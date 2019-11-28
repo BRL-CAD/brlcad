@@ -63,8 +63,8 @@ typedef struct bu_color bu_color_t;
  * initializes a bu_color struct without allocating any memory.
  */
 #define BU_COLOR_INIT(_c) { \
-    (_c)->buc_rgb[RED] = (_c)->buc_rgb[GRN] = (_c)->buc_rgb[BLU] = 0; (_c)->buc_rgb[ALP]; \
-}
+	(_c)->buc_rgb[RED] = (_c)->buc_rgb[GRN] = (_c)->buc_rgb[BLU] = 0; (_c)->buc_rgb[ALP]; \
+    }
 
 /**
  * macro suitable for declaration statement initialization of a bu_color
@@ -72,6 +72,13 @@ typedef struct bu_color bu_color_t;
  */
 #define BU_COLOR_INIT_ZERO {{0, 0, 0, 0}}
 
+
+
+/* random color generating methods */
+typedef enum {
+    BU_COLOR_RANDOM = 0,
+    BU_COLOR_RANDOM_LIGHTENED
+} bu_color_rand_t;
 
 /**
  * Function to generate random color
@@ -81,17 +88,22 @@ typedef struct bu_color bu_color_t;
  *     3dm-g: src/libgcv/plugins/rhino/rhino_read.cpp
  *   "constrained" random
  *     BRLCADWrapper:getRandomColor(): src/conv/step/BRLCADWrapper.cpp
- *   color command (set specified color)
+
+ */
+BU_EXPORT extern int bu_color_rand(struct bu_color *c, bu_color_rand_t type);
+
+#if 0
+
+/*
+ * Refactoring points:
+ * color command (set specified color)
  *     src/libged/color.c
  *     src/libged/brep.c
  *   get color from string
  *     src/libbu/color.c
- *
- * Possible calling syntax:
+
+* Possible calling syntax:
  @code
- * // get a color object given a string description
- * bu_color_from_str(redcolor, "red");
- *
  * // draw a purely random color in 0/0/0 to 255/255/255 range
  * bn_color_samples(colors, NULL, COLOR_RANDOM, 1); // problematic in libbu, random is libbn domain
  *
@@ -121,7 +133,6 @@ typedef struct bu_color bu_color_t;
  *     ignoring YCbCr, YPbPr, YUV, YIQ, CMYK, CIE LAB
  *     ignoring grayscale specification
  */
-#if 0
 /**
  * Return a set of sampled colors given a range of zero or more colors
  * (a NULL-terminated list of colors), a sample method, and desired

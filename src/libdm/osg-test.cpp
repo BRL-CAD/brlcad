@@ -78,7 +78,7 @@ obj_vlist(const struct directory *dp, const struct db_i *dbip, mat_t mat)
     struct bu_list *plot_segments;
     struct rt_db_internal intern;
     const struct bn_tol tol = {BN_TOL_MAGIC, 0.0005, 0.0005 * 0.0005, 1e-6, 1 - 1e-6};
-    const struct rt_tess_tol rttol = {RT_TESS_TOL_MAGIC, 0.0, 0.01, 0};
+    const struct bg_tess_tol rttol = {BG_TESS_TOL_MAGIC, 0.0, 0.01, 0};
     RT_DB_INTERNAL_INIT(&intern);
     if (rt_db_get_internal(&intern, dp, dbip, mat, &rt_uniresource) < 0) {
 	bu_exit(1, "ERROR: Unable to get internal representation of %s\n", dp->d_namep);

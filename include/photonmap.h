@@ -53,8 +53,6 @@
 #define	PM_SHADOW	2	/* Current not used */
 #define	PM_IMPORTANCE	3
 
-#define	PM_SEM		RT_SEM_LAST-1
-#define	PM_SEM_INIT	RT_SEM_LAST
 
 /**
  *  Photon Map Data Structure

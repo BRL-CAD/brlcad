@@ -25,18 +25,18 @@
  * Generation of the Sobol quasi-random low-discrepancy sequence of numbers.
  *
  * @par Usage:
-@code
-double *snums;
-struct bn_soboldata *sd = bn_sobol_create(3, time(NULL));
-if (sd) {
-    bn_sobol_skip(s, 4000, snums);
-    for (i = 0; i < 4000; i++) {
-	snums = bn_sobol_next(s, NULL, NULL);
-	printf("x[%d]: %g %g %g", i, snums[0], snums[1], snums[2]);
-    }
-    bn_sobol_destroy(sd);
-}
-@endcode
+ * @code
+ * double *snums;
+ * struct bn_soboldata *sd = bn_sobol_create(3, time(NULL));
+ * if (sd) {
+ *   bn_sobol_skip(s, 4000, snums);
+ *   for (i = 0; i < 4000; i++) {
+ *     snums = bn_sobol_next(s, NULL, NULL);
+ *     printf("x[%d]: %g %g %g", i, snums[0], snums[1], snums[2]);
+ *   }
+ *   bn_sobol_destroy(sd);
+ * }
+ * @endcode
  *
  */
 /** @{ */

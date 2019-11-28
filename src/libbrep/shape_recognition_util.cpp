@@ -7,7 +7,8 @@
 #include "bu/str.h"
 #include "bu/malloc.h"
 #include "bn/tol.h"
-#include "brep.h"
+#include "brep/defines.h"
+#include "brep/util.h"
 #include "shape_recognition.h"
 
 #define COMMA ','

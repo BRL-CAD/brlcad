@@ -391,7 +391,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	if (state->rpnt[W] > SMALL_FASTF) {
 	    mat_t m3;
 
-	    bn_mat_xform_about_pt(m3, m2, state->rpnt);
+	    bn_mat_xform_about_pnt(m3, m2, state->rpnt);
 	    bn_mat_mul(t, matrix, m3);
 	} else
 	    bn_mat_mul(t, matrix, m2);
@@ -1042,7 +1042,7 @@ f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 
     /* Interpolate link vertices *********************/
     for (i = 0; i < s.n_segs; i++) /* determine initial track length */
-	totlen += DIST_PT_PT(s.k[i].pt, s.k[i+1].pt);
+	totlen += DIST_PNT_PNT(s.k[i].pt, s.k[i+1].pt);
     len = totlen/(n_verts-1);
     VMOVE(verts[0], s.k[0].pt);
     olen = 2*len;
@@ -1066,8 +1066,8 @@ f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 		mid = (min+max)/2;
 		interp_spl(mid, s, pt);
 		dist_to_next = (k > 0) ? links[k-1].len : links[n_links-1].len; /* links[k].len;*/
-		while (fabs(DIST_PT_PT(verts[n_links*j+k-1], pt) - dist_to_next) >= VUNITIZE_TOL) {
-		    if (DIST_PT_PT(verts[n_links*j+k-1], pt) > dist_to_next) {
+		while (fabs(DIST_PNT_PNT(verts[n_links*j+k-1], pt) - dist_to_next) >= VUNITIZE_TOL) {
+		    if (DIST_PNT_PNT(verts[n_links*j+k-1], pt) > dist_to_next) {
 			max = mid;
 			mid = (min+max)/2;
 		    } else {
@@ -1083,7 +1083,7 @@ f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 	interp_spl(s.t[s.n_segs], s, verts[n_verts*n_links-1]);
 	totlen = 0.0;
 	for (j = 0; j < n_verts*n_links-1; j++)
-	    totlen += DIST_PT_PT(verts[j], verts[j+1]);
+	    totlen += DIST_PNT_PNT(verts[j], verts[j+1]);
 	olen = len;
 	len = totlen/(n_verts-1);
     }

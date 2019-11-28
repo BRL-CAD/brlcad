@@ -458,7 +458,7 @@ edge_can_be_decimated(struct rt_bot_internal *bot,
 	    /* check the distance between this new plane and vertex
 	     * v1
 	     */
-	    dist = fabs(DIST_PT_PLANE(&vertices[v1*3], pla));
+	    dist = fabs(DIST_PNT_PLANE(&vertices[v1*3], pla));
 	    if (max_chord_error + 1.0 > -SMALL_FASTF && dist > max_chord_error) {
 		return 0;
 	    }

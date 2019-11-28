@@ -734,8 +734,8 @@ Section "-Core installation"
   CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\RtWizard.lnk" "$INSTDIR\bin\rtwizard.exe" "" "$INSTDIR\@CPACK_DATA_DIR@\icons\brlcad.ico" 0
 
   CreateDirectory "$SMPROGRAMS\$STARTMENU_FOLDER\Manuals"
-  CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Manuals\BRL-CAD.lnk" "$INSTDIR\@CPACK_DATA_DIR@\html\manuals\index.html" "" "$INSTDIR\brlcad.ico" 0
-  CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Manuals\MGED.lnk" "$INSTDIR\@CPACK_DATA_DIR@\html\manuals\mged\index.html" "" "$INSTDIR\brlcad.ico" 0
+  CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Manuals\BRL-CAD.lnk" "$INSTDIR\@CPACK_DATA_DIR@\@CPACK_DOC_DIR@\html\manuals\index.html" "" "$INSTDIR\brlcad.ico" 0
+  CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Manuals\MGED.lnk" "$INSTDIR\@CPACK_DATA_DIR@\@CPACK_DOC_DIR@\html\manuals\mged\index.html" "" "$INSTDIR\brlcad.ico" 0
 
   CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Uninstall.lnk" "$INSTDIR\Uninstall.exe"
 

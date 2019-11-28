@@ -1229,6 +1229,10 @@ CMAKEFILES_IN_DIR(gct_ignore_files gct)
 include(${CMAKE_CURRENT_SOURCE_DIR}/linenoise.dist)
 CMAKEFILES_IN_DIR(linenoise_ignore_files linenoise)
 
+# Eigen is header only
+include("${CMAKE_CURRENT_SOURCE_DIR}/Eigen.dist")
+CMAKEFILES_IN_DIR(Eigen_ignore_files Eigen)
+
 CMAKEFILES(README)
 CMAKEFILES(CMakeLists.txt)
 

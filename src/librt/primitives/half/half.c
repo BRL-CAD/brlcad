@@ -389,7 +389,7 @@ rt_hlf_free(struct soltab *stp)
  * the plane, with the outward normal drawn shorter.
  */
 int
-rt_hlf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_hlf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     struct rt_half_internal *hip;
     vect_t cent;		/* some point on the plane */
@@ -745,7 +745,7 @@ rt_hlf_ifree(struct rt_db_internal *ip)
 
 
 int
-rt_hlf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+rt_hlf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_half_internal *vip;
 

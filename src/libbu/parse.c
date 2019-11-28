@@ -53,7 +53,7 @@
 	    } while (offset < 0);					\
 	    offset = cp - (char *)ext->ext_buf;				\
 	    ext->ext_buf = (uint8_t *)bu_realloc((char *) ext->ext_buf,	\
-						ext->ext_nbytes, "bu_struct_export"); \
+						 ext->ext_nbytes, "bu_struct_export"); \
 	    ep = (char *)ext->ext_buf + ext->ext_nbytes;		\
 	    cp = (char *)ext->ext_buf + offset;			\
 	}								\
@@ -1031,8 +1031,8 @@ parse_dmatprint(const char *name, register const double *mat)
 
 HIDDEN void
 parse_vls_matprint(struct bu_vls *vls,
-		 const char *name,
-		 register const fastf_t *mat)
+		   const char *name,
+		   register const fastf_t *mat)
 {
     int delta;
 
@@ -1065,8 +1065,8 @@ parse_vls_matprint(struct bu_vls *vls,
 
 HIDDEN void
 parse_vls_dmatprint(struct bu_vls *vls,
-		 const char *name,
-		 register const double *mat)
+		    const char *name,
+		    register const double *mat)
 {
     int delta;
 

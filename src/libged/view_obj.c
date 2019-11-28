@@ -1353,7 +1353,7 @@ vo_rot(struct view_obj *vop,
 	    }
 	}
 
-	bn_mat_xform_about_pt(viewchg, rmat, rot_pt);
+	bn_mat_xform_about_pnt(viewchg, rmat, rot_pt);
 	bn_mat_inv(viewchginv, viewchg);
 
 	/* Convert origin in new (viewchg) coords back to old view coords */

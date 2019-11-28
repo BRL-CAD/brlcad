@@ -88,6 +88,7 @@ typedef struct render_camera_thread_data_s
     camera_tile_t *tile;
     void *res_buf;
     unsigned int *scanline;
+    int sem_tie_worker;
 } render_camera_thread_data_t;
 
 

@@ -44,7 +44,7 @@
 #include "../../librt_private.h"
 
 
-extern int seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, point_t V,
+extern int seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, point_t V,
 			vect_t u_vec, vect_t v_vec, struct rt_sketch_internal *sketch_ip, void *seg);
 
 extern void rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip);
@@ -873,8 +873,8 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
     dot_pl1 = VDOT(rp->r_dir, extr->pl1);
     if (ZERO(dot_pl1)) {
 	/* ray is parallel to top and bottom faces */
-	dist_bottom = DIST_PT_PLANE(rp->r_pt, extr->pl1);
-	dist_top = DIST_PT_PLANE(rp->r_pt, extr->pl2);
+	dist_bottom = DIST_PNT_PLANE(rp->r_pt, extr->pl1);
+	dist_top = DIST_PNT_PLANE(rp->r_pt, extr->pl2);
 	if (dist_bottom < 0.0 && dist_top < 0.0)
 	    return 0;
 	if (dist_bottom > 0.0 && dist_top > 0.0)
@@ -882,9 +882,9 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 	dist_bottom = -MAX_FASTF;
 	dist_top = MAX_FASTF;
     } else {
-	dist_bottom = -DIST_PT_PLANE(rp->r_pt, extr->pl1)/dot_pl1;
+	dist_bottom = -DIST_PNT_PLANE(rp->r_pt, extr->pl1)/dot_pl1;
 	to_bottom = dist_bottom;				/* need to remember this */
-	dist_top = -DIST_PT_PLANE(rp->r_pt, extr->pl2)/dot_pl1;	/* pl1 and pl2 are parallel */
+	dist_top = -DIST_PNT_PLANE(rp->r_pt, extr->pl2)/dot_pl1;	/* pl1 and pl2 are parallel */
 	if (dist_bottom > dist_top) {
 	    fastf_t tmp1;
 
@@ -1278,7 +1278,7 @@ rt_extrude_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 	    break;
 	case CARC_SEG:
 	case -CARC_SEG:
-	    alpha = DIST_PT_PLANE(hitp->hit_point, extr->pl1) / VDOT(extr->unit_h, extr->pl1);
+	    alpha = DIST_PNT_PLANE(hitp->hit_point, extr->pl1) / VDOT(extr->unit_h, extr->pl1);
 	    VJOIN1(hit_in_plane, hitp->hit_point, -alpha, extr->unit_h);
 	    VSUB2(tmp, hit_in_plane, hitp->hit_vpriv);
 	    VCROSS(tmp2, extr->pl1, tmp);
@@ -1387,7 +1387,7 @@ rt_extrude_free(struct soltab *stp)
 
 
 int
-rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     struct rt_extrude_internal *extrude_ip;
     struct rt_curve *crv = NULL;
@@ -2052,7 +2052,7 @@ classify_sketch_loops(struct bu_ptbl *loopa, struct bu_ptbl *loopb, struct rt_sk
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     struct bu_list vhead;
     struct shell *s;

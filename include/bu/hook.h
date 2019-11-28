@@ -45,11 +45,13 @@ struct bu_hook {
     void *clientdata; /**< data for caller */
 };
 
+
 struct bu_hook_list {
     size_t size, capacity;
     struct bu_hook *hooks; /**< linked list */
 };
 typedef struct bu_hook bu_hook_list_t;
+
 
 /**
  * macro suitable for declaration statement initialization of a
@@ -58,27 +60,79 @@ typedef struct bu_hook bu_hook_list_t;
  */
 #define BU_HOOK_LIST_INIT_ZERO { 0, 0, NULL}
 
+
 /**
  * returns truthfully whether a non-head node bu_hook_list has been
  * initialized via BU_HOOK_LIST_INIT() or BU_HOOK_LIST_INIT_ZERO.
  */
 #define BU_HOOK_LIST_IS_INITIALIZED(_p) ((_p)->capacity != 0)
 
-/** @brief BRL-CAD support library's hook utility. */
+
+/**
+ * initialize a hook list to empty
+ *
+ * the caller is responsible for ensuring memory is not leaked.
+ */
 BU_EXPORT extern void bu_hook_list_init(struct bu_hook_list *hlp);
+
+
+/**
+ * add a hook to the list.
+ *
+ * in addition to the callback, the call may optionally provide a data
+ * pointer that will get passed as the first argument to the 'func'
+ * hook function.  the hook function may be NULL, which will result in
+ * a no-op (skipped) when bu_hook_call() is called.
+ */
 BU_EXPORT extern void bu_hook_add(struct bu_hook_list *hlp,
 				  bu_hook_t func,
 				  void *clientdata);
+
+
+/**
+ * delete a hook from the list.
+ *
+ * this removes a specified callback function registered with a
+ * particular data pointer via bu_hook_add() from the hook list.
+ */
 BU_EXPORT extern void bu_hook_delete(struct bu_hook_list *hlp,
 				     bu_hook_t func,
 				     void *clientdata);
+
+
+/**
+ * call all registered hooks.
+ *
+ * this invokes all callbacks added via bu_hook_add() passing any data
+ * pointer as the first argument and the provided 'buf' argument as
+ * the second argument, either of which may be NULL if desired.
+ */
 BU_EXPORT extern void bu_hook_call(struct bu_hook_list *hlp,
 				   void *buf);
-BU_EXPORT extern void bu_hook_save_all(struct bu_hook_list *hlp,
-				       struct bu_hook_list *save_hlp);
+
+
+/**
+ * copy all hooks from one list to another
+ */
+BU_EXPORT extern void bu_hook_save_all(struct bu_hook_list *source,
+				       struct bu_hook_list *destination);
+
+
+/**
+ * delete all hooks in a list
+ */
 BU_EXPORT extern void bu_hook_delete_all(struct bu_hook_list *hlp);
-BU_EXPORT extern void bu_hook_restore_all(struct bu_hook_list *hlp,
-					  struct bu_hook_list *restore_hlp);
+
+
+/**
+ * replace all hooks in a list with the hooks from another list
+ *
+ * all hooks from ther 'destination' hook list will be deleted and all
+ * hooks in the 'source' list will be copied into the 'destination'
+ * list.
+ */
+BU_EXPORT extern void bu_hook_restore_all(struct bu_hook_list *destination,
+					  struct bu_hook_list *source);
 
 /** @} */
 

@@ -29,6 +29,9 @@
 #include "bu/parallel.h"
 
 
+extern "C" int BU_SEM_THREAD;
+
+
 #if defined(HAVE_THREAD_LOCAL)
 
 static thread_local int thread_cpu = 0;
@@ -104,18 +107,18 @@ static ThreadLocal<int> thread_cpu;
 extern "C" {
 
 
-void
-thread_set_cpu(int cpu)
-{
-    thread_cpu = cpu;
-}
+    void
+    thread_set_cpu(int cpu)
+    {
+	thread_cpu = cpu;
+    }
 
 
-int
-thread_get_cpu(void)
-{
-    return thread_cpu;
-}
+    int
+    thread_get_cpu(void)
+    {
+	return thread_cpu;
+    }
 
 
 } /* extern "C" */

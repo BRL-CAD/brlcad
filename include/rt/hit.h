@@ -50,7 +50,7 @@ __BEGIN_DECLS
  * @brief
  * Information about where a ray hits the surface.
  *
-*
+ *
  * Important Note:  Surface Normals always point OUT of a solid.
  *
  * DEPRECATED: The hit_point and hit_normal elements will be removed
@@ -84,23 +84,23 @@ struct hit {
  * Return the post-boolean normal into caller-provided _normal vector.
  */
 #define RT_HIT_NORMAL(_normal, _hitp, _stp, _unused, _flipflag) { \
-        RT_CK_HIT(_hitp); \
-        RT_CK_SOLTAB(_stp); \
-        RT_CK_FUNCTAB((_stp)->st_meth); \
-        { \
-            void *_n = (void *)_normal; \
-            if ((_stp)->st_meth->ft_norm) { \
-                (_stp)->st_meth->ft_norm(_hitp, _stp, (_hitp)->hit_rayp); \
-            } \
-            if (_n != NULL) { \
-                int _f = (int)_flipflag; \
-                if (_f) { \
-                    VREVERSE((fastf_t *)_normal, (_hitp)->hit_normal); \
-                } else { \
-                    VMOVE((fastf_t *)_normal, (_hitp)->hit_normal); \
-                } \
-            } \
-        } \
+	RT_CK_HIT(_hitp); \
+	RT_CK_SOLTAB(_stp); \
+	RT_CK_FUNCTAB((_stp)->st_meth); \
+	{ \
+	    void *_n = (void *)_normal; \
+	    if ((_stp)->st_meth->ft_norm) { \
+		(_stp)->st_meth->ft_norm(_hitp, _stp, (_hitp)->hit_rayp); \
+	    } \
+	    if (_n != NULL) { \
+		int _f = (int)_flipflag; \
+		if (_f) { \
+		    VREVERSE((fastf_t *)_normal, (_hitp)->hit_normal); \
+		} else { \
+		    VMOVE((fastf_t *)_normal, (_hitp)->hit_normal); \
+		} \
+	    } \
+	} \
     }
 
 /* A more powerful interface would be: */
@@ -131,16 +131,16 @@ struct curvature {
  * extra argument was added the name was changed.
  */
 #define RT_CURVATURE(_curvp, _hitp, _flipflag, _stp) { \
-        RT_CK_HIT(_hitp); \
-        RT_CK_SOLTAB(_stp); \
-        RT_CK_FUNCTAB((_stp)->st_meth); \
-        if ((_stp)->st_meth->ft_curve) { \
-            (_stp)->st_meth->ft_curve(_curvp, _hitp, _stp); \
-        } \
-        if (_flipflag) { \
-            (_curvp)->crv_c1 = - (_curvp)->crv_c1; \
-            (_curvp)->crv_c2 = - (_curvp)->crv_c2; \
-        } \
+	RT_CK_HIT(_hitp); \
+	RT_CK_SOLTAB(_stp); \
+	RT_CK_FUNCTAB((_stp)->st_meth); \
+	if ((_stp)->st_meth->ft_curve) { \
+	    (_stp)->st_meth->ft_curve(_curvp, _hitp, _stp); \
+	} \
+	if (_flipflag) { \
+	    (_curvp)->crv_c1 = - (_curvp)->crv_c1; \
+	    (_curvp)->crv_c2 = - (_curvp)->crv_c2; \
+	} \
     }
 
 /* A more powerful interface would be: */
@@ -156,12 +156,12 @@ struct uvcoord {
     fastf_t uv_dv;      /**< @brief delta in v */
 };
 #define RT_HIT_UVCOORD(ap, _stp, _hitp, uvp) { \
-        RT_CK_HIT(_hitp); \
-        RT_CK_SOLTAB(_stp); \
-        RT_CK_FUNCTAB((_stp)->st_meth); \
-        if ((_stp)->st_meth->ft_uv) { \
-            (_stp)->st_meth->ft_uv(ap, _stp, _hitp, uvp); \
-        } \
+	RT_CK_HIT(_hitp); \
+	RT_CK_SOLTAB(_stp); \
+	RT_CK_FUNCTAB((_stp)->st_meth); \
+	if ((_stp)->st_meth->ft_uv) { \
+	    (_stp)->st_meth->ft_uv(ap, _stp, _hitp, uvp); \
+	} \
     }
 
 
@@ -170,14 +170,14 @@ struct uvcoord {
 
 /* Print a bit vector */
 RT_EXPORT extern void rt_pr_hit(const char *str,
-	                        const struct hit *hitp);
+				const struct hit *hitp);
 RT_EXPORT extern void rt_pr_hit_vls(struct bu_vls *v,
-                                    const char *str,
-                                    const struct hit *hitp);
+				    const char *str,
+				    const struct hit *hitp);
 RT_EXPORT extern void rt_pr_hitarray_vls(struct bu_vls *v,
-                                         const char *str,
-                                         const struct hit *hitp,
-                                         int count);
+					 const char *str,
+					 const struct hit *hitp,
+					 int count);
 
 __END_DECLS
 

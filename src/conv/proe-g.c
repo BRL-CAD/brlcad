@@ -482,35 +482,35 @@ do_modifiers(char *line1, int *start, struct wmember *head, char *name, fastf_t 
 	    /* find max distance to corner of enclosing RPP */
 	    dist = 0.0;
 	    VSET(rpp_corner, min[X], min[Y], min[Z]);
-	    tmp_dist = DIST_PT_PLANE(rpp_corner, plane) * (fastf_t)orient;
+	    tmp_dist = DIST_PNT_PLANE(rpp_corner, plane) * (fastf_t)orient;
 	    V_MAX(dist, tmp_dist);
 
 	    VSET(rpp_corner, min[X], min[Y], max[Z]);
-	    tmp_dist = DIST_PT_PLANE(rpp_corner, plane) * (fastf_t)orient;
+	    tmp_dist = DIST_PNT_PLANE(rpp_corner, plane) * (fastf_t)orient;
 	    V_MAX(dist, tmp_dist);
 
 	    VSET(rpp_corner, min[X], max[Y], min[Z]);
-	    tmp_dist = DIST_PT_PLANE(rpp_corner, plane) * (fastf_t)orient;
+	    tmp_dist = DIST_PNT_PLANE(rpp_corner, plane) * (fastf_t)orient;
 	    V_MAX(dist, tmp_dist);
 
 	    VSET(rpp_corner, min[X], max[Y], max[Z]);
-	    tmp_dist = DIST_PT_PLANE(rpp_corner, plane) * (fastf_t)orient;
+	    tmp_dist = DIST_PNT_PLANE(rpp_corner, plane) * (fastf_t)orient;
 	    V_MAX(dist, tmp_dist);
 
 	    VSET(rpp_corner, max[X], min[Y], min[Z]);
-	    tmp_dist = DIST_PT_PLANE(rpp_corner, plane) * (fastf_t)orient;
+	    tmp_dist = DIST_PNT_PLANE(rpp_corner, plane) * (fastf_t)orient;
 	    V_MAX(dist, tmp_dist);
 
 	    VSET(rpp_corner, max[X], min[Y], max[Z]);
-	    tmp_dist = DIST_PT_PLANE(rpp_corner, plane) * (fastf_t)orient;
+	    tmp_dist = DIST_PNT_PLANE(rpp_corner, plane) * (fastf_t)orient;
 	    V_MAX(dist, tmp_dist);
 
 	    VSET(rpp_corner, max[X], max[Y], min[Z]);
-	    tmp_dist = DIST_PT_PLANE(rpp_corner, plane) * (fastf_t)orient;
+	    tmp_dist = DIST_PNT_PLANE(rpp_corner, plane) * (fastf_t)orient;
 	    V_MAX(dist, tmp_dist);
 
 	    VSET(rpp_corner, max[X], max[Y], max[Z]);
-	    tmp_dist = DIST_PT_PLANE(rpp_corner, plane) * (fastf_t)orient;
+	    tmp_dist = DIST_PNT_PLANE(rpp_corner, plane) * (fastf_t)orient;
 	    V_MAX(dist, tmp_dist);
 
 	    for (i=0; i<4; i++) {

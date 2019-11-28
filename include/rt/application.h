@@ -120,8 +120,8 @@ struct application {
     int                 a_return;       /**< @brief  Return of a_hit()/a_miss() */
     int                 a_no_booleans;  /**< @brief  1= partitions==segs, no booleans */
     char **             attrs;          /**< @brief  null terminated list of attributes
-                                         * This list should be the same as passed to
-                                         * rt_gettrees_and_attrs() */
+					 * This list should be the same as passed to
+					 * rt_gettrees_and_attrs() */
     int                 a_bot_reverse_normal_disabled;  /**< @brief  1= no bot normals get reversed in BOT_UNORIENTED_NORM */
     /* THESE ELEMENTS ARE USED BY THE PROGRAM "rt" AND MAY BE USED BY */
     /* THE LIBRARY AT SOME FUTURE DATE */
@@ -192,8 +192,8 @@ struct application_bundle
 #define RT_CK_AP(_p) BU_CKMAG(_p, RT_AP_MAGIC, "struct application")
 #define RT_CK_APPLICATION(_p) BU_CKMAG(_p, RT_AP_MAGIC, "struct application")
 #define RT_APPLICATION_INIT(_p) { \
-        memset((char *)(_p), 0, sizeof(struct application)); \
-        (_p)->a_magic = RT_AP_MAGIC; \
+	memset((char *)(_p), 0, sizeof(struct application)); \
+	(_p)->a_magic = RT_AP_MAGIC; \
     }
 
 
@@ -202,7 +202,7 @@ struct application_bundle
 #else
 #  define RT_AP_CHECK(_ap)      \
     {if ((_ap)->a_zero1||(_ap)->a_zero2) \
-            bu_bomb("corrupt application struct"); }
+	    bu_bomb("corrupt application struct"); }
 #endif
 
 __END_DECLS

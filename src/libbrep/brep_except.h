@@ -24,6 +24,8 @@
 #include "common.h"
 
 #include <stdexcept>
+#include <string>
+
 
 class InvalidBooleanOperation : public std::invalid_argument
 {

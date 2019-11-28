@@ -77,6 +77,8 @@
 #include "bio.h"
 
 #include "../libfb/fb_private.h" /* for _fb_disk_enable */
+
+#include "bu/malloc.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"
 #include "bu/snooze.h"
@@ -99,7 +101,6 @@ static int port_set = 0;		/* !0 if user supplied port num */
 static int once_only = 0;
 static int netfd;
 
-#define OUTBUFSZ 4096
 
 #define MAX_CLIENTS 32
 struct pkg_conn *clients[MAX_CLIENTS];
@@ -531,7 +532,7 @@ void
 fb_log(const char *fmt, ...)
 {
     va_list ap;
-    char outbuf[OUTBUFSZ];			/* final output string */
+    char outbuf[BU_PAGE_SIZE];			/* final output string */
     int want;
     int i;
     int nsent = 0;

@@ -53,6 +53,7 @@ set(rt_headers
   timer.h
   tol.h
   tree.h
+  uv.h
   version.h
   view.h
   vlist.h

@@ -110,7 +110,7 @@ RT_EXPORT extern int rt_obj_free(struct soltab *stp);
 /**
  * obtain a vlist wireframe representation of an object for plotting purposes
  */
-RT_EXPORT extern int rt_obj_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol);
+RT_EXPORT extern int rt_obj_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
 
 /**
  * shoot an array of rays at a set of homogeneous objects.
@@ -120,7 +120,7 @@ RT_EXPORT extern int rt_obj_vshot(struct soltab *stp[], struct xray *rp[], struc
 /**
  * tessellate an object (into NMG form)
  */
-RT_EXPORT extern int rt_obj_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol);
+RT_EXPORT extern int rt_obj_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
 
 /**
  * tessellate an object (into NURBS NMG form)

@@ -136,7 +136,6 @@ bu_num_print(const double *vals, size_t nvals, size_t cols, const char *tbl_star
     if ((row_start && strchr(row_start, '\n')) || (row_end && strchr(row_end, '\n'))) {
 	/* if spanning lines, get column sizes for pretty-printing */
 	i = 0;
-	j = 0;
 	do {
 	    char num[3 + DBL_MANT_DIG - DBL_MIN_EXP + 1]; /* max double digits plus nul */
 	    size_t numlen;

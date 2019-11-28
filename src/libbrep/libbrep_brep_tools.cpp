@@ -32,6 +32,7 @@
 #include <iostream>
 
 /* library implementation headers */
+#include "brep/util.h"
 
 
 bool ON_NearZero(double val, double epsilon) {

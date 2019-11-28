@@ -406,7 +406,7 @@
 	    set vpt [$itk_option(-mged) pane_m2v_point $_dname $botpt]
 	    set vz [lindex $vpt 2]
 	    set mpt [$itk_option(-mged) pane_v2m_point $_dname [list $_vx $_vy $vz]]
-	    $itk_option(-mged) move_botpt $_obj $i $mpt
+	    $itk_option(-mged) bot_move_pnt $_obj $i $mpt
 	}
 	default {
 	    $::ArcherCore::application putString "More than one point has been selected."
@@ -419,7 +419,7 @@
     $itk_option(-mged) clear_bot_callbacks
 
     set pindex [$itk_option(-mged) pane_mouse_find_botpt $_dname $_obj $_viewz $_x $_y]
-    $itk_option(-mged) pane_move_botpt_mode $_dname $_obj $pindex $_x $_y
+    $itk_option(-mged) pane_bot_move_pnt_mode $_dname $_obj $pindex $_x $_y
 
     botPointSelectCallback $pindex
 }
@@ -431,7 +431,7 @@
 	incr item -1
 	lappend plist2 $item
     }
-    eval $itk_option(-mged) pane_move_botpts_mode $_dname $_x $_y $_obj $plist2
+    eval $itk_option(-mged) pane_bot_move_pnts_mode $_dname $_x $_y $_obj $plist2
 }
 
 

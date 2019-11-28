@@ -89,7 +89,7 @@ analyze_get_bbox_rays(fastf_t **rays, point_t min, point_t max, struct bn_tol *t
 
     if (!rays || !tol) return 0;
 
-    if (NEAR_ZERO(DIST_PT_PT_SQ(min, max), VUNITIZE_TOL)) return 0;
+    if (NEAR_ZERO(DIST_PNT_PNT_SQ(min, max), VUNITIZE_TOL)) return 0;
 
     /* We've got the bounding box - set up the grids */
     VSET(mid, (max[0] + min[0])/2, (max[1] + min[1])/2, (max[2] + min[2])/2);
@@ -204,7 +204,7 @@ analyze_get_scaled_bbox_rays(fastf_t **rays, point_t min, point_t max, fastf_t r
 
     if (!rays) return 0;
 
-    if (NEAR_ZERO(DIST_PT_PT_SQ(min, max), VUNITIZE_TOL)) return 0;
+    if (NEAR_ZERO(DIST_PNT_PNT_SQ(min, max), VUNITIZE_TOL)) return 0;
 
     /* We've got the bounding box - set up the grids */
     VSET(mid, (max[0] + min[0])/2, (max[1] + min[1])/2, (max[2] + min[2])/2);
@@ -332,7 +332,7 @@ segfilter_hit(struct application *ap, struct partition *PartHeadp, struct seg *U
     for (part = PartHeadp->pt_forw; part != PartHeadp; part = part->pt_forw) {
         VJOIN1(in_pt, ap->a_ray.r_pt, part->pt_inhit->hit_dist, ap->a_ray.r_dir);
         VJOIN1(out_pt, ap->a_ray.r_pt, part->pt_outhit->hit_dist, ap->a_ray.r_dir);
-        part_len = DIST_PT_PT(in_pt, out_pt);
+        part_len = DIST_PNT_PNT(in_pt, out_pt);
         if (part_len > state->tol) {
             state->cnt++;
             return 0;

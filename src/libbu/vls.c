@@ -55,7 +55,7 @@ static const unsigned int VLS_ALLOC_MIN = 32;
 static const size_t VLS_ALLOC_STEP = 128;
 
 /* minimum vls buffer allocation size */
-static const unsigned int VLS_ALLOC_READ = 4096;
+static const unsigned int VLS_ALLOC_READ = BU_PAGE_SIZE;
 
 void
 bu_vls_init(struct bu_vls *vp)
@@ -214,7 +214,7 @@ bu_vls_trunc(struct bu_vls *vp, int len)
 	vp->vls_offset = 0;
 
     if (vp->vls_str)
-       	vp->vls_str[len+vp->vls_offset] = '\0'; /* force null termination */
+	vp->vls_str[len+vp->vls_offset] = '\0'; /* force null termination */
 
     vp->vls_len = len;
 }
@@ -914,7 +914,7 @@ vls_incr_next(struct bu_vls *next_incr, const char *incr_state, const char *inc_
     int i = 0;
     long ret = 0;
     /*char bsep = '\0';
-    char esep = '\0';*/
+      char esep = '\0';*/
     long vals[4] = {0}; /* 0 = width, 1 = min/init, 2 = max, 3 = increment */
     long state_val = 0;
     const char *wstr = inc_specifier;

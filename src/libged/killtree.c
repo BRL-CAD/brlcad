@@ -33,7 +33,7 @@
 #include "./ged_private.h"
 
 
-#define AV_STEP 4096
+#define AV_STEP BU_PAGE_SIZE
 
 
 struct killtree_data {

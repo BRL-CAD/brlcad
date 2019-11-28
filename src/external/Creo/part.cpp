@@ -820,13 +820,14 @@ have_part:
     ProMdlToModelitem(model, &mitm);
     if (ProSurfaceAppearancepropsGet(&mitm, &aprops) == PRO_TK_NO_ERROR) {
 	/* use the colors, ... that were set in CREO */
-	rgbflts[0] = aprops.color_rgb[0]*255.0;
-	rgbflts[1] = aprops.color_rgb[1]*255.0;
-	rgbflts[2] = aprops.color_rgb[2]*255.0;
+	rgbflts[0] = aprops.color_rgb[0];
+	rgbflts[1] = aprops.color_rgb[1];
+	rgbflts[2] = aprops.color_rgb[2];
 	bu_color_from_rgb_floats(&color, rgbflts);
 	bu_color_to_rgb_chars(&color, rgb);
 
 	/* shader args */
+	/* FIXME: make exporting material optional */
 	bu_vls_sprintf(&shader_args, "{");
 	if (!NEAR_ZERO(aprops.transparency, SMALL_FASTF)) bu_vls_printf(&shader_args, " tr %g", aprops.transparency);
 	if (!NEAR_EQUAL(aprops.shininess, 1.0, SMALL_FASTF)) bu_vls_printf(&shader_args, " sh %d", (int)(aprops.shininess * 18 + 2.0));
@@ -836,7 +837,7 @@ have_part:
 
 	/* Make the region comb */
 	mk_comb(cinfo->wdbp, bu_vls_addr(rname), &wcomb.l, 1,
-		"plastic", bu_vls_addr(&shader_args), (const unsigned char *)rgb,
+		NULL, NULL, (const unsigned char *)rgb,
 		cinfo->reg_id, 0, 0, 0, 0, 0, 0);
     } else {
 	/* something is wrong, but just ignore the missing properties */

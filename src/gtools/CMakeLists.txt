@@ -18,7 +18,7 @@ BRLCAD_ADDEXEC(glint glint.c "librt;${M_LIBRARY}")
 BRLCAD_ADDEXEC(gqa gqa.c "libged;librt")
 
 set(GSH_SRCS
-  gsh.cxx
+  gsh.cpp
   ${LDIR}/utf8.c
   ${LDIR}/linenoise.c
   )
@@ -26,7 +26,7 @@ BRLCAD_ADDEXEC(gsh "${GSH_SRCS}"  "libged;libbu" NO_INSTALL)
 BRLCAD_ADDEXEC(gtransfer gtransfer.c "librt;libpkg" NO_INSTALL)
 
 set(GANALYZE_SRCS
-  ganalyze.cxx
+  ganalyze.cpp
   ${LDIR}/utf8.c
   ${LDIR}/linenoise.c
   )

@@ -84,7 +84,7 @@ BG_EXPORT extern int bg_trimesh_manifold_closed(int vcnt, int fcnt, fastf_t *v, 
 BG_EXPORT extern int bg_trimesh_oriented(int vcnt, int fcnt, fastf_t *v, int *f);
 
 /**
- * Check if a mesh is toplogically solid. True if the mesh is closed,
+ * Check if a mesh is topologically solid. True if the mesh is closed,
  * manifold, and oriented.
  */
 BG_EXPORT extern int bg_trimesh_solid(int vcnt, int fcnt, fastf_t *v, int *f, int **bedges);
@@ -121,6 +121,72 @@ BG_EXPORT extern int bg_trimesh_solid2(int vcnt, int fcnt, fastf_t *v, int *f, s
 BG_EXPORT extern int bg_trimesh_hanging_nodes(int num_vertices, int num_faces, fastf_t *vertices, int *faces, struct bg_trimesh_solid_errors *errors);
 
 BG_EXPORT extern struct bg_trimesh_halfedge * bg_trimesh_generate_edge_list(int fcnt, int *f);
+
+/* Make an attempt at a trimesh intersection calculator that returns the sets
+ * of faces intersecting and inside the other for each mesh. Doesn't attempt
+ * a boolean evaluation, just characterizes faces */
+BG_EXPORT extern int
+bg_trimesh_isect(
+    int **faces_inside_1, int *num_faces_inside_1, int **faces_inside_2, int *num_faces_inside_2,
+    int **faces_isect_1, int *num_faces_isect_1, int **faces_isect_2, int *num_faces_isect_2,
+    int *faces_1, int num_faces_1, point_t *vertices_1, int num_vertices_1,
+    int *faces_2, int num_faces_2, point_t *vertices_2, int num_vertices_2);
+
+
+/**
+ * @brief
+ * Return trimesh information for a planar (2D) mesh that contains just the set
+ * of points active in the mesh.
+ *
+ * @param[out] ofaces faces array for the new output mesh
+ * @param[out] n_ofaces length of ofaces array
+ * @param[out] opnts points array for the new output mesh
+ * @param[out] n_opnts length of opnts array
+ * @param[in] ifaces array of input trimesh
+ * @param[in] n_ifaces size of input faces array
+ * @param[in] ipnts array that holds the points defining the original trimesh
+ *
+ * @return -1 if error, number of faces in new trimesh if successful (should
+ * match the original face count)
+ */
+BG_EXPORT extern int bg_trimesh_2d_gc(int **ofaces, int *n_ofaces, point2d_t **opnts, int *n_opnts,
+	const int *ifaces, int n_ifaces, const point2d_t *ipnts);
+
+/**
+ * @brief
+ * Return trimesh information for a 3D mesh that contains just the set
+ * of points active in the mesh.
+ *
+ * @param[out] ofaces faces array for the new output mesh.
+ * @param[out] n_ofaces length of ofaces array
+ * @param[out] opnts points array for the new output mesh.
+ * @param[out] n_opnts length of opnts array.
+ * @param[in] ifaces array of input trimesh
+ * @param[in] n_ifaces size of input faces array
+ * @param[in] ipnts array that holds the points defining the original trimesh
+ *
+ * @return -1 if error, number of faces in new trimesh if successful (should
+ * match the original face count)
+ */
+BG_EXPORT extern int bg_trimesh_3d_gc(int **ofaces, int *n_ofaces, point_t **opnts, int *n_opnts,
+	const int *ifaces, int n_ifaces, const point_t *ipnts);
+
+
+/**
+ * @brief
+ * Low level per-face contribution to inside/outside test, used if
+ * calling codes prefer to construct their own test with their own
+ * mesh containers.
+ */
+BG_EXPORT int
+bg_ptm_triangle_chain(point_t v1, point_t v2, point_t v3, point_t tp, int *exact_flag);
+
+/**
+ * @brief
+ * Report if point tp is inside or outside of the trimesh.
+ */
+BG_EXPORT int
+bg_trimesh_pt_in(point_t tp, int num_faces, int *faces, int num_vertices, point_t *pts);
 
 __END_DECLS
 

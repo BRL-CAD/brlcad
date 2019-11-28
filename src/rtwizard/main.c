@@ -943,15 +943,17 @@ int
 main(int argc, char **argv)
 {
     char *av0;
+    char type = '\0';
+    int i = 0;
     int need_help = 0;
     int need_help_dev = 0;
     int uac = 0;
-    int i = 0;
-    char type = '\0';
+
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
     struct bu_vls info_msg = BU_VLS_INIT_ZERO;
     struct rtwizard_settings *s = rtwizard_settings_create();
     struct bu_opt_desc d[35];
+
     BU_OPT(d[0],  "h", "help",          "",          NULL,            &need_help,    "Print help and exit");
     BU_OPT(d[1],  "",  "help-dev",      "",          NULL,            &need_help_dev,    "Print options intended for developer/programmatic use and exit.");
     BU_OPT(d[2],  "",  "gui",           "",          NULL,            &s->use_gui,   "Force use of GUI.");
@@ -998,24 +1000,30 @@ main(int argc, char **argv)
     uac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d);
 
     if (uac == -1) {
-	bu_exit(1, "%s", bu_vls_addr(&optparse_msg));
+	bu_exit(EXIT_FAILURE, "%s", bu_vls_addr(&optparse_msg));
     }
     bu_vls_free(&optparse_msg);
 
     if (need_help) {
 	rtwizard_help((struct bu_opt_desc *)&d);
-	bu_exit(0, NULL);
+	bu_exit(EXIT_SUCCESS, NULL);
     }
 
     if (need_help_dev) {
 	rtwizard_help_dev((struct bu_opt_desc *)&d);
-	bu_exit(0, NULL);
+	bu_exit(EXIT_SUCCESS, NULL);
     }
 
-    for (i = 0; i < uac; i++) {
-	if (argv[i][0] == '-') {
-	    bu_exit(1, "Error: unknown option %s.\n", argv[i]);
+    {
+	int stop = 0;
+	for (i = 0; i < uac; i++) {
+	    if (argv[i][0] == '-') {
+		bu_log("ERROR: unknown option %s.\n", argv[i]);
+		stop++;
+	    }
 	}
+	if (stop)
+	    bu_exit(EXIT_FAILURE, "Halting.  Unknown options encountered.\n");
     }
 
     if (type != '\0') {
@@ -1023,12 +1031,12 @@ main(int argc, char **argv)
     }
 
     if (s->use_gui && s->no_gui) {
-	bu_log("Warning - both -gui and -no-gui supplied - enabling gui\n");
+	bu_log("WARNING: both -gui and -no-gui supplied - enabling gui\n");
 	s->no_gui = 0;
     }
 
     if (bu_vls_strlen(s->input_file) && !bu_file_exists(bu_vls_addr(s->input_file), NULL)) {
-	bu_exit(1, "Specified %s as .g file, but file does not exist.\n", bu_vls_addr(s->input_file));
+	bu_exit(EXIT_FAILURE, "ERROR: Specified %s as .g file, but file does not exist.\n", bu_vls_addr(s->input_file));
     }
 
     /* Handle any leftover arguments per established conventions */
@@ -1043,7 +1051,7 @@ main(int argc, char **argv)
 			/* This was the .g name - don't add it to the color list */
 			continue;
 		    } else {
-			bu_exit(1, "Specified %s as .g file, but file does not exist.\n", argv[i]);
+			bu_exit(EXIT_FAILURE, "ERROR: Specified %s as .g file, but file does not exist.\n", argv[i]);
 		    }
 		}
 	    }
@@ -1074,7 +1082,7 @@ main(int argc, char **argv)
 	} else {
 	    bu_log("%s", bu_vls_addr(&info_msg));
 	    bu_vls_free(&info_msg);
-	    bu_exit(EXIT_FAILURE, "Fatal: insufficient information to generate image");
+	    bu_exit(EXIT_FAILURE, "ERROR: insufficient information to generate image");
 	}
     }
     bu_vls_free(&info_msg);
@@ -1157,7 +1165,7 @@ main(int argc, char **argv)
 	if (!rtwizard_info_sufficient(NULL, s, type)) {
 	    /* If we *can* launch the GUI in this situation, do it */
 	    if (s->no_gui) {
-		bu_exit(1, "Image type %c specified, but supplied information is not sufficient to generate a type %c image.\n", type, type);
+		bu_exit(EXIT_FAILURE, "ERROR: Image type %c specified, but supplied inputs are insufficient for generating a type %c image.\n", type, type);
 	    } else {
 		/* Launch GUI */
 	    }

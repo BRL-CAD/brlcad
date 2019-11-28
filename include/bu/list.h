@@ -76,8 +76,8 @@ __BEGIN_DECLS
 
  // make bu_list the first element in your structure
  struct my_structure {
-   struct bu_list l;
-   int my_data;
+ struct bu_list l;
+ int my_data;
  };
 
  // your actual list
@@ -97,9 +97,9 @@ __BEGIN_DECLS
  // iterate over your list, remove all items
  struct my_structure *entry;
  while (BU_LIST_WHILE(entry, my_structure, &(my_list->l))) {
-   bu_log("Entry value is %d\n", entry->my_data);
-   BU_LIST_DEQUEUE(&(entry->l));
-   BU_PUT(entry, struct my_structure);
+ bu_log("Entry value is %d\n", entry->my_data);
+ BU_LIST_DEQUEUE(&(entry->l));
+ BU_PUT(entry, struct my_structure);
  }
  BU_PUT(my_list, struct my_structure);
 
@@ -377,13 +377,13 @@ typedef struct bu_list bu_list_t;
  */
 #define BU_LIST_FOR(p, structure, headp)	\
     (p)=BU_LIST_FIRST(structure, headp); \
-       (p) && BU_LIST_NOT_HEAD(p, headp); \
-       (p)=BU_LIST_PNEXT(structure, p)
+    (p) && BU_LIST_NOT_HEAD(p, headp); \
+    (p)=BU_LIST_PNEXT(structure, p)
 
 #define BU_LIST_FOR_BACKWARDS(p, structure, headp)	\
     (p)=BU_LIST_LAST(structure, headp); \
-       (p) && BU_LIST_NOT_HEAD(p, headp); \
-       (p)=BU_LIST_PLAST(structure, p)
+    (p) && BU_LIST_NOT_HEAD(p, headp); \
+    (p)=BU_LIST_PLAST(structure, p)
 
 /**
  * Process all the list members except headp and the actual head.  Useful
@@ -391,8 +391,8 @@ typedef struct bu_list bu_list_t;
  */
 #define BU_LIST_FOR_CIRC(p, structure, headp)	\
     (p)=BU_LIST_PNEXT_CIRC(structure, headp); \
-       (p) && BU_LIST_NOT_HEAD(p, headp); \
-       (p)=BU_LIST_PNEXT_CIRC(structure, p)
+    (p) && BU_LIST_NOT_HEAD(p, headp); \
+    (p)=BU_LIST_PNEXT_CIRC(structure, p)
 
 /**
  * Intended as innards for a for loop to visit elements of two lists
@@ -405,9 +405,9 @@ typedef struct bu_list bu_list_t;
 #define BU_LIST_FOR2(p1, p2, structure, headp1, headp2)				\
     (p1)=BU_LIST_FIRST(structure, headp1),			\
 	(p2)=BU_LIST_FIRST(structure, headp2);			\
-				      (p1) && BU_LIST_NOT_HEAD((struct bu_list *)(p1), (headp1)) &&	\
-				      (p2) && BU_LIST_NOT_HEAD((struct bu_list *)(p2), (headp2));		\
-				      (p1)=BU_LIST_NEXT(structure, (struct bu_list *)(p1)),	\
+    (p1) && BU_LIST_NOT_HEAD((struct bu_list *)(p1), (headp1)) &&	\
+	(p2) && BU_LIST_NOT_HEAD((struct bu_list *)(p2), (headp2));		\
+    (p1)=BU_LIST_NEXT(structure, (struct bu_list *)(p1)),	\
 	(p2)=BU_LIST_NEXT(structure, (struct bu_list *)(p2))
 
 /**

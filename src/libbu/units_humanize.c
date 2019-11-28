@@ -77,7 +77,7 @@ bu_humanize_number(char *buf, size_t len, int64_t quotient, const char *suffix, 
     if (buf == NULL || suffix == NULL)
 	return (-1);
     else if (scale >= hn_maxscale &&
-	    ((scale & ~(BU_HN_AUTOSCALE|BU_HN_GETSCALE)) != 0))
+	     ((scale & ~(BU_HN_AUTOSCALE|BU_HN_GETSCALE)) != 0))
 	return (-1);
     if ((flags & BU_HN_DIVISOR_1000) && (flags & BU_HN_IEC_PREFIXES))
 	return (-1);
@@ -154,8 +154,8 @@ bu_humanize_number(char *buf, size_t len, int64_t quotient, const char *suffix, 
 	 * divide once more.
 	 */
 	for (i = 0;
-		(quotient >= max || (quotient == max - 1 &&
-				     leftover >= divisordeccut)) && i < hn_maxscale; i++) {
+	     (quotient >= max || (quotient == max - 1 &&
+				  leftover >= divisordeccut)) && i < hn_maxscale; i++) {
 	    leftover = quotient % divisor;
 	    quotient /= divisor;
 	}

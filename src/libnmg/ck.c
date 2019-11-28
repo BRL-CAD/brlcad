@@ -1563,8 +1563,8 @@ nmg_ck_v_in_2fus(const struct vertex *vp, const struct faceuse *fu1, const struc
     /* geometry check */
     NMG_GET_FU_PLANE(n1, fu1);
     NMG_GET_FU_PLANE(n2, fu2);
-    dist1 = DIST_PT_PLANE(vp->vg_p->coord, n1);
-    dist2 = DIST_PT_PLANE(vp->vg_p->coord, n2);
+    dist1 = DIST_PNT_PLANE(vp->vg_p->coord, n1);
+    dist2 = DIST_PNT_PLANE(vp->vg_p->coord, n2);
 
     if (!NEAR_ZERO(dist1, tol->dist) || !NEAR_ZERO(dist2, tol->dist)) {
 	bu_vls_printf(&str, "nmg_ck_v_in_2fus: vertex %p (%g %g %g) not in plane of" ,
@@ -1617,7 +1617,7 @@ nmg_ck_v_in_fus(uint32_t *vp, void *state, int UNUSED(unused))
 		    bu_log("ERROR - nmg_ck_vs_in_region: fu (%p) has no geometry\n", (void *)fu);
 		else if (*fu->f_p->g.magic_p == NMG_FACE_G_PLANE_MAGIC) {
 		    NMG_GET_FU_PLANE(n, fu);
-		    dist = DIST_PT_PLANE(v->vg_p->coord, n);
+		    dist = DIST_PNT_PLANE(v->vg_p->coord, n);
 		    if (!NEAR_ZERO(dist, sp->tol->dist)) {
 			bu_log("ERROR - nmg_ck_vs_in_region: vertex %p (%g %g %g) is %g from faceuse %p\n" ,
 			       (void *)v, V3ARGS(v->vg_p->coord), dist, (void *)fu);

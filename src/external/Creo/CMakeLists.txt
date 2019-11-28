@@ -95,8 +95,17 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   set(CREO_PTK_UNLOCKER "${CREO_ROOT_DIR}/${MDIR}/Parametric/bin/protk_unlock.bat")
 
   # CREO libraries
-  set(CREO_PTK_EXE_LIBS "${CREO_ROOT_DIR}/${MDIR}/Common Files/protoolkit/${CREO_OS_VERSION}/obj/protoolkit.lib")
-  set(CREO_PTK_DLL_LIBS "${CREO_ROOT_DIR}/${MDIR}/Common Files/protoolkit/${CREO_OS_VERSION}/obj/protk_dll.lib")
+  set(CREO_LIB_PATH "${CREO_ROOT_DIR}/${MDIR}/Common Files/protoolkit/${CREO_OS_VERSION}/obj/")
+  find_file(CREO_PTK_DLL_LIBS NAMES "protk_dll_NU.lib" "protk_dll.lib" PATHS "${CREO_LIB_PATH}")
+  find_file(CREO_PTK_EXE_LIBS NAMES "protoolkit_NU.lib" "protoolkit.lib" PATHS "${CREO_LIB_PATH}")
+
+  foreach(libname "ucore.lib" "udata.lib")
+    set(unicode_lib "${CREO_LIB_PATH}/${libname}")
+
+    if(EXISTS "${unicode_lib}")
+      set(CREO_PTK_DLL_LIBS "${CREO_PTK_DLL_LIBS}" "${unicode_lib}")
+    endif(EXISTS "${unicode_lib}")
+  endforeach(libname "ucore.lib" "udata.lib")
 
   # CREO include directories
   set(CREO_PTK_INCDIR "${CREO_ROOT_DIR}/${MDIR}/Common Files/protoolkit/includes")
@@ -114,12 +123,14 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     CREO_PTK_INCDIR
     CREO_PTK_APPLS_INCDIR
     )
-  foreach(reqpath ${CREO_REQUIRED_PATHS_ABS})
-    if(NOT EXISTS "${${reqpath}}")
-      set(have_creo_paths 0)
-      message(WARNING "Required CREO path variable ${reqpath} has non-existant path ${${reqpath}} - update ${reqpath} to reflect the correct path for this installation of CREO.")
-    endif(NOT EXISTS "${${reqpath}}")
-  endforeach(reqpath ${CREO_REQUIRED_PATHS_ABS})
+  foreach(reqpath_set ${CREO_REQUIRED_PATHS_ABS})
+    foreach(reqpath ${${reqpath_set}})
+      if(NOT EXISTS "${reqpath}")
+	set(have_creo_paths 0)
+	message(WARNING "Required CREO path variable ${reqpath_set} has non-existant path ${reqpath} - update ${reqpath} to reflect the correct path for this installation of CREO.")
+      endif(NOT EXISTS "${reqpath}")
+    endforeach(reqpath ${${reqpath_set}})
+  endforeach(reqpath_set ${CREO_REQUIRED_PATHS_ABS})
 
   # CREO resource paths
   set(CREO_RESOURCE_DIR "Common Files/text/resource")

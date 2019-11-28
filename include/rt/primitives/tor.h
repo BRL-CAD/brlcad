@@ -30,7 +30,7 @@
 __BEGIN_DECLS
 
 RT_EXPORT extern int rt_num_circular_segments(double maxerr,
-	                                      double radius);
+					      double radius);
 
 __END_DECLS
 

@@ -31,10 +31,10 @@
 __BEGIN_DECLS
 
 RT_EXPORT extern void rt_ell(fastf_t *ov,
-                             const fastf_t *V,
-                             const fastf_t *A,
-                             const fastf_t *B,
-                             int sides);
+			     const fastf_t *V,
+			     const fastf_t *A,
+			     const fastf_t *B,
+			     int sides);
 
 /** @} */
 

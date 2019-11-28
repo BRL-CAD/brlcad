@@ -32,8 +32,8 @@
 __BEGIN_DECLS
 
 RT_EXPORT extern int dsp_pos(point_t out,
-                             struct soltab *stp,
-                             point_t p);
+			     struct soltab *stp,
+			     point_t p);
 
 
 __END_DECLS

@@ -31,10 +31,10 @@
 __BEGIN_DECLS
 
 /* TODO - can this move elsewhere? */
-RT_EXPORT extern void rt_ell_16pts(fastf_t *ov,
-                                   fastf_t *V,
-                                   fastf_t *A,
-                                   fastf_t *B);
+RT_EXPORT extern void rt_ell_16pnts(fastf_t *ov,
+				   fastf_t *V,
+				   fastf_t *A,
+				   fastf_t *B);
 /** @} */
 
 __END_DECLS

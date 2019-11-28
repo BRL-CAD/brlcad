@@ -156,11 +156,11 @@ Skip_field()
     int done = 0;
     int lencard;
 
-    if (card[counter] == eof) {
+    if (card[counter] == eofd) {
 	/* This is an empty field */
 	counter++;
 	return;
-    } else if (card[counter] == eor) /* Up against the end of record */
+    } else if (card[counter] == eord) /* Up against the end of record */
 	return;
 
     if (card[72] == 'P')
@@ -172,15 +172,15 @@ Skip_field()
 	Readrec(++currec);
 
     while (!done) {
-	while (card[counter++] != eof && card[counter] != eor &&
+	while (card[counter++] != eofd && card[counter] != eord &&
 	       counter <= lencard);
-	if (counter > lencard && card[counter] != eor && card[counter] != eof)
+	if (counter > lencard && card[counter] != eord && card[counter] != eofd)
 	    Readrec(++currec);
 	else
 	    done = 1;
     }
 
-    if (card[counter] == eor)
+    if (card[counter] == eord)
 	counter--;
 }
 

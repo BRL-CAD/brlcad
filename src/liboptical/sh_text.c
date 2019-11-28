@@ -59,7 +59,6 @@ struct txt_specific {
 HIDDEN void txt_transp_hook(const struct bu_structparse *, const char *, void *, const char *, void *);
 HIDDEN void txt_source_hook(const struct bu_structparse *, const char *, void *, const char *, void *);
 
-HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInstance, const long unsigned int size);
 
 
 struct bu_structparse txt_parse[] = {

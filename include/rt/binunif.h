@@ -33,10 +33,10 @@ __BEGIN_DECLS
 
 /* defined in binary_obj.c */
 RT_EXPORT extern int rt_mk_binunif(struct rt_wdb *wdbp,
-                                   const char *obj_name,
-                                   const char *file_name,
-                                   unsigned int minor_type,
-                                   size_t max_count);
+				   const char *obj_name,
+				   const char *file_name,
+				   unsigned int minor_type,
+				   size_t max_count);
 
 
 /* defined in db5_bin.c */

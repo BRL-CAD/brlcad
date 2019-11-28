@@ -31,7 +31,7 @@ set(documentation_DATA
   bu_opt_design_notes.txt
   brep.txt
   BRL-CAD.bib
-  code_review.txt
+  checklist.txt
   cvs.txt
   description.txt
   editors.txt
@@ -41,6 +41,7 @@ set(documentation_DATA
   irprep.tr
   mater.txt
   matrix.txt
+  pre_BRL-CAD.bib
   )
 ADD_DOC(documentation_DATA ".")
 

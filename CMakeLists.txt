@@ -96,6 +96,9 @@ file(READ "${BRLCAD_SOURCE_DIR}/include/conf/PATCH" BRLCAD_VERSION_PATCH)
 string(STRIP ${BRLCAD_VERSION_PATCH} BRLCAD_VERSION_PATCH)
 
 set(BRLCAD_VERSION "${BRLCAD_VERSION_MAJOR}.${BRLCAD_VERSION_MINOR}.${BRLCAD_VERSION_PATCH}")
+if(DEFINED BRLCAD_VERSION_AMEND)
+  set(BRLCAD_VERSION "${BRLCAD_VERSION}-${BRLCAD_VERSION_AMEND}")
+endif(DEFINED BRLCAD_VERSION_AMEND)
 
 #---------------------------------------------------------------------
 # Let CMake know where to look for our counting file for configuration
@@ -940,6 +943,16 @@ CONFIG_H_APPEND(BRLCAD "#define BRLCAD_DATA_DIR \"${DATA_DIR}\"\n")
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_DOC_DIR \"${DOC_DIR}\"\n")
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_MAN_DIR \"${MAN_DIR}\"\n")
 
+# Define the ammendment count if we have one
+if(DEFINED BRLCAD_VERSION_AMEND)
+  CONFIG_H_APPEND(BRLCAD "#define BRLCAD_VERSION_AMEND ${BRLCAD_VERSION_AMEND}\n")
+endif(DEFINED BRLCAD_VERSION_AMEND)
+
+# bu_dir needs to know some platform-specific information about executable and library
+# suffixes - just use CMake's knowledge of this information
+CONFIG_H_APPEND(BRLCAD "#define EXE_SUFFIX \"${CMAKE_EXECUTABLE_SUFFIX}\"\n")
+CONFIG_H_APPEND(BRLCAD "#define SHARED_LIB_SUFFIX \"${CMAKE_SHARED_LIBRARY_SUFFIX}\"\n")
+
 #----------------------------------------------------------------------
 # If we're not debugging, we want HIDDEN to be defined as static.  Set
 # the NDEBUG flag accordingly, and common.h will take it from there.
@@ -1323,6 +1336,17 @@ if(BRLCAD_ENABLE_OPENCL)
     set(BRLCAD_ENABLE_OPENCL OFF)
   endif(NOT OPENCL_FOUND)
 endif(BRLCAD_ENABLE_OPENCL)
+
+# Enable features requiring OpenVDB
+option(BRLCAD_ENABLE_OPENVDB "Enable features requiring OpenVDB" OFF)
+mark_as_advanced(BRLCAD_ENABLE_OPENVDB)
+if(BRLCAD_ENABLE_OPENVDB)
+  find_package(OpenVDB)
+  if(NOT OpenVDB_FOUND)
+    message("OpenVDB enablement requested, but OpenVDB is not found - disabling")
+    set(BRLCAD_ENABLE_OPENVDB OFF)
+  endif(NOT OpenVDB_FOUND)
+endif(BRLCAD_ENABLE_OPENVDB)
 
 # Enable experimental support for binary attributes
 option(BRLCAD_ENABLE_BINARY_ATTRIBUTES "Enable support for binary attributes" OFF)
@@ -1812,6 +1836,24 @@ if (ERROR_FLAG)
   set(CMAKE_REQUIRED_FLAGS "-Werror")
 endif (ERROR_FLAG)
 
+# Check whether the compiler supports __attribute__((format (__printf__, 1, 2)))
+check_c_source_compiles("int pf(const char *f, ...) __attribute__((format (__printf__, 1, 2))); int pf(const char *f, ...){return 1;} int main(int argc, char *argv[]) {return pf(\"%c\",'a');}" HAVE_PRINTF12_ATTRIBUTE)
+if(HAVE_PRINTF12_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_PRINTF12_ATTRIBUTE 1\n")
+endif(HAVE_PRINTF12_ATTRIBUTE)
+
+# Check whether the compiler supports __attribute__((format (__printf__, 2, 3)))
+check_c_source_compiles("int pf(void *o, const char *f, ...) __attribute__((format (__printf__, 2, 3))); int pf(void *o, const char *f, ...){return 1;} int main(int argc, char *argv[]) {return pf((void *)0, \"%c\",'a');}" HAVE_PRINTF23_ATTRIBUTE)
+if(HAVE_PRINTF23_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_PRINTF23_ATTRIBUTE 1\n")
+endif(HAVE_PRINTF23_ATTRIBUTE)
+
+# Check whether the compiler supports __attribute__((format (__scanf__, 2, 3)))
+check_c_source_compiles("int sf(void *o, const char *f, ...) __attribute__((format (__scanf__, 2, 3))); int sf(void *o, const char *f, ...){return 1;} int main(int argc, char *argv[]) {int i = 1; return sf((void *)0, \"%d\", &i);}" HAVE_SCANF23_ATTRIBUTE)
+if(HAVE_SCANF23_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_SCANF23_ATTRIBUTE 1\n")
+endif(HAVE_SCANF23_ATTRIBUTE)
+
 include(CheckCSourceCompiles)
 # Check whether the compiler supports __attribute__((__noreturn__))
 check_c_source_compiles("#include <stdlib.h>\n
@@ -1832,23 +1874,35 @@ if(HAVE_ALWAYS_INLINE_ATTRIBUTE)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_ALWAYS_INLINE_ATTRIBUTE 1\n")
 endif(HAVE_ALWAYS_INLINE_ATTRIBUTE)
 
-# Check whether the compiler supports __attribute__((format (__printf__, 1, 2)))
-check_c_source_compiles("int pf(const char *f, ...) __attribute__((format (__printf__, 1, 2))); int pf(const char *f, ...){return 1;} int main(int argc, char *argv[]) {return pf(\"%c\",'a');}" HAVE_PRINTF12_ATTRIBUTE)
-if(HAVE_PRINTF12_ATTRIBUTE)
-  CONFIG_H_APPEND(BRLCAD "#define HAVE_PRINTF12_ATTRIBUTE 1\n")
-endif(HAVE_PRINTF12_ATTRIBUTE)
+# Check whether the compiler supports __attribute__((const))
+check_c_source_compiles("void func() __attribute__((const)); void func(){return;} int main(int argc, char *argv[]) {func(); return 0;}" HAVE_CONST_ATTRIBUTE)
+if(HAVE_CONST_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_CONST_ATTRIBUTE 1\n")
+endif(HAVE_CONST_ATTRIBUTE)
 
-# Check whether the compiler supports __attribute__((format (__printf__, 2, 3)))
-check_c_source_compiles("int pf(void *o, const char *f, ...) __attribute__((format (__printf__, 2, 3))); int pf(void *o, const char *f, ...){return 1;} int main(int argc, char *argv[]) {return pf((void *)0, \"%c\",'a');}" HAVE_PRINTF23_ATTRIBUTE)
-if(HAVE_PRINTF23_ATTRIBUTE)
-  CONFIG_H_APPEND(BRLCAD "#define HAVE_PRINTF23_ATTRIBUTE 1\n")
-endif(HAVE_PRINTF23_ATTRIBUTE)
+# Check whether the compiler supports __attribute__((pure))
+check_c_source_compiles("void func() __attribute__((pure)); void func(){return;} int main(int argc, char *argv[]) {func(); return 0;}" HAVE_PURE_ATTRIBUTE)
+if(HAVE_PURE_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_PURE_ATTRIBUTE 1\n")
+endif(HAVE_PURE_ATTRIBUTE)
 
-# Check whether the compiler supports __attribute__((format (__scanf__, 2, 3)))
-check_c_source_compiles("int sf(void *o, const char *f, ...) __attribute__((format (__scanf__, 2, 3))); int sf(void *o, const char *f, ...){return 1;} int main(int argc, char *argv[]) {int i = 1; return sf((void *)0, \"%d\", &i);}" HAVE_SCANF23_ATTRIBUTE)
-if(HAVE_SCANF23_ATTRIBUTE)
-  CONFIG_H_APPEND(BRLCAD "#define HAVE_SCANF23_ATTRIBUTE 1\n")
-endif(HAVE_SCANF23_ATTRIBUTE)
+# Check whether the compiler supports __attribute__((cold))
+check_c_source_compiles("void func() __attribute__((cold)); void func(){return;} int main(int argc, char *argv[]) {func(); return 0;}" HAVE_COLD_ATTRIBUTE)
+if(HAVE_COLD_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_COLD_ATTRIBUTE 1\n")
+endif(HAVE_COLD_ATTRIBUTE)
+
+# Check whether the compiler supports __attribute__((nonnull))
+check_c_source_compiles("int *func(int *) __attribute__((nonnull)); int *func(int *v){(*v)-=1; return v;} int main(int argc, char *argv[]) {int v = 1; int *vp = func(&v); return *vp;}" HAVE_NONNULL_ATTRIBUTE)
+if(HAVE_NONNULL_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_NONNULL_ATTRIBUTE 1\n")
+endif(HAVE_NONNULL_ATTRIBUTE)
+
+# Check whether the compiler supports __attribute__((warn_unused_result))
+check_c_source_compiles("int *func(int *) __attribute__((warn_unused_result)); int *func(int *v){(*v)-=1; return v;} int main(int argc, char *argv[]) {int v = 1; int *vp = func(&v); return *vp;}" HAVE_WARN_UNUSED_RESULT_ATTRIBUTE)
+if(HAVE_WARN_UNUSED_RESULT_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_WARN_UNUSED_RESULT_ATTRIBUTE 1\n")
+endif(HAVE_WARN_UNUSED_RESULT_ATTRIBUTE)
 
 
 # Silence check for unused arguments (used to silence clang warnings about
@@ -2303,6 +2357,9 @@ find_package(Threads)
 # some compilation situations
 find_package(STL)
 
+# Check for an MPI library
+find_package(MPI)
+
 # Check for the daemon function in -lbsd and/or -lc for adrt
 BRLCAD_CHECK_LIBRARY(BSD bsd daemon)
 BRLCAD_CHECK_LIBRARY(BSD c daemon)
@@ -2639,13 +2696,14 @@ if(BRLCAD_PRINT_MSGS)
   message("***********************************************************")
 endif(BRLCAD_PRINT_MSGS)
 
+include(CheckSymbolExists)
+
 BRLCAD_FUNCTION_EXISTS(XQueryExtension)
 BRLCAD_FUNCTION_EXISTS(_putenv_s)
 BRLCAD_FUNCTION_EXISTS(_splitpath)
 BRLCAD_FUNCTION_EXISTS(_strtoi64)
 BRLCAD_FUNCTION_EXISTS(alarm)
 BRLCAD_FUNCTION_EXISTS(asinh REQUIRED_LIBS ${M_LIBRARY})
-BRLCAD_FUNCTION_EXISTS(canonicalize_file_name)
 BRLCAD_FUNCTION_EXISTS(confstr) # darwin/mac
 BRLCAD_FUNCTION_EXISTS(dlopen)
 BRLCAD_FUNCTION_EXISTS(drand48)
@@ -2674,6 +2732,7 @@ BRLCAD_FUNCTION_EXISTS(isinf REQUIRED_LIBS ${M_LIBRARY})
 BRLCAD_FUNCTION_EXISTS(isnan REQUIRED_LIBS ${M_LIBRARY})
 BRLCAD_FUNCTION_EXISTS(logb REQUIRED_LIBS ${M_LIBRARY})
 BRLCAD_FUNCTION_EXISTS(lrand48)
+BRLCAD_FUNCTION_EXISTS(lseek)
 BRLCAD_FUNCTION_EXISTS(mkstemp)
 BRLCAD_FUNCTION_EXISTS(modff REQUIRED_LIBS ${M_LIBRARY})
 BRLCAD_FUNCTION_EXISTS(nextafter REQUIRED_LIBS ${M_LIBRARY})
@@ -2758,6 +2817,19 @@ if(NOT HAVE_SNPRINTF)
     CONFIG_H_APPEND(BRLCAD "#define snprintf _snprintf\n")
   endif(HAVE__SNPRINTF)
 endif(NOT HAVE_SNPRINTF)
+
+# So far I haven't been able to come up with a reliable self contained
+# test for this, but libbu's #2 realpath test triggers a stack smash
+# on some linux systems.  For the moment, fall back on OpenBSD's
+# userspace implementation, which does seem to work.  Once we can
+# get a self-contained reproduction of this failure, put it below
+# and we can use the system realpath again.
+if(HAVE_REALPATH)
+  #check_c_source_runs("#include<limits.h>\n#include <stdlib.h>\nint main() { char dir[512]; const char *d = \"/tmp/REALPATH_TEST_PATH\"; d = (const char *)realpath(d, dir); return 0; }" HAVE_WORKING_REALPATH)
+  #if(HAVE_WORKING_REALPATH)
+  #  CONFIG_H_APPEND(BRLCAD "#define HAVE_WORKING_REALPATH 1\n")
+  #endif(HAVE_WORKING_REALPATH)
+endif(HAVE_REALPATH)
 
 # GetFullPathName
 check_c_source_compiles("
@@ -3347,9 +3419,14 @@ if(NOT BRLCAD_IS_SUBBUILD)
     set(CPACK_RPM_SPEC_INSTALL_POST /bin/true)
 
     if(CPACK_RPM_VERSION)
-      set(CPACK_RPM_PACKAGE_NAME "brlcad_${BRLCAD_VERSION_MAJOR}_${BRLCAD_VERSION_MINOR}_${BRLCAD_VERSION_PATCH}")
-      # If we've got a Redhat release, include some info about the specific release in the name.
-      # Otherwise, just go generic.
+      if(DEFINED BRLCAD_VERSION_AMEND)
+	set(CPACK_RPM_PACKAGE_NAME "brlcad_${BRLCAD_VERSION_MAJOR}_${BRLCAD_VERSION_MINOR}_${BRLCAD_VERSION_PATCH}_${BRLCAD_VERSION_AMEND}")
+      else(DEFINED BRLCAD_VERSION_AMEND)
+	set(CPACK_RPM_PACKAGE_NAME "brlcad_${BRLCAD_VERSION_MAJOR}_${BRLCAD_VERSION_MINOR}_${BRLCAD_VERSION_PATCH}")
+      endif(DEFINED BRLCAD_VERSION_AMEND)
+
+      # If we've got a Redhat release, include some info about the
+      # specific release in the name.  Otherwise, just go generic.
       if(EXISTS /etc/redhat-release)
 	file(READ /etc/redhat-release REDHAT_RELEASE)
 	string(REGEX MATCH "[0-9]+" REDHAT_VERSION ${REDHAT_RELEASE})
@@ -3363,6 +3440,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
       else(EXISTS /etc/redhat-release)
 	set(CPACK_RPM_PACKAGE_RELEASE ${CPACK_RPM_VERSION})
       endif(EXISTS /etc/redhat-release)
+
     endif(CPACK_RPM_VERSION)
   endif(RPMBUILD_EXEC AND NOT CPACK_RPM_SKIP)
 
@@ -3381,6 +3459,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
     set(CPACK_NSIS_INSTALL_DIRECTORY "BRL-CAD ${BRLCAD_VERSION}")
     set(CPACK_SOURCE_DIR "${CMAKE_SOURCE_DIR}")
     set(CPACK_DATA_DIR "${DATA_DIR}")
+    set(CPACK_DOC_DIR "${DOC_DIR}")
     # There is a bug in NSI that does not handle full unix paths properly. Make
     # sure there is at least one set of four (4) backslashes.
     set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/misc/nsis\\\\brlcad.ico")
@@ -3429,6 +3508,9 @@ if(NOT BRLCAD_IS_SUBBUILD)
     CTestConfig.cmake
     )
   CMAKEFILES(${toplevel_ignore_files})
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.gitignore)
+    CMAKEFILES(.gitignore)
+  endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.gitignore)
 
   # Handle some toplevel distclean listings
   DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeCache.txt")

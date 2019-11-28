@@ -49,29 +49,29 @@ __BEGIN_DECLS
  * presently writes to STDERR by default, this behavior should not be relied
  * upon and may be changed to STDOUT in the future without notice.
  *
- @code
- --- BEGIN EXAMPLE ---
-
- int log_output_to_file(void *data, void *str)
- {
-   FILE *fp = (FILE *)data;
-   fprintf(fp, "LOG: %s", str);
-   return 0;
- }
-
- int main(int ac, char *av[])
- {
-   FILE *fp = fopen("whatever.log", "w+");
-   bu_log_add_hook(log_output_to_file, (void *)fp);
-   bu_log("Logging to file.\n");
-   bu_log_delete_hook(log_output_to_file, (void *)fp);
-   bu_log("Logging to stderr.\n");
-   fclose(fp);
-   return 0;
- }
-
- --- END EXAMPLE ---
- @endcode
+ * @code
+ * --- BEGIN EXAMPLE ---
+ *
+ * int log_output_to_file(void *data, void *str)
+ * {
+ *   FILE *fp = (FILE *)data;
+ *   fprintf(fp, "LOG: %s", str);
+ *   return 0;
+ * }
+ *
+ * int main(int ac, char *av[])
+ * {
+ *   FILE *fp = fopen("whatever.log", "w+");
+ *   bu_log_add_hook(log_output_to_file, (void *)fp);
+ *   bu_log("Logging to file.\n");
+ *   bu_log_delete_hook(log_output_to_file, (void *)fp);
+ *   bu_log("Logging to stderr.\n");
+ *   fclose(fp);
+ *   return 0;
+ * }
+ *
+ * --- END EXAMPLE ---
+ * @endcode
  *
  */
 /** @{ */

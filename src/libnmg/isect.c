@@ -356,7 +356,7 @@ get_pole_dist_to_face(struct nmg_ray_data *rd, struct vertexuse *vu, fastf_t *Po
     VSETALL(pca_to_pole_vect, 0);
 
     /* find the points of closest approach
-     * There are six distinct return values from bn_dist_pt3_lseg3():
+     * There are six distinct return values from bn_dist_pnt3_lseg3():
      *
      *    Value	Condition
      *    	-----------------------------------------------------------------
@@ -369,7 +369,7 @@ get_pole_dist_to_face(struct nmg_ray_data *rd, struct vertexuse *vu, fastf_t *Po
      *	4	P is to the "right" of point B.  *dist=|P-B|, pca=B.
      *	5	P is "above/below" lseg AB.  *dist=|PCA-P|, pca=computed.
      */
-    code = bn_dist_pt3_lseg3(&distA, pcaA, vu->v_p->vg_p->coord, pointA,
+    code = bn_dist_pnt3_lseg3(&distA, pcaA, vu->v_p->vg_p->coord, pointA,
 			     Pole_prj_pt, rd->tol);
     if (code < 3) {
 	/* Point is on line */
@@ -379,7 +379,7 @@ get_pole_dist_to_face(struct nmg_ray_data *rd, struct vertexuse *vu, fastf_t *Po
     }
 
     status = code << 4;
-    code = bn_dist_pt3_lseg3(&distB, pcaB, vu->v_p->vg_p->coord, pointB,
+    code = bn_dist_pnt3_lseg3(&distB, pcaB, vu->v_p->vg_p->coord, pointB,
 			     Pole_prj_pt, rd->tol);
     if (code < 3) {
 	/* Point is on line */
@@ -1057,7 +1057,7 @@ isect_ray_vertexuse(struct nmg_ray_data *rd, struct vertexuse *vu_p)
     }
 
     /* intersect ray with vertex */
-    ray_vu_dist = bn_dist_line3_pt3(rd->rp->r_pt, rd->rp->r_dir,
+    ray_vu_dist = bn_dist_line3_pnt3(rd->rp->r_pt, rd->rp->r_dir,
 				    vu_p->v_p->vg_p->coord);
 
     if (ray_vu_dist > rd->tol->dist) {
@@ -2078,7 +2078,7 @@ isect_ray_planar_face(struct nmg_ray_data *rd, struct faceuse *fu_p, struct bu_l
     VMOVE(plane_pt, rd->plane_pt);
     dist = rd->ray_dist_to_plane;
 
-    if (UNLIKELY(fabs(DIST_PT_PLANE(plane_pt, norm)) > rd->tol->dist)) {
+    if (UNLIKELY(fabs(DIST_PNT_PLANE(plane_pt, norm)) > rd->tol->dist)) {
 	bu_log("%s:%d plane_pt (%g %g %g) @ dist (%g)out of tolerance\n",
 	       __FILE__, __LINE__, V3ARGS(plane_pt), dist);
 	bu_bomb("isect_ray_planar_face() dist out of tol\n");
@@ -2097,9 +2097,9 @@ isect_ray_planar_face(struct nmg_ray_data *rd, struct faceuse *fu_p, struct bu_l
 	       V3ARGS(plane_pt));
 	bu_log("\tdistance along ray to intersection point %16.10e\n", dist);
 
-	new_dist=DIST_PT_PLANE(plane_pt, norm);
+	new_dist=DIST_PNT_PLANE(plane_pt, norm);
 
-	bu_log("\tDIST_PT_PLANE(%16.10e) %p %p\n",
+	bu_log("\tDIST_PNT_PLANE(%16.10e) %p %p\n",
 	       new_dist, (void *)plane_pt, (void *)norm);
 
 	bn_isect_line3_plane(&new_dist, plane_pt, rd->rp->r_dir,
@@ -2124,11 +2124,11 @@ isect_ray_planar_face(struct nmg_ray_data *rd, struct faceuse *fu_p, struct bu_l
     rd->face_subhit = 0;
     rd->ray_dist_to_plane = dist;
     if (rd->classifying_ray)
-	pt_class = nmg_class_pt_fu_except(plane_pt, fu_p, (struct loopuse *)NULL,
+	pt_class = nmg_class_pnt_fu_except(plane_pt, fu_p, (struct loopuse *)NULL,
 					  0, 0, (char *)rd, NMG_FPI_PERGEOM, 1, vlfree,
 					  rd->tol);
     else
-	pt_class = nmg_class_pt_fu_except(plane_pt, fu_p,
+	pt_class = nmg_class_pnt_fu_except(plane_pt, fu_p,
 					  (struct loopuse *)NULL,
 					  eu_touch_func,
 					  (void (*)(struct vertexuse *, point_t, const char *))vu_touch_func,
@@ -2268,7 +2268,7 @@ isect_ray_faceuse(struct nmg_ray_data *rd, struct faceuse *fu_p, struct bu_list 
 	}
 	dist *= MAGNITUDE(rd->rp->r_dir);
 	VJOIN1(hit_pt, rd->rp->r_pt, dist, r_dir_unit);
-	if (V3PT_OUT_RPP_TOL(hit_pt, fp->min_pt, fp->max_pt, rd->tol->dist)) {
+	if (V3PNT_OUT_RPP_TOL(hit_pt, fp->min_pt, fp->max_pt, rd->tol->dist)) {
 	    NMG_GET_HITMISS(myhit);
 	    NMG_INDEX_ASSIGN(rd->hitmiss, fu_p->f_p, myhit);
 	    myhit->hit.hit_private = (void *)fu_p->f_p;
@@ -2630,7 +2630,7 @@ guess_class_from_hitlist_min(struct nmg_ray_data *rd, int *hari_kari, int in_or_
 
 
 /**
- * Intended as a support routine for nmg_class_pt_s() in nmg_class.c
+ * Intended as a support routine for nmg_class_pnt_s() in nmg_class.c
  *
  * Intersect a ray with a shell, and return whether the ray start
  * point is inside or outside or ON the shell.  Count the number of

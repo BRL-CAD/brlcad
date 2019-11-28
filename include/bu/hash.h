@@ -121,15 +121,15 @@ BU_EXPORT extern void bu_hash_rm(bu_hash_tbl *t, const uint8_t *key, size_t key_
  * @param[in] p - the previous entry in the iteration
  *
  * This example prints all values in a hash table:
- @code
- void print_vals(struct bu_hash_tbl *t) {
-     struct bu_hash_entry *e = bu_hash_next(t, NULL);
-     while (e) {
-         bu_log("Value: %p\n", bu_hash_value(e, NULL));
-         e = bu_hash_next(t, e);
-     }
- }
- @endcode
+ * @code
+ * void print_vals(struct bu_hash_tbl *t) {
+ *   struct bu_hash_entry *e = bu_hash_next(t, NULL);
+ *   while (e) {
+ *     bu_log("Value: %p\n", bu_hash_value(e, NULL));
+ *     e = bu_hash_next(t, e);
+ *   }
+ * }
+ * @endcode
  *
  * @return
  * Either first entry (if p is NULL) or next entry (if p is NON-null).  Returns

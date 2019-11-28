@@ -1,5 +1,4 @@
-# Tests for the various image format conversions supported
-# by BRL-CAD
+# Tests for image generation via rtwizard
 
 # For multi-config build tools
 if(CMAKE_CONFIGURATION_TYPES)
@@ -59,68 +58,64 @@ add_custom_target(regress-rtwizard)
 set_target_properties(regress-rtwizard PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 set_target_properties(regress-rtwizard PROPERTIES FOLDER "BRL-CAD Regression Tests")
 
-# Unpack compressed reference images
-execute_process(COMMAND "${CMAKE_COMMAND}" -E tar xjf "${CMAKE_CURRENT_SOURCE_DIR}/m35_rtwiz.tar.bz2" WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/m35_A_ref.pix")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/m35_B_ref.pix")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/m35_C_ref.pix")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/m35_D_ref.pix")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/m35_E_ref.pix")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/m35_F_ref.pix")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/m35_edge_only_ref.pix")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/m35_edge_only_color_ref.pix")
-
 Add_RtWiz_Test(rtwiz_m35_A "${DATA_DIR}/db/m35.g" "all.g -t A --benchmark -s 512" "m35.g"
-  CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_A_ref.pix"
+  CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/m35_A_ref.pix"
   TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_A.pix"
   LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/m35_A.log"
   )
 
 Add_RtWiz_Test(rtwiz_m35_B "${DATA_DIR}/db/m35.g" "-l component -t B --benchmark -z 2" "m35.g"
-  CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_B_ref.pix"
+  CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/m35_B_ref.pix"
   TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_B.pix"
   LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/m35_B.log"
   )
 
 Add_RtWiz_Test(rtwiz_m35_C "${DATA_DIR}/db/m35.g" "-c component -l component -t C --benchmark -z 2" "m35.g"
-  CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_C_ref.pix"
+  CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/m35_C_ref.pix"
   TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_C.pix"
   LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/m35_C.log"
   )
 
 Add_RtWiz_Test(rtwiz_m35_D "${DATA_DIR}/db/m35.g" "-l component -c component/suspension,component/power.train -t D --benchmark -z 2" "m35.g"
-  CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_D_ref.pix"
+  CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/m35_D_ref.pix"
   TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_D.pix"
   LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/m35_D.log"
   )
 
 Add_RtWiz_Test(rtwiz_m35_E "${DATA_DIR}/db/m35.g" "-g component -c component/power.train -t E --benchmark -z 2" "m35.g"
-  CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_E_ref.pix"
+  CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/m35_E_ref.pix"
   TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_E.pix"
   LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/m35_E.log"
   )
 
 Add_RtWiz_Test(rtwiz_m35_F "${DATA_DIR}/db/m35.g" "-l component -g component -c component/power.train -t F --benchmark -z 2" "m35.g"
-  CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_F_ref.pix"
+  CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/m35_F_ref.pix"
   TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_F.pix"
   LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/m35_F.log"
   )
 
 Add_RtWiz_Test(rtwiz_m35_edge_only "${DATA_DIR}/db/m35.g" "-l component --benchmark -z 2" "m35.g"
-  CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_edge_only_ref.pix"
+  CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/m35_edge_only_ref.pix"
   TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_edge_only.pix"
   LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/m35_edge_only.log"
   )
 
 Add_RtWiz_Test(rtwiz_m35_edge_only_color "${DATA_DIR}/db/m35.g" "-l component --benchmark -z 2 --line-color 100/200/255 -C 30/30/30" "m35.g"
-  CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_edge_only_color_ref.pix"
+  CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/m35_edge_only_color_ref.pix"
   TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_edge_only_color.pix"
   LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/m35_edge_only_color.log"
   )
 
 CMAKEFILES(
   CMakeLists.txt
-  m35_rtwiz.tar.bz2
+  m35_A_ref.pix
+  m35_B_ref.pix
+  m35_C_ref.pix
+  m35_D_ref.pix
+  m35_E_ref.pix
+  m35_F_ref.pix
+  m35_edge_only_color_ref.pix
+  m35_edge_only_ref.pix
   )
 
 # Local Variables:

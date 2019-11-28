@@ -64,7 +64,7 @@ compare_result(char *expected_buf, FILE *result_fd)
     memset(result_buf, 0, BUFFER_SIZE);
 
     rewind(result_fd);
-	errno = 0;
+    errno = 0;
     ret = fread(result_buf, sizeof(char), BUFFER_SIZE, result_fd);
     if (ret < BUFFER_SIZE)
 	perror("fread");

@@ -41,7 +41,7 @@
 	*out++ = 0; \
 	*out++ = 0; \
 	continue;   \
-}
+    }
 
 
 #define OUT_IEEE_NAN { /* Signaling NAN */	\
@@ -54,7 +54,7 @@
 	*out++ = 0x0B;				\
 	*out++ = 0xAD;				\
 	continue;				\
-}
+    }
 
 
 void

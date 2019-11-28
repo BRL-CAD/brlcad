@@ -61,7 +61,7 @@ test_encode(const char *str)
 	printf("{%*s}%*s -> {%*s}%*s [PASS]\n",
 	       (int)len_s, str, (int)(f_wid - len_s), " ",
 	       (int)len_d, bu_vls_addr(&decoded), (int)(f_wid - len_d), " "
-	       );
+	    );
     } else {
 	/* a hack for str showing '(null)' in printf if zero length */
 	if (len_s == 0)
@@ -70,7 +70,7 @@ test_encode(const char *str)
 	       (int)len_s, str, (int)(f_wid - len_s), " ",
 	       (int)len_d, bu_vls_addr(&decoded), (int)(f_wid - len_d), " ",
 	       str
-	       );
+	    );
 	status = 1;
     }
 

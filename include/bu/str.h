@@ -294,8 +294,8 @@ BU_EXPORT extern int bu_str_false(const char *str);
  * argc number of words of input, now in argv[]
  */
 BU_EXPORT extern size_t bu_argv_from_string(char *argv[],
-                                            size_t lim,
-                                            char *lp);
+					    size_t lim,
+					    char *lp);
 
 
 /**
@@ -303,8 +303,8 @@ BU_EXPORT extern size_t bu_argv_from_string(char *argv[],
  * (Note: function signature duplicates that of Tcl_SplitList)
  */
 BU_EXPORT extern int bu_argv_from_tcl_list(const char *list_str,
-                                           int *argc,
-                                           const char ***argv);
+					   int *argc,
+					   const char ***argv);
 
 /**
  * Deallocate all strings in a given argv array and the array itself

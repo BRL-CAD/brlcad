@@ -220,83 +220,83 @@ BU_EXPORT extern size_t bu_cv_itemlen(int cookie);
  *
  *
  * A worst case would be:	ns16 on vax to ns32
- @code
-	ns16 	-> hs16
-		-> hd
-		-> hs32
-		-> ns32
- @endcode
+ * @code
+ *	ns16 	-> hs16
+ *		-> hd
+ *		-> hs32
+ *		-> ns32
+ * @endcode
  * The worst case is probably the easiest to deal with because all
  * steps are done.  The more difficult cases are when only a subset of
  * steps need to be done.
  *
  * @par Method:
- @code
-	HOSTDBL defined as true or false
-	if ! hostother then
-		hostother = (Endian == END_BIG) ? SAME : DIFFERENT;
-	fi
-	if (infmt == double) then
-		if (HOSTDBL == SAME) {
-			inIsHost = host;
-		fi
-	else
-		if (hostother == SAME) {
-			inIsHost = host;
-		fi
-	fi
-	if (outfmt == double) then
-		if (HOSTDBL == SAME) {
-			outIsHost == host;
-	else
-		if (hostother == SAME) {
-			outIsHost = host;
-		fi
-	fi
-	if (infmt == outfmt) {
-		if (inIsHost == outIsHost) {
-			copy(in, out)
-			exit
-		else if (inIsHost == net) {
-			ntoh?(in, out);
-			exit
-		else
-			hton?(in, out);
-			exit
-		fi
-	fi
-
-	while not done {
-		from = in;
-
-		if (inIsHost == net) {
-			ntoh?(from, t1);
-			from = t1;
-		fi
-		if (infmt != double) {
-			if (outIsHost == host) {
-				to = out;
-			else
-				to = t2;
-			fi
-			castdbl(from, to);
-			from = to;
-		fi
-
-		if (outfmt == double) {
-			if (outIsHost == net) {
-				hton?(from, out);
-			fi
-		else
-			if (outIsHost == host) {
-				dblcast(from, out);
-			else
-				dblcast(from, t3);
-				hton?(t3, out);
-			fi
-		fi
-	done
- @endcode
+ * @code
+ *	HOSTDBL defined as true or false
+ *	if ! hostother then
+ *		hostother = (Endian == END_BIG) ? SAME : DIFFERENT;
+ *	fi
+ *	if (infmt == double) then
+ *		if (HOSTDBL == SAME) {
+ *			inIsHost = host;
+ *		fi
+ *	else
+ *		if (hostother == SAME) {
+ *			inIsHost = host;
+ *		fi
+ *	fi
+ *	if (outfmt == double) then
+ *		if (HOSTDBL == SAME) {
+ *			outIsHost == host;
+ *	else
+ *		if (hostother == SAME) {
+ *			outIsHost = host;
+ *		fi
+ *	fi
+ *	if (infmt == outfmt) {
+ *		if (inIsHost == outIsHost) {
+ *			copy(in, out)
+ *			exit
+ *		else if (inIsHost == net) {
+ *			ntoh?(in, out);
+ *			exit
+ *		else
+ *			hton?(in, out);
+ *			exit
+ *		fi
+ *	fi
+ *
+ *	while not done {
+ *		from = in;
+ *
+ *		if (inIsHost == net) {
+ *			ntoh?(from, t1);
+ *			from = t1;
+ *		fi
+ *		if (infmt != double) {
+ *			if (outIsHost == host) {
+ *				to = out;
+ *			else
+ *				to = t2;
+ *			fi
+ *			castdbl(from, to);
+ *			from = to;
+ *		fi
+ *
+ *		if (outfmt == double) {
+ *			if (outIsHost == net) {
+ *				hton?(from, out);
+ *			fi
+ *		else
+ *			if (outIsHost == host) {
+ *				dblcast(from, out);
+ *			else
+ *				dblcast(from, t3);
+ *				hton?(t3, out);
+ *			fi
+ *		fi
+ *	done
+ * @endcode
  */
 BU_EXPORT extern size_t bu_cv_w_cookie(void *out, int outcookie, size_t size, void *in, int incookie, size_t count);
 
@@ -354,7 +354,7 @@ BU_EXPORT extern int bu_b64_decode_block(signed char **output_buffer, const sign
  * It is assumed that these routines will only be called if there is
  * real work to do - there is no checking to see if it is reasonable
  * to do any conversions.
-  */
+ */
 /** @ingroup bu_hton */
 /** @defgroup bu_htond Network Conversion - Doubles */
 /** @ingroup bu_hton */

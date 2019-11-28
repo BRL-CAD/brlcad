@@ -108,7 +108,7 @@ push_leaf(struct db_tree_state *tsp,
     struct push_id *gpip;
     struct push_data *gpdp = (struct push_data *)client_data;
 
-    RT_CK_TESS_TOL(tsp->ts_ttol);
+    BG_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
     RT_CK_RESOURCE(tsp->ts_resp);
 

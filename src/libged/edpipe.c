@@ -21,9 +21,9 @@
  *
  * Functions -
  *
- * split_pipept - split a pipe segment at a given point
+ * pipe_split_pnt - split a pipe segment at a given point
  *
- * find_pipept_nearest_pt - find which segment of a pipe is nearest
+ * find_pipe_pnt_nearest_pnt - find which segment of a pipe is nearest
  * the ray from "pt" in the viewing direction (for segment selection
  * in MGED)
  */
@@ -44,12 +44,12 @@
  * Returns the index for the pipe segment matching ps.
  */
 int
-_ged_get_pipe_i_seg(struct rt_pipe_internal *pipeip, struct wdb_pipept *ps)
+_ged_get_pipe_i_seg(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *ps)
 {
-    struct wdb_pipept *curr_ps;
+    struct wdb_pipe_pnt *curr_ps;
     int seg_i = 0;
 
-    for (BU_LIST_FOR(curr_ps, wdb_pipept, &pipeip->pipe_segs_head)) {
+    for (BU_LIST_FOR(curr_ps, wdb_pipe_pnt, &pipeip->pipe_segs_head)) {
 	if (curr_ps == ps)
 	    return seg_i;
 
@@ -63,25 +63,25 @@ _ged_get_pipe_i_seg(struct rt_pipe_internal *pipeip, struct wdb_pipept *ps)
 /*
  * Returns segment seg_i.
  */
-struct wdb_pipept *
+struct wdb_pipe_pnt *
 _ged_get_pipe_seg_i(struct rt_pipe_internal *pipeip, int seg_i)
 {
     int i = 0;
-    struct wdb_pipept *curr_ps;
+    struct wdb_pipe_pnt *curr_ps;
 
-    for (BU_LIST_FOR(curr_ps, wdb_pipept, &pipeip->pipe_segs_head)) {
+    for (BU_LIST_FOR(curr_ps, wdb_pipe_pnt, &pipeip->pipe_segs_head)) {
 	if (i == seg_i)
 	    return curr_ps;
 
 	++i;
     }
 
-    return (struct wdb_pipept *)NULL;
+    return (struct wdb_pipe_pnt *)NULL;
 }
 
 
 void
-split_pipept(struct bu_list *UNUSED(pipe_hd), struct wdb_pipept *UNUSED(ps), fastf_t *UNUSED(new_pt))
+pipe_split_pnt(struct bu_list *UNUSED(pipe_hd), struct wdb_pipe_pnt *UNUSED(ps), fastf_t *UNUSED(new_pt))
 {
     bu_log("WARNING: pipe splitting unimplemented\n");
 }
@@ -103,12 +103,12 @@ edpipe_scale(fastf_t d, fastf_t scale)
 void
 pipe_scale_od(struct rt_pipe_internal *pipeip, fastf_t scale)
 {
-    struct wdb_pipept *ps;
+    struct wdb_pipe_pnt *ps;
 
     RT_PIPE_CK_MAGIC(pipeip);
 
     /* check that this can be done */
-    for (BU_LIST_FOR(ps, wdb_pipept, &pipeip->pipe_segs_head)) {
+    for (BU_LIST_FOR(ps, wdb_pipe_pnt, &pipeip->pipe_segs_head)) {
 	fastf_t tmp_od;
 
 	tmp_od = edpipe_scale(ps->pp_od, scale);
@@ -123,7 +123,7 @@ pipe_scale_od(struct rt_pipe_internal *pipeip, fastf_t scale)
 	}
     }
 
-    for (BU_LIST_FOR(ps, wdb_pipept, &pipeip->pipe_segs_head)) {
+    for (BU_LIST_FOR(ps, wdb_pipe_pnt, &pipeip->pipe_segs_head)) {
 	ps->pp_od = edpipe_scale(ps->pp_od, scale);
     }
 }
@@ -132,12 +132,12 @@ pipe_scale_od(struct rt_pipe_internal *pipeip, fastf_t scale)
 void
 pipe_scale_id(struct rt_pipe_internal *pipeip, fastf_t scale)
 {
-    struct wdb_pipept *ps;
+    struct wdb_pipe_pnt *ps;
 
     RT_PIPE_CK_MAGIC(pipeip);
 
     /* check that this can be done */
-    for (BU_LIST_FOR(ps, wdb_pipept, &pipeip->pipe_segs_head)) {
+    for (BU_LIST_FOR(ps, wdb_pipe_pnt, &pipeip->pipe_segs_head)) {
 	fastf_t tmp_id;
 
 	tmp_id = edpipe_scale(ps->pp_id, scale);
@@ -152,14 +152,14 @@ pipe_scale_id(struct rt_pipe_internal *pipeip, fastf_t scale)
 	}
     }
 
-    for (BU_LIST_FOR(ps, wdb_pipept, &pipeip->pipe_segs_head)) {
+    for (BU_LIST_FOR(ps, wdb_pipe_pnt, &pipeip->pipe_segs_head)) {
 	ps->pp_id = edpipe_scale(ps->pp_id, scale);
     }
 }
 
 
 void
-pipe_seg_scale_od(struct wdb_pipept *ps, fastf_t scale)
+pipe_seg_scale_od(struct wdb_pipe_pnt *ps, fastf_t scale)
 {
     fastf_t tmp_od;
 
@@ -184,7 +184,7 @@ pipe_seg_scale_od(struct wdb_pipept *ps, fastf_t scale)
 
 
 void
-pipe_seg_scale_id(struct wdb_pipept *ps, fastf_t scale)
+pipe_seg_scale_id(struct wdb_pipe_pnt *ps, fastf_t scale)
 {
     fastf_t tmp_id;
 
@@ -207,16 +207,16 @@ pipe_seg_scale_id(struct wdb_pipept *ps, fastf_t scale)
 
 
 void
-pipe_seg_scale_radius(struct wdb_pipept *ps, fastf_t scale)
+pipe_seg_scale_radius(struct wdb_pipe_pnt *ps, fastf_t scale)
 {
     fastf_t old_radius;
-    struct wdb_pipept *head;
+    struct wdb_pipe_pnt *head;
 
     BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "pipe point");
 
     head = ps;
     while (head->l.magic != BU_LIST_HEAD_MAGIC)
-	head = BU_LIST_NEXT(wdb_pipept, &head->l);
+	head = BU_LIST_NEXT(wdb_pipe_pnt, &head->l);
 
     /* make sure we can make this change */
     old_radius = ps->pp_bendradius;
@@ -241,12 +241,12 @@ void
 pipe_scale_radius(struct rt_pipe_internal *pipeip, fastf_t scale)
 {
     struct bu_list head;
-    struct wdb_pipept *old_ps, *new_ps;
+    struct wdb_pipe_pnt *old_ps, *new_ps;
 
     RT_PIPE_CK_MAGIC(pipeip);
 
     /* make a quick check for minimum bend radius */
-    for (BU_LIST_FOR(old_ps, wdb_pipept, &pipeip->pipe_segs_head)) {
+    for (BU_LIST_FOR(old_ps, wdb_pipe_pnt, &pipeip->pipe_segs_head)) {
 	if (scale < 0.0) {
 	    if ((-scale) < old_ps->pp_od * 0.5) {
 		bu_log("Cannot make bend radius less than pipe outer radius\n");
@@ -262,14 +262,14 @@ pipe_scale_radius(struct rt_pipe_internal *pipeip, fastf_t scale)
 
     /* make temporary copy of this pipe solid */
     BU_LIST_INIT(&head);
-    for (BU_LIST_FOR(old_ps, wdb_pipept, &pipeip->pipe_segs_head)) {
-	BU_GET(new_ps, struct wdb_pipept);
+    for (BU_LIST_FOR(old_ps, wdb_pipe_pnt, &pipeip->pipe_segs_head)) {
+	BU_GET(new_ps, struct wdb_pipe_pnt);
 	*new_ps = (*old_ps);
 	BU_LIST_APPEND(&head, &new_ps->l);
     }
 
     /* make the desired editing changes to the copy */
-    for (BU_LIST_FOR(new_ps, wdb_pipept, &head)) {
+    for (BU_LIST_FOR(new_ps, wdb_pipe_pnt, &head)) {
 	new_ps->pp_bendradius = edpipe_scale(new_ps->pp_bendradius, scale);
     }
 
@@ -277,32 +277,32 @@ pipe_scale_radius(struct rt_pipe_internal *pipeip, fastf_t scale)
     if (rt_pipe_ck(&head)) {
 	/* won't work, go back to original */
 	while (BU_LIST_NON_EMPTY(&head)) {
-	    new_ps = BU_LIST_FIRST(wdb_pipept, &head);
+	    new_ps = BU_LIST_FIRST(wdb_pipe_pnt, &head);
 	    BU_LIST_DEQUEUE(&new_ps->l);
-	    BU_PUT(new_ps, struct wdb_pipept);
+	    BU_PUT(new_ps, struct wdb_pipe_pnt);
 	}
 	return;
     }
 
     /* free temporary pipe solid */
     while (BU_LIST_NON_EMPTY(&head)) {
-	new_ps = BU_LIST_FIRST(wdb_pipept, &head);
+	new_ps = BU_LIST_FIRST(wdb_pipe_pnt, &head);
 	BU_LIST_DEQUEUE(&new_ps->l);
-	BU_PUT(new_ps, struct wdb_pipept);
+	BU_PUT(new_ps, struct wdb_pipe_pnt);
     }
 
     /* make changes to the original */
-    for (BU_LIST_FOR(old_ps, wdb_pipept, &pipeip->pipe_segs_head)) {
+    for (BU_LIST_FOR(old_ps, wdb_pipe_pnt, &pipeip->pipe_segs_head)) {
 	old_ps->pp_bendradius = edpipe_scale(old_ps->pp_bendradius, scale);
     }
 }
 
 
-struct wdb_pipept *
-find_pipept_nearest_pt(const struct bu_list *pipe_hd, const point_t model_pt, matp_t view2model)
+struct wdb_pipe_pnt *
+find_pipe_pnt_nearest_pnt(const struct bu_list *pipe_hd, const point_t model_pt, matp_t view2model)
 {
-    struct wdb_pipept *ps;
-    struct wdb_pipept *nearest=(struct wdb_pipept *)NULL;
+    struct wdb_pipe_pnt *ps;
+    struct wdb_pipe_pnt *nearest=(struct wdb_pipe_pnt *)NULL;
     struct bn_tol tmp_tol;
     fastf_t min_dist = MAX_FASTF;
     vect_t dir, work;
@@ -317,10 +317,10 @@ find_pipept_nearest_pt(const struct bu_list *pipe_hd, const point_t model_pt, ma
     VSET(work, 0.0, 0.0, 1.0);
     MAT4X3VEC(dir, view2model, work);
 
-    for (BU_LIST_FOR(ps, wdb_pipept, pipe_hd)) {
+    for (BU_LIST_FOR(ps, wdb_pipe_pnt, pipe_hd)) {
 	fastf_t dist;
 
-	dist = bn_dist_line3_pt3(model_pt, dir, ps->pp_coord);
+	dist = bn_dist_line3_pnt3(model_pt, dir, ps->pp_coord);
 	if (dist < min_dist) {
 	    min_dist = dist;
 	    nearest = ps;
@@ -331,11 +331,11 @@ find_pipept_nearest_pt(const struct bu_list *pipe_hd, const point_t model_pt, ma
 }
 
 
-struct wdb_pipept *
-_ged_add_pipept(struct rt_pipe_internal *pipeip, struct wdb_pipept *pp, const point_t new_pt)
+struct wdb_pipe_pnt *
+_ged_pipe_add_pnt(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *pp, const point_t new_pt)
 {
-    struct wdb_pipept *last;
-    struct wdb_pipept *newpp;
+    struct wdb_pipe_pnt *last;
+    struct wdb_pipe_pnt *newpp;
 
     RT_PIPE_CK_MAGIC(pipeip);
 
@@ -344,10 +344,10 @@ _ged_add_pipept(struct rt_pipe_internal *pipeip, struct wdb_pipept *pp, const po
 	last = pp;
     } else {
 	/* add new point to end of pipe solid */
-	last = BU_LIST_LAST(wdb_pipept, &pipeip->pipe_segs_head);
+	last = BU_LIST_LAST(wdb_pipe_pnt, &pipeip->pipe_segs_head);
 
 	if (last->l.magic == BU_LIST_HEAD_MAGIC) {
-	    BU_GET(newpp, struct wdb_pipept);
+	    BU_GET(newpp, struct wdb_pipe_pnt);
 	    newpp->l.magic = WDB_PIPESEG_MAGIC;
 	    newpp->pp_od = 30.0;
 	    newpp->pp_id = 0.0;
@@ -359,7 +359,7 @@ _ged_add_pipept(struct rt_pipe_internal *pipeip, struct wdb_pipept *pp, const po
     }
 
     /* build new point */
-    BU_GET(newpp, struct wdb_pipept);
+    BU_GET(newpp, struct wdb_pipe_pnt);
     newpp->l.magic = WDB_PIPESEG_MAGIC;
     newpp->pp_od = last->pp_od;
     newpp->pp_id = last->pp_id;
@@ -377,7 +377,7 @@ _ged_add_pipept(struct rt_pipe_internal *pipeip, struct wdb_pipept *pp, const po
     if (rt_pipe_ck(&pipeip->pipe_segs_head)) {
 	/* won't work here, so refuse to do it */
 	BU_LIST_DEQUEUE(&newpp->l);
-	BU_PUT(newpp, struct wdb_pipept);
+	BU_PUT(newpp, struct wdb_pipe_pnt);
 	return pp;
     }
 
@@ -385,11 +385,11 @@ _ged_add_pipept(struct rt_pipe_internal *pipeip, struct wdb_pipept *pp, const po
 }
 
 
-struct wdb_pipept *
-_ged_ins_pipept(struct rt_pipe_internal *pipeip, struct wdb_pipept *pp, const point_t new_pt)
+struct wdb_pipe_pnt *
+_ged_pipe_ins_pnt(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *pp, const point_t new_pt)
 {
-    struct wdb_pipept *first;
-    struct wdb_pipept *newpp;
+    struct wdb_pipe_pnt *first;
+    struct wdb_pipe_pnt *newpp;
 
     RT_PIPE_CK_MAGIC(pipeip);
 
@@ -398,10 +398,10 @@ _ged_ins_pipept(struct rt_pipe_internal *pipeip, struct wdb_pipept *pp, const po
 	first = pp;
     } else {
 	/* insert new point at start of pipe solid */
-	first = BU_LIST_FIRST(wdb_pipept, &pipeip->pipe_segs_head);
+	first = BU_LIST_FIRST(wdb_pipe_pnt, &pipeip->pipe_segs_head);
 
 	if (first->l.magic == BU_LIST_HEAD_MAGIC) {
-	    BU_GET(newpp, struct wdb_pipept);
+	    BU_GET(newpp, struct wdb_pipe_pnt);
 	    newpp->l.magic = WDB_PIPESEG_MAGIC;
 	    newpp->pp_od = 30.0;
 	    newpp->pp_id = 0.0;
@@ -413,7 +413,7 @@ _ged_ins_pipept(struct rt_pipe_internal *pipeip, struct wdb_pipept *pp, const po
     }
 
     /* build new point */
-    BU_GET(newpp, struct wdb_pipept);
+    BU_GET(newpp, struct wdb_pipe_pnt);
     newpp->l.magic = WDB_PIPESEG_MAGIC;
     newpp->pp_od = first->pp_od;
     newpp->pp_id = first->pp_id;
@@ -431,7 +431,7 @@ _ged_ins_pipept(struct rt_pipe_internal *pipeip, struct wdb_pipept *pp, const po
     if (rt_pipe_ck(&pipeip->pipe_segs_head)) {
 	/* won't work here, so refuse to do it */
 	BU_LIST_DEQUEUE(&newpp->l);
-	BU_PUT(newpp, struct wdb_pipept);
+	BU_PUT(newpp, struct wdb_pipe_pnt);
 	return pp;
     }
 
@@ -439,26 +439,26 @@ _ged_ins_pipept(struct rt_pipe_internal *pipeip, struct wdb_pipept *pp, const po
 }
 
 
-struct wdb_pipept *
-_ged_delete_pipept(struct wdb_pipept *ps)
+struct wdb_pipe_pnt *
+_ged_pipe_delete_pnt(struct wdb_pipe_pnt *ps)
 {
-    struct wdb_pipept *next;
-    struct wdb_pipept *prev;
-    struct wdb_pipept *head;
+    struct wdb_pipe_pnt *next;
+    struct wdb_pipe_pnt *prev;
+    struct wdb_pipe_pnt *head;
 
     BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "pipe segment");
 
     head = ps;
     while (head->l.magic != BU_LIST_HEAD_MAGIC)
-	head = BU_LIST_NEXT(wdb_pipept, &head->l);
+	head = BU_LIST_NEXT(wdb_pipe_pnt, &head->l);
 
-    next = BU_LIST_NEXT(wdb_pipept, &ps->l);
+    next = BU_LIST_NEXT(wdb_pipe_pnt, &ps->l);
     if (next->l.magic == BU_LIST_HEAD_MAGIC)
-	next = (struct wdb_pipept *)NULL;
+	next = (struct wdb_pipe_pnt *)NULL;
 
-    prev = BU_LIST_PREV(wdb_pipept, &ps->l);
+    prev = BU_LIST_PREV(wdb_pipe_pnt, &ps->l);
     if (prev->l.magic == BU_LIST_HEAD_MAGIC)
-	prev = (struct wdb_pipept *)NULL;
+	prev = (struct wdb_pipe_pnt *)NULL;
 
     if (!prev && !next) {
 	bu_log("Cannot delete last point in pipe\n");
@@ -479,7 +479,7 @@ _ged_delete_pipept(struct wdb_pipept *ps)
 
 	return ps;
     } else {
-	BU_PUT(ps, struct wdb_pipept);
+	BU_PUT(ps, struct wdb_pipe_pnt);
     }
 
     if (prev)
@@ -491,7 +491,7 @@ _ged_delete_pipept(struct wdb_pipept *ps)
 
 
 int
-_ged_move_pipept(struct rt_pipe_internal *pipeip, struct wdb_pipept *ps, const point_t new_pt)
+_ged_pipe_move_pnt(struct rt_pipe_internal *pipeip, struct wdb_pipe_pnt *ps, const point_t new_pt)
 {
     point_t old_pt;
 
@@ -515,7 +515,7 @@ int
 _ged_scale_pipe(struct ged *gedp, struct rt_pipe_internal *pipeip, const char *attribute, fastf_t sf, int rflag)
 {
     int seg_i;
-    struct wdb_pipept *ps;
+    struct wdb_pipe_pnt *ps;
 
     RT_PIPE_CK_MAGIC(pipeip);
 
@@ -529,7 +529,7 @@ _ged_scale_pipe(struct ged *gedp, struct rt_pipe_internal *pipeip, const char *a
 	    if (sscanf(attribute+1, "%d", &seg_i) != 1)
 		seg_i = 0;
 
-	    if ((ps = _ged_get_pipe_seg_i(pipeip, seg_i)) == (struct wdb_pipept *)NULL)
+	    if ((ps = _ged_get_pipe_seg_i(pipeip, seg_i)) == (struct wdb_pipe_pnt *)NULL)
 		return GED_ERROR;
 
 	    pipe_seg_scale_radius(ps, sf);
@@ -542,7 +542,7 @@ _ged_scale_pipe(struct ged *gedp, struct rt_pipe_internal *pipeip, const char *a
 	    if (sscanf(attribute+1, "%d", &seg_i) != 1)
 		seg_i = 0;
 
-	    if ((ps = _ged_get_pipe_seg_i(pipeip, seg_i)) == (struct wdb_pipept *)NULL)
+	    if ((ps = _ged_get_pipe_seg_i(pipeip, seg_i)) == (struct wdb_pipe_pnt *)NULL)
 		return GED_ERROR;
 
 	    pipe_seg_scale_id(ps, sf);
@@ -554,7 +554,7 @@ _ged_scale_pipe(struct ged *gedp, struct rt_pipe_internal *pipeip, const char *a
 	    if (sscanf(attribute+1, "%d", &seg_i) != 1)
 		seg_i = 0;
 
-	    if ((ps = _ged_get_pipe_seg_i(pipeip, seg_i)) == (struct wdb_pipept *)NULL)
+	    if ((ps = _ged_get_pipe_seg_i(pipeip, seg_i)) == (struct wdb_pipe_pnt *)NULL)
 		return GED_ERROR;
 
 	    pipe_seg_scale_od(ps, sf);
@@ -572,7 +572,7 @@ _ged_scale_pipe(struct ged *gedp, struct rt_pipe_internal *pipeip, const char *a
 
 
 int
-_ged_append_pipept_common(struct ged *gedp, int argc, const char *argv[], struct wdb_pipept *(*func)(struct rt_pipe_internal *, struct wdb_pipept *, const point_t))
+_ged_pipe_append_pnt_common(struct ged *gedp, int argc, const char *argv[], struct wdb_pipe_pnt *(*func)(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t))
 {
     struct directory *dp;
     static const char *usage = "pipe pt";
@@ -582,7 +582,7 @@ _ged_append_pipept_common(struct ged *gedp, int argc, const char *argv[], struct
     point_t view_ps_pt;
     point_t view_pp_coord;
     point_t ps_pt;
-    struct wdb_pipept *prevpp;
+    struct wdb_pipe_pnt *prevpp;
     double scan[3];
     char *last;
 
@@ -641,16 +641,16 @@ _ged_append_pipept_common(struct ged *gedp, int argc, const char *argv[], struct
     pipeip = (struct rt_pipe_internal *)intern.idb_ptr;
 
     /* use the view z from the first or last pipe point, depending on whether we're appending or prepending */
-    if (func == _ged_add_pipept)
-	prevpp = BU_LIST_LAST(wdb_pipept, &pipeip->pipe_segs_head);
+    if (func == _ged_pipe_add_pnt)
+	prevpp = BU_LIST_LAST(wdb_pipe_pnt, &pipeip->pipe_segs_head);
     else
-	prevpp = BU_LIST_FIRST(wdb_pipept, &pipeip->pipe_segs_head);
+	prevpp = BU_LIST_FIRST(wdb_pipe_pnt, &pipeip->pipe_segs_head);
 
     MAT4X3PNT(view_pp_coord, gedp->ged_gvp->gv_model2view, prevpp->pp_coord);
     view_ps_pt[Z] = view_pp_coord[Z];
     MAT4X3PNT(ps_pt, gedp->ged_gvp->gv_view2model, view_ps_pt);
 
-    if ((*func)(pipeip, (struct wdb_pipept *)NULL, ps_pt) == (struct wdb_pipept *)NULL) {
+    if ((*func)(pipeip, (struct wdb_pipe_pnt *)NULL, ps_pt) == (struct wdb_pipe_pnt *)NULL) {
 	rt_db_free_internal(&intern);
 	bu_vls_printf(gedp->ged_result_str, "%s: cannot move point there", argv[0]);
 	return GED_ERROR;
@@ -658,11 +658,11 @@ _ged_append_pipept_common(struct ged *gedp, int argc, const char *argv[], struct
 
     {
 	mat_t invmat;
-	struct wdb_pipept *curr_ps;
+	struct wdb_pipe_pnt *curr_ps;
 	point_t curr_pt;
 
 	bn_mat_inv(invmat, mat);
-	for (BU_LIST_FOR(curr_ps, wdb_pipept, &pipeip->pipe_segs_head)) {
+	for (BU_LIST_FOR(curr_ps, wdb_pipe_pnt, &pipeip->pipe_segs_head)) {
 	    MAT4X3PNT(curr_pt, invmat, curr_ps->pp_coord);
 	    VMOVE(curr_ps->pp_coord, curr_pt);
 	}
@@ -676,19 +676,19 @@ _ged_append_pipept_common(struct ged *gedp, int argc, const char *argv[], struct
 
 
 int
-ged_append_pipept(struct ged *gedp, int argc, const char *argv[])
+ged_pipe_append_pnt(struct ged *gedp, int argc, const char *argv[])
 {
-    return _ged_append_pipept_common(gedp, argc, argv, _ged_add_pipept);
+    return _ged_pipe_append_pnt_common(gedp, argc, argv, _ged_pipe_add_pnt);
 }
 
 
 int
-ged_delete_pipept(struct ged *gedp, int argc, const char *argv[])
+ged_pipe_delete_pnt(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     static const char *usage = "pipe seg_i";
     struct rt_db_internal intern;
-    struct wdb_pipept *ps;
+    struct wdb_pipe_pnt *ps;
     struct rt_pipe_internal *pipeip;
     int seg_i;
     char *last;
@@ -745,13 +745,13 @@ ged_delete_pipept(struct ged *gedp, int argc, const char *argv[])
     }
 
     pipeip = (struct rt_pipe_internal *)intern.idb_ptr;
-    if ((ps = _ged_get_pipe_seg_i(pipeip, seg_i)) == (struct wdb_pipept *)NULL) {
+    if ((ps = _ged_get_pipe_seg_i(pipeip, seg_i)) == (struct wdb_pipe_pnt *)NULL) {
 	rt_db_free_internal(&intern);
 	bu_vls_printf(gedp->ged_result_str, "%s: bad pipe segment index - %s", argv[0], argv[2]);
 	return GED_ERROR;
     }
 
-    if (_ged_delete_pipept(ps) == ps) {
+    if (_ged_pipe_delete_pnt(ps) == ps) {
 	rt_db_free_internal(&intern);
 	bu_vls_printf(gedp->ged_result_str, "%s: cannot delete pipe segment %d", argv[0], seg_i);
 	return GED_ERROR;
@@ -765,12 +765,12 @@ ged_delete_pipept(struct ged *gedp, int argc, const char *argv[])
 
 
 int
-ged_find_pipept_nearest_pt(struct ged *gedp, int argc, const char *argv[])
+ged_find_pipe_pnt_nearest_pnt(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     static const char *usage = "pipe x y z";
     struct rt_db_internal intern;
-    struct wdb_pipept *nearest;
+    struct wdb_pipe_pnt *nearest;
     point_t model_pt;
     double scan[3];
     mat_t mat;
@@ -828,7 +828,7 @@ ged_find_pipept_nearest_pt(struct ged *gedp, int argc, const char *argv[])
     if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) == GED_ERROR)
 	return GED_ERROR;
 
-    nearest = find_pipept_nearest_pt(&((struct rt_pipe_internal *)intern.idb_ptr)->pipe_segs_head,
+    nearest = find_pipe_pnt_nearest_pnt(&((struct rt_pipe_internal *)intern.idb_ptr)->pipe_segs_head,
 				     model_pt, gedp->ged_gvp->gv_view2model);
     seg_i = _ged_get_pipe_i_seg((struct rt_pipe_internal *)intern.idb_ptr, nearest);
     rt_db_free_internal(&intern);
@@ -844,12 +844,12 @@ ged_find_pipept_nearest_pt(struct ged *gedp, int argc, const char *argv[])
 
 
 int
-ged_move_pipept(struct ged *gedp, int argc, const char *argv[])
+ged_pipe_move_pnt(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     static const char *usage = "[-r] pipe seg_i pt";
     struct rt_db_internal intern;
-    struct wdb_pipept *ps;
+    struct wdb_pipe_pnt *ps;
     struct rt_pipe_internal *pipeip;
     mat_t mat;
     point_t ps_pt;
@@ -925,7 +925,7 @@ ged_move_pipept(struct ged *gedp, int argc, const char *argv[])
     }
 
     pipeip = (struct rt_pipe_internal *)intern.idb_ptr;
-    if ((ps = _ged_get_pipe_seg_i(pipeip, seg_i)) == (struct wdb_pipept *)NULL) {
+    if ((ps = _ged_get_pipe_seg_i(pipeip, seg_i)) == (struct wdb_pipe_pnt *)NULL) {
 	rt_db_free_internal(&intern);
 	bu_vls_printf(gedp->ged_result_str, "%s: bad pipe segment index - %s", argv[0], argv[2]);
 	return GED_ERROR;
@@ -935,7 +935,7 @@ ged_move_pipept(struct ged *gedp, int argc, const char *argv[])
 	VADD2(ps_pt, ps_pt, ps->pp_coord);
     }
 
-    if (_ged_move_pipept(pipeip, ps, ps_pt)) {
+    if (_ged_pipe_move_pnt(pipeip, ps, ps_pt)) {
 	rt_db_free_internal(&intern);
 	bu_vls_printf(gedp->ged_result_str, "%s: cannot move point there", argv[0]);
 	return GED_ERROR;
@@ -943,11 +943,11 @@ ged_move_pipept(struct ged *gedp, int argc, const char *argv[])
 
     {
 	mat_t invmat;
-	struct wdb_pipept *curr_ps;
+	struct wdb_pipe_pnt *curr_ps;
 	point_t curr_pt;
 
 	bn_mat_inv(invmat, mat);
-	for (BU_LIST_FOR(curr_ps, wdb_pipept, &pipeip->pipe_segs_head)) {
+	for (BU_LIST_FOR(curr_ps, wdb_pipe_pnt, &pipeip->pipe_segs_head)) {
 	    MAT4X3PNT(curr_pt, invmat, curr_ps->pp_coord);
 	    VMOVE(curr_ps->pp_coord, curr_pt);
 	}
@@ -961,9 +961,9 @@ ged_move_pipept(struct ged *gedp, int argc, const char *argv[])
 
 
 int
-ged_prepend_pipept(struct ged *gedp, int argc, const char *argv[])
+ged_pipe_prepend_pnt(struct ged *gedp, int argc, const char *argv[])
 {
-    return _ged_append_pipept_common(gedp, argc, argv, _ged_ins_pipept);
+    return _ged_pipe_append_pnt_common(gedp, argc, argv, _ged_pipe_ins_pnt);
 }
 
 

@@ -71,36 +71,36 @@ main(int argc, char *argv[])
 
     sscanf(argv[1], "%d", &testnum);
     switch (testnum) {
-    case 1:
-	*ptr = BU_AVS_MAGIC;
-	magic = BU_BITV_MAGIC;
-	str = (char *)bu_identify_magic(*(ptr));
-	sprintf(expected_str, "ERROR: bad pointer %p: s/b %s(x%lx), was %s(x%lx), file %s, line %d\n",
-		(void *)ptr,
-		str, (unsigned long)magic,
-		bu_identify_magic(*(ptr)), (unsigned long)*(ptr),
-		file, line);
-	bu_badmagic(ptr, magic, str, file, line);
-	return 1;
-    case 2:
-	return 0;
-    case 3:
-	ptr = NULL;
-	magic = BU_VLS_MAGIC;
-	str = (char *)bu_identify_magic(magic);
-	sprintf(expected_str, "ERROR: NULL %s pointer, file %s, line %d\n",
-		str, file, line);
-	bu_badmagic(ptr, magic, str, file, line);
-	return 1;
-    case 4:
-	misalign = (unsigned char *)ptr;
-	ptr = (uint32_t *)(misalign + 1);
-	magic = BU_EXTERNAL_MAGIC;
-	str = (char *)bu_identify_magic(magic);
-	sprintf(expected_str, "ERROR: %p mis-aligned %s pointer, file %s, line %d\n",
-		(void *)ptr, str, file, line);
-	bu_badmagic(ptr, magic, str, file, line);
-	return 1;
+	case 1:
+	    *ptr = BU_AVS_MAGIC;
+	    magic = BU_BITV_MAGIC;
+	    str = (char *)bu_identify_magic(*(ptr));
+	    sprintf(expected_str, "ERROR: bad pointer %p: s/b %s(x%lx), was %s(x%lx), file %s, line %d\n",
+		    (void *)ptr,
+		    str, (unsigned long)magic,
+		    bu_identify_magic(*(ptr)), (unsigned long)*(ptr),
+		    file, line);
+	    bu_badmagic(ptr, magic, str, file, line);
+	    return 1;
+	case 2:
+	    return 0;
+	case 3:
+	    ptr = NULL;
+	    magic = BU_VLS_MAGIC;
+	    str = (char *)bu_identify_magic(magic);
+	    sprintf(expected_str, "ERROR: NULL %s pointer, file %s, line %d\n",
+		    str, file, line);
+	    bu_badmagic(ptr, magic, str, file, line);
+	    return 1;
+	case 4:
+	    misalign = (unsigned char *)ptr;
+	    ptr = (uint32_t *)(misalign + 1);
+	    magic = BU_EXTERNAL_MAGIC;
+	    str = (char *)bu_identify_magic(magic);
+	    sprintf(expected_str, "ERROR: %p mis-aligned %s pointer, file %s, line %d\n",
+		    (void *)ptr, str, file, line);
+	    bu_badmagic(ptr, magic, str, file, line);
+	    return 1;
     }
 
     bu_log("Invalid function number %d specified. [%s]\n", testnum, argv[0]);

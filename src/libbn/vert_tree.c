@@ -226,7 +226,7 @@ bn_vert_tree_add( struct bn_vert_tree *tree, double x, double y, double z, fastf
 	tree->max_vert += VERT_BLOCK;
 
 	tree->the_array = (fastf_t *)bu_realloc( tree->the_array, sizeof( fastf_t ) * tree->max_vert * 3,
-						      "tree->the_array" );
+						 "tree->the_array" );
     }
 
     VMOVE( &tree->the_array[tree->curr_vert*3], vertex );
@@ -351,8 +351,8 @@ bn_vert_tree_add_w_norm( struct bn_vert_tree *tree, double x, double y, double z
 	tree->max_vert += VERT_BLOCK;
 
 	tree->the_array = (fastf_t *)bu_realloc( tree->the_array,
-						      sizeof( fastf_t ) * tree->max_vert * 6,
-						      "tree->the_array" );
+						 sizeof( fastf_t ) * tree->max_vert * 6,
+						 "tree->the_array" );
     }
 
     VMOVE( &tree->the_array[tree->curr_vert*6], vertex );

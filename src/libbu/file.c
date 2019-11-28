@@ -163,10 +163,11 @@ file_compare_info(HANDLE handle1, HANDLE handle2)
     }
 
     /* On Windows, test if paths map to the same space on disk. */
-    if (got1 && got2 &&
-	    (file_info1.dwVolumeSerialNumber == file_info2.dwVolumeSerialNumber) &&
-	    (file_info1.nFileIndexLow == file_info2.nFileIndexLow) &&
-	    (file_info1.nFileIndexHigh = file_info2.nFileIndexHigh)) {
+    if (got1 && got2
+	&& (file_info1.dwVolumeSerialNumber == file_info2.dwVolumeSerialNumber)
+	&& (file_info1.nFileIndexLow == file_info2.nFileIndexLow)
+	&& (file_info1.nFileIndexHigh = file_info2.nFileIndexHigh))
+    {
 	return 1;
     }
 
@@ -230,7 +231,7 @@ bu_file_same(const char *fn1, const char *fn2)
 	 */
 	struct stat sb1, sb2;
 	if ((stat(rp1, &sb1) == 0) && (stat(rp2, &sb2) == 0) &&
-		(sb1.st_dev == sb2.st_dev) && (sb1.st_ino == sb2.st_ino)) {
+	    (sb1.st_dev == sb2.st_dev) && (sb1.st_ino == sb2.st_ino)) {
 	    ret = 1;
 	}
 #endif
@@ -391,9 +392,9 @@ bu_file_delete(const char *path)
 
     /* reject empty, special, or non-existent paths */
     if (!path
-	    || BU_STR_EQUAL(path, "")
-	    || BU_STR_EQUAL(path, ".")
-	    || BU_STR_EQUAL(path, "..") )
+	|| BU_STR_EQUAL(path, "")
+	|| BU_STR_EQUAL(path, ".")
+	|| BU_STR_EQUAL(path, "..") )
     {
 	return 0;
     }

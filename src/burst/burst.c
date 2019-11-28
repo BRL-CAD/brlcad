@@ -160,12 +160,13 @@ int
 main(int argc, const char *argv[])
 {
     const char *bfile = NULL;
-    int ret_ac;
     int burst_opt; /* unused, for option compatibility */
-    struct bu_vls pmsg = BU_VLS_INIT_ZERO;
-    int plot_points = 0;
     int plot_lines = 0;
+    int plot_points = 0;
+    int ret_ac;
     struct bu_opt_desc d[4];
+    struct bu_vls pmsg = BU_VLS_INIT_ZERO;
+
     BU_OPT(d[0],  "p", "", "",  NULL,   &plot_points, "Plot points");
     BU_OPT(d[1],  "P", "", "",  NULL,   &plot_lines,  "Plot lines");
     BU_OPT(d[2],  "b", "", "",  NULL,   &burst_opt,   "Batch mode");
@@ -177,13 +178,14 @@ main(int argc, const char *argv[])
 
     bu_setlinebuf(stderr);
 
-    tmpfp = bu_temp_file(tmpfname, TIMER_LEN);
-    if (!tmpfp) {
-	bu_exit(EXIT_FAILURE, "ERROR: Unable to create temporary file.\n");
-    }
-
     /* Skip first arg */
     argv++; argc--;
+
+    /* no options imply a request for usage */
+    if (argc < 1 || !argv || argv[0] == NULL) {
+	(void)fprintf(stderr, "%s\n", usage);
+	return EXIT_SUCCESS;
+    }
 
     /* Process options */
     ret_ac = bu_opt_parse(&pmsg, argc, argv, d);
@@ -197,6 +199,7 @@ main(int argc, const char *argv[])
 
     if (ret_ac) {
 	if (!bu_file_exists(argv[0], NULL)) {
+	    (void)fprintf(stderr, "ERROR: Input file [%s] does not exist!\n", argv[0]);
 	    (void)fprintf(stderr, "%s\n", usage);
 	    return EXIT_FAILURE;
 	} else {
@@ -204,9 +207,18 @@ main(int argc, const char *argv[])
 	}
     }
 
+    tmpfp = bu_temp_file(tmpfname, TIMER_LEN);
+    if (!tmpfp) {
+	bu_exit(EXIT_FAILURE, "ERROR: Unable to create temporary file.\n");
+    }
+
     setupSigs();
-    if (! initUi()) /* must be called before any output is produced */
+
+    /* must be called before any output is produced */
+    if (!initUi()) {
+	fclose(tmpfp);
 	return EXIT_FAILURE;
+    }
 
 #if DEBUG_BURST
     prntTrie(cmdtrie, 0);
@@ -215,13 +227,15 @@ main(int argc, const char *argv[])
     assert(armorids.i_next == NULL);
     assert(critids.i_next == NULL);
 
-    if (!isatty(0) && !bfile ) {
-	readBatchInput(stdin);
-    } else {
+    if (bfile) {
 	FILE *fp = fopen(bfile, "rb");
 	readBatchInput(fp);
+	fclose(fp);
+    } else {
+	readBatchInput(stdin);
     }
-    /* not reached */
+
+    fclose(tmpfp);
     return EXIT_SUCCESS;
 }
 

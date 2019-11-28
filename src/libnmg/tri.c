@@ -1454,7 +1454,7 @@ nmg_plot_fu(const char *prefix, const struct faceuse *fu, const struct bn_tol *U
 		non_consec_edgeuse_vert_count++;
 	    }
 	    if (edgeuse_vert_count > 1) {
-		bn_dist_pt3_pt3(prev_v_p->vg_p->coord,curr_v_p->vg_p->coord);
+		bn_dist_pnt3_pnt3(prev_v_p->vg_p->coord,curr_v_p->vg_p->coord);
 		pdv_3line(plotfp, prev_v_p->vg_p->coord, curr_v_p->vg_p->coord);
 	    }
 	    prev_v_p = curr_v_p;
@@ -1462,7 +1462,7 @@ nmg_plot_fu(const char *prefix, const struct faceuse *fu, const struct bn_tol *U
 	}
 
 	if (curr_v_p && first_v_p) {
-	    bn_dist_pt3_pt3(first_v_p->vg_p->coord,curr_v_p->vg_p->coord);
+	    bn_dist_pnt3_pnt3(first_v_p->vg_p->coord,curr_v_p->vg_p->coord);
 	    if (curr_eu->e_p->is_real) {
 		/* set last segment if is_real to cyan */
 		pl_color(plotfp, 0, 255, 255);
@@ -1537,13 +1537,13 @@ nmg_isect_pt_facet(struct vertex *v, struct vertex *v0, struct vertex *v1, struc
     VMINMAX(bb_min, bb_max, p1);
     VMINMAX(bb_min, bb_max, p2);
 
-    if (V3PT_OUT_RPP_TOL(p, bb_min, bb_max, tol->dist)) {
+    if (V3PNT_OUT_RPP_TOL(p, bb_min, bb_max, tol->dist)) {
 	return 0; /* no isect */
     }
 
-    dp0p1 = bn_dist_pt3_pt3(p0, p1);
-    dp0p2 = bn_dist_pt3_pt3(p0, p2);
-    dp1p2 = bn_dist_pt3_pt3(p1, p2);
+    dp0p1 = bn_dist_pnt3_pnt3(p0, p1);
+    dp0p2 = bn_dist_pnt3_pnt3(p0, p2);
+    dp1p2 = bn_dist_pnt3_pnt3(p1, p2);
 
     if (!degen_p0p1 && (dp0p1 < tol->dist)) {
 	degen_p0p1 = 2;
@@ -1555,9 +1555,9 @@ nmg_isect_pt_facet(struct vertex *v, struct vertex *v0, struct vertex *v1, struc
 	degen_p1p2 = 2;
     }
 
-    dpp0 = bn_dist_pt3_pt3(p, p0);
-    dpp1 = bn_dist_pt3_pt3(p, p1);
-    dpp2 = bn_dist_pt3_pt3(p, p2);
+    dpp0 = bn_dist_pnt3_pnt3(p, p0);
+    dpp1 = bn_dist_pnt3_pnt3(p, p1);
+    dpp2 = bn_dist_pnt3_pnt3(p, p2);
 
     if (dpp0 < tol->dist || dpp1 < tol->dist || dpp2 < tol->dist) {
 	return 3; /* isect vertex (non-shared, vertex not fused) */
@@ -2532,7 +2532,7 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, struct bu_list *vlfre
 		/* true when the vertex tested would not belong to
 		 * the resulting triangle
 		 */
-		status = bn_isect_pt_lseg(&dist, prev->vu_p->v_p->vg_p->coord,
+		status = bn_isect_pnt_lseg(&dist, prev->vu_p->v_p->vg_p->coord,
 					  next->vu_p->v_p->vg_p->coord,
 					  eu->vu_p->v_p->vg_p->coord, tol);
 		if (status == 3) {
@@ -2829,7 +2829,7 @@ print_loopuse_tree(struct bu_list *head, struct loopuse_tree_node *parent, const
 }
 
 int
-nmg_classify_pt_loop_new(const struct vertex *line1_pt1_v_ptr, const struct loopuse *lu, const struct bn_tol *tol)
+nmg_classify_pnt_loop_new(const struct vertex *line1_pt1_v_ptr, const struct loopuse *lu, const struct bn_tol *tol)
 {
     struct edgeuse *eu1, *eu2;
     int status;
@@ -2854,13 +2854,13 @@ nmg_classify_pt_loop_new(const struct vertex *line1_pt1_v_ptr, const struct loop
     vect_t  min_pt = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
     vect_t  max_pt = {-MAX_FASTF, -MAX_FASTF, -MAX_FASTF};
 
-    bu_log("\nnmg_classify_pt_loop_new(): START ==========================================\n\n");
+    bu_log("\nnmg_classify_pnt_loop_new(): START ==========================================\n\n");
 
     line1_pt1 = line1_pt1_v_ptr->vg_p->coord;
     NMG_CK_LOOPUSE(lu);
 
     if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC) {
-	bu_bomb("nmg_classify_pt_loop_new(): loopuse contains no edgeuse\n");
+	bu_bomb("nmg_classify_pnt_loop_new(): loopuse contains no edgeuse\n");
     }
 
 
@@ -2886,7 +2886,7 @@ nmg_classify_pt_loop_new(const struct vertex *line1_pt1_v_ptr, const struct loop
 	}
     }
 
-    if (V3PT_OUT_RPP_TOL(line1_pt1, min_pt, max_pt, tol->dist)) {
+    if (V3PNT_OUT_RPP_TOL(line1_pt1, min_pt, max_pt, tol->dist)) {
 	/* True when the point is outside the loopuse bounding box.
 	 * Considering distance tolerance, the point is also not on
 	 * the bounding box and therefore the point can not be on the
@@ -2894,21 +2894,21 @@ nmg_classify_pt_loop_new(const struct vertex *line1_pt1_v_ptr, const struct loop
 	 */
 	bu_log("pt = %g %g %g min_pt = %g %g %g max_pt = %g %g %g\n",
 	       V3ARGS(line1_pt1), V3ARGS(min_pt), V3ARGS(max_pt));
-	bu_log("nmg_classify_pt_loop_new(): pt outside loopuse bb\n");
-	bu_log("\nnmg_classify_pt_loop_new(): END ==========================================\n\n");
+	bu_log("nmg_classify_pnt_loop_new(): pt outside loopuse bb\n");
+	bu_log("\nnmg_classify_pnt_loop_new(): END ==========================================\n\n");
 	return NMG_CLASS_AoutB;
     }
 
     for (BU_LIST_FOR(eu1, edgeuse, &lu->down_hd)) {
 	NMG_CK_EDGEUSE(eu1);
 	if (eu1->vu_p->v_p == line1_pt1_v_ptr) {
-	    bu_log("nmg_classify_pt_loop_new(): pt %g %g %g is same as a loopuse vertex\n",
+	    bu_log("nmg_classify_pnt_loop_new(): pt %g %g %g is same as a loopuse vertex\n",
 		   V3ARGS(eu1->vu_p->v_p->vg_p->coord));
-	    bu_log("\nnmg_classify_pt_loop_new(): END ==========================================\n\n");
+	    bu_log("\nnmg_classify_pnt_loop_new(): END ==========================================\n\n");
 	    return NMG_CLASS_AonBshared;
 	} else {
-	    if (bn_pt3_pt3_equal(eu1->vu_p->v_p->vg_p->coord, line1_pt1_v_ptr->vg_p->coord, tol)) {
-		bu_bomb("nmg_classify_pt_loop_new(): found unfused vertex\n");
+	    if (bn_pnt3_pnt3_equal(eu1->vu_p->v_p->vg_p->coord, line1_pt1_v_ptr->vg_p->coord, tol)) {
+		bu_bomb("nmg_classify_pnt_loop_new(): found unfused vertex\n");
 	    }
 	}
     }
@@ -2918,9 +2918,9 @@ nmg_classify_pt_loop_new(const struct vertex *line1_pt1_v_ptr, const struct loop
     for (BU_LIST_FOR(eu1, edgeuse, &lu->down_hd)) {
 	NMG_CK_EDGEUSE(eu1);
 	if (eu1->eumate_p->vu_p->v_p->vg_p == eu1->vu_p->v_p->vg_p) {
-	    bu_bomb("nmg_classify_pt_loop_new(): zero length edge\n");
-	} else if (bn_pt3_pt3_equal(eu1->eumate_p->vu_p->v_p->vg_p->coord, eu1->vu_p->v_p->vg_p->coord, tol)) {
-	    bu_bomb("nmg_classify_pt_loop_new(): found unfused vertex, zero length edge\n");
+	    bu_bomb("nmg_classify_pnt_loop_new(): zero length edge\n");
+	} else if (bn_pnt3_pnt3_equal(eu1->eumate_p->vu_p->v_p->vg_p->coord, eu1->vu_p->v_p->vg_p->coord, tol)) {
+	    bu_bomb("nmg_classify_pnt_loop_new(): found unfused vertex, zero length edge\n");
 	}
 
 	line1_pt2 = eu1->vu_p->v_p->vg_p->coord;
@@ -2994,7 +2994,7 @@ nmg_classify_pt_loop_new(const struct vertex *line1_pt1_v_ptr, const struct loop
 		}
 
 		if (status == 0) {
-		    bu_log("nmg_classify_pt_loop_new(): co-linear, ray = %g %g %g -> %g %g %g edge = %g %g %g -> %g %g %g lu_ptr = %p line1_dist = %g line2_dist = %g\n",
+		    bu_log("nmg_classify_pnt_loop_new(): co-linear, ray = %g %g %g -> %g %g %g edge = %g %g %g -> %g %g %g lu_ptr = %p line1_dist = %g line2_dist = %g\n",
 			   V3ARGS(line1_pt1), V3ARGS(line1_pt2), V3ARGS(line2_pt1),
 			   V3ARGS(line2_pt2), (void *)lu, line1_dist, line2_dist);
 		    VSUB2(line1_dir, line1_pt2, line1_pt1);
@@ -3021,7 +3021,7 @@ nmg_classify_pt_loop_new(const struct vertex *line1_pt1_v_ptr, const struct loop
 			 * this is not a hit but we need to keep track of these
 			 * future hits on these vertices are inconclusive
 			 */
-			bu_log("nmg_classify_pt_loop_new(): co-linear ON RAY, ray = %g %g %g -> %g %g %g edge = %g %g %g -> %g %g %g lu_ptr = %p line1_dist = %g line2_dist = %g\n",
+			bu_log("nmg_classify_pnt_loop_new(): co-linear ON RAY, ray = %g %g %g -> %g %g %g edge = %g %g %g -> %g %g %g lu_ptr = %p line1_dist = %g line2_dist = %g\n",
 			       V3ARGS(line1_pt1), V3ARGS(line1_pt2), V3ARGS(line2_pt1),
 			       V3ARGS(line2_pt2), (void *)lu, line1_dist, line2_dist);
 			eu2 = BU_LIST_PNEXT(edgeuse, eu2);
@@ -3039,11 +3039,11 @@ nmg_classify_pt_loop_new(const struct vertex *line1_pt1_v_ptr, const struct loop
 	if (hit_cnt != 0) {
 	    if (NEAR_ZERO((hit_cnt/2.0) - floor(hit_cnt/2.0), SMALL_FASTF)) {
 		/* true when hit_cnt is even */
-		bu_log("nmg_classify_pt_loop_new(): hit_cnt = %d %f %f EVEN\n",
+		bu_log("nmg_classify_pnt_loop_new(): hit_cnt = %d %f %f EVEN\n",
 		       hit_cnt, (hit_cnt/2.0), floor(hit_cnt/2.0));
 		out_cnt++;
 	    } else {
-		bu_log("nmg_classify_pt_loop_new(): hit_cnt = %d %f %f ODD\n",
+		bu_log("nmg_classify_pnt_loop_new(): hit_cnt = %d %f %f ODD\n",
 		       hit_cnt, (hit_cnt/2.0), floor(hit_cnt/2.0));
 		in_cnt++;
 	    }
@@ -3053,20 +3053,20 @@ nmg_classify_pt_loop_new(const struct vertex *line1_pt1_v_ptr, const struct loop
     if (((out_cnt > 0) && (in_cnt != 0)) || ((in_cnt > 0) && (out_cnt != 0))) {
 	bu_log("lu ptr = %p pt = %g %g %g in_cnt = %d out_cnt = %d on_cnt = %d\n",
 	       (void *)lu, V3ARGS(line1_pt1), in_cnt, out_cnt, on_cnt);
-	bu_log("nmg_classify_pt_loop_new(): inconsistent result, point both inside and outside loopuse\n");
+	bu_log("nmg_classify_pnt_loop_new(): inconsistent result, point both inside and outside loopuse\n");
     }
 
     if (out_cnt > 0) {
-	bu_log("\nnmg_classify_pt_loop_new(): END ==========================================\n\n");
+	bu_log("\nnmg_classify_pnt_loop_new(): END ==========================================\n\n");
 	return NMG_CLASS_AoutB;
     }
     if (in_cnt > 0) {
-	bu_log("\nnmg_classify_pt_loop_new(): END ==========================================\n\n");
+	bu_log("\nnmg_classify_pnt_loop_new(): END ==========================================\n\n");
 	return NMG_CLASS_AinB;
     }
 
     bu_log("in_cnt = %d out_cnt = %d on_cnt = %d\n", in_cnt, out_cnt, on_cnt);
-    bu_bomb("nmg_classify_pt_loop_new(): should not be here\n");
+    bu_bomb("nmg_classify_pnt_loop_new(): should not be here\n");
 
     return NMG_CLASS_Unknown; /* error */
 }
@@ -3090,7 +3090,7 @@ nmg_classify_lu_lu_new(const struct loopuse *lu1, const struct loopuse *lu2, con
 
     for (BU_LIST_FOR(eu, edgeuse, &lu1->down_hd)) {
 
-	status = nmg_classify_pt_loop_new(eu->vu_p->v_p, lu2, tol);
+	status = nmg_classify_pnt_loop_new(eu->vu_p->v_p, lu2, tol);
 
 	if (status == NMG_CLASS_AoutB) {
 	    out_cnt++;

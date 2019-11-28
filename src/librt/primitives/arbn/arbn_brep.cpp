@@ -33,7 +33,7 @@
 
 
 extern "C" {
-    extern void rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol);
+    extern void rt_arbn_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
     extern void rt_nmg_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
 }
 
@@ -42,7 +42,7 @@ extern "C" void
 rt_arbn_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {
     struct rt_db_internal *tmp_internal;
-    struct rt_tess_tol ttmptol;
+    struct bg_tess_tol ttmptol;
 
     BU_ALLOC(tmp_internal, struct rt_db_internal);
     RT_DB_INTERNAL_INIT(tmp_internal);
@@ -51,7 +51,7 @@ rt_arbn_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     ttmptol.rel = 0.01;
     ttmptol.norm = 0;
 
-    const struct rt_tess_tol *ttol = &ttmptol;
+    const struct bg_tess_tol *ttol = &ttmptol;
     struct model *arbn_nmg = nmg_mm();
     struct nmgregion *arbnmgr;
 

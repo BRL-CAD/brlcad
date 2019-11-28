@@ -74,9 +74,9 @@ __BEGIN_DECLS
  * well as the partition list that we return.
  */
 RT_EXPORT extern void rt_boolweave(struct seg *out_hd,
-                                   struct seg *in_hd,
-                                   struct partition *PartHeadp,
-                                   struct application *ap);
+				   struct seg *in_hd,
+				   struct partition *PartHeadp,
+				   struct application *ap);
 
 /**
  * @brief
@@ -153,12 +153,12 @@ RT_EXPORT extern void rt_boolweave(struct seg *out_hd,
  * it are ready to be evaluated.
  */
 RT_EXPORT extern int rt_boolfinal(struct partition *InputHdp,
-                                  struct partition *FinalHdp,
-                                  fastf_t startdist,
-                                  fastf_t enddist,
-                                  struct bu_ptbl *regionbits,
-                                  struct application *ap,
-                                  const struct bu_bitv *solidbits);
+				  struct partition *FinalHdp,
+				  fastf_t startdist,
+				  fastf_t enddist,
+				  struct bu_ptbl *regionbits,
+				  struct application *ap,
+				  const struct bu_bitv *solidbits);
 
 /**
  * Increase the size of re_boolstack to double the previous size.

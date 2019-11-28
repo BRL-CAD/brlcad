@@ -86,10 +86,10 @@ typedef struct icv_image icv_image_t;
  * initializes a icv_image_file struct without allocating any memory.
  */
 #define ICV_IMAGE_INIT(_i) { \
-	    (_i)->magic = ICV_IMAGE_MAGIC; \
-	    (_i)->width = (_i)->height = (_i)->channels = (_i)->alpha_channel = 0; \
-	    (_i)->gamma_corr = 0.0; \
-	    (_i)->data = NULL; \
+	(_i)->magic = ICV_IMAGE_MAGIC; \
+	(_i)->width = (_i)->height = (_i)->channels = (_i)->alpha_channel = 0; \
+	(_i)->gamma_corr = 0.0; \
+	(_i)->data = NULL; \
     }
 
 /**

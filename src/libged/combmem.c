@@ -224,7 +224,7 @@ combmem_assemble_mat(matp_t matp, vect_t aetvec, vect_t tvec, hvect_t svec, poin
     }
 
     combmem_mat_aet(mat_aet, aetvec[X], aetvec[Y], aetvec[Z]);
-    bn_mat_xform_about_pt(mat_aet_about_pt, mat_aet, key_pt);
+    bn_mat_xform_about_pnt(mat_aet_about_pt, mat_aet, key_pt);
 
     MAT_IDN(mat_scale);
 
@@ -678,7 +678,7 @@ combmem_set_rot(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	    } else
 		bn_mat_angles(mat_rot, az, el, tw);
 
-	    bn_mat_xform_about_pt(mat, mat_rot, key_pt);
+	    bn_mat_xform_about_pnt(mat, mat_rot, key_pt);
 	}
 
 	BU_ALLOC(tp, union tree);

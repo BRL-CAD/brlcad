@@ -91,7 +91,7 @@ struct nurb_hit {
     extern void rt_brep_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp);
     extern void rt_brep_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp);
     extern void rt_brep_free(struct soltab *stp);
-    extern int rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *UNUSED(info));
+    extern int rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *UNUSED(info));
 
 #endif /* CONVERT_TO_BREP */
 
@@ -335,8 +335,8 @@ rt_nurb_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
     /* Note: the equation of the plane in BRL-CAD is
      * Ax + By + Cz = D represented by [A B C D]
      */
-    bn_mk_plane_3pts(plane1, p1, p3, p2, tol);
-    bn_mk_plane_3pts(plane2, p1, p2, p4, tol);
+    bn_make_plane_3pnts(plane1, p1, p3, p2, tol);
+    bn_make_plane_3pnts(plane2, p1, p2, p4, tol);
 
     /* make sure that the hit_list is zero */
 
@@ -556,7 +556,7 @@ rt_nurb_free(struct soltab *stp)
 
 
 int
-rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *UNUSED(info))
+rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *UNUSED(info))
 {
     struct rt_nurb_internal *sip;
 
@@ -685,7 +685,7 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 
 
 int
-rt_nurb_tess(struct nmgregion **, struct model *, struct rt_db_internal *, const struct rt_tess_tol *, const struct bn_tol *)
+rt_nurb_tess(struct nmgregion **, struct model *, struct rt_db_internal *, const struct bg_tess_tol *, const struct bn_tol *)
 {
     return -1;
 }

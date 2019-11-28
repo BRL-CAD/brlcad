@@ -97,6 +97,7 @@ set(LIBRT_SOURCES
   primitives/bot/btgf.c
   primitives/bot/decimate.c
   primitives/brep/brep.cpp
+  primitives/brep/brep_cdt.cpp
   primitives/brep/brep_debug.cpp
   primitives/bspline/bspline.cpp
   primitives/bspline/bspline_brep.cpp
@@ -219,6 +220,7 @@ set(LIBRT_SOURCES
   tol.c
   transform.c
   tree.c
+  uv.c
   vers.c
   vlist.c
   vshoot.c
@@ -390,7 +392,7 @@ endif(CPP_DLL_DEFINES)
 add_subdirectory(tests)
 
 CMAKEFILES(CMakeLists.txt)
-CMAKEFILES(db_fp.cxx)
+CMAKEFILES(db_fp.cpp)
 
 # Local Variables:
 # tab-width: 8

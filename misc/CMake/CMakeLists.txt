@@ -19,6 +19,7 @@ set(cmake_ignore_files
   Doxygen.cmake
   FindADAPTAGRAMS.cmake
   FindASTYLE.cmake
+  FindBlosc.cmake
   FindBRLCADTCL.cmake
   FindBRLCADZLIB.cmake
   FindBSON.cmake
@@ -26,6 +27,7 @@ set(cmake_ignore_files
   FindGDAL.cmake
   FindGECODE.cmake
   FindGL.cmake
+  FindIlmBase.cmake
   FindLEMON.cmake
   FindLZ4.cmake
   FindNETPBM.cmake
@@ -33,7 +35,7 @@ set(cmake_ignore_files
   FindOPENNURBS.cmake
   FindOSL.cmake
   FindOpenCL.cmake
-  FindOpenEXR.cmake
+  FindOpenVDB.cmake
   FindPERPLEX.cmake
   FindPkgMacros.cmake
   FindPROJ4.cmake
@@ -54,6 +56,7 @@ set(cmake_ignore_files
   Fink_MacPorts.cmake
   NSIS.template.in
   NSIS_silent.template.in
+  OpenVDBUtils.cmake
   Path_Setup.cmake
   RPath_Setup.cmake
   ResetCache.cmake

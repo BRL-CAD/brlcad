@@ -101,7 +101,7 @@ main(int argc, const char **argv)
 	    bu_log("    expected[%d]: (%f, %f)\n", i, V2ARGS(expected[i]));
 	    bu_log("      actual[%d]: (%f, %f)\n", i, V2ARGS(output_pnts[i]));
 	    if (!NEAR_ZERO(output_pnts[i][0] - expected[i][0], VUNITIZE_TOL) ||
-		    !NEAR_ZERO(output_pnts[i][1] - expected[i][1], VUNITIZE_TOL)) {
+		!NEAR_ZERO(output_pnts[i][1] - expected[i][1], VUNITIZE_TOL)) {
 		retval += 1;
 	    }
 	}
@@ -156,7 +156,7 @@ main(int argc, const char **argv)
 	    bu_log("    expected[%d]: (%f, %f)\n", i, V2ARGS(expected[i]));
 	    bu_log("      actual[%d]: (%f, %f)\n", i, V2ARGS(output_pnts[i]));
 	    if (!NEAR_ZERO(output_pnts[i][0] - expected[i][0], SMALL_FASTF) ||
-		    !NEAR_ZERO(output_pnts[i][1] - expected[i][1], SMALL_FASTF)) {
+		!NEAR_ZERO(output_pnts[i][1] - expected[i][1], SMALL_FASTF)) {
 		retval += 1;
 	    }
 	}

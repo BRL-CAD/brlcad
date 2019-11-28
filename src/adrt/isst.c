@@ -364,7 +364,7 @@ zero_view(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(
     vect_t vec;
     double mag_vec;
 
-    mag_vec = DIST_PT_PT(isst->camera.pos, isst->camera.focus);
+    mag_vec = DIST_PNT_PNT(isst->camera.pos, isst->camera.focus);
 
     VSUB2(vec, isst->camera_focus_init, isst->camera.pos);
     VUNITIZE(vec);
@@ -458,7 +458,7 @@ aetolookat(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj 
     if (Tcl_GetDoubleFromObj(interp, objv[3], &y) != TCL_OK)
 	return TCL_ERROR;
 
-    mag_vec = DIST_PT_PT(isst->camera.pos, isst->camera.focus);
+    mag_vec = DIST_PNT_PNT(isst->camera.pos, isst->camera.focus);
 
     VSUB2(vecdfoc, isst->camera.pos, isst->camera.focus);
     VUNITIZE(vecdfoc);
@@ -493,9 +493,9 @@ aerotate(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *c
     if (Tcl_GetDoubleFromObj(interp, objv[3], &y) != TCL_OK)
 	return TCL_ERROR;
 
-    mag_pos = DIST_PT_PT(isst->camera.pos, isst->camera_focus_init);
+    mag_pos = DIST_PNT_PNT(isst->camera.pos, isst->camera_focus_init);
 
-    mag_focus = DIST_PT_PT(isst->camera.focus, isst->camera_focus_init);
+    mag_focus = DIST_PNT_PNT(isst->camera.focus, isst->camera_focus_init);
 
     VSUB2(vecdpos, isst->camera_focus_init, isst->camera.pos);
     VUNITIZE(vecdpos);

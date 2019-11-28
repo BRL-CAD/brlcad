@@ -146,7 +146,7 @@ struct rt_selection_operation {
 #define RT_SELECTION_TRANSLATION 1
     int type;
     union {
-        struct rt_selection_translation tran;
+	struct rt_selection_translation tran;
     } parameters;
 };
 

@@ -39,9 +39,7 @@
 #include "./tri_intersect.h"
 
 
-/* assume 4096, seems common enough. a portable way to get to PAGE_SIZE might be
- * better. */
-const int faces_per_page = 4096 / sizeof(struct face_s);
+const int faces_per_page = BU_PAGE_SIZE / sizeof(struct face_s);
 
 
 int
@@ -102,7 +100,7 @@ soup_add_face(struct soup_s *s, point_t a, point_t b, point_t c, const struct bn
     plane_t p;
 
     /* solve the plane */
-    bn_mk_plane_3pts(p, a, b, c, tol);
+    bn_make_plane_3pnts(p, a, b, c, tol);
 
     return soup_add_face_precomputed(s, a, b, c, p, OUTSIDE);
 }
@@ -127,7 +125,7 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
 	    if (isv[i] == 0) {
 		fastf_t dist;
 
-		switch (bn_isect_pt_lseg(&dist, (fastf_t *)&f->vert[j], (fastf_t *)&f->vert[j==2?0:j+1], (fastf_t *)&isectpt[i], tol)) {
+		switch (bn_isect_pnt_lseg(&dist, (fastf_t *)&f->vert[j], (fastf_t *)&f->vert[j==2?0:j+1], (fastf_t *)&isectpt[i], tol)) {
 		    case -2: case -1: continue;
 		    case 1: isv[i] = VERT_INT|j; break;
 		    case 2: isv[i] = VERT_INT|(j==2?0:j+1); break;
@@ -217,7 +215,7 @@ split_face_single(struct soup_s *s, unsigned long int fid, point_t isectpt[2], s
 	/* extend intersect line to triangle edges, could be 2 or 3? */
 
 	/* make sure isectpt[0] is closest to vert[0] */
-	if (DIST_PT_PT_SQ(f->vert[0], isectpt[0]) > DIST_PT_PT_SQ(f->vert[0], isectpt[1])) {
+	if (DIST_PNT_PNT_SQ(f->vert[0], isectpt[0]) > DIST_PNT_PNT_SQ(f->vert[0], isectpt[1])) {
 	    point_t tmp;
 	    VMOVE(tmp, isectpt[1]);
 	    VMOVE(isectpt[1], isectpt[0]);
@@ -406,7 +404,7 @@ compose(union tree *left_tree, union tree *right_tree, unsigned long int UNUSED(
 
 
 union tree *
-evaluate(union tree *tr, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+evaluate(union tree *tr, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     RT_CK_TREE(tr);
 
@@ -492,7 +490,7 @@ gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 
     RT_CK_FULL_PATH(pathp);
     RT_CK_TREE(curtree);
-    RT_CK_TESS_TOL(tsp->ts_ttol);
+    BG_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
     NMG_CK_MODEL(*tsp->ts_m);
 
@@ -501,7 +499,7 @@ gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 
     RT_CK_FULL_PATH(pathp);
     RT_CK_TREE(curtree);
-    RT_CK_TESS_TOL(tsp->ts_ttol);
+    BG_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
     NMG_CK_MODEL(*tsp->ts_m);
 
@@ -521,7 +519,7 @@ gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 
 
 union tree *
-gcv_bottess(int argc, const char **argv, struct db_i *dbip, struct rt_tess_tol *ttol)
+gcv_bottess(int argc, const char **argv, struct db_i *dbip, struct bg_tess_tol *ttol)
 {
     struct db_tree_state tree_state = rt_initial_tree_state;
     tree_state.ts_ttol = ttol;

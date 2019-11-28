@@ -43,6 +43,8 @@
 extern int posix_memalign(void **, size_t, size_t);
 #endif
 
+int BU_SEM_MALLOC;
+
 
 /**
  * this controls whether to semaphore protect malloc calls
@@ -345,7 +347,7 @@ int
 #ifdef HAVE_SYS_SHM_H
 bu_shmget(int *shmid, char **shared_memory, int key, size_t size)
 #else
-bu_shmget(int *UNUSED(shmid), char **UNUSED(shared_memory), int UNUSED(key), size_t UNUSED(size))
+    bu_shmget(int *UNUSED(shmid), char **UNUSED(shared_memory), int UNUSED(key), size_t UNUSED(size))
 #endif
 {
     int ret = 1;
@@ -357,16 +359,16 @@ bu_shmget(int *UNUSED(shmid), char **UNUSED(shared_memory), int UNUSED(key), siz
 #ifdef _SC_PAGESIZE
     psize = sysconf(_SC_PAGESIZE);
 #else
-    psize = 4096;
+    psize = BU_PAGE_SIZE;
 #endif
 
     ret = 0;
     errno = 0;
 
     /*
-       make more portable
-       shmsize = (size + getpagesize()-1) & ~(getpagesize()-1);
-       */
+      make more portable
+      shmsize = (size + getpagesize()-1) & ~(getpagesize()-1);
+    */
     shmsize = (size + psize - 1) & ~(psize - 1);
     /* First try to attach to an existing one */
     if (((*shmid) = shmget(key, shmsize, 0)) < 0) {

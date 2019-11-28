@@ -151,7 +151,7 @@ void writePipe
 
 	VSCALE(pipePoint, pipePoint, IntavalUnitInMm);
 
-	mk_add_pipe_pt(&pipePointList, pipePoint, radius, 2 * radius / 3., radius / 2.);
+	mk_add_pipe_pnt(&pipePointList, pipePoint, radius, 2 * radius / 3., radius / 2.);
     }
 
     sprintf(name, "s%lu.pipe", (long unsigned int)++pipe_counter);

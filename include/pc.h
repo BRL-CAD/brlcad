@@ -54,9 +54,9 @@ __BEGIN_DECLS
  */
 
 #define PC_PCSET_PUSHP(_pcsp,_par) \
-	BU_LIST_PUSH(&(_pcsp->ps->l),&(_par->l));
+    BU_LIST_PUSH(&(_pcsp->ps->l),&(_par->l));
 #define PC_PCSET_PUSHC(_pcsp,_con) \
-	BU_LIST_PUSH(&(_pcsp->cs->l),&(_con->l));
+    BU_LIST_PUSH(&(_pcsp->cs->l),&(_con->l));
 
 /** Definitions for data storage and transfer type information */
 #define PC_DB_FASTF_T 1
@@ -66,9 +66,6 @@ __BEGIN_DECLS
 #define PC_DB_BYSTRUCT 1
 #define PC_DB_BYEXPR 2
 
-#ifdef __cplusplus
-extern "C" {
-#endif
 
 /**
  * A composite set of parameters constraints with respect to those
@@ -89,9 +86,9 @@ struct pc_param {
 };
 
 struct pc_constraint_fp {
-	int nargs;
-	int dimension;
-	int (*fp) (double ** a);
+    int nargs;
+    int dimension;
+    int (*fp) (double ** a);
 };
 
 struct pc_constrnt {
@@ -132,11 +129,8 @@ PC_EXPORT extern void pc_mk_isperpendicular(struct pc_constrnt ** c, const char 
 PC_EXPORT extern int pc_ismodpositive(double ** v);
 PC_EXPORT extern void pc_mk_ismodpositive(struct pc_constrnt ** c, const char * name, const char **args);
 
-#ifdef __cplusplus
-}
-#endif
-
 __END_DECLS
+
 #endif
 /** @} */
 /*

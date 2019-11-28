@@ -60,8 +60,8 @@ struct directory {
     uint32_t d_magic;   /**< @brief Magic number */
     char * d_namep;             /**< @brief pointer to name string */
     union {
-        off_t file_offset;      /**< @brief disk address in obj file */
-        void *ptr;              /**< @brief ptr to in-memory-only obj */
+	off_t file_offset;      /**< @brief disk address in obj file */
+	void *ptr;              /**< @brief ptr to in-memory-only obj */
     } d_un;
     struct directory * d_forw;  /**< @brief link to next dir entry */
     struct animate * d_animate; /**< @brief link to animation */
@@ -95,18 +95,18 @@ struct directory {
 #define LOOKUP_QUIET    0
 
 #define FOR_ALL_DIRECTORY_START(_dp, _dbip) { int _i; \
-        for (_i = RT_DBNHASH-1; _i >= 0; _i--) { \
-            for ((_dp) = (_dbip)->dbi_Head[_i]; (_dp); (_dp) = (_dp)->d_forw) {
+    for (_i = RT_DBNHASH-1; _i >= 0; _i--) { \
+    for ((_dp) = (_dbip)->dbi_Head[_i]; (_dp); (_dp) = (_dp)->d_forw) {
 
 #define FOR_ALL_DIRECTORY_END   }}}
 
 #define RT_DIR_SET_NAMEP(_dp, _name) { \
-        if (strlen(_name) < sizeof((_dp)->d_shortname)) {\
-            bu_strlcpy((_dp)->d_shortname, (_name), sizeof((_dp)->d_shortname)); \
-            (_dp)->d_namep = (_dp)->d_shortname; \
-        } else { \
-            (_dp)->d_namep = bu_strdup(_name); /* Calls bu_malloc() */ \
-        } }
+	if (strlen(_name) < sizeof((_dp)->d_shortname)) {\
+	    bu_strlcpy((_dp)->d_shortname, (_name), sizeof((_dp)->d_shortname)); \
+	    (_dp)->d_namep = (_dp)->d_shortname; \
+	} else { \
+	    (_dp)->d_namep = bu_strdup(_name); /* Calls bu_malloc() */ \
+	} }
 
 
 /**
@@ -114,9 +114,9 @@ struct directory {
  * dynamic.
  */
 #define RT_DIR_FREE_NAMEP(_dp) { \
-        if ((_dp)->d_namep != (_dp)->d_shortname)  \
-            bu_free((_dp)->d_namep, "d_namep"); \
-        (_dp)->d_namep = NULL; }
+	if ((_dp)->d_namep != (_dp)->d_shortname)  \
+	    bu_free((_dp)->d_namep, "d_namep"); \
+	(_dp)->d_namep = NULL; }
 
 
 /**
@@ -124,10 +124,10 @@ struct directory {
  * structure's freelist
  */
 #define RT_GET_DIRECTORY(_p, _res) { \
-        while (((_p) = (_res)->re_directory_hd) == NULL) \
-            db_alloc_directory_block(_res); \
-        (_res)->re_directory_hd = (_p)->d_forw; \
-        (_p)->d_forw = NULL; }
+	while (((_p) = (_res)->re_directory_hd) == NULL) \
+	    db_alloc_directory_block(_res); \
+	(_res)->re_directory_hd = (_p)->d_forw; \
+	(_p)->d_forw = NULL; }
 
 
 /**
@@ -139,7 +139,7 @@ struct directory {
  * The returned directory ** structure is NULL terminated.
  */
 RT_EXPORT extern struct directory **db_argv_to_dpv(const struct db_i *dbip,
-                                                   const char **argv);
+						   const char **argv);
 
 
 /**

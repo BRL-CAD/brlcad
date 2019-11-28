@@ -108,14 +108,16 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-f </option><replaceable>sfile</replaceable></term>
+      <term><option>-f </option><replaceable>format</replaceable></term>
       <listitem>
 	<para>
-	  Causes <command>nirt</command> to run the script file
-	  <emphasis remap="I">sfile</emphasis> before reading the standard input.
-	  Scripts specified with either the <option>-e</option> or <option>-f</option>
-	  options are executed in the order in which they are specified
-	  on the command line.
+	  Causes <command>nirt</command> to load the predefined format
+	  (see <option>-L</option>) <emphasis
+	  remap="I">format</emphasis> or script file before reading
+	  standard input.  Scripts specified with either the
+	  <option>-e</option> or <option>-f</option> options are
+	  executed in the order in which they are specified on the
+	  command line.
 	</para>
       </listitem>
     </varlistentry>

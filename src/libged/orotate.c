@@ -126,7 +126,7 @@ ged_orotate(struct ged *gedp, int argc, const char *argv[])
     }
 
     bn_mat_angles(rmat, xrot, yrot, zrot);
-    bn_mat_xform_about_pt(pmat, rmat, keypoint);
+    bn_mat_xform_about_pnt(pmat, rmat, keypoint);
 
     bn_mat_inv(invXform, gtd.gtd_xform);
     bn_mat_mul(tmpMat, invXform, pmat);

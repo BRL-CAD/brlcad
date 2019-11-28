@@ -38,16 +38,16 @@ __BEGIN_DECLS
  */
 
 /**
-*
-* To provide timing information for RT when running on 4.2 BSD UNIX.
-*
-*/
+ *
+ * To provide timing information for RT when running on 4.2 BSD UNIX.
+ *
+ */
 
- /**
+/**
  *
  * To provide timing information on Microsoft Windows NT.
  */
- /**
+/**
  *
  * To provide timing information for RT.  This version for any non-BSD
  * UNIX system, including System III, Vr1, Vr2.  Version 6 & 7 should
@@ -66,7 +66,7 @@ RT_EXPORT extern void rt_prep_timer(void);
  * seconds are returned.  Times returned will never be zero.
  */
 RT_EXPORT extern double rt_get_timer(struct bu_vls *vp,
-                                     double *elapsed);
+				     double *elapsed);
 /* Return CPU time, text, & wall clock time off the global timer */
 /**
  * Compatibility routine

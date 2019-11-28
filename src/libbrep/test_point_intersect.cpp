@@ -150,8 +150,8 @@ main(int, char**)
 	double y = 0.0;
 	double z = sqrt(radius*radius-x*x);
 	if (rand() % 2) z = -z; // sometimes we have it negative
-	ON_3dPoint test_pt(x, y, z);
-	test_pci(test_pt, *curve);
+	ON_3dPoint test_pnt(x, y, z);
+	test_pci(test_pnt, *curve);
     }
 
     // More randomize points (maybe no intersection)
@@ -162,8 +162,8 @@ main(int, char**)
 	double x = rand_f(-radius, radius);
 	double y = rand_f(-radius, radius);
 	double z = rand_f(-radius, radius);
-	ON_3dPoint test_pt(x, y, z);
-	test_pci(test_pt, *curve);
+	ON_3dPoint test_pnt(x, y, z);
+	test_pci(test_pnt, *curve);
     }
 
     // Point-surface intersection
@@ -181,8 +181,8 @@ main(int, char**)
 	double y = rand_f(-y_range, y_range);
 	double z = sqrt(y_range*y_range-y*y);
 	if (rand() % 2) z = -z; // sometimes we have it negative
-	ON_3dPoint test_pt(x, y, z);
-	test_psi(test_pt, *surf);
+	ON_3dPoint test_pnt(x, y, z);
+	test_psi(test_pnt, *surf);
     }
 
     // More randomize points (maybe no intersection)
@@ -193,8 +193,8 @@ main(int, char**)
 	double x = rand_f(-radius, radius);
 	double y = rand_f(-radius, radius);
 	double z = rand_f(-radius, radius);
-	ON_3dPoint test_pt(x, y, z);
-	test_psi(test_pt, *surf);
+	ON_3dPoint test_pnt(x, y, z);
+	test_psi(test_pnt, *surf);
     }
 
     delete brep;

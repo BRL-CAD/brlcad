@@ -1082,10 +1082,7 @@ number follows a common convention where the three numbers represent:
     {MAJOR_VERSION}.{MINOR_VERSION}.{PATCH_VERSION}
 
 All "development" builds use an odd number for the minor version.  All
-"release" builds use an even number for the minor version.  Patched
-versions should include a release count:
-
-    {MAJOR_VERSION}.{MINOR_VERSION}.{PATCH_VERSION}[-{RELEASE_COUNT}]
+"release" builds use an even number for the minor version.
 
 The MAJOR_VERSION should only increment when it is deemed that a
 significant amount of major changes have accumulated, new features
@@ -1107,9 +1104,13 @@ backwards incompatible in some manner should increment the patch
 version number.
 
 If it becomes necessary to update a posted release, use and increment
-the RELEASE_COUNT.  The first posted release is implicitly the "-0"
-release count (e.g., 7.10.2 is implicitly 7.10.2-0) with subsequent
-updated releases incrementing the count (e.g., 7.10.2-1).
+the AMEND_COUNT format outlined below.  The first posted release is
+implicitly the "-0" release (e.g., 7.10.2 is implicitly 7.10.2-0) with
+subsequent updated releases incrementing the count (e.g., 7.10.2-1).
+See the "AMENDING A RELEASE" section below for guidelines on when a
+release should be amended in lieu of a new PATCH_VERSION release.
+
+    {MAJOR_VERSION}.{MINOR_VERSION}.{PATCH_VERSION}[-{AMEND_COUNT}]
 
 
 NAMING A SOURCE RELEASE
@@ -1203,33 +1204,35 @@ necessary convention by a binary package management system.  Examples:
   zip
 
 
-PATCHING A RELEASE
+AMENDING A RELEASE
 ------------------
 
-Should it become necessary to patch a release that has already been
-posted and announced, the mechanism is to post patch files for the
-source release and update the uploaded release notes README file.
+Should it become necessary to modify a release after it has been
+tagged, uploaded, and announced, a release amendment may be issued.
+Releases that are neither tagged, uploaded, or announced are subject
+to at-will change and re-tagging.
+
+Amendments to source releases are expressed as a sequence of one or
+more patch files that are to be applied sequentially.  Patch files may
+be descriptively named but must be incrementally numbered.  The
+uploaded release notes and/or README file(s) should instruct users
+building from source to download and apply all available patch files
+in order.
 
 Example: stop_rt_crashing-0.patch and fix_fbserv-1.patch
 
-It's expected that all patch files are independent and will be applied
-sequentially.  They should be consistently and incrementally numbered.
-Users should be instructed in the release notes README to download and
-apply all available patch files.
-
-For binary releases, it's recommended to just "move on" and let issues
+For binary builds, it's recommended to just "move on" and let issues
 become resolved in the next release unless there's a critical security
-or significant data corruption issue involved.  If it becomes
-necessary to repost a release, use the RELEASE_COUNT file name
-convention described in VERSION NUMBERS & COMPATIBILITY.
+or data corruption issue involved.  That said, binary releases may be
+re-posted with a modified name per the convention described in VERSION
+NUMBERS & COMPATIBILITY.
 
 Example:  BRL-CAD-7.12.2.dmg is superseded by BRL-CAD-7.12.2-1.dmg
 
-Patched binary releases may be moved to the hidden attic folder if
-critical, though not necessary or recommended.  They are preserved for
-historic record and should never be deleted once announced.  Releases
-not yet been announced may be updated within two days of being posted
-without involving a patch.
+Older binary releases may be moved to the hidden attic folder, though
+not necessary or recommended except where critical vulnerabilities are
+involved.  Releases are preserved for historic record and should never
+be deleted once announced.
 
 
 MAKING A RELEASE
@@ -1273,10 +1276,14 @@ Release steps are as follows:
 #####################################################################
 # 02: Test the merge.
 
+    # NON-AUTO: Confirm versioning in include/conf/.
+    # BRLCAD_VERSION_AMEND may be defined during CMake for an
+    # amendment build.
+
     mkdir -p .build && cd .build
     cmake .. -DBRLCAD_BUNDLED_LIBS=ON -DCMAKE_BUILD_TYPE=Release && make
 
-    # Manually check rt, mged, and archer.
+    # NON-AUTO: Manually check rt, mged, and archer.
     bin/rt        # should report usage with correct library versions
     bin/mged -c test.g "make sph sph ; draw sph ; rt"   # pops up a sphere
     bin/mged      # displays gui, run: opendb test.g ; draw sph ; rt

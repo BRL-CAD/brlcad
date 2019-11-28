@@ -127,15 +127,6 @@ shade_inputs(struct application *ap, const struct partition *pp, struct shadewor
 	    /* Get surface normal for hit point */
 	    RT_HIT_NORMAL(swp->sw_hit.hit_normal, &(swp->sw_hit), pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip);
 
-#ifdef never
-	    if (swp->sw_hit.hit_normal[X] < -1.01 || swp->sw_hit.hit_normal[X] > 1.01 ||
-		swp->sw_hit.hit_normal[Y] < -1.01 || swp->sw_hit.hit_normal[Y] > 1.01 ||
-		swp->sw_hit.hit_normal[Z] < -1.01 || swp->sw_hit.hit_normal[Z] > 1.01) {
-		VPRINT("shade_inputs: N", swp->sw_hit.hit_normal);
-		VSET(swp->sw_color, 9, 9, 0);	/* Yellow */
-		return;
-	    }
-#endif
 	    /* Check to make sure normals are OK */
 	    f = VDOT(ap->a_ray.r_dir, swp->sw_hit.hit_normal);
 	    if (f > RT_DOT_TOL &&

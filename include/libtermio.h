@@ -77,7 +77,7 @@ void prnt_Tio(
 #else
     void *tio_ptr
 #endif
-    );
+	     );
 
 __END_DECLS
 

@@ -31,6 +31,9 @@ package require Itk
 package require OverlapFileTool
 package require GeometryChecker
 
+# replace existing class
+catch {delete class OverlapMenu} error
+
 ::itcl::class OverlapMenu {
     inherit ::itk::Widget
     constructor { args } {}
@@ -299,10 +302,8 @@ proc overlaps_tool { args } {
 
     # if filename is specified directly run checker tool
     if {$filename != ""} {
-	if { [validateOvFile $filename] == 0 } {
-	    $overlapmenu configure -ovfile $filename
-	    $overlapmenu runCheckerTool
-	}
+	$overlapmenu configure -ovfile $filename
+	$overlapmenu runCheckerTool
     }
 }
 

@@ -80,7 +80,7 @@ const int DEBUG_NAMES = 1;
 const long debug = 1;
 int verbose = 0;
 
-static rt_tess_tol ttol;   /* tessellation tolerance in mm */
+static bg_tess_tol ttol;   /* tessellation tolerance in mm */
 static bn_tol tol;    /* calculation tolerance */
 
 // Global map for bodies names in the CGM global list

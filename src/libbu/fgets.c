@@ -33,8 +33,8 @@ bu_fgets(char *s, int size, FILE *stream)
     int totBytesRead = 0;
     int isEOF = 0;
 
-    /* if we are not asked to read anything, just return */
-    if (UNLIKELY(size < 1)) {
+    /* if we are not asked to or can't read anything, just return */
+    if (UNLIKELY(size < 1 || !s)) {
 	return s;
     }
 
@@ -47,7 +47,7 @@ bu_fgets(char *s, int size, FILE *stream)
     }
 
     /* check for EOF or error */
-    if (feof(stream) || ferror(stream)) {
+    if (UNLIKELY(!stream) || feof(stream) || ferror(stream)) {
 	return (char *)NULL;
     }
 

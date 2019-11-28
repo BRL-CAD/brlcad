@@ -195,7 +195,7 @@ usage(const char *argv0, int verbose)
 	/* count how many will print at this verbosity level */
 	size_t enabled = 0;
 	for (std::vector<struct opt_info>::const_iterator j = i->second.begin(); j != i->second.end(); ++j) {
-	    if (verbose < j->verbose)
+	    if (verbose < j->verbose || j->verbose < 0)
 		continue;
 	    enabled++;
 	}
@@ -217,7 +217,7 @@ usage(const char *argv0, int verbose)
 
 	/* print our option lines */
 	for (std::vector<struct opt_info>::const_iterator j = i->second.begin(); j != i->second.end(); ++j) {
-	    if (verbose < j->verbose)
+	    if (verbose < j->verbose || j->verbose < 0)
 		continue;
 
 	    /* long option strings are printed on lines by themselves
@@ -242,8 +242,9 @@ usage(const char *argv0, int verbose)
 	    }
 	}
     }
-    if (verbose < max_verbosity)
+    if (verbose < max_verbosity) {
 	bu_log("\nType \"%s -?\" for a complete list of options.\n", argv0);
+    }
     bu_log("\n");
 }
 

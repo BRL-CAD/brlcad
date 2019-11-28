@@ -762,7 +762,7 @@ analyze_edge(struct ged *gedp, const int edge, const struct rt_arb_internal *arb
     row->nfields = 2;
     row->fields[0].nchars = sprintf(row->fields[0].buf, "%d%d", a + 1, b + 1);
     row->fields[1].nchars = sprintf(row->fields[1].buf, "%10.8f",
-				    DIST_PT_PT(arb->pt[a], arb->pt[b])*gedp->ged_wdbp->dbip->dbi_base2local);
+				    DIST_PNT_PNT(arb->pt[a], arb->pt[b])*gedp->ged_wdbp->dbip->dbi_base2local);
 }
 
 
@@ -816,7 +816,7 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
 	}
 
 	/* find plane eqn for this face */
-	if (bn_mk_plane_3pts(face.plane_eqn, arb->pt[a], arb->pt[b], arb->pt[c], &gedp->ged_wdbp->wdb_tol) < 0) {
+	if (bn_make_plane_3pnts(face.plane_eqn, arb->pt[a], arb->pt[b], arb->pt[c], &gedp->ged_wdbp->wdb_tol) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "| %d%d%d%d |         ***NOT A PLANE***                                          |\n",
 			  a+1, b+1, c+1, d+1);
 	    /* this row has 1 special fields */
@@ -829,12 +829,12 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
 	ADD_PT(face, arb->pt[c]);
 	ADD_PT(face, arb->pt[d]);
 
-	/* The plane equations returned by bn_mk_plane_3pts above do
+	/* The plane equations returned by bn_make_plane_3pnts above do
 	 * not necessarily point outward. Use the reference center
 	 * point for the arb and reverse direction for any errant planes.
 	 * This corrects the output rotation, fallback angles so that
 	 * they always give the outward pointing normal vector. */
-	if (DIST_PT_PLANE(center_pt, face.plane_eqn) > 0.0) {
+	if (DIST_PNT_PLANE(center_pt, face.plane_eqn) > 0.0) {
 	    HREVERSE(face.plane_eqn, face.plane_eqn);
 	}
 
@@ -922,7 +922,7 @@ analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
     table.rows = (row_t *)bu_calloc(aip->neqn, sizeof(row_t), "analyze_arbn: rows");
     table.nrows = aip->neqn;
 
-    bg_3d_polygon_mk_pts_planes(npts, tmp_pts, aip->neqn, (const plane_t *)eqs);
+    bg_3d_polygon_make_pnts_planes(npts, tmp_pts, aip->neqn, (const plane_t *)eqs);
 
     for (i = 0; i < aip->neqn; i++) {
 	vect_t tmp;
@@ -995,7 +995,7 @@ analyze_ars(struct ged *gedp, const struct rt_db_internal *ip)
 	    if (double_ended && i != 0 && (j == 0 || j == k || j == arip->pts_per_curve - 1)) continue;
 
 	    /* first triangular face, make sure it's not a duplicate */
-	    if (bn_mk_plane_3pts(face.plane_eqn, ARS_PT(0, 0), ARS_PT(1, 1), ARS_PT(0, 1), &gedp->ged_wdbp->wdb_tol) == 0
+	    if (bn_make_plane_3pnts(face.plane_eqn, ARS_PT(0, 0), ARS_PT(1, 1), ARS_PT(0, 1), &gedp->ged_wdbp->wdb_tol) == 0
 		&& !HEQUAL(old_plane, face.plane_eqn)) {
 		HMOVE(old_plane, face.plane_eqn);
 		ADD_PT(face, ARS_PT(0, 1));
@@ -1018,7 +1018,7 @@ analyze_ars(struct ged *gedp, const struct rt_db_internal *ip)
 	    }
 
 	    /* second triangular face, make sure it's not a duplicate */
-	    if (bn_mk_plane_3pts(face.plane_eqn, ARS_PT(1, 0), ARS_PT(1, 1), ARS_PT(0, 0), &gedp->ged_wdbp->wdb_tol) == 0
+	    if (bn_make_plane_3pnts(face.plane_eqn, ARS_PT(1, 0), ARS_PT(1, 1), ARS_PT(0, 0), &gedp->ged_wdbp->wdb_tol) == 0
 		&& !HEQUAL(old_plane, face.plane_eqn)) {
 		HMOVE(old_plane, face.plane_eqn);
 		ADD_PT(face, ARS_PT(1, 0));

@@ -20,8 +20,10 @@
 
 #include "common.h"
 
+#include <algorithm>
+
 #include "bu/log.h"
-#include "brep.h"
+#include "brep/bbnode.h"
 
 
 namespace brlcad {
@@ -473,7 +475,7 @@ BBNode::getTrimsAbove(const ON_2dPoint &uv, std::list<const BRNode *> &out_leave
     for (std::list<const BRNode *>::const_iterator i = m_stl->m_trims_above.begin(); i != m_stl->m_trims_above.end(); i++) {
 	const BRNode *br = *i;
 	br->GetBBox(bmin, bmax);
-	dist = BREP_UV_DIST_FUZZ; /* 0.03*DIST_PT_PT(bmin, bmax); */
+	dist = BREP_UV_DIST_FUZZ; /* 0.03*DIST_PNT_PNT(bmin, bmax); */
 	if ((uv[X] > bmin[X] - dist) && (uv[X] < bmax[X] + dist)) {
 	    out_leaves.push_back(br);
 	}
@@ -548,7 +550,7 @@ BBNode::prepTrims()
 	    i = m_stl->m_trims_above.begin();
 	    br = *i;
 	    br->GetBBox(curvemin, curvemax);
-	    dist = BREP_UV_DIST_FUZZ; /* 0.03*DIST_PT_PT(curvemin, curvemax); */
+	    dist = BREP_UV_DIST_FUZZ; /* 0.03*DIST_PNT_PNT(curvemin, curvemax); */
 	    if (curvemin[Y] - dist > m_v[1]) {
 		i++;
 

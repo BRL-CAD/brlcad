@@ -1464,7 +1464,7 @@ rt_nmg_free(struct soltab *stp)
 
 
 int
-rt_nmg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_nmg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     struct model *m;
 
@@ -1490,7 +1490,7 @@ rt_nmg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_nmg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
+rt_nmg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
     struct model *lm;
 
@@ -4255,7 +4255,7 @@ rt_nmg_faces_area(struct poly_face* faces, struct shell* s)
 	tmp_pts[i] = faces[i].pts;
 	HMOVE(eqs[i], faces[i].plane_eqn);
     }
-    bg_3d_polygon_mk_pts_planes(npts, tmp_pts, num_faces, (const plane_t *)eqs);
+    bg_3d_polygon_make_pnts_planes(npts, tmp_pts, num_faces, (const plane_t *)eqs);
     for (i = 0; i < num_faces; i++) {
 	faces[i].npts = npts[i];
 	bg_3d_polygon_sort_ccw(faces[i].npts, faces[i].pts, faces[i].plane_eqn);
@@ -4514,7 +4514,7 @@ nmg_booltree_leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pat
 
     NMG_CK_MODEL(*tsp->ts_m);
     BN_CK_TOL(tsp->ts_tol);
-    RT_CK_TESS_TOL(tsp->ts_ttol);
+    BG_CK_TESS_TOL(tsp->ts_ttol);
     RT_CK_RESOURCE(tsp->ts_resp);
 
     m = nmg_mm();
@@ -4567,7 +4567,7 @@ nmg_booltree_leaf_tnurb(struct db_tree_state *tsp, const struct db_full_path *pa
 
     NMG_CK_MODEL(*tsp->ts_m);
     BN_CK_TOL(tsp->ts_tol);
-    RT_CK_TESS_TOL(tsp->ts_ttol);
+    BG_CK_TESS_TOL(tsp->ts_ttol);
     RT_CK_DB_INTERNAL(ip);
     RT_CK_RESOURCE(tsp->ts_resp);
 

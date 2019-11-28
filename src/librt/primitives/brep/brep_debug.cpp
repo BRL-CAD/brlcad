@@ -52,12 +52,12 @@
 #include "rt/geom.h"
 #include "wdb.h"
 
-#include "brep_local.h"
+#include "./brep_local.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
-    RT_EXPORT extern int brep_command(struct bu_vls *vls, const char *solid_name, struct bu_color *color, const struct rt_tess_tol* ttol, const struct bn_tol* tol, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag);
+    RT_EXPORT extern int brep_command(struct bu_vls *vls, const char *solid_name, struct rt_wdb *wdbp, struct bu_color *color, const struct bg_tess_tol* ttol, const struct bn_tol* tol, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag);
     extern int single_conversion(struct rt_db_internal* intern, ON_Brep** brep, const struct db_i *dbip);
     RT_EXPORT extern int brep_conversion(struct rt_db_internal* in, struct rt_db_internal* out, const struct db_i *dbip);
     RT_EXPORT extern int brep_conversion_comb(struct rt_db_internal *old_internal, const char *name, const char *suffix, struct rt_wdb *wdbp, fastf_t local2mm);
@@ -71,8 +71,6 @@ extern "C" {
 #ifdef __cplusplus
 }
 #endif
-
-extern void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face, const struct rt_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *info, bool watertight = false, int plottype = 0, int num_points = -1.0);
 
 /********************************************************************************
  * Auxiliary functions
@@ -1347,67 +1345,6 @@ brep_edge_info(struct brep_specific* bs, struct bu_vls *vls, int ei)
     return 0;
 }
 
-
-int brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
-		      const struct rt_tess_tol *ttol, const struct bn_tol *tol,
-		      struct brep_specific* bs, struct rt_brep_internal*UNUSED(bi),
-		      struct bn_vlblock *vbp, int index, int plottype, int num_points = -1)
-{
-    struct bu_list *vhead = bn_vlblock_find(vbp, YELLOW);
-    bool watertight = true;
-    ON_wString wstr;
-    ON_TextLog tl(wstr);
-
-    ON_Brep* brep = bs->brep;
-    if (brep == NULL || !brep->IsValid(&tl)) {
-	if (wstr.Length() > 0) {
-	    ON_String onstr = ON_String(wstr);
-	    const char *isvalidinfo = onstr.Array();
-	    bu_vls_strcat(vls, "brep (");
-	    bu_vls_strcat(vls, solid_name);
-	    bu_vls_strcat(vls, ") is NOT valid:");
-	    bu_vls_strcat(vls, isvalidinfo);
-	} else {
-	    bu_vls_strcat(vls, "brep (");
-	    bu_vls_strcat(vls, solid_name);
-	    bu_vls_strcat(vls, ") is NOT valid.");
-	}
-	//for now try to draw - return -1;
-    }
-
-    for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
-	ON_BrepFace *face = brep->Face(face_index);
-	const ON_Surface *s = face->SurfaceOf();
-	double surface_width, surface_height;
-	if (s->GetSurfaceSize(&surface_width, &surface_height)) {
-	    // reparameterization of the face's surface and transforms the "u"
-	    // and "v" coordinates of all the face's parameter space trimming
-	    // curves to minimize distortion in the map from parameter space to 3d..
-	    face->SetDomain(0, 0.0, surface_width);
-	    face->SetDomain(1, 0.0, surface_height);
-	}
-    }
-
-    if (index == -1) {
-	for (index = 0; index < brep->m_F.Count(); index++) {
-	    ON_BrepFace& face = brep->m_F[index];
-	    poly2tri_CDT(vhead, face, ttol, tol, NULL, watertight, plottype, num_points);
-	}
-    } else if (index < brep->m_F.Count()) {
-	ON_BrepFaceArray& faces = brep->m_F;
-	if (index < faces.Count()) {
-	    ON_BrepFace& face = faces[index];
-	    face.Dump(tl);
-	    poly2tri_CDT(vhead, face, ttol, tol, NULL, watertight, plottype, num_points);
-	}
-    }
-
-    bu_vls_printf(vls, "%s", ON_String(wstr).Array());
-
-    return 0;
-}
-
-
 int
 brep_facetrim_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, struct bu_color *color, int plotres, bool dim3d)
 {
@@ -1872,7 +1809,12 @@ brep_surface_cv_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_bre
 
 
 /* a binary predicate for std:list implemented as a function */
-extern bool near_equal (double first, double second);
+static bool
+near_equal(double first, double second)
+{
+    /* FIXME: arbitrary nearness tolerance */
+    return NEAR_EQUAL(first, second, 1e-6);
+}
 
 
 void
@@ -2847,7 +2789,7 @@ translate_command(
 
 
 int
-brep_command(struct bu_vls *vls, const char *solid_name, struct bu_color *color, const struct rt_tess_tol *ttol, const struct bn_tol *tol, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag)
+brep_command(struct bu_vls *vls, const char *solid_name, struct rt_wdb *UNUSED(wdbp), struct bu_color *color, const struct bg_tess_tol *ttol, const struct bn_tol *tol, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag)
 {
     const char *command;
     int ret = 0;
@@ -3188,6 +3130,90 @@ brep_command(struct bu_vls *vls, const char *solid_name, struct bu_color *color,
 		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
 		    ret = brep_facecdt_plot(vls, solid_name, ttol, tol, bs, bi, vbp, (*e_it), 0);
 		}
+	    } else if (BU_STR_EQUAL(part, "FCDTN")) {
+		snprintf(commtag, 64, "_BC_FCDTN_");
+		struct bu_color c;
+		bu_color_from_str(&c, "255/255/0");
+		int face_cnt = 0;
+		int *faces = (int *)bu_calloc(elements.size()+1, sizeof(int), "face array");
+		std::set<int>::iterator f_it;
+		for (f_it = elements.begin(); f_it != elements.end(); f_it++) {
+		    faces[face_cnt] = *f_it;
+		    face_cnt++;
+		}
+		ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)bs->brep, solid_name);
+
+		struct bg_tess_tol cdttol = BG_TESS_TOL_INIT_ZERO;
+		cdttol.abs = ttol->abs;
+		cdttol.rel = ttol->rel;
+		cdttol.norm = ttol->norm;
+		ON_Brep_CDT_Tol_Set(s_cdt, &cdttol);
+
+		ON_Brep_CDT_Tessellate(s_cdt, face_cnt, faces);
+		ON_Brep_CDT_VList(vbp, &RTG.rtg_vlfree, &c, 0, s_cdt);
+		ON_Brep_CDT_Destroy(s_cdt);
+		bu_free(faces, "free face array");
+	    } else if (BU_STR_EQUAL(part, "FCDTNw")) {
+		snprintf(commtag, 64, "_BC_FCDT_");
+		struct bu_color c;
+		bu_color_from_str(&c, "255/255/0");
+		int face_cnt = 0;
+		int *faces = (int *)bu_calloc(elements.size()+1, sizeof(int), "face array");
+		std::set<int>::iterator f_it;
+		for (f_it = elements.begin(); f_it != elements.end(); f_it++) {
+		    faces[face_cnt] = *f_it;
+		    face_cnt++;
+		}
+		ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)bs->brep, solid_name);
+
+		struct bg_tess_tol cdttol = BG_TESS_TOL_INIT_ZERO;
+		cdttol.abs = ttol->abs;
+		cdttol.rel = ttol->rel;
+		cdttol.norm = ttol->norm;
+		ON_Brep_CDT_Tol_Set(s_cdt, &cdttol);
+
+		ON_Brep_CDT_Tessellate(s_cdt, face_cnt, faces);
+		ON_Brep_CDT_VList(vbp, &RTG.rtg_vlfree, &c, 1, s_cdt);
+		ON_Brep_CDT_Destroy(s_cdt);
+		bu_free(faces, "free face array");
+	    } else if (BU_STR_EQUAL(part, "FCDTN2d")) {
+		snprintf(commtag, 64, "_BC_FCDT_");
+		struct bu_color c;
+		bu_color_from_str(&c, "255/255/0");
+		int face_cnt = 0;
+		int *faces = (int *)bu_calloc(elements.size()+1, sizeof(int), "face array");
+		std::set<int>::iterator f_it;
+		for (f_it = elements.begin(); f_it != elements.end(); f_it++) {
+		    faces[face_cnt] = *f_it;
+		    face_cnt++;
+		}
+		ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)bs->brep, solid_name);
+
+		struct bg_tess_tol cdttol = BG_TESS_TOL_INIT_ZERO;
+		cdttol.abs = ttol->abs;
+		cdttol.rel = ttol->rel;
+		cdttol.norm = ttol->norm;
+		ON_Brep_CDT_Tol_Set(s_cdt, &cdttol);
+
+		ON_Brep_CDT_Tessellate(s_cdt, face_cnt, faces);
+		ON_Brep_CDT_VList(vbp, &RTG.rtg_vlfree, &c, 2, s_cdt);
+		ON_Brep_CDT_Destroy(s_cdt);
+		bu_free(faces, "free face array");
+	    } else if (BU_STR_EQUAL(part, "CDT")) {
+		snprintf(commtag, 64, "_BC_CDT_");
+		struct bu_color c;
+		bu_color_from_str(&c, "255/255/0");
+		ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)bs->brep, solid_name);
+
+		struct bg_tess_tol cdttol = BG_TESS_TOL_INIT_ZERO;
+		cdttol.abs = ttol->abs;
+		cdttol.rel = ttol->rel;
+		cdttol.norm = ttol->norm;
+		ON_Brep_CDT_Tol_Set(s_cdt, &cdttol);
+
+		ON_Brep_CDT_Tessellate(s_cdt, 0, NULL);
+		ON_Brep_CDT_VList(vbp, &RTG.rtg_vlfree, &c, 0, s_cdt);
+		ON_Brep_CDT_Destroy(s_cdt);
 	    } else if (BU_STR_EQUAL(part, "FCDTw")) {
 		snprintf(commtag, 64, "_BC_FCDT_");
 		for (e_it = elements.begin(); e_it != elements.end(); e_it++) {

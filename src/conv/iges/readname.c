@@ -25,8 +25,8 @@
  * "id" is printed followed by "string".  A pointer to the string is
  * returned in "ptr".
  *
- * "eof" is the "end-of-field" delimiter
- * "eor" is the "end-of-record" delimiter
+ * "eofd" is the "end-of-field" delimiter
+ * "eord" is the "end-of-record" delimiter
  *
  */
 
@@ -40,12 +40,12 @@ Readname(char **ptr, char *id)
     char num[80], *ch;
 
 
-    if (card[counter] == eof) {
+    if (card[counter] == eofd) {
 	/* This is an empty field */
 	*ptr = (char *)NULL;
 	counter++;
 	return;
-    } else if (card[counter] == eor) {
+    } else if (card[counter] == eord) {
 	/* Up against the end of record */
 	*ptr = (char *)NULL;
 	return;
@@ -88,15 +88,15 @@ Readname(char **ptr, char *id)
 
     done = 0;
     while (!done) {
-	while (card[counter++] != eof && card[counter] != eor &&
+	while (card[counter++] != eofd && card[counter] != eord &&
 	       counter <= lencard);
-	if (counter > lencard && card[counter] != eor && card[counter] != eof)
+	if (counter > lencard && card[counter] != eord && card[counter] != eofd)
 	    Readrec(++currec);
 	else
 	    done = 1;
     }
 
-    if (card[counter-1] == eor)
+    if (card[counter-1] == eord)
 	counter--;
 }
 

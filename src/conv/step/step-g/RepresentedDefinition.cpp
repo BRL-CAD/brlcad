@@ -46,14 +46,14 @@ RepresentedDefinition::RepresentedDefinition() {
     step = NULL;
     id = 0;
     entity = NULL;
-    type = RepresentedDefinition::UNKNOWN;
+    type = RepresentedDefinition::REPRESENTED_DEFINITION_UNKNOWN;
 }
 
 RepresentedDefinition::RepresentedDefinition(STEPWrapper *sw,int step_id) {
     step = sw;
     id = step_id;
     entity = NULL;
-    type = RepresentedDefinition::UNKNOWN;
+    type = RepresentedDefinition::REPRESENTED_DEFINITION_UNKNOWN;
 }
 
 RepresentedDefinition::~RepresentedDefinition() {
@@ -79,7 +79,7 @@ RepresentedDefinition::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
 	    type = RepresentedDefinition::AXIS2_PLACEMENT_3D;
 	    value = dynamic_cast<Placement *>(Factory::CreateObject(sw,(SDAI_Application_instance *)a3));
 	} else {
-	    type = RepresentedDefinition::UNKNOWN;
+	    type = RepresentedDefinition::REPRESENTED_DEFINITION_UNKNOWN;
 	}
 	*/
     }
@@ -111,7 +111,7 @@ RepresentedDefinition::Print(int level) {
 	TAB(level+1); std::cout << "Type:" << represented_definition_type_names[type] << " Value:" << std::endl;
 	//entity->Print(level+1);
     } else {
-	TAB(level+1); std::cout << "Type:" << "UNKNOWN" << " Value:" << std::endl;
+	TAB(level+1); std::cout << "Type:" << "REPRESENTED_DEFINITION_UNKNOWN" << " Value:" << std::endl;
     }
 }
 

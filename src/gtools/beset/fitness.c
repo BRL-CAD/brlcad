@@ -120,9 +120,9 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
     int status = 0;
 
     if (partHeadp == NULL && fstate->ray[ap->a_user] == NULL) {
-	bu_semaphore_acquire(SEM_SAME);
+	bu_semaphore_acquire(fstate->sem_same);
 	fstate->same += fstate->a_len;
-	bu_semaphore_release(SEM_SAME);
+	bu_semaphore_release(fstate->sem_same);
 	return 0;
     }
 
@@ -136,8 +136,8 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
     /* if both rays missed, count this as the same.
      * no need to evaluate further*/
 
-    bu_semaphore_acquire(SEM_SAME);
-    bu_semaphore_acquire(SEM_DIFF);
+    bu_semaphore_acquire(fstate->sem_same);
+    bu_semaphore_acquire(fstate->sem_diff);
 
     while (pp != partHeadp && mp != fstate->ray[ap->a_user]) {
 	if (status & STATUS_PP)
@@ -263,8 +263,8 @@ compare_hit(register struct application *ap, struct partition *partHeadp, struct
     /* include trailing empty space as similar */
     fstate->same += fstate->a_len - lastpt;
 
-    bu_semaphore_release(SEM_SAME);
-    bu_semaphore_release(SEM_DIFF);
+    bu_semaphore_release(fstate->sem_same);
+    bu_semaphore_release(fstate->sem_diff);
 
     return 1;
 }
@@ -288,12 +288,12 @@ int
 get_next_row(struct fitness_state *fstate)
 {
     int r;
-    bu_semaphore_acquire(SEM_WORK);
+    bu_semaphore_acquire(fstate->sem_work);
     if (fstate->row < fstate->res[Y])
 	r = ++fstate->row; /* get a row to work on */
     else
 	r = 0; /* signal end of work */
-    bu_semaphore_release(SEM_WORK);
+    bu_semaphore_release(fstate->sem_work);
 
     return r;
 }
@@ -479,6 +479,9 @@ fit_diff(char *obj, struct db_i *db, struct fitness_state *fstate)
 void
 fit_prep(struct fitness_state *fstate, int rows, int cols)
 {
+    fstate->sem_work = bu_semaphore_register("beset_sem_work");
+    fstate->sem_diff = bu_semaphore_register("beset_sem_diff");
+    fstate->sem_same = bu_semaphore_register("beset_sem_same");
     fstate->max_cpus = fstate->ncpu = 1;/*bu_avail_cpus();*/
     fstate->capture = 0;
     fstate->res[X] = rows;

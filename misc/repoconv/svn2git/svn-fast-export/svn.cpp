@@ -25,6 +25,10 @@
 #define _LARGEFILE_SUPPORT
 #define _LARGEFILE64_SUPPORT
 
+#include <iostream>
+#include <fstream>
+#include <sys/stat.h>
+
 #include "svn.h"
 #include "CommandLineParser.h"
 
@@ -910,6 +914,17 @@ int SvnRevision::exportInternal(const char *key, const svn_fs_path_change2_t *ch
             } else if (!svnignore.isNull()) {
                 addGitIgnore(pool, key, path, fs_root, txn, svnignore.toStdString().c_str());
                 ignoreSet = true;
+		std::string ignorefile = std::to_string(revnum) + std::string(".gitignore");
+		struct stat buffer;
+		int fexists = (stat(ignorefile.c_str(), &buffer) == 0);
+		std::ofstream outfile(ignorefile, std::ios::out | std::ios::binary | std::fstream::app);
+		if (!fexists) {
+			std::cout << revnum << ": creating gitignore\n\n";
+		} else {
+			std::cout << revnum << ": appending to gitignore\n\n";
+		}
+		outfile << svnignore.toStdString();
+		outfile.close();
             }
         }
 

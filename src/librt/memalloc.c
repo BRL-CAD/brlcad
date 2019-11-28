@@ -23,10 +23,8 @@
  *
  * Functions -
  * rt_memalloc allocate 'size' of memory from a given map
- * rt_memget allocate 'size' of memory from map at 'place'
  * rt_memfree return 'size' of memory to map at 'place'
  * rt_mempurge free everything on current memory chain
- * rt_memprint print a map
  * rt_memclose
  *
  * The structure of the displaylist memory map chains consists of
@@ -135,92 +133,6 @@ rt_memalloc_nosplit(struct mem_map **pp, register size_t size)
     rt_mem_freemap = best;			/* Make it the start */
 
     return best;
-}
-
-size_t
-rt_memget(struct mem_map **pp, register size_t size, off_t place)
-{
-    register struct mem_map *prevp, *curp;
-    size_t addr;
-
-    prevp = MAP_NULL;		/* special for first pass through */
-    if (size == 0)
-	bu_bomb("rt_memget() size==0\n");
-
-    curp = *pp;
-    while (curp) {
-	/*
-	 * Assumption: We will always be APPENDING to an existing
-	 * memory allocation, so we search for a free piece of memory
-	 * which begins at 'place', without worrying about ones which
-	 * could begin earlier but be long enough to satisfy this
-	 * request.
-	 */
-	if (curp->m_addr == place && curp->m_size >= size)
-	    break;
-	curp = (prevp=curp)->m_nxtp;
-    }
-
-    if (curp == MAP_NULL)
-	return 0L;		/* No space here */
-
-    addr = (size_t)curp->m_addr;
-    curp->m_addr += (off_t)size;
-
-    /* If the element size goes to zero, put it on the freelist */
-    if ((curp->m_size -= size) == 0) {
-	if (prevp)
-	    prevp->m_nxtp = curp->m_nxtp;
-	else
-	    *pp = curp->m_nxtp;	/* Click list down at start */
-	curp->m_nxtp = rt_mem_freemap;		/* Link it in */
-	rt_mem_freemap = curp;			/* Make it the start */
-    }
-    return addr;
-}
-
-
-/**
- * Returns:	0 Unable to satisfy request
- * <size> Actual size of free block, may be larger
- * than requested size.
- *
- * Comments:
- * Caller is responsible for returning unused portion.
- */
-size_t
-rt_memget_nosplit(struct mem_map **pp, register size_t size, size_t place)
-{
-    register struct mem_map *prevp, *curp;
-
-    prevp = MAP_NULL;		/* special for first pass through */
-    if (size == 0)
-	bu_bomb("rt_memget_nosplit() size==0\n");
-
-    curp = *pp;
-    while (curp) {
-	/*
-	 * Assumption: We will always be APPENDING to an existing
-	 * memory allocation, so we search for a free piece of memory
-	 * which begins at 'place', without worrying about ones which
-	 * could begin earlier but be long enough to satisfy this
-	 * request.
-	 */
-	if (curp->m_addr == (off_t)place && curp->m_size >= size) {
-	    size = curp->m_size;
-	    /* put this element on the freelist */
-	    if (prevp)
-		prevp->m_nxtp = curp->m_nxtp;
-	    else
-		*pp = curp->m_nxtp;	/* Click list down at start */
-	    curp->m_nxtp = rt_mem_freemap;		/* Link it in */
-	    rt_mem_freemap = curp;			/* Make it the start */
-	    return size;		/* actual size found */
-	}
-	curp = (prevp=curp)->m_nxtp;
-    }
-
-    return 0L;		/* No space found */
 }
 
 
@@ -342,14 +254,6 @@ rt_memclose(void)
 	rt_mem_freemap = mp->m_nxtp;
 	bu_free((char *)mp, "struct mem_map " CPP_FILELINE);
     }
-}
-
-
-/* DEPRECATED */
-void
-rt_memprint(struct mem_map **UNUSED(pp))
-{
-    bu_log("rt_memprint() is deprecated\n");
 }
 
 

@@ -110,7 +110,7 @@ struct pkg_conn {
  * Sends a VLS as a given message type across a pkg connection.
  */
 #define pkg_send_vls(type, vlsp, pkg)	\
-	pkg_send( (type), bu_vls_addr((vlsp)), bu_vls_strlen((vlsp))+1, (pkg) )
+    pkg_send( (type), bu_vls_addr((vlsp)), bu_vls_strlen((vlsp))+1, (pkg) )
 
 
 /**

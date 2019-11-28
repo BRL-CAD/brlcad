@@ -33,11 +33,12 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/malloc.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"
 #include "vmath.h"
 
-#define MAXFFT 4096
+#define MAXFFT BU_PAGE_SIZE
 
 
 /* functions specified elsewhere (these probably belong in a header) */
