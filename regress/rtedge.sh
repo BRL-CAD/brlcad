@@ -40,7 +40,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
 # source common library functionality, setting ARGS, NAME_OF_THIS,
 # PATH_TO_THIS, and THIS.
-. "`dirname $0`/library.sh"
+. "$1/regress/library.sh"
 
 if test "x$LOGFILE" = "x" ; then
     LOGFILE="`pwd`/rtedge.log"
