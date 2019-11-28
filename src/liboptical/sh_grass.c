@@ -336,7 +336,7 @@ plant_scale(struct plant *pl, double w)
     int blade, seg;
     double d;
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_log("plant_scale(%g)\n", w);
 
     d = 1.0 - w;
@@ -470,7 +470,7 @@ make_proto(struct grass_specific *grass_sp)
 	val -= tmp * .4;
     }
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	print_plant("proto", &grass_sp->proto);
     }
 
@@ -499,7 +499,7 @@ grass_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, cons
     RT_CK_REGION(rp);
 
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_log("grass_setup(%s)\n", rp->reg_name);
 
     /* Get memory for the shader parameters and shader-specific data */
@@ -528,7 +528,7 @@ grass_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, cons
 
     bn_mat_inv(grass_sp->sh_to_m, grass_sp->m_to_sh);
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 
 	bu_struct_print(" Parameters:", grass_print_tab, (char *)grass_sp);
 	bn_mat_print("m_to_sh", grass_sp->m_to_sh);
@@ -612,7 +612,7 @@ make_bush(struct plant *pl, double seed, const fastf_t *cell_pos, const struct g
     int blade, seg;
     unsigned idx;
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_log("make_bush(%g, ... %g)\n", seed, w);
 
     CK_grass_SP(grass_sp);
@@ -649,7 +649,7 @@ make_bush(struct plant *pl, double seed, const fastf_t *cell_pos, const struct g
 	VMINMAX(pl->pmin, pl->pmax, pl->b[blade].pmin);
 	VMINMAX(pl->pmin, pl->pmax, pl->b[blade].pmax);
     }
-    if (rdebug&RDEBUG_SHADE && r->fd) plot_bush(pl, r);
+    if (optical_debug&OPTICAL_DEBUG_SHADE && r->fd) plot_bush(pl, r);
 }
 
 
@@ -670,7 +670,7 @@ hit_blade(const struct blade *UNUSED(bl), struct grass_ray *r, struct shadework 
 
 
     /* get the hit point/PCA */
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_log("\t  hit_blade()\n");
 
     r->occlusion = 1.0;
@@ -706,7 +706,7 @@ isect_blade(const struct blade *bl, const fastf_t *root, struct grass_ray *r, st
     CK_grass_SP(grass_sp);
     BU_CKMAG(r, GRASSRAY_MAGIC, "grass_ray");
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_log("\t  isect_blade()\n");
 
 
@@ -723,7 +723,7 @@ isect_blade(const struct blade *bl, const fastf_t *root, struct grass_ray *r, st
 	cond = bn_dist_line3_line3(ldist, r->r.r_pt, r->r.r_dir,
 				   pt, bl->leaf[seg].blade, &r->tol);
 
-	if (rdebug&RDEBUG_SHADE) {
+	if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	    bu_log("\t    ");
 	    switch (cond) {
 		case -2: bu_log("lines parallel  "); break;
@@ -759,7 +759,7 @@ isect_blade(const struct blade *bl, const fastf_t *root, struct grass_ray *r, st
 	}
 
 	if (dist < (PCA_ray_radius+blade_width)) {
-	    if (rdebug&RDEBUG_SHADE)
+	    if (optical_debug&OPTICAL_DEBUG_SHADE)
 		bu_log("\thit grass: %g < (%g + %g)\n",
 		       dist, PCA_ray_radius,
 		       bl->width);
@@ -770,7 +770,7 @@ isect_blade(const struct blade *bl, const fastf_t *root, struct grass_ray *r, st
 	    if (r->occlusion >= 1.0) return;
 
 	}
-	if (rdebug&RDEBUG_SHADE) bu_log("\t    (missed aside)\n");
+	if (optical_debug&OPTICAL_DEBUG_SHADE) bu_log("\t    (missed aside)\n");
 
     iter:
 	/* compute origin of NEXT leaf segment */
@@ -793,14 +793,14 @@ isect_plant(const struct plant *pl, struct grass_ray *r, struct shadework *swp, 
     BU_CKMAG(r, GRASSRAY_MAGIC, "grass_ray");
     BU_CKMAG(pl, PLANT_MAGIC, "plant");
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	bu_log("isect_plant()\n");
 	print_plant("plant", pl);
     }
 
     r->r.r_min = r->r.r_max = 0.0;
     if (! rt_in_rpp(&r->r, r->rev, pl->pmin, pl->pmax)) {
-	if (rdebug&RDEBUG_SHADE) {
+	if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	    point_t in_pt, out_pt;
 	    bu_log("min:%g max:%g\n", r->r.r_min, r->r.r_max);
 
@@ -816,7 +816,7 @@ isect_plant(const struct plant *pl, struct grass_ray *r, struct shadework *swp, 
 	}
 	return;
     } else {
-	if (rdebug&RDEBUG_SHADE) {
+	if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	    point_t in_pt, out_pt;
 	    bu_log("min:%g max:%g\n", r->r.r_min, r->r.r_max);
 	    bu_log("ray %g %g %g->%g %g %g hit:\n\trpp %g %g %g, %g %g %g\n",
@@ -858,7 +858,7 @@ stat_cell(fastf_t *UNUSED(cell_pos), struct grass_ray *r, struct grass_specific 
     CK_grass_SP(grass_sp);
     BU_CKMAG(r, GRASSRAY_MAGIC, "grass_ray");
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_log("statistical bailout\n");
 
     r->hit.hit_dist = dist_to_cell;
@@ -943,7 +943,7 @@ isect_cell(long int *cell, struct grass_ray *r, struct shadework *swp, double ou
 
     CK_grass_SP(grass_sp);
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	static int plot_num = 0;
 	char buf[32];
 	point_t cell_in_pt;
@@ -985,7 +985,7 @@ isect_cell(long int *cell, struct grass_ray *r, struct shadework *swp, double ou
     /* radius of ray at cell origin */
     val = r->radius + r->diverge * dist_to_cell;
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_log("\t  ray radius @cell %g = %g, %g, %g   (%g)\n\t   cell:%g, %g\n",
 	       val, r->radius, r->diverge, dist_to_cell,  val*32.0,
 	       V2ARGS(grass_sp->cell));
@@ -1001,7 +1001,7 @@ isect_cell(long int *cell, struct grass_ray *r, struct shadework *swp, double ou
 
     ppc = grass_sp->ppc + grass_sp->ppcd * val;
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	bu_log("cell pos(%g, %g .. %g, %g)\n", V2ARGS(cell_pos),
 	       cell_pos[X]+grass_sp->cell[X],
 	       cell_pos[Y]+grass_sp->cell[Y]);
@@ -1073,7 +1073,7 @@ do_cells(long int *cell_num, struct grass_ray *r, short int flags, struct shadew
     CK_grass_SP(grass_sp);
     BU_CKMAG(r, GRASSRAY_MAGIC, "grass_ray");
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_log("do_cells(%ld, %ld)\n", V2ARGS(cell_num));
 
     for (y=-1; y < 2; y++) {
@@ -1084,7 +1084,7 @@ do_cells(long int *cell_num, struct grass_ray *r, short int flags, struct shadew
 	    cell[X] = cell_num[X] + x;
 	    cell[Y] = cell_num[Y] + y;
 
-	    if (rdebug&RDEBUG_SHADE)
+	    if (optical_debug&OPTICAL_DEBUG_SHADE)
 		bu_log("checking relative cell %2d, %2d at(%ld, %ld)\n",
 		       x, y, V2ARGS(cell));
 
@@ -1129,7 +1129,7 @@ grass_render(struct application *ap, const struct partition *pp, struct shadewor
     RT_CHECK_PT(pp);
     CK_grass_SP(grass_sp);
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_struct_print("grass_render Parameters:", grass_print_tab, (char *)grass_sp);
 
     swp->sw_transmit = 1.0;
@@ -1191,7 +1191,7 @@ grass_render(struct application *ap, const struct partition *pp, struct shadewor
     VMOVE(gr.hit.hit_point, out_pt);
     MAT4X3VEC(gr.hit.hit_normal, grass_sp->m_to_sh, swp->sw_hit.hit_normal);
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	bu_log("Pt: (%g %g %g)\nRPt:(%g %g %g)\n",
 	       V3ARGS(ap->a_ray.r_pt),
 	       V3ARGS(gr.r.r_pt));
@@ -1232,7 +1232,7 @@ grass_render(struct application *ap, const struct partition *pp, struct shadewor
 	t[n] = in_pt[n] -
 	    floor(in_pt[n]/grass_sp->cell[n]) *
 	    grass_sp->cell[n];
-	if (rdebug&RDEBUG_SHADE)
+	if (optical_debug&OPTICAL_DEBUG_SHADE)
 	    bu_log("t[%s]:%g = in_pt[%s]:%g - floor():%g * cell[%s]%g\n",
 		   s, t[n], s, in_pt[n],
 		   floor(in_pt[n]/grass_sp->cell[n]),
@@ -1256,7 +1256,7 @@ grass_render(struct application *ap, const struct partition *pp, struct shadewor
     }
 
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	bu_log("t[X]:%g tD[X]:%g\n", t[X], tD[X]);
 	bu_log("t[Y]:%g tD[Y]:%g\n\n", t[Y], tD[Y]);
     }
@@ -1283,17 +1283,17 @@ grass_render(struct application *ap, const struct partition *pp, struct shadewor
     while (curr_dist < out_dist) {
 
 
-	if (rdebug&RDEBUG_SHADE) {
+	if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	    point_t cell_pos; /* cell origin position */
 
-	    if (rdebug&RDEBUG_SHADE) {
+	    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 		bu_log("dist:%g (%g %g %g)\n", curr_dist,
 		       V3ARGS(curr_pt));
 		bu_log("cell num: %ld %ld\n", V2ARGS(cell_num));
 	    }
 	    CELL_POS(cell_pos, grass_sp, cell_num);
 
-	    if (rdebug&RDEBUG_SHADE)
+	    if (optical_debug&OPTICAL_DEBUG_SHADE)
 		bu_log("cell pos: %g %g\n", V2ARGS(cell_pos));
 	}
 
@@ -1303,7 +1303,7 @@ grass_render(struct application *ap, const struct partition *pp, struct shadewor
 	    goto done;
 
 	if (t[X] < t[Y]) {
-	    if (rdebug&RDEBUG_SHADE)
+	    if (optical_debug&OPTICAL_DEBUG_SHADE)
 		bu_log("stepping X %le\n", t[X]);
 	    if (gr.r.r_dir[X] < 0.0) {
 		flags = 0111;
@@ -1314,7 +1314,7 @@ grass_render(struct application *ap, const struct partition *pp, struct shadewor
 	    }
 	    n = X;
 	} else {
-	    if (rdebug&RDEBUG_SHADE)
+	    if (optical_debug&OPTICAL_DEBUG_SHADE)
 		bu_log("stepping Y %le\n", t[Y]);
 	    if (gr.r.r_dir[Y] < 0.0) {
 		flags = 0007;
@@ -1336,7 +1336,7 @@ grass_render(struct application *ap, const struct partition *pp, struct shadewor
     }
 
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_log("Missed grass blades\n");
 
     /* Missed everything */
@@ -1364,7 +1364,7 @@ grass_render(struct application *ap, const struct partition *pp, struct shadewor
     (void)rr_render(ap, pp, swp);
 
 done:
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	if (gr.fd) {
 	    fflush(gr.fd);

@@ -610,7 +610,7 @@ rt_arb_mk_planes(register struct prep_arb *pap, struct rt_arb_internal *aip, con
 	equiv_pts[i] = i;
     next_point: ;
     }
-    if (RT_G_DEBUG & DEBUG_ARB8) {
+    if (RT_G_DEBUG & RT_DEBUG_ARB8) {
 	bu_log("arb(%s) equiv_pts[] = %d %d %d %d %d %d %d %d\n",
 	       name,
 	       equiv_pts[0], equiv_pts[1], equiv_pts[2], equiv_pts[3],
@@ -626,7 +626,7 @@ rt_arb_mk_planes(register struct prep_arb *pap, struct rt_arb_internal *aip, con
 	    int pt_index;
 
 	    pt_index = rt_arb_info[i].ai_sub[j];
-	    if (RT_G_DEBUG & DEBUG_ARB8) {
+	    if (RT_G_DEBUG & RT_DEBUG_ARB8) {
 		bu_log("face %d, j=%d, npts=%d, orig_vert=%d, vert=%d\n",
 		       i, j, npts,
 		       pt_index, equiv_pts[pt_index]);
@@ -865,7 +865,7 @@ rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     out = INFINITY;
     iplane = oplane = -1;
 
-    if (RT_G_DEBUG & DEBUG_ARB8) {
+    if (RT_G_DEBUG & RT_DEBUG_ARB8) {
 	bu_log("\n\n------------\n arb: ray point %g %g %g -> %g %g %g\n",
 	       V3ARGS(rp->r_pt),
 	       V3ARGS(rp->r_dir));
@@ -882,7 +882,7 @@ rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	dxbdn = VDOT(afp->peqn, rp->r_pt) - afp->peqn[W];
 	dn = -VDOT(afp->peqn, rp->r_dir);
 
-	if (RT_G_DEBUG & DEBUG_ARB8) {
+	if (RT_G_DEBUG & RT_DEBUG_ARB8) {
 	    HPRINT("arb: Plane Equation", afp->peqn);
 	    bu_log("arb: dn=%g dxbdn=%g s=%g\n", dn, dxbdn, dxbdn/dn);
 	}
@@ -1108,7 +1108,7 @@ rt_arb_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 		   stp->st_specific, (void *)arbp->arb_opt);
 	    return;
 	}
-	if (RT_G_DEBUG&DEBUG_SOLIDS)
+	if (RT_G_DEBUG&RT_DEBUG_SOLIDS)
 	    rt_pr_soltab(stp);
     }
 
@@ -1542,7 +1542,7 @@ rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    *vertpp++ = &verts[pa.pa_pindex[1][i]];
 	    *vertpp++ = &verts[pa.pa_pindex[0][i]];
 	}
-	if (RT_G_DEBUG & DEBUG_ARB8) {
+	if (RT_G_DEBUG & RT_DEBUG_ARB8) {
 	    bu_log("face %d, npts=%d, verts %d %d %d %d\n",
 		   i, pa.pa_npts[i],
 		   pa.pa_pindex[0][i], pa.pa_pindex[1][i],
@@ -1649,7 +1649,7 @@ rt_arb_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	    *vertpp++ = &verts[pa.pa_pindex[1][i]];
 	    *vertpp++ = &verts[pa.pa_pindex[0][i]];
 	}
-	if (RT_G_DEBUG & DEBUG_ARB8) {
+	if (RT_G_DEBUG & RT_DEBUG_ARB8) {
 	    bu_log("face %d, npts=%d, verts %d %d %d %d\n",
 		   i, pa.pa_npts[i],
 		   pa.pa_pindex[0][i], pa.pa_pindex[1][i],

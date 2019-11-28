@@ -81,10 +81,10 @@ try_load(const char *path, const char *material, const char *shader_name)
     char sym[MAXPATHLEN];
 
     if (! (handle = bu_dlopen(path, BU_RTLD_NOW))) {
-	if (R_DEBUG&RDEBUG_MATERIAL)
+	if (OPTICAL_DEBUG&OPTICAL_DEBUG_MATERIAL)
 	    bu_log("bu_dlopen failed on \"%s\"\n", path);
 	return (struct mfuncs *)NULL;
-    } else if (R_DEBUG&RDEBUG_MATERIAL) {
+    } else if (OPTICAL_DEBUG&OPTICAL_DEBUG_MATERIAL) {
 	bu_log("%s open... ", path);
     }
 
@@ -101,13 +101,13 @@ try_load(const char *path, const char *material, const char *shader_name)
 	shader_mfuncs = (struct mfuncs *)bu_dlsym((struct mfuncs *)handle, "shader_mfuncs");
 	if ((dl_error_str=bu_dlerror()) != (char *)NULL) {
 	    /* didn't find anything appropriate, give up */
-	    if (R_DEBUG&RDEBUG_MATERIAL) bu_log("%s has no %s table, %s\n", material, sym, dl_error_str);
+	    if (OPTICAL_DEBUG&OPTICAL_DEBUG_MATERIAL) bu_log("%s has no %s table, %s\n", material, sym, dl_error_str);
 	    bu_dlclose(handle);
 	    return (struct mfuncs *)NULL;
 	}
     }
 
-    if (R_DEBUG&RDEBUG_MATERIAL)
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_MATERIAL)
 	bu_log("%s_mfuncs table found\n", shader_name);
 
     /* make sure the shader we were looking for is in the mfuncs table */
@@ -120,7 +120,7 @@ try_load(const char *path, const char *material, const char *shader_name)
 	}
     }
 
-    if (R_DEBUG&RDEBUG_MATERIAL) bu_log("shader '%s' not found in library\n", shader_name);
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_MATERIAL) bu_log("shader '%s' not found in library\n", shader_name);
 
     /* found the library, but not the shader */
     bu_dlclose(handle);
@@ -135,7 +135,7 @@ load_dynamic_shader(const char *material)
     char libname[MAXPATHLEN];
     char libpath[MAXPATHLEN];
     char *cwd = (char *)NULL;
-    int old_rdebug = R_DEBUG;
+    int old_optical_debug = OPTICAL_DEBUG;
     char sh_name[128]; /* XXX constants are bogus */
 
     if (strlen(material) < sizeof(sh_name)) {
@@ -146,7 +146,7 @@ load_dynamic_shader(const char *material)
 	return (struct mfuncs *)NULL;
     }
 
-    if (R_DEBUG&RDEBUG_MATERIAL)
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_MATERIAL)
 	bu_log("load_dynamic_shader(\"%s\")\n", sh_name);
 
     cwd = getcwd((char *)NULL, (size_t)MAXPATHLEN);
@@ -190,7 +190,7 @@ done:
     else
 	bu_log("WARNING: shader [%s] not found\n", sh_name);
 
-    rdebug = old_rdebug;
+    optical_debug = old_optical_debug;
 
     return shader_mfuncs;
 }
@@ -284,7 +284,7 @@ found:
     rp->reg_mfuncs = (char *)mfp;
     rp->reg_udata = (char *)0;
 
-    if (R_DEBUG&RDEBUG_MATERIAL)
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_MATERIAL)
 	bu_log("mlib_setup(%s) shader=%s\n", rp->reg_name, mfp->mf_name);
 
     if (mfp && mfp->mf_setup)

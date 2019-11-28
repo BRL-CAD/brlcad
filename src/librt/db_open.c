@@ -91,7 +91,7 @@ db_open(const char *name, const char *mode)
     if (name == NULL)
 	return DBI_NULL;
 
-    if (RT_G_DEBUG & DEBUG_DB) {
+    if (RT_G_DEBUG & RT_DEBUG_DB) {
 	bu_log("db_open(%s, %s)\n", name, mode);
     }
 
@@ -102,7 +102,7 @@ db_open(const char *name, const char *mode)
 
 	mfp = bu_open_mapped_file(name, "db_i");
 	if (mfp == NULL) {
-	    if (RT_G_DEBUG & DEBUG_DB) {
+	    if (RT_G_DEBUG & RT_DEBUG_DB) {
 		bu_log("db_open(%s) FAILED, unable to open as a mapped file\n", name);
 	    }
 	    return DBI_NULL;
@@ -122,7 +122,7 @@ db_open(const char *name, const char *mode)
 	     */
 	    bu_close_mapped_file(mfp);
 
-	    if (RT_G_DEBUG & DEBUG_DB) {
+	    if (RT_G_DEBUG & RT_DEBUG_DB) {
 		bu_log("db_open(%s) dbip=%p: reused previously mapped file\n", name, (void *)dbip);
 	    }
 
@@ -137,7 +137,7 @@ db_open(const char *name, const char *mode)
 
 	/* Do this too, so we can seek around on the file */
 	if ((dbip->dbi_fp = fopen(name, "rb")) == NULL) {
-	    if (RT_G_DEBUG & DEBUG_DB) {
+	    if (RT_G_DEBUG & RT_DEBUG_DB) {
 		bu_log("db_open(%s) FAILED, unable to open file for reading\n", name);
 	    }
 	    bu_free((char *)dbip, "struct db_i");
@@ -152,7 +152,7 @@ db_open(const char *name, const char *mode)
 	dbip->dbi_eof = (off_t)-1L;
 
 	if ((dbip->dbi_fp = fopen(name, "r+b")) == NULL) {
-	    if (RT_G_DEBUG & DEBUG_DB) {
+	    if (RT_G_DEBUG & RT_DEBUG_DB) {
 		bu_log("db_open(%s) FAILED, unable to open file for reading/writing\n", name);
 	    }
 	    bu_free((char *)dbip, "struct db_i");
@@ -240,7 +240,7 @@ db_open(const char *name, const char *mode)
 	}
     }
 
-    if (RT_G_DEBUG & DEBUG_DB) {
+    if (RT_G_DEBUG & RT_DEBUG_DB) {
 	bu_log("db_open(%s) dbip=%p version=%d\n", dbip->dbi_filename, (void *)dbip, dbip->dbi_version);
     }
 
@@ -257,7 +257,7 @@ db_create(const char *name, int version)
 
     if (name == NULL) return DBI_NULL;
 
-    if (RT_G_DEBUG & DEBUG_DB)
+    if (RT_G_DEBUG & RT_DEBUG_DB)
 	bu_log("db_create(%s, %d)\n", name, version);
 
     fp = fopen(name, "w+b");
@@ -321,7 +321,7 @@ db_close(register struct db_i *dbip)
 	return;
 
     RT_CK_DBI(dbip);
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_close(%s) %p uses=%d\n",
+    if (RT_G_DEBUG&RT_DEBUG_DB) bu_log("db_close(%s) %p uses=%d\n",
 				    dbip->dbi_filename, (void *)dbip, dbip->dbi_uses);
 
     bu_semaphore_acquire(sem_uses);

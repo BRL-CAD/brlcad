@@ -363,11 +363,11 @@ int main(int argc, char *argv[])
     }
 
     if (RT_G_DEBUG) {
-	bu_printb("librt RTG.debug", RTG.debug, DEBUG_FORMAT);
+	bu_printb("librt rt_debug", rt_debug, RT_DEBUG_FORMAT);
 	bu_log("\n");
     }
-    if (rdebug) {
-	bu_printb("rt rdebug", rdebug, RDEBUG_FORMAT);
+    if (optical_debug) {
+	bu_printb("rt optical_debug", optical_debug, OPTICAL_DEBUG_FORMAT);
 	bu_log("\n");
     }
 
@@ -559,7 +559,7 @@ int main(int argc, char *argv[])
 	}
 
 	while ((buf = rt_read_cmd( stdin )) != (char *)0) {
-	    if (R_DEBUG&RDEBUG_PARSE) {
+	    if (OPTICAL_DEBUG&OPTICAL_DEBUG_PARSE) {
 		fprintf(stderr, "cmd: %s\n", buf);
 	    }
 

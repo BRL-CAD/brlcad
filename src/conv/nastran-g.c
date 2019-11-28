@@ -1130,8 +1130,8 @@ main(int argc, char **argv)
     while ((c=bu_getopt(argc, argv, "x:X:t:ni:o:mh?")) != -1) {
 	switch (c) {
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
-		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT);
+		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
+		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, RT_DEBUG_FORMAT);
 		bu_log("\n");
 		break;
 	    case 'X':

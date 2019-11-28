@@ -459,7 +459,7 @@ int cm_clean(const int UNUSED(argc), const char **UNUSED(argv))
 
     rt_clean(APP.a_rt_i);
 
-    if (R_DEBUG&RDEBUG_RTMEM_END)
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_RTMEM_END)
 	bu_prmem("After cm_clean");
     return 0;
 }
@@ -799,9 +799,9 @@ do_frame(int framenumber)
 	bu_log("Tree: %zu solids in %zu regions\n", rtip->nsolids, rtip->nregions);
 
     if (Query_one_pixel) {
-	query_rdebug = R_DEBUG;
+	query_optical_debug = OPTICAL_DEBUG;
 	query_debug = RT_G_DEBUG;
-	RTG.debug = rdebug = 0;
+	rt_debug = optical_debug = 0;
     }
 
     if (rtip->nsolids <= 0)
@@ -1143,7 +1143,7 @@ do_frame(int framenumber)
 	outfp = NULL;
     }
 
-    if (R_DEBUG&RDEBUG_STATS) {
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_STATS) {
 	/* Print additional statistics */
 	res_pr();
     }

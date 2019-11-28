@@ -57,7 +57,7 @@
 
 
 /* define to enable output of debug hit information */
-/* #define DEBUG_HITS 1 */
+/* #define RT_DEBUG_HITS 1 */
 
 
 #ifdef __cplusplus
@@ -229,7 +229,7 @@ public:
 };
 
 
-#ifdef DEBUG_HITS
+#ifdef RT_DEBUG_HITS
 
 
 static const char *
@@ -1374,7 +1374,7 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
                 BU_LIST_INSERT(&(seghead->l), &(segp->l));
 	    }
 
-#ifdef DEBUG_HITS
+#ifdef RT_DEBUG_HITS
 	    //TRACE2("screen xy: " << ap->a_x << ", " << ap->a_y);
 	    bu_log("**** ERROR odd number of hits: %lu\n", static_cast<unsigned long>(hits.size()));
 	    bu_log("xyz %g %g %g \n", rp->r_pt[0], rp->r_pt[1], rp->r_pt[2]);

@@ -126,7 +126,7 @@ air_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const 
 {
     register struct air_specific *air_sp;
 
-    if (rdebug&RDEBUG_SHADE) bu_log("air_setup\n");
+    if (optical_debug&OPTICAL_DEBUG_SHADE) bu_log("air_setup\n");
 
     RT_CHECK_RTI(rtip);
     BU_CK_VLS(matparm);
@@ -144,11 +144,11 @@ air_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const 
 	bu_bomb("");
     }
 
-    if (rdebug&RDEBUG_SHADE) bu_log("\"%s\"\n", bu_vls_addr(matparm));
+    if (optical_debug&OPTICAL_DEBUG_SHADE) bu_log("\"%s\"\n", bu_vls_addr(matparm));
     if (bu_struct_parse(matparm, air_parse, (char *)air_sp, NULL) < 0)
 	return -1;
 
-    if (rdebug&RDEBUG_SHADE) air_print(rp, (char *)air_sp);
+    if (optical_debug&OPTICAL_DEBUG_SHADE) air_print(rp, (char *)air_sp);
 
     return 1;
 }
@@ -164,7 +164,7 @@ air_print(register struct region *rp, void *dp)
 HIDDEN void
 air_free(void *cp)
 {
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_log("air_free(%s:%d)\n", __FILE__, __LINE__);
     BU_PUT(cp, struct air_specific);
 }
@@ -184,7 +184,7 @@ airtest_render(struct application *ap, const struct partition *pp, struct shadew
     RT_CHECK_PT(pp);
     CK_AIR_SP(air_sp);
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	bu_struct_print("air_specific", air_parse, (char *)air_sp);
 
 	bu_log("air in(%g) out%g)\n",
@@ -217,7 +217,7 @@ air_render(struct application *ap, const struct partition *pp, struct shadework 
     RT_CHECK_PT(pp);
     CK_AIR_SP(air_sp);
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	bu_struct_print("air_specific", air_parse, (char *)air_sp);
 	bu_log("air in(%g) out(%g) r_pt(%g %g %g)\n",
 	       pp->pt_inhit->hit_dist,
@@ -249,7 +249,7 @@ air_render(struct application *ap, const struct partition *pp, struct shadework 
     if (swp->sw_reflect > 0 || swp->sw_transmit > 0)
 	(void)rr_render(ap, pp, swp);
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_log("air o dist:%gmm tau:%g transmit:%g\n",
 	       dist, tau, swp->sw_transmit);
 
@@ -353,7 +353,7 @@ tmist_render(struct application *ap, const struct partition *pp, struct shadewor
     if (swp->sw_transmit > 1.0) swp->sw_transmit = 1.0;
     else if (swp->sw_transmit < 0.0) swp->sw_transmit = 0.0;
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_log("tmist transmit = %g\n", swp->sw_transmit);
 
     return 1;
@@ -419,7 +419,7 @@ emist_render(struct application *ap, const struct partition *pp, struct shadewor
     if (swp->sw_transmit > 1.0) swp->sw_transmit = 1.0;
     else if (swp->sw_transmit < 0.0) swp->sw_transmit = 0.0;
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_log("emist transmit = %g\n", swp->sw_transmit);
 
     return 1;

@@ -40,8 +40,8 @@
 #include "./librt_private.h"
 
 
-#define DEBUG_PR(aaa, rrr) { \
-	if (RT_G_DEBUG&DEBUG_DB) { \
+#define RT_DEBUG_PR(aaa, rrr) { \
+	if (RT_G_DEBUG&RT_DEBUG_DB) { \
 	    bu_log("db_scan %jd %c (0%o)\n", \
 		   (intmax_t)aaa, rrr.u_id, rrr.u_id); \
 	} \
@@ -87,7 +87,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
     register long j;
 
     RT_CK_DBI(dbip);
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_scan(%p, %lx)\n",
+    if (RT_G_DEBUG&RT_DEBUG_DB) bu_log("db_scan(%p, %lx)\n",
 				    (void *)dbip, (long unsigned int)handler);
 
     /* XXXX Note that this ignores dbip->dbi_inmem */
@@ -125,7 +125,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 	    perror("db_scan:  ftell:  ");
 	    return -1;
 	}
-	DEBUG_PR(addr, record);
+	RT_DEBUG_PR(addr, record);
 
 	nrec++;
 	switch (record.u_id) {
@@ -150,7 +150,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 		    if (fread((char *)&rec2, sizeof(rec2),
 			      1, dbip->dbi_fp) != 1)
 			break;
-		    DEBUG_PR(here, rec2);
+		    RT_DEBUG_PR(here, rec2);
 		    if (rec2.u_id != ID_ARS_B) {
 			bu_fseek(dbip->dbi_fp, here, 0);
 			break;
@@ -195,7 +195,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 		    here = bu_ftell(dbip->dbi_fp);
 		    if (fread((char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp) != 1)
 			break;
-		    DEBUG_PR(here, rec2);
+		    RT_DEBUG_PR(here, rec2);
 		    if (rec2.u_id != ID_P_DATA) {
 			bu_fseek(dbip->dbi_fp, here, 0);
 			break;
@@ -214,7 +214,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 		    here = bu_ftell(dbip->dbi_fp);
 		    if (fread((char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp) != 1)
 			break;
-		    DEBUG_PR(here, rec2);
+		    RT_DEBUG_PR(here, rec2);
 		    if (rec2.u_id != ID_BSURF) {
 			bu_fseek(dbip->dbi_fp, here, 0);
 			break;
@@ -316,7 +316,7 @@ db_scan(struct db_i *dbip, int (*handler) (struct db_i *, const char *, off_t, s
 		    here = bu_ftell(dbip->dbi_fp);
 		    if (fread((char *)&rec2, sizeof(rec2), 1, dbip->dbi_fp) != 1)
 			break;
-		    DEBUG_PR(here, rec2);
+		    RT_DEBUG_PR(here, rec2);
 		    if (rec2.u_id != ID_MEMB) {
 			bu_fseek(dbip->dbi_fp, here, 0);
 			break;
@@ -380,7 +380,7 @@ db_update_ident(struct db_i *dbip, const char *new_title, double local2mm)
     if (!new_title)
 	new_title = "";
 
-    if (RT_G_DEBUG&DEBUG_DB)
+    if (RT_G_DEBUG&RT_DEBUG_DB)
 	bu_log("db_update_ident(%p, '%s', %g)\n", (void *)dbip, new_title, local2mm);
 
     /* make sure dbip is a valid version */
@@ -452,7 +452,7 @@ db_fwrite_ident(FILE *fp, const char *title, double local2mm)
 
     code = db_v4_get_units_code(bu_units_string(local2mm));
 
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_fwrite_ident(%p, '%s', %g) code=%d\n",
+    if (RT_G_DEBUG&RT_DEBUG_DB) bu_log("db_fwrite_ident(%p, '%s', %g) code=%d\n",
 				    (void *)fp, title, local2mm, code);
 
     memset((char *)&rec, 0, sizeof(rec));

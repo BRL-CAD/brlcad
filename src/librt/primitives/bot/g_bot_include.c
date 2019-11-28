@@ -74,7 +74,7 @@ CPP_XGLUE(bot_face_w_normals_, TRI_TYPE)(struct soltab *stp,
     {
 	BU_PUT(trip, CPP_XGLUE(tri_specific_, TRI_TYPE));
 
-	if (RT_G_DEBUG & DEBUG_SHOOT) {
+	if (RT_G_DEBUG & RT_DEBUG_SHOOT) {
 	    bu_log("%s: degenerate facet #%zu\n",
 		   stp->st_name, face_no);
 	    bu_log("\t(%g %g %g) (%g %g %g) (%g %g %g)\n",
@@ -535,7 +535,7 @@ CPP_XGLUE(bot_unoriented_segs_, TRI_TYPE)(struct hit *hits,
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
     }
     if (nhits&1) {
-	if (RT_G_DEBUG & DEBUG_SHOOT) {
+	if (RT_G_DEBUG & RT_DEBUG_SHOOT) {
 	    bu_log("rt_bot_unoriented_segs(%s): WARNING: odd number of hits (%zu), last hit ignored\n",
 		   stp->st_name, nhits);
 	    bu_log("\tray = -p %g %g %g -d %g %g %g\n",
@@ -1121,7 +1121,7 @@ CPP_XGLUE(bot_piece_shot_, TRI_TYPE)(struct rt_piecestate *psp, struct rt_piecel
     long piecenum;
     register struct hit *hp;
     struct bot_specific *bot;
-    const int debug_shoot = RT_G_DEBUG & DEBUG_SHOOT;
+    const int debug_shoot = RT_G_DEBUG & RT_DEBUG_SHOOT;
     int starting_hits;
     fastf_t toldist, dn_plus_tol;
     size_t trinum;

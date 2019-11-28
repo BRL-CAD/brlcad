@@ -398,7 +398,7 @@ nmg_patch_coplanar_face_merge(struct shell *s, size_t *face_count, struct patch_
     bu_free((char *)flags1, "nmg_shell_coplanar_face_merge flags1[]");
     bu_free((char *)flags2, "nmg_shell_coplanar_face_merge flags2[]");
 
-    if (nmg_debug & DEBUG_BASIC) {
+    if (nmg_debug & NMG_DEBUG_BASIC) {
 	bu_log("nmg_shell_coplanar_face_merge(s=%p, tol=%p, simplify=%d)\n",
 	       (void *)s, (void *)tol, simplify);
     }
@@ -3457,7 +3457,7 @@ main(int argc, char **argv)
 
 	    case 'x':  /* librt debug flags */
 
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
 		break;
 
 	    case 'X':  /* librt NMG debug flags */
@@ -3548,7 +3548,7 @@ main(int argc, char **argv)
 	bu_log("debug level = %d\n", debug);
 
     if (RT_G_DEBUG) {
-	bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT);
+	bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, RT_DEBUG_FORMAT);
 	bu_log("\n");
     }
 

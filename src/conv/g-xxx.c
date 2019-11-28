@@ -399,8 +399,8 @@ main(int argc, char *argv[])
 		/* grab output file name */
 		break;
 	    case 'x':		/* librt debug flag */
-		sscanf(bu_optarg, "%x", &RTG.debug);
-		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT);
+		sscanf(bu_optarg, "%x", &rt_debug);
+		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, RT_DEBUG_FORMAT);
 		bu_log("\n");
 		break;
 	    case 'X':		/* NMG debug flag */

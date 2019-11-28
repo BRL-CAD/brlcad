@@ -104,7 +104,7 @@ typedef struct {
 #endif
     char paddingB[64];
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
     long entrycountmax;
     mmAtomicL statentrycount;
     mmAtomicL accesscount;
@@ -183,7 +183,7 @@ static int mmHashTryCallEntry(mmHashTable *table, mmHashAccess *vaccess, void *c
     /* Hash key of entry */
     hashkey = vaccess->entrykey(callentry) & table->hashmask;
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
     mmAtomicAddL(&table->accesscount, 1);
 #endif
 
@@ -222,7 +222,7 @@ static int mmHashTryCallEntry(mmHashTable *table, mmHashAccess *vaccess, void *c
 	    goto end;
 	}
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
 	mmAtomicAddL(&table->collisioncount, 1);
 #endif
     }
@@ -244,7 +244,7 @@ static int mmHashTryCallEntry(mmHashTable *table, mmHashAccess *vaccess, void *c
 	    table->status = MM_HASH_STATUS_MUSTGROW;
     }
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
     int statentrycount = mmAtomicAddReadL(&table->statentrycount, 1);
 
     if (statentrycount > table->entrycountmax)
@@ -281,7 +281,7 @@ static int mmHashTryDeleteEntry(mmHashTable *table, mmHashAccess *vaccess, void 
     /* Hash key of entry */
     hashkey = vaccess->entrykey(deleteentry) & table->hashmask;
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
     mmAtomicAddL(&table->accesscount, 1);
 #endif
 
@@ -318,7 +318,7 @@ static int mmHashTryDeleteEntry(mmHashTable *table, mmHashAccess *vaccess, void 
 	} else if (cmpvalue == MM_HASH_ENTRYCMP_FOUND)
 	    break;
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
 	mmAtomicAddL(&table->collisioncount, 1);
 #endif
     }
@@ -420,7 +420,7 @@ static int mmHashTryDeleteEntry(mmHashTable *table, mmHashAccess *vaccess, void 
 	/* Move entry in place and continue the repair process */
 	memcpy(entry, targetentry, table->entrysize);
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
 	mmAtomicAddL(&table->relocationcount, 1);
 #endif
 
@@ -435,7 +435,7 @@ static int mmHashTryDeleteEntry(mmHashTable *table, mmHashAccess *vaccess, void 
 	    table->status = MM_HASH_STATUS_MUSTSHRINK;
     }
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
     mmAtomicAddL(&table->statentrycount, -1);
 #endif
 
@@ -463,7 +463,7 @@ static int mmHashTryReadEntry(mmHashTable *table, mmHashAccess *vaccess, void *r
     /* Hash key of entry */
     hashkey = vaccess->entrykey(readentry) & table->hashmask;
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
     mmAtomicAddL(&table->accesscount, 1);
 #endif
 
@@ -502,7 +502,7 @@ static int mmHashTryReadEntry(mmHashTable *table, mmHashAccess *vaccess, void *r
 	} else if (cmpvalue == MM_HASH_ENTRYCMP_FOUND)
 	    break;
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
 	mmAtomicAddL(&table->collisioncount, 1);
 #endif
     }
@@ -532,7 +532,7 @@ static int mmHashTryAddEntry(mmHashTable *table, mmHashAccess *vaccess, void *ad
     /* Hash key of entry */
     hashkey = vaccess->entrykey(addentry) & table->hashmask;
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
     mmAtomicAddL(&table->accesscount, 1);
 #endif
 
@@ -577,7 +577,7 @@ static int mmHashTryAddEntry(mmHashTable *table, mmHashAccess *vaccess, void *ad
 		break;
 	}
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
 	mmAtomicAddL(&table->collisioncount, 1);
 #endif
     }
@@ -593,7 +593,7 @@ static int mmHashTryAddEntry(mmHashTable *table, mmHashAccess *vaccess, void *ad
 	    table->status = MM_HASH_STATUS_MUSTGROW;
     }
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
     int statentrycount = mmAtomicAddReadL(&table->statentrycount, 1);
 
     if (statentrycount > table->entrycountmax)
@@ -622,7 +622,7 @@ static int mmHashTryFindEntry(mmHashTable *table, mmHashAccess *vaccess, void *f
     int cmpvalue, retvalue;
     void *entry;
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
     mmAtomicAddL(&table->accesscount, 1);
 #endif
 
@@ -664,7 +664,7 @@ static int mmHashTryFindEntry(mmHashTable *table, mmHashAccess *vaccess, void *f
 	} else if (cmpvalue == MM_HASH_ENTRYCMP_FOUND)
 	    break;
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
 	mmAtomicAddL(&table->collisioncount, 1);
 #endif
     }
@@ -755,7 +755,7 @@ void mmHashInit(void *hashtable, mmHashAccess *vaccess, size_t entrysize, uint32
 
 #endif
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
     table->entrycountmax = 0;
     mmAtomicWriteL(&table->statentrycount, 0);
     mmAtomicWriteL(&table->accesscount, 0);
@@ -788,7 +788,7 @@ int mmHashDirectAddEntry(void *hashtable, mmHashAccess *vaccess, void *addentry,
 
     table = (mmHashTable *)hashtable;
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
     mmAtomicAddL(&table->accesscount, 1);
 #endif
 
@@ -812,7 +812,7 @@ int mmHashDirectAddEntry(void *hashtable, mmHashAccess *vaccess, void *addentry,
 		break;
 	}
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
 	mmAtomicAddL(&table->collisioncount, 1);
 #endif
     }
@@ -828,7 +828,7 @@ int mmHashDirectAddEntry(void *hashtable, mmHashAccess *vaccess, void *addentry,
 	    table->status = MM_HASH_STATUS_MUSTGROW;
     }
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
     int statentrycount = mmAtomicAddReadL(&table->statentrycount, 1);
 
     if (statentrycount > table->entrycountmax)
@@ -849,7 +849,7 @@ void mmHashDirectListEntry(void *hashtable, mmHashAccess *vaccess, void *listent
 
     table = (mmHashTable *)hashtable;
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
     mmAtomicAddL(&table->accesscount, 1);
 #endif
 
@@ -864,7 +864,7 @@ void mmHashDirectListEntry(void *hashtable, mmHashAccess *vaccess, void *listent
 	if (cmpvalue == MM_HASH_ENTRYLIST_BREAK)
 	    break;
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
 	mmAtomicAddL(&table->collisioncount, 1);
 #endif
     }

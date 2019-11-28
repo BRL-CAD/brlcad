@@ -245,7 +245,7 @@ view_pixel(struct application *ap)
 	    b = 1;
     }
 
-    if (R_DEBUG&RDEBUG_HITS) bu_log("rgb=%3d, %3d, %3d xy=%3d, %3d (%g, %g, %g)\n",
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_HITS) bu_log("rgb=%3d, %3d, %3d xy=%3d, %3d (%g, %g, %g)\n",
 				    r, g, b, ap->a_x, ap->a_y,
 				    V3ARGS(ap->a_color));
 
@@ -606,7 +606,7 @@ view_setup(struct rt_i *rtip)
 		{
 		    struct region *r = BU_LIST_NEXT(region, &regp->l);
 
-		    if (R_DEBUG&RDEBUG_MATERIAL)
+		    if (OPTICAL_DEBUG&OPTICAL_DEBUG_MATERIAL)
 			bu_log("mlib_setup: drop region %s\n", regp->reg_name);
 
 		    /* zap reg_udata? beware of light structs */
@@ -616,7 +616,7 @@ view_setup(struct rt_i *rtip)
 		}
 	    case 1:
 		/* Full success */
-		if (R_DEBUG&RDEBUG_MATERIAL &&
+		if (OPTICAL_DEBUG&OPTICAL_DEBUG_MATERIAL &&
 		    ((struct mfuncs *)(regp->reg_mfuncs))->mf_print) {
 		    ((struct mfuncs *)(regp->reg_mfuncs))->
 			mf_print(regp, regp->reg_udata);
@@ -698,7 +698,7 @@ view_cleanup(struct rt_i *rtip)
 static int
 hit_nothing(struct application *ap)
 {
-    if (R_DEBUG&RDEBUG_MISSPLOT) {
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_MISSPLOT) {
 	vect_t out;
 
 	/* XXX length should be 1 model diameter */
@@ -753,7 +753,7 @@ hit_nothing(struct application *ap)
 	VSETALL(u.sw.sw_color, 1);
 	VSETALL(u.sw.sw_basecolor, 1);
 
-	if (R_DEBUG&RDEBUG_SHADE)
+	if (OPTICAL_DEBUG&OPTICAL_DEBUG_SHADE)
 	    bu_log("hit_nothing calling viewshade\n");
 
 	(void)viewshade(ap, &u.part, &u.sw);
@@ -1008,7 +1008,7 @@ colorview(struct application *ap, struct partition *PartHeadp, struct seg *finis
     RT_CK_RAY(hitp->hit_rayp);
     ap->a_uptr = (void *)pp->pt_regionp;	/* note which region was shaded */
 
-    if (R_DEBUG&RDEBUG_HITS) {
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_HITS) {
 	bu_log("colorview: lvl=%d coloring %s\n",
 	       ap->a_level,
 	       pp->pt_regionp->reg_name);
@@ -1037,7 +1037,7 @@ colorview(struct application *ap, struct partition *PartHeadp, struct seg *finis
 
 	if (pp->pt_outhit->hit_dist >= INFINITY ||
 	    ap->a_level > max_bounces) {
-	    if (R_DEBUG&RDEBUG_SHOWERR) {
+	    if (OPTICAL_DEBUG&OPTICAL_DEBUG_SHOWERR) {
 		VSET(ap->a_color, 9, 0, 0);	/* RED */
 		bu_log("colorview:  eye inside %s (x=%d, y=%d, lvl=%d)\n",
 		       pp->pt_regionp->reg_name,
@@ -1070,7 +1070,7 @@ colorview(struct application *ap, struct partition *PartHeadp, struct seg *finis
     }
 
     /* Record the approach path */
-    if (R_DEBUG&RDEBUG_RAYWRITE && (hitp->hit_dist > 0.0001)) {
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_RAYWRITE && (hitp->hit_dist > 0.0001)) {
 	VJOIN1(hitp->hit_point, ap->a_ray.r_pt,
 	       hitp->hit_dist, ap->a_ray.r_dir);
 	wraypts(ap->a_ray.r_pt,
@@ -1079,7 +1079,7 @@ colorview(struct application *ap, struct partition *PartHeadp, struct seg *finis
 		-1, ap, stdout);	/* -1 = air */
     }
 
-    if ((R_DEBUG&(RDEBUG_RAYPLOT|RDEBUG_RAYWRITE|RDEBUG_REFRACT)) && (hitp->hit_dist > 0.0001)) {
+    if ((OPTICAL_DEBUG&(OPTICAL_DEBUG_RAYPLOT|OPTICAL_DEBUG_RAYWRITE|OPTICAL_DEBUG_REFRACT)) && (hitp->hit_dist > 0.0001)) {
 	/* There are two parts to plot here.  Ray start to inhit
 	 * (purple), and inhit to outhit (grey).
 	 */
@@ -1094,7 +1094,7 @@ colorview(struct application *ap, struct partition *PartHeadp, struct seg *finis
 
 	VJOIN1(inhit, ap->a_ray.r_pt,
 	       hitp->hit_dist, ap->a_ray.r_dir);
-	if (R_DEBUG&RDEBUG_RAYPLOT) {
+	if (OPTICAL_DEBUG&OPTICAL_DEBUG_RAYPLOT) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    pl_color(stdout, i, 0, i);
 	    pdv_3line(stdout, ap->a_ray.r_pt, inhit);
@@ -1111,7 +1111,7 @@ vdraw open oray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
 	VJOIN1(outhit,
 	       ap->a_ray.r_pt, out,
 	       ap->a_ray.r_dir);
-	if (R_DEBUG&RDEBUG_RAYPLOT) {
+	if (OPTICAL_DEBUG&OPTICAL_DEBUG_RAYPLOT) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    pl_color(stdout, i, i, i);
 	    pdv_3line(stdout, inhit, outhit);
@@ -1135,7 +1135,7 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
     VSETALL(sw.sw_color, 1);
     VSETALL(sw.sw_basecolor, 1);
 
-    if (R_DEBUG&RDEBUG_SHADE)
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_SHADE)
 	bu_log("colorview calling viewshade\n");
 
     /* individual shaders must handle reflection & refraction */
@@ -1164,7 +1164,7 @@ out:
 	ambientOcclusion(ap, pp);
 
     RT_CK_REGION(ap->a_uptr);
-    if (R_DEBUG&RDEBUG_HITS) {
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_HITS) {
 	bu_log("colorview: lvl=%d ret a_user=%d %s\n",
 	       ap->a_level,
 	       ap->a_user,
@@ -1329,7 +1329,7 @@ viewit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
 
     }
 
-    if (R_DEBUG&RDEBUG_HITS) {
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_HITS) {
 	rt_pr_hit(" In", hitp);
 	bu_log("cosI0=%f, diffuse0=%f   ", cosI0, diffuse0);
 	VPRINT("RGB", ap->a_color);
@@ -1689,7 +1689,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	     */
 	    if (BU_LIST_IS_EMPTY(&(LightHead.l))
 		|| !BU_LIST_IS_INITIALIZED(&(LightHead.l))) {
-		if (R_DEBUG&RDEBUG_SHOWERR)bu_log("No explicit light\n");
+		if (OPTICAL_DEBUG&OPTICAL_DEBUG_SHOWERR)bu_log("No explicit light\n");
 		light_maker(1, view2model);
 	    }
 	    break;
@@ -1713,7 +1713,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 		 * create one.
 		 */
 		if (BU_LIST_IS_EMPTY(&(LightHead.l)) || !BU_LIST_IS_INITIALIZED(&(LightHead.l))) {
-		    if (rdebug&RDEBUG_SHOWERR)
+		    if (optical_debug&OPTICAL_DEBUG_SHOWERR)
 			bu_log("No explicit light\n");
 		    light_maker(1, view2model);
 		}
@@ -1741,7 +1741,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 		ap->a_hit = colorview;
 		if (BU_LIST_IS_EMPTY(&(LightHead.l))
 		    || !BU_LIST_IS_INITIALIZED(&(LightHead.l))) {
-		    if (R_DEBUG&RDEBUG_SHOWERR)bu_log("No explicit light\n");
+		    if (OPTICAL_DEBUG&OPTICAL_DEBUG_SHOWERR)bu_log("No explicit light\n");
 		    light_maker(1, view2model);
 		}
 		break;
@@ -1758,7 +1758,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
      * structures in the space partitioning tree
      */
     bu_ptbl_init(&stps, 8, "soltabs to delete");
-    if (R_DEBUG & RDEBUG_LIGHT)
+    if (OPTICAL_DEBUG & OPTICAL_DEBUG_LIGHT)
 	bu_log("deleting %lu invisible light regions\n", BU_PTBL_LEN(&ap->a_rt_i->delete_regs));
 
     for (i=0; i<BU_PTBL_LEN(&ap->a_rt_i->delete_regs); i++) {
@@ -1777,7 +1777,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	/* remove the invisible light region pointers from the soltab
 	 * structs.
 	 */
-	if (R_DEBUG & RDEBUG_LIGHT)
+	if (OPTICAL_DEBUG & OPTICAL_DEBUG_LIGHT)
 	    bu_log("Removing invisible light region pointers from %lu soltabs\n",
 		   BU_PTBL_LEN(&stps));
 
@@ -1790,7 +1790,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	    for (; k>=0; k--) {
 		rp2 = (struct region *)BU_PTBL_GET(&stp->st_regions, k);
 		if (rp2 == rp) {
-		    if (R_DEBUG & RDEBUG_LIGHT) {
+		    if (OPTICAL_DEBUG & OPTICAL_DEBUG_LIGHT) {
 			bu_log("\tRemoving region %s from soltab for %s\n", rp2->reg_name, stp->st_dp->d_namep);
 		    }
 		    bu_ptbl_rm(&stp->st_regions, (long *)rp2);

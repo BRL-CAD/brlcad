@@ -48,7 +48,7 @@ bev_facetize_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_
 
     BU_LIST_INIT(&vhead);
 
-    if (RT_G_DEBUG&DEBUG_TREEWALK) {
+    if (RT_G_DEBUG&RT_DEBUG_TREEWALK) {
 	char *sofar = db_path_to_string(pathp);
 
 	bu_vls_printf(gedp->ged_result_str, "bev_facetize_region_end() path='%s'\n", sofar);

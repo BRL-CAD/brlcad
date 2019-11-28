@@ -268,29 +268,29 @@ rt_seg_planeclip(struct seg *out_hd, struct seg *in_hd, fastf_t *out_norm, fastf
     } else {
 	out_norm_code = NORM_ZNEG;
     }
-    if (RT_G_DEBUG&DEBUG_EBM)bu_log("kmin=%g, kmax=%g, out_norm_code=%d\n", kmin, kmax, out_norm_code);
+    if (RT_G_DEBUG&RT_DEBUG_EBM)bu_log("kmin=%g, kmax=%g, out_norm_code=%d\n", kmin, kmax, out_norm_code);
 
     count = 0;
     while (BU_LIST_WHILE(curr, seg, &(in_hd->l))) {
 	BU_LIST_DEQUEUE(&(curr->l));
-	if (RT_G_DEBUG&DEBUG_EBM)bu_log(" rt_seg_planeclip seg(%g, %g)\n", curr->seg_in.hit_dist, curr->seg_out.hit_dist);
+	if (RT_G_DEBUG&RT_DEBUG_EBM)bu_log(" rt_seg_planeclip seg(%g, %g)\n", curr->seg_in.hit_dist, curr->seg_out.hit_dist);
 	if (curr->seg_out.hit_dist <= kmin) {
-	    if (RT_G_DEBUG&DEBUG_EBM)bu_log("seg_out %g <= kmin %g, freeing\n", curr->seg_out.hit_dist, kmin);
+	    if (RT_G_DEBUG&RT_DEBUG_EBM)bu_log("seg_out %g <= kmin %g, freeing\n", curr->seg_out.hit_dist, kmin);
 	    RT_FREE_SEG(curr, ap->a_resource);
 	    continue;
 	}
 	if (curr->seg_in.hit_dist >= kmax) {
-	    if (RT_G_DEBUG&DEBUG_EBM)bu_log("seg_in  %g >= kmax %g, freeing\n", curr->seg_in.hit_dist, kmax);
+	    if (RT_G_DEBUG&RT_DEBUG_EBM)bu_log("seg_in  %g >= kmax %g, freeing\n", curr->seg_in.hit_dist, kmax);
 	    RT_FREE_SEG(curr, ap->a_resource);
 	    continue;
 	}
 	if (curr->seg_in.hit_dist <= kmin) {
-	    if (RT_G_DEBUG&DEBUG_EBM)bu_log("seg_in = kmin %g\n", kmin);
+	    if (RT_G_DEBUG&RT_DEBUG_EBM)bu_log("seg_in = kmin %g\n", kmin);
 	    curr->seg_in.hit_dist = kmin;
 	    curr->seg_in.hit_surfno = out_norm_code;
 	}
 	if (curr->seg_out.hit_dist >= kmax) {
-	    if (RT_G_DEBUG&DEBUG_EBM)bu_log("seg_out= kmax %g\n", kmax);
+	    if (RT_G_DEBUG&RT_DEBUG_EBM)bu_log("seg_out= kmax %g\n", kmax);
 	    curr->seg_out.hit_dist = kmax;
 	    curr->seg_out.hit_surfno = (-out_norm_code);
 	}
@@ -336,13 +336,13 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
     VJOIN1(P, rp->r_pt, rp->r_min, rp->r_dir);
     /* P is hit point (on RPP?) */
 
-    if (RT_G_DEBUG&DEBUG_EBM)VPRINT("ebm_origin", ebmp->ebm_origin);
-    if (RT_G_DEBUG&DEBUG_EBM)VPRINT("r_pt", rp->r_pt);
-    if (RT_G_DEBUG&DEBUG_EBM)VPRINT("P", P);
-    if (RT_G_DEBUG&DEBUG_EBM)VPRINT("cellsize", ebmp->ebm_cellsize);
+    if (RT_G_DEBUG&RT_DEBUG_EBM)VPRINT("ebm_origin", ebmp->ebm_origin);
+    if (RT_G_DEBUG&RT_DEBUG_EBM)VPRINT("r_pt", rp->r_pt);
+    if (RT_G_DEBUG&RT_DEBUG_EBM)VPRINT("P", P);
+    if (RT_G_DEBUG&RT_DEBUG_EBM)VPRINT("cellsize", ebmp->ebm_cellsize);
     t0 = rp->r_min;
     tmax = rp->r_max;
-    if (RT_G_DEBUG&DEBUG_EBM)bu_log("[shoot: r_min=%g, r_max=%g]\n", rp->r_min, rp->r_max);
+    if (RT_G_DEBUG&RT_DEBUG_EBM)bu_log("[shoot: r_min=%g, r_max=%g]\n", rp->r_min, rp->r_max);
 
     /* find grid cell where ray first hits ideal space bounding RPP */
     igrid[X] = (P[X] - ebmp->ebm_origin[X]) / ebmp->ebm_cellsize[X];
@@ -353,7 +353,7 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
     if (igrid[Y] >= ebmp->ebm_i.ydim) {
 	igrid[Y] = ebmp->ebm_i.ydim-1;
     }
-    if (RT_G_DEBUG&DEBUG_EBM)bu_log("g[X] = %zu, g[Y] = %zu\n", igrid[X], igrid[Y]);
+    if (RT_G_DEBUG&RT_DEBUG_EBM)bu_log("g[X] = %zu, g[Y] = %zu\n", igrid[X], igrid[Y]);
 
     if (ZERO(rp->r_dir[X]) && ZERO(rp->r_dir[Y])) {
 	register struct seg *segp;
@@ -361,7 +361,7 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
 	/* Ray is traveling exactly along Z axis.  Just check the one
 	 * cell hit.  Depend on higher level to clip ray to Z extent.
 	 */
-	if (RT_G_DEBUG&DEBUG_EBM)bu_log("ray on local Z axis\n");
+	if (RT_G_DEBUG&RT_DEBUG_EBM)bu_log("ray on local Z axis\n");
 	if (BIT(&ebmp->ebm_i, igrid[X], igrid[Y]) == 0)
 	    return 0;	/* MISS */
 	RT_GET_SEG(segp, ap->a_resource);
@@ -414,8 +414,8 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
     }
 
     /* The delta[] elements *must* be positive, as t must increase */
-    if (RT_G_DEBUG&DEBUG_EBM)bu_log("t[X] = %g, delta[X] = %g\n", t[X], delta[X]);
-    if (RT_G_DEBUG&DEBUG_EBM)bu_log("t[Y] = %g, delta[Y] = %g\n", t[Y], delta[Y]);
+    if (RT_G_DEBUG&RT_DEBUG_EBM)bu_log("t[X] = %g, delta[X] = %g\n", t[X], delta[X]);
+    if (RT_G_DEBUG&RT_DEBUG_EBM)bu_log("t[Y] = %g, delta[Y] = %g\n", t[Y], delta[Y]);
 
     /* Find face of entry into first cell -- max initial t value */
     if (ZERO(t[X] - INFINITY)) {
@@ -431,7 +431,7 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
 	in_index = Y;
 	t0 = t[Y];
     }
-    if (RT_G_DEBUG&DEBUG_EBM)bu_log("Entry index is %s, t0=%g\n", in_index==X ? "X" : "Y", t0);
+    if (RT_G_DEBUG&RT_DEBUG_EBM)bu_log("Entry index is %s, t0=%g\n", in_index==X ? "X" : "Y", t0);
 
     /* Advance to next exits */
     t[X] += delta[X];
@@ -446,7 +446,7 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
 	bu_log("*** advancing t[Y]\n");
 	t[Y] += delta[Y];
     }
-    if (RT_G_DEBUG&DEBUG_EBM)bu_log("Exit t[X]=%g, t[Y]=%g\n", t[X], t[Y]);
+    if (RT_G_DEBUG&RT_DEBUG_EBM)bu_log("Exit t[X]=%g, t[Y]=%g\n", t[X], t[Y]);
 
     inside = 0;
 
@@ -461,10 +461,10 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
 
 	/* Ray passes through cell igrid[XY] from t0 to t1 */
 	val = BIT(&ebmp->ebm_i, igrid[X], igrid[Y]);
-	if (RT_G_DEBUG&DEBUG_EBM)bu_log("igrid [%zu %zu] from %g to %g, val=%d\n",
+	if (RT_G_DEBUG&RT_DEBUG_EBM)bu_log("igrid [%zu %zu] from %g to %g, val=%d\n",
 					igrid[X], igrid[Y],
 					t0, t1, val);
-	if (RT_G_DEBUG&DEBUG_EBM)bu_log("Exit index is %s, t[X]=%g, t[Y]=%g\n",
+	if (RT_G_DEBUG&RT_DEBUG_EBM)bu_log("Exit index is %s, t[X]=%g, t[Y]=%g\n",
 					out_index==X ? "X" : "Y", t[X], t[Y]);
 
 
@@ -496,7 +496,7 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
 		}
 		BU_LIST_INSERT(&(seghead->l), &(segp->l));
 
-		if (RT_G_DEBUG&DEBUG_EBM) bu_log("START t=%g, surfno=%d\n",
+		if (RT_G_DEBUG&RT_DEBUG_EBM) bu_log("START t=%g, surfno=%d\n",
 						 t0, segp->seg_in.hit_surfno);
 	    } else {
 		/* Do nothing, marching through void */
@@ -528,7 +528,7 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
 		    tail->seg_out.hit_surfno =
 			rt_ebm_normtab[in_index];
 		}
-		if (RT_G_DEBUG&DEBUG_EBM) bu_log("END t=%g, surfno=%d\n",
+		if (RT_G_DEBUG&RT_DEBUG_EBM) bu_log("END t=%g, surfno=%d\n",
 						 t0, tail->seg_out.hit_surfno);
 	    }
 	}
@@ -560,7 +560,7 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
 	    /* go right, exit norm goes right */
 	    tail->seg_out.hit_surfno = rt_ebm_normtab[in_index];
 	}
-	if (RT_G_DEBUG&DEBUG_EBM) bu_log("closed END t=%g, surfno=%d\n",
+	if (RT_G_DEBUG&RT_DEBUG_EBM) bu_log("closed END t=%g, surfno=%d\n",
 					 tmax, tail->seg_out.hit_surfno);
     }
 

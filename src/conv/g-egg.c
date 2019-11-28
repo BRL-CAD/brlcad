@@ -249,7 +249,7 @@ main(int argc, char *argv[])
 		ncpu = atoi(bu_optarg);
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
 		break;
 	    case 'D':
 		conv_data.tol.dist = atof(bu_optarg);

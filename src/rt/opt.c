@@ -70,7 +70,7 @@ int output_is_binary = 1;        /* !0 means output file is binary */
 int query_x = 0;
 int query_y = 0;
 int Query_one_pixel = 0;
-int query_rdebug  = 0;
+int query_optical_debug  = 0;
 int query_debug = 0;
 int stereo = 0;                         /* stereo viewing */
 int hypersample = 0;                    /* number of extra rays to fire */
@@ -391,10 +391,10 @@ get_args(int argc, const char *argv[])
 		AmbientIntensity = atof(bu_optarg);
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rdebug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&optical_debug);
 		break;
 	    case '!':
 		sscanf(bu_optarg, "%x", (unsigned int *)&bu_debug);
@@ -575,7 +575,7 @@ get_args(int argc, const char *argv[])
 				(unsigned long)npsw, (unsigned long)avail_cpus);
 
 			if ((bu_debug & BU_DEBUG_PARALLEL) ||
-			    (RT_G_DEBUG & DEBUG_PARALLEL)) {
+			    (RT_G_DEBUG & RT_DEBUG_PARALLEL)) {
 			    fprintf(stderr, "\nAllowing surplus cpus due to debug flag.\n");
 			} else {
 			    fprintf(stderr, "  Will use %lu.\n", (unsigned long)avail_cpus);
@@ -586,7 +586,7 @@ get_args(int argc, const char *argv[])
 			fprintf(stderr, "Numer of requested cpus (%lu) is out of range 1..%d", (unsigned long)npsw, MAX_PSW);
 
 			if ((bu_debug & BU_DEBUG_PARALLEL) ||
-			    (RT_G_DEBUG & DEBUG_PARALLEL)) {
+			    (RT_G_DEBUG & RT_DEBUG_PARALLEL)) {
 			    fprintf(stderr, ", but allowing due to debug flag\n");
 			} else {
 			    fprintf(stderr, ", using -P1\n");
@@ -673,12 +673,12 @@ get_args(int argc, const char *argv[])
     }
 
     /* Compat */
-    if (RT_G_DEBUG || R_DEBUG || nmg_debug)
+    if (RT_G_DEBUG || OPTICAL_DEBUG || nmg_debug)
 	bu_debug |= BU_DEBUG_COREDUMP;
 
-    if (RT_G_DEBUG & DEBUG_PARALLEL)
+    if (RT_G_DEBUG & RT_DEBUG_PARALLEL)
 	bu_debug |= BU_DEBUG_PARALLEL;
-    if (RT_G_DEBUG & DEBUG_MATH)
+    if (RT_G_DEBUG & RT_DEBUG_MATH)
 	bu_debug |= BU_DEBUG_MATH;
 
     /* TODO: add options instead of reading from ENV */

@@ -7178,7 +7178,7 @@ wdb_pull_cmd(struct rt_wdb *wdbp,
     while ((c = bu_getopt(argc, (char * const *)argv, "d")) != -1) {
 	switch (c) {
 	   case 'd':
-		RTG.debug |= DEBUG_TREEWALK;
+		rt_debug |= RT_DEBUG_TREEWALK;
 		break;
 	  case '?':
 	  default:
@@ -7195,7 +7195,7 @@ wdb_pull_cmd(struct rt_wdb *wdbp,
      */
     db_functree(wdbp->dbip, dp, wdb_pull_comb, wdb_pull_leaf, &rt_uniresource, &mat);
 
-    RTG.debug = debug;
+    rt_debug = debug;
 
 
    return TCL_OK;
@@ -7268,7 +7268,7 @@ wdb_push_leaf(struct db_tree_state *tsp,
 
     dp = pathp->fp_names[pathp->fp_len-1];
 
-    if (RT_G_DEBUG&DEBUG_TREEWALK) {
+    if (RT_G_DEBUG&RT_DEBUG_TREEWALK) {
 	char *sofar = db_path_to_string(pathp);
 
 	Tcl_AppendResult(wpdp->interp, "wdb_push_leaf(",
@@ -7386,7 +7386,7 @@ wdb_push_cmd(struct rt_wdb *wdbp,
 		if (ncpu<1) ncpu = 1;
 		break;
 	    case 'd':
-		RTG.debug |= DEBUG_TREEWALK;
+		rt_debug |= RT_DEBUG_TREEWALK;
 		break;
 	    case '?':
 	    default:
@@ -7422,7 +7422,7 @@ wdb_push_cmd(struct rt_wdb *wdbp,
 	    pip->back->forw = pip->forw;
 	    bu_free((void *)pip, "Push ident");
 	}
-	RTG.debug = old_debug;
+	rt_debug = old_debug;
 	bu_free((void *)wpdp, "wdb_push_tcl: wpdp");
 	Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp,
 			 "push:\tdb_walk_tree failed or there was a solid moving\n\tin two or more directions",
@@ -7477,7 +7477,7 @@ wdb_push_cmd(struct rt_wdb *wdbp,
 	bu_free((void *)pip, "Push ident");
     }
 
-    RTG.debug = old_debug;
+    rt_debug = old_debug;
     push_error = wpdp->push_error;
     bu_free((void *)wpdp, "wdb_push_tcl: wpdp");
 

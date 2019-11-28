@@ -590,14 +590,14 @@ cm_libdebug(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 
     if (*cp == '\0') {
 	/* display current value */
-	bu_printb("libdebug ", RT_G_DEBUG, RT_DEBUG_FMT);
+	bu_printb("libdebug ", RT_G_DEBUG, RT_DEBUG_FORMAT);
 	bu_log("\n");
 	return;
     }
 
     /* Set a new value */
-    if (sscanf(cp, "%x", (unsigned int *)&RTG.debug) == 1) {
-	bu_printb("libdebug ", RT_G_DEBUG, RT_DEBUG_FMT);
+    if (sscanf(cp, "%x", (unsigned int *)&rt_debug) == 1) {
+	bu_printb("libdebug ", RT_G_DEBUG, RT_DEBUG_FORMAT);
 	bu_log("\n");
     } else {
 	com_usage(ctp);

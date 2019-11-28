@@ -806,7 +806,7 @@ prep_frame(struct frame *fr)
 	    use_air, jitter,
 	    AmbientIntensity, lightmodel,
 	    eye_backoff,
-	    RT_G_DEBUG, R_DEBUG,
+	    RT_G_DEBUG, OPTICAL_DEBUG,
 	    rt_dist_tol, rt_perp_tol
 	);
     bu_vls_strcat(&fr->fr_cmd, buf);

@@ -657,7 +657,7 @@ main(int argc, char **argv)
 		verbose++;
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
 		break;
 	    case 'X':
 		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
@@ -1223,7 +1223,7 @@ do_region_end1(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 	bu_log("pmp->num_bots = %d pmp->num_nonbots = %d\n", pmp->num_bots, pmp->num_nonbots);
 	bu_bomb("region was both bot and non-bot objects\n");
     }
-    if (RT_G_DEBUG&DEBUG_TREEWALK || verbose) {
+    if (RT_G_DEBUG&RT_DEBUG_TREEWALK || verbose) {
 	bu_log("\nConverted %d%% so far (%d of %d)\n",
 	       regions_tried > 0 ? (regions_converted * 100) / regions_tried : 0,
 	       regions_converted, regions_tried);
@@ -1256,7 +1256,7 @@ do_region_end2(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     struct plate_mode *pmp = (struct plate_mode *)client_data;
     char *name;
 
-    if ((pmp->num_bots > 0) && (RT_G_DEBUG&DEBUG_TREEWALK || verbose)) {
+    if ((pmp->num_bots > 0) && (RT_G_DEBUG&RT_DEBUG_TREEWALK || verbose)) {
 	bu_log("\nConverted %d%% so far (%d of %d)\n",
 	       regions_tried > 0 ? (regions_converted * 100) / regions_tried : 0,
 	       regions_converted, regions_tried);
@@ -1322,7 +1322,7 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 
     BU_LIST_INIT(&vhead);
 
-    if (RT_G_DEBUG&DEBUG_TREEWALK || verbose) {
+    if (RT_G_DEBUG&RT_DEBUG_TREEWALK || verbose) {
 	bu_log("\nConverted %d%% so far (%d of %d)\n",
 	       regions_tried > 0 ? (regions_converted * 100) / regions_tried : 0,
 	       regions_converted, regions_tried);

@@ -216,7 +216,7 @@ fire_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const
     RT_CK_REGION(rp);
 
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_log("fire_setup(%s)\n", rp->reg_name);
 
     /* Get memory for the shader parameters and shader-specific data */
@@ -256,7 +256,7 @@ fire_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const
     rt_dspline_matrix(fire_sp->fire_colorspline_mat, "Catmull", 0.5, 0.0);
 
 
-    if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE || fire_sp->fire_debug) {
 	bu_struct_print(" FIRE Parameters:", fire_print_tab, (char *)fire_sp);
 	bn_mat_print("m_to_sh", fire_sp->fire_m_to_sh);
 	bn_mat_print("sh_to_noise", fire_sp->fire_sh_to_noise);
@@ -292,7 +292,7 @@ fire_render(struct application *ap, const struct partition *pp, struct shadework
 /* ptr to the shader-specific struct */
 {
 #define DEBUG_SPACE_PRINT(str, i_pt, o_pt)			\
-    if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug) {		\
+    if (optical_debug&OPTICAL_DEBUG_SHADE || fire_sp->fire_debug) {		\
 	bu_log("fire_render() %s space \n", str);		\
 	bu_log("fire_render() i_pt(%g %g %g)\n", V3ARGS(i_pt)); \
 	bu_log("fire_render() o_pt(%g %g %g)\n", V3ARGS(o_pt)); \
@@ -339,7 +339,7 @@ fire_render(struct application *ap, const struct partition *pp, struct shadework
     RT_CHECK_PT(pp);
     CK_fire_SP(fire_sp);
 
-    if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE || fire_sp->fire_debug) {
 /* bu_struct_print("fire_render Parameters:", fire_print_tab, (char *)fire_sp); */
 	bu_log("fire_render()\n");
     }
@@ -376,7 +376,7 @@ fire_render(struct application *ap, const struct partition *pp, struct shadework
 
     noise_r_thick = MAGNITUDE(noise_r_dir);
 
-    if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE || fire_sp->fire_debug) {
 	bu_log("fire_render() noise_r_dir (%g %g %g)\n",
 	       V3ARGS(noise_r_dir));
 	bu_log("fire_render() noise_r_thick %g\n", noise_r_thick);
@@ -402,7 +402,7 @@ fire_render(struct application *ap, const struct partition *pp, struct shadework
 
     if (samples < 1) samples = 1;
 
-    if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE || fire_sp->fire_debug) {
 	bu_log("samples:%d\n", samples);
 	bu_log("samples_per_unit_noise %g\n", samples_per_unit_noise);
 	bu_log("noise_dist_per_sample %g\n", noise_dist_per_sample);
@@ -429,7 +429,7 @@ fire_render(struct application *ap, const struct partition *pp, struct shadework
 	noise_val = bn_noise_turb(noise_pt, fire_sp->noise_h_val,
 				  fire_sp->noise_lacunarity, fire_sp->noise_octaves);
 
-	if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug)
+	if (optical_debug&OPTICAL_DEBUG_SHADE || fire_sp->fire_debug)
 	    bu_log("bn_noise_turb(%g %g %g) = %g\n",
 		   V3ARGS(noise_pt),
 		   noise_val);
@@ -445,7 +445,7 @@ fire_render(struct application *ap, const struct partition *pp, struct shadework
 	    register double t;
 	    t = lumens;
 	    lumens += noise_val * 0.025 * (1.0 -shader_pt[Z]);
-	    if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug)
+	    if (optical_debug&OPTICAL_DEBUG_SHADE || fire_sp->fire_debug)
 		bu_log("lumens:%g = %g + %g * %g\n",
 		       lumens, t, noise_val,
 		       0.025 * (1.0 - shader_pt[Z]));
@@ -453,14 +453,14 @@ fire_render(struct application *ap, const struct partition *pp, struct shadework
 	}
 	if (lumens >= 1.0) {
 	    lumens = 1.0;
-	    if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug)
+	    if (optical_debug&OPTICAL_DEBUG_SHADE || fire_sp->fire_debug)
 		bu_log("early exit from lumens loop\n");
 	    break;
 	}
 
     }
 
-    if (rdebug&RDEBUG_SHADE || fire_sp->fire_debug)
+    if (optical_debug&OPTICAL_DEBUG_SHADE || fire_sp->fire_debug)
 	bu_log("lumens = %g\n", lumens);
 
     if (lumens < 0.0) lumens = 0.0;
