@@ -23,6 +23,16 @@ if(ADAPTAGRAMS_FOUND)
   set(LIBGED_CMD_INCLUDE_DIRS ${LIBGED_CMD_INCLUDE_DIRS} ${AVOID_INCLUDE_DIR})
 endif(ADAPTAGRAMS_FOUND)
 
+set(DEBUG_VARS_C "${CMAKE_CURRENT_BINARY_DIR}/debug_vars.c")
+
+add_custom_command(OUTPUT ${DEBUG_VARS_C}
+  COMMAND debug2c ${CMAKE_BINARY_DIR}/cmakefiles.cmake ${DEBUG_VARS_C}
+  DEPENDS debug2c
+  COMMENT "[DEBUG2C] Scanning for debugging variables"
+  )
+set_source_files_properties(debug.c PROPERTIES OBJECT_DEPENDS ${DEBUG_VARS_C})
+DISTCLEAN(${DEBUG_VARS_C})
+
 set(ENV_VARS_C "${CMAKE_CURRENT_BINARY_DIR}/env_vars.c")
 
 add_custom_command(OUTPUT ${ENV_VARS_C}
@@ -97,6 +107,7 @@ set(LIBGED_SOURCES
   cpi.c
   dag.cpp
   dbip.c
+  debug.c
   debugbu.c
   debugdir.c
   debuglib.c
@@ -387,7 +398,7 @@ if (BRLCAD_ENABLE_OPENVDB)
   set_property(SOURCE bot_remesh.cpp APPEND PROPERTY COMPILE_FLAGS "${OpenVDB_DEFINITIONS} -w")
 endif (BRLCAD_ENABLE_OPENVDB)
 
-BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;librt;libnmg;libfb;libbg;libbn;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${CADBULLET_LIBRARY};${REGEX_LIBRARY};${WINSOCK_LIB};${M_LIBRARY}")
+BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;liboptical;librt;libnmg;libfb;libbg;libbn;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${CADBULLET_LIBRARY};${REGEX_LIBRARY};${WINSOCK_LIB};${M_LIBRARY}")
 SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 add_subdirectory(tests)

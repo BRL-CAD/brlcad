@@ -182,6 +182,12 @@ THIRD_PARTY_EXECUTABLE(env2c ENV2C env2c REQUIRED "BRLCAD_LEVEL2" NOSYS)
 SetTargetFolder(env2c "Compilation Utilities")
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/env2c/Makefile)
 
+# debug2c - Scanner to generate a list of debug variables used by
+# source code
+THIRD_PARTY_EXECUTABLE(debug2c DEBUG2C debug2c REQUIRED "BRLCAD_LEVEL2" NOSYS)
+SetTargetFolder(debug2c "Compilation Utilities")
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/debug2c/Makefile)
+
 CMAKEFILES(README)
 CMAKEFILES(CMakeLists.txt)
 
