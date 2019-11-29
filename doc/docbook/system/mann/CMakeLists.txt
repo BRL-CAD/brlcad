@@ -52,6 +52,7 @@ set(mann_EN
   db_glob.xml
   dbconcat.xml
   dbupgrade.xml
+  debug.xml
   debugbu.xml
   debugdir.xml
   debuglib.xml

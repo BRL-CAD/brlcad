@@ -115,7 +115,7 @@ static void
 debug_print_help(struct bu_vls *vls)
 {
     int lcnt = 0;
-    bu_vls_printf(vls, "debug [-h] [-l [lib]] [-C [lib]] [-V [lib] [val]] [lib] [flag]]\n\n");
+    bu_vls_printf(vls, "debug [-h] [-l [lib]] [-C [lib]] [-V [lib] [val]] [lib [flag]]\n\n");
     bu_vls_printf(vls, "Available libs:\n");
     while (dbg_lib_entries[lcnt]) {
 	bu_vls_printf(vls, "\t%s\n", dbg_libs[lcnt]);
