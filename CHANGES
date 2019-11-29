@@ -137,6 +137,9 @@ btclsh, bwish
 	Emacs key binding emulation
 	achieved by running btclsh in Emacs [deprecated 7.30]
 
+nirt
+	Behavior available under the --old flag [deprecated 7.30]
+
 7.28
 ----
 include/bu/malloc.h
