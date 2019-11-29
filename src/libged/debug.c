@@ -38,14 +38,14 @@
 #include "./debug_vars.c"
 
 static void
-print_all_lib_flags(struct ged *gedp, int lcnt, int max_strlen)
+print_all_lib_flags(struct bu_vls *vls, int lcnt, int max_strlen)
 {
     int ecnt = 0;
     long eval = -1;
     while (eval != 0) {
 	eval = dbg_lib_entries[lcnt][ecnt].val;
 	if (eval > 0) {
-	    bu_vls_printf(gedp->ged_result_str, "   %*s (0x%08lx): %s\n", max_strlen, dbg_lib_entries[lcnt][ecnt].key, dbg_lib_entries[lcnt][ecnt].val, dbg_lib_entries[lcnt][ecnt].info);
+	    bu_vls_printf(vls, "   %*s (0x%08lx): %s\n", max_strlen, dbg_lib_entries[lcnt][ecnt].key, dbg_lib_entries[lcnt][ecnt].val, dbg_lib_entries[lcnt][ecnt].info);
 	}
 	ecnt++;
     }
@@ -53,21 +53,21 @@ print_all_lib_flags(struct ged *gedp, int lcnt, int max_strlen)
 
 
 static void
-print_set_lib_flags(struct ged *gedp, int lcnt, int max_strlen)
+print_set_lib_flags(struct bu_vls *vls, int lcnt, int max_strlen)
 {
     int ecnt = 0;
     while (dbg_lib_entries[lcnt][ecnt].val) {
 	unsigned int *cvect = dbg_vars[lcnt];
 	if (*cvect & dbg_lib_entries[lcnt][ecnt].val) {
-	    bu_vls_printf(gedp->ged_result_str, "   %*s (0x%08lx): %s\n", max_strlen, dbg_lib_entries[lcnt][ecnt].key, dbg_lib_entries[lcnt][ecnt].val, dbg_lib_entries[lcnt][ecnt].info);
+	    bu_vls_printf(vls, "   %*s (0x%08lx): %s\n", max_strlen, dbg_lib_entries[lcnt][ecnt].key, dbg_lib_entries[lcnt][ecnt].val, dbg_lib_entries[lcnt][ecnt].info);
 	}
 	ecnt++;
     }
-    bu_vls_printf(gedp->ged_result_str, "\n");
+    bu_vls_printf(vls, "\n");
 }
 
 static void
-print_all_set_lib_flags(struct ged *gedp, int max_strlen)
+print_all_set_lib_flags(struct bu_vls *vls, int max_strlen)
 {
     int lcnt = 0;
     while (dbg_lib_entries[lcnt]) {
@@ -87,8 +87,8 @@ print_all_set_lib_flags(struct ged *gedp, int max_strlen)
 	    continue;
 	}
 
-	bu_vls_printf(gedp->ged_result_str, "%s flags:\n", dbg_libs[lcnt]);
-	print_set_lib_flags(gedp, lcnt, max_strlen);
+	bu_vls_printf(vls, "%s flags:\n", dbg_libs[lcnt]);
+	print_set_lib_flags(vls, lcnt, max_strlen);
 
 	lcnt++;
     }
@@ -134,7 +134,7 @@ ged_debug(struct ged *gedp, int argc, const char **argv)
 	    lcnt = 0;
 	    while (dbg_lib_entries[lcnt]) {
 		bu_vls_printf(gedp->ged_result_str, "%s flags:\n", dbg_libs[lcnt]);
-		print_all_lib_flags(gedp, lcnt, max_strlen);
+		print_all_lib_flags(gedp->ged_result_str, lcnt, max_strlen);
 		bu_vls_printf(gedp->ged_result_str, "\n");
 		lcnt++;
 	    }
@@ -149,7 +149,7 @@ ged_debug(struct ged *gedp, int argc, const char **argv)
 		    continue;
 		}
 		bu_vls_printf(gedp->ged_result_str, "%s flags:\n", dbg_libs[lcnt]);
-		print_all_lib_flags(gedp, lcnt, max_strlen);
+		print_all_lib_flags(gedp->ged_result_str, lcnt, max_strlen);
 		bu_vls_printf(gedp->ged_result_str, "\n");
 		lcnt++;
 	    }
@@ -183,7 +183,7 @@ ged_debug(struct ged *gedp, int argc, const char **argv)
 			*cvect = (unsigned int) fvall;
 			lcnt++;
 		    }
-		    print_all_set_lib_flags(gedp, max_strlen);
+		    print_all_set_lib_flags(gedp->ged_result_str, max_strlen);
 		    return GED_OK;
 		} else {
 		    while (dbg_lib_entries[lcnt]) {
@@ -251,7 +251,7 @@ ged_debug(struct ged *gedp, int argc, const char **argv)
 			return GED_ERROR;
 		    }
 		}
-		print_set_lib_flags(gedp, lcnt, max_strlen);
+		print_set_lib_flags(gedp->ged_result_str, lcnt, max_strlen);
 		return GED_OK;
 	    }
 	    lcnt++;
@@ -262,7 +262,7 @@ ged_debug(struct ged *gedp, int argc, const char **argv)
     }
 
     lcnt = 0;
-    print_all_set_lib_flags(gedp, max_strlen);
+    print_all_set_lib_flags(gedp->ged_result_str, max_strlen);
 
     return GED_OK;
 }
