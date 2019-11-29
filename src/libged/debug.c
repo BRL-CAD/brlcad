@@ -115,7 +115,7 @@ static void
 debug_print_help(struct bu_vls *vls)
 {
     int lcnt = 0;
-    bu_vls_printf(vls, "debug [-h] [-l [lib]] [-C [lib]] [-V [lib] [val]] [[lib] [flag]]\n\n");
+    bu_vls_printf(vls, "debug [-h] [-l [lib]] [-C [lib]] [-V [lib] [val]] [lib] [flag]]\n\n");
     bu_vls_printf(vls, "Available libs:\n");
     while (dbg_lib_entries[lcnt]) {
 	bu_vls_printf(vls, "\t%s\n", dbg_libs[lcnt]);
@@ -258,14 +258,19 @@ ged_debug(struct ged *gedp, int argc, const char **argv)
 	    return GED_OK;
 	}
 
-	if (BU_STR_EQUAL(argv[1], "-l") && argc == 2) {
-	    print_all_flags(gedp->ged_result_str, max_strlen);
-	    return GED_OK;
-	}
+	if (BU_STR_EQUAL(argv[1], "-l")) {
+	    if (argc == 2) {
+		print_all_flags(gedp->ged_result_str, max_strlen);
+		return GED_OK;
+	    }
 
-	if (BU_STR_EQUAL(argv[1], "-l") && argc == 3) {
-	    print_select_flags(gedp->ged_result_str, argv[2], max_strlen);
-	    return GED_OK;
+	    if (argc == 3) {
+		print_select_flags(gedp->ged_result_str, argv[2], max_strlen);
+		return GED_OK;
+	    }
+
+	    debug_print_help(gedp->ged_result_str);
+	    return GED_ERROR;
 	}
 
 	if (BU_STR_EQUAL(argv[1], "-C")) {
@@ -293,12 +298,9 @@ ged_debug(struct ged *gedp, int argc, const char **argv)
 		bu_vls_printf(gedp->ged_result_str, "invalid input: %s\n", argv[2]);
 		return GED_ERROR;
 	    }
-	    if (argc > 3) {
-		if (set_flag_hex_value(gedp->ged_result_str, argv[2], argv[3], max_strlen)) {
-		    return GED_ERROR;
-		}
-		return GED_OK;
-	    }
+
+	    debug_print_help(gedp->ged_result_str);
+	    return GED_ERROR;
 	}
 
 
@@ -330,18 +332,13 @@ ged_debug(struct ged *gedp, int argc, const char **argv)
 		}
 		return GED_OK;
 	    }
+
+	    debug_print_help(gedp->ged_result_str);
+	    return GED_ERROR;
 	}
 
 
-	if (argc > 2) {
-	    lcnt = toggle_debug_flag(gedp->ged_result_str, argv[1], argv[2]);
-	    if (lcnt < 0) {
-		return GED_ERROR;
-	    } else {
-		print_set_lib_flags(gedp->ged_result_str, lcnt, max_strlen);
-		return GED_OK;
-	    }
-	} else {
+	if (argc == 2) {
 	    lcnt = 0;
 	    while (dbg_lib_entries[lcnt]) {
 		if (BU_STR_EQUIV(argv[1], dbg_libs[lcnt])) {
@@ -351,7 +348,18 @@ ged_debug(struct ged *gedp, int argc, const char **argv)
 		lcnt++;
 	    }
 	}
-	bu_vls_printf(gedp->ged_result_str, "invalid input: %s\n", argv[1]);
+
+	if (argc == 3) {
+	    lcnt = toggle_debug_flag(gedp->ged_result_str, argv[1], argv[2]);
+	    if (lcnt < 0) {
+		return GED_ERROR;
+	    } else {
+		print_set_lib_flags(gedp->ged_result_str, lcnt, max_strlen);
+		return GED_OK;
+	    }
+	}
+
+	debug_print_help(gedp->ged_result_str);
 	return GED_ERROR;
     }
 
