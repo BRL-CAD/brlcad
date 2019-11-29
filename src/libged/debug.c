@@ -120,14 +120,22 @@ ged_debug(struct ged *gedp, int argc, const char **argv)
     if (argc > 1) {
 
 	if (BU_STR_EQUAL(argv[1], "-h")) {
-	    bu_vls_printf(gedp->ged_result_str, "debug [-h] [-l [lib]] [lib] [flag]\n");
+	    bu_vls_printf(gedp->ged_result_str, "debug [-h] [-l [lib]] [lib] [flag]\n\n");
+	    bu_vls_printf(gedp->ged_result_str, "Available libs:\n");
+	    lcnt = 0;
+	    while (dbg_lib_entries[lcnt]) {
+		bu_vls_printf(gedp->ged_result_str, "\t%s\n", dbg_libs[lcnt]);
+		lcnt++;
+	    }
 	    return GED_OK;
 	}
 
 	if (BU_STR_EQUAL(argv[1], "-l") && argc == 2) {
 	    lcnt = 0;
 	    while (dbg_lib_entries[lcnt]) {
-		bu_vls_printf(gedp->ged_result_str, "%s\n", dbg_libs[lcnt]);
+		bu_vls_printf(gedp->ged_result_str, "%s flags:\n", dbg_libs[lcnt]);
+		print_all_lib_flags(gedp, lcnt, max_strlen);
+		bu_vls_printf(gedp->ged_result_str, "\n");
 		lcnt++;
 	    }
 	    return GED_OK;
