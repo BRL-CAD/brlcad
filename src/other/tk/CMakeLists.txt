@@ -42,6 +42,10 @@ cmake_minimum_required(VERSION 3.1.3)
 # set CMake project name
 project(TK)
 
+if (${CMAKE_VERSION} VERSION_GREATER "3.11.0")
+	cmake_policy(SET CMP0075 NEW)
+endif (${CMAKE_VERSION} VERSION_GREATER "3.11.0")
+
 # Without Tcl libraries AND sources, we can't build Tk.  Use TCL_SRC_PREFIX
 # and TCL_BIN_PREFIX to identify the location of the Tcl we are to use.
 IF(TCL_SRC_PREFIX AND TCL_BIN_PREFIX)

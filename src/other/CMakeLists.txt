@@ -415,9 +415,9 @@ set(TCL_PATH_NOMATCH_PATTERNS "/usr/brlcad;brlcad-install;${CMAKE_INSTALL_PREFIX
 set(TCL_MIN_VERSION "8.5" CACHE STRING "Minimum acceptable Tcl/Tk version" FORCE)
 
 if(BRLCAD_ENABLE_TK)
-  set(TCL_REQUIRE_TK 1)
-ELSE(BRLCAD_ENABLE_TK)
-  set(TCL_REQUIRE_TK 0)
+  OPTION(TCL_REQUIRE_TK "Look for Tk installation, not just Tcl." ON)
+else(BRLCAD_ENABLE_TK)
+  OPTION(TCL_REQUIRE_TK "Look for Tk installation, not just Tcl." OFF)
 endif(BRLCAD_ENABLE_TK)
 
 # Turn off the man pages
@@ -906,16 +906,16 @@ endif(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
 # Need Lemon/Perplex to build STEP - conditionalize
 
 # Set some options for the SCL build
-set(SC_PYTHON_GENERATOR OFF)
-set(SC_ENABLE_TESTING OFF)
-set(SC_ENABLE_COVERAGE OFF)
+option(SC_PYTHON_GENERATOR "Compile exp2python" OFF)
+option(SC_ENABLE_TESTING "Enable unittesting framework" OFF)
+option(SC_ENABLE_COVERAGE "Enable code coverage test" OFF)
+
 set(SC_IS_SUBBUILD ON)
 set(SC_SKIP_EXEC_INSTALL ON)
 set(SC_BUILD_TYPE "${CMAKE_BUILD_TYPE}")
 set(INCLUDE_INSTALL_DIR ${INCLUDE_DIR})
 set(BIN_INSTALL_DIR ${BIN_DIR})
 set(LIB_INSTALL_DIR ${LIB_DIR})
-
 
 function(SC_MANAGE_HDRS src_dir src_var target_dir)
   get_directory_property(sc_headers_orig DIRECTORY ${src_dir} DEFINITION ${src_var})
