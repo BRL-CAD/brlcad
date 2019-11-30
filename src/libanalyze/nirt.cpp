@@ -2061,7 +2061,7 @@ static const struct nirt_cmd_desc nirt_descs[] = {
     { "fmt",            "set/query output formats",                      "{rhpfmog} format item item ..." },
     { "print",          "query an output item",                          "item" },
     { "bot_minpieces",  "Get/Set value for rt_bot_minpieces (0 means do not use pieces, default is 32)", "min_pieces" },
-    { "debug",          "set/query nirt debug flags",                    "hex_flag_value" },
+    { "debug",          "set/query nirt debug flags",                    "[-h] [-l [lib]] [-C [lib]] [-V [lib] [val]] [lib [flag]]" },
     { "q",              "quit",                                          NULL },
     { "?",              "display this help menu",                        NULL },
     { (char *)NULL,     NULL,                                            NULL}
