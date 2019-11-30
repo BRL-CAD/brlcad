@@ -63,7 +63,8 @@ extern "C" off_t ftello(FILE *);
 #include "bu/debug.h"
 #include "nmg/debug.h"
 #include "rt/debug.h"
-#include "optical/debug.h"
+
+#include "./debug_cmd.c"
 
 /* NIRT segment types */
 #define NIRT_MISS_SEG      1    /**< @brief Ray segment representing a miss */
@@ -75,15 +76,6 @@ extern "C" off_t ftello(FILE *);
 #define NIRT_SILENT_UNSET    0
 #define NIRT_SILENT_YES      1
 #define NIRT_SILENT_NO       -1
-
-// Used by front end applications, but library needs to store and report as well.
-#define NIRT_DEBUG_INTERACT  0x001
-#define NIRT_DEBUG_SCRIPTS   0x002
-#define NIRT_DEBUG_MAT       0x004
-
-#define NIRT_DEBUG_BACKOUT   0x008
-#define NIRT_DEBUG_HITS      0x010
-#define NIRT_DEBUG_FMT        "\020\5HITS\4BACKOUT\3MAT\2SCRIPTS\1INTERACT"
 
 #define NIRT_OVLP_RESOLVE            0
 #define NIRT_OVLP_REBUILD_FASTGEN    1
@@ -441,8 +433,6 @@ struct nirt_state_impl {
     struct bu_color *overlap_color;
     int print_header;
     int print_ident_flag;
-    unsigned int rt_debug;
-    unsigned int nirt_debug;
 
     /* Output */
     struct bu_vls *out;
@@ -566,7 +556,7 @@ HIDDEN void nerr(struct nirt_state *nss, const char *fmt, ...)
 HIDDEN void ndbg(struct nirt_state *nss, int flag, const char *fmt, ...)
 {
     va_list ap;
-    if ((nss->i->nirt_debug & flag) && nss->i->h_err) {
+    if ((analyze_debug & flag) && nss->i->h_err) {
 	struct bu_vls *vls = nss->i->out;
 	BU_CK_VLS(vls);
 	va_start(ap, fmt);
@@ -1837,7 +1827,7 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 	VMOVE(s->out, part->pt_outhit->hit_point);
 	if (part_nm > 1) VMOVE(s->gap_in, out_old);
 
-	ndbg(nss, NIRT_DEBUG_HITS, "Partition %d entry: (%g, %g, %g) exit: (%g, %g, %g)\n",
+	ndbg(nss, ANALYZE_DEBUG_NIRT_HITS, "Partition %d entry: (%g, %g, %g) exit: (%g, %g, %g)\n",
 		part_nm, V3ARGS(s->in), V3ARGS(s->out));
 
 	s->d_in = d_calc(nss, s->in);
@@ -2071,7 +2061,6 @@ static const struct nirt_cmd_desc nirt_descs[] = {
     { "fmt",            "set/query output formats",                      "{rhpfmog} format item item ..." },
     { "print",          "query an output item",                          "item" },
     { "bot_minpieces",  "Get/Set value for rt_bot_minpieces (0 means do not use pieces, default is 32)", "min_pieces" },
-    { "libdebug",       "set/query librt debug flags",                   "hex_flag_value" },
     { "debug",          "set/query nirt debug flags",                    "hex_flag_value" },
     { "q",              "quit",                                          NULL },
     { "?",              "display this help menu",                        NULL },
@@ -2764,7 +2753,7 @@ _nirt_cmd_shoot(void *ns, int argc, const char **UNUSED(argv))
 	nss->i->ap->a_ray.r_dir[i] = nss->i->vals->dir[i];
     }
 
-    ndbg(nss, NIRT_DEBUG_BACKOUT,
+    ndbg(nss, ANALYZE_DEBUG_NIRT_BACKOUT,
 	    "Backing out %g units to (%g %g %g), shooting dir is (%g %g %g)\n",
 	    bov * nss->i->base2local,
 	    nss->i->ap->a_ray.r_pt[0] * nss->i->base2local,
@@ -3185,91 +3174,27 @@ bot_minpieces_done:
 }
 
 extern "C" int
-_nirt_cmd_librt_debug(void *ns, int argc, const char **argv)
-{
-    int ret = 0;
-    long dflg = 0;
-    struct bu_vls msg = BU_VLS_INIT_ZERO;
-    struct nirt_state *nss = (struct nirt_state *)ns;
-    if (!ns) return -1;
-
-    /* Sigh... another librt global, not rtip specific... */
-    if (argc == 1) {
-	bu_vls_printb(&msg, "librt debug ", RT_G_DEBUG, NIRT_DEBUG_FMT);
-	nout(nss, "%s\n", bu_vls_addr(&msg));
-	goto librt_nirt_debug_done;
-    }
-
-    argc--; argv++;
-
-    if (argc > 1) {
-	nerr(nss, "Usage:  libdebug %s\n", _nirt_get_desc_args("libdebug"));
-	return -1;
-    }
-
-    if ((ret = bu_opt_long_hex(&msg, 1, argv, (void *)&dflg)) == -1) {
-	nerr(nss, "%s\n", bu_vls_addr(&msg));
-	goto librt_nirt_debug_done;
-    } else {
-	ret = 0;
-    }
-
-    if (dflg < 0 || dflg > (long)UINT32_MAX) {
-	nerr(nss, "Error: LIBRT debug flag cannot be less than 0 or greater than %d\n", UINT32_MAX);
-	ret = -1;
-	goto librt_nirt_debug_done;
-    }
-
-    rt_debug = (uint32_t)dflg;
-    bu_vls_printb(&msg, "librt debug ", rt_debug, NIRT_DEBUG_FMT);
-    nout(nss, "%s\n", bu_vls_addr(&msg));
-
-librt_nirt_debug_done:
-    bu_vls_free(&msg);
-    return ret;
-}
-
-extern "C" int
 _nirt_cmd_debug(void *ns, int argc, const char **argv)
 {
     int ret = 0;
-    long dflg = 0;
-    struct bu_vls msg = BU_VLS_INIT_ZERO;
+    struct bu_vls msg_out = BU_VLS_INIT_ZERO;
+    struct bu_vls msg_err = BU_VLS_INIT_ZERO;
+
     struct nirt_state *nss = (struct nirt_state *)ns;
     if (!ns) return -1;
 
-    if (argc == 1) {
-	bu_vls_printb(&msg, "debug ", nss->i->nirt_debug, NIRT_DEBUG_FMT);
-	nout(nss, "%s\n", bu_vls_addr(&msg));
-	goto nirt_debug_done;
+    ret = debug_cmd(&msg_out, &msg_err, argc, argv);
+
+    if (bu_vls_strlen(&msg_err)) {
+	nerr(nss, "%s", bu_vls_cstr(&msg_err));
     }
 
-    argc--; argv++;
-
-    if (argc > 1) {
-	nerr(nss, "Usage:  debug %s\n", _nirt_get_desc_args("debug"));
-	return -1;
+    if (bu_vls_strlen(&msg_out)) {
+	nout(nss, "%s", bu_vls_cstr(&msg_out));
     }
 
-    if ((ret = bu_opt_long_hex(&msg, 1, argv, (void *)&dflg)) == -1) {
-	nerr(nss, "%s\n", bu_vls_addr(&msg));
-	goto nirt_debug_done;
-    } else {
-	ret = 0;
-    }
-
-    if (dflg < 0) {
-	nerr(nss, "Error: NIRT debug flag cannot be less than 0\n");
-	ret = -1;
-	goto nirt_debug_done;
-    }
-
-    nss->i->nirt_debug = (unsigned int)dflg;
-    bu_vls_printb(&msg, "debug ", nss->i->nirt_debug, NIRT_DEBUG_FMT);
-    nout(nss, "%s\n", bu_vls_addr(&msg));
-
-nirt_debug_done:
-    bu_vls_free(&msg);
+    bu_vls_free(&msg_err);
+    bu_vls_free(&msg_out);
     return ret;
 }
 
@@ -3526,7 +3451,6 @@ const struct bu_cmdtab _libanalyze_nirt_cmds[] = {
     { "fmt",            _nirt_cmd_format_output},
     { "print",          _nirt_cmd_print_item},
     { "bot_minpieces",  _nirt_cmd_bot_minpieces},
-    { "libdebug",       _nirt_cmd_librt_debug},
     { "debug",          _nirt_cmd_debug},
     { "q",              _nirt_cmd_quit},
     { "?",              _nirt_cmd_show_menu},
@@ -3712,8 +3636,6 @@ nirt_init(struct nirt_state *ns)
     bu_color_from_rgb_chars(n->overlap_color, (unsigned char *)&rgb);
     n->print_header = 0;
     n->print_ident_flag = 0;
-    n->rt_debug = 0;
-    n->nirt_debug = 0;
 
     BU_GET(n->out, struct bu_vls);
     bu_vls_init(n->out);
