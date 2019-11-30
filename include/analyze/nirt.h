@@ -133,7 +133,7 @@ ANALYZE_EXPORT int nirt_line_segments(struct bn_vlblock **segs, struct nirt_stat
 
 __END_DECLS
 
-#endif /* ANALYZE_H */
+#endif /* ANALYZE_NIRT_H */
 
 /** @} */
 

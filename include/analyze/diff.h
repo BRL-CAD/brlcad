@@ -1,4 +1,4 @@
-/*                       A N A L Y Z E . H
+/*                          D I F F . H
  * BRL-CAD
  *
  * Copyright (c) 2008-2019 United States Government as represented by
@@ -19,31 +19,44 @@
  */
 /** @addtogroup libanalyze
  *
- * Functions provided by the LIBANALYZE geometry analysis library.
- *
  */
 /** @{ */
-/** @file include/analyze.h */
+/** @file analyze/diff.h */
 
-#ifndef ANALYZE_H
-#define ANALYZE_H
+#ifndef ANALYZE_DIFF_H
+#define ANALYZE_DIFF_H
 
 #include "common.h"
+#include "raytrace.h"
 
 #include "analyze/defines.h"
-#include "analyze/debug.h"
-#include "analyze/diff.h"
-#include "analyze/density.h"
-#include "analyze/grid.h"
-#include "analyze/heal.h"
-#include "analyze/info.h"
-#include "analyze/pnts.h"
-#include "analyze/polygonize.h"
-#include "analyze/nirt.h"
 #include "analyze/worker.h"
-#include "analyze/voxelize.h"
 
-#endif /* ANALYZE_H */
+__BEGIN_DECLS
+
+struct analyze_raydiff_results {
+    struct bu_ptbl *left;
+    struct bu_ptbl *right;
+    struct bu_ptbl *both;
+};
+
+struct diff_seg {
+    point_t in_pt;
+    point_t out_pt;
+    struct xray ray;
+    int valid;
+};
+
+ANALYZE_EXPORT int
+analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
+		const char *left, const char *right, struct bn_tol *tol, int solidcheck);
+
+ANALYZE_EXPORT void
+analyze_raydiff_results_free(struct analyze_raydiff_results *results);
+
+__END_DECLS
+
+#endif /* ANALYZE_DIFF_H */
 
 /** @} */
 

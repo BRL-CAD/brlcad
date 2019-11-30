@@ -1,4 +1,4 @@
-/*                       A N A L Y Z E . H
+/*                    P O L Y G O N I Z E . H
  * BRL-CAD
  *
  * Copyright (c) 2008-2019 United States Government as represented by
@@ -19,31 +19,32 @@
  */
 /** @addtogroup libanalyze
  *
- * Functions provided by the LIBANALYZE geometry analysis library.
  *
  */
 /** @{ */
-/** @file include/analyze.h */
+/** @file analyze/polygonize.h */
 
-#ifndef ANALYZE_H
-#define ANALYZE_H
+#ifndef ANALYZE_POLYGONIZE_H
+#define ANALYZE_POLYGONIZE_H
 
 #include "common.h"
+#include "raytrace.h"
 
 #include "analyze/defines.h"
-#include "analyze/debug.h"
-#include "analyze/diff.h"
-#include "analyze/density.h"
-#include "analyze/grid.h"
-#include "analyze/heal.h"
-#include "analyze/info.h"
-#include "analyze/pnts.h"
-#include "analyze/polygonize.h"
-#include "analyze/nirt.h"
-#include "analyze/worker.h"
-#include "analyze/voxelize.h"
 
-#endif /* ANALYZE_H */
+__BEGIN_DECLS
+struct analyze_polygonize_params {
+    int max_time;
+    long int minimum_free_mem;
+    int verbosity;
+};
+#define ANALYZE_POLYGONIZE_PARAMS_DEFAULT { 30, 150000000, 0 }
+ANALYZE_EXPORT extern int
+analyze_polygonize(int **faces, int *num_faces, point_t **vertices, int *num_vertices, fastf_t size, point_t p_s, const char *obj, struct db_i *dbip, struct analyze_polygonize_params *p);
+
+__END_DECLS
+
+#endif /* ANALYZE_POLYGONIZE_H */
 
 /** @} */
 

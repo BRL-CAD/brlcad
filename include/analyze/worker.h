@@ -1,4 +1,4 @@
-/*                       A N A L Y Z E . H
+/*                          W O R K E R . H
  * BRL-CAD
  *
  * Copyright (c) 2008-2019 United States Government as represented by
@@ -19,31 +19,41 @@
  */
 /** @addtogroup libanalyze
  *
- * Functions provided by the LIBANALYZE geometry analysis library.
- *
  */
 /** @{ */
-/** @file include/analyze.h */
+/** @file analyze/worker.h */
 
-#ifndef ANALYZE_H
-#define ANALYZE_H
+#ifndef ANALYZE_WORKER_H
+#define ANALYZE_WORKER_H
 
 #include "common.h"
+#include "raytrace.h"
 
 #include "analyze/defines.h"
-#include "analyze/debug.h"
-#include "analyze/diff.h"
-#include "analyze/density.h"
-#include "analyze/grid.h"
-#include "analyze/heal.h"
-#include "analyze/info.h"
-#include "analyze/pnts.h"
-#include "analyze/polygonize.h"
-#include "analyze/nirt.h"
-#include "analyze/worker.h"
-#include "analyze/voxelize.h"
 
-#endif /* ANALYZE_H */
+__BEGIN_DECLS
+
+typedef int (*hitfunc_t)(struct application *, struct partition *, struct seg *);
+typedef int (*missfunc_t)(struct application *);
+typedef int (*overlapfunc_t)(struct application *, struct partition *, struct region *, struct region *, struct partition *);
+
+struct rt_gen_worker_vars {
+    struct rt_i *rtip;
+    struct resource *resp;
+    int rays_cnt;
+    fastf_t *rays;
+    hitfunc_t fhit;
+    missfunc_t fmiss;
+    overlapfunc_t foverlap;
+    int step;       /* number of rays to be fired by this worker before calling back */
+    int *ind_src;   /* source of starting index */
+    int curr_ind;   /* current ray index */
+    void *ptr; /* application specific info */
+};
+
+__END_DECLS
+
+#endif /* ANALYZE_WORKER_H */
 
 /** @} */
 

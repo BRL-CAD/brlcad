@@ -1,4 +1,4 @@
-/*                       A N A L Y Z E . H
+/*                       V O X E L I Z E . H
  * BRL-CAD
  *
  * Copyright (c) 2008-2019 United States Government as represented by
@@ -19,31 +19,51 @@
  */
 /** @addtogroup libanalyze
  *
- * Functions provided by the LIBANALYZE geometry analysis library.
- *
  */
 /** @{ */
-/** @file include/analyze.h */
+/** @file analyze/voxelize.h */
 
-#ifndef ANALYZE_H
-#define ANALYZE_H
+#ifndef ANALYZE_VOXELIZE_H
+#define ANALYZE_VOXELIZE_H
 
 #include "common.h"
+#include "raytrace.h"
 
-#include "analyze/defines.h"
-#include "analyze/debug.h"
-#include "analyze/diff.h"
-#include "analyze/density.h"
-#include "analyze/grid.h"
-#include "analyze/heal.h"
-#include "analyze/info.h"
-#include "analyze/pnts.h"
-#include "analyze/polygonize.h"
-#include "analyze/nirt.h"
-#include "analyze/worker.h"
-#include "analyze/voxelize.h"
+__BEGIN_DECLS
 
-#endif /* ANALYZE_H */
+/*
+ *      Voxel specific structures
+ */
+
+/**
+ * This structure is for lists that store region names for each voxel
+ */
+
+struct voxelRegion {
+    char *regionName;
+    fastf_t regionDistance;
+    struct voxelRegion *nextRegion;
+};
+
+/**
+ * This structure stores the information about voxels provided by a single raytrace.
+ */
+
+struct rayInfo {
+    fastf_t sizeVoxel;
+    fastf_t *fillDistances;
+    struct voxelRegion *regionList;
+};
+
+/**
+ * voxelize function takes raytrace instance and user parameters as inputs
+ */
+ANALYZE_EXPORT extern void
+voxelize(struct rt_i *rtip, fastf_t voxelSize[3], int levelOfDetail, void (*create_boxes)(void *callBackData, int x, int y, int z, const char *regionName, fastf_t percentageFill), void *callBackData);
+
+__END_DECLS
+
+#endif /* ANALYZE_VOXELIZE_H */
 
 /** @} */
 

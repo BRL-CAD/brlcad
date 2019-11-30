@@ -1,8 +1,16 @@
 set(analyze_headers
-  defines.h
   debug.h
+  defines.h
   density.h
+  diff.h
+  grid.h
+  heal.h
+  info.h
   nirt.h
+  pnts.h
+  polygonize.h
+  voxelize.h
+  worker.h
   )
 BRLCAD_MANAGE_FILES(analyze_headers ${INCLUDE_DIR}/brlcad/analyze)
 CMAKEFILES(CMakeLists.txt)
