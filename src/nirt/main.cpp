@@ -816,7 +816,7 @@ main(int argc, const char **argv)
     }
 
     if (bu_vls_strlen(&nirt_debug) > 0) {
-	bu_vls_sprintf(&ncmd, "debug %s", bu_vls_addr(&nirt_debug));
+	bu_vls_sprintf(&ncmd, "debug -V ANALYZE %s", bu_vls_cstr(&nirt_debug));
 	(void)nirt_exec(ns, bu_vls_addr(&ncmd));
     }
 
