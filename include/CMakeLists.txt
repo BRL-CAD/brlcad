@@ -1,3 +1,4 @@
+add_subdirectory(analyze)
 add_subdirectory(bu)
 add_subdirectory(bn)
 add_subdirectory(bg)

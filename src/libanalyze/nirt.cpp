@@ -60,6 +60,10 @@ extern "C" off_t ftello(FILE *);
 #include "bu/vls.h"
 #include "analyze.h"
 
+#include "bu/debug.h"
+#include "nmg/debug.h"
+#include "rt/debug.h"
+#include "optical/debug.h"
 
 /* NIRT segment types */
 #define NIRT_MISS_SEG      1    /**< @brief Ray segment representing a miss */

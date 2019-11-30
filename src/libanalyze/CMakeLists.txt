@@ -1,5 +1,6 @@
 # Include directories needed by libanalyze users
 set(ANALYZE_INCLUDE_DIRS
+  ${CMAKE_CURRENT_BINARY_DIR}
   ${BRLCAD_BINARY_DIR}/include
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
@@ -12,6 +13,7 @@ set(LIBANALYZE_SOURCES
   centroid.c
   check_options.c
   density.cpp
+  globals.c
   inside.c
   mass.c
   moments.c

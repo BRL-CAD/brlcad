@@ -33,37 +33,9 @@
 #include "bu/vls.h"
 #include "raytrace.h"
 
+#include "analyze/defines.h"
+
 __BEGIN_DECLS
-
-#ifndef ANALYZE_EXPORT
-#  if defined(ANALYZE_DLL_EXPORTS) && defined(ANALYZE_DLL_IMPORTS)
-#    error "Only ANALYZE_DLL_EXPORTS or ANALYZE_DLL_IMPORTS can be defined, not both."
-#  elif defined(ANALYZE_DLL_EXPORTS)
-#    define ANALYZE_EXPORT __declspec(dllexport)
-#  elif defined(ANALYZE_DLL_IMPORTS)
-#    define ANALYZE_EXPORT __declspec(dllimport)
-#  else
-#    define ANALYZE_EXPORT
-#  endif
-#endif
-
-/* Libanalyze return codes */
-#define ANALYZE_OK 0x0000
-#define ANALYZE_ERROR 0x0001 /**< something went wrong, function not completed */
-
-
-/*
- *     Density specific structures
- */
-
-#define DENSITY_MAGIC 0xaf0127
-
-/* the entries in the density table */
-struct density_entry {
-    uint32_t magic;
-    double grams_per_cu_mm;
-    char *name;
-};
 
 /*
  *     Grid specific structures
@@ -141,81 +113,7 @@ struct rayInfo {
     struct voxelRegion *regionList;
 };
 
-/**
- *     Loading information from a .density file and querying it.
- */
-#if defined(__cplusplus)
-extern "C" {
-#endif
-struct analyze_densities_impl;
-struct analyze_densities {
-    struct analyze_densities_impl *i;
-};
-#if defined(__cplusplus)
-}
-#endif
-
-ANALYZE_EXPORT extern int analyze_densities_create(struct analyze_densities **a);
-ANALYZE_EXPORT extern void analyze_densities_destroy(struct analyze_densities *a);
-ANALYZE_EXPORT extern int analyze_densities_init(struct analyze_densities *a);
-ANALYZE_EXPORT extern void analyze_densities_clear(struct analyze_densities *a);
-
-/* Update an entry if one matching id already exists, else create a new entry.
- * Unlike the loading and writing functions, this command uses g/mm^3 */
-ANALYZE_EXPORT extern int analyze_densities_set(struct analyze_densities *a, long int id, fastf_t density, const char *name, struct bu_vls *msgs);
-
-/* Accepts a buffer, typically read from a .density file.  Expects units of g/cm^3.
- * (TODO - Ugh - need to come up with a way to define the units in the file so we aren't
- * tied to that forever...)
- *
- * Returns the number of valid density entries loaded. The optional ecnt variable, if
- * supplied, will count the number of lines where the parser failed to recognize either
- * a commented line or a valid density.  Calling codes may then decide if they want to
- * accept the partial result or fail hard based on the ecnt. */
-ANALYZE_EXPORT extern int analyze_densities_load(struct analyze_densities *a, const char *buff, struct bu_vls *msgs, int *ecnt);
-
-/* Creates a .density buffer from a, writing units of g/cm^3.  Returns length of buff
- * (TODO - Ugh - need to come up with a way to define the units so we aren't
- * tied to g/cm^3 that forever...) */
-ANALYZE_EXPORT extern long int analyze_densities_write(char **buff, struct analyze_densities *a);
-
-/* This mapping will be unique - each id may have at most one entry in the database. Caller
- * is responsible for freeing the resulting string. */
-ANALYZE_EXPORT extern char *analyze_densities_name(struct analyze_densities *a, long int id);
-
-/* Because this mapping is not guaranteed to be unique, this function has to be
- * a bit more sophisticated in what it does.
- *
- * If ids is NULL or max_ids == 0, it will return the count of the ids
- * associated with name in the database.
- *
- * If an ids array is available, it returns two pieces of data - the id array
- * of length max_ids (defined by the caller) will hold up to max_ids material
- * IDs that have the specified name.  In this mode, the return code will either
- * be the number of IDs written to ids (if positive) or the number of
- * additional ids found that would not fit in the ids array (if negative).
- */
-ANALYZE_EXPORT extern long int analyze_densities_id(long int *ids, long int max_ids, struct analyze_densities *a, const char *name);
-
-/* Note: to use a name for density lookup, supply one of the outputs of
- * analyze_densities_id to this function.
- *
- * Density is returned in g/mm^3 */
-ANALYZE_EXPORT extern fastf_t analyze_densities_density(struct analyze_densities *a, long int id);
-
-/* Provide a means to iterate over all defined densities.  To get the lowest valid id,
- * supply -1 to curr_id.  Given a valid id, supply it to curr_id to get the next highest
- * id.  When there isn't a valid next id, -1 is returned. To count the number of density
- * definitions active, do the following:
- *
- * long int curr_id = -1;
- * long int dcnt = 0;
- * while ((curr_id = analyze_densities_next(a, curr_id)) != -1) dcnt++;
- *
- */
-ANALYZE_EXPORT extern long int analyze_densities_next(struct analyze_densities *a, long int curr_id);
-
-
+#include "analyze/density.h"
 
 /**
  *     region_pair for gqa
@@ -300,103 +198,7 @@ analyze_find_subtracted(struct bu_ptbl *results, struct rt_wdb *wdbp,
 ANALYZE_EXPORT void
 analyze_heal_bot(struct rt_bot_internal *bot, double zipper_tol);
 
-/**
- *    A library implementation of functionality originally developed in
- *    Natalie's Interactive Ray Tracer (NIRT)
- */
-
-/** Opaque container to hold NIRT's state */
-struct nirt_state_impl;
-struct nirt_state {
-    struct nirt_state_impl *i;
-};
-
-/**
- * Perform non-database dependent initialization.  A newly initialized state
- * can accept some commands (like updates to the attribute list) but will not
- * be able to raytrace. To set up a raytracing environment, apply
- * nirt_init_dbip */
-ANALYZE_EXPORT int nirt_init(struct nirt_state *ns);
-
-/**
- * Initialize a struct nirt_state state for a particular database.  After this
- * step a nirt instance is ready to raytrace. */
-ANALYZE_EXPORT int nirt_init_dbip(struct nirt_state *ns, struct db_i *dbip);
-
-/**
- * Clear those aspects of a struct nirt_state state specific to a database
- * instance. */
-ANALYZE_EXPORT int nirt_clear_dbip(struct nirt_state *ns);
-
-/**
- * Clean up and free the internals of a NIRT state. */
-ANALYZE_EXPORT void nirt_destroy(struct nirt_state *ns);
-
-/**
- * Execute nirt commands.  Runs either the supplied script.
- *
- * Returns -1 if there was any sort of error, 0 if the script executed
- * successfully without a quit call, and 1 if a quit command was encountered
- * during execution. See the man(1) nirt manual page for documentation of
- * valid script commands and options.
- */
-ANALYZE_EXPORT int nirt_exec(struct nirt_state *ns, const char *script);
-
-/* Flags for clearing/resetting/reporting the struct nirt_state state */
-#define NIRT_ALL      0x1    /**< @brief reset to initial state or report all state */
-#define NIRT_OUT      0x2    /**< @brief output log*/
-#define NIRT_MSG      0x4    /**< @brief output log*/
-#define NIRT_ERR      0x8    /**< @brief error log */
-#define NIRT_SEGS     0x10   /**< @brief segment list */
-#define NIRT_OBJS     0x20   /**< @brief 'active' objects from the scene */
-#define NIRT_FRMTS    0x40   /**< @brief available pre-defined output formats */
-#define NIRT_VIEW     0x80   /**< @brief the current view (ae/dir/center/etc.) */
-
-/**
- * Associate a pointer to user data with the struct nirt_state state, unless
- * u_data is NULL. Returns the current u_data pointer - so to extract the
- * current struct nirt_state data pointer value, supply a NULL argument to
- * u_data. If u_data is non-NULL, the current data pointer will be overwritten
- * - the caller should save the old pointer if they need it before setting the
- * new one. */
-ANALYZE_EXPORT void *nirt_udata(struct nirt_state *ns, void *u_data);
-
-/**
- * Mechanism for setting callback hooks executed when the specified state is
- * changed after a nirt_exec call.  struct nirt_state_ALL will be executed
- * last, and is run if set and if any of the other states change. Hook
- * functions will be passed the current value of the u_data pointer. */
-typedef int (*nirt_hook_t)(struct nirt_state *ns, void *u_data);
-ANALYZE_EXPORT void nirt_hook(struct nirt_state *ns, nirt_hook_t hf, int flag);
-
-/**
- * Reset some or all of the struct nirt_state state, depending on the supplied
- * flags. If other flags are provided with struct nirt_state_ALL, struct
- * nirt_state_ALL will skip the clearing step(s) specified by the other
- * flag(s).  So, for example, if a caller wishes to reset the struct nirt_state
- * state but retain the existing scripts for re-use they could call with
- * nirt_clear with struct nirt_state_ALL|struct nirt_state_SCRIPTS.  Note that
- * the struct nirt_state_FRMTS, struct nirt_state_OUT and struct nirt_state_ERR
- * flags are no-ops for nirt_clear. */
-ANALYZE_EXPORT void nirt_clear(struct nirt_state *ns, int flags);
-
-/**
- * Report command output.  For SEGS, SCRIPTS, OBJS and FRMTS reports a textual
- * list of the output.  Unlike clear, which takes the type as combinable flags,
- * nirt_log expects only one type. Returns -1 if output can't be printed for
- * any reason (NULL input or unknown output_type) and 0 otherwise. */
-ANALYZE_EXPORT void nirt_log(struct bu_vls *o, struct nirt_state *ns, int output_type);
-
-/**
- * Reports available commands and their options. Returns -1 if help can't be
- * printed for any reason (NULL input or unknown output type) and 0 otherwise.
- */
-ANALYZE_EXPORT int nirt_help(struct bu_vls *h, struct nirt_state *ns, bu_opt_format_t ofmt);
-
-/**
- * Return any line segments generated by processed commands in segs.  Returns
- * number of line segments in segs, or -1 if there was an error. */
-ANALYZE_EXPORT int nirt_line_segments(struct bn_vlblock **segs, struct nirt_state *ns);
+#include "analyze/nirt.h"
 
 /**
  * Using ray intersection, sample the database object obj and return a pnts
