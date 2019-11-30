@@ -9,7 +9,7 @@
 
   <refnamediv xml:id="name">
     <refname>debug</refname>
-    <refpurpose>Allows the user to set or check the debug flags used by BRL-CAD libraries.
+    <refpurpose>Allows the user to set or check the flags used by BRL-CAD libraries to enable low level debugging outputs.
     </refpurpose>
   </refnamediv>
 
@@ -28,7 +28,7 @@
   <refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>
-    Supports listing, setting and checking the debug flags defined by <emphasis>BRL-CAD</emphasis> libraries.
+    Supports listing, setting and checking the debug flags defined by <emphasis>BRL-CAD</emphasis> libraries.  The outputs controlled by this command are extremely low level, most likely cryptic to those not familiar with the internal of BRL-CAD's implementation, and may cause any variety of odd or unexpected behaviors.  Generally speaking, they are present to avoid having to recompile the code to obtain more verbose information printing during a debugging setssion, and are intended only for that use case.  In short, they are development only, <emphasis>not</emphasis> intended for general user consumption and should be avoided unless you know <emphasis>exactly</emphasis> what you are doing.
   </para>
   <para>
     The <option>-h</option> help option will print out a list of libraries supported by the
