@@ -28,7 +28,7 @@
   <refsection xml:id="description"><title>DESCRIPTION</title>
 
   <para>
-    Supports listing, seting and checking the debug flags defined by <emphasis>BRL-CAD</emphasis> libraries.
+    Supports listing, setting and checking the debug flags defined by <emphasis>BRL-CAD</emphasis> libraries.
   </para>
   <para>
     The <option>-h</option> help option will print out a list of libraries supported by the
