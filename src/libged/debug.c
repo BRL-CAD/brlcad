@@ -42,6 +42,9 @@ print_all_lib_flags(struct bu_vls *vls, int lcnt, int max_strlen)
 {
     int ecnt = 0;
     long eval = -1;
+    if (!vls) {
+	return;
+    }
     while (eval != 0) {
 	eval = dbg_lib_entries[lcnt][ecnt].val;
 	if (eval > 0) {
@@ -56,6 +59,9 @@ static void
 print_set_lib_flags(struct bu_vls *vls, int lcnt, int max_strlen)
 {
     int ecnt = 0;
+    if (!vls) {
+	return;
+    }
     while (dbg_lib_entries[lcnt][ecnt].val) {
 	unsigned int *cvect = dbg_vars[lcnt];
 	if (*cvect & dbg_lib_entries[lcnt][ecnt].val) {
@@ -70,6 +76,9 @@ static void
 print_all_set_lib_flags(struct bu_vls *vls, int max_strlen)
 {
     int lcnt = 0;
+    if (!vls) {
+	return;
+    }
     while (dbg_lib_entries[lcnt]) {
 	int ecnt = 0;
 	int have_active = 0;
@@ -115,6 +124,9 @@ static void
 debug_print_help(struct bu_vls *vls)
 {
     int lcnt = 0;
+    if (!vls) {
+	return;
+    }
     bu_vls_printf(vls, "debug [-h] [-l [lib]] [-C [lib]] [-V [lib] [val]] [lib [flag]]\n\n");
     bu_vls_printf(vls, "Available libs:\n");
     while (dbg_lib_entries[lcnt]) {
@@ -127,6 +139,9 @@ static void
 print_all_flags(struct bu_vls *vls, int max_strlen)
 {
     int lcnt = 0;
+    if (!vls) {
+	return;
+    }
     while (dbg_lib_entries[lcnt]) {
 	bu_vls_printf(vls, "%s flags:\n", dbg_libs[lcnt]);
 	print_all_lib_flags(vls, lcnt, max_strlen);
@@ -139,6 +154,9 @@ static void
 print_select_flags(struct bu_vls *vls, const char *filter, int max_strlen)
 {
     int lcnt = 0;
+    if (!vls) {
+	return;
+    }
     while (dbg_lib_entries[lcnt]) {
 	if (!BU_STR_EQUAL(filter, "*") && !(BU_STR_EQUIV(filter, dbg_libs[lcnt]))) {
 	    lcnt++;
@@ -152,7 +170,7 @@ print_select_flags(struct bu_vls *vls, const char *filter, int max_strlen)
 }
 
 static int
-toggle_debug_flag(struct bu_vls *vls, const char *lib_filter, const char *flag_filter)
+toggle_debug_flag(struct bu_vls *e_vls, const char *lib_filter, const char *flag_filter)
 {
     int	lcnt = 0;
     while (dbg_lib_entries[lcnt]) {
@@ -173,8 +191,8 @@ toggle_debug_flag(struct bu_vls *vls, const char *lib_filter, const char *flag_f
 		ecnt++;
 	    }
 	    if (!found) {
-		if (vls) {
-		    bu_vls_printf(vls, "invalid %s flag paramter: %s\n", dbg_libs[lcnt], flag_filter);
+		if (e_vls) {
+		    bu_vls_printf(e_vls, "invalid %s flag paramter: %s\n", dbg_libs[lcnt], flag_filter);
 		}
 		return -1;
 	    } else {
@@ -184,8 +202,8 @@ toggle_debug_flag(struct bu_vls *vls, const char *lib_filter, const char *flag_f
 	lcnt++;
     }
 
-    if (vls) {
-	bu_vls_printf(vls, "invalid lib paramter: %s\n", lib_filter);
+    if (e_vls) {
+	bu_vls_printf(e_vls, "invalid lib paramter: %s\n", lib_filter);
     }
     return -1;
 }
@@ -194,6 +212,9 @@ static void
 print_flag_hex_val(struct bu_vls *vls, int lcnt, int max_strlen, int labeled)
 {
     unsigned int *cvect = dbg_vars[lcnt];
+    if (!vls) {
+	return;
+    }
     if (labeled) {
 	bu_vls_printf(vls, "%*s: 0x%08x\n", max_strlen, dbg_libs[lcnt], *cvect);
     } else {
@@ -202,7 +223,7 @@ print_flag_hex_val(struct bu_vls *vls, int lcnt, int max_strlen, int labeled)
 }
 
 static int
-set_flag_hex_value(struct bu_vls *vls, const char *lib_filter, const char *hexstr, int max_strlen)
+set_flag_hex_value(struct bu_vls *o_vls, struct bu_vls *e_vls, const char *lib_filter, const char *hexstr, int max_strlen)
 {
     int lcnt = 0;
     while (dbg_lib_entries[lcnt]) {
@@ -212,41 +233,40 @@ set_flag_hex_value(struct bu_vls *vls, const char *lib_filter, const char *hexst
 	    if (hexstr[0] == '0' && hexstr[1] == 'x') {
 		long fvall = strtol(hexstr, NULL, 0);
 		if (fvall < 0) {
-		    if (vls) {
-			bu_vls_printf(vls, "unusable hex value %ld\n", fvall);
+		    if (e_vls) {
+			bu_vls_printf(e_vls, "unusable hex value %ld\n", fvall);
 		    }
 		    return -1;
 		}
 		*cvect = (unsigned int)fvall;
 	    } else {
-		if (vls) {
-		    bu_vls_printf(vls, "invalid hex string %s\n", hexstr);
+		if (e_vls) {
+		    bu_vls_printf(e_vls, "invalid hex string %s\n", hexstr);
 		}
 		return -1;
 	    }
-	    if (vls) {
-		print_flag_hex_val(vls, lcnt, max_strlen, 0);
+	    if (o_vls) {
+		print_flag_hex_val(o_vls, lcnt, max_strlen, 0);
 	    }
 	    return 0;
 	}
 	lcnt++;
     }
-    if (vls) {
-	bu_vls_printf(vls, "invalid input: %s\n", lib_filter);
+    if (e_vls) {
+	bu_vls_printf(e_vls, "invalid input: %s\n", lib_filter);
     }
     return -1;
 }
 
-int
-ged_debug(struct ged *gedp, int argc, const char **argv)
+static int
+debug_cmd(struct bu_vls *o_vls, struct bu_vls *e_vls, int argc, const char **argv)
 {
     int lcnt = 0;
     int max_strlen = -1;
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (argc > 4) {
-	return GED_ERROR;
+	debug_print_help(e_vls);
+	return -1;
     }
 
     max_strlen = debug_max_strlen();
@@ -254,23 +274,23 @@ ged_debug(struct ged *gedp, int argc, const char **argv)
     if (argc > 1) {
 
 	if (BU_STR_EQUAL(argv[1], "-h")) {
-	    debug_print_help(gedp->ged_result_str);
-	    return GED_OK;
+	    debug_print_help(o_vls);
+	    return 0;
 	}
 
 	if (BU_STR_EQUAL(argv[1], "-l")) {
 	    if (argc == 2) {
-		print_all_flags(gedp->ged_result_str, max_strlen);
-		return GED_OK;
+		print_all_flags(o_vls, max_strlen);
+		return 0;
 	    }
 
 	    if (argc == 3) {
-		print_select_flags(gedp->ged_result_str, argv[2], max_strlen);
-		return GED_OK;
+		print_select_flags(o_vls, argv[2], max_strlen);
+		return 0;
 	    }
 
-	    debug_print_help(gedp->ged_result_str);
-	    return GED_ERROR;
+	    debug_print_help(e_vls);
+	    return -1;
 	}
 
 	if (BU_STR_EQUAL(argv[1], "-C")) {
@@ -282,7 +302,7 @@ ged_debug(struct ged *gedp, int argc, const char **argv)
 		    *cvect = 0;
 		    lcnt++;
 		}
-		return GED_OK;
+		return 0;
 	    }
 	    if (argc == 3) {
 		/* -C with arg - clear a specific library */
@@ -291,16 +311,18 @@ ged_debug(struct ged *gedp, int argc, const char **argv)
 		    if (BU_STR_EQUIV(argv[2], dbg_libs[lcnt])) {
 			unsigned int *cvect = dbg_vars[lcnt];
 			*cvect = 0;
-			return GED_OK;
+			return 0;
 		    }
 		    lcnt++;
 		}
-		bu_vls_printf(gedp->ged_result_str, "invalid input: %s\n", argv[2]);
-		return GED_ERROR;
+		if (e_vls) {
+		    bu_vls_printf(e_vls, "invalid input: %s\n", argv[2]);
+		}
+		return -1;
 	    }
 
-	    debug_print_help(gedp->ged_result_str);
-	    return GED_ERROR;
+	    debug_print_help(e_vls);
+	    return -1;
 	}
 
 
@@ -309,32 +331,34 @@ ged_debug(struct ged *gedp, int argc, const char **argv)
 		/* Bare -v option - print all the hex values */
 		lcnt = 0;
 		while (dbg_lib_entries[lcnt]) {
-		    print_flag_hex_val(gedp->ged_result_str, lcnt, max_strlen, 1);
+		    print_flag_hex_val(o_vls, lcnt, max_strlen, 1);
 		    lcnt++;
 		}
-		return GED_OK;
+		return 0;
 	    }
 	    if (argc == 3) {
 		lcnt = 0;
 		while (dbg_lib_entries[lcnt]) {
 		    if (BU_STR_EQUIV(argv[2], dbg_libs[lcnt])) {
-			print_flag_hex_val(gedp->ged_result_str, lcnt, max_strlen, 0);
-			return GED_OK;
+			print_flag_hex_val(o_vls, lcnt, max_strlen, 0);
+			return 0;
 		    }
 		    lcnt++;
 		}
-		bu_vls_printf(gedp->ged_result_str, "invalid input: %s\n", argv[2]);
-		return GED_ERROR;
+		if (e_vls) {
+		    bu_vls_printf(e_vls, "invalid input: %s\n", argv[2]);
+		}
+		return -1;
 	    }
 	    if (argc > 3) {
-		if (set_flag_hex_value(gedp->ged_result_str, argv[2], argv[3], max_strlen)) {
-		    return GED_ERROR;
+		if (set_flag_hex_value(o_vls, e_vls, argv[2], argv[3], max_strlen)) {
+		    return -1;
 		}
-		return GED_OK;
+		return 0;
 	    }
 
-	    debug_print_help(gedp->ged_result_str);
-	    return GED_ERROR;
+	    debug_print_help(e_vls);
+	    return -1;
 	}
 
 
@@ -342,29 +366,42 @@ ged_debug(struct ged *gedp, int argc, const char **argv)
 	    lcnt = 0;
 	    while (dbg_lib_entries[lcnt]) {
 		if (BU_STR_EQUIV(argv[1], dbg_libs[lcnt])) {
-		    print_set_lib_flags(gedp->ged_result_str, lcnt, max_strlen);
-		    return GED_OK;
+		    print_set_lib_flags(o_vls, lcnt, max_strlen);
+		    return 0;
 		}
 		lcnt++;
 	    }
 	}
 
 	if (argc == 3) {
-	    lcnt = toggle_debug_flag(gedp->ged_result_str, argv[1], argv[2]);
+	    lcnt = toggle_debug_flag(e_vls, argv[1], argv[2]);
 	    if (lcnt < 0) {
-		return GED_ERROR;
+		return -1;
 	    } else {
-		print_set_lib_flags(gedp->ged_result_str, lcnt, max_strlen);
-		return GED_OK;
+		print_set_lib_flags(o_vls, lcnt, max_strlen);
+		return 0;
 	    }
 	}
 
-	debug_print_help(gedp->ged_result_str);
-	return GED_ERROR;
+	debug_print_help(e_vls);
+	return -1;
     }
 
     lcnt = 0;
-    print_all_set_lib_flags(gedp->ged_result_str, max_strlen);
+    print_all_set_lib_flags(o_vls, max_strlen);
+
+    return 0;
+}
+
+int
+ged_debug(struct ged *gedp, int argc, const char **argv)
+{
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    if (debug_cmd(gedp->ged_result_str, gedp->ged_result_str, argc, argv)) {
+	return GED_ERROR;
+    }
 
     return GED_OK;
 }
