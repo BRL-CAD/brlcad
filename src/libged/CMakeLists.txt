@@ -33,15 +33,15 @@ add_custom_command(OUTPUT ${DEBUG_VARS_C}
 set_source_files_properties(debug.c PROPERTIES OBJECT_DEPENDS ${DEBUG_VARS_C})
 DISTCLEAN(${DEBUG_VARS_C})
 
-set(ENV_VARS_C "${CMAKE_CURRENT_BINARY_DIR}/env_vars.c")
+set(ENV_CMD_C "${CMAKE_CURRENT_BINARY_DIR}/env_cmd.c")
 
-add_custom_command(OUTPUT ${ENV_VARS_C}
-  COMMAND env2c ${CMAKE_BINARY_DIR}/cmakefiles.cmake ${ENV_VARS_C}
+add_custom_command(OUTPUT ${ENV_CMD_C}
+  COMMAND env2c ${CMAKE_BINARY_DIR}/cmakefiles.cmake ${ENV_CMD_C}
   DEPENDS env2c
   COMMENT "[ENV2C] Scanning for environment variable usage"
   )
-set_source_files_properties(env.c PROPERTIES OBJECT_DEPENDS ${ENV_VARS_C})
-DISTCLEAN(${ENV_VARS_C})
+set_source_files_properties(env.c PROPERTIES OBJECT_DEPENDS ${ENV_CMD_C})
+DISTCLEAN(${ENV_CMD_C})
 
 set(LIBGED_SOURCES
   ${LIBGED_SOURCES}
