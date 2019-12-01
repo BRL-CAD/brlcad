@@ -207,31 +207,12 @@ main(int argc, const char *argv[])
 	cad_vars.insert(v_it->second);
     }
 
-    if (verbose) {
-
-	std::cout << "src/other Environment Variables:\n";
-	for (v_it = o_vars.begin(); v_it != o_vars.end(); v_it++) {
-	    std::cout << "\t" << v_it->first << ":" << v_it->second << "\n";
-	}
-
-	std::cout << "BRL-CAD library Environment Variables:\n";
-	for (v_it = blib_vars.begin(); v_it != blib_vars.end(); v_it++) {
-	    std::cout << "\t" << v_it->first << ":" << v_it->second << "\n";
-	}
-
-	std::cout << "BRL-CAD executable Environment Variables:\n";
-	for (v_it = bexe_vars.begin(); v_it != bexe_vars.end(); v_it++) {
-	    std::cout << "\t" << v_it->first << ":" << v_it->second << "\n";
-	}
-    }
-
     std::ofstream ofile;
     ofile.open(argv[2], std::fstream::trunc);
     if (!ofile.is_open()) {
 	std::cerr << "Unable to open output file " << argv[2] << " for writing!\n";
 	return -1;
     }
-
 
     ofile << "#include <stdlib.h>\n";
     ofile << "#include <string.h>\n";
