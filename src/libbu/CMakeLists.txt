@@ -129,6 +129,7 @@ set(LIBBU_SOURCES
   vlb.c
   vls.c
   vls_vprintf.c
+  whereami.c
   whereis.c
   which.c
   xdr.c
@@ -181,6 +182,7 @@ set(bu_ignore_files
   vls_vprintf.h
   TODO.binary_attributes
   uce-dirent.h
+  whereami.h
   y2038/LICENSE
   y2038/README.txt
   y2038/time64.h
