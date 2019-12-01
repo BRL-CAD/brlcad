@@ -39,6 +39,7 @@
  */
 
 #include <cstdio>
+#include <algorithm>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -47,42 +48,121 @@
 #include <sstream>
 #include <string>
 
+/* Uncomment to debug stand-alone */
+//#define TEST_MAIN 1
+
 void
-process_file(std::string f, std::set<std::string> &evars, int verbose)
+process_file(
+	std::set<std::pair<std::string,std::string>> &o_vars,
+	std::set<std::pair<std::string,std::string>> &blib_vars,
+	std::set<std::pair<std::string,std::string>> &bexe_vars,
+	std::map<std::string, std::set<std::string>> &c_vars,
+	std::string f, int verbose)
 {
+    std::regex getenv_regex(".*getenv\\(\\\".*");
+    std::regex evar_regex(".*getenv\\(\\\"([^\\\"]+)\\\"\\).*");
+    std::regex o_regex(".*[\\/]other[\\/].*");
+    std::regex sp_regex(".*[\\/]other[\\/]([A-Za-z0-9_-]+).*");
+    std::regex lp_regex(".*[\\/]lib([A-Za-z0-9_-]+)[\\/].*");
+    std::regex ep_regex(".*[\\/]src[\\/]([A-Za-z0-9_-]+)[\\/].*");
+    std::regex bench_regex(".*[\\/](bench)[\\/].*");
+    std::regex bullet_regex(".*[\\/](bullet)[\\/].*");
+
     std::regex srcfile_regex(".*[.](cxx|c|cpp|h|hpp|hxx)(\\.in)*$");
-    if (std::regex_match(std::string(f), srcfile_regex)) {
-	std::regex getenv_regex(".*getenv\\(\\\".*");
-	std::string sline;
-	std::ifstream fs;
-	fs.open(f);
-	if (!fs.is_open()) {
-	    std::cerr << "Unable to open " << f << " for reading, skipping\n";
-	    return;
+    if (!std::regex_match(f, srcfile_regex)) {
+	return;
+    }
+    std::string sline;
+    std::ifstream fs;
+    fs.open(f);
+    if (!fs.is_open()) {
+	std::cerr << "Unable to open " << f << " for reading, skipping\n";
+	return;
+    }
+    while (std::getline(fs, sline)) {
+	if (!std::regex_match(sline, getenv_regex)) {
+	    continue;
 	}
-	while (std::getline(fs, sline)) {
-	    if (std::regex_match(sline, getenv_regex)) {
-		std::regex evar_regex(".*getenv\\(\\\"([^\\\"]+)\\\"\\).*");
-		std::smatch envvar;
-		if (!std::regex_search(sline, envvar, evar_regex)) {
-		    std::cerr << "Error, could not find environment variable in file " << f << " line:\n" << sline << "\n";
-		} else {
-		    evars.insert(std::string(envvar[1]));
-		    if (verbose) {
-			std::cout << f << ": " << envvar[1] << "\n";
-		    }
+	std::smatch envvar;
+	if (!std::regex_search(sline, envvar, evar_regex)) {
+	    std::cerr << "Error, could not find environment variable in file " << f << " line:\n" << sline << "\n";
+	    continue;
+	}
+
+	if (std::regex_match(f, o_regex) || std::regex_match(f, bullet_regex)) {
+	    std::smatch sp_match;
+	    if (std::regex_search(f, sp_match, sp_regex)) {
+		if (verbose) {
+		    std::cout << sp_match[1] << "[SYSTEM]: " << envvar[1] << "\n";
 		}
+		o_vars.insert(std::make_pair(std::string(sp_match[1]), std::string(envvar[1])));
+		c_vars[std::string(sp_match[1])].insert(std::string(envvar[1]));
+		continue;
+	    }
+	    if (std::regex_match(f, bullet_regex)) {
+		if (verbose) {
+		    std::cout << "bullet[SYSTEM]: " << envvar[1] << "\n";
+		}
+		o_vars.insert(std::make_pair(std::string("bullet"), std::string(envvar[1])));
+		c_vars[std::string("bullet")].insert(std::string(envvar[1]));
+		continue;
+	    }
+	    std::cout << f << "[SYSTEM]: " << envvar[1] << "\n";
+	    continue;
+	}
+
+	{
+	    std::smatch lp_match;
+	    if (std::regex_search(f, lp_match, lp_regex)) {
+		if (verbose) {
+		    std::cout << "lib" << lp_match[1] << ": " << envvar[1] << "\n";
+		}
+		blib_vars.insert(std::make_pair(std::string(lp_match[1]), std::string(envvar[1])));
+		c_vars[std::string(lp_match[1])].insert(std::string(envvar[1]));
+		continue;
 	    }
 	}
-	fs.close();
+
+	{
+	    std::smatch ep_match;
+	    if (std::regex_search(f, ep_match, ep_regex)) {
+		if (verbose) {
+		    std::cout << ep_match[1] << ": " << envvar[1] << "\n";
+		}
+		bexe_vars.insert(std::make_pair(std::string(ep_match[1]), std::string(envvar[1])));
+		c_vars[std::string(ep_match[1])].insert(std::string(envvar[1]));
+		continue;
+	    }
+	}
+	{
+	    if (std::regex_match(f, bench_regex)) {
+		if (verbose) {
+		    std::cout << "bench: " << envvar[1] << "\n";
+		}
+		bexe_vars.insert(std::make_pair(std::string("bench"), std::string(envvar[1])));
+		c_vars[std::string("bench")].insert(std::string(envvar[1]));
+		continue;
+	    }
+	}
+
+	std::cout << f << ": " << envvar[1] << "\n";
     }
+    fs.close();
+
 }
 
 int
 main(int argc, const char *argv[])
 {
     int verbose = 0;
-    std::set<std::string> evars;
+    std::set<std::string> all_vars;
+    std::set<std::string> cad_vars;
+    std::set<std::pair<std::string,std::string>>::iterator v_it;
+    std::set<std::pair<std::string,std::string>> o_vars;
+    std::set<std::pair<std::string,std::string>> blib_vars;
+    std::set<std::pair<std::string,std::string>> bexe_vars;
+    std::map<std::string, std::set<std::string>>::iterator c_it;
+    std::map<std::string, std::set<std::string>> c_vars;
     std::set<std::string>::iterator e_it;
 
     if (argc < 3) {
@@ -101,7 +181,8 @@ main(int argc, const char *argv[])
 	}
     }
 
-    std::regex skip_regex(".*/(other|tests|tools|bullet|docbook)/.*");
+    std::regex skip_regex(".*/(tests|tools|bullet|docbook)/.*");
+    //std::regex skip_regex(".*/(other|tests|tools|bullet|docbook)/.*");
     std::string sfile;
     std::ifstream fs;
     fs.open(argv[1]);
@@ -110,10 +191,39 @@ main(int argc, const char *argv[])
     }
     while (std::getline(fs, sfile)) {
 	if (!std::regex_match(sfile, skip_regex)) {
-	    process_file(sfile, evars, verbose);
+	    process_file(o_vars, blib_vars, bexe_vars, c_vars, sfile, verbose);
 	}
     }
     fs.close();
+
+    for (v_it = o_vars.begin(); v_it != o_vars.end(); v_it++) {
+	all_vars.insert(v_it->second);
+    }
+    for (v_it = blib_vars.begin(); v_it != blib_vars.end(); v_it++) {
+	all_vars.insert(v_it->second);
+	cad_vars.insert(v_it->second);
+    }
+    for (v_it = bexe_vars.begin(); v_it != bexe_vars.end(); v_it++) {
+	cad_vars.insert(v_it->second);
+    }
+
+    if (verbose) {
+
+	std::cout << "src/other Environment Variables:\n";
+	for (v_it = o_vars.begin(); v_it != o_vars.end(); v_it++) {
+	    std::cout << "\t" << v_it->first << ":" << v_it->second << "\n";
+	}
+
+	std::cout << "BRL-CAD library Environment Variables:\n";
+	for (v_it = blib_vars.begin(); v_it != blib_vars.end(); v_it++) {
+	    std::cout << "\t" << v_it->first << ":" << v_it->second << "\n";
+	}
+
+	std::cout << "BRL-CAD executable Environment Variables:\n";
+	for (v_it = bexe_vars.begin(); v_it != bexe_vars.end(); v_it++) {
+	    std::cout << "\t" << v_it->first << ":" << v_it->second << "\n";
+	}
+    }
 
     std::ofstream ofile;
     ofile.open(argv[2], std::fstream::trunc);
@@ -130,13 +240,71 @@ main(int argc, const char *argv[])
     ofile << "#include \"bu/path.h\"\n";
     ofile << "#include \"bu/str.h\"\n";
     ofile << "#include \"bu/vls.h\"\n";
+    ofile << "\n";
 
     ofile << "static const char * const env_vars[] = {\n";
-    for (e_it = evars.begin(); e_it != evars.end(); e_it++) {
-	ofile << "\"" << *e_it << "\",\n";
+    for (e_it = all_vars.begin(); e_it != all_vars.end(); e_it++) {
+	ofile << "  \"" << *e_it << "\",\n";
     }
     ofile << "\"NULL\"";
-    ofile << "};\n";
+    ofile << "};\n\n";
+
+    ofile << "static const char * const cad_env_vars[] = {\n";
+    for (e_it = cad_vars.begin(); e_it != cad_vars.end(); e_it++) {
+	ofile << "  \"" << *e_it << "\",\n";
+    }
+    ofile << "\"NULL\"";
+    ofile << "};\n\n";
+
+    ofile << "struct envcmd_entry {\n";
+    ofile << "  const char * const key;\n";
+    ofile << "  const char * const var;\n";
+    ofile << "};\n\n";
+
+    ofile << "static const struct envcmd_entry other_vars[] = {\n";
+    for (v_it = o_vars.begin(); v_it != o_vars.end(); v_it++) {
+	ofile << "  {\"" << v_it->first << "\",\"" << v_it->second << "\"},\n";
+    }
+    ofile << "  {\"NULL\", \"NULL\"}\n";
+    ofile << "};\n\n";
+
+    ofile << "static const struct envcmd_entry lib_vars[] = {\n";
+    for (v_it = blib_vars.begin(); v_it != blib_vars.end(); v_it++) {
+	ofile << "  {\"" << v_it->first << "\",\"" << v_it->second << "\"},\n";
+    }
+    ofile << "  {\"NULL\", \"NULL\"}\n";
+    ofile << "};\n\n";
+
+    ofile << "static const struct envcmd_entry exe_vars[] = {\n";
+    for (v_it = bexe_vars.begin(); v_it != bexe_vars.end(); v_it++) {
+	ofile << "  {\"" << v_it->first << "\",\"" << v_it->second << "\"},\n";
+    }
+    ofile << "  {\"NULL\", \"NULL\"}\n";
+    ofile << "};\n\n";
+
+    for (c_it = c_vars.begin(); c_it != c_vars.end(); c_it++) {
+	std::string var_root = c_it->first;
+	std::replace(var_root.begin(), var_root.end(), '-', '_');
+	ofile << "static const char * const " << var_root << "_vars[] = {\n";
+	std::set<std::string>::iterator s_it;
+	for (s_it = c_it->second.begin(); s_it != c_it->second.end(); s_it++) {
+	    ofile << "  \"" << *s_it << "\",\n";
+	}
+	ofile << "  NULL};\n";
+    }
+
+    ofile << "struct env_context_entry {\n";
+    ofile << "  const char * const key;\n";
+    ofile << "  const char * const * vars;\n";
+    ofile << "};\n\n";
+
+    ofile << "static const struct env_context_entry context_vars[] = {\n";
+    for (c_it = c_vars.begin(); c_it != c_vars.end(); c_it++) {
+	std::string var_root = c_it->first;
+	std::replace(var_root.begin(), var_root.end(), '-', '_');
+	ofile << "  {\"" << c_it->first << "\", (const char * const *)&" << var_root << "_vars},\n";
+    }
+    ofile << "{\"NULL\", NULL}\n};\n";
 
     ofile << "static const char *\n";
     ofile << "validate_env(const char *var)\n";
@@ -149,37 +317,99 @@ main(int argc, const char *argv[])
     ofile << "    return NULL;\n";
     ofile << "}\n";
     ofile << "\n";
+
     ofile << "static void\n";
-    ofile << "list_env(struct bu_vls *vl, const char *pattern, int list_all)\n";
+    ofile << "list_env(struct bu_vls *vl, const char *pattern, int list_all, int include_system, int include_context)\n";
     ofile << "{\n";
     ofile << "    int i = 0;\n";
-    ofile << "    while (!BU_STR_EQUAL(env_vars[i], \"NULL\")) {\n";
-    ofile << "        if (!bu_path_match(pattern, env_vars[i], 0)) {\n";
-    ofile << "            char *evval = getenv(env_vars[i]);\n";
-    ofile << "            if (!list_all && !evval) {\n";
-    ofile << "                i++;\n";
-    ofile << "                continue;\n";
-    ofile << "            }\n";
-    ofile << "            bu_vls_printf(vl, \"%s=%s\\n\", env_vars[i], evval);\n";
-    ofile << "        }\n";
-    ofile << "        i++;\n";
+    ofile << "    if (!include_context) {\n";
+    ofile << "	if (include_system) {\n";
+    ofile << "	    while (!BU_STR_EQUAL(env_vars[i], \"NULL\")) {\n";
+    ofile << "		if (!bu_path_match(pattern, env_vars[i], 0)) {\n";
+    ofile << "		    char *evval = getenv(env_vars[i]);\n";
+    ofile << "		    if (!list_all && !evval) {\n";
+    ofile << "			i++;\n";
+    ofile << "			continue;\n";
+    ofile << "		    }\n";
+    ofile << "		    bu_vls_printf(vl, \"%s=%s\\n\", env_vars[i], evval);\n";
+    ofile << "		}\n";
+    ofile << "		i++;\n";
+    ofile << "	    }\n";
+    ofile << "	    return;\n";
+    ofile << "	}\n";
+    ofile << "	while (!BU_STR_EQUAL(cad_env_vars[i], \"NULL\")) {\n";
+    ofile << "	    if (!bu_path_match(pattern, cad_env_vars[i], 0)) {\n";
+    ofile << "		char *evval = getenv(cad_env_vars[i]);\n";
+    ofile << "		if (!list_all && !evval) {\n";
+    ofile << "		    i++;\n";
+    ofile << "		    continue;\n";
+    ofile << "		}\n";
+    ofile << "		bu_vls_printf(vl, \"%s=%s\\n\", cad_env_vars[i], evval);\n";
+    ofile << "	    }\n";
+    ofile << "	    i++;\n";
+    ofile << "	}\n";
+    ofile << "	return;\n";
+    ofile << "    }\n";
+    ofile << "\n";
+    ofile << "    if (include_system) {\n";
+    ofile << "	while (!BU_STR_EQUAL(other_vars[i].key, \"NULL\")) {\n";
+    ofile << "	    if (!bu_path_match(pattern, other_vars[i].var, 0)) {\n";
+    ofile << "		char *evval = getenv(other_vars[i].var);\n";
+    ofile << "		if (!list_all && !evval) {\n";
+    ofile << "		    i++;\n";
+    ofile << "		    continue;\n";
+    ofile << "		}\n";
+    ofile << "		bu_vls_printf(vl, \"[%s] %s=%s\\n\", other_vars[i].key, other_vars[i].var, evval);\n";
+    ofile << "	    }\n";
+    ofile << "	    i++;\n";
+    ofile << "	}\n";
+    ofile << "    }\n";
+    ofile << "    i = 0;\n";
+    ofile << "    while (!BU_STR_EQUAL(lib_vars[i].key, \"NULL\")) {\n";
+    ofile << "	if (!bu_path_match(pattern, lib_vars[i].var, 0)) {\n";
+    ofile << "	    char *evval = getenv(lib_vars[i].var);\n";
+    ofile << "	    if (!list_all && !evval) {\n";
+    ofile << "		i++;\n";
+    ofile << "		continue;\n";
+    ofile << "	    }\n";
+    ofile << "	    bu_vls_printf(vl, \"[lib%s] %s=%s\\n\", lib_vars[i].key, lib_vars[i].var, evval);\n";
+    ofile << "	}\n";
+    ofile << "	i++;\n";
+    ofile << "    }\n";
+    ofile << "\n";
+    ofile << "    i = 0;\n";
+    ofile << "    while (!BU_STR_EQUAL(exe_vars[i].key, \"NULL\")) {\n";
+    ofile << "	if (!bu_path_match(pattern, exe_vars[i].var, 0)) {\n";
+    ofile << "	    char *evval = getenv(exe_vars[i].var);\n";
+    ofile << "	    if (!list_all && !evval) {\n";
+    ofile << "		i++;\n";
+    ofile << "		continue;\n";
+    ofile << "	    }\n";
+    ofile << "	    bu_vls_printf(vl, \"[%s] %s=%s\\n\", exe_vars[i].key, exe_vars[i].var, evval);\n";
+    ofile << "	}\n";
+    ofile << "	i++;\n";
     ofile << "    }\n";
     ofile << "}\n";
+    ofile << "\n";
 
     ofile << "static int\n";
     ofile << "env_cmd(struct bu_vls *s_out, int argc, const char **argv)\n";
     ofile << "{\n";
     ofile << "    int print_help = 0;\n";
     ofile << "    int list_all = 0;\n";
+    ofile << "    int include_system = 0;\n";
+    ofile << "    int include_context = 0;\n";
     ofile << "\n";
     ofile << "    static const char *usage1 = \"Usage: env [-hA] [pattern]\\n\";\n";
     ofile << "    static const char *usage2 = \" env get var_name\\n\";\n";
     ofile << "    static const char *usage3 = \" env set var_name var_val\\n\";\n";
     ofile << "\n";
-    ofile << "    struct bu_opt_desc d[3];\n";
+    ofile << "    struct bu_opt_desc d[5];\n";
     ofile << "    BU_OPT(d[0], \"h\", \"help\", \"\", NULL, &print_help, \"Print help and exit\");\n";
     ofile << "    BU_OPT(d[1], \"A\", \"all\",  \"\", NULL, &list_all,   \"List all relevant variables, not just those currently set\");\n";
-    ofile << "    BU_OPT_NULL(d[2]);\n";
+    ofile << "    BU_OPT(d[2], \"S\", \"system\",  \"\", NULL, &include_system,   \"Include known variables from src/other code, not just BRL-CAD's own variables\");\n";
+    ofile << "    BU_OPT(d[3], \"C\", \"context\",  \"\", NULL, &include_context,   \"When listing variables, identify the library/executable in which they are used\");\n";
+    ofile << "    BU_OPT_NULL(d[4]);\n";
     ofile << "\n";
     ofile << "    /* skip command name argv[0] */\n";
     ofile << "    argc-=(argc>0); argv+=(argc>0);\n";
@@ -229,16 +459,25 @@ main(int argc, const char *argv[])
     ofile << "\n";
     ofile << "    /* Not getting or setting, so we must be listing. */\n";
     ofile << "    if (!argc) {\n";
-    ofile << "	list_env(s_out, \"*\", list_all);\n";
+    ofile << "	list_env(s_out, \"*\", list_all, include_system, include_context);\n";
     ofile << "    } else {\n";
     ofile << "	int i = 0;\n";
     ofile << "	for (i = 0; i < argc; i++) {\n";
-    ofile << "	    list_env(s_out, argv[i], list_all);\n";
+    ofile << "	    list_env(s_out, argv[i], list_all, include_system, include_context);\n";
     ofile << "	}\n";
     ofile << "    }\n";
     ofile << "    return 0;\n";
     ofile << "}\n";
 
+#ifdef TEST_MAIN
+    ofile << "int main(int argc, const char **argv) {\n";
+    ofile << "  int ret = 0;\n";
+    ofile << "  struct bu_vls s_out = BU_VLS_INIT_ZERO;\n";
+    ofile << "  ret = env_cmd(&s_out, argc, argv);\n";
+    ofile << "  printf(\"%s\\n\", bu_vls_cstr(&s_out));\n";
+    ofile << "  return ret;\n";
+    ofile << "}\n";
+#endif
 
     ofile.close();
 
