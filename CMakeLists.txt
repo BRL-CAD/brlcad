@@ -930,8 +930,12 @@ CONFIG_H_APPEND(BRLCAD "#define PACKAGE_NAME \"BRL-CAD\"\n")
 CONFIG_H_APPEND(BRLCAD "#define PACKAGE_STRING \"BRL-CAD ${BRLCAD_VERSION}\"\n")
 CONFIG_H_APPEND(BRLCAD "#define PACKAGE_TARNAME \"brlcad\"\n")
 
-# Let programs know what the executable suffix is on this platform, if any
+# Let programs know what the executable suffix and lib suffix are on this platform, if any
 CONFIG_H_APPEND(BRLCAD "#define EXECUTABLE_SUFFIX \"${CMAKE_EXECUTABLE_SUFFIX}\"\n")
+CONFIG_H_APPEND(BRLCAD "#define SHARED_LIBRARY_SUFFIX \"${CMAKE_SHARED_LIBRARY_SUFFIX}\"\n")
+
+# Let bu_dir know what the target install directory is
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_ROOT \"${CMAKE_INSTALL_PREFIX}\"\n")
 
 # Define the various relative paths for bu_dir (be sure to have included
 # Path_Setup.cmake before this point, as that file defines these variables.)
@@ -947,11 +951,6 @@ CONFIG_H_APPEND(BRLCAD "#define BRLCAD_MAN_DIR \"${MAN_DIR}\"\n")
 if(DEFINED BRLCAD_VERSION_AMEND)
   CONFIG_H_APPEND(BRLCAD "#define BRLCAD_VERSION_AMEND ${BRLCAD_VERSION_AMEND}\n")
 endif(DEFINED BRLCAD_VERSION_AMEND)
-
-# bu_dir needs to know some platform-specific information about executable and library
-# suffixes - just use CMake's knowledge of this information
-CONFIG_H_APPEND(BRLCAD "#define EXE_SUFFIX \"${CMAKE_EXECUTABLE_SUFFIX}\"\n")
-CONFIG_H_APPEND(BRLCAD "#define SHARED_LIB_SUFFIX \"${CMAKE_SHARED_LIBRARY_SUFFIX}\"\n")
 
 #----------------------------------------------------------------------
 # If we're not debugging, we want HIDDEN to be defined as static.  Set
