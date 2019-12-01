@@ -122,12 +122,49 @@ main(int argc, const char *argv[])
 	return -1;
     }
 
+
+    ofile << "#include <stdlib.h>\n";
+    ofile << "#include <string.h>\n";
+    ofile << "#include \"bu/env.h\"\n";
+    ofile << "#include \"bu/opt.h\"\n";
+    ofile << "#include \"bu/path.h\"\n";
+    ofile << "#include \"bu/str.h\"\n";
+    ofile << "#include \"bu/vls.h\"\n";
+
     ofile << "static const char * const env_vars[] = {\n";
     for (e_it = evars.begin(); e_it != evars.end(); e_it++) {
 	ofile << "\"" << *e_it << "\",\n";
     }
     ofile << "\"NULL\"";
     ofile << "};\n";
+
+    ofile << "static const char *\n";
+    ofile << "validate_env(const char *var)\n";
+    ofile << "{\n";
+    ofile << "    int i = 0;\n";
+    ofile << "    while (!BU_STR_EQUAL(env_vars[i], \"NULL\")) {\n";
+    ofile << "        if (BU_STR_EQUAL(env_vars[i], var)) return var;\n";
+    ofile << "        i++;\n";
+    ofile << "    }\n";
+    ofile << "    return NULL;\n";
+    ofile << "}\n";
+    ofile << "\n";
+    ofile << "static void\n";
+    ofile << "list_env(struct bu_vls *vl, const char *pattern, int list_all)\n";
+    ofile << "{\n";
+    ofile << "    int i = 0;\n";
+    ofile << "    while (!BU_STR_EQUAL(env_vars[i], \"NULL\")) {\n";
+    ofile << "        if (!bu_path_match(pattern, env_vars[i], 0)) {\n";
+    ofile << "            char *evval = getenv(env_vars[i]);\n";
+    ofile << "            if (!list_all && !evval) {\n";
+    ofile << "                i++;\n";
+    ofile << "                continue;\n";
+    ofile << "            }\n";
+    ofile << "            bu_vls_printf(vl, \"%s=%s\\n\", env_vars[i], evval);\n";
+    ofile << "        }\n";
+    ofile << "        i++;\n";
+    ofile << "    }\n";
+    ofile << "}\n";
 
     ofile.close();
 

@@ -35,41 +35,10 @@
 #include "bu/path.h"
 #include "./ged_private.h"
 
-static const char *
-validate_env(const char *var)
-{
 #include "./env_vars.c"
-    int i = 0;
-    while (!BU_STR_EQUAL(env_vars[i], "NULL")) {
-	if (BU_STR_EQUAL(env_vars[i], var)) return var;
-	i++;
-    }
-    return NULL;
-}
 
-void
-list_env(struct bu_vls *vl, const char *pattern, int list_all)
-{
-#include "./env_vars.c"
-    int i = 0;
-    while (!BU_STR_EQUAL(env_vars[i], "NULL")) {
-	if (!bu_path_match(pattern, env_vars[i], 0)) {
-	    char *evval = getenv(env_vars[i]);
-	    if (!list_all && !evval) {
-		i++;
-		continue;
-	    }
-	    bu_vls_printf(vl, "%s=%s\n", env_vars[i], evval);
-	}
-	i++;
-    }
-}
-
-/**
- * Reports on and manipulates environment variables relevant to BRL-CAD.
- */
-int
-ged_env(struct ged *gedp, int argc, const char *argv[])
+static int
+env_cmd(struct bu_vls *s_out, int argc, const char **argv)
 {
     int print_help = 0;
     int list_all = 0;
@@ -86,62 +55,81 @@ ged_env(struct ged *gedp, int argc, const char *argv[])
     /* skip command name argv[0] */
     argc-=(argc>0); argv+=(argc>0);
 
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
     /* parse standard options */
     argc = bu_opt_parse(NULL, argc, argv, d);
 
     if (print_help) {
-	bu_vls_printf(gedp->ged_result_str, "%s      %s      %s", usage1, usage2, usage3);
-	return GED_HELP;
+	bu_vls_printf(s_out, "%s      %s      %s", usage1, usage2, usage3);
+	return 2;
     }
 
     if (argc) {
 	if (BU_STR_EQUAL(argv[0], "get")) {
 	    if (argc != 2) {
-		bu_vls_printf(gedp->ged_result_str, "Usage: %s", usage2);
-		return GED_ERROR;
+		bu_vls_printf(s_out, "Usage: %s", usage2);
+		return -1;
 	    }
 	    if (!validate_env(argv[1])) {
-		bu_vls_printf(gedp->ged_result_str, "unknown environment variable: %s", argv[1]);
-		return GED_ERROR;
+		bu_vls_printf(s_out, "unknown environment variable: %s", argv[1]);
+		return -1;
 	    }
 
-	    bu_vls_printf(gedp->ged_result_str, "%s", getenv(argv[1]));
-	    return GED_OK;
+	    bu_vls_printf(s_out, "%s", getenv(argv[1]));
+	    return 0;
 	}
 
 	if (BU_STR_EQUAL(argv[0], "set")) {
 	    if (argc != 3) {
-		bu_vls_printf(gedp->ged_result_str, "Usage: %s", usage3);
-		return GED_ERROR;
+		bu_vls_printf(s_out, "Usage: %s", usage3);
+		return -1;
 	    }
 	    if (!validate_env(argv[1])) {
-		bu_vls_printf(gedp->ged_result_str, "unknown environment variable: %s", argv[1]);
-		return GED_ERROR;
+		bu_vls_printf(s_out, "unknown environment variable: %s", argv[1]);
+		return -1;
 	    }
 
 	    if (bu_setenv(argv[1], argv[2], 1)) {
-		bu_vls_printf(gedp->ged_result_str, "error when setting variable %s to %s", argv[1], argv[2]);
-		return GED_ERROR;
+		bu_vls_printf(s_out, "error when setting variable %s to %s", argv[1], argv[2]);
+		return -1;
 	    } else {
-		bu_vls_printf(gedp->ged_result_str, "%s", argv[2]);
-		return GED_OK;
+		bu_vls_printf(s_out, "%s", argv[2]);
+		return 0;
 	    }
 	}
     }
 
     /* Not getting or setting, so we must be listing. */
     if (!argc) {
-	list_env(gedp->ged_result_str, "*", list_all);
+	list_env(s_out, "*", list_all);
     } else {
 	int i = 0;
 	for (i = 0; i < argc; i++) {
-	    list_env(gedp->ged_result_str, argv[i], list_all);
+	    list_env(s_out, argv[i], list_all);
 	}
     }
-    return GED_OK;
+    return 0;
+}
+
+/**
+ * Reports on and manipulates environment variables relevant to BRL-CAD.
+ */
+int
+ged_env(struct ged *gedp, int argc, const char *argv[])
+{
+    int ret = GED_OK;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    ret = env_cmd(gedp->ged_result_str, argc, argv);
+
+    if (ret == 2) {
+	return GED_HELP;
+    }
+
+    ret = (!ret) ? GED_OK : GED_ERROR;
+
+    return ret;
 }
 
 
