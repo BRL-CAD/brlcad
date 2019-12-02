@@ -18,18 +18,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* rtedge.sh regression script is seriously unhappy about paths with
-  spaces in them - odd pathnames distcheck is failing
-
-* implement uv-mapping callback so we can texture-map BoT, NMG, and
-  NURBS geometry
-
-* check thread safety history of gqa + plot calls (pl_color)
-
-* mged> nirt -? needs to provide help
-
-* mged> nirt -f fmt doesn't seem to work at all
-
 * fix recently introduced mged -c input bug that causes seemingly
   random text (usually previous command output or mged version string
   info) to be pasted automatically while commands are typed.  For
@@ -45,6 +33,15 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* implement uv-mapping callback so we can texture-map BoT, NMG, and
+  NURBS geometry
+
+* check thread safety history of gqa + plot calls (pl_color)
+
+* mged> nirt -? needs to provide help
+
+* mged> nirt -f fmt doesn't seem to work at all
 
 * modify libfb's default memory buffer allocation to be dynamic
 
@@ -81,7 +78,7 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
   Consider implementing a corollary to FTS instead of dirent for
   simplified tree traversal with cyclic awareness.
-  
+
   https://keramida.wordpress.com/2009/07/05/fts3-or-avoiding-to-reinvent-the-wheel/
 
 * move the rt_*_timer timing facilities to libbu and rework to allow
