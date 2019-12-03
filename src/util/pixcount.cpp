@@ -1,4 +1,4 @@
-/*                      P I X C O U N T . C
+/*                    P I X C O U N T . C P P
  * BRL-CAD
  *
  * Copyright (c) 1998-2019 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file util/pixcount.c
+/** @file util/pixcount.cpp
  *
  * Sort the pixels of an input stream by color value.
  *
@@ -71,8 +71,8 @@ mk_pixel(unsigned char *color)
 
     pp->p_magic = PIXEL_MAGIC;
     pp->p_color = (unsigned char *)
-	bu_malloc(pixel_size * sizeof(unsigned char),
-		  "pixel color");
+		  bu_malloc(pixel_size * sizeof(unsigned char),
+			    "pixel color");
     for (i = 0; i < pixel_size; ++i)
 	pp->p_color[i] = color[i];
     pp->p_count = 0;
@@ -191,10 +191,10 @@ main(int argc, char **argv)
     switch (argc - bu_optind) {
 	case 0:
 	    infp = stdin;
-	    /* fall through */
+	/* fall through */
 	case 1:
 	    outfp = stdout;
-	    /* fall through */
+	/* fall through */
 	case 2:
 	    break;
 	default:
@@ -232,8 +232,8 @@ main(int argc, char **argv)
      * Read the input stream into the palette
      */
     buf = (unsigned char *)
-	bu_malloc(pixel_size * sizeof(unsigned char),
-		  "pixel buffer");
+	  bu_malloc(pixel_size * sizeof(unsigned char),
+		    "pixel buffer");
     while (fread((void *)buf, pixel_size * sizeof(unsigned char), 1, infp) == 1) {
 	pp = lookup_pixel(palette, buf);
 	BU_CKMAG(pp, PIXEL_MAGIC, "pixel");
@@ -248,12 +248,12 @@ main(int argc, char **argv)
 }
 
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
