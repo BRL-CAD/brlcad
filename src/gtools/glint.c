@@ -146,7 +146,7 @@ int log_2 (unsigned long x)
 /**
  * The usage message -- it's a long 'un.
  */
-static char *usage[] = {
+static const char *usage[] = {
     "Usage: 'g_lint [options] model.g object ...'\n",
     "Options (defaults in parentheses):\n",
     "  -a azim      View target from azimuth of azim, in degrees (0.0)\n",
@@ -175,7 +175,7 @@ static char *usage[] = {
  */
 void printusage(void)
 {
-    char **u;
+    const char **u;
 
     for (u = usage; *u != 0; ++u)
 	bu_log("%s", *u);
