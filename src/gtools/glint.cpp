@@ -1,4 +1,4 @@
-/*                        G _ L I N T . C
+/*                        G L I N T . C P P
  * BRL-CAD
  *
  * Copyright (c) 1995-2019 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file g_lint.c
+/** @file glint.cpp
  *
  * Sample some BRL-CAD geometry, reporting overlaps and potential
  * problems with air regions.
@@ -45,15 +45,14 @@
 #define OPT_STRING	"a:ce:g:opr:st:ux:?h"
 #define RAND_NUM	(rand()/(fastf_t)RAND_MAX)
 #define RAND_OFFSET	((1 - cell_center) * 	\
-			 (RAND_NUM * celsiz - celsiz / 2))
+	(RAND_NUM * celsiz - celsiz / 2))
 #define TITLE_LEN	80
 
 
 /**
  * Specification of what and how to report results
  */
-struct g_lint_ctrl
-{
+struct g_lint_ctrl {
     uint32_t glc_magic;			/* Magic no. for integrity check */
     long glc_debug;			/* Bits to tailor diagnostics */
     double glc_tol;			/* Overlap/void tolerance */
@@ -75,7 +74,7 @@ struct g_lint_ctrl
 #define G_LINT_A_1ST    0x008
 #define G_LINT_A_LAST   0x010
 #define G_LINT_A_ANY    (G_LINT_A_CONT | G_LINT_A_UNCONF |	\
-			 G_LINT_A_1ST  | G_LINT_A_LAST)
+	G_LINT_A_1ST  | G_LINT_A_LAST)
 #define G_LINT_VAC      0x020
 #define G_LINT_ALL      (G_LINT_OVLP | G_LINT_A_ANY | G_LINT_VAC)
 
@@ -91,8 +90,7 @@ struct g_lint_ctrl
  * The critical information about a particular overlap found on one
  * ray.
  */
-struct g_lint_seg
-{
+struct g_lint_seg {
     uint32_t gls_magic;	/* Magic no. for integrity check */
     double gls_length;
     point_t gls_origin;
@@ -108,8 +106,7 @@ struct g_lint_seg
  * A pair of overlapping regions and a list of all the offending ray
  * intervals.
  */
-struct g_lint_ovlp
-{
+struct g_lint_ovlp {
     uint32_t glo_magic; /* Magic no. for integrity check */
     struct region *glo_r1;
     struct region *glo_r2;
@@ -120,8 +117,7 @@ struct g_lint_ovlp
 #define G_LINT_OVLP_NULL	((struct g_lint_ovlp *) 0)
 #define G_LINT_OVLP_MAGIC 0x676c6f76
 
-static unsigned char dflt_plot_rgb[] =
-{
+static unsigned char dflt_plot_rgb[] = {
     255,   0,   0,	/* overlap */
     255, 255,   0,	/* air_contiguous */
     0,   255,   0,	/* air_unconfined */
@@ -133,7 +129,7 @@ static unsigned char dflt_plot_rgb[] =
 struct bu_rb_tree *ovlp_log = 0;	/* Log of previous overlaps */
 struct bu_rb_tree *ovlps_by_vol;	/* For sorting by volume */
 
-int log_2 (unsigned long x)
+int log_2(unsigned long x)
 {
     int result;
 
@@ -230,7 +226,7 @@ struct g_lint_ovlp *create_overlap(struct region *r1, struct region *r2)
     } else {
 	bu_log("%s:%d: Self-overlap of region '%s' (%p)\n",
 	       __FILE__, __LINE__, r1->reg_name, (void *)r1);
-	bu_exit (1, "This shouldn't happen\n");
+	bu_exit(1, "This shouldn't happen\n");
     }
 
     return op;
@@ -349,8 +345,8 @@ void insert_by_vol(void *v, int UNUSED(depth))
     struct g_lint_ovlp *op = (struct g_lint_ovlp *) v;
 
     if ((rc = bu_rb_insert(ovlps_by_vol, (void *) op)))
-	bu_exit (1, "%s:%d: bu_rb_insert() returns %d:  This should not happen\n",
-		 __FILE__, __LINE__, rc);
+	bu_exit(1, "%s:%d: bu_rb_insert() returns %d:  This should not happen\n",
+		__FILE__, __LINE__, rc);
 }
 
 
@@ -368,7 +364,7 @@ void update_ovlp_log(struct region *r1, struct region *r2, double seg_length, fa
     struct g_lint_seg *sp;
 
     /* Prepare an overlap query */
-    op = create_overlap (r1, r2);
+    op = create_overlap(r1, r2);
 
     /*
      * Add this overlap, if necessary.
@@ -378,10 +374,9 @@ void update_ovlp_log(struct region *r1, struct region *r2, double seg_length, fa
     if ((rc = bu_rb_insert(ovlp_log, (void *) op)) < 0) {
 	free_overlap(op);
 	op = (struct g_lint_ovlp *) bu_rb_curr1(ovlp_log);
-    }
-    else if (rc > 0)
-	bu_exit (1, "%s:%d: bu_rb_insert() returns %d:  This should not happen\n",
-		 __FILE__, __LINE__, rc);
+    } else if (rc > 0)
+	bu_exit(1, "%s:%d: bu_rb_insert() returns %d:  This should not happen\n",
+		__FILE__, __LINE__, rc);
 
     /*
      * Fill in a new segment structure and add it to the overlap
@@ -459,9 +454,9 @@ static int rpt_hit(struct application *ap, struct partition *ph, struct seg *UNU
 	BU_CKMAG(pp, PT_MAGIC, "partition structure");
 
 	RT_HIT_NORMAL(NULL, pp->pt_inhit, pp->pt_inseg->seg_stp,
-		    &ap->a_ray, 0);
+		      &ap->a_ray, 0);
 	RT_HIT_NORMAL(NULL, pp->pt_outhit, pp->pt_outseg->seg_stp,
-		    &ap->a_ray, 0);
+		      &ap->a_ray, 0);
     }
 
     /*
@@ -614,8 +609,7 @@ static int rpt_hit(struct application *ap, struct partition *ph, struct seg *UNU
 		    }
 		}
 		last_air = pp->pt_regionp->reg_aircode;
-	    }
-	    else
+	    } else
 		last_air = 0;
 	}
 
@@ -811,7 +805,7 @@ main(int argc, char **argv)
 		if (bn_decode_angle(&azimuth,bu_optarg) == 0) {
 		    bu_log("Invalid azimuth specification: '%s'\n", bu_optarg);
 		    printusage();
-		    bu_exit (1, NULL);
+		    bu_exit(1, NULL);
 		}
 		break;
 	    case 'c':
@@ -821,19 +815,19 @@ main(int argc, char **argv)
 		if (bn_decode_angle(&elevation,bu_optarg) == 0) {
 		    bu_log("Invalid elevation specification: '%s'\n", bu_optarg);
 		    printusage();
-		    bu_exit (1, NULL);
+		    bu_exit(1, NULL);
 		}
 		if ((elevation < -90.0) || (elevation > 90.0))
-		    bu_exit (1, "Illegal elevation: '%g'\n", elevation);
+		    bu_exit(1, "Illegal elevation: '%g'\n", elevation);
 		break;
 	    case 'g':
 		if (sscanf(bu_optarg, "%lf", &celsiz) != 1) {
 		    bu_log("Invalid grid-size specification: '%s'\n", bu_optarg);
 		    printusage();
-		    bu_exit (1, NULL);
+		    bu_exit(1, NULL);
 		}
 		if (celsiz < 0.0)
-		    bu_exit (1, "Illegal grid size: '%g'\n", celsiz);
+		    bu_exit(1, "Illegal grid size: '%g'\n", celsiz);
 		break;
 	    case 'o':
 		control.glc_how_to_report = G_LINT_ASCII_WITH_ORIGIN;
@@ -856,7 +850,7 @@ main(int argc, char **argv)
 		if (sp == bu_optarg) {
 		    bu_log("Invalid report specification: '%s'\n", bu_optarg);
 		    printusage();
-		    bu_exit (1, NULL);
+		    bu_exit(1, NULL);
 		}
 		if (complement_bits) {
 		    control.glc_what_to_report = ~(control.glc_what_to_report);
@@ -875,10 +869,10 @@ main(int argc, char **argv)
 		    bu_log("Invalid tolerance specification: '%s'\n",
 			   bu_optarg);
 		    printusage();
-		    bu_exit (1, NULL);
+		    bu_exit(1, NULL);
 		}
 		if (control.glc_tol < 0.0)
-		    bu_exit (1, "Illegal tolerance: '%g'\n", control.glc_tol);
+		    bu_exit(1, "Illegal tolerance: '%g'\n", control.glc_tol);
 		break;
 	    case 'u':
 		use_air = 1;
@@ -888,17 +882,17 @@ main(int argc, char **argv)
 		if (sp == bu_optarg) {
 		    bu_log("Invalid debug-flag specification: '%s'\n", bu_optarg);
 		    printusage();
-		    bu_exit (1, NULL);
+		    bu_exit(1, NULL);
 		}
 		break;
 	    default:
 		printusage();
-		bu_exit (1, NULL);
+		bu_exit(1, NULL);
 	}
 
     if (argc - bu_optind < 2) {
 	printusage();
-	bu_exit (1, NULL);
+	bu_exit(1, NULL);
     }
     if (control.glc_what_to_report & ~G_LINT_ALL)
 	bu_log("WARNING: Ignoring undefined bits of report specification\n");
@@ -907,12 +901,12 @@ main(int argc, char **argv)
     bu_log("Database file:  '%s'\n", argv[bu_optind]);
     bu_log("Building the directory... ");
     if ((rtip = rt_dirbuild(argv[bu_optind], db_title, TITLE_LEN)) == RTI_NULL)
-	bu_exit (1, "Could not build directory for file '%s'\n", argv[bu_optind]);
+	bu_exit(1, "Could not build directory for file '%s'\n", argv[bu_optind]);
     rtip->useair = use_air;
     bu_log("\nPreprocessing the geometry... ");
     while (++bu_optind < argc) {
 	if (rt_gettree(rtip, argv[bu_optind]) == -1)
-	    bu_exit (1, NULL);
+	    bu_exit(1, NULL);
 	bu_log("\nObject '%s' processed", argv[bu_optind]);
     }
     bu_log("\nPrepping the geometry... ");
@@ -1013,12 +1007,13 @@ main(int argc, char **argv)
     return 0;
 }
 
-/*
- * Local Variables:
- * mode: C
- * tab-width: 8
- * indent-tabs-mode: t
- * c-file-style: "stroustrup"
- * End:
- * ex: shiftwidth=4 tabstop=8
- */
+
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
