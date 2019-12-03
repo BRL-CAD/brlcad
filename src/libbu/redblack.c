@@ -592,7 +592,7 @@ bu_rb_delete(struct bu_rb_tree *tree, int order)
 	_rb_delete(tree, node[order], order);
 
     --(tree->rbt_nm_nodes);
-    rb_free_package(package);
+    //rb_free_package(package);
     bu_free((void *) node, "node list");
 }
 
