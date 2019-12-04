@@ -16,6 +16,10 @@
  * information.
  */
 
+/* TODO - for this type of problem, Simbody might also be work a look:
+ * https://github.com/simbody/simbody
+ * /
+
 /** @file Bullet_Box_Chain_Demo.cpp
  *
  * Based on Bullet Constraint demo, which has the following license:
