@@ -23,15 +23,15 @@ if(ADAPTAGRAMS_FOUND)
   set(LIBGED_CMD_INCLUDE_DIRS ${LIBGED_CMD_INCLUDE_DIRS} ${AVOID_INCLUDE_DIR})
 endif(ADAPTAGRAMS_FOUND)
 
-set(DEBUG_VARS_C "${CMAKE_CURRENT_BINARY_DIR}/debug_vars.cpp")
+set(DEBUG_VARS_CPP "${CMAKE_CURRENT_BINARY_DIR}/debug_vars.cpp")
 
-add_custom_command(OUTPUT ${DEBUG_VARS_C}
-  COMMAND debug2c ${CMAKE_BINARY_DIR}/cmakefiles.cmake ${DEBUG_VARS_C}
+add_custom_command(OUTPUT ${DEBUG_VARS_CPP}
+  COMMAND debug2c ${CMAKE_BINARY_DIR}/cmakefiles.cmake ${DEBUG_VARS_CPP}
   DEPENDS debug2c
   COMMENT "[DEBUG2C] Scanning for debugging variables"
   )
-set_source_files_properties(debug.cpp PROPERTIES OBJECT_DEPENDS ${DEBUG_VARS_C})
-DISTCLEAN(${DEBUG_VARS_C})
+set_source_files_properties(debug.cpp PROPERTIES OBJECT_DEPENDS ${DEBUG_VARS_CPP})
+DISTCLEAN(${DEBUG_VARS_CPP})
 
 set(ENV_CMD_C "${CMAKE_CURRENT_BINARY_DIR}/env_cmd.c")
 
