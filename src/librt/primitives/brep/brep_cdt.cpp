@@ -2060,6 +2060,11 @@ int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, s
 #ifdef DRAW_FACE
 	    draw_face_CDT(vhead, face, ttol, tol, info, watertight, plottype, numpoints);
 #else
+	    if (UNLIKELY(rt_debug & RT_DEBUG_MESHING)) {
+		char *obj = db_path_to_string(pathp);
+		bu_log("Plotting brep %s face %d\n", obj, face.m_face_index);
+		bu_free(obj, "path string");
+	    }
 	    poly2tri_CDT(vhead, face, ttol, tol, info, watertight, plottype, numpoints);
 #endif
 	} else {

@@ -83,7 +83,7 @@ __BEGIN_DECLS
 #define RT_DEBUG_EBM		0x02000000	/* 26 Extruded bit-map solids */
 #define RT_DEBUG_HF		0x04000000	/* 27 Height Field solids */
 
-#define RT_DEBUG_UNUSED_2	0x08000000	/* 28 Unassigned */
+#define RT_DEBUG_MESHING	0x08000000	/* 28 Print meshing/triangulation details */
 #define RT_DEBUG_UNUSED_3	0x10000000	/* 29 Unassigned */
 #define RT_DEBUG_UNUSED_4	0x20000000	/* 30 Unassigned */
 
