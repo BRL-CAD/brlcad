@@ -35,7 +35,7 @@
 #include "optical/debug.h"
 #include "./ged_private.h"
 
-#include "./debug_vars.c"
+#include "./debug_vars.cpp"
 
 int
 ged_debug(struct ged *gedp, int argc, const char **argv)
