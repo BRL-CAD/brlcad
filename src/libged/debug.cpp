@@ -1,4 +1,4 @@
-/*                         D E B U G B U . C
+/*                         D E B U G . C P P
  * BRL-CAD
  *
  * Copyright (c) 2008-2019 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/debug.c
+/** @file libged/debug.cpp
  *
  * The debug command.
  *
