@@ -2201,10 +2201,6 @@ if(NOT MSVC)
     CHECK_C_FLAG(Wbad-function-cast)
     CHECK_CXX_FLAG(Wbad-function-cast)
 
-    # this makes sure we don't declare variables mid-scope, helps build on Windows
-    CHECK_C_FLAG(Wdeclaration-after-statement)
-    CHECK_CXX_FLAG(Wdeclaration-after-statement)
-
     # C-only: this makes sure C sources will compile as C++ code
     CHECK_C_FLAG(Wc++-compat)
 
