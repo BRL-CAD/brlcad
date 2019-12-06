@@ -1,3 +1,10 @@
+2019-12-06 14:41  starseeker
+
+	* [r74434] src/librt/primitives/brep/brep.cpp:
+	  Non-solid intersection logic is causing artifacts in NIST3
+	  example raytracing - lines inside of holes and above edges.
+	  Revert the change for 7.30.4 release.
+
 2019-11-29 15:24  starseeker
 
 	* [r74388] CHANGES:
