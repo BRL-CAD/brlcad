@@ -21,6 +21,7 @@
 
 #include "common.h"
 
+#include "bu/log.h"
 #include "bu/malloc.h"
 
 #define WAI_MALLOC(size) bu_malloc(size, "WAI_MALLOC")
@@ -294,7 +295,7 @@ int WAI_PREFIX(getModulePath)(char* out, int capacity, int* dirname_length)
       char path[PATH_MAX];
       uint32_t inode;
 
-      if (!fgets(buffer, sizeof(buffer), maps))
+      if (!bu_fgets(buffer, sizeof(buffer), maps))
         break;
 
       if (sscanf(buffer, "%" PRIx64 "-%" PRIx64 " %s %" PRIx64 " %x:%x %u %s\n", &low, &high, perms, &offset, &major, &minor, &inode, path) == 8)
@@ -517,7 +518,7 @@ int WAI_PREFIX(getExecutablePath)(char* out, int capacity, int* dirname_length)
     if (!self_exe)
       break;
 
-    if (!fgets(buffer1, sizeof(buffer1), self_exe))
+    if (!bu_fgets(buffer1, sizeof(buffer1), self_exe))
       break;
 
     resolved = realpath(buffer1, buffer2);
