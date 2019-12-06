@@ -503,7 +503,7 @@ nmg_fix_overlapping_loops(struct shell *s, struct bu_list *vlfree, const struct 
 	    if (!nmg_find_vertex_in_lu(vu->v_p, lu1)) {
 		int nmg_class;
 
-		nmg_class = nmg_classify_pt_loop(vu->v_p->vg_p->coord, lu1, vlfree, tol);
+		nmg_class = nmg_classify_pnt_loop(vu->v_p->vg_p->coord, lu1, vlfree, tol);
 		if (nmg_class == NMG_CLASS_AoutB)
 		    outside++;
 		else if (nmg_class == NMG_CLASS_AinB)
@@ -600,7 +600,7 @@ nmg_fix_overlapping_loops(struct shell *s, struct bu_list *vlfree, const struct 
 	     */
 	    VBLEND2(mid_pt, 0.5, v1->vg_p->coord, 0.5, v2->vg_p->coord);
 
-	    if (nmg_classify_pt_loop(mid_pt, lu2, vlfree, tol) == NMG_CLASS_AoutB) {
+	    if (nmg_classify_pnt_loop(mid_pt, lu2, vlfree, tol) == NMG_CLASS_AoutB) {
 		start_eu = eu1;
 		break;
 	    }
@@ -751,7 +751,7 @@ nmg_break_crossed_loops(struct shell *is, const struct bn_tol *tol)
 			    } else {
 				VJOIN1(pt, eu1->vu_p->v_p->vg_p->coord ,
 				       dist[0], v1);
-				v = nmg_find_pt_in_shell(is, pt, tol);
+				v = nmg_find_pnt_in_shell(is, pt, tol);
 			    }
 
 			    new_eu = nmg_esplit(v, eu1, 0);
@@ -773,7 +773,7 @@ nmg_break_crossed_loops(struct shell *is, const struct bn_tol *tol)
 				VMOVE(pt, v->vg_p->coord);
 			    } else {
 				VJOIN1(pt, eu2->vu_p->v_p->vg_p->coord, dist[1], v2);
-				v = nmg_find_pt_in_shell(is, pt, tol);
+				v = nmg_find_pnt_in_shell(is, pt, tol);
 			    }
 
 			    new_eu = nmg_esplit(v, eu2, 0);

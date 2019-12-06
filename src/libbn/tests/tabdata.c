@@ -636,46 +636,46 @@ tabdata_main(int argc, char *argv[])
     sscanf(argv[1], "%d", &function_num);
 
     switch (function_num) {
-    case 1:
-	return test_bn_table_make_uniform(argc, argv);
-    case 2:
-	return test_bn_tabdata_add(argc, argv);
-    case 3:
-	return test_bn_tabdata_mul(argc, argv);
-    case 4:
-	return test_bn_tabdata_mul3(argc, argv);
-    case 5:
-	return test_bn_tabdata_incr_mul3_scale(argc, argv);
-    case 6:
-	return test_bn_tabdata_incr_mul2_scale(argc, argv);
-    case 7:
-	return test_bn_tabdata_scale(argc, argv);
-    case 8:
-	return test_bn_table_scale(argc, argv);
-    case 9:
-	return test_bn_tabdata_join1(argc, argv);
-    case 10:
-	return test_bn_tabdata_join2(argc, argv);
-    case 11:
-	return test_bn_tabdata_blend2(argc, argv);
-    case 12:
-	return test_bn_tabdata_blend3(argc, argv);
-    case 13:
-	return test_bn_tabdata_area1(argc, argv);
-    case 14:
-	return test_bn_tabdata_area2(argc, argv);
-    case 15:
-	return test_bn_tabdata_mul_area1(argc, argv);
-    case 16:
-	return test_bn_tabdata_mul_area2(argc, argv);
-    case 17:
-	return test_bn_table_lin_interp(argc, argv);
-    case 18:
-	return test_bn_tabdata_copy(argc, argv);
-    case 19:
-	return test_bn_tabdata_dup(argc, argv);
-    case 20:
-	return test_bn_tabdata_get_constval(argc, argv);
+	case 1:
+	    return test_bn_table_make_uniform(argc, argv);
+	case 2:
+	    return test_bn_tabdata_add(argc, argv);
+	case 3:
+	    return test_bn_tabdata_mul(argc, argv);
+	case 4:
+	    return test_bn_tabdata_mul3(argc, argv);
+	case 5:
+	    return test_bn_tabdata_incr_mul3_scale(argc, argv);
+	case 6:
+	    return test_bn_tabdata_incr_mul2_scale(argc, argv);
+	case 7:
+	    return test_bn_tabdata_scale(argc, argv);
+	case 8:
+	    return test_bn_table_scale(argc, argv);
+	case 9:
+	    return test_bn_tabdata_join1(argc, argv);
+	case 10:
+	    return test_bn_tabdata_join2(argc, argv);
+	case 11:
+	    return test_bn_tabdata_blend2(argc, argv);
+	case 12:
+	    return test_bn_tabdata_blend3(argc, argv);
+	case 13:
+	    return test_bn_tabdata_area1(argc, argv);
+	case 14:
+	    return test_bn_tabdata_area2(argc, argv);
+	case 15:
+	    return test_bn_tabdata_mul_area1(argc, argv);
+	case 16:
+	    return test_bn_tabdata_mul_area2(argc, argv);
+	case 17:
+	    return test_bn_table_lin_interp(argc, argv);
+	case 18:
+	    return test_bn_tabdata_copy(argc, argv);
+	case 19:
+	    return test_bn_tabdata_dup(argc, argv);
+	case 20:
+	    return test_bn_tabdata_get_constval(argc, argv);
     }
 
     bu_log("ERROR: function_num %d is not valid [%s]\n", function_num, argv[0]);

@@ -42,14 +42,14 @@
  *
  * LLVM 3.2 complains about a static inline function here, so use a macro instead
  */
-#define COUNT_ONES32(x) { \
-    x -= ((x >> 1) & 0x55555555); \
-    x  = (((x >> 2) & 0x33333333) + (x & 0x33333333)); \
-    x  = (((x >> 4) + x) & 0x0f0f0f0f); \
-    x += (x >> 8); \
-    x += (x >> 16); \
-    x &= 0x0000003f; \
-}
+#define COUNT_ONES32(x) do { \
+	x -= ((x >> 1) & 0x55555555); \
+	x  = (((x >> 2) & 0x33333333) + (x & 0x33333333)); \
+	x  = (((x >> 4) + x) & 0x0f0f0f0f); \
+	x += (x >> 8); \
+	x += (x >> 16); \
+	x &= 0x0000003f; \
+    } while (0)
 
 
 /**
@@ -60,15 +60,15 @@
  *
  * LLVM 3.2 complains about a static inline function here, so use a macro instead
  */
-#define FLOOR_ILOG2(x) { \
-    x |= (x >> 1); \
-    x |= (x >> 2); \
-    x |= (x >> 4); \
-    x |= (x >> 8); \
-    x |= (x >> 16); \
-    x >>= 1; \
-    COUNT_ONES32(x) \
-}
+#define FLOOR_ILOG2(x) do { \
+	x |= (x >> 1); \
+	x |= (x >> 2); \
+	x |= (x >> 4); \
+	x |= (x >> 8); \
+	x |= (x >> 16); \
+	x >>= 1; \
+	COUNT_ONES32(x); \
+    } while (0)
 
 
 /**

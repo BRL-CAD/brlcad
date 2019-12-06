@@ -169,7 +169,7 @@ extern int rt_binunif_import5_minor_type(struct rt_db_internal *, const struct b
 extern void primitive_hitsort(struct hit h[], int nh);
 
 extern fastf_t primitive_get_absolute_tolerance(
-	const struct rt_tess_tol *ttol,
+	const struct bg_tess_tol *ttol,
 	fastf_t rel_to_abs);
 
 extern fastf_t primitive_diagonal_samples(
@@ -177,7 +177,7 @@ extern fastf_t primitive_diagonal_samples(
 	const struct rt_view_info *info);
 
 extern int approximate_parabolic_curve(
-	struct rt_pt_node *pts,
+	struct rt_pnt_node *pts,
 	fastf_t p,
 	int num_new_points);
 
@@ -186,7 +186,7 @@ extern fastf_t primitive_curve_count(
 	const struct rt_view_info *info);
 
 extern int approximate_hyperbolic_curve(
-	struct rt_pt_node *pts,
+	struct rt_pnt_node *pts,
 	fastf_t a,
 	fastf_t b,
 	int num_new_points);

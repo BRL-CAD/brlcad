@@ -249,7 +249,7 @@ bu_rb_free(struct bu_rb_tree *tree, void (*free_data)(void *))
      * Free all the nodes
      */
     for (i = 0; i < tree->rbt_nodes.size; i++) {
-	    node = tree->rbt_nodes.rbl_node[i];
+	node = tree->rbt_nodes.rbl_node[i];
 	rb_free_node(node);
     }
 
@@ -999,18 +999,18 @@ _rb_insert(struct bu_rb_tree *tree, int order, struct bu_rb_node *new_node)
     while (node != RB_NULL(tree)) {
 	parent = node;
 	++RB_SIZE(parent, order);
-    if (UNLIKELY(tree->rbt_debug & BU_RB_DEBUG_OS))
+	if (UNLIKELY(tree->rbt_debug & BU_RB_DEBUG_OS))
 	    bu_log("_rb_insert(%p): size(%p, %d)=%d\n",
 		   (void*)new_node, (void*)parent, order, RB_SIZE(parent, order));
 	comparison = compare(RB_DATA(new_node, order),
 			     RB_DATA(node, order));
 	if (comparison < 0) {
-	if (UNLIKELY(tree->rbt_debug & BU_RB_DEBUG_INSERT))
+	    if (UNLIKELY(tree->rbt_debug & BU_RB_DEBUG_INSERT))
 		bu_log("_rb_insert(%p): <_%d <%p>, going left\n",
 		       (void*)new_node, order, (void*)node);
 	    node = RB_LEFT_CHILD(node, order);
 	} else {
-	if (UNLIKELY(tree->rbt_debug & BU_RB_DEBUG_INSERT))
+	    if (UNLIKELY(tree->rbt_debug & BU_RB_DEBUG_INSERT))
 		bu_log("_rb_insert(%p): >=_%d <%p>, going right\n",
 		       (void*)new_node, order, (void*)node);
 	    node = RB_RIGHT_CHILD(node, order);
@@ -1107,18 +1107,18 @@ bu_rb_insert(struct bu_rb_tree *tree, void *data)
     /*
      * Make a new package and add it to the list of all packages.
      */
-	if (tree->rbt_packages.capacity == 0) {
-	    tree->rbt_packages.capacity = BU_RB_LIST_INIT_CAPACITY;
-	    tree->rbt_packages.rbl_package = (struct bu_rb_package **)bu_malloc(
-		    sizeof tree->rbt_packages.rbl_package[0] * tree->rbt_packages.capacity,
-		    "initial rb list init");
-	} else if (tree->rbt_packages.size == tree->rbt_packages.capacity) {
-	    tree->rbt_packages.capacity *= 2;
-	    tree->rbt_packages.rbl_package = (struct bu_rb_package **)bu_realloc(
-		tree->rbt_packages.rbl_package,
-		    sizeof tree->rbt_packages.rbl_package[0] * tree->rbt_packages.capacity,
-		    "initial rb list init");
-	}
+    if (tree->rbt_packages.capacity == 0) {
+	tree->rbt_packages.capacity = BU_RB_LIST_INIT_CAPACITY;
+	tree->rbt_packages.rbl_package = (struct bu_rb_package **)bu_malloc(
+	    sizeof tree->rbt_packages.rbl_package[0] * tree->rbt_packages.capacity,
+	    "initial rb list init");
+    } else if (tree->rbt_packages.size == tree->rbt_packages.capacity) {
+	tree->rbt_packages.capacity *= 2;
+	tree->rbt_packages.rbl_package = (struct bu_rb_package **)bu_realloc(
+	    tree->rbt_packages.rbl_package,
+	    sizeof tree->rbt_packages.rbl_package[0] * tree->rbt_packages.capacity,
+	    "initial rb list init");
+    }
 
     BU_ALLOC(package, struct bu_rb_package);
     package->rbp_node = (struct bu_rb_node **)
@@ -1132,18 +1132,18 @@ bu_rb_insert(struct bu_rb_tree *tree, void *data)
     /*
      * Make a new node and add it to the list of all nodes.
      */
-	if (tree->rbt_nodes.capacity == 0) {
-	    tree->rbt_nodes.capacity = BU_RB_LIST_INIT_CAPACITY;
-	    tree->rbt_nodes.rbl_node = (struct bu_rb_node **)bu_malloc(
-		    sizeof tree->rbt_nodes.rbl_node[0] * tree->rbt_nodes.capacity,
-		    "initial rb list init");
-	} else if (tree->rbt_nodes.size == tree->rbt_nodes.capacity) {
-	    tree->rbt_nodes.capacity *= 2;
-	    tree->rbt_nodes.rbl_node = (struct bu_rb_node **)bu_realloc(
-		tree->rbt_nodes.rbl_node,
-		    sizeof tree->rbt_nodes.rbl_node[0] * tree->rbt_nodes.capacity,
-		    "initial rb list init");
-	}
+    if (tree->rbt_nodes.capacity == 0) {
+	tree->rbt_nodes.capacity = BU_RB_LIST_INIT_CAPACITY;
+	tree->rbt_nodes.rbl_node = (struct bu_rb_node **)bu_malloc(
+	    sizeof tree->rbt_nodes.rbl_node[0] * tree->rbt_nodes.capacity,
+	    "initial rb list init");
+    } else if (tree->rbt_nodes.size == tree->rbt_nodes.capacity) {
+	tree->rbt_nodes.capacity *= 2;
+	tree->rbt_nodes.rbl_node = (struct bu_rb_node **)bu_realloc(
+	    tree->rbt_nodes.rbl_node,
+	    sizeof tree->rbt_nodes.rbl_node[0] * tree->rbt_nodes.capacity,
+	    "initial rb list init");
+    }
 
     node = (struct bu_rb_node *)
 	bu_malloc(sizeof(struct bu_rb_node), "red-black node");

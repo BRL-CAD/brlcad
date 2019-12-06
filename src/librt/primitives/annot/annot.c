@@ -48,82 +48,91 @@
 
 
 int
-rt_pos_flag(int *pos_flag, int p_hor, int p_ver)
+rt_txt_pos_flag(int *pos_flag, int p_hor, int p_ver)
 {
+    if (!pos_flag)
+	return 1;
+
+    /* sanity bounding */
+    if (p_hor < 1)
+	p_hor = 1;
+    if (p_hor > 3)
+	p_hor = 3;
+    if (p_ver < 1)
+	p_ver = 1;
+    if (p_ver > 3)
+	p_ver = 3;
+
     switch (p_ver) {
-    case 1:
-	switch(p_hor) {
 	case 1:
-	    *pos_flag = RT_ANNOT_POS_BR;
+	    switch(p_hor) {
+		case 1:
+		    *pos_flag = RT_TXT_POS_BL;
+		    break;
+		case 2:
+		    *pos_flag = RT_TXT_POS_BC;
+		    break;
+		case 3:
+		    *pos_flag = RT_TXT_POS_BR;
+	    }
 	    break;
 	case 2:
-	    *pos_flag = RT_ANNOT_POS_BC;
+	    switch(p_hor) {
+		case 1:
+		    *pos_flag = RT_TXT_POS_ML;
+		    break;
+		case 2:
+		    *pos_flag = RT_TXT_POS_MC;
+		    break;
+		case 3:
+		    *pos_flag = RT_TXT_POS_MR;
+	    }
 	    break;
 	case 3:
-	    *pos_flag = RT_ANNOT_POS_BL;
-	    goto case2;
-	}
-	goto case2;
-case2:
-    case 2:
-	switch(p_hor) {
-	case 1:
-	    *pos_flag = RT_ANNOT_POS_MR;
-	    break;
-	case 2:
-	    *pos_flag = RT_ANNOT_POS_MC;
-	    break;
-	case 3:
-	    *pos_flag = RT_ANNOT_POS_ML;
-	    goto case3;
-	}
-	goto case3;
-case3:
-    case 3:
-	switch(p_hor) {
-	case 1:
-	    *pos_flag = RT_ANNOT_POS_TR;
-	    break;
-	case 2:
-	    *pos_flag = RT_ANNOT_POS_TC;
-	    break;
-	case 3:
-	    *pos_flag = RT_ANNOT_POS_TL;
-	}
+	    switch(p_hor) {
+		case 1:
+		    *pos_flag = RT_TXT_POS_TL;
+		    break;
+		case 2:
+		    *pos_flag = RT_TXT_POS_TC;
+		    break;
+		case 3:
+		    *pos_flag = RT_TXT_POS_TR;
+	    }
     }
     return 0;
 }
 
 
-int
-rt_check_pos(const struct txt_seg *tsg, char **rel_pos)
+static int
+ant_check_pos(const struct txt_seg *tsg, char **rel_pos)
 {
-    switch (tsg->pt_rel_pos) {
-	case RT_ANNOT_POS_BL:
+    switch (tsg->rel_pos) {
+	case RT_TXT_POS_BL:
 	    *rel_pos = "bottom left";
 	    break;
-	case RT_ANNOT_POS_BC:
+	case RT_TXT_POS_BC:
 	    *rel_pos = "bottom center";
 	    break;
-	case RT_ANNOT_POS_BR:
+	case RT_TXT_POS_BR:
 	    *rel_pos = "bottom right";
 	    break;
-	case RT_ANNOT_POS_ML:
+	case RT_TXT_POS_ML:
 	    *rel_pos = "middle left";
 	    break;
-	case RT_ANNOT_POS_MC:
+	case RT_TXT_POS_MC:
 	    *rel_pos = "middle center";
 	    break;
-	case RT_ANNOT_POS_MR:
+	case RT_TXT_POS_MR:
 	    *rel_pos = "middle right";
 	    break;
-	case RT_ANNOT_POS_TL:
+	case RT_TXT_POS_TL:
 	    *rel_pos = "top left";
 	    break;
-	case RT_ANNOT_POS_TC:
+	case RT_TXT_POS_TC:
 	    *rel_pos = "top center";
 	    break;
-	case RT_ANNOT_POS_TR:
+	case RT_TXT_POS_TR:
 	    *rel_pos = "top right";
 	    break;
     }
@@ -132,8 +141,84 @@ rt_check_pos(const struct txt_seg *tsg, char **rel_pos)
 }
 
 
-int
-rt_check_ant(const struct rt_ant *ant, const struct rt_annot_internal *annot_ip, int noisy)
+static void
+ant_label_dimensions(struct txt_seg* tsg, hpoint_t ref_pt, fastf_t* length, fastf_t* hight)
+{
+    point_t bmin, bmax;
+    struct bu_list vhead;
+
+    BU_LIST_INIT(&vhead);
+    VSET(bmin, INFINITY, INFINITY, INFINITY);
+    VSET(bmax, -INFINITY, -INFINITY, -INFINITY);
+
+    bn_vlist_2string(&vhead, &RTG.rtg_vlfree, tsg->label.vls_str, ref_pt[0], ref_pt[1], 5, 0);
+    bn_vlist_bbox(&vhead, &bmin, &bmax, NULL);
+
+    *length = bmax[0] - ref_pt[0];
+    *hight = bmax[1] - ref_pt[1];
+}
+
+
+static int
+ant_pos_adjs(struct txt_seg* tsg, struct rt_annot_internal* annot_ip)
+{
+    point2d_t pt = V2INIT_ZERO;
+    fastf_t length = 0;
+    fastf_t height = 0;
+
+    ant_label_dimensions(tsg, annot_ip->verts[tsg->ref_pt], &length, &height);
+
+    if (tsg->rel_pos == RT_TXT_POS_BL) {
+	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
+	pt[0] = pt[0] + 1;
+	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
+    }else if (tsg->rel_pos == RT_TXT_POS_BC) {
+	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
+	pt[0] = pt[0] - (length / 2);
+	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
+    }else if (tsg->rel_pos == RT_TXT_POS_BR) {
+	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
+	pt[0] = pt[0] - length;
+	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
+    }else if (tsg->rel_pos == RT_TXT_POS_ML) {
+	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
+	pt[0] = pt[0] + 1;
+	pt[1] = pt[1] - (height / 2);
+	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
+    }else if (tsg->rel_pos == RT_TXT_POS_MC) {
+	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
+	pt[0] = pt[0] - (length / 2);
+	pt[1] = pt[1] - (height / 2);
+	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
+    }else if (tsg->rel_pos == RT_TXT_POS_MR) {
+	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
+	pt[1] = pt[1] - (height / 2);
+	pt[0] = pt[0] - length;
+	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
+    }else if (tsg->rel_pos == RT_TXT_POS_TL) {
+	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
+	pt[1] = pt[1] - height;
+	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
+    }else if (tsg->rel_pos == RT_TXT_POS_TC) {
+	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
+	pt[0] = pt[0] - (length / 2);
+	pt[1] = pt[1] - height;
+	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
+    } else {
+	//this is the case of TR
+	V2MOVE(pt, annot_ip->verts[tsg->ref_pt]);
+	pt[0] = pt[0] - length;
+	pt[1] = pt[1] - height;
+	V2MOVE(annot_ip->verts[tsg->ref_pt], pt);
+    }
+    return 0;
+}
+
+
+/* FIXME: Unused? */
+#if 0
+static int
+ant_check(const struct rt_ant *ant, const struct rt_annot_internal *annot_ip, int noisy)
 {
     size_t i, j;
     int ret=0;
@@ -190,7 +275,7 @@ rt_check_ant(const struct rt_ant *ant, const struct rt_annot_internal *annot_ip,
 		tsg = (struct txt_seg *)lng;
 		if((size_t)tsg->ref_pt >= annot_ip->vert_count)
 		    ret++;
-		if((size_t)tsg->pt_rel_pos > 9 || (size_t)tsg->pt_rel_pos < 1)
+		if((size_t)tsg->rel_pos > 9 || (size_t)tsg->rel_pos < 1)
 		    ret++;
 		break;
 	    default:
@@ -205,6 +290,7 @@ rt_check_ant(const struct rt_ant *ant, const struct rt_annot_internal *annot_ip,
 	bu_log("annotation references non-existent vertices!\n");
     return ret;
 }
+#endif
 
 
 /**
@@ -317,7 +403,7 @@ rt_annot_free(struct soltab *stp)
 
 
 static int
-seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, struct rt_annot_internal *annot_ip, void *seg)
+seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, struct rt_annot_internal *annot_ip, void *seg)
 {
     int ret=0;
     int i;
@@ -330,7 +416,7 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
     fastf_t delta;
     point_t center = VINIT_ZERO;
     point_t start_pt = VINIT_ZERO;
-    fastf_t pt[4];
+    hpoint_t pt = HINIT_ZERO;
     vect_t semi_a, semi_b;
     fastf_t radius;
     vect_t norm;
@@ -361,10 +447,11 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 		ret++;
 		break;
 	    }
-	    if((size_t)tsg->pt_rel_pos > 9 || (size_t)tsg->pt_rel_pos < 1) {
+	    if((size_t)tsg->rel_pos > 9 || (size_t)tsg->rel_pos < 1) {
 		ret++;
 		break;
 	    }
+	    ant_pos_adjs(tsg, annot_ip);
 	    V2ADD2(pt, V, annot_ip->verts[tsg->ref_pt]);
 	    bn_vlist_2string(vhead, &RTG.rtg_vlfree, tsg->label.vls_str, pt[0], pt[1], 5, 0);
 	    break;
@@ -615,7 +702,7 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 			    pt[j] /= pt[coords-1];
 		    }
 		    if (i == 0)
-			RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE)
+			RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
 		    else
 			RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
 		}
@@ -727,7 +814,7 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 
 
 static int
-ant_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, struct rt_annot_internal *annot_ip, struct rt_ant *ant)
+ant_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, struct rt_annot_internal *annot_ip, struct rt_ant *ant)
 {
     size_t seg_no;
     int ret=0;
@@ -746,7 +833,7 @@ ant_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 
 
 int
-rt_annot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_annot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     struct rt_annot_internal *annot_ip;
     int ret;
@@ -765,415 +852,6 @@ rt_annot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_
     }
 
     return myret;
-}
-
-
-/**
- * Import an annotation from the database format to the internal format.
- * Apply modeling transformations as well.
- */
-int
-rt_annot_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
-{
-    struct rt_annot_internal *annot_ip;
-    union record *rp;
-    size_t seg_no;
-    unsigned char *ptr;
-    struct rt_ant *ant;
-    size_t i;
-
-    /* must be double for import and export */
-    double v[ELEMENTS_PER_VECT];
-    double *vp;
-
-    if (dbip) RT_CK_DBI(dbip);
-
-    BU_CK_EXTERNAL(ep);
-    rp = (union record *)ep->ext_buf;
-    /* Check record type */
-    if (rp->u_id != DBID_ANNOT) {
-	bu_log("rt_annot_import4: defective record\n");
-	return -1;
-    }
-
-    RT_CK_DB_INTERNAL(ip);
-    ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    ip->idb_type = ID_ANNOT;
-    ip->idb_meth = &OBJ[ID_ANNOT];
-    BU_ALLOC(ip->idb_ptr, struct rt_annot_internal);
-
-    annot_ip = (struct rt_annot_internal *)ip->idb_ptr;
-    annot_ip->magic = RT_ANNOT_INTERNAL_MAGIC;
-
-    if (mat == NULL) mat = bn_mat_identity;
-
-    bu_cv_ntohd((unsigned char *)v, rp->ant.ant_V, ELEMENTS_PER_VECT);
-    MAT4X3PNT(annot_ip->V, mat, v);
-
-    annot_ip->vert_count = ntohl(*(uint32_t *)rp->ant.ant_vert_count);
-    annot_ip->ant.count = ntohl(*(uint32_t *)rp->ant.ant_count);
-
-    ptr = (unsigned char *)rp;
-    ptr += sizeof(struct annot_rec);
-    if (annot_ip->vert_count) {
-	annot_ip->verts = (point2d_t *)bu_calloc(annot_ip->vert_count, sizeof(point2d_t), "annot_ip->vert");
-	vp = (double *)bu_calloc(annot_ip->vert_count, sizeof(double)*ELEMENTS_PER_VECT2D, "vp");
-	bu_cv_ntohd((unsigned char *)vp, ptr, annot_ip->vert_count*ELEMENTS_PER_VECT2D);
-
-	/* convert double to fastf_t */
-	for (i=0; i<annot_ip->vert_count; i++) {
-	    annot_ip->verts[i][X] = vp[(i*ELEMENTS_PER_VECT2D)+0];
-	    annot_ip->verts[i][Y] = vp[(i*ELEMENTS_PER_VECT2D)+1];
-	}
-
-	bu_free(vp, "vp");
-	ptr += 16 * annot_ip->vert_count;
-    }
-
-    if (annot_ip->ant.count)
-	annot_ip->ant.segments = (void **)bu_calloc(annot_ip->ant.count, sizeof(void *), "segs");
-    else
-	annot_ip->ant.segments = (void **)NULL;
-    for (seg_no=0; seg_no < annot_ip->ant.count; seg_no++) {
-	uint32_t magic;
-	struct line_seg *lsg;
-	struct carc_seg *csg;
-	struct nurb_seg *nsg;
-	struct bezier_seg *bsg;
-	struct txt_seg *tsg;
-
-	/* must be double for import and export */
-	double scan;
-	double *scanp;
-
-	magic = ntohl(*(uint32_t *)ptr);
-	ptr += SIZEOF_NETWORK_LONG;
-	switch (magic) {
-	    case CURVE_LSEG_MAGIC:
-		BU_ALLOC(lsg, struct line_seg);
-		lsg->magic = magic;
-		lsg->start = ntohl(*(uint32_t *)ptr);
-		ptr += SIZEOF_NETWORK_LONG;
-		lsg->end = ntohl(*(uint32_t *)ptr);
-		ptr += SIZEOF_NETWORK_LONG;
-		annot_ip->ant.segments[seg_no] = (void *)lsg;
-		break;
-	    case ANN_TSEG_MAGIC:
-		BU_ALLOC(tsg, struct txt_seg);
-		tsg->magic = magic;
-		tsg->ref_pt = ntohl(*(uint32_t *)ptr);
-		ptr += SIZEOF_NETWORK_LONG;
-		tsg->pt_rel_pos = ntohl(*(uint32_t *)ptr);
-		ptr += SIZEOF_NETWORK_LONG;
-		tsg->label.vls_offset = ntohl(*(uint32_t *)ptr);
-		ptr += SIZEOF_NETWORK_LONG;
-		tsg->label.vls_len = ntohl(*(uint32_t *)ptr);
-		ptr += SIZEOF_NETWORK_LONG;
-		tsg->label.vls_max = ntohl(*(uint32_t *)ptr);
-		ptr += SIZEOF_NETWORK_LONG;
-		tsg->label.vls_str = (char *)bu_calloc(tsg->label.vls_len + 1, sizeof(char), "annotation label");
-		bu_strlcpy(tsg->label.vls_str, (char *)ptr, tsg->label.vls_len + 1);
-		ptr += tsg->label.vls_len + 1;
-		annot_ip->ant.segments[seg_no] = (void *)tsg;
-		break;
-	    case CURVE_CARC_MAGIC:
-		BU_ALLOC(csg, struct carc_seg);
-		csg->magic = magic;
-		csg->start = ntohl(*(uint32_t *)ptr);
-		ptr += SIZEOF_NETWORK_LONG;
-		csg->end = ntohl(*(uint32_t *)ptr);
-		ptr += SIZEOF_NETWORK_LONG;
-		csg->orientation = ntohl(*(uint32_t *)ptr);
-		ptr += SIZEOF_NETWORK_LONG;
-		csg->center_is_left = ntohl(*(uint32_t *)ptr);
-		ptr += SIZEOF_NETWORK_LONG;
-		bu_cv_ntohd((unsigned char *)&scan, ptr, 1);
-		csg->radius = scan; /* convert double to fastf_t */
-		ptr += SIZEOF_NETWORK_DOUBLE;
-		annot_ip->ant.segments[seg_no] = (void *)csg;
-		break;
-	    case CURVE_NURB_MAGIC:
-		BU_ALLOC(nsg, struct nurb_seg);
-		nsg->magic = magic;
-		nsg->order = ntohl(*(uint32_t *)ptr);
-		ptr += SIZEOF_NETWORK_LONG;
-		nsg->pt_type = ntohl(*(uint32_t *)ptr);
-		ptr += SIZEOF_NETWORK_LONG;
-		nsg->k.k_size = ntohl(*(uint32_t *)ptr);
-		ptr += SIZEOF_NETWORK_LONG;
-
-		nsg->k.knots = (fastf_t *)bu_malloc(nsg->k.k_size * sizeof(fastf_t), "nsg->k.knots");
-		scanp = (double *)bu_malloc(nsg->k.k_size * sizeof(double), "scanp");
-		bu_cv_ntohd((unsigned char *)scanp, ptr, nsg->k.k_size);
-
-		/* convert double to fastf_t */
-		for (i=0; i<(size_t)nsg->k.k_size; i++) {
-		    nsg->k.knots[i] = scanp[i];
-		}
-		bu_free(scanp, "scanp");
-
-		ptr += SIZEOF_NETWORK_DOUBLE * nsg->k.k_size;
-		nsg->c_size = ntohl(*(uint32_t *)ptr);
-		ptr += SIZEOF_NETWORK_LONG;
-		nsg->ctl_points = (int *)bu_malloc(nsg->c_size * sizeof(int), "nsg->ctl_points");
-		for (i=0; i<(size_t)nsg->c_size; i++) {
-		    nsg->ctl_points[i] = ntohl(*(uint32_t *)ptr);
-		    ptr += SIZEOF_NETWORK_LONG;
-		}
-		if (RT_NURB_IS_PT_RATIONAL(nsg->pt_type)) {
-		    nsg->weights = (fastf_t *)bu_malloc(nsg->c_size * sizeof(fastf_t), "nsg->weights");
-		    scanp = (double *)bu_malloc(nsg->c_size * sizeof(double), "scanp");
-		    bu_cv_ntohd((unsigned char *)scanp, ptr, nsg->c_size);
-
-		    /* convert double to fastf_t */
-		    for (i=0; i<(size_t)nsg->k.k_size; i++) {
-			nsg->weights[i] = scanp[i];
-		    }
-		    bu_free(scanp, "scanp");
-
-		    ptr += SIZEOF_NETWORK_DOUBLE * nsg->c_size;
-		} else {
-		    nsg->weights = (fastf_t *)NULL;
-		}
-		annot_ip->ant.segments[seg_no] = (void *)nsg;
-		break;
-	    case CURVE_BEZIER_MAGIC:
-		BU_ALLOC(bsg, struct bezier_seg);
-		bsg->magic = magic;
-		bsg->degree = ntohl(*(uint32_t *)ptr);
-		ptr += SIZEOF_NETWORK_LONG;
-		bsg->ctl_points = (int *)bu_calloc(bsg->degree + 1, sizeof(int), "bsg->ctl_points");
-		for (i=0; i<=(size_t)bsg->degree; i++) {
-		    bsg->ctl_points[i] = ntohl(*(uint32_t *)ptr);
-		    ptr += SIZEOF_NETWORK_LONG;
-		}
-		annot_ip->ant.segments[seg_no] = (void *)bsg;
-		break;
-	    default:
-		bu_bomb("rt_annot_import4: ERROR: unrecognized segment type!\n");
-		break;
-	}
-    }
-
-    ant = &annot_ip->ant;
-
-    if (ant->count)
-	ant->reverse = (int *)bu_calloc(ant->count, sizeof(int), "ant->reverse");
-    for (i=0; i<ant->count; i++) {
-	ant->reverse[i] = ntohl(*(uint32_t *)ptr);
-	ptr += SIZEOF_NETWORK_LONG;
-    }
-
-    return 0;			/* OK */
-}
-
-
-/**
- * The name is added by the caller, in the usual place.
- */
-int
-rt_annot_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
-{
-    struct rt_annot_internal *annot_ip;
-    union record *rec;
-    size_t i, seg_no, nbytes=0, ngran;
-    unsigned char *ptr;
-
-    /* must be double for import and export */
-    double tmp_vec[ELEMENTS_PER_VECT];
-
-    if (dbip) RT_CK_DBI(dbip);
-
-    RT_CK_DB_INTERNAL(ip);
-    if (ip->idb_type != ID_ANNOT) return -1;
-    annot_ip = (struct rt_annot_internal *)ip->idb_ptr;
-    RT_ANNOT_CK_MAGIC(annot_ip);
-
-    BU_CK_EXTERNAL(ep);
-
-    nbytes = sizeof(union record);		/* base record */
-    nbytes += annot_ip->vert_count*(8*2);	/* vertex list */
-
-    for (seg_no=0; seg_no < annot_ip->ant.count; seg_no++) {
-	uint32_t *lng;
-	struct nurb_seg *nseg;
-	struct bezier_seg *bseg;
-
-	lng = (uint32_t *)annot_ip->ant.segments[seg_no];
-	switch (*lng) {
-	    case CURVE_LSEG_MAGIC:
-		nbytes += 12;
-		break;
-	    case ANN_TSEG_MAGIC:
-		nbytes += 12 + sizeof(struct bu_vls);
-		break;
-	    case CURVE_CARC_MAGIC:
-		nbytes += 28;
-		break;
-	    case CURVE_NURB_MAGIC:
-		nseg = (struct nurb_seg *)lng;
-		nbytes += 16 + sizeof(struct knot_vector) + nseg->k.k_size * 8 + nseg->c_size * 4;
-		if (RT_NURB_IS_PT_RATIONAL(nseg->pt_type))
-		    nbytes += nseg->c_size * 8;	/* weights */
-		break;
-	    case CURVE_BEZIER_MAGIC:
-		bseg = (struct bezier_seg *)lng;
-		nbytes += 8 + (bseg->degree + 1) * 4;
-		break;
-	    default:
-		bu_log("rt_annot_export4: unsupported segment type (x%x)\n", *lng);
-		bu_bomb("rt_annot_export4: unsupported segment type\n");
-	}
-    }
-
-    ngran = ceil((double)(nbytes + sizeof(union record)) / sizeof(union record));
-    ep->ext_nbytes = ngran * sizeof(union record);
-    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "annotation external");
-
-    rec = (union record *)ep->ext_buf;
-
-    rec->ant.ant_id = DBID_ANNOT;
-
-    /* convert from local editing units to mm and export
-     * to database record format
-     */
-    VSCALE(tmp_vec, annot_ip->V, local2mm);
-    bu_cv_htond(rec->ant.ant_V, (unsigned char *)tmp_vec, ELEMENTS_PER_VECT);
-
-    /* uvec and uvec are unit vectors, do not convert to/from mm */
-
-    *(uint32_t *)rec->ant.ant_vert_count = htonl(annot_ip->vert_count);
-    *(uint32_t *)rec->ant.ant_count = htonl(annot_ip->ant.count);
-    *(uint32_t *)rec->ant.ant_count = htonl(ngran-1);
-
-    ptr = (unsigned char *)rec;
-    ptr += sizeof(struct annot_rec);
-    /* convert 2D points to mm */
-    for (i=0; i<annot_ip->vert_count; i++) {
-	/* must be double for import and export */
-	double pt2d[ELEMENTS_PER_VECT2D];
-
-	V2SCALE(pt2d, annot_ip->verts[i], local2mm);
-	bu_cv_htond(ptr, (const unsigned char *)pt2d, ELEMENTS_PER_VECT2D);
-	ptr += 16;
-    }
-
-    for (seg_no=0; seg_no < annot_ip->ant.count; seg_no++) {
-	struct line_seg *lseg;
-	struct carc_seg *cseg;
-	struct nurb_seg *nseg;
-	struct bezier_seg *bseg;
-	struct txt_seg *tseg;
-	uint32_t *lng;
-
-	/* must be double for import and export */
-	double tmp_fastf;
-	double *scanp;
-
-	/* write segment type ID, and segment parameters */
-	lng = (uint32_t *)annot_ip->ant.segments[seg_no];
-	switch (*lng) {
-	    case CURVE_LSEG_MAGIC:
-		lseg = (struct line_seg *)lng;
-		*(uint32_t *)ptr = htonl(CURVE_LSEG_MAGIC);
-		ptr += SIZEOF_NETWORK_LONG;
-		*(uint32_t *)ptr = htonl(lseg->start);
-		ptr += SIZEOF_NETWORK_LONG;
-		*(uint32_t *)ptr = htonl(lseg->end);
-		ptr += SIZEOF_NETWORK_LONG;
-		break;
-	    case ANN_TSEG_MAGIC:
-		tseg = (struct txt_seg *)lng;
-		*(uint32_t *)ptr = htonl(ANN_TSEG_MAGIC);
-		ptr += SIZEOF_NETWORK_LONG;
-		*(uint32_t *)ptr = htonl(tseg->ref_pt);
-		ptr += SIZEOF_NETWORK_LONG;
-		*(uint32_t *)ptr = htonl(tseg->pt_rel_pos);
-		ptr += SIZEOF_NETWORK_LONG;
-		*(uint32_t *)ptr = htonl(tseg->label.vls_offset);
-		ptr += SIZEOF_NETWORK_LONG;
-		*(uint32_t *)ptr = htonl(tseg->label.vls_len);
-		ptr += SIZEOF_NETWORK_LONG;
-		*(uint32_t *)ptr = htonl(tseg->label.vls_max);
-		ptr += SIZEOF_NETWORK_LONG;
-		bu_strlcpy((char *)ptr, tseg->label.vls_str, tseg->label.vls_len);
-		ptr += tseg->label.vls_len;
-		break;
-	    case CURVE_CARC_MAGIC:
-		cseg = (struct carc_seg *)lng;
-		*(uint32_t *)ptr = htonl(CURVE_CARC_MAGIC);
-		ptr += SIZEOF_NETWORK_LONG;
-		*(uint32_t *)ptr = htonl(cseg->start);
-		ptr += SIZEOF_NETWORK_LONG;
-		*(uint32_t *)ptr = htonl(cseg->end);
-		ptr += SIZEOF_NETWORK_LONG;
-		*(uint32_t *)ptr = htonl(cseg->orientation);
-		ptr += SIZEOF_NETWORK_LONG;
-		*(uint32_t *)ptr = htonl(cseg->center_is_left);
-		ptr += SIZEOF_NETWORK_LONG;
-		tmp_fastf = cseg->radius * local2mm;
-		bu_cv_htond(ptr, (unsigned char *)&tmp_fastf, 1);
-		ptr += SIZEOF_NETWORK_DOUBLE;
-		break;
-	    case CURVE_NURB_MAGIC:
-		nseg = (struct nurb_seg *)lng;
-		*(uint32_t *)ptr = htonl(CURVE_NURB_MAGIC);
-		ptr += SIZEOF_NETWORK_LONG;
-		*(uint32_t *)ptr = htonl(nseg->order);
-		ptr += SIZEOF_NETWORK_LONG;
-		*(uint32_t *)ptr = htonl(nseg->pt_type);
-		ptr += SIZEOF_NETWORK_LONG;
-		*(uint32_t *)ptr = htonl(nseg->k.k_size);
-		ptr += SIZEOF_NETWORK_LONG;
-		scanp = (double *)bu_malloc(nseg->k.k_size * sizeof(double), "scanp");
-		/* convert fastf_t to double */
-		for (i=0; i<(size_t)nseg->k.k_size; i++) {
-		    scanp[i] = nseg->k.knots[i];
-		}
-		bu_cv_htond(ptr, (const unsigned char *)scanp, nseg->k.k_size);
-		bu_free(scanp, "scanp");
-		ptr += nseg->k.k_size * 8;
-		*(uint32_t *)ptr = htonl(nseg->c_size);
-		ptr += SIZEOF_NETWORK_LONG;
-		for (i=0; i<(size_t)nseg->c_size; i++) {
-		    *(uint32_t *)ptr = htonl(nseg->ctl_points[i]);
-		    ptr += SIZEOF_NETWORK_LONG;
-		}
-		if (RT_NURB_IS_PT_RATIONAL(nseg->pt_type)) {
-		    scanp = (double *)bu_malloc(nseg->c_size * sizeof(double), "scanp");
-		    /* convert fastf_t to double */
-		    for (i=0; i<(size_t)nseg->c_size; i++) {
-			scanp[i] = nseg->weights[i];
-		    }
-		    bu_cv_htond(ptr, (const unsigned char *)scanp, nseg->c_size);
-		    bu_free(scanp, "scanp");
-		    ptr += SIZEOF_NETWORK_DOUBLE * nseg->c_size;
-		}
-		break;
-	    case CURVE_BEZIER_MAGIC:
-		bseg = (struct bezier_seg *)lng;
-		*(uint32_t *)ptr = htonl(CURVE_BEZIER_MAGIC);
-		ptr += SIZEOF_NETWORK_LONG;
-		*(uint32_t *)ptr = htonl(bseg->degree);
-		ptr += SIZEOF_NETWORK_LONG;
-		for (i=0; i<=(size_t)bseg->degree; i++) {
-		    *(uint32_t *)ptr = htonl(bseg->ctl_points[i]);
-		    ptr += SIZEOF_NETWORK_LONG;
-		}
-		break;
-	    default:
-		bu_bomb("rt_annot_export4: ERROR: unrecognized segment type!\n");
-		break;
-
-	}
-    }
-
-    for (seg_no=0; seg_no < annot_ip->ant.count; seg_no++) {
-	*(uint32_t *)ptr = htonl(annot_ip->ant.reverse[seg_no]);
-	ptr += SIZEOF_NETWORK_LONG;
-    }
-
-    return 0;
 }
 
 
@@ -1266,17 +944,11 @@ rt_annot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const 
 		tsg->magic = magic;
 		tsg->ref_pt = ntohl(*(uint32_t *)ptr);
 		ptr += SIZEOF_NETWORK_LONG;
-		tsg->pt_rel_pos = ntohl(*(uint32_t *)ptr);
+		tsg->rel_pos = ntohl(*(uint32_t *)ptr);
 		ptr += SIZEOF_NETWORK_LONG;
 		bu_vls_init(&tsg->label);
-		tsg->label.vls_str = bu_strdup((const char *)ptr);
-		ptr += strlen(tsg->label.vls_str);
-		tsg->label.vls_offset = ntohl(*(uint32_t *)ptr);
-		ptr += SIZEOF_NETWORK_LONG;
-		tsg->label.vls_len = ntohl(*(uint32_t *)ptr);
-		ptr += SIZEOF_NETWORK_LONG;
-		tsg->label.vls_max = ntohl(*(uint32_t *)ptr);
-		ptr += SIZEOF_NETWORK_LONG;
+		bu_vls_strcpy(&tsg->label, (const char*)ptr);
+		ptr += bu_vls_strlen(&tsg->label) + 1;
 		annot_ip->ant.segments[seg_no] = (void *)tsg;
 		break;
 	    case CURVE_CARC_MAGIC:
@@ -1405,6 +1077,7 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
 	uint32_t *lng;
 	struct nurb_seg *nseg;
 	struct bezier_seg *bseg;
+	struct txt_seg *tseg;
 
 	lng = (uint32_t *)annot_ip->ant.segments[seg_no];
 	switch (*lng) {
@@ -1413,7 +1086,9 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
 		ep->ext_nbytes += 3 * SIZEOF_NETWORK_LONG;
 		break;
 	    case ANN_TSEG_MAGIC:
-		ep->ext_nbytes += 3 * SIZEOF_NETWORK_LONG + sizeof(struct bu_vls);
+		tseg = (struct txt_seg*)lng;
+		/* magic + ref_pt + pt_rel_pos + label->vls_str length + 1 for the null terminator*/
+		ep->ext_nbytes += 3 * SIZEOF_NETWORK_LONG + bu_vls_strlen(&tseg->label) + 1;
 		break;
 	    case CURVE_CARC_MAGIC:
 		/* magic + start + end + orientation + center_is_left + (double)radius*/
@@ -1498,7 +1173,7 @@ rt_annot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double
 		cp += SIZEOF_NETWORK_LONG;
 		*(uint32_t *)cp = htonl(tseg->ref_pt);
 		cp += SIZEOF_NETWORK_LONG;
-		*(uint32_t *)cp = htonl(tseg->pt_rel_pos);
+		*(uint32_t *)cp = htonl(tseg->rel_pos);
 		cp += SIZEOF_NETWORK_LONG;
 
 		bu_strlcpy((char *)cp, bu_vls_addr(&tseg->label), bu_vls_strlen(&tseg->label) + 1);
@@ -1658,14 +1333,14 @@ rt_annot_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbo
 	    case ANN_TSEG_MAGIC:
 		tsg = (struct txt_seg *)annot_ip->ant.segments[seg_no];
 		if((size_t)tsg->ref_pt >= annot_ip->vert_count) {
-		    sprintf(buf, "\t\tReference point vertex #%d\n",tsg->ref_pt);
+		    sprintf(buf, "\t\tReference point vertex #%d\n", tsg->ref_pt);
 		}
 		else {
 		    sprintf(buf, "\t\tReference point (%g %g)\n",
-				V2INTCLAMPARGS(annot_ip->verts[tsg->ref_pt]));
+			    V2INTCLAMPARGS(annot_ip->verts[tsg->ref_pt]));
 		}
 		bu_vls_strcat(str, buf);
-		rt_check_pos(tsg, &rel_pos);
+		ant_check_pos(tsg, &rel_pos);
 		sprintf(buf, "\t\tRelative position: %s\n", rel_pos);
 		bu_vls_strcat(str, buf);
 		sprintf(buf, "\tLabel text: %s\n", bu_vls_addr(&tsg->label));
@@ -1877,8 +1552,8 @@ rt_annot_ifree(struct rt_db_internal *ip)
 }
 
 
-void
-rt_copy_ant(struct rt_ant *ant_out, const struct rt_ant *ant_in)
+static void
+ant_copy(struct rt_ant *ant_out, const struct rt_ant *ant_in)
 {
     size_t i, j;
 
@@ -1947,7 +1622,7 @@ rt_copy_ant(struct rt_ant *ant_out, const struct rt_ant *ant_in)
 		}
 		break;
 	    default:
-		bu_bomb("rt_copy_annot: ERROR: unrecognized segment type!\n");
+		bu_bomb("ERROR: unrecognized segment type enountered while copying annotation\n");
 	}
     }
 
@@ -1975,13 +1650,13 @@ rt_copy_annot(const struct rt_annot_internal *annot_ip)
 
     ant_out = &out->ant;
     if (ant_out)
-	rt_copy_ant(ant_out, &annot_ip->ant);
+	ant_copy(ant_out, &annot_ip->ant);
 
     return out;
 }
 
 
-int
+static int
 ant_to_tcl_list(struct bu_vls *vls, struct rt_ant *ant)
 {
     size_t i, j;
@@ -1999,7 +1674,7 @@ ant_to_tcl_list(struct bu_vls *vls, struct rt_ant *ant)
 	    case ANN_TSEG_MAGIC:
 		{
 		    struct txt_seg *tsg = (struct txt_seg *)ant->segments[j];
-		    rt_check_pos(tsg, &rel_pos);
+		    ant_check_pos(tsg, &rel_pos);
 		    bu_vls_printf(vls, " { label %s ref_pt %d position %s }", bu_vls_addr(&tsg->label), tsg->ref_pt, rel_pos);
 		}
 		break;
@@ -2047,7 +1722,8 @@ ant_to_tcl_list(struct bu_vls *vls, struct rt_ant *ant)
 }
 
 
-int rt_annot_form(struct bu_vls *logstr, const struct rt_functab *ftp)
+int
+rt_annot_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 {
     BU_CK_VLS(logstr);
     RT_CK_FUNCTAB(ftp);
@@ -2107,10 +1783,10 @@ rt_annot_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const c
 }
 
 
-int
-get_tcl_ant(struct bu_vls *logstr, struct rt_ant *ant, const char *argv1)
+static int
+ant_get_tcl(struct bu_vls *logstr, struct rt_ant *ant, const char *argv1)
 {
-	int count;
+    int count;
     int j;
     const char **seg_list = NULL;
 
@@ -2159,26 +1835,26 @@ get_tcl_ant(struct bu_vls *logstr, struct rt_ant *ant, const char *argv1)
 	    lsg->magic = CURVE_LSEG_MAGIC;
 	    ant->segments[j] = (void *)lsg;
 	} else if (BU_STR_EQUAL(seg_argv[0], "txt")) {
-		struct txt_seg *tsg;
+	    struct txt_seg *tsg;
 
-		BU_ALLOC(tsg, struct txt_seg);
-		for (k=1; k<seg_argc; k+= 2) {
-		    elem = seg_argv[k];
-		    sval = seg_argv[k+1];
-		    switch (*elem){
-			case 'R': /* ref point */
-			    (void)bu_opt_int(NULL, 1, &sval, (void *)&tsg->ref_pt);
-			    break;
-			case 'P': /* position relative */
-			    (void)bu_opt_int(NULL, 1, &sval, (void *)&tsg->pt_rel_pos);
-			    break;
-			case 'L': /* label text */
-			    (void)bu_opt_vls(NULL, 1, &sval, (void *)&tsg->label);
-			    break;
-		    }
+	    BU_ALLOC(tsg, struct txt_seg);
+	    for (k=1; k<seg_argc; k+= 2) {
+		elem = seg_argv[k];
+		sval = seg_argv[k+1];
+		switch (*elem) {
+		    case 'R': /* ref point */
+			(void)bu_opt_int(NULL, 1, &sval, (void *)&tsg->ref_pt);
+			break;
+		    case 'P': /* position relative */
+			(void)bu_opt_int(NULL, 1, &sval, (void *)&tsg->rel_pos);
+			break;
+		    case 'L': /* label text */
+			(void)bu_opt_vls(NULL, 1, &sval, (void *)&tsg->label);
+			break;
 		}
-		tsg->magic = ANN_TSEG_MAGIC;
-		ant->segments[j] = (void *)tsg;
+	    }
+	    tsg->magic = ANN_TSEG_MAGIC;
+	    ant->segments[j] = (void *)tsg;
 	} else if (BU_STR_EQUAL(seg_argv[0], "bezier")) {
 	    struct bezier_seg *bsg;
 	    int num_points;
@@ -2335,7 +2011,7 @@ rt_annot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, 
 	    ant->reverse = (int *)NULL;
 	    ant->segments = (void **)NULL;
 
-	    if ((ret=get_tcl_ant(logstr, ant, argv[1])) != 0)
+	    if ((ret=ant_get_tcl(logstr, ant, argv[1])) != 0)
 		return ret;
 	} else if (*argv[0] == 'V' && isdigit((int)*(argv[0]+1))) {
 	    /* changing a specific vertex */

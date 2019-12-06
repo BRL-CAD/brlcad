@@ -130,7 +130,8 @@ fi
 
 # apply the header
 output="`env bash \"$header_sh\" \"$LICE\" \"$FILE\" \"$PROJ\" \"$COPY\" 2>&1`"
-if [ $? -ne 0 ] ; then
+# return 0 is header applied, return 9 is header already exists
+if [ $? -ne 0 -a $? -ne 9 ] ; then
     if [ -f "$FILE.backup" ] ; then
 	cp "$FILE.backup" "$FILE"
     fi

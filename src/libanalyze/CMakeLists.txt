@@ -11,12 +11,12 @@ set(LIBANALYZE_SOURCES
   api.c
   centroid.c
   check_options.c
-  density.cxx
+  density.cpp
   inside.c
   mass.c
   moments.c
-  nirt.cxx
-  obj_to_pnts.cxx
+  nirt.cpp
+  obj_to_pnts.cpp
   overlaps.c
   polygonizer.c
   raydiff.c
@@ -53,7 +53,7 @@ CMAKEFILES(
   CMakeLists.txt
   analyze_private.h
   find_subtracted_shapes.cpp
-  wnsurface.cxx
+  wnsurface.cpp
   )
 
 # Local Variables:

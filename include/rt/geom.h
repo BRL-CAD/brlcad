@@ -42,6 +42,7 @@
 #include "bu/mapped_file.h"
 #include "bu/vls.h"
 #include "vmath.h"
+#include "rt/defines.h"
 
 #include "../nmg.h" /* (temporarily?) needed for knot_vector */
 #include "brep.h"
@@ -165,7 +166,7 @@ struct rt_metaball_internal {
     struct bu_list metaball_ctrl_head;
 };
 #define RT_METABALL_CK_MAGIC(_p) BU_CKMAG(_p, RT_METABALL_INTERNAL_MAGIC, "rt_metaball_internal")
-struct wdb_metaballpt {
+struct wdb_metaball_pnt {
     struct bu_list l;
     int type;
     fastf_t fldstr; /**< @brief  field strength */
@@ -175,7 +176,7 @@ struct wdb_metaballpt {
 };
 #define WDB_METABALLPT_TYPE_POINT 0x0
 #define WDB_METABALLPT_TYPE_LINE 0x1
-#define WDB_METABALLPT_NULL	((struct wdb_metaballpt *)0)
+#define WDB_METABALL_PNT_NULL	((struct wdb_metaball_pnt *)0)
 /** @} */
 
 
@@ -415,7 +416,7 @@ struct rt_pipe_internal {
     int pipe_count;
 };
 #define RT_PIPE_CK_MAGIC(_p) BU_CKMAG(_p, RT_PIPE_INTERNAL_MAGIC, "rt_pipe_internal")
-struct wdb_pipept {
+struct wdb_pipe_pnt {
     struct bu_list l;      /**< @brief  doubly linked list support */
     point_t pp_coord;      /**< @brief  "control" point for pipe solid */
     fastf_t pp_id;         /**< @brief  inner diam, <=0 if solid (wire) */
@@ -808,6 +809,14 @@ struct rt_bot_internal
 				 * texturing coordinates [num_uvs*3]
 				 */
 
+    size_t num_face_uvs;	/**< @brief current size of the
+				 * face_uvs array below (number of
+				 * faces in the array)
+				 */
+    int *face_uvs;		/**< @brief array of indices into the
+				 * "uvs" array, one per face vertex
+				 * [num_uvs*3] */
+
     void *tie;	/* FIXME: blind casting. TIE needs to move from TIE_FUNC to XGLUE before this can not suck. */
 };
 
@@ -841,9 +850,14 @@ struct rt_bot_list {
 #define RT_BOT_PLATE_NOCOS 4
 
 /* flags for bot_flags */
-#define RT_BOT_HAS_SURFACE_NORMALS 0x1 /**< @brief This primitive may have surface normals at each face vertex */
-#define RT_BOT_USE_NORMALS 0x2         /**< @brief Use the surface normals if they exist */
-#define RT_BOT_USE_FLOATS 0x4          /**< @brief Use the single precision version of "tri_specific" during prep */
+#define RT_BOT_HAS_SURFACE_NORMALS 0x01 /**< @brief Has surface normals at each face vertex */
+#define RT_BOT_USE_NORMALS         0x02 /**< @brief Use the surface normals if they exist */
+#define RT_BOT_USE_FLOATS          0x04 /**< @brief Use the single precision version of "tri_specific" during prep */
+#define RT_BOT_HAS_TEXTURE_UVS     0x08 /**< @brief Has uv texture coordinates at each face vertex */
+#define RT_BOT_HAS_UNUSED1         0x10 /**< @brief TBD */
+#define RT_BOT_HAS_UNUSED2         0x20 /**< @brief TBD */
+#define RT_BOT_HAS_UNUSED3         0x40 /**< @brief TBD */
+#define RT_BOT_HAS_UNUSED4         0x80 /**< @brief WARNING: use this flag to denote more bits in the export serialization */
 
 #define RT_BOT_CK_MAGIC(_p) BU_CKMAG(_p, RT_BOT_INTERNAL_MAGIC, "rt_bot_internal")
 /** @} */
@@ -941,12 +955,15 @@ struct rt_pnts_internal {
 /*
  * ID_ANNO
  *
- * Annotations are used to provide labels in-scene when viewing geometry. Leaders connect labels
- * to geometry objects or fixed points in space.
+ * Annotations are used to provide labels in-scene when viewing
+ * geometry. Leaders connect labels to geometry objects or fixed
+ * points in space.
  *
- * container for the annotation primitive
  */
 
+/**
+ * container for the annotation primitive
+ */
 struct rt_ant {
     size_t count;			/**< @brief number of segments in the annotation */
     int *reverse;			/**< array of boolean flags indicating if the
@@ -955,16 +972,37 @@ struct rt_ant {
 };
 
 /**
- * used by the annotation primitive
+ * text labels used by the annotation primitive
  */
-
 struct txt_seg {
     uint32_t magic;
     int ref_pt;				/** reference point */
-    int pt_rel_pos;			/** flag describing the position relative to the ref_point */
+    int rel_pos;			/** flag describing position relative to ref_pt */
     struct bu_vls label;
 };
 
+/**
+ * placement flags
+ */
+#define RT_TXT_POS_BL 1
+#define RT_TXT_POS_BC 2
+#define RT_TXT_POS_BR 3
+#define RT_TXT_POS_ML 4
+#define RT_TXT_POS_MC 5
+#define RT_TXT_POS_MR 6
+#define RT_TXT_POS_TL 7
+#define RT_TXT_POS_TC 8
+#define RT_TXT_POS_TR 9
+
+/**
+ * set a position flag to the corresponding placement value given
+ * numeric settings (1=left/top, 2=middle/center, 3=right/bottom).
+ */
+RT_EXPORT int rt_txt_pos_flag(int *pos_flag, int horizontal, int vertical);
+
+/**
+ * internal representation of an annotation object
+ */
 struct rt_annot_internal
 {
     uint32_t magic;
@@ -974,19 +1012,6 @@ struct rt_annot_internal
     struct rt_ant ant;			/**< @brief segments in the annotation */
 };
 
-/**
- * placement flags
- */
-
-#define RT_ANNOT_POS_BL 1
-#define RT_ANNOT_POS_BC 2
-#define RT_ANNOT_POS_BR 3
-#define RT_ANNOT_POS_ML 4
-#define RT_ANNOT_POS_MC 5
-#define RT_ANNOT_POS_MR 6
-#define RT_ANNOT_POS_TL 7
-#define RT_ANNOT_POS_TC 8
-#define RT_ANNOT_POS_TR 9
 
 
 #define RT_ANNOT_CK_MAGIC(_p) BU_CKMAG(_p, RT_ANNOT_INTERNAL_MAGIC, "rt_annot_internal")

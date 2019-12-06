@@ -106,13 +106,13 @@ double
 bn_dbl_max(void)
 {
 #if defined(DBL_MAX)
-	return DBL_MAX;
+    return DBL_MAX;
 #elif defined(INFINITY)
     static const double val = INFINITY;
     long long next = *(long long*)&val - 1;
     return *(double *)&next;
 #else
-	return 1.0/bn_dbl_min();
+    return 1.0/bn_dbl_min();
 #endif
 }
 
@@ -129,13 +129,13 @@ double
 bn_flt_max(void)
 {
 #if defined(FLT_MAX)
-	return FLT_MAX;
+    return FLT_MAX;
 #elif defined(INFINITY)
     static const float val = INFINITY;
     long next = *(long*)&val - 1;
     return *(float *)&next;
 #else
-	return 1.0/bn_flt_min();
+    return 1.0/bn_flt_min();
 #endif
 }
 

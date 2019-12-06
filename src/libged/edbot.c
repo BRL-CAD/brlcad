@@ -290,7 +290,7 @@ ged_bot_face_split(struct ged *gedp, int argc, const char *argv[])
 
 
 int
-ged_find_bot_edge_nearest_pt(struct ged *gedp, int argc, const char *argv[])
+ged_find_bot_edge_nearest_pnt(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "bot view_xyz";
     struct rt_db_internal intern;
@@ -349,7 +349,7 @@ ged_find_bot_edge_nearest_pt(struct ged *gedp, int argc, const char *argv[])
 
 
 int
-ged_find_botpt_nearest_pt(struct ged *gedp, int argc, const char *argv[])
+ged_find_bot_pnt_nearest_pnt(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "bot view_xyz";
     struct rt_db_internal intern;
@@ -464,7 +464,7 @@ ged_get_bot_edges(struct ged *gedp, int argc, const char *argv[])
 
 
 int
-ged_move_botpt(struct ged *gedp, int argc, const char *argv[])
+ged_bot_move_pnt(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "[-r] bot vertex_i pt";
     struct directory *dp;
@@ -581,7 +581,7 @@ ged_move_botpt(struct ged *gedp, int argc, const char *argv[])
 
 
 int
-ged_move_botpts(struct ged *gedp, int argc, const char *argv[])
+ged_bot_move_pnts(struct ged *gedp, int argc, const char *argv[])
 {
     static const char *usage = "bot vec vertex_1 [vertex_2 ... vertex_n]";
     struct directory *dp;

@@ -77,6 +77,7 @@ if(SH_EXEC)
   Sh_Regression_Test(solids "rt;mged;pixdiff;asc2pix;gencolor")
   Sh_Regression_Test(shaders "rt;mged;pixdiff;gencolor")
   Sh_Regression_Test(spdi "rt;mged;pixdiff")
+  Sh_Regression_Test(rtedge "rt;rtedge;pixdiff;asc2g")
   Sh_Regression_Test(iges "iges-g;g-iges;mged;asc2g")
   Sh_Regression_Test(weight "rtweight;mged")
   Sh_Regression_Test(gqa "gqa;mged")
@@ -147,6 +148,12 @@ CMAKEFILES(
   nurbs/brep-3dm.tar.bz2
   red.sh
   repository.sh
+  rtedge.ref.pix.gz
+  rtedge.ref2.pix.gz
+  rtedge.ref3.pix.gz
+  rtedge.ref4.pix.gz
+  rtedge.ref5.pix.gz
+  rtedge.sh
   shaders.eagleCAD-512x438.pix
   shaders.ref.pix
   shaders.sh
@@ -158,6 +165,7 @@ CMAKEFILES(
   tgms/comgeom.cg
   tgms/comgeom.tgt-1-v4-documented.cg
   tgms/comgeom.tgt-1-v4.cg
+  tgms/havoc.g.gz
   tgms/m35.asc.gz
   tgms/m35.cg.gz
   tgms/solids.dsp.dat
@@ -225,14 +233,18 @@ set(regress_outfiles
   gqa.overlaps.plot3
   gqa.volume.plot3
   iges.export.iges
-  iges.export2.iges
+  iges.export.stdout.iges
   iges.g
+  iges.import.export.iges
   iges.import.g
+  iges.import2.export.iges
+  iges.import2.g
+  iges.import3.export.iges
+  iges.import3.g
   iges.log
   iges.m35.asc
   iges.m35.g
-  iges_file3.iges
-  iges_stdout_new.g
+  iges.m35.r516.iges
   lights.asc
   lights.diff.pix
   lights.g
@@ -347,6 +359,23 @@ set(regress_outfiles
   region_ids
   regions
   repository.log
+  rtedge.2.pix
+  rtedge.3.pix
+  rtedge.4.pix
+  rtedge.5.pix
+  rtedge.diff.pix
+  rtedge.diff2.pix
+  rtedge.diff3.pix
+  rtedge.diff4.pix
+  rtedge.diff5.pix
+  rtedge.havoc.g
+  rtedge.log
+  rtedge.pix
+  rtedge.ref.pix
+  rtedge.ref2.pix
+  rtedge.ref3.pix
+  rtedge.ref4.pix
+  rtedge.ref5.pix
   shaders.ebm.bw
   shaders.ell_2.prj
   shaders.g

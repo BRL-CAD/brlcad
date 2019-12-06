@@ -42,39 +42,39 @@ RT_EXPORT extern int rt_arb_get_cgtype(
     int *uvec,  /* array of indexes to unique points in arb->pt[] */
     int *svec); /* array of indexes to like points in arb->pt[] */
 RT_EXPORT extern int rt_arb_std_type(const struct rt_db_internal *ip,
-                                     const struct bn_tol *tol);
+				     const struct bn_tol *tol);
 RT_EXPORT extern void rt_arb_centroid(point_t                       *cent,
-                                      const struct rt_db_internal   *ip);
+				      const struct rt_db_internal   *ip);
 RT_EXPORT extern int rt_arb_calc_points(struct rt_arb_internal *arb, int cgtype, const plane_t planes[6], const struct bn_tol *tol);            /* needs wdb.h for arg list */
 RT_EXPORT extern int rt_arb_check_points(struct rt_arb_internal *arb,
-                                         int cgtype,
-                                         const struct bn_tol *tol);
+					 int cgtype,
+					 const struct bn_tol *tol);
 RT_EXPORT extern int rt_arb_3face_intersect(point_t                     point,
-                                            const plane_t               planes[6],
-                                            int                 type,           /* 4..8 */
-                                            int                 loc);
+					    const plane_t               planes[6],
+					    int                 type,           /* 4..8 */
+					    int                 loc);
 RT_EXPORT extern int rt_arb_calc_planes(struct bu_vls           *error_msg_ret,
-                                        struct rt_arb_internal  *arb,
-                                        int                     type,
-                                        plane_t                 planes[6],
-                                        const struct bn_tol     *tol);
+					struct rt_arb_internal  *arb,
+					int                     type,
+					plane_t                 planes[6],
+					const struct bn_tol     *tol);
 RT_EXPORT extern int rt_arb_move_edge(struct bu_vls             *error_msg_ret,
-                                      struct rt_arb_internal    *arb,
-                                      vect_t                    thru,
-                                      int                       bp1,
-                                      int                       bp2,
-                                      int                       end1,
-                                      int                       end2,
-                                      const vect_t              dir,
-                                      plane_t                   planes[6],
-                                      const struct bn_tol       *tol);
+				      struct rt_arb_internal    *arb,
+				      vect_t                    thru,
+				      int                       bp1,
+				      int                       bp2,
+				      int                       end1,
+				      int                       end2,
+				      const vect_t              dir,
+				      plane_t                   planes[6],
+				      const struct bn_tol       *tol);
 RT_EXPORT extern int rt_arb_edit(struct bu_vls          *error_msg_ret,
-                                 struct rt_arb_internal *arb,
-                                 int                    arb_type,
-                                 int                    edit_type,
-                                 vect_t                 pos_model,
-                                 plane_t                        planes[6],
-                                 const struct bn_tol    *tol);
+				 struct rt_arb_internal *arb,
+				 int                    arb_type,
+				 int                    edit_type,
+				 vect_t                 pos_model,
+				 plane_t                        planes[6],
+				 const struct bn_tol    *tol);
 RT_EXPORT extern int rt_arb_find_e_nearest_pt2(int *edge, int *vert1, int *vert2, const struct rt_db_internal *ip, const point_t pt2, const mat_t mat, fastf_t ptol);
 
 

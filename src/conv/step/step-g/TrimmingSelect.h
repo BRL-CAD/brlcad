@@ -37,7 +37,7 @@ public:
     enum trimming_select_type {
 	CARTESIAN_POINT,
 	PARAMETER_VALUE,
-	UNKNOWN
+	TRIMMING_SELECT_UNKNOWN
     };
 
 private:

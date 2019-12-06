@@ -88,11 +88,14 @@ objects.
           </listitem>
         </varlistentry>
         <varlistentry>
-          <term><emphasis remap="B" role="bold">list</emphasis></term>
+          <term><emphasis remap="B" role="bold">list</emphasis> object_name_pattern [key_filter_pattern [value_filter_pattern]]</term>
           <listitem>
                 <para>
-                  Lists the attributes assigned to the object or objects matched by the pattern.  If multiple objects are matched, the list returned is a consolidated list of all attribute types present on one or more of the matched objects.  This option is useful when investigating what attributes are present in objects in a database.  The "list" sub-command takes no arguments.
+                  Lists the attributes assigned to the object or objects matched by the pattern.  If multiple objects are matched, the list returned is a consolidated list of all attribute types present on one or more of the matched objects.  This option is useful when investigating what attributes are present in objects in a database.
                 </para>
+		<para>
+		  Optionally, the <command>list</command> subcommand will accept filters that are used to match key or key/value combinations and report only those matches.  If both key and value filters are supplied, the output of the list subcommand will be not just the unique matching attribute keys but the unique matching key/value pairs.  The latter is particularly useful as a way to get an overview of all actively used values associated with a particular attribute key.
+		</para>
           </listitem>
         </varlistentry>
         <varlistentry>
@@ -172,16 +175,46 @@ objects.
   </example>
 
   <example><title>List all the attribute types present on one or more objects in a database</title>
-    <variablelist>
-      <varlistentry>
-	<term><prompt>mged&gt;</prompt> <userinput>attr list *</userinput></term>
-    <listitem>
-	<para>Lists all the attributes found in the database. It may be necessary to place a '\' character before the asterisk to quote it on the MGED tcl prompt so that it reaches the attr command unexpanded.
+    <para>
+	<prompt>mged&gt;</prompt> <userinput>attr list *</userinput>
+	<literallayout class="normal">
+aircode
+los
+material_id
+oshader
+region
+region_id
+regionid_colortable
+rgb
+shader
+title
+units
+        </literallayout>
+    </para>
+	<para>Generate a list of all attribute keys found one one or more objects in the database. It may be necessary to place a '\' character before the asterisk to quote it on the MGED tcl prompt so that it reaches the attr command unexpanded.  The above output is the attribute list from the m35.g sample database.
 	</para>
-</listitem>
-      </varlistentry>
-    </variablelist>
   </example>
+
+  <example><title>List all the material_id attribute values in use in a database</title>
+    <para>
+	<prompt>mged&gt;</prompt> <userinput>attr list * material_id *</userinput>
+	<literallayout class="normal">
+material_id=1
+material_id=2
+material_id=4
+material_id=7
+material_id=8
+material_id=14
+material_id=17
+material_id=18
+material_id=19
+material_id=20
+        </literallayout>
+    </para>
+	<para>Produces a list of all material_id values found one or more times in the database on an object. It may be necessary to place a '\' character before the asterisks to quote them on the MGED tcl prompt so that they reaches the attr command correctly.  The above output is the attribute list from the m35.g sample database.
+	</para>
+  </example>
+  
 </refsection>
 
 <refsection xml:id="see_also"><title>SEE ALSO</title>

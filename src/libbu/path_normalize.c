@@ -60,48 +60,48 @@ bu_path_normalize(const char *path)
 loop:
     /* Skip any slash. */
     while (*path == '/')
-        path++;
+	path++;
 
     if (*path == 0) {
-        if (p == resolved)
-            *p++ = '/';
-        *p = 0;
-        return (resolved);
+	if (p == resolved)
+	    *p++ = '/';
+	*p = 0;
+	return (resolved);
     }
 
     /* Find the end of this component. */
     q = path;
     do
-        q++;
+	q++;
     while (*q != '/' && *q != 0);
 
     /* Test . or .. */
     if (path[0] == '.') {
-        if (q - path == 1) {
-            path = q;
-            goto loop;
-        }
-        if (path[1] == '.' && q - path == 2) {
-            /* Trim the last component. */
-            if (p != resolved)
-                while (*--p != '/')
-                    ;
-            path = q;
-            goto loop;
-        }
+	if (q - path == 1) {
+	    path = q;
+	    goto loop;
+	}
+	if (path[1] == '.' && q - path == 2) {
+	    /* Trim the last component. */
+	    if (p != resolved)
+		while (*--p != '/')
+		    ;
+	    path = q;
+	    goto loop;
+	}
     }
 
     /* Append this component. */
     if (p - resolved + 1 + q - path + 1 > MAXPATHLEN) {
-        if (p == resolved)
-            *p++ = '/';
-        *p = 0;
-        return (NULL);
+	if (p == resolved)
+	    *p++ = '/';
+	*p = 0;
+	return (NULL);
     }
     p[0] = '/';
     memcpy(&p[1], path,
-           /* LINTED We know q > path. */
-           q - path);
+	   /* LINTED We know q > path. */
+	   q - path);
     p[1 + q - path] = 0;
 
     /* Advance both resolved and unresolved path. */

@@ -193,7 +193,7 @@ wrt_point(mat_t out, const mat_t change, const mat_t in, const point_t point)
 {
     mat_t t;
 
-    bn_mat_xform_about_pt(t, change, point);
+    bn_mat_xform_about_pnt(t, change, point);
 
     if (out == in)
 	bn_mat_mul2(t, out);

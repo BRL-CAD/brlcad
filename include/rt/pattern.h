@@ -45,7 +45,7 @@ __BEGIN_DECLS
 RT_EXPORT extern int rt_raybundle_maker(struct xray *rp, double radius, const fastf_t *avec, const fastf_t *bvec, int rays_per_ring, int nring);
 
 
- /** Available ray generation patterns */
+/** Available ray generation patterns */
 typedef enum {
     RT_PATTERN_RECT_ORTHOGRID,     /*!< grid of rays with parallel normals */
     RT_PATTERN_RECT_PERSPGRID,     /*!< rays from a point with diverging normals to a grid */
@@ -65,7 +65,7 @@ typedef enum {
  * Data container used to supply options to and receive data from
  * the rt_pattern generator function
  */
- struct rt_pattern_data {
+struct rt_pattern_data {
     /* output - MUST DO this should really be an array of fastf_t numbers... */
     fastf_t *rays; /*!< An array of px,py,pz,nx,ny,nz ray/normal results */
     size_t ray_cnt;
@@ -206,20 +206,20 @@ typedef enum {
  *
  *
  * The following is an example:
-@code
-int ray_cnt = 0;
-struct rt_pattern_data data = RT_PATTERN_DATA_INIT;
-VSET(data.a_vec, 0, 0, 1);
-data.p1 = 0.1
-data.p2 = 10
-ray_cnt = rt_pattern(&data, RT_CIRCULAR_GRID);
-if (ray_cnt < 0) {
-    bu_log("error");
-} else {
-    do_something_with_rays(data.rays);
-    bu_free(data.rays);
-}
-@endcode
+ * @code
+ * int ray_cnt = 0;
+ * struct rt_pattern_data data = RT_PATTERN_DATA_INIT;
+ * VSET(data.a_vec, 0, 0, 1);
+ * data.p1 = 0.1
+ * data.p2 = 10
+ * ray_cnt = rt_pattern(&data, RT_CIRCULAR_GRID);
+ * if (ray_cnt < 0) {
+ *   bu_log("error");
+ * } else {
+ *   do_something_with_rays(data.rays);
+ *   bu_free(data.rays);
+ * }
+ * @endcode
  */
 RT_EXPORT extern int rt_pattern(struct rt_pattern_data *data, rt_pattern_t type);
 

@@ -58,7 +58,7 @@ void trcurve(fastf_t *wh, fastf_t *t);
 void bottom(fastf_t *vec1, fastf_t *vec2, fastf_t *t);
 void top(fastf_t *vec1, fastf_t *vec2, fastf_t *t);
 void crregion(char *region, char *op, int *members, int number, char *solidname, int maxlen);
-void itoa(int n, char *s, int w);
+static void track_itoa(int n, char *s, int w);
 
 
 /*
@@ -495,7 +495,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     j = 1;
     if ((i = Trackpos / 10 + 1) > 9)
 	j = 2;
-    itoa(i, temp, j);
+    track_itoa(i, temp, j);
     bu_strlcat(grpname, temp, sizeof(grpname));
     for (i=1; i<11; i++) {
 	if (i == 3 || i ==4 || i == 7 || i == 8)
@@ -556,7 +556,7 @@ crname(char *name, int pos, int maxlen)
 	j = 2;
     if (i > 99)
 	j = 3;
-    itoa(i, temp, j);
+    track_itoa(i, temp, j);
     bu_strlcat(name, temp, maxlen);
     return;
 }
@@ -897,8 +897,8 @@ crregion(char *region, char *op, int *members, int number, char *solidname, int 
 /*
  * convert integer to ascii wd format
  */
-void
-itoa(int n, char *s, int w)
+static void
+track_itoa(int n, char *s, int w)
 {
     int c, i, j, sign;
 
@@ -911,7 +911,7 @@ itoa(int n, char *s, int w)
      */
     for (j = i; j < w; j++) s[j] = ' ';
     if (i > w)
-	Tcl_AppendResult(INTERP, "itoa: field length too small\n", (char *)NULL);
+	Tcl_AppendResult(INTERP, "track_itoa: field length too small\n", (char *)NULL);
     s[w] = '\0';
     /* reverse the array
      */

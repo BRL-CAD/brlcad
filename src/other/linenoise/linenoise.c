@@ -321,7 +321,10 @@ static void cursorToLeft(struct current *current)
 
 static int outputChars(struct current *current, const char *buf, int len)
 {
-    return write(current->fd, buf, len);
+    int ret = write(current->fd, buf, len);
+    if (ret < 0)
+      perror("write");
+    return ret;
 }
 
 static void outputControlChar(struct current *current, char ch)
@@ -1533,7 +1536,12 @@ char *linenoise(const char *prompt)
     struct current current;
     char buf[LINENOISE_MAX_LINE];
 
-    if (enableRawMode(&current) == -1) {
+    /* FIXME: something is wrong here.  Enabling raw mode either ends
+     * up corrupting fd0 or the code is just wrong for trying to
+     * write(2) to it.  This results in programs like nirt hanging
+     * indefinitely in poll(2).  Falling back to non-raw mode.
+     */
+    if (1 || enableRawMode(&current) == -1) {
         printf("%s", prompt);
         fflush(stdout);
         if (fgets(buf, sizeof(buf), stdin) == NULL) {

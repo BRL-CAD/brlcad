@@ -748,13 +748,13 @@ void
 dump_pipe_segs(char *name, struct bu_list *headp)
 {
 
-    struct wdb_pipept *sp;
+    struct wdb_pipe_pnt *sp;
 
     fprintf(ofp, "%c %.16s\n", DBID_PIPE, name);
 
     /* print parameters for each point: one point per line */
 
-    for (BU_LIST_FOR(sp, wdb_pipept, headp)) {
+    for (BU_LIST_FOR(sp, wdb_pipe_pnt, headp)) {
 	fprintf(ofp,  "%26.20e %26.20e %26.20e %26.20e %26.20e %26.20e\n",
 		sp->pp_id, sp->pp_od, sp->pp_bendradius, V3ARGS(sp->pp_coord));
     }

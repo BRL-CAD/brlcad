@@ -96,10 +96,10 @@ ICV_EXPORT int icv_gray2rgb(icv_image_t *img);
  *
  */
 ICV_EXPORT int icv_rgb2gray(icv_image_t *img,
-				  ICV_COLOR color,
-				  double rweight,
-				  double gweight,
-				  double bweight);
+			    ICV_COLOR color,
+			    double rweight,
+			    double gweight,
+			    double bweight);
 
 /** @} */
 

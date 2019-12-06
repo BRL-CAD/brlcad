@@ -106,7 +106,7 @@ static int verbose = 0;
 static char *out_file = (char *)NULL; /* Output filename */
 static FILE *fp_out; /* Output file pointer */
 static struct db_i *dbip;
-static struct rt_tess_tol ttol;
+static struct bg_tess_tol ttol;
 static struct bn_tol tol;
 static struct model *the_model;
 
@@ -606,7 +606,7 @@ main(int argc, char **argv)
     tree_state.ts_ttol = &ttol;
     tree_state.ts_m = &the_model;
 
-    ttol.magic = RT_TESS_TOL_MAGIC;
+    ttol.magic = BG_TESS_TOL_MAGIC;
     /* Defaults, updated by command line options. */
     ttol.abs = 0.0;
     ttol.rel = 0.01;
@@ -1316,7 +1316,7 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     union tree *ret_tree;
     char *name;
 
-    RT_CK_TESS_TOL(tsp->ts_ttol);
+    BG_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
     NMG_CK_MODEL(*tsp->ts_m);
 

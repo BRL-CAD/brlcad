@@ -76,8 +76,8 @@ RT_EXPORT extern char *rt_read_cmd(FILE *fp);
  * DEPRECATED: needs to migrate to libbu
  */
 RT_EXPORT extern int rt_do_cmd(struct rt_i *rtip,
-                               const char *ilp,
-                               const struct command_tab *tp);
+			       const char *ilp,
+			       const struct command_tab *tp);
 
 __END_DECLS
 

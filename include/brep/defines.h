@@ -29,6 +29,22 @@
 
 #include "common.h"
 
+#include "bio.h" /* needed to include windows.h with protections */
+#ifdef __cplusplus
+extern "C++" {
+#define ON_NO_WINDOWS 1 /* don't let opennurbs include windows.h */
+/* Note - We aren't (yet) including opennurbs in our Doxygen output. Until we
+ * do, use cond to hide the opennurbs header from Doxygen. */
+/* @cond */
+#define read on_read
+#define write on_write
+#include "opennurbs.h"
+/* @endcond */
+}
+#endif
+
+#include "vmath.h"
+
 /** @{ */
 /** @file brep/defines.h */
 
@@ -50,7 +66,7 @@
  * compiling with a C compiler
  */
 typedef struct _on_brep_placeholder {
-        int dummy; /* MS Visual C hack which can be removed if the struct contains something meaningful */
+    int dummy; /* MS Visual C hack which can be removed if the struct contains something meaningful */
 } ON_Brep;
 #endif
 
@@ -132,10 +148,19 @@ typedef struct _on_brep_placeholder {
 extern "C++" {
 struct BrepTrimPoint
 {
-    ON_2dPoint p2d; /* 2d surface parameter space point */
-    ON_3dPoint *p3d; /* 3d edge/trim point depending on whether we're using the 3d edge to generate points or the trims */
-    double t;     /* corresponding trim curve parameter (ON_UNSET_VALUE if unknown or not pulled back) */
+    int edge_ind;
     double e;     /* corresponding edge curve parameter (ON_UNSET_VALUE if using trim not edge) */
+    ON_3dPoint *p3d; /* 3d edge/trim point depending on whether we're using the 3d edge to generate points or the trims */
+    ON_3dPoint *n3d; /* normal on edge, average of the normals from the two surfaces at this point, or of all surface points associated with a vertex if this is a vertex point. */
+    ON_3dVector tangent; /* Tangent from the curve, or from the surfaces if the curve wasn't usable at this point. */
+
+    int trim_ind;
+    double t;     /* corresponding trim curve parameter (ON_UNSET_VALUE if unknown or not pulled back) */
+    ON_2dPoint p2d; /* 2d surface parameter space point */
+    ON_3dVector normal; /* normal as calculated by this trim */
+
+    BrepTrimPoint *other_face_trim_pnt;
+    int from_singular;
 };}
 #endif
 

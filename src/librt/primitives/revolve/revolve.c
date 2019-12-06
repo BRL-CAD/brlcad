@@ -1202,7 +1202,7 @@ rt_revolve_free(struct soltab *stp)
 
 
 int
-rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     struct rt_revolve_internal *rip;
 
@@ -1424,7 +1424,7 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_revolve_tess(struct nmgregion **UNUSED(r), struct model *UNUSED(m), struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+rt_revolve_tess(struct nmgregion **UNUSED(r), struct model *UNUSED(m), struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_revolve_internal *rip = NULL;
     struct rt_sketch_internal *sketch_ip = NULL;

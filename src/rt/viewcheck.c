@@ -389,8 +389,8 @@ application_init (void)
     option("dummy", "-? or -h", "Display help", 1);
     option("", "-? or -h", "Display help", 1);
 
-    option(NULL, "-C", "Disabled, not implemented", 2);
-    option(NULL, "-W", "Disabled, non implemented", 2);
+    option(NULL, "-C", "Disabled, not implemented", -2);
+    option(NULL, "-W", "Disabled, non implemented", -2);
 }
 
 

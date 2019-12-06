@@ -220,7 +220,7 @@ xrayhit(register struct application *ap, struct partition *PartHeadp, struct seg
     }
 
     if (R_DEBUG&RDEBUG_HITS)  {
-	rt_pr_pt( ap->a_rt_i, pp );
+	rt_pr_partition(ap->a_rt_i, pp );
     }
 
     hitp = pp->pt_inhit;
@@ -233,7 +233,7 @@ xrayhit(register struct application *ap, struct partition *PartHeadp, struct seg
 	/* XXX */
 	bu_log("xrayhit:  Eye inside solid (%g)\n", hitp->hit_dist );
 	for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
-	    rt_pr_pt( ap->a_rt_i, pp );
+	    rt_pr_partition( ap->a_rt_i, pp );
 	return 0;
     }
 
@@ -323,8 +323,8 @@ application_init (void)
     option("Raytrace", "-i", "Enable incremental (progressive-style) rendering", 1);
     option("Raytrace", "-t", "Render from top to bottom (default: from bottom up)", 1);
 
-    option(NULL, "-C", "Disabled, not implemented", 2);
-    option(NULL, "-W", "Disabled, non implemented", 2);
+    option(NULL, "-C", "Disabled, not implemented", -2);
+    option(NULL, "-W", "Disabled, non implemented", -2);
 }
 
 /*

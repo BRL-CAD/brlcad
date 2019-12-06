@@ -38,9 +38,12 @@
 #include "./Hm.h"
 
 /* External functions from application. */
+
+extern Func *getTrie(char *name, Trie *triep);
+extern Trie *addTrie(char *name, Trie **triepp);
+extern void prntTrie(Trie *triep, int level);
+
 extern Colors *findColors();
-extern Func *getTrie();
-extern Trie *addTrie();
 extern int chkEntryNorm();
 extern int chkExitNorm();
 extern int closFbDevice();

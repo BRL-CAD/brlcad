@@ -30,6 +30,7 @@
 #include <string.h>
 
 #include "rt/geom.h"
+#include "ged/objects.h"
 
 #include "./ged_private.h"
 

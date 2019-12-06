@@ -1900,12 +1900,6 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
 	{ { summary "Tool for controlling the angle distance cursor." }
 	    { see_also "adc" } }
 
-    .$id.menubar.tools add command -label "AnimMate Control Panel" -underline 1\
-	-command "animmate $id .$id"
-    hoc_register_menu_data "Tools" "AnimMate Control Panel" "AnimMate Control Panel"\
-	{ { summary "Tool for building animation scripts." }
-	    { see_also animmate } }
-
     .$id.menubar.tools add command -label "Grid Control Panel" -underline 0\
 	-command "init_grid_control $id"
     hoc_register_menu_data "Tools" "Grid Control Panel" "Grid Control Panel"\

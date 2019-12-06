@@ -97,7 +97,7 @@ BN_EXPORT extern float bn_rand_halftab[BN_RANDHALFTABSIZE];
 #define bn_rand_half(_p)	\
     ((++(_p) >= &bn_rand_halftab[bn_randhalftabsize] || \
       (_p) < bn_rand_halftab) ? \
-     *((_p) = bn_rand_halftab) : *(_p))
+    *((_p) = bn_rand_halftab) : *(_p))
 
 /**
  * initialize the seed for the large random number table (halftab)

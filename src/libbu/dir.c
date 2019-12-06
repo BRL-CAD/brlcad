@@ -174,8 +174,8 @@ dir_home(char *buf, size_t len)
     if (BU_STR_EMPTY(path)) {
 	PWSTR wpath;
 	if (SHGetKnownFolderPath(&FOLDERID_Profile, 0, NULL, &wpath) == S_OK) {
-		wcstombs(path, wpath, MAXPATHLEN);
-		CoTaskMemFree(wpath);
+	    wcstombs(path, wpath, MAXPATHLEN);
+	    CoTaskMemFree(wpath);
 	}
     }
 #endif
@@ -212,26 +212,18 @@ dir_cache(char *buf, size_t len)
     }
 
     /* method #1b: platform standard (macosx) */
-#ifdef HAVE_FOUNDATION_FOUNDATION_H
-    if (BU_STR_EMPTY(path)) {
-	extern void dir_cache_macosx(char *buf, size_t len);
-	dir_cache_macosx(path, MAXPATHLEN);
-    }
-#endif
-
-    /* method #1c: platform standard (macosx) */
 #if defined(HAVE_CONFSTR) && defined(_CS_DARWIN_CACHE_DIR)
     if (BU_STR_EMPTY(path)) {
 	confstr(_CS_DARWIN_CACHE_DIR, path, len);
     }
 #endif
 
-    /* method #1d: platform standard (windows) */
+    /* method #1c: platform standard (windows) */
 #ifdef HAVE_WINDOWS_H
     if (BU_STR_EMPTY(path)) {
 	PWSTR wpath;
 	if (SHGetKnownFolderPath(&FOLDERID_RoamingAppData, 0, NULL, &wpath) == S_OK) {
-		wcstombs(path, wpath, MAXPATHLEN);
+	    wcstombs(path, wpath, MAXPATHLEN);
 	    CoTaskMemFree(wpath);
 	}
     }
@@ -310,7 +302,8 @@ vdir(char *result, size_t len, va_list args)
 		append(&vls, buf);
 		break;
 	    case BU_DIR_INIT:
-		bu_log("UNIMPLEMENTED\n");
+		bu_getiwd(buf, MAXPATHLEN);
+		append(&vls, buf);
 		break;
 	    case BU_DIR_BIN:
 		cpath = bu_brlcad_root(BRLCAD_BIN_DIR, 1);
@@ -357,10 +350,10 @@ vdir(char *result, size_t len, va_list args)
 		append(&vls, cpath);
 		break;
 	    case BU_DIR_EXT:
-		bu_log("UNIMPLEMENTED\n");
+		append(&vls, EXE_SUFFIX);
 		break;
 	    case BU_DIR_LIBEXT:
-		bu_log("UNIMPLEMENTED\n");
+		append(&vls, SHARED_LIB_SUFFIX);
 		break;
 	    default:
 		append(&vls, (const char *)arg);

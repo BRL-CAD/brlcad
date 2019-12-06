@@ -40,9 +40,9 @@ gaps(const struct xray* ray, const struct partition *pp, double gap_dist, point_
 {
     struct gap_context *context = (struct gap_context*) callback_data;
     /* we only want to report unique pairs */
-    bu_semaphore_acquire(GED_SEM_LIST);
+    bu_semaphore_acquire(BU_SEM_GENERAL);
     add_to_list(context->gapList, pp->pt_regionp->reg_name, pp->pt_back->pt_regionp->reg_name, gap_dist, pt);
-    bu_semaphore_release(GED_SEM_LIST);
+    bu_semaphore_release(BU_SEM_GENERAL);
 
     /* let's plot */
     if (context->plot_gaps) {

@@ -334,7 +334,8 @@ rt_boolweave(struct seg *out_hd, struct seg *in_hd, struct partition *PartHdp, s
 		    }
 		    continue;
 		}
-		if (RT_G_DEBUG&DEBUG_PARTITION) rt_pr_pt(rtip, pp);
+		if (RT_G_DEBUG&DEBUG_PARTITION)
+		    rt_pr_partition(rtip, pp);
 		diff = lasthit->hit_dist - pp->pt_inhit->hit_dist;
 		if (diff_se > -(tol_dist) && diff > tol_dist) {
 		    /*
@@ -1475,7 +1476,7 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 		BU_PTBL_GET(&pp->pt_inseg->seg_stp->st_regions, 0);
 	    RT_CK_REGION(pp->pt_regionp);
 	    if (RT_G_DEBUG&DEBUG_PARTITION) {
-		rt_pr_pt(ap->a_rt_i, pp);
+		rt_pr_partition(ap->a_rt_i, pp);
 	    }
 	    INSERT_PT(pp, FinalHdp);
 	}
@@ -1492,7 +1493,7 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 	    bu_log("\nrt_boolfinal(%g, %g) x%d y%d lvl%d, next input pp\n",
 		   startdist, enddist,
 		   ap->a_x, ap->a_y, ap->a_level);
-	    rt_pr_pt(ap->a_rt_i, pp);
+	    rt_pr_partition(ap->a_rt_i, pp);
 	}
 	RT_CHECK_SEG(pp->pt_inseg);
 	RT_CHECK_SEG(pp->pt_outseg);
@@ -1722,7 +1723,7 @@ rt_boolfinal(struct partition *InputHdp, struct partition *FinalHdp, fastf_t sta
 	     */
 	    if (claiming_regions > 1) {
 		bu_log("rt_boolfinal() a_multioverlap() failed to resolve overlap, discarding bad partition:\n");
-		rt_pr_pt(ap->a_rt_i, pp);
+		rt_pr_partition(ap->a_rt_i, pp);
 	    }
 
 	    if (claiming_regions != 1) {

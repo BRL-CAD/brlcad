@@ -25,8 +25,8 @@
  * is not the null string, then "id" is printed followed by the
  * number.
  *
- * "eof" is the "end-of-field" delimiter
- * "eor" is the "end-of-record" delimiter
+ * "eofd" is the "end-of-field" delimiter
+ * "eord" is the "end-of-record" delimiter
  *
  */
 
@@ -39,11 +39,11 @@ Readflt(fastf_t *inum, char *id)
     int i = (-1), done = 0, lencard;
     char num[80];
 
-    if (card[counter] == eof) {
+    if (card[counter] == eofd) {
 	/* This is an empty field */
 	counter++;
 	return;
-    } else if (card[counter] == eor) /* Up against the end of record */
+    } else if (card[counter] == eord) /* Up against the end of record */
 	return;
 
     if (card[72] == 'P')
@@ -55,18 +55,18 @@ Readflt(fastf_t *inum, char *id)
 	Readrec(++currec);
 
     while (!done) {
-	while ((num[++i] = card[counter++]) != eof && num[i] != eor
+	while ((num[++i] = card[counter++]) != eofd && num[i] != eord
 	       && counter <= lencard)
 	    if (num[i] == 'D')
 		num[i] = 'e';
 
-	if (counter > lencard && num[i] != eor && num[i] != eof)
+	if (counter > lencard && num[i] != eord && num[i] != eofd)
 	    Readrec(++currec);
 	else
 	    done = 1;
     }
 
-    if (num[i] == eor)
+    if (num[i] == eord)
 	counter--;
 
     num[i] = '\0';

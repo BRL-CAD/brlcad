@@ -308,7 +308,7 @@
     set vpt [$itk_option(-mged) pane_m2v_point $_dm $pt]
     set vz [lindex $vpt 2]
     set mpt [$itk_option(-mged) pane_v2m_point $_dm [list $_vx $_vy $vz]]
-    $itk_option(-mged) move_pipept $_obj $seg_i $mpt
+    $itk_option(-mged) pipe_move_pnt $_obj $seg_i $mpt
 }
 
 
@@ -517,7 +517,7 @@
 	    $::ArcherCore::application initFindPipePoint $itk_option(-geometryObjectPath) 1 [::itcl::code $this pipePointSelectCallback] 1
 	} \
 	$movePoint {
-	    set mEditCommand move_pipept
+	    set mEditCommand pipe_move_pnt
 	    set mEditClass $EDIT_CLASS_TRANS
 	    set mEditLastTransMode $::ArcherCore::OBJECT_TRANSLATE_MODE
 	    set mEditParam1 ""
@@ -652,7 +652,7 @@
 	return
     }
 
-    eval $itk_option(-mged) delete_pipept $itk_option(-geometryObject) $_pindex
+    eval $itk_option(-mged) pipe_pnt_delete $itk_option(-geometryObject) $_pindex
     eval $itk_option(-mged) redraw $itk_option(-geometryObjectPath)
     set odata [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
 
@@ -681,7 +681,7 @@
 
     set last_mouse [$itk_option(-mged) get_prev_ged_mouse]
     set seg_i [expr {$mCurrentPipePoint - 1}]
-    eval $itk_option(-mged) move_pipept_mode $itk_option(-geometryObject) $seg_i $last_mouse
+    eval $itk_option(-mged) pipe_move_pnt_mode $itk_option(-geometryObject) $seg_i $last_mouse
 }
 
 

@@ -24,7 +24,8 @@
  */
 
 #include "common.h"
-#include "brep.h"
+#include "brep/defines.h"
+#include "brep/intersect.h"
 
 void
 DumpSSXEvent(ON_SSX_EVENT &x, ON_TextLog &text_log)

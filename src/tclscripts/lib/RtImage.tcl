@@ -111,6 +111,8 @@ proc rtimage {rtimage_dict} {
 	    lappend cmd $obj
 	}
 
+	puts "RT (with fullcolor): $cmd"
+
 	#
 	# Run rt to generate the color insert
 	#
@@ -162,6 +164,9 @@ proc rtimage {rtimage_dict} {
 		    }
 		}
 
+		# !!! FIXME: this runs rt in regress-D ...
+		puts "RTEDGE (with fullcolor): $cmd"
+		
 		#
 		# Run rtedge to generate the full-color with edges
 		#
@@ -200,6 +205,8 @@ proc rtimage {rtimage_dict} {
 	    lappend cmd $obj
 	}
 
+	puts "RT (ghosted): $cmd"
+
 	#
 	# Run rt to generate the full-color version of the ghost image
 	#
@@ -221,6 +228,8 @@ proc rtimage {rtimage_dict} {
 	    lappend cmd $obj
 	}
 
+	puts "RT (occluded): $cmd"
+	
 	#
 	# Run rt to generate the full-color version of the occlude_objects (i.e. color and ghost)
 	#
@@ -276,7 +285,8 @@ proc rtimage {rtimage_dict} {
 		     -A 0.9 \
 		     -p $_perspective \
 		     "-c {$fgMode}" \
-		     "-c {$bgMode}" $coMode \
+		     "-c {$bgMode}" \
+		     $coMode \
 	             "-c {viewsize $_viewsize}" \
 		     "-c {orientation $_orientation}" \
 		     "-c {eye_pt $_eye_pt}" \
@@ -285,10 +295,12 @@ proc rtimage {rtimage_dict} {
 	    lappend cmd $obj
 	}
 
+	puts "RTEDGE: $cmd"
+	
 	#
 	# Run rtedge to generate the full-color version of the ghost image
-	#
-	catch {eval exec $cmd >& $_log_file} curr_pid
+	# !!! manually write an rtedge log
+	catch {eval exec $cmd >& rtedge.log} curr_pid
     }
 
     catch {file delete -force $tgi}

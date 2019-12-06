@@ -961,7 +961,7 @@ colorview(struct application *ap, struct partition *PartHeadp, struct seg *finis
     if (do_kut_plane) {
 	fastf_t slant_factor;
 	fastf_t dist;
-	fastf_t norm_dist = DIST_PT_PLANE(ap->a_ray.r_pt, kut_plane);
+	fastf_t norm_dist = DIST_PNT_PLANE(ap->a_ray.r_pt, kut_plane);
 
 	if ((slant_factor = -VDOT(kut_plane, ap->a_ray.r_dir)) < -1.0e-10) {
 	    /* exit point, ignore everything before "dist" */
@@ -1012,7 +1012,7 @@ colorview(struct application *ap, struct partition *PartHeadp, struct seg *finis
 	bu_log("colorview: lvl=%d coloring %s\n",
 	       ap->a_level,
 	       pp->pt_regionp->reg_name);
-	rt_pr_pt(ap->a_rt_i, pp);
+	rt_pr_partition(ap->a_rt_i, pp);
     }
     if (hitp->hit_dist >= INFINITY) {
 	bu_log("colorview:  entry beyond infinity\n");
@@ -1199,7 +1199,7 @@ viewit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
     if (do_kut_plane) {
 	fastf_t slant_factor;
 	fastf_t dist;
-	fastf_t norm_dist = DIST_PT_PLANE(ap->a_ray.r_pt, kut_plane);
+	fastf_t norm_dist = DIST_PNT_PLANE(ap->a_ray.r_pt, kut_plane);
 
 	if ((slant_factor = -VDOT(kut_plane, ap->a_ray.r_dir)) < -1.0e-10) {
 	    /* exit point, ignore everything before "dist" */

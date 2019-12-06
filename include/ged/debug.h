@@ -74,10 +74,10 @@ struct _ged_trace_data {
 
 
 GED_EXPORT extern void ged_trace(struct directory *dp,
-		       int pathpos,
-		       const mat_t old_xlate,
-		       struct _ged_trace_data *gtdp,
-		       int verbose);
+				 int pathpos,
+				 const mat_t old_xlate,
+				 struct _ged_trace_data *gtdp,
+				 int verbose);
 
 
 

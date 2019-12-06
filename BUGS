@@ -15,6 +15,24 @@ on-going issues.
 Recent Bugs
 -----------
 
+* fix checker.sh script and/or overlap GUI so that the latter will
+  read the resulting overlap pairings file from the prior.
+  alternatively, need to be able to run overlap check on server
+  without GUI, so could implement an overlaps file output option to be
+  run via mged -c.
+
+* running 'put' on geometry that is already displayed results in a NaN
+  view (at least View and Eye_pos parameters are non) despite geometry
+  setill being displayed.  this causes 'rt' to fly into an infinite
+  loop, presumably trying to increment rays from the eye position.
+
+* icv dpix support is not cross-platform (it writes out native, reads
+  in assuming same encoding).  regression tests fail on big endian.
+
+* creating an object with a slashes in the name (e.g., cp foo foo/R)
+  results in an object that cannot be deleted/renamed.  bad behavior
+  presumably extends to any name with path separators.
+
 * mirror command rejects brep solids and turns faces inside-out when
   mirroring a comb with brep solids below it.
 
@@ -111,10 +129,6 @@ Recent Bugs
   where shmget() fails (or is requested via /dev/oglp) and we get
   private memory -- looks like private memory is not initialized
   (observed on Mac 10.6, Windows, and Ubuntu Linux using 7.26).
-
-* rtedge's overlay mode appears to be generating different results on
-  Windows and Linux for the m35 steering wheel (rtwizard rendering
-  mode D.)
 
 * pixdiff on Windows is reporting no differences with a pair of files
   that pixcmp can see differences in.

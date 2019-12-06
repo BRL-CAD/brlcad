@@ -34,7 +34,12 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
-#include "brep.h"
+#include "brep/defines.h"
+#include "brep/curvetree.h"
+#include "brep/surfacetree.h"
+#include "brep/ray.h"
+#include "brep/cdt.h" // for ON_Brep_Report_Faces - should go away
+#include "bg/tri_ray.h" // for ON_Brep_Report_Faces - should go away
 #include "libbrep_brep_tools.h"
 #include "bn/dvec.h"
 
@@ -112,6 +117,186 @@ brep_newton_iterate(const plane_ray& pr, pt2d_t R, const ON_3dVector& su, const 
     }
 }
 
+// This doesn't belong here - just not sure where to put it yet.  By rights
+// this should do a ray intersection and report on the faces with that info,
+// which means this should really be in libanalyze.  For now, just do a quick
+// and dirty bbox check to at least let us narrow down what faces are active
+// along a ray.
+int
+ON_Brep_Report_Faces(struct bu_vls *log, void *bp, const vect_t center, const vect_t dir)
+{
+    struct bu_vls faces = BU_VLS_INIT_ZERO;
+    point_t p1, p2;
+    if (!log || !bp) return -1;
+    VMOVE(p1, center);
+    VADD2(p2, center, dir);
+    ON_Line l(ON_3dPoint(p1[X], p1[Y], p1[Z]), ON_3dPoint(p2[X], p2[Y], p2[Z]));
+
+    ON_Brep *brep = (ON_Brep *)bp;
+    ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)brep, NULL);
+    ON_Brep_CDT_Tessellate(s_cdt, 0, NULL);
+
+    for (int i = 0; i < brep->m_F.Count(); i++) {
+	ON_BrepFace &face = brep->m_F[i];
+	ON_3dPoint bmin, bmax;
+	face.SurfaceOf()->GetBoundingBox(bmin, bmax);
+	ON_BoundingBox bb(bmin, bmax);
+	double t1, t2;
+	if (bb.Intersection(l, &t1, &t2)) {
+	    int faces_array = face.m_face_index;
+	    int fcnt, vcnt;
+	    int *csg_faces;
+	    point_t *csg_vertices;
+	    ON_Brep_CDT_Mesh(&csg_faces, &fcnt, (fastf_t **)&csg_vertices, &vcnt, NULL, NULL, NULL, NULL, s_cdt, 1, &faces_array);
+	    int is_hit = 0;
+	    for (int j = 0; j < fcnt; j++) {
+		point_t cp1, cp2, cp3, isect;
+		VMOVE(cp1, csg_vertices[csg_faces[j*3+0]]);
+		VMOVE(cp2, csg_vertices[csg_faces[j*3+1]]);
+		VMOVE(cp3, csg_vertices[csg_faces[j*3+2]]);
+		is_hit = bg_isect_tri_ray(center, dir, cp1, cp2, cp3, &isect);
+		if (is_hit) {
+		    if (!bu_vls_strlen(&faces)) {
+			bu_vls_printf(&faces, "%d", face.m_face_index);
+		    } else {
+			bu_vls_printf(&faces, ",%d", face.m_face_index);
+		    }
+		    break;
+		}
+	    }
+	    bu_free(csg_faces, "free faces");
+	    bu_free(csg_vertices, "free faces");
+	}
+    }
+
+    ON_Brep_CDT_Destroy(s_cdt);
+    bu_vls_printf(log, "%s", bu_vls_cstr(&faces));
+    bu_vls_free(&faces);
+
+    return 0;
+}
+
+
+/* Implement the closest point on curve algorithm from
+ * https://github.com/pboyer/verb - specifically:
+ *
+ * verb/src/verb/eval/Tess.hx 
+ * verb/src/verb/eval/Analyze.hx 
+ */
+
+struct curve_search_args {
+    const ON_NurbsCurve *nc;
+    ON_3dPoint tp;
+};
+
+int
+curve_closest_search_func(void *farg, double t, double *ft, double *dft)
+{
+    struct curve_search_args *cargs = (struct curve_search_args *)farg;
+    const ON_NurbsCurve *nc = cargs->nc;
+    ON_3dPoint tp = cargs->tp;
+    ON_3dPoint crv_pnt;
+    ON_3dVector crv_d1;
+    ON_3dVector crv_d2;
+    if (!nc->Ev2Der(t, crv_pnt, crv_d1, crv_d2)) return -1;
+    ON_3dVector fparam2 = crv_pnt - tp;
+    *ft = ON_DotProduct(crv_d1, fparam2);
+    *dft = ON_DotProduct(crv_d2, fparam2) + ON_DotProduct(crv_d1, crv_d1);
+
+    if (*ft < ON_ZERO_TOLERANCE) return 1;
+    return 0;
+}
+
+bool
+ON_NurbsCurve_GetClosestPoint(
+	double *t,
+	const ON_NurbsCurve *nc,
+	const ON_3dPoint &p,
+	double maximum_distance = 0.0,
+	const ON_Interval *sub_domain = NULL
+	)
+{
+    ON_Interval domain = (sub_domain) ? *sub_domain : nc->Domain();
+    size_t init_sample_cnt = nc->CVCount() * nc->Degree();
+    double span = 1.0/(double)(init_sample_cnt);
+
+    // Get an initial sampling of uniform points along the active
+    // curve domain
+    std::vector<ON_3dPoint> pnts;
+    for (size_t i = 0; i <= init_sample_cnt; i++) {
+	double st = domain.ParameterAt(i * span);
+	pnts.push_back(nc->PointAt(st));
+    }
+
+    // Find an initial domain subset based on the breakdown into segments
+    double d1 = domain.Min();
+    double d2 = domain.Max();
+    double vmin = DBL_MAX;
+    for (size_t i = 0; i < pnts.size() - 1; i++) {
+	ON_Line l(pnts[i], pnts[i+1]);
+	double lt;
+	l.ClosestPointTo(p, &lt);
+	ON_3dPoint pl = l.PointAt(lt);
+	if ((lt < 0 || NEAR_ZERO(lt, ON_ZERO_TOLERANCE))) {
+	    pl = l.PointAt(0);
+	}
+	if ((lt > 1 || NEAR_EQUAL(lt, 1, ON_ZERO_TOLERANCE))) {
+	    pl = l.PointAt(1);
+	}
+	if (pl.DistanceTo(p) < vmin) {
+	    vmin = pl.DistanceTo(p);
+	    d1 = domain.ParameterAt(i*span);
+	    d2 = domain.ParameterAt((i+1)*span);
+	}
+    }
+
+    // Iterate to find the closest point
+    double vdist = DBL_MAX;
+    double u = (d1 + d2) * 0.5;
+    struct curve_search_args cargs;
+    cargs.nc = nc;
+    cargs.tp = p;
+    double st;
+    int osearch = 0;
+
+    if (!nc->IsLinear(TOL2)) {
+	osearch = ON_FindLocalMinimum(curve_closest_search_func, &cargs, d1, u, d2, ON_EPSILON, 0.5*ON_ZERO_TOLERANCE, 100, &st);
+    }
+
+    if (osearch == 1) {
+
+	(*t) = st;
+	vdist = (p.DistanceTo(nc->PointAt(st)));
+
+    } else {
+
+	// ON_FindLocalMinimum failed, fall back on binary search
+	double vmin_delta = DBL_MAX;
+	ON_3dPoint p1 = nc->PointAt(d1);
+	ON_3dPoint p2 = nc->PointAt(d2);
+	double vmin_prev = (p1.DistanceTo(p) > p2.DistanceTo(p)) ? p1.DistanceTo(p) : p2.DistanceTo(p);
+	while (vmin_delta > ON_ZERO_TOLERANCE) {
+	    u = (d1 + d2) * 0.5;
+	    if (p1.DistanceTo(p) < p2.DistanceTo(p)) {
+		d2 = u;
+		p2 = nc->PointAt(u);
+	    } else {
+		d1 = u;
+		p1 = nc->PointAt(u);
+	    }
+	    vdist = (p.DistanceTo(nc->PointAt(u)));
+	    vmin_delta = fabs(vmin_prev - vdist);
+	    vmin_prev = vdist;
+	}
+
+	(*t) = u;
+
+    }
+
+    if (maximum_distance > 0 && vdist > maximum_distance) return false;
+
+    return true;
+}
 
 namespace brlcad {
 
@@ -365,7 +550,7 @@ CurveTree::getLeavesAbove(std::list<const BRNode*>& out_leaves, const ON_Interva
 	const BRNode* br = *i;
 	br->GetBBox(bmin, bmax);
 
-	dist = BREP_UV_DIST_FUZZ;//0.03*DIST_PT_PT(bmin, bmax);
+	dist = BREP_UV_DIST_FUZZ;//0.03*DIST_PNT_PNT(bmin, bmax);
 	if (bmax[X]+dist < u[0])
 	    continue;
 	if (bmin[X]-dist < u[1]) {
@@ -405,7 +590,7 @@ CurveTree::getLeavesRight(std::list<const BRNode*>& out_leaves, const ON_Interva
 	const BRNode* br = *i;
 	br->GetBBox(bmin, bmax);
 
-	dist = BREP_UV_DIST_FUZZ;//0.03*DIST_PT_PT(bmin, bmax);
+	dist = BREP_UV_DIST_FUZZ;//0.03*DIST_PNT_PNT(bmin, bmax);
 	if (bmax[Y]+dist < v[0])
 	    continue;
 	if (bmin[Y]-dist < v[1]) {
@@ -584,8 +769,8 @@ CurveTree::isLinear(const ON_Curve* curve, double min, double max) const
     point_t a, b;
     VSET(a, u[0], v[0], 0.0);
     VSET(b, u[1], v[1], 0.0);
-    double dd = DIST_PT_PT(a, b);
-    double cd = DIST_PT_PT(pmin, pmax);
+    double dd = DIST_PNT_PNT(a, b);
+    double cd = DIST_PNT_PNT(pmin, pmax);
 
     if (cd > BREP_TRIM_SUB_FACTOR*dd)
 	return false;

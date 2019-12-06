@@ -259,46 +259,6 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
     return GED_OK;
 }
 
-size_t
-ged_count_tops(struct ged *gedp)
-{
-    struct display_list *gdlp = NULL;
-    size_t visibleCount = 0;
-    for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
-	visibleCount++;
-    }
-    return visibleCount;
-}
-
-
-/**
- * Build a command line vector of the tops of all objects in view.
- */
-int
-ged_build_tops(struct ged *gedp, char **start, char **end)
-{
-    struct display_list *gdlp;
-    char **vp = start;
-
-    for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
-	if (((struct directory *)gdlp->dl_dp)->d_addr == RT_DIR_PHONY_ADDR)
-	    continue;
-
-	if ((vp != NULL) && (vp < end))
-	    *vp++ = bu_strdup(bu_vls_addr(&gdlp->dl_path));
-	else {
-	    bu_vls_printf(gedp->ged_result_str, "libged: ran out of command vector space at %s\n", ((struct directory *)gdlp->dl_dp)->d_namep);
-	    break;
-	}
-    }
-
-    if ((vp != NULL) && (vp < end)) {
-	*vp = (char *) 0;
-    }
-
-    return vp-start;
-}
-
 
 int
 ged_rt(struct ged *gedp, int argc, const char *argv[])
@@ -323,7 +283,7 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    args = argc + 7 + 2 + ged_count_tops(gedp);
+    args = argc + 7 + 2 + ged_who_argc(gedp);
     gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
     bin = bu_brlcad_root("bin", 1);

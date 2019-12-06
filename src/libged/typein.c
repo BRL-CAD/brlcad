@@ -620,7 +620,7 @@ static char *p_datum[] = {
     "Enter Z: ",
     "Enter X, Y, Z for the datum plane direction vector: ",
     "Enter Y: ",
-    "Enter Z: ",
+    "Enter Z: "
 };
 
 
@@ -633,10 +633,10 @@ static char *p_annot[] = {
     "Enter Y: ",
     "Enter Z: ",
     "Enter the text label: ",
-    "Enter X,Y for the text placement: ",
+    "Enter X, Y for the text placement: ",
     "Enter Y: ",
-    "Enter the relative vertical position(1->bottom, 2->middle, 3->top): ",
-    "Enter the relative horizontal position(1->right, 2->center, 3->left): "
+    "Enter relative horizontal position (1->left, 2->center, 3->right): ",
+    "Enter relative vertical position (1->bottom, 2->middle, 3->top): "
 };
 
 
@@ -645,7 +645,7 @@ static char *p_annot[] = {
  * add support
  */
 static char *p_script[] = {
-    "Enter the script type: ",
+    "Enter the script type: "
 };
 
 /**
@@ -1187,17 +1187,17 @@ pipe_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     pipeip->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
     BU_LIST_INIT(&pipeip->pipe_segs_head);
     for (i = 4; i < argc; i += 6) {
-	struct wdb_pipept *pipept;
+	struct wdb_pipe_pnt *pipe_pnt;
 
-	BU_ALLOC(pipept, struct wdb_pipept);
-	pipept->pp_coord[0] = atof(argv[i]) * gedp->ged_wdbp->dbip->dbi_local2base;
-	pipept->pp_coord[1] = atof(argv[i+1]) * gedp->ged_wdbp->dbip->dbi_local2base;
-	pipept->pp_coord[2] = atof(argv[i+2]) * gedp->ged_wdbp->dbip->dbi_local2base;
-	pipept->pp_id = atof(argv[i+3]) * gedp->ged_wdbp->dbip->dbi_local2base;
-	pipept->pp_od = atof(argv[i+4]) * gedp->ged_wdbp->dbip->dbi_local2base;
-	pipept->pp_bendradius = atof(argv[i+5]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	BU_ALLOC(pipe_pnt, struct wdb_pipe_pnt);
+	pipe_pnt->pp_coord[0] = atof(argv[i]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	pipe_pnt->pp_coord[1] = atof(argv[i+1]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	pipe_pnt->pp_coord[2] = atof(argv[i+2]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	pipe_pnt->pp_id = atof(argv[i+3]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	pipe_pnt->pp_od = atof(argv[i+4]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	pipe_pnt->pp_bendradius = atof(argv[i+5]) * gedp->ged_wdbp->dbip->dbi_local2base;
 
-	BU_LIST_INSERT(&pipeip->pipe_segs_head, &pipept->l);
+	BU_LIST_INSERT(&pipeip->pipe_segs_head, &pipe_pnt->l);
     }
 
     if (rt_pipe_ck(&pipeip->pipe_segs_head)) {
@@ -2506,16 +2506,16 @@ metaball_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal
      * line. Is that a bug, or a feature?
      */
     for (i = 6; i + 3 < argc; i += 4) {
-	struct wdb_metaballpt *metaballpt;
+	struct wdb_metaball_pnt *metaball_pnt;
 
-	BU_ALLOC(metaballpt, struct wdb_metaballpt);
-	metaballpt->coord[0] = atof(argv[i]) * gedp->ged_wdbp->dbip->dbi_local2base;
-	metaballpt->coord[1] = atof(argv[i+1]) * gedp->ged_wdbp->dbip->dbi_local2base;
-	metaballpt->coord[2] = atof(argv[i+2]) * gedp->ged_wdbp->dbip->dbi_local2base;
-	metaballpt->fldstr = atof(argv[i+3]) * gedp->ged_wdbp->dbip->dbi_local2base;
-	metaballpt->sweat = 1.0;
+	BU_ALLOC(metaball_pnt, struct wdb_metaball_pnt);
+	metaball_pnt->coord[0] = atof(argv[i]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	metaball_pnt->coord[1] = atof(argv[i+1]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	metaball_pnt->coord[2] = atof(argv[i+2]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	metaball_pnt->fldstr = atof(argv[i+3]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	metaball_pnt->sweat = 1.0;
 
-	BU_LIST_INSERT(&metaball->metaball_ctrl_head, &metaballpt->l);
+	BU_LIST_INSERT(&metaball->metaball_ctrl_head, &metaball_pnt->l);
     }
 
     return GED_OK;
@@ -3033,6 +3033,7 @@ annot_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern
     struct txt_seg *tsg;
     struct line_seg *lsg;
 
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_ANNOT;
     intern->idb_meth = &OBJ[ID_ANNOT];
     BU_ALLOC(intern->idb_ptr, struct rt_annot_internal);
@@ -3063,10 +3064,10 @@ annot_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern
     for (i = 0; i<ELEMENTS_PER_POINT2D; i++)
 	anip->verts[0][i] = atof(cmd_argvs[7+i]) * gedp->ged_wdbp->dbip->dbi_local2base;
 
-    p_ver = atoi(cmd_argvs[9]);
-    p_hor = atoi(cmd_argvs[10]);
+    p_hor = atoi(cmd_argvs[9]);
+    p_ver = atoi(cmd_argvs[10]);
+    rt_txt_pos_flag(&tsg->rel_pos, p_hor, p_ver);
 
-    rt_pos_flag(&tsg->pt_rel_pos, p_hor, p_ver);
     anip->ant.segments = (void **)bu_calloc(anip->ant.count, sizeof(void *), "segs");
     anip->ant.reverse = (int *)bu_calloc(anip->ant.count, sizeof(int), "rev");
 

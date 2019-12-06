@@ -273,7 +273,8 @@ proc esol_build_form { id w type vals do_gui do_cmd do_entries } {
 	frame $sform
     }
 
-    set form [db form $type]
+#    set form [db form $type]
+    set form [form $type]
     set len [llength $form]
 
     for { set i 0; set row 0 } { $i < $len } { incr i; incr row } {

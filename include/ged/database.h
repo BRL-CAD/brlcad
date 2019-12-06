@@ -54,11 +54,16 @@ __BEGIN_DECLS
 GED_EXPORT extern int ged_title(struct ged *gedp, int argc, const char *argv[]);
 
 
-/* defined in rt.c */
-GED_EXPORT extern int ged_build_tops(struct ged	*gedp,
-				     char		**start,
-				     char		**end);
-GED_EXPORT extern size_t ged_count_tops(struct ged *gedp);
+/**
+ * Return a count of objects displayed
+ */
+GED_EXPORT extern size_t ged_who_argc(struct ged *gedp);
+
+/**
+ * Return a list of names of objects displayed
+ */
+GED_EXPORT extern int ged_who_argv(struct ged *gedp, char **start, const char **end);
+
 
 /**
  * Find all top level objects

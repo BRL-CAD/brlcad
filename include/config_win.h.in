@@ -210,10 +210,12 @@
 #endif
 
 /* set up lseek */
-#if defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8
-#   define lseek _lseeki64
-#else
-#   define lseek _lseek
+#ifndef HAVE_LSEEK
+#  if defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8
+#    define lseek _lseeki64
+#  else
+#    define lseek _lseek
+#  endif
 #endif
 
 #cmakedefine fmax __max

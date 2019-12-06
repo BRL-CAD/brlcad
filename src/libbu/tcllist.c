@@ -59,7 +59,7 @@ HIDDEN int
 _bu_tcl_utf_to_ushort(
     register const char *src,   /* The UTF-8 string. */
     register unsigned short *chPtr)/* Filled with the unsigned short represented by
-				 * the UTF-8 string. */
+				    * the UTF-8 string. */
 {
     register int byte;
 
@@ -101,7 +101,7 @@ _bu_tcl_utf_to_ushort(
 	     */
 
 	    *chPtr = (unsigned short) (((byte & 0x0F) << 12)
-		    | ((src[1] & 0x3F) << 6) | (src[2] & 0x3F));
+				       | ((src[1] & 0x3F) << 6) | (src[2] & 0x3F));
 	    return 3;
 	}
 
@@ -156,8 +156,8 @@ _bu_tcl_parse_hex(
     const char *src,            /* First character to parse. */
     int numBytes,               /* Max number of byes to scan */
     unsigned short *resultPtr)     /* Points to storage provided by caller where
-				 * the unsigned short resulting from the
-				 * conversion is to be written. */
+				    * the unsigned short resulting from the
+				    * conversion is to be written. */
 {
     unsigned short result = 0;
     register const char *p = src;
@@ -243,108 +243,108 @@ _bu_tcl_parse_backslash(
 	 * non-portable Tcl scripts.
 	 */
 
-    case 'a':
-	result = 0x7;
-	break;
-    case 'b':
-	result = 0x8;
-	break;
-    case 'f':
-	result = 0xc;
-	break;
-    case 'n':
-	result = 0xa;
-	break;
-    case 'r':
-	result = 0xd;
-	break;
-    case 't':
-	result = 0x9;
-	break;
-    case 'v':
-	result = 0xb;
-	break;
-    case 'x':
-	count += _bu_tcl_parse_hex(p+1, numBytes-1, &result);
-	if (count == 2) {
-	    /*
-	     * No hexadigits -> This is just "x".
-	     */
-
-	    result = 'x';
-	} else {
-	    /*
-	     * Keep only the last byte (2 hex digits).
-	     */
-	    result = (unsigned char) result;
-	}
-	break;
-    case 'u':
-	count += _bu_tcl_parse_hex(p+1, (numBytes > 5) ? 4 : numBytes-1, &result);
-	if (count == 2) {
-	    /*
-	     * No hexadigits -> This is just "u".
-	     */
-	    result = 'u';
-	}
-	break;
-    case '\n':
-	count--;
-	do {
-	    p++;
-	    count++;
-	} while ((count < numBytes) && ((*p == ' ') || (*p == '\t')));
-	result = ' ';
-	break;
-    case 0:
-	result = '\\';
-	count = 1;
-	break;
-    default:
-	/*
-	 * Check for an octal number \oo?o?
-	 */
-
-	if (isdigit((unsigned char)(*p)) && ((unsigned char)(*p) < '8')) {  /* INTL: digit */
-	    result = (unsigned char)(*p - '0');
-	    p++;
-	    if ((numBytes == 2) || !isdigit((unsigned char)(*p))  /* INTL: digit */
-		    || ((unsigned char)(*p) >= '8')) {
-		break;
-	    }
-	    count = 3;
-	    result = (unsigned char)((result << 3) + (*p - '0'));
-	    p++;
-	    if ((numBytes == 3) || !isdigit((unsigned char)(*p))  /* INTL: digit */
-		    || ((unsigned char)(*p) >= '8')) {
-		break;
-	    }
-	    count = 4;
-	    result = (unsigned char)((result << 3) + (*p - '0'));
+	case 'a':
+	    result = 0x7;
 	    break;
-	}
+	case 'b':
+	    result = 0x8;
+	    break;
+	case 'f':
+	    result = 0xc;
+	    break;
+	case 'n':
+	    result = 0xa;
+	    break;
+	case 'r':
+	    result = 0xd;
+	    break;
+	case 't':
+	    result = 0x9;
+	    break;
+	case 'v':
+	    result = 0xb;
+	    break;
+	case 'x':
+	    count += _bu_tcl_parse_hex(p+1, numBytes-1, &result);
+	    if (count == 2) {
+		/*
+		 * No hexadigits -> This is just "x".
+		 */
 
-	/*
-	 * We have to convert here in case the user has put a backslash in
-	 * front of a multi-byte utf-8 character. While this means nothing
-	 * special, we shouldn't break up a correct utf-8 character. [Bug
-	 * #217987] test subst-3.2
-	 */
+		result = 'x';
+	    } else {
+		/*
+		 * Keep only the last byte (2 hex digits).
+		 */
+		result = (unsigned char) result;
+	    }
+	    break;
+	case 'u':
+	    count += _bu_tcl_parse_hex(p+1, (numBytes > 5) ? 4 : numBytes-1, &result);
+	    if (count == 2) {
+		/*
+		 * No hexadigits -> This is just "u".
+		 */
+		result = 'u';
+	    }
+	    break;
+	case '\n':
+	    count--;
+	    do {
+		p++;
+		count++;
+	    } while ((count < numBytes) && ((*p == ' ') || (*p == '\t')));
+	    result = ' ';
+	    break;
+	case 0:
+	    result = '\\';
+	    count = 1;
+	    break;
+	default:
+	    /*
+	     * Check for an octal number \oo?o?
+	     */
 
-	ch = *((unsigned char *) p);
-	if (numBytes - 1 >= utf_byte_cnts[ch]) {
-	    count = _bu_tcl_utf_to_ushort(p, &result) + 1;   /* +1 for '\' */
-	} else {
-	    char utfBytes[3];
+	    if (isdigit((unsigned char)(*p)) && ((unsigned char)(*p) < '8')) {  /* INTL: digit */
+		result = (unsigned char)(*p - '0');
+		p++;
+		if ((numBytes == 2) || !isdigit((unsigned char)(*p))  /* INTL: digit */
+		    || ((unsigned char)(*p) >= '8')) {
+		    break;
+		}
+		count = 3;
+		result = (unsigned char)((result << 3) + (*p - '0'));
+		p++;
+		if ((numBytes == 3) || !isdigit((unsigned char)(*p))  /* INTL: digit */
+		    || ((unsigned char)(*p) >= '8')) {
+		    break;
+		}
+		count = 4;
+		result = (unsigned char)((result << 3) + (*p - '0'));
+		break;
+	    }
 
-	    memcpy(utfBytes, p, (size_t) (numBytes - 1));
-	    utfBytes[numBytes - 1] = '\0';
-	    count = _bu_tcl_utf_to_ushort(utfBytes, &result) + 1;
-	}
-	break;
+	    /*
+	     * We have to convert here in case the user has put a backslash in
+	     * front of a multi-byte utf-8 character. While this means nothing
+	     * special, we shouldn't break up a correct utf-8 character. [Bug
+	     * #217987] test subst-3.2
+	     */
+
+	    ch = *((unsigned char *) p);
+	    if (numBytes - 1 >= utf_byte_cnts[ch]) {
+		count = _bu_tcl_utf_to_ushort(p, &result) + 1;   /* +1 for '\' */
+	    } else {
+		char utfBytes[3];
+
+		memcpy(utfBytes, p, (size_t) (numBytes - 1));
+		utfBytes[numBytes - 1] = '\0';
+		count = _bu_tcl_utf_to_ushort(utfBytes, &result) + 1;
+	    }
+	    break;
     }
 
-  done:
+done:
     if (readPtr != NULL) {
 	*readPtr = count;
     }
@@ -418,81 +418,81 @@ _bu_tcl_find_element(
 	     * braces. In this case, keep a nesting count.
 	     */
 
-	case '{':
-	    if (openBraces != 0) {
-		openBraces++;
-	    }
-	    break;
+	    case '{':
+		if (openBraces != 0) {
+		    openBraces++;
+		}
+		break;
 
-	    /*
-	     * Close brace: if element is in braces, keep nesting count and
-	     * quit when the last close brace is seen.
-	     */
+		/*
+		 * Close brace: if element is in braces, keep nesting count and
+		 * quit when the last close brace is seen.
+		 */
 
-	case '}':
-	    if (openBraces > 1) {
-		openBraces--;
-	    } else if (openBraces == 1) {
-		size = (p - elemStart);
-		p++;
-		if ((p >= limit)
+	    case '}':
+		if (openBraces > 1) {
+		    openBraces--;
+		} else if (openBraces == 1) {
+		    size = (p - elemStart);
+		    p++;
+		    if ((p >= limit)
 			|| isspace((unsigned char)(*p))) {        /* INTL: ISO space. */
-		    goto done;
+			goto done;
+		    }
+
+		    /*
+		     * Garbage after the closing brace; return an error.
+		     */
+		    return 1;
 		}
+		break;
 
 		/*
-		 * Garbage after the closing brace; return an error.
+		 * Backslash: skip over everything up to the end of the backslash
+		 * sequence.
 		 */
-		return 1;
-	    }
-	    break;
 
-	    /*
-	     * Backslash: skip over everything up to the end of the backslash
-	     * sequence.
-	     */
+	    case '\\':
+		(void)_bu_tcl_parse_backslash(p, (int)strlen(p), &numChars, NULL);
+		p += (numChars - 1);
+		break;
 
-	case '\\':
-	    (void)_bu_tcl_parse_backslash(p, (int)strlen(p), &numChars, NULL);
-	    p += (numChars - 1);
-	    break;
+		/*
+		 * Space: ignore if element is in braces or quotes; otherwise
+		 * terminate element.
+		 */
 
-	    /*
-	     * Space: ignore if element is in braces or quotes; otherwise
-	     * terminate element.
-	     */
+	    case ' ':
+	    case '\f':
+	    case '\n':
+	    case '\r':
+	    case '\t':
+	    case '\v':
+		if ((openBraces == 0) && !inQuotes) {
+		    size = (p - elemStart);
+		    goto done;
+		}
+		break;
 
-	case ' ':
-	case '\f':
-	case '\n':
-	case '\r':
-	case '\t':
-	case '\v':
-	    if ((openBraces == 0) && !inQuotes) {
-		size = (p - elemStart);
-		goto done;
-	    }
-	    break;
+		/*
+		 * Double-quote: if element is in quotes then terminate it.
+		 */
 
-	    /*
-	     * Double-quote: if element is in quotes then terminate it.
-	     */
-
-	case '"':
-	    if (inQuotes) {
-		size = (p - elemStart);
-		p++;
-		if ((p >= limit)
+	    case '"':
+		if (inQuotes) {
+		    size = (p - elemStart);
+		    p++;
+		    if ((p >= limit)
 			|| isspace((unsigned char)(*p))) {        /* INTL: ISO space */
-		    goto done;
-		}
+			goto done;
+		    }
 
-		/*
-		 * Garbage after the closing quote; return an error.
-		 */
-		return 1;
-	    }
-	    break;
+		    /*
+		     * Garbage after the closing quote; return an error.
+		     */
+		    return 1;
+		}
+		break;
 	}
 	p++;
     }
@@ -509,7 +509,7 @@ _bu_tcl_find_element(
 	size = (p - elemStart);
     }
 
-  done:
+done:
     while ((p < limit) && (isspace((unsigned char)(*p)))) { /* INTL: ISO space. */
 	p++;
     }

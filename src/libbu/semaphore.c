@@ -85,6 +85,7 @@ static struct bu_semaphores bu_semaphores[SEMAPHORE_MAX] = {{0, SEMAPHORE_INIT}}
 #endif
 
 
+
 void
 bu_semaphore_init(unsigned int nsemaphores)
 {
@@ -169,12 +170,13 @@ bu_semaphore_init(unsigned int nsemaphores)
 void
 bu_semaphore_free(void)
 {
+    unsigned int i;
+    extern void semaphore_clear(void);
+    semaphore_clear();
 
 #if !defined(PARALLEL) && !defined(DEFINED_BU_SEMAPHORES)
     return;					/* No support on this hardware */
 #else
-
-    unsigned int i;
 
     /* Close out the mutexes already created. */
 #  if defined(SUNOS)

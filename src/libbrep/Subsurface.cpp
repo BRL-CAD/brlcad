@@ -19,7 +19,9 @@
  */
 
 #include "common.h"
-#include "brep.h"
+#include "brep/defines.h"
+#include "brep/intersect.h"
+#include "brep/util.h"
 
 Subsurface::Subsurface()
     : m_surf(NULL), m_isplanar(false)

@@ -386,7 +386,7 @@ Check_names(void)
 
 
 static struct name_tree *
-Search_names(struct name_tree *root, char *name, int *found)
+Search_names(struct name_tree *root, const char *name, int *found)
 {
     struct name_tree *ptr;
 
@@ -495,7 +495,7 @@ List_names(void)
 
 
 static void
-Insert_region_name(char *name, int reg_id)
+Insert_region_name(const char *name, int reg_id)
 {
     struct name_tree *nptr_model, *rptr_model;
     struct name_tree *new_ptr;
@@ -595,25 +595,27 @@ find_region_name(int g_id, int c_id)
 }
 
 
-static char *
-make_unique_name(char *name)
+static void
+make_unique_name(struct bu_vls *name)
 {
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     int found;
 
     /* make a unique name from what we got off the $NAME card */
 
-    (void)Search_names(name_root, name, &found);
+    (void)Search_names(name_root, bu_vls_cstr(name), &found);
     if (!found)
-	return bu_strdup(name);
+	return;
 
     while (found) {
 	bu_vls_trunc(&vls, 0);
-	bu_vls_printf(&vls, "%s_%d", name, name_count);
+	bu_vls_printf(&vls, "%s_%d", bu_vls_cstr(name), name_count);
 	(void)Search_names(name_root, bu_vls_addr(&vls), &found);
+	name_count++;
     }
 
-    return bu_vls_strgrab(&vls);
+    bu_vls_sprintf(name, "%s", bu_vls_cstr(&vls));
+    bu_vls_free(&vls);
 }
 
 
@@ -622,7 +624,7 @@ make_region_name(int g_id, int c_id)
 {
     int r_id;
     const char *tmp_name;
-    char *name;
+    struct bu_vls name = BU_VLS_INIT_ZERO;
 
     r_id = g_id * 1000 + c_id;
 
@@ -634,12 +636,12 @@ make_region_name(int g_id, int c_id)
 	return;
 
     /* create a new name */
-    name = (char *)bu_malloc(MAX_LINE_SIZE, "make_region_name");
-    snprintf(name, MAX_LINE_SIZE, "comp_%04d.r", r_id);
+    bu_vls_sprintf(&name, "comp_%04d.r", r_id);
 
-    make_unique_name(name);
+    make_unique_name(&name);
 
-    Insert_region_name(name, r_id);
+    Insert_region_name(bu_vls_cstr(&name), r_id);
+    bu_vls_free(&name);
 }
 
 
@@ -877,11 +879,10 @@ f4_do_groups(void)
 static void
 f4_do_name(void)
 {
-    int i, j;
+    int foundr = 0;
     int g_id;
     int c_id;
-    char comp_name[MAX_LINE_SIZE] = {0}; /* should only use 25 chars */
-    char tmp_name[MAX_LINE_SIZE] = {0}; /* should only use 25 chars */
+    struct bu_vls comp_name = BU_VLS_INIT_ZERO;
 
     if (pass)
 	return;
@@ -907,41 +908,30 @@ f4_do_name(void)
 	return;
     }
 
-    /* skip leading blanks */
-    i = 56;
-    while ((size_t)i < sizeof(comp_name) && isspace((int)line[i]))
-	i++;
-
-    if (i == sizeof(comp_name))
+    /* Eliminate leading and trailing blanks */
+    bu_vls_sprintf(&comp_name, "%s", &line[56]);
+    bu_vls_trimspace(&comp_name);
+    if (!bu_vls_strlen(&comp_name)) {
+	bu_vls_free(&comp_name);
 	return;
-
-    bu_strlcpy(comp_name, &line[i], sizeof(comp_name) - i);
-
-    /* eliminate trailing blanks */
-    i = sizeof(comp_name) - i;
-    while (--i >= 0 && isspace((int)comp_name[i]))
-	comp_name[i] = '\0';
-
-    /* copy comp_name to tmp_name while replacing white space with "_" */
-    i = (-1);
-    j = (-1);
-
-    /* copy */
-    while (comp_name[++i] != '\0') {
-	if (isspace((int)comp_name[i]) || comp_name[i] == '/') {
-	    if (j == (-1) || tmp_name[j] != '_')
-		tmp_name[++j] = '_';
-	} else {
-	    tmp_name[++j] = comp_name[i];
-	}
     }
-    tmp_name[++j] = '\0';
+
+    /* Simplify */
+    bu_vls_simplify(&comp_name, NULL, NULL, NULL);
 
     /* reserve this name for group name */
-    make_unique_name(tmp_name);
-    Insert_region_name(tmp_name, region_id);
+    Search_ident(name_root, region_id, &foundr);
+    if (!foundr) {
+	make_unique_name(&comp_name);
+    } else {
+	bu_log("Already encountered region id %d - reusing name\n", region_id);
+    }
+
+    Insert_region_name(bu_vls_cstr(&comp_name), region_id);
 
     name_count = 0;
+
+    bu_vls_free(&comp_name);
 }
 
 

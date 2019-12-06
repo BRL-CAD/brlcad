@@ -41,7 +41,7 @@ string PCurveOrSurface::entityname = Factory::RegisterClass(ENTITYNAME, (Factory
 const char *pcurve_or_surface_type_names[] = {
     "PCURVE",
     "SURFACE",
-    "UNKNOWN",
+    "PCURVE_OR_SURFACE_UNKNOWN",
     NULL
 };
 
@@ -51,7 +51,7 @@ PCurveOrSurface::PCurveOrSurface()
     id = 0;
     pcurve = NULL;
     surface = NULL;
-    type = PCurveOrSurface::UNKNOWN;
+    type = PCurveOrSurface::PCURVE_OR_SURFACE_UNKNOWN;
 }
 
 PCurveOrSurface::PCurveOrSurface(STEPWrapper *sw, int step_id)
@@ -60,7 +60,7 @@ PCurveOrSurface::PCurveOrSurface(STEPWrapper *sw, int step_id)
     id = step_id;
     pcurve = NULL;
     surface = NULL;
-    type = PCurveOrSurface::UNKNOWN;
+    type = PCurveOrSurface::PCURVE_OR_SURFACE_UNKNOWN;
 }
 
 PCurveOrSurface::~PCurveOrSurface()

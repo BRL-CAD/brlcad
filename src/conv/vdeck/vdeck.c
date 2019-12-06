@@ -172,7 +172,7 @@ void			addarbn();
 void			addell();
 void			addars();
 void			deck();
-void			itoa();
+static void		vdeck_itoa();
 void			vls_blanks();
 void			vls_itoa();
 void			vls_ftoa_vec_cvt();
@@ -1252,7 +1252,7 @@ deck(char *prefix)
 	perror(id_file);
 	bu_exit(10, NULL);
     }
-    itoa(-1, buff, 5);
+    vdeck_itoa(-1, buff, 5);
     ewrite(ridfp, buff, 5);
     ewrite(ridfp, LF, 1);
 
@@ -1274,9 +1274,9 @@ deck(char *prefix)
     if (savsol >= 0)
 	bu_fseek(solfp, savsol, 0);
 
-    itoa(nns, buff, 5);
+    vdeck_itoa(nns, buff, 5);
     ewrite(solfp, buff, 5);
-    itoa(nnr, buff, 5);
+    vdeck_itoa(nnr, buff, 5);
     ewrite(solfp, buff, 5);
 
     /* Finish region id table.					*/
@@ -1461,8 +1461,8 @@ delete_obj(char *args[])
 /**
  * Convert integer to ascii  wd format.
  */
-void
-itoa(int n, char *s, int w)
+static void
+vdeck_itoa(int n, char *s, int w)
 {
     int	 c, i, j, sign;
 

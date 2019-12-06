@@ -79,7 +79,7 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 
     RT_CK_FULL_PATH(pathp);
     RT_CK_TREE(curtree);
-    RT_CK_TESS_TOL(tsp->ts_ttol);
+    BG_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
     NMG_CK_MODEL(*tsp->ts_m);
 

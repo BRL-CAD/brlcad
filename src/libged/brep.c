@@ -44,7 +44,7 @@
  * lots of new public librt functions?  right now, we reach into librt
  * directly and export what we need from brep_debug.cpp which sucks.
  */
-RT_EXPORT extern int brep_command(struct bu_vls *vls, const char *solid_name, struct bu_color *color, const struct rt_tess_tol *ttol, const struct bn_tol *tol, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag);
+RT_EXPORT extern int brep_command(struct bu_vls *vls, const char *solid_name, struct rt_wdb *wdbp, struct bu_color *color, const struct bg_tess_tol *ttol, const struct bn_tol *tol, struct brep_specific* bs, struct rt_brep_internal* bi, struct bn_vlblock *vbp, int argc, const char *argv[], char *commtag);
 RT_EXPORT extern int brep_conversion(struct rt_db_internal* in, struct rt_db_internal* out, const struct db_i *dbip);
 RT_EXPORT extern int brep_conversion_comb(struct rt_db_internal *old_internal, const char *name, const char *suffix, struct rt_wdb *wdbp, fastf_t local2mm);
 RT_EXPORT extern int brep_intersect_point_point(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
@@ -330,6 +330,38 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	return _ged_brep_to_csg(gedp, argv[1], 0);
     }
 
+
+    if (BU_STR_EQUAL(argv[2], "bot")) {
+	/* Call bot conversion routine */
+	int bret = GED_ERROR;
+	struct bu_vls bname_bot;
+	bu_vls_init(&bname_bot);
+	if (argc < 4) {
+	    bu_vls_sprintf(&bname_bot, "%s.bot", solid_name);
+	} else {
+	    bu_vls_sprintf(&bname_bot, "%s", argv[3]);
+	}
+
+	// TODO - pass tol info down...
+	bret = _ged_brep_to_bot(gedp, argv[1], bi, bu_vls_cstr(&bname_bot), (const struct bg_tess_tol *)&gedp->ged_wdbp->wdb_ttol, &gedp->ged_wdbp->wdb_tol);
+	bu_vls_free(&bname_bot);
+	return bret;
+    }
+
+    if (BU_STR_EQUAL(argv[2], "bots")) {
+	/* Call bot conversion routine */
+	int bret = GED_ERROR;
+	const char **av = (const char **)bu_calloc(argc, sizeof(char *), "new argv");
+	av[0] = argv[1];
+	for (int iav = 3; iav < argc; iav++) {
+	    av[iav-2] = argv[iav];
+	}
+	bret = _ged_breps_to_bots(gedp, argc-2, av, (const struct bg_tess_tol *)&gedp->ged_wdbp->wdb_ttol, &gedp->ged_wdbp->wdb_tol);
+	bu_free(av, "av");
+	return bret;
+    }
+
+
     if (BU_STR_EQUAL(argv[2], "csgv")) {
 	/* Call csg conversion routine */
 	struct bu_vls bname_csg;
@@ -349,12 +381,21 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	return _ged_brep_flip(gedp, bi, solid_name);
     }
 
+    if (BU_STR_EQUAL(argv[2], "shrink-surfaces")) {
+	return _ged_brep_shrink_surfaces(gedp, bi, solid_name);
+    }
+
     if (BU_STR_EQUAL(argv[2], "tikz")) {
 	if (argc == 4) {
 	    return _ged_brep_tikz(gedp, argv[1], argv[3]);
 	} else {
 	    return _ged_brep_tikz(gedp, argv[1], NULL);
 	}
+    }
+
+
+    if (BU_STR_EQUAL(argv[2], "nirt")) {
+	return _ged_brep_pick_face(gedp, bi, argv[1]);
     }
 
 
@@ -517,9 +558,9 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     vbp = rt_vlblock_init();
 
     if ((int)color.buc_rgb[0] == 0 && (int)color.buc_rgb[1] == 0 && (int)color.buc_rgb[2] == 0) {
-	brep_command(gedp->ged_result_str, solid_name, NULL, (const struct rt_tess_tol *)&gedp->ged_wdbp->wdb_ttol, &gedp->ged_wdbp->wdb_tol, bs, bi, vbp, argc, argv, commtag);
+	brep_command(gedp->ged_result_str, solid_name, gedp->ged_wdbp, NULL, (const struct bg_tess_tol *)&gedp->ged_wdbp->wdb_ttol, &gedp->ged_wdbp->wdb_tol, bs, bi, vbp, argc, argv, commtag);
     } else {
-	brep_command(gedp->ged_result_str, solid_name, &color, (const struct rt_tess_tol *)&gedp->ged_wdbp->wdb_ttol, &gedp->ged_wdbp->wdb_tol, bs, bi, vbp, argc, argv, commtag);
+	brep_command(gedp->ged_result_str, solid_name, gedp->ged_wdbp, &color, (const struct bg_tess_tol *)&gedp->ged_wdbp->wdb_ttol, &gedp->ged_wdbp->wdb_tol, bs, bi, vbp, argc, argv, commtag);
     }
 
     if (BU_STR_EQUAL(argv[2], "translate")) {

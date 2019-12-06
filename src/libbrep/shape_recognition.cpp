@@ -2,13 +2,17 @@
 
 #include "common.h"
 
-#include <set>
 #include <map>
+#include <queue>
+#include <set>
 #include <string>
 
 #include "bu/log.h"
 #include "bu/str.h"
 #include "bu/malloc.h"
+#include "brep/defines.h"
+#include "brep/util.h"
+
 #include "shape_recognition.h"
 
 #define L1_OFFSET 2

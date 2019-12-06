@@ -3450,7 +3450,7 @@ static int mdThreadMain(void *value)
     tdata.binsort = mmBinSortInit(offsetof(mdOp, list), 64, 16, -0.2 * mesh->maxcollapsecost, 1.2 * mesh->maxcollapsecost, groupthreshold, mdMeshOpValueCallback, 6, nodeindex);
 
     for (vindex = 0; vindex < mesh->updatebuffercount; vindex++)
-	mdUpdateBufferInit(&tdata.updatebuffer[vindex], 4096);
+	mdUpdateBufferInit(&tdata.updatebuffer[vindex], BU_PAGE_SIZE);
 
     /* Wait until all threads have properly initialized */
     if (mesh->updatestatusflag)

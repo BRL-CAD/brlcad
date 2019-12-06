@@ -18,213 +18,7 @@
         </listitem>
       </itemizedlist>
 </listitem>
-    <listitem>
-      <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php">Animation Tutorial</link>
-      </para>
-  <itemizedlist>
-        <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#Introduction">Introduction</link>
-          </para>
-       <itemizedlist>
-        <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#Preliminaries">Preliminaries</link>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#Simple_Camera_Motion">Simple Camera Motion</link>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#Object_Motion">Object Motion</link>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#Computing_Video_Frames">Computing Video Frames</link>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#Recording_Videotape">Recording Videotape</link>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#Conclusion">Conclusion</link>
-          </para>
-        </listitem>
-      </itemizedlist>
-    </listitem>
-      <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#Appendix_A">Appendix A</link>
-          </para>
-          <itemizedlist>
-        <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#tabinterp">Name</link>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#SYNOPSIS1">Synopsis</link>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#DESCRIPTION1">Description</link>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#EXAMPLE1">Example</link>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#POST_PROCESSING">Post Processing</link>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#PREPARING_INPUT_TABLES">Preparing Input Table</link>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#SEE_ALSO">See Also</link>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#DIAGNOSTICS">Diagnostics</link>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#BUGS">Bugs</link>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#AUTHOR">Author</link>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#SOURCE">Source</link>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#BUG_REPORTS">Bug Reports</link>
-          </para>
-        </listitem>
-      </itemizedlist>
-    </listitem>
-    <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#Appendix_B">Appendix B</link>
-          </para>
-      <itemizedlist>
-        <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#NAME">Name</link>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#SYNOPSIS">Synopsis</link>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#DESCRIPTION">Description</link>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#Example">Example</link>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#POST_PROCESSING2">Post Processing</link>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#EXAMPLE2">Example 2</link>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#SEE_ALSO2">See Also</link>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#DIAGNOSTICS">Diagnostics</link>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#BUGS2">Bugs</link>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#AUTHOR2">Author</link>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#SOURCE2">Source</link>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#BUG_REPORTS2">Bug Reports</link>
-          </para>
-        </listitem>
-      </itemizedlist>
-    </listitem>
-     <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#Chains">Chains</link>
-          </para>
-          <itemizedlist>
-        <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#vsize">Chains Vsize</link>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#eypet">Chains Eypet</link>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#orient">Chain Orient</link>
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-        <link xlink:href="../../articles/en/animation_tutorial.php#all">Chain all</link>
-          </para>
-        </listitem>
-      </itemizedlist>
-    </listitem>
-
-  </itemizedlist>
-</listitem>
- <listitem>
+<listitem>
     <para>
         <link xlink:href="../../articles/en/build_pattern.php">Build Pattern</link>
     </para>
@@ -2852,31 +2646,6 @@
     <itemizedlist>
     <listitem>
       <para>
-        <link xlink:href="../../man1/en/anim_script.php">Anim Script</link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-        <link xlink:href="../../man1/en/anim_sort.php">Anim Sort</link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-        <link xlink:href="../../man1/en/anim_time.php">Anim Time</link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-        <link xlink:href="../../man1/en/anim_track.php">Anim Track</link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-        <link xlink:href="../../man1/en/anim_turn.php">Anim Turn</link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
         <link xlink:href="../../man1/en/ap-pix.php">AP Pix</link>
       </para>
     </listitem>
@@ -3053,16 +2822,6 @@
     <listitem>
       <para>
         <link xlink:href="../../man1/en/cell-fb.php">Cell FB</link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-        <link xlink:href="../../man1/en/chan_mult.php">Chan Mult</link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-        <link xlink:href="../../man1/en/chan_premute.php">Chan Premute</link>
       </para>
     </listitem>
     <listitem>
@@ -3933,16 +3692,6 @@
     </listitem>
     <listitem>
       <para>
-        <link xlink:href="../../man1/en/tabinterp.php">tab interp</link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-        <link xlink:href="../../man1/en/tabsub.php">Tab Sub</link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
         <link xlink:href="../../man1/en/tankill-g.php">Tankill G</link>
       </para>
     </listitem>
@@ -4090,52 +3839,12 @@
     </listitem>
     <listitem>
       <para>
-        <link xlink:href="../../mann/en/anim_turn.php">All sf</link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
         <link xlink:href="../../mann/en/analyze.php">Analyze</link>
       </para>
     </listitem>
     <listitem>
       <para>
-        <link xlink:href="../../mann/en/anim_cascade.php">Aim Cascade</link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-        <link xlink:href="../../mann/en/anim_fly.php">Anim Fly</link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-        <link xlink:href="../../mann/en/anim_hardtrack.php">Anim Hardtrack</link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-        <link xlink:href="../../mann/en/anim_keyread.php">Anim Keyread</link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-        <link xlink:href="../../mann/en/anim_lookat.php">Anim Lookat</link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
         <link xlink:href="../../mann/en/animmate.php">Animmate</link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-        <link xlink:href="../../mann/en/anim_offset.php">Anim Offset</link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-        <link xlink:href="../../mann/en/anim_orient.php">Anim Orient</link>
       </para>
     </listitem>
     <listitem>
@@ -4945,11 +4654,6 @@
     </listitem>
     <listitem>
       <para>
-        <link xlink:href="../../mann/en/rmats.php">R mats</link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
         <link xlink:href="../../mann/en/rot.php">Rot</link>
       </para>
     </listitem>
@@ -4986,11 +4690,6 @@
     <listitem>
       <para>
         <link xlink:href="../../mann/en/rtcheck.php">Rt Check</link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-        <link xlink:href="../../mann/en/savekey.php">Save Key</link>
       </para>
     </listitem>
     <listitem>

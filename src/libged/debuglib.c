@@ -59,8 +59,6 @@ ged_debuglib(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return GED_ERROR;
 	}
-
-	if (RT_G_DEBUG) bu_debug |= BU_DEBUG_COREDUMP;
     }
 
     bu_vls_printb(gedp->ged_result_str, "librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT);

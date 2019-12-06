@@ -79,10 +79,10 @@ struct animate {
     struct db_full_path an_path;        /**< @brief  (sub)-path pattern */
     int                 an_type;        /**< @brief  AN_MATRIX, AN_COLOR... */
     union animate_specific {
-        struct anim_mat         anu_m;
-        struct rt_anim_property anu_p;
-        struct rt_anim_color    anu_c;
-        float                   anu_t;
+	struct anim_mat         anu_m;
+	struct rt_anim_property anu_p;
+	struct rt_anim_color    anu_c;
+	float                   anu_t;
     } an_u;
 };
 #define RT_AN_MATRIX      1             /**< @brief  Matrix animation */
@@ -98,8 +98,8 @@ __END_DECLS
 
 /* db_anim.c */
 RT_EXPORT extern struct animate *db_parse_1anim(struct db_i     *dbip,
-                                                int             argc,
-                                                const char      **argv);
+						int             argc,
+						const char      **argv);
 
 
 /**
@@ -107,8 +107,8 @@ RT_EXPORT extern struct animate *db_parse_1anim(struct db_i     *dbip,
  * for this.
  */
 RT_EXPORT extern int db_parse_anim(struct db_i     *dbip,
-                                   int             argc,
-                                   const char      **argv);
+				   int             argc,
+				   const char      **argv);
 
 /**
  * Add a user-supplied animate structure to the end of the chain of
@@ -121,8 +121,8 @@ RT_EXPORT extern int db_parse_anim(struct db_i     *dbip,
  * directory references are in the right database (dbip).
  */
 RT_EXPORT extern int db_add_anim(struct db_i *dbip,
-                                 struct animate *anp,
-                                 int root);
+				 struct animate *anp,
+				 int root);
 
 /**
  * Perform the one animation operation.  Leave results in form that
@@ -132,9 +132,9 @@ RT_EXPORT extern int db_add_anim(struct db_i *dbip,
  * region has already been finalized above this point in the tree.
  */
 RT_EXPORT extern int db_do_anim(struct animate *anp,
-                                mat_t stack,
-                                mat_t arc,
-                                struct mater_info *materp);
+				mat_t stack,
+				mat_t arc,
+				struct mater_info *materp);
 
 /**
  * Release chain of animation structures
@@ -155,7 +155,7 @@ RT_EXPORT extern void db_free_anim(struct db_i *dbip);
  */
 /* should be HIDDEN */
 RT_EXPORT extern void db_write_anim(FILE *fop,
-                                    struct animate *anp);
+				    struct animate *anp);
 
 /**
  * Parse one "anim" type command into an "animate" structure.
@@ -164,8 +164,8 @@ RT_EXPORT extern void db_write_anim(FILE *fop,
  * argv[2] indicates what is to be animated on that arc.
  */
 RT_EXPORT extern struct animate *db_parse_1anim(struct db_i *dbip,
-                                                int argc,
-                                                const char **argv);
+						int argc,
+						const char **argv);
 
 
 /**
@@ -180,10 +180,10 @@ RT_EXPORT extern void db_free_1anim(struct animate *anp);
  * already been finalized above this point in the tree.
  */
 RT_EXPORT extern void db_apply_anims(struct db_full_path *pathp,
-                                     struct directory *dp,
-                                     mat_t stck,
-                                     mat_t arc,
-                                     struct mater_info *materp);
+				     struct directory *dp,
+				     mat_t stck,
+				     mat_t arc,
+				     struct mater_info *materp);
 
 
 #endif /* RT_ANIM_H */

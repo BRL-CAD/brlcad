@@ -187,7 +187,7 @@ int mged_db_upgrade = 0;
 int mged_db_version = 5;
 
 struct bn_tol mged_tol;	/* calculation tolerance */
-struct rt_tess_tol mged_ttol;	/* XXX needs to replace mged_abs_tol, et.al. */
+struct bg_tess_tol mged_ttol;	/* XXX needs to replace mged_abs_tol, et.al. */
 
 
 #if !defined(_WIN32) || defined(__CYGWIN__)
@@ -1811,14 +1811,14 @@ stdin_input(ClientData clientData, int UNUSED(mask))
     /*XXXXX*/
 #define TRY_STDIN_INPUT_HACK
 #ifdef TRY_STDIN_INPUT_HACK
-    /* Grab everything --- assuming everything is <= 4096 */
+    /* Grab everything --- assuming everything is <= page size */
     {
-	char buf[4096];
+	char buf[BU_PAGE_SIZE];
 	int idx;
 #  ifdef _WIN32
-	count = Tcl_Read(chan, buf, 4096);
+	count = Tcl_Read(chan, buf, BU_PAGE_SIZE);
 #  else
-	count = read((int)fd, (void *)buf, 4096);
+	count = read((int)fd, (void *)buf, BU_PAGE_SIZE);
 #  endif
 
 #else
@@ -1971,10 +1971,6 @@ event_check(int non_blocking)
 	while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT)) {
 	    handled++;
 	}
-    }
-
-    if (bu_debug > 0) {
-	bu_log("Handled %d events\n", handled);
     }
 
     non_blocking = 0;

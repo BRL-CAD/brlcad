@@ -58,18 +58,18 @@ __BEGIN_DECLS
  * to look at the regions that have come before in deciding what to do
  */
 RT_EXPORT extern void rt_default_multioverlap(struct application *ap,
-                                              struct partition *pp,
-                                              struct bu_ptbl *regiontable,
-                                              struct partition *InputHdp);
+					      struct partition *pp,
+					      struct bu_ptbl *regiontable,
+					      struct partition *InputHdp);
 
 /**
  * If an application doesn't want any logging from LIBRT, it should
  * just set ap->a_logoverlap = rt_silent_logoverlap.
  */
 RT_EXPORT extern void rt_silent_logoverlap(struct application *ap,
-                                           const struct partition *pp,
-                                           const struct bu_ptbl *regiontable,
-                                           const struct partition *InputHdp);
+					   const struct partition *pp,
+					   const struct bu_ptbl *regiontable,
+					   const struct partition *InputHdp);
 
 /**
  * Log a multiplicity of overlaps within a single partition.  This
@@ -78,17 +78,17 @@ RT_EXPORT extern void rt_silent_logoverlap(struct application *ap,
  * replaced by an application setting a_logoverlap().
  */
 RT_EXPORT extern void rt_default_logoverlap(struct application *ap,
-                                            const struct partition *pp,
-                                            const struct bu_ptbl *regiontable,
-                                            const struct partition *InputHdp);
+					    const struct partition *pp,
+					    const struct bu_ptbl *regiontable,
+					    const struct partition *InputHdp);
 
 /**
  * XXX This routine seems to free things more than once.  For a
  * temporary measure, don't free things.
  */
 RT_EXPORT extern void rt_rebuild_overlaps(struct partition      *PartHdp,
-	                                  struct application    *ap,
-	                                  int rebuild_fastgen_plates_only);
+					  struct application    *ap,
+					  int rebuild_fastgen_plates_only);
 
 /**
  * Default handler for overlaps in rt_boolfinal().
@@ -99,10 +99,10 @@ RT_EXPORT extern void rt_rebuild_overlaps(struct partition      *PartHdp,
  * 2 to retain partition in output list, claimed by reg2
  */
 RT_EXPORT extern int    rt_defoverlap(struct application *ap,
-                                      struct partition *pp,
-                                      struct region *reg1,
-                                      struct region *reg2,
-                                      struct partition *pheadp);
+				      struct partition *pp,
+				      struct region *reg1,
+				      struct region *reg2,
+				      struct partition *pheadp);
 
 __END_DECLS
 

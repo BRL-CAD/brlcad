@@ -35,7 +35,9 @@
 #include "bio.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
-#include "brep.h"
+#include "brep/defines.h"
+#include "brep/intersect.h"
+#include "brep/util.h"
 #include "brep_except.h"
 
 

@@ -2593,7 +2593,7 @@ db_tree_parse(struct bu_vls *vls, const char *str, struct resource *resp)
     }
 
     if (argv[0][1] != '\0') {
-	bu_vls_printf(vls, "db_tree_parse() operator is not single character: %s", argv[0]);
+	bu_vls_printf(vls, "db_tree_parse() operator is not single character: %s\n", argv[0]);
 	bu_free((char *)argv, "argv");
 	return TREE_NULL;
     }
@@ -2618,7 +2618,7 @@ db_tree_parse(struct bu_vls *vls, const char *str, struct resource *resp)
 		    /* decode also recognizes "I" notation for identity */
 		    if (bn_decode_mat(m, argv[2]) != 16) {
 			bu_vls_printf(vls,
-				      "db_tree_parse: unable to parse matrix '%s' using identity",
+				      "db_tree_parse: unable to parse matrix '%s' using identity\n",
 				      argv[2]);
 			break;
 		    }
@@ -2626,7 +2626,7 @@ db_tree_parse(struct bu_vls *vls, const char *str, struct resource *resp)
 			break;
 		    if (bn_mat_ck("db_tree_parse", m)) {
 			bu_vls_printf(vls,
-				      "db_tree_parse: matrix '%s', does not preserve axis perpendicularity, using identity", argv[2]);
+				      "db_tree_parse: matrix '%s', does not preserve axis perpendicularity, using identity\n", argv[2]);
 			break;
 		    }
 		    /* Finally, a good non-identity matrix, dup & save it */
@@ -2660,10 +2660,12 @@ db_tree_parse(struct bu_vls *vls, const char *str, struct resource *resp)
 		    bu_free((char *)tp, "union tree");
 		    tp = TREE_NULL;
 		}
-		tp->tr_b.tb_left = db_tree_parse(vls, argv[1], resp);
-		if (tp->tr_b.tb_left == TREE_NULL) {
-		    bu_free((char *)tp, "union tree");
-		    tp = TREE_NULL;
+		if (tp) {
+		    tp->tr_b.tb_left = db_tree_parse(vls, argv[1], resp);
+		    if (tp->tr_b.tb_left == TREE_NULL) {
+			bu_free((char *)tp, "union tree");
+			tp = TREE_NULL;
+		    }
 		}
 		break;
 
@@ -2707,22 +2709,26 @@ db_tree_parse(struct bu_vls *vls, const char *str, struct resource *resp)
 
 	if (argv[1] == (char *)NULL || argv[2] == (char *)NULL) {
 	    bu_vls_printf(vls,
-			  "db_tree_parse: binary operator %s has insufficient operands in %s",
+			  "db_tree_parse: binary operator %s has insufficient operands in %s\n",
 			  argv[0], str);
 	    BU_PUT(tp, union tree);
 	    tp = TREE_NULL;
 	}
-	tp->tr_b.tb_left = db_tree_parse(vls, argv[1], resp);
-	if (tp->tr_b.tb_left == TREE_NULL) {
-	    BU_PUT(tp, union tree);
-	    tp = TREE_NULL;
+	if (tp) {
+	    tp->tr_b.tb_left = db_tree_parse(vls, argv[1], resp);
+	    if (tp->tr_b.tb_left == TREE_NULL) {
+		BU_PUT(tp, union tree);
+		tp = TREE_NULL;
+	    }
 	}
-	tp->tr_b.tb_right = db_tree_parse(vls, argv[2], resp);
-	if (tp->tr_b.tb_right == TREE_NULL) {
-	    /* free the left we just tree parsed */
-	    db_free_tree(tp->tr_b.tb_left, resp);
-	    BU_PUT(tp, union tree);
-	    tp = TREE_NULL;
+	if (tp) {
+	    tp->tr_b.tb_right = db_tree_parse(vls, argv[2], resp);
+	    if (tp->tr_b.tb_right == TREE_NULL) {
+		/* free the left we just tree parsed */
+		db_free_tree(tp->tr_b.tb_left, resp);
+		BU_PUT(tp, union tree);
+		tp = TREE_NULL;
+	    }
 	}
     }
 

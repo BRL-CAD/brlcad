@@ -43,18 +43,18 @@ bu_path_dirname(const char *cp)
 
     /* Special cases */
     if (UNLIKELY(!cp))
-        return bu_strdup(".");
+	return bu_strdup(".");
 
     if (BU_STR_EQUAL(cp, DSLASH))
-        return bu_strdup(DSLASH);
+	return bu_strdup(DSLASH);
     if (BU_STR_EQUAL(cp, FSLASH))
-        return bu_strdup(FSLASH);
+	return bu_strdup(FSLASH);
 
     if (BU_STR_EQUAL(cp, DOT)
-        || BU_STR_EQUAL(cp, DOTDOT)
-        || (strrchr(cp, BU_DIR_SEPARATOR) == NULL
-            && strrchr(cp, '/') == NULL))
-        return bu_strdup(DOT);
+	|| BU_STR_EQUAL(cp, DOTDOT)
+	|| (strrchr(cp, BU_DIR_SEPARATOR) == NULL
+	    && strrchr(cp, '/') == NULL))
+	return bu_strdup(DOT);
 
     /* Make a duplicate copy of the string, and shorten it in place */
     ret = bu_strdup(cp);
@@ -62,28 +62,28 @@ bu_path_dirname(const char *cp)
     /* A sequence of trailing slashes don't count */
     len = strlen(ret);
     while (len > 1
-           && (ret[len-1] == BU_DIR_SEPARATOR
-               || ret[len-1] == '/')) {
-        ret[len-1] = '\0';
-        len--;
+	   && (ret[len-1] == BU_DIR_SEPARATOR
+	       || ret[len-1] == '/')) {
+	ret[len-1] = '\0';
+	len--;
     }
 
     /* If no slashes remain, return "." */
     found_dslash = strrchr(ret, BU_DIR_SEPARATOR);
     found_fslash = strrchr(ret, '/');
     if (!found_dslash && !found_fslash) {
-        bu_free(ret, "bu_path_dirname");
-        return bu_strdup(DOT);
+	bu_free(ret, "bu_path_dirname");
+	return bu_strdup(DOT);
     }
 
     /* Remove trailing slash, unless it's at front */
     if (found_dslash == ret || found_fslash == ret) {
-        ret[1] = '\0';          /* ret == BU_DIR_SEPARATOR || "/" */
+	ret[1] = '\0';          /* ret == BU_DIR_SEPARATOR || "/" */
     } else {
-        if (found_dslash)
-            *found_dslash = '\0';
-        if (found_fslash)
-            *found_fslash = '\0';
+	if (found_dslash)
+	    *found_dslash = '\0';
+	if (found_fslash)
+	    *found_fslash = '\0';
     }
 
     return ret;
@@ -102,32 +102,32 @@ bu_path_basename(const char *path, char *basename)
 	    bu_strlcpy(basename, ".", strlen(".")+1);
 	    return basename;
 	}
-        return bu_strdup(".");
+	return bu_strdup(".");
     }
 
     /* skip the filesystem disk/drive name if we're on a DOS-capable
      * platform that uses '\' for paths, e.g., C:\ -> \
      */
     if (BU_DIR_SEPARATOR == '\\' && isalpha((int)(path[0])) && path[1] == ':') {
-        path += 2;
+	path += 2;
     }
 
     /* Skip leading separators, e.g., ///foo/bar -> foo/bar */
     for (p = path; *p != '\0'; p++) {
-        /* check native separator as well as / so we can use this
-         * routine for geometry paths too.
-         */
-        if ((p[0] == BU_DIR_SEPARATOR && p[1] != BU_DIR_SEPARATOR && p[1] != '\0')
-            || (p[0] == '/' && p[1] != '/' && p[1] != '\0')) {
-            path = p+1;
-        }
+	/* check native separator as well as / so we can use this
+	 * routine for geometry paths too.
+	 */
+	if ((p[0] == BU_DIR_SEPARATOR && p[1] != BU_DIR_SEPARATOR && p[1] != '\0')
+	    || (p[0] == '/' && p[1] != '/' && p[1] != '\0')) {
+	    path = p+1;
+	}
     }
 
     len = strlen(path);
 
     /* Remove trailing separators */
     while (len > 1 && (path[len - 1] == BU_DIR_SEPARATOR || path[len - 1] == '/'))
-        len--;
+	len--;
 
     if (basename) {
 	if (len > 0) {
@@ -196,11 +196,11 @@ bu_path_component(struct bu_vls *component, const char *path, bu_path_component_
 	    if (strlen(basename) > 0) {
 		ret = 1;
 		if (component) {
-		period_pos = strrchr(basename, '.');
-		bu_vls_sprintf(component, "%s", basename);
+		    period_pos = strrchr(basename, '.');
+		    bu_vls_sprintf(component, "%s", basename);
 		    if (period_pos) {
-		bu_vls_trunc(component, -1 * (int)strlen(period_pos));
-	    }
+			bu_vls_trunc(component, -1 * (int)strlen(period_pos));
+		    }
 		}
 	    }
 	    break;
@@ -242,18 +242,18 @@ bu_path_to_argv(const char *path, int *ac)
     register int i;
 
     if (UNLIKELY(path == (char *)0 || path[0] == '\0'))
-        return (char **)0;
+	return (char **)0;
 
     newstr = bu_strdup(path);
 
     /* skip leading /'s */
     i = 0;
     while (newstr[i] == '/')
-        ++i;
+	++i;
 
     if (UNLIKELY(newstr[i] == '\0')) {
-        bu_free((void *)newstr, "bu_path_to_argv");
-        return (char **)0;
+	bu_free((void *)newstr, "bu_path_to_argv");
+	return (char **)0;
     }
 
     /* If we get here, there is at least one path element */
@@ -263,30 +263,30 @@ bu_path_to_argv(const char *path, int *ac)
     /* First count the number of '/' */
     begin = headpath;
     while ((end = strchr(begin, '/')) != (char *)0) {
-        if (begin != end)
-            ++*ac;
+	if (begin != end)
+	    ++*ac;
 
-        begin = end + 1;
+	begin = end + 1;
     }
     av = (char **)bu_calloc((unsigned int)(*ac)+1, sizeof(char *), "bu_path_to_argv");
 
     begin = headpath;
     i = 0;
     while ((end = strchr(begin, '/')) != (char *)0) {
-        if (begin != end) {
-            *end = '\0';
-            av[i++] = bu_strdup(begin);
-        }
+	if (begin != end) {
+	    *end = '\0';
+	    av[i++] = bu_strdup(begin);
+	}
 
-        begin = end + 1;
+	begin = end + 1;
     }
 
     if (begin[0] != '\0') {
-        av[i++] = bu_strdup(begin);
-        av[i] = (char *)0;
+	av[i++] = bu_strdup(begin);
+	av[i] = (char *)0;
     } else {
-        av[i] = (char *)0;
-        --*ac;
+	av[i] = (char *)0;
+	--*ac;
     }
     bu_free((void *)newstr, "bu_path_to_argv");
 

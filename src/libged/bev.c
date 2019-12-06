@@ -120,7 +120,7 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
     gedp->ged_wdbp->wdb_initial_tree_state.ts_ttol = &gedp->ged_wdbp->wdb_ttol;
     gedp->ged_wdbp->wdb_initial_tree_state.ts_tol = &gedp->ged_wdbp->wdb_tol;
 
-    gedp->ged_wdbp->wdb_ttol.magic = RT_TESS_TOL_MAGIC;
+    gedp->ged_wdbp->wdb_ttol.magic = BG_TESS_TOL_MAGIC;
 
     /* Initial values for options, must be reset each time */
     ncpu = 1;

@@ -66,7 +66,7 @@ static const char *global_form = "%-72.72s%c%07d\n"; /* format for global sectio
 static const char *param_form = "%-64.64s %7d%c%07d\n"; /* format for parameter section */
 static const char *att_string = "BRL-CAD attribute definition:material name, material parameters, region flag, ident number, air code, material code (GIFT), los density, inheritance";
 static struct bn_tol tol;	/* tolerances */
-static struct rt_tess_tol ttol;	/* tolerances */
+static struct bg_tess_tol ttol;	/* tolerances */
 static struct db_i *dbip = NULL;
 static const char *unknown = "Unknown";
 static int unknown_count = 0;
@@ -565,12 +565,12 @@ write_attribute_definition(FILE *fp_dir, FILE *fp_param)
 
 void
 iges_init(struct bn_tol *set_tol,
-	  struct rt_tess_tol *set_ttol,
+	  struct bg_tess_tol *set_ttol,
 	  int set_verbose,
 	  struct db_i *dbip_set)
 {
     BN_CK_TOL(set_tol);
-    RT_CK_TESS_TOL(set_ttol);
+    BG_CK_TESS_TOL(set_ttol);
     tol = (*set_tol);
     ttol = (*set_ttol);
     verbose = set_verbose;

@@ -64,9 +64,9 @@ int sobolseq_main(int argc, char **argv)
     }
     bn_sobol_destroy(s);
     printf("Test integral = %g using Sobol, %g using pseudorandom.\n",
-	    testint_sobol / n, testint_rand / n);
+	   testint_sobol / n, testint_rand / n);
     printf("        error = %g using Sobol, %g using pseudorandom.\n",
-	    testint_sobol / n - 1, testint_rand / n - 1);
+	   testint_sobol / n - 1, testint_rand / n - 1);
     return ((testint_sobol / n - 1) > 0.001);
 }
 

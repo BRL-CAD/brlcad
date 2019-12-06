@@ -7,8 +7,10 @@ set(embedded_licenses
   db_faa-info.txt
   db_nist-info.txt
   dehumanize.txt
+  delaunator.txt
   DejaVu_Fonts.txt
-  ear_clipping.txt
+  earcut.txt
+  Eigen.txt
   fnmatch.txt
   fontstash.txt
   gct.txt
@@ -26,11 +28,13 @@ set(embedded_licenses
   osl.txt
   pbrt.txt
   point_in_polygon.txt
+  point_in_polyhedron.txt
   polygonizer.txt
   pstdint.txt
   qsort.txt
   randmt.txt
   realpath.txt
+  RTree.txt
   scriptsort.txt
   search.txt
   sh_wood.txt
@@ -41,6 +45,7 @@ set(embedded_licenses
   tcl.txt
   tinythread.txt
   tkcon.txt
+  tri_pt.txt
   uce_dirent.txt
   x24.txt
   y2038.txt

@@ -33,7 +33,9 @@
 /**
  * list of callbacks to call during bu_log.
  *
- * NOT published in a public header.
+ * FIXME: this would be better returned to the caller as a logging
+ * context instead of as a library-stateful set of callback functions
+ * that is woefully thread-unsafe.
  */
 static struct bu_hook_list log_hook_list = BU_HOOK_LIST_INIT_ZERO;
 
@@ -69,6 +71,7 @@ bu_log_delete_hook(bu_hook_t func, void *clientdata)
 {
     bu_hook_delete(&log_hook_list, func, clientdata);
 }
+
 
 HIDDEN void
 log_call_hooks(void *buf)

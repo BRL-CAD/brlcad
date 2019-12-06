@@ -245,7 +245,7 @@ extern void count_refs(struct db_i *dbip, struct directory *dp);
 extern void csg_comb_func(struct db_i *dbip, struct directory *dp);
 extern void csg_leaf_func(struct db_i *dbip, struct directory *dp);
 extern void nmg_region_edge_list(struct bu_ptbl *tab, struct nmgregion *r);
-extern void set_iges_tolerances(struct bn_tol *set_tol, struct rt_tess_tol *set_ttol);
+extern void set_iges_tolerances(struct bn_tol *set_tol, struct bg_tess_tol *set_ttol);
 extern void w_start_global(FILE *fp_dir, FILE *fp_param, char *db_name, char *prog_name, char *output_file, char *id, char *version);
 extern void w_terminate(FILE *fp);
 extern void write_edge_list(struct nmgregion *r, int vert_de, struct bu_ptbl *etab, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);

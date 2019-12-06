@@ -32,8 +32,8 @@
  *	The string is read and printed out in the form:
  *		/MM/DD/YYYY at HH:NN:SS
  *
- *	"eof" is the "end-of-field" delimiter
- *	"eor" is the "end-of-record" delimiter
+ *	"eofd" is the "end-of-field" delimiter
+ *	"eord" is the "end-of-record" delimiter
  *
  */
 
@@ -47,11 +47,11 @@ Readtime(char *id)
     char num[80];
     char year_str[5];
 
-    if (card[counter] == eof) {
+    if (card[counter] == eofd) {
 	/* This is an empty field */
 	counter++;
 	return;
-    } else if (card[counter] == eor) /* Up against the end of record */
+    } else if (card[counter] == eord) /* Up against the end of record */
 	return;
 
     if (*id != '\0')
@@ -110,14 +110,14 @@ Readtime(char *id)
 	       num[12], num[13], num[14]);
     }
 
-    while (card[counter] != eof && card[counter] != eor) {
+    while (card[counter] != eofd && card[counter] != eord) {
 	if (counter < lencard)
 	    counter++;
 	else
 	    Readrec(++currec);
     }
 
-    if (card[counter] == eof) {
+    if (card[counter] == eofd) {
 	counter++;
 	if (counter > lencard)
 	    Readrec(++ currec);

@@ -1,0 +1,77 @@
+BRL-CAD Code Review Checklist
+=============================
+
+Included below is a list of criteria used when reviewing code changes.
+While not comprehensive, it's a good checklist for new contributors to
+evaluate against their changes prior to submission.  The checklist is
+part of common criteria used for core development and peer review.
+The answer to all questions should be "yes".
+
+
+Legal
+-----
+00. Are all changes under legally compatible license?  No GPL, no NC.
+01. Are all contributors documented?  AUTHORS if new.
+02. Do all new files have correct license header, copyright line, year?
+
+Organization
+------------
+03. Are changes in an appropriate location with similar/related logic?
+04. Do all new files have a consistent name?  c/cpp/h extension.
+05. Do the changes NOT introduce a cyclic dependency?
+
+Style
+-----
+06. Does the file have the right style footer?
+07. Is the code indented consistently?  4 char per level, 8 char tabs.
+08. Is whitespace correct (no EOL spaces, internal tabs, or space around ops)?
+09. Are braces consistent with existing code?  Typically BSD KNF / K&R style.
+
+Documentation
+-------------
+10. Publicly visible changes / features are documented?  NEWS entry.
+11. Does referencing documentation reflect interface changes?  Check manpages.
+12. Are new public symbols documented?  Doxygen comment in include/ dir.
+13. Are changed public symbols documented?  CHANGES entry, DEPRECATED comment.
+14. Is all dead or conditional debugging code documented?  Comment or remove.
+15. Are new numeric constants documented?  Comment or eliminate.
+
+Declaration
+-----------
+16. Do changed files include and only include headers in use by that file?
+17. Are new public symbols named consistently?  Prefixed according to library.
+18. Are new private symbols NOT prefixed like they're public?
+19. Are new functions NOT referenced in other files marked static?
+20. Are new global variables avoided?  No new ones allowed in libraries.
+
+Definition
+----------
+21. Do changes avoid platform/compiler-specific constructs?  libbu exempt.
+22. Do new structures / classes have static size?  No preprocessor toggles.
+23. Do changes avoid exact floating point math?  Use NEAR_EQUAL, see vmath.h
+24. Do changes use wrapped system functions?  See libbu API and HACKING.
+25. Do changes avoid duplication, or refactor accordingly to shared code?
+
+Compilation
+-----------
+26. Does the code compile without warnings?  All enabled.
+27. Reasonable to think changes will trivially compile on all major platforms?
+
+Testing
+-------
+28. Are any new inputs checked, sanitized?
+29. For changes fixing a recurrant bug, is there an accompanying test?
+30. Does performance testing pass and NOT decrease?  No slow downs.
+31. Do all regression tests pass?  No new failures.
+
+
+The following guidelines are also desirable ideals, but not as
+strictly measurable:
+
+** should minimize new public API, less is more
+** should leverage standard libraries and standards, C++11 in particular
+** should leverage demonstrably robust 3rd-party dependencies
+** should resist new 3rd-party dependencies with duplicate functionality
+** should keep code robust to different configurations and change
+** should resist or eliminate changes not taken to some useful completion
+** should prefer simple over complex or clever, except that which has merit

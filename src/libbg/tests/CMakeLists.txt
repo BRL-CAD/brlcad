@@ -57,7 +57,11 @@ CMAKEFILES(chull_test004_bot.asc)
 # 3D Convex Hull tests
 BRLCAD_ADDEXEC(bg_chull3d chull3d.c "libbg;libbn;libbu" TEST)
 
+#  ************ lseg_lseg.c tests ***********
 
+BRLCAD_ADDEXEC(bg_lseg_lseg_dist lseg_lseg.c "libbg;libbn;libbu" TEST)
+
+add_test(NAME bg_lseg_lseg_1   COMMAND bg_lseg_lseg_dist 1)
 
 #  ************ tri_tri.c tests ***********
 
@@ -101,6 +105,20 @@ add_test(NAME bg_tri_tri_isect_cp_full   COMMAND bg_tri_tri_isect  0,0,0 1,0,0 1
 
 # Test more general triangles
 add_test(NAME bg_tri_tri_isect_null   COMMAND bg_tri_tri_isect  0,0,0 1,0,0 1,1,0  1,0,1 1,0,1 1,1,1  0)
+
+
+#  ************ tri_closest_pt.c tests ***********
+
+BRLCAD_ADDEXEC(bg_tri_closest_pt tri_closest_pt.c "libbg;libbn;libbu" TEST)
+
+add_test(NAME bg_tri_pt_dist_coplanar_center   COMMAND bg_tri_closest_pt  0,0,0 -1,-1,0 1,-1,0 0,1,0 0)
+add_test(NAME bg_tri_pt_dist_coplanar_vert_closest   COMMAND bg_tri_closest_pt -2,-1,0 -1,-1,0 1,-1,0 0,1,0 1)
+
+#  ************ trimesh_pt_in.cpp tests ***********
+
+BRLCAD_ADDEXEC(bg_trimesh_pt_in trimesh_pt_in.c "libbg;libbn;libbu" TEST)
+
+add_test(NAME bg_trimesh_pt_in_basic   COMMAND bg_trimesh_pt_in 1)
 
 CMAKEFILES(CMakeLists.txt)
 

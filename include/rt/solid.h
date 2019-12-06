@@ -68,34 +68,34 @@ struct solid  {
 #define SOLID_NULL	((struct solid *)0)
 
 #define GET_SOLID(p, fp) { \
-    if (BU_LIST_IS_EMPTY(fp)) { \
-	BU_ALLOC((p), struct solid); \
-	db_full_path_init(&(p)->s_fullpath); \
-    } else { \
-	p = BU_LIST_NEXT(solid, fp); \
-	BU_LIST_DEQUEUE(&((p)->l)); \
-	(p)->s_fullpath.fp_len = 0; \
-    } \
-    BU_LIST_INIT( &((p)->s_vlist) ); }
+	if (BU_LIST_IS_EMPTY(fp)) { \
+	    BU_ALLOC((p), struct solid); \
+	    db_full_path_init(&(p)->s_fullpath); \
+	} else { \
+	    p = BU_LIST_NEXT(solid, fp); \
+	    BU_LIST_DEQUEUE(&((p)->l)); \
+	    (p)->s_fullpath.fp_len = 0; \
+	} \
+	BU_LIST_INIT( &((p)->s_vlist) ); }
 
 #define FREE_SOLID(p, fp) { \
-    BU_LIST_APPEND(fp, &((p)->l)); \
-    RT_FREE_VLIST(&((p)->s_vlist)); }
+	BU_LIST_APPEND(fp, &((p)->l)); \
+	RT_FREE_VLIST(&((p)->s_vlist)); }
 
 /** Obtain the last node (the solid) on the path */
 #define LAST_SOLID(_sp)	DB_FULL_PATH_CUR_DIR( &(_sp)->s_fullpath )
 #define FIRST_SOLID(_sp)	((_sp)->s_fullpath.fp_names[0])
 
 #define FOR_ALL_SOLIDS(p, hp)  \
-	for (BU_LIST_FOR(p, solid, hp))
+    for (BU_LIST_FOR(p, solid, hp))
 
 #define FOR_REST_OF_SOLIDS(p1, p2, hp) \
-	for (BU_LIST_PFOR(p1, p2, solid, hp))
+    for (BU_LIST_PFOR(p1, p2, solid, hp))
 
 #define BU_LIST_PFOR(p1, p2, structure, hp) \
-	(p1)=BU_LIST_PNEXT(structure, p2); \
-	BU_LIST_NOT_HEAD(p1, hp);\
-	(p1)=BU_LIST_PNEXT(structure, p1)
+    (p1)=BU_LIST_PNEXT(structure, p2); \
+    BU_LIST_NOT_HEAD(p1, hp);\
+    (p1)=BU_LIST_PNEXT(structure, p1)
 
 #endif /* RT_SOLID_H */
 

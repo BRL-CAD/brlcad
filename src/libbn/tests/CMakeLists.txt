@@ -17,6 +17,7 @@ set(bn_test_srcs
   qmath.c
   sobolseq.c
   tabdata.c
+  vlist.c
   )
 
 # Generate and assemble the necessary per-test-type source code
@@ -1118,6 +1119,23 @@ add_test(NAME bn_quat_exp_2 COMMAND bn_test qmath 9 0.365,0.730,0.183,0 0.324,0.
 add_test(NAME bn_quat_log_0 COMMAND bn_test qmath 10 1,0,0,0 1.571,0,0,0)
 add_test(NAME bn_quat_log_1 COMMAND bn_test qmath 10 0.5,0.5,0.5,0.5 0.605,0.605,0.605,0)
 add_test(NAME bn_quat_log_2 COMMAND bn_test qmath 10 0.548,0.365,0.730,0.183 0.773,0.515,1.030,0)
+
+
+#
+#  *************** vlist.c ***************
+#
+# For vlist_cnt, input is as follows:
+# vlist_cnt <args>
+
+# the <args> format is as follows:
+# expected_result
+#
+add_test(NAME bn_vlist_cmd_cnt_NULL COMMAND bn_test vlist -1)
+add_test(NAME bn_vlist_cmd_cnt_0 COMMAND bn_test vlist 0)
+add_test(NAME bn_vlist_cmd_cnt_1 COMMAND bn_test vlist 5)
+add_test(NAME bn_vlist_cmd_cnt_15 COMMAND bn_test vlist 15)
+add_test(NAME bn_vlist_cmd_cnt_45 COMMAND bn_test vlist 45)
+add_test(NAME bn_vlist_cmd_cnt_500 COMMAND bn_test vlist 500)
 
 
 CMAKEFILES(poly_cubic_roots.c poly_quartic_roots.c)

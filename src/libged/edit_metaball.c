@@ -47,12 +47,12 @@
  * Returns the index for the metaball point matching mbpp.
  */
 int
-_ged_get_metaball_i_pt(struct rt_metaball_internal *mbip, struct wdb_metaballpt *mbpp)
+_ged_get_metaball_i_pnt(struct rt_metaball_internal *mbip, struct wdb_metaball_pnt *mbpp)
 {
-    struct wdb_metaballpt *curr_mbpp;
+    struct wdb_metaball_pnt *curr_mbpp;
     int mbp_i = 0;
 
-    for (BU_LIST_FOR(curr_mbpp, wdb_metaballpt, &mbip->metaball_ctrl_head)) {
+    for (BU_LIST_FOR(curr_mbpp, wdb_metaball_pnt, &mbip->metaball_ctrl_head)) {
 	if (curr_mbpp == mbpp)
 	    return mbp_i;
 
@@ -66,20 +66,20 @@ _ged_get_metaball_i_pt(struct rt_metaball_internal *mbip, struct wdb_metaballpt 
 /*
  * Returns point mbp_i.
  */
-struct wdb_metaballpt *
+struct wdb_metaball_pnt *
 _ged_get_metaball_pt_i(struct rt_metaball_internal *mbip, int mbp_i)
 {
     int i = 0;
-    struct wdb_metaballpt *curr_mbpp;
+    struct wdb_metaball_pnt *curr_mbpp;
 
-    for (BU_LIST_FOR(curr_mbpp, wdb_metaballpt, &mbip->metaball_ctrl_head)) {
+    for (BU_LIST_FOR(curr_mbpp, wdb_metaball_pnt, &mbip->metaball_ctrl_head)) {
 	if (i == mbp_i)
 	    return curr_mbpp;
 
 	++i;
     }
 
-    return (struct wdb_metaballpt *)NULL;
+    return (struct wdb_metaball_pnt *)NULL;
 }
 
 
@@ -120,7 +120,7 @@ int
 _ged_scale_metaball(struct ged *gedp, struct rt_metaball_internal *mbip, const char *attribute, fastf_t sf, int rflag)
 {
     int mbp_i;
-    struct wdb_metaballpt *mbpp;
+    struct wdb_metaball_pnt *mbpp;
 
     RT_METABALL_CK_MAGIC(mbip);
 
@@ -133,10 +133,10 @@ _ged_scale_metaball(struct ged *gedp, struct rt_metaball_internal *mbip, const c
 	    if (sscanf(attribute+1, "%d", &mbp_i) != 1)
 		mbp_i = 0;
 
-	    if ((mbpp = _ged_get_metaball_pt_i(mbip, mbp_i)) == (struct wdb_metaballpt *)NULL)
+	    if ((mbpp = _ged_get_metaball_pt_i(mbip, mbp_i)) == (struct wdb_metaball_pnt *)NULL)
 		return GED_ERROR;
 
-	    BU_CKMAG(mbpp, WDB_METABALLPT_MAGIC, "wdb_metaballpt");
+	    BU_CKMAG(mbpp, WDB_METABALLPT_MAGIC, "wdb_metaball_pnt");
 	    GED_METABALL_SCALE(mbpp->fldstr, sf);
 
 	    break;
@@ -145,10 +145,10 @@ _ged_scale_metaball(struct ged *gedp, struct rt_metaball_internal *mbip, const c
 	    if (sscanf(attribute+1, "%d", &mbp_i) != 1)
 		mbp_i = 0;
 
-	    if ((mbpp = _ged_get_metaball_pt_i(mbip, mbp_i)) == (struct wdb_metaballpt *)NULL)
+	    if ((mbpp = _ged_get_metaball_pt_i(mbip, mbp_i)) == (struct wdb_metaball_pnt *)NULL)
 		return GED_ERROR;
 
-	    BU_CKMAG(mbpp, WDB_METABALLPT_MAGIC, "wdb_metaballpt");
+	    BU_CKMAG(mbpp, WDB_METABALLPT_MAGIC, "wdb_metaball_pnt");
 	    GED_METABALL_SCALE(mbpp->sweat, sf);
 
 	    break;
@@ -161,11 +161,11 @@ _ged_scale_metaball(struct ged *gedp, struct rt_metaball_internal *mbip, const c
 }
 
 
-struct wdb_metaballpt *
-find_metaballpt_nearest_pt(const struct bu_list *metaball_hd, const point_t model_pt, matp_t view2model)
+struct wdb_metaball_pnt *
+find_metaball_pnt_nearest_pnt(const struct bu_list *metaball_hd, const point_t model_pt, matp_t view2model)
 {
-    struct wdb_metaballpt *mbpp;
-    struct wdb_metaballpt *nearest=(struct wdb_metaballpt *)NULL;
+    struct wdb_metaball_pnt *mbpp;
+    struct wdb_metaball_pnt *nearest=(struct wdb_metaball_pnt *)NULL;
     struct bn_tol tmp_tol;
     fastf_t min_dist = MAX_FASTF;
     vect_t dir, work;
@@ -180,10 +180,10 @@ find_metaballpt_nearest_pt(const struct bu_list *metaball_hd, const point_t mode
     VSET(work, 0.0, 0.0, 1.0);
     MAT4X3VEC(dir, view2model, work);
 
-    for (BU_LIST_FOR(mbpp, wdb_metaballpt, metaball_hd)) {
+    for (BU_LIST_FOR(mbpp, wdb_metaball_pnt, metaball_hd)) {
 	fastf_t dist;
 
-	dist = bn_dist_line3_pt3(model_pt, dir, mbpp->coord);
+	dist = bn_dist_line3_pnt3(model_pt, dir, mbpp->coord);
 	if (dist < min_dist) {
 	    min_dist = dist;
 	    nearest = mbpp;
@@ -195,12 +195,12 @@ find_metaballpt_nearest_pt(const struct bu_list *metaball_hd, const point_t mode
 
 
 int
-ged_find_metaballpt_nearest_pt(struct ged *gedp, int argc, const char *argv[])
+ged_find_metaball_pnt_nearest_pnt(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     static const char *usage = "metaball x y z";
     struct rt_db_internal intern;
-    struct wdb_metaballpt *nearest;
+    struct wdb_metaball_pnt *nearest;
     point_t model_pt;
     double scan[3];
     mat_t mat;
@@ -258,9 +258,9 @@ ged_find_metaballpt_nearest_pt(struct ged *gedp, int argc, const char *argv[])
     if (wdb_import_from_path2(gedp->ged_result_str, &intern, argv[1], gedp->ged_wdbp, mat) == GED_ERROR)
 	return GED_ERROR;
 
-    nearest = find_metaballpt_nearest_pt(&((struct rt_metaball_internal *)intern.idb_ptr)->metaball_ctrl_head,
-				     model_pt, gedp->ged_gvp->gv_view2model);
-    pt_i = _ged_get_metaball_i_pt((struct rt_metaball_internal *)intern.idb_ptr, nearest);
+    nearest = find_metaball_pnt_nearest_pnt(&((struct rt_metaball_internal *)intern.idb_ptr)->metaball_ctrl_head,
+					    model_pt, gedp->ged_gvp->gv_view2model);
+    pt_i = _ged_get_metaball_i_pnt((struct rt_metaball_internal *)intern.idb_ptr, nearest);
     rt_db_free_internal(&intern);
 
     if (pt_i < 0) {
@@ -273,11 +273,11 @@ ged_find_metaballpt_nearest_pt(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-struct wdb_metaballpt *
-_ged_add_metaballpt(struct rt_metaball_internal *mbip, struct wdb_metaballpt *mbp, const point_t new_pt)
+struct wdb_metaball_pnt *
+_ged_metaball_add_pnt(struct rt_metaball_internal *mbip, struct wdb_metaball_pnt *mbp, const point_t new_pt)
 {
-    struct wdb_metaballpt *last;
-    struct wdb_metaballpt *newmbp;
+    struct wdb_metaball_pnt *last;
+    struct wdb_metaball_pnt *newmbp;
 
     RT_METABALL_CK_MAGIC(mbip);
 
@@ -286,10 +286,10 @@ _ged_add_metaballpt(struct rt_metaball_internal *mbip, struct wdb_metaballpt *mb
 	last = mbp;
     } else {
 	/* add new point to end of metaball solid */
-	last = BU_LIST_LAST(wdb_metaballpt, &mbip->metaball_ctrl_head);
+	last = BU_LIST_LAST(wdb_metaball_pnt, &mbip->metaball_ctrl_head);
 
 	if (last->l.magic == BU_LIST_HEAD_MAGIC) {
-	    BU_GET(newmbp, struct wdb_metaballpt);
+	    BU_GET(newmbp, struct wdb_metaball_pnt);
 	    newmbp->l.magic = WDB_METABALLPT_MAGIC;
 	    newmbp->fldstr = 1.0;
 	    newmbp->sweat = 1.0;
@@ -300,7 +300,7 @@ _ged_add_metaballpt(struct rt_metaball_internal *mbip, struct wdb_metaballpt *mb
     }
 
     /* build new point */
-    BU_GET(newmbp, struct wdb_metaballpt);
+    BU_GET(newmbp, struct wdb_metaball_pnt);
     newmbp->l.magic = WDB_METABALLPT_MAGIC;
     newmbp->fldstr = 1.0;
     newmbp->sweat = 1.0;
@@ -319,7 +319,7 @@ _ged_add_metaballpt(struct rt_metaball_internal *mbip, struct wdb_metaballpt *mb
 
 
 int
-ged_add_metaballpt(struct ged *gedp, int argc, const char *argv[])
+ged_metaball_add_pnt(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     static const char *usage = "metaball pt";
@@ -329,7 +329,7 @@ ged_add_metaballpt(struct ged *gedp, int argc, const char *argv[])
     point_t view_mb_pt;
     point_t view_coord;
     point_t mb_pt;
-    struct wdb_metaballpt *lastmbp;
+    struct wdb_metaball_pnt *lastmbp;
     double scan[3];
     const char *last;
 
@@ -388,13 +388,13 @@ ged_add_metaballpt(struct ged *gedp, int argc, const char *argv[])
     mbip = (struct rt_metaball_internal *)intern.idb_ptr;
 
     /* use the view z from the last metaball point */
-    lastmbp = BU_LIST_LAST(wdb_metaballpt, &mbip->metaball_ctrl_head);
+    lastmbp = BU_LIST_LAST(wdb_metaball_pnt, &mbip->metaball_ctrl_head);
 
     MAT4X3PNT(view_coord, gedp->ged_gvp->gv_model2view, lastmbp->coord);
     view_mb_pt[Z] = view_coord[Z];
     MAT4X3PNT(mb_pt, gedp->ged_gvp->gv_view2model, view_mb_pt);
 
-    if (_ged_add_metaballpt(mbip, (struct wdb_metaballpt *)NULL, mb_pt) == (struct wdb_metaballpt *)NULL) {
+    if (_ged_metaball_add_pnt(mbip, (struct wdb_metaball_pnt *)NULL, mb_pt) == (struct wdb_metaball_pnt *)NULL) {
 	rt_db_free_internal(&intern);
 	bu_vls_printf(gedp->ged_result_str, "%s: cannot move point there", argv[0]);
 	return GED_ERROR;
@@ -402,11 +402,11 @@ ged_add_metaballpt(struct ged *gedp, int argc, const char *argv[])
 
     {
 	mat_t invmat;
-	struct wdb_metaballpt *curr_mbp;
+	struct wdb_metaball_pnt *curr_mbp;
 	point_t curr_pt;
 
 	bn_mat_inv(invmat, mat);
-	for (BU_LIST_FOR(curr_mbp, wdb_metaballpt, &mbip->metaball_ctrl_head)) {
+	for (BU_LIST_FOR(curr_mbp, wdb_metaball_pnt, &mbip->metaball_ctrl_head)) {
 	    MAT4X3PNT(curr_pt, invmat, curr_mbp->coord);
 	    VMOVE(curr_mbp->coord, curr_pt);
 	}
@@ -419,27 +419,27 @@ ged_add_metaballpt(struct ged *gedp, int argc, const char *argv[])
 }
 
 
-struct wdb_metaballpt *
-_ged_delete_metaballpt(struct wdb_metaballpt *mbp)
+struct wdb_metaball_pnt *
+_ged_metaball_delete_pnt(struct wdb_metaball_pnt *mbp)
 {
-    struct wdb_metaballpt *next;
-    struct wdb_metaballpt *prev;
-    struct wdb_metaballpt *head;
+    struct wdb_metaball_pnt *next;
+    struct wdb_metaball_pnt *prev;
+    struct wdb_metaball_pnt *head;
 
     BU_CKMAG(mbp, WDB_METABALLPT_MAGIC, "metaball point");
 
     /* Find the head */
     head = mbp;
     while (head->l.magic != BU_LIST_HEAD_MAGIC)
-	head = BU_LIST_NEXT(wdb_metaballpt, &head->l);
+	head = BU_LIST_NEXT(wdb_metaball_pnt, &head->l);
 
-    next = BU_LIST_NEXT(wdb_metaballpt, &mbp->l);
+    next = BU_LIST_NEXT(wdb_metaball_pnt, &mbp->l);
     if (next->l.magic == BU_LIST_HEAD_MAGIC)
-	next = (struct wdb_metaballpt *)NULL;
+	next = (struct wdb_metaball_pnt *)NULL;
 
-    prev = BU_LIST_PREV(wdb_metaballpt, &mbp->l);
+    prev = BU_LIST_PREV(wdb_metaball_pnt, &mbp->l);
     if (prev->l.magic == BU_LIST_HEAD_MAGIC)
-	prev = (struct wdb_metaballpt *)NULL;
+	prev = (struct wdb_metaball_pnt *)NULL;
 
     if (!prev && !next) {
 	return mbp;
@@ -447,7 +447,7 @@ _ged_delete_metaballpt(struct wdb_metaballpt *mbp)
 
     BU_LIST_DEQUEUE(&mbp->l);
 
-    BU_PUT(mbp, struct wdb_metaballpt);
+    BU_PUT(mbp, struct wdb_metaball_pnt);
 
     if (prev)
 	return prev;
@@ -458,12 +458,12 @@ _ged_delete_metaballpt(struct wdb_metaballpt *mbp)
 
 
 int
-ged_delete_metaballpt(struct ged *gedp, int argc, const char *argv[])
+ged_metaball_delete_pnt(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     static const char *usage = "metaball pt_i";
     struct rt_db_internal intern;
-    struct wdb_metaballpt *mbp;
+    struct wdb_metaball_pnt *mbp;
     struct rt_metaball_internal *mbip;
     int pt_i;
     const char *last;
@@ -520,13 +520,13 @@ ged_delete_metaballpt(struct ged *gedp, int argc, const char *argv[])
     }
 
     mbip = (struct rt_metaball_internal *)intern.idb_ptr;
-    if ((mbp = _ged_get_metaball_pt_i(mbip, pt_i)) == (struct wdb_metaballpt *)NULL) {
+    if ((mbp = _ged_get_metaball_pt_i(mbip, pt_i)) == (struct wdb_metaball_pnt *)NULL) {
 	rt_db_free_internal(&intern);
 	bu_vls_printf(gedp->ged_result_str, "%s: bad metaball point index - %s", argv[0], argv[2]);
 	return GED_ERROR;
     }
 
-    if (_ged_delete_metaballpt(mbp) == mbp) {
+    if (_ged_metaball_delete_pnt(mbp) == mbp) {
 	rt_db_free_internal(&intern);
 	bu_vls_printf(gedp->ged_result_str, "%s: cannot delete last metaball point %d", argv[0], pt_i);
 	return GED_ERROR;
@@ -540,12 +540,12 @@ ged_delete_metaballpt(struct ged *gedp, int argc, const char *argv[])
 
 
 int
-ged_move_metaballpt(struct ged *gedp, int argc, const char *argv[])
+ged_metaball_move_pnt(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     static const char *usage = "[-r] metaball seg_i pt";
     struct rt_db_internal intern;
-    struct wdb_metaballpt *mbp;
+    struct wdb_metaball_pnt *mbp;
     struct rt_metaball_internal *mbip;
     mat_t mat;
     point_t mb_pt;
@@ -621,7 +621,7 @@ ged_move_metaballpt(struct ged *gedp, int argc, const char *argv[])
     }
 
     mbip = (struct rt_metaball_internal *)intern.idb_ptr;
-    if ((mbp = _ged_get_metaball_pt_i(mbip, seg_i)) == (struct wdb_metaballpt *)NULL) {
+    if ((mbp = _ged_get_metaball_pt_i(mbip, seg_i)) == (struct wdb_metaball_pnt *)NULL) {
 	rt_db_free_internal(&intern);
 	bu_vls_printf(gedp->ged_result_str, "%s: bad metaball point index - %s", argv[0], argv[2]);
 	return GED_ERROR;
@@ -635,11 +635,11 @@ ged_move_metaballpt(struct ged *gedp, int argc, const char *argv[])
 
     {
 	mat_t invmat;
-	struct wdb_metaballpt *curr_mbp;
+	struct wdb_metaball_pnt *curr_mbp;
 	point_t curr_pt;
 
 	bn_mat_inv(invmat, mat);
-	for (BU_LIST_FOR(curr_mbp, wdb_metaballpt, &mbip->metaball_ctrl_head)) {
+	for (BU_LIST_FOR(curr_mbp, wdb_metaball_pnt, &mbip->metaball_ctrl_head)) {
 	    MAT4X3PNT(curr_pt, invmat, curr_mbp->coord);
 	    VMOVE(curr_mbp->coord, curr_pt);
 	}

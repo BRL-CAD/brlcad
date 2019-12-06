@@ -45,6 +45,7 @@ main(int ac, char *av[])
 	    {
 		const char *dir = "/tmp/REALPATH_TEST_PATH";
 		dir = bu_file_realpath(dir, NULL);
+		printf("Test 1 result: %s\n", dir);
 		return 0;
 	    }
 	case 2:
@@ -52,6 +53,7 @@ main(int ac, char *av[])
 		struct rp_container RPC = RPC_INIT;
 		const char *dir2 = "/tmp/REALPATH_TEST_PATH";
 		dir2 = bu_file_realpath(dir2, RPC.dir);
+		printf("Test 2 result: %s\n", dir2);
 		return 0;
 	    }
     }

@@ -141,12 +141,12 @@ BU_EXPORT extern int bu_file_delete(const char *path);
  *
  * Example:
  @code
-   // This allocates an array for storing matches, filling in the
-   // array with all directory paths starting with 'a' through 'e' and
-   // ending with a '.c' in the src/libbu directory.
+ // This allocates an array for storing matches, filling in the
+ // array with all directory paths starting with 'a' through 'e' and
+ // ending with a '.c' in the src/libbu directory.
 
-   char **my_matches = NULL;
-   size_t count = bu_file_list("src/libbu", "[a-e]*.c", &my_matches);
+ char **my_matches = NULL;
+ size_t count = bu_file_list("src/libbu", "[a-e]*.c", &my_matches);
  @endcode
  *
  * @return the number of directory entries matching the provided

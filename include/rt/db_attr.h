@@ -110,15 +110,15 @@ RT_EXPORT extern void db5_attr_registry_free(struct db5_registry *registry);
  * time being.
  */
 RT_EXPORT extern int db5_attr_create(struct db5_registry *registry,
-                                     int attr_type,
-                                     int is_binary,
-                                     int attr_subtype,
-                                     const char *name,
-                                     const char *description,
-                                     const char *examples,
-                                     const char *aliases,
-                                     const char *property,
-                                     const char *long_description);
+				     int attr_type,
+				     int is_binary,
+				     int attr_subtype,
+				     const char *name,
+				     const char *description,
+				     const char *examples,
+				     const char *aliases,
+				     const char *property,
+				     const char *long_description);
 
 /**
  * Register a user attribute
@@ -127,7 +127,7 @@ RT_EXPORT extern int db5_attr_create(struct db5_registry *registry,
  * time being.
  */
 RT_EXPORT extern int db5_attr_register(struct db5_registry *registry,
-                                       struct db5_attr_ctype *attribute);
+				       struct db5_attr_ctype *attribute);
 
 /**
  * De-register a user attribute
@@ -136,7 +136,7 @@ RT_EXPORT extern int db5_attr_register(struct db5_registry *registry,
  * time being.
  */
 RT_EXPORT extern int db5_attr_deregister(struct db5_registry *registry,
-                                         const char *name);
+					 const char *name);
 
 /**
  * Look to see if a specific attribute is registered
@@ -145,7 +145,7 @@ RT_EXPORT extern int db5_attr_deregister(struct db5_registry *registry,
  * time being.
  */
 RT_EXPORT extern struct db5_attr_ctype *db5_attr_get(struct db5_registry *registry,
-                                                     const char *name);
+						     const char *name);
 
 /**
  * Get an array of pointers to all registered attributes
@@ -245,7 +245,7 @@ RT_EXPORT extern void db5_sync_comb_to_attr(struct bu_attribute_value_set *avs, 
  * -1 Error, mal-formed input
  */
 RT_EXPORT extern int db5_import_attributes(struct bu_attribute_value_set *avs,
-                                           const struct bu_external *ap);
+					   const struct bu_external *ap);
 
 /**
  * Encode the attribute-value pair information into the external
@@ -263,7 +263,7 @@ RT_EXPORT extern int db5_import_attributes(struct bu_attribute_value_set *avs,
  * 'ext' is initialized on behalf of the caller.
  */
 RT_EXPORT extern void db5_export_attributes(struct bu_external *ap,
-                                            const struct bu_attribute_value_set *avs);
+					    const struct bu_attribute_value_set *avs);
 
 
 
@@ -289,9 +289,9 @@ RT_EXPORT extern void db5_export_attributes(struct bu_external *ap,
  * went wrong.
  */
 RT_EXPORT extern struct bu_ptbl *db_lookup_by_attr(struct db_i *dbip,
-                                                   int dir_flags,
-                                                   struct bu_attribute_value_set *avs,
-                                                   int op);
+						   int dir_flags,
+						   struct bu_attribute_value_set *avs,
+						   int op);
 /**
  * Put the old region-id-color-table into the global object.  A null
  * attribute is set if the material table is empty.
@@ -302,8 +302,8 @@ RT_EXPORT extern struct bu_ptbl *db_lookup_by_attr(struct db_i *dbip,
  */
 RT_EXPORT extern int db5_put_color_table(struct db_i *dbip);
 RT_EXPORT extern int db5_update_ident(struct db_i *dbip,
-                                      const char *title,
-                                      double local2mm);
+				      const char *title,
+				      double local2mm);
 
 
 /**
@@ -319,8 +319,8 @@ RT_EXPORT extern int db5_update_ident(struct db_i *dbip,
  * <0 on error
  */
 RT_EXPORT extern int db5_update_attributes(struct directory *dp,
-                                           struct bu_attribute_value_set *avsp,
-                                           struct db_i *dbip);
+					   struct bu_attribute_value_set *avsp,
+					   struct db_i *dbip);
 
 /**
  * A convenience routine to update the value of a single attribute.
@@ -330,9 +330,9 @@ RT_EXPORT extern int db5_update_attributes(struct directory *dp,
  * <0 on error
  */
 RT_EXPORT extern int db5_update_attribute(const char *obj_name,
-                                          const char *aname,
-                                          const char *value,
-                                          struct db_i *dbip);
+					  const char *aname,
+					  const char *value,
+					  struct db_i *dbip);
 
 /**
  * Replace the attributes of a given database object.
@@ -346,8 +346,8 @@ RT_EXPORT extern int db5_update_attribute(const char *obj_name,
  * <0 on error
  */
 RT_EXPORT extern int db5_replace_attributes(struct directory *dp,
-                                            struct bu_attribute_value_set *avsp,
-                                            struct db_i *dbip);
+					    struct bu_attribute_value_set *avsp,
+					    struct db_i *dbip);
 
 /**
  *
@@ -358,8 +358,8 @@ RT_EXPORT extern int db5_replace_attributes(struct directory *dp,
  * <0 - error
  */
 RT_EXPORT extern int db5_get_attributes(const struct db_i *dbip,
-                                        struct bu_attribute_value_set *avs,
-                                        const struct directory *dp);
+					struct bu_attribute_value_set *avs,
+					const struct directory *dp);
 
 
 

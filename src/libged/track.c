@@ -66,7 +66,7 @@ static struct track_solid {
  * convert integer to ascii wd format
  */
 static void
-itoa(struct bu_vls *log_str,
+track_itoa(struct bu_vls *log_str,
      int n,
      char s[],
      int w) {
@@ -81,7 +81,7 @@ itoa(struct bu_vls *log_str,
      */
     for (j = i; j < w; j++) s[j] = ' ';
     if (i > w)
-	bu_vls_printf(log_str, "itoa: field length too small\n");
+	bu_vls_printf(log_str, "track_itoa: field length too small\n");
     s[w] = '\0';
     /* reverse the array
      */
@@ -101,7 +101,7 @@ crname(struct bu_vls *log_str,
 {
     char temp[4];
 
-    itoa(log_str, pos, temp, 1);
+    track_itoa(log_str, pos, temp, 1);
     bu_strlcat(name, temp, maxlen);
 }
 

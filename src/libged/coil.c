@@ -72,11 +72,11 @@ cap_squared(struct bu_list *head, fastf_t mean_outer_diameter, fastf_t wire_diam
 	VSET(pnt4, lhf*coil_radius , coil_radius, starting_pitch - sin(D2R(helix_angle))*coil_radius);
 	VSET(pnt6, lhf*-coil_radius , coil_radius, pitch/2+starting_pitch - sin(D2R(helix_angle))*coil_radius);
 	VSET(pnt8, lhf*-coil_radius , -coil_radius, pitch+starting_pitch - sin(D2R(helix_angle))*coil_radius);
-	mk_add_pipe_pt(head, pnt1, wire_diameter, 0.0, pipe_bend);
-	mk_add_pipe_pt(head, pnt2, wire_diameter, 0.0, pipe_bend);
-	mk_add_pipe_pt(head, pnt4, wire_diameter, 0.0, pipe_bend);
-	mk_add_pipe_pt(head, pnt6, wire_diameter, 0.0, pipe_bend);
-	mk_add_pipe_pt(head, pnt8, wire_diameter, 0.0, pipe_bend);
+	mk_add_pipe_pnt(head, pnt1, wire_diameter, 0.0, pipe_bend);
+	mk_add_pipe_pnt(head, pnt2, wire_diameter, 0.0, pipe_bend);
+	mk_add_pipe_pnt(head, pnt4, wire_diameter, 0.0, pipe_bend);
+	mk_add_pipe_pnt(head, pnt6, wire_diameter, 0.0, pipe_bend);
+	mk_add_pipe_pnt(head, pnt8, wire_diameter, 0.0, pipe_bend);
 	return pitch + starting_pitch;
     } else {
 	VSET(pnt2, lhf*coil_radius , -coil_radius, starting_pitch + pitch/8);
@@ -84,11 +84,11 @@ cap_squared(struct bu_list *head, fastf_t mean_outer_diameter, fastf_t wire_diam
 	VSET(pnt6, lhf*-coil_radius , coil_radius, starting_pitch + pitch + sin(D2R(helix_angle))*coil_radius);
 	VSET(pnt8, lhf*-coil_radius , -coil_radius, starting_pitch + pitch + sin(D2R(helix_angle))*coil_radius);
 	VSET(pnt1, 0 , -coil_radius, starting_pitch + pitch + sin(D2R(helix_angle))*coil_radius);
-	mk_add_pipe_pt(head, pnt2, wire_diameter, 0.0, pipe_bend);
-	mk_add_pipe_pt(head, pnt4, wire_diameter, 0.0, pipe_bend);
-	mk_add_pipe_pt(head, pnt6, wire_diameter, 0.0, pipe_bend);
-	mk_add_pipe_pt(head, pnt8, wire_diameter, 0.0, pipe_bend);
-	mk_add_pipe_pt(head, pnt1, wire_diameter, 0.0, pipe_bend);
+	mk_add_pipe_pnt(head, pnt2, wire_diameter, 0.0, pipe_bend);
+	mk_add_pipe_pnt(head, pnt4, wire_diameter, 0.0, pipe_bend);
+	mk_add_pipe_pnt(head, pnt6, wire_diameter, 0.0, pipe_bend);
+	mk_add_pipe_pnt(head, pnt8, wire_diameter, 0.0, pipe_bend);
+	mk_add_pipe_pnt(head, pnt1, wire_diameter, 0.0, pipe_bend);
 	return starting_pitch + pitch + sin(D2R(helix_angle))*coil_radius;
     }
 
@@ -114,11 +114,11 @@ cap_squared_ground(struct rt_wdb *file, struct bu_list *head, char *prefix, stru
 	VSET(pnt4, lhf*coil_radius , coil_radius, starting_pitch);
 	VSET(pnt6, lhf*-coil_radius , coil_radius, pitch/2+starting_pitch);
 	VSET(pnt8, lhf*-coil_radius , -coil_radius, pitch+starting_pitch);
-	mk_add_pipe_pt(head, pnt1, wire_diameter, 0.0, pipe_bend);
-	mk_add_pipe_pt(head, pnt2, wire_diameter, 0.0, pipe_bend);
-	mk_add_pipe_pt(head, pnt4, wire_diameter, 0.0, pipe_bend);
-	mk_add_pipe_pt(head, pnt6, wire_diameter, 0.0, pipe_bend);
-	mk_add_pipe_pt(head, pnt8, wire_diameter, 0.0, pipe_bend);
+	mk_add_pipe_pnt(head, pnt1, wire_diameter, 0.0, pipe_bend);
+	mk_add_pipe_pnt(head, pnt2, wire_diameter, 0.0, pipe_bend);
+	mk_add_pipe_pnt(head, pnt4, wire_diameter, 0.0, pipe_bend);
+	mk_add_pipe_pnt(head, pnt6, wire_diameter, 0.0, pipe_bend);
+	mk_add_pipe_pnt(head, pnt8, wire_diameter, 0.0, pipe_bend);
 	VSET(origin, 0, 0, starting_pitch);
 	VSET(height, 0, 0, -wire_diameter);
 	bu_vls_sprintf(&str1, "%s-startcap.s", prefix);
@@ -132,11 +132,11 @@ cap_squared_ground(struct rt_wdb *file, struct bu_list *head, char *prefix, stru
 	VSET(pnt6, lhf*-coil_radius , coil_radius, starting_pitch + pitch + sin(D2R(helix_angle))*coil_radius);
 	VSET(pnt8, lhf*-coil_radius , -coil_radius, starting_pitch + pitch + sin(D2R(helix_angle))*coil_radius);
 	VSET(pnt1, 0 , -coil_radius, starting_pitch + pitch + sin(D2R(helix_angle))*coil_radius);
-	mk_add_pipe_pt(head, pnt2, wire_diameter, 0.0, pipe_bend);
-	mk_add_pipe_pt(head, pnt4, wire_diameter, 0.0, pipe_bend);
-	mk_add_pipe_pt(head, pnt6, wire_diameter, 0.0, pipe_bend);
-	mk_add_pipe_pt(head, pnt8, wire_diameter, 0.0, pipe_bend);
-	mk_add_pipe_pt(head, pnt1, wire_diameter, 0.0, pipe_bend);
+	mk_add_pipe_pnt(head, pnt2, wire_diameter, 0.0, pipe_bend);
+	mk_add_pipe_pnt(head, pnt4, wire_diameter, 0.0, pipe_bend);
+	mk_add_pipe_pnt(head, pnt6, wire_diameter, 0.0, pipe_bend);
+	mk_add_pipe_pnt(head, pnt8, wire_diameter, 0.0, pipe_bend);
+	mk_add_pipe_pnt(head, pnt1, wire_diameter, 0.0, pipe_bend);
 	VSET(origin, 0, 0, starting_pitch + pitch + sin(D2R(helix_angle))*coil_radius);
 	VSET(height, 0, 0, wire_diameter);
 	bu_vls_sprintf(&str1, "%s-endcap.s", prefix);
@@ -168,11 +168,11 @@ cap_ground(struct rt_wdb *file, struct bu_list *head, char *prefix, struct wmemb
 	VSET(pnt4, lhf*coil_radius , coil_radius, pitch*3/8 + starting_pitch + sin(D2R(helix_angle))*coil_radius);
 	VSET(pnt6, lhf*-coil_radius , coil_radius, pitch*5/8 + starting_pitch - sin(D2R(helix_angle))*coil_radius);
 	VSET(pnt8, lhf*-coil_radius , -coil_radius, pitch*7/8 + starting_pitch - sin(D2R(helix_angle))*coil_radius);
-	mk_add_pipe_pt(head, pnt1, wire_diameter, 0.0, pipe_bend);
-	mk_add_pipe_pt(head, pnt2, wire_diameter, 0.0, pipe_bend);
-	mk_add_pipe_pt(head, pnt4, wire_diameter, 0.0, pipe_bend);
-	mk_add_pipe_pt(head, pnt6, wire_diameter, 0.0, pipe_bend);
-	mk_add_pipe_pt(head, pnt8, wire_diameter, 0.0, pipe_bend);
+	mk_add_pipe_pnt(head, pnt1, wire_diameter, 0.0, pipe_bend);
+	mk_add_pipe_pnt(head, pnt2, wire_diameter, 0.0, pipe_bend);
+	mk_add_pipe_pnt(head, pnt4, wire_diameter, 0.0, pipe_bend);
+	mk_add_pipe_pnt(head, pnt6, wire_diameter, 0.0, pipe_bend);
+	mk_add_pipe_pnt(head, pnt8, wire_diameter, 0.0, pipe_bend);
 	VSET(origin, 0, 0, 0);
 	VSET(height, sin(D2R(helix_angle))*(wire_diameter+0.25*pitch), 0, -wire_diameter - 0.25*pitch);
 	bu_vls_trunc(&str1, 0);
@@ -187,11 +187,11 @@ cap_ground(struct rt_wdb *file, struct bu_list *head, char *prefix, struct wmemb
 	VSET(pnt6, lhf*-coil_radius , coil_radius, pitch*5/8 + starting_pitch - sin(D2R(helix_angle))*coil_radius);
 	VSET(pnt8, lhf*-coil_radius , -coil_radius, pitch*7/8 + starting_pitch - sin(D2R(helix_angle))*coil_radius);
 	VSET(pnt1, 0 , -coil_radius, pitch+starting_pitch);
-	mk_add_pipe_pt(head, pnt2, wire_diameter, 0.0, pipe_bend);
-	mk_add_pipe_pt(head, pnt4, wire_diameter, 0.0, pipe_bend);
-	mk_add_pipe_pt(head, pnt6, wire_diameter, 0.0, pipe_bend);
-	mk_add_pipe_pt(head, pnt8, wire_diameter, 0.0, pipe_bend);
-	mk_add_pipe_pt(head, pnt1, wire_diameter, 0.0, pipe_bend);
+	mk_add_pipe_pnt(head, pnt2, wire_diameter, 0.0, pipe_bend);
+	mk_add_pipe_pnt(head, pnt4, wire_diameter, 0.0, pipe_bend);
+	mk_add_pipe_pnt(head, pnt6, wire_diameter, 0.0, pipe_bend);
+	mk_add_pipe_pnt(head, pnt8, wire_diameter, 0.0, pipe_bend);
+	mk_add_pipe_pnt(head, pnt1, wire_diameter, 0.0, pipe_bend);
 	VSET(origin, 0, 0, starting_pitch + 15/8*pitch - center_height + sin(D2R(helix_angle))*coil_radius);
 	VSET(height, -sin(D2R(helix_angle))*(wire_diameter+0.25*pitch), 0, wire_diameter + 0.25*pitch);
 	bu_vls_trunc(&str1, 0);
@@ -219,10 +219,10 @@ helical_coil_plain(struct bu_list *head, fastf_t mean_outer_diameter, fastf_t wi
 	VSET(pnt4, lhf*coil_radius , coil_radius, i*pitch + pitch*3/8 + starting_pitch + sin(D2R(helix_angle))*coil_radius);
 	VSET(pnt6, lhf*-coil_radius , coil_radius, i*pitch + pitch*5/8 + starting_pitch - sin(D2R(helix_angle))*coil_radius);
 	VSET(pnt8, lhf*-coil_radius , -coil_radius, i*pitch + pitch*7/8 + starting_pitch - sin(D2R(helix_angle))*coil_radius);
-	mk_add_pipe_pt(head, pnt2, wire_diameter, 0.0, pipe_bend);
-	mk_add_pipe_pt(head, pnt4, wire_diameter, 0.0, pipe_bend);
-	mk_add_pipe_pt(head, pnt6, wire_diameter, 0.0, pipe_bend);
-	mk_add_pipe_pt(head, pnt8, wire_diameter, 0.0, pipe_bend);
+	mk_add_pipe_pnt(head, pnt2, wire_diameter, 0.0, pipe_bend);
+	mk_add_pipe_pnt(head, pnt4, wire_diameter, 0.0, pipe_bend);
+	mk_add_pipe_pnt(head, pnt6, wire_diameter, 0.0, pipe_bend);
+	mk_add_pipe_pnt(head, pnt8, wire_diameter, 0.0, pipe_bend);
     }
 
     return (nt-1)*pitch + pitch*7/8 + starting_pitch;
@@ -255,7 +255,7 @@ make_coil(struct rt_wdb (*file), char *prefix, struct bu_list *sections, int sta
     switch (start_cap_type) {
 	case 0:
 	    VSET(pnt1, 0, -1*(s_data->od/2-s_data->wd/2), last_pitch_pt);
-	    mk_add_pipe_pt(&head, pnt1, s_data->wd, 0.0, (s_data->od/2-s_data->wd/2));
+	    mk_add_pipe_pnt(&head, pnt1, s_data->wd, 0.0, (s_data->od/2-s_data->wd/2));
 	    break;
 	case 1:
 	    last_pitch_pt = cap_squared(&head, s_data->od, s_data->wd, s_data->ha, s_data->p, 0, 1, &need_subtractions, s_data->lhf);
@@ -277,7 +277,7 @@ make_coil(struct rt_wdb (*file), char *prefix, struct bu_list *sections, int sta
     switch (end_cap_type) {
 	case 0:
 	    VSET(pnt1, 0 , -1*(e_data->od/2-e_data->wd/2), 0.125*(e_data->p)+last_pitch_pt);
-	    mk_add_pipe_pt(&head, pnt1, e_data->wd, 0.0, (e_data->od/2-e_data->wd/2));
+	    mk_add_pipe_pnt(&head, pnt1, e_data->wd, 0.0, (e_data->od/2-e_data->wd/2));
 	    break;
 	case 1:
 	    last_pitch_pt = cap_squared(&head, e_data->od, e_data->wd, e_data->ha, e_data->p, last_pitch_pt, 0, &need_subtractions, s_data->lhf);

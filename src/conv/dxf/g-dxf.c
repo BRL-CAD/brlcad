@@ -91,7 +91,7 @@ static int	polyface_mesh = 0;	/* flag for output type (default is 3DFACE) */
 static char	*output_file = NULL;	/* output filename */
 static FILE	*fp;		/* Output file pointer */
 static struct db_i		*dbip;
-static struct rt_tess_tol	ttol;	/* tessellation tolerance in mm */
+static struct bg_tess_tol	ttol;	/* tessellation tolerance in mm */
 static struct bn_tol		tol;	/* calculation tolerance */
 static struct model		*the_model;
 
@@ -394,7 +394,7 @@ main(int argc, char *argv[])
     tree_state.ts_m = &the_model;
 
     /* Set up tessellation tolerance defaults */
-    ttol.magic = RT_TESS_TOL_MAGIC;
+    ttol.magic = BG_TESS_TOL_MAGIC;
     /* Defaults, updated by command line options. */
     ttol.abs = 0.0;
     ttol.rel = 0.01;
@@ -487,7 +487,7 @@ main(int argc, char *argv[])
     }
 
     BN_CK_TOL(tree_state.ts_tol);
-    RT_CK_TESS_TOL(tree_state.ts_ttol);
+    BG_CK_TESS_TOL(tree_state.ts_ttol);
 
     if (verbose) {
 	int i;

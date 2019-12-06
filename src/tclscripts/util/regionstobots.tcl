@@ -17,6 +17,7 @@
 # License along with this file; see the file named COPYING for more
 # information.
 #
+
 proc regions_to_bots {} {
     set old_globcompat $::glob_compat_mode
     set glob_compat_mode 0
@@ -28,12 +29,9 @@ proc regions_to_bots {} {
         }
 	set have_bot [exists $region.bot]
 	if { $have_bot } {
-	  puts "facetized $region to $region.bot"
-	  set region_tree [search $region -depth 1]
-	  foreach item $region_tree {
-	      rm $region $item
-	  }
-	  g $region $region.bot
+	    puts "facetized $region to $region.bot"
+	    kill $region
+	    g $region $region.bot
         }
     }
     set ::glob_compat_mode $old_globcompat

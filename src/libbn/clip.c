@@ -43,14 +43,14 @@ clip_code(fastf_t x, fastf_t y, fastf_t clip_min, fastf_t clip_max)
 
     cval = 0;
     if (x < clip_min)
-        cval |= 01;
+	cval |= 01;
     else if (x > clip_max)
-        cval |= 02;
+	cval |= 02;
 
     if (y < clip_min)
-        cval |= 04;
+	cval |= 04;
     else if (y > clip_max)
-        cval |= 010;
+	cval |= 010;
 
     return cval;
 }
@@ -127,41 +127,41 @@ bn_ray_vclip(vect_t a, vect_t b, fastf_t *min_pt, fastf_t *max_pt)
     VSUB2(diff, b, a);
 
     for (i = 0; i < 3; i++, pt++, dir++, max_pt++, min_pt++) {
-        if (*dir < -EPSILON) {
+	if (*dir < -EPSILON) {
 	    sv = (*min_pt - *pt) / *dir;
-            if (sv < 0.0)
-                return 0;       /* MISS */
+	    if (sv < 0.0)
+		return 0;       /* MISS */
 
 	    st = (*max_pt - *pt) / *dir;
 	    V_MAX(mindist, st);
 	    V_MIN(maxdist, sv);
 
-        }  else if (*dir > EPSILON) {
+	}  else if (*dir > EPSILON) {
 	    st = (*max_pt - *pt) / *dir;
-            if (st < 0.0)
-                return 0;       /* MISS */
+	    if (st < 0.0)
+		return 0;       /* MISS */
 
 	    sv = (*min_pt - *pt) / *dir;
 	    V_MAX(mindist, sv);
 	    V_MIN(maxdist, st);
-        } else {
-            /*
-             * If direction component along this axis is NEAR 0,
-             * (i.e., this ray is aligned with this axis),
-             * merely check against the boundaries.
-             */
-            if ((*min_pt > *pt) || (*max_pt < *pt))
-                return 0;       /* MISS */
-        }
+	} else {
+	    /*
+	     * If direction component along this axis is NEAR 0,
+	     * (i.e., this ray is aligned with this axis),
+	     * merely check against the boundaries.
+	     */
+	    if ((*min_pt > *pt) || (*max_pt < *pt))
+		return 0;       /* MISS */
+	}
     }
     if (mindist >= maxdist)
-        return 0;       /* MISS */
+	return 0;       /* MISS */
 
     if (mindist > 1 || maxdist < 0)
-        return 0;       /* MISS */
+	return 0;       /* MISS */
 
     if (mindist <= 0 && maxdist >= 1)
-        return 1;       /* HIT, no clipping needed */
+	return 1;       /* HIT, no clipping needed */
 
     /* Don't grow one end of a contained segment */
     V_MAX(mindist, 0);

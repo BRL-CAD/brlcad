@@ -23,7 +23,7 @@ set(NIRT_OLD_SRCS
 
 set(NIRT_SRCS
   ${NIRT_OLD_SRCS}
-  main.cxx
+  main.cpp
   ${LDIR}/utf8.c
   ${LDIR}/linenoise.c
   )

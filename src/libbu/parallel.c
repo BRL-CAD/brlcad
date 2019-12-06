@@ -111,6 +111,8 @@
 void parallel_cpp11thread(void (*func)(int, void *), size_t ncpu, void *arg);
 #endif /* CPP11THREAD */
 
+int BU_SEM_THREAD;
+
 
 typedef enum {
     PARALLEL_GET = 0,
@@ -394,7 +396,7 @@ parallel_wait_for_slot(int throttle, struct parallel_info *parent, size_t max_th
 	threads = parent->started - parent->finished;
 
 	/*bu_log("threads=%d (start %d - done %d)\n", threads, parent->started, parent->finished);
-	bu_log("max_threads=%d, throttle: %d\n", max_threads, throttle);*/
+	  bu_log("max_threads=%d, throttle: %d\n", max_threads, throttle);*/
 
 	if (threads < max_threads || !throttle) {
 	    return;

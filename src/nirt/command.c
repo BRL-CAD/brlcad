@@ -357,7 +357,7 @@ shoot(char *UNUSED(buffer), com_table *UNUSED(ctp), struct rt_i *rtip)
 	 */
 	VADD2SCALE(center_bsphere, rtip->mdl_max, rtip->mdl_min, 0.5);
 
-	dist_to_target = DIST_PT_PT(center_bsphere, ray_point);
+	dist_to_target = DIST_PNT_PNT(center_bsphere, ray_point);
 
 	VSUB2(dvec, ray_point, center_bsphere);
 	VUNITIZE(dvec);

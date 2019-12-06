@@ -36,30 +36,30 @@ __BEGIN_DECLS
  * Import a combination record from a V4 database into internal form.
  */
 RT_EXPORT extern int rt_comb_import4(struct rt_db_internal      *ip,
-                                     const struct bu_external   *ep,
-                                     const mat_t                matrix,         /* NULL if identity */
-                                     const struct db_i          *dbip,
-                                     struct resource            *resp);
+				     const struct bu_external   *ep,
+				     const mat_t                matrix,         /* NULL if identity */
+				     const struct db_i          *dbip,
+				     struct resource            *resp);
 
 RT_EXPORT extern int rt_comb_export4(struct bu_external                 *ep,
-                                     const struct rt_db_internal        *ip,
-                                     double                             local2mm,
-                                     const struct db_i                  *dbip,
-                                     struct resource                    *resp);
+				     const struct rt_db_internal        *ip,
+				     double                             local2mm,
+				     const struct db_i                  *dbip,
+				     struct resource                    *resp);
 
 
 RT_EXPORT extern void db_comb_describe(struct bu_vls    *str,
-                                       const struct rt_comb_internal    *comb,
-                                       int              verbose,
-                                       double           mm2local);
+				       const struct rt_comb_internal    *comb,
+				       int              verbose,
+				       double           mm2local);
 
 /**
  * OBJ[ID_COMBINATION].ft_describe() method
  */
 RT_EXPORT extern int rt_comb_describe(struct bu_vls     *str,
-                                      const struct rt_db_internal *ip,
-                                      int               verbose,
-                                      double            mm2local);
+				      const struct rt_db_internal *ip,
+				      int               verbose,
+				      double            mm2local);
 
 /**
  * fills in rgb with the color for a given comb combination
@@ -80,10 +80,10 @@ RT_EXPORT extern int rt_comb_get_color(unsigned char rgb[3], const struct rt_com
  * once done.
  */
 RT_EXPORT extern int db_comb_mvall(struct directory *dp,
-                                   struct db_i *dbip,
-                                   const char *old_name,
-                                   const char *new_name,
-                                   struct bu_ptbl *stack);
+				   struct db_i *dbip,
+				   const char *old_name,
+				   const char *new_name,
+				   struct bu_ptbl *stack);
 
 /* db5_comb.c */
 

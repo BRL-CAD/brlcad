@@ -32,13 +32,13 @@
 __BEGIN_DECLS
 
 RT_EXPORT extern int rt_find_paths(struct db_i *dbip,
-                                   struct directory *start,
-                                   struct directory *end,
-                                   struct bu_ptbl *paths,
-                                   struct resource *resp);
+				   struct directory *start,
+				   struct directory *end,
+				   struct bu_ptbl *paths,
+				   struct resource *resp);
 
 RT_EXPORT extern struct bu_bitv *rt_get_solidbitv(size_t nbits,
-                                                  struct resource *resp);
+						  struct resource *resp);
 
 /* table.c */
 RT_EXPORT extern int rt_id_solid(struct bu_external *ep);
@@ -69,10 +69,10 @@ RT_EXPORT extern void rt_reduce_db(struct db_i *db, size_t num_preserved_attribu
 /* below are librt table implementation detail */
 
 RT_EXPORT extern int rt_generic_xform(struct rt_db_internal     *op,
-                                      const mat_t               mat,
-                                      struct rt_db_internal     *ip,
-                                      int                       avail,
-                                      struct db_i               *dbip);
+				      const mat_t               mat,
+				      struct rt_db_internal     *ip,
+				      int                       avail,
+				      struct db_i               *dbip);
 RT_EXPORT extern void rt_generic_make(const struct rt_functab *ftp, struct rt_db_internal *intern);
 
 

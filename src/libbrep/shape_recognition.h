@@ -2,7 +2,8 @@
 
 #include "common.h"
 #include "bu/ptbl.h"
-#include "brep.h"
+#include "brep/defines.h"
+#include "brep/csg.h"
 
 #ifndef SHAPE_RECOGNITION_H
 #define SHAPE_RECOGNITION_H

@@ -1189,8 +1189,8 @@ application_init () {
     option(NULL, "", "         default but will be changed to output in local", 0);
     option(NULL, "", "         units in the near future.", 0);
 
-    option(NULL, "-C", "Disabled, not implemented", 2);
-    option(NULL, "-W", "Disabled, non implemented", 2);
+    option(NULL, "-C", "Disabled, not implemented", -2);
+    option(NULL, "-W", "Disabled, non implemented", -2);
 }
 
 /*

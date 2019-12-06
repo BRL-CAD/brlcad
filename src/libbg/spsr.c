@@ -37,8 +37,8 @@ struct c_vert {
 
 int
 bg_3d_spsr(int **faces, int *num_faces, point_t **points, int *num_pnts,
-	const point_t *input_points_3d, const vect_t *input_normals_3d,
-	int num_input_pnts, struct bg_3d_spsr_opts *spsr_opts)
+	   const point_t *input_points_3d, const vect_t *input_normals_3d,
+	   int num_input_pnts, struct bg_3d_spsr_opts *spsr_opts)
 {
     int i = 0;
     struct spsr_options opts = SPSR_OPTIONS_DEFAULT_INIT;

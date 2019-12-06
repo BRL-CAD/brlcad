@@ -475,7 +475,7 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
     int failed;
     struct _ged_client_data *dgcdp = (struct _ged_client_data *)client_data;
 
-    RT_CK_TESS_TOL(tsp->ts_ttol);
+    BG_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
     NMG_CK_MODEL(*tsp->ts_m);
     RT_CK_RESOURCE(tsp->ts_resp);

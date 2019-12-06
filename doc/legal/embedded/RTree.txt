@@ -1,0 +1,16 @@
+https://github.com/DevHwan/RTree
+
+Original code was taken from http://www.superliminal.com/sources/sources.htm
+and is stored as git revision 0. This revision is entirely free for all uses.
+Enjoy!
+
+Due to restrictions on public domain in certain jurisdictions, code contributed
+by Yariv Barkan is released in these jurisdictions under the BSD, MIT or the
+GPL - you may choose one or more, whichever that suits you best.
+
+In jurisdictions where public domain property is recognized, the user of this
+software may choose to accept it either 1) as public domain, 2) under the
+conditions of the BSD, MIT or GPL or 3) any combination of public domain and
+one or more of these licenses.
+
+Thanks Baptiste Lepilleur for the licensing idea.

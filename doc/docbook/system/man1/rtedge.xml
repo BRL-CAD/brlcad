@@ -864,23 +864,26 @@
 	    valid modes. Mode 2 is the default.
 	  </para>
 	  <para>
-	    <emphasis remap="B" role="B">mode 1 -</emphasis>
-	    An edge detected in the first set of geometry is written to
-	    the framebuffer if and only if it occludes the second set of
-	    geometry. The edge is colored according to the foreground or
-	    region colors options.
+	    <emphasis remap="B" role="B">mode 1 - EDGES</emphasis> An
+	    Only edge pixels are drawn.  Edges detected in the first
+	    set of geometry are written to the framebuffer if and only
+	    if they are NOT occluded by the second set of geometry.
+	    Edges are colored according to the foreground or region
+	    color options.
 	  </para>
 	  <para>
-	    <emphasis remap="B" role="B">mode 2 -</emphasis>
-	    All pixels that hit the first set of geometry that are not
-	    occluded by the second set are written to the framebuffer.
-	    Edges are rendered in the foreground or region color; non-edges
-	    are rendered in the background color.
+	    <emphasis remap="B" role="B">mode 2 - ALL HITS</emphasis>
+	    Edge and non-edge pixels are drawn.  All pixels that hit
+	    the first set of geometry and are NOT occluded by the
+	    second set are written to the framebuffer.  Edges are
+	    rendered in the foreground or region color; non-edges are
+	    rendered in the background color.
 	  </para>
 	  <para>
-	    <emphasis remap="B" role="B">mode 3 -</emphasis>
-	    Like mode 2 except non-edge pixels are dithered to make the
-	    geometry semi-transparent.
+	    <emphasis remap="B" role="B">mode 3 - DITHER</emphasis>
+	    Edge and dithered non-edge pixels are drawn.  This is like
+	    mode 2 except non-edge pixels are dithered to make the
+	    exterior geometry appear semi-transparent.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -908,7 +911,7 @@
     <example><title><command>rtedge</command> rendering of havoc.g</title>
 
       <para>
-      <userinput>rtedge -s 1024 -o new.pix havoc.g havoc</userinput>
+        <userinput>rtedge -s 1024 -o new.pix havoc.g havoc</userinput>
       </para>
       <para>
 	results in a 1024 by 1024 BRL-CAD image file showing the
@@ -931,23 +934,32 @@
       </para>
 
       <para>
-	The remaining examples will illustrate how to use <command>rtedge</command>
-	in concert with <command>rt</command> to produce interesting
-	images. When merging <command>rtedge</command> and
-	<command>rt</command> images, it is best to use
-	<emphasis remap="I">saveview</emphasis> scripts. In
-	<command>mged</command>, configure your view, save it,
-	and then open the file in an editor. Duplicate the
-	<command>rt</command> command block. After duplicating
-	the block, change the second to <command>rtedge</command> .</para>
+	The remaining examples illustrate how to use
+	<command>rtedge</command> in concert with
+	<command>rt</command> to produce merged images.  When merging
+	<command>rtedge</command> and <command>rt</command> images, it
+	is helpful to use <emphasis remap="I">saveview</emphasis>
+	scripts in order to maintain alignment of successive
+	renderings.  In <command>mged</command>, configure your view,
+	save it via <emphasis remap="I">saveview</emphasis>, and then
+	open the file in an editor. Duplicate the
+	<command>rt</command> command block.  After duplicating the
+	block, change the second one to use <command>rtedge</command>.
+      </para>
 
-	<para>
-	  This script will overlay bright orange edges on the Havoc.
-	</para>
+      <para>
+        NOTE: You must use the <option>-F</option> option instead of
+        <option>-o</option> when performing overlay or occlusion
+        renderings.  With -F, a file or framebuffer may be specified.
+      </para>
 
-	<literallayout remap=".nf" class="normal">
+      <para>
+	This script will overlay bright orange edges on the Havoc.
+      </para>
+      
+      <literallayout remap=".nf" class="normal">
 #!/bin/sh
-rt -M -s1280 -o new.pix -C255/255/255\
+rt -M -s1280 -F new.pix -C255/255/255\
  $*\
  havoc.g\
  havoc\
@@ -961,7 +973,7 @@ end;
 
 EOF
 
-rtedge -M -s1280 -o new.pix \
+rtedge -M -s1280 -F new.pix \
  -c"set dr=1 dn=1 ov=1"\
  -c"set fg=255,200,0" \
  $*\
@@ -977,20 +989,20 @@ start 0; clean;
 end;
 
 EOF
-	</literallayout>
+      </literallayout>
 
-	<para>
-	  Finally, this script will render the Havoc weapon systems in
-	  full color, render the edges on the remainder of the aircraft
-	  in black, and render the non-edges in dithered gray to make
-	  them semi-transparent. Note that when specifying the occlusion
-	  objects, the delimiting quotes must be escaped.
-	</para>
+      <para>
+	Finally, this script will render the Havoc weapon systems in
+	full color, render the edges on the remainder of the aircraft
+	in black, and render the non-edges in dithered gray to make
+	them semi-transparent. Note that when specifying the occlusion
+	objects, the delimiting quotes must be escaped.
+      </para>
 
-	<literallayout remap=".nf" class="normal">
+      <literallayout remap=".nf" class="normal">
 #!/bin/sh
 
-rt -M -s1280 -o new.pix -C255/255/255 \
+rt -M -s1280 -F new.pix -C255/255/255 \
  $*\
  havoc.g\
  weapons\
@@ -1004,7 +1016,7 @@ end;
 
 EOF
 
-rtedge -M -s1280 -o new.pix \
+rtedge -M -s1280 -F new.pix \
  -c"set dr=1 dn=1 om=3"\
  -c"set fg=0,0,0 bg=200,200,200"\
  -c"set oo=\"weapons\" "\
@@ -1021,13 +1033,13 @@ start 0; clean;
 end;
 
 EOF
-	</literallayout>
+      </literallayout>
 
-	<para>
-	  In general, if you are mixing <command>rt</command>
-	  and <command>rtedge</command> renderings, and the objects being
-	  rendered are different, occlusion checking should be used.
-	</para>
+      <para>
+	In general, if you are mixing <command>rt</command> and
+	<command>rtedge</command> renderings, and the objects being
+	rendered are different, occlusion checking should be used.
+      </para>
     </example>
   </refsection>
 

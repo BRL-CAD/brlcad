@@ -28,7 +28,7 @@
 #include "bu.h"
 
 
-const int SEM = BU_SEM_LAST+1;
+const int SEM = 1000; /* FIXME */
 
 
 struct increment_thread_args {

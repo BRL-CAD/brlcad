@@ -11,9 +11,32 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
+--- 2019-12-05  Release 7.30.4                                     ---
+----------------------------------------------------------------------
+
+* enhanced attr list command to support reporting values - Cliff Yapp
+* updated FAA Generic Twin example FASTGEN model - Cliff Yapp
+* fixed handling of duplicate FASTGEN object names - Cliff Yapp
+* update gqa/rtweight man pages to reference mater -d - Cliff Yapp
+* overlay command accepts file patterns (e.g., *.plot) - Cliff Yapp
+* changed mged escape key binding to reset mouse mode - Sean Morrison
+* removed default xXyYzZ0 rate rotation key bindings - Sean Morrison
+* improved tessellation of nearly coplanar surfaces - John Anderson
+* fixed display of annotations on Windows - Daniel Roßberg
+* fixed rtedge and rtwizard occlusion object edge bug - Sean Morrison
+* rt* tools no longer force outputs to be read-only - Sean Morrison
+* fixed 'burst' crash when run without options - Sean Morrison
+* changed rtweight to not truncate long pathnames - Sean Morrison
+* added new ball bearing example geometry model - Sean Morrison
+* added new manual page for the clone command - Sean Morrison
+
+
+----------------------------------------------------------------------
 --- 2019-04-03  Release 7.30.2                                     ---
 ----------------------------------------------------------------------
 
+* fixed memory leak during obj-g and gcv import - Bojian Wu
+* added new manual page for the clone command - Sean Morrison
 * fixed crash calculating dsp bounding boxes - Sean Morrison
 * fixed Windows temporary file removal for MGED commands (red, etc.)
 	- Cliff Yapp

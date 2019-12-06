@@ -63,22 +63,22 @@ struct rt_comb_internal {
  * initialize an rt_comb_internal to empty.
  */
 #define RT_COMB_INTERNAL_INIT(_p) { \
-        (_p)->magic = RT_COMB_MAGIC; \
-        (_p)->tree = TREE_NULL; \
-        (_p)->region_flag = 0; \
-        (_p)->is_fastgen = REGION_NON_FASTGEN; \
-        (_p)->region_id = 0; \
-        (_p)->aircode = 0; \
-        (_p)->GIFTmater = 0; \
-        (_p)->los = 0; \
-        (_p)->rgb_valid = 0; \
-        (_p)->rgb[0] = 0; \
-        (_p)->rgb[1] = 0; \
-        (_p)->rgb[2] = 0; \
-        (_p)->temperature = 0.0; \
-        BU_VLS_INIT(&(_p)->shader); \
-        BU_VLS_INIT(&(_p)->material); \
-        (_p)->inherit = 0; \
+	(_p)->magic = RT_COMB_MAGIC; \
+	(_p)->tree = TREE_NULL; \
+	(_p)->region_flag = 0; \
+	(_p)->is_fastgen = REGION_NON_FASTGEN; \
+	(_p)->region_id = 0; \
+	(_p)->aircode = 0; \
+	(_p)->GIFTmater = 0; \
+	(_p)->los = 0; \
+	(_p)->rgb_valid = 0; \
+	(_p)->rgb[0] = 0; \
+	(_p)->rgb[1] = 0; \
+	(_p)->rgb[2] = 0; \
+	(_p)->temperature = 0.0; \
+	BU_VLS_INIT(&(_p)->shader); \
+	BU_VLS_INIT(&(_p)->material); \
+	(_p)->inherit = 0; \
     }
 
 /**
@@ -89,10 +89,10 @@ struct rt_comb_internal {
  * unless it resides on the stack.
  */
 #define RT_FREE_COMB_INTERNAL(_p) { \
-        bu_vls_free(&(_p)->shader); \
-        bu_vls_free(&(_p)->material); \
-        (_p)->tree = TREE_NULL; \
-        (_p)->magic = 0; \
+	bu_vls_free(&(_p)->shader); \
+	bu_vls_free(&(_p)->material); \
+	(_p)->tree = TREE_NULL; \
+	(_p)->magic = 0; \
     }
 
 
@@ -105,16 +105,16 @@ struct rt_binunif_internal {
     int                 type;
     size_t              count;
     union {
-        float           *flt;
-        double          *dbl;
-        char            *int8;
-        short           *int16;
-        int             *int32;
-        long            *int64;
-        unsigned char   *uint8;
-        unsigned short  *uint16;
-        unsigned int    *uint32;
-        unsigned long   *uint64;
+	float           *flt;
+	double          *dbl;
+	char            *int8;
+	short           *int16;
+	int             *int32;
+	long            *int64;
+	unsigned char   *uint8;
+	unsigned short  *uint16;
+	unsigned int    *uint32;
+	unsigned long   *uint64;
     } u;
 };
 #define RT_CHECK_BINUNIF(_p) BU_CKMAG(_p, RT_BINUNIF_INTERNAL_MAGIC, "rt_binunif_internal")

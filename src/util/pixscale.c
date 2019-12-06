@@ -326,11 +326,11 @@ init_buffer()
     max = MAXBUFBYTES / scanlen;
 
     /*
-     * Do a max of 512.  We really should see how big
-     * the input file is to decide if we should buffer
-     * less than our max.
+     * Do a max of page size.  We really should see how big the input
+     * file is to decide if we should buffer less than our max.
      */
-    if (max > 4096) max = 4096;
+    if (max > BU_PAGE_SIZE)
+	max = BU_PAGE_SIZE;
 
     if (max < iny)
 	buflines = max;

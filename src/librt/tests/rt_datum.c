@@ -454,7 +454,7 @@ main(int UNUSED(argc), char *argv[])
 
     bu_log("\n\nOperation 05: scale a comb about -30, 40, 10 by 5x\n\n");
     VSET(p, -30, 40, 10);
-    bn_mat_scale_about_pt(mat, p, 5);
+    bn_mat_scale_about_pnt(mat, p, 5);
     apply_mat_obj(dbip, "comb_1.c", mat);
 
     /* Report */
@@ -471,7 +471,7 @@ main(int UNUSED(argc), char *argv[])
 
     bu_log("\n\nOperation 06: scale the solids about 10, 30, -40 by 5x\n\n");
     VSET(p, 10, 30, -40);
-    bn_mat_scale_about_pt(mat, p, 5);
+    bn_mat_scale_about_pnt(mat, p, 5);
     apply_mat_obj(dbip, "rcc_1.s", mat);
     apply_mat_obj(dbip, "datum_plane.s", mat);
 

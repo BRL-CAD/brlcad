@@ -35,8 +35,8 @@
 
 
 int do_projection = 1;
-char eor = 0;
-char eof = -1;
+char eord = 0;
+char eofd = -1;
 char card[256] = {0};
 fastf_t scale = 0.0;
 fastf_t inv_scale = 0.0;

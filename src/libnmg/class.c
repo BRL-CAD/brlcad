@@ -24,10 +24,10 @@
  * Subroutines to classify one object with respect to another.
  * Possible classifications are AinB, AoutB, AinBshared, AinBanti.
  *
- * The first set of routines (nmg_class_pt_xxx) are used to classify
+ * The first set of routines (nmg_class_pnt_xxx) are used to classify
  * an arbitrary point specified by its Cartesian coordinates, against
- * various kinds of NMG elements.  nmg_class_pt_f() and
- * nmg_class_pt_s() are available to applications programmers for
+ * various kinds of NMG elements.  nmg_class_pnt_f() and
+ * nmg_class_pnt_s() are available to applications programmers for
  * direct use, and have no side effects.
  *
  * The second set of routines (class_xxx_vs_s) are used only to
@@ -76,11 +76,11 @@ struct neighbor {
 };
 
 
-HIDDEN void nmg_class_pt_e(struct neighbor *closest,
+HIDDEN void nmg_class_pnt_e(struct neighbor *closest,
 			   const point_t pt, const struct edgeuse *eu,
 			   struct bu_list *vlfree,
 			   const struct bn_tol *tol);
-HIDDEN void nmg_class_pt_l(struct neighbor *closest,
+HIDDEN void nmg_class_pnt_l(struct neighbor *closest,
 			   const point_t pt, const struct loopuse *lu,
 			   struct bu_list *vlfree,
 			   const struct bn_tol *tol);
@@ -126,7 +126,7 @@ nmg_pr_class_status(char *prefix, int status)
  * XXX DANGER:  This routine does not work well.
  *
  * Called by -
- * nmg_class_pt_e
+ * nmg_class_pnt_e
  */
 HIDDEN void
 joint_hitmiss2(struct neighbor *closest, const struct edgeuse *eu, int code)
@@ -202,10 +202,10 @@ joint_hitmiss2(struct neighbor *closest, const struct edgeuse *eu, int code)
  * Updated "closest" structure if appropriate.
  *
  * Called by -
- * nmg_class_pt_l
+ * nmg_class_pnt_l
  */
 HIDDEN void
-nmg_class_pt_e(struct neighbor *closest, const fastf_t *pt, const struct edgeuse *eu, struct bu_list *vlfree, const struct bn_tol *tol)
+nmg_class_pnt_e(struct neighbor *closest, const fastf_t *pt, const struct edgeuse *eu, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     vect_t ptvec;	/* vector from lseg to pt */
     vect_t left;	/* vector left of edge -- into inside of loop */
@@ -227,7 +227,7 @@ nmg_class_pt_e(struct neighbor *closest, const fastf_t *pt, const struct edgeuse
     matept = eu->eumate_p->vu_p->v_p->vg_p->coord;
 
     if (nmg_debug & DEBUG_CLASSIFY) {
-	VPRINT("nmg_class_pt_e\tPt", pt);
+	VPRINT("nmg_class_pnt_e\tPt", pt);
 	nmg_euprint("          \tvs. eu", eu);
     }
     /*
@@ -237,10 +237,11 @@ nmg_class_pt_e(struct neighbor *closest, const fastf_t *pt, const struct edgeuse
      * Some compilers don't get that fastf_t * and point_t are related
      * So we have to pass the whole bloody mess for the point arguments.
      */
-    code = bn_dist_pt3_lseg3(&dist, pca, eu->vu_p->v_p->vg_p->coord,
-			     eu->eumate_p->vu_p->v_p->vg_p->coord,
-			     pt, tol);
-    if (code <= 0) dist = 0;
+    code = bn_dist_pnt3_lseg3(&dist, pca, eu->vu_p->v_p->vg_p->coord,
+			      eu->eumate_p->vu_p->v_p->vg_p->coord,
+			      pt, tol);
+    if (code <= 0)
+	dist = 0;
     if (nmg_debug & DEBUG_CLASSIFY) {
 	bu_log("          \tcode=%d, dist: %g\n", code, dist);
 	VPRINT("          \tpca:", pca);
@@ -331,7 +332,7 @@ nmg_class_pt_e(struct neighbor *closest, const fastf_t *pt, const struct edgeuse
      * left, towards the interior of the loop, regardless of
      * whether it's an interior (OT_OPPOSITE) or exterior (OT_SAME) loop.
      */
-    if (nmg_find_eu_leftvec(left, eu) < 0) bu_bomb("nmg_class_pt_e() bad LEFT vector\n");
+    if (nmg_find_eu_leftvec(left, eu) < 0) bu_bomb("nmg_class_pnt_e() bad LEFT vector\n");
 
     VSUB2(ptvec, pt, pca);		/* pt - pca */
     if (nmg_debug & DEBUG_CLASSIFY) {
@@ -402,13 +403,13 @@ out:
  * Updated "closest" structure if appropriate.
  *
  * Called by -
- * nmg_class_pt_loop()
+ * nmg_class_pnt_loop()
  *		from: nmg_extrude.c / nmg_fix_overlapping_loops()
  * nmg_classify_lu_lu()
  *		from: nmg_misc.c / nmg_split_loops_handler()
  */
 HIDDEN void
-nmg_class_pt_l(struct neighbor *closest, const fastf_t *pt, const struct loopuse *lu, struct bu_list *vlfree, const struct bn_tol *tol)
+nmg_class_pnt_l(struct neighbor *closest, const fastf_t *pt, const struct loopuse *lu, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     vect_t delta;
     pointp_t lu_pt;
@@ -422,7 +423,7 @@ nmg_class_pt_l(struct neighbor *closest, const fastf_t *pt, const struct loopuse
     NMG_CK_LOOP_G(lg);
 
     if (nmg_debug & DEBUG_CLASSIFY) {
-	VPRINT("nmg_class_pt_l\tPt:", pt);
+	VPRINT("nmg_class_pnt_l\tPt:", pt);
     }
 
     if (*lu->up.magic_p != NMG_FACEUSE_MAGIC)
@@ -435,7 +436,7 @@ nmg_class_pt_l(struct neighbor *closest, const fastf_t *pt, const struct loopuse
 	HPRINT("\tplane eqn", peqn);
     }
 
-    if (V3PT_OUT_RPP_TOL(pt, lg->min_pt, lg->max_pt, tol->dist)) {
+    if (V3PNT_OUT_RPP_TOL(pt, lg->min_pt, lg->max_pt, tol->dist)) {
 	if (nmg_debug & DEBUG_CLASSIFY) {
 	    bu_log("\tPoint is outside loop RPP\n");
 	}
@@ -444,12 +445,12 @@ nmg_class_pt_l(struct neighbor *closest, const fastf_t *pt, const struct loopuse
     }
     if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
 	for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-	    nmg_class_pt_e(closest, pt, eu, vlfree, tol);
+	    nmg_class_pnt_e(closest, pt, eu, vlfree, tol);
 	    /* If point lies ON edge, we are done */
 	    if (closest->nmg_class == NMG_CLASS_AonBanti) {
 		break;
 	    } else if (closest->nmg_class == NMG_CLASS_AonBshared) {
-		bu_bomb("nmg_class_pt_l(): nmg_class_pt_e returned AonBshared but can only return AonBanti\n");
+		bu_bomb("nmg_class_pnt_l(): nmg_class_pnt_e returned AonBshared but can only return AonBanti\n");
 	    }
 	}
     } else if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
@@ -464,7 +465,7 @@ nmg_class_pt_l(struct neighbor *closest, const fastf_t *pt, const struct loopuse
 		closest->nmg_class = NMG_CLASS_AonBanti;
 	    } else {
 		nmg_pr_orient(lu->orientation, "\t");
-		bu_bomb("nmg_class_pt_l: bad orientation for face loopuse\n");
+		bu_bomb("nmg_class_pnt_l: bad orientation for face loopuse\n");
 	    }
 	    if (nmg_debug & DEBUG_CLASSIFY)
 		bu_log("\t\t closer to loop pt (%g, %g, %g)\n",
@@ -474,10 +475,10 @@ nmg_class_pt_l(struct neighbor *closest, const fastf_t *pt, const struct loopuse
 	    closest->p.vu = vu;
 	}
     } else {
-	bu_bomb("nmg_class_pt_l() bad child of loopuse\n");
+	bu_bomb("nmg_class_pnt_l() bad child of loopuse\n");
     }
     if (nmg_debug & DEBUG_CLASSIFY)
-	bu_log("nmg_class_pt_l\treturning, closest=%g %s\n",
+	bu_log("nmg_class_pnt_l\treturning, closest=%g %s\n",
 	       closest->dist, nmg_class_name(closest->nmg_class));
 }
 
@@ -549,13 +550,13 @@ again:
 
     /* Validate distance from point to plane */
     NMG_GET_FU_PLANE(n, fu);
-    if ((dist = fabs(DIST_PT_PLANE(vg->coord, n))) > tol->dist) {
+    if ((dist = fabs(DIST_PNT_PLANE(vg->coord, n))) > tol->dist) {
 	bu_log("nmg_class_lu_fu() ERROR, point (%g, %g, %g) not on face, dist=%g\n",
 	       V3ARGS(vg->coord), dist);
     }
 
     /* find the closest approach in this face to the projected point */
-    nmg_class = nmg_class_pt_fu_except(vg->coord, fu, lu,
+    nmg_class = nmg_class_pnt_fu_except(vg->coord, fu, lu,
 				       NULL, NULL, NULL, 0, 0, vlfree, tol);
 
     /* If this vertex lies ON loop edge, must check all others. */
@@ -621,7 +622,7 @@ static const point_t nmg_good_dirs[MAX_DIR_TRYS] = {
  * NMG_CLASS_AoutB pt is OUTSIDE the volume of the shell.
  */
 int
-nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_only, struct bu_list *vlfree, const struct bn_tol *tol)
+nmg_class_pnt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_only, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     const struct faceuse *fu;
     struct model *m;
@@ -641,18 +642,18 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
     BN_CK_TOL(tol);
 
     if (nmg_debug & DEBUG_CLASSIFY) {
-	bu_log("nmg_class_pt_s(): pt=(%g, %g, %g), s=%p\n",
+	bu_log("nmg_class_pnt_s(): pt=(%g, %g, %g), s=%p\n",
 	       V3ARGS(pt), (void *)s);
     }
-    if (V3PT_OUT_RPP_TOL(pt, s->sa_p->min_pt, s->sa_p->max_pt, tol->dist)) {
+    if (V3PNT_OUT_RPP_TOL(pt, s->sa_p->min_pt, s->sa_p->max_pt, tol->dist)) {
 	if (nmg_debug & DEBUG_CLASSIFY) {
-	    bu_log("nmg_class_pt_s(): OUT, point not in RPP\n");
+	    bu_log("nmg_class_pnt_s(): OUT, point not in RPP\n");
 	}
 	return NMG_CLASS_AoutB;
     }
 
     if (!in_or_out_only) {
-	faces_seen = (long *)nmg_calloc(m->maxindex, sizeof(long), "nmg_class_pt_s faces_seen[]");
+	faces_seen = (long *)nmg_calloc(m->maxindex, sizeof(long), "nmg_class_pnt_s faces_seen[]");
 	/*
 	 * First pass:  Try hard to see if point is ON a face.
 	 */
@@ -670,16 +671,16 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
 
 	    /* See if this point lies on this face */
 	    NMG_GET_FU_PLANE(n, fu);
-	    if ((fabs(DIST_PT_PLANE(pt, n))) < tol->dist) {
+	    if ((fabs(DIST_PNT_PLANE(pt, n))) < tol->dist) {
 		/* Point lies on this plane, it may be possible to
 		 * short circuit everything.
 		 */
-		nmg_class = nmg_class_pt_fu_except(pt, fu, (struct loopuse *)0,
+		nmg_class = nmg_class_pnt_fu_except(pt, fu, (struct loopuse *)0,
 						   NULL,
 						   NULL,
 						   NULL, 0, 0, vlfree, tol);
 		if (nmg_class == NMG_CLASS_AonBshared) {
-		    bu_bomb("nmg_class_pt_s(): function nmg_class_pt_fu_except returned AonBshared when it can only return AonBanti\n");
+		    bu_bomb("nmg_class_pnt_s(): function nmg_class_pnt_fu_except returned AonBshared when it can only return AonBanti\n");
 		}
 		if (nmg_class == NMG_CLASS_AonBshared) {
 		    /* Point is ON face, therefore it must be
@@ -722,7 +723,7 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
     region_diameter = MAGNITUDE(region_diagonal);
 
     nmg_model_bb(m_min_pt, m_max_pt, m);
-    model_bb_max_width = bn_dist_pt3_pt3(m_min_pt, m_max_pt);
+    model_bb_max_width = bn_dist_pnt3_pnt3(m_min_pt, m_max_pt);
 
     /* Choose an unlikely direction */
     tries = 0;
@@ -740,7 +741,7 @@ retry:
     VUNITIZE(projection_dir);
 
     if (nmg_debug & DEBUG_CLASSIFY) {
-	bu_log("nmg_class_pt_s(): Pt=(%g, %g, %g) dir=(%g, %g, %g), reg_diam=%g\n",
+	bu_log("nmg_class_pnt_s(): Pt=(%g, %g, %g) dir=(%g, %g, %g), reg_diam=%g\n",
 	       V3ARGS(pt), V3ARGS(projection_dir), region_diameter);
     }
 
@@ -755,7 +756,7 @@ retry:
     nmg_class = nmg_class_ray_vs_shell(&rp, s, in_or_out_only, vlfree, tol);
 
     if (nmg_class == NMG_CLASS_AonBshared) {
-	bu_bomb("nmg_class_pt_s(): function nmg_class_ray_vs_shell returned AonBshared when it can only return AonBanti\n");
+	bu_bomb("nmg_class_pnt_s(): function nmg_class_ray_vs_shell returned AonBshared when it can only return AonBanti\n");
     }
     if (nmg_class == NMG_CLASS_Unknown) {
 	goto retry;
@@ -763,11 +764,11 @@ retry:
 
 out:
     if (!in_or_out_only) {
-	nmg_free((char *)faces_seen, "nmg_class_pt_s faces_seen[]");
+	nmg_free((char *)faces_seen, "nmg_class_pnt_s faces_seen[]");
     }
 
     if (nmg_debug & DEBUG_CLASSIFY) {
-	bu_log("nmg_class_pt_s(): returning %s, s=%p, tries=%d\n",
+	bu_log("nmg_class_pnt_s(): returning %s, s=%p, tries=%d\n",
 	       nmg_class_name(nmg_class), (void *)s, tries);
     }
 
@@ -864,21 +865,21 @@ class_vu_vs_s(struct vertexuse *vu, struct shell *sB, char **classlist, struct b
      */
 
     if (nmg_debug & DEBUG_CLASSIFY) {
-	if ((sv = nmg_find_pt_in_shell(sB, pt, tol))) {
+	if ((sv = nmg_find_pnt_in_shell(sB, pt, tol))) {
 	    bu_log("vu=%p, v=%p, sv=%p, pt=(%g, %g, %g)\n",
 		   (void *)vu, (void *)vu->v_p, (void *)sv, V3ARGS(pt));
 	    bu_bomb("class_vu_vs_s(): logic error, vertex topology not shared properly\n");
 	}
     }
 
-    reason = "of nmg_class_pt_s()";
+    reason = "of nmg_class_pnt_s()";
     /* 3rd parameter '0' allows return of AonBanti instead of
      * only AinB or AoutB
      */
-    nmg_class = nmg_class_pt_s(pt, sB, 0, vlfree, tol);
+    nmg_class = nmg_class_pnt_s(pt, sB, 0, vlfree, tol);
 
     if (nmg_class == NMG_CLASS_AonBshared) {
-	bu_bomb("class_vu_vs_s(): function nmg_class_pt_s returned AonBshared when it can only return AonBanti\n");
+	bu_bomb("class_vu_vs_s(): function nmg_class_pnt_s returned AonBshared when it can only return AonBanti\n");
     }
     if (nmg_class == NMG_CLASS_AoutB) {
 	NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], vu->v_p);
@@ -895,7 +896,7 @@ class_vu_vs_s(struct vertexuse *vu, struct shell *sB, char **classlist, struct b
     } else {
 	bu_log("class_vu_vs_s(): nmg_class=%s\n", nmg_class_name(nmg_class));
 	VPRINT("pt", pt);
-	bu_bomb("class_vu_vs_s(): nmg_class_pt_s() failure\n");
+	bu_bomb("class_vu_vs_s(): nmg_class_pnt_s() failure\n");
     }
 
 out:
@@ -1086,12 +1087,12 @@ class_eu_vs_s(struct edgeuse *eu, struct shell *s, char **classlist, struct bu_l
 	    /* 3rd parameter of '0' allows a return of AonBanti
 	     * instead of only AinB or AoutB.
 	     */
-	    nmg_class = nmg_class_pt_s(pt, s, 0, vlfree, tol);
+	    nmg_class = nmg_class_pnt_s(pt, s, 0, vlfree, tol);
 	    tries++;
 	}
 
 	if (nmg_class == NMG_CLASS_AonBshared) {
-	    bu_bomb("class_eu_vs_s(): function nmg_class_pt_s returned AonBshared when it can only return AonBanti\n");
+	    bu_bomb("class_eu_vs_s(): function nmg_class_pnt_s returned AonBshared when it can only return AonBanti\n");
 	}
 	if (nmg_class == NMG_CLASS_AoutB) {
 	    NMG_INDEX_SET(classlist[NMG_CLASS_AoutB], eu->e_p);
@@ -1105,7 +1106,7 @@ class_eu_vs_s(struct edgeuse *eu, struct shell *s, char **classlist, struct bu_l
 	} else {
 	    bu_log("class_eu_vs_s(): nmg_class=%s\n", nmg_class_name(nmg_class));
 	    nmg_euprint("class_eu_vs_s(): Why wasn't this edge in or out?", eu);
-	    bu_bomb("class_eu_vs_s(): nmg_class_pt_s() midpoint failure\n");
+	    bu_bomb("class_eu_vs_s(): nmg_class_pnt_s() midpoint failure\n");
 	}
 	goto out;
     }
@@ -2041,21 +2042,21 @@ nmg_class_shells(struct shell *sA, struct shell *sB, char **classlist, struct bu
 
 
 /**
- * A generally available interface to nmg_class_pt_l
+ * A generally available interface to nmg_class_pnt_l
  *
- * returns the classification from nmg_class_pt_l
+ * returns the classification from nmg_class_pnt_l
  * or a (-1) on error
  *
  * Called by -
  * nmg_extrude.c / nmg_fix_overlapping_loops()
  *
- * XXX DANGER:  Calls nmg_class_pt_l(), which does not work well.
+ * XXX DANGER:  Calls nmg_class_pnt_l(), which does not work well.
  */
 int
-nmg_classify_pt_loop(const point_t pt,
-		     const struct loopuse *lu,
-		     struct bu_list *vlfree,
-		     const struct bn_tol *tol)
+nmg_classify_pnt_loop(const point_t pt,
+		      const struct loopuse *lu,
+		      struct bu_list *vlfree,
+		      const struct bn_tol *tol)
 {
     struct neighbor closest;
     struct faceuse *fu;
@@ -2065,9 +2066,9 @@ nmg_classify_pt_loop(const point_t pt,
     NMG_CK_LOOPUSE(lu);
     BN_CK_TOL(tol);
 
-    bu_log("DANGER: nmg_classify_pt_loop() is calling nmg_class_pt_l(), which does not work well\n");
+    bu_log("DANGER: nmg_classify_pnt_loop() is calling nmg_class_pnt_l(), which does not work well\n");
     if (*lu->up.magic_p != NMG_FACEUSE_MAGIC) {
-	bu_log("nmg_classify_pt_loop: lu not part of a faceuse!!\n");
+	bu_log("nmg_classify_pnt_loop: lu not part of a faceuse!!\n");
 	return -1;
     }
 
@@ -2075,8 +2076,8 @@ nmg_classify_pt_loop(const point_t pt,
 
     /* Validate distance from point to plane */
     NMG_GET_FU_PLANE(n, fu);
-    if ((dist = fabs(DIST_PT_PLANE(pt, n))) > tol->dist) {
-	bu_log("nmg_classify_pt_l() ERROR, point (%g, %g, %g) not on face, dist=%g\n",
+    if ((dist = fabs(DIST_PNT_PLANE(pt, n))) > tol->dist) {
+	bu_log("nmg_classify_pnt_l() ERROR, point (%g, %g, %g) not on face, dist=%g\n",
 	       V3ARGS(pt), dist);
 	return -1;
     }
@@ -2087,7 +2088,7 @@ nmg_classify_pt_loop(const point_t pt,
     closest.p.eu = (struct edgeuse *)NULL;
     closest.nmg_class = NMG_CLASS_AoutB;	/* default return */
 
-    nmg_class_pt_l(&closest, pt, lu, vlfree, tol);
+    nmg_class_pnt_l(&closest, pt, lu, vlfree, tol);
 
     return closest.nmg_class;
 }
@@ -2105,7 +2106,7 @@ nmg_classify_pt_loop(const point_t pt,
  * 4 - Just plain can't find an interior point
  */
 HIDDEN int
-nmg_get_interior_pt(fastf_t *pt, const struct loopuse *lu, struct bu_list *vlfree, const struct bn_tol *tol)
+nmg_get_interior_pnt(fastf_t *pt, const struct loopuse *lu, struct bu_list *vlfree, const struct bn_tol *tol)
 {
     struct edgeuse *eu;
     fastf_t point_count = 0.0;
@@ -2142,7 +2143,7 @@ nmg_get_interior_pt(fastf_t *pt, const struct loopuse *lu, struct bu_list *vlfre
     VSCALE(average_pt, average_pt, one_over_count);
     VMOVE(test_pt, average_pt);
 
-    if (nmg_class_pt_lu_except(test_pt, lu, (struct edge *)NULL, vlfree, tol) == NMG_CLASS_AinB) {
+    if (nmg_class_pnt_lu_except(test_pt, lu, (struct edge *)NULL, vlfree, tol) == NMG_CLASS_AinB) {
 	VMOVE(pt, test_pt);
 	return 0;
     }
@@ -2180,7 +2181,7 @@ nmg_get_interior_pt(fastf_t *pt, const struct loopuse *lu, struct bu_list *vlfre
 	    VSCALE(test_pt, test_pt, 0.5);
 
 	    VJOIN1(test_pt, test_pt, tol_mult, left);
-	    if (nmg_class_pt_lu_except(test_pt, lu, (struct edge *)NULL, vlfree, tol) == NMG_CLASS_AinB) {
+	    if (nmg_class_pnt_lu_except(test_pt, lu, (struct edge *)NULL, vlfree, tol) == NMG_CLASS_AinB) {
 		VMOVE(pt, test_pt);
 		return 0;
 	    }
@@ -2188,7 +2189,7 @@ nmg_get_interior_pt(fastf_t *pt, const struct loopuse *lu, struct bu_list *vlfre
     }
 
     if (nmg_debug & DEBUG_CLASSIFY) {
-	bu_log("nmg_get_interior_pt: Couldn't find interior point for lu %p\n", (void *)lu);
+	bu_log("nmg_get_interior_pnt: Couldn't find interior point for lu %p\n", (void *)lu);
 	nmg_pr_lu_briefly(lu, "");
     }
 
@@ -2202,7 +2203,7 @@ nmg_get_interior_pt(fastf_t *pt, const struct loopuse *lu, struct bu_list *vlfre
  * Generally available classifier for
  * determining if one loop is within another
  *
- * returns classification based on nmg_class_pt_l results
+ * returns classification based on nmg_class_pnt_l results
  *
  * Called by -
  * nmg_misc.c / nmg_split_loops_handler()
@@ -2327,7 +2328,7 @@ nmg_classify_lu_lu(const struct loopuse *lu1, const struct loopuse *lu2, struct 
 		    if (nmg_find_vertex_in_lu(eu->vu_p->v_p, lu2) != NULL)
 			continue;
 
-		    nmg_class = nmg_class_pt_lu_except(vg->coord, lu2, (struct edge *)NULL, vlfree, tol);
+		    nmg_class = nmg_class_pnt_lu_except(vg->coord, lu2, (struct edge *)NULL, vlfree, tol);
 		    if (nmg_class != NMG_CLASS_AonBshared && nmg_class != NMG_CLASS_AonBanti) {
 			if (lu2->orientation == OT_SAME) {
 			    if (nmg_debug & DEBUG_CLASSIFY)
@@ -2379,7 +2380,7 @@ nmg_classify_lu_lu(const struct loopuse *lu1, const struct loopuse *lu2, struct 
 		if (nmg_find_vertex_in_lu(eu->vu_p->v_p, lu2) != NULL)
 		    continue;
 
-		nmg_class = nmg_class_pt_lu_except(vg->coord, lu2, (struct edge *)NULL, vlfree, tol);
+		nmg_class = nmg_class_pnt_lu_except(vg->coord, lu2, (struct edge *)NULL, vlfree, tol);
 		if (nmg_class != NMG_CLASS_AonBshared && nmg_class != NMG_CLASS_AonBanti) {
 		    if (lu2->orientation == OT_SAME) {
 			if (nmg_debug & DEBUG_CLASSIFY)
@@ -2414,7 +2415,7 @@ nmg_classify_lu_lu(const struct loopuse *lu1, const struct loopuse *lu2, struct 
 		VADD2(mid_pt, vg1->coord, vg2->coord);
 		VSCALE(mid_pt, mid_pt, 0.5);
 
-		nmg_class = nmg_class_pt_lu_except(mid_pt, lu2, (struct edge *)NULL, vlfree, tol);
+		nmg_class = nmg_class_pnt_lu_except(mid_pt, lu2, (struct edge *)NULL, vlfree, tol);
 		if (nmg_class != NMG_CLASS_AonBshared && nmg_class != NMG_CLASS_AonBanti) {
 		    if (lu2->orientation == OT_SAME) {
 			if (nmg_debug & DEBUG_CLASSIFY)
@@ -2469,7 +2470,7 @@ nmg_classify_lu_lu(const struct loopuse *lu1, const struct loopuse *lu2, struct 
 	vg = vu->v_p->vg_p;
 	NMG_CK_VERTEX_G(vg);
 
-	nmg_class = nmg_class_pt_lu_except(vg->coord, lu2,
+	nmg_class = nmg_class_pnt_lu_except(vg->coord, lu2,
 					   (struct edge *)NULL, vlfree, tol);
 
 	if (lu2->orientation == OT_OPPOSITE) {
@@ -2525,7 +2526,7 @@ nmg_classify_s_vs_s(struct shell *s2, struct shell *s, struct bu_list *vlfree, c
 	lu = BU_LIST_FIRST(loopuse, &fu->lu_hd);
 	eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
 	VMOVE(pt_in_s2, eu->vu_p->v_p->vg_p->coord);
-	nmg_class = nmg_class_pt_s(pt_in_s2, s, 0, vlfree, tol);
+	nmg_class = nmg_class_pnt_s(pt_in_s2, s, 0, vlfree, tol);
 	if (nmg_class == NMG_CLASS_AinB)
 	    return NMG_CLASS_AinB;		/* shell s2 is inside shell s */
 	else if (nmg_class == NMG_CLASS_AoutB)
@@ -2533,7 +2534,7 @@ nmg_classify_s_vs_s(struct shell *s2, struct shell *s, struct bu_list *vlfree, c
 
 	/* try other end of this EU */
 	VMOVE(pt_in_s2, eu->eumate_p->vu_p->v_p->vg_p->coord);
-	nmg_class = nmg_class_pt_s(pt_in_s2, s, 0, vlfree, tol);
+	nmg_class = nmg_class_pnt_s(pt_in_s2, s, 0, vlfree, tol);
 	if (nmg_class == NMG_CLASS_AinB)
 	    return NMG_CLASS_AinB;		/* shell s2 is inside shell s */
 	else if (nmg_class == NMG_CLASS_AoutB)
@@ -2544,7 +2545,7 @@ nmg_classify_s_vs_s(struct shell *s2, struct shell *s, struct bu_list *vlfree, c
 	lu = BU_LIST_FIRST(loopuse, &s2->lu_hd);
 	eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
 	VMOVE(pt_in_s2, eu->vu_p->v_p->vg_p->coord);
-	nmg_class = nmg_class_pt_s(pt_in_s2, s, 0, vlfree, tol);
+	nmg_class = nmg_class_pnt_s(pt_in_s2, s, 0, vlfree, tol);
 	if (nmg_class == NMG_CLASS_AinB)
 	    return NMG_CLASS_AinB;		/* shell s2 is inside shell s */
 	else if (nmg_class == NMG_CLASS_AoutB)
@@ -2552,7 +2553,7 @@ nmg_classify_s_vs_s(struct shell *s2, struct shell *s, struct bu_list *vlfree, c
 
 	/* try other end of this EU */
 	VMOVE(pt_in_s2, eu->eumate_p->vu_p->v_p->vg_p->coord);
-	nmg_class = nmg_class_pt_s(pt_in_s2, s, 0, vlfree, tol);
+	nmg_class = nmg_class_pnt_s(pt_in_s2, s, 0, vlfree, tol);
 	if (nmg_class == NMG_CLASS_AinB)
 	    return NMG_CLASS_AinB;		/* shell s2 is inside shell s */
 	else if (nmg_class == NMG_CLASS_AoutB)
@@ -2562,7 +2563,7 @@ nmg_classify_s_vs_s(struct shell *s2, struct shell *s, struct bu_list *vlfree, c
     if (BU_LIST_NON_EMPTY(&s2->eu_hd)) {
 	eu = BU_LIST_FIRST(edgeuse, &s2->eu_hd);
 	VMOVE(pt_in_s2, eu->vu_p->v_p->vg_p->coord);
-	nmg_class = nmg_class_pt_s(pt_in_s2, s, 0, vlfree, tol);
+	nmg_class = nmg_class_pnt_s(pt_in_s2, s, 0, vlfree, tol);
 	if (nmg_class == NMG_CLASS_AinB)
 	    return NMG_CLASS_AinB;		/* shell s2 is inside shell s */
 	else if (nmg_class == NMG_CLASS_AoutB)
@@ -2570,7 +2571,7 @@ nmg_classify_s_vs_s(struct shell *s2, struct shell *s, struct bu_list *vlfree, c
 
 	/* try other end of this EU */
 	VMOVE(pt_in_s2, eu->eumate_p->vu_p->v_p->vg_p->coord);
-	nmg_class = nmg_class_pt_s(pt_in_s2, s, 0, vlfree, tol);
+	nmg_class = nmg_class_pnt_s(pt_in_s2, s, 0, vlfree, tol);
 	if (nmg_class == NMG_CLASS_AinB)
 	    return NMG_CLASS_AinB;		/* shell s2 is inside shell s */
 	else if (nmg_class == NMG_CLASS_AoutB)
@@ -2579,7 +2580,7 @@ nmg_classify_s_vs_s(struct shell *s2, struct shell *s, struct bu_list *vlfree, c
 
     if (s2->vu_p && s2->vu_p->v_p->vg_p) {
 	VMOVE(pt_in_s2, s2->vu_p->v_p->vg_p->coord);
-	nmg_class = nmg_class_pt_s(pt_in_s2, s, 0, vlfree, tol);
+	nmg_class = nmg_class_pnt_s(pt_in_s2, s, 0, vlfree, tol);
 	if (nmg_class == NMG_CLASS_AinB)
 	    return NMG_CLASS_AinB;		/* shell s2 is inside shell s */
 	else if (nmg_class == NMG_CLASS_AoutB)
@@ -2594,7 +2595,7 @@ nmg_classify_s_vs_s(struct shell *s2, struct shell *s, struct bu_list *vlfree, c
 	v = (struct vertex *)BU_PTBL_GET(&verts, i);
 
 	VMOVE(pt_in_s2, v->vg_p->coord);
-	nmg_class = nmg_class_pt_s(pt_in_s2, s, 0, vlfree, tol);
+	nmg_class = nmg_class_pnt_s(pt_in_s2, s, 0, vlfree, tol);
 	if (nmg_class == NMG_CLASS_AinB) {
 	    bu_ptbl_free(&verts);
 	    return NMG_CLASS_AinB;	/* shell s2 is inside shell s */

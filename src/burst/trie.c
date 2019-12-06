@@ -155,22 +155,28 @@ void
 prntTrie(Trie *triep, int level)
 {
     Trie *tp = triep;
-    static char name_buf[MAX_TRIE_LEVEL+1], *namep;
+    static char name_buf[MAX_TRIE_LEVEL+1];
+    static char *namep = NULL;
+
     if (tp == TRIE_NULL)
 	return;
     if (tp->n.t_altr != TRIE_NULL)
 	prntTrie(tp->n.t_altr, level);
     if (level == 0)
 	namep = name_buf;
-    *namep = tp->n.t_char;
+    if (namep)
+	*namep = tp->n.t_char;
     if (tp->n.t_next == TRIE_NULL) {
 	/* At end of name, so print it out. */
-	*namep = NUL;
+	if (namep)
+	    *namep = NUL;
 	brst_log("%s\n", name_buf);
     } else {
-	namep++;
+	if (namep)
+	    namep++;
 	prntTrie(tp->n.t_next, level+1);
-	namep--;
+	if (namep)
+	    namep--;
     }
     return;
 }

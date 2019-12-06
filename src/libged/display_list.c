@@ -640,19 +640,14 @@ solid_set_color_info(
 static void
 bound_solid(struct solid *sp)
 {
-    struct bn_vlist *vp;
     point_t bmin, bmax;
     int cmd;
     VSET(bmin, INFINITY, INFINITY, INFINITY);
     VSET(bmax, -INFINITY, -INFINITY, -INFINITY);
-
-    for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
-	cmd = bn_vlist_bbox(vp, &bmin, &bmax);
-	if (cmd) {
-	    bu_log("unknown vlist op %d\n", cmd);
-	}
+    cmd = bn_vlist_bbox(&sp->s_vlist, &bmin, &bmax, NULL);
+    if (cmd) {
+	bu_log("unknown vlist op %d\n", cmd);
     }
-
     sp->s_center[X] = (bmin[X] + bmax[X]) * 0.5;
     sp->s_center[Y] = (bmin[Y] + bmax[Y]) * 0.5;
     sp->s_center[Z] = (bmin[Z] + bmax[Z]) * 0.5;
@@ -805,7 +800,7 @@ solid_point_spacing(struct bview *gvp, fastf_t solid_width)
     }
     p2[X] = sqrt((radius * radius) - (p2[Y] * p2[Y]));
 
-    return DIST_PT2_PT2(p1, p2);
+    return DIST_PNT2_PNT2(p1, p2);
 }
 
 
@@ -966,7 +961,7 @@ append_solid_to_display_list(
     struct bview_client_data *bview_data = (struct bview_client_data *)client_data;
 
     RT_CK_DB_INTERNAL(ip);
-    RT_CK_TESS_TOL(tsp->ts_ttol);
+    BG_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
     RT_CK_RESOURCE(tsp->ts_resp);
 

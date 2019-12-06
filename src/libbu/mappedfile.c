@@ -446,7 +446,7 @@ fail:
 	    munmap(mp->buf, (size_t)mp->buflen);
 #else
 #  ifdef HAVE_WINDOWS_H
-	    win_munmap(mp->buf, (size_t)mp->buflen, mp->handle);
+	win_munmap(mp->buf, (size_t)mp->buflen, mp->handle);
 #  endif
 #endif
 	else

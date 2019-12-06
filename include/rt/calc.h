@@ -57,9 +57,9 @@ RT_EXPORT extern int rt_matrix_transform(struct rt_db_internal *output, const ma
  * diagnostic), or 1 for success.
  */
 RT_EXPORT extern int rt_rpp_region(struct rt_i *rtip,
-                                   const char *reg_name,
-                                   fastf_t *min_rpp,
-                                   fastf_t *max_rpp);
+				   const char *reg_name,
+				   fastf_t *min_rpp,
+				   fastf_t *max_rpp);
 
 /**
  * Compute the intersections of a ray with a rectangular
@@ -84,9 +84,9 @@ RT_EXPORT extern int rt_rpp_region(struct rt_i *rtip,
  * rp->r_max = dist from start of ray to point at which ray LEAVES solid
  */
 RT_EXPORT extern int rt_in_rpp(struct xray *rp,
-                               const fastf_t *invdir,
-                               const fastf_t *min,
-                               const fastf_t *max);
+			       const fastf_t *invdir,
+			       const fastf_t *min,
+			       const fastf_t *max);
 
 /* Find the bounding box given a struct rt_db_internal : bbox.c */
 
@@ -111,9 +111,9 @@ RT_EXPORT extern int rt_in_rpp(struct xray *rp,
  *
  */
 RT_EXPORT extern int rt_bound_internal(struct db_i *dbip,
-                                       struct directory *dp,
-                                       point_t rpp_min,
-                                       point_t rpp_max);
+				       struct directory *dp,
+				       point_t rpp_min,
+				       point_t rpp_max);
 
 /**
  *
@@ -130,34 +130,34 @@ RT_EXPORT extern int rt_bound_internal(struct db_i *dbip,
  * <0 Failure
  */
 RT_EXPORT extern int rt_shader_mat(mat_t                        model_to_shader,        /* result */
-                                   const struct rt_i    *rtip,
-                                   const struct region  *rp,
-                                   point_t                      p_min,  /* input/output: shader/region min point */
-                                   point_t                      p_max,  /* input/output: shader/region max point */
-                                   struct resource              *resp);
+				   const struct rt_i    *rtip,
+				   const struct region  *rp,
+				   point_t                      p_min,  /* input/output: shader/region min point */
+				   point_t                      p_max,  /* input/output: shader/region max point */
+				   struct resource              *resp);
 
 /* mirror.c */
 RT_EXPORT extern struct rt_db_internal *rt_mirror(struct db_i *dpip,
-                                                  struct rt_db_internal *ip,
-                                                  point_t mirror_pt,
-                                                  vect_t mirror_dir,
-                                                  struct resource *resp);
+						  struct rt_db_internal *ip,
+						  point_t mirror_pt,
+						  vect_t mirror_dir,
+						  struct resource *resp);
 
 
 RT_EXPORT extern void rt_plot_all_bboxes(FILE *fp,
-                                         struct rt_i *rtip);
+					 struct rt_i *rtip);
 RT_EXPORT extern void rt_plot_all_solids(FILE           *fp,
-                                         struct rt_i    *rtip,
-                                         struct resource        *resp);
+					 struct rt_i    *rtip,
+					 struct resource        *resp);
 
 
 /* pr.c */
 /* TODO - do these belong in libbn? */
 RT_EXPORT extern void rt_pr_fallback_angle(struct bu_vls *str,
-                                           const char *prefix,
-                                           const double angles[5]);
+					   const char *prefix,
+					   const double angles[5]);
 RT_EXPORT extern void rt_find_fallback_angle(double angles[5],
-                                             const vect_t vec);
+					     const vect_t vec);
 RT_EXPORT extern void rt_pr_tol(const struct bn_tol *tol);
 
 
@@ -175,8 +175,8 @@ RT_EXPORT extern void rt_pr_tol(const struct bn_tol *tol);
  * algorithm will also be required.
  */
 RT_EXPORT extern int rt_poly_roots(bn_poly_t *eqn,
-                                   bn_complex_t roots[],
-                                   const char *name);
+				   bn_complex_t roots[],
+				   const char *name);
 
 /** @} */
 

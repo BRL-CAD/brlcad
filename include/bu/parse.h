@@ -96,32 +96,32 @@ __BEGIN_DECLS
  *
  * For example:
  *
- @code
-
- struct data_structure {
-   char a_char;
-   char str[32];
-   short a_short;
-   int a_int;
-   fastf_t a_fastf_t;
-   double a_double;
- }
-
- struct data_structure default = { 'c', "the default string", 32767, 1, 1.0, 1.0 };
-
- struct data_structure my_values;
-
- struct bu_structparse data_sp[] ={
-   {"%c", 1,     "a_char",   bu_offsetof(data_structure, a_char), BU_STRUCTPARSE_FUNC_NULL,                      "a single character", (void*)&default.a_char},
-   {"%s", 32,       "str", bu_offsetofarray(data_structure, str), BU_STRUCTPARSE_FUNC_NULL,         "This is a full character string", (void*)default.str},
-   {"%i", 1,    "a_short",  bu_offsetof(data_structure, a_short), BU_STRUCTPARSE_FUNC_NULL,                         "A 16bit integer", (void*)&default.a_short},
-   {"%d", 1,      "a_int",    bu_offsetof(data_structure, a_int), BU_STRUCTPARSE_FUNC_NULL,                          "A full integer", (void*)&default.a_int},
-   {"%f", 1,   "a_fastf_t", bu_offsetof(data_structure, a_fastf_t), BU_STRUCTPARSE_FUNC_NULL, "A variable-precision fasf_t floating point value", (void*)&default.a_fastf_t},
-   {"%g", 1,   "a_double", bu_offsetof(data_structure, a_double), BU_STRUCTPARSE_FUNC_NULL, "A double-precision fasf_t floating point value", (void*)&default.a_double},
-   {  "", 0, (char *)NULL,                                     0, BU_STRUCTPARSE_FUNC_NULL,                              (char *)NULL, (void *)NULL}
- };
-
- @endcode
+ * @code
+ *
+ * struct data_structure {
+ *   char a_char;
+ *   char str[32];
+ *   short a_short;
+ *   int a_int;
+ *   fastf_t a_fastf_t;
+ *   double a_double;
+ * }
+ *
+ * struct data_structure default = { 'c', "the default string", 32767, 1, 1.0, 1.0 };
+ *
+ * struct data_structure my_values;
+ *
+ * struct bu_structparse data_sp[] ={
+ *   {"%c", 1,     "a_char",   bu_offsetof(data_structure, a_char), BU_STRUCTPARSE_FUNC_NULL,                      "a single character", (void*)&default.a_char},
+ *   {"%s", 32,       "str", bu_offsetofarray(data_structure, str), BU_STRUCTPARSE_FUNC_NULL,         "This is a full character string", (void*)default.str},
+ *   {"%i", 1,    "a_short",  bu_offsetof(data_structure, a_short), BU_STRUCTPARSE_FUNC_NULL,                         "A 16bit integer", (void*)&default.a_short},
+ *   {"%d", 1,      "a_int",    bu_offsetof(data_structure, a_int), BU_STRUCTPARSE_FUNC_NULL,                          "A full integer", (void*)&default.a_int},
+ *   {"%f", 1,   "a_fastf_t", bu_offsetof(data_structure, a_fastf_t), BU_STRUCTPARSE_FUNC_NULL, "A variable-precision fasf_t floating point value", (void*)&default.a_fastf_t},
+ *   {"%g", 1,   "a_double", bu_offsetof(data_structure, a_double), BU_STRUCTPARSE_FUNC_NULL, "A double-precision fasf_t floating point value", (void*)&default.a_double},
+ *   {  "", 0, (char *)NULL,                                     0, BU_STRUCTPARSE_FUNC_NULL,                              (char *)NULL, (void *)NULL}
+ * };
+ *
+ * @endcode
  *
  * To parse a string, call:
  *
@@ -229,14 +229,14 @@ typedef struct bu_external bu_external_t;
  * initializes a bu_external struct without allocating any memory.
  */
 #if defined(USE_BINARY_ATTRIBUTES)
-  #define BU_EXTERNAL_INIT(_p) { \
+#  define BU_EXTERNAL_INIT(_p) { \
 	(_p)->ext_magic = BU_EXTERNAL_MAGIC; \
 	(_p)->ext_nbytes = 0; \
 	(_p)->widcode = 0; \
 	(_p)->ext_buf = NULL; \
     }
 #else
-  #define BU_EXTERNAL_INIT(_p) { \
+#  define BU_EXTERNAL_INIT(_p) { \
 	(_p)->ext_magic = BU_EXTERNAL_MAGIC; \
 	(_p)->ext_nbytes = 0; \
 	(_p)->ext_buf = NULL; \
@@ -248,9 +248,9 @@ typedef struct bu_external bu_external_t;
  * bu_external struct. does not allocate memory.
  */
 #if defined(USE_BINARY_ATTRIBUTES)
-  #define BU_EXTERNAL_INIT_ZERO { BU_EXTERNAL_MAGIC, 0, 0, NULL }
+#  define BU_EXTERNAL_INIT_ZERO { BU_EXTERNAL_MAGIC, 0, 0, NULL }
 #else
-  #define BU_EXTERNAL_INIT_ZERO { BU_EXTERNAL_MAGIC, 0, NULL }
+#  define BU_EXTERNAL_INIT_ZERO { BU_EXTERNAL_MAGIC, 0, NULL }
 #endif
 /**
  * returns truthfully whether a bu_external struct has been

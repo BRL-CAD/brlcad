@@ -118,9 +118,9 @@ face_area(struct rt_bot_internal *bot, size_t face_num)
     VMOVE(ptA, &bot->vertices[bot->faces[face_num*3+0]*3]);
     VMOVE(ptB, &bot->vertices[bot->faces[face_num*3+1]*3]);
     VMOVE(ptC, &bot->vertices[bot->faces[face_num*3+2]*3]);
-    a = DIST_PT_PT(ptA, ptB);
-    b = DIST_PT_PT(ptB, ptC);
-    c = DIST_PT_PT(ptC, ptA);
+    a = DIST_PNT_PNT(ptA, ptB);
+    b = DIST_PNT_PNT(ptB, ptC);
+    c = DIST_PNT_PNT(ptC, ptA);
     p = (a + b + c)/2;
     area = sqrt(p*(p-a)*(p-b)*(p-c));
     return area;
@@ -883,7 +883,7 @@ bot_partition(struct Manifold_Info *info)
 					double dist_to_plane = plane.DistanceTo(ON_3dPoint(cpt[0], cpt[1], cpt[2]));
 					//std::cout << "Distance[" << face_num << "," << (*cf_it) << "](" <<  pt << "): " << dist_to_plane << "\n";
 					if (dist_to_plane > 0) {
-					    double dist = DIST_PT_PT(origin, cpt);
+					    double dist = DIST_PNT_PNT(origin, cpt);
 					    double angle = atan(dist_to_plane/dist);
 					    if (angle > info->neighbor_angle_threshold) ok = 0;
 					}

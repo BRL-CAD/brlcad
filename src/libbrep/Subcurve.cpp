@@ -19,7 +19,8 @@
  */
 
 #include "common.h"
-#include "brep.h"
+#include "brep/defines.h"
+#include "brep/intersect.h"
 
 Subcurve::Subcurve()
     : m_curve(NULL), m_islinear(false)

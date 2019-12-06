@@ -31,12 +31,13 @@
 
 #include "bu/str.h"
 #include "bu/exit.h"
+#include "bu/malloc.h"
 
 
 static void
 skip(int num)
 {
-    double buf[4096] = {0};
+    double buf[BU_PAGE_SIZE] = {0};
     int n, m;
 
     while (num > 0) {
@@ -51,7 +52,7 @@ skip(int num)
 static void
 keep(int num)
 {
-    double buf[4096] = {0};
+    double buf[BU_PAGE_SIZE] = {0};
     int n, m;
     size_t ret;
 

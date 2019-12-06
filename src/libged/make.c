@@ -575,7 +575,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_meth = &OBJ[ID_NMG];
 	internal.idb_ptr = (void *)m;
     } else if (BU_STR_EQUAL(argv[bu_optind+1], "pipe")) {
-	struct wdb_pipept *ps;
+	struct wdb_pipe_pnt *ps;
 
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_PIPE;
@@ -584,14 +584,14 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	pipe_ip = (struct rt_pipe_internal *)internal.idb_ptr;
 	pipe_ip->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
 	BU_LIST_INIT(&pipe_ip->pipe_segs_head);
-	BU_ALLOC(ps, struct wdb_pipept);
+	BU_ALLOC(ps, struct wdb_pipe_pnt);
 	ps->l.magic = WDB_PIPESEG_MAGIC;
 	VSET(ps->pp_coord, origin[X], origin[Y], origin[Z]-0.5*scale);
 	ps->pp_od = 0.25*scale;
 	ps->pp_id = 0.25*ps->pp_od;
 	ps->pp_bendradius = ps->pp_od;
 	BU_LIST_INSERT(&pipe_ip->pipe_segs_head, &ps->l);
-	BU_ALLOC(ps, struct wdb_pipept);
+	BU_ALLOC(ps, struct wdb_pipe_pnt);
 	ps->l.magic = WDB_PIPESEG_MAGIC;
 	VSET(ps->pp_coord, origin[X], origin[Y], origin[Z]+0.5*scale);
 	ps->pp_od = 0.25*scale;
@@ -803,7 +803,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "make: the %s primitive is not supported by this command", argv[bu_optind+1]);
 	return GED_ERROR;
     } else if (BU_STR_EQUAL(argv[bu_optind+1], "metaball")) {
-	struct wdb_metaballpt *mbpt;
+	struct wdb_metaball_pnt *mbpt;
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_METABALL;
 	internal.idb_meth = &OBJ[ID_METABALL];
@@ -814,13 +814,13 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	metaball_ip->method = 1;
 	BU_LIST_INIT(&metaball_ip->metaball_ctrl_head);
 
-	mbpt = (struct wdb_metaballpt *)malloc(sizeof(struct wdb_metaballpt));
+	mbpt = (struct wdb_metaball_pnt *)malloc(sizeof(struct wdb_metaball_pnt));
 	mbpt->fldstr = 1.0;
 	mbpt->sweat = 1.0;
 	VSET(mbpt->coord, origin[X] - 1.0, origin[Y], origin[Z]);
 	BU_LIST_INSERT(&metaball_ip->metaball_ctrl_head, &mbpt->l);
 
-	mbpt = (struct wdb_metaballpt *)malloc(sizeof(struct wdb_metaballpt));
+	mbpt = (struct wdb_metaball_pnt *)malloc(sizeof(struct wdb_metaball_pnt));
 	mbpt->fldstr = 1.0;
 	mbpt->sweat = 1.0;
 	VSET(mbpt->coord, origin[X] + 1.0, origin[Y], origin[Z]);

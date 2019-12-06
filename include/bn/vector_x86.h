@@ -139,12 +139,12 @@ dvec<LEN>::operator==(const dvec<LEN>& b) const
 }
 
 #define DOP_IMPL(__op__) {                             \
-    dvec_internal<LEN> result;                         \
-    for (int i = 0; i < LEN/2; i++) {                 \
-	result.v[i] = __op__(data.v[i], b.data.v[i]); \
-    }                                                 \
-    return dvec<LEN>(result);                         \
-}
+	dvec_internal<LEN> result;                         \
+	for (int i = 0; i < LEN/2; i++) {                 \
+	    result.v[i] = __op__(data.v[i], b.data.v[i]); \
+	}                                                 \
+	return dvec<LEN>(result);                         \
+    }
 
 template<int LEN>
 inline dvec<LEN>

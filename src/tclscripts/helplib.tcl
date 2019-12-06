@@ -233,7 +233,7 @@ set helplib_data(mat_lookat)		{{dir yflip}	{compute a matrix which rotates vecto
 set helplib_data(mat_vec_ortho)		{{vec}	{find a vector which is perpendicular to vec and with unit length}}
 set helplib_data(mat_vec_perp)		{{vec}	{find a vector which is perpendicular to vec and with unit length
     if vec was of unit length}}
-set helplib_data(mat_scale_about_pt)	{{pt scale}	{build a matrix to scale uniformly around a given point}}
+set helplib_data(mat_scale_about_pnt)	{{pt scale}	{build a matrix to scale uniformly around a given point}}
 set helplib_data(mat_xform_about_pt)	{{xform pt}	{build a matrix to apply an arbitrary 4x4 transformation around
     a given point}}
 set helplib_data(mat_arb_rot)		{{pt dir angle}	{build a matrix to rotate about an arbitrary axis}}

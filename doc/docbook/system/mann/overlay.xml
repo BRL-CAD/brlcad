@@ -24,12 +24,18 @@
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
 
-  <para>Plots the specified UNIX <emphasis>plot_file</emphasis> in the MGED display.
-	Phony object names are created for each part of the plot file that is in a unique color.
-	The names are created by adding a color to the specified <emphasis>name</emphasis>, or to
-	_PLOT_OVER if no name is provided. The color suffix is built by converting the
-	RGB color to a six-digit hex number. Each color corresponds to 2 hex digits, so that
-	white becomes "ffffff," red becomes "ff0000," green is "00ff00," etc.
+  <para>Plots the specified UNIX <emphasis>plot_file</emphasis> in the
+  MGED display.  Multiple files may be specified using a pattern match
+  (e.g., <command>overlay</command> <emphasis>*.plot</emphasis>).
+  </para>
+
+  <para>Phony object names are created for each part of the plot file
+  that is in a unique color.  The names are created by adding a color
+  to the specified <emphasis>name</emphasis>, or to _PLOT_OVER
+  if no name is provided. The color suffix is built by converting the
+  RGB color to a six-digit hex number. Each color corresponds to 2 hex
+  digits, so that white becomes "ffffff," red becomes "ff0000," green
+  is "00ff00," etc.
   </para>
 </refsection>
 

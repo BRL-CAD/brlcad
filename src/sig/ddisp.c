@@ -28,14 +28,13 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "bu/malloc.h"
 #include "bu/color.h"
 #include "bu/str.h"
 #include "bu/exit.h"
 #include "bu/snooze.h"
 #include "fb.h"
 
-
-#define MAXPTS 4096
 
 #define VERT 1
 #define BARS 2
@@ -140,7 +139,7 @@ main(int argc, char **argv)
     static const char usage[] = "Usage: ddisp [-v -b -p -c -H] [width (512)] < inputfile\n";
 
     fb *fbp = NULL;
-    double buf[MAXPTS];
+    double buf[BU_PAGE_SIZE];
 
     int n, L;
     int Clear = 0;
@@ -179,7 +178,7 @@ main(int argc, char **argv)
 	bu_exit(2, "Unable to open framebuffer\n");
     }
 
-    L = (argc > 1) ? atoi(argv[1]) : 512;
+    L = (argc > 1) ? atoi(argv[1]) : BU_PAGE_SIZE;
 
     while ((n = fread(buf, sizeof(*buf), L, stdin)) > 0) {
 	/* XXX - width hack */
