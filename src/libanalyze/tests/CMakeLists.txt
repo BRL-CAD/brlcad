@@ -1,10 +1,11 @@
-BRLCAD_ADDEXEC(tester_raydiff raydiff.c "libanalyze;libbu" NO_INSTALL)
-BRLCAD_ADDEXEC(tester_sp solid_partitions.c "libanalyze;libbu" NO_INSTALL)
+BRLCAD_ADDEXEC(analyze_raydiff raydiff.c "libanalyze;libbu" TEST)
+BRLCAD_ADDEXEC(analyze_sp solid_partitions.c "libanalyze;libbu" TEST)
+BRLCAD_ADDEXEC(analyze_nhit nhit.cpp "libanalyze;libbu" TEST_USESDATA)
 
 #####################################
 #      analyze_densities testing    #
 #####################################
-BRLCAD_ADDEXEC(analyze_densities density.cpp "libanalyze;libbu" NO_INSTALL)
+BRLCAD_ADDEXEC(analyze_densities density.cpp "libanalyze;libbu" TEST)
 
 add_test(NAME analyze_densities_null        COMMAND analyze_densities)
 add_test(NAME analyze_densities_std        COMMAND analyze_densities std)

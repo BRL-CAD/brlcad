@@ -40,6 +40,9 @@ add_subdirectory(ged)
 # Geometry Conversion Regression Tests
 add_subdirectory(gcv)
 
+# NURBS Regression Tests
+add_subdirectory(nurbs)
+
 # Burst Regression Tests
 add_subdirectory(burst)
 
@@ -145,7 +148,6 @@ CMAKEFILES(
   moss.ref.pix
   moss.sh
   nirt.sh
-  nurbs/brep-3dm.tar.bz2
   red.sh
   repository.sh
   rtedge.ref.pix.gz
