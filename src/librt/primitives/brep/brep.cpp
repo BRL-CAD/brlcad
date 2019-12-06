@@ -514,10 +514,6 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
     ON_TextLog tl(stderr);
     if (!bs->brep->IsValid(&tl))
 	bu_log("brep is NOT valid\n");
-    else {
-	bs->is_solid = bs->brep->IsSolid();
-	bu_log("brep %s solid\n", (bs->is_solid) ? "is" : "is NOT");
-    }
 
     //start = bu_gettime();
     /* do the majority of real work here */
@@ -1012,7 +1008,7 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
     hits.sort();
     std::list<brep_hit> orig = hits;
 
-    ////////////////////////
+////////////////////////
     if ((hits.size() > 1) && containsNearMiss(&hits)) { //&& ((hits.size() % 2) != 0)) {
 
 	std::list<brep_hit>::iterator prev;
@@ -1298,16 +1294,23 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	}
     }
 
-    size_t nhits = hits.size();
-    if (nhits > 0) {
+    bool hit = false;
+    if (hits.size() > 1) {
 
+//#define KODDHIT
+#ifdef KODDHIT //ugly debugging hack to raytrace single surface and not worry about odd hits
+	static fastf_t diststep = 0.0;
+	bool hit_it = !hits.empty();
+#else
 	bool hit_it = hits.size() % 2 == 0;
-
-	if (hit_it && bs->is_solid) {
+#endif
+	if (hit_it) {
 	    // take each pair as a segment
 	    for (std::list<brep_hit>::const_iterator i = hits.begin(); i != hits.end(); ++i) {
 		const brep_hit& in = *i;
+#ifndef KODDHIT  //ugly debugging hack to raytrace single surface and not worry about odd hits
 		i++;
+#endif
 		const brep_hit& out = *i;
 
 		struct seg* segp;
@@ -1316,8 +1319,11 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 
 		VMOVE(segp->seg_in.hit_point, in.point);
 		VMOVE(segp->seg_in.hit_normal, in.normal);
+#ifdef KODDHIT //ugly debugging hack to raytrace single surface and not worry about odd hits
+		segp->seg_in.hit_dist = diststep + 1.0;
+#else
 		segp->seg_in.hit_dist = in.dist;
-
+#endif
 		segp->seg_in.hit_surfno = in.face.m_face_index;
 		VSET(segp->seg_in.hit_vpriv, in.uv[0], in.uv[1], 0.0);
 
@@ -1329,70 +1335,25 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 
 		BU_LIST_INSERT(&(seghead->l), &(segp->l));
 	    }
-	    nhits /= 2;
-
+	    hit = true;
 	} else {
-
-	    /* NON-SOLID CASE */
-
-	    double los = bs->brep->m_brep_user.d; // FIXME: currently packing a single global thickness
-	    if (los < 0)
-		los = -los;
-
-	    /* iterate over all hit points assuming a plate-mode shell */
-	    for (std::list<brep_hit>::const_iterator i = hits.begin(); i != hits.end(); ++i) {
-		const brep_hit& in = *i;
-		const brep_hit& out = *i;
-
-		struct seg* segp;
-		RT_GET_SEG(segp, ap->a_resource);
-		segp->seg_stp = stp;
-
-		/* set in hit */
-		segp->seg_in.hit_dist = in.dist - (los*0.5); // segment
-							     // is
-							     // centered
-							     // on the
-							     // hit
-							     // point
-		segp->seg_in.hit_surfno = in.face.m_face_index;
-		VSET(segp->seg_in.hit_vpriv, in.uv[0], in.uv[1], 0.0);
-		VMOVE(segp->seg_in.hit_normal, in.normal);
-		VJOIN1(segp->seg_in.hit_point, rp->r_pt, in.dist, rp->r_dir);
-
-		VMOVE(segp->seg_out.hit_point, out.point);
-		VMOVE(segp->seg_out.hit_normal, out.normal);
-		segp->seg_out.hit_dist = out.dist;
-
-		/* set out hit */
-		segp->seg_out.hit_dist = out.dist + (los*0.5); // centered
-                segp->seg_out.hit_surfno = out.face.m_face_index;
-                VSET(segp->seg_out.hit_vpriv, out.uv[0], out.uv[1], 0.0);
-		VREVERSE(segp->seg_out.hit_normal, out.normal);
-		VJOIN1(segp->seg_out.hit_point, rp->r_pt, out.dist, rp->r_dir);
-
-                BU_LIST_INSERT(&(seghead->l), &(segp->l));
-	    }
-
-#ifdef DEBUG_HITS
 	    //TRACE2("screen xy: " << ap->a_x << ", " << ap->a_y);
 	    bu_log("**** ERROR odd number of hits: %lu\n", static_cast<unsigned long>(hits.size()));
 	    bu_log("xyz %g %g %g \n", rp->r_pt[0], rp->r_pt[1], rp->r_pt[2]);
 	    bu_log("dir %g %g %g \n", rp->r_dir[0], rp->r_dir[1], rp->r_dir[2]);
 	    bu_log("**** Current Hits: %lu\n", static_cast<unsigned long>(hits.size()));
 
-	    log_hits(hits, debug_output);
+	    //log_hits(hits, debug_output);
 
 	    bu_log("\n**** Orig Hits: %lu\n", static_cast<unsigned long>(orig.size()));
 
-	    log_hits(orig, debug_output);
+	    //log_hits(orig, debug_output);
 
 	    bu_log("\n**********************\n");
-#endif
 	}
     }
 
-    return nhits;
+    return (hit) ? (int)hits.size() : 0; // MISS
 }
 
 
@@ -1403,7 +1364,7 @@ void
 rt_brep_norm(struct hit *UNUSED(hitp), struct soltab *UNUSED(stp), struct xray *UNUSED(rp))
 {
     /* normal was computed during shot, resides in hitp->hit_normal */
-    return;
+	return;
 }
 
 
