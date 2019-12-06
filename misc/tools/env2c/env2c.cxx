@@ -52,13 +52,16 @@
 /* Uncomment to debug stand-alone */
 //#define TEST_MAIN 1
 
+class env_outputs {
+    public:
+	std::set<std::pair<std::string,std::string>> o_vars;
+	std::set<std::pair<std::string,std::string>> blib_vars;
+	std::set<std::pair<std::string,std::string>> bexe_vars;
+	std::map<std::string, std::set<std::string>> c_vars;
+};
+
 void
-process_file(
-	std::set<std::pair<std::string,std::string>> &o_vars,
-	std::set<std::pair<std::string,std::string>> &blib_vars,
-	std::set<std::pair<std::string,std::string>> &bexe_vars,
-	std::map<std::string, std::set<std::string>> &c_vars,
-	std::string f, int verbose)
+process_file(env_outputs &env, std::string f, int verbose)
 {
     std::regex getenv_regex(".*getenv\\(\\\".*");
     std::regex evar_regex(".*getenv\\(\\\"([^\\\"]+)\\\"\\).*");
@@ -96,16 +99,16 @@ process_file(
 		if (verbose) {
 		    std::cout << sp_match[1] << "[SYSTEM]: " << envvar[1] << "\n";
 		}
-		o_vars.insert(std::make_pair(std::string(sp_match[1]), std::string(envvar[1])));
-		c_vars[std::string(sp_match[1])].insert(std::string(envvar[1]));
+		env.o_vars.insert(std::make_pair(std::string(sp_match[1]), std::string(envvar[1])));
+		env.c_vars[std::string(sp_match[1])].insert(std::string(envvar[1]));
 		continue;
 	    }
 	    if (std::regex_match(f, bullet_regex)) {
 		if (verbose) {
 		    std::cout << "bullet[SYSTEM]: " << envvar[1] << "\n";
 		}
-		o_vars.insert(std::make_pair(std::string("bullet"), std::string(envvar[1])));
-		c_vars[std::string("bullet")].insert(std::string(envvar[1]));
+		env.o_vars.insert(std::make_pair(std::string("bullet"), std::string(envvar[1])));
+		env.c_vars[std::string("bullet")].insert(std::string(envvar[1]));
 		continue;
 	    }
 	    std::cout << f << "[SYSTEM]: " << envvar[1] << "\n";
@@ -118,8 +121,8 @@ process_file(
 		if (verbose) {
 		    std::cout << "lib" << lp_match[1] << ": " << envvar[1] << "\n";
 		}
-		blib_vars.insert(std::make_pair(std::string(lp_match[1]), std::string(envvar[1])));
-		c_vars[std::string(lp_match[1])].insert(std::string(envvar[1]));
+		env.blib_vars.insert(std::make_pair(std::string(lp_match[1]), std::string(envvar[1])));
+		env.c_vars[std::string(lp_match[1])].insert(std::string(envvar[1]));
 		continue;
 	    }
 	}
@@ -130,8 +133,8 @@ process_file(
 		if (verbose) {
 		    std::cout << ep_match[1] << ": " << envvar[1] << "\n";
 		}
-		bexe_vars.insert(std::make_pair(std::string(ep_match[1]), std::string(envvar[1])));
-		c_vars[std::string(ep_match[1])].insert(std::string(envvar[1]));
+		env.bexe_vars.insert(std::make_pair(std::string(ep_match[1]), std::string(envvar[1])));
+		env.c_vars[std::string(ep_match[1])].insert(std::string(envvar[1]));
 		continue;
 	    }
 	}
@@ -140,8 +143,8 @@ process_file(
 		if (verbose) {
 		    std::cout << "bench: " << envvar[1] << "\n";
 		}
-		bexe_vars.insert(std::make_pair(std::string("bench"), std::string(envvar[1])));
-		c_vars[std::string("bench")].insert(std::string(envvar[1]));
+		env.bexe_vars.insert(std::make_pair(std::string("bench"), std::string(envvar[1])));
+		env.c_vars[std::string("bench")].insert(std::string(envvar[1]));
 		continue;
 	    }
 	}
@@ -158,12 +161,10 @@ main(int argc, const char *argv[])
     int verbose = 0;
     std::set<std::string> all_vars;
     std::set<std::string> cad_vars;
+
+    env_outputs env;
     std::set<std::pair<std::string,std::string>>::iterator v_it;
-    std::set<std::pair<std::string,std::string>> o_vars;
-    std::set<std::pair<std::string,std::string>> blib_vars;
-    std::set<std::pair<std::string,std::string>> bexe_vars;
     std::map<std::string, std::set<std::string>>::iterator c_it;
-    std::map<std::string, std::set<std::string>> c_vars;
     std::set<std::string>::iterator e_it;
 
     if (argc < 3) {
@@ -192,19 +193,19 @@ main(int argc, const char *argv[])
     }
     while (std::getline(fs, sfile)) {
 	if (!std::regex_match(sfile, skip_regex)) {
-	    process_file(o_vars, blib_vars, bexe_vars, c_vars, sfile, verbose);
+	    process_file(env, sfile, verbose);
 	}
     }
     fs.close();
 
-    for (v_it = o_vars.begin(); v_it != o_vars.end(); v_it++) {
+    for (v_it = env.o_vars.begin(); v_it != env.o_vars.end(); v_it++) {
 	all_vars.insert(v_it->second);
     }
-    for (v_it = blib_vars.begin(); v_it != blib_vars.end(); v_it++) {
+    for (v_it = env.blib_vars.begin(); v_it != env.blib_vars.end(); v_it++) {
 	all_vars.insert(v_it->second);
 	cad_vars.insert(v_it->second);
     }
-    for (v_it = bexe_vars.begin(); v_it != bexe_vars.end(); v_it++) {
+    for (v_it = env.bexe_vars.begin(); v_it != env.bexe_vars.end(); v_it++) {
 	cad_vars.insert(v_it->second);
     }
 
@@ -244,27 +245,27 @@ main(int argc, const char *argv[])
     ofile << "};\n\n";
 
     ofile << "static const struct envcmd_entry other_vars[] = {\n";
-    for (v_it = o_vars.begin(); v_it != o_vars.end(); v_it++) {
+    for (v_it = env.o_vars.begin(); v_it != env.o_vars.end(); v_it++) {
 	ofile << "  {\"" << v_it->first << "\",\"" << v_it->second << "\"},\n";
     }
     ofile << "  {\"NULL\", \"NULL\"}\n";
     ofile << "};\n\n";
 
     ofile << "static const struct envcmd_entry lib_vars[] = {\n";
-    for (v_it = blib_vars.begin(); v_it != blib_vars.end(); v_it++) {
+    for (v_it = env.blib_vars.begin(); v_it != env.blib_vars.end(); v_it++) {
 	ofile << "  {\"" << v_it->first << "\",\"" << v_it->second << "\"},\n";
     }
     ofile << "  {\"NULL\", \"NULL\"}\n";
     ofile << "};\n\n";
 
     ofile << "static const struct envcmd_entry exe_vars[] = {\n";
-    for (v_it = bexe_vars.begin(); v_it != bexe_vars.end(); v_it++) {
+    for (v_it = env.bexe_vars.begin(); v_it != env.bexe_vars.end(); v_it++) {
 	ofile << "  {\"" << v_it->first << "\",\"" << v_it->second << "\"},\n";
     }
     ofile << "  {\"NULL\", \"NULL\"}\n";
     ofile << "};\n\n";
 
-    for (c_it = c_vars.begin(); c_it != c_vars.end(); c_it++) {
+    for (c_it = env.c_vars.begin(); c_it != env.c_vars.end(); c_it++) {
 	std::string var_root = c_it->first;
 	std::replace(var_root.begin(), var_root.end(), '-', '_');
 	ofile << "static const char * const " << var_root << "_vars[] = {\n";
@@ -281,7 +282,7 @@ main(int argc, const char *argv[])
     ofile << "};\n\n";
 
     ofile << "static const struct env_context_entry context_vars[] = {\n";
-    for (c_it = c_vars.begin(); c_it != c_vars.end(); c_it++) {
+    for (c_it = env.c_vars.begin(); c_it != env.c_vars.end(); c_it++) {
 	std::string var_root = c_it->first;
 	std::replace(var_root.begin(), var_root.end(), '-', '_');
 	ofile << "  {\"" << c_it->first << "\", (const char * const *)&" << var_root << "_vars},\n";
