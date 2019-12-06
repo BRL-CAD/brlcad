@@ -48,6 +48,7 @@
 #include <map>
 #include <sstream>
 #include <string>
+#include <thread>
 
 /* Uncomment to debug stand-alone */
 //#define TEST_MAIN 1
@@ -58,11 +59,15 @@ class env_outputs {
 	std::set<std::pair<std::string,std::string>> blib_vars;
 	std::set<std::pair<std::string,std::string>> bexe_vars;
 	std::map<std::string, std::set<std::string>> c_vars;
+	std::string f;
+	int verbose;
 };
 
 void
-process_file(env_outputs &env, std::string f, int verbose)
+process_file(env_outputs &env_t)
 {
+    env_outputs &env = const_cast<env_outputs &>(env_t);
+
     std::regex getenv_regex(".*getenv\\(\\\".*");
     std::regex evar_regex(".*getenv\\(\\\"([^\\\"]+)\\\"\\).*");
     std::regex o_regex(".*[\\/]other[\\/].*");
@@ -73,14 +78,14 @@ process_file(env_outputs &env, std::string f, int verbose)
     std::regex bullet_regex(".*[\\/](bullet)[\\/].*");
 
     std::regex srcfile_regex(".*[.](cxx|c|cpp|h|hpp|hxx)(\\.in)*$");
-    if (!std::regex_match(f, srcfile_regex)) {
+    if (!std::regex_match(env.f, srcfile_regex)) {
 	return;
     }
     std::string sline;
     std::ifstream fs;
-    fs.open(f);
+    fs.open(env.f);
     if (!fs.is_open()) {
-	std::cerr << "Unable to open " << f << " for reading, skipping\n";
+	std::cerr << "Unable to open " << env.f << " for reading, skipping\n";
 	return;
     }
     while (std::getline(fs, sline)) {
@@ -89,36 +94,36 @@ process_file(env_outputs &env, std::string f, int verbose)
 	}
 	std::smatch envvar;
 	if (!std::regex_search(sline, envvar, evar_regex)) {
-	    std::cerr << "Error, could not find environment variable in file " << f << " line:\n" << sline << "\n";
+	    std::cerr << "Error, could not find environment variable in file " << env.f << " line:\n" << sline << "\n";
 	    continue;
 	}
 
-	if (std::regex_match(f, o_regex) || std::regex_match(f, bullet_regex)) {
+	if (std::regex_match(env.f, o_regex) || std::regex_match(env.f, bullet_regex)) {
 	    std::smatch sp_match;
-	    if (std::regex_search(f, sp_match, sp_regex)) {
-		if (verbose) {
+	    if (std::regex_search(env.f, sp_match, sp_regex)) {
+		if (env.verbose) {
 		    std::cout << sp_match[1] << "[SYSTEM]: " << envvar[1] << "\n";
 		}
 		env.o_vars.insert(std::make_pair(std::string(sp_match[1]), std::string(envvar[1])));
 		env.c_vars[std::string(sp_match[1])].insert(std::string(envvar[1]));
 		continue;
 	    }
-	    if (std::regex_match(f, bullet_regex)) {
-		if (verbose) {
+	    if (std::regex_match(env.f, bullet_regex)) {
+		if (env.verbose) {
 		    std::cout << "bullet[SYSTEM]: " << envvar[1] << "\n";
 		}
 		env.o_vars.insert(std::make_pair(std::string("bullet"), std::string(envvar[1])));
 		env.c_vars[std::string("bullet")].insert(std::string(envvar[1]));
 		continue;
 	    }
-	    std::cout << f << "[SYSTEM]: " << envvar[1] << "\n";
+	    std::cout << env.f << "[SYSTEM]: " << envvar[1] << "\n";
 	    continue;
 	}
 
 	{
 	    std::smatch lp_match;
-	    if (std::regex_search(f, lp_match, lp_regex)) {
-		if (verbose) {
+	    if (std::regex_search(env.f, lp_match, lp_regex)) {
+		if (env.verbose) {
 		    std::cout << "lib" << lp_match[1] << ": " << envvar[1] << "\n";
 		}
 		env.blib_vars.insert(std::make_pair(std::string(lp_match[1]), std::string(envvar[1])));
@@ -129,8 +134,8 @@ process_file(env_outputs &env, std::string f, int verbose)
 
 	{
 	    std::smatch ep_match;
-	    if (std::regex_search(f, ep_match, ep_regex)) {
-		if (verbose) {
+	    if (std::regex_search(env.f, ep_match, ep_regex)) {
+		if (env.verbose) {
 		    std::cout << ep_match[1] << ": " << envvar[1] << "\n";
 		}
 		env.bexe_vars.insert(std::make_pair(std::string(ep_match[1]), std::string(envvar[1])));
@@ -139,8 +144,8 @@ process_file(env_outputs &env, std::string f, int verbose)
 	    }
 	}
 	{
-	    if (std::regex_match(f, bench_regex)) {
-		if (verbose) {
+	    if (std::regex_match(env.f, bench_regex)) {
+		if (env.verbose) {
 		    std::cout << "bench: " << envvar[1] << "\n";
 		}
 		env.bexe_vars.insert(std::make_pair(std::string("bench"), std::string(envvar[1])));
@@ -149,7 +154,7 @@ process_file(env_outputs &env, std::string f, int verbose)
 	    }
 	}
 
-	std::cout << f << ": " << envvar[1] << "\n";
+	std::cout << env.f << ": " << envvar[1] << "\n";
     }
     fs.close();
 
@@ -161,6 +166,7 @@ main(int argc, const char *argv[])
     int verbose = 0;
     std::set<std::string> all_vars;
     std::set<std::string> cad_vars;
+
 
     env_outputs env;
     std::set<std::pair<std::string,std::string>>::iterator v_it;
@@ -183,6 +189,8 @@ main(int argc, const char *argv[])
 	}
     }
 
+    std::vector<std::string> sfiles;
+
     std::regex skip_regex(".*/(tests|tools|bullet|docbook)/.*");
     //std::regex skip_regex(".*/(other|tests|tools|bullet|docbook)/.*");
     std::string sfile;
@@ -190,13 +198,47 @@ main(int argc, const char *argv[])
     fs.open(argv[1]);
     if (!fs.is_open()) {
 	std::cerr << "Unable to open file list " << argv[1] << "\n";
+	return -1;
     }
     while (std::getline(fs, sfile)) {
 	if (!std::regex_match(sfile, skip_regex)) {
-	    process_file(env, sfile, verbose);
+	    sfiles.push_back(sfile);
 	}
     }
     fs.close();
+
+    unsigned int hwc = std::thread::hardware_concurrency();
+    if (!hwc) {
+	hwc = 10;
+    }
+    env_outputs envs[hwc];
+    std::thread t[hwc];
+    size_t fcnt = 0;
+    while (fcnt < sfiles.size()) {
+	int athreads = 0;
+	for (int i = 0; i < hwc; i++) {
+	    if (fcnt + i < sfiles.size()) {
+		envs[i].f = sfiles[fcnt+i];
+		envs[i].verbose = verbose;
+		t[i] = std::thread(process_file, std::ref(envs[i]));
+		athreads++;
+	    }
+	}
+	for (int i = 0; i < athreads; i++) {
+	    t[i].join();
+	}
+	fcnt += athreads;
+    }
+
+    for (int i = 0; i < hwc; i++) {
+	env.o_vars.insert(envs[i].o_vars.begin(), envs[i].o_vars.end());
+	env.blib_vars.insert(envs[i].blib_vars.begin(), envs[i].blib_vars.end());
+	env.bexe_vars.insert(envs[i].bexe_vars.begin(), envs[i].bexe_vars.end());
+	std::map<std::string, std::set<std::string>>::iterator cv_it;
+	for (cv_it = envs[i].c_vars.begin(); cv_it != envs[i].c_vars.end(); cv_it++) {
+	    env.c_vars[cv_it->first].insert(cv_it->second.begin(), cv_it->second.end());
+	}
+    }
 
     for (v_it = env.o_vars.begin(); v_it != env.o_vars.end(); v_it++) {
 	all_vars.insert(v_it->second);
