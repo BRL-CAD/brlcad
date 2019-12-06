@@ -27,6 +27,7 @@
 /* BRL-CAD includes */
 #include "common.h"
 
+#include "bu/app.h"
 
 #include <algorithm>
 #include <string>
@@ -3753,14 +3754,17 @@ nirt_init(struct nirt_state *ns)
     /* Set up the default NIRT formatting output */
     std::ifstream fs;
     std::string fmtline;
-    fs.open(bu_brlcad_root("share/nirt/default.nrt", 0), std::fstream::binary);
+
+    char default_fmt[MAXPATHLEN] = {0};
+    bu_dir(default_fmt, MAXPATHLEN, BU_DIR_DATA, "nirt/default.nrt", NULL);
+    fs.open(default_fmt, std::fstream::binary);
     if (!fs.is_open()) {
-	bu_log("Error - could not load default NIRT formatting file: %s\n", bu_brlcad_root("share/nirt/default.nrt", 0));
+	bu_log("Error - could not load default NIRT formatting file: %s\n", default_fmt);
 	return -1;
     }
     while (std::getline(fs, fmtline)) {
 	if (nirt_exec(ns, fmtline.c_str()) < 0) {
-	    bu_log("Error - could not load default NIRT formatting file: %s\n", bu_brlcad_root("share/nirt/default.nrt", 0));
+	    bu_log("Error - could not load default NIRT formatting file: %s\n", default_fmt);
 	    return -1;
 	}
     }
