@@ -2782,21 +2782,37 @@ ovlp_grp::validate()
 }
 
 void
+refinement_reset(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
+{
+    std::set<std::pair<omesh_t *, omesh_t *>>::iterator cp_it;
+    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
+	omesh_t *omesh1 = cp_it->first;
+	omesh_t *omesh2 = cp_it->second;
+	omesh1->refinement_clear();
+	omesh2->refinement_clear();
+    }
+}
+
+void
 shared_cdts(
 	std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs,
 	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
 	)
 {
     bool have_refine_pnts = true;
+    int processed_cnt = 0;
     std::vector<ovlp_grp> bins;
     std::map<std::pair<omesh_t *, size_t>, size_t> bin_map;
+    std::set<size_t> no_refine;
 
-    while (have_refine_pnts) {
+    while (have_refine_pnts && (processed_cnt < 2)) {
+
 
 	std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> edge_verts;
 
 	bins.clear();
 	bin_map.clear();
+	no_refine.clear();
 	have_refine_pnts = false;
 
 	std::set<std::pair<omesh_t *, omesh_t *>>::iterator cp_it;
@@ -2852,16 +2868,13 @@ shared_cdts(
 	}
 
 	// Have groupings - reset refinement info
-	for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
-	    omesh_t *omesh1 = cp_it->first;
-	    omesh_t *omesh2 = cp_it->second;
-	    omesh1->refinement_clear();
-	    omesh2->refinement_clear();
-	}
+	refinement_reset(check_pairs);
 
 	for (size_t i = 0; i < bins.size(); i++) {
 	    if (bins[i].refinement_pnts(&edge_verts)) {
 		have_refine_pnts = true;
+	    } else {
+		no_refine.insert(i);
 	    }
 
 	    if (!have_refine_pnts) {
@@ -2891,10 +2904,23 @@ shared_cdts(
 	    }
 	    // Restore "normal" overlap information for next pass
 	    face_omesh_ovlps(check_pairs, edge_verts, f2omap);
+
+	    processed_cnt++;
 	}
     }
 
+    if (have_refine_pnts && processed_cnt > 1) {
+	std::cout << "Have " << bins.size() - no_refine.size() << " groupings that will need edge based refinement\n";
+    }
+    if (no_refine.size()) {
+	std::cout << "Have " << no_refine.size() << " groups we can process directly\n";
+    } 
+
     for (size_t bin_id = 0; bin_id < bins.size(); bin_id++) {
+
+	// If we still need refinement, we can't do this yet...
+	if (no_refine.find(bin_id) == no_refine.end()) continue;
+
 	// Find the best fit plane of all 3D points from all the vertices in play from both
 	// meshes.  This will be our polygon plane.
 	std::set<ON_3dPoint> plane_pnts;
