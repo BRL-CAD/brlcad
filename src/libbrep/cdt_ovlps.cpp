@@ -2672,6 +2672,14 @@ class ovlp_grp {
 	std::set<long> verts2;
 	std::set<overt_t *> overts1;
 	std::set<overt_t *> overts2;
+	//TODO - we need a map from one mesh's overts to the others.  When we
+	//do the triangulation, we'll need to produce triangles in both meshes
+	//and to do that we have to associate the vertices.  Those mappings
+	//must also be unique - each point must have a unique counterpart in the
+	//other mesh.  For cases where this is impossible (triangles that overlap
+	//and extend beyond the other mesh) we'll need to split the edges
+	//at their closest approach point to force the meshes into a workable
+	//configuration.
 
 	void add_tri(omesh_t *m, size_t tind) {
 	    if (om1 == m) {
