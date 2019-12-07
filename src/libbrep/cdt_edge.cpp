@@ -1883,7 +1883,6 @@ finalize_rtrees(struct ON_Brep_CDT_State *s_cdt)
 	cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face.m_face_index];
 
 	std::vector<cdt_mesh::cpolyedge_t *> ws;
-	std::vector<cdt_mesh::cpolyedge_t *>::iterator w_it;
 
 	int loop_cnt = face.LoopCount();
 	for (int li = 0; li < loop_cnt; li++) {
@@ -1961,7 +1960,6 @@ cpolyedge_nearest_dists(struct ON_Brep_CDT_State *s_cdt)
 	cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face.m_face_index];
 
 	std::vector<cdt_mesh::cpolyedge_t *> ws;
-	std::vector<cdt_mesh::cpolyedge_t *>::iterator w_it;
 
 	int loop_cnt = face.LoopCount();
 	for (int li = 0; li < loop_cnt; li++) {
