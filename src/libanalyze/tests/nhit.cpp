@@ -54,7 +54,7 @@ nirt_stdout_hook(struct nirt_state *ns, void *u_data)
     struct bu_vls out = BU_VLS_INIT_ZERO;
     nirt_log(&out, ns, NIRT_OUT);
     if (bu_vls_strlen(&out)) {
-	bu_vls_sprintf(io_data->out, bu_vls_addr(&out));
+	bu_vls_sprintf(io_data->out, "%s", bu_vls_cstr(&out));
     }
     bu_vls_free(&out);
     return 0;
@@ -66,7 +66,7 @@ nirt_stderr_hook(struct nirt_state *ns, void *u_data)
     struct nirt_io_data *io_data = (struct nirt_io_data *)u_data;
     struct bu_vls out = BU_VLS_INIT_ZERO;
     nirt_log(&out, ns, NIRT_ERR);
-    bu_vls_printf(io_data->err, bu_vls_addr(&out));
+    bu_vls_printf(io_data->err, "%s", bu_vls_cstr(&out));
     bu_vls_free(&out);
     return 0;
 }
