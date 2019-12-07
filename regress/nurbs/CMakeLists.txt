@@ -31,6 +31,7 @@ macro(ADD_NURBS_NIRT_Test testname topts gfile targs depends_list)
 endmacro()
 
 add_custom_target(regress-nurbs)
+set_target_properties(regress-nurbs PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 set_target_properties(regress-nurbs PROPERTIES FOLDER "BRL-CAD Regression Tests")
 
 ADD_NURBS_NIRT_Test(NIST03_MISS_01
