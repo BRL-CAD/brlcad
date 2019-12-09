@@ -37,6 +37,7 @@
 #include "bg/tri_pt.h"
 #include "bg/tri_tri.h"
 #include "./cdt.h"
+#include "./cdt_ovlps.h"
 
 #define TREE_LEAF_FACE_3D(pf, valp, a, b, c, d)  \
     pdv_3move(pf, pt[a]); \
@@ -90,105 +91,6 @@ tri_pnt_r(cdt_mesh::cdt_mesh_t &fmesh, long tri_ind)
     double bbd = bb.Diagonal().Length();
     return bbd * 0.01;
 }
-
-class omesh_t;
-class overt_t {
-    public:
-
-	overt_t(omesh_t *om, long p)
-	{
-	    omesh = om;
-	    p_id = p;
-	    closest_uedge = -1;
-	    t_ind = -1;
-	}
-
-	omesh_t *omesh;
-	long p_id;
-
-	bool edge_vert();
-
-	double min_len();
-
-	ON_BoundingBox bb;
-
-	long closest_uedge;
-	bool t_ind;
-
-	ON_3dPoint vpnt();
-
-	void plot(FILE *plot);
-
-	double v_min_edge_len;
-};
-
-class omesh_t
-{
-    public:
-	omesh_t(cdt_mesh::cdt_mesh_t *m)
-	{
-	    fmesh = m;
-	    init_verts();
-	};
-
-	// The fmesh pnts array may have inactive vertices - we only want the
-	// active verts for this portion of the processing.
-	std::map<long, overt_t *> overts;
-	RTree<long, double, 3> vtree;
-	void add_vtree_vert(overt_t *v);
-	void remove_vtree_vert(overt_t *v);
-	void plot_vtree(const char *fname);
-	bool validate_vtree();
-	void save_vtree(const char *fname);
-	void load_vtree(const char *fname);
-
-	// Add an fmesh vertex to the overts array and tree.
-	overt_t *vert_add(long, ON_BoundingBox *bb = NULL);
-
-	// Find the closest uedge in the mesh to a point
-	cdt_mesh::uedge_t closest_uedge(ON_3dPoint &p);
-	// Find close (non-face-boundary) edges
-	std::set<cdt_mesh::uedge_t> interior_uedges_search(ON_BoundingBox &bb);
-
-	// Find close triangles
-	std::set<size_t> tris_search(ON_BoundingBox &bb);
-
-	// Find close vertices
-	std::set<overt_t *> vert_search(ON_BoundingBox &bb);
-	std::set<overt_t *> vert_search(overt_t *v);
-	overt_t * vert_closest(double *vdist, overt_t *v);
-
-	void retessellate(std::set<size_t> &ov);
-
-	// Points from other meshes potentially needing refinement in this mesh
-	std::map<overt_t *, std::set<long>> refinement_overts;
-
-	// Points from this mesh inducing refinement in other meshes, and
-	// triangles reported by tri_isect as intersecting from this mesh
-	std::map<overt_t *, std::set<long>> intruding_overts;
-	std::set<size_t> intruding_tris;
-
-	void refinement_clear();
-	std::set<long> refinement_split_tris();
-
-	cdt_mesh::cdt_mesh_t *fmesh;
-
-	void plot(const char *fname,
-		std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *ev,
-		std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap);
-	void plot(std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *ev,
-		std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap);
-
-	void verts_one_ring_update(long p_id);
-
-	void vupdate(overt_t *v);
-    private:
-	void init_verts();
-	void rebuild_vtree();
-
-	void edge_tris_remove(cdt_mesh::uedge_t &ue);
-
-};
 
 #define PPOINT 3.0550159446561063,7.5001153978277033,23.999999999999996
 bool
@@ -975,22 +877,6 @@ isect_plot(cdt_mesh::cdt_mesh_t *fmesh1, long t1_ind, cdt_mesh::cdt_mesh_t *fmes
     pdv_3move(plot, *isectpt1);
     pdv_3cont(plot, *isectpt2);
     fclose(plot);
-}
-
-static void
-isect_process_edge_vert2(
-	overt_t *v, omesh_t *omesh2, ON_3dPoint &sp,
-	std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *edge_verts)
-{
-    cdt_mesh::uedge_t closest_edge = omesh2->closest_uedge(sp);
-    if (omesh2->fmesh->brep_edges.find(closest_edge) != omesh2->fmesh->brep_edges.end()) {
-	cdt_mesh::bedge_seg_t *bseg = omesh2->fmesh->ue2b_map[closest_edge];
-	if (!bseg) {
-	    std::cout << "couldn't find bseg pointer??\n";
-	} else {
-	    (*edge_verts)[bseg].insert(v);
-	}
-    }
 }
 
 static void
@@ -2656,139 +2542,6 @@ ptri_process(cdt_mesh::cpolygon_t *polygon, omesh_t *om, std::set<long> &overts,
 }
 #endif
 
-
-
-class ovlp_grp {
-    public:
-	ovlp_grp(omesh_t *m1, omesh_t *m2) {
-	    om1 = m1;
-	    om2 = m2;
-	}
-	omesh_t *om1;
-	omesh_t *om2;
-	std::set<size_t> tris1;
-	std::set<size_t> tris2;
-	std::set<long> verts1;
-	std::set<long> verts2;
-	std::set<overt_t *> overts1;
-	std::set<overt_t *> overts2;
-	//TODO - we need a map from one mesh's overts to the others.  When we
-	//do the triangulation, we'll need to produce triangles in both meshes
-	//and to do that we have to associate the vertices.  Those mappings
-	//must also be unique - each point must have a unique counterpart in the
-	//other mesh.  For cases where this is impossible (triangles that overlap
-	//and extend beyond the other mesh) we'll need to split the edges
-	//at their closest approach point to force the meshes into a workable
-	//configuration.
-
-	void add_tri(omesh_t *m, size_t tind) {
-	    if (om1 == m) {
-		tris1.insert(tind);
-		cdt_mesh::triangle_t tri = om1->fmesh->tris_vect[tind];
-		for (int i = 0; i < 3; i++) {
-		    verts1.insert(tri.v[i]);
-		    overt_t *ov = om1->overts[tri.v[i]];
-		    if (!ov) {
-			std::cout << "WARNING: - no overt for tri vertex??\n";
-			continue;
-		    }
-		    overts1.insert(ov);
-		}
-		return;
-	    }
-	    if (om2 == m) {
-		tris2.insert(tind);
-		cdt_mesh::triangle_t tri = om2->fmesh->tris_vect[tind];
-		for (int i = 0; i < 3; i++) {
-		    verts2.insert(tri.v[i]);
-		    overt_t *ov = om2->overts[tri.v[i]];
-		    if (!ov) {
-			std::cout << "WARNING: - no overt for tri vertex??\n";
-			continue;
-		    }
-		    overts2.insert(ov);
-		}
-		return;
-	    }
-	}
-
-	// Each point involved in this operation must have it's closest point
-	// in the other mesh involved.  If the closest point in the other mesh
-	// ISN'T the closest surface point, we need to introduce that
-	// point in the other mesh.
-	bool refinement_pnts(std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *edge_verts);
-
-	// Confirm that all triangles in the group are still in the fmeshes - if
-	// we processed a prior group that involved a triangle incorporated into
-	// this group that is now gone, this grouping is invalid and can't be
-	// processed
-	bool validate();
-
-    private:
-	bool ovlp_vert_validate(int ind, std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *edge_verts);
-};
-
-bool
-ovlp_grp::ovlp_vert_validate(int ind, std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *edge_verts)
-{
-    omesh_t *other_m = (!ind) ? om2 : om1;
-    std::set<overt_t *> &ov1 = (!ind) ? overts1 : overts2;
-    std::set<overt_t *> &ov2 = (!ind) ? overts2 : overts1;
-    std::set<long> &v2 = (!ind) ? verts2 : verts1;
-
-    bool have_refine_pnts = false;
-    std::set<overt_t *>::iterator ov_it;
-    for (ov_it = ov1.begin(); ov_it != ov1.end(); ov_it++) {
-	// Find any points whose matching closest surface point isn't a vertex
-	// in the other mesh per the vtree.  That point is a refinement point.
-	overt_t *ov = *ov_it;
-	overt_t *nv = other_m->vert_closest(NULL, ov);
-	ON_3dPoint target_point = ov->vpnt();
-	double pdist = ov->bb.Diagonal().Length() * 10;
-	ON_3dPoint s_p;
-	ON_3dVector s_n;
-	bool feval = closest_surf_pnt(s_p, s_n, *other_m->fmesh, &target_point, 2*pdist);
-	if (!feval) {
-	    std::cout << "Error - couldn't find closest point for unpaired vert\n";
-	}
-	if (s_p.DistanceTo(nv->vpnt()) > ON_ZERO_TOLERANCE) {
-	    std::cout << "Need new vert paring(" << s_p.DistanceTo(nv->vpnt()) << ": " << target_point.x << "," << target_point.y << "," << target_point.z << "\n";
-	    isect_process_edge_vert2(ov, other_m, s_p, edge_verts);
-	    // Ensure the count for this vert is above the processing threshold
-	    other_m->refinement_overts[ov].insert(-1);
-	    other_m->refinement_overts[ov].insert(-2);
-	    have_refine_pnts = true;
-	}
-	// Make sure both vert sets store all the required vertices
-	ov2.insert(nv);
-	v2.insert(nv->p_id);
-    }
-
-    return have_refine_pnts;
-}
-
-bool
-ovlp_grp::refinement_pnts(std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *edge_verts)
-{
-    size_t v1_prev_size = verts1.size();
-    size_t v2_prev_size = verts2.size();
-    bool r1 = ovlp_vert_validate(0, edge_verts);
-    bool r2 = ovlp_vert_validate(1, edge_verts);
-    while ((v1_prev_size != verts1.size()) || (v2_prev_size != verts2.size())) {
-	v1_prev_size = verts1.size();
-	v2_prev_size = verts2.size();
-	r1 = ovlp_vert_validate(0, edge_verts);
-	r2 = ovlp_vert_validate(1, edge_verts);
-    }
-    return (r1 || r2);
-}
-
-bool
-ovlp_grp::validate()
-{
-    return false;
-}
-
 void
 refinement_reset(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
 {
@@ -2887,15 +2640,9 @@ shared_cdts(
 
 	    if (!have_refine_pnts) {
 		std::set<size_t>::iterator t_it;
-		std::cout << "Group " << i << " vert cnts:\n";
-		std::cout << "      " << bins[i].om1->fmesh->name << " " << bins[i].om1->fmesh->f_id << ": " << bins[i].overts1.size() << " verts\n";
-		for (t_it = bins[i].tris1.begin(); t_it != bins[i].tris1.end(); t_it++) {
-		    std::cout << "      " << bins[i].om1->fmesh->name << " " << bins[i].om1->fmesh->f_id << " triangle " << *t_it << "\n";
-		}
-		std::cout << "      " << bins[i].om2->fmesh->name << " " << bins[i].om2->fmesh->f_id << ": " << bins[i].overts2.size() << " verts\n";
-		for (t_it = bins[i].tris2.begin(); t_it != bins[i].tris2.end(); t_it++) {
-		    std::cout << "      " << bins[i].om2->fmesh->name << " " << bins[i].om2->fmesh->f_id << " triangle " << *t_it << "\n";
-		}
+		std::cout << "Group " << i << " tri/vert cnts:\n";
+		bins[i].list_tris();
+		bins[i].list_overts();
 	    }
 	}
 

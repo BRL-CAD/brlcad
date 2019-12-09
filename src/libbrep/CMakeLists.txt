@@ -31,6 +31,7 @@ set(LIBBREP_SOURCES
   cdt_edge.cpp
   cdt_mesh.cpp
   cdt_ovlps.cpp
+  cdt_ovlps_grps.cpp
   intersect.cpp
   libbrep_brep_tools.cpp
   opennurbs_ext.cpp
@@ -51,6 +52,7 @@ set(libbrep_ignored_files
   brep_except.h
   cdt.h
   cdt_mesh.h
+  cdt_ovlps.h
   cdt_closed_surf.cpp
   opennurbs_fit.h
   opennurbs_fit.cpp
