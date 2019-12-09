@@ -202,6 +202,29 @@ class ovlp_grp {
         void list_tris();
         void list_overts();
 
+
+	// Start thinking about what relationships we need to track between mesh
+	// points - refinement_pnts isn't enough by itself, we'll need more
+	//
+	// Each vertex in one mesh needs a matching vert in the other
+	std::map<overt_t *, overt_t *> om1_om2_verts;
+	std::map<overt_t *, overt_t *> om2_om1_verts;
+
+	// Mappable rverts - no current opposite point, but surf closest point is new and unique
+	// (i.e. can be inserted into the other mesh)
+	std::set<overt_t *> om1_rverts_from_om2;
+	std::set<overt_t *> om2_rverts_from_om1;
+
+	/* If the closest point for a vert is already assigned to another vert,
+	 * the vert with the further distance is deemed unmappable - in this
+	 * situation, we're going to have to do some interior edge based point
+	 * insertions (i.e. the hard case).*/
+	std::set<overt_t *> om1_unmappable_rverts;
+	std::set<overt_t *> om2_unmappable_rverts;
+
+	// This container needs to be global, since edge splits are global */
+	std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *refine_edge_verts;
+
     private:
         bool ovlp_vert_validate(int ind, std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *edge_verts);
 };
