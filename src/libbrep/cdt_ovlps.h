@@ -209,6 +209,20 @@ class ovlp_grp {
 bool
 closest_surf_pnt(ON_3dPoint &s_p, ON_3dVector &s_norm, cdt_mesh::cdt_mesh_t &fmesh, ON_3dPoint *p, double tol);
 
+int
+tri_isect(
+	bool process,
+	omesh_t *omesh1, cdt_mesh::triangle_t &t1,
+	omesh_t *omesh2, cdt_mesh::triangle_t &t2,
+	std::map<overt_t *, std::map<cdt_mesh::bedge_seg_t *, int>> *vert_edge_cnts
+	);
+
+std::vector<ovlp_grp>
+find_ovlp_grps(
+	std::map<std::pair<omesh_t *, size_t>, size_t> &bin_map,
+	std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
+	);
+
 
 #endif /* __cdt_mesh_ovlps_h__ */
 

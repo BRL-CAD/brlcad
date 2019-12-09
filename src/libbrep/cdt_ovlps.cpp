@@ -1131,7 +1131,7 @@ edge_only_isect(
  * Return 0 if no intersection, 1 if coplanar intersection, 2 if non-coplanar
  * intersection.
  *****************************************************************************/
-static int
+int
 tri_isect(
 	bool process,
 	omesh_t *omesh1, cdt_mesh::triangle_t &t1,
@@ -2572,56 +2572,8 @@ shared_cdts(
 	std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> edge_verts;
 
 	bins.clear();
-	bin_map.clear();
-	no_refine.clear();
-	have_refine_pnts = false;
 
-	std::set<std::pair<omesh_t *, omesh_t *>>::iterator cp_it;
-	for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
-	    omesh_t *omesh1 = cp_it->first;
-	    omesh_t *omesh2 = cp_it->second;
-	    if (!omesh1->intruding_tris.size() || !omesh2->intruding_tris.size()) {
-		continue;
-	    }
-	    //std::cout << "Need to check " << omesh1->fmesh->name << " " << omesh1->fmesh->f_id << " vs " << omesh2->fmesh->name << " " << omesh2->fmesh->f_id << "\n";
-	    std::set<size_t> om1_tris = omesh1->intruding_tris;
-	    while (om1_tris.size()) {
-		size_t t1 = *om1_tris.begin();
-		std::pair<omesh_t *, size_t> ckey(omesh1, t1);
-		om1_tris.erase(t1);
-		//std::cout << "Processing triangle " << t1 << "\n";
-		ON_BoundingBox tri_bb = omesh1->fmesh->tri_bbox(t1);
-		std::set<size_t> ntris = omesh2->tris_search(tri_bb);
-		std::set<size_t>::iterator nt_it;
-		for (nt_it = ntris.begin(); nt_it != ntris.end(); nt_it++) {
-		    int real_ovlp = tri_isect(false, omesh1, omesh1->fmesh->tris_vect[t1], omesh2, omesh2->fmesh->tris_vect[*nt_it], NULL);
-		    if (!real_ovlp) continue;
-		    //std::cout << "real overlap with " << *nt_it << "\n";
-		    std::pair<omesh_t *, size_t> nkey(omesh2, *nt_it);
-		    size_t key_id;
-		    if (bin_map.find(ckey) == bin_map.end() && bin_map.find(nkey) == bin_map.end()) {
-			// New group
-			ovlp_grp ngrp(ckey.first, nkey.first);
-			ngrp.add_tri(ckey.first, ckey.second);
-			ngrp.add_tri(nkey.first, nkey.second);
-			bins.push_back(ngrp);
-			key_id = bins.size() - 1;
-			bin_map[ckey] = key_id;
-			bin_map[nkey] = key_id;
-		    } else {
-			if (bin_map.find(ckey) != bin_map.end()) {
-			    key_id = bin_map[ckey];
-			    bins[key_id].add_tri(nkey.first, nkey.second);
-			    bin_map[nkey] = key_id;
-			} else {
-			    key_id = bin_map[nkey];
-			    bins[key_id].add_tri(ckey.first, ckey.second);
-			    bin_map[ckey] = key_id;
-			}
-		    }
-		}
-	    }
-	}
+	bins = find_ovlp_grps(bin_map, check_pairs);
 
 	if (!bins.size()) {
 	    // If we didn't find anything, we're done
@@ -2631,6 +2583,7 @@ shared_cdts(
 	// Have groupings - reset refinement info
 	refinement_reset(check_pairs);
 
+	no_refine.clear();
 	for (size_t i = 0; i < bins.size(); i++) {
 	    if (bins[i].refinement_pnts(&edge_verts)) {
 		have_refine_pnts = true;
