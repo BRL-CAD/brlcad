@@ -188,28 +188,16 @@ main(int argc, const char **argv)
     if (nirt_exec(ns, bu_vls_addr(&ncmd))) goto done;
     bu_vls_sprintf(&ncmd, "fmt h \"\"");
     if (nirt_exec(ns, bu_vls_addr(&ncmd))) goto done;
-    if (!should_miss) {
-	bu_vls_sprintf(&ncmd, "fmt p \"hit\"");
-	if (nirt_exec(ns, bu_vls_addr(&ncmd))) goto done;
-	bu_vls_sprintf(&ncmd, "fmt o \"ovlp\"");
-	if (nirt_exec(ns, bu_vls_addr(&ncmd))) goto done;
-    } else {
-	bu_vls_sprintf(&ncmd, "fmt p \"\"");
-	if (nirt_exec(ns, bu_vls_addr(&ncmd))) goto done;
-    }
+    bu_vls_sprintf(&ncmd, "fmt p \"hit\"");
+    if (nirt_exec(ns, bu_vls_addr(&ncmd))) goto done;
+    bu_vls_sprintf(&ncmd, "fmt o \"ovlp\"");
+    if (nirt_exec(ns, bu_vls_addr(&ncmd))) goto done;
     bu_vls_sprintf(&ncmd, "fmt f \"\"");
     if (nirt_exec(ns, bu_vls_addr(&ncmd))) goto done;
-    if (!should_miss) {
-	bu_vls_sprintf(&ncmd, "fmt m \"\"");
-	if (nirt_exec(ns, bu_vls_addr(&ncmd))) goto done;
-    } else {
-	bu_vls_sprintf(&ncmd, "fmt m \"miss\"");
-	if (nirt_exec(ns, bu_vls_addr(&ncmd))) goto done;
-    }
+    bu_vls_sprintf(&ncmd, "fmt m \"miss\"");
+    if (nirt_exec(ns, bu_vls_addr(&ncmd))) goto done;
     bu_vls_sprintf(&ncmd, "fmt g \"\"");
     if (nirt_exec(ns, bu_vls_addr(&ncmd))) goto done;
-
-
 
 
     // Set up and take the shot
@@ -227,14 +215,22 @@ main(int argc, const char **argv)
     if (should_miss) {
 	if (!BU_STR_EQUAL(bu_vls_cstr(io_data.out), "miss")) {
 	    ret = 1;
-	    bu_log("Error: expected miss!\n");
+	    if (bu_vls_strlen(io_data.out)) {
+		bu_log("Error: expected miss, but got \"%s\"!\n", bu_vls_cstr(io_data.out));
+	    } else {
+		bu_log("Error: expected miss!\n");
+	    }
 	} else {
 	    ret = 0;
 	}
     } else {
 	if (!BU_STR_EQUAL(bu_vls_cstr(io_data.out), "hit")) {
 	    ret = 1;
-	    bu_log("Error: expected hit!\n");
+	    if (bu_vls_strlen(io_data.out)) {
+		bu_log("Error: expected hit, but got \"%s\"!\n", bu_vls_cstr(io_data.out));
+	    } else {
+		bu_log("Error: expected hit!\n");
+	    }
 	} else {
 	    ret = 0;
 	}
