@@ -80,8 +80,8 @@ if(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
 
 endif(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
 
+CMAKEFILES(isst.tcl)
 CMAKEFILES(isst.c)
-
 
 add_subdirectory(master)
 # add_subdirectory(slave)

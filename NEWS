@@ -11,10 +11,12 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
---- 20XX-XX-XX  Release 7.30.4                                     ---
+--- 2019-12-05  Release 7.30.4                                     ---
 ----------------------------------------------------------------------
 
 * enhanced attr list command to support reporting values - Cliff Yapp
+* updated FAA Generic Twin example FASTGEN model - Cliff Yapp
+* fixed handling of duplicate FASTGEN object names - Cliff Yapp
 * update gqa/rtweight man pages to reference mater -d - Cliff Yapp
 * overlay command accepts file patterns (e.g., *.plot) - Cliff Yapp
 * changed mged escape key binding to reset mouse mode - Sean Morrison
