@@ -2585,7 +2585,7 @@ shared_cdts(
 
 	no_refine.clear();
 	for (size_t i = 0; i < bins.size(); i++) {
-	    if (bins[i].refinement_pnts(&edge_verts)) {
+	    if (bins[i].characterize_all_verts()) {
 		have_refine_pnts = true;
 	    } else {
 		no_refine.insert(i);
@@ -2599,8 +2599,17 @@ shared_cdts(
 	    }
 	}
 
+
+	// Consolidate edge points from characterizations
+	for (size_t i = 0; i < bins.size(); i++) {
+	    std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>>::iterator e_it;
+	    for (e_it = bins[i].refine_edge_verts.begin(); e_it != bins[i].refine_edge_verts.end(); e_it++) {
+		edge_verts[e_it->first].insert(e_it->second.begin(), e_it->second.end());
+	    }
+	}
+
 	// If refinement points were added above, refine and repeat
-	if (have_refine_pnts) {
+	if (edge_verts.size()) {
 	    int bedge_replaced_tris = INT_MAX;
 	    while (bedge_replaced_tris) {
 		// Process edge_verts

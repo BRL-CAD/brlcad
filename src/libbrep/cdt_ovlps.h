@@ -191,7 +191,7 @@ class ovlp_grp {
         // in the other mesh involved.  If the closest point in the other mesh
         // ISN'T the closest surface point, we need to introduce that
         // point in the other mesh.
-        bool refinement_pnts(std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *edge_verts);
+        bool characterize_all_verts();
 
         // Confirm that all triangles in the group are still in the fmeshes - if
         // we processed a prior group that involved a triangle incorporated into
@@ -211,7 +211,7 @@ class ovlp_grp {
 	std::map<overt_t *, overt_t *> om2_om1_verts;
 
 	// Mappable rverts - no current opposite point, but surf closest point is new and unique
-	// (i.e. can be inserted into the other mesh)
+	// (i.e. can be inserted into this mesh)
 	std::set<overt_t *> om1_rverts_from_om2;
 	std::set<overt_t *> om2_rverts_from_om1;
 
@@ -222,11 +222,10 @@ class ovlp_grp {
 	std::set<overt_t *> om1_unmappable_rverts;
 	std::set<overt_t *> om2_unmappable_rverts;
 
-	// This container needs to be global, since edge splits are global */
-	std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *refine_edge_verts;
+	std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> refine_edge_verts;
 
     private:
-        bool ovlp_vert_validate(int ind, std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *edge_verts);
+        void characterize_verts(int ind);
 };
 
 bool

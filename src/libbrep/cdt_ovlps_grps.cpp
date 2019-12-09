@@ -68,37 +68,59 @@ ovlp_grp::list_overts()
     }
 }
 
-static void
-isect_process_edge_vert2(
-	overt_t *v, omesh_t *omesh2, ON_3dPoint &sp,
-	std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *edge_verts)
+static bool
+is_edge_vert(
+	overt_t *UNUSED(v), omesh_t *omesh2, ON_3dPoint &sp,
+	std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *UNUSED(edge_verts))
 {
     cdt_mesh::uedge_t closest_edge = omesh2->closest_uedge(sp);
     if (omesh2->fmesh->brep_edges.find(closest_edge) != omesh2->fmesh->brep_edges.end()) {
 	cdt_mesh::bedge_seg_t *bseg = omesh2->fmesh->ue2b_map[closest_edge];
 	if (!bseg) {
-	    std::cout << "couldn't find bseg pointer??\n";
+	    std::cout << "edge point, but couldn't find bseg pointer??\n";
+	    return false;
 	} else {
-	    (*edge_verts)[bseg].insert(v);
+	    //(*edge_verts)[bseg].insert(v);
+	    return true;
 	}
     }
+    return false;
 }
 
-bool
-ovlp_grp::ovlp_vert_validate(int ind, std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *edge_verts)
+void
+ovlp_grp::characterize_verts(int ind)
 {
     omesh_t *other_m = (!ind) ? om2 : om1;
     std::set<overt_t *> &ov1 = (!ind) ? overts1 : overts2;
-    std::set<overt_t *> &ov2 = (!ind) ? overts2 : overts1;
-    std::set<long> &v2 = (!ind) ? verts2 : verts1;
 
-    bool have_refine_pnts = false;
+    std::map<overt_t *, overt_t *> &ovm = (!ind) ? om1_om2_verts : om2_om1_verts;
+    std::map<overt_t *, overt_t *> &ovmo = (!ind) ? om2_om1_verts : om1_om2_verts;
+    std::set<overt_t *> &ovum = (!ind) ? om2_unmappable_rverts : om1_unmappable_rverts;
+
     std::set<overt_t *>::iterator ov_it;
     for (ov_it = ov1.begin(); ov_it != ov1.end(); ov_it++) {
-	// Find any points whose matching closest surface point isn't a vertex
-	// in the other mesh per the vtree.  That point is a refinement point.
 	overt_t *ov = *ov_it;
 	overt_t *nv = other_m->vert_closest(NULL, ov);
+
+	if (ovmo.find(nv) != ovmo.end()) {
+	    // We already have a mapping on this mesh for nv - closer one wins,
+	    // further is added to unmappable_verts for later consideration
+	    overt_t *nv_orig = ovm[ov];
+	    double d_orig = nv_orig->vpnt().DistanceTo(ov->vpnt());
+	    double d_new = nv->vpnt().DistanceTo(ov->vpnt());
+
+	    if (d_orig < d_new) {
+		ovum.insert(nv);
+	    } else {
+		ovum.insert(nv_orig);
+		ovmo[ov] = nv;
+	    }
+	    std::cout << "already mapped\n";
+	    continue;
+	}
+
+	// Find any points whose matching closest surface point isn't a vertex
+	// in the other mesh per the vtree.  That point is a refinement point.
 	ON_3dPoint target_point = ov->vpnt();
 	double pdist = ov->bb.Diagonal().Length() * 10;
 	ON_3dPoint s_p;
@@ -106,47 +128,63 @@ ovlp_grp::ovlp_vert_validate(int ind, std::map<cdt_mesh::bedge_seg_t *, std::set
 	bool feval = closest_surf_pnt(s_p, s_n, *other_m->fmesh, &target_point, 2*pdist);
 	if (!feval) {
 	    std::cout << "Error - couldn't find closest point for unpaired vert\n";
+	    continue;
 	}
 	ON_BoundingBox spbb(s_p, s_p);
 	std::cout << "ov " << ov->p_id << " closest vert " << nv->p_id << ", dist " << s_p.DistanceTo(nv->vpnt()) << "\n";
-	if (nv->bb.IsDisjoint(spbb) || (s_p.DistanceTo(nv->vpnt()) > ON_ZERO_TOLERANCE)) {
-	    std::cout << "Need new vert paring(" << s_p.DistanceTo(nv->vpnt()) << ": " << target_point.x << "," << target_point.y << "," << target_point.z << "\n";
-	    isect_process_edge_vert2(ov, other_m, s_p, edge_verts);
-	    // Ensure the count for this vert is above the processing threshold
-	    other_m->refinement_overts[ov].insert(-1);
-	    other_m->refinement_overts[ov].insert(-2);
-	    have_refine_pnts = true;
+
+	// If the opposite vertex is close to the current vertex per their bounding boxes and is close
+	// to the closet surface point, go with it
+	std::set<overt_t *> &ov2 = (!ind) ? overts2 : overts1;
+	std::set<long> &v2 = (!ind) ? verts2 : verts1;
+	if (!nv->bb.IsDisjoint(spbb) && (s_p.DistanceTo(nv->vpnt()) < 2*ON_ZERO_TOLERANCE)) {
+	    ovm[ov] = nv;
+	    ovmo[nv] = ov;
+	    // Make sure both vert sets store all the required vertices
+	    ov2.insert(nv);
+	    v2.insert(nv->p_id);
+	    continue;
 	}
-	// Make sure both vert sets store all the required vertices
+
+	std::cout << "Need new vert paring(" << s_p.DistanceTo(nv->vpnt()) << ": " << target_point.x << "," << target_point.y << "," << target_point.z << "\n";
+
+	if (is_edge_vert(ov, other_m, s_p, &refine_edge_verts)) {
+	    // Ensure the count for this vert is above the processing threshold
+	    //other_m->refinement_overts[ov].insert(-1);
+	    //other_m->refinement_overts[ov].insert(-2);
+	} else {
+	    // Unmapped non-edge point
+	    std::cout << "Non edge point needs a new refinement point inserted??\n";
+	    //std::set<overt_t *> &ovrv = (!ind) ? om2_rverts_from_om1 : om1_rverts_from_om2;
+	    //ovrv.insert(ov);
+	}
+
+	// Make sure both vert sets store all the required vertices - the
+	// polygons need to encompass all active verts mapped in by both
+	// meshes, not just those from the overlapping triangles original to
+	// that mesh.
 	ov2.insert(nv);
 	v2.insert(nv->p_id);
     }
 
-    return have_refine_pnts;
 }
 
 bool
-ovlp_grp::refinement_pnts(std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *edge_verts)
+ovlp_grp::characterize_all_verts()
 {
-    size_t v1_prev_size = verts1.size();
-    size_t v2_prev_size = verts2.size();
-    bool r1 = ovlp_vert_validate(0, edge_verts);
-    bool r2 = ovlp_vert_validate(1, edge_verts);
-    while ((v1_prev_size != verts1.size()) || (v2_prev_size != verts2.size())) {
-	v1_prev_size = verts1.size();
-	v2_prev_size = verts2.size();
-	r1 = ovlp_vert_validate(0, edge_verts);
-	r2 = ovlp_vert_validate(1, edge_verts);
-    }
-    return (r1 || r2);
-}
-
-bool
-ovlp_grp::validate()
-{
+    characterize_verts(0);
+#if 0
+    characterize_verts(1);
+    return (refine_edge_verts->size() > 0) ? true : false;
+#endif
     return false;
 }
 
+
+/* A grouping of overlapping triangles is defined as the set of triangles from
+ * two meshes that overlap and are surrounded in both meshes by either
+ * non-involved triangles or face boundary edges.  Visually, these are "clusters"
+ * of overlapping triangles on the mesh surfaces. */
 std::vector<ovlp_grp>
 find_ovlp_grps(
 	std::map<std::pair<omesh_t *, size_t>, size_t> &bin_map,
