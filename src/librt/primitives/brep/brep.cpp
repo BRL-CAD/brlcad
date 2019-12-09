@@ -1298,6 +1298,11 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	}
     }
 
+#ifdef PLATE_MODE_NURBS
+
+    /* Newer plate mode enabled version of logic, causing problems with NIST3 (see regress/nurbs
+     * test */
+
     size_t nhits = hits.size();
     if (nhits > 0) {
 
@@ -1393,6 +1398,45 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
     }
 
     return nhits;
+
+#else
+
+    /* Older (pre-plate-mode) code */
+
+    bool hit = false;
+    if (hits.size() > 1) {
+
+	bool hit_it = hits.size() % 2 == 0;
+	if (hit_it) {
+	    // take each pair as a segment
+	    for (std::list<brep_hit>::const_iterator i = hits.begin(); i != hits.end(); ++i) {
+		const brep_hit& in = *i;
+		const brep_hit& out = *i;
+
+		struct seg* segp;
+		RT_GET_SEG(segp, ap->a_resource);
+		segp->seg_stp = stp;
+
+		VMOVE(segp->seg_in.hit_point, in.point);
+		VMOVE(segp->seg_in.hit_normal, in.normal);
+		segp->seg_in.hit_dist = in.dist;
+		segp->seg_in.hit_surfno = in.face.m_face_index;
+		VSET(segp->seg_in.hit_vpriv, in.uv[0], in.uv[1], 0.0);
+
+		VMOVE(segp->seg_out.hit_point, out.point);
+		VMOVE(segp->seg_out.hit_normal, out.normal);
+		segp->seg_out.hit_dist = out.dist;
+		segp->seg_out.hit_surfno = out.face.m_face_index;
+		VSET(segp->seg_out.hit_vpriv, out.uv[0], out.uv[1], 0.0);
+
+		BU_LIST_INSERT(&(seghead->l), &(segp->l));
+	    }
+	    hit = true;
+	}
+    }
+
+    return (hit) ? (int)hits.size() : 0; // MISS
+#endif
 }
 
 
