@@ -215,6 +215,9 @@ class ovlp_grp {
 	std::set<overt_t *> om1_rverts_from_om2;
 	std::set<overt_t *> om2_rverts_from_om1;
 
+	std::set<overt_t *> om1_everts_from_om2;
+	std::set<overt_t *> om2_everts_from_om1;
+
 	/* If the closest point for a vert is already assigned to another vert,
 	 * the vert with the further distance is deemed unmappable - in this
 	 * situation, we're going to have to do some interior edge based point
@@ -222,7 +225,6 @@ class ovlp_grp {
 	std::set<overt_t *> om1_unmappable_rverts;
 	std::set<overt_t *> om2_unmappable_rverts;
 
-	std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> refine_edge_verts;
 
     private:
         void characterize_verts(int ind);

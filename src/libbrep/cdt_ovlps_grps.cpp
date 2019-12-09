@@ -69,9 +69,7 @@ ovlp_grp::list_overts()
 }
 
 static bool
-is_edge_vert(
-	overt_t *UNUSED(v), omesh_t *omesh2, ON_3dPoint &sp,
-	std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *UNUSED(edge_verts))
+is_edge_vert(omesh_t *omesh2, ON_3dPoint &sp)
 {
     cdt_mesh::uedge_t closest_edge = omesh2->closest_uedge(sp);
     if (omesh2->fmesh->brep_edges.find(closest_edge) != omesh2->fmesh->brep_edges.end()) {
@@ -80,7 +78,6 @@ is_edge_vert(
 	    std::cout << "edge point, but couldn't find bseg pointer??\n";
 	    return false;
 	} else {
-	    //(*edge_verts)[bseg].insert(v);
 	    return true;
 	}
     }
@@ -148,15 +145,14 @@ ovlp_grp::characterize_verts(int ind)
 
 	std::cout << "Need new vert paring(" << s_p.DistanceTo(nv->vpnt()) << ": " << target_point.x << "," << target_point.y << "," << target_point.z << "\n";
 
-	if (is_edge_vert(ov, other_m, s_p, &refine_edge_verts)) {
-	    // Ensure the count for this vert is above the processing threshold
-	    //other_m->refinement_overts[ov].insert(-1);
-	    //other_m->refinement_overts[ov].insert(-2);
+	if (is_edge_vert(other_m, s_p)) {
+	    std::set<overt_t *> &ovev = (!ind) ? om2_everts_from_om1 : om1_everts_from_om2;
+	    ovev.insert(ov);
 	} else {
 	    // Unmapped non-edge point
 	    std::cout << "Non edge point needs a new refinement point inserted??\n";
-	    //std::set<overt_t *> &ovrv = (!ind) ? om2_rverts_from_om1 : om1_rverts_from_om2;
-	    //ovrv.insert(ov);
+	    std::set<overt_t *> &ovrv = (!ind) ? om2_rverts_from_om1 : om1_rverts_from_om2;
+	    ovrv.insert(ov);
 	}
 
 	// Make sure both vert sets store all the required vertices - the

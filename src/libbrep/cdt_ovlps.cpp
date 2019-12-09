@@ -2599,7 +2599,7 @@ shared_cdts(
 	    }
 	}
 
-
+#if 0
 	// Consolidate edge points from characterizations
 	for (size_t i = 0; i < bins.size(); i++) {
 	    std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>>::iterator e_it;
@@ -2607,6 +2607,7 @@ shared_cdts(
 		edge_verts[e_it->first].insert(e_it->second.begin(), e_it->second.end());
 	    }
 	}
+#endif
 
 	// If refinement points were added above, refine and repeat
 	if (edge_verts.size()) {
