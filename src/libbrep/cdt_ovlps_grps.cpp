@@ -95,7 +95,7 @@ ovlp_grp::characterize_verts(int ind)
 
     std::map<overt_t *, overt_t *> &ovm = (!ind) ? om1_om2_verts : om2_om1_verts;
     std::map<overt_t *, overt_t *> &ovmo = (!ind) ? om2_om1_verts : om1_om2_verts;
-    std::set<overt_t *> &ovum = (!ind) ? om2_unmappable_rverts : om1_unmappable_rverts;
+    std::set<overt_t *> &ovum = (!ind) ? om1_unmappable_rverts : om2_unmappable_rverts;
 
     std::set<overt_t *>::iterator ov_it;
     for (ov_it = ov1.begin(); ov_it != ov1.end(); ov_it++) {
@@ -105,15 +105,15 @@ ovlp_grp::characterize_verts(int ind)
 	if (ovmo.find(nv) != ovmo.end()) {
 	    // We already have a mapping on this mesh for nv - closer one wins,
 	    // further is added to unmappable_verts for later consideration
-	    overt_t *nv_orig = ovm[ov];
-	    double d_orig = nv_orig->vpnt().DistanceTo(ov->vpnt());
-	    double d_new = nv->vpnt().DistanceTo(ov->vpnt());
+	    overt_t *ov_orig = ovmo[nv];
+	    double d_orig = ov_orig->vpnt().DistanceTo(nv->vpnt());
+	    double d_new = ov->vpnt().DistanceTo(nv->vpnt());
 
 	    if (d_orig < d_new) {
-		ovum.insert(nv);
+		ovum.insert(ov);
 	    } else {
-		ovum.insert(nv_orig);
-		ovmo[ov] = nv;
+		ovum.insert(ov_orig);
+		ovmo[nv] = ov;
 	    }
 	    std::cout << "already mapped\n";
 	    continue;
