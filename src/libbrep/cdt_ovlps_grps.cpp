@@ -89,9 +89,10 @@ ovlp_grp::characterize_verts(int ind)
 {
     omesh_t *other_m = (!ind) ? om2 : om1;
     std::set<overt_t *> &ov1 = (!ind) ? overts1 : overts2;
+    std::set<overt_t *> &ov2 = (!ind) ? overts2 : overts1;
 
-    std::map<overt_t *, overt_t *> &ovm = (!ind) ? om1_om2_verts : om2_om1_verts;
-    std::map<overt_t *, overt_t *> &ovmo = (!ind) ? om2_om1_verts : om1_om2_verts;
+    std::map<overt_t *, overt_t *> &ovm1 = (!ind) ? om1_om2_verts : om2_om1_verts;
+    std::map<overt_t *, overt_t *> &ovm2 = (!ind) ? om2_om1_verts : om1_om2_verts;
     std::set<overt_t *> &ovum = (!ind) ? om1_unmappable_rverts : om2_unmappable_rverts;
 
     std::set<overt_t *>::iterator ov_it;
@@ -99,20 +100,23 @@ ovlp_grp::characterize_verts(int ind)
 	overt_t *ov = *ov_it;
 	overt_t *nv = other_m->vert_closest(NULL, ov);
 
-	if (ovmo.find(nv) != ovmo.end()) {
+	if (ovm2.find(nv) != ovm2.end()) {
 	    // We already have a mapping on this mesh for nv - closer one wins,
 	    // further is added to unmappable_verts for later consideration
-	    overt_t *ov_orig = ovmo[nv];
+	    overt_t *ov_orig = ovm2[nv];
+	    if (ov_orig == ov) continue;
 	    double d_orig = ov_orig->vpnt().DistanceTo(nv->vpnt());
 	    double d_new = ov->vpnt().DistanceTo(nv->vpnt());
 
 	    if (d_orig < d_new) {
 		ovum.insert(ov);
+		std::cout << "Skipping(" << d_new << "): " << ov->vpnt().x << "," << ov->vpnt().y << "," << ov->vpnt().z << "\n";
 	    } else {
 		ovum.insert(ov_orig);
-		ovmo[nv] = ov;
+		ovm2[nv] = ov;
+		std::cout << "Displacing(" << d_orig << "): " << ov_orig->vpnt().x << "," << ov_orig->vpnt().y << "," << ov_orig->vpnt().z << "\n";
+		std::cout << "       New(" << d_new << "): " << ov->vpnt().x << "," << ov->vpnt().y << "," << ov->vpnt().z << "\n";
 	    }
-	    std::cout << "already mapped\n";
 	    continue;
 	}
 
@@ -132,25 +136,25 @@ ovlp_grp::characterize_verts(int ind)
 
 	// If the opposite vertex is close to the current vertex per their bounding boxes and is close
 	// to the closet surface point, go with it
-	std::set<overt_t *> &ov2 = (!ind) ? overts2 : overts1;
 	std::set<long> &v2 = (!ind) ? verts2 : verts1;
 	if (!nv->bb.IsDisjoint(spbb) && (s_p.DistanceTo(nv->vpnt()) < 2*ON_ZERO_TOLERANCE)) {
-	    ovm[ov] = nv;
-	    ovmo[nv] = ov;
+	    ovm1[ov] = nv;
+	    ovm2[nv] = ov;
 	    // Make sure both vert sets store all the required vertices
 	    ov2.insert(nv);
 	    v2.insert(nv->p_id);
 	    continue;
 	}
 
-	std::cout << "Need new vert paring(" << s_p.DistanceTo(nv->vpnt()) << ": " << target_point.x << "," << target_point.y << "," << target_point.z << "\n";
+	std::cout << "Need new vert paring(" << s_p.DistanceTo(nv->vpnt()) << "): " << target_point.x << "," << target_point.y << "," << target_point.z << "\n";
 
 	if (is_edge_vert(other_m, s_p)) {
+	    std::cout << "Edge refinement point\n";
 	    std::set<overt_t *> &ovev = (!ind) ? om2_everts_from_om1 : om1_everts_from_om2;
 	    ovev.insert(ov);
 	} else {
 	    // Unmapped non-edge point
-	    std::cout << "Non edge point needs a new refinement point inserted??\n";
+	    std::cout << "Non edge refinement point\n";
 	    std::set<overt_t *> &ovrv = (!ind) ? om2_rverts_from_om1 : om1_rverts_from_om2;
 	    ovrv.insert(ov);
 	}
@@ -169,11 +173,23 @@ bool
 ovlp_grp::characterize_all_verts()
 {
     characterize_verts(0);
-#if 0
     characterize_verts(1);
-    return (refine_edge_verts->size() > 0) ? true : false;
-#endif
-    return false;
+    bool status = true;
+    status = (om1_unmappable_rverts.size() > 0) ? false : status;
+    status = (om2_unmappable_rverts.size() > 0) ? false : status;
+    status = (om1_rverts_from_om2.size() > 0) ? false : status;
+    status = (om2_rverts_from_om1.size() > 0) ? false : status;
+    status = (om1_everts_from_om2.size() > 0) ? false : status;
+    status = (om2_everts_from_om1.size() > 0) ? false : status;
+    std::cout << "om1_unmappable_rverts: " << om1_unmappable_rverts.size() << "\n";
+    std::cout << "om2_unmappable_rverts: " << om2_unmappable_rverts.size() << "\n";
+    std::cout << "om1_rverts_from_om2  : " << om1_rverts_from_om2.size()   << "\n";
+    std::cout << "om2_rverts_from_om1  : " << om2_rverts_from_om1.size()   << "\n";
+    std::cout << "om1_everts_from_om2  : " << om1_everts_from_om2.size()   << "\n";
+    std::cout << "om2_everts_from_om1  : " << om2_everts_from_om1.size()   << "\n";
+ 
+    std::cout << "characterize_all_verts: " << status << "\n";
+    return status;
 }
 
 
