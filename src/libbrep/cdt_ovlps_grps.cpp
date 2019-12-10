@@ -175,6 +175,7 @@ ovlp_grp::characterize_all_verts()
     characterize_verts(0);
     characterize_verts(1);
     bool status = true;
+    std::set<overt_t *>::iterator os_it;
     status = (om1_unmappable_rverts.size() > 0) ? false : status;
     status = (om2_unmappable_rverts.size() > 0) ? false : status;
     status = (om1_rverts_from_om2.size() > 0) ? false : status;
@@ -182,12 +183,40 @@ ovlp_grp::characterize_all_verts()
     status = (om1_everts_from_om2.size() > 0) ? false : status;
     status = (om2_everts_from_om1.size() > 0) ? false : status;
     std::cout << "om1_unmappable_rverts: " << om1_unmappable_rverts.size() << "\n";
+    for (os_it = om1_unmappable_rverts.begin(); os_it != om1_unmappable_rverts.end(); os_it++) {
+	std::cout << "                       "  << (*os_it)->vpnt().x << "," << (*os_it)->vpnt().y << "," << (*os_it)->vpnt().z << "\n";
+    }
     std::cout << "om2_unmappable_rverts: " << om2_unmappable_rverts.size() << "\n";
+    for (os_it = om2_unmappable_rverts.begin(); os_it != om2_unmappable_rverts.end(); os_it++) {
+	std::cout << "                       "  << (*os_it)->vpnt().x << "," << (*os_it)->vpnt().y << "," << (*os_it)->vpnt().z << "\n";
+    }
     std::cout << "om1_rverts_from_om2  : " << om1_rverts_from_om2.size()   << "\n";
+    for (os_it = om1_rverts_from_om2.begin(); os_it != om1_rverts_from_om2.end(); os_it++) {
+	std::cout << "                       "  << (*os_it)->vpnt().x << "," << (*os_it)->vpnt().y << "," << (*os_it)->vpnt().z << "\n";
+    }
     std::cout << "om2_rverts_from_om1  : " << om2_rverts_from_om1.size()   << "\n";
+    for (os_it = om2_rverts_from_om1.begin(); os_it != om2_rverts_from_om1.end(); os_it++) {
+	std::cout << "                       "  << (*os_it)->vpnt().x << "," << (*os_it)->vpnt().y << "," << (*os_it)->vpnt().z << "\n";
+    }
     std::cout << "om1_everts_from_om2  : " << om1_everts_from_om2.size()   << "\n";
+    for (os_it = om1_everts_from_om2.begin(); os_it != om1_everts_from_om2.end(); os_it++) {
+	std::cout << "                       "  << (*os_it)->vpnt().x << "," << (*os_it)->vpnt().y << "," << (*os_it)->vpnt().z << "\n";
+    }
     std::cout << "om2_everts_from_om1  : " << om2_everts_from_om1.size()   << "\n";
- 
+    for (os_it = om2_everts_from_om1.begin(); os_it != om2_everts_from_om1.end(); os_it++) {
+	std::cout << "                       "  << (*os_it)->vpnt().x << "," << (*os_it)->vpnt().y << "," << (*os_it)->vpnt().z << "\n";
+    }
+
+    std::map<overt_t *, overt_t *>::iterator om_it;
+    std::cout << "Clear mappings om1 -> om2: \n";
+    for (om_it = om1_om2_verts.begin(); om_it != om1_om2_verts.end(); om_it++) {
+	std::cout << "                       "  << om_it->first->vpnt().x << "," << om_it->first->vpnt().y << "," << om_it->first->vpnt().z << " -> "  << om_it->second->vpnt().x << "," << om_it->second->vpnt().y << "," << om_it->second->vpnt().z << "\n";
+    }
+    std::cout << "Clear mappings om2 -> om1: \n";
+    for (om_it = om2_om1_verts.begin(); om_it != om2_om1_verts.end(); om_it++) {
+	std::cout << "                       "  << om_it->first->vpnt().x << "," << om_it->first->vpnt().y << "," << om_it->first->vpnt().z << " -> "  << om_it->second->vpnt().x << "," << om_it->second->vpnt().y << "," << om_it->second->vpnt().z << "\n";
+    }
+
     std::cout << "characterize_all_verts: " << status << "\n";
     return status;
 }
