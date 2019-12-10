@@ -218,7 +218,109 @@ ovlp_grp::characterize_all_verts()
     }
 
     std::cout << "characterize_all_verts: " << status << "\n";
+
+    plot("curr_ovlp_grp");
     return status;
+}
+
+void
+ovlp_grp::plot(const char *fname, int ind)
+{
+
+    omesh_t *om = (!ind) ? om1 : om2;
+    std::set<size_t> tris = (!ind) ? tris1 : tris2;
+
+    std::set<overt_t *>::iterator os_it;
+    std::set<overt_t *> oum = (!ind) ? om1_unmappable_rverts : om2_unmappable_rverts;
+    std::set<overt_t *> orm = (!ind) ? om1_rverts_from_om2 : om2_rverts_from_om1;
+    std::set<overt_t *> oem = (!ind) ? om1_everts_from_om2 : om2_everts_from_om1;
+
+    std::map<overt_t *, overt_t *>::iterator om_it;
+    std::map<overt_t *, overt_t *> onormverts = (!ind) ? om1_om2_verts : om2_om1_verts;
+
+    struct bu_color c = BU_COLOR_INIT_ZERO;
+    unsigned char rgb[3] = {0,0,255};
+
+    // Randomize the blue so (usually) subsequent
+    // draws of different meshes won't erase the
+    // previous wireframe
+    std::random_device rd;
+    std::mt19937 reng(rd());
+    std::uniform_int_distribution<> rrange(100,250);
+    int brand = rrange(reng);
+    rgb[2] = (unsigned char)brand;
+
+    FILE *plot = fopen(fname, "w");
+
+    RTree<size_t, double, 3>::Iterator tree_it;
+    size_t t_ind;
+    cdt_mesh::triangle_t tri;
+
+    bu_color_from_rgb_chars(&c, (const unsigned char *)rgb);
+
+    om->fmesh->tris_tree.GetFirst(tree_it);
+    while (!tree_it.IsNull()) {
+	t_ind = *tree_it;
+	tri = om->fmesh->tris_vect[t_ind];
+	om->fmesh->plot_tri(tri, &c, plot, 255, 0, 0);
+	++tree_it;
+    }
+
+    double tri_r = 0;
+
+    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
+    pl_color_buc(plot, &c);
+    std::set<size_t>::iterator ts_it;
+    for (ts_it = tris.begin(); ts_it != tris.end(); ts_it++) {
+	tri = om->fmesh->tris_vect[*ts_it];
+	double tr = tri_pnt_r(*om->fmesh, tri.ind);
+	tri_r = (tr > tri_r) ? tr : tri_r;
+	om->fmesh->plot_tri(tri, &c, plot, 255, 0, 0);
+    }
+
+    pl_color(plot, 255, 0, 0);
+    for (os_it = oum.begin(); os_it != oum.end(); os_it++) {
+	overt_t *iv = *os_it;
+	ON_3dPoint vp = iv->vpnt();
+	plot_pnt_3d(plot, &vp, tri_r, 0);
+    }
+
+    pl_color(plot, 0, 255, 0);
+    for (os_it = oem.begin(); os_it != oem.end(); os_it++) {
+	overt_t *iv = *os_it;
+	ON_3dPoint vp = iv->vpnt();
+	plot_pnt_3d(plot, &vp, tri_r, 0);
+    }
+
+    pl_color(plot, 255, 255, 0);
+    for (os_it = orm.begin(); os_it != orm.end(); os_it++) {
+	overt_t *iv = *os_it;
+	ON_3dPoint vp = iv->vpnt();
+	plot_pnt_3d(plot, &vp, tri_r, 0);
+    }
+
+    pl_color(plot, 255, 255, 255);
+    for (om_it = onormverts.begin(); om_it != onormverts.end(); om_it++) {
+	overt_t *iv = om_it->first;
+	ON_3dPoint vp = iv->vpnt();
+	plot_pnt_3d(plot, &vp, tri_r, 0);
+	iv = om_it->second;
+	vp = iv->vpnt();
+	plot_pnt_3d(plot, &vp, tri_r, 0);
+    }
+
+    fclose(plot);
+}
+
+void
+ovlp_grp::plot(const char *fname)
+{
+    struct bu_vls omname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&omname, "%s-0.plot3", fname);
+    plot(bu_vls_cstr(&omname), 0);
+    bu_vls_sprintf(&omname, "%s-1.plot3", fname);
+    plot(bu_vls_cstr(&omname), 1);
+    bu_vls_free(&omname);
 }
 
 
