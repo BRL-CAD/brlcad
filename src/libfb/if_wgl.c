@@ -418,7 +418,7 @@ MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_MBUTTONDOWN:
 	    break;
 	case WM_CLOSE:
-	    WGL(saveifp)->alive = -1;
+	    WGL(saveifp)->alive = 0;
 	    break;
 	case WM_LBUTTONUP:
 	    WGL(saveifp)->alive = 0;
