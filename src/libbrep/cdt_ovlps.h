@@ -228,6 +228,7 @@ class ovlp_grp {
 	std::set<overt_t *> om1_unmappable_rverts;
 	std::set<overt_t *> om2_unmappable_rverts;
 
+	bool replaceable;
 
     private:
         void characterize_verts(int ind);

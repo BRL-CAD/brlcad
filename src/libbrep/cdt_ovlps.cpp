@@ -2565,11 +2565,12 @@ shared_cdts(
     std::vector<ovlp_grp> bins;
     std::map<std::pair<omesh_t *, size_t>, size_t> bin_map;
     std::set<size_t> no_refine;
+    std::set<size_t> refine;
+    std::set<size_t>::iterator r_it;
 
     while (have_refine_pnts && (processed_cnt < 2)) {
 
 
-	std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> edge_verts;
 
 	bins.clear();
 
@@ -2583,31 +2584,41 @@ shared_cdts(
 	// Have groupings - reset refinement info
 	refinement_reset(check_pairs);
 
+	refine.clear();
 	no_refine.clear();
 	for (size_t i = 0; i < bins.size(); i++) {
 	    if (bins[i].characterize_all_verts()) {
-		have_refine_pnts = true;
+		refine.insert(i);
 	    } else {
 		no_refine.insert(i);
 	    }
-
-	    if (!have_refine_pnts) {
-		std::set<size_t>::iterator t_it;
-		std::cout << "Group " << i << " tri/vert cnts:\n";
-		bins[i].list_tris();
-		bins[i].list_overts();
-	    }
 	}
 
-#if 0
-	// Consolidate edge points from characterizations
-	for (size_t i = 0; i < bins.size(); i++) {
-	    std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>>::iterator e_it;
-	    for (e_it = bins[i].refine_edge_verts.begin(); e_it != bins[i].refine_edge_verts.end(); e_it++) {
-		edge_verts[e_it->first].insert(e_it->second.begin(), e_it->second.end());
-	    }
+	// For any groups that need no further point refinement, do the shared
+	// tessellation
+	for (r_it = no_refine.begin(); r_it != no_refine.end(); r_it++) {
+	    std::cout << "Group " << *r_it << " ready:\n";
+	    bins[*r_it].list_tris();
+	    bins[*r_it].list_overts();
+	    struct bu_vls pname = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&pname, "group_ready_%zu", *r_it);
+	    bins[*r_it].plot(bu_vls_cstr(&pname));
+	    bu_vls_free(&pname);
 	}
-#endif
+
+	// For any groups that need no further point refinement, do the shared
+	// tessellation
+	for (r_it = refine.begin(); r_it != refine.end(); r_it++) {
+	    std::cout << "Group " << *r_it << " NEEDS REFINEMENT:\n";
+	    bins[*r_it].list_tris();
+	    bins[*r_it].list_overts();
+	    struct bu_vls pname = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&pname, "group_refine_%zu", *r_it);
+	    bins[*r_it].plot(bu_vls_cstr(&pname));
+	    bu_vls_free(&pname);
+	}
+
+	std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> edge_verts;
 
 	// If refinement points were added above, refine and repeat
 	if (edge_verts.size()) {

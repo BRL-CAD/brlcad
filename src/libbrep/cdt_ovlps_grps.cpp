@@ -174,14 +174,14 @@ ovlp_grp::characterize_all_verts()
 {
     characterize_verts(0);
     characterize_verts(1);
-    bool status = true;
+    replaceable = true;
     std::set<overt_t *>::iterator os_it;
-    status = (om1_unmappable_rverts.size() > 0) ? false : status;
-    status = (om2_unmappable_rverts.size() > 0) ? false : status;
-    status = (om1_rverts_from_om2.size() > 0) ? false : status;
-    status = (om2_rverts_from_om1.size() > 0) ? false : status;
-    status = (om1_everts_from_om2.size() > 0) ? false : status;
-    status = (om2_everts_from_om1.size() > 0) ? false : status;
+    replaceable = (om1_unmappable_rverts.size() > 0) ? false : replaceable;
+    replaceable = (om2_unmappable_rverts.size() > 0) ? false : replaceable;
+    replaceable = (om1_rverts_from_om2.size() > 0) ? false : replaceable;
+    replaceable = (om2_rverts_from_om1.size() > 0) ? false : replaceable;
+    replaceable = (om1_everts_from_om2.size() > 0) ? false : replaceable;
+    replaceable = (om2_everts_from_om1.size() > 0) ? false : replaceable;
     std::cout << "om1_unmappable_rverts: " << om1_unmappable_rverts.size() << "\n";
     for (os_it = om1_unmappable_rverts.begin(); os_it != om1_unmappable_rverts.end(); os_it++) {
 	std::cout << "                       "  << (*os_it)->vpnt().x << "," << (*os_it)->vpnt().y << "," << (*os_it)->vpnt().z << "\n";
@@ -217,10 +217,9 @@ ovlp_grp::characterize_all_verts()
 	std::cout << "                       "  << om_it->first->vpnt().x << "," << om_it->first->vpnt().y << "," << om_it->first->vpnt().z << " -> "  << om_it->second->vpnt().x << "," << om_it->second->vpnt().y << "," << om_it->second->vpnt().z << "\n";
     }
 
-    std::cout << "characterize_all_verts: " << status << "\n";
+    std::cout << "group is replaceable: " << replaceable << "\n";
 
-    plot("curr_ovlp_grp");
-    return status;
+    return !replaceable;
 }
 
 void
