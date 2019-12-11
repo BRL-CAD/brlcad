@@ -2056,6 +2056,7 @@ replace_edge_split_tri(cdt_mesh::cdt_mesh_t &fmesh, size_t t_id, long np_id, cdt
 
 int
 ovlp_split_edge(
+	overt_t **nv,
 	std::set<cdt_mesh::bedge_seg_t *> *nsegs,
 	cdt_mesh::bedge_seg_t *eseg, double t,
 	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
@@ -2159,8 +2160,8 @@ ovlp_split_edge(
 	    replaced_tris++;
 	}
 	omesh_t *om = f2omap[&fmesh_f1];
-	om->vert_add(np_id);
-
+	overt_t *nvert = om->vert_add(np_id);
+	(*nv) = nvert;
     } else {
 	np_id = fmesh_f1.pnts.size() - 1;
 	fmesh_f1.ep.insert(np_id);
@@ -2174,7 +2175,8 @@ ovlp_split_edge(
 	replace_edge_split_tri(fmesh_f2, *f2_tris.begin(), np_id, ue2);
 	replaced_tris++;
     	omesh_t *om2 = f2omap[&fmesh_f2];
-	om2->vert_add(np_id);
+	overt_t *nvert = om2->vert_add(np_id);
+	(*nv) = nvert;
     }
 
     return replaced_tris;
@@ -2187,6 +2189,7 @@ ovlp_split_edge(
 // what we need to do, small triangles or not...
 int
 bedge_split_at_t(
+	overt_t **nv,
 	cdt_mesh::bedge_seg_t *eseg, double t,
 	std::set<cdt_mesh::bedge_seg_t *> *nsegs,
 	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
@@ -2200,7 +2203,7 @@ bedge_split_at_t(
     double lseg_check = 0.1 * eseg->e_start->DistanceTo(*eseg->e_end);
     if (epdist1 > lseg_check && epdist2 > lseg_check) {
 	// If the point is not close to a start/end point on the edge then split the edge.
-	int rtris = ovlp_split_edge(nsegs, eseg, t, f2omap);
+	int rtris = ovlp_split_edge(nv, nsegs, eseg, t, f2omap);
 	if (rtris >= 0) {
 	    replaced_tris += rtris;
 	} else {
@@ -2215,6 +2218,7 @@ bedge_split_at_t(
 // Find the point on the edge nearest to the point, and split the edge at that point.
 int
 bedge_split_near_pnt(
+	overt_t **nv,
 	cdt_mesh::bedge_seg_t *eseg, ON_3dPoint &p,
 	std::set<cdt_mesh::bedge_seg_t *> *nsegs,
 	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
@@ -2224,12 +2228,13 @@ bedge_split_near_pnt(
     ON_Interval domain(eseg->edge_start, eseg->edge_end);
     double t;
     ON_NurbsCurve_GetClosestPoint(&t, nc, p, 0.0, &domain);
-    return bedge_split_at_t(eseg, t, nsegs, f2omap);
+    return bedge_split_at_t(nv, eseg, t, nsegs, f2omap);
 }
 
 // Find the point on the edge nearest to the vert point.
 int
 bedge_split_near_vert(
+	overt_t **nv,
 	std::map<cdt_mesh::bedge_seg_t *, overt_t *> &edge_vert,
 	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
 	)
@@ -2240,13 +2245,14 @@ bedge_split_near_vert(
 	cdt_mesh::bedge_seg_t *eseg = ev_it->first;
 	overt_t *v = ev_it->second;
 	ON_3dPoint p = v->vpnt();
-	replaced_tris += bedge_split_near_pnt(eseg, p, NULL, f2omap);
+	replaced_tris += bedge_split_near_pnt(nv, eseg, p, NULL, f2omap);
     }
     return replaced_tris;
 }
 
 int
 bedge_split_near_verts(
+	std::set<overt_t *> *nverts,
 	std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> &edge_verts,
 	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
 	)
@@ -2286,11 +2292,13 @@ bedge_split_near_verts(
 	    }
 
 	    std::set<cdt_mesh::bedge_seg_t *> nsegs;
-	    int ntri_cnt = bedge_split_at_t(eseg_split, split_t, &nsegs, f2omap);
+	    overt_t *nv = NULL;
+	    int ntri_cnt = bedge_split_at_t(&nv, eseg_split, split_t, &nsegs, f2omap);
 	    if (ntri_cnt) {
 		segs.erase(eseg_split);
 		replaced_tris += ntri_cnt;
 		segs.insert(nsegs.begin(), nsegs.end());
+		nverts->insert(nv);
 	    }
 	}
     }
@@ -2625,7 +2633,8 @@ shared_cdts(
 	    int bedge_replaced_tris = INT_MAX;
 	    while (bedge_replaced_tris) {
 		// Process edge_verts
-		bedge_replaced_tris = bedge_split_near_verts(edge_verts, f2omap);
+		std::set<overt_t *> nverts;
+		bedge_replaced_tris = bedge_split_near_verts(&nverts, edge_verts, f2omap);
 	    }
 	    int interior_replaced_tris = INT_MAX;
 	    while (interior_replaced_tris) {
@@ -2846,7 +2855,8 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    }
 
 	    // Process edge_verts
-	    bedge_replaced_tris = bedge_split_near_verts(edge_verts, f2omap);
+	    std::set<overt_t *> nverts;
+	    bedge_replaced_tris = bedge_split_near_verts(&nverts, edge_verts, f2omap);
 
 	    face_ov_cnt = face_omesh_ovlps(ocheck_pairs, edge_verts, f2omap);
 	}
