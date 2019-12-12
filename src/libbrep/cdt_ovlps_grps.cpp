@@ -154,6 +154,8 @@ ovlp_grp::characterize_verts(int ind)
 	    ovev.insert(ov);
 	} else {
 	    // Unmapped non-edge point
+
+	    // TODO - need to stash this in the other mesh's refinement_overts so it gets processed
 	    std::cout << "Non edge refinement point\n";
 	    std::set<overt_t *> &ovrv = (!ind) ? om2_rverts_from_om1 : om1_rverts_from_om2;
 	    ovrv.insert(ov);
