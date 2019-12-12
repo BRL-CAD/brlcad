@@ -230,6 +230,8 @@ class ovlp_grp {
 
 	bool replaceable;
 
+	std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *edge_verts;
+
     private:
         void characterize_verts(int ind);
 };

@@ -68,22 +68,6 @@ ovlp_grp::list_overts()
     }
 }
 
-static bool
-is_edge_vert(omesh_t *omesh2, ON_3dPoint &sp)
-{
-    cdt_mesh::uedge_t closest_edge = omesh2->closest_uedge(sp);
-    if (omesh2->fmesh->brep_edges.find(closest_edge) != omesh2->fmesh->brep_edges.end()) {
-	cdt_mesh::bedge_seg_t *bseg = omesh2->fmesh->ue2b_map[closest_edge];
-	if (!bseg) {
-	    std::cout << "edge point, but couldn't find bseg pointer??\n";
-	    return false;
-	} else {
-	    return true;
-	}
-    }
-    return false;
-}
-
 void
 ovlp_grp::characterize_verts(int ind)
 {
@@ -148,17 +132,28 @@ ovlp_grp::characterize_verts(int ind)
 
 	std::cout << "Need new vert paring(" << s_p.DistanceTo(nv->vpnt()) << "): " << target_point.x << "," << target_point.y << "," << target_point.z << "\n";
 
-	if (is_edge_vert(other_m, s_p)) {
-	    std::cout << "Edge refinement point\n";
-	    std::set<overt_t *> &ovev = (!ind) ? om2_everts_from_om1 : om1_everts_from_om2;
-	    ovev.insert(ov);
-	} else {
-	    // Unmapped non-edge point
+	cdt_mesh::uedge_t closest_edge = other_m->closest_uedge(s_p);
+	if (other_m->fmesh->brep_edges.find(closest_edge) != other_m->fmesh->brep_edges.end()) {
+	    cdt_mesh::bedge_seg_t *bseg = other_m->fmesh->ue2b_map[closest_edge];
+	    if (!bseg) {
+		std::cout << "couldn't find bseg pointer??\n";
+	    } else {
+		std::cout << "Edge refinement point\n";
+		std::set<overt_t *> &ovev = (!ind) ? om2_everts_from_om1 : om1_everts_from_om2;
+		ovev.insert(ov);
 
-	    // TODO - need to stash this in the other mesh's refinement_overts so it gets processed
+		(*edge_verts)[bseg].insert(ov);
+	    }
+	} else {
 	    std::cout << "Non edge refinement point\n";
 	    std::set<overt_t *> &ovrv = (!ind) ? om2_rverts_from_om1 : om1_rverts_from_om2;
 	    ovrv.insert(ov);
+
+	    std::set<size_t> uet = other_m->fmesh->uedges2tris[closest_edge];
+	    std::set<size_t>::iterator u_it;
+	    for (u_it = uet.begin(); u_it != uet.end(); u_it++) {
+		other_m->refinement_overts[ov].insert(*u_it);
+	    }
 	}
 
 	// Make sure both vert sets store all the required vertices - the

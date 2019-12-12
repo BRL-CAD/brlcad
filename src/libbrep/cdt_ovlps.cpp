@@ -2659,7 +2659,7 @@ shared_cdts(
 
     while (have_refine_pnts && (processed_cnt < 2)) {
 
-
+	std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> edge_verts;
 
 	bins.clear();
 
@@ -2676,6 +2676,7 @@ shared_cdts(
 	refine.clear();
 	no_refine.clear();
 	for (size_t i = 0; i < bins.size(); i++) {
+	    bins[i].edge_verts = &edge_verts;
 	    if (bins[i].characterize_all_verts()) {
 		refine.insert(i);
 	    } else {
@@ -2705,24 +2706,6 @@ shared_cdts(
 	    bu_vls_sprintf(&pname, "group_refine_%zu", *r_it);
 	    bins[*r_it].plot(bu_vls_cstr(&pname));
 	    bu_vls_free(&pname);
-	}
-
-	std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> edge_verts;
-	if (refine.size()) {
-	    int avcnt = 0;
-	    std::set<overt_t *>::iterator nv_it;
-	    for (r_it = refine.begin(); r_it != refine.end(); r_it++) {
-		std::set<overt_t *>::iterator os_it;
-		for (os_it = bins[*r_it].om1_everts_from_om2.begin(); os_it != bins[*r_it].om1_everts_from_om2.end(); os_it++) {
-		    avcnt += vert_nearby_closest_point_check(*os_it, edge_verts, check_pairs);
-		}
-		for (os_it = bins[*r_it].om2_everts_from_om1.begin(); os_it != bins[*r_it].om2_everts_from_om1.end(); os_it++) {
-		    avcnt += vert_nearby_closest_point_check(*os_it, edge_verts, check_pairs);
-		}
-	    }
-	    if (avcnt) {
-		std::cout << "vert_nearby_closest_point_check added " << avcnt << " edge close verts\n";
-	    }
 	}
 
 	// If refinement points were added above, refine and repeat
@@ -2758,7 +2741,7 @@ shared_cdts(
     }
     if (no_refine.size()) {
 	std::cout << "Have " << no_refine.size() << " groups we can process directly\n";
-    } 
+    }
 
     for (size_t bin_id = 0; bin_id < bins.size(); bin_id++) {
 
