@@ -2259,7 +2259,9 @@ bedge_split_near_verts(
 {
     int replaced_tris = 0;
     std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>>::iterator ev_it;
+    int evcnt = 0;
     for (ev_it = edge_verts.begin(); ev_it != edge_verts.end(); ev_it++) {
+	std::cout << "evcnt: " << evcnt << "\n";
 	std::set<overt_t *> verts = ev_it->second;
 	std::set<cdt_mesh::bedge_seg_t *> segs;
 	segs.insert(ev_it->first);
@@ -2274,7 +2276,9 @@ bedge_split_near_verts(
 	    double closest_dist = DBL_MAX;
 	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
 	    //std::cout << "segs size: " << segs.size() << "\n";
+	    int segcnt = 0;
 	    for (e_it = segs.begin(); e_it != segs.end(); e_it++) {
+		std::cout << "segcnt: " << segcnt << "\n";
 		cdt_mesh::bedge_seg_t *eseg = *e_it;
 		ON_NurbsCurve *nc = eseg->nc;
 		ON_Interval domain(eseg->edge_start, eseg->edge_end);
@@ -2289,6 +2293,7 @@ bedge_split_near_verts(
 		    eseg_split = eseg;
 		    split_t = t;
 		}
+		segcnt++;
 	    }
 
 	    std::set<cdt_mesh::bedge_seg_t *> nsegs;
@@ -2301,6 +2306,7 @@ bedge_split_near_verts(
 		nverts->insert(nv);
 	    }
 	}
+	evcnt++;
     }
 
     return replaced_tris;
@@ -2341,7 +2347,7 @@ vert_nearby_closest_point_check(
 	ON_3dVector sn;
 	double dist = nv->bb.Diagonal().Length() * 10;
 	if (!closest_surf_pnt(spnt, sn, *(m->fmesh), &vpnt, 2*dist)) {
-	    std::cout << "closest point failed\n";
+	    // If there's no surface point with dist, we're not close
 	    continue;
 	}
 	ON_BoundingBox spbb(spnt, spnt);
@@ -2702,14 +2708,31 @@ shared_cdts(
 	}
 
 	std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> edge_verts;
+	if (refine.size()) {
+	    int avcnt = 0;
+	    std::set<overt_t *>::iterator nv_it;
+	    for (r_it = refine.begin(); r_it != refine.end(); r_it++) {
+		std::set<overt_t *>::iterator os_it;
+		for (os_it = bins[*r_it].om1_everts_from_om2.begin(); os_it != bins[*r_it].om1_everts_from_om2.end(); os_it++) {
+		    avcnt += vert_nearby_closest_point_check(*os_it, edge_verts, check_pairs);
+		}
+		for (os_it = bins[*r_it].om2_everts_from_om1.begin(); os_it != bins[*r_it].om2_everts_from_om1.end(); os_it++) {
+		    avcnt += vert_nearby_closest_point_check(*os_it, edge_verts, check_pairs);
+		}
+	    }
+	    if (avcnt) {
+		std::cout << "vert_nearby_closest_point_check added " << avcnt << " edge close verts\n";
+	    }
+	}
 
 	// If refinement points were added above, refine and repeat
-	if (edge_verts.size()) {
+	if (refine.size()) {
 	    int bedge_replaced_tris = INT_MAX;
 	    while (bedge_replaced_tris) {
 		// Process edge_verts
 		std::set<overt_t *> nverts;
 		bedge_replaced_tris = bedge_split_near_verts(&nverts, edge_verts, f2omap);
+		edge_verts.clear();
 		std::set<overt_t *>::iterator nv_it;
 		int avcnt = 0;
 		for (nv_it = nverts.begin(); nv_it != nverts.end(); nv_it++) {
@@ -2940,6 +2963,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    // Process edge_verts
 	    std::set<overt_t *> nverts;
 	    bedge_replaced_tris = bedge_split_near_verts(&nverts, edge_verts, f2omap);
+	    edge_verts.clear();
 	    std::set<overt_t *>::iterator nv_it;
 	    int vvcnt = 0;
 	    for (nv_it = nverts.begin(); nv_it != nverts.end(); nv_it++) {
