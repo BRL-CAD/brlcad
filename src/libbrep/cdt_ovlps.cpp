@@ -2306,6 +2306,81 @@ bedge_split_near_verts(
     return replaced_tris;
 }
 
+int
+vert_nearby_closest_point_check(
+	overt_t *nv,
+	std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> &edge_verts,
+	std::set<std::pair<omesh_t *, omesh_t *>> &ocheck_pairs)
+{
+    int retcnt = 0;
+    ON_3dPoint vpnt = nv->vpnt();
+
+    // For the given vertex, check any mesh from any of the pairs that
+    // is potentially overlapping.
+    std::set<omesh_t *> check_meshes;
+    std::set<std::pair<omesh_t *, omesh_t *>>::iterator o_it;
+    for (o_it = ocheck_pairs.begin(); o_it != ocheck_pairs.end(); o_it++) {
+	if (o_it->first == nv->omesh && o_it->second != nv->omesh) {
+	    check_meshes.insert(o_it->second);
+	}
+	if (o_it->second == nv->omesh && o_it->first != nv->omesh) {
+	    check_meshes.insert(o_it->first);
+	}
+    }
+
+
+    std::set<omesh_t *>::iterator m_it;
+    for (m_it = check_meshes.begin(); m_it != check_meshes.end(); m_it++) {
+	// If there are close triangles to this vertex but the closest surface
+	// point is not near one of the verts of those triangles, we need to
+	// introduce a new point onto the opposite mesh.  Also will have to
+	// check if the point we need to introduce is an edge point.
+	omesh_t *m = *m_it;
+
+	ON_3dPoint spnt;
+	ON_3dVector sn;
+	double dist = nv->bb.Diagonal().Length() * 10;
+	if (!closest_surf_pnt(spnt, sn, *(m->fmesh), &vpnt, 2*dist)) {
+	    std::cout << "closest point failed\n";
+	    continue;
+	}
+	ON_BoundingBox spbb(spnt, spnt);
+
+	// Check the vtree and see if we can eliminate the closest surf point
+	// as being already close to an existing vert in the other mesh
+	double vdist;
+	overt_t *existing_v = m->vert_closest(&vdist, nv);
+
+	if (existing_v->bb.IsDisjoint(spbb)) {
+	    // Closest surface point isn't inside the closest vert bbox - add
+	    // a new refinement vert
+
+	    // If we're close to a brep face edge, needs to go in edge_verts.
+	    // Else, new interior vert for m
+	    cdt_mesh::uedge_t closest_edge = m->closest_uedge(vpnt);
+	    if (m->fmesh->brep_edges.find(closest_edge) != m->fmesh->brep_edges.end()) {
+		cdt_mesh::bedge_seg_t *bseg = m->fmesh->ue2b_map[closest_edge];
+		if (!bseg) {
+		    std::cout << "couldn't find bseg pointer??\n";
+		} else {
+		    edge_verts[bseg].insert(nv);
+		    retcnt++;
+		}
+	    } else {
+		std::set<size_t> uet = m->fmesh->uedges2tris[closest_edge];
+		std::set<size_t>::iterator u_it;
+		for (u_it = uet.begin(); u_it != uet.end(); u_it++) {
+		    m->refinement_overts[nv].insert(*u_it);
+		}
+		retcnt++;
+	    }
+	}
+    }
+
+    return 0;
+}
+
+
 void
 check_faces_validity(std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs)
 {
@@ -2635,6 +2710,14 @@ shared_cdts(
 		// Process edge_verts
 		std::set<overt_t *> nverts;
 		bedge_replaced_tris = bedge_split_near_verts(&nverts, edge_verts, f2omap);
+		std::set<overt_t *>::iterator nv_it;
+		int avcnt = 0;
+		for (nv_it = nverts.begin(); nv_it != nverts.end(); nv_it++) {
+		    avcnt += vert_nearby_closest_point_check(*nv_it, edge_verts, check_pairs);
+		}
+		if (avcnt) {
+		    std::cout << "vert_nearby_closest_point_check added " << avcnt << " close verts\n";
+		}
 	    }
 	    int interior_replaced_tris = INT_MAX;
 	    while (interior_replaced_tris) {
@@ -2857,6 +2940,15 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    // Process edge_verts
 	    std::set<overt_t *> nverts;
 	    bedge_replaced_tris = bedge_split_near_verts(&nverts, edge_verts, f2omap);
+	    std::set<overt_t *>::iterator nv_it;
+	    int vvcnt = 0;
+	    for (nv_it = nverts.begin(); nv_it != nverts.end(); nv_it++) {
+		vvcnt += vert_nearby_closest_point_check(*nv_it, edge_verts, ocheck_pairs);
+	    }
+	    if (vvcnt) {
+		std::cout << "vert_nearby_closest_point_check added " << vvcnt << " close verts\n";
+	    }
+
 
 	    face_ov_cnt = face_omesh_ovlps(ocheck_pairs, edge_verts, f2omap);
 	}
