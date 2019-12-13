@@ -100,13 +100,22 @@ BU_EXPORT int bu_process_pid(struct bu_process *pinfo);
 
 
 /**
- * Returns argc and argv used to exec the subprocess - argc is
- * returned as the return integer, a pointer to the specified command
- * in the first pointer, and a pointer to the argv array in the second
- * argument. If either cmd or argv are NULL they will be skipped.
+ * Reports one or both of the command string and the argv array
+ * used to execute the process.
  *
- * FIXME: argument ordering and grouping is wrong/inconsistent.
- * unclear who owns the pointers returned.
+ * The bu_process container owns all strings for both cmd and argv -
+ * for the caller they are read-only.
+ *
+ * If either cmd or argv are NULL they will be skipped - if the
+ * caller only wants one of these outputs the other argument can
+ * be set to NULL.
+ *
+ * @param[out] cmd - pointer to the cmd string used to launch pinfo
+ * @param[out] argv - pointer to the argv array used to launch pinfo
+ * @param[in] pinfo - the bu_process structure of interest
+ *
+ * @return
+ * the corresponding argc count for pinfo's argv array.
  */
 BU_EXPORT int bu_process_args(const char **cmd, const char * const **argv, struct bu_process *pinfo);
 
