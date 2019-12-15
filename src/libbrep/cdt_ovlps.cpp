@@ -2357,7 +2357,18 @@ vert_nearby_closest_point_check(
 	double vdist;
 	overt_t *existing_v = m->vert_closest(&vdist, nv);
 
-	if (existing_v->bb.IsDisjoint(spbb)) {
+	// The key point here is whether the other vertex is too close according
+	// to the point needing a match, not according to the other point (which
+	// may have an arbitrarily sized bbox depending on its associated edge
+	// lengths.  Construct a new bbox using the existing_v point and the box
+	// size of nv.
+	ON_BoundingBox evnbb(existing_v->vpnt(), existing_v->vpnt());
+	ON_3dPoint c1 = existing_v->vpnt() + nv->bb.Diagonal()*0.5;
+	ON_3dPoint c2 = existing_v->vpnt() - nv->bb.Diagonal()*0.5;
+	evnbb.Set(c1, true);
+	evnbb.Set(c2, true);
+
+	if (evnbb.IsDisjoint(spbb)) {
 	    // Closest surface point isn't inside the closest vert bbox - add
 	    // a new refinement vert
 
