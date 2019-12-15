@@ -53,7 +53,10 @@ class overt_t {
         }
 
         omesh_t *omesh;
-        long p_id;
+
+	std::map<omesh_t *, overt_t *> aligned;
+
+      	long p_id;
 
         bool edge_vert();
 

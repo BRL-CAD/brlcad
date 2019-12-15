@@ -1960,6 +1960,8 @@ adjust_close_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
 	}
 	// Both v and it's companion only have one overlapping point
 	vq.push(std::make_pair(v,v_other));
+	v->aligned[v_other->omesh] = v_other;
+	v_other->aligned[v->omesh] = v;
     }
 
     //std::cout << "Have " << vq.size() << " simple interactions\n";
@@ -1995,6 +1997,8 @@ adjust_close_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
 	    adjusted_overts += adjust_overt_pair(l, c);
 	    adjusted.insert(l);
 	    adjusted.insert(c);
+	    l->aligned[c->omesh] = c;
+	    c->aligned[l->omesh] = l;
 	}
     }
 
