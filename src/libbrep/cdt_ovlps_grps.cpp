@@ -327,17 +327,17 @@ ovlp_grp::plot(const char *fname)
 std::vector<ovlp_grp>
 find_ovlp_grps(
 	std::map<std::pair<omesh_t *, size_t>, size_t> &bin_map,
-	std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
+	std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs
 	)
 {
     std::vector<ovlp_grp> bins;
 
     bin_map.clear();
 
-    std::set<std::pair<omesh_t *, omesh_t *>>::iterator cp_it;
+    std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
-	omesh_t *omesh1 = cp_it->first;
-	omesh_t *omesh2 = cp_it->second;
+	omesh_t *omesh1 = cp_it->first->omesh;
+	omesh_t *omesh2 = cp_it->second->omesh;
 	if (!omesh1->intruding_tris.size() || !omesh2->intruding_tris.size()) {
 	    continue;
 	}

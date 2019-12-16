@@ -462,6 +462,8 @@ public:
 	v2edges.clear();
 	v2tris.clear();
 	edges2tris.clear();
+
+	omesh = NULL;
     };
 
     /* The 3D triangle set (defined by index values) and it associated points array.
@@ -906,7 +908,7 @@ tri_isect(
 std::vector<ovlp_grp>
 find_ovlp_grps(
 	std::map<std::pair<omesh_t *, size_t>, size_t> &bin_map,
-	std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
+	std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs
 	);
 
 #endif /* __cdt_mesh_h__ */
