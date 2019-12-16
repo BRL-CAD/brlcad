@@ -136,10 +136,22 @@ overt_t::edge_vert() {
 
 void
 overt_t::update() {
-    // 1.  Get pnt's associated edges.
+    double fMin[3], fMax[3];
+    if (init) {
+	// Previously updated - remove old instance from tree
+	fMin[0] = bb.Min().x-ON_ZERO_TOLERANCE;
+	fMin[1] = bb.Min().y-ON_ZERO_TOLERANCE;
+	fMin[2] = bb.Min().z-ON_ZERO_TOLERANCE;
+	fMax[0] = bb.Max().x+ON_ZERO_TOLERANCE;
+	fMax[1] = bb.Max().y+ON_ZERO_TOLERANCE;
+	fMax[2] = bb.Max().z+ON_ZERO_TOLERANCE;
+	omesh->vtree.Remove(fMin, fMax, p_id);
+    }
+
+    // Get pnt's associated edges.
     std::set<cdt_mesh::edge_t> edges = omesh->fmesh->v2edges[p_id];
 
-    // 2.  find the shortest edge associated with pnt
+    // find the shortest edge associated with pnt
     std::set<cdt_mesh::edge_t>::iterator e_it;
     double elen = DBL_MAX;
     for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
@@ -174,12 +186,101 @@ overt_t::update() {
     npnt = v3dpnt;
     npnt.z = npnt.z - lfactor*elen;
     bb.Set(npnt, true);
+
+    // (re)insert the vertex into the parent omesh's vtree, once we're done
+    // updating
+    fMin[0] = bb.Min().x;
+    fMin[1] = bb.Min().y;
+    fMin[2] = bb.Min().z;
+    fMax[0] = bb.Max().x;
+    fMax[1] = bb.Max().y;
+    fMax[2] = bb.Max().z;
+    if (fMin[0] < -0.4*DBL_MAX || fMax[0] > 0.4*DBL_MAX) {
+	std::cout << "Bad vert box!\n";
+    }
+    omesh->vtree.Insert(fMin, fMax, p_id);
+
+    // Once we've gotten here, the vertex is fully initialized
+    init = true;
 }
 
 void
-omesh_t::vupdate(overt_t *v) {
-    v->update();
-    add_vtree_vert(v);
+overt_t::update(ON_BoundingBox *bbox) {
+    double fMin[3], fMax[3];
+
+    if (!bbox) {
+	std::cerr << "Cannot update vertex with NULL bounding box!\n";
+	return;
+    }
+
+    if (init) {
+	// Previously updated - remove old instance from tree
+	fMin[0] = bb.Min().x-ON_ZERO_TOLERANCE;
+	fMin[1] = bb.Min().y-ON_ZERO_TOLERANCE;
+	fMin[2] = bb.Min().z-ON_ZERO_TOLERANCE;
+	fMax[0] = bb.Max().x+ON_ZERO_TOLERANCE;
+	fMax[1] = bb.Max().y+ON_ZERO_TOLERANCE;
+	fMax[2] = bb.Max().z+ON_ZERO_TOLERANCE;
+	omesh->vtree.Remove(fMin, fMax, p_id);
+    }
+
+    // Use the new bbox to set bb
+    bb = *bbox;
+
+    // Get pnt's associated edges.
+    std::set<cdt_mesh::edge_t> edges = omesh->fmesh->v2edges[p_id];
+
+    // find the shortest edge associated with pnt
+    std::set<cdt_mesh::edge_t>::iterator e_it;
+    double elen = DBL_MAX;
+    for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
+	ON_3dPoint *p1 = omesh->fmesh->pnts[(*e_it).v[0]];
+	ON_3dPoint *p2 = omesh->fmesh->pnts[(*e_it).v[1]];
+	double dist = p1->DistanceTo(*p2);
+	elen = (dist < elen) ? dist : elen;
+    }
+    v_min_edge_len = elen;
+
+    // (re)insert the vertex into the parent omesh's vtree, once we're done
+    // updating
+    fMin[0] = bb.Min().x;
+    fMin[1] = bb.Min().y;
+    fMin[2] = bb.Min().z;
+    fMax[0] = bb.Max().x;
+    fMax[1] = bb.Max().y;
+    fMax[2] = bb.Max().z;
+    if (fMin[0] < -0.4*DBL_MAX || fMax[0] > 0.4*DBL_MAX) {
+	std::cout << "Bad vert box!\n";
+    }
+    omesh->vtree.Insert(fMin, fMax, p_id);
+
+    // Once we've gotten here, the vertex is fully initialized
+    init = true;
+}
+
+void
+overt_t::update_ring()
+{
+    std::set<long> mod_verts;
+
+    // 1.  Get pnt's associated edges.
+    std::set<cdt_mesh::edge_t> edges = omesh->fmesh->v2edges[p_id];
+
+    // 2.  Collect all the vertices associated with all the edges connected to
+    // the original point - these are the vertices that will have a new associated
+    // edge length after the change, and need to check if they have a new minimum
+    // associated edge length (with its implications for bounding box size).
+    std::set<cdt_mesh::edge_t>::iterator e_it;
+    for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
+	mod_verts.insert((*e_it).v[0]);
+	mod_verts.insert((*e_it).v[1]);
+    }
+
+    // 3.  Update each vertex
+    std::set<long>::iterator v_it;
+    for (v_it = mod_verts.begin(); v_it != mod_verts.end(); v_it++) {
+	omesh->overts[*v_it]->update();
+    }
 }
 
 void
@@ -190,90 +291,6 @@ overt_t::plot(FILE *plot)
     double r = 0.05*bb.Diagonal().Length();
     pl_color(plot, 0, 255, 0);
     plot_pnt_3d(plot, i_p, r, 0);
-}
-
-void
-omesh_t::add_vtree_vert(overt_t *v)
-{
-    remove_vtree_vert(v);
-    double fMin[3];
-    fMin[0] = v->bb.Min().x;
-    fMin[1] = v->bb.Min().y;
-    fMin[2] = v->bb.Min().z;
-    double fMax[3];
-    fMax[0] = v->bb.Max().x;
-    fMax[1] = v->bb.Max().y;
-    fMax[2] = v->bb.Max().z;
-    if (fMin[0] < -0.4*DBL_MAX || fMax[0] > 0.4*DBL_MAX) {
-	std::cout << "Bad vert box!\n";
-    }
-    vtree.Insert(fMin, fMax, v->p_id);
-    //rebuild_vtree();
-}
-
-void
-omesh_t::remove_vtree_vert(overt_t *v)
-{
-    double fMin[3];
-    fMin[0] = v->bb.Min().x-ON_ZERO_TOLERANCE;
-    fMin[1] = v->bb.Min().y-ON_ZERO_TOLERANCE;
-    fMin[2] = v->bb.Min().z-ON_ZERO_TOLERANCE;
-    double fMax[3];
-    fMax[0] = v->bb.Max().x+ON_ZERO_TOLERANCE;
-    fMax[1] = v->bb.Max().y+ON_ZERO_TOLERANCE;
-    fMax[2] = v->bb.Max().z+ON_ZERO_TOLERANCE;
-    vtree.Remove(fMin, fMax, v->p_id);
-}
-
-void
-omesh_t::init_verts()
-{
-    // Walk the fmesh's rtree holding the active triangles to get all
-    // vertices active in the face
-    std::set<long> averts;
-    RTree<size_t, double, 3>::Iterator tree_it;
-    size_t t_ind;
-    cdt_mesh::triangle_t tri;
-    fmesh->tris_tree.GetFirst(tree_it);
-    while (!tree_it.IsNull()) {
-	t_ind = *tree_it;
-	tri = fmesh->tris_vect[t_ind];
-	averts.insert(tri.v[0]);
-	averts.insert(tri.v[1]);
-	averts.insert(tri.v[2]);
-	++tree_it;
-    }
-
-    std::set<long>::iterator a_it;
-    for (a_it = averts.begin(); a_it != averts.end(); a_it++) {
-	overts[*a_it] = new overt_t(this, *a_it);
-	vupdate(overts[*a_it]);
-    }
-}
-
-void
-omesh_t::rebuild_vtree()
-{
-    std::map<long, class overt_t *>::iterator o_it;
-
-    vtree.RemoveAll();
-
-    for (o_it = overts.begin(); o_it != overts.end(); o_it++) {
-	long ind = o_it->first;
-	overt_t *ov = o_it->second;
-	double fMin[3];
-	fMin[0] = ov->bb.Min().x;
-	fMin[1] = ov->bb.Min().y;
-	fMin[2] = ov->bb.Min().z;
-	double fMax[3];
-	fMax[0] = ov->bb.Max().x;
-	fMax[1] = ov->bb.Max().y;
-	fMax[2] = ov->bb.Max().z;
-	if (fMin[0] < -0.4*DBL_MAX || fMax[0] > 0.4*DBL_MAX) {
-	    std::cout << "Bad vert box!\n";
-	}
-	vtree.Insert(fMin, fMax, ind);
-    }
 }
 
 void
@@ -332,17 +349,13 @@ omesh_t::validate_vtree()
     return true;
 }
 
-void
-omesh_t::load_vtree(const char *fname)
+std::set<std::pair<long, long>>
+omesh_t::vert_ovlps(omesh_t *other)
 {
-    vtree.RemoveAll();
-    vtree.Load(fname);
-}
-
-void
-omesh_t::save_vtree(const char *fname)
-{
-    vtree.Save(fname);
+    std::set<std::pair<long, long>> vert_pairs;
+    vert_pairs.clear();
+    vtree.Overlaps(other->vtree, &vert_pairs);
+    return vert_pairs;
 }
 
 void
@@ -646,39 +659,15 @@ omesh_t::vert_search(overt_t *v)
     return vert_search(vbb);
 }
 
-void
-omesh_t::verts_one_ring_update(long p_id)
-{
-    std::set<long> mod_verts;
-
-    // 1.  Get pnt's associated edges.
-    std::set<cdt_mesh::edge_t> edges = fmesh->v2edges[p_id];
-
-    // 2.  Collect all the vertices associated with all the edges
-    // connected to the original point - these are the mvert_info
-    // structures that may have a new minimum edge length after
-    // the change.
-    std::set<cdt_mesh::edge_t>::iterator e_it;
-    for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
-	mod_verts.insert((*e_it).v[0]);
-	mod_verts.insert((*e_it).v[1]);
-    }
-
-    // 3.  Update each vertex (both itself and in the vtree
-    std::set<long>::iterator v_it;
-    for (v_it = mod_verts.begin(); v_it != mod_verts.end(); v_it++) {
-	vupdate(overts[*v_it]);
-    }
-}
-
 overt_t *
 omesh_t::vert_add(long f3ind, ON_BoundingBox *bb)
 {
     overt_t *nv = new overt_t(this, f3ind);
     if (bb) {
-	nv->bb = *bb;
+	nv->update(bb);
+    } else {
+	nv->update();
     }
-    vupdate(nv);
     overts[f3ind] = nv;
     return nv;
 }
@@ -1744,7 +1733,7 @@ refine_edge_vert_sets (
 	// Have new triangles, update overts
 	std::set<overt_t *>::iterator n_it;
 	for (n_it = new_overts.begin(); n_it != new_overts.end(); n_it++) {
-	    (*n_it)->omesh->vupdate(*n_it);
+	    (*n_it)->update();
 	}
 
 	// Reassign points to their new closest edge (may be the same edge, but we need
@@ -1831,15 +1820,14 @@ adjust_overt(overt_t *v, overt_t *v_other, ON_3dPoint &target_point, double pdis
 	// If we're adjusting, that's the only refinement we will do with this vert
 	v_other->omesh->refinement_overts.erase(v);
 
-	v->omesh->remove_vtree_vert(v);
 	(*v->omesh->fmesh->pnts[v->p_id]) = s_p;
 	(*v->omesh->fmesh->normals[v->omesh->fmesh->nmap[v->p_id]]) = s_n;
+	v->update();
+	// We just changed the vertex point values - need to update all
+	// this vertex and all vertices connected to the updated vertex
+	// by an edge.
+	v->update_ring();
 
-	v->omesh->vupdate(v);
-
-	// We just changed the vertex point values - need to update all the
-	// connected vertices which might be impacted...
-	v->omesh->verts_one_ring_update(v->p_id);
 	return 1;
     } else {
 	struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)v_other->omesh->fmesh->p_cdt;
@@ -1929,9 +1917,7 @@ adjust_close_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
 	std::cout << "omesh1 vtree cnt: " << omesh1->vtree.Count() << "\n";
 	std::cout << "omesh2 vtree cnt: " << omesh2->vtree.Count() << "\n";
 #endif
-	std::set<std::pair<long, long>> vert_pairs;
-	vert_pairs.clear();
-	omesh1->vtree.Overlaps(omesh2->vtree, &vert_pairs);
+	std::set<std::pair<long, long>> vert_pairs = omesh1->vert_ovlps(omesh2);
 	//std::cout << "(" << s_cdt1->name << "," << omesh1->fmesh->f_id << ")+(" << s_cdt2->name << "," << omesh2->fmesh->f_id << "): " << vert_pairs.size() << " vert box overlaps\n";
 	std::set<std::pair<long, long>>::iterator v_it;
 	for (v_it = vert_pairs.begin(); v_it != vert_pairs.end(); v_it++) {

@@ -48,10 +48,20 @@ class overt_t {
         {
             omesh = om;
             p_id = p;
+	    init = false;
         }
 
 	// Update minimum edge length and bounding box information
         void update();
+
+	// For situations where we don't yet have associated edges
+	// (i.e. a new point is coming in based on an intruding mesh's
+	// vertex) we need to supply external bounding box info
+        void update(ON_BoundingBox *bbox);
+
+	// If vertices are being moved, the impact is not local to
+	// a single vertex - need updating in the neighborhood
+        void update_ring();
 
 	// Determine if this vertex is on a brep face edge
         bool edge_vert();
@@ -64,6 +74,8 @@ class overt_t {
 
 	// Print 3D axis at the vertex point location
         void plot(FILE *plot);
+
+
 
 	// Index of associated point in the omesh's fmesh container
 	long p_id;
@@ -82,6 +94,10 @@ class overt_t {
     private:
 	// Smallest edge length associated with this vertex
 	double v_min_edge_len;
+
+	// Set if vertex has been previously initialized - guides what
+	// the update step must do.
+	bool init;
 };
 
 
@@ -91,19 +107,33 @@ class omesh_t
         omesh_t(cdt_mesh::cdt_mesh_t *m)
         {
             fmesh = m;
-            init_verts();
+	    // Walk the fmesh's rtree holding the active triangles to get all
+	    // vertices active in the face
+	    std::set<long> averts;
+	    RTree<size_t, double, 3>::Iterator tree_it;
+	    size_t t_ind;
+	    cdt_mesh::triangle_t tri;
+	    fmesh->tris_tree.GetFirst(tree_it);
+	    while (!tree_it.IsNull()) {
+		t_ind = *tree_it;
+		tri = fmesh->tris_vect[t_ind];
+		averts.insert(tri.v[0]);
+		averts.insert(tri.v[1]);
+		averts.insert(tri.v[2]);
+		++tree_it;
+	    }
+
+	    std::set<long>::iterator a_it;
+	    for (a_it = averts.begin(); a_it != averts.end(); a_it++) {
+		overts[*a_it] = new overt_t(this, *a_it);
+		overts[*a_it]->update();
+	    }
         };
 
-        // The fmesh pnts array may have inactive vertices - we only want the
-        // active verts for this portion of the processing.
-        std::map<long, overt_t *> overts;
-        RTree<long, double, 3> vtree;
-        void add_vtree_vert(overt_t *v);
-        void remove_vtree_vert(overt_t *v);
-        void plot_vtree(const char *fname);
+
         bool validate_vtree();
-        void save_vtree(const char *fname);
-        void load_vtree(const char *fname);
+
+	std::set<std::pair<long, long>> vert_ovlps(omesh_t *other);
 
         // Add an fmesh vertex to the overts array and tree.
         overt_t *vert_add(long, ON_BoundingBox *bb = NULL);
@@ -123,6 +153,30 @@ class omesh_t
 
         void retessellate(std::set<size_t> &ov);
 
+        void refinement_clear();
+        std::set<long> refinement_split_tris();
+
+
+
+        void plot(const char *fname,
+                std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *ev,
+                std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap);
+        void plot(std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *ev,
+                std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap);
+        void plot_vtree(const char *fname);
+
+
+	// The parent cdt_mesh container holding the original mesh data
+	cdt_mesh::cdt_mesh_t *fmesh;
+
+        // The fmesh pnts array may have inactive vertices - we only want the
+        // active verts for this portion of the processing, so we maintain our
+	// own map of active overlap vertices.
+        std::map<long, overt_t *> overts;
+
+	// Use an rtree for fast localized lookup
+        RTree<long, double, 3> vtree;
+
         // Points from other meshes potentially needing refinement in this mesh
         std::map<overt_t *, std::set<long>> refinement_overts;
 
@@ -130,27 +184,6 @@ class omesh_t
         // triangles reported by tri_isect as intersecting from this mesh
         std::map<overt_t *, std::set<long>> intruding_overts;
         std::set<size_t> intruding_tris;
-
-        void refinement_clear();
-        std::set<long> refinement_split_tris();
-
-        cdt_mesh::cdt_mesh_t *fmesh;
-
-        void plot(const char *fname,
-                std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *ev,
-                std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap);
-        void plot(std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *ev,
-                std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap);
-
-        void verts_one_ring_update(long p_id);
-
-        void vupdate(overt_t *v);
-    private:
-        void init_verts();
-        void rebuild_vtree();
-
-        void edge_tris_remove(cdt_mesh::uedge_t &ue);
-
 };
 
 
