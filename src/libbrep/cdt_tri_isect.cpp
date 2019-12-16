@@ -39,6 +39,12 @@
 #include "./cdt.h"
 #include "./cdt_mesh.h"
 
+#if 0
+
+// These are unused for the moment, but will be needed if
+// we are forced to do brute force splitting of triangles
+// to reduce their size
+
 double
 tri_shortest_edge_len(cdt_mesh_t *fmesh, long t_ind)
 {
@@ -112,9 +118,9 @@ tri_longest_edge(cdt_mesh_t *fmesh, long t_ind)
     }
     return ue;
 }
+#endif
 
-
-
+#if 0
 ON_BoundingBox
 edge_bbox(bedge_seg_t *eseg)
 {
@@ -153,19 +159,6 @@ edge_bbox(bedge_seg_t *eseg)
     return bb;
 }
 
-class tri_dist {
-public:
-    tri_dist(double idist, long iind) {
-	dist = idist;
-	ind = iind;
-    }
-    bool operator< (const tri_dist &b) const {
-	return dist < b.dist;
-    }
-    double dist;
-    long ind;
-};
-
 ON_3dPoint
 lseg_closest_pnt(ON_Line &l, ON_3dPoint &p)
 {
@@ -179,6 +172,21 @@ lseg_closest_pnt(ON_Line &l, ON_3dPoint &p)
 	return (d2 < d1) ? l.to : l.from;
     }
 }
+
+class tri_dist {
+public:
+    tri_dist(double idist, long iind) {
+	dist = idist;
+	ind = iind;
+    }
+    bool operator< (const tri_dist &b) const {
+	return dist < b.dist;
+    }
+    double dist;
+    long ind;
+};
+
+#endif
 
 void
 isect_plot(cdt_mesh_t *fmesh1, long t1_ind, cdt_mesh_t *fmesh2, long t2_ind, point_t *isectpt1, point_t *isectpt2)
