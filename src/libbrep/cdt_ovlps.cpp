@@ -39,6 +39,9 @@
 #include "./cdt.h"
 #include "./cdt_ovlps.h"
 
+/*******************************************
+ * Temporary debugging utilities
+ ******************************************/
 void
 ovbbp(ON_BoundingBox &bb) {
     FILE *plot = fopen ("bb.plot3", "w");
@@ -73,10 +76,9 @@ VPCHECK(overt_t *v, const char *fname)
     return false;
 }
 
-double
-overt_t::min_len() {
-    return v_min_edge_len;
-}
+/******************************************/
+/*          overt implementation          */
+/******************************************/
 
 ON_3dPoint
 overt_t::vpnt() {
@@ -238,12 +240,12 @@ overt_t::update_ring()
     }
 }
 
-int 
+int
 overt_t::adjust(ON_3dPoint &target_point, double dtol)
 {
     ON_3dPoint s_p;
     ON_3dVector s_n;
-    bool feval = closest_surf_pnt(s_p, s_n, *omesh->fmesh, &target_point, dtol);
+    bool feval = omesh->fmesh->closest_surf_pnt(s_p, s_n, &target_point, dtol);
     if (feval) {
 
 	// See if s_p is an actual move - if not, this is a no-op
@@ -293,6 +295,9 @@ omesh_t::plot_vtree(const char *fname)
     fclose(plot);
 }
 
+/******************************************/
+/*          omesh implementation          */
+/******************************************/
 bool
 omesh_t::validate_vtree()
 {
@@ -654,31 +659,6 @@ omesh_t::refinement_clear()
 {
     refinement_overts.clear();
     intruding_tris.clear();
-}
-
-bool
-closest_surf_pnt(ON_3dPoint &s_p, ON_3dVector &s_norm, cdt_mesh::cdt_mesh_t &fmesh, ON_3dPoint *p, double tol)
-{
-    struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh.p_cdt;
-    ON_2dPoint surf_p2d;
-    ON_3dPoint surf_p3d = ON_3dPoint::UnsetPoint;
-    s_p = ON_3dPoint::UnsetPoint;
-    s_norm = ON_3dVector::UnsetVector;
-    double cdist;
-    if (tol <= 0) {
-	surface_GetClosestPoint3dFirstOrder(s_cdt->brep->m_F[fmesh.f_id].SurfaceOf(), *p, surf_p2d, surf_p3d, cdist);
-    } else {
-	surface_GetClosestPoint3dFirstOrder(s_cdt->brep->m_F[fmesh.f_id].SurfaceOf(), *p, surf_p2d, surf_p3d, cdist, 0, ON_ZERO_TOLERANCE, tol);
-    }
-    if (NEAR_EQUAL(cdist, DBL_MAX, ON_ZERO_TOLERANCE)) return false;
-    bool seval = surface_EvNormal(s_cdt->brep->m_F[fmesh.f_id].SurfaceOf(), surf_p2d.x, surf_p2d.y, s_p, s_norm);
-    if (!seval) return false;
-
-    if (fmesh.m_bRev) {
-	s_norm = s_norm * -1;
-    }
-
-    return true;
 }
 
 /******************************************************************************
@@ -1697,7 +1677,7 @@ vert_nearby_closest_point_check(
 	ON_3dPoint spnt;
 	ON_3dVector sn;
 	double dist = nv->bb.Diagonal().Length() * 10;
-	if (!closest_surf_pnt(spnt, sn, *(m->fmesh), &vpnt, 2*dist)) {
+	if (!m->fmesh->closest_surf_pnt(spnt, sn, &vpnt, 2*dist)) {
 	    // If there's no surface point with dist, we're not close
 	    continue;
 	}
@@ -1831,7 +1811,7 @@ omesh_interior_edge_verts(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
 	    ON_3dVector sn;
 	    double dist = ov->bb.Diagonal().Length() * 10;
 
-	    if (!closest_surf_pnt(spnt, sn, *omesh->fmesh, &ovpnt, 2*dist)) {
+	    if (!omesh->fmesh->closest_surf_pnt(spnt, sn, &ovpnt, 2*dist)) {
 		std::cout << "closest point failed\n";
 		continue;
 	    }

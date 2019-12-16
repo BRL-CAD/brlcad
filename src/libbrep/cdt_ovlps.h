@@ -68,7 +68,7 @@ class overt_t {
         bool edge_vert();
 
 	// Report the length of the shortest edge using this vertex
-        double min_len();
+        double min_len() { return v_min_edge_len; }
 
 	// Return the ON_3dPoint associated with this vertex
         ON_3dPoint vpnt();
@@ -284,9 +284,6 @@ class ovlp_grp {
     private:
         void characterize_verts(int ind);
 };
-
-bool
-closest_surf_pnt(ON_3dPoint &s_p, ON_3dVector &s_norm, cdt_mesh::cdt_mesh_t &fmesh, ON_3dPoint *p, double tol);
 
 int
 tri_isect(

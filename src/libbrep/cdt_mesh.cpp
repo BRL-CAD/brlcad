@@ -1965,6 +1965,31 @@ cdt_mesh_t::sorted_uedges_l_to_s(std::set<uedge_t> &uedges)
     return ue_sorted;
 }
 
+bool
+cdt_mesh_t::closest_surf_pnt(ON_3dPoint &s_p, ON_3dVector &s_norm, ON_3dPoint *p, double tol)
+{
+    struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)p_cdt;
+    ON_2dPoint surf_p2d;
+    ON_3dPoint surf_p3d = ON_3dPoint::UnsetPoint;
+    s_p = ON_3dPoint::UnsetPoint;
+    s_norm = ON_3dVector::UnsetVector;
+    double cdist;
+    if (tol <= 0) {
+	surface_GetClosestPoint3dFirstOrder(s_cdt->brep->m_F[f_id].SurfaceOf(), *p, surf_p2d, surf_p3d, cdist);
+    } else {
+	surface_GetClosestPoint3dFirstOrder(s_cdt->brep->m_F[f_id].SurfaceOf(), *p, surf_p2d, surf_p3d, cdist, 0, ON_ZERO_TOLERANCE, tol);
+    }
+    if (NEAR_EQUAL(cdist, DBL_MAX, ON_ZERO_TOLERANCE)) return false;
+    bool seval = surface_EvNormal(s_cdt->brep->m_F[f_id].SurfaceOf(), surf_p2d.x, surf_p2d.y, s_p, s_norm);
+    if (!seval) return false;
+
+    if (m_bRev) {
+	s_norm = s_norm * -1;
+    }
+
+    return true;
+}
+
 ON_3dVector
 cdt_mesh_t::tnorm(const triangle_t &t)
 {

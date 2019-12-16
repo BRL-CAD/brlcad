@@ -536,6 +536,10 @@ public:
     // Length sorted (longest to shortest) array of uedges in set.
     std::vector<uedge_t> sorted_uedges_l_to_s(std::set<uedge_t> &uedges);
 
+    // Given a test point, calculate the closest point on the
+    // Brep face's surface to that point
+    bool closest_surf_pnt(ON_3dPoint &s_p, ON_3dVector &s_norm, ON_3dPoint *p, double tol = -1);
+
     // Plot3 generation routines for debugging
     void boundary_edges_plot(const char *filename);
     void face_neighbors_plot(const triangle_t &f, const char *filename);

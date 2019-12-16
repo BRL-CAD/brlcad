@@ -110,7 +110,7 @@ ovlp_grp::characterize_verts(int ind)
 	double pdist = ov->bb.Diagonal().Length() * 10;
 	ON_3dPoint s_p;
 	ON_3dVector s_n;
-	bool feval = closest_surf_pnt(s_p, s_n, *other_m->fmesh, &target_point, 2*pdist);
+	bool feval = other_m->fmesh->closest_surf_pnt(s_p, s_n, &target_point, 2*pdist);
 	if (!feval) {
 	    std::cout << "Error - couldn't find closest point for unpaired vert\n";
 	    continue;
