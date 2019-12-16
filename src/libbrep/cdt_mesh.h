@@ -774,11 +774,8 @@ class omesh_t
         bool validate_vtree();
 
 
-        void plot(const char *fname,
-                std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *ev,
-                std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap);
-        void plot(std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *ev,
-                std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap);
+        void plot(const char *fname, std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *ev);
+        void plot(std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *ev);
         void plot_vtree(const char *fname);
 
 

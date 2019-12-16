@@ -349,8 +349,7 @@ omesh_t::vert_ovlps(omesh_t *other)
 
 void
 omesh_t::plot(const char *fname,
-       	std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *ev,
-	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
+       	std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *ev
 	)
 {
     struct bu_color c = BU_COLOR_INIT_ZERO;
@@ -406,8 +405,8 @@ omesh_t::plot(const char *fname,
 	    int f_id2 = s_cdt_edge->brep->m_T[eseg->tseg2->trim_ind].Face()->m_face_index;
 	    cdt_mesh::cdt_mesh_t &fmesh_f1 = s_cdt_edge->fmeshes[f_id1];
 	    cdt_mesh::cdt_mesh_t &fmesh_f2 = s_cdt_edge->fmeshes[f_id2];
-	    omesh_t *o1 = f2omap[&fmesh_f1];
-	    omesh_t *o2 = f2omap[&fmesh_f2];
+	    omesh_t *o1 = fmesh_f1.omesh;
+	    omesh_t *o2 = fmesh_f2.omesh;
 	    if (o1 == this || o2 == this) {
 		std::set<overt_t *>::iterator v_it;
 		for (v_it = ev_it->second.begin(); v_it != ev_it->second.end(); v_it++) {
@@ -434,13 +433,12 @@ omesh_t::plot(const char *fname,
 }
 
 void
-omesh_t::plot(std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *ev, 
-	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap)
+omesh_t::plot(std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *ev)
 {
     struct bu_vls fname = BU_VLS_INIT_ZERO;
     struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
     bu_vls_sprintf(&fname, "%s-%d_ovlps.plot3", s_cdt->name, fmesh->f_id);
-    plot(bu_vls_cstr(&fname), ev, f2omap);
+    plot(bu_vls_cstr(&fname), ev);
     bu_vls_free(&fname);
 }
 
@@ -719,8 +717,7 @@ possibly_interfering_face_pairs(struct ON_Brep_CDT_State **s_a, int s_cnt)
 size_t
 face_omesh_ovlps(
 	std::set<std::pair<omesh_t *, omesh_t *>> check_pairs,
-	std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> &edge_verts,
-	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
+	std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> &edge_verts
 	)
 {
     size_t tri_isects = 0;
@@ -794,8 +791,8 @@ face_omesh_ovlps(
     }
 
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
-	cp_it->first->plot(&edge_verts, f2omap);
-	cp_it->second->plot(&edge_verts, f2omap);
+	cp_it->first->plot(&edge_verts);
+	cp_it->second->plot(&edge_verts);
     }
 
     return tri_isects;
@@ -1389,8 +1386,7 @@ int
 ovlp_split_edge(
 	overt_t **nv,
 	std::set<cdt_mesh::bedge_seg_t *> *nsegs,
-	cdt_mesh::bedge_seg_t *eseg, double t,
-	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
+	cdt_mesh::bedge_seg_t *eseg, double t
 	)
 {
     int replaced_tris = 0;
@@ -1490,7 +1486,7 @@ ovlp_split_edge(
 	    replace_edge_split_tri(fmesh_f1, *tr_it, np_id, ue);
 	    replaced_tris++;
 	}
-	omesh_t *om = f2omap[&fmesh_f1];
+	omesh_t *om = fmesh_f1.omesh;
 	overt_t *nvert = om->vert_add(np_id);
 	(*nv) = nvert;
     } else {
@@ -1498,14 +1494,14 @@ ovlp_split_edge(
 	fmesh_f1.ep.insert(np_id);
 	replace_edge_split_tri(fmesh_f1, *f1_tris.begin(), np_id, ue1);
 	replaced_tris++;
-	omesh_t *om1 = f2omap[&fmesh_f1];
+	omesh_t *om1 = fmesh_f1.omesh;
 	om1->vert_add(np_id);
 
 	np_id = fmesh_f2.pnts.size() - 1;
 	fmesh_f2.ep.insert(np_id);
 	replace_edge_split_tri(fmesh_f2, *f2_tris.begin(), np_id, ue2);
 	replaced_tris++;
-    	omesh_t *om2 = f2omap[&fmesh_f2];
+    	omesh_t *om2 = fmesh_f2.omesh;
 	overt_t *nvert = om2->vert_add(np_id);
 	(*nv) = nvert;
     }
@@ -1522,8 +1518,7 @@ int
 bedge_split_at_t(
 	overt_t **nv,
 	cdt_mesh::bedge_seg_t *eseg, double t,
-	std::set<cdt_mesh::bedge_seg_t *> *nsegs,
-	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
+	std::set<cdt_mesh::bedge_seg_t *> *nsegs
 	)
 {
     int replaced_tris = 0;
@@ -1534,7 +1529,7 @@ bedge_split_at_t(
     double lseg_check = 0.1 * eseg->e_start->DistanceTo(*eseg->e_end);
     if (epdist1 > lseg_check && epdist2 > lseg_check) {
 	// If the point is not close to a start/end point on the edge then split the edge.
-	int rtris = ovlp_split_edge(nv, nsegs, eseg, t, f2omap);
+	int rtris = ovlp_split_edge(nv, nsegs, eseg, t);
 	if (rtris >= 0) {
 	    replaced_tris += rtris;
 	} else {
@@ -1551,24 +1546,21 @@ int
 bedge_split_near_pnt(
 	overt_t **nv,
 	cdt_mesh::bedge_seg_t *eseg, ON_3dPoint &p,
-	std::set<cdt_mesh::bedge_seg_t *> *nsegs,
-	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
+	std::set<cdt_mesh::bedge_seg_t *> *nsegs
 	)
 {
     ON_NurbsCurve *nc = eseg->nc;
     ON_Interval domain(eseg->edge_start, eseg->edge_end);
     double t;
     ON_NurbsCurve_GetClosestPoint(&t, nc, p, 0.0, &domain);
-    return bedge_split_at_t(nv, eseg, t, nsegs, f2omap);
+    return bedge_split_at_t(nv, eseg, t, nsegs);
 }
 
 // Find the point on the edge nearest to the vert point.
 int
 bedge_split_near_vert(
 	overt_t **nv,
-	std::map<cdt_mesh::bedge_seg_t *, overt_t *> &edge_vert,
-	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
-	)
+	std::map<cdt_mesh::bedge_seg_t *, overt_t *> &edge_vert)
 {
     int replaced_tris = 0;
     std::map<cdt_mesh::bedge_seg_t *, overt_t *>::iterator ev_it;
@@ -1576,7 +1568,7 @@ bedge_split_near_vert(
 	cdt_mesh::bedge_seg_t *eseg = ev_it->first;
 	overt_t *v = ev_it->second;
 	ON_3dPoint p = v->vpnt();
-	replaced_tris += bedge_split_near_pnt(nv, eseg, p, NULL, f2omap);
+	replaced_tris += bedge_split_near_pnt(nv, eseg, p, NULL);
     }
     return replaced_tris;
 }
@@ -1584,8 +1576,7 @@ bedge_split_near_vert(
 int
 bedge_split_near_verts(
 	std::set<overt_t *> *nverts,
-	std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> &edge_verts,
-	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
+	std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> &edge_verts
 	)
 {
     int replaced_tris = 0;
@@ -1629,7 +1620,7 @@ bedge_split_near_verts(
 
 	    std::set<cdt_mesh::bedge_seg_t *> nsegs;
 	    overt_t *nv = NULL;
-	    int ntri_cnt = bedge_split_at_t(&nv, eseg_split, split_t, &nsegs, f2omap);
+	    int ntri_cnt = bedge_split_at_t(&nv, eseg_split, split_t, &nsegs);
 	    if (ntri_cnt) {
 		segs.erase(eseg_split);
 		replaced_tris += ntri_cnt;
@@ -1987,8 +1978,7 @@ refinement_reset(std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs)
 
 void
 shared_cdts(
-	std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs,
-	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap
+	std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
 	)
 {
     bool have_refine_pnts = true;
@@ -2056,7 +2046,7 @@ shared_cdts(
 	    while (bedge_replaced_tris) {
 		// Process edge_verts
 		std::set<overt_t *> nverts;
-		bedge_replaced_tris = bedge_split_near_verts(&nverts, edge_verts, f2omap);
+		bedge_replaced_tris = bedge_split_near_verts(&nverts, edge_verts);
 		edge_verts.clear();
 		std::set<overt_t *>::iterator nv_it;
 		int avcnt = 0;
@@ -2072,7 +2062,7 @@ shared_cdts(
 		interior_replaced_tris = omesh_interior_edge_verts(check_pairs);
 	    }
 	    // Restore "normal" overlap information for next pass
-	    face_omesh_ovlps(check_pairs, edge_verts, f2omap);
+	    face_omesh_ovlps(check_pairs, edge_verts);
 
 	    processed_cnt++;
 	}
@@ -2210,7 +2200,6 @@ shared_cdts(
 static void
 make_omeshes(
 	std::set<std::pair<omesh_t *, omesh_t *>> &ocheck_pairs,
-	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> &f2omap,
 	std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> check_pairs)
 {
     // Make omesh containers for all the cdt_meshes in play
@@ -2225,12 +2214,10 @@ make_omeshes(
     for (af_it = afmeshes.begin(); af_it != afmeshes.end(); af_it++) {
 	cdt_mesh::cdt_mesh_t *fmesh = *af_it;
 	omeshes.push_back(new omesh_t(fmesh));
-	f2omap[fmesh] = omeshes[omeshes.size() - 1];
+	fmesh->omesh = omeshes[omeshes.size() - 1];
     }
     for (p_it = check_pairs.begin(); p_it != check_pairs.end(); p_it++) {
-	omesh_t *o1 = f2omap[p_it->first];
-	omesh_t *o2 = f2omap[p_it->second];
-	ocheck_pairs.insert(std::make_pair(o1, o2));
+	ocheck_pairs.insert(std::make_pair(p_it->first->omesh, p_it->second->omesh));
     }
 }
 
@@ -2258,16 +2245,15 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	if (iterations > 4) break;
 
 	std::set<std::pair<omesh_t *, omesh_t *>> ocheck_pairs;
-	std::map<cdt_mesh::cdt_mesh_t *, omesh_t *> f2omap;
 	std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> edge_verts;
 
 	// TODO - we shouldn't really have to remake these every time - just
 	// doing it now as a quick and dirty way of skipping the bookeeping
 	// cleanup/resetting work that will need...
-	make_omeshes(ocheck_pairs, f2omap, check_pairs);
+	make_omeshes(ocheck_pairs, check_pairs);
 
 	// Report our starting overlap count
-	face_ov_cnt = face_omesh_ovlps(ocheck_pairs, edge_verts, f2omap);
+	face_ov_cnt = face_omesh_ovlps(ocheck_pairs, edge_verts);
 	std::cout << "Initial overlap cnt: " << face_ov_cnt << "\n";
 	if (!face_ov_cnt) return 0;
 
@@ -2292,7 +2278,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 
 	    // Process edge_verts
 	    std::set<overt_t *> nverts;
-	    bedge_replaced_tris = bedge_split_near_verts(&nverts, edge_verts, f2omap);
+	    bedge_replaced_tris = bedge_split_near_verts(&nverts, edge_verts);
 	    edge_verts.clear();
 	    std::set<overt_t *>::iterator nv_it;
 	    int vvcnt = 0;
@@ -2304,7 +2290,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    }
 
 
-	    face_ov_cnt = face_omesh_ovlps(ocheck_pairs, edge_verts, f2omap);
+	    face_ov_cnt = face_omesh_ovlps(ocheck_pairs, edge_verts);
 	}
 
 	// Once edge splits are handled, use remaining closest points and find
@@ -2316,7 +2302,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	int interior_replaced_tris = INT_MAX;
 	while (interior_replaced_tris) {
 	    interior_replaced_tris = omesh_interior_edge_verts(ocheck_pairs);
-	    face_ov_cnt = face_omesh_ovlps(ocheck_pairs, edge_verts, f2omap);
+	    face_ov_cnt = face_omesh_ovlps(ocheck_pairs, edge_verts);
 	}
 
 
@@ -2332,11 +2318,11 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	// triangulation where both meshes agree which triangles get which
 	// vertices
 
-	shared_cdts(ocheck_pairs, f2omap);
+	shared_cdts(ocheck_pairs);
 
 
 	check_faces_validity(check_pairs);
-	face_ov_cnt = face_omesh_ovlps(ocheck_pairs, edge_verts, f2omap);
+	face_ov_cnt = face_omesh_ovlps(ocheck_pairs, edge_verts);
 	std::cout << "Iteration " << iterations << " post tri split overlap cnt: " << face_ov_cnt << "\n";
     }
 
