@@ -54,7 +54,6 @@ set(libbrep_ignored_files
   brep_except.h
   cdt.h
   cdt_mesh.h
-  cdt_ovlps.h
   cdt_closed_surf.cpp
   opennurbs_fit.h
   opennurbs_fit.cpp

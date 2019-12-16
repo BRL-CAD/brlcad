@@ -38,7 +38,7 @@
 #include "bg/tri_pt.h"
 #include "bg/tri_tri.h"
 #include "./cdt.h"
-#include "./cdt_ovlps.h"
+#include "./cdt_mesh.h"
 
 void
 ovlp_grp::list_tris()
