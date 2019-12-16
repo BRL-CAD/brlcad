@@ -48,8 +48,6 @@ class overt_t {
         {
             omesh = om;
             p_id = p;
-            closest_uedge = -1;
-            t_ind = -1;
         }
 
 	// Update minimum edge length and bounding box information
@@ -69,10 +67,16 @@ class overt_t {
 
 	// Index of associated point in the omesh's fmesh container
 	long p_id;
-        bool t_ind;
-	long closest_uedge;
+
+	// Bounding box centered on 3D vert, size based on smallest
+	// associated edge length
         ON_BoundingBox bb;
+
+	// Associated omesh
         omesh_t *omesh;
+
+	// If this vertex has been aligned with a vertex in another mesh,
+	// the other vertex and mesh are stored here
 	std::map<omesh_t *, overt_t *> aligned;
 
     private:
