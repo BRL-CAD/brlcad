@@ -283,6 +283,35 @@ overt_t::update_ring()
     }
 }
 
+int 
+overt_t::adjust(ON_3dPoint &target_point, double dtol)
+{
+    ON_3dPoint s_p;
+    ON_3dVector s_n;
+    bool feval = closest_surf_pnt(s_p, s_n, *omesh->fmesh, &target_point, dtol);
+    if (feval) {
+
+	// See if s_p is an actual move - if not, this is a no-op
+	ON_3dPoint p = vpnt();
+	if (p.DistanceTo(s_p) < ON_ZERO_TOLERANCE) {
+	    return 0;
+	}
+
+	(*omesh->fmesh->pnts[p_id]) = s_p;
+	(*omesh->fmesh->normals[omesh->fmesh->nmap[p_id]]) = s_n;
+	update();
+	// We just changed the vertex point values - need to update all
+	// this vertex and all vertices connected to the updated vertex
+	// by an edge.
+	update_ring();
+
+	return 1;
+    }
+
+    return 0;
+}
+
+
 void
 overt_t::plot(FILE *plot)
 {
@@ -1796,34 +1825,6 @@ closest_overt(std::set<overt_t *> &verts, overt_t *v)
     return closest;
 }
 
-static int 
-adjust_overt(overt_t *v, ON_3dPoint &target_point, double pdist)
-{
-    ON_3dPoint s_p;
-    ON_3dVector s_n;
-    bool feval = closest_surf_pnt(s_p, s_n, *v->omesh->fmesh, &target_point, pdist);
-    if (feval) {
-
-	// See if s_p is an actual move - if not, this is a no-op
-	ON_3dPoint p = v->vpnt();
-	if (p.DistanceTo(s_p) < ON_ZERO_TOLERANCE) {
-	    return 0;
-	}
-
-	(*v->omesh->fmesh->pnts[v->p_id]) = s_p;
-	(*v->omesh->fmesh->normals[v->omesh->fmesh->nmap[v->p_id]]) = s_n;
-	v->update();
-	// We just changed the vertex point values - need to update all
-	// this vertex and all vertices connected to the updated vertex
-	// by an edge.
-	v->update_ring();
-
-	return 1;
-    }
-
-    return 0;
-}
-
 // TODO - right now, we've locked brep face edge points.  This
 // isn't ideal, as we could in principle move those points locally
 // along the edge curve to align with other points.  This way we
@@ -1855,7 +1856,7 @@ adjust_overt_pair(overt_t *v1, overt_t *v2)
 	if (pdist > v2->min_len()*0.5) {
 	    return 0;
 	}
-	return adjust_overt(v2, p1, pdist);
+	return v2->adjust(p1, pdist);
     }
 
     if (v2->edge_vert()) {
@@ -1863,7 +1864,7 @@ adjust_overt_pair(overt_t *v1, overt_t *v2)
 	if (pdist > v1->min_len()*0.5) {
 	    return 0;
 	}
-	return adjust_overt(v1, p2, pdist);
+	return v1->adjust(p2, pdist);
     }
 
     ON_Line l(p1,p2);
@@ -1877,8 +1878,8 @@ adjust_overt_pair(overt_t *v1, overt_t *v2)
     }
 
     int adj_cnt = 0;
-    adj_cnt += adjust_overt(v1, p_wavg, pdist);
-    adj_cnt += adjust_overt(v2, p_wavg, pdist);
+    adj_cnt += v1->adjust(p_wavg, pdist);
+    adj_cnt += v2->adjust(p_wavg, pdist);
 
     return adj_cnt;
 }

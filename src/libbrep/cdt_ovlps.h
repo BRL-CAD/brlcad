@@ -54,14 +54,15 @@ class overt_t {
 	// Update minimum edge length and bounding box information
         void update();
 
-	// For situations where we don't yet have associated edges
-	// (i.e. a new point is coming in based on an intruding mesh's
-	// vertex) we need to supply external bounding box info
+	// For situations where we don't yet have associated edges (i.e. a new
+	// point is coming in based on an intruding mesh's vertex) we need to
+	// supply external bounding box info
         void update(ON_BoundingBox *bbox);
 
-	// If vertices are being moved, the impact is not local to
-	// a single vertex - need updating in the neighborhood
-        void update_ring();
+	// Adjust this vertex to be as close as the surface allows to a target
+	// point.  dtol is the allowable distance for the closest point to be
+	// from the target before reporting failure.
+	int adjust(ON_3dPoint &target_point, double dtol);
 
 	// Determine if this vertex is on a brep face edge
         bool edge_vert();
@@ -80,23 +81,27 @@ class overt_t {
 	// Index of associated point in the omesh's fmesh container
 	long p_id;
 
-	// Bounding box centered on 3D vert, size based on smallest
-	// associated edge length
+	// Bounding box centered on 3D vert, size based on smallest associated
+	// edge length
         ON_BoundingBox bb;
 
 	// Associated omesh
         omesh_t *omesh;
 
-	// If this vertex has been aligned with a vertex in another mesh,
-	// the other vertex and mesh are stored here
+	// If this vertex has been aligned with a vertex in another mesh, the
+	// other vertex and mesh are stored here
 	std::map<omesh_t *, overt_t *> aligned;
 
     private:
+	// If vertices are being moved, the impact is not local to a single
+	// vertex - need updating in the neighborhood
+        void update_ring();
+
 	// Smallest edge length associated with this vertex
 	double v_min_edge_len;
 
-	// Set if vertex has been previously initialized - guides what
-	// the update step must do.
+	// Set if vertex has been previously initialized - guides what the
+	// update step must do.
 	bool init;
 };
 
