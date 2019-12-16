@@ -550,6 +550,8 @@ public:
     void tri_plot(long ind, const char *filename);
     void plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot, int r, int g, int b);
 
+    double tri_pnt_r(long tri_ind);
+
     void tris_vect_plot_2d(std::vector<triangle_t> &tset, const char *filename);
     void tris_plot_2d(const char *filename);
 

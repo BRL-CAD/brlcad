@@ -302,9 +302,6 @@ find_ovlp_grps(
 	std::set<std::pair<omesh_t *, omesh_t *>> &check_pairs
 	);
 
-double
-tri_pnt_r(cdt_mesh::cdt_mesh_t &fmesh, long tri_ind);
-
 #endif /* __cdt_mesh_ovlps_h__ */
 
 /*

@@ -78,20 +78,6 @@ ovlp_plot_bbox(ON_BoundingBox &bb)
     fclose(plot);
 }
 
-double
-tri_pnt_r(cdt_mesh::cdt_mesh_t &fmesh, long tri_ind)
-{
-    cdt_mesh::triangle_t tri = fmesh.tris_vect[tri_ind];
-    ON_3dPoint *p3d = fmesh.pnts[tri.v[0]];
-    ON_BoundingBox bb(*p3d, *p3d);
-    for (int i = 1; i < 3; i++) {
-	p3d = fmesh.pnts[tri.v[i]];
-	bb.Set(*p3d, true);
-    }
-    double bbd = bb.Diagonal().Length();
-    return bbd * 0.01;
-}
-
 #define PPOINT 3.0550159446561063,7.5001153978277033,23.999999999999996
 bool
 PPCHECK(ON_3dPoint &p)
@@ -428,7 +414,7 @@ omesh_t::plot(const char *fname,
     std::set<size_t>::iterator ts_it;
     for (ts_it = intruding_tris.begin(); ts_it != intruding_tris.end(); ts_it++) {
 	tri = fmesh->tris_vect[*ts_it];
-	double tr = tri_pnt_r(*fmesh, tri.ind);
+	double tr = fmesh->tri_pnt_r(tri.ind);
 	tri_r = (tr > tri_r) ? tr : tri_r;
 	fmesh->plot_tri(tri, &c, plot, 255, 0, 0);
     }

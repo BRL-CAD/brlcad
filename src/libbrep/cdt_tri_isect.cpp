@@ -188,11 +188,11 @@ isect_plot(cdt_mesh::cdt_mesh_t *fmesh1, long t1_ind, cdt_mesh::cdt_mesh_t *fmes
     double pnt_r = -1.0;
     pl_color(plot, 0, 0, 255);
     fmesh1->plot_tri(fmesh1->tris_vect[t1_ind], NULL, plot, 0, 0, 0);
-    pnt_r = tri_pnt_r(*fmesh1, t1_ind);
+    pnt_r = fmesh1->tri_pnt_r(t1_ind);
     fpnt_r = (pnt_r > fpnt_r) ? pnt_r : fpnt_r;
     pl_color(plot, 255, 0, 0);
     fmesh2->plot_tri(fmesh2->tris_vect[t2_ind], NULL, plot, 0, 0, 0);
-    pnt_r = tri_pnt_r(*fmesh2, t2_ind);
+    pnt_r = fmesh2->tri_pnt_r(t2_ind);
     fpnt_r = (pnt_r > fpnt_r) ? pnt_r : fpnt_r;
     pl_color(plot, 255, 255, 255);
     ON_3dPoint p1((*isectpt1)[X], (*isectpt1)[Y], (*isectpt1)[Z]);

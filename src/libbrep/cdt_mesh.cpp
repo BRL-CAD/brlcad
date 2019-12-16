@@ -3155,6 +3155,20 @@ void cdt_mesh_t::plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot,
     }
 }
 
+double
+cdt_mesh_t::tri_pnt_r(long tri_ind)
+{
+    cdt_mesh::triangle_t tri = tris_vect[tri_ind];
+    ON_3dPoint *p3d = pnts[tri.v[0]];
+    ON_BoundingBox bb(*p3d, *p3d);
+    for (int i = 1; i < 3; i++) {
+	p3d = pnts[tri.v[i]];
+	bb.Set(*p3d, true);
+    }
+    double bbd = bb.Diagonal().Length();
+    return bbd * 0.01;
+}
+
 void cdt_mesh_t::face_neighbors_plot(const triangle_t &f, const char *filename)
 {
     FILE* plot_file = fopen(filename, "w");

@@ -269,7 +269,7 @@ ovlp_grp::plot(const char *fname, int ind)
     std::set<size_t>::iterator ts_it;
     for (ts_it = tris.begin(); ts_it != tris.end(); ts_it++) {
 	tri = om->fmesh->tris_vect[*ts_it];
-	double tr = tri_pnt_r(*om->fmesh, tri.ind);
+	double tr = om->fmesh->tri_pnt_r(tri.ind);
 	tri_r = (tr > tri_r) ? tr : tri_r;
 	om->fmesh->plot_tri(tri, &c, plot, 255, 0, 0);
     }
