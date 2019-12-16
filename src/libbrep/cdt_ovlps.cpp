@@ -1796,8 +1796,8 @@ closest_overt(std::set<overt_t *> &verts, overt_t *v)
     return closest;
 }
 
-static int
-adjust_overt(overt_t *v, overt_t *v_other, ON_3dPoint &target_point, double pdist)
+static int 
+adjust_overt(overt_t *v, ON_3dPoint &target_point, double pdist)
 {
     ON_3dPoint s_p;
     ON_3dVector s_n;
@@ -1810,9 +1810,6 @@ adjust_overt(overt_t *v, overt_t *v_other, ON_3dPoint &target_point, double pdis
 	    return 0;
 	}
 
-	// If we're adjusting, that's the only refinement we will do with this vert
-	v_other->omesh->refinement_overts.erase(v);
-
 	(*v->omesh->fmesh->pnts[v->p_id]) = s_p;
 	(*v->omesh->fmesh->normals[v->omesh->fmesh->nmap[v->p_id]]) = s_n;
 	v->update();
@@ -1822,12 +1819,9 @@ adjust_overt(overt_t *v, overt_t *v_other, ON_3dPoint &target_point, double pdis
 	v->update_ring();
 
 	return 1;
-    } else {
-	struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)v_other->omesh->fmesh->p_cdt;
-	std::cout << s_cdt2->name << " face " << v_other->omesh->fmesh->f_id << " closest point eval failure\n";
-	return 0;
     }
 
+    return 0;
 }
 
 // TODO - right now, we've locked brep face edge points.  This
@@ -1861,7 +1855,7 @@ adjust_overt_pair(overt_t *v1, overt_t *v2)
 	if (pdist > v2->min_len()*0.5) {
 	    return 0;
 	}
-	return adjust_overt(v2, v1, p1, pdist);
+	return adjust_overt(v2, p1, pdist);
     }
 
     if (v2->edge_vert()) {
@@ -1869,7 +1863,7 @@ adjust_overt_pair(overt_t *v1, overt_t *v2)
 	if (pdist > v1->min_len()*0.5) {
 	    return 0;
 	}
-	return adjust_overt(v1, v2, p2, pdist);
+	return adjust_overt(v1, p2, pdist);
     }
 
     ON_Line l(p1,p2);
@@ -1883,8 +1877,8 @@ adjust_overt_pair(overt_t *v1, overt_t *v2)
     }
 
     int adj_cnt = 0;
-    adj_cnt += adjust_overt(v1, v2, p_wavg, pdist);
-    adj_cnt += adjust_overt(v2, v1, p_wavg, pdist);
+    adj_cnt += adjust_overt(v1, p_wavg, pdist);
+    adj_cnt += adjust_overt(v2, p_wavg, pdist);
 
     return adj_cnt;
 }

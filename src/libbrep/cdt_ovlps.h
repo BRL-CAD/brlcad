@@ -131,8 +131,9 @@ class omesh_t
         };
 
 
-        bool validate_vtree();
 
+	// Given another omesh, find which vertex pairs have overlapping
+	// bounding boxes
 	std::set<std::pair<long, long>> vert_ovlps(omesh_t *other);
 
         // Add an fmesh vertex to the overts array and tree.
@@ -140,7 +141,7 @@ class omesh_t
 
         // Find the closest uedge in the mesh to a point
         cdt_mesh::uedge_t closest_uedge(ON_3dPoint &p);
-        // Find close (non-face-boundary) edges
+        // Find closest (non-face-boundary) edges
         std::set<cdt_mesh::uedge_t> interior_uedges_search(ON_BoundingBox &bb);
 
         // Find close triangles
@@ -150,11 +151,9 @@ class omesh_t
         std::set<overt_t *> vert_search(ON_BoundingBox &bb);
         overt_t * vert_closest(double *vdist, overt_t *v);
 
-        void retessellate(std::set<size_t> &ov);
 
         void refinement_clear();
-        std::set<long> refinement_split_tris();
-
+        bool validate_vtree();
 
 
         void plot(const char *fname,
