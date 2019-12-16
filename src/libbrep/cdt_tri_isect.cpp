@@ -40,9 +40,9 @@
 #include "./cdt_mesh.h"
 
 double
-tri_shortest_edge_len(cdt_mesh::cdt_mesh_t *fmesh, long t_ind)
+tri_shortest_edge_len(cdt_mesh_t *fmesh, long t_ind)
 {
-    cdt_mesh::triangle_t t = fmesh->tris_vect[t_ind];
+    triangle_t t = fmesh->tris_vect[t_ind];
     double len = DBL_MAX;
     for (int i = 0; i < 3; i++) {
 	long v0 = t.v[i];
@@ -56,11 +56,11 @@ tri_shortest_edge_len(cdt_mesh::cdt_mesh_t *fmesh, long t_ind)
     return len;
 }
 
-cdt_mesh::uedge_t
-tri_shortest_edge(cdt_mesh::cdt_mesh_t *fmesh, long t_ind)
+uedge_t
+tri_shortest_edge(cdt_mesh_t *fmesh, long t_ind)
 {
-    cdt_mesh::uedge_t ue;
-    cdt_mesh::triangle_t t = fmesh->tris_vect[t_ind];
+    uedge_t ue;
+    triangle_t t = fmesh->tris_vect[t_ind];
     double len = DBL_MAX;
     for (int i = 0; i < 3; i++) {
 	long v0 = t.v[i];
@@ -70,16 +70,16 @@ tri_shortest_edge(cdt_mesh::cdt_mesh_t *fmesh, long t_ind)
 	double d = p1->DistanceTo(*p2);
 	if (d < len) {
 	    len = d;
-	    ue = cdt_mesh::uedge_t(v0, v1);
+	    ue = uedge_t(v0, v1);
 	}
     }
     return ue;
 }
 
 double
-tri_longest_edge_len(cdt_mesh::cdt_mesh_t *fmesh, long t_ind)
+tri_longest_edge_len(cdt_mesh_t *fmesh, long t_ind)
 {
-    cdt_mesh::triangle_t t = fmesh->tris_vect[t_ind];
+    triangle_t t = fmesh->tris_vect[t_ind];
     double len = -DBL_MAX;
     for (int i = 0; i < 3; i++) {
 	long v0 = t.v[i];
@@ -93,11 +93,11 @@ tri_longest_edge_len(cdt_mesh::cdt_mesh_t *fmesh, long t_ind)
     return len;
 }
 
-cdt_mesh::uedge_t
-tri_longest_edge(cdt_mesh::cdt_mesh_t *fmesh, long t_ind)
+uedge_t
+tri_longest_edge(cdt_mesh_t *fmesh, long t_ind)
 {
-    cdt_mesh::uedge_t ue;
-    cdt_mesh::triangle_t t = fmesh->tris_vect[t_ind];
+    uedge_t ue;
+    triangle_t t = fmesh->tris_vect[t_ind];
     double len = -DBL_MAX;
     for (int i = 0; i < 3; i++) {
 	long v0 = t.v[i];
@@ -107,7 +107,7 @@ tri_longest_edge(cdt_mesh::cdt_mesh_t *fmesh, long t_ind)
 	double d = p1->DistanceTo(*p2);
 	if (d > len) {
 	    len = d;
-	    ue = cdt_mesh::uedge_t(v0, v1);
+	    ue = uedge_t(v0, v1);
 	}
     }
     return ue;
@@ -116,7 +116,7 @@ tri_longest_edge(cdt_mesh::cdt_mesh_t *fmesh, long t_ind)
 
 
 ON_BoundingBox
-edge_bbox(cdt_mesh::bedge_seg_t *eseg)
+edge_bbox(bedge_seg_t *eseg)
 {
     ON_3dPoint *p3d1 = eseg->e_start;
     ON_3dPoint *p3d2 = eseg->e_end;
@@ -181,7 +181,7 @@ lseg_closest_pnt(ON_Line &l, ON_3dPoint &p)
 }
 
 void
-isect_plot(cdt_mesh::cdt_mesh_t *fmesh1, long t1_ind, cdt_mesh::cdt_mesh_t *fmesh2, long t2_ind, point_t *isectpt1, point_t *isectpt2)
+isect_plot(cdt_mesh_t *fmesh1, long t1_ind, cdt_mesh_t *fmesh2, long t2_ind, point_t *isectpt1, point_t *isectpt2)
 {
     FILE *plot = fopen("tri_pair.plot3", "w");
     double fpnt_r = -1.0;
@@ -206,9 +206,9 @@ isect_plot(cdt_mesh::cdt_mesh_t *fmesh1, long t1_ind, cdt_mesh::cdt_mesh_t *fmes
 
 static void
 isect_process_vert(
-	omesh_t *omesh1, overt_t *v, cdt_mesh::triangle_t &t1,
-       	omesh_t *omesh2, cdt_mesh::triangle_t &t2,
-	std::map<overt_t *, std::map<cdt_mesh::bedge_seg_t *, int>> *vert_edge_cnts
+	omesh_t *omesh1, overt_t *v, triangle_t &t1,
+       	omesh_t *omesh2, triangle_t &t2,
+	std::map<overt_t *, std::map<bedge_seg_t *, int>> *vert_edge_cnts
 	)
 {
 
@@ -227,9 +227,9 @@ isect_process_vert(
     // might be far away from the actual edge curve in a course approximation.
     if (vert_edge_cnts) {
 	ON_3dPoint p = v->vpnt();
-	cdt_mesh::uedge_t closest_edge = omesh2->fmesh->closest_uedge(t2, p);
+	uedge_t closest_edge = omesh2->fmesh->closest_uedge(t2, p);
 	if (omesh2->fmesh->brep_edges.find(closest_edge) != omesh2->fmesh->brep_edges.end()) {
-	    cdt_mesh::bedge_seg_t *bseg = omesh2->fmesh->ue2b_map[closest_edge];
+	    bedge_seg_t *bseg = omesh2->fmesh->ue2b_map[closest_edge];
 	    if (!bseg) {
 		std::cout << "couldn't find bseg pointer??\n";
 	    } else {
@@ -246,7 +246,7 @@ isect_process_vert(
 }
 
 int
-remote_vert_process(bool process, bool pinside, omesh_t *omesh1, overt_t *v, cdt_mesh::triangle_t &t1, omesh_t *omesh2, cdt_mesh::triangle_t &t2, std::map<overt_t *, std::map<cdt_mesh::bedge_seg_t *, int>> *vert_edge_cnts)
+remote_vert_process(bool process, bool pinside, omesh_t *omesh1, overt_t *v, triangle_t &t1, omesh_t *omesh2, triangle_t &t2, std::map<overt_t *, std::map<bedge_seg_t *, int>> *vert_edge_cnts)
 {
     if (!v) {
 	std::cout << "WARNING: - no overt for vertex??\n";
@@ -276,8 +276,8 @@ remote_vert_process(bool process, bool pinside, omesh_t *omesh1, overt_t *v, cdt
 }
 
 int
-near_edge_process(bool process, double t, double vtol, overt_t *v, omesh_t *omesh1, cdt_mesh::triangle_t &t1,
-	omesh_t *omesh2, cdt_mesh::triangle_t &t2, std::map<overt_t *, std::map<cdt_mesh::bedge_seg_t *, int>> *vert_edge_cnts)
+near_edge_process(bool process, double t, double vtol, overt_t *v, omesh_t *omesh1, triangle_t &t1,
+	omesh_t *omesh2, triangle_t &t2, std::map<overt_t *, std::map<bedge_seg_t *, int>> *vert_edge_cnts)
 {
     if (t > 0  && t < 1 && !NEAR_ZERO(t, vtol) && !NEAR_EQUAL(t, 1, vtol)) {
 	//VPCHECK(v, NULL);
@@ -298,13 +298,13 @@ near_edge_process(bool process, double t, double vtol, overt_t *v, omesh_t *omes
 static int
 edge_only_isect(
 	bool process,
-	omesh_t *omesh1, cdt_mesh::triangle_t &t1,
-	omesh_t *omesh2, cdt_mesh::triangle_t &t2,
+	omesh_t *omesh1, triangle_t &t1,
+	omesh_t *omesh2, triangle_t &t2,
 	ON_3dPoint &p1, ON_3dPoint &p2,
 	ON_Line *t1_lines,
 	ON_Line *t2_lines,
 	double etol,
-	std::map<overt_t *, std::map<cdt_mesh::bedge_seg_t *, int>> *vert_edge_cnts
+	std::map<overt_t *, std::map<bedge_seg_t *, int>> *vert_edge_cnts
 	)
 {
     double p1d1[3], p1d2[3];
@@ -318,26 +318,26 @@ edge_only_isect(
 
     bool nedge_1 = false;
     ON_Line t1_nedge;
-    cdt_mesh::edge_t t1_e;
+    edge_t t1_e;
     for (int i = 0; i < 3; i++) {
 	if (NEAR_ZERO(p1d1[i], etol) &&  NEAR_ZERO(p2d1[i], etol)) {
 	    //std::cout << "edge-only intersect - e1\n";
 	    t1_nedge = t1_lines[i];
 	    int v2 = (i < 2) ? i + 1 : 0;
-	    t1_e = cdt_mesh::edge_t(t1.v[i], t1.v[v2]);
+	    t1_e = edge_t(t1.v[i], t1.v[v2]);
 	    nedge_1 = true;
 	}
     }
 
     bool nedge_2 = false;
     ON_Line t2_nedge;
-    cdt_mesh::edge_t t2_e;
+    edge_t t2_e;
     for (int i = 0; i < 3; i++) {
 	if (NEAR_ZERO(p1d2[i], etol) &&  NEAR_ZERO(p2d2[i], etol)) {
 	    //std::cout << "edge-only intersect - e1\n";
 	    t2_nedge = t2_lines[i];
 	    int v2 = (i < 2) ? i + 1 : 0;
-	    t2_e = cdt_mesh::edge_t(t2.v[i], t2.v[v2]);
+	    t2_e = edge_t(t2.v[i], t2.v[v2]);
 	    nedge_2 = true;
 	}
     }
@@ -459,13 +459,13 @@ edge_only_isect(
 int
 tri_isect(
 	bool process,
-	omesh_t *omesh1, cdt_mesh::triangle_t &t1,
-       	omesh_t *omesh2, cdt_mesh::triangle_t &t2,
-	std::map<overt_t *, std::map<cdt_mesh::bedge_seg_t *, int>> *vert_edge_cnts
+	omesh_t *omesh1, triangle_t &t1,
+       	omesh_t *omesh2, triangle_t &t2,
+	std::map<overt_t *, std::map<bedge_seg_t *, int>> *vert_edge_cnts
 	)
 {
-    cdt_mesh::cdt_mesh_t *fmesh1 = omesh1->fmesh;
-    cdt_mesh::cdt_mesh_t *fmesh2 = omesh2->fmesh;
+    cdt_mesh_t *fmesh1 = omesh1->fmesh;
+    cdt_mesh_t *fmesh2 = omesh2->fmesh;
     int coplanar = 0;
     point_t T1_V[3];
     point_t T2_V[3];

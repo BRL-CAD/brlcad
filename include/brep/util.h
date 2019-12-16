@@ -54,6 +54,7 @@ __BEGIN_DECLS
 extern "C++" {
 
 BREP_EXPORT void ON_BoundingBox_Plot(FILE *pf, ON_BoundingBox &bb);
+BREP_EXPORT void ON_Plane_Plot(FILE *pf, ON_Plane &plane);
 
 
 BREP_EXPORT bool ON_NearZero(double x, double tolerance = ON_ZERO_TOLERANCE);

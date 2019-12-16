@@ -55,10 +55,7 @@
 #include <stack>
 
 
-namespace cdt_mesh
-{
-
-void
+static void
 plot_pnt_2d(FILE *plot_file, ON_2dPoint *p, double r, int dir)
 {
     point_t origin, bnp;
@@ -114,7 +111,7 @@ plot_pnt_2d(FILE *plot_file, ON_2dPoint *p, double r, int dir)
     }
 }
 
-void
+static void
 plot_vec_3d(FILE *plot_file, ON_3dPoint *p, ON_3dVector *v, double elen)
 {
     point_t origin, bnp;
@@ -131,7 +128,7 @@ plot_vec_3d(FILE *plot_file, ON_3dPoint *p, ON_3dVector *v, double elen)
 }
 
 
-void
+static void
 plot_seg_3d(FILE *plot_file, ON_3dPoint *p1, ON_3dPoint *p2)
 {
     point_t origin, bnp;
@@ -139,57 +136,6 @@ plot_seg_3d(FILE *plot_file, ON_3dPoint *p1, ON_3dPoint *p2)
     pdv_3move(plot_file, origin);
     VSET(bnp, p2->x, p2->y, p2->z);
     pdv_3cont(plot_file, bnp);
-}
-
-void
-plot_best_fit_plane(ON_Plane &fit_plane, const char *filename)
-{
-    FILE* plot_file = fopen(filename, "w");
-    int r = int(256*drand48() + 1.0);
-    int g = int(256*drand48() + 1.0);
-    int b = int(256*drand48() + 1.0);
-    pl_color(plot_file, r, g, b);
-    ON_3dPoint ocenter = fit_plane.Origin();
-    ON_3dVector onorm = fit_plane.Normal();
-    point_t center, norm;
-
-    VSET(center, ocenter.x, ocenter.y, ocenter.z);
-    VSET(norm, onorm.x, onorm.y, onorm.z);
-
-    vect_t xbase, ybase, tip;
-    vect_t x_1, x_2, y_1, y_2;
-    bn_vec_perp(xbase, norm);
-    VCROSS(ybase, xbase, norm);
-    VUNITIZE(xbase);
-    VUNITIZE(ybase);
-    VSCALE(xbase, xbase, 10);
-    VSCALE(ybase, ybase, 10);
-    VADD2(x_1, center, xbase);
-    VSUB2(x_2, center, xbase);
-    VADD2(y_1, center, ybase);
-    VSUB2(y_2, center, ybase);
-
-    pdv_3move(plot_file, x_1);
-    pdv_3cont(plot_file, x_2);
-    pdv_3move(plot_file, y_1);
-    pdv_3cont(plot_file, y_2);
-
-    pdv_3move(plot_file, x_1);
-    pdv_3cont(plot_file, y_1);
-    pdv_3move(plot_file, x_2);
-    pdv_3cont(plot_file, y_2);
-
-    pdv_3move(plot_file, x_2);
-    pdv_3cont(plot_file, y_1);
-    pdv_3move(plot_file, x_1);
-    pdv_3cont(plot_file, y_2);
-
-    VSCALE(tip, norm, 5);
-    VADD2(tip, center, tip);
-    pdv_3move(plot_file, center);
-    pdv_3cont(plot_file, tip);
-
-    fclose(plot_file);
 }
 
 void
@@ -1713,7 +1659,7 @@ cdt_mesh_t::interior_incorrect_normals()
 
     RTree<size_t, double, 3>::Iterator tree_it;
     size_t t_ind;
-    cdt_mesh::triangle_t tri;
+    triangle_t tri;
     std::set<size_t> flip_tris;
 
     // TODO - just flipping these edge triangles may introduce edge problems - now that
@@ -3021,7 +2967,7 @@ cdt_mesh_t::valid(int verbose)
     RTree<size_t, double, 3>::Iterator tree_it;
     tris_tree.GetFirst(tree_it);
     size_t t_ind;
-    cdt_mesh::triangle_t tri;
+    triangle_t tri;
     while (!tree_it.IsNull()) {
 	t_ind = *tree_it;
 	tri = tris_vect[t_ind];
@@ -3183,7 +3129,7 @@ void cdt_mesh_t::plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot,
 double
 cdt_mesh_t::tri_pnt_r(long tri_ind)
 {
-    cdt_mesh::triangle_t tri = tris_vect[tri_ind];
+    triangle_t tri = tris_vect[tri_ind];
     ON_3dPoint *p3d = pnts[tri.v[0]];
     ON_BoundingBox bb(*p3d, *p3d);
     for (int i = 1; i < 3; i++) {
@@ -3343,7 +3289,7 @@ void cdt_mesh_t::tris_plot(const char *filename)
 
     RTree<size_t, double, 3>::Iterator tree_it;
     size_t t_ind;
-    cdt_mesh::triangle_t tri;
+    triangle_t tri;
     std::set<size_t> flip_tris;
 
     tris_tree.GetFirst(tree_it);
@@ -3450,7 +3396,7 @@ cdt_mesh_t::serialize(const char *fname)
     sfile << "TRIANGLES_TREE" << tris_tree.Count() << "\n";
     RTree<size_t, double, 3>::Iterator tree_it;
     size_t t_ind;
-    cdt_mesh::triangle_t tri;
+    triangle_t tri;
     std::set<size_t> flip_tris;
 
     tris_tree.GetFirst(tree_it);
@@ -4432,12 +4378,9 @@ void cdt_mesh_t::polygon_print_3d(cpolygon_t *polygon)
     std::cout << "\n";
 }
 
-
-} // close namespace cdt_mesh
-
 // PImpl exposure of some mesh operations for use in tests
 struct cdt_bmesh_impl {
-    cdt_mesh::cdt_mesh_t fmesh;
+    cdt_mesh_t fmesh;
 };
 
 int

@@ -39,10 +39,10 @@
 int debug_ecnt;
 
 static void
-debug_plot(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolygon_t *cpoly, int m_face_index, int m_loop_index, int m_edge_index, int m_trim_index, int step_cnt, int *d_cnt) {
+debug_plot(struct ON_Brep_CDT_State *s_cdt, cpolygon_t *cpoly, int m_face_index, int m_loop_index, int m_edge_index, int m_trim_index, int step_cnt, int *d_cnt) {
     if (m_face_index > 0 && m_face_index != 34) return;
     if (m_edge_index > 0 && (m_edge_index < 93 || m_edge_index > 96)) return;
-    cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[34];
+    cdt_mesh_t *fmesh = &s_cdt->fmeshes[34];
     std::cout << "\n";
     if (m_loop_index > 0) {
 	std::cout << step_cnt << "-" << (*d_cnt) << ": generating plots for loop " << m_loop_index << "...\n";
@@ -71,7 +71,7 @@ debug_plot(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolygon_t *cpoly, int m_f
 #endif
 #if 0
 static void
-debug_bseg(cdt_mesh::bedge_seg_t *bseg, int seg_id)
+debug_bseg(bedge_seg_t *bseg, int seg_id)
 {
 #if 0
     int face_index = 34;
@@ -85,7 +85,7 @@ debug_bseg(cdt_mesh::bedge_seg_t *bseg, int seg_id)
 #if 0
     if (trim1->Face()->m_face_index != face_index && trim2->Face()->m_face_index != face_index) return;
     ON_BrepTrim *ftrim = (trim1->Face()->m_face_index == face_index) ? trim1 : trim2;
-    cdt_mesh::cpolyedge_t *tseg = (bseg->tseg1->trim_ind == ftrim->m_trim_index) ? bseg->tseg1 : bseg->tseg2;
+    cpolyedge_t *tseg = (bseg->tseg1->trim_ind == ftrim->m_trim_index) ? bseg->tseg1 : bseg->tseg2;
 
     std::cout << "bseg " << bseg->edge_ind << "-" << seg_id << ", trim " << tseg->trim_ind << " (" << bseg->brep->m_T[tseg->trim_ind].m_bRev3d << "):\n";
     std::cout << "   edge point start (x,y,z): (" << bseg->e_start->x << "," << bseg->e_start->y << "," << bseg->e_start->z << ")\n";
@@ -135,7 +135,7 @@ debug_bseg(cdt_mesh::bedge_seg_t *bseg, int seg_id)
 // the proposed 3D triangle, and use that to evaluate the suitability of
 // the proposed surface point 
 bool
-candidate_surf_pnt(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
+candidate_surf_pnt(struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *pe)
 {
     if (!pe->eseg) return false;
 
@@ -201,7 +201,7 @@ candidate_surf_pnt(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
 // Probably still want some minimum distance to avoid extremely slim triangles, even if they
 // are "valid"...
 void
-rtree_bbox_2d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe, int tight)
+rtree_bbox_2d(struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *pe, int tight)
 {
     ON_BrepTrim& trim = s_cdt->brep->m_T[pe->trim_ind];
     ON_2dPoint p2d1(pe->polygon->pnts_2d[pe->v[0]].first, pe->polygon->pnts_2d[pe->v[0]].second);
@@ -264,7 +264,7 @@ rtree_bbox_2d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe, int ti
 }
 
 void
-rtree_bbox_2d_remove(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
+rtree_bbox_2d_remove(struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *pe)
 {
     ON_BrepTrim& trim = s_cdt->brep->m_T[pe->trim_ind];
     ON_2dPoint p2d1(pe->polygon->pnts_2d[pe->v[0]].first, pe->polygon->pnts_2d[pe->v[0]].second);
@@ -310,7 +310,7 @@ rtree_bbox_2d_remove(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
 }
 
 void
-rtree_bbox_3d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
+rtree_bbox_3d(struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *pe)
 {
     if (!pe->eseg) return;
     ON_BrepTrim& trim = s_cdt->brep->m_T[pe->trim_ind];
@@ -378,7 +378,7 @@ rtree_bbox_3d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
 }
 
 void
-rtree_bbox_3d_remove(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
+rtree_bbox_3d_remove(struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *pe)
 {
     if (!pe->eseg) return;
     ON_BrepTrim& trim = s_cdt->brep->m_T[pe->trim_ind];
@@ -447,11 +447,11 @@ rtree_bbox_3d_remove(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe)
 
 struct rtree_minsplit_context {
     struct ON_Brep_CDT_State *s_cdt;
-    cdt_mesh::cpolyedge_t *cseg;
+    cpolyedge_t *cseg;
 };
 
 static bool MinSplit2dCallback(void *data, void *a_context) {
-    cdt_mesh::cpolyedge_t *tseg = (cdt_mesh::cpolyedge_t *)data;
+    cpolyedge_t *tseg = (cpolyedge_t *)data;
     struct rtree_minsplit_context *context= (struct rtree_minsplit_context *)a_context;
 
 
@@ -511,10 +511,10 @@ double
 edge_median_seg_len(struct ON_Brep_CDT_State *s_cdt, int m_edge_index)
 {
     std::vector<double> lsegs;
-    std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[m_edge_index];
-    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
+    std::set<bedge_seg_t *> &epsegs = s_cdt->e2polysegs[m_edge_index];
+    std::set<bedge_seg_t *>::iterator e_it;
     for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
-	cdt_mesh::bedge_seg_t *b = *e_it;
+	bedge_seg_t *b = *e_it;
 	double seg_dist = b->e_start->DistanceTo(*b->e_end);
 	lsegs.push_back(seg_dist);
     }
@@ -636,7 +636,7 @@ pnt_binary_search(fastf_t *tparam, const ON_BrepTrim &trim, double tstart, doubl
 }
 
 ON_2dPoint
-get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe, ON_3dPoint &edge_mid_3d, double elen, double brep_edge_tol)
+get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *pe, ON_3dPoint &edge_mid_3d, double elen, double brep_edge_tol)
 {
     int verbose = 1;
     double tol;
@@ -673,7 +673,7 @@ get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_
 }
 
 bool
-tol_need_split(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, ON_3dPoint &edge_mid_3d)
+tol_need_split(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, ON_3dPoint &edge_mid_3d)
 {
     ON_Line line3d(*(bseg->e_start), *(bseg->e_end));
     double seg_len = line3d.Length();
@@ -761,7 +761,7 @@ tol_need_split(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, ON_
     ON_BrepEdge& edge = s_cdt->brep->m_E[bseg->edge_ind];
     ON_BrepTrim *trim1 = edge.Trim(0);
     ON_BrepFace *face1 = trim1->Face();
-    cdt_mesh::cdt_mesh_t *fmesh1 = &s_cdt->fmeshes[face1->m_face_index];
+    cdt_mesh_t *fmesh1 = &s_cdt->fmeshes[face1->m_face_index];
     n1 = fmesh1->normals[fmesh1->nmap[fmesh1->p2ind[bseg->e_start]]];
     n2 = fmesh1->normals[fmesh1->nmap[fmesh1->p2ind[bseg->e_end]]];
 
@@ -771,7 +771,7 @@ tol_need_split(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, ON_
 
     ON_BrepTrim *trim2 = edge.Trim(1);
     ON_BrepFace *face2 = trim2->Face();
-    cdt_mesh::cdt_mesh_t *fmesh2 = &s_cdt->fmeshes[face2->m_face_index];
+    cdt_mesh_t *fmesh2 = &s_cdt->fmeshes[face2->m_face_index];
     n1 = fmesh2->normals[fmesh2->nmap[fmesh2->p2ind[bseg->e_start]]];
     n2 = fmesh2->normals[fmesh2->nmap[fmesh2->p2ind[bseg->e_end]]];
 
@@ -782,10 +782,10 @@ tol_need_split(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, ON_
     return false;
 }
 
-std::set<cdt_mesh::bedge_seg_t *>
-split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int force, double *t, int update_rtrees)
+std::set<bedge_seg_t *>
+split_edge_seg(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, int force, double *t, int update_rtrees)
 {
-    std::set<cdt_mesh::bedge_seg_t *> nedges;
+    std::set<bedge_seg_t *> nedges;
 
     // If we don't have associated segments, we can't do anything
     if (!bseg->tseg1 || !bseg->tseg2 || !bseg->nc) return nedges;
@@ -799,8 +799,8 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
 
     ON_BrepFace *face1 = trim1->Face();
     ON_BrepFace *face2 = trim2->Face();
-    cdt_mesh::cdt_mesh_t *fmesh1 = &s_cdt->fmeshes[face1->m_face_index];
-    cdt_mesh::cdt_mesh_t *fmesh2 = &s_cdt->fmeshes[face2->m_face_index];
+    cdt_mesh_t *fmesh1 = &s_cdt->fmeshes[face1->m_face_index];
+    cdt_mesh_t *fmesh2 = &s_cdt->fmeshes[face2->m_face_index];
 
 
     // Get the 3D midpoint (and tangent, if we can) from the edge curve
@@ -858,7 +858,7 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
     fmesh2->nmap[f2_ind3d] = f2_nind;
 
     // From the existing polyedge, make the two new polyedges that will replace the old one
-    cdt_mesh::bedge_seg_t *bseg1 = new cdt_mesh::bedge_seg_t(bseg);
+    bedge_seg_t *bseg1 = new bedge_seg_t(bseg);
     bseg1->edge_start = bseg->edge_start;
     bseg1->edge_end = emid;
     bseg1->e_start = bseg->e_start;
@@ -866,7 +866,7 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
     bseg1->tan_start = bseg->tan_start;
     bseg1->tan_end = edge_mid_tan;
 
-    cdt_mesh::bedge_seg_t *bseg2 = new cdt_mesh::bedge_seg_t(bseg);
+    bedge_seg_t *bseg2 = new bedge_seg_t(bseg);
     bseg2->edge_start = emid;
     bseg2->edge_end = bseg->edge_end;
     bseg2->e_start = mid_3d;
@@ -883,44 +883,44 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int
     }
 
     // Using the 2d mid points, update the polygons associated with tseg1 and tseg2.
-    cdt_mesh::cpolyedge_t *poly1_ne1, *poly1_ne2, *poly2_ne1, *poly2_ne2;
+    cpolyedge_t *poly1_ne1, *poly1_ne2, *poly2_ne1, *poly2_ne2;
     {
-	cdt_mesh::cpolygon_t *poly1 = bseg->tseg1->polygon;
+	cpolygon_t *poly1 = bseg->tseg1->polygon;
 	int v[2];
 	v[0] = bseg->tseg1->v[0];
 	v[1] = bseg->tseg1->v[1];
 	int trim_ind = bseg->tseg1->trim_ind;
 	double old_trim_start = bseg->tseg1->trim_start;
 	double old_trim_end = bseg->tseg1->trim_end;
-	poly1->remove_ordered_edge(cdt_mesh::edge_t(v[0], v[1]));
+	poly1->remove_ordered_edge(edge_t(v[0], v[1]));
 	long poly1_2dind = poly1->add_point(trim1_mid_2d, f1_ind2d);
-	struct cdt_mesh::edge_t poly1_edge1(v[0], poly1_2dind);
+	struct edge_t poly1_edge1(v[0], poly1_2dind);
 	poly1_ne1 = poly1->add_ordered_edge(poly1_edge1);
 	poly1_ne1->trim_ind = trim_ind;
 	poly1_ne1->trim_start = old_trim_start;
 	poly1_ne1->trim_end = t1mid;
-	struct cdt_mesh::edge_t poly1_edge2(poly1_2dind, v[1]);
+	struct edge_t poly1_edge2(poly1_2dind, v[1]);
 	poly1_ne2 = poly1->add_ordered_edge(poly1_edge2);
 	poly1_ne2->trim_ind = trim_ind;
 	poly1_ne2->trim_start = t1mid;
 	poly1_ne2->trim_end = old_trim_end;
     }
     {
-	cdt_mesh::cpolygon_t *poly2 = bseg->tseg2->polygon;
+	cpolygon_t *poly2 = bseg->tseg2->polygon;
 	int v[2];
 	v[0] = bseg->tseg2->v[0];
 	v[1] = bseg->tseg2->v[1];
 	int trim_ind = bseg->tseg2->trim_ind;
 	double old_trim_start = bseg->tseg2->trim_start;
 	double old_trim_end = bseg->tseg2->trim_end;
-	poly2->remove_ordered_edge(cdt_mesh::edge_t(v[0], v[1]));
+	poly2->remove_ordered_edge(edge_t(v[0], v[1]));
 	long poly2_2dind = poly2->add_point(trim2_mid_2d, f2_ind2d);
-	struct cdt_mesh::edge_t poly2_edge1(v[0], poly2_2dind);
+	struct edge_t poly2_edge1(v[0], poly2_2dind);
 	poly2_ne1 = poly2->add_ordered_edge(poly2_edge1);
 	poly2_ne1->trim_ind = trim_ind;
 	poly2_ne1->trim_start = old_trim_start;
 	poly2_ne1->trim_end = t2mid;
-	struct cdt_mesh::edge_t poly2_edge2(poly2_2dind, v[1]);
+	struct edge_t poly2_edge2(poly2_2dind, v[1]);
 	poly2_ne2 = poly2->add_ordered_edge(poly2_edge2);
 	poly2_ne2->trim_ind = trim_ind;
 	poly2_ne2->trim_start = t2mid;
@@ -993,11 +993,11 @@ loop_avg_seg_len(struct ON_Brep_CDT_State *s_cdt, int loop_index)
 	if (!edge) continue;
 	const ON_Curve* crv = edge->EdgeCurveOf();
 	if (!crv) continue;
-	std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge->m_edge_index];
+	std::set<bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge->m_edge_index];
 	if (!epsegs.size()) continue;
-	std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
+	std::set<bedge_seg_t *>::iterator e_it;
 	for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
-	    cdt_mesh::bedge_seg_t *b = *e_it;
+	    bedge_seg_t *b = *e_it;
 	    double seg_dist = b->e_start->DistanceTo(*b->e_end);
 	    lsegs.push_back(seg_dist);
 	}
@@ -1023,23 +1023,23 @@ split_long_edges(struct ON_Brep_CDT_State *s_cdt, int face_index)
 	    if (!crv || crv->IsLinear(BN_TOL_DIST)) {
 		continue;
 	    }
-	    std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge->m_edge_index];
+	    std::set<bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge->m_edge_index];
 	    if (!epsegs.size()) continue;
-	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
-	    std::set<cdt_mesh::bedge_seg_t *> new_segs;
-	    std::set<cdt_mesh::bedge_seg_t *> ws1, ws2;
-	    std::set<cdt_mesh::bedge_seg_t *> *ws = &ws1;
-	    std::set<cdt_mesh::bedge_seg_t *> *ns = &ws2;
+	    std::set<bedge_seg_t *>::iterator e_it;
+	    std::set<bedge_seg_t *> new_segs;
+	    std::set<bedge_seg_t *> ws1, ws2;
+	    std::set<bedge_seg_t *> *ws = &ws1;
+	    std::set<bedge_seg_t *> *ns = &ws2;
 	    for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
-		cdt_mesh::bedge_seg_t *b = *e_it;
+		bedge_seg_t *b = *e_it;
 		ws->insert(b);
 	    }
 	    while (ws->size()) {
-		cdt_mesh::bedge_seg_t *b = *ws->begin();
+		bedge_seg_t *b = *ws->begin();
 		ws->erase(ws->begin());
 		double seg_dist = b->e_start->DistanceTo(*b->e_end);
 		if (seg_dist > 0.5*avg_seg_len) {
-		    std::set<cdt_mesh::bedge_seg_t *> esegs_split = split_edge_seg(s_cdt, b, 1);
+		    std::set<bedge_seg_t *> esegs_split = split_edge_seg(s_cdt, b, 1);
 		    if (esegs_split.size()) {
 			ns->insert(esegs_split.begin(), esegs_split.end());
 		    } else {
@@ -1049,7 +1049,7 @@ split_long_edges(struct ON_Brep_CDT_State *s_cdt, int face_index)
 		    new_segs.insert(b);
 		}
 		if (!ws->size() && ns->size()) {
-		    std::set<cdt_mesh::bedge_seg_t *> *tmp = ws;
+		    std::set<bedge_seg_t *> *tmp = ws;
 		    ws = ns;
 		    ns = tmp;
 		}
@@ -1061,11 +1061,11 @@ split_long_edges(struct ON_Brep_CDT_State *s_cdt, int face_index)
 }
 #endif
 
-std::set<cdt_mesh::cpolyedge_t *>
-split_singular_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *ce, int update_rtrees)
+std::set<cpolyedge_t *>
+split_singular_seg(struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *ce, int update_rtrees)
 {
-    std::set<cdt_mesh::cpolyedge_t *> nedges;
-    cdt_mesh::cpolygon_t *poly = ce->polygon;
+    std::set<cpolyedge_t *> nedges;
+    cpolygon_t *poly = ce->polygon;
     int trim_ind = ce->trim_ind;
 
     ON_BrepTrim& trim = s_cdt->brep->m_T[ce->trim_ind];
@@ -1074,7 +1074,7 @@ split_singular_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *ce, i
     ON_2dPoint trim_mid_2d(trim_mid_2d_ev.x, trim_mid_2d_ev.y);
 
     ON_BrepFace *face = trim.Face();
-    cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face->m_face_index];
+    cdt_mesh_t *fmesh = &s_cdt->fmeshes[face->m_face_index];
     long f_ind2d = fmesh->add_point(trim_mid_2d);
 
     // Singularity - new 2D point points to the same 3D point as both of the existing
@@ -1088,21 +1088,21 @@ split_singular_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *ce, i
     s_cdt->unsplit_singular_edges.erase(ce);
 
     // Using the 2d mid points, update the polygons associated with tseg1 and tseg2.
-    cdt_mesh::cpolyedge_t *poly_ne1, *poly_ne2;
+    cpolyedge_t *poly_ne1, *poly_ne2;
     int v[2];
     v[0] = ce->v[0];
     v[1] = ce->v[1];
     double old_trim_start = ce->trim_start;
     double old_trim_end = ce->trim_end;
-    poly->remove_edge(cdt_mesh::edge_t(v[0], v[1]));
+    poly->remove_edge(edge_t(v[0], v[1]));
     long poly_2dind = poly->add_point(trim_mid_2d, f_ind2d);
-    struct cdt_mesh::edge_t poly_edge1(v[0], poly_2dind);
+    struct edge_t poly_edge1(v[0], poly_2dind);
     poly_ne1 = poly->add_edge(poly_edge1);
     poly_ne1->trim_ind = trim_ind;
     poly_ne1->trim_start = old_trim_start;
     poly_ne1->trim_end = tcparam;
     poly_ne1->eseg = NULL;
-    struct cdt_mesh::edge_t poly_edge2(poly_2dind, v[1]);
+    struct edge_t poly_edge2(poly_2dind, v[1]);
     poly_ne2 = poly->add_edge(poly_edge2);
     poly_ne2->trim_ind = trim_ind;
     poly_ne2->trim_start = tcparam;
@@ -1127,18 +1127,18 @@ split_singular_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *ce, i
 bool
 initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt)
 {
-    std::map<int, std::set<cdt_mesh::bedge_seg_t *>>::iterator epoly_it;
+    std::map<int, std::set<bedge_seg_t *>>::iterator epoly_it;
     for (epoly_it = s_cdt->e2polysegs.begin(); epoly_it != s_cdt->e2polysegs.end(); epoly_it++) {
-	std::set<cdt_mesh::bedge_seg_t *>::iterator seg_it;
-	std::set<cdt_mesh::bedge_seg_t *> wsegs = epoly_it->second;
+	std::set<bedge_seg_t *>::iterator seg_it;
+	std::set<bedge_seg_t *> wsegs = epoly_it->second;
 	for (seg_it = wsegs.begin(); seg_it != wsegs.end(); seg_it++) {
-	    cdt_mesh::bedge_seg_t *e = *seg_it;
+	    bedge_seg_t *e = *seg_it;
 
 
 	    ON_BrepEdge& edge = s_cdt->brep->m_E[e->edge_ind];
 	    ON_BrepTrim *trim1 = edge.Trim(0);
 	    ON_BrepTrim *trim2 = edge.Trim(1);
-	    std::set<cdt_mesh::bedge_seg_t *> esegs_closed;
+	    std::set<bedge_seg_t *> esegs_closed;
 
 	    if (!trim1 || !trim2) return false;
 
@@ -1157,12 +1157,12 @@ initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt)
 	    }
 
 	    // 2.  Any edges with a non-linear edge curve are split.
-	    std::set<cdt_mesh::bedge_seg_t *> esegs_csplit;
+	    std::set<bedge_seg_t *> esegs_csplit;
 	    const ON_Curve* crv = edge.EdgeCurveOf();
 	    if (!crv->IsLinear(BN_TOL_DIST)) {
-		std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
+		std::set<bedge_seg_t *>::iterator e_it;
 		for (e_it = esegs_closed.begin(); e_it != esegs_closed.end(); e_it++) {
-		    std::set<cdt_mesh::bedge_seg_t *> efirst = split_edge_seg(s_cdt, *e_it, 1, NULL, 1);
+		    std::set<bedge_seg_t *> efirst = split_edge_seg(s_cdt, *e_it, 1, NULL, 1);
 		    if (!efirst.size()) {
 			// split failed??  On a curved edge we must split at least once to
 			// avoid potentially degenerate polygons (if we had to split a closed
@@ -1171,9 +1171,9 @@ initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt)
 		    } else {
 			// To avoid representing circles with squares, split curved segments
 			// one additional time
-			std::set<cdt_mesh::bedge_seg_t *>::iterator s_it;
+			std::set<bedge_seg_t *>::iterator s_it;
 			for (s_it = efirst.begin(); s_it != efirst.end(); s_it++) {
-			    std::set<cdt_mesh::bedge_seg_t *> etmp = split_edge_seg(s_cdt, *s_it, 1, NULL, 1);
+			    std::set<bedge_seg_t *> etmp = split_edge_seg(s_cdt, *s_it, 1, NULL, 1);
 			    if (!etmp.size()) {
 				// split failed??  This isn't good and shouldn't
 				// happen, but it's not fatal the way the previous two
@@ -1285,7 +1285,7 @@ initialize_edge_containers(struct ON_Brep_CDT_State *s_cdt)
 
     for (int index = 0; index < brep->m_E.Count(); index++) {
 	ON_BrepEdge& edge = brep->m_E[index];
-	cdt_mesh::bedge_seg_t *bseg = new cdt_mesh::bedge_seg_t;
+	bedge_seg_t *bseg = new bedge_seg_t;
 	bseg->edge_ind = edge.m_edge_index;
 	bseg->brep = s_cdt->brep;
 	bseg->p_cdt= (void *)s_cdt;
@@ -1332,11 +1332,11 @@ initialize_loop_polygons(struct ON_Brep_CDT_State *s_cdt)
     for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
 	ON_BrepFace &face = s_cdt->brep->m_F[face_index];
 	int loop_cnt = face.LoopCount();
-	cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face_index];
+	cdt_mesh_t *fmesh = &s_cdt->fmeshes[face_index];
 	fmesh->f_id = face_index;
 	fmesh->m_bRev = face.m_bRev;
 	fmesh->has_singularities = false;
-	cdt_mesh::cpolygon_t *cpoly = NULL;
+	cpolygon_t *cpoly = NULL;
 
 	for (int li = 0; li < loop_cnt; li++) {
 	    const ON_BrepLoop *loop = face.Loop(li);
@@ -1344,7 +1344,7 @@ initialize_loop_polygons(struct ON_Brep_CDT_State *s_cdt)
 	    if (is_outer) {
 		cpoly = &fmesh->outer_loop;
 	    } else {
-		cpoly = new cdt_mesh::cpolygon_t;
+		cpoly = new cpolygon_t;
 		fmesh->inner_loops[li] = cpoly;
 	    }
 	    int trim_count = loop->TrimCount();
@@ -1432,8 +1432,8 @@ initialize_loop_polygons(struct ON_Brep_CDT_State *s_cdt)
 		    fmesh->nmap[f3ind] = fnind;
 		}
 
-		struct cdt_mesh::edge_t lseg(pv, cv);
-		cdt_mesh::cpolyedge_t *ne = cpoly->add_ordered_edge(lseg);
+		struct edge_t lseg(pv, cv);
+		cpolyedge_t *ne = cpoly->add_ordered_edge(lseg);
 
 		ne->trim_ind = trim->m_trim_index;
 		ne->loop_type = (is_outer) ? 1 : 2;
@@ -1443,7 +1443,7 @@ initialize_loop_polygons(struct ON_Brep_CDT_State *s_cdt)
 		rtree_bbox_2d(s_cdt, ne, 0);
 
 		if (trim->m_ei >= 0) {
-		    cdt_mesh::bedge_seg_t *eseg = *s_cdt->e2polysegs[trim->m_ei].begin();
+		    bedge_seg_t *eseg = *s_cdt->e2polysegs[trim->m_ei].begin();
 		    // Associate the edge segment with the trim segment and vice versa
 		    ne->eseg = eseg;
 		    if (eseg->tseg1 && eseg->tseg2) {
@@ -1488,27 +1488,27 @@ tol_curved_edges_split(struct ON_Brep_CDT_State *s_cdt)
 	// TODO - BN_TOL_DIST will be too large for very small trims - need to do
 	// something similar to the ptol calculation for these edge curves...
 	if (crv && !crv->IsLinear(BN_TOL_DIST)) {
-	    std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge.m_edge_index];
-	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
-	    std::set<cdt_mesh::bedge_seg_t *> new_segs;
-	    std::set<cdt_mesh::bedge_seg_t *> ws1, ws2;
-	    std::set<cdt_mesh::bedge_seg_t *> *ws = &ws1;
-	    std::set<cdt_mesh::bedge_seg_t *> *ns = &ws2;
+	    std::set<bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge.m_edge_index];
+	    std::set<bedge_seg_t *>::iterator e_it;
+	    std::set<bedge_seg_t *> new_segs;
+	    std::set<bedge_seg_t *> ws1, ws2;
+	    std::set<bedge_seg_t *> *ws = &ws1;
+	    std::set<bedge_seg_t *> *ns = &ws2;
 	    for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
-		cdt_mesh::bedge_seg_t *b = *e_it;
+		bedge_seg_t *b = *e_it;
 		ws->insert(b);
 	    }
 	    while (ws->size()) {
-		cdt_mesh::bedge_seg_t *b = *ws->begin();
+		bedge_seg_t *b = *ws->begin();
 		ws->erase(ws->begin());
-		std::set<cdt_mesh::bedge_seg_t *> esegs_split = split_edge_seg(s_cdt, b, 0, NULL, 0);
+		std::set<bedge_seg_t *> esegs_split = split_edge_seg(s_cdt, b, 0, NULL, 0);
 		if (esegs_split.size()) {
 		    ns->insert(esegs_split.begin(), esegs_split.end());
 		} else {
 		    new_segs.insert(b);
 		}
 		if (!ws->size() && ns->size()) {
-		    std::set<cdt_mesh::bedge_seg_t *> *tmp = ws;
+		    std::set<bedge_seg_t *> *tmp = ws;
 		    ws = ns;
 		    ns = tmp;
 		}
@@ -1530,10 +1530,10 @@ update_vert_edge_seg_lengths(struct ON_Brep_CDT_State *s_cdt)
 	double emin = DBL_MAX;
 	for (int j = 0; j < brep->m_V[i].m_ei.Count(); j++) {
 	    ON_BrepEdge &edge = brep->m_E[brep->m_V[i].m_ei[j]];
-	    std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge.m_edge_index];
-	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
+	    std::set<bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge.m_edge_index];
+	    std::set<bedge_seg_t *>::iterator e_it;
 	    for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
-		cdt_mesh::bedge_seg_t *b = *e_it;
+		bedge_seg_t *b = *e_it;
 		if (b->e_start == p3d || b->e_end == p3d) {
 		    ON_Line line3d(*(b->e_start), *(b->e_end));
 		    double seg_len = line3d.Length();
@@ -1564,11 +1564,11 @@ update_loop_median_curved_edge_seg_lengths(struct ON_Brep_CDT_State *s_cdt)
 	    if (!crv || crv->IsLinear(BN_TOL_DIST)) {
 		continue;
 	    }
-	    std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge->m_edge_index];
+	    std::set<bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge->m_edge_index];
 	    if (!epsegs.size()) continue;
-	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
+	    std::set<bedge_seg_t *>::iterator e_it;
 	    for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
-		cdt_mesh::bedge_seg_t *b = *e_it;
+		bedge_seg_t *b = *e_it;
 		double seg_dist = b->e_start->DistanceTo(*b->e_end);
 		lsegs.push_back(seg_dist);
 	    }
@@ -1629,23 +1629,23 @@ void curved_edges_refine(struct ON_Brep_CDT_State *s_cdt)
     for (r_it = refine_targets.begin(); r_it != refine_targets.end(); r_it++) {
 	ON_BrepEdge& edge = brep->m_E[r_it->first];
 	double split_tol = r_it->second;
-	std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[r_it->first];
-	std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
-	std::set<cdt_mesh::bedge_seg_t *> new_segs;
-	std::set<cdt_mesh::bedge_seg_t *> ws1, ws2;
-	std::set<cdt_mesh::bedge_seg_t *> *ws = &ws1;
-	std::set<cdt_mesh::bedge_seg_t *> *ns = &ws2;
+	std::set<bedge_seg_t *> &epsegs = s_cdt->e2polysegs[r_it->first];
+	std::set<bedge_seg_t *>::iterator e_it;
+	std::set<bedge_seg_t *> new_segs;
+	std::set<bedge_seg_t *> ws1, ws2;
+	std::set<bedge_seg_t *> *ws = &ws1;
+	std::set<bedge_seg_t *> *ns = &ws2;
 	for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
-	    cdt_mesh::bedge_seg_t *b = *e_it;
+	    bedge_seg_t *b = *e_it;
 	    ws->insert(b);
 	}
 	while (ws->size()) {
-	    cdt_mesh::bedge_seg_t *b = *ws->begin();
+	    bedge_seg_t *b = *ws->begin();
 	    ws->erase(ws->begin());
 	    bool split_edge = (b->e_start->DistanceTo(*b->e_end) > split_tol);
 	    if (split_edge) {
 		// If we need to split, do so
-		std::set<cdt_mesh::bedge_seg_t *> esegs_split = split_edge_seg(s_cdt, b, 1, NULL, 0);
+		std::set<bedge_seg_t *> esegs_split = split_edge_seg(s_cdt, b, 1, NULL, 0);
 		if (esegs_split.size()) {
 		    ws->insert(esegs_split.begin(), esegs_split.end());
 		} else {
@@ -1655,7 +1655,7 @@ void curved_edges_refine(struct ON_Brep_CDT_State *s_cdt)
 		new_segs.insert(b);
 	    }
 	    if (!ws->size() && ns->size()) {
-		std::set<cdt_mesh::bedge_seg_t *> *tmp = ws;
+		std::set<bedge_seg_t *> *tmp = ws;
 		ws = ns;
 		ns = tmp;
 	    }
@@ -1679,27 +1679,27 @@ tol_linear_edges_split(struct ON_Brep_CDT_State *s_cdt)
 	ON_BrepEdge& edge = brep->m_E[index];
 	const ON_Curve* crv = edge.EdgeCurveOf();
 	if (crv && crv->IsLinear(BN_TOL_DIST)) {
-	    std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge.m_edge_index];
-	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
-	    std::set<cdt_mesh::bedge_seg_t *> new_segs;
-	    std::set<cdt_mesh::bedge_seg_t *> ws1, ws2;
-	    std::set<cdt_mesh::bedge_seg_t *> *ws = &ws1;
-	    std::set<cdt_mesh::bedge_seg_t *> *ns = &ws2;
+	    std::set<bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge.m_edge_index];
+	    std::set<bedge_seg_t *>::iterator e_it;
+	    std::set<bedge_seg_t *> new_segs;
+	    std::set<bedge_seg_t *> ws1, ws2;
+	    std::set<bedge_seg_t *> *ws = &ws1;
+	    std::set<bedge_seg_t *> *ns = &ws2;
 	    for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
-		cdt_mesh::bedge_seg_t *b = *e_it;
+		bedge_seg_t *b = *e_it;
 		ws->insert(b);
 	    }
 	    while (ws->size()) {
-		cdt_mesh::bedge_seg_t *b = *ws->begin();
+		bedge_seg_t *b = *ws->begin();
 		ws->erase(ws->begin());
-		std::set<cdt_mesh::bedge_seg_t *> esegs_split = split_edge_seg(s_cdt, b, 0, NULL, 0);
+		std::set<bedge_seg_t *> esegs_split = split_edge_seg(s_cdt, b, 0, NULL, 0);
 		if (esegs_split.size()) {
 		    ns->insert(esegs_split.begin(), esegs_split.end());
 		} else {
 		    new_segs.insert(b);
 		}
 		if (!ws->size() && ns->size()) {
-		    std::set<cdt_mesh::bedge_seg_t *> *tmp = ws;
+		    std::set<bedge_seg_t *> *tmp = ws;
 		    ws = ns;
 		    ns = tmp;
 		}
@@ -1720,7 +1720,7 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 	ON_BrepFace &face = s_cdt->brep->m_F[face_index];
 	//std::cout << "Face " << face_index << " of " << brep->m_F.Count()-1 << " close edge check...\n";
 
-	std::vector<cdt_mesh::cpolyedge_t *> ws = cdt_face_polyedges(s_cdt, face_index);
+	std::vector<cpolyedge_t *> ws = cdt_face_polyedges(s_cdt, face_index);
 
 #if 0
 	{
@@ -1737,7 +1737,7 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 	// don't have any non-neighbor overlaps.
 	int split_cnt = 0;
 	while (ws.size() && split_cnt < 10) {
-	    std::vector<cdt_mesh::cpolyedge_t *> current_trims;
+	    std::vector<cpolyedge_t *> current_trims;
 
 	    bool split_check = false;
 
@@ -1750,9 +1750,9 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 	    // itself, this loop should be (in principle) suitable for bu_parallel - we're not
 	    // doing any splitting at this point - searching is a read only activity once
 	    // the initial data containers are set up
-	    std::vector<cdt_mesh::cpolyedge_t *>::iterator w_it;
+	    std::vector<cpolyedge_t *>::iterator w_it;
 	    for (w_it = ws.begin(); w_it != ws.end(); w_it++) {
-		cdt_mesh::cpolyedge_t *tseg = *w_it;
+		cpolyedge_t *tseg = *w_it;
 		ON_2dPoint p2d1(tseg->polygon->pnts_2d[tseg->v[0]].first, tseg->polygon->pnts_2d[tseg->v[0]].second);
 		ON_2dPoint p2d2(tseg->polygon->pnts_2d[tseg->v[1]].first, tseg->polygon->pnts_2d[tseg->v[1]].second);
 
@@ -1797,24 +1797,24 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 	    // If we need to split, do so.  We need to process as a set,
 	    // because an edge split on a closed face may end up removing more
 	    // than one cpolyedge_t in ws at the same time.
-	    std::set<cdt_mesh::cpolyedge_t *> ws_s(ws.begin(), ws.end());
+	    std::set<cpolyedge_t *> ws_s(ws.begin(), ws.end());
 	    while (ws_s.size()) {
-		cdt_mesh::cpolyedge_t *pe = *ws_s.begin();
+		cpolyedge_t *pe = *ws_s.begin();
 		if (pe->eseg) {
-		    cdt_mesh::bedge_seg_t *b = pe->eseg;
+		    bedge_seg_t *b = pe->eseg;
 		    // Get both of them in case they're both in ws (closed face)
 		    ws_s.erase(b->tseg1);
 		    ws_s.erase(b->tseg2);
 		    if (pe->split_status == 2) {
-			std::set<cdt_mesh::bedge_seg_t *> esegs_split = split_edge_seg(s_cdt, b, 1, NULL, 1);
+			std::set<bedge_seg_t *> esegs_split = split_edge_seg(s_cdt, b, 1, NULL, 1);
 			if (esegs_split.size()) {
 			    split_check = true;
 			    // Pick up the new trim segments from the edges for the next iteration.  Only
 			    // want the ones associated with the current face.
-			    std::set<cdt_mesh::bedge_seg_t *>::iterator b_it;
+			    std::set<bedge_seg_t *>::iterator b_it;
 			    for (b_it = esegs_split.begin(); b_it != esegs_split.end(); b_it++) {
-				cdt_mesh::bedge_seg_t *bn = *b_it;
-				cdt_mesh::cpolyedge_t *ce = (s_cdt->brep->m_T[bn->tseg1->trim_ind].Face()->m_face_index == face_index) ? bn->tseg1 : bn->tseg2;
+				bedge_seg_t *bn = *b_it;
+				cpolyedge_t *ce = (s_cdt->brep->m_T[bn->tseg1->trim_ind].Face()->m_face_index == face_index) ? bn->tseg1 : bn->tseg2;
 				current_trims.push_back(ce);
 			    }
 			} else {
@@ -1829,7 +1829,7 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 		    // Trim only, no edge.
 		    ws_s.erase(pe);
 		    if (pe->split_status == 2) {
-			std::set<cdt_mesh::cpolyedge_t *> ntrims = split_singular_seg(s_cdt, pe, 1);
+			std::set<cpolyedge_t *> ntrims = split_singular_seg(s_cdt, pe, 1);
 			if (ntrims.size()) {
 			    std::copy(ntrims.begin(), ntrims.end(), std::back_inserter(current_trims));
 			    split_check = true;
@@ -1880,15 +1880,15 @@ finalize_rtrees(struct ON_Brep_CDT_State *s_cdt)
     for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
 	ON_BrepFace &face = s_cdt->brep->m_F[face_index];
 	s_cdt->face_rtrees_2d[face.m_face_index].RemoveAll();
-	cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face.m_face_index];
+	cdt_mesh_t *fmesh = &s_cdt->fmeshes[face.m_face_index];
 
-	std::vector<cdt_mesh::cpolyedge_t *> ws;
+	std::vector<cpolyedge_t *> ws;
 
 	int loop_cnt = face.LoopCount();
 	for (int li = 0; li < loop_cnt; li++) {
 	    const ON_BrepLoop *loop = face.Loop(li);
 	    bool is_outer = (face.OuterLoop()->m_loop_index == loop->m_loop_index) ? true : false;
-	    cdt_mesh::cpolygon_t *cpoly = NULL;
+	    cpolygon_t *cpoly = NULL;
 	    if (is_outer) {
 		cpoly = &fmesh->outer_loop;
 	    } else {
@@ -1896,9 +1896,9 @@ finalize_rtrees(struct ON_Brep_CDT_State *s_cdt)
 	    }
 
 	    size_t ecnt = 1;
-	    cdt_mesh::cpolyedge_t *pe = (*cpoly->poly.begin());
-	    cdt_mesh::cpolyedge_t *first = pe;
-	    cdt_mesh::cpolyedge_t *next = pe->next;
+	    cpolyedge_t *pe = (*cpoly->poly.begin());
+	    cpolyedge_t *first = pe;
+	    cpolyedge_t *next = pe->next;
 	    rtree_bbox_2d(s_cdt, first, 1);
 	    // Walk the loop
 	    while (first != next) {
@@ -1927,10 +1927,10 @@ finalize_rtrees(struct ON_Brep_CDT_State *s_cdt)
 	s_cdt->face_rtrees_3d[face.m_face_index].RemoveAll();
     }	
     for (int index = 0; index < brep->m_E.Count(); index++) {
-	std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[index];
-	std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
+	std::set<bedge_seg_t *> &epsegs = s_cdt->e2polysegs[index];
+	std::set<bedge_seg_t *>::iterator e_it;
 	for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
-	    cdt_mesh::bedge_seg_t *b = *e_it;
+	    bedge_seg_t *b = *e_it;
 	    rtree_bbox_3d(s_cdt, b->tseg1);
 	    rtree_bbox_3d(s_cdt, b->tseg2);
 	}
@@ -1938,7 +1938,7 @@ finalize_rtrees(struct ON_Brep_CDT_State *s_cdt)
 }
 
 void
-cpolyedge_ndists(cdt_mesh::cpolyedge_t *pe) {
+cpolyedge_ndists(cpolyedge_t *pe) {
     ON_2dPoint p2d1(pe->polygon->pnts_2d[pe->v[0]].first, pe->polygon->pnts_2d[pe->v[0]].second);
     ON_2dPoint p2d2(pe->polygon->pnts_2d[pe->v[1]].first, pe->polygon->pnts_2d[pe->v[1]].second);
 
@@ -1957,15 +1957,15 @@ cpolyedge_nearest_dists(struct ON_Brep_CDT_State *s_cdt)
     ON_Brep* brep = s_cdt->brep;
     for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
 	ON_BrepFace &face = s_cdt->brep->m_F[face_index];
-	cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face.m_face_index];
+	cdt_mesh_t *fmesh = &s_cdt->fmeshes[face.m_face_index];
 
-	std::vector<cdt_mesh::cpolyedge_t *> ws;
+	std::vector<cpolyedge_t *> ws;
 
 	int loop_cnt = face.LoopCount();
 	for (int li = 0; li < loop_cnt; li++) {
 	    const ON_BrepLoop *loop = face.Loop(li);
 	    bool is_outer = (face.OuterLoop()->m_loop_index == loop->m_loop_index) ? true : false;
-	    cdt_mesh::cpolygon_t *cpoly = NULL;
+	    cpolygon_t *cpoly = NULL;
 	    if (is_outer) {
 		cpoly = &fmesh->outer_loop;
 	    } else {
@@ -1973,9 +1973,9 @@ cpolyedge_nearest_dists(struct ON_Brep_CDT_State *s_cdt)
 	    }
 
 	    size_t ecnt = 1;
-	    cdt_mesh::cpolyedge_t *pe = (*cpoly->poly.begin());
-	    cdt_mesh::cpolyedge_t *first = pe;
-	    cdt_mesh::cpolyedge_t *next = pe->next;
+	    cpolyedge_t *pe = (*cpoly->poly.begin());
+	    cpolyedge_t *first = pe;
+	    cpolyedge_t *next = pe->next;
 
 	    cpolyedge_ndists(first);
 

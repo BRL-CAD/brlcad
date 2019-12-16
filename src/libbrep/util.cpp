@@ -31,6 +31,7 @@
 #include "bu/log.h"
 #include "bu/str.h"
 #include "bu/malloc.h"
+#include "bn/mat.h" /* bn_vec_perp */
 #include "bn/tol.h"
 #include "bn/plot3.h"
 #include "brep/defines.h"
@@ -177,6 +178,55 @@ ON_BoundingBox_Plot(FILE *pf, ON_BoundingBox &bb)
     TREE_LEAF_FACE_3D(pf, pt, 5, 4, 7, 6);
     TREE_LEAF_FACE_3D(pf, pt, 1, 5, 6, 2);
 }
+
+void
+ON_Plane_Plot(FILE *pf, ON_Plane &plane)
+{
+    int r = int(256*drand48() + 1.0);
+    int g = int(256*drand48() + 1.0);
+    int b = int(256*drand48() + 1.0);
+    pl_color(pf, r, g, b);
+    ON_3dPoint ocenter = plane.Origin();
+    ON_3dVector onorm = plane.Normal();
+    point_t center, norm;
+
+    VSET(center, ocenter.x, ocenter.y, ocenter.z);
+    VSET(norm, onorm.x, onorm.y, onorm.z);
+
+    vect_t xbase, ybase, tip;
+    vect_t x_1, x_2, y_1, y_2;
+    bn_vec_perp(xbase, norm);
+    VCROSS(ybase, xbase, norm);
+    VUNITIZE(xbase);
+    VUNITIZE(ybase);
+    VSCALE(xbase, xbase, 10);
+    VSCALE(ybase, ybase, 10);
+    VADD2(x_1, center, xbase);
+    VSUB2(x_2, center, xbase);
+    VADD2(y_1, center, ybase);
+    VSUB2(y_2, center, ybase);
+
+    pdv_3move(pf, x_1);
+    pdv_3cont(pf, x_2);
+    pdv_3move(pf, y_1);
+    pdv_3cont(pf, y_2);
+
+    pdv_3move(pf, x_1);
+    pdv_3cont(pf, y_1);
+    pdv_3move(pf, x_2);
+    pdv_3cont(pf, y_2);
+
+    pdv_3move(pf, x_2);
+    pdv_3cont(pf, y_1);
+    pdv_3move(pf, x_1);
+    pdv_3cont(pf, y_2);
+
+    VSCALE(tip, norm, 5);
+    VADD2(tip, center, tip);
+    pdv_3move(pf, center);
+    pdv_3cont(pf, tip);
+}
+
 
 // Local Variables:
 // tab-width: 8

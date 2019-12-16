@@ -157,7 +157,7 @@ plot_on_bbox(ON_BoundingBox &bb, const char *filename)
 }
 
 void
-plot_ce_bbox(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe, const char *filename)
+plot_ce_bbox(struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *pe, const char *filename)
 {
     FILE* plot_file = fopen(filename, "w");
     struct bu_color c = BU_COLOR_INIT_ZERO;
@@ -264,12 +264,12 @@ point_inside(struct ON_Brep_CDT_State *s_cdt, point_t p)
 {
     int wn = 0;
     int exact = 0;
-    std::map<int, cdt_mesh::cdt_mesh_t>::iterator f_it;
+    std::map<int, cdt_mesh_t>::iterator f_it;
     for (f_it = s_cdt->fmeshes.begin(); f_it != s_cdt->fmeshes.end(); f_it++) {
 	RTree<size_t, double, 3>::Iterator tree_it;
 	f_it->second.tris_tree.GetFirst(tree_it);
 	size_t t_ind;
-	cdt_mesh::triangle_t tri;
+	triangle_t tri;
 	while (!tree_it.IsNull()) {
 	    t_ind = *tree_it;
 	    tri = f_it->second.tris_vect[t_ind];
@@ -294,18 +294,18 @@ on_point_inside(struct ON_Brep_CDT_State *s_cdt, ON_3dPoint *p)
     return point_inside(s_cdt, tp);
 }
 
-std::vector<cdt_mesh::cpolyedge_t *>
+std::vector<cpolyedge_t *>
 cdt_face_polyedges(struct ON_Brep_CDT_State *s_cdt, int face_index)
 {
-    std::vector<cdt_mesh::cpolyedge_t *> ws;
+    std::vector<cpolyedge_t *> ws;
 
     ON_BrepFace &face = s_cdt->brep->m_F[face_index];
-    cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face_index];
+    cdt_mesh_t *fmesh = &s_cdt->fmeshes[face_index];
     int loop_cnt = face.LoopCount();
     for (int li = 0; li < loop_cnt; li++) {
 	const ON_BrepLoop *loop = face.Loop(li);
 	bool is_outer = (face.OuterLoop()->m_loop_index == loop->m_loop_index) ? true : false;
-	cdt_mesh::cpolygon_t *cpoly = NULL;
+	cpolygon_t *cpoly = NULL;
 	if (is_outer) {
 	    cpoly = &fmesh->outer_loop;
 	} else {
@@ -313,9 +313,9 @@ cdt_face_polyedges(struct ON_Brep_CDT_State *s_cdt, int face_index)
 	}
 
 	size_t ecnt = 1;
-	cdt_mesh::cpolyedge_t *pe = (*cpoly->poly.begin());
-	cdt_mesh::cpolyedge_t *first = pe;
-	cdt_mesh::cpolyedge_t *next = pe->next;
+	cpolyedge_t *pe = (*cpoly->poly.begin());
+	cpolyedge_t *first = pe;
+	cpolyedge_t *next = pe->next;
 	first->split_status = 0;
 	ws.push_back(first);
 	//Walk the loop
@@ -631,11 +631,11 @@ ON_Brep_CDT_VList_Face(
     point_t pt2 = VINIT_ZERO;
 #endif
 
-    cdt_mesh::cdt_mesh_t *fmesh = &(s->fmeshes[face_index]);
+    cdt_mesh_t *fmesh = &(s->fmeshes[face_index]);
     RTree<size_t, double, 3>::Iterator tree_it;
     fmesh->tris_tree.GetFirst(tree_it);
     size_t t_ind;
-    cdt_mesh::triangle_t tri;
+    triangle_t tri;
 
     switch (mode) {
 	case 0:

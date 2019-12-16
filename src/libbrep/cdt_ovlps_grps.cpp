@@ -132,9 +132,9 @@ ovlp_grp::characterize_verts(int ind)
 
 	std::cout << "Need new vert paring(" << s_p.DistanceTo(nv->vpnt()) << "): " << target_point.x << "," << target_point.y << "," << target_point.z << "\n";
 
-	cdt_mesh::uedge_t closest_edge = other_m->closest_uedge(s_p);
+	uedge_t closest_edge = other_m->closest_uedge(s_p);
 	if (other_m->fmesh->brep_edges.find(closest_edge) != other_m->fmesh->brep_edges.end()) {
-	    cdt_mesh::bedge_seg_t *bseg = other_m->fmesh->ue2b_map[closest_edge];
+	    bedge_seg_t *bseg = other_m->fmesh->ue2b_map[closest_edge];
 	    if (!bseg) {
 		std::cout << "couldn't find bseg pointer??\n";
 	    } else {
@@ -250,7 +250,7 @@ ovlp_grp::plot(const char *fname, int ind)
 
     RTree<size_t, double, 3>::Iterator tree_it;
     size_t t_ind;
-    cdt_mesh::triangle_t tri;
+    triangle_t tri;
 
     bu_color_from_rgb_chars(&c, (const unsigned char *)rgb);
 
@@ -327,14 +327,14 @@ ovlp_grp::plot(const char *fname)
 std::vector<ovlp_grp>
 find_ovlp_grps(
 	std::map<std::pair<omesh_t *, size_t>, size_t> &bin_map,
-	std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs
+	std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs
 	)
 {
     std::vector<ovlp_grp> bins;
 
     bin_map.clear();
 
-    std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>>::iterator cp_it;
+    std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>>::iterator cp_it;
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
 	omesh_t *omesh1 = cp_it->first->omesh;
 	omesh_t *omesh2 = cp_it->second->omesh;

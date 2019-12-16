@@ -59,9 +59,6 @@ extern "C" {
 
 class omesh_t;
 
-namespace cdt_mesh
-{
-
 struct edge_t {
     long v[2];
 
@@ -654,7 +651,6 @@ private:
 
 };
 
-}
 
 class overt_t {
     public:
@@ -724,7 +720,7 @@ class overt_t {
 class omesh_t
 {
     public:
-        omesh_t(cdt_mesh::cdt_mesh_t *m)
+        omesh_t(cdt_mesh_t *m)
         {
             fmesh = m;
 	    // Walk the fmesh's rtree holding the active triangles to get all
@@ -732,7 +728,7 @@ class omesh_t
 	    std::set<long> averts;
 	    RTree<size_t, double, 3>::Iterator tree_it;
 	    size_t t_ind;
-	    cdt_mesh::triangle_t tri;
+	    triangle_t tri;
 	    fmesh->tris_tree.GetFirst(tree_it);
 	    while (!tree_it.IsNull()) {
 		t_ind = *tree_it;
@@ -760,9 +756,9 @@ class omesh_t
         overt_t *vert_add(long, ON_BoundingBox *bb = NULL);
 
         // Find the closest uedge in the mesh to a point
-        cdt_mesh::uedge_t closest_uedge(ON_3dPoint &p);
+        uedge_t closest_uedge(ON_3dPoint &p);
         // Find closest (non-face-boundary) edges
-        std::set<cdt_mesh::uedge_t> interior_uedges_search(ON_BoundingBox &bb);
+        std::set<uedge_t> interior_uedges_search(ON_BoundingBox &bb);
 
         // Find close triangles
         std::set<size_t> tris_search(ON_BoundingBox &bb);
@@ -776,13 +772,13 @@ class omesh_t
         bool validate_vtree();
 
 
-        void plot(const char *fname, std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *ev);
-        void plot(std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *ev);
+        void plot(const char *fname, std::map<bedge_seg_t *, std::set<overt_t *>> *ev);
+        void plot(std::map<bedge_seg_t *, std::set<overt_t *>> *ev);
         void plot_vtree(const char *fname);
 
 
 	// The parent cdt_mesh container holding the original mesh data
-	cdt_mesh::cdt_mesh_t *fmesh;
+	cdt_mesh_t *fmesh;
 
         // The fmesh pnts array may have inactive vertices - we only want the
         // active verts for this portion of the processing, so we maintain our
@@ -820,7 +816,7 @@ class ovlp_grp {
         void add_tri(omesh_t *m, size_t tind) {
             if (om1 == m) {
                 tris1.insert(tind);
-                cdt_mesh::triangle_t tri = om1->fmesh->tris_vect[tind];
+                triangle_t tri = om1->fmesh->tris_vect[tind];
                 for (int i = 0; i < 3; i++) {
                     verts1.insert(tri.v[i]);
                     overt_t *ov = om1->overts[tri.v[i]];
@@ -834,7 +830,7 @@ class ovlp_grp {
             }
             if (om2 == m) {
                 tris2.insert(tind);
-                cdt_mesh::triangle_t tri = om2->fmesh->tris_vect[tind];
+                triangle_t tri = om2->fmesh->tris_vect[tind];
                 for (int i = 0; i < 3; i++) {
                     verts2.insert(tri.v[i]);
                     overt_t *ov = om2->overts[tri.v[i]];
@@ -891,7 +887,7 @@ class ovlp_grp {
 
 	bool replaceable;
 
-	std::map<cdt_mesh::bedge_seg_t *, std::set<overt_t *>> *edge_verts;
+	std::map<bedge_seg_t *, std::set<overt_t *>> *edge_verts;
 
     private:
         void characterize_verts(int ind);
@@ -900,15 +896,15 @@ class ovlp_grp {
 int
 tri_isect(
 	bool process,
-	omesh_t *omesh1, cdt_mesh::triangle_t &t1,
-	omesh_t *omesh2, cdt_mesh::triangle_t &t2,
-	std::map<overt_t *, std::map<cdt_mesh::bedge_seg_t *, int>> *vert_edge_cnts
+	omesh_t *omesh1, triangle_t &t1,
+	omesh_t *omesh2, triangle_t &t2,
+	std::map<overt_t *, std::map<bedge_seg_t *, int>> *vert_edge_cnts
 	);
 
 std::vector<ovlp_grp>
 find_ovlp_grps(
 	std::map<std::pair<omesh_t *, size_t>, size_t> &bin_map,
-	std::set<std::pair<cdt_mesh::cdt_mesh_t *, cdt_mesh::cdt_mesh_t *>> &check_pairs
+	std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs
 	);
 
 #endif /* __cdt_mesh_h__ */

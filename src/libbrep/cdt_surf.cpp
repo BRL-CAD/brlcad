@@ -59,7 +59,7 @@ struct cdt_surf_info {
 };
 
 void
-cpolyedge_fdists(struct cdt_surf_info *s, cdt_mesh::cdt_mesh_t *fmesh, cdt_mesh::cpolyedge_t *pe)
+cpolyedge_fdists(struct cdt_surf_info *s, cdt_mesh_t *fmesh, cpolyedge_t *pe)
 {
 
     if (!pe->eseg) return;
@@ -88,17 +88,17 @@ cpolyedge_fdists(struct cdt_surf_info *s, cdt_mesh::cdt_mesh_t *fmesh, cdt_mesh:
 void sinfo_tol_calc(struct cdt_surf_info *s)
 {
     const ON_BrepFace *face = s->f;
-    cdt_mesh::cdt_mesh_t *fmesh = &s->s_cdt->fmeshes[face->m_face_index];
-    cdt_mesh::cpolygon_t *cpoly = &fmesh->outer_loop;
+    cdt_mesh_t *fmesh = &s->s_cdt->fmeshes[face->m_face_index];
+    cpolygon_t *cpoly = &fmesh->outer_loop;
 
     s->min_edge = DBL_MAX;
     s->max_edge = -DBL_MAX;
     s->within_dist = -DBL_MAX;
 
     size_t ecnt = 1;
-    cdt_mesh::cpolyedge_t *pe = (*cpoly->poly.begin());
-    cdt_mesh::cpolyedge_t *first = pe;
-    cdt_mesh::cpolyedge_t *next = pe->next;
+    cpolyedge_t *pe = (*cpoly->poly.begin());
+    cpolyedge_t *first = pe;
+    cpolyedge_t *next = pe->next;
 
     cpolyedge_fdists(s, fmesh, first);
 
@@ -259,8 +259,8 @@ singular_trim_norm(struct cdt_surf_info *sinfo, fastf_t uc, fastf_t vc)
 #endif
 
 static bool EdgeSegCallback(void *data, void *a_context) {
-    cdt_mesh::cpolyedge_t *eseg = (cdt_mesh::cpolyedge_t *)data;
-    std::set<cdt_mesh::cpolyedge_t *> *segs = (std::set<cdt_mesh::cpolyedge_t *> *)a_context;
+    cpolyedge_t *eseg = (cpolyedge_t *)data;
+    std::set<cpolyedge_t *> *segs = (std::set<cpolyedge_t *> *)a_context;
     segs->insert(eseg);
     return true;
 }
@@ -271,7 +271,7 @@ struct trim_seg_context {
 };
 
 static bool SPntCallback(void *data, void *a_context) {
-    cdt_mesh::cpolyedge_t *pe = (cdt_mesh::cpolyedge_t *)data;
+    cpolyedge_t *pe = (cpolyedge_t *)data;
     struct trim_seg_context *sc = (struct trim_seg_context *)a_context;
     ON_2dPoint p2d1(pe->polygon->pnts_2d[pe->v[0]].first, pe->polygon->pnts_2d[pe->v[0]].second);
     ON_2dPoint p2d2(pe->polygon->pnts_2d[pe->v[1]].first, pe->polygon->pnts_2d[pe->v[1]].second);
@@ -321,7 +321,7 @@ static bool involves_trims(double *min_edge, struct cdt_surf_info *sinfo, ON_3dP
     fMax[1] = wp2.y;
     fMax[2] = wp2.z;
 
-    std::set<cdt_mesh::cpolyedge_t *> segs;
+    std::set<cpolyedge_t *> segs;
     size_t nhits = sinfo->s_cdt->face_rtrees_3d[sinfo->f->m_face_index].Search(fMin, fMax, EdgeSegCallback, (void *)&segs);
     //bu_log("new tree found %zu boxes and %zu segments\n", nhits, segs.size());
 
@@ -338,9 +338,9 @@ static bool involves_trims(double *min_edge, struct cdt_surf_info *sinfo, ON_3dP
 	return true;
     }
 
-    std::set<cdt_mesh::cpolyedge_t *>::iterator s_it;
+    std::set<cpolyedge_t *>::iterator s_it;
     for (s_it = segs.begin(); s_it != segs.end(); s_it++) {
-	cdt_mesh::cpolyedge_t *seg = *s_it;
+	cpolyedge_t *seg = *s_it;
 	ON_BoundingBox lbb;
 	lbb.Set(*seg->eseg->e_start, true);
 	lbb.Set(*seg->eseg->e_end, true);
@@ -468,13 +468,13 @@ _cdt_get_uv_edge_3d_len(struct cdt_surf_info *sinfo, int c1, int c2)
 
 struct rtree_trimpnt_context {
     struct ON_Brep_CDT_State *s_cdt;
-    cdt_mesh::cpolyedge_t *cseg;
+    cpolyedge_t *cseg;
     bool *use;
 };
 
 #if 1
 static bool UseTrimPntCallback(void *data, void *a_context) {
-    cdt_mesh::cpolyedge_t *tseg = (cdt_mesh::cpolyedge_t *)data;
+    cpolyedge_t *tseg = (cpolyedge_t *)data;
     struct rtree_trimpnt_context *context= (struct rtree_trimpnt_context *)a_context;
 
     // Our own bbox isn't a problem
@@ -531,12 +531,12 @@ sinfo_init(struct cdt_surf_info *sinfo, struct ON_Brep_CDT_State *s_cdt, int fac
     // and assemble an rtree for them.  We can't insert points from the general
     // build too close to them or we run the risk of duplicate points and very small
     // triangles.
-    std::vector<cdt_mesh::cpolyedge_t *> ws = cdt_face_polyedges(s_cdt, face.m_face_index);
-    std::vector<cdt_mesh::cpolyedge_t *>::iterator w_it;
+    std::vector<cpolyedge_t *> ws = cdt_face_polyedges(s_cdt, face.m_face_index);
+    std::vector<cpolyedge_t *>::iterator w_it;
     float *prand;
     bn_rand_init(prand, 0);
     for (w_it = ws.begin(); w_it != ws.end(); w_it++) {
-	cdt_mesh::cpolyedge_t *tseg = *w_it;
+	cpolyedge_t *tseg = *w_it;
 	if (!tseg->defines_spnt) continue;
 	bool include_pnt = true;
 
@@ -627,7 +627,7 @@ filter_surface_pnts(struct cdt_surf_info *sinfo)
 	sinfo->on_surf_points.erase((ON_2dPoint *)p);
     }
 
-    cdt_mesh::cdt_mesh_t *fmesh = &sinfo->s_cdt->fmeshes[sinfo->f->m_face_index];
+    cdt_mesh_t *fmesh = &sinfo->s_cdt->fmeshes[sinfo->f->m_face_index];
 
     // Populate m_interior_pnts with the final set
     for (osp_it = sinfo->on_surf_points.begin(); osp_it != sinfo->on_surf_points.end(); osp_it++) {

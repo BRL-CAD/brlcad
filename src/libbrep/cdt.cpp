@@ -44,10 +44,10 @@
 int debug_ecnt;
 
 void
-debug_plot(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolygon_t *cpoly, int m_face_index, int m_loop_index, int m_edge_index, int m_trim_index, int step_cnt, int *d_cnt) {
+debug_plot(struct ON_Brep_CDT_State *s_cdt, cpolygon_t *cpoly, int m_face_index, int m_loop_index, int m_edge_index, int m_trim_index, int step_cnt, int *d_cnt) {
     if (m_face_index > 0 && m_face_index != 34) return;
     if (m_edge_index > 0 && (m_edge_index < 93 || m_edge_index > 96)) return;
-    cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[34];
+    cdt_mesh_t *fmesh = &s_cdt->fmeshes[34];
     std::cout << "\n";
     if (m_loop_index > 0) {
 	std::cout << step_cnt << "-" << (*d_cnt) << ": generating plots for loop " << m_loop_index << "...\n";
@@ -76,7 +76,7 @@ debug_plot(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolygon_t *cpoly, int m_f
 #endif
 
 ON_3dVector
-bseg_tangent(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, double eparam, double t1param, double t2param)
+bseg_tangent(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, double eparam, double t1param, double t2param)
 {
     ON_3dPoint tmp;
     ON_3dVector tangent = ON_3dVector::UnsetVector;
@@ -105,7 +105,7 @@ bseg_tangent(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, doubl
 
 
 bool
-refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cdt_mesh_t *fmesh, int cnt, int rebuild)
+refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh, int cnt, int rebuild)
 {
     if (!s_cdt || !fmesh) return false;
 
@@ -148,19 +148,19 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cdt_mesh_t *fmes
 }
 
 void
-loop_edges(cdt_mesh::cdt_mesh_t *fmesh, cdt_mesh::cpolygon_t *loop)
+loop_edges(cdt_mesh_t *fmesh, cpolygon_t *loop)
 {
     size_t vcnt = 1;
-    cdt_mesh::cpolyedge_t *pe = (*loop->poly.begin());
-    cdt_mesh::cpolyedge_t *first = pe;
-    cdt_mesh::cpolyedge_t *next = pe->next;
+    cpolyedge_t *pe = (*loop->poly.begin());
+    cpolyedge_t *first = pe;
+    cpolyedge_t *next = pe->next;
 
     long p1_ind = fmesh->p2ind[fmesh->pnts[fmesh->p2d3d[loop->p2o[pe->v[0]]]]];
     long p2_ind = fmesh->p2ind[fmesh->pnts[fmesh->p2d3d[loop->p2o[pe->v[1]]]]];
     fmesh->ep.insert(p1_ind);
     fmesh->ep.insert(p2_ind);
-    fmesh->brep_edges.insert(cdt_mesh::uedge_t(p1_ind, p2_ind));
-    fmesh->ue2b_map[cdt_mesh::uedge_t(p1_ind, p2_ind)] = pe->eseg;
+    fmesh->brep_edges.insert(uedge_t(p1_ind, p2_ind));
+    fmesh->ue2b_map[uedge_t(p1_ind, p2_ind)] = pe->eseg;
 
     while (first != next) {
 	vcnt++;
@@ -168,8 +168,8 @@ loop_edges(cdt_mesh::cdt_mesh_t *fmesh, cdt_mesh::cpolygon_t *loop)
 	p2_ind = fmesh->p2ind[fmesh->pnts[fmesh->p2d3d[loop->p2o[next->v[1]]]]];
 	fmesh->ep.insert(p1_ind);
 	fmesh->ep.insert(p2_ind);
-	fmesh->brep_edges.insert(cdt_mesh::uedge_t(p1_ind, p2_ind));
-	fmesh->ue2b_map[cdt_mesh::uedge_t(p1_ind, p2_ind)] = next->eseg;
+	fmesh->brep_edges.insert(uedge_t(p1_ind, p2_ind));
+	fmesh->ue2b_map[uedge_t(p1_ind, p2_ind)] = next->eseg;
 	next = next->next;
 	if (vcnt > loop->poly.size()) {
 	    std::cerr << "infinite loop when reading loop edges\n";
@@ -195,11 +195,11 @@ do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
 	    if (!edge) continue;
 	    const ON_Curve* crv = edge->EdgeCurveOf();
 	    if (!crv) continue;
-	    std::set<cdt_mesh::bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge->m_edge_index];
+	    std::set<bedge_seg_t *> &epsegs = s_cdt->e2polysegs[edge->m_edge_index];
 	    if (!epsegs.size()) continue;
-	    std::set<cdt_mesh::bedge_seg_t *>::iterator e_it;
+	    std::set<bedge_seg_t *>::iterator e_it;
 	    for (e_it = epsegs.begin(); e_it != epsegs.end(); e_it++) {
-		cdt_mesh::bedge_seg_t *b = *e_it;
+		bedge_seg_t *b = *e_it;
 		double seg_dist = b->e_start->DistanceTo(*b->e_end);
 		min_edge_seg_len = (min_edge_seg_len > seg_dist) ? seg_dist : min_edge_seg_len;
 		max_edge_seg_len = (max_edge_seg_len < seg_dist) ? seg_dist : max_edge_seg_len;
@@ -213,7 +213,7 @@ do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
     // will tie the mesh to the interior surface.
     GetInteriorPoints(s_cdt, face.m_face_index);
 
-    cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[face.m_face_index];
+    cdt_mesh_t *fmesh = &s_cdt->fmeshes[face.m_face_index];
     fmesh->brep = s_cdt->brep;
     fmesh->p_cdt = (void *)s_cdt;
     fmesh->name = s_cdt->name;
@@ -245,7 +245,7 @@ do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
     fmesh->brep_edges.clear();
     fmesh->ue2b_map.clear();
     loop_edges(fmesh, &fmesh->outer_loop);
-    std::map<int, cdt_mesh::cpolygon_t*>::iterator i_it;
+    std::map<int, cpolygon_t*>::iterator i_it;
     for (i_it = fmesh->inner_loops.begin(); i_it != fmesh->inner_loops.end(); i_it++) {
 	loop_edges(fmesh, i_it->second);
     }
@@ -508,11 +508,11 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	}
 
 	// Initialize the tangents.
-	std::map<int, std::set<cdt_mesh::bedge_seg_t *>>::iterator epoly_it;
+	std::map<int, std::set<bedge_seg_t *>>::iterator epoly_it;
 	for (epoly_it = s_cdt->e2polysegs.begin(); epoly_it != s_cdt->e2polysegs.end(); epoly_it++) {
-	    std::set<cdt_mesh::bedge_seg_t *>::iterator seg_it;
+	    std::set<bedge_seg_t *>::iterator seg_it;
 	    for (seg_it = epoly_it->second.begin(); seg_it != epoly_it->second.end(); seg_it++) {
-		cdt_mesh::bedge_seg_t *bseg = *seg_it;
+		bedge_seg_t *bseg = *seg_it;
 		double ts1 = bseg->tseg1->trim_start;
 		double ts2 = bseg->tseg2->trim_start;
 		bseg->tan_start = bseg_tangent(s_cdt, bseg, bseg->edge_start, ts1, ts2);
@@ -553,8 +553,8 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	// splits will produce degenerate (zero area, two identical vertex) triangles in 3D that have
 	// to be cleaned up.
 	while (s_cdt->unsplit_singular_edges.size()) {
-	    std::queue<cdt_mesh::cpolyedge_t *> w1, w2;
-	    std::queue<cdt_mesh::cpolyedge_t *> *wq, *nq, *tmpq;
+	    std::queue<cpolyedge_t *> w1, w2;
+	    std::queue<cpolyedge_t *> *wq, *nq, *tmpq;
 	    int cnt = 0;
 	    wq = &w1;
 	    nq = &w2;
@@ -566,10 +566,10 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 		wq = nq;
 		nq = tmpq;
 		while (!wq->empty()) {
-		    cdt_mesh::cpolyedge_t *ce = wq->front();
+		    cpolyedge_t *ce = wq->front();
 		    wq->pop();
-		    std::set<cdt_mesh::cpolyedge_t *> nedges = split_singular_seg(s_cdt, ce, 0);
-		    std::set<cdt_mesh::cpolyedge_t *>::iterator n_it;
+		    std::set<cpolyedge_t *> nedges = split_singular_seg(s_cdt, ce, 0);
+		    std::set<cpolyedge_t *>::iterator n_it;
 		    for (n_it = nedges.begin(); n_it != nedges.end(); n_it++) {
 			nq->push(*n_it);
 			cnt++;
@@ -585,7 +585,7 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 	for (int index = 0; index < brep->m_F.Count(); index++) {
 	    struct bu_vls fname = BU_VLS_INIT_ZERO;
 	    bu_vls_sprintf(&fname, "%d-rtree_outer_polygon_2d.plot3", index);
-	    cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[index];
+	    cdt_mesh_t *fmesh = &s_cdt->fmeshes[index];
 	    fmesh->polygon_plot_2d(&fmesh->outer_loop, bu_vls_cstr(&fname));
 	    bu_vls_sprintf(&fname, "%d-rtree_2d.plot3", index);
 	    plot_rtree_2d2(s_cdt->face_rtrees_2d[index], bu_vls_cstr(&fname));
@@ -691,11 +691,11 @@ ON_Brep_CDT_Mesh(
     std::set<ON_3dPoint *> vfnormals;
     std::set<ON_3dPoint *> flip_normals;
     for (size_t fi = 0; fi < active_faces.size(); fi++) {
-	cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[fi];
+	cdt_mesh_t *fmesh = &s_cdt->fmeshes[fi];
 	RTree<size_t, double, 3>::Iterator tree_it;
 	fmesh->tris_tree.GetFirst(tree_it);
 	size_t t_ind;
-	cdt_mesh::triangle_t tri;
+	triangle_t tri;
 	while (!tree_it.IsNull()) {
 	    t_ind = *tree_it;
 	    tri = fmesh->tris_vect[t_ind];
@@ -782,11 +782,11 @@ ON_Brep_CDT_Mesh(
     int face_cnt = 0;
     triangle_cnt = 0;
     for (size_t fi = 0; fi < active_faces.size(); fi++) {
-	cdt_mesh::cdt_mesh_t *fmesh = &s_cdt->fmeshes[fi];
+	cdt_mesh_t *fmesh = &s_cdt->fmeshes[fi];
 	RTree<size_t, double, 3>::Iterator tree_it;
 	fmesh->tris_tree.GetFirst(tree_it);
 	size_t t_ind;
-	cdt_mesh::triangle_t tri;
+	triangle_t tri;
 	while (!tree_it.IsNull()) {
 	    t_ind = *tree_it;
 	    tri = fmesh->tris_vect[t_ind];

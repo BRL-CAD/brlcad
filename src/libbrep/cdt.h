@@ -104,7 +104,7 @@ struct brep_face_ovlp_instance {
     bool coplanar_intersection;
     point_t isect1_3d;
     point_t isect2_3d;
-    std::set<cdt_mesh::cpolyedge_t *> involved_edge_segs;
+    std::set<cpolyedge_t *> involved_edge_segs;
 };
 
 struct ON_Brep_CDT_State {
@@ -135,17 +135,17 @@ struct ON_Brep_CDT_State {
     std::map<int, double> *min_edge_seg_len;
     std::map<int, double> *max_edge_seg_len;
     std::map<ON_3dPoint *, std::set<BrepTrimPoint *>> *on_brep_edge_pnts;
-    std::map<int, std::set<cdt_mesh::bedge_seg_t *>> e2polysegs;
+    std::map<int, std::set<bedge_seg_t *>> e2polysegs;
     std::map<ON_3dPoint *, double> v_min_seg_len;
     std::map<int, double> l_median_len;
-    std::set<cdt_mesh::cpolyedge_t *> unsplit_singular_edges;
+    std::set<cpolyedge_t *> unsplit_singular_edges;
 
     /* Audit data */
     std::map<int, ON_3dPoint *> *bot_pnt_to_on_pnt;
     std::map<ON_3dPoint *, struct cdt_audit_info *> *pnt_audit_info;
 
     /* Face specific data */
-    std::map<int, cdt_mesh::cdt_mesh_t> fmeshes;
+    std::map<int, cdt_mesh_t> fmeshes;
     std::map<int, RTree<void *, double, 2>> face_rtrees_2d;
     std::map<int, RTree<void *, double, 3>> face_rtrees_3d;
     std::map<int, std::map<int,ON_3dPoint *>> strim_pnts;
@@ -174,11 +174,11 @@ GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index);
 ON_3dVector
 calc_trim_vnorm(ON_BrepVertex& v, ON_BrepTrim *trim);
 
-std::set<cdt_mesh::cpolyedge_t *>
-split_singular_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *ce, int update_rtree);
+std::set<cpolyedge_t *>
+split_singular_seg(struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *ce, int update_rtree);
 
-std::set<cdt_mesh::bedge_seg_t *>
-split_edge_seg(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::bedge_seg_t *bseg, int force, double *t, int update_rtrees);
+std::set<bedge_seg_t *>
+split_edge_seg(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, int force, double *t, int update_rtrees);
 
 bool initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt);
 void refine_close_edges(struct ON_Brep_CDT_State *s_cdt);
@@ -201,11 +201,11 @@ void plot_rtree_2d2(RTree<void *, double, 2> &rtree, const char *filename);
 void plot_rtree_3d(RTree<void *, double, 3> &rtree, const char *filename);
 void plot_bbox(point_t m_min, point_t m_max, const char *filename);
 void plot_on_bbox(ON_BoundingBox &bb, const char *filename);
-void plot_ce_bbox(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe, const char *filename);
+void plot_ce_bbox(struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *pe, const char *filename);
 void plot_pnt_3d(FILE *plot_file, ON_3dPoint *p, double r, int dir);
 
 
-std::vector<cdt_mesh::cpolyedge_t *>
+std::vector<cpolyedge_t *>
 cdt_face_polyedges(struct ON_Brep_CDT_State *s_cdt, int face_index);
 
 struct cdt_audit_info *
@@ -225,8 +225,8 @@ trimesh_error_report(struct ON_Brep_CDT_State *s_cdt, int valid_fcnt, int valid_
 int
 ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt);
 
-void rtree_bbox_3d_remove(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe);
-void rtree_bbox_3d(struct ON_Brep_CDT_State *s_cdt, cdt_mesh::cpolyedge_t *pe);
+void rtree_bbox_3d_remove(struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *pe);
+void rtree_bbox_3d(struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *pe);
 
 /** @} */
 
