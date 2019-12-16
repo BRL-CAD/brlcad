@@ -53,6 +53,9 @@ __BEGIN_DECLS
 #ifdef __cplusplus
 extern "C++" {
 
+BREP_EXPORT void ON_BoundingBox_Plot(FILE *pf, ON_BoundingBox &bb);
+
+
 BREP_EXPORT bool ON_NearZero(double x, double tolerance = ON_ZERO_TOLERANCE);
 
 

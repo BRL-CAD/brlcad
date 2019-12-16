@@ -214,51 +214,6 @@ subbrep_island_free(struct subbrep_island_data *obj)
     }
 }
 
-
-/* Geometry utilities */
-
-void
-ON_MinMaxInit(ON_3dPoint *min, ON_3dPoint *max)
-{
-    min->x = ON_DBL_MAX;
-    min->y = ON_DBL_MAX;
-    min->z = ON_DBL_MAX;
-    max->x = -ON_DBL_MAX;
-    max->y = -ON_DBL_MAX;
-    max->z = -ON_DBL_MAX;
-}
-
-
-#define LN_DOTP_TOL 0.000001
-ON_3dPoint
-ON_LinePlaneIntersect(ON_Line &line, ON_Plane &plane)
-{
-    ON_3dPoint result;
-    result.x = ON_DBL_MAX;
-    result.y = ON_DBL_MAX;
-    result.z = ON_DBL_MAX;
-    ON_3dVector n = plane.Normal();
-    ON_3dVector l = line.Direction();
-    ON_3dPoint l0 = line.PointAt(0.5);
-    ON_3dPoint p0 = plane.Origin();
-
-    ON_3dVector p0l0 = p0 - l0;
-    double p0l0n = ON_DotProduct(p0l0, n);
-    double ln = ON_DotProduct(l, n);
-    if (NEAR_ZERO(ln, LN_DOTP_TOL) && NEAR_ZERO(p0l0n, LN_DOTP_TOL)) {
-	result.x = -ON_DBL_MAX;
-	result.y = -ON_DBL_MAX;
-	result.z = -ON_DBL_MAX;
-	return result;
-    }
-    if (NEAR_ZERO(ln, LN_DOTP_TOL)) return result;
-    double d = p0l0n/ln;
-
-    result = d*l + l0;
-    return result;
-}
-
-
 surface_t
 GetSurfaceType(const ON_Surface *orig_surface)
 {
@@ -681,76 +636,6 @@ subbrep_make_brep(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *data)
 
     return 1;
 }
-
-
-// Tikz LaTeX output from B-Rep wireframes
-int
-ON_BrepTikz(ON_String& s, const ON_Brep *brep, const char *c, const char *pre)
-{
-    struct bu_vls color = BU_VLS_INIT_ZERO;
-    struct bu_vls output = BU_VLS_INIT_ZERO;
-    struct bu_vls prefix = BU_VLS_INIT_ZERO;
-    if (c) {
-	bu_vls_sprintf(&color, "%s", c);
-    } else {
-	bu_vls_sprintf(&color, "gray");
-    }
-    if (pre) {
-	bu_vls_sprintf(&prefix, "%s", pre);
-    } else {
-	bu_vls_trunc(&prefix, 0);
-    }
-
-    for (int i = 0; i < brep->m_V.Count(); i++) {
-	bu_vls_printf(&output, "\\coordinate (%sV%d) at (%f, %f, %f);\n", bu_vls_addr(&prefix), i, brep->m_V[i].Point().x, brep->m_V[i].Point().y, brep->m_V[i].Point().z);
-    }
-
-    for (int i = 0; i < brep->m_E.Count(); i++) {
-	const ON_BrepEdge *edge = &(brep->m_E[i]);
-	//int ei = edge->m_edge_index;
-	ON_Curve *ecv = edge->EdgeCurveOf()->Duplicate();
-	if (ecv->IsLinear()) {
-	    bu_vls_printf(&output, "\\draw[%s] (%sV%d) -- (%sV%d);\n", bu_vls_addr(&color), bu_vls_addr(&prefix), edge->Vertex(0)->m_vertex_index, bu_vls_addr(&prefix), edge->Vertex(1)->m_vertex_index);
-	    delete ecv;
-	    continue;
-	}
-	ecv = edge->EdgeCurveOf()->Duplicate();
-	ON_Polyline poly;
-	ON_Curve *ncv = edge->EdgeCurveOf()->Duplicate();
-	int pnt_cnt = ON_Curve_PolyLine_Approx(&poly, ncv, BN_TOL_DIST);
-	if (pnt_cnt) {
-	    if (ecv->IsPolyline()) {
-		ON_3dPoint p = poly[0];
-		if (pnt_cnt) {
-		    bu_vls_printf(&output, "\\draw[%s] (%f, %f, %f)", bu_vls_addr(&color), p.x, p.y, p.z);
-		    for (int si = 1; si < poly.Count(); si++) {
-			p = poly[si];
-			bu_vls_printf(&output, " -- (%f, %f, %f)", p.x, p.y, p.z);
-			if (si+1 == poly.Count()) {
-			    bu_vls_printf(&output, ";\n");
-			}
-		    }
-		}
-	    } else {
-		bu_vls_printf(&output, "\\draw[%s] plot [smooth] coordinates {", bu_vls_addr(&color));
-		for (int si = 0; si < poly.Count(); si++) {
-		    ON_3dPoint p = poly[si];
-		    bu_vls_printf(&output, "(%f, %f, %f) ", p.x, p.y, p.z);
-		}
-		bu_vls_printf(&output, "};\n");
-	    }
-	}
-	delete ecv;
-	delete ncv;
-    }
-
-    s.Append(bu_vls_addr(&output), bu_vls_strlen(&output));
-    bu_vls_free(&color);
-    bu_vls_free(&output);
-    bu_vls_free(&prefix);
-    return 1;
-}
-
 
 // Local Variables:
 // tab-width: 8

@@ -39,44 +39,13 @@
 #include "./cdt.h"
 #include "./cdt_ovlps.h"
 
-#define TREE_LEAF_FACE_3D(pf, valp, a, b, c, d)  \
-    pdv_3move(pf, pt[a]); \
-    pdv_3cont(pf, pt[b]); \
-    pdv_3cont(pf, pt[c]); \
-    pdv_3cont(pf, pt[d]); \
-    pdv_3cont(pf, pt[a]); \
-
-#define BBOX_PLOT(pf, bb) {                 \
-    fastf_t pt[8][3];                       \
-    point_t min, max;		    	    \
-    min[0] = bb.Min().x;                    \
-    min[1] = bb.Min().y;                    \
-    min[2] = bb.Min().z;		    \
-    max[0] = bb.Max().x;		    \
-    max[1] = bb.Max().y;		    \
-    max[2] = bb.Max().z;		    \
-    VSET(pt[0], max[X], min[Y], min[Z]);    \
-    VSET(pt[1], max[X], max[Y], min[Z]);    \
-    VSET(pt[2], max[X], max[Y], max[Z]);    \
-    VSET(pt[3], max[X], min[Y], max[Z]);    \
-    VSET(pt[4], min[X], min[Y], min[Z]);    \
-    VSET(pt[5], min[X], max[Y], min[Z]);    \
-    VSET(pt[6], min[X], max[Y], max[Z]);    \
-    VSET(pt[7], min[X], min[Y], max[Z]);    \
-    TREE_LEAF_FACE_3D(pf, pt, 0, 1, 2, 3);      \
-    TREE_LEAF_FACE_3D(pf, pt, 4, 0, 3, 7);      \
-    TREE_LEAF_FACE_3D(pf, pt, 5, 4, 7, 6);      \
-    TREE_LEAF_FACE_3D(pf, pt, 1, 5, 6, 2);      \
-}
-
-
 void
-ovlp_plot_bbox(ON_BoundingBox &bb)
-{
+ovbbp(ON_BoundingBox &bb) {
     FILE *plot = fopen ("bb.plot3", "w");
-    BBOX_PLOT(plot, bb);
+    ON_BoundingBox_Plot(plot, bb);
     fclose(plot);
 }
+
 
 #define PPOINT 3.0550159446561063,7.5001153978277033,23.999999999999996
 bool
@@ -302,7 +271,7 @@ void
 overt_t::plot(FILE *plot)
 {
     ON_3dPoint *i_p = omesh->fmesh->pnts[p_id];
-    BBOX_PLOT(plot, bb);
+    ON_BoundingBox_Plot(plot, bb);
     double r = 0.05*bb.Diagonal().Length();
     pl_color(plot, 0, 255, 0);
     plot_pnt_3d(plot, i_p, r, 0);
