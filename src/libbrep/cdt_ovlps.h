@@ -148,7 +148,6 @@ class omesh_t
 
         // Find close vertices
         std::set<overt_t *> vert_search(ON_BoundingBox &bb);
-        std::set<overt_t *> vert_search(overt_t *v);
         overt_t * vert_closest(double *vdist, overt_t *v);
 
         void retessellate(std::set<size_t> &ov);

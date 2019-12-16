@@ -652,13 +652,6 @@ omesh_t::vert_search(ON_BoundingBox &bb)
     return near_overts;
 }
 
-std::set<overt_t *>
-omesh_t::vert_search(overt_t *v)
-{
-    ON_BoundingBox vbb = v->bb;
-    return vert_search(vbb);
-}
-
 overt_t *
 omesh_t::vert_add(long f3ind, ON_BoundingBox *bb)
 {
@@ -921,7 +914,7 @@ remote_vert_process(bool process, bool pinside, omesh_t *omesh1, overt_t *v, cdt
     }
     ON_3dPoint vp = v->vpnt();
     bool near_vert = false;
-    std::set<overt_t *> cverts = omesh2->vert_search(v);
+    std::set<overt_t *> cverts = omesh2->vert_search(v->bb);
     std::set<overt_t *>::iterator v_it;
     for (v_it = cverts.begin(); v_it != cverts.end(); v_it++) {
 	ON_3dPoint cvpnt = (*v_it)->vpnt();
