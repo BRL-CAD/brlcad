@@ -52,26 +52,32 @@ class overt_t {
             t_ind = -1;
         }
 
-        omesh_t *omesh;
+	// Update minimum edge length and bounding box information
+        void update();
 
-	std::map<omesh_t *, overt_t *> aligned;
-
-      	long p_id;
-
+	// Determine if this vertex is on a brep face edge
         bool edge_vert();
 
+	// Report the length of the shortest edge using this vertex
         double min_len();
 
-        ON_BoundingBox bb;
-
-        long closest_uedge;
-        bool t_ind;
-
+	// Return the ON_3dPoint associated with this vertex
         ON_3dPoint vpnt();
 
+	// Print 3D axis at the vertex point location
         void plot(FILE *plot);
 
-        double v_min_edge_len;
+	// Index of associated point in the omesh's fmesh container
+	long p_id;
+        bool t_ind;
+	long closest_uedge;
+        ON_BoundingBox bb;
+        omesh_t *omesh;
+	std::map<omesh_t *, overt_t *> aligned;
+
+    private:
+	// Smallest edge length associated with this vertex
+	double v_min_edge_len;
 };
 
 

@@ -135,48 +135,51 @@ overt_t::edge_vert() {
 }
 
 void
-omesh_t::vupdate(overt_t *v) {
+overt_t::update() {
     // 1.  Get pnt's associated edges.
-    std::set<cdt_mesh::edge_t> edges = fmesh->v2edges[v->p_id];
+    std::set<cdt_mesh::edge_t> edges = omesh->fmesh->v2edges[p_id];
 
     // 2.  find the shortest edge associated with pnt
     std::set<cdt_mesh::edge_t>::iterator e_it;
     double elen = DBL_MAX;
     for (e_it = edges.begin(); e_it != edges.end(); e_it++) {
-	ON_3dPoint *p1 = fmesh->pnts[(*e_it).v[0]];
-	ON_3dPoint *p2 = fmesh->pnts[(*e_it).v[1]];
+	ON_3dPoint *p1 = omesh->fmesh->pnts[(*e_it).v[0]];
+	ON_3dPoint *p2 = omesh->fmesh->pnts[(*e_it).v[1]];
 	double dist = p1->DistanceTo(*p2);
 	elen = (dist < elen) ? dist : elen;
     }
-    v->v_min_edge_len = elen;
+    v_min_edge_len = elen;
 
     // create a bbox around pnt using length ~20% of the shortest edge length.
-    ON_3dPoint vpnt = *fmesh->pnts[v->p_id];
+    ON_3dPoint v3dpnt = *omesh->fmesh->pnts[p_id];
 
-    ON_BoundingBox init_bb(vpnt, vpnt);
-    v->bb = init_bb;
-    ON_3dPoint npnt = vpnt;
+    ON_BoundingBox init_bb(v3dpnt, v3dpnt);
+    bb = init_bb;
+    ON_3dPoint npnt = v3dpnt;
     double lfactor = 0.2;
     npnt.x = npnt.x + lfactor*elen;
-    v->bb.Set(npnt, true);
-    npnt = vpnt;
+    bb.Set(npnt, true);
+    npnt = v3dpnt;
     npnt.x = npnt.x - lfactor*elen;
-    v->bb.Set(npnt, true);
-    npnt = vpnt;
+    bb.Set(npnt, true);
+    npnt = v3dpnt;
     npnt.y = npnt.y + lfactor*elen;
-    v->bb.Set(npnt, true);
-    npnt = vpnt;
+    bb.Set(npnt, true);
+    npnt = v3dpnt;
     npnt.y = npnt.y - lfactor*elen;
-    v->bb.Set(npnt, true);
-    npnt = vpnt;
+    bb.Set(npnt, true);
+    npnt = v3dpnt;
     npnt.z = npnt.z + lfactor*elen;
-    v->bb.Set(npnt, true);
-    npnt = vpnt;
+    bb.Set(npnt, true);
+    npnt = v3dpnt;
     npnt.z = npnt.z - lfactor*elen;
-    v->bb.Set(npnt, true);
+    bb.Set(npnt, true);
+}
 
+void
+omesh_t::vupdate(overt_t *v) {
+    v->update();
     add_vtree_vert(v);
-
 }
 
 void
