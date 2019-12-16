@@ -32,6 +32,7 @@ set(LIBBREP_SOURCES
   cdt_mesh.cpp
   cdt_ovlps.cpp
   cdt_ovlps_grps.cpp
+  cdt_tri_isect.cpp
   intersect.cpp
   libbrep_brep_tools.cpp
   opennurbs_ext.cpp
