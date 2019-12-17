@@ -70,10 +70,6 @@ surface_t GetSurfaceType(const ON_Surface *surface);
 surface_t subbrep_highest_order_face(struct subbrep_island_data *data);
 void subbrep_bbox(struct subbrep_island_data *obj);
 
-void ON_MinMaxInit(ON_3dPoint *min, ON_3dPoint *max);
-ON_3dPoint ON_LinePlaneIntersect(ON_Line &line, ON_Plane &plane);
-
-
 void convex_plane_usage(ON_SimpleArray<ON_Plane> *planes, int **pu);
 int island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data);
 

@@ -10,6 +10,7 @@
 #include "bu/malloc.h"
 #include "bg/polygon.h"
 #include "bg/tri_ray.h"
+#include "brep/util.h"
 #include "shape_recognition.h"
 
 

@@ -8,6 +8,7 @@
 
 #include "bu/str.h"
 #include "bu/malloc.h"
+#include "brep/util.h"
 #include "shape_recognition.h"
 
 #define L3_OFFSET 6
