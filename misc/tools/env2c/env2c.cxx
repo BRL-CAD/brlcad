@@ -191,6 +191,9 @@ main(int argc, const char *argv[])
 
     std::vector<std::string> sfiles;
 
+    /*************************************************************/
+    /*     Filter files down to the set we want to process       */
+    /*************************************************************/
     std::regex skip_regex(".*/(tests|tools|bullet|docbook)/.*");
     //std::regex skip_regex(".*/(other|tests|tools|bullet|docbook)/.*");
     std::string sfile;
@@ -207,20 +210,28 @@ main(int argc, const char *argv[])
     }
     fs.close();
 
+
+    /*************************************************************/
+    /*  Process the files (mulithreaded mapping for performance) */
+    /*************************************************************/
     unsigned int hwc = std::thread::hardware_concurrency();
     if (!hwc) {
 	hwc = 10;
     }
-    env_outputs envs[hwc];
-    std::thread t[hwc];
+    std::vector<env_outputs> envs;
+    for (int i = 0; i < hwc; i++) {
+	env_outputs enew;
+	enew.verbose = verbose;
+	envs.push_back(enew);
+    }
     size_t fcnt = 0;
     while (fcnt < sfiles.size()) {
 	int athreads = 0;
+	std::vector<std::thread> t;
 	for (int i = 0; i < hwc; i++) {
 	    if (fcnt + i < sfiles.size()) {
 		envs[i].f = sfiles[fcnt+i];
-		envs[i].verbose = verbose;
-		t[i] = std::thread(process_file, std::ref(envs[i]));
+		t.push_back(std::thread(process_file, std::ref(envs[i])));
 		athreads++;
 	    }
 	}
@@ -230,6 +241,9 @@ main(int argc, const char *argv[])
 	fcnt += athreads;
     }
 
+    /*************************************************************/
+    /*     Reduce the individual thread results to single sets   */
+    /*************************************************************/
     for (int i = 0; i < hwc; i++) {
 	env.o_vars.insert(envs[i].o_vars.begin(), envs[i].o_vars.end());
 	env.blib_vars.insert(envs[i].blib_vars.begin(), envs[i].blib_vars.end());
@@ -240,6 +254,10 @@ main(int argc, const char *argv[])
 	}
     }
 
+
+    /*************************************************************/
+    /*            Build up categorized variable sets             */
+    /*************************************************************/
     for (v_it = env.o_vars.begin(); v_it != env.o_vars.end(); v_it++) {
 	all_vars.insert(v_it->second);
     }
@@ -251,6 +269,10 @@ main(int argc, const char *argv[])
 	cad_vars.insert(v_it->second);
     }
 
+
+    /*************************************************************/
+    /*             Generate the command's source code            */
+    /*************************************************************/
     std::ofstream ofile;
     ofile.open(argv[2], std::fstream::trunc);
     if (!ofile.is_open()) {

@@ -39,6 +39,8 @@ cmake_minimum_required(VERSION 3.1.3)
 # set CMake project name
 project(ENV2C)
 
+add_definitions(-g)
+
 include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
