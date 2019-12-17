@@ -137,6 +137,20 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* enhance env command to handle debug variables, use sysctl style
+  groupings of variables, and in general make the setup simpler
+  and more uniform (ideally we'll fold the debug command's
+  capabilities into env in some form.)  Need to have a usability
+  brainstorming session, but after discussion with Sean general
+  outlines are to:
+  Switch all debug variable management to staging through
+  environment variables rather than directly setting hex values
+  on the globals, but leave the globals as the low level mechanism
+  for performance reasons (getenv is much more expensive, don't
+  want it in core code.)  Something like:
+
+  LIBRT_DEBUG_HF (env variable) -> debug.rt_hf (env cmd) -> rt_debug hex val (library)
+
 * overlay command needs to accept multiple file arguments
 
 * Bounding Boxes
