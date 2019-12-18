@@ -42,6 +42,7 @@ ADD_NURBS_NIRT_Test(NIST03_MISS_01
 
 CMAKEFILES(
   brep-3dm.tar.bz2
+  CMakeLists.txt
   )
 
 # Local Variables:
