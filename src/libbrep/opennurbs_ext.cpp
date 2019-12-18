@@ -40,7 +40,7 @@
 #include "brep/ray.h"
 #include "brep/cdt.h" // for ON_Brep_Report_Faces - should go away
 #include "bg/tri_ray.h" // for ON_Brep_Report_Faces - should go away
-#include "libbrep_brep_tools.h"
+#include "./tools/tools.h"
 #include "bn/dvec.h"
 
 #define RANGE_HI 0.55

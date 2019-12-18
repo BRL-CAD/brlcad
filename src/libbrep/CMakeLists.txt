@@ -34,7 +34,7 @@ set(LIBBREP_SOURCES
   cdt_ovlps_grps.cpp
   cdt_tri_isect.cpp
   intersect.cpp
-  libbrep_brep_tools.cpp
+  tools/tools.cpp
   opennurbs_ext.cpp
   px_event.cpp
   shape_recognition.cpp
@@ -45,12 +45,12 @@ set(LIBBREP_SOURCES
   shape_recognition_sphere.cpp
   shape_recognition_util.cpp
   ssx_event.cpp
-  util.cpp
+  tools/util.cpp
   #opennurbs_fit.cpp
   )
 
 set(libbrep_ignored_files
-  libbrep_brep_tools.h
+  tools/tools.h
   brep_except.h
   cdt.h
   cdt_mesh.h

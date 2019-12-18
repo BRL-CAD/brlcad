@@ -25,7 +25,7 @@
 #include "common.h"
 
 /* interface header */
-#include "libbrep_brep_tools.h"
+#include "tools.h"
 
 /* system implementation headers */
 #include <vector>
