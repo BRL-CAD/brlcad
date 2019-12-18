@@ -55,10 +55,10 @@ set(libbrep_ignored_files
   cdt/cdt.h
   cdt/mesh.h
   cdt/closed_surf.cpp
+  cdt/RTree.h
   opennurbs_fit.h
   opennurbs_fit.cpp
   PullbackCurve.h
-  RTree.h
   shape_recognition/shape_recognition.h
   shape_recognition/torus.cpp
   surface_tree_queue_tests.patch
@@ -73,10 +73,6 @@ endif(CPP_DLL_DEFINES)
 BRLCAD_ADDLIB(libbrep "${LIBBREP_SOURCES}" "libbg;libbn;libbu;${OPENNURBS_LIBRARIES};${P2T_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
 
 set_target_properties(libbrep PROPERTIES VERSION 20.0.1 SOVERSION 20)
-
-BRLCAD_ADDEXEC(test_point_intersect test_point_intersect.cpp "libbrep" NO_STRICT NO_INSTALL)
-
-BRLCAD_ADDEXEC(test_curve_intersect test_curve_intersect.cpp "libbrep" NO_STRICT NO_INSTALL)
 
 add_subdirectory(tests)
 
