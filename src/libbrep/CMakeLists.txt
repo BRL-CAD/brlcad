@@ -37,13 +37,13 @@ set(LIBBREP_SOURCES
   tools/tools.cpp
   opennurbs_ext.cpp
   px_event.cpp
-  shape_recognition.cpp
-  shape_recognition_cone.cpp
-  shape_recognition_cylinder.cpp
-  shape_recognition_pipeline.cpp
-  shape_recognition_planar.cpp
-  shape_recognition_sphere.cpp
-  shape_recognition_util.cpp
+  shape_recognition/shape_recognition.cpp
+  shape_recognition/shape_recognition_cone.cpp
+  shape_recognition/shape_recognition_cylinder.cpp
+  shape_recognition/shape_recognition_pipeline.cpp
+  shape_recognition/shape_recognition_planar.cpp
+  shape_recognition/shape_recognition_sphere.cpp
+  shape_recognition/shape_recognition_util.cpp
   ssx_event.cpp
   tools/util.cpp
   #opennurbs_fit.cpp
@@ -59,8 +59,8 @@ set(libbrep_ignored_files
   opennurbs_fit.cpp
   PullbackCurve.h
   RTree.h
-  shape_recognition.h
-  shape_recognition_torus.cpp
+  shape_recognition/shape_recognition.h
+  shape_recognition/shape_recognition_torus.cpp
   surface_tree_queue_tests.patch
   )
 CMAKEFILES(${libbrep_ignored_files})

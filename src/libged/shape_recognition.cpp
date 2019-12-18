@@ -16,7 +16,8 @@
 #include "wdb.h"
 #include "analyze.h"
 #include "ged.h"
-#include "../libbrep/shape_recognition.h"
+/* TODO - this indicates something should be public API from libbrep... */
+#include "../libbrep/shape_recognition/shape_recognition.h"
 
 #define ptout(p)  p.x << " " << p.y << " " << p.z
 
