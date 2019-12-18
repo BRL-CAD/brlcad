@@ -37,7 +37,6 @@
 #include "bg/tri_pt.h"
 #include "bg/tri_tri.h"
 #include "./cdt.h"
-#include "./cdt_mesh.h"
 
 /*******************************************
  * Temporary debugging utilities

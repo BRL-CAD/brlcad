@@ -43,8 +43,8 @@
 #include "bg/tri_pt.h"
 #include "bg/trimesh.h"
 #include "brep.h"
-#include "./cdt_mesh.h"
 #include "./cdt.h"
+#include "./mesh.h"
 
 // needed for implementation
 #include <iostream>

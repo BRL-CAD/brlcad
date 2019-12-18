@@ -58,7 +58,7 @@
 #include "brep/pullback.h"
 #include "brep/util.h"
 
-#include "./cdt_mesh.h"
+#include "./mesh.h"
 
 #define BREP_PLANAR_TOL 0.05
 
