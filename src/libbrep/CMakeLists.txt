@@ -24,15 +24,15 @@ set(LIBBREP_SOURCES
   Subcurve.cpp
   Subsurface.cpp
   boolean.cpp
-  cdt_surf.cpp
-  cdt_util.cpp
-  cdt_validate.cpp
-  cdt.cpp
-  cdt_edge.cpp
-  cdt_mesh.cpp
-  cdt_ovlps.cpp
-  cdt_ovlps_grps.cpp
-  cdt_tri_isect.cpp
+  cdt/cdt_surf.cpp
+  cdt/cdt_util.cpp
+  cdt/cdt_validate.cpp
+  cdt/cdt.cpp
+  cdt/cdt_edge.cpp
+  cdt/cdt_mesh.cpp
+  cdt/cdt_ovlps.cpp
+  cdt/cdt_ovlps_grps.cpp
+  cdt/cdt_tri_isect.cpp
   intersect.cpp
   tools/tools.cpp
   opennurbs_ext.cpp
@@ -52,9 +52,9 @@ set(LIBBREP_SOURCES
 set(libbrep_ignored_files
   tools/tools.h
   brep_except.h
-  cdt.h
-  cdt_mesh.h
-  cdt_closed_surf.cpp
+  cdt/cdt.h
+  cdt/cdt_mesh.h
+  cdt/cdt_closed_surf.cpp
   opennurbs_fit.h
   opennurbs_fit.cpp
   PullbackCurve.h
