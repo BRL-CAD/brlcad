@@ -1,6 +1,12 @@
 /* This is a C translation of Mark Dickinson's point-in-polyhedron test from
  * https://github.com/mdickinson/polyhedron/ */
 
+/* TODO - should also look into this code to see if it can do the same job
+ * faster...:
+ *
+ * https://github.com/GavinBarill/fast-winding-number-soups
+ */
+
 /*
  * BSD 3-Clause License
  *
