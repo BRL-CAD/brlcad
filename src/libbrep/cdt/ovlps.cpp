@@ -397,11 +397,9 @@ omesh_t::plot(const char *fname,
 
     pl_color(plot, 255, 0, 0);
     for (iv_it = refinement_overts.begin(); iv_it != refinement_overts.end(); iv_it++) {
-	if (iv_it->second.size() > 1) {
-	    overt_t *iv = iv_it->first;
-	    ON_3dPoint vp = iv->vpnt();
-	    plot_pnt_3d(plot, &vp, tri_r, 0);
-	}
+	overt_t *iv = iv_it->first;
+	ON_3dPoint vp = iv->vpnt();
+	plot_pnt_3d(plot, &vp, tri_r, 0);
     }
 
     if (ev) {
@@ -883,7 +881,7 @@ omesh_refinement_pnts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pair
     // This case is a bit different - we're altering the intruding mesh's
     // containers based on the triangles recorded in this container, instead
     // of the other way around.
-    if (level == 2) {
+    if (level > 1) {
     	for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
 	    omesh_t *am = *a_it;
 	    std::set<std::pair<omesh_t *, size_t> >::iterator p_it;
@@ -1960,9 +1958,7 @@ omesh_interior_edge_verts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check
 	std::set<overt_t *> omesh_rverts;
 	std::map<overt_t *, std::set<long>>::iterator r_it;
 	for (r_it = omesh->refinement_overts.begin(); r_it != omesh->refinement_overts.end(); r_it++) {
-	    if (r_it->second.size() > 1) {
-		omesh_rverts.insert(r_it->first);
-	    }
+	    omesh_rverts.insert(r_it->first);
 	}
 
 
@@ -2342,7 +2338,9 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     check_faces_validity(check_pairs);
     int face_ov_cnt = 1;
     int iterations = 0;
+    int rpnt_level = 0;
     while (face_ov_cnt) {
+
 
 	iterations++;
 	if (iterations > 4) break;
@@ -2359,7 +2357,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	if (!face_ov_cnt) return 0;
 
 	// If we're going to process, initialize refinement points
-	omesh_refinement_pnts(check_pairs, 0);
+	omesh_refinement_pnts(check_pairs, rpnt_level);
 
 	int bedge_replaced_tris = INT_MAX;
 
@@ -2375,7 +2373,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		// If we adjusted, recalculate overlapping tris and refinement points
 		std::cout << "Adjusted " << avcnt << " vertices\n";
 		face_ov_cnt = omesh_ovlps(check_pairs);
-		omesh_refinement_pnts(check_pairs, 0);
+		omesh_refinement_pnts(check_pairs, rpnt_level);
 	    }
 
 	    // TODO - rethink the edge points a bit.  What we probably want is a matching
@@ -2410,7 +2408,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 #endif
 	    if (bedge_replaced_tris || vvcnt) {
 		face_ov_cnt = omesh_ovlps(check_pairs);
-		omesh_refinement_pnts(check_pairs, 0);
+		omesh_refinement_pnts(check_pairs, rpnt_level);
 	    }
 	}
 
@@ -2424,8 +2422,9 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	while (interior_replaced_tris) {
 	    interior_replaced_tris = omesh_interior_edge_verts(check_pairs);
 	    face_ov_cnt = omesh_ovlps(check_pairs);
-	    omesh_refinement_pnts(check_pairs, 0);
+	    omesh_refinement_pnts(check_pairs, rpnt_level);
 	}
+	rpnt_level++;
 
 
 	// TODO - Instead of splitting to refine these last cases, we need to
