@@ -394,9 +394,18 @@ omesh_t::plot(const char *fname,
     std::map<overt_t *, std::set<long>>::iterator iv_it;
 
 
+    pl_color(plot, 255, 0, 0);
+    for (iv_it = refinement_overts.begin(); iv_it != refinement_overts.end(); iv_it++) {
+	if (iv_it->second.size() > 1) {
+	    overt_t *iv = iv_it->first;
+	    ON_3dPoint vp = iv->vpnt();
+	    plot_pnt_3d(plot, &vp, tri_r, 0);
+	}
+    }
+
     if (ev) {
 	std::map<bedge_seg_t *, std::set<overt_t *>>::iterator ev_it;
-	pl_color(plot, 128, 0, 128);
+	pl_color(plot, 128, 0, 255);
 	for (ev_it = ev->begin(); ev_it != ev->end(); ev_it++) {
 	    bedge_seg_t *eseg = ev_it->first;
 	    struct ON_Brep_CDT_State *s_cdt_edge = (struct ON_Brep_CDT_State *)eseg->p_cdt;
@@ -419,15 +428,6 @@ omesh_t::plot(const char *fname,
     }
 
 
-    pl_color(plot, 255, 0, 0);
-    for (iv_it = refinement_overts.begin(); iv_it != refinement_overts.end(); iv_it++) {
-	if (iv_it->second.size() > 1) {
-	    overt_t *iv = iv_it->first;
-	    ON_3dPoint vp = iv->vpnt();
-	    plot_pnt_3d(plot, &vp, tri_r, 0);
-	}
-    }
-
     fclose(plot);
 }
 
@@ -439,6 +439,12 @@ omesh_t::plot(std::map<bedge_seg_t *, std::set<overt_t *>> *ev)
     bu_vls_sprintf(&fname, "%s-%d_ovlps.plot3", s_cdt->name, fmesh->f_id);
     plot(bu_vls_cstr(&fname), ev);
     bu_vls_free(&fname);
+}
+
+void
+omesh_t::plot()
+{
+    plot(NULL);
 }
 
 overt_t *
@@ -713,6 +719,36 @@ possibly_interfering_face_pairs(struct ON_Brep_CDT_State **s_a, int s_cnt)
     return check_pairs;
 }
 
+void
+plot_active_omeshes(
+	std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs,
+	std::map<bedge_seg_t *, std::set<overt_t *>> *ev
+	)
+{
+    std::set<omesh_t *> a_omesh;
+    std::set<omesh_t *>::iterator a_it;
+    std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>>::iterator cp_it;
+
+    // Find the meshes with actual intersecting triangles
+    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
+	omesh_t *omesh1 = cp_it->first->omesh;
+	omesh_t *omesh2 = cp_it->second->omesh;
+	if (omesh1->itris.size()) {
+	    a_omesh.insert(omesh1);
+	}
+	if (omesh2->itris.size()) {
+	    a_omesh.insert(omesh2);
+	}
+    }
+
+    // Plot overlaps with refinement points
+    for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
+	omesh_t *am = *a_it;
+	am->plot(ev);
+    }
+
+}
+
 // Identify refinement points that are close to face edges - they present a
 // particular problem 
 std::map<bedge_seg_t *, std::set<overt_t *>>
@@ -736,43 +772,34 @@ find_edge_verts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs)
     }
 
     std::map<bedge_seg_t *, std::set<overt_t *>> edge_verts;
-    std::map<overt_t *, std::map<bedge_seg_t *, int>> vert_edge_cnts;
     for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
-	omesh_t *om = *a_it;
+	omesh_t *am = *a_it;
+	std::set<overt_t *> everts;
+	std::set<overt_t *>::iterator e_it;
 	std::map<overt_t *, std::set<long>>::iterator r_it;
-	for (r_it = om->refinement_overts.begin(); r_it != om->refinement_overts.end(); r_it++) {
+	for (r_it = am->refinement_overts.begin(); r_it != am->refinement_overts.end(); r_it++) {
 	    overt_t *v = r_it->first;	
 	    ON_3dPoint p = v->vpnt();
-	    uedge_t closest_edge = om->closest_uedge(p);
-	    if (om->fmesh->brep_edges.find(closest_edge) != om->fmesh->brep_edges.end()) {
-		bedge_seg_t *bseg = om->fmesh->ue2b_map[closest_edge];
+	    uedge_t closest_edge = am->closest_uedge(p);
+	    if (am->fmesh->brep_edges.find(closest_edge) != am->fmesh->brep_edges.end()) {
+		bedge_seg_t *bseg = am->fmesh->ue2b_map[closest_edge];
 		if (!bseg) {
 		    std::cout << "couldn't find bseg pointer??\n";
 		} else {
-		    vert_edge_cnts[v][bseg]++;
+		    VPCHECK(v, NULL);
+		    edge_verts[bseg].insert(v);
+		    everts.insert(v);
 		}
 	    }
 	}
-    }
-
-    // Process the close-to-edge cases
-    std::map<overt_t *, std::map<bedge_seg_t *, int>>::iterator ov_it;
-    for (ov_it = vert_edge_cnts.begin(); ov_it != vert_edge_cnts.end(); ov_it++) {
-	std::map<bedge_seg_t *, int>::iterator s_it;
-	for (s_it = ov_it->second.begin(); s_it != ov_it->second.end(); s_it++) {
-	    if (s_it->second > 1) {
-		VPCHECK(ov_it->first, NULL);
-		edge_verts[s_it->first].insert(ov_it->first);
-	    }
+	// Remove any edge vertices from the refinement_overts container - they'll be handled
+	// separately
+	for (e_it = everts.begin(); e_it != everts.end(); e_it++) {
+	    am->refinement_overts.erase(*e_it);
 	}
     }
 
-#if 0
-    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
-	cp_it->first->omesh->plot(&edge_verts);
-	cp_it->second->omesh->plot(&edge_verts);
-    }
-#endif
+    plot_active_omeshes(check_pairs, &edge_verts);
 
     return edge_verts;
 }
@@ -783,7 +810,7 @@ omesh_refinement_pnts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pair
     std::set<omesh_t *> a_omesh;
     std::set<omesh_t *>::iterator a_it;
     std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>>::iterator cp_it;
-  
+
     // Find the meshes with actual intersecting triangles
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
 	omesh_t *omesh1 = cp_it->first->omesh;
@@ -836,6 +863,8 @@ omesh_refinement_pnts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pair
 	rcnt += am->refinement_overts.size();
     }
 
+    plot_active_omeshes(check_pairs, NULL);
+
     return rcnt;
 }
 
@@ -882,12 +911,18 @@ omesh_ovlps(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs)
 		    if (isect) {
 			omesh1->itris.insert(std::make_pair(omesh2, t2.ind));
 			omesh2->itris.insert(std::make_pair(omesh1, t1.ind));
+			omesh1->intruding_tris.insert(t1.ind);
+			omesh2->intruding_tris.insert(t2.ind);
+			a_omesh.insert(omesh1);
+			a_omesh.insert(omesh2);
 			tri_isects++;
 		    }
 		}
 	    }
 	}
     }
+
+    plot_active_omeshes(check_pairs, NULL);
 
     return tri_isects;
 }
@@ -1190,6 +1225,7 @@ refine_edge_vert_sets (
 	if (!omesh->fmesh->valid(1)) {
 	    std::cout << "CDT broke mesh!\n";
 	    polygon->polygon_plot_in_plane("poly.plot3");
+	    bu_exit(1, "Fatal cdt error\n");
 	}
 	delete polygon;
 
@@ -2294,7 +2330,6 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		face_ov_cnt = omesh_ovlps(check_pairs);
 		omesh_refinement_pnts(check_pairs);
 	    }
-	    std::map<bedge_seg_t *, std::set<overt_t *>> edge_verts = find_edge_verts(check_pairs);
 
 	    // TODO - rethink the edge points a bit.  What we probably want is a matching
 	    // point for every edge point that is close to a nearby mesh...  maybe do
@@ -2302,9 +2337,11 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    // that don't already have an aligned point recorded?
 
 	    // Process edge_verts
+	    std::map<bedge_seg_t *, std::set<overt_t *>> edge_verts = find_edge_verts(check_pairs);
 	    std::set<overt_t *> nverts;
 	    bedge_replaced_tris = bedge_split_near_verts(&nverts, edge_verts);
 	    edge_verts.clear();
+#if 0
 	    std::set<overt_t *>::iterator nv_it;
 	    int vvcnt = 0;
 	    for (nv_it = nverts.begin(); nv_it != nverts.end(); nv_it++) {
@@ -2318,6 +2355,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		face_ov_cnt = omesh_ovlps(check_pairs);
 		omesh_refinement_pnts(check_pairs);
 	    }
+#endif
 	}
 
 	// Once edge splits are handled, use remaining closest points and find

@@ -774,6 +774,7 @@ class omesh_t
 
         void plot(const char *fname, std::map<bedge_seg_t *, std::set<overt_t *>> *ev);
         void plot(std::map<bedge_seg_t *, std::set<overt_t *>> *ev);
+        void plot();
         void plot_vtree(const char *fname);
 
 
