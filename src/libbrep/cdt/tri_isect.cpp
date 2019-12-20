@@ -211,49 +211,8 @@ isect_plot(cdt_mesh_t *fmesh1, long t1_ind, cdt_mesh_t *fmesh2, long t2_ind, poi
     fclose(plot);
 }
 
-static void
-isect_process_vert(
-	omesh_t *omesh1, overt_t *v, triangle_t &t1,
-       	omesh_t *omesh2, triangle_t &t2,
-	std::map<overt_t *, std::map<bedge_seg_t *, int>> *vert_edge_cnts
-	)
-{
-
-    if (!v) {
-	std::cerr << "ERROR - no valid vertex point supplied to isect_process_vert\n";
-	return;
-    }
-
-    // If we're tracking this, check to see if the intruding vertex in question
-    // is closest to a brep face edge in the opposite mesh.  If it is, we may
-    // need an edge split.
-    //
-    // TODO - we also need to try the points to see if they project *inside* the
-    // opposite face's polygon - if they do, we also need to split the edge even
-    // if the point is closer to an interior edge, since the brep face edge segment
-    // might be far away from the actual edge curve in a course approximation.
-    if (vert_edge_cnts) {
-	ON_3dPoint p = v->vpnt();
-	uedge_t closest_edge = omesh2->fmesh->closest_uedge(t2, p);
-	if (omesh2->fmesh->brep_edges.find(closest_edge) != omesh2->fmesh->brep_edges.end()) {
-	    bedge_seg_t *bseg = omesh2->fmesh->ue2b_map[closest_edge];
-	    if (!bseg) {
-		std::cout << "couldn't find bseg pointer??\n";
-	    } else {
-		(*vert_edge_cnts)[v][bseg]++;
-	    }
-	}
-    }
-
-    // Note this vertex as a possible source of refinement necessity in omesh2
-    omesh2->refinement_overts[v].insert(t1.ind);
-
-    // Let omesh1 know that its triangle is interfering with another mesh
-    omesh1->intruding_tris.insert(t1.ind);
-}
-
 int
-remote_vert_process(bool process, bool pinside, omesh_t *omesh1, overt_t *v, triangle_t &t1, omesh_t *omesh2, triangle_t &t2, std::map<overt_t *, std::map<bedge_seg_t *, int>> *vert_edge_cnts)
+remote_vert_process(bool pinside, overt_t *v, omesh_t *omesh2)
 {
     if (!v) {
 	std::cout << "WARNING: - no overt for vertex??\n";
@@ -273,9 +232,6 @@ remote_vert_process(bool process, bool pinside, omesh_t *omesh1, overt_t *v, tri
     }
 
     if (!near_vert && pinside) {
-	if (process) {
-	    isect_process_vert(omesh1, v, t1, omesh2, t2, vert_edge_cnts);
-	}
 	return 1;
     }
 
@@ -283,20 +239,9 @@ remote_vert_process(bool process, bool pinside, omesh_t *omesh1, overt_t *v, tri
 }
 
 int
-near_edge_process(bool process, double t, double vtol, overt_t *v, omesh_t *omesh1, triangle_t &t1,
-	omesh_t *omesh2, triangle_t &t2, std::map<overt_t *, std::map<bedge_seg_t *, int>> *vert_edge_cnts)
+near_edge_process(double t, double vtol)
 {
     if (t > 0  && t < 1 && !NEAR_ZERO(t, vtol) && !NEAR_EQUAL(t, 1, vtol)) {
-	//VPCHECK(v, NULL);
-
-	if (process) {
-	    isect_process_vert(omesh2, v, t2, omesh1, t1, vert_edge_cnts);
-	    // In these cases it is possible that the mated triangle to the edge
-	    // doesn't intrude on the opposite mesh.  Never the less we still want
-	    // to process these points near edges, so artificially bump the tri
-	    // listing for refinement_overts high enough to force processing
-	    omesh1->refinement_overts[v].insert(-1);
-	}
 	return 1;
     }
     return 0;
@@ -304,14 +249,12 @@ near_edge_process(bool process, double t, double vtol, overt_t *v, omesh_t *omes
 
 static int
 edge_only_isect(
-	bool process,
 	omesh_t *omesh1, triangle_t &t1,
 	omesh_t *omesh2, triangle_t &t2,
 	ON_3dPoint &p1, ON_3dPoint &p2,
 	ON_Line *t1_lines,
 	ON_Line *t2_lines,
-	double etol,
-	std::map<overt_t *, std::map<bedge_seg_t *, int>> *vert_edge_cnts
+	double etol
 	)
 {
     double p1d1[3], p1d2[3];
@@ -388,16 +331,16 @@ edge_only_isect(
     overt_t *v = NULL;
 
     v = omesh2->overts[t2_e.v[0]];
-    process_pnt += near_edge_process(process, lt[0], vtol, v, omesh1, t1, omesh2, t2, vert_edge_cnts);
+    process_pnt += near_edge_process(lt[0], vtol);
 
     v = omesh2->overts[t2_e.v[1]];
-    process_pnt += near_edge_process(process, lt[1], vtol, v, omesh1, t1, omesh2, t2, vert_edge_cnts);
+    process_pnt += near_edge_process(lt[1], vtol);
 
     v = omesh1->overts[t1_e.v[0]];
-    process_pnt += near_edge_process(process, lt[2], vtol, v, omesh2, t2, omesh1, t1, vert_edge_cnts);
+    process_pnt += near_edge_process(lt[2], vtol);
 
     v = omesh1->overts[t1_e.v[1]];
-    process_pnt += near_edge_process(process, lt[3], vtol, v, omesh2, t2, omesh1, t1, vert_edge_cnts);
+    process_pnt += near_edge_process(lt[3], vtol);
 
     // If the non-edge point of one of the triangles is clearly inside
     // the other mesh, we need to flag it for processing as well - there
@@ -449,9 +392,9 @@ edge_only_isect(
     // triangle edges.
     if (t1_pinside || t2_pinside) {
 	v = omesh1->overts[t1_vind];
-	process_pnt += remote_vert_process(process, t1_pinside, omesh1, v, t1, omesh2, t2, vert_edge_cnts);
+	process_pnt += remote_vert_process(t1_pinside, v, omesh2);
 	v = omesh2->overts[t2_vind];
-	process_pnt += remote_vert_process(process, t2_pinside, omesh2, v, t2, omesh1, t1, vert_edge_cnts);
+	process_pnt += remote_vert_process(t2_pinside, v, omesh1);
     }
 
     return (process_pnt > 0) ? 1 : 0;
@@ -465,10 +408,8 @@ edge_only_isect(
  *****************************************************************************/
 int
 tri_isect(
-	bool process,
 	omesh_t *omesh1, triangle_t &t1,
-       	omesh_t *omesh2, triangle_t &t2,
-	std::map<overt_t *, std::map<bedge_seg_t *, int>> *vert_edge_cnts
+       	omesh_t *omesh2, triangle_t &t2
 	)
 {
     cdt_mesh_t *fmesh1 = omesh1->fmesh;
@@ -551,29 +492,16 @@ tri_isect(
     }
     for (int i = 0; i < 3; i++) {
 	if (t1_i1_vdists[i] < etol && t1_i2_vdists[i] < etol) {
-	    if (process) {
-		overt_t *v = omesh1->overts[t1.v[i]];
-		isect_process_vert(omesh1, v, t1, omesh2, t2, vert_edge_cnts);
-	    }
 	    vert_isect = true;
 	}
 	if (t2_i1_vdists[i] < etol && t2_i2_vdists[i] < etol) {
-	    if (process) {
-		overt_t *v = omesh2->overts[t2.v[i]];
-		isect_process_vert(omesh2, v, t2, omesh1, t1, vert_edge_cnts);
-	    }
 	    vert_isect = true;
 	}
     }
 
+    // This category of intersection isn't one that warrants an intersection return.
     if (vert_isect) {
-	if (process) {
-	    return 1;
-	} else {
-	    // If we're not vertex processing, this category of intersection
-	    // isn't one that warrants a hit return.
-	    return 0;
-	}
+	return 0;
     }
 
 #if 0
@@ -596,34 +524,11 @@ tri_isect(
 #endif
 
     ON_Line nedge;
-    int near_edge = edge_only_isect(process, omesh1, t1, omesh2, t2, p1, p2, (ON_Line *)t1_lines, (ON_Line *)t2_lines, 0.3*elen_min, vert_edge_cnts);
+    int near_edge = edge_only_isect(omesh1, t1, omesh2, t2, p1, p2, (ON_Line *)t1_lines, (ON_Line *)t2_lines, 0.3*elen_min);
 
 
     if (near_edge >= 0) {
 	return near_edge;
-    }
-
-    // If we're not aligned or in an edge intersect situation, all three
-    // vertices go into the refinement pot.
-    for (int i = 0; i < 3; i++) {
-	overt_t *v = omesh1->overts[t1.v[i]];
-	if (!v) {
-	    std::cout << "WARNING: - no overt for vertex??\n";
-	    continue;
-	}
-	if (process) {
-	    isect_process_vert(omesh1, v, t1, omesh2, t2, vert_edge_cnts);
-	}
-    }
-    for (int i = 0; i < 3; i++) {
-	overt_t *v = omesh2->overts[t2.v[i]];
-	if (!v) {
-	    std::cout << "WARNING: - no overt for vertex??\n";
-	    continue;
-	}
-	if (process) {
-	    isect_process_vert(omesh2, v, t2, omesh1, t1, vert_edge_cnts);
-	}
     }
 
     return 1;

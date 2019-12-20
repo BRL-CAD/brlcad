@@ -788,8 +788,13 @@ class omesh_t
 	// Use an rtree for fast localized lookup
         RTree<long, double, 3> vtree;
 
+	// Triangles that intersect another mesh
+	std::set<std::pair<omesh_t *, size_t>> itris;
+
         // Points from other meshes potentially needing refinement in this mesh
         std::map<overt_t *, std::set<long>> refinement_overts;
+
+
 
         // Points from this mesh inducing refinement in other meshes, and
         // triangles reported by tri_isect as intersecting from this mesh
@@ -895,10 +900,8 @@ class ovlp_grp {
 
 int
 tri_isect(
-	bool process,
 	omesh_t *omesh1, triangle_t &t1,
-	omesh_t *omesh2, triangle_t &t2,
-	std::map<overt_t *, std::map<bedge_seg_t *, int>> *vert_edge_cnts
+	omesh_t *omesh2, triangle_t &t2
 	);
 
 std::vector<ovlp_grp>

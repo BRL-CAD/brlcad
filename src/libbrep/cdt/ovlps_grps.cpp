@@ -351,7 +351,7 @@ find_ovlp_grps(
 	    std::set<size_t> ntris = omesh2->tris_search(tri_bb);
 	    std::set<size_t>::iterator nt_it;
 	    for (nt_it = ntris.begin(); nt_it != ntris.end(); nt_it++) {
-		int real_ovlp = tri_isect(false, omesh1, omesh1->fmesh->tris_vect[t1], omesh2, omesh2->fmesh->tris_vect[*nt_it], NULL);
+		int real_ovlp = tri_isect(omesh1, omesh1->fmesh->tris_vect[t1], omesh2, omesh2->fmesh->tris_vect[*nt_it]);
 		if (!real_ovlp) continue;
 		//std::cout << "real overlap with " << *nt_it << "\n";
 		std::pair<omesh_t *, size_t> nkey(omesh2, *nt_it);
