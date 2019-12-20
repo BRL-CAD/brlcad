@@ -787,8 +787,18 @@ find_edge_verts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs)
 		if (!bseg) {
 		    std::cout << "couldn't find bseg pointer??\n";
 		} else {
+
+		    // TODO - be aware of distances - if v is far from the
+		    // closest_edge line segment relative to that segment's
+		    // length and that closest segment is a brep edge segment,
+		    // don't split the edge at this point - we'll probably be
+		    // introducing other, more useful points
+
 		    VPCHECK(v, NULL);
 		    edge_verts[bseg].insert(v);
+
+		    // Erase regardless - if we're here, we won't be using this point for
+		    // interiors on the other mesh
 		    everts.insert(v);
 		}
 	    }
@@ -805,8 +815,16 @@ find_edge_verts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs)
     return edge_verts;
 }
 
+
+/* TODO - There are three levels of aggressiveness we can use when assigning refinement points:
+ *
+ * 1.  Only use vertices that share at least two triangles which overlap with the other mesh
+ * 2.  Use all vertices from triangles that overlap
+ * 3.  Use all vertices from the other mesh that are contained by the bounding box of the
+ *     overlapping triangle from this mesh.
+ */
 size_t
-omesh_refinement_pnts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs)
+omesh_refinement_pnts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs, int level)
 {
     std::set<omesh_t *> a_omesh;
     std::set<omesh_t *>::iterator a_it;
@@ -826,35 +844,63 @@ omesh_refinement_pnts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pair
 	}
     }
 
-    // Count triangles to determine which verts need attention.  If a vertex is associated
-    // with two or more triangles that intersect another face, it is a refinement point
-    // candidate.
-    for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
-	omesh_t *am = *a_it;
-	std::set<std::pair<omesh_t *, size_t> >::iterator p_it;
-	for (p_it = am->itris.begin(); p_it != am->itris.end(); p_it++) {
-	    omesh_t *im = p_it->first;
-	    triangle_t tri = im->fmesh->tris_vect[p_it->second];
-	    for (int i = 0; i < 3; i++) {
-		overt_t *v = im->overts[tri.v[i]];
-		am->refinement_overts[v].insert(p_it->second);
+    if (level < 2) {
+	// Count triangles to determine which verts need attention.  If a vertex is associated
+	// with two or more triangles that intersect another face, it is a refinement point
+	// candidate.
+	for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
+	    omesh_t *am = *a_it;
+	    std::set<std::pair<omesh_t *, size_t> >::iterator p_it;
+	    for (p_it = am->itris.begin(); p_it != am->itris.end(); p_it++) {
+		omesh_t *im = p_it->first;
+		triangle_t tri = im->fmesh->tris_vect[p_it->second];
+		for (int i = 0; i < 3; i++) {
+		    overt_t *v = im->overts[tri.v[i]];
+		    am->refinement_overts[v].insert(p_it->second);
+		}
+	    }
+	}
+	if (level == 0) {
+	    for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
+		std::set<overt_t *> ev;
+		std::set<overt_t *>::iterator ev_it;
+		std::map<overt_t *, std::set<long>>::iterator r_it;
+		omesh_t *am = *a_it;
+		for (r_it = am->refinement_overts.begin(); r_it != am->refinement_overts.end(); r_it++) {
+		    VPCHECK(r_it->first, NULL);
+		    // Not enough activity hits, not a refinement vertex
+		    if (r_it->second.size() == 1) {
+			ev.insert(r_it->first);
+		    }
+		}
+		for (ev_it = ev.begin(); ev_it != ev.end(); ev_it++) {
+		    am->refinement_overts.erase(*ev_it);
+		}
 	    }
 	}
     }
-    for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
-	std::set<overt_t *> ev;
-	std::set<overt_t *>::iterator ev_it;
-	std::map<overt_t *, std::set<long>>::iterator r_it;
-	omesh_t *am = *a_it;
-	for (r_it = am->refinement_overts.begin(); r_it != am->refinement_overts.end(); r_it++) {
-	    VPCHECK(r_it->first, NULL);
-	    // Not enough activity hits, not a refinement vertex
-	    if (r_it->second.size() == 1) {
-		ev.insert(r_it->first);
+
+    // This case is a bit different - we're altering the intruding mesh's
+    // containers based on the triangles recorded in this container, instead
+    // of the other way around.
+    if (level == 2) {
+    	for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
+	    omesh_t *am = *a_it;
+	    std::set<std::pair<omesh_t *, size_t> >::iterator p_it;
+	    for (p_it = am->itris.begin(); p_it != am->itris.end(); p_it++) {
+		omesh_t *im = p_it->first;
+		triangle_t tri = im->fmesh->tris_vect[p_it->second];
+		ON_BoundingBox t_bb = im->fmesh->tri_bbox(tri.ind);
+		std::set<size_t> otris = am->tris_search(t_bb);
+		std::set<size_t>::iterator o_it;
+		for (o_it = otris.begin(); o_it != otris.end(); o_it++) {
+		    triangle_t otri = am->fmesh->tris_vect[*o_it];
+		    for (int i = 0; i < 3; i++) {
+			overt_t *v = am->overts[otri.v[i]];
+			im->refinement_overts[v].insert(otri.ind);
+		    }
+		}
 	    }
-	}
-	for (ev_it = ev.begin(); ev_it != ev.end(); ev_it++) {
-	    am->refinement_overts.erase(*ev_it);
 	}
     }
 
@@ -2121,7 +2167,7 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 	    }
 	    // Restore "normal" overlap information for next pass
 	    omesh_ovlps(check_pairs);
-	    omesh_refinement_pnts(check_pairs);
+	    omesh_refinement_pnts(check_pairs, 0);
 
 	    processed_cnt++;
 	}
@@ -2313,7 +2359,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	if (!face_ov_cnt) return 0;
 
 	// If we're going to process, initialize refinement points
-	omesh_refinement_pnts(check_pairs);
+	omesh_refinement_pnts(check_pairs, 0);
 
 	int bedge_replaced_tris = INT_MAX;
 
@@ -2329,7 +2375,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		// If we adjusted, recalculate overlapping tris and refinement points
 		std::cout << "Adjusted " << avcnt << " vertices\n";
 		face_ov_cnt = omesh_ovlps(check_pairs);
-		omesh_refinement_pnts(check_pairs);
+		omesh_refinement_pnts(check_pairs, 0);
 	    }
 
 	    // TODO - rethink the edge points a bit.  What we probably want is a matching
@@ -2364,7 +2410,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 #endif
 	    if (bedge_replaced_tris || vvcnt) {
 		face_ov_cnt = omesh_ovlps(check_pairs);
-		omesh_refinement_pnts(check_pairs);
+		omesh_refinement_pnts(check_pairs, 0);
 	    }
 	}
 
@@ -2378,7 +2424,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	while (interior_replaced_tris) {
 	    interior_replaced_tris = omesh_interior_edge_verts(check_pairs);
 	    face_ov_cnt = omesh_ovlps(check_pairs);
-	    omesh_refinement_pnts(check_pairs);
+	    omesh_refinement_pnts(check_pairs, 0);
 	}
 
 
