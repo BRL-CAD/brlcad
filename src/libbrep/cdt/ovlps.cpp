@@ -371,6 +371,7 @@ omesh_t::plot(const char *fname,
 
     bu_color_from_rgb_chars(&c, (const unsigned char *)rgb);
 
+    pl_color(plot, 0, 0, 255);
     fmesh->tris_tree.GetFirst(tree_it);
     while (!tree_it.IsNull()) {
 	t_ind = *tree_it;
@@ -1846,7 +1847,7 @@ vert_nearby_closest_point_check(
 	}
     }
 
-    return 0;
+    return retcnt;
 }
 
 
@@ -2341,21 +2342,30 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    std::set<overt_t *> nverts;
 	    bedge_replaced_tris = bedge_split_near_verts(&nverts, edge_verts);
 	    edge_verts.clear();
-#if 0
-	    std::set<overt_t *>::iterator nv_it;
+
 	    int vvcnt = 0;
+#if 1
+	    std::set<overt_t *>::iterator nv_it;
 	    for (nv_it = nverts.begin(); nv_it != nverts.end(); nv_it++) {
 		vvcnt += vert_nearby_closest_point_check(*nv_it, edge_verts, check_pairs);
 	    }
 	    if (vvcnt) {
 		std::cout << "vert_nearby_closest_point_check added " << vvcnt << " close verts\n";
 	    }
+	    while (edge_verts.size()) {
+		nverts.clear();
+		bedge_replaced_tris += bedge_split_near_verts(&nverts, edge_verts);
+		edge_verts.clear();
+		for (nv_it = nverts.begin(); nv_it != nverts.end(); nv_it++) {
+		    vvcnt += vert_nearby_closest_point_check(*nv_it, edge_verts, check_pairs);
+		}
+	    }
 
+#endif
 	    if (bedge_replaced_tris || vvcnt) {
 		face_ov_cnt = omesh_ovlps(check_pairs);
 		omesh_refinement_pnts(check_pairs);
 	    }
-#endif
 	}
 
 	// Once edge splits are handled, use remaining closest points and find
