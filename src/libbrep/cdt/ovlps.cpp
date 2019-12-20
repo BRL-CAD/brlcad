@@ -297,6 +297,14 @@ omesh_t::plot_vtree(const char *fname)
 /******************************************/
 /*          omesh implementation          */
 /******************************************/
+
+std::string
+omesh_t::sname()
+{
+    struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
+    return std::string(s_cdt->name);
+}
+
 bool
 omesh_t::validate_vtree()
 {
@@ -763,7 +771,6 @@ find_edge_verts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs)
 	omesh_t *omesh2 = cp_it->second->omesh;
 	if (omesh1->refinement_overts.size()) {
 	    a_omesh.insert(omesh1);
-	    omesh1->refinement_overts.clear();
 	}
 	if (omesh2->refinement_overts.size()) {
 	    a_omesh.insert(omesh2);

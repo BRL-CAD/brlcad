@@ -801,6 +801,8 @@ class omesh_t
         // triangles reported by tri_isect as intersecting from this mesh
         std::map<overt_t *, std::set<long>> intruding_overts;
         std::set<size_t> intruding_tris;
+
+	std::string sname();
 };
 
 
