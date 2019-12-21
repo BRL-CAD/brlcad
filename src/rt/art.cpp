@@ -31,7 +31,7 @@
  *
  *
  * The example scene object used by helloworld is found at:
- * https://github.com/appleseedhq/appleseed/blob/master/sandbox/examples/cpp/helloworld/data/scene.obj
+ * https://raw.githubusercontent.com/appleseedhq/appleseed/master/sandbox/examples/cpp/helloworld/data/scene.obj
  *
  * basic example helloworld code from
  * https://github.com/appleseedhq/appleseed/blob/master/sandbox/examples/cpp/helloworld/helloworld.cpp
