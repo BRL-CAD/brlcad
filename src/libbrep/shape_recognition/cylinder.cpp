@@ -29,6 +29,8 @@
 #include <map>
 #include <limits>
 
+#include "bio.h"  // for NOMINMAX
+
 #include "bu/log.h"
 #include "bu/str.h"
 #include "bu/malloc.h"
