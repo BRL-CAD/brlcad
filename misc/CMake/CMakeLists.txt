@@ -19,6 +19,7 @@ set(cmake_ignore_files
   Doxygen.cmake
   FindADAPTAGRAMS.cmake
   FindASTYLE.cmake
+  FindAppleseed.cmake
   FindBlosc.cmake
   FindBRLCADTCL.cmake
   FindBRLCADZLIB.cmake
@@ -31,7 +32,6 @@ set(cmake_ignore_files
   FindLEMON.cmake
   FindLZ4.cmake
   FindNETPBM.cmake
-  FindOIIO.cmake
   FindOPENNURBS.cmake
   FindOSL.cmake
   FindOpenCL.cmake
