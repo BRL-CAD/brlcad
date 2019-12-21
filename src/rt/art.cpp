@@ -22,7 +22,7 @@
  * Once you have appleseed installed, run BRL-CAD's CMake with APPLESEED_ROOT
  * set to enable this program:
  *
- * cmake .. -DAPPLESEED_ROOT=/path/to/appleseed
+ * cmake .. -DAPPLESEED_ROOT=/path/to/appleseed -DBRLCAD_PNG=SYSTEM -DBRLCAD_ZLIB=SYSTEM
  *
  * (the appleseed root path should contain bin, lib and include directories)
  *
