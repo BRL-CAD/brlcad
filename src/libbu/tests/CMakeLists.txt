@@ -28,7 +28,6 @@ set(bu_test_srcs
   process.c
   ptbl.c
   realpath.c
-  redblack.c
   semaphore.c
   sort.c
   str.c
@@ -271,12 +270,6 @@ endforeach()
 # The testing of encoding and de-coding is tested at once in a "round trip"
 # approach - the tests below all test both bu_b64_encode and bu_b64_decode.
 add_test(NAME "bu_b64_test" COMMAND bu_test b64)
-
-
-#
-#  ************ rb_*.c tests *************
-#
-add_test(NAME bu_redblack_test COMMAND bu_test redblack)
 
 #
 #  ************ bu_semaphore.c tests *************
