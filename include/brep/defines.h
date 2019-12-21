@@ -31,14 +31,29 @@
 
 #include "bio.h" /* needed to include windows.h with protections */
 #ifdef __cplusplus
-extern "C++" {
-#define ON_NO_WINDOWS 1 /* don't let opennurbs include windows.h */
+
+
 /* Note - We aren't (yet) including opennurbs in our Doxygen output. Until we
  * do, use cond to hide the opennurbs header from Doxygen. */
 /* @cond */
+extern "C++" {
+
+/* don't let opennurbs include windows.h */
+#define ON_NO_WINDOWS 1
+
+/* NOTE: we re-define read/write due to the archive_mode enum that
+ * shadows the system symbols.  we undefine when done to not interfere
+ * with app code.
+ */
+#define read on_read
+#define write on_write
 #include "opennurbs.h"
-/* @endcond */
+#undef read
+#undef write
+
 }
+/* @endcond */
+
 #endif
 
 #include "vmath.h"
