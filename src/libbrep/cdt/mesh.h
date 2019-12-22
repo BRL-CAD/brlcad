@@ -790,7 +790,7 @@ class omesh_t
         RTree<long, double, 3> vtree;
 
 	// Triangles that intersect another mesh
-	std::set<std::pair<omesh_t *, size_t>> itris;
+	std::map<size_t, std::set<std::pair<omesh_t *, size_t>>> itris;
 
         // Points from other meshes potentially needing refinement in this mesh
         std::map<overt_t *, std::set<long>> refinement_overts;

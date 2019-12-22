@@ -855,13 +855,17 @@ omesh_refinement_pnts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pair
 	// candidate.
 	for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
 	    omesh_t *am = *a_it;
-	    std::set<std::pair<omesh_t *, size_t> >::iterator p_it;
+	    std::map<size_t, std::set<std::pair<omesh_t *, size_t>> >::iterator p_it;
 	    for (p_it = am->itris.begin(); p_it != am->itris.end(); p_it++) {
-		omesh_t *im = p_it->first;
-		triangle_t tri = im->fmesh->tris_vect[p_it->second];
-		for (int i = 0; i < 3; i++) {
-		    overt_t *v = im->overts[tri.v[i]];
-		    am->refinement_overts[v].insert(p_it->second);
+		std::set<std::pair<omesh_t *, size_t>>::iterator s_it;
+		for (s_it = p_it->second.begin(); s_it != p_it->second.end(); s_it++) {
+		    omesh_t *im = s_it->first;
+		    size_t otri_ind = s_it->second;
+		    triangle_t tri = im->fmesh->tris_vect[otri_ind];
+		    for (int i = 0; i < 3; i++) {
+			overt_t *v = im->overts[tri.v[i]];
+			am->refinement_overts[v].insert(otri_ind);
+		    }
 		}
 	    }
 	}
@@ -891,18 +895,23 @@ omesh_refinement_pnts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pair
     if (level > 1) {
     	for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
 	    omesh_t *am = *a_it;
-	    std::set<std::pair<omesh_t *, size_t> >::iterator p_it;
+	    std::map<size_t, std::set<std::pair<omesh_t *, size_t>> >::iterator p_it;
 	    for (p_it = am->itris.begin(); p_it != am->itris.end(); p_it++) {
-		omesh_t *im = p_it->first;
-		triangle_t tri = im->fmesh->tris_vect[p_it->second];
-		ON_BoundingBox t_bb = im->fmesh->tri_bbox(tri.ind);
-		std::set<size_t> otris = am->tris_search(t_bb);
-		std::set<size_t>::iterator o_it;
-		for (o_it = otris.begin(); o_it != otris.end(); o_it++) {
-		    triangle_t otri = am->fmesh->tris_vect[*o_it];
-		    for (int i = 0; i < 3; i++) {
-			overt_t *v = am->overts[otri.v[i]];
-			im->refinement_overts[v].insert(otri.ind);
+		std::set<std::pair<omesh_t *, size_t>>::iterator s_it;
+		for (s_it = p_it->second.begin(); s_it != p_it->second.end(); s_it++) {
+		    omesh_t *im = s_it->first;
+		    size_t otri_ind = s_it->second;
+
+		    triangle_t tri = im->fmesh->tris_vect[otri_ind];
+		    ON_BoundingBox t_bb = im->fmesh->tri_bbox(tri.ind);
+		    std::set<size_t> otris = am->tris_search(t_bb);
+		    std::set<size_t>::iterator o_it;
+		    for (o_it = otris.begin(); o_it != otris.end(); o_it++) {
+			triangle_t otri = am->fmesh->tris_vect[*o_it];
+			for (int i = 0; i < 3; i++) {
+			    overt_t *v = am->overts[otri.v[i]];
+			    im->refinement_overts[v].insert(otri.ind);
+			}
 		    }
 		}
 	    }
@@ -961,8 +970,8 @@ omesh_ovlps(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs)
 		    triangle_t t2 = omesh2->fmesh->tris_vect[tb_it->second];
 		    int isect = tri_isect(omesh1, t1, omesh2, t2);
 		    if (isect) {
-			omesh1->itris.insert(std::make_pair(omesh2, t2.ind));
-			omesh2->itris.insert(std::make_pair(omesh1, t1.ind));
+			omesh1->itris[t1.ind].insert(std::make_pair(omesh2, t2.ind));
+			omesh2->itris[t2.ind].insert(std::make_pair(omesh1, t1.ind));
 			omesh1->intruding_tris.insert(t1.ind);
 			omesh2->intruding_tris.insert(t2.ind);
 			a_omesh.insert(omesh1);
