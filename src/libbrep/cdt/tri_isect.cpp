@@ -212,7 +212,7 @@ isect_plot(cdt_mesh_t *fmesh1, long t1_ind, cdt_mesh_t *fmesh2, long t2_ind, poi
 }
 
 int
-remote_vert_process(bool pinside, overt_t *v, omesh_t *omesh2)
+remote_vert_process(bool pinside, overt_t *v, omesh_t *om_other, triangle_t &tri)
 {
     if (!v) {
 	std::cout << "WARNING: - no overt for vertex??\n";
@@ -220,7 +220,7 @@ remote_vert_process(bool pinside, overt_t *v, omesh_t *omesh2)
     }
     ON_3dPoint vp = v->vpnt();
     bool near_vert = false;
-    std::set<overt_t *> cverts = omesh2->vert_search(v->bb);
+    std::set<overt_t *> cverts = om_other->vert_search(v->bb);
     std::set<overt_t *>::iterator v_it;
     for (v_it = cverts.begin(); v_it != cverts.end(); v_it++) {
 	ON_3dPoint cvpnt = (*v_it)->vpnt();
@@ -232,6 +232,7 @@ remote_vert_process(bool pinside, overt_t *v, omesh_t *omesh2)
     }
 
     if (!near_vert && pinside) {
+	om_other->refinement_overts[v].insert(tri.ind);
 	return 1;
     }
 
@@ -242,6 +243,15 @@ int
 near_edge_process(double t, double vtol)
 {
     if (t > 0  && t < 1 && !NEAR_ZERO(t, vtol) && !NEAR_EQUAL(t, 1, vtol)) {
+	return 1;
+    }
+    return 0;
+}
+
+static int
+near_edge_refinement(double t, double vtol, overt_t *v, omesh_t *om_other, triangle_t &tri) {
+    if (t > 0  && t < 1 && !NEAR_ZERO(t, vtol) && !NEAR_EQUAL(t, 1, vtol)) {
+	om_other->refinement_overts[v].insert(tri.ind);
 	return 1;
     }
     return 0;
@@ -319,8 +329,7 @@ find_intersecting_edges(
 
 static bool
 edge_only_isect(
-	omesh_t *omesh1, triangle_t &t1,
-	omesh_t *omesh2, triangle_t &t2,
+	triangle_t &t1, triangle_t &t2,
 	ON_3dPoint &p1, ON_3dPoint &p2,
 	ON_Line *t1_lines,
 	ON_Line *t2_lines,
@@ -348,78 +357,10 @@ edge_only_isect(
 
     int process_pnt = 0;
     double vtol = 0.01;
-    overt_t *v = NULL;
-
-    v = omesh2->overts[t2_e.v[0]];
     process_pnt += near_edge_process(lt[0], vtol);
-
-    v = omesh2->overts[t2_e.v[1]];
     process_pnt += near_edge_process(lt[1], vtol);
-
-    v = omesh1->overts[t1_e.v[0]];
     process_pnt += near_edge_process(lt[2], vtol);
-
-    v = omesh1->overts[t1_e.v[1]];
     process_pnt += near_edge_process(lt[3], vtol);
-
-    if (process_pnt) {
-	return false;
-    }
-
-    // If the non-edge point of one of the triangles is clearly inside
-    // the other mesh, we need to flag it for processing as well - there
-    // are geometric situations where edge intersection information isn't
-    // sufficient to identify all the points to consider.
-
-    long t1_vind, t2_vind;
-
-    // If it is an edge intersect, identify the point from each triangle not
-    // on the edge.
-    double cdist = -DBL_MAX;
-    for (int i = 0; i < 3; i++) {
-	ON_3dPoint tp = *omesh1->fmesh->pnts[t1.v[i]];
-	double tdist = tp.DistanceTo(t1_nedge.ClosestPointTo(tp));
-	if (tdist > cdist) {
-	    t1_vind = t1.v[i];
-	    cdist = tdist;
-	}
-    }
-    cdist = -DBL_MAX;
-    for (int i = 0; i < 3; i++) {
-	ON_3dPoint tp = *omesh2->fmesh->pnts[t2.v[i]];
-	double tdist = tp.DistanceTo(t2_nedge.ClosestPointTo(tp));
-	if (tdist > cdist) {
-	    t2_vind = t2.v[i];
-	    cdist = tdist;
-	}
-    }
-
-    // See if the triangles are inside the mesh (center point test).  If so,
-    // we have more work to do.
-    //
-    // We use the center point for this because we are only in this logic
-    // due to the triangle intersection reporting the intersection points close
-    // to one of the edges.  That being the case, the center should be in the
-    // direction of the inside/outside behavior of interest, and not being a
-    // vertex it is not likely to be aligned with another unrelated vertex in
-    // the opposite mesh due to prior refinement steps.
-    struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)omesh2->fmesh->p_cdt;
-    ON_3dPoint t1_f = omesh1->fmesh->tcenter(t1);
-    bool t1_pinside = on_point_inside(s_cdt2, &t1_f);
-    struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)omesh1->fmesh->p_cdt;
-    ON_3dPoint t2_f = omesh2->fmesh->tcenter(t2);
-    bool t2_pinside = on_point_inside(s_cdt1, &t2_f);
-
-    // For each remote vertex, see if it is very close to a vertex on the
-    // opposite mesh.  If not, and it is inside the opposite mesh, we
-    // can use it as a refinement point.  Otherwise, we need to split
-    // triangle edges.
-    if (t1_pinside || t2_pinside) {
-	v = omesh1->overts[t1_vind];
-	process_pnt += remote_vert_process(t1_pinside, v, omesh2);
-	v = omesh2->overts[t2_vind];
-	process_pnt += remote_vert_process(t2_pinside, v, omesh1);
-    }
 
     if (process_pnt) {
 	return false;
@@ -550,7 +491,7 @@ tri_isect(
     ON_Line nedge;
     ON_3dPoint p1(isectpt1[X], isectpt1[Y], isectpt1[Z]);
     ON_3dPoint p2(isectpt2[X], isectpt2[Y], isectpt2[Z]);
-    bool near_edge_isect = edge_only_isect(omesh1, t1, omesh2, t2, p1, p2, (ON_Line *)t1_lines, (ON_Line *)t2_lines, 0.3*elen_min);
+    bool near_edge_isect = edge_only_isect(t1, t2, p1, p2, (ON_Line *)t1_lines, (ON_Line *)t2_lines, 0.3*elen_min);
 
     if (near_edge_isect) {
 	return 0;
@@ -574,14 +515,100 @@ tri_nearedge_refine(
     if (!tri_isect_basic(&isectpt1, &isectpt2, fmesh1, t1, fmesh2, t2)) {
 	return 0;
     }
-#if 0
+
     ON_Line t1_lines[3];
     ON_Line t2_lines[3];
-    double elen_min = tri_lines(&t1_lines, &t2_lines, fmesh1, t1, fmesh2, t2);
+    double elen_min = tri_lines((ON_Line *)&t1_lines, (ON_Line *)&t2_lines, fmesh1, t1, fmesh2, t2);
     double etol = 0.0001*elen_min;
-#endif
 
-    return 0;
+    ON_Line t1_nedge, t2_nedge;
+    edge_t t1_e, t2_e;
+    double lt[4];
+    ON_3dPoint p1(isectpt1[X], isectpt1[Y], isectpt1[Z]);
+    ON_3dPoint p2(isectpt2[X], isectpt2[Y], isectpt2[Z]);
+ 
+    // Find the closest points to the nearby edges (if any) and process
+    if (!find_intersecting_edges((double *)lt, t1_e, t2_e, t1_nedge, t2_nedge,
+		p1, p2, t1_lines, t2_lines, t1, t2, etol)) {
+	return 0;
+    }
+
+    int process_cnt = 0;
+    double vtol = 0.01;
+    overt_t *v = NULL;
+    v = omesh2->overts[t2_e.v[0]];
+    process_cnt += near_edge_refinement(lt[0], vtol, v, omesh1, t1);
+
+    v = omesh2->overts[t2_e.v[1]];
+    process_cnt += near_edge_refinement(lt[1], vtol, v, omesh1, t1);
+
+    v = omesh1->overts[t1_e.v[0]];
+    process_cnt += near_edge_refinement(lt[2], vtol, v, omesh2, t2);
+
+    v = omesh1->overts[t1_e.v[1]];
+    process_cnt += near_edge_refinement(lt[3], vtol, v, omesh2, t2);
+
+    if (process_cnt > 0) {
+	return process_cnt;
+    }
+
+    // If the non-edge point of one of the triangles is clearly inside
+    // the other mesh, we need to flag it for processing as well - there
+    // are geometric situations where edge intersection information isn't
+    // sufficient to identify all the points to consider.
+
+    long t1_vind, t2_vind;
+
+    // If it is an edge intersect, identify the point from each triangle not
+    // on the edge.
+    double cdist = -DBL_MAX;
+    for (int i = 0; i < 3; i++) {
+	ON_3dPoint tp = *omesh1->fmesh->pnts[t1.v[i]];
+	double tdist = tp.DistanceTo(t1_nedge.ClosestPointTo(tp));
+	if (tdist > cdist) {
+	    t1_vind = t1.v[i];
+	    cdist = tdist;
+	}
+    }
+    cdist = -DBL_MAX;
+    for (int i = 0; i < 3; i++) {
+	ON_3dPoint tp = *omesh2->fmesh->pnts[t2.v[i]];
+	double tdist = tp.DistanceTo(t2_nedge.ClosestPointTo(tp));
+	if (tdist > cdist) {
+	    t2_vind = t2.v[i];
+	    cdist = tdist;
+	}
+    }
+
+    // See if the triangles are inside the mesh (center point test).  If so,
+    // we have more work to do.
+    //
+    // We use the center point for this because we are only in this logic
+    // due to the triangle intersection reporting the intersection points close
+    // to one of the edges.  That being the case, the center should be in the
+    // direction of the inside/outside behavior of interest, and not being a
+    // vertex it is not likely to be aligned with another unrelated vertex in
+    // the opposite mesh due to prior refinement steps.
+    struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)omesh2->fmesh->p_cdt;
+    ON_3dPoint t1_f = omesh1->fmesh->tcenter(t1);
+    bool t1_pinside = on_point_inside(s_cdt2, &t1_f);
+    struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)omesh1->fmesh->p_cdt;
+    ON_3dPoint t2_f = omesh2->fmesh->tcenter(t2);
+    bool t2_pinside = on_point_inside(s_cdt1, &t2_f);
+
+    // For each remote vertex, see if it is very close to a vertex on the
+    // opposite mesh.  If not, and it is inside the opposite mesh, we
+    // can use it as a refinement point.  Otherwise, we need to split
+    // triangle edges.
+    if (t1_pinside || t2_pinside) {
+	v = omesh1->overts[t1_vind];
+	process_cnt += remote_vert_process(t1_pinside, v, omesh2, t2);
+	v = omesh2->overts[t2_vind];
+	process_cnt += remote_vert_process(t2_pinside, v, omesh1, t1);
+    }
+
+
+    return process_cnt;
 }
 
 /** @} */
