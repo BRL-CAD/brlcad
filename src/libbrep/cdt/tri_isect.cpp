@@ -247,13 +247,14 @@ near_edge_process(double t, double vtol)
     return 0;
 }
 
-static int
-edge_only_isect(
-	omesh_t *omesh1, triangle_t &t1,
-	omesh_t *omesh2, triangle_t &t2,
+static bool
+find_intersecting_edges(
+	double *lt,
+	edge_t &t1_e, edge_t &t2_e,
+	ON_Line &t1_nedge, ON_Line &t2_nedge,
 	ON_3dPoint &p1, ON_3dPoint &p2,
-	ON_Line *t1_lines,
-	ON_Line *t2_lines,
+	ON_Line *t1_lines, ON_Line *t2_lines,
+	triangle_t &t1,	triangle_t &t2,
 	double etol
 	)
 {
@@ -262,13 +263,11 @@ edge_only_isect(
     for (int i = 0; i < 3; i++) {
 	p1d1[i] = p1.DistanceTo(t1_lines[i].ClosestPointTo(p1));
 	p2d1[i] = p2.DistanceTo(t1_lines[i].ClosestPointTo(p2));
-    	p1d2[i] = p1.DistanceTo(t2_lines[i].ClosestPointTo(p1));
+	p1d2[i] = p1.DistanceTo(t2_lines[i].ClosestPointTo(p1));
 	p2d2[i] = p2.DistanceTo(t2_lines[i].ClosestPointTo(p2));
     }
 
     bool nedge_1 = false;
-    ON_Line t1_nedge;
-    edge_t t1_e;
     for (int i = 0; i < 3; i++) {
 	if (NEAR_ZERO(p1d1[i], etol) &&  NEAR_ZERO(p2d1[i], etol)) {
 	    //std::cout << "edge-only intersect - e1\n";
@@ -280,8 +279,6 @@ edge_only_isect(
     }
 
     bool nedge_2 = false;
-    ON_Line t2_nedge;
-    edge_t t2_e;
     for (int i = 0; i < 3; i++) {
 	if (NEAR_ZERO(p1d2[i], etol) &&  NEAR_ZERO(p2d2[i], etol)) {
 	    //std::cout << "edge-only intersect - e1\n";
@@ -292,15 +289,12 @@ edge_only_isect(
 	}
     }
 
-    // If either triangle thinks this isn't an edge intersect, we're done
     if (!nedge_1 || !nedge_2) {
-	return -1;
+	return false;
     }
 
-    // If the finite chords' maximum distance is too large, the edges
-    // aren't properly aligned and we need the points
+    // If the edges aren't properly aligned and we need the closest points
     double llen = -DBL_MAX;
-    double lt[4];
 
     t1_nedge.ClosestPointTo(t2_nedge.PointAt(0), &(lt[0]));
     t1_nedge.ClosestPointTo(t2_nedge.PointAt(1), &(lt[1]));
@@ -315,16 +309,42 @@ edge_only_isect(
     for (int i = 0; i < 4; i++) {
 	llen = (ll[i] > llen) ? ll[i] : llen;
     }
-    // Max dist from line too large
+    // Max dist from line too large, not an edge only intersect
     if ( llen > etol ) {
-	return -1;
+	return false;
     }
 
-    // If both points are on the same edge, it's an edge-only intersect.
+    return true;
+}
 
-    // For any vertices from one triangle that are interior to the opposite
-    // edge, flag them for processing - almost-but-not-on-the-edge points
-    // are a possible source of overlaps
+static bool
+edge_only_isect(
+	omesh_t *omesh1, triangle_t &t1,
+	omesh_t *omesh2, triangle_t &t2,
+	ON_3dPoint &p1, ON_3dPoint &p2,
+	ON_Line *t1_lines,
+	ON_Line *t2_lines,
+	double etol
+	)
+{
+    ON_Line t1_nedge, t2_nedge;
+    edge_t t1_e, t2_e;
+    double lt[4];
+
+    // If either triangle thinks this isn't an edge-only intersect, we're done
+    if (!find_intersecting_edges((double *)lt, t1_e, t2_e, t1_nedge, t2_nedge,
+		p1, p2, t1_lines, t2_lines, t1, t2, etol)) {
+	return false;
+    }
+
+
+    // If both points are on the same edge, it's an edge-only intersect.  However,
+    // if the vertices are such that we want to process them to align the mesh
+    // and avoid sliver overlaps near the edges, we may not be able to report it
+    // as such - keep checking.
+
+    // If any close-to-edge vertices from one triangle project on the interior of the
+    // nearest edge from the other triangle, report a non-edge intersect.
 
     int process_pnt = 0;
     double vtol = 0.01;
@@ -341,6 +361,10 @@ edge_only_isect(
 
     v = omesh1->overts[t1_e.v[1]];
     process_pnt += near_edge_process(lt[3], vtol);
+
+    if (process_pnt) {
+	return false;
+    }
 
     // If the non-edge point of one of the triangles is clearly inside
     // the other mesh, we need to flag it for processing as well - there
@@ -397,7 +421,93 @@ edge_only_isect(
 	process_pnt += remote_vert_process(t2_pinside, v, omesh1);
     }
 
-    return (process_pnt > 0) ? 1 : 0;
+    if (process_pnt) {
+	return false;
+    }
+
+    return true;
+}
+
+static bool
+tri_isect_basic(point_t *isectpt1, point_t *isectpt2, cdt_mesh_t *fmesh1, triangle_t &t1, cdt_mesh_t *fmesh2, triangle_t &t2)
+{
+    int coplanar = 0;
+    point_t T1_V[3];
+    point_t T2_V[3];
+
+    VSET(T1_V[0], fmesh1->pnts[t1.v[0]]->x, fmesh1->pnts[t1.v[0]]->y, fmesh1->pnts[t1.v[0]]->z);
+    VSET(T1_V[1], fmesh1->pnts[t1.v[1]]->x, fmesh1->pnts[t1.v[1]]->y, fmesh1->pnts[t1.v[1]]->z);
+    VSET(T1_V[2], fmesh1->pnts[t1.v[2]]->x, fmesh1->pnts[t1.v[2]]->y, fmesh1->pnts[t1.v[2]]->z);
+    VSET(T2_V[0], fmesh2->pnts[t2.v[0]]->x, fmesh2->pnts[t2.v[0]]->y, fmesh2->pnts[t2.v[0]]->z);
+    VSET(T2_V[1], fmesh2->pnts[t2.v[1]]->x, fmesh2->pnts[t2.v[1]]->y, fmesh2->pnts[t2.v[1]]->z);
+    VSET(T2_V[2], fmesh2->pnts[t2.v[2]]->x, fmesh2->pnts[t2.v[2]]->y, fmesh2->pnts[t2.v[2]]->z);
+    int isect = bg_tri_tri_isect_with_line(T1_V[0], T1_V[1], T1_V[2], T2_V[0], T2_V[1], T2_V[2], &coplanar, isectpt1, isectpt2);
+
+    if (!isect) {
+	// No intersection - we're done
+	return false;
+    }
+
+    ON_3dPoint p1((*isectpt1)[X], (*isectpt1)[Y], (*isectpt1)[Z]);
+    ON_3dPoint p2((*isectpt2)[X], (*isectpt2)[Y], (*isectpt2)[Z]);
+    if (p1.DistanceTo(p2) < ON_ZERO_TOLERANCE) {
+	// Intersection is a single point - not volumetric
+	return false;
+    }
+
+    return true;
+}
+
+static double
+tri_lines(ON_Line *t1_lines, ON_Line *t2_lines,
+	cdt_mesh_t *fmesh1, triangle_t &t1, cdt_mesh_t *fmesh2, triangle_t &t2)
+{
+    t1_lines[0] = ON_Line(*fmesh1->pnts[t1.v[0]], *fmesh1->pnts[t1.v[1]]);
+    t1_lines[1] = ON_Line(*fmesh1->pnts[t1.v[1]], *fmesh1->pnts[t1.v[2]]);
+    t1_lines[2] = ON_Line(*fmesh1->pnts[t1.v[2]], *fmesh1->pnts[t1.v[0]]);
+
+    t2_lines[0] = ON_Line(*fmesh2->pnts[t2.v[0]], *fmesh2->pnts[t2.v[1]]);
+    t2_lines[1] = ON_Line(*fmesh2->pnts[t2.v[1]], *fmesh2->pnts[t2.v[2]]);
+    t2_lines[2] = ON_Line(*fmesh2->pnts[t2.v[2]], *fmesh2->pnts[t2.v[0]]);
+
+    double elen_min = DBL_MAX;
+    for (int i = 0; i < 3; i++) {
+	elen_min = (elen_min > t1_lines[i].Length()) ? t1_lines[i].Length() : elen_min;
+	elen_min = (elen_min > t2_lines[i].Length()) ? t2_lines[i].Length() : elen_min;
+    }
+
+    return elen_min;
+}
+
+static bool
+tri_near_verts_isect(point_t *isectpt1, point_t *isectpt2, cdt_mesh_t *fmesh1, triangle_t &t1, cdt_mesh_t *fmesh2, triangle_t &t2, double etol)
+{
+    // See if we're intersecting very close to triangle vertices
+    bool vert_isect = false;
+    double t1_i1_vdists[3];
+    double t1_i2_vdists[3];
+    double t2_i1_vdists[3];
+    double t2_i2_vdists[3];
+
+    ON_3dPoint p1((*isectpt1)[X], (*isectpt1)[Y], (*isectpt1)[Z]);
+    ON_3dPoint p2((*isectpt2)[X], (*isectpt2)[Y], (*isectpt2)[Z]);
+
+    for (int i = 0; i < 3; i++) {
+	t1_i1_vdists[i] = fmesh1->pnts[t1.v[i]]->DistanceTo(p1);
+	t2_i1_vdists[i] = fmesh2->pnts[t2.v[i]]->DistanceTo(p1);
+    	t1_i2_vdists[i] = fmesh1->pnts[t1.v[i]]->DistanceTo(p2);
+	t2_i2_vdists[i] = fmesh2->pnts[t2.v[i]]->DistanceTo(p2);
+    }
+    for (int i = 0; i < 3; i++) {
+	if (t1_i1_vdists[i] < etol && t1_i2_vdists[i] < etol) {
+	    vert_isect = true;
+	}
+	if (t2_i1_vdists[i] < etol && t2_i2_vdists[i] < etol) {
+	    vert_isect = true;
+	}
+    }
+
+    return vert_isect;
 }
 
 /*****************************************************************************
@@ -414,124 +524,64 @@ tri_isect(
 {
     cdt_mesh_t *fmesh1 = omesh1->fmesh;
     cdt_mesh_t *fmesh2 = omesh2->fmesh;
-    int coplanar = 0;
-    point_t T1_V[3];
-    point_t T2_V[3];
     point_t isectpt1 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
     point_t isectpt2 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
 
 
-    VSET(T1_V[0], fmesh1->pnts[t1.v[0]]->x, fmesh1->pnts[t1.v[0]]->y, fmesh1->pnts[t1.v[0]]->z);
-    VSET(T1_V[1], fmesh1->pnts[t1.v[1]]->x, fmesh1->pnts[t1.v[1]]->y, fmesh1->pnts[t1.v[1]]->z);
-    VSET(T1_V[2], fmesh1->pnts[t1.v[2]]->x, fmesh1->pnts[t1.v[2]]->y, fmesh1->pnts[t1.v[2]]->z);
-    VSET(T2_V[0], fmesh2->pnts[t2.v[0]]->x, fmesh2->pnts[t2.v[0]]->y, fmesh2->pnts[t2.v[0]]->z);
-    VSET(T2_V[1], fmesh2->pnts[t2.v[1]]->x, fmesh2->pnts[t2.v[1]]->y, fmesh2->pnts[t2.v[1]]->z);
-    VSET(T2_V[2], fmesh2->pnts[t2.v[2]]->x, fmesh2->pnts[t2.v[2]]->y, fmesh2->pnts[t2.v[2]]->z);
-    int isect = bg_tri_tri_isect_with_line(T1_V[0], T1_V[1], T1_V[2], T2_V[0], T2_V[1], T2_V[2], &coplanar, &isectpt1, &isectpt2);
-
-    if (!isect) {
-	// No intersection - we're done
+    if (!tri_isect_basic(&isectpt1, &isectpt2, fmesh1, t1, fmesh2, t2)) {
 	return 0;
     }
 
-    ON_3dPoint p1(isectpt1[X], isectpt1[Y], isectpt1[Z]);
-    ON_3dPoint p2(isectpt2[X], isectpt2[Y], isectpt2[Z]);
-    if (p1.DistanceTo(p2) < ON_ZERO_TOLERANCE) {
-	// Intersection is a single point - not volumetric
-	return 0;
-    }
-
-#if 0
-    // Trigger if our problem point of the moment is near an edge
-    bool t1_edge_problem = (
-	    PPCHECK(*fmesh1->pnts[t1.v[0]]) || PPCHECK(*fmesh1->pnts[t1.v[1]]) || PPCHECK(*fmesh1->pnts[t1.v[2]]));
-    bool t2_edge_problem = (
-	    PPCHECK(*fmesh2->pnts[t2.v[0]]) || PPCHECK(*fmesh2->pnts[t2.v[1]]) || PPCHECK(*fmesh2->pnts[t2.v[2]]));
-
-    if (t1_edge_problem || t2_edge_problem) {
-	if (t1_edge_problem) {
-	    std::cout << "t1 edge problem pnt\n";
-	}
-	if (t2_edge_problem) {
-	    std::cout << "t2 edge problem pnt\n";
-	} 
-    }
-#endif
-    isect_plot(fmesh1, t1.ind, fmesh2, t2.ind, &isectpt1, &isectpt2);
+    //isect_plot(fmesh1, t1.ind, fmesh2, t2.ind, &isectpt1, &isectpt2);
 
     // Past the trivial cases - we're going to have to know something about the
     // triangles' dimensions and boundaries to characterize the intersection
     ON_Line t1_lines[3];
-    t1_lines[0] = ON_Line(*fmesh1->pnts[t1.v[0]], *fmesh1->pnts[t1.v[1]]);
-    t1_lines[1] = ON_Line(*fmesh1->pnts[t1.v[1]], *fmesh1->pnts[t1.v[2]]);
-    t1_lines[2] = ON_Line(*fmesh1->pnts[t1.v[2]], *fmesh1->pnts[t1.v[0]]);
-
     ON_Line t2_lines[3];
-    t2_lines[0] = ON_Line(*fmesh2->pnts[t2.v[0]], *fmesh2->pnts[t2.v[1]]);
-    t2_lines[1] = ON_Line(*fmesh2->pnts[t2.v[1]], *fmesh2->pnts[t2.v[2]]);
-    t2_lines[2] = ON_Line(*fmesh2->pnts[t2.v[2]], *fmesh2->pnts[t2.v[0]]);
-    double elen_min = DBL_MAX;
-    for (int i = 0; i < 3; i++) {
-	elen_min = (elen_min > t1_lines[i].Length()) ? t1_lines[i].Length() : elen_min;
-	elen_min = (elen_min > t2_lines[i].Length()) ? t2_lines[i].Length() : elen_min;
-    }
+    double elen_min = tri_lines((ON_Line *)&t1_lines, (ON_Line *)&t2_lines, fmesh1, t1, fmesh2, t2);
     double etol = 0.0001*elen_min;
 
-    // See if we're intersecting very close to triangle vertices - if we
-    // are, just flag those points for consideration
-    bool vert_isect = false;
-    double t1_i1_vdists[3];
-    double t1_i2_vdists[3];
-    double t2_i1_vdists[3];
-    double t2_i2_vdists[3];
-    for (int i = 0; i < 3; i++) {
-	t1_i1_vdists[i] = fmesh1->pnts[t1.v[i]]->DistanceTo(p1);
-	t2_i1_vdists[i] = fmesh2->pnts[t2.v[i]]->DistanceTo(p1);
-    	t1_i2_vdists[i] = fmesh1->pnts[t1.v[i]]->DistanceTo(p2);
-	t2_i2_vdists[i] = fmesh2->pnts[t2.v[i]]->DistanceTo(p2);
-    }
-    for (int i = 0; i < 3; i++) {
-	if (t1_i1_vdists[i] < etol && t1_i2_vdists[i] < etol) {
-	    vert_isect = true;
-	}
-	if (t2_i1_vdists[i] < etol && t2_i2_vdists[i] < etol) {
-	    vert_isect = true;
-	}
-    }
-
     // This category of intersection isn't one that warrants an intersection return.
-    if (vert_isect) {
+    if (tri_near_verts_isect(&isectpt1, &isectpt2, fmesh1, t1, fmesh2, t2, etol)) {
 	return 0;
     }
 
-#if 0
-    // Because the edge-only test is deliberately loose, we need to check if
-    // we've got a situation where all three vertices are already closely
-    // aligned with vertices in the opposite mesh.  In that case, we don't have
-    // enough degrees of freedom to resolve the overlap, and we need to mark
-    // the edges for splitting.
-    int a1 = aligned_isect(omesh1, t1, omesh2, t2, etol);
-    int a2 = aligned_isect(omesh2, t2, omesh1, t1, etol);
-    // If they're both aligned we're done, otherwise we need to keep checking
-    if (a1 && a2) {
-	// We won't use this information for most of the processing, but at the end
-	// we may need to re-triangulate using this particular category of triangle
-	// intersects as a guide.  Make a record.
-	omesh1->aligned_ovlps[t1.ind][omesh2].insert(t2.ind);
-	omesh2->aligned_ovlps[t2.ind][omesh1].insert(t1.ind);
-	return 1;
-    }
-#endif
-
+    // Check for edge-only intersections
     ON_Line nedge;
-    int near_edge = edge_only_isect(omesh1, t1, omesh2, t2, p1, p2, (ON_Line *)t1_lines, (ON_Line *)t2_lines, 0.3*elen_min);
+    ON_3dPoint p1(isectpt1[X], isectpt1[Y], isectpt1[Z]);
+    ON_3dPoint p2(isectpt2[X], isectpt2[Y], isectpt2[Z]);
+    bool near_edge_isect = edge_only_isect(omesh1, t1, omesh2, t2, p1, p2, (ON_Line *)t1_lines, (ON_Line *)t2_lines, 0.3*elen_min);
 
-
-    if (near_edge >= 0) {
-	return near_edge;
+    if (near_edge_isect) {
+	return 0;
     }
 
     return 1;
+}
+
+// Assuming t1 and t2 intersect, identify any refinement vertices that need processing
+int
+tri_nearedge_refine(
+	omesh_t *omesh1, triangle_t &t1,
+       	omesh_t *omesh2, triangle_t &t2
+	)
+{
+    cdt_mesh_t *fmesh1 = omesh1->fmesh;
+    cdt_mesh_t *fmesh2 = omesh2->fmesh;
+    point_t isectpt1 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
+    point_t isectpt2 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
+
+    if (!tri_isect_basic(&isectpt1, &isectpt2, fmesh1, t1, fmesh2, t2)) {
+	return 0;
+    }
+#if 0
+    ON_Line t1_lines[3];
+    ON_Line t2_lines[3];
+    double elen_min = tri_lines(&t1_lines, &t2_lines, fmesh1, t1, fmesh2, t2);
+    double etol = 0.0001*elen_min;
+#endif
+
+    return 0;
 }
 
 /** @} */
