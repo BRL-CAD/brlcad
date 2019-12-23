@@ -849,6 +849,8 @@ omesh_refinement_pnts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pair
 	}
     }
 
+    // TODO - incorporate tri_nearedge_refine in here somewhere...
+
     if (level < 2) {
 	// Count triangles to determine which verts need attention.  If a vertex is associated
 	// with two or more triangles that intersect another face, it is a refinement point

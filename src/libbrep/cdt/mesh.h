@@ -906,6 +906,12 @@ tri_isect(
 	omesh_t *omesh1, triangle_t &t1,
 	omesh_t *omesh2, triangle_t &t2
 	);
+int
+tri_nearedge_refine(
+	omesh_t *omesh1, triangle_t &t1,
+	omesh_t *omesh2, triangle_t &t2
+	);
+
 
 std::vector<ovlp_grp>
 find_ovlp_grps(
