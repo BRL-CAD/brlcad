@@ -2963,6 +2963,9 @@ cdt_mesh_t::valid(int verbose)
     struct bu_vls fname = BU_VLS_INIT_ZERO;
     bool nret = true;
     bool eret = true;
+    bool tret = true;
+
+    boundary_edges_update();
 
     RTree<size_t, double, 3>::Iterator tree_it;
     tris_tree.GetFirst(tree_it);
@@ -2993,7 +2996,39 @@ cdt_mesh_t::valid(int verbose)
 	serialize(bu_vls_cstr(&fname));
     }
 
-    boundary_edges_update();
+    tris_tree.GetFirst(tree_it);
+    while (!tree_it.IsNull()) {
+	t_ind = *tree_it;
+	tri = tris_vect[t_ind];
+
+	int epnt_cnt = 0;
+	int bedge_cnt = 0;
+	for (int i = 0; i < 3; i++) {
+	    epnt_cnt = (ep.find(tri.v[i]) == ep.end()) ? epnt_cnt : epnt_cnt + 1;
+	}
+	std::set<uedge_t> ue = tri.uedges();
+	std::set<uedge_t>::iterator ue_it;
+	for (ue_it = ue.begin(); ue_it != ue.end(); ue_it++) {
+	    if (boundary_edges.find(*ue_it) != boundary_edges.end()) {
+		bedge_cnt++;
+	    }
+	}
+
+	if (epnt_cnt == 3 && bedge_cnt < 2) {
+	    std::cerr << "tri has three edge points, but only " << bedge_cnt << "  boundary edges??\n";
+	    tret = false;
+	}
+
+	++tree_it;
+    }
+
+    if (!tret && verbose > 1) {
+	bu_vls_sprintf(&fname, "%d-bad_edge_tri.plot3", f_id);
+	tris_plot(bu_vls_cstr(&fname));
+	bu_vls_sprintf(&fname, "%d-bad_edge_tri.cdtmesh", f_id);
+	serialize(bu_vls_cstr(&fname));
+    }
+
     if (problem_edges.size() > 0) {
 	if (verbose > 0) {
 	    std::cout << name << " face " << f_id << ": problem edges in mesh\n";
@@ -3012,11 +3047,11 @@ cdt_mesh_t::valid(int verbose)
 
     bu_vls_free(&fname);
 
-    if ((nret && eret) && verbose > 0) {
+    if ((nret && eret && tret) && verbose > 0) {
 	std::cout << name << " face " << f_id << ": valid\n";
     }
 
-    return (nret && eret);
+    return (nret && eret && tret);
 }
 
 void cdt_mesh_t::plot_uedge(struct uedge_t &ue, FILE* plot_file)
