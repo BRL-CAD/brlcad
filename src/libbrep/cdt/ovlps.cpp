@@ -851,7 +851,7 @@ omesh_refinement_pnts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pair
 
     // TODO - incorporate tri_nearedge_refine in here somewhere...
 
-    if (level < 2) {
+    if (level == 0) {
 	// Count triangles to determine which verts need attention.  If a vertex is associated
 	// with two or more triangles that intersect another face, it is a refinement point
 	// candidate.
@@ -871,21 +871,61 @@ omesh_refinement_pnts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pair
 		}
 	    }
 	}
-	if (level == 0) {
-	    for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
-		std::set<overt_t *> ev;
-		std::set<overt_t *>::iterator ev_it;
-		std::map<overt_t *, std::set<long>>::iterator r_it;
-		omesh_t *am = *a_it;
-		for (r_it = am->refinement_overts.begin(); r_it != am->refinement_overts.end(); r_it++) {
-		    VPCHECK(r_it->first, NULL);
-		    // Not enough activity hits, not a refinement vertex
-		    if (r_it->second.size() == 1) {
-			ev.insert(r_it->first);
+	for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
+	    std::set<overt_t *> ev;
+	    std::set<overt_t *>::iterator ev_it;
+	    std::map<overt_t *, std::set<long>>::iterator r_it;
+	    omesh_t *am = *a_it;
+	    for (r_it = am->refinement_overts.begin(); r_it != am->refinement_overts.end(); r_it++) {
+		VPCHECK(r_it->first, NULL);
+		// Not enough activity hits, not a refinement vertex
+		if (r_it->second.size() == 1) {
+		    ev.insert(r_it->first);
+		}
+	    }
+	    for (ev_it = ev.begin(); ev_it != ev.end(); ev_it++) {
+		am->refinement_overts.erase(*ev_it);
+	    }
+	}
+
+	// Add triangle intersection vertices that are close to the edge of the opposite
+	// triangle, whether or not they satisfy the count criteria - these are a source
+	// of potential trouble.
+	for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
+	    omesh_t *am = *a_it;
+	    std::map<size_t, std::set<std::pair<omesh_t *, size_t>> >::iterator p_it;
+	    for (p_it = am->itris.begin(); p_it != am->itris.end(); p_it++) {
+		triangle_t t1 = am->fmesh->tris_vect[p_it->first];
+		std::set<std::pair<omesh_t *, size_t>>::iterator s_it;
+		for (s_it = p_it->second.begin(); s_it != p_it->second.end(); s_it++) {
+		    omesh_t *im = s_it->first;
+		    size_t otri_ind = s_it->second;
+		    triangle_t t2 = im->fmesh->tris_vect[otri_ind];
+		    int risect = tri_nearedge_refine(am, t1, im, t2);
+		    if (risect) {
+			std::cout << "risect: " << risect << "\n";
 		    }
 		}
-		for (ev_it = ev.begin(); ev_it != ev.end(); ev_it++) {
-		    am->refinement_overts.erase(*ev_it);
+	    }
+	}	    
+    }
+
+    if (level == 1) {
+	// Add all vertices associated with triangles that intersect another
+	// face.
+	for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
+	    omesh_t *am = *a_it;
+	    std::map<size_t, std::set<std::pair<omesh_t *, size_t>> >::iterator p_it;
+	    for (p_it = am->itris.begin(); p_it != am->itris.end(); p_it++) {
+		std::set<std::pair<omesh_t *, size_t>>::iterator s_it;
+		for (s_it = p_it->second.begin(); s_it != p_it->second.end(); s_it++) {
+		    omesh_t *im = s_it->first;
+		    size_t otri_ind = s_it->second;
+		    triangle_t tri = im->fmesh->tris_vect[otri_ind];
+		    for (int i = 0; i < 3; i++) {
+			overt_t *v = im->overts[tri.v[i]];
+			am->refinement_overts[v].insert(otri_ind);
+		    }
 		}
 	    }
 	}
