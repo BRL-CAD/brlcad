@@ -888,6 +888,8 @@ omesh_refinement_pnts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pair
 	    }
 	}
 
+	plot_active_omeshes(check_pairs, NULL);
+
 	// Add triangle intersection vertices that are close to the edge of the opposite
 	// triangle, whether or not they satisfy the count criteria - these are a source
 	// of potential trouble.
@@ -907,7 +909,7 @@ omesh_refinement_pnts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pair
 		    }
 		}
 	    }
-	}	    
+	}
     }
 
     if (level == 1) {
@@ -1806,8 +1808,46 @@ bedge_split_near_vert(
     return replaced_tris;
 }
 
+// TODO - need to add a check for triangles with all three vertices on the
+// same brep face edge - c.s face 4 appears to have some triangles appearing
+// of that sort, which are messing with the ovlp resolution...
+void
+check_faces_validity(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
+{
+    int verbosity = 0;
+    std::set<cdt_mesh_t *> fmeshes;
+    std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>>::iterator cp_it;
+    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
+	cdt_mesh_t *fmesh1 = cp_it->first;
+	cdt_mesh_t *fmesh2 = cp_it->second;
+	fmeshes.insert(fmesh1);
+	fmeshes.insert(fmesh2);
+    }
+    if (verbosity > 0) {
+	std::cout << "Full face validity check results:\n";
+    }
+    bool valid = true;
+    std::set<cdt_mesh_t *>::iterator f_it;
+    for (f_it = fmeshes.begin(); f_it != fmeshes.end(); f_it++) {
+	cdt_mesh_t *fmesh = *f_it;
+	if (!fmesh->valid(verbosity)) {
+	    valid = false;
+#if 1
+	    struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
+	    std::string fpname = std::string(s_cdt->name) + std::string("_face_") + std::to_string(fmesh->f_id) + std::string(".plot3");
+	    fmesh->tris_plot(fpname.c_str());
+	    std::cerr << "Invalid: " << s_cdt->name << " face " << fmesh->f_id << "\n";
+#endif
+	}
+    }
+    if (!valid) {
+	bu_exit(1, "fatal mesh damage");
+    }
+}
+
 int
 bedge_split_near_verts(
+	std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs,
 	std::set<overt_t *> *nverts,
 	std::map<bedge_seg_t *, std::set<overt_t *>> &edge_verts
 	)
@@ -1859,6 +1899,9 @@ bedge_split_near_verts(
 		replaced_tris += ntri_cnt;
 		segs.insert(nsegs.begin(), nsegs.end());
 		nverts->insert(nv);
+
+		// Ouch - we're getting a validity failure after the near_verts split
+		check_faces_validity(check_pairs);
 	    }
 	}
 	evcnt++;
@@ -1953,38 +1996,7 @@ vert_nearby_closest_point_check(
 }
 
 
-void
-check_faces_validity(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
-{
-    int verbosity = 0;
-    std::set<cdt_mesh_t *> fmeshes;
-    std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>>::iterator cp_it;
-    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
-	cdt_mesh_t *fmesh1 = cp_it->first;
-	cdt_mesh_t *fmesh2 = cp_it->second;
-	fmeshes.insert(fmesh1);
-	fmeshes.insert(fmesh2);
-    }
-    if (verbosity > 0) {
-	std::cout << "Full face validity check results:\n";
-    }
-    bool valid = true;
-    std::set<cdt_mesh_t *>::iterator f_it;
-    for (f_it = fmeshes.begin(); f_it != fmeshes.end(); f_it++) {
-	cdt_mesh_t *fmesh = *f_it;
-	if (!fmesh->valid(verbosity)) {
-	    valid = false;
-	}
-#if 0
-	struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
-	std::string fpname = std::to_string(id) + std::string("_") + std::string(s_cdt->name) + std::string("_face_") + std::to_string(fmesh->f_id) + std::string(".plot3");
-	fmesh->tris_plot(fpname.c_str());
-#endif
-    }
-    if (!valid) {
-	bu_exit(1, "fatal mesh damage");
-    }
-}
+
 
 int
 omesh_interior_edge_verts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
@@ -2204,7 +2216,7 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 	    while (bedge_replaced_tris) {
 		// Process edge_verts
 		std::set<overt_t *> nverts;
-		bedge_replaced_tris = bedge_split_near_verts(&nverts, edge_verts);
+		bedge_replaced_tris = bedge_split_near_verts(check_pairs, &nverts, edge_verts);
 		edge_verts.clear();
 		std::set<overt_t *>::iterator nv_it;
 		int avcnt = 0;
@@ -2432,6 +2444,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		std::cout << "Adjusted " << avcnt << " vertices\n";
 		face_ov_cnt = omesh_ovlps(check_pairs);
 		omesh_refinement_pnts(check_pairs, rpnt_level);
+		check_faces_validity(check_pairs);
 	    }
 
 	    // TODO - rethink the edge points a bit.  What we probably want is a matching
@@ -2442,8 +2455,10 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    // Process edge_verts
 	    std::map<bedge_seg_t *, std::set<overt_t *>> edge_verts = find_edge_verts(check_pairs);
 	    std::set<overt_t *> nverts;
-	    bedge_replaced_tris = bedge_split_near_verts(&nverts, edge_verts);
+	    bedge_replaced_tris = bedge_split_near_verts(check_pairs, &nverts, edge_verts);
 	    edge_verts.clear();
+	    // Ouch - we're getting a validity failure after the near_verts split
+	    check_faces_validity(check_pairs);
 
 	    int vvcnt = 0;
 #if 1
@@ -2456,7 +2471,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    }
 	    while (edge_verts.size()) {
 		nverts.clear();
-		bedge_replaced_tris += bedge_split_near_verts(&nverts, edge_verts);
+		bedge_replaced_tris += bedge_split_near_verts(check_pairs, &nverts, edge_verts);
 		edge_verts.clear();
 		for (nv_it = nverts.begin(); nv_it != nverts.end(); nv_it++) {
 		    vvcnt += vert_nearby_closest_point_check(*nv_it, edge_verts, check_pairs);
@@ -2467,6 +2482,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    if (bedge_replaced_tris || vvcnt) {
 		face_ov_cnt = omesh_ovlps(check_pairs);
 		omesh_refinement_pnts(check_pairs, rpnt_level);
+		check_faces_validity(check_pairs);
 	    }
 	}
 
@@ -2481,6 +2497,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    interior_replaced_tris = omesh_interior_edge_verts(check_pairs);
 	    face_ov_cnt = omesh_ovlps(check_pairs);
 	    omesh_refinement_pnts(check_pairs, rpnt_level);
+	    check_faces_validity(check_pairs);
 	}
 	rpnt_level++;
 
