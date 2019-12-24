@@ -784,8 +784,11 @@ find_edge_verts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs)
 	std::set<overt_t *>::iterator e_it;
 	std::map<overt_t *, std::set<long>>::iterator r_it;
 	for (r_it = am->refinement_overts.begin(); r_it != am->refinement_overts.end(); r_it++) {
-	    overt_t *v = r_it->first;	
+	    overt_t *v = r_it->first;
 	    ON_3dPoint p = v->vpnt();
+	    if (am->sname() == std::string("c.s") && am->fmesh->f_id == 4) {
+		std::cout << "center " << p.x << " " << p.y << " " << p.z << "\n";
+	    }
 	    uedge_t closest_edge = am->closest_uedge(p);
 	    if (am->fmesh->brep_edges.find(closest_edge) != am->fmesh->brep_edges.end()) {
 		bedge_seg_t *bseg = am->fmesh->ue2b_map[closest_edge];
@@ -2020,7 +2023,9 @@ omesh_interior_edge_verts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check
     std::set<omesh_t *>::iterator o_it;
     for (o_it = omeshes.begin(); o_it != omeshes.end(); o_it++) {
 	omesh_t *omesh = *o_it;
-
+	if (omesh->sname() == std::string("c.s") && omesh->fmesh->f_id == 4) {
+	    std::cout << "debug\n";
+	}
 	std::map<uedge_t, std::vector<revt_pt_t>> edge_sets;
 
 	// From the refinement_overts set, build up the set of vertices
@@ -2453,15 +2458,21 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    // that don't already have an aligned point recorded?
 
 	    // Process edge_verts
+	    size_t evcnt = INT_MAX;
 	    std::map<bedge_seg_t *, std::set<overt_t *>> edge_verts = find_edge_verts(check_pairs);
-	    std::set<overt_t *> nverts;
-	    bedge_replaced_tris = bedge_split_near_verts(check_pairs, &nverts, edge_verts);
-	    edge_verts.clear();
-	    // Ouch - we're getting a validity failure after the near_verts split
-	    check_faces_validity(check_pairs);
+	    while (evcnt > edge_verts.size()) {
+		std::set<overt_t *> nverts;
+		bedge_replaced_tris = bedge_split_near_verts(check_pairs, &nverts, edge_verts);
+		evcnt = edge_verts.size();
+		edge_verts.clear();
+		omesh_refinement_pnts(check_pairs, rpnt_level);
+		edge_verts = find_edge_verts(check_pairs);
+		// Ouch - we're getting a validity failure after the near_verts split
+		check_faces_validity(check_pairs);
+	    }
 
 	    int vvcnt = 0;
-#if 1
+#if 0
 	    std::set<overt_t *>::iterator nv_it;
 	    for (nv_it = nverts.begin(); nv_it != nverts.end(); nv_it++) {
 		vvcnt += vert_nearby_closest_point_check(*nv_it, edge_verts, check_pairs);
@@ -2494,6 +2505,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	// to the meshes as a condition of termination...
 	int interior_replaced_tris = INT_MAX;
 	while (interior_replaced_tris) {
+	    find_edge_verts(check_pairs);
 	    interior_replaced_tris = omesh_interior_edge_verts(check_pairs);
 	    face_ov_cnt = omesh_ovlps(check_pairs);
 	    omesh_refinement_pnts(check_pairs, rpnt_level);
