@@ -330,8 +330,12 @@ struct rt_ebm_internal {
     uint32_t ydim;	/**< @brief Y dimension (n cells) */
     fastf_t tallness;	/**< @brief Z dimension (mm) */
     mat_t mat;		/**< @brief convert local coords to model space */
-    /* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
-    struct bu_mapped_file *mp;	/**< @brief actual data */
+    unsigned short *buf; /**< @brief actual data */
+    struct bu_mapped_file *mp;	/**< @brief mapped file for data */
+    struct rt_db_internal *bip; /**< @brief db object for data */
+#define RT_EBM_SRC_FILE 'f'
+#define RT_EBM_SRC_OBJ 'o'
+    char datasrc; /**< @brief which type of data source */
 };
 #define RT_EBM_CK_MAGIC(_p) BU_CKMAG(_p, RT_EBM_INTERNAL_MAGIC, "rt_ebm_internal")
 /** @} */
