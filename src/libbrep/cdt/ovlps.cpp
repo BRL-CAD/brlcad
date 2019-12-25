@@ -49,7 +49,8 @@ ovbbp(ON_BoundingBox &bb) {
 }
 
 
-#define PPOINT 3.38984844477552327,7.61925680200236233,24.0000072835802527
+//#define PPOINT 3.38984844477552327,7.61925680200236233,24.0000072835802527
+#define PPOINT 2.5657681525730283,8.003238757925871,23.752291844936355 
 bool
 PPCHECK(ON_3dPoint &p)
 {
@@ -778,6 +779,7 @@ find_edge_verts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs)
     }
 
     std::map<bedge_seg_t *, std::set<overt_t *>> edge_verts;
+    edge_verts.clear();
     for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
 	omesh_t *am = *a_it;
 	std::set<overt_t *> everts;
@@ -786,10 +788,19 @@ find_edge_verts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs)
 	for (r_it = am->refinement_overts.begin(); r_it != am->refinement_overts.end(); r_it++) {
 	    overt_t *v = r_it->first;
 	    ON_3dPoint p = v->vpnt();
-	    if (am->sname() == std::string("c.s") && am->fmesh->f_id == 4) {
-		std::cout << "center " << p.x << " " << p.y << " " << p.z << "\n";
-	    }
 	    uedge_t closest_edge = am->closest_uedge(p);
+	    bool pprint = false;
+	    //if (am->sname() == std::string("c.s") && am->fmesh->f_id == 0 && PPCHECK(p)) {
+	    if (PPCHECK(p)) {
+		std::cout << am->sname() << ":\n";
+		std::cout << "center " << p.x << " " << p.y << " " << p.z << "\n";
+		ON_3dPoint pe1 = *am->fmesh->pnts[closest_edge.v[0]];
+		std::cout << "center " << pe1.x << " " << pe1.y << " " << pe1.z << "\n";
+		ON_3dPoint pe2 = *am->fmesh->pnts[closest_edge.v[1]];
+		std::cout << "center " << pe2.x << " " << pe2.y << " " << pe2.z << "\n";
+		pprint = true;
+	    }
+
 	    if (am->fmesh->brep_edges.find(closest_edge) != am->fmesh->brep_edges.end()) {
 		bedge_seg_t *bseg = am->fmesh->ue2b_map[closest_edge];
 		if (!bseg) {
@@ -808,6 +819,10 @@ find_edge_verts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs)
 		    // Erase regardless - if we're here, we won't be using this point for
 		    // interiors on the other mesh
 		    everts.insert(v);
+		}
+
+		if (pprint) {
+		    std::cout << "PROBLEM point INSERTED from " << am->sname() << "!\n";
 		}
 	    }
 	}
@@ -1859,7 +1874,7 @@ bedge_split_near_verts(
     std::map<bedge_seg_t *, std::set<overt_t *>>::iterator ev_it;
     int evcnt = 0;
     for (ev_it = edge_verts.begin(); ev_it != edge_verts.end(); ev_it++) {
-	std::cout << "evcnt: " << evcnt << "\n";
+	std::cout << "ev (" << evcnt+1 << " of " << edge_verts.size() <<")\n";
 	std::set<overt_t *> verts = ev_it->second;
 	std::set<bedge_seg_t *> segs;
 	segs.insert(ev_it->first);
@@ -1868,6 +1883,11 @@ bedge_split_near_verts(
 	    overt_t *v = *verts.begin();
 	    ON_3dPoint p = v->vpnt();
 	    verts.erase(v);
+
+	    if (PPCHECK(p)) {
+		std::cout << v->omesh->sname() << ":\n";
+		std::cout << "center " << p.x << " " << p.y << " " << p.z << "\n";
+	    }
 
 	    bedge_seg_t *eseg_split = NULL;
 	    double split_t = -1.0;
