@@ -192,54 +192,6 @@ candidate_surf_pnt(struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *pe)
 }
 #endif
 
-std::vector<std::pair<cdt_mesh_t *, size_t>>
-bedge_seg_t::triangles()
-{
-    std::vector<std::pair<cdt_mesh_t *, size_t>> etris;
-    //  Get the triangle from each face associated with the edge segment (should only
-    // be one per face, since we're working with boundary edges.)
-    struct ON_Brep_CDT_State *s_cdt_edge = (struct ON_Brep_CDT_State *)p_cdt;
-    int f_id1 = s_cdt_edge->brep->m_T[tseg1->trim_ind].Face()->m_face_index;
-    int f_id2 = s_cdt_edge->brep->m_T[tseg2->trim_ind].Face()->m_face_index;
-    cdt_mesh_t &fmesh_f1 = s_cdt_edge->fmeshes[f_id1];
-    cdt_mesh_t &fmesh_f2 = s_cdt_edge->fmeshes[f_id2];
-
-    // Translate the tseg verts to their parent indices in order to get
-    // valid triangle lookups
-    cpolyedge_t *pe1 = tseg1;
-    cpolyedge_t *pe2 = tseg2;
-    cpolygon_t *poly1 = pe1->polygon;
-    cpolygon_t *poly2 = pe2->polygon;
-    long ue1_1 = fmesh_f1.p2d3d[poly1->p2o[tseg1->v[0]]];
-    long ue1_2 = fmesh_f1.p2d3d[poly1->p2o[tseg1->v[1]]];
-    uedge_t ue1(ue1_1, ue1_2);
-    long ue2_1 = fmesh_f2.p2d3d[poly2->p2o[tseg2->v[0]]];
-    long ue2_2 = fmesh_f2.p2d3d[poly2->p2o[tseg2->v[1]]];
-    uedge_t ue2(ue2_1, ue2_2);
-    std::set<size_t> f1_tris = fmesh_f1.uedges2tris[ue1];
-    std::set<size_t> f2_tris = fmesh_f2.uedges2tris[ue2];
-    if (f1_tris.size() != 1 || f2_tris.size() != 1) {
-	if (f1_tris.size() != 1) {
-	    std::cerr << "FATAL: could not find expected triangle in mesh " << fmesh_f1.name << "," << fmesh_f1.f_id << "\n";
-	}
-	if (f2_tris.size() != 1) {
-	    std::cerr << "FATAL: could not find expected triangle in mesh " << fmesh_f2.name << ","  << fmesh_f2.f_id << "\n";
-	}
-	ON_3dPoint ue1_p1 = *fmesh_f1.pnts[ue1.v[0]];
-	ON_3dPoint ue1_p2 = *fmesh_f1.pnts[ue1.v[1]];
-	std::cout << fmesh_f1.name << "," << f_id1 << " ue1: " << ue1.v[0] << "," << ue1.v[1] << ": " << ue1_p1.x << "," << ue1_p1.y << "," << ue1_p1.z << " -> " << ue1_p2.x << "," << ue1_p2.y << "," << ue1_p2.z << "\n";
-	ON_3dPoint ue2_p1 = *fmesh_f2.pnts[ue2.v[0]];
-	ON_3dPoint ue2_p2 = *fmesh_f2.pnts[ue2.v[1]];
-	std::cout << fmesh_f2.name << "," << f_id2 << " ue2: " << ue2.v[0] << "," << ue2.v[1] << ": " << ue2_p1.x << "," << ue2_p1.y << "," << ue2_p1.z << " -> " << ue2_p2.x << "," << ue2_p2.y << "," << ue2_p2.z << "\n";
-   
-       return etris;	
-    }
-   
-   etris.push_back(std::make_pair(&fmesh_f1, *f1_tris.begin()));
-   etris.push_back(std::make_pair(&fmesh_f2, *f2_tris.begin()));
-
-   return etris;
-}
 
 
 // TODO - can we base the width of this box on how far the 3D edge curve midpoint is from
