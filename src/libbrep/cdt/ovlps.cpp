@@ -1675,7 +1675,15 @@ ovlp_split_edge(
     //ON_3dPoint ue2_p2 = *fmesh_f2.pnts[ue2.v[1]];
     //std::cout << f_id2 << " ue2: " << ue2.v[0] << "," << ue2.v[1] << ": " << ue2_p1.x << "," << ue2_p1.y << "," << ue2_p1.z << " -> " << ue2_p2.x << "," << ue2_p2.y << "," << ue2_p2.z << "\n";
     std::set<size_t> f1_tris = fmesh_f1.uedges2tris[ue1];
+    if (f1_tris.size() != 1) {
+	std::cerr << "FATAL: could not find expected triangle in mesh " << fmesh_f1.f_id << "\n";
+	return -1; 
+    }
     std::set<size_t> f2_tris = fmesh_f2.uedges2tris[ue2];
+    if (f2_tris.size() != 1) {
+	std::cerr << "FATAL: could not find expected triangle in mesh " << fmesh_f2.f_id << "\n";
+	return -1; 
+    }
 
     int eind = eseg->edge_ind;
     std::set<bedge_seg_t *> epsegs = s_cdt_edge->e2polysegs[eind];
