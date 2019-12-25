@@ -823,11 +823,35 @@ ON_Brep_CDT_Mesh(
 bool
 CDT_Audit(struct ON_Brep_CDT_State *s_cdt)
 {
+    bool ret = true;
     if (!s_cdt) return false;
 
+    std::map<int, std::set<bedge_seg_t *>>::iterator ps_it;
 
+    for (ps_it = s_cdt->e2polysegs.begin(); ps_it != s_cdt->e2polysegs.end(); ps_it++) {
+	std::set<bedge_seg_t *>::iterator b_it;
+	for (b_it = ps_it->second.begin(); b_it != ps_it->second.end(); b_it++) {
+	    bedge_seg_t *eseg = *b_it;
+	    std::vector<std::pair<cdt_mesh_t *,uedge_t>> uedges = eseg->uedges();
+	    cdt_mesh_t *fmesh_f1 = uedges[0].first;
+	    cdt_mesh_t *fmesh_f2 = uedges[1].first;
+	    uedge_t ue1 = uedges[0].second;
+	    uedge_t ue2 = uedges[1].second;
+	    std::set<size_t> f1_tris = fmesh_f1->uedges2tris[ue1];
+	    std::set<size_t> f2_tris = fmesh_f2->uedges2tris[ue2];
+	    if (f1_tris.size() != 1 || f2_tris.size() != 1) {
+		if (f1_tris.size() != 1) {
+		    std::cerr << "FATAL: could not find expected triangle in mesh " << fmesh_f1->name << "," << fmesh_f1->f_id << "\n";
+		}
+		if (f2_tris.size() != 1) {
+		    std::cerr << "FATAL: could not find expected triangle in mesh " << fmesh_f2->name << "," << fmesh_f1->f_id  << "\n";
+		}
+		ret = false;
+	    }
+	}
+    }
 
-    return true;
+    return ret;
 }
 
 /** @} */

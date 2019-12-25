@@ -1633,8 +1633,6 @@ replace_edge_split_tri(cdt_mesh_t &fmesh, size_t t_id, long np_id, uedge_t &spli
     fmesh.tri_plot(ntri1, "nt1.plot3");
     fmesh.tri_plot(ntri2, "nt2.plot3");
 
-    // TODO - update the uedges2tris map!!!!!
-
 }
 
 int
@@ -1829,17 +1827,32 @@ check_faces_validity(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pair
 {
     int verbosity = 0;
     std::set<cdt_mesh_t *> fmeshes;
+    std::set<struct ON_Brep_CDT_State *> cdt_states;
     std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>>::iterator cp_it;
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
 	cdt_mesh_t *fmesh1 = cp_it->first;
 	cdt_mesh_t *fmesh2 = cp_it->second;
 	fmeshes.insert(fmesh1);
 	fmeshes.insert(fmesh2);
+	struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)fmesh1->p_cdt;
+	struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)fmesh2->p_cdt;
+	cdt_states.insert(s_cdt1);
+	cdt_states.insert(s_cdt2);
     }
     if (verbosity > 0) {
 	std::cout << "Full face validity check results:\n";
     }
     bool valid = true;
+
+    std::set<struct ON_Brep_CDT_State *>::iterator s_it;
+    for (s_it = cdt_states.begin(); s_it != cdt_states.end(); s_it++) {
+	struct ON_Brep_CDT_State *s_cdt = *s_it;
+	if (!CDT_Audit(s_cdt)) {
+	    std::cerr << "Invalid: " << s_cdt->name << " edge data\n";
+	    valid = false;
+	}
+    }
+
     std::set<cdt_mesh_t *>::iterator f_it;
     for (f_it = fmeshes.begin(); f_it != fmeshes.end(); f_it++) {
 	cdt_mesh_t *fmesh = *f_it;
