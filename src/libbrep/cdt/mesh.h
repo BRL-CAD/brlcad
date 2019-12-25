@@ -301,6 +301,8 @@ class bedge_seg_t {
 	ON_3dVector tan_start;
 	ON_3dVector tan_end;
 
+	std::vector<std::pair<cdt_mesh_t *,uedge_t>> uedges();
+
 };
 
 class cpolygon_t;

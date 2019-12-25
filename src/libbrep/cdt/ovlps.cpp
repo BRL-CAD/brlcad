@@ -1646,48 +1646,44 @@ ovlp_split_edge(
 {
     int replaced_tris = 0;
 
-    // 1.  Get the triangle from each face associated with the edge segment to be split (should only
-    // be one per face, since we're working with boundary edges.)
-    struct ON_Brep_CDT_State *s_cdt_edge = (struct ON_Brep_CDT_State *)eseg->p_cdt;
-    int f_id1 = s_cdt_edge->brep->m_T[eseg->tseg1->trim_ind].Face()->m_face_index;
-    int f_id2 = s_cdt_edge->brep->m_T[eseg->tseg2->trim_ind].Face()->m_face_index;
-    cdt_mesh_t &fmesh_f1 = s_cdt_edge->fmeshes[f_id1];
-    cdt_mesh_t &fmesh_f2 = s_cdt_edge->fmeshes[f_id2];
+    std::vector<std::pair<cdt_mesh_t *,uedge_t>> uedges = eseg->uedges();
 
-    // Translate the tseg verts to their parent indices in order to get
-    // valid triangle lookups
-    cpolyedge_t *pe1 = eseg->tseg1;
-    cpolyedge_t *pe2 = eseg->tseg2;
-    cpolygon_t *poly1 = pe1->polygon;
-    cpolygon_t *poly2 = pe2->polygon;
-    long ue1_1 = fmesh_f1.p2d3d[poly1->p2o[eseg->tseg1->v[0]]];
-    long ue1_2 = fmesh_f1.p2d3d[poly1->p2o[eseg->tseg1->v[1]]];
-    uedge_t ue1(ue1_1, ue1_2);
-    long ue2_1 = fmesh_f2.p2d3d[poly2->p2o[eseg->tseg2->v[0]]];
-    long ue2_2 = fmesh_f2.p2d3d[poly2->p2o[eseg->tseg2->v[1]]];
-    uedge_t ue2(ue2_1, ue2_2);
-    fmesh_f1.brep_edges.erase(ue1);
-    fmesh_f2.brep_edges.erase(ue2);
-    fmesh_f1.ue2b_map.erase(ue1);
-    fmesh_f2.ue2b_map.erase(ue2);
-    std::set<size_t> f1_tris = fmesh_f1.uedges2tris[ue1];
-    if (f1_tris.size() != 1) {
-	std::cerr << "FATAL: could not find expected triangle in mesh " << fmesh_f1.name << "," << fmesh_f1.f_id << "\n";
-	ON_3dPoint ue1_p1 = *fmesh_f1.pnts[ue1.v[0]];
-	ON_3dPoint ue1_p2 = *fmesh_f1.pnts[ue1.v[1]];
-	std::cout << fmesh_f1.name << "," << f_id1 << " ue1: " << ue1.v[0] << "," << ue1.v[1] << ": " << ue1_p1.x << "," << ue1_p1.y << "," << ue1_p1.z << " -> " << ue1_p2.x << "," << ue1_p2.y << "," << ue1_p2.z << "\n";
-	ON_3dPoint ue2_p1 = *fmesh_f2.pnts[ue2.v[0]];
-	ON_3dPoint ue2_p2 = *fmesh_f2.pnts[ue2.v[1]];
-	std::cout << fmesh_f2.name << "," << f_id2 << " ue2: " << ue2.v[0] << "," << ue2.v[1] << ": " << ue2_p1.x << "," << ue2_p1.y << "," << ue2_p1.z << " -> " << ue2_p2.x << "," << ue2_p2.y << "," << ue2_p2.z << "\n";
+    cdt_mesh_t *fmesh_f1 = uedges[0].first;
+    cdt_mesh_t *fmesh_f2 = uedges[1].first;
+
+    int f_id1 = fmesh_f1->f_id;
+    int f_id2 = fmesh_f2->f_id;
+
+    uedge_t ue1 = uedges[0].second;
+    uedge_t ue2 = uedges[1].second;
+
+    std::set<size_t> f1_tris = fmesh_f1->uedges2tris[ue1];
+    std::set<size_t> f2_tris = fmesh_f2->uedges2tris[ue2];
+    if (f1_tris.size() != 1 || f2_tris.size() != 1) {
+	if (f1_tris.size() != 1) {
+	    std::cerr << "FATAL: could not find expected triangle in mesh " << fmesh_f1->name << "," << f_id1 << "\n";
+	}
+	if (f2_tris.size() != 1) {
+	    std::cerr << "FATAL: could not find expected triangle in mesh " << fmesh_f2->name << "," << f_id2 << "\n";
+	}
+	ON_3dPoint ue1_p1 = *fmesh_f1->pnts[ue1.v[0]];
+	ON_3dPoint ue1_p2 = *fmesh_f1->pnts[ue1.v[1]];
+	std::cout << fmesh_f1->name << "," << f_id1 << " ue1: " << ue1.v[0] << "," << ue1.v[1] << ": " << ue1_p1.x << "," << ue1_p1.y << "," << ue1_p1.z << " -> " << ue1_p2.x << "," << ue1_p2.y << "," << ue1_p2.z << "\n";
+	ON_3dPoint ue2_p1 = *fmesh_f2->pnts[ue2.v[0]];
+	ON_3dPoint ue2_p2 = *fmesh_f2->pnts[ue2.v[1]];
+	std::cout << fmesh_f2->name << "," << f_id2 << " ue2: " << ue2.v[0] << "," << ue2.v[1] << ": " << ue2_p1.x << "," << ue2_p1.y << "," << ue2_p1.z << " -> " << ue2_p2.x << "," << ue2_p2.y << "," << ue2_p2.z << "\n";
 	return -1;
     }
-    std::set<size_t> f2_tris = fmesh_f2.uedges2tris[ue2];
-    if (f2_tris.size() != 1) {
-	std::cerr << "FATAL: could not find expected triangle in mesh " << fmesh_f2.name << ","  << fmesh_f2.f_id << "\n";
-	return -1;
-    }
+
+    // We're replacing the edge and its triangles - clear old data
+    // from the containers
+    fmesh_f1->brep_edges.erase(ue1);
+    fmesh_f2->brep_edges.erase(ue2);
+    fmesh_f1->ue2b_map.erase(ue1);
+    fmesh_f2->ue2b_map.erase(ue2);
 
     int eind = eseg->edge_ind;
+    struct ON_Brep_CDT_State *s_cdt_edge = (struct ON_Brep_CDT_State *)eseg->p_cdt;
     std::set<bedge_seg_t *> epsegs = s_cdt_edge->e2polysegs[eind];
     epsegs.erase(eseg);
     std::set<bedge_seg_t *> esegs_split = split_edge_seg(s_cdt_edge, eseg, 1, &t, 1);
@@ -1716,11 +1712,11 @@ ovlp_split_edge(
 	cpolyedge_t *pe_2 = es->tseg2;
 	cpolygon_t *poly_1 = pe_1->polygon;
 	cpolygon_t *poly_2 = pe_2->polygon;
-	long nue1_1 = fmesh_f1.p2d3d[poly_1->p2o[es->tseg1->v[0]]];
-	long nue1_2 = fmesh_f1.p2d3d[poly_1->p2o[es->tseg1->v[1]]];
+	long nue1_1 = fmesh_f1->p2d3d[poly_1->p2o[es->tseg1->v[0]]];
+	long nue1_2 = fmesh_f1->p2d3d[poly_1->p2o[es->tseg1->v[1]]];
 	uedge_t ue_1(nue1_1, nue1_2);
-	long nue2_1 = fmesh_f2.p2d3d[poly_2->p2o[es->tseg2->v[0]]];
-	long nue2_2 = fmesh_f2.p2d3d[poly_2->p2o[es->tseg2->v[1]]];
+	long nue2_1 = fmesh_f2->p2d3d[poly_2->p2o[es->tseg2->v[0]]];
+	long nue2_2 = fmesh_f2->p2d3d[poly_2->p2o[es->tseg2->v[1]]];
 	uedge_t ue_2(nue2_1, nue2_2);
 	f1.brep_edges.insert(ue_1);
 	f2.brep_edges.insert(ue_2);
@@ -1743,28 +1739,28 @@ ovlp_split_edge(
 	ue = (f1_tris.size()) ? ue1 : ue2;
 	ftris.insert(f1_tris.begin(), f1_tris.end());
 	ftris.insert(f2_tris.begin(), f2_tris.end());
-	np_id = fmesh_f1.pnts.size() - 1;
-	fmesh_f1.ep.insert(np_id);
+	np_id = fmesh_f1->pnts.size() - 1;
+	fmesh_f1->ep.insert(np_id);
 	for (tr_it = ftris.begin(); tr_it != ftris.end(); tr_it++) {
-	    replace_edge_split_tri(fmesh_f1, *tr_it, np_id, ue);
+	    replace_edge_split_tri(*fmesh_f1, *tr_it, np_id, ue);
 	    replaced_tris++;
 	}
-	omesh_t *om = fmesh_f1.omesh;
+	omesh_t *om = fmesh_f1->omesh;
 	overt_t *nvert = om->vert_add(np_id);
 	(*nv) = nvert;
     } else {
-	np_id = fmesh_f1.pnts.size() - 1;
-	fmesh_f1.ep.insert(np_id);
-	replace_edge_split_tri(fmesh_f1, *f1_tris.begin(), np_id, ue1);
+	np_id = fmesh_f1->pnts.size() - 1;
+	fmesh_f1->ep.insert(np_id);
+	replace_edge_split_tri(*fmesh_f1, *f1_tris.begin(), np_id, ue1);
 	replaced_tris++;
-	omesh_t *om1 = fmesh_f1.omesh;
+	omesh_t *om1 = fmesh_f1->omesh;
 	om1->vert_add(np_id);
 
-	np_id = fmesh_f2.pnts.size() - 1;
-	fmesh_f2.ep.insert(np_id);
-	replace_edge_split_tri(fmesh_f2, *f2_tris.begin(), np_id, ue2);
+	np_id = fmesh_f2->pnts.size() - 1;
+	fmesh_f2->ep.insert(np_id);
+	replace_edge_split_tri(*fmesh_f2, *f2_tris.begin(), np_id, ue2);
 	replaced_tris++;
-    	omesh_t *om2 = fmesh_f2.omesh;
+    	omesh_t *om2 = fmesh_f2->omesh;
 	overt_t *nvert = om2->vert_add(np_id);
 	(*nv) = nvert;
     }

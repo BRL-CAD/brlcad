@@ -192,6 +192,35 @@ bedge_seg_t::plot(const char *fname)
     fclose(plot_file);
 }
 
+std::vector<std::pair<cdt_mesh_t *,uedge_t>>
+bedge_seg_t::uedges()
+{
+    std::vector<std::pair<cdt_mesh_t *,uedge_t>> uedges;
+    struct ON_Brep_CDT_State *s_cdt_edge = (struct ON_Brep_CDT_State *)p_cdt;
+    int f_id1 = s_cdt_edge->brep->m_T[tseg1->trim_ind].Face()->m_face_index;
+    int f_id2 = s_cdt_edge->brep->m_T[tseg2->trim_ind].Face()->m_face_index;
+    cdt_mesh_t &fmesh_f1 = s_cdt_edge->fmeshes[f_id1];
+    cdt_mesh_t &fmesh_f2 = s_cdt_edge->fmeshes[f_id2];
+
+    cpolyedge_t *pe1 = tseg1;
+    cpolyedge_t *pe2 = tseg2;
+    cpolygon_t *poly1 = pe1->polygon;
+    cpolygon_t *poly2 = pe2->polygon;
+    long ue1_1 = fmesh_f1.p2d3d[poly1->p2o[tseg1->v[0]]];
+    long ue1_2 = fmesh_f1.p2d3d[poly1->p2o[tseg1->v[1]]];
+    uedge_t ue1(ue1_1, ue1_2);
+ 
+    uedges.push_back(std::make_pair(&fmesh_f1, ue1)); 
+
+    long ue2_1 = fmesh_f2.p2d3d[poly2->p2o[tseg2->v[0]]];
+    long ue2_2 = fmesh_f2.p2d3d[poly2->p2o[tseg2->v[1]]];
+    uedge_t ue2(ue2_1, ue2_2);
+ 
+    uedges.push_back(std::make_pair(&fmesh_f2, ue2)); 
+
+    return uedges;
+}
+
 /***************************/
 /* CPolygon implementation */
 /***************************/
