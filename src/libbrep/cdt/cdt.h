@@ -180,6 +180,9 @@ split_singular_seg(struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *ce, int update_
 std::set<bedge_seg_t *>
 split_edge_seg(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, int force, double *t, int update_rtrees);
 
+
+bool CDT_Audit(struct ON_Brep_CDT_State *s_cdt);
+
 bool initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt);
 void refine_close_edges(struct ON_Brep_CDT_State *s_cdt);
 std::vector<int> characterize_edges(struct ON_Brep_CDT_State *s_cdt);

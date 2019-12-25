@@ -815,6 +815,20 @@ ON_Brep_CDT_Mesh(
     return 0;
 }
 
+// TODO - need a function that not only checks the integrity of
+// each face mesh, but also validates all the boundary edge related
+// information needed to stitch them together.  This is beyond the
+// scope of the face mesh validity routines, so we'll have to do it
+// at the CDT state level.
+bool
+CDT_Audit(struct ON_Brep_CDT_State *s_cdt)
+{
+    if (!s_cdt) return false;
+
+
+
+    return true;
+}
 
 /** @} */
 
