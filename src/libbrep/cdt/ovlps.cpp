@@ -1633,6 +1633,9 @@ replace_edge_split_tri(cdt_mesh_t &fmesh, size_t t_id, long np_id, uedge_t &spli
 
     fmesh.tri_plot(ntri1, "nt1.plot3");
     fmesh.tri_plot(ntri2, "nt2.plot3");
+
+    // TODO - update the uedges2tris map!!!!!
+
 }
 
 int
@@ -1668,21 +1671,21 @@ ovlp_split_edge(
     fmesh_f2.brep_edges.erase(ue2);
     fmesh_f1.ue2b_map.erase(ue1);
     fmesh_f2.ue2b_map.erase(ue2);
-    //ON_3dPoint ue1_p1 = *fmesh_f1.pnts[ue1.v[0]];
-    //ON_3dPoint ue1_p2 = *fmesh_f1.pnts[ue1.v[1]];
-    //std::cout << f_id1 << " ue1: " << ue1.v[0] << "," << ue1.v[1] << ": " << ue1_p1.x << "," << ue1_p1.y << "," << ue1_p1.z << " -> " << ue1_p2.x << "," << ue1_p2.y << "," << ue1_p2.z << "\n";
-    //ON_3dPoint ue2_p1 = *fmesh_f2.pnts[ue2.v[0]];
-    //ON_3dPoint ue2_p2 = *fmesh_f2.pnts[ue2.v[1]];
-    //std::cout << f_id2 << " ue2: " << ue2.v[0] << "," << ue2.v[1] << ": " << ue2_p1.x << "," << ue2_p1.y << "," << ue2_p1.z << " -> " << ue2_p2.x << "," << ue2_p2.y << "," << ue2_p2.z << "\n";
     std::set<size_t> f1_tris = fmesh_f1.uedges2tris[ue1];
     if (f1_tris.size() != 1) {
-	std::cerr << "FATAL: could not find expected triangle in mesh " << fmesh_f1.f_id << "\n";
-	return -1; 
+	std::cerr << "FATAL: could not find expected triangle in mesh " << fmesh_f1.name << "," << fmesh_f1.f_id << "\n";
+	ON_3dPoint ue1_p1 = *fmesh_f1.pnts[ue1.v[0]];
+	ON_3dPoint ue1_p2 = *fmesh_f1.pnts[ue1.v[1]];
+	std::cout << fmesh_f1.name << "," << f_id1 << " ue1: " << ue1.v[0] << "," << ue1.v[1] << ": " << ue1_p1.x << "," << ue1_p1.y << "," << ue1_p1.z << " -> " << ue1_p2.x << "," << ue1_p2.y << "," << ue1_p2.z << "\n";
+	ON_3dPoint ue2_p1 = *fmesh_f2.pnts[ue2.v[0]];
+	ON_3dPoint ue2_p2 = *fmesh_f2.pnts[ue2.v[1]];
+	std::cout << fmesh_f2.name << "," << f_id2 << " ue2: " << ue2.v[0] << "," << ue2.v[1] << ": " << ue2_p1.x << "," << ue2_p1.y << "," << ue2_p1.z << " -> " << ue2_p2.x << "," << ue2_p2.y << "," << ue2_p2.z << "\n";
+	return -1;
     }
     std::set<size_t> f2_tris = fmesh_f2.uedges2tris[ue2];
     if (f2_tris.size() != 1) {
-	std::cerr << "FATAL: could not find expected triangle in mesh " << fmesh_f2.f_id << "\n";
-	return -1; 
+	std::cerr << "FATAL: could not find expected triangle in mesh " << fmesh_f2.name << ","  << fmesh_f2.f_id << "\n";
+	return -1;
     }
 
     int eind = eseg->edge_ind;
