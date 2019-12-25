@@ -760,7 +760,7 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     /* Check for reasonable values */
     if (eip->file[0] == '\0' || eip->tallness <= 0.0 ||
 	eip->xdim < 1 || eip->ydim < 1 || eip->mat[15] <= 0.0 ||
-	eip->datasrc != RT_EBM_SRC_FILE && eip->datasrc != RT_EBM_SRC_OBJ) {
+	(eip->datasrc != RT_EBM_SRC_FILE && eip->datasrc != RT_EBM_SRC_OBJ)) {
 	bu_struct_print("Unreasonable EBM parameters", rt_ebm_parse,
 			(char *)eip);
 	bu_free((char *)eip, "rt_ebm_import4: eip");
