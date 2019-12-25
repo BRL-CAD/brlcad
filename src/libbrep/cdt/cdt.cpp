@@ -841,16 +841,36 @@ CDT_Audit(struct ON_Brep_CDT_State *s_cdt)
 	    uedge_t ue2 = uedges[1].second;
 	    std::set<size_t> f1_tris = fmesh_f1->uedges2tris[ue1];
 	    std::set<size_t> f2_tris = fmesh_f2->uedges2tris[ue2];
-	    if (f1_tris.size() != 1 || f2_tris.size() != 1) {
-		if (f1_tris.size() != 1) {
-		    std::cerr << "FATAL: could not find expected triangle in mesh " << fmesh_f1->name << "," << fmesh_f1->f_id << "\n";
-		    std::string fpname = std::string(s_cdt->name) + std::string("_face_") + std::to_string(fmesh_f1->f_id) + std::string(".plot3");
-		    fmesh_f1->tris_plot(fpname.c_str());
-		}
-		if (f2_tris.size() != 1) {
-		    std::cerr << "FATAL: could not find expected triangle in mesh " << fmesh_f2->name << "," << fmesh_f2->f_id  << "\n";
-		    std::string fpname = std::string(s_cdt->name) + std::string("_face_") + std::to_string(fmesh_f2->f_id) + std::string(".plot3");
-		    fmesh_f2->tris_plot(fpname.c_str());
+	
+	    bool bad_tris = false; 
+
+	    bad_tris = (bad_tris || ((fmesh_f1->f_id != fmesh_f2->f_id) && (f1_tris.size() != 1 || f2_tris.size() != 1)));
+	    bad_tris = (bad_tris || ((fmesh_f1->f_id == fmesh_f2->f_id) && ((f1_tris.size() != 0 && f1_tris.size() != 2) || (f2_tris.size() != 0 && f2_tris.size() != 2) )));
+	    bad_tris = (bad_tris || (!f1_tris.size() && !f2_tris.size()));
+
+	    if (bad_tris) {
+		if ((fmesh_f1->f_id == fmesh_f2->f_id)) {
+		    if (f1_tris.size() == 1 || (!f1_tris.size() && !f2_tris.size())) {
+			std::cerr << "FATAL: could not find expected triangle in mesh " << fmesh_f1->name << "," << fmesh_f1->f_id << "\n";
+			std::string fpname = std::string(s_cdt->name) + std::string("_face_") + std::to_string(fmesh_f1->f_id) + std::string(".plot3");
+			fmesh_f1->tris_plot(fpname.c_str());
+		    }
+		    if (f2_tris.size() == 1 || (!f1_tris.size() && !f2_tris.size())) {
+			std::cerr << "FATAL: could not find expected triangle in mesh " << fmesh_f2->name << "," << fmesh_f2->f_id  << "\n";
+			std::string fpname = std::string(s_cdt->name) + std::string("_face_") + std::to_string(fmesh_f2->f_id) + std::string(".plot3");
+			fmesh_f2->tris_plot(fpname.c_str());
+		    }
+		} else {
+		    if (f1_tris.size() == 0) {
+			std::cerr << "FATAL: could not find expected triangle in mesh " << fmesh_f1->name << "," << fmesh_f1->f_id << "\n";
+			std::string fpname = std::string(s_cdt->name) + std::string("_face_") + std::to_string(fmesh_f1->f_id) + std::string(".plot3");
+			fmesh_f1->tris_plot(fpname.c_str());
+		    }
+		    if (f2_tris.size() == 0) {
+			std::cerr << "FATAL: could not find expected triangle in mesh " << fmesh_f2->name << "," << fmesh_f2->f_id  << "\n";
+			std::string fpname = std::string(s_cdt->name) + std::string("_face_") + std::to_string(fmesh_f2->f_id) + std::string(".plot3");
+			fmesh_f2->tris_plot(fpname.c_str());
+		    }
 		}
 		std::string ename = std::string(s_cdt->name) + std::string("_edge_") + std::to_string(bedge_cnt) + std::string(".plot3");
 		eseg->plot(ename.c_str());
