@@ -1700,30 +1700,19 @@ ovlp_split_edge(
     s_cdt_edge->e2polysegs[eind].clear();
     s_cdt_edge->e2polysegs[eind] = epsegs;
     std::set<bedge_seg_t *>::iterator es_it;
-    std::set<uedge_t> f1_new_ue;
-    std::set<uedge_t> f2_new_ue;
     for (es_it = esegs_split.begin(); es_it != esegs_split.end(); es_it++) {
 	bedge_seg_t *es = *es_it;
-	int fid1 = s_cdt_edge->brep->m_T[es->tseg1->trim_ind].Face()->m_face_index;
-	int fid2 = s_cdt_edge->brep->m_T[es->tseg2->trim_ind].Face()->m_face_index;
-	cdt_mesh_t &f1 = s_cdt_edge->fmeshes[fid1];
-	cdt_mesh_t &f2 = s_cdt_edge->fmeshes[fid2];
-	cpolyedge_t *pe_1 = es->tseg1;
-	cpolyedge_t *pe_2 = es->tseg2;
-	cpolygon_t *poly_1 = pe_1->polygon;
-	cpolygon_t *poly_2 = pe_2->polygon;
-	long nue1_1 = fmesh_f1->p2d3d[poly_1->p2o[es->tseg1->v[0]]];
-	long nue1_2 = fmesh_f1->p2d3d[poly_1->p2o[es->tseg1->v[1]]];
-	uedge_t ue_1(nue1_1, nue1_2);
-	long nue2_1 = fmesh_f2->p2d3d[poly_2->p2o[es->tseg2->v[0]]];
-	long nue2_2 = fmesh_f2->p2d3d[poly_2->p2o[es->tseg2->v[1]]];
-	uedge_t ue_2(nue2_1, nue2_2);
-	f1.brep_edges.insert(ue_1);
-	f2.brep_edges.insert(ue_2);
-	f1_new_ue.insert(ue_1);
-	f2_new_ue.insert(ue_2);
-	f1.ue2b_map[ue_1] = es;
-	f2.ue2b_map[ue_2] = es;
+
+	std::vector<std::pair<cdt_mesh_t *,uedge_t>> nuedges = es->uedges();
+	cdt_mesh_t *f1 = nuedges[0].first;
+	cdt_mesh_t *f2 = nuedges[1].first;
+	uedge_t ue_1 = nuedges[0].second;
+	uedge_t ue_2 = nuedges[1].second;
+
+	f1->brep_edges.insert(ue_1);
+	f2->brep_edges.insert(ue_2);
+	f1->ue2b_map[ue_1] = es;
+	f2->ue2b_map[ue_2] = es;
     }
 
     // Need to return one of the inserted verts from this process - we need to
