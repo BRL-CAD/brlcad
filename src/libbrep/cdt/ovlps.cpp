@@ -1608,7 +1608,6 @@ replace_edge_split_tri(cdt_mesh_t &fmesh, size_t t_id, long np_id, uedge_t &spli
 	}
     }
 
-
     triangle_t ntri1, ntri2;
     ntri1.v[0] = e1.v[0];
     ntri1.v[1] = np_id;

@@ -2964,6 +2964,7 @@ cdt_mesh_t::valid(int verbose)
     bool nret = true;
     bool eret = true;
     bool tret = true;
+    bool topret = true;
 
     boundary_edges_update();
 
@@ -3047,11 +3048,43 @@ cdt_mesh_t::valid(int verbose)
 
     bu_vls_free(&fname);
 
-    if ((nret && eret && tret) && verbose > 0) {
+    // Check all map lookups to make sure we can find what we expect to
+    // find
+    tris_tree.GetFirst(tree_it);
+    while (!tree_it.IsNull()) {
+	t_ind = *tree_it;
+	tri = tris_vect[t_ind];
+
+	long i = tri.v[0];
+	long j = tri.v[1];
+	long k = tri.v[2];
+	struct edge_t e[3];
+	struct uedge_t ue[3];
+	e[0].set(i, j);
+	e[1].set(j, k);
+	e[2].set(k, i);
+	for (int ind = 0; ind < 3; ind++) {
+	    ue[ind].set(e[ind].v[0], e[ind].v[1]);
+	}
+	for (int ind = 0; ind < 3; ind++) {
+	    if (edges2tris[e[ind]] != tri.ind) {
+		topret = false;
+	    }
+	    if (uedges2tris[uedge_t(e[ind])].find(tri.ind) == uedges2tris[uedge_t(e[ind])].end()) {
+		topret = false;
+	    } 
+	    if (v2tris[tri.v[ind]].find(tri.ind) == v2tris[tri.v[ind]].end()) {
+		topret = false;
+	    }
+	}
+	++tree_it;
+    }
+
+    if ((nret && eret && tret && topret) && verbose > 0) {
 	std::cout << name << " face " << f_id << ": valid\n";
     }
 
-    return (nret && eret && tret);
+    return (nret && eret && tret && topret);
 }
 
 void cdt_mesh_t::plot_uedge(struct uedge_t &ue, FILE* plot_file)
