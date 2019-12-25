@@ -828,6 +828,8 @@ CDT_Audit(struct ON_Brep_CDT_State *s_cdt)
 
     std::map<int, std::set<bedge_seg_t *>>::iterator ps_it;
 
+    int bedge_cnt = 0;
+
     for (ps_it = s_cdt->e2polysegs.begin(); ps_it != s_cdt->e2polysegs.end(); ps_it++) {
 	std::set<bedge_seg_t *>::iterator b_it;
 	for (b_it = ps_it->second.begin(); b_it != ps_it->second.end(); b_it++) {
@@ -842,12 +844,19 @@ CDT_Audit(struct ON_Brep_CDT_State *s_cdt)
 	    if (f1_tris.size() != 1 || f2_tris.size() != 1) {
 		if (f1_tris.size() != 1) {
 		    std::cerr << "FATAL: could not find expected triangle in mesh " << fmesh_f1->name << "," << fmesh_f1->f_id << "\n";
+		    std::string fpname = std::string(s_cdt->name) + std::string("_face_") + std::to_string(fmesh_f1->f_id) + std::string(".plot3");
+		    fmesh_f1->tris_plot(fpname.c_str());
 		}
 		if (f2_tris.size() != 1) {
-		    std::cerr << "FATAL: could not find expected triangle in mesh " << fmesh_f2->name << "," << fmesh_f1->f_id  << "\n";
+		    std::cerr << "FATAL: could not find expected triangle in mesh " << fmesh_f2->name << "," << fmesh_f2->f_id  << "\n";
+		    std::string fpname = std::string(s_cdt->name) + std::string("_face_") + std::to_string(fmesh_f2->f_id) + std::string(".plot3");
+		    fmesh_f2->tris_plot(fpname.c_str());
 		}
+		std::string ename = std::string(s_cdt->name) + std::string("_edge_") + std::to_string(bedge_cnt) + std::string(".plot3");
+		eseg->plot(ename.c_str());
 		ret = false;
 	    }
+	    bedge_cnt++;
 	}
     }
 

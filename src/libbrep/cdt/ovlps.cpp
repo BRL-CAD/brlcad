@@ -1867,6 +1867,12 @@ check_faces_validity(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pair
 	}
     }
     if (!valid) {
+	for (f_it = fmeshes.begin(); f_it != fmeshes.end(); f_it++) {
+	    cdt_mesh_t *fmesh = *f_it;
+	    struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
+	    std::string fpname = std::string(s_cdt->name) + std::string("_face_") + std::to_string(fmesh->f_id) + std::string(".plot3");
+	    fmesh->tris_plot(fpname.c_str());
+	}
 	bu_exit(1, "fatal mesh damage");
     }
 }
