@@ -1490,6 +1490,24 @@ cdt_mesh_t::tri_add(triangle_t &tri)
     tris_vect.push_back(tri);
     tris_tree.Insert(fMin, fMax, tri.ind);
 
+    int pcnt = 0;
+    ON_3dPoint problem1(2.5989674496614921,7.8208160252273462,26.533125750337135);
+    ON_3dPoint problem2(2.5989674496614921,7.8208160252273462,25.033125750337135);
+    for (int ind = 0; ind < 3; ind++) {
+	ON_3dPoint p = *pnts[tri.v[ind]];
+	if (problem1.DistanceTo(p) < 0.01) {
+	    pcnt++;
+	    continue;
+	}
+	if (problem2.DistanceTo(p) < 0.01) {
+	    pcnt++;
+	    continue;
+	}
+    }
+    if (pcnt > 1) {
+	std::cout << "Adding problem tri\n";
+    }
+
     // Populate maps
     long i = tri.v[0];
     long j = tri.v[1];
@@ -1502,7 +1520,7 @@ cdt_mesh_t::tri_add(triangle_t &tri)
     for (int ind = 0; ind < 3; ind++) {
 	ue[ind].set(e[ind].v[0], e[ind].v[1]);
 	edges2tris[e[ind]] = tri.ind;
-	uedges2tris[uedge_t(e[ind])].insert(tri.ind);
+	uedges2tris[ue[ind]].insert(tri.ind);
 	this->v2edges[e[ind].v[0]].insert(e[ind]);
 	v2tris[tri.v[ind]].insert(tri.ind);
     }
