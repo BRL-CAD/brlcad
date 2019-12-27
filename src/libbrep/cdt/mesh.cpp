@@ -1505,7 +1505,7 @@ cdt_mesh_t::tri_add(triangle_t &tri)
 	}
     }
     if (pcnt > 1) {
-	std::cout << "Adding problem tri\n";
+	std::cout << "Adding problem tri to " << name << "\n";
     }
 
     // Populate maps
@@ -1521,6 +1521,9 @@ cdt_mesh_t::tri_add(triangle_t &tri)
 	ue[ind].set(e[ind].v[0], e[ind].v[1]);
 	edges2tris[e[ind]] = tri.ind;
 	uedges2tris[ue[ind]].insert(tri.ind);
+	if (pcnt > 1) {
+	    std::cout << "uedge[" << ind << "]: " << ue[ind].v[0] << "," << ue[ind].v[1] << "\n";
+	}
 	this->v2edges[e[ind].v[0]].insert(e[ind]);
 	v2tris[tri.v[ind]].insert(tri.ind);
     }
