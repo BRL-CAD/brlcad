@@ -2213,6 +2213,107 @@ refinement_reset(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
     }
 }
 
+// TODO - because we don't have an implicit identity relationship between
+// 2D and 3D indices at this stage in the processing, the existing polygon
+// routines will need some overhauling to handle the additional necessary mappings...
+//
+// Don't expect this to work with the standard polygon->unshared_vertex call, for example...
+bool poly_tri_process(cpolygon_t *polygon, long *nv, std::set<uedge_t> *ne, std::set<uedge_t> *se,
+       	triangle_t &t, std::map<long, long> &v2p)
+{
+    if (!polygon) return false;
+
+    // Build the polygon edge information for the triangle
+    bool e_shared[3];
+    struct edge_t e[3];
+    struct uedge_t ue[3];
+    for (int i = 0; i < 3; i++) {
+	e_shared[i] = false;
+    }
+    e[0].set(v2p[t.v[0]], v2p[t.v[1]]);
+    e[1].set(v2p[t.v[1]], v2p[t.v[2]]);
+    e[2].set(v2p[t.v[2]], v2p[t.v[0]]);
+    ue[0].set(v2p[t.v[0]], v2p[t.v[1]]);
+    ue[1].set(v2p[t.v[1]], v2p[t.v[2]]);
+    ue[2].set(v2p[t.v[2]], v2p[t.v[0]]);
+
+    // Check the polygon edges against the triangle edges
+    for (int i = 0; i < 3; i++) {
+	std::set<cpolyedge_t *>::iterator pe_it;
+	for (pe_it = polygon->poly.begin(); pe_it != polygon->poly.end(); pe_it++) {
+	    cpolyedge_t *pe = *pe_it;
+	    struct uedge_t pue(pe->v[0], pe->v[1]);
+	    if (ue[i] == pue) {
+		e_shared[i] = true;
+		break;
+	    }
+	}
+    }
+
+    // Count categories and file edges in the appropriate output sets
+    long shared_cnt = 0;
+    for (int i = 0; i < 3; i++) {
+	if (e_shared[i]) {
+	    shared_cnt++;
+	    se->insert(ue[i]);
+	} else {
+	    ne->insert(ue[i]);
+	}
+    }
+
+    if (!shared_cnt) return false;
+
+    if (shared_cnt == 1) {
+        // If we've got only one shared edge, there should be a vertex not currently
+        // involved with the loop - verify that, and if it's true report it.
+        long unshared_vert = polygon->unshared_vertex(t);
+
+        if (unshared_vert != -1) {
+            (*nv) = unshared_vert;
+        } else {
+            // Self intersecting
+            se->clear();
+            ne->clear();
+            return false;
+        }
+    }
+
+    if (shared_cnt == 2) {
+        // We've got one vert shared by both of the shared edges - it's probably
+        // about to become an interior point
+        std::map<long, int> vcnt;
+        std::set<uedge_t>::iterator se_it;
+        for (se_it = se->begin(); se_it != se->end(); se_it++) {
+            vcnt[(*se_it).v[0]]++;
+            vcnt[(*se_it).v[1]]++;
+        }
+        std::map<long, int>::iterator v_it;
+        for (v_it = vcnt.begin(); v_it != vcnt.end(); v_it++) {
+            if (v_it->second == 2) {
+                (*nv) = v_it->first;
+                break;
+            }
+        }
+    }
+
+    return true;
+}
+
+// If either all three points are in the active set or the
+// point not on the shared edge is in the set, the triangle
+// should be considered.
+bool poly_tri_usable(std::set<long> &active_verts, triangle_t &tri, long nv) {
+    if (active_verts.find(nv) != active_verts.end()) return true;
+    int avcnt = 0;
+    for (int i = 0; i < 3; i++) {
+	if (active_verts.find(tri.v[i]) != active_verts.end()) {
+	    avcnt++;
+	}
+    }
+    if (avcnt == 3) return true;
+    return false;
+}
+
 cpolygon_t *
 group_polygon(ovlp_grp &grp, int ind)
 {
@@ -2224,14 +2325,11 @@ group_polygon(ovlp_grp &grp, int ind)
 
     cpolygon_t *polygon = new cpolygon_t;
 
-    // TODO - the below logic is the right idea, but om1_verts is not the
-    // vertex list to use - that's just from the overlapping triangles.  We
-    // need the vert_bin set that includes all of the vertices active due
-    // to the other mesh's triangles as well.
     std::set<long>::iterator tv_it;
 
     polygon->pdir = fit_plane.Normal();
     polygon->tplane = fit_plane;
+    std::map<long,long> v2p;
     for (tv_it = verts.begin(); tv_it != verts.end(); tv_it++) {
 	double u, v;
 	long pind = *tv_it;
@@ -2242,22 +2340,22 @@ group_polygon(ovlp_grp &grp, int ind)
 	proj_2d.second = v;
 	polygon->pnts_2d.push_back(proj_2d);
 	polygon->p2o[polygon->pnts_2d.size() - 1] = pind;
+	v2p[pind] = polygon->pnts_2d.size() - 1;
     }
 
     // Seed the polygon with one of the triangles.
     triangle_t tri1 = om->fmesh->tris_vect[*(tris.begin())];
-    edge_t e1(tri1.v[0], tri1.v[1]);
-    edge_t e2(tri1.v[1], tri1.v[2]);
-    edge_t e3(tri1.v[2], tri1.v[0]);
+    edge_t e1(v2p[tri1.v[0]], v2p[tri1.v[1]]);
+    edge_t e2(v2p[tri1.v[1]], v2p[tri1.v[2]]);
+    edge_t e3(v2p[tri1.v[2]], v2p[tri1.v[0]]);
     polygon->add_edge(e1);
     polygon->add_edge(e2);
     polygon->add_edge(e3);
 
-#if 0
-    // Now, the hard part.  We need to grow the polygon to encompass the om1_vert vertices.  This
-    // may involve more triangles than om1_tris, but shouldn't involve vertices that aren't in the
-    // om1_vert set.
-    std::set<long> unused_verts = om1_verts;
+    // Now, the hard part.  We need to grow the polygon to encompass the active vertices.  This
+    // may involve more triangles than the basic grp set, but shouldn't involve vertices that aren't in the
+    // active vertices set.
+    std::set<long> unused_verts = verts;
     std::set<size_t> visited_tris, added_tris;
     visited_tris.insert(tri1.ind);
     added_tris.insert(tri1.ind);
@@ -2269,29 +2367,34 @@ group_polygon(ovlp_grp &grp, int ind)
 	std::set<cpolyedge_t *>::iterator pe_it;
 	for (pe_it = polygon->poly.begin(); pe_it != polygon->poly.end(); pe_it++) {
 	    cpolyedge_t *pe = *pe_it;
-	    uedge_t ue(pe->v[0], pe->v[1]);
-	    std::set<size_t> petris = om[0]->fmesh->uedges2tris[ue];
+	    uedge_t ue(polygon->p2o[pe->v[0]], polygon->p2o[pe->v[1]]);
+	    std::set<size_t> petris = om->fmesh->uedges2tris[ue];
 	    std::set<size_t>::iterator t_it;
 	    for (t_it = petris.begin(); t_it != petris.end(); t_it++) {
 		if (visited_tris.find(*t_it) != visited_tris.end()) continue;
 		visited_tris.insert(*t_it);
-		// If either all three points are in the active set or the
-		// point not on the shared edge is in the set, the triangle
-		// should be considered.
+		triangle_t ntri = om->fmesh->tris_vect[*t_it];
 		std::set<uedge_t> new_edges;
 		std::set<uedge_t> shared_edges;
-		if (ptri_process(polygon, om[0], om1_verts, *t_it, &new_edges, &shared_edges)) {
+		long nv = -1;
+		if (poly_tri_process(polygon, &nv, &new_edges, &shared_edges, ntri, v2p)) {
+		    if (!poly_tri_usable(verts, ntri, nv)) {
+			continue;
+		    }
 		    added_tris.insert(*t_it);
-		    triangle_t ntri = om[0]->fmesh->tris_vect[*t_it];
 		    unused_verts.erase(ntri.v[0]);
 		    unused_verts.erase(ntri.v[1]);
 		    unused_verts.erase(ntri.v[2]);
 		    polygon->replace_edges(new_edges, shared_edges);
+		} else {
+		    std::cerr << "group_polygon: failed to process tri??\n";
+		    return NULL;
 		}
 	    }
 	}
     }
-#endif
+
+    polygon->polygon_plot("ovlp_grp.plot3");
 
     return polygon;
 }
