@@ -59,6 +59,53 @@ extern "C" {
 
 class omesh_t;
 
+struct edge2d_t {
+    long v2d[2];
+
+    long& start() { return v2d[0]; }
+    const long& start() const {	return v2d[0]; }
+    long& end() { return v2d[1]; }
+    const long& end() const { return v2d[1]; }
+
+    edge2d_t(long i, long j)
+    {
+	v2d[0] = i;
+	v2d[1] = j;
+    }
+
+    edge2d_t()
+    {
+	v2d[0] = v2d[1] = -1;
+    }
+
+    void set(long i, long j)
+    {
+	v2d[0] = i;
+	v2d[1] = j;
+    }
+
+    bool operator<(edge2d_t other) const
+    {
+	bool c1 = (v2d[0] < other.v2d[0]);
+	bool c1e = (v2d[0] == other.v2d[0]);
+	bool c2 = (v2d[1] < other.v2d[1]);
+	return (c1 || (c1e && c2));
+    }
+    bool operator==(edge2d_t other) const
+    {
+	bool c1 = (v2d[0] == other.v2d[0]);
+	bool c2 = (v2d[1] == other.v2d[1]);
+	return (c1 && c2);
+    }
+    bool operator!=(edge2d_t other) const
+    {
+	bool c1 = (v2d[0] != other.v2d[0]);
+	bool c2 = (v2d[1] != other.v2d[1]);
+	return (c1 || c2);
+    }
+};
+
+
 struct edge_t {
     long v[2];
 
@@ -148,6 +195,54 @@ struct uedge_t {
     {
 	bool c1 = ((v[0] != other.v[0]) && (v[0] != other.v[1]));
 	bool c2 = ((v[1] != other.v[0]) && (v[1] != other.v[1]));
+	return (c1 || c2);
+    }
+};
+
+
+struct uedge2d_t {
+    long v2d[2];
+
+    uedge2d_t()
+    {
+	v2d[0] = v2d[1] = -1;
+    }
+
+    uedge2d_t(struct edge2d_t e)
+    {
+	v2d[0] = (e.v2d[0] <= e.v2d[1]) ? e.v2d[0] : e.v2d[1];
+	v2d[1] = (e.v2d[0] > e.v2d[1]) ? e.v2d[0] : e.v2d[1];
+    }
+
+    uedge2d_t(long i, long j)
+    {
+	v2d[0] = (i <= j) ? i : j;
+	v2d[1] = (i > j) ? i : j;
+    }
+
+    void set(long i, long j)
+    {
+	v2d[0] = (i <= j) ? i : j;
+	v2d[1] = (i > j) ? i : j;
+    }
+
+    bool operator<(uedge2d_t other) const
+    {
+	bool c1 = (v2d[0] < other.v2d[0]);
+	bool c1e = (v2d[0] == other.v2d[0]);
+	bool c2 = (v2d[1] < other.v2d[1]);
+	return (c1 || (c1e && c2));
+    }
+    bool operator==(uedge2d_t other) const
+    {
+	bool c1 = ((v2d[0] == other.v2d[0]) || (v2d[0] == other.v2d[1]));
+	bool c2 = ((v2d[1] == other.v2d[0]) || (v2d[1] == other.v2d[1]));
+	return (c1 && c2);
+    }
+    bool operator!=(uedge2d_t other) const
+    {
+	bool c1 = ((v2d[0] != other.v2d[0]) && (v2d[0] != other.v2d[1]));
+	bool c2 = ((v2d[1] != other.v2d[0]) && (v2d[1] != other.v2d[1]));
 	return (c1 || c2);
     }
 };
@@ -599,6 +694,8 @@ public:
     void *p_cdt;
     omesh_t *omesh;
 
+    long tri_process(cpolygon_t *polygon, std::set<uedge_t> *ne, std::set<uedge_t> *se, long *nv, triangle_t &t);
+
 private:
     /* Data containers */
     std::map<edge_t, size_t> edges2tris;
@@ -647,7 +744,6 @@ private:
     bool best_fit_plane_reproject(cpolygon_t *polygon);
     void best_fit_plane_plot(point_t *center, vect_t *norm, const char *fname);
 
-    long tri_process(cpolygon_t *polygon, std::set<uedge_t> *ne, std::set<uedge_t> *se, long *nv, triangle_t &t);
 
     bool oriented_polycdt(cpolygon_t *polygon);
 
