@@ -1660,9 +1660,15 @@ ovlp_split_edge(
     if (f1_tris.size() != 1 || f2_tris.size() != 1) {
 	if (f1_tris.size() != 1) {
 	    std::cerr << "FATAL: could not find expected triangle in mesh " << fmesh_f1->name << "," << f_id1 << "\n";
+	    CDT_Audit((struct ON_Brep_CDT_State *)eseg->p_cdt);
+	    CDT_Audit((struct ON_Brep_CDT_State *)fmesh_f1->p_cdt);
+	    exit(1);
 	}
 	if (f2_tris.size() != 1) {
 	    std::cerr << "FATAL: could not find expected triangle in mesh " << fmesh_f2->name << "," << f_id2 << "\n";
+	    CDT_Audit((struct ON_Brep_CDT_State *)eseg->p_cdt);
+	    CDT_Audit((struct ON_Brep_CDT_State *)fmesh_f2->p_cdt);
+	    exit(1);
 	}
 	ON_3dPoint ue1_p1 = *fmesh_f1->pnts[ue1.v[0]];
 	ON_3dPoint ue1_p2 = *fmesh_f1->pnts[ue1.v[1]];
