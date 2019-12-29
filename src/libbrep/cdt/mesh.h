@@ -375,6 +375,9 @@ class cpolygon_t
 	 * original point array to the polygon pnts_2d point array.*/
 	std::map<long, long> p2o;
 
+	/* Map from points in the source date to the same points in the polygon.*/
+	std::map<long, long> o2p;
+
 	/* Polygon edge manipulation */
 	cpolyedge_t *add_ordered_edge(const struct edge_t &e);
 	void remove_ordered_edge(const struct edge_t &e);

@@ -234,6 +234,7 @@ cpolygon_t::add_point(ON_2dPoint &on_2dp, long orig_index)
     pnts_2d.push_back(proj_2d);
     p2ind[proj_2d] = pnts_2d.size() - 1;
     p2o[pnts_2d.size() - 1] = orig_index;
+    o2p[orig_index] = pnts_2d.size() - 1;
     return (long)(pnts_2d.size() - 1);
 }
 
@@ -3850,6 +3851,7 @@ cdt_mesh_t::build_initial_loop(triangle_t &seed, bool repair)
 	    polygon->brep_edge_pnts.insert(i);
 	}
 	polygon->p2o[i] = i;
+	polygon->o2p[i] = i;
     }
 
     if (repair) {
@@ -4292,8 +4294,7 @@ void cdt_mesh_t::cdt_inputs_plot(const char *filename)
     for (il_it = inner_loops.begin(); il_it != inner_loops.end(); il_it++) {
 	cpolygon_t *il = il_it->second;
 	polyplot_2d(il, plot_file);
-    }	
-
+    }
 
     if (m_interior_pnts.size()) {
 	pl_color(plot_file, 0, 255, 0);
