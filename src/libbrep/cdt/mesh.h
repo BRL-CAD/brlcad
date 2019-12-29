@@ -854,6 +854,40 @@ class ovlp_grp {
             }
         }
 
+	// Find the best fit plane of all 3D points from all the vertices in play from both
+	// meshes.
+	ON_Plane fit_plane() {
+	    std::set<ON_3dPoint> plane_pnts;
+	    std::set<long>::iterator vp_it;
+	    for (vp_it = verts1.begin(); vp_it != verts1.end(); vp_it++) {
+		ON_3dPoint p = *om1->fmesh->pnts[*vp_it];
+		plane_pnts.insert(p);
+	    }
+	    for (vp_it = verts2.begin(); vp_it != verts2.end(); vp_it++) {
+		ON_3dPoint p = *om2->fmesh->pnts[*vp_it];
+		plane_pnts.insert(p);
+	    }
+
+	    point_t pcenter;
+	    vect_t pnorm;
+	    point_t *fpnts = (point_t *)bu_calloc(plane_pnts.size(), sizeof(point_t), "fitting points");
+	    std::set<ON_3dPoint>::iterator p_it;
+	    int pcnt = 0;
+	    for (p_it = plane_pnts.begin(); p_it != plane_pnts.end(); p_it++) {
+		fpnts[pcnt][X] = p_it->x;
+		fpnts[pcnt][Y] = p_it->y;
+		fpnts[pcnt][Z] = p_it->z;
+		pcnt++;
+	    }
+	    if (bn_fit_plane(&pcenter, &pnorm, plane_pnts.size(), fpnts)) {
+		std::cout << "fitting plane failed!\n";
+	    }
+	    bu_free(fpnts, "fitting points");
+
+	    ON_Plane fp(pcenter, pnorm);
+	    return fp;
+	}
+
         // Each point involved in this operation must have it's closest point
         // in the other mesh involved.  If the closest point in the other mesh
         // ISN'T the closest surface point, we need to introduce that
