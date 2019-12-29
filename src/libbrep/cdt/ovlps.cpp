@@ -1659,13 +1659,21 @@ ovlp_split_edge(
     std::set<size_t> f2_tris = fmesh_f2->uedges2tris[ue2];
     if (f1_tris.size() != 1 || f2_tris.size() != 1) {
 	if (f1_tris.size() != 1) {
-	    std::cerr << "FATAL: could not find expected triangle in mesh " << fmesh_f1->name << "," << f_id1 << "\n";
+	    std::cerr << "FATAL: could not find expected triangle in mesh " << fmesh_f1->name << "," << f_id1 << " using uedge " << ue1.v[0] << "," << ue1.v[1] << "\n";
+	    ON_3dPoint v1 = *fmesh_f1->pnts[ue1.v[0]];
+	    ON_3dPoint v2 = *fmesh_f1->pnts[ue1.v[1]];
+	    std::cerr << "ue1.v[0]: " << v1.x << "," << v1.y << "," << v1.z << "\n";
+	    std::cerr << "ue1.v[1]: " << v2.x << "," << v2.y << "," << v2.z << "\n";
 	    CDT_Audit((struct ON_Brep_CDT_State *)eseg->p_cdt);
 	    CDT_Audit((struct ON_Brep_CDT_State *)fmesh_f1->p_cdt);
 	    exit(1);
 	}
 	if (f2_tris.size() != 1) {
-	    std::cerr << "FATAL: could not find expected triangle in mesh " << fmesh_f2->name << "," << f_id2 << "\n";
+	    std::cerr << "FATAL: could not find expected triangle in mesh " << fmesh_f2->name << "," << f_id2 << " using uedge " << ue2.v[0] << "," << ue2.v[1] << "\n";
+	    ON_3dPoint v1 = *fmesh_f2->pnts[ue2.v[0]];
+	    ON_3dPoint v2 = *fmesh_f2->pnts[ue2.v[1]];
+	    std::cerr << "ue2.v[0]: " << v1.x << "," << v1.y << "," << v1.z << "\n";
+	    std::cerr << "ue2.v[1]: " << v2.x << "," << v2.y << "," << v2.z << "\n";
 	    CDT_Audit((struct ON_Brep_CDT_State *)eseg->p_cdt);
 	    CDT_Audit((struct ON_Brep_CDT_State *)fmesh_f2->p_cdt);
 	    exit(1);
