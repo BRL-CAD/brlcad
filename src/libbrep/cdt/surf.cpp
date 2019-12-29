@@ -64,8 +64,8 @@ cpolyedge_fdists(struct cdt_surf_info *s, cdt_mesh_t *fmesh, cpolyedge_t *pe)
 
     if (!pe->eseg) return;
 
-    ON_3dPoint *p3d1 = fmesh->pnts[fmesh->p2d3d[pe->polygon->p2o[pe->v[0]]]];
-    ON_3dPoint *p3d2 = fmesh->pnts[fmesh->p2d3d[pe->polygon->p2o[pe->v[1]]]];
+    ON_3dPoint *p3d1 = fmesh->pnts[fmesh->p2d3d[pe->polygon->p2o[pe->v2d[0]]]];
+    ON_3dPoint *p3d2 = fmesh->pnts[fmesh->p2d3d[pe->polygon->p2o[pe->v2d[1]]]];
 
 
     double dist = p3d1->DistanceTo(*p3d2);
@@ -273,8 +273,8 @@ struct trim_seg_context {
 static bool SPntCallback(void *data, void *a_context) {
     cpolyedge_t *pe = (cpolyedge_t *)data;
     struct trim_seg_context *sc = (struct trim_seg_context *)a_context;
-    ON_2dPoint p2d1(pe->polygon->pnts_2d[pe->v[0]].first, pe->polygon->pnts_2d[pe->v[0]].second);
-    ON_2dPoint p2d2(pe->polygon->pnts_2d[pe->v[1]].first, pe->polygon->pnts_2d[pe->v[1]].second);
+    ON_2dPoint p2d1(pe->polygon->pnts_2d[pe->v2d[0]].first, pe->polygon->pnts_2d[pe->v2d[0]].second);
+    ON_2dPoint p2d2(pe->polygon->pnts_2d[pe->v2d[1]].first, pe->polygon->pnts_2d[pe->v2d[1]].second);
     ON_Line l(p2d1, p2d2);
     double t;
     if (l.ClosestPointTo(*sc->p, &t)) {

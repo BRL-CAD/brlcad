@@ -206,14 +206,14 @@ bedge_seg_t::uedges()
     cpolyedge_t *pe2 = tseg2;
     cpolygon_t *poly1 = pe1->polygon;
     cpolygon_t *poly2 = pe2->polygon;
-    long ue1_1 = fmesh_f1.p2ind[fmesh_f1.pnts[fmesh_f1.p2d3d[poly1->p2o[tseg1->v[0]]]]];
-    long ue1_2 = fmesh_f1.p2ind[fmesh_f1.pnts[fmesh_f1.p2d3d[poly1->p2o[tseg1->v[1]]]]];
+    long ue1_1 = fmesh_f1.p2ind[fmesh_f1.pnts[fmesh_f1.p2d3d[poly1->p2o[tseg1->v2d[0]]]]];
+    long ue1_2 = fmesh_f1.p2ind[fmesh_f1.pnts[fmesh_f1.p2d3d[poly1->p2o[tseg1->v2d[1]]]]];
     uedge_t ue1(ue1_1, ue1_2);
 
     uedges.push_back(std::make_pair(&fmesh_f1, ue1));
 
-    long ue2_1 = fmesh_f2.p2ind[fmesh_f2.pnts[fmesh_f2.p2d3d[poly2->p2o[tseg2->v[0]]]]];
-    long ue2_2 = fmesh_f2.p2ind[fmesh_f2.pnts[fmesh_f2.p2d3d[poly2->p2o[tseg2->v[1]]]]];
+    long ue2_1 = fmesh_f2.p2ind[fmesh_f2.pnts[fmesh_f2.p2d3d[poly2->p2o[tseg2->v2d[0]]]]];
+    long ue2_2 = fmesh_f2.p2ind[fmesh_f2.pnts[fmesh_f2.p2d3d[poly2->p2o[tseg2->v2d[1]]]]];
     uedge_t ue2(ue2_1, ue2_2);
 
     uedges.push_back(std::make_pair(&fmesh_f2, ue2));
@@ -262,11 +262,11 @@ cpolygon_t::add_ordered_edge(const struct edge_t &e)
 
 	if (pe == nedge) continue;
 
-	if (pe->v[1] == nedge->v[0]) {
+	if (pe->v2d[1] == nedge->v2d[0]) {
 	    prev = pe;
 	}
 
-	if (pe->v[0] == nedge->v[1]) {
+	if (pe->v2d[0] == nedge->v2d[1]) {
 	    next = pe;
 	}
     }
@@ -291,7 +291,7 @@ cpolygon_t::remove_ordered_edge(const struct edge_t &e)
     std::set<cpolyedge_t *>::iterator cp_it;
     for (cp_it = poly.begin(); cp_it != poly.end(); cp_it++) {
 	cpolyedge_t *pe = *cp_it;
-	struct edge_t oe(pe->v[0], pe->v[1]);
+	struct edge_t oe(pe->v2d[0], pe->v2d[1]);
 	if (e == oe) {
 	    // Existing segment with this ending vertex exists
 	    cull = pe;
@@ -330,19 +330,19 @@ cpolygon_t::add_edge(const struct uedge_t &ue)
     for (cp_it = poly.begin(); cp_it != poly.end(); cp_it++) {
 	cpolyedge_t *pe = *cp_it;
 
-	if (pe->v[1] == ue.v[0]) {
+	if (pe->v2d[1] == ue.v[0]) {
 	    v1 = ue.v[0];
 	}
 
-	if (pe->v[1] == ue.v[1]) {
+	if (pe->v2d[1] == ue.v[1]) {
 	    v1 = ue.v[1];
 	}
 
-	if (pe->v[0] == ue.v[0]) {
+	if (pe->v2d[0] == ue.v[0]) {
 	    v2 = ue.v[0];
 	}
 
-	if (pe->v[0] == ue.v[1]) {
+	if (pe->v2d[0] == ue.v[1]) {
 	    v2 = ue.v[1];
 	}
     }
@@ -375,11 +375,11 @@ cpolygon_t::add_edge(const struct uedge_t &ue)
 
 	if (pe == nedge) continue;
 
-	if (pe->v[1] == nedge->v[0]) {
+	if (pe->v2d[1] == nedge->v2d[0]) {
 	    prev = pe;
 	}
 
-	if (pe->v[0] == nedge->v[1]) {
+	if (pe->v2d[0] == nedge->v2d[1]) {
 	    next = pe;
 	}
     }
@@ -405,7 +405,7 @@ cpolygon_t::remove_edge(const struct uedge_t &ue)
     std::set<cpolyedge_t *>::iterator cp_it;
     for (cp_it = poly.begin(); cp_it != poly.end(); cp_it++) {
 	cpolyedge_t *pe = *cp_it;
-	struct uedge_t pue(pe->v[0], pe->v[1]);
+	struct uedge_t pue(pe->v2d[0], pe->v2d[1]);
 	if (ue == pue) {
 	    // Existing segment with this ending vertex exists
 	    cull = pe;
@@ -612,8 +612,8 @@ cpolygon_t::self_intersecting()
     std::set<cpolyedge_t *>::iterator pe_it;
     for (pe_it = poly.begin(); pe_it != poly.end(); pe_it++) {
 	cpolyedge_t *pe = *pe_it;
-	vecnt[pe->v[0]]++;
-	vecnt[pe->v[1]]++;
+	vecnt[pe->v2d[0]]++;
+	vecnt[pe->v2d[1]]++;
     }
     std::map<long, int>::iterator v_it;
     for (v_it = vecnt.begin(); v_it != vecnt.end(); v_it++) {
@@ -630,9 +630,9 @@ cpolygon_t::self_intersecting()
     std::vector<cpolyedge_t *> pv(poly.begin(), poly.end());
     for (size_t i = 0; i < pv.size(); i++) {
 	cpolyedge_t *pe1 = pv[i];
-	ON_2dPoint p1_1(pnts_2d[pe1->v[0]].first, pnts_2d[pe1->v[0]].second);
-	ON_2dPoint p1_2(pnts_2d[pe1->v[1]].first, pnts_2d[pe1->v[1]].second);
-	struct uedge_t ue1(pe1->v[0], pe1->v[1]);
+	ON_2dPoint p1_1(pnts_2d[pe1->v2d[0]].first, pnts_2d[pe1->v2d[0]].second);
+	ON_2dPoint p1_2(pnts_2d[pe1->v2d[1]].first, pnts_2d[pe1->v2d[1]].second);
+	struct uedge_t ue1(pe1->v2d[0], pe1->v2d[1]);
 	// if we already know this segment intersects at least one other segment, we
 	// don't need to re-test it - it's already "active"
 	if (self_isect_edges.find(ue1) != self_isect_edges.end()) continue;
@@ -640,9 +640,9 @@ cpolygon_t::self_intersecting()
 	ON_Line e1(p1_1, p1_2);
 	for (size_t j = i+1; j < pv.size(); j++) {
 	    cpolyedge_t *pe2 = pv[j];
-	    ON_2dPoint p2_1(pnts_2d[pe2->v[0]].first, pnts_2d[pe2->v[0]].second);
-	    ON_2dPoint p2_2(pnts_2d[pe2->v[1]].first, pnts_2d[pe2->v[1]].second);
-	    struct uedge_t ue2(pe2->v[0], pe2->v[1]);
+	    ON_2dPoint p2_1(pnts_2d[pe2->v2d[0]].first, pnts_2d[pe2->v2d[0]].second);
+	    ON_2dPoint p2_2(pnts_2d[pe2->v2d[1]].first, pnts_2d[pe2->v2d[1]].second);
+	    struct uedge_t ue2(pe2->v2d[0], pe2->v2d[1]);
 	    ON_BoundingBox e2b(p2_1, p2_2);
 	    ON_Line e2(p2_1, p2_2);
 
@@ -750,14 +750,14 @@ cpolygon_t::bg_polygon(point2d_t **ppnts)
     cpolyedge_t *first = pe;
     cpolyedge_t *next = pe->next;
 
-    V2SET(polypnts[pind], pnts_2d[pe->v[0]].first, pnts_2d[pe->v[0]].second);
+    V2SET(polypnts[pind], pnts_2d[pe->v2d[0]].first, pnts_2d[pe->v2d[0]].second);
     pind++;
-    V2SET(polypnts[pind], pnts_2d[pe->v[1]].first, pnts_2d[pe->v[1]].second);
+    V2SET(polypnts[pind], pnts_2d[pe->v2d[1]].first, pnts_2d[pe->v2d[1]].second);
 
     // Walk the loop
     while (first != next) {
 	pind++;
-	V2SET(polypnts[pind], pnts_2d[next->v[1]].first, pnts_2d[next->v[1]].second);
+	V2SET(polypnts[pind], pnts_2d[next->v2d[1]].first, pnts_2d[next->v2d[1]].second);
 	next = next->next;
 	if ((size_t)pind > poly.size()+1) {
 	    std::cout << "\nERROR infinite loop\n";
@@ -778,7 +778,7 @@ cpolygon_t::point_in_polygon(long v, bool flip)
     if (!closed()) return false;
 
     cpolyedge_t *pe = (*poly.begin());
-    if (v == pe->v[0] || v == pe->v[1]) {
+    if (v == pe->v2d[0] || v == pe->v2d[1]) {
 	return -1;
     }
 
@@ -826,14 +826,14 @@ cpolygon_t::rm_points_in_polygon(std::set<ON_2dPoint *> *pnts, bool flip)
     cpolyedge_t *first = pe;
     cpolyedge_t *next = pe->next;
 
-    V2SET(polypnts[pind], pnts_2d[pe->v[0]].first, pnts_2d[pe->v[0]].second);
+    V2SET(polypnts[pind], pnts_2d[pe->v2d[0]].first, pnts_2d[pe->v2d[0]].second);
     pind++;
-    V2SET(polypnts[pind], pnts_2d[pe->v[1]].first, pnts_2d[pe->v[1]].second);
+    V2SET(polypnts[pind], pnts_2d[pe->v2d[1]].first, pnts_2d[pe->v2d[1]].second);
 
     // Walk the loop
     while (first != next) {
 	pind++;
-	V2SET(polypnts[pind], pnts_2d[next->v[1]].first, pnts_2d[next->v[1]].second);
+	V2SET(polypnts[pind], pnts_2d[next->v2d[1]].first, pnts_2d[next->v2d[1]].second);
 	next = next->next;
     }
 
@@ -895,16 +895,16 @@ void cpolygon_t::cdt_inputs_print(const char *filename)
     cpolyedge_t *first = pe;
     cpolyedge_t *next = pe->next;
 
-    sfile << "opoly[" << vcnt-1 << "] = " << pe->v[0] << ";\n";
-    sfile << "opoly[" << vcnt << "] = " << pe->v[1] << ";\n";
-    oloop_pnts.insert(pe->v[0]);
-    oloop_pnts.insert(pe->v[1]);
+    sfile << "opoly[" << vcnt-1 << "] = " << pe->v2d[0] << ";\n";
+    sfile << "opoly[" << vcnt << "] = " << pe->v2d[1] << ";\n";
+    oloop_pnts.insert(pe->v2d[0]);
+    oloop_pnts.insert(pe->v2d[1]);
 
     // Walk the loop
     while (first != next) {
 	vcnt++;
-	sfile << "opoly[" << vcnt << "] = " << next->v[1] << ";\n";
-	oloop_pnts.insert(next->v[1]);
+	sfile << "opoly[" << vcnt << "] = " << next->v2d[1] << ";\n";
+	oloop_pnts.insert(next->v2d[1]);
 	next = next->next;
 	if (vcnt > poly.size()) {
 	    return;
@@ -969,16 +969,16 @@ cpolygon_t::cdt(triangulation_t ttype)
     cpolyedge_t *first = pe;
     cpolyedge_t *next = pe->next;
 
-    opoly[vcnt-1] = pe->v[0];
-    opoly[vcnt] = pe->v[1];
-    oloop_pnts.insert(pe->v[0]);
-    oloop_pnts.insert(pe->v[1]);
+    opoly[vcnt-1] = pe->v2d[0];
+    opoly[vcnt] = pe->v2d[1];
+    oloop_pnts.insert(pe->v2d[0]);
+    oloop_pnts.insert(pe->v2d[1]);
 
     // Walk the loop
     while (first != next) {
 	vcnt++;
-	opoly[vcnt] = next->v[1];
-	oloop_pnts.insert(next->v[1]);
+	opoly[vcnt] = next->v2d[1];
+	oloop_pnts.insert(next->v2d[1]);
 	next = next->next;
 	if (vcnt > poly.size()) {
 	    bu_free(bgp_2d, "free libbg 2d points array)");
@@ -1087,24 +1087,24 @@ void cpolygon_t::polygon_plot(const char *filename)
     cpolyedge_t *ecurr = NULL;
 
     point_t bnp;
-    VSET(bnp, pnts_2d[efirst->v[0]].first, pnts_2d[efirst->v[0]].second, 0);
+    VSET(bnp, pnts_2d[efirst->v2d[0]].first, pnts_2d[efirst->v2d[0]].second, 0);
     pdv_3move(plot_file, bnp);
-    VSET(bnp, pnts_2d[efirst->v[1]].first, pnts_2d[efirst->v[1]].second, 0);
+    VSET(bnp, pnts_2d[efirst->v2d[1]].first, pnts_2d[efirst->v2d[1]].second, 0);
     pdv_3cont(plot_file, bnp);
 
     point2d_t wpnt;
-    V2SET(wpnt, pnts_2d[efirst->v[0]].first, pnts_2d[efirst->v[0]].second);
+    V2SET(wpnt, pnts_2d[efirst->v2d[0]].first, pnts_2d[efirst->v2d[0]].second);
     V2MINMAX(pmin, pmax, wpnt);
-    V2SET(wpnt, pnts_2d[efirst->v[1]].first, pnts_2d[efirst->v[1]].second);
+    V2SET(wpnt, pnts_2d[efirst->v2d[1]].first, pnts_2d[efirst->v2d[1]].second);
     V2MINMAX(pmin, pmax, wpnt);
 
     size_t ecnt = 1;
     while (ecurr != efirst && ecnt < poly.size()+1) {
 	ecnt++;
 	ecurr = (!ecurr) ? efirst->next : ecurr->next;
-	VSET(bnp, pnts_2d[ecurr->v[1]].first, pnts_2d[ecurr->v[1]].second, 0);
+	VSET(bnp, pnts_2d[ecurr->v2d[1]].first, pnts_2d[ecurr->v2d[1]].second, 0);
 	pdv_3cont(plot_file, bnp);
-	V2SET(wpnt, pnts_2d[ecurr->v[1]].first, pnts_2d[ecurr->v[1]].second);
+	V2SET(wpnt, pnts_2d[ecurr->v2d[1]].first, pnts_2d[ecurr->v2d[1]].second);
 	V2MINMAX(pmin, pmax, wpnt);
 	if (ecnt > poly.size()) {
 	    break;
@@ -1175,11 +1175,11 @@ void cpolygon_t::polygon_plot_in_plane(const char *filename)
     cpolyedge_t *efirst = *(poly.begin());
     cpolyedge_t *ecurr = NULL;
 
-    ppnt = tplane.PointAt(pnts_2d[efirst->v[0]].first, pnts_2d[efirst->v[0]].second);
+    ppnt = tplane.PointAt(pnts_2d[efirst->v2d[0]].first, pnts_2d[efirst->v2d[0]].second);
     VSET(bnp, ppnt.x, ppnt.y, ppnt.z);
     pdv_3move(plot_file, bnp);
     VMINMAX(pmin, pmax, bnp);
-    ppnt = tplane.PointAt(pnts_2d[efirst->v[1]].first, pnts_2d[efirst->v[1]].second);
+    ppnt = tplane.PointAt(pnts_2d[efirst->v2d[1]].first, pnts_2d[efirst->v2d[1]].second);
     VSET(bnp, ppnt.x, ppnt.y, ppnt.z);
     pdv_3cont(plot_file, bnp);
     VMINMAX(pmin, pmax, bnp);
@@ -1188,7 +1188,7 @@ void cpolygon_t::polygon_plot_in_plane(const char *filename)
     while (ecurr != efirst && ecnt < poly.size()+1) {
 	ecnt++;
 	ecurr = (!ecurr) ? efirst->next : ecurr->next;
-	ppnt = tplane.PointAt(pnts_2d[ecurr->v[1]].first, pnts_2d[ecurr->v[1]].second);
+	ppnt = tplane.PointAt(pnts_2d[ecurr->v2d[1]].first, pnts_2d[ecurr->v2d[1]].second);
 	VSET(bnp, ppnt.x, ppnt.y, ppnt.z);
 	pdv_3cont(plot_file, bnp);
 	VMINMAX(pmin, pmax, bnp);
@@ -1266,7 +1266,7 @@ void cpolygon_t::print()
     std::set<cpolyedge_t *> visited;
     visited.insert(first);
 
-    std::cout << first->v[0];
+    std::cout << first->v2d[0];
 
     // Walk the loop - an infinite loop is not closed
     while (first != next) {
@@ -1274,7 +1274,7 @@ void cpolygon_t::print()
 	if (!next) {
 	    break;
 	}
-	std::cout << "->" << next->v[0];
+	std::cout << "->" << next->v2d[0];
 	visited.insert(next);
 	next = next->next;
 	if (ecnt > poly.size()) {
@@ -1291,7 +1291,7 @@ void cpolygon_t::print()
     first = pe;
     next = pe->next;
     visited.insert(first);
-    std::cout << "(" << pnts_2d[first->v[0]].first << "," << pnts_2d[first->v[0]].second << ")" ;
+    std::cout << "(" << pnts_2d[first->v2d[0]].first << "," << pnts_2d[first->v2d[0]].second << ")" ;
     ecnt = 1;
     // Walk the loop - an infinite loop is not closed
     while (first != next) {
@@ -1300,7 +1300,7 @@ void cpolygon_t::print()
 	    break;
 	}
 	std::cout << "->";
-	std::cout << "(" << pnts_2d[next->v[0]].first << "," << pnts_2d[next->v[0]].second << ")" ;
+	std::cout << "(" << pnts_2d[next->v2d[0]].first << "," << pnts_2d[next->v2d[0]].second << ")" ;
 	visited.insert(next);
 	next = next->next;
 	if (ecnt > poly.size()) {
@@ -1316,7 +1316,7 @@ void cpolygon_t::print()
 	std::set<cpolyedge_t *>::iterator p_it;
 	for (p_it = poly.begin(); p_it != poly.end(); p_it++) {
 	    if (visited.find(*p_it) == visited.end()) {
-		std::cout << "  " << (*p_it)->v[0] << "->" << (*p_it)->v[1] << "\n";
+		std::cout << "  " << (*p_it)->v2d[0] << "->" << (*p_it)->v2d[1] << "\n";
 	    }
 	}
     }
@@ -2227,7 +2227,7 @@ cdt_mesh_t::polygon_tris(cpolygon_t *polygon, double angle, bool brep_norm, int 
     std::set<cpolyedge_t *>::iterator p_it;
     for (p_it = polygon->poly.begin(); p_it != polygon->poly.end(); p_it++) {
 	cpolyedge_t *pe = *p_it;
-	struct uedge_t ue(pe->v[0], pe->v[1]);
+	struct uedge_t ue(pe->v2d[0], pe->v2d[1]);
 	bool edge_isect = (polygon->self_isect_edges.find(ue) != polygon->self_isect_edges.end());
 	std::set<size_t> petris = uedges2tris[ue];
 	std::set<size_t>::iterator t_it;
@@ -2706,12 +2706,12 @@ loop_to_bgpoly(cpolygon_t *loop)
     cpolyedge_t *first = pe;
     cpolyedge_t *next = pe->next;
 
-    opoly[vcnt-1] = loop->p2o[pe->v[0]];
-    opoly[vcnt] = loop->p2o[pe->v[1]];
+    opoly[vcnt-1] = loop->p2o[pe->v2d[0]];
+    opoly[vcnt] = loop->p2o[pe->v2d[1]];
 
     while (first != next) {
 	vcnt++;
-	opoly[vcnt] = loop->p2o[next->v[1]];
+	opoly[vcnt] = loop->p2o[next->v2d[1]];
 	next = next->next;
 	if (vcnt > loop->poly.size()) {
 	    bu_free(opoly, "free libbg 2d points array)");
@@ -4007,8 +4007,8 @@ cdt_mesh_t::best_fit_plane_reproject(cpolygon_t *polygon)
     std::set<cpolyedge_t *>::iterator cp_it;
     for (cp_it = polygon->poly.begin(); cp_it != polygon->poly.end(); cp_it++) {
 	cpolyedge_t *pe = *cp_it;
-	averts.insert(polygon->p2o[pe->v[0]]);
-	averts.insert(polygon->p2o[pe->v[1]]);
+	averts.insert(polygon->p2o[pe->v2d[0]]);
+	averts.insert(polygon->p2o[pe->v2d[1]]);
     }
     std::set<long>::iterator a_it;
     for (a_it = polygon->interior_points.begin(); a_it != polygon->interior_points.end(); a_it++) {
@@ -4107,7 +4107,7 @@ cdt_mesh_t::tri_process(cpolygon_t *polygon, std::set<uedge_t> *ne, std::set<ued
     for (int i = 0; i < 3; i++) {
 	for (pe_it = polygon->poly.begin(); pe_it != polygon->poly.end(); pe_it++) {
 	    cpolyedge_t *pe = *pe_it;
-	    struct uedge_t pue(pe->v[0], pe->v[1]);
+	    struct uedge_t pue(pe->v2d[0], pe->v2d[1]);
 	    if (ue[i] == pue) {
 		e_shared[i] = true;
 		break;
@@ -4230,13 +4230,13 @@ cdt_mesh_t::polyplot_2d(cpolygon_t *polygon, FILE* plot_file)
     cpolyedge_t *efirst = *(polygon->poly.begin());
     cpolyedge_t *ecurr = NULL;
 
-    ppnt.x = m_pnts_2d[polygon->p2o[efirst->v[0]]].first;
-    ppnt.y = m_pnts_2d[polygon->p2o[efirst->v[0]]].second;
+    ppnt.x = m_pnts_2d[polygon->p2o[efirst->v2d[0]]].first;
+    ppnt.y = m_pnts_2d[polygon->p2o[efirst->v2d[0]]].second;
     VSET(bnp, ppnt.x, ppnt.y, 0);
     pdv_3move(plot_file, bnp);
     VMINMAX(pmin, pmax, bnp);
-    ppnt.x = m_pnts_2d[polygon->p2o[efirst->v[1]]].first;
-    ppnt.y = m_pnts_2d[polygon->p2o[efirst->v[1]]].second;
+    ppnt.x = m_pnts_2d[polygon->p2o[efirst->v2d[1]]].first;
+    ppnt.y = m_pnts_2d[polygon->p2o[efirst->v2d[1]]].second;
     VSET(bnp, ppnt.x, ppnt.y, 0);
     pdv_3cont(plot_file, bnp);
     VMINMAX(pmin, pmax, bnp);
@@ -4245,8 +4245,8 @@ cdt_mesh_t::polyplot_2d(cpolygon_t *polygon, FILE* plot_file)
     while (ecurr != efirst && ecnt < polygon->poly.size()+1) {
 	ecnt++;
 	ecurr = (!ecurr) ? efirst->next : ecurr->next;
-	ppnt.x = m_pnts_2d[polygon->p2o[ecurr->v[1]]].first;
-	ppnt.y = m_pnts_2d[polygon->p2o[ecurr->v[1]]].second;
+	ppnt.x = m_pnts_2d[polygon->p2o[ecurr->v2d[1]]].first;
+	ppnt.y = m_pnts_2d[polygon->p2o[ecurr->v2d[1]]].second;
 	VSET(bnp, ppnt.x, ppnt.y, 0);
 	pdv_3cont(plot_file, bnp);
 	VMINMAX(pmin, pmax, bnp);
@@ -4318,12 +4318,12 @@ serialize_loop(cpolygon_t *loop, std::ofstream &sfile, const char *lname)
     cpolyedge_t *first = pe;
     cpolyedge_t *next = pe->next;
 
-    sfile << lname << "[" << vcnt-1 << "] = " << loop->p2o[pe->v[0]] << ";\n";
-    sfile << lname << "[" << vcnt << "] = " << loop->p2o[pe->v[1]] << ";\n";
+    sfile << lname << "[" << vcnt-1 << "] = " << loop->p2o[pe->v2d[0]] << ";\n";
+    sfile << lname << "[" << vcnt << "] = " << loop->p2o[pe->v2d[1]] << ";\n";
 
     while (first != next) {
 	vcnt++;
-	sfile << lname << "[" << vcnt << "] = " << loop->p2o[next->v[1]] << ";\n";
+	sfile << lname << "[" << vcnt << "] = " << loop->p2o[next->v2d[1]] << ";\n";
 	next = next->next;
 	if (vcnt > loop->poly.size()) {
 	    return;
@@ -4413,11 +4413,11 @@ void cdt_mesh_t::polygon_plot_3d(cpolygon_t *polygon, const char *filename)
     cpolyedge_t *efirst = *(polygon->poly.begin());
     cpolyedge_t *ecurr = NULL;
 
-    ppnt = pnts[p2d3d[polygon->p2o[efirst->v[0]]]];
+    ppnt = pnts[p2d3d[polygon->p2o[efirst->v2d[0]]]];
     VSET(bnp, ppnt->x, ppnt->y, ppnt->z);
     pdv_3move(plot_file, bnp);
     VMINMAX(pmin, pmax, bnp);
-    ppnt = pnts[p2d3d[polygon->p2o[efirst->v[1]]]];
+    ppnt = pnts[p2d3d[polygon->p2o[efirst->v2d[1]]]];
     VSET(bnp, ppnt->x, ppnt->y, ppnt->z);
     pdv_3cont(plot_file, bnp);
     VMINMAX(pmin, pmax, bnp);
@@ -4426,7 +4426,7 @@ void cdt_mesh_t::polygon_plot_3d(cpolygon_t *polygon, const char *filename)
     while (ecurr != efirst && ecnt < polygon->poly.size()+1) {
 	ecnt++;
 	ecurr = (!ecurr) ? efirst->next : ecurr->next;
-	ppnt = pnts[p2d3d[polygon->p2o[ecurr->v[1]]]];
+	ppnt = pnts[p2d3d[polygon->p2o[ecurr->v2d[1]]]];
 	VSET(bnp, ppnt->x, ppnt->y, ppnt->z);
 	pdv_3cont(plot_file, bnp);
 	VMINMAX(pmin, pmax, bnp);
@@ -4450,7 +4450,7 @@ void cdt_mesh_t::polygon_print_3d(cpolygon_t *polygon)
     std::set<cpolyedge_t *> visited;
     visited.insert(first);
 
-    std::cout << first->v[0];
+    std::cout << first->v2d[0];
 
     // Walk the loop - an infinite loop is not closed
     while (first != next) {
@@ -4458,7 +4458,7 @@ void cdt_mesh_t::polygon_print_3d(cpolygon_t *polygon)
 	if (!next) {
 	    break;
 	}
-	std::cout << "->" << next->v[0];
+	std::cout << "->" << next->v2d[0];
 	visited.insert(next);
 	next = next->next;
 	if (ecnt > polygon->poly.size()) {
@@ -4475,7 +4475,7 @@ void cdt_mesh_t::polygon_print_3d(cpolygon_t *polygon)
     first = pe;
     next = pe->next;
     visited.insert(first);
-    ON_3dPoint *p = pnts[p2d3d[polygon->p2o[first->v[0]]]];
+    ON_3dPoint *p = pnts[p2d3d[polygon->p2o[first->v2d[0]]]];
     std::cout << "(" << p->x << "," << p->y << "," << p->z << ")" ;
     ecnt = 1;
     // Walk the loop - an infinite loop is not closed
@@ -4485,7 +4485,7 @@ void cdt_mesh_t::polygon_print_3d(cpolygon_t *polygon)
 	    break;
 	}
 	std::cout << "->";
-	p = pnts[p2d3d[polygon->p2o[first->v[0]]]];
+	p = pnts[p2d3d[polygon->p2o[first->v2d[0]]]];
 	std::cout << "(" << p->x << "," << p->y << "," << p->z << ")" ;
 	visited.insert(next);
 	next = next->next;

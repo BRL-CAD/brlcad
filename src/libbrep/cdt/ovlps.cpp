@@ -2242,7 +2242,7 @@ bool poly_tri_process(cpolygon_t *polygon, long *nv, std::set<uedge_t> *ne, std:
 	std::set<cpolyedge_t *>::iterator pe_it;
 	for (pe_it = polygon->poly.begin(); pe_it != polygon->poly.end(); pe_it++) {
 	    cpolyedge_t *pe = *pe_it;
-	    struct uedge_t pue(pe->v[0], pe->v[1]);
+	    struct uedge_t pue(pe->v2d[0], pe->v2d[1]);
 	    if (ue[i] == pue) {
 		e_shared[i] = true;
 		break;
@@ -2367,7 +2367,7 @@ group_polygon(ovlp_grp &grp, int ind)
 	std::set<cpolyedge_t *>::iterator pe_it;
 	for (pe_it = polygon->poly.begin(); pe_it != polygon->poly.end(); pe_it++) {
 	    cpolyedge_t *pe = *pe_it;
-	    uedge_t ue(polygon->p2o[pe->v[0]], polygon->p2o[pe->v[1]]);
+	    uedge_t ue(polygon->p2o[pe->v2d[0]], polygon->p2o[pe->v2d[1]]);
 	    std::set<size_t> petris = om->fmesh->uedges2tris[ue];
 	    std::set<size_t>::iterator t_it;
 	    for (t_it = petris.begin(); t_it != petris.end(); t_it++) {

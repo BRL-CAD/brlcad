@@ -155,8 +155,8 @@ loop_edges(cdt_mesh_t *fmesh, cpolygon_t *loop)
     cpolyedge_t *first = pe;
     cpolyedge_t *next = pe->next;
 
-    long p1_ind = fmesh->p2ind[fmesh->pnts[fmesh->p2d3d[loop->p2o[pe->v[0]]]]];
-    long p2_ind = fmesh->p2ind[fmesh->pnts[fmesh->p2d3d[loop->p2o[pe->v[1]]]]];
+    long p1_ind = fmesh->p2ind[fmesh->pnts[fmesh->p2d3d[loop->p2o[pe->v2d[0]]]]];
+    long p2_ind = fmesh->p2ind[fmesh->pnts[fmesh->p2d3d[loop->p2o[pe->v2d[1]]]]];
     fmesh->ep.insert(p1_ind);
     fmesh->ep.insert(p2_ind);
     fmesh->brep_edges.insert(uedge_t(p1_ind, p2_ind));
@@ -164,8 +164,8 @@ loop_edges(cdt_mesh_t *fmesh, cpolygon_t *loop)
 
     while (first != next) {
 	vcnt++;
-	p1_ind = fmesh->p2ind[fmesh->pnts[fmesh->p2d3d[loop->p2o[next->v[0]]]]];
-	p2_ind = fmesh->p2ind[fmesh->pnts[fmesh->p2d3d[loop->p2o[next->v[1]]]]];
+	p1_ind = fmesh->p2ind[fmesh->pnts[fmesh->p2d3d[loop->p2o[next->v2d[0]]]]];
+	p2_ind = fmesh->p2ind[fmesh->pnts[fmesh->p2d3d[loop->p2o[next->v2d[1]]]]];
 	fmesh->ep.insert(p1_ind);
 	fmesh->ep.insert(p2_ind);
 	fmesh->brep_edges.insert(uedge_t(p1_ind, p2_ind));

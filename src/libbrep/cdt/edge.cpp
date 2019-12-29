@@ -204,8 +204,8 @@ void
 rtree_bbox_2d(struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *pe, int tight)
 {
     ON_BrepTrim& trim = s_cdt->brep->m_T[pe->trim_ind];
-    ON_2dPoint p2d1(pe->polygon->pnts_2d[pe->v[0]].first, pe->polygon->pnts_2d[pe->v[0]].second);
-    ON_2dPoint p2d2(pe->polygon->pnts_2d[pe->v[1]].first, pe->polygon->pnts_2d[pe->v[1]].second);
+    ON_2dPoint p2d1(pe->polygon->pnts_2d[pe->v2d[0]].first, pe->polygon->pnts_2d[pe->v2d[0]].second);
+    ON_2dPoint p2d2(pe->polygon->pnts_2d[pe->v2d[1]].first, pe->polygon->pnts_2d[pe->v2d[1]].second);
     double dist = p2d1.DistanceTo(p2d2);
     double bdist = 0.5*dist;
 
@@ -267,8 +267,8 @@ void
 rtree_bbox_2d_remove(struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *pe)
 {
     ON_BrepTrim& trim = s_cdt->brep->m_T[pe->trim_ind];
-    ON_2dPoint p2d1(pe->polygon->pnts_2d[pe->v[0]].first, pe->polygon->pnts_2d[pe->v[0]].second);
-    ON_2dPoint p2d2(pe->polygon->pnts_2d[pe->v[1]].first, pe->polygon->pnts_2d[pe->v[1]].second);
+    ON_2dPoint p2d1(pe->polygon->pnts_2d[pe->v2d[0]].first, pe->polygon->pnts_2d[pe->v2d[0]].second);
+    ON_2dPoint p2d2(pe->polygon->pnts_2d[pe->v2d[1]].first, pe->polygon->pnts_2d[pe->v2d[1]].second);
     ON_Line line(p2d1, p2d2);
     ON_BoundingBox bb = line.BoundingBox();
     bb.m_max.x = bb.m_max.x + ON_ZERO_TOLERANCE;
@@ -461,10 +461,10 @@ static bool MinSplit2dCallback(void *data, void *a_context) {
     if (tseg == context->cseg || tseg == context->cseg->prev || tseg == context->cseg->next) return true;
 
     // Someone needs to split - figure out if it's us
-    ON_2dPoint cp2d1(context->cseg->polygon->pnts_2d[context->cseg->v[0]].first, context->cseg->polygon->pnts_2d[context->cseg->v[0]].second);
-    ON_2dPoint cp2d2(context->cseg->polygon->pnts_2d[context->cseg->v[1]].first, context->cseg->polygon->pnts_2d[context->cseg->v[1]].second);
-    ON_2dPoint tp2d1(tseg->polygon->pnts_2d[tseg->v[0]].first, tseg->polygon->pnts_2d[tseg->v[0]].second);
-    ON_2dPoint tp2d2(tseg->polygon->pnts_2d[tseg->v[1]].first, tseg->polygon->pnts_2d[tseg->v[1]].second);
+    ON_2dPoint cp2d1(context->cseg->polygon->pnts_2d[context->cseg->v2d[0]].first, context->cseg->polygon->pnts_2d[context->cseg->v2d[0]].second);
+    ON_2dPoint cp2d2(context->cseg->polygon->pnts_2d[context->cseg->v2d[1]].first, context->cseg->polygon->pnts_2d[context->cseg->v2d[1]].second);
+    ON_2dPoint tp2d1(tseg->polygon->pnts_2d[tseg->v2d[0]].first, tseg->polygon->pnts_2d[tseg->v2d[0]].second);
+    ON_2dPoint tp2d2(tseg->polygon->pnts_2d[tseg->v2d[1]].first, tseg->polygon->pnts_2d[tseg->v2d[1]].second);
     double cdist = cp2d1.DistanceTo(cp2d2);
     double tdist = tp2d1.DistanceTo(tp2d2);
 
@@ -899,8 +899,8 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, int force, do
     {
 	cpolygon_t *poly1 = bseg->tseg1->polygon;
 	int v[2];
-	v[0] = bseg->tseg1->v[0];
-	v[1] = bseg->tseg1->v[1];
+	v[0] = bseg->tseg1->v2d[0];
+	v[1] = bseg->tseg1->v2d[1];
 	int trim_ind = bseg->tseg1->trim_ind;
 	double old_trim_start = bseg->tseg1->trim_start;
 	double old_trim_end = bseg->tseg1->trim_end;
@@ -920,8 +920,8 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, int force, do
     {
 	cpolygon_t *poly2 = bseg->tseg2->polygon;
 	int v[2];
-	v[0] = bseg->tseg2->v[0];
-	v[1] = bseg->tseg2->v[1];
+	v[0] = bseg->tseg2->v2d[0];
+	v[1] = bseg->tseg2->v2d[1];
 	int trim_ind = bseg->tseg2->trim_ind;
 	double old_trim_start = bseg->tseg2->trim_start;
 	double old_trim_end = bseg->tseg2->trim_end;
@@ -1094,7 +1094,7 @@ split_singular_seg(struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *ce, int update_
     if (fmesh->p2d3d.find(f_ind2d) != fmesh->p2d3d.end()) {
 	std::cout << fmesh->f_id << ": 2d->3d mapping already exists for " << f_ind2d << "\n";
     }
-    fmesh->p2d3d[f_ind2d] = fmesh->p2d3d[poly->p2o[ce->v[0]]];
+    fmesh->p2d3d[f_ind2d] = fmesh->p2d3d[poly->p2o[ce->v2d[0]]];
 
     if (update_rtrees) {
 	rtree_bbox_2d_remove(s_cdt, ce);
@@ -1105,8 +1105,8 @@ split_singular_seg(struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *ce, int update_
     // Using the 2d mid points, update the polygons associated with tseg1 and tseg2.
     cpolyedge_t *poly_ne1, *poly_ne2;
     int v[2];
-    v[0] = ce->v[0];
-    v[1] = ce->v[1];
+    v[0] = ce->v2d[0];
+    v[1] = ce->v2d[1];
     double old_trim_start = ce->trim_start;
     double old_trim_end = ce->trim_end;
     poly->remove_edge(edge_t(v[0], v[1]));
@@ -1780,8 +1780,8 @@ refine_close_edges(struct ON_Brep_CDT_State *s_cdt)
 	    std::vector<cpolyedge_t *>::iterator w_it;
 	    for (w_it = ws.begin(); w_it != ws.end(); w_it++) {
 		cpolyedge_t *tseg = *w_it;
-		ON_2dPoint p2d1(tseg->polygon->pnts_2d[tseg->v[0]].first, tseg->polygon->pnts_2d[tseg->v[0]].second);
-		ON_2dPoint p2d2(tseg->polygon->pnts_2d[tseg->v[1]].first, tseg->polygon->pnts_2d[tseg->v[1]].second);
+		ON_2dPoint p2d1(tseg->polygon->pnts_2d[tseg->v2d[0]].first, tseg->polygon->pnts_2d[tseg->v2d[0]].second);
+		ON_2dPoint p2d2(tseg->polygon->pnts_2d[tseg->v2d[1]].first, tseg->polygon->pnts_2d[tseg->v2d[1]].second);
 
 		// Trim 2D bbox
 		ON_Line line(p2d1, p2d2);
@@ -1966,11 +1966,11 @@ finalize_rtrees(struct ON_Brep_CDT_State *s_cdt)
 
 void
 cpolyedge_ndists(cpolyedge_t *pe) {
-    ON_2dPoint p2d1(pe->polygon->pnts_2d[pe->v[0]].first, pe->polygon->pnts_2d[pe->v[0]].second);
-    ON_2dPoint p2d2(pe->polygon->pnts_2d[pe->v[1]].first, pe->polygon->pnts_2d[pe->v[1]].second);
+    ON_2dPoint p2d1(pe->polygon->pnts_2d[pe->v2d[0]].first, pe->polygon->pnts_2d[pe->v2d[0]].second);
+    ON_2dPoint p2d2(pe->polygon->pnts_2d[pe->v2d[1]].first, pe->polygon->pnts_2d[pe->v2d[1]].second);
 
-    ON_2dPoint p2d1_n(pe->polygon->pnts_2d[pe->prev->v[0]].first, pe->polygon->pnts_2d[pe->prev->v[0]].second);
-    ON_2dPoint p2d2_n(pe->polygon->pnts_2d[pe->next->v[1]].first, pe->polygon->pnts_2d[pe->next->v[1]].second);
+    ON_2dPoint p2d1_n(pe->polygon->pnts_2d[pe->prev->v2d[0]].first, pe->polygon->pnts_2d[pe->prev->v2d[0]].second);
+    ON_2dPoint p2d2_n(pe->polygon->pnts_2d[pe->next->v2d[1]].first, pe->polygon->pnts_2d[pe->next->v2d[1]].second);
 
     pe->v1_dist = p2d1.DistanceTo(p2d1_n);
     pe->v2_dist = p2d2.DistanceTo(p2d2_n);
