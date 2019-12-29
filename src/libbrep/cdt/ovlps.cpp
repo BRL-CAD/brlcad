@@ -2214,20 +2214,16 @@ refinement_reset(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 }
 
 cpolygon_t *
-group_polygon(ovlp_grp &UNUSED(grp), int UNUSED(ind))
+group_polygon(ovlp_grp &grp, int ind)
 {
-#if 0
     omesh_t *om = (ind == 0) ? grp.om1 : grp.om2;
     std::set<size_t> tris = (ind == 0) ? grp.tris1 : grp.tris2;
     std::set<long> verts = (ind == 0) ? grp.verts1 : grp.verts2;
-    std::set<overt_t *> overts = (ind == 0) ? grp.overts1 : grp.overts2;
 
     ON_Plane fit_plane = grp.fit_plane();
-#endif
 
     cpolygon_t *polygon = new cpolygon_t;
-#if 0
-   //
+
     // TODO - the below logic is the right idea, but om1_verts is not the
     // vertex list to use - that's just from the overlapping triangles.  We
     // need the vert_bin set that includes all of the vertices active due
@@ -2236,10 +2232,10 @@ group_polygon(ovlp_grp &UNUSED(grp), int UNUSED(ind))
 
     polygon->pdir = fit_plane.Normal();
     polygon->tplane = fit_plane;
-    for (tv_it = om1_verts.begin(); tv_it != om1_verts.end(); tv_it++) {
+    for (tv_it = verts.begin(); tv_it != verts.end(); tv_it++) {
 	double u, v;
 	long pind = *tv_it;
-	ON_3dPoint *p = om[0]->fmesh->pnts[pind];
+	ON_3dPoint *p = om->fmesh->pnts[pind];
 	fit_plane.ClosestPointTo(*p, &u, &v);
 	std::pair<double, double> proj_2d;
 	proj_2d.first = u;
@@ -2247,8 +2243,9 @@ group_polygon(ovlp_grp &UNUSED(grp), int UNUSED(ind))
 	polygon->pnts_2d.push_back(proj_2d);
 	polygon->p2o[polygon->pnts_2d.size() - 1] = pind;
     }
+
     // Seed the polygon with one of the triangles.
-    triangle_t tri1 = om[0]->fmesh->tris_vect[*(om1_tris.begin())];
+    triangle_t tri1 = om->fmesh->tris_vect[*(tris.begin())];
     edge_t e1(tri1.v[0], tri1.v[1]);
     edge_t e2(tri1.v[1], tri1.v[2]);
     edge_t e3(tri1.v[2], tri1.v[0]);
@@ -2256,6 +2253,7 @@ group_polygon(ovlp_grp &UNUSED(grp), int UNUSED(ind))
     polygon->add_edge(e2);
     polygon->add_edge(e3);
 
+#if 0
     // Now, the hard part.  We need to grow the polygon to encompass the om1_vert vertices.  This
     // may involve more triangles than om1_tris, but shouldn't involve vertices that aren't in the
     // om1_vert set.
@@ -2349,8 +2347,10 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 
 	    // With a seed triangle from each mesh, grow two polygons such that all active
 	    // vertices from each mesh are either boundary or interior points on the polygons.
-	    //cpolygon_t *polygon = group_polygon();
-
+	    cpolygon_t *polygon = group_polygon(bins[*r_it], 0);
+	    if (!polygon) {
+		std::cerr << "group polygon generation failed!\n";
+	    }
 
 	    // CDT the polygon in the shared plane.  Those triangles will now map back to matching
 	    // closest points in both meshes.  Remove the original triangles from each mesh, and
