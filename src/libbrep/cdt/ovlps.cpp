@@ -1189,6 +1189,7 @@ refine_edge_vert_sets (
 	}
 	polygon->replace_edges(new_edges, shared_edges);
 
+#if 0
 	{
 	FILE *t1plot = fopen("t1.plot", "w");
 	struct bu_color c = BU_COLOR_INIT_ZERO;
@@ -1205,6 +1206,7 @@ refine_edge_vert_sets (
 	omesh->fmesh->plot_tri(tri2, &c, t2plot, 255, 0, 0);
 	fclose(t2plot);
 	}
+#endif
 
 	// Grow the polygon with the other triangle.
 	std::set<overt_t *> new_overts;
@@ -1657,8 +1659,18 @@ ovlp_split_edge(
 
     std::set<size_t> f1_tris = fmesh_f1->uedges2tris[ue1];
     std::set<size_t> f2_tris = fmesh_f2->uedges2tris[ue2];
-    if (f1_tris.size() != 1 || f2_tris.size() != 1) {
-	if (f1_tris.size() != 1) {
+
+    size_t tris_cnt = 0;
+    if (fmesh_f1->f_id == fmesh_f2->f_id) {
+	std::set<size_t> f_alltris;
+	f_alltris.insert(f1_tris.begin(), f1_tris.end());
+	f_alltris.insert(f2_tris.begin(), f2_tris.end());
+	tris_cnt = f_alltris.size();
+    } else {
+	tris_cnt = f1_tris.size() + f2_tris.size();
+    }
+    if (tris_cnt != 2) {
+	if (f1_tris.size() != 1 || ((fmesh_f1->f_id == fmesh_f2->f_id) && (f1_tris.size() != 2))) {
 	    std::cerr << "FATAL: could not find expected triangle in mesh " << fmesh_f1->name << "," << f_id1 << " using uedge " << ue1.v[0] << "," << ue1.v[1] << "\n";
 	    ON_3dPoint v1 = *fmesh_f1->pnts[ue1.v[0]];
 	    ON_3dPoint v2 = *fmesh_f1->pnts[ue1.v[1]];
@@ -1668,7 +1680,7 @@ ovlp_split_edge(
 	    CDT_Audit((struct ON_Brep_CDT_State *)fmesh_f1->p_cdt);
 	    exit(1);
 	}
-	if (f2_tris.size() != 1) {
+	if (f2_tris.size() != 1 || ((fmesh_f1->f_id == fmesh_f2->f_id) && (f2_tris.size() != 2))) {
 	    std::cerr << "FATAL: could not find expected triangle in mesh " << fmesh_f2->name << "," << f_id2 << " using uedge " << ue2.v[0] << "," << ue2.v[1] << "\n";
 	    ON_3dPoint v1 = *fmesh_f2->pnts[ue2.v[0]];
 	    ON_3dPoint v2 = *fmesh_f2->pnts[ue2.v[1]];
