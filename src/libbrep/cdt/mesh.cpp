@@ -206,17 +206,17 @@ bedge_seg_t::uedges()
     cpolyedge_t *pe2 = tseg2;
     cpolygon_t *poly1 = pe1->polygon;
     cpolygon_t *poly2 = pe2->polygon;
-    long ue1_1 = fmesh_f1.p2d3d[poly1->p2o[tseg1->v[0]]];
-    long ue1_2 = fmesh_f1.p2d3d[poly1->p2o[tseg1->v[1]]];
+    long ue1_1 = fmesh_f1.p2ind[fmesh_f1.pnts[fmesh_f1.p2d3d[poly1->p2o[tseg1->v[0]]]]];
+    long ue1_2 = fmesh_f1.p2ind[fmesh_f1.pnts[fmesh_f1.p2d3d[poly1->p2o[tseg1->v[1]]]]];
     uedge_t ue1(ue1_1, ue1_2);
- 
-    uedges.push_back(std::make_pair(&fmesh_f1, ue1)); 
 
-    long ue2_1 = fmesh_f2.p2d3d[poly2->p2o[tseg2->v[0]]];
-    long ue2_2 = fmesh_f2.p2d3d[poly2->p2o[tseg2->v[1]]];
+    uedges.push_back(std::make_pair(&fmesh_f1, ue1));
+
+    long ue2_1 = fmesh_f2.p2ind[fmesh_f2.pnts[fmesh_f2.p2d3d[poly2->p2o[tseg2->v[0]]]]];
+    long ue2_2 = fmesh_f2.p2ind[fmesh_f2.pnts[fmesh_f2.p2d3d[poly2->p2o[tseg2->v[1]]]]];
     uedge_t ue2(ue2_1, ue2_2);
- 
-    uedges.push_back(std::make_pair(&fmesh_f2, ue2)); 
+
+    uedges.push_back(std::make_pair(&fmesh_f2, ue2));
 
     return uedges;
 }
