@@ -475,7 +475,7 @@ class cpolygon_t
 
 	/* Polygon edge manipulation */
 	cpolyedge_t *add_ordered_edge(const struct edge2d_t &e);
-	void remove_ordered_edge(const struct edge_t &e);
+	void remove_ordered_edge(const struct edge2d_t &e);
 
 	cpolyedge_t *add_edge(const struct uedge_t &e);
 	void remove_edge(const struct uedge_t &e);

@@ -285,13 +285,13 @@ cpolygon_t::add_ordered_edge(const struct edge2d_t &e)
 }
 
 void
-cpolygon_t::remove_ordered_edge(const struct edge_t &e)
+cpolygon_t::remove_ordered_edge(const struct edge2d_t &e)
 {
     cpolyedge_t *cull = NULL;
     std::set<cpolyedge_t *>::iterator cp_it;
     for (cp_it = poly.begin(); cp_it != poly.end(); cp_it++) {
 	cpolyedge_t *pe = *cp_it;
-	struct edge_t oe(pe->v2d[0], pe->v2d[1]);
+	struct edge2d_t oe(pe->v2d[0], pe->v2d[1]);
 	if (e == oe) {
 	    // Existing segment with this ending vertex exists
 	    cull = pe;
@@ -301,8 +301,8 @@ cpolygon_t::remove_ordered_edge(const struct edge_t &e)
 
     if (!cull) return;
 
-    v2pe[e.v[0]].erase(cull);
-    v2pe[e.v[1]].erase(cull);
+    v2pe[e.v2d[0]].erase(cull);
+    v2pe[e.v2d[1]].erase(cull);
 
     for (cp_it = poly.begin(); cp_it != poly.end(); cp_it++) {
 	cpolyedge_t *pe = *cp_it;
