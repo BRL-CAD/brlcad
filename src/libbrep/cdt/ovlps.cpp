@@ -49,8 +49,7 @@ ovbbp(ON_BoundingBox &bb) {
 }
 
 
-//#define PPOINT 3.38984844477552327,7.61925680200236233,24.0000072835802527
-#define PPOINT 2.5657681525730283,8.003238757925871,23.752291844936355 
+#define PPOINT 3.05501831768742305,7.50007628741969601,23.99999799973181069
 bool
 PPCHECK(ON_3dPoint &p)
 {
@@ -1934,9 +1933,7 @@ bedge_split_near_verts(
 	    double closest_dist = DBL_MAX;
 	    std::set<bedge_seg_t *>::iterator e_it;
 	    //std::cout << "segs size: " << segs.size() << "\n";
-	    int segcnt = 0;
 	    for (e_it = segs.begin(); e_it != segs.end(); e_it++) {
-		std::cout << "segcnt: " << segcnt << "\n";
 		bedge_seg_t *eseg = *e_it;
 		ON_NurbsCurve *nc = eseg->nc;
 		ON_Interval domain(eseg->edge_start, eseg->edge_end);
@@ -1951,7 +1948,6 @@ bedge_split_near_verts(
 		    eseg_split = eseg;
 		    split_t = t;
 		}
-		segcnt++;
 	    }
 
 	    std::set<bedge_seg_t *> nsegs;
@@ -2278,8 +2274,10 @@ group_polygon(ovlp_grp &grp, int ind)
     unused_verts.erase(tri1.v[2]);
 
     while (unused_verts.size()) {
+	std::set<cpolyedge_t *> pedges = polygon->poly;
 	std::set<cpolyedge_t *>::iterator pe_it;
-	for (pe_it = polygon->poly.begin(); pe_it != polygon->poly.end(); pe_it++) {
+	polygon->polygon_plot("ovlp_grp.plot3");
+	for (pe_it = pedges.begin(); pe_it != pedges.end(); pe_it++) {
 	    cpolyedge_t *pe = *pe_it;
 	    uedge_t ue(polygon->p2o[pe->v2d[0]], polygon->p2o[pe->v2d[1]]);
 	    std::set<size_t> petris = om->fmesh->uedges2tris[ue];
@@ -2302,6 +2300,7 @@ group_polygon(ovlp_grp &grp, int ind)
 		    polygon->replace_edges(new_edges, shared_edges);
 		} else {
 		    std::cerr << "group_polygon: failed to process tri??\n";
+		    polygon->polygon_plot("ovlp_grp.plot3");
 		    return NULL;
 		}
 	    }
@@ -2362,14 +2361,15 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 	    bins[*r_it].plot(bu_vls_cstr(&pname));
 	    bu_vls_free(&pname);
 
-	    // With a seed triangle from each mesh, grow two polygons such that all active
-	    // vertices from each mesh are either boundary or interior points on the polygons.
-	    cpolygon_t *polygon = group_polygon(bins[*r_it], 0);
-	    if (!polygon) {
+	    // With a seed triangle from each mesh, grow a polygon such that all active
+	    // vertices from each mesh are either boundary or interior points on the polygon.
+	    cpolygon_t *polygon1 = group_polygon(bins[*r_it], 0);
+	    cpolygon_t *polygon2 = group_polygon(bins[*r_it], 1);
+	    if (!polygon1 || !polygon2) {
 		std::cerr << "group polygon generation failed!\n";
 	    }
 
-	    // CDT the polygon in the shared plane.  Those triangles will now map back to matching
+	    // CDT one of the polygons in the shared plane.  Those triangles will now map back to matching
 	    // closest points in both meshes.  Remove the original triangles from each mesh, and
 	    // replace with the new in both meshes.
 
@@ -2389,6 +2389,17 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 
 	// If refinement points were added above, refine and repeat
 	if (refine.size()) {
+
+	    // Before adding points, see if retessellating the groups individually can clear the ovlps
+	    for (r_it = refine.begin(); r_it != refine.end(); r_it++) {
+		cpolygon_t *polygon1 = group_polygon(bins[*r_it], 0);
+		cpolygon_t *polygon2 = group_polygon(bins[*r_it], 1);
+		if (!polygon1 || !polygon2) {
+		    std::cerr << "group polygon generation failed!\n";
+		}
+	    }
+
+
 	    int bedge_replaced_tris = INT_MAX;
 	    while (bedge_replaced_tris) {
 		// Process edge_verts
