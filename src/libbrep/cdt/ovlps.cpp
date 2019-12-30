@@ -2217,6 +2217,7 @@ bool poly_tri_usable(std::set<long> &active_verts, triangle_t &tri, long nv) {
 	}
     }
     if (avcnt == 3) return true;
+    std::cout << "avcnt " << avcnt << "\n";
     return false;
 }
 
@@ -2269,40 +2270,52 @@ group_polygon(ovlp_grp &grp, int ind)
     unused_verts.erase(tri1.v[2]);
 
     while (unused_verts.size()) {
-	std::set<cpolyedge_t *> pedges = polygon->poly;
-	std::set<cpolyedge_t *>::iterator pe_it;
-	polygon->polygon_plot_in_plane("ogp.plot3");
-	for (pe_it = pedges.begin(); pe_it != pedges.end(); pe_it++) {
-	    cpolyedge_t *pe = *pe_it;
+
+	std::set<triangle_t> tuniq;
+	std::set<cpolyedge_t *>::iterator p_it;
+	for (p_it = polygon->poly.begin(); p_it != polygon->poly.end(); p_it++) {
+	    cpolyedge_t *pe = *p_it;
 	    uedge_t ue(polygon->p2o[pe->v2d[0]], polygon->p2o[pe->v2d[1]]);
 	    std::set<size_t> petris = om->fmesh->uedges2tris[ue];
 	    std::set<size_t>::iterator t_it;
 	    for (t_it = petris.begin(); t_it != petris.end(); t_it++) {
 		if (visited_tris.find(*t_it) != visited_tris.end()) continue;
-		visited_tris.insert(*t_it);
 		triangle_t ntri = om->fmesh->tris_vect[*t_it];
-		std::set<uedge_t> new_edges;
-		std::set<uedge_t> shared_edges;
-		long nv = -1;
-		if (om->fmesh->tri_process(polygon, &new_edges, &shared_edges, &nv, ntri) >= 0) {
-		    if (!poly_tri_usable(verts, ntri, nv)) {
-			continue;
-		    }
-		    added_tris.insert(*t_it);
-		    unused_verts.erase(ntri.v[0]);
-		    unused_verts.erase(ntri.v[1]);
-		    unused_verts.erase(ntri.v[2]);
-		    polygon->replace_edges(new_edges, shared_edges);
-		} else {
-		    std::cerr << "group_polygon: failed to process tri??\n";
-		    polygon->polygon_plot_in_plane("ogp.plot3");
-		    return NULL;
-		}
+		tuniq.insert(ntri);
 	    }
 	}
+	std::stack<triangle_t> ts;
+	std::set<triangle_t>::iterator tu_it;
+	for (tu_it = tuniq.begin(); tu_it != tuniq.end(); tu_it++) {
+	    ts.push(*tu_it);
+	}
+
+	while (!ts.empty()) {
+	    triangle_t ntri = ts.top();
+	    ts.pop();
+	    std::set<uedge_t> new_edges;
+	    std::set<uedge_t> shared_edges;
+	    long nv = -1;
+	    if (om->fmesh->tri_process(polygon, &new_edges, &shared_edges, &nv, ntri) >= 0) {
+		om->fmesh->tri_plot(ntri, "ntri.p3");
+		visited_tris.insert(ntri.ind);
+		if (!poly_tri_usable(verts, ntri, nv)) {
+		    continue;
+		}
+		added_tris.insert(ntri.ind);
+		unused_verts.erase(ntri.v[0]);
+		unused_verts.erase(ntri.v[1]);
+		unused_verts.erase(ntri.v[2]);
+		polygon->replace_edges(new_edges, shared_edges);
+		polygon->print();
+		polygon->polygon_plot_in_plane("ogp.plot3");
+	    }
+	}
+
+	polygon->polygon_plot_in_plane("ogp.plot3");
     }
 
-    polygon->polygon_plot_in_plane("ogp.plot3");
+
 
     return polygon;
 }

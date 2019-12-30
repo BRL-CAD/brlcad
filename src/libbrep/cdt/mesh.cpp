@@ -1295,6 +1295,33 @@ void cpolygon_t::print()
     first = pe;
     next = pe->next;
     visited.insert(first);
+    ecnt = 1;
+    std::cout << p2o[first->v2d[0]];
+    // Walk the loop - an infinite loop is not closed
+    while (first != next) {
+	ecnt++;
+	if (!next) {
+	    break;
+	}
+	std::cout << "->" << p2o[next->v2d[0]];
+	visited.insert(next);
+	next = next->next;
+	if (ecnt > poly.size()) {
+	    std::cout << "\nERROR infinite loop\n";
+	    break;
+	}
+    }
+
+    std::cout << "\n";
+
+    visited.clear();
+
+
+
+    pe = (*poly.begin());
+    first = pe;
+    next = pe->next;
+    visited.insert(first);
     std::cout << "(" << pnts_2d[first->v2d[0]].first << "," << pnts_2d[first->v2d[0]].second << ")" ;
     ecnt = 1;
     // Walk the loop - an infinite loop is not closed
