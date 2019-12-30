@@ -1109,15 +1109,15 @@ split_singular_seg(struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *ce, int update_
     v[1] = ce->v2d[1];
     double old_trim_start = ce->trim_start;
     double old_trim_end = ce->trim_end;
-    poly->remove_edge(edge_t(v[0], v[1]));
+    poly->remove_edge(uedge2d_t(v[0], v[1]));
     long poly_2dind = poly->add_point(trim_mid_2d, f_ind2d);
-    struct edge_t poly_edge1(v[0], poly_2dind);
+    struct edge2d_t poly_edge1(v[0], poly_2dind);
     poly_ne1 = poly->add_edge(poly_edge1);
     poly_ne1->trim_ind = trim_ind;
     poly_ne1->trim_start = old_trim_start;
     poly_ne1->trim_end = tcparam;
     poly_ne1->eseg = NULL;
-    struct edge_t poly_edge2(poly_2dind, v[1]);
+    struct edge2d_t poly_edge2(poly_2dind, v[1]);
     poly_ne2 = poly->add_edge(poly_edge2);
     poly_ne2->trim_ind = trim_ind;
     poly_ne2->trim_start = tcparam;

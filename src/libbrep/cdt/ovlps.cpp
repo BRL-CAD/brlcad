@@ -1101,19 +1101,13 @@ refine_edge_vert_sets (
 	// need to reassess their closest edge assignment after new edges are added.
 	// Build up the set of those uedges for later processing.  While we are looping,
 	// get initial data for the polygon build.
-	std::map<int, long> t_pts;
-	std::map<long, int> t_pts_map;
+	std::set<long> t_pts;
 	std::set<uedge_t> pnt_reassignment_edges;
-	int pnts_ind = 0;
 	std::set<size_t>::iterator r_it;
 	for (r_it = rtris.begin(); r_it != rtris.end(); r_it++) {
 	    triangle_t tri = omesh->fmesh->tris_vect[*r_it];
 	    for (int i = 0; i < 3; i++) {
-		if (t_pts_map.find(tri.v[i]) == t_pts_map.end()) {
-		    pnts_ind = (int)t_pts_map.size();
-		    t_pts[pnts_ind] = tri.v[i];
-		    t_pts_map[tri.v[i]] = pnts_ind;
-		}
+		t_pts.insert(tri.v[i]);
 	    }
 	    std::set<uedge_t> tuedges = omesh->fmesh->uedges(tri);
 	    pnt_reassignment_edges.insert(tuedges.begin(), tuedges.end());
@@ -1126,15 +1120,17 @@ refine_edge_vert_sets (
 
 	point_t pcenter;
 	vect_t pnorm;
-	point_t *fpnts = (point_t *)bu_calloc(pnts_ind+1, sizeof(point_t), "fitting points");
-	std::map<int, long>::iterator p_it;
+	point_t *fpnts = (point_t *)bu_calloc(t_pts.size()+1, sizeof(point_t), "fitting points");
+	std::set<long>::iterator p_it;
+	int tpind = 0;
 	for (p_it = t_pts.begin(); p_it != t_pts.end(); p_it++) {
-	    ON_3dPoint *p = omesh->fmesh->pnts[p_it->second];
-	    fpnts[p_it->first][X] = p->x;
-	    fpnts[p_it->first][Y] = p->y;
-	    fpnts[p_it->first][Z] = p->z;
+	    ON_3dPoint *p = omesh->fmesh->pnts[*p_it];
+	    fpnts[tpind][X] = p->x;
+	    fpnts[tpind][Y] = p->y;
+	    fpnts[tpind][Z] = p->z;
+	    tpind++;
 	}
-	if (bn_fit_plane(&pcenter, &pnorm, pnts_ind+1, fpnts)) {
+	if (bn_fit_plane(&pcenter, &pnorm, t_pts.size(), fpnts)) {
 	    std::cout << "fitting plane failed!\n";
 	}
 	bu_free(fpnts, "fitting points");
@@ -1150,7 +1146,7 @@ refine_edge_vert_sets (
 	polygon->tplane = fit_plane;
 	for (p_it = t_pts.begin(); p_it != t_pts.end(); p_it++) {
 	    double u, v;
-	    long pind = p_it->second;
+	    long pind = *p_it;
 	    ON_3dPoint *p = omesh->fmesh->pnts[pind];
 	    fit_plane.ClosestPointTo(*p, &u, &v);
 	    std::pair<double, double> proj_2d;
@@ -1158,14 +1154,15 @@ refine_edge_vert_sets (
 	    proj_2d.second = v;
 	    polygon->pnts_2d.push_back(proj_2d);
 	    polygon->p2o[polygon->pnts_2d.size() - 1] = pind;
+	    polygon->o2p[pind] = polygon->pnts_2d.size() - 1;
 	}
 
 	// Initialize the polygon edges with one of the triangles.
 	triangle_t tri1 = omesh->fmesh->tris_vect[*(rtris.begin())];
 	rtris.erase(rtris.begin());
-	struct edge_t e1(t_pts_map[tri1.v[0]], t_pts_map[tri1.v[1]]);
-	struct edge_t e2(t_pts_map[tri1.v[1]], t_pts_map[tri1.v[2]]);
-	struct edge_t e3(t_pts_map[tri1.v[2]], t_pts_map[tri1.v[0]]);
+	struct edge2d_t e1(polygon->o2p[tri1.v[0]], polygon->o2p[tri1.v[1]]);
+	struct edge2d_t e2(polygon->o2p[tri1.v[1]], polygon->o2p[tri1.v[2]]);
+	struct edge2d_t e3(polygon->o2p[tri1.v[2]], polygon->o2p[tri1.v[0]]);
 	polygon->add_edge(e1);
 	polygon->add_edge(e2);
 	polygon->add_edge(e3);
@@ -1179,11 +1176,10 @@ refine_edge_vert_sets (
 	    int v1 = i;
 	    int v2 = (i < 2) ? i + 1 : 0;
 	    uedge_t ue1(tri2.v[v1], tri2.v[v2]);
-	    uedge_t nue1(t_pts_map[tri2.v[v1]], t_pts_map[tri2.v[v2]]);
 	    if (ue1 != ue) {
-		new_edges.insert(nue1);
+		new_edges.insert(ue1);
 	    } else {
-		shared_edges.insert(nue1);
+		shared_edges.insert(ue1);
 	    }
 	}
 	polygon->replace_edges(new_edges, shared_edges);
@@ -2254,9 +2250,9 @@ group_polygon(ovlp_grp &grp, int ind)
 
     // Seed the polygon with one of the triangles.
     triangle_t tri1 = om->fmesh->tris_vect[*(tris.begin())];
-    edge_t e1(polygon->o2p[tri1.v[0]], polygon->o2p[tri1.v[1]]);
-    edge_t e2(polygon->o2p[tri1.v[1]], polygon->o2p[tri1.v[2]]);
-    edge_t e3(polygon->o2p[tri1.v[2]], polygon->o2p[tri1.v[0]]);
+    edge2d_t e1(polygon->o2p[tri1.v[0]], polygon->o2p[tri1.v[1]]);
+    edge2d_t e2(polygon->o2p[tri1.v[1]], polygon->o2p[tri1.v[2]]);
+    edge2d_t e3(polygon->o2p[tri1.v[2]], polygon->o2p[tri1.v[0]]);
     polygon->add_edge(e1);
     polygon->add_edge(e2);
     polygon->add_edge(e3);

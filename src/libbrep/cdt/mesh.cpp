@@ -318,10 +318,9 @@ cpolygon_t::remove_ordered_edge(const struct edge2d_t &e)
 }
 
 cpolyedge_t *
-cpolygon_t::add_edge(const struct uedge_t &ue)
+cpolygon_t::add_edge(const struct uedge2d_t &ue)
 {
-    if (ue.v[0] == -1) return NULL;
-
+    if (ue.v2d[0] == -1) return NULL;
 
     int v1 = -1;
     int v2 = -1;
@@ -330,29 +329,29 @@ cpolygon_t::add_edge(const struct uedge_t &ue)
     for (cp_it = poly.begin(); cp_it != poly.end(); cp_it++) {
 	cpolyedge_t *pe = *cp_it;
 
-	if (pe->v2d[1] == ue.v[0]) {
-	    v1 = ue.v[0];
+	if (pe->v2d[1] == ue.v2d[0]) {
+	    v1 = ue.v2d[0];
 	}
 
-	if (pe->v2d[1] == ue.v[1]) {
-	    v1 = ue.v[1];
+	if (pe->v2d[1] == ue.v2d[1]) {
+	    v1 = ue.v2d[1];
 	}
 
-	if (pe->v2d[0] == ue.v[0]) {
-	    v2 = ue.v[0];
+	if (pe->v2d[0] == ue.v2d[0]) {
+	    v2 = ue.v2d[0];
 	}
 
-	if (pe->v2d[0] == ue.v[1]) {
-	    v2 = ue.v[1];
+	if (pe->v2d[0] == ue.v2d[1]) {
+	    v2 = ue.v2d[1];
 	}
     }
 
     if (v1 == -1) {
-	v1 = (ue.v[0] == v2) ? ue.v[1] : ue.v[0];
+	v1 = (ue.v2d[0] == v2) ? ue.v2d[1] : ue.v2d[0];
     }
 
     if (v2 == -1) {
-	v2 = (ue.v[0] == v1) ? ue.v[1] : ue.v[0];
+	v2 = (ue.v2d[0] == v1) ? ue.v2d[1] : ue.v2d[0];
     }
 
     struct edge2d_t le(v1, v2);
@@ -399,13 +398,13 @@ cpolygon_t::add_edge(const struct uedge_t &ue)
 }
 
 void
-cpolygon_t::remove_edge(const struct uedge_t &ue)
+cpolygon_t::remove_edge(const struct uedge2d_t &ue)
 {
     cpolyedge_t *cull = NULL;
     std::set<cpolyedge_t *>::iterator cp_it;
     for (cp_it = poly.begin(); cp_it != poly.end(); cp_it++) {
 	cpolyedge_t *pe = *cp_it;
-	struct uedge_t pue(pe->v2d[0], pe->v2d[1]);
+	struct uedge2d_t pue(pe->v2d[0], pe->v2d[1]);
 	if (ue == pue) {
 	    // Existing segment with this ending vertex exists
 	    cull = pe;
@@ -415,19 +414,19 @@ cpolygon_t::remove_edge(const struct uedge_t &ue)
 
     if (!cull) return;
 
-    v2pe[ue.v[0]].erase(cull);
-    v2pe[ue.v[1]].erase(cull);
+    v2pe[ue.v2d[0]].erase(cull);
+    v2pe[ue.v2d[1]].erase(cull);
     active_edges.erase(uedge2d_t(cull->v2d[0], cull->v2d[1]));
 
     // An edge removal may produce a new interior point candidate - check
     // Will need to verify eventually with point_in_polygon, but topologically
     // it may be cut loose
     for (int i = 0; i < 2; i++) {
-	if (!v2pe[ue.v[i]].size()) {
-	    if (flipped_face.find(ue.v[i]) != flipped_face.end()) {
-		flipped_face.erase(ue.v[i]);
+	if (!v2pe[ue.v2d[i]].size()) {
+	    if (flipped_face.find(ue.v2d[i]) != flipped_face.end()) {
+		flipped_face.erase(ue.v2d[i]);
 	    }
-	    uncontained.insert(ue.v[i]);
+	    uncontained.insert(ue.v2d[i]);
 	}
     }
 
@@ -451,10 +450,14 @@ cpolygon_t::replace_edges(std::set<uedge_t> &new_edges, std::set<uedge_t> &old_e
 
     std::set<uedge_t>::iterator e_it;
     for (e_it = old_edges.begin(); e_it != old_edges.end(); e_it++) {
-	remove_edge(*e_it);
+	uedge_t e3d = *e_it;
+	uedge2d_t ue2d(o2p[e3d.v[0]], o2p[e3d.v[1]]);
+	remove_edge(ue2d);
     }
     for (e_it = new_edges.begin(); e_it != new_edges.end(); e_it++) {
-	cpolyedge_t *ne = add_edge(*e_it);
+	uedge_t e3d = *e_it;
+	uedge2d_t ue2d(o2p[e3d.v[0]], o2p[e3d.v[1]]);
+	cpolyedge_t *ne = add_edge(ue2d);
 	nedges.insert(ne);
     }
 
@@ -633,7 +636,7 @@ cpolygon_t::self_intersecting()
 	cpolyedge_t *pe1 = pv[i];
 	ON_2dPoint p1_1(pnts_2d[pe1->v2d[0]].first, pnts_2d[pe1->v2d[0]].second);
 	ON_2dPoint p1_2(pnts_2d[pe1->v2d[1]].first, pnts_2d[pe1->v2d[1]].second);
-	struct uedge_t ue1(pe1->v2d[0], pe1->v2d[1]);
+	struct uedge2d_t ue1(pe1->v2d[0], pe1->v2d[1]);
 	// if we already know this segment intersects at least one other segment, we
 	// don't need to re-test it - it's already "active"
 	if (self_isect_edges.find(ue1) != self_isect_edges.end()) continue;
@@ -2228,8 +2231,9 @@ cdt_mesh_t::polygon_tris(cpolygon_t *polygon, double angle, bool brep_norm, int 
     std::set<cpolyedge_t *>::iterator p_it;
     for (p_it = polygon->poly.begin(); p_it != polygon->poly.end(); p_it++) {
 	cpolyedge_t *pe = *p_it;
-	struct uedge_t ue(pe->v2d[0], pe->v2d[1]);
-	bool edge_isect = (polygon->self_isect_edges.find(ue) != polygon->self_isect_edges.end());
+	struct uedge2d_t ue2d(pe->v2d[0], pe->v2d[1]);
+	bool edge_isect = (polygon->self_isect_edges.find(ue2d) != polygon->self_isect_edges.end());
+	struct uedge_t ue(polygon->p2o[pe->v2d[0]], polygon->p2o[pe->v2d[1]]);
 	std::set<size_t> petris = uedges2tris[ue];
 	std::set<size_t>::iterator t_it;
 	for (t_it = petris.begin(); t_it != petris.end(); t_it++) {
@@ -2283,13 +2287,13 @@ cdt_mesh_t::polygon_tris(cpolygon_t *polygon, double angle, bool brep_norm, int 
 	nct->v[1] = t.v[1];
 	nct->v[2] = t.v[2];
 	nct->ind = t.ind;
-	struct edge_t e1(t.v[0], t.v[1]);
-	struct edge_t e2(t.v[1], t.v[2]);
-	struct edge_t e3(t.v[2], t.v[0]);
-	struct uedge_t ue[3];
-	ue[0].set(t.v[0], t.v[1]);
-	ue[1].set(t.v[1], t.v[2]);
-	ue[2].set(t.v[2], t.v[0]);
+	struct edge2d_t e1(polygon->o2p[t.v[0]], polygon->o2p[t.v[1]]);
+	struct edge2d_t e2(polygon->o2p[t.v[1]], polygon->o2p[t.v[2]]);
+	struct edge2d_t e3(polygon->o2p[t.v[2]], polygon->o2p[t.v[0]]);
+	struct uedge2d_t ue[3];
+	ue[0].set(polygon->o2p[t.v[0]], polygon->o2p[t.v[1]]);
+	ue[1].set(polygon->o2p[t.v[1]], polygon->o2p[t.v[2]]);
+	ue[2].set(polygon->o2p[t.v[2]], polygon->o2p[t.v[0]]);
 
 	nct->all_bedge = false;
 	nct->isect_edge = false;
@@ -3877,9 +3881,9 @@ cdt_mesh_t::build_initial_loop(triangle_t &seed, bool repair)
 	for (size_t i = 0; i < faces.size(); i++) {
 	    triangle_t t = faces[i];
 	    if (seed_tris.find(t) == seed_tris.end()) {
-		struct edge_t e1(t.v[0], t.v[1]);
-		struct edge_t e2(t.v[1], t.v[2]);
-		struct edge_t e3(t.v[2], t.v[0]);
+		struct edge2d_t e1(polygon->o2p[t.v[0]], polygon->o2p[t.v[1]]);
+		struct edge2d_t e2(polygon->o2p[t.v[1]], polygon->o2p[t.v[2]]);
+		struct edge2d_t e3(polygon->o2p[t.v[2]], polygon->o2p[t.v[0]]);
 		polygon->add_edge(e1);
 		polygon->add_edge(e2);
 		polygon->add_edge(e3);
@@ -3896,9 +3900,9 @@ cdt_mesh_t::build_initial_loop(triangle_t &seed, bool repair)
 		for (size_t j = 0; j < vfaces.size(); j++) {
 		    triangle_t t = vfaces[j];
 		    if (seed_tris.find(t) == seed_tris.end()) {
-			struct edge_t e1(t.v[0], t.v[1]);
-			struct edge_t e2(t.v[1], t.v[2]);
-			struct edge_t e3(t.v[2], t.v[0]);
+			struct edge2d_t e1(polygon->o2p[t.v[0]], polygon->o2p[t.v[1]]);
+			struct edge2d_t e2(polygon->o2p[t.v[1]], polygon->o2p[t.v[2]]);
+			struct edge2d_t e3(polygon->o2p[t.v[2]], polygon->o2p[t.v[0]]);
 			polygon->add_edge(e1);
 			polygon->add_edge(e2);
 			polygon->add_edge(e3);
@@ -3923,9 +3927,9 @@ cdt_mesh_t::build_initial_loop(triangle_t &seed, bool repair)
 
     } else {
 	// If we're not repairing, start with the seed itself
-	struct edge_t e1(seed.v[0], seed.v[1]);
-	struct edge_t e2(seed.v[1], seed.v[2]);
-	struct edge_t e3(seed.v[2], seed.v[0]);
+	struct edge2d_t e1(polygon->o2p[seed.v[0]], polygon->o2p[seed.v[1]]);
+	struct edge2d_t e2(polygon->o2p[seed.v[1]], polygon->o2p[seed.v[2]]);
+	struct edge2d_t e3(polygon->o2p[seed.v[2]], polygon->o2p[seed.v[0]]);
 	polygon->add_edge(e1);
 	polygon->add_edge(e2);
 	polygon->add_edge(e3);
