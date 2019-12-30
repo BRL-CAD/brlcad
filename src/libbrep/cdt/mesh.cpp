@@ -483,14 +483,14 @@ cpolygon_t::unshared_vertex(triangle_t &t)
     if (shared_edge_cnt(t) != 1) return -1;
 
     for (int i = 0; i < 3; i++) {
-	if (v2pe.find(t.v[i]) == v2pe.end()) {
+	if (v2pe.find(o2p[t.v[i]]) == v2pe.end()) {
 	    return t.v[i];
 	}
 	// TODO - need to check C++ map container behavior - if the set
 	// a key points to is fully cleared, will the above test work?
 	// (if it finds the empty set successfully it doesn't do what
 	// we need...)
-	if (v2pe[t.v[i]].size() == 0) {
+	if (v2pe[o2p[t.v[i]]].size() == 0) {
 	    return t.v[i];
 	}
     }
@@ -509,7 +509,7 @@ cpolygon_t::shared_vertices(triangle_t &t)
 
     int vcnt = 0;
     for (int i = 0; i < 3; i++) {
-	if (v2pe.find(t.v[i]) != v2pe.end()) {
+	if (v2pe.find(o2p[t.v[i]]) != v2pe.end()) {
 	    if (!vcnt) {
 		ret.first = t.v[i];
 		vcnt++;
@@ -4107,7 +4107,7 @@ cdt_mesh_t::tri_process(cpolygon_t *polygon, std::set<uedge_t> *ne, std::set<ued
     for (int i = 0; i < 3; i++) {
 	for (pe_it = polygon->poly.begin(); pe_it != polygon->poly.end(); pe_it++) {
 	    cpolyedge_t *pe = *pe_it;
-	    struct uedge_t pue(pe->v2d[0], pe->v2d[1]);
+	    struct uedge_t pue(polygon->p2o[pe->v2d[0]], polygon->p2o[pe->v2d[1]]);
 	    if (ue[i] == pue) {
 		e_shared[i] = true;
 		break;
