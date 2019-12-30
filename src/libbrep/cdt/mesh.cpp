@@ -529,6 +529,7 @@ cpolygon_t::ucv_angle(triangle_t &t)
     std::set<long>::iterator u_it;
     long nv = unshared_vertex(t);
     if (nv == -1) return -1;
+    nv = o2p[nv]; // Need 2D point index, but unshared_vertex returns tri vert (3D).
     std::pair<long, long> s_vert = shared_vertices(t);
     if (s_vert.first == -1 || s_vert.second == -1) return -1;
 

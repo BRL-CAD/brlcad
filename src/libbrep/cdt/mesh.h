@@ -694,6 +694,9 @@ public:
     void *p_cdt;
     omesh_t *omesh;
 
+    // Characterize triangle's relationship to polygon.  Returned
+    // edges and vertices are in triangle (3D) point indices rather than
+    // polygon (2D) vertex indices - use o2p mapping to get polygon indices.
     long tri_process(cpolygon_t *polygon, std::set<uedge_t> *ne, std::set<uedge_t> *se, long *nv, triangle_t &t);
 
 private:
