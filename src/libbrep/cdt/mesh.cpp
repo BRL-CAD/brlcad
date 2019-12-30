@@ -363,7 +363,7 @@ cpolygon_t::add_edge(const struct uedge_t &ue)
 
     v2pe[v1].insert(nedge);
     v2pe[v2].insert(nedge);
-    active_edges.insert(uedge_t(v1, v2));
+    active_edges.insert(uedge2d_t(v1, v2));
     used_verts.insert(v1);
     used_verts.insert(v2);
 
@@ -417,7 +417,7 @@ cpolygon_t::remove_edge(const struct uedge_t &ue)
 
     v2pe[ue.v[0]].erase(cull);
     v2pe[ue.v[1]].erase(cull);
-    active_edges.erase(ue);
+    active_edges.erase(uedge2d_t(cull->v2d[0], cull->v2d[1]));
 
     // An edge removal may produce a new interior point candidate - check
     // Will need to verify eventually with point_in_polygon, but topologically
@@ -464,10 +464,10 @@ cpolygon_t::replace_edges(std::set<uedge_t> &new_edges, std::set<uedge_t> &old_e
 long
 cpolygon_t::shared_edge_cnt(triangle_t &t)
 {
-    struct uedge_t ue[3];
-    ue[0].set(t.v[0], t.v[1]);
-    ue[1].set(t.v[1], t.v[2]);
-    ue[2].set(t.v[2], t.v[0]);
+    struct uedge2d_t ue[3];
+    ue[0].set(o2p[t.v[0]], o2p[t.v[1]]);
+    ue[1].set(o2p[t.v[1]], o2p[t.v[2]]);
+    ue[2].set(o2p[t.v[2]], o2p[t.v[0]]);
     long shared_cnt = 0;
     for (int i = 0; i < 3; i++) {
 	if (active_edges.find(ue[i]) != active_edges.end()) {

@@ -500,7 +500,7 @@ tri_isect(
     return 1;
 }
 
-#define PPOINT 3.05501647567131496,7.49970465810727038,23.99999993295735123
+#define PPOINT 3.03804220530474867,7.50076886978772883,22.99999799154713287
 static bool
 PPCHECK(ON_3dPoint &p)
 {
@@ -549,12 +549,18 @@ tri_nearedge_refine(
     ON_Line t1_lines[3];
     ON_Line t2_lines[3];
     double elen_min = tri_lines((ON_Line *)&t1_lines, (ON_Line *)&t2_lines, fmesh1, t1, fmesh2, t2);
-    double etol = 0.01*elen_min;
 
+    // TODO - need something less arbitrary here... maybe < 0.5 the distance from the tri centerpoint to
+    // the edge?
+    double etol = 0.1*elen_min;
 
     int process_cnt = 0;
     double vtol = 0.01;
     overt_t *v = NULL;
+
+    if (ppoint) {
+	std::cout << "working problem point\n";
+    }
 
     for (int i = 0; i < 3; i++) {
 	for (int j = 0; j < 3; j++) {

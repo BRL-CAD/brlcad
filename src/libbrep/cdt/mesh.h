@@ -533,7 +533,7 @@ class cpolygon_t
 	std::set<long> used_verts; /* both interior and active points - for a quick check if a point is active */
 	std::set<triangle_t> unusable_triangles;
 	std::set<triangle_t> visited_triangles;
-	std::set<uedge_t> active_edges;
+	std::set<uedge2d_t> active_edges;
 	std::set<uedge_t> self_isect_edges;
 	ON_Plane tplane;
 	ON_Plane fit_plane;

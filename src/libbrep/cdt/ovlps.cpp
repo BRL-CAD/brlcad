@@ -2239,7 +2239,6 @@ group_polygon(ovlp_grp &grp, int ind)
 
     polygon->pdir = fit_plane.Normal();
     polygon->tplane = fit_plane;
-    std::map<long,long> v2p;
     for (tv_it = verts.begin(); tv_it != verts.end(); tv_it++) {
 	double u, v;
 	long pind = *tv_it;
@@ -2250,14 +2249,14 @@ group_polygon(ovlp_grp &grp, int ind)
 	proj_2d.second = v;
 	polygon->pnts_2d.push_back(proj_2d);
 	polygon->p2o[polygon->pnts_2d.size() - 1] = pind;
-	v2p[pind] = polygon->pnts_2d.size() - 1;
+	polygon->o2p[pind] = polygon->pnts_2d.size() - 1;
     }
 
     // Seed the polygon with one of the triangles.
     triangle_t tri1 = om->fmesh->tris_vect[*(tris.begin())];
-    edge_t e1(v2p[tri1.v[0]], v2p[tri1.v[1]]);
-    edge_t e2(v2p[tri1.v[1]], v2p[tri1.v[2]]);
-    edge_t e3(v2p[tri1.v[2]], v2p[tri1.v[0]]);
+    edge_t e1(polygon->o2p[tri1.v[0]], polygon->o2p[tri1.v[1]]);
+    edge_t e2(polygon->o2p[tri1.v[1]], polygon->o2p[tri1.v[2]]);
+    edge_t e3(polygon->o2p[tri1.v[2]], polygon->o2p[tri1.v[0]]);
     polygon->add_edge(e1);
     polygon->add_edge(e2);
     polygon->add_edge(e3);
@@ -2276,7 +2275,7 @@ group_polygon(ovlp_grp &grp, int ind)
     while (unused_verts.size()) {
 	std::set<cpolyedge_t *> pedges = polygon->poly;
 	std::set<cpolyedge_t *>::iterator pe_it;
-	polygon->polygon_plot("ovlp_grp.plot3");
+	polygon->polygon_plot_in_plane("ogp.plot3");
 	for (pe_it = pedges.begin(); pe_it != pedges.end(); pe_it++) {
 	    cpolyedge_t *pe = *pe_it;
 	    uedge_t ue(polygon->p2o[pe->v2d[0]], polygon->p2o[pe->v2d[1]]);
@@ -2300,14 +2299,14 @@ group_polygon(ovlp_grp &grp, int ind)
 		    polygon->replace_edges(new_edges, shared_edges);
 		} else {
 		    std::cerr << "group_polygon: failed to process tri??\n";
-		    polygon->polygon_plot("ovlp_grp.plot3");
+		    polygon->polygon_plot_in_plane("ogp.plot3");
 		    return NULL;
 		}
 	    }
 	}
     }
 
-    polygon->polygon_plot("ovlp_grp.plot3");
+    polygon->polygon_plot_in_plane("ogp.plot3");
 
     return polygon;
 }
