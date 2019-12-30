@@ -2213,92 +2213,6 @@ refinement_reset(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
     }
 }
 
-// TODO - because we don't have an implicit identity relationship between
-// 2D and 3D indices at this stage in the processing, the existing polygon
-// routines will need some overhauling to handle the additional necessary mappings...
-//
-// Don't expect this to work with the standard polygon->unshared_vertex call, for example...
-bool poly_tri_process(cpolygon_t *polygon, long *nv, std::set<uedge_t> *ne, std::set<uedge_t> *se,
-       	triangle_t &t, std::map<long, long> &v2p)
-{
-    if (!polygon) return false;
-
-    // Build the polygon edge information for the triangle
-    bool e_shared[3];
-    struct edge_t e[3];
-    struct uedge_t ue[3];
-    for (int i = 0; i < 3; i++) {
-	e_shared[i] = false;
-    }
-    e[0].set(v2p[t.v[0]], v2p[t.v[1]]);
-    e[1].set(v2p[t.v[1]], v2p[t.v[2]]);
-    e[2].set(v2p[t.v[2]], v2p[t.v[0]]);
-    ue[0].set(v2p[t.v[0]], v2p[t.v[1]]);
-    ue[1].set(v2p[t.v[1]], v2p[t.v[2]]);
-    ue[2].set(v2p[t.v[2]], v2p[t.v[0]]);
-
-    // Check the polygon edges against the triangle edges
-    for (int i = 0; i < 3; i++) {
-	std::set<cpolyedge_t *>::iterator pe_it;
-	for (pe_it = polygon->poly.begin(); pe_it != polygon->poly.end(); pe_it++) {
-	    cpolyedge_t *pe = *pe_it;
-	    struct uedge_t pue(pe->v2d[0], pe->v2d[1]);
-	    if (ue[i] == pue) {
-		e_shared[i] = true;
-		break;
-	    }
-	}
-    }
-
-    // Count categories and file edges in the appropriate output sets
-    long shared_cnt = 0;
-    for (int i = 0; i < 3; i++) {
-	if (e_shared[i]) {
-	    shared_cnt++;
-	    se->insert(ue[i]);
-	} else {
-	    ne->insert(ue[i]);
-	}
-    }
-
-    if (!shared_cnt) return false;
-
-    if (shared_cnt == 1) {
-        // If we've got only one shared edge, there should be a vertex not currently
-        // involved with the loop - verify that, and if it's true report it.
-        long unshared_vert = polygon->unshared_vertex(t);
-
-        if (unshared_vert != -1) {
-            (*nv) = unshared_vert;
-        } else {
-            // Self intersecting
-            se->clear();
-            ne->clear();
-            return false;
-        }
-    }
-
-    if (shared_cnt == 2) {
-        // We've got one vert shared by both of the shared edges - it's probably
-        // about to become an interior point
-        std::map<long, int> vcnt;
-        std::set<uedge_t>::iterator se_it;
-        for (se_it = se->begin(); se_it != se->end(); se_it++) {
-            vcnt[(*se_it).v[0]]++;
-            vcnt[(*se_it).v[1]]++;
-        }
-        std::map<long, int>::iterator v_it;
-        for (v_it = vcnt.begin(); v_it != vcnt.end(); v_it++) {
-            if (v_it->second == 2) {
-                (*nv) = v_it->first;
-                break;
-            }
-        }
-    }
-
-    return true;
-}
-
 // If either all three points are in the active set or the
 // point not on the shared edge is in the set, the triangle
 // should be considered.
@@ -2377,7 +2291,7 @@ group_polygon(ovlp_grp &grp, int ind)
 		std::set<uedge_t> new_edges;
 		std::set<uedge_t> shared_edges;
 		long nv = -1;
-		if (poly_tri_process(polygon, &nv, &new_edges, &shared_edges, ntri, v2p)) {
+		if (om->fmesh->tri_process(polygon, &new_edges, &shared_edges, &nv, ntri) >= 0) {
 		    if (!poly_tri_usable(verts, ntri, nv)) {
 			continue;
 		    }
