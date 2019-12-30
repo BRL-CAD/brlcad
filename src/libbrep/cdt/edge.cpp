@@ -906,12 +906,12 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, int force, do
 	double old_trim_end = bseg->tseg1->trim_end;
 	poly1->remove_ordered_edge(edge_t(v[0], v[1]));
 	long poly1_2dind = poly1->add_point(trim1_mid_2d, f1_ind2d);
-	struct edge_t poly1_edge1(v[0], poly1_2dind);
+	struct edge2d_t poly1_edge1(v[0], poly1_2dind);
 	poly1_ne1 = poly1->add_ordered_edge(poly1_edge1);
 	poly1_ne1->trim_ind = trim_ind;
 	poly1_ne1->trim_start = old_trim_start;
 	poly1_ne1->trim_end = t1mid;
-	struct edge_t poly1_edge2(poly1_2dind, v[1]);
+	struct edge2d_t poly1_edge2(poly1_2dind, v[1]);
 	poly1_ne2 = poly1->add_ordered_edge(poly1_edge2);
 	poly1_ne2->trim_ind = trim_ind;
 	poly1_ne2->trim_start = t1mid;
@@ -927,12 +927,12 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, int force, do
 	double old_trim_end = bseg->tseg2->trim_end;
 	poly2->remove_ordered_edge(edge_t(v[0], v[1]));
 	long poly2_2dind = poly2->add_point(trim2_mid_2d, f2_ind2d);
-	struct edge_t poly2_edge1(v[0], poly2_2dind);
+	struct edge2d_t poly2_edge1(v[0], poly2_2dind);
 	poly2_ne1 = poly2->add_ordered_edge(poly2_edge1);
 	poly2_ne1->trim_ind = trim_ind;
 	poly2_ne1->trim_start = old_trim_start;
 	poly2_ne1->trim_end = t2mid;
-	struct edge_t poly2_edge2(poly2_2dind, v[1]);
+	struct edge2d_t poly2_edge2(poly2_2dind, v[1]);
 	poly2_ne2 = poly2->add_ordered_edge(poly2_edge2);
 	poly2_ne2->trim_ind = trim_ind;
 	poly2_ne2->trim_start = t2mid;
@@ -1459,7 +1459,7 @@ initialize_loop_polygons(struct ON_Brep_CDT_State *s_cdt)
 		    fmesh->nmap[f3ind] = fnind;
 		}
 
-		struct edge_t lseg(pv, cv);
+		struct edge2d_t lseg(pv, cv);
 		cpolyedge_t *ne = cpoly->add_ordered_edge(lseg);
 
 		ne->trim_ind = trim->m_trim_index;

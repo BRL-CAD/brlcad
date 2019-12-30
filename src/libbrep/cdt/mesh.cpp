@@ -240,18 +240,18 @@ cpolygon_t::add_point(ON_2dPoint &on_2dp, long orig_index)
 
 
 cpolyedge_t *
-cpolygon_t::add_ordered_edge(const struct edge_t &e)
+cpolygon_t::add_ordered_edge(const struct edge2d_t &e)
 {
-    if (e.v[0] == -1) return NULL;
+    if (e.v2d[0] == -1) return NULL;
 
-    struct edge_t ne(e);
+    struct edge2d_t ne(e);
     cpolyedge_t *nedge = new cpolyedge_t(ne);
     poly.insert(nedge);
 
     nedge->polygon = this;
 
-    v2pe[e.v[0]].insert(nedge);
-    v2pe[e.v[1]].insert(nedge);
+    v2pe[e.v2d[0]].insert(nedge);
+    v2pe[e.v2d[1]].insert(nedge);
 
     cpolyedge_t *prev = NULL;
     cpolyedge_t *next = NULL;
@@ -355,7 +355,7 @@ cpolygon_t::add_edge(const struct uedge_t &ue)
 	v2 = (ue.v[0] == v1) ? ue.v[1] : ue.v[0];
     }
 
-    struct edge_t le(v1, v2);
+    struct edge2d_t le(v1, v2);
     cpolyedge_t *nedge = new cpolyedge_t(le);
     poly.insert(nedge);
 
@@ -363,7 +363,7 @@ cpolygon_t::add_edge(const struct uedge_t &ue)
 
     v2pe[v1].insert(nedge);
     v2pe[v2].insert(nedge);
-    active_edges.insert(uedge_t(le));
+    active_edges.insert(uedge_t(v1, v2));
     used_verts.insert(v1);
     used_verts.insert(v2);
 

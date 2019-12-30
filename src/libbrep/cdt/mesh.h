@@ -421,9 +421,9 @@ class cpolyedge_t
 
 	long v2d[2];
 
-	cpolyedge_t(edge_t &e){
-	    v2d[0] = e.v[0];
-	    v2d[1] = e.v[1];
+	cpolyedge_t(edge2d_t &e){
+	    v2d[0] = e.v2d[0];
+	    v2d[1] = e.v2d[1];
 	    polygon = NULL;
 	    prev = NULL;
 	    next = NULL;
@@ -474,7 +474,7 @@ class cpolygon_t
 	std::map<long, long> o2p;
 
 	/* Polygon edge manipulation */
-	cpolyedge_t *add_ordered_edge(const struct edge_t &e);
+	cpolyedge_t *add_ordered_edge(const struct edge2d_t &e);
 	void remove_ordered_edge(const struct edge_t &e);
 
 	cpolyedge_t *add_edge(const struct uedge_t &e);
