@@ -32,6 +32,9 @@
 #include <queue>
 #include <numeric>
 #include <random>
+#include <sstream>
+#include <iomanip>
+
 #include "bu/str.h"
 #include "bg/chull.h"
 #include "bg/tri_pt.h"
@@ -211,6 +214,53 @@ isect_plot(cdt_mesh_t *fmesh1, long t1_ind, cdt_mesh_t *fmesh2, long t2_ind, poi
     fclose(plot);
 }
 
+#define PPOINT1 3.56554479743774344,7.98569858586419024,23.37338642522485799
+#define PPOINT2 3.56554479743774477,7.98112948296225078,23.71606012295672983
+#define PPOINT3 3.42047903513449203,7.64743233441400783,23.39883493871970188
+static int
+TPPCHECK(ON_3dPoint &p)
+{
+    ON_3dPoint problem1(PPOINT1);
+    if (problem1.DistanceTo(p) < 0.01) {
+	return 1;
+    }
+
+    ON_3dPoint problem2(PPOINT2);
+    if (problem2.DistanceTo(p) < 0.01) {
+	return 1;
+    }
+
+    ON_3dPoint problem3(PPOINT3);
+    if (problem3.DistanceTo(p) < 0.01) {
+	return 1;
+    }
+
+    return 0;
+}
+static bool
+TRICHK(cdt_mesh_t *fmesh1, cdt_mesh_t *fmesh2, triangle_t &t1, triangle_t &t2)
+{
+    int ppoint1 = 0;
+    ON_3dPoint t1p1, t1p2, t1p3;
+    t1p1 = *fmesh1->pnts[t1.v[0]];
+    t1p2 = *fmesh1->pnts[t1.v[1]];
+    t1p3 = *fmesh1->pnts[t1.v[2]];
+    ppoint1 += TPPCHECK(t1p1);
+    ppoint1 += TPPCHECK(t1p2);
+    ppoint1 += TPPCHECK(t1p3);
+    
+    int ppoint2 = 0;
+    ON_3dPoint t2p1, t2p2, t2p3;
+    t2p1 = *fmesh2->pnts[t2.v[0]];
+    t2p2 = *fmesh2->pnts[t2.v[1]];
+    t2p3 = *fmesh2->pnts[t2.v[2]];
+    ppoint2 += TPPCHECK(t2p1);
+    ppoint2 += TPPCHECK(t2p2);
+    ppoint2 += TPPCHECK(t2p3);
+
+    return (ppoint1 == 3 || ppoint2 == 3);
+}
+
 int
 remote_vert_process(bool pinside, overt_t *v, omesh_t *om_other, triangle_t &tri)
 {
@@ -329,6 +379,7 @@ find_intersecting_edges(
 
 static bool
 edge_only_isect(
+	cdt_mesh_t *fmesh1, cdt_mesh_t *fmesh2,
 	triangle_t &t1, triangle_t &t2,
 	ON_3dPoint &p1, ON_3dPoint &p2,
 	ON_Line *t1_lines,
@@ -345,7 +396,6 @@ edge_only_isect(
 		p1, p2, t1_lines, t2_lines, t1, t2, etol)) {
 	return false;
     }
-
 
     // If both points are on the same edge, it's an edge-only intersect.  However,
     // if the vertices are such that we want to process them to align the mesh
@@ -364,6 +414,56 @@ edge_only_isect(
 
     if (process_pnt) {
 	return false;
+    }
+
+    // If the projections of the two triangles onto a common plane has a non-zero
+    // area, we don't report this as an edge-only intersection - it is as far as the
+    // triangles are concerned but it has potentially non-zero volume in the mesh
+    // intersection, and so must be regarded as a processable intersection.
+    point_t t1p[3];
+    point_t t2p[3];
+    ON_Plane t1plane = fmesh1->tplane(t1);
+    ON_Plane t2plane = fmesh2->tplane(t2);
+    ON_3dPoint avgcenter = (t1plane.Origin() + t2plane.Origin()) / 2.0;
+    ON_3dVector avgnorm = (t1plane.Normal() + t2plane.Normal()) / 2.0;
+    avgnorm.Unitize();
+    ON_Plane avgplane(avgcenter, avgnorm);
+    for (int i = 0; i < 3; i++) {
+	double u, v;
+	ON_3dPoint p3d = *fmesh1->pnts[t1.v[i]];
+	avgplane.ClosestPointTo(p3d, &u, &v);
+	VSET(t1p[i], u, v, 0);
+	std::ostringstream ss;
+	ss << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << t1p[i][0];
+	ss << " ";
+	ss << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << t1p[i][1];
+	ss << " ";
+	ss << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << t1p[i][2];
+	std::string sd = ss.str();
+	std::cout << "in sph1_" << i << ".s sph " << sd << " 0.01\n";
+    }
+    for (int i = 0; i < 3; i++) {
+	double u, v;
+	ON_3dPoint p3d = *fmesh2->pnts[t2.v[i]];
+	avgplane.ClosestPointTo(p3d, &u, &v);
+	VSET(t2p[i], u, v, 0);
+	std::ostringstream ss;
+	ss << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << t2p[i][0];
+	ss << " ";
+	ss << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << t2p[i][1];
+	ss << " ";
+	ss << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << t2p[i][2];
+	std::string sd = ss.str();
+	std::cout << "in sph2_" << i << ".s sph " << sd << " 0.01\n";
+    }
+    fmesh1->tri_plot(t1, "t1.plot3");
+    fmesh2->tri_plot(t2, "t2.plot3");
+    if (bg_tri_tri_isect_coplanar2(t1p[0], t1p[1], t1p[2], t2p[0], t2p[1], t2p[2], 1) == 1) {
+	std::cout << "Coplanar isect true!\n";
+	// TODO: If we're here, check the midpoints of the unshared edges to see if they are inside the opposite
+	// mesh. If any of them are, treat this as a full intersection (return false).
+    } else {
+	std::cout << "Coplanar isect false!\n";
     }
 
     return true;
@@ -451,6 +551,7 @@ tri_near_verts_isect(point_t *isectpt1, point_t *isectpt2, cdt_mesh_t *fmesh1, t
     return vert_isect;
 }
 
+
 /*****************************************************************************
  * We're only concerned with specific categories of intersections between
  * triangles, so filter accordingly.
@@ -468,9 +569,14 @@ tri_isect(
     point_t isectpt1 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
     point_t isectpt2 = {MAX_FASTF, MAX_FASTF, MAX_FASTF};
 
-
     if (!tri_isect_basic(&isectpt1, &isectpt2, fmesh1, t1, fmesh2, t2)) {
 	return 0;
+    }
+
+    if (TRICHK(fmesh1, fmesh2, t1, t2)) {
+	fmesh1->tri_plot(t1, "t1.plot3");
+	fmesh2->tri_plot(t2, "t2.plot3");
+	std::cout << "working problem tri\n";
     }
 
     //isect_plot(fmesh1, t1.ind, fmesh2, t2.ind, &isectpt1, &isectpt2);
@@ -491,25 +597,13 @@ tri_isect(
     ON_Line nedge;
     ON_3dPoint p1(isectpt1[X], isectpt1[Y], isectpt1[Z]);
     ON_3dPoint p2(isectpt2[X], isectpt2[Y], isectpt2[Z]);
-    bool near_edge_isect = edge_only_isect(t1, t2, p1, p2, (ON_Line *)t1_lines, (ON_Line *)t2_lines, 0.3*elen_min);
+    bool near_edge_isect = edge_only_isect(fmesh1, fmesh2, t1, t2, p1, p2, (ON_Line *)t1_lines, (ON_Line *)t2_lines, 0.3*elen_min);
 
     if (near_edge_isect) {
 	return 0;
     }
 
     return 1;
-}
-
-#define PPOINT 3.03804220530474867,7.50076886978772883,22.99999799154713287
-static bool
-PPCHECK(ON_3dPoint &p)
-{
-    ON_3dPoint problem(PPOINT);
-    if (problem.DistanceTo(p) < 0.01) {
-	std::cout << "tri_nearedge_refine: saw problem point\n";
-	return true;
-    }
-    return false;
 }
 
 // Assuming t1 and t2 intersect, identify any refinement vertices that need processing
@@ -528,24 +622,6 @@ tri_nearedge_refine(
 	return 0;
     }
 
-    bool ppoint = false;
-
-    ON_3dPoint t1p1, t1p2, t1p3;
-    ON_3dPoint t2p1, t2p2, t2p3;
-    t1p1 = *omesh1->fmesh->pnts[t1.v[0]];
-    t1p2 = *omesh1->fmesh->pnts[t1.v[1]];
-    t1p3 = *omesh1->fmesh->pnts[t1.v[2]];
-    t2p1 = *omesh2->fmesh->pnts[t2.v[0]];
-    t2p2 = *omesh2->fmesh->pnts[t2.v[1]];
-    t2p3 = *omesh2->fmesh->pnts[t2.v[2]];
-
-    ppoint = (PPCHECK(t1p1)) ? true : ppoint;
-    ppoint = (PPCHECK(t1p2)) ? true : ppoint;
-    ppoint = (PPCHECK(t1p3)) ? true : ppoint;
-    ppoint = (PPCHECK(t2p1)) ? true : ppoint;
-    ppoint = (PPCHECK(t2p2)) ? true : ppoint;
-    ppoint = (PPCHECK(t2p3)) ? true : ppoint;
-
     ON_Line t1_lines[3];
     ON_Line t2_lines[3];
     double elen_min = tri_lines((ON_Line *)&t1_lines, (ON_Line *)&t2_lines, fmesh1, t1, fmesh2, t2);
@@ -557,10 +633,6 @@ tri_nearedge_refine(
     int process_cnt = 0;
     double vtol = 0.01;
     overt_t *v = NULL;
-
-    if (ppoint) {
-	std::cout << "working problem point\n";
-    }
 
     for (int i = 0; i < 3; i++) {
 	for (int j = 0; j < 3; j++) {
@@ -606,10 +678,6 @@ tri_nearedge_refine(
 	if (on_point_inside(s_cdt2, &vp)) {
 	    process_cnt += remote_vert_process(true, v, omesh2, t1);
 	}
-    }
-
-    if (ppoint && !process_cnt) {
-	std::cerr << "missed expected vertex\n";
     }
 
     return process_cnt;
