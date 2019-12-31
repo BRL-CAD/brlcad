@@ -64,7 +64,6 @@ struct rt_ebm_specific {
 
 const struct bu_structparse rt_ebm_parse[] = {
     {"%s",	RT_EBM_NAME_LEN, "file", bu_offsetof(struct rt_ebm_internal, file), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%c",	1, "src",	RT_EBM_O(datasrc),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "w",		RT_EBM_O(xdim),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "n",		RT_EBM_O(ydim),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "d",		RT_EBM_O(tallness),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -758,9 +757,9 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     bu_vls_free(&str);
 
     /* Check for reasonable values */
-    if (eip->file[0] == '\0' || eip->tallness <= 0.0 ||
-	eip->xdim < 1 || eip->ydim < 1 || eip->mat[15] <= 0.0 ||
-	(eip->datasrc != RT_EBM_SRC_FILE && eip->datasrc != RT_EBM_SRC_OBJ)) {
+    if (eip->file[0] == '\0' || eip->xdim < 1 ||
+	eip->ydim < 1 || eip->mat[15] <= 0.0 ||
+	eip->tallness <= 0.0) {
 	bu_struct_print("Unreasonable EBM parameters", rt_ebm_parse,
 			(char *)eip);
 	bu_free((char *)eip, "rt_ebm_import4: eip");
@@ -819,10 +818,6 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	    cp += eip->xdim;
 	}
     }
-
-    RT_CK_DB_INTERNAL(eip->bip);
-    RT_CK_BINUNIF(eip->bip->idb_ptr);
-
     return 0;
 }
 
