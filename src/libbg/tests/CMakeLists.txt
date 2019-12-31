@@ -74,7 +74,7 @@ add_test(NAME bg_lseg_lseg_1   COMMAND bg_lseg_lseg_dist 1)
 # flag tells the function whether or not to require non-zero area for an
 # overlap in coplanar cases.
 
-BRLCAD_ADDEXEC(bg_tri_tri_isect_coplanar tri_tri_isect_coplanar.c "libbg;libbn;libbu" TEST)
+BRLCAD_ADDEXEC(bg_tri_tri_isect_coplanar tri_tri_isect_coplanar.cpp "libbg;libbn;libbu" TEST)
 
 # TODO - need some tests with floating point vertices that are down around the EPSILON threshold - that's
 # where the NEAR_ZERO components of the bg_tri_tri_isect_coplanar logic become important.
