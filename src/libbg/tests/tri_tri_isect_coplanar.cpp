@@ -1,4 +1,4 @@
-/*     B N _ T R I _ T R I _ I S E C T _ C O _ P L A N A R . C
+/*       T R I _ T R I _ I S E C T _ C O _ P L A N A R . C P P
  * BRL-CAD
  *
  * Copyright (c) 2011-2019 United States Government as represented by
@@ -20,11 +20,44 @@
 
 #include "common.h"
 
-#include <stdio.h>
+#include <string>
+#include <sstream>
+#include <iomanip>
+#include <limits>
 
 #include "bu.h"
 #include "bg.h"
 
+static double
+str_to_dbl(std::string s)
+{
+    double d;
+    size_t prec = std::numeric_limits<double>::max_digits10;
+    std::stringstream ss(s);
+    ss >> std::setprecision(prec) >> std::fixed >> d;
+    return d;
+}
+
+static void
+read_point(point_t *p, const char *arg)
+{
+    std::string pstr(arg);
+    size_t sp = pstr.find_first_not_of(" \"\t\n\v\f\r");
+    size_t ep = pstr.find_last_not_of(" \"\t\n\v\f\r");
+    pstr = pstr.substr(sp, ep-sp+1);
+    int i = 0;
+    while (i < 2) {
+	size_t cp = pstr.find_first_of(",");
+	if (cp == std::string::npos) {
+	    bu_exit(1, "ERROR: failure while parsing point string \"%s\"", arg);
+	}
+	std::string dstr = pstr.substr(0, cp);
+	pstr.erase(0, cp+1);
+	(*p)[i] = str_to_dbl(dstr);
+	i++;
+    }
+    (*p)[i] = str_to_dbl(pstr);
+}
 
 int
 main(int argc, char *argv[])
@@ -32,7 +65,6 @@ main(int argc, char *argv[])
     int expected_result = 0;
     int actual_result = 0;
     int area_flag = 0;
-    float f1, f2, f3 = 0.0;
     point_t V0 = VINIT_ZERO;
     point_t V1 = VINIT_ZERO;
     point_t V2 = VINIT_ZERO;
@@ -43,23 +75,12 @@ main(int argc, char *argv[])
     if (argc != 9)
 	bu_exit(1, "ERROR: input format is V0x,V0y,V0z V1x,V1y,V1z V2x,V2y,V2z U0x,U0y,U0z U1x,U1y,U1z U2x,U2y,U2z area_flag expected_result [%s]\n", argv[0]);
 
-    sscanf(argv[1], "%f,%f,%f", &f1, &f2, &f3);
-    VSET(V0, f1, f2, f3);
-
-    sscanf(argv[2], "%f,%f,%f", &f1, &f2, &f3);
-    VSET(V1, f1, f2, f3);
-
-    sscanf(argv[3], "%f,%f,%f", &f1, &f2, &f3);
-    VSET(V2, f1, f2, f3);
-
-    sscanf(argv[4], "%f,%f,%f", &f1, &f2, &f3);
-    VSET(U0, f1, f2, f3);
-
-    sscanf(argv[5], "%f,%f,%f", &f1, &f2, &f3);
-    VSET(U1, f1, f2, f3);
-
-    sscanf(argv[6], "%f,%f,%f", &f1, &f2, &f3);
-    VSET(U2, f1, f2, f3);
+    read_point(&V0, argv[1]);
+    read_point(&V1, argv[2]);
+    read_point(&V2, argv[3]);
+    read_point(&U0, argv[4]);
+    read_point(&U1, argv[5]);
+    read_point(&U2, argv[6]);
 
     sscanf(argv[7], "%d", &area_flag);
     sscanf(argv[8], "%d", &expected_result);
