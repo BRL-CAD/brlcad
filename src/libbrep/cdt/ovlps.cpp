@@ -2227,6 +2227,8 @@ group_polygon(ovlp_grp &grp, int ind)
     omesh_t *om = (ind == 0) ? grp.om1 : grp.om2;
     std::set<size_t> tris = (ind == 0) ? grp.tris1 : grp.tris2;
     std::set<long> verts = (ind == 0) ? grp.verts1 : grp.verts2;
+    std::set<size_t> &vtris = (ind == 0) ? grp.vtris1 : grp.vtris2;
+    vtris.clear();
 
     ON_Plane fit_plane = grp.fit_plane();
 
@@ -2315,7 +2317,7 @@ group_polygon(ovlp_grp &grp, int ind)
 	polygon->polygon_plot_in_plane("ogp.plot3");
     }
 
-
+    vtris = added_tris;
 
     return polygon;
 }
@@ -2405,6 +2407,37 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 		if (!polygon1 || !polygon2) {
 		    std::cerr << "group polygon generation failed!\n";
 		}
+
+		polygon1->cdt();
+		bins[*r_it].om1->fmesh->tris_plot("before1.plot3");
+
+		// Replace grp triangles with new polygon triangles
+		std::set<size_t>::iterator t_it;
+		for (t_it = bins[*r_it].vtris1.begin(); t_it != bins[*r_it].vtris1.end(); t_it++) {
+		    bins[*r_it].om1->fmesh->tri_remove(bins[*r_it].om1->fmesh->tris_vect[*t_it]);
+		}
+		std::set<triangle_t>::iterator tr_it;
+		for (tr_it = polygon1->tris.begin(); tr_it != polygon1->tris.end(); tr_it++) {
+		    triangle_t tri = *tr_it;
+		    orient_tri(*bins[*r_it].om1->fmesh, tri);
+		    bins[*r_it].om1->fmesh->tri_add(tri);
+		}
+		bins[*r_it].om1->fmesh->tris_plot("after1.plot3");
+
+		polygon2->cdt();
+		bins[*r_it].om2->fmesh->tris_plot("before2.plot3");
+
+		// Replace grp triangles with new polygon triangles
+		for (t_it = bins[*r_it].vtris2.begin(); t_it != bins[*r_it].vtris2.end(); t_it++) {
+		    bins[*r_it].om2->fmesh->tri_remove(bins[*r_it].om2->fmesh->tris_vect[*t_it]);
+		}
+		for (tr_it = polygon2->tris.begin(); tr_it != polygon2->tris.end(); tr_it++) {
+		    triangle_t tri = *tr_it;
+		    orient_tri(*bins[*r_it].om2->fmesh, tri);
+		    bins[*r_it].om2->fmesh->tri_add(tri);
+		}
+		bins[*r_it].om2->fmesh->tris_plot("after2.plot3");
+		std::cout << "cdts complete\n";
 	    }
 
 

@@ -920,7 +920,10 @@ class ovlp_grp {
         omesh_t *om2;
         std::set<size_t> tris1;
         std::set<size_t> tris2;
-        std::set<long> verts1;
+        std::set<size_t> vtris1;
+        std::set<size_t> vtris2;
+       
+      	std::set<long> verts1;
         std::set<long> verts2;
         std::set<overt_t *> overts1;
         std::set<overt_t *> overts2;
