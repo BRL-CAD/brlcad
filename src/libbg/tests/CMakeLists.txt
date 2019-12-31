@@ -88,6 +88,9 @@ add_test(NAME bg_tri_tri_isect_coplanar_vertex_area COMMAND bg_tri_tri_isect_cop
 add_test(NAME bg_tri_tri_isect_coplanar_edge_area   COMMAND bg_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 1,1,0        1  0)
 add_test(NAME bg_tri_tri_isect_coplanar_full_area   COMMAND bg_tri_tri_isect_coplanar  0,0,0 1,0,0 1,1,0  1,0,0       2,0,0 0.7,0.8,0    1  1)
 
+# TODO - in the debugger this is looking like it shouldn't return intersecting - it's very nearly an edge only intersect - but the final point-in-triangle test is doing something I don't quite understand: it seems to be checking only one point per triangle for inside/outside instead of all three points against each triangle...
+#add_test(NAME bg_tri_tri_isect_coplanar_f1 COMMAND bg_tri_tri_isect_coplanar -0.17062162871133435,0.02417062256398481,0.00000000000000000 -0.20768111931464361,-0.34362144340377737,0.00000000000000000 0.17876567813733310,-0.05826268893839849,0.00000000000000000 0.17876567813748631,-0.05826268893840295,0.00000000000000000 -0.17062162871171396,0.02417062256397554,0.00000000000000000 0.19139302046287024,0.41180557615261132,0.00000000000000000 1 0)
+
 # For COMMAND bg_tri_tri_isect, the input format is as follows:
 #
 # COMMAND bg_tri_tri_isect V0 V1 V2 U0 U1 U2 <expected result>
