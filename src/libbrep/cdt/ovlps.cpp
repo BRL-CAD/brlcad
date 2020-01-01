@@ -2270,8 +2270,11 @@ group_polygon(ovlp_grp &grp, int ind)
     unused_verts.erase(tri1.v[0]);
     unused_verts.erase(tri1.v[1]);
     unused_verts.erase(tri1.v[2]);
+    size_t unused_prev = INT_MAX;
 
-    while (unused_verts.size()) {
+    while (unused_verts.size() != unused_prev) {
+
+	unused_prev = unused_verts.size();
 
 	std::set<triangle_t> tuniq;
 	std::set<cpolyedge_t *>::iterator p_it;
@@ -2315,6 +2318,10 @@ group_polygon(ovlp_grp &grp, int ind)
 	}
 
 	polygon->polygon_plot_in_plane("ogp.plot3");
+    }
+
+    if (unused_verts.size()) {
+	std::cerr << "ERROR - unable to use all vertices in group during polygon build!\n";
     }
 
     vtris = added_tris;
