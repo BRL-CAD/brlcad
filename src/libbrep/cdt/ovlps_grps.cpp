@@ -326,6 +326,13 @@ ovlp_grp::plot(const char *fname)
 // group.  Should also be maintining sets of "grouped" triangles to make sure
 // no triangle ever ends up in more than one group.
 //
+// The criteria for incorporating a triangle into the polygon should probably
+// be whether any of the other mesh's group triangles, projected into the common
+// plane, overlap (non-zero area) with the proposed inclusion triangle's projection
+// in that same plane.  Anything that so overlaps needs to be incorporated to
+// get us to two polygons that, when triangulated, will reliably resolve any
+// overlaps.
+//
 // A group build terminates when all active verts in both meshes are incorporated
 // into the polygons
 
