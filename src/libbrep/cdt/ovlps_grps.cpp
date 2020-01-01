@@ -319,6 +319,16 @@ ovlp_grp::plot(const char *fname)
 }
 
 
+// TODO - this needs to be more sophisticated.  The polygon for a group needs
+// to be built after the initial assignment, and then any triangles needed to
+// encompass all originally active verts in one mesh need to be checked to see
+// if they introduce any new verts that must be incorporated into the other
+// group.  Should also be maintining sets of "grouped" triangles to make sure
+// no triangle ever ends up in more than one group.
+//
+// A group build terminates when all active verts in both meshes are incorporated
+// into the polygons
+
 /* A grouping of overlapping triangles is defined as the set of triangles from
  * two meshes that overlap and are surrounded in both meshes by either
  * non-involved triangles or face boundary edges.  Visually, these are "clusters"
