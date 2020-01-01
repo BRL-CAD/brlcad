@@ -378,7 +378,12 @@ static double
 _cdt_get_uv_edge_3d_len(struct cdt_surf_info *sinfo, int c1, int c2)
 {
     int line_set = 0;
-    double wu1, wv1, wu2, wv2, umid, vmid = 0.0;
+    double wu1 = 0.0;
+    double wv1 = 0.0;
+    double wu2 = 0.0;
+    double wv2 = 0.0;
+    double umid = 0.0;
+    double vmid = 0.0;
 
     /* u_lower */
     if (c1 == 0 && c2 == 0) {
