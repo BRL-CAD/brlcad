@@ -206,7 +206,7 @@ class tri_isect_t {
 	    t1 = tri1;
 	    t2 = tri2;
 
-	    // Set up the ON_Lines for the triangles	    
+	    // Set up the ON_Lines for the triangles
 	    t1_lines[0] = ON_Line(*fmesh1->pnts[t1.v[0]], *fmesh1->pnts[t1.v[1]]);
 	    t1_lines[1] = ON_Line(*fmesh1->pnts[t1.v[1]], *fmesh1->pnts[t1.v[2]]);
 	    t1_lines[2] = ON_Line(*fmesh1->pnts[t1.v[2]], *fmesh1->pnts[t1.v[0]]);
@@ -240,7 +240,7 @@ class tri_isect_t {
 	}
 	bool isect_edge_only() {
 	    return isect_edge_only(TRI_NEAR_EDGE_TOL * elen_min);
-	}	
+	}
 
 	void plot(const char *fname);
 
@@ -249,6 +249,9 @@ class tri_isect_t {
 	double elen_min;
 	double lt[4];
 	ON_Line t1_nedge, t2_nedge;
+	ON_Line t1_fedges[2];
+	ON_Line t2_fedges[2];
+	
 	edge_t t1_e, t2_e;
 
     private:
@@ -353,6 +356,7 @@ tri_isect_t::find_intersecting_edges(double etol)
 	p2d2[i] = ipt_2.DistanceTo(t2_lines[i].ClosestPointTo(ipt_2));
     }
 
+    int fedgecnt = 0;
     bool nedge_1 = false;
     for (int i = 0; i < 3; i++) {
 	if (NEAR_ZERO(p1d1[i], etol) &&  NEAR_ZERO(p2d1[i], etol)) {
@@ -361,9 +365,15 @@ tri_isect_t::find_intersecting_edges(double etol)
 	    int v2 = (i < 2) ? i + 1 : 0;
 	    t1_e = edge_t(t1.v[i], t1.v[v2]);
 	    nedge_1 = true;
+	} else {
+	    if (fedgecnt < 2) {
+		t1_fedges[fedgecnt] = t1_lines[i];
+		fedgecnt++;
+	    }
 	}
     }
 
+    fedgecnt = 0;
     bool nedge_2 = false;
     for (int i = 0; i < 3; i++) {
 	if (NEAR_ZERO(p1d2[i], etol) &&  NEAR_ZERO(p2d2[i], etol)) {
@@ -372,6 +382,11 @@ tri_isect_t::find_intersecting_edges(double etol)
 	    int v2 = (i < 2) ? i + 1 : 0;
 	    t2_e = edge_t(t2.v[i], t2.v[v2]);
 	    nedge_2 = true;
+	} else {
+	    if (fedgecnt < 2) {
+		t2_fedges[fedgecnt] = t2_lines[i];
+		fedgecnt++;
+	    }
 	}
     }
 
@@ -465,11 +480,34 @@ tri_isect_t::isect_edge_only(double etol)
 	VSET(t2p[i], u, v, 0);
     }
     if (bg_tri_tri_isect_coplanar2(t1p[0], t1p[1], t1p[2], t2p[0], t2p[1], t2p[2], 1) == 1) {
-	fmesh1->tri_plot(t1, "t1.plot3");
-	fmesh2->tri_plot(t2, "t2.plot3");
-	std::cout << t1.ind << "-" << t2.ind << ": coplanar isect true!\n";
-	// TODO: If we're here, check the midpoints of the unshared edges to see if they are inside the opposite
+	// If we're here, check the midpoints of the unshared edges to see if they are inside the opposite
 	// mesh. If any of them are, treat this as a full intersection (return false).
+	int mid_inside_cnt = 0;
+	for (int i = 0; i < 2; i++) {
+	    ON_Line l = t1_fedges[i];
+	    ON_3dPoint lmid = l.PointAt(0.5);
+	    struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh2->p_cdt;
+	    if (on_point_inside(s_cdt, &lmid)) {
+		// TODO - need some distance metric here - ON the mesh is fine, to within tolerance...
+		std::cout << "center " << lmid.x << "," << lmid.y << "," << lmid.z << "\n";
+		mid_inside_cnt++;
+	    }
+	}
+	for (int i = 0; i < 2; i++) {
+	    ON_Line l = t2_fedges[i];
+	    ON_3dPoint lmid = l.PointAt(0.5);
+	    struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh1->p_cdt;
+	    if (on_point_inside(s_cdt, &lmid)) {
+		// TODO - need some distance metric here - ON the mesh is fine, to within tolerance...
+		std::cout << "center " << lmid.x << "," << lmid.y << "," << lmid.z << "\n";
+		mid_inside_cnt++;
+	    }
+	}
+	if (mid_inside_cnt > 1) {
+	    fmesh1->tri_plot(t1, "t1.plot3");
+	    fmesh2->tri_plot(t2, "t2.plot3");
+	    std::cout << t1.ind << "-" << t2.ind << ": coplanar isect true, mid_inside_cnt: " << mid_inside_cnt << "\n";
+	}
     } else {
 	//std::cout << "Coplanar isect false!\n";
     }
