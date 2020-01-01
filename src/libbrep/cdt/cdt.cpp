@@ -849,7 +849,7 @@ CDT_Audit(struct ON_Brep_CDT_State *s_cdt)
 	    bad_tris = (bad_tris || (!f1_tris.size() && !f2_tris.size()));
 
 	    if (bad_tris) {
-		if ((fmesh_f1->f_id == fmesh_f2->f_id)) {
+		if (fmesh_f1->f_id == fmesh_f2->f_id) {
 		    if (f1_tris.size() == 1 || (!f1_tris.size() && !f2_tris.size())) {
 			std::cerr << "FATAL: could not find expected triangle in mesh " << fmesh_f1->name << "," << fmesh_f1->f_id << "\n";
 			std::cerr << "uedge: " << ue1.v[0] << "," << ue1.v[1] << "\n";
