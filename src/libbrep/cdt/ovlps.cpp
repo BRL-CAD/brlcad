@@ -1823,7 +1823,7 @@ bedge_split_near_vert(
 // TODO - need to add a check for triangles with all three vertices on the
 // same brep face edge - c.s face 4 appears to have some triangles appearing
 // of that sort, which are messing with the ovlp resolution...
-void
+bool
 check_faces_validity(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 {
     int verbosity = 0;
@@ -1876,6 +1876,8 @@ check_faces_validity(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pair
 	}
 	bu_exit(1, "fatal mesh damage");
     }
+
+    return valid;
 }
 
 int
@@ -2202,6 +2204,7 @@ make_omeshes(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs)
 int
 ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 {
+    int rpnt_level = 0;
     if (!s_a) return -1;
     if (s_cnt < 1) return 0;
 
@@ -2214,131 +2217,123 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     if (!check_pairs.size()) return 0;
 
     // Sanity check - are we valid?
-    check_faces_validity(check_pairs);
-    int face_ov_cnt = 1;
-    int iterations = 0;
-    int rpnt_level = 0;
-    while (face_ov_cnt) {
+    if (!check_faces_validity(check_pairs)) {
+	bu_log("ON_Brep_CDT_Ovlp_Resolve:  invalid inputs - not attempting overlap processing!\n");
+	return -1;
+    }
+
+    make_omeshes(check_pairs);
+
+    int face_ov_cnt = omesh_ovlps(check_pairs, 0);
+    if (!face_ov_cnt) {
+	return 0;
+    }
 
 
-	iterations++;
-	if (iterations > 4) break;
+    // Report our starting overlap count
+    std::cout << "Initial overlap cnt: " << face_ov_cnt << "\n";
 
+    // If we're going to process, initialize refinement points
+    omesh_refinement_pnts(check_pairs, rpnt_level);
 
-	// TODO - we shouldn't really have to remake these every time - just
-	// doing it now as a quick and dirty way of skipping the bookeeping
-	// cleanup/resetting work that will need...
-	make_omeshes(check_pairs);
+    int bedge_replaced_tris = INT_MAX;
 
-	// Report our starting overlap count
-	face_ov_cnt = omesh_ovlps(check_pairs, 0);
-	std::cout << "Initial overlap cnt: " << face_ov_cnt << "\n";
-	if (!face_ov_cnt) return 0;
-
-	// If we're going to process, initialize refinement points
-	omesh_refinement_pnts(check_pairs, rpnt_level);
-
-	int bedge_replaced_tris = INT_MAX;
-
-	while (bedge_replaced_tris) {
-	    int avcnt = 0;
-	    // The simplest operation is to find vertices close to each other
-	    // with enough freedom of movement (per triangle edge length) that
-	    // we can shift the two close neighbors to surface points that are
-	    // both the respective closest points to a center point between the
-	    // two originals.
-	    avcnt = adjust_close_verts(check_pairs);
-	    if (avcnt) {
-		// If we adjusted, recalculate overlapping tris and refinement points
-		std::cout << "Adjusted " << avcnt << " vertices\n";
-		face_ov_cnt = omesh_ovlps(check_pairs, 0);
-		omesh_refinement_pnts(check_pairs, rpnt_level);
-		check_faces_validity(check_pairs);
-	    }
-
-	    // TODO - rethink the edge points a bit.  What we probably want is a matching
-	    // point for every edge point that is close to a nearby mesh...  maybe do
-	    // a nearby tris search for each edge point and introduce new points for any
-	    // that don't already have an aligned point recorded?
-
-	    // Process edge_verts
-	    size_t evcnt = INT_MAX;
-	    std::map<bedge_seg_t *, std::set<overt_t *>> edge_verts = find_edge_verts(check_pairs);
-	    while (evcnt > edge_verts.size()) {
-		std::set<overt_t *> nverts;
-		bedge_replaced_tris = bedge_split_near_verts(check_pairs, &nverts, edge_verts);
-		evcnt = edge_verts.size();
-		edge_verts.clear();
-		omesh_refinement_pnts(check_pairs, rpnt_level);
-		edge_verts = find_edge_verts(check_pairs);
-		// Ouch - we're getting a validity failure after the near_verts split
-		check_faces_validity(check_pairs);
-	    }
-
-	    int vvcnt = 0;
-#if 0
-	    std::set<overt_t *>::iterator nv_it;
-	    for (nv_it = nverts.begin(); nv_it != nverts.end(); nv_it++) {
-		vvcnt += vert_nearby_closest_point_check(*nv_it, edge_verts, check_pairs);
-	    }
-	    if (vvcnt) {
-		std::cout << "vert_nearby_closest_point_check added " << vvcnt << " close verts\n";
-	    }
-	    while (edge_verts.size()) {
-		nverts.clear();
-		bedge_replaced_tris += bedge_split_near_verts(check_pairs, &nverts, edge_verts);
-		edge_verts.clear();
-		for (nv_it = nverts.begin(); nv_it != nverts.end(); nv_it++) {
-		    vvcnt += vert_nearby_closest_point_check(*nv_it, edge_verts, check_pairs);
-		}
-	    }
-
-#endif
-	    if (bedge_replaced_tris || vvcnt) {
-		face_ov_cnt = omesh_ovlps(check_pairs, 0);
-		omesh_refinement_pnts(check_pairs, rpnt_level);
-		check_faces_validity(check_pairs);
-	    }
-	}
-
-	// Once edge splits are handled, use remaining closest points and find
-	// nearest interior edge curve, building sets of points near each
-	// interior edge.  Then, for all interior edges, yank the two triangles
-	// associated with that edge, build a polygon with interior points and
-	// tessellate.  I think we probably need this to introduce no changes
-	// to the meshes as a condition of termination...
-	int interior_replaced_tris = INT_MAX;
-	while (interior_replaced_tris) {
-	    find_edge_verts(check_pairs);
-	    interior_replaced_tris = omesh_interior_edge_verts(check_pairs);
+    while (bedge_replaced_tris) {
+	int avcnt = 0;
+	// The simplest operation is to find vertices close to each other
+	// with enough freedom of movement (per triangle edge length) that
+	// we can shift the two close neighbors to surface points that are
+	// both the respective closest points to a center point between the
+	// two originals.
+	avcnt = adjust_close_verts(check_pairs);
+	if (avcnt) {
+	    // If we adjusted, recalculate overlapping tris and refinement points
+	    std::cout << "Adjusted " << avcnt << " vertices\n";
 	    face_ov_cnt = omesh_ovlps(check_pairs, 0);
 	    omesh_refinement_pnts(check_pairs, rpnt_level);
 	    check_faces_validity(check_pairs);
 	}
-	rpnt_level++;
 
+	// TODO - rethink the edge points a bit.  What we probably want is a matching
+	// point for every edge point that is close to a nearby mesh...  maybe do
+	// a nearby tris search for each edge point and introduce new points for any
+	// that don't already have an aligned point recorded?
 
-	// TODO - Instead of splitting to refine these last cases, we need to
-	// build a set of vertex points common to both overlapping triangle
-	// pairs, construct in each mesh the bounding polygon that has all of
-	// the corresponding closest verts in both meshes in the polygon,
-	// project that polygon to a COMMON plane best fitting all the points,
-	// retriangulate in that plane, then construct the corresponding
-	// triangles in both meshes from the shared triangulation.  Splitting
-	// won't necessarily clear these cases - it may create more like them
-	// on a smaller scale - so instead the idea is to construct a shared
-	// triangulation where both meshes agree which triangles get which
-	// vertices
+	// Process edge_verts
+	size_t evcnt = INT_MAX;
+	std::map<bedge_seg_t *, std::set<overt_t *>> edge_verts = find_edge_verts(check_pairs);
+	while (evcnt > edge_verts.size()) {
+	    std::set<overt_t *> nverts;
+	    bedge_replaced_tris = bedge_split_near_verts(check_pairs, &nverts, edge_verts);
+	    evcnt = edge_verts.size();
+	    edge_verts.clear();
+	    omesh_refinement_pnts(check_pairs, rpnt_level);
+	    edge_verts = find_edge_verts(check_pairs);
+	    // Ouch - we're getting a validity failure after the near_verts split
+	    check_faces_validity(check_pairs);
+	}
 
-	shared_cdts(check_pairs);
+	int vvcnt = 0;
+#if 0
+	std::set<overt_t *>::iterator nv_it;
+	for (nv_it = nverts.begin(); nv_it != nverts.end(); nv_it++) {
+	    vvcnt += vert_nearby_closest_point_check(*nv_it, edge_verts, check_pairs);
+	}
+	if (vvcnt) {
+	    std::cout << "vert_nearby_closest_point_check added " << vvcnt << " close verts\n";
+	}
+	while (edge_verts.size()) {
+	    nverts.clear();
+	    bedge_replaced_tris += bedge_split_near_verts(check_pairs, &nverts, edge_verts);
+	    edge_verts.clear();
+	    for (nv_it = nverts.begin(); nv_it != nverts.end(); nv_it++) {
+		vvcnt += vert_nearby_closest_point_check(*nv_it, edge_verts, check_pairs);
+	    }
+	}
 
-
-	check_faces_validity(check_pairs);
-	face_ov_cnt = omesh_ovlps(check_pairs, 0);
-	std::cout << "Iteration " << iterations << " post tri split overlap cnt: " << face_ov_cnt << "\n";
+#endif
+	if (bedge_replaced_tris || vvcnt) {
+	    face_ov_cnt = omesh_ovlps(check_pairs, 0);
+	    omesh_refinement_pnts(check_pairs, rpnt_level);
+	    check_faces_validity(check_pairs);
+	}
     }
 
-    return 0;
+    // Once edge splits are handled, use remaining closest points and find
+    // nearest interior edge curve, building sets of points near each
+    // interior edge.  Then, for all interior edges, yank the two triangles
+    // associated with that edge, build a polygon with interior points and
+    // tessellate.  I think we probably need this to introduce no changes
+    // to the meshes as a condition of termination...
+    int interior_replaced_tris = INT_MAX;
+    while (interior_replaced_tris) {
+	find_edge_verts(check_pairs);
+	interior_replaced_tris = omesh_interior_edge_verts(check_pairs);
+	face_ov_cnt = omesh_ovlps(check_pairs, 0);
+	omesh_refinement_pnts(check_pairs, rpnt_level);
+	check_faces_validity(check_pairs);
+    }
+
+
+    // TODO - Instead of splitting to refine these last cases, we need to
+    // build a set of vertex points common to both overlapping triangle
+    // pairs, construct in each mesh the bounding polygon that has all of
+    // the corresponding closest verts in both meshes in the polygon,
+    // project that polygon to a COMMON plane best fitting all the points,
+    // retriangulate in that plane, then construct the corresponding
+    // triangles in both meshes from the shared triangulation.  Splitting
+    // won't necessarily clear these cases - it may create more like them
+    // on a smaller scale - so instead the idea is to construct a shared
+    // triangulation where both meshes agree which triangles get which
+    // vertices
+
+    shared_cdts(check_pairs);
+
+    check_faces_validity(check_pairs);
+    face_ov_cnt = omesh_ovlps(check_pairs, 0);
+    std::cout << "Post-processing overlap cnt: " << face_ov_cnt << "\n";
+
+    return (face_ov_cnt > 0) ? -1 : 0;
 }
 
 
