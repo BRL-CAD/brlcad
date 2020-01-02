@@ -1060,21 +1060,33 @@ tri_nearedge_refine(
 	);
 
 size_t
-omesh_ovlps(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs, int mode);
+omesh_refinement_pnts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs, int level);
 
-std::vector<ovlp_grp>
-find_ovlp_grps(
-	std::map<std::pair<omesh_t *, size_t>, size_t> &bin_map,
-	std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs
-	);
+size_t
+omesh_ovlps(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs, int mode);
 
 void
 orient_tri(cdt_mesh_t &fmesh, triangle_t &t);
 
-void
-find_interior_edge_grps(
+int
+bedge_split_near_verts(
+	std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs,
+	std::set<overt_t *> *nverts,
+	std::map<bedge_seg_t *, std::set<overt_t *>> &edge_verts
+	);
+
+int
+vert_nearby_closest_point_check(
+	overt_t *nv,
+	std::map<bedge_seg_t *, std::set<overt_t *>> &edge_verts,
 	std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs
 	);
+
+int
+omesh_interior_edge_verts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs);
+
+void
+shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs);
 
 #endif /* __cdt_mesh_h__ */
 

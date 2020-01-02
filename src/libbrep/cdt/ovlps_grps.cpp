@@ -405,6 +405,132 @@ find_ovlp_grps(
     return bins;
 }
 
+// If either all three points are in the active set or the
+// point not on the shared edge is in the set, the triangle
+// should be considered.
+bool poly_tri_usable(std::set<long> &active_verts, triangle_t &tri, long nv) {
+    if (active_verts.find(nv) != active_verts.end()) return true;
+    int avcnt = 0;
+    for (int i = 0; i < 3; i++) {
+	if (active_verts.find(tri.v[i]) != active_verts.end()) {
+	    avcnt++;
+	}
+    }
+    if (avcnt == 3) return true;
+    std::cout << "avcnt " << avcnt << "\n";
+    return false;
+}
+
+cpolygon_t *
+group_polygon(ovlp_grp &grp, int ind)
+{
+    omesh_t *om = (ind == 0) ? grp.om1 : grp.om2;
+    std::set<size_t> tris = (ind == 0) ? grp.tris1 : grp.tris2;
+    std::set<long> verts = (ind == 0) ? grp.verts1 : grp.verts2;
+    std::set<size_t> &vtris = (ind == 0) ? grp.vtris1 : grp.vtris2;
+    vtris.clear();
+
+    ON_Plane fit_plane = grp.fit_plane();
+
+    cpolygon_t *polygon = new cpolygon_t;
+
+    std::set<long>::iterator tv_it;
+
+    polygon->pdir = fit_plane.Normal();
+    polygon->tplane = fit_plane;
+    for (tv_it = verts.begin(); tv_it != verts.end(); tv_it++) {
+	double u, v;
+	long pind = *tv_it;
+	ON_3dPoint *p = om->fmesh->pnts[pind];
+	fit_plane.ClosestPointTo(*p, &u, &v);
+	std::pair<double, double> proj_2d;
+	proj_2d.first = u;
+	proj_2d.second = v;
+	polygon->pnts_2d.push_back(proj_2d);
+	polygon->p2o[polygon->pnts_2d.size() - 1] = pind;
+	polygon->o2p[pind] = polygon->pnts_2d.size() - 1;
+    }
+
+    // Seed the polygon with one of the triangles.
+    triangle_t tri1 = om->fmesh->tris_vect[*(tris.begin())];
+    edge2d_t e1(polygon->o2p[tri1.v[0]], polygon->o2p[tri1.v[1]]);
+    edge2d_t e2(polygon->o2p[tri1.v[1]], polygon->o2p[tri1.v[2]]);
+    edge2d_t e3(polygon->o2p[tri1.v[2]], polygon->o2p[tri1.v[0]]);
+    polygon->add_edge(e1);
+    polygon->add_edge(e2);
+    polygon->add_edge(e3);
+
+    // Now, the hard part.  We need to grow the polygon to encompass the active vertices.  This
+    // may involve more triangles than the basic grp set, but shouldn't involve vertices that aren't in the
+    // active vertices set.
+    std::set<long> unused_verts = verts;
+    std::set<size_t> visited_tris, added_tris;
+    visited_tris.insert(tri1.ind);
+    added_tris.insert(tri1.ind);
+    unused_verts.erase(tri1.v[0]);
+    unused_verts.erase(tri1.v[1]);
+    unused_verts.erase(tri1.v[2]);
+    size_t unused_prev = INT_MAX;
+
+    while (unused_verts.size() != unused_prev) {
+
+	unused_prev = unused_verts.size();
+
+	std::set<triangle_t> tuniq;
+	std::set<cpolyedge_t *>::iterator p_it;
+	for (p_it = polygon->poly.begin(); p_it != polygon->poly.end(); p_it++) {
+	    cpolyedge_t *pe = *p_it;
+	    uedge_t ue(polygon->p2o[pe->v2d[0]], polygon->p2o[pe->v2d[1]]);
+	    std::set<size_t> petris = om->fmesh->uedges2tris[ue];
+	    std::set<size_t>::iterator t_it;
+	    for (t_it = petris.begin(); t_it != petris.end(); t_it++) {
+		if (visited_tris.find(*t_it) != visited_tris.end()) continue;
+		triangle_t ntri = om->fmesh->tris_vect[*t_it];
+		tuniq.insert(ntri);
+	    }
+	}
+	std::stack<triangle_t> ts;
+	std::set<triangle_t>::iterator tu_it;
+	for (tu_it = tuniq.begin(); tu_it != tuniq.end(); tu_it++) {
+	    ts.push(*tu_it);
+	}
+
+	while (!ts.empty()) {
+	    triangle_t ntri = ts.top();
+	    ts.pop();
+	    std::set<uedge_t> new_edges;
+	    std::set<uedge_t> shared_edges;
+	    long nv = -1;
+	    if (om->fmesh->tri_process(polygon, &new_edges, &shared_edges, &nv, ntri) >= 0) {
+		om->fmesh->tri_plot(ntri, "ntri.p3");
+		visited_tris.insert(ntri.ind);
+		if (!poly_tri_usable(verts, ntri, nv)) {
+		    continue;
+		}
+		added_tris.insert(ntri.ind);
+		unused_verts.erase(ntri.v[0]);
+		unused_verts.erase(ntri.v[1]);
+		unused_verts.erase(ntri.v[2]);
+		polygon->replace_edges(new_edges, shared_edges);
+		polygon->print();
+		polygon->polygon_plot_in_plane("ogp.plot3");
+	    }
+	}
+
+	polygon->polygon_plot_in_plane("ogp.plot3");
+    }
+
+    if (unused_verts.size()) {
+	std::cerr << "ERROR - unable to use all vertices in group during polygon build!\n";
+    }
+
+    vtris = added_tris;
+
+    return polygon;
+}
+
+
+
 static void
 recdt_edges(omesh_t *omesh, omesh_t *other_m)
 {
@@ -507,6 +633,169 @@ find_interior_edge_grps(
 	omesh_ovlps(check_pairs, 1);
     }
 }
+
+
+void
+refinement_reset(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
+{
+    std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>>::iterator cp_it;
+    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
+	omesh_t *omesh1 = cp_it->first->omesh;
+	omesh_t *omesh2 = cp_it->second->omesh;
+	omesh1->refinement_clear();
+	omesh2->refinement_clear();
+    }
+}
+
+void
+shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
+{
+    bool have_refine_pnts = true;
+    int processed_cnt = 0;
+    std::vector<ovlp_grp> bins;
+    std::map<std::pair<omesh_t *, size_t>, size_t> bin_map;
+    std::set<size_t> no_refine;
+    std::set<size_t> refine;
+    std::set<size_t>::iterator r_it;
+
+    while (have_refine_pnts && (processed_cnt < 2)) {
+
+	std::map<bedge_seg_t *, std::set<overt_t *>> edge_verts;
+
+	bins.clear();
+
+	bins = find_ovlp_grps(bin_map, check_pairs);
+
+	if (!bins.size()) {
+	    // If we didn't find anything, we're done
+	    break;
+	}
+
+	// Have groupings - reset refinement info
+	refinement_reset(check_pairs);
+
+	refine.clear();
+	no_refine.clear();
+	for (size_t i = 0; i < bins.size(); i++) {
+	    bins[i].edge_verts = &edge_verts;
+	    if (bins[i].characterize_all_verts()) {
+		refine.insert(i);
+	    } else {
+		no_refine.insert(i);
+	    }
+	}
+
+	// For any groups that need no further point refinement, do the shared
+	// tessellation
+	for (r_it = no_refine.begin(); r_it != no_refine.end(); r_it++) {
+	    std::cout << "Group " << *r_it << " ready:\n";
+	    bins[*r_it].list_tris();
+	    bins[*r_it].list_overts();
+	    struct bu_vls pname = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&pname, "group_ready_%zu", *r_it);
+	    bins[*r_it].plot(bu_vls_cstr(&pname));
+	    bu_vls_free(&pname);
+
+	    // With a seed triangle from each mesh, grow a polygon such that all active
+	    // vertices from each mesh are either boundary or interior points on the polygon.
+	    cpolygon_t *polygon1 = group_polygon(bins[*r_it], 0);
+	    cpolygon_t *polygon2 = group_polygon(bins[*r_it], 1);
+	    if (!polygon1 || !polygon2) {
+		std::cerr << "group polygon generation failed!\n";
+	    }
+
+	    // CDT one of the polygons in the shared plane.  Those triangles will now map back to matching
+	    // closest points in both meshes.  Remove the original triangles from each mesh, and
+	    // replace with the new in both meshes.
+
+	}
+
+	// For any groups that need no further point refinement, do the shared
+	// tessellation
+	for (r_it = refine.begin(); r_it != refine.end(); r_it++) {
+	    std::cout << "Group " << *r_it << " NEEDS REFINEMENT:\n";
+	    bins[*r_it].list_tris();
+	    bins[*r_it].list_overts();
+	    struct bu_vls pname = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&pname, "group_refine_%zu", *r_it);
+	    bins[*r_it].plot(bu_vls_cstr(&pname));
+	    bu_vls_free(&pname);
+	}
+
+	// If refinement points were added above, refine and repeat
+	if (refine.size()) {
+
+	    // Before adding points, see if retessellating the groups individually can clear the ovlps
+	    for (r_it = refine.begin(); r_it != refine.end(); r_it++) {
+		cpolygon_t *polygon1 = group_polygon(bins[*r_it], 0);
+		cpolygon_t *polygon2 = group_polygon(bins[*r_it], 1);
+		if (!polygon1 || !polygon2) {
+		    std::cerr << "group polygon generation failed!\n";
+		}
+
+		polygon1->cdt();
+		bins[*r_it].om1->fmesh->tris_plot("before1.plot3");
+
+		// Replace grp triangles with new polygon triangles
+		std::set<size_t>::iterator t_it;
+		for (t_it = bins[*r_it].vtris1.begin(); t_it != bins[*r_it].vtris1.end(); t_it++) {
+		    bins[*r_it].om1->fmesh->tri_remove(bins[*r_it].om1->fmesh->tris_vect[*t_it]);
+		}
+		std::set<triangle_t>::iterator tr_it;
+		for (tr_it = polygon1->tris.begin(); tr_it != polygon1->tris.end(); tr_it++) {
+		    triangle_t tri = *tr_it;
+		    orient_tri(*bins[*r_it].om1->fmesh, tri);
+		    bins[*r_it].om1->fmesh->tri_add(tri);
+		}
+		bins[*r_it].om1->fmesh->tris_plot("after1.plot3");
+
+		polygon2->cdt();
+		bins[*r_it].om2->fmesh->tris_plot("before2.plot3");
+
+		// Replace grp triangles with new polygon triangles
+		for (t_it = bins[*r_it].vtris2.begin(); t_it != bins[*r_it].vtris2.end(); t_it++) {
+		    bins[*r_it].om2->fmesh->tri_remove(bins[*r_it].om2->fmesh->tris_vect[*t_it]);
+		}
+		for (tr_it = polygon2->tris.begin(); tr_it != polygon2->tris.end(); tr_it++) {
+		    triangle_t tri = *tr_it;
+		    orient_tri(*bins[*r_it].om2->fmesh, tri);
+		    bins[*r_it].om2->fmesh->tri_add(tri);
+		}
+		bins[*r_it].om2->fmesh->tris_plot("after2.plot3");
+		std::cout << "cdts complete\n";
+	    }
+
+
+	    int bedge_replaced_tris = INT_MAX;
+	    while (bedge_replaced_tris) {
+		// Process edge_verts
+		std::set<overt_t *> nverts;
+		bedge_replaced_tris = bedge_split_near_verts(check_pairs, &nverts, edge_verts);
+		edge_verts.clear();
+		std::set<overt_t *>::iterator nv_it;
+		int avcnt = 0;
+		for (nv_it = nverts.begin(); nv_it != nverts.end(); nv_it++) {
+		    avcnt += vert_nearby_closest_point_check(*nv_it, edge_verts, check_pairs);
+		}
+		if (avcnt) {
+		    std::cout << "vert_nearby_closest_point_check added " << avcnt << " close verts\n";
+		}
+	    }
+	    int interior_replaced_tris = INT_MAX;
+	    while (interior_replaced_tris) {
+		interior_replaced_tris = omesh_interior_edge_verts(check_pairs);
+	    }
+	    // Restore "normal" overlap information for next pass
+	    omesh_ovlps(check_pairs, 0);
+	    omesh_refinement_pnts(check_pairs, 0);
+
+	    processed_cnt++;
+	}
+    }
+
+    find_interior_edge_grps(check_pairs);
+}
+
 
 /** @} */
 
