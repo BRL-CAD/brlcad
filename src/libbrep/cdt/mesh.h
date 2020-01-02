@@ -635,6 +635,10 @@ public:
     // Length sorted (longest to shortest) array of uedges in set.
     std::vector<uedge_t> sorted_uedges_l_to_s(std::set<uedge_t> &uedges);
 
+    // Given an unordered edge, return a polygon defined by the
+    // two triangles associated with that edge
+    cpolygon_t * uedge_polygon(uedge_t &ue);
+
     // Given a test point, calculate the closest point on the
     // Brep face's surface to that point
     bool closest_surf_pnt(ON_3dPoint &s_p, ON_3dVector &s_norm, ON_3dPoint *p, double tol = -1);

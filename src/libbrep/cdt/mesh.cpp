@@ -1993,6 +1993,100 @@ cdt_mesh_t::sorted_uedges_l_to_s(std::set<uedge_t> &uedges)
     return ue_sorted;
 }
 
+cpolygon_t *
+cdt_mesh_t::uedge_polygon(uedge_t &ue)
+{
+    std::set<size_t> ue_tris = uedges2tris[ue];
+
+    if (ue_tris.size() != 2) {
+	std::cout << "Error - found " << ue_tris.size() << " triangles, not building polygon\n";
+	return NULL;
+    }
+
+    std::set<long> t_pts;
+    std::set<size_t>::iterator r_it;
+    for (r_it = ue_tris.begin(); r_it != ue_tris.end(); r_it++) {
+	triangle_t tri = omesh->fmesh->tris_vect[*r_it];
+	for (int i = 0; i < 3; i++) {
+	    t_pts.insert(tri.v[i]);
+	}
+    }
+    if (t_pts.size() != 4) {
+	std::cout << "Error - found " << t_pts.size() << " triangle points??\n";
+	return NULL;
+    }
+
+    point_t pcenter;
+    vect_t pnorm;
+    point_t *fpnts = (point_t *)bu_calloc(t_pts.size()+1, sizeof(point_t), "fitting points");
+    std::set<long>::iterator p_it;
+    int tpind = 0;
+    for (p_it = t_pts.begin(); p_it != t_pts.end(); p_it++) {
+	ON_3dPoint *p = omesh->fmesh->pnts[*p_it];
+	fpnts[tpind][X] = p->x;
+	fpnts[tpind][Y] = p->y;
+	fpnts[tpind][Z] = p->z;
+	tpind++;
+    }
+    if (bn_fit_plane(&pcenter, &pnorm, t_pts.size(), fpnts)) {
+	std::cout << "fitting plane failed!\n";
+	bu_free(fpnts, "fitting points");
+	return NULL;
+    }
+    bu_free(fpnts, "fitting points");
+
+    ON_Plane fit_plane(pcenter, pnorm);
+
+    // Build our polygon out of the two triangles.
+
+    // First step, add the 2D projection of the triangle vertices to the
+    // polygon data structure.
+    cpolygon_t *polygon = new cpolygon_t;
+    polygon->pdir = fit_plane.Normal();
+    polygon->tplane = fit_plane;
+    for (p_it = t_pts.begin(); p_it != t_pts.end(); p_it++) {
+	double u, v;
+	long pind = *p_it;
+	ON_3dPoint *p = omesh->fmesh->pnts[pind];
+	fit_plane.ClosestPointTo(*p, &u, &v);
+	std::pair<double, double> proj_2d;
+	proj_2d.first = u;
+	proj_2d.second = v;
+	polygon->pnts_2d.push_back(proj_2d);
+	polygon->p2o[polygon->pnts_2d.size() - 1] = pind;
+	polygon->o2p[pind] = polygon->pnts_2d.size() - 1;
+    }
+    // Initialize the polygon edges with one of the triangles.
+    triangle_t tri1 = omesh->fmesh->tris_vect[*(ue_tris.begin())];
+    ue_tris.erase(ue_tris.begin());
+    struct edge2d_t e1(polygon->o2p[tri1.v[0]], polygon->o2p[tri1.v[1]]);
+    struct edge2d_t e2(polygon->o2p[tri1.v[1]], polygon->o2p[tri1.v[2]]);
+    struct edge2d_t e3(polygon->o2p[tri1.v[2]], polygon->o2p[tri1.v[0]]);
+    polygon->add_edge(e1);
+    polygon->add_edge(e2);
+    polygon->add_edge(e3);
+
+    // Grow the polygon with the other triangle.
+    std::set<uedge_t> new_edges;
+    std::set<uedge_t> shared_edges;
+    triangle_t tri2 = omesh->fmesh->tris_vect[*(ue_tris.begin())];
+    ue_tris.erase(ue_tris.begin());
+    for (int i = 0; i < 3; i++) {
+	int v1 = i;
+	int v2 = (i < 2) ? i + 1 : 0;
+	uedge_t ue1(tri2.v[v1], tri2.v[v2]);
+	if (ue1 != ue) {
+	    new_edges.insert(ue1);
+	} else {
+	    shared_edges.insert(ue1);
+	}
+    }
+    polygon->replace_edges(new_edges, shared_edges);
+
+    return polygon;
+}
+
+
 bool
 cdt_mesh_t::closest_surf_pnt(ON_3dPoint &s_p, ON_3dVector &s_norm, ON_3dPoint *p, double tol)
 {
