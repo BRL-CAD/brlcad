@@ -870,6 +870,7 @@ class omesh_t
         // Find close vertices
         std::set<overt_t *> vert_search(ON_BoundingBox &bb);
         overt_t * vert_closest(double *vdist, overt_t *v);
+        overt_t * vert_closest(double *vdist, ON_3dPoint &opnt);
 
 
         void refinement_clear();
@@ -1054,10 +1055,20 @@ tri_nearedge_refine(
 	omesh_t *omesh2, triangle_t &t2
 	);
 
+size_t
+omesh_ovlps(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs, int mode);
 
 std::vector<ovlp_grp>
 find_ovlp_grps(
 	std::map<std::pair<omesh_t *, size_t>, size_t> &bin_map,
+	std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs
+	);
+
+void
+orient_tri(cdt_mesh_t &fmesh, triangle_t &t);
+
+void
+find_interior_edge_grps(
 	std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs
 	);
 

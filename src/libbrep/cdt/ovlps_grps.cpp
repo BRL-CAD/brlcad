@@ -369,8 +369,13 @@ find_ovlp_grps(
 	    std::set<size_t>::iterator nt_it;
 	    for (nt_it = ntris.begin(); nt_it != ntris.end(); nt_it++) {
 		int real_ovlp = tri_isect(omesh1, omesh1->fmesh->tris_vect[t1], omesh2, omesh2->fmesh->tris_vect[*nt_it], 0);
+		omesh1->fmesh->tri_plot(omesh1->fmesh->tris_vect[t1], "ot1.plot3");
+		omesh2->fmesh->tri_plot(omesh2->fmesh->tris_vect[*nt_it], "ot2.plot3");
 		if (!real_ovlp) continue;
 		//std::cout << "real overlap with " << *nt_it << "\n";
+
+		// We have a qualified overlapping pair - check to see 
+
 		std::pair<omesh_t *, size_t> nkey(omesh2, *nt_it);
 		size_t key_id;
 		if (bin_map.find(ckey) == bin_map.end() && bin_map.find(nkey) == bin_map.end()) {
@@ -398,6 +403,161 @@ find_ovlp_grps(
     }
 
     return bins;
+}
+
+static void
+recdt_edges(omesh_t *omesh)
+{
+
+    std::set<size_t> om_tris = omesh->intruding_tris;
+
+    while (om_tris.size()) {
+	struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)omesh->fmesh->p_cdt;
+	size_t t1 = *om_tris.begin();
+	triangle_t t1_tri = omesh->fmesh->tris_vect[t1];
+	om_tris.erase(t1);
+
+	uedge_t i_ue;
+	bool found_iuedge = false;
+
+	for (int i = 0; i < 3; i++) {
+	    edge_t t_e;
+	    t_e.v[0] = t1_tri.v[i];
+	    t_e.v[1] = (i < 2) ? t1_tri.v[i + 1] : t1_tri.v[0];
+	    uedge_t t_ue(t_e);
+	    ON_3dPoint emid = (*omesh->fmesh->pnts[t_ue.v[0]] + *omesh->fmesh->pnts[t_ue.v[1]]) / 2;
+	    if (on_point_inside(s_cdt, &emid)) {
+		i_ue = t_ue;
+		found_iuedge = true;
+		break;
+	    }
+	}
+
+	if (!found_iuedge) continue;
+
+	std::set<size_t> itris = omesh->fmesh->uedges2tris[i_ue];
+
+
+	std::set<long> t_pts;
+	std::set<size_t>::iterator r_it;
+	for (r_it = itris.begin(); r_it != itris.end(); r_it++) {
+	    triangle_t tri = omesh->fmesh->tris_vect[*r_it];
+	    om_tris.erase(*r_it);
+	    for (int i = 0; i < 3; i++) {
+		t_pts.insert(tri.v[i]);
+	    }
+	}
+	if (t_pts.size() != 4) {
+	    std::cout << "Error - found " << t_pts.size() << " triangle points??\n";
+	}
+
+	point_t pcenter;
+	vect_t pnorm;
+	point_t *fpnts = (point_t *)bu_calloc(t_pts.size()+1, sizeof(point_t), "fitting points");
+	std::set<long>::iterator p_it;
+	int tpind = 0;
+	for (p_it = t_pts.begin(); p_it != t_pts.end(); p_it++) {
+	    ON_3dPoint *p = omesh->fmesh->pnts[*p_it];
+	    fpnts[tpind][X] = p->x;
+	    fpnts[tpind][Y] = p->y;
+	    fpnts[tpind][Z] = p->z;
+	    tpind++;
+	}
+	if (bn_fit_plane(&pcenter, &pnorm, t_pts.size(), fpnts)) {
+	    std::cout << "fitting plane failed!\n";
+	}
+	bu_free(fpnts, "fitting points");
+
+	ON_Plane fit_plane(pcenter, pnorm);
+
+	// Build our polygon out of the two triangles.
+	//
+	// First step, add the 2D projection of the triangle vertices to the
+	// polygon data structure.
+	cpolygon_t *polygon = new cpolygon_t;
+	polygon->pdir = fit_plane.Normal();
+	polygon->tplane = fit_plane;
+	for (p_it = t_pts.begin(); p_it != t_pts.end(); p_it++) {
+	    double u, v;
+	    long pind = *p_it;
+	    ON_3dPoint *p = omesh->fmesh->pnts[pind];
+	    fit_plane.ClosestPointTo(*p, &u, &v);
+	    std::pair<double, double> proj_2d;
+	    proj_2d.first = u;
+	    proj_2d.second = v;
+	    polygon->pnts_2d.push_back(proj_2d);
+	    polygon->p2o[polygon->pnts_2d.size() - 1] = pind;
+	    polygon->o2p[pind] = polygon->pnts_2d.size() - 1;
+	}
+
+	// Initialize the polygon edges with one of the triangles.
+	triangle_t tri1 = omesh->fmesh->tris_vect[*(itris.begin())];
+	itris.erase(itris.begin());
+	struct edge2d_t e1(polygon->o2p[tri1.v[0]], polygon->o2p[tri1.v[1]]);
+	struct edge2d_t e2(polygon->o2p[tri1.v[1]], polygon->o2p[tri1.v[2]]);
+	struct edge2d_t e3(polygon->o2p[tri1.v[2]], polygon->o2p[tri1.v[0]]);
+	polygon->add_edge(e1);
+	polygon->add_edge(e2);
+	polygon->add_edge(e3);
+
+	// Grow the polygon with the other triangle.
+	std::set<uedge_t> new_edges;
+	std::set<uedge_t> shared_edges;
+	triangle_t tri2 = omesh->fmesh->tris_vect[*(itris.begin())];
+	itris.erase(itris.begin());
+	for (int i = 0; i < 3; i++) {
+	    int v1 = i;
+	    int v2 = (i < 2) ? i + 1 : 0;
+	    uedge_t ue1(tri2.v[v1], tri2.v[v2]);
+	    if (ue1 != i_ue) {
+		new_edges.insert(ue1);
+	    } else {
+		shared_edges.insert(ue1);
+	    }
+	}
+	polygon->replace_edges(new_edges, shared_edges);
+
+	polygon->cdt();
+
+	omesh->fmesh->tri_remove(tri1);
+	omesh->fmesh->tri_remove(tri2);
+
+	std::set<triangle_t>::iterator v_it;
+	for (v_it = polygon->tris.begin(); v_it != polygon->tris.end(); v_it++) {
+	    triangle_t vt = *v_it;
+	    orient_tri(*omesh->fmesh, vt);
+	    omesh->fmesh->tri_add(vt);
+	}
+    }
+}
+
+void
+find_interior_edge_grps(
+	std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs
+	)
+{
+    std::vector<ovlp_grp> bins;
+
+    // Do a more aggressive overlap check that will catch triangles aligned
+    // on the edges but still interior to the mesh
+    omesh_ovlps(check_pairs, 1);
+
+    std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>>::iterator cp_it;
+    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
+	omesh_t *omesh1 = cp_it->first->omesh;
+	omesh_t *omesh2 = cp_it->second->omesh;
+	if (!omesh1->intruding_tris.size() || !omesh2->intruding_tris.size()) {
+	    continue;
+	}
+	//std::cout << "Need to check " << omesh1->fmesh->name << " " << omesh1->fmesh->f_id << " vs " << omesh2->fmesh->name << " " << omesh2->fmesh->f_id << "\n";
+
+	recdt_edges(omesh1);
+	recdt_edges(omesh2);
+
+	// Do a more aggressive overlap check that will catch triangles aligned
+	// on the edges but still interior to the mesh
+	omesh_ovlps(check_pairs, 1);
+    }
 }
 
 /** @} */

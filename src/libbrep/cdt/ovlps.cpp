@@ -498,6 +498,52 @@ omesh_t::vert_closest(double *vdist, overt_t *v)
     return nv;
 }
 
+overt_t *
+omesh_t::vert_closest(double *vdist, ON_3dPoint &opnt)
+{
+    ON_BoundingBox fbbox = fmesh->bbox();
+
+    ON_3dPoint ptol(ON_ZERO_TOLERANCE, ON_ZERO_TOLERANCE, ON_ZERO_TOLERANCE);
+    ON_BoundingBox s_bb(opnt, opnt);
+    ON_3dPoint npnt = opnt + ptol;
+    s_bb.Set(npnt, true);
+    npnt = opnt - ptol;
+    s_bb.Set(npnt, true);
+
+    std::set<overt_t *> nverts = vert_search(s_bb);
+    bool last_try = false;
+    while (!nverts.size() && !last_try) {
+	ON_3dVector vmin = s_bb.Min() - s_bb.Center();
+	ON_3dVector vmax = s_bb.Max() - s_bb.Center();
+	vmin.Unitize();
+	vmax.Unitize();
+	vmin = vmin * s_bb.Diagonal().Length() * 2;
+	vmax = vmax * s_bb.Diagonal().Length() * 2;
+	s_bb.m_min = opnt + vmin;
+	s_bb.m_max = opnt + vmax;
+	if (s_bb.Includes(fbbox, true)) {
+	    last_try = true;
+	}
+	nverts = vert_search(s_bb);
+    }
+
+    double dist = DBL_MAX;
+    overt_t *nv = NULL;
+    std::set<overt_t *>::iterator v_it;
+    for (v_it = nverts.begin(); v_it != nverts.end(); v_it++) {
+	overt_t *ov = *v_it;
+	ON_3dPoint np = ov->vpnt();
+	if (np.DistanceTo(opnt) < dist) {
+	    nv = ov;
+	    dist = np.DistanceTo(opnt);
+	}
+    }
+    if (vdist) {
+	(*vdist) = dist;
+    }
+    return nv;
+}
+
 uedge_t
 omesh_t::closest_uedge(ON_3dPoint &p)
 {
@@ -991,7 +1037,7 @@ omesh_refinement_pnts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pair
 }
 
 size_t
-omesh_ovlps(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs)
+omesh_ovlps(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs, int mode)
 {
     size_t tri_isects = 0;
 
@@ -1011,6 +1057,7 @@ omesh_ovlps(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs)
     for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
 	omesh_t *am = *a_it;
 	am->itris.clear();
+	am->intruding_tris.clear();
     }
     a_omesh.clear();
 
@@ -1029,7 +1076,7 @@ omesh_ovlps(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs)
 		for (tb_it = tris_prelim.begin(); tb_it != tris_prelim.end(); tb_it++) {
 		    triangle_t t1 = omesh1->fmesh->tris_vect[tb_it->first];
 		    triangle_t t2 = omesh2->fmesh->tris_vect[tb_it->second];
-		    int isect = tri_isect(omesh1, t1, omesh2, t2, 0);
+		    int isect = tri_isect(omesh1, t1, omesh2, t2, mode);
 		    if (isect) {
 			omesh1->itris[t1.ind].insert(std::make_pair(omesh2, t2.ind));
 			omesh2->itris[t2.ind].insert(std::make_pair(omesh1, t1.ind));
@@ -2350,7 +2397,7 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 
 	if (!bins.size()) {
 	    // If we didn't find anything, we're done
-	    return;
+	    break;
 	}
 
 	// Have groupings - reset refinement info
@@ -2468,19 +2515,14 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 		interior_replaced_tris = omesh_interior_edge_verts(check_pairs);
 	    }
 	    // Restore "normal" overlap information for next pass
-	    omesh_ovlps(check_pairs);
+	    omesh_ovlps(check_pairs, 0);
 	    omesh_refinement_pnts(check_pairs, 0);
 
 	    processed_cnt++;
 	}
     }
 
-    if (have_refine_pnts && processed_cnt > 1) {
-	std::cout << "Have " << bins.size() - no_refine.size() << " groupings that will need edge based refinement\n";
-    }
-    if (no_refine.size()) {
-	std::cout << "Have " << no_refine.size() << " groups we can process directly\n";
-    }
+    find_interior_edge_grps(check_pairs);
 }
 
 
@@ -2538,7 +2580,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	make_omeshes(check_pairs);
 
 	// Report our starting overlap count
-	face_ov_cnt = omesh_ovlps(check_pairs);
+	face_ov_cnt = omesh_ovlps(check_pairs, 0);
 	std::cout << "Initial overlap cnt: " << face_ov_cnt << "\n";
 	if (!face_ov_cnt) return 0;
 
@@ -2558,7 +2600,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    if (avcnt) {
 		// If we adjusted, recalculate overlapping tris and refinement points
 		std::cout << "Adjusted " << avcnt << " vertices\n";
-		face_ov_cnt = omesh_ovlps(check_pairs);
+		face_ov_cnt = omesh_ovlps(check_pairs, 0);
 		omesh_refinement_pnts(check_pairs, rpnt_level);
 		check_faces_validity(check_pairs);
 	    }
@@ -2602,7 +2644,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 
 #endif
 	    if (bedge_replaced_tris || vvcnt) {
-		face_ov_cnt = omesh_ovlps(check_pairs);
+		face_ov_cnt = omesh_ovlps(check_pairs, 0);
 		omesh_refinement_pnts(check_pairs, rpnt_level);
 		check_faces_validity(check_pairs);
 	    }
@@ -2618,7 +2660,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	while (interior_replaced_tris) {
 	    find_edge_verts(check_pairs);
 	    interior_replaced_tris = omesh_interior_edge_verts(check_pairs);
-	    face_ov_cnt = omesh_ovlps(check_pairs);
+	    face_ov_cnt = omesh_ovlps(check_pairs, 0);
 	    omesh_refinement_pnts(check_pairs, rpnt_level);
 	    check_faces_validity(check_pairs);
 	}
@@ -2641,7 +2683,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 
 
 	check_faces_validity(check_pairs);
-	face_ov_cnt = omesh_ovlps(check_pairs);
+	face_ov_cnt = omesh_ovlps(check_pairs, 0);
 	std::cout << "Iteration " << iterations << " post tri split overlap cnt: " << face_ov_cnt << "\n";
     }
 

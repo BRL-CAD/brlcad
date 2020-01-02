@@ -457,61 +457,71 @@ tri_isect_t::isect_edge_only(double etol)
 	return false;
     }
 
-    // If the projections of the two triangles onto a common plane has a non-zero
-    // area, we don't report this as an edge-only intersection - it is as far as the
-    // triangles are concerned but it has potentially non-zero volume in the mesh
-    // intersection, and so must be regarded as a processable intersection.
-    point_t t1p[3];
-    point_t t2p[3];
-    ON_Plane t1plane = fmesh1->tplane(t1);
-    ON_Plane t2plane = fmesh2->tplane(t2);
-    ON_3dPoint avgcenter = (t1plane.Origin() + t2plane.Origin()) / 2.0;
-    ON_3dVector avgnorm = (t1plane.Normal() + t2plane.Normal()) / 2.0;
-    avgnorm.Unitize();
-    ON_Plane avgplane(avgcenter, avgnorm);
-    for (int i = 0; i < 3; i++) {
-	double u, v;
-	ON_3dPoint p3d = *fmesh1->pnts[t1.v[i]];
-	avgplane.ClosestPointTo(p3d, &u, &v);
-	VSET(t1p[i], u, v, 0);
+    if (mode == 0) {
+	return true;
     }
-    for (int i = 0; i < 3; i++) {
-	double u, v;
-	ON_3dPoint p3d = *fmesh2->pnts[t2.v[i]];
-	avgplane.ClosestPointTo(p3d, &u, &v);
-	VSET(t2p[i], u, v, 0);
-    }
-    if (bg_tri_tri_isect_coplanar2(t1p[0], t1p[1], t1p[2], t2p[0], t2p[1], t2p[2], 1) == 1) {
-	// If we're here, check the midpoints of the unshared edges to see if they are inside the opposite
-	// mesh. If any of them are, treat this as a full intersection (return false).
-	int mid_inside_cnt = 0;
-	for (int i = 0; i < 2; i++) {
-	    ON_Line l = t1_fedges[i];
-	    ON_3dPoint lmid = l.PointAt(0.5);
-	    struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh2->p_cdt;
-	    if (on_point_inside(s_cdt, &lmid)) {
-		// TODO - need some distance metric here - ON the mesh is fine, to within tolerance...
-		std::cout << "center " << lmid.x << "," << lmid.y << "," << lmid.z << "\n";
-		mid_inside_cnt++;
+
+    if (mode > 0) {
+	// If the projections of the two triangles onto a common plane has a non-zero
+	// area, we don't report this as an edge-only intersection - it is as far as the
+	// triangles are concerned but it has potentially non-zero volume in the mesh
+	// intersection, and so must be regarded as a processable intersection.
+	point_t t1p[3];
+	point_t t2p[3];
+	ON_Plane t1plane = fmesh1->tplane(t1);
+	ON_Plane t2plane = fmesh2->tplane(t2);
+	ON_3dPoint avgcenter = (t1plane.Origin() + t2plane.Origin()) / 2.0;
+	ON_3dVector avgnorm = (t1plane.Normal() + t2plane.Normal()) / 2.0;
+	avgnorm.Unitize();
+	ON_Plane avgplane(avgcenter, avgnorm);
+	for (int i = 0; i < 3; i++) {
+	    double u, v;
+	    ON_3dPoint p3d = *fmesh1->pnts[t1.v[i]];
+	    avgplane.ClosestPointTo(p3d, &u, &v);
+	    VSET(t1p[i], u, v, 0);
+	}
+	for (int i = 0; i < 3; i++) {
+	    double u, v;
+	    ON_3dPoint p3d = *fmesh2->pnts[t2.v[i]];
+	    avgplane.ClosestPointTo(p3d, &u, &v);
+	    VSET(t2p[i], u, v, 0);
+	}
+	if (bg_tri_tri_isect_coplanar2(t1p[0], t1p[1], t1p[2], t2p[0], t2p[1], t2p[2], 1) == 1) {
+	    // If we're here, check the midpoints of the unshared edges to see if they are inside the opposite
+	    // mesh. If any of them are, treat this as a full intersection (return false).
+	    int mid_inside_cnt = 0;
+	    for (int i = 0; i < 2; i++) {
+		ON_Line l = t1_fedges[i];
+		ON_3dPoint lmid = l.PointAt(0.5);
+		struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh2->p_cdt;
+		if (on_point_inside(s_cdt, &lmid)) {
+		    // TODO - need some distance metric here - ON the mesh is fine, to within tolerance...
+		    std::cout << "center " << lmid.x << "," << lmid.y << "," << lmid.z << "\n";
+		    mid_inside_cnt++;
+		}
 	    }
-	}
-	for (int i = 0; i < 2; i++) {
-	    ON_Line l = t2_fedges[i];
-	    ON_3dPoint lmid = l.PointAt(0.5);
-	    struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh1->p_cdt;
-	    if (on_point_inside(s_cdt, &lmid)) {
-		// TODO - need some distance metric here - ON the mesh is fine, to within tolerance...
-		std::cout << "center " << lmid.x << "," << lmid.y << "," << lmid.z << "\n";
-		mid_inside_cnt++;
+	    for (int i = 0; i < 2; i++) {
+		ON_Line l = t2_fedges[i];
+		ON_3dPoint lmid = l.PointAt(0.5);
+		struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh1->p_cdt;
+		if (on_point_inside(s_cdt, &lmid)) {
+		    // TODO - need some distance metric here - ON the mesh is fine, to within tolerance...
+		    std::cout << "center " << lmid.x << "," << lmid.y << "," << lmid.z << "\n";
+		    mid_inside_cnt++;
+		}
 	    }
+	    if (mid_inside_cnt > 1) {
+		fmesh1->tri_plot(t1, "t1.plot3");
+		fmesh2->tri_plot(t2, "t2.plot3");
+		std::cout << t1.ind << "-" << t2.ind << ": coplanar isect true, mid_inside_cnt: " << mid_inside_cnt << "\n";
+		return false;
+	    } else {
+		return true;
+	    }
+	} else {
+	    //std::cout << "Coplanar isect false!\n";
+	    return true;
 	}
-	if (mid_inside_cnt > 1) {
-	    fmesh1->tri_plot(t1, "t1.plot3");
-	    fmesh2->tri_plot(t2, "t2.plot3");
-	    std::cout << t1.ind << "-" << t2.ind << ": coplanar isect true, mid_inside_cnt: " << mid_inside_cnt << "\n";
-	}
-    } else {
-	//std::cout << "Coplanar isect false!\n";
     }
 
     return true;
@@ -551,7 +561,7 @@ TRICHK(cdt_mesh_t *fmesh1, cdt_mesh_t *fmesh2, triangle_t &t1, triangle_t &t2)
     ppoint1 += TPPCHECK(t1p1);
     ppoint1 += TPPCHECK(t1p2);
     ppoint1 += TPPCHECK(t1p3);
-    
+
     int ppoint2 = 0;
     ON_3dPoint t2p1, t2p2, t2p3;
     t2p1 = *fmesh2->pnts[t2.v[0]];
