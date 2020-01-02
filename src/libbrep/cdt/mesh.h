@@ -1045,7 +1045,8 @@ class ovlp_grp {
 int
 tri_isect(
 	omesh_t *omesh1, triangle_t &t1,
-	omesh_t *omesh2, triangle_t &t2
+	omesh_t *omesh2, triangle_t &t2,
+	int mode
 	);
 int
 tri_nearedge_refine(

@@ -1029,7 +1029,7 @@ omesh_ovlps(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs)
 		for (tb_it = tris_prelim.begin(); tb_it != tris_prelim.end(); tb_it++) {
 		    triangle_t t1 = omesh1->fmesh->tris_vect[tb_it->first];
 		    triangle_t t2 = omesh2->fmesh->tris_vect[tb_it->second];
-		    int isect = tri_isect(omesh1, t1, omesh2, t2);
+		    int isect = tri_isect(omesh1, t1, omesh2, t2, 0);
 		    if (isect) {
 			omesh1->itris[t1.ind].insert(std::make_pair(omesh2, t2.ind));
 			omesh2->itris[t2.ind].insert(std::make_pair(omesh1, t1.ind));

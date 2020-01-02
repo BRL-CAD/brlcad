@@ -199,12 +199,13 @@ public:
 class tri_isect_t {
     public:
 
-	tri_isect_t(cdt_mesh_t *f1, cdt_mesh_t *f2, triangle_t &tri1, triangle_t &tri2)
+	tri_isect_t(cdt_mesh_t *f1, cdt_mesh_t *f2, triangle_t &tri1, triangle_t &tri2, int m)
 	{
 	    fmesh1 = f1;
 	    fmesh2 = f2;
 	    t1 = tri1;
 	    t2 = tri2;
+	    mode = m;
 
 	    // Set up the ON_Lines for the triangles
 	    t1_lines[0] = ON_Line(*fmesh1->pnts[t1.v[0]], *fmesh1->pnts[t1.v[1]]);
@@ -251,10 +252,11 @@ class tri_isect_t {
 	ON_Line t1_nedge, t2_nedge;
 	ON_Line t1_fedges[2];
 	ON_Line t2_fedges[2];
-	
+
 	edge_t t1_e, t2_e;
 
     private:
+	int mode;
 	bool find_intersecting_edges(double etol);
 
 };
@@ -571,13 +573,14 @@ TRICHK(cdt_mesh_t *fmesh1, cdt_mesh_t *fmesh2, triangle_t &t1, triangle_t &t2)
 int
 tri_isect(
 	omesh_t *omesh1, triangle_t &t1,
-       	omesh_t *omesh2, triangle_t &t2
+       	omesh_t *omesh2, triangle_t &t2,
+	int mode
 	)
 {
     cdt_mesh_t *fmesh1 = omesh1->fmesh;
     cdt_mesh_t *fmesh2 = omesh2->fmesh;
 
-    tri_isect_t tri_isection(fmesh1, fmesh2, t1, t2);
+    tri_isect_t tri_isection(fmesh1, fmesh2, t1, t2, mode);
 
     if (!tri_isection.isect_basic()) {
 	return 0;
@@ -653,7 +656,7 @@ tri_nearedge_refine(
     cdt_mesh_t *fmesh1 = omesh1->fmesh;
     cdt_mesh_t *fmesh2 = omesh2->fmesh;
 
-    tri_isect_t tri_isection(fmesh1, fmesh2, t1, t2);
+    tri_isect_t tri_isection(fmesh1, fmesh2, t1, t2, 0);
 
     if (!tri_isection.isect_basic()) {
 	return 0;
