@@ -406,20 +406,21 @@ find_ovlp_grps(
 }
 
 static void
-recdt_edges(omesh_t *omesh)
+recdt_edges(omesh_t *omesh, omesh_t *other_m)
 {
 
     std::set<size_t> om_tris = omesh->intruding_tris;
 
     while (om_tris.size()) {
-	struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)omesh->fmesh->p_cdt;
+	struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)other_m->fmesh->p_cdt;
 	size_t t1 = *om_tris.begin();
 	triangle_t t1_tri = omesh->fmesh->tris_vect[t1];
 	om_tris.erase(t1);
 
 	uedge_t i_ue;
 	bool found_iuedge = false;
-
+	double pdist = 0;
+	ON_BoundingBox fbbox = omesh->fmesh->bbox();
 	for (int i = 0; i < 3; i++) {
 	    edge_t t_e;
 	    t_e.v[0] = t1_tri.v[i];
@@ -427,9 +428,17 @@ recdt_edges(omesh_t *omesh)
 	    uedge_t t_ue(t_e);
 	    ON_3dPoint emid = (*omesh->fmesh->pnts[t_ue.v[0]] + *omesh->fmesh->pnts[t_ue.v[1]]) / 2;
 	    if (on_point_inside(s_cdt, &emid)) {
-		i_ue = t_ue;
-		found_iuedge = true;
-		break;
+		ON_3dPoint s_p;
+		ON_3dVector s_n;
+		bool feval = other_m->fmesh->closest_surf_pnt(s_p, s_n, &emid, 2*fbbox.Diagonal().Length());
+		if (!feval) {
+		    std::cout << "Error - couldn't find closest point for emid\n";
+		    continue;
+		}
+		if (emid.DistanceTo(s_p) > pdist) {
+		    i_ue = t_ue;
+		    found_iuedge = true;
+		}
 	    }
 	}
 
@@ -551,8 +560,8 @@ find_interior_edge_grps(
 	}
 	//std::cout << "Need to check " << omesh1->fmesh->name << " " << omesh1->fmesh->f_id << " vs " << omesh2->fmesh->name << " " << omesh2->fmesh->f_id << "\n";
 
-	recdt_edges(omesh1);
-	recdt_edges(omesh2);
+	recdt_edges(omesh1, omesh2);
+	recdt_edges(omesh2, omesh1);
 
 	// Do a more aggressive overlap check that will catch triangles aligned
 	// on the edges but still interior to the mesh
