@@ -650,149 +650,113 @@ refinement_reset(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 void
 shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 {
-    bool have_refine_pnts = true;
-    int processed_cnt = 0;
     std::vector<ovlp_grp> bins;
     std::map<std::pair<omesh_t *, size_t>, size_t> bin_map;
-    std::set<size_t> no_refine;
-    std::set<size_t> refine;
+    std::set<size_t> aligned, non_aligned;
     std::set<size_t>::iterator r_it;
 
-    while (have_refine_pnts && (processed_cnt < 2)) {
+    std::map<bedge_seg_t *, std::set<overt_t *>> edge_verts;
 
-	std::map<bedge_seg_t *, std::set<overt_t *>> edge_verts;
+    bins.clear();
 
-	bins.clear();
+    bins = find_ovlp_grps(bin_map, check_pairs);
 
-	bins = find_ovlp_grps(bin_map, check_pairs);
+    if (!bins.size()) {
+	// If we didn't find anything, we're done
+	return;
+    }
 
-	if (!bins.size()) {
-	    // If we didn't find anything, we're done
-	    break;
-	}
+    // Have groupings - reset refinement info
+    refinement_reset(check_pairs);
 
-	// Have groupings - reset refinement info
-	refinement_reset(check_pairs);
-
-	refine.clear();
-	no_refine.clear();
-	for (size_t i = 0; i < bins.size(); i++) {
-	    bins[i].edge_verts = &edge_verts;
-	    if (bins[i].characterize_all_verts()) {
-		refine.insert(i);
-	    } else {
-		no_refine.insert(i);
-	    }
-	}
-
-	// For any groups that need no further point refinement, do the shared
-	// tessellation
-	for (r_it = no_refine.begin(); r_it != no_refine.end(); r_it++) {
-	    std::cout << "Group " << *r_it << " ready:\n";
-	    bins[*r_it].list_tris();
-	    bins[*r_it].list_overts();
-	    struct bu_vls pname = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&pname, "group_ready_%zu", *r_it);
-	    bins[*r_it].plot(bu_vls_cstr(&pname));
-	    bu_vls_free(&pname);
-
-	    // With a seed triangle from each mesh, grow a polygon such that all active
-	    // vertices from each mesh are either boundary or interior points on the polygon.
-	    cpolygon_t *polygon1 = group_polygon(bins[*r_it], 0);
-	    cpolygon_t *polygon2 = group_polygon(bins[*r_it], 1);
-	    if (!polygon1 || !polygon2) {
-		std::cerr << "group polygon generation failed!\n";
-	    }
-
-	    // CDT one of the polygons in the shared plane.  Those triangles will now map back to matching
-	    // closest points in both meshes.  Remove the original triangles from each mesh, and
-	    // replace with the new in both meshes.
-
-	}
-
-	// For any groups that need no further point refinement, do the shared
-	// tessellation
-	for (r_it = refine.begin(); r_it != refine.end(); r_it++) {
-	    std::cout << "Group " << *r_it << " NEEDS REFINEMENT:\n";
-	    bins[*r_it].list_tris();
-	    bins[*r_it].list_overts();
-	    struct bu_vls pname = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&pname, "group_refine_%zu", *r_it);
-	    bins[*r_it].plot(bu_vls_cstr(&pname));
-	    bu_vls_free(&pname);
-	}
-
-	// If refinement points were added above, refine and repeat
-	if (refine.size()) {
-
-	    // Before adding points, see if retessellating the groups individually can clear the ovlps
-	    for (r_it = refine.begin(); r_it != refine.end(); r_it++) {
-		cpolygon_t *polygon1 = group_polygon(bins[*r_it], 0);
-		cpolygon_t *polygon2 = group_polygon(bins[*r_it], 1);
-		if (!polygon1 || !polygon2) {
-		    std::cerr << "group polygon generation failed!\n";
-		}
-
-		polygon1->cdt();
-		bins[*r_it].om1->fmesh->tris_plot("before1.plot3");
-
-		// Replace grp triangles with new polygon triangles
-		std::set<size_t>::iterator t_it;
-		for (t_it = bins[*r_it].vtris1.begin(); t_it != bins[*r_it].vtris1.end(); t_it++) {
-		    bins[*r_it].om1->fmesh->tri_remove(bins[*r_it].om1->fmesh->tris_vect[*t_it]);
-		}
-		std::set<triangle_t>::iterator tr_it;
-		for (tr_it = polygon1->tris.begin(); tr_it != polygon1->tris.end(); tr_it++) {
-		    triangle_t tri = *tr_it;
-		    orient_tri(*bins[*r_it].om1->fmesh, tri);
-		    bins[*r_it].om1->fmesh->tri_add(tri);
-		}
-		bins[*r_it].om1->fmesh->tris_plot("after1.plot3");
-
-		polygon2->cdt();
-		bins[*r_it].om2->fmesh->tris_plot("before2.plot3");
-
-		// Replace grp triangles with new polygon triangles
-		for (t_it = bins[*r_it].vtris2.begin(); t_it != bins[*r_it].vtris2.end(); t_it++) {
-		    bins[*r_it].om2->fmesh->tri_remove(bins[*r_it].om2->fmesh->tris_vect[*t_it]);
-		}
-		for (tr_it = polygon2->tris.begin(); tr_it != polygon2->tris.end(); tr_it++) {
-		    triangle_t tri = *tr_it;
-		    orient_tri(*bins[*r_it].om2->fmesh, tri);
-		    bins[*r_it].om2->fmesh->tri_add(tri);
-		}
-		bins[*r_it].om2->fmesh->tris_plot("after2.plot3");
-		std::cout << "cdts complete\n";
-	    }
-
-
-	    int bedge_replaced_tris = INT_MAX;
-	    while (bedge_replaced_tris) {
-		// Process edge_verts
-		std::set<overt_t *> nverts;
-		bedge_replaced_tris = bedge_split_near_verts(check_pairs, &nverts, edge_verts);
-		edge_verts.clear();
-		std::set<overt_t *>::iterator nv_it;
-		int avcnt = 0;
-		for (nv_it = nverts.begin(); nv_it != nverts.end(); nv_it++) {
-		    avcnt += vert_nearby_closest_point_check(*nv_it, edge_verts, check_pairs);
-		}
-		if (avcnt) {
-		    std::cout << "vert_nearby_closest_point_check added " << avcnt << " close verts\n";
-		}
-	    }
-	    int interior_replaced_tris = INT_MAX;
-	    while (interior_replaced_tris) {
-		interior_replaced_tris = omesh_interior_edge_verts(check_pairs);
-	    }
-	    // Restore "normal" overlap information for next pass
-	    omesh_ovlps(check_pairs, 0);
-	    omesh_refinement_pnts(check_pairs, 0);
-
-	    processed_cnt++;
+    aligned.clear();
+    non_aligned.clear();
+    for (size_t i = 0; i < bins.size(); i++) {
+	bins[i].edge_verts = &edge_verts;
+	if (bins[i].characterize_all_verts()) {
+	    non_aligned.insert(i);
+	} else {
+	    aligned.insert(i);
 	}
     }
 
+    for (r_it = aligned.begin(); r_it != aligned.end(); r_it++) {
+	std::cout << "Group " << *r_it << " aligned:\n";
+	bins[*r_it].list_tris();
+	bins[*r_it].list_overts();
+	struct bu_vls pname = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&pname, "group_aligned_%zu", *r_it);
+	bins[*r_it].plot(bu_vls_cstr(&pname));
+	bu_vls_free(&pname);
+    }
+    for (r_it = non_aligned.begin(); r_it != non_aligned.end(); r_it++) {
+	std::cout << "Group " << *r_it << " not fully aligned:\n";
+	bins[*r_it].list_tris();
+	bins[*r_it].list_overts();
+	struct bu_vls pname = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&pname, "group_nonaligned_%zu", *r_it);
+	bins[*r_it].plot(bu_vls_cstr(&pname));
+	bu_vls_free(&pname);
+    }
+
+
+    for (size_t i = 0; i < bins.size(); i++) {
+
+	// TODO - if all vertices are mapped, may want to CDT only one of
+	// the polygons in the shared plane and map back to matching
+	// closest points in both meshes - not clear if this is necessary
+	// (CDTs ought to produce the same answer for both polygons, but
+	// might be better not to rely on that...)
+	cpolygon_t *polygon1 = group_polygon(bins[i], 0);
+	cpolygon_t *polygon2 = group_polygon(bins[i], 1);
+	if (!polygon1 || !polygon2) {
+	    std::cerr << "group polygon generation failed!\n";
+	}
+
+	polygon1->cdt();
+	bins[i].om1->fmesh->tris_plot("before1.plot3");
+
+	// Replace grp triangles with new polygon triangles
+	std::set<size_t>::iterator t_it;
+	for (t_it = bins[i].vtris1.begin(); t_it != bins[i].vtris1.end(); t_it++) {
+	    bins[i].om1->fmesh->tri_remove(bins[i].om1->fmesh->tris_vect[*t_it]);
+	}
+	std::set<triangle_t>::iterator tr_it;
+	for (tr_it = polygon1->tris.begin(); tr_it != polygon1->tris.end(); tr_it++) {
+	    triangle_t tri = *tr_it;
+	    orient_tri(*bins[i].om1->fmesh, tri);
+	    bins[i].om1->fmesh->tri_add(tri);
+	}
+	bins[i].om1->fmesh->tris_plot("after1.plot3");
+
+	polygon2->cdt();
+	bins[i].om2->fmesh->tris_plot("before2.plot3");
+
+	// Replace grp triangles with new polygon triangles
+	for (t_it = bins[i].vtris2.begin(); t_it != bins[i].vtris2.end(); t_it++) {
+	    bins[i].om2->fmesh->tri_remove(bins[i].om2->fmesh->tris_vect[*t_it]);
+	}
+	for (tr_it = polygon2->tris.begin(); tr_it != polygon2->tris.end(); tr_it++) {
+	    triangle_t tri = *tr_it;
+	    orient_tri(*bins[i].om2->fmesh, tri);
+	    bins[i].om2->fmesh->tri_add(tri);
+	}
+	bins[i].om2->fmesh->tris_plot("after2.plot3");
+	std::cout << "cdts complete\n";
+    }
+
+    // After the above processing, we may still have individual triangle pairs
+    // that intrude with all edges aligned relative to the other mesh (in
+    // essence, these are shared polygons with different interior tessellations
+    // in each mesh.)  To align them, we identify the intruding edges and
+    // construct the simple polygons associated with those edges in both meshes
+    // for retessellation.  Assuming consistent CDT behavior, the outputs
+    // should align and clear the overlap.  (If necessary we can map the
+    // triangles from one edge into the other mesh (in principle we could also
+    // do that with the above case, although there the CDT result is likely to
+    // be more reliably simple/clean than the existing triangles...) which
+    // would be less work CPU wise, but the current logic leverages already
+    // written code so it's easier as an immediate implementation path.)
     find_interior_edge_grps(check_pairs);
 }
 
