@@ -1144,92 +1144,27 @@ refine_edge_vert_sets (
 	if (rtris.size() != 2) {
 	    std::cout << "Error - could not associate uedge with two triangles??\n";
 	}
+	std::set<size_t> crtris = rtris;
+	triangle_t tri1 = omesh->fmesh->tris_vect[*crtris.begin()];
+	crtris.erase(crtris.begin());
+	triangle_t tri2 = omesh->fmesh->tris_vect[*crtris.begin()];
+	crtris.erase(crtris.begin());
+
 	// For the involved triangle edges that are not the edge to be removed, we will
 	// need to reassess their closest edge assignment after new edges are added.
 	// Build up the set of those uedges for later processing.  While we are looping,
 	// get initial data for the polygon build.
-	std::set<long> t_pts;
 	std::set<uedge_t> pnt_reassignment_edges;
 	std::set<size_t>::iterator r_it;
 	for (r_it = rtris.begin(); r_it != rtris.end(); r_it++) {
 	    triangle_t tri = omesh->fmesh->tris_vect[*r_it];
-	    for (int i = 0; i < 3; i++) {
-		t_pts.insert(tri.v[i]);
-	    }
 	    std::set<uedge_t> tuedges = omesh->fmesh->uedges(tri);
 	    pnt_reassignment_edges.insert(tuedges.begin(), tuedges.end());
 	}
 	pnt_reassignment_edges.erase(ue);
 
-	if (t_pts.size() != 4) {
-	    std::cout << "Error - found " << t_pts.size() << " triangle points??\n";
-	}
 
-	point_t pcenter;
-	vect_t pnorm;
-	point_t *fpnts = (point_t *)bu_calloc(t_pts.size()+1, sizeof(point_t), "fitting points");
-	std::set<long>::iterator p_it;
-	int tpind = 0;
-	for (p_it = t_pts.begin(); p_it != t_pts.end(); p_it++) {
-	    ON_3dPoint *p = omesh->fmesh->pnts[*p_it];
-	    fpnts[tpind][X] = p->x;
-	    fpnts[tpind][Y] = p->y;
-	    fpnts[tpind][Z] = p->z;
-	    tpind++;
-	}
-	if (bn_fit_plane(&pcenter, &pnorm, t_pts.size(), fpnts)) {
-	    std::cout << "fitting plane failed!\n";
-	}
-	bu_free(fpnts, "fitting points");
-
-	ON_Plane fit_plane(pcenter, pnorm);
-
-	// Build our polygon out of the two triangles.
-	//
-	// First step, add the 2D projection of the triangle vertices to the
-	// polygon data structure.
-	cpolygon_t *polygon = new cpolygon_t;
-	polygon->pdir = fit_plane.Normal();
-	polygon->tplane = fit_plane;
-	for (p_it = t_pts.begin(); p_it != t_pts.end(); p_it++) {
-	    double u, v;
-	    long pind = *p_it;
-	    ON_3dPoint *p = omesh->fmesh->pnts[pind];
-	    fit_plane.ClosestPointTo(*p, &u, &v);
-	    std::pair<double, double> proj_2d;
-	    proj_2d.first = u;
-	    proj_2d.second = v;
-	    polygon->pnts_2d.push_back(proj_2d);
-	    polygon->p2o[polygon->pnts_2d.size() - 1] = pind;
-	    polygon->o2p[pind] = polygon->pnts_2d.size() - 1;
-	}
-
-	// Initialize the polygon edges with one of the triangles.
-	triangle_t tri1 = omesh->fmesh->tris_vect[*(rtris.begin())];
-	rtris.erase(rtris.begin());
-	struct edge2d_t e1(polygon->o2p[tri1.v[0]], polygon->o2p[tri1.v[1]]);
-	struct edge2d_t e2(polygon->o2p[tri1.v[1]], polygon->o2p[tri1.v[2]]);
-	struct edge2d_t e3(polygon->o2p[tri1.v[2]], polygon->o2p[tri1.v[0]]);
-	polygon->add_edge(e1);
-	polygon->add_edge(e2);
-	polygon->add_edge(e3);
-
-	// Grow the polygon with the other triangle.
-	std::set<uedge_t> new_edges;
-	std::set<uedge_t> shared_edges;
-	triangle_t tri2 = omesh->fmesh->tris_vect[*(rtris.begin())];
-	rtris.erase(rtris.begin());
-	for (int i = 0; i < 3; i++) {
-	    int v1 = i;
-	    int v2 = (i < 2) ? i + 1 : 0;
-	    uedge_t ue1(tri2.v[v1], tri2.v[v2]);
-	    if (ue1 != ue) {
-		new_edges.insert(ue1);
-	    } else {
-		shared_edges.insert(ue1);
-	    }
-	}
-	polygon->replace_edges(new_edges, shared_edges);
+	cpolygon_t *polygon = omesh->fmesh->uedge_polygon(ue);
 
 #if 0
 	{
@@ -1250,7 +1185,7 @@ refine_edge_vert_sets (
 	}
 #endif
 
-	// Grow the polygon with the other triangle.
+	// Add any interior points to the polygon before cdt.
 	std::set<overt_t *> new_overts;
 	bool have_inside = false;
 	for (size_t i = 0; i < epnts.size(); i++) {
@@ -1323,7 +1258,7 @@ refine_edge_vert_sets (
 	        // always pass, so it's not usable for rejection.
 		ON_3dPoint ovpnt = epnts[i].ov->vpnt();
 		double u, v;
-		fit_plane.ClosestPointTo(ovpnt, &u, &v);
+		polygon->tplane.ClosestPointTo(ovpnt, &u, &v);
 		std::pair<double, double> proj_2d;
 		proj_2d.first = u;
 		proj_2d.second = v;
@@ -1334,7 +1269,7 @@ refine_edge_vert_sets (
 	    if (inside) {
 		ON_3dPoint p = epnts[i].spnt;
 		double u, v;
-		fit_plane.ClosestPointTo(p, &u, &v);
+		polygon->tplane.ClosestPointTo(p, &u, &v);
 		std::pair<double, double> proj_2d;
 		proj_2d.first = u;
 		proj_2d.second = v;
