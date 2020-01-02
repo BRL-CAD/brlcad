@@ -835,6 +835,7 @@ find_edge_verts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs)
 	    ON_3dPoint p = v->vpnt();
 	    uedge_t closest_edge = am->closest_uedge(p);
 	    bool pprint = false;
+#if 0
 	    //if (am->sname() == std::string("c.s") && am->fmesh->f_id == 0 && PPCHECK(p)) {
 	    if (PPCHECK(p)) {
 		std::cout << am->sname() << ":\n";
@@ -845,7 +846,7 @@ find_edge_verts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs)
 		std::cout << "center " << pe2.x << " " << pe2.y << " " << pe2.z << "\n";
 		pprint = true;
 	    }
-
+#endif
 	    if (am->fmesh->brep_edges.find(closest_edge) != am->fmesh->brep_edges.end()) {
 		bedge_seg_t *bseg = am->fmesh->ue2b_map[closest_edge];
 		if (!bseg) {
@@ -966,10 +967,7 @@ omesh_refinement_pnts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pair
 		    omesh_t *im = s_it->first;
 		    size_t otri_ind = s_it->second;
 		    triangle_t t2 = im->fmesh->tris_vect[otri_ind];
-		    int risect = tri_nearedge_refine(am, t1, im, t2);
-		    if (risect) {
-			std::cout << "risect: " << risect << "\n";
-		    }
+		    tri_nearedge_refine(am, t1, im, t2);
 		}
 	    }
 	}
@@ -1901,10 +1899,12 @@ bedge_split_near_verts(
 	    ON_3dPoint p = v->vpnt();
 	    verts.erase(v);
 
+#if 0
 	    if (PPCHECK(p)) {
 		std::cout << v->omesh->sname() << ":\n";
 		std::cout << "center " << p.x << " " << p.y << " " << p.z << "\n";
 	    }
+#endif
 
 	    bedge_seg_t *eseg_split = NULL;
 	    double split_t = -1.0;

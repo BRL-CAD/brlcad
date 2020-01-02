@@ -496,7 +496,7 @@ tri_isect_t::isect_edge_only(double etol)
 		struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh2->p_cdt;
 		if (on_point_inside(s_cdt, &lmid)) {
 		    // TODO - need some distance metric here - ON the mesh is fine, to within tolerance...
-		    std::cout << "center " << lmid.x << "," << lmid.y << "," << lmid.z << "\n";
+		    //std::cout << "center " << lmid.x << "," << lmid.y << "," << lmid.z << "\n";
 		    mid_inside_cnt++;
 		}
 	    }
@@ -506,7 +506,7 @@ tri_isect_t::isect_edge_only(double etol)
 		struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh1->p_cdt;
 		if (on_point_inside(s_cdt, &lmid)) {
 		    // TODO - need some distance metric here - ON the mesh is fine, to within tolerance...
-		    std::cout << "center " << lmid.x << "," << lmid.y << "," << lmid.z << "\n";
+		    //std::cout << "center " << lmid.x << "," << lmid.y << "," << lmid.z << "\n";
 		    mid_inside_cnt++;
 		}
 	    }
