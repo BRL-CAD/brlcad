@@ -505,7 +505,7 @@ tri_isect_t::isect_edge_only(double etol)
 			    std::cout << "Error - couldn't find closest point for mesh\n";
 			    continue;
 			}
-			std::cout << "lmin_dist_to_sp vs elen_min: " << lmid.DistanceTo(bs_p) << "," << 0.001*elen_min << "\n";
+			//std::cout << "lmin_dist_to_sp vs elen_min: " << lmid.DistanceTo(bs_p) << "," << 0.001*elen_min << "\n";
 
 			if (lmid.DistanceTo(bs_p) > BN_TOL_DIST) {
 			    std::cout << "center " << lmid.x << "," << lmid.y << "," << lmid.z << "\n";
@@ -528,7 +528,7 @@ tri_isect_t::isect_edge_only(double etol)
 			    std::cout << "Error - couldn't find closest point for mesh\n";
 			    continue;
 			}
-			std::cout << "lmin_dist_to_sp vs elen_min: " << lmid.DistanceTo(bs_p) << "," << 0.001*elen_min << "\n";
+			//std::cout << "lmin_dist_to_sp vs elen_min: " << lmid.DistanceTo(bs_p) << "," << 0.001*elen_min << "\n";
 
 			if (lmid.DistanceTo(bs_p) > BN_TOL_DIST) {
 			    std::cout << "center " << lmid.x << "," << lmid.y << "," << lmid.z << "\n";
@@ -555,6 +555,7 @@ tri_isect_t::isect_edge_only(double etol)
     return true;
 }
 
+#if 0
 #define PPOINT1 3.56554479743774344,7.98569858586419024,23.37338642522485799
 #define PPOINT2 3.56554479743774477,7.98112948296225078,23.71606012295672983
 #define PPOINT3 3.42047903513449203,7.64743233441400783,23.39883493871970188
@@ -601,6 +602,7 @@ TRICHK(cdt_mesh_t *fmesh1, cdt_mesh_t *fmesh2, triangle_t &t1, triangle_t &t2)
 
     return (ppoint1 == 3 || ppoint2 == 3);
 }
+#endif
 
 /*****************************************************************************
  * We're only concerned with specific categories of intersections between
@@ -624,11 +626,13 @@ tri_isect(
 	return 0;
     }
 
+#if 0
     if (TRICHK(fmesh1, fmesh2, t1, t2)) {
 	fmesh1->tri_plot(t1, "t1.plot3");
 	fmesh2->tri_plot(t2, "t2.plot3");
 	std::cout << "working problem tri\n";
     }
+#endif
 
     // tri_isection.plot("tri_isect.plot3");
 
