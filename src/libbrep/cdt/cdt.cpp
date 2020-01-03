@@ -26,8 +26,10 @@
  */
 
 #include "common.h"
-#include <queue>
+#include <iostream>
 #include <numeric>
+#include <queue>
+#include <string>
 #include "bg/chull.h"
 #include "bg/tri_tri.h"
 #include "./cdt.h"

@@ -30,9 +30,11 @@
  */
 
 #include "common.h"
-#include <queue>
+#include <iostream>
 #include <numeric>
+#include <queue>
 #include <random>
+#include <string>
 #include "bu/str.h"
 #include "bg/chull.h"
 #include "bg/tri_pt.h"
