@@ -500,10 +500,9 @@ tri_isect_t::isect_edge_only(double etol)
 		    // surface may not be fmesh2...  Need a s_cdt level closest_surf_pnt function
 		    if (on_point_inside(s_cdt, &lmid)) {
 			ON_3dPoint bs_p;
-			ON_3dVector bs_n;
-			bool cpeval = on_closest_point(bs_p, bs_n, s_cdt, &lmid);
+			bool cpeval = fmesh2->omesh->closest_brep_mesh_point(bs_p, &lmid, s_cdt);
 			if (!cpeval) {
-			    std::cout << "Error - couldn't find closest point for brep\n";
+			    std::cout << "Error - couldn't find closest point for mesh\n";
 			    continue;
 			}
 			std::cout << "lmin_dist_to_sp vs elen_min: " << lmid.DistanceTo(bs_p) << "," << 0.001*elen_min << "\n";
@@ -524,10 +523,9 @@ tri_isect_t::isect_edge_only(double etol)
 		    // TODO - need some distance metric here - ON the mesh is fine, to within tolerance...
 		    if (on_point_inside(s_cdt, &lmid)) {
 			ON_3dPoint bs_p;
-			ON_3dVector bs_n;
-			bool cpeval = on_closest_point(bs_p, bs_n, s_cdt, &lmid);
+			bool cpeval = fmesh1->omesh->closest_brep_mesh_point(bs_p, &lmid, s_cdt);
 			if (!cpeval) {
-			    std::cout << "Error - couldn't find closest point for brep\n";
+			    std::cout << "Error - couldn't find closest point for mesh\n";
 			    continue;
 			}
 			std::cout << "lmin_dist_to_sp vs elen_min: " << lmid.DistanceTo(bs_p) << "," << 0.001*elen_min << "\n";

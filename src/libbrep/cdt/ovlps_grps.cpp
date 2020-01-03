@@ -554,16 +554,17 @@ recdt_edges(omesh_t *omesh, omesh_t *other_m)
 	    uedge_t t_ue(t_e);
 	    ON_3dPoint emid = (*omesh->fmesh->pnts[t_ue.v[0]] + *omesh->fmesh->pnts[t_ue.v[1]]) / 2;
 	    if (on_point_inside(s_cdt, &emid)) {
-		ON_3dPoint s_p;
-		ON_3dVector s_n;
-		bool feval = other_m->fmesh->closest_surf_pnt(s_p, s_n, &emid, 2*fbbox.Diagonal().Length());
-		if (!feval) {
-		    std::cout << "Error - couldn't find closest point for emid\n";
+		ON_3dPoint bs_p;
+		bool cpeval = other_m->closest_brep_mesh_point(bs_p, &emid, s_cdt);
+		if (!cpeval) {
+		    std::cout << "Error - couldn't find closest point for mesh\n";
 		    continue;
 		}
-		if (emid.DistanceTo(s_p) > pdist) {
+		double lpdist = emid.DistanceTo(bs_p);
+		if (lpdist > pdist) {
 		    i_ue = t_ue;
 		    found_iuedge = true;
+		    pdist = lpdist;
 		}
 	    }
 	}
@@ -614,23 +615,27 @@ find_interior_edge_grps(
 
     // Do a more aggressive overlap check that will catch triangles aligned
     // on the edges but still interior to the mesh
-    omesh_ovlps(check_pairs, 1);
+    int face_ov_cnt = omesh_ovlps(check_pairs, 1);
+    int nfcnt = 0;
 
-    std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>>::iterator cp_it;
-    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
-	omesh_t *omesh1 = cp_it->first->omesh;
-	omesh_t *omesh2 = cp_it->second->omesh;
-	if (!omesh1->intruding_tris.size() || !omesh2->intruding_tris.size()) {
-	    continue;
+    while (nfcnt != face_ov_cnt) {
+	face_ov_cnt = nfcnt;
+	std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>>::iterator cp_it;
+	for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
+	    omesh_t *omesh1 = cp_it->first->omesh;
+	    omesh_t *omesh2 = cp_it->second->omesh;
+	    if (!omesh1->intruding_tris.size() || !omesh2->intruding_tris.size()) {
+		continue;
+	    }
+	    //std::cout << "Need to check " << omesh1->fmesh->name << " " << omesh1->fmesh->f_id << " vs " << omesh2->fmesh->name << " " << omesh2->fmesh->f_id << "\n";
+
+	    recdt_edges(omesh1, omesh2);
+	    recdt_edges(omesh2, omesh1);
+
+	    // Do a more aggressive overlap check that will catch triangles aligned
+	    // on the edges but still interior to the mesh
+	    nfcnt = omesh_ovlps(check_pairs, 1);
 	}
-	//std::cout << "Need to check " << omesh1->fmesh->name << " " << omesh1->fmesh->f_id << " vs " << omesh2->fmesh->name << " " << omesh2->fmesh->f_id << "\n";
-
-	recdt_edges(omesh1, omesh2);
-	recdt_edges(omesh2, omesh1);
-
-	// Do a more aggressive overlap check that will catch triangles aligned
-	// on the edges but still interior to the mesh
-	omesh_ovlps(check_pairs, 1);
     }
 }
 

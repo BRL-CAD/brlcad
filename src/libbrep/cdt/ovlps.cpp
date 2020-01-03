@@ -544,6 +544,68 @@ omesh_t::vert_closest(double *vdist, ON_3dPoint &opnt)
     return nv;
 }
 
+ON_3dPoint
+omesh_t::closest_pt(double *pdist, ON_3dPoint &op)
+{
+    ON_BoundingBox fbbox = fmesh->bbox();
+
+    ON_3dPoint ptol(ON_ZERO_TOLERANCE, ON_ZERO_TOLERANCE, ON_ZERO_TOLERANCE);
+    ON_BoundingBox s_bb(op, op);
+    ON_3dPoint npnt = op + ptol;
+    s_bb.Set(npnt, true);
+    npnt = op - ptol;
+    s_bb.Set(npnt, true);
+
+    // Find close triangles, iterate through them and
+    // find the closest interior edge
+    std::set<size_t> ntris = tris_search(s_bb);
+    bool last_try = false;
+    while (!ntris.size() && !last_try) {
+	ON_3dVector vmin = s_bb.Min() - s_bb.Center();
+	ON_3dVector vmax = s_bb.Max() - s_bb.Center();
+	vmin.Unitize();
+	vmax.Unitize();
+	vmin = vmin * s_bb.Diagonal().Length() * 2;
+	vmax = vmax * s_bb.Diagonal().Length() * 2;
+	s_bb.m_min = op + vmin;
+	s_bb.m_max = op + vmax;
+	if (s_bb.Includes(fbbox, true)) {
+	    last_try = true;
+	}
+	ntris = tris_search(s_bb);
+    }
+
+    double tdist = DBL_MAX;
+    point_t closest_pt;
+    std::set<size_t>::iterator tr_it;
+    for (tr_it = ntris.begin(); tr_it != ntris.end(); tr_it++) {
+	triangle_t t = fmesh->tris_vect[*tr_it];
+
+	point_t T_V[3];
+	VSET(T_V[0], fmesh->pnts[t.v[0]]->x, fmesh->pnts[t.v[0]]->y, fmesh->pnts[t.v[0]]->z); 
+	VSET(T_V[1], fmesh->pnts[t.v[1]]->x, fmesh->pnts[t.v[1]]->y, fmesh->pnts[t.v[1]]->z); 
+	VSET(T_V[2], fmesh->pnts[t.v[2]]->x, fmesh->pnts[t.v[2]]->y, fmesh->pnts[t.v[2]]->z); 
+
+	point_t opt;
+	point_t lclosest_pt;
+	VSET(opt, op.x, op.y, op.z);
+
+	double ltdist = bg_tri_closest_pt(&lclosest_pt, opt, T_V[0], T_V[1], T_V[2]);
+
+	if (ltdist < tdist) {
+	    VMOVE(closest_pt, lclosest_pt);
+	    tdist = ltdist;
+	}
+    }
+
+    ON_3dPoint on_cp(closest_pt[X], closest_pt[Y], closest_pt[Z]);
+
+    if (pdist) {
+	(*pdist) = tdist;
+    }
+    return on_cp;
+}
+
 uedge_t
 omesh_t::closest_uedge(ON_3dPoint &p)
 {
@@ -715,6 +777,39 @@ omesh_t::refinement_clear()
 {
     refinement_overts.clear();
     intruding_tris.clear();
+}
+
+
+bool
+omesh_t::closest_brep_mesh_point(ON_3dPoint &s_p, ON_3dPoint *p, struct ON_Brep_CDT_State *s_cdt)
+{
+    std::set<omesh_t *> check_meshes;
+    std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>>::iterator o_it;
+    for (o_it = check_pairs->begin(); o_it != check_pairs->end(); o_it++) {
+	if ((struct ON_Brep_CDT_State *)o_it->first->omesh->fmesh->p_cdt == s_cdt) {
+	    check_meshes.insert(o_it->first->omesh);
+	}
+	if ((struct ON_Brep_CDT_State *)o_it->second->omesh->fmesh->p_cdt == s_cdt) {
+	    check_meshes.insert(o_it->second->omesh);
+	}
+    }
+
+    double cdist = DBL_MAX;
+    ON_3dPoint cp;
+    std::set<omesh_t *>::iterator om_it;
+    for (om_it = check_meshes.begin(); om_it != check_meshes.end(); om_it++) {
+	omesh_t *om = *om_it;
+	double ldist;
+	ON_3dPoint om_cp = om->closest_pt(&ldist, *p);
+	if (ldist < DBL_MAX && cdist > ldist) {
+	    cdist = ldist;
+	    cp = om_cp;
+	}
+    }
+
+    s_p = cp;
+
+    return (cdist < DBL_MAX);
 }
 
 /******************************************************************************
@@ -2180,13 +2275,13 @@ omesh_interior_edge_verts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check
 
 
 static void
-make_omeshes(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs)
+make_omeshes(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> *check_pairs)
 {
     // Make omesh containers for all the cdt_meshes in play
     std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>>::iterator p_it;
     std::set<cdt_mesh_t *> afmeshes;
     std::vector<omesh_t *> omeshes;
-    for (p_it = check_pairs.begin(); p_it != check_pairs.end(); p_it++) {
+    for (p_it = check_pairs->begin(); p_it != check_pairs->end(); p_it++) {
 	afmeshes.insert(p_it->first);
 	afmeshes.insert(p_it->second);
     }
@@ -2198,6 +2293,7 @@ make_omeshes(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs)
 	    delete fmesh->omesh;
 	}
 	fmesh->omesh = omeshes[omeshes.size() - 1];
+	fmesh->omesh->check_pairs = check_pairs;
     }
 }
 
@@ -2222,7 +2318,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	return -1;
     }
 
-    make_omeshes(check_pairs);
+    make_omeshes(&check_pairs);
 
     int face_ov_cnt = omesh_ovlps(check_pairs, 0);
     if (!face_ov_cnt) {
@@ -2291,7 +2387,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 
     // Make sure everything is still OK and do final overlap check
     bool final_valid = check_faces_validity(check_pairs);
-    face_ov_cnt = omesh_ovlps(check_pairs, 1); // TODO - this should be the strict test...
+    face_ov_cnt = omesh_ovlps(check_pairs, 1);
     std::cout << "Post-processing overlap cnt: " << face_ov_cnt << "\n";
 
     return (face_ov_cnt > 0 || !final_valid) ? -1 : 0;

@@ -876,6 +876,11 @@ class omesh_t
         overt_t * vert_closest(double *vdist, overt_t *v);
         overt_t * vert_closest(double *vdist, ON_3dPoint &opnt);
 
+	// Find closest point on mesh
+        ON_3dPoint closest_pt(double *pdist, ON_3dPoint &op);
+
+	// Find closest point on any active mesh face
+	bool closest_brep_mesh_point(ON_3dPoint &s_p, ON_3dPoint *p, struct ON_Brep_CDT_State *s_cdt);
 
         void refinement_clear();
         bool validate_vtree();
@@ -904,7 +909,8 @@ class omesh_t
         // Points from other meshes potentially needing refinement in this mesh
         std::map<overt_t *, std::set<long>> refinement_overts;
 
-
+	// Set of all active fmesh pairs
+	std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> *check_pairs;
 
         // Points from this mesh inducing refinement in other meshes, and
         // triangles reported by tri_isect as intersecting from this mesh
@@ -1084,6 +1090,10 @@ vert_nearby_closest_point_check(
 
 int
 omesh_interior_edge_verts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs);
+
+
+bool
+closest_mesh_point(ON_3dPoint &s_p, std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> *check_pairs, ON_3dPoint *p);
 
 void
 shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs);
