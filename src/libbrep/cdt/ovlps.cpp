@@ -576,15 +576,15 @@ omesh_t::closest_pt(double *pdist, ON_3dPoint &op)
     }
 
     double tdist = DBL_MAX;
-    point_t closest_pt;
+    point_t closest_pt = VINIT_ZERO;
     std::set<size_t>::iterator tr_it;
     for (tr_it = ntris.begin(); tr_it != ntris.end(); tr_it++) {
 	triangle_t t = fmesh->tris_vect[*tr_it];
 
 	point_t T_V[3];
-	VSET(T_V[0], fmesh->pnts[t.v[0]]->x, fmesh->pnts[t.v[0]]->y, fmesh->pnts[t.v[0]]->z); 
-	VSET(T_V[1], fmesh->pnts[t.v[1]]->x, fmesh->pnts[t.v[1]]->y, fmesh->pnts[t.v[1]]->z); 
-	VSET(T_V[2], fmesh->pnts[t.v[2]]->x, fmesh->pnts[t.v[2]]->y, fmesh->pnts[t.v[2]]->z); 
+	VSET(T_V[0], fmesh->pnts[t.v[0]]->x, fmesh->pnts[t.v[0]]->y, fmesh->pnts[t.v[0]]->z);
+	VSET(T_V[1], fmesh->pnts[t.v[1]]->x, fmesh->pnts[t.v[1]]->y, fmesh->pnts[t.v[1]]->z);
+	VSET(T_V[2], fmesh->pnts[t.v[2]]->x, fmesh->pnts[t.v[2]]->y, fmesh->pnts[t.v[2]]->z);
 
 	point_t opt;
 	point_t lclosest_pt;
