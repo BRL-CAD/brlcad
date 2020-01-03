@@ -499,17 +499,18 @@ tri_isect_t::isect_edge_only(double etol)
 		    // The below is a start, but the correct mesh for the closest distance to the
 		    // surface may not be fmesh2...  Need a s_cdt level closest_surf_pnt function
 		    if (on_point_inside(s_cdt, &lmid)) {
-			ON_3dPoint s_p;
-			ON_3dVector s_n;
-			ON_BoundingBox fbbox = fmesh1->bbox();
-			bool feval = fmesh2->closest_surf_pnt(s_p, s_n, &lmid, 2*fbbox.Diagonal().Length());
-			if (!feval) {
-			    std::cout << "Error - couldn't find closest point for emid\n";
+			ON_3dPoint bs_p;
+			ON_3dVector bs_n;
+			bool cpeval = on_closest_point(bs_p, bs_n, s_cdt, &lmid);
+			if (!cpeval) {
+			    std::cout << "Error - couldn't find closest point for brep\n";
 			    continue;
 			}
-			if (lmid.DistanceTo(s_p) > 0.001*elen_min) {
+			std::cout << "lmin_dist_to_sp vs elen_min: " << lmid.DistanceTo(bs_p) << "," << 0.001*elen_min << "\n";
+
+			if (lmid.DistanceTo(bs_p) > BN_TOL_DIST) {
 			    std::cout << "center " << lmid.x << "," << lmid.y << "," << lmid.z << "\n";
-			    std::cout << s_cdt->name << " dist: " << lmid.DistanceTo(s_p) << "\n";
+			    std::cout << s_cdt->name << " dist: " << lmid.DistanceTo(bs_p) << "\n";
 			    mid_inside_cnt++;
 			}
 		    }
@@ -522,17 +523,18 @@ tri_isect_t::isect_edge_only(double etol)
 		if (on_point_inside(s_cdt, &lmid)) {
 		    // TODO - need some distance metric here - ON the mesh is fine, to within tolerance...
 		    if (on_point_inside(s_cdt, &lmid)) {
-			ON_3dPoint s_p;
-			ON_3dVector s_n;
-			ON_BoundingBox fbbox = fmesh2->bbox();
-			bool feval = fmesh1->closest_surf_pnt(s_p, s_n, &lmid, 2*fbbox.Diagonal().Length());
-			if (!feval) {
-			    std::cout << "Error - couldn't find closest point for emid\n";
+			ON_3dPoint bs_p;
+			ON_3dVector bs_n;
+			bool cpeval = on_closest_point(bs_p, bs_n, s_cdt, &lmid);
+			if (!cpeval) {
+			    std::cout << "Error - couldn't find closest point for brep\n";
 			    continue;
 			}
-			if (lmid.DistanceTo(s_p) > 0.00001*elen_min) {
+			std::cout << "lmin_dist_to_sp vs elen_min: " << lmid.DistanceTo(bs_p) << "," << 0.001*elen_min << "\n";
+
+			if (lmid.DistanceTo(bs_p) > BN_TOL_DIST) {
 			    std::cout << "center " << lmid.x << "," << lmid.y << "," << lmid.z << "\n";
-			    std::cout << s_cdt->name << " dist: " << lmid.DistanceTo(s_p) << "\n";
+			    std::cout << s_cdt->name << " dist: " << lmid.DistanceTo(bs_p) << "\n";
 			    mid_inside_cnt++;
 			}
 		    }

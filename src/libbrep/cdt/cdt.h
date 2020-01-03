@@ -198,6 +198,7 @@ void finalize_rtrees(struct ON_Brep_CDT_State *s_cdt);
 void cpolyedge_nearest_dists(struct ON_Brep_CDT_State *s_cdt);
 bool point_inside(struct ON_Brep_CDT_State *s_cdt, point_t p);
 bool on_point_inside(struct ON_Brep_CDT_State *s_cdt, ON_3dPoint *p);
+bool on_closest_point(ON_3dPoint &s_p, ON_3dVector &s_v, struct ON_Brep_CDT_State *s_cdt, ON_3dPoint *p);
 
 void plot_rtree_2d(ON_RTree *rtree, const char *filename);
 void plot_rtree_2d2(RTree<void *, double, 2> &rtree, const char *filename);

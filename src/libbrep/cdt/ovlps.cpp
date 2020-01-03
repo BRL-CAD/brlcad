@@ -2291,7 +2291,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 
     // Make sure everything is still OK and do final overlap check
     bool final_valid = check_faces_validity(check_pairs);
-    face_ov_cnt = omesh_ovlps(check_pairs, 0); // TODO - this should be the strict test...
+    face_ov_cnt = omesh_ovlps(check_pairs, 1); // TODO - this should be the strict test...
     std::cout << "Post-processing overlap cnt: " << face_ov_cnt << "\n";
 
     return (face_ov_cnt > 0 || !final_valid) ? -1 : 0;

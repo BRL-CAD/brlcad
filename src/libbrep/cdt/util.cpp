@@ -294,6 +294,54 @@ on_point_inside(struct ON_Brep_CDT_State *s_cdt, ON_3dPoint *p)
     return point_inside(s_cdt, tp);
 }
 
+bool
+on_closest_point(ON_3dPoint &s_p, ON_3dVector &s_n, struct ON_Brep_CDT_State *s_cdt, ON_3dPoint *p)
+{
+    ON_BoundingBox bbb = s_cdt->brep->BoundingBox();
+
+    bool have_pnt = false;
+    double cpdist = DBL_MAX;
+
+    ON_BoundingBox pbb(*p,*p);
+
+    ON_3dPoint c_point = ON_3dPoint::UnsetPoint;
+    ON_3dVector c_normal = ON_3dVector::UnsetVector;
+
+    for (int i = 0; i < s_cdt->brep->m_F.Count(); i++) {
+	ON_BoundingBox fbb = s_cdt->brep->m_F[i].BoundingBox();
+	if (!fbb.IsDisjoint(pbb)) {
+	    ON_2dPoint surf_p2d;
+	    ON_3dPoint surf_p3d = ON_3dPoint::UnsetPoint;
+	    double cdist;
+	    surface_GetClosestPoint3dFirstOrder(s_cdt->brep->m_F[i].SurfaceOf(), *p, surf_p2d, surf_p3d, cdist, 0, ON_ZERO_TOLERANCE, 10*bbb.Diagonal().Length());
+	    if (NEAR_EQUAL(cdist, DBL_MAX, ON_ZERO_TOLERANCE)) {
+		continue;
+	    }
+	    if (cdist < cpdist) {
+		ON_3dPoint s_point = ON_3dPoint::UnsetPoint;
+		ON_3dVector s_norm = ON_3dVector::UnsetVector;
+		c_point = surf_p3d;
+		bool neval = surface_EvNormal(s_cdt->brep->m_F[i].SurfaceOf(), surf_p2d.x, surf_p2d.y, s_point, s_norm);
+		if (!neval) {
+		    continue;
+		}
+		c_point = s_point;
+		if (s_cdt->brep->m_F[i].m_bRev) {
+		    c_normal = -1 * s_norm;
+		} else {
+		    c_normal = s_norm;
+		}
+		have_pnt = true;
+	    }
+	}
+    }
+
+    s_p = c_point;
+    s_n = c_normal;
+
+    return have_pnt;
+}
+
 std::vector<cpolyedge_t *>
 cdt_face_polyedges(struct ON_Brep_CDT_State *s_cdt, int face_index)
 {
