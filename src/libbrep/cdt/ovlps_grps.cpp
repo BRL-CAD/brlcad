@@ -218,6 +218,29 @@ ovlp_grp::characterize_all_verts()
     return !replaceable;
 }
 
+bool
+ovlp_grp::proj_tri_ovlp(omesh_t *om, size_t ind)
+{
+    std::vector<ovlp_proj_tri> &ptris = (om == om1) ? planar_core_tris2: planar_core_tris1;
+    triangle_t tri = om->fmesh->tris_vect[ind];
+
+    ovlp_proj_tri ttri;
+    for (int i = 0; i < 3; i++) {
+	double u, v;
+	ON_3dPoint p3d = *om->fmesh->pnts[tri.v[i]];
+	fp.ClosestPointTo(p3d, &u, &v);
+	VSET(ttri.pts[i], u, v, 0);
+    }
+
+    for (size_t i = 0; i < ptris.size(); i++) {
+	if (ptris[i].ovlps(ttri)) {
+	    return true;
+	}
+    }
+
+    return false;
+}
+
 void
 ovlp_grp::plot(const char *fname, int ind)
 {
@@ -374,8 +397,6 @@ find_ovlp_grps(
 		if (!real_ovlp) continue;
 		//std::cout << "real overlap with " << *nt_it << "\n";
 
-		// We have a qualified overlapping pair - check to see 
-
 		std::pair<omesh_t *, size_t> nkey(omesh2, *nt_it);
 		size_t key_id;
 		if (bin_map.find(ckey) == bin_map.end() && bin_map.find(nkey) == bin_map.end()) {
@@ -402,23 +423,23 @@ find_ovlp_grps(
 	}
     }
 
-    return bins;
-}
+    // Define each group's plane based on the core overlapping triangles,
+    // and construct projected sets for overlap testing
+    for (size_t i = 0; i < bins.size(); i++) {
+	bins[i].fit_plane();
+	std::set<size_t>::iterator t_it;
+	for (t_it = bins[i].tris1.begin(); t_it != bins[i].tris1.end(); t_it++) {
+	    ovlp_proj_tri ptri = bins[i].proj_tri(bins[i].om1, *t_it);
+	    bins[i].planar_core_tris1.push_back(ptri);
+	}
 
-// If either all three points are in the active set or the
-// point not on the shared edge is in the set, the triangle
-// should be considered.
-bool poly_tri_usable(std::set<long> &active_verts, triangle_t &tri, long nv) {
-    if (active_verts.find(nv) != active_verts.end()) return true;
-    int avcnt = 0;
-    for (int i = 0; i < 3; i++) {
-	if (active_verts.find(tri.v[i]) != active_verts.end()) {
-	    avcnt++;
+	for (t_it = bins[i].tris2.begin(); t_it != bins[i].tris2.end(); t_it++) {
+	    ovlp_proj_tri ptri = bins[i].proj_tri(bins[i].om2, *t_it);
+	    bins[i].planar_core_tris2.push_back(ptri);
 	}
     }
-    if (avcnt == 3) return true;
-    std::cout << "avcnt " << avcnt << "\n";
-    return false;
+
+    return bins;
 }
 
 cpolygon_t *
@@ -504,7 +525,7 @@ group_polygon(ovlp_grp &grp, int ind)
 	    if (om->fmesh->tri_process(polygon, &new_edges, &shared_edges, &nv, ntri) >= 0) {
 		om->fmesh->tri_plot(ntri, "ntri.p3");
 		visited_tris.insert(ntri.ind);
-		if (!poly_tri_usable(verts, ntri, nv)) {
+		if (!grp.proj_tri_ovlp(om, ntri.ind)) {
 		    continue;
 		}
 		added_tris.insert(ntri.ind);

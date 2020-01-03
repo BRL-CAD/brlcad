@@ -44,6 +44,7 @@
 #include "opennurbs.h"
 #include "bu/color.h"
 #include "bg/polygon.h"
+#include "bg/tri_tri.h"
 
 extern "C" {
     struct ctriangle_t {
@@ -920,6 +921,17 @@ class omesh_t
 	std::string sname();
 };
 
+class ovlp_proj_tri {
+    public:
+	point_t pts[3];
+
+	bool ovlps(ovlp_proj_tri &other_tri) {
+	    if (bg_tri_tri_isect_coplanar2(pts[0], pts[1], pts[2], other_tri.pts[0], other_tri.pts[1], other_tri.pts[2], 1) == 1) {
+		return true;
+	    }
+	    return false;
+	}
+};
 
 class ovlp_grp {
     public:
@@ -929,11 +941,29 @@ class ovlp_grp {
         }
         omesh_t *om1;
         omesh_t *om2;
-        std::set<size_t> tris1;
+
+	ovlp_proj_tri proj_tri(omesh_t *om, size_t ind){
+	    triangle_t tri = om->fmesh->tris_vect[ind];
+	    ovlp_proj_tri ptri;
+	    for (int i = 0; i < 3; i++) {
+		double u, v;
+		ON_3dPoint p3d = *om->fmesh->pnts[tri.v[i]];
+		fp.ClosestPointTo(p3d, &u, &v);
+		VSET(ptri.pts[i], u, v, 0);
+	    }
+
+	    return ptri;
+	}
+	bool proj_tri_ovlp(omesh_t *om, size_t ind);
+
+        std::vector<ovlp_proj_tri> planar_core_tris1;
+        std::vector<ovlp_proj_tri> planar_core_tris2;
+
+	std::set<size_t> tris1;
         std::set<size_t> tris2;
         std::set<size_t> vtris1;
         std::set<size_t> vtris2;
-       
+
       	std::set<long> verts1;
         std::set<long> verts2;
         std::set<overt_t *> overts1;
@@ -1000,8 +1030,11 @@ class ovlp_grp {
 	    }
 	    bu_free(fpnts, "fitting points");
 
-	    ON_Plane fp(pcenter, pnorm);
-	    return fp;
+	    ON_Plane fplane(pcenter, pnorm);
+
+	    fp = fplane;
+
+	    return fplane;
 	}
 
         // Each point involved in this operation must have it's closest point
@@ -1048,6 +1081,8 @@ class ovlp_grp {
 	bool replaceable;
 
 	std::map<bedge_seg_t *, std::set<overt_t *>> *edge_verts;
+
+	ON_Plane fp;
 
     private:
         void characterize_verts(int ind);
