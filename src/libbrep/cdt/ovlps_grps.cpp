@@ -428,6 +428,49 @@ find_ovlp_grps(
     return bins;
 }
 
+int
+add_tri_test(ovlp_grp &grp, omesh_t *om, triangle_t &ntri, std::set<long> &verts, long nv, ON_3dPoint &opnt, ON_3dPoint &tpnt, double *dp, long *tind)
+{
+    // If the triangle doesn't overlap in projection,
+    // it's a definite no.
+    if (!grp.proj_tri_ovlp(om, ntri.ind)) {
+	return -1;
+    }
+
+    // If either all three points are in the active set or the
+    // point not on the shared edge is in the set, it's a definite
+    // yes.
+    if (verts.find(nv) != verts.end()) return 1;
+    int avcnt = 0;
+    for (int i = 0; i < 3; i++) {
+	if (verts.find(ntri.v[i]) != verts.end()) {
+	    avcnt++;
+	}
+    }
+    if (avcnt == 3) return 1;
+
+    // Now it gets tricky... if we're overlapping in projection
+    // but not pulling a vert directly, we only want the triangle
+    // if it moves the polygon toward a vert we need.
+    ON_3dVector vtri = tpnt - opnt;
+    double largest_dp = -DBL_MAX;
+std::set<long>::iterator v_it;
+    for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
+	ON_3dPoint tvpnt = *om->fmesh->pnts[*v_it];
+	ON_3dVector pvect = tvpnt - opnt;
+	double vdir = ON_DotProduct(vtri, pvect);
+	if (vdir > largest_dp) {
+	    largest_dp = vdir;
+	}
+    }
+
+    if (largest_dp > *dp && largest_dp > 0) {
+	*dp = largest_dp;
+	*tind = ntri.ind;
+    }
+    return 0;
+}
+
 cpolygon_t *
 group_polygon(ovlp_grp &grp, int ind)
 {
@@ -504,6 +547,9 @@ group_polygon(ovlp_grp &grp, int ind)
 	    ts.push(*tu_it);
 	}
 
+	long tind = -1;
+	double dprod = -DBL_MAX;
+
 	while (!ts.empty()) {
 	    triangle_t ntri = ts.top();
 	    ts.pop();
@@ -530,16 +576,41 @@ group_polygon(ovlp_grp &grp, int ind)
 	    }
 
 	    if (om->fmesh->tri_process(polygon, &new_edges, &shared_edges, &nv, ntri) >= 0) {
-		om->fmesh->tri_plot(ntri, "ntri.p3");
+		om->fmesh->tri_plot(ntri, "ntri.plot3");
 		visited_tris.insert(ntri.ind);
 
-		// TODO - this is probably too aggressive - might need to add a test to see if
-		// the triangle is at least vaguely headed in the direction of an unused
-		// vertex, rather than just grabbing any overlap in the projection - have
-		// seen an example where we get an unwanted triangle because of a projecting
-		// overlap...
+		// Calculate some properties about the triangle we will need for inclusion testing.
+		ON_3dPoint opnt, tpnt;
+		if (nv == -1) {
+		    long v1 = new_edges.begin()->v[0];
+		    long v2 = new_edges.begin()->v[1];
+		    long ov;
+		    for (int i = 0; i < 3; i++) {
+			if (ntri.v[i] != v1 && ntri.v[i] != v2) {
+			    ov = ntri.v[i];
+			}
+		    }
+		    ON_3dPoint p1 = *om->fmesh->pnts[v1];
+		    ON_3dPoint p2 = *om->fmesh->pnts[v2];
+		    tpnt = (p1 + p2) * 0.5;
+		    opnt = *om->fmesh->pnts[ov];
+		} else {
+		    long v1 = shared_edges.begin()->v[0];
+		    long v2 = shared_edges.begin()->v[1];
+		    long tv;
+		    for (int i = 0; i < 3; i++) {
+			if (ntri.v[i] != v1 && ntri.v[i] != v2) {
+			    tv = ntri.v[i];
+			}
+		    }
+		    ON_3dPoint p1 = *om->fmesh->pnts[v1];
+		    ON_3dPoint p2 = *om->fmesh->pnts[v2];
+		    opnt = (p1 + p2) * 0.5;
+		    tpnt = *om->fmesh->pnts[tv];
+		}
 
-		if (!grp.proj_tri_ovlp(om, ntri.ind)) {
+		int atest = add_tri_test(grp,om, ntri, verts, nv, opnt, tpnt, &dprod, &tind); 
+		if (!atest || atest == -1) {
 		    continue;
 		}
 		added_tris.insert(ntri.ind);
@@ -553,8 +624,26 @@ group_polygon(ovlp_grp &grp, int ind)
 	}
 
 	polygon->polygon_plot_in_plane("ogp.plot3");
-    }
+    
 
+	if (unused_verts.size() && (unused_verts.size() == unused_prev) && tind != -1) {
+	    triangle_t ntri = om->fmesh->tris_vect[tind];
+	    std::set<uedge_t> new_edges;
+	    std::set<uedge_t> shared_edges;
+	    long nv = -1;
+
+	    if (om->fmesh->tri_process(polygon, &new_edges, &shared_edges, &nv, ntri) >= 0) {
+		om->fmesh->tri_plot(ntri, "ntri.plot3");
+		visited_tris.insert(ntri.ind);
+		added_tris.insert(ntri.ind);
+		unused_verts.erase(ntri.v[0]);
+		unused_verts.erase(ntri.v[1]);
+		unused_verts.erase(ntri.v[2]);
+		polygon->replace_edges(new_edges, shared_edges);
+		polygon->polygon_plot_in_plane("ogp.plot3");
+	    }
+	}
+    }
 #if 0
     if (unused_verts.size()) {
 	std::cerr << "ERROR - unable to use all vertices in group during polygon build!\n";
