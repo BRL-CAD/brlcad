@@ -2116,6 +2116,13 @@ cdt_mesh_t::closest_surf_pnt(ON_3dPoint &s_p, ON_3dVector &s_norm, ON_3dPoint *p
     return true;
 }
 
+bool
+cdt_mesh_t::planar(double ptol)
+{
+    struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)p_cdt;
+    return s_cdt->brep->m_F[f_id].SurfaceOf()->IsPlanar(NULL, ptol);
+}
+
 ON_3dVector
 cdt_mesh_t::tnorm(const triangle_t &t)
 {
@@ -3147,6 +3154,8 @@ cdt_mesh_t::valid(int verbose)
     bool tret = true;
     bool topret = true;
 
+    bool fplanar = planar();
+
     boundary_edges_update();
 
     RTree<size_t, double, 3>::Iterator tree_it;
@@ -3196,7 +3205,7 @@ cdt_mesh_t::valid(int verbose)
 	    }
 	}
 
-	if (epnt_cnt == 3 && bedge_cnt < 2) {
+	if (!fplanar && epnt_cnt == 3 && bedge_cnt < 2) {
 	    std::cerr << "tri has three edge points, but only " << bedge_cnt << "  boundary edges??\n";
 	    tret = false;
 	}

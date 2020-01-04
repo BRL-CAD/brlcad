@@ -644,6 +644,9 @@ public:
     // Brep face's surface to that point
     bool closest_surf_pnt(ON_3dPoint &s_p, ON_3dVector &s_norm, ON_3dPoint *p, double tol = -1);
 
+    // Report if the brep surface associated with this face is planar
+    bool planar(double ptol = ON_ZERO_TOLERANCE);
+
     // Plot3 generation routines for debugging
     void boundary_edges_plot(const char *filename);
     void face_neighbors_plot(const triangle_t &f, const char *filename);
