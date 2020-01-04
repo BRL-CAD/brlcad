@@ -1522,6 +1522,7 @@ cdt_mesh_t::tri_add(triangle_t &tri)
     tris_vect.push_back(tri);
     tris_tree.Insert(fMin, fMax, tri.ind);
 
+#if 0
     int pcnt = 0;
     ON_3dPoint problem1(2.5989674496614921,7.8208160252273462,26.533125750337135);
     ON_3dPoint problem2(2.5989674496614921,7.8208160252273462,25.033125750337135);
@@ -1539,6 +1540,7 @@ cdt_mesh_t::tri_add(triangle_t &tri)
     if (pcnt > 1) {
 	std::cout << "Adding problem tri to " << name << "\n";
     }
+#endif
 
     // Populate maps
     long i = tri.v[0];
@@ -1553,9 +1555,11 @@ cdt_mesh_t::tri_add(triangle_t &tri)
 	ue[ind].set(e[ind].v[0], e[ind].v[1]);
 	edges2tris[e[ind]] = tri.ind;
 	uedges2tris[ue[ind]].insert(tri.ind);
+#if 0
 	if (pcnt > 1) {
 	    std::cout << "uedge[" << ind << "]: " << ue[ind].v[0] << "," << ue[ind].v[1] << "\n";
 	}
+#endif
 	this->v2edges[e[ind].v[0]].insert(e[ind]);
 	v2tris[tri.v[ind]].insert(tri.ind);
     }
@@ -3257,9 +3261,11 @@ cdt_mesh_t::valid(int verbose)
 	++tree_it;
     }
 
+#if 0
     if ((nret && eret && tret && topret) && verbose > 0) {
 	std::cout << name << " face " << f_id << ": valid\n";
     }
+#endif
 
     return (nret && eret && tret && topret);
 }

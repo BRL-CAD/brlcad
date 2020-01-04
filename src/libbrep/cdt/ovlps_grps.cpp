@@ -95,12 +95,12 @@ ovlp_grp::characterize_verts(int ind)
 
 	    if (d_orig < d_new) {
 		ovum.insert(ov);
-		std::cout << "Skipping(" << d_new << "): " << ov->vpnt().x << "," << ov->vpnt().y << "," << ov->vpnt().z << "\n";
+		//std::cout << "Skipping(" << d_new << "): " << ov->vpnt().x << "," << ov->vpnt().y << "," << ov->vpnt().z << "\n";
 	    } else {
 		ovum.insert(ov_orig);
 		ovm2[nv] = ov;
-		std::cout << "Displacing(" << d_orig << "): " << ov_orig->vpnt().x << "," << ov_orig->vpnt().y << "," << ov_orig->vpnt().z << "\n";
-		std::cout << "       New(" << d_new << "): " << ov->vpnt().x << "," << ov->vpnt().y << "," << ov->vpnt().z << "\n";
+		//std::cout << "Displacing(" << d_orig << "): " << ov_orig->vpnt().x << "," << ov_orig->vpnt().y << "," << ov_orig->vpnt().z << "\n";
+		//std::cout << "       New(" << d_new << "): " << ov->vpnt().x << "," << ov->vpnt().y << "," << ov->vpnt().z << "\n";
 	    }
 	    continue;
 	}
@@ -117,7 +117,7 @@ ovlp_grp::characterize_verts(int ind)
 	    continue;
 	}
 	ON_BoundingBox spbb(s_p, s_p);
-	std::cout << "ov " << ov->p_id << " closest vert " << nv->p_id << ", dist " << s_p.DistanceTo(nv->vpnt()) << "\n";
+	//std::cout << "ov " << ov->p_id << " closest vert " << nv->p_id << ", dist " << s_p.DistanceTo(nv->vpnt()) << "\n";
 
 	// If the opposite vertex is close to the current vertex per their bounding boxes and is close
 	// to the closet surface point, go with it
@@ -131,7 +131,7 @@ ovlp_grp::characterize_verts(int ind)
 	    continue;
 	}
 
-	std::cout << "Need new vert paring(" << s_p.DistanceTo(nv->vpnt()) << "): " << target_point.x << "," << target_point.y << "," << target_point.z << "\n";
+	//std::cout << "Need new vert paring(" << s_p.DistanceTo(nv->vpnt()) << "): " << target_point.x << "," << target_point.y << "," << target_point.z << "\n";
 
 	uedge_t closest_edge = other_m->closest_uedge(s_p);
 	if (other_m->fmesh->brep_edges.find(closest_edge) != other_m->fmesh->brep_edges.end()) {
@@ -139,14 +139,14 @@ ovlp_grp::characterize_verts(int ind)
 	    if (!bseg) {
 		std::cout << "couldn't find bseg pointer??\n";
 	    } else {
-		std::cout << "Edge refinement point\n";
+		//std::cout << "Edge refinement point\n";
 		std::set<overt_t *> &ovev = (!ind) ? om2_everts_from_om1 : om1_everts_from_om2;
 		ovev.insert(ov);
 
 		(*edge_verts)[bseg].insert(ov);
 	    }
 	} else {
-	    std::cout << "Non edge refinement point\n";
+	    //std::cout << "Non edge refinement point\n";
 	    std::set<overt_t *> &ovrv = (!ind) ? om2_rverts_from_om1 : om1_rverts_from_om2;
 	    ovrv.insert(ov);
 
@@ -180,6 +180,7 @@ ovlp_grp::characterize_all_verts()
     replaceable = (om2_rverts_from_om1.size() > 0) ? false : replaceable;
     replaceable = (om1_everts_from_om2.size() > 0) ? false : replaceable;
     replaceable = (om2_everts_from_om1.size() > 0) ? false : replaceable;
+#if 0
     std::cout << "om1_unmappable_rverts: " << om1_unmappable_rverts.size() << "\n";
     for (os_it = om1_unmappable_rverts.begin(); os_it != om1_unmappable_rverts.end(); os_it++) {
 	std::cout << "                       "  << (*os_it)->vpnt().x << "," << (*os_it)->vpnt().y << "," << (*os_it)->vpnt().z << "\n";
@@ -216,6 +217,7 @@ ovlp_grp::characterize_all_verts()
     }
 
     std::cout << "group is replaceable: " << replaceable << "\n";
+#endif
 
     return !replaceable;
 }
@@ -342,24 +344,6 @@ ovlp_grp::plot(const char *fname)
     plot(bu_vls_cstr(&omname), 1);
     bu_vls_free(&omname);
 }
-
-
-// TODO - this needs to be more sophisticated.  The polygon for a group needs
-// to be built after the initial assignment, and then any triangles needed to
-// encompass all originally active verts in one mesh need to be checked to see
-// if they introduce any new verts that must be incorporated into the other
-// group.  Should also be maintining sets of "grouped" triangles to make sure
-// no triangle ever ends up in more than one group.
-//
-// The criteria for incorporating a triangle into the polygon should probably
-// be whether any of the other mesh's group triangles, projected into the common
-// plane, overlap (non-zero area) with the proposed inclusion triangle's projection
-// in that same plane.  Anything that so overlaps needs to be incorporated to
-// get us to two polygons that, when triangulated, will reliably resolve any
-// overlaps.
-//
-// A group build terminates when all active verts in both meshes are incorporated
-// into the polygons
 
 /* A grouping of overlapping triangles is defined as the set of triangles from
  * two meshes that overlap and are surrounded in both meshes by either
@@ -535,7 +519,7 @@ group_polygon(ovlp_grp &grp, int ind)
 		unused_verts.erase(ntri.v[1]);
 		unused_verts.erase(ntri.v[2]);
 		polygon->replace_edges(new_edges, shared_edges);
-		polygon->print();
+		//polygon->print();
 		polygon->polygon_plot_in_plane("ogp.plot3");
 	    }
 	}
@@ -543,9 +527,11 @@ group_polygon(ovlp_grp &grp, int ind)
 	polygon->polygon_plot_in_plane("ogp.plot3");
     }
 
+#if 0
     if (unused_verts.size()) {
 	std::cerr << "ERROR - unable to use all vertices in group during polygon build!\n";
     }
+#endif
 
     vtris = added_tris;
 
@@ -708,6 +694,7 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 	}
     }
 
+#if 0
     for (r_it = aligned.begin(); r_it != aligned.end(); r_it++) {
 	std::cout << "Group " << *r_it << " aligned:\n";
 	bins[*r_it].list_tris();
@@ -726,7 +713,7 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 	bins[*r_it].plot(bu_vls_cstr(&pname));
 	bu_vls_free(&pname);
     }
-
+#endif
 
     for (size_t i = 0; i < bins.size(); i++) {
 
@@ -742,7 +729,7 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 	}
 
 	polygon1->cdt();
-	bins[i].om1->fmesh->tris_plot("before1.plot3");
+	//bins[i].om1->fmesh->tris_plot("before1.plot3");
 
 	// Replace grp triangles with new polygon triangles
 	std::set<size_t>::iterator t_it;
@@ -755,10 +742,10 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 	    orient_tri(*bins[i].om1->fmesh, tri);
 	    bins[i].om1->fmesh->tri_add(tri);
 	}
-	bins[i].om1->fmesh->tris_plot("after1.plot3");
+	//bins[i].om1->fmesh->tris_plot("after1.plot3");
 
 	polygon2->cdt();
-	bins[i].om2->fmesh->tris_plot("before2.plot3");
+	//bins[i].om2->fmesh->tris_plot("before2.plot3");
 
 	// Replace grp triangles with new polygon triangles
 	for (t_it = bins[i].vtris2.begin(); t_it != bins[i].vtris2.end(); t_it++) {
@@ -769,8 +756,8 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 	    orient_tri(*bins[i].om2->fmesh, tri);
 	    bins[i].om2->fmesh->tri_add(tri);
 	}
-	bins[i].om2->fmesh->tris_plot("after2.plot3");
-	std::cout << "cdts complete\n";
+	//bins[i].om2->fmesh->tris_plot("after2.plot3");
+	//std::cout << "cdts complete\n";
     }
 
     // After the above processing, we may still have individual triangle pairs

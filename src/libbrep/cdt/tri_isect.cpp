@@ -508,8 +508,8 @@ tri_isect_t::isect_edge_only(double etol)
 			//std::cout << "lmin_dist_to_sp vs elen_min: " << lmid.DistanceTo(bs_p) << "," << 0.001*elen_min << "\n";
 
 			if (lmid.DistanceTo(bs_p) > BN_TOL_DIST) {
-			    std::cout << "center " << lmid.x << "," << lmid.y << "," << lmid.z << "\n";
-			    std::cout << s_cdt->name << " dist: " << lmid.DistanceTo(bs_p) << "\n";
+			    //std::cout << "center " << lmid.x << "," << lmid.y << "," << lmid.z << "\n";
+			    //std::cout << s_cdt->name << " dist: " << lmid.DistanceTo(bs_p) << "\n";
 			    mid_inside_cnt++;
 			}
 		    }
@@ -531,17 +531,17 @@ tri_isect_t::isect_edge_only(double etol)
 			//std::cout << "lmin_dist_to_sp vs elen_min: " << lmid.DistanceTo(bs_p) << "," << 0.001*elen_min << "\n";
 
 			if (lmid.DistanceTo(bs_p) > BN_TOL_DIST) {
-			    std::cout << "center " << lmid.x << "," << lmid.y << "," << lmid.z << "\n";
-			    std::cout << s_cdt->name << " dist: " << lmid.DistanceTo(bs_p) << "\n";
+			    //std::cout << "center " << lmid.x << "," << lmid.y << "," << lmid.z << "\n";
+			    //std::cout << s_cdt->name << " dist: " << lmid.DistanceTo(bs_p) << "\n";
 			    mid_inside_cnt++;
 			}
 		    }
 		}
 	    }
 	    if (mid_inside_cnt > 1) {
-		fmesh1->tri_plot(t1, "t1.plot3");
-		fmesh2->tri_plot(t2, "t2.plot3");
-		std::cout << t1.ind << "-" << t2.ind << ": coplanar isect true, mid_inside_cnt: " << mid_inside_cnt << "\n";
+		//fmesh1->tri_plot(t1, "t1.plot3");
+		//fmesh2->tri_plot(t2, "t2.plot3");
+		//std::cout << t1.ind << "-" << t2.ind << ": coplanar isect true, mid_inside_cnt: " << mid_inside_cnt << "\n";
 		return false;
 	    } else {
 		return true;

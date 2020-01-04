@@ -141,11 +141,13 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh, int cnt
 	return false;
     }
 
+#if 0
     if (fmesh->valid(1)) {
 	bu_log("Face %d: successful triangulation after %d passes\n", fmesh->f_id, cnt);
     } else {
 	bu_log("Face %d: triangulation produced invalid mesh!\n", fmesh->f_id);
     }
+#endif
     return true;
 }
 
@@ -723,7 +725,7 @@ ON_Brep_CDT_Mesh(
 	}
     }
 
-    bu_log("tri_cnt: %zd\n", triangle_cnt);
+    //bu_log("tri_cnt: %zd\n", triangle_cnt);
 
     // We know how many faces, points and normals we need now - initialize BoT containers.
     *fcnt = (int)triangle_cnt;
