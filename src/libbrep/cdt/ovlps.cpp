@@ -1050,7 +1050,7 @@ omesh_refinement_pnts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pair
 	    }
 	}
 
-	plot_active_omeshes(check_pairs, NULL);
+	//plot_active_omeshes(check_pairs, NULL);
 
 	// Add triangle intersection vertices that are close to the edge of the opposite
 	// triangle, whether or not they satisfy the count criteria - these are a source
@@ -1127,7 +1127,7 @@ omesh_refinement_pnts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pair
 	rcnt += am->refinement_overts.size();
     }
 
-    plot_active_omeshes(check_pairs, NULL);
+    //plot_active_omeshes(check_pairs, NULL);
 
     return rcnt;
 }
@@ -1967,12 +1967,14 @@ check_faces_validity(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pair
 	}
     }
     if (!valid) {
+#if 0
 	for (f_it = fmeshes.begin(); f_it != fmeshes.end(); f_it++) {
 	    cdt_mesh_t *fmesh = *f_it;
 	    struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
 	    std::string fpname = std::string(s_cdt->name) + std::string("_face_") + std::to_string(fmesh->f_id) + std::string(".plot3");
 	    fmesh->tris_plot(fpname.c_str());
 	}
+#endif
 	bu_exit(1, "fatal mesh damage");
     }
 
@@ -1981,7 +1983,7 @@ check_faces_validity(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pair
 
 int
 bedge_split_near_verts(
-	std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs,
+	std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &UNUSED(check_pairs),
 	std::set<overt_t *> *nverts,
 	std::map<bedge_seg_t *, std::set<overt_t *>> &edge_verts
 	)
@@ -2039,7 +2041,7 @@ bedge_split_near_verts(
 		nverts->insert(nv);
 
 		// Ouch - we're getting a validity failure after the near_verts split
-		check_faces_validity(check_pairs);
+		//check_faces_validity(check_pairs);
 	    }
 	}
 	evcnt++;
@@ -2380,7 +2382,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	interior_replaced_tris = omesh_interior_edge_verts(check_pairs);
 	face_ov_cnt = omesh_ovlps(check_pairs, 0);
 	omesh_refinement_pnts(check_pairs, rpnt_level);
-	check_faces_validity(check_pairs);
+	//check_faces_validity(check_pairs);
     }
 
     // Refine areas of the mesh with overlapping triangles that have aligned

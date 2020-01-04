@@ -468,8 +468,10 @@ group_polygon(ovlp_grp &grp, int ind)
     polygon->add_edge(e3);
 
     // Now, the hard part.  We need to grow the polygon to encompass the active vertices.  This
-    // may involve more triangles than the basic grp set, but shouldn't involve vertices that aren't in the
-    // active vertices set.
+    // may involve more triangles than the basic grp set, but shouldn't involve any more vertices
+    // that aren't in the active vertices set than are necessary to grow the polygon to contain
+    // the active verts.  May need to iterate to steady state on both polygons if we are forced to active a vertex
+    // to reach another vertex in the other polygon...
     std::set<long> unused_verts = verts;
     std::set<size_t> visited_tris, added_tris;
     visited_tris.insert(tri1.ind);
@@ -508,9 +510,35 @@ group_polygon(ovlp_grp &grp, int ind)
 	    std::set<uedge_t> new_edges;
 	    std::set<uedge_t> shared_edges;
 	    long nv = -1;
+
+	    // Make sure all triangle points are in the polygon set, otherwise
+	    // spurious entries will be added when we attempt look-up in maps
+	    // of unmapped points
+	    for (int i = 0; i < 3; i++) {
+		double u, v;
+		long pind = ntri.v[i];
+		if (polygon->o2p.find(pind) == polygon->o2p.end()) {
+		    ON_3dPoint *p = om->fmesh->pnts[pind];
+		    fit_plane.ClosestPointTo(*p, &u, &v);
+		    std::pair<double, double> proj_2d;
+		    proj_2d.first = u;
+		    proj_2d.second = v;
+		    polygon->pnts_2d.push_back(proj_2d);
+		    polygon->p2o[polygon->pnts_2d.size() - 1] = pind;
+		    polygon->o2p[pind] = polygon->pnts_2d.size() - 1;
+		}
+	    }
+
 	    if (om->fmesh->tri_process(polygon, &new_edges, &shared_edges, &nv, ntri) >= 0) {
 		om->fmesh->tri_plot(ntri, "ntri.p3");
 		visited_tris.insert(ntri.ind);
+
+		// TODO - this is probably too aggressive - might need to add a test to see if
+		// the triangle is at least vaguely headed in the direction of an unused
+		// vertex, rather than just grabbing any overlap in the projection - have
+		// seen an example where we get an unwanted triangle because of a projecting
+		// overlap...
+
 		if (!grp.proj_tri_ovlp(om, ntri.ind)) {
 		    continue;
 		}
@@ -717,6 +745,19 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 
     for (size_t i = 0; i < bins.size(); i++) {
 
+#if 0
+	if (bins[i].om1->fmesh->f_id == 899 || bins[i].om2->fmesh->f_id == 899) {
+	    std::cout << "problem\n";
+	}
+
+	bool v1 = bins[i].om1->fmesh->valid(1);
+	bool v2 = bins[i].om2->fmesh->valid(1);
+
+	if (!v1 || !v2) {
+	    std::cout << "Starting bin processing with invalid inputs!\n";
+	}
+#endif
+
 	// TODO - if all vertices are mapped, may want to CDT only one of
 	// the polygons in the shared plane and map back to matching
 	// closest points in both meshes - not clear if this is necessary
@@ -730,7 +771,6 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 
 	polygon1->cdt();
 	//bins[i].om1->fmesh->tris_plot("before1.plot3");
-
 	// Replace grp triangles with new polygon triangles
 	std::set<size_t>::iterator t_it;
 	for (t_it = bins[i].vtris1.begin(); t_it != bins[i].vtris1.end(); t_it++) {
@@ -742,7 +782,16 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 	    orient_tri(*bins[i].om1->fmesh, tri);
 	    bins[i].om1->fmesh->tri_add(tri);
 	}
+
+#if 0
 	//bins[i].om1->fmesh->tris_plot("after1.plot3");
+	v1 = bins[i].om1->fmesh->valid(1);
+	v2 = bins[i].om2->fmesh->valid(1);
+
+	if (!v1 || !v2) {
+	    std::cout << "Ending polygon1 processing with invalid inputs!\n";
+	}
+#endif
 
 	polygon2->cdt();
 	//bins[i].om2->fmesh->tris_plot("before2.plot3");
@@ -756,8 +805,17 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 	    orient_tri(*bins[i].om2->fmesh, tri);
 	    bins[i].om2->fmesh->tri_add(tri);
 	}
+
+#if 0
+	v1 = bins[i].om1->fmesh->valid(1);
+	v2 = bins[i].om2->fmesh->valid(1);
+
+	if (!v1 || !v2) {
+	    std::cout << "Ending polygon2 processing with invalid inputs!\n";
+	}
 	//bins[i].om2->fmesh->tris_plot("after2.plot3");
 	//std::cout << "cdts complete\n";
+#endif
     }
 
     // After the above processing, we may still have individual triangle pairs

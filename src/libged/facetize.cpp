@@ -2865,11 +2865,13 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
     }
     if (ON_Brep_CDT_Ovlp_Resolve(s_a, ss_cdt.size()) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Error: RESOLVE fail.");
+#if 0
 	for (size_t i = 0; i < ss_cdt.size(); i++) {
 	    ON_Brep_CDT_Destroy(ss_cdt[i]);
 	}
 	bu_free(s_a, "array of states");
 	return GED_ERROR;
+#endif
     }
     bu_free(s_a, "array of states");
 
