@@ -2394,7 +2394,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 
     /* Find assemblies and regions */
     BU_ALLOC(pc, struct bu_ptbl);
-    if (db_search(pc, DB_SEARCH_RETURN_UNIQ_DP, preserve_combs, argc, dpa, dbip, NULL) < 0) {
+    if (db_search(pc, DB_SEARCH_RETURN_UNIQ_DP, preserve_combs, newobj_cnt, dpa, dbip, NULL) < 0) {
 	if (opts->verbosity) {
 	    bu_log("Problem searching for parent combs - aborting.\n");
 	}
@@ -2402,7 +2402,7 @@ _ged_facetize_regions(struct ged *gedp, int argc, const char **argv, struct _ged
 	goto ged_facetize_regions_memfree;
     }
     BU_ALLOC(ar, struct bu_ptbl);
-    if (db_search(ar, DB_SEARCH_RETURN_UNIQ_DP, active_regions, argc, dpa, dbip, NULL) < 0) {
+    if (db_search(ar, DB_SEARCH_RETURN_UNIQ_DP, active_regions, newobj_cnt, dpa, dbip, NULL) < 0) {
 	if (opts->verbosity) {
 	    bu_log("Problem searching for active regions - aborting.\n");
 	}
@@ -2696,7 +2696,7 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
     /* If anything specified has subtractions or intersections, we can't facetize it with
      * this logic - that would require all-up Boolean evaluation processing. */
     const char *non_union = "-bool + -or -bool -";
-    if (db_search(NULL, DB_SEARCH_QUIET, non_union, argc, dpa, dbip, NULL) > 0) {
+    if (db_search(NULL, DB_SEARCH_QUIET, non_union, newobj_cnt, dpa, dbip, NULL) > 0) {
 	bu_vls_printf(gedp->ged_result_str, "Found intersection or subtraction objects in specified inputs - currently unsupported. Aborting.\n");
 	return GED_ERROR;
     }
@@ -2704,7 +2704,7 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
     /* If anything other than combs or breps exists in the specified inputs, we can't
      * process with this logic - requires a preliminary brep conversion. */
     const char *obj_types = "! -type c -and ! -type brep";
-    if (db_search(NULL, DB_SEARCH_QUIET, obj_types, argc, dpa, dbip, NULL) > 0) {
+    if (db_search(NULL, DB_SEARCH_QUIET, obj_types, newobj_cnt, dpa, dbip, NULL) > 0) {
 	bu_vls_printf(gedp->ged_result_str, "Found objects in specified inputs which are not of type comb or brep- currently unsupported. Aborting.\n");
 	return GED_ERROR;
     }
@@ -2712,7 +2712,7 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
     /* Find breps (need full paths to do uniqueness checking )*/
     const char *active_breps = "-type brep";
     BU_ALLOC(br, struct bu_ptbl);
-    if (db_search(br, DB_SEARCH_TREE, active_breps, argc, dpa, dbip, NULL) < 0) {
+    if (db_search(br, DB_SEARCH_TREE, active_breps, newobj_cnt, dpa, dbip, NULL) < 0) {
 	bu_free(br, "brep results");
 	return GED_ERROR;
     }
@@ -2726,7 +2726,7 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
     /* Find combs (need full paths to do uniqueness checking) */
     const char *active_combs = "-type c";
     BU_ALLOC(ac, struct bu_ptbl);
-    if (db_search(ac, DB_SEARCH_TREE, active_combs, argc, dpa, dbip, NULL) < 0) {
+    if (db_search(ac, DB_SEARCH_TREE, active_combs, newobj_cnt, dpa, dbip, NULL) < 0) {
 	if (opts->verbosity) {
 	    bu_log("Problem searching for parent combs - aborting.\n");
 	}
