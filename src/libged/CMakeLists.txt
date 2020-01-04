@@ -139,7 +139,7 @@ set(LIBGED_SOURCES
   eye.c
   eye_pos.c
   facedef.c
-  facetize.c
+  facetize.cpp
   fb2pix.c
   fbclear.c
   find.c
