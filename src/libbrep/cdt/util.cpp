@@ -515,6 +515,12 @@ ON_Brep_CDT_Destroy(struct ON_Brep_CDT_State *s_cdt)
     delete s_cdt;
 }
 
+const char *
+ON_Brep_CDT_ObjName(struct ON_Brep_CDT_State *s_cdt)
+{
+    return s_cdt->name;
+}
+
 int
 ON_Brep_CDT_Status(struct ON_Brep_CDT_State *s_cdt)
 {
