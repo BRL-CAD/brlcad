@@ -821,20 +821,8 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 	}
 
 	if (refinement_cnt) {
-	    std::set<omesh_t *> a_omesh;
+	    std::set<omesh_t *> a_omesh = refinement_omeshes(check_pairs);
 	    std::set<omesh_t *>::iterator a_it;
-	    // Find the meshes with actual refinement points
-	    std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>>::iterator cp_it;
-	    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
-		omesh_t *omesh1 = cp_it->first->omesh;
-		omesh_t *omesh2 = cp_it->second->omesh;
-		if (omesh1->refinement_overts.size()) {
-		    a_omesh.insert(omesh1);
-		}
-		if (omesh2->refinement_overts.size()) {
-		    a_omesh.insert(omesh2);
-		}
-	    }
 
 	    for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
 		omesh_t *am = *a_it;

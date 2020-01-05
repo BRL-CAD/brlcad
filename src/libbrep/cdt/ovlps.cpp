@@ -301,6 +301,67 @@ omesh_t::plot_vtree(const char *fname)
 /*          omesh implementation          */
 /******************************************/
 
+std::set<omesh_t *>
+active_omeshes(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
+{
+    std::set<omesh_t *> a_omesh;
+    std::set<omesh_t *>::iterator a_it;
+    // Find the meshes with actual refinement points
+    std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>>::iterator cp_it;
+    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
+	omesh_t *omesh1 = cp_it->first->omesh;
+	omesh_t *omesh2 = cp_it->second->omesh;
+	a_omesh.insert(omesh1);
+	a_omesh.insert(omesh2);
+    }
+
+    return a_omesh;
+}
+
+std::set<omesh_t *>
+refinement_omeshes(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
+{
+    std::set<omesh_t *> a_omesh;
+    std::set<omesh_t *>::iterator a_it;
+    // Find the meshes with actual refinement points
+    std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>>::iterator cp_it;
+    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
+	omesh_t *omesh1 = cp_it->first->omesh;
+	omesh_t *omesh2 = cp_it->second->omesh;
+	if (omesh1->refinement_overts.size()) {
+	    a_omesh.insert(omesh1);
+	}
+	if (omesh2->refinement_overts.size()) {
+	    a_omesh.insert(omesh2);
+	}
+    }
+
+    return a_omesh;
+}
+
+std::set<omesh_t *>
+itris_omeshes(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
+{
+    std::set<omesh_t *> a_omesh;
+    std::set<omesh_t *>::iterator a_it;
+    // Find the meshes with actual refinement points
+    std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>>::iterator cp_it;
+    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
+	omesh_t *omesh1 = cp_it->first->omesh;
+	omesh_t *omesh2 = cp_it->second->omesh;
+	if (omesh1->itris.size()) {
+	    a_omesh.insert(omesh1);
+	    omesh1->refinement_overts.clear();
+	}
+	if (omesh2->itris.size()) {
+	    a_omesh.insert(omesh2);
+	    omesh2->refinement_overts.clear();
+	}
+    }
+
+    return a_omesh;
+}
+
 std::string
 omesh_t::sname()
 {
@@ -905,21 +966,8 @@ plot_active_omeshes(
 std::map<bedge_seg_t *, std::set<overt_t *>>
 find_edge_verts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs)
 {
-    std::set<omesh_t *> a_omesh;
+    std::set<omesh_t *> a_omesh = refinement_omeshes(check_pairs);
     std::set<omesh_t *>::iterator a_it;
-    std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>>::iterator cp_it;
-
-    // Find the meshes with actual refinement points
-    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
-	omesh_t *omesh1 = cp_it->first->omesh;
-	omesh_t *omesh2 = cp_it->second->omesh;
-	if (omesh1->refinement_overts.size()) {
-	    a_omesh.insert(omesh1);
-	}
-	if (omesh2->refinement_overts.size()) {
-	    a_omesh.insert(omesh2);
-	}
-    }
 
     std::map<bedge_seg_t *, std::set<overt_t *>> edge_verts;
     edge_verts.clear();
@@ -993,23 +1041,8 @@ find_edge_verts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs)
 size_t
 omesh_refinement_pnts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs, int level)
 {
-    std::set<omesh_t *> a_omesh;
+    std::set<omesh_t *> a_omesh = itris_omeshes(check_pairs);
     std::set<omesh_t *>::iterator a_it;
-    std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>>::iterator cp_it;
-
-    // Find the meshes with actual intersecting triangles
-    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
-	omesh_t *omesh1 = cp_it->first->omesh;
-	omesh_t *omesh2 = cp_it->second->omesh;
-	if (omesh1->itris.size()) {
-	    a_omesh.insert(omesh1);
-	    omesh1->refinement_overts.clear();
-	}
-	if (omesh2->itris.size()) {
-	    a_omesh.insert(omesh2);
-	    omesh2->refinement_overts.clear();
-	}
-    }
 
     // TODO - incorporate tri_nearedge_refine in here somewhere...
 
@@ -1139,15 +1172,8 @@ omesh_ovlps(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs, int mod
 
     // Assemble the set of mesh faces that (per the check_pairs sets) we
     // may need to process.
-    std::set<omesh_t *> a_omesh;
+    std::set<omesh_t *> a_omesh = active_omeshes(check_pairs);
     std::set<omesh_t *>::iterator a_it;
-    std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>>::iterator cp_it;
-    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
-	cp_it->first->omesh->refinement_clear();
-	cp_it->second->omesh->refinement_clear();
-	a_omesh.insert(cp_it->first->omesh);
-	a_omesh.insert(cp_it->second->omesh);
-    }
 
     // Scrub the old data in active mesh containers (if any)
     for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
@@ -1159,6 +1185,7 @@ omesh_ovlps(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs, int mod
 
     // Intersect first the triangle RTrees, then any potentially
     // overlapping triangles found within the leaves.
+    std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>>::iterator cp_it;
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
 	omesh_t *omesh1 = cp_it->first->omesh;
 	omesh_t *omesh2 = cp_it->second->omesh;

@@ -1103,6 +1103,14 @@ tri_nearedge_refine(
 	omesh_t *omesh2, triangle_t &t2
 	);
 
+std::set<omesh_t *>
+active_omeshes(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs);
+std::set<omesh_t *>
+refinement_omeshes(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs);
+std::set<omesh_t *>
+itris_omeshes(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs);
+
+
 size_t
 omesh_refinement_pnts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs, int level);
 
