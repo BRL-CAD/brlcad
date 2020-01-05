@@ -820,6 +820,8 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 	    refinement_cnt += bcnt;
 	}
 
+	// TODO - before attempting localized cdt, we need to perform
+	// any necessary refinements so we have the proper points in place.
 	if (refinement_cnt) {
 	    std::set<omesh_t *> a_omesh = refinement_omeshes(check_pairs);
 	    std::set<omesh_t *>::iterator a_it;
@@ -828,9 +830,18 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 		omesh_t *am = *a_it;
 		std::map<bedge_seg_t *, std::set<overt_t *>>::iterator es_it;
 		for (es_it = edge_verts.begin(); es_it != edge_verts.end(); es_it++) {
-		    std::set<overt_t *>::iterator e_it;
-		    for (e_it = es_it->second.begin(); e_it != es_it->second.end(); e_it++) {
-			am->refinement_overts.erase(*e_it);
+		    bedge_seg_t *eseg = es_it->first;
+		    std::vector<std::pair<cdt_mesh_t *,uedge_t>> uedges = eseg->uedges();
+		    int f_id1 = uedges[0].first->f_id;
+		    int f_id2 = uedges[1].first->f_id;
+		    if (f_id1 == am->fmesh->f_id || f_id2 == am->fmesh->f_id) {
+			// If this bedge_seg_t is topologically connected to the face, then the
+			// verts associated with that bedge are not interior overts and
+			// will be handled by the edge refinement.
+			std::set<overt_t *>::iterator e_it;
+			for (e_it = es_it->second.begin(); e_it != es_it->second.end(); e_it++) {
+			    am->refinement_overts.erase(*e_it);
+			}
 		    }
 		}
 	    }
