@@ -1044,7 +1044,7 @@ class ovlp_grp {
         // in the other mesh involved.  If the closest point in the other mesh
         // ISN'T the closest surface point, we need to introduce that
         // point in the other mesh.
-        bool characterize_all_verts();
+        size_t characterize_all_verts();
 
         // Confirm that all triangles in the group are still in the fmeshes - if
         // we processed a prior group that involved a triangle incorporated into
@@ -1129,6 +1129,8 @@ vert_nearby_closest_point_check(
 int
 omesh_interior_edge_verts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs);
 
+std::map<bedge_seg_t *, std::set<overt_t *>>
+find_edge_verts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs);
 
 bool
 closest_mesh_point(ON_3dPoint &s_p, std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> *check_pairs, ON_3dPoint *p);

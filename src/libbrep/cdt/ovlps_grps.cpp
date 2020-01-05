@@ -167,7 +167,7 @@ ovlp_grp::characterize_verts(int ind)
 
 }
 
-bool
+size_t
 ovlp_grp::characterize_all_verts()
 {
     characterize_verts(0);
@@ -219,7 +219,7 @@ ovlp_grp::characterize_all_verts()
     std::cout << "group is replaceable: " << replaceable << "\n";
 #endif
 
-    return !replaceable;
+    return (om1_rverts_from_om2.size() + om2_rverts_from_om1.size() + om1_everts_from_om2.size() + om2_everts_from_om1.size());
 }
 
 bool
@@ -523,10 +523,12 @@ group_polygon(ovlp_grp &grp, int ind)
     unused_verts.erase(tri1.v[1]);
     unused_verts.erase(tri1.v[2]);
     size_t unused_prev = INT_MAX;
+    bool incr_tri = false;
 
-    while (unused_verts.size() != unused_prev) {
+    while (unused_verts.size() != unused_prev || incr_tri) {
 
 	unused_prev = unused_verts.size();
+	incr_tri = false;
 
 	std::set<triangle_t> tuniq;
 	std::set<cpolyedge_t *>::iterator p_it;
@@ -641,6 +643,7 @@ group_polygon(ovlp_grp &grp, int ind)
 		unused_verts.erase(ntri.v[2]);
 		polygon->replace_edges(new_edges, shared_edges);
 		polygon->polygon_plot_in_plane("ogp.plot3");
+		incr_tri = true;
 	    }
 	}
     }
@@ -788,30 +791,71 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 
     std::map<bedge_seg_t *, std::set<overt_t *>> edge_verts;
 
-    bins.clear();
+    size_t refinement_cnt = INT_MAX;
+    while (refinement_cnt) {
+	refinement_cnt = 0;
+	bins.clear();
+	aligned.clear();
+	non_aligned.clear();
+	edge_verts.clear();
+	bin_map.clear();
 
-    bins = find_ovlp_grps(bin_map, check_pairs);
+	bins = find_ovlp_grps(bin_map, check_pairs);
 
-    if (!bins.size()) {
-	// If we didn't find anything, we're done
-	return;
-    }
+	if (!bins.size()) {
+	    // If we didn't find anything, we're done
+	    return;
+	}
 
-    // Have groupings - reset refinement info
-    refinement_reset(check_pairs);
+	// Have groupings - reset refinement info
+	refinement_reset(check_pairs);
+	for (size_t i = 0; i < bins.size(); i++) {
+	    bins[i].edge_verts = &edge_verts;
+	    size_t bcnt = bins[i].characterize_all_verts();
+	    if (bcnt) {
+		non_aligned.insert(i);
+	    } else {
+		aligned.insert(i);
+	    }
+	    refinement_cnt += bcnt;
+	}
 
-    aligned.clear();
-    non_aligned.clear();
-    for (size_t i = 0; i < bins.size(); i++) {
-	bins[i].edge_verts = &edge_verts;
-	if (bins[i].characterize_all_verts()) {
-	    non_aligned.insert(i);
-	} else {
-	    aligned.insert(i);
+	if (refinement_cnt) {
+	    std::set<omesh_t *> a_omesh;
+	    std::set<omesh_t *>::iterator a_it;
+	    // Find the meshes with actual refinement points
+	    std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>>::iterator cp_it;
+	    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
+		omesh_t *omesh1 = cp_it->first->omesh;
+		omesh_t *omesh2 = cp_it->second->omesh;
+		if (omesh1->refinement_overts.size()) {
+		    a_omesh.insert(omesh1);
+		}
+		if (omesh2->refinement_overts.size()) {
+		    a_omesh.insert(omesh2);
+		}
+	    }
+
+	    for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
+		omesh_t *am = *a_it;
+		std::map<bedge_seg_t *, std::set<overt_t *>>::iterator es_it;
+		for (es_it = edge_verts.begin(); es_it != edge_verts.end(); es_it++) {
+		    std::set<overt_t *>::iterator e_it;
+		    for (e_it = es_it->second.begin(); e_it != es_it->second.end(); e_it++) {
+			am->refinement_overts.erase(*e_it);
+		    }
+		}
+	    }
+
+	    std::set<overt_t *> nverts;
+	    bedge_split_near_verts(check_pairs, &nverts, edge_verts);
+	    omesh_interior_edge_verts(check_pairs);
+	    omesh_ovlps(check_pairs, 0);
+	    omesh_refinement_pnts(check_pairs, 0);
 	}
     }
 
-#if 0
+#if 1
     for (r_it = aligned.begin(); r_it != aligned.end(); r_it++) {
 	std::cout << "Group " << *r_it << " aligned:\n";
 	bins[*r_it].list_tris();
@@ -834,7 +878,7 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 
     for (size_t i = 0; i < bins.size(); i++) {
 
-#if 0
+#if 1
 	if (bins[i].om1->fmesh->f_id == 899 || bins[i].om2->fmesh->f_id == 899) {
 	    std::cout << "problem\n";
 	}
