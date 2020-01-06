@@ -1058,6 +1058,7 @@ class ovlp_grp {
 	void plot(const char *fname, int ind);
 
 	void plot(const char *fname);
+	void print();
 
 	// Start thinking about what relationships we need to track between mesh
 	// points - refinement_pnts isn't enough by itself, we'll need more

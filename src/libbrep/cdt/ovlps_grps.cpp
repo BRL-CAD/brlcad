@@ -95,12 +95,12 @@ ovlp_grp::characterize_verts(int ind)
 
 	    if (d_orig < d_new) {
 		ovum.insert(ov);
-		//std::cout << "Skipping(" << d_new << "): " << ov->vpnt().x << "," << ov->vpnt().y << "," << ov->vpnt().z << "\n";
+		std::cout << "Skipping(" << d_new << "): " << ov->vpnt().x << "," << ov->vpnt().y << "," << ov->vpnt().z << "\n";
 	    } else {
 		ovum.insert(ov_orig);
 		ovm2[nv] = ov;
-		//std::cout << "Displacing(" << d_orig << "): " << ov_orig->vpnt().x << "," << ov_orig->vpnt().y << "," << ov_orig->vpnt().z << "\n";
-		//std::cout << "       New(" << d_new << "): " << ov->vpnt().x << "," << ov->vpnt().y << "," << ov->vpnt().z << "\n";
+		std::cout << "Displacing(" << d_orig << "): " << ov_orig->vpnt().x << "," << ov_orig->vpnt().y << "," << ov_orig->vpnt().z << "\n";
+		std::cout << "       New(" << d_new << "): " << ov->vpnt().x << "," << ov->vpnt().y << "," << ov->vpnt().z << "\n";
 	    }
 	    continue;
 	}
@@ -165,6 +165,30 @@ ovlp_grp::characterize_verts(int ind)
 	v2.insert(nv->p_id);
     }
 
+    // If we have unmappable vertices, we're going to have to force refinement of them
+    // somehow...
+    for (ov_it = ovum.begin(); ov_it != ovum.end(); ov_it++) {
+	overt_t *uv = *ov_it;
+	ON_3dPoint uvpnt = uv->vpnt();
+	uedge_t closest_edge = other_m->closest_uedge(uvpnt);
+	if (other_m->fmesh->brep_edges.find(closest_edge) != other_m->fmesh->brep_edges.end()) {
+	    bedge_seg_t *bseg = other_m->fmesh->ue2b_map[closest_edge];
+	    if (!bseg) {
+		std::cout << "couldn't find bseg pointer??\n";
+	    } else {
+		//std::cout << "Edge refinement point\n";
+		(*edge_verts)[bseg].insert(uv);
+	    }
+	} else {
+	    //std::cout << "Non edge refinement point\n";
+	    std::set<size_t> uet = other_m->fmesh->uedges2tris[closest_edge];
+	    std::set<size_t>::iterator u_it;
+	    for (u_it = uet.begin(); u_it != uet.end(); u_it++) {
+		other_m->refinement_overts[uv].insert(*u_it);
+	    }
+	}
+    }
+
 }
 
 size_t
@@ -172,53 +196,7 @@ ovlp_grp::characterize_all_verts()
 {
     characterize_verts(0);
     characterize_verts(1);
-    replaceable = true;
-    std::set<overt_t *>::iterator os_it;
-    replaceable = (om1_unmappable_rverts.size() > 0) ? false : replaceable;
-    replaceable = (om2_unmappable_rverts.size() > 0) ? false : replaceable;
-    replaceable = (om1_rverts_from_om2.size() > 0) ? false : replaceable;
-    replaceable = (om2_rverts_from_om1.size() > 0) ? false : replaceable;
-    replaceable = (om1_everts_from_om2.size() > 0) ? false : replaceable;
-    replaceable = (om2_everts_from_om1.size() > 0) ? false : replaceable;
-#if 0
-    std::cout << "om1_unmappable_rverts: " << om1_unmappable_rverts.size() << "\n";
-    for (os_it = om1_unmappable_rverts.begin(); os_it != om1_unmappable_rverts.end(); os_it++) {
-	std::cout << "                       "  << (*os_it)->vpnt().x << "," << (*os_it)->vpnt().y << "," << (*os_it)->vpnt().z << "\n";
-    }
-    std::cout << "om2_unmappable_rverts: " << om2_unmappable_rverts.size() << "\n";
-    for (os_it = om2_unmappable_rverts.begin(); os_it != om2_unmappable_rverts.end(); os_it++) {
-	std::cout << "                       "  << (*os_it)->vpnt().x << "," << (*os_it)->vpnt().y << "," << (*os_it)->vpnt().z << "\n";
-    }
-    std::cout << "om1_rverts_from_om2  : " << om1_rverts_from_om2.size()   << "\n";
-    for (os_it = om1_rverts_from_om2.begin(); os_it != om1_rverts_from_om2.end(); os_it++) {
-	std::cout << "                       "  << (*os_it)->vpnt().x << "," << (*os_it)->vpnt().y << "," << (*os_it)->vpnt().z << "\n";
-    }
-    std::cout << "om2_rverts_from_om1  : " << om2_rverts_from_om1.size()   << "\n";
-    for (os_it = om2_rverts_from_om1.begin(); os_it != om2_rverts_from_om1.end(); os_it++) {
-	std::cout << "                       "  << (*os_it)->vpnt().x << "," << (*os_it)->vpnt().y << "," << (*os_it)->vpnt().z << "\n";
-    }
-    std::cout << "om1_everts_from_om2  : " << om1_everts_from_om2.size()   << "\n";
-    for (os_it = om1_everts_from_om2.begin(); os_it != om1_everts_from_om2.end(); os_it++) {
-	std::cout << "                       "  << (*os_it)->vpnt().x << "," << (*os_it)->vpnt().y << "," << (*os_it)->vpnt().z << "\n";
-    }
-    std::cout << "om2_everts_from_om1  : " << om2_everts_from_om1.size()   << "\n";
-    for (os_it = om2_everts_from_om1.begin(); os_it != om2_everts_from_om1.end(); os_it++) {
-	std::cout << "                       "  << (*os_it)->vpnt().x << "," << (*os_it)->vpnt().y << "," << (*os_it)->vpnt().z << "\n";
-    }
-
-    std::map<overt_t *, overt_t *>::iterator om_it;
-    std::cout << "Clear mappings om1 -> om2: \n";
-    for (om_it = om1_om2_verts.begin(); om_it != om1_om2_verts.end(); om_it++) {
-	std::cout << "                       "  << om_it->first->vpnt().x << "," << om_it->first->vpnt().y << "," << om_it->first->vpnt().z << " -> "  << om_it->second->vpnt().x << "," << om_it->second->vpnt().y << "," << om_it->second->vpnt().z << "\n";
-    }
-    std::cout << "Clear mappings om2 -> om1: \n";
-    for (om_it = om2_om1_verts.begin(); om_it != om2_om1_verts.end(); om_it++) {
-	std::cout << "                       "  << om_it->first->vpnt().x << "," << om_it->first->vpnt().y << "," << om_it->first->vpnt().z << " -> "  << om_it->second->vpnt().x << "," << om_it->second->vpnt().y << "," << om_it->second->vpnt().z << "\n";
-    }
-
-    std::cout << "group is replaceable: " << replaceable << "\n";
-#endif
-
+    
     return (om1_rverts_from_om2.size() + om2_rverts_from_om1.size() + om1_everts_from_om2.size() + om2_everts_from_om1.size());
 }
 
@@ -343,6 +321,56 @@ ovlp_grp::plot(const char *fname)
     bu_vls_sprintf(&omname, "%s-1.plot3", fname);
     plot(bu_vls_cstr(&omname), 1);
     bu_vls_free(&omname);
+}
+
+void
+ovlp_grp::print()
+{
+    replaceable = true;
+    replaceable = (om1_unmappable_rverts.size() > 0) ? false : replaceable;
+    replaceable = (om2_unmappable_rverts.size() > 0) ? false : replaceable;
+    replaceable = (om1_rverts_from_om2.size() > 0) ? false : replaceable;
+    replaceable = (om2_rverts_from_om1.size() > 0) ? false : replaceable;
+    replaceable = (om1_everts_from_om2.size() > 0) ? false : replaceable;
+    replaceable = (om2_everts_from_om1.size() > 0) ? false : replaceable;
+
+    std::set<overt_t *>::iterator os_it;
+    std::cout << "om1_unmappable_rverts: " << om1_unmappable_rverts.size() << "\n";
+    for (os_it = om1_unmappable_rverts.begin(); os_it != om1_unmappable_rverts.end(); os_it++) {
+	std::cout << "                       "  << (*os_it)->vpnt().x << "," << (*os_it)->vpnt().y << "," << (*os_it)->vpnt().z << "\n";
+    }
+    std::cout << "om2_unmappable_rverts: " << om2_unmappable_rverts.size() << "\n";
+    for (os_it = om2_unmappable_rverts.begin(); os_it != om2_unmappable_rverts.end(); os_it++) {
+	std::cout << "                       "  << (*os_it)->vpnt().x << "," << (*os_it)->vpnt().y << "," << (*os_it)->vpnt().z << "\n";
+    }
+    std::cout << "om1_rverts_from_om2  : " << om1_rverts_from_om2.size()   << "\n";
+    for (os_it = om1_rverts_from_om2.begin(); os_it != om1_rverts_from_om2.end(); os_it++) {
+	std::cout << "                       "  << (*os_it)->vpnt().x << "," << (*os_it)->vpnt().y << "," << (*os_it)->vpnt().z << "\n";
+    }
+    std::cout << "om2_rverts_from_om1  : " << om2_rverts_from_om1.size()   << "\n";
+    for (os_it = om2_rverts_from_om1.begin(); os_it != om2_rverts_from_om1.end(); os_it++) {
+	std::cout << "                       "  << (*os_it)->vpnt().x << "," << (*os_it)->vpnt().y << "," << (*os_it)->vpnt().z << "\n";
+    }
+    std::cout << "om1_everts_from_om2  : " << om1_everts_from_om2.size()   << "\n";
+    for (os_it = om1_everts_from_om2.begin(); os_it != om1_everts_from_om2.end(); os_it++) {
+	std::cout << "                       "  << (*os_it)->vpnt().x << "," << (*os_it)->vpnt().y << "," << (*os_it)->vpnt().z << "\n";
+    }
+    std::cout << "om2_everts_from_om1  : " << om2_everts_from_om1.size()   << "\n";
+    for (os_it = om2_everts_from_om1.begin(); os_it != om2_everts_from_om1.end(); os_it++) {
+	std::cout << "                       "  << (*os_it)->vpnt().x << "," << (*os_it)->vpnt().y << "," << (*os_it)->vpnt().z << "\n";
+    }
+
+    std::map<overt_t *, overt_t *>::iterator om_it;
+    std::cout << "Clear mappings om1 -> om2: \n";
+    for (om_it = om1_om2_verts.begin(); om_it != om1_om2_verts.end(); om_it++) {
+	std::cout << "                       "  << om_it->first->vpnt().x << "," << om_it->first->vpnt().y << "," << om_it->first->vpnt().z << " -> "  << om_it->second->vpnt().x << "," << om_it->second->vpnt().y << "," << om_it->second->vpnt().z << "\n";
+    }
+    std::cout << "Clear mappings om2 -> om1: \n";
+    for (om_it = om2_om1_verts.begin(); om_it != om2_om1_verts.end(); om_it++) {
+	std::cout << "                       "  << om_it->first->vpnt().x << "," << om_it->first->vpnt().y << "," << om_it->first->vpnt().z << " -> "  << om_it->second->vpnt().x << "," << om_it->second->vpnt().y << "," << om_it->second->vpnt().z << "\n";
+    }
+
+    std::cout << "group is replaceable: " << replaceable << "\n";
 }
 
 /* A grouping of overlapping triangles is defined as the set of triangles from
@@ -814,6 +842,7 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 	    size_t bcnt = bins[i].characterize_all_verts();
 	    if (bcnt) {
 		non_aligned.insert(i);
+		bins[i].print();
 	    } else {
 		aligned.insert(i);
 	    }
