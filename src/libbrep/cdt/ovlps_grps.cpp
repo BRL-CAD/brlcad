@@ -586,7 +586,7 @@ group_polygon(ovlp_grp &grp, int ind)
 		if (nv == -1) {
 		    long v1 = new_edges.begin()->v[0];
 		    long v2 = new_edges.begin()->v[1];
-		    long ov;
+		    long ov = -1;
 		    for (int i = 0; i < 3; i++) {
 			if (ntri.v[i] != v1 && ntri.v[i] != v2) {
 			    ov = ntri.v[i];
@@ -599,7 +599,7 @@ group_polygon(ovlp_grp &grp, int ind)
 		} else {
 		    long v1 = shared_edges.begin()->v[0];
 		    long v2 = shared_edges.begin()->v[1];
-		    long tv;
+		    long tv = -1;
 		    for (int i = 0; i < 3; i++) {
 			if (ntri.v[i] != v1 && ntri.v[i] != v2) {
 			    tv = ntri.v[i];
