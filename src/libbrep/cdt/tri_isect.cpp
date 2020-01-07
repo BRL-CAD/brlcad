@@ -738,6 +738,7 @@ tri_nearedge_refine(
 	return process_cnt;
     }
 
+#if 0
     // If any vertices are actually inside the other mesh, consider them.
 
     for (int i = 0; i < 3; i++) {
@@ -757,6 +758,7 @@ tri_nearedge_refine(
 	    process_cnt += remote_vert_process(true, v, omesh2, t1);
 	}
     }
+#endif
 
     return process_cnt;
 }
