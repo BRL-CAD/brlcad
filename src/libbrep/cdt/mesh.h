@@ -954,7 +954,11 @@ class ovlp_grp {
 	    for (int i = 0; i < 3; i++) {
 		double u, v;
 		ON_3dPoint p3d = *om->fmesh->pnts[tri.v[i]];
-		fp.ClosestPointTo(p3d, &u, &v);
+		if (!ind) {
+		    fp1.ClosestPointTo(p3d, &u, &v);
+		} else {
+		    fp2.ClosestPointTo(p3d, &u, &v);
+		}
 		VSET(ptri.pts[i], u, v, 0);
 	    }
 
@@ -1007,41 +1011,11 @@ class ovlp_grp {
         }
 
 	// Find the best fit plane of all 3D points from all the vertices in play from both
-	// meshes.
-	ON_Plane fit_plane() {
-	    std::set<ON_3dPoint> plane_pnts;
-	    std::set<long>::iterator vp_it;
-	    for (vp_it = verts1.begin(); vp_it != verts1.end(); vp_it++) {
-		ON_3dPoint p = *om1->fmesh->pnts[*vp_it];
-		plane_pnts.insert(p);
-	    }
-	    for (vp_it = verts2.begin(); vp_it != verts2.end(); vp_it++) {
-		ON_3dPoint p = *om2->fmesh->pnts[*vp_it];
-		plane_pnts.insert(p);
-	    }
-
-	    point_t pcenter;
-	    vect_t pnorm;
-	    point_t *fpnts = (point_t *)bu_calloc(plane_pnts.size(), sizeof(point_t), "fitting points");
-	    std::set<ON_3dPoint>::iterator p_it;
-	    int pcnt = 0;
-	    for (p_it = plane_pnts.begin(); p_it != plane_pnts.end(); p_it++) {
-		fpnts[pcnt][X] = p_it->x;
-		fpnts[pcnt][Y] = p_it->y;
-		fpnts[pcnt][Z] = p_it->z;
-		pcnt++;
-	    }
-	    if (bn_fit_plane(&pcenter, &pnorm, plane_pnts.size(), fpnts)) {
-		std::cout << "fitting plane failed!\n";
-	    }
-	    bu_free(fpnts, "fitting points");
-
-	    ON_Plane fplane(pcenter, pnorm);
-
-	    fp = fplane;
-
-	    return fplane;
-	}
+	// meshes or (if the individual planes are not close to parallel) the best fit
+	// plane of the current mesh's inputs.
+	void fit_plane();
+	ON_Plane fp1;
+	ON_Plane fp2;
 
         // Each point involved in this operation must have it's closest point
         // in the other mesh involved.  If the closest point in the other mesh
@@ -1089,8 +1063,6 @@ class ovlp_grp {
 
 	std::map<bedge_seg_t *, std::set<overt_t *>> *edge_verts;
 
-	ON_Plane fp;
-
     private:
         void characterize_verts(int ind);
 };
@@ -1114,6 +1086,8 @@ refinement_omeshes(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 std::set<omesh_t *>
 itris_omeshes(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs);
 
+bool
+check_faces_validity(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs);
 
 size_t
 omesh_refinement_pnts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs, int level);

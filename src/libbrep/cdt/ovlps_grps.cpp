@@ -70,6 +70,96 @@ ovlp_grp::list_overts()
 }
 
 void
+ovlp_grp::fit_plane()
+{
+    std::set<ON_3dPoint> plane1_pnts;
+    std::set<ON_3dPoint> plane2_pnts;
+    std::set<ON_3dPoint> plane_pnts;
+    std::set<long>::iterator vp_it;
+    for (vp_it = verts1.begin(); vp_it != verts1.end(); vp_it++) {
+	ON_3dPoint p = *om1->fmesh->pnts[*vp_it];
+	plane1_pnts.insert(p);
+	plane_pnts.insert(p);
+    }
+    for (vp_it = verts2.begin(); vp_it != verts2.end(); vp_it++) {
+	ON_3dPoint p = *om2->fmesh->pnts[*vp_it];
+	plane2_pnts.insert(p);
+	plane_pnts.insert(p);
+    }
+
+    ON_Plane fplane1;
+    {
+	point_t pcenter;
+	vect_t pnorm;
+	point_t *fpnts = (point_t *)bu_calloc(plane1_pnts.size(), sizeof(point_t), "fitting points");
+	std::set<ON_3dPoint>::iterator p_it;
+	int pcnt = 0;
+	for (p_it = plane1_pnts.begin(); p_it != plane1_pnts.end(); p_it++) {
+	    fpnts[pcnt][X] = p_it->x;
+	    fpnts[pcnt][Y] = p_it->y;
+	    fpnts[pcnt][Z] = p_it->z;
+	    pcnt++;
+	}
+	if (bn_fit_plane(&pcenter, &pnorm, plane1_pnts.size(), fpnts)) {
+	    std::cout << "fitting plane failed!\n";
+	}
+	bu_free(fpnts, "fitting points");
+	fplane1 = ON_Plane(pcenter, pnorm);
+    }
+    fp1 = fplane1;
+
+    ON_Plane fplane2;
+    {
+	point_t pcenter;
+	vect_t pnorm;
+	point_t *fpnts = (point_t *)bu_calloc(plane2_pnts.size(), sizeof(point_t), "fitting points");
+	std::set<ON_3dPoint>::iterator p_it;
+	int pcnt = 0;
+	for (p_it = plane2_pnts.begin(); p_it != plane2_pnts.end(); p_it++) {
+	    fpnts[pcnt][X] = p_it->x;
+	    fpnts[pcnt][Y] = p_it->y;
+	    fpnts[pcnt][Z] = p_it->z;
+	    pcnt++;
+	}
+	if (bn_fit_plane(&pcenter, &pnorm, plane2_pnts.size(), fpnts)) {
+	    std::cout << "fitting plane failed!\n";
+	}
+	bu_free(fpnts, "fitting points");
+	fplane2 = ON_Plane(pcenter, pnorm);
+    }
+    fp2 = fplane2;
+
+    if (acos(ON_DotProduct(fplane1.Normal(), fplane2.Normal())) > 0.785398) {
+	// If the planes are too far from parallel, we're done - there is no
+	// sensible common plane for projections.
+	return;
+    }
+
+    ON_Plane fplane;
+    {
+	point_t pcenter;
+	vect_t pnorm;
+	point_t *fpnts = (point_t *)bu_calloc(plane_pnts.size(), sizeof(point_t), "fitting points");
+	std::set<ON_3dPoint>::iterator p_it;
+	int pcnt = 0;
+	for (p_it = plane_pnts.begin(); p_it != plane_pnts.end(); p_it++) {
+	    fpnts[pcnt][X] = p_it->x;
+	    fpnts[pcnt][Y] = p_it->y;
+	    fpnts[pcnt][Z] = p_it->z;
+	    pcnt++;
+	}
+	if (bn_fit_plane(&pcenter, &pnorm, plane_pnts.size(), fpnts)) {
+	    std::cout << "fitting plane failed!\n";
+	}
+	bu_free(fpnts, "fitting points");
+	fplane = ON_Plane(pcenter, pnorm);
+    }
+
+    fp1 = fplane;
+    fp2 = fplane;
+}
+
+void
 ovlp_grp::characterize_verts(int ind)
 {
     omesh_t *other_m = (!ind) ? om2 : om1;
@@ -210,7 +300,11 @@ ovlp_grp::proj_tri_ovlp(omesh_t *om, size_t ind)
     for (int i = 0; i < 3; i++) {
 	double u, v;
 	ON_3dPoint p3d = *om->fmesh->pnts[tri.v[i]];
-	fp.ClosestPointTo(p3d, &u, &v);
+	if (!ind) {
+	    fp1.ClosestPointTo(p3d, &u, &v);
+	} else {
+	    fp2.ClosestPointTo(p3d, &u, &v);
+	}
 	VSET(ttri.pts[i], u, v, 0);
     }
 
@@ -508,7 +602,7 @@ group_polygon(ovlp_grp &grp, int ind)
     std::set<size_t> &vtris = (ind == 0) ? grp.vtris1 : grp.vtris2;
     vtris.clear();
 
-    ON_Plane fit_plane = grp.fit_plane();
+    ON_Plane fit_plane = (!ind) ? grp.fp1 : grp.fp2;
 
     cpolygon_t *polygon = new cpolygon_t;
 
@@ -911,10 +1005,6 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
     for (size_t i = 0; i < bins.size(); i++) {
 
 #if 1
-	if (bins[i].om1->fmesh->f_id == 899 || bins[i].om2->fmesh->f_id == 899) {
-	    std::cout << "problem\n";
-	}
-
 	bool v1 = bins[i].om1->fmesh->valid(1);
 	bool v2 = bins[i].om2->fmesh->valid(1);
 
@@ -928,6 +1018,10 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 	// closest points in both meshes - not clear if this is necessary
 	// (CDTs ought to produce the same answer for both polygons, but
 	// might be better not to rely on that...)
+	if (bins[i].om1->fmesh->f_id == 869 || bins[i].om2->fmesh->f_id == 869) {
+	    std::cout << "problem\n";
+	}
+
 	cpolygon_t *polygon1 = group_polygon(bins[i], 0);
 	cpolygon_t *polygon2 = group_polygon(bins[i], 1);
 	if (!polygon1 || !polygon2) {
@@ -935,7 +1029,8 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 	}
 
 	polygon1->cdt();
-	//bins[i].om1->fmesh->tris_plot("before1.plot3");
+	polygon1->polygon_plot_in_plane("poly1.plot3");
+	bins[i].om1->fmesh->tris_plot("before1.plot3");
 	// Replace grp triangles with new polygon triangles
 	std::set<size_t>::iterator t_it;
 	for (t_it = bins[i].vtris1.begin(); t_it != bins[i].vtris1.end(); t_it++) {
@@ -948,7 +1043,7 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 	    bins[i].om1->fmesh->tri_add(tri);
 	}
 
-#if 0
+#if 1
 	//bins[i].om1->fmesh->tris_plot("after1.plot3");
 	v1 = bins[i].om1->fmesh->valid(1);
 	v2 = bins[i].om2->fmesh->valid(1);
@@ -959,7 +1054,8 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 #endif
 
 	polygon2->cdt();
-	//bins[i].om2->fmesh->tris_plot("before2.plot3");
+	polygon1->polygon_plot_in_plane("poly1.plot3");
+	bins[i].om2->fmesh->tris_plot("before2.plot3");
 
 	// Replace grp triangles with new polygon triangles
 	for (t_it = bins[i].vtris2.begin(); t_it != bins[i].vtris2.end(); t_it++) {
@@ -971,15 +1067,15 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 	    bins[i].om2->fmesh->tri_add(tri);
 	}
 
-#if 0
+#if 1
 	v1 = bins[i].om1->fmesh->valid(1);
 	v2 = bins[i].om2->fmesh->valid(1);
 
 	if (!v1 || !v2) {
 	    std::cout << "Ending polygon2 processing with invalid inputs!\n";
 	}
-	//bins[i].om2->fmesh->tris_plot("after2.plot3");
-	//std::cout << "cdts complete\n";
+	bins[i].om2->fmesh->tris_plot("after2.plot3");
+	std::cout << "cdts complete\n";
 #endif
     }
 
