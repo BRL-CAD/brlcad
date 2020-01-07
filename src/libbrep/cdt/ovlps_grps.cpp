@@ -929,10 +929,12 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 
     std::map<bedge_seg_t *, std::set<overt_t *>> edge_verts;
 
+    size_t bins_prev_cnt = 0;
     bool processed_all_bins = false;
 
-    while (!processed_all_bins) {
+    while (!processed_all_bins || bins.size() != bins_prev_cnt) {
 	size_t refinement_cnt = INT_MAX;
+	bins_prev_cnt = bins.size();
 	while (refinement_cnt) {
 	    bins.clear();
 	    aligned.clear();
@@ -1105,11 +1107,9 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 #endif
 	}
 
-	if (!processed_all_bins) {
-	    omesh_ovlps(check_pairs, 0);
-	    omesh_refinement_pnts(check_pairs, 0);
-	}
-	
+	omesh_ovlps(check_pairs, 1);
+	omesh_refinement_pnts(check_pairs, 0);
+
     }
 
     // After the above processing, we may still have individual triangle pairs
