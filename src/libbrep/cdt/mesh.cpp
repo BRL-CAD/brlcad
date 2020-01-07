@@ -1887,6 +1887,40 @@ cdt_mesh_t::tris_search(ON_BoundingBox &bb)
     return near_tris;
 }
 
+bool
+cdt_mesh_t::tri_active(size_t ind)
+{
+
+    if (ind >= tris_vect.size()) {
+	return false;
+    }
+    ON_BoundingBox bb = tri_bbox(ind);
+
+    double fMin[3], fMax[3];
+    fMin[0] = bb.Min().x;
+    fMin[1] = bb.Min().y;
+    fMin[2] = bb.Min().z;
+    fMax[0] = bb.Max().x;
+    fMax[1] = bb.Max().y;
+    fMax[2] = bb.Max().z;
+    std::set<size_t> near_tris;
+    size_t nhits = tris_tree.Search(fMin, fMax, NearTrisCallback, (void *)&near_tris);
+
+    if (!nhits) {
+	return false;
+    }
+
+    std::set<size_t>::iterator n_it;
+    for (n_it = near_tris.begin(); n_it != near_tris.end(); n_it++) {
+	if (*n_it == ind) {
+	    return true;
+	}
+    }
+
+    return false;
+}
+
+
 ON_BoundingBox
 cdt_mesh_t::bbox()
 {

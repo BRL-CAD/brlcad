@@ -622,6 +622,8 @@ public:
     // Find close triangles
     std::set<size_t> tris_search(ON_BoundingBox &bb);
 
+    bool tri_active(size_t tind);
+
     ON_BoundingBox bbox();
     ON_BoundingBox tri_bbox(size_t tind);
 

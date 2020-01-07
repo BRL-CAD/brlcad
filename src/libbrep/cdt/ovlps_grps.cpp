@@ -602,6 +602,15 @@ group_polygon(ovlp_grp &grp, int ind)
     std::set<size_t> &vtris = (ind == 0) ? grp.vtris1 : grp.vtris2;
     vtris.clear();
 
+    // Validate that all triangles in tris are still in the fmesh - if
+    // not, this is a stale group.
+    std::set<size_t>::iterator tr_it;
+    for (tr_it = tris.begin(); tr_it != tris.end(); tr_it++) {
+	if (!om->fmesh->tri_active(*tr_it)) {
+	    return NULL;
+	}
+    }
+
     ON_Plane fit_plane = (!ind) ? grp.fp1 : grp.fp2;
 
     cpolygon_t *polygon = new cpolygon_t;
@@ -870,23 +879,30 @@ find_interior_edge_grps(
     int nfcnt = 0;
 
     while (nfcnt != face_ov_cnt) {
+	std::cout << "face_ov_cnt: " << face_ov_cnt << ", nfcnt: " << nfcnt << "\n";
 	face_ov_cnt = nfcnt;
 	std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>>::iterator cp_it;
 	for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
 	    omesh_t *omesh1 = cp_it->first->omesh;
 	    omesh_t *omesh2 = cp_it->second->omesh;
+	    if (omesh1->fmesh->p_cdt == omesh2->fmesh->p_cdt) {
+		// For now, don't tangle with self intersections
+		continue;
+	    }
 	    if (!omesh1->intruding_tris.size() || !omesh2->intruding_tris.size()) {
 		continue;
 	    }
-	    //std::cout << "Need to check " << omesh1->fmesh->name << " " << omesh1->fmesh->f_id << " vs " << omesh2->fmesh->name << " " << omesh2->fmesh->f_id << "\n";
+	    std::cout << "Need to check " << omesh1->fmesh->name << " " << omesh1->fmesh->f_id << " vs " << omesh2->fmesh->name << " " << omesh2->fmesh->f_id << "\n";
 
 	    recdt_edges(omesh1, omesh2);
+	    omesh_ovlps(check_pairs, 1);
 	    recdt_edges(omesh2, omesh1);
-
-	    // Do a more aggressive overlap check that will catch triangles aligned
-	    // on the edges but still interior to the mesh
-	    nfcnt = omesh_ovlps(check_pairs, 1);
+	    omesh_ovlps(check_pairs, 1);
+	
 	}
+	// Do a more aggressive overlap check that will catch triangles aligned
+	// on the edges but still interior to the mesh
+	nfcnt = omesh_ovlps(check_pairs, 1);
     }
 }
 
@@ -913,170 +929,187 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 
     std::map<bedge_seg_t *, std::set<overt_t *>> edge_verts;
 
-    size_t refinement_cnt = INT_MAX;
-    while (refinement_cnt) {
-	bins.clear();
-	aligned.clear();
-	non_aligned.clear();
-	edge_verts.clear();
-	bin_map.clear();
+    bool processed_all_bins = false;
 
-	bins = find_ovlp_grps(bin_map, check_pairs);
+    while (!processed_all_bins) {
+	size_t refinement_cnt = INT_MAX;
+	while (refinement_cnt) {
+	    bins.clear();
+	    aligned.clear();
+	    non_aligned.clear();
+	    edge_verts.clear();
+	    bin_map.clear();
 
-	if (!bins.size()) {
-	    // If we didn't find anything, we're done
-	    return;
-	}
+	    bins = find_ovlp_grps(bin_map, check_pairs);
 
-	// Have groupings - reset refinement info
-	size_t refinement_cnt_prev = (refinement_cnt < INT_MAX) ? refinement_cnt : 0;
-	refinement_cnt = 0;
-	refinement_reset(check_pairs);
-	for (size_t i = 0; i < bins.size(); i++) {
-	    bins[i].edge_verts = &edge_verts;
-	    size_t bcnt = bins[i].characterize_all_verts();
-	    if (bcnt) {
-		non_aligned.insert(i);
-		bins[i].print();
-	    } else {
-		aligned.insert(i);
+	    if (!bins.size()) {
+		// If we didn't find anything, we're done
+		return;
 	    }
-	    refinement_cnt += bcnt;
-	}
 
-	// TODO - before attempting localized cdt, we need to perform
-	// any necessary refinements so we have the proper points in place.
-	if (refinement_cnt > refinement_cnt_prev) {
-	    std::set<omesh_t *> a_omesh = refinement_omeshes(check_pairs);
-	    std::set<omesh_t *>::iterator a_it;
+	    // Have groupings - reset refinement info
+	    size_t refinement_cnt_prev = (refinement_cnt < INT_MAX) ? refinement_cnt : 0;
+	    refinement_cnt = 0;
+	    refinement_reset(check_pairs);
+	    for (size_t i = 0; i < bins.size(); i++) {
+		bins[i].edge_verts = &edge_verts;
+		size_t bcnt = bins[i].characterize_all_verts();
+		if (bcnt) {
+		    non_aligned.insert(i);
+		    bins[i].print();
+		} else {
+		    aligned.insert(i);
+		}
+		refinement_cnt += bcnt;
+	    }
 
-	    for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
-		omesh_t *am = *a_it;
-		std::map<bedge_seg_t *, std::set<overt_t *>>::iterator es_it;
-		for (es_it = edge_verts.begin(); es_it != edge_verts.end(); es_it++) {
-		    bedge_seg_t *eseg = es_it->first;
-		    std::vector<std::pair<cdt_mesh_t *,uedge_t>> uedges = eseg->uedges();
-		    int f_id1 = uedges[0].first->f_id;
-		    int f_id2 = uedges[1].first->f_id;
-		    if (f_id1 == am->fmesh->f_id || f_id2 == am->fmesh->f_id) {
-			// If this bedge_seg_t is topologically connected to the face, then the
-			// verts associated with that bedge are not interior overts and
-			// will be handled by the edge refinement.
-			std::set<overt_t *>::iterator e_it;
-			for (e_it = es_it->second.begin(); e_it != es_it->second.end(); e_it++) {
-			    am->refinement_overts.erase(*e_it);
+	    // TODO - before attempting localized cdt, we need to perform
+	    // any necessary refinements so we have the proper points in place.
+	    if (refinement_cnt > refinement_cnt_prev) {
+		std::set<omesh_t *> a_omesh = refinement_omeshes(check_pairs);
+		std::set<omesh_t *>::iterator a_it;
+
+		for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
+		    omesh_t *am = *a_it;
+		    std::map<bedge_seg_t *, std::set<overt_t *>>::iterator es_it;
+		    for (es_it = edge_verts.begin(); es_it != edge_verts.end(); es_it++) {
+			bedge_seg_t *eseg = es_it->first;
+			std::vector<std::pair<cdt_mesh_t *,uedge_t>> uedges = eseg->uedges();
+			int f_id1 = uedges[0].first->f_id;
+			int f_id2 = uedges[1].first->f_id;
+			if (f_id1 == am->fmesh->f_id || f_id2 == am->fmesh->f_id) {
+			    // If this bedge_seg_t is topologically connected to the face, then the
+			    // verts associated with that bedge are not interior overts and
+			    // will be handled by the edge refinement.
+			    std::set<overt_t *>::iterator e_it;
+			    for (e_it = es_it->second.begin(); e_it != es_it->second.end(); e_it++) {
+				am->refinement_overts.erase(*e_it);
+			    }
 			}
 		    }
 		}
+
+		std::set<overt_t *> nverts;
+		bedge_split_near_verts(check_pairs, &nverts, edge_verts);
+		omesh_interior_edge_verts(check_pairs);
+		omesh_ovlps(check_pairs, 0);
+		omesh_refinement_pnts(check_pairs, 0);
+		refinement_cnt_prev = refinement_cnt;
+	    } else {
+		refinement_cnt = 0;
+	    }
+	}
+
+#if 1
+	for (r_it = aligned.begin(); r_it != aligned.end(); r_it++) {
+	    std::cout << "Group " << *r_it << " aligned:\n";
+	    bins[*r_it].list_tris();
+	    bins[*r_it].list_overts();
+	    struct bu_vls pname = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&pname, "group_aligned_%zu", *r_it);
+	    bins[*r_it].plot(bu_vls_cstr(&pname));
+	    bu_vls_free(&pname);
+	}
+	for (r_it = non_aligned.begin(); r_it != non_aligned.end(); r_it++) {
+	    std::cout << "Group " << *r_it << " not fully aligned:\n";
+	    bins[*r_it].list_tris();
+	    bins[*r_it].list_overts();
+	    struct bu_vls pname = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&pname, "group_nonaligned_%zu", *r_it);
+	    bins[*r_it].plot(bu_vls_cstr(&pname));
+	    bu_vls_free(&pname);
+	}
+#endif
+
+	processed_all_bins = true;
+	for (size_t i = 0; i < bins.size(); i++) {
+
+#if 1
+	    bool v1 = bins[i].om1->fmesh->valid(1);
+	    bool v2 = bins[i].om2->fmesh->valid(1);
+
+	    if (!v1 || !v2) {
+		std::cout << "Starting bin processing with invalid inputs!\n";
+	    }
+#endif
+
+	    // TODO - if all vertices are mapped, may want to CDT only one of
+	    // the polygons in the shared plane and map back to matching
+	    // closest points in both meshes - not clear if this is necessary
+	    // (CDTs ought to produce the same answer for both polygons, but
+	    // might be better not to rely on that...)
+	    if (bins[i].om1->fmesh->f_id == 869 || bins[i].om2->fmesh->f_id == 869) {
+		std::cout << "problem\n";
 	    }
 
-	    std::set<overt_t *> nverts;
-	    bedge_split_near_verts(check_pairs, &nverts, edge_verts);
-	    omesh_interior_edge_verts(check_pairs);
+	    cpolygon_t *polygon1 = group_polygon(bins[i], 0);
+	    cpolygon_t *polygon2 = group_polygon(bins[i], 1);
+	    if (!polygon1 || !polygon2) {
+		// TODO - there is a potentially legitimate case for no polygon returned
+		// here - if two groups are formed by different mesh pairs, but one of
+		// them processes out a triangle that is in another group, that group
+		// is now invalid and must be skipped.
+		std::cerr << "group polygon generation failed!\n";
+		processed_all_bins = false;
+		continue;
+	    }
+
+	    polygon1->cdt();
+	    polygon1->polygon_plot_in_plane("poly1.plot3");
+	    bins[i].om1->fmesh->tris_plot("before1.plot3");
+	    // Replace grp triangles with new polygon triangles
+	    std::set<size_t>::iterator t_it;
+	    for (t_it = bins[i].vtris1.begin(); t_it != bins[i].vtris1.end(); t_it++) {
+		bins[i].om1->fmesh->tri_remove(bins[i].om1->fmesh->tris_vect[*t_it]);
+	    }
+	    std::set<triangle_t>::iterator tr_it;
+	    for (tr_it = polygon1->tris.begin(); tr_it != polygon1->tris.end(); tr_it++) {
+		triangle_t tri = *tr_it;
+		orient_tri(*bins[i].om1->fmesh, tri);
+		bins[i].om1->fmesh->tri_add(tri);
+	    }
+
+#if 1
+	    //bins[i].om1->fmesh->tris_plot("after1.plot3");
+	    v1 = bins[i].om1->fmesh->valid(1);
+	    v2 = bins[i].om2->fmesh->valid(1);
+
+	    if (!v1 || !v2) {
+		std::cout << "Ending polygon1 processing with invalid inputs!\n";
+	    }
+#endif
+
+	    polygon2->cdt();
+	    polygon1->polygon_plot_in_plane("poly1.plot3");
+	    bins[i].om2->fmesh->tris_plot("before2.plot3");
+
+	    // Replace grp triangles with new polygon triangles
+	    for (t_it = bins[i].vtris2.begin(); t_it != bins[i].vtris2.end(); t_it++) {
+		bins[i].om2->fmesh->tri_remove(bins[i].om2->fmesh->tris_vect[*t_it]);
+	    }
+	    for (tr_it = polygon2->tris.begin(); tr_it != polygon2->tris.end(); tr_it++) {
+		triangle_t tri = *tr_it;
+		orient_tri(*bins[i].om2->fmesh, tri);
+		bins[i].om2->fmesh->tri_add(tri);
+	    }
+
+#if 1
+	    v1 = bins[i].om1->fmesh->valid(1);
+	    v2 = bins[i].om2->fmesh->valid(1);
+
+	    if (!v1 || !v2) {
+		std::cout << "Ending polygon2 processing with invalid inputs!\n";
+	    }
+	    bins[i].om2->fmesh->tris_plot("after2.plot3");
+	    std::cout << "cdts complete\n";
+#endif
+	}
+
+	if (!processed_all_bins) {
 	    omesh_ovlps(check_pairs, 0);
 	    omesh_refinement_pnts(check_pairs, 0);
-	    refinement_cnt_prev = refinement_cnt;
-	} else {
-	    refinement_cnt = 0;
 	}
-    }
-
-#if 1
-    for (r_it = aligned.begin(); r_it != aligned.end(); r_it++) {
-	std::cout << "Group " << *r_it << " aligned:\n";
-	bins[*r_it].list_tris();
-	bins[*r_it].list_overts();
-	struct bu_vls pname = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&pname, "group_aligned_%zu", *r_it);
-	bins[*r_it].plot(bu_vls_cstr(&pname));
-	bu_vls_free(&pname);
-    }
-    for (r_it = non_aligned.begin(); r_it != non_aligned.end(); r_it++) {
-	std::cout << "Group " << *r_it << " not fully aligned:\n";
-	bins[*r_it].list_tris();
-	bins[*r_it].list_overts();
-	struct bu_vls pname = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&pname, "group_nonaligned_%zu", *r_it);
-	bins[*r_it].plot(bu_vls_cstr(&pname));
-	bu_vls_free(&pname);
-    }
-#endif
-
-    for (size_t i = 0; i < bins.size(); i++) {
-
-#if 1
-	bool v1 = bins[i].om1->fmesh->valid(1);
-	bool v2 = bins[i].om2->fmesh->valid(1);
-
-	if (!v1 || !v2) {
-	    std::cout << "Starting bin processing with invalid inputs!\n";
-	}
-#endif
-
-	// TODO - if all vertices are mapped, may want to CDT only one of
-	// the polygons in the shared plane and map back to matching
-	// closest points in both meshes - not clear if this is necessary
-	// (CDTs ought to produce the same answer for both polygons, but
-	// might be better not to rely on that...)
-	if (bins[i].om1->fmesh->f_id == 869 || bins[i].om2->fmesh->f_id == 869) {
-	    std::cout << "problem\n";
-	}
-
-	cpolygon_t *polygon1 = group_polygon(bins[i], 0);
-	cpolygon_t *polygon2 = group_polygon(bins[i], 1);
-	if (!polygon1 || !polygon2) {
-	    std::cerr << "group polygon generation failed!\n";
-	}
-
-	polygon1->cdt();
-	polygon1->polygon_plot_in_plane("poly1.plot3");
-	bins[i].om1->fmesh->tris_plot("before1.plot3");
-	// Replace grp triangles with new polygon triangles
-	std::set<size_t>::iterator t_it;
-	for (t_it = bins[i].vtris1.begin(); t_it != bins[i].vtris1.end(); t_it++) {
-	    bins[i].om1->fmesh->tri_remove(bins[i].om1->fmesh->tris_vect[*t_it]);
-	}
-	std::set<triangle_t>::iterator tr_it;
-	for (tr_it = polygon1->tris.begin(); tr_it != polygon1->tris.end(); tr_it++) {
-	    triangle_t tri = *tr_it;
-	    orient_tri(*bins[i].om1->fmesh, tri);
-	    bins[i].om1->fmesh->tri_add(tri);
-	}
-
-#if 1
-	//bins[i].om1->fmesh->tris_plot("after1.plot3");
-	v1 = bins[i].om1->fmesh->valid(1);
-	v2 = bins[i].om2->fmesh->valid(1);
-
-	if (!v1 || !v2) {
-	    std::cout << "Ending polygon1 processing with invalid inputs!\n";
-	}
-#endif
-
-	polygon2->cdt();
-	polygon1->polygon_plot_in_plane("poly1.plot3");
-	bins[i].om2->fmesh->tris_plot("before2.plot3");
-
-	// Replace grp triangles with new polygon triangles
-	for (t_it = bins[i].vtris2.begin(); t_it != bins[i].vtris2.end(); t_it++) {
-	    bins[i].om2->fmesh->tri_remove(bins[i].om2->fmesh->tris_vect[*t_it]);
-	}
-	for (tr_it = polygon2->tris.begin(); tr_it != polygon2->tris.end(); tr_it++) {
-	    triangle_t tri = *tr_it;
-	    orient_tri(*bins[i].om2->fmesh, tri);
-	    bins[i].om2->fmesh->tri_add(tri);
-	}
-
-#if 1
-	v1 = bins[i].om1->fmesh->valid(1);
-	v2 = bins[i].om2->fmesh->valid(1);
-
-	if (!v1 || !v2) {
-	    std::cout << "Ending polygon2 processing with invalid inputs!\n";
-	}
-	bins[i].om2->fmesh->tris_plot("after2.plot3");
-	std::cout << "cdts complete\n";
-#endif
+	
     }
 
     // After the above processing, we may still have individual triangle pairs
