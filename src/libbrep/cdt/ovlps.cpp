@@ -1952,6 +1952,7 @@ check_faces_validity(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pair
     }
     bool valid = true;
 
+#if 0
     std::set<struct ON_Brep_CDT_State *>::iterator s_it;
     for (s_it = cdt_states.begin(); s_it != cdt_states.end(); s_it++) {
 	struct ON_Brep_CDT_State *s_cdt = *s_it;
@@ -1960,6 +1961,7 @@ check_faces_validity(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pair
 	    valid = false;
 	}
     }
+#endif
 
     std::set<cdt_mesh_t *>::iterator f_it;
     for (f_it = fmeshes.begin(); f_it != fmeshes.end(); f_it++) {

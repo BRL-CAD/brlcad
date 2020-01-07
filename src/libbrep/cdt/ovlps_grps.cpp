@@ -593,18 +593,16 @@ std::set<long>::iterator v_it;
     return 0;
 }
 
-bool 
-group_repair(ovlp_grp &grp, int ind)
+bool
+omesh_repair(omesh_t *om, std::set<size_t> &tris)
 {
-    omesh_t *om = (ind == 0) ? grp.om1 : grp.om2;
-    std::set<size_t> tris = (ind == 0) ? grp.tris1 : grp.tris2;
-
     om->fmesh->seed_tris.clear();
     // Validate that all triangles in tris are still in the fmesh - if
     // not, this is a stale group.
     std::set<size_t>::iterator tr_it;
     for (tr_it = tris.begin(); tr_it != tris.end(); tr_it++) {
 	if (!om->fmesh->tri_active(*tr_it)) {
+	    std::cout << "stale triangle: " << *tr_it << "\n";
 	    return false;
 	}
 	om->fmesh->seed_tris.insert(om->fmesh->tris_vect[*tr_it]);
@@ -624,6 +622,15 @@ group_repair(ovlp_grp &grp, int ind)
     }
 
     return true;
+}
+
+bool 
+group_repair(ovlp_grp &grp, int ind)
+{
+    omesh_t *om = (ind == 0) ? grp.om1 : grp.om2;
+    std::set<size_t> tris = (ind == 0) ? grp.tris1 : grp.tris2;
+
+    return omesh_repair(om, tris);
 }
 
 
@@ -823,83 +830,6 @@ group_polygon(ovlp_grp &grp, int ind)
     return polygon;
 }
 
-
-
-static void
-recdt_edges(omesh_t *omesh, omesh_t *other_m)
-{
-
-    std::set<size_t> om_tris = omesh->intruding_tris;
-
-    while (om_tris.size()) {
-	struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)other_m->fmesh->p_cdt;
-	size_t t1 = *om_tris.begin();
-	triangle_t t1_tri = omesh->fmesh->tris_vect[t1];
-	om_tris.erase(t1);
-
-	uedge_t i_ue;
-	bool found_iuedge = false;
-	double pdist = 0;
-	ON_BoundingBox fbbox = omesh->fmesh->bbox();
-	for (int i = 0; i < 3; i++) {
-	    edge_t t_e;
-	    t_e.v[0] = t1_tri.v[i];
-	    t_e.v[1] = (i < 2) ? t1_tri.v[i + 1] : t1_tri.v[0];
-	    uedge_t t_ue(t_e);
-	    ON_3dPoint emid = (*omesh->fmesh->pnts[t_ue.v[0]] + *omesh->fmesh->pnts[t_ue.v[1]]) / 2;
-	    if (on_point_inside(s_cdt, &emid)) {
-		ON_3dPoint bs_p;
-		bool cpeval = other_m->closest_brep_mesh_point(bs_p, &emid, s_cdt);
-		if (!cpeval) {
-		    std::cout << "Error - couldn't find closest point for mesh\n";
-		    continue;
-		}
-		double lpdist = emid.DistanceTo(bs_p);
-		if (lpdist > pdist) {
-		    i_ue = t_ue;
-		    found_iuedge = true;
-		    pdist = lpdist;
-		}
-	    }
-	}
-
-	if (!found_iuedge) continue;
-
-	std::set<size_t> itris = omesh->fmesh->uedges2tris[i_ue];
-	if (itris.size() != 2) {
-	    std::cout << "Error - found " << itris.size() << " triangles??\n";
-	    return;
-	}
-	triangle_t tri1 = omesh->fmesh->tris_vect[*itris.begin()];
-	om_tris.erase(*itris.begin());
-	itris.erase(itris.begin());
-	triangle_t tri2 = omesh->fmesh->tris_vect[*itris.begin()];
-	om_tris.erase(*itris.begin());
-	itris.erase(itris.begin());
-
-
-	cpolygon_t *polygon = omesh->fmesh->uedge_polygon(i_ue);
-	if (!polygon) {
-	    std::cout << "Error - polygon build failed\n";
-	    return;
-	}
-
-	polygon->cdt();
-
-	omesh->fmesh->tri_remove(tri1);
-	omesh->fmesh->tri_remove(tri2);
-
-	std::set<triangle_t>::iterator v_it;
-	for (v_it = polygon->tris.begin(); v_it != polygon->tris.end(); v_it++) {
-	    triangle_t vt = *v_it;
-	    orient_tri(*omesh->fmesh, vt);
-	    omesh->fmesh->tri_add(vt);
-	}
-
-	delete polygon;
-    }
-}
-
 void
 find_interior_edge_grps(
 	std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs
@@ -911,6 +841,7 @@ find_interior_edge_grps(
     // on the edges but still interior to the mesh
     int face_ov_cnt = omesh_ovlps(check_pairs, 1);
     int nfcnt = 0;
+
 
     while (nfcnt != face_ov_cnt) {
 	std::cout << "face_ov_cnt: " << face_ov_cnt << ", nfcnt: " << nfcnt << "\n";
@@ -926,18 +857,21 @@ find_interior_edge_grps(
 	    if (!omesh1->intruding_tris.size() || !omesh2->intruding_tris.size()) {
 		continue;
 	    }
-	    std::cout << "Need to check " << omesh1->fmesh->name << " " << omesh1->fmesh->f_id << " vs " << omesh2->fmesh->name << " " << omesh2->fmesh->f_id << "\n";
 
-	    recdt_edges(omesh1, omesh2);
-	    omesh_ovlps(check_pairs, 1);
-	    recdt_edges(omesh2, omesh1);
-	    omesh_ovlps(check_pairs, 1);
-	
+	    std::cout << "Need to check " << omesh1->fmesh->name << " " << omesh1->fmesh->f_id << " vs " << omesh2->fmesh->name << " " << omesh2->fmesh->f_id << "\n";
+	    bool r1 = omesh_repair(omesh1, omesh1->intruding_tris);
+	    bool r2 = omesh_repair(omesh2, omesh2->intruding_tris);
+	    if (!r1 || !r2) {
+		std::cout << "edge aligned repair failed\n";
+	    }
 	}
+
 	// Do a more aggressive overlap check that will catch triangles aligned
 	// on the edges but still interior to the mesh
 	nfcnt = omesh_ovlps(check_pairs, 1);
     }
+
+    std::cout << "done with edge aligned\n";
 }
 
 
