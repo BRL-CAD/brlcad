@@ -821,7 +821,6 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 
     size_t refinement_cnt = INT_MAX;
     while (refinement_cnt) {
-	refinement_cnt = 0;
 	bins.clear();
 	aligned.clear();
 	non_aligned.clear();
@@ -836,6 +835,8 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 	}
 
 	// Have groupings - reset refinement info
+	size_t refinement_cnt_prev = (refinement_cnt < INT_MAX) ? refinement_cnt : 0;
+	refinement_cnt = 0;
 	refinement_reset(check_pairs);
 	for (size_t i = 0; i < bins.size(); i++) {
 	    bins[i].edge_verts = &edge_verts;
@@ -851,7 +852,7 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 
 	// TODO - before attempting localized cdt, we need to perform
 	// any necessary refinements so we have the proper points in place.
-	if (refinement_cnt) {
+	if (refinement_cnt > refinement_cnt_prev) {
 	    std::set<omesh_t *> a_omesh = refinement_omeshes(check_pairs);
 	    std::set<omesh_t *>::iterator a_it;
 
@@ -880,6 +881,9 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 	    omesh_interior_edge_verts(check_pairs);
 	    omesh_ovlps(check_pairs, 0);
 	    omesh_refinement_pnts(check_pairs, 0);
+	    refinement_cnt_prev = refinement_cnt;
+	} else {
+	    refinement_cnt = 0;
 	}
     }
 
