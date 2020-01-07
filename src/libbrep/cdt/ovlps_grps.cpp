@@ -593,6 +593,40 @@ std::set<long>::iterator v_it;
     return 0;
 }
 
+bool 
+group_repair(ovlp_grp &grp, int ind)
+{
+    omesh_t *om = (ind == 0) ? grp.om1 : grp.om2;
+    std::set<size_t> tris = (ind == 0) ? grp.tris1 : grp.tris2;
+
+    om->fmesh->seed_tris.clear();
+    // Validate that all triangles in tris are still in the fmesh - if
+    // not, this is a stale group.
+    std::set<size_t>::iterator tr_it;
+    for (tr_it = tris.begin(); tr_it != tris.end(); tr_it++) {
+	if (!om->fmesh->tri_active(*tr_it)) {
+	    return false;
+	}
+	om->fmesh->seed_tris.insert(om->fmesh->tris_vect[*tr_it]);
+    }
+
+    size_t st_size = om->fmesh->seed_tris.size();
+
+    while (om->fmesh->seed_tris.size()) {
+	triangle_t seed = *om->fmesh->seed_tris.begin();
+	bool pseed = om->fmesh->process_seed_tri(seed, false, 90.0);
+
+	if (!pseed || om->fmesh->seed_tris.size() >= st_size) {
+	    std::cerr << om->fmesh->f_id << ": Error - failed to process repair seed triangle!\n";
+	    return false;
+	}
+	st_size = om->fmesh->seed_tris.size();
+    }
+
+    return true;
+}
+
+
 cpolygon_t *
 group_polygon(ovlp_grp &grp, int ind)
 {
@@ -929,12 +963,12 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 
     std::map<bedge_seg_t *, std::set<overt_t *>> edge_verts;
 
-    size_t bins_prev_cnt = 0;
+    size_t bins_pcnt = 0;
     bool processed_all_bins = false;
 
-    while (!processed_all_bins || bins.size() != bins_prev_cnt) {
+    while (!processed_all_bins || (bins.size() && bins_pcnt < 3)) {
 	size_t refinement_cnt = INT_MAX;
-	bins_prev_cnt = bins.size();
+	bins_pcnt++;
 	while (refinement_cnt) {
 	    bins.clear();
 	    aligned.clear();
@@ -1110,6 +1144,51 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 	omesh_ovlps(check_pairs, 1);
 	omesh_refinement_pnts(check_pairs, 0);
 
+    }
+
+
+    if (bins.size() && bins_pcnt == 3) {
+	bins.clear();
+	aligned.clear();
+	non_aligned.clear();
+	edge_verts.clear();
+	bin_map.clear();
+
+	bins = find_ovlp_grps(bin_map, check_pairs);
+
+	if (!bins.size()) {
+	    // If we didn't find anything, we're done
+	    return;
+	}
+
+	for (size_t i = 0; i < bins.size(); i++) {
+
+#if 1
+	    bool v1 = bins[i].om1->fmesh->valid(1);
+	    bool v2 = bins[i].om2->fmesh->valid(1);
+
+	    if (!v1 || !v2) {
+		std::cout << "Starting bin processing with invalid inputs!\n";
+	    }
+#endif
+
+	    bool r1 = group_repair(bins[i], 0);
+	    bool r2 = group_repair(bins[i], 1);
+	    if (!r1 || !r2) {
+		std::cerr << "group repair failed!\n";
+		continue;
+	    }
+
+#if 1
+	    v1 = bins[i].om1->fmesh->valid(1);
+	    v2 = bins[i].om2->fmesh->valid(1);
+
+	    if (!v1 || !v2) {
+		std::cout << "Repair produced invalid outputs!\n";
+	    }
+#endif
+
+	}
     }
 
     // After the above processing, we may still have individual triangle pairs

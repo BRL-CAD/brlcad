@@ -712,6 +712,11 @@ public:
     // polygon (2D) vertex indices - use o2p mapping to get polygon indices.
     long tri_process(cpolygon_t *polygon, std::set<uedge_t> *ne, std::set<uedge_t> *se, long *nv, triangle_t &t);
 
+    bool process_seed_tri(triangle_t &seed, bool repair, double deg);
+
+    /* Working polygon sweeping seed triangle set */
+    std::set<triangle_t> seed_tris;
+
 private:
     /* Data containers */
     std::map<edge_t, size_t> edges2tris;
@@ -734,7 +739,6 @@ private:
     bool tri_problem_edges(triangle_t &t);
     std::vector<triangle_t> interior_incorrect_normals();
     double max_angle_delta(triangle_t &seed, std::vector<triangle_t> &s_tris);
-    bool process_seed_tri(triangle_t &seed, bool repair, double deg);
 
     // Plotting utility functions
     void plot_uedge(struct uedge_t &ue, FILE* plot_file);
@@ -762,9 +766,6 @@ private:
 
 
     bool oriented_polycdt(cpolygon_t *polygon);
-
-    /* Working polygon sweeping seed triangle set */
-    std::set<triangle_t> seed_tris;
 
 };
 
