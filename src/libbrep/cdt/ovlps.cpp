@@ -767,29 +767,10 @@ omesh_t::interior_uedges_search(ON_BoundingBox &bb)
     return uedges;
 }
 
-static bool NearTrisCallback(size_t data, void *a_context) {
-    std::set<size_t> *ntris = (std::set<size_t> *)a_context;
-    ntris->insert(data);
-    return true;
-}
 std::set<size_t>
 omesh_t::tris_search(ON_BoundingBox &bb)
 {
-    double fMin[3], fMax[3];
-    fMin[0] = bb.Min().x;
-    fMin[1] = bb.Min().y;
-    fMin[2] = bb.Min().z;
-    fMax[0] = bb.Max().x;
-    fMax[1] = bb.Max().y;
-    fMax[2] = bb.Max().z;
-    std::set<size_t> near_tris;
-    size_t nhits = fmesh->tris_tree.Search(fMin, fMax, NearTrisCallback, (void *)&near_tris);
-
-    if (!nhits) {
-	return std::set<size_t>();
-    }
-
-    return near_tris;
+    return fmesh->tris_search(bb);
 }
 
 static bool NearVertsCallback(long data, void *a_context) {

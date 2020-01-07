@@ -619,6 +619,9 @@ public:
 
     bool face_edge_tri(const triangle_t &t);
 
+    // Find close triangles
+    std::set<size_t> tris_search(ON_BoundingBox &bb);
+
     ON_BoundingBox bbox();
     ON_BoundingBox tri_bbox(size_t tind);
 

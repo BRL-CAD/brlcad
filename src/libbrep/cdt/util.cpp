@@ -26,6 +26,7 @@
  */
 
 #include "common.h"
+#include "bg/tri_ray.h"
 #include "./cdt.h"
 
 /***************************************************
@@ -258,10 +259,53 @@ plot_pnt_3d(FILE *plot_file, ON_3dPoint *p, double r, int dir)
     }
 }
 
+// Shoot a vertical ray and count intersections.
+bool
+point_inside2(struct ON_Brep_CDT_State *s_cdt, point_t p)
+{
+    ON_3dPoint on_p(p);
+    point_t rdir;
+    VSET(rdir, 0, 0, 1);
+    std::map<int, cdt_mesh_t>::iterator f_it;
+    int icnt = 0;
+    for (f_it = s_cdt->fmeshes.begin(); f_it != s_cdt->fmeshes.end(); f_it++) {
+	cdt_mesh_t &fmesh = f_it->second;
+
+	ON_BoundingBox fbb = s_cdt->brep->m_F[fmesh.f_id].BoundingBox();
+
+	if (fbb.Min().x > on_p.x || fbb.Max().x < on_p.x) {
+	    continue;
+	}
+	if (fbb.Min().y > on_p.y || fbb.Max().y < on_p.y) {
+	    continue;
+	}
+
+	ON_BoundingBox on_pb(on_p, on_p);
+	on_pb.m_min.z = fbb.Min().z;
+	on_pb.m_max.z = fbb.Max().z;
+
+	std::set<size_t> near_tris = fmesh.tris_search(on_pb);
+	std::set<size_t>::iterator n_it;
+	for (n_it = near_tris.begin(); n_it != near_tris.end(); n_it++) {
+	    triangle_t t = fmesh.tris_vect[*n_it];
+	    point_t T_V[3];
+	    VSET(T_V[0], fmesh.pnts[t.v[0]]->x, fmesh.pnts[t.v[0]]->y, fmesh.pnts[t.v[0]]->z);
+	    VSET(T_V[1], fmesh.pnts[t.v[1]]->x, fmesh.pnts[t.v[1]]->y, fmesh.pnts[t.v[1]]->z);
+	    VSET(T_V[2], fmesh.pnts[t.v[2]]->x, fmesh.pnts[t.v[2]]->y, fmesh.pnts[t.v[2]]->z);
+
+	    if (bg_isect_tri_ray(p, rdir, T_V[0], T_V[1], T_V[2], NULL)) {
+		icnt++;
+	    }
+	}
+    }
+
+    return (icnt % 2) ? true : false;
+}
 
 bool
 point_inside(struct ON_Brep_CDT_State *s_cdt, point_t p)
 {
+#if 0
     int wn = 0;
     int exact = 0;
     std::map<int, cdt_mesh_t>::iterator f_it;
@@ -282,9 +326,18 @@ point_inside(struct ON_Brep_CDT_State *s_cdt, point_t p)
 	    ++tree_it;
 	}
     }
+    bool ret = (wn) ? true : false;
+#endif
 
-    return (wn) ? true : false;
+    bool ret = point_inside2(s_cdt, p);
+    //if (ret != i2) {
+//	std::cout << "disagreement\n";
+ //   }
+
+    return ret;
 }
+
+
 
 bool
 on_point_inside(struct ON_Brep_CDT_State *s_cdt, ON_3dPoint *p)

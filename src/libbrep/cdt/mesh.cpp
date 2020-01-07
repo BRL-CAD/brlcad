@@ -1448,7 +1448,7 @@ cdt_mesh_t::add_normal(ON_3dPoint *on_3dn)
     return (long)(normals.size() - 1);
 }
 
-static bool NearTrisCallback(size_t data, void *a_context) {
+static bool NearTrisCallbackTriAdd(size_t data, void *a_context) {
     std::vector<size_t> *near_tris = (std::vector<size_t> *)a_context;
     near_tris->push_back(data);
     return true;
@@ -1486,7 +1486,7 @@ cdt_mesh_t::tri_add(triangle_t &tri)
     fMax[2] = bb.Max().z;
 
     std::vector<size_t> near_tris;
-    size_t nhits = tris_tree.Search(fMin, fMax, NearTrisCallback, &near_tris);
+    size_t nhits = tris_tree.Search(fMin, fMax, NearTrisCallbackTriAdd, &near_tris);
 
     if (nhits) {
 	// We've got something nearby, see if any of them are duplicates
@@ -1861,6 +1861,31 @@ cdt_mesh_t::face_edge_tri(const triangle_t &t)
     return (edge_pts > 1);
 }
 
+
+static bool NearTrisCallback(size_t data, void *a_context) {
+    std::set<size_t> *ntris = (std::set<size_t> *)a_context;
+    ntris->insert(data);
+    return true;
+}
+std::set<size_t>
+cdt_mesh_t::tris_search(ON_BoundingBox &bb)
+{
+    double fMin[3], fMax[3];
+    fMin[0] = bb.Min().x;
+    fMin[1] = bb.Min().y;
+    fMin[2] = bb.Min().z;
+    fMax[0] = bb.Max().x;
+    fMax[1] = bb.Max().y;
+    fMax[2] = bb.Max().z;
+    std::set<size_t> near_tris;
+    size_t nhits = tris_tree.Search(fMin, fMax, NearTrisCallback, (void *)&near_tris);
+
+    if (!nhits) {
+	return std::set<size_t>();
+    }
+
+    return near_tris;
+}
 
 ON_BoundingBox
 cdt_mesh_t::bbox()
