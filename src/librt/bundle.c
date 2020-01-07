@@ -572,7 +572,7 @@ bundle_miss(register struct application *ap)
 }
 
 
-void
+static void
 shootrays_in_parallel(int UNUSED(cpu), void *data)
 {
     size_t i;
