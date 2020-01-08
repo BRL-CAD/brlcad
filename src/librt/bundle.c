@@ -571,7 +571,7 @@ bundle_miss(register struct application *ap)
     return 0;
 }
 
-
+#if 0
 static void
 shootrays_in_parallel(int UNUSED(cpu), void *data)
 {
@@ -598,7 +598,7 @@ shootrays_in_parallel(int UNUSED(cpu), void *data)
 
     return;
 }
-
+#endif
 
 int
 rt_shootrays(struct application_bundle *bundle)
