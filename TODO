@@ -32,12 +32,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 * modify libfb's default memory buffer allocation to be dynamic
 
-* add coverage test geometry, e.g., scene with all object types plus a
-  lookup check to ensure no new ones are missing.
-
-	- likely need comprehensive parameter testing for each type
-	- add regression test for all geometric object types
-	- test whether RT+-TIE can render all BoT modes
+* create a BRL-CAD .g with all possible object types embedded.
+  integrate into testing. e.g., scene with all object types plus a
+  lookup check to ensure none are missing.
 
 * fix pipe subtractions shaded display issue in archer
 
@@ -102,9 +99,6 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 * bundle primary rays in rt front end into postage stamps, shoot via
   rt_shootrays(), modify to pass all rays down through the spatial
   partitioning simultaneously
-
-* create a BRL-CAD .g with all possible object types embedded.
-  integrate into testing.
 
 * readd support for vrml v1 to g-vrml so that users can select whether
   they want v2 (default) or previous v1 output format via a
@@ -483,13 +477,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * high-performance VOL for medical data visualization.  consider
   leveraging OpenVDB, PCL, Paraview/VTK, etc.
-
-* multi-region VOL objects.  this basically will either introduce a
-  notion of data-reuse where multiple regions reference the same VOL
-  and get different spatial results, or a single primitive reports
-  distinct material/region/spatial information that will get
-  propagated up into separate region hits.  the prior is probably
-  easier and less error-prone.
 
 * establish the Basic Application Runtime (BAR), only consisting of
   libbu and libbn, as a stand-alone self-contained project.  provide
@@ -1644,6 +1631,13 @@ ATTRIBUTES
 
 NEW OBJECTS
 -----------
+
+* multi-region VOL objects.  this basically will either introduce a
+  notion of data-reuse where multiple regions reference the same VOL
+  and get different spatial results, or a single primitive reports
+  distinct material/region/spatial information that will get
+  propagated up into separate region hits.  the prior is probably
+  easier and less error-prone.
 
 * view/camera objects.  non-geometry object type that encapsulates the
   concepts handled by saveview/loadview including awareness of
