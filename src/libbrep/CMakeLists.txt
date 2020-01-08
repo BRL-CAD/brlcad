@@ -30,6 +30,8 @@ set(LIBBREP_SOURCES
   cdt/validate.cpp
   cdt/edge.cpp
   cdt/mesh.cpp
+  cdt/omesh.cpp
+  cdt/overt.cpp
   cdt/ovlps.cpp
   cdt/ovlps_grps.cpp
   cdt/tri_isect.cpp
