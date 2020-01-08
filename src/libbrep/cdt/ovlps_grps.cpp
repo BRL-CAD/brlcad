@@ -960,7 +960,7 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 		}
 
 		std::set<overt_t *> nverts;
-		bedge_split_near_verts(check_pairs, &nverts, edge_verts);
+		bedge_split_near_verts(&nverts, edge_verts);
 		omesh_interior_edge_verts(check_pairs);
 		omesh_ovlps(check_pairs, 0);
 		omesh_refinement_pnts(check_pairs, 0);

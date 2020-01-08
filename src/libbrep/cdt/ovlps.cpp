@@ -1174,7 +1174,6 @@ bedge_split_at_t(
 
 int
 bedge_split_near_verts(
-	std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &UNUSED(check_pairs),
 	std::set<overt_t *> *nverts,
 	std::map<bedge_seg_t *, std::set<overt_t *>> &edge_verts
 	)
@@ -1230,9 +1229,6 @@ bedge_split_near_verts(
 		replaced_tris += ntri_cnt;
 		segs.insert(nsegs.begin(), nsegs.end());
 		nverts->insert(nv);
-
-		// Ouch - we're getting a validity failure after the near_verts split
-		//check_faces_validity(check_pairs);
 	    }
 	}
 	evcnt++;
@@ -1611,7 +1607,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	std::map<bedge_seg_t *, std::set<overt_t *>> edge_verts = find_edge_verts(check_pairs);
 	while (evcnt > edge_verts.size()) {
 	    std::set<overt_t *> nverts;
-	    bedge_replaced_tris = bedge_split_near_verts(check_pairs, &nverts, edge_verts);
+	    bedge_replaced_tris = bedge_split_near_verts(&nverts, edge_verts);
 	    evcnt = edge_verts.size();
 	    edge_verts.clear();
 	    omesh_refinement_pnts(check_pairs, rpnt_level);
