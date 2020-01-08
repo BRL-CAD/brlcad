@@ -1107,6 +1107,15 @@ bedge_split_near_verts(
 	std::map<bedge_seg_t *, std::set<overt_t *>> &edge_verts
 	);
 
+
+overt_t *
+nearby_vert(overt_t *v, omesh_t *other_m, int mode);
+
+int
+add_refinement_vert(overt_t *v, omesh_t *other_m,
+	std::map<bedge_seg_t *, std::set<overt_t *>> &edge_verts);
+
+
 int
 vert_nearby_closest_point_check(
 	overt_t *nv,

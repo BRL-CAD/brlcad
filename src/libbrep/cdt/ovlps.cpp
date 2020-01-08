@@ -1302,6 +1302,90 @@ check_faces_validity(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pair
     return valid;
 }
 
+overt_t *
+nearby_vert(overt_t *v, omesh_t *other_m, int mode)
+{
+    double vdist;
+    overt_t *v_closest = other_m->vert_closest(&vdist, v);
+
+    // If we're extremely close, just go with v_closest
+    if (vdist < 2*ON_ZERO_TOLERANCE) {
+	return v_closest;
+    }
+
+    // Past the easy case - now we need the closest surface point on other_m
+    ON_3dPoint opnt = v->vpnt();
+    ON_3dPoint spnt;
+    ON_3dVector sn;
+    double dist = v_closest->vpnt().DistanceTo(opnt) * 10;
+    if (!other_m->fmesh->closest_surf_pnt(spnt, sn, &opnt, dist)) {
+	// If there's no closest surface point within dist, there's probably
+	// an error - it should at least have found the v_closest point...
+	std::cerr << "Error - couldn't find closest point\n";
+	return NULL;
+    }
+
+    // See if the closest vert bbox overlaps the closest surface
+    // point to v.  If not, there is definitely no nearby vertex defined,
+    // since we know spnt is free to be defined as a vertex according
+    // to other_m's vertices.
+    ON_BoundingBox spbb(spnt, spnt);
+    if (v_closest->bb.IsDisjoint(spbb)) {
+	return NULL;
+    }
+
+    // We know v_closest isn't nearby according according to v_closest's bbox,
+    // but v_closest may have an arbitrarily sized bbox depending on its
+    // associated edge lengths.  Hence it may contain spnt even though (from
+    // v's perspective) it isn't close.  Construct a new bbox using the
+    // v_closest point and the box size of v, and repeat the bbox check for
+    // spbb.
+    ON_BoundingBox v_closest_bb(v_closest->vpnt(), v_closest->vpnt());
+    ON_3dPoint c1 = v_closest->vpnt() + v->bb.Diagonal()*0.5;
+    ON_3dPoint c2 = v_closest->vpnt() - v->bb.Diagonal()*0.5;
+    v_closest_bb.Set(c1, true);
+    v_closest_bb.Set(c2, true);
+    if (v_closest_bb.IsDisjoint(spbb)) {
+	return NULL;
+    }
+
+    // We're close according to the smallest bounding box - depending on the
+    // mode, that might be enough, but if we're being strict go ahead and
+    // check that spnt is (nearly) the same as the v_closest pnt.
+    if (mode == 1 && spnt.DistanceTo(v_closest->vpnt()) > 2*ON_ZERO_TOLERANCE) {
+	return NULL;
+    }
+
+    return v_closest;
+}
+
+int
+add_refinement_vert(overt_t *v, omesh_t *other_m,
+	std::map<bedge_seg_t *, std::set<overt_t *>> &edge_verts)
+{
+    // If we're close to a brep face edge, needs to go in edge_verts.
+    // Else, new interior vert for m
+    ON_3dPoint vpnt = v->vpnt();
+    uedge_t closest_edge = other_m->closest_uedge(vpnt);
+    if (other_m->fmesh->brep_edges.find(closest_edge) != other_m->fmesh->brep_edges.end()) {
+	bedge_seg_t *bseg = other_m->fmesh->ue2b_map[closest_edge];
+	if (!bseg) {
+	    std::cout << "couldn't find bseg pointer??\n";
+	    return 0;
+	} else {
+	    edge_verts[bseg].insert(v);
+	}
+    } else {
+	std::set<size_t> uet = other_m->fmesh->uedges2tris[closest_edge];
+	std::set<size_t>::iterator u_it;
+	for (u_it = uet.begin(); u_it != uet.end(); u_it++) {
+	    other_m->refinement_overts[v].insert(*u_it);
+	}
+    }
+
+    return 1;
+}
+
 int
 vert_nearby_closest_point_check(
 	overt_t *nv,
@@ -1309,21 +1393,10 @@ vert_nearby_closest_point_check(
 	std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 {
     int retcnt = 0;
-    ON_3dPoint vpnt = nv->vpnt();
 
     // For the given vertex, check any mesh from any of the pairs that
     // is potentially overlapping.
-    std::set<omesh_t *> check_meshes;
-    std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>>::iterator o_it;
-    for (o_it = check_pairs.begin(); o_it != check_pairs.end(); o_it++) {
-	if (o_it->first->omesh == nv->omesh && o_it->second->omesh != nv->omesh) {
-	    check_meshes.insert(o_it->second->omesh);
-	}
-	if (o_it->second->omesh == nv->omesh && o_it->first->omesh != nv->omesh) {
-	    check_meshes.insert(o_it->first->omesh);
-	}
-    }
-
+    std::set<omesh_t *> check_meshes = active_omeshes(check_pairs);
 
     std::set<omesh_t *>::iterator m_it;
     for (m_it = check_meshes.begin(); m_it != check_meshes.end(); m_it++) {
@@ -1333,54 +1406,9 @@ vert_nearby_closest_point_check(
 	// check if the point we need to introduce is an edge point.
 	omesh_t *m = *m_it;
 
-	ON_3dPoint spnt;
-	ON_3dVector sn;
-	double dist = nv->bb.Diagonal().Length() * 10;
-	if (!m->fmesh->closest_surf_pnt(spnt, sn, &vpnt, 2*dist)) {
-	    // If there's no surface point with dist, we're not close
-	    continue;
-	}
-	ON_BoundingBox spbb(spnt, spnt);
-
-	// Check the vtree and see if we can eliminate the closest surf point
-	// as being already close to an existing vert in the other mesh
-	double vdist;
-	overt_t *existing_v = m->vert_closest(&vdist, nv);
-
-	// The key point here is whether the other vertex is too close according
-	// to the point needing a match, not according to the other point (which
-	// may have an arbitrarily sized bbox depending on its associated edge
-	// lengths.  Construct a new bbox using the existing_v point and the box
-	// size of nv.
-	ON_BoundingBox evnbb(existing_v->vpnt(), existing_v->vpnt());
-	ON_3dPoint c1 = existing_v->vpnt() + nv->bb.Diagonal()*0.5;
-	ON_3dPoint c2 = existing_v->vpnt() - nv->bb.Diagonal()*0.5;
-	evnbb.Set(c1, true);
-	evnbb.Set(c2, true);
-
-	if (evnbb.IsDisjoint(spbb)) {
-	    // Closest surface point isn't inside the closest vert bbox - add
-	    // a new refinement vert
-
-	    // If we're close to a brep face edge, needs to go in edge_verts.
-	    // Else, new interior vert for m
-	    uedge_t closest_edge = m->closest_uedge(vpnt);
-	    if (m->fmesh->brep_edges.find(closest_edge) != m->fmesh->brep_edges.end()) {
-		bedge_seg_t *bseg = m->fmesh->ue2b_map[closest_edge];
-		if (!bseg) {
-		    std::cout << "couldn't find bseg pointer??\n";
-		} else {
-		    edge_verts[bseg].insert(nv);
-		    retcnt++;
-		}
-	    } else {
-		std::set<size_t> uet = m->fmesh->uedges2tris[closest_edge];
-		std::set<size_t>::iterator u_it;
-		for (u_it = uet.begin(); u_it != uet.end(); u_it++) {
-		    m->refinement_overts[nv].insert(*u_it);
-		}
-		retcnt++;
-	    }
+	if (!nearby_vert(nv, m, 0)) {
+	    // Add a new refinement vert
+	    retcnt += add_refinement_vert(nv, m, edge_verts);
 	}
     }
 
