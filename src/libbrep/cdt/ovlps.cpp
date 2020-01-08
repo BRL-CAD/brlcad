@@ -1387,7 +1387,7 @@ add_refinement_vert(overt_t *v, omesh_t *other_m,
 }
 
 int
-vert_nearby_closest_point_check(
+vert_nearby_missing(
 	overt_t *nv,
 	std::map<bedge_seg_t *, std::set<overt_t *>> &edge_verts,
 	std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
@@ -1419,18 +1419,7 @@ vert_nearby_closest_point_check(
 int
 omesh_interior_edge_verts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 {
-    std::set<omesh_t *> omeshes;
-    std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>>::iterator cp_it;
-    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
-	omesh_t *omesh1 = cp_it->first->omesh;
-	omesh_t *omesh2 = cp_it->second->omesh;
-	if (omesh1->refinement_overts.size()) {
-	    omeshes.insert(omesh1);
-	}
-	if (omesh2->refinement_overts.size()) {
-	    omeshes.insert(omesh2);
-	}
-    }
+    std::set<omesh_t *> omeshes = refinement_omeshes(check_pairs);
     //std::cout << "Need to split triangles in " << omeshes.size() << " meshes\n";
 
     int rcnt = 0;

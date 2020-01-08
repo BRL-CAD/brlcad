@@ -1117,13 +1117,6 @@ add_refinement_vert(overt_t *v, omesh_t *other_m,
 
 
 int
-vert_nearby_closest_point_check(
-	overt_t *nv,
-	std::map<bedge_seg_t *, std::set<overt_t *>> &edge_verts,
-	std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs
-	);
-
-int
 omesh_interior_edge_verts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs);
 
 std::map<bedge_seg_t *, std::set<overt_t *>>

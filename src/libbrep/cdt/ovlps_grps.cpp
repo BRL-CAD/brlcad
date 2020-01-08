@@ -195,10 +195,6 @@ ovlp_grp::characterize_verts(int ind)
 	    continue;
 	}
 
-	if (nearby_vert(ov, other_m, 1)) {
-	    continue;
-	}
-
 	// Find any points whose matching closest surface point isn't a vertex
 	// in the other mesh per the vtree.  That point is a refinement point.
 	ON_3dPoint target_point = ov->vpnt();
