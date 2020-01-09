@@ -3220,6 +3220,65 @@ cdt_mesh_t::repair()
 }
 
 bool
+cdt_mesh_t::smooth()
+{
+    seed_tris.clear();
+
+    RTree<size_t, double, 3>::Iterator tree_it;
+    tris_tree.GetFirst(tree_it);
+    size_t t_ind;
+    triangle_t tri;
+    while (!tree_it.IsNull()) {
+	t_ind = *tree_it;
+	tri = tris_vect[t_ind];
+	ON_3dVector tdir = tnorm(tri);
+	ON_3dVector bdir = bnorm(tri);
+	// larger angle between brep and triangle = seed candidate
+	double dp = ON_DotProduct(tdir, bdir);
+	if (std::string(name) == std::string("p.s") && f_id == 0) {
+	    std::cout << "dp: " << dp << "\n";
+	}
+	if (dp < 0.9) {
+	    seed_tris.insert(tri);
+	}
+	++tree_it;
+    }
+
+    if (std::string(name) == std::string("p.s") && f_id == 0) {
+	tris_plot("pre_smooth.plot3");
+    }
+
+    size_t st_size = seed_tris.size();
+    while (seed_tris.size()) {
+	triangle_t seed = *seed_tris.begin();
+	bool pseed = process_seed_tri(seed, true, 70);
+
+	if (!pseed || seed_tris.size() >= st_size) {
+	    std::cerr << f_id << ": Error - failed to process smoothing seed triangle!\n";
+	    struct bu_vls fname = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&fname, "%d-failed_seed.plot3", f_id);
+	    tri_plot(seed, bu_vls_cstr(&fname));
+	    bu_vls_sprintf(&fname, "%d-failed_seed_mesh.plot3", f_id);
+	    tris_plot(bu_vls_cstr(&fname));
+	    bu_vls_sprintf(&fname, "%d-failed_seed.cdtmesh", f_id);
+	    serialize(bu_vls_cstr(&fname));
+	    bu_vls_free(&fname);
+	    return false;
+	}
+
+	st_size = seed_tris.size();
+
+    }
+
+    if (std::string(name) == std::string("p.s") && f_id == 0) {
+	tris_plot("smooth.plot3");
+    }
+
+    return true;
+}
+
+
+bool
 cdt_mesh_t::valid(int verbose)
 {
     struct bu_vls fname = BU_VLS_INIT_ZERO;

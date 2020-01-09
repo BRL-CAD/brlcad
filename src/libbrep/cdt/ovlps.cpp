@@ -85,28 +85,13 @@ plot_active_omeshes(
 	std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs
 	)
 {
-    std::set<omesh_t *> a_omesh;
+    std::set<omesh_t *> a_omesh = itris_omeshes(check_pairs);
     std::set<omesh_t *>::iterator a_it;
-    std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>>::iterator cp_it;
-
-    // Find the meshes with actual intersecting triangles
-    for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
-	omesh_t *omesh1 = cp_it->first->omesh;
-	omesh_t *omesh2 = cp_it->second->omesh;
-	if (omesh1->itris.size()) {
-	    a_omesh.insert(omesh1);
-	}
-	if (omesh2->itris.size()) {
-	    a_omesh.insert(omesh2);
-	}
-    }
-
     // Plot overlaps with refinement points
     for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
 	omesh_t *am = *a_it;
 	am->plot();
     }
-
 }
 #endif
 
@@ -440,6 +425,23 @@ omesh_refinement_pnts(
     plot_active_omeshes(check_pairs);
 
     return rcnt;
+}
+
+bool
+omesh_smooth(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs)
+{
+    std::set<omesh_t *> a_omesh = active_omeshes(check_pairs);
+    std::set<omesh_t *>::iterator a_it;
+
+    // Scrub the old data in active mesh containers (if any)
+    for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
+	omesh_t *am = *a_it;
+	if (!am->fmesh->smooth()) {
+	    return false;
+	}
+    }
+
+    return true;
 }
 
 size_t
@@ -1381,6 +1383,8 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 
     make_omeshes(&check_pairs, &edge_verts);
 
+    omesh_smooth(check_pairs);
+
     int face_ov_cnt = omesh_ovlps(check_pairs, 0);
     if (!face_ov_cnt) {
 	return 0;
@@ -1399,19 +1403,27 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	int bedge_replaced_tris = INT_MAX;
 
 	while (bedge_replaced_tris) {
-	    int avcnt = 0;
-	    // The simplest operation is to find vertices close to each other
-	    // with enough freedom of movement (per triangle edge length) that
-	    // we can shift the two close neighbors to surface points that are
-	    // both the respective closest points to a center point between the
-	    // two originals.
-	    avcnt = adjust_close_verts(check_pairs);
-	    if (avcnt) {
-		// If we adjusted, recalculate overlapping tris and refinement points
-		//std::cout << "Adjusted " << avcnt << " vertices\n";
-		face_ov_cnt = omesh_ovlps(check_pairs, 0);
-		omesh_refinement_pnts(check_pairs, rpnt_level);
-		check_faces_validity(check_pairs);
+	    if (rpnt_level == 0) {
+		int avcnt = 0;
+		// The simplest operation is to find vertices close to each other
+		// with enough freedom of movement (per triangle edge length) that
+		// we can shift the two close neighbors to surface points that are
+		// both the respective closest points to a center point between the
+		// two originals.
+		//
+		// TODO - need an additional constraint on the vert box size - need
+		// to base it on the distance to the closest triangle edge, as well
+		// as the edge lengths.  Otherwise we get flipping triangles when
+		// the vertex moves across an opposite edge.
+		avcnt = adjust_close_verts(check_pairs);
+		if (avcnt) {
+		    // If we adjusted, recalculate overlapping tris and refinement points
+		    //std::cout << "Adjusted " << avcnt << " vertices\n";
+		    omesh_smooth(check_pairs);
+		    face_ov_cnt = omesh_ovlps(check_pairs, 0);
+		    omesh_refinement_pnts(check_pairs, rpnt_level);
+		    check_faces_validity(check_pairs);
+		}
 	    }
 
 	    // Process edge_verts
@@ -1435,6 +1447,9 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	int interior_replaced_tris = INT_MAX;
 	while (interior_replaced_tris) {
 	    interior_replaced_tris = omesh_interior_edge_verts(check_pairs);
+	    if (interior_replaced_tris) { 
+		omesh_smooth(check_pairs);
+	    }
 	    face_ov_cnt = omesh_ovlps(check_pairs, 0);
 	    omesh_refinement_pnts(check_pairs, rpnt_level);
 	    check_faces_validity(check_pairs);

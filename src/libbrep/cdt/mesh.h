@@ -593,6 +593,7 @@ public:
     long add_point(ON_3dPoint *on_3dp);
     long add_normal(ON_3dPoint *on_3dn);
     bool repair();
+    bool smooth();
     void reset();
     bool valid(int verbose);
     bool serialize(const char *fname);
