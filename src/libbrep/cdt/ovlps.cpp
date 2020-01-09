@@ -348,7 +348,7 @@ omesh_refinement_pnts(
 {
     std::set<omesh_t *> a_omesh = itris_omeshes(check_pairs);
     std::set<omesh_t *>::iterator a_it;
-	    
+
     (*a_omesh.begin())->edge_verts->clear();
     for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
 	(*a_it)->edge_sets.clear();
@@ -1300,15 +1300,14 @@ check_faces_validity(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pair
 	}
     }
     if (!valid) {
-#if 0
+#if 1
 	for (f_it = fmeshes.begin(); f_it != fmeshes.end(); f_it++) {
 	    cdt_mesh_t *fmesh = *f_it;
-	    struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
-	    std::string fpname = std::string(s_cdt->name) + std::string("_face_") + std::to_string(fmesh->f_id) + std::string(".plot3");
-	    fmesh->tris_plot(fpname.c_str());
+	    fmesh->valid(2);
 	}
 #endif
-	bu_exit(1, "fatal mesh damage");
+	std::cout << "fatal mesh damage\n";
+	//bu_exit(1, "fatal mesh damage");
     }
 
     return valid;
@@ -1412,6 +1411,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		//std::cout << "Adjusted " << avcnt << " vertices\n";
 		face_ov_cnt = omesh_ovlps(check_pairs, 0);
 		omesh_refinement_pnts(check_pairs, rpnt_level);
+		check_faces_validity(check_pairs);
 	    }
 
 	    // Process edge_verts
@@ -1422,6 +1422,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		evcnt = edge_verts.size();
 		face_ov_cnt = omesh_ovlps(check_pairs, 0);
 		omesh_refinement_pnts(check_pairs, rpnt_level);
+		check_faces_validity(check_pairs);
 	    }
 	}
 
@@ -1436,7 +1437,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    interior_replaced_tris = omesh_interior_edge_verts(check_pairs);
 	    face_ov_cnt = omesh_ovlps(check_pairs, 0);
 	    omesh_refinement_pnts(check_pairs, rpnt_level);
-	    //check_faces_validity(check_pairs);
+	    check_faces_validity(check_pairs);
 	}
 
 	rpnt_level++;
