@@ -228,7 +228,7 @@ possibly_interfering_face_pairs(struct ON_Brep_CDT_State **s_a, int s_cnt)
 }
 
 overt_t *
-nearby_vert(ON_3dPoint &spnt, ON_3dVector &sn, overt_t *v, omesh_t *other_m, double dist, int level)
+nearby_vert(ON_3dPoint &spnt, ON_3dVector &sn, overt_t *v, omesh_t *other_m, int level)
 {
     double vdist;
     overt_t *v_closest = other_m->vert_closest(&vdist, v);
@@ -241,7 +241,7 @@ nearby_vert(ON_3dPoint &spnt, ON_3dVector &sn, overt_t *v, omesh_t *other_m, dou
     // Past the easy case - now we need the closest surface point on other_m
     ON_3dPoint opnt = v->vpnt();
     ON_3dPoint vcpnt = v_closest->vpnt();
-    double vo_to_vc = vcpnt.DistanceTo(opnt); 
+    double vo_to_vc = vcpnt.DistanceTo(opnt);
     double spdist = vo_to_vc * 10;
     if (!other_m->fmesh->closest_surf_pnt(spnt, sn, &opnt, spdist)) {
 	// If there's no closest surface point within dist, there's probably
@@ -274,27 +274,17 @@ nearby_vert(ON_3dPoint &spnt, ON_3dVector &sn, overt_t *v, omesh_t *other_m, dou
 	return NULL;
     }
 
-    if (level == 0) {
-	// In this mode, if the surface point is close to the closest existing
-	// vertex per its bounding box size, report the vertex as nearby.  In
-	// essence this can be considered an "approximate" nearby vert match.
-	double cvbbdiag = v_closest->bb.Diagonal().Length() * 0.1;
-	if (vcpnt.DistanceTo(spnt) < cvbbdiag) {
-	   return v_closest;
-	} else {
-	    return NULL;
-	} 
+    // If the surface point is close to the closest existing vertex per its
+    // bounding box size, report the vertex as nearby.  In essence this can be
+    // considered an "approximate" nearby vert match, keyed to local edge
+    // lengths from involved triangle edges.
+    double factor = (level < INT_MAX) ? (1.0/(double)(10 + level)) : 0;
+    double cvbbdiag = v_closest->bb.Diagonal().Length() * factor + 2 * ON_ZERO_TOLERANCE;
+    if (vcpnt.DistanceTo(spnt) < cvbbdiag) {
+	return v_closest;
     }
 
-    // We're close according to the smallest bounding box - depending on the
-    // mode, that might be enough, but if we're being strict go ahead and
-    // check that spnt is (nearly) the same as the v_closest pnt.
-    double dtol = (dist > 0) ? dist : 2 * ON_ZERO_TOLERANCE;
-    if (spnt.DistanceTo(v_closest->vpnt()) > dtol) {
-	return NULL;
-    }
-
-    return v_closest;
+    return NULL;
 }
 
 int
@@ -304,7 +294,7 @@ add_refinement_vert(overt_t *v, omesh_t *other_m, int level)
     // of this vertex.
     ON_3dPoint spnt;
     ON_3dVector sn;
-    if (nearby_vert(spnt, sn, v, other_m, 0, level)) {
+    if (nearby_vert(spnt, sn, v, other_m, level)) {
 	return 0;
     }
 
@@ -1323,37 +1313,6 @@ check_faces_validity(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pair
 
     return valid;
 }
-
-#if 0
-int
-vert_nearby_missing(
-	overt_t *nv,
-	std::map<bedge_seg_t *, std::set<overt_t *>> &edge_verts,
-	std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
-{
-    int retcnt = 0;
-
-    // For the given vertex, check any mesh from any of the pairs that
-    // is potentially overlapping.
-    std::set<omesh_t *> check_meshes = active_omeshes(check_pairs);
-
-    std::set<omesh_t *>::iterator m_it;
-    for (m_it = check_meshes.begin(); m_it != check_meshes.end(); m_it++) {
-	// If there are close triangles to this vertex but the closest surface
-	// point is not near one of the verts of those triangles, we need to
-	// introduce a new point onto the opposite mesh.  Also will have to
-	// check if the point we need to introduce is an edge point.
-	omesh_t *m = *m_it;
-
-	if (!nearby_vert(nv, m, 0)) {
-	    // Add a new refinement vert
-	    retcnt += add_refinement_vert(nv, m);
-	}
-    }
-
-    return retcnt;
-}
-#endif
 
 int
 omesh_interior_edge_verts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
