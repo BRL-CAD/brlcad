@@ -343,6 +343,7 @@ struct triangle_t {
 	return (c1 || c2 || c3);
     }
 
+    ON_3dPoint * vpnt(int i);
 };
 
 
@@ -1081,17 +1082,8 @@ class ovlp_grp {
         void characterize_verts(int ind);
 };
 
-int
-tri_isect(
-	omesh_t *omesh1, triangle_t &t1,
-	omesh_t *omesh2, triangle_t &t2,
-	int mode
-	);
-int
-tri_nearedge_refine(
-	omesh_t *omesh1, triangle_t &t1,
-	omesh_t *omesh2, triangle_t &t2
-	);
+int tri_isect(triangle_t &t1, triangle_t &t2, int mode );
+int tri_nearedge_refine(triangle_t &t1, triangle_t &t2);
 
 std::set<omesh_t *>
 active_omeshes(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs);

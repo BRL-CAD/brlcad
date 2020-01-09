@@ -221,6 +221,17 @@ bedge_seg_t::uedges()
     return uedges;
 }
 
+/*****************************/
+/* triangle_t implementation */
+/*****************************/
+
+ON_3dPoint *
+triangle_t::vpnt(int i)
+{
+    return m->pnts[v[i]];
+}
+
+
 /***************************/
 /* CPolygon implementation */
 /***************************/

@@ -199,10 +199,10 @@ public:
 class tri_isect_t {
     public:
 
-	tri_isect_t(cdt_mesh_t *f1, cdt_mesh_t *f2, triangle_t &tri1, triangle_t &tri2, int m)
+	tri_isect_t(triangle_t &tri1, triangle_t &tri2, int m)
 	{
-	    fmesh1 = f1;
-	    fmesh2 = f2;
+	    fmesh1 = tri1.m;
+	    fmesh2 = tri2.m;
 	    t1 = tri1;
 	    t2 = tri2;
 	    mode = m;
@@ -612,15 +612,12 @@ TRICHK(cdt_mesh_t *fmesh1, cdt_mesh_t *fmesh2, triangle_t &t1, triangle_t &t2)
  *****************************************************************************/
 int
 tri_isect(
-	omesh_t *omesh1, triangle_t &t1,
-       	omesh_t *omesh2, triangle_t &t2,
+	triangle_t &t1,
+       	triangle_t &t2,
 	int mode
 	)
 {
-    cdt_mesh_t *fmesh1 = omesh1->fmesh;
-    cdt_mesh_t *fmesh2 = omesh2->fmesh;
-
-    tri_isect_t tri_isection(fmesh1, fmesh2, t1, t2, mode);
+    tri_isect_t tri_isection(t1, t2, mode);
 
     if (!tri_isection.isect_basic()) {
 	return 0;
@@ -680,9 +677,8 @@ remote_vert_process(bool pinside, overt_t *v, omesh_t *om_other, triangle_t &tri
 
 
 static int
-near_edge_refinement(double t, double vtol, overt_t *v, omesh_t *om_other, triangle_t &tri) {
+near_edge_refinement(double t, double vtol) {
     if (t > 0  && t < 1 && !NEAR_ZERO(t, vtol) && !NEAR_EQUAL(t, 1, vtol)) {
-	om_other->refinement_overts[v].insert(tri.ind);
 	return 1;
     }
     return 0;
@@ -691,74 +687,52 @@ near_edge_refinement(double t, double vtol, overt_t *v, omesh_t *om_other, trian
 // Assuming t1 and t2 intersect, identify any refinement vertices that need processing
 int
 tri_nearedge_refine(
-	omesh_t *omesh1, triangle_t &t1,
-       	omesh_t *omesh2, triangle_t &t2
+	triangle_t &t1,
+       	triangle_t &t2
 	)
 {
-    cdt_mesh_t *fmesh1 = omesh1->fmesh;
-    cdt_mesh_t *fmesh2 = omesh2->fmesh;
-
-    tri_isect_t tri_isection(fmesh1, fmesh2, t1, t2, 0);
+    tri_isect_t tri_isection(t1, t2, 0);
 
     if (!tri_isection.isect_basic()) {
 	return 0;
     }
 
-    // TODO - need something less arbitrary here... maybe < 0.5 the distance from the tri centerpoint to
-    // the edge?
+    // TODO - need something less arbitrary here... maybe < 0.5 the distance
+    // from the tri centerpoint to the edge?
     double etol = 0.1*tri_isection.elen_min;
 
     int process_cnt = 0;
-    double vtol = 0.01;
-    overt_t *v = NULL;
+    double vtol = 0.01; // used on a 0-1 parametric line parameter comparison
 
     for (int i = 0; i < 3; i++) {
 	for (int j = 0; j < 3; j++) {
-	    v = omesh2->overts[t2.v[j]];
+	    ON_3dPoint *vpnt = t2.vpnt(j);
 	    double lt;
-	    tri_isection.t1_lines[i].ClosestPointTo(v->vpnt(), &lt);
-	    if (v->vpnt().DistanceTo(tri_isection.t1_lines[i].PointAt(lt)) < etol) {
-		process_cnt += near_edge_refinement(lt, vtol, v, omesh1, t1);
+	    tri_isection.t1_lines[i].ClosestPointTo(*vpnt, &lt);
+	    if (vpnt->DistanceTo(tri_isection.t1_lines[i].PointAt(lt)) < etol) {
+		if (near_edge_refinement(lt, vtol)) {
+		    overt_t *v = t2.m->omesh->overts[t2.v[j]];
+		    t1.m->omesh->refinement_overts[v].insert(t2.ind);
+		    process_cnt++;
+		}
 	    }
 	}
     }
 
     for (int i = 0; i < 3; i++) {
 	for (int j = 0; j < 3; j++) {
-	    v = omesh1->overts[t1.v[j]];
+	    ON_3dPoint *vpnt = t1.vpnt(j);
 	    double lt;
-	    tri_isection.t2_lines[i].ClosestPointTo(v->vpnt(), &lt);
-	    if (v->vpnt().DistanceTo(tri_isection.t2_lines[i].PointAt(lt)) < etol) {
-		process_cnt += near_edge_refinement(lt, vtol, v, omesh2, t2);
+	    tri_isection.t2_lines[i].ClosestPointTo(*vpnt, &lt);
+	    if (vpnt->DistanceTo(tri_isection.t2_lines[i].PointAt(lt)) < etol) {
+		if (near_edge_refinement(lt, vtol)) {
+		    overt_t *v = t1.m->omesh->overts[t1.v[j]];
+		    t2.m->omesh->refinement_overts[v].insert(t1.ind);
+		    process_cnt++;
+		}
 	    }
 	}
     }
-
-    if (process_cnt > 0) {
-	return process_cnt;
-    }
-
-#if 0
-    // If any vertices are actually inside the other mesh, consider them.
-
-    for (int i = 0; i < 3; i++) {
-	v = omesh2->overts[t2.v[i]];
-	struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)omesh1->fmesh->p_cdt;
-	ON_3dPoint vp = v->vpnt();
-	if (on_point_inside(s_cdt1, &vp)) {
-	    process_cnt += remote_vert_process(true, v, omesh1, t2);
-	}
-    }
-
-    for (int i = 0; i < 3; i++) {
-	v = omesh1->overts[t1.v[i]];
-	struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)omesh2->fmesh->p_cdt;
-	ON_3dPoint vp = v->vpnt();
-	if (on_point_inside(s_cdt2, &vp)) {
-	    process_cnt += remote_vert_process(true, v, omesh2, t1);
-	}
-    }
-#endif
 
     return process_cnt;
 }

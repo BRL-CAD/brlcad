@@ -354,7 +354,7 @@ omesh_refinement_pnts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pair
 		    omesh_t *im = s_it->first;
 		    size_t otri_ind = s_it->second;
 		    triangle_t t2 = im->fmesh->tris_vect[otri_ind];
-		    tri_nearedge_refine(am, t1, im, t2);
+		    tri_nearedge_refine(t1, t2);
 		}
 	    }
 	}
@@ -455,7 +455,7 @@ omesh_ovlps(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs, int mod
 		for (tb_it = tris_prelim.begin(); tb_it != tris_prelim.end(); tb_it++) {
 		    triangle_t t1 = omesh1->fmesh->tris_vect[tb_it->first];
 		    triangle_t t2 = omesh2->fmesh->tris_vect[tb_it->second];
-		    int isect = tri_isect(omesh1, t1, omesh2, t2, mode);
+		    int isect = tri_isect(t1, t2, mode);
 		    if (isect) {
 			omesh1->itris[t1.ind].insert(std::make_pair(omesh2, t2.ind));
 			omesh2->itris[t2.ind].insert(std::make_pair(omesh1, t1.ind));
