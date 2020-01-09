@@ -521,7 +521,7 @@ orient_tri(cdt_mesh_t &fmesh, triangle_t &t)
 }
 
 static int
-refine_edge_vert_sets(omesh_t *omesh)
+interior_edge_verts(omesh_t *omesh)
 {
     struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)omesh->fmesh->p_cdt;
 
@@ -899,7 +899,7 @@ adjust_close_verts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 	    vert_ovlps[v2].insert(v1);
 	}
     }
-    //std::cout << "Found " << vert_ovlps.size() << " vertices with box overlaps\n";
+    std::cout << "Found " << vert_ovlps.size() << " vertices with box overlaps\n";
 
 
     std::queue<std::pair<overt_t *, overt_t *>> vq;
@@ -923,8 +923,8 @@ adjust_close_verts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 	v_other->aligned[v->omesh] = v;
     }
 
-    //std::cout << "Have " << vq.size() << " simple interactions\n";
-    //std::cout << "Have " << vq_multi.size() << " complex interactions\n";
+    std::cout << "Have " << vq.size() << " simple interactions\n";
+    std::cout << "Have " << vq_multi.size() << " complex interactions\n";
     std::set<overt_t *> adjusted;
 
     int adjusted_overts = 0;
@@ -943,7 +943,7 @@ adjust_close_verts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
     while (vq_multi.size()) {
 	overt_t *l = get_largest_overt(vq_multi);
 	if (!l) {
-	    vq_multi.erase(l);
+	    vq_multi.erase(vq_multi.begin());
 	    continue;
 	}
 	overt_t *c = closest_overt(vert_ovlps[l], l);
@@ -1365,7 +1365,7 @@ omesh_interior_edge_verts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check
     std::set<omesh_t *>::iterator o_it;
     for (o_it = omeshes.begin(); o_it != omeshes.end(); o_it++) {
 	omesh_t *omesh = *o_it;
-	rcnt += refine_edge_vert_sets(omesh);
+	rcnt += interior_edge_verts(omesh);
     }
 
     return rcnt;
@@ -1436,9 +1436,10 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     // If we're going to process, initialize refinement points
     omesh_refinement_pnts(check_pairs, rpnt_level);
 
-    int bedge_replaced_tris = INT_MAX;
-
     while (rpnt_level < 2) {
+
+	int bedge_replaced_tris = INT_MAX;
+
 	while (bedge_replaced_tris) {
 	    int avcnt = 0;
 	    // The simplest operation is to find vertices close to each other
