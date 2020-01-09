@@ -1109,7 +1109,7 @@ bedge_split_near_verts(
 
 
 overt_t *
-nearby_vert(overt_t *v, omesh_t *other_m, int mode);
+nearby_vert(overt_t *v, omesh_t *other_m, double dist);
 
 int
 add_refinement_vert(overt_t *v, omesh_t *other_m,

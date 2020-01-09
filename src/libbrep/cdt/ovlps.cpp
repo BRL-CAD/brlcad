@@ -302,8 +302,6 @@ omesh_refinement_pnts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pair
     std::set<omesh_t *> a_omesh = itris_omeshes(check_pairs);
     std::set<omesh_t *>::iterator a_it;
 
-    // TODO - incorporate tri_nearedge_refine in here somewhere...
-
     if (level == 0) {
 	// Count triangles to determine which verts need attention.  If a vertex is associated
 	// with two or more triangles that intersect another face, it is a refinement point
@@ -1303,7 +1301,7 @@ check_faces_validity(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pair
 }
 
 overt_t *
-nearby_vert(overt_t *v, omesh_t *other_m, int mode)
+nearby_vert(overt_t *v, omesh_t *other_m, double dist)
 {
     double vdist;
     overt_t *v_closest = other_m->vert_closest(&vdist, v);
@@ -1317,8 +1315,8 @@ nearby_vert(overt_t *v, omesh_t *other_m, int mode)
     ON_3dPoint opnt = v->vpnt();
     ON_3dPoint spnt;
     ON_3dVector sn;
-    double dist = v_closest->vpnt().DistanceTo(opnt) * 10;
-    if (!other_m->fmesh->closest_surf_pnt(spnt, sn, &opnt, dist)) {
+    double spdist = v_closest->vpnt().DistanceTo(opnt) * 10;
+    if (!other_m->fmesh->closest_surf_pnt(spnt, sn, &opnt, spdist)) {
 	// If there's no closest surface point within dist, there's probably
 	// an error - it should at least have found the v_closest point...
 	std::cerr << "Error - couldn't find closest point\n";
@@ -1352,7 +1350,8 @@ nearby_vert(overt_t *v, omesh_t *other_m, int mode)
     // We're close according to the smallest bounding box - depending on the
     // mode, that might be enough, but if we're being strict go ahead and
     // check that spnt is (nearly) the same as the v_closest pnt.
-    if (mode == 1 && spnt.DistanceTo(v_closest->vpnt()) > 2*ON_ZERO_TOLERANCE) {
+    double dtol = (dist > 0) ? dist : 2 * ON_ZERO_TOLERANCE;
+    if (spnt.DistanceTo(v_closest->vpnt()) > dtol) {
 	return NULL;
     }
 
