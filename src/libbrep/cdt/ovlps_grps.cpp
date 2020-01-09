@@ -243,7 +243,7 @@ ovlp_grp::characterize_verts(int ind)
 	    std::set<size_t> uet = other_m->fmesh->uedges2tris[closest_edge];
 	    std::set<size_t>::iterator u_it;
 	    for (u_it = uet.begin(); u_it != uet.end(); u_it++) {
-		other_m->refinement_overts[ov].insert(*u_it);
+		other_m->ivert_ref_cnts[ov].insert(*u_it);
 	    }
 	}
 
@@ -274,11 +274,10 @@ ovlp_grp::characterize_verts(int ind)
 	    std::set<size_t> uet = other_m->fmesh->uedges2tris[closest_edge];
 	    std::set<size_t>::iterator u_it;
 	    for (u_it = uet.begin(); u_it != uet.end(); u_it++) {
-		other_m->refinement_overts[uv].insert(*u_it);
+		other_m->ivert_ref_cnts[uv].insert(*u_it);
 	    }
 	}
     }
-
 }
 
 size_t
@@ -874,7 +873,7 @@ find_interior_edge_grps(
     std::cout << "done with edge aligned\n";
 }
 
-
+#if 0
 void
 refinement_reset(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 {
@@ -886,6 +885,7 @@ refinement_reset(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 	omesh2->refinement_clear();
     }
 }
+#endif
 
 void
 shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
@@ -920,7 +920,7 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 	    // Have groupings - reset refinement info
 	    size_t refinement_cnt_prev = (refinement_cnt < INT_MAX) ? refinement_cnt : 0;
 	    refinement_cnt = 0;
-	    refinement_reset(check_pairs);
+	    //refinement_reset(check_pairs);
 	    for (size_t i = 0; i < bins.size(); i++) {
 		bins[i].edge_verts = &edge_verts;
 		size_t bcnt = bins[i].characterize_all_verts();
@@ -953,7 +953,7 @@ shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 			    // will be handled by the edge refinement.
 			    std::set<overt_t *>::iterator e_it;
 			    for (e_it = es_it->second.begin(); e_it != es_it->second.end(); e_it++) {
-				am->refinement_overts.erase(*e_it);
+				//am->near_verts.erase(*e_it);
 			    }
 			}
 		    }

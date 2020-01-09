@@ -646,36 +646,6 @@ tri_isect(
     return 1;
 }
 
-
-int
-remote_vert_process(bool pinside, overt_t *v, omesh_t *om_other, triangle_t &tri)
-{
-    if (!v) {
-	std::cout << "WARNING: - no overt for vertex??\n";
-	return 0;
-    }
-    ON_3dPoint vp = v->vpnt();
-    bool near_vert = false;
-    std::set<overt_t *> cverts = om_other->vert_search(v->bb);
-    std::set<overt_t *>::iterator v_it;
-    for (v_it = cverts.begin(); v_it != cverts.end(); v_it++) {
-	ON_3dPoint cvpnt = (*v_it)->vpnt();
-	double cvbbdiag = (*v_it)->bb.Diagonal().Length() * 0.1;
-	if (vp.DistanceTo(cvpnt) < cvbbdiag) {
-	    near_vert = true;
-	    break;
-	}
-    }
-
-    if (!near_vert && pinside) {
-	om_other->refinement_overts[v].insert(tri.ind);
-	return 1;
-    }
-
-    return 0;
-}
-
-
 static int
 near_edge_refinement(double t, double vtol) {
     if (t > 0  && t < 1 && !NEAR_ZERO(t, vtol) && !NEAR_EQUAL(t, 1, vtol)) {
@@ -688,7 +658,8 @@ near_edge_refinement(double t, double vtol) {
 int
 tri_nearedge_refine(
 	triangle_t &t1,
-       	triangle_t &t2
+       	triangle_t &t2,
+	int level
 	)
 {
     tri_isect_t tri_isection(t1, t2, 0);
@@ -712,8 +683,7 @@ tri_nearedge_refine(
 	    if (vpnt->DistanceTo(tri_isection.t1_lines[i].PointAt(lt)) < etol) {
 		if (near_edge_refinement(lt, vtol)) {
 		    overt_t *v = t2.m->omesh->overts[t2.v[j]];
-		    t1.m->omesh->refinement_overts[v].insert(t2.ind);
-		    process_cnt++;
+		    process_cnt += add_refinement_vert(v, t1.m->omesh, level);
 		}
 	    }
 	}
@@ -727,8 +697,7 @@ tri_nearedge_refine(
 	    if (vpnt->DistanceTo(tri_isection.t2_lines[i].PointAt(lt)) < etol) {
 		if (near_edge_refinement(lt, vtol)) {
 		    overt_t *v = t1.m->omesh->overts[t1.v[j]];
-		    t2.m->omesh->refinement_overts[v].insert(t1.ind);
-		    process_cnt++;
+		    process_cnt += add_refinement_vert(v, t2.m->omesh, level);
 		}
 	    }
 	}

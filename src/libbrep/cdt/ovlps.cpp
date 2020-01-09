@@ -44,7 +44,7 @@
  * Temporary debugging utilities
  ******************************************/
 
-//#define OVLPS_DEBUG 1
+#define OVLPS_DEBUG 1
 
 #ifdef OVLPS_DEBUG
 void
@@ -82,8 +82,7 @@ VPCHECK(overt_t *v, const char *fname)
 
 static void
 plot_active_omeshes(
-	std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs,
-	std::map<bedge_seg_t *, std::set<overt_t *>> *ev
+	std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs
 	)
 {
     std::set<omesh_t *> a_omesh;
@@ -105,7 +104,7 @@ plot_active_omeshes(
     // Plot overlaps with refinement points
     for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
 	omesh_t *am = *a_it;
-	am->plot(ev);
+	am->plot();
     }
 
 }
@@ -141,10 +140,10 @@ refinement_omeshes(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
 	omesh_t *omesh1 = cp_it->first->omesh;
 	omesh_t *omesh2 = cp_it->second->omesh;
-	if (omesh1->refinement_overts.size()) {
+	if (omesh1->edge_sets.size()) {
 	    a_omesh.insert(omesh1);
 	}
-	if (omesh2->refinement_overts.size()) {
+	if (omesh2->edge_sets.size()) {
 	    a_omesh.insert(omesh2);
 	}
     }
@@ -164,11 +163,9 @@ itris_omeshes(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 	omesh_t *omesh2 = cp_it->second->omesh;
 	if (omesh1->itris.size()) {
 	    a_omesh.insert(omesh1);
-	    omesh1->refinement_overts.clear();
 	}
 	if (omesh2->itris.size()) {
 	    a_omesh.insert(omesh2);
-	    omesh2->refinement_overts.clear();
 	}
     }
 
@@ -230,78 +227,146 @@ possibly_interfering_face_pairs(struct ON_Brep_CDT_State **s_a, int s_cnt)
     return check_pairs;
 }
 
-// Identify refinement points that are close to face edges - they present a
-// particular problem
-std::map<bedge_seg_t *, std::set<overt_t *>>
-find_edge_verts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs)
+overt_t *
+nearby_vert(ON_3dPoint &spnt, ON_3dVector &sn, overt_t *v, omesh_t *other_m, double dist, int level)
 {
-    std::set<omesh_t *> a_omesh = refinement_omeshes(check_pairs);
-    std::set<omesh_t *>::iterator a_it;
+    double vdist;
+    overt_t *v_closest = other_m->vert_closest(&vdist, v);
 
-    std::map<bedge_seg_t *, std::set<overt_t *>> edge_verts;
-    edge_verts.clear();
-    for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
-	omesh_t *am = *a_it;
-	std::set<overt_t *> everts;
-	std::set<overt_t *>::iterator e_it;
-	std::map<overt_t *, std::set<long>>::iterator r_it;
-	for (r_it = am->refinement_overts.begin(); r_it != am->refinement_overts.end(); r_it++) {
-	    overt_t *v = r_it->first;
-	    ON_3dPoint p = v->vpnt();
-	    uedge_t closest_edge = am->closest_uedge(p);
-	    bool pprint = false;
-
-	    if (am->fmesh->brep_edges.find(closest_edge) != am->fmesh->brep_edges.end()) {
-		bedge_seg_t *bseg = am->fmesh->ue2b_map[closest_edge];
-		if (!bseg) {
-		    std::cout << "couldn't find bseg pointer??\n";
-		} else {
-
-		    // TODO - be aware of distances - if v is far from the
-		    // closest_edge line segment relative to that segment's
-		    // length and that closest segment is a brep edge segment,
-		    // don't split the edge at this point - we'll probably be
-		    // introducing other, more useful points
-
-		    //VPCHECK(v, NULL);
-		    edge_verts[bseg].insert(v);
-
-		    // Erase regardless - if we're here, we won't be using this point for
-		    // interiors on the other mesh
-		    everts.insert(v);
-		}
-
-		if (pprint) {
-		    std::cout << "PROBLEM point INSERTED from " << am->sname() << "!\n";
-		}
-	    }
-	}
-	// Remove any edge vertices from the refinement_overts container - they'll be handled
-	// separately
-	for (e_it = everts.begin(); e_it != everts.end(); e_it++) {
-	    am->refinement_overts.erase(*e_it);
-	}
+    // If we're extremely close, just go with v_closest
+    if (vdist < 2*ON_ZERO_TOLERANCE) {
+	return v_closest;
     }
 
-    //plot_active_omeshes(check_pairs, &edge_verts);
+    // Past the easy case - now we need the closest surface point on other_m
+    ON_3dPoint opnt = v->vpnt();
+    ON_3dPoint vcpnt = v_closest->vpnt();
+    double vo_to_vc = vcpnt.DistanceTo(opnt); 
+    double spdist = vo_to_vc * 10;
+    if (!other_m->fmesh->closest_surf_pnt(spnt, sn, &opnt, spdist)) {
+	// If there's no closest surface point within dist, there's probably
+	// an error - it should at least have found the v_closest point...
+	std::cerr << "Error - couldn't find closest point\n";
+	return NULL;
+    }
 
-    return edge_verts;
+    // See if the closest vert bbox overlaps the closest surface
+    // point to v.  If not, there is definitely no nearby vertex defined,
+    // since we know spnt is free to be defined as a vertex according
+    // to other_m's vertices.
+    ON_BoundingBox spbb(spnt, spnt);
+    if (v_closest->bb.IsDisjoint(spbb)) {
+	return NULL;
+    }
+
+    // We know v_closest isn't nearby according according to v_closest's bbox,
+    // but v_closest may have an arbitrarily sized bbox depending on its
+    // associated edge lengths.  Hence it may contain spnt even though (from
+    // v's perspective) it isn't close.  Construct a new bbox using the
+    // v_closest point and the box size of v, and repeat the bbox check for
+    // spbb.
+    ON_BoundingBox v_closest_v_bb(v_closest->vpnt(), v_closest->vpnt());
+    ON_3dPoint c1 = vcpnt + v->bb.Diagonal()*0.5;
+    ON_3dPoint c2 = vcpnt - v->bb.Diagonal()*0.5;
+    v_closest_v_bb.Set(c1, true);
+    v_closest_v_bb.Set(c2, true);
+    if (v_closest_v_bb.IsDisjoint(spbb)) {
+	return NULL;
+    }
+
+    if (level == 0) {
+	// In this mode, if the surface point is close to the closest existing
+	// vertex per its bounding box size, report the vertex as nearby.  In
+	// essence this can be considered an "approximate" nearby vert match.
+	double cvbbdiag = v_closest->bb.Diagonal().Length() * 0.1;
+	if (vcpnt.DistanceTo(spnt) < cvbbdiag) {
+	   return v_closest;
+	} else {
+	    return NULL;
+	} 
+    }
+
+    // We're close according to the smallest bounding box - depending on the
+    // mode, that might be enough, but if we're being strict go ahead and
+    // check that spnt is (nearly) the same as the v_closest pnt.
+    double dtol = (dist > 0) ? dist : 2 * ON_ZERO_TOLERANCE;
+    if (spnt.DistanceTo(v_closest->vpnt()) > dtol) {
+	return NULL;
+    }
+
+    return v_closest;
+}
+
+int
+add_refinement_vert(overt_t *v, omesh_t *other_m, int level)
+{
+    // If we've already got a matching vertex, we don't change anything because
+    // of this vertex.
+    ON_3dPoint spnt;
+    ON_3dVector sn;
+    if (nearby_vert(spnt, sn, v, other_m, 0, level)) {
+	return 0;
+    }
+
+    // If we're close to a brep face edge, needs to go in edge_verts.
+    // else, list as a new vert requiring a nearby vert on mesh other_m.
+    //
+    // What should happen in successive iterations is the following:
+    // 1.  The first pass will split the brep face edge at the closest
+    // point to the near-edge point in question, introducing a new
+    // triangle edge and triangles in the vicinity of the nearby vertex.
+    //
+    // 2.  A second pass will then find the closest edge to the same
+    // vertex (if the vertex is still intruding) closer to the new
+    // interior edge than the original brep face edge, and the categorization
+    // of the point will change to an interior point.
+    ON_3dPoint vpnt = v->vpnt();
+    uedge_t closest_edge = other_m->closest_uedge(vpnt);
+    if (other_m->fmesh->brep_edges.find(closest_edge) != other_m->fmesh->brep_edges.end()) {
+	bedge_seg_t *bseg = other_m->fmesh->ue2b_map[closest_edge];
+	if (!bseg) {
+	    std::cout << "couldn't find bseg pointer??\n";
+	    return 0;
+	} else {
+	    (*other_m->edge_verts)[bseg].insert(v);
+	}
+    } else {
+	// Point is interior - stash relevant information
+	revt_pt_t rpt;
+	rpt.spnt = spnt;
+	rpt.sn = sn;
+	rpt.ov = v;
+	other_m->edge_sets[closest_edge].push_back(rpt);
+    }
+
+    return 1;
 }
 
 
-/* TODO - There are three levels of aggressiveness we can use when assigning refinement points:
+/* There are three levels of aggressiveness we can use when assigning refinement points:
  *
  * 1.  Only use vertices that share at least two triangles which overlap with the other mesh
  * 2.  Use all vertices from triangles that overlap
- * 3.  Use all vertices from the other mesh that are contained by the bounding box of the
+ * 3.  MAYBE TODO... Use all vertices from the other mesh that are contained by the bounding box of the
  *     overlapping triangle from this mesh.
  */
 size_t
-omesh_refinement_pnts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs, int level)
+omesh_refinement_pnts(
+	std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs,
+	int level
+	)
 {
     std::set<omesh_t *> a_omesh = itris_omeshes(check_pairs);
     std::set<omesh_t *>::iterator a_it;
+	    
+    (*a_omesh.begin())->edge_verts->clear();
+    for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
+	(*a_it)->edge_sets.clear();
+	(*a_it)->ivert_ref_cnts.clear();
+    }
 
+    // At the first level, we don't want to get too aggressive about introducing new vertex points
+    // because we haven't done any significant clean-up on what's already there.
     if (level == 0) {
 	// Count triangles to determine which verts need attention.  If a vertex is associated
 	// with two or more triangles that intersect another face, it is a refinement point
@@ -317,25 +382,20 @@ omesh_refinement_pnts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pair
 		    triangle_t tri = im->fmesh->tris_vect[otri_ind];
 		    for (int i = 0; i < 3; i++) {
 			overt_t *v = im->overts[tri.v[i]];
-			am->refinement_overts[v].insert(otri_ind);
+			am->ivert_ref_cnts[v].insert(otri_ind);
 		    }
 		}
 	    }
 	}
 	for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
-	    std::set<overt_t *> ev;
-	    std::set<overt_t *>::iterator ev_it;
-	    std::map<overt_t *, std::set<long>>::iterator r_it;
 	    omesh_t *am = *a_it;
-	    for (r_it = am->refinement_overts.begin(); r_it != am->refinement_overts.end(); r_it++) {
+	    std::map<overt_t *, std::set<long>>::iterator r_it;
+	    for (r_it = am->ivert_ref_cnts.begin(); r_it != am->ivert_ref_cnts.end(); r_it++) {
 		//VPCHECK(r_it->first, NULL);
-		// Not enough activity hits, not a refinement vertex
-		if (r_it->second.size() == 1) {
-		    ev.insert(r_it->first);
+		// If there are enough activity hits, we need a nearby vertex
+		if (r_it->second.size() > 1) {
+		    add_refinement_vert(r_it->first, am, level);
 		}
-	    }
-	    for (ev_it = ev.begin(); ev_it != ev.end(); ev_it++) {
-		am->refinement_overts.erase(*ev_it);
 	    }
 	}
 
@@ -354,57 +414,28 @@ omesh_refinement_pnts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pair
 		    omesh_t *im = s_it->first;
 		    size_t otri_ind = s_it->second;
 		    triangle_t t2 = im->fmesh->tris_vect[otri_ind];
-		    tri_nearedge_refine(t1, t2);
+		    tri_nearedge_refine(t1, t2, level);
 		}
 	    }
 	}
     }
 
-    if (level == 1) {
-	// Add all vertices associated with triangles that intersect another
-	// face.
-	for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
-	    omesh_t *am = *a_it;
-	    std::map<size_t, std::set<std::pair<omesh_t *, size_t>> >::iterator p_it;
-	    for (p_it = am->itris.begin(); p_it != am->itris.end(); p_it++) {
-		std::set<std::pair<omesh_t *, size_t>>::iterator s_it;
-		for (s_it = p_it->second.begin(); s_it != p_it->second.end(); s_it++) {
-		    omesh_t *im = s_it->first;
-		    size_t otri_ind = s_it->second;
-		    triangle_t tri = im->fmesh->tris_vect[otri_ind];
-		    for (int i = 0; i < 3; i++) {
-			overt_t *v = im->overts[tri.v[i]];
-			am->refinement_overts[v].insert(otri_ind);
-		    }
-		}
-	    }
-	}
-    }
-
-    // This case is a bit different - we're altering the intruding mesh's
-    // containers based on the triangles recorded in this container, instead
-    // of the other way around.
-    if (level > 1) {
-    	for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
-	    omesh_t *am = *a_it;
-	    std::map<size_t, std::set<std::pair<omesh_t *, size_t>> >::iterator p_it;
-	    for (p_it = am->itris.begin(); p_it != am->itris.end(); p_it++) {
-		std::set<std::pair<omesh_t *, size_t>>::iterator s_it;
-		for (s_it = p_it->second.begin(); s_it != p_it->second.end(); s_it++) {
-		    omesh_t *im = s_it->first;
-		    size_t otri_ind = s_it->second;
-
-		    triangle_t tri = im->fmesh->tris_vect[otri_ind];
-		    ON_BoundingBox t_bb = im->fmesh->tri_bbox(tri.ind);
-		    std::set<size_t> otris = am->tris_search(t_bb);
-		    std::set<size_t>::iterator o_it;
-		    for (o_it = otris.begin(); o_it != otris.end(); o_it++) {
-			triangle_t otri = am->fmesh->tris_vect[*o_it];
-			for (int i = 0; i < 3; i++) {
-			    overt_t *v = am->overts[otri.v[i]];
-			    im->refinement_overts[v].insert(otri.ind);
-			}
-		    }
+    // At the second level, we need to be more aggressive - earlier efforts have
+    // not resolved these triangles. Add all vertices associated with triangles
+    // that intersect another face, and harden the nearby vertex criteria to a
+    // tight distance tolerance.
+    for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
+	omesh_t *am = *a_it;
+	std::map<size_t, std::set<std::pair<omesh_t *, size_t>> >::iterator p_it;
+	for (p_it = am->itris.begin(); p_it != am->itris.end(); p_it++) {
+	    std::set<std::pair<omesh_t *, size_t>>::iterator s_it;
+	    for (s_it = p_it->second.begin(); s_it != p_it->second.end(); s_it++) {
+		omesh_t *im = s_it->first;
+		size_t otri_ind = s_it->second;
+		triangle_t tri = im->fmesh->tris_vect[otri_ind];
+		for (int i = 0; i < 3; i++) {
+		    overt_t *v = im->overts[tri.v[i]];
+		    add_refinement_vert(v, am, level);
 		}
 	    }
 	}
@@ -413,10 +444,10 @@ omesh_refinement_pnts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pair
     size_t rcnt = 0;
     for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
 	omesh_t *am = *a_it;
-	rcnt += am->refinement_overts.size();
+	rcnt += am->edge_sets.size();
     }
 
-    //plot_active_omeshes(check_pairs, NULL);
+    plot_active_omeshes(check_pairs);
 
     return rcnt;
 }
@@ -489,19 +520,8 @@ orient_tri(cdt_mesh_t &fmesh, triangle_t &t)
     }
 }
 
-class revt_pt_t {
-    public:
-	ON_3dPoint spnt;
-	ON_3dVector sn;
-	overt_t *ov;
-};
-
-
 static int
-refine_edge_vert_sets (
-	omesh_t *omesh,
-	std::map<uedge_t, std::vector<revt_pt_t>> *edge_sets
-)
+refine_edge_vert_sets(omesh_t *omesh)
 {
     struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)omesh->fmesh->p_cdt;
 
@@ -511,12 +531,14 @@ refine_edge_vert_sets (
 
     int new_tris = 0; 
 
-    while (edge_sets->size()) {
+    std::map<uedge_t, std::vector<revt_pt_t>> wedge_sets = omesh->edge_sets;
+
+    while (wedge_sets.size()) {
 	std::map<uedge_t, std::vector<revt_pt_t>> updated_esets;
 
-	uedge_t ue = edge_sets->begin()->first;
-	std::vector<revt_pt_t> epnts = edge_sets->begin()->second;
-	edge_sets->erase(edge_sets->begin());
+	uedge_t ue = wedge_sets.begin()->first;
+	std::vector<revt_pt_t> epnts = wedge_sets.begin()->second;
+	wedge_sets.erase(wedge_sets.begin());
 
 	// Find the two triangles that we will be using to form the outer polygon
 	std::set<size_t> rtris = omesh->fmesh->uedges2tris[ue];
@@ -721,9 +743,9 @@ refine_edge_vert_sets (
 	std::set<uedge_t>::iterator pre_it;
 	for (pre_it = pnt_reassignment_edges.begin(); pre_it != pnt_reassignment_edges.end(); pre_it++) {
 	    uedge_t rue = *pre_it;
-	    std::vector<revt_pt_t> old_epnts = (*edge_sets)[rue];
-	    std::map<uedge_t, std::vector<revt_pt_t>>::iterator er_it = edge_sets->find(rue);
-	    edge_sets->erase(er_it);
+	    std::vector<revt_pt_t> old_epnts = wedge_sets[rue];
+	    std::map<uedge_t, std::vector<revt_pt_t>>::iterator er_it = wedge_sets.find(rue);
+	    wedge_sets.erase(er_it);
 	    for (size_t i = 0; i < old_epnts.size(); i++) {
 		overt_t *ov = old_epnts[i].ov;
 		std::set<uedge_t> close_edges = omesh->interior_uedges_search(ov->bb);
@@ -739,7 +761,7 @@ refine_edge_vert_sets (
 		    }
 		}
 
-		(*edge_sets)[closest_uedge].push_back(old_epnts[i]);
+		wedge_sets[closest_uedge].push_back(old_epnts[i]);
 	    }
 	}
     }
@@ -797,8 +819,10 @@ closest_overt(std::set<overt_t *> &verts, overt_t *v)
 static int
 adjust_overt_pair(overt_t *v1, overt_t *v2)
 {
-    v1->omesh->refinement_overts.erase(v2);
-    v2->omesh->refinement_overts.erase(v1);
+#if 0
+    v1->omesh->near_verts.erase(v2);
+    v2->omesh->near_verts.erase(v1);
+#endif
 
     // If we've got two edge vertices, no dice
     if (v1->edge_vert() && v2->edge_vert()) return 0;
@@ -1300,91 +1324,7 @@ check_faces_validity(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pair
     return valid;
 }
 
-overt_t *
-nearby_vert(overt_t *v, omesh_t *other_m, double dist)
-{
-    double vdist;
-    overt_t *v_closest = other_m->vert_closest(&vdist, v);
-
-    // If we're extremely close, just go with v_closest
-    if (vdist < 2*ON_ZERO_TOLERANCE) {
-	return v_closest;
-    }
-
-    // Past the easy case - now we need the closest surface point on other_m
-    ON_3dPoint opnt = v->vpnt();
-    ON_3dPoint spnt;
-    ON_3dVector sn;
-    double spdist = v_closest->vpnt().DistanceTo(opnt) * 10;
-    if (!other_m->fmesh->closest_surf_pnt(spnt, sn, &opnt, spdist)) {
-	// If there's no closest surface point within dist, there's probably
-	// an error - it should at least have found the v_closest point...
-	std::cerr << "Error - couldn't find closest point\n";
-	return NULL;
-    }
-
-    // See if the closest vert bbox overlaps the closest surface
-    // point to v.  If not, there is definitely no nearby vertex defined,
-    // since we know spnt is free to be defined as a vertex according
-    // to other_m's vertices.
-    ON_BoundingBox spbb(spnt, spnt);
-    if (v_closest->bb.IsDisjoint(spbb)) {
-	return NULL;
-    }
-
-    // We know v_closest isn't nearby according according to v_closest's bbox,
-    // but v_closest may have an arbitrarily sized bbox depending on its
-    // associated edge lengths.  Hence it may contain spnt even though (from
-    // v's perspective) it isn't close.  Construct a new bbox using the
-    // v_closest point and the box size of v, and repeat the bbox check for
-    // spbb.
-    ON_BoundingBox v_closest_bb(v_closest->vpnt(), v_closest->vpnt());
-    ON_3dPoint c1 = v_closest->vpnt() + v->bb.Diagonal()*0.5;
-    ON_3dPoint c2 = v_closest->vpnt() - v->bb.Diagonal()*0.5;
-    v_closest_bb.Set(c1, true);
-    v_closest_bb.Set(c2, true);
-    if (v_closest_bb.IsDisjoint(spbb)) {
-	return NULL;
-    }
-
-    // We're close according to the smallest bounding box - depending on the
-    // mode, that might be enough, but if we're being strict go ahead and
-    // check that spnt is (nearly) the same as the v_closest pnt.
-    double dtol = (dist > 0) ? dist : 2 * ON_ZERO_TOLERANCE;
-    if (spnt.DistanceTo(v_closest->vpnt()) > dtol) {
-	return NULL;
-    }
-
-    return v_closest;
-}
-
-int
-add_refinement_vert(overt_t *v, omesh_t *other_m,
-	std::map<bedge_seg_t *, std::set<overt_t *>> &edge_verts)
-{
-    // If we're close to a brep face edge, needs to go in edge_verts.
-    // Else, new interior vert for m
-    ON_3dPoint vpnt = v->vpnt();
-    uedge_t closest_edge = other_m->closest_uedge(vpnt);
-    if (other_m->fmesh->brep_edges.find(closest_edge) != other_m->fmesh->brep_edges.end()) {
-	bedge_seg_t *bseg = other_m->fmesh->ue2b_map[closest_edge];
-	if (!bseg) {
-	    std::cout << "couldn't find bseg pointer??\n";
-	    return 0;
-	} else {
-	    edge_verts[bseg].insert(v);
-	}
-    } else {
-	std::set<size_t> uet = other_m->fmesh->uedges2tris[closest_edge];
-	std::set<size_t>::iterator u_it;
-	for (u_it = uet.begin(); u_it != uet.end(); u_it++) {
-	    other_m->refinement_overts[v].insert(*u_it);
-	}
-    }
-
-    return 1;
-}
-
+#if 0
 int
 vert_nearby_missing(
 	overt_t *nv,
@@ -1407,13 +1347,13 @@ vert_nearby_missing(
 
 	if (!nearby_vert(nv, m, 0)) {
 	    // Add a new refinement vert
-	    retcnt += add_refinement_vert(nv, m, edge_verts);
+	    retcnt += add_refinement_vert(nv, m);
 	}
     }
 
     return retcnt;
 }
-
+#endif
 
 int
 omesh_interior_edge_verts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
@@ -1422,121 +1362,10 @@ omesh_interior_edge_verts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check
     //std::cout << "Need to split triangles in " << omeshes.size() << " meshes\n";
 
     int rcnt = 0;
-
     std::set<omesh_t *>::iterator o_it;
     for (o_it = omeshes.begin(); o_it != omeshes.end(); o_it++) {
 	omesh_t *omesh = *o_it;
-	std::map<uedge_t, std::vector<revt_pt_t>> edge_sets;
-
-	// From the refinement_overts set, build up the set of vertices
-	// that look like they are intruding
-	std::set<overt_t *> omesh_rverts;
-	std::map<overt_t *, std::set<long>>::iterator r_it;
-	for (r_it = omesh->refinement_overts.begin(); r_it != omesh->refinement_overts.end(); r_it++) {
-	    omesh_rverts.insert(r_it->first);
-	}
-
-
-	while (omesh_rverts.size()) {
-
-	    overt_t *ov = *omesh_rverts.begin();
-
-	    //VPCHECK(ov, NULL);
-
-	    omesh_rverts.erase(ov);
-	    ON_3dPoint ovpnt = ov->vpnt();
-
-	    ON_3dPoint spnt;
-	    ON_3dVector sn;
-	    double dist = ov->bb.Diagonal().Length() * 10;
-
-	    if (!omesh->fmesh->closest_surf_pnt(spnt, sn, &ovpnt, 2*dist)) {
-		std::cout << "closest point failed\n";
-		continue;
-	    }
-
-	    int problem_flag = 0;
-
-	    // Check this point against the mesh vert tree - if we're
-	    // extremely close to an existing vertex, we don't want to split
-	    // and create extremely tiny triangles - vertex adjustment should
-	    // handle super-close points...
-	    ON_BoundingBox pbb(spnt, spnt);
-	    std::set<overt_t *> cverts = omesh->vert_search(pbb);
-	    if (problem_flag && !cverts.size()) {
-		cverts = omesh->vert_search(pbb);
-	    }
-
-	    // If we're close to a vertex, find the vertices from the other
-	    // mesh that overlap with that vertex.  If there are, and if the
-	    // surface point is close to them per the vert bbox dimension,
-	    // skip that point as a refinement point in this step.
-	    if (cverts.size()) {
-		double spdist = ovpnt.DistanceTo(spnt);
-
-		// Find the closest vertex, and use its bounding box size as a
-		// gauge for how close is too close for the surface point
-		double vdist = DBL_MAX;
-		double bbdiag = DBL_MAX;
-		bool skip = false;
-		std::set<overt_t *>::iterator v_it;
-		for (v_it = cverts.begin(); v_it != cverts.end(); v_it++) {
-		    ON_3dPoint cvpnt = (*v_it)->vpnt();
-		    double cvbbdiag = (*v_it)->bb.Diagonal().Length() * 0.1;
-		    if (cvpnt.DistanceTo(spnt) < cvbbdiag) {
-			// Too close to a vertex in the current mesh, skip
-			skip = true;
-			break;
-		    }
-		    double cvdist = ovpnt.DistanceTo(cvpnt);
-		    if (cvdist < vdist) {
-			vdist = cvdist;
-			bbdiag = cvbbdiag;
-		    }
-		}
-
-		if (skip || spdist < bbdiag) {
-		    continue;
-		}
-	    }
-
-	    // If we passed the above filter, find the closest edges
-	    std::set<uedge_t> close_edges = omesh->interior_uedges_search(ov->bb);
-
-	    double mindist = DBL_MAX; 
-	    uedge_t closest_uedge;
-	    std::set<uedge_t>::iterator c_it;
-	    for (c_it = close_edges.begin(); c_it != close_edges.end(); c_it++) {
-		uedge_t ue = *c_it;
-		double dline = omesh->fmesh->uedge_dist(ue, spnt);
-		if (mindist > dline) {
-		    closest_uedge = ue;
-		    mindist = dline;
-		}
-	    }
-
-	    if (closest_uedge.v[0] == -1) {
-		std::cout << "uedge problem\n";
-		continue;
-	    }
-
-	    revt_pt_t rpt;
-	    rpt.spnt = spnt;
-	    rpt.sn = sn;
-	    rpt.ov = ov;
-	    edge_sets[closest_uedge].push_back(rpt);
-	}
-#if 0
-	struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)omesh->fmesh->p_cdt;
-	std::cout << s_cdt->name << " face " << omesh->fmesh->f_id << " has " << edge_sets.size() << " edge/point sets:\n";
-	std::map<uedge_t, std::vector<revt_pt_t>>::iterator es_it;
-	for (es_it = edge_sets.begin(); es_it != edge_sets.end(); es_it++) {
-	    uedge_t ue = es_it->first;
-	    std::cout << "Edge: " << ue.v[0] << "<->" << ue.v[1] << ": " << es_it->second.size() << " points\n";
-	}
-#endif
-
-	rcnt += refine_edge_vert_sets(omesh, &edge_sets);
+	rcnt += refine_edge_vert_sets(omesh);
     }
 
     return rcnt;
@@ -1545,7 +1374,8 @@ omesh_interior_edge_verts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check
 
 
 static void
-make_omeshes(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> *check_pairs)
+make_omeshes(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> *check_pairs,
+        std::map<bedge_seg_t *, std::set<overt_t *>> *edge_verts)
 {
     // Make omesh containers for all the cdt_meshes in play
     std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>>::iterator p_it;
@@ -1564,6 +1394,7 @@ make_omeshes(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> *check_pairs)
 	}
 	fmesh->omesh = omeshes[omeshes.size() - 1];
 	fmesh->omesh->check_pairs = check_pairs;
+	fmesh->omesh->edge_verts = edge_verts;
     }
 }
 
@@ -1573,6 +1404,8 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     int rpnt_level = 0;
     if (!s_a) return -1;
     if (s_cnt < 1) return 0;
+
+    std::map<bedge_seg_t *, std::set<overt_t *>> edge_verts;
 
     // Get the bounding boxes of all faces of all breps in s_a, and find
     // possible interactions
@@ -1588,7 +1421,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	return -1;
     }
 
-    make_omeshes(&check_pairs);
+    make_omeshes(&check_pairs, &edge_verts);
 
     int face_ov_cnt = omesh_ovlps(check_pairs, 0);
     if (!face_ov_cnt) {
@@ -1598,62 +1431,60 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     // Report our starting overlap count
     bu_log("Initial overlap cnt: %d\n", face_ov_cnt);
 
+    plot_active_omeshes(check_pairs);
+
     // If we're going to process, initialize refinement points
     omesh_refinement_pnts(check_pairs, rpnt_level);
 
     int bedge_replaced_tris = INT_MAX;
 
-    while (bedge_replaced_tris) {
-	int avcnt = 0;
-	// The simplest operation is to find vertices close to each other
-	// with enough freedom of movement (per triangle edge length) that
-	// we can shift the two close neighbors to surface points that are
-	// both the respective closest points to a center point between the
-	// two originals.
-	avcnt = adjust_close_verts(check_pairs);
-	if (avcnt) {
-	    // If we adjusted, recalculate overlapping tris and refinement points
-	    //std::cout << "Adjusted " << avcnt << " vertices\n";
+    while (rpnt_level < 2) {
+	while (bedge_replaced_tris) {
+	    int avcnt = 0;
+	    // The simplest operation is to find vertices close to each other
+	    // with enough freedom of movement (per triangle edge length) that
+	    // we can shift the two close neighbors to surface points that are
+	    // both the respective closest points to a center point between the
+	    // two originals.
+	    avcnt = adjust_close_verts(check_pairs);
+	    if (avcnt) {
+		// If we adjusted, recalculate overlapping tris and refinement points
+		//std::cout << "Adjusted " << avcnt << " vertices\n";
+		face_ov_cnt = omesh_ovlps(check_pairs, 0);
+		omesh_refinement_pnts(check_pairs, rpnt_level);
+	    }
+
+	    // Process edge_verts
+	    size_t evcnt = INT_MAX;
+	    while (evcnt > edge_verts.size()) {
+		std::set<overt_t *> nverts;
+		bedge_replaced_tris = bedge_split_near_verts(&nverts, edge_verts);
+		evcnt = edge_verts.size();
+		face_ov_cnt = omesh_ovlps(check_pairs, 0);
+		omesh_refinement_pnts(check_pairs, rpnt_level);
+	    }
+	}
+
+	// Once edge splits are handled, use remaining closest points and find
+	// nearest interior edge curve, building sets of points near each interior
+	// edge.  Then, for all interior edges, yank the two triangles associated
+	// with that edge, build a polygon with interior points and tessellate.  We
+	// need this to introduce no changes to the meshes as a condition of
+	// termination...
+	int interior_replaced_tris = INT_MAX;
+	while (interior_replaced_tris) {
+	    interior_replaced_tris = omesh_interior_edge_verts(check_pairs);
 	    face_ov_cnt = omesh_ovlps(check_pairs, 0);
 	    omesh_refinement_pnts(check_pairs, rpnt_level);
+	    //check_faces_validity(check_pairs);
 	}
 
-	// Process edge_verts
-	size_t evcnt = INT_MAX;
-	std::map<bedge_seg_t *, std::set<overt_t *>> edge_verts = find_edge_verts(check_pairs);
-	while (evcnt > edge_verts.size()) {
-	    std::set<overt_t *> nverts;
-	    bedge_replaced_tris = bedge_split_near_verts(&nverts, edge_verts);
-	    evcnt = edge_verts.size();
-	    edge_verts.clear();
-	    omesh_refinement_pnts(check_pairs, rpnt_level);
-	    edge_verts = find_edge_verts(check_pairs);
-	}
-
-	if (bedge_replaced_tris) {
-	    face_ov_cnt = omesh_ovlps(check_pairs, 0);
-	    omesh_refinement_pnts(check_pairs, rpnt_level);
-	}
-    }
-
-    // Once edge splits are handled, use remaining closest points and find
-    // nearest interior edge curve, building sets of points near each interior
-    // edge.  Then, for all interior edges, yank the two triangles associated
-    // with that edge, build a polygon with interior points and tessellate.  We
-    // need this to introduce no changes to the meshes as a condition of
-    // termination...
-    int interior_replaced_tris = INT_MAX;
-    while (interior_replaced_tris) {
-	find_edge_verts(check_pairs);
-	interior_replaced_tris = omesh_interior_edge_verts(check_pairs);
-	face_ov_cnt = omesh_ovlps(check_pairs, 0);
-	omesh_refinement_pnts(check_pairs, rpnt_level);
-	//check_faces_validity(check_pairs);
+	rpnt_level++;
     }
 
     // Refine areas of the mesh with overlapping triangles that have aligned
     // vertices but have different triangulations of those vertices.
-    shared_cdts(check_pairs);
+    //shared_cdts(check_pairs);
 
     // Make sure everything is still OK and do final overlap check
     bool final_valid = check_faces_validity(check_pairs);

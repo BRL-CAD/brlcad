@@ -110,9 +110,7 @@ omesh_t::vert_ovlps(omesh_t *other)
 }
 
 void
-omesh_t::plot(const char *fname,
-       	std::map<bedge_seg_t *, std::set<overt_t *>> *ev
-	)
+omesh_t::plot(const char *fname)
 {
     struct bu_color c = BU_COLOR_INIT_ZERO;
     unsigned char rgb[3] = {0,0,255};
@@ -155,58 +153,58 @@ omesh_t::plot(const char *fname,
 	fmesh->plot_tri(tri, &c, plot, 255, 0, 0);
     }
 
-    std::map<overt_t *, std::set<long>>::iterator iv_it;
 
 
-    pl_color(plot, 255, 0, 0);
-    for (iv_it = refinement_overts.begin(); iv_it != refinement_overts.end(); iv_it++) {
-	overt_t *iv = iv_it->first;
-	ON_3dPoint vp = iv->vpnt();
-	plot_pnt_3d(plot, &vp, tri_r, 0);
+    std::set<overt_t *>::iterator iv_it;
+    std::map<uedge_t, std::vector<revt_pt_t>>::iterator es_it;
+    for (es_it = edge_sets.begin(); es_it != edge_sets.end(); es_it++) {
+	for (size_t i = 0; i < es_it->second.size(); i++) {
+	    overt_t *iv = es_it->second[i].ov;
+	    ON_3dPoint vp = iv->vpnt();
+	    pl_color(plot, 255, 0, 0);
+	    plot_pnt_3d(plot, &vp, tri_r, 0);
+	    pl_color(plot, 0, 255, 0);
+	    ON_3dPoint sp = es_it->second[i].spnt;
+	    plot_pnt_3d(plot, &sp, tri_r, 0);
+	}
     }
 
-    if (ev) {
-	std::map<bedge_seg_t *, std::set<overt_t *>>::iterator ev_it;
-	pl_color(plot, 128, 0, 255);
-	for (ev_it = ev->begin(); ev_it != ev->end(); ev_it++) {
-	    bedge_seg_t *eseg = ev_it->first;
-	    struct ON_Brep_CDT_State *s_cdt_edge = (struct ON_Brep_CDT_State *)eseg->p_cdt;
-	    int f_id1 = s_cdt_edge->brep->m_T[eseg->tseg1->trim_ind].Face()->m_face_index;
-	    int f_id2 = s_cdt_edge->brep->m_T[eseg->tseg2->trim_ind].Face()->m_face_index;
-	    cdt_mesh_t &fmesh_f1 = s_cdt_edge->fmeshes[f_id1];
-	    cdt_mesh_t &fmesh_f2 = s_cdt_edge->fmeshes[f_id2];
-	    omesh_t *o1 = fmesh_f1.omesh;
-	    omesh_t *o2 = fmesh_f2.omesh;
-	    if (o1 == this || o2 == this) {
-		std::set<overt_t *>::iterator v_it;
-		for (v_it = ev_it->second.begin(); v_it != ev_it->second.end(); v_it++) {
-		    overt_t *iv = *v_it;
-		    if (iv->omesh == this) continue;
-		    ON_3dPoint vp = iv->vpnt();
-		    plot_pnt_3d(plot, &vp, tri_r, 0);
-		}
+    std::map<bedge_seg_t *, std::set<overt_t *>>::iterator ev_it;
+    pl_color(plot, 128, 0, 255);
+    for (ev_it = edge_verts->begin(); ev_it != edge_verts->end(); ev_it++) {
+	bedge_seg_t *eseg = ev_it->first;
+	struct ON_Brep_CDT_State *s_cdt_edge = (struct ON_Brep_CDT_State *)eseg->p_cdt;
+	int f_id1 = s_cdt_edge->brep->m_T[eseg->tseg1->trim_ind].Face()->m_face_index;
+	int f_id2 = s_cdt_edge->brep->m_T[eseg->tseg2->trim_ind].Face()->m_face_index;
+	cdt_mesh_t &fmesh_f1 = s_cdt_edge->fmeshes[f_id1];
+	cdt_mesh_t &fmesh_f2 = s_cdt_edge->fmeshes[f_id2];
+	omesh_t *o1 = fmesh_f1.omesh;
+	omesh_t *o2 = fmesh_f2.omesh;
+	if (o1 == this || o2 == this) {
+	    std::set<overt_t *>::iterator v_it;
+	    for (v_it = ev_it->second.begin(); v_it != ev_it->second.end(); v_it++) {
+		overt_t *iv = *v_it;
+		if (iv->omesh == this) continue;
+		ON_3dPoint vp = iv->vpnt();
+		plot_pnt_3d(plot, &vp, tri_r, 0);
 	    }
 	}
     }
+
+    pl_color(plot, 0, 0, 255);
 
 
     fclose(plot);
 }
 
 void
-omesh_t::plot(std::map<bedge_seg_t *, std::set<overt_t *>> *ev)
+omesh_t::plot()
 {
     struct bu_vls fname = BU_VLS_INIT_ZERO;
     struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh->p_cdt;
     bu_vls_sprintf(&fname, "%s-%d_ovlps.plot3", s_cdt->name, fmesh->f_id);
-    plot(bu_vls_cstr(&fname), ev);
+    plot(bu_vls_cstr(&fname));
     bu_vls_free(&fname);
-}
-
-void
-omesh_t::plot()
-{
-    plot(NULL);
 }
 
 overt_t *
@@ -479,8 +477,8 @@ omesh_t::vert_search(ON_BoundingBox &bb)
     fMax[0] = bb.Max().x + ON_ZERO_TOLERANCE;
     fMax[1] = bb.Max().y + ON_ZERO_TOLERANCE;
     fMax[2] = bb.Max().z + ON_ZERO_TOLERANCE;
-    std::set<long> near_verts;
-    size_t nhits = vtree.Search(fMin, fMax, NearVertsCallback, (void *)&near_verts);
+    std::set<long> vtree_near_verts;
+    size_t nhits = vtree.Search(fMin, fMax, NearVertsCallback, (void *)&vtree_near_verts);
 
     if (!nhits) {
 	return std::set<overt_t *>();
@@ -488,8 +486,8 @@ omesh_t::vert_search(ON_BoundingBox &bb)
 
     std::set<overt_t *> near_overts;
     std::set<long>::iterator n_it;
-    for (n_it = near_verts.begin(); n_it != near_verts.end(); n_it++) {
-	near_overts.insert(overts[*n_it]);    
+    for (n_it = vtree_near_verts.begin(); n_it != vtree_near_verts.end(); n_it++) {
+	near_overts.insert(overts[*n_it]);
     }
 
     return near_overts;
@@ -507,14 +505,6 @@ omesh_t::vert_add(long f3ind, ON_BoundingBox *bb)
     overts[f3ind] = nv;
     return nv;
 }
-
-void
-omesh_t::refinement_clear()
-{
-    refinement_overts.clear();
-    intruding_tris.clear();
-}
-
 
 bool
 omesh_t::closest_brep_mesh_point(ON_3dPoint &s_p, ON_3dPoint *p, struct ON_Brep_CDT_State *s_cdt)

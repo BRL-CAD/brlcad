@@ -846,6 +846,12 @@ class overt_t {
 	bool init;
 };
 
+class revt_pt_t {
+    public:
+	ON_3dPoint spnt;
+	ON_3dVector sn;
+	overt_t *ov;
+};
 
 class omesh_t
 {
@@ -904,12 +910,10 @@ class omesh_t
 	// Find closest point on any active mesh face
 	bool closest_brep_mesh_point(ON_3dPoint &s_p, ON_3dPoint *p, struct ON_Brep_CDT_State *s_cdt);
 
-        void refinement_clear();
         bool validate_vtree();
 
 
-        void plot(const char *fname, std::map<bedge_seg_t *, std::set<overt_t *>> *ev);
-        void plot(std::map<bedge_seg_t *, std::set<overt_t *>> *ev);
+        void plot(const char *fname);
         void plot();
         void plot_vtree(const char *fname);
 
@@ -927,17 +931,22 @@ class omesh_t
 
 	// Triangles that intersect another mesh
 	std::map<size_t, std::set<std::pair<omesh_t *, size_t>>> itris;
+        std::set<size_t> intruding_tris;
 
         // Points from other meshes potentially needing refinement in this mesh
-        std::map<overt_t *, std::set<long>> refinement_overts;
+        std::map<overt_t *, std::set<long>> ivert_ref_cnts;
+        // Points from other meshes needing corresponding vertices in this mesh
+	std::map<uedge_t, std::vector<revt_pt_t>> edge_sets;
 
 	// Set of all active fmesh pairs
 	std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> *check_pairs;
 
+	// Container that holds the current (global) set of edge vertices
+	std::map<bedge_seg_t *, std::set<overt_t *>> *edge_verts;
+
         // Points from this mesh inducing refinement in other meshes, and
         // triangles reported by tri_isect as intersecting from this mesh
         std::map<overt_t *, std::set<long>> intruding_overts;
-        std::set<size_t> intruding_tris;
 
 	std::string sname();
 };
@@ -1082,8 +1091,8 @@ class ovlp_grp {
         void characterize_verts(int ind);
 };
 
-int tri_isect(triangle_t &t1, triangle_t &t2, int mode );
-int tri_nearedge_refine(triangle_t &t1, triangle_t &t2);
+int tri_isect(triangle_t &t1, triangle_t &t2, int mode);
+int tri_nearedge_refine(triangle_t &t1, triangle_t &t2, int level);
 
 std::set<omesh_t *>
 active_omeshes(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs);
@@ -1115,8 +1124,7 @@ overt_t *
 nearby_vert(overt_t *v, omesh_t *other_m, double dist);
 
 int
-add_refinement_vert(overt_t *v, omesh_t *other_m,
-	std::map<bedge_seg_t *, std::set<overt_t *>> &edge_verts);
+add_refinement_vert(overt_t *v, omesh_t *other_m, int level);
 
 
 int
