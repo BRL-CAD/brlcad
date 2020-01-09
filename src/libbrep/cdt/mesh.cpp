@@ -3243,7 +3243,7 @@ cdt_mesh_t::valid(int verbose)
 	ON_3dVector bdir = bnorm(tri);
 	if (tdir.Length() > 0 && bdir.Length() > 0 && ON_DotProduct(tdir, bdir) < 0.1) {
 	    if (verbose > 0) {
-		std::cout << name << " face " << f_id << ": invalid normals in mesh, triangle (" << tri.v[0] << "," << tri.v[1] << "," << tri.v[2] << ")\n";
+		std::cout << name << " face " << f_id << ": invalid normals in mesh, triangle " << tri.ind << " (" << tri.v[0] << "," << tri.v[1] << "," << tri.v[2] << ")\n";
 	    }
 	    if (verbose > 1) {
 		bu_vls_sprintf(&fname, "%d-invalid_normal_tri_%ld_%ld_%ld.plot3", f_id, tri.v[0], tri.v[1], tri.v[2]);
