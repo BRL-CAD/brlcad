@@ -253,6 +253,7 @@ class cdt_mesh_t;
 struct triangle_t {
     long v[3];
     size_t ind;
+    cdt_mesh_t *m;
 
     long& i() { return v[0]; }
     const long& i() const { return v[0]; }
@@ -266,6 +267,7 @@ struct triangle_t {
 	v[0] = i;
 	v[1] = j;
 	v[2] = k;
+	m = NULL;
     }
 
     triangle_t(long i, long j, long k, size_t pind)
@@ -274,12 +276,14 @@ struct triangle_t {
 	v[1] = j;
 	v[2] = k;
 	ind = pind;
+	m = NULL;
     }
 
     triangle_t()
     {
 	v[0] = v[1] = v[2] = -1;
 	ind = LONG_MAX;
+	m = NULL;
     }
 
     triangle_t(const triangle_t &other)
@@ -288,6 +292,7 @@ struct triangle_t {
 	v[1] = other.v[1];
 	v[2] = other.v[2];
 	ind = other.ind;
+	m = other.m;
     }
 
     triangle_t& operator=(const triangle_t &other) = default;
@@ -319,6 +324,9 @@ struct triangle_t {
     }
     bool operator==(triangle_t other) const
     {
+	if (m != other.m) {
+	    return false;
+	}
 	bool c1 = ((v[0] == other.v[0]) || (v[0] == other.v[1]) || (v[0] == other.v[2]));
 	bool c2 = ((v[1] == other.v[0]) || (v[1] == other.v[1]) || (v[1] == other.v[2]));
 	bool c3 = ((v[2] == other.v[0]) || (v[2] == other.v[1]) || (v[2] == other.v[2]));
@@ -326,6 +334,9 @@ struct triangle_t {
     }
     bool operator!=(triangle_t other) const
     {
+	if (m != other.m) {
+	    return true;
+	}
 	bool c1 = ((v[0] != other.v[0]) && (v[0] != other.v[1]) && (v[0] != other.v[2]));
 	bool c2 = ((v[1] != other.v[0]) && (v[1] != other.v[1]) && (v[1] != other.v[2]));
 	bool c3 = ((v[2] != other.v[0]) && (v[2] != other.v[1]) && (v[2] != other.v[2]));

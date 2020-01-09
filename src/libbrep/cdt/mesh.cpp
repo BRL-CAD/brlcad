@@ -1469,6 +1469,10 @@ cdt_mesh_t::tri_add(triangle_t &tri)
 	return true;
     }
 
+    // Tell the triangle what mesh it is part of
+    tri.m = this;
+
+
     ON_3dPoint *p3d = pnts[tri.v[0]];
     ON_BoundingBox bb(*p3d, *p3d);
     for (int i = 1; i < 3; i++) {
