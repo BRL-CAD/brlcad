@@ -340,65 +340,9 @@ omesh_refinement_pnts(
 	(*a_it)->ivert_ref_cnts.clear();
     }
 
-    // At the first level, we don't want to get too aggressive about introducing new vertex points
-    // because we haven't done any significant clean-up on what's already there.
-    if (level == 0) {
-	// Count triangles to determine which verts need attention.  If a vertex is associated
-	// with two or more triangles that intersect another face, it is a refinement point
-	// candidate.
-	for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
-	    omesh_t *am = *a_it;
-	    std::map<size_t, std::set<std::pair<omesh_t *, size_t>> >::iterator p_it;
-	    for (p_it = am->itris.begin(); p_it != am->itris.end(); p_it++) {
-		std::set<std::pair<omesh_t *, size_t>>::iterator s_it;
-		for (s_it = p_it->second.begin(); s_it != p_it->second.end(); s_it++) {
-		    omesh_t *im = s_it->first;
-		    size_t otri_ind = s_it->second;
-		    triangle_t tri = im->fmesh->tris_vect[otri_ind];
-		    for (int i = 0; i < 3; i++) {
-			overt_t *v = im->overts[tri.v[i]];
-			am->ivert_ref_cnts[v].insert(otri_ind);
-		    }
-		}
-	    }
-	}
-	for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
-	    omesh_t *am = *a_it;
-	    std::map<overt_t *, std::set<long>>::iterator r_it;
-	    for (r_it = am->ivert_ref_cnts.begin(); r_it != am->ivert_ref_cnts.end(); r_it++) {
-		//VPCHECK(r_it->first, NULL);
-		// If there are enough activity hits, we need a nearby vertex
-		if (r_it->second.size() > 1) {
-		    add_refinement_vert(r_it->first, am, level);
-		}
-	    }
-	}
-
-	//plot_active_omeshes(check_pairs, NULL);
-
-	// Add triangle intersection vertices that are close to the edge of the opposite
-	// triangle, whether or not they satisfy the count criteria - these are a source
-	// of potential trouble.
-	for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
-	    omesh_t *am = *a_it;
-	    std::map<size_t, std::set<std::pair<omesh_t *, size_t>> >::iterator p_it;
-	    for (p_it = am->itris.begin(); p_it != am->itris.end(); p_it++) {
-		triangle_t t1 = am->fmesh->tris_vect[p_it->first];
-		std::set<std::pair<omesh_t *, size_t>>::iterator s_it;
-		for (s_it = p_it->second.begin(); s_it != p_it->second.end(); s_it++) {
-		    omesh_t *im = s_it->first;
-		    size_t otri_ind = s_it->second;
-		    triangle_t t2 = im->fmesh->tris_vect[otri_ind];
-		    tri_nearedge_refine(t1, t2, level);
-		}
-	    }
-	}
-    }
-
-    // At the second level, we need to be more aggressive - earlier efforts have
-    // not resolved these triangles. Add all vertices associated with triangles
-    // that intersect another face, and harden the nearby vertex criteria to a
-    // tight distance tolerance.
+    // Count triangles to determine which verts need attention.  If a vertex is associated
+    // with two or more triangles that intersect another face, it is a refinement point
+    // candidate.
     for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
 	omesh_t *am = *a_it;
 	std::map<size_t, std::set<std::pair<omesh_t *, size_t>> >::iterator p_it;
@@ -410,7 +354,40 @@ omesh_refinement_pnts(
 		triangle_t tri = im->fmesh->tris_vect[otri_ind];
 		for (int i = 0; i < 3; i++) {
 		    overt_t *v = im->overts[tri.v[i]];
-		    add_refinement_vert(v, am, level);
+		    am->ivert_ref_cnts[v].insert(otri_ind);
+		}
+	    }
+	}
+    }
+    for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
+	omesh_t *am = *a_it;
+	std::map<overt_t *, std::set<long>>::iterator r_it;
+	for (r_it = am->ivert_ref_cnts.begin(); r_it != am->ivert_ref_cnts.end(); r_it++) {
+	    //VPCHECK(r_it->first, NULL);
+	    // If there are enough activity hits, we need a nearby vertex
+	    if (r_it->second.size() > 1 || level > 0) {
+		add_refinement_vert(r_it->first, am, level);
+	    }
+	}
+    }
+
+    //plot_active_omeshes(check_pairs, NULL);
+
+    // Add triangle intersection vertices that are close to the edge of the opposite
+    // triangle, whether or not they satisfy the count criteria - these are a source
+    // of potential trouble.
+    if (!level) {
+	for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
+	    omesh_t *am = *a_it;
+	    std::map<size_t, std::set<std::pair<omesh_t *, size_t>> >::iterator p_it;
+	    for (p_it = am->itris.begin(); p_it != am->itris.end(); p_it++) {
+		triangle_t t1 = am->fmesh->tris_vect[p_it->first];
+		std::set<std::pair<omesh_t *, size_t>>::iterator s_it;
+		for (s_it = p_it->second.begin(); s_it != p_it->second.end(); s_it++) {
+		    omesh_t *im = s_it->first;
+		    size_t otri_ind = s_it->second;
+		    triangle_t t2 = im->fmesh->tris_vect[otri_ind];
+		    tri_nearedge_refine(t1, t2, level);
 		}
 	    }
 	}
@@ -1377,7 +1354,6 @@ make_omeshes(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> *check_pairs,
 int
 ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 {
-    int rpnt_level = 0;
     if (!s_a) return -1;
     if (s_cnt < 1) return 0;
 
@@ -1410,7 +1386,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     plot_active_omeshes(check_pairs);
 
     // If we're going to process, initialize refinement points
-    omesh_refinement_pnts(check_pairs, rpnt_level);
+    omesh_refinement_pnts(check_pairs, 0);
 
 
     int bedge_replaced_tris = INT_MAX;
@@ -1432,18 +1408,18 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 	    // If we adjusted, recalculate overlapping tris and refinement points
 	    //std::cout << "Adjusted " << avcnt << " vertices\n";
 	    face_ov_cnt = omesh_ovlps(check_pairs, 0);
-	    omesh_refinement_pnts(check_pairs, rpnt_level);
+	    omesh_refinement_pnts(check_pairs, 0);
 	    check_faces_validity(check_pairs);
 	}
 
 	// Process edge_verts
-	size_t evcnt = INT_MAX;
-	while (evcnt > edge_verts.size()) {
+	size_t evcnt = 0;
+	while (evcnt < edge_verts.size()) {
 	    std::set<overt_t *> nverts;
-	    bedge_replaced_tris = bedge_split_near_verts(&nverts, edge_verts);
 	    evcnt = edge_verts.size();
+	    bedge_replaced_tris = bedge_split_near_verts(&nverts, edge_verts);
 	    face_ov_cnt = omesh_ovlps(check_pairs, 0);
-	    omesh_refinement_pnts(check_pairs, rpnt_level);
+	    omesh_refinement_pnts(check_pairs, 0);
 	    check_faces_validity(check_pairs);
 	}
     }
@@ -1457,14 +1433,43 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     int interior_replaced_tris = INT_MAX;
     while (interior_replaced_tris) {
 	interior_replaced_tris = omesh_interior_edge_verts(check_pairs);
-	if (interior_replaced_tris) { 
+	if (interior_replaced_tris) {
 	    omesh_smooth(check_pairs);
 	}
 	face_ov_cnt = omesh_ovlps(check_pairs, 0);
-	omesh_refinement_pnts(check_pairs, rpnt_level);
+	omesh_refinement_pnts(check_pairs, 0);
 	check_faces_validity(check_pairs);
     }
 
+    // For handling any overlaps that have persisted to this point, we need to
+    // be more aggressive about getting nearby verts in place
+    face_ov_cnt = omesh_ovlps(check_pairs, 1);
+    if (face_ov_cnt) {
+	omesh_refinement_pnts(check_pairs, INT_MAX);
+	// Process edge_verts
+	size_t evcnt = 0;
+	while (evcnt < edge_verts.size()) {
+	    std::set<overt_t *> nverts;
+	    evcnt = edge_verts.size();
+	    bedge_replaced_tris = bedge_split_near_verts(&nverts, edge_verts);
+	    face_ov_cnt = omesh_ovlps(check_pairs, 1);
+	    omesh_refinement_pnts(check_pairs, INT_MAX);
+	    check_faces_validity(check_pairs);
+	}
+	interior_replaced_tris = INT_MAX;
+	while (interior_replaced_tris) {
+	    interior_replaced_tris = omesh_interior_edge_verts(check_pairs);
+	    if (interior_replaced_tris) {
+		omesh_smooth(check_pairs);
+	    }
+	    face_ov_cnt = omesh_ovlps(check_pairs, 1);
+	    omesh_refinement_pnts(check_pairs, INT_MAX);
+	    check_faces_validity(check_pairs);
+	}
+    }
+
+    // We should now have all the points we need - any remaining work involves
+    // selecting the correct triangles.
 
     // Refine areas of the mesh with overlapping triangles that have aligned
     // vertices but have different triangulations of those vertices.
@@ -1474,6 +1479,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     bool final_valid = check_faces_validity(check_pairs);
     face_ov_cnt = omesh_ovlps(check_pairs, 1);
     bu_log("Post-processing overlap cnt: %d\n", face_ov_cnt);
+    plot_active_omeshes(check_pairs);
 
     return (face_ov_cnt > 0 || !final_valid) ? -1 : 0;
 }
