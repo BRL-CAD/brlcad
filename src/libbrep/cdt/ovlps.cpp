@@ -1397,64 +1397,59 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
     // If we're going to process, initialize refinement points
     omesh_refinement_pnts(check_pairs, rpnt_level);
 
-    while (rpnt_level < 2) {
 
-	int bedge_replaced_tris = INT_MAX;
+    int bedge_replaced_tris = INT_MAX;
 
-	while (bedge_replaced_tris) {
-	    if (rpnt_level == 0) {
-		int avcnt = 0;
-		// The simplest operation is to find vertices close to each other
-		// with enough freedom of movement (per triangle edge length) that
-		// we can shift the two close neighbors to surface points that are
-		// both the respective closest points to a center point between the
-		// two originals.
-		//
-		// TODO - need an additional constraint on the vert box size - need
-		// to base it on the distance to the closest triangle edge, as well
-		// as the edge lengths.  Otherwise we get flipping triangles when
-		// the vertex moves across an opposite edge.
-		avcnt = adjust_close_verts(check_pairs);
-		if (avcnt) {
-		    // If we adjusted, recalculate overlapping tris and refinement points
-		    //std::cout << "Adjusted " << avcnt << " vertices\n";
-		    face_ov_cnt = omesh_ovlps(check_pairs, 0);
-		    omesh_refinement_pnts(check_pairs, rpnt_level);
-		    check_faces_validity(check_pairs);
-		}
-	    }
-
-	    // Process edge_verts
-	    size_t evcnt = INT_MAX;
-	    while (evcnt > edge_verts.size()) {
-		std::set<overt_t *> nverts;
-		bedge_replaced_tris = bedge_split_near_verts(&nverts, edge_verts);
-		evcnt = edge_verts.size();
-		face_ov_cnt = omesh_ovlps(check_pairs, 0);
-		omesh_refinement_pnts(check_pairs, rpnt_level);
-		check_faces_validity(check_pairs);
-	    }
-	}
-
-	// Once edge splits are handled, use remaining closest points and find
-	// nearest interior edge curve, building sets of points near each interior
-	// edge.  Then, for all interior edges, yank the two triangles associated
-	// with that edge, build a polygon with interior points and tessellate.  We
-	// need this to introduce no changes to the meshes as a condition of
-	// termination...
-	int interior_replaced_tris = INT_MAX;
-	while (interior_replaced_tris) {
-	    interior_replaced_tris = omesh_interior_edge_verts(check_pairs);
-	    if (interior_replaced_tris) { 
-		omesh_smooth(check_pairs);
-	    }
+    while (bedge_replaced_tris) {
+	int avcnt = 0;
+	// The simplest operation is to find vertices close to each other
+	// with enough freedom of movement (per triangle edge length) that
+	// we can shift the two close neighbors to surface points that are
+	// both the respective closest points to a center point between the
+	// two originals.
+	//
+	// TODO - need an additional constraint on the vert box size - need
+	// to base it on the distance to the closest triangle edge, as well
+	// as the edge lengths.  Otherwise we get flipping triangles when
+	// the vertex moves across an opposite edge.
+	avcnt = adjust_close_verts(check_pairs);
+	if (avcnt) {
+	    // If we adjusted, recalculate overlapping tris and refinement points
+	    //std::cout << "Adjusted " << avcnt << " vertices\n";
 	    face_ov_cnt = omesh_ovlps(check_pairs, 0);
 	    omesh_refinement_pnts(check_pairs, rpnt_level);
 	    check_faces_validity(check_pairs);
 	}
 
-	rpnt_level++;
+	// Process edge_verts
+	size_t evcnt = INT_MAX;
+	while (evcnt > edge_verts.size()) {
+	    std::set<overt_t *> nverts;
+	    bedge_replaced_tris = bedge_split_near_verts(&nverts, edge_verts);
+	    evcnt = edge_verts.size();
+	    face_ov_cnt = omesh_ovlps(check_pairs, 0);
+	    omesh_refinement_pnts(check_pairs, rpnt_level);
+	    check_faces_validity(check_pairs);
+	}
     }
+
+    // Once edge splits are handled, use remaining closest points and find
+    // nearest interior edge curve, building sets of points near each interior
+    // edge.  Then, for all interior edges, yank the two triangles associated
+    // with that edge, build a polygon with interior points and tessellate.  We
+    // need this to introduce no changes to the meshes as a condition of
+    // termination...
+    int interior_replaced_tris = INT_MAX;
+    while (interior_replaced_tris) {
+	interior_replaced_tris = omesh_interior_edge_verts(check_pairs);
+	if (interior_replaced_tris) { 
+	    omesh_smooth(check_pairs);
+	}
+	face_ov_cnt = omesh_ovlps(check_pairs, 0);
+	omesh_refinement_pnts(check_pairs, rpnt_level);
+	check_faces_validity(check_pairs);
+    }
+
 
     // Refine areas of the mesh with overlapping triangles that have aligned
     // vertices but have different triangulations of those vertices.
