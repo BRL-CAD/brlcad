@@ -436,9 +436,10 @@ omesh_smooth(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs)
     // Scrub the old data in active mesh containers (if any)
     for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
 	omesh_t *am = *a_it;
-	if (!am->fmesh->smooth()) {
+	if (!am->fmesh->optimize()) {
 	    return false;
 	}
+	// TODO - need to update vertex bboxes after changing triangles!
     }
 
     return true;
@@ -1383,8 +1384,6 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 
     make_omeshes(&check_pairs, &edge_verts);
 
-    omesh_smooth(check_pairs);
-
     int face_ov_cnt = omesh_ovlps(check_pairs, 0);
     if (!face_ov_cnt) {
 	return 0;
@@ -1419,7 +1418,6 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 		if (avcnt) {
 		    // If we adjusted, recalculate overlapping tris and refinement points
 		    //std::cout << "Adjusted " << avcnt << " vertices\n";
-		    omesh_smooth(check_pairs);
 		    face_ov_cnt = omesh_ovlps(check_pairs, 0);
 		    omesh_refinement_pnts(check_pairs, rpnt_level);
 		    check_faces_validity(check_pairs);

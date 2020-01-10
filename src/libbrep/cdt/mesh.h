@@ -568,6 +568,7 @@ public:
 
 	uedges2tris.clear();
 	seed_tris.clear();
+	new_tris.clear();
 
 	v2edges.clear();
 	v2tris.clear();
@@ -593,7 +594,8 @@ public:
     long add_point(ON_3dPoint *on_3dp);
     long add_normal(ON_3dPoint *on_3dn);
     bool repair();
-    bool smooth();
+    bool optimize(double deg = 10);
+    bool optimize(std::set<triangle_t> &seeds);
     void reset();
     bool valid(int verbose);
     bool serialize(const char *fname);
@@ -730,6 +732,9 @@ public:
     /* Working polygon sweeping seed triangle set */
     std::set<triangle_t> seed_tris;
 
+    /* New triangles introduced into the mesh by a repair or optimization pass */
+    std::set<triangle_t> new_tris;
+
 private:
     /* Data containers */
     std::map<edge_t, size_t> edges2tris;
@@ -773,12 +778,15 @@ private:
     // that triangles which would cause a self-intersecting polygon will be
     // rejected, even if they satisfy deg.
     int grow_loop(cpolygon_t *polygon, double deg, bool stop_on_contained, triangle_t &target);
+    bool grow_loop_failure_ok;
 
     bool best_fit_plane_reproject(cpolygon_t *polygon);
     void best_fit_plane_plot(point_t *center, vect_t *norm, const char *fname);
 
 
     bool oriented_polycdt(cpolygon_t *polygon);
+
+    bool optimize_process(double deg);
 
 };
 

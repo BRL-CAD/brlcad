@@ -2793,18 +2793,20 @@ cdt_mesh_t::grow_loop(cpolygon_t *polygon, double deg, bool stop_on_contained, t
 
 	    if (ctriangle_vect_cmp(ptris, ntris)) {
 		if (h_uc || (stop_on_contained && polygon->poly.size() <= 3)) {
-		    struct bu_vls fname = BU_VLS_INIT_ZERO;
-		    std::cerr << "Error - new triangle set from polygon edge is the same as the previous triangle set.  Infinite loop, aborting\n";
-		    std::vector<struct ctriangle_t> infinite_loop_tris = polygon_tris(polygon, angle, stop_on_contained, 0);
-		    bu_vls_sprintf(&fname, "%d-infinite_loop_poly_2d.plot3", f_id);
-		    polygon->polygon_plot(bu_vls_cstr(&fname));
-		    bu_vls_sprintf(&fname, "%d-infinite_loop_poly_3d.plot3", f_id);
-		    polygon->polygon_plot_in_plane(bu_vls_cstr(&fname));
-		    bu_vls_sprintf(&fname, "%d-infinite_loop_tris.plot3", f_id);
-		    ctris_vect_plot(infinite_loop_tris, bu_vls_cstr(&fname));
-		    bu_vls_sprintf(&fname, "%d-infinite_loop.cdtmesh", f_id);
-		    serialize(bu_vls_cstr(&fname));
-		    bu_vls_free(&fname);
+		    if (!grow_loop_failure_ok) {
+			struct bu_vls fname = BU_VLS_INIT_ZERO;
+			std::cerr << "Error - new triangle set from polygon edge is the same as the previous triangle set.  Infinite loop, aborting\n";
+			std::vector<struct ctriangle_t> infinite_loop_tris = polygon_tris(polygon, angle, stop_on_contained, 0);
+			bu_vls_sprintf(&fname, "%d-infinite_loop_poly_2d.plot3", f_id);
+			polygon->polygon_plot(bu_vls_cstr(&fname));
+			bu_vls_sprintf(&fname, "%d-infinite_loop_poly_3d.plot3", f_id);
+			polygon->polygon_plot_in_plane(bu_vls_cstr(&fname));
+			bu_vls_sprintf(&fname, "%d-infinite_loop_tris.plot3", f_id);
+			ctris_vect_plot(infinite_loop_tris, bu_vls_cstr(&fname));
+			bu_vls_sprintf(&fname, "%d-infinite_loop.cdtmesh", f_id);
+			serialize(bu_vls_cstr(&fname));
+			bu_vls_free(&fname);
+		    }
 		    return -1;
 		} else {
 		    // We're not in a repair situation, and we've already tried
@@ -2852,12 +2854,14 @@ cdt_mesh_t::grow_loop(cpolygon_t *polygon, double deg, bool stop_on_contained, t
 	}
     }
 
-    std::cout << "Error - loop growth terminated but conditions for triangulation were never satisfied!\n";
-    struct bu_vls fname = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&fname, "%d-failed_patch_poly_2d.plot3", f_id);
-    polygon->polygon_plot(bu_vls_cstr(&fname));
-    bu_vls_sprintf(&fname, "%d-failed_patch_poly_3d.plot3", f_id);
-    polygon->polygon_plot_in_plane(bu_vls_cstr(&fname));
+    if (!grow_loop_failure_ok) {
+	std::cout << "Error - loop growth terminated but conditions for triangulation were never satisfied!\n";
+	struct bu_vls fname = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&fname, "%d-failed_patch_poly_2d.plot3", f_id);
+	polygon->polygon_plot(bu_vls_cstr(&fname));
+	bu_vls_sprintf(&fname, "%d-failed_patch_poly_3d.plot3", f_id);
+	polygon->polygon_plot_in_plane(bu_vls_cstr(&fname));
+    }
     return -1;
 }
 
@@ -2897,6 +2901,7 @@ cdt_mesh_t::process_seed_tri(triangle_t &seed, bool repair, double deg)
     // Add in the replacement triangles
     for (v_it = polygon->tris.begin(); v_it != polygon->tris.end(); v_it++) {
 	triangle_t vt = *v_it;
+	new_tris.insert(vt);
 	tri_add(vt);
     }
 
@@ -3085,6 +3090,8 @@ cdt_mesh_t::repair()
 	return false;
     }
 
+    grow_loop_failure_ok = false;
+
     remove_dangling_tris();
 
     // *Wrong* triangles: problem edge and/or flipped normal triangles.  Handle
@@ -3092,6 +3099,7 @@ cdt_mesh_t::repair()
     // errors they might introduce.
     std::vector<triangle_t> f_tris = this->interior_incorrect_normals();
     std::vector<triangle_t> e_tris = this->problem_edge_tris();
+    new_tris.clear();
     seed_tris.clear();
     seed_tris.insert(e_tris.begin(), e_tris.end());
     seed_tris.insert(f_tris.begin(), f_tris.end());
@@ -3220,9 +3228,38 @@ cdt_mesh_t::repair()
 }
 
 bool
-cdt_mesh_t::smooth()
+cdt_mesh_t::optimize_process(double deg)
+{
+    grow_loop_failure_ok = true;
+
+    if (std::string(name) == std::string("p.s") && f_id == 0) {
+	tris_plot("pre_smooth.plot3");
+    }
+
+    while (seed_tris.size()) {
+	triangle_t seed = *seed_tris.begin();
+	seed_tris.erase(seed);
+	process_seed_tri(seed, true, deg);
+    }
+
+    if (std::string(name) == std::string("p.s") && f_id == 0) {
+	tris_plot("smooth.plot3");
+    }
+
+    return true;
+}
+
+bool
+cdt_mesh_t::optimize(double deg)
 {
     seed_tris.clear();
+    new_tris.clear();
+
+    // If we're using this method for picking seed triangles
+    // and the surface is planar, it's a no-op.
+    if (planar()) return true;
+
+    double deg_dp = cos(deg * ON_PI/180.0);
 
     RTree<size_t, double, 3>::Iterator tree_it;
     tris_tree.GetFirst(tree_it);
@@ -3238,45 +3275,31 @@ cdt_mesh_t::smooth()
 	if (std::string(name) == std::string("p.s") && f_id == 0) {
 	    std::cout << "dp: " << dp << "\n";
 	}
-	if (dp < 0.9) {
+	if (dp < deg_dp) {
 	    seed_tris.insert(tri);
 	}
 	++tree_it;
     }
 
-    if (std::string(name) == std::string("p.s") && f_id == 0) {
-	tris_plot("pre_smooth.plot3");
-    }
-
-    size_t st_size = seed_tris.size();
-    while (seed_tris.size()) {
-	triangle_t seed = *seed_tris.begin();
-	bool pseed = process_seed_tri(seed, true, 70);
-
-	if (!pseed || seed_tris.size() >= st_size) {
-	    std::cerr << f_id << ": Error - failed to process smoothing seed triangle!\n";
-	    struct bu_vls fname = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&fname, "%d-failed_seed.plot3", f_id);
-	    tri_plot(seed, bu_vls_cstr(&fname));
-	    bu_vls_sprintf(&fname, "%d-failed_seed_mesh.plot3", f_id);
-	    tris_plot(bu_vls_cstr(&fname));
-	    bu_vls_sprintf(&fname, "%d-failed_seed.cdtmesh", f_id);
-	    serialize(bu_vls_cstr(&fname));
-	    bu_vls_free(&fname);
-	    return false;
-	}
-
-	st_size = seed_tris.size();
-
-    }
-
-    if (std::string(name) == std::string("p.s") && f_id == 0) {
-	tris_plot("smooth.plot3");
-    }
+    optimize_process(deg);
 
     return true;
 }
 
+bool
+cdt_mesh_t::optimize(std::set<triangle_t> &seeds)
+{
+    seed_tris.clear();
+    new_tris.clear();
+
+    seed_tris = seeds;
+
+    // TODO - calculate best fit plane and maximum angle of any seed tri from that plane - that's
+    // our angle limit for the optimization build.
+    optimize_process(70);
+
+    return true;
+}
 
 bool
 cdt_mesh_t::valid(int verbose)
