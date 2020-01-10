@@ -85,7 +85,6 @@ overt_t::update() {
     for (tv_it = vtri_inds.begin(); tv_it != vtri_inds.end(); tv_it++) {
 	triangle_t tri = omesh->fmesh->tris_vect[*tv_it];
 	double odist = tri.opp_edge_dist(p_id);
-	std::cout << "odist: " << odist << "\n";
 	elen = (odist < elen) ? odist : elen;
     }
 

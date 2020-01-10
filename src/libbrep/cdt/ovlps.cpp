@@ -433,13 +433,23 @@ omesh_smooth(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs)
     std::set<omesh_t *> a_omesh = active_omeshes(check_pairs);
     std::set<omesh_t *>::iterator a_it;
 
-    // Scrub the old data in active mesh containers (if any)
     for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
 	omesh_t *am = *a_it;
 	if (!am->fmesh->optimize()) {
 	    return false;
 	}
-	// TODO - need to update vertex bboxes after changing triangles!
+	// Need to update vertex bboxes after changing triangles!
+	std::set<triangle_t>::iterator n_it;
+	std::set<overt_t *> tri_verts;
+	for (n_it = am->fmesh->new_tris.begin(); n_it != am->fmesh->new_tris.end(); n_it++) {
+	    for (int i = 0; i < 3; i++) {
+		tri_verts.insert(am->overts[(*n_it).v[i]]);
+	    }
+	}
+	std::set<overt_t *>::iterator o_it;
+	for (o_it = tri_verts.begin(); o_it != tri_verts.end(); o_it++) {
+	    (*o_it)->update();
+	}
     }
 
     return true;
@@ -580,7 +590,7 @@ interior_edge_verts(omesh_t *omesh)
 #endif
 
 	// Add any interior points to the polygon before cdt.
-	std::set<overt_t *> new_overts;
+	std::set<overt_t *> overts_to_update;
 	bool have_inside = false;
 	for (size_t i = 0; i < epnts.size(); i++) {
 	    bool skip_epnt = false;
@@ -677,7 +687,7 @@ interior_edge_verts(omesh_t *omesh)
 		CDT_Add3DNorm(s_cdt, omesh->fmesh->normals[fnind], omesh->fmesh->pnts[f3ind], omesh->fmesh->f_id, -1, -1, -1, 0, 0);
 		omesh->fmesh->nmap[f3ind] = fnind;
 		overt_t *nvrt = omesh->vert_add(f3ind, &sbb);
-		new_overts.insert(nvrt);
+		overts_to_update.insert(nvrt);
 		polygon->p2o[p2dind] = f3ind;
 		polygon->interior_points.insert(p2dind);
 
@@ -706,6 +716,11 @@ interior_edge_verts(omesh_t *omesh)
 		triangle_t vt = *v_it;
 		orient_tri(*omesh->fmesh, vt);
 		omesh->fmesh->tri_add(vt);
+		// In addition to the genuinely new vertices, altered triangles
+		// may need updated vert bboxes
+		for (int i = 0; i < 3; i++) {
+		    overts_to_update.insert(omesh->overts[vt.v[i]]);
+		}
 	    }
 
 	    new_tris += polygon->tris.size();
@@ -727,7 +742,7 @@ interior_edge_verts(omesh_t *omesh)
 
 	// Have new triangles, update overts
 	std::set<overt_t *>::iterator n_it;
-	for (n_it = new_overts.begin(); n_it != new_overts.end(); n_it++) {
+	for (n_it = overts_to_update.begin(); n_it != overts_to_update.end(); n_it++) {
 	    (*n_it)->update();
 	}
 
