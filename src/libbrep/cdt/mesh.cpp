@@ -4402,6 +4402,58 @@ cdt_mesh_t::best_fit_plane_reproject(cpolygon_t *polygon)
     return true;
 }
 
+ON_Plane
+cdt_mesh_t::best_fit_plane(std::set<triangle_t> &ts)
+{
+    std::set<long> averts;
+    std::set<long>::iterator a_it;
+
+    std::set<triangle_t>::iterator t_it;
+    for (t_it = ts.begin(); t_it != ts.end(); t_it++) {
+	for (int i = 0; i < 3; i++) {
+	    averts.insert((*t_it).v[i]);
+	}
+    }
+
+    ON_3dVector avgtnorm(0.0,0.0,0.0);
+    int ncnt = 0;
+    for (a_it = averts.begin(); a_it != averts.end(); a_it++) {
+	ON_3dPoint *vn = normals[nmap[*a_it]];
+	if (vn) {
+	    avgtnorm += *vn;
+	    ncnt++;
+	}
+    }
+    avgtnorm = avgtnorm * 1.0/(double)ncnt;
+
+    point_t pcenter;
+    vect_t pnorm;
+
+    point_t *vpnts = (point_t *)bu_calloc(averts.size()+1, sizeof(point_t), "fitting points");
+    int pnts_ind = 0;
+    for (a_it = averts.begin(); a_it != averts.end(); a_it++) {
+	ON_3dPoint *p = pnts[*a_it];
+	vpnts[pnts_ind][X] = p->x;
+	vpnts[pnts_ind][Y] = p->y;
+	vpnts[pnts_ind][Z] = p->z;
+	pnts_ind++;
+    }
+    if (bn_fit_plane(&pcenter, &pnorm, pnts_ind, vpnts)) {
+	ON_Plane null_fit_plane(ON_3dPoint::UnsetPoint, ON_3dVector::UnsetVector);
+	return null_fit_plane;
+    }
+    bu_free(vpnts, "fitting points");
+
+    ON_3dVector on_norm(pnorm[X], pnorm[Y], pnorm[Z]);
+    if (ON_DotProduct(on_norm, avgtnorm) < 0) {
+	VSCALE(pnorm, pnorm, -1);
+    }
+
+    ON_Plane fit_plane(pcenter, pnorm);
+
+    return fit_plane;
+}
+
 long
 cdt_mesh_t::tri_process(cpolygon_t *polygon, std::set<uedge_t> *ne, std::set<uedge_t> *se, long *nv, triangle_t &t)
 {

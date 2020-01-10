@@ -736,6 +736,8 @@ public:
     /* New triangles introduced into the mesh by a repair or optimization pass */
     std::set<triangle_t> new_tris;
 
+    ON_Plane best_fit_plane(std::set<triangle_t> &ts);
+
 private:
     /* Data containers */
     std::map<edge_t, size_t> edges2tris;
