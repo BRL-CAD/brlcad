@@ -737,6 +737,7 @@ public:
     std::set<triangle_t> new_tris;
 
     ON_Plane best_fit_plane(std::set<triangle_t> &ts);
+    double max_tri_angle(ON_Plane &plane, std::set<triangle_t> &ts);
 
 private:
     /* Data containers */

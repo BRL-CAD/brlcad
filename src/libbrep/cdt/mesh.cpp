@@ -3316,9 +3316,11 @@ cdt_mesh_t::optimize(std::set<triangle_t> &seeds)
 
     seed_tris = seeds;
 
-    // TODO - calculate best fit plane and maximum angle of any seed tri from that plane - that's
-    // our angle limit for the optimization build.
-    optimize_process(70);
+    // Calculate best fit plane and find the maximum angle of any seed tri from
+    // that plane - that's our angle limit for the optimization build.
+    ON_Plane fp = best_fit_plane(seeds);
+    double ang = max_tri_angle(fp, seeds);
+    optimize_process(ang);
 
     return true;
 }
@@ -4452,6 +4454,22 @@ cdt_mesh_t::best_fit_plane(std::set<triangle_t> &ts)
     ON_Plane fit_plane(pcenter, pnorm);
 
     return fit_plane;
+}
+
+double
+cdt_mesh_t::max_tri_angle(ON_Plane &plane, std::set<triangle_t> &ts)
+{
+    double dmax = DBL_MAX;
+    ON_3dVector pnorm = plane.Normal();
+    std::set<triangle_t>::iterator t_it;
+    for (t_it = ts.begin(); t_it != ts.end(); t_it++) {
+	ON_3dVector tn = tnorm(*t_it);
+	double tdp = ON_DotProduct(tn, pnorm);
+	double dang = (NEAR_EQUAL(tdp, 1.0, ON_ZERO_TOLERANCE)) ? 0 : acos(tdp);
+	dmax = (dang > dmax) ? dang : dmax;
+    }
+
+    return dmax * 180.0/ON_PI;
 }
 
 long
