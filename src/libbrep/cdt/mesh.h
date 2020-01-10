@@ -597,6 +597,7 @@ public:
     bool repair();
     bool optimize(double deg = 10);
     bool optimize(std::set<triangle_t> &seeds);
+    bool optimize(double deg, std::set<triangle_t> &seeds);
     void reset();
     bool valid(int verbose);
     bool serialize(const char *fname);
@@ -964,18 +965,6 @@ class omesh_t
 	std::string sname();
 };
 
-class ovlp_proj_tri {
-    public:
-	point_t pts[3];
-
-	bool ovlps(ovlp_proj_tri &other_tri) {
-	    if (bg_tri_tri_isect_coplanar2(pts[0], pts[1], pts[2], other_tri.pts[0], other_tri.pts[1], other_tri.pts[2], 1) == 1) {
-		return true;
-	    }
-	    return false;
-	}
-};
-
 class ovlp_grp {
     public:
         ovlp_grp(omesh_t *m1, omesh_t *m2) {
@@ -983,125 +972,39 @@ class ovlp_grp {
             om2 = m2;
         }
         omesh_t *om1;
-        omesh_t *om2;
+	std::set<triangle_t> tris1;
 
-	ovlp_proj_tri proj_tri(omesh_t *om, size_t ind){
-	    triangle_t tri = om->fmesh->tris_vect[ind];
-	    ovlp_proj_tri ptri;
-	    for (int i = 0; i < 3; i++) {
-		double u, v;
-		ON_3dPoint p3d = *om->fmesh->pnts[tri.v[i]];
-		if (!ind) {
-		    fp1.ClosestPointTo(p3d, &u, &v);
-		} else {
-		    fp2.ClosestPointTo(p3d, &u, &v);
-		}
-		VSET(ptri.pts[i], u, v, 0);
+	omesh_t *om2;
+        std::set<triangle_t> tris2;
+
+        void add_tri(triangle_t &t) {
+            if (om1->fmesh == t.m) {
+                tris1.insert(t);
+		return;
 	    }
-
-	    return ptri;
-	}
-	bool proj_tri_ovlp(omesh_t *om, size_t ind);
-
-        std::vector<ovlp_proj_tri> planar_core_tris1;
-        std::vector<ovlp_proj_tri> planar_core_tris2;
-
-	std::set<size_t> tris1;
-        std::set<size_t> tris2;
-        std::set<size_t> vtris1;
-        std::set<size_t> vtris2;
-
-      	std::set<long> verts1;
-        std::set<long> verts2;
-        std::set<overt_t *> overts1;
-        std::set<overt_t *> overts2;
-
-        void add_tri(omesh_t *m, size_t tind) {
-            if (om1 == m) {
-                tris1.insert(tind);
-                triangle_t tri = om1->fmesh->tris_vect[tind];
-                for (int i = 0; i < 3; i++) {
-                    verts1.insert(tri.v[i]);
-                    overt_t *ov = om1->overts[tri.v[i]];
-                    if (!ov) {
-                        std::cout << "WARNING: - no overt for tri vertex??\n";
-                        continue;
-                    }
-                    overts1.insert(ov);
-                }
-                return;
-            }
-            if (om2 == m) {
-                tris2.insert(tind);
-                triangle_t tri = om2->fmesh->tris_vect[tind];
-                for (int i = 0; i < 3; i++) {
-                    verts2.insert(tri.v[i]);
-                    overt_t *ov = om2->overts[tri.v[i]];
-                    if (!ov) {
-                        std::cout << "WARNING: - no overt for tri vertex??\n";
-                        continue;
-                    }
-                    overts2.insert(ov);
-                }
+            if (om2->fmesh == t.m) {
+                tris2.insert(t);
                 return;
             }
         }
 
+	bool optimize();
+
+	void plot(const char *fname, int ind);
+	void plot(const char *fname);
+
+    private:
 	// Find the best fit plane of all 3D points from all the vertices in play from both
 	// meshes or (if the individual planes are not close to parallel) the best fit
 	// plane of the current mesh's inputs.
-	void fit_plane();
+	bool fit_plane();
 	ON_Plane fp1;
 	ON_Plane fp2;
+	bool separate_planes;
 
-        // Each point involved in this operation must have it's closest point
-        // in the other mesh involved.  If the closest point in the other mesh
-        // ISN'T the closest surface point, we need to introduce that
-        // point in the other mesh.
-        size_t characterize_all_verts();
-
-        // Confirm that all triangles in the group are still in the fmeshes - if
-        // we processed a prior group that involved a triangle incorporated into
-        // this group that is now gone, this grouping is invalid and can't be
-        // processed
+	// Confirm that all triangles in the group are still in the fmeshes, and
+	// remove any that are not from the tris sets.
         bool validate();
-
-        void list_tris();
-        void list_overts();
-
-	void plot(const char *fname, int ind);
-
-	void plot(const char *fname);
-	void print();
-
-	// Start thinking about what relationships we need to track between mesh
-	// points - refinement_pnts isn't enough by itself, we'll need more
-	//
-	// Each vertex in one mesh needs a matching vert in the other
-	std::map<overt_t *, overt_t *> om1_om2_verts;
-	std::map<overt_t *, overt_t *> om2_om1_verts;
-
-	// Mappable rverts - no current opposite point, but surf closest point is new and unique
-	// (i.e. can be inserted into this mesh)
-	std::set<overt_t *> om1_rverts_from_om2;
-	std::set<overt_t *> om2_rverts_from_om1;
-
-	std::set<overt_t *> om1_everts_from_om2;
-	std::set<overt_t *> om2_everts_from_om1;
-
-	/* If the closest point for a vert is already assigned to another vert,
-	 * the vert with the further distance is deemed unmappable - in this
-	 * situation, we're going to have to do some interior edge based point
-	 * insertions (i.e. the hard case).*/
-	std::set<overt_t *> om1_unmappable_rverts;
-	std::set<overt_t *> om2_unmappable_rverts;
-
-	bool replaceable;
-
-	std::map<bedge_seg_t *, std::set<overt_t *>> *edge_verts;
-
-    private:
-        void characterize_verts(int ind);
 };
 
 int tri_isect(triangle_t &t1, triangle_t &t2, int mode);
@@ -1150,7 +1053,7 @@ bool
 closest_mesh_point(ON_3dPoint &s_p, std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> *check_pairs, ON_3dPoint *p);
 
 void
-shared_cdts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs);
+resolve_ovlp_grps(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs);
 
 #endif /* __cdt_mesh_h__ */
 

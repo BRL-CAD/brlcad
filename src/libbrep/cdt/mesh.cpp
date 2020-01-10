@@ -3326,6 +3326,18 @@ cdt_mesh_t::optimize(std::set<triangle_t> &seeds)
 }
 
 bool
+cdt_mesh_t::optimize(double deg, std::set<triangle_t> &seeds)
+{
+    seed_tris.clear();
+    new_tris.clear();
+
+    seed_tris = seeds;
+    optimize_process(deg);
+
+    return true;
+}
+
+bool
 cdt_mesh_t::valid(int verbose)
 {
     struct bu_vls fname = BU_VLS_INIT_ZERO;

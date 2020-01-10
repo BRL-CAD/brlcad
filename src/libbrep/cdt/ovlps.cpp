@@ -1470,6 +1470,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 
     // We should now have all the points we need - any remaining work involves
     // selecting the correct triangles.
+    resolve_ovlp_grps(check_pairs);
 
     // Refine areas of the mesh with overlapping triangles that have aligned
     // vertices but have different triangulations of those vertices.
