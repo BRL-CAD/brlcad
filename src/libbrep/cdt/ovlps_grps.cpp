@@ -264,11 +264,41 @@ ovlp_grp::optimize()
 
     double ang1 = om1->fmesh->max_tri_angle(fp1, tris1);
     std::cout << "ang1: " << ang1 << "\n";
-    om1->fmesh->optimize(ang1, tris1);
+    bool m1opt = om1->fmesh->optimize(ang1, tris1);
+
+    if (m1opt) {
+	// Need to update vertex bboxes after changing triangles!
+	std::set<triangle_t>::iterator n_it;
+	std::set<overt_t *> tri_verts;
+	for (n_it = om1->fmesh->new_tris.begin(); n_it != om1->fmesh->new_tris.end(); n_it++) {
+	    for (int i = 0; i < 3; i++) {
+		tri_verts.insert(om1->overts[(*n_it).v[i]]);
+	    }
+	}
+	std::set<overt_t *>::iterator o_it;
+	for (o_it = tri_verts.begin(); o_it != tri_verts.end(); o_it++) {
+	    (*o_it)->update();
+	}
+    }
 
     double ang2 = om2->fmesh->max_tri_angle(fp2, tris2);
     std::cout << "ang2: " << ang2 << "\n";
-    om2->fmesh->optimize(ang2, tris2);
+    bool m2opt = om2->fmesh->optimize(ang2, tris2);
+
+    if (m2opt) {
+	// Need to update vertex bboxes after changing triangles!
+	std::set<triangle_t>::iterator n_it;
+	std::set<overt_t *> tri_verts;
+	for (n_it = om2->fmesh->new_tris.begin(); n_it != om2->fmesh->new_tris.end(); n_it++) {
+	    for (int i = 0; i < 3; i++) {
+		tri_verts.insert(om2->overts[(*n_it).v[i]]);
+	    }
+	}
+	std::set<overt_t *>::iterator o_it;
+	for (o_it = tri_verts.begin(); o_it != tri_verts.end(); o_it++) {
+	    (*o_it)->update();
+	}
+    }
 
     return true;
 }
