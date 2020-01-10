@@ -231,6 +231,27 @@ triangle_t::vpnt(int i)
     return m->pnts[v[i]];
 }
 
+double
+triangle_t::opp_edge_dist(int vind)
+{
+    std::vector<int> everts;
+    for (int i = 0; i < 3; i++) {
+	if (v[i] != vind) {
+	    everts.push_back(v[i]);
+	}
+    }
+    if (everts.size() != 2) {
+	// Degenerate triangle
+	return 0;
+    }
+
+    uedge_t ue(everts[0], everts[1]);
+
+    ON_3dPoint p = *m->pnts[vind];
+
+    double edist = m->uedge_dist(ue, p);
+    return edist;
+}
 
 /***************************/
 /* CPolygon implementation */
@@ -2652,7 +2673,9 @@ cdt_mesh_t::grow_loop(cpolygon_t *polygon, double deg, bool stop_on_contained, t
     std::vector<ctriangle_t> ptris = polygon_tris(polygon, angle, stop_on_contained, 1);
 
     if (!ptris.size() && stop_on_contained) {
-	std::cerr << "No triangles available??\n";
+	if (!grow_loop_failure_ok) {
+	    std::cerr << "No triangles available??\n";
+	}
 	return -1;
     }
     if (!ptris.size() && !stop_on_contained) {
@@ -2879,7 +2902,9 @@ cdt_mesh_t::process_seed_tri(triangle_t &seed, bool repair, double deg)
     // Grow until we contain the seed and its associated problem data
     int tri_cnt = grow_loop(polygon, deg, repair, seed);
     if (tri_cnt < 0) {
-	std::cerr << "grow_loop failure\n";
+	if (!grow_loop_failure_ok) {
+	    std::cerr << "grow_loop failure\n";
+	}
 	delete polygon;
 	return false;
     }
@@ -3272,9 +3297,6 @@ cdt_mesh_t::optimize(double deg)
 	ON_3dVector bdir = bnorm(tri);
 	// larger angle between brep and triangle = seed candidate
 	double dp = ON_DotProduct(tdir, bdir);
-	if (std::string(name) == std::string("p.s") && f_id == 0) {
-	    std::cout << "dp: " << dp << "\n";
-	}
 	if (dp < deg_dp) {
 	    seed_tris.insert(tri);
 	}

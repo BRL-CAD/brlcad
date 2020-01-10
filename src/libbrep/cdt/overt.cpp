@@ -76,6 +76,19 @@ overt_t::update() {
     }
     v_min_edge_len = elen;
 
+    // We also need to check if the vertex is close to
+    // the opposite edge of one of its triangles - that
+    // will constrain how we can move it without flipping
+    // a triangle.
+    std::set<size_t> vtri_inds = omesh->fmesh->v2tris[p_id];
+    std::set<size_t>::iterator tv_it;
+    for (tv_it = vtri_inds.begin(); tv_it != vtri_inds.end(); tv_it++) {
+	triangle_t tri = omesh->fmesh->tris_vect[*tv_it];
+	double odist = tri.opp_edge_dist(p_id);
+	std::cout << "odist: " << odist << "\n";
+	elen = (odist < elen) ? odist : elen;
+    }
+
     // create a bbox around pnt using length ~20% of the shortest edge length.
     ON_3dPoint v3dpnt = *omesh->fmesh->pnts[p_id];
 

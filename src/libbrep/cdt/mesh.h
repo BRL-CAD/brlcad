@@ -344,6 +344,7 @@ struct triangle_t {
     }
 
     ON_3dPoint * vpnt(int i);
+    double opp_edge_dist(int vind);
 };
 
 
