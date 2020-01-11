@@ -85,34 +85,8 @@ set_property(TARGET rtweight APPEND PROPERTY COMPILE_DEFINITIONS "RT_TXT_OUTPUT"
 
 BRLCAD_ADDEXEC(rtxray "${LIBRTUIF_SOURCES};viewxray.c" "${RT_STD_LIBS}")
 
-find_package(Appleseed)
-if(APPLESEED_FOUND)
-  message("Found Appleseed: ${APPLESEED_LIBRARIES}")
-
-  # For soem reason GCC won't suppress this warning with an in-src pragma push
-  include(CheckCXXCompilerFlag)
-  check_cxx_compiler_flag(-Wno-unknown-pragmas HAVE_WNO_UNKNOWN_PRAGMAS)
-  if(HAVE_WNO_UNKNOWN_PRAGMAS)
-    set_property(SOURCE art.cpp APPEND PROPERTY COMPILE_FLAGS "-Wno-unknown-pragmas")
-  endif(HAVE_WNO_UNKNOWN_PRAGMAS)
-
-  # Using the binary version of appleseed on Linux, we need a couple specific additional
-  # libraries linked in
-  get_filename_component(APPLESEED_LIB_DIR "${APPLESEED_LIBRARY}" DIRECTORY)
-  file(GLOB APPLESEED_BOOST_SYSTEM_LIB "${APPLESEED_LIB_DIR}/libboost_system-*")
-  #message("BOOST lib: ${APPLESEED_BOOST_SYSTEM_LIB}")
-  file(GLOB APPLESEED_OPENIMAGEIO_LIB "${APPLESEED_LIB_DIR}/libOpenImageIO.*")
-  #message("OpenImageIO lib: ${APPLESEED_OPENIMAGEIO_LIB}")
-
-  include_directories(
-    ${APPLESEED_INCLUDE_DIRS}
-    )
-  BRLCAD_ADDEXEC(art "art.cpp" "${RT_STD_LIBS};${APPLESEED_LIBRARIES};${APPLESEED_BOOST_SYSTEM_LIB};${APPLESEED_OPENIMAGEIO_LIB}" TEST_USESDATA)
-endif(APPLESEED_FOUND)
-
 set(rt_ignore_files
   CMakeLists.txt
-  art.cpp
   ext.h
   libfb-dummy.c
   main.c

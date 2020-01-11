@@ -83,6 +83,7 @@ set(level_3_dirs
   nirt
   proc-db
   rt
+  art
   shapes
   sig
   util
