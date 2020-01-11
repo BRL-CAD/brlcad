@@ -269,7 +269,7 @@ ovlp_grp::optimize()
 
     double ang1 = om1->fmesh->max_tri_angle(fp1, tris1);
     std::cout << "ang1: " << ang1 << "\n";
-    bool m1opt = om1->fmesh->optimize(ang1, tris1);
+    bool m1opt = om1->fmesh->optimize(tris1, fp1);
 
     if (m1opt) {
 	// Need to update vertex bboxes after changing triangles!
@@ -288,7 +288,7 @@ ovlp_grp::optimize()
 
     double ang2 = om2->fmesh->max_tri_angle(fp2, tris2);
     std::cout << "ang2: " << ang2 << "\n";
-    bool m2opt = om2->fmesh->optimize(ang2, tris2);
+    bool m2opt = om2->fmesh->optimize(tris2, fp2);
 
     if (m2opt) {
 	// Need to update vertex bboxes after changing triangles!

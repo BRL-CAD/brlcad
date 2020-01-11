@@ -2463,7 +2463,7 @@ cdt_mesh_t::polygon_tris(cpolygon_t *polygon, double angle, bool brep_norm, int 
 
 	    ON_3dVector tn = (brep_norm) ? bnorm(tris_vect[*t_it]) : tnorm(tris_vect[*t_it]);
 	    double d_ang = ang_deg(polygon->pdir, tn);
-	    if (d_ang > angle) {
+	    if (d_ang > angle && !NEAR_EQUAL(d_ang, angle, ON_ZERO_TOLERANCE)) {
 		continue;
 	    }
 	    initial_set.insert(tris_vect[*t_it]);
@@ -2860,10 +2860,10 @@ cdt_mesh_t::grow_loop(cpolygon_t *polygon, double deg, bool stop_on_contained, t
 }
 
 bool
-cdt_mesh_t::process_seed_tri(triangle_t &seed, bool repair, double deg)
+cdt_mesh_t::process_seed_tri(triangle_t &seed, bool repair, double deg, ON_Plane *pplane)
 {
     // build an initial loop from a nearby valid triangle
-    cpolygon_t *polygon = build_initial_loop(seed, repair);
+    cpolygon_t *polygon = build_initial_loop(seed, repair, pplane);
 
     if (!polygon) {
 	std::cerr << "Could not build initial valid loop\n";
@@ -3104,7 +3104,7 @@ cdt_mesh_t::repair()
     while (seed_tris.size()) {
 	triangle_t seed = *seed_tris.begin();
 
-	bool pseed = process_seed_tri(seed, true, 170.0);
+	bool pseed = process_seed_tri(seed, true, 170.0, NULL);
 
 	if (!pseed || seed_tris.size() >= st_size) {
 	    std::cerr << f_id << ": Error - failed to process repair seed triangle!\n";
@@ -3153,7 +3153,7 @@ cdt_mesh_t::repair()
     while (seed_tris.size()) {
 	triangle_t seed = *s_it;
 
-	bool pseed = process_seed_tri(seed, true, 170.0);
+	bool pseed = process_seed_tri(seed, true, 170.0, NULL);
 
 	if (seed_tris.size() >= st_size) {
 	    s_it++;
@@ -3193,7 +3193,7 @@ cdt_mesh_t::repair()
 		triangle_t seed = *seed_tris.begin();
 
 		double deg = max_angle_delta(seed, s_tris);
-		bool pseed = process_seed_tri(seed, false, deg);
+		bool pseed = process_seed_tri(seed, false, deg, NULL);
 
 		if (!pseed || seed_tris.size() >= st_size) {
 		    std::cerr << f_id << ":  Error - failed to process refinement seed triangle!\n";
@@ -3224,7 +3224,7 @@ cdt_mesh_t::repair()
 }
 
 bool
-cdt_mesh_t::optimize_process(double deg)
+cdt_mesh_t::optimize_process(double deg, ON_Plane *pplane)
 {
     grow_loop_failure_ok = true;
 
@@ -3235,7 +3235,7 @@ cdt_mesh_t::optimize_process(double deg)
     while (seed_tris.size()) {
 	triangle_t seed = *seed_tris.begin();
 	seed_tris.erase(seed);
-	process_seed_tri(seed, false, deg);
+	process_seed_tri(seed, false, deg, pplane);
     }
 
     if (std::string(name) == std::string("c.s") && f_id == 0) {
@@ -3272,7 +3272,7 @@ cdt_mesh_t::optimize(double deg)
 	++tree_it;
     }
 
-    optimize_process(deg);
+    optimize_process(deg, NULL);
 
     return true;
 }
@@ -3288,20 +3288,26 @@ cdt_mesh_t::optimize(std::set<triangle_t> &seeds)
     // Calculate best fit plane and find the maximum angle of any seed tri from
     // that plane - that's our angle limit for the optimization build.
     ON_Plane fp = best_fit_plane(seeds);
-    double ang = max_tri_angle(fp, seeds);
-    optimize_process(ang);
+    double deg = max_tri_angle(fp, seeds);
+    optimize_process(deg, NULL);
 
     return true;
 }
 
 bool
-cdt_mesh_t::optimize(double deg, std::set<triangle_t> &seeds)
+cdt_mesh_t::optimize(std::set<triangle_t> &seeds, ON_Plane &pplane)
 {
     seed_tris.clear();
     new_tris.clear();
 
     seed_tris = seeds;
-    optimize_process(deg);
+
+    // Calculate best fit plane and find the maximum angle of any seed tri from
+    // that plane - that's our angle limit for the optimization build.
+    double deg = max_tri_angle(pplane, seeds);
+
+    ON_Plane poly_plane = pplane;
+    optimize_process(deg, &poly_plane);
 
     return true;
 }
@@ -4126,7 +4132,7 @@ cdt_mesh_t::deserialize(const char *fname)
 
 
 cpolygon_t *
-cdt_mesh_t::build_initial_loop(triangle_t &seed, bool repair)
+cdt_mesh_t::build_initial_loop(triangle_t &seed, bool repair, ON_Plane *pplane)
 {
     std::set<uedge_t>::iterator u_it;
 
@@ -4138,13 +4144,18 @@ cdt_mesh_t::build_initial_loop(triangle_t &seed, bool repair)
     ON_3dPoint sp = tcenter(seed);
     ON_3dVector sn = bnorm(seed);
 
-    ON_Plane tri_plane(sp, sn);
-    polygon->pdir = sn;
-    polygon->tplane = tri_plane;
+    if (!pplane) {
+	ON_Plane tri_plane(sp, sn);
+	polygon->tplane = tri_plane;
+	polygon->pdir = sn;
+    } else {
+	polygon->tplane = *pplane;
+	polygon->pdir = pplane->Normal();
+    }
     for (size_t i = 0; i < pnts.size(); i++) {
 	double u, v;
 	ON_3dPoint op3d = (*pnts[i]);
-	tri_plane.ClosestPointTo(op3d, &u, &v);
+	polygon->tplane.ClosestPointTo(op3d, &u, &v);
 	std::pair<double, double> proj_2d;
 	proj_2d.first = u;
 	proj_2d.second = v;

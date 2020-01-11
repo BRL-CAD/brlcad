@@ -597,7 +597,7 @@ public:
     bool repair();
     bool optimize(double deg = 10);
     bool optimize(std::set<triangle_t> &seeds);
-    bool optimize(double deg, std::set<triangle_t> &seeds);
+    bool optimize(std::set<triangle_t> &seeds, ON_Plane &pplane);
     void reset();
     bool valid(int verbose);
     bool serialize(const char *fname);
@@ -729,7 +729,7 @@ public:
     // polygon (2D) vertex indices - use o2p mapping to get polygon indices.
     long tri_process(cpolygon_t *polygon, std::set<uedge_t> *ne, std::set<uedge_t> *se, long *nv, triangle_t &t);
 
-    bool process_seed_tri(triangle_t &seed, bool repair, double deg);
+    bool process_seed_tri(triangle_t &seed, bool repair, double deg, ON_Plane *pplane);
 
     /* Working polygon sweeping seed triangle set */
     std::set<triangle_t> seed_tris;
@@ -773,7 +773,7 @@ private:
 
     // Use the seed triangle and build an initial loop.  If repair is set, find a nearby triangle that is
     // valid and use that instead.
-    cpolygon_t *build_initial_loop(triangle_t &seed, bool repair);
+    cpolygon_t *build_initial_loop(triangle_t &seed, bool repair, ON_Plane *pplane);
 
     std::vector<struct ctriangle_t> polygon_tris(cpolygon_t *polygon, double angle, bool brep_norm, int initial);
 
@@ -791,7 +791,7 @@ private:
 
     bool oriented_polycdt(cpolygon_t *polygon);
 
-    bool optimize_process(double deg);
+    bool optimize_process(double deg, ON_Plane *pplane);
 
 };
 
