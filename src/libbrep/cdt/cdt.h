@@ -232,6 +232,10 @@ ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt);
 void rtree_bbox_3d_remove(struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *pe);
 void rtree_bbox_3d(struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *pe);
 
+double
+ang_deg(const ON_3dVector &v1, const ON_3dVector &v2);
+
+
 /** @} */
 
 // Local Variables:

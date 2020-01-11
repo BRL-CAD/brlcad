@@ -331,14 +331,18 @@ omesh_refinement_pnts(
 	int level
 	)
 {
-    std::set<omesh_t *> a_omesh = itris_omeshes(check_pairs);
+    std::set<omesh_t *> a_omesh = active_omeshes(check_pairs);
     std::set<omesh_t *>::iterator a_it;
 
+    // Clear everything, even if we don't have intersecting triangles
     (*a_omesh.begin())->edge_verts->clear();
     for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
 	(*a_it)->edge_sets.clear();
 	(*a_it)->ivert_ref_cnts.clear();
     }
+
+    a_omesh = itris_omeshes(check_pairs);
+    if (!a_omesh.size()) return 0;
 
     // Count triangles to determine which verts need attention.  If a vertex is associated
     // with two or more triangles that intersect another face, it is a refinement point

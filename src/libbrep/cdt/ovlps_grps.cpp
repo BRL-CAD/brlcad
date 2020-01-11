@@ -220,7 +220,7 @@ ovlp_grp::fit_plane()
     }
     fp2 = fplane2;
 
-    double pangle = acos(ON_DotProduct(fplane1.Normal(), fplane2.Normal())) * 180/ON_PI;
+    double pangle = ang_deg(fplane1.Normal(), fplane2.Normal());
     if (pangle > 30) {
 	// If the planes are too far from parallel, we're done - there is no
 	// sensible common plane for projections.

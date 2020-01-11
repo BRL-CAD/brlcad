@@ -54,7 +54,6 @@
 #include <limits>
 #include <stack>
 
-
 static void
 plot_pnt_2d(FILE *plot_file, ON_2dPoint *p, double r, int dir)
 {
@@ -691,35 +690,10 @@ cpolygon_t::self_intersecting()
 		continue;
 	    }
 
-#if 0
-	    // Weed out nearly parallel lines
-	    double angle_tolerance_radians = 0.5*ON_PI/180.0;
-	    double parallel_tol = cos(angle_tolerance_radians);
-	    if (fabs(e1.Tangent()*e2.Tangent()) >= parallel_tol) {
-		continue;
-	    }
-#endif
-
 	    if ((a < 0 || NEAR_ZERO(a, ON_ZERO_TOLERANCE) || a > 1 || NEAR_ZERO(1-a, ON_ZERO_TOLERANCE)) ||
 		(b < 0 || NEAR_ZERO(b, ON_ZERO_TOLERANCE) || b > 1 || NEAR_ZERO(1-b, ON_ZERO_TOLERANCE))) {
 		continue;
 	    }
-#if 0
-	    else {
-		std::cout << "Isect: a = " << a << ", b = " << b << ":\n";
-		ON_2dPoint p2d;
-		self_isect_edges.insert(ue1);
-		p2d = ON_2dPoint(pnts_2d[ue1.v[0]].first, pnts_2d[ue1.v[0]].second);
-		std::cout << ue1.v[0] << "(" << p2d.x << "," << p2d.y << ")<->";
-		p2d = ON_2dPoint(pnts_2d[ue1.v[1]].first, pnts_2d[ue1.v[1]].second);
-		std::cout << ue1.v[1] << "(" << p2d.x << "," << p2d.y << ") isects with ";
-		self_isect_edges.insert(ue2);
-		p2d = ON_2dPoint(pnts_2d[ue2.v[0]].first, pnts_2d[ue2.v[0]].second);
-		std::cout << ue2.v[0] << "(" << p2d.x << "," << p2d.y << ")<->";
-		p2d = ON_2dPoint(pnts_2d[ue2.v[1]].first, pnts_2d[ue2.v[1]].second);
-		std::cout << ue2.v[1] << "(" << p2d.x << "," << p2d.y << ")\n";
-	    }
-#endif
 	    self_isect = true;
 	}
     }
@@ -2440,12 +2414,10 @@ cdt_mesh_t::max_angle_delta(triangle_t &seed, std::vector<triangle_t> &s_tris)
 
     for (size_t i = 0; i < s_tris.size(); i++) {
 	ON_3dVector tn = tnorm(s_tris[i]);
-	double dprd = ON_DotProduct(sn, tn);
-	double dang = (NEAR_EQUAL(dprd, 1.0, ON_ZERO_TOLERANCE)) ? 0 : acos(dprd);
-	dmax = (dang > dmax) ? dang : dmax;
+	double d_ang = ang_deg(sn, tn);
+	dmax = (d_ang > dmax) ? d_ang : dmax;
     }
 
-    dmax = dmax * 180.0/ON_PI;
     dmax = (dmax < 10) ? 10 : dmax;
     return (dmax < 170) ? dmax : 170;
 }
@@ -2490,9 +2462,8 @@ cdt_mesh_t::polygon_tris(cpolygon_t *polygon, double angle, bool brep_norm, int 
 	    }
 
 	    ON_3dVector tn = (brep_norm) ? bnorm(tris_vect[*t_it]) : tnorm(tris_vect[*t_it]);
-	    double dprd = ON_DotProduct(polygon->pdir, tn);
-	    double dang = (NEAR_EQUAL(dprd, 1.0, ON_ZERO_TOLERANCE)) ? 0 : acos(dprd);
-	    if (dang > angle) {
+	    double d_ang = ang_deg(polygon->pdir, tn);
+	    if (d_ang > angle) {
 		continue;
 	    }
 	    initial_set.insert(tris_vect[*t_it]);
@@ -2643,7 +2614,7 @@ cdt_mesh_t::oriented_polycdt(cpolygon_t *polygon)
 int
 cdt_mesh_t::grow_loop(cpolygon_t *polygon, double deg, bool stop_on_contained, triangle_t &target)
 {
-    double angle = deg * ON_PI/180.0;
+    double angle = deg;
 
     if (stop_on_contained && !polygon->uncontained.size() && polygon->visited_triangles.size() > 1) {
 	return 0;
@@ -3257,17 +3228,17 @@ cdt_mesh_t::optimize_process(double deg)
 {
     grow_loop_failure_ok = true;
 
-    if (std::string(name) == std::string("p.s") && f_id == 0) {
+    if (std::string(name) == std::string("c.s") && f_id == 0) {
 	tris_plot("pre_smooth.plot3");
     }
 
     while (seed_tris.size()) {
 	triangle_t seed = *seed_tris.begin();
 	seed_tris.erase(seed);
-	process_seed_tri(seed, true, deg);
+	process_seed_tri(seed, false, deg);
     }
 
-    if (std::string(name) == std::string("p.s") && f_id == 0) {
+    if (std::string(name) == std::string("c.s") && f_id == 0) {
 	tris_plot("smooth.plot3");
     }
 
@@ -3284,8 +3255,6 @@ cdt_mesh_t::optimize(double deg)
     // and the surface is planar, it's a no-op.
     if (planar()) return true;
 
-    double deg_dp = cos(deg * ON_PI/180.0);
-
     RTree<size_t, double, 3>::Iterator tree_it;
     tris_tree.GetFirst(tree_it);
     size_t t_ind;
@@ -3296,8 +3265,8 @@ cdt_mesh_t::optimize(double deg)
 	ON_3dVector tdir = tnorm(tri);
 	ON_3dVector bdir = bnorm(tri);
 	// larger angle between brep and triangle = seed candidate
-	double dp = ON_DotProduct(tdir, bdir);
-	if (dp < deg_dp) {
+	double d_ang = ang_deg(tdir, bdir);
+	if (d_ang > deg) {
 	    seed_tris.insert(tri);
 	}
 	++tree_it;
@@ -4476,12 +4445,11 @@ cdt_mesh_t::max_tri_angle(ON_Plane &plane, std::set<triangle_t> &ts)
     std::set<triangle_t>::iterator t_it;
     for (t_it = ts.begin(); t_it != ts.end(); t_it++) {
 	ON_3dVector tn = tnorm(*t_it);
-	double tdp = fabs(ON_DotProduct(tn, pnorm));
-	double dang = (NEAR_EQUAL(tdp, 1.0, ON_ZERO_TOLERANCE)) ? 0 : acos(tdp);
-	dmax = (dang > dmax) ? dang : dmax;
+	double d_ang = ang_deg(tn, pnorm);
+	dmax = (d_ang > dmax) ? d_ang : dmax;
     }
 
-    return dmax * 180.0/ON_PI;
+    return dmax;
 }
 
 long

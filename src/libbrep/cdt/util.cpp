@@ -259,6 +259,15 @@ plot_pnt_3d(FILE *plot_file, ON_3dPoint *p, double r, int dir)
     }
 }
 
+double
+ang_deg(const ON_3dVector &v1, const ON_3dVector &v2)
+{
+    double tdp = fabs(ON_DotProduct(v1, v2));
+    double d_ang = (NEAR_EQUAL(tdp, 1.0, ON_ZERO_TOLERANCE)) ? 0 : acos(tdp);
+    return d_ang * 180.0/ON_PI;
+}
+
+
 // Shoot a vertical ray and count intersections.
 bool
 point_inside2(struct ON_Brep_CDT_State *s_cdt, point_t p)
