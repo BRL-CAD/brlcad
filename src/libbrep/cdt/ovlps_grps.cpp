@@ -255,6 +255,11 @@ ovlp_grp::fit_plane()
     return true;
 }
 
+// TODO - the optimize calls here are calling the mesh repair subroutines, which don't
+// (yet) have an option for allowing the specification of an explicit plane when
+// building the initial polygon loop - it's calculating that plane from the triangle.
+// That won't give us our shared plane needed for this step, so going to have to
+// generalize that routine to allow an optional externally supplied projection plane.
 bool
 ovlp_grp::optimize()
 {
@@ -366,7 +371,6 @@ triangle_t tri1 = omesh1->fmesh->tris_vect[t1];
 
     return bins;
 }
-
 
 void
 resolve_ovlp_grps(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
