@@ -79,10 +79,11 @@ VPCHECK(overt_t *v, const char *fname)
     }
     return false;
 }
+#endif
 
-static void
+void
 plot_active_omeshes(
-	std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs
+	std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs
 	)
 {
     std::set<omesh_t *> a_omesh = itris_omeshes(check_pairs);
@@ -93,7 +94,6 @@ plot_active_omeshes(
 	am->plot();
     }
 }
-#endif
 
 
 // Functions to build sets of active meshes from the active pairs set

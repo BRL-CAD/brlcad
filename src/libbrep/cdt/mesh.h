@@ -1027,6 +1027,9 @@ size_t
 omesh_ovlps(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs, int mode);
 
 void
+plot_active_omeshes(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs);
+
+void
 orient_tri(cdt_mesh_t &fmesh, triangle_t &t);
 
 int

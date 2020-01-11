@@ -4471,12 +4471,12 @@ cdt_mesh_t::best_fit_plane(std::set<triangle_t> &ts)
 double
 cdt_mesh_t::max_tri_angle(ON_Plane &plane, std::set<triangle_t> &ts)
 {
-    double dmax = DBL_MAX;
+    double dmax = 0;
     ON_3dVector pnorm = plane.Normal();
     std::set<triangle_t>::iterator t_it;
     for (t_it = ts.begin(); t_it != ts.end(); t_it++) {
 	ON_3dVector tn = tnorm(*t_it);
-	double tdp = ON_DotProduct(tn, pnorm);
+	double tdp = fabs(ON_DotProduct(tn, pnorm));
 	double dang = (NEAR_EQUAL(tdp, 1.0, ON_ZERO_TOLERANCE)) ? 0 : acos(tdp);
 	dmax = (dang > dmax) ? dang : dmax;
     }

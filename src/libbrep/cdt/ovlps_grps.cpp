@@ -397,6 +397,9 @@ resolve_ovlp_grps(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 
 	   bins[i].optimize();
        }
+
+       omesh_ovlps(check_pairs, 1);
+       plot_active_omeshes(check_pairs);
    }
 }
 
