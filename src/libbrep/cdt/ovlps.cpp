@@ -215,24 +215,48 @@ possibly_interfering_face_pairs(struct ON_Brep_CDT_State **s_a, int s_cnt)
 overt_t *
 nearby_vert(ON_3dPoint &spnt, ON_3dVector &sn, overt_t *v, omesh_t *other_m, int level)
 {
+    // If we already know the answer, just return it and skip all the calculations...
+    if (v->aligned.find(other_m) != v->aligned.end()) {
+	overt_t *ov = v->aligned[other_m];
+	if (v->alevel[ov] == level) {
+	    spnt = v->cpoints[ov];
+	    sn = v->cnorms[ov];
+	    return ov;
+	} else {
+	    // Alignment was done at another level - closest surface point is still
+	    // OK, but vert mapping may not be - erase it and make a new determination.
+	    v->aligned.erase(other_m);
+	}
+    }
+
+    // Past the easy case - now we need to do some work.  Find the closest vertex point
+    // and the closest surface point/normal.
     double vdist;
     overt_t *v_closest = other_m->vert_closest(&vdist, v);
 
-    // If we're extremely close, just go with v_closest
-    if (vdist < 2*ON_ZERO_TOLERANCE) {
-	return v_closest;
-    }
-
-    // Past the easy case - now we need the closest surface point on other_m
     ON_3dPoint opnt = v->vpnt();
     ON_3dPoint vcpnt = v_closest->vpnt();
     double vo_to_vc = vcpnt.DistanceTo(opnt);
     double spdist = vo_to_vc * 10;
-    if (!other_m->fmesh->closest_surf_pnt(spnt, sn, &opnt, spdist)) {
-	// If there's no closest surface point within dist, there's probably
-	// an error - it should at least have found the v_closest point...
-	std::cerr << "Error - couldn't find closest point\n";
-	return NULL;
+    if (v->cpoints.find(v_closest) != v->cpoints.end() && v->cnorms.find(v_closest) != v->cnorms.end()) {
+	// If we already have calculated the closest surface point, just reuse it
+	spnt = v->cpoints[v_closest];
+	sn = v->cnorms[v_closest];
+    } else {
+	if (!other_m->fmesh->closest_surf_pnt(spnt, sn, &opnt, spdist)) {
+	    // If there's no closest surface point within dist, there's probably
+	    // an error - it should at least have found the v_closest point...
+	    std::cerr << "Error - couldn't find closest point\n";
+	} else {
+	    v->cpoints[v_closest] = spnt;
+	    v->cnorms[v_closest] = sn;
+	}
+    }
+
+    // If we're extremely close, just go with v_closest
+    if (vdist < 2*ON_ZERO_TOLERANCE) {
+	v->alevel[v_closest] = level;
+	return v_closest;
     }
 
     // See if the closest vert bbox overlaps the closest surface
@@ -266,6 +290,8 @@ nearby_vert(ON_3dPoint &spnt, ON_3dVector &sn, overt_t *v, omesh_t *other_m, int
     double factor = (level < INT_MAX) ? (1.0/(double)(10 + level)) : 0;
     double cvbbdiag = v_closest->bb.Diagonal().Length() * factor + 2 * ON_ZERO_TOLERANCE;
     if (vcpnt.DistanceTo(spnt) < cvbbdiag) {
+	v->aligned[other_m] = v_closest;
+	v->alevel[v_closest] = level;
 	return v_closest;
     }
 

@@ -837,15 +837,19 @@ class overt_t {
 	long p_id;
 
 	// Bounding box centered on 3D vert, size based on smallest associated
-	// edge length
+	// edge length or distance to opposite triangle edge.
         ON_BoundingBox bb;
 
 	// Associated omesh
         omesh_t *omesh;
 
 	// If this vertex has been aligned with a vertex in another mesh, the
-	// other vertex and mesh are stored here
+	// other vertex and mesh are stored here.  The idea is for this info
+	// to replace the need for rev_pt_t
 	std::map<omesh_t *, overt_t *> aligned;
+	std::map<overt_t *, ON_3dPoint> cpoints;
+	std::map<overt_t *, ON_3dVector> cnorms;
+	std::map<overt_t *, int> alevel;
 
     private:
 	// If vertices are being moved, the impact is not local to a single

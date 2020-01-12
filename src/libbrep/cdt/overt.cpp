@@ -126,6 +126,18 @@ overt_t::update() {
     }
     omesh->vtree.Insert(fMin, fMax, p_id);
 
+    // Any closet point calculations and alignments are now invalid - update accordingly
+    std::map<omesh_t *, overt_t *>::iterator a_it;
+    for (a_it = aligned.begin(); a_it != aligned.end(); a_it++) {
+	overt_t *other_vert = a_it->second;
+	other_vert->aligned.erase(omesh);
+	other_vert->cpoints.erase(this);
+	other_vert->cnorms.erase(this);
+    }
+    aligned.clear();
+    cpoints.clear();
+    cnorms.clear();
+
     // Once we've gotten here, the vertex is fully initialized
     init = true;
 }
