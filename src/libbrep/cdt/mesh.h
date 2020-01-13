@@ -782,14 +782,14 @@ private:
     // until the Brep normals of the triangles are beyond the deg limit.  Note
     // that triangles which would cause a self-intersecting polygon will be
     // rejected, even if they satisfy deg.
-    int grow_loop(cpolygon_t *polygon, double deg, bool stop_on_contained, triangle_t &target);
+    int grow_loop(cpolygon_t *polygon, double deg, bool stop_on_contained, triangle_t &target, bool reproject);
     bool grow_loop_failure_ok;
 
     bool best_fit_plane_reproject(cpolygon_t *polygon);
     void best_fit_plane_plot(point_t *center, vect_t *norm, const char *fname);
 
 
-    bool oriented_polycdt(cpolygon_t *polygon);
+    bool oriented_polycdt(cpolygon_t *polygon, bool reproject);
 
     bool optimize_process(double deg, ON_Plane *pplane);
 

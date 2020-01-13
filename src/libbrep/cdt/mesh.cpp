@@ -2586,11 +2586,13 @@ cdt_mesh_t::polygon_tris(cpolygon_t *polygon, double angle, bool brep_norm, int 
 }
 
 bool
-cdt_mesh_t::oriented_polycdt(cpolygon_t *polygon)
+cdt_mesh_t::oriented_polycdt(cpolygon_t *polygon, bool reproject)
 {
     std::set<triangle_t> otris;
 
-    best_fit_plane_reproject(polygon);
+    if (reproject) {
+	best_fit_plane_reproject(polygon);
+    }
 
     if (!polygon->cdt()) return false;
     std::set<triangle_t>::iterator tr_it;
@@ -2612,7 +2614,7 @@ cdt_mesh_t::oriented_polycdt(cpolygon_t *polygon)
 }
 
 int
-cdt_mesh_t::grow_loop(cpolygon_t *polygon, double deg, bool stop_on_contained, triangle_t &target)
+cdt_mesh_t::grow_loop(cpolygon_t *polygon, double deg, bool stop_on_contained, triangle_t &target, bool reproject)
 {
     double angle = deg;
 
@@ -2757,7 +2759,7 @@ cdt_mesh_t::grow_loop(cpolygon_t *polygon, double deg, bool stop_on_contained, t
 	    //polygon->print();
 	    //polygon->cdt_inputs_print("cdt_poly.c");
 	    //polygon->polygon_plot("cdt_poly.plot3");
-	    bool cdt_status = oriented_polycdt(polygon);
+	    bool cdt_status = oriented_polycdt(polygon, reproject);
 	    if (cdt_status) {
 		//tris_set_plot(tris, "patch.plot3");
 		return (long)polygon->tris.size();
@@ -2806,7 +2808,7 @@ cdt_mesh_t::grow_loop(cpolygon_t *polygon, double deg, bool stop_on_contained, t
 		    // We're not in a repair situation, and we've already tried
 		    // the current triangle candidate set with no polygon
 		    // change.  Generate triangles.
-		    bool cdt_status = oriented_polycdt(polygon);
+		    bool cdt_status = oriented_polycdt(polygon, reproject);
 		    if (cdt_status) {
 			//tris_set_plot(tris, "patch.plot3");
 			return 1;
@@ -2832,7 +2834,7 @@ cdt_mesh_t::grow_loop(cpolygon_t *polygon, double deg, bool stop_on_contained, t
 		// not concerned with contained points so this isn't an indication
 		// of an error condition.  Generate triangles.
 		// TODO - this produces polygon tris, which will need to be checked for flippping
-		bool cdt_status = oriented_polycdt(polygon);
+		bool cdt_status = oriented_polycdt(polygon, reproject);
 		if (cdt_status) {
 		    //tris_set_plot(tris, "patch.plot3");
 		    return 1;
@@ -2871,7 +2873,7 @@ cdt_mesh_t::process_seed_tri(triangle_t &seed, bool repair, double deg, ON_Plane
     }
 
     // Grow until we contain the seed and its associated problem data
-    int tri_cnt = grow_loop(polygon, deg, repair, seed);
+    int tri_cnt = grow_loop(polygon, deg, repair, seed, (pplane == NULL));
     if (tri_cnt < 0) {
 	if (!grow_loop_failure_ok) {
 	    std::cerr << "grow_loop failure\n";
