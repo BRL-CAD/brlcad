@@ -380,6 +380,9 @@ _ged_facetize_nmg_logging_hook(void *data, void *str)
 HIDDEN void
 _ged_facetize_log_nmg(struct _ged_facetize_opts *o)
 {
+    if (fileno(stderr) < 0)
+	return;
+
     /* Seriously, bu_bomb, we don't want you blathering
      * to stderr... shut down stderr temporarily, assuming
      * we can find /dev/null or something similar */
@@ -409,6 +412,9 @@ _ged_facetize_log_nmg(struct _ged_facetize_opts *o)
 HIDDEN void
 _ged_facetize_log_default(struct _ged_facetize_opts *o)
 {
+    if (fileno(stderr) < 0)
+	return;
+
     /* Put stderr back */
     if (o->fnull != -1) {
 	fflush(stderr);
