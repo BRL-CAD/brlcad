@@ -130,7 +130,7 @@ ovlp_grp::validate()
 
     etris.clear();
     for (tr_it = tris2.begin(); tr_it != tris2.end(); tr_it++) {
-	if (!om1->fmesh->tri_active(tr_it->ind)) {
+	if (!om2->fmesh->tri_active(tr_it->ind)) {
 	    etris.insert(*tr_it);
 	}
     }
@@ -608,13 +608,14 @@ ovlp_grp::pairs_realign()
 	return false;
     }
 
-    // TODO - if the nearest vertex to every vertex in one triangle set isn't in the
+    // If the nearest vertex to every vertex in one triangle set isn't in the
     // other triangle vertex set, we can't do this.
     if (!aligned_verts_check()) {
 	return false;
     }
 
     bool p1 = pair_realign(0);
+    if (!p1) return false;
     bool p2 = pair_realign(1);
 
     if (!overlapping()) {
@@ -656,9 +657,7 @@ resolve_ovlp_grps(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 		std::cout << "Starting bin processing with invalid inputs!\n";
 	    }
 
-	    if (i == 7) {
-		std::cout << "Processing bin " << i << "\n";
-	    }
+	    std::cout << "Processing bin " << i << "\n";
 	    if (!bins[i].pairs_realign()) {
 		bins[i].optimize();
 	    }
