@@ -54,7 +54,8 @@ ovbbp(ON_BoundingBox &bb) {
     fclose(plot);
 }
 
-#define PPOINT 3.05501831768742305,7.50007628741969601,23.99999799973181069
+//#define PPOINT 23.75000091628566068,7.56415387307229370,4.69184016593825515
+#define PPOINT 23.249999993258228,8.311619640259547,5.3252579308096335
 bool
 PPCHECK(ON_3dPoint &p)
 {
@@ -602,7 +603,7 @@ interior_edge_verts(omesh_t *omesh)
 	for (size_t i = 0; i < epnts.size(); i++) {
 	    bool skip_epnt = false;
 
-	    //VPCHECK(epnts[i].ov, NULL);
+	    VPCHECK(epnts[i].ov, NULL);
 
 	    ON_BoundingBox sbb(epnts[i].spnt,epnts[i].spnt);
 	    ON_3dVector vmin = epnts[i].ov->bb.Min() - epnts[i].ov->bb.Center();
@@ -614,22 +615,16 @@ interior_edge_verts(omesh_t *omesh)
 	    sbb.m_min = epnts[i].spnt + vmin;
 	    sbb.m_max = epnts[i].spnt + vmax;
 
-	    std::set <overt_t *> nv = omesh->vert_search(sbb);
-	    std::set<overt_t *>::iterator v_it;
-	    for (v_it = nv.begin(); v_it != nv.end(); v_it++) {
 
-		ON_3dPoint cvpnt = (*v_it)->vpnt();
-		double cvbbdiag = (*v_it)->bb.Diagonal().Length() * 0.1;
-		if (cvpnt.DistanceTo(epnts[i].spnt) < cvbbdiag) {
-		    // Too close to a vertex in the current mesh, skip
-		    //std::cout << "skip epnt, too close to vert\n";
-		    skip_epnt = true;
-		    break;
-		}
-	    }
-	    if (skip_epnt) {
+	    double vdist;
+	    overt_t *v_closest = omesh->vert_closest(&vdist, epnts[i].spnt);
+	    double cvbbdiag = v_closest->bb.Diagonal().Length() * 0.1;
+	    if (vdist < cvbbdiag) {
+		// Too close to a vertex in the current mesh, skip
+		//std::cout << "skip epnt, too close to vert\n";
 		continue;
 	    }
+
 	    // If the point is too close to a brep face edge,
 	    // we also need to reject it to avoid creating degenerate
 	    // triangles
