@@ -50,6 +50,16 @@ overt_t::edge_vert() {
 
 void
 overt_t::update() {
+
+    // Get pnt's associated edges.
+    std::set<edge_t> edges = omesh->fmesh->v2edges[p_id];
+
+    // If we don't have any edge information, this method of
+    // updating the vertex isn't viable - leave it as is.
+    if (!edges.size()) {
+	return;
+    }
+
     double fMin[3], fMax[3];
     if (init) {
 	// Previously updated - remove old instance from tree
@@ -61,9 +71,6 @@ overt_t::update() {
 	fMax[2] = bb.Max().z+ON_ZERO_TOLERANCE;
 	omesh->vtree.Remove(fMin, fMax, p_id);
     }
-
-    // Get pnt's associated edges.
-    std::set<edge_t> edges = omesh->fmesh->v2edges[p_id];
 
     // find the shortest edge associated with pnt
     std::set<edge_t>::iterator e_it;
