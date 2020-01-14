@@ -992,10 +992,15 @@ class ovlp_grp {
             }
         }
 
+	bool overlapping();
 	bool optimize();
+	bool pairs_realign();
 
 	void plot(const char *fname, int ind);
 	void plot(const char *fname);
+
+	// -1 = invalid, 1 = valid, 2 = cleared
+	int state;
 
     private:
 	// Find the best fit plane of all 3D points from all the vertices in play from both
@@ -1009,6 +1014,8 @@ class ovlp_grp {
 	// Confirm that all triangles in the group are still in the fmeshes, and
 	// remove any that are not from the tris sets.
         bool validate();
+
+	bool pair_realign(int ind);
 };
 
 int tri_isect(triangle_t &t1, triangle_t &t2, int mode);

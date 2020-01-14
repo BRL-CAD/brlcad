@@ -2598,6 +2598,7 @@ cdt_mesh_t::oriented_polycdt(cpolygon_t *polygon, bool reproject)
     std::set<triangle_t>::iterator tr_it;
     for (tr_it = polygon->tris.begin(); tr_it != polygon->tris.end(); tr_it++) {
 	triangle_t t = *tr_it;
+	t.m = this;
 	triangle_t nt(t);
 	ON_3dVector tdir = tnorm(t);
 	ON_3dVector bdir = bnorm(t);
@@ -2899,6 +2900,7 @@ cdt_mesh_t::process_seed_tri(triangle_t &seed, bool repair, double deg, ON_Plane
     // Add in the replacement triangles
     for (v_it = polygon->tris.begin(); v_it != polygon->tris.end(); v_it++) {
 	triangle_t vt = *v_it;
+	vt.m = this;
 	new_tris.insert(vt);
 	tri_add(vt);
     }

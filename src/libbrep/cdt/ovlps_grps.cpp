@@ -109,6 +109,14 @@ ovlp_grp::plot(const char *fname)
 bool
 ovlp_grp::validate()
 {
+    // Once we're invalid, no point in doing the work again
+    if (state == -1) {
+	return false;
+    }
+
+    // Assume valid until proven otherwise...
+    state = 1;
+
     std::set<triangle_t> etris;
     std::set<triangle_t>::iterator tr_it;
     for (tr_it = tris1.begin(); tr_it != tris1.end(); tr_it++) {
@@ -131,6 +139,7 @@ ovlp_grp::validate()
     }
 
     if (!tris1.size() || !tris2.size()) {
+	state = -1;
 	return false;
     }
 
@@ -269,9 +278,10 @@ ovlp_grp::optimize()
 
     double ang1 = om1->fmesh->max_tri_angle(fp1, tris1);
     std::cout << "ang1: " << ang1 << "\n";
-    bool m1opt = om1->fmesh->optimize(tris1, fp1);
+    om1->fmesh->optimize(tris1, fp1);
 
-    if (m1opt) {
+    if (om1->fmesh->new_tris.size()) {
+	tris1 = om1->fmesh->new_tris;
 	// Need to update vertex bboxes after changing triangles!
 	std::set<triangle_t>::iterator n_it;
 	std::set<overt_t *> tri_verts;
@@ -288,9 +298,10 @@ ovlp_grp::optimize()
 
     double ang2 = om2->fmesh->max_tri_angle(fp2, tris2);
     std::cout << "ang2: " << ang2 << "\n";
-    bool m2opt = om2->fmesh->optimize(tris2, fp2);
+    om2->fmesh->optimize(tris2, fp2);
 
-    if (m2opt) {
+    if (om2->fmesh->new_tris.size()) {
+	tris2 = om2->fmesh->new_tris;
 	// Need to update vertex bboxes after changing triangles!
 	std::set<triangle_t>::iterator n_it;
 	std::set<overt_t *> tri_verts;
@@ -303,6 +314,10 @@ ovlp_grp::optimize()
 	for (o_it = tri_verts.begin(); o_it != tri_verts.end(); o_it++) {
 	    (*o_it)->update();
 	}
+    }
+
+    if (!overlapping()) {
+	state = 2;
     }
 
     return true;
@@ -401,14 +416,167 @@ triangle_t tri1 = omesh1->fmesh->tris_vect[t1];
     return bins;
 }
 
+bool
+ovlp_grp::overlapping()
+{
+    // For now, just do the naive comparison without acceleration
+    // structures - if these sets get big it might be worth building
+    // rtrees specific to the group tris.
+
+    std::set<triangle_t>::iterator i_it, j_it;
+    for (i_it = tris1.begin(); i_it != tris1.end(); i_it++) {
+	triangle_t tri1 = *i_it;
+	for (j_it = tris2.begin(); j_it != tris2.end(); j_it++) {
+	    triangle_t tri2 = *j_it;
+	    if (tri_isect(tri1, tri2, 1)) {
+		return true;
+	    }
+	}
+    }
+
+    return false;
+}
+
+// TODO - probably don't really need a full CDT for this -
+// just find the interior edge, the other possible interior
+// edge, and if the other one is shorter switch the triangles...
+bool
+ovlp_grp::pair_realign(int ind)
+{
+    std::set<triangle_t> &gtris = (ind) ? tris1 : tris2;
+    std::set<triangle_t> tris = (ind) ? tris1 : tris2;
+    omesh_t *omesh = tris.begin()->m->omesh;
+
+    std::set<long> t_pts;
+    std::set<triangle_t>::iterator r_it;
+    for (r_it = tris.begin(); r_it != tris.end(); r_it++) {
+	for (int i = 0; i < 3; i++) {
+	    t_pts.insert(r_it->v[i]);
+	}
+    }
+
+    // If we don't have exactly 4 vertices from the triangles, we can't do this
+    if (t_pts.size() != 4) {
+	return false;
+    }
+
+    point_t pcenter;
+    vect_t pnorm;
+    point_t *fpnts = (point_t *)bu_calloc(t_pts.size()+1, sizeof(point_t), "fitting points");
+    std::set<long>::iterator p_it;
+    int tpind = 0;
+    for (p_it = t_pts.begin(); p_it != t_pts.end(); p_it++) {
+	ON_3dPoint *p = omesh->fmesh->pnts[*p_it];
+	fpnts[tpind][X] = p->x;
+	fpnts[tpind][Y] = p->y;
+	fpnts[tpind][Z] = p->z;
+	tpind++;
+    }
+    if (bn_fit_plane(&pcenter, &pnorm, t_pts.size(), fpnts)) {
+	std::cout << "fitting plane failed!\n";
+    }
+    bu_free(fpnts, "fitting points");
+
+    ON_Plane fit_plane(pcenter, pnorm);
+
+    // Build our polygon out of the two triangles.
+    //
+    // First step, add the 2D projection of the triangle vertices to the
+    // polygon data structure.
+    cpolygon_t *polygon = new cpolygon_t;
+    polygon->pdir = fit_plane.Normal();
+    polygon->tplane = fit_plane;
+    for (p_it = t_pts.begin(); p_it != t_pts.end(); p_it++) {
+	double u, v;
+	long pind = *p_it;
+	ON_3dPoint *p = omesh->fmesh->pnts[pind];
+	fit_plane.ClosestPointTo(*p, &u, &v);
+	std::pair<double, double> proj_2d;
+	proj_2d.first = u;
+	proj_2d.second = v;
+	polygon->pnts_2d.push_back(proj_2d);
+	polygon->p2o[polygon->pnts_2d.size() - 1] = pind;
+	polygon->o2p[pind] = polygon->pnts_2d.size() - 1;
+    }
+
+    // Initialize the polygon edges with one of the triangles.
+    triangle_t tri1 = *tris.begin();
+    tris.erase(tris.begin());
+    struct edge2d_t e1(polygon->o2p[tri1.v[0]], polygon->o2p[tri1.v[1]]);
+    struct edge2d_t e2(polygon->o2p[tri1.v[1]], polygon->o2p[tri1.v[2]]);
+    struct edge2d_t e3(polygon->o2p[tri1.v[2]], polygon->o2p[tri1.v[0]]);
+    polygon->add_edge(e1);
+    polygon->add_edge(e2);
+    polygon->add_edge(e3);
+
+    std::set<uedge_t> uedges;
+    uedges.insert(uedge_t(tri1.v[0], tri1.v[1]));
+    uedges.insert(uedge_t(tri1.v[1], tri1.v[2]));
+    uedges.insert(uedge_t(tri1.v[2], tri1.v[0]));
+
+    // Grow the polygon with the other triangle.
+    std::set<uedge_t> new_edges;
+    std::set<uedge_t> shared_edges;
+    triangle_t tri2 = *tris.begin();
+    tris.erase(tris.begin());
+    for (int i = 0; i < 3; i++) {
+	int v1 = i;
+	int v2 = (i < 2) ? i + 1 : 0;
+	uedge_t ue1(tri2.v[v1], tri2.v[v2]);
+	if (uedges.find(ue1) == uedges.end()) {
+	    new_edges.insert(ue1);
+	} else {
+	    shared_edges.insert(ue1);
+	}
+    }
+    polygon->replace_edges(new_edges, shared_edges);
+
+    polygon->cdt();
+
+    omesh->fmesh->tri_remove(tri1);
+    omesh->fmesh->tri_remove(tri2);
+
+    gtris.clear();
+    std::set<triangle_t>::iterator v_it;
+    for (v_it = polygon->tris.begin(); v_it != polygon->tris.end(); v_it++) {
+	triangle_t vt = *v_it;
+	vt.m = omesh->fmesh;
+	orient_tri(*omesh->fmesh, vt);
+	omesh->fmesh->tri_add(vt);
+	gtris.insert(vt);
+    }
+
+    return true;
+}
+
+bool
+ovlp_grp::pairs_realign()
+{
+    // If we don't have exactly 2 triangles in each of the grp sets, we can't do this
+    if (tris1.size() != 2 || tris2.size() != 2) {
+	return false;
+    }
+
+    bool p1 = pair_realign(0);
+    bool p2 = pair_realign(1);
+
+    if (!overlapping()) {
+	state = 2;
+    }
+
+    return (p1 && p2);
+}
+
+
 void
 resolve_ovlp_grps(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 {
     std::vector<ovlp_grp> bins;
 
    size_t bin_cnt = INT_MAX;
+   int cycle_cnt = 0;
 
-   while (bin_cnt) {
+   while (bin_cnt && cycle_cnt < 5) {
        bins = find_ovlp_grps(check_pairs);
        bin_cnt = bins.size();
 #if 1
@@ -428,12 +596,32 @@ resolve_ovlp_grps(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 	       std::cout << "Starting bin processing with invalid inputs!\n";
 	   }
 
-	   bins[i].optimize();
+
+	   if (!bins[i].pairs_realign()) {
+	       bins[i].optimize();
+	   }
+       }
+
+       bool have_invalid = false;
+       bool have_unresolved = false;
+       for (size_t i = 0; i < bins.size(); i++) {
+	   if (bins[i].state == -1) {
+	       have_invalid = true;
+	   }
+	   if (bins[i].state == 1) {
+	       have_unresolved = true;
+	   }
+       }
+       if (!have_invalid && !have_unresolved) {
+	   break;
        }
 
        omesh_ovlps(check_pairs, 1);
        plot_active_omeshes(check_pairs);
+       cycle_cnt++;
    }
+
+   plot_active_omeshes(check_pairs);
 }
 
 /** @} */
