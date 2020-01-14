@@ -2778,7 +2778,7 @@ cdt_mesh_t::grow_loop(cpolygon_t *polygon, double deg, bool stop_on_contained, t
 	    // That's all the triangles from this ring - if we haven't
 	    // terminated yet, pull the next triangle set.
 
-	    if (!stop_on_contained) {
+	    if (!stop_on_contained && reproject) {
 		angle = 0.75 * angle;
 	    }
 
@@ -3257,7 +3257,7 @@ cdt_mesh_t::optimize(double deg)
 
     // If we're using this method for picking seed triangles
     // and the surface is planar, it's a no-op.
-    if (planar()) return true;
+    if (planar()) return false;
 
     RTree<size_t, double, 3>::Iterator tree_it;
     tris_tree.GetFirst(tree_it);
@@ -3289,6 +3289,8 @@ cdt_mesh_t::optimize(std::set<triangle_t> &seeds)
 
     seed_tris = seeds;
 
+    if (planar()) return false;
+
     // Calculate best fit plane and find the maximum angle of any seed tri from
     // that plane - that's our angle limit for the optimization build.
     ON_Plane fp = best_fit_plane(seeds);
@@ -3305,6 +3307,8 @@ cdt_mesh_t::optimize(std::set<triangle_t> &seeds, ON_Plane &pplane)
     new_tris.clear();
 
     seed_tris = seeds;
+
+    if (planar()) return false;
 
     // Calculate best fit plane and find the maximum angle of any seed tri from
     // that plane - that's our angle limit for the optimization build.

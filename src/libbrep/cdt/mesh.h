@@ -1015,6 +1015,8 @@ class ovlp_grp {
 	// remove any that are not from the tris sets.
         bool validate();
 
+	bool aligned_verts_check();
+
 	bool pair_realign(int ind);
 };
 

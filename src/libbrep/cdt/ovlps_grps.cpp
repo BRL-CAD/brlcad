@@ -152,9 +152,6 @@ ovlp_grp::fit_plane()
     std::set<long> verts1;
     std::set<long> verts2;
 
-    // Clear out anything stale
-    if (!validate()) return false;
-
     // Collect the vertices
     std::set<triangle_t>::iterator tr_it;
     for (tr_it = tris1.begin(); tr_it != tris1.end(); tr_it++) {
@@ -272,12 +269,20 @@ ovlp_grp::fit_plane()
 bool
 ovlp_grp::optimize()
 {
-    if (!fit_plane()) {
-	return false;
+    // Clear out anything stale
+    if (!validate()) return false;
+
+    double ang1 = 1.0;
+    double ang2 = 1.0;
+
+    if (tris1.size() > 1 || tris2.size() > 2) {
+	fit_plane();
     }
 
-    double ang1 = om1->fmesh->max_tri_angle(fp1, tris1);
-    std::cout << "ang1: " << ang1 << "\n";
+    if (tris1.size() > 1) {
+	ang1 = om1->fmesh->max_tri_angle(fp1, tris1);
+	std::cout << "ang1: " << ang1 << "\n";
+    }
     om1->fmesh->optimize(tris1, fp1);
 
     if (om1->fmesh->new_tris.size()) {
@@ -296,8 +301,10 @@ ovlp_grp::optimize()
 	}
     }
 
-    double ang2 = om2->fmesh->max_tri_angle(fp2, tris2);
-    std::cout << "ang2: " << ang2 << "\n";
+    if (tris2.size() > 1) {
+	ang2 = om2->fmesh->max_tri_angle(fp2, tris2);
+	std::cout << "ang2: " << ang2 << "\n";
+    }
     om2->fmesh->optimize(tris2, fp2);
 
     if (om2->fmesh->new_tris.size()) {
@@ -550,10 +557,60 @@ ovlp_grp::pair_realign(int ind)
 }
 
 bool
+ovlp_grp::aligned_verts_check()
+{
+    std::set<overt_t *> overts1;
+    std::set<overt_t *> overts2;
+
+    std::set<triangle_t>::iterator t_it;
+    for (t_it = tris1.begin(); t_it != tris1.end(); t_it++) {
+	for (int i = 0; i < 3; i++) {
+	    overt_t *cv = om1->overts[t_it->v[i]];
+	    overts1.insert(cv);
+	}
+    }
+
+    for (t_it = tris2.begin(); t_it != tris2.end(); t_it++) {
+	for (int i = 0; i < 3; i++) {
+	    overt_t *cv = om2->overts[t_it->v[i]];
+	    overts2.insert(cv);
+	}
+    }
+
+    if (overts1.size() != 4 || overts2.size() != 4) {
+	return false;
+    }
+
+    std::set<overt_t *> unmapped1 = overts1;
+    std::set<overt_t *> unmapped2 = overts2;
+    std::set<overt_t *>::iterator v_it;
+    for (v_it = overts1.begin(); v_it != overts1.end(); v_it++) {
+	overt_t *ov = *v_it;
+	overt_t *ovc = om2->vert_closest(NULL, ov);
+	if (overts2.find(ovc) != overts2.end()) {
+	    unmapped1.erase(ov);
+	    unmapped2.erase(ovc);
+	}
+    }
+
+    if (unmapped1.size() || unmapped2.size()) {
+	return false;
+    }
+
+    return true;
+}
+
+bool
 ovlp_grp::pairs_realign()
 {
     // If we don't have exactly 2 triangles in each of the grp sets, we can't do this
     if (tris1.size() != 2 || tris2.size() != 2) {
+	return false;
+    }
+
+    // TODO - if the nearest vertex to every vertex in one triangle set isn't in the
+    // other triangle vertex set, we can't do this.
+    if (!aligned_verts_check()) {
 	return false;
     }
 
@@ -567,61 +624,66 @@ ovlp_grp::pairs_realign()
     return (p1 && p2);
 }
 
+static void
+plot_bins(std::vector<ovlp_grp> &bins) {
+    for (size_t i = 0; i < bins.size(); i++) {
+	struct bu_vls pname = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&pname, "group_%zu", i);
+	bins[i].plot(bu_vls_cstr(&pname));
+	bu_vls_free(&pname);
+    }
+}
 
 void
 resolve_ovlp_grps(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 {
     std::vector<ovlp_grp> bins;
 
-   size_t bin_cnt = INT_MAX;
-   int cycle_cnt = 0;
+    size_t bin_cnt = INT_MAX;
+    int cycle_cnt = 0;
 
-   while (bin_cnt && cycle_cnt < 5) {
-       bins = find_ovlp_grps(check_pairs);
-       bin_cnt = bins.size();
-#if 1
-       for (size_t i = 0; i < bins.size(); i++) {
-	   struct bu_vls pname = BU_VLS_INIT_ZERO;
-	   bu_vls_sprintf(&pname, "group_%zu", i);
-	   bins[i].plot(bu_vls_cstr(&pname));
-	   bu_vls_free(&pname);
-       }
-#endif
+    while (bin_cnt && cycle_cnt < 5) {
+	bins = find_ovlp_grps(check_pairs);
+	bin_cnt = bins.size();
 
-       for (size_t i = 0; i < bins.size(); i++) {
-	   bool v1 = bins[i].om1->fmesh->valid(1);
-	   bool v2 = bins[i].om2->fmesh->valid(1);
+	plot_bins(bins);
 
-	   if (!v1 || !v2) {
-	       std::cout << "Starting bin processing with invalid inputs!\n";
-	   }
+	for (size_t i = 0; i < bins.size(); i++) {
+	    bool v1 = bins[i].om1->fmesh->valid(1);
+	    bool v2 = bins[i].om2->fmesh->valid(1);
 
+	    if (!v1 || !v2) {
+		std::cout << "Starting bin processing with invalid inputs!\n";
+	    }
 
-	   if (!bins[i].pairs_realign()) {
-	       bins[i].optimize();
-	   }
-       }
+	    if (i == 7) {
+		std::cout << "Processing bin " << i << "\n";
+	    }
+	    if (!bins[i].pairs_realign()) {
+		bins[i].optimize();
+	    }
+	}
 
-       bool have_invalid = false;
-       bool have_unresolved = false;
-       for (size_t i = 0; i < bins.size(); i++) {
-	   if (bins[i].state == -1) {
-	       have_invalid = true;
-	   }
-	   if (bins[i].state == 1) {
-	       have_unresolved = true;
-	   }
-       }
-       if (!have_invalid && !have_unresolved) {
-	   break;
-       }
+	bool have_invalid = false;
+	bool have_unresolved = false;
+	for (size_t i = 0; i < bins.size(); i++) {
+	    if (bins[i].state == -1) {
+		have_invalid = true;
+	    }
+	    if (bins[i].state == 1) {
+		have_unresolved = true;
+	    }
+	}
+	if (!have_invalid && !have_unresolved) {
+	    break;
+	}
 
-       omesh_ovlps(check_pairs, 1);
-       plot_active_omeshes(check_pairs);
-       cycle_cnt++;
-   }
+	omesh_ovlps(check_pairs, 1);
+	plot_active_omeshes(check_pairs);
+	cycle_cnt++;
+    }
 
-   plot_active_omeshes(check_pairs);
+    plot_active_omeshes(check_pairs);
 }
 
 /** @} */
