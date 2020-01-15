@@ -494,24 +494,22 @@ tri_isect_t::isect_edge_only(double etol)
 		ON_Line l = t1_fedges[i];
 		ON_3dPoint lmid = l.PointAt(0.5);
 		struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh2->p_cdt;
+		// TODO - need some distance metric here - ON the mesh is fine, to within tolerance...
+		// The below is a start, but the correct mesh for the closest distance to the
+		// surface may not be fmesh2...  Need a s_cdt level closest_surf_pnt function
 		if (on_point_inside(s_cdt, &lmid)) {
-		    // TODO - need some distance metric here - ON the mesh is fine, to within tolerance...
-		    // The below is a start, but the correct mesh for the closest distance to the
-		    // surface may not be fmesh2...  Need a s_cdt level closest_surf_pnt function
-		    if (on_point_inside(s_cdt, &lmid)) {
-			ON_3dPoint bs_p;
-			bool cpeval = fmesh2->omesh->closest_brep_mesh_point(bs_p, &lmid, s_cdt);
-			if (!cpeval) {
-			    std::cout << "Error - couldn't find closest point for mesh\n";
-			    continue;
-			}
-			//std::cout << "lmin_dist_to_sp vs elen_min: " << lmid.DistanceTo(bs_p) << "," << 0.001*elen_min << "\n";
+		    ON_3dPoint bs_p;
+		    bool cpeval = fmesh2->omesh->closest_brep_mesh_point(bs_p, &lmid, s_cdt);
+		    if (!cpeval) {
+			std::cout << "Error - couldn't find closest point for mesh\n";
+			continue;
+		    }
+		    //std::cout << "lmin_dist_to_sp vs elen_min: " << lmid.DistanceTo(bs_p) << "," << 0.001*elen_min << "\n";
 
-			if (lmid.DistanceTo(bs_p) > BN_TOL_DIST) {
-			    //std::cout << "center " << lmid.x << "," << lmid.y << "," << lmid.z << "\n";
-			    //std::cout << s_cdt->name << " dist: " << lmid.DistanceTo(bs_p) << "\n";
-			    mid_inside_cnt++;
-			}
+		    if (lmid.DistanceTo(bs_p) > BN_TOL_DIST) {
+			//std::cout << "center " << lmid.x << "," << lmid.y << "," << lmid.z << "\n";
+			//std::cout << s_cdt->name << " dist: " << lmid.DistanceTo(bs_p) << "\n";
+			mid_inside_cnt++;
 		    }
 		}
 	    }
@@ -519,22 +517,20 @@ tri_isect_t::isect_edge_only(double etol)
 		ON_Line l = t2_fedges[i];
 		ON_3dPoint lmid = l.PointAt(0.5);
 		struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)fmesh1->p_cdt;
+		// TODO - need some distance metric here - ON the mesh is fine, to within tolerance...
 		if (on_point_inside(s_cdt, &lmid)) {
-		    // TODO - need some distance metric here - ON the mesh is fine, to within tolerance...
-		    if (on_point_inside(s_cdt, &lmid)) {
-			ON_3dPoint bs_p;
-			bool cpeval = fmesh1->omesh->closest_brep_mesh_point(bs_p, &lmid, s_cdt);
-			if (!cpeval) {
-			    std::cout << "Error - couldn't find closest point for mesh\n";
-			    continue;
-			}
-			//std::cout << "lmin_dist_to_sp vs elen_min: " << lmid.DistanceTo(bs_p) << "," << 0.001*elen_min << "\n";
+		    ON_3dPoint bs_p;
+		    bool cpeval = fmesh1->omesh->closest_brep_mesh_point(bs_p, &lmid, s_cdt);
+		    if (!cpeval) {
+			std::cout << "Error - couldn't find closest point for mesh\n";
+			continue;
+		    }
+		    //std::cout << "lmin_dist_to_sp vs elen_min: " << lmid.DistanceTo(bs_p) << "," << 0.001*elen_min << "\n";
 
-			if (lmid.DistanceTo(bs_p) > BN_TOL_DIST) {
-			    //std::cout << "center " << lmid.x << "," << lmid.y << "," << lmid.z << "\n";
-			    //std::cout << s_cdt->name << " dist: " << lmid.DistanceTo(bs_p) << "\n";
-			    mid_inside_cnt++;
-			}
+		    if (lmid.DistanceTo(bs_p) > BN_TOL_DIST) {
+			//std::cout << "center " << lmid.x << "," << lmid.y << "," << lmid.z << "\n";
+			//std::cout << s_cdt->name << " dist: " << lmid.DistanceTo(bs_p) << "\n";
+			mid_inside_cnt++;
 		    }
 		}
 	    }
