@@ -1016,8 +1016,7 @@ class ovlp_grp {
         bool validate();
 
 	bool aligned_verts_check();
-
-	bool pair_realign(int ind);
+	std::map<long, long> p2p;
 };
 
 int tri_isect(triangle_t &t1, triangle_t &t2, int mode);
