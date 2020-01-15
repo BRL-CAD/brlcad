@@ -330,6 +330,9 @@ ovlp_grp::optimize()
     return true;
 }
 
+// TODO - If we have edges that have non-aligned vertices, should probably
+// split those as well - interiors by itself doesn't look like it will be
+// enough.
 std::set<uedge_t>
 ovlp_grp::interior_uedges(int ind)
 {
