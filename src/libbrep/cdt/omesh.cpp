@@ -517,7 +517,7 @@ omesh_t::vert_add(long f3ind, ON_BoundingBox *bb)
 }
 
 bool
-omesh_t::closest_brep_mesh_point(ON_3dPoint &s_p, ON_3dPoint *p, struct ON_Brep_CDT_State *s_cdt)
+omesh_t::closest_nearby_mesh_point(ON_3dPoint &s_p, ON_3dPoint *p, struct ON_Brep_CDT_State *s_cdt)
 {
     std::set<omesh_t *> check_meshes;
     std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>>::iterator o_it;
@@ -530,17 +530,25 @@ omesh_t::closest_brep_mesh_point(ON_3dPoint &s_p, ON_3dPoint *p, struct ON_Brep_
 	}
     }
 
+    ON_BoundingBox pbb(*p, *p);
+
+    bool have_dist = false;
     double cdist = DBL_MAX;
     ON_3dPoint cp;
     std::set<omesh_t *>::iterator om_it;
     for (om_it = check_meshes.begin(); om_it != check_meshes.end(); om_it++) {
 	omesh_t *om = *om_it;
+	if (om->fmesh->bbox().IsDisjoint(pbb)) continue;
 	double ldist;
 	ON_3dPoint om_cp = om->closest_pt(&ldist, *p);
 	if (ldist < DBL_MAX && cdist > ldist) {
 	    cdist = ldist;
 	    cp = om_cp;
+	    have_dist = true;
 	}
+    }
+    if (!have_dist) {
+	cp = closest_pt(&cdist, *p);
     }
 
     s_p = cp;

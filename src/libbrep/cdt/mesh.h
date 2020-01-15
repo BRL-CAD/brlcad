@@ -641,7 +641,8 @@ public:
 
     bool tri_active(size_t tind);
 
-    ON_BoundingBox bbox();
+    ON_BoundingBox& bbox();
+    ON_BoundingBox mbb;
     ON_BoundingBox tri_bbox(size_t tind);
 
     // Find the edge of the triangle that is closest to the
@@ -754,6 +755,9 @@ private:
     bool boundary_edges_stale;
     std::set<uedge_t> problem_edges;
     edge_t find_boundary_oriented_edge(uedge_t &ue);
+
+    
+    bool bounding_box_stale;
 
     // Submesh building
     std::vector<triangle_t> singularity_triangles();
@@ -925,8 +929,21 @@ class omesh_t
 	// Find closest point on mesh
         ON_3dPoint closest_pt(double *pdist, ON_3dPoint &op);
 
-	// Find closest point on any active mesh face
-	bool closest_brep_mesh_point(ON_3dPoint &s_p, ON_3dPoint *p, struct ON_Brep_CDT_State *s_cdt);
+	// Find closest point on any nearby mesh face in the
+	// specified brep.  This isn't guaranteed to return
+	// the closest point on the brep mesh - it will check
+	// to see if the test point p is close to a face per
+	// it's bounding box, and if it is look for the closest
+	// point.  If the point isn't within any bbox, it will
+	// return the closest point for the current mesh.
+	//
+	// This is done to save the work of searching out the
+	// closest point for every face all the time, which
+	// for the current application isn't what we need -
+	// we just need to know if there's a very close point
+	// to a nearby triangle that is closer (i.e. changes
+	// the triangle status) for the local problem.
+	bool closest_nearby_mesh_point(ON_3dPoint &s_p, ON_3dPoint *p, struct ON_Brep_CDT_State *s_cdt);
 
         bool validate_vtree();
 

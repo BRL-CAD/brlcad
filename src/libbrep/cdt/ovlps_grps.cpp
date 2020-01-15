@@ -601,6 +601,7 @@ resolve_ovlp_grps(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 	    }
 
 	    if (bins[i].state == 1) {
+		std::cout << "Interior edges: bin " << i << "\n";
 		bins[i].split_interior_uedges();
 	    }
 	}

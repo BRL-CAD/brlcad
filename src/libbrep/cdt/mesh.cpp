@@ -1578,6 +1578,9 @@ cdt_mesh_t::tri_add(triangle_t &tri)
     // flag.
     boundary_edges_stale = true;
 
+    // Ditto bounding box
+    bounding_box_stale = true;
+
     return true;
 }
 
@@ -1620,6 +1623,7 @@ void cdt_mesh_t::tri_remove(triangle_t &tri)
 
     // flag boundary edge information for updating
     boundary_edges_stale = true;
+    bounding_box_stale = true;
 }
 
 std::vector<triangle_t>
@@ -1931,28 +1935,38 @@ cdt_mesh_t::tri_active(size_t ind)
 }
 
 
-ON_BoundingBox
+ON_BoundingBox &
 cdt_mesh_t::bbox()
 {
+    if (!bounding_box_stale) {
+	return mbb;
+    }
+
     RTree<size_t, double, 3>::Iterator tree_it;
     tris_tree.GetFirst(tree_it);
 
-    if (tree_it.IsNull()) return ON_BoundingBox();
+    if (tree_it.IsNull()) {
+	mbb = ON_BoundingBox();
+	return mbb;
+    }
 
     ON_3dPoint *p3d = pnts[tris_vect[*tree_it].v[0]];
-    ON_BoundingBox bb(*p3d, *p3d);
+    ON_BoundingBox cbb(*p3d, *p3d);
 
     while (!tree_it.IsNull()) {
 	p3d = pnts[tris_vect[*tree_it].v[0]];
-	bb.Set(*p3d, true);
+	cbb.Set(*p3d, true);
 	p3d = pnts[tris_vect[*tree_it].v[1]];
-	bb.Set(*p3d, true);
+	cbb.Set(*p3d, true);
 	p3d = pnts[tris_vect[*tree_it].v[2]];
-	bb.Set(*p3d, true);
+	cbb.Set(*p3d, true);
 	++tree_it;
     }
+    mbb = cbb;
 
-    return bb;
+    bounding_box_stale = false;
+
+    return mbb;
 }
 
 
@@ -3937,6 +3951,7 @@ cdt_mesh_t::deserialize(const char *fname)
 
     boundary_edges.clear();
     boundary_edges_stale = true;
+    bounding_box_stale = true;
     problem_edges.clear();
 
     while (std::getline(sfile,switch_line)) {
@@ -4081,6 +4096,7 @@ cdt_mesh_t::deserialize(const char *fname)
 
 	    }
 	    boundary_edges_stale = true;
+	    bounding_box_stale = true;
 	    continue;
 	}
 
