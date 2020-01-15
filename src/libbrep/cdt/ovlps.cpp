@@ -34,53 +34,10 @@
 #include <queue>
 #include <random>
 #include <string>
-#include "bu/str.h"
 #include "bg/chull.h"
 #include "bg/tri_pt.h"
 #include "bg/tri_tri.h"
 #include "./cdt.h"
-
-/*******************************************
- * Temporary debugging utilities
- ******************************************/
-
-#define OVLPS_DEBUG 1
-
-#ifdef OVLPS_DEBUG
-void
-ovbbp(ON_BoundingBox &bb) {
-    FILE *plot = fopen ("bb.plot3", "w");
-    ON_BoundingBox_Plot(plot, bb);
-    fclose(plot);
-}
-
-//#define PPOINT 23.75000091628566068,7.56415387307229370,4.69184016593825515
-#define PPOINT 23.249999993258228,8.311619640259547,5.3252579308096335
-bool
-PPCHECK(ON_3dPoint &p)
-{
-    ON_3dPoint problem(PPOINT);
-    if (problem.DistanceTo(p) < 0.01) {
-	std::cout << "Saw problem point\n";
-	return true;
-    }
-    return false;
-}
-
-bool
-VPCHECK(overt_t *v, const char *fname)
-{
-    if (fname && !BU_STR_EQUAL(v->omesh->fmesh->name, fname)) {
-	return false;
-    }
-    ON_3dPoint p = v->vpnt();
-    if (PPCHECK(p)) {
-	std::cout << "Saw problem vert: " << v->omesh->fmesh->name << "-" << v->omesh->fmesh->f_id << "\n";
-	return true;
-    }
-    return false;
-}
-#endif
 
 void
 plot_active_omeshes(
@@ -309,6 +266,18 @@ add_refinement_vert(overt_t *v, omesh_t *other_m, int level)
     if (nearby_vert(spnt, sn, v, other_m, level)) {
 	return 0;
     }
+
+#if 0
+    // TODO - if we're at INT_MAX and the point is far from the spnt
+    // compared to it's bbox, don't add it - all such remote points
+    // should have been handled in earlier processing.
+    if (level == INT_MAX) {
+	double bdist = v->bb.Diagonal().Length();
+	if (v->vpnt().DistanceTo(spnt) > bdist) {
+	    return 0;
+	}
+    }
+#endif
 
     // If we're close to a brep face edge, needs to go in edge_verts.
     // else, list as a new vert requiring a nearby vert on mesh other_m.

@@ -555,55 +555,6 @@ tri_isect_t::isect_edge_only(double etol)
     return true;
 }
 
-#if 0
-#define PPOINT1 3.56554479743774344,7.98569858586419024,23.37338642522485799
-#define PPOINT2 3.56554479743774477,7.98112948296225078,23.71606012295672983
-#define PPOINT3 3.42047903513449203,7.64743233441400783,23.39883493871970188
-static int
-TPPCHECK(ON_3dPoint &p)
-{
-    ON_3dPoint problem1(PPOINT1);
-    if (problem1.DistanceTo(p) < 0.01) {
-	return 1;
-    }
-
-    ON_3dPoint problem2(PPOINT2);
-    if (problem2.DistanceTo(p) < 0.01) {
-	return 1;
-    }
-
-    ON_3dPoint problem3(PPOINT3);
-    if (problem3.DistanceTo(p) < 0.01) {
-	return 1;
-    }
-
-    return 0;
-}
-static bool
-TRICHK(cdt_mesh_t *fmesh1, cdt_mesh_t *fmesh2, triangle_t &t1, triangle_t &t2)
-{
-    int ppoint1 = 0;
-    ON_3dPoint t1p1, t1p2, t1p3;
-    t1p1 = *fmesh1->pnts[t1.v[0]];
-    t1p2 = *fmesh1->pnts[t1.v[1]];
-    t1p3 = *fmesh1->pnts[t1.v[2]];
-    ppoint1 += TPPCHECK(t1p1);
-    ppoint1 += TPPCHECK(t1p2);
-    ppoint1 += TPPCHECK(t1p3);
-
-    int ppoint2 = 0;
-    ON_3dPoint t2p1, t2p2, t2p3;
-    t2p1 = *fmesh2->pnts[t2.v[0]];
-    t2p2 = *fmesh2->pnts[t2.v[1]];
-    t2p3 = *fmesh2->pnts[t2.v[2]];
-    ppoint2 += TPPCHECK(t2p1);
-    ppoint2 += TPPCHECK(t2p2);
-    ppoint2 += TPPCHECK(t2p3);
-
-    return (ppoint1 == 3 || ppoint2 == 3);
-}
-#endif
-
 /*****************************************************************************
  * We're only concerned with specific categories of intersections between
  * triangles, so filter accordingly.

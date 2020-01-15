@@ -235,6 +235,13 @@ void rtree_bbox_3d(struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *pe);
 double
 ang_deg(const ON_3dVector &v1, const ON_3dVector &v2);
 
+/* debug */
+void on_bb_plot(const char *fname, ON_BoundingBox &bb);
+bool PPCHECK(ON_3dPoint &p);
+bool VPCHECK(overt_t *v, const char *fname);
+bool TRICHECK(triangle_t &tri);
+
+
 
 /** @} */
 

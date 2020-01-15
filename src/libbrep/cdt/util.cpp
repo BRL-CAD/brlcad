@@ -26,12 +26,91 @@
  */
 
 #include "common.h"
+#include "bu/str.h"
 #include "bg/tri_ray.h"
 #include "./cdt.h"
 
 /***************************************************
  * debugging routines
  ***************************************************/
+
+void
+on_bb_plot(const char *fname, ON_BoundingBox &bb) {
+    FILE *plot = fopen (fname, "w");
+    ON_BoundingBox_Plot(plot, bb);
+    fclose(plot);
+}
+
+//#define PPOINT 23.75000091628566068,7.56415387307229370,4.69184016593825515
+#define PPOINT 23.249999993258228,8.311619640259547,5.3252579308096335
+bool
+PPCHECK(ON_3dPoint &p)
+{
+    ON_3dPoint problem(PPOINT);
+    if (problem.DistanceTo(p) < 0.01) {
+	std::cout << "Saw problem point\n";
+	return true;
+    }
+    return false;
+}
+
+bool
+VPCHECK(overt_t *v, const char *fname)
+{
+    if (fname && !BU_STR_EQUAL(v->omesh->fmesh->name, fname)) {
+	return false;
+    }
+    ON_3dPoint p = v->vpnt();
+    if (PPCHECK(p)) {
+	std::cout << "Saw problem vert: " << v->omesh->fmesh->name << "-" << v->omesh->fmesh->f_id << "\n";
+	return true;
+    }
+    return false;
+}
+
+#define PPOINT1 3.56554479743774344,7.98569858586419024,23.37338642522485799
+#define PPOINT2 3.56554479743774477,7.98112948296225078,23.71606012295672983
+#define PPOINT3 3.42047903513449203,7.64743233441400783,23.39883493871970188
+static int
+TPPCHECK(ON_3dPoint &p)
+{
+    ON_3dPoint problem1(PPOINT1);
+    if (problem1.DistanceTo(p) < 0.01) {
+	return 1;
+    }
+
+    ON_3dPoint problem2(PPOINT2);
+    if (problem2.DistanceTo(p) < 0.01) {
+	return 1;
+    }
+
+    ON_3dPoint problem3(PPOINT3);
+    if (problem3.DistanceTo(p) < 0.01) {
+	return 1;
+    }
+
+    return 0;
+}
+bool
+TRICHECK(triangle_t &tri)
+{
+    cdt_mesh_t *fmesh1 = tri.m;
+    int ppoint = 0;
+    ON_3dPoint trip1, trip2, trip3;
+    trip1 = *fmesh1->pnts[tri.v[0]];
+    trip2 = *fmesh1->pnts[tri.v[1]];
+    trip3 = *fmesh1->pnts[tri.v[2]];
+    ppoint += TPPCHECK(trip1);
+    ppoint += TPPCHECK(trip2);
+    ppoint += TPPCHECK(trip3);
+
+    if (ppoint == 3) {
+	std::cout << "Have triangle: " << tri.ind << "\n";
+    }
+
+    return (ppoint == 3);
+}
+
 
 #define BB_PLOT_2D(min, max) {         \
     fastf_t pt[4][3];                  \
