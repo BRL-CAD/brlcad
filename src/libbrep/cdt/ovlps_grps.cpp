@@ -450,6 +450,9 @@ ovlp_grp::overlapping()
 bool
 ovlp_grp::pair_realign(int ind)
 {
+
+    if (!validate()) return false;
+
     std::set<triangle_t> &gtris = (ind) ? tris1 : tris2;
     std::set<triangle_t> tris = (ind) ? tris1 : tris2;
     omesh_t *omesh = tris.begin()->m->omesh;
