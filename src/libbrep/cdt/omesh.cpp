@@ -297,12 +297,12 @@ omesh_t::vert_closest(double *vdist, ON_3dPoint &opnt)
     return nv;
 }
 
-ON_3dPoint
-omesh_t::closest_pt(double *pdist, ON_3dPoint &op)
+double
+omesh_t::closest_pt(ON_3dPoint &cp, const ON_3dPoint &op)
 {
     ON_BoundingBox fbbox = fmesh->bbox();
     if (!fmesh->tris_vect.size()) {
-	return ON_3dPoint::UnsetPoint;
+	return DBL_MAX;
     }
 
     double lguess = fbbox.Diagonal().Length()/(double)fmesh->tris_vect.size();
@@ -359,10 +359,9 @@ omesh_t::closest_pt(double *pdist, ON_3dPoint &op)
 
     ON_3dPoint on_cp(closest_pt[X], closest_pt[Y], closest_pt[Z]);
 
-    if (pdist) {
-	(*pdist) = tdist;
-    }
-    return on_cp;
+    cp = on_cp;
+
+    return tdist;
 }
 
 uedge_t
@@ -516,8 +515,8 @@ omesh_t::vert_add(long f3ind, ON_BoundingBox *bb)
     return nv;
 }
 
-bool
-omesh_t::closest_nearby_mesh_point(ON_3dPoint &s_p, ON_3dPoint *p, struct ON_Brep_CDT_State *s_cdt)
+std::set<omesh_t *>
+scdt_meshes(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> *check_pairs, struct ON_Brep_CDT_State *s_cdt)
 {
     std::set<omesh_t *> check_meshes;
     std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>>::iterator o_it;
@@ -530,17 +529,27 @@ omesh_t::closest_nearby_mesh_point(ON_3dPoint &s_p, ON_3dPoint *p, struct ON_Bre
 	}
     }
 
+    return check_meshes;
+}
+
+
+bool
+omesh_t::closest_nearby_mesh_point(ON_3dPoint &s_p, ON_3dPoint *p, struct ON_Brep_CDT_State *s_cdt)
+{
+    std::set<omesh_t *> check_meshes = scdt_meshes(check_pairs, s_cdt);
+
     ON_BoundingBox pbb(*p, *p);
 
     bool have_dist = false;
     double cdist = DBL_MAX;
     ON_3dPoint cp;
+    ON_3dVector cn;
     std::set<omesh_t *>::iterator om_it;
     for (om_it = check_meshes.begin(); om_it != check_meshes.end(); om_it++) {
 	omesh_t *om = *om_it;
 	if (om->fmesh->bbox().IsDisjoint(pbb)) continue;
-	double ldist;
-	ON_3dPoint om_cp = om->closest_pt(&ldist, *p);
+	ON_3dPoint om_cp;
+	double ldist = om->closest_pt(om_cp, *p);
 	if (ldist < DBL_MAX && cdist > ldist) {
 	    cdist = ldist;
 	    cp = om_cp;
@@ -548,7 +557,7 @@ omesh_t::closest_nearby_mesh_point(ON_3dPoint &s_p, ON_3dPoint *p, struct ON_Bre
 	}
     }
     if (!have_dist) {
-	cp = closest_pt(&cdist, *p);
+	cdist = closest_pt(cp, *p);
     }
 
     s_p = cp;

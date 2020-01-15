@@ -928,7 +928,7 @@ class omesh_t
         overt_t * vert_closest(double *vdist, ON_3dPoint &opnt);
 
 	// Find closest point on mesh
-        ON_3dPoint closest_pt(double *pdist, ON_3dPoint &op);
+        double closest_pt(ON_3dPoint &p, const ON_3dPoint &op);
 
 	// Find closest point on any nearby mesh face in the
 	// specified brep.  This isn't guaranteed to return
