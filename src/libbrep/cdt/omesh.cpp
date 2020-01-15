@@ -301,8 +301,14 @@ ON_3dPoint
 omesh_t::closest_pt(double *pdist, ON_3dPoint &op)
 {
     ON_BoundingBox fbbox = fmesh->bbox();
+    if (!fmesh->tris_vect.size()) {
+	return ON_3dPoint::UnsetPoint;
+    }
 
-    ON_3dPoint ptol(ON_ZERO_TOLERANCE, ON_ZERO_TOLERANCE, ON_ZERO_TOLERANCE);
+    double lguess = fbbox.Diagonal().Length()/(double)fmesh->tris_vect.size();
+    lguess = (lguess < ON_ZERO_TOLERANCE) ? ON_ZERO_TOLERANCE : lguess;
+
+    ON_3dPoint ptol(lguess, lguess, lguess);
     ON_BoundingBox s_bb(op, op);
     ON_3dPoint npnt = op + ptol;
     s_bb.Set(npnt, true);
@@ -367,18 +373,22 @@ omesh_t::closest_uedge(ON_3dPoint &p)
     if (!fmesh->pnts.size()) return uedge;
 
     ON_BoundingBox fbbox = fmesh->bbox();
+    if (!fmesh->tris_vect.size()) {
+	return uedge_t();
+    }
 
-    ON_BoundingBox bb(p, p);
-    bb.m_min.x = bb.Min().x - ON_ZERO_TOLERANCE;
-    bb.m_min.y = bb.Min().y - ON_ZERO_TOLERANCE;
-    bb.m_min.z = bb.Min().z - ON_ZERO_TOLERANCE;
-    bb.m_max.x = bb.Max().x + ON_ZERO_TOLERANCE;
-    bb.m_max.y = bb.Max().y + ON_ZERO_TOLERANCE;
-    bb.m_max.z = bb.Max().z + ON_ZERO_TOLERANCE;
+    double lguess = fbbox.Diagonal().Length()/(double)fmesh->tris_vect.size();
+    lguess = (lguess < ON_ZERO_TOLERANCE) ? ON_ZERO_TOLERANCE : lguess;
+
+    ON_3dPoint ptol(lguess, lguess, lguess);
+    ON_BoundingBox s_bb(p, p);
+    ON_3dPoint npnt = p + ptol;
+    s_bb.Set(npnt, true);
+    npnt = p - ptol;
+    s_bb.Set(npnt, true);
 
     // Find close triangles, iterate through them and
     // find the closest interior edge
-    ON_BoundingBox s_bb = bb;
     std::set<size_t> ntris = tris_search(s_bb);
     bool last_try = false;
     while (!ntris.size() && !last_try) {
@@ -400,7 +410,7 @@ omesh_t::closest_uedge(ON_3dPoint &p)
     std::set<size_t>::iterator tr_it;
     for (tr_it = ntris.begin(); tr_it != ntris.end(); tr_it++) {
 	triangle_t t = fmesh->tris_vect[*tr_it];
-	ON_3dPoint tp = bb.Center();
+	ON_3dPoint tp = p;
 	uedge_t ue = fmesh->closest_uedge(t, tp);
 	double ue_cdist = fmesh->uedge_dist(ue, p);
 	if (ue_cdist < uedist) {

@@ -999,6 +999,9 @@ class ovlp_grp {
 	void plot(const char *fname, int ind);
 	void plot(const char *fname);
 
+	std::set<uedge_t> interior_uedges(int ind);
+	bool split_interior_uedges();
+
 	// -1 = invalid, 1 = valid, 2 = cleared
 	int state;
 
