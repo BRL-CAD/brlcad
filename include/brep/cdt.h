@@ -48,7 +48,7 @@ ON_Brep_CDT_Create(void *bv, const char *objname);
 extern BREP_EXPORT void
 ON_Brep_CDT_Destroy(struct ON_Brep_CDT_State *s);
 
-const char *
+extern BREP_EXPORT const char *
 ON_Brep_CDT_ObjName(struct ON_Brep_CDT_State *s);
 
 /* Set/get the CDT tolerances. */
