@@ -928,7 +928,7 @@ class omesh_t
         overt_t * vert_closest(double *vdist, ON_3dPoint &opnt);
 
 	// Find closest point on mesh
-        double closest_pt(ON_3dPoint &p, const ON_3dPoint &op);
+        double closest_pt(ON_3dPoint &p, ON_3dVector &n, const ON_3dPoint &op);
 
 	// Find closest point on any nearby mesh face in the
 	// specified brep.  This isn't guaranteed to return
@@ -944,7 +944,7 @@ class omesh_t
 	// we just need to know if there's a very close point
 	// to a nearby triangle that is closer (i.e. changes
 	// the triangle status) for the local problem.
-	bool closest_nearby_mesh_point(ON_3dPoint &s_p, ON_3dPoint *p, struct ON_Brep_CDT_State *s_cdt);
+	bool closest_nearby_mesh_point(ON_3dPoint &s_p, ON_3dVector &s_n, ON_3dPoint *p, struct ON_Brep_CDT_State *s_cdt);
 
         bool validate_vtree();
 

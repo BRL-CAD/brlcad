@@ -298,7 +298,7 @@ omesh_t::vert_closest(double *vdist, ON_3dPoint &opnt)
 }
 
 double
-omesh_t::closest_pt(ON_3dPoint &cp, const ON_3dPoint &op)
+omesh_t::closest_pt(ON_3dPoint &cp, ON_3dVector &cn, const ON_3dPoint &op)
 {
     ON_BoundingBox fbbox = fmesh->bbox();
     if (!fmesh->tris_vect.size()) {
@@ -336,6 +336,7 @@ omesh_t::closest_pt(ON_3dPoint &cp, const ON_3dPoint &op)
 
     double tdist = DBL_MAX;
     point_t closest_pt = VINIT_ZERO;
+    triangle_t ctri;
     std::set<size_t>::iterator tr_it;
     for (tr_it = ntris.begin(); tr_it != ntris.end(); tr_it++) {
 	triangle_t t = fmesh->tris_vect[*tr_it];
@@ -353,13 +354,16 @@ omesh_t::closest_pt(ON_3dPoint &cp, const ON_3dPoint &op)
 
 	if (ltdist < tdist) {
 	    VMOVE(closest_pt, lclosest_pt);
+	    ctri = t;
 	    tdist = ltdist;
 	}
     }
 
     ON_3dPoint on_cp(closest_pt[X], closest_pt[Y], closest_pt[Z]);
+    ON_3dVector on_cn = ctri.m->tnorm(ctri);
 
     cp = on_cp;
+    cn = on_cn;
 
     return tdist;
 }
@@ -534,7 +538,7 @@ scdt_meshes(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> *check_pairs, struct
 
 
 bool
-omesh_t::closest_nearby_mesh_point(ON_3dPoint &s_p, ON_3dPoint *p, struct ON_Brep_CDT_State *s_cdt)
+omesh_t::closest_nearby_mesh_point(ON_3dPoint &s_p, ON_3dVector &s_n, ON_3dPoint *p, struct ON_Brep_CDT_State *s_cdt)
 {
     std::set<omesh_t *> check_meshes = scdt_meshes(check_pairs, s_cdt);
 
@@ -549,18 +553,21 @@ omesh_t::closest_nearby_mesh_point(ON_3dPoint &s_p, ON_3dPoint *p, struct ON_Bre
 	omesh_t *om = *om_it;
 	if (om->fmesh->bbox().IsDisjoint(pbb)) continue;
 	ON_3dPoint om_cp;
-	double ldist = om->closest_pt(om_cp, *p);
+	ON_3dVector om_cn;
+	double ldist = om->closest_pt(om_cp, om_cn, *p);
 	if (ldist < DBL_MAX && cdist > ldist) {
 	    cdist = ldist;
 	    cp = om_cp;
+	    cn = om_cn;
 	    have_dist = true;
 	}
     }
     if (!have_dist) {
-	cdist = closest_pt(cp, *p);
+	cdist = closest_pt(cp, cn, *p);
     }
 
     s_p = cp;
+    s_n = cn;
 
     return (cdist < DBL_MAX);
 }

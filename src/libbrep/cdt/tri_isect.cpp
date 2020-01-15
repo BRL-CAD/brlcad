@@ -461,6 +461,9 @@ tri_isect_t::isect_edge_only(double etol)
 	return true;
     }
 
+    TRICHECK(t1);
+    TRICHECK(t2);
+
     if (mode > 0) {
 	// If the projections of the two triangles onto a common plane has a non-zero
 	// area, we don't report this as an edge-only intersection - it is as far as the
@@ -499,16 +502,23 @@ tri_isect_t::isect_edge_only(double etol)
 		// surface may not be fmesh2...  Need a s_cdt level closest_surf_pnt function
 		if (on_point_inside(s_cdt, &lmid)) {
 		    ON_3dPoint bs_p;
-		    bool cpeval = fmesh2->omesh->closest_nearby_mesh_point(bs_p, &lmid, s_cdt);
+		    ON_3dVector bs_n;
+		    bool cpeval = fmesh2->omesh->closest_nearby_mesh_point(bs_p, bs_n, &lmid, s_cdt);
 		    if (!cpeval) {
 			std::cout << "Error - couldn't find closest point for mesh\n";
 			continue;
 		    }
-		    //std::cout << "lmin_dist_to_sp vs elen_min: " << lmid.DistanceTo(bs_p) << "," << 0.001*elen_min << "\n";
 
 		    if (lmid.DistanceTo(bs_p) > BN_TOL_DIST) {
 			//std::cout << "center " << lmid.x << "," << lmid.y << "," << lmid.z << "\n";
 			//std::cout << s_cdt->name << " dist: " << lmid.DistanceTo(bs_p) << "\n";
+
+			ON_3dVector pt = (fmesh2->m_bRev) ? (bs_p - lmid) : lmid - bs_p;
+			pt.Unitize();
+			double dp = ON_DotProduct(pt, bs_n);
+			std::cout << "dp: " << dp << "\n";
+
+
 			mid_inside_cnt++;
 		    }
 		}
@@ -520,16 +530,24 @@ tri_isect_t::isect_edge_only(double etol)
 		// TODO - need some distance metric here - ON the mesh is fine, to within tolerance...
 		if (on_point_inside(s_cdt, &lmid)) {
 		    ON_3dPoint bs_p;
-		    bool cpeval = fmesh1->omesh->closest_nearby_mesh_point(bs_p, &lmid, s_cdt);
+		    ON_3dVector bs_n;
+		    bool cpeval = fmesh1->omesh->closest_nearby_mesh_point(bs_p, bs_n, &lmid, s_cdt);
 		    if (!cpeval) {
 			std::cout << "Error - couldn't find closest point for mesh\n";
 			continue;
 		    }
+
 		    //std::cout << "lmin_dist_to_sp vs elen_min: " << lmid.DistanceTo(bs_p) << "," << 0.001*elen_min << "\n";
 
 		    if (lmid.DistanceTo(bs_p) > BN_TOL_DIST) {
 			//std::cout << "center " << lmid.x << "," << lmid.y << "," << lmid.z << "\n";
 			//std::cout << s_cdt->name << " dist: " << lmid.DistanceTo(bs_p) << "\n";
+
+			ON_3dVector pt = (fmesh2->m_bRev) ? (bs_p - lmid) : lmid - bs_p;
+			pt.Unitize();
+			double dp = ON_DotProduct(pt, bs_n);
+			std::cout << "dp: " << dp << "\n";
+
 			mid_inside_cnt++;
 		    }
 		}
