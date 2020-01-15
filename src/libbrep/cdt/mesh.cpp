@@ -36,6 +36,8 @@
 #include "bu/log.h"
 #include "bu/sort.h"
 #include "bu/malloc.h"
+#include "bu/str.h"
+#include "bu/vls.h"
 #include "bn/mat.h" /* bn_vec_perp */
 #include "bn/plot3.h"
 #include "bn/plane.h" /* bn_fit_plane */
@@ -250,6 +252,18 @@ triangle_t::opp_edge_dist(int vind)
 
     double edist = m->uedge_dist(ue, p);
     return edist;
+}
+
+char *
+triangle_t::ppnt(int i)
+{
+    ON_3dPoint *p = vpnt(i);
+    struct bu_vls pp = BU_VLS_INIT_ZERO;
+    char *rstr = NULL;
+    bu_vls_sprintf(&pp, "%.17f %.17f %.17f", p->x, p->y, p->z);
+    rstr = bu_strdup(bu_vls_cstr(&pp));
+    bu_vls_free(&pp);
+    return rstr;
 }
 
 /***************************/
