@@ -267,18 +267,6 @@ add_refinement_vert(overt_t *v, omesh_t *other_m, int level)
 	return 0;
     }
 
-#if 0
-    // TODO - if we're at INT_MAX and the point is far from the spnt
-    // compared to it's bbox, don't add it - all such remote points
-    // should have been handled in earlier processing.
-    if (level == INT_MAX) {
-	double bdist = v->bb.Diagonal().Length();
-	if (v->vpnt().DistanceTo(spnt) > bdist) {
-	    return 0;
-	}
-    }
-#endif
-
     // If we're close to a brep face edge, needs to go in edge_verts.
     // else, list as a new vert requiring a nearby vert on mesh other_m.
     //
