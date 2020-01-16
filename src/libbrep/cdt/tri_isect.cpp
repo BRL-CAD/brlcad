@@ -41,22 +41,18 @@
 #include "bg/tri_tri.h"
 #include "./cdt.h"
 
-#if 0
-
 // These are unused for the moment, but will be needed if
 // we are forced to do brute force splitting of triangles
 // to reduce their size
-
 double
-tri_shortest_edge_len(cdt_mesh_t *fmesh, long t_ind)
+tri_shortest_edge_len(triangle_t &t)
 {
-    triangle_t t = fmesh->tris_vect[t_ind];
     double len = DBL_MAX;
     for (int i = 0; i < 3; i++) {
 	long v0 = t.v[i];
 	long v1 = (i < 2) ? t.v[i + 1] : t.v[0];
-	ON_3dPoint *p1 = fmesh->pnts[v0];
-	ON_3dPoint *p2 = fmesh->pnts[v1];
+	ON_3dPoint *p1 = t.m->pnts[v0];
+	ON_3dPoint *p2 = t.m->pnts[v1];
 	double d = p1->DistanceTo(*p2);
 	len = (d < len) ? d : len;
     }
@@ -65,16 +61,15 @@ tri_shortest_edge_len(cdt_mesh_t *fmesh, long t_ind)
 }
 
 uedge_t
-tri_shortest_edge(cdt_mesh_t *fmesh, long t_ind)
+tri_shortest_edge(triangle_t &t)
 {
     uedge_t ue;
-    triangle_t t = fmesh->tris_vect[t_ind];
     double len = DBL_MAX;
     for (int i = 0; i < 3; i++) {
 	long v0 = t.v[i];
 	long v1 = (i < 2) ? t.v[i + 1] : t.v[0];
-	ON_3dPoint *p1 = fmesh->pnts[v0];
-	ON_3dPoint *p2 = fmesh->pnts[v1];
+	ON_3dPoint *p1 = t.m->pnts[v0];
+	ON_3dPoint *p2 = t.m->pnts[v1];
 	double d = p1->DistanceTo(*p2);
 	if (d < len) {
 	    len = d;
@@ -85,15 +80,14 @@ tri_shortest_edge(cdt_mesh_t *fmesh, long t_ind)
 }
 
 double
-tri_longest_edge_len(cdt_mesh_t *fmesh, long t_ind)
+tri_longest_edge_len(triangle_t &t)
 {
-    triangle_t t = fmesh->tris_vect[t_ind];
     double len = -DBL_MAX;
     for (int i = 0; i < 3; i++) {
 	long v0 = t.v[i];
 	long v1 = (i < 2) ? t.v[i + 1] : t.v[0];
-	ON_3dPoint *p1 = fmesh->pnts[v0];
-	ON_3dPoint *p2 = fmesh->pnts[v1];
+	ON_3dPoint *p1 = t.m->pnts[v0];
+	ON_3dPoint *p2 = t.m->pnts[v1];
 	double d = p1->DistanceTo(*p2);
 	len = (d > len) ? d : len;
     }
@@ -102,16 +96,15 @@ tri_longest_edge_len(cdt_mesh_t *fmesh, long t_ind)
 }
 
 uedge_t
-tri_longest_edge(cdt_mesh_t *fmesh, long t_ind)
+tri_longest_edge(triangle_t &t)
 {
     uedge_t ue;
-    triangle_t t = fmesh->tris_vect[t_ind];
     double len = -DBL_MAX;
     for (int i = 0; i < 3; i++) {
 	long v0 = t.v[i];
 	long v1 = (i < 2) ? t.v[i + 1] : t.v[0];
-	ON_3dPoint *p1 = fmesh->pnts[v0];
-	ON_3dPoint *p2 = fmesh->pnts[v1];
+	ON_3dPoint *p1 = t.m->pnts[v0];
+	ON_3dPoint *p2 = t.m->pnts[v1];
 	double d = p1->DistanceTo(*p2);
 	if (d > len) {
 	    len = d;
@@ -120,75 +113,6 @@ tri_longest_edge(cdt_mesh_t *fmesh, long t_ind)
     }
     return ue;
 }
-#endif
-
-#if 0
-ON_BoundingBox
-edge_bbox(bedge_seg_t *eseg)
-{
-    ON_3dPoint *p3d1 = eseg->e_start;
-    ON_3dPoint *p3d2 = eseg->e_end;
-    ON_Line line(*p3d1, *p3d2);
-
-    ON_BoundingBox bb = line.BoundingBox();
-    bb.m_max.x = bb.m_max.x + ON_ZERO_TOLERANCE;
-    bb.m_max.y = bb.m_max.y + ON_ZERO_TOLERANCE;
-    bb.m_max.z = bb.m_max.z + ON_ZERO_TOLERANCE;
-    bb.m_min.x = bb.m_min.x - ON_ZERO_TOLERANCE;
-    bb.m_min.y = bb.m_min.y - ON_ZERO_TOLERANCE;
-    bb.m_min.z = bb.m_min.z - ON_ZERO_TOLERANCE;
-
-    double dist = p3d1->DistanceTo(*p3d2);
-    double bdist = 0.5*dist;
-    double xdist = bb.m_max.x - bb.m_min.x;
-    double ydist = bb.m_max.y - bb.m_min.y;
-    double zdist = bb.m_max.z - bb.m_min.z;
-    // If we're close to the edge, we want to know - the Search callback will
-    // check the precise distance and make a decision on what to do.
-    if (xdist < bdist) {
-        bb.m_min.x = bb.m_min.x - 0.5*bdist;
-        bb.m_max.x = bb.m_max.x + 0.5*bdist;
-    }
-    if (ydist < bdist) {
-        bb.m_min.y = bb.m_min.y - 0.5*bdist;
-        bb.m_max.y = bb.m_max.y + 0.5*bdist;
-    }
-    if (zdist < bdist) {
-        bb.m_min.z = bb.m_min.z - 0.5*bdist;
-        bb.m_max.z = bb.m_max.z + 0.5*bdist;
-    }
-
-    return bb;
-}
-
-ON_3dPoint
-lseg_closest_pnt(ON_Line &l, ON_3dPoint &p)
-{
-    double t;
-    l.ClosestPointTo(p, &t);
-    if (t > 0 && t < 1) {
-	return l.PointAt(t);
-    } else {
-	double d1 = l.from.DistanceTo(p);
-	double d2 = l.to.DistanceTo(p);
-	return (d2 < d1) ? l.to : l.from;
-    }
-}
-
-class tri_dist {
-public:
-    tri_dist(double idist, long iind) {
-	dist = idist;
-	ind = iind;
-    }
-    bool operator< (const tri_dist &b) const {
-	return dist < b.dist;
-    }
-    double dist;
-    long ind;
-};
-
-#endif
 
 // Four orders below the minimum involved triangle edge length by default...
 #define TRI_ISECT_TOL_FACTOR 0.0001
