@@ -63,6 +63,13 @@ BRLCAD_ADDEXEC(bg_lseg_lseg_dist lseg_lseg.c "libbg;libbn;libbu" TEST)
 
 add_test(NAME bg_lseg_lseg_1   COMMAND bg_lseg_lseg_dist 1)
 
+#  ************ tri_ray.c tests ***********
+
+BRLCAD_ADDEXEC(bg_tri_ray_isect tri_ray_isect.cpp "libbg;libbn;libbu" TEST)
+
+# Need to double check, but I think this is an unexpected result - should hit, returns miss?
+#add_test(NAME bg_tri_ray_isect_1   COMMAND bg_tri_ray_isect  23.179952013885874,7.6422705777096072,-0.25 23.279461392150449,7.681746343891751,-0.25 23.240884561991336,7.602980510224489,-0.25 23.249999993258228,7.6246213728328982,4.9870093033699456 0,0,1 1)
+
 #  ************ tri_tri.c tests ***********
 
 # For COMMAND bg_tri_tri_isect_coplanar, the input format is as follows:
