@@ -272,6 +272,78 @@ triangle_t::plot(const char *fname)
     m->tri_plot(ind, fname);
 }
 
+double
+triangle_t::shortest_edge_len()
+{
+    double len = DBL_MAX;
+    for (int i = 0; i < 3; i++) {
+	long v0 = v[i];
+	long v1 = (i < 2) ? v[i + 1] : v[0];
+	ON_3dPoint *p1 = m->pnts[v0];
+	ON_3dPoint *p2 = m->pnts[v1];
+	double d = p1->DistanceTo(*p2);
+	len = (d < len) ? d : len;
+    }
+
+    return len;
+}
+
+uedge_t
+triangle_t::shortest_edge()
+{
+    uedge_t ue;
+    double len = DBL_MAX;
+    for (int i = 0; i < 3; i++) {
+	long v0 = v[i];
+	long v1 = (i < 2) ? v[i + 1] : v[0];
+	ON_3dPoint *p1 = m->pnts[v0];
+	ON_3dPoint *p2 = m->pnts[v1];
+	double d = p1->DistanceTo(*p2);
+	if (d < len) {
+	    len = d;
+	    ue = uedge_t(v0, v1);
+	}
+    }
+
+    return ue;
+}
+
+double
+triangle_t::longest_edge_len()
+{
+    double len = -DBL_MAX;
+    for (int i = 0; i < 3; i++) {
+	long v0 = v[i];
+	long v1 = (i < 2) ? v[i + 1] : v[0];
+	ON_3dPoint *p1 = m->pnts[v0];
+	ON_3dPoint *p2 = m->pnts[v1];
+	double d = p1->DistanceTo(*p2);
+	len = (d > len) ? d : len;
+    }
+
+    return len;
+}
+
+uedge_t
+triangle_t::longest_edge()
+{
+    uedge_t ue;
+    double len = -DBL_MAX;
+    for (int i = 0; i < 3; i++) {
+	long v0 = v[i];
+	long v1 = (i < 2) ? v[i + 1] : v[0];
+	ON_3dPoint *p1 = m->pnts[v0];
+	ON_3dPoint *p2 = m->pnts[v1];
+	double d = p1->DistanceTo(*p2);
+	if (d > len) {
+	    len = d;
+	    ue = uedge_t(v0, v1);
+	}
+    }
+    return ue;
+}
+
+
 /***************************/
 /* CPolygon implementation */
 /***************************/

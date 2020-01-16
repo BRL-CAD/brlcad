@@ -343,6 +343,11 @@ struct triangle_t {
 	return (c1 || c2 || c3);
     }
 
+    double longest_edge_len();
+    double shortest_edge_len();
+    uedge_t longest_edge();
+    uedge_t shortest_edge();
+
     ON_3dPoint * vpnt(int i);
     char*ppnt(int i);
     void plot(const char *fname);
