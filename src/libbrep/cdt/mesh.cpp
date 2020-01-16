@@ -266,6 +266,12 @@ triangle_t::ppnt(int i)
     return rstr;
 }
 
+void
+triangle_t::plot(const char *fname)
+{
+    m->tri_plot(ind, fname);
+}
+
 /***************************/
 /* CPolygon implementation */
 /***************************/

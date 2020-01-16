@@ -344,7 +344,8 @@ struct triangle_t {
     }
 
     ON_3dPoint * vpnt(int i);
-    char *ppnt(int i);
+    char*ppnt(int i);
+    void plot(const char *fname);
     double opp_edge_dist(int vind);
 };
 

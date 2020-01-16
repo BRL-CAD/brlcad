@@ -347,53 +347,9 @@ ang_deg(const ON_3dVector &v1, const ON_3dVector &v2)
 }
 
 
-// Shoot a vertical ray and count intersections.
-bool
-point_inside2(struct ON_Brep_CDT_State *s_cdt, point_t p)
-{
-    ON_3dPoint on_p(p);
-    point_t rdir;
-    VSET(rdir, 0, 0, 1);
-    std::map<int, cdt_mesh_t>::iterator f_it;
-    int icnt = 0;
-    for (f_it = s_cdt->fmeshes.begin(); f_it != s_cdt->fmeshes.end(); f_it++) {
-	cdt_mesh_t &fmesh = f_it->second;
-
-	ON_BoundingBox fbb = s_cdt->brep->m_F[fmesh.f_id].BoundingBox();
-
-	if (fbb.Min().x > on_p.x || fbb.Max().x < on_p.x) {
-	    continue;
-	}
-	if (fbb.Min().y > on_p.y || fbb.Max().y < on_p.y) {
-	    continue;
-	}
-
-	ON_BoundingBox on_pb(on_p, on_p);
-	on_pb.m_min.z = fbb.Min().z;
-	on_pb.m_max.z = fbb.Max().z;
-
-	std::set<size_t> near_tris = fmesh.tris_search(on_pb);
-	std::set<size_t>::iterator n_it;
-	for (n_it = near_tris.begin(); n_it != near_tris.end(); n_it++) {
-	    triangle_t t = fmesh.tris_vect[*n_it];
-	    point_t T_V[3];
-	    VSET(T_V[0], fmesh.pnts[t.v[0]]->x, fmesh.pnts[t.v[0]]->y, fmesh.pnts[t.v[0]]->z);
-	    VSET(T_V[1], fmesh.pnts[t.v[1]]->x, fmesh.pnts[t.v[1]]->y, fmesh.pnts[t.v[1]]->z);
-	    VSET(T_V[2], fmesh.pnts[t.v[2]]->x, fmesh.pnts[t.v[2]]->y, fmesh.pnts[t.v[2]]->z);
-
-	    if (bg_isect_tri_ray(p, rdir, T_V[0], T_V[1], T_V[2], NULL)) {
-		icnt++;
-	    }
-	}
-    }
-
-    return (icnt % 2) ? true : false;
-}
-
 bool
 point_inside(struct ON_Brep_CDT_State *s_cdt, point_t p)
 {
-#if 0
     int wn = 0;
     int exact = 0;
     std::map<int, cdt_mesh_t>::iterator f_it;
@@ -414,18 +370,8 @@ point_inside(struct ON_Brep_CDT_State *s_cdt, point_t p)
 	    ++tree_it;
 	}
     }
-    bool ret = (wn) ? true : false;
-#endif
-
-    bool ret = point_inside2(s_cdt, p);
-    //if (ret != i2) {
-//	std::cout << "disagreement\n";
- //   }
-
-    return ret;
+    return (wn) ? true : false;
 }
-
-
 
 bool
 on_point_inside(struct ON_Brep_CDT_State *s_cdt, ON_3dPoint *p)
@@ -433,6 +379,52 @@ on_point_inside(struct ON_Brep_CDT_State *s_cdt, ON_3dPoint *p)
     point_t tp;
     VSET(tp, p->x, p->y, p->z);
     return point_inside(s_cdt, tp);
+}
+
+bool
+on_point_inside_fast(struct ON_Brep_CDT_State *s_cdt, ON_3dPoint *p)
+{
+    // Shoot a vertical ray and count intersections.
+    point_t tp;
+    VSET(tp, p->x, p->y, p->z);
+
+    ON_3dPoint on_p(*p);
+    ON_BoundingBox bbb = s_cdt->brep->BoundingBox();
+    ON_BoundingBox pbb(*p, *p);
+    pbb.m_min.z = bbb.m_min.z;
+    pbb.m_max.z = bbb.m_max.z;
+    point_t rdir;
+    VSET(rdir, 0, 0, 1);
+    std::map<int, cdt_mesh_t>::iterator f_it;
+    int icnt = 0;
+    for (f_it = s_cdt->fmeshes.begin(); f_it != s_cdt->fmeshes.end(); f_it++) {
+	cdt_mesh_t &fmesh = f_it->second;
+
+	ON_BoundingBox fbb = s_cdt->brep->m_F[fmesh.f_id].BoundingBox();
+	if (fbb.IsDisjoint(pbb)) {
+	    continue;
+	}
+
+	std::set<size_t> near_tris = fmesh.tris_search(pbb);
+	std::set<size_t>::iterator n_it;
+	if (near_tris.size()) {
+	    std::cout << "fmesh " << fmesh.f_id << " has " << near_tris.size() << " triangles to test\n";
+	}
+	for (n_it = near_tris.begin(); n_it != near_tris.end(); n_it++) {
+	    triangle_t t = fmesh.tris_vect[*n_it];
+	    point_t T_V[3];
+	    VSET(T_V[0], fmesh.pnts[t.v[0]]->x, fmesh.pnts[t.v[0]]->y, fmesh.pnts[t.v[0]]->z);
+	    VSET(T_V[1], fmesh.pnts[t.v[1]]->x, fmesh.pnts[t.v[1]]->y, fmesh.pnts[t.v[1]]->z);
+	    VSET(T_V[2], fmesh.pnts[t.v[2]]->x, fmesh.pnts[t.v[2]]->y, fmesh.pnts[t.v[2]]->z);
+
+	    if (bg_isect_tri_ray(tp, rdir, T_V[0], T_V[1], T_V[2], NULL)) {
+		icnt++;
+	    }
+	}
+	std::cout << "icnt: " << icnt << "\n";
+    }
+
+    return (icnt > 0 && icnt % 2) ? true : false;
 }
 
 bool

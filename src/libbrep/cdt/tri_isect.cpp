@@ -236,6 +236,8 @@ class tri_isect_t {
 	bool isect_tri_near_verts(double etol);
 	bool isect_edge_only(double etol);
 
+	bool edge_midpoints_inside(int ind);
+
 	bool isect_tri_near_verts() {
 	    return isect_tri_near_verts(TRI_ISECT_TOL_FACTOR * elen_min);
 	}
@@ -430,6 +432,57 @@ near_edge_process(double t, double vtol)
 }
 
 bool
+tri_isect_t::edge_midpoints_inside(int ind)
+{
+    ON_Line tedges[2] = (!ind) ? t1_fedges : t2_fedges;
+    omesh_t *om = (!ind) ? t2.m->omesh : t1.m->omesh;
+    struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)om->fmesh->p_cdt;
+
+
+    for (int i = 0; i < 2; i++) {
+	ON_3dPoint bs_p;
+	ON_3dVector bs_n;
+	ON_3dPoint lmid = tedges[i].PointAt(0.5);
+
+	bool cpeval = om->closest_nearby_mesh_point(bs_p, bs_n, &lmid, s_cdt);
+	if (!cpeval) {
+	    std::cout << "Error - couldn't find closest point for mesh\n";
+	    continue;
+	}
+
+	bool near_surf_pt = (lmid.DistanceTo(bs_p) < BN_TOL_DIST);
+	bool point_inside = on_point_inside(s_cdt, &lmid);
+	bool pin = (point_inside && !near_surf_pt);
+
+#if 0
+	bool point_inside_fast = on_point_inside_fast(s_cdt, &lmid);
+	if (point_inside != point_inside_fast) {
+	    t1.m->tris_plot("m1.plot3");
+	    t2.m->tris_plot("m2.plot3");
+	    t1.plot("t1.plot3");
+	    t2.plot("t2.plot3");
+
+	    std::cout << "disagree: on_point_inside: " << point_inside << ", on_point_inside_fast: " << point_inside_fast << "\n\n";
+	    std::cout << "kill lmid.s bs_p.s\n";
+	    std::cout << "Z; overlay m1.plot3; overlay m2.plot3; overlay t1.plot3; overlay t2.plot3\n";
+	    std::cout << "in lmid.s sph " << lmid.x << " " << lmid.y << " " << lmid.z << " .01\n";
+	    std::cout << "in bs_p.s sph " << bs_p.x << " " << bs_p.y << " " << bs_p.z << " .02\n";
+	    std::cout << "\n";
+	    point_inside = on_point_inside_fast(s_cdt, &lmid);
+	}
+#endif
+
+	if (pin) {
+	    //std::cout << "center " << lmid.x << "," << lmid.y << "," << lmid.z << "\n";
+	    //std::cout << s_cdt->name << " dist: " << lmid.DistanceTo(bs_p) << "\n";
+	    return true;
+	}
+    }
+
+    return false;
+}
+
+bool
 tri_isect_t::isect_edge_only(double etol)
 {
 
@@ -490,6 +543,19 @@ tri_isect_t::isect_edge_only(double etol)
 	    VSET(t2p[i], u, v, 0);
 	}
 	if (bg_tri_tri_isect_coplanar2(t1p[0], t1p[1], t1p[2], t2p[0], t2p[1], t2p[2], 1) == 1) {
+
+	    bool in1 = edge_midpoints_inside(0);
+	    bool in2 = edge_midpoints_inside(1);
+
+	    if (in1 && in2) {
+		//t1.plot("t1.plot3");
+		//t2.plot("t2.plot3");
+		return false;
+	    } else {
+		return true;
+	    }
+
+#if 0
 	    // If we're here, check the midpoints of the unshared edges to see if they are inside the opposite
 	    // mesh. If any of them are, treat this as a full intersection (return false).
 	    int mid_inside_cnt = 0;
@@ -552,14 +618,7 @@ tri_isect_t::isect_edge_only(double etol)
 		    }
 		}
 	    }
-	    if (mid_inside_cnt > 1) {
-		//fmesh1->tri_plot(t1, "t1.plot3");
-		//fmesh2->tri_plot(t2, "t2.plot3");
-		//std::cout << t1.ind << "-" << t2.ind << ": coplanar isect true, mid_inside_cnt: " << mid_inside_cnt << "\n";
-		return false;
-	    } else {
-		return true;
-	    }
+#endif
 	} else {
 	    //std::cout << "Coplanar isect false!\n";
 	    return true;
