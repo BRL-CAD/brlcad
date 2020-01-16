@@ -556,7 +556,58 @@ plot_bins(std::vector<ovlp_grp> &bins) {
 }
 
 void
-resolve_ovlp_grps(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
+split_edges(std::set<triangle_t> &tris, double lthresh)
+{
+    std::set<triangle_t>::iterator t_it;
+    std::set<uedge_t>::iterator u_it;
+    omesh_t *om = tris.begin()->m->omesh;
+
+    std::set<long> tverts;
+
+    // Collect the set of original vertices involved with these triangles.
+    // If a triangle edge doesn't use either these vertices or new vertices
+    // we introduce here, don't split it.
+    for (t_it = tris.begin(); t_it != tris.end(); t_it++) {
+	for (int i = 0; i < 3; i++) {
+	    tverts.insert(t_it->v[i]);
+	}
+    }
+
+    std::set<uedge_t> split_uedges;
+    // Collect the set of seed uedges to split.  For the first pass,
+    // all verts are in play
+    for (t_it = tris.begin(); t_it != tris.end(); t_it++) {
+	triangle_t t = *t_it;
+	for (int i = 0; i < 3; i++) {
+	    if (t.uedge_len(i) > lthresh) {
+		split_uedges.insert(t.uedge(i));
+	    }
+	}
+    }
+
+    std::cout << om->fmesh->f_id << ": found " << split_uedges.size() << " edges to split\n";
+}
+
+void
+split_bins(std::vector<ovlp_grp> &bins, double lthresh)
+{
+    std::map<omesh_t *, std::set<triangle_t>> grp_tris;
+
+    // For each face, gather up all the remaining triangles.
+    for(size_t i = 0; i < bins.size(); i++) {
+	grp_tris[bins[i].om1].insert(bins[i].tris1.begin(), bins[i].tris1.end());
+	grp_tris[bins[i].om2].insert(bins[i].tris2.begin(), bins[i].tris2.end());
+    }
+
+
+    std::map<omesh_t *, std::set<triangle_t>>::iterator g_it;
+    for (g_it = grp_tris.begin(); g_it != grp_tris.end(); g_it++) {
+	split_edges(g_it->second, lthresh);
+    }
+}
+
+void
+resolve_ovlp_grps(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs, double lthresh)
 {
     std::vector<ovlp_grp> bins;
 
@@ -627,6 +678,9 @@ resolve_ovlp_grps(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 	plot_active_omeshes(check_pairs);
 	cycle_cnt++;
     }
+
+    bins = find_ovlp_grps(check_pairs);
+    split_bins(bins, lthresh);
 
     plot_active_omeshes(check_pairs);
 }

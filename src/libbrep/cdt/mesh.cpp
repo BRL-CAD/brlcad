@@ -309,6 +309,24 @@ triangle_t::shortest_edge()
 }
 
 double
+triangle_t::uedge_len(int i)
+{
+    long v0 = v[i];
+    long v1 = (i < 2) ? v[i + 1] : v[0];
+    ON_3dPoint *p1 = m->pnts[v0];
+    ON_3dPoint *p2 = m->pnts[v1];
+    return p1->DistanceTo(*p2);
+}
+
+uedge_t
+triangle_t::uedge(int i)
+{
+    long v0 = v[i];
+    long v1 = (i < 2) ? v[i + 1] : v[0];
+    return uedge_t(v0, v1);
+}
+
+double
 triangle_t::longest_edge_len()
 {
     double len = -DBL_MAX;

@@ -343,6 +343,9 @@ struct triangle_t {
 	return (c1 || c2 || c3);
     }
 
+    double uedge_len(int ind);
+    uedge_t uedge(int ind);
+
     double longest_edge_len();
     double shortest_edge_len();
     uedge_t longest_edge();
@@ -1095,7 +1098,7 @@ bool
 closest_mesh_point(ON_3dPoint &s_p, std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> *check_pairs, ON_3dPoint *p);
 
 void
-resolve_ovlp_grps(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs);
+resolve_ovlp_grps(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs, double lthresh);
 
 #endif /* __cdt_mesh_h__ */
 
