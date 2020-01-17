@@ -488,6 +488,109 @@ orient_tri(cdt_mesh_t &fmesh, triangle_t &t)
     }
 }
 
+int
+ovlp_split_interior_edge(overt_t **nv, omesh_t *omesh, uedge_t &ue)
+{
+    int new_tris = 0;
+    std::set<overt_t *> overts_to_update;
+
+    // Find the two triangles that we will be using to form the outer polygon
+    std::set<size_t> rtris = omesh->fmesh->uedges2tris[ue];
+    if (rtris.size() != 2) {
+	std::cout << "Error - could not associate uedge with two triangles??\n";
+    }
+    std::set<size_t> crtris = rtris;
+    triangle_t tri1 = omesh->fmesh->tris_vect[*crtris.begin()];
+    crtris.erase(crtris.begin());
+    triangle_t tri2 = omesh->fmesh->tris_vect[*crtris.begin()];
+    crtris.erase(crtris.begin());
+
+    cpolygon_t *polygon = omesh->fmesh->uedge_polygon(ue);
+
+    // Add interior point to the polygon before cdt.
+    ON_3dPoint epnt = (*omesh->fmesh->pnts[ue.v[0]] + *omesh->fmesh->pnts[ue.v[1]]) * 0.5;
+    double spdist = omesh->fmesh->pnts[ue.v[0]]->DistanceTo(*omesh->fmesh->pnts[ue.v[1]]);
+    ON_3dPoint spnt;
+    ON_3dVector sn; 
+    if (!omesh->fmesh->closest_surf_pnt(spnt, sn, &epnt, spdist*10)) {
+	std::cerr << "Error - couldn't find closest point\n";
+	delete polygon;
+	return -1;
+    }
+
+    double u, v;
+    polygon->tplane.ClosestPointTo(spnt, &u, &v);
+    std::pair<double, double> proj_2d;
+    proj_2d.first = u;
+    proj_2d.second = v;
+    polygon->pnts_2d.push_back(proj_2d);
+    size_t p2dind = polygon->pnts_2d.size() - 1;
+
+    // Base the bbox on the edge length, since we don't have any topology yet.
+    ON_BoundingBox sbb(spnt,spnt);
+    ON_3dPoint sbb1 = spnt - ON_3dPoint(.1*spdist, .1*spdist, .1*spdist);
+    ON_3dPoint sbb2 = spnt + ON_3dPoint(.1*spdist, .1*spdist, .1*spdist);
+    sbb.Set(sbb1, true);
+    sbb.Set(sbb2, true);
+
+    // We're going to use it - add new 3D point to CDT
+    long f3ind = omesh->fmesh->add_point(new ON_3dPoint(spnt));
+    long fnind = omesh->fmesh->add_normal(new ON_3dPoint(sn));
+    struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)omesh->fmesh->p_cdt;
+    CDT_Add3DPnt(s_cdt, omesh->fmesh->pnts[f3ind], omesh->fmesh->f_id, -1, -1, -1, 0, 0);
+    CDT_Add3DNorm(s_cdt, omesh->fmesh->normals[fnind], omesh->fmesh->pnts[f3ind], omesh->fmesh->f_id, -1, -1, -1, 0, 0);
+    omesh->fmesh->nmap[f3ind] = fnind;
+    overt_t *nvrt = omesh->vert_add(f3ind, &sbb);
+    overts_to_update.insert(nvrt);
+    polygon->p2o[p2dind] = f3ind;
+    polygon->interior_points.insert(p2dind);
+
+    polygon->cdt();
+
+    if (polygon->tris.size()) {
+	unsigned char rgb[3] = {0,255,255};
+	struct bu_color c = BU_COLOR_INIT_ZERO;
+	bu_color_from_rgb_chars(&c, (const unsigned char *)rgb);
+	omesh->fmesh->tri_remove(tri1);
+	omesh->fmesh->tri_remove(tri2);
+	std::set<triangle_t>::iterator v_it;
+	for (v_it = polygon->tris.begin(); v_it != polygon->tris.end(); v_it++) {
+	    triangle_t vt = *v_it;
+	    orient_tri(*omesh->fmesh, vt);
+	    omesh->fmesh->tri_add(vt);
+	    // In addition to the genuinely new vertices, altered triangles
+	    // may need updated vert bboxes
+	    for (int i = 0; i < 3; i++) {
+		overts_to_update.insert(omesh->overts[vt.v[i]]);
+	    }
+	}
+
+	new_tris = polygon->tris.size();
+
+	//omesh->fmesh->tris_set_plot(polygon->tris, "poly_tris.plot3");
+	//polygon->polygon_plot_in_plane("poly.plot3");
+    } else {
+	std::cout << "polygon cdt failed!\n";
+	bu_file_delete("interior_edge_split_failure.plot3");
+	polygon->polygon_plot_in_plane("interior_edge_split_failure.plot3");
+    }
+
+    delete polygon;
+
+    // Have new triangles, update overts
+    std::set<overt_t *>::iterator n_it;
+    for (n_it = overts_to_update.begin(); n_it != overts_to_update.end(); n_it++) {
+	(*n_it)->update();
+    }
+
+    (*nv) = nvrt;
+
+    return new_tris;
+}
+
+
+
+
 static int
 interior_edge_verts(omesh_t *omesh)
 {
@@ -984,9 +1087,10 @@ replace_edge_split_tri(cdt_mesh_t &fmesh, size_t t_id, long np_id, uedge_t &spli
 
 }
 
-static int
+int
 ovlp_split_edge(
-	overt_t **nv,
+	overt_t **nv1,
+	overt_t **nv2,
 	std::set<bedge_seg_t *> *nsegs,
 	bedge_seg_t *eseg, double t
 	)
@@ -1107,22 +1211,24 @@ ovlp_split_edge(
 	}
 	omesh_t *om = fmesh_f1->omesh;
 	overt_t *nvert = om->vert_add(np_id);
-	(*nv) = nvert;
+	(*nv1) = nvert;
+	(*nv2) = nvert;
     } else {
 	np_id = fmesh_f1->pnts.size() - 1;
 	fmesh_f1->ep.insert(np_id);
 	replace_edge_split_tri(*fmesh_f1, *f1_tris.begin(), np_id, ue1);
 	replaced_tris++;
 	omesh_t *om1 = fmesh_f1->omesh;
-	om1->vert_add(np_id);
+	overt_t *nvert1 = om1->vert_add(np_id);
+	(*nv1) = nvert1;
 
 	np_id = fmesh_f2->pnts.size() - 1;
 	fmesh_f2->ep.insert(np_id);
 	replace_edge_split_tri(*fmesh_f2, *f2_tris.begin(), np_id, ue2);
 	replaced_tris++;
     	omesh_t *om2 = fmesh_f2->omesh;
-	overt_t *nvert = om2->vert_add(np_id);
-	(*nv) = nvert;
+	overt_t *nvert2 = om2->vert_add(np_id);
+	(*nv2) = nvert2;
     }
 
     return replaced_tris;
@@ -1148,7 +1254,8 @@ bedge_split_at_t(
     double lseg_check = 0.1 * eseg->e_start->DistanceTo(*eseg->e_end);
     if (epdist1 > lseg_check && epdist2 > lseg_check) {
 	// If the point is not close to a start/end point on the edge then split the edge.
-	int rtris = ovlp_split_edge(nv, nsegs, eseg, t);
+	overt_t *nv2;
+	int rtris = ovlp_split_edge(nv, &nv2, nsegs, eseg, t);
 	if (rtris >= 0) {
 	    replaced_tris += rtris;
 	} else {

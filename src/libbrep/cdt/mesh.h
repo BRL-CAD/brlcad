@@ -1097,6 +1097,14 @@ find_edge_verts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs);
 bool
 closest_mesh_point(ON_3dPoint &s_p, std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> *check_pairs, ON_3dPoint *p);
 
+int
+ovlp_split_edge(overt_t **nv1, overt_t **nv2,
+	std::set<bedge_seg_t *> *nsegs,	bedge_seg_t *eseg, double t);
+
+int
+ovlp_split_interior_edge(overt_t **nv, omesh_t *om, uedge_t &ue);
+
+
 void
 resolve_ovlp_grps(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs, double lthresh);
 

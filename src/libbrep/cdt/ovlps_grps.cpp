@@ -609,8 +609,6 @@ void
 split_bins(std::vector<ovlp_grp> &bins, double lthresh)
 {
     std::map<omesh_t *, std::set<long>> active_verts;
-    std::map<omesh_t *, std::set<uedge_t>> iedges;
-    std::set<bedge_seg_t *> bedges;
 
     bool do_split = true;
 
@@ -637,6 +635,9 @@ split_bins(std::vector<ovlp_grp> &bins, double lthresh)
     }
 
     while (do_split == true) {
+	std::map<omesh_t *, std::set<uedge_t>> iedges;
+	std::set<bedge_seg_t *> bedges;
+
 	do_split = false;
 	for (g_it = grp_tris.begin(); g_it != grp_tris.end(); g_it++) {
 	    bool have_split_edges = find_split_edges(iedges[g_it->first], bedges, g_it->second, active_verts[g_it->first], lthresh);
@@ -644,8 +645,31 @@ split_bins(std::vector<ovlp_grp> &bins, double lthresh)
 	    if (have_split_edges) {
 		// We're changing a mesh, so we'll need to come back for another round.
 		do_split = true;
-		// Split brep edges
-		// Split interior edges
+	    }
+	}
+	// Split brep edges
+	std::set<bedge_seg_t *>::iterator b_it;
+	for (b_it = bedges.begin(); b_it != bedges.end(); b_it++) {
+	    overt_t *nv1, *nv2;
+	    std::set<bedge_seg_t *> nbsegs;
+	    bedge_seg_t *eseg = *b_it;
+	    double t = eseg->edge_start + (eseg->edge_end - eseg->edge_start)*0.5;
+	    if (ovlp_split_edge(&nv1, &nv2, &nbsegs, eseg, t)) {
+		active_verts[nv1->omesh].insert(nv1->p_id);
+		active_verts[nv2->omesh].insert(nv2->p_id);
+	    }
+	}
+	// Split interior edges
+	std::map<omesh_t *, std::set<uedge_t>>::iterator i_it;
+	for (i_it = iedges.begin(); i_it != iedges.end(); i_it++) {
+	    omesh_t *om = i_it->first;
+	    std::set<uedge_t>::iterator u_it;
+	    for (u_it = i_it->second.begin(); u_it != i_it->second.end(); u_it++) {
+		overt_t *nv;
+		uedge_t ue = *u_it;
+		if (ovlp_split_interior_edge(&nv, om, ue) > 0) {
+		    active_verts[nv->omesh].insert(nv->p_id);
+		}
 	    }
 	}
     }
