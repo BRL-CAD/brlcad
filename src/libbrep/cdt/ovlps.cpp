@@ -1380,11 +1380,6 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt, double lthre
 	// we can shift the two close neighbors to surface points that are
 	// both the respective closest points to a center point between the
 	// two originals.
-	//
-	// TODO - need an additional constraint on the vert box size - need
-	// to base it on the distance to the closest triangle edge, as well
-	// as the edge lengths.  Otherwise we get flipping triangles when
-	// the vertex moves across an opposite edge.
 	avcnt = adjust_close_verts(check_pairs);
 	if (avcnt) {
 	    // If we adjusted, recalculate overlapping tris and refinement points

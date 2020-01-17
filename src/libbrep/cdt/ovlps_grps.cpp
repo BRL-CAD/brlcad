@@ -557,7 +557,7 @@ plot_bins(std::vector<ovlp_grp> &bins) {
     }
 }
 
-void
+bool
 find_split_edges(std::set<uedge_t> &interior_uedges, std::set<bedge_seg_t *> &bsegs,
        	std::set<triangle_t> &tris, std::set<long> &active_verts, double lthresh)
 {
@@ -601,16 +601,20 @@ find_split_edges(std::set<uedge_t> &interior_uedges, std::set<bedge_seg_t *> &bs
 
     interior_uedges.insert(split_uedges.begin(), split_uedges.end());
     bsegs.insert(nbsegs.begin(), nbsegs.end());
+
+    return (split_uedges.size() || nbsegs.size());
 }
 
 void
 split_bins(std::vector<ovlp_grp> &bins, double lthresh)
 {
     std::map<omesh_t *, std::set<long>> active_verts;
-    std::map<omesh_t *, std::set<triangle_t>> grp_tris;
     std::map<omesh_t *, std::set<uedge_t>> iedges;
     std::set<bedge_seg_t *> bedges;
 
+    bool do_split = true;
+
+    std::map<omesh_t *, std::set<triangle_t>> grp_tris;
     std::map<omesh_t *, std::set<triangle_t>>::iterator g_it;
 
     // For each face, gather up all the remaining triangles.
@@ -618,7 +622,6 @@ split_bins(std::vector<ovlp_grp> &bins, double lthresh)
 	grp_tris[bins[i].om1].insert(bins[i].tris1.begin(), bins[i].tris1.end());
 	grp_tris[bins[i].om2].insert(bins[i].tris2.begin(), bins[i].tris2.end());
     }
-
 
     // Collect the set of original vertices involved with these triangles.
     // If a triangle edge doesn't use either these vertices or new vertices
@@ -633,8 +636,18 @@ split_bins(std::vector<ovlp_grp> &bins, double lthresh)
 	}
     }
 
-    for (g_it = grp_tris.begin(); g_it != grp_tris.end(); g_it++) {
-	find_split_edges(iedges[g_it->first], bedges, g_it->second, active_verts[g_it->first], lthresh);
+    while (do_split == true) {
+	do_split = false;
+	for (g_it = grp_tris.begin(); g_it != grp_tris.end(); g_it++) {
+	    bool have_split_edges = find_split_edges(iedges[g_it->first], bedges, g_it->second, active_verts[g_it->first], lthresh);
+	    g_it->second.clear();
+	    if (have_split_edges) {
+		// We're changing a mesh, so we'll need to come back for another round.
+		do_split = true;
+		// Split brep edges
+		// Split interior edges
+	    }
+	}
     }
 }
 
