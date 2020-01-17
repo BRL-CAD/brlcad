@@ -39,6 +39,8 @@
 #include "bg/chull.h"
 #include "bg/tri_pt.h"
 #include "bg/tri_tri.h"
+
+#include "./mesh.h"
 #include "./cdt.h"
 
 void
@@ -556,42 +558,60 @@ plot_bins(std::vector<ovlp_grp> &bins) {
 }
 
 void
-split_edges(std::set<triangle_t> &tris, double lthresh)
+find_split_edges(std::set<uedge_t> &interior_uedges, std::set<bedge_seg_t *> &bsegs,
+       	std::set<triangle_t> &tris, std::set<long> &active_verts, double lthresh)
 {
     std::set<triangle_t>::iterator t_it;
     std::set<uedge_t>::iterator u_it;
     omesh_t *om = tris.begin()->m->omesh;
 
-    std::set<long> tverts;
-
-    // Collect the set of original vertices involved with these triangles.
-    // If a triangle edge doesn't use either these vertices or new vertices
-    // we introduce here, don't split it.
-    for (t_it = tris.begin(); t_it != tris.end(); t_it++) {
-	for (int i = 0; i < 3; i++) {
-	    tverts.insert(t_it->v[i]);
-	}
-    }
-
     std::set<uedge_t> split_uedges;
-    // Collect the set of seed uedges to split.  For the first pass,
-    // all verts are in play
+    // Collect the set of seed uedges to split.
     for (t_it = tris.begin(); t_it != tris.end(); t_it++) {
 	triangle_t t = *t_it;
 	for (int i = 0; i < 3; i++) {
 	    if (t.uedge_len(i) > lthresh) {
-		split_uedges.insert(t.uedge(i));
+		uedge_t ue = t.uedge(i);
+		if (active_verts.find(ue.v[0]) == active_verts.end()) continue;
+		if (active_verts.find(ue.v[1]) == active_verts.end()) continue;
+		split_uedges.insert(ue);
 	    }
 	}
     }
 
     std::cout << om->fmesh->f_id << ": found " << split_uedges.size() << " edges to split\n";
+
+    // If any of these are brep face edge segments, pull them out for
+    // separate processing.
+    std::set<bedge_seg_t *> nbsegs;
+    std::set<uedge_t> e_uedges;
+    std::set<uedge_t>::iterator s_ue;
+    for (s_ue = split_uedges.begin(); s_ue != split_uedges.end(); s_ue++) {
+	if (om->fmesh->ue2b_map.find(*s_ue) != om->fmesh->ue2b_map.end()) {
+	    bedge_seg_t *bseg = om->fmesh->ue2b_map[*s_ue];
+	    e_uedges.insert(*s_ue);
+	    nbsegs.insert(bseg);
+	}
+    }
+
+    split_uedges.erase(e_uedges.begin(), e_uedges.end());
+
+    std::cout << om->fmesh->f_id << ": found " << split_uedges.size() << " interior edges to split\n";
+    std::cout << om->fmesh->f_id << ": found " << nbsegs.size() << " brep face edges to split\n";
+
+    interior_uedges.insert(split_uedges.begin(), split_uedges.end());
+    bsegs.insert(nbsegs.begin(), nbsegs.end());
 }
 
 void
 split_bins(std::vector<ovlp_grp> &bins, double lthresh)
 {
+    std::map<omesh_t *, std::set<long>> active_verts;
     std::map<omesh_t *, std::set<triangle_t>> grp_tris;
+    std::map<omesh_t *, std::set<uedge_t>> iedges;
+    std::set<bedge_seg_t *> bedges;
+
+    std::map<omesh_t *, std::set<triangle_t>>::iterator g_it;
 
     // For each face, gather up all the remaining triangles.
     for(size_t i = 0; i < bins.size(); i++) {
@@ -600,9 +620,21 @@ split_bins(std::vector<ovlp_grp> &bins, double lthresh)
     }
 
 
-    std::map<omesh_t *, std::set<triangle_t>>::iterator g_it;
+    // Collect the set of original vertices involved with these triangles.
+    // If a triangle edge doesn't use either these vertices or new vertices
+    // introduced by splitting, don't split it - this localize the splitting
+    // behavior to the original overlapping bin triangle areas.
     for (g_it = grp_tris.begin(); g_it != grp_tris.end(); g_it++) {
-	split_edges(g_it->second, lthresh);
+	std::set<triangle_t>::iterator t_it;
+	for (t_it = g_it->second.begin(); t_it != g_it->second.end(); t_it++) {
+	    for (int i = 0; i < 3; i++) {
+		active_verts[t_it->m->omesh].insert(t_it->v[i]);
+	    }
+	}
+    }
+
+    for (g_it = grp_tris.begin(); g_it != grp_tris.end(); g_it++) {
+	find_split_edges(iedges[g_it->first], bedges, g_it->second, active_verts[g_it->first], lthresh);
     }
 }
 
