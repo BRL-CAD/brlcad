@@ -285,7 +285,7 @@ near_edge_process(double t, double vtol)
 bool
 tri_isect_t::edge_midpoints_inside(int ind)
 {
-    ON_Line tedges[2] = (!ind) ? t1_fedges : t2_fedges;
+    ON_Line *tedges = (!ind) ? t1_fedges : t2_fedges;
     omesh_t *om = (!ind) ? t2.m->omesh : t1.m->omesh;
     struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)om->fmesh->p_cdt;
 
