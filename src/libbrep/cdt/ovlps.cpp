@@ -559,6 +559,10 @@ ovlp_split_interior_edge(overt_t **nv, std::set<long> &ntris, omesh_t *omesh, ue
 	std::set<triangle_t>::iterator v_it;
 	for (v_it = polygon->tris.begin(); v_it != polygon->tris.end(); v_it++) {
 	    triangle_t vt = *v_it;
+	    // orient_tri isn't going to work here... when we're splitting on
+	    // the edge, it's quite possible to generate a flipped normal
+	    // triangle.  We need to maintain the mesh integrity first and
+	    // foremost...
 	    orient_tri(*omesh->fmesh, vt);
 	    omesh->fmesh->tri_add(vt);
 	    ntris.insert(omesh->fmesh->tris_vect.size() - 1);
@@ -588,6 +592,8 @@ ovlp_split_interior_edge(overt_t **nv, std::set<long> &ntris, omesh_t *omesh, ue
     }
 
     (*nv) = nvrt;
+
+    omesh->fmesh->valid(1);
 
     return new_tris;
 }

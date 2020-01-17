@@ -589,6 +589,18 @@ find_split_edges(std::set<uedge_t> &interior_uedges, std::set<bedge_seg_t *> &bs
 	// In addition to raw length, if we have any triangles
 	// with a longest edge much larger than the shortest edge,
 	// split the longer edges.
+	double ledge = t.longest_edge_len();
+	double sedge = t.shortest_edge_len();
+	if (ledge > 10*sedge && sedge > .001*lthresh) {
+	    for (int i = 0; i < 3; i++) {
+		if (t.uedge_len(i) > 2*sedge) {
+		    uedge_t ue = t.uedge(i);
+		    split_uedges.insert(ue);
+		    active_verts.insert(ue.v[0]);
+		    active_verts.insert(ue.v[1]);
+		}
+	    }
+	}
     }
 
     std::cout << om->fmesh->f_id << ": found " << split_uedges.size() << " edges to split\n";
