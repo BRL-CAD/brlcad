@@ -1334,7 +1334,7 @@ make_omeshes(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> *check_pairs,
 }
 
 int
-ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
+ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt, double lthresh)
 {
     if (!s_a) return -1;
     if (s_cnt < 1) return 0;
@@ -1452,7 +1452,7 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt)
 
     // We should now have all the points we need - any remaining work involves
     // selecting the correct triangles.
-    resolve_ovlp_grps(check_pairs, 0.5);
+    resolve_ovlp_grps(check_pairs, lthresh);
 
     // Refine areas of the mesh with overlapping triangles that have aligned
     // vertices but have different triangulations of those vertices.

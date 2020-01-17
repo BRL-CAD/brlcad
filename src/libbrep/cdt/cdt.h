@@ -119,6 +119,7 @@ struct ON_Brep_CDT_State {
     fastf_t absmax;
     fastf_t absmin;
     fastf_t cos_within_ang;
+    fastf_t ovlp_max_len;
 
     /* 3D data */
     std::vector<ON_3dPoint *> *w3dpnts;

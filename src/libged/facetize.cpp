@@ -2689,6 +2689,7 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
     cdttol.abs = opts->tol->abs;
     cdttol.rel = opts->tol->rel;
     cdttol.norm = opts->tol->norm;
+    double ovlp_max_smallest = DBL_MAX;
 
     if (!argc) return GED_ERROR;
 
@@ -2858,6 +2859,9 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
 	ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)bi->brep, (*d_it)->d_namep);
 	ON_Brep_CDT_Tol_Set(s_cdt, &cdttol);
 	ss_cdt.push_back(s_cdt);
+
+	double bblen = bi->brep->BoundingBox().Diagonal().Length() * 0.01;
+	ovlp_max_smallest = (bblen < ovlp_max_smallest) ? bblen : ovlp_max_smallest;
     }
 
     for (size_t i = 0; i < ss_cdt.size(); i++) {
@@ -2869,7 +2873,8 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
     for (size_t i = 0; i < ss_cdt.size(); i++) {
 	s_a[i] = ss_cdt[i];
     }
-    if (ON_Brep_CDT_Ovlp_Resolve(s_a, ss_cdt.size()) < 0) {
+
+    if (ON_Brep_CDT_Ovlp_Resolve(s_a, ss_cdt.size(), ovlp_max_smallest) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Error: RESOLVE fail.");
 #if 0
 	for (size_t i = 0; i < ss_cdt.size(); i++) {

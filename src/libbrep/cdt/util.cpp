@@ -719,6 +719,7 @@ cdt_tol_global_calc(struct ON_Brep_CDT_State *s)
 	    // Smallest dimension, unless otherwise set, is  0.01 * tol.rel * the bbox diagonal length.
 	    if (s->tol.relmin < ON_ZERO_TOLERANCE) {
 		s->absmin = len * s->tol.rel * 0.01;
+		s->ovlp_max_len = s->absmin;
 	    }
 	}
 

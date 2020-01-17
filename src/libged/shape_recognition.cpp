@@ -1050,6 +1050,7 @@ _ged_brep_to_bot(struct ged *gedp, const char *obj_name, const struct rt_brep_in
 extern "C" int
 _ged_breps_to_bots(struct ged *gedp, int obj_cnt, const char **obj_names, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
+    double ovlp_max_smallest = DBL_MAX;
     if (!gedp || obj_cnt <= 0 || !obj_names || !ttol || !tol) return GED_ERROR;
 
     struct bg_tess_tol cdttol;
@@ -1084,6 +1085,9 @@ _ged_breps_to_bots(struct ged *gedp, int obj_cnt, const char **obj_names, const 
 	o_bi.push_back(bi);
 	ss_cdt.push_back(s_cdt);
 	bot_names.push_back(bname);
+
+	double bblen = bi->brep->BoundingBox().Diagonal().Length() * 0.01;
+	ovlp_max_smallest = (bblen < ovlp_max_smallest) ? bblen : ovlp_max_smallest;
     }
 
     // Do tessellations
@@ -1096,7 +1100,7 @@ _ged_breps_to_bots(struct ged *gedp, int obj_cnt, const char **obj_names, const 
     for (size_t i = 0; i < ss_cdt.size(); i++) {
 	s_a[i] = ss_cdt[i];
     }
-    if (ON_Brep_CDT_Ovlp_Resolve(s_a, obj_cnt) < 0) {
+    if (ON_Brep_CDT_Ovlp_Resolve(s_a, obj_cnt, ovlp_max_smallest) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Error: RESOLVE fail.");
 	return GED_ERROR;
     }
