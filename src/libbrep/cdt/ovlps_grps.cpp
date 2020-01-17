@@ -386,6 +386,8 @@ find_ovlp_grps(
 	std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs
 	)
 {
+    omesh_ovlps(check_pairs, 1);
+
     std::vector<ovlp_grp> bins;
 
     std::map<std::pair<omesh_t *, size_t>, size_t> bin_map;
@@ -563,12 +565,19 @@ find_split_edges(std::set<uedge_t> &interior_uedges, std::set<bedge_seg_t *> &bs
 {
     std::set<triangle_t>::iterator t_it;
     std::set<uedge_t>::iterator u_it;
+    if (!tris.size()) {
+	return false;
+    }
     omesh_t *om = tris.begin()->m->omesh;
 
     std::set<uedge_t> split_uedges;
     // Collect the set of seed uedges to split.
     for (t_it = tris.begin(); t_it != tris.end(); t_it++) {
 	triangle_t t = *t_it;
+	if (!om->fmesh->tri_active(t.ind)) {
+	    std::cout << "Stale triangle in " << om->fmesh->f_id << ": " << t.ind << "\n";
+	    continue;
+	}
 	for (int i = 0; i < 3; i++) {
 	    if (t.uedge_len(i) > lthresh) {
 		uedge_t ue = t.uedge(i);
@@ -577,6 +586,9 @@ find_split_edges(std::set<uedge_t> &interior_uedges, std::set<bedge_seg_t *> &bs
 		split_uedges.insert(ue);
 	    }
 	}
+	// In addition to raw length, if we have any triangles
+	// with a longest edge much larger than the shortest edge,
+	// split the longer edges.
     }
 
     std::cout << om->fmesh->f_id << ": found " << split_uedges.size() << " edges to split\n";
@@ -587,10 +599,15 @@ find_split_edges(std::set<uedge_t> &interior_uedges, std::set<bedge_seg_t *> &bs
     std::set<uedge_t> e_uedges;
     std::set<uedge_t>::iterator s_ue;
     for (s_ue = split_uedges.begin(); s_ue != split_uedges.end(); s_ue++) {
-	if (om->fmesh->ue2b_map.find(*s_ue) != om->fmesh->ue2b_map.end()) {
+	if (om->fmesh->brep_edges.find(*s_ue) != om->fmesh->brep_edges.end()) {
 	    bedge_seg_t *bseg = om->fmesh->ue2b_map[*s_ue];
 	    e_uedges.insert(*s_ue);
 	    nbsegs.insert(bseg);
+	} else {
+	    std::set<size_t> rtris = om->fmesh->uedges2tris[*s_ue];
+	    if (rtris.size() != 2) {
+		std::cout << "Error - could not associate uedge with two triangles??\n";
+	    }
 	}
     }
 
@@ -617,8 +634,23 @@ split_bins(std::vector<ovlp_grp> &bins, double lthresh)
 
     // For each face, gather up all the remaining triangles.
     for(size_t i = 0; i < bins.size(); i++) {
-	grp_tris[bins[i].om1].insert(bins[i].tris1.begin(), bins[i].tris1.end());
-	grp_tris[bins[i].om2].insert(bins[i].tris2.begin(), bins[i].tris2.end());
+	std::set<triangle_t>::iterator t_it;
+	for (t_it = bins[i].tris1.begin(); t_it != bins[i].tris1.end(); t_it++) {
+	    triangle_t t = *t_it;
+	    if (!bins[i].om1->fmesh->tri_active(t.ind)) {
+		std::cout << "Stale triangle in tris1, bin " << i << ": " << bins[i].om1->fmesh->f_id << "," << t.ind << "\n";
+		continue;
+	    }
+	    grp_tris[bins[i].om1].insert(t);
+	}
+	for (t_it = bins[i].tris2.begin(); t_it != bins[i].tris2.end(); t_it++) {
+	    triangle_t t = *t_it;
+	    if (!bins[i].om2->fmesh->tri_active(t.ind)) {
+		std::cout << "Stale triangle in tris2, bin " << i << ": " << bins[i].om2->fmesh->f_id << "," << t.ind << "\n";
+		continue;
+	    }
+	    grp_tris[bins[i].om2].insert(t);
+	}
     }
 
     // Collect the set of original vertices involved with these triangles.
@@ -657,6 +689,7 @@ split_bins(std::vector<ovlp_grp> &bins, double lthresh)
 	    if (ovlp_split_edge(&nv1, &nv2, &nbsegs, eseg, t)) {
 		active_verts[nv1->omesh].insert(nv1->p_id);
 		active_verts[nv2->omesh].insert(nv2->p_id);
+		// TODO - get triangles and add them
 	    }
 	}
 	// Split interior edges
@@ -664,12 +697,21 @@ split_bins(std::vector<ovlp_grp> &bins, double lthresh)
 	for (i_it = iedges.begin(); i_it != iedges.end(); i_it++) {
 	    omesh_t *om = i_it->first;
 	    std::set<uedge_t>::iterator u_it;
+	    std::set<long> ntris;
 	    for (u_it = i_it->second.begin(); u_it != i_it->second.end(); u_it++) {
 		overt_t *nv;
 		uedge_t ue = *u_it;
-		if (ovlp_split_interior_edge(&nv, om, ue) > 0) {
+		if (ovlp_split_interior_edge(&nv, ntris, om, ue) > 0) {
 		    active_verts[nv->omesh].insert(nv->p_id);
 		}
+	    }
+	    // Multiple edge replacements may remove new triangles immediately
+	    // after they are introduced into the mesh.  Now that we've processed
+	    // the full edge set, we have a "stable" set of new triangles to record
+	    // for the next round of processing.
+	    std::set<long>::iterator n_it;
+	    for (n_it = ntris.begin(); n_it != ntris.end(); n_it++) {
+		grp_tris[om].insert(om->fmesh->tris_vect[*n_it]);
 	    }
 	}
     }
@@ -743,7 +785,6 @@ resolve_ovlp_grps(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs, 
 	    break;
 	}
 
-	omesh_ovlps(check_pairs, 1);
 	plot_active_omeshes(check_pairs);
 	cycle_cnt++;
     }

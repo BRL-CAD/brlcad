@@ -3559,10 +3559,14 @@ cdt_mesh_t::valid(int verbose)
 	    if (edges2tris[e[ind]] != tri.ind) {
 		topret = false;
 	    }
-	    if (uedges2tris[uedge_t(e[ind])].find(tri.ind) == uedges2tris[uedge_t(e[ind])].end()) {
+	    if (uedges2tris[ue[ind]].find(tri.ind) == uedges2tris[ue[ind]].end()) {
 		topret = false;
-	    } 
+	    }
 	    if (v2tris[tri.v[ind]].find(tri.ind) == v2tris[tri.v[ind]].end()) {
+		topret = false;
+	    }
+	    if (uedges2tris[ue[ind]].size() != 2 && brep_edges.find(ue[ind]) == brep_edges.end()) {
+		std::cout << "not enough triangles for edge?\n";
 		topret = false;
 	    }
 	}

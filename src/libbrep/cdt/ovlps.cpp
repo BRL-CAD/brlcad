@@ -489,7 +489,7 @@ orient_tri(cdt_mesh_t &fmesh, triangle_t &t)
 }
 
 int
-ovlp_split_interior_edge(overt_t **nv, omesh_t *omesh, uedge_t &ue)
+ovlp_split_interior_edge(overt_t **nv, std::set<long> &ntris, omesh_t *omesh, uedge_t &ue)
 {
     int new_tris = 0;
     std::set<overt_t *> overts_to_update;
@@ -498,6 +498,7 @@ ovlp_split_interior_edge(overt_t **nv, omesh_t *omesh, uedge_t &ue)
     std::set<size_t> rtris = omesh->fmesh->uedges2tris[ue];
     if (rtris.size() != 2) {
 	std::cout << "Error - could not associate uedge with two triangles??\n";
+	return -1;
     }
     std::set<size_t> crtris = rtris;
     triangle_t tri1 = omesh->fmesh->tris_vect[*crtris.begin()];
@@ -551,13 +552,16 @@ ovlp_split_interior_edge(overt_t **nv, omesh_t *omesh, uedge_t &ue)
 	unsigned char rgb[3] = {0,255,255};
 	struct bu_color c = BU_COLOR_INIT_ZERO;
 	bu_color_from_rgb_chars(&c, (const unsigned char *)rgb);
+	ntris.erase(tri1.ind);
 	omesh->fmesh->tri_remove(tri1);
+	ntris.erase(tri2.ind);
 	omesh->fmesh->tri_remove(tri2);
 	std::set<triangle_t>::iterator v_it;
 	for (v_it = polygon->tris.begin(); v_it != polygon->tris.end(); v_it++) {
 	    triangle_t vt = *v_it;
 	    orient_tri(*omesh->fmesh, vt);
 	    omesh->fmesh->tri_add(vt);
+	    ntris.insert(omesh->fmesh->tris_vect.size() - 1);
 	    // In addition to the genuinely new vertices, altered triangles
 	    // may need updated vert bboxes
 	    for (int i = 0; i < 3; i++) {
@@ -1359,16 +1363,15 @@ check_faces_validity(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pair
     }
     bool valid = true;
 
-#if 0
     std::set<struct ON_Brep_CDT_State *>::iterator s_it;
     for (s_it = cdt_states.begin(); s_it != cdt_states.end(); s_it++) {
 	struct ON_Brep_CDT_State *s_cdt = *s_it;
 	if (!CDT_Audit(s_cdt)) {
 	    std::cerr << "Invalid: " << s_cdt->name << " edge data\n";
 	    valid = false;
+	    bu_exit(1, "urk\n");
 	}
     }
-#endif
 
     std::set<cdt_mesh_t *>::iterator f_it;
     for (f_it = fmeshes.begin(); f_it != fmeshes.end(); f_it++) {

@@ -1102,7 +1102,7 @@ ovlp_split_edge(overt_t **nv1, overt_t **nv2,
 	std::set<bedge_seg_t *> *nsegs,	bedge_seg_t *eseg, double t);
 
 int
-ovlp_split_interior_edge(overt_t **nv, omesh_t *om, uedge_t &ue);
+ovlp_split_interior_edge(overt_t **nv, std::set<long> &ntris, omesh_t *om, uedge_t &ue);
 
 
 void
