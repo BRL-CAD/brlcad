@@ -549,6 +549,7 @@ ovlp_grp::pairs_realign()
     return true;
 }
 
+#if 0
 static void
 plot_bins(std::vector<ovlp_grp> &bins) {
     for (size_t i = 0; i < bins.size(); i++) {
@@ -558,6 +559,7 @@ plot_bins(std::vector<ovlp_grp> &bins) {
 	bu_vls_free(&pname);
     }
 }
+#endif
 
 bool
 find_split_edges(std::set<uedge_t> &interior_uedges, std::set<bedge_seg_t *> &bsegs,
@@ -570,6 +572,8 @@ find_split_edges(std::set<uedge_t> &interior_uedges, std::set<bedge_seg_t *> &bs
     }
     omesh_t *om = tris.begin()->m->omesh;
 
+    std::set<uedge_t> split_uedges_init;
+    std::set<uedge_t> split_uedges_skip;
     std::set<uedge_t> split_uedges;
     // Collect the set of seed uedges to split.
     for (t_it = tris.begin(); t_it != tris.end(); t_it++) {
@@ -585,23 +589,35 @@ find_split_edges(std::set<uedge_t> &interior_uedges, std::set<bedge_seg_t *> &bs
 		if (active_verts.find(ue.v[0]) != active_verts.end()) acnt++;
 		if (!acnt && active_verts.find(ue.v[1]) != active_verts.end()) acnt++;
 		if (!acnt) continue;
-		split_uedges.insert(ue);
+		split_uedges_init.insert(ue);
 	    }
 	}
 	// In addition to raw length, if we have any triangles
 	// with a longest edge much larger than the shortest edge,
-	// split the longer edges.
+	// split the longer edges.  Remove the shortest edge from
+	// splitting, if present.
 	double ledge = t.longest_edge_len();
 	double sedge = t.shortest_edge_len();
 	if (ledge > 10*sedge && sedge > .001*lthresh) {
 	    for (int i = 0; i < 3; i++) {
-		if (t.uedge_len(i) > 2*sedge) {
-		    uedge_t ue = t.uedge(i);
-		    split_uedges.insert(ue);
+		uedge_t ue = t.uedge(i);
+		double uel = t.uedge_len(i);
+		if (uel > 2*sedge) {
+		    split_uedges_init.insert(ue);
 		    active_verts.insert(ue.v[0]);
 		    active_verts.insert(ue.v[1]);
+		} else {
+		    if (uel < lthresh) {
+			split_uedges_skip.insert(ue);
+		    }
 		}
 	    }
+	}
+    }
+    std::set<uedge_t>::iterator s_ue;
+    for (s_ue = split_uedges_init.begin(); s_ue != split_uedges_init.end(); s_ue++) {
+	if (split_uedges_skip.find(*s_ue) == split_uedges_skip.end()) {
+	    split_uedges.insert(*s_ue);
 	}
     }
 
@@ -611,7 +627,6 @@ find_split_edges(std::set<uedge_t> &interior_uedges, std::set<bedge_seg_t *> &bs
     // separate processing.
     std::set<bedge_seg_t *> nbsegs;
     std::set<uedge_t> c_uedges;
-    std::set<uedge_t>::iterator s_ue;
     for (s_ue = split_uedges.begin(); s_ue != split_uedges.end(); s_ue++) {
 	if (om->fmesh->brep_edges.find(*s_ue) != om->fmesh->brep_edges.end()) {
 	    bedge_seg_t *bseg = om->fmesh->ue2b_map[*s_ue];
@@ -688,7 +703,11 @@ split_bins(std::vector<ovlp_grp> &bins, double lthresh)
 	}
     }
 
+    int icnt = 0;
     while (do_split == true) {
+	if (icnt > 4) {
+	    break;
+	}
 	std::map<omesh_t *, std::set<uedge_t>> iedges;
 	std::set<bedge_seg_t *> bedges;
 	iedges.clear();
@@ -725,6 +744,8 @@ split_bins(std::vector<ovlp_grp> &bins, double lthresh)
 	std::map<omesh_t *, std::set<uedge_t>>::iterator i_it;
 	for (i_it = iedges.begin(); i_it != iedges.end(); i_it++) {
 	    omesh_t *om = i_it->first;
+	    std::string pname = std::string(om->fmesh->name) + std::string("_") + std::to_string(icnt) + std::string(".plot3");
+	    om->fmesh->tris_plot(pname.c_str());
 	    std::set<uedge_t> &uedges = i_it->second;
 	    std::cout << om->fmesh->name << "," << om->fmesh->f_id << ": have " << uedges.size() << " interior edges to split\n";
 	    std::set<uedge_t>::iterator u_it;
@@ -755,6 +776,7 @@ split_bins(std::vector<ovlp_grp> &bins, double lthresh)
 		grp_tris[om].insert(om->fmesh->tris_vect[*n_it]);
 	    }
 	}
+	icnt++;
     }
 }
 
@@ -763,9 +785,9 @@ resolve_ovlp_grps(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs, 
 {
     std::vector<ovlp_grp> bins;
 
+#if 0
     size_t bin_cnt = INT_MAX;
     int cycle_cnt = 0;
-
     while (bin_cnt && cycle_cnt < 5) {
 	bins = find_ovlp_grps(check_pairs);
 	bin_cnt = bins.size();
@@ -829,7 +851,7 @@ resolve_ovlp_grps(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs, 
 	plot_active_omeshes(check_pairs);
 	cycle_cnt++;
     }
-
+#endif
     bins = find_ovlp_grps(check_pairs);
     split_bins(bins, lthresh);
 
