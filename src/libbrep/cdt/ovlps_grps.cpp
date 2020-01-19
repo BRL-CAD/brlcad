@@ -605,19 +605,19 @@ find_split_edges(std::set<uedge_t> &interior_uedges, std::set<bedge_seg_t *> &bs
 	}
     }
 
-    std::cout << om->fmesh->f_id << ": found " << split_uedges.size() << " edges to split\n";
+    std::cout << om->fmesh->name << "," << om->fmesh->f_id << ": found " << split_uedges.size() << " edges to split\n";
 
     // If any of these are brep face edge segments, pull them out for
     // separate processing.
     std::set<bedge_seg_t *> nbsegs;
-    std::set<uedge_t> e_uedges;
+    std::set<uedge_t> c_uedges;
     std::set<uedge_t>::iterator s_ue;
     for (s_ue = split_uedges.begin(); s_ue != split_uedges.end(); s_ue++) {
 	if (om->fmesh->brep_edges.find(*s_ue) != om->fmesh->brep_edges.end()) {
 	    bedge_seg_t *bseg = om->fmesh->ue2b_map[*s_ue];
-	    e_uedges.insert(*s_ue);
 	    nbsegs.insert(bseg);
 	} else {
+	    c_uedges.insert(*s_ue);
 	    std::set<size_t> rtris = om->fmesh->uedges2tris[*s_ue];
 	    if (rtris.size() != 2) {
 		std::cout << "Error - could not associate uedge with two triangles??\n";
@@ -625,15 +625,23 @@ find_split_edges(std::set<uedge_t> &interior_uedges, std::set<bedge_seg_t *> &bs
 	}
     }
 
-    split_uedges.erase(e_uedges.begin(), e_uedges.end());
+    std::cout << om->fmesh->name << "," << om->fmesh->f_id << ": found " << c_uedges.size() << " interior edges to split\n";
+    std::cout << om->fmesh->name << "," << om->fmesh->f_id << ": found " << nbsegs.size() << " brep face edges to split\n";
 
-    std::cout << om->fmesh->f_id << ": found " << split_uedges.size() << " interior edges to split\n";
-    std::cout << om->fmesh->f_id << ": found " << nbsegs.size() << " brep face edges to split\n";
+    size_t cnt = 0;
+    for (u_it = c_uedges.begin(); u_it != c_uedges.end(); u_it++) {
+	if (cnt >= c_uedges.size()) {
+	    std::cout << "huh???\n";
+	}
+	interior_uedges.insert(*u_it);
+	cnt++;
+    }
+    std::set<bedge_seg_t *>::iterator n_it;
+    for (n_it = nbsegs.begin(); n_it != nbsegs.end(); n_it++) {
+	bsegs.insert(*n_it);
+    }
 
-    interior_uedges.insert(split_uedges.begin(), split_uedges.end());
-    bsegs.insert(nbsegs.begin(), nbsegs.end());
-
-    return (split_uedges.size() || nbsegs.size());
+    return (c_uedges.size() || nbsegs.size());
 }
 
 void
@@ -718,6 +726,7 @@ split_bins(std::vector<ovlp_grp> &bins, double lthresh)
 	for (i_it = iedges.begin(); i_it != iedges.end(); i_it++) {
 	    omesh_t *om = i_it->first;
 	    std::set<uedge_t> &uedges = i_it->second;
+	    std::cout << om->fmesh->name << "," << om->fmesh->f_id << ": have " << uedges.size() << " interior edges to split\n";
 	    std::set<uedge_t>::iterator u_it;
 	    std::set<long> ntris;
 	    size_t lcnt = 0;
