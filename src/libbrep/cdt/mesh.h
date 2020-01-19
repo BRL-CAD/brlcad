@@ -351,6 +351,8 @@ struct triangle_t {
     uedge_t longest_edge();
     uedge_t shortest_edge();
 
+    std::set<triangle_t> split(uedge_t &ue, long split_pnt, bool flip);
+
     ON_3dPoint * vpnt(int i);
     char*ppnt(int i);
     void plot(const char *fname);
@@ -1071,7 +1073,7 @@ omesh_ovlps(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs, int mod
 void
 plot_active_omeshes(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs);
 
-void
+bool
 orient_tri(cdt_mesh_t &fmesh, triangle_t &t);
 
 int

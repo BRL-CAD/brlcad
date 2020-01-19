@@ -308,6 +308,50 @@ triangle_t::shortest_edge()
     return ue;
 }
 
+std::set<triangle_t>
+triangle_t::split(uedge_t &ue, long split_pnt, bool flip)
+{
+    long A, B, C;
+    long E =split_pnt;
+    for (int i = 0; i < 3; i++) {
+	long v0 = v[i];
+	long v1 = (i < 2) ? v[i + 1] : v[0];
+	if ((v0 == ue.v[0] && v1 == ue.v[1]) || (v0 == ue.v[1] && v1 == ue.v[0])) {
+	    A = v1;
+	    C = v0;
+	    break;
+	}
+    }
+    for (int i = 0; i < 3; i++) {
+	if (v[i] != A && v[i] != C) {
+	    B = v[i];
+	    break;
+	}
+    }
+    if (flip) {
+	long tmp = C;
+	C = A;
+	A = tmp;
+    }
+
+    triangle_t t1, t2;
+    t1.v[0] = A;
+    t1.v[1] = B;
+    t1.v[2] = E;
+    t1.m = m;
+
+    t2.v[0] = B;
+    t2.v[1] = C;
+    t2.v[2] = E;
+    t1.m = m;
+
+    std::set<triangle_t> stris;
+    stris.insert(t1);
+    stris.insert(t2);
+
+    return stris;
+}
+
 double
 triangle_t::uedge_len(int i)
 {

@@ -581,8 +581,10 @@ find_split_edges(std::set<uedge_t> &interior_uedges, std::set<bedge_seg_t *> &bs
 	for (int i = 0; i < 3; i++) {
 	    if (t.uedge_len(i) > lthresh) {
 		uedge_t ue = t.uedge(i);
-		if (active_verts.find(ue.v[0]) == active_verts.end()) continue;
-		if (active_verts.find(ue.v[1]) == active_verts.end()) continue;
+		int acnt = 0;
+		if (active_verts.find(ue.v[0]) != active_verts.end()) acnt++;
+		if (!acnt && active_verts.find(ue.v[1]) != active_verts.end()) acnt++;
+		if (!acnt) continue;
 		split_uedges.insert(ue);
 	    }
 	}
@@ -681,17 +683,23 @@ split_bins(std::vector<ovlp_grp> &bins, double lthresh)
     while (do_split == true) {
 	std::map<omesh_t *, std::set<uedge_t>> iedges;
 	std::set<bedge_seg_t *> bedges;
+	iedges.clear();
+	bedges.clear();
 
 	do_split = false;
 	for (g_it = grp_tris.begin(); g_it != grp_tris.end(); g_it++) {
-	    bool have_split_edges = find_split_edges(iedges[g_it->first], bedges, g_it->second, active_verts[g_it->first], lthresh);
-	    g_it->second.clear();
+	    omesh_t *om = g_it->first;
+	    std::set<triangle_t> &mtris = g_it->second;
+	    std::set<uedge_t> &uedges= iedges[om];
+	    bool have_split_edges = find_split_edges(uedges, bedges, mtris, active_verts[om], lthresh);
+	    mtris.clear();
 	    if (have_split_edges) {
 		// We're changing a mesh, so we'll need to come back for another round.
 		do_split = true;
 	    }
 	}
 	// Split brep edges
+#if 0
 	std::set<bedge_seg_t *>::iterator b_it;
 	for (b_it = bedges.begin(); b_it != bedges.end(); b_it++) {
 	    overt_t *nv1, *nv2;
@@ -704,13 +712,25 @@ split_bins(std::vector<ovlp_grp> &bins, double lthresh)
 		// TODO - get triangles and add them
 	    }
 	}
+#endif
 	// Split interior edges
 	std::map<omesh_t *, std::set<uedge_t>>::iterator i_it;
 	for (i_it = iedges.begin(); i_it != iedges.end(); i_it++) {
 	    omesh_t *om = i_it->first;
+	    std::set<uedge_t> &uedges = i_it->second;
 	    std::set<uedge_t>::iterator u_it;
 	    std::set<long> ntris;
-	    for (u_it = i_it->second.begin(); u_it != i_it->second.end(); u_it++) {
+	    size_t lcnt = 0;
+	    for (u_it = uedges.begin(); u_it != uedges.end(); u_it++) {
+		if (om->fmesh->uedges2tris[*u_it].size() != 2) {
+		    std::cout << "stale uedge?\n";
+		    lcnt++;
+		    if (lcnt > uedges.size()+1) {
+			std::cout << "infinite loop?\n";
+			break;
+		    }
+		    continue;
+		}
 		overt_t *nv;
 		uedge_t ue = *u_it;
 		if (ovlp_split_interior_edge(&nv, ntris, om, ue) > 0) {
