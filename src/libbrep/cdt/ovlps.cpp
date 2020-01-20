@@ -1040,52 +1040,14 @@ static void
 replace_edge_split_tri(cdt_mesh_t &fmesh, size_t t_id, long np_id, uedge_t &split_edge)
 {
     triangle_t &t = fmesh.tris_vect[t_id];
-
-    fmesh.tri_plot(t, "replacing.plot3");
-    // Find the two triangle edges that weren't split - these are the starting points for the
-    // new triangles
-    edge_t e1, e2;
-    int ecnt = 0;
-    for (int i = 0; i < 3; i++) {
-	long v0 = t.v[i];
-	long v1 = (i < 2) ? t.v[i + 1] : t.v[0];
-	edge_t ec(v0, v1);
-	uedge_t uec(ec);
-	if (uec != split_edge) {
-	    if (!ecnt) {
-		e1 = ec;
-	    } else {
-		e2 = ec;
-	    }
-	    ecnt++;
-	}
-    }
-
-    triangle_t ntri1, ntri2;
-    ntri1.v[0] = e1.v[0];
-    ntri1.v[1] = np_id;
-    ntri1.v[2] = e1.v[1];
-    orient_tri(fmesh, ntri1);
-
-    ntri2.v[0] = e2.v[0];
-    ntri2.v[1] = np_id;
-    ntri2.v[2] = e2.v[1];
-    orient_tri(fmesh, ntri2);
+    std::set<triangle_t> ntris = t.split(split_edge, np_id, false);
 
     fmesh.tri_remove(t);
-    fmesh.tri_add(ntri1);
-    fmesh.tri_add(ntri2);
-
-    std::set<uedge_t> nedges;
-    std::set<uedge_t> n1 = fmesh.uedges(ntri1);
-    std::set<uedge_t> n2 = fmesh.uedges(ntri2);
-    nedges.insert(n1.begin(), n1.end());
-    nedges.insert(n2.begin(), n2.end());
-    std::set<uedge_t>::iterator n_it;
-
-    fmesh.tri_plot(ntri1, "nt1.plot3");
-    fmesh.tri_plot(ntri2, "nt2.plot3");
-
+    std::set<triangle_t>::iterator t_it;
+    for (t_it = ntris.begin(); t_it != ntris.end(); t_it++) {
+	triangle_t nt = *t_it;
+	fmesh.tri_add(nt);
+    }
 }
 
 int
