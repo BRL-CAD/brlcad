@@ -57,6 +57,7 @@ set(libbrep_ignored_files
   cdt/cdt.h
   cdt/mesh.h
   cdt/closed_surf.cpp
+  cdt/ovlps_simple.cpp
   cdt/RTree.h
   opennurbs_fit.h
   opennurbs_fit.cpp
