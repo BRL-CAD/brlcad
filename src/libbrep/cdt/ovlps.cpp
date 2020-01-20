@@ -586,7 +586,7 @@ ovlp_split_interior_edge(overt_t **nv, std::set<long> &ntris, omesh_t *omesh, ue
 
     (*nv) = nvrt;
 
-    omesh->fmesh->valid(1);
+    //omesh->fmesh->valid(1);
 
     return new_tris;
 }
