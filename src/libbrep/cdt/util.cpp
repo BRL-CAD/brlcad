@@ -54,6 +54,7 @@ PPCHECK(ON_3dPoint &p)
     return false;
 }
 
+#if 0
 bool
 VPCHECK(overt_t *v, const char *fname)
 {
@@ -67,6 +68,7 @@ VPCHECK(overt_t *v, const char *fname)
     }
     return false;
 }
+#endif
 
 #define PPOINT1 23.25001595493834472,7.56258605501400005,4.69182363386541645
 #define PPOINT2 23.25001595493833406,7.50286345088642914,4.88080852489416639

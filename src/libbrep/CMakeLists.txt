@@ -30,10 +30,7 @@ set(LIBBREP_SOURCES
   cdt/validate.cpp
   cdt/edge.cpp
   cdt/mesh.cpp
-  cdt/omesh.cpp
-  cdt/overt.cpp
-  cdt/ovlps.cpp
-  cdt/ovlps_grps.cpp
+  cdt/ovlps_simple.cpp
   cdt/tri_isect.cpp
   intersect.cpp
   tools/tools.cpp
@@ -57,7 +54,10 @@ set(libbrep_ignored_files
   cdt/cdt.h
   cdt/mesh.h
   cdt/closed_surf.cpp
-  cdt/ovlps_simple.cpp
+  cdt/omesh.cpp
+  cdt/overt.cpp
+  cdt/ovlps.cpp
+  cdt/ovlps_grps.cpp
   cdt/RTree.h
   opennurbs_fit.h
   opennurbs_fit.cpp

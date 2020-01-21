@@ -2249,7 +2249,7 @@ cdt_mesh_t::uedge_polygon(uedge_t &ue)
     std::set<long> t_pts;
     std::set<size_t>::iterator r_it;
     for (r_it = ue_tris.begin(); r_it != ue_tris.end(); r_it++) {
-	triangle_t tri = omesh->fmesh->tris_vect[*r_it];
+	triangle_t tri = tris_vect[*r_it];
 	for (int i = 0; i < 3; i++) {
 	    t_pts.insert(tri.v[i]);
 	}
@@ -2265,7 +2265,7 @@ cdt_mesh_t::uedge_polygon(uedge_t &ue)
     std::set<long>::iterator p_it;
     int tpind = 0;
     for (p_it = t_pts.begin(); p_it != t_pts.end(); p_it++) {
-	ON_3dPoint *p = omesh->fmesh->pnts[*p_it];
+	ON_3dPoint *p = pnts[*p_it];
 	fpnts[tpind][X] = p->x;
 	fpnts[tpind][Y] = p->y;
 	fpnts[tpind][Z] = p->z;
@@ -2290,7 +2290,7 @@ cdt_mesh_t::uedge_polygon(uedge_t &ue)
     for (p_it = t_pts.begin(); p_it != t_pts.end(); p_it++) {
 	double u, v;
 	long pind = *p_it;
-	ON_3dPoint *p = omesh->fmesh->pnts[pind];
+	ON_3dPoint *p = pnts[pind];
 	fit_plane.ClosestPointTo(*p, &u, &v);
 	std::pair<double, double> proj_2d;
 	proj_2d.first = u;
@@ -2300,7 +2300,7 @@ cdt_mesh_t::uedge_polygon(uedge_t &ue)
 	polygon->o2p[pind] = polygon->pnts_2d.size() - 1;
     }
     // Initialize the polygon edges with one of the triangles.
-    triangle_t tri1 = omesh->fmesh->tris_vect[*(ue_tris.begin())];
+    triangle_t tri1 = tris_vect[*(ue_tris.begin())];
     ue_tris.erase(ue_tris.begin());
     struct edge2d_t e1(polygon->o2p[tri1.v[0]], polygon->o2p[tri1.v[1]]);
     struct edge2d_t e2(polygon->o2p[tri1.v[1]], polygon->o2p[tri1.v[2]]);
@@ -2312,7 +2312,7 @@ cdt_mesh_t::uedge_polygon(uedge_t &ue)
     // Grow the polygon with the other triangle.
     std::set<uedge_t> new_edges;
     std::set<uedge_t> shared_edges;
-    triangle_t tri2 = omesh->fmesh->tris_vect[*(ue_tris.begin())];
+    triangle_t tri2 = tris_vect[*(ue_tris.begin())];
     ue_tris.erase(ue_tris.begin());
     for (int i = 0; i < 3; i++) {
 	int v1 = i;

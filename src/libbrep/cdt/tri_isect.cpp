@@ -282,6 +282,7 @@ near_edge_process(double t, double vtol)
     return 0;
 }
 
+#if 0
 bool
 tri_isect_t::edge_midpoints_inside(int ind)
 {
@@ -411,6 +412,7 @@ tri_isect_t::isect_edge_only(double etol)
 
     return true;
 }
+#endif
 
 /*****************************************************************************
  * We're only concerned with specific categories of intersections between
@@ -446,14 +448,17 @@ tri_isect(
 	return 0;
     }
 
+#if 0
     // Check for edge-only intersections
     if (tri_isection.isect_edge_only()) {
 	return 0;
     }
+#endif
 
     return 1;
 }
 
+#if 0
 static int
 near_edge_refinement(double t, double vtol) {
     if (t > 0  && t < 1 && !NEAR_ZERO(t, vtol) && !NEAR_EQUAL(t, 1, vtol)) {
@@ -513,6 +518,7 @@ tri_nearedge_refine(
 
     return process_cnt;
 }
+#endif
 
 /** @} */
 

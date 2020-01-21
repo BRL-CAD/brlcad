@@ -42,20 +42,20 @@
 
 // Functions to build sets of active meshes from the active pairs set
 
-std::set<omesh_t *>
-active_omeshes(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
+std::set<cdt_mesh_t *>
+active_meshes(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs)
 {
-    std::set<omesh_t *> a_omesh;
-    std::set<omesh_t *>::iterator a_it;
+    std::set<cdt_mesh_t *> a_mesh;
+    std::set<cdt_mesh_t *>::iterator a_it;
     std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>>::iterator cp_it;
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
-	omesh_t *omesh1 = cp_it->first->omesh;
-	omesh_t *omesh2 = cp_it->second->omesh;
-	a_omesh.insert(omesh1);
-	a_omesh.insert(omesh2);
+	cdt_mesh_t *cdt_mesh1 = cp_it->first;
+	cdt_mesh_t *cdt_mesh2 = cp_it->second;
+	a_mesh.insert(cdt_mesh1);
+	a_mesh.insert(cdt_mesh2);
     }
 
-    return a_omesh;
+    return a_mesh;
 }
 
 /******************************************************************************
@@ -70,9 +70,9 @@ struct nf_info {
 
 static bool NearFacesPairsCallback(void *data, void *a_context) {
     struct nf_info *nf = (struct nf_info *)a_context;
-    cdt_mesh_t *omesh = (cdt_mesh_t *)data;
-    std::pair<cdt_mesh_t *, cdt_mesh_t *> p1(nf->cmesh, omesh);
-    std::pair<cdt_mesh_t *, cdt_mesh_t *> p2(omesh, nf->cmesh);
+    cdt_mesh_t *fmesh = (cdt_mesh_t *)data;
+    std::pair<cdt_mesh_t *, cdt_mesh_t *> p1(nf->cmesh, fmesh);
+    std::pair<cdt_mesh_t *, cdt_mesh_t *> p2(fmesh, nf->cmesh);
     if ((nf->check_pairs->find(p1) == nf->check_pairs->end()) && (nf->check_pairs->find(p1) == nf->check_pairs->end())) {
 	nf->check_pairs->insert(p1);
     }
@@ -114,49 +114,45 @@ possibly_interfering_face_pairs(struct ON_Brep_CDT_State **s_a, int s_cnt)
 }
 
 void
-tri_uedges(std::set<uedge_t> &uedges, std::set<uedge_t> &uskip, triangle_t &t, double lthresh)
+triangle_uedges(std::set<uedge_t> &uedges, std::set<uedge_t> &uskip, triangle_t &t, double lthresh)
 {
+    double lel = t.longest_edge_len();
+    if (lel < lthresh) {
+	return;
+    }
     for (int i = 0; i < 3; i++) {
 	if (t.uedge_len(i) > lthresh) {
 	    uedge_t ue = t.uedge(i);
-	    split_uedges_init.insert(ue);
+	    uedges.insert(ue);
 	}
     }
-    // Remove the shortest edge from splitting, if present.  if we do need to
-    // split this edge, do so after getting longer edges.
+    // Remove the shortest edge from splitting (if present) even if it is
+    // longer than the threshold length.  If we do need to split this edge,
+    // we'll do so after getting the longer edges.
     uedge_t ue = t.shortest_edge();
     uskip.insert(ue);
 }
 
-std::set<bedge_seg_t *>
-omesh_ovlps(
-	std::map<omesh_t *, std::set<uedge_t>> *iedges,
+int
+mesh_ovlps(
+	std::map<cdt_mesh_t *, std::set<uedge_t>> *iedges,
+	std::set<bedge_seg_t *> *bsegs,
 	std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs, int mode, double lthresh)
 {
-    std::set<bedge_seg_t *> bsegs;
     std::map<cdt_mesh_t *, std::set<uedge_t>> iedges_init;
     std::map<cdt_mesh_t *, std::set<uedge_t>> iedges_skip;
-    std::map<cdt_mesh_t *, std::set<long>> itris;
-
     iedges->clear();
-
-    size_t tri_isects = 0;
+    bsegs->clear();
 
     // Assemble the set of mesh faces that (per the check_pairs sets) we
     // may need to process.
-    std::set<omesh_t *> a_omesh = active_omeshes(check_pairs);
-    std::set<omesh_t *>::iterator a_it;
-
-    // Scrub the old data in active mesh containers (if any)
-    for (a_it = a_omesh.begin(); a_it != a_omesh.end(); a_it++) {
-	omesh_t *am = *a_it;
-	am->itris.clear();
-	am->intruding_tris.clear();
-    }
-    a_omesh.clear();
+    std::set<cdt_mesh_t *> a_mesh = active_meshes(check_pairs);
+    std::set<cdt_mesh_t *>::iterator a_it;
 
     // Intersect first the triangle RTrees, then any potentially
     // overlapping triangles found within the leaves.
+    size_t tri_isects = 0;
+    std::map<cdt_mesh_t *, std::set<long>> itris;
     std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>>::iterator cp_it;
     for (cp_it = check_pairs.begin(); cp_it != check_pairs.end(); cp_it++) {
 	cdt_mesh_t *fmesh1 = cp_it->first;
@@ -193,124 +189,30 @@ omesh_ovlps(
     }
 
     // Build up the final edge sets
-    std::map<omesh_t *, std::set<uedge_t>>::iterator ie_it;
+    int ecnt = 0;
+    std::map<cdt_mesh_t *, std::set<uedge_t>>::iterator ie_it;
     for (ie_it = iedges_init.begin(); ie_it != iedges_init.end(); ie_it++) {
 	cdt_mesh_t *fmesh = ie_it->first;
 	std::set<uedge_t>::iterator u_it;
 	for (u_it = ie_it->second.begin(); u_it != ie_it->second.end(); u_it++) {
 	    if (iedges_skip[fmesh].find(*u_it) == iedges_skip[fmesh].end()) {
-		if (fmesh->brep_edges.find(*u_it) == mesh->brep_edges.end()) {
+		if (fmesh->brep_edges.find(*u_it) == fmesh->brep_edges.end()) {
 		    (*iedges)[fmesh].insert(*u_it);
 		} else {
-		    bedge_seg_t *bseg = om->fmesh->ue2b_map[*u_it];
-		    bsegs.insert(bseg);
+		    bedge_seg_t *bseg = fmesh->ue2b_map[*u_it];
+		    bsegs->insert(bseg);
 		}
+		ecnt++;
 	    }
 	}
     }
 
-    return bsegs;
+    return ecnt;
 }
-
-int
-ovlp_split_interior_edge(overt_t **nv, std::set<long> &ntris, omesh_t *omesh, uedge_t &ue)
-{
-    std::set<overt_t *> overts_to_update;
-
-    // Find the two triangles that we will be using to form the outer polygon
-    std::set<size_t> rtris = omesh->fmesh->uedges2tris[ue];
-    if (rtris.size() != 2) {
-	std::cout << "Error - could not associate uedge with two triangles??\n";
-	return -1;
-    }
-    std::set<size_t> crtris = rtris;
-    triangle_t tri1 = omesh->fmesh->tris_vect[*crtris.begin()];
-    crtris.erase(crtris.begin());
-    triangle_t tri2 = omesh->fmesh->tris_vect[*crtris.begin()];
-    crtris.erase(crtris.begin());
-
-    cpolygon_t *polygon = omesh->fmesh->uedge_polygon(ue);
-
-    // Add interior point.
-    ON_3dPoint epnt = (*omesh->fmesh->pnts[ue.v[0]] + *omesh->fmesh->pnts[ue.v[1]]) * 0.5;
-    double spdist = omesh->fmesh->pnts[ue.v[0]]->DistanceTo(*omesh->fmesh->pnts[ue.v[1]]);
-    ON_3dPoint spnt;
-    ON_3dVector sn;
-    if (!omesh->fmesh->closest_surf_pnt(spnt, sn, &epnt, spdist*10)) {
-	std::cerr << "Error - couldn't find closest point\n";
-	delete polygon;
-	return -1;
-    }
-    // Base the bbox on the edge length, since we don't have any topology yet.
-    ON_BoundingBox sbb(spnt,spnt);
-    ON_3dPoint sbb1 = spnt - ON_3dPoint(.1*spdist, .1*spdist, .1*spdist);
-    ON_3dPoint sbb2 = spnt + ON_3dPoint(.1*spdist, .1*spdist, .1*spdist);
-    sbb.Set(sbb1, true);
-    sbb.Set(sbb2, true);
-
-    // We're going to use it - add new 3D point
-    long f3ind = omesh->fmesh->add_point(new ON_3dPoint(spnt));
-    long fnind = omesh->fmesh->add_normal(new ON_3dPoint(sn));
-    struct ON_Brep_CDT_State *s_cdt = (struct ON_Brep_CDT_State *)omesh->fmesh->p_cdt;
-    CDT_Add3DPnt(s_cdt, omesh->fmesh->pnts[f3ind], omesh->fmesh->f_id, -1, -1, -1, 0, 0);
-    CDT_Add3DNorm(s_cdt, omesh->fmesh->normals[fnind], omesh->fmesh->pnts[f3ind], omesh->fmesh->f_id, -1, -1, -1, 0, 0);
-    omesh->fmesh->nmap[f3ind] = fnind;
-    overt_t *nvrt = omesh->vert_add(f3ind, &sbb);
-    overts_to_update.insert(nvrt);
-
-    // The 'old' triangles may themselves have been newly introduced - we're now going to remove
-    // them from the mesh regardless, so make sure the ntris set doesn't include them any more.
-    ntris.erase(tri1.ind);
-    ntris.erase(tri2.ind);
-
-    // Split the old triangles, perform the removals and add the new triangles
-    int new_tris = 0;
-    std::set<triangle_t>::iterator s_it;
-    std::set<triangle_t> t1_tris = tri1.split(ue, f3ind, false);
-    omesh->fmesh->tri_remove(tri1);
-    for (s_it = t1_tris.begin(); s_it != t1_tris.end(); s_it++) {
-	triangle_t vt = *s_it;
-	omesh->fmesh->tri_add(vt);
-	ntris.insert(omesh->fmesh->tris_vect.size() - 1);
-	// In addition to the genuinely new vertices, altered triangles
-	// may need updated vert bboxes
-	for (int i = 0; i < 3; i++) {
-	    overts_to_update.insert(omesh->overts[vt.v[i]]);
-	}
-	new_tris++;
-    }
-    std::set<triangle_t> t2_tris = tri2.split(ue, f3ind, false);
-    omesh->fmesh->tri_remove(tri2);
-    for (s_it = t2_tris.begin(); s_it != t2_tris.end(); s_it++) {
-	triangle_t vt = *s_it;
-	omesh->fmesh->tri_add(vt);
-	ntris.insert(omesh->fmesh->tris_vect.size() - 1);
-	// In addition to the genuinely new vertices, altered triangles
-	// may need updated vert bboxes
-	for (int i = 0; i < 3; i++) {
-	    overts_to_update.insert(omesh->overts[vt.v[i]]);
-	}
-	new_tris++;
-    }
-
-    // Have new triangles, update overts
-    std::set<overt_t *>::iterator n_it;
-    for (n_it = overts_to_update.begin(); n_it != overts_to_update.end(); n_it++) {
-	(*n_it)->update();
-    }
-
-    (*nv) = nvrt;
-
-    //omesh->fmesh->valid(1);
-
-    return new_tris;
-}
-
 
 static void
-split_tri(cdt_mesh_t &fmesh, size_t t_id, long np_id, uedge_t &split_edge)
+split_tri(cdt_mesh_t &fmesh, triangle_t &t, long np_id, uedge_t &split_edge)
 {
-    triangle_t &t = fmesh.tris_vect[t_id];
     std::set<triangle_t> ntris = t.split(split_edge, np_id, false);
 
     fmesh.tri_remove(t);
@@ -359,10 +261,10 @@ internal_split_edge(
     fmesh->nmap[f3ind] = fnind;
 
     // Split the old triangles, perform the removals and add the new triangles
-    split_tri(*fmesh, tri1.ind, f3ind, ue);
-    split_tri(*fmesh, tri2.ind, f3ind, ue);
+    split_tri(*fmesh, tri1, f3ind, ue);
+    split_tri(*fmesh, tri2, f3ind, ue);
    
-    return 0;
+    return 2;
 }
 
 int
@@ -370,9 +272,12 @@ brep_split_edge(
 	bedge_seg_t *eseg, double t
 	)
 {
-    int replaced_tris = 0;
-
     std::vector<std::pair<cdt_mesh_t *,uedge_t>> uedges = eseg->uedges();
+
+    if (uedges.size() != 2) {
+	std::cout << "Unexpected edge count for bedge segment\n";
+	return -1;
+    }
 
     cdt_mesh_t *fmesh_f1 = uedges[0].first;
     cdt_mesh_t *fmesh_f2 = uedges[1].first;
@@ -385,15 +290,34 @@ brep_split_edge(
 
     std::set<size_t> f1_tris = fmesh_f1->uedges2tris[ue1];
     std::set<size_t> f2_tris = fmesh_f2->uedges2tris[ue2];
-
-    size_t tris_cnt = 0;
-    if (fmesh_f1->f_id == fmesh_f2->f_id) {
-	std::set<size_t> f_alltris;
-	f_alltris.insert(f1_tris.begin(), f1_tris.end());
-	f_alltris.insert(f2_tris.begin(), f2_tris.end());
-	tris_cnt = f_alltris.size();
+    triangle_t tri1, tri2;
+    if (f_id1 == f_id2) {
+	if ((f1_tris.size() != 2 && f1_tris.size() != 0) || (f2_tris.size() != 2 && f2_tris.size() != 0)) {
+	    std::cout << "Unexpected triangle count for edge\n";
+	    return -1;
+	}
+	if ((!f1_tris.size() && !f2_tris.size()) || (f1_tris.size() == 2 && f2_tris.size() == 2)) {
+	    std::cout << "Unexpected triangle count for edge\n";
+	    return -1;
+	}
+	if (f1_tris.size()) {
+	    tri1 = fmesh_f1->tris_vect[*f1_tris.begin()];
+	    f1_tris.erase(f1_tris.begin());
+	    tri2 = fmesh_f1->tris_vect[*f1_tris.begin()];
+	    f1_tris.erase(f1_tris.begin());
+	} else {
+	    tri1 = fmesh_f2->tris_vect[*f2_tris.begin()];
+	    f1_tris.erase(f1_tris.begin());
+	    tri2 = fmesh_f2->tris_vect[*f2_tris.begin()];
+	    f1_tris.erase(f1_tris.begin());
+	}
     } else {
-	tris_cnt = f1_tris.size() + f2_tris.size();
+	if (f1_tris.size() != 1 || f2_tris.size() != 1) {
+	    std::cout << "Unexpected triangle count for edge\n";
+	    return -1;
+	}
+	tri1 = fmesh_f1->tris_vect[*f1_tris.begin()];
+	tri2 = fmesh_f2->tris_vect[*f2_tris.begin()];
     }
 
     // We're replacing the edge and its triangles - clear old data
@@ -432,33 +356,15 @@ brep_split_edge(
 	f2->ue2b_map[ue_2] = es;
     }
 
-    long np_id;
-    if (f_id1 == f_id2) {
-	std::set<size_t> ftris;
-	std::set<size_t>::iterator tr_it;
-	uedge_t ue;
-	ue = (f1_tris.size()) ? ue1 : ue2;
-	ftris.insert(f1_tris.begin(), f1_tris.end());
-	ftris.insert(f2_tris.begin(), f2_tris.end());
-	np_id = fmesh_f1->pnts.size() - 1;
-	fmesh_f1->ep.insert(np_id);
-	for (tr_it = ftris.begin(); tr_it != ftris.end(); tr_it++) {
-	    replace_edge_split_tri(*fmesh_f1, *tr_it, np_id, ue);
-	    replaced_tris++;
-	}
-    } else {
-	np_id = fmesh_f1->pnts.size() - 1;
-	fmesh_f1->ep.insert(np_id);
-	replace_edge_split_tri(*fmesh_f1, *f1_tris.begin(), np_id, ue1);
-	replaced_tris++;
+    long np_id_1 = tri1.m->pnts.size() - 1;
+    tri1.m->ep.insert(np_id_1);
+    split_tri(*tri1.m, tri1, np_id_1, ue1);
 
-	np_id = fmesh_f2->pnts.size() - 1;
-	fmesh_f2->ep.insert(np_id);
-	replace_edge_split_tri(*fmesh_f2, *f2_tris.begin(), np_id, ue2);
-	replaced_tris++;
-    }
+    long np_id_2 = tri2.m->pnts.size() - 1;
+    tri2.m->ep.insert(np_id_2);
+    split_tri(*tri2.m, tri2, np_id_2, ue2);
 
-    return replaced_tris;
+    return 2;
 }
 
 // TODO - need to add a check for triangles with all three vertices on the
@@ -546,8 +452,8 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt, double lthre
     std::map<cdt_mesh_t *, std::set<uedge_t>> otsets;
     std::set<bedge_seg_t *> bsegs; 
 
-    bsegs = omesh_ovlps(&otsets, check_pairs, 1);
-    while (otsets.size() || bsegs.size()) {
+    int ecnt = mesh_ovlps(&otsets, &bsegs, check_pairs, 1, lthresh);
+    while (ecnt > 0) {
 	// bsegs first - they impact more than one face
 	std::set<bedge_seg_t *>::iterator b_it; 
 	for (b_it = bsegs.begin(); b_it != bsegs.end(); b_it++) {
@@ -560,18 +466,18 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt, double lthre
 	for (ot_it = otsets.begin(); ot_it != otsets.end(); ot_it++) {
 	    std::set<uedge_t>::iterator u_it;
 	    for (u_it = ot_it->second.begin(); u_it != ot_it->second.end(); u_it++) {
-		internal_split_edge(ot_it->first, *u_it);
+		uedge_t ue = *u_it;
+		internal_split_edge(ot_it->first, ue);
 	    }
 	}
 
-	bsegs = omesh_ovlps(&otsets, check_pairs, 1);
+	ecnt = mesh_ovlps(&otsets, &bsegs, check_pairs, 1, lthresh);
     }
 
     // Make sure everything is still OK and do final overlap check
-    bool final_valid = check_faces_validity(check_pairs);
-    bu_log("Active set sizes: %d\n", bsegs.size() + otsets.size());
+    check_faces_validity(check_pairs);
 
-    return 0;
+    return ecnt;
 }
 
 

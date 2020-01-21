@@ -58,7 +58,7 @@ extern "C" {
     };
 }
 
-class omesh_t;
+//class omesh_t;
 
 struct edge2d_t {
     long v2d[2];
@@ -735,7 +735,8 @@ public:
     ON_Brep *brep;
     const char *name;
     void *p_cdt;
-    omesh_t *omesh;
+    //omesh_t *omesh;
+    void *omesh;
 
     // Characterize triangle's relationship to polygon.  Returned
     // edges and vertices are in triangle (3D) point indices rather than
@@ -811,7 +812,7 @@ private:
 
 };
 
-
+#if 0
 class overt_t {
     public:
 
@@ -1051,25 +1052,12 @@ class ovlp_grp {
 	std::map<long, long> p2p;
 };
 
-int tri_isect(triangle_t &t1, triangle_t &t2, int mode);
-int tri_nearedge_refine(triangle_t &t1, triangle_t &t2, int level);
-
 std::set<omesh_t *>
 active_omeshes(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs);
 std::set<omesh_t *>
 refinement_omeshes(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs);
 std::set<omesh_t *>
 itris_omeshes(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs);
-
-bool
-check_faces_validity(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs);
-
-size_t
-omesh_refinement_pnts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs, int level);
-
-size_t
-omesh_ovlps(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs, int mode);
-
 void
 plot_active_omeshes(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs);
 
@@ -1110,6 +1098,18 @@ ovlp_split_interior_edge(overt_t **nv, std::set<long> &ntris, omesh_t *om, uedge
 void
 resolve_ovlp_grps(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs, double lthresh);
 
+size_t
+omesh_refinement_pnts(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs, int level);
+
+size_t
+omesh_ovlps(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs, int mode);
+
+#endif
+
+int tri_isect(triangle_t &t1, triangle_t &t2, int mode);
+int tri_nearedge_refine(triangle_t &t1, triangle_t &t2, int level);
+bool
+check_faces_validity(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pairs);
 #endif /* __cdt_mesh_h__ */
 
 /*
