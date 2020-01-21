@@ -178,6 +178,9 @@ struct _ged_facetize_opts {
     int max_pnts;
     struct bg_3d_spsr_opts s_opts;
 
+    /* Brep specific options */
+    double nonovlp_threshold;
+
     /* internal */
     struct bu_attribute_value_set *c_map;
     struct bu_attribute_value_set *s_map;
@@ -221,6 +224,9 @@ struct _ged_facetize_opts * _ged_facetize_opts_create()
 
     o->max_pnts = 0;
     o->max_time = 30;
+
+    o->nonovlp_threshold = 0;
+
     o->s_opts = s_opts;
 
     BU_ALLOC(o->c_map, struct bu_attribute_value_set);
@@ -2689,7 +2695,6 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
     cdttol.abs = opts->tol->abs;
     cdttol.rel = opts->tol->rel;
     cdttol.norm = opts->tol->norm;
-    double ovlp_max_smallest = DBL_MAX;
 
     if (!argc) return GED_ERROR;
 
@@ -2859,9 +2864,6 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
 	ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)bi->brep, (*d_it)->d_namep);
 	ON_Brep_CDT_Tol_Set(s_cdt, &cdttol);
 	ss_cdt.push_back(s_cdt);
-
-	double bblen = bi->brep->BoundingBox().Diagonal().Length() * 0.01;
-	ovlp_max_smallest = (bblen < ovlp_max_smallest) ? bblen : ovlp_max_smallest;
     }
 
     for (size_t i = 0; i < ss_cdt.size(); i++) {
@@ -2874,8 +2876,8 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
 	s_a[i] = ss_cdt[i];
     }
 
-    if (ON_Brep_CDT_Ovlp_Resolve(s_a, ss_cdt.size(), ovlp_max_smallest) < 0) {
-	bu_vls_printf(gedp->ged_result_str, "Error: RESOLVE fail.");
+    if (ON_Brep_CDT_Ovlp_Resolve(s_a, ss_cdt.size(), opts->nonovlp_threshold) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Error: RESOLVE fail.\n");
 #if 0
 	for (size_t i = 0; i < ss_cdt.size(); i++) {
 	    ON_Brep_CDT_Destroy(ss_cdt[i]);
@@ -2941,7 +2943,6 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     int print_help = 0;
     int need_help = 0;
     int nonovlp_brep = 0;
-    double nonovlp_threshold = 0;
     struct _ged_facetize_opts *opts = _ged_facetize_opts_create();
     struct bu_opt_desc d[21];
     struct bu_opt_desc pd[4];
@@ -2965,7 +2966,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[16], "",  "max-time",      "#", &bu_opt_int,     &(opts->max_time),       "Maximum time to spend per processing step (in seconds).  Default is 30.  Zero means either the default (for routines which could run indefinitely) or run to completion (if there is a theoretical termination point for the algorithm) - be careful of specifying zero because it is quite easy to produce extremely long runs!.");
     BU_OPT(d[17], "",  "max-pnts",      "#", &bu_opt_int,     &(opts->max_pnts),                "Maximum number of pnts to use when applying ray sampling methods.");
     BU_OPT(d[18], "B",  "",             "",  NULL,  &nonovlp_brep,              "EXPERIMENTAL: non-overlapping facetization to BoT objects of union-only brep comb tree.");
-    BU_OPT(d[19], "t",  "threshold",    "#",  &bu_opt_fastf_t, &nonovlp_threshold,  "EXPERIMENTAL: max ovlp threshold length.");
+    BU_OPT(d[19], "t",  "threshold",    "#",  &bu_opt_fastf_t, &(opts->nonovlp_threshold),  "EXPERIMENTAL: max ovlp threshold length.");
     BU_OPT_NULL(d[20]);
 
     /* Poisson specific options */
@@ -3063,7 +3064,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 
     /* If we're doing the experimental brep-only logic, it's a separate process */
     if (nonovlp_brep) {
-	if (NEAR_ZERO(nonovlp_threshold, SMALL_FASTF)) {
+	if (NEAR_ZERO(opts->nonovlp_threshold, SMALL_FASTF)) {
 	    bu_vls_printf(gedp->ged_result_str, "-B option requires a specified length threshold\n");
 	    return GED_ERROR;
 	}
