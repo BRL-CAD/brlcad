@@ -34,6 +34,7 @@
 #include <queue>
 #include <random>
 #include <string>
+#include "bu/time.h"
 #include "bg/chull.h"
 #include "bg/tri_pt.h"
 #include "bg/tri_tri.h"
@@ -436,10 +437,12 @@ check_faces_validity(std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> &check_pair
 }
 
 int
-ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt, double lthresh)
+ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt, double lthresh, int timeout)
 {
     if (!s_a) return -1;
     if (s_cnt < 1) return 0;
+
+    double timestamp = bu_gettime();
 
     // Get the bounding boxes of all faces of all breps in s_a, and find
     // possible interactions
@@ -458,14 +461,22 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt, double lthre
     std::map<cdt_mesh_t *, std::set<uedge_t>> otsets;
     std::set<bedge_seg_t *> bsegs; 
 
+    int ccnt = 0;
     int ecnt = mesh_ovlps(&otsets, &bsegs, check_pairs, 1, lthresh);
     while (ecnt > 0) {
+	if (((bu_gettime() - timestamp)/1e6) > (double)timeout) {
+	    return ecnt;
+	}
 	// bsegs first - they impact more than one face
 	std::set<bedge_seg_t *>::iterator b_it; 
 	for (b_it = bsegs.begin(); b_it != bsegs.end(); b_it++) {
 	    bedge_seg_t *bseg = *b_it;
 	    double t = bseg->edge_start + ((bseg->edge_end - bseg->edge_start) * 0.5);
 	    brep_split_edge(*b_it, t);
+	}
+
+	if (((bu_gettime() - timestamp)/1e6) > (double)timeout) {
+	    return ecnt;
 	}
 
 	std::map<cdt_mesh_t *, std::set<uedge_t>>::iterator ot_it;
@@ -476,6 +487,13 @@ ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt, double lthre
 		internal_split_edge(ot_it->first, ue);
 	    }
 	}
+
+	if (((bu_gettime() - timestamp)/1e6) > (double)timeout) {
+	    return ecnt;
+	}
+
+	bu_log("Cycle %d: %d seconds\n", ccnt, (int)((bu_gettime() - timestamp)/1e6));
+	ccnt++;
 
 	ecnt = mesh_ovlps(&otsets, &bsegs, check_pairs, 1, lthresh);
     }

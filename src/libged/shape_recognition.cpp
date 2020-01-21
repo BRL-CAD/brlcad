@@ -1100,7 +1100,7 @@ _ged_breps_to_bots(struct ged *gedp, int obj_cnt, const char **obj_names, const 
     for (size_t i = 0; i < ss_cdt.size(); i++) {
 	s_a[i] = ss_cdt[i];
     }
-    if (ON_Brep_CDT_Ovlp_Resolve(s_a, obj_cnt, ovlp_max_smallest) < 0) {
+    if (ON_Brep_CDT_Ovlp_Resolve(s_a, obj_cnt, ovlp_max_smallest, INT_MAX) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Error: RESOLVE fail.");
 	return GED_ERROR;
     }

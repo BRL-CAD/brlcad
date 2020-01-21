@@ -107,7 +107,7 @@ ON_Brep_CDT_VList(
  * states with other function calls - this function returns only the
  * overall result. */
 extern BREP_EXPORT int
-ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt, double lthreshold);
+ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt, double lthreshold, int timeout);
 
 #if 0
 /* Report the number of other tessellation states which manifest unresolvable

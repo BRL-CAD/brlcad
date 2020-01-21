@@ -2876,7 +2876,8 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
 	s_a[i] = ss_cdt[i];
     }
 
-    if (ON_Brep_CDT_Ovlp_Resolve(s_a, ss_cdt.size(), opts->nonovlp_threshold) < 0) {
+    int resolve_result = ON_Brep_CDT_Ovlp_Resolve(s_a, ss_cdt.size(), opts->nonovlp_threshold, opts->max_time);
+    if (resolve_result < 0) {
 	bu_vls_printf(gedp->ged_result_str, "Error: RESOLVE fail.\n");
 #if 0
 	for (size_t i = 0; i < ss_cdt.size(); i++) {
@@ -2886,6 +2887,12 @@ _nonovlp_brep_facetize(struct ged *gedp, int argc, const char **argv, struct _ge
 	return GED_ERROR;
 #endif
     }
+
+    if (resolve_result > 0) {
+	bu_vls_printf(gedp->ged_result_str, "WARNING: Timeout of %d seconds overlap processing reached, but triangles not fully refined to specified threshold.\nGenerating meshes, but larger overlaps will be present.\n", opts->max_time);
+    }
+
+
     bu_free(s_a, "array of states");
 
     // Make final meshes
@@ -2940,6 +2947,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     int ret = GED_OK;
     static const char *usage = "Usage: facetize [ -nmhT | [--NMG] [--CM] [--SPSR] ] [old_obj1 | new_obj] [old_obj* ...] [old_objN | new_obj]\n";
     static const char *pusage = "Usage: facetize --SPSR [-d #] [-w #] [ray sampling options] old_obj new_obj\n";
+    static const char *busage = "Usage: facetize -B -t # [--max-time #] old_obj new_obj\n";
     int print_help = 0;
     int need_help = 0;
     int nonovlp_brep = 0;
@@ -3054,6 +3062,12 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     need_help += (argc < 1);
     need_help += (argc < 2 && !opts->in_place && !opts->resume && !nonovlp_brep);
     if (print_help || need_help || argc < 1) {
+	if (nonovlp_brep) {
+	    _ged_cmd_help(gedp, busage, d);
+	    ret = (need_help) ? GED_ERROR : GED_OK;
+	    goto ged_facetize_memfree;
+	}
+
 	_ged_cmd_help(gedp, usage, d);
 	if (opts->method_flags & GED_FACETIZE_SPSR) {
 	    _ged_cmd_help(gedp, pusage, pd);
