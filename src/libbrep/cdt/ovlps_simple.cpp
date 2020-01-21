@@ -294,10 +294,14 @@ brep_split_edge(
     if (f_id1 == f_id2) {
 	if ((f1_tris.size() != 2 && f1_tris.size() != 0) || (f2_tris.size() != 2 && f2_tris.size() != 0)) {
 	    std::cout << "Unexpected triangle count for edge\n";
+	    std::cout << "f1_tris: " << f1_tris.size() << "\n";
+	    std::cout << "f2_tris: " << f2_tris.size() << "\n";
 	    return -1;
 	}
-	if ((!f1_tris.size() && !f2_tris.size()) || (f1_tris.size() == 2 && f2_tris.size() == 2)) {
+	if ((!f1_tris.size() && !f2_tris.size())) {
 	    std::cout << "Unexpected triangle count for edge\n";
+	    std::cout << "f1_tris: " << f1_tris.size() << "\n";
+	    std::cout << "f2_tris: " << f2_tris.size() << "\n";
 	    return -1;
 	}
 	if (f1_tris.size()) {
@@ -314,6 +318,8 @@ brep_split_edge(
     } else {
 	if (f1_tris.size() != 1 || f2_tris.size() != 1) {
 	    std::cout << "Unexpected triangle count for edge\n";
+	    std::cout << "f1_tris: " << f1_tris.size() << "\n";
+	    std::cout << "f2_tris: " << f2_tris.size() << "\n";
 	    return -1;
 	}
 	tri1 = fmesh_f1->tris_vect[*f1_tris.begin()];

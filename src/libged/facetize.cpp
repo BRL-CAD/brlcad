@@ -2941,8 +2941,9 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     int print_help = 0;
     int need_help = 0;
     int nonovlp_brep = 0;
+    double nonovlp_threshold = 0;
     struct _ged_facetize_opts *opts = _ged_facetize_opts_create();
-    struct bu_opt_desc d[20];
+    struct bu_opt_desc d[21];
     struct bu_opt_desc pd[4];
 
     BU_OPT(d[0],  "h", "help",          "",  NULL,  &print_help,               "Print help and exit");
@@ -2964,7 +2965,8 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[16], "",  "max-time",      "#", &bu_opt_int,     &(opts->max_time),       "Maximum time to spend per processing step (in seconds).  Default is 30.  Zero means either the default (for routines which could run indefinitely) or run to completion (if there is a theoretical termination point for the algorithm) - be careful of specifying zero because it is quite easy to produce extremely long runs!.");
     BU_OPT(d[17], "",  "max-pnts",      "#", &bu_opt_int,     &(opts->max_pnts),                "Maximum number of pnts to use when applying ray sampling methods.");
     BU_OPT(d[18], "B",  "",             "",  NULL,  &nonovlp_brep,              "EXPERIMENTAL: non-overlapping facetization to BoT objects of union-only brep comb tree.");
-    BU_OPT_NULL(d[19]);
+    BU_OPT(d[19], "t",  "threshold",    "#",  &bu_opt_fastf_t, &nonovlp_threshold,  "EXPERIMENTAL: max ovlp threshold length.");
+    BU_OPT_NULL(d[20]);
 
     /* Poisson specific options */
     BU_OPT(pd[0], "d", "depth",            "#", &bu_opt_int,     &(opts->s_opts.depth),            "Maximum reconstruction depth (default 8)");
@@ -3061,6 +3063,10 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 
     /* If we're doing the experimental brep-only logic, it's a separate process */
     if (nonovlp_brep) {
+	if (NEAR_ZERO(nonovlp_threshold, SMALL_FASTF)) {
+	    bu_vls_printf(gedp->ged_result_str, "-B option requires a specified length threshold\n");
+	    return GED_ERROR;
+	}
 	return _nonovlp_brep_facetize(gedp, argc, argv, opts);
     }
 
