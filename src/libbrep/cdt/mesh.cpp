@@ -311,7 +311,9 @@ triangle_t::shortest_edge()
 std::set<triangle_t>
 triangle_t::split(uedge_t &ue, long split_pnt, bool flip)
 {
-    long A, B, C;
+    long A = -1;
+    long B = -1;
+    long C = -1;
     long E =split_pnt;
     for (int i = 0; i < 3; i++) {
 	long v0 = v[i];
