@@ -2566,7 +2566,7 @@ cdt_mesh_t::self_intersecting_mesh()
 		struct bu_color c = BU_COLOR_INIT_ZERO;
 		bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
 		pl_color_buc(plot_file, &c);
-		plot_uedge(pue, plot_file);
+		plot_edge(pue, plot_file);
 		fclose(plot_file);
 		return true;
 	    }
@@ -3628,17 +3628,6 @@ cdt_mesh_t::valid(int verbose)
     return (nret && eret && tret && topret);
 }
 
-void cdt_mesh_t::plot_uedge(struct uedge_t &ue, FILE* plot_file)
-{
-    ON_3dPoint *p1 = this->pnts[ue.v[0]];
-    ON_3dPoint *p2 = this->pnts[ue.v[1]];
-    point_t bnp1, bnp2;
-    VSET(bnp1, p1->x, p1->y, p1->z);
-    VSET(bnp2, p2->x, p2->y, p2->z);
-    pdv_3move(plot_file, bnp1);
-    pdv_3cont(plot_file, bnp2);
-}
-
 void cdt_mesh_t::boundary_edges_plot(const char *filename)
 {
     FILE* plot_file = fopen(filename, "w");
@@ -3650,14 +3639,14 @@ void cdt_mesh_t::boundary_edges_plot(const char *filename)
     std::set<uedge_t>::iterator b_it;
     for (b_it = bedges.begin(); b_it != bedges.end(); b_it++) {
 	uedge_t ue = *b_it;
-	plot_uedge(ue, plot_file);
+	plot_edge(ue, plot_file);
     }
 
     if (this->problem_edges.size()) {
 	pl_color(plot_file, 255, 0, 0);
 	for (b_it = problem_edges.begin(); b_it != problem_edges.end(); b_it++) {
 	    uedge_t ue = *b_it;
-	    plot_uedge(ue, plot_file);
+	    plot_edge(ue, plot_file);
 	}
     }
 
@@ -3963,6 +3952,91 @@ void cdt_mesh_t::tris_rtree_plot(const char *filename)
 	tree_it.GetBounds(m_min, m_max);
 	BB_PLOT(m_min, m_max);
 	++tree_it;
+    }
+    fclose(plot_file);
+}
+
+void cdt_mesh_t::plot_edge(const uedge_t &ue, FILE *plot)
+{
+    point_t p1 = VINIT_ZERO;
+    point_t p2 = VINIT_ZERO;
+    ON_3dPoint *p3d1 = pnts[ue.v[0]];
+    ON_3dPoint *p3d2 = pnts[ue.v[1]];
+    VSET(p1, p3d1->x, p3d1->y, p3d1->z);
+    VSET(p2, p3d2->x, p3d2->y, p3d2->z);
+    pdv_3move(plot, p1);
+    pdv_3cont(plot, p2);
+}
+
+void cdt_mesh_t::plot_edge(const bedge_seg_t *s, FILE *plot)
+{
+    point_t p1 = VINIT_ZERO;
+    point_t p2 = VINIT_ZERO;
+    ON_3dPoint *p3d1 = s->e_start;
+    ON_3dPoint *p3d2 = s->e_end;
+    VSET(p1, p3d1->x, p3d1->y, p3d1->z);
+    VSET(p2, p3d2->x, p3d2->y, p3d2->z);
+    pdv_3move(plot, p1);
+    pdv_3cont(plot, p2);
+}
+
+void cdt_mesh_t::edge_set_plot(std::set<uedge_t> &eset, const char *filename)
+{
+    FILE* plot_file = fopen(filename, "w");
+
+    struct bu_color c = BU_COLOR_INIT_ZERO;
+    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
+    pl_color_buc(plot_file, &c);
+
+    std::set<uedge_t>::iterator e_it;
+
+    for (e_it = eset.begin(); e_it != eset.end(); e_it++) {
+	plot_edge(*e_it, plot_file);
+    }
+    fclose(plot_file);
+}
+
+void cdt_mesh_t::edge_set_plot(std::set<uedge_t> &eset, const char *filename, int r, int g, int b)
+{
+    FILE* plot_file = fopen(filename, "w");
+
+    pl_color(plot_file, r, g, b);
+
+    std::set<uedge_t>::iterator e_it;
+
+    for (e_it = eset.begin(); e_it != eset.end(); e_it++) {
+	plot_edge(*e_it, plot_file);
+    }
+    fclose(plot_file);
+}
+
+
+void cdt_mesh_t::edge_set_plot(std::set<bedge_seg_t *> &eset, const char *filename)
+{
+    FILE* plot_file = fopen(filename, "w");
+
+    struct bu_color c = BU_COLOR_INIT_ZERO;
+    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
+    pl_color_buc(plot_file, &c);
+
+    std::set<bedge_seg_t *>::iterator e_it;
+
+    for (e_it = eset.begin(); e_it != eset.end(); e_it++) {
+	plot_edge(*e_it, plot_file);
+    }
+    fclose(plot_file);
+}
+
+void cdt_mesh_t::edge_set_plot(std::set<bedge_seg_t *> &eset, const char *filename, int r, int g, int b)
+{
+    FILE* plot_file = fopen(filename, "w");
+
+    pl_color(plot_file, r, g, b);
+
+    std::set<bedge_seg_t *>::iterator e_it;
+
+    for (e_it = eset.begin(); e_it != eset.end(); e_it++) {
+	plot_edge(*e_it, plot_file);
     }
     fclose(plot_file);
 }

@@ -697,6 +697,12 @@ public:
     void plot_tri(const triangle_t &t, struct bu_color *buc, FILE *plot, int r, int g, int b);
     void tris_rtree_plot(const char *fname);
 
+    void edge_set_plot(std::set<uedge_t> &eset, const char *filename);
+    void edge_set_plot(std::set<bedge_seg_t *> &eset, const char *filename);
+
+    void edge_set_plot(std::set<uedge_t> &eset, const char *filename, int r, int g, int b);
+    void edge_set_plot(std::set<bedge_seg_t *> &eset, const char *filename, int r, int g, int b);
+
     double tri_pnt_r(long tri_ind);
 
     void tris_vect_plot_2d(std::vector<triangle_t> &tset, const char *filename);
@@ -770,7 +776,7 @@ private:
     std::set<uedge_t> problem_edges;
     edge_t find_boundary_oriented_edge(uedge_t &ue);
 
-    
+
     bool bounding_box_stale;
 
     // Submesh building
@@ -782,7 +788,9 @@ private:
     double max_angle_delta(triangle_t &seed, std::vector<triangle_t> &s_tris);
 
     // Plotting utility functions
-    void plot_uedge(struct uedge_t &ue, FILE* plot_file);
+    void plot_edge(const uedge_t &ue, FILE* plot);
+    void plot_edge(const bedge_seg_t *s, FILE* plot);
+ 
     void plot_tri_2d(const triangle_t &t, struct bu_color *buc, FILE *plot);
     void polyplot_2d(cpolygon_t *polygon, FILE* plot_file);
 
