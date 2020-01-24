@@ -140,6 +140,7 @@ mesh_ovlps(
 	std::set<bedge_seg_t *> *bsegs,
 	std::set<std::pair<cdt_mesh_t *, cdt_mesh_t *>> check_pairs, int mode, double lthresh)
 {
+    std::map<cdt_mesh_t *, std::set<uedge_t>>::iterator ie_it;
     std::map<cdt_mesh_t *, std::set<uedge_t>> iedges_init;
     std::map<cdt_mesh_t *, std::set<uedge_t>> iedges_skip;
     iedges->clear();
@@ -160,11 +161,23 @@ mesh_ovlps(
 	cdt_mesh_t *fmesh2 = cp_it->second;
 	struct ON_Brep_CDT_State *s_cdt1 = (struct ON_Brep_CDT_State *)fmesh1->p_cdt;
 	struct ON_Brep_CDT_State *s_cdt2 = (struct ON_Brep_CDT_State *)fmesh2->p_cdt;
+	//fmesh1->tris_rtree_plot("tree1.plot3");
+	//fmesh2->tris_rtree_plot("tree2.plot3");
 	if (s_cdt1 != s_cdt2) {
 	    std::set<std::pair<size_t, size_t>> tris_prelim;
 	    size_t ovlp_cnt = fmesh1->tris_tree.Overlaps(fmesh2->tris_tree, &tris_prelim);
 	    if (ovlp_cnt) {
 		std::set<std::pair<size_t, size_t>>::iterator tb_it;
+#if 0
+		std::set<size_t> tris_p1, tris_p2;
+		for (tb_it = tris_prelim.begin(); tb_it != tris_prelim.end(); tb_it++) {
+		    tris_p1.insert(tb_it->first);
+		    tris_p2.insert(tb_it->second);
+		}
+		fmesh1->tris_set_plot(tris_p1,"tp1.plot3");
+		fmesh2->tris_set_plot(tris_p2,"tp2.plot3");
+		std::set<size_t> tris_i1, tris_i2;
+#endif
 		for (tb_it = tris_prelim.begin(); tb_it != tris_prelim.end(); tb_it++) {
 		    triangle_t t1 = fmesh1->tris_vect[tb_it->first];
 		    triangle_t t2 = fmesh2->tris_vect[tb_it->second];
@@ -172,9 +185,13 @@ mesh_ovlps(
 		    if (isect) {
 			itris[t1.m].insert(t1.ind);
 			itris[t2.m].insert(t2.ind);
+			//tris_i1.insert(t1.ind);
+			//tris_i2.insert(t2.ind);
 			tri_isects++;
 		    }
 		}
+		//fmesh1->tris_set_plot(tris_i1,"ti1.plot3");
+		//fmesh2->tris_set_plot(tris_i2,"ti2.plot3");
 	    }
 	}
     }
@@ -189,9 +206,22 @@ mesh_ovlps(
 	}
     }
 
+#if 0
+    for (ie_it = iedges_init.begin(); ie_it != iedges_init.end(); ie_it++) {
+	cdt_mesh_t *fmesh = ie_it->first;
+	std::string pname = std::string(fmesh->name) + std::string("_long_") + std::to_string(fmesh->f_id) + std::string(".plot3");
+	fmesh->edge_set_plot(ie_it->second, pname.c_str(), 160, 160, 160);
+    }
+    for (ie_it = iedges_skip.begin(); ie_it != iedges_skip.end(); ie_it++) {
+	cdt_mesh_t *fmesh = ie_it->first;
+	std::string pname = std::string(fmesh->name) + std::string("_short_") + std::to_string(fmesh->f_id) + std::string(".plot3");
+	fmesh->edge_set_plot(ie_it->second, pname.c_str(), 255, 0, 0);
+    }
+#endif
+
+
     // Build up the final edge sets
     int ecnt = 0;
-    std::map<cdt_mesh_t *, std::set<uedge_t>>::iterator ie_it;
     for (ie_it = iedges_init.begin(); ie_it != iedges_init.end(); ie_it++) {
 	cdt_mesh_t *fmesh = ie_it->first;
 	std::set<uedge_t>::iterator u_it;
@@ -207,6 +237,8 @@ mesh_ovlps(
 	    }
 	}
     }
+
+    //iedges_init.begin()->first->edge_set_plot(*bsegs, "bsegs.plot3");
 
     return ecnt;
 }
