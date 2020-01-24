@@ -159,7 +159,7 @@ is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
 testing first for a system version if BRLCAD_BUNDLED_LIBS is also
 AUTO.
 ")
-THIRD_PARTY(lz4 LZ4 lz4 lz4_DESCRIPTION ALIASES ENABLE_LZ4)
+THIRD_PARTY(lz4 LZ4 lz4 lz4_DESCRIPTION ALIASES ENABLE_LZ4 FLAGS NOSYS)
 if(BRLCAD_LZ4_BUILD)
   set(LIBLZ4_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/lz4" CACHE STRING "Directory containing lz4 headers." FORCE)
   mark_as_advanced(LIBLZ4_INCLUDE_DIR)
