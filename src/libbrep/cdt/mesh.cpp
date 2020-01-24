@@ -3876,7 +3876,7 @@ void cdt_mesh_t::tris_set_plot(std::set<triangle_t> &tset, const char *filename)
     fclose(plot_file);
 }
 
-void cdt_mesh_t::tris_ind_set_plot(std::set<size_t> &tset, const char *filename)
+void cdt_mesh_t::tris_set_plot(std::set<size_t> &tset, const char *filename)
 {
     std::vector<triangle_t> ts_vect;
 
@@ -3910,6 +3910,63 @@ void cdt_mesh_t::tris_plot(const char *filename)
     }
     fclose(plot_file);
 }
+
+#define BB_PLOT_2D(min, max) {         \
+        fastf_t pt[4][3];                  \
+        VSET(pt[0], max[X], min[Y], 0);    \
+        VSET(pt[1], max[X], max[Y], 0);    \
+        VSET(pt[2], min[X], max[Y], 0);    \
+        VSET(pt[3], min[X], min[Y], 0);    \
+        pdv_3move(plot_file, pt[0]); \
+        pdv_3cont(plot_file, pt[1]); \
+        pdv_3cont(plot_file, pt[2]); \
+        pdv_3cont(plot_file, pt[3]); \
+        pdv_3cont(plot_file, pt[0]); \
+}
+
+#define TREE_LEAF_FACE_3D(valp, a, b, c, d)  \
+        pdv_3move(plot_file, pt[a]); \
+    pdv_3cont(plot_file, pt[b]); \
+    pdv_3cont(plot_file, pt[c]); \
+    pdv_3cont(plot_file, pt[d]); \
+    pdv_3cont(plot_file, pt[a]); \
+
+#define BB_PLOT(min, max) {                 \
+        fastf_t pt[8][3];                       \
+        VSET(pt[0], max[X], min[Y], min[Z]);    \
+        VSET(pt[1], max[X], max[Y], min[Z]);    \
+        VSET(pt[2], max[X], max[Y], max[Z]);    \
+        VSET(pt[3], max[X], min[Y], max[Z]);    \
+        VSET(pt[4], min[X], min[Y], min[Z]);    \
+        VSET(pt[5], min[X], max[Y], min[Z]);    \
+        VSET(pt[6], min[X], max[Y], max[Z]);    \
+        VSET(pt[7], min[X], min[Y], max[Z]);    \
+        TREE_LEAF_FACE_3D(pt, 0, 1, 2, 3);      \
+        TREE_LEAF_FACE_3D(pt, 4, 0, 3, 7);      \
+        TREE_LEAF_FACE_3D(pt, 5, 4, 7, 6);      \
+        TREE_LEAF_FACE_3D(pt, 1, 5, 6, 2);      \
+}
+
+void cdt_mesh_t::tris_rtree_plot(const char *filename)
+{
+    FILE* plot_file = fopen(filename, "w");
+
+    struct bu_color c = BU_COLOR_INIT_ZERO;
+    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
+    pl_color_buc(plot_file, &c);
+
+    RTree<size_t, double, 3>::Iterator tree_it;
+    tris_tree.GetFirst(tree_it);
+    while (!tree_it.IsNull()) {
+	double m_min[3];
+	double m_max[3];
+	tree_it.GetBounds(m_min, m_max);
+	BB_PLOT(m_min, m_max);
+	++tree_it;
+    }
+    fclose(plot_file);
+}
+
 
 void cdt_mesh_t::plot_tri_2d(const triangle_t &t, struct bu_color *buc, FILE *plot)
 {
