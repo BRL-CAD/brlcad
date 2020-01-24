@@ -390,7 +390,6 @@ on_point_inside_fast(struct ON_Brep_CDT_State *s_cdt, ON_3dPoint *p)
     point_t tp;
     VSET(tp, p->x, p->y, p->z);
 
-    ON_3dPoint on_p(*p);
     ON_BoundingBox bbb = s_cdt->brep->BoundingBox();
     ON_BoundingBox pbb(*p, *p);
     pbb.m_min.z = bbb.m_min.z;
