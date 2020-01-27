@@ -416,6 +416,30 @@ _ged_invalid_prim_check(struct _ged_invalid_data *idata, struct ged *gedp, struc
 		} else {
 		    obj.error = std::string("failed OpenNURBS validity test");
 		}
+	    } else {
+		struct rt_brep_internal *bi = (struct rt_brep_internal *)intern.idb_ptr;
+		ON_Brep *brep = bi->brep;
+		for (int i = 0; i < brep->m_T.Count(); i++) {
+		    if (brep->TrimType(brep->m_T[i], true) == ON_BrepTrim::boundary) {
+			bu_vls_printf(&vlog, "%s: trim %d: boundary\n", dp->d_namep, i);
+			not_valid = 1;
+		    }
+		}
+		for (int i = 0; i < brep->m_E.Count(); i++) {
+		    if (brep->m_E[i].TrimCount() == 1) {
+			bu_vls_printf(&vlog, "%s: edge %d: one trim\n", dp->d_namep, i);
+			not_valid = 1;
+		    }
+		}
+		if (not_valid) {
+		    obj.name = std::string(dp->d_namep);
+		    obj.type= std::string("brep");
+		    if (idata->o->verbosity) {
+			obj.error = std::string("plate mode NURBS object?\n") + std::string(bu_vls_addr(&vlog));
+		    } else {
+			obj.error = std::string("plate mode NURBS object?");
+		    }
+		}
 	    }
 	    break;
 	case DB5_MINORTYPE_BRLCAD_ARB8:
