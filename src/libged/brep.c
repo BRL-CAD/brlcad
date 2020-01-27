@@ -217,7 +217,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "\tplot           - plot entire BREP\n");
 	bu_vls_printf(gedp->ged_result_str, "\tplot S [index] - plot specific BREP 'surface'\n");
 	bu_vls_printf(gedp->ged_result_str, "\tplot F [index] - plot specific BREP 'face'\n");
-	bu_vls_printf(gedp->ged_result_str, "\tplate_mode_thickness #  - if brep is plate mode, set its thickness in current db units\n");
+	bu_vls_printf(gedp->ged_result_str, "\tplate_mode #/cos/nocos  - if brep is plate mode, set its thickness in current db units or toggle cos/nocos mode\n");
 	bu_vls_printf(gedp->ged_result_str, "\tcsg            - convert BREP to implicit primitive CSG tree\n");
 	bu_vls_printf(gedp->ged_result_str, "\tflip           - flip all faces on BREP\n");
 	bu_vls_printf(gedp->ged_result_str, "\ttikz [file]    - generate a Tikz LaTeX version of the B-Rep edges\n");
@@ -315,7 +315,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	return GED_OK;
     }
 
-    if (BU_STR_EQUAL(argv[2], "plate_mode_thickness")) {
+    if (BU_STR_EQUAL(argv[2], "plate_mode")) {
 	if (!rt_brep_valid(NULL, &intern, 0)) {
 	    bu_vls_printf(gedp->ged_result_str, "%s is not a valid B-Rep - aborting\n", ndp->d_namep);
 	    return GED_ERROR;
@@ -329,7 +329,11 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	/* we need 3 or 4 arguments */
 	if (argc == 3) {
 	    double thickness = gedp->ged_wdbp->dbip->dbi_base2local * bi->plate_mode_thickness;
-	    bu_vls_printf(gedp->ged_result_str, "%f", thickness);
+	    if (bi->plate_mode_nocos) {
+		bu_vls_printf(gedp->ged_result_str, "%f (NOCOS)", thickness);
+	    } else {
+		bu_vls_printf(gedp->ged_result_str, "%f (COS)", thickness);
+	    }
 	    return GED_OK;
 	} else if (argc == 4) {
 	    return _ged_brep_plate_mode_thickness(gedp, ndp, bi, argv[3]);

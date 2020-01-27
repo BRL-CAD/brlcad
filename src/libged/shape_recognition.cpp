@@ -1016,6 +1016,30 @@ _ged_brep_plate_mode_thickness(struct ged *gedp, struct directory *dp, struct rt
 	return GED_ERROR;
     };
 
+    if (BU_STR_EQUIV(val, "cos")) {
+	(void)bu_avs_add(&avs, "_plate_mode_nocos", "0");
+	bi->plate_mode_nocos = 0;
+	if (db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
+	    bu_vls_printf(gedp->ged_result_str, "Error setting plate mode value\n");
+	    return GED_ERROR;
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "%s", val);
+	}
+	return GED_OK;
+    }
+
+    if (BU_STR_EQUIV(val, "nocos")) {
+	(void)bu_avs_add(&avs, "_plate_mode_nocos", "1");
+	bi->plate_mode_nocos = 1;
+	if (db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
+	    bu_vls_printf(gedp->ged_result_str, "Error setting plate mode value\n");
+	    return GED_ERROR;
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "%s", val);
+	}
+	return GED_OK;
+    }
+
     // Unpack the string
     double pthickness;
     char *endptr = NULL;
@@ -1024,7 +1048,7 @@ _ged_brep_plate_mode_thickness(struct ged *gedp, struct directory *dp, struct rt
     if ((endptr != NULL && strlen(endptr) > 0) || (errno == ERANGE)) {
 	pthickness = 0;
     }
-    
+
     // Apply units to the value and update rt_brep_internal
     double pthicknessmm = local2base * pthickness;
     bi->plate_mode_thickness = pthicknessmm;
@@ -1038,7 +1062,7 @@ _ged_brep_plate_mode_thickness(struct ged *gedp, struct directory *dp, struct rt
     	bu_vls_printf(gedp->ged_result_str, "Error setting plate mode value\n");
 	return GED_ERROR;
     } else {
-    	bu_vls_printf(gedp->ged_result_str, "%s\n", val);
+    	bu_vls_printf(gedp->ged_result_str, "%s", val);
     }
     return GED_OK;
 }

@@ -509,6 +509,7 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
 	bs->brep = bi->brep;
 	bs->plate_mode = bi->plate_mode;
 	bs->plate_mode_thickness = bi->plate_mode_thickness;
+	bs->plate_mode_nocos = bi->plate_mode_nocos;
 	bi->brep = NULL;
 	stp->st_specific = (void *)bs;
     }
@@ -1309,14 +1310,14 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	if (nhits > 0) {
 	    /* PLATE MODE case */
 
-	    double los = bs->plate_mode_thickness;
-	    if (los < 0)
-		los = -los;
-
 	    /* iterate over all hit points assuming a plate-mode shell */
 	    for (std::list<brep_hit>::const_iterator i = hits.begin(); i != hits.end(); ++i) {
 		const brep_hit& in = *i;
 		const brep_hit& out = *i;
+		double los = (bs->plate_mode_thickness < 0) ? -bs->plate_mode_thickness : bs->plate_mode_thickness;
+		if (!bs->plate_mode_nocos) {
+		    los = los / fabs(VDOT(in.normal, rp->r_dir));
+		}
 
 		struct seg* segp;
 		RT_GET_SEG(segp, ap->a_resource);
@@ -2309,6 +2310,7 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
 
     // See if we're valid and have unmated edges - if so, object is plate mode 
     bi->plate_mode = 0;
+    bi->plate_mode_nocos = 0;
     bi->plate_mode_thickness = 0;
     if (bi->brep->IsValid(&dump)) {
 	for (int i = 0; i < bi->brep->m_E.Count(); i++) {
@@ -2333,6 +2335,12 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
 	    }
 	    bi->plate_mode_thickness = pthickness;
 	    //bu_log("plate mode thickness: %f\n", pthickness);
+	}
+	const char *pcos = bu_avs_get(&ip->idb_avs, "_plate_mode_nocos");
+	if (BU_STR_EQUAL(pcos, "1")) {
+	    bi->plate_mode_nocos = 1;
+	} else {
+	    bi->plate_mode_nocos = 0;
 	}
     }
 
@@ -2766,6 +2774,7 @@ rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, stru
 	std::swap(specific->brep, static_cast<rt_brep_internal *>(ip->idb_ptr)->brep);
 	specific->plate_mode = ((struct rt_brep_internal *)(ip->idb_ptr))->plate_mode;
 	specific->plate_mode_thickness = ((struct rt_brep_internal *)(ip->idb_ptr))->plate_mode_thickness;
+	specific->plate_mode_nocos = ((struct rt_brep_internal *)(ip->idb_ptr))->plate_mode_nocos;
 	specific->bvh = new BBNode(specific->brep->BoundingBox());
 	specific->is_solid = specific->brep->IsSolid(); // recompute solidity
 
