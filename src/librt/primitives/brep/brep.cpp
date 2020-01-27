@@ -507,6 +507,7 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
     if ((bs = (struct brep_specific*)stp->st_specific) == NULL) {
 	bs = brep_specific_new();
 	bs->brep = bi->brep;
+	bs->plate_mode = bi->plate_mode;
 	bi->brep = NULL;
 	stp->st_specific = (void *)bs;
     }
@@ -1298,147 +1299,148 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	}
     }
 
-#ifdef PLATE_MODE_NURBS
+    if (bs->plate_mode) {
 
-    /* Newer plate mode enabled version of logic, causing problems with NIST3 (see regress/nurbs
-     * test */
+	/* Newer plate mode enabled version of logic, causing problems with NIST3 (see regress/nurbs
+	 * test */
 
-    size_t nhits = hits.size();
-    if (nhits > 0) {
+	size_t nhits = hits.size();
+	if (nhits > 0) {
 
-	bool hit_it = hits.size() % 2 == 0;
+	    bool hit_it = hits.size() % 2 == 0;
 
-	if (hit_it && bs->is_solid) {
-	    // take each pair as a segment
-	    for (std::list<brep_hit>::const_iterator i = hits.begin(); i != hits.end(); ++i) {
-		const brep_hit& in = *i;
-		i++;
-		const brep_hit& out = *i;
+	    if (hit_it && bs->is_solid) {
+		// take each pair as a segment
+		for (std::list<brep_hit>::const_iterator i = hits.begin(); i != hits.end(); ++i) {
+		    const brep_hit& in = *i;
+		    i++;
+		    const brep_hit& out = *i;
 
-		struct seg* segp;
-		RT_GET_SEG(segp, ap->a_resource);
-		segp->seg_stp = stp;
+		    struct seg* segp;
+		    RT_GET_SEG(segp, ap->a_resource);
+		    segp->seg_stp = stp;
 
-		VMOVE(segp->seg_in.hit_point, in.point);
-		VMOVE(segp->seg_in.hit_normal, in.normal);
-		segp->seg_in.hit_dist = in.dist;
+		    VMOVE(segp->seg_in.hit_point, in.point);
+		    VMOVE(segp->seg_in.hit_normal, in.normal);
+		    segp->seg_in.hit_dist = in.dist;
 
-		segp->seg_in.hit_surfno = in.face.m_face_index;
-		VSET(segp->seg_in.hit_vpriv, in.uv[0], in.uv[1], 0.0);
+		    segp->seg_in.hit_surfno = in.face.m_face_index;
+		    VSET(segp->seg_in.hit_vpriv, in.uv[0], in.uv[1], 0.0);
 
-		VMOVE(segp->seg_out.hit_point, out.point);
-		VMOVE(segp->seg_out.hit_normal, out.normal);
-		segp->seg_out.hit_dist = out.dist;
-		segp->seg_out.hit_surfno = out.face.m_face_index;
-		VSET(segp->seg_out.hit_vpriv, out.uv[0], out.uv[1], 0.0);
+		    VMOVE(segp->seg_out.hit_point, out.point);
+		    VMOVE(segp->seg_out.hit_normal, out.normal);
+		    segp->seg_out.hit_dist = out.dist;
+		    segp->seg_out.hit_surfno = out.face.m_face_index;
+		    VSET(segp->seg_out.hit_vpriv, out.uv[0], out.uv[1], 0.0);
 
-		BU_LIST_INSERT(&(seghead->l), &(segp->l));
-	    }
-	    nhits /= 2;
+		    BU_LIST_INSERT(&(seghead->l), &(segp->l));
+		}
+		nhits /= 2;
 
-	} else {
+	    } else {
 
-	    /* NON-SOLID CASE */
+		/* NON-SOLID CASE */
 
-	    double los = bs->brep->m_brep_user.d; // FIXME: currently packing a single global thickness
-	    if (los < 0)
-		los = -los;
+		double los = bs->brep->m_brep_user.d; // FIXME: currently packing a single global thickness
+		if (los < 0)
+		    los = -los;
 
-	    /* iterate over all hit points assuming a plate-mode shell */
-	    for (std::list<brep_hit>::const_iterator i = hits.begin(); i != hits.end(); ++i) {
-		const brep_hit& in = *i;
-		const brep_hit& out = *i;
+		/* iterate over all hit points assuming a plate-mode shell */
+		for (std::list<brep_hit>::const_iterator i = hits.begin(); i != hits.end(); ++i) {
+		    const brep_hit& in = *i;
+		    const brep_hit& out = *i;
 
-		struct seg* segp;
-		RT_GET_SEG(segp, ap->a_resource);
-		segp->seg_stp = stp;
+		    struct seg* segp;
+		    RT_GET_SEG(segp, ap->a_resource);
+		    segp->seg_stp = stp;
 
-		/* set in hit */
-		segp->seg_in.hit_dist = in.dist - (los*0.5); // segment
-							     // is
-							     // centered
-							     // on the
-							     // hit
-							     // point
-		segp->seg_in.hit_surfno = in.face.m_face_index;
-		VSET(segp->seg_in.hit_vpriv, in.uv[0], in.uv[1], 0.0);
-		VMOVE(segp->seg_in.hit_normal, in.normal);
-		VJOIN1(segp->seg_in.hit_point, rp->r_pt, in.dist, rp->r_dir);
+		    /* set in hit */
+		    segp->seg_in.hit_dist = in.dist - (los*0.5); // segment
+		    // is
+		    // centered
+		    // on the
+		    // hit
+		    // point
+		    segp->seg_in.hit_surfno = in.face.m_face_index;
+		    VSET(segp->seg_in.hit_vpriv, in.uv[0], in.uv[1], 0.0);
+		    VMOVE(segp->seg_in.hit_normal, in.normal);
+		    VJOIN1(segp->seg_in.hit_point, rp->r_pt, in.dist, rp->r_dir);
 
-		VMOVE(segp->seg_out.hit_point, out.point);
-		VMOVE(segp->seg_out.hit_normal, out.normal);
-		segp->seg_out.hit_dist = out.dist;
+		    VMOVE(segp->seg_out.hit_point, out.point);
+		    VMOVE(segp->seg_out.hit_normal, out.normal);
+		    segp->seg_out.hit_dist = out.dist;
 
-		/* set out hit */
-		segp->seg_out.hit_dist = out.dist + (los*0.5); // centered
-                segp->seg_out.hit_surfno = out.face.m_face_index;
-                VSET(segp->seg_out.hit_vpriv, out.uv[0], out.uv[1], 0.0);
-		VREVERSE(segp->seg_out.hit_normal, out.normal);
-		VJOIN1(segp->seg_out.hit_point, rp->r_pt, out.dist, rp->r_dir);
+		    /* set out hit */
+		    segp->seg_out.hit_dist = out.dist + (los*0.5); // centered
+		    segp->seg_out.hit_surfno = out.face.m_face_index;
+		    VSET(segp->seg_out.hit_vpriv, out.uv[0], out.uv[1], 0.0);
+		    VREVERSE(segp->seg_out.hit_normal, out.normal);
+		    VJOIN1(segp->seg_out.hit_point, rp->r_pt, out.dist, rp->r_dir);
 
-                BU_LIST_INSERT(&(seghead->l), &(segp->l));
-	    }
+		    BU_LIST_INSERT(&(seghead->l), &(segp->l));
+		}
 
 #ifdef RT_DEBUG_HITS
-	    //TRACE2("screen xy: " << ap->a_x << ", " << ap->a_y);
-	    bu_log("**** ERROR odd number of hits: %lu\n", static_cast<unsigned long>(hits.size()));
-	    bu_log("xyz %g %g %g \n", rp->r_pt[0], rp->r_pt[1], rp->r_pt[2]);
-	    bu_log("dir %g %g %g \n", rp->r_dir[0], rp->r_dir[1], rp->r_dir[2]);
-	    bu_log("**** Current Hits: %lu\n", static_cast<unsigned long>(hits.size()));
+		//TRACE2("screen xy: " << ap->a_x << ", " << ap->a_y);
+		bu_log("**** ERROR odd number of hits: %lu\n", static_cast<unsigned long>(hits.size()));
+		bu_log("xyz %g %g %g \n", rp->r_pt[0], rp->r_pt[1], rp->r_pt[2]);
+		bu_log("dir %g %g %g \n", rp->r_dir[0], rp->r_dir[1], rp->r_dir[2]);
+		bu_log("**** Current Hits: %lu\n", static_cast<unsigned long>(hits.size()));
 
-	    log_hits(hits, debug_output);
+		log_hits(hits, debug_output);
 
-	    bu_log("\n**** Orig Hits: %lu\n", static_cast<unsigned long>(orig.size()));
+		bu_log("\n**** Orig Hits: %lu\n", static_cast<unsigned long>(orig.size()));
 
-	    log_hits(orig, debug_output);
+		log_hits(orig, debug_output);
 
-	    bu_log("\n**********************\n");
+		bu_log("\n**********************\n");
 #endif
-	}
-    }
-
-    return nhits;
-
-#else
-
-    /* Older (pre-plate-mode) code */
-
-    bool hit = false;
-    if (hits.size() > 1) {
-
-	bool hit_it = hits.size() % 2 == 0;
-	if (hit_it) {
-	    // take each pair as a segment
-	    for (std::list<brep_hit>::const_iterator i = hits.begin(); i != hits.end(); ++i) {
-		const brep_hit& in = *i;
-		const brep_hit& out = *i;
-
-		struct seg* segp;
-		RT_GET_SEG(segp, ap->a_resource);
-		segp->seg_stp = stp;
-
-		VMOVE(segp->seg_in.hit_point, in.point);
-		VMOVE(segp->seg_in.hit_normal, in.normal);
-		segp->seg_in.hit_dist = in.dist;
-		segp->seg_in.hit_surfno = in.face.m_face_index;
-		VSET(segp->seg_in.hit_vpriv, in.uv[0], in.uv[1], 0.0);
-
-		VMOVE(segp->seg_out.hit_point, out.point);
-		VMOVE(segp->seg_out.hit_normal, out.normal);
-		segp->seg_out.hit_dist = out.dist;
-		segp->seg_out.hit_surfno = out.face.m_face_index;
-		VSET(segp->seg_out.hit_vpriv, out.uv[0], out.uv[1], 0.0);
-
-		BU_LIST_INSERT(&(seghead->l), &(segp->l));
 	    }
-	    hit = true;
 	}
+
+	return nhits;
+
+    } else {
+
+	/* Older (pre-plate-mode) code */
+
+	bool hit = false;
+	if (hits.size() > 1) {
+
+	    bool hit_it = hits.size() % 2 == 0;
+	    if (hit_it) {
+		// take each pair as a segment
+		for (std::list<brep_hit>::const_iterator i = hits.begin(); i != hits.end(); ++i) {
+		    const brep_hit& in = *i;
+		    const brep_hit& out = *i;
+
+		    struct seg* segp;
+		    RT_GET_SEG(segp, ap->a_resource);
+		    segp->seg_stp = stp;
+
+		    VMOVE(segp->seg_in.hit_point, in.point);
+		    VMOVE(segp->seg_in.hit_normal, in.normal);
+		    segp->seg_in.hit_dist = in.dist;
+		    segp->seg_in.hit_surfno = in.face.m_face_index;
+		    VSET(segp->seg_in.hit_vpriv, in.uv[0], in.uv[1], 0.0);
+
+		    VMOVE(segp->seg_out.hit_point, out.point);
+		    VMOVE(segp->seg_out.hit_normal, out.normal);
+		    segp->seg_out.hit_dist = out.dist;
+		    segp->seg_out.hit_surfno = out.face.m_face_index;
+		    VSET(segp->seg_out.hit_vpriv, out.uv[0], out.uv[1], 0.0);
+
+		    BU_LIST_INSERT(&(seghead->l), &(segp->l));
+		}
+		hit = true;
+	    }
+	}
+
+	return (hit) ? (int)hits.size() : 0; // MISS
     }
 
-    return (hit) ? (int)hits.size() : 0; // MISS
-#endif
+    return 0;
 }
-
 
 /**
  * Given ONE ray distance, return the normal and entry/exit point.
@@ -2339,6 +2341,19 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
 	    bi->brep->Transform(xform);
 	}
     }
+
+    // See if we're valid and have unmated edges - if so, object is plate mode 
+    bi->plate_mode = 0;
+    if (bi->brep->IsValid(&dump)) {
+	for (int i = 0; i < bi->brep->m_E.Count(); i++) {
+	    if (bi->brep->m_E[i].TrimCount() == 1 && bi->brep->TrimType(*bi->brep->m_E[i].Trim(0), true) == ON_BrepTrim::boundary) {
+		//bu_log("edge %d: one boundary trim\n", i);
+		bi->plate_mode = 1;
+		break;
+	    }
+	}
+    }
+
     /*
       if ((ip->idb_avs.magic == BU_AVS_MAGIC) && bu_avs_get(&ip->idb_avs, "plate_mode") != NULL) {
       bu_log("plate mode brep\n");
@@ -2775,6 +2790,7 @@ rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, stru
 	brep_specific * const specific = brep_specific_new();
 	stp->st_specific = specific;
 	std::swap(specific->brep, static_cast<rt_brep_internal *>(ip->idb_ptr)->brep);
+	specific->plate_mode = ((struct rt_brep_internal *)(ip->idb_ptr))->plate_mode;
 	specific->bvh = new BBNode(specific->brep->BoundingBox());
 	specific->is_solid = specific->brep->IsSolid(); // recompute solidity
 
