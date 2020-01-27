@@ -1323,13 +1323,13 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 		segp->seg_stp = stp;
 
 		/* set in hit */
-
-		// segment is centered on the hit point
 		segp->seg_in.hit_dist = in.dist - (los*0.5);
+		// segment is centered on the hit point
 		segp->seg_in.hit_surfno = in.face.m_face_index;
 		VSET(segp->seg_in.hit_vpriv, in.uv[0], in.uv[1], 0.0);
 		VMOVE(segp->seg_in.hit_normal, in.normal);
-		VJOIN1(segp->seg_in.hit_point, rp->r_pt, in.dist, rp->r_dir);
+		VJOIN1(segp->seg_in.hit_point, rp->r_pt, segp->seg_in.hit_dist, rp->r_dir);
+		segp->seg_in.hit_rayp = &ap->a_ray;
 
 		VMOVE(segp->seg_out.hit_point, out.point);
 		VMOVE(segp->seg_out.hit_normal, out.normal);
@@ -1340,7 +1340,8 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 		segp->seg_out.hit_surfno = out.face.m_face_index;
 		VSET(segp->seg_out.hit_vpriv, out.uv[0], out.uv[1], 0.0);
 		VREVERSE(segp->seg_out.hit_normal, out.normal);
-		VJOIN1(segp->seg_out.hit_point, rp->r_pt, out.dist, rp->r_dir);
+		segp->seg_out.hit_rayp = &ap->a_ray;
+		VJOIN1(segp->seg_out.hit_point, rp->r_pt, segp->seg_out.hit_dist, rp->r_dir);
 
 		BU_LIST_INSERT(&(seghead->l), &(segp->l));
 	    }
@@ -1361,6 +1362,7 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	    bu_log("\n**********************\n");
 #endif
 	}
+
 	return nhits;
 
     } else {
