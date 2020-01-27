@@ -1,13 +1,16 @@
 #include "common.h"
 
-#include <map>
-#include <set>
-#include <queue>
-#include <list>
-#include <vector>
-#include <iostream>
-#include <fstream>
 #include <algorithm>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <list>
+#include <map>
+#include <queue>
+#include <set>
+#include <sstream>
+#include <string>
+#include <vector>
 
 #include "vmath.h"
 #include "bu/avs.h"
@@ -997,6 +1000,50 @@ _ged_brep_shrink_surfaces(struct ged *gedp, struct rt_brep_internal *bi, const c
     }
     return GED_OK;
 }
+
+// TODO - this doesn't belong here, just convenient for now since we need to crack the ON_Brep for this
+extern "C" int
+_ged_brep_plate_mode_thickness(struct ged *gedp, struct directory *dp, struct rt_brep_internal *bi, const char *val)
+{
+    struct bu_attribute_value_set avs;
+    if (!gedp || !bi || !dp || !val) return GED_ERROR;
+
+    double local2base = gedp->ged_wdbp->dbip->dbi_local2base;
+
+    // Make sure we can get attributes
+    if (db5_get_attributes(gedp->ged_wdbp->dbip, &avs, dp)) {
+	bu_vls_printf(gedp->ged_result_str, "Error setting plate mode value\n");
+	return GED_ERROR;
+    };
+
+    // Unpack the string
+    double pthickness;
+    char *endptr = NULL;
+    errno = 0;
+    pthickness = strtod(val, &endptr);
+    if ((endptr != NULL && strlen(endptr) > 0) || (errno == ERANGE)) {
+	pthickness = 0;
+    }
+    
+    // Apply units to the value and update rt_brep_internal
+    double pthicknessmm = local2base * pthickness;
+    bi->plate_mode_thickness = pthicknessmm;
+
+    // Create and set the attribute string
+    std::ostringstream ss;
+    ss << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << pthicknessmm;
+    std::string sd = ss.str();
+    (void)bu_avs_add(&avs, "_plate_mode_thickness", sd.c_str());
+    if (db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
+    	bu_vls_printf(gedp->ged_result_str, "Error setting plate mode value\n");
+	return GED_ERROR;
+    } else {
+    	bu_vls_printf(gedp->ged_result_str, "%s\n", val);
+    }
+    return GED_OK;
+}
+
+
 
 // TODO - this doesn't belong here, just convenient for now since we need to crack the ON_Brep for this
 extern "C" int

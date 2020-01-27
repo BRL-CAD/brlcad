@@ -35,6 +35,7 @@ struct brep_specific {
     BrepBoundingVolume* bvh;
     int is_solid;
     int plate_mode;
+    double plate_mode_thickness;
 };
 
 

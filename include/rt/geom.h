@@ -299,6 +299,7 @@ struct rt_brep_internal {
 
     ON_Brep* brep; /**< @brief An openNURBS brep object containing the solid */
     int plate_mode;
+    double plate_mode_thickness;
 };
 
 
