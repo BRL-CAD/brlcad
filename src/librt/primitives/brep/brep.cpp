@@ -85,6 +85,7 @@ extern "C" {
     struct rt_selection_set *rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selection_query *query);
     int rt_brep_process_selection(struct rt_db_internal *ip, struct db_i *dbip, const struct rt_selection *selection, const struct rt_selection_operation *op);
     int rt_brep_valid(struct bu_vls *log, struct rt_db_internal *ip, int flags);
+    int rt_brep_plate_mode(struct rt_db_internal *ip);
     int rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, size_t *version);
 #ifdef __cplusplus
 }
@@ -2736,6 +2737,33 @@ brep_valid_done:
 
 
 int
+rt_brep_plate_mode(struct rt_db_internal *ip)
+{
+    RT_CK_DB_INTERNAL(ip);
+    if (ip->idb_type != ID_BREP) {
+	return 0;
+    }
+    struct rt_brep_internal *bi = (struct rt_brep_internal *)ip->idb_ptr;
+    ON_Brep *brep = NULL;
+    if (bi == NULL || bi->brep == NULL) {
+	return 0;
+    }
+    brep = bi->brep;
+
+    ON_wString s;
+    ON_TextLog dump(s);
+    if (brep->IsValid(&dump)) {
+	for (int i = 0; i < brep->m_E.Count(); i++) {
+	    if (brep->m_E[i].TrimCount() == 1 && brep->TrimType(*brep->m_E[i].Trim(0), true) == ON_BrepTrim::boundary) {
+		return 1;
+	    }
+	}
+    }
+
+    return 0;
+}
+
+    int
 rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, size_t *version)
 {
     RT_CK_SOLTAB(stp);

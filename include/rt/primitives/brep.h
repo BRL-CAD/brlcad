@@ -56,6 +56,11 @@ RT_EXPORT extern int rt_brep_valid(struct bu_vls *log, struct rt_db_internal *ip
  */
 RT_EXPORT extern int rt_brep_normalize(struct rt_db_internal *ip, double pmax);
 
+
+/* Report if the brep is a plate mode object: returns 1 if plate mode, otherwise 0.
+ * (Invalid openNURBS objects are not considered plate mode) */
+RT_EXPORT extern int rt_brep_plate_mode(struct rt_db_internal *ip);
+
 /** @} */
 
 __END_DECLS
