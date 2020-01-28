@@ -15,6 +15,9 @@ on-going issues.
 Recent Bugs
 -----------
 
+* mater -d information stored in the .g file doesn't survive a
+  garbage collection operation.
+
 * fix checker.sh script and/or overlap GUI so that the latter will
   read the resulting overlap pairings file from the prior.
   alternatively, need to be able to run overlap check on server
