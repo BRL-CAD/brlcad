@@ -432,16 +432,16 @@ view_end(struct application *ap)
 	bu_log("%d overlap%c detected.\n\n", noverlaps,
 	       noverlaps==1 ? '\0' : 's');
 
-    bu_log("RT Weight Program Output:\n");
-    bu_log("\nDatabase Title: \"%s\"\n", dbp->dbi_title);
-    bu_log("Time Stamp: %s\n\nDensity Table Used:%s\n\n", timeptr, bu_vls_cstr(densityfile_vls));
-    bu_log("Material  Density(g/cm^3) Name\n");
+    fprintf(outfp, "RT Weight Program Output:\n");
+    fprintf(outfp, "\nDatabase Title: \"%s\"\n", dbp->dbi_title);
+    fprintf(outfp, "Time Stamp: %s\n\nDensity Table Used:%s\n\n", timeptr, bu_vls_cstr(densityfile_vls));
+    fprintf(outfp, "Material  Density(g/cm^3) Name\n");
     {
 	long int curr_id = -1;
 	while ((curr_id = analyze_densities_next(density, curr_id)) != -1) {
 	    char *cname = analyze_densities_name(density, curr_id);
 	    fastf_t cdensity = analyze_densities_density(density, curr_id);
-	    bu_log("%5ld     %10.4f       %s\n", curr_id, cdensity*1000, cname);
+	    fprintf(outfp, "%5ld     %10.4f       %s\n", curr_id, cdensity*1000, cname);
 	    bu_free(cname, "free name copy");
 	}
     }
@@ -517,9 +517,9 @@ view_end(struct application *ap)
 
 	/* WEIGHT BY REGION NAME =============== */
 	/* ^L is char code for FormFeed/NewPage */
-	bu_log("Weight by region name (in %s, density given in g/cm^3):\n\n", units);
-	bu_log(" Weight   Matl  LOS  Material Name  Density Name\n");
-	bu_log("-------- ------ --- --------------- ------- -------------\n");
+	fprintf(outfp, "Weight by region name (in %s, density given in g/cm^3):\n\n", units);
+	fprintf(outfp, " Weight   Matl  LOS  Material Name  Density Name\n");
+	fprintf(outfp, "-------- ------ --- --------------- ------- -------------\n");
 
 	start_ridx = 0; /* region array is indexed from 0 */
 	for (id = 1; id < max_item; ++id) {
@@ -534,7 +534,7 @@ view_end(struct application *ap)
 		    char *cname = analyze_densities_name(density, r->reg_gmater);
 		    fastf_t cdensity = analyze_densities_density(density, r->reg_gmater);
 		    fastf_t weight = *(fastf_t *)r->reg_udata;
-		    bu_log("%8.3f %5d  %3d %-15.15s %7.4f %s\n",
+		    fprintf(outfp, "%8.3f %5d  %3d %-15.15s %7.4f %s\n",
 			    weight,
 			    r->reg_gmater, r->reg_los,
 			    cname,
@@ -555,9 +555,9 @@ view_end(struct application *ap)
 	}
 
 	/* WEIGHT BY REGION ID =============== */
-	bu_log("Weight by region ID (in %s):\n\n", units);
-	bu_log("  ID   Weight  Region Names\n");
-	bu_log("----- -------- --------------------\n");
+	fprintf(outfp, "Weight by region ID (in %s):\n\n", units);
+	fprintf(outfp, "  ID   Weight  Region Names\n");
+	fprintf(outfp, "----- -------- --------------------\n");
 
 	start_ridx = 0; /* region array is indexed from 0 */
 	for (id = 1; id < max_item; ++id) {
@@ -568,7 +568,7 @@ view_end(struct application *ap)
 		continue;
 
 	    /* the following format string has 15 spaces before the region name: */
-	    bu_log("%5d %8.3f ", id, item_wt[id]);
+	    fprintf(outfp, "%5d %8.3f ", id, item_wt[id]);
 
 	    /* since we're sorted by ID, we only need to start and end with the current ID */
 	    for (ridx = start_ridx; ridx < nregions; ++ridx) {
@@ -576,9 +576,9 @@ view_end(struct application *ap)
 		if (r->reg_regionid == id) {
 		    if (CR) {
 			/* need leading spaces */
-			bu_log("%*.*s", ns, ns, " ");
+			fprintf(outfp, "%*.*s", ns, ns, " ");
 		    }
-		    bu_log("%s\n", r->reg_name);
+		    fprintf(outfp, "%s\n", r->reg_name);
 		    CR = 1;
 		} else if (r->reg_regionid > id) {
 		    /* FIXME: an "else" alone should be good enough
@@ -602,14 +602,14 @@ view_end(struct application *ap)
     sum_y *= (conversion / total_weight) * dbp->dbi_base2local;
     sum_z *= (conversion / total_weight) * dbp->dbi_base2local;
 
-    bu_log("RT Weight Program Output:\n");
-    bu_log("\nDatabase Title: \"%s\"\n", dbp->dbi_title);
-    bu_log("Time Stamp: %s\n\n", timeptr);
-    bu_log("Total volume = %g %s^3\n\n", volume, unit2);
-    bu_log("Centroid: X = %g %s\n", sum_x, unit2);
-    bu_log("          Y = %g %s\n", sum_y, unit2);
-    bu_log("          Z = %g %s\n", sum_z, unit2);
-    bu_log("\nTotal mass = %g %s\n\n", total_weight, units);
+    fprintf(outfp, "RT Weight Program Output:\n");
+    fprintf(outfp, "\nDatabase Title: \"%s\"\n", dbp->dbi_title);
+    fprintf(outfp, "Time Stamp: %s\n\n", timeptr);
+    fprintf(outfp, "Total volume = %g %s^3\n\n", volume, unit2);
+    fprintf(outfp, "Centroid: X = %g %s\n", sum_x, unit2);
+    fprintf(outfp, "          Y = %g %s\n", sum_y, unit2);
+    fprintf(outfp, "          Z = %g %s\n", sum_z, unit2);
+    fprintf(outfp, "\nTotal mass = %g %s\n\n", total_weight, units);
 
     /* now finished with density file name*/
     bu_vls_free(densityfile_vls);
