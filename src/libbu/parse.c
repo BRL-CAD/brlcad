@@ -2461,7 +2461,6 @@ bu_next_token(char *str)
 void
 bu_structparse_get_terse_form(struct bu_vls *logstr, const struct bu_structparse *sp)
 {
-    struct bu_vls str = BU_VLS_INIT_ZERO;
     size_t i;
 
     if (UNLIKELY(!logstr || !sp))
@@ -2493,7 +2492,6 @@ bu_structparse_get_terse_form(struct bu_vls *logstr, const struct bu_structparse
 	}
 	++sp;
     }
-    bu_vls_free(&str);
 }
 
 
