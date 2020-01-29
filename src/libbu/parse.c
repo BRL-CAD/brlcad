@@ -1287,27 +1287,31 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 	    case 'i':
 		{
 		    register short *sp = (short *)loc;
+		    struct bu_vls str = BU_VLS_INIT_ZERO;
 
-		    bu_log("\t%s=%d", sdp->sp_name, *sp++);
+		    bu_vls_printf(&str, "\t%s=%d", sdp->sp_name, *sp++);
 
 		    for (i = 1; i < sdp->sp_count; i++) {
-			bu_log("%c%d", COMMA, *sp++);
+			bu_vls_printf(&str, "%c%d", COMMA, *sp++);
 		    }
 
-		    bu_log("\n");
+		    bu_log("%s\n", bu_vls_cstr(&str));
+		    bu_vls_free(&str);
 		}
 		break;
 	    case 'd':
 		{
 		    register int *dp = (int *)loc;
+		    struct bu_vls str = BU_VLS_INIT_ZERO;
 
-		    bu_log("\t%s=%d", sdp->sp_name, *dp++);
+		    bu_vls_printf(&str, "\t%s=%d", sdp->sp_name, *dp++);
 
 		    for (i = 1; i < sdp->sp_count; i++) {
-			bu_log("%c%d", COMMA, *dp++);
+			bu_vls_printf(&str, "%c%d", COMMA, *dp++);
 		    }
 
-		    bu_log("\n");
+		    bu_log("%s\n", bu_vls_cstr(&str));
+		    bu_vls_free(&str);
 		}
 		break;
 	    case 'f':
@@ -1317,13 +1321,16 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 		    if (sdp->sp_count == 16) {
 			parse_matprint(sdp->sp_name, dp);
 		    } else if (sdp->sp_count <= 3) {
-			bu_log("\t%s=%.25G", sdp->sp_name, *dp++);
+			struct bu_vls str = BU_VLS_INIT_ZERO;
+
+			bu_vls_printf(&str, "\t%s=%.25G", sdp->sp_name, *dp++);
 
 			for (i = 1; i < sdp->sp_count; i++) {
-			    bu_log("%c%.25G", COMMA, *dp++);
+			    bu_vls_printf(&str, "%c%.25G", COMMA, *dp++);
 			}
 
-			bu_log("\n");
+			bu_log("%s\n", bu_vls_cstr(&str));
+			bu_vls_free(&str);
 		    } else {
 			int delta = (int)strlen(sdp->sp_name)+2;
 
@@ -1350,13 +1357,16 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 		    if (sdp->sp_count == 16) {
 			parse_dmatprint(sdp->sp_name, dp);
 		    } else if (sdp->sp_count <= 3) {
-			bu_log("\t%s=%.25G", sdp->sp_name, *dp++);
+			struct bu_vls str = BU_VLS_INIT_ZERO;
+
+			bu_vls_printf(&str, "\t%s=%.25G", sdp->sp_name, *dp++);
 
 			for (i = 1; i < sdp->sp_count; i++) {
-			    bu_log("%c%.25G", COMMA, *dp++);
+			    bu_vls_printf(&str, "%c%.25G", COMMA, *dp++);
 			}
 
-			bu_log("\n");
+			bu_log("%s\n", bu_vls_cstr(&str));
+			bu_vls_free(&str);
 		    } else {
 			int delta = (int)strlen(sdp->sp_name)+2;
 
@@ -1379,14 +1389,16 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 	    case 'x':
 		{
 		    register int *dp = (int *)loc;
+		    struct bu_vls str = BU_VLS_INIT_ZERO;
 
-		    bu_log("\t%s=%08x", sdp->sp_name, *dp++);
+		    bu_vls_printf(&str, "\t%s=%08x", sdp->sp_name, *dp++);
 
 		    for (i = 1; i < sdp->sp_count; i++) {
-			bu_log("%c%08x", COMMA, *dp++);
+			bu_vls_printf(&str, "%c%08x", COMMA, *dp++);
 		    }
 
-		    bu_log("\n");
+		    bu_log("%s\n", bu_vls_cstr(&str));
+		    bu_vls_free(&str);
 		}
 		break;
 	    case 'p':
