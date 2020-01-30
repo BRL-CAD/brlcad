@@ -344,7 +344,7 @@ proc gets_execute_cmd {w} {
     rename execute_cmd_save execute_cmd
 
     $w mark set insert {end - 2c}
-    $w insert insert \n
+    $w insert insert "\n"
 
     $w see insert
     update
@@ -356,7 +356,7 @@ proc execute_cmd {w} {
     global mged_gui
 
     $w mark set insert {end - 2c}
-    $w insert insert \n
+    $w insert insert "\n"
 
     $w see insert
     update
@@ -373,7 +373,7 @@ proc interrupt_cmd { w } {
     set id [get_player_id_t $w]
     set mged_gui($id,cmd_prefix) ""
     set mged_gui($id,more_default) ""
-    $w insert insert \n
+    $w insert insert "\n"
     mged_print_prompt $w "mged> "
     $w see insert
 }

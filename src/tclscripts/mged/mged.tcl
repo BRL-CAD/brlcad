@@ -474,9 +474,9 @@ proc ia_invoke { w } {
 
 	    if {$ia_msg != ""} {
 		if {[string index $ia_msg end] == "\n"} {
-		    mged_print_tag $w $ia_msg result
+		    mged_print_tag $w "$ia_msg" result
 		} else {
-		    mged_print_tag $w $ia_msg\n result
+		    mged_print_tag $w "$ia_msg\n" result
 		}
 	    }
 
