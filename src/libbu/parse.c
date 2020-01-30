@@ -2508,7 +2508,6 @@ bu_structparse_argv(struct bu_vls *logstr,
     register size_t ii;
     const char *cp = NULL;
     char *loc = NULL;
-    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     if (UNLIKELY(!logstr || !argv))
 	return BRLCAD_OK;
@@ -2727,7 +2726,7 @@ bu_structparse_argv(struct bu_vls *logstr,
 		    fastf_t *fp = (fastf_t *)loc;
 
 		    if (argc < 1) {
-			bu_vls_printf(&str,
+			bu_vls_printf(logstr,
 				      "not enough values for \"%s\" argument: should have %zu, only %d given",
 				      sdp->sp_name,
 				      sdp->sp_count, argc);
@@ -2786,20 +2785,21 @@ bu_structparse_argv(struct bu_vls *logstr,
 				cp++;
 			}
 
-			bu_vls_trunc(&str, 0);
-			bu_vls_strcpy(&str, numstart);
-			bu_vls_trunc(&str, cp-numstart);
+			{
+			    struct bu_vls str = BU_VLS_INIT_ZERO;
+			    bu_vls_strcpy(&str, numstart);
+			    bu_vls_trunc(&str, cp-numstart);
 
-			ret = sscanf(bu_vls_addr(&str), "%lf", &tmp_double);
-			if (ret != 1) {
-			    bu_vls_printf(logstr,
-					  "value \"%s\" to argument %s isn't a float",
-					  numstart,
-					  sdp->sp_name);
+			    ret = sscanf(bu_vls_addr(&str), "%lf", &tmp_double);
 			    bu_vls_free(&str);
-			    return BRLCAD_ERROR;
+			    if (ret != 1) {
+				bu_vls_printf(logstr,
+					      "value \"%s\" to argument %s isn't a float",
+					      numstart,
+					      sdp->sp_name);
+				return BRLCAD_ERROR;
+			    }
 			}
-			bu_vls_free(&str);
 
 			if (sdp->sp_fmt[1] == 'f') {
 			    *fp++ = (fastf_t)tmp_double;
