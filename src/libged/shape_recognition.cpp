@@ -1087,7 +1087,11 @@ _ged_brep_to_bot(struct ged *gedp, const char *obj_name, const struct rt_brep_in
     cdttol.norm = ttol->norm;
     ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)bi->brep, obj_name);
     ON_Brep_CDT_Tol_Set(s_cdt, &cdttol);
-    ON_Brep_CDT_Tessellate(s_cdt, 0, NULL);
+    if (ON_Brep_CDT_Tessellate(s_cdt, 0, NULL) == -1) {
+	bu_vls_printf(gedp->ged_result_str, "tessellation failed\n");
+	ON_Brep_CDT_Destroy(s_cdt);
+	return GED_ERROR;
+    }
     ON_Brep_CDT_Mesh(&faces, &fcnt, &vertices, &vcnt, &face_normals, &fncnt, &normals, &ncnt, s_cdt, 0, NULL);
     ON_Brep_CDT_Destroy(s_cdt);
 
