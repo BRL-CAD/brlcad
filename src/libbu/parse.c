@@ -1056,10 +1056,13 @@ bu_vls_struct_item(struct bu_vls *vp, const struct bu_structparse *sdp, const ch
 	case 's':
 	    if (sdp->sp_count < 1)
 		break;
-	    if (sdp->sp_count == 1)
-		bu_vls_printf(vp, "%c", *loc);
-	    else
+	    if (sdp->sp_count == 1) {
+		if (*loc != '\0') {
+		    bu_vls_printf(vp, "%c", *loc);
+		}
+	    } else {
 		bu_vls_printf(vp, "%s", (char *)loc);
+	    }
 	    break;
 	case 'V':
 	    {
@@ -1198,11 +1201,16 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 	    case 's':
 		if (sdp->sp_count < 1)
 		    break;
-		if (sdp->sp_count == 1)
-		    bu_log("\t%s='%c'\n", sdp->sp_name, *loc);
-		else
+		if (sdp->sp_count == 1) {
+		    if (*loc == '\0') {
+			bu_log("\t%s=''\n", sdp->sp_name);
+		    } else {
+			bu_log("\t%s='%c'\n", sdp->sp_name, *loc);
+		    }
+		} else {
 		    bu_log("\t%s=\"%s\"\n", sdp->sp_name,
 			   (char *)loc);
+		}
 		break;
 	    case 'V':
 		{
@@ -1386,8 +1394,6 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 {
     register char *loc;
     register int lastoff = -1;
-    register char *cp;
-    size_t increase;
 
     BU_CK_VLS(vls);
 
@@ -1437,19 +1443,20 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		if (sdp->sp_count < 1)
 		    break;
 		if (sdp->sp_count == 1) {
-		    increase = strlen(sdp->sp_name)+6;
-		    bu_vls_extend(vls, (unsigned int)increase);
-		    cp = vls->vls_str + vls->vls_offset + bu_vls_strlen(vls);
-		    if (*loc == '"')
-			snprintf(cp, increase, "%s%s=\"%s\"",
-				 (bu_vls_strlen(vls)?" ":""),
-				 sdp->sp_name, "\\\"");
-		    else
-			snprintf(cp, increase, "%s%s=\"%c\"",
-				 (bu_vls_strlen(vls)?" ":""),
-				 sdp->sp_name,
-				 *loc);
-		    vls->vls_len += (int)strlen(cp);
+ 		    if (*loc == '"') {
+			bu_vls_printf(vls, "%s%s=\"%s\"",
+				      (bu_vls_strlen(vls)?" ":""),
+				      sdp->sp_name, "\\\"");
+		    } else if (*loc == '\0') {
+			bu_vls_printf(vls, "%s%s=\"\"",
+				      (bu_vls_strlen(vls)?" ":""),
+				      sdp->sp_name);
+		    } else {
+			bu_vls_printf(vls, "%s%s=\"%c\"",
+				      (bu_vls_strlen(vls)?" ":""),
+				      sdp->sp_name,
+				      *loc);
+		    }
 		} else {
 		    struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
 
@@ -1475,24 +1482,13 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		{
 		    register size_t i = sdp->sp_count;
 		    register short *sp = (short *)loc;
-		    register int tmpi;
 
-		    increase = 64 * i + strlen(sdp->sp_name) + 3;
-		    bu_vls_extend(vls, (unsigned int)increase);
-
-
-		    cp = vls->vls_str + vls->vls_offset + bu_vls_strlen(vls);
-		    snprintf(cp, increase, "%s%s=%d",
-			     (bu_vls_strlen(vls)?" ":""),
-			     sdp->sp_name, *sp++);
-		    tmpi = (int)strlen(cp);
-		    vls->vls_len += tmpi;
+		    bu_vls_printf(vls, "%s%s=%d",
+				  (bu_vls_strlen(vls)?" ":""),
+				  sdp->sp_name, *sp++);
 
 		    while (--i > 0) {
-			cp += tmpi;
-			sprintf(cp, "%c%d", COMMA, *sp++);
-			tmpi = (int)strlen(cp);
-			vls->vls_len += tmpi;
+			bu_vls_printf(vls, "%c%d", COMMA, *sp++);
 		    }
 		}
 		break;
@@ -1588,7 +1584,10 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
 		if (sdp->sp_count < 1)
 		    break;
 		if (sdp->sp_count == 1)
-		    bu_vls_printf(vls_out, "\t%s='%c'\n", sdp->sp_name, *loc);
+		    if (*loc == '\0')
+			bu_vls_printf(vls_out, "\t%s=''\n", sdp->sp_name);
+		    else
+			bu_vls_printf(vls_out, "\t%s='%c'\n", sdp->sp_name, *loc);
 		else
 		    bu_vls_printf(vls_out, "\t%s=\"%s\"\n", sdp->sp_name,
 				  (char *)loc);
@@ -2475,7 +2474,7 @@ bu_structparse_argv(struct bu_vls *logstr,
 		case 's':
 		    /* copy the string to an array of length
 		     * sdp->sp_count, converting escaped double quotes
-		     * to just double quotes
+		     * to just double quotes.
 		     */
 		    if (argc < 1) {
 			bu_vls_printf(logstr,
@@ -2494,7 +2493,10 @@ bu_structparse_argv(struct bu_vls *logstr,
 			loc[sdp->sp_count-1] = '\0';
 			bu_vls_printf(logstr, "%s %s ", sdp->sp_name, loc);
 		    } else {
-			bu_vls_printf(logstr, "%s %c ", sdp->sp_name, *loc);
+			if (*loc == '\0')
+			    bu_vls_printf(logstr, "%s \"\" ", sdp->sp_name);
+			else
+			    bu_vls_printf(logstr, "%s %c ", sdp->sp_name, *loc);
 		    }
 		    break;
 		case 'V':
