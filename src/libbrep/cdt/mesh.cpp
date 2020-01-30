@@ -2755,6 +2755,8 @@ cdt_mesh_t::polygon_tris(cpolygon_t *polygon, double angle, bool brep_norm, int 
     return result;
 }
 
+// TODO - this should be all flip or all non-flip - selective flipping will break edge
+// connectivity
 bool
 cdt_mesh_t::oriented_polycdt(cpolygon_t *polygon, bool reproject)
 {
