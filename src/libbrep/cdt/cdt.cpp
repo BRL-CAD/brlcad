@@ -665,7 +665,7 @@ ON_Brep_CDT_Mesh(
 	int exp_face_cnt, int *exp_faces)
 {
     size_t triangle_cnt = 0;
-    if (!faces || !fcnt || !vertices || !vcnt || !s_cdt) {
+    if (!faces || !fcnt || !vertices || !vcnt || !s_cdt || !s_cdt->brep) {
 	return -1;
     }
 
