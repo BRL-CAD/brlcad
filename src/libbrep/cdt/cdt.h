@@ -91,22 +91,6 @@ struct brep_cdt_tol {
 };
 #define BREP_CDT_TOL_ZERO {0.0, 0.0, 0.0}
 
-struct ON_Brep_CDT_State;
-
-struct brep_face_ovlp_instance {
-    struct ON_Brep_CDT_State *intruding_pnt_s_cdt;
-    int intruding_pnt_face_ind;
-    int intruding_pnt_tri_ind;
-    long intruding_pnt;
-    struct ON_Brep_CDT_State *intersected_tri_s_cdt;
-    int intersected_tri_face_ind;
-    int intersected_tri_ind;
-    bool coplanar_intersection;
-    point_t isect1_3d;
-    point_t isect2_3d;
-    std::set<cpolyedge_t *> involved_edge_segs;
-};
-
 struct ON_Brep_CDT_State {
 
     int status;
@@ -158,89 +142,31 @@ struct ON_Brep_CDT_State {
     std::set<int> faces_to_update;
 };
 
-#if 0
-void
-PerformClosedSurfaceChecks(
-	struct ON_Brep_CDT_State *s_cdt,
-	const ON_Surface *s,
-	const ON_BrepFace &face,
-	ON_SimpleArray<BrepTrimPoint> *brep_loop_points,
-	double same_point_tolerance,
-	bool verbose);
-#endif
-
-void
-GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index);
-
-ON_3dVector
-calc_trim_vnorm(ON_BrepVertex& v, ON_BrepTrim *trim);
-
-std::set<cpolyedge_t *>
-split_singular_seg(struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *ce, int update_rtree);
-
-std::set<bedge_seg_t *>
-split_edge_seg(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, int force, double *t, int update_rtrees);
-
-
-bool CDT_Audit(struct ON_Brep_CDT_State *s_cdt);
-
+ON_3dVector calc_trim_vnorm(ON_BrepVertex& v, ON_BrepTrim *trim);
 bool initialize_edge_segs(struct ON_Brep_CDT_State *s_cdt);
-void refine_close_edges(struct ON_Brep_CDT_State *s_cdt);
-std::vector<int> characterize_edges(struct ON_Brep_CDT_State *s_cdt);
-void initialize_edge_containers(struct ON_Brep_CDT_State *s_cdt);
 bool initialize_loop_polygons(struct ON_Brep_CDT_State *s_cdt);
-void tol_curved_edges_split(struct ON_Brep_CDT_State *s_cdt);
-void update_vert_edge_seg_lengths(struct ON_Brep_CDT_State *s_cdt);
-void update_loop_median_curved_edge_seg_lengths(struct ON_Brep_CDT_State *s_cdt);
-void curved_edges_refine(struct ON_Brep_CDT_State *s_cdt);
-void tol_linear_edges_split(struct ON_Brep_CDT_State *s_cdt);
-void refine_near_loops(struct ON_Brep_CDT_State *s_cdt);
-void finalize_rtrees(struct ON_Brep_CDT_State *s_cdt);
-void cpolyedge_nearest_dists(struct ON_Brep_CDT_State *s_cdt);
-bool point_inside(struct ON_Brep_CDT_State *s_cdt, point_t p);
-bool on_point_inside(struct ON_Brep_CDT_State *s_cdt, ON_3dPoint *p);
-bool on_point_inside_fast(struct ON_Brep_CDT_State *s_cdt, ON_3dPoint *p);
-bool on_closest_point(ON_3dPoint &s_p, ON_3dVector &s_v, struct ON_Brep_CDT_State *s_cdt, ON_3dPoint *p);
-
-void plot_rtree_2d(ON_RTree *rtree, const char *filename);
-void plot_rtree_2d2(RTree<void *, double, 2> &rtree, const char *filename);
-void plot_rtree_3d(RTree<void *, double, 3> &rtree, const char *filename);
-void plot_bbox(point_t m_min, point_t m_max, const char *filename);
-void plot_on_bbox(ON_BoundingBox &bb, const char *filename);
-void plot_ce_bbox(struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *pe, const char *filename);
-void plot_pnt_3d(FILE *plot_file, ON_3dPoint *p, double r, int dir);
-
-
-std::vector<cpolyedge_t *>
-cdt_face_polyedges(struct ON_Brep_CDT_State *s_cdt, int face_index);
-
-struct cdt_audit_info *
-cdt_ainfo(int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d, double px, double py, double pz);
-
-void
-CDT_Add3DPnt(struct ON_Brep_CDT_State *s, ON_3dPoint *p, int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d);
-void
-CDT_Add3DNorm(struct ON_Brep_CDT_State *s, ON_3dPoint *norm, ON_3dPoint *vert, int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d);
-
-void cdt_tol_global_calc(struct ON_Brep_CDT_State *s);
+double ang_deg(const ON_3dVector &v1, const ON_3dVector &v2);
+std::set<bedge_seg_t *> split_edge_seg(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, int force, double *t, int update_rtrees);
+std::set<cpolyedge_t *> split_singular_seg(struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *ce, int update_rtree);
+std::vector<cpolyedge_t *> cdt_face_polyedges(struct ON_Brep_CDT_State *s_cdt, int face_index);
+void CDT_Add3DNorm(struct ON_Brep_CDT_State *s, ON_3dPoint *norm, ON_3dPoint *vert, int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d);
+void CDT_Add3DPnt(struct ON_Brep_CDT_State *s, ON_3dPoint *p, int fid, int vid, int tid, int eid, fastf_t x2d, fastf_t y2d);
 void CDT_Tol_Set(struct brep_cdt_tol *cdt, double dist, fastf_t md, double t_abs, double t_rel, double t_dist);
-
-void
-trimesh_error_report(struct ON_Brep_CDT_State *s_cdt, int valid_fcnt, int valid_vcnt, int *valid_faces, fastf_t *valid_vertices, struct bg_trimesh_solid_errors *se);
-
-int
-ON_Brep_CDT_Tessellate2(struct ON_Brep_CDT_State *s_cdt);
-
-void rtree_bbox_3d_remove(struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *pe);
-void rtree_bbox_3d(struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *pe);
-
-double
-ang_deg(const ON_3dVector &v1, const ON_3dVector &v2);
+void GetInteriorPoints(struct ON_Brep_CDT_State *s_cdt, int face_index);
+void cdt_tol_global_calc(struct ON_Brep_CDT_State *s);
+void curved_edges_refine(struct ON_Brep_CDT_State *s_cdt);
+void finalize_rtrees(struct ON_Brep_CDT_State *s_cdt);
+void initialize_edge_containers(struct ON_Brep_CDT_State *s_cdt);
+void refine_close_edges(struct ON_Brep_CDT_State *s_cdt);
+void tol_curved_edges_split(struct ON_Brep_CDT_State *s_cdt);
+void tol_linear_edges_split(struct ON_Brep_CDT_State *s_cdt);
 
 /* debug */
+void trimesh_error_report(struct ON_Brep_CDT_State *s_cdt, int valid_fcnt, int valid_vcnt, int *valid_faces, fastf_t *valid_vertices, struct bg_trimesh_solid_errors *se);
+bool CDT_Audit(struct ON_Brep_CDT_State *s_cdt);
 void on_bb_plot(const char *fname, ON_BoundingBox &bb);
+void plot_pnt_3d(FILE *plot_file, ON_3dPoint *p, double r, int dir);
 bool PPCHECK(ON_3dPoint &p);
-//bool VPCHECK(overt_t *v, const char *fname);
 bool TRICHECK(triangle_t &tri);
 
 /** @} */
