@@ -2767,6 +2767,8 @@ cdt_mesh_t::oriented_polycdt(cpolygon_t *polygon, bool reproject)
     }
 
     if (!polygon->cdt()) return false;
+
+    size_t flip_cnt = 0;
     std::set<triangle_t>::iterator tr_it;
     for (tr_it = polygon->tris.begin(); tr_it != polygon->tris.end(); tr_it++) {
 	triangle_t t = *tr_it;
@@ -2776,13 +2778,25 @@ cdt_mesh_t::oriented_polycdt(cpolygon_t *polygon, bool reproject)
 	ON_3dVector bdir = bnorm(t);
 	bool flipped_tri = (ON_DotProduct(tdir, bdir) < 0);
 	if (flipped_tri) {
+	    flip_cnt++;
+	}
+    }
+
+    if (flip_cnt > polygon->tris.size() / 2) {
+	for (tr_it = polygon->tris.begin(); tr_it != polygon->tris.end(); tr_it++) {
+	    triangle_t t = *tr_it;
+	    t.m = this;
+	    triangle_t nt(t);
+	    flip_cnt++;
 	    nt.v[2] = t.v[1];
 	    nt.v[1] = t.v[2];
+	    otris.insert(nt);
 	}
-	otris.insert(nt);
+	polygon->tris.clear();
+	polygon->tris.insert(otris.begin(), otris.end());
+
     }
-    polygon->tris.clear();
-    polygon->tris.insert(otris.begin(), otris.end());
+
     return true;
 }
 
@@ -4708,6 +4722,8 @@ cdt_mesh_t::best_fit_plane_reproject(cpolygon_t *polygon)
 	polygon->pnts_2d.clear();
 	polygon->pnts_2d = pnts_2d_cached;
 	return false;
+    } else {
+	polygon->fit_plane = fit_plane;
     }
 
     return true;
