@@ -2794,7 +2794,13 @@ cdt_mesh_t::oriented_polycdt(cpolygon_t *polygon, bool reproject)
 	}
 	polygon->tris.clear();
 	polygon->tris.insert(otris.begin(), otris.end());
-
+	bu_log("flipping tris\n");
+    } else {
+	if (flip_cnt && flip_cnt != polygon->tris.size()) {
+	    bu_log("NOT flipping tris, adding %zd flipped tris\n", flip_cnt);
+	} else {
+	    bu_log("NOT flipping tris, OK\n");
+	}
     }
 
     return true;
