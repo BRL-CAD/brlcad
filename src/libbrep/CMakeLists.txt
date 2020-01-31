@@ -53,7 +53,6 @@ set(libbrep_ignored_files
   brep_except.h
   cdt/cdt.h
   cdt/mesh.h
-  cdt/closed_surf.cpp
   cdt/omesh.cpp
   cdt/overt.cpp
   cdt/ovlps.cpp

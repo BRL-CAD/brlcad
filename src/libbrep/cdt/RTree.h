@@ -9,7 +9,6 @@
 #include <type_traits>
 #include <cmath>
 #include <set>
-#include "bn/plot3.h"
 #include "opennurbs.h"
 
 #define RTreeAssert assert // RTree uses RTreeAssert( condition )
@@ -409,52 +408,6 @@ public:
     void plot(Rect *a_rect, const char *fname) __attribute__((noinline));
 
 };
-
-#define RECT_TREE_LEAF_FACE_3D(pf, valp, a, b, c, d)  \
-        pdv_3move(pf, pt[a]); \
-    pdv_3cont(pf, pt[b]); \
-    pdv_3cont(pf, pt[c]); \
-    pdv_3cont(pf, pt[d]); \
-    pdv_3cont(pf, pt[a]); \
-
-#define RECT_BBOX_PLOT(pf, bb) {                 \
-        fastf_t pt[8][3];                       \
-        point_t min, max;                       \
-        min[0] = bb.Min().x;                    \
-        min[1] = bb.Min().y;                    \
-        min[2] = bb.Min().z;                    \
-        max[0] = bb.Max().x;                    \
-        max[1] = bb.Max().y;                    \
-        max[2] = bb.Max().z;                    \
-        VSET(pt[0], max[X], min[Y], min[Z]);    \
-        VSET(pt[1], max[X], max[Y], min[Z]);    \
-        VSET(pt[2], max[X], max[Y], max[Z]);    \
-        VSET(pt[3], max[X], min[Y], max[Z]);    \
-        VSET(pt[4], min[X], min[Y], min[Z]);    \
-        VSET(pt[5], min[X], max[Y], min[Z]);    \
-        VSET(pt[6], min[X], max[Y], max[Z]);    \
-        VSET(pt[7], min[X], min[Y], max[Z]);    \
-        RECT_TREE_LEAF_FACE_3D(pf, pt, 0, 1, 2, 3);      \
-        RECT_TREE_LEAF_FACE_3D(pf, pt, 4, 0, 3, 7);      \
-        RECT_TREE_LEAF_FACE_3D(pf, pt, 5, 4, 7, 6);      \
-        RECT_TREE_LEAF_FACE_3D(pf, pt, 1, 5, 6, 2);      \
-}
-
-// For debugging - works only with 3D trees
-RTREE_TEMPLATE
-void RTREE_QUAL::plot(Rect *a_rect, const char *fname)
-{
-    if (!fname) return;
-    ON_3dPoint p1(a_rect->m_min[0], a_rect->m_min[1], a_rect->m_min[2]);
-    ON_3dPoint p2(a_rect->m_max[0], a_rect->m_max[1], a_rect->m_max[2]);
-    ON_BoundingBox bb(p1, p2);
-    FILE *p = fopen(fname, "w");
-    struct bu_color c = BU_COLOR_INIT_ZERO;
-    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
-    pl_color_buc(p, &c);
-    RECT_BBOX_PLOT(p, bb);
-    fclose(p);
-}
 
 // Because there is not stream support, this is a quick and dirty file I/O helper.
 // Users will likely replace its usage with a Stream implementation from their favorite API.
@@ -1127,7 +1080,7 @@ void RTREE_QUAL::DisconnectBranch(Node* a_node, int a_index)
 
 
 // Pick a branch.  Pick the one that will need the smallest increase
-// in area to accomodate the new rectangle.  This will result in the
+// in area to accommodate the new rectangle.  This will result in the
 // least total area for the covering rectangles in the current node.
 // In case of a tie, pick the one which was smaller before, to get
 // the best resolution when searching.

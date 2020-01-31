@@ -40,44 +40,7 @@
 // TODO - get rid of all BN_TOL_DIST-only tolerances - if the object is
 // very small, that distance is too big (e.g. for linearity testing).
 
-// TODO get a profiler on this to see where we're slowest...
-
-#if 0
-int debug_ecnt;
-
-void
-debug_plot(struct ON_Brep_CDT_State *s_cdt, cpolygon_t *cpoly, int m_face_index, int m_loop_index, int m_edge_index, int m_trim_index, int step_cnt, int *d_cnt) {
-    if (m_face_index > 0 && m_face_index != 34) return;
-    if (m_edge_index > 0 && (m_edge_index < 93 || m_edge_index > 96)) return;
-    cdt_mesh_t *fmesh = &s_cdt->fmeshes[34];
-    std::cout << "\n";
-    if (m_loop_index > 0) {
-	std::cout << step_cnt << "-" << (*d_cnt) << ": generating plots for loop " << m_loop_index << "...\n";
-    }
-    if (m_edge_index > 0) {
-	std::cout << step_cnt << "-" << (*d_cnt) << ": generating plots for edge " << m_edge_index << "...\n";
-    }
-    if (m_trim_index > 0) {
-	std::cout << step_cnt << "-" << (*d_cnt) << ": generating plots for trim " << m_trim_index << "...\n";
-    }
-    cpoly->print();
-    fmesh->polygon_print_3d(cpoly);
-    struct bu_vls fname = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&fname, "%d-%d-%d-poly2d.p3", m_face_index, step_cnt, (*d_cnt));
-    fmesh->polygon_plot_2d(cpoly, bu_vls_cstr(&fname));
-    bu_vls_sprintf(&fname, "%d-%d-%d-poly3d.p3", m_face_index, step_cnt, (*d_cnt));
-    fmesh->polygon_plot_3d(cpoly, bu_vls_cstr(&fname));
-    fmesh->cdt();
-    bu_vls_sprintf(&fname, "%d-%d-%d-tris_2d.p3", m_face_index, step_cnt, (*d_cnt));
-    fmesh->tris_plot_2d(bu_vls_cstr(&fname));
-    bu_vls_sprintf(&fname, "%d-%d-%d-tris.p3", m_face_index, step_cnt, (*d_cnt));
-    fmesh->tris_plot(bu_vls_cstr(&fname));
-    (*d_cnt)++;
-    std::cout << "\n";
-}
-#endif
-
-ON_3dVector
+static ON_3dVector
 bseg_tangent(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, double eparam, double t1param, double t2param)
 {
     ON_3dPoint tmp;
@@ -106,7 +69,7 @@ bseg_tangent(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, double eparam, 
 
 
 
-bool
+static bool
 refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh, int cnt, int rebuild)
 {
     if (!s_cdt || !fmesh) return false;
@@ -124,16 +87,6 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh, int cnt
 	return false;
     }
 
-#if 0
-    // Check the triangles around edges first - these may require
-    // the removal of points from the surface set
-    ret = triangles_check_edge_tris(f);
-    if (ret) {
-	bu_log("Pass %d: surface points removed, need full retriangulation\n", cnt);
-	return refine_triangulation(f, cnt+1, 1);
-    }
-#endif
-
     // Now, the hard part - create local subsets, remesh them, and replace the original
     // triangles with the new ones.
     if (!fmesh->repair()) {
@@ -141,17 +94,10 @@ refine_triangulation(struct ON_Brep_CDT_State *s_cdt, cdt_mesh_t *fmesh, int cnt
 	return false;
     }
 
-#if 0
-    if (fmesh->valid(1)) {
-	bu_log("Face %d: successful triangulation after %d passes\n", fmesh->f_id, cnt);
-    } else {
-	bu_log("Face %d: triangulation produced invalid mesh!\n", fmesh->f_id);
-    }
-#endif
     return true;
 }
 
-void
+static void
 loop_edges(cdt_mesh_t *fmesh, cpolygon_t *loop)
 {
     size_t vcnt = 1;
@@ -226,15 +172,6 @@ do_triangulation(struct ON_Brep_CDT_State *s_cdt, int fi)
 
     if (!fmesh->cdt()) {
 	return false;
-    } else {
-#if 0
-	struct bu_vls fname = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&fname, "%d-tris.plot3", face.m_face_index);
-	fmesh->tris_plot(bu_vls_cstr(&fname));
-	bu_vls_sprintf(&fname, "%d-tris_2d.plot3", face.m_face_index);
-	fmesh->tris_plot_2d(bu_vls_cstr(&fname));
-	bu_vls_free(&fname);
-#endif
     }
 
     // List singularities
@@ -298,13 +235,6 @@ calc_trim_vnorm(ON_BrepVertex& v, ON_BrepTrim *trim)
 	}
 	// If we got both of them, go with the closest one
 	if (ev1 && ev2) {
-#if 0
-	    if (ON_DotProduct(v1, v2) < 0) {
-		bu_log("Vertex %d(%f %f %f), trim %d: got both normals\n", v.m_vertex_index, v.Point().x, v.Point().y, v.Point().z, trim->m_trim_index);
-		bu_log("v1(%f)(%f %f)(%f %f %f): %f %f %f\n", v.Point().DistanceTo(t1), t_2d1.x, t_2d1.y, t1.x, t1.y, t1.z, v1.x, v1.y, v1.z);
-		bu_log("v2(%f)(%f %f)(%f %f %f): %f %f %f\n", v.Point().DistanceTo(t2), t_2d2.x, t_2d2.y, t2.x, t2.y, t2.z, v2.x, v2.y, v2.z);
-	    }
-#endif
 	    trim_norm = (v.Point().DistanceTo(t1) < v.Point().DistanceTo(t2)) ? v1 : v2;
 	}
 
@@ -584,22 +514,6 @@ ON_Brep_CDT_Tessellate(struct ON_Brep_CDT_State *s_cdt, int face_cnt, int *faces
 
 	// Rebuild finalized 2D RTrees for faces (needed for surface processing)
 	finalize_rtrees(s_cdt);
-
-#if 0
-	for (int index = 0; index < brep->m_F.Count(); index++) {
-	    struct bu_vls fname = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&fname, "%d-rtree_outer_polygon_2d.plot3", index);
-	    cdt_mesh_t *fmesh = &s_cdt->fmeshes[index];
-	    fmesh->polygon_plot_2d(&fmesh->outer_loop, bu_vls_cstr(&fname));
-	    bu_vls_sprintf(&fname, "%d-rtree_2d.plot3", index);
-	    plot_rtree_2d2(s_cdt->face_rtrees_2d[index], bu_vls_cstr(&fname));
-	    bu_vls_sprintf(&fname, "%d-rtree_outer_polygon_3d.plot3", index);
-	    fmesh->polygon_plot_3d(&fmesh->outer_loop, bu_vls_cstr(&fname));
-	    bu_vls_sprintf(&fname, "%d-rtree_3d.plot3", index);
-	    plot_rtree_3d(s_cdt->face_rtrees_3d[index], bu_vls_cstr(&fname));
-	}
-#endif
-
     } else {
 	/* Clear the mesh state, if this container was previously used */
     }
