@@ -749,20 +749,12 @@ split_edge_seg(struct ON_Brep_CDT_State *s_cdt, bedge_seg_t *bseg, int force, do
 	std::cout << fmesh1->f_id << ": 2d->3d mapping already exists for " << f1_ind2d << "\n";
     }
     fmesh1->p2d3d[f1_ind2d] = f1_ind3d;
-    if (fmesh1->p3d2d.find(f1_ind3d) != fmesh1->p3d2d.end()) {
-	std::cout << fmesh1->f_id << ": 3d->2d mapping already exists for " << f1_ind3d << "\n";
-    }
-    fmesh1->p3d2d[f1_ind3d] = f1_ind2d;
     long f2_ind2d = fmesh2->add_point(trim2_mid_2d);
     long f2_ind3d = fmesh2->add_point(mid_3d);
     if (fmesh2->p2d3d.find(f2_ind2d) != fmesh2->p2d3d.end()) {
 	std::cout << fmesh2->f_id << ": 2d->3d mapping already exists for " << f2_ind2d << "\n";
     }
     fmesh2->p2d3d[f2_ind2d] = f2_ind3d;
-    if (fmesh2->p3d2d.find(f2_ind3d) != fmesh2->p3d2d.end()) {
-	std::cout << fmesh2->f_id << ": 3d->2d mapping already exists for " << f2_ind3d << "\n";
-    }
-    fmesh2->p3d2d[f2_ind3d] = f2_ind2d;
 
     // Trims get their own normals
     ON_3dVector norm1 = trim_normal(trim1, trim1_mid_2d);
@@ -1230,12 +1222,6 @@ initialize_loop_polygons(struct ON_Brep_CDT_State *s_cdt)
 			std::cout << fmesh->f_id << ": 2d->3d mapping already exists for " << find << "\n";
 		    }
 		    fmesh->p2d3d[find] = f3ind;
-		    if (trim->m_type != ON_BrepTrim::singular) {
-			if (fmesh->p3d2d.find(f3ind) != fmesh->p3d2d.end()) {
-			    std::cout << fmesh->f_id << ": 3d->2d mapping already exists for " << f3ind << "\n";
-			}
-			fmesh->p3d2d[f3ind] = find;
-		    }
 		    fmesh->nmap[f3ind] = fnind;
 
 		} else {
@@ -1276,12 +1262,6 @@ initialize_loop_polygons(struct ON_Brep_CDT_State *s_cdt)
 			std::cout << fmesh->f_id << ": 2d->3d mapping already exists for " << find << "\n";
 		    }
 		    fmesh->p2d3d[find] = f3ind;
-		    if (trim->m_type != ON_BrepTrim::singular) {
-			if (fmesh->p3d2d.find(f3ind) != fmesh->p3d2d.end()) {
-			    std::cout << fmesh->f_id << ": 3d->2d mapping already exists for " << f3ind << "\n";
-			}
-			fmesh->p3d2d[f3ind] = find;
-		    }
 		    fmesh->nmap[f3ind] = fnind;
 		}
 
