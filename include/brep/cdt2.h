@@ -40,6 +40,7 @@ __BEGIN_DECLS
 struct brep_cdt_impl;
 struct brep_cdt {
     struct brep_cdt_impl *i;
+    struct bu_vls *msgs;
 };
 
 /* Create and initialize a CDT state with default tolerances.  bv

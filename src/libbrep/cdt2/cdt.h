@@ -27,13 +27,14 @@
 
 #include "common.h"
 
+#include <map>
 #include <queue>
 #include <string>
 
-#include "RTree.h"
+#include "../cdt/RTree.h"
 #include "vmath.h"
 #include "brep/defines.h"
-#include "brep/cdt.h"
+#include "brep/cdt2.h"
 
 #define BREP_PLANAR_TOL 0.05
 
@@ -46,9 +47,9 @@ class poly_uedge_t;
 class polygon_t;
 
 typedef enum {
-    B_VERT;
-    B_EDGE;
-    B_SURF;
+    B_VERT,
+    B_EDGE,
+    B_SURF
 } mesh_point_type;
 
 class mesh_point_t {
@@ -100,15 +101,14 @@ class mesh_point_t {
 };
 
 typedef enum {
-    B_UNSET;
-    B_SINGULAR;
-    B_BOUNDARY;
-    B_INTERIOR;
-} edge_type;
+    B_UNSET,
+    B_SINGULAR,
+    B_BOUNDARY,
+    B_INTERIOR
+} edge_type_t;
 
 class mesh_edge_t {
     public:
-
 	mesh_edge_t() {
 	    v[0] = v[1] = -1;
 	    m = NULL;
@@ -119,7 +119,7 @@ class mesh_edge_t {
 	void clear();
 	bool set(long i, long j);
 
-	bool operator<(mesh_edge other) const
+	bool operator<(mesh_edge_t other) const
 	{
 	    bool c1 = (v[0] < other.v[0]);
 	    bool c1e = (v[0] == other.v[0]);
@@ -127,7 +127,7 @@ class mesh_edge_t {
 	    return (c1 || (c1e && c2));
 	}
 
-	bool operator==(mesh_edge other) const
+	bool operator==(mesh_edge_t other) const
 	{
 	    bool c0 = (type == other.type);
 	    if (!c0) return false;
@@ -135,7 +135,7 @@ class mesh_edge_t {
 	    bool c2 = (v[1] == other.v[1]);
 	    return (c1 && c2);
 	}
-	bool operator!=(mesh_edge other) const
+	bool operator!=(mesh_edge_t other) const
 	{
 	    bool c0 = (type == other.type);
 	    if (!c0) return true;
@@ -148,31 +148,34 @@ class mesh_edge_t {
 	ON_BoundingBox &bbox();
 
 	long v[2];
-	edge_type type;
+	edge_type_t type;
 	mesh_t *m;
 	mesh_uedge_t *uedge;
 
+	mesh_tri_t *tri;
+
 	bool unused = false;
-    private:
 	bool current = false;
+    private:
 	double len = 0.0;
 	ON_BoundingBox bb;
 };
 
-class mesh_uedge {
+class mesh_uedge_t {
     public:
 
 	mesh_uedge_t() {
-	    m[0] = m[1] = NULL;
-	    e[0] = e[1] = NULL;
 	    v[0] = v[1] = -1;
+	    e[0] = e[1] = NULL;
+	    pe[0] = pe[1] = NULL;
+	    tri[0] = tri[1] = NULL;
 	    type = B_UNSET;
 	}
 
 	void clear();
 	bool set(mesh_edge_t *e1, mesh_edge_t *e2);
 
-	bool operator<(mesh_uedge other) const
+	bool operator<(mesh_uedge_t other) const
 	{
 	    bool c1 = (v[0] < other.v[0]);
 	    bool c1e = (v[0] == other.v[0]);
@@ -180,17 +183,17 @@ class mesh_uedge {
 	    return (c1 || (c1e && c2));
 	}
 
-	bool operator==(mesh_uedge other) const
+	bool operator==(mesh_uedge_t other) const
 	{
-	    bool c0 = (type == other.type && m[0] == other.m[0] && m[1] == other.m[1]);
+	    bool c0 = (type == other.type);
 	    if (!c0) return false;
 	    bool c1 = (v[0] == other.v[0]);
 	    bool c2 = (v[1] == other.v[1]);
 	    return (c1 && c2);
 	}
-	bool operator!=(mesh_uedge other) const
+	bool operator!=(mesh_uedge_t other) const
 	{
-	    bool c0 = ((type == other.type) && m[0] == other.m[0] && m[1] == other.m[1]);
+	    bool c0 = (type == other.type);
 	    if (!c0) return true;
 	    bool c1 = (v[0] != other.v[0]);
 	    bool c2 = (v[1] != other.v[1]);
@@ -202,28 +205,27 @@ class mesh_uedge {
 	double length();
 	ON_BoundingBox *bbox();
 
-	edge_type type;
+	edge_type_t type;
 	mesh_edge_t *e[2];
 	poly_edge_t *pe[2];
 	mesh_tri_t *tri[2];
-	long v1[2];
-	long v2[2];
+	long v[2];
 
-	// If mesh_uedge is also a boundary edge, more information is needed
+	// If mesh_uedge_t is also a boundary edge, more information is needed
 	int edge_ind;
 	double cp_len;
 	ON_NurbsCurve *nc;
 	double edge_start;
 	double edge_end;
 
-	mesh_point_t &edge_start_pnt;
-	mesh_point_t &edge_end_pnt;
+	mesh_point_t *edge_start_pnt;
+	mesh_point_t *edge_end_pnt;
 	ON_3dVector edge_tan_start;
 	ON_3dVector edge_tan_end;
 
 	bool unused = false;
-    private:
 	bool current = false;
+    private:
 	double len = 0.0;
 	ON_BoundingBox bb;
 };
@@ -246,7 +248,7 @@ class mesh_tri_t {
 	    v[1] = j;
 	    v[2] = k;
 	    ind = LONG_MAX;
-	    m = m;
+	    m = mesh;
 	    current = false;
 	}
 
@@ -303,8 +305,6 @@ class mesh_tri_t {
 	ON_3dPoint &center();
 	ON_3dVector &bnorm();
 	ON_3dVector &tnorm();
-	ON_Plane &tplane;
-	ON_Plane &bplane;
 
 	ON_BoundingBox &bbox();
 
@@ -322,9 +322,10 @@ class mesh_tri_t {
 };
 
 class poly_point_t {
-    mesh_point_t *mp;
-    double u;
-    double v;
+    public:
+	mesh_point_t *mp = NULL;
+	double u;
+	double v;
 };
 
 class polygon_t;
@@ -332,23 +333,23 @@ class polygon_t;
 class poly_edge_t {
     public:
 
-	poly_edge_t(polygon_t *p, ) {
+	poly_edge_t(polygon_t *p) {
 	    v[0] = v[1] = -1;
 	    polygon = p;
 	}
 
-	poly_edge_t(polygon *p, long i, long j) {
+	poly_edge_t(polygon_t *p, long i, long j) {
 	    v[0] = i;
 	    v[1] = j;
 	    polygon = p;
 	}
 
-	set(long i, long j) {
+	void set(long i, long j) {
 	    v[0] = i;
 	    v[1] = j;
 	}
 
-	bool operator<(poly_edge other) const
+	bool operator<(poly_edge_t other) const
 	{
 	    bool c1 = (v[0] < other.v[0]);
 	    bool c1e = (v[0] == other.v[0]);
@@ -356,7 +357,7 @@ class poly_edge_t {
 	    return (c1 || (c1e && c2));
 	}
 
-	bool operator==(poly_edge other) const
+	bool operator==(poly_edge_t other) const
 	{
 	    bool c0 = (type == other.type);
 	    if (!c0) return false;
@@ -364,7 +365,7 @@ class poly_edge_t {
 	    bool c2 = (v[1] == other.v[1]);
 	    return (c1 && c2);
 	}
-	bool operator!=(poly_edge other) const
+	bool operator!=(poly_edge_t other) const
 	{
 	    bool c0 = (type == other.type);
 	    if (!c0) return true;
@@ -376,12 +377,12 @@ class poly_edge_t {
 	double length();
 	ON_BoundingBox *bbox();
 
-	edge_point_t type;
+	edge_type_t type;
 	polygon_t *polygon;
 	long v[2];
-	mesh_uedge_t *ue;
-    private:
+	mesh_edge_t *ue;
 	bool current = false;
+    private:
 	double len = 0.0;
 	ON_BoundingBox bb;
 };
@@ -404,24 +405,23 @@ class poly_uedge_t {
 	    current = false;
 	}
 
-	poly_uedge_t(poly_edge e) {
+	poly_uedge_t(poly_edge_t e) {
 	    v[0] = (e.v[0] <= e.v[1]) ? e.v[0] : e.v[1];
 	    v[1] = (e.v[0] > e.v[1]) ? e.v[0] : e.v[1];
-	    len = e.len;
-	    bb = e.bb;
+	    len = e.length();
+	    bb = *e.bbox();
 	    polygon = e.polygon;
-	    len = e.len;
+	    len = e.length();
 	    current = e.current;
 	}
 
-	set(long i, long j) {
+	void set(long i, long j) {
 	    v[0] = i;
 	    v[1] = j;
-	    len = e.len;
 	    current = false;
 	}
 
-	bool operator<(poly_uedge other) const
+	bool operator<(poly_uedge_t other) const
 	{
 	    bool c1 = (v[0] < other.v[0]);
 	    bool c1e = (v[0] == other.v[0]);
@@ -429,17 +429,17 @@ class poly_uedge_t {
 	    return (c1 || (c1e && c2));
 	}
 
-	bool operator==(poly_uedge other) const
+	bool operator==(poly_uedge_t other) const
 	{
-	    bool c0 = ((type == other.type) && cdt == other.cdt);
+	    bool c0 = (type == other.type);
 	    if (!c0) return false;
 	    bool c1 = (v[0] == other.v[0]);
 	    bool c2 = (v[1] == other.v[1]);
 	    return (c1 && c2);
 	}
-	bool operator!=(poly_uedge other) const
+	bool operator!=(poly_uedge_t other) const
 	{
-	    bool c0 = ((type == other.type) && cdt == other.cdt);
+	    bool c0 = (type == other.type);
 	    if (!c0) return true;
 	    bool c1 = (v[0] != other.v[0]);
 	    bool c2 = (v[1] != other.v[1]);
@@ -449,7 +449,7 @@ class poly_uedge_t {
 	double length();
 	ON_BoundingBox *bbox();
 
-	edge_point_t type;
+	edge_type_t type;
 	polygon_t *polygon;
 	long v[2];
     private:
@@ -461,6 +461,7 @@ class poly_uedge_t {
 class polygon_t {
     std::vector<poly_point_t> p_pnts;
     std::map<long, long> o2p;
+    RTree<size_t, double, 2> p_edges_tree; // 2D spatial lookup for polygon edges
 };
 
 class mesh_t
@@ -476,7 +477,7 @@ class mesh_t
 
 	// Primary triangle container
 	std::vector<mesh_tri_t> tris_vect;
-	RTree<size_t, double 3> tris_tree;
+	RTree<size_t, double, 3> tris_tree;
 
 	// Polygonal approximation of face trimming loops
 	std::vector<polygon_t> loops;
@@ -494,14 +495,14 @@ class mesh_t
 	int f_id;
     private:
 
-	RTree<size_t, double 3> m_pnts_tree; // Spatial lookup for interior points
-	RTree<size_t, double 3> m_uedges_tree; // Spatial lookup for unordered face edges
+	RTree<size_t, double, 3> m_pnts_tree; // Spatial lookup for interior points
+	RTree<size_t, double, 3> m_uedges_tree; // Spatial lookup for unordered face edges
 
 	std::queue<size_t> m_equeue; // Available (unused) entries in m_edges_vect
 	std::queue<size_t> m_uequeue; // Available (unused) entries in m_uedges_vect
 	std::queue<size_t> m_pequeue; // Available (unused) entries in m_pdges_vect
 	std::queue<size_t> m_tqueue; // Available (unused) entries in tris_vect
-}
+};
 
 class brep_cdt_state {
     public:
@@ -510,10 +511,10 @@ class brep_cdt_state {
 
 	std::vector<mesh_edge_t> b_edges_vect; // All brep edges
 	std::vector<mesh_uedge_t> b_uedges_vect; // All brep uedges
-	RTree<size_t, double 3> b_uedges_tree; // Spatial lookup for unordered face edges
+	RTree<size_t, double, 3> b_uedges_tree; // Spatial lookup for unordered face edges
 
 
-	RTree<int, double 3> b_faces_tree; // Spatial lookup for face bboxes
+	RTree<int, double, 3> b_faces_tree; // Spatial lookup for face bboxes
 
 	ON_Brep *orig_brep = NULL;
 	ON_Brep *brep = NULL;

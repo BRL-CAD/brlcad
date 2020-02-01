@@ -48,7 +48,7 @@ brep_cdt_create(struct brep_cdt **cdt, void *bv, const char *objname)
 {
     if (!cdt || !bv) return -1;
     (*cdt) = new brep_cdt;
-    return brep_cdt_init(*cdt);
+    return brep_cdt_init(*cdt, bv, objname);
 }
 
 static void
@@ -71,7 +71,7 @@ brep_cdt_destroy(struct brep_cdt *s)
 // TODO - need a flag variable to enable various modes (watertightness,
 // validity, overlap resolving - no need for separate functions for all that...)
 int
-brep_cdt_triangulate(struct brep_cdt *s_cdt, int face_cnt, int *faces)
+brep_cdt_triangulate(struct brep_cdt *s_cdt, int UNUSED(face_cnt), int *UNUSED(faces))
 {
     if (!s_cdt) return -1;
 
@@ -79,7 +79,7 @@ brep_cdt_triangulate(struct brep_cdt *s_cdt, int face_cnt, int *faces)
     ON_wString wonstr;
     ON_TextLog vout(wonstr);
     if (!s_cdt->i->s.orig_brep->IsValid(&vout)) {
-	bu_vls_printf(s->msgs, "NOTE: brep is NOT valid, cannot produce watertight mesh\n");
+	bu_vls_printf(s_cdt->msgs, "NOTE: brep is NOT valid, cannot produce watertight mesh\n");
     }
 
     // For now, edges must have 2 and only 2 trims for this to work.
@@ -88,25 +88,21 @@ brep_cdt_triangulate(struct brep_cdt *s_cdt, int face_cnt, int *faces)
     // collapse back to the original logic...
     // for that matter, if we want the fastest possible mesh regardless of quality we should
     // be able to do that...
-    for (int index = 0; index < s_cdt->orig_brep->m_E.Count(); index++) {
-	ON_BrepEdge& edge = s_cdt->orig_brep->m_E[index];
+    for (int index = 0; index < s_cdt->i->s.orig_brep->m_E.Count(); index++) {
+	ON_BrepEdge& edge = s_cdt->i->s.orig_brep->m_E[index];
 	if (edge.TrimCount() != 2) {
-	    bu_vls_printf(s->msgs, "Edge %d trim count: %d - can't (yet) do watertight meshing\n", edge.m_edge_index, edge.TrimCount());
+	    bu_vls_printf(s_cdt->msgs, "Edge %d trim count: %d - can't (yet) do watertight meshing\n", edge.m_edge_index, edge.TrimCount());
 	    return -1;
 	}
     }
 
     // We may be changing the ON_Brep data, so work on a copy
     // rather than the original object
-    if (!s_cdt->brep) {
+    s_cdt->i->s.brep = new ON_Brep(*s_cdt->i->s.orig_brep);
 
-	s_cdt->i->s.brep = new ON_Brep(*s_cdt->orig_brep);
-
-	// Attempt to minimize situations where 2D and 3D distances get out of sync
-	// by shrinking the surfaces down to the active area of the face
-	s_cdt->i->s.brep->ShrinkSurfaces();
-
-    }
+    // Attempt to minimize situations where 2D and 3D distances get out of sync
+    // by shrinking the surfaces down to the active area of the face
+    s_cdt->i->s.brep->ShrinkSurfaces();
 
     ON_Brep* brep = s_cdt->i->s.brep;
 
@@ -158,6 +154,7 @@ brep_cdt_triangulate(struct brep_cdt *s_cdt, int face_cnt, int *faces)
      * average of the surface normals at the junction from faces that don't use
      * a singular trim to reference the vertex. */
 
+    return 0;
 }
 
 
