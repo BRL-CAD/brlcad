@@ -24,7 +24,7 @@ set(LIBBREP_SOURCES
   Subcurve.cpp
   Subsurface.cpp
   boolean.cpp
-  cdt2/cdt.cpp
+  #cdt2/cdt.cpp
   cdt/cdt.cpp
   cdt/surf.cpp
   cdt/util.cpp
