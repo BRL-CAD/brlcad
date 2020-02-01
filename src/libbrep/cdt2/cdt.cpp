@@ -28,7 +28,141 @@
 #include "common.h"
 #include "bu/malloc.h"
 #include "bu/vls.h"
+#include "brep/pullback.h"
 #include "./cdt.h"
+
+#define BREP_PLANAR_TOL 0.05
+
+static ON_3dVector
+calc_trim_vnorm(ON_BrepVertex& v, ON_BrepTrim *trim)
+{
+    ON_3dPoint t1, t2;
+    ON_3dVector v1 = ON_3dVector::UnsetVector;
+    ON_3dVector v2 = ON_3dVector::UnsetVector;
+    ON_3dVector trim_norm = ON_3dVector::UnsetVector;
+
+    ON_Interval trange = trim->Domain();
+    ON_3dPoint t_2d1 = trim->PointAt(trange[0]);
+    ON_3dPoint t_2d2 = trim->PointAt(trange[1]);
+
+    ON_Plane fplane;
+    const ON_Surface *s = trim->SurfaceOf();
+    double ptol = s->BoundingBox().Diagonal().Length()*0.001;
+    ptol = (ptol < BREP_PLANAR_TOL) ? ptol : BREP_PLANAR_TOL;
+    if (s->IsPlanar(&fplane, ptol)) {
+        trim_norm = fplane.Normal();
+        if (trim->Face()->m_bRev) {
+            trim_norm = trim_norm * -1;
+        }
+    } else {
+        int ev1 = 0;
+        int ev2 = 0;
+        if (surface_EvNormal(s, t_2d1.x, t_2d1.y, t1, v1)) {
+            if (trim->Face()->m_bRev) {
+                v1 = v1 * -1;
+            }
+            ev1 = 1;
+        }
+        if (surface_EvNormal(s, t_2d2.x, t_2d2.y, t2, v2)) {
+            if (trim->Face()->m_bRev) {
+                v2 = v2 * -1;
+            }
+            ev2 = 1;
+        }
+        // If we got both of them, go with the closest one
+        if (ev1 && ev2) {
+            trim_norm = (v.Point().DistanceTo(t1) < v.Point().DistanceTo(t2)) ? v1 : v2;
+        }
+
+        if (ev1 && !ev2) {
+            trim_norm = v1;
+        }
+
+        if (!ev1 && ev2) {
+            trim_norm = v2;
+        }
+    }
+
+    return trim_norm;
+}
+
+static ON_3dVector
+singular_vert_norm(ON_Brep *brep, int index)
+{
+    ON_BrepVertex &v = brep->m_V[index];
+    ON_3dVector vnrml = ON_3dVector::UnsetVector;
+    bool have_calculated = false;
+    for (int eind = 0; eind != v.EdgeCount(); eind++) {
+	ON_3dVector trim1_norm = ON_3dVector::UnsetVector;
+	ON_3dVector trim2_norm = ON_3dVector::UnsetVector;
+	ON_BrepEdge& edge = brep->m_E[v.m_ei[eind]];
+	if (edge.TrimCount() != 2) {
+	    // Don't know what to do with this yet... skip.
+	    continue;
+	}
+	ON_BrepTrim *trim1 = edge.Trim(0);
+	ON_BrepTrim *trim2 = edge.Trim(1);
+
+	if (trim1->m_type != ON_BrepTrim::singular) {
+	    trim1_norm = calc_trim_vnorm(v, trim1);
+	}
+	if (trim2->m_type != ON_BrepTrim::singular) {
+	    trim2_norm = calc_trim_vnorm(v, trim2);
+	}
+
+	// If one of the normals is unset and the other comes from a plane, use it
+	if (trim1_norm == ON_3dVector::UnsetVector && trim2_norm != ON_3dVector::UnsetVector) {
+	    const ON_Surface *s2 = trim2->SurfaceOf();
+	    if (!s2->IsPlanar(NULL, ON_ZERO_TOLERANCE)) {
+		continue;
+	    }
+	    trim1_norm = trim2_norm;
+	}
+	if (trim1_norm != ON_3dVector::UnsetVector && trim2_norm == ON_3dVector::UnsetVector) {
+	    const ON_Surface *s1 = trim1->SurfaceOf();
+	    if (!s1->IsPlanar(NULL, ON_ZERO_TOLERANCE)) {
+		continue;
+	    }
+	    trim2_norm = trim1_norm;
+	}
+
+	// If we have disagreeing normals and one of them is from a planar surface, go
+	// with that one
+	if (NEAR_EQUAL(ON_DotProduct(trim1_norm, trim2_norm), -1, VUNITIZE_TOL)) {
+	    const ON_Surface *s1 = trim1->SurfaceOf();
+	    const ON_Surface *s2 = trim2->SurfaceOf();
+	    if (!s1->IsPlanar(NULL, ON_ZERO_TOLERANCE) && !s2->IsPlanar(NULL, ON_ZERO_TOLERANCE)) {
+		// Normals severely disagree, no planar surface to fall back on - can't use this
+		continue;
+	    }
+	    if (s1->IsPlanar(NULL, ON_ZERO_TOLERANCE) && s2->IsPlanar(NULL, ON_ZERO_TOLERANCE)) {
+		// Two disagreeing planes - can't use this
+		continue;
+	    }
+	    if (s1->IsPlanar(NULL, ON_ZERO_TOLERANCE)) {
+		trim2_norm = trim1_norm;
+	    }
+	    if (s2->IsPlanar(NULL, ON_ZERO_TOLERANCE)) {
+		trim1_norm = trim2_norm;
+	    }
+	}
+
+	// Add the normals to the vnrml total
+	vnrml += trim1_norm;
+	vnrml += trim2_norm;
+	have_calculated = 1;
+    }
+
+    if (!have_calculated) {
+	return ON_3dVector::UnsetVector;
+    }
+
+    // Average all the successfully calculated normals into a new unit normal
+    vnrml.Unitize();
+
+    return vnrml;
+}
+
 
 static int
 brep_cdt_init(struct brep_cdt *s, void *bv, const char *objname)
@@ -119,11 +253,33 @@ brep_cdt_triangulate(struct brep_cdt *s_cdt, int UNUSED(face_cnt), int *UNUSED(f
 	}
     }
 
-    // TODO - populate b_pnts with all the vertex points.
-    // NOTE: At this stage need the index of each b_pnt to match the
-    // ON_BrepVertex index value the edges use, so we can populate the edge
-    // structures without having to build a std::map.  If for any reason
-    // that should not prove viable, need to build and use the map.
+    // Populate b_pnts with all the vertex points.
+    for (int vert_index = 0; vert_index < brep->m_V.Count(); vert_index++) {
+	mesh_point_t np;
+	np.vert_index = vert_index;
+	np.p = brep->m_V[vert_index].Point();
+	np.n = ON_3dVector::UnsetVector;
+	np.type = B_VERT;
+	s_cdt->i->s.b_pnts.push_back(np);
+    }
+
+    // Flag singular vertices.
+    for (int index = 0; index < brep->m_T.Count(); index++) {
+	ON_BrepTrim &trim = brep->m_T[index];
+	if (trim.m_type == ON_BrepTrim::singular) {
+	    s_cdt->i->s.b_pnts[trim.Vertex(0)->m_vertex_index].singular = true;
+	    s_cdt->i->s.b_pnts[trim.Vertex(1)->m_vertex_index].singular = true;
+	}
+    }
+
+    // Calculate normals for singular vertices - the surface normals at those
+    // aren't well defined, so other nearby information must be used.
+    for (size_t index = 0; index < s_cdt->i->s.b_pnts.size(); index++) {
+	mesh_point_t &p = s_cdt->i->s.b_pnts[index];
+	if (p.singular) {
+	    p.n = singular_vert_norm(brep, p.vert_index);
+	}
+    }
 
     // TODO - populate b_edges_vect with all m_E edges.
     // NOTE: At this stage need the index of each b_edge to match the
