@@ -590,6 +590,13 @@ class brep_cdt_state {
 	ON_Brep *brep = NULL;
 
 	std::string name;
+	struct brep_cdt *cdt;
+
+	void brep_cpy_init();
+	void verts_init();
+	void uedges_init();
+	void edges_init();
+
     private:
 	std::queue<size_t> b_equeue; // Available (unused) entries in edges_vect
 	std::queue<size_t> b_uequeue; // Available (unused) entries in uedges_vect
