@@ -212,10 +212,13 @@ brep_cdt_triangulate(struct brep_cdt *s_cdt, int UNUSED(face_cnt), int *UNUSED(f
     // definition the two ordered edges will have the same bounding box in
     // space.
 
-    /* Check for singular trims.  Vertices associated with such a trim are
-     * categorized as singular vertices.  Get vertex normals that are the
-     * average of the surface normals at the junction from faces that don't use
-     * a singular trim to reference the vertex. */
+    // When we get to splitting: the maximum normal tolerance allowed should
+    // probably be 45 degrees - that's splitting a half circle twice, which is
+    // pretty much the minimum needed to get anything remotely represenative of
+    // the curve (one split per half produces a square for a circle, which is
+    // deceptive.)  Need to apply that to surface sampling as well - might help
+    // with the "define a minimum valid surface point sampling density"
+    // question...
 
     return 0;
 }
