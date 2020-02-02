@@ -97,7 +97,7 @@ brep_cdt_triangulate(struct brep_cdt *s_cdt, int UNUSED(face_cnt), int *UNUSED(f
 	}
     }
 
-    // We may be changing the ON_Brep data, so work on a copy
+    // We will probably be changing the ON_Brep data, so work on a copy
     // rather than the original object
     s_cdt->i->s.brep = new ON_Brep(*s_cdt->i->s.orig_brep);
 
@@ -123,6 +123,7 @@ brep_cdt_triangulate(struct brep_cdt *s_cdt, int UNUSED(face_cnt), int *UNUSED(f
     // Populate b_pnts with all the vertex points.
     for (int vert_index = 0; vert_index < brep->m_V.Count(); vert_index++) {
 	mesh_point_t np;
+	np.cdt = s_cdt;
 	np.vert_index = vert_index;
 	np.p = brep->m_V[vert_index].Point();
 	np.n = ON_3dVector::UnsetVector;
@@ -161,7 +162,7 @@ brep_cdt_triangulate(struct brep_cdt *s_cdt, int UNUSED(face_cnt), int *UNUSED(f
     // individual faces.  As yet, we're not concerned with specific faces, so
     // only create the unordered edges.
     //
-    // NOTE: At this stage need the index of each b_edge to match the
+    // NOTE: At this stage need the index of each b_uedge to match the
     // ON_BrepEdge index value, so we can populate the loop structures without
     // having to build a std::map.  If for any reason that should not prove
     // viable, need to build and use the map.
@@ -170,6 +171,7 @@ brep_cdt_triangulate(struct brep_cdt *s_cdt, int UNUSED(face_cnt), int *UNUSED(f
 	long v0 = edge.Vertex(0)->m_vertex_index;
 	long v1 = edge.Vertex(1)->m_vertex_index;
 	mesh_uedge_t ue;
+	ue.cdt = s_cdt;
 	ue.v[0] = (v1 > v0) ? v0 : v1;
 	ue.v[1] = (v1 > v0) ? v1 : v0;
 	ue.edge_ind = index;
@@ -177,12 +179,14 @@ brep_cdt_triangulate(struct brep_cdt *s_cdt, int UNUSED(face_cnt), int *UNUSED(f
 	ue.edge_end_pnt = v1;
 
 	// Characterize the edge type
-	ue.split_type = find_edge_type(s_cdt, edge);
-	ue.type = (ue.split_type == 0) ? B_SINGULAR : B_BOUNDARY;
+	ue.type = (edge.EdgeCurveOf() == NULL) ? B_SINGULAR : B_BOUNDARY;
 
 	// Set up the NURBS curve to be used for splitting
 	const ON_Curve* crv = edge.EdgeCurveOf();
 	ue.nc = crv->NurbsCurve();
+	double c_len_tol = 0.1 * ue.nc->ControlPolygonLength();
+	double tol = (c_len_tol < BN_TOL_DIST) ? c_len_tol : BN_TOL_DIST;
+	ue.linear = crv->IsLinear(tol);
 	// Match the parameterization to the control polygon length, so
 	// distances in t value will have some relationship to 3D distances
 	ue.cp_len = ue.nc->ControlPolygonLength();
@@ -190,11 +194,30 @@ brep_cdt_triangulate(struct brep_cdt *s_cdt, int UNUSED(face_cnt), int *UNUSED(f
 	ue.t_start = 0.0;
 	ue.t_end = ue.cp_len;
 
+	// Calculate the edge length once up front
+	ue.len = s_cdt->i->s.b_pnts[ue.v[0]].p.DistanceTo(s_cdt->i->s.b_pnts[ue.v[1]].p);
+
+	// Set an initial edge bbox
+	ue.bbox_update();
+
+	// Add the uedge to the brep container
+	s_cdt->i->s.b_uedges_vect.push_back(ue);
+
+	// Establish the vertex to edge connectivity
+	s_cdt->i->s.b_pnts[ue.v[0]].uedges.insert(index);
+	s_cdt->i->s.b_pnts[ue.v[1]].uedges.insert(index);
+    }
+
+    // Set initial vert bboxes, based on the smallest initial edge length associated
+    // with that vertex.
+    for (size_t index = 0; index < s_cdt->i->s.b_pnts.size(); index++) {
+	s_cdt->i->s.b_pnts[index].bbox_update();
     }
 
     // Set trim curve domains to match the edge curve domains.
     for (int index = 0; index < brep->m_T.Count(); index++) {
     }
+
 
     // Vertices and edges are the only two elements that are not unique to
     // faces.  However, to build up unordered edges we also want the polygon

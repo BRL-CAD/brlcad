@@ -31,48 +31,45 @@
 #include "brep/pullback.h"
 #include "./cdt.h"
 
-
-int
-find_edge_type(struct brep_cdt *s, ON_BrepEdge &edge)
+void
+mesh_uedge_t::bbox_update()
 {
-    const ON_Curve* crv = edge.EdgeCurveOf();
+    if (type == B_SINGULAR) return;
 
-    // Singularity
-    if (!crv) {
-	return 0;
+    double tmid = t_start + (t_end - t_start)*0.5;
+    ON_3dPoint trim_3d = nc->PointAt(tmid);
+
+    ON_3dPoint &p3d1 = cdt->i->s.b_pnts[v[0]].p;
+    ON_3dPoint &p3d2 = cdt->i->s.b_pnts[v[1]].p;
+    ON_Line line(p3d1, p3d2);
+
+    double arc_dist = 2*trim_3d.DistanceTo(line.ClosestPointTo(trim_3d));
+
+    ON_3dPoint pztol(ON_ZERO_TOLERANCE, ON_ZERO_TOLERANCE, ON_ZERO_TOLERANCE);
+    bb = line.BoundingBox();
+    bb.m_max = bb.m_max + pztol;
+    bb.m_min = bb.m_min - pztol;
+
+    double bdist = (0.5*len > arc_dist) ? 0.5*len: arc_dist;
+    double xdist = bb.m_max.x - bb.m_min.x;
+    double ydist = bb.m_max.y - bb.m_min.y;
+    double zdist = bb.m_max.z - bb.m_min.z;
+    // If we're close to the edge, we want to know - the Search callback will
+    // check the precise distance and make a decision on what to do.
+    if (xdist < bdist) {
+        bb.m_min.x = bb.m_min.x - 0.5*bdist;
+        bb.m_max.x = bb.m_max.x + 0.5*bdist;
+    }
+    if (ydist < bdist) {
+        bb.m_min.y = bb.m_min.y - 0.5*bdist;
+        bb.m_max.y = bb.m_max.y + 0.5*bdist;
+    }
+    if (zdist < bdist) {
+        bb.m_min.z = bb.m_min.z - 0.5*bdist;
+        bb.m_max.z = bb.m_max.z + 0.5*bdist;
     }
 
-    // Curved edge
-    if (!crv->IsLinear(BN_TOL_DIST)) {
-	return 1;
-    }
-
-    // NOTE: for what we're actually using this for, it would be better to
-    // detect when the surface breakdown isn't yet terminated according to the
-    // surfaces tolerances, but overlaps an edge bbox with the segment longer
-    // than the box dimenension - and in that case, split the edge curves
-    // according to what the surface needs locally.  The drawback to that approach is
-    // it complicates the workflow - right now it's all edges then all surface
-    // points, and if we start changing boundary edges in response to surface
-    // point sampling we're going to greatly complicate parallelization.
-    // However, trying to do it this way we're getting cases where a very small
-    // edge curve in a loop is resulting in dense tessellations for entire
-    // surfaces as the edge curves get chopped up in response...
-
-    // Linear edge, at least one non-planar surface
-    const ON_Surface *s1= edge.Trim(0)->SurfaceOf();
-    const ON_Surface *s2= edge.Trim(1)->SurfaceOf();
-    if (!s1->IsPlanar(NULL, BN_TOL_DIST) || !s2->IsPlanar(NULL, BN_TOL_DIST)) {
-	return 2;
-    }
-
-    // Linear edge, at least one associated non-linear edge
-    if (s->i->s.b_pnts[edge.Vertex(0)->m_vertex_index].on_curved_edge || s->i->s.b_pnts[edge.Vertex(1)->m_vertex_index].on_curved_edge) {
-	return 3;
-    }
-
-    // Linear edge, only associated with linear edges and planar faces
-    return 4;
+    // TODO - update box in rtree
 }
 
 

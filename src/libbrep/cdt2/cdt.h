@@ -123,7 +123,9 @@ class mesh_point_t {
 
 	// Topology information: associated object and edges
 	struct brep_cdt *cdt;
-	std::vector<mesh_edge_t *> edges;
+	std::set<size_t> uedges;
+
+	void bbox_update();
 
 	// Origin information - specifics about what vertex, edge or surface on the
 	// mesh is connected to this particular point.  Which set of information is
@@ -194,7 +196,6 @@ class mesh_edge_t {
 	    return (c1 || c2);
 	}
 
-	double length();
 	ON_BoundingBox &bbox();
 
 	long v[2];
@@ -204,10 +205,11 @@ class mesh_edge_t {
 
 	mesh_tri_t *tri;
 
+	double len = 0.0;
 	bool unused = false;
 	bool current = false;
+
     private:
-	double len = 0.0;
 	ON_BoundingBox bb;
 };
 
@@ -252,9 +254,9 @@ class mesh_uedge_t {
 
 	bool split(ON_3dPoint &p);
 
-	double length();
 	ON_BoundingBox *bbox();
 
+	struct brep_cdt *cdt;
 	edge_type_t type;
 	int split_type;
 	mesh_edge_t *e[2];
@@ -274,10 +276,13 @@ class mesh_uedge_t {
 	ON_3dVector edge_tan_start = ON_3dVector::UnsetVector;
 	ON_3dVector edge_tan_end = ON_3dVector::UnsetVector;
 
+	void bbox_update();
+
+	double len = 0.0;
+	bool linear = false;
 	bool unused = false;
 	bool current = false;
     private:
-	double len = 0.0;
 	ON_BoundingBox bb;
 };
 
@@ -425,16 +430,15 @@ class poly_edge_t {
 	    return (c1 || c2);
 	}
 
-	double length();
 	ON_BoundingBox *bbox();
 
 	edge_type_t type;
 	polygon_t *polygon;
 	long v[2];
 	mesh_edge_t *ue;
+	double len = 0.0;
 	bool current = false;
     private:
-	double len = 0.0;
 	ON_BoundingBox bb;
 };
 
@@ -459,10 +463,10 @@ class poly_uedge_t {
 	poly_uedge_t(poly_edge_t e) {
 	    v[0] = (e.v[0] <= e.v[1]) ? e.v[0] : e.v[1];
 	    v[1] = (e.v[0] > e.v[1]) ? e.v[0] : e.v[1];
-	    len = e.length();
+	    len = e.len;
 	    bb = *e.bbox();
 	    polygon = e.polygon;
-	    len = e.length();
+	    len = e.len;
 	    current = e.current;
 	}
 
@@ -497,15 +501,14 @@ class poly_uedge_t {
 	    return (c1 || c2);
 	}
 
-	double length();
 	ON_BoundingBox *bbox();
 
+	double len;
 	edge_type_t type;
 	polygon_t *polygon;
 	long v[2];
     private:
 	bool current;
-	double len;
 	ON_BoundingBox bb;
 };
 
@@ -599,9 +602,6 @@ struct brep_cdt_impl {
 
 // Vertex processing routines
 ON_3dVector singular_vert_norm(ON_Brep *brep, int index);
-
-// Edge processing routines
-int find_edge_type(struct brep_cdt *s, ON_BrepEdge &edge);
 
 /** @} */
 

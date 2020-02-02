@@ -161,6 +161,37 @@ singular_vert_norm(ON_Brep *brep, int index)
     return vnrml;
 }
 
+double
+mesh_point_t::min_len()
+{
+    double slen = DBL_MAX;
+    std::set<size_t>::iterator e_it;
+    for (e_it = uedges.begin(); e_it != uedges.end(); e_it++) {
+	mesh_uedge_t &ue = cdt->i->s.b_uedges_vect[*e_it];
+	if (ue.type == B_SINGULAR) continue;
+	slen = (slen > ue.len) ? ue.len : slen;
+    }
+    return slen;
+}
+
+void
+mesh_point_t::bbox_update()
+{
+    ON_3dPoint pztol(ON_ZERO_TOLERANCE, ON_ZERO_TOLERANCE, ON_ZERO_TOLERANCE);
+    bb = ON_BoundingBox(p,p);
+    bb.m_max = bb.m_max + pztol;
+    bb.m_min = bb.m_min - pztol;
+
+    double slen = min_len();
+    ON_3dPoint nbbp;
+    ON_3dPoint bdelta(slen*0.5, slen*0.5, slen*0.5);
+    nbbp = p + bdelta;
+    bb.Set(nbbp, true);
+    nbbp = p - bdelta;
+    bb.Set(nbbp, true);
+
+    // TODO - update box in rtree
+}
 
 /** @} */
 
