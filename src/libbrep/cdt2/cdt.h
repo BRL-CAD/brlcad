@@ -33,6 +33,7 @@
 
 #include "../cdt/RTree.h"
 #include "vmath.h"
+#include "bn/tol.h"
 #include "brep/defines.h"
 #include "brep/cdt2.h"
 
@@ -82,6 +83,7 @@ class mesh_point_t {
 	// B_VERT
 	int vert_index;
 	bool singular;
+	bool on_curved_edge = false;
 	// B_EDGE
 	int trim_index;
 	int edge_index;
@@ -206,22 +208,23 @@ class mesh_uedge_t {
 	ON_BoundingBox *bbox();
 
 	edge_type_t type;
+	int split_type;
 	mesh_edge_t *e[2];
 	poly_edge_t *pe[2];
 	mesh_tri_t *tri[2];
 	long v[2];
 
 	// If mesh_uedge_t is also a boundary edge, more information is needed
-	int edge_ind;
-	double cp_len;
-	ON_NurbsCurve *nc;
-	double edge_start;
-	double edge_end;
+	int edge_ind = -1;
+	double cp_len = DBL_MAX;
+	ON_NurbsCurve *nc = NULL;
+	double t_start = DBL_MAX;
+	double t_end = DBL_MAX;
 
-	mesh_point_t *edge_start_pnt;
-	mesh_point_t *edge_end_pnt;
-	ON_3dVector edge_tan_start;
-	ON_3dVector edge_tan_end;
+	int edge_start_pnt = -1;
+	int edge_end_pnt = -1;
+	ON_3dVector edge_tan_start = ON_3dVector::UnsetVector;
+	ON_3dVector edge_tan_end = ON_3dVector::UnsetVector;
 
 	bool unused = false;
 	bool current = false;
@@ -491,6 +494,22 @@ class mesh_t
 	// correct ordering.  Returns -1 if no such edge exists
 	long find_edge(long v1, long v2);
 
+	mesh_edge_t &new_edge();
+	mesh_uedge_t &new_uedge() {
+	    if (m_uequeue.size()) {
+		mesh_uedge_t &nue = m_uedges_vect[m_uequeue.front()];
+		m_uequeue.pop();
+		return nue;
+	    } else {
+		mesh_uedge_t nue;
+		nue.edge_ind = m_uedges_vect.size();
+		m_uedges_vect.push_back(nue);
+		mesh_uedge_t &rnue = m_uedges_vect[nue.edge_ind];
+		return rnue;
+	    }
+	}
+	mesh_tri_t &new_tri();
+
 	struct brep_cdt *cdt;
 	int f_id;
     private:
@@ -528,6 +547,13 @@ class brep_cdt_state {
 struct brep_cdt_impl {
     brep_cdt_state s;
 };
+
+
+// Vertex processing routines
+ON_3dVector singular_vert_norm(ON_Brep *brep, int index);
+
+// Edge processing routines
+int find_edge_type(struct brep_cdt *s, ON_BrepEdge &edge);
 
 /** @} */
 
