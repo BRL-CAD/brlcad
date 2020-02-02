@@ -17,12 +17,6 @@ set(BREP_LOCAL_INCLUDE_DIRS
 
 BRLCAD_LIB_INCLUDE_DIRS(brep BREP_INCLUDE_DIRS BREP_LOCAL_INCLUDE_DIRS)
 
-set(CDT2_srcs
-  cdt2/cdt.cpp
-  cdt2/vert.cpp
-  cdt2/edge.cpp
-  )
-
 set(LIBBREP_SOURCES
   BBNode.cpp
   BRNode.cpp
@@ -30,7 +24,6 @@ set(LIBBREP_SOURCES
   Subcurve.cpp
   Subsurface.cpp
   boolean.cpp
-  ${CDT2_srcs}
   cdt/cdt.cpp
   cdt/surf.cpp
   cdt/util.cpp
@@ -54,6 +47,15 @@ set(LIBBREP_SOURCES
   tools/util.cpp
   #opennurbs_fit.cpp
   )
+
+set(CDT2_srcs
+  cdt2/cdt.cpp
+  cdt2/vert.cpp
+  cdt2/edge.cpp
+  )
+if (ENABLE_CDT2)
+  set(LIBBREP_SOURCES ${LIBBREP_SOURCES} ${CDT2_srcs})
+endif (ENABLE_CDT2)
 
 set(libbrep_ignored_files
   tools/tools.h
