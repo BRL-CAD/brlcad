@@ -25,6 +25,54 @@
  *
  */
 
+
+/*
+Design thoughts:
+
+When performing triangle insertions from the CDT, can use the ordered
+edges and unordered edges to valid the triangles as they go in, rather
+than trying to do it after the fact:
+
+1.  Any triangle with two vertices on a singularity is degenerate - skip.
+
+2.  Before inserting a triangle into the mesh, make sure all three triangle
+edges would reference unique unordered edges in 3D.  We've seen at least one
+instance of a 2D triangle that ended up using the same interior edge for 2 of
+its edges - that's a degenerate triangle, just filter it out.
+
+3.  For a proposed insertion triangle, check it's three edges against the
+unordered edge tree.   RTree uedge lookup will be used for this - in principle
+it should be quicker than a std::map lookup by taking advantage of the spatial
+grouping of the mesh.  There should be at least one pre existing edge (from the
+mesh boundary if not from an already inserted triangle) that is already in the
+containers and will be linked to the new triangle.  Check that unordered edge's
+associated ordered edge that doesn't have an associated triangle against the
+new triangle edges -  if there's not a match, flip the triangle ordering and
+try again.
+
+What this will do is force all triangles in 3D to form a valid topology,
+regardless of whether or not the original CDT triangles would have formed such
+a topology if naively translated.  Then we can check the triangle normals
+against the brep normals and locally address those problem areas, but without
+unmated edges being one of the potential issues.  I.e. the mesh will stay
+as "valid" as possible in BoT terms at all times, even during the initial build.
+
+
+During the initial edge breakdown, split all curved edges to a 45 degree normal
+tolerance at an absolute minimum.  Do the same for the surface.  Drive curve
+refinement using the size of the surface patches overlapping the edges, and
+vice versa - needs to be handled so we don't get infinite looping, but the idea
+is that curves, surfaces, and otherwise unsplit curves and surfaces in the
+vicinity of curves and surfaces needing splitting will be (locally) refined
+consistently.  Should terminate with those curve/surface areas that need it
+(and only those) refined per tolerance settings, or to minimal standard.
+Hopefully that will avoid the need for the various special case rules currently
+defined based on linear/non-linear pairings and such, which don't always do
+what we want/need locally in any event.
+
+*/
+
+
 #include "common.h"
 
 #include <map>
