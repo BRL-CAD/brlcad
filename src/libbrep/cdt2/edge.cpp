@@ -36,37 +36,40 @@ mesh_uedge_t::bbox_update()
 {
     if (type == B_SINGULAR) return;
 
-    double tmid = t_start + (t_end - t_start)*0.5;
-    ON_3dPoint trim_3d = nc->PointAt(tmid);
-
     ON_3dPoint &p3d1 = cdt->i->s.b_pnts[v[0]].p;
     ON_3dPoint &p3d2 = cdt->i->s.b_pnts[v[1]].p;
     ON_Line line(p3d1, p3d2);
-
-    double arc_dist = 2*trim_3d.DistanceTo(line.ClosestPointTo(trim_3d));
-
     ON_3dPoint pztol(ON_ZERO_TOLERANCE, ON_ZERO_TOLERANCE, ON_ZERO_TOLERANCE);
     bb = line.BoundingBox();
     bb.m_max = bb.m_max + pztol;
     bb.m_min = bb.m_min - pztol;
 
-    double bdist = (0.5*len > arc_dist) ? 0.5*len: arc_dist;
-    double xdist = bb.m_max.x - bb.m_min.x;
-    double ydist = bb.m_max.y - bb.m_min.y;
-    double zdist = bb.m_max.z - bb.m_min.z;
-    // If we're close to the edge, we want to know - the Search callback will
-    // check the precise distance and make a decision on what to do.
-    if (xdist < bdist) {
-        bb.m_min.x = bb.m_min.x - 0.5*bdist;
-        bb.m_max.x = bb.m_max.x + 0.5*bdist;
-    }
-    if (ydist < bdist) {
-        bb.m_min.y = bb.m_min.y - 0.5*bdist;
-        bb.m_max.y = bb.m_max.y + 0.5*bdist;
-    }
-    if (zdist < bdist) {
-        bb.m_min.z = bb.m_min.z - 0.5*bdist;
-        bb.m_max.z = bb.m_max.z + 0.5*bdist;
+    if (type == B_BOUNDARY) {
+	// For boundary edges, we want to bound the nearby neighborhood as well
+	// as the line itself.  Start by bounding the portion of the NURBS curve
+	// involved with this portion of the boundary
+	ON_NurbsCurve sc;
+	ON_Interval domain(t_start, t_end);
+	nc->GetNurbForm(sc, 0.0, &domain);
+	bb = sc.BoundingBox();
+
+	// Be more aggressive - if we're close to a face edge, we need to know
+	double bdist = 0.5*len;
+	double xdist = bb.m_max.x - bb.m_min.x;
+	double ydist = bb.m_max.y - bb.m_min.y;
+	double zdist = bb.m_max.z - bb.m_min.z;
+	if (xdist < bdist) {
+	    bb.m_min.x = bb.m_min.x - 0.5*bdist;
+	    bb.m_max.x = bb.m_max.x + 0.5*bdist;
+	}
+	if (ydist < bdist) {
+	    bb.m_min.y = bb.m_min.y - 0.5*bdist;
+	    bb.m_max.y = bb.m_max.y + 0.5*bdist;
+	}
+	if (zdist < bdist) {
+	    bb.m_min.z = bb.m_min.z - 0.5*bdist;
+	    bb.m_max.z = bb.m_max.z + 0.5*bdist;
+	}
     }
 
     // TODO - update box in rtree

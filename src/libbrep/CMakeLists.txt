@@ -30,7 +30,7 @@ set(LIBBREP_SOURCES
   Subcurve.cpp
   Subsurface.cpp
   boolean.cpp
-  #${CDT2_srcs}
+  ${CDT2_srcs}
   cdt/cdt.cpp
   cdt/surf.cpp
   cdt/util.cpp
