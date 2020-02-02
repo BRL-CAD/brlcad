@@ -134,7 +134,18 @@ namespace brlcad {
 bool
 ON_NurbsCurve_GetClosestPoint(
 	double *t,
+	ON_3dPoint *cp,
 	const ON_NurbsCurve *nc,
+	const ON_3dPoint &p,
+	double maximum_distance = 0.0,
+	const ON_Interval *sub_domain = NULL
+	);
+
+
+bool
+ON_TrimCurve_GetClosestPoint(
+	double *t,
+	const ON_BrepTrim *trim,
 	const ON_3dPoint &p,
 	double maximum_distance = 0.0,
 	const ON_Interval *sub_domain = NULL

@@ -216,6 +216,8 @@ ON_NurbsCurve_GetClosestPoint(
 	const ON_Interval *sub_domain = NULL
 	)
 {
+    if (!t || !nc) return false;
+
     ON_Interval domain = (sub_domain) ? *sub_domain : nc->Domain();
     size_t init_sample_cnt = nc->CVCount() * nc->Degree();
     double span = 1.0/(double)(init_sample_cnt);
@@ -297,6 +299,119 @@ ON_NurbsCurve_GetClosestPoint(
 
     return true;
 }
+
+static double
+trim_binary_search(fastf_t *tparam, const ON_BrepTrim *trim, double tstart, double tend, const ON_3dPoint &edge_3d, double tol, int depth, int force)
+{
+    double tcparam = (tstart + tend) / 2.0;
+    ON_3dPoint trim_2d = trim->PointAt(tcparam);
+    const ON_Surface *s = trim->SurfaceOf();
+    ON_3dPoint trim_3d = s->PointAt(trim_2d.x, trim_2d.y);
+    double dist = edge_3d.DistanceTo(trim_3d);
+
+    if (dist > tol && !force) {
+	ON_3dPoint trim_start_2d = trim->PointAt(tstart);
+	ON_3dPoint trim_end_2d = trim->PointAt(tend);
+	ON_3dPoint trim_start_3d = s->PointAt(trim_start_2d.x, trim_start_2d.y);
+	ON_3dPoint trim_end_3d = s->PointAt(trim_end_2d.x, trim_end_2d.y);
+
+	ON_3dVector v1 = edge_3d - trim_start_3d;
+	ON_3dVector v2 = edge_3d - trim_end_3d;
+	double vdot = ON_DotProduct(v1,v2);
+
+	if (vdot < 0 && dist > ON_ZERO_TOLERANCE) {
+	    double tlparam, trparam;
+	    double fldist = trim_binary_search(&tlparam, trim, tstart, tcparam, edge_3d, tol, depth+1, 0);
+	    double frdist = trim_binary_search(&trparam, trim, tcparam, tend, edge_3d, tol, depth+1, 0);
+	    if (fldist >= 0 && frdist < -1) {
+		(*tparam) = tlparam;
+		return fldist;
+	    }
+	    if (frdist >= 0 && fldist < -1) {
+		(*tparam) = trparam;
+		return frdist;
+	    }
+	    if (fldist < -1 && frdist < -1) {
+		fldist = trim_binary_search(&tlparam, trim, tstart, tcparam, edge_3d, tol, depth+1, 1);
+		frdist = trim_binary_search(&trparam, trim, tcparam, tend, edge_3d, tol, depth+1, 1);
+		if ((fldist < frdist) && (fldist < dist)) {
+		    (*tparam) = tlparam;
+		    return fldist;
+		}
+		if ((frdist < fldist) && (frdist < dist)) {
+		    (*tparam) = trparam;
+		    return frdist;
+		}
+		(*tparam) = tcparam;
+		return dist;
+
+	    }
+	} else if (NEAR_ZERO(vdot, ON_ZERO_TOLERANCE)) {
+	    (*tparam) = tcparam;
+	    return dist;
+	} else {
+	    // Not in this span
+	    if (depth == 0) {
+		(*tparam) = tcparam;
+		return dist;
+	    } else {
+		return -2;
+	    }
+	}
+    }
+
+    // close enough - this works
+    (*tparam) = tcparam;
+    return dist;
+}
+
+bool
+ON_TrimCurve_GetClosestPoint(
+	double *t,
+	const ON_BrepTrim *trim,
+	const ON_3dPoint &p,
+	double maximum_distance = 0.0,
+	const ON_Interval *sub_domain = NULL
+	)
+{
+    ON_3dPoint trim_2d;
+    ON_3dPoint trim_3d;
+    if (!t || !trim) {
+	return false;
+    }
+
+    ON_Interval domain = (sub_domain) ? *sub_domain : trim->Domain();
+
+    if (trim->m_type == ON_BrepTrim::singular) {
+	// If the trim is singular, there's only one point to check.
+	if (maximum_distance > 0) {
+	    trim_3d = trim->Brep()->m_V[trim->m_vi[0]].Point();
+	    if (trim_3d.DistanceTo(p) > maximum_distance) {
+		return false;
+	    }
+	}
+	(*t) = domain.ParameterAt(0);
+	return true;
+    }
+
+    double vdist = trim_binary_search(t, trim, domain.ParameterAt(0), domain.ParameterAt(1), p, maximum_distance, 0, 0);
+    if (vdist < 0) {
+	return false;
+    }
+
+    if (maximum_distance > 0 && vdist > maximum_distance) {
+	return false;
+    }
+
+    return true;
+}
+
+
+
+
+
+
+
 
 namespace brlcad {
 

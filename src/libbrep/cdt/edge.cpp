@@ -454,94 +454,6 @@ trim_normal(ON_BrepTrim *trim, ON_2dPoint &cp)
     return norm;
 }
 
-
-static double
-pnt_binary_search(fastf_t *tparam, const ON_BrepTrim &trim, double tstart, double tend, ON_3dPoint &edge_3d, double tol, int verbose, int depth, int force)
-{
-    double tcparam = (tstart + tend) / 2.0;
-    ON_3dPoint trim_2d = trim.PointAt(tcparam);
-    const ON_Surface *s = trim.SurfaceOf();
-    ON_3dPoint trim_3d = s->PointAt(trim_2d.x, trim_2d.y);
-    double dist = edge_3d.DistanceTo(trim_3d);
-
-    if (dist > tol && !force) {
-	ON_3dPoint trim_start_2d = trim.PointAt(tstart);
-	ON_3dPoint trim_end_2d = trim.PointAt(tend);
-	ON_3dPoint trim_start_3d = s->PointAt(trim_start_2d.x, trim_start_2d.y);
-	ON_3dPoint trim_end_3d = s->PointAt(trim_end_2d.x, trim_end_2d.y);
-
-	ON_3dVector v1 = edge_3d - trim_start_3d;
-	ON_3dVector v2 = edge_3d - trim_end_3d;
-	double sedist = trim_start_3d.DistanceTo(trim_end_3d);
-
-	if (verbose) {
-	    //bu_log("start point (%f %f %f) and end point (%f %f %f)\n", trim_start_3d.x, trim_start_3d.y, trim_start_3d.z, trim_end_3d.x, trim_end_3d.y, trim_end_3d.z);
-	}
-
-	double vdot = ON_DotProduct(v1,v2);
-
-	if (vdot < 0 && dist > ON_ZERO_TOLERANCE) {
-	    //if (verbose)
-	    //	bu_log("(%f - %f - %f (%f): searching left and right subspans\n", tstart, tcparam, tend, ON_DotProduct(v1,v2));
-	    double tlparam, trparam;
-	    double fldist = pnt_binary_search(&tlparam, trim, tstart, tcparam, edge_3d, tol, verbose, depth+1, 0);
-	    double frdist = pnt_binary_search(&trparam, trim, tcparam, tend, edge_3d, tol, verbose, depth+1, 0);
-	    if (fldist >= 0 && frdist < -1) {
-		//	if (verbose)
-		//	    bu_log("(%f - %f - %f: going with fldist: %f\n", tstart, tcparam, tend, fldist);
-		(*tparam) = tlparam;
-		return fldist;
-	    }
-	    if (frdist >= 0 && fldist < -1) {
-		//	if (verbose)
-		//	    bu_log("(%f - %f - %f: going with frdist: %f\n", tstart, tcparam, tend, frdist);
-		(*tparam) = trparam;
-		return frdist;
-	    }
-	    if (fldist < -1 && frdist < -1) {
-		fldist = pnt_binary_search(&tlparam, trim, tstart, tcparam, edge_3d, tol, verbose, depth+1, 1);
-		frdist = pnt_binary_search(&trparam, trim, tcparam, tend, edge_3d, tol, verbose, depth+1, 1);
-		if (verbose) {
-		    bu_log("Trim %d: point not in either subspan according to dot product (distances are %f and %f, distance between sampling segment ends is %f), forcing the issue\n", trim.m_trim_index, fldist, frdist, sedist);
-		}
-
-		if ((fldist < frdist) && (fldist < dist)) {
-		    (*tparam) = tlparam;
-		    return fldist;
-		}
-		if ((frdist < fldist) && (frdist < dist)) {
-		    (*tparam) = trparam;
-		    return frdist;
-		}
-		(*tparam) = tcparam;
-		return dist;
-
-	    }
-	} else if (NEAR_ZERO(vdot, ON_ZERO_TOLERANCE)) {
-	    (*tparam) = tcparam;
-	    return dist;
-	} else {
-	    // Not in this span
-	    if (verbose && depth < 2) {
-		//bu_log("Trim %d: (%f:%f)%f - edge point (%f %f %f) and trim point (%f %f %f): distance between them is %f, tol is %f, search seg length: %f\n", trim.m_trim_index, tstart, tend, ON_DotProduct(v1,v2), edge_3d.x, edge_3d.y, edge_3d.z, trim_3d.x, trim_3d.y, trim_3d.z, dist, tol, sedist);
-	    }
-	    if (depth == 0) {
-		(*tparam) = tcparam;
-		return dist;
-	    } else {
-		return -2;
-	    }
-	}
-    }
-
-    // close enough - this works
-    //if (verbose)
-    //	bu_log("Workable (%f:%f) - edge point (%f %f %f) and trim point (%f %f %f): %f, %f\n", tstart, tend, edge_3d.x, edge_3d.y, edge_3d.z, trim_3d.x, trim_3d.y, trim_3d.z, dist, tol);
-
-    (*tparam) = tcparam;
-    return dist;
-}
-
 static ON_2dPoint
 get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *pe, ON_3dPoint &edge_mid_3d, double elen, double brep_edge_tol)
 {
@@ -553,15 +465,19 @@ get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *pe, ON_
 	tol = (elen < BN_TOL_DIST) ? 0.01*elen : 0.1*BN_TOL_DIST;
     }
     ON_BrepTrim& trim = s_cdt->brep->m_T[pe->trim_ind];
-
-    double tmid;
-    double dist = pnt_binary_search(&tmid, trim, pe->trim_start, pe->trim_end, edge_mid_3d, tol, 0, 0, 0);
-    if (dist < 0) {
-	if (verbose) {
-	    bu_log("Warning - could not find suitable trim point\n");
-	}
-	tmid = (pe->trim_start + pe->trim_end) / 2.0;
-    } else {
+    ON_Interval domain(pe->trim_start, pe->trim_end);
+    double tparam;
+    ON_2dPoint trim_mid_2d;
+    bool cpoint = ON_TrimCurve_GetClosestPoint(&tparam, &trim, edge_mid_3d, 0, &domain);
+    if (verbose && !cpoint) {
+	bu_log("Warning - could not find suitable trim point\n");
+    }
+    if (!cpoint) {
+	tparam = (pe->trim_start + pe->trim_end) / 2.0;
+    }
+    trim_mid_2d = trim.PointAt(tparam);
+    if (verbose && !cpoint) {
+	double dist = trim.SurfaceOf()->PointAt(trim_mid_2d.x, trim_mid_2d.y).DistanceTo(edge_mid_3d);
 	if (verbose && (dist > BN_TOL_DIST) && (dist > tol)) {
 	    if (trim.m_bRev3d) {
 		//bu_log("Reversed trim: going with distance %f greater than desired tolerance %f\n", dist, tol);
@@ -569,13 +485,12 @@ get_trim_midpt(fastf_t *t, struct ON_Brep_CDT_State *s_cdt, cpolyedge_t *pe, ON_
 		//bu_log("Non-reversed trim: going with distance %f greater than desired tolerance %f\n", dist, tol);
 	    }
 	    if (dist > 10*tol) {
-		dist = pnt_binary_search(&tmid, trim, pe->trim_start, pe->trim_end, edge_mid_3d, tol, 0, 0, 0);
+		cpoint = ON_TrimCurve_GetClosestPoint(&tparam, &trim, edge_mid_3d, 0, &domain);
 	    }
 	}
     }
 
-    ON_2dPoint trim_mid_2d = trim.PointAt(tmid);
-    (*t) = tmid;
+    (*t) = tparam;
     return trim_mid_2d;
 }
 
