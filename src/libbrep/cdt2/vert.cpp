@@ -171,7 +171,7 @@ mesh_point_t::min_len()
 	if (ue.type == B_SINGULAR) continue;
 	slen = (slen > ue.len) ? ue.len : slen;
     }
-    return slen;
+    return (slen < DBL_MAX) ? slen : 0;
 }
 
 void
