@@ -31,6 +31,7 @@
 #include "brep/pullback.h"
 #include "./cdt.h"
 
+
 int
 find_edge_type(struct brep_cdt *s, ON_BrepEdge &edge)
 {
@@ -45,6 +46,18 @@ find_edge_type(struct brep_cdt *s, ON_BrepEdge &edge)
     if (!crv->IsLinear(BN_TOL_DIST)) {
 	return 1;
     }
+
+    // NOTE: for what we're actually using this for, it would be better to
+    // detect when the surface breakdown isn't yet terminated according to the
+    // surfaces tolerances, but overlaps an edge bbox with the segment longer
+    // than the box dimenension - and in that case, split the edge curves
+    // according to what the surface needs locally.  The drawback to that approach is
+    // it complicates the workflow - right now it's all edges then all surface
+    // points, and if we start changing boundary edges in response to surface
+    // point sampling we're going to greatly complicate parallelization.
+    // However, trying to do it this way we're getting cases where a very small
+    // edge curve in a loop is resulting in dense tessellations for entire
+    // surfaces as the edge curves get chopped up in response...
 
     // Linear edge, at least one non-planar surface
     const ON_Surface *s1= edge.Trim(0)->SurfaceOf();
