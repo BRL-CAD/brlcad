@@ -75,7 +75,7 @@ what we want/need locally in any event.
 
 #include "common.h"
 
-#include <map>
+#include <unordered_map>
 #include <queue>
 #include <string>
 
@@ -92,7 +92,6 @@ class mesh_uedge_t;
 class mesh_tri_t;
 class mesh_t;
 class poly_edge_t;
-class poly_uedge_t;
 class polygon_t;
 
 typedef enum {
@@ -382,6 +381,7 @@ class mesh_tri_t {
 class poly_point_t {
     public:
 	mesh_point_t *mp = NULL;
+	long vect_ind = -1;
 	double u;
 	double v;
 };
@@ -390,23 +390,6 @@ class polygon_t;
 
 class poly_edge_t {
     public:
-
-	poly_edge_t(polygon_t *p) {
-	    v[0] = v[1] = -1;
-	    polygon = p;
-	}
-
-	poly_edge_t(polygon_t *p, long i, long j) {
-	    v[0] = i;
-	    v[1] = j;
-	    polygon = p;
-	}
-
-	void set(long i, long j) {
-	    v[0] = i;
-	    v[1] = j;
-	}
-
 	bool operator<(poly_edge_t other) const
 	{
 	    bool c1 = (v[0] < other.v[0]);
@@ -432,100 +415,31 @@ class poly_edge_t {
 	    return (c1 || c2);
 	}
 
-	ON_BoundingBox *bbox();
+	ON_BoundingBox bbox_update();
+	ON_BoundingBox bb;
 
 	int vect_ind = -1;
 
-	edge_type_t type;
-	polygon_t *polygon;
+	edge_type_t type = B_UNSET;
+	polygon_t *polygon = NULL;
 	long v[2];
-	mesh_edge_t *ue;
+	mesh_edge_t *ue = NULL;
 	double len = 0.0;
 	bool current = false;
-    private:
-	ON_BoundingBox bb;
-};
-
-class poly_uedge_t {
-    public:
-
-	poly_uedge_t(polygon_t *p) {
-	    v[0] = v[1] = -1;
-	    polygon = p;
-	    len = 0.0;
-	    current = false;
-	}
-
-	poly_uedge_t(polygon_t *p, long i, long j) {
-	    v[0] = i;
-	    v[1] = j;
-	    polygon = p;
-	    len = 0.0;
-	    current = false;
-	}
-
-	poly_uedge_t(poly_edge_t e) {
-	    v[0] = (e.v[0] <= e.v[1]) ? e.v[0] : e.v[1];
-	    v[1] = (e.v[0] > e.v[1]) ? e.v[0] : e.v[1];
-	    len = e.len;
-	    bb = *e.bbox();
-	    polygon = e.polygon;
-	    len = e.len;
-	    current = e.current;
-	}
-
-	void set(long i, long j) {
-	    v[0] = i;
-	    v[1] = j;
-	    current = false;
-	}
-
-	bool operator<(poly_uedge_t other) const
-	{
-	    bool c1 = (v[0] < other.v[0]);
-	    bool c1e = (v[0] == other.v[0]);
-	    bool c2 = (v[1] < other.v[1]);
-	    return (c1 || (c1e && c2));
-	}
-
-	bool operator==(poly_uedge_t other) const
-	{
-	    bool c0 = (type == other.type);
-	    if (!c0) return false;
-	    bool c1 = (v[0] == other.v[0]);
-	    bool c2 = (v[1] == other.v[1]);
-	    return (c1 && c2);
-	}
-	bool operator!=(poly_uedge_t other) const
-	{
-	    bool c0 = (type == other.type);
-	    if (!c0) return true;
-	    bool c1 = (v[0] != other.v[0]);
-	    bool c2 = (v[1] != other.v[1]);
-	    return (c1 || c2);
-	}
-
-	ON_BoundingBox *bbox();
-
-	int vect_ind = -1;
-
-	double len;
-	edge_type_t type;
-	polygon_t *polygon;
-	long v[2];
-    private:
-	bool current;
-	ON_BoundingBox bb;
 };
 
 class polygon_t {
     public:
 	std::vector<poly_point_t> p_pnts;
-	std::map<long, long> o2p;
+	std::vector<poly_edge_t> p_polyedges;
+	std::unordered_map<long, long> o2p;
 	RTree<size_t, double, 2> p_edges_tree; // 2D spatial lookup for polygon edges
 
+	bool add_ordered_edge(poly_edge_t &pe);
+
+	size_t vect_ind;
+
 	// If this polygon is defined on a face edge, we need more info.
-	long f_id;
 	long l_id;
 
 };
@@ -535,7 +449,6 @@ class mesh_t
     public:
 	// Primary containers for face edges
 	std::vector<poly_edge_t> m_pedges_vect;
-	std::vector<poly_uedge_t> m_puedges_vect;
 	std::vector<mesh_edge_t> m_edges_vect;
 
 	// Primary triangle container
@@ -547,10 +460,6 @@ class mesh_t
 
 	// Create a new polygon edge
 	poly_edge_t &new_pedge();
-	// Identify and return the unordered polygon edge associated with the
-	// ordered polygon edge, or create such an unordered edge if one does
-	// not already exist.
-	poly_uedge_t &puedge(poly_edge_t &pe);
 	// Identify and return the ordered edge associated with the ordered
 	// edge, or create such an ordered edge if one does not already
 	// exist.
@@ -564,6 +473,7 @@ class mesh_t
 	// Create a new 3D triangle
 	polygon_t &new_loop();
 
+	size_t outer_loop;
 
 	void delete_edge(mesh_edge_t &e);
 	void delete_tri(mesh_tri_t &t);
@@ -573,7 +483,6 @@ class mesh_t
 	void bbox_insert();
 
 	struct brep_cdt *cdt;
-	int f_id;
 	ON_BrepFace *f;
 
     private:

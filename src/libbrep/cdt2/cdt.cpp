@@ -216,25 +216,58 @@ void
 brep_cdt_state::faces_init()
 {
     for (int index = 0; index < brep->m_F.Count(); index++) {
-	mesh_t m;
+	mesh_t m_new;
+	b_faces_vect.push_back(m_new);
+	mesh_t &m = b_faces_vect[b_faces_vect.size() - 1];
 	m.cdt = cdt;
 	m.f = brep->Face(index);
 	m.bb = m.f->BoundingBox();
-	m.bbox_insert();
 	for (int li = 0; li < brep->m_L.Count(); li++) {
 	    const ON_BrepLoop *loop = m.f->Loop(li);
-	    //polygon_t &l = m.new_loop();
-	    for (int lti = 0; lti < loop->TrimCount(); lti++) {
-#if 0
-		ON_BrepTrim *trim = loop->Trim(lti);
-		// Every loop trim gets a polygon edge, a polygon uedge,
-		// and a mesh_edge (although the latter may be degenerate
-		// for singular trims).
-		poly_edge_t &pe = m.new_pedge();
-#endif
+	    polygon_t &l = m.new_loop();
+	    l.l_id = li;
+	    l.vect_ind = li;
+	    if (m.f->OuterLoop()->m_loop_index == loop->m_loop_index) {
+		m.outer_loop = l.vect_ind;
 	    }
+	    // Initialize polygon points
+	    for (int lti = 0; lti < loop->TrimCount(); lti++) {
+		ON_BrepTrim *trim = loop->Trim(lti);
+		ON_Interval range = trim->Domain();
+		poly_point_t pp;
+		pp.mp = &b_pnts[trim->Vertex(0)->m_vertex_index];
+		ON_2dPoint cp = trim->PointAt(range.m_t[0]);
+		pp.u = cp.x;
+		pp.v = cp.y;
+		pp.vect_ind = l.p_pnts.size();
+		l.o2p[trim->Vertex(0)->m_vertex_index] = l.p_pnts.size();
+		l.p_pnts.push_back(pp);
+	    };
+	    // Initialize polygon edges and add to loop
+	    for (int lti = 0; lti < loop->TrimCount(); lti++) {
+		// Every loop trim gets a polygon edge.
+		poly_edge_t &pe = m.new_pedge();
+		pe.polygon = &l;
+		pe.vect_ind = l.p_polyedges.size();
+		pe.v[0] = lti;
+		pe.v[1] = (lti < loop->TrimCount() - 1) ? lti + 1 : 0;
 
+		// If we're not singular, define a mesh_edge
+		ON_BrepTrim *trim = loop->Trim(lti);
+		ON_BrepEdge *edge = trim->Edge();
+		if (edge && edge->EdgeCurveOf()) {
+		    pe.type = B_BOUNDARY;
+		    //mesh_edge_t &e3d = m.edge(pe);
+
+		} else {
+		    pe.type = B_SINGULAR;
+		}
+
+		l.add_ordered_edge(pe);
+	    }
 	}
+
+	m.bbox_insert();
     }
 }
 
