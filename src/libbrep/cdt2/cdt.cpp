@@ -68,6 +68,22 @@ brep_cdt_state::delete_uedge(mesh_uedge_t &ue)
     b_uequeue.push(ind);
 }
 
+long
+brep_cdt_state::find_uedge(mesh_edge_t &e)
+{
+    double p1[3];
+    p1[0] = e.bb.Min().x - 2*ON_ZERO_TOLERANCE;
+    p1[1] = e.bb.Min().y - 2*ON_ZERO_TOLERANCE;
+    p1[2] = e.bb.Min().z - 2*ON_ZERO_TOLERANCE;
+    double p2[3];
+    p2[0] = e.bb.Max().x + 2*ON_ZERO_TOLERANCE;
+    p2[1] = e.bb.Max().y + 2*ON_ZERO_TOLERANCE;
+    p2[2] = e.bb.Max().z + 2*ON_ZERO_TOLERANCE;
+
+    b_uedges_tree.Search(p1, p2, NULL, NULL);
+
+    return -1;
+}
 
 
 void
@@ -227,6 +243,8 @@ brep_cdt_state::faces_init()
 	    polygon_t &l = m.new_loop();
 	    l.l_id = li;
 	    l.vect_ind = li;
+	    l.cdt = cdt;
+	    l.m = &b_faces_vect[b_faces_vect.size() - 1];
 	    if (m.f->OuterLoop()->m_loop_index == loop->m_loop_index) {
 		m.outer_loop = l.vect_ind;
 	    }
@@ -246,24 +264,26 @@ brep_cdt_state::faces_init()
 	    // Initialize polygon edges and add to loop
 	    for (int lti = 0; lti < loop->TrimCount(); lti++) {
 		// Every loop trim gets a polygon edge.
+		ON_BrepTrim *trim = loop->Trim(lti);
 		poly_edge_t &pe = m.new_pedge();
 		pe.polygon = &l;
 		pe.vect_ind = l.p_polyedges.size();
 		pe.v[0] = lti;
 		pe.v[1] = (lti < loop->TrimCount() - 1) ? lti + 1 : 0;
+		pe.m_bRev3d = trim->m_bRev3d;
+
+		l.add_ordered_edge(pe);
 
 		// If we're not singular, define a mesh_edge
-		ON_BrepTrim *trim = loop->Trim(lti);
 		ON_BrepEdge *edge = trim->Edge();
 		if (edge && edge->EdgeCurveOf()) {
 		    pe.type = B_BOUNDARY;
-		    //mesh_edge_t &e3d = m.edge(pe);
-
+		    mesh_edge_t *e3d = m.edge(pe);
+		    m.uedge(*e3d);
 		} else {
 		    pe.type = B_SINGULAR;
 		}
 
-		l.add_ordered_edge(pe);
 	    }
 	}
 

@@ -168,7 +168,6 @@ class mesh_edge_t {
 	}
 
 	void clear();
-	bool set(long i, long j);
 
 	bool operator<(mesh_edge_t other) const
 	{
@@ -195,23 +194,24 @@ class mesh_edge_t {
 	    return (c1 || c2);
 	}
 
-	ON_BoundingBox &bbox();
+	void bbox_update();
+	ON_BoundingBox bb;
 
 	int vect_ind = -1;
 
 	long v[2];
-	edge_type_t type;
-	mesh_t *m;
-	mesh_uedge_t *uedge;
+	edge_type_t type = B_UNSET;
+	struct brep_cdt *cdt;
+	mesh_t *m = NULL;
+	mesh_uedge_t *uedge = NULL;
 
-	mesh_tri_t *tri;
+	mesh_tri_t *tri = NULL;
 
 	double len = 0.0;
 	bool unused = false;
 	bool current = false;
 
     private:
-	ON_BoundingBox bb;
 };
 
 class mesh_uedge_t {
@@ -220,7 +220,6 @@ class mesh_uedge_t {
 	mesh_uedge_t() {
 	    v[0] = v[1] = -1;
 	    e[0] = e[1] = NULL;
-	    pe[0] = pe[1] = NULL;
 	    tri[0] = tri[1] = NULL;
 	    type = B_UNSET;
 	}
@@ -262,7 +261,6 @@ class mesh_uedge_t {
 	ON_BrepEdge *edge;
 	edge_type_t type;
 	mesh_edge_t *e[2];
-	poly_edge_t *pe[2];
 	mesh_tri_t *tri[2];
 	long v[2];
 
@@ -420,10 +418,12 @@ class poly_edge_t {
 
 	int vect_ind = -1;
 
+	bool m_bRev3d = false;
+
 	edge_type_t type = B_UNSET;
 	polygon_t *polygon = NULL;
 	long v[2];
-	mesh_edge_t *ue = NULL;
+	mesh_edge_t *e3d = NULL;
 	double len = 0.0;
 	bool current = false;
 };
@@ -438,6 +438,9 @@ class polygon_t {
 	bool add_ordered_edge(poly_edge_t &pe);
 
 	size_t vect_ind;
+
+	struct brep_cdt *cdt;
+	mesh_t *m;
 
 	// If this polygon is defined on a face edge, we need more info.
 	long l_id;
@@ -463,11 +466,11 @@ class mesh_t
 	// Identify and return the ordered edge associated with the ordered
 	// edge, or create such an ordered edge if one does not already
 	// exist.
-	mesh_edge_t &edge(poly_edge_t &pe);
+	mesh_edge_t *edge(poly_edge_t &pe);
 	// Identify and return the unordered edge associated with the ordered
 	// edge, or create such an unordered edge if one does not already
 	// exist.
-	mesh_uedge_t &uedge(mesh_edge_t &e);
+	mesh_uedge_t *uedge(mesh_edge_t &e);
 	// Create a new 3D triangle
 	mesh_tri_t &new_tri();
 	// Create a new 3D triangle
@@ -489,7 +492,6 @@ class mesh_t
 
 	std::queue<size_t> m_equeue; // Available (unused) entries in m_edges_vect
 	std::queue<size_t> m_pequeue; // Available (unused) entries in m_pedges_vect
-	std::queue<size_t> m_puequeue; // Available (unused) entries in m_puedges_vect
 	std::queue<size_t> m_tqueue; // Available (unused) entries in tris_vect
 	std::queue<size_t> m_lqueue; // Available (unused) entries in loops_vect
 };
@@ -528,7 +530,6 @@ class brep_cdt_state {
 	void uedges_init();
 	void faces_init();
 
-    private:
 	std::queue<size_t> b_equeue; // Available (unused) entries in edges_vect
 	std::queue<size_t> b_uequeue; // Available (unused) entries in uedges_vect
 };
