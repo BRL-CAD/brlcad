@@ -32,6 +32,29 @@
 #include "./cdt.h"
 
 void
+mesh_uedge_t::clear()
+{
+    type = B_UNSET;
+    v[0] = v[1] = -1;
+    e[0] = e[1] = NULL;
+    pe[0] = pe[1] = NULL;
+    tri[0] = tri[1] = NULL;
+    edge_ind = -1;
+    nc = NULL;
+    t_start = DBL_MAX;
+    t_end = DBL_MAX;
+    edge_start_pnt = -1;
+    edge_end_pnt = -1;
+    edge_tan_start = ON_3dVector::UnsetVector;
+    edge_tan_end = ON_3dVector::UnsetVector;
+    bb = ON_BoundingBox();
+    len = 0.0;
+    linear = false;
+    unused = false;
+    current = false;
+}
+
+void
 mesh_uedge_t::bbox_update()
 {
     if (type == B_SINGULAR) return;

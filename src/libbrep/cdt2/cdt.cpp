@@ -31,6 +31,64 @@
 #include "brep/pullback.h"
 #include "./cdt.h"
 
+mesh_uedge_t &
+mesh_t::new_uedge() {
+    if (m_uequeue.size()) {
+	mesh_uedge_t &nue = m_uedges_vect[m_uequeue.front()];
+	m_uequeue.pop();
+	return nue;
+    } else {
+	mesh_uedge_t nue;
+	nue.vect_ind = m_uedges_vect.size();
+	m_uedges_vect.push_back(nue);
+	mesh_uedge_t &rnue = m_uedges_vect[nue.edge_ind];
+	return rnue;
+    }
+}
+
+void
+mesh_t::delete_uedge(mesh_uedge_t &ue)
+{
+    if (ue.vect_ind == -1) {
+	return;
+    }
+    // TODO - remove from rtree
+    size_t ind = ue.vect_ind;
+
+    ue.clear();
+    m_uequeue.push(ind);
+}
+
+mesh_uedge_t &
+brep_cdt_state::new_uedge() {
+    if (b_uequeue.size()) {
+	mesh_uedge_t &nue = b_uedges_vect[b_uequeue.front()];
+	b_uequeue.pop();
+	return nue;
+    } else {
+	mesh_uedge_t nue;
+	nue.vect_ind = b_uedges_vect.size();
+	b_uedges_vect.push_back(nue);
+	mesh_uedge_t &rnue = b_uedges_vect[nue.edge_ind];
+	return rnue;
+    }
+}
+
+void
+brep_cdt_state::delete_uedge(mesh_uedge_t &ue)
+{
+    if (ue.vect_ind == -1) {
+	return;
+    }
+    // TODO - remove from rtree
+    size_t ind = ue.vect_ind;
+
+    ue.clear();
+    b_uequeue.push(ind);
+}
+
+
+
 void
 brep_cdt_state::brep_cpy_init()
 {
@@ -113,7 +171,7 @@ brep_cdt_state::uedges_init()
 	ON_BrepEdge& edge = brep->m_E[index];
 	long v0 = edge.Vertex(0)->m_vertex_index;
 	long v1 = edge.Vertex(1)->m_vertex_index;
-	mesh_uedge_t ue;
+	mesh_uedge_t ue = new_uedge();
 	ue.cdt = cdt;
 	ue.v[0] = (v1 > v0) ? v0 : v1;
 	ue.v[1] = (v1 > v0) ? v1 : v0;
@@ -148,9 +206,6 @@ brep_cdt_state::uedges_init()
 
 	// Set an initial edge bbox
 	ue.bbox_update();
-
-	// Add the uedge to the brep container
-	b_uedges_vect.push_back(ue);
 
 	// Establish the vertex to edge connectivity
 	b_pnts[ue.v[0]].uedges.insert(index);

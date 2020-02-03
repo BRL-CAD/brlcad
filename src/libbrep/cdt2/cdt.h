@@ -198,6 +198,8 @@ class mesh_edge_t {
 
 	ON_BoundingBox &bbox();
 
+	int vect_ind = -1;
+
 	long v[2];
 	edge_type_t type;
 	mesh_t *m;
@@ -256,9 +258,11 @@ class mesh_uedge_t {
 
 	ON_BoundingBox *bbox();
 
+
+	int vect_ind = -1;
+
 	struct brep_cdt *cdt;
 	edge_type_t type;
-	int split_type;
 	mesh_edge_t *e[2];
 	poly_edge_t *pe[2];
 	mesh_tri_t *tri[2];
@@ -432,6 +436,8 @@ class poly_edge_t {
 
 	ON_BoundingBox *bbox();
 
+	int vect_ind = -1;
+
 	edge_type_t type;
 	polygon_t *polygon;
 	long v[2];
@@ -503,6 +509,8 @@ class poly_uedge_t {
 
 	ON_BoundingBox *bbox();
 
+	int vect_ind = -1;
+
 	double len;
 	edge_type_t type;
 	polygon_t *polygon;
@@ -546,21 +554,13 @@ class mesh_t
 	long find_edge(long v1, long v2);
 
 	mesh_edge_t &new_edge();
-	mesh_uedge_t &new_uedge() {
-	    if (m_uequeue.size()) {
-		mesh_uedge_t &nue = m_uedges_vect[m_uequeue.front()];
-		m_uequeue.pop();
-		return nue;
-	    } else {
-		mesh_uedge_t nue;
-		nue.edge_ind = m_uedges_vect.size();
-		m_uedges_vect.push_back(nue);
-		mesh_uedge_t &rnue = m_uedges_vect[nue.edge_ind];
-		return rnue;
-	    }
-	}
+	mesh_uedge_t &new_uedge();
 	mesh_tri_t &new_tri();
-
+	
+	void delete_edge(mesh_edge_t &e);
+	void delete_uedge(mesh_uedge_t &ue);
+	void delete_tri(mesh_tri_t &t);
+	
 	struct brep_cdt *cdt;
 	int f_id;
     private:
@@ -583,6 +583,11 @@ class brep_cdt_state {
 	std::vector<mesh_uedge_t> b_uedges_vect; // All brep uedges
 	RTree<size_t, double, 3> b_uedges_tree; // Spatial lookup for unordered face edges
 
+	mesh_edge_t &new_edge();
+	mesh_uedge_t &new_uedge();
+	
+	void delete_edge(mesh_edge_t &e);
+	void delete_uedge(mesh_uedge_t &ue);
 
 	RTree<int, double, 3> b_faces_tree; // Spatial lookup for face bboxes
 
