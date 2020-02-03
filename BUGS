@@ -15,6 +15,10 @@ on-going issues.
 Recent Bugs
 -----------
 
+* bot_dump -o file.obj is possibly generating invalid OBJ files.
+  tested on two different pieces of software including xcode and cura,
+  both failed to read our obj files where stl worked.
+
 * mater -d information stored in the .g file doesn't survive a
   garbage collection operation.
 
