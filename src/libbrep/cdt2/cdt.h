@@ -111,10 +111,6 @@ class mesh_point_t {
 	// Minimum associated edge length.  If < 0, no associated edges
 	double min_len();
 
-	// If a bounding box is populated for the point return it, otherwise
-	// returns NULL
-	ON_BoundingBox *bbox();
-
 	// Moves the point to the new value, sets the new normal, and updates
 	// all impacted data (vert bboxes, edge bboxes and lengths, triangle
 	// bboxes, RTrees, etc.) using edge connectivity to find everything
@@ -126,6 +122,9 @@ class mesh_point_t {
 	std::set<size_t> uedges;
 
 	void bbox_update();
+	ON_BoundingBox bb;
+
+	size_t vect_ind;
 
 	// Origin information - specifics about what vertex, edge or surface on the
 	// mesh is connected to this particular point.  Which set of information is
@@ -133,7 +132,6 @@ class mesh_point_t {
 	// B_VERT
 	int vert_index;
 	bool singular;
-	bool on_curved_edge = false;
 	// B_EDGE
 	int trim_index;
 	int edge_index;
@@ -143,13 +141,12 @@ class mesh_point_t {
 	double u;
 	double v;
 
+
 	// Variables used to store the associated index when assembling BoT
 	// meshes
 	int bot_vert_ind = -1;
 	int bot_norm_ind = -1;
 
-    private:
-	ON_BoundingBox bb;
 };
 
 typedef enum {
@@ -281,13 +278,12 @@ class mesh_uedge_t {
 	ON_3dVector edge_tan_end = ON_3dVector::UnsetVector;
 
 	void bbox_update();
+	ON_BoundingBox bb;
 
 	double len = 0.0;
 	bool linear = false;
 	bool unused = false;
 	bool current = false;
-    private:
-	ON_BoundingBox bb;
 };
 
 
@@ -553,43 +549,46 @@ class mesh_t
 	// correct ordering.  Returns -1 if no such edge exists
 	long find_edge(long v1, long v2);
 
+	// Create a new 3D edge
 	mesh_edge_t &new_edge();
-	mesh_uedge_t &new_uedge();
+	// Create a new 3D triangle
 	mesh_tri_t &new_tri();
-	
+
+	// Identify and return the unordered edge associated with
+	// the ordered edge, or create such an unordered edge if
+	// one does not already exist.
+	mesh_uedge_t &uedge(mesh_edge_t &e);
+
 	void delete_edge(mesh_edge_t &e);
 	void delete_uedge(mesh_uedge_t &ue);
 	void delete_tri(mesh_tri_t &t);
-	
+
 	struct brep_cdt *cdt;
 	int f_id;
     private:
 
-	RTree<size_t, double, 3> m_pnts_tree; // Spatial lookup for interior points
-	RTree<size_t, double, 3> m_uedges_tree; // Spatial lookup for unordered face edges
-
 	std::queue<size_t> m_equeue; // Available (unused) entries in m_edges_vect
-	std::queue<size_t> m_uequeue; // Available (unused) entries in m_uedges_vect
 	std::queue<size_t> m_pequeue; // Available (unused) entries in m_pdges_vect
 	std::queue<size_t> m_tqueue; // Available (unused) entries in tris_vect
 };
 
 class brep_cdt_state {
     public:
-	// Primary container for edge points
+	// Primary container for points
 	std::vector<mesh_point_t> b_pnts;
+	// Spatial lookup tree for points
+	RTree<size_t, double, 3> b_pnts_tree;
 
-	std::vector<mesh_edge_t> b_edges_vect; // All brep edges
-	std::vector<mesh_uedge_t> b_uedges_vect; // All brep uedges
-	RTree<size_t, double, 3> b_uedges_tree; // Spatial lookup for unordered face edges
+	// All brep unordered edges
+	std::vector<mesh_uedge_t> b_uedges_vect;
+	// Spatial lookup for unordered edges
+	RTree<size_t, double, 3> b_uedges_tree;
 
-	mesh_edge_t &new_edge();
+	// Spatial lookup for face bboxes
+	RTree<int, double, 3> b_faces_tree;
+
 	mesh_uedge_t &new_uedge();
-	
-	void delete_edge(mesh_edge_t &e);
 	void delete_uedge(mesh_uedge_t &ue);
-
-	RTree<int, double, 3> b_faces_tree; // Spatial lookup for face bboxes
 
 	ON_Brep *orig_brep = NULL;
 	ON_Brep *brep = NULL;

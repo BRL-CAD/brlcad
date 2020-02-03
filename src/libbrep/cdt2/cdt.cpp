@@ -32,34 +32,6 @@
 #include "./cdt.h"
 
 mesh_uedge_t &
-mesh_t::new_uedge() {
-    if (m_uequeue.size()) {
-	mesh_uedge_t &nue = m_uedges_vect[m_uequeue.front()];
-	m_uequeue.pop();
-	return nue;
-    } else {
-	mesh_uedge_t nue;
-	nue.vect_ind = m_uedges_vect.size();
-	m_uedges_vect.push_back(nue);
-	mesh_uedge_t &rnue = m_uedges_vect[nue.edge_ind];
-	return rnue;
-    }
-}
-
-void
-mesh_t::delete_uedge(mesh_uedge_t &ue)
-{
-    if (ue.vect_ind == -1) {
-	return;
-    }
-    // TODO - remove from rtree
-    size_t ind = ue.vect_ind;
-
-    ue.clear();
-    m_uequeue.push(ind);
-}
-
-mesh_uedge_t &
 brep_cdt_state::new_uedge() {
     if (b_uequeue.size()) {
 	mesh_uedge_t &nue = b_uedges_vect[b_uequeue.front()];
@@ -69,7 +41,7 @@ brep_cdt_state::new_uedge() {
 	mesh_uedge_t nue;
 	nue.vect_ind = b_uedges_vect.size();
 	b_uedges_vect.push_back(nue);
-	mesh_uedge_t &rnue = b_uedges_vect[nue.edge_ind];
+	mesh_uedge_t &rnue = b_uedges_vect[nue.vect_ind];
 	return rnue;
     }
 }
@@ -80,8 +52,17 @@ brep_cdt_state::delete_uedge(mesh_uedge_t &ue)
     if (ue.vect_ind == -1) {
 	return;
     }
-    // TODO - remove from rtree
+    // Remove from RTree
     size_t ind = ue.vect_ind;
+    double p1[3];
+    p1[0] = ue.bb.Min().x - 2*ON_ZERO_TOLERANCE;
+    p1[1] = ue.bb.Min().y - 2*ON_ZERO_TOLERANCE;
+    p1[2] = ue.bb.Min().z - 2*ON_ZERO_TOLERANCE;
+    double p2[3];
+    p2[0] = ue.bb.Max().x + 2*ON_ZERO_TOLERANCE;
+    p2[1] = ue.bb.Max().y + 2*ON_ZERO_TOLERANCE;
+    p2[2] = ue.bb.Max().z + 2*ON_ZERO_TOLERANCE;
+    b_uedges_tree.Remove(p1, p2, ind);
 
     ue.clear();
     b_uequeue.push(ind);
@@ -125,14 +106,8 @@ brep_cdt_state::verts_init()
 	np.p = brep->m_V[vert_index].Point();
 	np.n = ON_3dVector::UnsetVector;
 	np.type = B_VERT;
-	for (int j = 0; j < brep->m_V[vert_index].m_ei.Count(); j++) {
-	    ON_BrepEdge &edge = brep->m_E[brep->m_V[vert_index].m_ei[j]];
-	    const ON_Curve* crv = edge.EdgeCurveOf();
-	    if (crv && !crv->IsLinear(BN_TOL_DIST)) {
-		np.on_curved_edge = true;
-		break;
-	    }
-	}
+	np.bbox_update();
+	np.vect_ind = b_pnts.size();
 	b_pnts.push_back(np);
     }
 
@@ -185,17 +160,22 @@ brep_cdt_state::uedges_init()
 	// Set up the NURBS curve to be used for splitting
 	const ON_Curve* crv = edge.EdgeCurveOf();
 	ue.nc = crv->NurbsCurve();
+
+	// Curved edges will need some minimal splitting regardless, so
+	// identify them up front
 	double c_len_tol = 0.1 * ue.nc->ControlPolygonLength();
 	double tol = (c_len_tol < BN_TOL_DIST) ? c_len_tol : BN_TOL_DIST;
 	ue.linear = crv->IsLinear(tol);
+
 	// Match the parameterization to the control polygon length, so
-	// distances in t value will have some relationship to 3D distances
+	// distances in t paramater space will have some relationship to 3D
+	// distances.
 	ue.cp_len = ue.nc->ControlPolygonLength();
 	ue.nc->SetDomain(0.0, ue.cp_len);
 	ue.t_start = 0.0;
 	ue.t_end = ue.cp_len;
 
-	// Set trim curve domains to match the edge curve domains.
+	// Set trim curve domains to match the updated edge curve domains.
 	for (int i = 0; i < edge.TrimCount(); i++) {
 	    ON_BrepTrim *trim = edge.Trim(i);
 	    brep->m_T[trim->TrimCurveIndexOf()].SetDomain(ue.t_start, ue.t_end);
@@ -204,7 +184,14 @@ brep_cdt_state::uedges_init()
 	// Calculate the edge length once up front
 	ue.len = b_pnts[ue.v[0]].p.DistanceTo(b_pnts[ue.v[1]].p);
 
-	// Set an initial edge bbox
+	// Set an initial edge bbox.  Because this is the first round,
+	// bbox_update will need something well defined to operate on - just
+	// define a minimal box around the point.  Subsequent update calls
+	// will have an initialized box and won't need this.
+	ON_3dPoint pztol(ON_ZERO_TOLERANCE, ON_ZERO_TOLERANCE, ON_ZERO_TOLERANCE);
+	ue.bb = ON_BoundingBox(b_pnts[v0].p,b_pnts[v1].p);
+	ue.bb.m_max = ue.bb.m_max + pztol;
+	ue.bb.m_min = ue.bb.m_min - pztol;
 	ue.bbox_update();
 
 	// Establish the vertex to edge connectivity
@@ -212,8 +199,7 @@ brep_cdt_state::uedges_init()
 	b_pnts[ue.v[1]].uedges.insert(index);
     }
 
-    // Now that we have edge associations, set initial vert bboxes, based on
-    // the smallest initial edge length associated with that vertex.
+    // Now that we have edge associations, update vert bboxes.
     for (size_t index = 0; index < b_pnts.size(); index++) {
 	b_pnts[index].bbox_update();
     }

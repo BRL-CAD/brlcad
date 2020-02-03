@@ -177,11 +177,25 @@ mesh_point_t::min_len()
 void
 mesh_point_t::bbox_update()
 {
+    // Before updating, remove old box (if any) from RTree
+    double p1[3];
+    p1[0] = bb.Min().x - 2*ON_ZERO_TOLERANCE;
+    p1[1] = bb.Min().y - 2*ON_ZERO_TOLERANCE;
+    p1[2] = bb.Min().z - 2*ON_ZERO_TOLERANCE;
+    double p2[3];
+    p2[0] = bb.Max().x + 2*ON_ZERO_TOLERANCE;
+    p2[1] = bb.Max().y + 2*ON_ZERO_TOLERANCE;
+    p2[2] = bb.Max().z + 2*ON_ZERO_TOLERANCE;
+    cdt->i->s.b_pnts_tree.Remove(p1, p2, vect_ind);
+
+    // Start with a minimal box around the point - anything else is up to
+    // the edge lengths
     ON_3dPoint pztol(ON_ZERO_TOLERANCE, ON_ZERO_TOLERANCE, ON_ZERO_TOLERANCE);
     bb = ON_BoundingBox(p,p);
     bb.m_max = bb.m_max + pztol;
     bb.m_min = bb.m_min - pztol;
-
+    // With no edges assigned this is a no-op, but otherwise bump the bbox
+    // dimensions using half the smallest connected edge length.
     double slen = min_len();
     ON_3dPoint nbbp;
     ON_3dPoint bdelta(slen*0.5, slen*0.5, slen*0.5);
@@ -190,7 +204,14 @@ mesh_point_t::bbox_update()
     nbbp = p - bdelta;
     bb.Set(nbbp, true);
 
-    // TODO - update box in rtree
+    // Reinsert vert into RTree
+    p1[0] = bb.Min().x;
+    p1[1] = bb.Min().y;
+    p1[2] = bb.Min().z;
+    p2[0] = bb.Max().x;
+    p2[1] = bb.Max().y;
+    p2[2] = bb.Max().z;
+    cdt->i->s.b_pnts_tree.Insert(p1, p2, vect_ind);
 }
 
 /** @} */
