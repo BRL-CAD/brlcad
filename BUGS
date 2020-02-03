@@ -15,6 +15,12 @@ on-going issues.
 Recent Bugs
 -----------
 
+* Tessellating an ETO with a normal tolerance results in stack
+  smashing due to bad logic in recursive algorithm: set norm 2;
+  facetize my.eto my.bot;. Observed infinite recursion in both
+  make_ellipse4() in eto.c and (after adding max recursion test) in
+  paint_face() in manif.c:190
+
 * bot_dump -o file.obj is possibly generating invalid OBJ files.
   tested on two different pieces of software including xcode and cura,
   both failed to read our obj files where stl worked.
