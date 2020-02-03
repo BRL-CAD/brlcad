@@ -148,6 +148,7 @@ brep_cdt_state::uedges_init()
 	long v1 = edge.Vertex(1)->m_vertex_index;
 	mesh_uedge_t ue = new_uedge();
 	ue.cdt = cdt;
+	ue.edge = brep->Edge(index);
 	ue.v[0] = (v1 > v0) ? v0 : v1;
 	ue.v[1] = (v1 > v0) ? v1 : v0;
 	ue.edge_ind = index;
@@ -205,14 +206,35 @@ brep_cdt_state::uedges_init()
     }
 }
 
+// THOUGHT: for edge splitting, we don't actually need to split the trim curves
+// at all - what we need are the 2D coordinates for the polygon point to insert,
+// and the identification of the start/end points in the polygon between which
+// the new point will be inserted.  The trim curve parameter isn't actually important,
+// so instead of trying to split the trim curve we can just use the closest point
+// on surface routine to go directly to the u,v coordinates for the point.
 void
-brep_cdt_state::edges_init()
+brep_cdt_state::faces_init()
 {
-    // Trims have both a polyedge and a 3D edge associated with them.  The
-    // polyedge is used in 2D for CDT operations, and the 3D edge is used for
-    // triangle definition and connectivity.
-    for (int index = 0; index < brep->m_T.Count(); index++) {
+    for (int index = 0; index < brep->m_F.Count(); index++) {
+	mesh_t m;
+	m.cdt = cdt;
+	m.f = brep->Face(index);
+	m.bb = m.f->BoundingBox();
+	m.bbox_insert();
+	for (int li = 0; li < brep->m_L.Count(); li++) {
+	    const ON_BrepLoop *loop = m.f->Loop(li);
+	    //polygon_t &l = m.new_loop();
+	    for (int lti = 0; lti < loop->TrimCount(); lti++) {
+#if 0
+		ON_BrepTrim *trim = loop->Trim(lti);
+		// Every loop trim gets a polygon edge, a polygon uedge,
+		// and a mesh_edge (although the latter may be degenerate
+		// for singular trims).
+		poly_edge_t &pe = m.new_pedge();
+#endif
+	    }
 
+	}
     }
 }
 
@@ -293,8 +315,8 @@ brep_cdt_triangulate(struct brep_cdt *s_cdt, int UNUSED(face_cnt), int *UNUSED(f
     // m_E init
     s_cdt->i->s.uedges_init();
 
-    // m_T init
-    s_cdt->i->s.edges_init();
+    // m_F/m_T init
+    s_cdt->i->s.faces_init();
 
     // Vertices and edges are the only two elements that are not unique to
     // faces.  However, to build up unordered edges we also want the polygon

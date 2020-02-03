@@ -121,9 +121,13 @@ class mesh_point_t {
 	struct brep_cdt *cdt;
 	std::set<size_t> uedges;
 
+	// Bounding box around the vertex point, with sized defined based
+	// on connected edge lengths.
 	void bbox_update();
 	ON_BoundingBox bb;
 
+	// Index of this container in b_pnts vector.  Used primarily
+	// to allow RTree box lookups to identify specific points.
 	size_t vect_ind;
 
 	// Origin information - specifics about what vertex, edge or surface on the
@@ -140,7 +144,6 @@ class mesh_point_t {
 	int face_index;
 	double u;
 	double v;
-
 
 	// Variables used to store the associated index when assembling BoT
 	// meshes
@@ -253,12 +256,11 @@ class mesh_uedge_t {
 
 	bool split(ON_3dPoint &p);
 
-	ON_BoundingBox *bbox();
-
 
 	int vect_ind = -1;
 
 	struct brep_cdt *cdt;
+	ON_BrepEdge *edge;
 	edge_type_t type;
 	mesh_edge_t *e[2];
 	poly_edge_t *pe[2];
@@ -517,59 +519,70 @@ class poly_uedge_t {
 };
 
 class polygon_t {
-    std::vector<poly_point_t> p_pnts;
-    std::map<long, long> o2p;
-    RTree<size_t, double, 2> p_edges_tree; // 2D spatial lookup for polygon edges
+    public:
+	std::vector<poly_point_t> p_pnts;
+	std::map<long, long> o2p;
+	RTree<size_t, double, 2> p_edges_tree; // 2D spatial lookup for polygon edges
+
+	// If this polygon is defined on a face edge, we need more info.
+	long f_id;
+	long l_id;
+
 };
 
 class mesh_t
 {
     public:
-	// Primary container for points unique to this face
-	std::vector<mesh_point_t> m_pnts;
-
 	// Primary containers for face edges
-	std::vector<mesh_edge_t> m_edges_vect;
-	std::vector<mesh_uedge_t> m_uedges_vect;
 	std::vector<poly_edge_t> m_pedges_vect;
+	std::vector<poly_uedge_t> m_puedges_vect;
+	std::vector<mesh_edge_t> m_edges_vect;
 
 	// Primary triangle container
-	std::vector<mesh_tri_t> tris_vect;
+	std::vector<mesh_tri_t> m_tris_vect;
 	RTree<size_t, double, 3> tris_tree;
 
 	// Polygonal approximation of face trimming loops
-	std::vector<polygon_t> loops;
+	std::vector<polygon_t> loops_vect;
 
-	// Find mesh_uedge_t in m_uedges_vect associated with v1,v2.  Returns
-	// -1 if no such edge exists.
-	long find_uedge(long v1, long v2);
-
-	// Find mesh_edge_t associated with v1,v2 (looks up uedge,
-	// then checks uedge's edges for the mesh_edge_t with the
-	// correct ordering.  Returns -1 if no such edge exists
-	long find_edge(long v1, long v2);
-
-	// Create a new 3D edge
-	mesh_edge_t &new_edge();
+	// Create a new polygon edge
+	poly_edge_t &new_pedge();
+	// Identify and return the unordered polygon edge associated with the
+	// ordered polygon edge, or create such an unordered edge if one does
+	// not already exist.
+	poly_uedge_t &puedge(poly_edge_t &pe);
+	// Identify and return the ordered edge associated with the ordered
+	// edge, or create such an ordered edge if one does not already
+	// exist.
+	mesh_edge_t &edge(poly_edge_t &pe);
+	// Identify and return the unordered edge associated with the ordered
+	// edge, or create such an unordered edge if one does not already
+	// exist.
+	mesh_uedge_t &uedge(mesh_edge_t &e);
 	// Create a new 3D triangle
 	mesh_tri_t &new_tri();
+	// Create a new 3D triangle
+	polygon_t &new_loop();
 
-	// Identify and return the unordered edge associated with
-	// the ordered edge, or create such an unordered edge if
-	// one does not already exist.
-	mesh_uedge_t &uedge(mesh_edge_t &e);
 
 	void delete_edge(mesh_edge_t &e);
-	void delete_uedge(mesh_uedge_t &ue);
 	void delete_tri(mesh_tri_t &t);
+
+
+	ON_BoundingBox bb;
+	void bbox_insert();
 
 	struct brep_cdt *cdt;
 	int f_id;
+	ON_BrepFace *f;
+
     private:
 
 	std::queue<size_t> m_equeue; // Available (unused) entries in m_edges_vect
-	std::queue<size_t> m_pequeue; // Available (unused) entries in m_pdges_vect
+	std::queue<size_t> m_pequeue; // Available (unused) entries in m_pedges_vect
+	std::queue<size_t> m_puequeue; // Available (unused) entries in m_puedges_vect
 	std::queue<size_t> m_tqueue; // Available (unused) entries in tris_vect
+	std::queue<size_t> m_lqueue; // Available (unused) entries in loops_vect
 };
 
 class brep_cdt_state {
@@ -584,8 +597,13 @@ class brep_cdt_state {
 	// Spatial lookup for unordered edges
 	RTree<size_t, double, 3> b_uedges_tree;
 
-	// Spatial lookup for face bboxes
-	RTree<int, double, 3> b_faces_tree;
+	// Spatial lookup for faces
+	std::vector<mesh_t> b_faces_vect;
+	RTree<size_t, double, 3> b_faces_tree;
+
+	// Find mesh_uedge_t in b_uedges_vect using the points defining e.  Returns
+	// -1 if no such edge exists, else returns its b_pnts index.
+	long find_uedge(mesh_edge_t &e);
 
 	mesh_uedge_t &new_uedge();
 	void delete_uedge(mesh_uedge_t &ue);
@@ -599,7 +617,7 @@ class brep_cdt_state {
 	void brep_cpy_init();
 	void verts_init();
 	void uedges_init();
-	void edges_init();
+	void faces_init();
 
     private:
 	std::queue<size_t> b_equeue; // Available (unused) entries in edges_vect
