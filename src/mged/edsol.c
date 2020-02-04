@@ -4006,22 +4006,22 @@ sedit(void)
 		RT_EBM_CK_MAGIC(ebm);
 
 		if (inpara == 2) {
-		    if (stat(ebm->file, &stat_buf)) {
-			Tcl_AppendResult(INTERP, "Cannot get status of file ", ebm->file, (char *)NULL);
+		    if (stat(ebm->name, &stat_buf)) {
+			Tcl_AppendResult(INTERP, "Cannot get status of ebm data source ", ebm->name, (char *)NULL);
 			mged_print_result(TCL_ERROR);
 			return;
 		    }
 		    need_size = es_para[0] * es_para[1] * sizeof(unsigned char);
 		    if (stat_buf.st_size < need_size) {
-			Tcl_AppendResult(INTERP, "File (", ebm->file,
-					 ") is too small, set file name first", (char *)NULL);
+			Tcl_AppendResult(INTERP, "File (", ebm->name,
+					 ") is too small, set data source name first", (char *)NULL);
 			mged_print_result(TCL_ERROR);
 			return;
 		    }
 		    ebm->xdim = es_para[0];
 		    ebm->ydim = es_para[1];
 		} else if (inpara > 0) {
-		    Tcl_AppendResult(INTERP, "width and length of file are required\n", (char *)NULL);
+		    Tcl_AppendResult(INTERP, "width and length of data source are required\n", (char *)NULL);
 		    mged_print_result(TCL_ERROR);
 		    return;
 		}
@@ -4038,7 +4038,7 @@ sedit(void)
 
 		RT_EBM_CK_MAGIC(ebm);
 
-		fname = get_file_name(ebm->file);
+		fname = get_file_name(ebm->name);
 		if (fname) {
 		    struct bu_vls message = BU_VLS_INIT_ZERO;
 
@@ -4057,7 +4057,7 @@ sedit(void)
 			mged_print_result(TCL_ERROR);
 			return;
 		    }
-		    bu_strlcpy(ebm->file, fname, RT_EBM_NAME_LEN);
+		    bu_strlcpy(ebm->name, fname, RT_EBM_NAME_LEN);
 		}
 
 		break;

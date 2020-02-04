@@ -63,7 +63,9 @@ struct rt_ebm_specific {
 #define RT_EBM_O(m) bu_offsetof(struct rt_ebm_internal, m)
 
 const struct bu_structparse rt_ebm_parse[] = {
-    {"%s",	RT_EBM_NAME_LEN, "file", bu_offsetof(struct rt_ebm_internal, file), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s",	RT_EBM_NAME_LEN, "file", bu_offsetof(struct rt_ebm_internal, name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%s",	RT_EBM_NAME_LEN, "name", bu_offsetof(struct rt_ebm_internal, name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%c",	1, "src",	RT_EBM_O(datasrc),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "w",		RT_EBM_O(xdim),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "n",		RT_EBM_O(ydim),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "d",		RT_EBM_O(tallness),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -104,8 +106,24 @@ extern int rt_seg_planeclip(struct seg *out_hd, struct seg *in_hd,
  */
 #define BIT_XWIDEN 2
 #define BIT_YWIDEN 2
-#define BIT(_eip, _xx, _yy) \
-    ((unsigned char *)((_eip)->mp->apbuf))[ ((_yy)+BIT_YWIDEN)*((_eip)->xdim + BIT_XWIDEN*2)+(_xx)+BIT_XWIDEN ]
+
+unsigned char *
+bit(struct rt_ebm_internal *eip, size_t x, size_t y)
+{
+    unsigned char *ret = NULL;
+    switch (eip->datasrc) {
+	case RT_EBM_SRC_FILE:
+	    ret = &(((unsigned char *)(eip->mp->apbuf))[(y+BIT_YWIDEN)*(eip->xdim+BIT_XWIDEN*2)+x+BIT_XWIDEN]);
+	    break;
+	case RT_EBM_SRC_OBJ:
+	    ret = &((eip->buf)[(y+BIT_YWIDEN)*(eip->xdim+BIT_XWIDEN*2)+x+BIT_XWIDEN]);
+	    break;
+        default:
+	    bu_log("Unrecognized EBM data source (datasrc='%d')\n", eip->datasrc);
+	    bu_bomb("Internal Error, exiting.\n");
+    }
+    return ret;
+}
 
 
 #ifdef USE_OPENCL
@@ -161,7 +179,7 @@ clt_ebm_pack(struct bu_pool *pool, struct soltab *stp)
 
     for (y = 0; y < eip->ydim; y++) {
 	for (x = 0; x < eip->xdim; x++) {
-	    if (BIT(eip, x, y) != 0) {
+	    if (*bit(eip, x, y) != 0) {
 		id = (y+BIT_YWIDEN)*(eip->xdim + BIT_XWIDEN*2)+x+BIT_XWIDEN;
 		args->apbuf[(id >> 3)] |= (1 << (id & 7));
 	    }
@@ -196,7 +214,7 @@ rt_ebm_centroid(point_t *cent, const struct rt_db_internal *ip)
     totalcells = 0;
     for (y = 0; y < eip->ydim; y++) {
 	for (x = 0; x < eip->xdim; x++) {
-	    if (BIT(eip, x, y) == 1) {
+	    if (*bit(eip, x, y) == 1) {
 		xsum += x;
 		ysum += y;
 		totalcells++;
@@ -362,7 +380,7 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
 	 * cell hit.  Depend on higher level to clip ray to Z extent.
 	 */
 	if (RT_G_DEBUG&RT_DEBUG_EBM)bu_log("ray on local Z axis\n");
-	if (BIT(&ebmp->ebm_i, igrid[X], igrid[Y]) == 0)
+	if (*bit(&ebmp->ebm_i, igrid[X], igrid[Y]) == 0)
 	    return 0;	/* MISS */
 	RT_GET_SEG(segp, ap->a_resource);
 	segp->seg_stp = stp;
@@ -460,7 +478,7 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
 	t1 = t[out_index];
 
 	/* Ray passes through cell igrid[XY] from t0 to t1 */
-	val = BIT(&ebmp->ebm_i, igrid[X], igrid[Y]);
+	val = *bit(&ebmp->ebm_i, igrid[X], igrid[Y]);
 	if (RT_G_DEBUG&RT_DEBUG_EBM)bu_log("igrid [%zu %zu] from %g to %g, val=%d\n",
 					igrid[X], igrid[Y],
 					t0, t1, val);
@@ -571,6 +589,216 @@ rt_ebm_dda(register struct xray *rp, struct soltab *stp, struct application *ap,
 
 
 /**
+ * Retrieve data for EBM from external file.
+ * Returns:
+ * 0 Success
+ * !0 Failure
+ */
+static int
+get_file_data(struct rt_ebm_internal *eip, const struct db_i *dbip)
+{
+    struct bu_mapped_file *mp;
+    int nbytes;
+    
+    /* get file */
+    mp = bu_open_mapped_file_with_path(dbip->dbi_filepath, eip->name, "ebm");
+    if (!mp) {
+	bu_log("mapped file open failure: %s%c%s\n",
+	       *dbip->dbi_filepath, BU_DIR_SEPARATOR, eip->name);
+	return -1;
+    }
+    eip->mp = mp;
+    if (mp->buflen < (size_t)(eip->xdim*eip->ydim)) {
+	bu_log("EBM buffer wrong size: %lu s/b %u ",
+	       (long unsigned int) mp->buflen, eip->xdim*eip->ydim);
+	return -1;
+    }
+  
+    nbytes = (eip->xdim+BIT_XWIDEN*2)*(eip->ydim+BIT_YWIDEN*2);
+   
+    /* If first use of this file, prepare in-memory buffer */
+    if (!mp->apbuf) {
+	size_t y;
+	unsigned char* cp;
+	
+	/* Prevent a multi-processor race */
+	bu_semaphore_acquire(RT_SEM_MODEL);
+	if (mp->apbuf) {
+	    /* someone else beat us, nothing more to do */
+	    bu_semaphore_release(RT_SEM_MODEL);
+	    return 0;
+	}
+	mp->apbuf = (void *)bu_calloc(
+	    1, nbytes, "rt_ebm_import4 bitmap");
+	mp->apbuflen = nbytes;
+	bu_semaphore_release(RT_SEM_MODEL);
+
+	/* Because of in-memory padding, read each scanline separately */
+	cp = (unsigned char*)mp->buf;
+	for (y = 0; y < eip->ydim; y++) {
+	    /* bit() addresses into mp->apbuf */
+	    memcpy(bit(eip, 0, y), cp, eip->xdim);
+	    cp += eip->xdim;
+	}
+    }
+    return 0;
+}
+
+
+extern int rt_retrieve_binunif(struct rt_db_internal *intern, const struct db_i *dbip, const char *name);
+extern int rt_binunif_describe(struct bu_vls  *str, const struct rt_db_internal *ip, int verbose, double mm2local);
+
+
+/**
+ * Retrieve data for EBM from a database object.
+ * Returns:
+ * 0 Success
+ * !0 Failure
+ */
+static int
+get_obj_data(struct rt_ebm_internal *eip, const struct db_i *dbip)
+{
+    struct rt_binunif_internal *bip;
+    int ret;
+    int nbytes;
+
+    BU_ALLOC(eip->bip, struct rt_db_internal);
+
+    ret = rt_retrieve_binunif(eip->bip, dbip, eip->name);
+    if (ret)
+	return -1;
+
+    if (RT_G_DEBUG & RT_DEBUG_HF) {
+	bu_log("db_internal magic: 0x%08x  major: %d  minor: %d\n",
+		eip->bip->idb_magic,
+		eip->bip->idb_major_type,
+		eip->bip->idb_minor_type);
+    }
+
+    bip = (struct rt_binunif_internal *)eip->bip->idb_ptr;
+
+    if (RT_G_DEBUG & RT_DEBUG_HF)
+	bu_log("binunif magic: 0x%08x  type: %d count:%zu data[0]:%u\n",
+		bip->magic, bip->type, bip->count, bip->u.uint8[0]);
+
+    if (bip->type != DB5_MINORTYPE_BINU_8BITINT_U
+	|| (size_t)bip->count != (size_t)(eip->xdim*eip->ydim))
+    {
+	size_t i = 0;
+	size_t size;
+	struct bu_vls binudesc = BU_VLS_INIT_ZERO;
+	rt_binunif_describe(&binudesc, eip->bip, 0, dbip->dbi_base2local);
+
+	/* skip the first title line */
+	size = bu_vls_strlen(&binudesc);
+	while (size > 0 && i < size && bu_vls_cstr(&binudesc)[0] != '\n') {
+	    bu_vls_nibble(&binudesc, 1);
+	}
+	if (bu_vls_cstr(&binudesc)[0] == '\n')
+	    bu_vls_nibble(&binudesc, 1);
+
+	bu_log("ERROR: Binary object '%s' has invalid data (expected type %d, found %d).\n"
+	       "       Expecting %zu 8-bit unsigned char (nuc) integer data values.\n"
+	       "       Encountered %s\n",
+	       eip->name,
+	       DB5_MINORTYPE_BINU_8BITINT_U,
+	       bip->type,
+	       (size_t)(eip->xdim*eip->ydim),
+	       bu_vls_cstr(&binudesc));
+	return -2;
+    }
+
+    nbytes = (eip->xdim+BIT_XWIDEN*2)*(eip->ydim+BIT_YWIDEN*2);
+
+    if (!eip->buf) {
+	size_t y;
+	unsigned char* cp;
+
+	/* Prevent a multi-processor race */
+	bu_semaphore_acquire(RT_SEM_MODEL);
+	if (eip->buf) {
+	    /* someone else beat us, nothing more to do */
+	    bu_semaphore_release(RT_SEM_MODEL);
+	    return 0;
+	}
+	eip->buf = (void *)bu_calloc(
+	    1, nbytes, "rt_ebm_import4 bitmap");
+	bu_semaphore_release(RT_SEM_MODEL);
+
+	/* Because of in-memory padding, read each scanline separately */
+	cp = (unsigned char *)bip->u.uint8;
+	for (y = 0; y < eip->ydim; y++) {
+	    /* bit() addresses into buf */
+	    memcpy(bit(eip, 0, y), cp, eip->xdim);
+	    cp += eip->xdim;
+	}
+    }
+    return 0;
+}
+
+
+/**
+ * Apply the modelling transform and fetch actual data.
+ *
+ * Return:
+ * 0 success
+ * !0 failure
+ */
+static int
+ebm_get_data(struct rt_ebm_internal *eip, const mat_t mat, const struct db_i *dbip)
+{
+    mat_t tmp;
+    char *p;
+
+    /* Apply Modelling transform */
+    bn_mat_mul(tmp, mat, eip->mat);
+    MAT_COPY(eip->mat, tmp);
+
+    p = eip->name;
+
+    switch (eip->datasrc) {
+	case RT_EBM_SRC_FILE:
+	    /* Retrieve the data from an external file */
+	    if (RT_G_DEBUG & RT_DEBUG_HF)
+		bu_log("getting data from file \"%s\"\n", p);
+
+	    if (get_file_data(eip, dbip) != 0) {
+		p = "file";
+	    } else {
+		return 0;
+	    }
+	    break;
+	case RT_EBM_SRC_OBJ:
+	    /* Retrieve the data from an internal db object */
+	    if (RT_G_DEBUG & RT_DEBUG_HF)
+		bu_log("getting data from object \"%s\"\n", p);
+
+	    if (get_obj_data(eip, dbip) != 0) {
+		p = "object";
+	    } else {
+		RT_CK_DB_INTERNAL(eip->bip);
+		RT_CK_BINUNIF(eip->bip->idb_ptr);
+		return 0;
+	    }
+	    break;
+	default:
+	    bu_log("%s:%d Odd ebm data src '%c' s/b '%c' or '%c'\n",
+		    __FILE__, __LINE__, eip->datasrc,
+		    RT_EBM_SRC_FILE, RT_EBM_SRC_OBJ);
+	    return -1;
+    }
+
+    bu_log("Cannot retrieve EBM data from %s \"%s\"\n", p,
+	   eip->name);
+
+    eip->mp = (struct bu_mapped_file *)NULL;
+    eip->buf = NULL;
+
+    return 1;
+}
+
+
+/**
  * Read in the information from the string solid record.  Then, as a
  * service to the application, read in the bitmap and set up some of
  * the associated internal variables.
@@ -600,9 +828,10 @@ rt_ebm_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
     eip = (struct rt_ebm_internal *)ip->idb_ptr;
     eip->magic = RT_EBM_INTERNAL_MAGIC;
-
-    /* Provide default orientation info */
     MAT_IDN(eip->mat);
+
+    /* default source is file for compatibility with old EBM */
+    eip->datasrc = RT_EBM_SRC_FILE;
 
     bu_vls_strcpy(&str, rp->ss.ss_args);
     if (bu_struct_parse(&str, rt_ebm_parse, (char *)eip, NULL) < 0) {
@@ -615,11 +844,9 @@ rt_ebm_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     bu_vls_free(&str);
 
     /* Check for reasonable values */
-    if (eip->file[0] == '\0' || eip->xdim < 1 ||
-	eip->ydim < 1 || eip->mat[15] <= 0.0 ||
-	eip->tallness <= 0.0) {
-	bu_struct_print("Unreasonable EBM parameters", rt_ebm_parse,
-			(char *)eip);
+    if (eip->name[0] == '\0' || eip->tallness <= 0.0 ||
+	eip->xdim < 1 || eip->ydim < 1 || eip->mat[15] <= 0.0) {
+	bu_struct_print("Unreasonable EBM parameters", rt_ebm_parse, (char *)eip);
 	bu_free((char *)eip, "rt_ebm_import4: eip");
 	ip->idb_type = ID_NULL;
 	ip->idb_ptr = (void *)NULL;
@@ -632,9 +859,9 @@ rt_ebm_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     MAT_COPY(eip->mat, tmat);
 
     /* Get bit map from .bw(5) file */
-    mp = bu_open_mapped_file_with_path(dbip->dbi_filepath, eip->file, "ebm");
+    mp = bu_open_mapped_file_with_path(dbip->dbi_filepath, eip->name, "ebm");
     if (!mp) {
-	bu_log("rt_ebm_import4() unable to open '%s'\n", eip->file);
+	bu_log("rt_ebm_import4() unable to open '%s'\n", eip->name);
 	bu_free((char *)eip, "rt_ebm_import4: eip");
     fail:
 	ip->idb_type = ID_NULL;
@@ -644,7 +871,7 @@ rt_ebm_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     eip->mp = mp;
     if (mp->buflen < (size_t)(eip->xdim*eip->ydim)) {
 	bu_log("rt_ebm_import4() file '%s' is too short %zu < %u\n",
-	       eip->file, mp->buflen, eip->xdim*eip->ydim);
+	       eip->name, mp->buflen, eip->xdim*eip->ydim);
 	goto fail;
     }
 
@@ -671,8 +898,8 @@ rt_ebm_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	/* Because of in-memory padding, read each scanline separately */
 	cp = (unsigned char *)mp->buf;
 	for (y = 0; y < eip->ydim; y++) {
-	    /* BIT() addresses into mp->apbuf */
-	    memcpy(&BIT(eip, 0, y), cp, eip->xdim);
+	    /* bit() addresses into mp->apbuf */
+	    memcpy(bit(eip, 0, y), cp, eip->xdim);
 	    cp += eip->xdim;
 	}
     }
@@ -728,9 +955,6 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 {
     register struct rt_ebm_internal *eip;
     struct bu_vls str = BU_VLS_INIT_ZERO;
-    int nbytes;
-    mat_t tmat;
-    struct bu_mapped_file *mp;
 
     BU_CK_EXTERNAL(ep);
     RT_CK_DB_INTERNAL(ip);
@@ -742,9 +966,10 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
     eip = (struct rt_ebm_internal *)ip->idb_ptr;
     eip->magic = RT_EBM_INTERNAL_MAGIC;
-
-    /* Provide default orientation info */
     MAT_IDN(eip->mat);
+
+    /* default source is file for compatibility with old EBM */
+    eip->datasrc = RT_EBM_SRC_FILE;
 
     bu_vls_strcpy(&str, (const char *)ep->ext_buf);
     if (bu_struct_parse(&str, rt_ebm_parse, (char *)eip, NULL) < 0) {
@@ -757,66 +982,25 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     bu_vls_free(&str);
 
     /* Check for reasonable values */
-    if (eip->file[0] == '\0' || eip->xdim < 1 ||
-	eip->ydim < 1 || eip->mat[15] <= 0.0 ||
-	eip->tallness <= 0.0) {
-	bu_struct_print("Unreasonable EBM parameters", rt_ebm_parse,
-			(char *)eip);
+    if (eip->name[0] == '\0' || eip->tallness <= 0.0 ||
+	eip->xdim < 1 || eip->ydim < 1 || eip->mat[15] <= 0.0 ||
+	(eip->datasrc != RT_EBM_SRC_FILE && eip->datasrc != RT_EBM_SRC_OBJ)) {
+	bu_struct_print("Unreasonable EBM parameters", rt_ebm_parse, (char *)eip);
 	bu_free((char *)eip, "rt_ebm_import4: eip");
 	ip->idb_type = ID_NULL;
 	ip->idb_ptr = (void *)NULL;
 	return -1;
     }
 
-    /* Apply any modeling transforms to get final matrix */
+    /* Apply modelling transforms and fetch actual data */
     if (mat == NULL) mat = bn_mat_identity;
-    bn_mat_mul(tmat, mat, eip->mat);
-    MAT_COPY(eip->mat, tmat);
-
-    /* Get bit map from .bw(5) file */
-    mp = bu_open_mapped_file_with_path(dbip->dbi_filepath, eip->file, "ebm");
-    if (!mp) {
-	bu_log("rt_ebm_import4() unable to open '%s'\n", eip->file);
+    if (ebm_get_data(eip, mat, dbip) != 0) {
+	bu_log("rt_ebm_import4(%d) '%s' %s\n", __LINE__,
+		eip->name, "unable to load bitmap data");
 	bu_free((char *)eip, "rt_ebm_import4: eip");
-    fail:
 	ip->idb_type = ID_NULL;
 	ip->idb_ptr = (void *)NULL;
 	return -1;
-    }
-    eip->mp = mp;
-    if (mp->buflen < (size_t)(eip->xdim*eip->ydim)) {
-	bu_log("rt_ebm_import4() file '%s' is too short %zu < %u\n",
-	       eip->file, mp->buflen, eip->xdim*eip->ydim);
-	goto fail;
-    }
-
-    nbytes = (eip->xdim+BIT_XWIDEN*2)*(eip->ydim+BIT_YWIDEN*2);
-
-    /* If first use of this file, prepare in-memory buffer */
-    if (!mp->apbuf) {
-	size_t y;
-	unsigned char *cp;
-
-	/* Prevent a multi-processor race */
-	bu_semaphore_acquire(RT_SEM_MODEL);
-	if (mp->apbuf) {
-	    /* someone else beat us, nothing more to do */
-	    bu_semaphore_release(RT_SEM_MODEL);
-	    return 0;
-	}
-	mp->apbuf = (void *)bu_calloc(
-	    1, nbytes, "rt_ebm_import4 bitmap");
-	mp->apbuflen = nbytes;
-
-	bu_semaphore_release(RT_SEM_MODEL);
-
-	/* Because of in-memory padding, read each scanline separately */
-	cp = (unsigned char *)mp->buf;
-	for (y = 0; y < eip->ydim; y++) {
-	    /* BIT() addresses into mp->apbuf */
-	    memcpy(&BIT(eip, 0, y), cp, eip->xdim);
-	    cp += eip->xdim;
-	}
     }
     return 0;
 }
@@ -878,7 +1062,7 @@ rt_ebm_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 	return 0;
 
     bu_vls_printf(&substr, "  file=\"%s\" w=%u n=%u depth=%g\n   mat=",
-		  eip->file, eip->xdim, eip->ydim, INTCLAMP(eip->tallness*mm2local));
+		  eip->name, eip->xdim, eip->ydim, INTCLAMP(eip->tallness*mm2local));
     bu_vls_vlscat(str, &substr);
     for (i = 0; i < 15; i++) {
 	bu_vls_trunc(&substr, 0);
@@ -1008,7 +1192,7 @@ rt_ebm_print(register const struct soltab *stp)
     register const struct rt_ebm_specific *ebmp =
 	(struct rt_ebm_specific *)stp->st_specific;
 
-    bu_log("ebm file = %s\n", ebmp->ebm_i.file);
+    bu_log("ebm name = %s\n", ebmp->ebm_i.name);
     bu_log("dimensions = (%u, %u, %g)\n",
 	   ebmp->ebm_i.xdim, ebmp->ebm_i.ydim,
 	   ebmp->ebm_i.tallness);
@@ -1187,13 +1371,13 @@ rt_ebm_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 	following = 0;
 	for (y = 0; y <= eip->ydim; y++) {
 	    if (following) {
-		if ((BIT(eip, x-1, y) == 0) != (BIT(eip, x, y) == 0))
+		if ((*bit(eip, x-1, y) == 0) != (*bit(eip, x, y) == 0))
 		    continue;
 		rt_ebm_plate(x, base, x, y, eip->tallness,
 			     eip->mat, vhead);
 		following = 0;
 	    } else {
-		if ((BIT(eip, x-1, y) == 0) == (BIT(eip, x, y) == 0))
+		if ((*bit(eip, x-1, y) == 0) == (*bit(eip, x, y) == 0))
 		    continue;
 		following = 1;
 		base = y;
@@ -1206,13 +1390,13 @@ rt_ebm_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_te
 	following = 0;
 	for (x = 0; x <= eip->xdim; x++) {
 	    if (following) {
-		if ((BIT(eip, x, y-1) == 0) != (BIT(eip, x, y) == 0))
+		if ((*bit(eip, x, y-1) == 0) != (*bit(eip, x, y) == 0))
 		    continue;
 		rt_ebm_plate(base, y, x, y, eip->tallness,
 			     eip->mat, vhead);
 		following = 0;
 	    } else {
-		if ((BIT(eip, x, y-1) == 0) == (BIT(eip, x, y) == 0))
+		if ((*bit(eip, x, y-1) == 0) == (*bit(eip, x, y) == 0))
 		    continue;
 		following = 1;
 		base = x;
@@ -1428,14 +1612,14 @@ rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     while (x <= eip->xdim) {
 	y = 0;
 	while (y <= eip->ydim) {
-	    if ((BIT(eip, x-1, y) == 0) != (BIT(eip, x, y) == 0)) {
+	    if ((*bit(eip, x-1, y) == 0) != (*bit(eip, x, y) == 0)) {
 		/* a vertical edge starts here */
 		start = y;
-		left = (BIT(eip, x, y) != 0);
+		left = (*bit(eip, x, y) != 0);
 
 		/* find other end */
-		while ((BIT(eip, x-1, y) == 0) != (BIT(eip, x, y) == 0) &&
-		       (BIT(eip, x, y) != 0) == left)
+		while ((*bit(eip, x-1, y) == 0) != (*bit(eip, x, y) == 0) &&
+		       (*bit(eip, x, y) != 0) == left)
 		    y++;
 		rt_ebm_edge(x, start, x, y, left, &edges);
 	    } else {
@@ -1449,14 +1633,14 @@ rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     while (y <= eip->ydim) {
 	x = 0;
 	while (x <= eip->xdim) {
-	    if ((BIT(eip, x, y-1) ==0 ) != (BIT(eip, x, y) == 0)) {
+	    if ((*bit(eip, x, y-1) ==0 ) != (*bit(eip, x, y) == 0)) {
 		/* a horizontal edge starts here */
 		start = x;
-		left = (BIT(eip, x, y-1) != 0);
+		left = (*bit(eip, x, y-1) != 0);
 
 		/* find other end */
-		while ((BIT(eip, x, y-1) == 0) != (BIT(eip, x, y) == 0) &&
-		       (BIT(eip, x, y-1) != 0) == left)
+		while ((*bit(eip, x, y-1) == 0) != (*bit(eip, x, y) == 0) &&
+		       (*bit(eip, x, y-1) != 0) == left)
 		    x++;
 		rt_ebm_edge(start, y, x, y, left, &edges);
 	    } else
@@ -1618,13 +1802,13 @@ rt_ebm_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
     if (attr == (char *)NULL) {
 	bu_vls_strcpy(logstr, "ebm");
 	bu_vls_printf(logstr, " F %s W %u N %u H %.25g",
-		      ebm->file, ebm->xdim, ebm->ydim, ebm->tallness);
+		      ebm->name, ebm->xdim, ebm->ydim, ebm->tallness);
 	bu_vls_printf(logstr, " M {");
 	for (i = 0; i < 16; i++)
 	    bu_vls_printf(logstr, " %.25g", ebm->mat[i]);
 	bu_vls_printf(logstr, " }");
     } else if (BU_STR_EQUAL(attr, "F") || BU_STR_EQUAL(attr, "file")) {
-	bu_vls_printf(logstr, "%s", ebm->file);
+	bu_vls_printf(logstr, "%s", ebm->name);
     } else if (BU_STR_EQUAL(attr, "W")) {
 	bu_vls_printf(logstr, "%u", ebm->xdim);
     } else if (BU_STR_EQUAL(attr, "N")) {
@@ -1669,7 +1853,15 @@ rt_ebm_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		bu_vls_printf(logstr, "ERROR: File name too long");
 		return BRLCAD_ERROR;
 	    }
-	    bu_strlcpy(ebm->file, argv[1], RT_EBM_NAME_LEN);
+	    bu_strlcpy(ebm->name, argv[1], RT_EBM_NAME_LEN);
+	    /* ebm->datasrc = 'f'; */
+	} else if (BU_STR_EQUAL(argv[0], "O") || BU_STR_EQUAL(argv[0], "object")) {
+	    if (strlen(argv[1]) >= RT_EBM_NAME_LEN) {
+		bu_vls_printf(logstr, "ERROR: Object name too long");
+		return BRLCAD_ERROR;
+	    }
+	    bu_strlcpy(ebm->name, argv[1], RT_EBM_NAME_LEN);
+	    /* ebm->datasrc = 'o'; */
 	} else if (BU_STR_EQUAL(argv[0], "W")) {
 	    ebm->xdim = atoi(argv[1]);
 	} else if (BU_STR_EQUAL(argv[0], "N")) {
@@ -1728,6 +1920,8 @@ rt_ebm_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     intern->idb_ptr = (void *)ebm;
     ebm->magic = RT_EBM_INTERNAL_MAGIC;
     MAT_IDN(ebm->mat);
+    ebm->datasrc = RT_EBM_SRC_FILE;
+
     ebm->tallness = 1.0;
 }
 
@@ -1776,7 +1970,7 @@ rt_ebm_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 
     for (y = 0; y < eip->ydim; y++) {
 	for (x = 0; x < eip->xdim; x++) {
-	    if (BIT(eip, x, y) != 0) {
+	    if (*bit(eip, x, y) != 0) {
 		_x = (fastf_t)x;
 		_y = (fastf_t)y;
 		VSET(_x0, _x - 0.5, _y - 0.5, 0.0);
@@ -1806,25 +2000,25 @@ rt_ebm_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 		VCROSS(_cross, d7_4, d6_5);
 		_area += 0.5 * MAGNITUDE(_cross);
 
-		if (BIT(eip, x + 1, y) == 0) {
+		if (*bit(eip, x + 1, y) == 0) {
 		    VSUB2(d5_3, x5, x3);
 		    VSUB2(d7_1, x7, x1);
 		    VCROSS(_cross, d5_3, d7_1);
 		    _area += 0.5 * MAGNITUDE(_cross);
 		}
-		if (BIT(eip, x - 1, y) == 0) {
+		if (*bit(eip, x - 1, y) == 0) {
 		    VSUB2(d6_0, x6, x0);
 		    VSUB2(d4_2, x4, x2);
 		    VCROSS(_cross, d6_0, d4_2);
 		    _area += 0.5 * MAGNITUDE(_cross);
 		}
-		if (BIT(eip, x, y + 1) == 0) {
+		if (*bit(eip, x, y + 1) == 0) {
 		    VSUB2(d7_2, x7, x2);
 		    VSUB2(d6_3, x6, x3);
 		    VCROSS(_cross, d7_2, d6_3);
 		    _area += 0.5 * MAGNITUDE(_cross);
 		}
-		if (BIT(eip, x, y - 1) == 0) {
+		if (*bit(eip, x, y - 1) == 0) {
 		    VSUB2(d4_1, x4, x1);
 		    VSUB2(d5_0, x5, x0);
 		    VCROSS(_cross, d4_1, d5_0);

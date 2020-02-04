@@ -325,7 +325,7 @@ struct rt_brep_internal {
 #define RT_EBM_NAME_LEN 256
 struct rt_ebm_internal {
     uint32_t magic;
-    char file[RT_EBM_NAME_LEN];
+    char name[RT_EBM_NAME_LEN];
     /* NOTE: xdim/ydim cannot be size_t until rel8 as they are
      * written out to disk via bu_vls_struct_print() as 32-bit ints.
      */
@@ -333,7 +333,7 @@ struct rt_ebm_internal {
     uint32_t ydim;	/**< @brief Y dimension (n cells) */
     fastf_t tallness;	/**< @brief Z dimension (mm) */
     mat_t mat;		/**< @brief convert local coords to model space */
-    unsigned short *buf; /**< @brief actual data */
+    unsigned char *buf; /**< @brief actual data */
     struct bu_mapped_file *mp;	/**< @brief mapped file for data */
     struct rt_db_internal *bip; /**< @brief db object for data */
 #define RT_EBM_SRC_FILE 'f'
