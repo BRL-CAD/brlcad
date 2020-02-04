@@ -40,6 +40,13 @@ ADD_NURBS_NIRT_Test(NIST03_MISS_01
   "Document -114.61944548140064626 -127.49462006675899772 -134.83948901109894791 35 25"
   "analyze_nhit;NIST_MBE_PMI_3.g")
 
+ADD_NURBS_NIRT_Test(PLATE_MODE_CYL_HIT_01
+  "-b"
+  "${CMAKE_SOURCE_DIR}/src/libbrep/tests/plate_mode_samples.g"
+  "cylinder.s 51.20451138795556290 -9.99999987347469776 19.42666674721774100 0 0"
+  "analyze_nhit")
+
+
 CMAKEFILES(
   brep-3dm.tar.bz2
   CMakeLists.txt
