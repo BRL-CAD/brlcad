@@ -68,6 +68,12 @@ brep_cdt_state::delete_uedge(mesh_uedge_t &ue)
     b_uequeue.push(ind);
 }
 
+static bool Nearby_VectAdd(size_t data, void *a_context) {
+    std::vector<size_t> *nearby = (std::vector<size_t> *)a_context;
+    nearby->push_back(data);
+    return true;
+}
+
 long
 brep_cdt_state::find_uedge(mesh_edge_t &e)
 {
@@ -80,7 +86,19 @@ brep_cdt_state::find_uedge(mesh_edge_t &e)
     p2[1] = e.bb.Max().y + 2*ON_ZERO_TOLERANCE;
     p2[2] = e.bb.Max().z + 2*ON_ZERO_TOLERANCE;
 
-    b_uedges_tree.Search(p1, p2, NULL, NULL);
+    std::vector<size_t> near_uedges;
+    b_uedges_tree.Search(p1, p2, Nearby_VectAdd, &near_uedges);
+
+    bool c1, c2;
+    for (size_t i = 0; i < near_uedges.size(); i++) {
+	mesh_uedge_t &ue = b_uedges_vect[near_uedges[i]];
+	c1 = (ue.v[0] == e.v[0] || ue.v[1] == e.v[0]);
+	c2 = (ue.v[0] == e.v[1] || ue.v[1] == e.v[1]);
+	if (c1 && c2) {
+	    // Found a matching uedge
+	    return ue.vect_ind;
+	}    
+    }
 
     return -1;
 }
