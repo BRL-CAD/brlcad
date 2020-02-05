@@ -1008,17 +1008,15 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	return 0; // MISS
 
     // find all the hits (XXX very inefficient right now!)
-    std::list<brep_hit> all_hits; // record all hits
+    std::list<brep_hit> hits;
     MissList misses;
     for (std::list<const BBNode*>::const_iterator i = inters.begin(); i != inters.end(); i++) {
 	const BBNode* sbv = (*i);
 	const ON_BrepFace* f = &sbv->get_face();
 	const ON_Surface* surf = f->SurfaceOf();
 	pt2d_t uv = {sbv->m_u.Mid(), sbv->m_v.Mid()};
-	utah_brep_intersect(sbv, f, surf, uv, r, all_hits);
+	utah_brep_intersect(sbv, f, surf, uv, r, hits);
     }
-
-    std::list<brep_hit> hits = all_hits;
 
     // sort the hits
     hits.sort();
@@ -1204,9 +1202,6 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	    curr++;
 	}
     }
-
-    all_hits.clear();
-    all_hits = hits;
 
     if (!hits.empty()) {
 	// remove grazing hits with with normal to ray dot less than
