@@ -782,9 +782,9 @@ ebm_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     ebm->bip = NULL;
 
     if (*cmd_argvs[3] == 'f' || *cmd_argvs[3] == 'F')
-	ebm->datasrc = RT_DSP_SRC_FILE;
+	ebm->datasrc = RT_EBM_SRC_FILE;
     else if (*cmd_argvs[3] == 'o' || *cmd_argvs[3] == 'O')
-	ebm->datasrc = RT_DSP_SRC_OBJ;
+	ebm->datasrc = RT_EBM_SRC_OBJ;
     else
 	return GED_ERROR;
 
