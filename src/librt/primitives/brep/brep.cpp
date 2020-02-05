@@ -1010,22 +1010,22 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
     // find all the hits (XXX very inefficient right now!)
     std::list<brep_hit> all_hits; // record all hits
     MissList misses;
-    int s = 0;
-
     for (std::list<const BBNode*>::const_iterator i = inters.begin(); i != inters.end(); i++) {
 	const BBNode* sbv = (*i);
 	const ON_BrepFace* f = &sbv->get_face();
 	const ON_Surface* surf = f->SurfaceOf();
 	pt2d_t uv = {sbv->m_u.Mid(), sbv->m_v.Mid()};
 	utah_brep_intersect(sbv, f, surf, uv, r, all_hits);
-	s++;
     }
 
     std::list<brep_hit> hits = all_hits;
 
     // sort the hits
     hits.sort();
+
+#ifdef RT_DEBUG_HITS
     std::list<brep_hit> orig = hits;
+#endif
 
     ////////////////////////
     if ((hits.size() > 1) && containsNearMiss(&hits)) { //&& ((hits.size() % 2) != 0)) {
