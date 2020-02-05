@@ -125,7 +125,8 @@ brep_debug(const char *objname)
 	     *
 	     * TODO - can we set/clear static variables in brep_debug
 	     * so we don't have to do string ops every time? */
-	    if (BU_STR_EQUAL(objname, envstr)) return INT_MAX;
+	    if (BU_STR_EQUAL(objname, envstr))
+		return INT_MAX;
 	    return 0;
 	}
     } else {
@@ -1409,6 +1410,7 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
     return 0;
 }
 
+
 /**
  * Given ONE ray distance, return the normal and entry/exit point.
  */
@@ -2093,7 +2095,8 @@ RT_MemoryArchive::CurrentPosition() const
 bool
 RT_MemoryArchive::SeekFromCurrentPosition(int seek_to)
 {
-    if (pos + seek_to > m_buffer.size()) return false;
+    if (pos + seek_to > m_buffer.size())
+	return false;
     pos += seek_to;
     return true;
 }
@@ -2102,7 +2105,8 @@ RT_MemoryArchive::SeekFromCurrentPosition(int seek_to)
 bool
 RT_MemoryArchive::SeekFromStart(size_t seek_to)
 {
-    if (seek_to > m_buffer.size()) return false;
+    if (seek_to > m_buffer.size())
+	return false;
     pos = seek_to;
     return true;
 }
@@ -2731,7 +2735,8 @@ rt_brep_valid(struct bu_vls *log, struct rt_db_internal *ip, int flags)
 #endif
 
 brep_valid_done:
-    if (log && ret) bu_vls_printf(log, "\nbrep is valid\n");
+    if (log && ret)
+	bu_vls_printf(log, "\nbrep is valid\n");
     return ret;
 }
 
@@ -2750,20 +2755,21 @@ rt_brep_plate_mode(struct rt_db_internal *ip)
     }
     brep = bi->brep;
 
-    ON_wString s;
-    ON_TextLog dump(s);
-    if (brep->IsValid(&dump)) {
-	for (int i = 0; i < brep->m_E.Count(); i++) {
-	    if (brep->m_E[i].TrimCount() == 1 && brep->TrimType(*brep->m_E[i].Trim(0), true) == ON_BrepTrim::boundary) {
-		return 1;
-	    }
+    if (!brep->IsValid(NULL)) {
+	return 0;
+    }
+
+    for (int i = 0; i < brep->m_E.Count(); i++) {
+	if (brep->m_E[i].TrimCount() == 1 && brep->TrimType(*brep->m_E[i].Trim(0), true) == ON_BrepTrim::boundary) {
+	    return 1;
 	}
     }
 
     return 0;
 }
 
-    int
+
+int
 rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, size_t *version)
 {
     RT_CK_SOLTAB(stp);
