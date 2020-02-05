@@ -85,7 +85,8 @@ extern "C" {
     struct rt_selection_set *rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selection_query *query);
     int rt_brep_process_selection(struct rt_db_internal *ip, struct db_i *dbip, const struct rt_selection *selection, const struct rt_selection_operation *op);
     int rt_brep_valid(struct bu_vls *log, struct rt_db_internal *ip, int flags);
-    int rt_brep_plate_mode(struct rt_db_internal *ip);
+    int rt_brep_plate_mode(const struct rt_db_internal *ip);
+    void rt_brep_plate_mode_getvals(double *pthickness, int *nocos, const struct rt_db_internal *ip);
     int rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, size_t *version);
 #ifdef __cplusplus
 }
@@ -491,6 +492,7 @@ rt_brep_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct
 int
 rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
 {
+    int plate_mode;
     //int64_t start;
 
     TRACE1("rt_brep_prep");
@@ -506,14 +508,22 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
     bi = (struct rt_brep_internal*)ip->idb_ptr;
     RT_BREP_CK_MAGIC(bi);
 
-    if ((bs = (struct brep_specific*)stp->st_specific) == NULL) {
+    bs = (struct brep_specific*)stp->st_specific;
+    if (bs == NULL) {
 	bs = brep_specific_new();
 	bs->brep = bi->brep;
-	bs->plate_mode = bi->plate_mode;
-	bs->plate_mode_thickness = bi->plate_mode_thickness;
-	bs->plate_mode_nocos = bi->plate_mode_nocos;
+	plate_mode = rt_brep_plate_mode(ip);
 	bi->brep = NULL;
 	stp->st_specific = (void *)bs;
+    } else {
+	bi->brep = bs->brep;
+	plate_mode = rt_brep_plate_mode(ip);
+	bi->brep = NULL;
+    }
+
+    if (plate_mode) {
+	bs->plate_mode = 1;
+	rt_brep_plate_mode_getvals(&bs->plate_mode_thickness, &bs->plate_mode_nocos, ip);
     }
 
     ON_TextLog tl(stderr);
@@ -2313,42 +2323,6 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
 	}
     }
 
-    // See if we're valid and have unmated edges - if so, object is plate mode 
-    bi->plate_mode = 0;
-    bi->plate_mode_nocos = 0;
-    bi->plate_mode_thickness = 0;
-    if (bi->brep->IsValid(&dump)) {
-	for (int i = 0; i < bi->brep->m_E.Count(); i++) {
-	    if (bi->brep->m_E[i].TrimCount() == 1 && bi->brep->TrimType(*bi->brep->m_E[i].Trim(0), true) == ON_BrepTrim::boundary) {
-		//bu_log("edge %d: one boundary trim\n", i);
-		bi->plate_mode = 1;
-		break;
-	    }
-	}
-    }
-
-    // If we are plate mode, check for a thickness
-    if (bi->plate_mode && ip->idb_avs.magic == BU_AVS_MAGIC) {
-	const char *pval = bu_avs_get(&ip->idb_avs, "_plate_mode_thickness");
-	if (pval != NULL) {
-	    double pthickness;
-	    char *endptr = NULL;
-	    errno = 0;
-	    pthickness = strtod(pval, &endptr);
-	    if ((endptr != NULL && strlen(endptr) > 0) || (errno == ERANGE)) {
-		pthickness = 0;
-	    }
-	    bi->plate_mode_thickness = pthickness;
-	    //bu_log("plate mode thickness: %f\n", pthickness);
-	}
-	const char *pcos = bu_avs_get(&ip->idb_avs, "_plate_mode_nocos");
-	if (BU_STR_EQUAL(pcos, "1")) {
-	    bi->plate_mode_nocos = 1;
-	} else {
-	    bi->plate_mode_nocos = 0;
-	}
-    }
-
     return 0;
 }
 
@@ -2740,32 +2714,57 @@ brep_valid_done:
     return ret;
 }
 
+void
+rt_brep_plate_mode_getvals(double *pthickness, int *nocos, const struct rt_db_internal *ip)
+{
+    if (!pthickness || !nocos || !ip) return;
+
+    (*pthickness) = 0.0;
+    (*nocos) = 0;
+
+    // Check for a thickness and nocos setting
+    if (ip->idb_avs.magic == BU_AVS_MAGIC) {
+	const char *pval = bu_avs_get(&ip->idb_avs, "_plate_mode_thickness");
+	if (pval != NULL) {
+	    char *endptr = NULL;
+	    errno = 0;
+	    (*pthickness) = strtod(pval, &endptr);
+	    if ((endptr != NULL && strlen(endptr) > 0) || (errno == ERANGE)) {
+		(*pthickness) = 0.0;
+	    }
+	    //bu_log("plate mode thickness: %f\n", pthickness);
+	}
+	const char *pcos = bu_avs_get(&ip->idb_avs, "_plate_mode_nocos");
+	if (BU_STR_EQUAL(pcos, "1")) {
+	    (*nocos) = 1;
+	}
+    }
+}
 
 int
-rt_brep_plate_mode(struct rt_db_internal *ip)
+rt_brep_plate_mode(const struct rt_db_internal *ip)
 {
     RT_CK_DB_INTERNAL(ip);
     if (ip->idb_type != ID_BREP) {
 	return 0;
     }
     struct rt_brep_internal *bi = (struct rt_brep_internal *)ip->idb_ptr;
-    ON_Brep *brep = NULL;
     if (bi == NULL || bi->brep == NULL) {
 	return 0;
     }
-    brep = bi->brep;
 
-    if (!brep->IsValid(NULL)) {
+    if (!bi->brep->IsValid(NULL)) {
+	// Not valid, not plate mode
 	return 0;
     }
 
-    for (int i = 0; i < brep->m_E.Count(); i++) {
-	if (brep->m_E[i].TrimCount() == 1 && brep->TrimType(*brep->m_E[i].Trim(0), true) == ON_BrepTrim::boundary) {
-	    return 1;
-	}
+    if (bi->brep->IsSolid()) {
+	// Is solid, not plate mode
+	return 0;
     }
 
-    return 0;
+    // Valid and not solid - plate mode
+    return 1;
 }
 
 
@@ -2805,10 +2804,11 @@ rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, stru
 
 	brep_specific * const specific = brep_specific_new();
 	stp->st_specific = specific;
+	specific->plate_mode = rt_brep_plate_mode(ip);
 	std::swap(specific->brep, static_cast<rt_brep_internal *>(ip->idb_ptr)->brep);
-	specific->plate_mode = ((struct rt_brep_internal *)(ip->idb_ptr))->plate_mode;
-	specific->plate_mode_thickness = ((struct rt_brep_internal *)(ip->idb_ptr))->plate_mode_thickness;
-	specific->plate_mode_nocos = ((struct rt_brep_internal *)(ip->idb_ptr))->plate_mode_nocos;
+	if (specific->plate_mode) {
+	    rt_brep_plate_mode_getvals(&specific->plate_mode_thickness, &specific->plate_mode_nocos, ip);
+	}
 	specific->bvh = new BBNode(specific->brep->BoundingBox());
 	specific->is_solid = specific->brep->IsSolid(); // recompute solidity
 
