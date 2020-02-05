@@ -628,8 +628,7 @@ get_file_data(struct rt_ebm_internal *eip, const struct db_i *dbip)
 	    bu_semaphore_release(RT_SEM_MODEL);
 	    return 0;
 	}
-	mp->apbuf = (void *)bu_calloc(
-	    1, nbytes, "rt_ebm_import4 bitmap");
+	mp->apbuf = (uint8_t *)bu_calloc(1, nbytes, "rt_ebm_import4 bitmap");
 	mp->apbuflen = nbytes;
 	bu_semaphore_release(RT_SEM_MODEL);
 
@@ -721,8 +720,7 @@ get_obj_data(struct rt_ebm_internal *eip, const struct db_i *dbip)
 	    bu_semaphore_release(RT_SEM_MODEL);
 	    return 0;
 	}
-	eip->buf = (void *)bu_calloc(
-	    1, nbytes, "rt_ebm_import4 bitmap");
+	eip->buf = (unsigned char *)bu_calloc(1, nbytes, "rt_ebm_import4 bitmap");
 	bu_semaphore_release(RT_SEM_MODEL);
 
 	/* Because of in-memory padding, read each scanline separately */
@@ -889,8 +887,7 @@ rt_ebm_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	    bu_semaphore_release(RT_SEM_MODEL);
 	    return 0;
 	}
-	mp->apbuf = (void *)bu_calloc(
-	    1, nbytes, "rt_ebm_import4 bitmap");
+	mp->apbuf = (unsigned char *)bu_calloc(1, nbytes, "rt_ebm_import4 bitmap");
 	mp->apbuflen = nbytes;
 
 	bu_semaphore_release(RT_SEM_MODEL);
