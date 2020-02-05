@@ -526,10 +526,10 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
 	rt_brep_plate_mode_getvals(&bs->plate_mode_thickness, &bs->plate_mode_nocos, ip);
     }
 
-    ON_TextLog tl(stderr);
-    if (!bs->brep->IsValid(&tl))
+    ON_TextLog err(stderr);
+    if (!bs->brep->IsValid(&err)) {
 	bu_log("brep is NOT valid\n");
-    else {
+    } else {
 	bs->is_solid = bs->brep->IsSolid();
 	bu_log("brep %s solid\n", (bs->is_solid) ? "is" : "is NOT");
     }
@@ -2247,10 +2247,10 @@ rt_brep_adjust(struct bu_vls *logstr, const struct rt_db_internal *intern, int a
 	int decoded_size = bu_b64_decode(&decoded, (const signed char *)argv[0]);
 	RT_MemoryArchive archive(decoded, decoded_size);
 	ON_wString wonstr;
-	ON_TextLog dump(wonstr);
+	ON_TextLog log(wonstr);
 
 	RT_BREP_CK_MAGIC(bi);
-	model.Read(archive, &dump);
+	model.Read(archive, &log);
 	bu_vls_printf(logstr, "%s", ON_String(wonstr).Array());
 	ONX_Model_Object mo = model.m_object_table[0];
 	bi->brep = ON_Brep::New(*ON_Brep::Cast(mo.m_object));
@@ -2309,9 +2309,9 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
 
     RT_MemoryArchive archive(ep->ext_buf, ep->ext_nbytes);
     ONX_Model model;
-    ON_TextLog dump(stderr);
-    //archive.Dump3dmChunk(dump);
-    model.Read(archive, &dump);
+    ON_TextLog err(stderr);
+    //archive.Dump3dmChunk(err);
+    model.Read(archive, &err);
 
     ONX_Model_Object mo = model.m_object_table[0];
     bi->brep = ON_Brep::New(*ON_Brep::Cast(mo.m_object));
@@ -2669,11 +2669,9 @@ rt_brep_valid(struct bu_vls *log, struct rt_db_internal *ip, int flags)
 
     /* OpenNURBS IsValid test */
     if (!flags || flags & RT_BREP_OPENNURBS) {
-	ON_wString s;
-	ON_TextLog dump(s);
-	if (!brep->IsValid(&dump)) {
-	    ON_String ss = s;
-	    brep_log(log, "%s\nbrep NOT valid\n", ss.Array());
+	ON_TextLog text(stderr);
+	if (!brep->IsValid(&text)) {
+	    brep_log(log, "brep NOT valid\n");
 	    ret = 0;
 	    goto brep_valid_done;
 	}
