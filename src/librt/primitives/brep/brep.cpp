@@ -1390,6 +1390,7 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 		// take each pair as a segment
 		for (std::list<brep_hit>::const_iterator i = hits.begin(); i != hits.end(); ++i) {
 		    const brep_hit& in = *i;
+		    i++;
 		    const brep_hit& out = *i;
 
 		    struct seg* segp;
