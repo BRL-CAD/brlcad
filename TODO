@@ -131,6 +131,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* replace los references/terminology with span, len, dist, factor, etc
+  accordingly since los is ambiguous and a source of user confusion.
+
 * enhance env command to handle debug variables, use sysctl style
   groupings of variables, and in general make the setup simpler
   and more uniform (ideally we'll fold the debug command's
