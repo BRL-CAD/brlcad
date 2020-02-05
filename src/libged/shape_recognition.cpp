@@ -1003,10 +1003,10 @@ _ged_brep_shrink_surfaces(struct ged *gedp, struct rt_brep_internal *bi, const c
 
 // TODO - this doesn't belong here, just convenient for now since we need to crack the ON_Brep for this
 extern "C" int
-_ged_brep_plate_mode_thickness(struct ged *gedp, struct directory *dp, struct rt_brep_internal *bi, const char *val)
+_ged_brep_plate_mode_set(struct ged *gedp, struct directory *dp, const char *val)
 {
     struct bu_attribute_value_set avs;
-    if (!gedp || !bi || !dp || !val) return GED_ERROR;
+    if (!gedp || !dp || !val) return GED_ERROR;
 
     double local2base = gedp->ged_wdbp->dbip->dbi_local2base;
 
@@ -1018,7 +1018,6 @@ _ged_brep_plate_mode_thickness(struct ged *gedp, struct directory *dp, struct rt
 
     if (BU_STR_EQUIV(val, "cos")) {
 	(void)bu_avs_add(&avs, "_plate_mode_nocos", "0");
-	bi->plate_mode_nocos = 0;
 	if (db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
 	    bu_vls_printf(gedp->ged_result_str, "Error setting plate mode value\n");
 	    return GED_ERROR;
@@ -1030,7 +1029,6 @@ _ged_brep_plate_mode_thickness(struct ged *gedp, struct directory *dp, struct rt
 
     if (BU_STR_EQUIV(val, "nocos")) {
 	(void)bu_avs_add(&avs, "_plate_mode_nocos", "1");
-	bi->plate_mode_nocos = 1;
 	if (db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip)) {
 	    bu_vls_printf(gedp->ged_result_str, "Error setting plate mode value\n");
 	    return GED_ERROR;
@@ -1049,9 +1047,8 @@ _ged_brep_plate_mode_thickness(struct ged *gedp, struct directory *dp, struct rt
 	pthickness = 0;
     }
 
-    // Apply units to the value and update rt_brep_internal
+    // Apply units to the value
     double pthicknessmm = local2base * pthickness;
-    bi->plate_mode_thickness = pthicknessmm;
 
     // Create and set the attribute string
     std::ostringstream ss;

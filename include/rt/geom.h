@@ -298,9 +298,6 @@ struct rt_brep_internal {
     uint32_t magic;
 
     ON_Brep* brep; /**< @brief An openNURBS brep object containing the solid */
-    int plate_mode;
-    int plate_mode_nocos;
-    double plate_mode_thickness;
 };
 
 

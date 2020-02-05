@@ -59,7 +59,12 @@ RT_EXPORT extern int rt_brep_normalize(struct rt_db_internal *ip, double pmax);
 
 /* Report if the brep is a plate mode object: returns 1 if plate mode, otherwise 0.
  * (Invalid openNURBS objects are not considered plate mode) */
-RT_EXPORT extern int rt_brep_plate_mode(struct rt_db_internal *ip);
+RT_EXPORT extern int rt_brep_plate_mode(const struct rt_db_internal *ip);
+
+/* Get plate mode settings if  brep is a plate mode object. Note: default
+ * returns are 0 regardless of the object type - use rt_brep_plate_mode to test
+ * if an object is or isn't plate mode*/
+RT_EXPORT extern void rt_brep_plate_mode_getvals(double *pthickness, int *nocos, const struct rt_db_internal *ip);
 
 /** @} */
 

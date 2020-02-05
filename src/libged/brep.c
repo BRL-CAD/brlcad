@@ -321,24 +321,27 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
 	/* Verify brep is a plate mode brep */
-	if (!bi->plate_mode) {
-	    bu_vls_printf(gedp->ged_result_str, "N/A - %s is a solid brep\n", ndp->d_namep);
+	if (!rt_brep_plate_mode(&intern)) {
+	    bu_vls_printf(gedp->ged_result_str, "N/A - %s is not a plate mode brep\n", ndp->d_namep);
 	    return GED_ERROR;
 	}
 
 	/* we need 3 or 4 arguments */
 	if (argc == 3) {
-	    double thickness = gedp->ged_wdbp->dbip->dbi_base2local * bi->plate_mode_thickness;
-	    if (bi->plate_mode_nocos) {
+	    double thickness;
+	    int nocos;
+	    rt_brep_plate_mode_getvals(&thickness, &nocos, &intern);
+	    thickness = gedp->ged_wdbp->dbip->dbi_base2local * thickness;
+	    if (nocos) {
 		bu_vls_printf(gedp->ged_result_str, "%f (NOCOS)", thickness);
 	    } else {
 		bu_vls_printf(gedp->ged_result_str, "%f (COS)", thickness);
 	    }
 	    return GED_OK;
 	} else if (argc == 4) {
-	    return _ged_brep_plate_mode_thickness(gedp, ndp, bi, argv[3]);
+	    return _ged_brep_plate_mode_set(gedp, ndp, argv[3]);
 	}
-	bu_vls_printf(gedp->ged_result_str, "plate_mode_thickness requires a single length as an argument.\n");
+	bu_vls_printf(gedp->ged_result_str, "plate_mode requires a single numerical length or a cos/nocos flag as an argument.\n");
 	return GED_ERROR;
     }
 
