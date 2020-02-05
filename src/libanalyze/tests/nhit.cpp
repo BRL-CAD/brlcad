@@ -86,15 +86,17 @@ main(int argc, const char **argv)
     int print_help = 0;
     int should_miss= 0;
     int use_air = 0;
+    fastf_t los = -1;
 
-    struct bu_opt_desc d[19] = {BU_OPT_DESC_NULL};
+    struct bu_opt_desc d[7] = {BU_OPT_DESC_NULL};
 
-    BU_OPT(d[0],  "?", "help",     "",       NULL,         &print_help,   "print help and exit");
-    BU_OPT(d[1],  "h", "help",     "",       NULL,         &print_help,   "print help and exit");
-    BU_OPT(d[2],  "b", "backout",  "",       NULL,         &backout,      "back out of geometry before shot");
-    BU_OPT(d[3],  "M", "miss",     "",       NULL, 	   &should_miss,  "expected result is a miss");
-    BU_OPT(d[4],  "u", "use-air",  "n",      &bu_opt_int,  &use_air,      "set use_air=n (default 0)");
-    BU_OPT_NULL(d[5]);
+    BU_OPT(d[0],  "?", "help",     "",       NULL,             &print_help,   "print help and exit");
+    BU_OPT(d[1],  "h", "help",     "",       NULL,             &print_help,   "print help and exit");
+    BU_OPT(d[2],  "b", "backout",  "",       NULL,             &backout,      "back out of geometry before shot");
+    BU_OPT(d[3],  "M", "miss",     "",       NULL, 	       &should_miss,  "expected result is a miss");
+    BU_OPT(d[4],  "u", "use-air",  "n",      &bu_opt_int,      &use_air,      "set use_air=n (default 0)");
+    BU_OPT(d[5],  "L", "los",      "n",      &bu_opt_fastf_t,  &los,          "expected Line-of-Sight distance");
+    BU_OPT_NULL(d[6]);
 
     if (argc == 0 || !argv)
 	return -1;
@@ -118,7 +120,7 @@ main(int argc, const char **argv)
 
     /* If we've been asked to print help or don't know what to do, print help
      * and exit */
-    if (print_help || argc < 8) {
+    if (print_help || argc < 7) {
 	char *help = bu_opt_describe(d, NULL);
 	ret = (argc < 2) ? EXIT_FAILURE : EXIT_SUCCESS;
 	bu_log("Usage: 'nhit [options] model.g obj X Y Z AZ EL'\n\nOptions:\n%s\n", help);
@@ -199,6 +201,12 @@ main(int argc, const char **argv)
     bu_vls_sprintf(&ncmd, "fmt g \"\"");
     if (nirt_exec(ns, bu_vls_addr(&ncmd))) goto done;
 
+    // IFF we're expecting a particular length back per the -L option,
+    // set up to print it
+    if (los > 0) {
+	bu_vls_sprintf(&ncmd, "fmt p \"%%.17f\" los");
+	if (nirt_exec(ns, bu_vls_addr(&ncmd))) goto done;
+    }
 
     // Set up and take the shot
     bu_vls_sprintf(&ncmd, "xyz %s %s %s", argv[2], argv[3], argv[4]);
@@ -223,17 +231,46 @@ main(int argc, const char **argv)
 	} else {
 	    ret = 0;
 	}
-    } else {
-	if (!BU_STR_EQUAL(bu_vls_cstr(io_data.out), "hit")) {
+	goto done;
+    }
+
+    if (los > 0) {
+	double los_result;
+	char *endptr = NULL;
+	errno = 0;
+	los_result = strtod(bu_vls_cstr(io_data.out), &endptr);
+	if ((endptr != NULL && strlen(endptr) > 0) || errno == ERANGE) {
 	    ret = 1;
 	    if (bu_vls_strlen(io_data.out)) {
-		bu_log("Error: expected hit, but got \"%s\"!\n", bu_vls_cstr(io_data.out));
+		bu_log("Error: invalid los result: \"%s\"!\n", bu_vls_cstr(io_data.out));
 	    } else {
-		bu_log("Error: expected hit!\n");
+		bu_log("Error: empty los result!\n");
 	    }
-	} else {
-	    ret = 0;
+	    goto done;
 	}
+
+	if (los_result > 0 && los_result > los - BN_TOL_DIST && los_result < los + BN_TOL_DIST) {
+	    ret = 0;
+	    goto done;
+	} else {
+	    ret = 1;
+	    bu_log("Error: unexpected los value: \"%.2f\" instead of \"%.2f\"!\n", los_result, los);
+	    goto done;
+	}
+
+    }
+
+    if (!BU_STR_EQUAL(bu_vls_cstr(io_data.out), "hit")) {
+	ret = 1;
+	if (bu_vls_strlen(io_data.out)) {
+	    bu_log("Error: expected hit, but got \"%s\"!\n", bu_vls_cstr(io_data.out));
+	} else {
+	    bu_log("Error: expected hit!\n");
+	}
+	goto done;
+    } else {
+	ret = 0;
+	goto done;
     }
 
 done:
