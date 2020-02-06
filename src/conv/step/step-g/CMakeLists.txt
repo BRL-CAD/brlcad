@@ -111,6 +111,7 @@ set(stepg_SOURCES
   LuminousIntensitySiUnit.cpp
   LuminousIntensityUnit.cpp
   ManifoldSolidBrep.cpp
+  ManifoldSurfaceShapeRepresentation.cpp
   MassContextDependentUnit.cpp
   MassConversionBasedUnit.cpp
   MassSiUnit.cpp
@@ -327,6 +328,7 @@ set(stepg_HDRS
   LuminousIntensitySiUnit.h
   LuminousIntensityUnit.h
   ManifoldSolidBrep.h
+  ManifoldSurfaceShapeRepresentation.h
   MassContextDependentUnit.h
   MassConversionBasedUnit.h
   MassSiUnit.h

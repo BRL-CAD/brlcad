@@ -93,6 +93,7 @@ class SDAI_Application_instance;
 #include "UniformSurface.h"
 
 #include "AdvancedBrepShapeRepresentation.h"
+#include "ManifoldSurfaceShapeRepresentation.h"
 #include "PullbackCurve.h"
 
 #include "brep.h"
@@ -142,6 +143,45 @@ AdvancedBrepShapeRepresentation::LoadONBrep(ON_Brep *brep)
     return true;
 }
 
+ON_Brep *
+ManifoldSurfaceShapeRepresentation::GetONBrep()
+{
+    ON_Brep *brep = ON_Brep::New();
+
+    if (!brep) {
+	std::cerr << "ERROR: INTERNAL MEMORY ALLOCATION FAILURE in " << __FILE__ << ":" << __LINE__ << std::endl;
+	return NULL;
+    }
+
+    if (!LoadONBrep(brep)) {
+	std::cerr << "Error: " << entityname << "::GetONBrep() - Error loading openNURBS brep." << std::endl;
+	//still return brep may contain something useful to diagnose
+	return brep;
+    }
+
+    return brep;
+}
+
+
+bool
+ManifoldSurfaceShapeRepresentation::LoadONBrep(ON_Brep *brep)
+{
+    LIST_OF_REPRESENTATION_ITEMS::iterator i;
+
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
+    for (i = items.begin(); i != items.end(); i++) {
+	if (!(*i)->LoadONBrep(brep)) {
+	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
+	    return false;
+	}
+    }
+
+    return true;
+}
 
 //
 // Curve handlers
