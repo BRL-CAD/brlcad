@@ -4,7 +4,6 @@
 /* implementation headers */
 #include "STEPWrapper.h"
 #include "Factory.h"
-#include "ManifoldSolidBrep.h"
 #include "GeometricRepresentationContext.h"
 #include "Axis2Placement3D.h"
 

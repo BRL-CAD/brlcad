@@ -1,0 +1,129 @@
+#include "STEPWrapper.h"
+#include "Factory.h"
+
+#include "ShellBasedSurfaceModel.h"
+#include "OpenShell.h"
+
+#define CLASSNAME "ShellBasedSurfaceModel"
+#define ENTITYNAME "Shell_Based_Surface_Model"
+string ShellBasedSurfaceModel::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)ShellBasedSurfaceModel::Create);
+
+ShellBasedSurfaceModel::ShellBasedSurfaceModel()
+{
+    step = NULL;
+    id = 0;
+    sbsm_boundary.clear();
+}
+
+ShellBasedSurfaceModel::ShellBasedSurfaceModel(STEPWrapper *sw, int step_id)
+{
+    step = sw;
+    id = step_id;
+    sbsm_boundary.clear();
+}
+
+ShellBasedSurfaceModel::~ShellBasedSurfaceModel()
+{
+    sbsm_boundary.clear();
+}
+
+bool
+ShellBasedSurfaceModel::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
+    id = sse->STEPfile_id;
+
+    // load base class attributes
+    if (!GeometricRepresentationItem::Load(step, sse)) {
+	std::cout << CLASSNAME << ":Error loading base class ::GeometricRepresentationItem." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
+	return false;
+    }
+
+    if (sbsm_boundary.empty()) {
+	LIST_OF_ENTITIES *l = step->getListOfEntities(sse, "sbsm_boundary");
+	LIST_OF_ENTITIES::iterator i;
+	for (i = l->begin(); i != l->end(); i++) {
+	    SDAI_Application_instance *entity = (*i);
+	    if (entity) {
+		OpenShell *os = dynamic_cast<OpenShell *>(Factory::CreateObject(sw, entity));
+		if (os != NULL) {
+		    sbsm_boundary.push_back(os);
+		} else {
+		    l->clear();
+		    delete l;
+		    goto step_error;
+		}
+	    } else {
+		std::cerr << CLASSNAME << ": Unhandled entity in attribute 'sbsm_boundary'." << std::endl;
+		l->clear();
+		delete l;
+		goto step_error;
+	    }
+	}
+	l->clear();
+	delete l;
+    }
+
+    sw->entity_status[id] = STEP_LOADED;
+    return true;
+step_error:
+    sw->entity_status[id] = STEP_LOAD_ERROR;
+    return false;
+}
+
+void
+ShellBasedSurfaceModel::Print(int level)
+{
+    TAB(level);
+    std::cout << CLASSNAME << ":" << name << "(";
+    std::cout << "ID:" << STEPid() << ")" << std::endl;
+
+    TAB(level + 1);
+    std::cout << "sbsm_boundary:" << std::endl;
+    LIST_OF_SHELLS::iterator i;
+    for (i = sbsm_boundary.begin(); i != sbsm_boundary.end(); ++i) {
+	(*i)->Print(level + 1);
+    }
+
+    GeometricRepresentationItem::Print(level + 1);
+}
+
+STEPEntity *
+ShellBasedSurfaceModel::GetInstance(STEPWrapper *sw, int id)
+{
+    return new ShellBasedSurfaceModel(sw, id);
+}
+
+STEPEntity *
+ShellBasedSurfaceModel::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
+}
+
+bool
+ShellBasedSurfaceModel::LoadONBrep(ON_Brep *brep)
+{
+    if (!brep) {
+	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
+	return false;
+    }
+    LIST_OF_SHELLS::iterator i;
+    for (i = sbsm_boundary.begin(); i != sbsm_boundary.end(); ++i) {
+	if (!(*i)->LoadONBrep(brep)) {
+	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
+	    return false;
+	}
+    }
+    return true;
+}
+
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
