@@ -31,7 +31,7 @@ macro(ADD_NURBS_NIRT_Test testname topts gfile targs depends_list)
 endmacro()
 
 add_custom_target(regress-nurbs)
-set_target_properties(regress-nurbs PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
+#set_target_properties(regress-nurbs PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 set_target_properties(regress-nurbs PROPERTIES FOLDER "BRL-CAD Regression Tests")
 
 ADD_NURBS_NIRT_Test(NIST03_MISS_01
@@ -40,15 +40,23 @@ ADD_NURBS_NIRT_Test(NIST03_MISS_01
   "Document -114.61944548140064626 -127.49462006675899772 -134.83948901109894791 35 25"
   "analyze_nhit;NIST_MBE_PMI_3.g")
 
-ADD_NURBS_NIRT_Test(PLATE_MODE_CYL_HIT_01
-  "-b"
-  "${CMAKE_SOURCE_DIR}/src/libbrep/tests/plate_mode_samples.g"
-  "cylinder.s 51.20451138795556290 -9.99999987347469776 19.42666674721774100 0 0"
+#ADD_NURBS_NIRT_Test(PLATE_MODE_CYL_HIT_01
+#  "-b"
+#  "${CMAKE_SOURCE_DIR}/src/libbrep/tests/plate_mode_samples.g"
+#  "cylinder.s 51.20451138795556290 -9.99999987347469776 19.42666674721774100 0 0"
+#  "analyze_nhit")
+
+ADD_NURBS_NIRT_Test(SPH_SOLID_HIT_LEN_01
+  "-L 2000 -b"
+  "${CMAKE_CURRENT_SOURCE_DIR}/sph.g"
+  "sph.brep 0 0 0 0 0"
   "analyze_nhit")
+
 
 
 CMAKEFILES(
   brep-3dm.tar.bz2
+  sph.g
   CMakeLists.txt
   )
 
