@@ -4,6 +4,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/..)
 set(distcheck_files
   single_bad_edge.cdtmesh
   plate_mode_samples.g
+  plate_mode_samples.stp
   cyl_hole.g
   cyls_holes.g
   nurbs_csg.g
