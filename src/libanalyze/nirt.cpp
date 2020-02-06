@@ -810,7 +810,8 @@ _nirt_get_obliq(fastf_t *ray, fastf_t *normal)
     } else {
 	fflush(stdout);
 	fprintf (stderr, "Error:  cos(obliquity) > 1 (%g)\n", cos_obl);
-	bu_exit(1, NULL);
+	return -1;
+	//bu_exit(1, NULL);
     }
 
     /* convert obliquity to degrees */
