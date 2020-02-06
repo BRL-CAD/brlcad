@@ -52,7 +52,14 @@ ShellBasedSurfaceModel::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		stype = static_cast<SDAI_Select *>(sn->node);
 		const TypeDescriptor *underlying_type = stype->CurrentUnderlyingType();
 		if (underlying_type == SCHEMA_NAMESPACE::e_open_shell) {
-		    std::cout << "e_open_shell type\n";
+		    SdaiShell *shell = (SdaiShell *)stype;
+		    if (shell->IsOpen_shell()) {
+			SdaiOpen_shell *oshell = *shell;
+			OpenShell *os = dynamic_cast<OpenShell *>(Factory::CreateObject(sw, (SDAI_Application_instance *)oshell));
+			if (os) {
+			    sbsm_boundary.push_back(os);
+			}
+		    }
 		}
 		sn = (SelectNode *)sn->NextNode();
 	    }
@@ -75,7 +82,7 @@ ShellBasedSurfaceModel::Print(int level)
 
     TAB(level + 1);
     std::cout << "sbsm_boundary:" << std::endl;
-    LIST_OF_SHELLS::iterator i;
+    LIST_OF_OPEN_SHELLS::iterator i;
     for (i = sbsm_boundary.begin(); i != sbsm_boundary.end(); ++i) {
 	(*i)->Print(level + 1);
     }
@@ -102,7 +109,7 @@ ShellBasedSurfaceModel::LoadONBrep(ON_Brep *brep)
 	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	return false;
     }
-    LIST_OF_SHELLS::iterator i;
+    LIST_OF_OPEN_SHELLS::iterator i;
     for (i = sbsm_boundary.begin(); i != sbsm_boundary.end(); ++i) {
 	if (!(*i)->LoadONBrep(brep)) {
 	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;

@@ -8,7 +8,7 @@ class OpenShell;
 class STEPWrapper;
 class ON_Brep;
 
-typedef std::list<OpenShell *> LIST_OF_SHELLS;
+typedef std::list<OpenShell *> LIST_OF_OPEN_SHELLS;
 
 class ShellBasedSurfaceModel: public GeometricRepresentationItem
 {
@@ -17,7 +17,7 @@ private:
     static EntityInstanceFunc GetInstance;
 
 protected:
-    LIST_OF_SHELLS sbsm_boundary;
+    LIST_OF_OPEN_SHELLS sbsm_boundary;
 
 public:
     ShellBasedSurfaceModel();
