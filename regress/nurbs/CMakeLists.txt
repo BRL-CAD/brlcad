@@ -52,7 +52,11 @@ ADD_NURBS_NIRT_Test(SPH_SOLID_HIT_LEN_01
   "sph.brep 0 0 0 0 0"
   "analyze_nhit")
 
-
+ADD_NURBS_NIRT_Test(BOX_PLATE_HIT_LEN_01
+  "-L .1 -b"
+  "${CMAKE_SOURCE_DIR}/src/libbrep/tests/plate_mode_samples.g"
+  "box.s 0 0 0 270 90"
+  "analyze_nhit")
 
 CMAKEFILES(
   brep-3dm.tar.bz2
