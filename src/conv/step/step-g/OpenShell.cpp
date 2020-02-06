@@ -30,7 +30,7 @@
 #include "AdvancedFace.h"
 
 #define CLASSNAME "OpenShell"
-#define ENTITYNAME "Closed_Shell"
+#define ENTITYNAME "Open_Shell"
 string OpenShell::entityname = Factory::RegisterClass(ENTITYNAME, (FactoryMethod)OpenShell::Create);
 
 OpenShell::OpenShell()

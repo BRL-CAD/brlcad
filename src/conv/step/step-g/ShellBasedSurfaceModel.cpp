@@ -41,28 +41,22 @@ ShellBasedSurfaceModel::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     }
 
     if (sbsm_boundary.empty()) {
-	LIST_OF_ENTITIES *l = step->getListOfEntities(sse, "sbsm_boundary");
-	LIST_OF_ENTITIES::iterator i;
-	for (i = l->begin(); i != l->end(); i++) {
-	    SDAI_Application_instance *entity = (*i);
-	    if (entity) {
-		OpenShell *os = dynamic_cast<OpenShell *>(Factory::CreateObject(sw, entity));
-		if (os != NULL) {
-		    sbsm_boundary.push_back(os);
-		} else {
-		    l->clear();
-		    delete l;
-		    goto step_error;
+	STEPattribute *attr = step->getAttribute(sse, "sbsm_boundary");
+	if (attr) {
+	    SelectAggregate *sa = static_cast<SelectAggregate *>(attr->ptr.a);
+	    if (!sa) goto step_error;
+	    SelectNode *sn = static_cast<SelectNode *>(sa->GetHead());
+
+	    SDAI_Select *stype;
+	    while (sn != NULL) {
+		stype = static_cast<SDAI_Select *>(sn->node);
+		const TypeDescriptor *underlying_type = stype->CurrentUnderlyingType();
+		if (underlying_type == SCHEMA_NAMESPACE::e_open_shell) {
+		    std::cout << "e_open_shell type\n";
 		}
-	    } else {
-		std::cerr << CLASSNAME << ": Unhandled entity in attribute 'sbsm_boundary'." << std::endl;
-		l->clear();
-		delete l;
-		goto step_error;
+		sn = (SelectNode *)sn->NextNode();
 	    }
 	}
-	l->clear();
-	delete l;
     }
 
     sw->entity_status[id] = STEP_LOADED;
