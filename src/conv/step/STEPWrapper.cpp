@@ -186,6 +186,10 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 		Factory::DeleteObjects();
 	    }
 	}
+
+	if ((sse->STEPfile_id > 0) && (sse->IsA(SCHEMA_NAMESPACE::e_shell_based_surface_model))) {
+	    std::cout << "\nshell based surface model\n";
+	}
     }
     /*
      * Pickup BREP related to SHAPE_REPRESENTATION through SHAPE_REPRESENTATION_RELATIONSHIP
