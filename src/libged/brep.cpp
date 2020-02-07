@@ -40,6 +40,7 @@
 #include <string>
 #include <vector>
 
+#include "bu/cmd.h"
 #include "bu/color.h"
 #include "bu/opt.h"
 #include "raytrace.h"
@@ -1068,6 +1069,312 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
+struct _ged_brep_info {
+    struct ged *gedp;
+    struct rt_db_internal intern;
+    int verbosity;
+    std::string solid_name;
+};
+
+extern "C" int
+_brep_cmd_help(void *bs, int argc, const char **argv)
+{
+    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (!argc || !argv) {
+	bu_vls_printf(gb->gedp->ged_result_str, "basic help\n");
+    }
+
+    return GED_OK;
+}
+
+extern "C" int
+_brep_cmd_boolean(void *bs, int argc, const char **argv)
+{
+    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (!argc || !argv) {
+	bu_vls_printf(gb->gedp->ged_result_str, "basic help\n");
+    }
+
+    return GED_OK;
+}
+
+extern "C" int
+_brep_cmd_bot(void *bs, int argc, const char **argv)
+{
+    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (!argc || !argv) {
+	bu_vls_printf(gb->gedp->ged_result_str, "basic help\n");
+    }
+
+    return GED_OK;
+}
+
+
+extern "C" int
+_brep_cmd_brep(void *bs, int argc, const char **argv)
+{
+    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (!argc || !argv) {
+	bu_vls_printf(gb->gedp->ged_result_str, "basic help\n");
+    }
+
+    return GED_OK;
+}
+
+extern "C" int
+_brep_cmd_csg(void *bs, int argc, const char **argv)
+{
+    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (!argc || !argv) {
+	bu_vls_printf(gb->gedp->ged_result_str, "basic help\n");
+    }
+
+    return GED_OK;
+}
+
+
+extern "C" int
+_brep_cmd_flip(void *bs, int UNUSED(argc), const char **UNUSED(argv))
+{
+    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
+	return GED_ERROR;
+    }
+
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gb->intern.idb_ptr;
+
+    b_ip->brep->Flip();
+
+    // Delete the old object
+    const char *av[3];
+    char *ncpy = bu_strdup(gb->solid_name.c_str());
+    av[0] = "kill";
+    av[1] = ncpy;
+    av[2] = NULL;
+    (void)ged_kill(gb->gedp, 2, (const char **)av);
+    bu_free(ncpy, "free name cpy");
+
+    // Make the new one
+    if (mk_brep(gb->gedp->ged_wdbp, gb->solid_name.c_str(), (void *)b_ip->brep)) {
+	return GED_ERROR;
+    }
+    return GED_OK;
+}
+
+extern "C" int
+_brep_cmd_info(void *bs, int argc, const char **argv)
+{
+    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (!argc || !argv) {
+	bu_vls_printf(gb->gedp->ged_result_str, "basic help\n");
+    }
+
+    return GED_OK;
+}
+
+
+extern "C" int
+_brep_cmd_intersect(void *bs, int argc, const char **argv)
+{
+    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (!argc || !argv) {
+	bu_vls_printf(gb->gedp->ged_result_str, "basic help\n");
+    }
+
+    return GED_OK;
+}
+
+
+extern "C" int
+_brep_cmd_plate_mode(void *bs, int argc, const char **argv)
+{
+    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (!argc || !argv) {
+	bu_vls_printf(gb->gedp->ged_result_str, "basic help\n");
+    }
+
+    return GED_OK;
+}
+
+
+extern "C" int
+_brep_cmd_plot(void *bs, int argc, const char **argv)
+{
+    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (!argc || !argv) {
+	bu_vls_printf(gb->gedp->ged_result_str, "basic help\n");
+    }
+
+    return GED_OK;
+}
+
+extern "C" int
+_brep_cmd_selection(void *bs, int argc, const char **argv)
+{
+    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (!argc || !argv) {
+	bu_vls_printf(gb->gedp->ged_result_str, "basic help\n");
+    }
+
+    return GED_OK;
+}
+
+extern "C" int
+_brep_cmd_solid(void *bs, int UNUSED(argc), const char **UNUSED(argv))
+{
+    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
+	return GED_ERROR;
+    }
+
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gb->intern.idb_ptr;
+    int solid = (b_ip->brep->IsSolid()) ? 1 : 0;
+    return (solid) ? GED_OK : GED_ERROR;
+}
+
+extern "C" int
+_brep_cmd_shrink_surfaces(void *bs, int UNUSED(argc), const char **UNUSED(argv))
+{
+    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
+	return GED_ERROR;
+    }
+
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gb->intern.idb_ptr;
+
+    b_ip->brep->ShrinkSurfaces();
+
+    // Delete the old object
+    const char *av[3];
+    char *ncpy = bu_strdup(gb->solid_name.c_str());
+    av[0] = "kill";
+    av[1] = ncpy;
+    av[2] = NULL;
+    (void)ged_kill(gb->gedp, 2, (const char **)av);
+    bu_free(ncpy, "free name cpy");
+
+    // Make the new one
+    if (mk_brep(gb->gedp->ged_wdbp, gb->solid_name.c_str(), (void *)b_ip->brep)) {
+	return GED_ERROR;
+    }
+    return GED_OK;
+}
+
+extern "C" int
+_brep_cmd_valid(void *bs, int UNUSED(argc), const char **UNUSED(argv))
+{
+    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    int valid = rt_brep_valid(gb->gedp->ged_result_str, &gb->intern, 0);
+    return (valid) ? GED_OK : GED_ERROR;
+}
+
+const struct bu_cmdtab _brep_cmds[] = {
+    { "?",               _brep_cmd_help},
+    { "bool",            _brep_cmd_boolean},
+    { "bot",             _brep_cmd_bot},
+    { "brep",            _brep_cmd_brep},
+    { "csg",             _brep_cmd_csg},
+    { "flip",            _brep_cmd_flip},
+    { "help",            _brep_cmd_help},
+    { "info",            _brep_cmd_info},
+    { "intersect",       _brep_cmd_intersect},
+    { "plate_mode",      _brep_cmd_plate_mode},
+    { "plot",            _brep_cmd_plot},
+    { "selection",       _brep_cmd_selection},
+    { "solid",           _brep_cmd_solid},
+    { "shrink_surfaces", _brep_cmd_shrink_surfaces},
+    { "valid",           _brep_cmd_valid},
+    { (char *)NULL,      NULL}
+};
+
+int
+ged_brep2(struct ged *gedp, int argc, const char *argv[])
+{
+    struct bu_color color = BU_COLOR_INIT_ZERO;
+    struct _ged_brep_info gb;
+    gb.gedp = gedp;
+
+
+    // Sanity
+    if (UNLIKELY(!gedp || !argc || !argv)) {
+	return GED_ERROR;
+    }
+
+    // Clear results
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    // We know we're the brep command - start processing args
+    argc--; argv++;
+
+    // See if we have any high level options set
+    struct bu_opt_desc d[3];
+    BU_OPT(d[0], "C", "color",   "r/g/b", &bu_opt_color, &color,        "Set color");
+    BU_OPT(d[1], "v", "verbose", "",      NULL,          &gb.verbosity, "Verbose output");
+    BU_OPT_NULL(d[2]);
+
+    // High level options are only defined prior to the subcommand
+    int cmd_pos = -1;
+    for (int i = 0; i < argc; i++) {
+	if (bu_cmd_valid(_brep_cmds, argv[i]) == BRLCAD_OK) {
+	    cmd_pos = i;
+	    break;
+	}
+    }
+
+    // Must have a subcommand
+    if (cmd_pos == -1) {
+	bu_vls_printf(gedp->ged_result_str, ": no valid subcommand specified\n");
+	_brep_cmd_help(&gb, 0, NULL);
+	return GED_ERROR;
+    }
+
+
+    int opt_ret = bu_opt_parse(NULL, cmd_pos, argv, d);
+
+    if (opt_ret != 1) {
+	bu_vls_printf(gedp->ged_result_str, ": no object specified before subcommand\n");
+	_brep_cmd_help(&gb, 0, NULL);
+	return GED_ERROR;
+    }
+
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
+    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    struct directory *ndp;
+    gb.solid_name = std::string(argv[0]);
+
+    if ((ndp = db_lookup(gedp->ged_wdbp->dbip, gb.solid_name.c_str(), LOOKUP_NOISY)) == RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, ": %s is not a solid or does not exist in database", gb.solid_name.c_str());
+	return GED_ERROR;
+    } else {
+	int real_flag = (ndp->d_addr == RT_DIR_PHONY_ADDR) ? 0 : 1;
+	if (!real_flag) {
+	    /* solid doesn't exist */
+	    bu_vls_printf(gedp->ged_result_str, ": %s is not a real solid", gb.solid_name.c_str());
+	    return GED_OK;
+	}
+    }
+
+    GED_DB_GET_INTERNAL(gedp, &gb.intern, ndp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+    RT_CK_DB_INTERNAL(&gb.intern);
+
+    // Jump the processing past any options specified
+    argc = argc - cmd_pos;
+    argv = &argv[cmd_pos];
+
+    int ret;
+    if (bu_cmd(_brep_cmds, argc, argv, 0, (void *)&gb, &ret) == BRLCAD_OK) {
+	return ret;
+    } else {
+	bu_vls_printf(gedp->ged_result_str, "subcommand %s not defined", argv[0]);
+    }
+
+    return GED_ERROR;
+}
 
 /*
  * Local Variables:

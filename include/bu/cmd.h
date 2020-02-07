@@ -106,6 +106,10 @@ __BEGIN_DECLS
  */
 BU_EXPORT extern int bu_cmd(const struct bu_cmdtab *cmds, int argc, const char *argv[], int cmd_index, void *data, int *result);
 
+/**
+ * Returns BRLCAD_OK if cmdname defines a command in the cmds table, and BRLCAD_ERROR otherwise */
+BU_EXPORT extern int bu_cmd_valid(const struct bu_cmdtab *cmds, const char *cmdname);
+
 /** @brief Routines for maintaining a command history */
 
 /**
