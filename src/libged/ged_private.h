@@ -536,14 +536,6 @@ extern int _ged_results_init(struct ged_results *results);
 extern int _ged_results_add(struct ged_results *results, const char *result_string);
 
 extern int _ged_brep_to_csg(struct ged *gedp, const char *obj_name, int verify);
-extern int _ged_brep_tikz(struct ged *gedp, const char *obj_name, const char *outfile);
-extern int _ged_brep_flip(struct ged *gedp, struct rt_brep_internal *bi, const char *obj_name);
-extern int _ged_brep_plate_mode_set(struct ged *gedp, struct directory *dp, const char *val);
-extern int _ged_brep_shrink_surfaces(struct ged *gedp, struct rt_brep_internal *bi, const char *obj_name);
-extern int _ged_brep_to_bot(struct ged *gedp, const char *obj_name, const struct rt_brep_internal *bi, const char *bot_name, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
-extern int _ged_breps_to_bots(struct ged *gedp, int obj_cnt, const char **obj_names, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
-extern int _ged_brep_pick_face(struct ged *gedp, const struct rt_brep_internal *bi, const char *obj_name);
-
 
 /* defined in ged_util.c */
 
