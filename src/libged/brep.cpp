@@ -68,9 +68,9 @@ RT_EXPORT extern int brep_intersect_surface_surface(struct rt_db_internal *inter
 RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, db_op_t operation);
 }
 
-void tikz_comb(struct ged *gedp, struct bu_vls *tikz, struct directory *dp, struct bu_vls *color, int *cnt);
+static void tikz_comb(struct ged *gedp, struct bu_vls *tikz, struct directory *dp, struct bu_vls *color, int *cnt);
 
-int
+static int
 tikz_tree(struct ged *gedp, struct bu_vls *tikz, const union tree *oldtree, struct bu_vls *color, int *cnt)
 {
     int ret = 0;
@@ -125,7 +125,7 @@ tikz_tree(struct ged *gedp, struct bu_vls *tikz, const union tree *oldtree, stru
     return ret;
 }
 
-void
+static void
 tikz_comb(struct ged *gedp, struct bu_vls *tikz, struct directory *dp, struct bu_vls *color, int *cnt)
 {
     struct rt_db_internal intern;
@@ -165,7 +165,7 @@ tikz_comb(struct ged *gedp, struct bu_vls *tikz, struct directory *dp, struct bu
 
 
 
-extern "C" int
+static int
 _ged_brep_tikz(struct ged *gedp, const char *dp_name, const char *outfile)
 {
     int cnt = 0;
@@ -255,8 +255,7 @@ _ged_brep_tikz(struct ged *gedp, const char *dp_name, const char *outfile)
     return GED_OK;
 }
 
-// TODO - this doesn't belong here, just convenient for now since we need to crack the ON_Brep for this
-extern "C" int
+static int
 _ged_brep_flip(struct ged *gedp, struct rt_brep_internal *bi, const char *obj_name)
 {
     const char *av[3];
@@ -277,8 +276,7 @@ _ged_brep_flip(struct ged *gedp, struct rt_brep_internal *bi, const char *obj_na
 }
 
 
-// TODO - this doesn't belong here, just convenient for now since we need to crack the ON_Brep for this
-extern "C" int
+static int
 _ged_brep_pick_face(struct ged *gedp, struct rt_brep_internal *bi, const char *obj_name)
 {
     struct bu_vls log = BU_VLS_INIT_ZERO;
@@ -304,8 +302,7 @@ _ged_brep_pick_face(struct ged *gedp, struct rt_brep_internal *bi, const char *o
     return GED_OK;
 }
 
-// TODO - this doesn't belong here, just convenient for now since we need to crack the ON_Brep for this
-extern "C" int
+static int
 _ged_brep_shrink_surfaces(struct ged *gedp, struct rt_brep_internal *bi, const char *obj_name)
 {
     const char *av[3];
@@ -325,8 +322,7 @@ _ged_brep_shrink_surfaces(struct ged *gedp, struct rt_brep_internal *bi, const c
     return GED_OK;
 }
 
-// TODO - this doesn't belong here, just convenient for now since we need to crack the ON_Brep for this
-extern "C" int
+static int
 _ged_brep_plate_mode_set(struct ged *gedp, struct directory *dp, const char *val)
 {
     struct bu_attribute_value_set avs;
@@ -390,8 +386,7 @@ _ged_brep_plate_mode_set(struct ged *gedp, struct directory *dp, const char *val
 
 
 
-// TODO - this doesn't belong here, just convenient for now since we need to crack the ON_Brep for this
-extern "C" int
+static int
 _ged_brep_to_bot(struct ged *gedp, const char *obj_name, const struct rt_brep_internal *bi, const char *bot_name, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     if (!gedp || !bi || !bot_name || !ttol || !tol) return GED_ERROR;
@@ -440,10 +435,8 @@ _ged_brep_to_bot(struct ged *gedp, const char *obj_name, const struct rt_brep_in
     return GED_OK;
 }
 
-// TODO - this doesn't belong here, just convenient for now since we need to crack the ON_Brep for this
-//
 // Right now this is just a quick and dirty function to exercise the libbrep logic...
-extern "C" int
+static int
 _ged_breps_to_bots(struct ged *gedp, int obj_cnt, const char **obj_names, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     double ovlp_max_smallest = DBL_MAX;
