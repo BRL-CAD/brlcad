@@ -1091,6 +1091,9 @@ extern "C" int
 _brep_cmd_boolean(void *bs, int argc, const char **argv)
 {
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+
+    // Note - no up front type validation we can do here - breps and csgs are both legitimate inputs.
+
     if (!argc || !argv) {
 	bu_vls_printf(gb->gedp->ged_result_str, "basic help\n");
     }
@@ -1102,6 +1105,11 @@ extern "C" int
 _brep_cmd_bot(void *bs, int argc, const char **argv)
 {
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
+	return GED_ERROR;
+    }
+
     if (!argc || !argv) {
 	bu_vls_printf(gb->gedp->ged_result_str, "basic help\n");
     }
@@ -1114,6 +1122,11 @@ extern "C" int
 _brep_cmd_brep(void *bs, int argc, const char **argv)
 {
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (gb->intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_BREP) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is already a brep\n", gb->solid_name.c_str());
+	return GED_ERROR;
+    }
+
     if (!argc || !argv) {
 	bu_vls_printf(gb->gedp->ged_result_str, "basic help\n");
     }
@@ -1125,6 +1138,12 @@ extern "C" int
 _brep_cmd_csg(void *bs, int argc, const char **argv)
 {
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
+	return GED_ERROR;
+    }
+
+
     if (!argc || !argv) {
 	bu_vls_printf(gb->gedp->ged_result_str, "basic help\n");
     }
@@ -1166,6 +1185,12 @@ extern "C" int
 _brep_cmd_info(void *bs, int argc, const char **argv)
 {
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
+	return GED_ERROR;
+    }
+
+
     if (!argc || !argv) {
 	bu_vls_printf(gb->gedp->ged_result_str, "basic help\n");
     }
@@ -1178,6 +1203,12 @@ extern "C" int
 _brep_cmd_intersect(void *bs, int argc, const char **argv)
 {
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
+	return GED_ERROR;
+    }
+
+
     if (!argc || !argv) {
 	bu_vls_printf(gb->gedp->ged_result_str, "basic help\n");
     }
@@ -1190,6 +1221,12 @@ extern "C" int
 _brep_cmd_plate_mode(void *bs, int argc, const char **argv)
 {
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
+	return GED_ERROR;
+    }
+
+
     if (!argc || !argv) {
 	bu_vls_printf(gb->gedp->ged_result_str, "basic help\n");
     }
@@ -1202,6 +1239,12 @@ extern "C" int
 _brep_cmd_plot(void *bs, int argc, const char **argv)
 {
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
+	return GED_ERROR;
+    }
+
+
     if (!argc || !argv) {
 	bu_vls_printf(gb->gedp->ged_result_str, "basic help\n");
     }
@@ -1213,6 +1256,12 @@ extern "C" int
 _brep_cmd_selection(void *bs, int argc, const char **argv)
 {
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
+	return GED_ERROR;
+    }
+
+
     if (!argc || !argv) {
 	bu_vls_printf(gb->gedp->ged_result_str, "basic help\n");
     }
@@ -1267,6 +1316,11 @@ extern "C" int
 _brep_cmd_valid(void *bs, int UNUSED(argc), const char **UNUSED(argv))
 {
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
+	return GED_ERROR;
+    }
+
     int valid = rt_brep_valid(gb->gedp->ged_result_str, &gb->intern, 0);
     return (valid) ? GED_OK : GED_ERROR;
 }
