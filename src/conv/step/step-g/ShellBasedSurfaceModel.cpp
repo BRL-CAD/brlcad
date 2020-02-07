@@ -102,24 +102,6 @@ ShellBasedSurfaceModel::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
-bool
-ShellBasedSurfaceModel::LoadONBrep(ON_Brep *brep)
-{
-    if (!brep) {
-	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
-	return false;
-    }
-    LIST_OF_OPEN_SHELLS::iterator i;
-    for (i = sbsm_boundary.begin(); i != sbsm_boundary.end(); ++i) {
-	if (!(*i)->LoadONBrep(brep)) {
-	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
-	    return false;
-	}
-    }
-    return true;
-}
-
-
 // Local Variables:
 // tab-width: 8
 // mode: C++

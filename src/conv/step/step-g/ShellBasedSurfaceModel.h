@@ -24,6 +24,7 @@ public:
     ShellBasedSurfaceModel(STEPWrapper *sw, int step_id);
     virtual ~ShellBasedSurfaceModel();
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
+    ON_Brep *GetONBrep();
     virtual bool LoadONBrep(ON_Brep *brep);
     virtual void Print(int level);
 

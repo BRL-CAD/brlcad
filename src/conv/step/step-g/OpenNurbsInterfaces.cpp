@@ -75,6 +75,7 @@ class SDAI_Application_instance;
 #include "Loop.h"
 #include "VertexLoop.h"
 #include "Face.h"
+#include "OpenShell.h"
 #include "OrientedFace.h"
 #include "FaceBound.h"
 #include "FaceOuterBound.h"
@@ -93,7 +94,7 @@ class SDAI_Application_instance;
 #include "UniformSurface.h"
 
 #include "AdvancedBrepShapeRepresentation.h"
-#include "ManifoldSurfaceShapeRepresentation.h"
+#include "ShellBasedSurfaceModel.h"
 #include "PullbackCurve.h"
 
 #include "brep.h"
@@ -144,7 +145,7 @@ AdvancedBrepShapeRepresentation::LoadONBrep(ON_Brep *brep)
 }
 
 ON_Brep *
-ManifoldSurfaceShapeRepresentation::GetONBrep()
+ShellBasedSurfaceModel::GetONBrep()
 {
     ON_Brep *brep = ON_Brep::New();
 
@@ -164,22 +165,19 @@ ManifoldSurfaceShapeRepresentation::GetONBrep()
 
 
 bool
-ManifoldSurfaceShapeRepresentation::LoadONBrep(ON_Brep *brep)
+ShellBasedSurfaceModel::LoadONBrep(ON_Brep *brep)
 {
-    LIST_OF_REPRESENTATION_ITEMS::iterator i;
-
     if (!brep) {
-	/* nothing to do */
+	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	return false;
     }
-
-    for (i = items.begin(); i != items.end(); i++) {
+    LIST_OF_OPEN_SHELLS::iterator i;
+    for (i = sbsm_boundary.begin(); i != sbsm_boundary.end(); ++i) {
 	if (!(*i)->LoadONBrep(brep)) {
 	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	    return false;
 	}
     }
-
     return true;
 }
 

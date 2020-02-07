@@ -30,8 +30,6 @@ public:
     virtual ~ManifoldSurfaceShapeRepresentation();
 
     Axis2Placement3D *GetAxis2Placement3d();
-    ON_Brep *GetONBrep();
-    virtual bool LoadONBrep(ON_Brep *brep);
 
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     std::string Name() {
