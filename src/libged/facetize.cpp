@@ -302,7 +302,7 @@ void _ged_facetize_opts_destroy(struct _ged_facetize_opts *o)
     BU_PUT(o, struct _ged_facetize_opts);
 }
 
-HIDDEN db_op_t
+static db_op_t
 _int_to_opt(int op)
 {
     if (op == 2) return DB_OP_UNION;
@@ -311,7 +311,7 @@ _int_to_opt(int op)
     return DB_OP_NULL;
 }
 
-HIDDEN int
+static int
 _db_uniq_test(struct bu_vls *n, void *data)
 {
     struct ged *gedp = (struct ged *)data;
@@ -319,7 +319,7 @@ _db_uniq_test(struct bu_vls *n, void *data)
     return 0;
 }
 
-HIDDEN double
+static double
 _bbox_vol(point_t b_min, point_t b_max)
 {
     double bbox_vol = 0.0;
@@ -331,7 +331,7 @@ _bbox_vol(point_t b_min, point_t b_max)
     return bbox_vol; 
 }
 
-HIDDEN void
+static void
 _rt_pnts_bbox(point_t rpp_min, point_t rpp_max, struct rt_pnts_internal *pnts)
 {
     struct pnt_normal *pn = NULL;
@@ -346,7 +346,7 @@ _rt_pnts_bbox(point_t rpp_min, point_t rpp_max, struct rt_pnts_internal *pnts)
 }
 
 
-HIDDEN void
+static void
 _pnts_bbox(point_t rpp_min, point_t rpp_max, int pnt_cnt, point_t *pnts)
 {
     int i = 0;
@@ -359,7 +359,7 @@ _pnts_bbox(point_t rpp_min, point_t rpp_max, int pnt_cnt, point_t *pnts)
 }
 
 
-HIDDEN int
+static int
 _ged_facetize_bomb_hook(void *cdata, void *str)
 {
     struct _ged_facetize_opts *o = (struct _ged_facetize_opts *)cdata;
@@ -371,7 +371,7 @@ _ged_facetize_bomb_hook(void *cdata, void *str)
     return 0;
 }
 
-HIDDEN int
+static int
 _ged_facetize_nmg_logging_hook(void *data, void *str)
 {
     struct _ged_facetize_opts *o = (struct _ged_facetize_opts *)data;
@@ -383,7 +383,7 @@ _ged_facetize_nmg_logging_hook(void *data, void *str)
     return 0;
 }
 
-HIDDEN void
+static void
 _ged_facetize_log_nmg(struct _ged_facetize_opts *o)
 {
     if (fileno(stderr) < 0)
@@ -415,7 +415,7 @@ _ged_facetize_log_nmg(struct _ged_facetize_opts *o)
 }
 
 
-HIDDEN void
+static void
 _ged_facetize_log_default(struct _ged_facetize_opts *o)
 {
     if (fileno(stderr) < 0)
@@ -438,7 +438,7 @@ _ged_facetize_log_default(struct _ged_facetize_opts *o)
     bu_log_hook_restore_all(o->saved_log_hooks);
 }
 
-HIDDEN void
+static void
 _ged_facetize_mkname(struct ged *gedp, struct _ged_facetize_opts *opts, const char *n, int type)
 {
     struct bu_vls incr_template = BU_VLS_INIT_ZERO;
@@ -472,7 +472,7 @@ _ged_facetize_mkname(struct ged *gedp, struct _ged_facetize_opts *opts, const ch
     bu_vls_free(&incr_template);
 }
 
-HIDDEN int
+static int
 _ged_validate_objs_list(struct ged *gedp, int argc, const char *argv[], struct _ged_facetize_opts *o, int newobj_cnt)
 {
     int i;
@@ -519,7 +519,7 @@ _ged_validate_objs_list(struct ged *gedp, int argc, const char *argv[], struct _
     return GED_OK;
 }
 
-HIDDEN
+static
 int
 _ged_facetize_solid_objs(struct ged *gedp, int argc, struct directory **dpa, struct _ged_facetize_opts *opts)
 {
@@ -576,7 +576,7 @@ ged_facetize_solid_objs_memfree:
     return ret;
 }
 
-HIDDEN int
+static int
 _ged_facetize_obj_swap(struct ged *gedp, const char *o, const char *n)
 {
     int ret = GED_OK;
@@ -650,7 +650,7 @@ facetize_region_end(struct db_tree_state *tsp,
     return TREE_NULL;
 }
 
-HIDDEN struct model *
+static struct model *
 _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnurbs, struct _ged_facetize_opts *o)
 {
     int i;
@@ -725,7 +725,7 @@ _try_nmg_facetize(struct ged *gedp, int argc, const char **argv, int nmg_use_tnu
     return (failed) ? NULL : nmg_model;
 }
 
-HIDDEN int
+static int
 _try_nmg_triangulate(struct ged *gedp, struct model *nmg_model, struct _ged_facetize_opts *o)
 {
     _ged_facetize_log_nmg(o);
@@ -744,7 +744,7 @@ _try_nmg_triangulate(struct ged *gedp, struct model *nmg_model, struct _ged_face
     return GED_OK;
 }
 
-HIDDEN struct rt_bot_internal *
+static struct rt_bot_internal *
 _try_nmg_to_bot(struct ged *gedp, struct model *nmg_model, struct _ged_facetize_opts *o)
 {
     struct rt_bot_internal *bot = NULL;
@@ -763,7 +763,7 @@ _try_nmg_to_bot(struct ged *gedp, struct model *nmg_model, struct _ged_facetize_
 }
 
 
-HIDDEN struct rt_bot_internal *
+static struct rt_bot_internal *
 _try_decimate(struct rt_bot_internal *bot, fastf_t feature_size, struct _ged_facetize_opts *o)
 {
     size_t success = 0;
@@ -819,7 +819,7 @@ _try_decimate(struct rt_bot_internal *bot, fastf_t feature_size, struct _ged_fac
     }
 }
 
-HIDDEN int
+static int
 _write_bot(struct ged *gedp, struct rt_bot_internal *bot, const char *name, struct _ged_facetize_opts *opts)
 {
     struct rt_db_internal intern;
@@ -852,7 +852,7 @@ _write_bot(struct ged *gedp, struct rt_bot_internal *bot, const char *name, stru
     return GED_OK;
 }
 
-HIDDEN int
+static int
 _write_nmg(struct ged *gedp, struct model *nmg_model, const char *name, struct _ged_facetize_opts *opts)
 {
     struct rt_db_internal intern;
@@ -885,7 +885,7 @@ _write_nmg(struct ged *gedp, struct model *nmg_model, const char *name, struct _
     return GED_OK;
 }
 
-HIDDEN int
+static int
 _ged_spsr_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char *objname, const char *newname, struct _ged_facetize_opts *opts)
 {
     int ret = GED_OK;
@@ -1147,8 +1147,7 @@ ged_facetize_spsr_memfree:
     return ret;
 }
 
-HIDDEN
-int
+static int
 _ged_check_plate_mode(struct ged *gedp, struct directory *dp)
 {
     unsigned int i;
@@ -1184,7 +1183,7 @@ ged_check_plate_mode_memfree:
     return ret;
 }
 
-HIDDEN int
+static int
 _ged_continuation_obj(struct _ged_facetize_report_info *r, struct ged *gedp, const char *objname, const char *newname, struct _ged_facetize_opts *opts)
 {
     int first_run = 1;
