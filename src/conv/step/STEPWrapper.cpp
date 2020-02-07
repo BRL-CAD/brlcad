@@ -40,10 +40,12 @@
 #include "CartesianPoint.h"
 #include "SurfacePatch.h"
 #include "LocalUnits.h"
+#include "ManifoldSurfaceShapeRepresentation.h"
 #include "ContextDependentShapeRepresentation.h"
 #include "ProductDefinition.h"
 #include "ShapeDefinitionRepresentation.h"
 #include "ShapeRepresentationRelationship.h"
+#include "ShellBasedSurfaceModel.h"
 
 STEPWrapper::STEPWrapper()
     : registry(NULL), sfile(NULL), dotg(NULL), verbose(false)
@@ -187,8 +189,32 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 	    }
 	}
 
-	if ((sse->STEPfile_id > 0) && (sse->IsA(SCHEMA_NAMESPACE::e_shell_based_surface_model))) {
-	    std::cout << "\nshell based surface model\n";
+	// Manifold Surface representations define a group of shells
+	if ((sse->STEPfile_id > 0) && (sse->IsA(SCHEMA_NAMESPACE::e_manifold_surface_shape_representation))) {
+	    ShapeRepresentation *sr = dynamic_cast<ShapeRepresentation *>(Factory::CreateObject(this, (SDAI_Application_instance *)sse));
+	    if (!sr) {
+		bu_exit(1, "ERROR: unable to allocate a 'ShapeRepresentation' entity\n");
+	    }
+	    int id = sr->GetId();
+	    std::string pname  = sr->Name();
+	    pname = dotg->CleanBRLCADName(pname);
+	    std::cout << "pname(" << id << "): " << pname << "\n";
+	    if (pname.empty() || (pname.compare("''") == 0)) {
+		std::string str = "ManifoldSurfaces@";
+		pname = dotg->GetBRLCADName(str);
+	    }
+	    id2name_map[id] = pname;
+	    // Find out which shell(s) are part of this manifold and add them to the map
+	    LIST_OF_REPRESENTATION_ITEMS *items = sr->items_();
+	    LIST_OF_REPRESENTATION_ITEMS::iterator ii;
+	    for (ii = items->begin(); ii != items->end(); ++ii) {
+		ShellBasedSurfaceModel *sm = dynamic_cast<ShellBasedSurfaceModel *>(*ii);
+		if (sm != NULL) {
+		    int iid = (*ii)->GetId();
+		    std::cout << "iid: " << iid << "\n";
+		    id2productid_map[iid] = id;
+		}
+	    }
 	}
     }
     /*
@@ -268,6 +294,87 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 	    }
 	}
     }
+
+    // Find plate mode Brep objects through e_shell_based_surface_model
+    for (int i = 0; i < num_ents; i++) {
+	SDAI_Application_instance *sse = instance_list->GetSTEPentity(i);
+	if (sse == NULL) {
+	    continue;
+	}
+
+	if ((sse->STEPfile_id > 0) && (sse->IsA(SCHEMA_NAMESPACE::e_shell_based_surface_model))) {
+	    ShellBasedSurfaceModel *gr = dynamic_cast<ShellBasedSurfaceModel *>(Factory::CreateObject(this, (SDAI_Application_instance *)sse));
+	    if (!gr) {
+		bu_exit(1, "ERROR: unable to allocate a 'ShellBasedSurfaceModel' entity\n");
+	    }
+
+	    int id = gr->GetId();
+	    std::string pname  = gr->Name();
+	    pname = dotg->CleanBRLCADName(pname);
+	    if (pname.empty() || (pname.compare("''") == 0)) {
+		std::string str = "Brep_@";
+		pname = dotg->GetBRLCADName(str);
+		id2name_map[id] = pname;
+	    } else {
+		id2name_map[id] = pname;
+	    }
+	    std::cout << "\n" << pname << "(" << id << "): shell based surface model\n";
+
+
+	}
+
+	if ((sse->STEPfile_id > 0) && (sse->IsA(SCHEMA_NAMESPACE::e_shape_representation_relationship))) {
+	    ShapeRepresentationRelationship *srr = dynamic_cast<ShapeRepresentationRelationship *>(Factory::CreateObject(this, (SDAI_Application_instance *)sse));
+
+	    if (srr) {
+		ShapeRepresentation *aSR = dynamic_cast<ShapeRepresentation *>(srr->GetRepresentationRelationshipRep_1());
+		AdvancedBrepShapeRepresentation *aBrep = dynamic_cast<AdvancedBrepShapeRepresentation *>(srr->GetRepresentationRelationshipRep_2());
+		if (!aBrep) { //try rep_1
+		    aBrep = dynamic_cast<AdvancedBrepShapeRepresentation *>(srr->GetRepresentationRelationshipRep_1());
+		    aSR = dynamic_cast<ShapeRepresentation *>(srr->GetRepresentationRelationshipRep_2());
+		}
+		if ((aSR) && (aBrep)) {
+		    int sr_id = aSR->GetId();
+		    MAP_OF_ENTITY_ID_TO_PRODUCT_ID::iterator it = id2productid_map.find(sr_id);
+		    if (it != id2productid_map.end()) { // product found
+			int product_id = (*it).second;
+			int brep_id = aBrep->GetId();
+
+			it = id2productid_map.find(brep_id);
+			if (it == id2productid_map.end()) { // brep not loaded yet so lets do that here.
+			    string pname = id2name_map[brep_id];
+			    if (pname.empty() || (pname.compare("''") == 0)) {
+				std::string str = "Brep_@";
+				pname = dotg->GetBRLCADName(str);
+				id2name_map[aBrep->GetId()] = pname;
+			    } else {
+				id2name_map[aBrep->GetId()] = pname;
+			    }
+			    id2productid_map[brep_id] = product_id;
+			    /* This length is used in the hierarchy build - this is how
+			     * it was getting set when the Brep build came before the
+			     * hierarchy build, so leave it for now, but should there be
+			     * a look-up in the hierarchy build instead of here?*/
+			    LocalUnits::length = aBrep->GetLengthConversionFactor();
+
+			    if (product_id != brep_id) {
+				mat_t mat;
+
+				MAT_IDN(mat);
+				string comb = id2name_map[product_id];
+				if (!dry_run)
+				    dotg->AddMember(comb,pname,mat);
+			    }
+			}
+		    }
+		}
+		Factory::DeleteObjects();
+	    }
+	}
+    }
+
+
+
     if (Verbose()) {
 	std::cerr << std::endl << "     Generating BRL-CAD hierarchy." << std::endl;
     }
