@@ -256,73 +256,6 @@ _ged_brep_tikz(struct ged *gedp, const char *dp_name, const char *outfile)
 }
 
 static int
-_ged_brep_flip(struct ged *gedp, struct rt_brep_internal *bi, const char *obj_name)
-{
-    const char *av[3];
-    if (!gedp || !bi || !obj_name) return GED_ERROR;
-    bi->brep->Flip();
-
-    // Delete the old object
-    av[0] = "kill";
-    av[1] = obj_name;
-    av[2] = NULL;
-    (void)ged_kill(gedp, 2, (const char **)av);
-
-    // Make the new one
-    if (mk_brep(gedp->ged_wdbp, obj_name, (void *)bi->brep)) {
-	return GED_ERROR;
-    }
-    return GED_OK;
-}
-
-
-static int
-_ged_brep_pick_face(struct ged *gedp, struct rt_brep_internal *bi, const char *obj_name)
-{
-    struct bu_vls log = BU_VLS_INIT_ZERO;
-    vect_t xlate;
-    vect_t eye;
-    vect_t dir;
-
-    GED_CHECK_VIEW(gedp, GED_ERROR);
-    VSET(xlate, 0.0, 0.0, 1.0);
-    MAT4X3PNT(eye, gedp->ged_gvp->gv_view2model, xlate);
-    VSCALE(eye, eye, gedp->ged_wdbp->dbip->dbi_base2local);
-
-    VMOVEN(dir, gedp->ged_gvp->gv_rotation + 8, 3);
-    VSCALE(dir, dir, -1.0);
-
-    bu_vls_sprintf(&log, "%s:\n", obj_name);
-    if (ON_Brep_Report_Faces(&log, (void *)bi->brep, eye, dir)) {
-	bu_vls_free(&log);
-	return GED_ERROR;
-    }
-    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_cstr(&log));
-    bu_vls_free(&log);
-    return GED_OK;
-}
-
-static int
-_ged_brep_shrink_surfaces(struct ged *gedp, struct rt_brep_internal *bi, const char *obj_name)
-{
-    const char *av[3];
-    if (!gedp || !bi || !obj_name) return GED_ERROR;
-    bi->brep->ShrinkSurfaces();
-
-    // Delete the old object
-    av[0] = "kill";
-    av[1] = obj_name;
-    av[2] = NULL;
-    (void)ged_kill(gedp, 2, (const char **)av);
-
-    // Make the new one
-    if (mk_brep(gedp->ged_wdbp, obj_name, (void *)bi->brep)) {
-	return GED_ERROR;
-    }
-    return GED_OK;
-}
-
-static int
 _ged_brep_plate_mode_set(struct ged *gedp, struct directory *dp, const char *val)
 {
     struct bu_attribute_value_set avs;
@@ -889,11 +822,37 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 
 
     if (BU_STR_EQUAL(argv[2], "flip")) {
-	return _ged_brep_flip(gedp, bi, solid_name);
+	bi->brep->Flip();
+
+	// Delete the old object
+	const char *av[3];
+	av[0] = "kill";
+	av[1] = solid_name;
+	av[2] = NULL;
+	(void)ged_kill(gedp, 2, (const char **)av);
+
+	// Make the new one
+	if (mk_brep(gedp->ged_wdbp, solid_name, (void *)bi->brep)) {
+	    return GED_ERROR;
+	}
+	return GED_OK;
     }
 
     if (BU_STR_EQUAL(argv[2], "shrink-surfaces")) {
-	return _ged_brep_shrink_surfaces(gedp, bi, solid_name);
+	bi->brep->ShrinkSurfaces();
+
+	// Delete the old object
+	const char *av[3];
+	av[0] = "kill";
+	av[1] = solid_name;
+	av[2] = NULL;
+	(void)ged_kill(gedp, 2, (const char **)av);
+
+	// Make the new one
+	if (mk_brep(gedp->ged_wdbp, solid_name, (void *)bi->brep)) {
+	    return GED_ERROR;
+	}
+	return GED_OK;
     }
 
     if (BU_STR_EQUAL(argv[2], "tikz")) {
@@ -906,7 +865,27 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 
 
     if (BU_STR_EQUAL(argv[2], "nirt")) {
-	return _ged_brep_pick_face(gedp, bi, argv[1]);
+	struct bu_vls log = BU_VLS_INIT_ZERO;
+	vect_t xlate;
+	vect_t eye;
+	vect_t dir;
+
+	GED_CHECK_VIEW(gedp, GED_ERROR);
+	VSET(xlate, 0.0, 0.0, 1.0);
+	MAT4X3PNT(eye, gedp->ged_gvp->gv_view2model, xlate);
+	VSCALE(eye, eye, gedp->ged_wdbp->dbip->dbi_base2local);
+
+	VMOVEN(dir, gedp->ged_gvp->gv_rotation + 8, 3);
+	VSCALE(dir, dir, -1.0);
+
+	bu_vls_sprintf(&log, "%s:\n", argv[1]);
+	if (ON_Brep_Report_Faces(&log, (void *)bi->brep, eye, dir)) {
+	    bu_vls_free(&log);
+	    return GED_ERROR;
+	}
+	bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_cstr(&log));
+	bu_vls_free(&log);
+	return GED_OK;
     }
 
 
