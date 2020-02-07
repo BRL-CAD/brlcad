@@ -346,13 +346,13 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 	}
     }
 
-    // Find plate mode Brep objects through e_shell_based_surface_model
     for (int i = 0; i < num_ents; i++) {
 	SDAI_Application_instance *sse = instance_list->GetSTEPentity(i);
 	if (sse == NULL) {
 	    continue;
 	}
 
+	// Find plate mode Brep objects through e_shell_based_surface_model
 	if ((sse->STEPfile_id > 0) && (sse->IsA(SCHEMA_NAMESPACE::e_shell_based_surface_model))) {
 	    ShellBasedSurfaceModel *gr = dynamic_cast<ShellBasedSurfaceModel *>(Factory::CreateObject(this, (SDAI_Application_instance *)sse));
 	    if (!gr) {
@@ -383,6 +383,56 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 	    }
 
 	    Factory::DeleteObjects();
+	}
+
+
+	if ((sse->STEPfile_id > 0) && (sse->IsA(SCHEMA_NAMESPACE::e_shape_representation_relationship))) {
+	    ShapeRepresentationRelationship *srr = dynamic_cast<ShapeRepresentationRelationship *>(Factory::CreateObject(this, (SDAI_Application_instance *)sse));
+
+	    if (srr) {
+		ShapeRepresentation *aSR = dynamic_cast<ShapeRepresentation *>(srr->GetRepresentationRelationshipRep_1());
+		AdvancedBrepShapeRepresentation *aBrep = dynamic_cast<AdvancedBrepShapeRepresentation *>(srr->GetRepresentationRelationshipRep_2());
+		if (!aBrep) { //try rep_1
+		    aBrep = dynamic_cast<AdvancedBrepShapeRepresentation *>(srr->GetRepresentationRelationshipRep_1());
+		    aSR = dynamic_cast<ShapeRepresentation *>(srr->GetRepresentationRelationshipRep_2());
+		}
+		if ((aSR) && (aBrep)) {
+		    int sr_id = aSR->GetId();
+		    MAP_OF_ENTITY_ID_TO_PRODUCT_ID::iterator it = id2productid_map.find(sr_id);
+		    if (it != id2productid_map.end()) { // product found
+			int product_id = (*it).second;
+			int brep_id = aBrep->GetId();
+
+			it = id2productid_map.find(brep_id);
+			if (it == id2productid_map.end()) { // brep not loaded yet so lets do that here.
+			    string pname = id2name_map[brep_id];
+			    if (pname.empty() || (pname.compare("''") == 0)) {
+				std::string str = "Brep_@";
+				pname = dotg->GetBRLCADName(str);
+				id2name_map[aBrep->GetId()] = pname;
+			    } else {
+				id2name_map[aBrep->GetId()] = pname;
+			    }
+			    id2productid_map[brep_id] = product_id;
+			    /* This length is used in the hierarchy build - this is how
+			     * it was getting set when the Brep build came before the
+			     * hierarchy build, so leave it for now, but should there be
+			     * a look-up in the hierarchy build instead of here?*/
+			    LocalUnits::length = aBrep->GetLengthConversionFactor();
+
+			    if (product_id != brep_id) {
+				mat_t mat;
+
+				MAT_IDN(mat);
+				string comb = id2name_map[product_id];
+				if (!dry_run)
+				    dotg->AddMember(comb,pname,mat);
+			    }
+			}
+		    }
+		}
+		Factory::DeleteObjects();
+	    }
 	}
     }
 
