@@ -27,14 +27,38 @@
 
 #include "raytrace.h"
 #include "rt/geom.h"
+#include "rt/comb.h"
 #include "nmg.h"
 #include "brep.h"
 
+// TODO - there are multiple copies of this - need to find a good place for it...
+static int
+single_conversion(struct rt_db_internal* intern, ON_Brep** brep, const struct db_i* dbip)
+{
+    struct bn_tol tol;
+    tol.magic = BN_TOL_MAGIC;
+    tol.dist = BN_TOL_DIST;
+    tol.dist_sq = tol.dist * tol.dist;
+    tol.perp = SMALL_FASTF;
+    tol.para = 1.0 - tol.perp;
 
-// Declaration
-extern "C" void rt_comb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol, const struct db_i *dbip);
-extern "C" int single_conversion(struct rt_db_internal* intern, ON_Brep** brep, const struct db_i *dbip);
-
+    if (intern->idb_type == ID_BREP) {
+        // already a brep
+        RT_BREP_CK_MAGIC(intern->idb_ptr);
+        **brep = *((struct rt_brep_internal *)intern->idb_ptr)->brep;
+    } else if (intern->idb_type == ID_COMBINATION) {
+        rt_comb_brep(brep, intern, &tol, dbip);
+    } else if (intern->idb_meth->ft_brep != NULL) {
+        intern->idb_meth->ft_brep(brep, intern, &tol);
+    } else {
+        *brep = NULL;
+        return -1;
+    }
+    if (*brep == NULL) {
+        return -2;
+    }
+    return 0;
+}
 
 HIDDEN int
 conv_tree(ON_Brep **b, const union tree *t, const struct db_i *dbip)

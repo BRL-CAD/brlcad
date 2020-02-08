@@ -1,4 +1,4 @@
-/*                   G E D _ P R I V A T E . H
+/*                   G E D _ B R E P . H
  * BRL-CAD
  *
  * Copyright (c) 2008-2019 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file ged_private.h
+/** @file ged_brep.h
  *
  * Private header for libged brep cmd.
  *
@@ -38,6 +38,38 @@
 
 __BEGIN_DECLS
 
+#define BLUEVIOLET 138, 43, 226
+#define CADETBLUE 95, 159, 159
+#define CORNFLOWERBLUE 66, 66, 111
+#define LIGHTBLUE 173, 216, 230
+#define DARKGREEN 0, 100, 0
+#define KHAKI 189, 183, 107
+#define FORESTGREEN 34, 139, 34
+#define LIMEGREEN 124, 252, 0
+#define PALEGREEN 152, 251, 152
+#define DARKORANGE 255, 140, 0
+#define DARKSALMON 233, 150, 122
+#define LIGHTCORAL 240, 128, 128
+#define PEACH 255, 218, 185
+#define DEEPPINK 255, 20, 147
+#define HOTPINK 255, 105, 180
+#define INDIANRED 205, 92, 92
+#define DARKVIOLET 148, 0, 211
+#define MAROON 139, 28, 98
+#define GOLDENROD 218, 165, 32
+#define DARKGOLDENROD 184, 134, 11
+#define LIGHTGOLDENROD 238, 221, 130
+#define DARKYELLOW 155, 155, 52
+#define LIGHTYELLOW 255, 255, 224
+#define PURERED 255, 0, 0
+#define GREEN 0, 255, 0
+#define BLUE 0, 0, 255
+#define YELLOW 255, 255, 0
+#define MAGENTA 255, 0, 255
+#define CYAN 0, 255, 255
+#define BLACK 0, 0, 0
+#define WHITE 255, 255, 255
+
 /* defined in draw.c */
 extern void _ged_cvt_vlblock_to_solids(struct ged *gedp,
 				       struct bn_vlblock *vbp,
@@ -49,6 +81,15 @@ extern int _ged_brep_to_csg(struct ged *gedp, const char *obj_name, int verify);
 
 extern int _ged_brep_tikz(struct ged *gedp, const char *dp_name, const char *outfile);
 
+extern int brep_conversion(struct rt_db_internal* in, struct rt_db_internal* out, const struct db_i *dbip);
+extern int brep_conversion_comb(struct rt_db_internal *old_internal, const char *name, const char *suffix, struct rt_wdb *wdbp, fastf_t local2mm);
+
+extern int brep_intersect_point_point(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
+extern int brep_intersect_point_curve(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
+extern int brep_intersect_point_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
+extern int brep_intersect_curve_curve(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
+extern int brep_intersect_curve_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
+extern int brep_intersect_surface_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock *vbp);
 __END_DECLS
 
 #endif /* LIBGED_BREP_GED_PRIVATE_H */
