@@ -76,7 +76,8 @@ set(LIBGED_SOURCES
   bot_split.c
   bot_sync.c
   bot_vertex_fuse.c
-  brep.cpp
+  brep/brep.cpp
+  brep/shape_recognition.cpp
   cat.c
   cc.c
   center.cpp
@@ -302,7 +303,6 @@ set(LIBGED_SOURCES
   shaded_mode.c
   shader.c
   shells.c
-  shape_recognition.cpp
   showmats.c
   simulate/ged_command.cpp
   simulate/rt_collision_algorithm.cpp
@@ -411,6 +411,7 @@ set(ged_ignore_files
   CMakeLists.txt
   TODO
   pnts_util.h
+  brep/ged_private.h
   ged_private.h
   check/check_private.h
   joint.h
