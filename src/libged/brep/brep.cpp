@@ -49,7 +49,9 @@
 
 #include "./ged_brep.h"
 
-/* TODO - get rid of the need for brep_specific at this level */
+#define HELPFLAG "--print-help"
+
+
 #include "../librt/primitives/brep/brep_local.h"
 
 /* FIXME: how should we set up brep functionality without introducing
@@ -879,6 +881,11 @@ extern "C" int
 _brep_cmd_boolean(void *bs, int argc, const char **argv)
 {
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
+	bu_vls_printf(gb->gedp->ged_result_str, "brep <objname> \n");
+	return GED_OK;
+    }
+
     struct ged *gedp = gb->gedp;
     if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
 	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
@@ -929,6 +936,11 @@ extern "C" int
 _brep_cmd_bot(void *bs, int argc, const char **argv)
 {
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
+	bu_vls_printf(gb->gedp->ged_result_str, "brep <objname> \n");
+	return GED_OK;
+    }
+
     if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
 	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
 	return GED_ERROR;
@@ -998,6 +1010,11 @@ extern "C" int
 _brep_cmd_bots(void *bs, int argc, const char **argv)
 {
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
+	bu_vls_printf(gb->gedp->ged_result_str, "brep <objname> \n");
+	return GED_OK;
+    }
+
     struct ged *gedp = gb->gedp;
     if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
 	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
@@ -1116,6 +1133,11 @@ extern "C" int
 _brep_cmd_brep(void *bs, int argc, const char **argv)
 {
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
+	bu_vls_printf(gb->gedp->ged_result_str, "brep <objname> \n");
+	return GED_OK;
+    }
+
     struct ged *gedp = gb->gedp;
     if (gb->intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_BREP) {
 	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is already a brep\n", gb->solid_name.c_str());
@@ -1194,9 +1216,15 @@ _brep_cmd_brep(void *bs, int argc, const char **argv)
 }
 
 extern "C" int
-_brep_cmd_csg(void *bs, int UNUSED(argc), const char **UNUSED(argv))
+_brep_cmd_csg(void *bs, int argc, const char **argv)
 {
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
+	bu_vls_printf(gb->gedp->ged_result_str, "brep <objname> \n");
+	return GED_OK;
+    }
+
+
     struct ged *gedp = gb->gedp;
     if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
 	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
@@ -1218,9 +1246,14 @@ _brep_cmd_csg(void *bs, int UNUSED(argc), const char **UNUSED(argv))
 
 
 extern "C" int
-_brep_cmd_flip(void *bs, int UNUSED(argc), const char **UNUSED(argv))
+_brep_cmd_flip(void *bs, int argc, const char **argv)
 {
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
+	bu_vls_printf(gb->gedp->ged_result_str, "brep <objname> flip\nReverse the direction of the object's face normals (turns a BRep\n\"inside out\" relative to its current orientation.)\n");
+	return GED_OK;
+    }
+
     if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
 	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
 	return GED_ERROR;
@@ -1250,6 +1283,11 @@ extern "C" int
 _brep_cmd_info(void *bs, int argc, const char **argv)
 {
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
+	bu_vls_printf(gb->gedp->ged_result_str, "brep <objname> info [args]\n");
+	return GED_OK;
+    }
+
     struct ged *gedp = gb->gedp;
     if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
 	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
@@ -1287,7 +1325,14 @@ _brep_cmd_info(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_intersect(void *bs, int argc, const char **argv)
 {
+    const char *helpstr = "brep <objname> intersect <obj2> <i> <j> [PP|PC|PS|CC|CS|SS]\n";
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
+	bu_vls_printf(gb->gedp->ged_result_str, "%s\n\nCalculate intersections between BRep object components.", helpstr);
+	return GED_OK;
+    }
+
+
     struct ged *gedp = gb->gedp;
     if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
 	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
@@ -1295,7 +1340,7 @@ _brep_cmd_intersect(void *bs, int argc, const char **argv)
     }
 
     if (argc != 4 && argc != 5) {
-	bu_vls_printf(gedp->ged_result_str, "\tintersect <obj2> <i> <j> [PP|PC|PS|CC|CS|SS]\n");
+	bu_vls_printf(gb->gedp->ged_result_str, "%s", helpstr);
 	return GED_ERROR;
     }
 
@@ -1354,6 +1399,11 @@ extern "C" int
 _brep_cmd_plate_mode(void *bs, int argc, const char **argv)
 {
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
+	bu_vls_printf(gb->gedp->ged_result_str, "brep <objname> plate_mode [[thickness][cos][nocos]]\n\nReport and set plate mode properties of BReps.\n");
+	return GED_OK;
+    }
+
     if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
 	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
 	return GED_ERROR;
@@ -1439,6 +1489,11 @@ extern "C" int
 _brep_cmd_plot(void *bs, int argc, const char **argv)
 {
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
+	bu_vls_printf(gb->gedp->ged_result_str, "brep <objname> \n\nPlotting routines for visualizing the structure of a BRep object");
+	return GED_OK;
+    }
+
     if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
 	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
 	return GED_ERROR;
@@ -1453,6 +1508,11 @@ extern "C" int
 _brep_cmd_selection(void *bs, int argc, const char **argv)
 {
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
+	bu_vls_printf(gb->gedp->ged_result_str, "brep <objname> \n\nCommand for selecting subsets of a BRep for operations");
+	return GED_OK;
+    }
+
     if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
 	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
 	return GED_ERROR;
@@ -1467,9 +1527,14 @@ _brep_cmd_selection(void *bs, int argc, const char **argv)
 }
 
 extern "C" int
-_brep_cmd_solid(void *bs, int UNUSED(argc), const char **UNUSED(argv))
+_brep_cmd_solid(void *bs, int argc, const char **argv)
 {
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
+	bu_vls_printf(gb->gedp->ged_result_str, "brep <objname> valid\n\nReturns 1 if solid and 0 if not solid\n");
+	return GED_OK;
+    }
+
     if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
 	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
 	return GED_ERROR;
@@ -1481,9 +1546,14 @@ _brep_cmd_solid(void *bs, int UNUSED(argc), const char **UNUSED(argv))
 }
 
 extern "C" int
-_brep_cmd_shrink_surfaces(void *bs, int UNUSED(argc), const char **UNUSED(argv))
+_brep_cmd_shrink_surfaces(void *bs, int argc, const char **argv)
 {
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
+	bu_vls_printf(gb->gedp->ged_result_str, "brep <objname> shrink_surfaces\n\nTightens surfaces to more closely line up with their\nassociated face's trimming curves (openNURBS ShrinkSurfaces routine.)\n");
+	return GED_OK;
+    }
+
     if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
 	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
 	return GED_ERROR;
@@ -1510,9 +1580,13 @@ _brep_cmd_shrink_surfaces(void *bs, int UNUSED(argc), const char **UNUSED(argv))
 }
 
 extern "C" int
-_brep_cmd_valid(void *bs, int UNUSED(argc), const char **UNUSED(argv))
+_brep_cmd_valid(void *bs, int argc, const char **argv)
 {
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
+	bu_vls_printf(gb->gedp->ged_result_str, "brep <objname> valid\n\nReports if a brep is valid or invalid\n");
+	return GED_OK;
+    }
     if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
 	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
 	return GED_ERROR;
@@ -1526,7 +1600,7 @@ extern "C" int
 _brep_cmd_help(void *bs, int argc, const char **argv)
 {
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
-    if (!argc || !argv) {
+    if (!argc || !argv || BU_STR_EQUAL(argv[0], "help")) {
 	bu_vls_printf(gb->gedp->ged_result_str, "brep [options] <objname> subcommand [args]\n");
 	if (gb->gopts) {
 	    char *option_help = bu_opt_describe(gb->gopts, NULL);
@@ -1541,7 +1615,12 @@ _brep_cmd_help(void *bs, int argc, const char **argv)
 	    bu_vls_printf(gb->gedp->ged_result_str, "  %s\n", ctp->ct_name);
 	}
     } else {
-	bu_vls_printf(gb->gedp->ged_result_str, "command help for %s\n", argv[0]);
+	int ret;
+	const char *helpflag[2];
+	helpflag[0] = argv[0];
+	helpflag[1] = HELPFLAG;
+	bu_cmd(gb->cmds, 2, helpflag, 0, (void *)gb, &ret);
+	return ret;
     }
 
     return GED_OK;
