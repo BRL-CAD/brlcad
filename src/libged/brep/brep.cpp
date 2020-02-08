@@ -47,7 +47,7 @@
 #include "rt/geom.h"
 #include "wdb.h"
 
-#include "./ged_private.h"
+#include "./ged_brep.h"
 
 /* TODO - get rid of the need for brep_specific at this level */
 #include "../librt/primitives/brep/brep_local.h"

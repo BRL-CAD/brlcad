@@ -411,7 +411,7 @@ set(ged_ignore_files
   CMakeLists.txt
   TODO
   pnts_util.h
-  brep/ged_private.h
+  brep/ged_brep.h
   ged_private.h
   check/check_private.h
   joint.h
