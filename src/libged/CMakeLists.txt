@@ -77,6 +77,7 @@ set(LIBGED_SOURCES
   bot_sync.c
   bot_vertex_fuse.c
   brep/brep.cpp
+  brep/plot_tikz.cpp
   brep/shape_recognition.cpp
   cat.c
   cc.c

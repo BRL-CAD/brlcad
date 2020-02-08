@@ -47,6 +47,8 @@ extern void _ged_cvt_vlblock_to_solids(struct ged *gedp,
 
 extern int _ged_brep_to_csg(struct ged *gedp, const char *obj_name, int verify);
 
+extern int _ged_brep_tikz(struct ged *gedp, const char *dp_name, const char *outfile);
+
 __END_DECLS
 
 #endif /* LIBGED_BREP_GED_PRIVATE_H */
