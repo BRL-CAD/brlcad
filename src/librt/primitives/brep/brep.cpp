@@ -2842,6 +2842,29 @@ rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, stru
     }
 }
 
+int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, struct rt_db_internal *ip,
+		      const struct bg_tess_tol *ttol, const struct bn_tol *tol,
+		      const struct rt_view_info *UNUSED(info))
+{
+    TRACE1("rt_brep_plot");
+    struct rt_brep_internal* bi;
+    const char *solid_name =  DB_FULL_PATH_CUR_DIR(pathp)->d_namep;
+    ON_wString wstr;
+    ON_TextLog tl(wstr);
+
+    BU_CK_LIST_HEAD(vhead);
+    RT_CK_DB_INTERNAL(ip);
+    bi = (struct rt_brep_internal*) ip->idb_ptr;
+    RT_BREP_CK_MAGIC(bi);
+
+    ON_Brep* brep = bi->brep;
+
+    if (brep_facecdt_plot(NULL, solid_name, ttol, tol, brep, vhead, NULL, &RTG.rtg_vlfree, -1, 0, -1)) {
+	return -1;
+    }
+    return 0;
+}
+
 
 /** @} */
 

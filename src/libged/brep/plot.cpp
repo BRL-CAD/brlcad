@@ -2100,7 +2100,7 @@ brep_plot(struct _ged_brep_info *gb, int argc, const char **argv)
 	} else if (BU_STR_EQUAL(part, "FCDT")) {
 	    snprintf(commtag, 64, "_BC_FCDT_");
 	    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
-		ret = brep_facecdt_plot(vls, solid_name, ttol, tol, brep, vbp, (*e_it), 0);
+		ret = brep_facecdt_plot(vls, solid_name, ttol, tol, brep, NULL, vbp, &RTG.rtg_vlfree, (*e_it), 0, -1);
 	    }
 	} else if (BU_STR_EQUAL(part, "FCDTN")) {
 	    snprintf(commtag, 64, "_BC_FCDTN_");
@@ -2189,22 +2189,22 @@ brep_plot(struct _ged_brep_info *gb, int argc, const char **argv)
 	} else if (BU_STR_EQUAL(part, "FCDTw")) {
 	    snprintf(commtag, 64, "_BC_FCDT_");
 	    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
-		ret = brep_facecdt_plot(vls, solid_name, ttol, tol, brep, vbp, (*e_it), 1, numpoints);
+		ret = brep_facecdt_plot(vls, solid_name, ttol, tol, brep, NULL, vbp, &RTG.rtg_vlfree, (*e_it), 1, numpoints);
 	    }
 	} else if (BU_STR_EQUAL(part, "FCDT2d")) {
 	    snprintf(commtag, 64, "_BC_FCDT2d_");
 	    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
-		ret = brep_facecdt_plot(vls, solid_name, ttol, tol, brep, vbp, (*e_it), 2);
+		ret = brep_facecdt_plot(vls, solid_name, ttol, tol, brep, NULL, vbp, &RTG.rtg_vlfree, (*e_it), 2, -1);
 	    }
 	} else if (BU_STR_EQUAL(part, "FCDTm2d")) {
 	    snprintf(commtag, 64, "_BC_FCDTm2d_");
 	    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
-		ret = brep_facecdt_plot(vls, solid_name, ttol, tol, brep, vbp, (*e_it), 3, numpoints);
+		ret = brep_facecdt_plot(vls, solid_name, ttol, tol, brep, NULL, vbp, &RTG.rtg_vlfree, (*e_it), 3, numpoints);
 	    }
 	} else if (BU_STR_EQUAL(part, "FCDTp2d")) {
 	    snprintf(commtag, 64, "_BC_FCDTp2d_");
 	    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
-		ret = brep_facecdt_plot(vls, solid_name, ttol, tol, brep, vbp, (*e_it), 4, numpoints);
+		ret = brep_facecdt_plot(vls, solid_name, ttol, tol, brep, NULL, vbp, &RTG.rtg_vlfree, (*e_it), 4, numpoints);
 	    }
 	} else if (BU_STR_EQUAL(part, "SBB")) {
 	    snprintf(commtag, 64, "_BC_SBB_");

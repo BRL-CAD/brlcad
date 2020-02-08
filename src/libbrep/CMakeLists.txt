@@ -25,6 +25,7 @@ set(LIBBREP_SOURCES
   Subsurface.cpp
   boolean.cpp
   cdt/cdt.cpp
+  cdt/fast.cpp
   cdt/surf.cpp
   cdt/util.cpp
   cdt/validate.cpp

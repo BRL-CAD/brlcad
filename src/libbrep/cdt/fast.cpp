@@ -17,11 +17,12 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup librt */
+/** @addtogroup libbrep */
 /** @{ */
-/** @file brep_cdt.cpp
+/** @file cdt/fast.cpp
  *
- * Constrained Delaunay Triangulation of NURBS B-Rep objects.
+ * Original non-watertight fast implementation of Constrained Delaunay
+ * Triangulation of NURBS B-Rep objects.
  *
  */
 
@@ -45,15 +46,8 @@
 #include "bu/cv.h"
 #include "bu/opt.h"
 #include "bu/time.h"
-#include "brep.h"
 #include "bn/dvec.h"
-
-#include "raytrace.h"
-#include "rt/geom.h"
-
-#include "./brep_local.h"
-#include "./brep_debug.h"
-
+#include "brep.h"
 
 struct brep_cdt_tol {
     fastf_t min_dist;
@@ -63,9 +57,10 @@ struct brep_cdt_tol {
 };
 
 #define BREP_CDT_TOL_ZERO {0.0, 0.0, 0.0, 0.0}
+#define YELLOW 255, 255, 0
 
 // Digest tessellation tolerances...
-void
+static void
 CDT_Tol_Set(struct brep_cdt_tol *cdt, double dist, fastf_t md, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     fastf_t min_dist, max_dist, within_dist, cos_within_ang;
@@ -104,7 +99,7 @@ CDT_Tol_Set(struct brep_cdt_tol *cdt, double dist, fastf_t md, const struct bg_t
 }
 
 
-void
+static void
 getEdgePoints(const ON_BrepTrim &trim,
 	      BrepTrimPoint *sbtp,
               BrepTrimPoint *ebtp,
@@ -173,6 +168,7 @@ getEdgePoints(const ON_BrepTrim &trim,
     }
 }
 
+static
 std::map<double, BrepTrimPoint *> *
 getEdgePoints(ON_BrepTrim &trim,
 	      fastf_t max_dist,
@@ -285,7 +281,7 @@ getEdgePoints(ON_BrepTrim &trim,
     return param_points;
 }
 
-void
+static void
 getSurfacePoints(const ON_Surface *s,
 		 fastf_t u1,
 		 fastf_t u2,
@@ -493,7 +489,7 @@ getSurfacePoints(const ON_Surface *s,
 }
 
 
-void
+static void
 getSurfacePoints(const ON_BrepFace &face,
 		 const struct bg_tess_tol *ttol,
 		 const struct bn_tol *tol,
@@ -704,7 +700,7 @@ getSurfacePoints(const ON_BrepFace &face,
 }
 
 
-void
+static void
 getUVCurveSamples(const ON_Surface *s,
 		  const ON_Curve *curve,
 		  fastf_t t1,
@@ -756,6 +752,7 @@ getUVCurveSamples(const ON_Surface *s,
 }
 
 
+static
 std::map<double, ON_3dPoint *> *
 getUVCurveSamples(const ON_Surface *surf,
 		  const ON_Curve *curve,
@@ -873,7 +870,7 @@ getUVCurveSamples(const ON_Surface *surf,
 /*
  * number_of_seam_crossings
  */
-int
+static int
 number_of_seam_crossings(const ON_Surface *surf,  ON_SimpleArray<BrepTrimPoint> &brep_trim_points)
 {
     int rc = 0;
@@ -896,7 +893,7 @@ number_of_seam_crossings(const ON_Surface *surf,  ON_SimpleArray<BrepTrimPoint> 
 }
 
 
-bool
+static bool
 LoopStraddlesDomain(const ON_Surface *surf,  ON_SimpleArray<BrepTrimPoint> &brep_loop_points)
 {
     if (surf->IsClosed(0) || surf->IsClosed(1)) {
@@ -914,7 +911,7 @@ LoopStraddlesDomain(const ON_Surface *surf,  ON_SimpleArray<BrepTrimPoint> &brep
  * exiting - 2
  * contained - 0
  */
-int
+static int
 is_entering(const ON_Surface *surf,  const ON_SimpleArray<BrepTrimPoint> &brep_loop_points)
 {
     int numpoints = brep_loop_points.Count();
@@ -948,7 +945,7 @@ is_entering(const ON_Surface *surf,  const ON_SimpleArray<BrepTrimPoint> &brep_l
 /*
  * shift_closed_curve_split_over_seam
  */
-bool
+static bool
 shift_loop_straddled_over_seam(const ON_Surface *surf,  ON_SimpleArray<BrepTrimPoint> &brep_loop_points, double same_point_tolerance)
 {
     if (surf->IsClosed(0) || surf->IsClosed(1)) {
@@ -1005,7 +1002,7 @@ shift_loop_straddled_over_seam(const ON_Surface *surf,  ON_SimpleArray<BrepTrimP
 /*
  * extend_over_seam_crossings
  */
-bool
+static bool
 extend_over_seam_crossings(const ON_Surface *surf,  ON_SimpleArray<BrepTrimPoint> &brep_loop_points)
 {
     int num_points = brep_loop_points.Count();
@@ -1585,7 +1582,7 @@ ShiftInnerLoops(
 }
 
 
-void
+static void
 PerformClosedSurfaceChecks(
 	const ON_Surface *s,
 	const ON_BrepFace &face,
@@ -1612,12 +1609,12 @@ PerformClosedSurfaceChecks(
 }
 
 
-void
+static void
 poly2tri_CDT(struct bu_list *vhead,
 	     ON_BrepFace &face,
 	     const struct bg_tess_tol *ttol,
 	     const struct bn_tol *tol,
-	     const struct rt_view_info *UNUSED(info),
+	     struct bu_list *vlfree,
 	     bool watertight,
 	     int plottype,
 	     int num_points)
@@ -1774,14 +1771,14 @@ poly2tri_CDT(struct bu_list *vhead,
 		    }
 		}
 		//tri one
-		RT_ADD_VLIST(vhead, nv[0], BN_VLIST_TRI_START);
-		RT_ADD_VLIST(vhead, nv[0], BN_VLIST_TRI_VERTNORM);
-		RT_ADD_VLIST(vhead, pt[0], BN_VLIST_TRI_MOVE);
-		RT_ADD_VLIST(vhead, nv[1], BN_VLIST_TRI_VERTNORM);
-		RT_ADD_VLIST(vhead, pt[1], BN_VLIST_TRI_DRAW);
-		RT_ADD_VLIST(vhead, nv[2], BN_VLIST_TRI_VERTNORM);
-		RT_ADD_VLIST(vhead, pt[2], BN_VLIST_TRI_DRAW);
-		RT_ADD_VLIST(vhead, pt[0], BN_VLIST_TRI_END);
+		BN_ADD_VLIST(vlfree, vhead, nv[0], BN_VLIST_TRI_START);
+		BN_ADD_VLIST(vlfree, vhead, nv[0], BN_VLIST_TRI_VERTNORM);
+		BN_ADD_VLIST(vlfree, vhead, pt[0], BN_VLIST_TRI_MOVE);
+		BN_ADD_VLIST(vlfree, vhead, nv[1], BN_VLIST_TRI_VERTNORM);
+		BN_ADD_VLIST(vlfree, vhead, pt[1], BN_VLIST_TRI_DRAW);
+		BN_ADD_VLIST(vlfree, vhead, nv[2], BN_VLIST_TRI_VERTNORM);
+		BN_ADD_VLIST(vlfree, vhead, pt[2], BN_VLIST_TRI_DRAW);
+		BN_ADD_VLIST(vlfree, vhead, pt[0], BN_VLIST_TRI_END);
 	    }
 	} else if (plottype == 1) { // tris 3d wire
 	    ON_3dPoint pnt[3] = {ON_3dPoint(), ON_3dPoint(), ON_3dPoint()};;
@@ -1808,10 +1805,10 @@ poly2tri_CDT(struct bu_list *vhead,
 		    }
 		}
 		//tri one
-		RT_ADD_VLIST(vhead, pt[0], BN_VLIST_LINE_MOVE);
-		RT_ADD_VLIST(vhead, pt[1], BN_VLIST_LINE_DRAW);
-		RT_ADD_VLIST(vhead, pt[2], BN_VLIST_LINE_DRAW);
-		RT_ADD_VLIST(vhead, pt[0], BN_VLIST_LINE_DRAW);
+		BN_ADD_VLIST(vlfree, vhead, pt[0], BN_VLIST_LINE_MOVE);
+		BN_ADD_VLIST(vlfree, vhead, pt[1], BN_VLIST_LINE_DRAW);
+		BN_ADD_VLIST(vlfree, vhead, pt[2], BN_VLIST_LINE_DRAW);
+		BN_ADD_VLIST(vlfree, vhead, pt[0], BN_VLIST_LINE_DRAW);
 
 	    }
 	} else if (plottype == 2) { // tris 2d
@@ -1835,8 +1832,8 @@ poly2tri_CDT(struct bu_list *vhead,
 		    pt2[0] = p->x;
 		    pt2[1] = p->y;
 		    pt2[2] = 0.0;
-		    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
-		    RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
+		    BN_ADD_VLIST(vlfree, vhead, pt1, BN_VLIST_LINE_MOVE);
+		    BN_ADD_VLIST(vlfree, vhead, pt2, BN_VLIST_LINE_DRAW);
 		}
 	    }
 	}
@@ -1862,8 +1859,8 @@ poly2tri_CDT(struct bu_list *vhead,
 		pt2[0] = p->x;
 		pt2[1] = p->y;
 		pt2[2] = 0.0;
-		RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
-		RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
+		BN_ADD_VLIST(vlfree, vhead, pt1, BN_VLIST_LINE_MOVE);
+		BN_ADD_VLIST(vlfree, vhead, pt2, BN_VLIST_LINE_DRAW);
 	    }
 	}
     } else if (plottype == 4) {
@@ -1876,7 +1873,7 @@ poly2tri_CDT(struct bu_list *vhead,
 	    pt[0] = p->x;
 	    pt[1] = p->y;
 	    pt[2] = 0.0;
-	    RT_ADD_VLIST(vhead, pt, BN_VLIST_POINT_DRAW);
+	    BN_ADD_VLIST(vlfree, vhead, pt, BN_VLIST_POINT_DRAW);
 	}
     }
 
@@ -1931,31 +1928,41 @@ poly2tri_CDT(struct bu_list *vhead,
     return;
 }
 
-int brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
+int
+brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
                       const struct bg_tess_tol *ttol, const struct bn_tol *tol,
-                      struct brep_specific* bs, struct rt_brep_internal*UNUSED(bi),
-                      struct bn_vlblock *vbp, int index, int plottype, int num_points)
+                      ON_Brep *brep, struct bu_list *p_vhead,
+                      struct bn_vlblock *vbp, struct bu_list *vlfree,
+		      int index, int plottype, int num_points)
 {
-    struct bu_list *vhead = bn_vlblock_find(vbp, YELLOW);
+    struct bu_list *vhead = p_vhead;
+    if (!vhead) {
+	vhead = bn_vlblock_find(vbp, YELLOW);
+    }
     bool watertight = true;
     ON_wString wstr;
     ON_TextLog tl(wstr);
 
-    ON_Brep* brep = bs->brep;
-    if (brep == NULL || !brep->IsValid(&tl)) {
-        if (wstr.Length() > 0) {
-            ON_String onstr = ON_String(wstr);
-            const char *isvalidinfo = onstr.Array();
-            bu_vls_strcat(vls, "brep (");
-            bu_vls_strcat(vls, solid_name);
-            bu_vls_strcat(vls, ") is NOT valid:");
-            bu_vls_strcat(vls, isvalidinfo);
-        } else {
-            bu_vls_strcat(vls, "brep (");
-            bu_vls_strcat(vls, solid_name);
-            bu_vls_strcat(vls, ") is NOT valid.");
-        }
-        //for now try to draw - return -1;
+    if (brep == NULL) {
+	// Nothing to draw
+	return -1;
+    }
+
+    if (!brep->IsValid(&tl)) {
+	//for now try to draw even if it's invalid, but report if the
+	//user is listening
+	if (vls && wstr.Length() > 0) {
+	    ON_String onstr = ON_String(wstr);
+	    const char *isvalidinfo = onstr.Array();
+	    bu_vls_strcat(vls, "brep (");
+	    bu_vls_strcat(vls, solid_name);
+	    bu_vls_strcat(vls, ") is NOT valid:");
+	    bu_vls_strcat(vls, isvalidinfo);
+	} else {
+	    bu_vls_strcat(vls, "brep (");
+	    bu_vls_strcat(vls, solid_name);
+	    bu_vls_strcat(vls, ") is NOT valid.");
+	}
     }
 
     for (int face_index = 0; face_index < brep->m_F.Count(); face_index++) {
@@ -1974,128 +1981,23 @@ int brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
     if (index == -1) {
         for (index = 0; index < brep->m_F.Count(); index++) {
             ON_BrepFace& face = brep->m_F[index];
-            poly2tri_CDT(vhead, face, ttol, tol, NULL, watertight, plottype, num_points);
+            poly2tri_CDT(vhead, face, ttol, tol, vlfree, watertight, plottype, num_points);
         }
     } else if (index < brep->m_F.Count()) {
         ON_BrepFaceArray& faces = brep->m_F;
         if (index < faces.Count()) {
             ON_BrepFace& face = faces[index];
             face.Dump(tl);
-            poly2tri_CDT(vhead, face, ttol, tol, NULL, watertight, plottype, num_points);
+            poly2tri_CDT(vhead, face, ttol, tol, vlfree, watertight, plottype, num_points);
         }
     }
 
-    bu_vls_printf(vls, "%s", ON_String(wstr).Array());
-
-    return 0;
-}
-
-int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, struct rt_db_internal *ip,
-		      const struct bg_tess_tol *ttol, const struct bn_tol *tol,
-		      const struct rt_view_info *info)
-{
-    TRACE1("rt_brep_plot");
-    struct rt_brep_internal* bi;
-    const char *solid_name =  DB_FULL_PATH_CUR_DIR(pathp)->d_namep;
-    ON_wString wstr;
-    ON_TextLog tl(wstr);
-
-    BU_CK_LIST_HEAD(vhead);
-    RT_CK_DB_INTERNAL(ip);
-    bi = (struct rt_brep_internal*) ip->idb_ptr;
-    RT_BREP_CK_MAGIC(bi);
-
-    ON_Brep* brep = bi->brep;
-    if (brep == NULL || !brep->IsValid(&tl)) {
-	if (wstr.Length() > 0) {
-	    ON_String onstr = ON_String(wstr);
-	    const char *isvalidinfo = onstr.Array();
-	    bu_log("brep (%s) is NOT valid: %s\n", solid_name, isvalidinfo);
-	} else {
-	    bu_log("brep (%s) is NOT valid.\n", solid_name);
-	}
-	//return 0; let's just try it for now, need to improve the not valid checks
+    if (vls) {
+	bu_vls_printf(vls, "%s", ON_String(wstr).Array());
     }
 
-#ifndef TESTIT
-#ifndef WATER_TIGHT
-#ifdef DRAW_FACE
-    fastf_t  max_dist = 0;
-#endif
-    for (int index = 0; index < brep->m_F.Count(); index++) {
-	ON_BrepFace *face = brep->Face(index);
-	const ON_Surface *s = face->SurfaceOf();
-	if (s) {
-	    double surface_width, surface_height;
-	    if (s->GetSurfaceSize(&surface_width, &surface_height)) {
-		// reparameterization of the face's surface and transforms the "u"
-		// and "v" coordinates of all the face's parameter space trimming
-		// curves to minimize distortion in the map from parameter space to 3d..
-		face->SetDomain(0, 0.0, surface_width);
-		face->SetDomain(1, 0.0, surface_height);
-#ifdef DRAW_FACE
-		max_dist = sqrt(surface_width * surface_width + surface_height * surface_height) / 10.0;
-#endif
-	    }
-	}
-    }
-#ifdef DRAW_FACE
-    for (int index = 0; index < brep->m_E.Count(); index++) {
-	const ON_BrepEdge& edge = brep->m_E[index];
-	if (edge.m_edge_user.p == NULL) {
-	    std::map<double, ON_3dPoint *> *points = getEdgePoints(edge, max_dist, ttol, tol, info);
-	}
-    }
-#endif
-#endif /* WATER_TIGHT */
-    bool watertight = true;
-    int plottype = 0;
-    int numpoints = -1;
-    for (int index = 0; index < brep->m_F.Count(); index++) {
-	ON_BrepFace& face = brep->m_F[index];
-	const ON_Surface *s = face.SurfaceOf();
-
-	if (s) {
-
-#ifdef DRAW_FACE
-	    draw_face_CDT(vhead, face, ttol, tol, info, watertight, plottype, numpoints);
-#else
-	    if (UNLIKELY(rt_debug & RT_DEBUG_MESHING)) {
-		char *obj = db_path_to_string(pathp);
-		bu_log("Plotting brep %s face %d\n", obj, face.m_face_index);
-		bu_free(obj, "path string");
-	    }
-	    poly2tri_CDT(vhead, face, ttol, tol, info, watertight, plottype, numpoints);
-#endif
-	} else {
-	    bu_log("Error solid \"%s\" missing surface definition for Face(%d). Will skip this face when drawing.\n", solid_name, index);
-	}
-    }
-#else /* TESTIT */
-    for (int index = 0; index < brep->m_F.Count(); index++) {
-	const ON_BrepFace& face = brep->m_F[index];
-	SurfaceTree st(&face, true, 10);
-	plot_poly_from_surface_tree(vhead, &st, face.m_bRev);
-    }
-#endif /* TESTIT */
-#ifdef WATERTIGHT
-    for (int index = 0; index < brep->m_E.Count(); index++) {
-	const ON_BrepEdge& edge = brep->m_E[index];
-	if (edge.m_edge_user.p != NULL) {
-	    std::map<double, ON_3dPoint *> *points = (std::map<double, ON_3dPoint *> *)edge.m_edge_user.p;
-	    std::map<double, ON_3dPoint *>::const_iterator i;
-	    for (i = points->begin(); i != points->end(); i++) {
-		const ON_3dPoint *p = (*i).second;
-		delete p;
-	    }
-	    points->clear();
-	    delete points;
-	    edge.m_edge_user.p = NULL;
-	}
-    }
-#else
-    for (int index = 0; index < brep->m_T.Count(); index++) {
-	ON_BrepTrim& trim = brep->m_T[index];
+    for (int iindex = 0; iindex < brep->m_T.Count(); iindex++) {
+	ON_BrepTrim& trim = brep->m_T[iindex];
 	if (trim.m_trim_user.p != NULL) {
 	    std::map<double, ON_3dPoint *> *points = (std::map<double, ON_3dPoint *> *)trim.m_trim_user.p;
 	    std::map<double, ON_3dPoint *>::const_iterator i;
@@ -2108,7 +2010,6 @@ int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, s
 	    trim.m_trim_user.p = NULL;
 	}
     }
-#endif
 
     return 0;
 }

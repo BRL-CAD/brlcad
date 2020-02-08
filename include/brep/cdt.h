@@ -31,6 +31,8 @@
 
 #include "common.h"
 
+#include "bn/vlist.h"
+#include "bn/tol.h"
 #include "bg/defines.h"
 #include "brep/defines.h"
 
@@ -132,6 +134,15 @@ ON_Brep_CDT_Mesh(
     int exp_face_cnt, int *exp_faces
     );
 
+/* Original (fast but not watertight) routine used for plotting */
+#ifdef __cplusplus
+extern BREP_EXPORT int
+brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
+	const struct bg_tess_tol *ttol, const struct bn_tol *tol,
+	ON_Brep *brep, struct bu_list *p_vhead,
+	struct bn_vlblock *vbp, struct bu_list *vlfree,
+      	int index, int plottype, int num_points);
+#endif
 
 /* PImpl exposure of some mesh operations for use in tests - not to be considered public API */
 struct cdt_bmesh_impl;
