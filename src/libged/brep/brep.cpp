@@ -1257,17 +1257,16 @@ extern "C" int
 _brep_cmd_info(void *bs, int argc, const char **argv)
 {
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    struct ged *gedp = gb->gedp;
     if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
 	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
 	return GED_ERROR;
     }
+    struct rt_brep_internal *b_ip = (struct rt_brep_internal *)gb->intern.idb_ptr;
 
+    argc--; argv++;
 
-    if (!argc || !argv) {
-	bu_vls_printf(gb->gedp->ged_result_str, "basic help\n");
-    }
-
-    return GED_OK;
+    return brep_info(gedp->ged_result_str, b_ip->brep, argc, argv);
 }
 
 

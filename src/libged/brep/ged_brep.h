@@ -81,6 +81,8 @@ extern int _ged_brep_to_csg(struct ged *gedp, const char *obj_name, int verify);
 
 extern int _ged_brep_tikz(struct ged *gedp, const char *dp_name, const char *outfile);
 
+extern int brep_info(struct bu_vls *vls, const ON_Brep *brep, int argc, const char **argv);
+
 extern int brep_conversion(struct rt_db_internal* in, struct rt_db_internal* out, const struct db_i *dbip);
 extern int brep_conversion_comb(struct rt_db_internal *old_internal, const char *name, const char *suffix, struct rt_wdb *wdbp, fastf_t local2mm);
 
