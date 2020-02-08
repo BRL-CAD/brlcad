@@ -874,13 +874,6 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     return GED_OK;
 }
 
-struct _ged_brep_info {
-    struct ged *gedp;
-    struct rt_db_internal intern;
-    struct directory *dp;
-    int verbosity;
-    std::string solid_name;
-};
 
 extern "C" int
 _brep_cmd_boolean(void *bs, int argc, const char **argv)
@@ -1274,15 +1267,63 @@ extern "C" int
 _brep_cmd_intersect(void *bs, int argc, const char **argv)
 {
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    struct ged *gedp = gb->gedp;
     if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
 	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
 	return GED_ERROR;
     }
 
-
-    if (!argc || !argv) {
-	bu_vls_printf(gb->gedp->ged_result_str, "basic help\n");
+    if (argc != 4 && argc != 5) {
+	bu_vls_printf(gedp->ged_result_str, "\tintersect <obj2> <i> <j> [PP|PC|PS|CC|CS|SS]\n");
+	return GED_ERROR;
     }
+
+    int i, j;
+    if (bu_opt_int(gedp->ged_result_str, 1, &argv[2], (void *)&i) < 0) {
+	return GED_ERROR;
+    }
+    if (bu_opt_int(gedp->ged_result_str, 1, &argv[3], (void *)&j) < 0) {
+	return GED_ERROR;
+    }
+
+    // We've already looked up the first sold, get the second
+    struct directory *dp2 = db_lookup(gedp->ged_wdbp->dbip, argv[1], LOOKUP_NOISY);
+    if (dp2 == RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, ": %s is not a solid or does not exist in database", argv[3]);
+	return GED_ERROR;
+    } else {
+	int real_flag = (gb->dp->d_addr == RT_DIR_PHONY_ADDR) ? 0 : 1;
+	if (!real_flag) {
+	    /* solid doesn't exist */
+	    bu_vls_printf(gedp->ged_result_str, ": %s is not a real solid", argv[1]);
+	    return GED_ERROR;
+	}
+    }
+    struct rt_db_internal intern2;
+    GED_DB_GET_INTERNAL(gedp, &intern2, dp2, bn_mat_identity, &rt_uniresource, GED_ERROR);
+    RT_CK_DB_INTERNAL(&intern2);
+
+
+    if (argc == 4 || BU_STR_EQUAL(argv[4], "SS")) {
+	brep_intersect_surface_surface(&gb->intern, &intern2, i, j, gb->vbp);
+    } else if (BU_STR_EQUAL(argv[4], "PP")) {
+	brep_intersect_point_point(&gb->intern, &intern2, i, j);
+    } else if (BU_STR_EQUAL(argv[4], "PC")) {
+	brep_intersect_point_curve(&gb->intern, &intern2, i, j);
+    } else if (BU_STR_EQUAL(argv[4], "PS")) {
+	brep_intersect_point_surface(&gb->intern, &intern2, i, j);
+    } else if (BU_STR_EQUAL(argv[4], "CC")) {
+	brep_intersect_curve_curve(&gb->intern, &intern2, i, j);
+    } else if (BU_STR_EQUAL(argv[4], "CS")) {
+	brep_intersect_curve_surface(&gb->intern, &intern2, i, j);
+    } else {
+	bu_vls_printf(gedp->ged_result_str, "Invalid intersection type %s.\n", argv[6]);
+    }
+
+    char namebuf[65];
+    _ged_cvt_vlblock_to_solids(gedp, gb->vbp, namebuf, 0);
+
+    rt_db_free_internal(&intern2);
 
     return GED_OK;
 }
@@ -1382,12 +1423,9 @@ _brep_cmd_plot(void *bs, int argc, const char **argv)
 	return GED_ERROR;
     }
 
+    argc--; argv++;
 
-    if (!argc || !argv) {
-	bu_vls_printf(gb->gedp->ged_result_str, "basic help\n");
-    }
-
-    return GED_OK;
+    return brep_plot(gb, argc, argv);
 }
 
 extern "C" int
@@ -1498,10 +1536,9 @@ const struct bu_cmdtab _brep_cmds[] = {
 int
 ged_brep2(struct ged *gedp, int argc, const char *argv[])
 {
-    struct bu_color color = BU_COLOR_INIT_ZERO;
     struct _ged_brep_info gb;
     gb.gedp = gedp;
-
+    gb.color = BU_COLOR_INIT_ZERO;
 
     // Sanity
     if (UNLIKELY(!gedp || !argc || !argv)) {
@@ -1516,7 +1553,7 @@ ged_brep2(struct ged *gedp, int argc, const char *argv[])
 
     // See if we have any high level options set
     struct bu_opt_desc d[3];
-    BU_OPT(d[0], "C", "color",   "r/g/b", &bu_opt_color, &color,        "Set color");
+    BU_OPT(d[0], "C", "color",   "r/g/b", &bu_opt_color, &gb.color,        "Set color");
     BU_OPT(d[1], "v", "verbose", "",      NULL,          &gb.verbosity, "Verbose output");
     BU_OPT_NULL(d[2]);
 
@@ -1566,6 +1603,8 @@ ged_brep2(struct ged *gedp, int argc, const char *argv[])
     GED_DB_GET_INTERNAL(gedp, &gb.intern, gb.dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
     RT_CK_DB_INTERNAL(&gb.intern);
 
+    gb.vbp = rt_vlblock_init();
+
     // Jump the processing past any options specified
     argc = argc - cmd_pos;
     argv = &argv[cmd_pos];
@@ -1578,6 +1617,8 @@ ged_brep2(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "subcommand %s not defined", argv[0]);
     }
 
+    bn_vlblock_free(gb.vbp);
+    gb.vbp = (struct bn_vlblock *)NULL;
     rt_db_free_internal(&gb.intern);
     return GED_ERROR;
 }

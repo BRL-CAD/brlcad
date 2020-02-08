@@ -80,6 +80,7 @@ set(LIBGED_SOURCES
   brep/conversion.cpp
   brep/info.cpp
   brep/intersect.cpp
+  brep/plot.cpp
   brep/plot_tikz.cpp
   brep/shape_recognition.cpp
   cat.c

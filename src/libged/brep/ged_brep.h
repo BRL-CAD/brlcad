@@ -28,9 +28,12 @@
 
 #include "common.h"
 
+#include <string>
 #include <time.h>
 
 #include "bu/opt.h"
+#include "bn/plot3.h"
+#include "bu/color.h"
 #include "rt/db4.h"
 #include "raytrace.h"
 #include "rt/geom.h"
@@ -70,6 +73,17 @@ __BEGIN_DECLS
 #define BLACK 0, 0, 0
 #define WHITE 255, 255, 255
 
+
+struct _ged_brep_info {
+    struct ged *gedp;
+    struct rt_db_internal intern;
+    struct directory *dp;
+    struct bn_vlblock *vbp;
+    struct bu_color color;
+    int verbosity;
+    std::string solid_name;
+};
+
 /* defined in draw.c */
 extern void _ged_cvt_vlblock_to_solids(struct ged *gedp,
 				       struct bn_vlblock *vbp,
@@ -82,6 +96,7 @@ extern int _ged_brep_to_csg(struct ged *gedp, const char *obj_name, int verify);
 extern int _ged_brep_tikz(struct ged *gedp, const char *dp_name, const char *outfile);
 
 extern int brep_info(struct bu_vls *vls, const ON_Brep *brep, int argc, const char **argv);
+extern int brep_plot(struct _ged_brep_info *gb, int argc, const char **argv);
 
 extern int brep_conversion(struct rt_db_internal* in, struct rt_db_internal* out, const struct db_i *dbip);
 extern int brep_conversion_comb(struct rt_db_internal *old_internal, const char *name, const char *suffix, struct rt_wdb *wdbp, fastf_t local2mm);
@@ -92,6 +107,20 @@ extern int brep_intersect_point_surface(struct rt_db_internal *intern1, struct r
 extern int brep_intersect_curve_curve(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
 extern int brep_intersect_curve_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
 extern int brep_intersect_surface_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock *vbp);
+
+// For old CDT routines - will go away eventually
+#include "../../librt/primitives/brep/brep_local.h"
+
+using namespace brlcad;
+void
+plotsurface(const ON_Surface &surf, struct bn_vlblock *vbp, int isocurveres, int gridres, const int red = 200, const int green = 200, const int blue = 200);
+void
+plotcurve(const ON_Curve &curve, struct bn_vlblock *vbp, int plotres, const int red = 255, const int green = 255, const int blue = 0);
+void
+plotcurveonsurface(const ON_Curve *curve, const ON_Surface *surface, struct bn_vlblock *vbp, int plotres, const int red = 255, const int green = 255, const int blue = 0);
+void
+plotpoint(const ON_3dPoint &point, struct bn_vlblock *vbp, const int red = 255, const int green = 255, const int blue = 0);
+
 __END_DECLS
 
 #endif /* LIBGED_BREP_GED_PRIVATE_H */
