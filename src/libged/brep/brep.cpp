@@ -1259,6 +1259,27 @@ _brep_cmd_info(void *bs, int argc, const char **argv)
 
     argc--; argv++;
 
+    // If the user doesn't specify, give an overview
+    if (!argc) {
+	const char *is_valid = (rt_brep_valid(gb->gedp->ged_result_str, &gb->intern, 0)) ? "YES" : "NO";
+	bu_vls_printf(gedp->ged_result_str, "%s -- VALID: %s,", gb->solid_name.c_str(), is_valid);
+	const char *is_solid = (b_ip->brep->IsSolid()) ? "YES" : "NO";
+	bu_vls_printf(gedp->ged_result_str, " SOLID: %s,", is_solid);
+	const char *is_plate_mode = (rt_brep_plate_mode(&gb->intern)) ? "YES" : "NO";
+	bu_vls_printf(gedp->ged_result_str, " Plate mode: %s", is_plate_mode);
+	if (BU_STR_EQUAL(is_plate_mode, "YES")) {
+	    double thickness; int nocos;
+	    rt_brep_plate_mode_getvals(&thickness, &nocos, &gb->intern);
+	    if (nocos) {
+		bu_vls_printf(gedp->ged_result_str, "[%f (NOCOS)]\n", thickness);
+	    } else {
+		bu_vls_printf(gedp->ged_result_str, "[%f (COS)]\n", thickness);
+	    }
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, "\n");
+	}
+    }
+
     return brep_info(gedp->ged_result_str, b_ip->brep, argc, argv);
 }
 

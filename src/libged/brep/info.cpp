@@ -505,7 +505,7 @@ brep_info(struct bu_vls *vls, const ON_Brep *brep, int argc, const char **argv)
 {
     int ret = GED_ERROR;
 
-    if (argc == 3) {
+    if (!argc) {
 	bu_vls_printf(vls, "surfaces:  %d\n", brep->m_S.Count());
 	bu_vls_printf(vls, "3d curve:  %d\n", brep->m_C3.Count());
 	bu_vls_printf(vls, "2d curves: %d\n", brep->m_C2.Count());
@@ -516,8 +516,8 @@ brep_info(struct bu_vls *vls, const ON_Brep *brep, int argc, const char **argv)
 	bu_vls_printf(vls, "faces:     %d\n", brep->m_F.Count());
 	return GED_OK;
     }
-    if (argc == 4) {
-	const char *part = argv[3];
+    if (argc == 1) {
+	const char *part = argv[0];
 	if (BU_STR_EQUAL(part, "S")) {
 	    for (int i = 0; i < brep->m_S.Count(); ++i) {
 		ret = brep_surface_info(brep, vls, i);
@@ -547,9 +547,9 @@ brep_info(struct bu_vls *vls, const ON_Brep *brep, int argc, const char **argv)
 		ret = brep_curve_info(brep, vls, i);
 	    }
 	}
-    } else if (argc == 5) {
-	const char *part = argv[3];
-	const char *strindex = argv[4];
+    } else if (argc == 2) {
+	const char *part = argv[0];
+	const char *strindex = argv[1];
 	std::set<int> elements;
 	std::set<int>::const_iterator e_it;
 	if (BU_STR_EQUAL(strindex, "all")) {
