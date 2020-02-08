@@ -1554,14 +1554,20 @@ const struct bu_cmdtab _brep_cmds[] = {
     { (char *)NULL,      NULL}
 };
 
+static int
+_ged_brep_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *set_c)
+{
+    struct bu_color **set_color = (struct bu_color **)set_c;
+    BU_GET(*set_color, struct bu_color);
+    return bu_opt_color(msg, argc, argv, (void *)(*set_color));
+}
+
 int
 ged_brep2(struct ged *gedp, int argc, const char *argv[])
 {
     struct _ged_brep_info gb;
     gb.gedp = gedp;
-    gb.color = BU_COLOR_INIT_ZERO;
-    unsigned char rgb[3] = {255, 255, 0};
-    bu_color_from_rgb_chars(&gb.color, rgb);
+    struct bu_color *color = NULL;
 
     // Sanity
     if (UNLIKELY(!gedp || !argc || !argv)) {
@@ -1576,8 +1582,8 @@ ged_brep2(struct ged *gedp, int argc, const char *argv[])
 
     // See if we have any high level options set
     struct bu_opt_desc d[3];
-    BU_OPT(d[0], "C", "color",   "r/g/b", &bu_opt_color, &gb.color,        "Set color");
-    BU_OPT(d[1], "v", "verbose", "",      NULL,          &gb.verbosity, "Verbose output");
+    BU_OPT(d[0], "C", "color",   "r/g/b", &_ged_brep_opt_color, &color,         "Set color");
+    BU_OPT(d[1], "v", "verbose", "",      NULL,                 &gb.verbosity, "Verbose output");
     BU_OPT_NULL(d[2]);
 
     // High level options are only defined prior to the subcommand
@@ -1602,6 +1608,9 @@ ged_brep2(struct ged *gedp, int argc, const char *argv[])
     if (opt_ret != 1) {
 	bu_vls_printf(gedp->ged_result_str, ": no object specified before subcommand\n");
 	_brep_cmd_help(&gb, 0, NULL);
+	if (color) {
+	    BU_PUT(color, struct bu_color);
+	}
 	return GED_ERROR;
     }
 
@@ -1613,12 +1622,18 @@ ged_brep2(struct ged *gedp, int argc, const char *argv[])
     gb.dp = db_lookup(gedp->ged_wdbp->dbip, gb.solid_name.c_str(), LOOKUP_NOISY);
     if (gb.dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, ": %s is not a solid or does not exist in database", gb.solid_name.c_str());
+	if (color) {
+	    BU_PUT(color, struct bu_color);
+	}
 	return GED_ERROR;
     } else {
 	int real_flag = (gb.dp->d_addr == RT_DIR_PHONY_ADDR) ? 0 : 1;
 	if (!real_flag) {
 	    /* solid doesn't exist */
 	    bu_vls_printf(gedp->ged_result_str, ": %s is not a real solid", gb.solid_name.c_str());
+	    if (color) {
+		BU_PUT(color, struct bu_color);
+	    }
 	    return GED_ERROR;
 	}
     }
@@ -1627,6 +1642,7 @@ ged_brep2(struct ged *gedp, int argc, const char *argv[])
     RT_CK_DB_INTERNAL(&gb.intern);
 
     gb.vbp = rt_vlblock_init();
+    gb.color = color;
 
     // Jump the processing past any options specified
     argc = argc - cmd_pos;

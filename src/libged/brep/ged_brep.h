@@ -75,11 +75,11 @@ __BEGIN_DECLS
 
 
 struct _ged_brep_info {
-    struct ged *gedp;
+    struct ged *gedp = NULL;
     struct rt_db_internal intern;
-    struct directory *dp;
-    struct bn_vlblock *vbp;
-    struct bu_color color;
+    struct directory *dp = NULL;
+    struct bn_vlblock *vbp = NULL;
+    struct bu_color *color = NULL;
     int verbosity;
     std::string solid_name;
 };
@@ -108,18 +108,15 @@ extern int brep_intersect_curve_curve(struct rt_db_internal *intern1, struct rt_
 extern int brep_intersect_curve_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j);
 extern int brep_intersect_surface_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock *vbp);
 
-// For old CDT routines - will go away eventually
-#include "../../librt/primitives/brep/brep_local.h"
-
 using namespace brlcad;
 void
-plotsurface(const ON_Surface &surf, struct bn_vlblock *vbp, int isocurveres, int gridres, const int red = 200, const int green = 200, const int blue = 200);
+plotsurface(const ON_Surface &surf, struct bn_vlblock *vbp, int isocurveres, int gridres, const int red, const int green, const int blue);
 void
-plotcurve(const ON_Curve &curve, struct bn_vlblock *vbp, int plotres, const int red = 255, const int green = 255, const int blue = 0);
+plotcurve(const ON_Curve &curve, struct bn_vlblock *vbp, int plotres, const int red, const int green, const int blue);
 void
-plotcurveonsurface(const ON_Curve *curve, const ON_Surface *surface, struct bn_vlblock *vbp, int plotres, const int red = 255, const int green = 255, const int blue = 0);
+plotcurveonsurface(const ON_Curve *curve, const ON_Surface *surface, struct bn_vlblock *vbp, int plotres, const int red, const int green, const int blue);
 void
-plotpoint(const ON_3dPoint &point, struct bn_vlblock *vbp, const int red = 255, const int green = 255, const int blue = 0);
+plotpoint(const ON_3dPoint &point, struct bn_vlblock *vbp, const int red, const int green, const int blue);
 
 __END_DECLS
 

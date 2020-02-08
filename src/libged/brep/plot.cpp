@@ -546,7 +546,7 @@ plottrimdirection(const ON_BrepFace &face, struct bn_vlblock *vbp, int plotres)
 
 
 void
-plotsurface(const ON_Surface &surf, struct bn_vlblock *vbp, int isocurveres, int gridres, const int red, const int green, const int blue)
+plotsurface(const ON_Surface &surf, struct bn_vlblock *vbp, int isocurveres, int gridres, const int red = 200, const int green = 200, const int blue = 200)
 {
     struct bu_list *vhead;
     fastf_t pt1[3], pt2[3];
@@ -685,7 +685,7 @@ plotsurfaceknots(ON_Surface &surf, struct bn_vlblock *vbp, bool dim3d)
 
 
 void
-plotcurve(const ON_Curve &curve, struct bn_vlblock *vbp, int plotres, const int red, const int green, const int blue)
+plotcurve(const ON_Curve &curve, struct bn_vlblock *vbp, int plotres, const int red = 255, const int green = 255, const int blue = 0)
 {
     struct bu_list *vhead;
     fastf_t pt1[3], pt2[3];
@@ -733,7 +733,7 @@ plotcurve(const ON_Curve &curve, struct bn_vlblock *vbp, int plotres, const int 
 
 
 void
-plotpoint(const ON_3dPoint &point, struct bn_vlblock *vbp, const int red, const int green, const int blue)
+plotpoint(const ON_3dPoint &point, struct bn_vlblock *vbp, const int red = 255, const int green = 255, const int blue = 0)
 {
     struct bu_list *vhead;
     ON_3dPoint pointsize(4.0,0,0);
@@ -748,9 +748,9 @@ void plotcurveonsurface(const ON_Curve *curve,
 	const ON_Surface *surface,
 	struct bn_vlblock *vbp,
 	int plotres,
-	const int red,
-	const int green,
-	const int blue)
+	const int red = 255,
+	const int green = 255,
+	const int blue = 0)
 {
     if (curve->Dimension() != 2)
 	return;
@@ -1932,7 +1932,7 @@ int
 brep_plot(struct _ged_brep_info *gb, int argc, const char **argv)
 {
     ON_Brep *brep = ((struct rt_brep_internal *)gb->intern.idb_ptr)->brep;
-    struct bu_color *color = &gb->color;
+    struct bu_color *color = gb->color;
     struct bu_vls *vls = gb->gedp->ged_result_str;
     struct bn_vlblock *vbp = gb->vbp;
     const char *solid_name = gb->solid_name.c_str();
