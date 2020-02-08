@@ -1560,6 +1560,8 @@ ged_brep2(struct ged *gedp, int argc, const char *argv[])
     struct _ged_brep_info gb;
     gb.gedp = gedp;
     gb.color = BU_COLOR_INIT_ZERO;
+    unsigned char rgb[3] = {255, 255, 0};
+    bu_color_from_rgb_chars(&gb.color, rgb);
 
     // Sanity
     if (UNLIKELY(!gedp || !argc || !argv)) {

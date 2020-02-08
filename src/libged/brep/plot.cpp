@@ -812,6 +812,9 @@ brep_facetrim_plot(struct bu_vls *vls, ON_Brep *brep, struct bn_vlblock *vbp, in
     ON_wString wstr;
     ON_TextLog tl(wstr);
 
+    unsigned char rgb[3];
+    bu_color_to_rgb_chars(color, rgb);
+
     if (brep == NULL) {
 	return GED_ERROR;
     }
@@ -824,7 +827,7 @@ brep_facetrim_plot(struct bu_vls *vls, ON_Brep *brep, struct bn_vlblock *vbp, in
 	    if (!dim3d)
 		plotUVDomain2d(face, vbp);
 	    if (color) {
-		plottrim(face, vbp, plotres, dim3d, (int)color->buc_rgb[0], (int)color->buc_rgb[1], (int)color->buc_rgb[2]);
+		plottrim(face, vbp, plotres, dim3d, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
 	    } else {
 		plottrim(face, vbp, plotres, dim3d);
 	    }
@@ -837,7 +840,7 @@ brep_facetrim_plot(struct bu_vls *vls, ON_Brep *brep, struct bn_vlblock *vbp, in
 	    if (!dim3d)
 		plotUVDomain2d(face, vbp);
 	    if (color) {
-		plottrim(face, vbp, plotres, dim3d, (int)color->buc_rgb[0], (int)color->buc_rgb[1], (int)color->buc_rgb[2]);
+		plottrim(face, vbp, plotres, dim3d, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
 	    } else {
 		plottrim(face, vbp, plotres, dim3d);
 	    }
@@ -983,6 +986,9 @@ brep_surface_plot(struct bu_vls *vls, const ON_Brep *brep, struct bn_vlblock *vb
     ON_wString wstr;
     ON_TextLog tl(wstr);
 
+    unsigned char rgb[3];
+    bu_color_to_rgb_chars(color, rgb);
+
     if (brep == NULL) {
 	return GED_ERROR;
     }
@@ -995,7 +1001,7 @@ brep_surface_plot(struct bu_vls *vls, const ON_Brep *brep, struct bn_vlblock *vb
 	for (index = 0; index < brep->m_S.Count(); index++) {
 	    const ON_Surface *surf = brep->m_S[index];
 	    if (color) {
-		plotsurface(*surf, vbp, plotres, 10, (int)color->buc_rgb[0], (int)color->buc_rgb[1], (int)color->buc_rgb[2]);
+		plotsurface(*surf, vbp, plotres, 10, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
 	    } else {
 		plotsurface(*surf, vbp, plotres, 10);
 	    }
@@ -1004,7 +1010,7 @@ brep_surface_plot(struct bu_vls *vls, const ON_Brep *brep, struct bn_vlblock *vb
 	const ON_Surface *surf = brep->m_S[index];
 	surf->Dump(tl);
 	if (color) {
-	    plotsurface(*surf, vbp, plotres, 10, (int)color->buc_rgb[0], (int)color->buc_rgb[1], (int)color->buc_rgb[2]);
+	    plotsurface(*surf, vbp, plotres, 10, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
 	} else {
 	    plotsurface(*surf, vbp, plotres, 10);
 	}
@@ -1084,6 +1090,9 @@ brep_edge3d_plot(struct bu_vls *vls, const ON_Brep *brep, struct bn_vlblock *vbp
     ON_wString wstr;
     ON_TextLog tl(wstr);
 
+    unsigned char rgb[3];
+    bu_color_to_rgb_chars(color, rgb);
+
     if (brep == NULL) {
 	return GED_ERROR;
     }
@@ -1097,7 +1106,7 @@ brep_edge3d_plot(struct bu_vls *vls, const ON_Brep *brep, struct bn_vlblock *vbp
 	for (index = 0; index < num_curves; index++) {
 	    const ON_Curve *curve = brep->m_C3[index];
 	    if (color) {
-		plotcurve(*curve, vbp, plotres, (int)color->buc_rgb[0], (int)color->buc_rgb[1], (int)color->buc_rgb[2]);
+		plotcurve(*curve, vbp, plotres, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
 	    } else {
 		plotcurve(*curve, vbp, plotres);
 	    }
@@ -1106,7 +1115,7 @@ brep_edge3d_plot(struct bu_vls *vls, const ON_Brep *brep, struct bn_vlblock *vbp
 	const ON_Curve *curve = brep->m_C3[index];
 	curve->Dump(tl);
 	if (color) {
-	    plotcurve(*curve, vbp, plotres, (int)color->buc_rgb[0], (int)color->buc_rgb[1], (int)color->buc_rgb[2]);
+	    plotcurve(*curve, vbp, plotres, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
 	} else {
 	    plotcurve(*curve, vbp, plotres);
 	}
@@ -1161,6 +1170,9 @@ brep_trim_plot(struct bu_vls *vls, const ON_Brep *brep, struct bn_vlblock *vbp, 
     ON_wString wstr;
     ON_TextLog tl(wstr);
 
+    unsigned char rgb[3];
+    bu_color_to_rgb_chars(color, rgb);
+
     if (brep == NULL) {
 	return GED_ERROR;
     }
@@ -1174,7 +1186,7 @@ brep_trim_plot(struct bu_vls *vls, const ON_Brep *brep, struct bn_vlblock *vbp, 
 	for (index = 0; index < num_trims; index++) {
 	    const ON_BrepTrim &trim = brep->m_T[index];
 	    if (color) {
-		plottrim(trim, vbp, plotres, dim3d, (int)color->buc_rgb[0], (int)color->buc_rgb[1], (int)color->buc_rgb[2]);
+		plottrim(trim, vbp, plotres, dim3d, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
 	    } else {
 		plottrim(trim, vbp, plotres, dim3d);
 	    }
@@ -1182,7 +1194,7 @@ brep_trim_plot(struct bu_vls *vls, const ON_Brep *brep, struct bn_vlblock *vbp, 
     } else if (index < brep->m_T.Count()) {
 	const ON_BrepTrim &trim = brep->m_T[index];
 	if (color) {
-	    plottrim(trim, vbp, plotres, dim3d, (int)color->buc_rgb[0], (int)color->buc_rgb[1], (int)color->buc_rgb[2]);
+	    plottrim(trim, vbp, plotres, dim3d, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
 	} else {
 	    plottrim(trim, vbp, plotres, dim3d);
 	}
@@ -1928,22 +1940,26 @@ brep_plot(struct _ged_brep_info *gb, int argc, const char **argv)
     const struct bn_tol *tol = &gb->gedp->ged_wdbp->wdb_tol;
 
     char commtag[64];
+    char namebuf[65];
+
     int ret = GED_ERROR;
-    if (argc == 3) {
+    if (argc == 0) {
 	plot_usage(vls);
 	return GED_OK;
-    } else if (argc >= 4) {
-	const char *part = argv[3];
+    }
+
+    if (argc >= 1) {
+	const char *part = argv[0];
 	int numpoints = -1;
 	int plotres = 100;
 	std::set<int> elements;
 	std::set<int>::const_iterator e_it;
-	if (argc == 6) {
-	    const char *strres = argv[5];
+	if (argc == 3) {
+	    const char *strres = argv[2];
 	    plotres = numpoints = atoi(strres);
 	}
-	if (argc >= 5) {
-	    const char *str = argv[4];
+	if (argc >= 2) {
+	    const char *str = argv[1];
 	    if (BU_STR_EQUAL(str, "all")) {
 		if (BU_STR_EQUAL(part, "S")) {
 		    for (int i = 0; i < brep->m_S.Count(); ++i) {
@@ -2268,6 +2284,9 @@ brep_plot(struct _ged_brep_info *gb, int argc, const char **argv)
 	    }
 	}
     }
+
+    snprintf(namebuf, sizeof(namebuf), "%s%s_", commtag, gb->solid_name.c_str());
+    _ged_cvt_vlblock_to_solids(gb->gedp, vbp, namebuf, 0);
 
     return ret;
 }
