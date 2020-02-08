@@ -1527,15 +1527,27 @@ _brep_cmd_help(void *bs, int argc, const char **argv)
 {
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
     if (!argc || !argv) {
-	bu_vls_printf(gb->gedp->ged_result_str, "basic help\n");
+	bu_vls_printf(gb->gedp->ged_result_str, "brep [options] <objname> subcommand [args]\n");
+	if (gb->gopts) {
+	    char *option_help = bu_opt_describe(gb->gopts, NULL);
+	    if (option_help) {
+		bu_vls_printf(gb->gedp->ged_result_str, "Options:\n%s\n", option_help);
+		bu_free(option_help, "help str");
+	    }
+	}
+	bu_vls_printf(gb->gedp->ged_result_str, "Available subcommands:\n");
+	const struct bu_cmdtab *ctp = NULL;
+	for (ctp = gb->cmds; ctp->ct_name != (char *)NULL; ctp++) {
+	    bu_vls_printf(gb->gedp->ged_result_str, "  %s\n", ctp->ct_name);
+	}
+    } else {
+	bu_vls_printf(gb->gedp->ged_result_str, "command help for %s\n", argv[0]);
     }
 
     return GED_OK;
 }
 
-
 const struct bu_cmdtab _brep_cmds[] = {
-    { "?",               _brep_cmd_help},
     { "bool",            _brep_cmd_boolean},
     { "bot",             _brep_cmd_bot},
     { "bots",            _brep_cmd_bots},
@@ -1554,6 +1566,7 @@ const struct bu_cmdtab _brep_cmds[] = {
     { (char *)NULL,      NULL}
 };
 
+
 static int
 _ged_brep_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *set_c)
 {
@@ -1565,8 +1578,10 @@ _ged_brep_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *se
 int
 ged_brep2(struct ged *gedp, int argc, const char *argv[])
 {
+    int help = 0;
     struct _ged_brep_info gb;
     gb.gedp = gedp;
+    gb.cmds = _brep_cmds;
     struct bu_color *color = NULL;
 
     // Sanity
@@ -1581,10 +1596,20 @@ ged_brep2(struct ged *gedp, int argc, const char *argv[])
     argc--; argv++;
 
     // See if we have any high level options set
-    struct bu_opt_desc d[3];
-    BU_OPT(d[0], "C", "color",   "r/g/b", &_ged_brep_opt_color, &color,         "Set color");
-    BU_OPT(d[1], "v", "verbose", "",      NULL,                 &gb.verbosity, "Verbose output");
-    BU_OPT_NULL(d[2]);
+    struct bu_opt_desc d[4];
+    BU_OPT(d[0], "h", "help",    "",      NULL,                 &help,          "Print help");
+    BU_OPT(d[1], "C", "color",   "r/g/b", &_ged_brep_opt_color, &color,         "Set color");
+    BU_OPT(d[2], "v", "verbose", "",      NULL,                 &gb.verbosity, "Verbose output");
+    BU_OPT_NULL(d[3]);
+
+    gb.gopts = d;
+
+    if (!argc) {
+    	_brep_cmd_help(&gb, 0, NULL);
+	return GED_OK;
+    }
+
+
 
     // High level options are only defined prior to the subcommand
     int cmd_pos = -1;
@@ -1595,6 +1620,21 @@ ged_brep2(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
+    int acnt = (cmd_pos >= 0) ? cmd_pos : argc;
+
+    int opt_ret = bu_opt_parse(NULL, acnt, argv, d);
+
+    if (help) {
+	if (cmd_pos >= 0) {
+	    argc = argc - cmd_pos;
+	    argv = &argv[cmd_pos];
+	    _brep_cmd_help(&gb, argc, argv);
+	} else {
+	    _brep_cmd_help(&gb, 0, NULL);
+	}
+	return GED_OK;
+    }
+
     // Must have a subcommand
     if (cmd_pos == -1) {
 	bu_vls_printf(gedp->ged_result_str, ": no valid subcommand specified\n");
@@ -1603,11 +1643,9 @@ ged_brep2(struct ged *gedp, int argc, const char *argv[])
     }
 
 
-    int opt_ret = bu_opt_parse(NULL, cmd_pos, argv, d);
-
     if (opt_ret != 1) {
 	bu_vls_printf(gedp->ged_result_str, ": no object specified before subcommand\n");
-	_brep_cmd_help(&gb, 0, NULL);
+	bu_vls_printf(gedp->ged_result_str, "brep <objname> subcommand [args]\n");
 	if (color) {
 	    BU_PUT(color, struct bu_color);
 	}

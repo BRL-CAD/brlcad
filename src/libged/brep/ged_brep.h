@@ -82,6 +82,8 @@ struct _ged_brep_info {
     struct bu_color *color = NULL;
     int verbosity;
     std::string solid_name;
+    const struct bu_cmdtab *cmds = NULL;
+    struct bu_opt_desc *gopts = NULL;
 };
 
 /* defined in draw.c */
