@@ -1078,26 +1078,51 @@ struct _ged_brep_info {
 };
 
 extern "C" int
-_brep_cmd_help(void *bs, int argc, const char **argv)
-{
-    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
-    if (!argc || !argv) {
-	bu_vls_printf(gb->gedp->ged_result_str, "basic help\n");
-    }
-
-    return GED_OK;
-}
-
-extern "C" int
 _brep_cmd_boolean(void *bs, int argc, const char **argv)
 {
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
-
-    // Note - no up front type validation we can do here - breps and csgs are both legitimate inputs.
-
-    if (!argc || !argv) {
-	bu_vls_printf(gb->gedp->ged_result_str, "basic help\n");
+    struct ged *gedp = gb->gedp;
+    if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
+	return GED_ERROR;
     }
+
+    if (argc != 4) {
+	bu_vls_printf(gb->gedp->ged_result_str, "brep <objname1> bool <op> <objname2> <output_objname>\n");
+	return GED_ERROR;
+    }
+
+
+    // We've already looked up the first sold, get the second
+    struct directory *dp2 = db_lookup(gedp->ged_wdbp->dbip, argv[2], LOOKUP_NOISY);
+    if (dp2 == RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, ": %s is not a solid or does not exist in database", argv[3]);
+	return GED_ERROR;
+    } else {
+	int real_flag = (gb->dp->d_addr == RT_DIR_PHONY_ADDR) ? 0 : 1;
+	if (!real_flag) {
+	    /* solid doesn't exist */
+	    bu_vls_printf(gedp->ged_result_str, ": %s is not a real solid", argv[2]);
+	    return GED_ERROR;
+	}
+    }
+    struct rt_db_internal intern2;
+    GED_DB_GET_INTERNAL(gedp, &intern2, dp2, bn_mat_identity, &rt_uniresource, GED_ERROR);
+    RT_CK_DB_INTERNAL(&intern2);
+
+    db_op_t op = DB_OP_NULL;
+    op = db_str2op(argv[1]);
+    if (op == DB_OP_NULL) {
+	bu_vls_printf(gedp->ged_result_str, ": invalid boolean operation specified: %s", argv[1]);
+	return GED_ERROR;
+    }
+
+    struct rt_db_internal intern_res;
+    rt_brep_boolean(&intern_res, &gb->intern, &intern2, op);
+    struct rt_brep_internal *bip = (struct rt_brep_internal *)intern_res.idb_ptr;
+    mk_brep(gedp->ged_wdbp, argv[3], (void *)(bip->brep));
+    rt_db_free_internal(&intern2);
+    rt_db_free_internal(&intern_res);
 
     return GED_OK;
 }
@@ -1293,15 +1318,80 @@ extern "C" int
 _brep_cmd_brep(void *bs, int argc, const char **argv)
 {
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    struct ged *gedp = gb->gedp;
     if (gb->intern.idb_minor_type == DB5_MINORTYPE_BRLCAD_BREP) {
 	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is already a brep\n", gb->solid_name.c_str());
 	return GED_ERROR;
     }
 
-    if (!argc || !argv) {
-	bu_vls_printf(gb->gedp->ged_result_str, "basic help\n");
+    struct bu_vls bname, suffix;
+    int no_evaluation = 0;
+
+    bu_vls_init(&bname);
+    bu_vls_init(&suffix);
+
+    if (argc == 1) {
+	/* brep obj */
+	bu_vls_sprintf(&bname, "%s.brep", gb->solid_name.c_str());
+	bu_vls_sprintf(&suffix, ".brep");
+    } else if (BU_STR_EQUAL(argv[1], "--no-evaluation")) {
+	no_evaluation = 1;
+	if (argc == 2) {
+	    /* brep obj --no-evaluation */
+	    bu_vls_sprintf(&bname, "%s.brep", gb->solid_name.c_str());
+	    bu_vls_sprintf(&suffix, ".brep");
+	} else if (argc == 4) {
+	    /* brep obj --no-evaluation suffix */
+	    bu_vls_sprintf(&bname, "%s", argv[2]);
+	    bu_vls_sprintf(&suffix, "%s", argv[2]);
+	}
+    } else {
+	/* brep obj brepname/suffix */
+	bu_vls_sprintf(&bname, "%s", argv[1]);
+	bu_vls_sprintf(&suffix, "%s", argv[1]);
     }
 
+    if (no_evaluation && gb->intern.idb_type == ID_COMBINATION) {
+	struct bu_vls bname_suffix;
+	bu_vls_init(&bname_suffix);
+	bu_vls_sprintf(&bname_suffix, "%s%s", gb->solid_name.c_str(), bu_vls_addr(&suffix));
+	if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&bname_suffix), LOOKUP_QUIET) != RT_DIR_NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "%s already exists.", bu_vls_addr(&bname_suffix));
+	    bu_vls_free(&bname);
+	    bu_vls_free(&suffix);
+	    bu_vls_free(&bname_suffix);
+	    return GED_OK;
+	}
+	brep_conversion_comb(&gb->intern, bu_vls_addr(&bname_suffix), bu_vls_addr(&suffix), gedp->ged_wdbp, mk_conv2mm);
+	bu_vls_free(&bname_suffix);
+    } else {
+	struct rt_db_internal brep_db_internal;
+	ON_Brep* brep;
+	if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&bname), LOOKUP_QUIET) != RT_DIR_NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "%s already exists.", bu_vls_addr(&bname));
+	    bu_vls_free(&bname);
+	    bu_vls_free(&suffix);
+	    return GED_OK;
+	}
+	int ret = brep_conversion(&gb->intern, &brep_db_internal, gedp->ged_wdbp->dbip);
+	if (ret == -1) {
+	    bu_vls_printf(gedp->ged_result_str, "%s doesn't have a "
+		    "brep-conversion function yet. Type: %s", gb->solid_name.c_str(),
+		    gb->intern.idb_meth->ft_label);
+	} else if (ret == -2) {
+	    bu_vls_printf(gedp->ged_result_str, "%s cannot be converted "
+		    "to brep correctly.", gb->solid_name.c_str());
+	} else {
+	    brep = ((struct rt_brep_internal *)brep_db_internal.idb_ptr)->brep;
+	    ret = mk_brep(gedp->ged_wdbp, bu_vls_addr(&bname), brep);
+	    if (ret == 0) {
+		bu_vls_printf(gedp->ged_result_str, "%s is made.", bu_vls_addr(&bname));
+	    }
+	    rt_db_free_internal(&brep_db_internal);
+	}
+    }
+    bu_vls_free(&bname);
+    bu_vls_free(&suffix);
     return GED_OK;
 }
 
@@ -1569,6 +1659,18 @@ _brep_cmd_valid(void *bs, int UNUSED(argc), const char **UNUSED(argv))
     return (valid) ? GED_OK : GED_ERROR;
 }
 
+extern "C" int
+_brep_cmd_help(void *bs, int argc, const char **argv)
+{
+    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (!argc || !argv) {
+	bu_vls_printf(gb->gedp->ged_result_str, "basic help\n");
+    }
+
+    return GED_OK;
+}
+
+
 const struct bu_cmdtab _brep_cmds[] = {
     { "?",               _brep_cmd_help},
     { "bool",            _brep_cmd_boolean},
@@ -1644,8 +1746,8 @@ ged_brep2(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     gb.solid_name = std::string(argv[0]);
-
-    if ((gb.dp = db_lookup(gedp->ged_wdbp->dbip, gb.solid_name.c_str(), LOOKUP_NOISY)) == RT_DIR_NULL) {
+    gb.dp = db_lookup(gedp->ged_wdbp->dbip, gb.solid_name.c_str(), LOOKUP_NOISY);
+    if (gb.dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, ": %s is not a solid or does not exist in database", gb.solid_name.c_str());
 	return GED_ERROR;
     } else {
@@ -1653,7 +1755,7 @@ ged_brep2(struct ged *gedp, int argc, const char *argv[])
 	if (!real_flag) {
 	    /* solid doesn't exist */
 	    bu_vls_printf(gedp->ged_result_str, ": %s is not a real solid", gb.solid_name.c_str());
-	    return GED_OK;
+	    return GED_ERROR;
 	}
     }
 
@@ -1666,11 +1768,13 @@ ged_brep2(struct ged *gedp, int argc, const char *argv[])
 
     int ret;
     if (bu_cmd(_brep_cmds, argc, argv, 0, (void *)&gb, &ret) == BRLCAD_OK) {
+	rt_db_free_internal(&gb.intern);
 	return ret;
     } else {
 	bu_vls_printf(gedp->ged_result_str, "subcommand %s not defined", argv[0]);
     }
 
+    rt_db_free_internal(&gb.intern);
     return GED_ERROR;
 }
 
