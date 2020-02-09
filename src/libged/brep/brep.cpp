@@ -76,7 +76,7 @@ _brep_cmd_msgs(void *bs, int argc, const char **argv, const char *us, const char
 extern "C" int
 _brep_cmd_boolean(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> bool <op> <objname2> <output_objname>";
+    const char *usage_string = "brep [options] <objname1> bool <op> <objname2> <output_objname>";
     const char *purpose_string = "perform BRep boolean evaluations";
     if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -132,7 +132,7 @@ _brep_cmd_boolean(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_bot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname> bot <output_name>";
+    const char *usage_string = "brep [options] <objname> bot <output_name>";
     const char *purpose_string = "generate a triangle mesh from the BRep object";
     if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -210,7 +210,7 @@ _brep_cmd_bot(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_bots(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> bots <objname2> [objname3 ...]";
+    const char *usage_string = "brep [options] <objname1> bots <objname2> [objname3 ...]";
     const char *purpose_string = "generate overlap free meshes for multiple BRep objects";
     if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -335,7 +335,7 @@ _brep_cmd_bots(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_brep(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> brep [opts] [output_name]";
+    const char *usage_string = "brep [options] <objname> brep [opts] [output_name]";
     const char *purpose_string = "generate a BRep representation of the specified object";
     // TODO - this needs a more elabroate help - it has actual options per bu_opt_desc...
     if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
@@ -431,7 +431,7 @@ _brep_cmd_brep(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_csg(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname> csg";
+    const char *usage_string = "brep [options] <objname> csg";
     const char *purpose_string = "generate a CSG representation of the specified BRep object";
     if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -457,7 +457,7 @@ _brep_cmd_csg(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_flip(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname> flip";
+    const char *usage_string = "brep [options] <objname> flip";
     const char *purpose_string = "flip all face normals on the specified BRep object";
     if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -541,7 +541,7 @@ _brep_cmd_info(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_intersect(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname> intersect <obj2> <i> <j> [PP|PC|PS|CC|CS|SS]\n";
+    const char *usage_string = "brep [options] <objname> intersect <obj2> <i> <j> [PP|PC|PS|CC|CS|SS]\n";
     const char *purpose_string = "calculate intersections between BRep object components";
     if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -613,7 +613,7 @@ _brep_cmd_intersect(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_plate_mode(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname> plate_mode [[thickness][cos][nocos]]";
+    const char *usage_string = "brep [options] <objname> plate_mode [[thickness][cos][nocos]]";
     const char *purpose_string = "Report and set plate mode properties of BRep";
     if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -734,7 +734,7 @@ _brep_cmd_plot(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_selection(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname> selection <append/translate> <selection_name> startx starty startz dirx diry dirz";
+    const char *usage_string = "brep [options] <objname> selection <append/translate> <selection_name> startx starty startz dirx diry dirz";
     const char *purpose_string = "select specific components of a BRep object";
     if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -863,7 +863,7 @@ _brep_cmd_selection(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_solid(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname> solid";
+    const char *usage_string = "brep [options] <objname> solid";
     const char *purpose_string = "report on solidity of the specified BRep";
     if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -888,7 +888,7 @@ _brep_cmd_solid(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_shrink_surfaces(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname> shrink_surfaces";
+    const char *usage_string = "brep [options] <objname> shrink_surfaces";
     const char *purpose_string = "tightens surfaces to face trimming curves";
     if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -924,7 +924,7 @@ _brep_cmd_shrink_surfaces(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_valid(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname> valid";
+    const char *usage_string = "brep [options] <objname> valid";
     const char *purpose_string = "report on validity of the specified BRep";
     if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -990,7 +990,6 @@ const struct bu_cmdtab _brep_cmds[] = {
     { "brep",            _brep_cmd_brep},
     { "csg",             _brep_cmd_csg},
     { "flip",            _brep_cmd_flip},
-    { "help",            _brep_cmd_help},
     { "info",            _brep_cmd_info},
     { "intersect",       _brep_cmd_intersect},
     { "plate_mode",      _brep_cmd_plate_mode},
@@ -1081,7 +1080,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 
     if (opt_ret != 1) {
 	bu_vls_printf(gedp->ged_result_str, ": no object specified before subcommand\n");
-	bu_vls_printf(gedp->ged_result_str, "brep <objname> subcommand [args]\n");
+	bu_vls_printf(gedp->ged_result_str, "brep [options] <objname> subcommand [args]\n");
 	if (color) {
 	    BU_PUT(color, struct bu_color);
 	}

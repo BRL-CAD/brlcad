@@ -529,7 +529,7 @@ _brep_info_msgs(void *bs, int argc, const char **argv, const char *us, const cha
 extern "C" int
 _brep_cmd_curve_2d_info(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> info C2 [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> info C2 [[index][index-index]]";
     const char *purpose_string = "2D parameter space geometric curves";
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -542,7 +542,7 @@ _brep_cmd_curve_2d_info(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_curve_3d_info(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> info C3 [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> info C3 [[index][index-index]]";
     const char *purpose_string = "3D parameter space geometric curves";
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -555,7 +555,7 @@ _brep_cmd_curve_3d_info(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_edge_info(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> info E [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> info E [[index][index-index]]";
     const char *purpose_string = "topological 3D edges";
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -569,7 +569,7 @@ _brep_cmd_edge_info(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_face_info(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> info F [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> info F [[index][index-index]]";
     const char *purpose_string = "topological faces";
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -582,7 +582,7 @@ _brep_cmd_face_info(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_loop_info(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> info L [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> info L [[index][index-index]]";
     const char *purpose_string = "2D parameter space topological trimming loops";
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -596,7 +596,7 @@ _brep_cmd_loop_info(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_surface_info(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> info S [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> info S [[index][index-index]]";
     const char *purpose_string = "surfaces";
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -610,7 +610,7 @@ _brep_cmd_surface_info(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_surface_bezier_info(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> info SB [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> info SB [[index][index-index]]";
     const char *purpose_string = "piecewise Bezier surfaces";
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -624,7 +624,7 @@ _brep_cmd_surface_bezier_info(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_trim_info(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> info T [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> info T [[index][index-index]]";
     const char *purpose_string = "2D parameter space topological trims";
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -638,7 +638,7 @@ _brep_cmd_trim_info(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_trim_bezier_info(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> info TB [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> info TB [[index][index-index]]";
     const char *purpose_string = "2D piecewise Bezier trims";
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -652,7 +652,7 @@ _brep_cmd_trim_bezier_info(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_vertex_info(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> info V [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> info V [[index][index-index]]";
     const char *purpose_string = "3D vertices";
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -666,7 +666,7 @@ _brep_info_help(struct _ged_brep_iinfo *bs, int argc, const char **argv)
 {
     struct _ged_brep_iinfo *gb = (struct _ged_brep_iinfo *)bs;
     if (!argc || !argv) {
-	bu_vls_printf(gb->vls, "brep <objname> info <subcommand> [args]\n");
+	bu_vls_printf(gb->vls, "brep [options] <objname> info <subcommand> [args]\n");
 	bu_vls_printf(gb->vls, "Available subcommands:\n");
 	const struct bu_cmdtab *ctp = NULL;
 	int ret;

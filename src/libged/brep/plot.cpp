@@ -2323,7 +2323,7 @@ _brep_plot_msgs(void *bs, int argc, const char **argv, const char *us, const cha
 extern "C" int
 _brep_cmd_curve_2d_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> plot C2 [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot C2 [[index][index-index]]";
     const char *purpose_string = "2D parameter space geometric curves";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2336,7 +2336,7 @@ _brep_cmd_curve_2d_plot(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_curve_3d_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> plot C3 [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot C3 [[index][index-index]]";
     const char *purpose_string = "3D parameter space geometric curves";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2349,7 +2349,7 @@ _brep_cmd_curve_3d_plot(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_edge_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> plot E [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot E [[index][index-index]]";
     const char *purpose_string = "topological 3D edges";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2363,7 +2363,7 @@ _brep_cmd_edge_plot(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_face_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> plot F [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot F [[index][index-index]]";
     const char *purpose_string = "topological faces";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2376,7 +2376,7 @@ _brep_cmd_face_plot(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_face_2d_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> plot F2D [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot F2D [[index][index-index]]";
     const char *purpose_string = "topological faces in parametric space";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2389,7 +2389,7 @@ _brep_cmd_face_2d_plot(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_isosurface_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> plot I [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot I [[index][index-index]]";
     const char *purpose_string = "isosurfaces";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2402,7 +2402,7 @@ _brep_cmd_isosurface_plot(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_loop_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> plot L [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot L [[index][index-index]]";
     const char *purpose_string = "topological trimming loops in 3D";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2416,7 +2416,7 @@ _brep_cmd_loop_plot(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_loop_2d_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> plot L2D [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot L2D [[index][index-index]]";
     const char *purpose_string = "2D parameter space topological trimming loops";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2430,7 +2430,7 @@ _brep_cmd_loop_2d_plot(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_surface_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> plot S [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot S [[index][index-index]]";
     const char *purpose_string = "untrimmed surfaces";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2443,7 +2443,7 @@ _brep_cmd_surface_plot(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_surface_bbox_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> plot SBB [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot SBB [[index][index-index]]";
     const char *purpose_string = "surface bounding boxes";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2456,7 +2456,7 @@ _brep_cmd_surface_bbox_plot(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_surface_bbox_2d_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> plot SBB [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot SBB [[index][index-index]]";
     const char *purpose_string = "2D parameter space surface bounding boxes";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2469,7 +2469,7 @@ _brep_cmd_surface_bbox_2d_plot(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_surface_control_verts_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> plot SCV [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot SCV [[index][index-index]]";
     const char *purpose_string = "surface control vertex mesh";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2482,7 +2482,7 @@ _brep_cmd_surface_control_verts_plot(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_surface_knot_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> plot SK [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot SK [[index][index-index]]";
     const char *purpose_string = "surface knots in 3D";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2495,7 +2495,7 @@ _brep_cmd_surface_knot_plot(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_surface_knot_2d_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> plot SK2D [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot SK2D [[index][index-index]]";
     const char *purpose_string = "surface knots in parametric space";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2508,7 +2508,7 @@ _brep_cmd_surface_knot_2d_plot(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_surface_normal_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> plot SN [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot SN [[index][index-index]]";
     const char *purpose_string = "surface normals";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2521,7 +2521,7 @@ _brep_cmd_surface_normal_plot(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_surface_uv_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> plot SUV [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot SUV [[index][index-index]]";
     const char *purpose_string = "surface uv bounds";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2534,7 +2534,7 @@ _brep_cmd_surface_uv_plot(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_trim_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> plot T [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot T [[index][index-index]]";
     const char *purpose_string = "topological trims in 3D";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2548,7 +2548,7 @@ _brep_cmd_trim_plot(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_trim_2d_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> plot T2D [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot T2D [[index][index-index]]";
     const char *purpose_string = "2D parameter space topological trims";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2562,7 +2562,7 @@ _brep_cmd_trim_2d_plot(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_trim_direction_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> plot TD [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot TD [[index][index-index]]";
     const char *purpose_string = "trim direction";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2576,7 +2576,7 @@ _brep_cmd_trim_direction_plot(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_trim_bbox_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> plot TBB [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot TBB [[index][index-index]]";
     const char *purpose_string = "trim bounding boxes in 3D";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2590,7 +2590,7 @@ _brep_cmd_trim_bbox_plot(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_trim_bbox_2d_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> plot TBB [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot TBB [[index][index-index]]";
     const char *purpose_string = "trim bounding boxes in parametric space";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2604,7 +2604,7 @@ _brep_cmd_trim_bbox_2d_plot(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_vertex_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> plot V [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot V [[index][index-index]]";
     const char *purpose_string = "3D vertices";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2617,7 +2617,7 @@ _brep_cmd_vertex_plot(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_face_cdt_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> plot FCDT [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot FCDT [[index][index-index]]";
     const char *purpose_string = "triangulation of face in 3D";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2630,7 +2630,7 @@ _brep_cmd_face_cdt_plot(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_face_cdt_2d_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> plot FCDT2D [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot FCDT2D [[index][index-index]]";
     const char *purpose_string = "triangulation of face in parametric space";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2643,7 +2643,7 @@ _brep_cmd_face_cdt_2d_plot(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_face_cdt_m2d_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> plot FCDTM2D [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot FCDTM2D [[index][index-index]]";
     const char *purpose_string = "Triangulation of face ??";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2656,7 +2656,7 @@ _brep_cmd_face_cdt_m2d_plot(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_face_cdt_p2d_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> plot FCDTP2D [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot FCDTP2D [[index][index-index]]";
     const char *purpose_string = "face triangulation points?";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2669,7 +2669,7 @@ _brep_cmd_face_cdt_p2d_plot(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_face_cdt_wireframe_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> plot FCDTW [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot FCDTW [[index][index-index]]";
     const char *purpose_string = "face triangulation wireframe in 3D";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2682,7 +2682,7 @@ _brep_cmd_face_cdt_wireframe_plot(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_face_cdt2_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> plot FCDTN [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot FCDTN [[index][index-index]]";
     const char *purpose_string = "(Debug) new triangulation of face in 3D";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2695,7 +2695,7 @@ _brep_cmd_face_cdt2_plot(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_face_cdt2_2d_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> plot FCDTN2D [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot FCDTN2D [[index][index-index]]";
     const char *purpose_string = "(Debug) new triangulation of face in parametric space";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2708,7 +2708,7 @@ _brep_cmd_face_cdt2_2d_plot(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_face_cdt2_wireframe_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname1> plot FCDTNW [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot FCDTNW [[index][index-index]]";
     const char *purpose_string = "(Debug) new face triangulation wireframe in 3D";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2722,7 +2722,7 @@ _brep_plot_help(struct _ged_brep_iplot *bs, int argc, const char **argv)
 {
     struct _ged_brep_iplot *gb = (struct _ged_brep_iplot *)bs;
     if (!argc || !argv) {
-	bu_vls_printf(gb->vls, "brep <objname> plot <subcommand> [args]\n");
+	bu_vls_printf(gb->vls, "brep [options] <objname> plot <subcommand> [args]\n");
 	bu_vls_printf(gb->vls, "Available subcommands:\n");
 	const struct bu_cmdtab *ctp = NULL;
 	int ret;
