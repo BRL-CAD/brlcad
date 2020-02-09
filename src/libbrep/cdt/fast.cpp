@@ -48,15 +48,8 @@
 #include "bu/time.h"
 #include "bn/dvec.h"
 #include "brep.h"
+#include "./cdt.h"
 
-struct brep_cdt_tol {
-    fastf_t min_dist;
-    fastf_t max_dist;
-    fastf_t within_dist;
-    fastf_t cos_within_ang;
-};
-
-#define BREP_CDT_TOL_ZERO {0.0, 0.0, 0.0, 0.0}
 #define YELLOW 255, 255, 0
 
 // Digest tessellation tolerances...

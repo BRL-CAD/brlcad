@@ -88,8 +88,9 @@ struct brep_cdt_tol {
     fastf_t min_dist;
     fastf_t max_dist;
     fastf_t within_dist;
+    fastf_t cos_within_ang;
 };
-#define BREP_CDT_TOL_ZERO {0.0, 0.0, 0.0}
+#define BREP_CDT_TOL_ZERO {0.0, 0.0, 0.0, 0.0}
 
 struct ON_Brep_CDT_State {
 
