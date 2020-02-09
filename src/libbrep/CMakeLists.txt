@@ -75,6 +75,8 @@ set(libbrep_ignored_files
   shape_recognition/shape_recognition.h
   shape_recognition/torus.cpp
   surface_tree_queue_tests.patch
+  ${CDT2_srcs}
+  cdt2/cdt.h
   )
 CMAKEFILES(${libbrep_ignored_files})
 
