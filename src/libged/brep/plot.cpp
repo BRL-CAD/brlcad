@@ -38,6 +38,152 @@
 using namespace brlcad;
 
 
+void
+plotpoint(const ON_3dPoint &point, struct bn_vlblock *vbp, const int red = 255, const int green = 255, const int blue = 0)
+{
+    struct bu_list *vhead;
+    ON_3dPoint pointsize(4.0,0,0);
+    vhead = bn_vlblock_find(vbp, red, green, blue);
+    RT_ADD_VLIST(vhead, pointsize, BN_VLIST_POINT_SIZE);
+    RT_ADD_VLIST(vhead, point, BN_VLIST_POINT_DRAW);
+    return;
+}
+
+void
+plotcurve(const ON_Curve &curve, struct bn_vlblock *vbp, int plotres, const int red = 255, const int green = 255, const int blue = 0)
+{
+    struct bu_list *vhead;
+    fastf_t pt1[3], pt2[3];
+    ON_2dPoint from, to;
+
+    vhead = bn_vlblock_find(vbp, red, green, blue);
+
+    if (curve.IsLinear()) {
+	/*
+	   ON_BrepVertex& v1 = face.Brep()->m_V[trim.m_vi[0]];
+	   ON_BrepVertex& v2 = face.Brep()->m_V[trim.m_vi[1]];
+	   VMOVE(pt1, v1.Point());
+	   VMOVE(pt2, v2.Point());
+	   LINE_PLOT(pt1, pt2);
+	   */
+
+	int knotcnt = curve.SpanCount();
+	fastf_t *knots = new fastf_t[knotcnt + 1];
+
+	curve.GetSpanVector(knots);
+	for (int i = 1; i <= knotcnt; i++) {
+	    ON_3dPoint p = curve.PointAt(knots[i - 1]);
+	    VMOVE(pt1, p);
+	    p = curve.PointAt(knots[i]);
+	    VMOVE(pt2, p);
+	    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
+	}
+
+    } else {
+	ON_Interval dom = curve.Domain();
+	// XXX todo: dynamically sample the curve
+	for (int i = 1; i <= plotres; i++) {
+	    ON_3dPoint p = curve.PointAt(dom.ParameterAt((double) (i - 1)
+			/ (double)plotres));
+	    VMOVE(pt1, p);
+	    p = curve.PointAt(dom.ParameterAt((double) i / (double)plotres));
+	    VMOVE(pt2, p);
+	    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
+	}
+    }
+    return;
+}
+
+
+
+void plotcurveonsurface(const ON_Curve *curve,
+	const ON_Surface *surface,
+	struct bn_vlblock *vbp,
+	int plotres,
+	const int red = 255,
+	const int green = 255,
+	const int blue = 0)
+{
+    if (curve->Dimension() != 2)
+	return;
+    struct bu_list *vhead;
+    vhead = bn_vlblock_find(vbp, red, green, blue);
+
+    for (int i = 0; i <= plotres; i++) {
+	ON_2dPoint pt2d;
+	ON_3dPoint pt3d;
+	ON_3dPoint pt1, pt2;
+	pt2d = curve->PointAt(curve->Domain().ParameterAt((double)i/plotres));
+	pt3d = surface->PointAt(pt2d.x, pt2d.y);
+	pt1 = pt2;
+	pt2 = pt3d;
+	if (i != 0) {
+	    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
+	}
+    }
+    return;
+}
+
+void
+plotsurface(const ON_Surface &surf, struct bn_vlblock *vbp, int isocurveres, int gridres, const int red = 200, const int green = 200, const int blue = 200)
+{
+    struct bu_list *vhead;
+    fastf_t pt1[3], pt2[3];
+    ON_2dPoint from, to;
+    fastf_t hsv[3];
+    unsigned char fill_rgb[3];
+
+    VSET(fill_rgb,(unsigned char)red,(unsigned char)green,(unsigned char)blue);
+    bu_rgb_to_hsv(fill_rgb,hsv);
+    // simply fill with 50% lightness/value of outline
+    hsv[2] = hsv[2] * 0.5;
+    bu_hsv_to_rgb(hsv,fill_rgb);
+
+
+    vhead = bn_vlblock_find(vbp, red, green, blue);
+
+    ON_Interval udom = surf.Domain(0);
+    ON_Interval vdom = surf.Domain(1);
+
+    for (int u = 0; u <= gridres; u++) {
+	if (u == 0 || u == gridres) {
+	    vhead = bn_vlblock_find(vbp, red, green, blue);
+	} else {
+	    vhead = bn_vlblock_find(vbp, (int)(fill_rgb[0]), (int)(fill_rgb[1]), (int)(fill_rgb[2]));
+	}
+	for (int v = 1; v <= isocurveres; v++) {
+	    ON_3dPoint p = surf.PointAt(udom.ParameterAt((double)u/(double)gridres), vdom.ParameterAt((double)(v-1)/(double)isocurveres));
+	    VMOVE(pt1, p);
+	    p = surf.PointAt(udom.ParameterAt((double)u/(double)gridres), vdom.ParameterAt((double)v/(double)isocurveres));
+	    VMOVE(pt2, p);
+	    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
+	}
+    }
+
+    for (int v = 0; v <= gridres; v++) {
+	if (v == 0 || v == gridres) {
+	    vhead = bn_vlblock_find(vbp, red, green, blue);
+	} else {
+	    vhead = bn_vlblock_find(vbp, (int)(fill_rgb[0]), (int)(fill_rgb[1]), (int)(fill_rgb[2]));
+	}
+	for (int u = 1; u <= isocurveres; u++) {
+	    ON_3dPoint p = surf.PointAt(udom.ParameterAt((double)(u-1)/(double)isocurveres), vdom.ParameterAt((double)v/(double)gridres));
+	    VMOVE(pt1, p);
+	    p = surf.PointAt(udom.ParameterAt((double)u/(double)isocurveres), vdom.ParameterAt((double)v/(double)gridres));
+	    VMOVE(pt2, p);
+	    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
+	}
+    }
+    return;
+}
+
+
+
 #if 0
 
 FILE*
@@ -548,61 +694,6 @@ plottrimdirection(const ON_BrepFace &face, struct bn_vlblock *vbp, int plotres)
 }
 
 
-void
-plotsurface(const ON_Surface &surf, struct bn_vlblock *vbp, int isocurveres, int gridres, const int red = 200, const int green = 200, const int blue = 200)
-{
-    struct bu_list *vhead;
-    fastf_t pt1[3], pt2[3];
-    ON_2dPoint from, to;
-    fastf_t hsv[3];
-    unsigned char fill_rgb[3];
-
-    VSET(fill_rgb,(unsigned char)red,(unsigned char)green,(unsigned char)blue);
-    bu_rgb_to_hsv(fill_rgb,hsv);
-    // simply fill with 50% lightness/value of outline
-    hsv[2] = hsv[2] * 0.5;
-    bu_hsv_to_rgb(hsv,fill_rgb);
-
-
-    vhead = bn_vlblock_find(vbp, red, green, blue);
-
-    ON_Interval udom = surf.Domain(0);
-    ON_Interval vdom = surf.Domain(1);
-
-    for (int u = 0; u <= gridres; u++) {
-	if (u == 0 || u == gridres) {
-	    vhead = bn_vlblock_find(vbp, red, green, blue);
-	} else {
-	    vhead = bn_vlblock_find(vbp, (int)(fill_rgb[0]), (int)(fill_rgb[1]), (int)(fill_rgb[2]));
-	}
-	for (int v = 1; v <= isocurveres; v++) {
-	    ON_3dPoint p = surf.PointAt(udom.ParameterAt((double)u/(double)gridres), vdom.ParameterAt((double)(v-1)/(double)isocurveres));
-	    VMOVE(pt1, p);
-	    p = surf.PointAt(udom.ParameterAt((double)u/(double)gridres), vdom.ParameterAt((double)v/(double)isocurveres));
-	    VMOVE(pt2, p);
-	    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
-	}
-    }
-
-    for (int v = 0; v <= gridres; v++) {
-	if (v == 0 || v == gridres) {
-	    vhead = bn_vlblock_find(vbp, red, green, blue);
-	} else {
-	    vhead = bn_vlblock_find(vbp, (int)(fill_rgb[0]), (int)(fill_rgb[1]), (int)(fill_rgb[2]));
-	}
-	for (int u = 1; u <= isocurveres; u++) {
-	    ON_3dPoint p = surf.PointAt(udom.ParameterAt((double)(u-1)/(double)isocurveres), vdom.ParameterAt((double)v/(double)gridres));
-	    VMOVE(pt1, p);
-	    p = surf.PointAt(udom.ParameterAt((double)u/(double)isocurveres), vdom.ParameterAt((double)v/(double)gridres));
-	    VMOVE(pt2, p);
-	    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
-	}
-    }
-    return;
-}
-
 
 void
 plotsurfacenormals(const ON_Surface &surf, struct bn_vlblock *vbp, int gridres)
@@ -686,95 +777,6 @@ plotsurfaceknots(ON_Surface &surf, struct bn_vlblock *vbp, bool dim3d)
     return;
 }
 
-
-void
-plotcurve(const ON_Curve &curve, struct bn_vlblock *vbp, int plotres, const int red = 255, const int green = 255, const int blue = 0)
-{
-    struct bu_list *vhead;
-    fastf_t pt1[3], pt2[3];
-    ON_2dPoint from, to;
-
-    vhead = bn_vlblock_find(vbp, red, green, blue);
-
-    if (curve.IsLinear()) {
-	/*
-	   ON_BrepVertex& v1 = face.Brep()->m_V[trim.m_vi[0]];
-	   ON_BrepVertex& v2 = face.Brep()->m_V[trim.m_vi[1]];
-	   VMOVE(pt1, v1.Point());
-	   VMOVE(pt2, v2.Point());
-	   LINE_PLOT(pt1, pt2);
-	   */
-
-	int knotcnt = curve.SpanCount();
-	fastf_t *knots = new fastf_t[knotcnt + 1];
-
-	curve.GetSpanVector(knots);
-	for (int i = 1; i <= knotcnt; i++) {
-	    ON_3dPoint p = curve.PointAt(knots[i - 1]);
-	    VMOVE(pt1, p);
-	    p = curve.PointAt(knots[i]);
-	    VMOVE(pt2, p);
-	    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
-	}
-
-    } else {
-	ON_Interval dom = curve.Domain();
-	// XXX todo: dynamically sample the curve
-	for (int i = 1; i <= plotres; i++) {
-	    ON_3dPoint p = curve.PointAt(dom.ParameterAt((double) (i - 1)
-			/ (double)plotres));
-	    VMOVE(pt1, p);
-	    p = curve.PointAt(dom.ParameterAt((double) i / (double)plotres));
-	    VMOVE(pt2, p);
-	    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
-	}
-    }
-    return;
-}
-
-
-void
-plotpoint(const ON_3dPoint &point, struct bn_vlblock *vbp, const int red = 255, const int green = 255, const int blue = 0)
-{
-    struct bu_list *vhead;
-    ON_3dPoint pointsize(4.0,0,0);
-    vhead = bn_vlblock_find(vbp, red, green, blue);
-    RT_ADD_VLIST(vhead, pointsize, BN_VLIST_POINT_SIZE);
-    RT_ADD_VLIST(vhead, point, BN_VLIST_POINT_DRAW);
-    return;
-}
-
-
-void plotcurveonsurface(const ON_Curve *curve,
-	const ON_Surface *surface,
-	struct bn_vlblock *vbp,
-	int plotres,
-	const int red = 255,
-	const int green = 255,
-	const int blue = 0)
-{
-    if (curve->Dimension() != 2)
-	return;
-    struct bu_list *vhead;
-    vhead = bn_vlblock_find(vbp, red, green, blue);
-
-    for (int i = 0; i <= plotres; i++) {
-	ON_2dPoint pt2d;
-	ON_3dPoint pt3d;
-	ON_3dPoint pt1, pt2;
-	pt2d = curve->PointAt(curve->Domain().ParameterAt((double)i/plotres));
-	pt3d = surface->PointAt(pt2d.x, pt2d.y);
-	pt1 = pt2;
-	pt2 = pt3d;
-	if (i != 0) {
-	    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
-	    RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
-	}
-    }
-    return;
-}
 
 
 void
@@ -2787,9 +2789,8 @@ brep_plot(struct _ged_brep_info *gb, int argc, const char **argv)
 	return GED_OK;
     }
 
-    argc--;argv++;
-
-    if (argc && BU_STR_EQUAL(argv[0], HELPFLAG)) {
+    if (argc > 1 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
+	argc--;argv++;
 	argc--;argv++;
 	_brep_plot_help(&gib, argc, argv);
 	return GED_OK;

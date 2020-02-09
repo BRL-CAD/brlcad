@@ -721,9 +721,8 @@ brep_info(struct bu_vls *vls, const ON_Brep *brep, int argc, const char **argv)
 	return GED_OK;
     }
 
-    argc--;argv++;
-
-    if (argc && BU_STR_EQUAL(argv[0], HELPFLAG)) {
+    if (argc > 1 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
+	argc--;argv++;
 	argc--;argv++;
 	_brep_info_help(&gib, argc, argv);
 	return GED_OK;
