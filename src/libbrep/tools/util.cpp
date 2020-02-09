@@ -227,6 +227,48 @@ ON_Plane_Plot(FILE *pf, ON_Plane &plane)
     pdv_3cont(pf, tip);
 }
 
+int
+brep_translate_scv(
+        ON_Brep *brep,
+        int surface_index,
+        int i,
+        int j,
+        fastf_t dx,
+        fastf_t dy,
+        fastf_t dz)
+{
+    ON_NurbsSurface *nurbsSurface = NULL;
+    if (surface_index < 0 || surface_index >= brep->m_S.Count()) {
+        bu_log("brep_translate_scv: invalid surface index %d\n", surface_index);
+        return -1;
+    }
+
+    ON_Surface *surface = brep->m_S[surface_index];
+    if (surface) {
+        nurbsSurface = dynamic_cast<ON_NurbsSurface *>(surface);
+    } else {
+        return -1;
+    }
+
+    double *cv = NULL;
+    if (nurbsSurface) {
+        cv = nurbsSurface->CV(i, j);
+    } else {
+        return -2;
+    }
+
+    if (cv) {
+        ON_3dPoint newPt;
+        newPt.x = cv[X] + dx;
+        newPt.y = cv[Y] + dy;
+        newPt.z = cv[Z] + dz;
+        nurbsSurface->SetCV(i, j, newPt);
+    } else {
+        return -3;
+    }
+
+    return 0;
+}
 
 // Local Variables:
 // tab-width: 8

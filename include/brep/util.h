@@ -336,6 +336,17 @@ public:
     }
 };
 
+// Moved from librt - placed here until a better location is found
+BREP_EXPORT int
+brep_translate_scv(
+        ON_Brep *brep,
+        int surface_index,
+        int i,
+        int j,
+        fastf_t dx,
+        fastf_t dy,
+        fastf_t dz);
+
 } /* extern C++ */
 
 __END_DECLS
