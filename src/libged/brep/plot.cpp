@@ -3012,8 +3012,40 @@ _brep_cmd_face_cdt_plot(void *bs, int argc, const char **argv)
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
     }
+#if 0
+    argc--;argv++;
 
-    return GED_ERROR;
+    struct _ged_brep_iplot *gib = (struct _ged_brep_iplot *)bs;
+    const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
+    //struct bu_color *color = gib->gb->color;
+    struct bn_vlblock *vbp = gib->gb->vbp;
+    int plotres = gib->gb->plotres;
+    const char *solid_name = gib->gb->solid_name.c_str();
+    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gib->gb->gedp->ged_wdbp->wdb_ttol;
+    const struct bn_tol *tol = &gib->gb->gedp->ged_wdbp->wdb_tol;
+
+    std::set<int> elements;
+    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
+	return GED_ERROR;
+    }
+    // If we have nothing, report all
+    if (!elements.size()) {
+	for (int i = 0; i < brep->m_F.Count(); i++) {
+	    elements.insert(i);
+	}
+    }
+
+    struct bu_vls sname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&sname, "_BC_FCDT_%s", gib->gb->solid_name.c_str());
+
+    std::set<int>::iterator e_it;
+    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+	//brep_facecdt_plot(gib->vls, solid_name, ttol, tol, brep, NULL, vbp, &RTG.rtg_vlfree, *e_it, 0, -1);
+    }
+
+    bu_vls_free(&sname);
+#endif
+    return GED_OK;
 }
 
 // FCDT2D - face triangulation in parametric space
