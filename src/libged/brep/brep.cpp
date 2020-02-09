@@ -711,14 +711,16 @@ _brep_cmd_plate_mode(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname> plot";
+    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
     const char *purpose_string = "visualize specific components of a BRep object";
-    // TODO - need much more elaborate help for plot
-    if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+    if (argc == 2 && BU_STR_EQUAL(argv[1], PURPOSEFLAG)) {
+	bu_vls_printf(gb->gedp->ged_result_str, "%s\n", purpose_string);
 	return GED_OK;
     }
+    if (argc >= 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
+	return brep_plot(gb, argc, argv);
+    }
 
-    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
     if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
 	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
 	return GED_ERROR;
