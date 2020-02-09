@@ -38,478 +38,6 @@ struct _ged_brep_iinfo {
     const struct bu_cmdtab *cmds;
 };
 
-#if 0
-static int
-brep_surface_info(const ON_Brep *brep, struct bu_vls *vls, int si)
-{
-    ON_wString wonstr;
-    ON_TextLog info_output(wonstr);
-    if (brep == NULL) {
-	return GED_ERROR;
-    }
-    if (!((si >= 0) && (si < brep->m_S.Count()))) {
-	return GED_ERROR;
-    }
-    const ON_Surface* srf = brep->m_S[si];
-    if (srf) {
-	//ON_wString wonstr;
-	//ON_TextLog info_output(wonstr);
-	ON_Interval udom = srf->Domain(0);
-	ON_Interval vdom = srf->Domain(1);
-	const char* s = srf->ClassId()->ClassName();
-	if (!s)
-	    s = "";
-	bu_vls_printf(vls, "surface[%2d]: %s u(%g, %g) v(%g, %g)\n",
-		si, s,
-		udom[0], udom[1],
-		vdom[0], vdom[1]
-		);
-	bu_vls_printf(vls, "NURBS form of Surface:\n");
-	ON_NurbsSurface *nsrf = ON_NurbsSurface::New();
-	srf->GetNurbForm(*nsrf, 0.0);
-	nsrf->Dump(info_output);
-	ON_String onstr = ON_String(wonstr);
-	const char *infodesc = onstr.Array();
-	bu_vls_strcat(vls, infodesc);
-	delete nsrf;
-    } else {
-	bu_vls_printf(vls, "surface[%2d]: NULL\n", si);
-    }
-
-    return GED_OK;
-}
-
-
-static int
-brep_surface_bezier_info(const ON_Brep *brep, struct bu_vls *vls, int si)
-{
-    ON_wString wonstr;
-    ON_TextLog info_output(wonstr);
-    if (brep == NULL) {
-	return GED_ERROR;
-    }
-    if (!((si >= 0) && (si < brep->m_S.Count()))) {
-	return GED_ERROR;
-    }
-    const ON_Surface* srf = brep->m_S[si];
-    if (srf) {
-	//ON_wString wonstr;
-	//ON_TextLog info_output(wonstr);
-	ON_Interval udom = srf->Domain(0);
-	ON_Interval vdom = srf->Domain(1);
-	const char* s = srf->ClassId()->ClassName();
-	if (!s)
-	    s = "";
-	bu_vls_printf(vls, "surface[%2d]: %s u(%g, %g) v(%g, %g)\n",
-		si, s,
-		udom[0], udom[1],
-		vdom[0], vdom[1]
-		);
-	ON_NurbsSurface *nsrf = ON_NurbsSurface::New();
-	srf->GetNurbForm(*nsrf, 0.0);
-	int knotlength0 = nsrf->m_order[0] + nsrf->m_cv_count[0] - 2;
-	int knotlength1 = nsrf->m_order[1] + nsrf->m_cv_count[1] - 2;
-	int order0 = nsrf->m_order[0];
-	int order1 = nsrf->m_order[1];
-	fastf_t *knot0 = nsrf->m_knot[0];
-	fastf_t *knot1 = nsrf->m_knot[1];
-	int cnt = 0;
-	bu_vls_printf(vls, "bezier patches:\n");
-	for (int i = 0; i < knotlength0; ++i) {
-	    for (int j = 0; j < knotlength1; ++j) {
-		ON_BezierSurface *bezier = new ON_BezierSurface;
-		if (nsrf->ConvertSpanToBezier(i, j, *bezier)) {
-		    info_output.Print("NO.%d segment\n", ++cnt);
-		    info_output.Print("spanindex u from %d to %d\n", i + order0 - 2, i + order0 - 1);
-		    info_output.Print("spanindex v from %d to %d\n", j + order1 - 2, j + order1 - 1);
-		    info_output.Print("knot u from %.2f to %.2f\n ", knot0[i + order0 - 2], knot0[i + order0 - 1]);
-		    info_output.Print("knot v from %.2f to %.2f\n ", knot1[j + order1 - 2], knot1[j + order1 - 1]);
-		    info_output.Print("domain u(%g, %g)\n", bezier->Domain(0)[0], bezier->Domain(0)[1]);
-		    info_output.Print("domain v(%g, %g)\n", bezier->Domain(1)[0], bezier->Domain(1)[1]);
-		    bezier->Dump(info_output);
-		    info_output.Print("\n");
-		}
-		delete bezier;
-	    }
-	}
-	ON_String onstr = ON_String(wonstr);
-	const char *infodesc = onstr.Array();
-	bu_vls_strcat(vls, infodesc);
-	delete nsrf;
-    } else {
-	bu_vls_printf(vls, "surface[%2d]: NULL\n", si);
-    }
-    return GED_OK;
-}
-
-
-static int
-brep_face_info(const ON_Brep *brep, struct bu_vls *vls, int fi)
-{
-    ON_wString s;
-    ON_TextLog dump(s);
-    if (brep == NULL) {
-	return GED_ERROR;
-    }
-    if (!((fi >= 0) && (fi < brep->m_F.Count()))) {
-	return GED_ERROR;
-    }
-    //ON_wString s;
-    //ON_TextLog dump(s);
-    const ON_BrepFace& face = brep->m_F[fi];
-    const ON_Surface* face_srf = face.SurfaceOf();
-    dump.Print("face[%2d]: surface(%d) reverse(%d) loops(", fi, face.m_si, face.m_bRev);
-    int fli;
-    for (fli = 0; fli < face.m_li.Count(); fli++) {
-	dump.Print((fli) ? ", %d" : "%d", face.m_li[fli]);
-    }
-    dump.Print(")\n");
-    dump.PushIndent();
-
-    for (fli = 0; fli < face.m_li.Count(); fli++) {
-	const int li = face.m_li[fli];
-	const ON_BrepLoop& loop = brep->m_L[li];
-	const char* sLoopType = 0;
-	switch (loop.m_type) {
-	    case ON_BrepLoop::unknown:
-		sLoopType = "unknown";
-		break;
-	    case ON_BrepLoop::outer:
-		sLoopType = "outer";
-		break;
-	    case ON_BrepLoop::inner:
-		sLoopType = "inner";
-		break;
-	    case ON_BrepLoop::slit:
-		sLoopType = "slit";
-		break;
-	    case ON_BrepLoop::crvonsrf:
-		sLoopType = "crvonsrf";
-		break;
-	    default:
-		sLoopType = "unknown";
-		break;
-	}
-	dump.Print("loop[%2d]: type(%s) %d trims(", li, sLoopType, loop.m_ti.Count());
-	int lti;
-	for (lti = 0; lti < loop.m_ti.Count(); lti++) {
-	    dump.Print((lti) ? ", %d" : "%d", loop.m_ti[lti]);
-	}
-	dump.Print(")\n");
-	dump.PushIndent();
-	for (lti = 0; lti < loop.m_ti.Count(); lti++) {
-	    const int ti = loop.m_ti[lti];
-	    const ON_BrepTrim& trim = brep->m_T[ti];
-	    const char* sTrimType = "?";
-	    const char* sTrimIso = "-?";
-	    const ON_Curve* c2 = trim.TrimCurveOf();
-	    ON_NurbsCurve* nc2 = ON_NurbsCurve::New();
-	    c2->GetNurbForm(*nc2, 0.0);
-	    ON_3dPoint trim_start, trim_end;
-	    switch (trim.m_type) {
-		case ON_BrepTrim::unknown:
-		    sTrimType = "unknown ";
-		    break;
-		case ON_BrepTrim::boundary:
-		    sTrimType = "boundary";
-		    break;
-		case ON_BrepTrim::mated:
-		    sTrimType = "mated   ";
-		    break;
-		case ON_BrepTrim::seam:
-		    sTrimType = "seam    ";
-		    break;
-		case ON_BrepTrim::singular:
-		    sTrimType = "singular";
-		    break;
-		case ON_BrepTrim::crvonsrf:
-		    sTrimType = "crvonsrf";
-		    break;
-		default:
-		    sTrimType = "unknown";
-		    break;
-	    }
-	    switch (trim.m_iso) {
-		case ON_Surface::not_iso:
-		    sTrimIso = "";
-		    break;
-		case ON_Surface::x_iso:
-		    sTrimIso = "-u iso";
-		    break;
-		case ON_Surface::W_iso:
-		    sTrimIso = "-west side iso";
-		    break;
-		case ON_Surface::E_iso:
-		    sTrimIso = "-east side iso";
-		    break;
-		case ON_Surface::y_iso:
-		    sTrimIso = "-v iso";
-		    break;
-		case ON_Surface::S_iso:
-		    sTrimIso = "-south side iso";
-		    break;
-		case ON_Surface::N_iso:
-		    sTrimIso = "-north side iso";
-		    break;
-		default:
-		    sTrimIso = "-unknown_iso_flag";
-		    break;
-	    }
-	    dump.Print("trim[%2d]: edge(%2d) v0(%2d) v1(%2d) tolerance(%g, %g)\n", ti, trim.m_ei, trim.m_vi[0], trim.m_vi[1], trim.m_tolerance[0], trim.m_tolerance[1]);
-	    dump.PushIndent();
-	    dump.Print("type(%s%s) rev3d(%d) 2d_curve(%d)\n", sTrimType, sTrimIso, trim.m_bRev3d, trim.m_c2i);
-	    if (c2) {
-		trim_start = trim.PointAtStart();
-		trim_end = trim.PointAtEnd();
-		dump.Print("domain(%g, %g) start(%g, %g) end(%g, %g)\n", trim.Domain()[0], trim.Domain()[1], trim_start.x, trim_start.y, trim_end.x, trim_end.y);
-		if (0 != face_srf) {
-		    ON_3dPoint trim_srfstart = face_srf->PointAt(trim_start.x, trim_start.y);
-		    ON_3dPoint trim_srfend = face_srf->PointAt(trim_end.x, trim_end.y);
-		    dump.Print("surface points start(%g, %g, %g) end(%g, %g, %g)\n", trim_srfstart.x, trim_srfstart.y, trim_srfstart.z, trim_srfend.x, trim_srfend.y, trim_srfend.z);
-		}
-	    } else {
-		dump.Print("domain(%g, %g) start(?, ?) end(?, ?)\n", trim.Domain()[0], trim.Domain()[1]);
-	    }
-	    dump.PopIndent();
-	}
-	dump.PopIndent();
-    }
-    dump.PopIndent();
-
-    ON_String ss = s;
-    bu_vls_printf(vls, "%s\n", ss.Array());
-
-    return GED_OK;
-}
-
-
-static int
-brep_trim_info(const ON_Brep *brep, struct bu_vls *vls, int ti)
-{
-    ON_wString wstr;
-    ON_TextLog dump(wstr);
-    if (brep == NULL) {
-	return GED_ERROR;
-    }
-    if (!((ti >= 0) && (ti < brep->m_T.Count()))) {
-	return GED_ERROR;
-    }
-    const ON_BrepTrim &trim = brep->m_T[ti];
-    const ON_Surface* trim_srf = trim.SurfaceOf();
-    const ON_BrepLoop &loop = brep->m_L[trim.m_li];
-    const ON_BrepFace &face = brep->m_F[loop.m_fi];
-    const char* sTrimType = "?";
-    const char* sTrimIso = "-?";
-    const ON_Curve* c2 = trim.TrimCurveOf();
-    ON_NurbsCurve* nc2 = ON_NurbsCurve::New();
-    c2->GetNurbForm(*nc2, 0.0);
-    ON_3dPoint trim_start, trim_end;
-    dump.Print("trim[%2d]: surface(%2d) faces(%2d) loops(%2d)\n", ti, face.m_si, face.m_face_index, loop.m_loop_index);
-    switch (trim.m_type) {
-	case ON_BrepTrim::unknown:
-	    sTrimType = "unknown ";
-	    break;
-	case ON_BrepTrim::boundary:
-	    sTrimType = "boundary";
-	    break;
-	case ON_BrepTrim::mated:
-	    sTrimType = "mated   ";
-	    break;
-	case ON_BrepTrim::seam:
-	    sTrimType = "seam    ";
-	    break;
-	case ON_BrepTrim::singular:
-	    sTrimType = "singular";
-	    break;
-	case ON_BrepTrim::crvonsrf:
-	    sTrimType = "crvonsrf";
-	    break;
-	default:
-	    sTrimType = "unknown";
-	    break;
-    }
-    switch (trim.m_iso) {
-	case ON_Surface::not_iso:
-	    sTrimIso = "";
-	    break;
-	case ON_Surface::x_iso:
-	    sTrimIso = "-u iso";
-	    break;
-	case ON_Surface::W_iso:
-	    sTrimIso = "-west side iso";
-	    break;
-	case ON_Surface::E_iso:
-	    sTrimIso = "-east side iso";
-	    break;
-	case ON_Surface::y_iso:
-	    sTrimIso = "-v iso";
-	    break;
-	case ON_Surface::S_iso:
-	    sTrimIso = "-south side iso";
-	    break;
-	case ON_Surface::N_iso:
-	    sTrimIso = "-north side iso";
-	    break;
-	default:
-	    sTrimIso = "-unknown_iso_flag";
-	    break;
-    }
-    dump.Print("\tedge(%2d) v0(%2d) v1(%2d) tolerance(%g, %g)\n", trim.m_ei, trim.m_vi[0], trim.m_vi[1], trim.m_tolerance[0], trim.m_tolerance[1]);
-    dump.PushIndent();
-    dump.Print("\ttype(%s%s) rev3d(%d) 2d_curve(%d)\n", sTrimType, sTrimIso, trim.m_bRev3d, trim.m_c2i);
-    if (c2) {
-	trim_start = trim.PointAtStart();
-	trim_end = trim.PointAtEnd();
-	dump.Print("\tdomain(%g, %g) start(%g, %g) end(%g, %g)\n", trim.Domain()[0], trim.Domain()[1], trim_start.x, trim_start.y, trim_end.x, trim_end.y);
-	if (0 != trim_srf) {
-	    ON_3dPoint trim_srfstart = trim_srf->PointAt(trim_start.x, trim_start.y);
-	    ON_3dPoint trim_srfend = trim_srf->PointAt(trim_end.x, trim_end.y);
-	    dump.Print("\tsurface points start(%g, %g, %g) end(%g, %g, %g)\n", trim_srfstart.x, trim_srfstart.y, trim_srfstart.z, trim_srfend.x, trim_srfend.y, trim_srfend.z);
-	}
-    } else {
-	dump.Print("\tdomain(%g, %g) start(?, ?) end(?, ?)\n", trim.Domain()[0], trim.Domain()[1]);
-    }
-    dump.PopIndent();
-    dump.Print("NURBS form of 2d_curve(trim)\n");
-    nc2->Dump(dump);
-    delete nc2;
-
-    ON_String ss = wstr;
-    bu_vls_printf(vls, "%s\n", ss.Array());
-    return GED_OK;
-}
-
-
-static int
-brep_trim_bezier_info(const ON_Brep *brep, struct bu_vls *vls, int ti)
-{
-    ON_wString wstr;
-    ON_TextLog dump(wstr);
-    if (brep == NULL) {
-	return GED_ERROR;
-    }
-    if (!((ti >= 0) && (ti < brep->m_T.Count()))) {
-	return GED_ERROR;
-    }
-    const ON_BrepTrim &trim = brep->m_T[ti];
-    const ON_Curve* c2 = trim.TrimCurveOf();
-    ON_NurbsCurve* nc2 = ON_NurbsCurve::New();
-    c2->GetNurbForm(*nc2, 0.0);
-    int knotlength = nc2->m_order + nc2->m_cv_count - 2;
-    int order = nc2->m_order;
-    fastf_t *knot = nc2->m_knot;
-    dump.Print("trim[%2d]: domain(%g, %g)\n", ti, nc2->Domain()[0], nc2->Domain()[1]);
-    int cnt = 0;
-    dump.Print("NURBS converts to Bezier\n");
-    for (int i = 0; i < knotlength - 1; ++i) {
-	ON_BezierCurve* bezier = new ON_BezierCurve;
-	if (nc2->ConvertSpanToBezier(i, *bezier)) {
-	    dump.Print("NO.%d segment\n", ++cnt);
-	    dump.Print("spanindex from %d to %d\n", i + order - 2, i + order - 1);
-	    dump.Print("knot from %.2f to %.2f\n ", knot[i + order - 2], knot[i + order - 1]);
-	    dump.Print("domain(%g, %g)\n", bezier->Domain()[0], bezier->Domain()[1]);
-	    bezier->Dump(dump);
-	    dump.Print("\n");
-	}
-	delete bezier;
-    }
-    delete nc2;
-    ON_String ss = wstr;
-    bu_vls_printf(vls, "%s\n", ss.Array());
-    return GED_OK;
-}
-
-
-static int
-brep_curve_info(const ON_Brep *brep, struct bu_vls *vls, int ci)
-{
-    ON_wString wstr;
-    ON_TextLog dump(wstr);
-    if (brep == NULL) {
-	return GED_ERROR;
-    }
-    if (!((ci >= 0) && (ci < brep->m_C3.Count()))) {
-	return GED_ERROR;
-    }
-    const ON_Curve *curve = brep->m_C3[ci];
-    ON_NurbsCurve* nc3 = ON_NurbsCurve::New();
-    curve->GetNurbForm(*nc3, 0.0);
-    dump.Print("NURBS form of 3d_curve(edge) \n");
-    nc3->Dump(dump);
-    delete nc3;
-
-    ON_String ss = wstr;
-    bu_vls_printf(vls, "%s\n", ss.Array());
-    return GED_OK;
-}
-
-static int
-brep_loop_info(const ON_Brep *brep, struct bu_vls *vls, int li)
-{
-    ON_wString wstr;
-    ON_TextLog dump(wstr);
-    if (brep == NULL) {
-	return GED_ERROR;
-    }
-    if (!((li >= 0) && (li < brep->m_L.Count()))) {
-	return GED_ERROR;
-    }
-    const ON_BrepLoop &loop = brep->m_L[li];
-    dump.Print("loop[%d] on face %d with %d trims\n", li, loop.m_fi, loop.TrimCount());
-    if (loop.TrimCount() > 0) {
-	dump.Print("trims: ");
-	for (int i = 0; i < loop.TrimCount() - 1; ++i) {
-	    dump.Print("%d,", loop.m_ti[i]);
-	}
-	dump.Print("%d\n", loop.m_ti[loop.TrimCount() - 1]);
-    }
-    ON_String ss = wstr;
-    bu_vls_printf(vls, "%s\n", ss.Array());
-    return GED_OK;
-}
-
-static int
-brep_edge_info(const ON_Brep *brep, struct bu_vls *vls, int ei)
-{
-    ON_wString wstr;
-    ON_TextLog dump(wstr);
-    if (brep == NULL) {
-	return GED_ERROR;
-    }
-    if (!((ei >= 0) && (ei < brep->m_E.Count()))) {
-	return GED_ERROR;
-    }
-    const ON_BrepEdge &edge = brep->m_E[ei];
-    int trim_cnt = edge.m_ti.Count();
-    const ON_Curve* c3 = edge.EdgeCurveOf();
-    ON_NurbsCurve* nc3 = ON_NurbsCurve::New();
-    c3->GetNurbForm(*nc3, 0.0);
-    ON_3dPoint edge_start, edge_end;
-    dump.Print("edge[%2d]: for ", ei);
-    for (int i = 0; i < trim_cnt; ++i) {
-	dump.Print("trim[%2d] ", edge.m_ti[i]);
-    }
-    dump.Print("\n");
-    dump.Print("v0(%2d) v1(%2d) 3d_curve(%2d) tolerance(%g, %g)\n", ei, edge.m_vi[0], edge.m_vi[1], edge.m_c3i, edge.m_tolerance);
-    dump.PushIndent();
-    if (c3) {
-	edge_start = edge.PointAtStart();
-	edge_end = edge.PointAtEnd();
-	dump.Print("\tdomain(%g, %g) surface points start(%g, %g, %g) end(%g, %g, %g)\n", edge.Domain()[0], edge.Domain()[1], edge_start.x, edge_start.y, edge_start.z, edge_end.x, edge_end.y, edge_end.z);
-    } else {
-	dump.Print("\tdomain(%g, %g) start(?, ?) end(?, ?)\n", edge.Domain()[0], edge.Domain()[1]);
-    }
-    dump.PopIndent();
-    dump.Print("NURBS form of 3d_curve(edge) \n");
-    nc3->Dump(dump);
-    delete nc3;
-
-    ON_String ss = wstr;
-    bu_vls_printf(vls, "%s\n", ss.Array());
-    return GED_OK;
-}
-#endif
-
 static int
 _brep_info_msgs(void *bs, int argc, const char **argv, const char *us, const char *ps)
 {
@@ -640,73 +168,454 @@ _brep_cmd_curve_3d_info(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_edge_info(void *bs, int argc, const char **argv)
 {
-    //struct _ged_brep_iinfo *gib = (struct _ged_brep_iinfo *)bs;
     const char *usage_string = "brep [options] <objname1> info E [[index][index-index]]";
     const char *purpose_string = "topological 3D edges";
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
     }
 
-    return GED_ERROR;
+    argc--;argv++;
 
+    struct _ged_brep_iinfo *gib = (struct _ged_brep_iinfo *)bs;
+    const ON_Brep *brep = gib->brep;
+
+    std::set<int> elements;
+    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
+	return GED_ERROR;
+    }
+    // If we have nothing, report all
+    if (!elements.size()) {
+	for (int i = 0; i < brep->m_C3.Count(); i++) {
+	    elements.insert(i);
+	}
+    }
+
+    std::set<int>::iterator e_it;
+
+    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+
+	int ei = *e_it;
+
+	ON_wString wstr;
+	ON_TextLog dump(wstr);
+	if (brep == NULL) {
+	    return GED_ERROR;
+	}
+	if (!((ei >= 0) && (ei < brep->m_E.Count()))) {
+	    return GED_ERROR;
+	}
+	const ON_BrepEdge &edge = brep->m_E[ei];
+	int trim_cnt = edge.m_ti.Count();
+	const ON_Curve* c3 = edge.EdgeCurveOf();
+	ON_NurbsCurve* nc3 = ON_NurbsCurve::New();
+	c3->GetNurbForm(*nc3, 0.0);
+	ON_3dPoint edge_start, edge_end;
+	dump.Print("edge[%2d]: for ", ei);
+	for (int i = 0; i < trim_cnt; ++i) {
+	    dump.Print("trim[%2d] ", edge.m_ti[i]);
+	}
+	dump.Print("\n");
+	dump.Print("v0(%2d) v1(%2d) 3d_curve(%2d) tolerance(%g, %g)\n", ei, edge.m_vi[0], edge.m_vi[1], edge.m_c3i, edge.m_tolerance);
+	dump.PushIndent();
+	if (c3) {
+	    edge_start = edge.PointAtStart();
+	    edge_end = edge.PointAtEnd();
+	    dump.Print("\tdomain(%g, %g) surface points start(%g, %g, %g) end(%g, %g, %g)\n", edge.Domain()[0], edge.Domain()[1], edge_start.x, edge_start.y, edge_start.z, edge_end.x, edge_end.y, edge_end.z);
+	} else {
+	    dump.Print("\tdomain(%g, %g) start(?, ?) end(?, ?)\n", edge.Domain()[0], edge.Domain()[1]);
+	}
+	dump.PopIndent();
+	dump.Print("NURBS form of 3d_curve(edge) \n");
+	nc3->Dump(dump);
+	delete nc3;
+
+	ON_String ss = wstr;
+	bu_vls_printf(gib->vls, "%s\n", ss.Array());
+
+    }
+
+    return GED_OK;
 }
 
 // F - topological faces
 extern "C" int
 _brep_cmd_face_info(void *bs, int argc, const char **argv)
 {
-    //struct _ged_brep_iinfo *gib = (struct _ged_brep_iinfo *)bs;
     const char *usage_string = "brep [options] <objname1> info F [[index][index-index]]";
     const char *purpose_string = "topological faces";
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
     }
 
-    return GED_ERROR;
+    argc--;argv++;
+
+    struct _ged_brep_iinfo *gib = (struct _ged_brep_iinfo *)bs;
+    const ON_Brep *brep = gib->brep;
+
+    std::set<int> elements;
+    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
+	return GED_ERROR;
+    }
+    // If we have nothing, report all
+    if (!elements.size()) {
+	for (int i = 0; i < brep->m_C3.Count(); i++) {
+	    elements.insert(i);
+	}
+    }
+
+    std::set<int>::iterator e_it;
+
+    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+
+	int fi = *e_it;
+	ON_wString s;
+	ON_TextLog dump(s);
+	if (brep == NULL) {
+	    return GED_ERROR;
+	}
+	if (!((fi >= 0) && (fi < brep->m_F.Count()))) {
+	    return GED_ERROR;
+	}
+	//ON_wString s;
+	//ON_TextLog dump(s);
+	const ON_BrepFace& face = brep->m_F[fi];
+	const ON_Surface* face_srf = face.SurfaceOf();
+	dump.Print("face[%2d]: surface(%d) reverse(%d) loops(", fi, face.m_si, face.m_bRev);
+	int fli;
+	for (fli = 0; fli < face.m_li.Count(); fli++) {
+	    dump.Print((fli) ? ", %d" : "%d", face.m_li[fli]);
+	}
+	dump.Print(")\n");
+	dump.PushIndent();
+
+	for (fli = 0; fli < face.m_li.Count(); fli++) {
+	    const int li = face.m_li[fli];
+	    const ON_BrepLoop& loop = brep->m_L[li];
+	    const char* sLoopType = 0;
+	    switch (loop.m_type) {
+		case ON_BrepLoop::unknown:
+		    sLoopType = "unknown";
+		    break;
+		case ON_BrepLoop::outer:
+		    sLoopType = "outer";
+		    break;
+		case ON_BrepLoop::inner:
+		    sLoopType = "inner";
+		    break;
+		case ON_BrepLoop::slit:
+		    sLoopType = "slit";
+		    break;
+		case ON_BrepLoop::crvonsrf:
+		    sLoopType = "crvonsrf";
+		    break;
+		default:
+		    sLoopType = "unknown";
+		    break;
+	    }
+	    dump.Print("loop[%2d]: type(%s) %d trims(", li, sLoopType, loop.m_ti.Count());
+	    int lti;
+	    for (lti = 0; lti < loop.m_ti.Count(); lti++) {
+		dump.Print((lti) ? ", %d" : "%d", loop.m_ti[lti]);
+	    }
+	    dump.Print(")\n");
+	    dump.PushIndent();
+	    for (lti = 0; lti < loop.m_ti.Count(); lti++) {
+		const int ti = loop.m_ti[lti];
+		const ON_BrepTrim& trim = brep->m_T[ti];
+		const char* sTrimType = "?";
+		const char* sTrimIso = "-?";
+		const ON_Curve* c2 = trim.TrimCurveOf();
+		ON_NurbsCurve* nc2 = ON_NurbsCurve::New();
+		c2->GetNurbForm(*nc2, 0.0);
+		ON_3dPoint trim_start, trim_end;
+		switch (trim.m_type) {
+		    case ON_BrepTrim::unknown:
+			sTrimType = "unknown ";
+			break;
+		    case ON_BrepTrim::boundary:
+			sTrimType = "boundary";
+			break;
+		    case ON_BrepTrim::mated:
+			sTrimType = "mated   ";
+			break;
+		    case ON_BrepTrim::seam:
+			sTrimType = "seam    ";
+			break;
+		    case ON_BrepTrim::singular:
+			sTrimType = "singular";
+			break;
+		    case ON_BrepTrim::crvonsrf:
+			sTrimType = "crvonsrf";
+			break;
+		    default:
+			sTrimType = "unknown";
+			break;
+		}
+		switch (trim.m_iso) {
+		    case ON_Surface::not_iso:
+			sTrimIso = "";
+			break;
+		    case ON_Surface::x_iso:
+			sTrimIso = "-u iso";
+			break;
+		    case ON_Surface::W_iso:
+			sTrimIso = "-west side iso";
+			break;
+		    case ON_Surface::E_iso:
+			sTrimIso = "-east side iso";
+			break;
+		    case ON_Surface::y_iso:
+			sTrimIso = "-v iso";
+			break;
+		    case ON_Surface::S_iso:
+			sTrimIso = "-south side iso";
+			break;
+		    case ON_Surface::N_iso:
+			sTrimIso = "-north side iso";
+			break;
+		    default:
+			sTrimIso = "-unknown_iso_flag";
+			break;
+		}
+		dump.Print("trim[%2d]: edge(%2d) v0(%2d) v1(%2d) tolerance(%g, %g)\n", ti, trim.m_ei, trim.m_vi[0], trim.m_vi[1], trim.m_tolerance[0], trim.m_tolerance[1]);
+		dump.PushIndent();
+		dump.Print("type(%s%s) rev3d(%d) 2d_curve(%d)\n", sTrimType, sTrimIso, trim.m_bRev3d, trim.m_c2i);
+		if (c2) {
+		    trim_start = trim.PointAtStart();
+		    trim_end = trim.PointAtEnd();
+		    dump.Print("domain(%g, %g) start(%g, %g) end(%g, %g)\n", trim.Domain()[0], trim.Domain()[1], trim_start.x, trim_start.y, trim_end.x, trim_end.y);
+		    if (0 != face_srf) {
+			ON_3dPoint trim_srfstart = face_srf->PointAt(trim_start.x, trim_start.y);
+			ON_3dPoint trim_srfend = face_srf->PointAt(trim_end.x, trim_end.y);
+			dump.Print("surface points start(%g, %g, %g) end(%g, %g, %g)\n", trim_srfstart.x, trim_srfstart.y, trim_srfstart.z, trim_srfend.x, trim_srfend.y, trim_srfend.z);
+		    }
+		} else {
+		    dump.Print("domain(%g, %g) start(?, ?) end(?, ?)\n", trim.Domain()[0], trim.Domain()[1]);
+		}
+		dump.PopIndent();
+	    }
+	    dump.PopIndent();
+	}
+	dump.PopIndent();
+
+	ON_String ss = s;
+	bu_vls_printf(gib->vls, "%s\n", ss.Array());
+    }
+
+    return GED_OK;
 }
 
 // L - 2D parameter space topological trimming loops
 extern "C" int
 _brep_cmd_loop_info(void *bs, int argc, const char **argv)
 {
-    //struct _ged_brep_iinfo *gib = (struct _ged_brep_iinfo *)bs;
     const char *usage_string = "brep [options] <objname1> info L [[index][index-index]]";
     const char *purpose_string = "2D parameter space topological trimming loops";
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
     }
 
-    return GED_ERROR;
+    argc--;argv++;
 
+    struct _ged_brep_iinfo *gib = (struct _ged_brep_iinfo *)bs;
+    const ON_Brep *brep = gib->brep;
+
+    std::set<int> elements;
+    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
+	return GED_ERROR;
+    }
+    // If we have nothing, report all
+    if (!elements.size()) {
+	for (int i = 0; i < brep->m_C3.Count(); i++) {
+	    elements.insert(i);
+	}
+    }
+
+    std::set<int>::iterator e_it;
+
+    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+	int li = *e_it;
+	ON_wString wstr;
+	ON_TextLog dump(wstr);
+	if (brep == NULL) {
+	    return GED_ERROR;
+	}
+	if (!((li >= 0) && (li < brep->m_L.Count()))) {
+	    return GED_ERROR;
+	}
+	const ON_BrepLoop &loop = brep->m_L[li];
+	dump.Print("loop[%d] on face %d with %d trims\n", li, loop.m_fi, loop.TrimCount());
+	if (loop.TrimCount() > 0) {
+	    dump.Print("trims: ");
+	    for (int i = 0; i < loop.TrimCount() - 1; ++i) {
+		dump.Print("%d,", loop.m_ti[i]);
+	    }
+	    dump.Print("%d\n", loop.m_ti[loop.TrimCount() - 1]);
+	}
+	ON_String ss = wstr;
+	bu_vls_printf(gib->vls, "%s\n", ss.Array());
+    }
+
+    return GED_OK;
 }
 
 // S - surfaces
 extern "C" int
 _brep_cmd_surface_info(void *bs, int argc, const char **argv)
 {
-    //struct _ged_brep_iinfo *gib = (struct _ged_brep_iinfo *)bs;
     const char *usage_string = "brep [options] <objname1> info S [[index][index-index]]";
     const char *purpose_string = "surfaces";
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
     }
 
-    return GED_ERROR;
+    argc--;argv++;
 
+    struct _ged_brep_iinfo *gib = (struct _ged_brep_iinfo *)bs;
+    const ON_Brep *brep = gib->brep;
+
+    std::set<int> elements;
+    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
+	return GED_ERROR;
+    }
+    // If we have nothing, report all
+    if (!elements.size()) {
+	for (int i = 0; i < brep->m_C3.Count(); i++) {
+	    elements.insert(i);
+	}
+    }
+
+    std::set<int>::iterator e_it;
+
+    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+
+	int si = *e_it;
+	ON_wString wonstr;
+	ON_TextLog info_output(wonstr);
+	if (brep == NULL) {
+	    return GED_ERROR;
+	}
+	if (!((si >= 0) && (si < brep->m_S.Count()))) {
+	    return GED_ERROR;
+	}
+	const ON_Surface* srf = brep->m_S[si];
+	if (srf) {
+	    //ON_wString wonstr;
+	    //ON_TextLog info_output(wonstr);
+	    ON_Interval udom = srf->Domain(0);
+	    ON_Interval vdom = srf->Domain(1);
+	    const char* s = srf->ClassId()->ClassName();
+	    if (!s)
+		s = "";
+	    bu_vls_printf(gib->vls, "surface[%2d]: %s u(%g, %g) v(%g, %g)\n",
+		    si, s,
+		    udom[0], udom[1],
+		    vdom[0], vdom[1]
+		    );
+	    bu_vls_printf(gib->vls, "NURBS form of Surface:\n");
+	    ON_NurbsSurface *nsrf = ON_NurbsSurface::New();
+	    srf->GetNurbForm(*nsrf, 0.0);
+	    nsrf->Dump(info_output);
+	    ON_String onstr = ON_String(wonstr);
+	    const char *infodesc = onstr.Array();
+	    bu_vls_strcat(gib->vls, infodesc);
+	    delete nsrf;
+	} else {
+	    bu_vls_printf(gib->vls, "surface[%2d]: NULL\n", si);
+	}
+    }
+
+    return GED_OK;
 }
 
 // SB - piecewise Bezier surfaces
 extern "C" int
 _brep_cmd_surface_bezier_info(void *bs, int argc, const char **argv)
 {
-    //struct _ged_brep_iinfo *gib = (struct _ged_brep_iinfo *)bs;
     const char *usage_string = "brep [options] <objname1> info SB [[index][index-index]]";
     const char *purpose_string = "piecewise Bezier surfaces";
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
     }
 
-    return GED_ERROR;
+    argc--;argv++;
+
+    struct _ged_brep_iinfo *gib = (struct _ged_brep_iinfo *)bs;
+    const ON_Brep *brep = gib->brep;
+
+    std::set<int> elements;
+    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
+	return GED_ERROR;
+    }
+    // If we have nothing, report all
+    if (!elements.size()) {
+	for (int i = 0; i < brep->m_C3.Count(); i++) {
+	    elements.insert(i);
+	}
+    }
+
+    std::set<int>::iterator e_it;
+
+    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+
+	int si = *e_it;
+	ON_wString wonstr;
+	ON_TextLog info_output(wonstr);
+	if (brep == NULL) {
+	    return GED_ERROR;
+	}
+	if (!((si >= 0) && (si < brep->m_S.Count()))) {
+	    return GED_ERROR;
+	}
+	const ON_Surface* srf = brep->m_S[si];
+	if (srf) {
+	    ON_Interval udom = srf->Domain(0);
+	    ON_Interval vdom = srf->Domain(1);
+	    const char* s = srf->ClassId()->ClassName();
+	    if (!s) {
+		s = "";
+	    }
+	    bu_vls_printf(gib->vls, "surface[%2d]: %s u(%g, %g) v(%g, %g)\n",
+		    si, s,
+		    udom[0], udom[1],
+		    vdom[0], vdom[1]
+		    );
+	    ON_NurbsSurface *nsrf = ON_NurbsSurface::New();
+	    srf->GetNurbForm(*nsrf, 0.0);
+	    int knotlength0 = nsrf->m_order[0] + nsrf->m_cv_count[0] - 2;
+	    int knotlength1 = nsrf->m_order[1] + nsrf->m_cv_count[1] - 2;
+	    int order0 = nsrf->m_order[0];
+	    int order1 = nsrf->m_order[1];
+	    fastf_t *knot0 = nsrf->m_knot[0];
+	    fastf_t *knot1 = nsrf->m_knot[1];
+	    int cnt = 0;
+	    bu_vls_printf(gib->vls, "bezier patches:\n");
+	    for (int i = 0; i < knotlength0; ++i) {
+		for (int j = 0; j < knotlength1; ++j) {
+		    ON_BezierSurface *bezier = new ON_BezierSurface;
+		    if (nsrf->ConvertSpanToBezier(i, j, *bezier)) {
+			info_output.Print("NO.%d segment\n", ++cnt);
+			info_output.Print("spanindex u from %d to %d\n", i + order0 - 2, i + order0 - 1);
+			info_output.Print("spanindex v from %d to %d\n", j + order1 - 2, j + order1 - 1);
+			info_output.Print("knot u from %.2f to %.2f\n ", knot0[i + order0 - 2], knot0[i + order0 - 1]);
+			info_output.Print("knot v from %.2f to %.2f\n ", knot1[j + order1 - 2], knot1[j + order1 - 1]);
+			info_output.Print("domain u(%g, %g)\n", bezier->Domain(0)[0], bezier->Domain(0)[1]);
+			info_output.Print("domain v(%g, %g)\n", bezier->Domain(1)[0], bezier->Domain(1)[1]);
+			bezier->Dump(info_output);
+			info_output.Print("\n");
+		    }
+		    delete bezier;
+		}
+	    }
+	    ON_String onstr = ON_String(wonstr);
+	    const char *infodesc = onstr.Array();
+	    bu_vls_strcat(gib->vls, infodesc);
+	    delete nsrf;
+	} else {
+	    bu_vls_printf(gib->vls, "surface[%2d]: NULL\n", si);
+	}
+    }
+    return GED_OK;
 
 }
 
@@ -714,30 +623,195 @@ _brep_cmd_surface_bezier_info(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_trim_info(void *bs, int argc, const char **argv)
 {
-    //struct _ged_brep_iinfo *gib = (struct _ged_brep_iinfo *)bs;
     const char *usage_string = "brep [options] <objname1> info T [[index][index-index]]";
     const char *purpose_string = "2D parameter space topological trims";
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
     }
 
-    return GED_ERROR;
+    argc--;argv++;
 
+    struct _ged_brep_iinfo *gib = (struct _ged_brep_iinfo *)bs;
+    const ON_Brep *brep = gib->brep;
+
+    std::set<int> elements;
+    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
+	return GED_ERROR;
+    }
+    // If we have nothing, report all
+    if (!elements.size()) {
+	for (int i = 0; i < brep->m_C3.Count(); i++) {
+	    elements.insert(i);
+	}
+    }
+
+    std::set<int>::iterator e_it;
+
+    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+
+	int ti = *e_it;
+	ON_wString wstr;
+	ON_TextLog dump(wstr);
+	if (brep == NULL) {
+	    return GED_ERROR;
+	}
+	if (!((ti >= 0) && (ti < brep->m_T.Count()))) {
+	    return GED_ERROR;
+	}
+	const ON_BrepTrim &trim = brep->m_T[ti];
+	const ON_Surface* trim_srf = trim.SurfaceOf();
+	const ON_BrepLoop &loop = brep->m_L[trim.m_li];
+	const ON_BrepFace &face = brep->m_F[loop.m_fi];
+	const char* sTrimType = "?";
+	const char* sTrimIso = "-?";
+	const ON_Curve* c2 = trim.TrimCurveOf();
+	ON_NurbsCurve* nc2 = ON_NurbsCurve::New();
+	c2->GetNurbForm(*nc2, 0.0);
+	ON_3dPoint trim_start, trim_end;
+	dump.Print("trim[%2d]: surface(%2d) faces(%2d) loops(%2d)\n", ti, face.m_si, face.m_face_index, loop.m_loop_index);
+	switch (trim.m_type) {
+	    case ON_BrepTrim::unknown:
+		sTrimType = "unknown ";
+		break;
+	    case ON_BrepTrim::boundary:
+		sTrimType = "boundary";
+		break;
+	    case ON_BrepTrim::mated:
+		sTrimType = "mated   ";
+		break;
+	    case ON_BrepTrim::seam:
+		sTrimType = "seam    ";
+		break;
+	    case ON_BrepTrim::singular:
+		sTrimType = "singular";
+		break;
+	    case ON_BrepTrim::crvonsrf:
+		sTrimType = "crvonsrf";
+		break;
+	    default:
+		sTrimType = "unknown";
+		break;
+	}
+	switch (trim.m_iso) {
+	    case ON_Surface::not_iso:
+		sTrimIso = "";
+		break;
+	    case ON_Surface::x_iso:
+		sTrimIso = "-u iso";
+		break;
+	    case ON_Surface::W_iso:
+		sTrimIso = "-west side iso";
+		break;
+	    case ON_Surface::E_iso:
+		sTrimIso = "-east side iso";
+		break;
+	    case ON_Surface::y_iso:
+		sTrimIso = "-v iso";
+		break;
+	    case ON_Surface::S_iso:
+		sTrimIso = "-south side iso";
+		break;
+	    case ON_Surface::N_iso:
+		sTrimIso = "-north side iso";
+		break;
+	    default:
+		sTrimIso = "-unknown_iso_flag";
+		break;
+	}
+	dump.Print("\tedge(%2d) v0(%2d) v1(%2d) tolerance(%g, %g)\n", trim.m_ei, trim.m_vi[0], trim.m_vi[1], trim.m_tolerance[0], trim.m_tolerance[1]);
+	dump.PushIndent();
+	dump.Print("\ttype(%s%s) rev3d(%d) 2d_curve(%d)\n", sTrimType, sTrimIso, trim.m_bRev3d, trim.m_c2i);
+	if (c2) {
+	    trim_start = trim.PointAtStart();
+	    trim_end = trim.PointAtEnd();
+	    dump.Print("\tdomain(%g, %g) start(%g, %g) end(%g, %g)\n", trim.Domain()[0], trim.Domain()[1], trim_start.x, trim_start.y, trim_end.x, trim_end.y);
+	    if (0 != trim_srf) {
+		ON_3dPoint trim_srfstart = trim_srf->PointAt(trim_start.x, trim_start.y);
+		ON_3dPoint trim_srfend = trim_srf->PointAt(trim_end.x, trim_end.y);
+		dump.Print("\tsurface points start(%g, %g, %g) end(%g, %g, %g)\n", trim_srfstart.x, trim_srfstart.y, trim_srfstart.z, trim_srfend.x, trim_srfend.y, trim_srfend.z);
+	    }
+	} else {
+	    dump.Print("\tdomain(%g, %g) start(?, ?) end(?, ?)\n", trim.Domain()[0], trim.Domain()[1]);
+	}
+	dump.PopIndent();
+	dump.Print("NURBS form of 2d_curve(trim)\n");
+	nc2->Dump(dump);
+	delete nc2;
+
+	ON_String ss = wstr;
+	bu_vls_printf(gib->vls, "%s\n", ss.Array());
+    }
+
+    return GED_OK;
 }
 
 // TB - 2D piecewise Bezier trims
 extern "C" int
 _brep_cmd_trim_bezier_info(void *bs, int argc, const char **argv)
 {
-    //struct _ged_brep_iinfo *gib = (struct _ged_brep_iinfo *)bs;
     const char *usage_string = "brep [options] <objname1> info TB [[index][index-index]]";
     const char *purpose_string = "2D piecewise Bezier trims";
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
     }
 
-    return GED_ERROR;
+    argc--;argv++;
 
+    struct _ged_brep_iinfo *gib = (struct _ged_brep_iinfo *)bs;
+    const ON_Brep *brep = gib->brep;
+
+    std::set<int> elements;
+    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
+	return GED_ERROR;
+    }
+    // If we have nothing, report all
+    if (!elements.size()) {
+	for (int i = 0; i < brep->m_C3.Count(); i++) {
+	    elements.insert(i);
+	}
+    }
+
+    std::set<int>::iterator e_it;
+
+    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+
+	int ti = *e_it;
+	ON_wString wstr;
+	ON_TextLog dump(wstr);
+	if (brep == NULL) {
+	    return GED_ERROR;
+	}
+	if (!((ti >= 0) && (ti < brep->m_T.Count()))) {
+	    return GED_ERROR;
+	}
+	const ON_BrepTrim &trim = brep->m_T[ti];
+	const ON_Curve* c2 = trim.TrimCurveOf();
+	ON_NurbsCurve* nc2 = ON_NurbsCurve::New();
+	c2->GetNurbForm(*nc2, 0.0);
+	int knotlength = nc2->m_order + nc2->m_cv_count - 2;
+	int order = nc2->m_order;
+	fastf_t *knot = nc2->m_knot;
+	dump.Print("trim[%2d]: domain(%g, %g)\n", ti, nc2->Domain()[0], nc2->Domain()[1]);
+	int cnt = 0;
+	dump.Print("NURBS converts to Bezier\n");
+	for (int i = 0; i < knotlength - 1; ++i) {
+	    ON_BezierCurve* bezier = new ON_BezierCurve;
+	    if (nc2->ConvertSpanToBezier(i, *bezier)) {
+		dump.Print("NO.%d segment\n", ++cnt);
+		dump.Print("spanindex from %d to %d\n", i + order - 2, i + order - 1);
+		dump.Print("knot from %.2f to %.2f\n ", knot[i + order - 2], knot[i + order - 1]);
+		dump.Print("domain(%g, %g)\n", bezier->Domain()[0], bezier->Domain()[1]);
+		bezier->Dump(dump);
+		dump.Print("\n");
+	    }
+	    delete bezier;
+	}
+	delete nc2;
+	ON_String ss = wstr;
+	bu_vls_printf(gib->vls, "%s\n", ss.Array());
+    }
+
+    return GED_OK;
 }
 
 // V - 3D vertices
@@ -751,6 +825,42 @@ _brep_cmd_vertex_info(void *bs, int argc, const char **argv)
 	return GED_OK;
     }
 
+    argc--;argv++;
+
+    struct _ged_brep_iinfo *gib = (struct _ged_brep_iinfo *)bs;
+    const ON_Brep *brep = gib->brep;
+
+    std::set<int> elements;
+    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
+	return GED_ERROR;
+    }
+    // If we have nothing, report all
+    if (!elements.size()) {
+	for (int i = 0; i < brep->m_C3.Count(); i++) {
+	    elements.insert(i);
+	}
+    }
+
+    std::set<int>::iterator e_it;
+
+    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+
+	int vi = *e_it;
+
+	if (brep == NULL) {
+	    return GED_ERROR;
+	}
+	if (!((vi >= 0) && (vi < brep->m_V.Count()))) {
+	    return GED_ERROR;
+	}
+	const ON_BrepVertex &vertex = brep->m_V[vi];
+	ON_3dPoint p = vertex.Point();
+	bu_vls_printf(gib->vls, "m_V[%d]: %g %g %g  Used by %d edges\n", vi, p.x, p.y, p.z, vertex.EdgeCount());
+	for (int i = 0; i < vertex.EdgeCount(); i++) {
+	    const ON_BrepEdge &edge = brep->m_E[vertex.m_ei[i]];
+	    bu_vls_printf(gib->vls, "   m_E[%d]: %d -> %d\n", vertex.m_ei[i], edge.m_vi[0], edge.m_vi[1]);
+	}
+    }
     return GED_ERROR;
 }
 
