@@ -525,6 +525,87 @@ _brep_info_msgs(void *bs, int argc, const char **argv, const char *us, const cha
     return 0;
 }
 
+
+static int
+_brep_indices(std::set<int> &elements, struct bu_vls *vls, int argc, const char **argv) {
+    std::set<int> indices;
+    for (int i = 0; i < argc; i++) {
+	std::string s1(argv[i]);
+	size_t pos_dash = s1.find_first_of("-:", 0);
+	size_t pos_comma = s1.find_first_of(",/;", 0);
+	if (pos_dash != std::string::npos) {
+	    // May have a range - find out
+	    std::string s2 = s1.substr(0, pos_dash);
+	    s1.erase(0, pos_dash + 1);
+	    char *n1 = bu_strdup(s1.c_str());
+	    char *n2 = bu_strdup(s2.c_str());
+	    int val1, val2, vtmp;
+	    if (bu_opt_int(NULL, 1, (const char **)&n1, &val1) < 0) {
+		bu_vls_printf(vls, "Invalid index specification: %s\n", n1);
+		bu_free(n1, "n1");
+		bu_free(n2, "n2");
+		return GED_ERROR;
+	    } 
+	    if (bu_opt_int(NULL, 1, (const char **)&n2, &val2) < 0) {
+		bu_vls_printf(vls, "Invalid index specification: %s\n", n2);
+		bu_free(n1, "n1");
+		bu_free(n2, "n2");
+		return GED_ERROR;
+	    }
+	    bu_free(n1, "n1");
+	    bu_free(n2, "n2");
+	    if (val1 > val2) {
+		vtmp = val2;
+		val2 = val1;
+		val1 = vtmp;
+	    }
+	    for (int j = val1; j <= val2; j++) {
+		elements.insert(j);
+	    }
+	    continue;
+	}
+	if (pos_comma != std::string::npos) {
+	    // May have a set - find out
+	    while (pos_comma != std::string::npos) {
+		std::string ss = s1.substr(0, pos_comma);
+		char *n1 = bu_strdup(ss.c_str());
+		int val1;
+		if (bu_opt_int(NULL, 1, (const char **)&n1, &val1) < 0) {
+		    bu_vls_printf(vls, "Invalid index specification: %s\n", n1);
+		    bu_free(n1, "n1");
+		    return GED_ERROR;
+		} else {
+		    elements.insert(val1);
+		}
+		s1.erase(0, pos_comma + 1);
+		pos_comma = s1.find_first_of(",/;", 0);
+	    }
+	    if (s1.length()) {
+		char *n1 = bu_strdup(s1.c_str());
+		int val1;
+		if (bu_opt_int(NULL, 1, (const char **)&n1, &val1) < 0) {
+		    bu_vls_printf(vls, "Invalid index specification: %s\n", n1);
+		    bu_free(n1, "n1");
+		    return GED_ERROR;
+		} 
+		elements.insert(val1);
+	    }
+	    continue;
+	}
+
+	// Nothing fancy looking - see if its a number
+	int val = 0;
+	if (bu_opt_int(NULL, 1, &argv[i], &val) >= 0) {
+	    elements.insert(val);
+	} else {
+	    bu_vls_printf(vls, "Invalid index specification: %s\n", argv[i]);
+	    return GED_ERROR;
+	}
+    }
+
+    return GED_OK;
+}
+
 // C2 - 2D parameter curves
 extern "C" int
 _brep_cmd_curve_2d_info(void *bs, int argc, const char **argv)
@@ -534,6 +615,49 @@ _brep_cmd_curve_2d_info(void *bs, int argc, const char **argv)
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
     }
+
+    argc--;argv++;
+
+    struct _ged_brep_iinfo *gib = (struct _ged_brep_iinfo *)bs;
+    const ON_Brep *brep = gib->brep;
+
+    std::set<int> elements;
+    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
+	return GED_ERROR;
+    }
+    // If we have nothing, report all
+    if (!elements.size()) {
+	for (int i = 0; i < brep->m_C3.Count(); i++) {
+	    elements.insert(i);
+	}
+    }
+
+    std::set<int>::iterator e_it;
+
+    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+
+	int ci = *e_it;
+
+	ON_wString wstr;
+	ON_TextLog dump(wstr);
+	if (brep == NULL) {
+	    return GED_ERROR;
+	}
+	if (!((ci >= 0) && (ci < brep->m_C2.Count()))) {
+	    return GED_ERROR;
+	}
+	const ON_Curve *curve = brep->m_C2[ci];
+	ON_NurbsCurve* nc2 = ON_NurbsCurve::New();
+	curve->GetNurbForm(*nc2, 0.0);
+	dump.Print("m_C2[%d]: NURBS form of 2d_curve\n", ci);
+	nc2->Dump(dump);
+	delete nc2;
+
+	ON_String ss = wstr;
+	bu_vls_printf(gib->vls, "%s\n", ss.Array());
+
+    }
+    return GED_OK;
 
     return GED_ERROR;
 }
@@ -548,13 +672,55 @@ _brep_cmd_curve_3d_info(void *bs, int argc, const char **argv)
 	return GED_OK;
     }
 
-    return GED_ERROR;
+    argc--;argv++;
+
+    struct _ged_brep_iinfo *gib = (struct _ged_brep_iinfo *)bs;
+    const ON_Brep *brep = gib->brep;
+
+    std::set<int> elements;
+    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
+	return GED_ERROR;
+    }
+    // If we have nothing, report all
+    if (!elements.size()) {
+	for (int i = 0; i < brep->m_C3.Count(); i++) {
+	    elements.insert(i);
+	}
+    }
+
+    std::set<int>::iterator e_it;
+
+    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+
+	int ci = *e_it;
+
+	ON_wString wstr;
+	ON_TextLog dump(wstr);
+	if (brep == NULL) {
+	    return GED_ERROR;
+	}
+	if (!((ci >= 0) && (ci < brep->m_C3.Count()))) {
+	    return GED_ERROR;
+	}
+	const ON_Curve *curve = brep->m_C3[ci];
+	ON_NurbsCurve* nc3 = ON_NurbsCurve::New();
+	curve->GetNurbForm(*nc3, 0.0);
+	dump.Print("m_C3[%d]: NURBS form of 3d_curve(edge)\n", ci);
+	nc3->Dump(dump);
+	delete nc3;
+
+	ON_String ss = wstr;
+	bu_vls_printf(gib->vls, "%s\n", ss.Array());
+
+    }
+    return GED_OK;
 }
 
 // E - topological edges
 extern "C" int
 _brep_cmd_edge_info(void *bs, int argc, const char **argv)
 {
+    //struct _ged_brep_iinfo *gib = (struct _ged_brep_iinfo *)bs;
     const char *usage_string = "brep [options] <objname1> info E [[index][index-index]]";
     const char *purpose_string = "topological 3D edges";
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
@@ -569,6 +735,7 @@ _brep_cmd_edge_info(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_face_info(void *bs, int argc, const char **argv)
 {
+    //struct _ged_brep_iinfo *gib = (struct _ged_brep_iinfo *)bs;
     const char *usage_string = "brep [options] <objname1> info F [[index][index-index]]";
     const char *purpose_string = "topological faces";
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
@@ -582,6 +749,7 @@ _brep_cmd_face_info(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_loop_info(void *bs, int argc, const char **argv)
 {
+    //struct _ged_brep_iinfo *gib = (struct _ged_brep_iinfo *)bs;
     const char *usage_string = "brep [options] <objname1> info L [[index][index-index]]";
     const char *purpose_string = "2D parameter space topological trimming loops";
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
@@ -596,6 +764,7 @@ _brep_cmd_loop_info(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_surface_info(void *bs, int argc, const char **argv)
 {
+    //struct _ged_brep_iinfo *gib = (struct _ged_brep_iinfo *)bs;
     const char *usage_string = "brep [options] <objname1> info S [[index][index-index]]";
     const char *purpose_string = "surfaces";
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
@@ -610,6 +779,7 @@ _brep_cmd_surface_info(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_surface_bezier_info(void *bs, int argc, const char **argv)
 {
+    //struct _ged_brep_iinfo *gib = (struct _ged_brep_iinfo *)bs;
     const char *usage_string = "brep [options] <objname1> info SB [[index][index-index]]";
     const char *purpose_string = "piecewise Bezier surfaces";
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
@@ -624,6 +794,7 @@ _brep_cmd_surface_bezier_info(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_trim_info(void *bs, int argc, const char **argv)
 {
+    //struct _ged_brep_iinfo *gib = (struct _ged_brep_iinfo *)bs;
     const char *usage_string = "brep [options] <objname1> info T [[index][index-index]]";
     const char *purpose_string = "2D parameter space topological trims";
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
@@ -638,6 +809,7 @@ _brep_cmd_trim_info(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_trim_bezier_info(void *bs, int argc, const char **argv)
 {
+    //struct _ged_brep_iinfo *gib = (struct _ged_brep_iinfo *)bs;
     const char *usage_string = "brep [options] <objname1> info TB [[index][index-index]]";
     const char *purpose_string = "2D piecewise Bezier trims";
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
@@ -652,6 +824,7 @@ _brep_cmd_trim_bezier_info(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_vertex_info(void *bs, int argc, const char **argv)
 {
+    //struct _ged_brep_iinfo *gib = (struct _ged_brep_iinfo *)bs;
     const char *usage_string = "brep [options] <objname1> info V [[index][index-index]]";
     const char *purpose_string = "3D vertices";
     if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
