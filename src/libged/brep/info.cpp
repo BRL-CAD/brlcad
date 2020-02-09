@@ -29,8 +29,16 @@
 #include <set>
 
 #include "opennurbs.h"
+#include "bu/cmd.h"
 #include "./ged_brep.h"
 
+struct _ged_brep_iinfo {
+    struct bu_vls *vls;
+    const ON_Brep *brep;
+    const struct bu_cmdtab *cmds;
+};
+
+#if 0
 static int
 brep_surface_info(const ON_Brep *brep, struct bu_vls *vls, int si)
 {
@@ -500,23 +508,242 @@ brep_edge_info(const ON_Brep *brep, struct bu_vls *vls, int ei)
     bu_vls_printf(vls, "%s\n", ss.Array());
     return GED_OK;
 }
+#endif
+
+static int
+_brep_info_msgs(void *bs, int argc, const char **argv, const char *us, const char *ps)
+{
+    struct _ged_brep_iinfo *gb = (struct _ged_brep_iinfo *)bs;
+    if (argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
+	bu_vls_printf(gb->vls, "%s\n%s\n", us, ps);
+	return 1;
+    }
+    if (argc == 2 && BU_STR_EQUAL(argv[1], PURPOSEFLAG)) {
+	bu_vls_printf(gb->vls, "%s\n", ps);
+	return 1;
+    }
+    return 0;
+}
+
+// C2 - 2D parameter curves
+extern "C" int
+_brep_cmd_curve_2d_info(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep <objname1> info C2 [[index][index-index]]";
+    const char *purpose_string = "2D parameter space geometric curves";
+    if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    return GED_ERROR;
+}
+
+// C3 - 3D edge curves
+extern "C" int
+_brep_cmd_curve_3d_info(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep <objname1> info C3 [[index][index-index]]";
+    const char *purpose_string = "3D parameter space geometric curves";
+    if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    return GED_ERROR;
+}
+
+// E - topological edges
+extern "C" int
+_brep_cmd_edge_info(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep <objname1> info E [[index][index-index]]";
+    const char *purpose_string = "topological 3D edges";
+    if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    return GED_ERROR;
+
+}
+
+// F - topological faces
+extern "C" int
+_brep_cmd_face_info(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep <objname1> info F [[index][index-index]]";
+    const char *purpose_string = "topological faces";
+    if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    return GED_ERROR;
+}
+
+// L - 2D parameter space topological trimming loops
+extern "C" int
+_brep_cmd_loop_info(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep <objname1> info L [[index][index-index]]";
+    const char *purpose_string = "2D parameter space topological trimming loops";
+    if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    return GED_ERROR;
+
+}
+
+// S - surfaces
+extern "C" int
+_brep_cmd_surface_info(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep <objname1> info S [[index][index-index]]";
+    const char *purpose_string = "surfaces";
+    if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    return GED_ERROR;
+
+}
+
+// SB - piecewise Bezier surfaces
+extern "C" int
+_brep_cmd_surface_bezier_info(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep <objname1> info SB [[index][index-index]]";
+    const char *purpose_string = "piecewise Bezier surfaces";
+    if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    return GED_ERROR;
+
+}
+
+// T - 2D topological trims
+extern "C" int
+_brep_cmd_trim_info(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep <objname1> info T [[index][index-index]]";
+    const char *purpose_string = "2D parameter space topological trims";
+    if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    return GED_ERROR;
+
+}
+
+// TB - 2D piecewise Bezier trims
+extern "C" int
+_brep_cmd_trim_bezier_info(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep <objname1> info TB [[index][index-index]]";
+    const char *purpose_string = "2D piecewise Bezier trims";
+    if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    return GED_ERROR;
+
+}
+
+// V - 3D vertices
+extern "C" int
+_brep_cmd_vertex_info(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep <objname1> info V [[index][index-index]]";
+    const char *purpose_string = "3D vertices";
+    if (_brep_info_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    return GED_ERROR;
+}
+
+static void
+_brep_info_help(struct _ged_brep_iinfo *bs, int argc, const char **argv)
+{
+    struct _ged_brep_iinfo *gb = (struct _ged_brep_iinfo *)bs;
+    if (!argc || !argv) {
+	bu_vls_printf(gb->vls, "brep <objname> info <subcommand> [args]\n");
+	bu_vls_printf(gb->vls, "Available subcommands:\n");
+	const struct bu_cmdtab *ctp = NULL;
+	int ret;
+	const char *helpflag[2];
+	helpflag[1] = PURPOSEFLAG;
+	for (ctp = gb->cmds; ctp->ct_name != (char *)NULL; ctp++) {
+	    bu_vls_printf(gb->vls, "  %s\t\t", ctp->ct_name);
+	    helpflag[0] = ctp->ct_name;
+	    bu_cmd(gb->cmds, 2, helpflag, 0, (void *)gb, &ret);
+	}
+    } else {
+	int ret;
+	const char *helpflag[2];
+	helpflag[0] = argv[0];
+	helpflag[1] = HELPFLAG;
+	bu_cmd(gb->cmds, 2, helpflag, 0, (void *)gb, &ret);
+    }
+}
+
+const struct bu_cmdtab _brep_info_cmds[] = {
+    { "C2",          _brep_cmd_curve_2d_info},
+    { "C3",          _brep_cmd_curve_3d_info},
+    { "E",           _brep_cmd_edge_info},
+    { "F",           _brep_cmd_face_info},
+    { "L",           _brep_cmd_loop_info},
+    { "S",           _brep_cmd_surface_info},
+    { "SB",          _brep_cmd_surface_bezier_info},
+    { "T",           _brep_cmd_trim_info},
+    { "TB",          _brep_cmd_trim_bezier_info},
+    { "V",           _brep_cmd_vertex_info},
+    { (char *)NULL,      NULL}
+};
 
 int
 brep_info(struct bu_vls *vls, const ON_Brep *brep, int argc, const char **argv)
 {
-    int ret = GED_ERROR;
+    struct _ged_brep_iinfo gib;
+    gib.vls = vls;
+    gib.brep = brep;
+    gib.cmds = _brep_info_cmds;
 
     if (!argc) {
-	bu_vls_printf(vls, "surfaces:  %d\n", brep->m_S.Count());
-	bu_vls_printf(vls, "3d curve:  %d\n", brep->m_C3.Count());
-	bu_vls_printf(vls, "2d curves: %d\n", brep->m_C2.Count());
-	bu_vls_printf(vls, "vertices:  %d\n", brep->m_V.Count());
-	bu_vls_printf(vls, "edges:     %d\n", brep->m_E.Count());
-	bu_vls_printf(vls, "trims:     %d\n", brep->m_T.Count());
-	bu_vls_printf(vls, "loops:     %d\n", brep->m_L.Count());
+	// No arg case is easy - just report counts
 	bu_vls_printf(vls, "faces:     %d\n", brep->m_F.Count());
+	bu_vls_printf(vls, "surfaces:  %d\n", brep->m_S.Count());
+	bu_vls_printf(vls, "edges:     %d\n", brep->m_E.Count());
+	bu_vls_printf(vls, "3d curve:  %d\n", brep->m_C3.Count());
+	bu_vls_printf(vls, "vertices:  %d\n", brep->m_V.Count());
+	bu_vls_printf(vls, "loops:     %d\n", brep->m_L.Count());
+	bu_vls_printf(vls, "trims:     %d\n", brep->m_T.Count());
+	bu_vls_printf(vls, "2d curves: %d\n", brep->m_C2.Count());
 	return GED_OK;
     }
+
+    argc--;argv++;
+
+    if (argc && BU_STR_EQUAL(argv[0], HELPFLAG)) {
+	argc--;argv++;
+	_brep_info_help(&gib, argc, argv);
+	return GED_OK;
+    }
+
+    // Must have valid subcommand to process
+    if (bu_cmd_valid(_brep_info_cmds, argv[0]) != BRLCAD_OK) {
+	bu_vls_printf(gib.vls, "invalid subcommand \"%s\" specified\n", argv[0]);
+	_brep_info_help(&gib, 0, NULL);
+	return GED_ERROR;
+    }
+
+    int ret;
+    if (bu_cmd(_brep_info_cmds, argc, argv, 0, (void *)&gib, &ret) == BRLCAD_OK) {
+	return ret;
+    }
+    return GED_ERROR;
+}
+
+#if 0
     if (argc == 1) {
 	const char *part = argv[0];
 	if (BU_STR_EQUAL(part, "S")) {
@@ -668,6 +895,7 @@ brep_info(struct bu_vls *vls, const ON_Brep *brep, int argc, const char **argv)
 
     return ret;
 }
+#endif
 
 // Local Variables:
 // tab-width: 8

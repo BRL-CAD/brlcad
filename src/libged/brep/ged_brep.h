@@ -73,6 +73,8 @@ __BEGIN_DECLS
 #define BLACK 0, 0, 0
 #define WHITE 255, 255, 255
 
+#define HELPFLAG "--print-help"
+#define PURPOSEFLAG "--print-purpose"
 
 struct _ged_brep_info {
     struct ged *gedp = NULL;

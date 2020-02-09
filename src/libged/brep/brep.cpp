@@ -49,10 +49,6 @@
 
 #include "./ged_brep.h"
 
-#define HELPFLAG "--print-help"
-#define PURPOSEFLAG "--print-purpose"
-
-
 /* FIXME: how should we set up brep functionality without introducing
  * lots of new public librt functions?  right now, we reach into librt
  * directly and export what we need from brep_debug.cpp which sucks.
@@ -497,14 +493,18 @@ _brep_cmd_flip(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_info(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep <objname> info";
-    const char *purpose_string = "print detailed information about components of the BRep object";
-    // TODO - need much more elaborate help for info
-    if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
-    }
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
     struct ged *gedp = gb->gedp;
+
+    const char *purpose_string = "print detailed information about components of the BRep object";
+    if (argc == 2 && BU_STR_EQUAL(argv[1], PURPOSEFLAG)) {
+	bu_vls_printf(gb->gedp->ged_result_str, "%s\n", purpose_string);
+	return GED_OK;
+    }
+    if (argc >= 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
+	return brep_info(gedp->ged_result_str, NULL, argc, argv);
+    }
+
     if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
 	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
 	return GED_ERROR;
@@ -967,10 +967,14 @@ _brep_cmd_help(void *bs, int argc, const char **argv)
 	}
     } else {
 	int ret;
-	const char *helpflag[2];
-	helpflag[0] = argv[0];
-	helpflag[1] = HELPFLAG;
-	bu_cmd(gb->cmds, 2, helpflag, 0, (void *)gb, &ret);
+	const char **helpargv = (const char **)bu_calloc(argc+1, sizeof(char *), "help argv");
+	helpargv[0] = argv[0];
+	helpargv[1] = HELPFLAG;
+	for (int i = 1; i < argc; i++) {
+	    helpargv[i+1] = argv[i];
+	}
+	bu_cmd(gb->cmds, argc+1, helpargv, 0, (void *)gb, &ret);
+	bu_free(helpargv, "help argv");
 	return ret;
     }
 
