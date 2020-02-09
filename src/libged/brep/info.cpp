@@ -75,7 +75,7 @@ _brep_cmd_curve_2d_info(void *bs, int argc, const char **argv)
     }
     // If we have nothing, report all
     if (!elements.size()) {
-	for (int i = 0; i < brep->m_C3.Count(); i++) {
+	for (int i = 0; i < brep->m_C2.Count(); i++) {
 	    elements.insert(i);
 	}
     }
@@ -185,7 +185,7 @@ _brep_cmd_edge_info(void *bs, int argc, const char **argv)
     }
     // If we have nothing, report all
     if (!elements.size()) {
-	for (int i = 0; i < brep->m_C3.Count(); i++) {
+	for (int i = 0; i < brep->m_E.Count(); i++) {
 	    elements.insert(i);
 	}
     }
@@ -258,7 +258,7 @@ _brep_cmd_face_info(void *bs, int argc, const char **argv)
     }
     // If we have nothing, report all
     if (!elements.size()) {
-	for (int i = 0; i < brep->m_C3.Count(); i++) {
+	for (int i = 0; i < brep->m_F.Count(); i++) {
 	    elements.insert(i);
 	}
     }
@@ -426,7 +426,7 @@ _brep_cmd_loop_info(void *bs, int argc, const char **argv)
     }
     // If we have nothing, report all
     if (!elements.size()) {
-	for (int i = 0; i < brep->m_C3.Count(); i++) {
+	for (int i = 0; i < brep->m_L.Count(); i++) {
 	    elements.insert(i);
 	}
     }
@@ -480,7 +480,7 @@ _brep_cmd_surface_info(void *bs, int argc, const char **argv)
     }
     // If we have nothing, report all
     if (!elements.size()) {
-	for (int i = 0; i < brep->m_C3.Count(); i++) {
+	for (int i = 0; i < brep->m_S.Count(); i++) {
 	    elements.insert(i);
 	}
     }
@@ -549,7 +549,7 @@ _brep_cmd_surface_bezier_info(void *bs, int argc, const char **argv)
     }
     // If we have nothing, report all
     if (!elements.size()) {
-	for (int i = 0; i < brep->m_C3.Count(); i++) {
+	for (int i = 0; i < brep->m_S.Count(); i++) {
 	    elements.insert(i);
 	}
     }
@@ -640,7 +640,7 @@ _brep_cmd_trim_info(void *bs, int argc, const char **argv)
     }
     // If we have nothing, report all
     if (!elements.size()) {
-	for (int i = 0; i < brep->m_C3.Count(); i++) {
+	for (int i = 0; i < brep->m_T.Count(); i++) {
 	    elements.insert(i);
 	}
     }
@@ -766,7 +766,7 @@ _brep_cmd_trim_bezier_info(void *bs, int argc, const char **argv)
     }
     // If we have nothing, report all
     if (!elements.size()) {
-	for (int i = 0; i < brep->m_C3.Count(); i++) {
+	for (int i = 0; i < brep->m_T.Count(); i++) {
 	    elements.insert(i);
 	}
     }
@@ -836,7 +836,7 @@ _brep_cmd_vertex_info(void *bs, int argc, const char **argv)
     }
     // If we have nothing, report all
     if (!elements.size()) {
-	for (int i = 0; i < brep->m_C3.Count(); i++) {
+	for (int i = 0; i < brep->m_V.Count(); i++) {
 	    elements.insert(i);
 	}
     }
