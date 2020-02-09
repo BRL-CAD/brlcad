@@ -2391,11 +2391,10 @@ _brep_cmd_curve_3d_plot(void *bs, int argc, const char **argv)
 	bu_vls_printf(gib->vls, "%s", ON_String(wstr).Array());
     }
 
-    char commtag[64];
-    char namebuf[65];
-    snprintf(commtag, 64, "_BC_E_");
-    snprintf(namebuf, sizeof(namebuf), "%s%s_", commtag, gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, namebuf, 0);
+    struct bu_vls sname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&sname, "_BC_C3_%s", gib->gb->solid_name.c_str());
+    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    bu_vls_free(&sname);
 
     return GED_OK;
 }
@@ -2459,11 +2458,10 @@ _brep_cmd_edge_plot(void *bs, int argc, const char **argv)
 	bu_vls_printf(gib->vls, "%s", ON_String(wstr).Array());
     }
 
-    char commtag[64];
-    char namebuf[65];
-    snprintf(commtag, 64, "_BC_E_");
-    snprintf(namebuf, sizeof(namebuf), "%s%s_", commtag, gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, namebuf, 0);
+    struct bu_vls sname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&sname, "_BC_E_%s", gib->gb->solid_name.c_str());
+    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    bu_vls_free(&sname);
 
     return GED_OK;
 
