@@ -1099,6 +1099,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     gb.gedp = gedp;
     gb.cmds = _brep_cmds;
     struct bu_color *color = NULL;
+    int plotres = 100;
 
     // Sanity
     if (UNLIKELY(!gedp || !argc || !argv)) {
@@ -1113,9 +1114,10 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 
     // See if we have any high level options set
     struct bu_opt_desc d[4];
-    BU_OPT(d[0], "h", "help",    "",      NULL,                 &help,          "Print help");
-    BU_OPT(d[1], "C", "color",   "r/g/b", &_ged_brep_opt_color, &color,         "Set color");
+    BU_OPT(d[0], "h", "help",    "",      NULL,                 &help,         "Print help");
+    BU_OPT(d[1], "C", "color",   "r/g/b", &_ged_brep_opt_color, &color,        "Set color");
     BU_OPT(d[2], "v", "verbose", "",      NULL,                 &gb.verbosity, "Verbose output");
+    BU_OPT(d[3], "",  "plotres", "#",     &bu_opt_int,          &plotres,      "Plotting resolution");
     BU_OPT_NULL(d[3]);
 
     gb.gopts = d;
@@ -1197,6 +1199,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 
     gb.vbp = rt_vlblock_init();
     gb.color = color;
+    gb.plotres = plotres;
 
     // Jump the processing past any options specified
     argc = argc - cmd_pos;

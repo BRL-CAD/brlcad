@@ -2342,7 +2342,62 @@ _brep_cmd_curve_3d_plot(void *bs, int argc, const char **argv)
 	return GED_OK;
     }
 
-    return GED_ERROR;
+    argc--;argv++;
+
+    struct _ged_brep_iplot *gib = (struct _ged_brep_iplot *)bs;
+    const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
+    struct bu_color *color = gib->gb->color;
+    struct bn_vlblock *vbp = gib->gb->vbp;
+    int plotres = gib->gb->plotres;
+
+    std::set<int> elements;
+    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
+	return GED_ERROR;
+    }
+    // If we have nothing, report all
+    if (!elements.size()) {
+	for (int i = 0; i < brep->m_C3.Count(); i++) {
+	    elements.insert(i);
+	}
+    }
+
+    std::set<int>::iterator e_it;
+
+    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+
+	int ci = *e_it;
+
+	ON_wString wstr;
+	ON_TextLog tl(wstr);
+
+	unsigned char rgb[3];
+	bu_color_to_rgb_chars(color, rgb);
+
+	if (brep == NULL) {
+	    return GED_ERROR;
+	}
+	if (!brep->IsValid(&tl)) {
+	    bu_log("brep is NOT valid");
+	    return GED_ERROR;
+	}
+	const ON_Curve* curve = brep->m_C3[ci];
+	curve->Dump(tl);
+	if (color) {
+	    plotcurve(*curve, vbp, plotres, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
+	} else {
+	    plotcurve(*curve, vbp, plotres);
+	}
+
+	bu_vls_printf(gib->vls, "%s", ON_String(wstr).Array());
+    }
+
+    char commtag[64];
+    char namebuf[65];
+    snprintf(commtag, 64, "_BC_E_");
+    snprintf(namebuf, sizeof(namebuf), "%s%s_", commtag, gib->gb->solid_name.c_str());
+    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, namebuf, 0);
+
+    return GED_OK;
 }
 
 // E - topological edges
@@ -2355,7 +2410,62 @@ _brep_cmd_edge_plot(void *bs, int argc, const char **argv)
 	return GED_OK;
     }
 
-    return GED_ERROR;
+    argc--;argv++;
+
+    struct _ged_brep_iplot *gib = (struct _ged_brep_iplot *)bs;
+    const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
+    struct bu_color *color = gib->gb->color;
+    struct bn_vlblock *vbp = gib->gb->vbp;
+    int plotres = gib->gb->plotres;
+
+    std::set<int> elements;
+    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
+	return GED_ERROR;
+    }
+    // If we have nothing, report all
+    if (!elements.size()) {
+	for (int i = 0; i < brep->m_E.Count(); i++) {
+	    elements.insert(i);
+	}
+    }
+
+    std::set<int>::iterator e_it;
+    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+
+	int ei = *e_it;
+
+	ON_wString wstr;
+	ON_TextLog tl(wstr);
+
+	unsigned char rgb[3];
+	bu_color_to_rgb_chars(color, rgb);
+
+	if (brep == NULL) {
+	    return GED_ERROR;
+	}
+	if (!brep->IsValid(&tl)) {
+	    bu_log("brep is NOT valid");
+	    return GED_ERROR;
+	}
+	const ON_BrepEdge &edge = brep->m_E[ei];
+	const ON_Curve* curve = edge.EdgeCurveOf();
+	curve->Dump(tl);
+	if (color) {
+	    plotcurve(*curve, vbp, plotres, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
+	} else {
+	    plotcurve(*curve, vbp, plotres);
+	}
+
+	bu_vls_printf(gib->vls, "%s", ON_String(wstr).Array());
+    }
+
+    char commtag[64];
+    char namebuf[65];
+    snprintf(commtag, 64, "_BC_E_");
+    snprintf(namebuf, sizeof(namebuf), "%s%s_", commtag, gib->gb->solid_name.c_str());
+    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, namebuf, 0);
+
+    return GED_OK;
 
 }
 

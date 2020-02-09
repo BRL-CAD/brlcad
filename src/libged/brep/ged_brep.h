@@ -84,6 +84,7 @@ struct _ged_brep_info {
     struct bn_vlblock *vbp = NULL;
     struct bu_color *color = NULL;
     int verbosity;
+    int plotres;
     std::string solid_name;
     const struct bu_cmdtab *cmds = NULL;
     struct bu_opt_desc *gopts = NULL;
