@@ -317,6 +317,372 @@ plotUVDomain2d(ON_BrepFace *face, struct bn_vlblock *vbp)
     return;
 }
 
+/* a binary predicate for std:list implemented as a function */
+static bool
+near_equal(double first, double second)
+{
+    /* FIXME: arbitrary nearness tolerance */
+    return NEAR_EQUAL(first, second, 1e-6);
+}
+
+void
+drawisoUCheckForTrim(const SurfaceTree* st, struct bn_vlblock *vbp, fastf_t from, fastf_t to, fastf_t v, int UNUSED(curveres))
+{
+    struct bu_list *vhead;
+    fastf_t pt1[3], pt2[3];
+    std::list<const BRNode*> m_trims_right;
+    std::list<fastf_t> trim_hits;
+
+    vhead = bn_vlblock_find(vbp, YELLOW);
+
+    const ON_Surface *surf = st->getSurface();
+    const CurveTree *ctree = st->m_ctree;
+    fastf_t umin, umax;
+    surf->GetDomain(0, &umin, &umax);
+
+    m_trims_right.clear();
+
+    fastf_t tol = 0.001;
+    ON_2dPoint pt;
+    pt.x = umin;
+    pt.y = v;
+
+    if (ctree != NULL) {
+	m_trims_right.clear();
+	ctree->getLeavesRight(m_trims_right, pt, tol);
+    }
+
+    int cnt = 1;
+    //bu_log("V - %f\n", pt.x);
+    trim_hits.clear();
+    for (std::list<const BRNode*>::const_iterator i = m_trims_right.begin(); i != m_trims_right.end(); i++, cnt++) {
+	const BRNode* br = *i;
+
+	point_t bmin, bmax;
+	if (!br->m_Horizontal) {
+	    br->GetBBox(bmin, bmax);
+	    if (((bmin[Y] - tol) <= pt[Y]) && (pt[Y] <= (bmax[Y]+tol))) { //if check trim and in BBox
+		fastf_t u = br->getCurveEstimateOfU(pt[Y], tol);
+		trim_hits.push_back(u);
+		//bu_log("%d U %d - %f pt %f, %f bmin %f, %f  bmax %f, %f\n", br->m_face->m_face_index, cnt, u, pt.x, pt.y, bmin[X], bmin[Y], bmax[X], bmax[Y]);
+	    }
+	}
+    }
+    trim_hits.sort();
+    trim_hits.unique(near_equal);
+
+    int hit_cnt = trim_hits.size();
+    cnt = 1;
+    //bu_log("\tdrawisoUCheckForTrim: hit_cnt %d from center  %f %f 0.0 to center %f %f 0.0\n", hit_cnt, from, v , to, v);
+
+    if ((hit_cnt > 0) && ((hit_cnt % 2) == 0)) {
+	/*
+	   if ((hit_cnt % 2) != 0) {
+	//bu_log("V - %f\n", pt.y);
+	if (!trim_hits.empty()) {
+	fastf_t end = trim_hits.front();
+	trim_hits.pop_front();
+	//bu_log("\tfrom - %f, to - %f\n", from, to);
+	fastf_t deltax = (end - from) / 50.0;
+	if (deltax > 0.001) {
+	for (fastf_t x = from; x < end && x < to; x = x + deltax) {
+	ON_3dPoint p = surf->PointAt(x, pt.y);
+	VMOVE(pt1, p);
+	if (x + deltax > end) {
+	if (x + deltax > to) {
+	p = surf->PointAt(to, pt.y);
+	} else {
+	p = surf->PointAt(end, pt.y);
+	}
+	} else {
+	if (x + deltax > to) {
+	p = surf->PointAt(to, pt.y);
+	} else {
+	p = surf->PointAt(x + deltax, pt.y);
+	}
+	}
+	VMOVE(pt2, p);
+
+	//bu_log(
+	//		"\t\t%d from center  %f %f 0.0 to center %f %f 0.0\n",
+	//		cnt++, x, v, x + deltax, v);
+
+	RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
+	}
+	}
+	}
+	}
+	*/
+	while (!trim_hits.empty()) {
+	    fastf_t start = trim_hits.front();
+	    if (start < from) {
+		start = from;
+	    }
+	    trim_hits.pop_front();
+	    fastf_t end = trim_hits.front();
+	    if (end > to) {
+		end = to;
+	    }
+	    trim_hits.pop_front();
+	    //bu_log("\tfrom - %f, to - %f\n", from, to);
+	    fastf_t deltax = (end - start) / 50.0;
+	    if (deltax > 0.001) {
+		for (fastf_t x = start; x < end; x = x + deltax) {
+		    ON_3dPoint p = surf->PointAt(x, pt.y);
+		    VMOVE(pt1, p);
+		    if (x + deltax > end) {
+			p = surf->PointAt(end, pt.y);
+		    } else {
+			p = surf->PointAt(x + deltax, pt.y);
+		    }
+		    VMOVE(pt2, p);
+
+		    //				bu_log(
+		    //						"\t\t%d from center  %f %f 0.0 to center %f %f 0.0\n",
+		    //						cnt++, x, v, x + deltax, v);
+
+		    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+		    RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
+		}
+	    }
+	}
+    }
+
+    return;
+}
+
+
+void
+drawisoVCheckForTrim(const SurfaceTree* st, struct bn_vlblock *vbp, fastf_t from, fastf_t to, fastf_t u, int UNUSED(curveres))
+{
+    struct bu_list *vhead;
+    fastf_t pt1[3], pt2[3];
+    std::list<const BRNode*> m_trims_above;
+    std::list<fastf_t> trim_hits;
+
+    vhead = bn_vlblock_find(vbp, YELLOW);
+
+    const ON_Surface *surf = st->getSurface();
+    const CurveTree *ctree = st->m_ctree;
+    fastf_t vmin, vmax;
+    surf->GetDomain(1, &vmin, &vmax);
+
+    m_trims_above.clear();
+
+    fastf_t tol = 0.001;
+    ON_2dPoint pt;
+    pt.x = u;
+    pt.y = vmin;
+
+    if (ctree != NULL) {
+	m_trims_above.clear();
+	ctree->getLeavesAbove(m_trims_above, pt, tol);
+    }
+
+    int cnt = 1;
+    trim_hits.clear();
+    for (std::list<const BRNode*>::const_iterator i = m_trims_above.begin(); i != m_trims_above.end(); i++, cnt++) {
+	const BRNode* br = *i;
+
+	point_t bmin, bmax;
+	if (!br->m_Vertical) {
+	    br->GetBBox(bmin, bmax);
+
+	    if (((bmin[X] - tol) <= pt[X]) && (pt[X] <= (bmax[X]+tol))) { //if check trim and in BBox
+		fastf_t v = br->getCurveEstimateOfV(pt[X], tol);
+		trim_hits.push_back(v);
+		//bu_log("%d V %d - %f pt %f, %f bmin %f, %f  bmax %f, %f\n", br->m_face->m_face_index, cnt, v, pt.x, pt.y, bmin[X], bmin[Y], bmax[X], bmax[Y]);
+	    }
+	}
+    }
+    trim_hits.sort();
+    trim_hits.unique(near_equal);
+
+    size_t hit_cnt = trim_hits.size();
+    cnt = 1;
+
+    //bu_log("\tdrawisoVCheckForTrim: hit_cnt %d from center  %f %f 0.0 to center %f %f 0.0\n", hit_cnt, u, from, u, to);
+
+    if ((hit_cnt > 0) && ((hit_cnt % 2) == 0)) {
+	/*
+	   if ((hit_cnt % 2) != 0) { //odd starting inside
+	//bu_log("V - %f\n", pt.y);
+	if (!trim_hits.empty()) {
+	fastf_t end = trim_hits.front();
+	trim_hits.pop_front();
+	//bu_log("\tfrom - %f, to - %f\n", from, to);
+	fastf_t deltay = (end - from) / 50.0;
+	if (deltay > 0.001) {
+	for (fastf_t y = from; y < end && y < to; y = y + deltay) {
+	ON_3dPoint p = surf->PointAt(pt.x, y);
+	VMOVE(pt1, p);
+	if (y + deltay > end) {
+	if (y + deltay > to) {
+	p = surf->PointAt(pt.x, to);
+	} else {
+	p = surf->PointAt(pt.x, end);
+	}
+	} else {
+	if (y + deltay > to) {
+	p = surf->PointAt(pt.x, to);
+	} else {
+	p = surf->PointAt(pt.x, y + deltay);
+	}
+	}
+	VMOVE(pt2, p);
+
+	//bu_log(
+	//		"\t\t%d from center  %f %f 0.0 to center %f %f 0.0\n",
+	//		cnt++, u, y, u, y + deltay);
+
+	RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
+	}
+	}
+
+	}
+	}
+	*/
+	while (!trim_hits.empty()) {
+	    fastf_t start = trim_hits.front();
+	    trim_hits.pop_front();
+	    if (start < from) {
+		start = from;
+	    }
+	    fastf_t end = trim_hits.front();
+	    trim_hits.pop_front();
+	    if (end > to) {
+		end = to;
+	    }
+	    //bu_log("\tfrom - %f, to - %f\n", from, to);
+	    fastf_t deltay = (end - start) / 50.0;
+	    if (deltay > 0.001) {
+		for (fastf_t y = start; y < end; y = y + deltay) {
+		    ON_3dPoint p = surf->PointAt(pt.x, y);
+		    VMOVE(pt1, p);
+		    if (y + deltay > end) {
+			p = surf->PointAt(pt.x, end);
+		    } else {
+			p = surf->PointAt(pt.x, y + deltay);
+		    }
+		    VMOVE(pt2, p);
+
+		    //bu_log("\t\t%d from center  %f %f 0.0 to center %f %f 0.0\n",
+		    //		cnt++, u, y, u, y + deltay);
+
+		    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+		    RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
+		}
+	    }
+	}
+    }
+    return;
+}
+
+
+void
+drawisoU(const SurfaceTree* st, struct bn_vlblock *vbp, fastf_t from, fastf_t to, fastf_t v, int curveres)
+{
+    struct bu_list *vhead;
+    fastf_t pt1[3], pt2[3];
+    fastf_t deltau = (to - from) / curveres;
+    const ON_Surface *surf = st->getSurface();
+
+    vhead = bn_vlblock_find(vbp, YELLOW);
+    for (fastf_t u = from; u < to; u = u + deltau) {
+	ON_3dPoint p = surf->PointAt(u, v);
+	//bu_log("p1 2d - %f, %f 3d - %f, %f, %f\n", pt.x, y, p.x, p.y, p.z);
+	VMOVE(pt1, p);
+	if (u + deltau > to) {
+	    p = surf->PointAt(to, v);
+	} else {
+	    p = surf->PointAt(u + deltau, v);
+	}
+	//bu_log("p1 2d - %f, %f 3d - %f, %f, %f\n", pt.x, y+deltay, p.x, p.y, p.z);
+	VMOVE(pt2, p);
+	RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
+    }
+}
+
+
+void
+drawisoV(const SurfaceTree* st, struct bn_vlblock *vbp, fastf_t from, fastf_t to, fastf_t u, int curveres)
+{
+    struct bu_list *vhead;
+    fastf_t pt1[3], pt2[3];
+    fastf_t deltav = (to - from) / curveres;
+    const ON_Surface *surf = st->getSurface();
+
+    vhead = bn_vlblock_find(vbp, YELLOW);
+    for (fastf_t v = from; v < to; v = v + deltav) {
+	ON_3dPoint p = surf->PointAt(u, v);
+	//bu_log("p1 2d - %f, %f 3d - %f, %f, %f\n", pt.x, y, p.x, p.y, p.z);
+	VMOVE(pt1, p);
+	if (v + deltav > to) {
+	    p = surf->PointAt(u, to);
+	} else {
+	    p = surf->PointAt(u, v + deltav);
+	}
+	//bu_log("p1 2d - %f, %f 3d - %f, %f, %f\n", pt.x, y+deltay, p.x, p.y, p.z);
+	VMOVE(pt2, p);
+	RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
+    }
+}
+
+
+
+void
+drawBBNode(const SurfaceTree* st, struct bn_vlblock *vbp, const BBNode * node) {
+    if (node->isLeaf()) {
+	//draw leaf
+	if (node->m_trimmed) {
+	    return; // nothing to do node is trimmed
+	} else if (node->m_checkTrim) { // node may contain trim check all corners
+	    fastf_t u =  node->m_u[0];
+	    fastf_t v = node->m_v[0];
+	    fastf_t from = u;
+	    fastf_t to = node->m_u[1];
+	    //bu_log("drawBBNode: node %x uvmin center %f %f 0.0, uvmax center %f %f 0.0\n", node, node->m_u[0], node->m_v[0], node->m_u[1], node->m_v[1]);
+
+	    drawisoUCheckForTrim(st, vbp, from, to, v, 3); //bottom
+	    v = node->m_v[1];
+	    drawisoUCheckForTrim(st, vbp, from, to, v, 3); //top
+	    from = node->m_v[0];
+	    to = node->m_v[1];
+	    drawisoVCheckForTrim(st, vbp, from, to, u, 3); //left
+	    u = node->m_u[1];
+	    drawisoVCheckForTrim(st, vbp, from, to, u, 3); //right
+
+	    return;
+	} else { // fully untrimmed just draw bottom and right edges
+	    fastf_t u =  node->m_u[0];
+	    fastf_t v = node->m_v[0];
+	    fastf_t from = u;
+	    fastf_t to = node->m_u[1];
+	    drawisoU(st, vbp, from, to, v, 10); //bottom
+	    from = v;
+	    to = node->m_v[1];
+	    drawisoV(st, vbp, from, to, u, 10); //right
+	    return;
+	}
+    } else {
+	if (!node->get_children().empty()) {
+	    for (std::vector<BBNode*>::const_iterator childnode = node->get_children().begin(); childnode
+		    != node->get_children().end(); childnode++) {
+		drawBBNode(st, vbp, *childnode);
+	    }
+	}
+    }
+}
+
+void
+plotFaceFromSurfaceTree(const SurfaceTree* st, struct bn_vlblock *vbp, int UNUSED(isocurveres), int UNUSED(gridres)) {
+    const BBNode *root = st->getRootNode();
+    drawBBNode(st, vbp, root);
+}
 
 #if 0
 
@@ -1277,15 +1643,6 @@ brep_surface_cv_plot(struct bu_vls *vls, const ON_Brep *brep, struct bn_vlblock 
 }
 
 
-/* a binary predicate for std:list implemented as a function */
-static bool
-near_equal(double first, double second)
-{
-    /* FIXME: arbitrary nearness tolerance */
-    return NEAR_EQUAL(first, second, 1e-6);
-}
-
-
 void
 plotFace(const SurfaceTree* st, struct bn_vlblock *vbp, int UNUSED(isocurveres), int gridres)
 {
@@ -1420,399 +1777,10 @@ plotFace(const SurfaceTree* st, struct bn_vlblock *vbp, int UNUSED(isocurveres),
 }
 
 
-void
-drawisoUCheckForTrim(const SurfaceTree* st, struct bn_vlblock *vbp, fastf_t from, fastf_t to, fastf_t v, int UNUSED(curveres))
-{
-    struct bu_list *vhead;
-    fastf_t pt1[3], pt2[3];
-    std::list<const BRNode*> m_trims_right;
-    std::list<fastf_t> trim_hits;
-
-    vhead = bn_vlblock_find(vbp, YELLOW);
-
-    const ON_Surface *surf = st->getSurface();
-    const CurveTree *ctree = st->m_ctree;
-    fastf_t umin, umax;
-    surf->GetDomain(0, &umin, &umax);
-
-    m_trims_right.clear();
-
-    fastf_t tol = 0.001;
-    ON_2dPoint pt;
-    pt.x = umin;
-    pt.y = v;
-
-    if (ctree != NULL) {
-	m_trims_right.clear();
-	ctree->getLeavesRight(m_trims_right, pt, tol);
-    }
-
-    int cnt = 1;
-    //bu_log("V - %f\n", pt.x);
-    trim_hits.clear();
-    for (std::list<const BRNode*>::const_iterator i = m_trims_right.begin(); i != m_trims_right.end(); i++, cnt++) {
-	const BRNode* br = *i;
-
-	point_t bmin, bmax;
-	if (!br->m_Horizontal) {
-	    br->GetBBox(bmin, bmax);
-	    if (((bmin[Y] - tol) <= pt[Y]) && (pt[Y] <= (bmax[Y]+tol))) { //if check trim and in BBox
-		fastf_t u = br->getCurveEstimateOfU(pt[Y], tol);
-		trim_hits.push_back(u);
-		//bu_log("%d U %d - %f pt %f, %f bmin %f, %f  bmax %f, %f\n", br->m_face->m_face_index, cnt, u, pt.x, pt.y, bmin[X], bmin[Y], bmax[X], bmax[Y]);
-	    }
-	}
-    }
-    trim_hits.sort();
-    trim_hits.unique(near_equal);
-
-    int hit_cnt = trim_hits.size();
-    cnt = 1;
-    //bu_log("\tdrawisoUCheckForTrim: hit_cnt %d from center  %f %f 0.0 to center %f %f 0.0\n", hit_cnt, from, v , to, v);
-
-    if ((hit_cnt > 0) && ((hit_cnt % 2) == 0)) {
-	/*
-	   if ((hit_cnt % 2) != 0) {
-	//bu_log("V - %f\n", pt.y);
-	if (!trim_hits.empty()) {
-	fastf_t end = trim_hits.front();
-	trim_hits.pop_front();
-	//bu_log("\tfrom - %f, to - %f\n", from, to);
-	fastf_t deltax = (end - from) / 50.0;
-	if (deltax > 0.001) {
-	for (fastf_t x = from; x < end && x < to; x = x + deltax) {
-	ON_3dPoint p = surf->PointAt(x, pt.y);
-	VMOVE(pt1, p);
-	if (x + deltax > end) {
-	if (x + deltax > to) {
-	p = surf->PointAt(to, pt.y);
-	} else {
-	p = surf->PointAt(end, pt.y);
-	}
-	} else {
-	if (x + deltax > to) {
-	p = surf->PointAt(to, pt.y);
-	} else {
-	p = surf->PointAt(x + deltax, pt.y);
-	}
-	}
-	VMOVE(pt2, p);
-
-	//bu_log(
-	//		"\t\t%d from center  %f %f 0.0 to center %f %f 0.0\n",
-	//		cnt++, x, v, x + deltax, v);
-
-	RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
-	RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
-	}
-	}
-	}
-	}
-	*/
-	while (!trim_hits.empty()) {
-	    fastf_t start = trim_hits.front();
-	    if (start < from) {
-		start = from;
-	    }
-	    trim_hits.pop_front();
-	    fastf_t end = trim_hits.front();
-	    if (end > to) {
-		end = to;
-	    }
-	    trim_hits.pop_front();
-	    //bu_log("\tfrom - %f, to - %f\n", from, to);
-	    fastf_t deltax = (end - start) / 50.0;
-	    if (deltax > 0.001) {
-		for (fastf_t x = start; x < end; x = x + deltax) {
-		    ON_3dPoint p = surf->PointAt(x, pt.y);
-		    VMOVE(pt1, p);
-		    if (x + deltax > end) {
-			p = surf->PointAt(end, pt.y);
-		    } else {
-			p = surf->PointAt(x + deltax, pt.y);
-		    }
-		    VMOVE(pt2, p);
-
-		    //				bu_log(
-		    //						"\t\t%d from center  %f %f 0.0 to center %f %f 0.0\n",
-		    //						cnt++, x, v, x + deltax, v);
-
-		    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
-		    RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
-		}
-	    }
-	}
-    }
-
-    return;
-}
 
 
-void
-drawisoVCheckForTrim(const SurfaceTree* st, struct bn_vlblock *vbp, fastf_t from, fastf_t to, fastf_t u, int UNUSED(curveres))
-{
-    struct bu_list *vhead;
-    fastf_t pt1[3], pt2[3];
-    std::list<const BRNode*> m_trims_above;
-    std::list<fastf_t> trim_hits;
-
-    vhead = bn_vlblock_find(vbp, YELLOW);
-
-    const ON_Surface *surf = st->getSurface();
-    const CurveTree *ctree = st->m_ctree;
-    fastf_t vmin, vmax;
-    surf->GetDomain(1, &vmin, &vmax);
-
-    m_trims_above.clear();
-
-    fastf_t tol = 0.001;
-    ON_2dPoint pt;
-    pt.x = u;
-    pt.y = vmin;
-
-    if (ctree != NULL) {
-	m_trims_above.clear();
-	ctree->getLeavesAbove(m_trims_above, pt, tol);
-    }
-
-    int cnt = 1;
-    trim_hits.clear();
-    for (std::list<const BRNode*>::const_iterator i = m_trims_above.begin(); i != m_trims_above.end(); i++, cnt++) {
-	const BRNode* br = *i;
-
-	point_t bmin, bmax;
-	if (!br->m_Vertical) {
-	    br->GetBBox(bmin, bmax);
-
-	    if (((bmin[X] - tol) <= pt[X]) && (pt[X] <= (bmax[X]+tol))) { //if check trim and in BBox
-		fastf_t v = br->getCurveEstimateOfV(pt[X], tol);
-		trim_hits.push_back(v);
-		//bu_log("%d V %d - %f pt %f, %f bmin %f, %f  bmax %f, %f\n", br->m_face->m_face_index, cnt, v, pt.x, pt.y, bmin[X], bmin[Y], bmax[X], bmax[Y]);
-	    }
-	}
-    }
-    trim_hits.sort();
-    trim_hits.unique(near_equal);
-
-    size_t hit_cnt = trim_hits.size();
-    cnt = 1;
-
-    //bu_log("\tdrawisoVCheckForTrim: hit_cnt %d from center  %f %f 0.0 to center %f %f 0.0\n", hit_cnt, u, from, u, to);
-
-    if ((hit_cnt > 0) && ((hit_cnt % 2) == 0)) {
-	/*
-	   if ((hit_cnt % 2) != 0) { //odd starting inside
-	//bu_log("V - %f\n", pt.y);
-	if (!trim_hits.empty()) {
-	fastf_t end = trim_hits.front();
-	trim_hits.pop_front();
-	//bu_log("\tfrom - %f, to - %f\n", from, to);
-	fastf_t deltay = (end - from) / 50.0;
-	if (deltay > 0.001) {
-	for (fastf_t y = from; y < end && y < to; y = y + deltay) {
-	ON_3dPoint p = surf->PointAt(pt.x, y);
-	VMOVE(pt1, p);
-	if (y + deltay > end) {
-	if (y + deltay > to) {
-	p = surf->PointAt(pt.x, to);
-	} else {
-	p = surf->PointAt(pt.x, end);
-	}
-	} else {
-	if (y + deltay > to) {
-	p = surf->PointAt(pt.x, to);
-	} else {
-	p = surf->PointAt(pt.x, y + deltay);
-	}
-	}
-	VMOVE(pt2, p);
-
-	//bu_log(
-	//		"\t\t%d from center  %f %f 0.0 to center %f %f 0.0\n",
-	//		cnt++, u, y, u, y + deltay);
-
-	RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
-	RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
-	}
-	}
-
-	}
-	}
-	*/
-	while (!trim_hits.empty()) {
-	    fastf_t start = trim_hits.front();
-	    trim_hits.pop_front();
-	    if (start < from) {
-		start = from;
-	    }
-	    fastf_t end = trim_hits.front();
-	    trim_hits.pop_front();
-	    if (end > to) {
-		end = to;
-	    }
-	    //bu_log("\tfrom - %f, to - %f\n", from, to);
-	    fastf_t deltay = (end - start) / 50.0;
-	    if (deltay > 0.001) {
-		for (fastf_t y = start; y < end; y = y + deltay) {
-		    ON_3dPoint p = surf->PointAt(pt.x, y);
-		    VMOVE(pt1, p);
-		    if (y + deltay > end) {
-			p = surf->PointAt(pt.x, end);
-		    } else {
-			p = surf->PointAt(pt.x, y + deltay);
-		    }
-		    VMOVE(pt2, p);
-
-		    //bu_log("\t\t%d from center  %f %f 0.0 to center %f %f 0.0\n",
-		    //		cnt++, u, y, u, y + deltay);
-
-		    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
-		    RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
-		}
-	    }
-	}
-    }
-    return;
-}
 
 
-void
-drawisoU(const SurfaceTree* st, struct bn_vlblock *vbp, fastf_t from, fastf_t to, fastf_t v, int curveres)
-{
-    struct bu_list *vhead;
-    fastf_t pt1[3], pt2[3];
-    fastf_t deltau = (to - from) / curveres;
-    const ON_Surface *surf = st->getSurface();
-
-    vhead = bn_vlblock_find(vbp, YELLOW);
-    for (fastf_t u = from; u < to; u = u + deltau) {
-	ON_3dPoint p = surf->PointAt(u, v);
-	//bu_log("p1 2d - %f, %f 3d - %f, %f, %f\n", pt.x, y, p.x, p.y, p.z);
-	VMOVE(pt1, p);
-	if (u + deltau > to) {
-	    p = surf->PointAt(to, v);
-	} else {
-	    p = surf->PointAt(u + deltau, v);
-	}
-	//bu_log("p1 2d - %f, %f 3d - %f, %f, %f\n", pt.x, y+deltay, p.x, p.y, p.z);
-	VMOVE(pt2, p);
-	RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
-	RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
-    }
-}
-
-
-void
-drawisoV(const SurfaceTree* st, struct bn_vlblock *vbp, fastf_t from, fastf_t to, fastf_t u, int curveres)
-{
-    struct bu_list *vhead;
-    fastf_t pt1[3], pt2[3];
-    fastf_t deltav = (to - from) / curveres;
-    const ON_Surface *surf = st->getSurface();
-
-    vhead = bn_vlblock_find(vbp, YELLOW);
-    for (fastf_t v = from; v < to; v = v + deltav) {
-	ON_3dPoint p = surf->PointAt(u, v);
-	//bu_log("p1 2d - %f, %f 3d - %f, %f, %f\n", pt.x, y, p.x, p.y, p.z);
-	VMOVE(pt1, p);
-	if (v + deltav > to) {
-	    p = surf->PointAt(u, to);
-	} else {
-	    p = surf->PointAt(u, v + deltav);
-	}
-	//bu_log("p1 2d - %f, %f 3d - %f, %f, %f\n", pt.x, y+deltay, p.x, p.y, p.z);
-	VMOVE(pt2, p);
-	RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
-	RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
-    }
-}
-
-
-void
-drawBBNode(const SurfaceTree* st, struct bn_vlblock *vbp, const BBNode * node) {
-    if (node->isLeaf()) {
-	//draw leaf
-	if (node->m_trimmed) {
-	    return; // nothing to do node is trimmed
-	} else if (node->m_checkTrim) { // node may contain trim check all corners
-	    fastf_t u =  node->m_u[0];
-	    fastf_t v = node->m_v[0];
-	    fastf_t from = u;
-	    fastf_t to = node->m_u[1];
-	    //bu_log("drawBBNode: node %x uvmin center %f %f 0.0, uvmax center %f %f 0.0\n", node, node->m_u[0], node->m_v[0], node->m_u[1], node->m_v[1]);
-
-	    drawisoUCheckForTrim(st, vbp, from, to, v, 3); //bottom
-	    v = node->m_v[1];
-	    drawisoUCheckForTrim(st, vbp, from, to, v, 3); //top
-	    from = node->m_v[0];
-	    to = node->m_v[1];
-	    drawisoVCheckForTrim(st, vbp, from, to, u, 3); //left
-	    u = node->m_u[1];
-	    drawisoVCheckForTrim(st, vbp, from, to, u, 3); //right
-
-	    return;
-	} else { // fully untrimmed just draw bottom and right edges
-	    fastf_t u =  node->m_u[0];
-	    fastf_t v = node->m_v[0];
-	    fastf_t from = u;
-	    fastf_t to = node->m_u[1];
-	    drawisoU(st, vbp, from, to, v, 10); //bottom
-	    from = v;
-	    to = node->m_v[1];
-	    drawisoV(st, vbp, from, to, u, 10); //right
-	    return;
-	}
-    } else {
-	if (!node->get_children().empty()) {
-	    for (std::vector<BBNode*>::const_iterator childnode = node->get_children().begin(); childnode
-		    != node->get_children().end(); childnode++) {
-		drawBBNode(st, vbp, *childnode);
-	    }
-	}
-    }
-}
-
-
-void
-plotFaceFromSurfaceTree(const SurfaceTree* st, struct bn_vlblock *vbp, int UNUSED(isocurveres), int UNUSED(gridres)) {
-    const BBNode *root = st->getRootNode();
-    drawBBNode(st, vbp, root);
-}
-
-
-int
-brep_isosurface_plot(struct bu_vls *vls, const ON_Brep *brep, struct bn_vlblock *vbp, int index, int plotres)
-{
-    ON_wString wstr;
-    ON_TextLog tl(wstr);
-
-    if (brep == NULL) {
-	return GED_ERROR;
-    }
-    if (!brep->IsValid(&tl)) {
-	bu_log("brep is NOT valid");
-	return GED_ERROR;
-    }
-    if (index == -1) {
-	for (index = 0; index < brep->m_F.Count(); index++) {
-	    const ON_BrepFace& face = brep->m_F[index];
-	    const SurfaceTree st(&face, true, 0);
-	    plottrim(face, vbp, plotres, true);
-	    plotFaceFromSurfaceTree(&st, vbp, plotres, plotres);
-	}
-    } else if (index < brep->m_F.Count()) {
-	const ON_BrepFaceArray& faces = brep->m_F;
-	if (index < faces.Count()) {
-	    const ON_BrepFace& face = faces[index];
-	    const SurfaceTree st(&face, true, 0);
-	    plottrim(face, vbp, plotres, true);
-	    plotFaceFromSurfaceTree(&st, vbp, plotres, plotres);
-	}
-    }
-
-    bu_vls_printf(vls, "%s", ON_String(wstr).Array());
-    return GED_OK;
-}
 
 
 int
@@ -2373,7 +2341,7 @@ _brep_cmd_curve_2d_plot(void *bs, int argc, const char **argv)
     }
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&sname, "_BC_C3_%s", gib->gb->solid_name.c_str());
+    bu_vls_sprintf(&sname, "_BC_C2_%s", gib->gb->solid_name.c_str());
     _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
     bu_vls_free(&sname);
 
@@ -2539,7 +2507,7 @@ _brep_cmd_face_plot(void *bs, int argc, const char **argv)
     }
     // If we have nothing, report all
     if (!elements.size()) {
-	for (int i = 0; i < brep->m_E.Count(); i++) {
+	for (int i = 0; i < brep->m_F.Count(); i++) {
 	    elements.insert(i);
 	}
     }
@@ -2575,7 +2543,7 @@ _brep_cmd_face_plot(void *bs, int argc, const char **argv)
     }
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&sname, "_BC_E_%s", gib->gb->solid_name.c_str());
+    bu_vls_sprintf(&sname, "_BC_F_%s", gib->gb->solid_name.c_str());
     _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
     bu_vls_free(&sname);
 
@@ -2606,7 +2574,7 @@ _brep_cmd_face_2d_plot(void *bs, int argc, const char **argv)
     }
     // If we have nothing, report all
     if (!elements.size()) {
-	for (int i = 0; i < brep->m_E.Count(); i++) {
+	for (int i = 0; i < brep->m_F.Count(); i++) {
 	    elements.insert(i);
 	}
     }
@@ -2643,7 +2611,7 @@ _brep_cmd_face_2d_plot(void *bs, int argc, const char **argv)
     }
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&sname, "_BC_E_%s", gib->gb->solid_name.c_str());
+    bu_vls_sprintf(&sname, "_BC_F2D_%s", gib->gb->solid_name.c_str());
     _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
     bu_vls_free(&sname);
 
@@ -2660,7 +2628,58 @@ _brep_cmd_isosurface_plot(void *bs, int argc, const char **argv)
 	return GED_OK;
     }
 
-    return GED_ERROR;
+    argc--;argv++;
+
+    struct _ged_brep_iplot *gib = (struct _ged_brep_iplot *)bs;
+    const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
+    struct bu_color *color = gib->gb->color;
+    struct bn_vlblock *vbp = gib->gb->vbp;
+    int plotres = gib->gb->plotres;
+
+    std::set<int> elements;
+    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
+	return GED_ERROR;
+    }
+    // If we have nothing, report all
+    if (!elements.size()) {
+	for (int i = 0; i < brep->m_F.Count(); i++) {
+	    elements.insert(i);
+	}
+    }
+
+    std::set<int>::iterator e_it;
+    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+
+	int fi = *e_it;
+
+
+	ON_wString wstr;
+	ON_TextLog tl(wstr);
+
+	unsigned char rgb[3];
+	bu_color_to_rgb_chars(color, rgb);
+
+	if (brep == NULL) {
+	    return GED_ERROR;
+	}
+	if (!brep->IsValid(&tl)) {
+	    return GED_ERROR;
+	}
+
+	const ON_BrepFace &face = brep->m_F[fi];
+	const SurfaceTree st(&face, true, 0);
+	plotface(face, vbp, plotres, true);
+	plotFaceFromSurfaceTree(&st, vbp, plotres, plotres);
+
+	bu_vls_printf(gib->vls, "%s", ON_String(wstr).Array());
+    }
+
+    struct bu_vls sname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&sname, "_BC_I_%s", gib->gb->solid_name.c_str());
+    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    bu_vls_free(&sname);
+
+    return GED_OK;
 }
 
 // L - topological trimming loops in 3D
