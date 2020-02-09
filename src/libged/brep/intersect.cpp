@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file intersect.cpp
+/** @file libged/brep/intersect.cpp
  *
- * Brief description
+ * Calculate intersections between brep object subcomponents.
  *
  */
 

@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file plot.cpp
+/** @file libged/brep/plot.cpp
  *
- * Brief description
+ * Visualization logic for individual subcomponents of brep objects.
  *
  */
 

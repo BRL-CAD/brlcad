@@ -19,7 +19,8 @@
  */
 /** @file conversion.cpp
  *
- * Routines for converting 
+ * Routines for converting non-brep objects and hierarchies to brep
+ * objects
  *
  */
 

@@ -1,4 +1,4 @@
-/*                  P L O T _ T I K Z . C P P
+/*                      T I K Z . C P P
  * BRL-CAD
  *
  * Copyright (c) 2008-2019 United States Government as represented by
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/brep/plot_tikz.cpp
+/** @file libged/brep/tikz.cpp
  *
  * The brep command logic for exporting Tikz plotting files.
  *

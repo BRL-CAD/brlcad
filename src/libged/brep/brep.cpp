@@ -1,7 +1,7 @@
-/*                         B R E P . C
+/*                        B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2019 United States Government as represented by
+ * Copyright (c) 2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/brep.c
+/** @file libged/brep/brep.cpp
  *
- * The brep command.
+ * The LIBGED brep command.
  *
  */
 

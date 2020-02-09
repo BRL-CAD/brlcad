@@ -17,9 +17,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file info.cpp
+/** @file libged/brep/info.cpp
  *
- * Brief description
+ * LIBGED brep info subcommand implementation - reports detailed information
+ * on the structure of individual brep objects.
  *
  */
 
