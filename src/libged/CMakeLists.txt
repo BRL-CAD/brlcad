@@ -78,11 +78,11 @@ set(LIBGED_SOURCES
   bot_vertex_fuse.c
   brep/brep.cpp
   brep/conversion.cpp
+  brep/csg.cpp
   brep/info.cpp
   brep/intersect.cpp
   brep/plot.cpp
-  brep/plot_tikz.cpp
-  brep/shape_recognition.cpp
+  brep/tikz.cpp
   cat.c
   cc.c
   center.cpp
