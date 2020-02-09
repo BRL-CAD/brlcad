@@ -57,6 +57,87 @@ extern "C" {
 RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, db_op_t operation);
 }
 
+// Indices are specified for info and plot commands - parsing logic is common to both
+int
+_brep_indices(std::set<int> &elements, struct bu_vls *vls, int argc, const char **argv) {
+    std::set<int> indices;
+    for (int i = 0; i < argc; i++) {
+	std::string s1(argv[i]);
+	size_t pos_dash = s1.find_first_of("-:", 0);
+	size_t pos_comma = s1.find_first_of(",/;", 0);
+	if (pos_dash != std::string::npos) {
+	    // May have a range - find out
+	    std::string s2 = s1.substr(0, pos_dash);
+	    s1.erase(0, pos_dash + 1);
+	    char *n1 = bu_strdup(s1.c_str());
+	    char *n2 = bu_strdup(s2.c_str());
+	    int val1, val2, vtmp;
+	    if (bu_opt_int(NULL, 1, (const char **)&n1, &val1) < 0) {
+		bu_vls_printf(vls, "Invalid index specification: %s\n", n1);
+		bu_free(n1, "n1");
+		bu_free(n2, "n2");
+		return GED_ERROR;
+	    } 
+	    if (bu_opt_int(NULL, 1, (const char **)&n2, &val2) < 0) {
+		bu_vls_printf(vls, "Invalid index specification: %s\n", n2);
+		bu_free(n1, "n1");
+		bu_free(n2, "n2");
+		return GED_ERROR;
+	    }
+	    bu_free(n1, "n1");
+	    bu_free(n2, "n2");
+	    if (val1 > val2) {
+		vtmp = val2;
+		val2 = val1;
+		val1 = vtmp;
+	    }
+	    for (int j = val1; j <= val2; j++) {
+		elements.insert(j);
+	    }
+	    continue;
+	}
+	if (pos_comma != std::string::npos) {
+	    // May have a set - find out
+	    while (pos_comma != std::string::npos) {
+		std::string ss = s1.substr(0, pos_comma);
+		char *n1 = bu_strdup(ss.c_str());
+		int val1;
+		if (bu_opt_int(NULL, 1, (const char **)&n1, &val1) < 0) {
+		    bu_vls_printf(vls, "Invalid index specification: %s\n", n1);
+		    bu_free(n1, "n1");
+		    return GED_ERROR;
+		} else {
+		    elements.insert(val1);
+		}
+		s1.erase(0, pos_comma + 1);
+		pos_comma = s1.find_first_of(",/;", 0);
+	    }
+	    if (s1.length()) {
+		char *n1 = bu_strdup(s1.c_str());
+		int val1;
+		if (bu_opt_int(NULL, 1, (const char **)&n1, &val1) < 0) {
+		    bu_vls_printf(vls, "Invalid index specification: %s\n", n1);
+		    bu_free(n1, "n1");
+		    return GED_ERROR;
+		} 
+		elements.insert(val1);
+	    }
+	    continue;
+	}
+
+	// Nothing fancy looking - see if its a number
+	int val = 0;
+	if (bu_opt_int(NULL, 1, &argv[i], &val) >= 0) {
+	    elements.insert(val);
+	} else {
+	    bu_vls_printf(vls, "Invalid index specification: %s\n", argv[i]);
+	    return GED_ERROR;
+	}
+    }
+
+    return GED_OK;
+}
+
 static int
 _brep_cmd_msgs(void *bs, int argc, const char **argv, const char *us, const char *ps)
 {

@@ -28,6 +28,7 @@
 
 #include "common.h"
 
+#include <set>
 #include <string>
 #include <time.h>
 
@@ -87,6 +88,9 @@ struct _ged_brep_info {
     const struct bu_cmdtab *cmds = NULL;
     struct bu_opt_desc *gopts = NULL;
 };
+
+int
+_brep_indices(std::set<int> &elements, struct bu_vls *vls, int argc, const char **argv);
 
 /* defined in draw.c */
 extern void _ged_cvt_vlblock_to_solids(struct ged *gedp,
