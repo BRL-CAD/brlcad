@@ -143,7 +143,7 @@ conv_tree(ON_Brep **b, const union tree *t, const struct db_i *dbip)
 }
 
 
-extern "C" void
+void
 rt_comb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol), const struct db_i *dbip)
 {
     RT_CK_DB_INTERNAL(ip);
