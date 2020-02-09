@@ -61,20 +61,32 @@ extern "C" {
 RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, db_op_t operation);
 }
 
+static int
+_brep_cmd_msgs(void *bs, int argc, const char **argv, const char *us, const char *ps)
+{
+    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    if (argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
+	bu_vls_printf(gb->gedp->ged_result_str, "%s\n%s\n", us, ps);
+	return 1;
+    }
+    if (argc == 2 && BU_STR_EQUAL(argv[1], PURPOSEFLAG)) {
+	bu_vls_printf(gb->gedp->ged_result_str, "%s\n", ps);
+	return 1;
+    }
+    return 0;
+}
+
+
 extern "C" int
 _brep_cmd_boolean(void *bs, int argc, const char **argv)
 {
+    const char *usage_string = "brep <objname1> bool <op> <objname2> <output_objname>";
     const char *purpose_string = "perform BRep boolean evaluations";
-    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
-    if (argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
-	bu_vls_printf(gb->gedp->ged_result_str, "brep <objname> \n%s\n", purpose_string);
-	return GED_OK;
-    }
-    if (argc == 2 && BU_STR_EQUAL(argv[1], PURPOSEFLAG)) {
-	bu_vls_printf(gb->gedp->ged_result_str, "%s\n", purpose_string);
+    if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
     }
 
+    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
     struct ged *gedp = gb->gedp;
     if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
 	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
@@ -124,16 +136,14 @@ _brep_cmd_boolean(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_bot(void *bs, int argc, const char **argv)
 {
+    const char *usage_string = "brep <objname> bot <output_name>";
     const char *purpose_string = "generate a triangle mesh from the BRep object";
+    if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
-    if (argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
-	bu_vls_printf(gb->gedp->ged_result_str, "brep <objname> \n%s\n", purpose_string);
-	return GED_OK;
-    }
-    if (argc == 2 && BU_STR_EQUAL(argv[1], PURPOSEFLAG)) {
-	bu_vls_printf(gb->gedp->ged_result_str, "%s\n", purpose_string);
-	return GED_OK;
-    }
+    struct ged *gedp = gb->gedp;
 
     argc--; argv++;
 
@@ -142,7 +152,6 @@ _brep_cmd_bot(void *bs, int argc, const char **argv)
 	return GED_ERROR;
     }
 
-    struct ged *gedp = gb->gedp;
     const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gb->gedp->ged_wdbp->wdb_ttol;
     struct rt_brep_internal *bi = (struct rt_brep_internal*)gb->intern.idb_ptr;
     struct bu_vls bname_bot = BU_VLS_INIT_ZERO;
@@ -205,18 +214,13 @@ _brep_cmd_bot(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_bots(void *bs, int argc, const char **argv)
 {
+    const char *usage_string = "brep <objname1> bots <objname2> [objname3 ...]";
     const char *purpose_string = "generate overlap free meshes for multiple BRep objects";
+    if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
-    if (argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
-	bu_vls_printf(gb->gedp->ged_result_str, "brep <objname> \n%s\n", purpose_string);
-	return GED_OK;
-    }
-    if (argc == 2 && BU_STR_EQUAL(argv[1], PURPOSEFLAG)) {
-	bu_vls_printf(gb->gedp->ged_result_str, "%s\n", purpose_string);
-	return GED_OK;
-    }
-
-
     struct ged *gedp = gb->gedp;
     if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
 	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
@@ -226,7 +230,7 @@ _brep_cmd_bots(void *bs, int argc, const char **argv)
     argc--; argv++;
 
     if (!argc || !argv) {
-	bu_vls_printf(gb->gedp->ged_result_str, "brep <objname> \n%s\n", purpose_string);
+	bu_vls_printf(gb->gedp->ged_result_str, "%s\n", usage_string);
 	return GED_ERROR;
     }
 
@@ -335,16 +339,14 @@ _brep_cmd_bots(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_brep(void *bs, int argc, const char **argv)
 {
+    const char *usage_string = "brep <objname1> brep [opts] [output_name]";
     const char *purpose_string = "generate a BRep representation of the specified object";
+    // TODO - this needs a more elabroate help - it has actual options per bu_opt_desc...
+    if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
-    if (argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
-	bu_vls_printf(gb->gedp->ged_result_str, "brep <objname> [output_objname]\n%s\n", purpose_string);
-	return GED_OK;
-    }
-    if (argc == 2 && BU_STR_EQUAL(argv[1], PURPOSEFLAG)) {
-	bu_vls_printf(gb->gedp->ged_result_str, "%s\n", purpose_string);
-	return GED_OK;
-    }
 
     argc--;argv++;
 
@@ -433,17 +435,14 @@ _brep_cmd_brep(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_csg(void *bs, int argc, const char **argv)
 {
+    const char *usage_string = "brep <objname> csg";
     const char *purpose_string = "generate a CSG representation of the specified BRep object";
+    if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
     struct ged *gedp = gb->gedp;
-    if (argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
-	bu_vls_printf(gb->gedp->ged_result_str, "brep <objname> \n%s\n", purpose_string);
-	return GED_OK;
-    }
-    if (argc == 2 && BU_STR_EQUAL(argv[1], PURPOSEFLAG)) {
-	bu_vls_printf(gb->gedp->ged_result_str, "%s\n", purpose_string);
-	return GED_OK;
-    }
 
     struct bu_vls bname_csg;
     bu_vls_init(&bname_csg);
@@ -462,17 +461,13 @@ _brep_cmd_csg(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_flip(void *bs, int argc, const char **argv)
 {
+    const char *usage_string = "brep <objname> flip";
     const char *purpose_string = "flip all face normals on the specified BRep object";
-    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
-    if (argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
-	bu_vls_printf(gb->gedp->ged_result_str, "brep <objname> flip\n%s\n", purpose_string);
-	return GED_OK;
-    }
-    if (argc == 2 && BU_STR_EQUAL(argv[1], PURPOSEFLAG)) {
-	bu_vls_printf(gb->gedp->ged_result_str, "%s\n", purpose_string);
+    if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
     }
 
+    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
 
     if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
 	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
@@ -502,18 +497,13 @@ _brep_cmd_flip(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_info(void *bs, int argc, const char **argv)
 {
+    const char *usage_string = "brep <objname> info";
     const char *purpose_string = "print detailed information about components of the BRep object";
+    // TODO - need much more elaborate help for info
+    if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
-    if (argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
-	bu_vls_printf(gb->gedp->ged_result_str, "brep <objname> info [args]\n%s\n", purpose_string);
-	return GED_OK;
-    }
-    if (argc == 2 && BU_STR_EQUAL(argv[1], PURPOSEFLAG)) {
-	bu_vls_printf(gb->gedp->ged_result_str, "%s\n", purpose_string);
-	return GED_OK;
-    }
-
-
     struct ged *gedp = gb->gedp;
     if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
 	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
