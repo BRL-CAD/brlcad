@@ -100,6 +100,7 @@ plottrim(const ON_BrepTrim &trim, struct bn_vlblock *vbp, int plotres, bool dim3
     return;
 }
 
+#define LINE_PLOT(p1, p2) pdv_3move(brep_plot_file(), p1); pdv_3line(brep_plot_file(), p1, p2)
 void
 plotcurve(const ON_Curve &curve, struct bn_vlblock *vbp, int plotres, const int red = 255, const int green = 255, const int blue = 0)
 {
@@ -722,32 +723,13 @@ brep_plot_file(const char *pname = NULL)
     return plot;
 }
 
-#define M_COLOR_PLOT(c) pl_color(brep_plot_file(), c)
-#define COLOR_PLOT(r, g, b) pl_color(brep_plot_file(), (r), (g), (b))
-#define M_PT_PLOT(p) {                          \
-            point_t pp, ppp;                        \
-            vect_t grow;                            \
-            VSETALL(grow, 0.01);                    \
-            VADD2(pp, p, grow);                     \
-            VSUB2(ppp, p, grow);                    \
-            pdv_3box(brep_plot_file(), pp, ppp);    \
-        }
-#define PT_PLOT(p) {                            \
-            point_t pp;                             \
-            VSCALE(pp, p, 1.001);                   \
-            pdv_3box(brep_plot_file(), p, pp);      \
-        }
-#define LINE_PLOT(p1, p2) pdv_3move(brep_plot_file(), p1); pdv_3line(brep_plot_file(), p1, p2)
-#define BB_PLOT(p1, p2) pdv_3box(brep_plot_file(), p1, p2)
-
-
 #define ARB_FACE(valp, a, b, c, d)			\
     RT_ADD_VLIST(vhead, valp[a], BN_VLIST_LINE_MOVE);	\
     RT_ADD_VLIST(vhead, valp[b], BN_VLIST_LINE_DRAW);	\
     RT_ADD_VLIST(vhead, valp[c], BN_VLIST_LINE_DRAW);	\
     RT_ADD_VLIST(vhead, valp[d], BN_VLIST_LINE_DRAW);
 
-#define BB_PLOT_VLIST(min, max) {		\
+#define BB_PLOT(min, max) {		\
     fastf_t pt[8][3];			\
     VSET(pt[0], max[X], min[Y], min[Z]);	\
     VSET(pt[1], max[X], max[Y], min[Z]);	\
@@ -796,7 +778,7 @@ plotsurfaceleafs(const SurfaceTree* surf, struct bn_vlblock *vbp, bool dim3d)
 	    VSET(min, bb->m_u[0]+0.001, bb->m_v[0]+0.001, 0.0);
 	    VSET(max, bb->m_u[1]-0.001, bb->m_v[1]-0.001, 0.0);
 	}
-	BB_PLOT_VLIST(min, max);
+	BB_PLOT(min, max);
     }
 
     return leaves.size();
@@ -837,7 +819,7 @@ plottrimleafs(const SurfaceTree* st, struct bn_vlblock *vbp, bool dim3d)
 	    VMOVE(min, p1);
 	    VMOVE(max, p2);
 	}
-	BB_PLOT_VLIST(min, max);
+	BB_PLOT(min, max);
     }
 
     return;
