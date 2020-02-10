@@ -5,7 +5,8 @@ set(distcheck_files
   ayam_hyperbolid.3dm
   single_bad_edge.cdtmesh
   plate_mode_samples.g
-  plate_mode_samples.stp
+  plate_mode_samples_rhino.stp
+  plate_mode_samples_creo.stp
   cyl_hole.g
   cyls_holes.g
   freecad_surface.stp
