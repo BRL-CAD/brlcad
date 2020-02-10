@@ -1,0 +1,36 @@
+include_directories(
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  )
+
+set(STEP_SCHEMA_FILE ${STEPCODE_DIR}/data/ap203/ap203.exp)
+add_definitions(-DAP203)
+
+set(lelem_LIBS
+  libbrep
+  libbn
+  libbu
+  steputils
+  stepeditor
+  stepdai
+  stepcore
+  ${OPENNURBS_LIBRARIES}
+  )
+
+GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} list_elements)
+
+set(list_elements_srcs ${express_srcs} list_elements.cpp)
+BRLCAD_ADDEXEC(list_elements "${list_elements_srcs}" "${lelem_LIBS}" NO_STRICT NO_INSTALL)
+add_dependencies(list_elements step-express-${SCHEMA_NAME}-list_elements)
+set_property(TARGET list_elements APPEND PROPERTY INCLUDE_DIRECTORIES "${list_elements_SCHEMA_OUT_DIR}")
+
+if(MSVC)
+  set_target_properties(list_elements PROPERTIES COMPILE_DEFINITIONS "${gstep_IMPORTS}")
+endif(MSVC)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
