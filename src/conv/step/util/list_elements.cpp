@@ -23,51 +23,78 @@
 
 class SEarrIterator {
     private:
-        const STEPentity ** SEarr; // Array of pointers to STEPentity's
-        int index;           // current index
-        int size;            // size of array
+	const STEPentity ** SEarr; // Array of pointers to STEPentity's
+	int index;           // current index
+	int size;            // size of array
     public:
-        // Construct the iterator with a given array and its size
-        SEarrIterator( const STEPentity ** entarr, int sz ) {
-            SEarr = entarr;
-            index = 0;
-            size = sz;
-        }
+	// Construct the iterator with a given array and its size
+	SEarrIterator( const STEPentity ** entarr, int sz ) {
+	    SEarr = entarr;
+	    index = 0;
+	    size = sz;
+	}
 
-        // set the value of the index: SEitr = 3
-        void operator= ( int newindex ) {
-            index = newindex;
-        }
+	// set the value of the index: SEitr = 3
+	void operator= ( int newindex ) {
+	    index = newindex;
+	}
 
-        // check if we're out of range: if (!SEitr)...
-        int operator!() {
-            return ( index < size );
-        }
+	// check if we're out of range: if (!SEitr)...
+	int operator!() {
+	    return ( index < size );
+	}
 
-        // return current element: SEptr = SEitr()
-        STEPentity * operator()() {
-            return ( STEPentity * )SEarr[index];
-        }
+	// return current element: SEptr = SEitr()
+	STEPentity * operator()() {
+	    return ( STEPentity * )SEarr[index];
+	}
 
-        // PREFIX increment operator: ++SEitr
-        int operator++ () {
-            index++;
-            return operator!();
-        }
+	// PREFIX increment operator: ++SEitr
+	int operator++ () {
+	    index++;
+	    return operator!();
+	}
 };
 
 void PrintEntity( STEPentity * ent ) {
+    EntityDescriptor * entDesc = 0;
     cout << ent->EntityName() << " :\n";
     //cout << "Populating " << ent->EntityName() << " which has ";
     //cout << attrCount << " attributes." << endl;
+
+
+    const EntityDescriptorList * supertypeList = &(ent->eDesc->Supertypes());
+    EntityDescLinkNode * supertypePtr = (EntityDescLinkNode *)supertypeList->GetHead();
+    entDesc = 0;
+    while (supertypePtr != 0) {
+	entDesc = supertypePtr->EntityDesc();
+	bool logi = entDesc->AbstractEntity().asInt();
+	if(logi == false) {
+	    cout << "     Subtype of: " << entDesc->Name() << "\n";
+	}
+	supertypePtr = ( EntityDescLinkNode * )supertypePtr->NextNode();
+    }
+
+
+    const EntityDescriptorList * subtypeList = &(ent->eDesc->Subtypes());
+    EntityDescLinkNode * subtypePtr = (EntityDescLinkNode *)subtypeList->GetHead();
+    entDesc = 0;
+    while (subtypePtr != 0) {
+	entDesc = subtypePtr->EntityDesc();
+	bool logi = entDesc->AbstractEntity().asInt();
+	if(logi == false) {
+	    cout << "     Supertype of:  " << entDesc->Name() << "\n";
+	}
+	subtypePtr = ( EntityDescLinkNode * )subtypePtr->NextNode();
+    }
 
     ent->ResetAttributes();    // start us walking at the top of the list
 
     STEPattribute * attr = ent->NextAttribute();
     while ( attr != 0 ) {
-        const AttrDescriptor * attrDesc = attr->aDesc;
-        cout << "     " << attrDesc->Name() << "[" << attrDesc->TypeName() << "]\n";
-        attr = ent->NextAttribute();
+	const AttrDescriptor * attrDesc = attr->aDesc;
+	cout << "     " << attrDesc->Name() << "[" << attrDesc->TypeName() << "]\n";
+	attr = ent->NextAttribute();
     }
     cout << "\n";
 }
@@ -118,16 +145,16 @@ int main() {
 
     const EntityDescriptor * ent;  // needs to be declared const...
     for ( int i = 0; i < num_ents; i++ ) {
-        ent = registry->NextEntity();
+	ent = registry->NextEntity();
 
-        // Build object, using its name, through the registry
-        SEarray[i] = registry->ObjCreate( ent->Name() );
+	// Build object, using its name, through the registry
+	SEarray[i] = registry->ObjCreate( ent->Name() );
 
-        // Add each realized entity to the instance list
-        instance_list.Append( SEarray[i], completeSE );
+	// Add each realized entity to the instance list
+	instance_list.Append( SEarray[i], completeSE );
 
-        // Put some data into each instance
-        PrintEntity( SEarray[i] );
+	// Put some data into each instance
+	PrintEntity( SEarray[i] );
     }
 
     // Print out all entities
@@ -136,3 +163,12 @@ int main() {
     exit( 0 );
 }
 
+
+// Local Variables:
+// tab-width: 8
+// mode: C++
+// c-basic-offset: 4
+// indent-tabs-mode: t
+// c-file-style: "stroustrup"
+// End:
+// ex: shiftwidth=4 tabstop=8
