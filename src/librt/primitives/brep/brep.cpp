@@ -976,6 +976,22 @@ containsNearHit(const std::list<brep_hit> *hits)
 }
 
 
+static double
+brep_platemode_thickness(const struct xray& ray, const brep_hit& hit, const struct brep_specific& bs)
+{
+    double los = bs.plate_mode_thickness;
+
+    if (!bs.plate_mode_nocos) {
+
+	double dot = fabs(VDOT(hit.normal, ray.r_dir));
+	los = los / dot;
+
+    }
+
+    return los;
+}
+
+
 /**
  * Intersect a ray with a brep.  If an intersection occurs, a struct
  * seg will be acquired and filled in.
@@ -1310,8 +1326,9 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 
     if (bs->plate_mode) {
 
-	/* Newer plate mode enabled version of logic, causing problems with NIST3 (see regress/nurbs
-	 * test */
+	/* Newer plate mode enabled version of logic, causing problems
+	 * with NIST3 (see regress/nurbs test)
+	 */
 
 	size_t nhits = hits.size();
 	if (nhits > 0) {
@@ -1321,10 +1338,8 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	    for (std::list<brep_hit>::const_iterator i = hits.begin(); i != hits.end(); ++i) {
 		const brep_hit& in = *i;
 		const brep_hit& out = *i;
-		double los = (bs->plate_mode_thickness < 0) ? -bs->plate_mode_thickness : bs->plate_mode_thickness;
-		if (!bs->plate_mode_nocos) {
-		    los = los / fabs(VDOT(in.normal, rp->r_dir));
-		}
+
+		double los = brep_platemode_thickness(*rp, in, *bs);
 
 		struct seg* segp;
 		RT_GET_SEG(segp, ap->a_resource);
@@ -2722,7 +2737,7 @@ rt_brep_plate_mode_getvals(double *pthickness, int *nocos, const struct rt_db_in
 	if (pval != NULL) {
 	    char *endptr = NULL;
 	    errno = 0;
-	    (*pthickness) = strtod(pval, &endptr);
+	    (*pthickness) = fabs(strtod(pval, &endptr));
 	    if ((endptr != NULL && strlen(endptr) > 0) || (errno == ERANGE)) {
 		(*pthickness) = 0.0;
 	    }
