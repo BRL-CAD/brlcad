@@ -7,6 +7,7 @@ set(distcheck_files
   plate_mode_samples.stp
   cyl_hole.g
   cyls_holes.g
+  freecad_surface.g
   nurbs_csg.g
   vsp.stp
   )
