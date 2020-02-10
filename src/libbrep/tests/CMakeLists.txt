@@ -8,6 +8,7 @@ set(distcheck_files
   cyl_hole.g
   cyls_holes.g
   nurbs_csg.g
+  vsp.stp
   )
 
 BRLCAD_ADDEXEC(brep_cdt_mesh brep_cdt_mesh.cpp "libbrep;libbg;libbn;libbu" TEST)
