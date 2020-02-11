@@ -116,6 +116,9 @@ struct gcv_opts
 
     /* objects to convert */
     const char * const *object_names;
+
+    /* Apply color randomization */
+    unsigned randomize_colors;
 };
 
 
