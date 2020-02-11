@@ -1003,15 +1003,15 @@ brep_platemode_thickness(const struct xray& ray, const brep_hit& hit, const stru
     ON_3dPoint p = surf->PointAt(uvpt[0], uvpt[1]);
     double dist_to_surf = p.DistanceTo(los_pnt);
 
-    const int MAX_ITERATIONS = 10;
+    const int MAX_ITERATIONS = 1000;
     const double stepsize = bs.plate_mode_thickness * 0.1;
     int iterations = 0;
     while (!NEAR_EQUAL(dist_to_surf, bs.plate_mode_thickness, stepsize) && iterations++ < MAX_ITERATIONS) {
 
 	if (dist_to_surf > bs.plate_mode_thickness)
-	    los -= stepsize; /* nudge back a full step */
+	    los -= (stepsize * 4.0); /* nudge back -400% step */
 	else if (dist_to_surf < bs.plate_mode_thickness)
-	    los += (stepsize * 0.9); /* nudge forward 90% step */
+	    los += (stepsize * 0.4); /* nudge forward 40% step */
 
 	/* calculate a new exit point distance to surface */
 	VJOIN1(hp, ray.r_pt, hit.dist + los, ray.r_dir);
