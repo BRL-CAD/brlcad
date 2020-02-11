@@ -92,10 +92,10 @@ namespace brlcad {
      *   -- minimum occurs when the gradient is zero, i.e.
      *     \f[ \nabla f(u, v) = |\vec{S}(u, v)-\vec{p}|^2 = 0 \f]
      */
-    BREP_EXPORT bool get_closest_point(ON_2dPoint &outpt,
-				       ON_BrepFace *face,
-				       const ON_3dPoint &point,
-				       SurfaceTree *tree = NULL,
+    BREP_EXPORT bool get_closest_point(ON_2dPoint& outpt,
+				       const ON_BrepFace& face,
+				       const ON_3dPoint& point,
+				       const SurfaceTree* tree = NULL,
 				       double tolerance = BREP_FCP_ROOT_EPSILON);
 
     /**

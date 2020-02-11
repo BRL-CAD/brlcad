@@ -1965,7 +1965,7 @@ gcp_newton_iteration(pt2d_t out_uv, const GCPData& data, pt2d_t grad, pt2d_t in_
 
 bool
 get_closest_point(ON_2dPoint& outpt,
-		  const ON_BrepFace* face,
+		  const ON_BrepFace& face,
 		  const ON_3dPoint& point,
 		  const SurfaceTree* tree,
 		  double tolerance)
@@ -1977,7 +1977,7 @@ get_closest_point(ON_2dPoint& outpt,
     pt2d_t curr_grad = {0.0, 0.0};
     pt2d_t new_uv = {0.0, 0.0};
     GCPData data;
-    data.surf = face->SurfaceOf();
+    data.surf = face.SurfaceOf();
     data.pt = point;
 
     TRACE("get_closest_point: " << PT(point));
@@ -1985,7 +1985,7 @@ get_closest_point(ON_2dPoint& outpt,
     // get initial estimate
     const SurfaceTree* a_tree = tree;
     if (a_tree == NULL) {
-	a_tree = new SurfaceTree(face);
+	a_tree = new SurfaceTree(&face);
 	delete_tree = true;
     }
     ON_Interval u, v;
