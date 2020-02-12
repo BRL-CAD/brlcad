@@ -139,7 +139,7 @@ ON_Brep_CDT_Mesh(
 extern BREP_EXPORT int
 brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
 	const struct bg_tess_tol *ttol, const struct bn_tol *tol,
-	ON_Brep *brep, struct bu_list *p_vhead,
+	const ON_Brep *brep, struct bu_list *p_vhead,
 	struct bn_vlblock *vbp, struct bu_list *vlfree,
       	int index, int plottype, int num_points);
 #endif

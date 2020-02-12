@@ -1604,7 +1604,7 @@ PerformClosedSurfaceChecks(
 
 static void
 poly2tri_CDT(struct bu_list *vhead,
-	     ON_BrepFace &face,
+	     const ON_BrepFace &face,
 	     const struct bg_tess_tol *ttol,
 	     const struct bn_tol *tol,
 	     struct bu_list *vlfree,
@@ -1924,7 +1924,7 @@ poly2tri_CDT(struct bu_list *vhead,
 int
 brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
                       const struct bg_tess_tol *ttol, const struct bn_tol *tol,
-                      ON_Brep *brep, struct bu_list *p_vhead,
+                      const ON_Brep *brep, struct bu_list *p_vhead,
                       struct bn_vlblock *vbp, struct bu_list *vlfree,
 		      int index, int plottype, int num_points)
 {
@@ -1973,13 +1973,13 @@ brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
 
     if (index == -1) {
         for (index = 0; index < brep->m_F.Count(); index++) {
-            ON_BrepFace& face = brep->m_F[index];
+            const ON_BrepFace& face = brep->m_F[index];
             poly2tri_CDT(vhead, face, ttol, tol, vlfree, watertight, plottype, num_points);
         }
     } else if (index < brep->m_F.Count()) {
-        ON_BrepFaceArray& faces = brep->m_F;
+        const ON_BrepFaceArray& faces = brep->m_F;
         if (index < faces.Count()) {
-            ON_BrepFace& face = faces[index];
+            const ON_BrepFace& face = faces[index];
             face.Dump(tl);
             poly2tri_CDT(vhead, face, ttol, tol, vlfree, watertight, plottype, num_points);
         }
@@ -1990,9 +1990,9 @@ brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
     }
 
     for (int iindex = 0; iindex < brep->m_T.Count(); iindex++) {
-	ON_BrepTrim& trim = brep->m_T[iindex];
-	if (trim.m_trim_user.p != NULL) {
-	    std::map<double, ON_3dPoint *> *points = (std::map<double, ON_3dPoint *> *)trim.m_trim_user.p;
+	ON_BrepTrim *trim = brep->Trim(iindex);
+	if (trim->m_trim_user.p != NULL) {
+	    std::map<double, ON_3dPoint *> *points = (std::map<double, ON_3dPoint *> *)trim->m_trim_user.p;
 	    std::map<double, ON_3dPoint *>::const_iterator i;
 	    for (i = points->begin(); i != points->end(); i++) {
 		const ON_3dPoint *p = (*i).second;
@@ -2000,7 +2000,7 @@ brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
 	    }
 	    points->clear();
 	    delete points;
-	    trim.m_trim_user.p = NULL;
+	    trim->m_trim_user.p = NULL;
 	}
     }
 
