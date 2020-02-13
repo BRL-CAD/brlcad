@@ -885,8 +885,6 @@ plottrimdirection(const ON_BrepFace &face, struct bn_vlblock *vbp, int plotres)
     return;
 }
 
-
-
 static void
 plotsurfacenormals(const ON_Surface &surf, struct bn_vlblock *vbp, int gridres)
 {
@@ -1088,7 +1086,7 @@ _brep_cmd_curve_2d_plot(void *bs, int argc, const char **argv)
     _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
     bu_vls_free(&sname);
 
-    return GED_ERROR;
+    return GED_OK;
 }
 
 // C3 - 3D edge curves
@@ -1464,8 +1462,7 @@ _brep_cmd_loop_plot(void *bs, int argc, const char **argv)
     _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
     bu_vls_free(&sname);
 
-    return GED_ERROR;
-
+    return GED_OK;
 }
 
 // L2D - 2D parameter space topological trimming loops
@@ -1522,7 +1519,7 @@ _brep_cmd_loop_2d_plot(void *bs, int argc, const char **argv)
     _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
     bu_vls_free(&sname);
 
-    return GED_ERROR;
+    return GED_OK;
 }
 
 // S - surfaces
@@ -1586,7 +1583,7 @@ _brep_cmd_surface_plot(void *bs, int argc, const char **argv)
     _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
     bu_vls_free(&sname);
 
-    return GED_ERROR;
+    return GED_OK;
 }
 
 // SBB - surface bounding boxes
@@ -1654,7 +1651,7 @@ _brep_cmd_surface_bbox_plot(void *bs, int argc, const char **argv)
     _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
     bu_vls_free(&sname);
 
-    return GED_ERROR;
+    return GED_OK;
 }
 
 // SBB2D - surface bounding boxes in parametric space
@@ -1722,7 +1719,7 @@ _brep_cmd_surface_bbox_2d_plot(void *bs, int argc, const char **argv)
     _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
     bu_vls_free(&sname);
 
-    return GED_ERROR;
+    return GED_OK;
 }
 
 // SCV - surface control vertex mesh
@@ -1785,7 +1782,7 @@ _brep_cmd_surface_control_verts_plot(void *bs, int argc, const char **argv)
     _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
     bu_vls_free(&sname);
 
-    return GED_ERROR;
+    return GED_OK;
 }
 
 // SK - surface knots in 3D
@@ -1843,7 +1840,7 @@ _brep_cmd_surface_knot_plot(void *bs, int argc, const char **argv)
     _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
     bu_vls_free(&sname);
 
-    return GED_ERROR;
+    return GED_OK;
 }
 
 // SK2D - surface knots in parametric space
@@ -1901,7 +1898,7 @@ _brep_cmd_surface_knot_2d_plot(void *bs, int argc, const char **argv)
     _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
     bu_vls_free(&sname);
 
-    return GED_ERROR;
+    return GED_OK;
 }
 
 // SN - surface normals
@@ -1961,7 +1958,7 @@ _brep_cmd_surface_normal_plot(void *bs, int argc, const char **argv)
     _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
     bu_vls_free(&sname);
 
-    return GED_ERROR;
+    return GED_OK;
 }
 
 // SUV - surface uv bounds plot
@@ -2326,7 +2323,7 @@ _brep_cmd_trim_direction_plot(void *bs, int argc, const char **argv)
     _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
     bu_vls_free(&sname);
 
-    return GED_ERROR;
+    return GED_OK;
 
 }
 
@@ -2394,7 +2391,7 @@ _brep_cmd_trim_bbox_plot(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_trim_bbox_2d_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname1> plot TBB [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot TBB2D [[index][index-index]]";
     const char *purpose_string = "trim bounding boxes in parametric space";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2447,7 +2444,7 @@ _brep_cmd_trim_bbox_2d_plot(void *bs, int argc, const char **argv)
     _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
     bu_vls_free(&sname);
 
-    return GED_ERROR;
+    return GED_OK;
 }
 
 // V - 3D vertices
@@ -2509,8 +2506,7 @@ _brep_cmd_vertex_plot(void *bs, int argc, const char **argv)
     _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
     bu_vls_free(&sname);
 
-
-    return GED_ERROR;
+    return GED_OK;
 }
 
 // FCDT - face triangulation
@@ -2598,7 +2594,7 @@ _brep_cmd_face_cdt_2d_plot(void *bs, int argc, const char **argv)
     _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
     bu_vls_free(&sname);
 
-    return GED_ERROR;
+    return GED_OK;
 }
 
 // FCDTM2D - face triangulation ??
@@ -2642,7 +2638,7 @@ _brep_cmd_face_cdt_m2d_plot(void *bs, int argc, const char **argv)
     _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
     bu_vls_free(&sname);
 
-    return GED_ERROR;
+    return GED_OK;
 }
 
 // FCDTP2D - face triangulation points?
@@ -2686,7 +2682,7 @@ _brep_cmd_face_cdt_p2d_plot(void *bs, int argc, const char **argv)
     _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
     bu_vls_free(&sname);
 
-    return GED_ERROR;
+    return GED_OK;
 }
 
 // FCDTW - face triangulation wireframe in 3D
@@ -2730,7 +2726,7 @@ _brep_cmd_face_cdt_wireframe_plot(void *bs, int argc, const char **argv)
     _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
     bu_vls_free(&sname);
 
-    return GED_ERROR;
+    return GED_OK;
 }
 
 // FCDTN - new face triangulation
@@ -2791,7 +2787,7 @@ _brep_cmd_face_cdt2_plot(void *bs, int argc, const char **argv)
     _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
     bu_vls_free(&sname);
 
-    return GED_ERROR;
+    return GED_OK;
 }
 
 // FCDTN2D - new face triangulation in parametric space
@@ -2851,7 +2847,7 @@ _brep_cmd_face_cdt2_2d_plot(void *bs, int argc, const char **argv)
     _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
     bu_vls_free(&sname);
 
-    return GED_ERROR;
+    return GED_OK;
 }
 
 // FCDTNW - new face triangulation wireframe in 3D
@@ -2911,7 +2907,7 @@ _brep_cmd_face_cdt2_wireframe_plot(void *bs, int argc, const char **argv)
     _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
     bu_vls_free(&sname);
 
-    return GED_ERROR;
+    return GED_OK;
 }
 
 static void
