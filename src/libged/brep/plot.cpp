@@ -1006,180 +1006,6 @@ plot_nurbs_cv(struct bn_vlblock *vbp, int ucount, int vcount, const ON_NurbsSurf
     }
 }
 
-static void
-plot_usage(struct bu_vls *vls)
-{
-    bu_vls_printf(vls, "mged>brep brepname.s plot\n");
-    bu_vls_printf(vls, "\tplot - plot entire BREP\n");
-    bu_vls_printf(vls, "\tplot S [index] or S [index-index]- plot specific BREP 'surface'\n");
-    bu_vls_printf(vls, "\tplot Suv index[-index] u v- plot specific BREP 'surface' 3d point at specified uv\n");
-    bu_vls_printf(vls, "\tplot UV index[-index] u1 u2 v1 v2 - plot specific BREP 'surface' 3d bounds at specified uv bounds\n");
-    bu_vls_printf(vls, "\tplot F [index] or F [index-index]- plot specific BREP 'face'\n");
-    bu_vls_printf(vls, "\tplot I [index] or I [index-index]- plot specific BREP 'isosurface'\n");
-    bu_vls_printf(vls, "\tplot SN [index] or SN [index-index]- plot specific BREP 'surface normal'\n");
-    bu_vls_printf(vls, "\tplot KN [index] or KN [index-index]- plot specific BREP 'surface knot'\n");
-    bu_vls_printf(vls, "\tplot F2d [index] or F2d [index-index]- plot specific BREP 'face in 2d'\n");
-    bu_vls_printf(vls, "\tplot SBB [index] or SBB [index-index]- plot specific BREP 'surfaceleafs'\n");
-    bu_vls_printf(vls, "\tplot SBB2d [index] or SBB2d [index-index]- plot specific BREP 'surfaceleafs in 2d'\n");
-    bu_vls_printf(vls, "\tplot TD [index] or TD [index-index]- plot specific BREP 'trim direction'\n");
-    bu_vls_printf(vls, "\tplot T [index] or T [index-index]- plot specific BREP 'trim'\n");
-    bu_vls_printf(vls, "\tplot T2d [index] or T2d [index-index]- plot specific BREP 'trim in 2d'\n");
-    bu_vls_printf(vls, "\tplot TBB [index] or TBB [index-index]- plot specific BREP 'trimleafs'\n");
-    bu_vls_printf(vls, "\tplot TBB2d [index] or TBB2d [index-index]- plot specific BREP 'trimleafs in 2d'\n");
-    bu_vls_printf(vls, "\tplot E [index] or E [index-index]- plot specific BREP 'edge3d'\n");
-    bu_vls_printf(vls, "\tplot L [index] or L [index-index]- plot specific BREP 'loop'\n");
-    bu_vls_printf(vls, "\tplot L2d [index] or L2d [index-index]- plot specific BREP 'loops in 2d'\n");
-    bu_vls_printf(vls, "\tplot SCV [index] or SCV [index-index]- plot specific BREP 'nurbs control net'\n");
-}
-
-
-int
-brep_plot_old(struct _ged_brep_info *gb, int argc, const char **argv)
-{
-    ON_Brep *brep = ((struct rt_brep_internal *)gb->intern.idb_ptr)->brep;
-    struct bu_vls *vls = gb->gedp->ged_result_str;
-    struct bn_vlblock *vbp = gb->vbp;
-    const char *solid_name = gb->solid_name.c_str();
-    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gb->gedp->ged_wdbp->wdb_ttol;
-    const struct bn_tol *tol = &gb->gedp->ged_wdbp->wdb_tol;
-
-    char commtag[64];
-    char namebuf[65];
-
-    int ret = GED_ERROR;
-    if (argc == 0) {
-	plot_usage(vls);
-	return GED_OK;
-    }
-
-    if (argc >= 1) {
-	const char *part = argv[0];
-	int numpoints = -1;
-	std::set<int> elements;
-	std::set<int>::const_iterator e_it;
-	if (BU_STR_EQUAL(part, "FCDT")) {
-	    snprintf(commtag, 64, "_BC_FCDT_");
-	    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
-		ret = brep_facecdt_plot(vls, solid_name, ttol, tol, brep, NULL, vbp, &RTG.rtg_vlfree, (*e_it), 0, -1);
-	    }
-	} else if (BU_STR_EQUAL(part, "FCDTN")) {
-	    snprintf(commtag, 64, "_BC_FCDTN_");
-	    struct bu_color c;
-	    bu_color_from_str(&c, "255/255/0");
-	    int face_cnt = 0;
-	    int *faces = (int *)bu_calloc(elements.size()+1, sizeof(int), "face array");
-	    std::set<int>::iterator f_it;
-	    for (f_it = elements.begin(); f_it != elements.end(); f_it++) {
-		faces[face_cnt] = *f_it;
-		face_cnt++;
-	    }
-	    ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)brep, solid_name);
-
-	    struct bg_tess_tol cdttol = BG_TESS_TOL_INIT_ZERO;
-	    cdttol.abs = ttol->abs;
-	    cdttol.rel = ttol->rel;
-	    cdttol.norm = ttol->norm;
-	    ON_Brep_CDT_Tol_Set(s_cdt, &cdttol);
-
-	    ON_Brep_CDT_Tessellate(s_cdt, face_cnt, faces);
-	    ON_Brep_CDT_VList(vbp, &RTG.rtg_vlfree, &c, 0, s_cdt);
-	    ON_Brep_CDT_Destroy(s_cdt);
-	    bu_free(faces, "free face array");
-	} else if (BU_STR_EQUAL(part, "FCDTNw")) {
-	    snprintf(commtag, 64, "_BC_FCDT_");
-	    struct bu_color c;
-	    bu_color_from_str(&c, "255/255/0");
-	    int face_cnt = 0;
-	    int *faces = (int *)bu_calloc(elements.size()+1, sizeof(int), "face array");
-	    std::set<int>::iterator f_it;
-	    for (f_it = elements.begin(); f_it != elements.end(); f_it++) {
-		faces[face_cnt] = *f_it;
-		face_cnt++;
-	    }
-	    ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)brep, solid_name);
-
-	    struct bg_tess_tol cdttol = BG_TESS_TOL_INIT_ZERO;
-	    cdttol.abs = ttol->abs;
-	    cdttol.rel = ttol->rel;
-	    cdttol.norm = ttol->norm;
-	    ON_Brep_CDT_Tol_Set(s_cdt, &cdttol);
-
-	    ON_Brep_CDT_Tessellate(s_cdt, face_cnt, faces);
-	    ON_Brep_CDT_VList(vbp, &RTG.rtg_vlfree, &c, 1, s_cdt);
-	    ON_Brep_CDT_Destroy(s_cdt);
-	    bu_free(faces, "free face array");
-	} else if (BU_STR_EQUAL(part, "FCDTN2d")) {
-	    snprintf(commtag, 64, "_BC_FCDT_");
-	    struct bu_color c;
-	    bu_color_from_str(&c, "255/255/0");
-	    int face_cnt = 0;
-	    int *faces = (int *)bu_calloc(elements.size()+1, sizeof(int), "face array");
-	    std::set<int>::iterator f_it;
-	    for (f_it = elements.begin(); f_it != elements.end(); f_it++) {
-		faces[face_cnt] = *f_it;
-		face_cnt++;
-	    }
-	    ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)brep, solid_name);
-
-	    struct bg_tess_tol cdttol = BG_TESS_TOL_INIT_ZERO;
-	    cdttol.abs = ttol->abs;
-	    cdttol.rel = ttol->rel;
-	    cdttol.norm = ttol->norm;
-	    ON_Brep_CDT_Tol_Set(s_cdt, &cdttol);
-
-	    ON_Brep_CDT_Tessellate(s_cdt, face_cnt, faces);
-	    ON_Brep_CDT_VList(vbp, &RTG.rtg_vlfree, &c, 2, s_cdt);
-	    ON_Brep_CDT_Destroy(s_cdt);
-	    bu_free(faces, "free face array");
-	} else if (BU_STR_EQUAL(part, "CDT")) {
-	    snprintf(commtag, 64, "_BC_CDT_");
-	    struct bu_color c;
-	    bu_color_from_str(&c, "255/255/0");
-	    ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)brep, solid_name);
-
-	    struct bg_tess_tol cdttol = BG_TESS_TOL_INIT_ZERO;
-	    cdttol.abs = ttol->abs;
-	    cdttol.rel = ttol->rel;
-	    cdttol.norm = ttol->norm;
-	    ON_Brep_CDT_Tol_Set(s_cdt, &cdttol);
-
-	    ON_Brep_CDT_Tessellate(s_cdt, 0, NULL);
-	    ON_Brep_CDT_VList(vbp, &RTG.rtg_vlfree, &c, 0, s_cdt);
-	    ON_Brep_CDT_Destroy(s_cdt);
-	} else if (BU_STR_EQUAL(part, "FCDTw")) {
-	    snprintf(commtag, 64, "_BC_FCDT_");
-	    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
-		ret = brep_facecdt_plot(vls, solid_name, ttol, tol, brep, NULL, vbp, &RTG.rtg_vlfree, (*e_it), 1, numpoints);
-	    }
-	} else if (BU_STR_EQUAL(part, "FCDT2d")) {
-	    snprintf(commtag, 64, "_BC_FCDT2d_");
-	    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
-		ret = brep_facecdt_plot(vls, solid_name, ttol, tol, brep, NULL, vbp, &RTG.rtg_vlfree, (*e_it), 2, -1);
-	    }
-	} else if (BU_STR_EQUAL(part, "FCDTm2d")) {
-	    snprintf(commtag, 64, "_BC_FCDTm2d_");
-	    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
-		ret = brep_facecdt_plot(vls, solid_name, ttol, tol, brep, NULL, vbp, &RTG.rtg_vlfree, (*e_it), 3, numpoints);
-	    }
-	} else if (BU_STR_EQUAL(part, "FCDTp2d")) {
-	    snprintf(commtag, 64, "_BC_FCDTp2d_");
-	    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
-		ret = brep_facecdt_plot(vls, solid_name, ttol, tol, brep, NULL, vbp, &RTG.rtg_vlfree, (*e_it), 4, numpoints);
-	    }
-	}
-    }
-
-    snprintf(namebuf, sizeof(namebuf), "%s%s_", commtag, gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gb->gedp, vbp, namebuf, 0);
-
-    return ret;
-}
-
-
-
-
-
-
 struct _ged_brep_iplot {
     struct _ged_brep_info *gb;
     struct bu_vls *vls;
@@ -2805,6 +2631,37 @@ _brep_cmd_face_cdt_2d_plot(void *bs, int argc, const char **argv)
 	return GED_OK;
     }
 
+    argc--;argv++;
+
+    struct _ged_brep_iplot *gib = (struct _ged_brep_iplot *)bs;
+    const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
+    //struct bu_color *color = gib->gb->color;
+    struct bn_vlblock *vbp = gib->gb->vbp;
+    const char *solid_name = gib->gb->solid_name.c_str();
+    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gib->gb->gedp->ged_wdbp->wdb_ttol;
+    const struct bn_tol *tol = &gib->gb->gedp->ged_wdbp->wdb_tol;
+
+    std::set<int> elements;
+    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
+	return GED_ERROR;
+    }
+    // If we have nothing, report all
+    if (!elements.size()) {
+	for (int i = 0; i < brep->m_F.Count(); i++) {
+	    elements.insert(i);
+	}
+    }
+
+    std::set<int>::iterator e_it;
+    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+	brep_facecdt_plot(gib->vls, solid_name, ttol, tol, brep, NULL, vbp, &RTG.rtg_vlfree, *e_it, 2, -1);
+    }
+
+    struct bu_vls sname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&sname, "_BC_FCDT2d_%s", gib->gb->solid_name.c_str());
+    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    bu_vls_free(&sname);
+
     return GED_ERROR;
 }
 
@@ -2817,6 +2674,37 @@ _brep_cmd_face_cdt_m2d_plot(void *bs, int argc, const char **argv)
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
     }
+
+    argc--;argv++;
+
+    struct _ged_brep_iplot *gib = (struct _ged_brep_iplot *)bs;
+    const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
+    //struct bu_color *color = gib->gb->color;
+    struct bn_vlblock *vbp = gib->gb->vbp;
+    const char *solid_name = gib->gb->solid_name.c_str();
+    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gib->gb->gedp->ged_wdbp->wdb_ttol;
+    const struct bn_tol *tol = &gib->gb->gedp->ged_wdbp->wdb_tol;
+
+    std::set<int> elements;
+    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
+	return GED_ERROR;
+    }
+    // If we have nothing, report all
+    if (!elements.size()) {
+	for (int i = 0; i < brep->m_F.Count(); i++) {
+	    elements.insert(i);
+	}
+    }
+
+    std::set<int>::iterator e_it;
+    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+	brep_facecdt_plot(gib->vls, solid_name, ttol, tol, brep, NULL, vbp, &RTG.rtg_vlfree, *e_it, 3, -1);
+    }
+
+    struct bu_vls sname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&sname, "_BC_FCDTm2d_%s", gib->gb->solid_name.c_str());
+    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    bu_vls_free(&sname);
 
     return GED_ERROR;
 }
@@ -2831,6 +2719,37 @@ _brep_cmd_face_cdt_p2d_plot(void *bs, int argc, const char **argv)
 	return GED_OK;
     }
 
+    argc--;argv++;
+
+    struct _ged_brep_iplot *gib = (struct _ged_brep_iplot *)bs;
+    const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
+    //struct bu_color *color = gib->gb->color;
+    struct bn_vlblock *vbp = gib->gb->vbp;
+    const char *solid_name = gib->gb->solid_name.c_str();
+    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gib->gb->gedp->ged_wdbp->wdb_ttol;
+    const struct bn_tol *tol = &gib->gb->gedp->ged_wdbp->wdb_tol;
+
+    std::set<int> elements;
+    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
+	return GED_ERROR;
+    }
+    // If we have nothing, report all
+    if (!elements.size()) {
+	for (int i = 0; i < brep->m_F.Count(); i++) {
+	    elements.insert(i);
+	}
+    }
+
+    std::set<int>::iterator e_it;
+    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+	brep_facecdt_plot(gib->vls, solid_name, ttol, tol, brep, NULL, vbp, &RTG.rtg_vlfree, *e_it, 4, -1);
+    }
+
+    struct bu_vls sname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&sname, "_BC_FCDTp2d_%s", gib->gb->solid_name.c_str());
+    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    bu_vls_free(&sname);
+
     return GED_ERROR;
 }
 
@@ -2843,6 +2762,37 @@ _brep_cmd_face_cdt_wireframe_plot(void *bs, int argc, const char **argv)
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
     }
+
+    argc--;argv++;
+
+    struct _ged_brep_iplot *gib = (struct _ged_brep_iplot *)bs;
+    const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
+    //struct bu_color *color = gib->gb->color;
+    struct bn_vlblock *vbp = gib->gb->vbp;
+    const char *solid_name = gib->gb->solid_name.c_str();
+    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gib->gb->gedp->ged_wdbp->wdb_ttol;
+    const struct bn_tol *tol = &gib->gb->gedp->ged_wdbp->wdb_tol;
+
+    std::set<int> elements;
+    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
+	return GED_ERROR;
+    }
+    // If we have nothing, report all
+    if (!elements.size()) {
+	for (int i = 0; i < brep->m_F.Count(); i++) {
+	    elements.insert(i);
+	}
+    }
+
+    std::set<int>::iterator e_it;
+    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+	brep_facecdt_plot(gib->vls, solid_name, ttol, tol, brep, NULL, vbp, &RTG.rtg_vlfree, *e_it, 1, -1);
+    }
+
+    struct bu_vls sname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&sname, "_BC_FCDTw_%s", gib->gb->solid_name.c_str());
+    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    bu_vls_free(&sname);
 
     return GED_ERROR;
 }
@@ -2857,6 +2807,54 @@ _brep_cmd_face_cdt2_plot(void *bs, int argc, const char **argv)
 	return GED_OK;
     }
 
+    argc--;argv++;
+
+    struct _ged_brep_iplot *gib = (struct _ged_brep_iplot *)bs;
+    const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
+    //struct bu_color *color = gib->gb->color;
+    struct bn_vlblock *vbp = gib->gb->vbp;
+    const char *solid_name = gib->gb->solid_name.c_str();
+    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gib->gb->gedp->ged_wdbp->wdb_ttol;
+
+    std::set<int> elements;
+    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
+	return GED_ERROR;
+    }
+
+    struct bu_color c;
+    bu_color_from_str(&c, "255/255/0");
+
+    ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)brep, solid_name);
+
+    struct bg_tess_tol cdttol = BG_TESS_TOL_INIT_ZERO;
+    cdttol.abs = ttol->abs;
+    cdttol.rel = ttol->rel;
+    cdttol.norm = ttol->norm;
+    ON_Brep_CDT_Tol_Set(s_cdt, &cdttol);
+
+    if (elements.size()) {
+	int face_cnt = 0;
+	int *faces = (int *)bu_calloc(elements.size()+1, sizeof(int), "face array");
+	std::set<int>::iterator e_it;
+	for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+	    faces[face_cnt] = *e_it;
+	    face_cnt++;
+	}
+	ON_Brep_CDT_Tessellate(s_cdt, face_cnt, faces);
+	bu_free(faces, "free face array");
+    } else {
+	// If we have nothing, show all
+	ON_Brep_CDT_Tessellate(s_cdt, 0, NULL);
+    }
+
+    ON_Brep_CDT_VList(vbp, &RTG.rtg_vlfree, &c, 0, s_cdt);
+    ON_Brep_CDT_Destroy(s_cdt);
+
+    struct bu_vls sname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&sname, "_BC_FCDTw_%s", gib->gb->solid_name.c_str());
+    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    bu_vls_free(&sname);
+
     return GED_ERROR;
 }
 
@@ -2870,6 +2868,53 @@ _brep_cmd_face_cdt2_2d_plot(void *bs, int argc, const char **argv)
 	return GED_OK;
     }
 
+    argc--;argv++;
+
+    struct _ged_brep_iplot *gib = (struct _ged_brep_iplot *)bs;
+    const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
+    //struct bu_color *color = gib->gb->color;
+    struct bn_vlblock *vbp = gib->gb->vbp;
+    const char *solid_name = gib->gb->solid_name.c_str();
+    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gib->gb->gedp->ged_wdbp->wdb_ttol;
+
+    std::set<int> elements;
+    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
+	return GED_ERROR;
+    }
+    // If we have nothing, report all
+    if (!elements.size()) {
+	for (int i = 0; i < brep->m_F.Count(); i++) {
+	    elements.insert(i);
+	}
+    }
+
+    struct bu_color c;
+    bu_color_from_str(&c, "255/255/0");
+    int face_cnt = 0;
+    int *faces = (int *)bu_calloc(elements.size()+1, sizeof(int), "face array");
+    std::set<int>::iterator e_it;
+    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+	faces[face_cnt] = *e_it;
+	face_cnt++;
+    }
+    ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)brep, solid_name);
+
+    struct bg_tess_tol cdttol = BG_TESS_TOL_INIT_ZERO;
+    cdttol.abs = ttol->abs;
+    cdttol.rel = ttol->rel;
+    cdttol.norm = ttol->norm;
+    ON_Brep_CDT_Tol_Set(s_cdt, &cdttol);
+
+    ON_Brep_CDT_Tessellate(s_cdt, face_cnt, faces);
+    ON_Brep_CDT_VList(vbp, &RTG.rtg_vlfree, &c, 2, s_cdt);
+    ON_Brep_CDT_Destroy(s_cdt);
+    bu_free(faces, "free face array");
+
+    struct bu_vls sname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&sname, "_BC_FCDT2d_%s", gib->gb->solid_name.c_str());
+    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    bu_vls_free(&sname);
+
     return GED_ERROR;
 }
 
@@ -2882,6 +2927,53 @@ _brep_cmd_face_cdt2_wireframe_plot(void *bs, int argc, const char **argv)
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
     }
+
+    argc--;argv++;
+
+    struct _ged_brep_iplot *gib = (struct _ged_brep_iplot *)bs;
+    const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
+    //struct bu_color *color = gib->gb->color;
+    struct bn_vlblock *vbp = gib->gb->vbp;
+    const char *solid_name = gib->gb->solid_name.c_str();
+    const struct bg_tess_tol *ttol = (const struct bg_tess_tol *)&gib->gb->gedp->ged_wdbp->wdb_ttol;
+
+    std::set<int> elements;
+    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
+	return GED_ERROR;
+    }
+    // If we have nothing, report all
+    if (!elements.size()) {
+	for (int i = 0; i < brep->m_F.Count(); i++) {
+	    elements.insert(i);
+	}
+    }
+
+    struct bu_color c;
+    bu_color_from_str(&c, "255/255/0");
+    int face_cnt = 0;
+    int *faces = (int *)bu_calloc(elements.size()+1, sizeof(int), "face array");
+    std::set<int>::iterator e_it;
+    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+	faces[face_cnt] = *e_it;
+	face_cnt++;
+    }
+    ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)brep, solid_name);
+
+    struct bg_tess_tol cdttol = BG_TESS_TOL_INIT_ZERO;
+    cdttol.abs = ttol->abs;
+    cdttol.rel = ttol->rel;
+    cdttol.norm = ttol->norm;
+    ON_Brep_CDT_Tol_Set(s_cdt, &cdttol);
+
+    ON_Brep_CDT_Tessellate(s_cdt, face_cnt, faces);
+    ON_Brep_CDT_VList(vbp, &RTG.rtg_vlfree, &c, 1, s_cdt);
+    ON_Brep_CDT_Destroy(s_cdt);
+    bu_free(faces, "free face array");
+
+    struct bu_vls sname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&sname, "_BC_FCDTw_%s", gib->gb->solid_name.c_str());
+    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    bu_vls_free(&sname);
 
     return GED_ERROR;
 }
