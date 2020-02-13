@@ -15,6 +15,10 @@ on-going issues.
 Recent Bugs
 -----------
 
+* apparently all four BRL-CAD Tutorial Series volumes are missing from
+  our bibliography...
+
+
 * Tessellating an ETO with a normal tolerance results in stack
   smashing due to bad logic in recursive algorithm: set norm 2;
   facetize my.eto my.bot;. Observed infinite recursion in both
@@ -28,6 +32,7 @@ Recent Bugs
 * mater -d information stored in the .g file doesn't survive a
   garbage collection operation.
 
+
 * fix checker.sh script and/or overlap GUI so that the latter will
   read the resulting overlap pairings file from the prior.
   alternatively, need to be able to run overlap check on server
@@ -36,7 +41,7 @@ Recent Bugs
 
 * running 'put' on geometry that is already displayed results in a NaN
   view (at least View and Eye_pos parameters are non) despite geometry
-  setill being displayed.  this causes 'rt' to fly into an infinite
+  still being displayed.  this causes 'rt' to fly into an infinite
   loop, presumably trying to increment rays from the eye position.
 
 * icv dpix support is not cross-platform (it writes out native, reads
