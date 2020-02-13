@@ -106,6 +106,7 @@ extern int _ged_brep_tikz(struct ged *gedp, const char *dp_name, const char *out
 
 extern int brep_info(struct bu_vls *vls, const ON_Brep *brep, int argc, const char **argv);
 extern int brep_plot(struct _ged_brep_info *gb, int argc, const char **argv);
+extern int brep_valid(struct bu_vls *vls, struct rt_db_internal *intern, int argc, const char **argv);
 
 extern int brep_conversion(struct rt_db_internal* in, struct rt_db_internal* out, const struct db_i *dbip);
 extern int brep_conversion_comb(struct rt_db_internal *old_internal, const char *name, const char *suffix, struct rt_wdb *wdbp, fastf_t local2mm);

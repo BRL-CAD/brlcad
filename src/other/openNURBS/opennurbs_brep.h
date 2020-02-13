@@ -3936,6 +3936,32 @@ public:
   ON_BrepLoopArray    m_L;   // loops
   ON_BrepFaceArray    m_F;   // faces
 
+  // helpers for validation checking
+  bool IsValidTrim(int trim_index,ON_TextLog* text_log) const;
+  bool IsValidTrimTopology(int trim_index,ON_TextLog* text_log) const;
+  bool IsValidTrimGeometry(int trim_index,ON_TextLog* text_log) const;
+  bool IsValidTrimTolerancesAndFlags(int trim_index,ON_TextLog* text_log) const;
+
+  bool IsValidLoop(int loop_index,ON_TextLog* text_log) const;
+  bool IsValidLoopTopology(int loop_index,ON_TextLog* text_log) const;
+  bool IsValidLoopGeometry(int loop_index,ON_TextLog* text_log) const;
+  bool IsValidLoopTolerancesAndFlags(int loop_index,ON_TextLog* text_log) const;
+
+  bool IsValidFace(int face_index,ON_TextLog* text_log) const;
+  bool IsValidFaceTopology(int face_index,ON_TextLog* text_log) const;
+  bool IsValidFaceGeometry(int face_index,ON_TextLog* text_log) const;
+  bool IsValidFaceTolerancesAndFlags(int face_index,ON_TextLog* text_log) const;
+
+  bool IsValidEdge(int edge_index,ON_TextLog* text_log) const;
+  bool IsValidEdgeTopology(int edge_index,ON_TextLog* text_log) const;
+  bool IsValidEdgeGeometry(int edge_index,ON_TextLog* text_log) const;
+  bool IsValidEdgeTolerancesAndFlags(int edge_index,ON_TextLog* text_log) const;
+
+  bool IsValidVertex(int vertex_index,ON_TextLog* text_log) const;
+  bool IsValidVertexTopology(int vertex_index,ON_TextLog* text_log) const;
+  bool IsValidVertexGeometry(int vertex_index,ON_TextLog* text_log) const;
+  bool IsValidVertexTolerancesAndFlags(int vertex_index,ON_TextLog* text_log) const;
+
 protected:	
   friend class ON_BrepFace;
   friend class ON_BrepRegion;
@@ -3978,31 +4004,6 @@ protected:
         int // index of trim
         );
 
-  // helpers for validation checking
-  bool IsValidTrim(int trim_index,ON_TextLog* text_log) const;
-  bool IsValidTrimTopology(int trim_index,ON_TextLog* text_log) const;
-  bool IsValidTrimGeometry(int trim_index,ON_TextLog* text_log) const;
-  bool IsValidTrimTolerancesAndFlags(int trim_index,ON_TextLog* text_log) const;
-
-  bool IsValidLoop(int loop_index,ON_TextLog* text_log) const;
-  bool IsValidLoopTopology(int loop_index,ON_TextLog* text_log) const;
-  bool IsValidLoopGeometry(int loop_index,ON_TextLog* text_log) const;
-  bool IsValidLoopTolerancesAndFlags(int loop_index,ON_TextLog* text_log) const;
-
-  bool IsValidFace(int face_index,ON_TextLog* text_log) const;
-  bool IsValidFaceTopology(int face_index,ON_TextLog* text_log) const;
-  bool IsValidFaceGeometry(int face_index,ON_TextLog* text_log) const;
-  bool IsValidFaceTolerancesAndFlags(int face_index,ON_TextLog* text_log) const;
-  
-  bool IsValidEdge(int edge_index,ON_TextLog* text_log) const;
-  bool IsValidEdgeTopology(int edge_index,ON_TextLog* text_log) const;
-  bool IsValidEdgeGeometry(int edge_index,ON_TextLog* text_log) const;
-  bool IsValidEdgeTolerancesAndFlags(int edge_index,ON_TextLog* text_log) const;
-
-  bool IsValidVertex(int vertex_index,ON_TextLog* text_log) const;
-  bool IsValidVertexTopology(int vertex_index,ON_TextLog* text_log) const;
-  bool IsValidVertexGeometry(int vertex_index,ON_TextLog* text_log) const;
-  bool IsValidVertexTolerancesAndFlags(int vertex_index,ON_TextLog* text_log) const;
 
   void SetTolsFromLegacyValues();
 

@@ -1005,20 +1005,26 @@ _brep_cmd_shrink_surfaces(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_valid(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname> valid";
+    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    struct ged *gedp = gb->gedp;
+
     const char *purpose_string = "report on validity of the specified BRep";
-    if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+    if (argc == 2 && BU_STR_EQUAL(argv[1], PURPOSEFLAG)) {
+	bu_vls_printf(gb->gedp->ged_result_str, "%s\n", purpose_string);
 	return GED_OK;
     }
+    if (argc >= 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
+	return brep_info(gedp->ged_result_str, NULL, argc, argv);
+    }
 
-    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
     if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
 	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
 	return GED_ERROR;
     }
 
-    int valid = rt_brep_valid(gb->gedp->ged_result_str, &gb->intern, 0);
-    return (valid) ? GED_OK : GED_ERROR;
+    argc--; argv++;
+
+    return brep_valid(gedp->ged_result_str, &gb->intern, argc, argv);
 }
 
 extern "C" int

@@ -83,6 +83,7 @@ set(LIBGED_SOURCES
   brep/intersect.cpp
   brep/plot.cpp
   brep/tikz.cpp
+  brep/valid.cpp
   cat.c
   cc.c
   center.cpp
