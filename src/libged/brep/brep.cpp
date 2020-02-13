@@ -1003,6 +1003,33 @@ _brep_cmd_shrink_surfaces(void *bs, int argc, const char **argv)
 }
 
 extern "C" int
+_brep_cmd_tikz(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> tikz <outfile>";
+    const char *purpose_string = "generate Tikz 3dplot of BRep object";
+    if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+
+    if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
+	return GED_ERROR;
+    }
+
+    argc--; argv++;
+
+    if (argc != 1 || !argv) {
+	bu_vls_printf(gb->gedp->ged_result_str, "%s\n", usage_string);
+	return GED_ERROR;
+    }
+
+    return brep_tikz(gb, argv[0]);
+}
+
+
+extern "C" int
 _brep_cmd_valid(void *bs, int argc, const char **argv)
 {
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
@@ -1084,6 +1111,7 @@ const struct bu_cmdtab _brep_cmds[] = {
     { "selection",       _brep_cmd_selection},
     { "solid",           _brep_cmd_solid},
     { "shrink_surfaces", _brep_cmd_shrink_surfaces},
+    { "tikz",            _brep_cmd_tikz},
     { "valid",           _brep_cmd_valid},
     { (char *)NULL,      NULL}
 };

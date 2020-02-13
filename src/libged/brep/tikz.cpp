@@ -126,22 +126,15 @@ tikz_comb(struct ged *gedp, struct bu_vls *tikz, struct directory *dp, struct bu
 }
 
 extern "C" int
-_ged_brep_tikz(struct ged *gedp, const char *dp_name, const char *outfile)
+brep_tikz(struct _ged_brep_info *gb, const char *outfile)
 {
     int cnt = 0;
     struct bu_vls color = BU_VLS_INIT_ZERO;
-    struct rt_db_internal intern;
-    struct rt_brep_internal *brep_ip = NULL;
-    RT_DB_INTERNAL_INIT(&intern)
-	struct rt_wdb *wdbp = gedp->ged_wdbp;
-    struct directory *dp = db_lookup(wdbp->dbip, dp_name, LOOKUP_QUIET);
-    if (dp == RT_DIR_NULL) return GED_ERROR;
     struct bu_vls tikz = BU_VLS_INIT_ZERO;
 
-    /* Unpack B-Rep */
-    if (rt_db_get_internal(&intern, dp, wdbp->dbip, NULL, &rt_uniresource) < 0) {
-	return GED_ERROR;
-    }
+    struct ged *gedp = gb->gedp;
+    struct rt_wdb *wdbp = gedp->ged_wdbp;
+    struct rt_brep_internal *brep_ip = NULL;
 
     bu_vls_printf(&tikz, "\\documentclass{article}\n");
     bu_vls_printf(&tikz, "\\usepackage{tikz}\n");
@@ -160,7 +153,7 @@ _ged_brep_tikz(struct ged *gedp, const char *dp_name, const char *outfile)
     struct bu_ptbl breps = BU_PTBL_INIT_ZERO;
     const char *brep_search = "-type brep";
     db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
-    (void)db_search(&breps, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, brep_search, 1, &dp, gedp->ged_wdbp->dbip, NULL);
+    (void)db_search(&breps, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, brep_search, 1, &gb->dp, gedp->ged_wdbp->dbip, NULL);
     for(size_t i = 0; i < BU_PTBL_LEN(&breps); i++) {
 	struct rt_db_internal bintern;
 	struct rt_brep_internal *b_ip = NULL;
@@ -178,17 +171,17 @@ _ged_brep_tikz(struct ged *gedp, const char *dp_name, const char *outfile)
 
     bu_vls_printf(&tikz, "\\begin{tikzpicture}[scale=%f,tdplot_main_coords]\n", scale);
 
-    if (dp->d_flags & RT_DIR_COMB) {
+    if (gb->dp->d_flags & RT_DIR_COMB) {
 	// Assign a default color
 	bu_vls_sprintf(&color, "color={rgb:red,255;green,0;blue,0}");
-	tikz_comb(gedp, &tikz, dp, &color, &cnt);
+	tikz_comb(gedp, &tikz, gb->dp, &color, &cnt);
     } else {
 	ON_String s;
-	if (intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
-	    bu_vls_printf(gedp->ged_result_str, "%s is not a B-Rep - aborting\n", dp->d_namep);
+	if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
+	    bu_vls_printf(gedp->ged_result_str, "%s is not a B-Rep - aborting\n", gb->dp->d_namep);
 	    return 1;
 	} else {
-	    brep_ip = (struct rt_brep_internal *)intern.idb_ptr;
+	    brep_ip = (struct rt_brep_internal *)gb->intern.idb_ptr;
 	}
 	RT_BREP_CK_MAGIC(brep_ip);
 	const ON_Brep *brep = brep_ip->brep;
