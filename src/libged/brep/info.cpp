@@ -88,9 +88,6 @@ _brep_cmd_curve_2d_info(void *bs, int argc, const char **argv)
 
 	ON_wString wstr;
 	ON_TextLog dump(wstr);
-	if (brep == NULL) {
-	    return GED_ERROR;
-	}
 	if (!((ci >= 0) && (ci < brep->m_C2.Count()))) {
 	    return GED_ERROR;
 	}
@@ -105,9 +102,8 @@ _brep_cmd_curve_2d_info(void *bs, int argc, const char **argv)
 	bu_vls_printf(gib->vls, "%s\n", ss.Array());
 
     }
-    return GED_OK;
 
-    return GED_ERROR;
+    return GED_OK;
 }
 
 // C3 - 3D edge curves
@@ -144,9 +140,6 @@ _brep_cmd_curve_3d_info(void *bs, int argc, const char **argv)
 
 	ON_wString wstr;
 	ON_TextLog dump(wstr);
-	if (brep == NULL) {
-	    return GED_ERROR;
-	}
 	if (!((ci >= 0) && (ci < brep->m_C3.Count()))) {
 	    return GED_ERROR;
 	}
@@ -161,6 +154,7 @@ _brep_cmd_curve_3d_info(void *bs, int argc, const char **argv)
 	bu_vls_printf(gib->vls, "%s\n", ss.Array());
 
     }
+
     return GED_OK;
 }
 
@@ -198,9 +192,6 @@ _brep_cmd_edge_info(void *bs, int argc, const char **argv)
 
 	ON_wString wstr;
 	ON_TextLog dump(wstr);
-	if (brep == NULL) {
-	    return GED_ERROR;
-	}
 	if (!((ei >= 0) && (ei < brep->m_E.Count()))) {
 	    return GED_ERROR;
 	}
@@ -270,9 +261,6 @@ _brep_cmd_face_info(void *bs, int argc, const char **argv)
 	int fi = *e_it;
 	ON_wString s;
 	ON_TextLog dump(s);
-	if (brep == NULL) {
-	    return GED_ERROR;
-	}
 	if (!((fi >= 0) && (fi < brep->m_F.Count()))) {
 	    return GED_ERROR;
 	}
@@ -437,9 +425,6 @@ _brep_cmd_loop_info(void *bs, int argc, const char **argv)
 	int li = *e_it;
 	ON_wString wstr;
 	ON_TextLog dump(wstr);
-	if (brep == NULL) {
-	    return GED_ERROR;
-	}
 	if (!((li >= 0) && (li < brep->m_L.Count()))) {
 	    return GED_ERROR;
 	}
@@ -492,9 +477,6 @@ _brep_cmd_surface_info(void *bs, int argc, const char **argv)
 	int si = *e_it;
 	ON_wString wonstr;
 	ON_TextLog info_output(wonstr);
-	if (brep == NULL) {
-	    return GED_ERROR;
-	}
 	if (!((si >= 0) && (si < brep->m_S.Count()))) {
 	    return GED_ERROR;
 	}
@@ -561,9 +543,6 @@ _brep_cmd_surface_bezier_info(void *bs, int argc, const char **argv)
 	int si = *e_it;
 	ON_wString wonstr;
 	ON_TextLog info_output(wonstr);
-	if (brep == NULL) {
-	    return GED_ERROR;
-	}
 	if (!((si >= 0) && (si < brep->m_S.Count()))) {
 	    return GED_ERROR;
 	}
@@ -615,8 +594,8 @@ _brep_cmd_surface_bezier_info(void *bs, int argc, const char **argv)
 	    bu_vls_printf(gib->vls, "surface[%2d]: NULL\n", si);
 	}
     }
-    return GED_OK;
 
+    return GED_OK;
 }
 
 // T - 2D topological trims
@@ -652,9 +631,6 @@ _brep_cmd_trim_info(void *bs, int argc, const char **argv)
 	int ti = *e_it;
 	ON_wString wstr;
 	ON_TextLog dump(wstr);
-	if (brep == NULL) {
-	    return GED_ERROR;
-	}
 	if (!((ti >= 0) && (ti < brep->m_T.Count()))) {
 	    return GED_ERROR;
 	}
@@ -778,9 +754,6 @@ _brep_cmd_trim_bezier_info(void *bs, int argc, const char **argv)
 	int ti = *e_it;
 	ON_wString wstr;
 	ON_TextLog dump(wstr);
-	if (brep == NULL) {
-	    return GED_ERROR;
-	}
 	if (!((ti >= 0) && (ti < brep->m_T.Count()))) {
 	    return GED_ERROR;
 	}
@@ -847,9 +820,6 @@ _brep_cmd_vertex_info(void *bs, int argc, const char **argv)
 
 	int vi = *e_it;
 
-	if (brep == NULL) {
-	    return GED_ERROR;
-	}
 	if (!((vi >= 0) && (vi < brep->m_V.Count()))) {
 	    return GED_ERROR;
 	}
@@ -861,7 +831,7 @@ _brep_cmd_vertex_info(void *bs, int argc, const char **argv)
 	    bu_vls_printf(gib->vls, "   m_E[%d]: %d -> %d\n", vertex.m_ei[i], edge.m_vi[0], edge.m_vi[1]);
 	}
     }
-    return GED_ERROR;
+    return GED_OK;
 }
 
 static void
@@ -942,7 +912,8 @@ brep_info(struct bu_vls *vls, const ON_Brep *brep, int argc, const char **argv)
     if (bu_cmd(_brep_info_cmds, argc, argv, 0, (void *)&gib, &ret) == BRLCAD_OK) {
 	return ret;
     }
-    return GED_ERROR;
+
+    return GED_OK;
 }
 
 // Local Variables:
