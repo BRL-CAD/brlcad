@@ -1068,9 +1068,6 @@ _brep_cmd_curve_2d_plot(void *bs, int argc, const char **argv)
 	unsigned char rgb[3];
 	bu_color_to_rgb_chars(color, rgb);
 
-	if (brep == NULL) {
-	    return GED_ERROR;
-	}
 	if (!brep->IsValid(&tl)) {
 	    bu_log("brep is NOT valid");
 	    return GED_ERROR;
@@ -1135,9 +1132,6 @@ _brep_cmd_curve_3d_plot(void *bs, int argc, const char **argv)
 	unsigned char rgb[3];
 	bu_color_to_rgb_chars(color, rgb);
 
-	if (brep == NULL) {
-	    return GED_ERROR;
-	}
 	if (!brep->IsValid(&tl)) {
 	    bu_log("brep is NOT valid");
 	    return GED_ERROR;
@@ -1201,9 +1195,6 @@ _brep_cmd_edge_plot(void *bs, int argc, const char **argv)
 	unsigned char rgb[3];
 	bu_color_to_rgb_chars(color, rgb);
 
-	if (brep == NULL) {
-	    return GED_ERROR;
-	}
 	if (!brep->IsValid(&tl)) {
 	    bu_log("brep is NOT valid");
 	    return GED_ERROR;
@@ -1270,9 +1261,6 @@ _brep_cmd_face_plot(void *bs, int argc, const char **argv)
 	unsigned char rgb[3];
 	bu_color_to_rgb_chars(color, rgb);
 
-	if (brep == NULL) {
-	    return GED_ERROR;
-	}
 	if (!brep->IsValid(&tl)) {
 	    return GED_ERROR;
 	}
@@ -1337,9 +1325,6 @@ _brep_cmd_face_2d_plot(void *bs, int argc, const char **argv)
 	unsigned char rgb[3];
 	bu_color_to_rgb_chars(color, rgb);
 
-	if (brep == NULL) {
-	    return GED_ERROR;
-	}
 	if (!brep->IsValid(&tl)) {
 	    return GED_ERROR;
 	}
@@ -1405,9 +1390,6 @@ _brep_cmd_isosurface_plot(void *bs, int argc, const char **argv)
 	unsigned char rgb[3];
 	bu_color_to_rgb_chars(color, rgb);
 
-	if (brep == NULL) {
-	    return GED_ERROR;
-	}
 	if (!brep->IsValid(&tl)) {
 	    return GED_ERROR;
 	}
@@ -1584,9 +1566,6 @@ _brep_cmd_surface_plot(void *bs, int argc, const char **argv)
 	unsigned char rgb[3];
 	bu_color_to_rgb_chars(color, rgb);
 
-	if (brep == NULL) {
-	    return GED_ERROR;
-	}
 	if (!brep->IsValid(&tl)) {
 	    return GED_ERROR;
 	}
@@ -1650,9 +1629,6 @@ _brep_cmd_surface_bbox_plot(void *bs, int argc, const char **argv)
 	ON_wString wstr;
 	ON_TextLog tl(wstr);
 
-	if (brep == NULL) {
-	    return GED_ERROR;
-	}
 	if (!brep->IsValid(&tl)) {
 	    bu_log("brep is NOT valid");
 	    return GED_ERROR;
@@ -1721,9 +1697,6 @@ _brep_cmd_surface_bbox_2d_plot(void *bs, int argc, const char **argv)
 	ON_wString wstr;
 	ON_TextLog tl(wstr);
 
-	if (brep == NULL) {
-	    return GED_ERROR;
-	}
 	if (!brep->IsValid(&tl)) {
 	    bu_log("brep is NOT valid");
 	    return GED_ERROR;
@@ -1792,9 +1765,6 @@ _brep_cmd_surface_control_verts_plot(void *bs, int argc, const char **argv)
 	ON_wString wstr;
 	ON_TextLog tl(wstr);
 
-	if (brep == NULL) {
-	    return GED_ERROR;
-	}
 	if (!brep->IsValid(&tl)) {
 	    bu_log("brep is NOT valid");
 	    return GED_ERROR;
@@ -1858,9 +1828,6 @@ _brep_cmd_surface_knot_plot(void *bs, int argc, const char **argv)
 	ON_wString wstr;
 	ON_TextLog tl(wstr);
 
-	if (brep == NULL) {
-	    return GED_ERROR;
-	}
 	if (!brep->IsValid(&tl)) {
 	    bu_log("brep is NOT valid");
 	    return GED_ERROR;
@@ -1919,9 +1886,6 @@ _brep_cmd_surface_knot_2d_plot(void *bs, int argc, const char **argv)
 	ON_wString wstr;
 	ON_TextLog tl(wstr);
 
-	if (brep == NULL) {
-	    return GED_ERROR;
-	}
 	if (!brep->IsValid(&tl)) {
 	    bu_log("brep is NOT valid");
 	    return GED_ERROR;
@@ -1981,9 +1945,6 @@ _brep_cmd_surface_normal_plot(void *bs, int argc, const char **argv)
 	ON_wString wstr;
 	ON_TextLog tl(wstr);
 
-	if (brep == NULL) {
-	    return GED_ERROR;
-	}
 	if (!brep->IsValid(&tl)) {
 	    bu_log("brep is NOT valid");
 	    return GED_ERROR;
@@ -2045,9 +2006,6 @@ _brep_cmd_surface_uv_plot(void *bs, int argc, const char **argv)
 	ON_wString wstr;
 	ON_TextLog tl(wstr);
 
-	if (brep == NULL) {
-	    return GED_ERROR;
-	}
 	if (!brep->IsValid(&tl)) {
 	    bu_log("brep is NOT valid");
 	    return GED_ERROR;
@@ -2132,10 +2090,6 @@ _brep_cmd_surface_uv_point_plot(void *bs, int argc, const char **argv)
 
     int si;
     double u, v;
-
-    if (brep == NULL) {
-	return GED_ERROR;
-    }
 
     ON_wString wstr;
     ON_TextLog tl(wstr);
@@ -2227,9 +2181,6 @@ _brep_cmd_trim_plot(void *bs, int argc, const char **argv)
 	unsigned char rgb[3];
 	bu_color_to_rgb_chars(color, rgb);
 
-	if (brep == NULL) {
-	    return GED_ERROR;
-	}
 	if (!brep->IsValid(&tl)) {
 	    bu_log("brep is NOT valid");
 	    return GED_ERROR;
@@ -2294,9 +2245,6 @@ _brep_cmd_trim_2d_plot(void *bs, int argc, const char **argv)
 	unsigned char rgb[3];
 	bu_color_to_rgb_chars(color, rgb);
 
-	if (brep == NULL) {
-	    return GED_ERROR;
-	}
 	if (!brep->IsValid(&tl)) {
 	    bu_log("brep is NOT valid");
 	    return GED_ERROR;
@@ -2361,9 +2309,6 @@ _brep_cmd_trim_direction_plot(void *bs, int argc, const char **argv)
 	unsigned char rgb[3];
 	bu_color_to_rgb_chars(color, rgb);
 
-	if (brep == NULL) {
-	    return GED_ERROR;
-	}
 	if (!brep->IsValid(&tl)) {
 	    bu_log("brep is NOT valid");
 	    return GED_ERROR;
@@ -2425,9 +2370,6 @@ _brep_cmd_trim_bbox_plot(void *bs, int argc, const char **argv)
 	unsigned char rgb[3];
 	bu_color_to_rgb_chars(color, rgb);
 
-	if (brep == NULL) {
-	    return GED_ERROR;
-	}
 	if (!brep->IsValid(&tl)) {
 	    bu_log("brep is NOT valid");
 	    return GED_ERROR;
@@ -2488,9 +2430,6 @@ _brep_cmd_trim_bbox_2d_plot(void *bs, int argc, const char **argv)
 	unsigned char rgb[3];
 	bu_color_to_rgb_chars(color, rgb);
 
-	if (brep == NULL) {
-	    return GED_ERROR;
-	}
 	if (!brep->IsValid(&tl)) {
 	    bu_log("brep is NOT valid");
 	    return GED_ERROR;
@@ -2551,9 +2490,6 @@ _brep_cmd_vertex_plot(void *bs, int argc, const char **argv)
 	unsigned char rgb[3];
 	bu_color_to_rgb_chars(color, rgb);
 
-	if (brep == NULL) {
-	    return GED_ERROR;
-	}
 	if (!brep->IsValid(&tl)) {
 	    bu_log("brep is NOT valid");
 	    return GED_ERROR;
@@ -3045,6 +2981,12 @@ brep_plot(struct _ged_brep_info *gb, int argc, const char **argv)
     gib.gb = gb;
     gib.vls = gb->gedp->ged_result_str;
     gib.cmds = _brep_plot_cmds;
+
+    const ON_Brep *brep = ((struct rt_brep_internal *)(gb->intern.idb_ptr))->brep;
+    if (brep == NULL) {
+	bu_vls_printf(gib.vls, "attempting to plot, but no ON_Brep data present\n");
+	return GED_ERROR;
+    }
 
     if (!argc) {
 	// No arg case - just plot entire brep
