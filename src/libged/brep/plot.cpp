@@ -1060,25 +1060,21 @@ _brep_cmd_curve_2d_plot(void *bs, int argc, const char **argv)
 
 	int ci = *e_it;
 
-	ON_wString wstr;
-	ON_TextLog tl(wstr);
-
 	unsigned char rgb[3];
 	bu_color_to_rgb_chars(color, rgb);
 
-	if (!brep->IsValid(&tl)) {
-	    bu_log("brep is NOT valid");
-	    return GED_ERROR;
-	}
 	const ON_Curve* curve = brep->m_C2[ci];
-	curve->Dump(tl);
+
+	if (!curve->IsValid(NULL)) {
+	    bu_vls_printf(gib->vls, "curve %d is not valid, skipping", ci);
+	    continue;
+	}
+
 	if (color) {
 	    plotcurve(*curve, vbp, plotres, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
 	} else {
 	    plotcurve(*curve, vbp, plotres);
 	}
-
-	bu_vls_printf(gib->vls, "%s", ON_String(wstr).Array());
     }
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
@@ -1124,25 +1120,19 @@ _brep_cmd_curve_3d_plot(void *bs, int argc, const char **argv)
 
 	int ci = *e_it;
 
-	ON_wString wstr;
-	ON_TextLog tl(wstr);
-
 	unsigned char rgb[3];
 	bu_color_to_rgb_chars(color, rgb);
 
-	if (!brep->IsValid(&tl)) {
-	    bu_log("brep is NOT valid");
-	    return GED_ERROR;
-	}
 	const ON_Curve* curve = brep->m_C3[ci];
-	curve->Dump(tl);
+	if (!curve->IsValid(NULL)) {
+	    bu_vls_printf(gib->vls, "curve %d is not valid, skipping", ci);
+	    continue;
+	}
 	if (color) {
 	    plotcurve(*curve, vbp, plotres, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
 	} else {
 	    plotcurve(*curve, vbp, plotres);
 	}
-
-	bu_vls_printf(gib->vls, "%s", ON_String(wstr).Array());
     }
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
@@ -1187,26 +1177,24 @@ _brep_cmd_edge_plot(void *bs, int argc, const char **argv)
 
 	int ei = *e_it;
 
-	ON_wString wstr;
-	ON_TextLog tl(wstr);
-
 	unsigned char rgb[3];
 	bu_color_to_rgb_chars(color, rgb);
 
-	if (!brep->IsValid(&tl)) {
-	    bu_log("brep is NOT valid");
-	    return GED_ERROR;
-	}
 	const ON_BrepEdge &edge = brep->m_E[ei];
+	if (!edge.IsValid(NULL)) {
+	    bu_vls_printf(gib->vls, "edge %d is not valid, skipping", ei);
+	    continue;
+	}
 	const ON_Curve* curve = edge.EdgeCurveOf();
-	curve->Dump(tl);
+	if (!curve->IsValid(NULL)) {
+	    bu_vls_printf(gib->vls, "curve %d associated with edge %d is not valid, skipping", edge.m_c3i, ei);
+	    continue;
+	}
 	if (color) {
 	    plotcurve(*curve, vbp, plotres, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
 	} else {
 	    plotcurve(*curve, vbp, plotres);
 	}
-
-	bu_vls_printf(gib->vls, "%s", ON_String(wstr).Array());
     }
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
@@ -1252,26 +1240,20 @@ _brep_cmd_face_plot(void *bs, int argc, const char **argv)
 
 	int fi = *e_it;
 
-
-	ON_wString wstr;
-	ON_TextLog tl(wstr);
-
 	unsigned char rgb[3];
 	bu_color_to_rgb_chars(color, rgb);
 
-	if (!brep->IsValid(&tl)) {
-	    return GED_ERROR;
+	const ON_BrepFace& face = brep->m_F[fi];
+	if (!face.IsValid(NULL)) {
+	    bu_vls_printf(gib->vls, "face %d is not valid, skipping", fi);
+	    continue;
 	}
 
-	const ON_BrepFace& face = brep->m_F[fi];
-	face.Dump(tl);
 	if (color) {
 	    plotface(face, vbp, plotres, true, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
 	} else {
 	    plotface(face, vbp, plotres, true);
 	}
-
-	bu_vls_printf(gib->vls, "%s", ON_String(wstr).Array());
     }
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
@@ -1316,27 +1298,21 @@ _brep_cmd_face_2d_plot(void *bs, int argc, const char **argv)
 
 	int fi = *e_it;
 
-
-	ON_wString wstr;
-	ON_TextLog tl(wstr);
-
 	unsigned char rgb[3];
 	bu_color_to_rgb_chars(color, rgb);
 
-	if (!brep->IsValid(&tl)) {
-	    return GED_ERROR;
+	const ON_BrepFace& face = brep->m_F[fi];
+	if (!face.IsValid(NULL)) {
+	    bu_vls_printf(gib->vls, "face %d is not valid, skipping", fi);
+	    continue;
 	}
 
-	const ON_BrepFace& face = brep->m_F[fi];
-	face.Dump(tl);
 	plotUVDomain2d(brep->Face(fi), vbp);
 	if (color) {
 	    plotface(face, vbp, plotres, false, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
 	} else {
 	    plotface(face, vbp, plotres, false);
 	}
-
-	bu_vls_printf(gib->vls, "%s", ON_String(wstr).Array());
     }
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
@@ -1384,15 +1360,12 @@ _brep_cmd_face_surface_bbox_plot(void *bs, int argc, const char **argv)
 	unsigned char rgb[3];
 	bu_color_to_rgb_chars(color, rgb);
 
-	ON_wString wstr;
-	ON_TextLog tl(wstr);
-
-	if (!brep->IsValid(&tl)) {
-	    bu_log("brep is NOT valid");
-	    return GED_ERROR;
+	ON_BrepFace *face = brep->Face(fi);
+	if (!face->IsValid(NULL)) {
+	    bu_vls_printf(gib->vls, "face %d is not valid, skipping", fi);
+	    continue;
 	}
 
-	ON_BrepFace *face = brep->Face(fi);
 	const ON_Surface *s = face->SurfaceOf();
 	double surface_width,surface_height;
 	if (s->GetSurfaceSize(&surface_width,&surface_height)) {
@@ -1452,15 +1425,12 @@ _brep_cmd_face_surface_bbox_2d_plot(void *bs, int argc, const char **argv)
 	unsigned char rgb[3];
 	bu_color_to_rgb_chars(color, rgb);
 
-	ON_wString wstr;
-	ON_TextLog tl(wstr);
-
-	if (!brep->IsValid(&tl)) {
-	    bu_log("brep is NOT valid");
-	    return GED_ERROR;
+	ON_BrepFace *face = brep->Face(fi);
+	if (!face->IsValid(NULL)) {
+	    bu_vls_printf(gib->vls, "face %d is not valid, skipping", fi);
+	    continue;
 	}
 
-	ON_BrepFace *face = brep->Face(fi);
 	const ON_Surface *s = face->SurfaceOf();
 	double surface_width,surface_height;
 	if (s->GetSurfaceSize(&surface_width,&surface_height)) {
@@ -1517,22 +1487,17 @@ _brep_cmd_face_trim_bbox_plot(void *bs, int argc, const char **argv)
 
 	int fi = *e_it;
 
-	ON_wString wstr;
-	ON_TextLog tl(wstr);
-
 	unsigned char rgb[3];
 	bu_color_to_rgb_chars(color, rgb);
 
-	if (!brep->IsValid(&tl)) {
-	    bu_log("brep is NOT valid");
-	    return GED_ERROR;
+	const ON_BrepFace& face = brep->m_F[fi];
+	if (!face.IsValid(NULL)) {
+	    bu_vls_printf(gib->vls, "face %d is not valid, skipping", fi);
+	    continue;
 	}
 
-	const ON_BrepFace& face = brep->m_F[fi];
 	const SurfaceTree st(&face);
 	plottrimleafs(&st, vbp, true);
-
-	bu_vls_printf(gib->vls, "%s", ON_String(wstr).Array());
     }
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
@@ -1577,22 +1542,18 @@ _brep_cmd_face_trim_bbox_2d_plot(void *bs, int argc, const char **argv)
 
 	int fi = *e_it;
 
-	ON_wString wstr;
-	ON_TextLog tl(wstr);
-
 	unsigned char rgb[3];
 	bu_color_to_rgb_chars(color, rgb);
 
-	if (!brep->IsValid(&tl)) {
-	    bu_log("brep is NOT valid");
-	    return GED_ERROR;
+	const ON_BrepFace& face = brep->m_F[fi];
+
+	if (!face.IsValid(NULL)) {
+	    bu_vls_printf(gib->vls, "face %d is not valid, skipping", fi);
+	    continue;
 	}
 
-	const ON_BrepFace& face = brep->m_F[fi];
 	const SurfaceTree st(&face);
 	plottrimleafs(&st, vbp, false);
-
-	bu_vls_printf(gib->vls, "%s", ON_String(wstr).Array());
     }
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
@@ -1603,6 +1564,60 @@ _brep_cmd_face_trim_bbox_2d_plot(void *bs, int argc, const char **argv)
     return GED_OK;
 }
 
+// FTD - trim direction
+extern "C" int
+_brep_cmd_face_trim_direction_plot(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname1> plot FTD [[index][index-index]]";
+    const char *purpose_string = "face trim direction";
+    if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    argc--;argv++;
+
+    struct _ged_brep_iplot *gib = (struct _ged_brep_iplot *)bs;
+    const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
+    struct bu_color *color = gib->gb->color;
+    struct bn_vlblock *vbp = gib->gb->vbp;
+    int plotres = gib->gb->plotres;
+
+    std::set<int> elements;
+    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
+	return GED_ERROR;
+    }
+    // If we have nothing, report all
+    if (!elements.size()) {
+	for (int i = 0; i < brep->m_F.Count(); i++) {
+	    elements.insert(i);
+	}
+    }
+
+    std::set<int>::iterator e_it;
+
+    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+
+	int fi = *e_it;
+
+	unsigned char rgb[3];
+	bu_color_to_rgb_chars(color, rgb);
+
+	const ON_BrepFace& face = brep->m_F[fi];
+	if (!face.IsValid(NULL)) {
+	    bu_vls_printf(gib->vls, "face %d is not valid, skipping", fi);
+	    continue;
+	}
+	plottrimdirection(face, vbp, plotres);
+    }
+
+    struct bu_vls sname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&sname, "_BC_FTD_%s", gib->gb->solid_name.c_str());
+    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    bu_vls_free(&sname);
+
+    return GED_OK;
+
+}
 
 // I - isosurfaces
 extern "C" int
@@ -1638,23 +1653,18 @@ _brep_cmd_isosurface_plot(void *bs, int argc, const char **argv)
 
 	int fi = *e_it;
 
-
-	ON_wString wstr;
-	ON_TextLog tl(wstr);
-
 	unsigned char rgb[3];
 	bu_color_to_rgb_chars(color, rgb);
 
-	if (!brep->IsValid(&tl)) {
-	    return GED_ERROR;
+	const ON_BrepFace &face = brep->m_F[fi];
+	if (!face.IsValid(NULL)) {
+	    bu_vls_printf(gib->vls, "face %d is not valid, skipping", fi);
+	    continue;
 	}
 
-	const ON_BrepFace &face = brep->m_F[fi];
 	const SurfaceTree st(&face, true, 0);
 	plotface(face, vbp, plotres, true);
 	plotFaceFromSurfaceTree(&st, vbp, plotres, plotres);
-
-	bu_vls_printf(gib->vls, "%s", ON_String(wstr).Array());
     }
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
@@ -1704,6 +1714,12 @@ _brep_cmd_loop_plot(void *bs, int argc, const char **argv)
 	bu_color_to_rgb_chars(color, rgb);
 
 	const ON_BrepLoop* loop = &(brep->m_L[li]);
+
+	if (!loop->IsValid(NULL)) {
+	    bu_vls_printf(gib->vls, "loop %d is not valid, skipping", li);
+	    continue;
+	}
+
 	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
 	    const ON_BrepTrim& trim = brep->m_T[loop->m_ti[ti]];
 	    if (color) {
@@ -1761,6 +1777,11 @@ _brep_cmd_loop_2d_plot(void *bs, int argc, const char **argv)
 	bu_color_to_rgb_chars(color, rgb);
 
 	const ON_BrepLoop* loop = &(brep->m_L[li]);
+	if (!loop->IsValid(NULL)) {
+	    bu_vls_printf(gib->vls, "loop %d is not valid, skipping", li);
+	    continue;
+	}
+
 	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
 	    const ON_BrepTrim& trim = brep->m_T[loop->m_ti[ti]];
 	    if (color) {
@@ -1813,26 +1834,20 @@ _brep_cmd_surface_plot(void *bs, int argc, const char **argv)
 
 	int si = *e_it;
 
-
-	ON_wString wstr;
-	ON_TextLog tl(wstr);
-
 	unsigned char rgb[3];
 	bu_color_to_rgb_chars(color, rgb);
 
-	if (!brep->IsValid(&tl)) {
-	    return GED_ERROR;
+	const ON_Surface *surf = brep->m_S[si];
+	if (!surf->IsValid(NULL)) {
+	    bu_vls_printf(gib->vls, "surface %d is not valid, skipping", si);
+	    continue;
 	}
 
-	const ON_Surface *surf = brep->m_S[si];
-	surf->Dump(tl);
 	if (color) {
 	    plotsurface(*surf, vbp, plotres, 10, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
 	} else {
 	    plotsurface(*surf, vbp, plotres, 10);
 	}
-
-	bu_vls_printf(gib->vls, "%s", ON_String(wstr).Array());
     }
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
@@ -1882,21 +1897,17 @@ _brep_cmd_surface_control_verts_plot(void *bs, int argc, const char **argv)
 	unsigned char rgb[3];
 	bu_color_to_rgb_chars(color, rgb);
 
-	ON_wString wstr;
-	ON_TextLog tl(wstr);
-
-	if (!brep->IsValid(&tl)) {
-	    bu_log("brep is NOT valid");
-	    return GED_ERROR;
+	const ON_Surface *surf = brep->m_S[si];
+	if (!surf->IsValid(NULL)) {
+	    bu_vls_printf(gib->vls, "surface %d is not valid, skipping", si);
+	    continue;
 	}
 
-	const ON_Surface *surf = brep->m_S[si];
 	ON_NurbsSurface *ns = ON_NurbsSurface::New();
 	surf->GetNurbForm(*ns, 0.0);
 	int ucount, vcount;
 	ucount = ns->m_cv_count[0];
 	vcount = ns->m_cv_count[1];
-	surf->Dump(tl);
 	plot_nurbs_cv(vbp, ucount, vcount, ns);
     }
 
@@ -1945,16 +1956,11 @@ _brep_cmd_surface_knot_plot(void *bs, int argc, const char **argv)
 	unsigned char rgb[3];
 	bu_color_to_rgb_chars(color, rgb);
 
-	ON_wString wstr;
-	ON_TextLog tl(wstr);
-
-	if (!brep->IsValid(&tl)) {
-	    bu_log("brep is NOT valid");
-	    return GED_ERROR;
-	}
-
 	ON_Surface *surf = brep->m_S[si];
-	surf->Dump(tl);
+	if (!surf->IsValid(NULL)) {
+	    bu_vls_printf(gib->vls, "surface %d is not valid, skipping", si);
+	    continue;
+	}
 	plotsurfaceknots(*surf, vbp, true);
     }
 
@@ -2003,16 +2009,11 @@ _brep_cmd_surface_knot_2d_plot(void *bs, int argc, const char **argv)
 	unsigned char rgb[3];
 	bu_color_to_rgb_chars(color, rgb);
 
-	ON_wString wstr;
-	ON_TextLog tl(wstr);
-
-	if (!brep->IsValid(&tl)) {
-	    bu_log("brep is NOT valid");
-	    return GED_ERROR;
-	}
-
 	ON_Surface *surf = brep->m_S[si];
-	surf->Dump(tl);
+	if (!surf->IsValid(NULL)) {
+	    bu_vls_printf(gib->vls, "surface %d is not valid, skipping", si);
+	    continue;
+	}
 	plotsurfaceknots(*surf, vbp, false);
     }
 
@@ -2062,16 +2063,12 @@ _brep_cmd_surface_normal_plot(void *bs, int argc, const char **argv)
 	unsigned char rgb[3];
 	bu_color_to_rgb_chars(color, rgb);
 
-	ON_wString wstr;
-	ON_TextLog tl(wstr);
-
-	if (!brep->IsValid(&tl)) {
-	    bu_log("brep is NOT valid");
-	    return GED_ERROR;
+	ON_Surface *surf = brep->m_S[si];
+	if (!surf->IsValid(NULL)) {
+	    bu_vls_printf(gib->vls, "surface %d is not valid, skipping", si);
+	    continue;
 	}
 
-	ON_Surface *surf = brep->m_S[si];
-	surf->Dump(tl);
 	plotsurfaceknots(*surf, vbp, true);
 	plotsurfacenormals(*surf, vbp, plotres);
     }
@@ -2123,15 +2120,12 @@ _brep_cmd_surface_uv_plot(void *bs, int argc, const char **argv)
 	unsigned char rgb[3];
 	bu_color_to_rgb_chars(color, rgb);
 
-	ON_wString wstr;
-	ON_TextLog tl(wstr);
-
-	if (!brep->IsValid(&tl)) {
-	    bu_log("brep is NOT valid");
-	    return GED_ERROR;
+	const ON_Surface *surf = brep->m_S[si];
+	if (!surf->IsValid(NULL)) {
+	    bu_vls_printf(gib->vls, "surface %d is not valid, skipping", si);
+	    continue;
 	}
 
-	const ON_Surface *surf = brep->m_S[si];
 	ON_Interval U = surf->Domain(0);
 	ON_Interval V = surf->Domain(1);
 	struct bu_list *vhead;
@@ -2174,8 +2168,6 @@ _brep_cmd_surface_uv_plot(void *bs, int argc, const char **argv)
 		RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
 	    }
 	}
-
-	bu_vls_printf(gib->vls, "%s", ON_String(wstr).Array());
     }
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
@@ -2214,12 +2206,6 @@ _brep_cmd_surface_uv_point_plot(void *bs, int argc, const char **argv)
     ON_wString wstr;
     ON_TextLog tl(wstr);
 
-    if (!brep->IsValid(&tl)) {
-	bu_log("brep is NOT valid");
-	return GED_ERROR;
-    }
-
-
     if (bu_opt_int(NULL, 1, (const char **)&argv[0], (void *)&si) < 0) {
 	bu_vls_printf(gib->vls, "invalid surface specifier: %s", argv[0]);
 	return GED_ERROR;
@@ -2244,7 +2230,11 @@ _brep_cmd_surface_uv_point_plot(void *bs, int argc, const char **argv)
     bu_color_to_rgb_chars(color, rgb);
 
     const ON_Surface *surf = brep->m_S[si];
-    surf->Dump(tl);
+    if (!surf->IsValid(NULL)) {
+	bu_vls_printf(gib->vls, "surface %d is not valid, skipping", si);
+	return GED_ERROR;
+    }
+
     if (color) {
 	plotpoint(surf->PointAt(u, v), vbp, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
     } else {
@@ -2295,25 +2285,20 @@ _brep_cmd_trim_plot(void *bs, int argc, const char **argv)
 
 	int ti = *e_it;
 
-	ON_wString wstr;
-	ON_TextLog tl(wstr);
-
 	unsigned char rgb[3];
 	bu_color_to_rgb_chars(color, rgb);
 
-	if (!brep->IsValid(&tl)) {
-	    bu_log("brep is NOT valid");
-	    return GED_ERROR;
-	}
 	const ON_BrepTrim &trim = brep->m_T[ti];
-	trim.Dump(tl);
+	if (!trim.IsValid(NULL)) {
+	    bu_vls_printf(gib->vls, "trim %d is not valid, skipping", ti);
+	    continue;
+	}
+
 	if (color) {
 	    plottrim(trim, vbp, plotres, true, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
 	} else {
 	    plottrim(trim, vbp, plotres, true);
 	}
-
-	bu_vls_printf(gib->vls, "%s", ON_String(wstr).Array());
     }
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
@@ -2359,25 +2344,20 @@ _brep_cmd_trim_2d_plot(void *bs, int argc, const char **argv)
 
 	int ti = *e_it;
 
-	ON_wString wstr;
-	ON_TextLog tl(wstr);
-
 	unsigned char rgb[3];
 	bu_color_to_rgb_chars(color, rgb);
 
-	if (!brep->IsValid(&tl)) {
-	    bu_log("brep is NOT valid");
-	    return GED_ERROR;
-	}
 	const ON_BrepTrim &trim = brep->m_T[ti];
-	trim.Dump(tl);
+	if (!trim.IsValid(NULL)) {
+	    bu_vls_printf(gib->vls, "trim %d is not valid, skipping", ti);
+	    continue;
+	}
+
 	if (color) {
 	    plottrim(trim, vbp, plotres, false, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
 	} else {
 	    plottrim(trim, vbp, plotres, false);
 	}
-
-	bu_vls_printf(gib->vls, "%s", ON_String(wstr).Array());
     }
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
@@ -2386,68 +2366,6 @@ _brep_cmd_trim_2d_plot(void *bs, int argc, const char **argv)
     bu_vls_free(&sname);
 
     return GED_OK;
-}
-
-// TD - trim direction
-extern "C" int
-_brep_cmd_trim_direction_plot(void *bs, int argc, const char **argv)
-{
-    const char *usage_string = "brep [options] <objname1> plot TD [[index][index-index]]";
-    const char *purpose_string = "face trim direction";
-    if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
-    }
-
-    argc--;argv++;
-
-    struct _ged_brep_iplot *gib = (struct _ged_brep_iplot *)bs;
-    const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
-    struct bu_color *color = gib->gb->color;
-    struct bn_vlblock *vbp = gib->gb->vbp;
-    int plotres = gib->gb->plotres;
-
-    std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
-    }
-    // If we have nothing, report all
-    if (!elements.size()) {
-	for (int i = 0; i < brep->m_F.Count(); i++) {
-	    elements.insert(i);
-	}
-    }
-
-    std::set<int>::iterator e_it;
-
-    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
-
-	int fi = *e_it;
-
-	ON_wString wstr;
-	ON_TextLog tl(wstr);
-
-	unsigned char rgb[3];
-	bu_color_to_rgb_chars(color, rgb);
-
-	if (!brep->IsValid(&tl)) {
-	    bu_log("brep is NOT valid");
-	    return GED_ERROR;
-	}
-
-	const ON_BrepFace& face = brep->m_F[fi];
-	face.Dump(tl);
-	plottrimdirection(face, vbp, plotres);
-
-	bu_vls_printf(gib->vls, "%s", ON_String(wstr).Array());
-    }
-
-    struct bu_vls sname = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&sname, "_BC_TD_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
-    bu_vls_free(&sname);
-
-    return GED_OK;
-
 }
 
 // V - 3D vertices
@@ -2484,24 +2402,19 @@ _brep_cmd_vertex_plot(void *bs, int argc, const char **argv)
 
 	int vi = *e_it;
 
-	ON_wString wstr;
-	ON_TextLog tl(wstr);
-
 	unsigned char rgb[3];
 	bu_color_to_rgb_chars(color, rgb);
 
-	if (!brep->IsValid(&tl)) {
-	    bu_log("brep is NOT valid");
-	    return GED_ERROR;
-	}
 	const ON_BrepVertex &vertex = brep->m_V[vi];
-	vertex.Dump(tl);
+	if (!vertex.IsValid(NULL)) {
+	    bu_vls_printf(gib->vls, "vertex %d is not valid, skipping", vi);
+	    continue;
+	}
 	if (color) {
 	    plotpoint(vertex.Point(), vbp, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
 	} else {
 	    plotpoint(vertex.Point(), vbp, GREEN);
 	}
-	bu_vls_printf(gib->vls, "%s", ON_String(wstr).Array());
     }
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
@@ -2948,6 +2861,7 @@ const struct bu_cmdtab _brep_plot_cmds[] = {
     { "FSBB2d",      _brep_cmd_face_surface_bbox_2d_plot},
     { "FTBB",        _brep_cmd_face_trim_bbox_plot},
     { "FTBB2d",      _brep_cmd_face_trim_bbox_2d_plot},
+    { "FTD",         _brep_cmd_face_trim_direction_plot},
     { "I",           _brep_cmd_isosurface_plot},
     { "L",           _brep_cmd_loop_plot},
     { "L2d",         _brep_cmd_loop_2d_plot},
@@ -2960,7 +2874,6 @@ const struct bu_cmdtab _brep_plot_cmds[] = {
     { "SUVP",        _brep_cmd_surface_uv_point_plot},
     { "T",           _brep_cmd_trim_plot},
     { "T2d",         _brep_cmd_trim_2d_plot},
-    { "TD",          _brep_cmd_trim_direction_plot},
     { "V",           _brep_cmd_vertex_plot},
     { "CDT",         _brep_cmd_face_cdt_plot},
     { "CDT2d",       _brep_cmd_face_cdt_2d_plot},
