@@ -1282,11 +1282,11 @@ _brep_cmd_face_plot(void *bs, int argc, const char **argv)
     return GED_OK;
 }
 
-// F2D - topological faces in parametric space
+// F2d - topological faces in parametric space
 extern "C" int
 _brep_cmd_face_2d_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname1> plot F2D [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot F2d [[index][index-index]]";
     const char *purpose_string = "topological faces in parametric space";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -1340,7 +1340,7 @@ _brep_cmd_face_2d_plot(void *bs, int argc, const char **argv)
     }
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&sname, "_BC_F2D_%s", gib->gb->solid_name.c_str());
+    bu_vls_sprintf(&sname, "_BC_F2d_%s", gib->gb->solid_name.c_str());
     _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
     bu_vls_free(&sname);
 
@@ -1415,11 +1415,11 @@ _brep_cmd_face_surface_bbox_plot(void *bs, int argc, const char **argv)
     return GED_OK;
 }
 
-// FSBB2D - surface bounding boxes in parametric space
+// FSBB2d - surface bounding boxes in parametric space
 extern "C" int
 _brep_cmd_face_surface_bbox_2d_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname1> plot FSBB2D [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot FSBB2d [[index][index-index]]";
     const char *purpose_string = "2D parameter space surface bounding boxes";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -1543,11 +1543,11 @@ _brep_cmd_face_trim_bbox_plot(void *bs, int argc, const char **argv)
     return GED_OK;
 }
 
-// FTBB2D - face trim bboxes in 2D 
+// FTBB2d - face trim bboxes in 2D 
 extern "C" int
 _brep_cmd_face_trim_bbox_2d_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname1> plot FTBB2D [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot FTBB2d [[index][index-index]]";
     const char *purpose_string = "trim bounding boxes in parametric space";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -1722,11 +1722,11 @@ _brep_cmd_loop_plot(void *bs, int argc, const char **argv)
     return GED_OK;
 }
 
-// L2D - 2D parameter space topological trimming loops
+// L2d - 2D parameter space topological trimming loops
 extern "C" int
 _brep_cmd_loop_2d_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname1> plot L2D [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot L2d [[index][index-index]]";
     const char *purpose_string = "2D parameter space topological trimming loops";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -1966,11 +1966,11 @@ _brep_cmd_surface_knot_plot(void *bs, int argc, const char **argv)
     return GED_OK;
 }
 
-// SK2D - surface knots in parametric space
+// SK2d - surface knots in parametric space
 extern "C" int
 _brep_cmd_surface_knot_2d_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname1> plot SK2D [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot SK2d [[index][index-index]]";
     const char *purpose_string = "surface knots in parametric space";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2324,11 +2324,11 @@ _brep_cmd_trim_plot(void *bs, int argc, const char **argv)
     return GED_OK;
 }
 
-// T2D - 2D topological trims
+// T2d - 2D topological trims
 extern "C" int
 _brep_cmd_trim_2d_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname1> plot T2D [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot T2d [[index][index-index]]";
     const char *purpose_string = "2D parameter space topological trims";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2512,11 +2512,11 @@ _brep_cmd_vertex_plot(void *bs, int argc, const char **argv)
     return GED_OK;
 }
 
-// FCDT - face triangulation
+// CDT - face triangulation
 extern "C" int
 _brep_cmd_face_cdt_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname1> plot FCDT [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot CDT [[index][index-index]]";
     const char *purpose_string = "triangulation of face in 3D";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2549,18 +2549,18 @@ _brep_cmd_face_cdt_plot(void *bs, int argc, const char **argv)
     }
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&sname, "_BC_FCDT_%s", gib->gb->solid_name.c_str());
+    bu_vls_sprintf(&sname, "_BC_CDT_%s", gib->gb->solid_name.c_str());
     _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
     bu_vls_free(&sname);
 
     return GED_OK;
 }
 
-// FCDT2D - face triangulation in parametric space
+// CDT2d - face triangulation in parametric space
 extern "C" int
 _brep_cmd_face_cdt_2d_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname1> plot FCDT2D [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot CDT2d [[index][index-index]]";
     const char *purpose_string = "triangulation of face in parametric space";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2593,18 +2593,18 @@ _brep_cmd_face_cdt_2d_plot(void *bs, int argc, const char **argv)
     }
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&sname, "_BC_FCDT2d_%s", gib->gb->solid_name.c_str());
+    bu_vls_sprintf(&sname, "_BC_CDT2d_%s", gib->gb->solid_name.c_str());
     _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
     bu_vls_free(&sname);
 
     return GED_OK;
 }
 
-// FCDTM2D - face triangulation ??
+// CDTM2d - face triangulation ??
 extern "C" int
 _brep_cmd_face_cdt_m2d_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname1> plot FCDTM2D [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot CDTM2d [[index][index-index]]";
     const char *purpose_string = "Triangulation of face ??";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2637,18 +2637,18 @@ _brep_cmd_face_cdt_m2d_plot(void *bs, int argc, const char **argv)
     }
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&sname, "_BC_FCDTm2d_%s", gib->gb->solid_name.c_str());
+    bu_vls_sprintf(&sname, "_BC_CDTm2d_%s", gib->gb->solid_name.c_str());
     _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
     bu_vls_free(&sname);
 
     return GED_OK;
 }
 
-// FCDTP2D - face triangulation points?
+// CDTP2d - face triangulation points?
 extern "C" int
 _brep_cmd_face_cdt_p2d_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname1> plot FCDTP2D [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot CDTP2d [[index][index-index]]";
     const char *purpose_string = "face triangulation points?";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2681,18 +2681,18 @@ _brep_cmd_face_cdt_p2d_plot(void *bs, int argc, const char **argv)
     }
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&sname, "_BC_FCDTp2d_%s", gib->gb->solid_name.c_str());
+    bu_vls_sprintf(&sname, "_BC_CDTp2d_%s", gib->gb->solid_name.c_str());
     _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
     bu_vls_free(&sname);
 
     return GED_OK;
 }
 
-// FCDTW - face triangulation wireframe in 3D
+// CDTW - face triangulation wireframe in 3D
 extern "C" int
 _brep_cmd_face_cdt_wireframe_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname1> plot FCDTW [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot CDTW [[index][index-index]]";
     const char *purpose_string = "face triangulation wireframe in 3D";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2725,18 +2725,18 @@ _brep_cmd_face_cdt_wireframe_plot(void *bs, int argc, const char **argv)
     }
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&sname, "_BC_FCDTw_%s", gib->gb->solid_name.c_str());
+    bu_vls_sprintf(&sname, "_BC_CDTw_%s", gib->gb->solid_name.c_str());
     _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
     bu_vls_free(&sname);
 
     return GED_OK;
 }
 
-// FCDTN - new face triangulation
+// CDTN - new face triangulation
 extern "C" int
 _brep_cmd_face_cdt2_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname1> plot FCDTN [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot CDTN [[index][index-index]]";
     const char *purpose_string = "(Debug) new triangulation of face in 3D";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2786,18 +2786,18 @@ _brep_cmd_face_cdt2_plot(void *bs, int argc, const char **argv)
     ON_Brep_CDT_Destroy(s_cdt);
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&sname, "_BC_FCDTw_%s", gib->gb->solid_name.c_str());
+    bu_vls_sprintf(&sname, "_BC_CDTw_%s", gib->gb->solid_name.c_str());
     _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
     bu_vls_free(&sname);
 
     return GED_OK;
 }
 
-// FCDTN2D - new face triangulation in parametric space
+// CDTN2d - new face triangulation in parametric space
 extern "C" int
 _brep_cmd_face_cdt2_2d_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname1> plot FCDTN2D [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot CDTN2d [[index][index-index]]";
     const char *purpose_string = "(Debug) new triangulation of face in parametric space";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2846,18 +2846,18 @@ _brep_cmd_face_cdt2_2d_plot(void *bs, int argc, const char **argv)
     bu_free(faces, "free face array");
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&sname, "_BC_FCDT2d_%s", gib->gb->solid_name.c_str());
+    bu_vls_sprintf(&sname, "_BC_CDT2d_%s", gib->gb->solid_name.c_str());
     _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
     bu_vls_free(&sname);
 
     return GED_OK;
 }
 
-// FCDTNW - new face triangulation wireframe in 3D
+// CDTNW - new face triangulation wireframe in 3D
 extern "C" int
 _brep_cmd_face_cdt2_wireframe_plot(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname1> plot FCDTNW [[index][index-index]]";
+    const char *usage_string = "brep [options] <objname1> plot CDTNW [[index][index-index]]";
     const char *purpose_string = "(Debug) new face triangulation wireframe in 3D";
     if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -2906,7 +2906,7 @@ _brep_cmd_face_cdt2_wireframe_plot(void *bs, int argc, const char **argv)
     bu_free(faces, "free face array");
 
     struct bu_vls sname = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&sname, "_BC_FCDTw_%s", gib->gb->solid_name.c_str());
+    bu_vls_sprintf(&sname, "_BC_CDTw_%s", gib->gb->solid_name.c_str());
     _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
     bu_vls_free(&sname);
 
@@ -2943,33 +2943,33 @@ const struct bu_cmdtab _brep_plot_cmds[] = {
     { "C3",          _brep_cmd_curve_3d_plot},
     { "E",           _brep_cmd_edge_plot},
     { "F",           _brep_cmd_face_plot},
-    { "F2D",         _brep_cmd_face_2d_plot},
+    { "F2d",         _brep_cmd_face_2d_plot},
     { "FSBB",        _brep_cmd_face_surface_bbox_plot},
-    { "FSBB2D",      _brep_cmd_face_surface_bbox_2d_plot},
+    { "FSBB2d",      _brep_cmd_face_surface_bbox_2d_plot},
     { "FTBB",        _brep_cmd_face_trim_bbox_plot},
-    { "FTBB2D",      _brep_cmd_face_trim_bbox_2d_plot},
+    { "FTBB2d",      _brep_cmd_face_trim_bbox_2d_plot},
     { "I",           _brep_cmd_isosurface_plot},
     { "L",           _brep_cmd_loop_plot},
-    { "L2D",         _brep_cmd_loop_2d_plot},
+    { "L2d",         _brep_cmd_loop_2d_plot},
     { "S",           _brep_cmd_surface_plot},
     { "SCV",         _brep_cmd_surface_control_verts_plot},
     { "SK",          _brep_cmd_surface_knot_plot},
-    { "SK2D",        _brep_cmd_surface_knot_2d_plot},
+    { "SK2d",        _brep_cmd_surface_knot_2d_plot},
     { "SN",          _brep_cmd_surface_normal_plot},
     { "SUV",         _brep_cmd_surface_uv_plot},
     { "SUVP",        _brep_cmd_surface_uv_point_plot},
     { "T",           _brep_cmd_trim_plot},
-    { "T2D",         _brep_cmd_trim_2d_plot},
+    { "T2d",         _brep_cmd_trim_2d_plot},
     { "TD",          _brep_cmd_trim_direction_plot},
     { "V",           _brep_cmd_vertex_plot},
-    { "FCDT",        _brep_cmd_face_cdt_plot},
-    { "FCDT2D",      _brep_cmd_face_cdt_2d_plot},
-    { "FCDTM2D",     _brep_cmd_face_cdt_m2d_plot},
-    { "FCDTP2D",     _brep_cmd_face_cdt_p2d_plot},
-    { "FCDTW",       _brep_cmd_face_cdt_wireframe_plot},
-    { "FCDTN",       _brep_cmd_face_cdt2_plot},
-    { "FCDTN2D",     _brep_cmd_face_cdt2_2d_plot},
-    { "FCDTNW",      _brep_cmd_face_cdt2_wireframe_plot},
+    { "CDT",         _brep_cmd_face_cdt_plot},
+    { "CDT2d",       _brep_cmd_face_cdt_2d_plot},
+    { "CDTm2d",      _brep_cmd_face_cdt_m2d_plot},
+    { "CDTp2d",      _brep_cmd_face_cdt_p2d_plot},
+    { "CDTw",        _brep_cmd_face_cdt_wireframe_plot},
+    { "CDTn",        _brep_cmd_face_cdt2_plot},
+    { "CDTn2d",      _brep_cmd_face_cdt2_2d_plot},
+    { "CDTnw",       _brep_cmd_face_cdt2_wireframe_plot},
     { (char *)NULL,      NULL}
 };
 
@@ -2988,7 +2988,7 @@ brep_plot(struct _ged_brep_info *gb, int argc, const char **argv)
     }
 
     if (!argc) {
-	// No arg case - just plot entire brep
+	_brep_plot_help(&gib, 0, NULL);
 	return GED_OK;
     }
 
