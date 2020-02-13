@@ -1347,6 +1347,263 @@ _brep_cmd_face_2d_plot(void *bs, int argc, const char **argv)
     return GED_OK;
 }
 
+// FSBB - face surface bounding boxes
+extern "C" int
+_brep_cmd_face_surface_bbox_plot(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname1> plot FSBB [[index][index-index]]";
+    const char *purpose_string = "face surface bounding boxes";
+    if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    argc--;argv++;
+
+    struct _ged_brep_iplot *gib = (struct _ged_brep_iplot *)bs;
+    const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
+    struct bu_color *color = gib->gb->color;
+    struct bn_vlblock *vbp = gib->gb->vbp;
+
+    std::set<int> elements;
+    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
+	return GED_ERROR;
+    }
+    // If we have nothing, report all
+    if (!elements.size()) {
+	for (int i = 0; i < brep->m_F.Count(); i++) {
+	    elements.insert(i);
+	}
+    }
+
+    std::set<int>::iterator e_it;
+
+    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+
+	int fi = *e_it;
+
+	unsigned char rgb[3];
+	bu_color_to_rgb_chars(color, rgb);
+
+	ON_wString wstr;
+	ON_TextLog tl(wstr);
+
+	if (!brep->IsValid(&tl)) {
+	    bu_log("brep is NOT valid");
+	    return GED_ERROR;
+	}
+
+	ON_BrepFace *face = brep->Face(fi);
+	const ON_Surface *s = face->SurfaceOf();
+	double surface_width,surface_height;
+	if (s->GetSurfaceSize(&surface_width,&surface_height)) {
+	    // reparameterization of the face's surface and transforms the "u"
+	    // and "v" coordinates of all the face's parameter space trimming
+	    // curves to minimize distortion in the map from parameter space to 3d..
+	    face->SetDomain(0, 0.0, surface_width);
+	    face->SetDomain(1, 0.0, surface_height);
+	}
+	const SurfaceTree st(face);
+	unsigned int lcnt = plotsurfaceleafs(&st, vbp, true);
+	bu_vls_printf(gib->vls, "Face: %d contains %d SBBs", fi, lcnt);
+    }
+
+    struct bu_vls sname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&sname, "_BC_SBB_%s", gib->gb->solid_name.c_str());
+    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    bu_vls_free(&sname);
+
+    return GED_OK;
+}
+
+// FSBB2D - surface bounding boxes in parametric space
+extern "C" int
+_brep_cmd_face_surface_bbox_2d_plot(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname1> plot FSBB2D [[index][index-index]]";
+    const char *purpose_string = "2D parameter space surface bounding boxes";
+    if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    argc--;argv++;
+
+    struct _ged_brep_iplot *gib = (struct _ged_brep_iplot *)bs;
+    const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
+    struct bu_color *color = gib->gb->color;
+    struct bn_vlblock *vbp = gib->gb->vbp;
+
+    std::set<int> elements;
+    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
+	return GED_ERROR;
+    }
+    // If we have nothing, report all
+    if (!elements.size()) {
+	for (int i = 0; i < brep->m_F.Count(); i++) {
+	    elements.insert(i);
+	}
+    }
+
+    std::set<int>::iterator e_it;
+
+    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+
+	int fi = *e_it;
+
+	unsigned char rgb[3];
+	bu_color_to_rgb_chars(color, rgb);
+
+	ON_wString wstr;
+	ON_TextLog tl(wstr);
+
+	if (!brep->IsValid(&tl)) {
+	    bu_log("brep is NOT valid");
+	    return GED_ERROR;
+	}
+
+	ON_BrepFace *face = brep->Face(fi);
+	const ON_Surface *s = face->SurfaceOf();
+	double surface_width,surface_height;
+	if (s->GetSurfaceSize(&surface_width,&surface_height)) {
+	    // reparameterization of the face's surface and transforms the "u"
+	    // and "v" coordinates of all the face's parameter space trimming
+	    // curves to minimize distortion in the map from parameter space to 3d..
+	    face->SetDomain(0, 0.0, surface_width);
+	    face->SetDomain(1, 0.0, surface_height);
+	}
+	const SurfaceTree st(face);
+	unsigned int lcnt = plotsurfaceleafs(&st, vbp, false);
+	bu_vls_printf(gib->vls, "Face: %d contains %d SBBs", fi, lcnt);
+    }
+
+    struct bu_vls sname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&sname, "_BC_SBB_%s", gib->gb->solid_name.c_str());
+    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    bu_vls_free(&sname);
+
+    return GED_OK;
+}
+
+// FTBB - trim bboxes in 3D
+extern "C" int
+_brep_cmd_face_trim_bbox_plot(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname1> plot FTBB [[index][index-index]]";
+    const char *purpose_string = "face trim bounding boxes in 3D";
+    if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    argc--;argv++;
+
+    struct _ged_brep_iplot *gib = (struct _ged_brep_iplot *)bs;
+    const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
+    struct bu_color *color = gib->gb->color;
+    struct bn_vlblock *vbp = gib->gb->vbp;
+
+    std::set<int> elements;
+    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
+	return GED_ERROR;
+    }
+    // If we have nothing, report all
+    if (!elements.size()) {
+	for (int i = 0; i < brep->m_F.Count(); i++) {
+	    elements.insert(i);
+	}
+    }
+
+    std::set<int>::iterator e_it;
+
+    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+
+	int fi = *e_it;
+
+	ON_wString wstr;
+	ON_TextLog tl(wstr);
+
+	unsigned char rgb[3];
+	bu_color_to_rgb_chars(color, rgb);
+
+	if (!brep->IsValid(&tl)) {
+	    bu_log("brep is NOT valid");
+	    return GED_ERROR;
+	}
+
+	const ON_BrepFace& face = brep->m_F[fi];
+	const SurfaceTree st(&face);
+	plottrimleafs(&st, vbp, true);
+
+	bu_vls_printf(gib->vls, "%s", ON_String(wstr).Array());
+    }
+
+    struct bu_vls sname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&sname, "_BC_TBB_%s", gib->gb->solid_name.c_str());
+    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    bu_vls_free(&sname);
+
+    return GED_OK;
+}
+
+// FTBB2D - face trim bboxes in 2D 
+extern "C" int
+_brep_cmd_face_trim_bbox_2d_plot(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname1> plot FTBB2D [[index][index-index]]";
+    const char *purpose_string = "trim bounding boxes in parametric space";
+    if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    argc--;argv++;
+
+    struct _ged_brep_iplot *gib = (struct _ged_brep_iplot *)bs;
+    const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
+    struct bu_color *color = gib->gb->color;
+    struct bn_vlblock *vbp = gib->gb->vbp;
+
+    std::set<int> elements;
+    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
+	return GED_ERROR;
+    }
+    // If we have nothing, report all
+    if (!elements.size()) {
+	for (int i = 0; i < brep->m_F.Count(); i++) {
+	    elements.insert(i);
+	}
+    }
+
+    std::set<int>::iterator e_it;
+
+    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+
+	int fi = *e_it;
+
+	ON_wString wstr;
+	ON_TextLog tl(wstr);
+
+	unsigned char rgb[3];
+	bu_color_to_rgb_chars(color, rgb);
+
+	if (!brep->IsValid(&tl)) {
+	    bu_log("brep is NOT valid");
+	    return GED_ERROR;
+	}
+
+	const ON_BrepFace& face = brep->m_F[fi];
+	const SurfaceTree st(&face);
+	plottrimleafs(&st, vbp, false);
+
+	bu_vls_printf(gib->vls, "%s", ON_String(wstr).Array());
+    }
+
+    struct bu_vls sname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&sname, "_BC_TBB_%s", gib->gb->solid_name.c_str());
+    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
+    bu_vls_free(&sname);
+
+    return GED_OK;
+}
+
+
 // I - isosurfaces
 extern "C" int
 _brep_cmd_isosurface_plot(void *bs, int argc, const char **argv)
@@ -1586,141 +1843,7 @@ _brep_cmd_surface_plot(void *bs, int argc, const char **argv)
     return GED_OK;
 }
 
-// SBB - surface bounding boxes
-extern "C" int
-_brep_cmd_surface_bbox_plot(void *bs, int argc, const char **argv)
-{
-    const char *usage_string = "brep [options] <objname1> plot SBB [[index][index-index]]";
-    const char *purpose_string = "surface bounding boxes";
-    if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
-    }
 
-    argc--;argv++;
-
-    struct _ged_brep_iplot *gib = (struct _ged_brep_iplot *)bs;
-    const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
-    struct bu_color *color = gib->gb->color;
-    struct bn_vlblock *vbp = gib->gb->vbp;
-
-    std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
-    }
-    // If we have nothing, report all
-    if (!elements.size()) {
-	for (int i = 0; i < brep->m_F.Count(); i++) {
-	    elements.insert(i);
-	}
-    }
-
-    std::set<int>::iterator e_it;
-
-    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
-
-	int fi = *e_it;
-
-	unsigned char rgb[3];
-	bu_color_to_rgb_chars(color, rgb);
-
-	ON_wString wstr;
-	ON_TextLog tl(wstr);
-
-	if (!brep->IsValid(&tl)) {
-	    bu_log("brep is NOT valid");
-	    return GED_ERROR;
-	}
-
-	ON_BrepFace *face = brep->Face(fi);
-	const ON_Surface *s = face->SurfaceOf();
-	double surface_width,surface_height;
-	if (s->GetSurfaceSize(&surface_width,&surface_height)) {
-	    // reparameterization of the face's surface and transforms the "u"
-	    // and "v" coordinates of all the face's parameter space trimming
-	    // curves to minimize distortion in the map from parameter space to 3d..
-	    face->SetDomain(0, 0.0, surface_width);
-	    face->SetDomain(1, 0.0, surface_height);
-	}
-	const SurfaceTree st(face);
-	unsigned int lcnt = plotsurfaceleafs(&st, vbp, true);
-	bu_vls_printf(gib->vls, "Face: %d contains %d SBBs", fi, lcnt);
-    }
-
-    struct bu_vls sname = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&sname, "_BC_SBB_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
-    bu_vls_free(&sname);
-
-    return GED_OK;
-}
-
-// SBB2D - surface bounding boxes in parametric space
-extern "C" int
-_brep_cmd_surface_bbox_2d_plot(void *bs, int argc, const char **argv)
-{
-    const char *usage_string = "brep [options] <objname1> plot SBB [[index][index-index]]";
-    const char *purpose_string = "2D parameter space surface bounding boxes";
-    if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
-    }
-
-    argc--;argv++;
-
-    struct _ged_brep_iplot *gib = (struct _ged_brep_iplot *)bs;
-    const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
-    struct bu_color *color = gib->gb->color;
-    struct bn_vlblock *vbp = gib->gb->vbp;
-
-    std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
-    }
-    // If we have nothing, report all
-    if (!elements.size()) {
-	for (int i = 0; i < brep->m_F.Count(); i++) {
-	    elements.insert(i);
-	}
-    }
-
-    std::set<int>::iterator e_it;
-
-    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
-
-	int fi = *e_it;
-
-	unsigned char rgb[3];
-	bu_color_to_rgb_chars(color, rgb);
-
-	ON_wString wstr;
-	ON_TextLog tl(wstr);
-
-	if (!brep->IsValid(&tl)) {
-	    bu_log("brep is NOT valid");
-	    return GED_ERROR;
-	}
-
-	ON_BrepFace *face = brep->Face(fi);
-	const ON_Surface *s = face->SurfaceOf();
-	double surface_width,surface_height;
-	if (s->GetSurfaceSize(&surface_width,&surface_height)) {
-	    // reparameterization of the face's surface and transforms the "u"
-	    // and "v" coordinates of all the face's parameter space trimming
-	    // curves to minimize distortion in the map from parameter space to 3d..
-	    face->SetDomain(0, 0.0, surface_width);
-	    face->SetDomain(1, 0.0, surface_height);
-	}
-	const SurfaceTree st(face);
-	unsigned int lcnt = plotsurfaceleafs(&st, vbp, false);
-	bu_vls_printf(gib->vls, "Face: %d contains %d SBBs", fi, lcnt);
-    }
-
-    struct bu_vls sname = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&sname, "_BC_SBB_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
-    bu_vls_free(&sname);
-
-    return GED_OK;
-}
 
 // SCV - surface control vertex mesh
 extern "C" int
@@ -2327,126 +2450,6 @@ _brep_cmd_trim_direction_plot(void *bs, int argc, const char **argv)
 
 }
 
-// TBB - trim bboxes in 3D
-extern "C" int
-_brep_cmd_trim_bbox_plot(void *bs, int argc, const char **argv)
-{
-    const char *usage_string = "brep [options] <objname1> plot TBB [[index][index-index]]";
-    const char *purpose_string = "face trim bounding boxes in 3D";
-    if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
-    }
-
-    argc--;argv++;
-
-    struct _ged_brep_iplot *gib = (struct _ged_brep_iplot *)bs;
-    const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
-    struct bu_color *color = gib->gb->color;
-    struct bn_vlblock *vbp = gib->gb->vbp;
-
-    std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
-    }
-    // If we have nothing, report all
-    if (!elements.size()) {
-	for (int i = 0; i < brep->m_F.Count(); i++) {
-	    elements.insert(i);
-	}
-    }
-
-    std::set<int>::iterator e_it;
-
-    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
-
-	int fi = *e_it;
-
-	ON_wString wstr;
-	ON_TextLog tl(wstr);
-
-	unsigned char rgb[3];
-	bu_color_to_rgb_chars(color, rgb);
-
-	if (!brep->IsValid(&tl)) {
-	    bu_log("brep is NOT valid");
-	    return GED_ERROR;
-	}
-
-	const ON_BrepFace& face = brep->m_F[fi];
-	const SurfaceTree st(&face);
-	plottrimleafs(&st, vbp, true);
-
-	bu_vls_printf(gib->vls, "%s", ON_String(wstr).Array());
-    }
-
-    struct bu_vls sname = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&sname, "_BC_TBB_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
-    bu_vls_free(&sname);
-
-    return GED_OK;
-}
-
-// TBB2D - trim bboxes in 2D 
-extern "C" int
-_brep_cmd_trim_bbox_2d_plot(void *bs, int argc, const char **argv)
-{
-    const char *usage_string = "brep [options] <objname1> plot TBB2D [[index][index-index]]";
-    const char *purpose_string = "trim bounding boxes in parametric space";
-    if (_brep_plot_msgs(bs, argc, argv, usage_string, purpose_string)) {
-	return GED_OK;
-    }
-
-    argc--;argv++;
-
-    struct _ged_brep_iplot *gib = (struct _ged_brep_iplot *)bs;
-    const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
-    struct bu_color *color = gib->gb->color;
-    struct bn_vlblock *vbp = gib->gb->vbp;
-
-    std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
-	return GED_ERROR;
-    }
-    // If we have nothing, report all
-    if (!elements.size()) {
-	for (int i = 0; i < brep->m_F.Count(); i++) {
-	    elements.insert(i);
-	}
-    }
-
-    std::set<int>::iterator e_it;
-
-    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
-
-	int fi = *e_it;
-
-	ON_wString wstr;
-	ON_TextLog tl(wstr);
-
-	unsigned char rgb[3];
-	bu_color_to_rgb_chars(color, rgb);
-
-	if (!brep->IsValid(&tl)) {
-	    bu_log("brep is NOT valid");
-	    return GED_ERROR;
-	}
-
-	const ON_BrepFace& face = brep->m_F[fi];
-	const SurfaceTree st(&face);
-	plottrimleafs(&st, vbp, false);
-
-	bu_vls_printf(gib->vls, "%s", ON_String(wstr).Array());
-    }
-
-    struct bu_vls sname = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&sname, "_BC_TBB_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
-    bu_vls_free(&sname);
-
-    return GED_OK;
-}
-
 // V - 3D vertices
 extern "C" int
 _brep_cmd_vertex_plot(void *bs, int argc, const char **argv)
@@ -2941,12 +2944,14 @@ const struct bu_cmdtab _brep_plot_cmds[] = {
     { "E",           _brep_cmd_edge_plot},
     { "F",           _brep_cmd_face_plot},
     { "F2D",         _brep_cmd_face_2d_plot},
+    { "FSBB",        _brep_cmd_face_surface_bbox_plot},
+    { "FSBB2D",      _brep_cmd_face_surface_bbox_2d_plot},
+    { "FTBB",        _brep_cmd_face_trim_bbox_plot},
+    { "FTBB2D",      _brep_cmd_face_trim_bbox_2d_plot},
     { "I",           _brep_cmd_isosurface_plot},
     { "L",           _brep_cmd_loop_plot},
     { "L2D",         _brep_cmd_loop_2d_plot},
     { "S",           _brep_cmd_surface_plot},
-    { "SBB",         _brep_cmd_surface_bbox_plot},
-    { "SBB2D",       _brep_cmd_surface_bbox_2d_plot},
     { "SCV",         _brep_cmd_surface_control_verts_plot},
     { "SK",          _brep_cmd_surface_knot_plot},
     { "SK2D",        _brep_cmd_surface_knot_2d_plot},
@@ -2956,8 +2961,6 @@ const struct bu_cmdtab _brep_plot_cmds[] = {
     { "T",           _brep_cmd_trim_plot},
     { "T2D",         _brep_cmd_trim_2d_plot},
     { "TD",          _brep_cmd_trim_direction_plot},
-    { "TBB",         _brep_cmd_trim_bbox_plot},
-    { "TBB2D",       _brep_cmd_trim_bbox_2d_plot},
     { "V",           _brep_cmd_vertex_plot},
     { "FCDT",        _brep_cmd_face_cdt_plot},
     { "FCDT2D",      _brep_cmd_face_cdt_2d_plot},
