@@ -57,7 +57,7 @@ _brep_pick_msgs(void *bs, int argc, const char **argv, const char *us, const cha
 extern "C" int
 _brep_cmd_edge_pick(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname1> plot E [px py pz dx dy dz]";
+    const char *usage_string = "brep [options] <objname1> pick E [px py pz dx dy dz]";
     const char *purpose_string = "pick closest 3D edge to line";
     if (_brep_pick_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -68,7 +68,6 @@ _brep_cmd_edge_pick(void *bs, int argc, const char **argv)
     struct _ged_brep_ipick *gib = (struct _ged_brep_ipick *)bs;
     struct ged *gedp = gib->gb->gedp;
     const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
-
 
     point_t origin;
     vect_t dir;
@@ -91,13 +90,8 @@ _brep_cmd_edge_pick(void *bs, int argc, const char **argv)
 
     // We're looking at edges - assemble bounding boxes for an initial cull
     RTree<int, double, 3> edge_bboxes;
-    ON_3dPoint ptol(ON_ZERO_TOLERANCE, ON_ZERO_TOLERANCE, ON_ZERO_TOLERANCE);
     for (int i = 0; i < brep->m_E.Count(); i++) {
 	ON_BoundingBox bb = brep->m_E[i].BoundingBox();
-	ON_3dPoint min2 = bb.m_min - ptol;
-	ON_3dPoint max2 = bb.m_max + ptol;
-	bb.Set(min2, true);
-	bb.Set(max2, true);
 
 	// Make sure we have some volume...
 	double dist = 0.1*bb.m_max.DistanceTo(bb.m_min);
@@ -255,8 +249,8 @@ _brep_cmd_face_pick(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_vertex_pick(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname1> plot V [[index][index-index]]";
-    const char *purpose_string = "3D vertices";
+    const char *usage_string = "brep [options] <objname1> pick E [px py pz dx dy dz]";
+    const char *purpose_string = "pick closest 3D vertex to line";
     if (_brep_pick_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
     }
@@ -264,47 +258,122 @@ _brep_cmd_vertex_pick(void *bs, int argc, const char **argv)
     argc--;argv++;
 
     struct _ged_brep_ipick *gib = (struct _ged_brep_ipick *)bs;
+    struct ged *gedp = gib->gb->gedp;
     const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
-    struct bu_color *color = gib->gb->color;
-    struct bn_vlblock *vbp = gib->gb->vbp;
+    ON_BoundingBox brep_bb = brep->BoundingBox();
 
-    std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
+    point_t origin;
+    vect_t dir;
+
+    if (argc && argc != 6) {
+	bu_vls_printf(gib->vls, "need six values for point and direction\n");
 	return GED_ERROR;
-    }
-    // If we have nothing, report all
-    if (!elements.size()) {
-	for (int i = 0; i < brep->m_V.Count(); i++) {
-	    elements.insert(i);
+    } else {
+	// If not explicitly specified, get the ray from GED
+	VSET(origin, -gedp->ged_gvp->gv_center[MDX], -gedp->ged_gvp->gv_center[MDY], -gedp->ged_gvp->gv_center[MDZ]);
+	VSCALE(origin, origin, gedp->ged_wdbp->dbip->dbi_base2local);
+	VMOVEN(dir, gedp->ged_gvp->gv_rotation + 8, 3);
+	VSCALE(dir, dir, -1.0);
+	// Back outside the shape using the brep bounding box diagonal length
+	for (int i = 0; i < 3; i++) {
+	    origin[i] = origin[i] + brep_bb.Diagonal().Length() * -1 * dir[i];
 	}
     }
 
-    std::set<int>::iterator e_it;
+    // We're looking at vertices - assemble bounding boxes for an initial cull
+    RTree<int, double, 3> vert_bboxes;
+    for (int i = 0; i < brep->m_V.Count(); i++) {
+	const ON_BrepVertex &v = brep->m_V[i];
+	double vlen = 0;
+	// A vertex by itself has no concept of volume - we need to deduce one
+	// from its neighborhood geometry.
 
-    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
-
-	int vi = *e_it;
-
-	unsigned char rgb[3];
-	bu_color_to_rgb_chars(color, rgb);
-
-	const ON_BrepVertex &vertex = brep->m_V[vi];
-	if (!vertex.IsValid(NULL)) {
-	    bu_vls_printf(gib->vls, "vertex %d is not valid, skipping", vi);
-	    continue;
-	}
-	if (color) {
-	    plotpoint(vertex.Point(), vbp, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
+	if (!v.EdgeCount()) {
+	    // If a vertex has no associated edges (??) all we can do is use some
+	    // fraction of the brep bounding box volume.
+	    vlen = brep_bb.Diagonal().Length() * 0.05;
 	} else {
-	    plotpoint(vertex.Point(), vbp, GREEN);
+	    // If a vertex has associated edges, find the shortest associated
+	    // control polyline length.  We can be more generous with box sizes
+	    // when other vertices are far away - if things are close, we need
+	    // tighter boxes.
+	    double edge_lens = 0.0;
+	    int edge_cnts = 0;
+	    for (int ec = 0; ec < v.EdgeCount(); ec++) {
+		const ON_BrepEdge &edge = brep->m_E[v.m_ei[ec]];
+		const ON_Curve *curve = edge.EdgeCurveOf();
+		if (!curve) continue;
+		ON_NurbsCurve nc;
+		curve->GetNurbForm(nc);
+		edge_lens += nc.ControlPolygonLength();
+		edge_cnts++;
+	    }
+	    vlen = edge_lens/((double)edge_cnts);
 	}
+
+
+	ON_BoundingBox vbb(v.Point(), v.Point());
+	vbb.m_min.x = vbb.m_min.x - 0.2*vlen;
+	vbb.m_max.x = vbb.m_max.x + 0.2*vlen;
+	vbb.m_min.y = vbb.m_min.y - 0.2*vlen;
+	vbb.m_max.y = vbb.m_max.y + 0.2*vlen;
+	vbb.m_min.z = vbb.m_min.z - 0.2*vlen;
+	vbb.m_max.z = vbb.m_max.z + 0.2*vlen;
+
+	double p1[3];
+	p1[0] = vbb.Min().x;
+	p1[1] = vbb.Min().y;
+	p1[2] = vbb.Min().z;
+	double p2[3];
+	p2[0] = vbb.Max().x;
+	p2[1] = vbb.Max().y;
+	p2[2] = vbb.Max().z;
+	vert_bboxes.Insert(p1, p2, i);
     }
 
-    struct bu_vls sname = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&sname, "_BC_V_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
-    bu_vls_free(&sname);
+    vert_bboxes.plot("tree.plot3");
 
+    RTree<int, double, 3>::Ray ray;
+    for (int i = 0; i < 3; i++) {
+	ray.o[i] = origin[i];
+	ray.d[i] = dir[i];
+	ray.di[i] = 1/ray.d[i];
+    }
+
+    std::set<int> averts;
+    size_t fcnt = vert_bboxes.Intersects(&ray, &averts);
+    if (fcnt == 0) {
+	bu_vls_printf(gib->vls, "no nearby vertices found\n");
+	return GED_OK;
+    }
+
+    // Construct ON_Line
+    ON_3dVector vdir(dir[0], dir[1], dir[2]);
+    ON_3dPoint porigin(origin[0], origin[1], origin[2]);
+    vdir.Unitize();
+    vdir = vdir * (brep_bb.Diagonal().Length() * 2);
+    ON_3dPoint lp1 = porigin - vdir;
+    ON_3dPoint lp2 = porigin + vdir;
+    ON_Line l(lp1, lp2);
+
+    double dmin = DBL_MAX;
+    int cvert = -1;
+
+    std::set<int>::iterator a_it;
+    for (a_it = averts.begin(); a_it != averts.end(); a_it++) {
+	const ON_BrepVertex &v = brep->m_V[*a_it];
+	double vmin = l.MinimumDistanceTo(v.Point());
+	if (vmin < dmin) {
+	    cvert = *a_it;
+	    dmin = vmin;
+	}
+    }	
+
+    if (gib->gb->verbosity) {
+	bu_vls_printf(gib->vls, "m_V[%d]: %g\n", cvert, dmin);
+    } else {
+	bu_vls_printf(gib->vls, "%d\n", cvert);
+    }
     return GED_OK;
 }
 
