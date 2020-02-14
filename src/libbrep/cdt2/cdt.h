@@ -429,27 +429,38 @@ class poly_edge_t {
 	polygon_t *polygon = NULL;
 	long v[2];
 	mesh_edge_t *e3d = NULL;
+	mesh_uedge_t *u3d = NULL;
 	double len = 0.0;
 	bool current = false;
 };
 
 class polygon_t {
     public:
-	std::vector<poly_point_t> p_pnts;
-	std::vector<poly_edge_t> p_polyedges;
 	std::unordered_map<long, long> o2p;
 	RTree<size_t, double, 2> p_edges_tree; // 2D spatial lookup for polygon edges
 
+	// Operations involving BRep loops (whether initializing or splitting)
+	// should always use ordered operations.  poly_edges are pre-generated
+	// based on ordering from the BRep trimming loops (as opposed to unordered
+	// edge insertions, which generate poly_edges as needed.)
 	bool add_ordered_edge(poly_edge_t &pe);
+	void remove_ordered_edge(poly_edge_t &pe);
+
+	// Polygons being constructed on mesh interiors for repair are built
+	// and manipulated using unordered edges as a guide - the integrity of
+	// the polygon must be maintained regardless of what the mesh edge
+	// ordering would do in "bad" mesh areas.
+	bool add_unordered_edge(mesh_uedge_t &ue);
+	bool remove_unordered_edge(mesh_uedge_t &ue);
 
 	// Create a new polygon edge
 	poly_edge_t &new_pedge()
 	{
 	    poly_edge_t npe;
-	    p_polyedges.push_back(npe);
-	    poly_edge_t &pe = p_polyedges[p_polyedges.size() - 1];
+	    p_pedges_vect.push_back(npe);
+	    poly_edge_t &pe = p_pedges_vect[p_pedges_vect.size() - 1];
 	    pe.polygon = this;
-	    pe.vect_ind = p_polyedges.size() - 1;
+	    pe.vect_ind = p_pedges_vect.size() - 1;
 	    return pe;
 	}
 
@@ -461,7 +472,10 @@ class polygon_t {
 	// If this polygon is defined on a face edge, we need more info.
 	long loop_id;
 
-	std::vector<poly_edge_t> m_pedges_vect;
+	std::vector<poly_edge_t> p_pedges_vect;
+	std::vector<poly_point_t> p_pnts_vect;
+    private:
+	std::queue<size_t> p_pequeue; // Available (unused) entries in p_pedges_vect
 };
 
 class mesh_t
@@ -516,7 +530,6 @@ class mesh_t
     private:
 
 	std::queue<size_t> m_equeue; // Available (unused) entries in m_edges_vect
-	std::queue<size_t> m_pequeue; // Available (unused) entries in m_pedges_vect
 	std::queue<size_t> m_tqueue; // Available (unused) entries in tris_vect
 	std::queue<size_t> m_lqueue; // Available (unused) entries in loops_vect
 };

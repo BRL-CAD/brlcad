@@ -42,8 +42,8 @@ polygon_t::add_ordered_edge(poly_edge_t &pe)
     // wading through all edges - won't matter much for small loops, but we
     // want the RTree anyway and it may help for large, heavily subdivided
     // loops produced by finer triangulations.
-    for (size_t i = 0; i < p_polyedges.size(); i++) {
-	poly_edge_t &ce = p_polyedges[i];
+    for (size_t i = 0; i < p_pedges_vect.size(); i++) {
+	poly_edge_t &ce = p_pedges_vect[i];
 	if (ce == pe) continue;
 
 	if (ce.v[1] == pe.v[0]) {
@@ -56,22 +56,46 @@ polygon_t::add_ordered_edge(poly_edge_t &pe)
     }
 
     if (prev != -1) {
-	p_polyedges[prev].next = pe.vect_ind;
+	p_pedges_vect[prev].next = pe.vect_ind;
 	pe.prev = prev;
     }
 
     if (next != -1) {
-	p_polyedges[next].prev = pe.vect_ind;
+	p_pedges_vect[next].prev = pe.vect_ind;
 	pe.next = next;
     }
 
-    p_pnts[pe.v[0]].ecnt++;
-    p_pnts[pe.v[1]].ecnt++;
+    p_pnts_vect[pe.v[0]].ecnt++;
+    p_pnts_vect[pe.v[1]].ecnt++;
 
     // TODO - add to RTree
 
     return true;
 }
+
+void
+polygon_t::remove_ordered_edge(poly_edge_t &pe)
+{
+    p_pnts_vect[pe.v[0]].ecnt--;
+    p_pnts_vect[pe.v[1]].ecnt--;
+
+    // TODO - use RTree.
+    for (size_t i = 0; i < p_pedges_vect.size(); i++) {
+	poly_edge_t &oe = p_pedges_vect[i];
+	if (oe.prev == pe.vect_ind) {
+	    oe.prev = -1;
+	}
+	if (oe.next == pe.vect_ind) {
+	    oe.next = -1;
+	}
+    }
+
+    // TODO - erase from RTree
+
+    // TODO - return pe to queue
+}
+
+
 
 /** @} */
 

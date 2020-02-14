@@ -275,9 +275,9 @@ brep_cdt_state::faces_init()
 		ON_2dPoint cp = trim->PointAt(range.m_t[0]);
 		pp.u = cp.x;
 		pp.v = cp.y;
-		pp.vect_ind = l.p_pnts.size();
-		l.o2p[trim->Vertex(0)->m_vertex_index] = l.p_pnts.size();
-		l.p_pnts.push_back(pp);
+		pp.vect_ind = l.p_pnts_vect.size();
+		l.o2p[trim->Vertex(0)->m_vertex_index] = l.p_pnts_vect.size();
+		l.p_pnts_vect.push_back(pp);
 	    };
 	    // Initialize polygon edges and add to loop
 	    for (int lti = 0; lti < loop->TrimCount(); lti++) {

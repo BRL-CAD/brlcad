@@ -77,13 +77,13 @@ mesh_t::edge(poly_edge_t &pe)
     // Assign ordered 3D points
     ne = &(m_edges_vect[n_ind]);
     ne->type = pe.type;
-    ne->v[0] = (pe.m_bRev3d) ? pe.polygon->p_pnts[pe.v[1]].mp->vect_ind : pe.polygon->p_pnts[pe.v[0]].mp->vect_ind;
-    ne->v[1] = (pe.m_bRev3d) ? pe.polygon->p_pnts[pe.v[0]].mp->vect_ind : pe.polygon->p_pnts[pe.v[1]].mp->vect_ind;
+    ne->v[0] = (pe.m_bRev3d) ? pe.polygon->p_pnts_vect[pe.v[1]].mp->vect_ind : pe.polygon->p_pnts_vect[pe.v[0]].mp->vect_ind;
+    ne->v[1] = (pe.m_bRev3d) ? pe.polygon->p_pnts_vect[pe.v[0]].mp->vect_ind : pe.polygon->p_pnts_vect[pe.v[1]].mp->vect_ind;
     ne->m = this;
     ne->bbox_update();
     ne->cdt = pe.polygon->cdt;
     ne->m = pe.polygon->m;
-    ne->pe = &pe.polygon->m_pedges_vect[pe.vect_ind];
+    ne->pe = &pe.polygon->p_pedges_vect[pe.vect_ind];
 
     // Tell the original polyedge which edge it got assigned
     pe.e3d = &m_edges_vect[ne->vect_ind];
