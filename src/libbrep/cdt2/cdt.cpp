@@ -296,8 +296,7 @@ brep_cdt_state::faces_init()
 		ON_BrepEdge *edge = trim->Edge();
 		if (edge && edge->EdgeCurveOf()) {
 		    pe.type = B_BOUNDARY;
-		    mesh_edge_t *e3d = m.edge(pe);
-		    m.uedge(*e3d);
+		    m.edge(pe);
 		} else {
 		    pe.type = B_SINGULAR;
 		}

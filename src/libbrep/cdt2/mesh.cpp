@@ -83,9 +83,25 @@ mesh_t::edge(poly_edge_t &pe)
     ne->bbox_update();
     ne->cdt = pe.polygon->cdt;
     ne->m = pe.polygon->m;
+    ne->pe = &pe.polygon->m->m_pedges_vect[pe.vect_ind];
 
     // Tell the original polyedge which edge it got assigned
     pe.e3d = &m_edges_vect[ne->vect_ind];
+
+    // Find the unordered edge that has both vertices matching this edge
+    std::set<size_t>::iterator ue_it;
+    for (ue_it = ne->cdt->i->s.b_pnts[ne->v[0]].uedges.begin(); ue_it != ne->cdt->i->s.b_pnts[ne->v[0]].uedges.end(); ue_it++) {
+	mesh_uedge_t &ue = ne->cdt->i->s.b_uedges_vect[*ue_it];
+	if ((ue.v[0] == ne->v[0] || ue.v[0] == ne->v[1]) && (ue.v[1] == ne->v[0] || ue.v[1] == ne->v[1])) {
+	    ne->uedge = &(ne->cdt->i->s.b_uedges_vect[*ue_it]);
+	    if (ue.e[0]) {
+		ue.e[1] = ne;
+	    } else {
+		ue.e[0] = ne;
+	    }
+	    break;
+	}
+    }
 
     return ne;
 }

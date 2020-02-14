@@ -204,6 +204,7 @@ class mesh_edge_t {
 	struct brep_cdt *cdt;
 	mesh_t *m = NULL;
 	mesh_uedge_t *uedge = NULL;
+	poly_edge_t *pe = NULL;
 
 	mesh_tri_t *tri = NULL;
 
