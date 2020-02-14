@@ -54,6 +54,7 @@ set(CDT2_srcs
   cdt2/vert.cpp
   cdt2/edge.cpp
   cdt2/mesh.cpp
+  cdt2/polygon.cpp
   )
 if (ENABLE_CDT2)
   set(LIBBREP_SOURCES ${LIBBREP_SOURCES} ${CDT2_srcs})

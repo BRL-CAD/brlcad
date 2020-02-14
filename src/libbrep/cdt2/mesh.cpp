@@ -83,7 +83,7 @@ mesh_t::edge(poly_edge_t &pe)
     ne->bbox_update();
     ne->cdt = pe.polygon->cdt;
     ne->m = pe.polygon->m;
-    ne->pe = &pe.polygon->m->m_pedges_vect[pe.vect_ind];
+    ne->pe = &pe.polygon->m_pedges_vect[pe.vect_ind];
 
     // Tell the original polyedge which edge it got assigned
     pe.e3d = &m_edges_vect[ne->vect_ind];

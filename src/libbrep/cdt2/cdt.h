@@ -383,6 +383,7 @@ class poly_point_t {
 	long vect_ind = -1;
 	double u;
 	double v;
+	int ecnt = 0;
 };
 
 class polygon_t;
@@ -419,6 +420,9 @@ class poly_edge_t {
 
 	int vect_ind = -1;
 
+	int prev = -1;
+	int next = -1;
+
 	bool m_bRev3d = false;
 
 	edge_type_t type = B_UNSET;
@@ -438,21 +442,32 @@ class polygon_t {
 
 	bool add_ordered_edge(poly_edge_t &pe);
 
+	// Create a new polygon edge
+	poly_edge_t &new_pedge()
+	{
+	    poly_edge_t npe;
+	    p_polyedges.push_back(npe);
+	    poly_edge_t &pe = p_polyedges[p_polyedges.size() - 1];
+	    pe.polygon = this;
+	    pe.vect_ind = p_polyedges.size() - 1;
+	    return pe;
+	}
+
 	size_t vect_ind;
 
 	struct brep_cdt *cdt;
 	mesh_t *m;
 
 	// If this polygon is defined on a face edge, we need more info.
-	long l_id;
+	long loop_id;
 
+	std::vector<poly_edge_t> m_pedges_vect;
 };
 
 class mesh_t
 {
     public:
 	// Primary containers for face edges
-	std::vector<poly_edge_t> m_pedges_vect;
 	std::vector<mesh_edge_t> m_edges_vect;
 
 	// Primary triangle container
@@ -462,20 +477,29 @@ class mesh_t
 	// Polygonal approximation of face trimming loops
 	std::vector<polygon_t> loops_vect;
 
-	// Create a new polygon edge
-	poly_edge_t &new_pedge();
 	// Identify and return the ordered edge associated with the ordered
-	// edge, or create such an ordered edge if one does not already
+	// pedge, or create such an ordered edge if one does not already
 	// exist.
 	mesh_edge_t *edge(poly_edge_t &pe);
+
 	// Identify and return the unordered edge associated with the ordered
 	// edge, or create such an unordered edge if one does not already
 	// exist.
 	mesh_uedge_t *uedge(mesh_edge_t &e);
+
 	// Create a new 3D triangle
 	mesh_tri_t &new_tri();
-	// Create a new 3D triangle
-	polygon_t &new_loop();
+
+	// Create a new polygon loop
+	polygon_t &new_loop()
+	{
+	    polygon_t npoly;
+	    loops_vect.push_back(npoly);
+	    polygon_t &poly = loops_vect[loops_vect.size() - 1];
+	    poly.m = this;
+	    poly.cdt = this->cdt;
+	    return poly;
+	}
 
 	size_t outer_loop;
 

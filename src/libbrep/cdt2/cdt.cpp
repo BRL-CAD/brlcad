@@ -259,7 +259,7 @@ brep_cdt_state::faces_init()
 	for (int li = 0; li < brep->m_L.Count(); li++) {
 	    const ON_BrepLoop *loop = m.f->Loop(li);
 	    polygon_t &l = m.new_loop();
-	    l.l_id = li;
+	    l.loop_id = li;
 	    l.vect_ind = li;
 	    l.cdt = cdt;
 	    l.m = &b_faces_vect[b_faces_vect.size() - 1];
@@ -283,9 +283,7 @@ brep_cdt_state::faces_init()
 	    for (int lti = 0; lti < loop->TrimCount(); lti++) {
 		// Every loop trim gets a polygon edge.
 		ON_BrepTrim *trim = loop->Trim(lti);
-		poly_edge_t &pe = m.new_pedge();
-		pe.polygon = &l;
-		pe.vect_ind = l.p_polyedges.size();
+		poly_edge_t &pe = l.new_pedge();
 		pe.v[0] = lti;
 		pe.v[1] = (lti < loop->TrimCount() - 1) ? lti + 1 : 0;
 		pe.m_bRev3d = trim->m_bRev3d;
@@ -296,7 +294,8 @@ brep_cdt_state::faces_init()
 		ON_BrepEdge *edge = trim->Edge();
 		if (edge && edge->EdgeCurveOf()) {
 		    pe.type = B_BOUNDARY;
-		    m.edge(pe);
+		    mesh_edge_t *e3d = m.edge(pe);
+		    m.uedge(*e3d);
 		} else {
 		    pe.type = B_SINGULAR;
 		}
