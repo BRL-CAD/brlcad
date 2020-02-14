@@ -1529,7 +1529,7 @@ bool RTREE_QUAL::Overlap(Rect* a_rectA, Rect* a_rectB) const
 RTREE_TEMPLATE
 bool RTREE_QUAL::Intersect(Rect* a_rect, Ray* a_ray) const
 {
-    RTreeAssert(a_rectA);
+    RTreeAssert(a_rect);
     if (kNumDimensions != 3) return false;
 
     fastf_t r_min, r_max;
