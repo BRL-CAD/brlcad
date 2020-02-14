@@ -10,6 +10,9 @@
 #include <cmath>
 #include <set>
 #include "opennurbs.h"
+#include "vmath.h"
+#include "bn/plot3.h"
+#include "bg/aabb_ray.h"
 
 #define RTreeAssert assert // RTree uses RTreeAssert( condition )
 
@@ -305,12 +308,17 @@ public:
 	return *a_it;
     }
 
-
-
     /// Minimal bounding rectangle (n-dimensional)
     struct Rect {
 	ElementType m_min[kNumDimensions] = { 0, };                      ///< Min dimensions of bounding box
 	ElementType m_max[kNumDimensions] = { 0, };                      ///< Max dimensions of bounding box
+    };
+
+public:
+    struct Ray {
+	ElementType o[kNumDimensions] = { 0, };                      ///< Ray origin
+	ElementType d[kNumDimensions] = { 0, };                      ///< Ray direction
+	ElementType di[kNumDimensions] = { 0, };                     ///< Ray direction component inverses
     };
 
 protected:
@@ -388,6 +396,7 @@ protected:
     ListNode* AllocListNode();
     void FreeListNode(ListNode* a_listNode);
     bool Overlap(Rect* a_rectA, Rect* a_rectB) const;
+    bool Intersect(Rect* a_rect, Ray* a_ray) const;
     void ReInsert(Node* a_node, ListNode** a_listNode);
     bool Search(Node* a_node, Rect* a_rect, int& a_foundCount, std::function<bool(const DataType&, void *)> callback, void *a_context) const;
     void RemoveAllRec(Node* a_node);
@@ -401,12 +410,16 @@ protected:
     size_t CheckNodes(Node *a_nodeA, Node *a_nodeB, std::set<DataType> *a_result, std::set<DataType> *b_result);
     size_t CheckNodes(Node *a_nodeA, Node *a_nodeB, std::set<std::pair<DataType, DataType>> *result);
 
+    size_t IsectNode(Node *a_node, Ray *a_ray, std::set<DataType> *result);
+
     Node* m_root = nullptr;                                         ///< Root of tree
     ElementTypeReal m_unitSphereVolume = kElementTypeRealZero;      ///< Unit sphere constant for required number of dimensions
 
 public:
-    void plot(Rect *a_rect, const char *fname) __attribute__((noinline));
+    // Find the leaves intersected by a ray, returning the data from the leaves in a set.
+    size_t Intersects(Ray *a_ray, std::set<DataType> *result);
 
+    void plot(const char *fname);
 };
 
 // Because there is not stream support, this is a quick and dirty file I/O helper.
@@ -1512,6 +1525,22 @@ bool RTREE_QUAL::Overlap(Rect* a_rectA, Rect* a_rectB) const
 }
 
 
+// Decide whether a ray intersect a Rect.
+RTREE_TEMPLATE
+bool RTREE_QUAL::Intersect(Rect* a_rect, Ray* a_ray) const
+{
+    RTreeAssert(a_rectA);
+    if (kNumDimensions != 3) return false;
+
+    fastf_t r_min, r_max;
+
+    if (bg_isect_aabb_ray(&r_min, &r_max, a_ray->o, a_ray->di, a_rect->m_min, a_rect->m_max)) {
+	return true;
+    }
+
+    return false;
+}
+
 // Add a node to the reinsertion list.  All its branches will later
 // be reinserted into the index structure.
 RTREE_TEMPLATE
@@ -1629,6 +1658,83 @@ size_t RTREE_QUAL::Overlaps(RTree &other, std::set<std::pair<DataType, DataType>
     size_t ovlp_cnt = CheckNodes(m_root, other.m_root, result);
     return ovlp_cnt;
 }
+
+
+RTREE_TEMPLATE
+size_t RTREE_QUAL::IsectNode(Node *a_node, RTREE_QUAL::Ray *a_ray, std::set<DataType> *result)
+{
+    size_t ocnt = 0;
+    for (int index = 0; index < a_node->m_count; ++index) {
+	if (Intersect(&(a_node->m_branch[index].m_rect), a_ray)) {
+	    if (a_node->m_level > 0) {
+		ocnt += IsectNode(a_node->m_branch[index].m_child, a_ray, result);
+	    } else {
+		result->insert(a_node->m_branch[index].m_data);
+		ocnt++;
+	    }
+	}
+    }
+    return ocnt;
+}
+
+// Loosely based on the idea from the openNURBS code to search two R-trees for all pairs elements whose bounding boxes overlap.
+RTREE_TEMPLATE
+size_t RTREE_QUAL::Intersects(RTREE_QUAL::Ray *a_ray, std::set<DataType> *result)
+{
+    if (!m_root) return 0;
+    size_t ovlp_cnt = IsectNode(m_root, a_ray, result);
+    return ovlp_cnt;
+}
+
+#define TREE_LEAF_FACE_3D(valp, a, b, c, d)  \
+        pdv_3move(plot_file, pt[a]); \
+    pdv_3cont(plot_file, pt[b]); \
+    pdv_3cont(plot_file, pt[c]); \
+    pdv_3cont(plot_file, pt[d]); \
+    pdv_3cont(plot_file, pt[a]); \
+
+#define BB_PLOT(min, max) {                 \
+        fastf_t pt[8][3];                       \
+        VSET(pt[0], max[X], min[Y], min[Z]);    \
+        VSET(pt[1], max[X], max[Y], min[Z]);    \
+        VSET(pt[2], max[X], max[Y], max[Z]);    \
+        VSET(pt[3], max[X], min[Y], max[Z]);    \
+        VSET(pt[4], min[X], min[Y], min[Z]);    \
+        VSET(pt[5], min[X], max[Y], min[Z]);    \
+        VSET(pt[6], min[X], max[Y], max[Z]);    \
+        VSET(pt[7], min[X], min[Y], max[Z]);    \
+        TREE_LEAF_FACE_3D(pt, 0, 1, 2, 3);      \
+        TREE_LEAF_FACE_3D(pt, 4, 0, 3, 7);      \
+        TREE_LEAF_FACE_3D(pt, 5, 4, 7, 6);      \
+        TREE_LEAF_FACE_3D(pt, 1, 5, 6, 2);      \
+}
+
+RTREE_TEMPLATE
+void RTREE_QUAL::plot(const char *fname)
+{
+    if (!m_root) return;
+
+    if (kNumDimensions != 3) return;
+
+    FILE* plot_file = fopen(fname, "w");
+    struct bu_color c = BU_COLOR_INIT_ZERO;
+    bu_color_rand(&c, BU_COLOR_RANDOM_LIGHTENED);
+    pl_color_buc(plot_file, &c);
+
+    RTREE_QUAL::Iterator tree_it;
+    this->GetFirst(tree_it);
+    while (!tree_it.IsNull()) {
+	double m_min[3];
+	double m_max[3];
+	tree_it.GetBounds(m_min, m_max);
+	BB_PLOT(m_min, m_max);
+	++tree_it;
+    }
+
+    fclose(plot_file);
+}
+
+
 
 #undef RTREE_TEMPLATE
 #undef RTREE_QUAL

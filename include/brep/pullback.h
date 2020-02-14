@@ -151,6 +151,16 @@ ON_TrimCurve_GetClosestPoint(
 	const ON_Interval *sub_domain = NULL
 	);
 
+bool
+ON_NurbsCurve_ClosestPointToLine(
+	double *dist,
+	double *t,
+	const ON_NurbsCurve *nc,
+	const ON_Line &l,
+	double maximum_distance = 0.0,
+	const ON_Interval *subdomain = NULL
+	);
+
 } /* extern C++ */
 
 __END_DECLS

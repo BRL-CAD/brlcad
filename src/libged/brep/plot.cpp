@@ -234,7 +234,7 @@ plotsurface(const ON_Surface &surf, struct bn_vlblock *vbp, int isocurveres, int
     return;
 }
 
-static void
+void
 plotface(const ON_BrepFace &face, struct bn_vlblock *vbp, int plotres, bool dim3d, const int red = 255, const int green = 255, const int blue = 0)
 {
     struct bu_list *vhead;

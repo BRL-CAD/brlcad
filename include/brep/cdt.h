@@ -154,11 +154,6 @@ extern BREP_EXPORT void cdt_bmesh_destroy(struct cdt_bmesh *m);
 extern BREP_EXPORT int cdt_bmesh_deserialize(const char *fname, struct cdt_bmesh *m);
 extern BREP_EXPORT int cdt_bmesh_repair(struct cdt_bmesh *m);
 
-
-/* TODO - this doesn't belong here.  Don't consider this public. */
-extern BREP_EXPORT int
-ON_Brep_Report_Faces(struct bu_vls *log, void *bp, const vect_t center, const vect_t dir);
-
 __END_DECLS
 
 /** @} */

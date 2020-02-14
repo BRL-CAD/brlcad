@@ -103,6 +103,7 @@ extern void _ged_cvt_vlblock_to_solids(struct ged *gedp,
 extern int _ged_brep_to_csg(struct ged *gedp, const char *obj_name, int verify);
 
 extern int brep_info(struct bu_vls *vls, const ON_Brep *brep, int argc, const char **argv);
+extern int brep_pick(struct _ged_brep_info *gb, int argc, const char **argv);
 extern int brep_plot(struct _ged_brep_info *gb, int argc, const char **argv);
 extern int brep_tikz(struct _ged_brep_info *gb, const char *outfile);
 extern int brep_valid(struct bu_vls *vls, struct rt_db_internal *intern, int argc, const char **argv);
@@ -118,6 +119,8 @@ extern int brep_intersect_curve_surface(struct rt_db_internal *intern1, struct r
 extern int brep_intersect_surface_surface(struct rt_db_internal *intern1, struct rt_db_internal *intern2, int i, int j, struct bn_vlblock *vbp);
 
 using namespace brlcad;
+void
+plotface(const ON_BrepFace &face, struct bn_vlblock *vbp, int plotres, bool dim3d, const int red, const int green, const int blue);
 void
 plotsurface(const ON_Surface &surf, struct bn_vlblock *vbp, int isocurveres, int gridres, const int red, const int green, const int blue);
 void

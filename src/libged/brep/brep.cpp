@@ -690,6 +690,29 @@ _brep_cmd_intersect(void *bs, int argc, const char **argv)
     return GED_OK;
 }
 
+extern "C" int
+_brep_cmd_pick(void *bs, int argc, const char **argv)
+{
+    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+
+    const char *purpose_string = "graphically identify components of the BRep object";
+    if (argc == 2 && BU_STR_EQUAL(argv[1], PURPOSEFLAG)) {
+	bu_vls_printf(gb->gedp->ged_result_str, "%s\n", purpose_string);
+	return GED_OK;
+    }
+    if (argc >= 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
+	return brep_pick(gb, argc, argv);
+    }
+
+    if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
+	return GED_ERROR;
+    }
+
+    argc--; argv++;
+
+    return brep_pick(gb, argc, argv);
+}
 
 extern "C" int
 _brep_cmd_plate_mode(void *bs, int argc, const char **argv)
@@ -1106,6 +1129,7 @@ const struct bu_cmdtab _brep_cmds[] = {
     { "flip",            _brep_cmd_flip},
     { "info",            _brep_cmd_info},
     { "intersect",       _brep_cmd_intersect},
+    { "pick",            _brep_cmd_pick},
     { "plate_mode",      _brep_cmd_plate_mode},
     { "plot",            _brep_cmd_plot},
     { "selection",       _brep_cmd_selection},
