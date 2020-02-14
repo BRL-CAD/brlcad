@@ -40,6 +40,7 @@
 #include "brep/ray.h"
 #include "brep/cdt.h" // for ON_Brep_Report_Faces - should go away
 #include "bg/tri_ray.h" // for ON_Brep_Report_Faces - should go away
+#include "bg/lseg.h"
 #include "./tools/tools.h"
 #include "bn/dvec.h"
 
@@ -315,10 +316,18 @@ curve_line_closest_search_func(void *farg, double t, double *ft, double *dft)
     ON_3dVector crv_d1;
     ON_3dVector crv_d2;
     if (!nc->Ev2Der(t, crv_pnt, crv_d1, crv_d2)) return -1;
+
+    // Unlike the closet point to test point case, we don't have a single target point
+    // to use.  Instead, for the current curve point, find the closest point on the
+    // line to that point and use it as the "current" test point.
     double lt;
     largs->l->ClosestPointTo(crv_pnt, &lt);
     ON_3dPoint tp = largs->l->PointAt(lt);
+  
+    // Since the test point is ephemeral, calculate and stash the distance
+    // while we have it  
     largs->vdist = crv_pnt.DistanceTo(tp);
+   
     ON_3dVector fparam2 = crv_pnt - tp;
     *ft = ON_DotProduct(crv_d1, fparam2);
     *dft = ON_DotProduct(crv_d2, fparam2) + ON_DotProduct(crv_d1, crv_d1);
@@ -328,7 +337,7 @@ curve_line_closest_search_func(void *farg, double t, double *ft, double *dft)
 }
 
 bool
-ON_NurbsCurve_ClosestPointToLine(
+ON_NurbsCurve_ClosestPointToLineSegment(
 	double *dist,
 	double *t,
 	const ON_NurbsCurve *nc,
@@ -337,15 +346,46 @@ ON_NurbsCurve_ClosestPointToLine(
 	const ON_Interval *sub_domain = NULL
 	)
 {
-    if (!t || !nc) return false;
+    if (!nc) return false;
 
     ON_Interval domain = (sub_domain) ? *sub_domain : nc->Domain();
 
     if (nc->IsLinear(TOL2)) {
-	// If the curve is linear, this reduces to an lseg/lseg test and a get
-	// closest point operation to figure out the corresponding t paramater.
-	bu_log("TODO - linear case\n");
-	return false;
+	// If the curve is linear, this reduces to an lseg/lseg test and
+	// (optionally depending on what the user has requested) a get closest
+	// point operation to figure out the corresponding t paramater.
+	ON_3dPoint onl1 = l.PointAt(0);
+	ON_3dPoint onl2 = l.PointAt(1);
+	ON_3dPoint onc1 = nc->PointAt(domain.ParameterAt(0));
+	ON_3dPoint onc2 = nc->PointAt(domain.ParameterAt(1));
+	point_t C0, C1, L0, L1;
+	VSET(C0, onc1.x, onc1.y, onc1.z);
+	VSET(C1, onc2.x, onc2.y, onc2.z);
+	VSET(L0, onl1.x, onl1.y, onl1.z);
+	VSET(L1, onl2.x, onl2.y, onl2.z);
+	double ndist;
+	if (t) {
+	    point_t c1i, l1i;
+	    ndist = bg_lseg_lseg_dist(&c1i, &l1i, C0, C1, L0, L1);
+	    double nt;
+	    ON_3dPoint tp(c1i[0], c1i[1], c1i[2]);
+	    if (!ON_NurbsCurve_GetClosestPoint(&nt, nc, tp, maximum_distance, &domain)) {
+		bu_log("ON_NurbsCurve_ClosestPointToLineSegment: linear closest point t param search failed\n");
+		if (dist) {
+		    (*dist) = ndist;
+		}
+		return false;
+	    }
+	    (*t) = nt;
+	} else {	   
+	    ndist = bg_lseg_lseg_dist(NULL, NULL, C0, C1, L0, L1);
+	}
+	if (dist) {
+	    (*dist) = ndist;
+	}
+
+	if (maximum_distance > 0 && ndist > maximum_distance) return false;
+	return true;
     }
 
     size_t init_sample_cnt = nc->CVCount() * nc->Degree();
@@ -383,8 +423,12 @@ ON_NurbsCurve_ClosestPointToLine(
 
     if (osearch == 1) {
 
-	(*t) = st;
-	(*dist) = largs.vdist;
+	if (t) {
+	    (*t) = st;
+	}
+	if (dist) {
+	    (*dist) = largs.vdist;
+	}
 
     } else {
 

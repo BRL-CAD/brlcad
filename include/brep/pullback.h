@@ -152,7 +152,7 @@ ON_TrimCurve_GetClosestPoint(
 	);
 
 bool
-ON_NurbsCurve_ClosestPointToLine(
+ON_NurbsCurve_ClosestPointToLineSegment(
 	double *dist,
 	double *t,
 	const ON_NurbsCurve *nc,

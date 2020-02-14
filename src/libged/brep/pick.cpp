@@ -170,23 +170,25 @@ _brep_cmd_edge_pick(void *bs, int argc, const char **argv)
 
     std::set<int>::iterator a_it;
     for (a_it = aedges.begin(); a_it != aedges.end(); a_it++) {
-	//bu_log("%d\n", *a_it);
 	const ON_BrepEdge &edge = brep->m_E[*a_it];
 	const ON_Curve *curve = edge.EdgeCurveOf();
 	if (!curve) continue;
 	ON_NurbsCurve nc;
 	curve->GetNurbForm(nc);
 	double ndist = 0.0;
-	double t;
-	if (ON_NurbsCurve_ClosestPointToLine(&ndist, &t, &nc, l, brep_bb.Diagonal().Length())) {
-	    bu_log("%d dist: %f\n", *a_it, ndist);
+	if (ON_NurbsCurve_ClosestPointToLineSegment(&ndist, NULL, &nc, l, brep_bb.Diagonal().Length())) {
 	    if (ndist < dmin) {
 		dmin = ndist;
 		cedge = *a_it;
 	    }
 	}
     }
-    bu_log("cedge: %d\n", cedge);
+
+    if (gib->gb->verbosity) {
+	bu_vls_printf(gib->vls, "m_E[%d]: %g\n", cedge, dmin);
+    } else {
+	bu_vls_printf(gib->vls, "%d\n", cedge);
+    }
 
     return GED_OK;
 }
