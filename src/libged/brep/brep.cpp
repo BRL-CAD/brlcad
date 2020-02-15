@@ -1156,6 +1156,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     struct _ged_brep_info gb;
     gb.gedp = gedp;
     gb.cmds = _brep_cmds;
+    gb.verbosity = 0;
     struct bu_color *color = NULL;
     int plotres = 100;
 
