@@ -143,6 +143,15 @@ polygon_t::add_ordered_edge(long p1, long p2)
     pe.polygon = this;
     pe.vect_ind = p_pedges_vect.size();
 
+    // Determine edge type from vertices
+    if ((pp1.mp->type == B_VERT || pp1.mp->type == B_EDGE) && (pp2.mp->type == B_VERT || pp2.mp->type == B_EDGE)) {
+	pe.type = B_BOUNDARY;
+    }
+    if ((pp1.mp->singular || pp2.mp->singular)) {
+	pe.type = B_SINGULAR;
+    }
+
+    // Update connectivity
     if (prev != -1) {
 	p_pedges_vect[prev].next = pe.vect_ind;
     }
@@ -156,6 +165,7 @@ polygon_t::add_ordered_edge(long p1, long p2)
     pp1.pedges.insert(pe.vect_ind);
     pp2.pedges.insert(pe.vect_ind);
 
+    // Add new edge to data containers
     p_pedges_vect.push_back(pe);
 
     // IFF the edge is not degenerate (which can happen if we're initializing
@@ -175,9 +185,11 @@ polygon_t::add_ordered_edge(long p1, long p2)
 	bp2[1] = pe.bb.Max().y;
 	p_edges_tree.Insert(bp1, bp2, pe.vect_ind);
 
-	// The parent mesh keeps track of all 2D polyedges present for higher
+	// The parent mesh keeps track of all boundary 2D polyedges present for higher
 	// level processing as well.
-	m->loops_tree.Insert(bp1, bp2, (void *)(&p_pedges_vect[pe.vect_ind]));
+	if (pe.type == B_BOUNDARY || pe.type == B_SINGULAR) {
+	    m->loops_tree.Insert(bp1, bp2, (void *)(&p_pedges_vect[pe.vect_ind]));
+	}
     }
 
     return &p_pedges_vect[pe.vect_ind];
@@ -238,9 +250,11 @@ polygon_t::remove_ordered_edge(poly_edge_t &pe)
 	bp2[1] = pe.bb.Max().y;
 	p_edges_tree.Remove(bp1, bp2, pe.vect_ind);
 
-	// The parent mesh keeps track of all 2D polyedges present for higher
+	// The parent mesh keeps track of all boundary 2D polyedges present for higher
 	// level processing as well.
-	m->loops_tree.Remove(bp1, bp2, (void *)(&p_pedges_vect[pe.vect_ind]));
+	if (pe.type == B_BOUNDARY || pe.type == B_SINGULAR) {
+	    m->loops_tree.Remove(bp1, bp2, (void *)(&p_pedges_vect[pe.vect_ind]));
+	}
 
     }
 
