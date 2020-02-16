@@ -186,6 +186,21 @@ polygon_t::add_ordered_edge(long p1, long p2)
 void
 polygon_t::remove_ordered_edge(poly_edge_t &pe)
 {
+    mesh_edge_t *rme3d = NULL;
+
+    // We'll need to clean up the 3D edge associated with this edge (if any).
+    // Because this routine may be called from other cleanup routines and vice
+    // versa, we only call the other cleanup routine if the various pointers
+    // haven't been NULLed out by other deletes first.  If they have, just do
+    // our bit - someone else is managing the other cleanup.  If not, we need
+    // to take care of calling the relevant routines from here.
+    if (pe.e3d) {
+	rme3d = pe.e3d;
+	pe.e3d = NULL;
+	rme3d->pe = NULL;
+    }
+
+    // Update other edges in the polygon that are referencing this edge
     std::set<size_t>::iterator p_it;
     for (int i = 0; i < 2; i++) {
 	std::set<size_t> &pedges = p_pnts_vect[pe.v[i]].pedges;
@@ -230,6 +245,16 @@ polygon_t::remove_ordered_edge(poly_edge_t &pe)
     }
 
     // TODO - return pe to queue
+
+
+    // TODO - implement other cleanup.  It will be the 3D edge's job to update
+    // uedge information and (IFF both associated 3D ordered edges are gone)
+    // clean out the uedge
+#if 0
+    if (rme3d) {
+	m->remove_edge(*rme3d);
+    }
+#endif
 }
 
 
