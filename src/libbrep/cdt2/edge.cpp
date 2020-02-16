@@ -42,10 +42,10 @@ mesh_uedge_t::clear()
     nc = NULL;
     t_start = DBL_MAX;
     t_end = DBL_MAX;
-    edge_start_pnt = -1;
-    edge_end_pnt = -1;
-    edge_tan_start = ON_3dVector::UnsetVector;
-    edge_tan_end = ON_3dVector::UnsetVector;
+    edge_pnts[0] = -1;
+    edge_pnts[2] = -1;
+    tangents[0] = ON_3dVector::UnsetVector;
+    tangents[1] = ON_3dVector::UnsetVector;
     bb = ON_BoundingBox();
     len = 0.0;
     linear = false;

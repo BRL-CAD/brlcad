@@ -272,10 +272,8 @@ class mesh_uedge_t {
 	double t_start = DBL_MAX;
 	double t_end = DBL_MAX;
 
-	int edge_start_pnt = -1;
-	int edge_end_pnt = -1;
-	ON_3dVector edge_tan_start = ON_3dVector::UnsetVector;
-	ON_3dVector edge_tan_end = ON_3dVector::UnsetVector;
+	int edge_pnts[2] = {-1, -1};
+	ON_3dVector tangents[2];
 
 	void bbox_update();
 	ON_BoundingBox bb;

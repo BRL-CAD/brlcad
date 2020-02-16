@@ -164,6 +164,32 @@ brep_cdt_state::verts_init()
     }
 }
 
+static ON_3dVector
+edge_tangent(ON_BrepEdge& edge, ON_NurbsCurve *nc, double eparam, double t1param, double t2param)
+{
+    ON_3dPoint tmp;
+    ON_3dVector tangent = ON_3dVector::UnsetVector;
+    if (!nc->EvTangent(eparam, tmp, tangent)) {
+	if (t1param < DBL_MAX && t2param < DBL_MAX) {
+	    // If the edge curve failed, average tangents from trims
+	    ON_BrepTrim *trim1 = edge.Trim(0);
+	    ON_BrepTrim *trim2 = edge.Trim(1);
+	    int evals = 0;
+	    ON_3dPoint tmp1, tmp2;
+	    ON_3dVector trim1_tangent, trim2_tangent;
+	    evals += (trim1->EvTangent(t1param, tmp1, trim1_tangent)) ? 1 : 0;
+	    evals += (trim2->EvTangent(t2param, tmp2, trim2_tangent)) ? 1 : 0;
+	    if (evals == 2) {
+		tangent = (trim1_tangent + trim2_tangent) / 2;
+	    } else {
+		tangent = ON_3dVector::UnsetVector;
+	    }
+	}
+    }
+
+    return tangent;
+}
+
 void
 brep_cdt_state::uedges_init()
 {
@@ -182,12 +208,15 @@ brep_cdt_state::uedges_init()
 	long v1 = edge.Vertex(1)->m_vertex_index;
 	mesh_uedge_t ue = new_uedge();
 	ue.cdt = cdt;
-	ue.edge = brep->Edge(index);
+	ue.edge_ind = index;
+	ue.edge = brep->Edge(ue.edge_ind);
+	ue.edge_pnts[0] = v0;
+	ue.edge_pnts[1] = v1;
+
+	// This sorting is what makes a mesh_uedge_t unordered - otherwise the edge
+	// curve will determine how data is stored.
 	ue.v[0] = (v1 > v0) ? v0 : v1;
 	ue.v[1] = (v1 > v0) ? v1 : v0;
-	ue.edge_ind = index;
-	ue.edge_start_pnt = v0;
-	ue.edge_end_pnt = v1;
 
 	// Characterize the edge type
 	ue.type = (edge.EdgeCurveOf() == NULL) ? B_SINGULAR : B_BOUNDARY;
@@ -232,6 +261,19 @@ brep_cdt_state::uedges_init()
 	// Establish the vertex to edge connectivity
 	b_pnts[ue.v[0]].uedges.insert(index);
 	b_pnts[ue.v[1]].uedges.insert(index);
+
+	// Initialize the tangent values
+	for (int i = 0; i < 2; i++) {
+	    double t1param, t2param;
+	    double ue_param = (i == 0) ? ue.t_start : ue.t_end;
+	    ON_BrepTrim *trim1 = edge.Trim(0);
+	    ON_BrepTrim *trim2 = edge.Trim(1);
+	    int ind1 = (i == 0) ? 0 : 1;
+	    int ind2 = (i == 0) ? 1 : 0;
+	    t1param = (trim1->m_bRev3d) ? trim1->Domain().m_t[ind2] : trim1->Domain().m_t[ind1];
+	    t2param = (trim2->m_bRev3d) ? trim2->Domain().m_t[ind2] : trim2->Domain().m_t[ind1];
+	    ue.tangents[i] = edge_tangent(edge, ue.nc, ue_param, t1param, t2param);
+	}
     }
 
     // Now that we have edge associations, update vert bboxes.
