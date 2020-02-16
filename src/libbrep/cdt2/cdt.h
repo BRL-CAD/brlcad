@@ -428,12 +428,15 @@ class poly_edge_t {
 	mesh_uedge_t *u3d = NULL;
 	double len = 0.0;
 	bool current = false;
+
+	// When performing refinement searches in 2D, we need to track the
+	// splitting status of polyedges.  The least complicated way to do
+	// that is to provide a means of tagging the edge itself.
+	int split_status = 0;
 };
 
 class polygon_t {
     public:
-	std::unordered_map<long, long> o2p;
-	RTree<size_t, double, 2> p_edges_tree; // 2D spatial lookup for polygon edges
 
 	// Add a polygon point associated with an existing 3D mesh point.
 	// Returns -1 if a point cannot be created.
@@ -488,7 +491,8 @@ class polygon_t {
 	size_t vect_ind;
 	struct brep_cdt *cdt;
 	mesh_t *m;
-
+	std::unordered_map<long, long> o2p;
+	RTree<size_t, double, 2> p_edges_tree; // 2D spatial lookup for polygon edges
 	std::vector<poly_edge_t> p_pedges_vect;
 	std::vector<poly_point_t> p_pnts_vect;
     private:
@@ -507,6 +511,7 @@ class mesh_t
 
 	// Polygonal approximation of face trimming loops
 	std::vector<polygon_t> loops_vect;
+	RTree<void *, double, 2> loops_tree;
 
 	// Identify and return the ordered edge associated with the ordered
 	// pedge, or create such an ordered edge if one does not already
@@ -552,6 +557,12 @@ class mesh_t
 	// face associated with this mesh.  Will optionally also calculate the
 	// normal vector at that point, if sn is non-NULL.
 	bool closest_surf_pt(ON_3dVector *sn, ON_3dPoint &s3d, ON_2dPoint &s2d, ON_3dPoint *p, double tol);
+
+
+	// Analyze polygon loops for segments that are too close to other
+	// segments in their own or other loops relative to their length,
+	// and refine them.
+	bool split_close_edges();
 
 	size_t outer_loop;
 

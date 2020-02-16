@@ -190,6 +190,11 @@ mesh_t::closest_surf_pt(ON_3dVector *sn, ON_3dPoint &s3d, ON_2dPoint &s2d, ON_3d
     return true;
 }
 
+bool
+mesh_t::split_close_edges()
+{
+    return false;
+}
 
 /** @} */
 

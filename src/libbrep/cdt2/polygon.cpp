@@ -159,7 +159,7 @@ polygon_t::add_ordered_edge(long p1, long p2)
     p_pedges_vect.push_back(pe);
 
     // IFF the edge is not degenerate (which can happen if we're initializing
-    // closed loops) add it to the RTree
+    // closed loops) add it to the RTrees
     if (p1 != p2) {
 	ON_Line line(ON_2dPoint(pp1.u, pp1.v), ON_2dPoint(pp2.u, pp2.v));
 	pe.bb = line.BoundingBox();
@@ -174,6 +174,10 @@ polygon_t::add_ordered_edge(long p1, long p2)
 	bp2[0] = pe.bb.Max().x;
 	bp2[1] = pe.bb.Max().y;
 	p_edges_tree.Insert(bp1, bp2, pe.vect_ind);
+
+	// The parent mesh keeps track of all 2D polyedges present for higher
+	// level processing as well.
+	m->loops_tree.Insert(bp1, bp2, (void *)(&p_pedges_vect[pe.vect_ind]));
     }
 
     return &p_pedges_vect[pe.vect_ind];
@@ -218,6 +222,11 @@ polygon_t::remove_ordered_edge(poly_edge_t &pe)
 	bp2[0] = pe.bb.Max().x;
 	bp2[1] = pe.bb.Max().y;
 	p_edges_tree.Remove(bp1, bp2, pe.vect_ind);
+
+	// The parent mesh keeps track of all 2D polyedges present for higher
+	// level processing as well.
+	m->loops_tree.Remove(bp1, bp2, (void *)(&p_pedges_vect[pe.vect_ind]));
+
     }
 
     // TODO - return pe to queue
