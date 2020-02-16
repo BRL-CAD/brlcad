@@ -157,7 +157,24 @@ polygon_t::add_ordered_edge(long p1, long p2)
     pp2.pedges.insert(pe.vect_ind);
 
     p_pedges_vect.push_back(pe);
-    // TODO - add to RTree
+
+    // IFF the edge is not degenerate (which can happen if we're initializing
+    // closed loops) add it to the RTree
+    if (p1 != p2) {
+	ON_Line line(ON_2dPoint(pp1.u, pp1.v), ON_2dPoint(pp2.u, pp2.v));
+	pe.bb = line.BoundingBox();
+	pe.bb.m_max.x = pe.bb.m_max.x + ON_ZERO_TOLERANCE;
+	pe.bb.m_max.y = pe.bb.m_max.y + ON_ZERO_TOLERANCE;
+	pe.bb.m_min.x = pe.bb.m_min.x - ON_ZERO_TOLERANCE;
+	pe.bb.m_min.y = pe.bb.m_min.y - ON_ZERO_TOLERANCE;
+	double bp1[2];
+	bp1[0] = pe.bb.Min().x;
+	bp1[1] = pe.bb.Min().y;
+	double bp2[2];
+	bp2[0] = pe.bb.Max().x;
+	bp2[1] = pe.bb.Max().y;
+	p_edges_tree.Insert(bp1, bp2, pe.vect_ind);
+    }
 
     return &p_pedges_vect[pe.vect_ind];
 }
@@ -183,7 +200,25 @@ polygon_t::remove_ordered_edge(poly_edge_t &pe)
 	}
     }
 
-    // TODO - erase from RTree
+    // IFF the edge is not degenerate remove it from the RTree.  (If it is
+    // degenerate it should never have been inserted.)
+    if (pe.v[0] != pe.v[1]) {
+	poly_point_t &pp1 = p_pnts_vect[pe.v[0]];
+	poly_point_t &pp2 = p_pnts_vect[pe.v[1]];
+	ON_Line line(ON_2dPoint(pp1.u, pp1.v), ON_2dPoint(pp2.u, pp2.v));
+	pe.bb = line.BoundingBox();
+	pe.bb.m_max.x = pe.bb.m_max.x + 2*ON_ZERO_TOLERANCE;
+	pe.bb.m_max.y = pe.bb.m_max.y + 2*ON_ZERO_TOLERANCE;
+	pe.bb.m_min.x = pe.bb.m_min.x - 2*ON_ZERO_TOLERANCE;
+	pe.bb.m_min.y = pe.bb.m_min.y - 2*ON_ZERO_TOLERANCE;
+	double bp1[2];
+	bp1[0] = pe.bb.Min().x;
+	bp1[1] = pe.bb.Min().y;
+	double bp2[2];
+	bp2[0] = pe.bb.Max().x;
+	bp2[1] = pe.bb.Max().y;
+	p_edges_tree.Remove(bp1, bp2, pe.vect_ind);
+    }
 
     // TODO - return pe to queue
 }

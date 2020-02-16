@@ -282,7 +282,8 @@ brep_cdt_state::faces_init()
 		poly_edge_t *pe = l.add_ordered_edge(cp1, cp2);
 		pe->m_bRev3d = trim->m_bRev3d;
 
-		// If we're not singular, define a mesh_edge
+		// If we're not singular, define an ordered 3D edge and
+		// associate it with an unordered 3D edge (creating at need).
 		ON_BrepEdge *edge = trim->Edge();
 		if (edge && edge->EdgeCurveOf()) {
 		    pe->type = B_BOUNDARY;
@@ -291,7 +292,6 @@ brep_cdt_state::faces_init()
 		} else {
 		    pe->type = B_SINGULAR;
 		}
-
 	    }
 	}
 
