@@ -258,46 +258,38 @@ brep_cdt_state::faces_init()
 	m.bb = m.f->BoundingBox();
 	for (int li = 0; li < brep->m_L.Count(); li++) {
 	    const ON_BrepLoop *loop = m.f->Loop(li);
-	    polygon_t &l = m.new_loop();
-	    l.loop_id = li;
-	    l.vect_ind = li;
-	    l.cdt = cdt;
-	    l.m = &b_faces_vect[b_faces_vect.size() - 1];
+	    polygon_t &l = m.add_polygon(li);
 	    if (m.f->OuterLoop()->m_loop_index == loop->m_loop_index) {
 		m.outer_loop = l.vect_ind;
 	    }
-	    // Initialize polygon points
+	    // Initialize polygon points and loop edges
 	    for (int lti = 0; lti < loop->TrimCount(); lti++) {
 		ON_BrepTrim *trim = loop->Trim(lti);
 		ON_Interval range = trim->Domain();
-		poly_point_t pp;
-		pp.mp = &b_pnts[trim->Vertex(0)->m_vertex_index];
-		ON_2dPoint cp = trim->PointAt(range.m_t[0]);
-		pp.u = cp.x;
-		pp.v = cp.y;
-		pp.vect_ind = l.p_pnts_vect.size();
-		l.o2p[trim->Vertex(0)->m_vertex_index] = l.p_pnts_vect.size();
-		l.p_pnts_vect.push_back(pp);
-	    };
-	    // Initialize polygon edges and add to loop
-	    for (int lti = 0; lti < loop->TrimCount(); lti++) {
-		// Every loop trim gets a polygon edge.
-		ON_BrepTrim *trim = loop->Trim(lti);
-		poly_edge_t &pe = l.new_pedge();
-		pe.v[0] = lti;
-		pe.v[1] = (lti < loop->TrimCount() - 1) ? lti + 1 : 0;
-		pe.m_bRev3d = trim->m_bRev3d;
-
-		l.add_ordered_edge(pe);
+		long cp1, cp2;
+		if (lti == 0) {
+		    ON_2dPoint cp = trim->PointAt(range.m_t[0]);
+		    cp1 = l.add_point(&b_pnts[trim->Vertex(0)->m_vertex_index], cp);
+		} else {
+		    cp1 = l.p_pnts_vect.size()-1;
+		}
+		if (lti < loop->TrimCount() - 1) {
+		    ON_2dPoint cp = trim->PointAt(range.m_t[1]);
+		    cp2 = l.add_point(&b_pnts[trim->Vertex(1)->m_vertex_index], cp);
+		} else {
+		    cp2 = 0;
+		}
+		poly_edge_t *pe = l.add_ordered_edge(cp1, cp2);
+		pe->m_bRev3d = trim->m_bRev3d;
 
 		// If we're not singular, define a mesh_edge
 		ON_BrepEdge *edge = trim->Edge();
 		if (edge && edge->EdgeCurveOf()) {
-		    pe.type = B_BOUNDARY;
-		    mesh_edge_t *e3d = m.edge(pe);
+		    pe->type = B_BOUNDARY;
+		    mesh_edge_t *e3d = m.edge(*pe);
 		    m.uedge(*e3d);
 		} else {
-		    pe.type = B_SINGULAR;
+		    pe->type = B_SINGULAR;
 		}
 
 	    }

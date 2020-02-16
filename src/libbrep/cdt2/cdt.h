@@ -383,10 +383,8 @@ class poly_point_t {
 	long vect_ind = -1;
 	double u;
 	double v;
-	int ecnt = 0;
+	std::set<size_t> pedges;
 };
-
-class polygon_t;
 
 class poly_edge_t {
     public:
@@ -439,11 +437,25 @@ class polygon_t {
 	std::unordered_map<long, long> o2p;
 	RTree<size_t, double, 2> p_edges_tree; // 2D spatial lookup for polygon edges
 
+	// Add a polygon point associated with an existing 3D mesh point.
+	// Returns -1 if a point cannot be created.
+	long add_point(mesh_point_t *meshp);
+
+	// Add a polygon point associated with an existing 3D mesh point, when
+	// an existing 2D point has already been calculated and the point
+	// addition doesn't need to do the work itself (usually happens when a
+	// point is added from a trim curve).  Returns -1 if no such point can
+	// be created.
+	long add_point(mesh_point_t *meshp, ON_2dPoint &p2d);
+
 	// Operations involving BRep loops (whether initializing or splitting)
-	// should always use ordered operations.  poly_edges are pre-generated
-	// based on ordering from the BRep trimming loops (as opposed to unordered
-	// edge insertions, which generate poly_edges as needed.)
-	bool add_ordered_edge(poly_edge_t &pe);
+	// should always use ordered operations.  Ordered poly_edges are
+	// generated based on ordering from the BRep trimming loops or valid
+	// triangles (as opposed to unordered edge insertions, which generate
+	// poly_edges to satisfy the existing polygon.)
+	poly_edge_t *add_ordered_edge(long p1, long p2);
+
+
 	void remove_ordered_edge(poly_edge_t &pe);
 
 	// Polygons being constructed on mesh interiors for repair are built
@@ -464,13 +476,20 @@ class polygon_t {
 	    return pe;
 	}
 
-	size_t vect_ind;
 
+	// If we are representing a BRep face loop, that index is stored here
+	// and the plane of the polygon is the 2D parametric space of the
+	// NURBS surface associated with the face.
+	long loop_id = -1;
+
+	// If the polygon is defined in a plane in space (as opposed to the
+	// parametric domain of a NURBS surface) that plane is stored here.)
+	ON_Plane p_plane;
+
+
+	size_t vect_ind;
 	struct brep_cdt *cdt;
 	mesh_t *m;
-
-	// If this polygon is defined on a face edge, we need more info.
-	long loop_id;
 
 	std::vector<poly_edge_t> p_pedges_vect;
 	std::vector<poly_point_t> p_pnts_vect;
@@ -505,15 +524,36 @@ class mesh_t
 	mesh_tri_t &new_tri();
 
 	// Create a new polygon loop
-	polygon_t &new_loop()
+	polygon_t &add_polygon(int l_id)
 	{
 	    polygon_t npoly;
+	    npoly.vect_ind = loops_vect.size();
+	    npoly.loop_id = l_id;
+	    npoly.cdt = this->cdt;
+	    npoly.m = this;
 	    loops_vect.push_back(npoly);
+	    // TODO - add support for m_lqueue
 	    polygon_t &poly = loops_vect[loops_vect.size() - 1];
-	    poly.m = this;
-	    poly.cdt = this->cdt;
 	    return poly;
 	}
+	polygon_t &add_polygon(ON_Plane &polyp)
+	{
+	    polygon_t npoly;
+	    npoly.vect_ind = loops_vect.size();
+	    npoly.loop_id = -1;
+	    npoly.p_plane = polyp;
+	    npoly.cdt = this->cdt;
+	    npoly.m = this;
+	    loops_vect.push_back(npoly);
+	    // TODO - add support for m_lqueue
+	    polygon_t &poly = loops_vect[loops_vect.size() - 1];
+	    return poly;
+	}
+
+	// Find the closest point to a 3D point p on the surface of the BRep
+	// face associated with this mesh.  Will optionally also calculate the
+	// normal vector at that point, if sn is non-NULL.
+	bool closest_surf_pt(ON_3dVector *sn, ON_3dPoint &s3d, ON_2dPoint &s2d, ON_3dPoint *p, double tol);
 
 	size_t outer_loop;
 

@@ -158,6 +158,39 @@ mesh_t::uedge(mesh_edge_t &e)
     return ue;
 }
 
+bool
+mesh_t::closest_surf_pt(ON_3dVector *sn, ON_3dPoint &s3d, ON_2dPoint &s2d, ON_3dPoint *p, double tol)
+{
+    s2d = ON_2dPoint::UnsetPoint;
+    s3d = ON_3dPoint::UnsetPoint;
+    if (sn) {
+	(*sn) = ON_3dVector::UnsetVector;
+    }
+
+    double cdist;
+    if (tol <= 0) {
+	surface_GetClosestPoint3dFirstOrder(f->SurfaceOf(), *p, s2d, s3d, cdist);
+    } else {
+	surface_GetClosestPoint3dFirstOrder(f->SurfaceOf(), *p, s2d, s3d, cdist, 0, ON_ZERO_TOLERANCE, tol);
+    }
+
+    if (NEAR_EQUAL(cdist, DBL_MAX, ON_ZERO_TOLERANCE)) {
+       	return false;
+    }
+
+    if (sn) {
+	bool seval = surface_EvNormal(f->SurfaceOf(), s2d.x, s2d.y, s3d, (*sn));
+	if (!seval) return false;
+
+	if (f->m_bRev) {
+	    (*sn) = (*sn) * -1;
+	}
+    }
+
+    return true;
+}
+
+
 /** @} */
 
 // Local Variables:
