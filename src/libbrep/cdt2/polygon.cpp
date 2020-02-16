@@ -100,7 +100,7 @@ polygon_t::add_point(mesh_point_t *meshp, ON_2dPoint &p2d)
 }
 
 poly_edge_t *
-polygon_t::add_ordered_edge(long p1, long p2)
+polygon_t::add_ordered_edge(long p1, long p2, int trim_ind = -1)
 {
     if (p1 < 0 || p2 < 0) return NULL;
     if (p1 >= (long)p_pnts_vect.size() || p2 >= (long)p_pnts_vect.size()) return NULL;
@@ -143,11 +143,12 @@ polygon_t::add_ordered_edge(long p1, long p2)
     pe.polygon = this;
     pe.vect_ind = p_pedges_vect.size();
 
-    // Determine edge type from vertices
-    if ((pp1.mp->type == B_VERT || pp1.mp->type == B_EDGE) && (pp2.mp->type == B_VERT || pp2.mp->type == B_EDGE)) {
+    // Determine edge type
+    if (trim_ind != -1) {
+	pe.m_trim_index = trim_ind;
 	pe.type = B_BOUNDARY;
     }
-    if ((pp1.mp->singular || pp2.mp->singular)) {
+    if (pe.type == B_BOUNDARY && (pp1.mp->singular || pp2.mp->singular)) {
 	pe.type = B_SINGULAR;
     }
 

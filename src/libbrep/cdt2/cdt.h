@@ -428,6 +428,7 @@ class poly_edge_t {
 	mesh_uedge_t *u3d = NULL;
 	double len = 0.0;
 	bool current = false;
+	int m_trim_index = -1;
 
 	// When performing refinement searches in 2D, we need to track the
 	// splitting status of polyedges.  The least complicated way to do
@@ -454,7 +455,7 @@ class polygon_t {
 	// generated based on ordering from the BRep trimming loops or valid
 	// triangles (as opposed to unordered edge insertions, which generate
 	// poly_edges to satisfy the existing polygon.)
-	poly_edge_t *add_ordered_edge(long p1, long p2);
+	poly_edge_t *add_ordered_edge(long p1, long p2, int trim_ind);
 
 
 	void remove_ordered_edge(poly_edge_t &pe);

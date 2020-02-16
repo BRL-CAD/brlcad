@@ -321,7 +321,7 @@ brep_cdt_state::faces_init()
 		} else {
 		    cp2 = 0;
 		}
-		poly_edge_t *pe = l.add_ordered_edge(cp1, cp2);
+		poly_edge_t *pe = l.add_ordered_edge(cp1, cp2, trim->m_trim_index);
 		pe->m_bRev3d = trim->m_bRev3d;
 
 		// If we're not singular, define an ordered 3D edge and
