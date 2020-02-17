@@ -2102,7 +2102,8 @@ gcp_newton_iteration(pt2d_t out_uv, const GCPData& data, pt2d_t grad, pt2d_t in_
 	pt2dsub(out_uv, in_uv, tmp);
 	return true;
     } else {
-	std::cerr << "inverse failed!" << std::endl; // XXX fix the error handling
+	// XXX fix the error handling
+	// std::cerr << "inverse failed!" << std::endl;
 	return false;
     }
 }
