@@ -113,7 +113,8 @@ brep_newton_iterate(const plane_ray& pr, pt2d_t R, const ON_3dVector& su, const 
 	mat2d_pt2d_mul(tmp, inv_jacob, R);
 	pt2dsub(out_uv, uv, tmp);
     } else {
-	TRACE2("inverse failed"); // FIXME: how to handle this?
+	// FIXME: how to handle this?
+	// TRACE2("inverse failed");
 	move(out_uv, uv);
     }
 }
