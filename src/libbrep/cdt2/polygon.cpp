@@ -238,11 +238,30 @@ polygon_t::add_ordered_edge(long p1, long p2, int trim_ind = -1)
 	double bp2[2];
 	bp2[0] = pe->bb.Max().x;
 	bp2[1] = pe->bb.Max().y;
+	// For the polygon tree, we want the tight box
 	p_edges_tree.Insert(bp1, bp2, pe->vect_ind);
 
 	// The parent mesh keeps track of all boundary 2D polyedges present for higher
 	// level processing as well.
 	if (pe->type == B_BOUNDARY || pe->type == B_SINGULAR) {
+	    // For this tree and edge type, we want a more aggressive bounding box
+	    ON_BoundingBox lbb = pe->bb;
+	    double xdist = lbb.m_max.x - lbb.m_min.x;
+	    double ydist = lbb.m_max.y - lbb.m_min.y;
+	    double bdist = (xdist < ydist) ? ydist : xdist;
+	    if (xdist < bdist) { 
+		lbb.m_min.x = lbb.m_min.x - 0.5*bdist;
+		lbb.m_max.x = lbb.m_max.x + 0.5*bdist;
+	    }
+	    if (ydist < bdist) { 
+		lbb.m_min.y = lbb.m_min.y - 0.5*bdist;
+		lbb.m_max.y = lbb.m_max.y + 0.5*bdist;
+	    }
+	    bp1[0] = lbb.Min().x;
+	    bp1[1] = lbb.Min().y;
+	    bp2[0] = lbb.Max().x;
+	    bp2[1] = lbb.Max().y;
+
 	    m->loops_tree.Insert(bp1, bp2, (void *)(&p_pedges_vect[pe->vect_ind]));
 	}
     }

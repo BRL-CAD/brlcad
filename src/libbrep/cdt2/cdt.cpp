@@ -221,8 +221,7 @@ brep_cdt_state::uedges_init()
 	long v1 = edge.Vertex(1)->m_vertex_index;
 	mesh_uedge_t *ue = get_uedge();
 	ue->cdt = cdt;
-	ue->edge_ind = index;
-	ue->edge = brep->Edge(ue->edge_ind);
+	ue->edge = brep->Edge(index);
 	ue->edge_pnts[0] = v0;
 	ue->edge_pnts[1] = v1;
 

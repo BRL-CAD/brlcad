@@ -242,6 +242,9 @@ class poly_edge_t {
 	void reset();
 };
 
+// The ordered 3D edge generally stores minimal information. Users should refer
+// to the associated unordered edge for information that is not specific to the
+// ordered version of the edge.
 class mesh_edge_t {
     public:
 
@@ -249,12 +252,23 @@ class mesh_edge_t {
 	// edges, ordered edges are always specific to a mesh context.
 	mesh_t *m = NULL;
 
+	// Index of this edge in m_edges_vect
 	int vect_ind = -1;
 
+	// b_pnts indices of points defining the edge
 	long v[2] = {-1, -1};
+
+	// Type of edge
 	edge_type_t type = B_UNSET;
+
+	// Associated uedge.  All 3D edges should have an associated uedge
 	mesh_uedge_t *uedge = NULL;
+
+	// Associated polygon edge.  Not all 3D edges will have an associated
+	// polygon edge, but all those involved with a BRep face edge should.
 	poly_edge_t *pe = NULL;
+
+	// Post CDT, all 3D edges should have exactly one associated triangle.
 	mesh_tri_t *tri = NULL;
 
 	// Called when a mesh_edge_t is returned to the
@@ -262,28 +276,56 @@ class mesh_edge_t {
 	void reset();
 };
 
+// An unordered edge (except in cases where the BRep is not closed) should
+// reference two triangles via two ordered edges.  Unordered edges are the
+// center of mesh processing and refinement, as only they have the necessary
+// information to update all relevant portions of the mesh when changes are
+// made.
 class mesh_uedge_t {
     public:
 
+	// Routine to update information associated with this edge in case
+	// supporting points have been updated.
 	void update();
 
-	bool split(ON_3dPoint &p);
+	// Split the uedge at the closest edge or surface point to the supplied
+	// 3D point.  This method will invalidate the current edge (placing it
+	// on the queue for reuse) and produce two new edges if successful -
+	// otherwise it will return a NULL pair and leave the current edge
+	// intact.  A successful uedge split will propagate changes down to
+	// ordered edges and polygon edges as well.
+	std::pair<mesh_uedge_t *, mesh_uedge_t *> split(ON_3dPoint &p);
 
-	struct brep_cdt *cdt = NULL;
-	ON_BrepEdge *edge = NULL;
-	edge_type_t type = B_UNSET;
-	mesh_edge_t *e[2] = {NULL, NULL};
-	long v[2];
+	// b_pnts indices denoting the original ordered points associated with
+	// the BRep edge start and end points of the parent BRep edge, if this
+	// edge is derived from a BRep edge.
+	long edge_pnts[2] = {-1, -1};
+
+	// b_pnts indices of points defining the edge.  Unlike an ordered
+	// edge, these will be sorted so that v[0] <= v[1]
+	long v[2] = {-1, -1};
+
+	// Index of this edge in m_uedges_vect
 	int vect_ind = -1;
 
-	// If mesh_uedge_t is also a boundary edge, more information is needed
-	int edge_ind = -1;
+	// Type of edge
+	edge_type_t type = B_UNSET;
+
+	// Associated ordered edges
+	mesh_edge_t *e[2] = {NULL, NULL};
+
+	// Associated brep.  Unlike ordered edges, an unordered edge may
+	// be associated with triangles in more than one mesh.
+	struct brep_cdt *cdt = NULL;
+
+	// Information for cases when the uedge is also on a BRep boundary edge
+	ON_BrepEdge *edge = NULL;
+
 	double cp_len = DBL_MAX;
 	ON_NurbsCurve *nc = NULL;
 	double t_start = DBL_MAX;
 	double t_end = DBL_MAX;
 
-	int edge_pnts[2] = {-1, -1};
 	ON_3dVector tangents[2];
 
 	ON_BoundingBox bb;

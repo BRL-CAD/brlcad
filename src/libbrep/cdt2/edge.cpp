@@ -49,7 +49,6 @@ mesh_uedge_t::reset()
     type = B_UNSET;
     v[0] = v[1] = -1;
     e[0] = e[1] = NULL;
-    edge_ind = -1;
     nc = NULL;
     t_start = DBL_MAX;
     t_end = DBL_MAX;
@@ -78,7 +77,7 @@ mesh_uedge_t::update()
     p2[0] = bb.Max().x + 2*ON_ZERO_TOLERANCE;
     p2[1] = bb.Max().y + 2*ON_ZERO_TOLERANCE;
     p2[2] = bb.Max().z + 2*ON_ZERO_TOLERANCE;
-    cdt->i->s.b_uedges_tree.Insert(p1, p2, vect_ind);
+    cdt->i->s.b_uedges_tree.Remove(p1, p2, vect_ind);
 
     ON_3dPoint &p3d1 = cdt->i->s.b_pnts[v[0]].p;
     ON_3dPoint &p3d2 = cdt->i->s.b_pnts[v[1]].p;
