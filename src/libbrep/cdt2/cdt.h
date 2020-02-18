@@ -252,6 +252,7 @@ class mesh_edge_t {
 	int vect_ind = -1;
 
 	long v[2] = {-1, -1};
+	edge_type_t type = B_UNSET;
 	mesh_uedge_t *uedge = NULL;
 	poly_edge_t *pe = NULL;
 	mesh_tri_t *tri = NULL;
@@ -407,19 +408,35 @@ class polygon_t {
 	ON_Plane p_plane;
 
 
-	size_t vect_ind;
-	mesh_t *m;
+	// The polygon points store a pointer to their origin 3D point, but
+	// to go the other way we need to keep track in a map.
 	std::unordered_map<long, long> o2p;
-	RTree<size_t, double, 2> p_edges_tree; // 2D spatial lookup for polygon edges
-	std::vector<poly_edge_t> p_pedges_vect;
-	std::vector<poly_point_t> p_pnts_vect;
 
-	poly_edge_t *get_pedge();
-	void put_pedge(poly_edge_t *pe);
+	// Pointer to the parent mesh.  All polygons will have a parent mesh
+	mesh_t *m;
+
+	// Polygon index in the parent mesh.  For BRep loops this should match
+	// the corresponding index in the ON_Brep structure.
+	size_t vect_ind;
+
+	// 2D spatial lookup for polygon edges.  Used to check for self
+	// intersections in the polygon (a variation on the "Bush" approach
+	// from https://github.com/anvaka/isect - we don't use a static
+	// container since the polygon is being refined, but otherwise the
+	// idea is similar.)
+	RTree<size_t, double, 2> p_edges_tree;
 
 	// Called when a mesh_uedge_t is returned to the
 	// queue for reuse
 	void reset();
+
+	// Functions to manage object reuse via the queue
+	poly_edge_t *get_pedge();
+	void put_pedge(poly_edge_t *pe);
+
+	// Containers holding all actual polygon edge and vertex information.
+	std::vector<poly_edge_t> p_pedges_vect;
+	std::vector<poly_point_t> p_pnts_vect;
 
     private:
 	std::queue<size_t> p_pequeue; // Available (unused) entries in p_pedges_vect
@@ -427,7 +444,7 @@ class polygon_t {
 
 
 ///////////////////////////////////////////////////////////////////////////////
-//  
+//
 //  Primary mesh container - holds polygon loops and triangles associated
 //  with an individual BRep face.
 //
@@ -497,7 +514,7 @@ class mesh_t
 
 
 ///////////////////////////////////////////////////////////////////////////////
-//  
+//
 //  Primary CDT state container - holds information about relationships
 //  between BRep faces and edge curves.
 //
