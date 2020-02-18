@@ -320,19 +320,25 @@ class mesh_uedge_t {
 
 	// Information for cases when the uedge is also on a BRep boundary edge
 	ON_BrepEdge *edge = NULL;
-
 	double cp_len = DBL_MAX;
 	ON_NurbsCurve *nc = NULL;
 	double t_start = DBL_MAX;
 	double t_end = DBL_MAX;
 
+	// When splitting, one of the criteria is based on the change of slopes
+	// at beginning and ending of curves.  These slopes are specific to
+	// edges - the same point may have two different tangents if it is used
+	// by multiple faces - so those tangents are stored with the edge
+	// curves.
 	ON_3dVector tangents[2];
+	// Because the vertices are unordered, we store in t_verts the specific
+	// point associated with each tangent so they may be properly passed down
+	// to child curves during a split operation.
+	int t_verts[2];
 
 	ON_BoundingBox bb;
 
 	bool linear = false;
-	bool unused = false;
-	bool current = false;
 
 	// Called when a mesh_uedge_t is returned to the
 	// queue for reuse

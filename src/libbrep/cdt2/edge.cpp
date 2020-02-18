@@ -52,15 +52,13 @@ mesh_uedge_t::reset()
     nc = NULL;
     t_start = DBL_MAX;
     t_end = DBL_MAX;
-    edge_pnts[0] = -1;
-    edge_pnts[2] = -1;
+    edge_pnts[0] = edge_pnts[1] = -1;
+    t_verts[0] = t_verts[1] =-1;
     tangents[0] = ON_3dVector::UnsetVector;
     tangents[1] = ON_3dVector::UnsetVector;
     bb = ON_BoundingBox();
     len = 0.0;
     linear = false;
-    unused = false;
-    current = false;
 }
 
 void

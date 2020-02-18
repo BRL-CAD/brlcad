@@ -44,6 +44,7 @@ poly_edge_t::reset()
     m_trim_index = -1;
     m_bRev3d = false;
     split_status = 0;
+    bb = ON_BoundingBox();
 }
 
 void

@@ -274,7 +274,10 @@ brep_cdt_state::uedges_init()
 	b_pnts[ue->v[0]].uedges.insert(ue);
 	b_pnts[ue->v[1]].uedges.insert(ue);
 
-	// Initialize the tangent values
+	// Initialize the tangent values.  For the specific case of the starting
+	// values when we need to evaluate at vertex points, back up the curve
+	// evaluation with trim parameter values in case the evaluation at the
+	// vertex point should fail to produce a tangent.
 	for (int i = 0; i < 2; i++) {
 	    double t1param, t2param;
 	    double ue_param = (i == 0) ? ue->t_start : ue->t_end;
@@ -285,6 +288,7 @@ brep_cdt_state::uedges_init()
 	    t1param = (trim1->m_bRev3d) ? trim1->Domain().m_t[ind2] : trim1->Domain().m_t[ind1];
 	    t2param = (trim2->m_bRev3d) ? trim2->Domain().m_t[ind2] : trim2->Domain().m_t[ind1];
 	    ue->tangents[i] = edge_tangent(edge, ue->nc, ue_param, t1param, t2param);
+	    ue->t_verts[i] = (i == 0) ? v0 : v1;
 	}
     }
 
