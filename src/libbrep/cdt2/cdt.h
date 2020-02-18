@@ -70,6 +70,17 @@ Hopefully that will avoid the need for the various special case rules currently
 defined based on linear/non-linear pairings and such, which don't always do
 what we want/need locally in any event.
 
+Thought:
+After initial triangulation, iterate over all edges looking for any interior
+edges that have edge or vert points as both their start and end point.  For
+those edges, insert new points at the closest point to the midpoint of those
+edges and replace the original two triangles on that interior edge with four
+that incorporate the new interior point.  This should catch cases where the
+triangulation jumps from one edge to the other.  Probably still need the initial
+box breakdown of the edges - what this might catch is when those midpoints in
+toward the surface aren't enough to keep some edges from "short circuiting"
+to the opposite side of a curved surface...
+
 */
 
 
