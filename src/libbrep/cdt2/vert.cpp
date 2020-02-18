@@ -161,21 +161,8 @@ singular_vert_norm(ON_Brep *brep, int index)
     return vnrml;
 }
 
-double
-mesh_point_t::min_len()
-{
-    double slen = DBL_MAX;
-    std::set<size_t>::iterator e_it;
-    for (e_it = uedges.begin(); e_it != uedges.end(); e_it++) {
-	mesh_uedge_t &ue = cdt->i->s.b_uedges_vect[*e_it];
-	if (ue.type == B_SINGULAR) continue;
-	slen = (slen > ue.len) ? ue.len : slen;
-    }
-    return (slen < DBL_MAX) ? slen : 0;
-}
-
 void
-mesh_point_t::bbox_update()
+mesh_point_t::update()
 {
     // Before updating, remove old box (if any) from RTree
     double p1[3];
@@ -194,9 +181,17 @@ mesh_point_t::bbox_update()
     bb = ON_BoundingBox(p,p);
     bb.m_max = bb.m_max + pztol;
     bb.m_min = bb.m_min - pztol;
+
     // With no edges assigned this is a no-op, but otherwise bump the bbox
     // dimensions using half the smallest connected edge length.
-    double slen = min_len();
+    double slen = DBL_MAX;
+    std::set<mesh_uedge_t *>::iterator ue_it;
+    for (ue_it = uedges.begin(); ue_it != uedges.end(); ue_it++) {
+	if ((*ue_it)->type == B_SINGULAR) continue;
+	slen = (slen > (*ue_it)->len) ? (*ue_it)->len : slen;
+    }
+    slen = (slen < DBL_MAX) ? slen : 0;
+
     ON_3dPoint nbbp;
     ON_3dPoint bdelta(slen*0.5, slen*0.5, slen*0.5);
     nbbp = p + bdelta;

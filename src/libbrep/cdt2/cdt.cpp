@@ -31,19 +31,29 @@
 #include "brep/pullback.h"
 #include "./cdt.h"
 
-mesh_uedge_t &
-brep_cdt_state::new_uedge() {
+mesh_uedge_t *
+brep_cdt_state::get_uedge()
+{
+    size_t n_ind;
     if (b_uequeue.size()) {
-	mesh_uedge_t &nue = b_uedges_vect[b_uequeue.front()];
+	n_ind = b_uequeue.front();
 	b_uequeue.pop();
-	return nue;
     } else {
-	mesh_uedge_t nue;
-	nue.vect_ind = b_uedges_vect.size();
-	b_uedges_vect.push_back(nue);
-	mesh_uedge_t &rnue = b_uedges_vect[nue.vect_ind];
-	return rnue;
+	mesh_uedge_t nedge;
+	b_uedges_vect.push_back(nedge);
+	n_ind = b_uedges_vect.size() - 1;
     }
+    mesh_uedge_t *nue = &(b_uedges_vect[n_ind]);
+    nue->vect_ind = n_ind;
+    return nue;
+}
+void
+brep_cdt_state::put_uedge(mesh_uedge_t *ue)
+{
+    if (!ue) return;
+    size_t n_ind = ue->vect_ind;
+    ue->reset();
+    b_uequeue.push(n_ind);
 }
 
 void
@@ -64,8 +74,7 @@ brep_cdt_state::delete_uedge(mesh_uedge_t &ue)
     p2[2] = ue.bb.Max().z + 2*ON_ZERO_TOLERANCE;
     b_uedges_tree.Remove(p1, p2, ind);
 
-    ue.clear();
-    b_uequeue.push(ind);
+    put_uedge(&ue);
 }
 
 static bool Nearby_VectAdd(size_t data, void *a_context) {
@@ -77,14 +86,17 @@ static bool Nearby_VectAdd(size_t data, void *a_context) {
 long
 brep_cdt_state::find_uedge(mesh_edge_t &e)
 {
+    ON_3dPoint on_p1 = b_pnts[e.v[0]].p;
+    ON_3dPoint on_p2 = b_pnts[e.v[1]].p;
+    ON_BoundingBox bb(on_p1, on_p2);
     double p1[3];
-    p1[0] = e.bb.Min().x - 2*ON_ZERO_TOLERANCE;
-    p1[1] = e.bb.Min().y - 2*ON_ZERO_TOLERANCE;
-    p1[2] = e.bb.Min().z - 2*ON_ZERO_TOLERANCE;
+    p1[0] = bb.Min().x - 2*ON_ZERO_TOLERANCE;
+    p1[1] = bb.Min().y - 2*ON_ZERO_TOLERANCE;
+    p1[2] = bb.Min().z - 2*ON_ZERO_TOLERANCE;
     double p2[3];
-    p2[0] = e.bb.Max().x + 2*ON_ZERO_TOLERANCE;
-    p2[1] = e.bb.Max().y + 2*ON_ZERO_TOLERANCE;
-    p2[2] = e.bb.Max().z + 2*ON_ZERO_TOLERANCE;
+    p2[0] = bb.Max().x + 2*ON_ZERO_TOLERANCE;
+    p2[1] = bb.Max().y + 2*ON_ZERO_TOLERANCE;
+    p2[2] = bb.Max().z + 2*ON_ZERO_TOLERANCE;
 
     std::vector<size_t> near_uedges;
     b_uedges_tree.Search(p1, p2, Nearby_VectAdd, &near_uedges);
@@ -102,6 +114,7 @@ brep_cdt_state::find_uedge(mesh_edge_t &e)
 
     return -1;
 }
+
 
 
 void
@@ -140,7 +153,7 @@ brep_cdt_state::verts_init()
 	np.p = brep->m_V[vert_index].Point();
 	np.n = ON_3dVector::UnsetVector;
 	np.type = B_VERT;
-	np.bbox_update();
+	np.update();
 	np.vect_ind = b_pnts.size();
 	b_pnts.push_back(np);
     }
@@ -206,79 +219,79 @@ brep_cdt_state::uedges_init()
 	ON_BrepEdge& edge = brep->m_E[index];
 	long v0 = edge.Vertex(0)->m_vertex_index;
 	long v1 = edge.Vertex(1)->m_vertex_index;
-	mesh_uedge_t ue = new_uedge();
-	ue.cdt = cdt;
-	ue.edge_ind = index;
-	ue.edge = brep->Edge(ue.edge_ind);
-	ue.edge_pnts[0] = v0;
-	ue.edge_pnts[1] = v1;
+	mesh_uedge_t *ue = get_uedge();
+	ue->cdt = cdt;
+	ue->edge_ind = index;
+	ue->edge = brep->Edge(ue->edge_ind);
+	ue->edge_pnts[0] = v0;
+	ue->edge_pnts[1] = v1;
 
 	// This sorting is what makes a mesh_uedge_t unordered - otherwise the edge
 	// curve will determine how data is stored.
-	ue.v[0] = (v1 > v0) ? v0 : v1;
-	ue.v[1] = (v1 > v0) ? v1 : v0;
+	ue->v[0] = (v1 > v0) ? v0 : v1;
+	ue->v[1] = (v1 > v0) ? v1 : v0;
 
 	// Characterize the edge type
-	ue.type = (edge.EdgeCurveOf() == NULL) ? B_SINGULAR : B_BOUNDARY;
+	ue->type = (edge.EdgeCurveOf() == NULL) ? B_SINGULAR : B_BOUNDARY;
 
 	// Set up the NURBS curve to be used for splitting
 	const ON_Curve* crv = edge.EdgeCurveOf();
-	ue.nc = crv->NurbsCurve();
+	ue->nc = crv->NurbsCurve();
 
 	// Curved edges will need some minimal splitting regardless, so
 	// identify them up front
-	double c_len_tol = 0.1 * ue.nc->ControlPolygonLength();
+	double c_len_tol = 0.1 * ue->nc->ControlPolygonLength();
 	double tol = (c_len_tol < BN_TOL_DIST) ? c_len_tol : BN_TOL_DIST;
-	ue.linear = crv->IsLinear(tol);
+	ue->linear = crv->IsLinear(tol);
 
 	// Match the parameterization to the control polygon length, so
 	// distances in t paramater space will have some relationship to 3D
 	// distances.
-	ue.cp_len = ue.nc->ControlPolygonLength();
-	ue.nc->SetDomain(0.0, ue.cp_len);
-	ue.t_start = 0.0;
-	ue.t_end = ue.cp_len;
+	ue->cp_len = ue->nc->ControlPolygonLength();
+	ue->nc->SetDomain(0.0, ue->cp_len);
+	ue->t_start = 0.0;
+	ue->t_end = ue->cp_len;
 
 	// Set trim curve domains to match the updated edge curve domains.
 	for (int i = 0; i < edge.TrimCount(); i++) {
 	    ON_BrepTrim *trim = edge.Trim(i);
-	    brep->m_T[trim->TrimCurveIndexOf()].SetDomain(ue.t_start, ue.t_end);
+	    brep->m_T[trim->TrimCurveIndexOf()].SetDomain(ue->t_start, ue->t_end);
 	}
 
 	// Calculate the edge length once up front
-	ue.len = b_pnts[ue.v[0]].p.DistanceTo(b_pnts[ue.v[1]].p);
+	ue->len = b_pnts[ue->v[0]].p.DistanceTo(b_pnts[ue->v[1]].p);
 
 	// Set an initial edge bbox.  Because this is the first round,
-	// bbox_update will need something well defined to operate on - just
+	// update will need something well defined to operate on - just
 	// define a minimal box around the point.  Subsequent update calls
 	// will have an initialized box and won't need this.
 	ON_3dPoint pztol(ON_ZERO_TOLERANCE, ON_ZERO_TOLERANCE, ON_ZERO_TOLERANCE);
-	ue.bb = ON_BoundingBox(b_pnts[v0].p,b_pnts[v1].p);
-	ue.bb.m_max = ue.bb.m_max + pztol;
-	ue.bb.m_min = ue.bb.m_min - pztol;
-	ue.bbox_update();
+	ue->bb = ON_BoundingBox(b_pnts[v0].p,b_pnts[v1].p);
+	ue->bb.m_max = ue->bb.m_max + pztol;
+	ue->bb.m_min = ue->bb.m_min - pztol;
+	ue->update();
 
 	// Establish the vertex to edge connectivity
-	b_pnts[ue.v[0]].uedges.insert(index);
-	b_pnts[ue.v[1]].uedges.insert(index);
+	b_pnts[ue->v[0]].uedges.insert(ue);
+	b_pnts[ue->v[1]].uedges.insert(ue);
 
 	// Initialize the tangent values
 	for (int i = 0; i < 2; i++) {
 	    double t1param, t2param;
-	    double ue_param = (i == 0) ? ue.t_start : ue.t_end;
+	    double ue_param = (i == 0) ? ue->t_start : ue->t_end;
 	    ON_BrepTrim *trim1 = edge.Trim(0);
 	    ON_BrepTrim *trim2 = edge.Trim(1);
 	    int ind1 = (i == 0) ? 0 : 1;
 	    int ind2 = (i == 0) ? 1 : 0;
 	    t1param = (trim1->m_bRev3d) ? trim1->Domain().m_t[ind2] : trim1->Domain().m_t[ind1];
 	    t2param = (trim2->m_bRev3d) ? trim2->Domain().m_t[ind2] : trim2->Domain().m_t[ind1];
-	    ue.tangents[i] = edge_tangent(edge, ue.nc, ue_param, t1param, t2param);
+	    ue->tangents[i] = edge_tangent(edge, ue->nc, ue_param, t1param, t2param);
 	}
     }
 
     // Now that we have edge associations, update vert bboxes.
     for (size_t index = 0; index < b_pnts.size(); index++) {
-	b_pnts[index].bbox_update();
+	b_pnts[index].update();
     }
 }
 
@@ -300,9 +313,9 @@ brep_cdt_state::faces_init()
 	m.bb = m.f->BoundingBox();
 	for (int li = 0; li < brep->m_L.Count(); li++) {
 	    const ON_BrepLoop *loop = m.f->Loop(li);
-	    polygon_t &l = m.add_polygon(li);
+	    polygon_t *l = m.get_poly(li);
 	    if (m.f->OuterLoop()->m_loop_index == loop->m_loop_index) {
-		m.outer_loop = l.vect_ind;
+		m.outer_loop = l->vect_ind;
 	    }
 	    // Initialize polygon points and loop edges
 	    for (int lti = 0; lti < loop->TrimCount(); lti++) {
@@ -311,17 +324,17 @@ brep_cdt_state::faces_init()
 		long cp1, cp2;
 		if (lti == 0) {
 		    ON_2dPoint cp = trim->PointAt(range.m_t[0]);
-		    cp1 = l.add_point(&b_pnts[trim->Vertex(0)->m_vertex_index], cp);
+		    cp1 = l->add_point(&b_pnts[trim->Vertex(0)->m_vertex_index], cp);
 		} else {
-		    cp1 = l.p_pnts_vect.size()-1;
+		    cp1 = l->p_pnts_vect.size()-1;
 		}
 		if (lti < loop->TrimCount() - 1) {
 		    ON_2dPoint cp = trim->PointAt(range.m_t[1]);
-		    cp2 = l.add_point(&b_pnts[trim->Vertex(1)->m_vertex_index], cp);
+		    cp2 = l->add_point(&b_pnts[trim->Vertex(1)->m_vertex_index], cp);
 		} else {
 		    cp2 = 0;
 		}
-		poly_edge_t *pe = l.add_ordered_edge(cp1, cp2, trim->m_trim_index);
+		poly_edge_t *pe = l->add_ordered_edge(cp1, cp2, trim->m_trim_index);
 		pe->m_bRev3d = trim->m_bRev3d;
 
 		// If we're not singular, define an ordered 3D edge and

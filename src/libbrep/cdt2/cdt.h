@@ -87,6 +87,7 @@ what we want/need locally in any event.
 
 #define BREP_PLANAR_TOL 0.05
 
+class mesh_point_t;
 class mesh_edge_t;
 class mesh_uedge_t;
 class mesh_tri_t;
@@ -94,40 +95,59 @@ class mesh_t;
 class poly_edge_t;
 class polygon_t;
 
+///////////////////////////////////////////////////////////////////////////////
+//
+//  Point containers - hold 2D and 3D points used in mesh processing, as well
+//  as associated metadata and edge connectivity information.
+//
+///////////////////////////////////////////////////////////////////////////////
+
+
 typedef enum {
     B_VERT,
     B_EDGE,
     B_SURF
 } mesh_point_type;
 
+
+class poly_point_t {
+    public:
+	// Associated 3D point used to derive this 2D point.
+	mesh_point_t *mp = NULL;
+	long vect_ind = -1;
+	double u;
+	double v;
+	std::set<size_t> pedges;
+};
+
 class mesh_point_t {
     public:
-	mesh_point_type type;
-
-	ON_3dPoint p;
-	ON_3dVector n;
-
-	// Minimum associated edge length.  If < 0, no associated edges
-	double min_len();
+	// Routine to update point bounding box in light of updates to
+	// associated edges.
+	void update();
 
 	// Moves the point to the new value, sets the new normal, and updates
 	// all impacted data (vert bboxes, edge bboxes and lengths, triangle
 	// bboxes, RTrees, etc.) using edge connectivity to find everything
 	// that needs updating.
-	void update(ON_3dPoint &np, ON_3dVector &nn);
+	//
+	// This operation (and only this operation) may also change associated
+	// 2D polygon points and the bboxes of associated polygon edges.
+	void adjust(ON_3dPoint &np, ON_3dVector *nn);
 
-	// Topology information: associated object and edges
-	struct brep_cdt *cdt;
-	std::set<size_t> uedges;
+	// Connect/disconnect edges to this point, updating any
+	// associated information that needs updating
+	void connect(poly_edge_t *ue);
+	void connect(mesh_uedge_t *ue);
+	void disconnect(poly_edge_t *ue);
+	void disconnect(mesh_uedge_t *ue);
 
-	// Bounding box around the vertex point, with sized defined based
-	// on connected edge lengths.
-	void bbox_update();
-	ON_BoundingBox bb;
+	// Primary 3D point and normal information
+	ON_3dPoint p;
+	ON_3dVector n;
 
-	// Index of this container in b_pnts vector.  Used primarily
-	// to allow RTree box lookups to identify specific points.
-	size_t vect_ind;
+	// Metadata from BRep indicating what type of point this is
+	mesh_point_type type;
 
 	// Origin information - specifics about what vertex, edge or surface on the
 	// mesh is connected to this particular point.  Which set of information is
@@ -149,7 +169,26 @@ class mesh_point_t {
 	int bot_vert_ind = -1;
 	int bot_norm_ind = -1;
 
+	// Index of this container in b_pnts vector.  Used primarily
+	// to allow RTree box lookups to identify specific points.
+	size_t vect_ind;
+
+	// Topology information: associated object and edges
+	struct brep_cdt *cdt;
+	std::set<poly_point_t *> poly_pts;
+	std::set<mesh_uedge_t *> uedges;
+
+	// Bounding box around the vertex point, with sized defined based
+	// on connected edge lengths.
+	ON_BoundingBox bb;
 };
+
+///////////////////////////////////////////////////////////////////////////////
+//
+//  Edge containers - hold 2D and 3D edges used in mesh processing, as well
+//  as associated metadata.
+//
+///////////////////////////////////////////////////////////////////////////////
 
 typedef enum {
     B_UNSET,
@@ -158,112 +197,83 @@ typedef enum {
     B_INTERIOR
 } edge_type_t;
 
+
+class poly_edge_t {
+    public:
+
+	// Routine to update information associated with this edge in case
+	// supporting points have been updated.
+	void update();
+
+	// The polygon context in which this edge is defined
+	polygon_t *polygon = NULL;
+
+	// Index identifying the current edge's position in the
+	// polygon->p_pedges_vect array
+	int vect_ind = -1;
+
+	// Indices into the associated polygon's p_pnts_vect array that define
+	// the start v[0] and end v[1] points of the polyedge in 2D.
+	long v[2] = {-1, -1};
+
+	// Indices into the associated polygon's p_pedges_vect array that
+	// identify the previous and next edges in the polygon loop. 
+	int prev = -1;
+	int next = -1;
+
+	// Pointer to the 3D ordered edge associated with this polygon edge.
+	mesh_edge_t *e3d = NULL;
+
+	// BRep metadata specific to this edge
+	edge_type_t type = B_UNSET;
+	int m_trim_index = -1;
+	bool m_bRev3d = false;
+
+	// When performing refinement searches in 2D, we need to track the
+	// splitting status of polyedges.  The least complicated way to do
+	// that is to provide a means of tagging the edge itself.
+	int split_status = 0;
+
+	// 2D bounding box containing this polyedge in the polygon plane
+	ON_BoundingBox bb;
+
+	// Called when a poly_edge_t is returned to the
+	// queue for reuse
+	void reset();
+};
+
 class mesh_edge_t {
     public:
-	mesh_edge_t() {
-	    v[0] = v[1] = -1;
-	    m = NULL;
-	    uedge = NULL;
-	    type = B_UNSET;
-	}
 
-	void clear();
-
-	bool operator<(mesh_edge_t other) const
-	{
-	    bool c1 = (v[0] < other.v[0]);
-	    bool c1e = (v[0] == other.v[0]);
-	    bool c2 = (v[1] < other.v[1]);
-	    return (c1 || (c1e && c2));
-	}
-
-	bool operator==(mesh_edge_t other) const
-	{
-	    bool c0 = (type == other.type);
-	    if (!c0) return false;
-	    bool c1 = (v[0] == other.v[0]);
-	    bool c2 = (v[1] == other.v[1]);
-	    return (c1 && c2);
-	}
-	bool operator!=(mesh_edge_t other) const
-	{
-	    bool c0 = (type == other.type);
-	    if (!c0) return true;
-	    bool c1 = (v[0] != other.v[0]);
-	    bool c2 = (v[1] != other.v[1]);
-	    return (c1 || c2);
-	}
-
-	void bbox_update();
-	ON_BoundingBox bb;
+	// Mesh context in which the 3D edge is defined.  Unlike unordered
+	// edges, ordered edges are always specific to a mesh context.
+	mesh_t *m = NULL;
 
 	int vect_ind = -1;
 
-	long v[2];
-	edge_type_t type = B_UNSET;
-	struct brep_cdt *cdt;
-	mesh_t *m = NULL;
+	long v[2] = {-1, -1};
 	mesh_uedge_t *uedge = NULL;
 	poly_edge_t *pe = NULL;
-
 	mesh_tri_t *tri = NULL;
 
-	double len = 0.0;
-	bool unused = false;
-	bool current = false;
-
-    private:
+	// Called when a mesh_edge_t is returned to the
+	// queue for reuse
+	void reset();
 };
 
 class mesh_uedge_t {
     public:
 
-	mesh_uedge_t() {
-	    v[0] = v[1] = -1;
-	    e[0] = e[1] = NULL;
-	    tri[0] = tri[1] = NULL;
-	    type = B_UNSET;
-	}
-
-	void clear();
-	bool set(mesh_edge_t *e1, mesh_edge_t *e2);
-
-	bool operator<(mesh_uedge_t other) const
-	{
-	    bool c1 = (v[0] < other.v[0]);
-	    bool c1e = (v[0] == other.v[0]);
-	    bool c2 = (v[1] < other.v[1]);
-	    return (c1 || (c1e && c2));
-	}
-
-	bool operator==(mesh_uedge_t other) const
-	{
-	    bool c0 = (type == other.type);
-	    if (!c0) return false;
-	    bool c1 = (v[0] == other.v[0]);
-	    bool c2 = (v[1] == other.v[1]);
-	    return (c1 && c2);
-	}
-	bool operator!=(mesh_uedge_t other) const
-	{
-	    bool c0 = (type == other.type);
-	    if (!c0) return true;
-	    bool c1 = (v[0] != other.v[0]);
-	    bool c2 = (v[1] != other.v[1]);
-	    return (c1 || c2);
-	}
+	void update();
 
 	bool split(ON_3dPoint &p);
 
-
-	int vect_ind = -1;
-
-	struct brep_cdt *cdt;
-	ON_BrepEdge *edge;
-	edge_type_t type;
-	mesh_edge_t *e[2];
-	mesh_tri_t *tri[2];
+	struct brep_cdt *cdt = NULL;
+	ON_BrepEdge *edge = NULL;
+	edge_type_t type = B_UNSET;
+	mesh_edge_t *e[2] = {NULL, NULL};
 	long v[2];
+	int vect_ind = -1;
 
 	// If mesh_uedge_t is also a boundary edge, more information is needed
 	int edge_ind = -1;
@@ -275,66 +285,47 @@ class mesh_uedge_t {
 	int edge_pnts[2] = {-1, -1};
 	ON_3dVector tangents[2];
 
-	void bbox_update();
 	ON_BoundingBox bb;
 
-	double len = 0.0;
 	bool linear = false;
 	bool unused = false;
 	bool current = false;
+
+	// Called when a mesh_uedge_t is returned to the
+	// queue for reuse
+	void reset();
+
+	double len;
 };
+
+
+///////////////////////////////////////////////////////////////////////////////
+//
+//  Triangle container - hold 3D triangles used to define meshes.
+//
+///////////////////////////////////////////////////////////////////////////////
 
 
 class mesh_tri_t {
     public:
 
-	mesh_tri_t()
-	{
-	    v[0] = v[1] = v[2] = -1;
-	    ind = LONG_MAX;
-	    m = NULL;
-	    current = false;
-	}
+	// Routine to update triangle bounding box in light of updates to
+	// associated edges.
+	void update();
 
-	mesh_tri_t(mesh_t *mesh, long i, long j, long k)
-	{
-	    v[0] = i;
-	    v[1] = j;
-	    v[2] = k;
-	    ind = LONG_MAX;
-	    m = mesh;
-	    current = false;
-	}
+	ON_3dPoint &center();
+	ON_3dVector &bnorm();
+	ON_3dVector &tnorm();
 
-	mesh_tri_t(const mesh_tri_t &other)
-	{
-	    v[0] = other.v[0];
-	    v[1] = other.v[1];
-	    v[2] = other.v[2];
-	    ind = other.ind;
-	    m = other.m;
-	    current = other.current;
-	    bb = other.bb;
-	}
+	long v[3] = {-1, -1, -1};
+	mesh_edge_t *e[3] = {NULL, NULL, NULL};
+	long vect_ind = -1;
+	mesh_t *m = NULL;
+
+	ON_BoundingBox bb;
 
 	mesh_tri_t& operator=(const mesh_tri_t &other) = default;
 
-	bool operator<(mesh_tri_t other) const
-	{
-	    std::vector<long> vca, voa;
-	    for (int i = 0; i < 3; i++) {
-		vca.push_back(v[i]);
-		voa.push_back(other.v[i]);
-	    }
-	    std::sort(vca.begin(), vca.end());
-	    std::sort(voa.begin(), voa.end());
-	    bool c1 = (vca[0] < voa[0]);
-	    bool c1e = (vca[0] == voa[0]);
-	    bool c2 = (vca[1] < voa[1]);
-	    bool c2e = (vca[1] == voa[1]);
-	    bool c3 = (vca[2] < voa[2]);
-	    return (c1 || (c1e && c2) || (c1e && c2e && c3));
-	}
 	bool operator==(mesh_tri_t other) const
 	{
 	    if (m != other.m) {
@@ -356,85 +347,24 @@ class mesh_tri_t {
 	    return (c1 || c2 || c3);
 	}
 
-	ON_3dPoint &center();
-	ON_3dVector &bnorm();
-	ON_3dVector &tnorm();
+	// Called when a mesh_tri_t is returned to the
+	// queue for reuse
+	void reset() {};
 
-	ON_BoundingBox &bbox();
-
-	long v[3];
-	mesh_edge_t e[3];
-	size_t ind;
-	mesh_t *m;
-
-	bool unused = false;
     private:
-	bool current = false;
-	ON_BoundingBox bb;
+
 	ON_Plane tplane;
 	ON_Plane bplane;
 };
 
-class poly_point_t {
-    public:
-	mesh_point_t *mp = NULL;
-	long vect_ind = -1;
-	double u;
-	double v;
-	std::set<size_t> pedges;
-};
 
-class poly_edge_t {
-    public:
-	bool operator<(poly_edge_t other) const
-	{
-	    bool c1 = (v[0] < other.v[0]);
-	    bool c1e = (v[0] == other.v[0]);
-	    bool c2 = (v[1] < other.v[1]);
-	    return (c1 || (c1e && c2));
-	}
-
-	bool operator==(poly_edge_t other) const
-	{
-	    bool c0 = (type == other.type);
-	    if (!c0) return false;
-	    bool c1 = (v[0] == other.v[0]);
-	    bool c2 = (v[1] == other.v[1]);
-	    return (c1 && c2);
-	}
-	bool operator!=(poly_edge_t other) const
-	{
-	    bool c0 = (type == other.type);
-	    if (!c0) return true;
-	    bool c1 = (v[0] != other.v[0]);
-	    bool c2 = (v[1] != other.v[1]);
-	    return (c1 || c2);
-	}
-
-	ON_BoundingBox bbox_update();
-	ON_BoundingBox bb;
-
-	int vect_ind = -1;
-
-	int prev = -1;
-	int next = -1;
-
-	bool m_bRev3d = false;
-
-	edge_type_t type = B_UNSET;
-	polygon_t *polygon = NULL;
-	long v[2];
-	mesh_edge_t *e3d = NULL;
-	mesh_uedge_t *u3d = NULL;
-	double len = 0.0;
-	bool current = false;
-	int m_trim_index = -1;
-
-	// When performing refinement searches in 2D, we need to track the
-	// splitting status of polyedges.  The least complicated way to do
-	// that is to provide a means of tagging the edge itself.
-	int split_status = 0;
-};
+///////////////////////////////////////////////////////////////////////////////
+//
+//  Polygon container - defines 2D loops which bound faces, and is also
+//  used to define and bound subsets of triangle meshes for repair
+//  operations.
+//
+///////////////////////////////////////////////////////////////////////////////
 
 class polygon_t {
     public:
@@ -456,28 +386,16 @@ class polygon_t {
 	// triangles (as opposed to unordered edge insertions, which generate
 	// poly_edges to satisfy the existing polygon.)
 	poly_edge_t *add_ordered_edge(long p1, long p2, int trim_ind);
-
-
 	void remove_ordered_edge(poly_edge_t &pe);
 
 	// Polygons being constructed on mesh interiors for repair are built
-	// and manipulated using unordered edges as a guide - the integrity of
-	// the polygon must be maintained regardless of what the mesh edge
-	// ordering would do in "bad" mesh areas.
-	bool add_unordered_edge(mesh_uedge_t &ue);
-	bool remove_unordered_edge(mesh_uedge_t &ue);
-
-	// Create a new polygon edge
-	poly_edge_t &new_pedge()
-	{
-	    poly_edge_t npe;
-	    p_pedges_vect.push_back(npe);
-	    poly_edge_t &pe = p_pedges_vect[p_pedges_vect.size() - 1];
-	    pe.polygon = this;
-	    pe.vect_ind = p_pedges_vect.size() - 1;
-	    return pe;
-	}
-
+	// and manipulated using existing edges as a guide.  Because the polygon
+	// may need to flip these edges, the original mesh_edge_t ordering is
+	// not guaranteed to persist in the polygon.  The repair routine in the
+	// parent mesh must manage the growth of a loop to ensure its boundaries
+	// will mate properly with the broader mesh.
+	poly_edge_t *add_edge(mesh_edge_t &e);
+	bool remove_edge(mesh_edge_t &e);
 
 	// If we are representing a BRep face loop, that index is stored here
 	// and the plane of the polygon is the 2D parametric space of the
@@ -490,15 +408,30 @@ class polygon_t {
 
 
 	size_t vect_ind;
-	struct brep_cdt *cdt;
 	mesh_t *m;
 	std::unordered_map<long, long> o2p;
 	RTree<size_t, double, 2> p_edges_tree; // 2D spatial lookup for polygon edges
 	std::vector<poly_edge_t> p_pedges_vect;
 	std::vector<poly_point_t> p_pnts_vect;
+
+	poly_edge_t *get_pedge();
+	void put_pedge(poly_edge_t *pe);
+
+	// Called when a mesh_uedge_t is returned to the
+	// queue for reuse
+	void reset();
+
     private:
 	std::queue<size_t> p_pequeue; // Available (unused) entries in p_pedges_vect
 };
+
+
+///////////////////////////////////////////////////////////////////////////////
+//  
+//  Primary mesh container - holds polygon loops and triangles associated
+//  with an individual BRep face.
+//
+///////////////////////////////////////////////////////////////////////////////
 
 class mesh_t
 {
@@ -510,8 +443,10 @@ class mesh_t
 	std::vector<mesh_tri_t> m_tris_vect;
 	RTree<size_t, double, 3> tris_tree;
 
-	// Polygonal approximation of face trimming loops
-	std::vector<polygon_t> loops_vect;
+	// All polygon loops (boundary or interior) used by the face
+	std::vector<polygon_t> m_polys_vect;
+
+	// Tree of face trimming loop approximating edges
 	RTree<void *, double, 2> loops_tree;
 
 	// Identify and return the ordered edge associated with the ordered
@@ -524,41 +459,10 @@ class mesh_t
 	// exist.
 	mesh_uedge_t *uedge(mesh_edge_t &e);
 
-	// Create a new 3D triangle
-	mesh_tri_t &new_tri();
-
-	// Create a new polygon loop
-	polygon_t &add_polygon(int l_id)
-	{
-	    polygon_t npoly;
-	    npoly.vect_ind = loops_vect.size();
-	    npoly.loop_id = l_id;
-	    npoly.cdt = this->cdt;
-	    npoly.m = this;
-	    loops_vect.push_back(npoly);
-	    // TODO - add support for m_lqueue
-	    polygon_t &poly = loops_vect[loops_vect.size() - 1];
-	    return poly;
-	}
-	polygon_t &add_polygon(ON_Plane &polyp)
-	{
-	    polygon_t npoly;
-	    npoly.vect_ind = loops_vect.size();
-	    npoly.loop_id = -1;
-	    npoly.p_plane = polyp;
-	    npoly.cdt = this->cdt;
-	    npoly.m = this;
-	    loops_vect.push_back(npoly);
-	    // TODO - add support for m_lqueue
-	    polygon_t &poly = loops_vect[loops_vect.size() - 1];
-	    return poly;
-	}
-
 	// Find the closest point to a 3D point p on the surface of the BRep
 	// face associated with this mesh.  Will optionally also calculate the
 	// normal vector at that point, if sn is non-NULL.
 	bool closest_surf_pt(ON_3dVector *sn, ON_3dPoint &s3d, ON_2dPoint &s2d, ON_3dPoint *p, double tol);
-
 
 	// Analyze polygon loops for segments that are too close to other
 	// segments in their own or other loops relative to their length,
@@ -577,12 +481,27 @@ class mesh_t
 	struct brep_cdt *cdt;
 	ON_BrepFace *f;
 
-    private:
+	mesh_edge_t *get_edge();
+	void put_edge(mesh_edge_t *e);
+	mesh_tri_t *get_tri();
+	void put_tri(mesh_tri_t *t);
+	polygon_t *get_poly(int l_id);
+	polygon_t *get_poly(ON_Plane &polyp);
+	void put_poly(polygon_t *p);
 
+    private:
 	std::queue<size_t> m_equeue; // Available (unused) entries in m_edges_vect
 	std::queue<size_t> m_tqueue; // Available (unused) entries in tris_vect
-	std::queue<size_t> m_lqueue; // Available (unused) entries in loops_vect
+	std::queue<size_t> m_pqueue; // Available (unused) entries in loops_vect
 };
+
+
+///////////////////////////////////////////////////////////////////////////////
+//  
+//  Primary CDT state container - holds information about relationships
+//  between BRep faces and edge curves.
+//
+///////////////////////////////////////////////////////////////////////////////
 
 class brep_cdt_state {
     public:
@@ -600,11 +519,7 @@ class brep_cdt_state {
 	std::vector<mesh_t> b_faces_vect;
 	RTree<size_t, double, 3> b_faces_tree;
 
-	// Find mesh_uedge_t in b_uedges_vect using the points defining e.  Returns
-	// -1 if no such edge exists, else returns its b_pnts index.
 	long find_uedge(mesh_edge_t &e);
-
-	mesh_uedge_t &new_uedge();
 	void delete_uedge(mesh_uedge_t &ue);
 
 	ON_Brep *orig_brep = NULL;
@@ -618,7 +533,9 @@ class brep_cdt_state {
 	void uedges_init();
 	void faces_init();
 
-	std::queue<size_t> b_equeue; // Available (unused) entries in edges_vect
+	mesh_uedge_t *get_uedge();
+	void put_uedge(mesh_uedge_t *ue);
+    private:
 	std::queue<size_t> b_uequeue; // Available (unused) entries in uedges_vect
 };
 

@@ -32,12 +32,23 @@
 #include "./cdt.h"
 
 void
-mesh_uedge_t::clear()
+mesh_edge_t::reset()
+{
+    m = NULL;
+    vect_ind = -1;
+    v[0] = -1;
+    v[1] = -1;
+    uedge = NULL;
+    pe = NULL;
+    tri = NULL;
+}
+
+void
+mesh_uedge_t::reset()
 {
     type = B_UNSET;
     v[0] = v[1] = -1;
     e[0] = e[1] = NULL;
-    tri[0] = tri[1] = NULL;
     edge_ind = -1;
     nc = NULL;
     t_start = DBL_MAX;
@@ -54,9 +65,20 @@ mesh_uedge_t::clear()
 }
 
 void
-mesh_uedge_t::bbox_update()
+mesh_uedge_t::update()
 {
     if (type == B_SINGULAR) return;
+
+    // Before updating, remove old box (if any) from RTree
+    double p1[3];
+    p1[0] = bb.Min().x - 2*ON_ZERO_TOLERANCE;
+    p1[1] = bb.Min().y - 2*ON_ZERO_TOLERANCE;
+    p1[2] = bb.Min().z - 2*ON_ZERO_TOLERANCE;
+    double p2[3];
+    p2[0] = bb.Max().x + 2*ON_ZERO_TOLERANCE;
+    p2[1] = bb.Max().y + 2*ON_ZERO_TOLERANCE;
+    p2[2] = bb.Max().z + 2*ON_ZERO_TOLERANCE;
+    cdt->i->s.b_uedges_tree.Insert(p1, p2, vect_ind);
 
     ON_3dPoint &p3d1 = cdt->i->s.b_pnts[v[0]].p;
     ON_3dPoint &p3d2 = cdt->i->s.b_pnts[v[1]].p;
@@ -76,7 +98,7 @@ mesh_uedge_t::bbox_update()
 	bb = sc.BoundingBox();
 
 	// Be more aggressive - if we're close to a face edge, we need to know
-	double bdist = 0.5*len;
+	double bdist = 0.5*line.Length();
 	double xdist = bb.m_max.x - bb.m_min.x;
 	double ydist = bb.m_max.y - bb.m_min.y;
 	double zdist = bb.m_max.z - bb.m_min.z;
@@ -94,45 +116,8 @@ mesh_uedge_t::bbox_update()
 	}
     }
 
-    // TODO - update box in rtree
+    cdt->i->s.b_uedges_tree.Insert(p1, p2, vect_ind);
 }
-
-void
-mesh_edge_t::bbox_update()
-{
-    if (type == B_SINGULAR) return;
-
-    ON_3dPoint &p3d1 = cdt->i->s.b_pnts[v[0]].p;
-    ON_3dPoint &p3d2 = cdt->i->s.b_pnts[v[1]].p;
-    ON_Line line(p3d1, p3d2);
-    ON_3dPoint pztol(ON_ZERO_TOLERANCE, ON_ZERO_TOLERANCE, ON_ZERO_TOLERANCE);
-    bb = line.BoundingBox();
-    bb.m_max = bb.m_max + pztol;
-    bb.m_min = bb.m_min - pztol;
-
-    if (type == B_BOUNDARY) {
-	// Be more aggressive - if we're close to a face edge, we need to know
-	double bdist = 0.5*len;
-	double xdist = bb.m_max.x - bb.m_min.x;
-	double ydist = bb.m_max.y - bb.m_min.y;
-	double zdist = bb.m_max.z - bb.m_min.z;
-	if (xdist < bdist) {
-	    bb.m_min.x = bb.m_min.x - 0.5*bdist;
-	    bb.m_max.x = bb.m_max.x + 0.5*bdist;
-	}
-	if (ydist < bdist) {
-	    bb.m_min.y = bb.m_min.y - 0.5*bdist;
-	    bb.m_max.y = bb.m_max.y + 0.5*bdist;
-	}
-	if (zdist < bdist) {
-	    bb.m_min.z = bb.m_min.z - 0.5*bdist;
-	    bb.m_max.z = bb.m_max.z + 0.5*bdist;
-	}
-    }
-
-    // TODO - update box in rtree
-}
-
 
 /** @} */
 

@@ -31,6 +31,107 @@
 #include "brep/pullback.h"
 #include "./cdt.h"
 
+mesh_edge_t *
+mesh_t::get_edge()
+{
+    size_t n_ind;
+    if (m_equeue.size()) {
+	n_ind = m_equeue.front();
+	m_equeue.pop();
+    } else {
+	mesh_edge_t nedge;
+	m_edges_vect.push_back(nedge);
+	n_ind = m_edges_vect.size() - 1;
+    }
+    mesh_edge_t *ne = &(m_edges_vect[n_ind]);
+    ne->m = this;
+    ne->vect_ind = n_ind;
+    return ne;
+}
+
+void
+mesh_t::put_edge(mesh_edge_t *e)
+{
+    if (!e) return;
+    size_t n_ind = e->vect_ind;
+    e->reset();
+    m_equeue.push(n_ind);
+}
+
+mesh_tri_t *
+mesh_t::get_tri()
+{
+    size_t n_ind;
+    if (m_tqueue.size()) {
+	n_ind = m_tqueue.front();
+	m_tqueue.pop();
+    } else {
+	mesh_tri_t ntri;
+	m_tris_vect.push_back(ntri);
+	n_ind = m_tris_vect.size() - 1;
+    }
+    mesh_tri_t *nt = &(m_tris_vect[n_ind]);
+    nt->m = this;
+    nt->vect_ind = n_ind;
+    return nt;
+}
+
+void
+mesh_t::put_tri(mesh_tri_t *t)
+{
+    if (!t) return;
+    size_t n_ind = t->vect_ind;
+    t->reset();
+    m_tqueue.push(n_ind);
+}
+
+polygon_t *
+mesh_t::get_poly(int l_id = -1)
+{
+    size_t n_ind;
+    if (m_pqueue.size()) {
+	n_ind = m_pqueue.front();
+	m_pqueue.pop();
+    } else {
+	polygon_t npoly;
+	m_polys_vect.push_back(npoly);
+	n_ind = m_polys_vect.size() - 1;
+    }
+    polygon_t *np = &(m_polys_vect[n_ind]);
+    np->m = this;
+    np->vect_ind = n_ind;
+    np->loop_id = l_id;
+    return np;
+}
+
+polygon_t *
+mesh_t::get_poly(ON_Plane &polyp)
+{
+    size_t n_ind;
+    if (m_pqueue.size()) {
+	n_ind = m_pqueue.front();
+	m_pqueue.pop();
+    } else {
+	polygon_t npoly;
+	m_polys_vect.push_back(npoly);
+	n_ind = m_polys_vect.size() - 1;
+    }
+    polygon_t *np = &(m_polys_vect[n_ind]);
+    np->m = this;
+    np->vect_ind = n_ind;
+    np->loop_id = -1;
+    np->p_plane = polyp;
+    return np;
+}
+void
+mesh_t::put_poly(polygon_t *p)
+{
+    if (!p) return;
+    size_t n_ind = p->vect_ind;
+    p->reset();
+    m_pqueue.push(n_ind);
+}
+
 
 void
 mesh_t::bbox_insert()
@@ -76,12 +177,9 @@ mesh_t::edge(poly_edge_t &pe)
 
     // Assign ordered 3D points
     ne = &(m_edges_vect[n_ind]);
-    ne->type = pe.type;
     ne->v[0] = (pe.m_bRev3d) ? pe.polygon->p_pnts_vect[pe.v[1]].mp->vect_ind : pe.polygon->p_pnts_vect[pe.v[0]].mp->vect_ind;
     ne->v[1] = (pe.m_bRev3d) ? pe.polygon->p_pnts_vect[pe.v[0]].mp->vect_ind : pe.polygon->p_pnts_vect[pe.v[1]].mp->vect_ind;
     ne->m = this;
-    ne->bbox_update();
-    ne->cdt = pe.polygon->cdt;
     ne->m = pe.polygon->m;
     ne->pe = &pe.polygon->p_pedges_vect[pe.vect_ind];
 
@@ -89,16 +187,19 @@ mesh_t::edge(poly_edge_t &pe)
     pe.e3d = &m_edges_vect[ne->vect_ind];
 
     // Find the unordered edge that has both vertices matching this edge
-    std::set<size_t>::iterator ue_it;
-    for (ue_it = ne->cdt->i->s.b_pnts[ne->v[0]].uedges.begin(); ue_it != ne->cdt->i->s.b_pnts[ne->v[0]].uedges.end(); ue_it++) {
-	mesh_uedge_t &ue = ne->cdt->i->s.b_uedges_vect[*ue_it];
-	if ((ue.v[0] == ne->v[0] || ue.v[0] == ne->v[1]) && (ue.v[1] == ne->v[0] || ue.v[1] == ne->v[1])) {
-	    ne->uedge = &(ne->cdt->i->s.b_uedges_vect[*ue_it]);
-	    if (ue.e[0]) {
-		ue.e[1] = ne;
+    std::set<mesh_uedge_t *>::iterator ue_it;
+    for (ue_it = ne->m->cdt->i->s.b_pnts[ne->v[0]].uedges.begin(); ue_it != ne->m->cdt->i->s.b_pnts[ne->v[0]].uedges.end(); ue_it++) {
+	mesh_uedge_t *ue = *ue_it;
+	if ((ue->v[0] == ne->v[0] || ue->v[0] == ne->v[1]) && (ue->v[1] == ne->v[0] || ue->v[1] == ne->v[1])) {
+	    ne->uedge = ue;
+	    // TODO - do we need to do this type assignment?
+	    ne->uedge->type = pe.type;
+	    if (ue->e[0]) {
+		ue->e[1] = ne;
 	    } else {
-		ue.e[0] = ne;
+		ue->e[0] = ne;
 	    }
+	    ne->uedge->update();
 	    break;
 	}
     }
@@ -110,8 +211,6 @@ mesh_t::edge(poly_edge_t &pe)
 mesh_uedge_t *
 mesh_t::uedge(mesh_edge_t &e)
 {
-    if (e.type == B_SINGULAR) return NULL;
-
     mesh_uedge_t *ue = e.uedge;
 
     if (!ue) {
@@ -125,16 +224,7 @@ mesh_t::uedge(mesh_edge_t &e)
     // IFF we've got nothing post search put in a new uedge - else, we're just
     // making the data connections to the existing uedge.
     if (!ue) {
-	if (cdt->i->s.b_uequeue.size()) {
-	    size_t n_ind = cdt->i->s.b_uequeue.front();
-	    ue = &(cdt->i->s.b_uedges_vect[n_ind]);
-	    cdt->i->s.b_uequeue.pop();
-	} else {
-	    mesh_uedge_t nedge;
-	    nedge.vect_ind = cdt->i->s.b_uedges_vect.size();
-	    cdt->i->s.b_uedges_vect.push_back(nedge);
-	    ue = &(cdt->i->s.b_uedges_vect[nedge.vect_ind]);
-	}
+	ue = cdt->i->s.get_uedge();
     }
 
     // Shouldn't happen...

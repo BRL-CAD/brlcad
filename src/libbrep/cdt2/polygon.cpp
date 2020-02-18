@@ -31,6 +31,34 @@
 #include "brep/pullback.h"
 #include "./cdt.h"
 
+
+void
+poly_edge_t::reset()
+{
+    polygon = NULL;
+    vect_ind = -1;
+    v[0] = -1;
+    v[1] = -1;
+    e3d = NULL;
+    type = B_UNSET;
+    m_trim_index = -1;
+    m_bRev3d = false;
+    split_status = 0;
+}
+
+void
+polygon_t::reset()
+{
+    loop_id = -1;
+    vect_ind = -1;
+    m = NULL;
+    o2p.clear();
+    p_edges_tree.RemoveAll();
+    p_pedges_vect.clear();
+    p_pnts_vect.clear();
+    while (!p_pequeue.empty()) p_pequeue.pop();
+}
+
 long
 polygon_t::add_point(mesh_point_t *meshp)
 {
@@ -100,6 +128,33 @@ polygon_t::add_point(mesh_point_t *meshp, ON_2dPoint &p2d)
 }
 
 poly_edge_t *
+polygon_t::get_pedge()
+{
+    size_t n_ind;
+    if (p_pequeue.size()) {
+	n_ind = p_pequeue.front();
+	p_pequeue.pop();
+    } else {
+	poly_edge_t nedge;
+	p_pedges_vect.push_back(nedge);
+	n_ind = p_pedges_vect.size() - 1;
+    }
+    poly_edge_t *npe = &(p_pedges_vect[n_ind]);
+    npe->polygon = this;
+    npe->vect_ind = n_ind;
+    return npe;
+}
+
+void
+polygon_t::put_pedge(poly_edge_t *pe)
+{
+    if (!pe) return;
+    size_t n_ind = pe->vect_ind;
+    pe->reset();
+    p_pequeue.push(n_ind);
+}
+
+poly_edge_t *
 polygon_t::add_ordered_edge(long p1, long p2, int trim_ind = -1)
 {
     if (p1 < 0 || p2 < 0) return NULL;
@@ -137,63 +192,62 @@ polygon_t::add_ordered_edge(long p1, long p2, int trim_ind = -1)
 	}
     }
 
-    poly_edge_t pe;
-    pe.v[0] = p1;
-    pe.v[1] = p2;
-    pe.polygon = this;
-    pe.vect_ind = p_pedges_vect.size();
+
+
+    poly_edge_t *pe = get_pedge();
+    pe->v[0] = p1;
+    pe->v[1] = p2;
 
     // Determine edge type
     if (trim_ind != -1) {
-	pe.m_trim_index = trim_ind;
-	pe.type = B_BOUNDARY;
+	pe->m_trim_index = trim_ind;
+	pe->type = B_BOUNDARY;
     }
-    if (pe.type == B_BOUNDARY && (pp1.mp->singular || pp2.mp->singular)) {
-	pe.type = B_SINGULAR;
+    if (pe->type == B_BOUNDARY && (pp1.mp->singular || pp2.mp->singular)) {
+	pe->type = B_SINGULAR;
     }
 
     // Update connectivity
     if (prev != -1) {
-	p_pedges_vect[prev].next = pe.vect_ind;
+	p_pedges_vect[prev].next = pe->vect_ind;
     }
-    pe.prev = prev;
+    pe->prev = prev;
 
     if (next != -1) {
-	p_pedges_vect[next].prev = pe.vect_ind;
+	p_pedges_vect[next].prev = pe->vect_ind;
     }
-    pe.next = next;
+    pe->next = next;
 
-    pp1.pedges.insert(pe.vect_ind);
-    pp2.pedges.insert(pe.vect_ind);
-
-    // Add new edge to data containers
-    p_pedges_vect.push_back(pe);
+    pp1.pedges.insert(pe->vect_ind);
+    pp2.pedges.insert(pe->vect_ind);
 
     // IFF the edge is not degenerate (which can happen if we're initializing
-    // closed loops) add it to the RTrees
+    // closed loops) add it to the RTrees.  Note that singularity edges are
+    // not necessarily degenerate in 2D - degenerate in this case refers
+    // specifically to an edge whose start and end indices are the same.
     if (p1 != p2) {
 	ON_Line line(ON_2dPoint(pp1.u, pp1.v), ON_2dPoint(pp2.u, pp2.v));
-	pe.bb = line.BoundingBox();
-	pe.bb.m_max.x = pe.bb.m_max.x + ON_ZERO_TOLERANCE;
-	pe.bb.m_max.y = pe.bb.m_max.y + ON_ZERO_TOLERANCE;
-	pe.bb.m_min.x = pe.bb.m_min.x - ON_ZERO_TOLERANCE;
-	pe.bb.m_min.y = pe.bb.m_min.y - ON_ZERO_TOLERANCE;
+	pe->bb = line.BoundingBox();
+	pe->bb.m_max.x = pe->bb.m_max.x + ON_ZERO_TOLERANCE;
+	pe->bb.m_max.y = pe->bb.m_max.y + ON_ZERO_TOLERANCE;
+	pe->bb.m_min.x = pe->bb.m_min.x - ON_ZERO_TOLERANCE;
+	pe->bb.m_min.y = pe->bb.m_min.y - ON_ZERO_TOLERANCE;
 	double bp1[2];
-	bp1[0] = pe.bb.Min().x;
-	bp1[1] = pe.bb.Min().y;
+	bp1[0] = pe->bb.Min().x;
+	bp1[1] = pe->bb.Min().y;
 	double bp2[2];
-	bp2[0] = pe.bb.Max().x;
-	bp2[1] = pe.bb.Max().y;
-	p_edges_tree.Insert(bp1, bp2, pe.vect_ind);
+	bp2[0] = pe->bb.Max().x;
+	bp2[1] = pe->bb.Max().y;
+	p_edges_tree.Insert(bp1, bp2, pe->vect_ind);
 
 	// The parent mesh keeps track of all boundary 2D polyedges present for higher
 	// level processing as well.
-	if (pe.type == B_BOUNDARY || pe.type == B_SINGULAR) {
-	    m->loops_tree.Insert(bp1, bp2, (void *)(&p_pedges_vect[pe.vect_ind]));
+	if (pe->type == B_BOUNDARY || pe->type == B_SINGULAR) {
+	    m->loops_tree.Insert(bp1, bp2, (void *)(&p_pedges_vect[pe->vect_ind]));
 	}
     }
 
-    return &p_pedges_vect[pe.vect_ind];
+    return pe;
 }
 
 void
@@ -232,8 +286,11 @@ polygon_t::remove_ordered_edge(poly_edge_t &pe)
 	}
     }
 
-    // IFF the edge is not degenerate remove it from the RTree.  (If it is
+    // IFF the edge is not degenerate remove it from the RTrees.  (If it is
     // degenerate it should never have been inserted.)
+    // Note that singularity edges are not necessarily degenerate in 2D -
+    // degenerate in this case refers specifically to an edge whose start and
+    // end indices are the same.
     if (pe.v[0] != pe.v[1]) {
 	poly_point_t &pp1 = p_pnts_vect[pe.v[0]];
 	poly_point_t &pp2 = p_pnts_vect[pe.v[1]];
