@@ -7864,6 +7864,7 @@ mged_param(Tcl_Interp *interp, int argc, fastf_t *argvect)
 		inpara = 0;
 		return TCL_ERROR;
 	    }
+	}
     } else if (PARAM_2ARG) {
 	if (inpara != 2) {
 	    Tcl_AppendResult(interp, "ERROR: two arguments needed\n", (char *)NULL);
