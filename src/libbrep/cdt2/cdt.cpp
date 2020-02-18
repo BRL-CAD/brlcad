@@ -311,9 +311,14 @@ brep_cdt_state::faces_init()
 	mesh_t m_new;
 	b_faces_vect.push_back(m_new);
 	mesh_t &m = b_faces_vect[b_faces_vect.size() - 1];
+	if (a_faces.size() && a_faces.find(index) == a_faces.end()) {
+	    // If we're not processing this face, go no further
+	    continue;
+	}
 	m.cdt = cdt;
 	m.f = brep->Face(index);
 	m.bb = m.f->BoundingBox();
+	m.vect_ind = b_faces_vect.size() - 1;
 	for (int li = 0; li < brep->m_L.Count(); li++) {
 	    const ON_BrepLoop *loop = m.f->Loop(li);
 	    polygon_t *l = m.get_poly(li);
@@ -353,7 +358,19 @@ brep_cdt_state::faces_init()
 	    }
 	}
 
-	m.bbox_insert();
+	// Insert face bounding box into the faces RTree - unlike more active
+	// trees this is a one time operation.  The face bbox is based on the
+	// BRep bounding box and does not change as a consequence of subsequent
+	// processing.
+	double p1[3];
+	p1[0] = m.bb.Min().x;
+	p1[1] = m.bb.Min().y;
+	p1[2] = m.bb.Min().z;
+	double p2[3];
+	p2[0] = m.bb.Max().x;
+	p2[1] = m.bb.Max().y;
+	p2[2] = m.bb.Max().z;
+	m.cdt->i->s.b_faces_tree.Insert(p1, p2, (size_t)m.f->m_face_index);
     }
 }
 
@@ -399,7 +416,7 @@ brep_cdt_destroy(struct brep_cdt *s)
 // TODO - need a flag variable to enable various modes (watertightness,
 // validity, overlap resolving - no need for separate functions for all that...)
 int
-brep_cdt_triangulate(struct brep_cdt *s_cdt, int UNUSED(face_cnt), int *UNUSED(faces))
+brep_cdt_triangulate(struct brep_cdt *s_cdt, int face_cnt, int *faces)
 {
     if (!s_cdt) return -1;
 
@@ -421,6 +438,12 @@ brep_cdt_triangulate(struct brep_cdt *s_cdt, int UNUSED(face_cnt), int *UNUSED(f
 	if (edge.TrimCount() != 2) {
 	    bu_vls_printf(s_cdt->msgs, "Edge %d trim count: %d - can't (yet) do watertight meshing\n", edge.m_edge_index, edge.TrimCount());
 	    return -1;
+	}
+    }
+
+    if (face_cnt) {
+	for (int i = 0; i < face_cnt; i++) {
+	    s_cdt->i->s.a_faces.insert(faces[i]);
 	}
     }
 

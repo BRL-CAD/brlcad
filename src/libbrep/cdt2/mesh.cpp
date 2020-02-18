@@ -132,24 +132,6 @@ mesh_t::put_poly(polygon_t *p)
     m_pqueue.push(n_ind);
 }
 
-
-void
-mesh_t::bbox_insert()
-{
-    // Insert vert into RTree - unlike more active trees this is a one time
-    // operation since the face bbox does not change.  Consequently, we don't
-    // have to remove a stale bbox from the tree.
-    double p1[3];
-    p1[0] = bb.Min().x;
-    p1[1] = bb.Min().y;
-    p1[2] = bb.Min().z;
-    double p2[3];
-    p2[0] = bb.Max().x;
-    p2[1] = bb.Max().y;
-    p2[2] = bb.Max().z;
-    cdt->i->s.b_faces_tree.Insert(p1, p2, (size_t)f->m_face_index);
-}
-
 mesh_edge_t *
 mesh_t::edge(poly_edge_t &pe)
 {

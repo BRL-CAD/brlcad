@@ -362,19 +362,47 @@ class mesh_tri_t {
 	// associated edges.
 	void update();
 
-	ON_3dPoint &center();
-	ON_3dVector &bnorm();
-	ON_3dVector &tnorm();
+	// 3D center point of triangle
+	const ON_3dPoint &center();
 
+	// Normal vector defined by the triangle
+	const ON_3dVector &tnorm();
+
+	// Triangle normal according to the average of the local BRep surface
+	// point normals at the points used by the triangle.  This value is
+	// important, because it allows for the evaluation of the correctness
+	// of the triangle's direction
+	const ON_3dVector &bnorm();
+
+	// The b_pnts indices of the three triangle points, in order
+	// TODO - which handedness are we using?
 	long v[3] = {-1, -1, -1};
+
+	// The three associated 3D oriented edges of the triangle:
+	//
+	// e[0] = v[0]->v[1]
+	// e[1] = v[1]->v[2]
+	// e[2] = v[2]->v[0]
 	mesh_edge_t *e[3] = {NULL, NULL, NULL};
-	long vect_ind = -1;
+
+	// Mesh in which this triangle is defined.  All triangles will have an
+	// associated mesh
 	mesh_t *m = NULL;
 
+	// Index of this triangle in m_tris_vect
+	long vect_ind = -1;
+
+	// 3D bounding box containing this triangle.  It is this box that is
+	// used to add this triangle the mesh's tris_tree holding all triangles
+	// associated with a particular face.
 	ON_BoundingBox bb;
 
-	mesh_tri_t& operator=(const mesh_tri_t &other) = default;
+	// Called when a mesh_tri_t is returned to the
+	// queue for reuse
+	void reset() {};
 
+	// Comparison operators to more easily detect duplicate triangles
+	mesh_tri_t& operator=(const mesh_tri_t &other) = default;
 	bool operator==(mesh_tri_t other) const
 	{
 	    if (m != other.m) {
@@ -395,13 +423,7 @@ class mesh_tri_t {
 	    bool c3 = ((v[2] != other.v[0]) && (v[2] != other.v[1]) && (v[2] != other.v[2]));
 	    return (c1 || c2 || c3);
 	}
-
-	// Called when a mesh_tri_t is returned to the
-	// queue for reuse
-	void reset() {};
-
     private:
-
 	ON_Plane tplane;
 	ON_Plane bplane;
 };
@@ -501,6 +523,31 @@ class polygon_t {
 class mesh_t
 {
     public:
+
+	// Analyze polygon loops for segments that are too close to other
+	// segments in their own or other loops relative to their length,
+	// and refine them.
+	bool split_close_edges();
+
+	// Find the closest point to a 3D point p on the surface of the BRep
+	// face associated with this mesh.  Will optionally also calculate the
+	// normal vector at that point, if sn is non-NULL.
+	bool closest_surf_pt(ON_3dVector *sn, ON_3dPoint &s3d, ON_2dPoint &s2d, ON_3dPoint *p, double tol);
+
+	// Identify and return the ordered edge associated with the ordered
+	// pedge, or create such an ordered edge if one does not already
+	// exist.
+	mesh_edge_t *edge(poly_edge_t &pe);
+
+	// Identify and return the unordered edge associated with the ordered
+	// edge, or create such an unordered edge if one does not already
+	// exist.
+	mesh_uedge_t *uedge(mesh_edge_t &e);
+
+	void delete_edge(mesh_edge_t &e);
+	void delete_tri(mesh_tri_t &t);
+
+
 	// Primary containers for face edges
 	std::vector<mesh_edge_t> m_edges_vect;
 
@@ -514,38 +561,29 @@ class mesh_t
 	// Tree of face trimming loop approximating edges
 	RTree<void *, double, 2> loops_tree;
 
-	// Identify and return the ordered edge associated with the ordered
-	// pedge, or create such an ordered edge if one does not already
-	// exist.
-	mesh_edge_t *edge(poly_edge_t &pe);
-
-	// Identify and return the unordered edge associated with the ordered
-	// edge, or create such an unordered edge if one does not already
-	// exist.
-	mesh_uedge_t *uedge(mesh_edge_t &e);
-
-	// Find the closest point to a 3D point p on the surface of the BRep
-	// face associated with this mesh.  Will optionally also calculate the
-	// normal vector at that point, if sn is non-NULL.
-	bool closest_surf_pt(ON_3dVector *sn, ON_3dPoint &s3d, ON_2dPoint &s2d, ON_3dPoint *p, double tol);
-
-	// Analyze polygon loops for segments that are too close to other
-	// segments in their own or other loops relative to their length,
-	// and refine them.
-	bool split_close_edges();
-
+	// Identify which of the m_polys_vect polygons holds the approximation
+	// of the outer BRep face loop
 	size_t outer_loop;
 
-	void delete_edge(mesh_edge_t &e);
-	void delete_tri(mesh_tri_t &t);
+	// Face index in the parent cdt brep_faces_vect array.  Usually this
+	// will match the m_face_index, but is defined here to match the convention
+	// exhibited by other parts of the mesh code.
+	size_t vect_ind;
 
-
+	// Overall bounding box of the face, based on the BRep face bounding
+	// box (which should be as large or larger than the mesh bounding
+	// boxes.
 	ON_BoundingBox bb;
-	void bbox_insert();
 
+	// Overall CDT state associated with this mesh
 	struct brep_cdt *cdt;
+
+	// The BRep face associated with the mesh.  The ON_BrepFace also holds
+	// the face index and ON_Surface pointer.
 	ON_BrepFace *f;
 
+	// Routines for managing the reuse of edge, triangle and polygon containers
+	// during the refinement process
 	mesh_edge_t *get_edge();
 	void put_edge(mesh_edge_t *e);
 	mesh_tri_t *get_tri();
@@ -587,21 +625,40 @@ class brep_cdt_state {
 	long find_uedge(mesh_edge_t &e);
 	void delete_uedge(mesh_uedge_t &ue);
 
+	// The original ON_Brep pointer supplied by
+	// the caller
 	ON_Brep *orig_brep = NULL;
+	// The "working" ON_Brep copy that will be altered as needed for
+	// meshing purposes
 	ON_Brep *brep = NULL;
 
+	// The BRL-CAD object name of the source BRep
 	std::string name;
+
+	// Pointer to the overall brep_cdt container (brep_cdt_state holds
+	// the working information, but it is the cdt pointer that is passed
+	// down to other data structures).
 	struct brep_cdt *cdt;
 
+	// Active faces to triangulate (empty set defaults to all)
+	std::set<size_t> a_faces; 
+
+	// Initialization routines.  Ordering is important - probably what
+	// we'll eventually do is just call all these from a constructor and
+	// make them private so the caller doesn't need to know about the
+	// ordering issues...
 	void brep_cpy_init();
 	void verts_init();
 	void uedges_init();
 	void faces_init();
 
+	// Routines for managing the reuse of unordered edges, which are global to
+	// the overall BRep object (i.e. they may, but are not guaranteed to, connect
+	// triangles from different BRep faces).
 	mesh_uedge_t *get_uedge();
 	void put_uedge(mesh_uedge_t *ue);
     private:
-	std::queue<size_t> b_uequeue; // Available (unused) entries in uedges_vect
+	std::queue<size_t> b_uequeue; // Available (unused) entries in b_uedges_vect
 };
 
 struct brep_cdt_impl {
