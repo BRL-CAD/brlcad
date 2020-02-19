@@ -151,7 +151,7 @@ ON_TrimCurve_GetClosestPoint(
 	const ON_Interval *sub_domain = NULL
 	);
 
-bool
+extern BREP_EXPORT bool
 ON_NurbsCurve_ClosestPointToLineSegment(
 	double *dist,
 	double *t,
