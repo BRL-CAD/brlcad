@@ -418,7 +418,7 @@ _brep_cmd_brep(void *bs, int argc, const char **argv)
 {
     const char *usage_string = "brep [options] <objname> brep [opts] [output_name]";
     const char *purpose_string = "generate a BRep representation of the specified object";
-    // TODO - this needs a more elabroate help - it has actual options per bu_opt_desc...
+    // TODO - this needs a better help output - it has actual options per bu_opt_desc...
     if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
     }
@@ -1026,6 +1026,65 @@ _brep_cmd_shrink_surfaces(void *bs, int argc, const char **argv)
 }
 
 extern "C" int
+_brep_cmd_split(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> split [-t #] [output_name]";
+    const char *purpose_string = "weld BRep object into a set of plate mode BRep objects";
+    if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+
+    if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
+	return GED_ERROR;
+    }
+    if (!rt_brep_valid(NULL, &gb->intern, 0)) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not valid\n", gb->solid_name.c_str());
+	return GED_ERROR;
+    }
+    if (rt_brep_plate_mode(&gb->intern)) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is already a plate mode brep\n", gb->solid_name.c_str());
+	return GED_ERROR;
+    }
+
+    argc--; argv++;
+
+    double thickness = 0.0;
+    struct bu_vls ocomb = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&ocomb, "%s.plates", gb->solid_name.c_str());
+
+    struct bu_opt_desc d[2];
+    BU_OPT(d[0], "t", "thickness", "#", &bu_opt_fastf_t, &thickness , "default plate mode thickness");
+    BU_OPT_NULL(d[1]);
+    bu_opt_parse(NULL, argc, argv, d);
+
+    // If we have anything left, it should be a proposed new toplevel name
+    if (argc) {
+	bu_vls_sprintf(&ocomb, "%s", argv[0]);
+    }
+
+    struct ged *gedp = gb->gedp;
+    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&ocomb), LOOKUP_QUIET) != RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, ": %s already exists.", bu_vls_addr(&ocomb));
+	return GED_ERROR;
+    }
+
+    ON_Brep *orig_brep = ((struct rt_brep_internal *)gb->intern.idb_ptr)->brep;
+    ON_Brep *brep = new ON_Brep();
+
+    // Vertices are the same
+    for (int i = 0; i < brep->m_T.Count(); i++) {
+	brep->NewVertex(orig_brep->m_V[i], 0.0);
+    }
+
+    int ret = mk_brep(gedp->ged_wdbp, bu_vls_addr(&ocomb), brep);
+
+    return ret;
+}
+
+extern "C" int
 _brep_cmd_tikz(void *bs, int argc, const char **argv)
 {
     const char *usage_string = "brep [options] <objname> tikz <outfile>";
@@ -1075,6 +1134,28 @@ _brep_cmd_valid(void *bs, int argc, const char **argv)
     argc--; argv++;
 
     return brep_valid(gedp->ged_result_str, &gb->intern, argc, argv);
+}
+
+extern "C" int
+_brep_cmd_weld(void *bs, int argc, const char **argv)
+{
+    const char *usage_string = "brep [options] <objname> weld <output> [obj1 obj2 ...]";
+    const char *purpose_string = "weld BRep plate mode objects into a solid object.";
+    if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
+	return GED_OK;
+    }
+
+    struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+
+    if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
+	return GED_ERROR;
+    }
+
+    argc--; argv++;
+
+    bu_vls_printf(gb->gedp->ged_result_str, "UNIMPLEMENTED\n");
+    return GED_ERROR;
 }
 
 extern "C" int
@@ -1134,9 +1215,11 @@ const struct bu_cmdtab _brep_cmds[] = {
     { "plot",            _brep_cmd_plot},
     { "selection",       _brep_cmd_selection},
     { "solid",           _brep_cmd_solid},
+    { "split",           _brep_cmd_split},
     { "shrink_surfaces", _brep_cmd_shrink_surfaces},
     { "tikz",            _brep_cmd_tikz},
     { "valid",           _brep_cmd_valid},
+    { "weld",            _brep_cmd_weld},
     { (char *)NULL,      NULL}
 };
 
