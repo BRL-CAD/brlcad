@@ -5,9 +5,9 @@
 
 int bg_isect_aabb_ray(fastf_t *r_min, fastf_t *r_max,
         point_t opt,
-        register const fastf_t *invdir, /* inverses of dir[] */
-        register const fastf_t *aabb_min,
-        register const fastf_t *aabb_max)
+        const fastf_t *invdir, /* inverses of dir[] */
+        const fastf_t *aabb_min,
+        const fastf_t *aabb_max)
 {
     register const fastf_t *pt = &opt[0];
     register fastf_t sv;
