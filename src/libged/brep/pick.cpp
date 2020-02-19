@@ -170,7 +170,7 @@ _brep_cmd_edge_pick(void *bs, int argc, const char **argv)
 	ON_NurbsCurve nc;
 	curve->GetNurbForm(nc);
 	double ndist = 0.0;
-	if (ON_NurbsCurve_ClosestPointToLineSegment(&ndist, NULL, &nc, l, brep_bb.Diagonal().Length())) {
+	if (ON_NurbsCurve_ClosestPointToLineSegment(&ndist, NULL, &nc, l, brep_bb.Diagonal().Length()), 0.0, NULL) {
 	    if (ndist < dmin) {
 		dmin = ndist;
 		cedge = *a_it;

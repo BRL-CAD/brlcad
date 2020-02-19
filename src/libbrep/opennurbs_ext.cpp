@@ -38,6 +38,7 @@
 #include "brep/curvetree.h"
 #include "brep/surfacetree.h"
 #include "brep/ray.h"
+#include "brep/pullback.h"
 #include "brep/cdt.h" // for ON_Brep_Report_Faces - should go away
 #include "bg/tri_ray.h" // for ON_Brep_Report_Faces - should go away
 #include "bg/lseg.h"
@@ -343,8 +344,8 @@ ON_NurbsCurve_ClosestPointToLineSegment(
 	double *t,
 	const ON_NurbsCurve *nc,
 	const ON_Line &l,
-	double maximum_distance = 0.0,
-	const ON_Interval *sub_domain = NULL
+	double maximum_distance,
+	const ON_Interval *sub_domain
 	)
 {
     if (!nc) return false;
@@ -378,7 +379,7 @@ ON_NurbsCurve_ClosestPointToLineSegment(
 		return false;
 	    }
 	    (*t) = nt;
-	} else {	   
+	} else {
 	    ndist = bg_lseg_lseg_dist(NULL, NULL, C0, C1, L0, L1);
 	}
 	if (dist) {
@@ -515,8 +516,8 @@ ON_TrimCurve_GetClosestPoint(
 	double *t,
 	const ON_BrepTrim *trim,
 	const ON_3dPoint &p,
-	double maximum_distance = 0.0,
-	const ON_Interval *sub_domain = NULL
+	double maximum_distance,
+	const ON_Interval *sub_domain
 	)
 {
     ON_3dPoint trim_2d;
