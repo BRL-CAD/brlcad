@@ -991,6 +991,12 @@ brep_platemode_thickness(const struct xray& ray, const brep_hit& hit, const stru
     VJOIN1(hp, ray.r_pt, hit.dist + los, ray.r_dir);
     ON_3dPoint los_pnt(V3ARGS(hp));
 
+    /* FIXME: default behavior matches what BoT does, but results in
+     * undesirable los values on high obliquity angles.
+     */
+
+#ifdef WORK_IN_PROGRESS
+
     /* try to make sure we don't extend more than plate-mode thickness
      * beyond the surface by calculating the proposed exit point's
      * distance to the surface.
@@ -1020,6 +1026,9 @@ brep_platemode_thickness(const struct xray& ray, const brep_hit& hit, const stru
 	p = surf->PointAt(uvpt[0], uvpt[1]);
 	dist_to_surf = p.DistanceTo(los_pnt);
     }
+
+#endif
+
 
     return los;
 }
