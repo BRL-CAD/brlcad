@@ -25,7 +25,18 @@ add_dependencies(list_elements step-express-${SCHEMA_NAME}-list_elements)
 set_property(TARGET list_elements APPEND PROPERTY INCLUDE_DIRECTORIES "${list_elements_SCHEMA_OUT_DIR}")
 
 if(MSVC)
-  set_target_properties(list_elements PROPERTIES COMPILE_DEFINITIONS "${gstep_IMPORTS}")
+  set(list_elements_IMPORTS
+    BU_DLL_IMPORTS
+    BN_DLL_IMPORTS
+    RT_DLL_IMPORTS
+    WDB_DLL_IMPORTS
+    SC_CORE_DLL_IMPORTS
+    SC_DAI_DLL_IMPORTS
+    SC_EDITOR_DLL_IMPORTS
+    SC_UTILS_DLL_IMPORTS
+    )
+  list(APPEND list_elements_IMPORTS ${list_elements_IMPORTS})
+  set_target_properties(list_elements PROPERTIES COMPILE_DEFINITIONS "${list_elements_IMPORTS}")
 endif(MSVC)
 
 CMAKEFILES(CMakeLists.txt)
