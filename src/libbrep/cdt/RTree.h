@@ -1661,7 +1661,7 @@ size_t RTREE_QUAL::Overlaps(RTree &other, std::set<std::pair<DataType, DataType>
 
 
 RTREE_TEMPLATE
-size_t RTREE_QUAL::IsectNode(Node *a_node, RTREE_QUAL::Ray *a_ray, std::set<DataType> *result)
+size_t RTREE_QUAL::IsectNode(Node *a_node, Ray *a_ray, std::set<DataType> *result)
 {
     size_t ocnt = 0;
     for (int index = 0; index < a_node->m_count; ++index) {
@@ -1679,7 +1679,7 @@ size_t RTREE_QUAL::IsectNode(Node *a_node, RTREE_QUAL::Ray *a_ray, std::set<Data
 
 // Loosely based on the idea from the openNURBS code to search two R-trees for all pairs elements whose bounding boxes overlap.
 RTREE_TEMPLATE
-size_t RTREE_QUAL::Intersects(RTREE_QUAL::Ray *a_ray, std::set<DataType> *result)
+size_t RTREE_QUAL::Intersects(Ray *a_ray, std::set<DataType> *result)
 {
     if (!m_root) return 0;
     size_t ovlp_cnt = IsectNode(m_root, a_ray, result);
