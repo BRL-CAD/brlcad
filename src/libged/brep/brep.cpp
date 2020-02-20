@@ -1029,7 +1029,7 @@ extern "C" int
 _brep_cmd_split(void *bs, int argc, const char **argv)
 {
     const char *usage_string = "brep [options] <objname> split [-t #] [-O] [-o output_name] [face_indices]";
-    const char *purpose_string = "weld BRep object into a set of plate mode BRep objects";
+    const char *purpose_string = "convert BRep object into a set of plate mode BRep objects";
     if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
     }
