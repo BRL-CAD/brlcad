@@ -100,6 +100,8 @@ set(cmake_ignore_files
   )
 CMAKEFILES(${cmake_ignore_files})
 
+CMAKEFILES(NOTES)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake
