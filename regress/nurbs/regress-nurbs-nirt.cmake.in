@@ -2,6 +2,9 @@ set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
 set(CSDIR "@CMAKE_CURRENT_SOURCE_DIR@")
 set(DDIR "@DATA_DIR@")
 
+# TODO - need to investigate if generator expressions might be used
+# to fully replace this mechanism:
+# https://cmake.org/cmake/help/latest/manual/cmake-generator-expressions.7.html
 set(SBDIR "@CMAKE_RUNTIME_OUTPUT_DIRECTORY@")
 set(DBDIR "@CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG@")
 set(RBDIR "@CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE@")
