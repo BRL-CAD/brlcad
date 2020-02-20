@@ -209,23 +209,33 @@ set(regress_outfiles
   dsp-2-1.dsp
   dsp-2-1.g
   dsp-2-1.log
+  dsp-2-1.pix
+  dsp-2-1.rt.pix
   dsp-2-2.bw
   dsp-2-2.dsp
   dsp-2-2.g
   dsp-2-2.log
+  dsp-2-2.pix
+  dsp-2-2.rt.pix
   dsp-2-3.bw
   dsp-2-3.dsp
   dsp-2-3.g
   dsp-2-3.log
+  dsp-2-3.pix
+  dsp-2-3.rt.pix
   dsp-2-4.bw
   dsp-2-4.dsp
   dsp-2-4.g
   dsp-2-4.log
+  dsp-2-4.pix
+  dsp-2-4.rt.pix
   dsp-2-5.bw
   dsp-2-5.dsp
   dsp-2-5.g
   dsp-2-5.log
-  dsp-log
+  dsp-2-5.pix
+  dsp-2-5.rt.pix
+  dsp.log
   gqa.adj_air.plot3
   gqa.exp_air.plot3
   gqa.g
