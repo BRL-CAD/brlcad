@@ -205,27 +205,27 @@ set(regress_outfiles
   comgeom.t-v4.g
   comgeom.t-v5.g
   density_table.txt
-  dsp.2-1.bw
-  dsp.2-1.dsp
-  dsp.2-1.g
-  dsp.2-1.log
-  dsp.2-2.bw
-  dsp.2-2.dsp
-  dsp.2-2.g
-  dsp.2-2.log
-  dsp.2-3.bw
-  dsp.2-3.dsp
-  dsp.2-3.g
-  dsp.2-3.log
-  dsp.2-4.bw
-  dsp.2-4.dsp
-  dsp.2-4.g
-  dsp.2-4.log
-  dsp.2-5.bw
-  dsp.2-5.dsp
-  dsp.2-5.g
-  dsp.2-5.log
-  dsp.log
+  dsp-2-1.bw
+  dsp-2-1.dsp
+  dsp-2-1.g
+  dsp-2-1.log
+  dsp-2-2.bw
+  dsp-2-2.dsp
+  dsp-2-2.g
+  dsp-2-2.log
+  dsp-2-3.bw
+  dsp-2-3.dsp
+  dsp-2-3.g
+  dsp-2-3.log
+  dsp-2-4.bw
+  dsp-2-4.dsp
+  dsp-2-4.g
+  dsp-2-4.log
+  dsp-2-5.bw
+  dsp-2-5.dsp
+  dsp-2-5.g
+  dsp-2-5.log
+  dsp-log
   gqa.adj_air.plot3
   gqa.exp_air.plot3
   gqa.g
