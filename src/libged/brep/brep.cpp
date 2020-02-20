@@ -448,9 +448,9 @@ _brep_cmd_brep(void *bs, int argc, const char **argv)
     if (no_evaluation && gb->intern.idb_type == ID_COMBINATION) {
 	struct bu_vls bname_suffix;
 	bu_vls_init(&bname_suffix);
-	bu_vls_sprintf(&bname_suffix, "%s%s", gb->solid_name.c_str(), bu_vls_addr(&suffix));
-	if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&bname_suffix), LOOKUP_QUIET) != RT_DIR_NULL) {
-	    bu_vls_printf(gedp->ged_result_str, "%s already exists.", bu_vls_addr(&bname_suffix));
+	bu_vls_sprintf(&bname_suffix, "%s%s", gb->solid_name.c_str(), bu_vls_cstr(&suffix));
+	if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_cstr(&bname_suffix), LOOKUP_QUIET) != RT_DIR_NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "%s already exists.", bu_vls_cstr(&bname_suffix));
 	    bu_vls_free(&bname);
 	    bu_vls_free(&suffix);
 	    bu_vls_free(&bname_suffix);
@@ -463,7 +463,7 @@ _brep_cmd_brep(void *bs, int argc, const char **argv)
 	GED_DB_GET_INTERNAL(gedp, &intern, gb->dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
 	RT_CK_DB_INTERNAL(&intern);
 
-	brep_conversion_comb(&intern, bu_vls_addr(&bname_suffix), bu_vls_addr(&suffix), gedp->ged_wdbp, mk_conv2mm);
+	brep_conversion_comb(&intern, bu_vls_cstr(&bname_suffix), bu_vls_cstr(&suffix), gedp->ged_wdbp, mk_conv2mm);
 	bu_vls_free(&bname_suffix);
 	bu_vls_free(&bname);
 	bu_vls_free(&suffix);
@@ -484,8 +484,8 @@ _brep_cmd_brep(void *bs, int argc, const char **argv)
     // Attempt to evalute to a single object
     struct rt_db_internal brep_db_internal;
     ON_Brep* brep;
-    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&bname), LOOKUP_QUIET) != RT_DIR_NULL) {
-	bu_vls_printf(gedp->ged_result_str, "%s already exists.", bu_vls_addr(&bname));
+    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_cstr(&bname), LOOKUP_QUIET) != RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, "%s already exists.", bu_vls_cstr(&bname));
 	bu_vls_free(&bname);
 	return GED_OK;
     }
@@ -499,9 +499,9 @@ _brep_cmd_brep(void *bs, int argc, const char **argv)
 		"to brep correctly.", gb->solid_name.c_str());
     } else {
 	brep = ((struct rt_brep_internal *)brep_db_internal.idb_ptr)->brep;
-	ret = mk_brep(gedp->ged_wdbp, bu_vls_addr(&bname), brep);
+	ret = mk_brep(gedp->ged_wdbp, bu_vls_cstr(&bname), brep);
 	if (ret == 0) {
-	    bu_vls_printf(gedp->ged_result_str, "%s is made.", bu_vls_addr(&bname));
+	    bu_vls_printf(gedp->ged_result_str, "%s is made.", bu_vls_cstr(&bname));
 	}
 	rt_db_free_internal(&brep_db_internal);
     }
@@ -524,8 +524,8 @@ _brep_cmd_csg(void *bs, int argc, const char **argv)
     struct bu_vls bname_csg;
     bu_vls_init(&bname_csg);
     bu_vls_sprintf(&bname_csg, "csg_%s", gb->solid_name.c_str());
-    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&bname_csg), LOOKUP_QUIET) != RT_DIR_NULL) {
-	bu_vls_printf(gedp->ged_result_str, "%s already exists.", bu_vls_addr(&bname_csg));
+    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_cstr(&bname_csg), LOOKUP_QUIET) != RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, "%s already exists.", bu_vls_cstr(&bname_csg));
 	bu_vls_free(&bname_csg);
 	return GED_OK;
     }
@@ -1028,13 +1028,14 @@ _brep_cmd_shrink_surfaces(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_split(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname> split [-t #] [output_name]";
+    const char *usage_string = "brep [options] <objname> split [-t #] [-O] [-o output_name] [face_indices]";
     const char *purpose_string = "weld BRep object into a set of plate mode BRep objects";
     if (_brep_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
     }
 
     struct _ged_brep_info *gb = (struct _ged_brep_info *)bs;
+    struct ged *gedp = gb->gedp;
 
     if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BREP) {
 	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type brep\n", gb->solid_name.c_str());
@@ -1051,36 +1052,143 @@ _brep_cmd_split(void *bs, int argc, const char **argv)
 
     argc--; argv++;
 
+    int object_per_face = 0;
     double thickness = 0.0;
     struct bu_vls ocomb = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&ocomb, "%s.plates", gb->solid_name.c_str());
 
-    struct bu_opt_desc d[2];
+    struct bu_opt_desc d[4];
     BU_OPT(d[0], "t", "thickness", "#", &bu_opt_fastf_t, &thickness , "default plate mode thickness");
-    BU_OPT_NULL(d[1]);
-    bu_opt_parse(NULL, argc, argv, d);
+    BU_OPT(d[1], "o", "output-object", "<name>", &bu_opt_vls, &ocomb, "specify an output object root name");
+    BU_OPT(d[2], "O", "object-per-face", "", NULL, &object_per_face, "create one brep object per face");
+    BU_OPT_NULL(d[3]);
+    argc = bu_opt_parse(NULL, argc, argv, d);
 
-    // If we have anything left, it should be a proposed new toplevel name
-    if (argc) {
-	bu_vls_sprintf(&ocomb, "%s", argv[0]);
+    if (!bu_vls_strlen(&ocomb)) {
+	// If the caller didn't provide a name, generate one
+	bu_vls_sprintf(&ocomb, "%s.plates", gb->solid_name.c_str());
     }
 
-    struct ged *gedp = gb->gedp;
-    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&ocomb), LOOKUP_QUIET) != RT_DIR_NULL) {
-	bu_vls_printf(gedp->ged_result_str, ": %s already exists.", bu_vls_addr(&ocomb));
+    // If we have anything left, it should be indices
+    std::set<int> elements;
+    if (argc) {
+	if (_brep_indices(elements, gb->gedp->ged_result_str, argc, argv) != GED_OK) {
+	    bu_vls_free(&ocomb);
+	    return GED_ERROR;
+	}
+    }
+
+    if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_cstr(&ocomb), LOOKUP_QUIET) != RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, ": %s already exists.", bu_vls_cstr(&ocomb));
+	bu_vls_free(&ocomb);
 	return GED_ERROR;
     }
 
     ON_Brep *orig_brep = ((struct rt_brep_internal *)gb->intern.idb_ptr)->brep;
-    ON_Brep *brep = new ON_Brep();
-
-    // Vertices are the same
-    for (int i = 0; i < brep->m_T.Count(); i++) {
-	brep->NewVertex(orig_brep->m_V[i], 0.0);
+    ON_Brep *brep = (object_per_face) ? NULL : new ON_Brep();
+    struct wmember wcomb;
+    if (object_per_face) {
+	BU_LIST_INIT(&wcomb.l);
     }
 
-    int ret = mk_brep(gedp->ged_wdbp, bu_vls_addr(&ocomb), brep);
+    // If we have nothing, process all faces
+    if (!elements.size()) {
+	for (int i = 0; i < orig_brep->m_F.Count(); i++) {
+	    elements.insert(i);
+	}
+    }
 
+    int valid_faces = 0;
+    std::set<int>::iterator e_it;
+    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
+	int f_id = *e_it;
+	ON_Brep *fbrep = orig_brep->SubBrep(1, &f_id);
+	if (!fbrep || !fbrep->IsValid()) {
+	    bu_vls_printf(gedp->ged_result_str, "NOTE: face %d failed to produce a valid brep, skipping", f_id);
+	    continue;
+	} else {
+	    valid_faces++;
+	}
+	if (object_per_face) {
+	    struct bu_vls fbrep_name = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&fbrep_name, "%s.%d", gb->solid_name.c_str(), f_id);
+	    (void)mk_addmember(bu_vls_cstr(&fbrep_name), &(wcomb.l), NULL, DB_OP_UNION);
+	    mk_brep(gedp->ged_wdbp, bu_vls_cstr(&fbrep_name), fbrep);
+	    delete fbrep;
+	    if (thickness > 0) {
+		struct bu_attribute_value_set avs;
+		struct directory *ndp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_cstr(&fbrep_name), LOOKUP_QUIET);
+		if (ndp == RT_DIR_NULL) {
+		    bu_vls_printf(gedp->ged_result_str, ": failed to create brep for face %d", f_id);
+		    bu_vls_free(&fbrep_name);
+		    bu_vls_free(&ocomb);
+		    return GED_ERROR;
+		}
+		if (db5_get_attributes(gb->gedp->ged_wdbp->dbip, &avs, gb->dp)) {
+		    bu_vls_printf(gedp->ged_result_str, ": failed to get attributes from face brep  %s", bu_vls_cstr(&fbrep_name));
+		    bu_vls_free(&fbrep_name);
+		    bu_vls_free(&ocomb);
+		    return GED_ERROR;
+		};
+		double local2base = gb->gedp->ged_wdbp->dbip->dbi_local2base;
+		double pthicknessmm = local2base * thickness;
+		std::ostringstream ss;
+		ss << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << pthicknessmm;
+		std::string sd = ss.str();
+		(void)bu_avs_add(&avs, "_plate_mode_thickness", sd.c_str());
+		if (db5_replace_attributes(ndp, &avs, gb->gedp->ged_wdbp->dbip)) {
+		    bu_vls_printf(gedp->ged_result_str, ": failed to set plate mode thickness for face %d", f_id);
+		    bu_vls_free(&fbrep_name);
+		    bu_vls_free(&ocomb);
+		    return GED_ERROR;
+		}
+	    }
+	    bu_vls_free(&fbrep_name);
+	} else {
+	    brep->Append(*fbrep);
+	    delete fbrep;
+	}
+    }
+
+    if (!valid_faces) {
+	bu_vls_free(&ocomb);
+	if (!object_per_face) {
+	    delete brep;
+	}
+	return GED_ERROR;
+    }
+
+    int ret;
+
+    if (!object_per_face) {
+	ret = mk_brep(gedp->ged_wdbp, bu_vls_cstr(&ocomb), brep);
+	if (thickness > 0) {
+	    struct bu_attribute_value_set avs;
+	    struct directory *ndp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_cstr(&ocomb), LOOKUP_QUIET);
+	    if (ndp == RT_DIR_NULL) {
+		bu_vls_printf(gedp->ged_result_str, ": failed to create brep");
+		bu_vls_free(&ocomb);
+		return GED_ERROR;
+	    }
+	    if (db5_get_attributes(gb->gedp->ged_wdbp->dbip, &avs, gb->dp)) {
+		bu_vls_printf(gedp->ged_result_str, ": failed to get attributes from brep");
+		bu_vls_free(&ocomb);
+		return GED_ERROR;
+	    };
+	    double local2base = gb->gedp->ged_wdbp->dbip->dbi_local2base;
+	    double pthicknessmm = local2base * thickness;
+	    std::ostringstream ss;
+	    ss << std::fixed << std::setprecision(std::numeric_limits<double>::max_digits10) << pthicknessmm;
+	    std::string sd = ss.str();
+	    (void)bu_avs_add(&avs, "_plate_mode_thickness", sd.c_str());
+	    if (db5_replace_attributes(ndp, &avs, gb->gedp->ged_wdbp->dbip)) {
+		bu_vls_printf(gedp->ged_result_str, ": failed to set plate mode thickness");
+		bu_vls_free(&ocomb);
+		return GED_ERROR;
+	    }
+	}
+    } else {
+	ret = mk_lcomb(gedp->ged_wdbp, bu_vls_cstr(&ocomb), &wcomb, 0, NULL, NULL, NULL, 0);
+    }
     return ret;
 }
 
