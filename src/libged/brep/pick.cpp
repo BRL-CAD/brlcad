@@ -191,56 +191,110 @@ _brep_cmd_edge_pick(void *bs, int argc, const char **argv)
 extern "C" int
 _brep_cmd_face_pick(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "brep [options] <objname1> plot F [[index][index-index]]";
-    const char *purpose_string = "topological faces";
+    const char *usage_string = "brep [options] <objname1> pick F [px py pz dx dy dz]";
+    const char *purpose_string = "pick closest face";
     if (_brep_pick_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
     }
 
-    argc--;argv++;
-
     struct _ged_brep_ipick *gib = (struct _ged_brep_ipick *)bs;
+    struct ged *gedp = gib->gb->gedp;
     const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
-    struct bu_color *color = gib->gb->color;
-    struct bn_vlblock *vbp = gib->gb->vbp;
-    int plotres = gib->gb->plotres;
 
-    std::set<int> elements;
-    if (_brep_indices(elements, gib->vls, argc, argv) != GED_OK) {
+    point_t origin;
+    vect_t dir;
+
+    if (argc && argc != 6) {
+	bu_vls_printf(gib->vls, "need six values for point and direction\n");
 	return GED_ERROR;
-    }
-    // If we have nothing, report all
-    if (!elements.size()) {
-	for (int i = 0; i < brep->m_F.Count(); i++) {
-	    elements.insert(i);
+    } else {
+	// If not explicitly specified, get the ray from GED
+	VSET(origin, -gedp->ged_gvp->gv_center[MDX], -gedp->ged_gvp->gv_center[MDY], -gedp->ged_gvp->gv_center[MDZ]);
+	VSCALE(origin, origin, gedp->ged_wdbp->dbip->dbi_base2local);
+	VMOVEN(dir, gedp->ged_gvp->gv_rotation + 8, 3);
+	VSCALE(dir, dir, -1.0);
+	// Back outside the shape using the brep bounding box diagonal length
+	ON_BoundingBox brep_bb = brep->BoundingBox();
+	for (int i = 0; i < 3; i++) {
+	    origin[i] = origin[i] + brep_bb.Diagonal().Length() * -1 * dir[i];
 	}
     }
 
-    std::set<int>::iterator e_it;
-    for (e_it = elements.begin(); e_it != elements.end(); e_it++) {
-
-	int fi = *e_it;
-
-	unsigned char rgb[3];
-	bu_color_to_rgb_chars(color, rgb);
-
-	const ON_BrepFace& face = brep->m_F[fi];
-	if (!face.IsValid(NULL)) {
-	    bu_vls_printf(gib->vls, "face %d is not valid, skipping", fi);
-	    continue;
-	}
-
-	if (color) {
-	    plotface(face, vbp, plotres, true, (int)rgb[0], (int)rgb[1], (int)rgb[2]);
-	} else {
-	    plotface(face, vbp, plotres, true, 10, 10, 10);
-	}
+    // We're looking at edges - assemble bounding boxes for an initial cull
+    RTree<int, double, 3> face_bboxes;
+    for (int i = 0; i < brep->m_E.Count(); i++) {
+	ON_BoundingBox bb = brep->m_F[i].BoundingBox();
+	double p1[3];
+	p1[0] = bb.Min().x;
+	p1[1] = bb.Min().y;
+	p1[2] = bb.Min().z;
+	double p2[3];
+	p2[0] = bb.Max().x;
+	p2[1] = bb.Max().y;
+	p2[2] = bb.Max().z;
+	face_bboxes.Insert(p1, p2, i);
     }
 
-    struct bu_vls sname = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&sname, "_BC_F_%s", gib->gb->solid_name.c_str());
-    _ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
-    bu_vls_free(&sname);
+    RTree<int, double, 3>::Ray ray;
+    for (int i = 0; i < 3; i++) {
+	ray.o[i] = origin[i];
+	ray.d[i] = dir[i];
+	ray.di[i] = 1/ray.d[i];
+    }
+
+    std::set<int> afaces;
+    size_t fcnt = face_bboxes.Intersects(&ray, &afaces);
+    if (fcnt == 0) {
+	bu_vls_printf(gib->vls, "no nearby faces found\n");
+	return GED_OK;
+    }
+
+    //face_bboxes.plot("tree.plot3");
+
+    // Construct ON_Line
+    ON_BoundingBox brep_bb = brep->BoundingBox();
+    ON_3dVector vdir(dir[0], dir[1], dir[2]);
+    ON_3dPoint porigin(origin[0], origin[1], origin[2]);
+    vdir.Unitize();
+    vdir = vdir * (brep_bb.Diagonal().Length() * 2);
+    ON_3dPoint lp1 = porigin - vdir;
+    ON_3dPoint lp2 = porigin + vdir;
+    ON_Line l(lp1, lp2);
+
+    double dmin = DBL_MAX;
+    int cface = -1;
+
+    std::set<int>::iterator a_it;
+    for (a_it = afaces.begin(); a_it != afaces.end(); a_it++) {
+
+	// See if there is a workable iteration to find the closest surface to
+	// the line (maybe starting with the closest point on the line to the
+	// face's closest edge curve to the line, find the closest surface
+	// point to that point, use the closest surface point to get a new
+	// closest point on the line, and iterate?)
+
+#if 0
+	const ON_BrepEdge &edge = brep->m_E[*a_it];
+	const ON_Curve *curve = edge.EdgeCurveOf();
+	if (!curve) continue;
+	ON_NurbsCurve nc;
+	curve->GetNurbForm(nc);
+	double ndist = 0.0;
+	if (ON_NurbsCurve_ClosestPointToLineSegment(&ndist, NULL, &nc, l, brep_bb.Diagonal().Length()), 0.0, NULL) {
+	    if (ndist < dmin) {
+		dmin = ndist;
+		cedge = *a_it;
+	    }
+	}
+#endif
+    }
+
+    if (gib->gb->verbosity) {
+	bu_vls_printf(gib->vls, "m_F[%d]: %g\n", cface, dmin);
+    } else {
+	bu_vls_printf(gib->vls, "%d\n", cface);
+    }
+
 
     return GED_OK;
 }
