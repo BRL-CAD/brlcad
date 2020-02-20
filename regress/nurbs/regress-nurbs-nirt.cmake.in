@@ -20,7 +20,13 @@ endif(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
 
 get_filename_component(EXE "@CMAKE_COMMAND@" EXT)
 set(NHIT "${BDIR}/analyze_nhit${EXE}")
-set(NHIT_G "@NHIT_GFILE@")
+
+get_filename_component(GFILE_FP "@NHIT_GFILE@" ABSOLUTE)
+if ("${GFILE_FP}" STREQUAL "@NHIT_GFILE@")
+  set(NHIT_G "@NHIT_GFILE@")
+else ("${GFILE_FP}" STREQUAL "@NHIT_GFILE@")
+  set(NHIT_G "${BDIR}/../@NHIT_GFILE@")
+endif ("${GFILE_FP}" STREQUAL "@NHIT_GFILE@")
 
 execute_process(
   COMMAND "${NHIT}" @NHIT_OPTS@ "${NHIT_G}" @NHIT_ARGS@ RESULT_VARIABLE nurbs_nirt_result

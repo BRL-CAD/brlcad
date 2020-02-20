@@ -36,7 +36,7 @@ set_target_properties(regress-nurbs PROPERTIES FOLDER "BRL-CAD Regression Tests"
 
 ADD_NURBS_NIRT_Test(NIST03_MISS_01
   "-M -b"
-  "${CMAKE_BINARY_DIR}/${DATA_DIR}/db/nist/NIST_MBE_PMI_3.g"
+  "${DATA_DIR}/db/nist/NIST_MBE_PMI_3.g"
   "Document -114.61944548140064626 -127.49462006675899772 -134.83948901109894791 35 25"
   "analyze_nhit;NIST_MBE_PMI_3.g")
 
