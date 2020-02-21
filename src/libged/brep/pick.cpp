@@ -197,6 +197,8 @@ _brep_cmd_face_pick(void *bs, int argc, const char **argv)
 	return GED_OK;
     }
 
+    argc--;argv++;
+
     struct _ged_brep_ipick *gib = (struct _ged_brep_ipick *)bs;
     struct ged *gedp = gib->gb->gedp;
     const ON_Brep *brep = ((struct rt_brep_internal *)(gib->gb->intern.idb_ptr))->brep;
@@ -220,9 +222,9 @@ _brep_cmd_face_pick(void *bs, int argc, const char **argv)
 	}
     }
 
-    // We're looking at edges - assemble bounding boxes for an initial cull
+    // We're looking at faces - assemble bounding boxes for an initial cull
     RTree<int, double, 3> face_bboxes;
-    for (int i = 0; i < brep->m_E.Count(); i++) {
+    for (int i = 0; i < brep->m_F.Count(); i++) {
 	ON_BoundingBox bb = brep->m_F[i].BoundingBox();
 	double p1[3];
 	p1[0] = bb.Min().x;
@@ -242,6 +244,8 @@ _brep_cmd_face_pick(void *bs, int argc, const char **argv)
 	ray.di[i] = 1/ray.d[i];
     }
 
+    face_bboxes.plot("tree.plot3");
+
     std::set<int> afaces;
     size_t fcnt = face_bboxes.Intersects(&ray, &afaces);
     if (fcnt == 0) {
@@ -249,7 +253,6 @@ _brep_cmd_face_pick(void *bs, int argc, const char **argv)
 	return GED_OK;
     }
 
-    //face_bboxes.plot("tree.plot3");
 
     // Construct ON_Line
     ON_BoundingBox brep_bb = brep->BoundingBox();
@@ -266,6 +269,29 @@ _brep_cmd_face_pick(void *bs, int argc, const char **argv)
 
     std::set<int>::iterator a_it;
     for (a_it = afaces.begin(); a_it != afaces.end(); a_it++) {
+	bu_vls_printf(gib->vls, "%d\n", *a_it);
+	ON_BrepLoop *loop = brep->m_F[*a_it].OuterLoop();
+	ON_3dPoint cedge_pt;
+	double edist = DBL_MAX;
+	for (int i = 0; i < loop->TrimCount(); i++) {
+	    ON_BrepTrim *trim = loop->Trim(i);
+	    ON_BrepEdge *edge = trim->Edge();
+	    if (edge) {
+		const ON_Curve *curve = edge->EdgeCurveOf();
+		if (!curve) continue;
+		ON_NurbsCurve nc;
+		curve->GetNurbForm(nc);
+		double ndist = 0.0;
+		double t;
+		bool have_closest_pt = ON_NurbsCurve_ClosestPointToLineSegment(&ndist, &t, &nc, l, brep_bb.Diagonal().Length(), NULL);
+		if (have_closest_pt) {
+		    if (ndist < edist) {
+			edist = ndist;
+			cedge_pt = curve->PointAt(t);
+		    }
+		}
+	    }
+	}
 
 	// See if there is a workable iteration to find the closest surface to
 	// the line (maybe starting with the closest point on the line to the
@@ -273,20 +299,54 @@ _brep_cmd_face_pick(void *bs, int argc, const char **argv)
 	// point to that point, use the closest surface point to get a new
 	// closest point on the line, and iterate?)
 
-#if 0
-	const ON_BrepEdge &edge = brep->m_E[*a_it];
-	const ON_Curve *curve = edge.EdgeCurveOf();
-	if (!curve) continue;
-	ON_NurbsCurve nc;
-	curve->GetNurbForm(nc);
-	double ndist = 0.0;
-	if (ON_NurbsCurve_ClosestPointToLineSegment(&ndist, NULL, &nc, l, brep_bb.Diagonal().Length()), 0.0, NULL) {
-	    if (ndist < dmin) {
-		dmin = ndist;
-		cedge = *a_it;
-	    }
+	ON_3dPoint l3d;
+	ON_2dPoint s2d;
+	ON_3dPoint s3d;
+	double sdist = DBL_MAX;
+	bool have_hit = false;
+	double cdist = DBL_MAX;
+	double idist = 0;
+	double lt;
+	l.ClosestPointTo(cedge_pt, &lt);
+	l3d = l.PointAt(lt);
+	bu_log("%d l3d: %f %f %f\n", *a_it, l3d.x, l3d.y, l3d.z);
+	if (!surface_GetClosestPoint3dFirstOrder(brep->m_F[*a_it].SurfaceOf(), l3d, s2d, s3d, sdist)) {
+	    bu_log("%d: get closest surface point failed??\n", *a_it);
+	    continue;
 	}
-#endif
+	bu_log("%d s3d: %f %f %f\n", *a_it, s3d.x, s3d.y, s3d.z);
+	cdist = l3d.DistanceTo(s3d);
+	while (!NEAR_ZERO(fabs(cdist-idist), ON_ZERO_TOLERANCE)) {
+	    idist = cdist;
+	    l.ClosestPointTo(s3d, &lt);
+	    l3d = l.PointAt(lt);
+	    bu_log("%d l3d+: %f %f %f\n", *a_it, l3d.x, l3d.y, l3d.z);
+	    if (!surface_GetClosestPoint3dFirstOrder(brep->m_F[*a_it].SurfaceOf(), l3d, s2d, s3d, sdist)) {
+		bu_log("%d: get closest surface point failed??\n", *a_it);
+		break;;
+	    }
+	    bu_log("%d s3d+: %f %f %f\n", *a_it, s3d.x, s3d.y, s3d.z);
+	    cdist = l3d.DistanceTo(s3d);
+	}
+	bu_log("%d cdist: %f\n", *a_it, cdist);
+	bu_log("%d sdist: %f\n", *a_it, sdist);
+
+	if (NEAR_ZERO(sdist, ON_ZERO_TOLERANCE)) {
+	    have_hit = true;
+	    double hdist = porigin.DistanceTo(s3d);
+	    bu_log("%d hdist: %f\n", *a_it, hdist);
+	    bu_log("center %f %f %f\n", s3d.x, s3d.y, s3d.z);
+	    if (hdist < dmin) {
+		dmin = hdist;
+		cface = *a_it;
+	    }
+	    continue;
+	}
+
+	if (!have_hit && cdist < dmin) {
+	    dmin = cdist;
+	    cface = *a_it;
+	}
     }
 
     if (gib->gb->verbosity) {
