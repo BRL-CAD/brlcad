@@ -995,6 +995,7 @@ brep_platemode_thickness(const struct xray& ray, const brep_hit& hit, const stru
      * undesirable los values on high obliquity angles.
      */
 
+/*#define WORK_IN_PROGRESS 1 */
 #ifdef WORK_IN_PROGRESS
 
     /* try to make sure we don't extend more than plate-mode thickness
@@ -1003,28 +1004,36 @@ brep_platemode_thickness(const struct xray& ray, const brep_hit& hit, const stru
      */
     const ON_Surface* surf = hit.face.SurfaceOf();
     const ON_BrepFace& face = hit.face;
+
+#if 0
     SurfaceTree* tree = NULL;
     ON_2dPoint uvpt;
     get_closest_point(uvpt, face, los_pnt, tree);
     ON_3dPoint p = surf->PointAt(uvpt[0], uvpt[1]);
     double dist_to_surf = p.DistanceTo(los_pnt);
+#else
+#endif
 
-    const int MAX_ITERATIONS = 1000;
-    const double stepsize = bs.plate_mode_thickness * 0.1;
+    const int MAX_ITERATIONS = 100;
+    const double MIN_STEPSIZE = bs.plate_mode_thickness * 0.1;
+
     int iterations = 0;
-    while (!NEAR_EQUAL(dist_to_surf, bs.plate_mode_thickness, stepsize) && iterations++ < MAX_ITERATIONS) {
+    while (!NEAR_EQUAL(dist_to_surf, bs.plate_mode_thickness, MIN_STEPSIZE) && iterations++ < MAX_ITERATIONS) {
 
 	if (dist_to_surf > bs.plate_mode_thickness)
-	    los -= (stepsize * 4.0); /* nudge back -400% step */
+	    los -= dist_to_surf / 2.0;
 	else if (dist_to_surf < bs.plate_mode_thickness)
-	    los += (stepsize * 0.4); /* nudge forward 40% step */
+	    los += dist_to_surf / 3.0;
 
+#if 0
 	/* calculate a new exit point distance to surface */
 	VJOIN1(hp, ray.r_pt, hit.dist + los, ray.r_dir);
 	los_pnt = ON_3dPoint(V3ARGS(hp));
 	get_closest_point(uvpt, face, los_pnt, tree);
 	p = surf->PointAt(uvpt[0], uvpt[1]);
 	dist_to_surf = p.DistanceTo(los_pnt);
+#else
+#endif
     }
 
 #endif
