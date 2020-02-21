@@ -188,6 +188,17 @@ _brep_cmd_edge_pick(void *bs, int argc, const char **argv)
 }
 
 // F - topological faces
+//
+// TODO: May be too difficult to implement, but should take a look at work in:
+//
+// Jingjing Shen, Laurent Busé, Pierre Alliez, Neil Dodgson,
+// A line/trimmed NURBS surface intersection algorithm using matrix representations,
+// Computer Aided Geometric Design, Volume 48, 2016, Pages 1-16
+//
+// The "M-rep" approach sounds quite interesting as an alternative to current
+// ray solving methods, but the implementation will require quite a bit of
+// knowledge about translating academic discussions of matrix operations to
+// working code...
 extern "C" int
 _brep_cmd_face_pick(void *bs, int argc, const char **argv)
 {
