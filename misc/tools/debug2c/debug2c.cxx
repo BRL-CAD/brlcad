@@ -143,6 +143,7 @@ main(int argc, const char *argv[])
 	return -1;
     }
 
+    ofile << "#include \"common.h\"\n";
     ofile << "#include <stddef.h>\n";
     ofile << "#include <stdio.h>\n\n";
 

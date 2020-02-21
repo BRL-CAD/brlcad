@@ -280,6 +280,7 @@ main(int argc, const char *argv[])
 	return -1;
     }
 
+    ofile << "#include \"common.h\"\n";
     ofile << "#include <stdlib.h>\n";
     ofile << "#include <string.h>\n";
     ofile << "#include \"bu/env.h\"\n";
