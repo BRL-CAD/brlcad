@@ -661,7 +661,7 @@ class brep_cdt_state {
 	void brep_cpy_init();
 	void verts_init();
 	void uedges_init();
-	void faces_init();
+	bool faces_init();
 
 	// Routines for managing the reuse of unordered edges, which are global to
 	// the overall BRep object (i.e. they may, but are not guaranteed to, connect

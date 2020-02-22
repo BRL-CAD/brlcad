@@ -304,7 +304,7 @@ brep_cdt_state::uedges_init()
 // the new point will be inserted.  The trim curve parameter isn't actually important,
 // so instead of trying to split the trim curve we can just use the closest point
 // on surface routine to go directly to the u,v coordinates for the point.
-void
+bool
 brep_cdt_state::faces_init()
 {
     for (int index = 0; index < brep->m_F.Count(); index++) {
@@ -351,7 +351,10 @@ brep_cdt_state::faces_init()
 		if (edge && edge->EdgeCurveOf()) {
 		    pe->type = B_BOUNDARY;
 		    mesh_edge_t *e3d = m.edge(*pe);
-		    m.uedge(*e3d);
+		    if (!m.uedge(*e3d)) {
+			std::cerr << "fatal error - couldn't associate an ordered 3D edge with an unordered 3D edge\n";
+			return false;
+		    }
 		} else {
 		    pe->type = B_SINGULAR;
 		}
@@ -372,6 +375,8 @@ brep_cdt_state::faces_init()
 	p2[2] = m.bb.Max().z;
 	m.cdt->i->s.b_faces_tree.Insert(p1, p2, (size_t)m.f->m_face_index);
     }
+
+    return true;
 }
 
 static int
