@@ -195,16 +195,25 @@ mesh_t::uedge(mesh_edge_t &e)
 {
     mesh_uedge_t *ue = e.uedge;
 
+    // If we don't already have an associated uedge, see if one of the points
+    // knows about a compatible uedge - another mesh_edge_t might already have
+    // created the edge we need.
     if (!ue) {
-	// Check for the uedge with an RTree search.
-	long r_ind = cdt->i->s.find_uedge(e);
-	if (r_ind >= 0) {
-	    ue = &(cdt->i->s.b_uedges_vect[r_ind]);
+	for (int i = 0; i < 2; i++) {
+	    mesh_point_t &p = cdt->i->s.b_pnts[e.v[i]];
+	    std::set<mesh_uedge_t *>::iterator ue_it;
+	    for (ue_it = p.uedges.begin(); ue_it != p.uedges.end(); ue_it++) {
+		mesh_uedge_t *pue = *ue_it;
+		if ((ue->v[0] == pue->v[0] || ue->v[0] == pue->v[1]) && (ue->v[1] == pue->v[0] || ue->v[1] == pue->v[1])) {
+		    ue = pue;
+		    break;
+		}
+	    }
 	}
     }
 
-    // IFF we've got nothing post search put in a new uedge - else, we're just
-    // making the data connections to the existing uedge.
+    // IFF we've got nothing at this point we need a new uedge - else, we're just
+    // making the additional data connections needed in the existing uedge.
     if (!ue) {
 	ue = cdt->i->s.get_uedge();
     }
@@ -226,6 +235,10 @@ mesh_t::uedge(mesh_edge_t &e)
 
     // Link the uedge back into the ordered edge
     e.uedge = &(cdt->i->s.b_uedges_vect[ue->vect_ind]);
+
+    // Let the points know they've got new uedges
+    cdt->i->s.b_pnts[ue->v[0]].uedges.insert(ue);
+    cdt->i->s.b_pnts[ue->v[1]].uedges.insert(ue);
 
     return ue;
 }
