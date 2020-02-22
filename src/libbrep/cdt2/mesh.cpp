@@ -214,8 +214,10 @@ mesh_t::uedge(mesh_edge_t &e)
 
     // IFF we've got nothing at this point we need a new uedge - else, we're just
     // making the additional data connections needed in the existing uedge.
+    bool new_uedge = false;
     if (!ue) {
 	ue = cdt->i->s.get_uedge();
+	new_uedge = true;
     }
 
     // Shouldn't happen...
@@ -236,10 +238,16 @@ mesh_t::uedge(mesh_edge_t &e)
     // Link the uedge back into the ordered edge
     e.uedge = &(cdt->i->s.b_uedges_vect[ue->vect_ind]);
 
-    // Let the points know they've got new uedges
-    cdt->i->s.b_pnts[ue->v[0]].uedges.insert(ue);
-    cdt->i->s.b_pnts[ue->v[1]].uedges.insert(ue);
-
+    if (new_uedge) {
+	ON_3dPoint pztol(ON_ZERO_TOLERANCE, ON_ZERO_TOLERANCE, ON_ZERO_TOLERANCE);
+	ue->bb = ON_BoundingBox(cdt->i->s.b_pnts[ue->v[0]].p,cdt->i->s.b_pnts[ue->v[1]].p);
+	ue->bb.m_max = ue->bb.m_max + pztol;
+	ue->bb.m_min = ue->bb.m_min - pztol;
+	ue->update();
+	// Let the points know they've got new uedges
+	cdt->i->s.b_pnts[ue->v[0]].uedges.insert(ue);
+	cdt->i->s.b_pnts[ue->v[1]].uedges.insert(ue);
+    }
     return ue;
 }
 
