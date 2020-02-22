@@ -195,9 +195,9 @@ mesh_t::uedge(mesh_edge_t &e)
 {
     mesh_uedge_t *ue = e.uedge;
 
-    // If we don't already have an associated uedge, see if one of the points
-    // knows about a compatible uedge - another mesh_edge_t might already have
-    // created the edge we need.
+    // If we don't already have an associated uedge, see if one of the
+    // points knows about a compatible uedge - another mesh_edge_t might
+    // already have created the edge we need.
     if (!ue) {
 	for (int i = 0; i < 2; i++) {
 	    mesh_point_t &p = cdt->i->s.b_pnts[e.v[i]];
@@ -212,8 +212,9 @@ mesh_t::uedge(mesh_edge_t &e)
 	}
     }
 
-    // IFF we've got nothing at this point we need a new uedge - else, we're just
-    // making the additional data connections needed in the existing uedge.
+    // IFF we've got nothing at this point we need a new uedge - else,
+    // we're just making the additional data connections needed in the
+    // existing uedge.
     bool new_uedge = false;
     if (!ue) {
 	ue = cdt->i->s.get_uedge();
@@ -236,11 +237,13 @@ mesh_t::uedge(mesh_edge_t &e)
     }
 
     // Link the uedge back into the ordered edge
-    e.uedge = &(cdt->i->s.b_uedges_vect[ue->vect_ind]);
+    e.uedge = ue;
 
     if (new_uedge) {
 	ON_3dPoint pztol(ON_ZERO_TOLERANCE, ON_ZERO_TOLERANCE, ON_ZERO_TOLERANCE);
-	ue->bb = ON_BoundingBox(cdt->i->s.b_pnts[ue->v[0]].p,cdt->i->s.b_pnts[ue->v[1]].p);
+	mesh_point_t &p1 = cdt->i->s.b_pnts[ue->v[0]];
+	mesh_point_t &p2 = cdt->i->s.b_pnts[ue->v[2]];
+	ue->bb = ON_BoundingBox(p1.p, p2.p);
 	ue->bb.m_max = ue->bb.m_max + pztol;
 	ue->bb.m_min = ue->bb.m_min - pztol;
 	ue->update();
