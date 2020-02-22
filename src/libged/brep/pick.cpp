@@ -194,11 +194,15 @@ _brep_cmd_edge_pick(void *bs, int argc, const char **argv)
 // Jingjing Shen, Laurent Busé, Pierre Alliez, Neil Dodgson,
 // A line/trimmed NURBS surface intersection algorithm using matrix representations,
 // Computer Aided Geometric Design, Volume 48, 2016, Pages 1-16
+// https://hal.inria.fr/hal-01268109v2/document
 //
 // The "M-rep" approach sounds quite interesting as an alternative to current
 // ray solving methods, but the implementation will require quite a bit of
 // knowledge about translating academic discussions of matrix operations to
 // working code...
+//
+// Related:
+// https://hal.inria.fr/hal-00847802/document
 extern "C" int
 _brep_cmd_face_pick(void *bs, int argc, const char **argv)
 {
