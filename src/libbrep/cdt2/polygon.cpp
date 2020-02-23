@@ -338,14 +338,12 @@ polygon_t::remove_ordered_edge(poly_edge_t &pe)
 
     put_pedge(&pe);
 
-    // TODO - implement other cleanup.  It will be the 3D edge's job to update
-    // uedge information and (IFF both associated 3D ordered edges are gone)
-    // clean out the uedge
-#if 0
+    // It will be the 3D edge's job to update uedge information and (IFF both
+    // associated 3D ordered edges are gone) clean out the uedge
     if (rme3d) {
-	m->remove_edge(*rme3d);
+	m->put_edge(rme3d);
     }
-#endif
+
 }
 
 

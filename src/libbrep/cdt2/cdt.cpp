@@ -52,8 +52,13 @@ brep_cdt_state::put_uedge(mesh_uedge_t *ue)
 {
     if (!ue) return;
     size_t n_ind = ue->vect_ind;
-    ue->reset();
-    b_uequeue.push(n_ind);
+
+    // If we no longer have any ordered edges associated with the uedge, we can
+    // reuse it.  Otherwise, it's still active.
+    if (!ue->e[0] && !ue->e[1]) {
+	ue->reset();
+	b_uequeue.push(n_ind);
+    }
 }
 
 void

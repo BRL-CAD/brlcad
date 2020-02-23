@@ -54,8 +54,41 @@ mesh_t::put_edge(mesh_edge_t *e)
 {
     if (!e) return;
     size_t n_ind = e->vect_ind;
+
+    mesh_uedge_t *rmu3d = NULL;
+    poly_edge_t *rmp3d = NULL;
+
+    // We'll need to clean up the other edges associated with this edge (if any).
+    // Because this routine may be called from other cleanup routines and vice
+    // versa, we only call the other cleanup routine if the various pointers
+    // haven't been NULLed out by other deletes first.  If they have, just do
+    // our bit - someone else is managing the other cleanup.  If not, we need
+    // to take care of calling the relevant routines from here.
+    if (e->pe) {
+        rmp3d = e->pe;
+        e->pe = NULL;
+        rmp3d->e3d = NULL;
+    }
+    if (e->uedge) {
+        rmu3d = e->uedge;
+        e->uedge = NULL;
+	for (int i = 0; i < 2; i++) {
+	    if (rmu3d->e[i] == e) {
+		rmu3d->e[i] = NULL;
+	    }
+	}
+    }
+
     e->reset();
     m_equeue.push(n_ind);
+
+    // Call other cleanup routines, if needed
+    if (rmp3d) {
+	rmp3d->polygon->put_pedge(rmp3d);
+    }
+    if (rmu3d) {
+	cdt->i->s.put_uedge(rmu3d);
+    }
 }
 
 mesh_tri_t *
