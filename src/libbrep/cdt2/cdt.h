@@ -673,7 +673,14 @@ class brep_cdt_state {
 	// the overall BRep object (i.e. they may, but are not guaranteed to, connect
 	// triangles from different BRep faces).
 	mesh_uedge_t *get_uedge();
+
+	// Clear and queue a uedge container, if it is no longer in use by any
+	// ordered edges.  Unlike other put_* routines this routine is not
+	// aggressive in clearing out related data - calling put_uedge on an
+	// in-use uedge is a no-op.  To clear all data associated with a uedge,
+	// the caller should erase its associated ordered edges instead.
 	void put_uedge(mesh_uedge_t *ue);
+
     private:
 	std::queue<size_t> b_uequeue; // Available (unused) entries in b_uedges_vect
 };

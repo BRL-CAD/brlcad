@@ -57,6 +57,7 @@ mesh_t::put_edge(mesh_edge_t *e)
 
     mesh_uedge_t *rmu3d = NULL;
     poly_edge_t *rmp3d = NULL;
+    mesh_tri_t *rmtri = NULL;
 
     // We'll need to clean up the other edges associated with this edge (if any).
     // Because this routine may be called from other cleanup routines and vice
@@ -78,6 +79,22 @@ mesh_t::put_edge(mesh_edge_t *e)
 	    }
 	}
     }
+    if (e->tri) {
+	rmtri = e->tri;
+	e->tri = NULL;
+	for (int i = 0; i < 3; i++) {
+	    if (rmtri->e[i] == e) {
+		// For the triangle edge that is the current edge, just NULL it
+		rmtri->e[i] = NULL;
+	    } else {
+		// For other edges, we'll need to remove them but we don't need
+		// to call the tri remove routine again.
+		if (rmtri->e[i]) {
+		    rmtri->e[i]->tri = NULL;
+		}
+	    }
+	}
+    }
 
     e->reset();
     m_equeue.push(n_ind);
@@ -88,6 +105,9 @@ mesh_t::put_edge(mesh_edge_t *e)
     }
     if (rmu3d) {
 	cdt->i->s.put_uedge(rmu3d);
+    }
+    if (rmtri) {
+	put_tri(rmtri);
     }
 }
 
