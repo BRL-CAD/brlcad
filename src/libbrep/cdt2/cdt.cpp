@@ -352,7 +352,7 @@ brep_cdt_state::faces_init()
 		    pe->type = B_BOUNDARY;
 		    mesh_edge_t *e3d = m.edge(*pe);
 		    if (!m.uedge(*e3d)) {
-			std::cerr << "fatal error - couldn't associate an ordered 3D edge with an unordered 3D edge\n";
+			bu_vls_printf(m.cdt->msgs, "fatal error - couldn't associate an ordered 3D edge with an unordered 3D edge\n");
 			return false;
 		    }
 		} else {

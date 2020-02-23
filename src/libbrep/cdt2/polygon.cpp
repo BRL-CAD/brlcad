@@ -75,7 +75,7 @@ polygon_t::add_point(mesh_point_t *meshp)
 	ON_2dPoint p2d;
 	ON_3dPoint p3d;
 	if (!m->closest_surf_pt(NULL, p3d, p2d, &(meshp->p), -1)) {
-	    std::cerr << "closest point evaluation failed for polygon 2D\n";
+	    bu_vls_printf(m->cdt->msgs, "closest point evaluation failed for polygon 2D\n");
 	    return -1;
 	}
 	pp.u = p2d.x;
