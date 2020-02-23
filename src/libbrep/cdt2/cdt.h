@@ -507,7 +507,7 @@ class polygon_t {
 	// idea is similar.)
 	RTree<size_t, double, 2> p_edges_tree;
 
-	// Called when a mesh_uedge_t is returned to the
+	// Called when a poly_edge_t is returned to the
 	// queue for reuse
 	void reset();
 

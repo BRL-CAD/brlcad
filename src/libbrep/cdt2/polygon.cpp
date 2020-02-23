@@ -336,8 +336,7 @@ polygon_t::remove_ordered_edge(poly_edge_t &pe)
 
     }
 
-    // TODO - return pe to queue
-
+    put_pedge(&pe);
 
     // TODO - implement other cleanup.  It will be the 3D edge's job to update
     // uedge information and (IFF both associated 3D ordered edges are gone)
