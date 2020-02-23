@@ -643,6 +643,12 @@ class brep_cdt_state {
 	// meshing purposes
 	ON_Brep *brep = NULL;
 
+	// Validity and solidity information - we check once up front
+	// and store the values for later use, to avoid having to
+	// recalculate the answers.
+	bool is_valid = false;
+	bool is_solid = false;
+
 	// The BRL-CAD object name of the source BRep
 	std::string name;
 
@@ -652,7 +658,7 @@ class brep_cdt_state {
 	struct brep_cdt *cdt;
 
 	// Active faces to triangulate (empty set defaults to all)
-	std::set<size_t> a_faces; 
+	std::set<size_t> a_faces;
 
 	// Initialization routines.  Ordering is important - probably what
 	// we'll eventually do is just call all these from a constructor and

@@ -418,32 +418,22 @@ brep_cdt_destroy(struct brep_cdt *s)
 }
 
 
-// TODO - need a flag variable to enable various modes (watertightness,
-// validity, overlap resolving - no need for separate functions for all that...)
 int
-brep_cdt_triangulate(struct brep_cdt *s_cdt, int face_cnt, int *faces)
+brep_cdt_triangulate(struct brep_cdt *s_cdt, int face_cnt, int *faces, long flags)
 {
     if (!s_cdt) return -1;
 
+    // Check validity and solidity
+    s_cdt->i->s.is_valid = s_cdt->i->s.orig_brep->IsValid();
+    s_cdt->i->s.is_solid = s_cdt->i->s.orig_brep->IsSolid();
+
     // Check for any conditions that are show-stoppers
-    ON_wString wonstr;
-    ON_TextLog vout(wonstr);
-    if (!s_cdt->i->s.orig_brep->IsValid(&vout)) {
+    if (!s_cdt->i->s.is_valid) {
 	bu_vls_printf(s_cdt->msgs, "NOTE: brep is NOT valid, cannot produce watertight mesh\n");
     }
 
-    // For now, edges must have 2 and only 2 trims for this to work.
-    // TODO - only do this check for solid objects - plate mode objects should be processed.
-    // Need to think about how to structure that - in such a case all of this logic should
-    // collapse back to the original logic...
-    // for that matter, if we want the fastest possible mesh regardless of quality we should
-    // be able to do that...
-    for (int index = 0; index < s_cdt->i->s.orig_brep->m_E.Count(); index++) {
-	ON_BrepEdge& edge = s_cdt->i->s.orig_brep->m_E[index];
-	if (edge.TrimCount() != 2) {
-	    bu_vls_printf(s_cdt->msgs, "Edge %d trim count: %d - can't (yet) do watertight meshing\n", edge.m_edge_index, edge.TrimCount());
-	    return -1;
-	}
+    if (!(flags & BG_CDT_NO_WATERTIGHT) && !s_cdt->i->s.is_solid) {
+	bu_vls_printf(s_cdt->msgs, "NOTE: watertight meshing requested but brep is not closed.  Cannot produce watertight mesh.\n");
     }
 
     if (face_cnt) {
@@ -451,7 +441,6 @@ brep_cdt_triangulate(struct brep_cdt *s_cdt, int face_cnt, int *faces)
 	    s_cdt->i->s.a_faces.insert(faces[i]);
 	}
     }
-
 
     // brep init
     s_cdt->i->s.brep_cpy_init();

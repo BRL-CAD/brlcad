@@ -73,7 +73,14 @@ brep_cdt_brep_get(struct brep_cdt *s);
  * triangulated faces.  If the CDT tolerances have been updated since the
  * last Tessellate call, the old tessellation information will be replaced. */
 extern BREP_EXPORT int
-brep_cdt_triangulate(struct brep_cdt *s, int face_cnt, int *faces);
+brep_cdt_triangulate(struct brep_cdt *s, int face_cnt, int *faces, long flags);
+
+/* The default triangulation attempts to satisfy a number of mesh quality constraints,
+ * which slows the triangulation process.  The following flags allow the caller to
+ * disable them to trade off increased speed for lower quality mesh outputs */
+#define BG_CDT_NO_WATERTIGHT       0x1   /**< @brief Disable watertight meshing. */
+#define BG_CDT_NO_EDGE_OPTIMIZE    0x2   /**< @brief Disable distortion correction near face edges. */
+#define BG_CDT_NO_VALIDITY         0x4   /**< @brief Disable triangle validity checking. */
 
 /* Given a state, report the status of its triangulation. -4 indicate an
  * unsuitable ON_Brep is present, -3 indicates a failed attempt on a
