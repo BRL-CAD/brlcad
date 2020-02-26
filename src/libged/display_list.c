@@ -972,7 +972,7 @@ append_solid_to_display_list(
         return TREE_NULL;
     }
 
-    if (RT_G_DEBUG & DEBUG_TREEWALK) {
+    if (RT_G_DEBUG & RT_DEBUG_TREEWALK) {
         char *sofar = db_path_to_string(pathp);
 
         bu_log("append_solid_to_display_list(%s) path='%s'\n", ip->idb_meth->ft_name, sofar);

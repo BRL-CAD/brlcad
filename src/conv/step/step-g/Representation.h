@@ -65,6 +65,10 @@ public:
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual void Print(int level);
 
+    string Name();
+
+    LIST_OF_REPRESENTATION_ITEMS *items_();
+
     //static methods
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };

@@ -215,7 +215,7 @@ crack_disk_header(struct db5_raw_internal *rip, const unsigned char *cp)
     rip->major_type = cp[4];
     rip->minor_type = cp[5];
 
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("crack_disk_header()\n\
+    if (RT_G_DEBUG&RT_DEBUG_DB) bu_log("crack_disk_header()\n\
 	h_dli=%d, h_object_width=%d, h_name_present=%d, h_name_width=%d, \n\
 	a_width=%d, a_present=%d, a_zzz=%d, \n\
 	b_width=%d, b_present=%d, b_zzz=%d, major=%d, minor=%d\n",
@@ -739,7 +739,7 @@ db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip
     RT_CK_DIR(dp);
     BU_CK_EXTERNAL(ep);
 
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_put_external5(%s) ep=%p, dbip=%p, dp=%p\n",
+    if (RT_G_DEBUG&RT_DEBUG_DB) bu_log("db_put_external5(%s) ep=%p, dbip=%p, dp=%p\n",
 				    dp->d_namep, (void *)ep, (void *)dbip, (void *)dp);
 
     if (dbip->dbi_read_only) {

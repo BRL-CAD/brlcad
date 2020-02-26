@@ -83,7 +83,7 @@ parse_args (int ac, char *av[], struct beset_options *opts)
 		opts->cross_rate = atoi(bu_optarg);
 		continue;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug );
+		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug );
 		continue;
 	    case 'p':
 		opts->pop_size = atoi(bu_optarg);

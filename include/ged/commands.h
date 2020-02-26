@@ -401,6 +401,7 @@ GED_EXPORT int ged_bot_remesh(struct ged *gedp, int argc, const char *argv[]);
  * BREP utility command
  */
 GED_EXPORT extern int ged_brep(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_brep2(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Create constraint object

@@ -134,6 +134,7 @@ set mged_help_data(dbconcat)	$helplib_data(wdb_concat)
 set mged_help_data(dbfind)	$helplib_data(wdb_find)
 set mged_help_data(dbupgrade)	{{[-f|-help] [upgrade|cancel|help]}	{upgrade your database to the current format}}
 set mged_help_data(dbversion)	{{}	{return the database version}}
+set mged_help_data(debug)	{{args}	{control BRL-CAD library debugging settings}}
 set mged_help_data(debugbu)	{{[hex_code]}	{show/set debugging bit vector for libbu}}
 set mged_help_data(debugdir)	{{}	{Print in-memory directory, for debugging}}
 set mged_help_data(debuglib)	{{[hex_code]}	{show/set debugging bit vector for librt}}

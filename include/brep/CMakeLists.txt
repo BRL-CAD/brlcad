@@ -14,6 +14,7 @@ set(brep_headers
   )
 BRLCAD_MANAGE_FILES(brep_headers ${INCLUDE_DIR}/brlcad/brep)
 CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(cdt2.h)
 
 # Local Variables:
 # tab-width: 8

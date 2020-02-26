@@ -178,7 +178,7 @@ rt_pgface(struct soltab *stp, fastf_t *ap, fastf_t *bp, fastf_t *cp, const struc
     if (m1 < tol->dist || m2 < tol->dist ||
 	m3 < tol->dist || m4 < tol->dist) {
 	BU_PUT(trip, struct tri_specific);
-	if (RT_G_DEBUG & DEBUG_ARB8)
+	if (RT_G_DEBUG & RT_DEBUG_ARB8)
 	    bu_log("pg(%s): degenerate facet\n", stp->st_name);
 	return 0;			/* BAD */
     }

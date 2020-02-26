@@ -25,8 +25,14 @@
 #define RT_COMB_H
 
 #include "common.h"
+
+#ifdef __cplusplus
+#  include "opennurbs.h"
+#endif
+
 #include "vmath.h"
 #include "bu/vls.h"
+#include "rt/defines.h"
 
 __BEGIN_DECLS
 
@@ -148,6 +154,11 @@ RT_EXPORT extern int rt_comb_import5(struct rt_db_internal *ip, const struct bu_
  * @endcode
  */
 RT_EXPORT extern int db_comb_children(struct db_i *dbip, struct rt_comb_internal *comb, struct directory ***children, int **bool_ops, matp_t **mats);
+
+#ifdef __cplusplus
+RT_EXPORT extern void
+rt_comb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol, const struct db_i *dbip);
+#endif
 
 __END_DECLS
 

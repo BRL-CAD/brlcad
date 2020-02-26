@@ -23,9 +23,6 @@
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
-#ifdef HAVE_SYS_SYSCTL_H
-#  include <sys/sysctl.h> /* for sysctl */
-#endif
 #ifdef HAVE_SYS_PARAM_H /* for MAXPATHLEN */
 #  include <sys/param.h>
 #endif
@@ -100,20 +97,6 @@ bu_argv0_full_path(void)
     if (argv0[0] == '\0') {
 	int pid = getpid();
 	(void)proc_pidpath(pid, tbuf, sizeof(tbuf));
-	argv0 = tbuf;
-    }
-#endif
-
-    /* both BSD and Mac OS X have KERN_PROC */
-#if defined(HAVE_SYS_SYSCTL_H) && defined(KERN_PROC)
-    if (argv0[0] == '\0') {
-	size_t tbuflen = sizeof(tbuf);
-#  ifdef KERN_PROC_PATHNAME /* BSD */
-	int mib[] = {CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1};
-#  else /* Mac OS X and older BSD */
-	int mib[] = {CTL_KERN, KERN_PROCNAME};
-#  endif
-	sysctl(mib, sizeof(mib)/sizeof(mib[0]), tbuf, &tbuflen, NULL, 0);
 	argv0 = tbuf;
     }
 #endif

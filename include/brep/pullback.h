@@ -92,10 +92,10 @@ namespace brlcad {
      *   -- minimum occurs when the gradient is zero, i.e.
      *     \f[ \nabla f(u, v) = |\vec{S}(u, v)-\vec{p}|^2 = 0 \f]
      */
-    BREP_EXPORT bool get_closest_point(ON_2dPoint &outpt,
-				       ON_BrepFace *face,
-				       const ON_3dPoint &point,
-				       SurfaceTree *tree = NULL,
+    BREP_EXPORT bool get_closest_point(ON_2dPoint& outpt,
+				       const ON_BrepFace& face,
+				       const ON_3dPoint& point,
+				       const SurfaceTree* tree = NULL,
 				       double tolerance = BREP_FCP_ROOT_EPSILON);
 
     /**
@@ -134,10 +134,31 @@ namespace brlcad {
 bool
 ON_NurbsCurve_GetClosestPoint(
 	double *t,
+	ON_3dPoint *cp,
 	const ON_NurbsCurve *nc,
 	const ON_3dPoint &p,
 	double maximum_distance = 0.0,
 	const ON_Interval *sub_domain = NULL
+	);
+
+
+bool
+ON_TrimCurve_GetClosestPoint(
+	double *t,
+	const ON_BrepTrim *trim,
+	const ON_3dPoint &p,
+	double maximum_distance = 0.0,
+	const ON_Interval *sub_domain = NULL
+	);
+
+extern BREP_EXPORT bool
+ON_NurbsCurve_ClosestPointToLineSegment(
+	double *dist,
+	double *t,
+	const ON_NurbsCurve *nc,
+	const ON_Line &l,
+	double maximum_distance = 0.0,
+	const ON_Interval *subdomain = NULL
 	);
 
 } /* extern C++ */

@@ -390,7 +390,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 
     BU_LIST_INIT(&vhead);
 
-    if (RT_G_DEBUG&DEBUG_TREEWALK || pstate->gcv_options->verbosity_level) {
+    if (RT_G_DEBUG&RT_DEBUG_TREEWALK || pstate->gcv_options->verbosity_level) {
 	char *sofar = db_path_to_string(pathp);
 	bu_log("\ndo_region_end(%zu %zu%%) %s\n",
 	       pstate->regions_tried,

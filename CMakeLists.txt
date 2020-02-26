@@ -785,6 +785,36 @@ endif(CMAKE_CONFIGURATION_TYPES)
 # The location in which to install BRL-CAD.  Only do this if
 # CMAKE_INSTALL_PREFIX hasn't been set already, to try and allow
 # parent builds (if any) some control.
+
+# TODO - generator expressions may be a way to replace some of this logic (or
+# improve it) by letting us ditch the logic tracking whether the path is
+# initialized to default - that's used to know whether or not it is safe to
+# override CMAKE_INSTALL_PREFIX based on build type.  If we use the generator
+# expressions, we won't have to be concerned about that - problem is that
+# change will require updating all the install commands in the build target
+# functions.  Third party logic will probably need to shift over to the new
+# ExternalProject_Add approach first as well - that way unmodified install
+# commands in 3rd party CMake files will be moot.
+#
+# if (NOT CMAKE_INSTALL_PREFIX)
+# set(CMAKE_INSTALL_PREFIX "/usr/brlcad/")
+#    if (NOT MSVC)
+#       set(gen_exp $<IF:$<CONFIG:Debug>,dev-${BRLCAD_VERSION}/,$<IF:$<CONFIG:Release>,rel-${BRLCAD_VERSION}/${BRLCAD_VERSION},>>)
+#    else (NOT MSVC)
+#       set(gen_exp)
+#        if(CMAKE_CL_64)
+#          set(CMAKE_INSTALL_PREFIX "C:/Program Files/BRL-CAD ${BRLCAD_VERSION}")
+#        else(CMAKE_CL_64)
+#          set(CMAKE_INSTALL_PREFIX "C:/Program Files (x86)/BRL-CAD ${BRLCAD_VERSION}")
+#        endif(CMAKE_CL_64)
+#    endif (NOT MSVC)
+# endif (NOT CMAKE_INSTALL_PREFIX)
+# install(TARGETS mged DESTINATION ${gen_exp}${BIN_DIR})
+#
+# Another (maybe better) option instead of generators might be to use the CONFIGURATIONS
+# option in our macros and the ExternalProject_Add management:
+# https://cmake.org/cmake/help/latest/command/install.html
+#
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT CMAKE_INSTALL_PREFIX)
   if(NOT CMAKE_CONFIGURATION_TYPES)
     if("${CMAKE_BUILD_TYPE}" MATCHES "Release")
@@ -930,8 +960,12 @@ CONFIG_H_APPEND(BRLCAD "#define PACKAGE_NAME \"BRL-CAD\"\n")
 CONFIG_H_APPEND(BRLCAD "#define PACKAGE_STRING \"BRL-CAD ${BRLCAD_VERSION}\"\n")
 CONFIG_H_APPEND(BRLCAD "#define PACKAGE_TARNAME \"brlcad\"\n")
 
-# Let programs know what the executable suffix is on this platform, if any
+# Let programs know what the executable suffix and lib suffix are on this platform, if any
 CONFIG_H_APPEND(BRLCAD "#define EXECUTABLE_SUFFIX \"${CMAKE_EXECUTABLE_SUFFIX}\"\n")
+CONFIG_H_APPEND(BRLCAD "#define SHARED_LIBRARY_SUFFIX \"${CMAKE_SHARED_LIBRARY_SUFFIX}\"\n")
+
+# Let bu_dir know what the target install directory is
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_ROOT \"${CMAKE_INSTALL_PREFIX}\"\n")
 
 # Define the various relative paths for bu_dir (be sure to have included
 # Path_Setup.cmake before this point, as that file defines these variables.)
@@ -947,11 +981,6 @@ CONFIG_H_APPEND(BRLCAD "#define BRLCAD_MAN_DIR \"${MAN_DIR}\"\n")
 if(DEFINED BRLCAD_VERSION_AMEND)
   CONFIG_H_APPEND(BRLCAD "#define BRLCAD_VERSION_AMEND ${BRLCAD_VERSION_AMEND}\n")
 endif(DEFINED BRLCAD_VERSION_AMEND)
-
-# bu_dir needs to know some platform-specific information about executable and library
-# suffixes - just use CMake's knowledge of this information
-CONFIG_H_APPEND(BRLCAD "#define EXE_SUFFIX \"${CMAKE_EXECUTABLE_SUFFIX}\"\n")
-CONFIG_H_APPEND(BRLCAD "#define SHARED_LIB_SUFFIX \"${CMAKE_SHARED_LIBRARY_SUFFIX}\"\n")
 
 #----------------------------------------------------------------------
 # If we're not debugging, we want HIDDEN to be defined as static.  Set
@@ -2202,10 +2231,6 @@ if(NOT MSVC)
     CHECK_C_FLAG(Wbad-function-cast)
     CHECK_CXX_FLAG(Wbad-function-cast)
 
-    # this makes sure we don't declare variables mid-scope, helps build on Windows
-    CHECK_C_FLAG(Wdeclaration-after-statement)
-    CHECK_CXX_FLAG(Wdeclaration-after-statement)
-
     # C-only: this makes sure C sources will compile as C++ code
     CHECK_C_FLAG(Wc++-compat)
 
@@ -2706,6 +2731,7 @@ BRLCAD_FUNCTION_EXISTS(alarm)
 BRLCAD_FUNCTION_EXISTS(asinh REQUIRED_LIBS ${M_LIBRARY})
 BRLCAD_FUNCTION_EXISTS(confstr) # darwin/mac
 BRLCAD_FUNCTION_EXISTS(dlopen)
+BRLCAD_FUNCTION_EXISTS(dladdr)
 BRLCAD_FUNCTION_EXISTS(drand48)
 BRLCAD_FUNCTION_EXISTS(fchmod)
 BRLCAD_FUNCTION_EXISTS(fdopen)

@@ -171,7 +171,7 @@ rt_hlf_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		return 0;	/* MISS */
 	}
     }
-    if (RT_G_DEBUG & DEBUG_ARB8)
+    if (RT_G_DEBUG & RT_DEBUG_ARB8)
 	bu_log("half: in=%f, out=%f\n", in, out);
 
     {

@@ -33,7 +33,7 @@
 
 extern "C" {
     extern int rt_hf_to_dsp(struct rt_db_internal *db_intern);
-    extern void rt_dsp_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
+    extern void rt_dsp_brep(ON_Brep **bi, const struct rt_db_internal *ip, const struct bn_tol *tol);
 }
 
 extern "C" void

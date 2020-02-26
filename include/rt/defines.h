@@ -171,18 +171,6 @@
 #define RT_DEFAULT_MINTIE               0       /* TODO: find the best value */
 
 
-/* Normally set when in production mode, setting the RT_G_DEBUG define
- * to 0 will allow chucks of code to poof away at compile time (since
- * they are truth-functionally constant (false)) This can boost
- * raytrace performance considerably (~10%).
- */
-#ifdef NO_DEBUG_CHECKING
-#  define RT_G_DEBUG 0
-#else
-#  define RT_G_DEBUG RTG.debug
-#endif
-
-
 #define BACKING_DIST    (-2.0)          /**< @brief  mm to look behind start point */
 #define OFFSET_DIST     0.01            /**< @brief  mm to advance point into box */
 

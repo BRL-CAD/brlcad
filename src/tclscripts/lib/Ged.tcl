@@ -202,6 +202,7 @@ package provide cadwidgets::Ged 1.0
 	method dbip {args}
 	method dbot_dump {args}
 	method dbversion {args}
+	method debug {args}
 	method debugbu {args}
 	method debugdir {args}
 	method debuglib {args}
@@ -1592,6 +1593,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::dbversion {args} {
     eval $mGed version $args
+}
+
+::itcl::body cadwidgets::Ged::debug {args} {
+    eval $mGed debug $args
 }
 
 ::itcl::body cadwidgets::Ged::debugbu {args} {
@@ -6237,6 +6242,7 @@ package provide cadwidgets::Ged 1.0
     $help add dbip		{{} {get dbip}}
     $help add dbot_dump	{{[-b] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] \n} {dump the displayed bots}}
     $help add dbversion		{{} {return the database version}}
+    $help add debug  		{{[args]} {control BRL-CAD library debugging}}
     $help add debugbu		{{[hex_code]} {activate libbu debugging}}
     $help add debugdir		{{} {dump of database directory}}
     $help add debuglib		{{[hex_code]} {activate librt debugging}}

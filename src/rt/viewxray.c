@@ -219,7 +219,7 @@ xrayhit(register struct application *ap, struct partition *PartHeadp, struct seg
 	return 0;
     }
 
-    if (R_DEBUG&RDEBUG_HITS)  {
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_HITS)  {
 	rt_pr_partition(ap->a_rt_i, pp );
     }
 

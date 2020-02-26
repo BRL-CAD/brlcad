@@ -31,7 +31,7 @@
 #include "brep.h"
 
 extern "C" {
-    extern void rt_sketch_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
+    extern void rt_sketch_brep(ON_Brep **bi, const struct rt_db_internal *ip, const struct bn_tol *tol);
 }
 
 

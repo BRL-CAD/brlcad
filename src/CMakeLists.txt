@@ -51,8 +51,8 @@ set(level_2_dirs
   libfb
   libgcv
   libanalyze
-  libged
   liboptical
+  libged
   libcursor
   libdm
   libfft
@@ -83,6 +83,7 @@ set(level_3_dirs
   nirt
   proc-db
   rt
+  art
   shapes
   sig
   util

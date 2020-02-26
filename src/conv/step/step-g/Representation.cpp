@@ -284,6 +284,20 @@ Representation::Print(int level)
     }
 }
 
+string
+Representation::Name()
+{
+    return name;
+}
+
+LIST_OF_REPRESENTATION_ITEMS *
+Representation::items_()
+{
+    return &items;
+}
+
+
+
 STEPEntity *
 Representation::GetInstance(STEPWrapper *sw, int id)
 {

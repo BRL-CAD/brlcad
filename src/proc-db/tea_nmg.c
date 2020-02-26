@@ -174,7 +174,7 @@ main(int argc, char **argv)
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    RTG.debug |= DEBUG_ALLRAYS;	/* Cause core dumps on bu_bomb(), but no extra messages */
+    rt_debug |= RT_DEBUG_ALLRAYS;	/* Cause core dumps on bu_bomb(), but no extra messages */
 
     while ((i=bu_getopt(argc, argv, "h?")) != -1) {
 	switch (i) {

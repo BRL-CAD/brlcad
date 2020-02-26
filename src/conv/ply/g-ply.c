@@ -660,7 +660,7 @@ Usage: %s [-v][-xX lvl][-a abs_tess_tol (default: 0.0)][-r rel_tess_tol (default
 		verbose++;
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
 		break;
 	    case 'D':
 		tol.dist = atof(bu_optarg);

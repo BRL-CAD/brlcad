@@ -1081,7 +1081,7 @@ main(int argc, char *argv[])
 		classic_mged = 1;
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
 		break;
 	    case 'X':
 		sscanf(bu_optarg, "%x", (unsigned int *)&bu_debug);

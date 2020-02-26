@@ -1,4 +1,5 @@
 set(bg_headers
+  aabb_ray.h
   chull.h
   defines.h
   lseg.h

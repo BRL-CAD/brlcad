@@ -473,7 +473,11 @@ proc ia_invoke { w } {
 	    .$id.t tag add oldcmd promptEnd insert
 
 	    if {$ia_msg != ""} {
-		mged_print_tag $w $ia_msg\n result
+		if {[string index $ia_msg end] == "\n"} {
+		    mged_print_tag $w "$ia_msg" result
+		} else {
+		    mged_print_tag $w "$ia_msg\n" result
+		}
 	    }
 
 	    distribute_text $w $hcmd $ia_msg

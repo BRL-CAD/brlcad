@@ -136,7 +136,7 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 
 	    bu_semaphore_release(RT_SEM_MODEL);
 
-	    if (RT_G_DEBUG & (DEBUG_DB|DEBUG_SOLIDS)) {
+	    if (RT_G_DEBUG & (RT_DEBUG_DB|RT_DEBUG_SOLIDS)) {
 		bu_log("rt_submodel_prep(%s): Re-used already prepped database %s, rtip=%p\n",
 		       stp->st_dp->d_namep,
 		       sub_dbip->dbi_filename,
@@ -154,7 +154,7 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 
     bu_semaphore_release(RT_SEM_MODEL);
 
-    if (RT_G_DEBUG & (DEBUG_DB|DEBUG_SOLIDS)) {
+    if (RT_G_DEBUG & (RT_DEBUG_DB|RT_DEBUG_SOLIDS)) {
 	bu_log("rt_submodel_prep(%s): Opened database %s\n",
 	       stp->st_dp->d_namep, sub_dbip->dbi_filename);
     }
@@ -230,7 +230,7 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     VSCALE(radvec, diam, 0.5);
     stp->st_aradius = stp->st_bradius = MAGNITUDE(radvec);
 
-    if (RT_G_DEBUG & (DEBUG_DB|DEBUG_SOLIDS)) {
+    if (RT_G_DEBUG & (RT_DEBUG_DB|RT_DEBUG_SOLIDS)) {
 	bu_log("rt_submodel_prep(%s): finished loading database %s\n",
 	       stp->st_dp->d_namep, sub_dbip->dbi_filename);
     }
@@ -630,7 +630,7 @@ rt_submodel_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path 
     if (gp)
 	RT_CK_DBI(gp->dbip);
 
-    if (RT_G_DEBUG&DEBUG_TREEWALK) {
+    if (RT_G_DEBUG&RT_DEBUG_TREEWALK) {
 	char *sofar = db_path_to_string(pathp);
 
 	bu_log("rt_submodel_wireframe_leaf(%s) path=%s\n",

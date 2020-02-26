@@ -44,7 +44,10 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
 
+find_package(Threads)
+
 add_executable(env2c env2c.cxx)
+target_link_libraries(env2c ${CMAKE_THREAD_LIBS_INIT})
 
 # Local Variables:
 # tab-width: 8

@@ -726,10 +726,11 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 	for (BU_PTBL_FOR(entry, (directory **), &found)) {
 	    comb_to_region(db, (*entry)->d_namep);
 
-	    if (gcv_options.debug_mode) {
-		// random colors debug mode: TODO: move this into a filter after 7.26.0
+	    if (gcv_options.randomize_colors) {
+		// random colors mode: TODO: move this into a filter after 7.26.0
 		std::string rgb;
 
+		// TODO - use bu_color for this...
 		for (std::size_t i = 0; i < 3; ++i)
 		    rgb.append(lexical_cast<std::string>(static_cast<unsigned>
 							 (drand48() * 255.0 + 0.5)) + (i != 2 ? "/" : ""));

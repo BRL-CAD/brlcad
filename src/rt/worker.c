@@ -59,7 +59,7 @@ extern int timeTable_input(int x, int y, fastf_t t, fastf_t **timeTable);
 extern int query_x;
 extern int query_y;
 extern int Query_one_pixel;
-extern int query_rdebug;
+extern int query_optical_debug;
 extern int query_debug;
 
 extern unsigned char *pixmap;	/* pixmap for rerendering of black pixels */
@@ -200,10 +200,10 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 
     if (Query_one_pixel) {
 	if (a.a_x == query_x && a.a_y == query_y) {
-	    rdebug = query_rdebug;
-	    RTG.debug = query_debug;
+	    optical_debug = query_optical_debug;
+	    rt_debug = query_debug;
 	} else {
-	    RTG.debug = rdebug = 0;
+	    rt_debug = optical_debug = 0;
 	}
     }
 

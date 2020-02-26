@@ -40,6 +40,9 @@ add_subdirectory(ged)
 # Geometry Conversion Regression Tests
 add_subdirectory(gcv)
 
+# NURBS Regression Tests
+add_subdirectory(nurbs)
+
 # Burst Regression Tests
 add_subdirectory(burst)
 
@@ -145,7 +148,6 @@ CMAKEFILES(
   moss.ref.pix
   moss.sh
   nirt.sh
-  nurbs/brep-3dm.tar.bz2
   red.sh
   repository.sh
   rtedge.ref.pix.gz
@@ -203,26 +205,36 @@ set(regress_outfiles
   comgeom.t-v4.g
   comgeom.t-v5.g
   density_table.txt
-  dsp.2-1.bw
-  dsp.2-1.dsp
-  dsp.2-1.g
-  dsp.2-1.log
-  dsp.2-2.bw
-  dsp.2-2.dsp
-  dsp.2-2.g
-  dsp.2-2.log
-  dsp.2-3.bw
-  dsp.2-3.dsp
-  dsp.2-3.g
-  dsp.2-3.log
-  dsp.2-4.bw
-  dsp.2-4.dsp
-  dsp.2-4.g
-  dsp.2-4.log
-  dsp.2-5.bw
-  dsp.2-5.dsp
-  dsp.2-5.g
-  dsp.2-5.log
+  dsp-2-1.bw
+  dsp-2-1.dsp
+  dsp-2-1.g
+  dsp-2-1.log
+  dsp-2-1.pix
+  dsp-2-1.rt.pix
+  dsp-2-2.bw
+  dsp-2-2.dsp
+  dsp-2-2.g
+  dsp-2-2.log
+  dsp-2-2.pix
+  dsp-2-2.rt.pix
+  dsp-2-3.bw
+  dsp-2-3.dsp
+  dsp-2-3.g
+  dsp-2-3.log
+  dsp-2-3.pix
+  dsp-2-3.rt.pix
+  dsp-2-4.bw
+  dsp-2-4.dsp
+  dsp-2-4.g
+  dsp-2-4.log
+  dsp-2-4.pix
+  dsp-2-4.rt.pix
+  dsp-2-5.bw
+  dsp-2-5.dsp
+  dsp-2-5.g
+  dsp-2-5.log
+  dsp-2-5.pix
+  dsp-2-5.rt.pix
   dsp.log
   gqa.adj_air.plot3
   gqa.exp_air.plot3

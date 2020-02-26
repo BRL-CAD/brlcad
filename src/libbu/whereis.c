@@ -35,6 +35,7 @@
 #endif
 
 /* common headers */
+#include "bu/app.h"
 #include "bu/debug.h"
 #include "bu/file.h"
 #include "bu/log.h"

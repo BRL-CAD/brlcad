@@ -223,6 +223,22 @@ int es_menu;		/* item selected from menu */
 #define MENU_HYP_C		130
 #define MENU_HYP_ROT_H		131
 
+#define PARAM_1ARG (es_edflag == SSCALE || \
+		    es_edflag == PSCALE || \
+		    es_edflag == ECMD_BOT_THICK || \
+		    es_edflag == ECMD_VOL_THRESH_LO || \
+		    es_edflag == ECMD_VOL_THRESH_HI || \
+		    es_edflag == ECMD_DSP_SCALE_X || \
+		    es_edflag == ECMD_DSP_SCALE_Y || \
+		    es_edflag == ECMD_DSP_SCALE_ALT || \
+		    es_edflag == ECMD_EBM_HEIGHT || \
+		    es_edflag == ECMD_CLINE_SCALE_H || \
+		    es_edflag == ECMD_CLINE_SCALE_R || \
+		    es_edflag == ECMD_CLINE_SCALE_T || \
+		    es_edflag == ECMD_EXTR_SCALE_H)
+#define PARAM_2ARG (es_edflag == ECMD_DSP_FSIZE || \
+		    es_edflag == ECMD_EBM_FSIZE)
+
 struct menu_item cline_menu[] = {
     { "CLINE MENU",		(void (*)())NULL, 0 },
     { "Set H",		cline_ed, ECMD_CLINE_SCALE_H },
@@ -4006,22 +4022,22 @@ sedit(void)
 		RT_EBM_CK_MAGIC(ebm);
 
 		if (inpara == 2) {
-		    if (stat(ebm->file, &stat_buf)) {
-			Tcl_AppendResult(INTERP, "Cannot get status of file ", ebm->file, (char *)NULL);
+		    if (stat(ebm->name, &stat_buf)) {
+			Tcl_AppendResult(INTERP, "Cannot get status of ebm data source ", ebm->name, (char *)NULL);
 			mged_print_result(TCL_ERROR);
 			return;
 		    }
 		    need_size = es_para[0] * es_para[1] * sizeof(unsigned char);
 		    if (stat_buf.st_size < need_size) {
-			Tcl_AppendResult(INTERP, "File (", ebm->file,
-					 ") is too small, set file name first", (char *)NULL);
+			Tcl_AppendResult(INTERP, "File (", ebm->name,
+					 ") is too small, set data source name first", (char *)NULL);
 			mged_print_result(TCL_ERROR);
 			return;
 		    }
 		    ebm->xdim = es_para[0];
 		    ebm->ydim = es_para[1];
 		} else if (inpara > 0) {
-		    Tcl_AppendResult(INTERP, "width and length of file are required\n", (char *)NULL);
+		    Tcl_AppendResult(INTERP, "width and length of data source are required\n", (char *)NULL);
 		    mged_print_result(TCL_ERROR);
 		    return;
 		}
@@ -4038,7 +4054,7 @@ sedit(void)
 
 		RT_EBM_CK_MAGIC(ebm);
 
-		fname = get_file_name(ebm->file);
+		fname = get_file_name(ebm->name);
 		if (fname) {
 		    struct bu_vls message = BU_VLS_INIT_ZERO;
 
@@ -4057,7 +4073,7 @@ sedit(void)
 			mged_print_result(TCL_ERROR);
 			return;
 		    }
-		    bu_strlcpy(ebm->file, fname, RT_EBM_NAME_LEN);
+		    bu_strlcpy(ebm->name, fname, RT_EBM_NAME_LEN);
 		}
 
 		break;
@@ -7826,7 +7842,7 @@ mged_param(Tcl_Interp *interp, int argc, fastf_t *argvect)
 	es_para[ inpara++ ] = argvect[i];
     }
 
-    if (es_edflag == PSCALE || es_edflag == SSCALE || es_edflag == ECMD_BOT_THICK) {
+    if (PARAM_1ARG) {
 	if (inpara != 1) {
 	    Tcl_AppendResult(interp, "ERROR: only one argument needed\n", (char *)NULL);
 	    inpara = 0;
@@ -7848,6 +7864,22 @@ mged_param(Tcl_Interp *interp, int argc, fastf_t *argvect)
 		inpara = 0;
 		return TCL_ERROR;
 	    }
+	}
+    } else if (PARAM_2ARG) {
+	if (inpara != 2) {
+	    Tcl_AppendResult(interp, "ERROR: two arguments needed\n", (char *)NULL);
+	    inpara = 0;
+	    return TCL_ERROR;
+	}
+
+	if (es_para[0] <= 0.0) {
+	    Tcl_AppendResult(interp, "ERROR: X SIZE <= 0\n", (char *)NULL);
+	    inpara = 0;
+	    return TCL_ERROR;
+	} else if (es_para[1] <= 0.0) {
+	    Tcl_AppendResult(interp, "ERROR: Y SIZE <= 0\n", (char *)NULL);
+	    inpara = 0;
+	    return TCL_ERROR;
 	}
     } else {
 	if (inpara != 3) {

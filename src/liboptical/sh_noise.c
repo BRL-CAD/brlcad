@@ -202,7 +202,7 @@ noise_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, cons
     RT_CK_REGION(rp);
 
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_log("noise_setup(%s, %s) (%s)\n",
 	       rp->reg_name, bu_vls_addr(matparm),
 	       rp->reg_mater.ma_shader);
@@ -257,7 +257,7 @@ found:
     noise_sp->nsd = 1.0 /
 	pow(noise_sp->lacunarity, noise_sp->octaves);
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	bu_struct_print(" Parameters:", noise_print_tab, (char *)noise_sp);
 	bn_mat_print("m_to_sh", noise_sp->m_to_sh);
     }
@@ -297,12 +297,12 @@ norm_noise(fastf_t *pt, double val, struct noise_specific *noise_sp, double (*fu
      * Convert the normal to shader space, get u, v coordinate system
      */
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	VPRINT("Model space Normal", swp->sw_hit.hit_normal);
     }
     MAT4X3VEC(N, noise_sp->m_to_sh, swp->sw_hit.hit_normal);
     VUNITIZE(N);
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	VPRINT("Shader space Normal", N);
     }
 
@@ -336,13 +336,13 @@ norm_noise(fastf_t *pt, double val, struct noise_specific *noise_sp, double (*fu
 
     MAT4X3VEC(N, v_mat, tmp);
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	VPRINT("old normal", swp->sw_hit.hit_normal);
     }
 
     MAT4X3VEC(swp->sw_hit.hit_normal, noise_sp->sh_to_m, N);
     VUNITIZE(swp->sw_hit.hit_normal);
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	VPRINT("new normal", swp->sw_hit.hit_normal);
     }
 }
@@ -368,7 +368,7 @@ fractal_render(struct application *ap, const struct partition *pp, struct shadew
     RT_CHECK_PT(pp);
     CK_noise_SP(noise_sp);
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_struct_print("noise_render Parameters:", noise_print_tab, (char *)noise_sp);
 
     /* If we are performing the shading in "region" space, we must
@@ -377,7 +377,7 @@ fractal_render(struct application *ap, const struct partition *pp, struct shadew
      */
     MAT4X3PNT(pt, noise_sp->m_to_sh, swp->sw_hit.hit_point);
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	bu_log("%s:%d noise_render(%s) model:(%g %g %g) shader:(%g %g %g)\n",
 	       __FILE__, __LINE__,
 	       noise_mfuncs[noise_sp->shader_number].mf_name,

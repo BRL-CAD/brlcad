@@ -32,7 +32,7 @@
 
 extern "C" {
     extern void rt_ebm_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
-    extern void rt_nmg_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
+    extern void rt_nmg_brep(ON_Brep **bi, const struct rt_db_internal *ip, const struct bn_tol *tol);
 }
 
 

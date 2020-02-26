@@ -133,7 +133,7 @@ shade_inputs(struct application *ap, const struct partition *pp, struct shadewor
 		!BN_VECT_ARE_PERP(f, &(ap->a_rt_i->rti_tol))) {
 		static int reported = 0;
 
-		if (reported < 100 || (R_DEBUG&RDEBUG_SHADE)) {
+		if (reported < 100 || (OPTICAL_DEBUG&OPTICAL_DEBUG_SHADE)) {
 		    bu_log("shade_inputs(%s) flip N xy=%d, %d %s surf=%d dot=%g\n",
 			   pp->pt_inseg->seg_stp->st_name,
 			   ap->a_x, ap->a_y,
@@ -146,7 +146,7 @@ shade_inputs(struct application *ap, const struct partition *pp, struct shadewor
 		}
 		reported++;
 
-		if (R_DEBUG&RDEBUG_SHADE) {
+		if (OPTICAL_DEBUG&OPTICAL_DEBUG_SHADE) {
 		    VPRINT("Dir ", ap->a_ray.r_dir);
 		    VPRINT("Norm", swp->sw_hit.hit_normal);
 		}
@@ -154,14 +154,14 @@ shade_inputs(struct application *ap, const struct partition *pp, struct shadewor
 		VREVERSE(swp->sw_hit.hit_normal, swp->sw_hit.hit_normal);
 	    }
 	}
-	if (R_DEBUG&(RDEBUG_RAYPLOT|RDEBUG_SHADE)) {
+	if (OPTICAL_DEBUG&(OPTICAL_DEBUG_RAYPLOT|OPTICAL_DEBUG_SHADE)) {
 	    point_t endpt;
 	    fastf_t f;
 	    /* Plot the surface normal -- green/blue */
 	    f = ap->a_rt_i->rti_radius * 0.02;
 	    VJOIN1(endpt, swp->sw_hit.hit_point,
 		   f, swp->sw_hit.hit_normal);
-	    if (R_DEBUG&RDEBUG_RAYPLOT) {
+	    if (OPTICAL_DEBUG&OPTICAL_DEBUG_RAYPLOT) {
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
 		pl_color(stdout, 0, 255, 255);
 		pdv_3line(stdout, swp->sw_hit.hit_point, endpt);
@@ -244,7 +244,7 @@ viewshade(struct application *ap, const struct partition *pp, struct shadework *
     RT_CK_MF(mfp);
 
     if (!swp || !mfp) {
-	if (R_DEBUG&RDEBUG_SHADE) {
+	if (OPTICAL_DEBUG&OPTICAL_DEBUG_SHADE) {
 	    bu_log("ERROR: NULL shadework or mfuncs structure encountered\n");
 	}
 	return 0;
@@ -252,7 +252,7 @@ viewshade(struct application *ap, const struct partition *pp, struct shadework *
 
     want = mfp->mf_inputs;
 
-    if (R_DEBUG&RDEBUG_SHADE) {
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_SHADE) {
 	bu_log("viewshade(%s)\n Using \"%s\" shader, ",
 	       rp->reg_name, mfp->mf_name);
 	bu_printb("mfp_inputs", want, MFI_FORMAT);
@@ -307,7 +307,7 @@ viewshade(struct application *ap, const struct partition *pp, struct shadework *
 	}
     }
 
-    if (R_DEBUG&RDEBUG_SHADE) {
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_SHADE) {
 	pr_shadework("before mf_render", swp);
     }
 
@@ -316,7 +316,7 @@ viewshade(struct application *ap, const struct partition *pp, struct shadework *
     if (mfp && mfp->mf_render)
 	(void)mfp->mf_render(ap, pp, swp, rp->reg_udata);
 
-    if (R_DEBUG&RDEBUG_SHADE) {
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_SHADE) {
 	pr_shadework("after mf_render", swp);
 	bu_log("\n");
     }

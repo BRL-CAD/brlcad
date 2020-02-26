@@ -47,7 +47,7 @@ db5_scan(
     off_t addr;
 
     RT_CK_DBI(dbip);
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db5_scan(%p, %lx)\n",
+    if (RT_G_DEBUG&RT_DEBUG_DB) bu_log("db5_scan(%p, %lx)\n",
 				    (void *)dbip, (long unsigned int)handler);
 
     raw.magic = DB5_RAW_INTERNAL_MAGIC;
@@ -195,7 +195,7 @@ db5_diradd(struct db_i *dbip,
 
     RT_CK_DBI(dbip);
 
-    if (client_data && RT_G_DEBUG&DEBUG_DB) {
+    if (client_data && RT_G_DEBUG&RT_DEBUG_DB) {
 	bu_log("WARNING: db5_diradd() received non-NULL client_data\n");
     }
 
@@ -286,7 +286,7 @@ db5_diradd_handler(
     /* If somehow it doesn't have a name, ignore it */
     if (rip->name.ext_buf == NULL) return;
 
-    if (RT_G_DEBUG&DEBUG_DB) {
+    if (RT_G_DEBUG&RT_DEBUG_DB) {
 	bu_log("db5_diradd_handler(dbip=%p, name='%s', addr=%jd, len=%zu)\n",
 	       (void *)dbip, rip->name.ext_buf, (intmax_t)laddr, rip->object_length);
     }
