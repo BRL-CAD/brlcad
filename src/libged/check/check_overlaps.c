@@ -321,10 +321,12 @@ int check_overlaps(struct current_state *state,
     analyze_register_overlaps_callback(state, overlap, &callbackdata);
 
     if (perform_raytracing(state, dbip, tobjtab, tnobjs, ANALYSIS_OVERLAPS)) {
-	for (BU_LIST_FOR(op, overlap_list, &(overlapList.l))){
-	   bu_free(op->reg1, "reg1 name");
-	   bu_free(op->reg2, "reg1 name");
-	   bu_free(op, "overlap_list");
+	while (BU_LIST_WHILE(op, overlap_list, &(overlapList.l))){
+	    bu_free(op->reg1, "reg1 name");
+	    bu_free(op->reg2, "reg1 name");
+
+	    BU_LIST_DEQUEUE(&(op->l));
+	    BU_PUT(op, struct overlap_list);
 	}
 	return GED_ERROR;
     }
@@ -343,10 +345,12 @@ int check_overlaps(struct current_state *state,
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "\nplot file saved as %s",name);
     }
 
-    for (BU_LIST_FOR(op, overlap_list, &(overlapList.l))){
+    while (BU_LIST_WHILE(op, overlap_list, &(overlapList.l))) {
 	bu_free(op->reg1, "reg1 name");
 	bu_free(op->reg2, "reg1 name");
-	bu_free(op, "overlap_list");
+
+	BU_LIST_DEQUEUE(&(op->l));
+	BU_PUT(op, struct overlap_list);
     }
 
     return GED_OK;
