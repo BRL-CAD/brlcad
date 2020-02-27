@@ -248,7 +248,7 @@ ged_pull(struct ged *gedp, int argc, const char *argv[])
     while ((c = bu_getopt(argc, (char * const *)argv, "d")) != -1) {
 	switch (c) {
 	   case 'd':
-		RTG.debug |= DEBUG_TREEWALK;
+		rt_debug |= RT_DEBUG_TREEWALK;
 		break;
 	  case '?':
 	  default:

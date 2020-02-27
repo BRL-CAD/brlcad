@@ -214,7 +214,7 @@ setup(register struct region *rp, struct bu_vls *matparm, void **dpp, struct rt_
     BU_GET(camo_sp, struct camo_specific);
     *dpp = camo_sp;
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	bu_log("%s'%s'\n", parameters, bu_vls_addr(matparm));
     }
     memcpy(camo_sp, &defaults, sizeof(struct camo_specific));
@@ -249,7 +249,7 @@ setup(register struct region *rp, struct bu_vls *matparm, void **dpp, struct rt_
     tmp[MDZ] = camo_sp->noise_delta[2];
     bn_mat_mul2(tmp, camo_sp->xform);
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	bu_struct_print(rp->reg_name, camo_print_tab,
 			(char *)camo_sp);
 	bn_mat_print("xform", camo_sp->xform);
@@ -301,7 +301,7 @@ camo_render(struct application *ap, const struct partition *pp, struct shadework
     RT_CHECK_PT(pp);
     CK_camo_SP(camo_sp);
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_struct_print("foo", camo_parse, (char *)camo_sp);
 
     /* Optional: transform hit point into "shader-space coordinates" */
@@ -352,7 +352,7 @@ marble_render(struct application *ap, const struct partition *pp, struct shadewo
     RT_CHECK_PT(pp);
     CK_camo_SP(camo_sp);
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_struct_print("foo", camo_parse, (char *)camo_sp);
 
     /* Optional: transform hit point into "shader-space coordinates" */

@@ -101,14 +101,14 @@ db5_realloc(struct db_i *dbip, struct directory *dp, struct bu_external *ep)
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
     BU_CK_EXTERNAL(ep);
-    if (RT_G_DEBUG & DEBUG_DB)
+    if (RT_G_DEBUG & RT_DEBUG_DB)
 	bu_log("db5_realloc(%s) dbip=%p, dp=%p, ext_nbytes=%ld\n",
 	       dp->d_namep, (void *)dbip, (void *)dp, ep->ext_nbytes);
 
     BU_ASSERT((ep->ext_nbytes&7) == 0);
 
     if (dp->d_addr != RT_DIR_PHONY_ADDR && ep->ext_nbytes == dp->d_len) {
-	if (RT_G_DEBUG&DEBUG_DB)
+	if (RT_G_DEBUG&RT_DEBUG_DB)
 	    bu_log("db5_realloc(%s) current allocation is exactly right.\n", dp->d_namep);
 	return 0;
     }
@@ -119,12 +119,12 @@ db5_realloc(struct db_i *dbip, struct directory *dp, struct bu_external *ep)
 
     if (dp->d_flags & RT_DIR_INMEM) {
 	if (dp->d_un.ptr) {
-	    if (RT_G_DEBUG&DEBUG_DB)
+	    if (RT_G_DEBUG&RT_DEBUG_DB)
 		bu_log("db5_realloc(%s) bu_realloc()ing memory resident object\n", dp->d_namep);
 	    dp->d_un.ptr = bu_realloc(dp->d_un.ptr,
 				      ep->ext_nbytes, "db5_realloc() d_un.ptr");
 	} else {
-	    if (RT_G_DEBUG&DEBUG_DB)
+	    if (RT_G_DEBUG&RT_DEBUG_DB)
 		bu_log("db5_realloc(%s) bu_malloc()ing memory resident object\n", dp->d_namep);
 	    dp->d_un.ptr = bu_malloc(ep->ext_nbytes, "db5_realloc() d_un.ptr");
 	}
@@ -147,7 +147,7 @@ db5_realloc(struct db_i *dbip, struct directory *dp, struct bu_external *ep)
 
     /* If the object is getting smaller... */
     if (ep->ext_nbytes < dp->d_len) {
-	if (RT_G_DEBUG&DEBUG_DB)
+	if (RT_G_DEBUG&RT_DEBUG_DB)
 	    bu_log("db5_realloc(%s) object is getting smaller\n", dp->d_namep);
 
 	/* First, erase front half of storage to desired size. */
@@ -170,7 +170,7 @@ db5_realloc(struct db_i *dbip, struct directory *dp, struct bu_external *ep)
 
     /* Start by zapping existing database object into a free object */
     if (dp->d_addr != RT_DIR_PHONY_ADDR) {
-	if (RT_G_DEBUG & DEBUG_DB)
+	if (RT_G_DEBUG & RT_DEBUG_DB)
 	    bu_log("db5_realloc(%s) releasing storage at %jd, len=%zu\n",
 		   dp->d_namep, (intmax_t)dp->d_addr, dp->d_len);
 
@@ -188,7 +188,7 @@ db5_realloc(struct db_i *dbip, struct directory *dp, struct bu_external *ep)
 	off_t newaddr;
 
 	if ((mmp = rt_memalloc_nosplit(&(dbip->dbi_freep), ep->ext_nbytes)) != MAP_NULL) {
-	    if (RT_G_DEBUG&DEBUG_DB)
+	    if (RT_G_DEBUG&RT_DEBUG_DB)
 		bu_log("db5_realloc(%s) obtained free block at %jd, len=%zu\n",
 		       dp->d_namep, (intmax_t)mmp->m_addr, mmp->m_size);
 	    BU_ASSERT((size_t)mmp->m_size >= (size_t)ep->ext_nbytes);
@@ -203,7 +203,7 @@ db5_realloc(struct db_i *dbip, struct directory *dp, struct bu_external *ep)
 		/* Reformat and free the surplus */
 		dp->d_addr = mmp->m_addr + (off_t)ep->ext_nbytes;
 		dp->d_len = mmp->m_size - ep->ext_nbytes;
-		if (RT_G_DEBUG&DEBUG_DB)
+		if (RT_G_DEBUG&RT_DEBUG_DB)
 		    bu_log("db5_realloc(%s) returning surplus at %jd, len=%zu\n",
 			   dp->d_namep, (intmax_t)dp->d_addr, dp->d_len);
 		if (db5_write_free(dbip, dp, dp->d_len) < 0) return -1;
@@ -213,7 +213,7 @@ db5_realloc(struct db_i *dbip, struct directory *dp, struct bu_external *ep)
 	    dp->d_addr = newaddr;
 	    dp->d_len = ep->ext_nbytes;
 	    /* Erase the new place */
-	    if (RT_G_DEBUG&DEBUG_DB)
+	    if (RT_G_DEBUG&RT_DEBUG_DB)
 		bu_log("db5_realloc(%s) utilizing free block at addr=%jd, len=%zu\n",
 		       dp->d_namep, (intmax_t)dp->d_addr, dp->d_len);
 	    if (db5_write_free(dbip, dp, dp->d_len) < 0) return -1;
@@ -225,7 +225,7 @@ db5_realloc(struct db_i *dbip, struct directory *dp, struct bu_external *ep)
     dp->d_addr = dbip->dbi_eof;
     dbip->dbi_eof += (off_t)ep->ext_nbytes;
     dp->d_len = ep->ext_nbytes;
-    if (RT_G_DEBUG & DEBUG_DB)
+    if (RT_G_DEBUG & RT_DEBUG_DB)
 	bu_log("db5_realloc(%s) extending database addr=%jd, len=%zu\n",
 	       dp->d_namep, (intmax_t)dp->d_addr, dp->d_len);
     return 0;

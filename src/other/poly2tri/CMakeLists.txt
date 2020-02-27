@@ -8,10 +8,7 @@ project(Poly2Tri)
 set(P2T_LIB_NAME p2t)
 
 # Testing option
-if(NOT DEFINED P2T_TESTS)
-  set(P2T_TESTS OFF)
-endif(NOT DEFINED P2T_TESTS)
-OPTION(P2T_TESTS "Build libp2t tests" ${P2T_TESTS})
+option(P2T_TESTS "Build libp2t tests" OFF)
 mark_as_advanced(P2T_TESTS)
 if(P2T_TESTS)
   include(CTest)

@@ -1157,6 +1157,7 @@ static struct to_cmdtab to_cmds[] = {
     {"dbfind",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_find},
     {"dbip",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_dbip},
     {"dbot_dump",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_dbot_dump},
+    {"debug", 	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_debug},
     {"debugbu", 	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_debugbu},
     {"debugdir",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_debugdir},
     {"debuglib",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_debuglib},

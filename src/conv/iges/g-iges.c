@@ -262,7 +262,7 @@ main(int argc, char *argv[])
 		tol.dist_sq = tol.dist * tol.dist;
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
 		break;
 	    case 'X':
 		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
@@ -506,7 +506,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 
     BU_LIST_INIT(&vhead);
 
-    if (RT_G_DEBUG&DEBUG_TREEWALK || verbose) {
+    if (RT_G_DEBUG&RT_DEBUG_TREEWALK || verbose) {
 	char *sofar = db_path_to_string(pathp);
 	bu_log("\ndo_nmg_region_end(%d %d%%) %s\n",
 	       regions_tried,

@@ -23,6 +23,11 @@
  *
  */
 
+
+#ifndef RT_UV_H
+#define RT_UV_H
+
+
 #include "common.h"
 
 #include "bu/vls.h"
@@ -30,6 +35,9 @@
 #include "vmath.h"
 #include "rt/geom.h"
 #include "rt/functab.h"
+
+
+__BEGIN_DECLS
 
 
 /*
@@ -125,6 +133,12 @@ struct uvcoord;
  */
 RT_EXPORT int
 rt_texture_lookup(fastf_t *data, const struct rt_texture *tp, const struct uvcoord *uvp);
+
+
+__END_DECLS
+
+
+#endif
 
 
 /*

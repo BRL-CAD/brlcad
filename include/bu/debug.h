@@ -38,7 +38,7 @@ __BEGIN_DECLS
 /**
  * controls the libbu debug level
  */
-BU_EXPORT extern int bu_debug;
+BU_EXPORT extern unsigned int bu_debug;
 
 /**
  * Section for BU_DEBUG values
@@ -61,8 +61,8 @@ BU_EXPORT extern int bu_debug;
 #define BU_DEBUG_ATTACH         0x00000080      /* Waits for a debugger to attach during a crash */
 
 #define BU_DEBUG_MATH           0x00000100      /* Fundamental math routines (plane.c, mat.c) */
-#define BU_DEBUG_PTBL           0x00000200      /* bu_ptbl_*() logging */
-#define BU_DEBUG_AVS            0x00000400      /* bu_avs_*() logging */
+#define BU_DEBUG_PTBL           0x00000200      /* bu_ptbl_() logging */
+#define BU_DEBUG_AVS            0x00000400      /* bu_avs_() logging */
 #define BU_DEBUG_MAPPED_FILE    0x00000800      /* bu_mapped_file logging */
 
 #define BU_DEBUG_PATHS          0x00001000      /* File and path debug logging */

@@ -82,7 +82,7 @@ struct nurb_hit {
 
 
 #ifdef CONVERT_TO_BREP
-    extern void rt_nurb_brep(ON_Brep **b, struct rt_db_internal *ip, const struct bn_tol *tol);
+    extern void rt_nurb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol);
 
     extern int rt_brep_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip);
     extern void rt_brep_print(const struct soltab *stp);
@@ -363,7 +363,7 @@ rt_nurb_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	    while (hp != (struct nmg_nurb_uv_hit *)0) {
 		struct nmg_nurb_uv_hit * o;
 
-		if (RT_G_DEBUG & DEBUG_SPLINE)
+		if (RT_G_DEBUG & RT_DEBUG_SPLINE)
 		    bu_log("hit at %d %d sub = %d u = %f v = %f\n",
 			   ap->a_x, ap->a_y, hp->sub, hp->u, hp->v);
 

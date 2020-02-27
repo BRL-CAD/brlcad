@@ -91,7 +91,8 @@ static char *p_hf[] = {
 
 
 static char *p_ebm[] = {
-    "Enter name of bit-map file: ",
+    "Take data from file or database binary object [f|o]: ",
+    "Enter name of file/object: ",
     "Enter width of bit-map (number of cells): ",
     "Enter height of bit-map (number of cells): ",
     "Enter extrusion distance: "
@@ -770,11 +771,22 @@ ebm_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     intern->idb_ptr = (void *)ebm;
     ebm->magic = RT_EBM_INTERNAL_MAGIC;
 
-    bu_strlcpy(ebm->file, cmd_argvs[3], RT_EBM_NAME_LEN);
-    ebm->xdim = atoi(cmd_argvs[4]);
-    ebm->ydim = atoi(cmd_argvs[5]);
-    ebm->tallness = atof(cmd_argvs[6]) * gedp->ged_wdbp->dbip->dbi_local2base;
+    bu_strlcpy(ebm->name, cmd_argvs[4], RT_EBM_NAME_LEN);
+    ebm->xdim = atoi(cmd_argvs[5]);
+    ebm->ydim = atoi(cmd_argvs[6]);
+    ebm->tallness = atof(cmd_argvs[7]) * gedp->ged_wdbp->dbip->dbi_local2base;
     MAT_IDN(ebm->mat);
+
+    ebm->buf = NULL;
+    ebm->mp = NULL;
+    ebm->bip = NULL;
+
+    if (*cmd_argvs[3] == 'f' || *cmd_argvs[3] == 'F')
+	ebm->datasrc = RT_EBM_SRC_FILE;
+    else if (*cmd_argvs[3] == 'o' || *cmd_argvs[3] == 'O')
+	ebm->datasrc = RT_EBM_SRC_OBJ;
+    else
+	return GED_ERROR;
 
     return GED_OK;
 }
@@ -3153,7 +3165,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
      rec|trc|rcc|box|raw|rpp|rpc|rhc|epa|ehy|hyp|eto|superell|hrt>
     */
     if (BU_STR_EQUAL(argv[2], "ebm")) {
-	nvals = 4;
+	nvals = 5;
 	menu = p_ebm;
 	fn_in = ebm_in;
     } else if (BU_STR_EQUAL(argv[2], "arbn")) {

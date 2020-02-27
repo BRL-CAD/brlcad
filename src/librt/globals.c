@@ -34,6 +34,9 @@
 
 #include "raytrace.h"
 #include "rt/db4.h"
+#include "rt/debug.h"
+
+unsigned int rt_debug = 0;
 
 struct rt_g RTG = RT_G_INIT_ZERO;
 

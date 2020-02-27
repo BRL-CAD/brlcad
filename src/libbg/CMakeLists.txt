@@ -9,6 +9,7 @@ set(BG_INCLUDE_DIRS
 BRLCAD_LIB_INCLUDE_DIRS(bg BG_INCLUDE_DIRS "")
 
 set(LIBBG_SOURCES
+  aabb_ray.c
   chull.c
   chull2.cpp
   QuickHull.cpp

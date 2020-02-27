@@ -2919,7 +2919,7 @@ fastgen4_read(struct gcv_context *context, const struct gcv_opts *gcv_options, c
     }
 
     if (bu_debug) {
-	bu_printb("librtbu_debug", bu_debug, DEBUG_FORMAT);
+	bu_printb("librtbu_debug", bu_debug, RT_DEBUG_FORMAT);
 	bu_log("\n");
     }
     if (nmg_debug) {

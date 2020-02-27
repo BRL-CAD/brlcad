@@ -215,7 +215,7 @@ static int pass;			/* Pass number (0 -> only make names, 1-> do geometry) */
 static int bot=0;			/* Flag: >0 -> There are BOT's in current component */
 static int warnings=0;		/* Flag: >0 -> Print warning messages */
 static int debug=0;		/* Debug flag */
-static int rt_debug=0;		/* RT_G_DEBUG */
+static int frt_debug=0;		/* RT_G_DEBUG */
 static int quiet=0;		/* flag to not blather */
 static int comp_count=0;		/* Count of components in FASTGEN4 file */
 static int f4_do_skips=0;		/* flag indicating that not all components will be processed */
@@ -2753,8 +2753,8 @@ main(int argc, char **argv)
 		warnings = 1;
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
-		bu_debug = rt_debug;
+		sscanf(bu_optarg, "%x", (unsigned int *)&frt_debug);
+		bu_debug = frt_debug;
 		break;
 	    case 'b':
 		sscanf(bu_optarg, "%x", (unsigned int *)&bu_debug);
@@ -2790,7 +2790,7 @@ main(int argc, char **argv)
     }
 
     if (bu_debug) {
-	bu_printb("librtbu_debug", bu_debug, DEBUG_FORMAT);
+	bu_printb("librtbu_debug", bu_debug, RT_DEBUG_FORMAT);
 	bu_log("\n");
     }
     if (nmg_debug) {

@@ -46,7 +46,7 @@ mk_ebm(struct rt_wdb *fp, const char *name, const char *file, size_t xdim, size_
 
     BU_ALLOC(ebm, struct rt_ebm_internal);
     ebm->magic = RT_EBM_INTERNAL_MAGIC;
-    bu_strlcpy(ebm->file, file, RT_EBM_NAME_LEN);
+    bu_strlcpy(ebm->name, file, RT_EBM_NAME_LEN);
     ebm->xdim = xdim;
     ebm->ydim = ydim;
     ebm->tallness = tallness;

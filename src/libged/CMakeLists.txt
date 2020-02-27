@@ -23,15 +23,25 @@ if(ADAPTAGRAMS_FOUND)
   set(LIBGED_CMD_INCLUDE_DIRS ${LIBGED_CMD_INCLUDE_DIRS} ${AVOID_INCLUDE_DIR})
 endif(ADAPTAGRAMS_FOUND)
 
-set(ENV_VARS_C "${CMAKE_CURRENT_BINARY_DIR}/env_vars.c")
+set(DEBUG_CMD_CPP "${CMAKE_CURRENT_BINARY_DIR}/debug_cmd.cpp")
 
-add_custom_command(OUTPUT ${ENV_VARS_C}
-  COMMAND env2c ${CMAKE_BINARY_DIR}/cmakefiles.cmake ${ENV_VARS_C}
+add_custom_command(OUTPUT ${DEBUG_CMD_CPP}
+  COMMAND debug2c ${CMAKE_BINARY_DIR}/cmakefiles.cmake ${DEBUG_CMD_CPP}
+  DEPENDS debug2c
+  COMMENT "[DEBUG2C] Scanning for debugging variables"
+  )
+set_source_files_properties(debug.cpp PROPERTIES OBJECT_DEPENDS ${DEBUG_CMD_CPP})
+DISTCLEAN(${DEBUG_CMD_CPP})
+
+set(ENV_CMD_C "${CMAKE_CURRENT_BINARY_DIR}/env_cmd.c")
+
+add_custom_command(OUTPUT ${ENV_CMD_C}
+  COMMAND env2c ${CMAKE_BINARY_DIR}/cmakefiles.cmake ${ENV_CMD_C}
   DEPENDS env2c
   COMMENT "[ENV2C] Scanning for environment variable usage"
   )
-set_source_files_properties(env.c PROPERTIES OBJECT_DEPENDS ${ENV_VARS_C})
-DISTCLEAN(${ENV_VARS_C})
+set_source_files_properties(env.c PROPERTIES OBJECT_DEPENDS ${ENV_CMD_C})
+DISTCLEAN(${ENV_CMD_C})
 
 set(LIBGED_SOURCES
   ${LIBGED_SOURCES}
@@ -66,7 +76,15 @@ set(LIBGED_SOURCES
   bot_split.c
   bot_sync.c
   bot_vertex_fuse.c
-  brep.c
+  brep/brep.cpp
+  brep/conversion.cpp
+  brep/csg.cpp
+  brep/info.cpp
+  brep/intersect.cpp
+  brep/pick.cpp
+  brep/plot.cpp
+  brep/tikz.cpp
+  brep/valid.cpp
   cat.c
   cc.c
   center.cpp
@@ -97,6 +115,7 @@ set(LIBGED_SOURCES
   cpi.c
   dag.cpp
   dbip.c
+  debug.cpp
   debugbu.c
   debugdir.c
   debuglib.c
@@ -128,7 +147,7 @@ set(LIBGED_SOURCES
   eye.c
   eye_pos.c
   facedef.c
-  facetize.c
+  facetize.cpp
   fb2pix.c
   fbclear.c
   find.c
@@ -291,7 +310,6 @@ set(LIBGED_SOURCES
   shaded_mode.c
   shader.c
   shells.c
-  shape_recognition.cpp
   showmats.c
   simulate/ged_command.cpp
   simulate/rt_collision_algorithm.cpp
@@ -360,6 +378,7 @@ set(GED_INCLUDE_DIRS
   ${NMG_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
   ${WDB_INCLUDE_DIRS}
+  ${BREP_INCLUDE_DIRS}
   )
 
 # Local include directories
@@ -387,7 +406,7 @@ if (BRLCAD_ENABLE_OPENVDB)
   set_property(SOURCE bot_remesh.cpp APPEND PROPERTY COMPILE_FLAGS "${OpenVDB_DEFINITIONS} -w")
 endif (BRLCAD_ENABLE_OPENVDB)
 
-BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;librt;libnmg;libfb;libbg;libbn;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${CADBULLET_LIBRARY};${REGEX_LIBRARY};${WINSOCK_LIB};${M_LIBRARY}")
+BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;liboptical;librt;libbrep;libnmg;libfb;libbg;libbn;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${CADBULLET_LIBRARY};${REGEX_LIBRARY};${WINSOCK_LIB};${M_LIBRARY}")
 SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 add_subdirectory(tests)
@@ -399,6 +418,7 @@ set(ged_ignore_files
   CMakeLists.txt
   TODO
   pnts_util.h
+  brep/ged_brep.h
   ged_private.h
   check/check_private.h
   joint.h

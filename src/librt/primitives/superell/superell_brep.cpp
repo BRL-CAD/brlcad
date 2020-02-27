@@ -30,7 +30,7 @@
 #include "brep.h"
 
 extern "C" {
-    void rt_ell_brep(ON_Brep **b, struct rt_db_internal *ip, const struct bn_tol *tol);
+    void rt_ell_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol);
 }
 
 extern "C" void

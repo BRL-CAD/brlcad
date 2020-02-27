@@ -57,7 +57,7 @@
 
 
 /* define to enable output of debug hit information */
-/* #define DEBUG_HITS 1 */
+/* #define RT_DEBUG_HITS 1 */
 
 
 #ifdef __cplusplus
@@ -75,7 +75,7 @@ extern "C" {
     int rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *UNUSED(info));
     int rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
     int rt_brep_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const char *attr);
-    int rt_brep_adjust(struct bu_vls *logstr, const struct rt_db_internal *intern, int argc, const char **argv);
+    int rt_brep_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv);
     int rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip);
     int rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip);
     void rt_brep_ifree(struct rt_db_internal *ip);
@@ -85,6 +85,8 @@ extern "C" {
     struct rt_selection_set *rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selection_query *query);
     int rt_brep_process_selection(struct rt_db_internal *ip, struct db_i *dbip, const struct rt_selection *selection, const struct rt_selection_operation *op);
     int rt_brep_valid(struct bu_vls *log, struct rt_db_internal *ip, int flags);
+    int rt_brep_plate_mode(const struct rt_db_internal *ip);
+    void rt_brep_plate_mode_getvals(double *pthickness, int *nocos, const struct rt_db_internal *ip);
     int rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, size_t *version);
 #ifdef __cplusplus
 }
@@ -124,7 +126,8 @@ brep_debug(const char *objname)
 	     *
 	     * TODO - can we set/clear static variables in brep_debug
 	     * so we don't have to do string ops every time? */
-	    if (BU_STR_EQUAL(objname, envstr)) return INT_MAX;
+	    if (BU_STR_EQUAL(objname, envstr))
+		return INT_MAX;
 	    return 0;
 	}
     } else {
@@ -229,7 +232,7 @@ public:
 };
 
 
-#ifdef DEBUG_HITS
+#ifdef RT_DEBUG_HITS
 
 
 static const char *
@@ -489,6 +492,7 @@ rt_brep_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct
 int
 rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
 {
+    int plate_mode;
     //int64_t start;
 
     TRACE1("rt_brep_prep");
@@ -504,16 +508,31 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
     bi = (struct rt_brep_internal*)ip->idb_ptr;
     RT_BREP_CK_MAGIC(bi);
 
-    if ((bs = (struct brep_specific*)stp->st_specific) == NULL) {
+    bs = (struct brep_specific*)stp->st_specific;
+    if (bs == NULL) {
 	bs = brep_specific_new();
 	bs->brep = bi->brep;
+	plate_mode = rt_brep_plate_mode(ip);
 	bi->brep = NULL;
 	stp->st_specific = (void *)bs;
+    } else {
+	bi->brep = bs->brep;
+	plate_mode = rt_brep_plate_mode(ip);
+	bi->brep = NULL;
     }
 
-    ON_TextLog tl(stderr);
-    if (!bs->brep->IsValid(&tl))
+    if (plate_mode) {
+	bs->plate_mode = 1;
+	rt_brep_plate_mode_getvals(&bs->plate_mode_thickness, &bs->plate_mode_nocos, ip);
+    }
+
+    ON_TextLog err(stderr);
+    if (!bs->brep->IsValid(&err)) {
 	bu_log("brep is NOT valid\n");
+    } else {
+	bs->is_solid = bs->brep->IsSolid();
+	bu_log("brep %s solid\n", (bs->is_solid) ? "is" : "is NOT");
+    }
 
     //start = bu_gettime();
     /* do the majority of real work here */
@@ -957,6 +976,73 @@ containsNearHit(const std::list<brep_hit> *hits)
 }
 
 
+static double
+brep_platemode_thickness(const struct xray& ray, const brep_hit& hit, const struct brep_specific& bs)
+{
+    double los = bs.plate_mode_thickness;
+    if (bs.plate_mode_nocos) {
+	return los;
+    }
+
+    double dot = fabs(VDOT(hit.normal, ray.r_dir));
+    los = los / dot;
+
+    point_t hp;
+    VJOIN1(hp, ray.r_pt, hit.dist + los, ray.r_dir);
+    ON_3dPoint los_pnt(V3ARGS(hp));
+
+    /* FIXME: default behavior matches what BoT does, but results in
+     * undesirable los values on high obliquity angles.
+     */
+
+/*#define WORK_IN_PROGRESS 1 */
+#ifdef WORK_IN_PROGRESS
+
+    /* try to make sure we don't extend more than plate-mode thickness
+     * beyond the surface by calculating the proposed exit point's
+     * distance to the surface.
+     */
+    const ON_Surface* surf = hit.face.SurfaceOf();
+    const ON_BrepFace& face = hit.face;
+
+#if 0
+    SurfaceTree* tree = NULL;
+    ON_2dPoint uvpt;
+    get_closest_point(uvpt, face, los_pnt, tree);
+    ON_3dPoint p = surf->PointAt(uvpt[0], uvpt[1]);
+    double dist_to_surf = p.DistanceTo(los_pnt);
+#else
+#endif
+
+    const int MAX_ITERATIONS = 100;
+    const double MIN_STEPSIZE = bs.plate_mode_thickness * 0.1;
+
+    int iterations = 0;
+    while (!NEAR_EQUAL(dist_to_surf, bs.plate_mode_thickness, MIN_STEPSIZE) && iterations++ < MAX_ITERATIONS) {
+
+	if (dist_to_surf > bs.plate_mode_thickness)
+	    los -= dist_to_surf / 2.0;
+	else if (dist_to_surf < bs.plate_mode_thickness)
+	    los += dist_to_surf / 3.0;
+
+#if 0
+	/* calculate a new exit point distance to surface */
+	VJOIN1(hp, ray.r_pt, hit.dist + los, ray.r_dir);
+	los_pnt = ON_3dPoint(V3ARGS(hp));
+	get_closest_point(uvpt, face, los_pnt, tree);
+	p = surf->PointAt(uvpt[0], uvpt[1]);
+	dist_to_surf = p.DistanceTo(los_pnt);
+#else
+#endif
+    }
+
+#endif
+
+
+    return los;
+}
+
+
 /**
  * Intersect a ray with a brep.  If an intersection occurs, a struct
  * seg will be acquired and filled in.
@@ -989,26 +1075,24 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	return 0; // MISS
 
     // find all the hits (XXX very inefficient right now!)
-    std::list<brep_hit> all_hits; // record all hits
+    std::list<brep_hit> hits;
     MissList misses;
-    int s = 0;
-
     for (std::list<const BBNode*>::const_iterator i = inters.begin(); i != inters.end(); i++) {
 	const BBNode* sbv = (*i);
 	const ON_BrepFace* f = &sbv->get_face();
 	const ON_Surface* surf = f->SurfaceOf();
 	pt2d_t uv = {sbv->m_u.Mid(), sbv->m_v.Mid()};
-	utah_brep_intersect(sbv, f, surf, uv, r, all_hits);
-	s++;
+	utah_brep_intersect(sbv, f, surf, uv, r, hits);
     }
-
-    std::list<brep_hit> hits = all_hits;
 
     // sort the hits
     hits.sort();
-    std::list<brep_hit> orig = hits;
 
-////////////////////////
+#ifdef RT_DEBUG_HITS
+    std::list<brep_hit> orig = hits;
+#endif
+
+    ////////////////////////
     if ((hits.size() > 1) && containsNearMiss(&hits)) { //&& ((hits.size() % 2) != 0)) {
 
 	std::list<brep_hit>::iterator prev;
@@ -1186,9 +1270,6 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	}
     }
 
-    all_hits.clear();
-    all_hits = hits;
-
     if (!hits.empty()) {
 	// remove grazing hits with with normal to ray dot less than
 	// BREP_GRAZING_DOT_TOL (>= 89.999 degrees obliq)
@@ -1294,66 +1375,111 @@ rt_brep_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	}
     }
 
-    bool hit = false;
-    if (hits.size() > 1) {
+    if (bs->plate_mode) {
 
-//#define KODDHIT
-#ifdef KODDHIT //ugly debugging hack to raytrace single surface and not worry about odd hits
-	static fastf_t diststep = 0.0;
-	bool hit_it = !hits.empty();
-#else
-	bool hit_it = hits.size() % 2 == 0;
-#endif
-	if (hit_it) {
-	    // take each pair as a segment
+	/* Newer plate mode enabled version of logic, causing problems
+	 * with NIST3 (see regress/nurbs test)
+	 */
+
+	size_t nhits = hits.size();
+	if (nhits > 0) {
+	    /* PLATE MODE case */
+
+	    /* iterate over all hit points assuming a plate-mode shell */
 	    for (std::list<brep_hit>::const_iterator i = hits.begin(); i != hits.end(); ++i) {
 		const brep_hit& in = *i;
-#ifndef KODDHIT  //ugly debugging hack to raytrace single surface and not worry about odd hits
-		i++;
-#endif
 		const brep_hit& out = *i;
+
+		double los = brep_platemode_thickness(*rp, in, *bs);
 
 		struct seg* segp;
 		RT_GET_SEG(segp, ap->a_resource);
 		segp->seg_stp = stp;
 
-		VMOVE(segp->seg_in.hit_point, in.point);
-		VMOVE(segp->seg_in.hit_normal, in.normal);
-#ifdef KODDHIT //ugly debugging hack to raytrace single surface and not worry about odd hits
-		segp->seg_in.hit_dist = diststep + 1.0;
-#else
-		segp->seg_in.hit_dist = in.dist;
-#endif
+		/* set in hit */
+		segp->seg_in.hit_dist = in.dist - (los*0.5);
+		// segment is centered on the hit point
 		segp->seg_in.hit_surfno = in.face.m_face_index;
 		VSET(segp->seg_in.hit_vpriv, in.uv[0], in.uv[1], 0.0);
+		VMOVE(segp->seg_in.hit_normal, in.normal);
+		VJOIN1(segp->seg_in.hit_point, rp->r_pt, segp->seg_in.hit_dist, rp->r_dir);
+		segp->seg_in.hit_rayp = &ap->a_ray;
 
 		VMOVE(segp->seg_out.hit_point, out.point);
 		VMOVE(segp->seg_out.hit_normal, out.normal);
 		segp->seg_out.hit_dist = out.dist;
+
+		/* set out hit */
+		segp->seg_out.hit_dist = out.dist + (los*0.5); // centered
 		segp->seg_out.hit_surfno = out.face.m_face_index;
 		VSET(segp->seg_out.hit_vpriv, out.uv[0], out.uv[1], 0.0);
+		VREVERSE(segp->seg_out.hit_normal, out.normal);
+		segp->seg_out.hit_rayp = &ap->a_ray;
+		VJOIN1(segp->seg_out.hit_point, rp->r_pt, segp->seg_out.hit_dist, rp->r_dir);
 
 		BU_LIST_INSERT(&(seghead->l), &(segp->l));
 	    }
-	    hit = true;
-	} else {
+
+#ifdef RT_DEBUG_HITS
 	    //TRACE2("screen xy: " << ap->a_x << ", " << ap->a_y);
 	    bu_log("**** ERROR odd number of hits: %lu\n", static_cast<unsigned long>(hits.size()));
 	    bu_log("xyz %g %g %g \n", rp->r_pt[0], rp->r_pt[1], rp->r_pt[2]);
 	    bu_log("dir %g %g %g \n", rp->r_dir[0], rp->r_dir[1], rp->r_dir[2]);
 	    bu_log("**** Current Hits: %lu\n", static_cast<unsigned long>(hits.size()));
 
-	    //log_hits(hits, debug_output);
+	    log_hits(hits, debug_output);
 
 	    bu_log("\n**** Orig Hits: %lu\n", static_cast<unsigned long>(orig.size()));
 
-	    //log_hits(orig, debug_output);
+	    log_hits(orig, debug_output);
 
 	    bu_log("\n**********************\n");
+#endif
 	}
+
+	return nhits;
+
+    } else {
+
+	/* SOLID case */
+
+	bool hit = false;
+	if (hits.size() > 1) {
+
+	    bool hit_it = hits.size() % 2 == 0;
+	    if (hit_it) {
+		// take each pair as a segment
+		for (std::list<brep_hit>::const_iterator i = hits.begin(); i != hits.end(); ++i) {
+		    const brep_hit& in = *i;
+		    i++;
+		    const brep_hit& out = *i;
+
+		    struct seg* segp;
+		    RT_GET_SEG(segp, ap->a_resource);
+		    segp->seg_stp = stp;
+
+		    VMOVE(segp->seg_in.hit_point, in.point);
+		    VMOVE(segp->seg_in.hit_normal, in.normal);
+		    segp->seg_in.hit_dist = in.dist;
+		    segp->seg_in.hit_surfno = in.face.m_face_index;
+		    VSET(segp->seg_in.hit_vpriv, in.uv[0], in.uv[1], 0.0);
+
+		    VMOVE(segp->seg_out.hit_point, out.point);
+		    VMOVE(segp->seg_out.hit_normal, out.normal);
+		    segp->seg_out.hit_dist = out.dist;
+		    segp->seg_out.hit_surfno = out.face.m_face_index;
+		    VSET(segp->seg_out.hit_vpriv, out.uv[0], out.uv[1], 0.0);
+
+		    BU_LIST_INSERT(&(seghead->l), &(segp->l));
+		}
+		hit = true;
+	    }
+	}
+
+	return (hit) ? (int)hits.size() : 0; // MISS
     }
 
-    return (hit) ? (int)hits.size() : 0; // MISS
+    return 0;
 }
 
 
@@ -1364,7 +1490,7 @@ void
 rt_brep_norm(struct hit *UNUSED(hitp), struct soltab *UNUSED(stp), struct xray *UNUSED(rp))
 {
     /* normal was computed during shot, resides in hitp->hit_normal */
-	return;
+    return;
 }
 
 
@@ -2041,7 +2167,8 @@ RT_MemoryArchive::CurrentPosition() const
 bool
 RT_MemoryArchive::SeekFromCurrentPosition(int seek_to)
 {
-    if (pos + seek_to > m_buffer.size()) return false;
+    if (pos + seek_to > m_buffer.size())
+	return false;
     pos += seek_to;
     return true;
 }
@@ -2050,7 +2177,8 @@ RT_MemoryArchive::SeekFromCurrentPosition(int seek_to)
 bool
 RT_MemoryArchive::SeekFromStart(size_t seek_to)
 {
-    if (seek_to > m_buffer.size()) return false;
+    if (seek_to > m_buffer.size())
+	return false;
     pos = seek_to;
     return true;
 }
@@ -2171,8 +2299,8 @@ rt_brep_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const ch
 }
 
 
-int
-rt_brep_adjust(struct bu_vls *logstr, const struct rt_db_internal *intern, int argc, const char **argv)
+extern "C" int
+rt_brep_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, const char **argv)
 {
     struct rt_brep_internal *bi = (struct rt_brep_internal *)intern->idb_ptr;
     signed char *decoded;
@@ -2181,10 +2309,10 @@ rt_brep_adjust(struct bu_vls *logstr, const struct rt_db_internal *intern, int a
 	int decoded_size = bu_b64_decode(&decoded, (const signed char *)argv[0]);
 	RT_MemoryArchive archive(decoded, decoded_size);
 	ON_wString wonstr;
-	ON_TextLog dump(wonstr);
+	ON_TextLog log(wonstr);
 
 	RT_BREP_CK_MAGIC(bi);
-	model.Read(archive, &dump);
+	model.Read(archive, &log);
 	bu_vls_printf(logstr, "%s", ON_String(wonstr).Array());
 	ONX_Model_Object mo = model.m_object_table[0];
 	bi->brep = ON_Brep::New(*ON_Brep::Cast(mo.m_object));
@@ -2243,9 +2371,9 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
 
     RT_MemoryArchive archive(ep->ext_buf, ep->ext_nbytes);
     ONX_Model model;
-    ON_TextLog dump(stderr);
-    //archive.Dump3dmChunk(dump);
-    model.Read(archive, &dump);
+    ON_TextLog err(stderr);
+    //archive.Dump3dmChunk(err);
+    model.Read(archive, &err);
 
     ONX_Model_Object mo = model.m_object_table[0];
     bi->brep = ON_Brep::New(*ON_Brep::Cast(mo.m_object));
@@ -2256,15 +2384,8 @@ rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, const f
 	    bi->brep->Transform(xform);
 	}
     }
-    /*
-      if ((ip->idb_avs.magic == BU_AVS_MAGIC) && bu_avs_get(&ip->idb_avs, "plate_mode") != NULL) {
-      bu_log("plate mode brep\n");
-      }
-    */
+
     return 0;
-    //} else {
-    //	return -1;
-    //}
 }
 
 
@@ -2610,11 +2731,9 @@ rt_brep_valid(struct bu_vls *log, struct rt_db_internal *ip, int flags)
 
     /* OpenNURBS IsValid test */
     if (!flags || flags & RT_BREP_OPENNURBS) {
-	ON_wString s;
-	ON_TextLog dump(s);
-	if (!brep->IsValid(&dump)) {
-	    ON_String ss = s;
-	    brep_log(log, "%s\nbrep NOT valid\n", ss.Array());
+	ON_TextLog text(stderr);
+	if (!brep->IsValid(&text)) {
+	    brep_log(log, "brep NOT valid\n");
 	    ret = 0;
 	    goto brep_valid_done;
 	}
@@ -2650,8 +2769,62 @@ rt_brep_valid(struct bu_vls *log, struct rt_db_internal *ip, int flags)
 #endif
 
 brep_valid_done:
-    if (log && ret) bu_vls_printf(log, "\nbrep is valid\n");
+    if (log && ret)
+	bu_vls_printf(log, "\nbrep is valid\n");
     return ret;
+}
+
+void
+rt_brep_plate_mode_getvals(double *pthickness, int *nocos, const struct rt_db_internal *ip)
+{
+    if (!pthickness || !nocos || !ip) return;
+
+    (*pthickness) = 0.0;
+    (*nocos) = 0;
+
+    // Check for a thickness and nocos setting
+    if (ip->idb_avs.magic == BU_AVS_MAGIC) {
+	const char *pval = bu_avs_get(&ip->idb_avs, "_plate_mode_thickness");
+	if (pval != NULL) {
+	    char *endptr = NULL;
+	    errno = 0;
+	    (*pthickness) = fabs(strtod(pval, &endptr));
+	    if ((endptr != NULL && strlen(endptr) > 0) || (errno == ERANGE)) {
+		(*pthickness) = 0.0;
+	    }
+	    //bu_log("plate mode thickness: %f\n", pthickness);
+	}
+	const char *pcos = bu_avs_get(&ip->idb_avs, "_plate_mode_nocos");
+	if (BU_STR_EQUAL(pcos, "1")) {
+	    (*nocos) = 1;
+	}
+    }
+}
+
+int
+rt_brep_plate_mode(const struct rt_db_internal *ip)
+{
+    RT_CK_DB_INTERNAL(ip);
+    if (ip->idb_type != ID_BREP) {
+	return 0;
+    }
+    struct rt_brep_internal *bi = (struct rt_brep_internal *)ip->idb_ptr;
+    if (bi == NULL || bi->brep == NULL) {
+	return 0;
+    }
+
+    if (!bi->brep->IsValid(NULL)) {
+	// Not valid, not plate mode
+	return 0;
+    }
+
+    if (bi->brep->IsSolid()) {
+	// Is solid, not plate mode
+	return 0;
+    }
+
+    // Valid and not solid - plate mode
+    return 1;
 }
 
 
@@ -2691,7 +2864,11 @@ rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, stru
 
 	brep_specific * const specific = brep_specific_new();
 	stp->st_specific = specific;
+	specific->plate_mode = rt_brep_plate_mode(ip);
 	std::swap(specific->brep, static_cast<rt_brep_internal *>(ip->idb_ptr)->brep);
+	if (specific->plate_mode) {
+	    rt_brep_plate_mode_getvals(&specific->plate_mode_thickness, &specific->plate_mode_nocos, ip);
+	}
 	specific->bvh = new BBNode(specific->brep->BoundingBox());
 	specific->is_solid = specific->brep->IsSolid(); // recompute solidity
 
@@ -2729,6 +2906,29 @@ rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, stru
 
 	return 0;
     }
+}
+
+int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, struct rt_db_internal *ip,
+		      const struct bg_tess_tol *ttol, const struct bn_tol *tol,
+		      const struct rt_view_info *UNUSED(info))
+{
+    TRACE1("rt_brep_plot");
+    struct rt_brep_internal* bi;
+    const char *solid_name =  DB_FULL_PATH_CUR_DIR(pathp)->d_namep;
+    ON_wString wstr;
+    ON_TextLog tl(wstr);
+
+    BU_CK_LIST_HEAD(vhead);
+    RT_CK_DB_INTERNAL(ip);
+    bi = (struct rt_brep_internal*) ip->idb_ptr;
+    RT_BREP_CK_MAGIC(bi);
+
+    ON_Brep* brep = bi->brep;
+
+    if (brep_facecdt_plot(NULL, solid_name, ttol, tol, brep, vhead, NULL, &RTG.rtg_vlfree, -1, 0, -1)) {
+	return -1;
+    }
+    return 0;
 }
 
 

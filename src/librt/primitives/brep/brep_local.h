@@ -34,19 +34,10 @@ struct brep_specific {
     ON_Brep* brep;
     BrepBoundingVolume* bvh;
     int is_solid;
+    int plate_mode;
+    int plate_mode_nocos;
+    double plate_mode_thickness;
 };
-
-
-#ifdef __cplusplus
-#include "brep.h"
-/* poly2tri interface functions */
-extern void poly2tri_CDT(struct bu_list *vhead, ON_BrepFace &face, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *info, bool watertight = false, int plottype = 0, int num_points = -1.0);
-
-int brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
-	const struct bg_tess_tol *ttol, const struct bn_tol *tol,
-	struct brep_specific* bs, struct rt_brep_internal*UNUSED(bi),
-	struct bn_vlblock *vbp, int index, int plottype, int num_points = -1);
-#endif
 
 #endif /* LIBRT_PRIMITIVES_BREP_BREP_LOCAL_H */
 /*

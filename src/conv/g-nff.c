@@ -241,7 +241,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 
     BU_LIST_INIT(&vhead);
 
-    if (RT_G_DEBUG&DEBUG_TREEWALK || verbose) {
+    if (RT_G_DEBUG&RT_DEBUG_TREEWALK || verbose) {
 	char *sofar = db_path_to_string(pathp);
 	bu_log("\ndo_region_end(%d %d%%) %s\n",
 	       regions_tried,
@@ -411,7 +411,7 @@ main(int argc, char *argv[])
 		verbose++;
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
 		break;
 	    case 'D':
 		tol.dist = atof(bu_optarg);

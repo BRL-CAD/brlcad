@@ -265,8 +265,8 @@ region_register(int reg_num, int id, int air, int mat, int los)
 	}
 	return;
     }
-    mk_lrcomb(outfp, wp->wm_name, wp, 1,
-	      "", "", (unsigned char *)0, id, air, mat, los, 0);
+    mk_comb(outfp, wp->wm_name, &(wp->l), 1,
+	      "", "", (unsigned char *)0, id, air, mat, los, 0, 0, 1);
     /* Add region to the one group that it belongs to. */
     group_add(id, wp->wm_name);
 

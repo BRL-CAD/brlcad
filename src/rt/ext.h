@@ -74,7 +74,7 @@ extern int Query_one_pixel;
 extern int benchmark;
 extern int lightmodel;			/* Select lighting model */
 extern int query_debug;
-extern int query_rdebug;
+extern int query_optical_debug;
 extern int query_x;
 extern int query_y;
 extern int rpt_overlap;			/* Warn about overlaps? */

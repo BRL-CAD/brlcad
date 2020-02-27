@@ -103,11 +103,11 @@ get_bu_output(const char *input)
     return output;
 }
 
+#if defined(HAVE_BASENAME) || defined(HAVE__SPLITPATH)
 void
 compare_bu_to_system_basename(const char *input)
 {
-#if defined(HAVE_BASENAME) || defined(HAVE__SPLITPATH)
-    char *sys_out = get_system_output(input);
+   char *sys_out = get_system_output(input);
     char *bu_out = get_bu_output(input);
 
     if (BU_STR_EQUAL(sys_out, bu_out)) {
@@ -121,6 +121,9 @@ compare_bu_to_system_basename(const char *input)
 	bu_exit(EXIT_FAILURE, "compare_bu_to_system_basename failed");
     }
 #else
+void
+compare_bu_to_system_basename(const char *UNUSED(input))
+{
     bu_exit(EXIT_FAILURE, "BASENAME not available on this platform\n");
 #endif
 }

@@ -31,6 +31,8 @@
 
 #include "common.h"
 
+#include "bn/vlist.h"
+#include "bn/tol.h"
 #include "bg/defines.h"
 #include "brep/defines.h"
 
@@ -48,6 +50,8 @@ ON_Brep_CDT_Create(void *bv, const char *objname);
 extern BREP_EXPORT void
 ON_Brep_CDT_Destroy(struct ON_Brep_CDT_State *s);
 
+extern BREP_EXPORT const char *
+ON_Brep_CDT_ObjName(struct ON_Brep_CDT_State *s);
 
 /* Set/get the CDT tolerances. */
 extern BREP_EXPORT void
@@ -105,7 +109,7 @@ ON_Brep_CDT_VList(
  * states with other function calls - this function returns only the
  * overall result. */
 extern BREP_EXPORT int
-ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt);
+ON_Brep_CDT_Ovlp_Resolve(struct ON_Brep_CDT_State **s_a, int s_cnt, double lthreshold, int timeout);
 
 #if 0
 /* Report the number of other tessellation states which manifest unresolvable
@@ -130,6 +134,15 @@ ON_Brep_CDT_Mesh(
     int exp_face_cnt, int *exp_faces
     );
 
+/* Original (fast but not watertight) routine used for plotting */
+#ifdef __cplusplus
+extern BREP_EXPORT int
+brep_facecdt_plot(struct bu_vls *vls, const char *solid_name,
+	const struct bg_tess_tol *ttol, const struct bn_tol *tol,
+	const ON_Brep *brep, struct bu_list *p_vhead,
+	struct bn_vlblock *vbp, struct bu_list *vlfree,
+      	int index, int plottype, int num_points);
+#endif
 
 /* PImpl exposure of some mesh operations for use in tests - not to be considered public API */
 struct cdt_bmesh_impl;
@@ -140,11 +153,6 @@ extern BREP_EXPORT int cdt_bmesh_create(struct cdt_bmesh **m);
 extern BREP_EXPORT void cdt_bmesh_destroy(struct cdt_bmesh *m);
 extern BREP_EXPORT int cdt_bmesh_deserialize(const char *fname, struct cdt_bmesh *m);
 extern BREP_EXPORT int cdt_bmesh_repair(struct cdt_bmesh *m);
-
-
-/* TODO - this doesn't belong here.  Don't consider this public. */
-extern BREP_EXPORT int
-ON_Brep_Report_Faces(struct bu_vls *log, void *bp, const vect_t center, const vect_t dir);
 
 __END_DECLS
 

@@ -35,7 +35,7 @@
 #include "raytrace.h"
 #include "optical.h"
 
-int rdebug;			/* RT program debugging */
+unsigned int optical_debug;	/* RT program debugging */
 double AmbientIntensity = 0.4;	/* Ambient light intensity */
 
 vect_t background = VINIT_ZERO; /* Black */

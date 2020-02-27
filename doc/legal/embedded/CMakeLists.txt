@@ -47,6 +47,7 @@ set(embedded_licenses
   tkcon.txt
   tri_pt.txt
   uce_dirent.txt
+  whereami.txt
   x24.txt
   y2038.txt
   )

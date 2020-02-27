@@ -75,7 +75,7 @@ main(int argc, char **argv)
 		break;
 
 	    case 'r':
-		gcv_options.debug_mode = 1;
+		gcv_options.randomize_colors = 1;
 		break;
 
 	    case 'v':

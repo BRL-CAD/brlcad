@@ -1033,6 +1033,7 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
 {
     struct rt_db_internal intern;
     struct directory *dp;
+    struct rt_bot_internal *bot_ip;
     int type_match = 0;
     int type;
     const struct bn_tol arb_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
@@ -1110,6 +1111,24 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
 	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_JOINT
 	) {
 	type_match = 1;
+    }
+
+    if (!bu_path_match(plan->p_un._type_data, "plate", 0)) {
+	switch (intern.idb_minor_type) {
+	    case DB5_MINORTYPE_BRLCAD_BOT:
+		bot_ip = (struct rt_bot_internal *)intern.idb_ptr;
+		if (bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS) {
+		    type_match = 1;
+		}
+		break;
+	    case DB5_MINORTYPE_BRLCAD_BREP:
+		if (rt_brep_plate_mode(&intern)) {
+		    type_match = 1;
+		}
+		break;
+	    default:
+		break;
+	}
     }
 
     rt_db_free_internal(&intern);

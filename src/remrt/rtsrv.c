@@ -54,6 +54,7 @@
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
+#include "optical/debug.h"
 #include "pkg.h"
 #include "fb.h"
 #include "icv.h"
@@ -95,7 +96,6 @@ int report_progress;	/* !0 = user wants progress report */
 /* Variables shared elsewhere */
 extern fastf_t rt_dist_tol;	/* Value for rti_tol.dist */
 extern fastf_t rt_perp_tol;	/* Value for rti_tol.perp */
-extern int rdebug;		/* RT program debugging (not library) */
 static char idbuf[132];		/* First ID record info */
 
 /* State flags */
@@ -171,10 +171,10 @@ main(int argc, char **argv)
 	if (BU_STR_EQUAL(argv[1], "-d")) {
 	    debug++;
 	} else if (BU_STR_EQUAL(argv[1], "-x")) {
-	    sscanf(argv[2], "%x", (unsigned int *)&RTG.debug);
+	    sscanf(argv[2], "%x", (unsigned int *)&rt_debug);
 	    argc--; argv++;
 	} else if (BU_STR_EQUAL(argv[1], "-X")) {
-	    sscanf(argv[2], "%x", (unsigned int *)&rdebug);
+	    sscanf(argv[2], "%x", (unsigned int *)&optical_debug);
 	    argc--; argv++;
 	} else {
 	    fprintf(stderr, "%s", srv_usage);
@@ -546,7 +546,7 @@ ph_gettrees(struct pkg_conn *UNUSED(pc), char *buf)
 	view_end(&APP);
 	view_cleanup(rtip);
 	rt_clean(rtip);
-	if (rdebug&RDEBUG_RTMEM_END)
+	if (optical_debug&OPTICAL_DEBUG_RTMEM_END)
 	    bu_prmem("After rt_clean");
     }
 

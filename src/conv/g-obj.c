@@ -145,7 +145,7 @@ parse_debug_rt(struct bu_vls *error_msg, size_t argc, const char **argv, void *s
     BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "debug rt");
 
     if (set_var) {
-	sscanf(argv[0], "%x", (unsigned int *)&RTG.debug);
+	sscanf(argv[0], "%x", (unsigned int *)&rt_debug);
 	return 1;
     } else {
 	return -1;
@@ -184,7 +184,7 @@ main(int argc, const char **argv)
     BU_OPT(options[6], "a", "", "#",           parse_tol_abs,   &ttol,        "absolute tolerance");
     BU_OPT(options[7], "n", "", "#",           parse_tol_norm,  &ttol,        "surface normal tolerance");
     BU_OPT(options[8], "D", "", "#",           parse_tol_dist,  &tol,         "distance tolerance");
-    BU_OPT(options[9], "x", "", "level",       parse_debug_rt,  &RTG.debug,   "set RT debug flag");
+    BU_OPT(options[9], "x", "", "level",       parse_debug_rt,  &rt_debug,   "set RT debug flag");
     BU_OPT(options[10], "X", "", "level",      parse_debug_nmg, &nmg_debug,   "set NMG debug flag");
     BU_OPT(options[11], "e", "", "error_file", bu_opt_str,      &error_file,  "error file name");
     BU_OPT(options[12], "o", "", "output.obj", bu_opt_str,      &output_file, "output file name");
@@ -626,7 +626,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 
     BU_LIST_INIT(&vhead);
 
-    if (RT_G_DEBUG&DEBUG_TREEWALK || verbose) {
+    if (RT_G_DEBUG&RT_DEBUG_TREEWALK || verbose) {
 	char *sofar = db_path_to_string(pathp);
 	bu_log("\ndo_region_end(%d %d%%) %s\n",
 	       regions_tried,

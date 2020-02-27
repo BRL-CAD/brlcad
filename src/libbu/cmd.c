@@ -25,6 +25,24 @@
 #include "bu/cmd.h"
 #include "bu/str.h"
 
+int
+bu_cmd_valid(const struct bu_cmdtab *cmds, const char *cmdname)
+{
+    const struct bu_cmdtab *ctp = NULL;
+
+    /* sanity */
+    if (UNLIKELY(!cmds || !cmdname)) {
+	return BRLCAD_ERROR;
+    }
+
+    for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
+	if (BU_STR_EQUAL(ctp->ct_name, cmdname)) {
+	    return BRLCAD_OK;
+	}
+    }
+
+    return BRLCAD_ERROR;
+}
 
 int
 bu_cmd(const struct bu_cmdtab *cmds, int argc, const char **argv, int cmd_index, void *data, int *retval)

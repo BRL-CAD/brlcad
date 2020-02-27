@@ -177,7 +177,6 @@
 	}                                         \
     }
 
-
 int bg_tri_tri_isect_coplanar(point_t V0, point_t V1, point_t V2,
 			      point_t U0, point_t U1, point_t U2, int area_flag)
 {
@@ -245,6 +244,112 @@ int bg_tri_tri_isect_coplanar(point_t V0, point_t V1, point_t V2,
     return 0;
 }
 
+static int
+_bg_point_in_tri(short i0, short i1, point_t V0, point_t U0, point_t U1, point_t U2) {
+    fastf_t a, b, c, d0, d1, d2;
+    /* is T1 completely inside T2? */
+    /* check if V0 is inside tri(U0, U1, U2) */
+    a=U1[i1]-U0[i1];
+    b=-(U1[i0]-U0[i0]);
+    c=-a*U0[i0]-b*U0[i1];
+    d0=a*V0[i0]+b*V0[i1]+c;
+
+    a=U2[i1]-U1[i1];
+    b=-(U2[i0]-U1[i0]);
+    c=-a*U1[i0]-b*U1[i1];
+    d1=a*V0[i0]+b*V0[i1]+c;
+
+    a=U0[i1]-U2[i1];
+    b=-(U0[i0]-U2[i0]);
+    c=-a*U2[i0]-b*U2[i1];
+    d2=a*V0[i0]+b*V0[i1]+c;
+    if (d0*d1>0.0) {
+	if (d0*d2>0.0) return 1;
+    }
+
+    return 0;
+}
+
+int bg_tri_tri_isect_coplanar2(point_t V0, point_t V1, point_t V2,
+			      point_t U0, point_t U1, point_t U2, int area_flag)
+{
+    int ret;
+    fastf_t A[3];
+    short i0, i1;
+    point_t E1, E2, N;
+    plane_t P1, P2;
+    static const struct bn_tol tol = {
+	BN_TOL_MAGIC, EPSILON, EPSILON*EPSILON, 1e-6, 1-1e-6
+    };
+
+    /* compute plane of triangle (V0, V1, V2) */
+    ret = bn_make_plane_3pnts(P1, V0, V1, V2, &tol);
+    if (ret) return -1;
+    /* compute plane of triangle (U0, U1, U2) */
+    ret = bn_make_plane_3pnts(P2, U0, U1, U2, &tol);
+    if (ret) return -1;
+    /* verify that triangles are coplanar */
+    if (bn_coplanar(P1, P2, &tol) <= 0) return -1;
+
+    /* first project onto an axis-aligned plane, that maximizes the area */
+    /* of the triangles, compute indices: i0, i1. */
+    VSUB2(E1, V1, V0);
+    VSUB2(E2, V2, V0);
+    VCROSS(N, E1, E2);
+
+    A[0]=fabs(N[0]);
+    A[1]=fabs(N[1]);
+    A[2]=fabs(N[2]);
+    if (A[0]>A[1]) {
+	if (A[0]>A[2]) {
+	    i0=1;      /* A[0] is greatest */
+	    i1=2;
+	} else {
+	    i0=0;      /* A[2] is greatest */
+	    i1=1;
+	}
+    } else {
+	/* A[0]<=A[1] */
+	if (A[2]>A[1]) {
+	    i0=0;      /* A[2] is greatest */
+	    i1=1;
+	} else {
+	    i0=0;      /* A[1] is greatest */
+	    i1=2;
+	}
+    }
+
+    /* test all edges of triangle 1 against the edges of triangle 2 */
+    if (!area_flag) {
+	EDGE_AGAINST_TRI_EDGES(V0, V1, U0, U1, U2);
+	EDGE_AGAINST_TRI_EDGES(V1, V2, U0, U1, U2);
+	EDGE_AGAINST_TRI_EDGES(V2, V0, U0, U1, U2);
+    } else {
+	EDGE_AGAINST_TRI_EDGES_AREA(V0, V1, U0, U1, U2);
+	EDGE_AGAINST_TRI_EDGES_AREA(V1, V2, U0, U1, U2);
+	EDGE_AGAINST_TRI_EDGES_AREA(V2, V0, U0, U1, U2);
+    }
+
+    /* finally, test if tri1 is totally contained in tri2 or vice versa */
+    int p1inside = 0;
+    p1inside += _bg_point_in_tri(i0, i1, V0, U0, U1, U2);
+    p1inside += _bg_point_in_tri(i0, i1, V1, U0, U1, U2);
+    p1inside += _bg_point_in_tri(i0, i1, V2, U0, U1, U2);
+    if (p1inside == 3) {
+	return 1;
+    }
+
+    int p2inside = 0;
+    p2inside += _bg_point_in_tri(i0, i1, U0, V0, V1, V2);
+    p2inside += _bg_point_in_tri(i0, i1, U1, V0, V1, V2);
+    p2inside += _bg_point_in_tri(i0, i1, U2, V0, V1, V2);
+
+    if (p2inside == 3) {
+	return 1;
+    }
+
+    return 0;
+}
 
 /* Internal coplanar test used by more general routines.  Separate from
  * the external function because this version of the test can assume

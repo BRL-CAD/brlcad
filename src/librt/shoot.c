@@ -230,7 +230,7 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 	if (PT_DEPARTING_RPP(ssp->rstep, ssp->curmin, ssp->curmax, px, py, pz))
 	    goto pop_space_stack;
 
-	if (RT_G_DEBUG&DEBUG_ADVANCE) {
+	if (RT_G_DEBUG&RT_DEBUG_ADVANCE) {
 	    bu_log(
 		"rt_advance_to_next_cell() dist_corr=%g, pt=(%g, %g, %g)\n",
 		t0 /*ssp->dist_corr*/, px, py, pz);
@@ -267,7 +267,7 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 
 	switch (cutp->cut_type) {
 	    case CUT_BOXNODE:
-		if (RT_G_DEBUG&DEBUG_ADVANCE &&
+		if (RT_G_DEBUG&RT_DEBUG_ADVANCE &&
 		    PT_DEPARTING_RPP(ssp->rstep, ssp->curmin, ssp->curmax, px, py, pz)
 		    ) {
 		    /* This cell is old news. */
@@ -291,7 +291,7 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 		if (cutp==ssp->lastcut) {
 		    fastf_t delta;
 		push_to_next_box:				;
-		    if (RT_G_DEBUG & DEBUG_ADVANCE) {
+		    if (RT_G_DEBUG & RT_DEBUG_ADVANCE) {
 			bu_log(
 			    "%d, %d box push odist_corr=%.20e n=%.20e model_end=%.20e\n",
 			    ap->a_x, ap->a_y,
@@ -317,14 +317,14 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 		    fraction = frexp(ssp->box_end,
 				     &exponent);
 
-		    if (RT_G_DEBUG & DEBUG_ADVANCE) {
+		    if (RT_G_DEBUG & RT_DEBUG_ADVANCE) {
 			bu_log(
 			    "exp=%d, fraction=%.20e\n",
 			    exponent, fraction);
 		    }
 		    fraction += SQRT_SMALL_FASTF;
 		    delta = ldexp(fraction, exponent);
-		    if (RT_G_DEBUG & DEBUG_ADVANCE) {
+		    if (RT_G_DEBUG & RT_DEBUG_ADVANCE) {
 			bu_log(
 			    "ldexp: delta=%g, fract=%g, exp=%d\n",
 			    delta,
@@ -337,7 +337,7 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 		    ssp->box_start = ssp->box_end + delta;
 		    ssp->box_end = ssp->box_start + delta;
 
-		    if (RT_G_DEBUG & DEBUG_ADVANCE) {
+		    if (RT_G_DEBUG & RT_DEBUG_ADVANCE) {
 			bu_log(
 			    "push%d: was=%.20e, now=%.20e\n\n",
 			    push_flag,
@@ -358,7 +358,7 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 		}
 		if (push_flag) {
 		    push_flag = 0;
-		    if (RT_G_DEBUG & DEBUG_ADVANCE) {
+		    if (RT_G_DEBUG & RT_DEBUG_ADVANCE) {
 			bu_log(
 			    "%d, %d Escaped %d. dist_corr=%g, box_start=%g, box_end=%g\n",
 			    ap->a_x, ap->a_y,
@@ -368,7 +368,7 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 			    ssp->box_end);
 		    }
 		}
-		if (RT_G_DEBUG & DEBUG_ADVANCE) {
+		if (RT_G_DEBUG & RT_DEBUG_ADVANCE) {
 		    bu_log(
 			"rt_advance_to_next_cell()=%p lastcut=%p\n",
 			(void *)cutp, (void *)ssp->lastcut);
@@ -391,7 +391,7 @@ rt_advance_to_next_cell(register struct rt_shootray_status *ssp)
 		ssp->dist_corr = t0;
 		ssp->box_start = t0 + ssp->newray.r_min;
 		ssp->box_end = t0 + ssp->newray.r_max;
-		if (RT_G_DEBUG & DEBUG_ADVANCE) {
+		if (RT_G_DEBUG & RT_DEBUG_ADVANCE) {
 		    bu_log(
 			"rt_advance_to_next_cell() box=(%g, %g)\n",
 			ssp->box_start, ssp->box_end);
@@ -649,7 +649,7 @@ rt_shootray(register struct application *ap)
     register const union cutter *cutp;
     struct resource *resp;
     struct rt_i *rtip;
-    const int debug_shoot = RT_G_DEBUG & DEBUG_SHOOT;
+    const int debug_shoot = RT_G_DEBUG & RT_DEBUG_SHOOT;
     fastf_t pending_hit = 0; /* dist of closest odd hit pending */
 
     RT_AP_CHECK(ap);
@@ -688,7 +688,7 @@ rt_shootray(register struct application *ap)
 
     if (RT_G_DEBUG) {
 	/* only test extensively if something in run-time debug is enabled */
-	if (RT_G_DEBUG & (DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION|DEBUG_ALLHITS)) {
+	if (RT_G_DEBUG & (RT_DEBUG_ALLRAYS|RT_DEBUG_SHOOT|RT_DEBUG_PARTITION|RT_DEBUG_ALLHITS)) {
 	    bu_log_indent_delta(2);
 	    bu_log("\n**********shootray cpu=%d  %d, %d lvl=%d a_onehit=%d (%s)\n",
 		   resp->re_cpu,
@@ -1125,7 +1125,7 @@ rt_shootray(register struct application *ap)
 		resp->re_shot_hit++;
 	    }
 	}
-	if (RT_G_DEBUG & DEBUG_ADVANCE)
+	if (RT_G_DEBUG & RT_DEBUG_ADVANCE)
 	    rt_plot_cell(cutp, &ss, &(waiting_segs.l), rtip);
 
 	/*
@@ -1201,7 +1201,7 @@ rt_shootray(register struct application *ap)
      * segments into the partition list.
      */
 weave:
-    if (RT_G_DEBUG&DEBUG_ADVANCE)
+    if (RT_G_DEBUG&RT_DEBUG_ADVANCE)
 	bu_log("rt_shootray: ray has left known space\n");
 
     /* Process any pending hits into segs */
@@ -1266,7 +1266,7 @@ hitit:
     /* finished_segs is only used by special hit routines which don't
      * follow the traditional solid modeling paradigm.
      */
-    if (RT_G_DEBUG&DEBUG_ALLHITS) rt_pr_partitions(rtip, &FinalPart, "Partition list passed to a_hit() routine");
+    if (RT_G_DEBUG&RT_DEBUG_ALLHITS) rt_pr_partitions(rtip, &FinalPart, "Partition list passed to a_hit() routine");
 
     /* Invoke caller's a_hit callback with the list of partitions */
     if (ap->a_hit) {
@@ -1305,7 +1305,7 @@ out:
     }
 
     /* Terminate any logging */
-    if (RT_G_DEBUG&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION|DEBUG_ALLHITS)) {
+    if (RT_G_DEBUG&(RT_DEBUG_ALLRAYS|RT_DEBUG_SHOOT|RT_DEBUG_PARTITION|RT_DEBUG_ALLHITS)) {
 	bu_log_indent_delta(-2);
 	bu_log("----------shootray cpu=%d  %d, %d lvl=%d (%s) %s ret=%d\n",
 	       resp->re_cpu,
@@ -1327,7 +1327,7 @@ rt_cell_n_on_ray(register struct application *ap, int n)
     register const union cutter *cutp;
     struct resource *resp;
     struct rt_i *rtip;
-    const int debug_shoot = RT_G_DEBUG & DEBUG_SHOOT;
+    const int debug_shoot = RT_G_DEBUG & RT_DEBUG_SHOOT;
 
     memset(&ss, 0, sizeof(struct rt_shootray_status));
 
@@ -1355,7 +1355,7 @@ rt_cell_n_on_ray(register struct application *ap, int n)
     RT_CK_RESOURCE(resp);
     ss.resp = resp;
 
-    if (RT_G_DEBUG&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION|DEBUG_ALLHITS)) {
+    if (RT_G_DEBUG&(RT_DEBUG_ALLRAYS|RT_DEBUG_SHOOT|RT_DEBUG_PARTITION|RT_DEBUG_ALLHITS)) {
 	bu_log_indent_delta(2);
 	bu_log("\n**********cell_n_on_ray cpu=%d  %d, %d lvl=%d (%s), n=%d\n",
 	       resp->re_cpu,

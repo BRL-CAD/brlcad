@@ -119,6 +119,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"dbfind", cmd_ged_info_wrapper, ged_find},
     {"dbip", cmd_ged_plain_wrapper, ged_dbip},
     {"dbversion", cmd_ged_plain_wrapper, ged_version},
+    {"debug", cmd_ged_plain_wrapper, ged_debug},
     {"debugbu", cmd_ged_plain_wrapper, ged_debugbu},
     {"debugdir", cmd_ged_plain_wrapper, ged_debugdir},
     {"debuglib", cmd_ged_plain_wrapper, ged_debuglib},

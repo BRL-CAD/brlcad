@@ -38,9 +38,11 @@
 #include "brep/curvetree.h"
 #include "brep/surfacetree.h"
 #include "brep/ray.h"
+#include "brep/pullback.h"
 #include "brep/cdt.h" // for ON_Brep_Report_Faces - should go away
 #include "bg/tri_ray.h" // for ON_Brep_Report_Faces - should go away
-#include "libbrep_brep_tools.h"
+#include "bg/lseg.h"
+#include "./tools/tools.h"
 #include "bn/dvec.h"
 
 #define RANGE_HI 0.55
@@ -112,7 +114,8 @@ brep_newton_iterate(const plane_ray& pr, pt2d_t R, const ON_3dVector& su, const 
 	mat2d_pt2d_mul(tmp, inv_jacob, R);
 	pt2dsub(out_uv, uv, tmp);
     } else {
-	TRACE2("inverse failed"); // FIXME: how to handle this?
+	// FIXME: how to handle this?
+	// TRACE2("inverse failed");
 	move(out_uv, uv);
     }
 }
@@ -216,6 +219,8 @@ ON_NurbsCurve_GetClosestPoint(
 	const ON_Interval *sub_domain = NULL
 	)
 {
+    if (!t || !nc) return false;
+
     ON_Interval domain = (sub_domain) ? *sub_domain : nc->Domain();
     size_t init_sample_cnt = nc->CVCount() * nc->Degree();
     double span = 1.0/(double)(init_sample_cnt);
@@ -297,6 +302,262 @@ ON_NurbsCurve_GetClosestPoint(
 
     return true;
 }
+
+struct curve_line_search_args {
+    const ON_NurbsCurve *nc;
+    const ON_Line *l;
+    double vdist;
+};
+
+int
+curve_line_closest_search_func(void *farg, double t, double *ft, double *dft)
+{
+    struct curve_line_search_args *largs = (struct curve_line_search_args *)farg;
+    const ON_NurbsCurve *nc = largs->nc;
+    ON_3dPoint crv_pnt;
+    ON_3dVector crv_d1;
+    ON_3dVector crv_d2;
+    if (!nc->Ev2Der(t, crv_pnt, crv_d1, crv_d2)) return -1;
+
+    // Unlike the closet point to test point case, we don't have a single target point
+    // to use.  Instead, for the current curve point, find the closest point on the
+    // line to that point and use it as the "current" test point.
+    double lt;
+    largs->l->ClosestPointTo(crv_pnt, &lt);
+    ON_3dPoint tp = largs->l->PointAt(lt);
+  
+    // Since the test point is ephemeral, calculate and stash the distance
+    // while we have it  
+    largs->vdist = crv_pnt.DistanceTo(tp);
+   
+    ON_3dVector fparam2 = crv_pnt - tp;
+    *ft = ON_DotProduct(crv_d1, fparam2);
+    *dft = ON_DotProduct(crv_d2, fparam2) + ON_DotProduct(crv_d1, crv_d1);
+
+    if (*ft < ON_ZERO_TOLERANCE) return 1;
+    return 0;
+}
+
+bool
+ON_NurbsCurve_ClosestPointToLineSegment(
+	double *dist,
+	double *t,
+	const ON_NurbsCurve *nc,
+	const ON_Line &l,
+	double maximum_distance,
+	const ON_Interval *sub_domain
+	)
+{
+    if (!nc) return false;
+
+    ON_Interval domain = (sub_domain) ? *sub_domain : nc->Domain();
+
+    if (nc->IsLinear(TOL2)) {
+	// If the curve is linear, this reduces to an lseg/lseg test and
+	// (optionally depending on what the user has requested) a get closest
+	// point operation to figure out the corresponding t paramater.
+	ON_3dPoint onl1 = l.PointAt(0);
+	ON_3dPoint onl2 = l.PointAt(1);
+	ON_3dPoint onc1 = nc->PointAt(domain.ParameterAt(0));
+	ON_3dPoint onc2 = nc->PointAt(domain.ParameterAt(1));
+	point_t C0, C1, L0, L1;
+	VSET(C0, onc1.x, onc1.y, onc1.z);
+	VSET(C1, onc2.x, onc2.y, onc2.z);
+	VSET(L0, onl1.x, onl1.y, onl1.z);
+	VSET(L1, onl2.x, onl2.y, onl2.z);
+	double ndist;
+	if (t) {
+	    point_t c1i, l1i;
+	    ndist = bg_lseg_lseg_dist(&c1i, &l1i, C0, C1, L0, L1);
+	    double nt;
+	    ON_3dPoint tp(c1i[0], c1i[1], c1i[2]);
+	    if (!ON_NurbsCurve_GetClosestPoint(&nt, nc, tp, maximum_distance, &domain)) {
+		bu_log("ON_NurbsCurve_ClosestPointToLineSegment: linear closest point t param search failed\n");
+		if (dist) {
+		    (*dist) = ndist;
+		}
+		return false;
+	    }
+	    (*t) = nt;
+	} else {
+	    ndist = bg_lseg_lseg_dist(NULL, NULL, C0, C1, L0, L1);
+	}
+	if (dist) {
+	    (*dist) = ndist;
+	}
+
+	if (maximum_distance > 0 && ndist > maximum_distance) return false;
+	return true;
+    }
+
+    size_t init_sample_cnt = nc->CVCount() * nc->Degree();
+    double span = 1.0/(double)(init_sample_cnt);
+
+    // Get an initial sampling of uniform points along the active
+    // curve domain
+    std::vector<ON_3dPoint> pnts;
+    for (size_t i = 0; i <= init_sample_cnt; i++) {
+	double st = domain.ParameterAt(i * span);
+	pnts.push_back(nc->PointAt(st));
+    }
+
+    // Find an initial domain subset based on the breakdown into segments
+    double d1 = domain.Min();
+    double d2 = domain.Max();
+    double vmin = DBL_MAX;
+    for (size_t i = 0; i < pnts.size() - 1; i++) {
+	ON_Line lseg(pnts[i], pnts[i+1]);
+	double lseglen = lseg.MinimumDistanceTo(l);
+	if (lseglen < vmin) {
+	    vmin = lseglen;
+	    d1 = domain.ParameterAt(i*span);
+	    d2 = domain.ParameterAt((i+1)*span);
+	}
+    }
+
+    // Iterate to find the closest point
+    double u = (d1 + d2) * 0.5;
+    struct curve_line_search_args largs;
+    largs.nc = nc;
+    largs.l = &l;
+    double st;
+    int osearch = ON_FindLocalMinimum(curve_line_closest_search_func, &largs, d1, u, d2, ON_EPSILON, 0.5*ON_ZERO_TOLERANCE, 100, &st);
+
+    if (osearch == 1) {
+
+	if (t) {
+	    (*t) = st;
+	}
+	if (dist) {
+	    (*dist) = largs.vdist;
+	}
+
+    } else {
+
+	bu_log("ON_NurbsCurve_ClosestPointToLineSegment: ON_FindLocalMinimum search failed\n");
+	return false;
+
+    }
+
+    if (maximum_distance > 0 && largs.vdist > maximum_distance) return false;
+
+    return true;
+}
+
+
+
+static double
+trim_binary_search(fastf_t *tparam, const ON_BrepTrim *trim, double tstart, double tend, const ON_3dPoint &edge_3d, double tol, int depth, int force)
+{
+    double tcparam = (tstart + tend) / 2.0;
+    ON_3dPoint trim_2d = trim->PointAt(tcparam);
+    const ON_Surface *s = trim->SurfaceOf();
+    ON_3dPoint trim_3d = s->PointAt(trim_2d.x, trim_2d.y);
+    double dist = edge_3d.DistanceTo(trim_3d);
+
+    if (dist > tol && !force) {
+	ON_3dPoint trim_start_2d = trim->PointAt(tstart);
+	ON_3dPoint trim_end_2d = trim->PointAt(tend);
+	ON_3dPoint trim_start_3d = s->PointAt(trim_start_2d.x, trim_start_2d.y);
+	ON_3dPoint trim_end_3d = s->PointAt(trim_end_2d.x, trim_end_2d.y);
+
+	ON_3dVector v1 = edge_3d - trim_start_3d;
+	ON_3dVector v2 = edge_3d - trim_end_3d;
+	double vdot = ON_DotProduct(v1,v2);
+
+	if (vdot < 0 && dist > ON_ZERO_TOLERANCE) {
+	    double tlparam, trparam;
+	    double fldist = trim_binary_search(&tlparam, trim, tstart, tcparam, edge_3d, tol, depth+1, 0);
+	    double frdist = trim_binary_search(&trparam, trim, tcparam, tend, edge_3d, tol, depth+1, 0);
+	    if (fldist >= 0 && frdist < -1) {
+		(*tparam) = tlparam;
+		return fldist;
+	    }
+	    if (frdist >= 0 && fldist < -1) {
+		(*tparam) = trparam;
+		return frdist;
+	    }
+	    if (fldist < -1 && frdist < -1) {
+		fldist = trim_binary_search(&tlparam, trim, tstart, tcparam, edge_3d, tol, depth+1, 1);
+		frdist = trim_binary_search(&trparam, trim, tcparam, tend, edge_3d, tol, depth+1, 1);
+		if ((fldist < frdist) && (fldist < dist)) {
+		    (*tparam) = tlparam;
+		    return fldist;
+		}
+		if ((frdist < fldist) && (frdist < dist)) {
+		    (*tparam) = trparam;
+		    return frdist;
+		}
+		(*tparam) = tcparam;
+		return dist;
+
+	    }
+	} else if (NEAR_ZERO(vdot, ON_ZERO_TOLERANCE)) {
+	    (*tparam) = tcparam;
+	    return dist;
+	} else {
+	    // Not in this span
+	    if (depth == 0) {
+		(*tparam) = tcparam;
+		return dist;
+	    } else {
+		return -2;
+	    }
+	}
+    }
+
+    // close enough - this works
+    (*tparam) = tcparam;
+    return dist;
+}
+
+bool
+ON_TrimCurve_GetClosestPoint(
+	double *t,
+	const ON_BrepTrim *trim,
+	const ON_3dPoint &p,
+	double maximum_distance,
+	const ON_Interval *sub_domain
+	)
+{
+    ON_3dPoint trim_2d;
+    ON_3dPoint trim_3d;
+    if (!t || !trim) {
+	return false;
+    }
+
+    ON_Interval domain = (sub_domain) ? *sub_domain : trim->Domain();
+
+    if (trim->m_type == ON_BrepTrim::singular) {
+	// If the trim is singular, there's only one point to check.
+	if (maximum_distance > 0) {
+	    trim_3d = trim->Brep()->m_V[trim->m_vi[0]].Point();
+	    if (trim_3d.DistanceTo(p) > maximum_distance) {
+		return false;
+	    }
+	}
+	(*t) = domain.ParameterAt(0);
+	return true;
+    }
+
+    double vdist = trim_binary_search(t, trim, domain.ParameterAt(0), domain.ParameterAt(1), p, maximum_distance, 0, 0);
+    if (vdist < 0) {
+	return false;
+    }
+
+    if (maximum_distance > 0 && vdist > maximum_distance) {
+	return false;
+    }
+
+    return true;
+}
+
+
+
+
+
+
+
 
 namespace brlcad {
 
@@ -1842,7 +2103,8 @@ gcp_newton_iteration(pt2d_t out_uv, const GCPData& data, pt2d_t grad, pt2d_t in_
 	pt2dsub(out_uv, in_uv, tmp);
 	return true;
     } else {
-	std::cerr << "inverse failed!" << std::endl; // XXX fix the error handling
+	// XXX fix the error handling
+	// std::cerr << "inverse failed!" << std::endl;
 	return false;
     }
 }
@@ -1850,7 +2112,7 @@ gcp_newton_iteration(pt2d_t out_uv, const GCPData& data, pt2d_t grad, pt2d_t in_
 
 bool
 get_closest_point(ON_2dPoint& outpt,
-		  const ON_BrepFace* face,
+		  const ON_BrepFace& face,
 		  const ON_3dPoint& point,
 		  const SurfaceTree* tree,
 		  double tolerance)
@@ -1862,7 +2124,7 @@ get_closest_point(ON_2dPoint& outpt,
     pt2d_t curr_grad = {0.0, 0.0};
     pt2d_t new_uv = {0.0, 0.0};
     GCPData data;
-    data.surf = face->SurfaceOf();
+    data.surf = face.SurfaceOf();
     data.pt = point;
 
     TRACE("get_closest_point: " << PT(point));
@@ -1870,7 +2132,7 @@ get_closest_point(ON_2dPoint& outpt,
     // get initial estimate
     const SurfaceTree* a_tree = tree;
     if (a_tree == NULL) {
-	a_tree = new SurfaceTree(face);
+	a_tree = new SurfaceTree(&face);
 	delete_tree = true;
     }
     ON_Interval u, v;

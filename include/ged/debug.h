@@ -33,6 +33,10 @@
 
 __BEGIN_DECLS
 
+/**
+ * Report/Control BRL-CAD library debugging settings
+ */
+GED_EXPORT extern int ged_debug(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Set/get libbu's debug bit vector

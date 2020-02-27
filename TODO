@@ -32,12 +32,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 * modify libfb's default memory buffer allocation to be dynamic
 
-* add coverage test geometry, e.g., scene with all object types plus a
-  lookup check to ensure no new ones are missing.
-
-	- likely need comprehensive parameter testing for each type
-	- add regression test for all geometric object types
-	- test whether RT+-TIE can render all BoT modes
+* create a BRL-CAD .g with all possible object types embedded.
+  integrate into testing. e.g., scene with all object types plus a
+  lookup check to ensure none are missing.
 
 * fix pipe subtractions shaded display issue in archer
 
@@ -103,9 +100,6 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   rt_shootrays(), modify to pass all rays down through the spatial
   partitioning simultaneously
 
-* create a BRL-CAD .g with all possible object types embedded.
-  integrate into testing.
-
 * readd support for vrml v1 to g-vrml so that users can select whether
   they want v2 (default) or previous v1 output format via a
   command-line switch.  see http://brlcad.svn.sf.net/viewvc/brlcad/brlcad/trunk/conv/g-vrml.c?view=diff&pathrev=22798&r1=16900&r2=16901
@@ -136,6 +130,23 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* replace los references/terminology with span, len, dist, factor, etc
+  accordingly since los is ambiguous and a source of user confusion.
+
+* enhance env command to handle debug variables, use sysctl style
+  groupings of variables, and in general make the setup simpler
+  and more uniform (ideally we'll fold the debug command's
+  capabilities into env in some form.)  Need to have a usability
+  brainstorming session, but after discussion with Sean general
+  outlines are to:
+  Switch all debug variable management to staging through
+  environment variables rather than directly setting hex values
+  on the globals, but leave the globals as the low level mechanism
+  for performance reasons (getenv is much more expensive, don't
+  want it in core code.)  Something like:
+
+  LIBRT_DEBUG_HF (env variable) -> debug.rt_hf (env cmd) -> rt_debug hex val (library)
 
 * overlay command needs to accept multiple file arguments
 
@@ -469,13 +480,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * high-performance VOL for medical data visualization.  consider
   leveraging OpenVDB, PCL, Paraview/VTK, etc.
-
-* multi-region VOL objects.  this basically will either introduce a
-  notion of data-reuse where multiple regions reference the same VOL
-  and get different spatial results, or a single primitive reports
-  distinct material/region/spatial information that will get
-  propagated up into separate region hits.  the prior is probably
-  easier and less error-prone.
 
 * establish the Basic Application Runtime (BAR), only consisting of
   libbu and libbn, as a stand-alone self-contained project.  provide
@@ -1630,6 +1634,13 @@ ATTRIBUTES
 
 NEW OBJECTS
 -----------
+
+* multi-region VOL objects.  this basically will either introduce a
+  notion of data-reuse where multiple regions reference the same VOL
+  and get different spatial results, or a single primitive reports
+  distinct material/region/spatial information that will get
+  propagated up into separate region hits.  the prior is probably
+  easier and less error-prone.
 
 * view/camera objects.  non-geometry object type that encapsulates the
   concepts handled by saveview/loadview including awareness of

@@ -450,7 +450,7 @@ old_nirt_main(int argc, char *argv[])
 		silent_flag = SILENT_NO;	/* Positively no */
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
 		break;
 	    case 'X':
 		sscanf(bu_optarg, "%x", (unsigned int *)&nirt_debug);
