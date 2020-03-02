@@ -1,7 +1,7 @@
 /*                        C D T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2007-2019 United States Government as represented by
+ * Copyright (c) 2007-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -84,7 +84,7 @@ vert_trim_vnorm(ON_BrepVertex& v, ON_BrepTrim *trim)
     return trim_norm;
 }
 
-ON_3dVector
+static ON_3dVector
 singular_vert_norm(ON_Brep *brep, int index)
 {
     ON_BrepVertex &v = brep->m_V[index];
@@ -159,6 +159,41 @@ singular_vert_norm(ON_Brep *brep, int index)
     vnrml.Unitize();
 
     return vnrml;
+}
+
+ON_3dPoint *
+mesh_point_t::pt()
+{
+    if (have_point) return &p;
+    if (type == B_PT || !cdt) return NULL;
+    if (type == B_VERT && vert_index == -1) return NULL;
+    if (type == B_EDGE && trim_index == -1) return NULL;
+    if (type == B_SURF && face_index == -1) return NULL;
+    if (type == B_VERT) {
+	have_point = true;
+	p = cdt->i->s.brep->m_V[vert_index].Point();
+	return &p;
+    }
+}
+
+ON_3dVector *
+mesh_point_t::norm(int ind)
+{
+    if (type == B_PT || !cdt) return NULL;
+    if (type == B_VERT && vert_index == -1) return NULL;
+    if (type == B_EDGE && trim_index == -1) return NULL;
+    if (type == B_SURF && face_index == -1) return NULL;
+
+    if (type == B_VERT) {
+	std::unordered_map<int, ON_3dVector>::iterator n_it;
+	n_it = norms.find(ind);
+	if (n_it != norms.end()){
+	    return &(n_it->second);
+	}
+	p = cdt->i->s.brep->m_V[vert_index].Point();
+	return &p;
+    }
+
 }
 
 void

@@ -1,7 +1,7 @@
 #     B R L C A D _ C H E C K F U N C T I O N S . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2019 United States Government as represented by
+# Copyright (c) 2011-2020 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -538,7 +538,7 @@ function(BRLCAD_CHECK_PERCENT_Z)
 int main(int ac, char *av[])
 {
   char buf[64] = {0};
-  if (sprintf(buf, \"%zu\", (size_t)1) != 1 || buf[0] != 1 || buf[1] != 0)
+  if (sprintf(buf, \"%zu\", (size_t)1) != 1 || buf[0] != '1' || buf[1] != 0)
     return 1;
   return (ac < 0) ? (int)av[0][0] : 0;
 }
