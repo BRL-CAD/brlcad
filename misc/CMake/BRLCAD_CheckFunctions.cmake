@@ -538,7 +538,7 @@ function(BRLCAD_CHECK_PERCENT_Z)
 int main(int ac, char *av[])
 {
   char buf[64] = {0};
-  if (sprintf(buf, \"%zu\", (size_t)1) != 1 || buf[0] != 1 || buf[1] != 0)
+  if (sprintf(buf, \"%zu\", (size_t)1) != 1 || buf[0] != '1' || buf[1] != 0)
     return 1;
   return (ac < 0) ? (int)av[0][0] : 0;
 }
