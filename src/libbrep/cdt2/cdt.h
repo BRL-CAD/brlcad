@@ -1,7 +1,7 @@
 /*                        C D T . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2019 United States Government as represented by
+ * Copyright (c) 2007-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -115,6 +115,7 @@ class polygon_t;
 
 
 typedef enum {
+    B_PT,
     B_VERT,
     B_EDGE,
     B_SURF
@@ -154,26 +155,26 @@ class mesh_point_t {
 	void disconnect(mesh_uedge_t *ue);
 
 	// Primary 3D point and normal information
-	ON_3dPoint p;
-	ON_3dVector n;
+	ON_3dPoint *pt;
+	ON_3dVector *norm(int ind = -1);
 
 	// Metadata from BRep indicating what type of point this is
-	mesh_point_type type;
+	mesh_point_type type = B_PT;
 
 	// Origin information - specifics about what vertex, edge or surface on the
 	// mesh is connected to this particular point.  Which set of information is
 	// valid for this particular point depends on its type.
 	// B_VERT
-	int vert_index;
-	bool singular;
+	int vert_index = -1;
+	bool singular = false;
 	// B_EDGE
-	int trim_index;
-	int edge_index;
-	double t;
+	int trim_index = -1;
+	int edge_index = -1;
+	double t = -DBL_MAX;
 	// B_SURF
-	int face_index;
-	double u;
-	double v;
+	int face_index = -1;
+	double u = -DBL_MAX;
+	double v = -DBL_MAX;
 
 	// Variables used to store the associated index when assembling BoT
 	// meshes
@@ -192,6 +193,18 @@ class mesh_point_t {
 	// Bounding box around the vertex point, with sized defined based
 	// on connected edge lengths.
 	ON_BoundingBox bb;
+
+    private:
+	ON_3dPoint p;
+	bool have_point = false;
+
+	// Unlike 3D points, normals at the same point may vary at edges
+	// depending on which surface is in play.  For points with type
+	// of B_VERT or B_EDGE, need to use the face_index or trim_index
+	// respectively to look up the correct normal.  For B_SURF the
+	// answer is unambigous so that vector is just storted with index
+	// zero.
+	std::unordered_map<int, ON_3dVector> norms;
 };
 
 ///////////////////////////////////////////////////////////////////////////////
