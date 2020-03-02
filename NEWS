@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.30.6                                     ---
 ----------------------------------------------------------------------
 
+* fixed transparent drawing in MGED - Nick Reed
 * fixed solid NURBS brep intersection testing - Cliff Yapp
 * removed extra blank line after commands in MGED GUI - Sean Morrison
 * added "plate" object type filter to search command - Cliff Yapp
