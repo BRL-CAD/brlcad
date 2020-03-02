@@ -1,7 +1,7 @@
 /*                          C O N F I G _ W I N . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2019 United States Government as represented by
+ * Copyright (c) 1993-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -101,7 +101,6 @@
 #define close _close
 #define dup _dup
 #define dup2 _dup2
-#define open _open
 
 
 /* it we're compiling c++ sources, there's a possibility that we'll be
@@ -122,6 +121,7 @@
 /* #define filelength _filelength */
 #define locking _locking
 /* #define mktemp _mktemp */
+#define open _open
 #define unlink _unlink
 
 /* io.h's _pipe func takes different args */
