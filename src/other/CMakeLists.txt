@@ -140,6 +140,7 @@ provided with BRL-CAD's source distribution.  Default is AUTO,
 responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
 first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
+set(Z_PREFIX_STR "brl_")
 THIRD_PARTY(libz ZLIB zlib zlib_DESCRIPTION ALIASES ENABLE_ZLIB ENABLE_LIBZ FIND_NAME BRLCADZLIB)
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libz/CTestTestfile.cmake")
 SetTargetFolder(zlib "Third Party Libraries")
@@ -147,8 +148,14 @@ SetTargetFolder(zlib-static "Third Party Libraries")
 SetTargetFolder(example "Third Party Executables")
 SetTargetFolder(minigzip "Third Party Executables")
 if(BRLCAD_ZLIB_BUILD)
+  add_definitions(-DZ_PREFIX)
+  add_definitions(-DZ_PREFIX_STR=${Z_PREFIX_STR})
+  set(Z_PREFIX_STR "${Z_PREFIX_STR}" CACHE STRING "prefix for zlib functions" FORCE)
   BRLCAD_MANAGE_FILES(${CMAKE_CURRENT_BINARY_DIR}/libz/zlib.h ${INCLUDE_DIR})
   BRLCAD_MANAGE_FILES(${CMAKE_CURRENT_BINARY_DIR}/libz/zconf.h ${INCLUDE_DIR})
+else(BRLCAD_ZLIB_BUILD)
+  set(Z_PREFIX_STR "" CACHE STRING "clear prefix for zlib functions" FORCE)
+  set(Z_PREFIX_STR)
 endif(BRLCAD_ZLIB_BUILD)
 
 # LZ4 compression/decompression library
