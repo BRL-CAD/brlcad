@@ -287,6 +287,8 @@ set(PNG_MAN_DIR ${MAN_DIR} CACHE STRING "Set PNG_MAN_DIR to the global MAN_DIR" 
 mark_as_advanced(PNG_MAN_DIR)
 set(PNG_TESTS 0 CACHE STRING "Disable building png test executables" FORCE)
 mark_as_advanced(PNG_TESTS)
+set(PNG_PREFIX "brl_" CACHE STRING "BRL-CAD prefix for libpng" FORCE)
+mark_as_advanced(PNG_PREFIX)
 set(ld-version-script OFF CACHE STRING "Disable linker script" FORCE)
 mark_as_advanced(ld-version-script)
 mark_as_advanced(PNG_PREFIX)
@@ -350,6 +352,7 @@ if(BRLCAD_PNG_BUILD)
   DISTCLEAN("${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/pnglibconf.h")
 
 endif(BRLCAD_PNG_BUILD)
+
 set(PNG_INCLUDE_DIR ${PNG_PNG_INCLUDE_DIR} CACHE STRING "PNG include directory" FORCE)
 # Since SKIP_INSTALL_FILES doesn't have a PNG prefix, we'll unset it once we're done
 unset(SKIP_INSTALL_FILES CACHE)
