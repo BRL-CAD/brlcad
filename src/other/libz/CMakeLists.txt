@@ -66,22 +66,22 @@ endif()
 # Check for unistd.h
 #
 check_include_file(unistd.h Z_HAVE_UNISTD_H)
-IF(Z_HAVE_UNISTD_H)
+if(Z_HAVE_UNISTD_H)
   add_definitions(-DZ_HAVE_UNISTD_H)
-ENDIF(Z_HAVE_UNISTD_H)
+endif(Z_HAVE_UNISTD_H)
 
-OPTION(ENABLE_Z_PREFIX "Add z_ prefix to all library functions." OFF)
-IF(DEFINED Z_PREFIX_STR)
+option(ENABLE_Z_PREFIX "Add z_ prefix to all library functions." OFF)
+if(DEFINED Z_PREFIX_STR)
   add_definitions(-DZ_PREFIX_STR=${Z_PREFIX_STR})
-  IF(NOT ENABLE_Z_PREFIX)
+  if(NOT ENABLE_Z_PREFIX)
     set(ENABLE_Z_PREFIX ON)
-  ENDIF(NOT ENABLE_Z_PREFIX)
-ENDIF(DEFINED Z_PREFIX_STR)
-IF(ENABLE_Z_PREFIX)
+  endif(NOT ENABLE_Z_PREFIX)
+endif(DEFINED Z_PREFIX_STR)
+if(ENABLE_Z_PREFIX)
   add_definitions(-DZ_PREFIX)
-ENDIF(ENABLE_Z_PREFIX)
-MARK_AS_ADVANCED(ENABLE_Z_PREFIX)
-MARK_AS_ADVANCED(Z_PREFIX_STR)
+endif(ENABLE_Z_PREFIX)
+mark_as_advanced(ENABLE_Z_PREFIX)
+mark_as_advanced(Z_PREFIX_STR)
 
 if(MSVC)
   #set(CMAKE_DEBUG_POSTFIX "d")
@@ -217,7 +217,6 @@ endif()
 if(NOT SKIP_INSTALL_HEADERS AND NOT SKIP_INSTALL_ALL )
   install(FILES ${ZLIB_PUBLIC_HDRS} DESTINATION ${INCLUDE_DIR})
 endif()
-
 
 # Local Variables:
 # tab-width: 8
