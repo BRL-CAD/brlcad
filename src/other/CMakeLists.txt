@@ -147,7 +147,7 @@ SetTargetFolder(zlib-static "Third Party Libraries")
 SetTargetFolder(example "Third Party Executables")
 SetTargetFolder(minigzip "Third Party Executables")
 if(BRLCAD_ZLIB_BUILD)
-  BRLCAD_MANAGE_FILES(libz/zlib.h ${INCLUDE_DIR})
+  BRLCAD_MANAGE_FILES(${CMAKE_CURRENT_BINARY_DIR}/libz/zlib.h ${INCLUDE_DIR})
   BRLCAD_MANAGE_FILES(${CMAKE_CURRENT_BINARY_DIR}/libz/zconf.h ${INCLUDE_DIR})
 endif(BRLCAD_ZLIB_BUILD)
 

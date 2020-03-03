@@ -70,11 +70,17 @@ IF(Z_HAVE_UNISTD_H)
 	add_definitions(-DZ_HAVE_UNISTD_H)
 ENDIF(Z_HAVE_UNISTD_H)
 
-OPTION(ENABLE_Z_PREFIX "Add z_ prefix to all library functions." OFF)
-MARK_AS_ADVANCED(ENABLE_Z_PREFIX)
-IF(ENABLE_Z_PREFIX)
-	add_definitions(-DZ_PREFIX)
-ENDIF(ENABLE_Z_PREFIX)
+MARK_AS_ADVANCED(Z_PREFIX)
+IF(DEFINED Z_PREFIX)
+	add_definitions(-DZ_PREFIX=${Z_PREFIX})
+	if("${Z_PREFIX}" STREQUAL 1 OR "${Z_PREFIX}" STREQUAL "")
+		set(Z_PREFIX_STR "z_")
+	else("${Z_PREFIX}" STREQUAL 1 OR "${Z_PREFIX}" STREQUAL "")
+		set(Z_PREFIX_STR "${Z_PREFIX}")
+	endif("${Z_PREFIX}" STREQUAL 1 OR "${Z_PREFIX}" STREQUAL "")
+else(DEFINED Z_PREFIX)
+	set(Z_PREFIX_STR "${Z_PREFIX}")
+ENDIF(DEFINED Z_PREFIX)
 
 if(MSVC)
     #set(CMAKE_DEBUG_POSTFIX "d")
@@ -86,8 +92,8 @@ if(NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
 	configure_file(${CMAKE_CURRENT_SOURCE_DIR}/zconf.h
 	${CMAKE_CURRENT_BINARY_DIR}/zconf.h COPYONLY)
 endif(NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
+configure_file(${CMAKE_CURRENT_SOURCE_DIR}/zlib.h.in ${CMAKE_CURRENT_BINARY_DIR}/zlib.h @ONLY)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
-
 
 #============================================================================
 # zlib
@@ -95,7 +101,7 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 set(ZLIB_PUBLIC_HDRS
     ${CMAKE_CURRENT_BINARY_DIR}/zconf.h
-    zlib.h
+    ${CMAKE_CURRENT_BINARY_DIR}/zlib.h
 )
 set(ZLIB_PRIVATE_HDRS
     crc32.h
@@ -127,7 +133,7 @@ set(ZLIB_SRCS
 )
 
 # parse the full version number from zlib.h and include in ZLIB_FULL_VERSION
-file(READ ${CMAKE_CURRENT_SOURCE_DIR}/zlib.h _zlib_h_contents)
+file(READ ${CMAKE_CURRENT_BINARY_DIR}/zlib.h _zlib_h_contents)
 string(REGEX REPLACE ".*#define[ \t]+ZLIB_VERSION[ \t]+\"([-0-9A-Za-z.]+)\".*"
     "\\1" ZLIB_FULL_VERSION ${_zlib_h_contents})
 
