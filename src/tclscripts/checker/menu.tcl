@@ -158,12 +158,19 @@ body OverlapMenu::runCheckerTool { } {
     wm title $checkerWindow "Geometry Checker"
     pack $checker -expand true -fill both
 
+    # calculate default geometry
+    wm withdraw $checkerWindow
+    update
+
     # ensure window isn't too narrow
     set geom [split [wm geometry $checkerWindow] "=x+-"]
     if {[lindex $geom 0] > [lindex $geom 1]} {
 	lreplace $geom 1 1 [lindex $geom 0]
     }
     wm geometry $checkerWindow "=[::tcl::mathfunc::round [expr 1.62 * [lindex $geom 1]]]x[lindex $geom 1]"
+
+    # raise to front
+    wm deiconify $checkerWindow
 
     destroy $parent.overlapmenu
 }
