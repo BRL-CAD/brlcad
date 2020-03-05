@@ -41,6 +41,7 @@ __BEGIN_DECLS
 struct nirt_state_impl;
 struct nirt_state {
     struct nirt_state_impl *i;
+    struct bu_vls nirt_cmd;
 };
 
 /**

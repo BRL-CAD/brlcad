@@ -149,7 +149,8 @@ HIDDEN const char *nirt_cmd_tbl_defs =
 "x_gap_in,       FLOAT,         ,"
 "y_gap_in,       FLOAT,         ,"
 "z_gap_in,       FLOAT,         ,"
-"gap_los,        FLOAT,         ,";
+"gap_los,        FLOAT,         ,"
+"nirt_cmd,       STRING,        ,";
 
 
 struct nirt_overlap {
@@ -1609,6 +1610,11 @@ _nirt_print_fmt_substr(struct nirt_state *nss, struct bu_vls *ostr, const char *
 	bu_vls_printf(ostr, "%s", fmt);
 	return;
     }
+
+    /* nirt_cmd is a special key to allow a nirt output to reproduce a command that would recreate
+     * the execution. */
+    nirt_print_key("nirt_cmd", bu_vls_cstr(&nss->nirt_cmd));
+
     nirt_print_key("x_orig", r->orig[X] * base2local);
     nirt_print_key("y_orig", r->orig[Y] * base2local);
     nirt_print_key("z_orig", r->orig[Z] * base2local);
@@ -3618,6 +3624,8 @@ nirt_init(struct nirt_state *ns)
 
     if (!ns) return -1;
 
+    ns->nirt_cmd = BU_VLS_INIT_ZERO;
+
     /* Get memory */
     n = new nirt_state_impl;
     ns->i = n;
@@ -3838,6 +3846,7 @@ void
 nirt_destroy(struct nirt_state *ns)
 {
     if (!ns) return;
+    bu_vls_free(&ns->nirt_cmd);
     bu_vls_free(ns->i->err);
     bu_vls_free(ns->i->msg);
     bu_vls_free(ns->i->out);
