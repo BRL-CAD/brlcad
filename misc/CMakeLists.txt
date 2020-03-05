@@ -45,10 +45,13 @@ set(density_DATAFILES
   )
 BRLCAD_ADDDATA(density_DATAFILES data)
 
+add_subdirectory(nirt)
+
 BRLCAD_ADDDATA(profont/ProFont.ttf fonts)
 
 BRLCAD_ADDDATA(nsis/brlcad.ico icons)
 BRLCAD_ADDDATA(nsis/archer.ico icons)
+
 
 add_subdirectory(doxygen)
 add_subdirectory(CMake)
