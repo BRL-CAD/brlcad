@@ -2199,6 +2199,10 @@ namespace eval ArcherCore {
 	".g"   {
 	    $itk_component(ged) open $target
 	}
+	"" {
+	    set target $target.g
+	    $itk_component(ged) open $target
+	}
 	default {
 	    return
 	}
