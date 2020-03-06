@@ -2292,10 +2292,25 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 	    if (cmt != std::string::npos) {
 		line.erase(cmt);
 	    }
+
+	    /* If the whole line was a comment, skip it */
 	    _nirt_trim_whitespace(line);
 	    if (!line.length()) continue;
 
-	    if (!line.compare(0, 4, "RAY ")) {
+	    /* Not a comment - has to be a valid type, or it's an error */
+	    int ltype = -1;
+	    ltype = (ltype < 0 && !line.compare(0, 4, "RAY,")) ? 0 : ltype;
+	    ltype = (ltype < 0 && !line.compare(0, 4, "HIT,")) ? 1 : ltype;
+	    ltype = (ltype < 0 && !line.compare(0, 4, "GAP,")) ? 2 : ltype;
+	    ltype = (ltype < 0 && !line.compare(0, 5, "MISS,")) ? 3 : ltype;
+	    ltype = (ltype < 0 && !line.compare(0, 8, "OVERLAP,")) ? 4 : ltype;
+	    if (ltype < 0) {
+		nerr(nss, "Error processing ray line \"%s\"!\nUnknown line type\n", line.c_str());
+		return -1;
+	    }
+
+	    /* Ray */
+	    if (ltype == 0) {
 		if (have_ray) {
 #ifdef NIRT_DIFF_DEBUG
 		    bu_log("\n\nanother ray!\n\n\n");
@@ -2336,16 +2351,15 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 		_nirt_dir2ae(nss);
 		nss->i->cdiff = df;
 		continue;
-	    } else {
-		if (!line.compare(0, 4, "HIT ") || !line.compare(0, 4, "GAP ") ||
-			!line.compare(0, 5, "MISS ") || !line.compare(0, 8, "OVERLAP ")) {
-		    if (!have_ray) {
-			nerr(nss, "Error: Result line found but no ray set.\n");
-			return -1;
-		    }
-		}
 	    }
-	    if (!line.compare(0, 4, "HIT ")) {
+
+	    /* Hit */
+	    if (ltype == 1) {
+		if (!have_ray) {
+		    nerr(nss, "Error: Hit line found but no ray set.\n");
+		    return -1;
+		}
+
 		// TODO - once we go to C++11, used std::regex_search and std::smatch to more flexibly get a substring
 		std::string hstr = line.substr(7);
 		std::vector<std::string> substrs = _nirt_string_split(hstr);
@@ -2382,7 +2396,14 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 		nss->i->cdiff->old_segs.push_back(seg);
 		continue;
 	    }
-	    if (!line.compare(0, 4, "GAP ")) {
+
+	    /* Gap */
+	    if (ltype == 2) {
+		if (!have_ray) {
+		    nerr(nss, "Error: Gap line found but no ray set.\n");
+		    return -1;
+		}
+
 		// TODO - once we go to C++11, used std::regex_search and std::smatch to more flexibly get a substring
 		std::string gstr = line.substr(7);
 		std::vector<std::string> substrs = _nirt_string_split(gstr);
@@ -2405,7 +2426,14 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 		nss->i->cdiff->old_segs.push_back(seg);
 		continue;
 	    }
-	    if (!line.compare(0, 5, "MISS ")) {
+
+	    /* Miss */
+	    if (ltype == 3) {
+		if (!have_ray) {
+		    nerr(nss, "Error: Miss line found but no ray set.\n");
+		    return -1;
+		}
+
 		struct nirt_seg *seg;
 		_nirt_seg_init(&seg);
 		seg->type = NIRT_MISS_SEG;
@@ -2416,7 +2444,14 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 		nss->i->cdiff->old_segs.push_back(seg);
 		continue;
 	    }
-	    if (!line.compare(0, 8, "OVERLAP ")) {
+
+	    /* Overlap */
+	    if (ltype == 4) {
+		if (!have_ray) {
+		    nerr(nss, "Error: Overlap line found but no ray set.\n");
+		    return -1;
+		}
+
 		// TODO - once we go to C++11, used std::regex_search and std::smatch to more flexibly get a substring
 		std::string ostr = line.substr(11);
 		std::vector<std::string> substrs = _nirt_string_split(ostr);
