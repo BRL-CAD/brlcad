@@ -66,6 +66,7 @@ set(libanalyze_ignored_files
   MeshHealing/MeshConversion_brlcad.h
   MeshHealing/Stitch.h
   MeshHealing/Zipper.h
+  nirt/nirt.h
 )
 CMAKEFILES(${libanalyze_ignored_files})
 
