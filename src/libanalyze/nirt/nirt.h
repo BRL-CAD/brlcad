@@ -63,8 +63,6 @@ extern "C" off_t ftello(FILE *);
 #include "nmg/debug.h"
 #include "rt/debug.h"
 
-#include "./debug_cmd.c"
-
 /* NIRT segment types */
 #define NIRT_MISS_SEG      1    /**< @brief Ray segment representing a miss */
 #define NIRT_PARTITION_SEG 2    /**< @brief Ray segment representing a solid region */
@@ -83,73 +81,6 @@ extern "C" off_t ftello(FILE *);
 
 #define NIRT_PRINTF_SPECIFIERS "difeEgGs"
 #define NIRT_OUTPUT_TYPE_SPECIFIERS "rhpfmog"
-
-HIDDEN const char *nirt_cmd_tbl_defs =
-"x_orig,         FLOAT,         Ray origin X coordinate,"
-"y_orig,         FLOAT,         Ray origin Y coordinate,"
-"z_orig,         FLOAT,         Ray origin Z coordinate,"
-"h,              FLOAT,         ,"
-"v,              FLOAT,         ,"
-"d_orig,         FLOAT,         ,"
-"x_dir,          FNOUNIT,       Ray direction unit vector x component,"
-"y_dir,          FNOUNIT,       Ray direction unit vector y component,"
-"z_dir,          FNOUNIT,       Ray direction unit vector z component,"
-"a,              FNOUNIT,       Azimuth,"
-"e,              FNOUNIT,       Elevation,"
-"x_in,           FLOAT,         ,"
-"y_in,           FLOAT,         ,"
-"z_in,           FLOAT,         ,"
-"d_in,           FLOAT,         ,"
-"x_out,          FLOAT,         ,"
-"y_out,          FLOAT,         ,"
-"z_out,          FLOAT,         ,"
-"d_out,          FLOAT,         ,"
-"los,            FLOAT,         ,"
-"scaled_los,     FLOAT,         ,"
-"path_name,      STRING,        ,"
-"reg_name,       STRING,        ,"
-"reg_id,         INT,           ,"
-"obliq_in,       FNOUNIT,       ,"
-"obliq_out,      FNOUNIT,       ,"
-"nm_x_in,        FNOUNIT,       ,"
-"nm_y_in,        FNOUNIT,       ,"
-"nm_z_in,        FNOUNIT,       ,"
-"nm_d_in,        FNOUNIT,       ,"
-"nm_h_in,        FNOUNIT,       ,"
-"nm_v_in,        FNOUNIT,       ,"
-"nm_x_out,       FNOUNIT,       ,"
-"nm_y_out,       FNOUNIT,       ,"
-"nm_z_out,       FNOUNIT,       ,"
-"nm_d_out,       FNOUNIT,       ,"
-"nm_h_out,       FNOUNIT,       ,"
-"nm_v_out,       FNOUNIT,       ,"
-"ov_reg1_name,   STRING,        ,"
-"ov_reg1_id,     INT,           ,"
-"ov_reg2_name,   STRING,        ,"
-"ov_reg2_id,     INT,           ,"
-"ov_sol_in,      STRING,        ,"
-"ov_sol_out,     STRING,        ,"
-"ov_los,         FLOAT,         ,"
-"ov_x_in,        FLOAT,         ,"
-"ov_y_in,        FLOAT,         ,"
-"ov_z_in,        FLOAT,         ,"
-"ov_d_in,        FLOAT,         ,"
-"ov_x_out,       FLOAT,         ,"
-"ov_y_out,       FLOAT,         ,"
-"ov_z_out,       FLOAT,         ,"
-"ov_d_out,       FLOAT,         ,"
-"surf_num_in,    INT,           ,"
-"surf_num_out,   INT,           ,"
-"claimant_count, INT,           ,"
-"claimant_list,  STRING,        ,"
-"claimant_listn, STRING,        ,"
-"attributes,     STRING,        ,"
-"x_gap_in,       FLOAT,         ,"
-"y_gap_in,       FLOAT,         ,"
-"z_gap_in,       FLOAT,         ,"
-"gap_los,        FLOAT,         ,"
-"nirt_cmd,       STRING,        ,";
-
 
 struct nirt_overlap {
     struct application *ap;
@@ -404,6 +335,9 @@ struct nirt_state_impl {
 /**************************
  * Internal functionality *
  **************************/
+void _nirt_seg_init(struct nirt_seg **s);
+void _nirt_seg_free(struct nirt_seg *s);
+
 
 void nmsg(struct nirt_state *nss, const char *fmt, ...) _BU_ATTR_PRINTF23;
 void nout(struct nirt_state *nss, const char *fmt, ...) _BU_ATTR_PRINTF23;
@@ -428,6 +362,18 @@ std::string _nirt_dbl_to_str(double d, size_t p);
 double _nirt_str_to_dbl(std::string s, size_t p);
 
 int _nirt_str_to_int(std::string s);
+
+void _nirt_targ2grid(struct nirt_state *nss);
+
+void _nirt_dir2ae(struct nirt_state *nss);
+
+struct rt_i * _nirt_get_rtip(struct nirt_state *nss);
+struct resource * _nirt_get_resource(struct nirt_state *nss);
+void _nirt_init_ovlp(struct nirt_state *nss);
+int _nirt_raytrace_prep(struct nirt_state *nss);
+
+extern "C" int _nirt_cmd_diff(void *ns, int argc, const char *argv[]);
+
 
 // Local Variables:
 // tab-width: 8

@@ -41,6 +41,7 @@ set(LIBANALYZE_SOURCES
   mass.c
   moments.c
   nirt/nirt.cpp
+  nirt/diff.cpp
   obj_to_pnts.cpp
   overlaps.c
   polygonizer.c
