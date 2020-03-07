@@ -1177,9 +1177,7 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 	    if (s->gap_los > 0) {
 		s->type = NIRT_GAP_SEG;
 		if (!nss->i->diff_run) _nirt_report(nss, 'g', vals);
-		if (nss->i->cdiff) {
-		    nss->i->cdiff->new_segs.push_back(_nirt_seg_cpy(s));
-		}
+		_nirt_diff_add_seg(nss, s);
 		/* vlist segment for gap */
 		vhead = bn_vlblock_find(nss->i->segs, nss->i->void_color->buc_rgb[RED], nss->i->void_color->buc_rgb[GRN], nss->i->void_color->buc_rgb[BLU]);
 		BN_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->gap_in, BN_VLIST_LINE_MOVE);
@@ -1254,9 +1252,7 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 	nss->i->b_segs = true;
 
 	/* done with hit portion - if diff, stash */
-	if (nss->i->cdiff && nss->i->diff_run) {
-	    nss->i->cdiff->new_segs.push_back(_nirt_seg_cpy(s));
-	}
+	_nirt_diff_add_seg(nss, s);
 
 	while ((ovp = _nirt_find_ovlp(nss, part)) != NIRT_OVERLAP_NULL) {
 
@@ -1299,9 +1295,7 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 	    }
 
 	    /* Diff */
-	    if (nss->i->cdiff && nss->i->diff_run) {
-		nss->i->cdiff->new_segs.push_back(_nirt_seg_cpy(s));
-	    }
+	    _nirt_diff_add_seg(nss, s);
 
 	    _nirt_del_ovlp(ovp);
 	}
@@ -2677,31 +2671,6 @@ nirt_init(struct nirt_state *ns)
     bu_avs_init_empty(n->val_types);
     bu_avs_init_empty(n->val_docs);
 
-    BU_GET(n->diff_file, struct bu_vls);
-    bu_vls_init(n->diff_file);
-    n->cdiff = NULL;
-    n->diff_run = 0;
-    n->diff_ready = 0;
-    BU_GET(n->diff_settings, struct nirt_diff_settings);
-    n->diff_settings->report_partitions = 1;
-    n->diff_settings->report_misses = 1;
-    n->diff_settings->report_gaps = 1;
-    n->diff_settings->report_overlaps = 1;
-    n->diff_settings->report_partition_reg_ids = 1;
-    n->diff_settings->report_partition_reg_names = 1;
-    n->diff_settings->report_partition_path_names = 1;
-    n->diff_settings->report_partition_dists = 1;
-    n->diff_settings->report_partition_obliq = 1;
-    n->diff_settings->report_overlap_reg_names = 1;
-    n->diff_settings->report_overlap_reg_ids = 1;
-    n->diff_settings->report_overlap_dists = 1;
-    n->diff_settings->report_overlap_obliq = 1;
-    n->diff_settings->report_gap_dists = 1;
-    n->diff_settings->dist_delta_tol = BN_TOL_DIST;
-    n->diff_settings->obliq_delta_tol = BN_TOL_DIST;
-    n->diff_settings->los_delta_tol = BN_TOL_DIST;
-    n->diff_settings->scaled_los_delta_tol = BN_TOL_DIST;
-
     BU_GET(n->vals, struct nirt_output_record);
 
     VSETALL(n->vals->orig, 0.0);
@@ -2710,6 +2679,7 @@ nirt_init(struct nirt_state *ns)
     n->vals->d_orig = 0.0;
     n->vals->seg = NULL;
 
+    _nirt_diff_create(ns);
 
     /* Populate the output key and type information */
     {

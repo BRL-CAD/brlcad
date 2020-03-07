@@ -30,6 +30,150 @@
 #include "./nirt.h"
 
 
+/**
+ * Design thoughts for nirt diffing:
+ *
+ * NIRT difference events come in two primary forms: "transition" differences
+ * in the form of entry/exit hits, and differences in segments - the regions
+ * between transitions.  In the context of a diff, a segment by definition
+ * contains no transitions on *either* shotline path.  Even if a segment
+ * contains no transitions along its own shotline, if a transition from the
+ * other shot falls within its bounds the original segment will be treated as
+ * two sequential segments of the same type for the purposes of comparison.
+ *
+ * Transitions are compared only to other transitions, and segments are
+ * compared only to other segments.
+ *
+ * The comparison criteria are as follows:
+ *
+ * Transition points:
+ *
+ * 1.  DIST_PNT_PNT - if there is a transition on either path that does not align
+ *     within the specified distance tolerance with a transition on the other
+ *     path, the transition is unmatched and reported as a difference.
+ * 2.  Obliquity delta - if two transition points align within the distance
+ *     tolerance, the next test is the difference between their normals. If
+ *     these match in direction and obliquity angle, the transition points
+ *     are deemed to be matching.  Otherwise, a difference is reported on the
+ *     transition point.
+ *
+ * Segments:
+ *
+ * 1.  The first comparison made between segments is their type. Type
+ *     differences will always be reported as a difference.
+ *
+ * 2.  If types match, behavior will depend on options and the specific
+ *     types being compared:
+ *
+ *     GAPS:       always match.
+ *
+ *     PARTITIONS: Match if all active criteria match.  If no criteria
+ *                 are active, match.  Possible active criteria:
+ *
+ *                 Region name
+ *                 Path name
+ *                 Region ID
+ *
+ *     OVERLAPS:   Match if all active criteria match.  If no criteria
+ *                 are active, match.  Possible active criteria:
+ *                 
+ *                 Overlap region set
+ *                 Overlap path set
+ *                 Overlap region id set
+ *                 Selected "winning" partition in the overlap
+ */
+
+
+struct nirt_seg_diff {
+    struct nirt_seg *left;
+    struct nirt_seg *right;
+    fastf_t in_delta;
+    fastf_t out_delta;
+    fastf_t los_delta;
+    fastf_t scaled_los_delta;
+    fastf_t obliq_in_delta;
+    fastf_t obliq_out_delta;
+    fastf_t ov_in_delta;
+    fastf_t ov_out_delta;
+    fastf_t ov_los_delta;
+    fastf_t gap_in_delta;
+    fastf_t gap_los_delta;
+};
+
+struct nirt_diff {
+    point_t orig;
+    vect_t dir;
+    std::vector<struct nirt_seg *> old_segs;
+    std::vector<struct nirt_seg *> new_segs;
+    std::vector<struct nirt_seg_diff *> diffs;
+};
+
+struct nirt_diff_settings {
+    int report_partitions;
+    int report_misses;
+    int report_gaps;
+    int report_overlaps;
+    int report_partition_reg_ids;
+    int report_partition_reg_names;
+    int report_partition_path_names;
+    int report_partition_dists;
+    int report_partition_obliq;
+    int report_overlap_reg_names;
+    int report_overlap_reg_ids;
+    int report_overlap_dists;
+    int report_overlap_obliq;
+    int report_gap_dists;
+    fastf_t dist_delta_tol;
+    fastf_t obliq_delta_tol;
+    fastf_t los_delta_tol;
+    fastf_t scaled_los_delta_tol;
+};
+
+
+void
+_nirt_diff_create(struct nirt_state *nss)
+{
+    BU_GET(nss->i->diff_file, struct bu_vls);
+    bu_vls_init(nss->i->diff_file);
+    nss->i->cdiff = NULL;
+    nss->i->diff_run = 0;
+    nss->i->diff_ready = 0;
+    BU_GET(nss->i->diff_settings, struct nirt_diff_settings);
+    nss->i->diff_settings->report_partitions = 1;
+    nss->i->diff_settings->report_misses = 1;
+    nss->i->diff_settings->report_gaps = 1;
+    nss->i->diff_settings->report_overlaps = 1;
+    nss->i->diff_settings->report_partition_reg_ids = 1;
+    nss->i->diff_settings->report_partition_reg_names = 1;
+    nss->i->diff_settings->report_partition_path_names = 1;
+    nss->i->diff_settings->report_partition_dists = 1;
+    nss->i->diff_settings->report_partition_obliq = 1;
+    nss->i->diff_settings->report_overlap_reg_names = 1;
+    nss->i->diff_settings->report_overlap_reg_ids = 1;
+    nss->i->diff_settings->report_overlap_dists = 1;
+    nss->i->diff_settings->report_overlap_obliq = 1;
+    nss->i->diff_settings->report_gap_dists = 1;
+    nss->i->diff_settings->dist_delta_tol = BN_TOL_DIST;
+    nss->i->diff_settings->obliq_delta_tol = BN_TOL_DIST;
+    nss->i->diff_settings->los_delta_tol = BN_TOL_DIST;
+    nss->i->diff_settings->scaled_los_delta_tol = BN_TOL_DIST;
+}
+
+void
+_nirt_diff_destroy(struct nirt_state *nss)
+{
+    bu_vls_free(nss->i->diff_file);
+    BU_PUT(nss->i->diff_settings, struct nirt_diff_settings);
+}
+
+void
+_nirt_diff_add_seg(struct nirt_state *nss, struct nirt_seg *nseg)
+{
+    if (nss->i->cdiff && nss->i->diff_run) {
+	nss->i->cdiff->new_segs.push_back(_nirt_seg_cpy(nseg));
+    }
+}
+
 #define SD_INIT(sd, l, r) \
     do {BU_GET(sd, struct nirt_seg_diff); sd->left = left; sd->right = right;} \
     while (0)
