@@ -27,6 +27,8 @@
 /* BRL-CAD includes */
 #include "common.h"
 
+#include "bu/cmd.h"
+
 #include "./nirt.h"
 
 
@@ -457,6 +459,412 @@ _nirt_diff_report(struct nirt_state *nss)
     return reporting_diff;
 }
 
+
+extern "C" int
+_nirt_diff_cmd_load(void *ndsv, int argc, const char **argv)
+{
+    size_t cmt = std::string::npos;
+    int have_ray = 0;
+    struct nirt_diff_state *nds = (struct nirt_diff_state *)ndsv;
+    struct nirt_state *nss = nds->nss;
+
+    if (argc != 1) {
+	nerr(nss, "Please specify a NIRT diff file to load.\n");
+	return -1;
+    }
+
+    if (nds->diff_ready) {
+	nerr(nss, "Diff file already loaded.  To reset, run \"diff clear\"\n");
+	return -1;
+    }
+
+    std::string line;
+    std::ifstream ifs;
+    ifs.open(argv[0]);
+    if (!ifs.is_open()) {
+	nerr(nss, "Error: could not open file %s\n", argv[0]);
+	return -1;
+    }
+
+    if (nss->i->need_reprep) {
+	/* If we need to (re)prep, do it now. Failure is an error. */
+	if (_nirt_raytrace_prep(nss)) {
+	    nerr(nss, "Error: raytrace prep failed!\n");
+	    return -1;
+	}
+    } else {
+	/* Based on current settings, tell the ap which rtip to use */
+	nss->i->ap->a_rt_i = _nirt_get_rtip(nss);
+	nss->i->ap->a_resource = _nirt_get_resource(nss);
+    }
+
+    bu_vls_sprintf(&nds->diff_file, "%s", argv[0]);
+    // TODO - temporarily suppress all formatting output for a silent diff run...
+    have_ray = 0;
+    while (std::getline(ifs, line)) {
+
+	/* If part of the line is commented, skip that part */
+	cmt = _nirt_find_first_unescaped(line, "#", 0);
+	if (cmt != std::string::npos) {
+	    line.erase(cmt);
+	}
+
+	/* If the whole line was a comment, skip it */
+	_nirt_trim_whitespace(line);
+	if (!line.length()) continue;
+
+	/* Not a comment - has to be a valid type, or it's an error */
+	int ltype = -1;
+	ltype = (ltype < 0 && !line.compare(0, 4, "RAY,")) ? 0 : ltype;
+	ltype = (ltype < 0 && !line.compare(0, 4, "HIT,")) ? 1 : ltype;
+	ltype = (ltype < 0 && !line.compare(0, 4, "GAP,")) ? 2 : ltype;
+	ltype = (ltype < 0 && !line.compare(0, 5, "MISS,")) ? 3 : ltype;
+	ltype = (ltype < 0 && !line.compare(0, 8, "OVERLAP,")) ? 4 : ltype;
+	if (ltype < 0) {
+	    nerr(nss, "Error processing ray line \"%s\"!\nUnknown line type\n", line.c_str());
+	    return -1;
+	}
+
+	/* Ray */
+	if (ltype == 0) {
+	    if (have_ray) {
+#ifdef NIRT_DIFF_DEBUG
+		bu_log("\n\nanother ray!\n\n\n");
+#endif
+		// Have ray already - execute current ray, store results in
+		// diff database (if any diffs were found), then clear expected
+		// results and old ray
+		for (int i = 0; i < 3; ++i) {
+		    nss->i->ap->a_ray.r_pt[i] = nss->i->vals->orig[i];
+		    nss->i->ap->a_ray.r_dir[i] = nss->i->vals->dir[i];
+		}
+		// TODO - rethink this container...
+		_nirt_init_ovlp(nss);
+		(void)rt_shootray(nss->i->ap);
+	    }
+	    // Read ray
+	    struct nirt_diff df;
+	    df.nds = nds;
+	    // TODO - once we go to C++11, used std::regex_search and std::smatch to more flexibly get a substring
+	    std::string rstr = line.substr(7);
+	    have_ray = 1;
+	    std::vector<std::string> substrs = _nirt_string_split(rstr);
+	    if (substrs.size() != 6) {
+		nerr(nss, "Error processing ray line \"%s\"!\nExpected 6 elements, found %zu\n", line.c_str(), substrs.size());
+		return -1;
+	    }
+	    VSET(df.orig, _nirt_str_to_dbl(substrs[0], 0), _nirt_str_to_dbl(substrs[1], 0), _nirt_str_to_dbl(substrs[2], 0));
+	    VSET(df.dir, _nirt_str_to_dbl(substrs[3], 0), _nirt_str_to_dbl(substrs[4], 0), _nirt_str_to_dbl(substrs[5], 0));
+	    VMOVE(nss->i->vals->dir, df.dir);
+	    VMOVE(nss->i->vals->orig, df.orig);
+#ifdef NIRT_DIFF_DEBUG
+	    bu_log("Found RAY:\n");
+	    bu_log("origin   : %0.17f, %0.17f, %0.17f\n", V3ARGS(df.orig));
+	    bu_log("direction: %0.17f, %0.17f, %0.17f\n", V3ARGS(df.dir));
+#endif
+	    _nirt_targ2grid(nss);
+	    _nirt_dir2ae(nss);
+	    nds->diffs.push_back(df);
+	    nds->cdiff = &nds->diffs[nds->diffs.size() - 1];
+	    continue;
+	}
+
+	/* Hit */
+	if (ltype == 1) {
+	    if (!have_ray) {
+		nerr(nss, "Error: Hit line found but no ray set.\n");
+		return -1;
+	    }
+
+	    // TODO - once we go to C++11, used std::regex_search and std::smatch to more flexibly get a substring
+	    std::string hstr = line.substr(7);
+	    std::vector<std::string> substrs = _nirt_string_split(hstr);
+	    if (substrs.size() != 15) {
+		nerr(nss, "Error processing hit line \"%s\"!\nExpected 15 elements, found %zu\n", hstr.c_str(), substrs.size());
+		return -1;
+	    }
+
+	    struct nirt_seg seg;
+	    struct nirt_seg *segp = &seg;
+	    _nirt_seg_init(&segp);
+	    seg.type = NIRT_PARTITION_SEG;
+	    bu_vls_decode(seg.reg_name, substrs[0].c_str());
+	    //bu_vls_printf(seg.reg_name, "%s", substrs[0].c_str());
+	    bu_vls_decode(seg.path_name, substrs[1].c_str());
+	    seg.reg_id = _nirt_str_to_int(substrs[2]);
+	    VSET(seg.in, _nirt_str_to_dbl(substrs[3], 0), _nirt_str_to_dbl(substrs[4], 0), _nirt_str_to_dbl(substrs[5], 0));
+	    seg.d_in = _nirt_str_to_dbl(substrs[6], 0);
+	    VSET(seg.out, _nirt_str_to_dbl(substrs[7], 0), _nirt_str_to_dbl(substrs[8], 0), _nirt_str_to_dbl(substrs[9], 0));
+	    seg.d_out = _nirt_str_to_dbl(substrs[10], 0);
+	    seg.los = _nirt_str_to_dbl(substrs[11], 0);
+	    seg.scaled_los = _nirt_str_to_dbl(substrs[12], 0);
+	    seg.obliq_in = _nirt_str_to_dbl(substrs[13], 0);
+	    seg.obliq_out = _nirt_str_to_dbl(substrs[14], 0);
+#ifdef NIRT_DIFF_DEBUG
+	    bu_log("Found %s:\n", line.c_str());
+	    bu_log("  reg_name: %s\n", bu_vls_addr(seg.reg_name));
+	    bu_log("  path_name: %s\n", bu_vls_addr(seg.path_name));
+	    bu_log("  reg_id: %d\n", seg.reg_id);
+	    bu_log("  in: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg.in));
+	    bu_log("  out: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg.out));
+	    bu_log("  d_in: %0.17f d_out: %0.17f\n", seg.d_in, seg.d_out);
+	    bu_log("  los: %0.17f  scaled_los: %0.17f\n", seg.los, seg.scaled_los);
+	    bu_log("  obliq_in: %0.17f  obliq_out: %0.17f\n", seg.obliq_in, seg.obliq_out);
+#endif
+	    nds->cdiff->old_segs.push_back(seg);
+	    continue;
+	}
+
+	/* Gap */
+	if (ltype == 2) {
+	    if (!have_ray) {
+		nerr(nss, "Error: Gap line found but no ray set.\n");
+		return -1;
+	    }
+
+	    // TODO - once we go to C++11, used std::regex_search and std::smatch to more flexibly get a substring
+	    std::string gstr = line.substr(7);
+	    std::vector<std::string> substrs = _nirt_string_split(gstr);
+	    if (substrs.size() != 7) {
+		nerr(nss, "Error processing gap line \"%s\"!\nExpected 7 elements, found %zu\n", gstr.c_str(), substrs.size());
+		return -1;
+	    }
+	    struct nirt_seg seg;
+	    struct nirt_seg *segp = &seg;
+	    _nirt_seg_init(&segp);
+	    seg.type = NIRT_GAP_SEG;
+	    VSET(seg.gap_in, _nirt_str_to_dbl(substrs[0], 0), _nirt_str_to_dbl(substrs[1], 0), _nirt_str_to_dbl(substrs[2], 0));
+	    VSET(seg.in, _nirt_str_to_dbl(substrs[3], 0), _nirt_str_to_dbl(substrs[4], 0), _nirt_str_to_dbl(substrs[5], 0));
+	    seg.gap_los = _nirt_str_to_dbl(substrs[6], 0);
+#ifdef NIRT_DIFF_DEBUG
+	    bu_log("Found %s:\n", line.c_str());
+	    bu_log("  in: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg.gap_in));
+	    bu_log("  out: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg.in));
+	    bu_log("  gap_los: %0.17f\n", seg.gap_los);
+#endif
+	    nds->cdiff->old_segs.push_back(seg);
+	    continue;
+	}
+
+	/* Miss */
+	if (ltype == 3) {
+	    if (!have_ray) {
+		nerr(nss, "Error: Miss line found but no ray set.\n");
+		return -1;
+	    }
+
+	    struct nirt_seg seg;
+	    struct nirt_seg *segp = &seg;
+	    _nirt_seg_init(&segp);
+	    seg.type = NIRT_MISS_SEG;
+#ifdef NIRT_DIFF_DEBUG
+	    bu_log("Found MISS\n");
+#endif
+	    have_ray = 0;
+	    nds->cdiff->old_segs.push_back(seg);
+	    continue;
+	}
+
+	/* Overlap */
+	if (ltype == 4) {
+	    if (!have_ray) {
+		nerr(nss, "Error: Overlap line found but no ray set.\n");
+		return -1;
+	    }
+
+	    // TODO - once we go to C++11, used std::regex_search and std::smatch to more flexibly get a substring
+	    std::string ostr = line.substr(11);
+	    std::vector<std::string> substrs = _nirt_string_split(ostr);
+	    if (substrs.size() != 11) {
+		nerr(nss, "Error processing overlap line \"%s\"!\nExpected 11 elements, found %zu\n", ostr.c_str(), substrs.size());
+		return -1;
+	    }
+	    struct nirt_seg seg;
+	    struct nirt_seg *segp = &seg;
+	    _nirt_seg_init(&segp);
+	    seg.type = NIRT_OVERLAP_SEG;
+	    bu_vls_decode(seg.ov_reg1_name, substrs[0].c_str());
+	    bu_vls_decode(seg.ov_reg2_name, substrs[1].c_str());
+	    seg.ov_reg1_id = _nirt_str_to_int(substrs[2]);
+	    seg.ov_reg2_id = _nirt_str_to_int(substrs[3]);
+	    VSET(seg.ov_in, _nirt_str_to_dbl(substrs[4], 0), _nirt_str_to_dbl(substrs[5], 0), _nirt_str_to_dbl(substrs[6], 0));
+	    VSET(seg.ov_out, _nirt_str_to_dbl(substrs[7], 0), _nirt_str_to_dbl(substrs[8], 0), _nirt_str_to_dbl(substrs[9], 0));
+	    seg.ov_los = _nirt_str_to_dbl(substrs[10], 0);
+#ifdef NIRT_DIFF_DEBUG
+	    bu_log("Found %s:\n", line.c_str());
+	    bu_log("  ov_reg1_name: %s\n", bu_vls_addr(seg.ov_reg1_name));
+	    bu_log("  ov_reg2_name: %s\n", bu_vls_addr(seg.ov_reg2_name));
+	    bu_log("  ov_reg1_id: %d\n", seg.ov_reg1_id);
+	    bu_log("  ov_reg2_id: %d\n", seg.ov_reg2_id);
+	    bu_log("  ov_in: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg.ov_in));
+	    bu_log("  ov_out: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg.ov_out));
+	    bu_log("  ov_los: %0.17f\n", seg.ov_los);
+#endif
+	    nds->cdiff->old_segs.push_back(seg);
+	    continue;
+	}
+#ifdef NIRT_DIFF_DEBUG
+	nerr(nss, "Warning - unknown line type, skipping: %s\n", line.c_str());
+#endif
+    }
+
+    if (have_ray) {
+	// Execute work.
+	for (int i = 0; i < 3; ++i) {
+	    nss->i->ap->a_ray.r_pt[i] = nss->i->vals->orig[i];
+	    nss->i->ap->a_ray.r_dir[i] = nss->i->vals->dir[i];
+	}
+	// TODO - rethink this container...
+	_nirt_init_ovlp(nss);
+	(void)rt_shootray(nss->i->ap);
+
+	// Thought - if we have rays but no pre-defined output, write out the
+	// expected output to stdout - in this mode diff will generate a diff
+	// input file from a supplied list of rays.
+    }
+
+    ifs.close();
+
+    // Done with if_hit and friends
+    nds->cdiff = NULL;
+    nds->diff_ready = 1;
+    return 0;
+}
+
+extern "C" int
+_nirt_diff_cmd_report(void *ndsv, int UNUSED(argc), const char **UNUSED(argv))
+{
+    struct nirt_diff_state *nds = (struct nirt_diff_state *)ndsv;
+    // Report diff results according to the NIRT diff settings.
+    if (!nds->diff_ready) {
+	nerr(nds->nss, "No diff file loaded - please load a diff file with \"diff load <filename>\"\n");
+	return -1;
+    } else {
+	return (_nirt_diff_report(nds->nss) >= 0) ? 0 : -1;
+    }
+}
+
+extern "C" int
+_nirt_diff_cmd_clear(void *ndsv, int UNUSED(argc), const char **UNUSED(argv))
+{
+    struct nirt_diff_state *nds = (struct nirt_diff_state *)ndsv;
+    nds->diffs.clear();
+    nds->diff_ready = false;
+    return 0;
+}
+
+extern "C" int
+_nirt_diff_cmd_settings(void *ndsv, int argc, const char **argv)
+{
+    struct nirt_diff_state *nds = (struct nirt_diff_state *)ndsv;
+    struct nirt_state *nss = nds->nss;
+    if (!argc) {
+	//print current settings
+	nout(nss, "report_partitions:           %d\n", nds->report_partitions);
+	nout(nss, "report_misses:               %d\n", nds->report_misses);
+	nout(nss, "report_gaps:                 %d\n", nds->report_gaps);
+	nout(nss, "report_overlaps:             %d\n", nds->report_overlaps);
+	nout(nss, "report_partition_reg_ids:    %d\n", nds->report_partition_reg_ids);
+	nout(nss, "report_partition_reg_names:  %d\n", nds->report_partition_reg_names);
+	nout(nss, "report_partition_path_names: %d\n", nds->report_partition_path_names);
+	nout(nss, "report_partition_dists:      %d\n", nds->report_partition_dists);
+	nout(nss, "report_partition_obliq:      %d\n", nds->report_partition_obliq);
+	nout(nss, "report_overlap_reg_names:    %d\n", nds->report_overlap_reg_names);
+	nout(nss, "report_overlap_reg_ids:      %d\n", nds->report_overlap_reg_ids);
+	nout(nss, "report_overlap_dists:        %d\n", nds->report_overlap_dists);
+	nout(nss, "report_overlap_obliq:        %d\n", nds->report_overlap_obliq);
+	nout(nss, "report_gap_dists:            %d\n", nds->report_gap_dists);
+	nout(nss, "dist_delta_tol:              %g\n", nds->dist_delta_tol);
+	nout(nss, "obliq_delta_tol:             %g\n", nds->obliq_delta_tol);
+	nout(nss, "los_delta_tol:               %g\n", nds->los_delta_tol);
+	nout(nss, "scaled_los_delta_tol:        %g\n", nds->scaled_los_delta_tol);
+	return 0;
+    }
+    if (argc == 1) {
+	//print specific setting
+	if (BU_STR_EQUAL(argv[0], "report_partitions"))           nout(nss, "%d\n", nds->report_partitions);
+	if (BU_STR_EQUAL(argv[0], "report_misses"))               nout(nss, "%d\n", nds->report_misses);
+	if (BU_STR_EQUAL(argv[0], "report_gaps"))                 nout(nss, "%d\n", nds->report_gaps);
+	if (BU_STR_EQUAL(argv[0], "report_overlaps"))             nout(nss, "%d\n", nds->report_overlaps);
+	if (BU_STR_EQUAL(argv[0], "report_partition_reg_ids"))    nout(nss, "%d\n", nds->report_partition_reg_ids);
+	if (BU_STR_EQUAL(argv[0], "report_partition_reg_names"))  nout(nss, "%d\n", nds->report_partition_reg_names);
+	if (BU_STR_EQUAL(argv[0], "report_partition_path_names")) nout(nss, "%d\n", nds->report_partition_path_names);
+	if (BU_STR_EQUAL(argv[0], "report_partition_dists"))      nout(nss, "%d\n", nds->report_partition_dists);
+	if (BU_STR_EQUAL(argv[0], "report_partition_obliq"))      nout(nss, "%d\n", nds->report_partition_obliq);
+	if (BU_STR_EQUAL(argv[0], "report_overlap_reg_names"))    nout(nss, "%d\n", nds->report_overlap_reg_names);
+	if (BU_STR_EQUAL(argv[0], "report_overlap_reg_ids"))      nout(nss, "%d\n", nds->report_overlap_reg_ids);
+	if (BU_STR_EQUAL(argv[0], "report_overlap_dists"))        nout(nss, "%d\n", nds->report_overlap_dists);
+	if (BU_STR_EQUAL(argv[0], "report_overlap_obliq"))        nout(nss, "%d\n", nds->report_overlap_obliq);
+	if (BU_STR_EQUAL(argv[0], "report_gap_dists"))            nout(nss, "%d\n", nds->report_gap_dists);
+	if (BU_STR_EQUAL(argv[0], "dist_delta_tol"))              nout(nss, "%g\n", nds->dist_delta_tol);
+	if (BU_STR_EQUAL(argv[0], "obliq_delta_tol"))             nout(nss, "%g\n", nds->obliq_delta_tol);
+	if (BU_STR_EQUAL(argv[0], "los_delta_tol"))               nout(nss, "%g\n", nds->los_delta_tol);
+	if (BU_STR_EQUAL(argv[0], "scaled_los_delta_tol"))        nout(nss, "%g\n", nds->scaled_los_delta_tol);
+	return 0;
+    }
+    if (argc == 2) {
+	//set setting
+	struct bu_vls opt_msg = BU_VLS_INIT_ZERO;
+	bool *setting_bool = NULL;
+	fastf_t *setting_fastf_t = NULL;
+	if (BU_STR_EQUAL(argv[0], "report_partitions"))           setting_bool = &(nds->report_partitions);
+	if (BU_STR_EQUAL(argv[0], "report_misses"))               setting_bool = &(nds->report_misses);
+	if (BU_STR_EQUAL(argv[0], "report_gaps"))                 setting_bool = &(nds->report_gaps);
+	if (BU_STR_EQUAL(argv[0], "report_overlaps"))             setting_bool = &(nds->report_overlaps);
+	if (BU_STR_EQUAL(argv[0], "report_partition_reg_ids"))    setting_bool = &(nds->report_partition_reg_ids);
+	if (BU_STR_EQUAL(argv[0], "report_partition_reg_names"))  setting_bool = &(nds->report_partition_reg_names);
+	if (BU_STR_EQUAL(argv[0], "report_partition_path_names")) setting_bool = &(nds->report_partition_path_names);
+	if (BU_STR_EQUAL(argv[0], "report_partition_dists"))      setting_bool = &(nds->report_partition_dists);
+	if (BU_STR_EQUAL(argv[0], "report_partition_obliq"))      setting_bool = &(nds->report_partition_obliq);
+	if (BU_STR_EQUAL(argv[0], "report_overlap_reg_names"))    setting_bool = &(nds->report_overlap_reg_names);
+	if (BU_STR_EQUAL(argv[0], "report_overlap_reg_ids"))      setting_bool = &(nds->report_overlap_reg_ids);
+	if (BU_STR_EQUAL(argv[0], "report_overlap_dists"))        setting_bool = &(nds->report_overlap_dists);
+	if (BU_STR_EQUAL(argv[0], "report_overlap_obliq"))        setting_bool = &(nds->report_overlap_obliq);
+	if (BU_STR_EQUAL(argv[0], "report_gap_dists"))            setting_bool = &(nds->report_gap_dists);
+	if (BU_STR_EQUAL(argv[0], "dist_delta_tol"))              setting_fastf_t = &(nds->dist_delta_tol);
+	if (BU_STR_EQUAL(argv[0], "obliq_delta_tol"))             setting_fastf_t = &(nds->obliq_delta_tol);
+	if (BU_STR_EQUAL(argv[0], "los_delta_tol"))               setting_fastf_t = &(nds->los_delta_tol);
+	if (BU_STR_EQUAL(argv[0], "scaled_los_delta_tol"))        setting_fastf_t = &(nds->scaled_los_delta_tol);
+
+	if (setting_bool) {
+	    if (bu_opt_bool(&opt_msg, 1, (const char **)&argv[1], (void *)setting_bool) == -1) {
+		nerr(nss, "Error: bu_opt value read failure: %s\n", bu_vls_addr(&opt_msg));
+		bu_vls_free(&opt_msg);
+		return -1;
+	    } else {
+		return 0;
+	    }
+	}
+	if (setting_fastf_t) {
+	    if (BU_STR_EQUAL(argv[1], "BN_TOL_DIST")) {
+		*setting_fastf_t = BN_TOL_DIST;
+		return 0;
+	    } else {
+		if (bu_opt_fastf_t(&opt_msg, 1, (const char **)&argv[1], (void *)setting_fastf_t) == -1) {
+		    nerr(nss, "Error: bu_opt value read failure: %s\n", bu_vls_addr(&opt_msg));
+		    bu_vls_free(&opt_msg);
+		    return -1;
+		} else {
+		    return 0;
+		}
+	    }
+	}
+    }
+
+    // anything else is an error
+    return -1;
+}
+
+
+const struct bu_cmdtab _nirt_diff_cmds[] {
+    { "load",_nirt_diff_cmd_load},
+    { "report",_nirt_diff_cmd_report},
+    { "clear",_nirt_diff_cmd_clear},
+    { "settings",_nirt_diff_cmd_settings},
+    { (char *)NULL, NULL}
+};
+
+
 //#define NIRT_DIFF_DEBUG 1
 
 extern "C" int
@@ -468,8 +876,6 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
     int ac = 0;
     int print_help = 0;
     double tol = 0;
-    int have_ray = 0;
-    size_t cmt = std::string::npos;
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
     struct bu_opt_desc d[3];
     // TODO - add reporting options for enabling/disabling region/path, partition length, normal, and overlap ordering diffs.
@@ -499,387 +905,15 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 	return -1;
     }
 
-    if (BU_STR_EQUAL(argv[0], "load")) {
-	ac--; argv++;
-	if (ac != 1) {
-	    nerr(nss, "Please specify a NIRT diff file to load.\n");
-	    return -1;
-	}
-
-	if (nds->diff_ready) {
-	    nerr(nss, "Diff file already loaded.  To reset, run \"diff clear\"\n");
-	    return -1;
-	}
-
-	std::string line;
-	std::ifstream ifs;
-	ifs.open(argv[0]);
-	if (!ifs.is_open()) {
-	    nerr(nss, "Error: could not open file %s\n", argv[0]);
-	    return -1;
-	}
-
-	if (nss->i->need_reprep) {
-	    /* If we need to (re)prep, do it now. Failure is an error. */
-	    if (_nirt_raytrace_prep(nss)) {
-		nerr(nss, "Error: raytrace prep failed!\n");
-		return -1;
-	    }
-	} else {
-	    /* Based on current settings, tell the ap which rtip to use */
-	    nss->i->ap->a_rt_i = _nirt_get_rtip(nss);
-	    nss->i->ap->a_resource = _nirt_get_resource(nss);
-	}
-
-	bu_vls_sprintf(&nds->diff_file, "%s", argv[0]);
-	// TODO - temporarily suppress all formatting output for a silent diff run...
-	have_ray = 0;
-	while (std::getline(ifs, line)) {
-
-	    /* If part of the line is commented, skip that part */
-	    cmt = _nirt_find_first_unescaped(line, "#", 0);
-	    if (cmt != std::string::npos) {
-		line.erase(cmt);
-	    }
-
-	    /* If the whole line was a comment, skip it */
-	    _nirt_trim_whitespace(line);
-	    if (!line.length()) continue;
-
-	    /* Not a comment - has to be a valid type, or it's an error */
-	    int ltype = -1;
-	    ltype = (ltype < 0 && !line.compare(0, 4, "RAY,")) ? 0 : ltype;
-	    ltype = (ltype < 0 && !line.compare(0, 4, "HIT,")) ? 1 : ltype;
-	    ltype = (ltype < 0 && !line.compare(0, 4, "GAP,")) ? 2 : ltype;
-	    ltype = (ltype < 0 && !line.compare(0, 5, "MISS,")) ? 3 : ltype;
-	    ltype = (ltype < 0 && !line.compare(0, 8, "OVERLAP,")) ? 4 : ltype;
-	    if (ltype < 0) {
-		nerr(nss, "Error processing ray line \"%s\"!\nUnknown line type\n", line.c_str());
-		return -1;
-	    }
-
-	    /* Ray */
-	    if (ltype == 0) {
-		if (have_ray) {
-#ifdef NIRT_DIFF_DEBUG
-		    bu_log("\n\nanother ray!\n\n\n");
-#endif
-		    // Have ray already - execute current ray, store results in
-		    // diff database (if any diffs were found), then clear expected
-		    // results and old ray
-		    for (int i = 0; i < 3; ++i) {
-			nss->i->ap->a_ray.r_pt[i] = nss->i->vals->orig[i];
-			nss->i->ap->a_ray.r_dir[i] = nss->i->vals->dir[i];
-		    }
-		    // TODO - rethink this container...
-		    _nirt_init_ovlp(nss);
-		    (void)rt_shootray(nss->i->ap);
-		}
-		// Read ray
-		struct nirt_diff df;
-		df.nds = nds;
-		// TODO - once we go to C++11, used std::regex_search and std::smatch to more flexibly get a substring
-		std::string rstr = line.substr(7);
-		have_ray = 1;
-		std::vector<std::string> substrs = _nirt_string_split(rstr);
-		if (substrs.size() != 6) {
-		    nerr(nss, "Error processing ray line \"%s\"!\nExpected 6 elements, found %zu\n", line.c_str(), substrs.size());
-		    return -1;
-		}
-		VSET(df.orig, _nirt_str_to_dbl(substrs[0], 0), _nirt_str_to_dbl(substrs[1], 0), _nirt_str_to_dbl(substrs[2], 0));
-		VSET(df.dir, _nirt_str_to_dbl(substrs[3], 0), _nirt_str_to_dbl(substrs[4], 0), _nirt_str_to_dbl(substrs[5], 0));
-		VMOVE(nss->i->vals->dir, df.dir);
-		VMOVE(nss->i->vals->orig, df.orig);
-#ifdef NIRT_DIFF_DEBUG
-		bu_log("Found RAY:\n");
-		bu_log("origin   : %0.17f, %0.17f, %0.17f\n", V3ARGS(df.orig));
-		bu_log("direction: %0.17f, %0.17f, %0.17f\n", V3ARGS(df.dir));
-#endif
-		_nirt_targ2grid(nss);
-		_nirt_dir2ae(nss);
-		nds->diffs.push_back(df);
-		nds->cdiff = &nds->diffs[nds->diffs.size() - 1];
-		continue;
-	    }
-
-	    /* Hit */
-	    if (ltype == 1) {
-		if (!have_ray) {
-		    nerr(nss, "Error: Hit line found but no ray set.\n");
-		    return -1;
-		}
-
-		// TODO - once we go to C++11, used std::regex_search and std::smatch to more flexibly get a substring
-		std::string hstr = line.substr(7);
-		std::vector<std::string> substrs = _nirt_string_split(hstr);
-		if (substrs.size() != 15) {
-		    nerr(nss, "Error processing hit line \"%s\"!\nExpected 15 elements, found %zu\n", hstr.c_str(), substrs.size());
-		    return -1;
-		}
-
-		struct nirt_seg seg;
-		struct nirt_seg *segp = &seg;
-		_nirt_seg_init(&segp);
-		seg.type = NIRT_PARTITION_SEG;
-		bu_vls_decode(seg.reg_name, substrs[0].c_str());
-		//bu_vls_printf(seg.reg_name, "%s", substrs[0].c_str());
-		bu_vls_decode(seg.path_name, substrs[1].c_str());
-		seg.reg_id = _nirt_str_to_int(substrs[2]);
-		VSET(seg.in, _nirt_str_to_dbl(substrs[3], 0), _nirt_str_to_dbl(substrs[4], 0), _nirt_str_to_dbl(substrs[5], 0));
-		seg.d_in = _nirt_str_to_dbl(substrs[6], 0);
-		VSET(seg.out, _nirt_str_to_dbl(substrs[7], 0), _nirt_str_to_dbl(substrs[8], 0), _nirt_str_to_dbl(substrs[9], 0));
-		seg.d_out = _nirt_str_to_dbl(substrs[10], 0);
-		seg.los = _nirt_str_to_dbl(substrs[11], 0);
-		seg.scaled_los = _nirt_str_to_dbl(substrs[12], 0);
-		seg.obliq_in = _nirt_str_to_dbl(substrs[13], 0);
-		seg.obliq_out = _nirt_str_to_dbl(substrs[14], 0);
-#ifdef NIRT_DIFF_DEBUG
-		bu_log("Found %s:\n", line.c_str());
-		bu_log("  reg_name: %s\n", bu_vls_addr(seg.reg_name));
-		bu_log("  path_name: %s\n", bu_vls_addr(seg.path_name));
-		bu_log("  reg_id: %d\n", seg.reg_id);
-		bu_log("  in: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg.in));
-		bu_log("  out: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg.out));
-		bu_log("  d_in: %0.17f d_out: %0.17f\n", seg.d_in, seg.d_out);
-		bu_log("  los: %0.17f  scaled_los: %0.17f\n", seg.los, seg.scaled_los);
-		bu_log("  obliq_in: %0.17f  obliq_out: %0.17f\n", seg.obliq_in, seg.obliq_out);
-#endif
-		nds->cdiff->old_segs.push_back(seg);
-		continue;
-	    }
-
-	    /* Gap */
-	    if (ltype == 2) {
-		if (!have_ray) {
-		    nerr(nss, "Error: Gap line found but no ray set.\n");
-		    return -1;
-		}
-
-		// TODO - once we go to C++11, used std::regex_search and std::smatch to more flexibly get a substring
-		std::string gstr = line.substr(7);
-		std::vector<std::string> substrs = _nirt_string_split(gstr);
-		if (substrs.size() != 7) {
-		    nerr(nss, "Error processing gap line \"%s\"!\nExpected 7 elements, found %zu\n", gstr.c_str(), substrs.size());
-		    return -1;
-		}
-		struct nirt_seg seg;
-		struct nirt_seg *segp = &seg;
-		_nirt_seg_init(&segp);
-		seg.type = NIRT_GAP_SEG;
-		VSET(seg.gap_in, _nirt_str_to_dbl(substrs[0], 0), _nirt_str_to_dbl(substrs[1], 0), _nirt_str_to_dbl(substrs[2], 0));
-		VSET(seg.in, _nirt_str_to_dbl(substrs[3], 0), _nirt_str_to_dbl(substrs[4], 0), _nirt_str_to_dbl(substrs[5], 0));
-		seg.gap_los = _nirt_str_to_dbl(substrs[6], 0);
-#ifdef NIRT_DIFF_DEBUG
-		bu_log("Found %s:\n", line.c_str());
-		bu_log("  in: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg.gap_in));
-		bu_log("  out: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg.in));
-		bu_log("  gap_los: %0.17f\n", seg.gap_los);
-#endif
-		nds->cdiff->old_segs.push_back(seg);
-		continue;
-	    }
-
-	    /* Miss */
-	    if (ltype == 3) {
-		if (!have_ray) {
-		    nerr(nss, "Error: Miss line found but no ray set.\n");
-		    return -1;
-		}
-
-		struct nirt_seg seg;
-		struct nirt_seg *segp = &seg;
-		_nirt_seg_init(&segp);
-		seg.type = NIRT_MISS_SEG;
-#ifdef NIRT_DIFF_DEBUG
-		bu_log("Found MISS\n");
-#endif
-		have_ray = 0;
-		nds->cdiff->old_segs.push_back(seg);
-		continue;
-	    }
-
-	    /* Overlap */
-	    if (ltype == 4) {
-		if (!have_ray) {
-		    nerr(nss, "Error: Overlap line found but no ray set.\n");
-		    return -1;
-		}
-
-		// TODO - once we go to C++11, used std::regex_search and std::smatch to more flexibly get a substring
-		std::string ostr = line.substr(11);
-		std::vector<std::string> substrs = _nirt_string_split(ostr);
-		if (substrs.size() != 11) {
-		    nerr(nss, "Error processing overlap line \"%s\"!\nExpected 11 elements, found %zu\n", ostr.c_str(), substrs.size());
-		    return -1;
-		}
-		struct nirt_seg seg;
-		struct nirt_seg *segp = &seg;
-		_nirt_seg_init(&segp);
-		seg.type = NIRT_OVERLAP_SEG;
-		bu_vls_decode(seg.ov_reg1_name, substrs[0].c_str());
-		bu_vls_decode(seg.ov_reg2_name, substrs[1].c_str());
-		seg.ov_reg1_id = _nirt_str_to_int(substrs[2]);
-		seg.ov_reg2_id = _nirt_str_to_int(substrs[3]);
-		VSET(seg.ov_in, _nirt_str_to_dbl(substrs[4], 0), _nirt_str_to_dbl(substrs[5], 0), _nirt_str_to_dbl(substrs[6], 0));
-		VSET(seg.ov_out, _nirt_str_to_dbl(substrs[7], 0), _nirt_str_to_dbl(substrs[8], 0), _nirt_str_to_dbl(substrs[9], 0));
-		seg.ov_los = _nirt_str_to_dbl(substrs[10], 0);
-#ifdef NIRT_DIFF_DEBUG
-		bu_log("Found %s:\n", line.c_str());
-		bu_log("  ov_reg1_name: %s\n", bu_vls_addr(seg.ov_reg1_name));
-		bu_log("  ov_reg2_name: %s\n", bu_vls_addr(seg.ov_reg2_name));
-		bu_log("  ov_reg1_id: %d\n", seg.ov_reg1_id);
-		bu_log("  ov_reg2_id: %d\n", seg.ov_reg2_id);
-		bu_log("  ov_in: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg.ov_in));
-		bu_log("  ov_out: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg.ov_out));
-		bu_log("  ov_los: %0.17f\n", seg.ov_los);
-#endif
-		nds->cdiff->old_segs.push_back(seg);
-		continue;
-	    }
-#ifdef NIRT_DIFF_DEBUG
-	    nerr(nss, "Warning - unknown line type, skipping: %s\n", line.c_str());
-#endif
-	}
-
-	if (have_ray) {
-	    // Execute work.
-	    for (int i = 0; i < 3; ++i) {
-		nss->i->ap->a_ray.r_pt[i] = nss->i->vals->orig[i];
-		nss->i->ap->a_ray.r_dir[i] = nss->i->vals->dir[i];
-	    }
-	    // TODO - rethink this container...
-	    _nirt_init_ovlp(nss);
-	    (void)rt_shootray(nss->i->ap);
-
-	    // Thought - if we have rays but no pre-defined output, write out the
-	    // expected output to stdout - in this mode diff will generate a diff
-	    // input file from a supplied list of rays.
-	}
-
-	ifs.close();
-
-	// Done with if_hit and friends
-	nds->cdiff = NULL;
-	nds->diff_ready = 1;
-	return 0;
+    if (bu_cmd_valid(_nirt_diff_cmds, argv[0]) != BRLCAD_OK) {
+	nerr(nss, "Unknown diff subcommand: \"%s\"\n", argv[0]);
+	return -1;
     }
 
-    if (BU_STR_EQUAL(argv[0], "report")) {
-	// Report diff results according to the NIRT diff settings.
-	if (!nds->diff_ready) {
-	    nerr(nss, "No diff file loaded - please load a diff file with \"diff load <filename>\"\n");
-	    return -1;
-	} else {
-	    return (_nirt_diff_report(nss) >= 0) ? 0 : -1;
-	}
+    int ret;
+    if (bu_cmd(_nirt_diff_cmds, argc, argv, 0, (void *)nds, &ret) == BRLCAD_OK) {
+	return ret;
     }
-
-    if (BU_STR_EQUAL(argv[0], "clear")) {
-	nds->diffs.clear();
-	nds->diff_ready = false;
-	return 0;
-    }
-
-    if (BU_STR_EQUAL(argv[0], "settings")) {
-	ac--; argv++;
-	if (!ac) {
-	    //print current settings
-	    nout(nss, "report_partitions:           %d\n", nds->report_partitions);
-	    nout(nss, "report_misses:               %d\n", nds->report_misses);
-	    nout(nss, "report_gaps:                 %d\n", nds->report_gaps);
-	    nout(nss, "report_overlaps:             %d\n", nds->report_overlaps);
-	    nout(nss, "report_partition_reg_ids:    %d\n", nds->report_partition_reg_ids);
-	    nout(nss, "report_partition_reg_names:  %d\n", nds->report_partition_reg_names);
-	    nout(nss, "report_partition_path_names: %d\n", nds->report_partition_path_names);
-	    nout(nss, "report_partition_dists:      %d\n", nds->report_partition_dists);
-	    nout(nss, "report_partition_obliq:      %d\n", nds->report_partition_obliq);
-	    nout(nss, "report_overlap_reg_names:    %d\n", nds->report_overlap_reg_names);
-	    nout(nss, "report_overlap_reg_ids:      %d\n", nds->report_overlap_reg_ids);
-	    nout(nss, "report_overlap_dists:        %d\n", nds->report_overlap_dists);
-	    nout(nss, "report_overlap_obliq:        %d\n", nds->report_overlap_obliq);
-	    nout(nss, "report_gap_dists:            %d\n", nds->report_gap_dists);
-	    nout(nss, "dist_delta_tol:              %g\n", nds->dist_delta_tol);
-	    nout(nss, "obliq_delta_tol:             %g\n", nds->obliq_delta_tol);
-	    nout(nss, "los_delta_tol:               %g\n", nds->los_delta_tol);
-	    nout(nss, "scaled_los_delta_tol:        %g\n", nds->scaled_los_delta_tol);
-	    return 0;
-	}
-	if (ac == 1) {
-	    //print specific setting
-	    if (BU_STR_EQUAL(argv[0], "report_partitions"))           nout(nss, "%d\n", nds->report_partitions);
-	    if (BU_STR_EQUAL(argv[0], "report_misses"))               nout(nss, "%d\n", nds->report_misses);
-	    if (BU_STR_EQUAL(argv[0], "report_gaps"))                 nout(nss, "%d\n", nds->report_gaps);
-	    if (BU_STR_EQUAL(argv[0], "report_overlaps"))             nout(nss, "%d\n", nds->report_overlaps);
-	    if (BU_STR_EQUAL(argv[0], "report_partition_reg_ids"))    nout(nss, "%d\n", nds->report_partition_reg_ids);
-	    if (BU_STR_EQUAL(argv[0], "report_partition_reg_names"))  nout(nss, "%d\n", nds->report_partition_reg_names);
-	    if (BU_STR_EQUAL(argv[0], "report_partition_path_names")) nout(nss, "%d\n", nds->report_partition_path_names);
-	    if (BU_STR_EQUAL(argv[0], "report_partition_dists"))      nout(nss, "%d\n", nds->report_partition_dists);
-	    if (BU_STR_EQUAL(argv[0], "report_partition_obliq"))      nout(nss, "%d\n", nds->report_partition_obliq);
-	    if (BU_STR_EQUAL(argv[0], "report_overlap_reg_names"))    nout(nss, "%d\n", nds->report_overlap_reg_names);
-	    if (BU_STR_EQUAL(argv[0], "report_overlap_reg_ids"))      nout(nss, "%d\n", nds->report_overlap_reg_ids);
-	    if (BU_STR_EQUAL(argv[0], "report_overlap_dists"))        nout(nss, "%d\n", nds->report_overlap_dists);
-	    if (BU_STR_EQUAL(argv[0], "report_overlap_obliq"))        nout(nss, "%d\n", nds->report_overlap_obliq);
-	    if (BU_STR_EQUAL(argv[0], "report_gap_dists"))            nout(nss, "%d\n", nds->report_gap_dists);
-	    if (BU_STR_EQUAL(argv[0], "dist_delta_tol"))              nout(nss, "%g\n", nds->dist_delta_tol);
-	    if (BU_STR_EQUAL(argv[0], "obliq_delta_tol"))             nout(nss, "%g\n", nds->obliq_delta_tol);
-	    if (BU_STR_EQUAL(argv[0], "los_delta_tol"))               nout(nss, "%g\n", nds->los_delta_tol);
-	    if (BU_STR_EQUAL(argv[0], "scaled_los_delta_tol"))        nout(nss, "%g\n", nds->scaled_los_delta_tol);
-	    return 0;
-	}
-	if (ac == 2) {
-	    //set setting
-	    struct bu_vls opt_msg = BU_VLS_INIT_ZERO;
-	    bool *setting_bool = NULL;
-	    fastf_t *setting_fastf_t = NULL;
-	    if (BU_STR_EQUAL(argv[0], "report_partitions"))           setting_bool = &(nds->report_partitions);
-	    if (BU_STR_EQUAL(argv[0], "report_misses"))               setting_bool = &(nds->report_misses);
-	    if (BU_STR_EQUAL(argv[0], "report_gaps"))                 setting_bool = &(nds->report_gaps);
-	    if (BU_STR_EQUAL(argv[0], "report_overlaps"))             setting_bool = &(nds->report_overlaps);
-	    if (BU_STR_EQUAL(argv[0], "report_partition_reg_ids"))    setting_bool = &(nds->report_partition_reg_ids);
-	    if (BU_STR_EQUAL(argv[0], "report_partition_reg_names"))  setting_bool = &(nds->report_partition_reg_names);
-	    if (BU_STR_EQUAL(argv[0], "report_partition_path_names")) setting_bool = &(nds->report_partition_path_names);
-	    if (BU_STR_EQUAL(argv[0], "report_partition_dists"))      setting_bool = &(nds->report_partition_dists);
-	    if (BU_STR_EQUAL(argv[0], "report_partition_obliq"))      setting_bool = &(nds->report_partition_obliq);
-	    if (BU_STR_EQUAL(argv[0], "report_overlap_reg_names"))    setting_bool = &(nds->report_overlap_reg_names);
-	    if (BU_STR_EQUAL(argv[0], "report_overlap_reg_ids"))      setting_bool = &(nds->report_overlap_reg_ids);
-	    if (BU_STR_EQUAL(argv[0], "report_overlap_dists"))        setting_bool = &(nds->report_overlap_dists);
-	    if (BU_STR_EQUAL(argv[0], "report_overlap_obliq"))        setting_bool = &(nds->report_overlap_obliq);
-	    if (BU_STR_EQUAL(argv[0], "report_gap_dists"))            setting_bool = &(nds->report_gap_dists);
-	    if (BU_STR_EQUAL(argv[0], "dist_delta_tol"))              setting_fastf_t = &(nds->dist_delta_tol);
-	    if (BU_STR_EQUAL(argv[0], "obliq_delta_tol"))             setting_fastf_t = &(nds->obliq_delta_tol);
-	    if (BU_STR_EQUAL(argv[0], "los_delta_tol"))               setting_fastf_t = &(nds->los_delta_tol);
-	    if (BU_STR_EQUAL(argv[0], "scaled_los_delta_tol"))        setting_fastf_t = &(nds->scaled_los_delta_tol);
-
-	    if (setting_bool) {
-		if (bu_opt_bool(&opt_msg, 1, (const char **)&argv[1], (void *)setting_bool) == -1) {
-		    nerr(nss, "Error: bu_opt value read failure: %s\n", bu_vls_addr(&opt_msg));
-		    bu_vls_free(&opt_msg);
-		    return -1;
-		} else {
-		    return 0;
-		}
-	    }
-	    if (setting_fastf_t) {
-		if (BU_STR_EQUAL(argv[1], "BN_TOL_DIST")) {
-		    *setting_fastf_t = BN_TOL_DIST;
-		    return 0;
-		} else {
-		    if (bu_opt_fastf_t(&opt_msg, 1, (const char **)&argv[1], (void *)setting_fastf_t) == -1) {
-			nerr(nss, "Error: bu_opt value read failure: %s\n", bu_vls_addr(&opt_msg));
-			bu_vls_free(&opt_msg);
-			return -1;
-		    } else {
-			return 0;
-		    }
-		}
-	    }
-
-	    // anything else is an error
-	    return -1;
-	}
-    }
-
-    nerr(nss, "Unknown diff subcommand: \"%s\"\n", argv[0]);
 
     return -1;
 }
