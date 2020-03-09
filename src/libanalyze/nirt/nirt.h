@@ -154,7 +154,7 @@ struct nirt_output_record {
 };
 
 
-struct nirt_diff;
+struct nirt_diff_state;
 
 struct nirt_state_impl {
     /* Output options */
@@ -198,11 +198,7 @@ struct nirt_state_impl {
     std::vector<std::string> active_paths; // active paths for raytracer
     struct nirt_output_record *vals;
     struct bu_vls *diff_file;
-    struct nirt_diff *cdiff;
-    std::vector<struct nirt_diff *> diffs;
-    struct nirt_diff_settings *diff_settings;
-    int diff_run;
-    int diff_ready;
+    struct nirt_diff_state *diff_state;
 
     /* state alteration flags */
     bool b_state;   // updated for any state change

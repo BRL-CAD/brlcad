@@ -1197,8 +1197,8 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
     }
     vals->seg = s;
 
-    if (!nss->i->diff_run) _nirt_report(nss, 'r', vals);
-    if (!nss->i->diff_run) _nirt_report(nss, 'h', vals);
+    _nirt_report(nss, 'r', vals);
+    _nirt_report(nss, 'h', vals);
 
     if (nss->i->overlap_claims == NIRT_OVLP_REBUILD_FASTGEN) {
 	rt_rebuild_overlaps(part_head, ap, 1);
@@ -1242,7 +1242,7 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 
 	    if (s->gap_los > 0) {
 		s->type = NIRT_GAP_SEG;
-		if (!nss->i->diff_run) _nirt_report(nss, 'g', vals);
+		_nirt_report(nss, 'g', vals);
 		_nirt_diff_add_seg(nss, s);
 		/* vlist segment for gap */
 		vhead = bn_vlblock_find(nss->i->segs, nss->i->void_color->buc_rgb[RED], nss->i->void_color->buc_rgb[GRN], nss->i->void_color->buc_rgb[BLU]);
@@ -1305,7 +1305,7 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 	    }
 	}
 
-	if (!nss->i->diff_run) _nirt_report(nss, 'p', vals);
+	_nirt_report(nss, 'p', vals);
 
 	/* vlist segment for hit */
 	if (ev_odd % 2) {
@@ -1350,7 +1350,7 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 	    s->ov_d_out = vals->d_orig - ovp->out_dist; // TODO looks sketchy in NIRT - did they really mean target(D) ?? -> (VTI_XORIG + 3 -> VTI_H)
 	    s->ov_los = s->ov_d_in - s->ov_d_out;
 
-	    if (!nss->i->diff_run) _nirt_report(nss, 'o', vals);
+	    _nirt_report(nss, 'o', vals);
 
 	    /* vlist segment for overlap */
 	    if (nss->i->plot_overlaps) {
@@ -1369,7 +1369,7 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 
     }
 
-    if (!nss->i->diff_run) _nirt_report(nss, 'f', vals);
+    _nirt_report(nss, 'f', vals);
 
     if (vals->ovlp_list.forw != &(vals->ovlp_list)) {
 	nerr(nss, "Previously unreported overlaps.  Shouldn't happen\n");
@@ -1390,8 +1390,8 @@ extern "C" int
 _nirt_if_miss(struct application *ap)
 {
     struct nirt_state *nss = (struct nirt_state *)ap->a_uptr;
-    if (!nss->i->diff_run) _nirt_report(nss, 'r', nss->i->vals);
-    if (!nss->i->diff_run) _nirt_report(nss, 'm', nss->i->vals);
+    _nirt_report(nss, 'r', nss->i->vals);
+    _nirt_report(nss, 'm', nss->i->vals);
 
     // TODO - handle miss diffing...
 
@@ -2871,7 +2871,6 @@ nirt_destroy(struct nirt_state *ns)
     bu_vls_free(ns->i->err);
     bu_vls_free(ns->i->msg);
     bu_vls_free(ns->i->out);
-    bu_vls_free(ns->i->diff_file);
     bn_vlist_cleanup(&(ns->i->s_vlist));
     bn_vlblock_free(ns->i->segs);
 
@@ -2880,7 +2879,6 @@ nirt_destroy(struct nirt_state *ns)
 
     db_close(ns->i->dbip);
 
-    BU_PUT(ns->i->diff_settings, struct nirt_diff_settings);
     BU_PUT(ns->i->vals, struct nirt_output_record);
 
     BU_PUT(ns->i->res, struct resource);
@@ -2888,7 +2886,6 @@ nirt_destroy(struct nirt_state *ns)
     BU_PUT(ns->i->err, struct bu_vls);
     BU_PUT(ns->i->msg, struct bu_vls);
     BU_PUT(ns->i->out, struct bu_vls);
-    BU_PUT(ns->i->diff_file, struct bu_vls);
     BU_PUT(ns->i->ap, struct application);
     BU_PUT(ns->i->hit_odd_color, struct bu_color);
     BU_PUT(ns->i->hit_even_color, struct bu_color);
