@@ -137,6 +137,63 @@ _nirt_seg_cpy(struct nirt_seg *s)
  * Internal functionality *
  **************************/
 
+#define nirt_sprint(vls, str) \
+    do { \
+	if (strchr(str, ' ')) { \
+	    bu_vls_printf(vls, "\"%s\"", str); \
+	} else { \
+	    bu_vls_printf(vls, "%s", str); \
+	} \
+    } \
+while (0)
+
+
+bool
+nirt_cmd_str(struct bu_vls *nirt_cmd, struct nirt_state *nss)
+{
+    if (!nirt_cmd || !nss) return false;
+
+    struct bu_vls wstr = BU_VLS_INIT_ZERO;
+
+    char nirt_exe[MAXPATHLEN] = {0};
+    bu_dir(nirt_exe, MAXPATHLEN, BU_DIR_BIN, "nirt", BU_DIR_EXT, NULL);
+
+    nirt_sprint(&wstr, nirt_exe);
+    bu_vls_printf(&wstr, " ");
+    nirt_sprint(&wstr, nss->i->dbip->dbi_filename);
+
+    for (size_t ui = 0; ui < nss->i->active_paths.size(); ui++) {
+	const char *o = nss->i->active_paths[ui].c_str();
+	bu_vls_printf(&wstr, " ");
+	nirt_sprint(&wstr, o);
+    }
+
+    if (bu_vls_strlen(&nss->nirt_format_file)) {
+	bu_vls_printf(&wstr, " -f ");
+	nirt_sprint(&wstr, bu_vls_cstr(&nss->nirt_format_file));
+    }
+
+    bu_vls_printf(&wstr, " -e \"");
+    std::string xyz_x = _nirt_dbl_to_str(nss->i->vals->orig[X], 0);
+    std::string xyz_y = _nirt_dbl_to_str(nss->i->vals->orig[Y], 0);
+    std::string xyz_z = _nirt_dbl_to_str(nss->i->vals->orig[Z], 0);
+    bu_vls_printf(&wstr, "xyz %s %s %s;", xyz_x.c_str(), xyz_y.c_str(), xyz_z.c_str());
+
+    std::string dir_x = _nirt_dbl_to_str(nss->i->vals->dir[X], 0);
+    std::string dir_y = _nirt_dbl_to_str(nss->i->vals->dir[Y], 0);
+    std::string dir_z = _nirt_dbl_to_str(nss->i->vals->dir[Z], 0);
+    bu_vls_printf(&wstr, "dir %s %s %s;", dir_x.c_str(), dir_y.c_str(), dir_z.c_str());
+
+    bu_vls_printf(&wstr, "s;q\"");
+
+    bu_vls_printf(nirt_cmd, "%s", bu_vls_cstr(&wstr));
+
+    bu_vls_free(&wstr);
+    return true;
+}
+
+
+
 void nmsg(struct nirt_state *nss, const char *fmt, ...)
 {
     va_list ap;
@@ -932,7 +989,16 @@ _nirt_print_fmt_substr(struct nirt_state *nss, struct bu_vls *ostr, const char *
 
     /* nirt_cmd is a special key to allow a nirt output to reproduce a command that would recreate
      * the execution. */
-    nirt_print_key("nirt_cmd", bu_vls_cstr(&nss->nirt_cmd));
+    if (BU_STR_EQUAL(key, "nirt_cmd")) {
+	struct bu_vls c_nirtcmd = BU_VLS_INIT_ZERO;
+	if (nirt_cmd_str(&c_nirtcmd, nss)) {
+	    bu_vls_printf(ostr, fmt, bu_vls_cstr(&c_nirtcmd));
+	} else {
+	    bu_vls_printf(ostr, fmt, bu_vls_cstr(&nss->nirt_cmd));
+	}
+	bu_vls_free(&c_nirtcmd);
+	return;
+    }
 
     nirt_print_key("x_orig", r->orig[X] * base2local);
     nirt_print_key("y_orig", r->orig[Y] * base2local);
@@ -2603,6 +2669,7 @@ nirt_init(struct nirt_state *ns)
     if (!ns) return -1;
 
     ns->nirt_cmd = BU_VLS_INIT_ZERO;
+    ns->nirt_format_file = BU_VLS_INIT_ZERO;
 
     /* Get memory */
     n = new nirt_state_impl;

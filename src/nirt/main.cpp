@@ -779,6 +779,7 @@ main(int argc, const char **argv)
 
     /* Store the execution command as a commented nirt output line */
     bu_vls_sprintf(&ns->nirt_cmd, "# %s", bu_vls_cstr(&launch_cmd));
+    bu_vls_sprintf(&ns->nirt_format_file, "%s", bu_vls_cstr(sfd.filename));
 
     /* Set up hooks so we can capture I/O from nirt_exec */
     (void)nirt_udata(ns, (void *)&io_data);
