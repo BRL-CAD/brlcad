@@ -146,6 +146,9 @@ struct nirt_diff_state {
     fastf_t scaled_los_delta_tol = BN_TOL_DIST;
 
     struct nirt_state *nss;
+
+    struct bu_opt_desc *d = NULL;
+    const struct bu_cmdtab *cmds = NULL;
 };
 
 
@@ -709,10 +712,33 @@ parse_overlap(struct nirt_diff_state *nds, std::string &line)
     return false;
 }
 
-extern "C" int
-_nirt_diff_cmd_clear(void *ndsv, int UNUSED(argc), const char **UNUSED(argv))
+static int
+_nirt_cmd_msgs(void *ndsv, int argc, const char **argv, const char *us, const char *ps)
 {
     struct nirt_diff_state *nds = (struct nirt_diff_state *)ndsv;
+    struct nirt_state *nss = nds->nss;
+    if (argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
+	nout(nss, "%s\n%s\n", us, ps);
+	return 1;
+    }
+    if (argc == 2 && BU_STR_EQUAL(argv[1], PURPOSEFLAG)) {
+	nout(nss, "%s\n", ps);
+	return 1;
+    }
+    return 0;
+}
+
+extern "C" int
+_nirt_diff_cmd_clear(void *ndsv, int argc, const char **argv)
+{
+    struct nirt_diff_state *nds = (struct nirt_diff_state *)ndsv;
+
+    const char *usage_string = "diff [options] clear";
+    const char *purpose_string = "reset NIRT diff state";
+    if (_nirt_cmd_msgs(nds, argc, argv, usage_string, purpose_string)) {
+	return 0;
+    }
+
     nds->diffs.clear();
     nds->diff_ready = false;
     nds->cdiff = NULL;
@@ -726,6 +752,12 @@ _nirt_diff_cmd_load(void *ndsv, int argc, const char **argv)
     size_t cmt = std::string::npos;
     struct nirt_diff_state *nds = (struct nirt_diff_state *)ndsv;
     struct nirt_state *nss = nds->nss;
+
+    const char *usage_string = "diff [options] load <nirt_diff_file>";
+    const char *purpose_string = "load pre-existing NIRT shotline information";
+    if (_nirt_cmd_msgs(nds, argc, argv, usage_string, purpose_string)) {
+	return 0;
+    }
 
     if (argc != 1) {
 	nerr(nss, "please specify a nirt diff file to load.\n");
@@ -841,10 +873,19 @@ _nirt_diff_cmd_load(void *ndsv, int argc, const char **argv)
 // expected output to stdout - in this mode diff will generate a diff
 // input file from a supplied list of rays.
 extern "C" int
-_nirt_diff_cmd_run(void *ndsv, int UNUSED(argc), const char **UNUSED(argv))
+_nirt_diff_cmd_run(void *ndsv, int argc, const char **argv)
 {
     struct nirt_diff_state *nds = (struct nirt_diff_state *)ndsv;
     struct nirt_state *nss = nds->nss;
+
+    const char *usage_string = "diff [options] run";
+    const char *purpose_string = "compute new shotlines to compare with loaded data";
+    if (_nirt_cmd_msgs(nds, argc, argv, usage_string, purpose_string)) {
+	return 0;
+    }
+
+    // TODO - clear any preexisting new_segs in case this is a repeated run
+
     for (unsigned int i = 0; i < nds->diffs.size(); i++) {
 	nds->cdiff = &(nds->diffs[i]);
 	VMOVE(nss->i->vals->dir,  nds->cdiff->dir);
@@ -864,9 +905,17 @@ _nirt_diff_cmd_run(void *ndsv, int UNUSED(argc), const char **UNUSED(argv))
 }
 
 extern "C" int
-_nirt_diff_cmd_report(void *ndsv, int UNUSED(argc), const char **UNUSED(argv))
+_nirt_diff_cmd_report(void *ndsv, int argc, const char **argv)
 {
     struct nirt_diff_state *nds = (struct nirt_diff_state *)ndsv;
+
+    const char *usage_string = "diff [options] report";
+    const char *purpose_string = "report differences (if any) between old and new shotlines";
+    if (_nirt_cmd_msgs(nds, argc, argv, usage_string, purpose_string)) {
+	return 0;
+    }
+
+
     // Report diff results according to the NIRT diff settings.
     if (!nds->diff_ready) {
 	nerr(nds->nss, "No diff file loaded - please load a diff file with \"diff load <filename>\"\n");
@@ -882,6 +931,13 @@ _nirt_diff_cmd_settings(void *ndsv, int argc, const char **argv)
 {
     struct nirt_diff_state *nds = (struct nirt_diff_state *)ndsv;
     struct nirt_state *nss = nds->nss;
+
+    const char *usage_string = "diff [options] settings [key] [val]";
+    const char *purpose_string = "print and change reporting and tolerance settings";
+    if (_nirt_cmd_msgs(nds, argc, argv, usage_string, purpose_string)) {
+	return 0;
+    }
+
     if (!argc) {
 	//print current settings
 	nout(nss, "report_partitions:           %d\n", nds->report_partitions);
@@ -976,6 +1032,50 @@ _nirt_diff_cmd_settings(void *ndsv, int argc, const char **argv)
     return -1;
 }
 
+extern "C" int
+_nirt_diff_help(void *ndsv, int argc, const char **argv)
+{
+    struct nirt_diff_state *nds = (struct nirt_diff_state *)ndsv;
+    struct nirt_state *nss = nds->nss;
+
+    if (!argc || !argv || BU_STR_EQUAL(argv[0], "help")) {
+	nout(nss, "diff [options] subcommand [args]\n");
+	if (nds->d) {
+	    char *option_help = bu_opt_describe(nds->d, NULL);
+	    if (option_help) {
+		nout(nss, "Options:\n%s\n", option_help);
+		bu_free(option_help, "help str");
+	    }
+	}
+	nout(nss, "Available subcommands:\n");
+	const struct bu_cmdtab *ctp = NULL;
+	int ret;
+	const char *helpflag[2];
+	helpflag[1] = PURPOSEFLAG;
+	for (ctp = nds->cmds; ctp->ct_name != (char *)NULL; ctp++) {
+	    nout(nss, "  %s\t\t", ctp->ct_name);
+	    if (!BU_STR_EQUAL(ctp->ct_name, "help")) {
+		helpflag[0] = ctp->ct_name;
+		bu_cmd(nds->cmds, 2, helpflag, 0, (void *)nds, &ret);
+	    } else {
+		nout(nss, "print help and exit\n");
+	    }
+	}
+    } else {
+	int ret;
+	const char **helpargv = (const char **)bu_calloc(argc+1, sizeof(char *), "help argv");
+	helpargv[0] = argv[0];
+	helpargv[1] = HELPFLAG;
+	for (int i = 1; i < argc; i++) {
+	    helpargv[i+1] = argv[i];
+	}
+	bu_cmd(nds->cmds, argc+1, helpargv, 0, (void *)nds, &ret);
+	bu_free(helpargv, "help argv");
+	return ret;
+    }
+
+    return 0;
+}
 
 const struct bu_cmdtab _nirt_diff_cmds[] {
     { "load",_nirt_diff_cmd_load},
@@ -996,44 +1096,58 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
     struct nirt_state *nss = (struct nirt_state *)ns;
     struct nirt_diff_state *nds = nss->i->diff_state;
     int ac = 0;
-    int print_help = 0;
+    int help = 0;
     double tol = 0;
-    struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
     struct bu_opt_desc d[3];
-    // TODO - add reporting options for enabling/disabling region/path, partition length, normal, and overlap ordering diffs.
-    // For example, if r1 and r2 have the same shape in space, we may want to suppress name based differences and look at
-    // other aspects of the shotline.  Also need sorting options for output - max partition diff first, max normal diff first,
-    // max numerical delta, etc...
-    BU_OPT(d[0],  "h", "help",       "",             NULL,   &print_help, "print help and exit");
-    BU_OPT(d[1],  "t", "tol",   "<val>",  &bu_opt_fastf_t,   &tol,        "set diff tolerance");
+    // TODO - add reporting options for enabling/disabling region/path,
+    // partition length, normal, and overlap ordering diffs.  For example, if
+    // r1 and r2 have the same shape in space, we may want to suppress name
+    // based differences and look at other aspects of the shotline.  Also need
+    // sorting options for output - max partition diff first, max normal diff
+    // first, max numerical delta, etc...
+    BU_OPT(d[0],  "h", "help",       "",             NULL,   &help, "print help and exit");
+    BU_OPT(d[1],  "t", "tol",   "<val>",  &bu_opt_fastf_t,   &tol,  "set diff tolerance");
     BU_OPT_NULL(d[2]);
-    const char *ustr = "Usage: diff [opts] shotfile";
+
+    // Need for help printing
+    nds->d = (struct bu_opt_desc *)d;
+    nds->cmds = _nirt_diff_cmds;
 
     argv++; argc--;
 
-    if ((ac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d)) == -1) {
-	char *help = bu_opt_describe(d, NULL);
-	nerr(nss, "Error: bu_opt value read failure: %s\n\n%s\n%s\n", bu_vls_addr(&optparse_msg), ustr, help);
-	if (help) bu_free(help, "help str");
-	bu_vls_free(&optparse_msg);
-	return -1;
-    }
-    bu_vls_free(&optparse_msg);
-
-    if (print_help || !argv[0]) {
-	char *help = bu_opt_describe(d, NULL);
-	nerr(nss, "%s\n%s", ustr, help);
-	if (help) bu_free(help, "help str");
-	return -1;
+    // High level options are only defined prior to the subcommand
+    int cmd_pos = -1;
+    for (int i = 0; i < argc; i++) {
+	if (bu_cmd_valid(_nirt_diff_cmds, argv[i]) == BRLCAD_OK) {
+	    cmd_pos = i;
+	    break;
+	}
     }
 
-    if (bu_cmd_valid(_nirt_diff_cmds, argv[0]) != BRLCAD_OK) {
-	nerr(nss, "Unknown diff subcommand: \"%s\"\n", argv[0]);
+    int acnt = (cmd_pos >= 0) ? cmd_pos : argc;
+
+    bu_opt_parse(NULL, acnt, argv, d);
+
+    if (help) {
+	if (cmd_pos >= 0) {
+	    argc = argc - cmd_pos;
+	    argv = &argv[cmd_pos];
+	    _nirt_diff_help(nds, argc, argv);
+	} else {
+	    _nirt_diff_help(nds, 0, NULL);
+	}
+	return 0;
+    }
+
+    // Must have a subcommand
+    if (cmd_pos == -1) {
+	nerr(nss, ": no valid subcommand specified\n");
+	_nirt_diff_help(nds, 0, NULL);
 	return -1;
     }
 
     int ret;
-    if (bu_cmd(_nirt_diff_cmds, argc, argv, 0, (void *)nds, &ret) == BRLCAD_OK) {
+    if (bu_cmd(_nirt_diff_cmds, ac, argv, 0, (void *)nds, &ret) == BRLCAD_OK) {
 	return ret;
     }
 

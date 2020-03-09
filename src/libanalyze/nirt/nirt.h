@@ -82,6 +82,9 @@ extern "C" off_t ftello(FILE *);
 #define NIRT_PRINTF_SPECIFIERS "difeEgGs"
 #define NIRT_OUTPUT_TYPE_SPECIFIERS "rhpfmog"
 
+#define HELPFLAG "--print-help"
+#define PURPOSEFLAG "--print-purpose"
+
 struct nirt_overlap {
     struct application *ap;
     struct partition *pp;
