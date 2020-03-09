@@ -27,6 +27,8 @@
 /* BRL-CAD includes */
 #include "common.h"
 
+#include <regex>
+
 #include "bu/cmd.h"
 
 #include "./nirt.h"
@@ -460,21 +462,278 @@ _nirt_diff_report(struct nirt_state *nss)
 }
 
 
+static bool
+parse_ray(struct nirt_diff_state *nds, std::string &line)
+{
+    // First up, find out what formatting version we need to deal with.
+    // This is done so that as long as the RAY,#, prefix is respected,
+    // we can take older diff.nrt files and use them in newer code while
+    // preserving the ability to adjust the format if we need/want to.
+
+    struct nirt_diff df;
+    df.nds = nds;
+
+    std::regex ray_regex("RAY,([0-9]+),(.*)");
+
+    std::smatch s1;
+    if (!std::regex_search(line, s1, ray_regex)) {
+	nerr(nds->nss, "Error processing ray line \"%s\"!\nUnable to identify formatting version\n", line.c_str());
+	return false;
+    }
+
+    int ray_version = _nirt_str_to_int(s1[1]);
+    std::string ray_data = s1[2];
+
+    std::cerr << "version: " << ray_version << "\n";
+    std::cerr << "data   : " << ray_data << "\n";
+
+    if (ray_version == 1) {
+	std::vector<std::string> substrs = _nirt_string_split(ray_data);
+	if (substrs.size() != 6) {
+	    nerr(nds->nss, "Error processing ray line \"%s\"!\nExpected 6 elements, found %zu\n", ray_data.c_str(), substrs.size());
+	    return false;
+	}
+	VSET(df.orig, _nirt_str_to_dbl(substrs[0], 0), _nirt_str_to_dbl(substrs[1], 0), _nirt_str_to_dbl(substrs[2], 0));
+	VSET(df.dir,  _nirt_str_to_dbl(substrs[3], 0), _nirt_str_to_dbl(substrs[4], 0), _nirt_str_to_dbl(substrs[5], 0));
+#ifdef NIRT_DIFF_DEBUG
+	bu_log("Found RAY:\n");
+	bu_log("origin   : %0.17f, %0.17f, %0.17f\n", V3ARGS(df.orig));
+	bu_log("direction: %0.17f, %0.17f, %0.17f\n", V3ARGS(df.dir));
+#endif
+	nds->diffs.push_back(df);
+	nds->cdiff = &(nds->diffs[nds->diffs.size() - 1]);
+	return true;
+    }
+
+    nerr(nds->nss, "Error processing ray line \"%s\"!\nUnsupported version: %d\n", line.c_str(), ray_version);
+    return false;
+}
+
+static bool
+parse_hit(struct nirt_diff_state *nds, std::string &line)
+{
+    std::regex hit_regex("HIT,([0-9]+),(.*)");
+
+    std::smatch s1;
+    if (!std::regex_search(line, s1, hit_regex)) {
+	nerr(nds->nss, "Error processing hit line \"%s\"!\nUnable to identify formatting version\n", line.c_str());
+	return false;
+    }
+
+    if (!nds->cdiff) {
+	nerr(nds->nss, "Error: Hit line found but no ray set.\n");
+	return false;
+    }
+
+    int hit_version = _nirt_str_to_int(s1[1]);
+    std::string hit_data = s1[2];
+
+    if (hit_version == 1) {
+	std::vector<std::string> substrs = _nirt_string_split(hit_data);
+
+	if (substrs.size() != 15) {
+	    nerr(nds->nss, "Error processing hit line \"%s\"!\nExpected 15 elements, found %zu\n", hit_data.c_str(), substrs.size());
+	    return -1;
+	}
+
+	struct nirt_seg seg;
+	struct nirt_seg *segp = &seg;
+	_nirt_seg_init(&segp);
+	seg.type = NIRT_PARTITION_SEG;
+	bu_vls_decode(seg.reg_name, substrs[0].c_str());
+	//bu_vls_printf(seg.reg_name, "%s", substrs[0].c_str());
+	bu_vls_decode(seg.path_name, substrs[1].c_str());
+	seg.reg_id = _nirt_str_to_int(substrs[2]);
+	VSET(seg.in, _nirt_str_to_dbl(substrs[3], 0), _nirt_str_to_dbl(substrs[4], 0), _nirt_str_to_dbl(substrs[5], 0));
+	seg.d_in = _nirt_str_to_dbl(substrs[6], 0);
+	VSET(seg.out, _nirt_str_to_dbl(substrs[7], 0), _nirt_str_to_dbl(substrs[8], 0), _nirt_str_to_dbl(substrs[9], 0));
+	seg.d_out = _nirt_str_to_dbl(substrs[10], 0);
+	seg.los = _nirt_str_to_dbl(substrs[11], 0);
+	seg.scaled_los = _nirt_str_to_dbl(substrs[12], 0);
+	seg.obliq_in = _nirt_str_to_dbl(substrs[13], 0);
+	seg.obliq_out = _nirt_str_to_dbl(substrs[14], 0);
+#ifdef NIRT_DIFF_DEBUG
+	bu_log("Found %s:\n", line.c_str());
+	bu_log("  reg_name: %s\n", bu_vls_addr(seg.reg_name));
+	bu_log("  path_name: %s\n", bu_vls_addr(seg.path_name));
+	bu_log("  reg_id: %d\n", seg.reg_id);
+	bu_log("  in: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg.in));
+	bu_log("  out: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg.out));
+	bu_log("  d_in: %0.17f d_out: %0.17f\n", seg.d_in, seg.d_out);
+	bu_log("  los: %0.17f  scaled_los: %0.17f\n", seg.los, seg.scaled_los);
+	bu_log("  obliq_in: %0.17f  obliq_out: %0.17f\n", seg.obliq_in, seg.obliq_out);
+#endif
+	nds->cdiff->old_segs.push_back(seg);
+	return true;
+    }
+
+    nerr(nds->nss, "Error processing hit line \"%s\"!\nUnsupported version: %d\n", line.c_str(), hit_version);
+    return false;
+
+}
+
+static bool
+parse_gap(struct nirt_diff_state *nds, std::string &line)
+{
+    std::regex gap_regex("GAP,([0-9]+),(.*)");
+
+    std::smatch s1;
+    if (!std::regex_search(line, s1, gap_regex)) {
+	nerr(nds->nss, "Error processing gap line \"%s\"!\nUnable to identify formatting version\n", line.c_str());
+	return false;
+    }
+
+    if (!nds->cdiff) {
+	nerr(nds->nss, "Error: Gap line found but no ray set.\n");
+	return false;
+    }
+
+    int gap_version = _nirt_str_to_int(s1[1]);
+    std::string gap_data = s1[2];
+
+    if (gap_version == 1) {
+	std::vector<std::string> substrs = _nirt_string_split(gap_data);
+	
+	if (substrs.size() != 7) {
+	    nerr(nds->nss, "Error processing gap line \"%s\"!\nExpected 7 elements, found %zu\n", gap_data.c_str(), substrs.size());
+	    return -1;
+	}
+	struct nirt_seg seg;
+	struct nirt_seg *segp = &seg;
+	_nirt_seg_init(&segp);
+	seg.type = NIRT_GAP_SEG;
+	VSET(seg.gap_in, _nirt_str_to_dbl(substrs[0], 0), _nirt_str_to_dbl(substrs[1], 0), _nirt_str_to_dbl(substrs[2], 0));
+	VSET(seg.in, _nirt_str_to_dbl(substrs[3], 0), _nirt_str_to_dbl(substrs[4], 0), _nirt_str_to_dbl(substrs[5], 0));
+	seg.gap_los = _nirt_str_to_dbl(substrs[6], 0);
+#ifdef NIRT_DIFF_DEBUG
+	bu_log("Found %s:\n", line.c_str());
+	bu_log("  in: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg.gap_in));
+	bu_log("  out: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg.in));
+	bu_log("  gap_los: %0.17f\n", seg.gap_los);
+#endif
+	nds->cdiff->old_segs.push_back(seg);
+	return true;
+    }
+
+    nerr(nds->nss, "Error processing gap line \"%s\"!\nUnsupported version: %d\n", line.c_str(), gap_version);
+    return false;
+
+}
+
+static bool
+parse_miss(struct nirt_diff_state *nds, std::string &line)
+{
+    std::regex miss_regex("MISS,([0-9]+),(.*)");
+
+    std::smatch s1;
+    if (!std::regex_search(line, s1, miss_regex)) {
+	nerr(nds->nss, "error processing miss line \"%s\"!\nunable to identify formatting version\n", line.c_str());
+	return false;
+    }
+
+    if (!nds->cdiff) {
+	nerr(nds->nss, "error: miss line found but no ray set.\n");
+	return false;
+    }
+
+    int miss_version = _nirt_str_to_int(s1[1]);
+
+    if (miss_version == 1) {
+	struct nirt_seg seg;
+	struct nirt_seg *segp = &seg;
+	_nirt_seg_init(&segp);
+	seg.type = NIRT_MISS_SEG;
+#ifdef NIRT_DIFF_DEBUG
+	bu_log("Found MISS\n");
+#endif
+	nds->cdiff->old_segs.push_back(seg);
+	return true;
+    }
+
+    nerr(nds->nss, "error processing miss line \"%s\"!\nunsupported version: %d\n", line.c_str(), miss_version);
+    return false;
+
+}
+
+static bool
+parse_overlap(struct nirt_diff_state *nds, std::string &line)
+{
+    std::regex overlap_regex("OVERLAP,([0-9]+),(.*)");
+
+    std::smatch s1;
+    if (!std::regex_search(line, s1, overlap_regex)) {
+	nerr(nds->nss, "Error processing overlap line \"%s\"!\nUnable to identify formatting version\n", line.c_str());
+	return false;
+    }
+
+    if (!nds->cdiff) {
+	nerr(nds->nss, "Error: Overlap line found but no ray set.\n");
+	return false;
+    }
+
+    int overlap_version = _nirt_str_to_int(s1[1]);
+    std::string overlap_data = s1[2];
+
+    if (overlap_version == 1) {
+	std::vector<std::string> substrs = _nirt_string_split(overlap_data);
+	if (substrs.size() != 11) {
+	    nerr(nds->nss, "Error processing overlap line \"%s\"!\nExpected 11 elements, found %zu\n", overlap_data.c_str(), substrs.size());
+	    return false;
+	}
+	struct nirt_seg seg;
+	struct nirt_seg *segp = &seg;
+	_nirt_seg_init(&segp);
+	seg.type = NIRT_OVERLAP_SEG;
+	bu_vls_decode(seg.ov_reg1_name, substrs[0].c_str());
+	bu_vls_decode(seg.ov_reg2_name, substrs[1].c_str());
+	seg.ov_reg1_id = _nirt_str_to_int(substrs[2]);
+	seg.ov_reg2_id = _nirt_str_to_int(substrs[3]);
+	VSET(seg.ov_in, _nirt_str_to_dbl(substrs[4], 0), _nirt_str_to_dbl(substrs[5], 0), _nirt_str_to_dbl(substrs[6], 0));
+	VSET(seg.ov_out, _nirt_str_to_dbl(substrs[7], 0), _nirt_str_to_dbl(substrs[8], 0), _nirt_str_to_dbl(substrs[9], 0));
+	seg.ov_los = _nirt_str_to_dbl(substrs[10], 0);
+#ifdef NIRT_DIFF_DEBUG
+	bu_log("Found %s:\n", line.c_str());
+	bu_log("  ov_reg1_name: %s\n", bu_vls_addr(seg.ov_reg1_name));
+	bu_log("  ov_reg2_name: %s\n", bu_vls_addr(seg.ov_reg2_name));
+	bu_log("  ov_reg1_id: %d\n", seg.ov_reg1_id);
+	bu_log("  ov_reg2_id: %d\n", seg.ov_reg2_id);
+	bu_log("  ov_in: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg.ov_in));
+	bu_log("  ov_out: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg.ov_out));
+	bu_log("  ov_los: %0.17f\n", seg.ov_los);
+#endif
+	nds->cdiff->old_segs.push_back(seg);
+	return true;
+    }
+
+    nerr(nds->nss, "Error processing overlap line \"%s\"!\nUnsupported version: %d\n", line.c_str(), overlap_version);
+    return false;
+}
+
+extern "C" int
+_nirt_diff_cmd_clear(void *ndsv, int UNUSED(argc), const char **UNUSED(argv))
+{
+    struct nirt_diff_state *nds = (struct nirt_diff_state *)ndsv;
+    nds->diffs.clear();
+    nds->diff_ready = false;
+    nds->cdiff = NULL;
+    bu_vls_trunc(&nds->diff_file, 0);
+    return 0;
+}
+
 extern "C" int
 _nirt_diff_cmd_load(void *ndsv, int argc, const char **argv)
 {
     size_t cmt = std::string::npos;
-    int have_ray = 0;
     struct nirt_diff_state *nds = (struct nirt_diff_state *)ndsv;
     struct nirt_state *nss = nds->nss;
 
     if (argc != 1) {
-	nerr(nss, "Please specify a NIRT diff file to load.\n");
+	nerr(nss, "please specify a nirt diff file to load.\n");
 	return -1;
     }
 
     if (nds->diff_ready) {
-	nerr(nss, "Diff file already loaded.  To reset, run \"diff clear\"\n");
+	nerr(nss, "diff file already loaded.  to reset, run \"diff clear\"\n");
 	return -1;
     }
 
@@ -482,38 +741,36 @@ _nirt_diff_cmd_load(void *ndsv, int argc, const char **argv)
     std::ifstream ifs;
     ifs.open(argv[0]);
     if (!ifs.is_open()) {
-	nerr(nss, "Error: could not open file %s\n", argv[0]);
+	nerr(nss, "error: could not open file %s\n", argv[0]);
 	return -1;
     }
 
     if (nss->i->need_reprep) {
-	/* If we need to (re)prep, do it now. Failure is an error. */
+	/* if we need to (re)prep, do it now. failure is an error. */
 	if (_nirt_raytrace_prep(nss)) {
-	    nerr(nss, "Error: raytrace prep failed!\n");
+	    nerr(nss, "error: raytrace prep failed!\n");
 	    return -1;
 	}
     } else {
-	/* Based on current settings, tell the ap which rtip to use */
+	/* based on current settings, tell the ap which rtip to use */
 	nss->i->ap->a_rt_i = _nirt_get_rtip(nss);
 	nss->i->ap->a_resource = _nirt_get_resource(nss);
     }
 
     bu_vls_sprintf(&nds->diff_file, "%s", argv[0]);
     // TODO - temporarily suppress all formatting output for a silent diff run...
-    have_ray = 0;
     while (std::getline(ifs, line)) {
-
-	/* If part of the line is commented, skip that part */
+	/* if part of the line is commented, skip that part */
 	cmt = _nirt_find_first_unescaped(line, "#", 0);
 	if (cmt != std::string::npos) {
 	    line.erase(cmt);
 	}
 
-	/* If the whole line was a comment, skip it */
+	/* if the whole line was a comment, skip it */
 	_nirt_trim_whitespace(line);
 	if (!line.length()) continue;
 
-	/* Not a comment - has to be a valid type, or it's an error */
+	/* not a comment - has to be a valid type, or it's an error */
 	int ltype = -1;
 	ltype = (ltype < 0 && !line.compare(0, 4, "RAY,")) ? 0 : ltype;
 	ltype = (ltype < 0 && !line.compare(0, 4, "HIT,")) ? 1 : ltype;
@@ -521,186 +778,52 @@ _nirt_diff_cmd_load(void *ndsv, int argc, const char **argv)
 	ltype = (ltype < 0 && !line.compare(0, 5, "MISS,")) ? 3 : ltype;
 	ltype = (ltype < 0 && !line.compare(0, 8, "OVERLAP,")) ? 4 : ltype;
 	if (ltype < 0) {
-	    nerr(nss, "Error processing ray line \"%s\"!\nUnknown line type\n", line.c_str());
+	    nerr(nss, "Error processing diff file, line \"%s\"!\nUnknown line type\n", line.c_str());
 	    return -1;
 	}
 
 	/* Ray */
 	if (ltype == 0) {
-	    if (have_ray) {
-#ifdef NIRT_DIFF_DEBUG
-		bu_log("\n\nanother ray!\n\n\n");
-#endif
-		// Have ray already - execute current ray, store results in
-		// diff database (if any diffs were found), then clear expected
-		// results and old ray
-		for (int i = 0; i < 3; ++i) {
-		    nss->i->ap->a_ray.r_pt[i] = nss->i->vals->orig[i];
-		    nss->i->ap->a_ray.r_dir[i] = nss->i->vals->dir[i];
-		}
-		// TODO - rethink this container...
-		_nirt_init_ovlp(nss);
-		(void)rt_shootray(nss->i->ap);
-	    }
-	    // Read ray
-	    struct nirt_diff df;
-	    df.nds = nds;
-	    // TODO - once we go to C++11, used std::regex_search and std::smatch to more flexibly get a substring
-	    std::string rstr = line.substr(7);
-	    have_ray = 1;
-	    std::vector<std::string> substrs = _nirt_string_split(rstr);
-	    if (substrs.size() != 6) {
-		nerr(nss, "Error processing ray line \"%s\"!\nExpected 6 elements, found %zu\n", line.c_str(), substrs.size());
+	    if (!parse_ray(nds, line)) {
+		_nirt_diff_cmd_clear((void *)nds, 0, NULL);
 		return -1;
 	    }
-	    VSET(df.orig, _nirt_str_to_dbl(substrs[0], 0), _nirt_str_to_dbl(substrs[1], 0), _nirt_str_to_dbl(substrs[2], 0));
-	    VSET(df.dir, _nirt_str_to_dbl(substrs[3], 0), _nirt_str_to_dbl(substrs[4], 0), _nirt_str_to_dbl(substrs[5], 0));
-	    VMOVE(nss->i->vals->dir, df.dir);
-	    VMOVE(nss->i->vals->orig, df.orig);
-#ifdef NIRT_DIFF_DEBUG
-	    bu_log("Found RAY:\n");
-	    bu_log("origin   : %0.17f, %0.17f, %0.17f\n", V3ARGS(df.orig));
-	    bu_log("direction: %0.17f, %0.17f, %0.17f\n", V3ARGS(df.dir));
-#endif
-	    _nirt_targ2grid(nss);
-	    _nirt_dir2ae(nss);
-	    nds->diffs.push_back(df);
-	    nds->cdiff = &nds->diffs[nds->diffs.size() - 1];
 	    continue;
-	}
+	}	
 
 	/* Hit */
 	if (ltype == 1) {
-	    if (!have_ray) {
-		nerr(nss, "Error: Hit line found but no ray set.\n");
+	    if (!parse_hit(nds, line)) {
+		_nirt_diff_cmd_clear((void *)nds, 0, NULL);
 		return -1;
 	    }
-
-	    // TODO - once we go to C++11, used std::regex_search and std::smatch to more flexibly get a substring
-	    std::string hstr = line.substr(7);
-	    std::vector<std::string> substrs = _nirt_string_split(hstr);
-	    if (substrs.size() != 15) {
-		nerr(nss, "Error processing hit line \"%s\"!\nExpected 15 elements, found %zu\n", hstr.c_str(), substrs.size());
-		return -1;
-	    }
-
-	    struct nirt_seg seg;
-	    struct nirt_seg *segp = &seg;
-	    _nirt_seg_init(&segp);
-	    seg.type = NIRT_PARTITION_SEG;
-	    bu_vls_decode(seg.reg_name, substrs[0].c_str());
-	    //bu_vls_printf(seg.reg_name, "%s", substrs[0].c_str());
-	    bu_vls_decode(seg.path_name, substrs[1].c_str());
-	    seg.reg_id = _nirt_str_to_int(substrs[2]);
-	    VSET(seg.in, _nirt_str_to_dbl(substrs[3], 0), _nirt_str_to_dbl(substrs[4], 0), _nirt_str_to_dbl(substrs[5], 0));
-	    seg.d_in = _nirt_str_to_dbl(substrs[6], 0);
-	    VSET(seg.out, _nirt_str_to_dbl(substrs[7], 0), _nirt_str_to_dbl(substrs[8], 0), _nirt_str_to_dbl(substrs[9], 0));
-	    seg.d_out = _nirt_str_to_dbl(substrs[10], 0);
-	    seg.los = _nirt_str_to_dbl(substrs[11], 0);
-	    seg.scaled_los = _nirt_str_to_dbl(substrs[12], 0);
-	    seg.obliq_in = _nirt_str_to_dbl(substrs[13], 0);
-	    seg.obliq_out = _nirt_str_to_dbl(substrs[14], 0);
-#ifdef NIRT_DIFF_DEBUG
-	    bu_log("Found %s:\n", line.c_str());
-	    bu_log("  reg_name: %s\n", bu_vls_addr(seg.reg_name));
-	    bu_log("  path_name: %s\n", bu_vls_addr(seg.path_name));
-	    bu_log("  reg_id: %d\n", seg.reg_id);
-	    bu_log("  in: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg.in));
-	    bu_log("  out: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg.out));
-	    bu_log("  d_in: %0.17f d_out: %0.17f\n", seg.d_in, seg.d_out);
-	    bu_log("  los: %0.17f  scaled_los: %0.17f\n", seg.los, seg.scaled_los);
-	    bu_log("  obliq_in: %0.17f  obliq_out: %0.17f\n", seg.obliq_in, seg.obliq_out);
-#endif
-	    nds->cdiff->old_segs.push_back(seg);
 	    continue;
 	}
 
 	/* Gap */
 	if (ltype == 2) {
-	    if (!have_ray) {
-		nerr(nss, "Error: Gap line found but no ray set.\n");
+	    if (!parse_gap(nds, line)) {
+		_nirt_diff_cmd_clear((void *)nds, 0, NULL);
 		return -1;
 	    }
-
-	    // TODO - once we go to C++11, used std::regex_search and std::smatch to more flexibly get a substring
-	    std::string gstr = line.substr(7);
-	    std::vector<std::string> substrs = _nirt_string_split(gstr);
-	    if (substrs.size() != 7) {
-		nerr(nss, "Error processing gap line \"%s\"!\nExpected 7 elements, found %zu\n", gstr.c_str(), substrs.size());
-		return -1;
-	    }
-	    struct nirt_seg seg;
-	    struct nirt_seg *segp = &seg;
-	    _nirt_seg_init(&segp);
-	    seg.type = NIRT_GAP_SEG;
-	    VSET(seg.gap_in, _nirt_str_to_dbl(substrs[0], 0), _nirt_str_to_dbl(substrs[1], 0), _nirt_str_to_dbl(substrs[2], 0));
-	    VSET(seg.in, _nirt_str_to_dbl(substrs[3], 0), _nirt_str_to_dbl(substrs[4], 0), _nirt_str_to_dbl(substrs[5], 0));
-	    seg.gap_los = _nirt_str_to_dbl(substrs[6], 0);
-#ifdef NIRT_DIFF_DEBUG
-	    bu_log("Found %s:\n", line.c_str());
-	    bu_log("  in: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg.gap_in));
-	    bu_log("  out: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg.in));
-	    bu_log("  gap_los: %0.17f\n", seg.gap_los);
-#endif
-	    nds->cdiff->old_segs.push_back(seg);
 	    continue;
 	}
 
 	/* Miss */
 	if (ltype == 3) {
-	    if (!have_ray) {
-		nerr(nss, "Error: Miss line found but no ray set.\n");
+	    if (!parse_miss(nds, line)) {
+		_nirt_diff_cmd_clear((void *)nds, 0, NULL);
 		return -1;
 	    }
-
-	    struct nirt_seg seg;
-	    struct nirt_seg *segp = &seg;
-	    _nirt_seg_init(&segp);
-	    seg.type = NIRT_MISS_SEG;
-#ifdef NIRT_DIFF_DEBUG
-	    bu_log("Found MISS\n");
-#endif
-	    have_ray = 0;
-	    nds->cdiff->old_segs.push_back(seg);
 	    continue;
 	}
 
 	/* Overlap */
 	if (ltype == 4) {
-	    if (!have_ray) {
-		nerr(nss, "Error: Overlap line found but no ray set.\n");
+	    if (!parse_overlap(nds, line)) {
+		_nirt_diff_cmd_clear((void *)nds, 0, NULL);
 		return -1;
 	    }
-
-	    // TODO - once we go to C++11, used std::regex_search and std::smatch to more flexibly get a substring
-	    std::string ostr = line.substr(11);
-	    std::vector<std::string> substrs = _nirt_string_split(ostr);
-	    if (substrs.size() != 11) {
-		nerr(nss, "Error processing overlap line \"%s\"!\nExpected 11 elements, found %zu\n", ostr.c_str(), substrs.size());
-		return -1;
-	    }
-	    struct nirt_seg seg;
-	    struct nirt_seg *segp = &seg;
-	    _nirt_seg_init(&segp);
-	    seg.type = NIRT_OVERLAP_SEG;
-	    bu_vls_decode(seg.ov_reg1_name, substrs[0].c_str());
-	    bu_vls_decode(seg.ov_reg2_name, substrs[1].c_str());
-	    seg.ov_reg1_id = _nirt_str_to_int(substrs[2]);
-	    seg.ov_reg2_id = _nirt_str_to_int(substrs[3]);
-	    VSET(seg.ov_in, _nirt_str_to_dbl(substrs[4], 0), _nirt_str_to_dbl(substrs[5], 0), _nirt_str_to_dbl(substrs[6], 0));
-	    VSET(seg.ov_out, _nirt_str_to_dbl(substrs[7], 0), _nirt_str_to_dbl(substrs[8], 0), _nirt_str_to_dbl(substrs[9], 0));
-	    seg.ov_los = _nirt_str_to_dbl(substrs[10], 0);
-#ifdef NIRT_DIFF_DEBUG
-	    bu_log("Found %s:\n", line.c_str());
-	    bu_log("  ov_reg1_name: %s\n", bu_vls_addr(seg.ov_reg1_name));
-	    bu_log("  ov_reg2_name: %s\n", bu_vls_addr(seg.ov_reg2_name));
-	    bu_log("  ov_reg1_id: %d\n", seg.ov_reg1_id);
-	    bu_log("  ov_reg2_id: %d\n", seg.ov_reg2_id);
-	    bu_log("  ov_in: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg.ov_in));
-	    bu_log("  ov_out: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg.ov_out));
-	    bu_log("  ov_los: %0.17f\n", seg.ov_los);
-#endif
-	    nds->cdiff->old_segs.push_back(seg);
 	    continue;
 	}
 #ifdef NIRT_DIFF_DEBUG
@@ -708,26 +831,35 @@ _nirt_diff_cmd_load(void *ndsv, int argc, const char **argv)
 #endif
     }
 
-    if (have_ray) {
-	// Execute work.
-	for (int i = 0; i < 3; ++i) {
-	    nss->i->ap->a_ray.r_pt[i] = nss->i->vals->orig[i];
-	    nss->i->ap->a_ray.r_dir[i] = nss->i->vals->dir[i];
+    ifs.close();
+
+    // Done with if_hit and friends
+    return 0;
+}
+
+// Thought - if we have rays but no pre-defined output, write out the
+// expected output to stdout - in this mode diff will generate a diff
+// input file from a supplied list of rays.
+extern "C" int
+_nirt_diff_cmd_run(void *ndsv, int UNUSED(argc), const char **UNUSED(argv))
+{
+    struct nirt_diff_state *nds = (struct nirt_diff_state *)ndsv;
+    struct nirt_state *nss = nds->nss;
+    for (unsigned int i = 0; i < nds->diffs.size(); i++) {
+	nds->cdiff = &(nds->diffs[i]);
+	VMOVE(nss->i->vals->dir,  nds->cdiff->dir);
+	VMOVE(nss->i->vals->orig, nds->cdiff->orig);
+	_nirt_targ2grid(nss);
+	_nirt_dir2ae(nss);
+	for (int ii = 0; ii < 3; ++ii) {
+	    nss->i->ap->a_ray.r_pt[ii] = nss->i->vals->orig[ii];
+	    nss->i->ap->a_ray.r_dir[ii] = nss->i->vals->dir[ii];
 	}
 	// TODO - rethink this container...
 	_nirt_init_ovlp(nss);
 	(void)rt_shootray(nss->i->ap);
-
-	// Thought - if we have rays but no pre-defined output, write out the
-	// expected output to stdout - in this mode diff will generate a diff
-	// input file from a supplied list of rays.
     }
-
-    ifs.close();
-
-    // Done with if_hit and friends
-    nds->cdiff = NULL;
-    nds->diff_ready = 1;
+    nds->diff_ready = true;
     return 0;
 }
 
@@ -744,14 +876,6 @@ _nirt_diff_cmd_report(void *ndsv, int UNUSED(argc), const char **UNUSED(argv))
     }
 }
 
-extern "C" int
-_nirt_diff_cmd_clear(void *ndsv, int UNUSED(argc), const char **UNUSED(argv))
-{
-    struct nirt_diff_state *nds = (struct nirt_diff_state *)ndsv;
-    nds->diffs.clear();
-    nds->diff_ready = false;
-    return 0;
-}
 
 extern "C" int
 _nirt_diff_cmd_settings(void *ndsv, int argc, const char **argv)
@@ -831,23 +955,20 @@ _nirt_diff_cmd_settings(void *ndsv, int argc, const char **argv)
 		nerr(nss, "Error: bu_opt value read failure: %s\n", bu_vls_addr(&opt_msg));
 		bu_vls_free(&opt_msg);
 		return -1;
-	    } else {
-		return 0;
 	    }
+	    return 0;
 	}
 	if (setting_fastf_t) {
-	    if (BU_STR_EQUAL(argv[1], "BN_TOL_DIST")) {
+	    if (BU_STR_EQUAL(argv[1], "BN_TOL_DIST") || BU_STR_EQUIV(argv[1], "default")) {
 		*setting_fastf_t = BN_TOL_DIST;
 		return 0;
-	    } else {
-		if (bu_opt_fastf_t(&opt_msg, 1, (const char **)&argv[1], (void *)setting_fastf_t) == -1) {
-		    nerr(nss, "Error: bu_opt value read failure: %s\n", bu_vls_addr(&opt_msg));
-		    bu_vls_free(&opt_msg);
-		    return -1;
-		} else {
-		    return 0;
-		}
 	    }
+	    if (bu_opt_fastf_t(&opt_msg, 1, (const char **)&argv[1], (void *)setting_fastf_t) == -1) {
+		nerr(nss, "Error: bu_opt value read failure: %s\n", bu_vls_addr(&opt_msg));
+		bu_vls_free(&opt_msg);
+		return -1;
+	    }
+	    return 0;
 	}
     }
 
@@ -858,6 +979,7 @@ _nirt_diff_cmd_settings(void *ndsv, int argc, const char **argv)
 
 const struct bu_cmdtab _nirt_diff_cmds[] {
     { "load",_nirt_diff_cmd_load},
+    { "run",_nirt_diff_cmd_run},
     { "report",_nirt_diff_cmd_report},
     { "clear",_nirt_diff_cmd_clear},
     { "settings",_nirt_diff_cmd_settings},
