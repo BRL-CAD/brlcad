@@ -1021,7 +1021,7 @@ static void DRL_STR(const char *str)
     }
 }
 #else
-#define DRL(ARGS...)
+#define DRL(...)
 #define DRL_CHAR(ch)
 #define DRL_STR(str)
 #endif
