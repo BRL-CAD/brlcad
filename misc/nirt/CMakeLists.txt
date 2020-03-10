@@ -9,6 +9,11 @@ set(nirt_format_files
   )
 BRLCAD_ADDDATA(nirt_format_files nirt)
 
+if(TARGET nirt)
+  add_dependencies(nirt nirt_format_files_cp)
+endif(TARGET nirt)
+
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake
