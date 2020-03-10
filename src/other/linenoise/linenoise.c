@@ -904,15 +904,17 @@ void linenoiseHistoryFree(void) {
     }
 }
 
+typedef enum {
+    EP_START,   /* looking for ESC */
+    EP_ESC,     /* looking for [ */
+    EP_DIGITS,  /* parsing digits */
+    EP_PROPS,   /* parsing digits or semicolons */
+    EP_END,     /* ok */
+    EP_ERROR,   /* error */
+} ep_state_t;
+
 struct esc_parser {
-    enum {
-        EP_START,   /* looking for ESC */
-        EP_ESC,     /* looking for [ */
-        EP_DIGITS,  /* parsing digits */
-        EP_PROPS,   /* parsing digits or semicolons */
-        EP_END,     /* ok */
-        EP_ERROR,   /* error */
-    } state;
+    ep_state_t state;
     int props[5];   /* properties are stored here */
     int maxprops;   /* size of the props[] array */
     int numprops;   /* number of properties found */
@@ -1691,7 +1693,7 @@ static void refreshEnd(struct current *current)
     current->output = NULL;
 }
 
-static void refreshStartChars(struct current *current)
+static void refreshStartChars()
 {
 }
 
@@ -1701,7 +1703,7 @@ static void refreshNewline(struct current *current)
     outputChars(current, "\n", 1);
 }
 
-static void refreshEndChars(struct current *current)
+static void refreshEndChars()
 {
 }
 #endif
@@ -2140,8 +2142,8 @@ static int reverseIncrementalSearch(struct current *current)
         c = fd_read(current);
         if (c == ctrl('H') || c == CHAR_DELETE) {
             if (rchars) {
-                int p = utf8_index(rbuf, --rchars);
-                rbuf[p] = 0;
+                int p_ind = utf8_index(rbuf, --rchars);
+                rbuf[p_ind] = 0;
                 rlen = strlen(rbuf);
             }
             continue;
