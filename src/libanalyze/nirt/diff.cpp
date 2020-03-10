@@ -1126,7 +1126,13 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 
     int acnt = (cmd_pos >= 0) ? cmd_pos : argc;
 
-    bu_opt_parse(NULL, acnt, argv, d);
+    struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
+    if (bu_opt_parse(&optparse_msg, acnt, argv, d) == -1) {
+	nerr(nss, "%s", bu_vls_cstr(&optparse_msg));
+	bu_vls_free(&optparse_msg);
+	return -1;
+    }
+    bu_vls_free(&optparse_msg);
 
     if (help) {
 	if (cmd_pos >= 0) {
