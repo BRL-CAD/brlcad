@@ -539,34 +539,34 @@ parse_hit(struct nirt_diff_state *nds, std::string &line)
 	    return -1;
 	}
 
-	struct nirt_seg seg;
-	struct nirt_seg *segp = &seg;
+	struct nirt_seg *segp = new struct nirt_seg;
 	_nirt_seg_init(&segp);
-	seg.type = NIRT_PARTITION_SEG;
-	bu_vls_decode(seg.reg_name, substrs[0].c_str());
-	//bu_vls_printf(seg.reg_name, "%s", substrs[0].c_str());
-	bu_vls_decode(seg.path_name, substrs[1].c_str());
-	seg.reg_id = _nirt_str_to_int(substrs[2]);
-	VSET(seg.in, _nirt_str_to_dbl(substrs[3], 0), _nirt_str_to_dbl(substrs[4], 0), _nirt_str_to_dbl(substrs[5], 0));
-	seg.d_in = _nirt_str_to_dbl(substrs[6], 0);
-	VSET(seg.out, _nirt_str_to_dbl(substrs[7], 0), _nirt_str_to_dbl(substrs[8], 0), _nirt_str_to_dbl(substrs[9], 0));
-	seg.d_out = _nirt_str_to_dbl(substrs[10], 0);
-	seg.los = _nirt_str_to_dbl(substrs[11], 0);
-	seg.scaled_los = _nirt_str_to_dbl(substrs[12], 0);
-	seg.obliq_in = _nirt_str_to_dbl(substrs[13], 0);
-	seg.obliq_out = _nirt_str_to_dbl(substrs[14], 0);
+	segp->type = NIRT_PARTITION_SEG;
+	bu_vls_decode(segp->reg_name, substrs[0].c_str());
+	//bu_vls_printf(segp->reg_name, "%s", substrs[0].c_str());
+	bu_vls_decode(segp->path_name, substrs[1].c_str());
+	segp->reg_id = _nirt_str_to_int(substrs[2]);
+	VSET(segp->in, _nirt_str_to_dbl(substrs[3], 0), _nirt_str_to_dbl(substrs[4], 0), _nirt_str_to_dbl(substrs[5], 0));
+	segp->d_in = _nirt_str_to_dbl(substrs[6], 0);
+	VSET(segp->out, _nirt_str_to_dbl(substrs[7], 0), _nirt_str_to_dbl(substrs[8], 0), _nirt_str_to_dbl(substrs[9], 0));
+	segp->d_out = _nirt_str_to_dbl(substrs[10], 0);
+	segp->los = _nirt_str_to_dbl(substrs[11], 0);
+	segp->scaled_los = _nirt_str_to_dbl(substrs[12], 0);
+	segp->obliq_in = _nirt_str_to_dbl(substrs[13], 0);
+	segp->obliq_out = _nirt_str_to_dbl(substrs[14], 0);
 #ifdef NIRT_DIFF_DEBUG
 	bu_log("Found %s:\n", line.c_str());
-	bu_log("  reg_name: %s\n", bu_vls_addr(seg.reg_name));
-	bu_log("  path_name: %s\n", bu_vls_addr(seg.path_name));
-	bu_log("  reg_id: %d\n", seg.reg_id);
-	bu_log("  in: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg.in));
-	bu_log("  out: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg.out));
-	bu_log("  d_in: %0.17f d_out: %0.17f\n", seg.d_in, seg.d_out);
-	bu_log("  los: %0.17f  scaled_los: %0.17f\n", seg.los, seg.scaled_los);
-	bu_log("  obliq_in: %0.17f  obliq_out: %0.17f\n", seg.obliq_in, seg.obliq_out);
+	bu_log("  reg_name: %s\n", bu_vls_addr(segp->reg_name));
+	bu_log("  path_name: %s\n", bu_vls_addr(segp->path_name));
+	bu_log("  reg_id: %d\n", segp->reg_id);
+	bu_log("  in: %0.17f, %0.17f, %0.17f\n", V3ARGS(segp->in));
+	bu_log("  out: %0.17f, %0.17f, %0.17f\n", V3ARGS(segp->out));
+	bu_log("  d_in: %0.17f d_out: %0.17f\n", segp->d_in, segp->d_out);
+	bu_log("  los: %0.17f  scaled_los: %0.17f\n", segp->los, segp->scaled_los);
+	bu_log("  obliq_in: %0.17f  obliq_out: %0.17f\n", segp->obliq_in, segp->obliq_out);
 #endif
-	nds->cdiff->old_segs.push_back(seg);
+	nds->cdiff->old_segs.push_back(*segp);
+	delete segp;
 	return true;
     }
 
@@ -601,20 +601,20 @@ parse_gap(struct nirt_diff_state *nds, std::string &line)
 	    nerr(nds->nss, "Error processing gap line \"%s\"!\nExpected 7 elements, found %zu\n", gap_data.c_str(), substrs.size());
 	    return -1;
 	}
-	struct nirt_seg seg;
-	struct nirt_seg *segp = &seg;
+	struct nirt_seg *segp = new struct nirt_seg;
 	_nirt_seg_init(&segp);
-	seg.type = NIRT_GAP_SEG;
-	VSET(seg.gap_in, _nirt_str_to_dbl(substrs[0], 0), _nirt_str_to_dbl(substrs[1], 0), _nirt_str_to_dbl(substrs[2], 0));
-	VSET(seg.in, _nirt_str_to_dbl(substrs[3], 0), _nirt_str_to_dbl(substrs[4], 0), _nirt_str_to_dbl(substrs[5], 0));
-	seg.gap_los = _nirt_str_to_dbl(substrs[6], 0);
+	segp->type = NIRT_GAP_SEG;
+	VSET(segp->gap_in, _nirt_str_to_dbl(substrs[0], 0), _nirt_str_to_dbl(substrs[1], 0), _nirt_str_to_dbl(substrs[2], 0));
+	VSET(segp->in, _nirt_str_to_dbl(substrs[3], 0), _nirt_str_to_dbl(substrs[4], 0), _nirt_str_to_dbl(substrs[5], 0));
+	segp->gap_los = _nirt_str_to_dbl(substrs[6], 0);
 #ifdef NIRT_DIFF_DEBUG
 	bu_log("Found %s:\n", line.c_str());
-	bu_log("  in: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg.gap_in));
-	bu_log("  out: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg.in));
-	bu_log("  gap_los: %0.17f\n", seg.gap_los);
+	bu_log("  in: %0.17f, %0.17f, %0.17f\n", V3ARGS(segp->gap_in));
+	bu_log("  out: %0.17f, %0.17f, %0.17f\n", V3ARGS(segp->in));
+	bu_log("  gap_los: %0.17f\n", segp->gap_los);
 #endif
-	nds->cdiff->old_segs.push_back(seg);
+	nds->cdiff->old_segs.push_back(*segp);
+	delete segp;
 	return true;
     }
 
@@ -642,14 +642,14 @@ parse_miss(struct nirt_diff_state *nds, std::string &line)
     int miss_version = _nirt_str_to_int(s1[1]);
 
     if (miss_version == 1) {
-	struct nirt_seg seg;
-	struct nirt_seg *segp = &seg;
+	struct nirt_seg *segp = new struct nirt_seg;
 	_nirt_seg_init(&segp);
-	seg.type = NIRT_MISS_SEG;
+	segp->type = NIRT_MISS_SEG;
 #ifdef NIRT_DIFF_DEBUG
 	bu_log("Found MISS\n");
 #endif
-	nds->cdiff->old_segs.push_back(seg);
+	nds->cdiff->old_segs.push_back(*segp);
+	delete segp;
 	return true;
     }
 
@@ -683,28 +683,28 @@ parse_overlap(struct nirt_diff_state *nds, std::string &line)
 	    nerr(nds->nss, "Error processing overlap line \"%s\"!\nExpected 11 elements, found %zu\n", overlap_data.c_str(), substrs.size());
 	    return false;
 	}
-	struct nirt_seg seg;
-	struct nirt_seg *segp = &seg;
+	struct nirt_seg *segp = new struct nirt_seg;
 	_nirt_seg_init(&segp);
-	seg.type = NIRT_OVERLAP_SEG;
-	bu_vls_decode(seg.ov_reg1_name, substrs[0].c_str());
-	bu_vls_decode(seg.ov_reg2_name, substrs[1].c_str());
-	seg.ov_reg1_id = _nirt_str_to_int(substrs[2]);
-	seg.ov_reg2_id = _nirt_str_to_int(substrs[3]);
-	VSET(seg.ov_in, _nirt_str_to_dbl(substrs[4], 0), _nirt_str_to_dbl(substrs[5], 0), _nirt_str_to_dbl(substrs[6], 0));
-	VSET(seg.ov_out, _nirt_str_to_dbl(substrs[7], 0), _nirt_str_to_dbl(substrs[8], 0), _nirt_str_to_dbl(substrs[9], 0));
-	seg.ov_los = _nirt_str_to_dbl(substrs[10], 0);
+	segp->type = NIRT_OVERLAP_SEG;
+	bu_vls_decode(segp->ov_reg1_name, substrs[0].c_str());
+	bu_vls_decode(segp->ov_reg2_name, substrs[1].c_str());
+	segp->ov_reg1_id = _nirt_str_to_int(substrs[2]);
+	segp->ov_reg2_id = _nirt_str_to_int(substrs[3]);
+	VSET(segp->ov_in, _nirt_str_to_dbl(substrs[4], 0), _nirt_str_to_dbl(substrs[5], 0), _nirt_str_to_dbl(substrs[6], 0));
+	VSET(segp->ov_out, _nirt_str_to_dbl(substrs[7], 0), _nirt_str_to_dbl(substrs[8], 0), _nirt_str_to_dbl(substrs[9], 0));
+	segp->ov_los = _nirt_str_to_dbl(substrs[10], 0);
 #ifdef NIRT_DIFF_DEBUG
 	bu_log("Found %s:\n", line.c_str());
-	bu_log("  ov_reg1_name: %s\n", bu_vls_addr(seg.ov_reg1_name));
-	bu_log("  ov_reg2_name: %s\n", bu_vls_addr(seg.ov_reg2_name));
-	bu_log("  ov_reg1_id: %d\n", seg.ov_reg1_id);
-	bu_log("  ov_reg2_id: %d\n", seg.ov_reg2_id);
-	bu_log("  ov_in: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg.ov_in));
-	bu_log("  ov_out: %0.17f, %0.17f, %0.17f\n", V3ARGS(seg.ov_out));
-	bu_log("  ov_los: %0.17f\n", seg.ov_los);
+	bu_log("  ov_reg1_name: %s\n", bu_vls_addr(segp->ov_reg1_name));
+	bu_log("  ov_reg2_name: %s\n", bu_vls_addr(segp->ov_reg2_name));
+	bu_log("  ov_reg1_id: %d\n", segp->ov_reg1_id);
+	bu_log("  ov_reg2_id: %d\n", segp->ov_reg2_id);
+	bu_log("  ov_in: %0.17f, %0.17f, %0.17f\n", V3ARGS(segp->ov_in));
+	bu_log("  ov_out: %0.17f, %0.17f, %0.17f\n", V3ARGS(segp->ov_out));
+	bu_log("  ov_los: %0.17f\n", segp->ov_los);
 #endif
-	nds->cdiff->old_segs.push_back(seg);
+	nds->cdiff->old_segs.push_back(*segp);
+	delete segp;
 	return true;
     }
 
