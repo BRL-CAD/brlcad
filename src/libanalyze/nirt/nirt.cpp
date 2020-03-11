@@ -155,6 +155,8 @@ nirt_cmd_str(struct bu_vls *nirt_cmd, struct nirt_state *nss)
 
     struct bu_vls wstr = BU_VLS_INIT_ZERO;
 
+    bu_vls_printf(&wstr, "#");
+
     char nirt_exe[MAXPATHLEN] = {0};
     bu_dir(nirt_exe, MAXPATHLEN, BU_DIR_BIN, "nirt", BU_DIR_EXT, NULL);
 
