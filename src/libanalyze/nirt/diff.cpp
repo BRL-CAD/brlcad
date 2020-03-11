@@ -739,6 +739,8 @@ _nirt_diff_cmd_clear(void *ndsv, int argc, const char **argv)
 	return 0;
     }
 
+    argv++; argc--;
+
     nds->diffs.clear();
     nds->diff_ready = false;
     nds->cdiff = NULL;
@@ -758,6 +760,8 @@ _nirt_diff_cmd_load(void *ndsv, int argc, const char **argv)
     if (_nirt_cmd_msgs(nds, argc, argv, usage_string, purpose_string)) {
 	return 0;
     }
+
+    argv++; argc--;
 
     if (argc != 1) {
 	nerr(nss, "please specify a nirt diff file to load.\n");
@@ -884,6 +888,8 @@ _nirt_diff_cmd_run(void *ndsv, int argc, const char **argv)
 	return 0;
     }
 
+    argv++; argc--;
+    
     // TODO - clear any preexisting new_segs in case this is a repeated run
 
     for (unsigned int i = 0; i < nds->diffs.size(); i++) {
@@ -915,6 +921,7 @@ _nirt_diff_cmd_report(void *ndsv, int argc, const char **argv)
 	return 0;
     }
 
+    argv++; argc--;
 
     // Report diff results according to the NIRT diff settings.
     if (!nds->diff_ready) {
@@ -937,6 +944,8 @@ _nirt_diff_cmd_settings(void *ndsv, int argc, const char **argv)
     if (_nirt_cmd_msgs(nds, argc, argv, usage_string, purpose_string)) {
 	return 0;
     }
+
+    argv++; argc--;
 
     if (!argc) {
 	//print current settings
@@ -1095,7 +1104,6 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
     if (!ns) return -1;
     struct nirt_state *nss = (struct nirt_state *)ns;
     struct nirt_diff_state *nds = nss->i->diff_state;
-    int ac = 0;
     int help = 0;
     double tol = 0;
     struct bu_opt_desc d[3];
@@ -1152,8 +1160,11 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 	return -1;
     }
 
+    argc = argc - cmd_pos;
+    argv = &argv[cmd_pos];
+
     int ret;
-    if (bu_cmd(_nirt_diff_cmds, ac, argv, 0, (void *)nds, &ret) == BRLCAD_OK) {
+    if (bu_cmd(_nirt_diff_cmds, argc, argv, 0, (void *)nds, &ret) == BRLCAD_OK) {
 	return ret;
     }
 
