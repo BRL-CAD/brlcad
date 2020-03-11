@@ -539,7 +539,8 @@ parse_hit(struct nirt_diff_state *nds, std::string &line)
 	    return -1;
 	}
 
-	struct nirt_seg *segp = new struct nirt_seg;
+	struct nirt_seg *segp = NULL;
+	BU_GET(segp, struct nirt_seg);
 	_nirt_seg_init(&segp);
 	segp->type = NIRT_PARTITION_SEG;
 	bu_vls_decode(segp->reg_name, substrs[0].c_str());
@@ -566,7 +567,7 @@ parse_hit(struct nirt_diff_state *nds, std::string &line)
 	bu_log("  obliq_in: %0.17f  obliq_out: %0.17f\n", segp->obliq_in, segp->obliq_out);
 #endif
 	nds->cdiff->old_segs.push_back(*segp);
-	delete segp;
+	BU_PUT(segp, struct nirt_seg);
 	return true;
     }
 
@@ -601,7 +602,8 @@ parse_gap(struct nirt_diff_state *nds, std::string &line)
 	    nerr(nds->nss, "Error processing gap line \"%s\"!\nExpected 7 elements, found %zu\n", gap_data.c_str(), substrs.size());
 	    return -1;
 	}
-	struct nirt_seg *segp = new struct nirt_seg;
+	struct nirt_seg *segp = NULL;
+	BU_GET(segp, struct nirt_seg);
 	_nirt_seg_init(&segp);
 	segp->type = NIRT_GAP_SEG;
 	VSET(segp->gap_in, _nirt_str_to_dbl(substrs[0], 0), _nirt_str_to_dbl(substrs[1], 0), _nirt_str_to_dbl(substrs[2], 0));
@@ -614,7 +616,7 @@ parse_gap(struct nirt_diff_state *nds, std::string &line)
 	bu_log("  gap_los: %0.17f\n", segp->gap_los);
 #endif
 	nds->cdiff->old_segs.push_back(*segp);
-	delete segp;
+	BU_PUT(segp, struct nirt_seg);
 	return true;
     }
 
@@ -642,14 +644,15 @@ parse_miss(struct nirt_diff_state *nds, std::string &line)
     int miss_version = _nirt_str_to_int(s1[1]);
 
     if (miss_version == 1) {
-	struct nirt_seg *segp = new struct nirt_seg;
+	struct nirt_seg *segp = NULL;
+	BU_GET(segp, struct nirt_seg);
 	_nirt_seg_init(&segp);
 	segp->type = NIRT_MISS_SEG;
 #ifdef NIRT_DIFF_DEBUG
 	bu_log("Found MISS\n");
 #endif
 	nds->cdiff->old_segs.push_back(*segp);
-	delete segp;
+	BU_PUT(segp, struct nirt_seg);
 	return true;
     }
 
@@ -683,7 +686,8 @@ parse_overlap(struct nirt_diff_state *nds, std::string &line)
 	    nerr(nds->nss, "Error processing overlap line \"%s\"!\nExpected 11 elements, found %zu\n", overlap_data.c_str(), substrs.size());
 	    return false;
 	}
-	struct nirt_seg *segp = new struct nirt_seg;
+	struct nirt_seg *segp = NULL;
+	BU_GET(segp, struct nirt_seg);
 	_nirt_seg_init(&segp);
 	segp->type = NIRT_OVERLAP_SEG;
 	bu_vls_decode(segp->ov_reg1_name, substrs[0].c_str());
@@ -704,7 +708,7 @@ parse_overlap(struct nirt_diff_state *nds, std::string &line)
 	bu_log("  ov_los: %0.17f\n", segp->ov_los);
 #endif
 	nds->cdiff->old_segs.push_back(*segp);
-	delete segp;
+	BU_PUT(segp, struct nirt_seg);
 	return true;
     }
 
