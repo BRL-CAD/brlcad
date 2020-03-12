@@ -161,7 +161,7 @@ nirt_cmd_str(struct bu_vls *nirt_cmd, struct nirt_state *nss)
     bu_dir(nirt_exe, MAXPATHLEN, BU_DIR_BIN, "nirt", BU_DIR_EXT, NULL);
 
     nirt_sprint(&wstr, nirt_exe);
-    bu_vls_printf(&wstr, " ");
+    bu_vls_printf(&wstr, " -s ");
     nirt_sprint(&wstr, nss->i->dbip->dbi_filename);
 
     for (size_t ui = 0; ui < nss->i->active_paths.size(); ui++) {
