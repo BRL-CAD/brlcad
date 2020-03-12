@@ -176,6 +176,10 @@ nirt_cmd_str(struct bu_vls *nirt_cmd, struct nirt_state *nss)
     }
 
     bu_vls_printf(&wstr, " -e \"");
+
+    /* Make sure the units match */
+    bu_vls_printf(&wstr, "units %s;", bu_units_string(nss->i->local2base));
+
     std::string xyz_x = _nirt_dbl_to_str(nss->i->vals->orig[X], 0);
     std::string xyz_y = _nirt_dbl_to_str(nss->i->vals->orig[Y], 0);
     std::string xyz_z = _nirt_dbl_to_str(nss->i->vals->orig[Z], 0);

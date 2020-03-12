@@ -3,6 +3,7 @@
 # numbers after each label (RAY, HIT, etc.) are for versioning purposes, to allow
 # new variations on this format to be processed while allowing for backwards
 # compatibility.
+units mm
 fmt r "%s\nRAY,1,%.17f,%.17f,%.17f,%.17f,%.17f,%.17f\n" nirt_cmd x_orig y_orig z_orig x_dir y_dir z_dir
 fmt h ""
 fmt p "HIT,1,\"%s\",\"%s\",%d,%.17f,%.17f,%.17f,%.17f,%.17f,%.17f,%.17f,%.17f,%.17f,%.17f,%.17f,%.17f\n" reg_name path_name reg_id x_in y_in z_in d_in x_out y_out z_out d_out los scaled_los obliq_in obliq_out

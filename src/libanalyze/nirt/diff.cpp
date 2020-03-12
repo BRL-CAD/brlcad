@@ -893,7 +893,7 @@ _nirt_diff_cmd_run(void *ndsv, int argc, const char **argv)
     }
 
     argv++; argc--;
-    
+
     // TODO - clear any preexisting new_segs in case this is a repeated run
 
     for (unsigned int i = 0; i < nds->diffs.size(); i++) {
@@ -1127,6 +1127,13 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 
     argv++; argc--;
 
+    // Diff does everything in mm
+    double l2base = nss->i->local2base;
+    double base2l = nss->i->base2local;
+
+    nss->i->local2base = 1.0;
+    nss->i->base2local = 1.0;
+
     // High level options are only defined prior to the subcommand
     int cmd_pos = -1;
     for (int i = 0; i < argc; i++) {
@@ -1142,6 +1149,8 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
     if (bu_opt_parse(&optparse_msg, acnt, argv, d) == -1) {
 	nerr(nss, "%s", bu_vls_cstr(&optparse_msg));
 	bu_vls_free(&optparse_msg);
+	nss->i->local2base = l2base;
+	nss->i->base2local = base2l;
 	return -1;
     }
     bu_vls_free(&optparse_msg);
@@ -1154,6 +1163,8 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 	} else {
 	    _nirt_diff_help(nds, 0, NULL);
 	}
+	nss->i->local2base = l2base;
+	nss->i->base2local = base2l;
 	return 0;
     }
 
@@ -1161,6 +1172,8 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
     if (cmd_pos == -1) {
 	nerr(nss, ": no valid subcommand specified\n");
 	_nirt_diff_help(nds, 0, NULL);
+	nss->i->local2base = l2base;
+	nss->i->base2local = base2l;
 	return -1;
     }
 
@@ -1169,9 +1182,13 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
 
     int ret;
     if (bu_cmd(_nirt_diff_cmds, argc, argv, 0, (void *)nds, &ret) == BRLCAD_OK) {
+	nss->i->local2base = l2base;
+	nss->i->base2local = base2l;
 	return ret;
     }
 
+    nss->i->local2base = l2base;
+    nss->i->base2local = base2l;
     return -1;
 }
 
