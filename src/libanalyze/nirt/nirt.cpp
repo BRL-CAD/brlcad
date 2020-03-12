@@ -98,8 +98,8 @@ _nirt_seg_cpy(struct nirt_seg *s)
     n->d_out = s->d_out;
     n->los = s->los;
     n->scaled_los = s->scaled_los;
-    bu_vls_sprintf(n->path_name, "%s", bu_vls_addr(s->path_name));
-    bu_vls_sprintf(n->reg_name, "%s", bu_vls_addr(s->reg_name));
+    bu_vls_sprintf(n->path_name, "%s", bu_vls_cstr(s->path_name));
+    bu_vls_sprintf(n->reg_name, "%s", bu_vls_cstr(s->reg_name));
     n->reg_id = s->reg_id;
     n->obliq_in = s->obliq_in;
     n->obliq_out = s->obliq_out;
@@ -1031,8 +1031,8 @@ _nirt_print_fmt_substr(struct nirt_state *nss, struct bu_vls *ostr, const char *
 	nirt_print_key("d_out", r->seg->d_out * base2local);
 	nirt_print_key("los", r->seg->los * base2local);
 	nirt_print_key("scaled_los", r->seg->scaled_los * base2local);
-	nirt_print_key("path_name", bu_vls_addr(r->seg->path_name));
-	nirt_print_key("reg_name", bu_vls_addr(r->seg->reg_name));
+	nirt_print_key("path_name", bu_vls_cstr(r->seg->path_name));
+	nirt_print_key("reg_name", bu_vls_cstr(r->seg->reg_name));
 	nirt_print_key("reg_id", r->seg->reg_id);
 	nirt_print_key("obliq_in", r->seg->obliq_in);
 	nirt_print_key("obliq_out", r->seg->obliq_out);
@@ -1051,18 +1051,18 @@ _nirt_print_fmt_substr(struct nirt_state *nss, struct bu_vls *ostr, const char *
 	nirt_print_key("surf_num_in", r->seg->surf_num_in);
 	nirt_print_key("surf_num_out", r->seg->surf_num_out);
 	nirt_print_key("claimant_count", r->seg->claimant_count);
-	nirt_print_key("claimant_list", bu_vls_addr(r->seg->claimant_list));
-	nirt_print_key("claimant_listn", bu_vls_addr(r->seg->claimant_listn));
-	nirt_print_key("attributes", bu_vls_addr(r->seg->attributes));
+	nirt_print_key("claimant_list", bu_vls_cstr(r->seg->claimant_list));
+	nirt_print_key("claimant_listn", bu_vls_cstr(r->seg->claimant_listn));
+	nirt_print_key("attributes", bu_vls_cstr(r->seg->attributes));
     }
 
     if (r->seg->type == NIRT_OVERLAP_SEG || r->seg->type == NIRT_ALL_SEG) {
-	nirt_print_key("ov_reg1_name", bu_vls_addr(r->seg->ov_reg1_name));
+	nirt_print_key("ov_reg1_name", bu_vls_cstr(r->seg->ov_reg1_name));
 	nirt_print_key("ov_reg1_id", r->seg->ov_reg1_id);
-	nirt_print_key("ov_reg2_name", bu_vls_addr(r->seg->ov_reg2_name));
+	nirt_print_key("ov_reg2_name", bu_vls_cstr(r->seg->ov_reg2_name));
 	nirt_print_key("ov_reg2_id", r->seg->ov_reg2_id);
-	nirt_print_key("ov_sol_in", bu_vls_addr(r->seg->ov_sol_in));
-	nirt_print_key("ov_sol_out", bu_vls_addr(r->seg->ov_sol_out));
+	nirt_print_key("ov_sol_in", bu_vls_cstr(r->seg->ov_sol_in));
+	nirt_print_key("ov_sol_out", bu_vls_cstr(r->seg->ov_sol_out));
 	nirt_print_key("ov_los", r->seg->ov_los * base2local);
 	nirt_print_key("ov_x_in", r->seg->ov_in[X] * base2local);
 	nirt_print_key("ov_y_in", r->seg->ov_in[Y] * base2local);
@@ -1078,7 +1078,7 @@ _nirt_print_fmt_substr(struct nirt_state *nss, struct bu_vls *ostr, const char *
 	nirt_print_key("x_in", r->seg->in[X] * base2local);
 	nirt_print_key("y_in", r->seg->in[Y] * base2local);
 	nirt_print_key("z_in", r->seg->in[Z] * base2local);
-	
+
 	nirt_print_key("x_gap_in", r->seg->gap_in[X] * base2local);
 	nirt_print_key("y_gap_in", r->seg->gap_in[Y] * base2local);
 	nirt_print_key("z_gap_in", r->seg->gap_in[Z] * base2local);
@@ -1143,7 +1143,7 @@ _nirt_report(struct nirt_state *nss, char type, struct nirt_output_record *r)
 	const char *fmt = (*f_it).first.c_str();
 	_nirt_print_fmt_substr(nss, &rstr, fmt, key, r, nss->i->base2local);
     }
-    nout(nss, "%s", bu_vls_addr(&rstr));
+    nout(nss, "%s", bu_vls_cstr(&rstr));
     bu_vls_free(&rstr);
 }
 
@@ -1288,14 +1288,14 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 		if (s->claimant_count) bu_vls_strcat(s->claimant_list, " ");
 		s->claimant_count++;
 		bu_vls_sprintf(&tmpcp, "%s", (*rpp)->reg_name);
-		base = bu_path_basename(bu_vls_addr(&tmpcp), NULL);
+		base = bu_path_basename(bu_vls_cstr(&tmpcp), NULL);
 		bu_vls_strcat(s->claimant_list, base);
 		bu_free(base, "bu_path_basename");
 	    }
 	    bu_vls_free(&tmpcp);
 
 	    /* insert newlines instead of spaces for listn */
-	    bu_vls_sprintf(s->claimant_listn, "%s", bu_vls_addr(s->claimant_list));
+	    bu_vls_sprintf(s->claimant_listn, "%s", bu_vls_cstr(s->claimant_list));
 	    for (char *cp = bu_vls_addr(s->claimant_listn); *cp != '\0'; ++cp) {
 		if (*cp == ' ') *cp = '\n';
 	    }
@@ -1495,7 +1495,7 @@ _nirt_cmd_attr(void *ns, int argc, const char *argv[])
 
     if ((ac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d)) == -1) {
 	char *help = bu_opt_describe(d, NULL);
-	nerr(nss, "Error: bu_opt value read failure: %s\n\n%s\n%s\n", bu_vls_addr(&optparse_msg), ustr, help);
+	nerr(nss, "Error: bu_opt value read failure: %s\n\n%s\n%s\n", bu_vls_cstr(&optparse_msg), ustr, help);
 	if (help) bu_free(help, "help str");
 	bu_vls_free(&optparse_msg);
 	return -1;
@@ -1561,7 +1561,7 @@ _nirt_cmd_az_el(void *ns, int argc, const char *argv[])
     }
 
     if ((ret = bu_opt_fastf_t(&opt_msg, 1, argv, (void *)&az)) == -1) {
-	nerr(nss, "Error: bu_opt value read failure: %s\n", bu_vls_addr(&opt_msg));
+	nerr(nss, "Error: bu_opt value read failure: %s\n", bu_vls_cstr(&opt_msg));
 	goto azel_done;
     }
 
@@ -1573,7 +1573,7 @@ _nirt_cmd_az_el(void *ns, int argc, const char *argv[])
 
     argc--; argv++;
     if ((ret = bu_opt_fastf_t(&opt_msg, 1, argv, (void *)&el)) == -1) {
-	nerr(nss, "%s\n", bu_vls_addr(&opt_msg));
+	nerr(nss, "%s\n", bu_vls_cstr(&opt_msg));
 	goto azel_done;
     }
 
@@ -1613,7 +1613,7 @@ _nirt_cmd_dir_vect(void *ns, int argc, const char *argv[])
     }
 
     if (bu_opt_vect_t(&opt_msg, 3, argv, (void *)&dir) == -1) {
-	nerr(nss, "%s\n", bu_vls_addr(&opt_msg));
+	nerr(nss, "%s\n", bu_vls_cstr(&opt_msg));
 	bu_vls_free(&opt_msg);
 	return -1;
     }
@@ -1645,20 +1645,20 @@ _nirt_cmd_grid_coor(void *ns, int argc, const char *argv[])
 	return -1;
     }
     if (bu_opt_fastf_t(&opt_msg, 1, argv, (void *)&grid[0]) == -1) {
-	nerr(nss, "%s\n", bu_vls_addr(&opt_msg));
+	nerr(nss, "%s\n", bu_vls_cstr(&opt_msg));
 	bu_vls_free(&opt_msg);
 	return -1;
     }
     argc--; argv++;
     if (bu_opt_fastf_t(&opt_msg, 1, argv, (void *)&grid[1]) == -1) {
-	nerr(nss, "%s\n", bu_vls_addr(&opt_msg));
+	nerr(nss, "%s\n", bu_vls_cstr(&opt_msg));
 	bu_vls_free(&opt_msg);
 	return -1;
     }
     argc--; argv++;
     if (argc) {
 	if (bu_opt_fastf_t(&opt_msg, 1, argv, (void *)&grid[2]) == -1) {
-	    nerr(nss, "%s\n", bu_vls_addr(&opt_msg));
+	    nerr(nss, "%s\n", bu_vls_cstr(&opt_msg));
 	    bu_vls_free(&opt_msg);
 	    return -1;
 	}
@@ -1697,7 +1697,7 @@ _nirt_cmd_target_coor(void *ns, int argc, const char *argv[])
     }
 
     if (bu_opt_vect_t(&opt_msg, 3, argv, (void *)&target) == -1) {
-	nerr(nss, "%s\n", bu_vls_addr(&opt_msg));
+	nerr(nss, "%s\n", bu_vls_cstr(&opt_msg));
 	bu_vls_free(&opt_msg);
 	return -1;
     }
@@ -1805,7 +1805,7 @@ _nirt_cmd_use_air(void *ns, int argc, const char *argv[])
 	return -1;
     }
     if (bu_opt_int(&optparse_msg, 1, (const char **)&(argv[1]), (void *)&nss->i->use_air) == -1) {
-	nerr(nss, "Error: bu_opt value read failure: %s\n\nUsage:  useair %s\n", bu_vls_addr(&optparse_msg), _nirt_get_desc_args("useair"));
+	nerr(nss, "Error: bu_opt value read failure: %s\n\nUsage:  useair %s\n", bu_vls_cstr(&optparse_msg), _nirt_get_desc_args("useair"));
 	return -1;
     }
     return 0;
@@ -1955,7 +1955,7 @@ _nirt_cmd_format_output(void *ns, int argc, const char **argv)
 		return -1;
 		break;
 	}
-	nout(nss, "%s\n", bu_vls_addr(&ostr));
+	nout(nss, "%s\n", bu_vls_cstr(&ostr));
 	bu_vls_free(&ostr);
 	return 0;
     }
@@ -2098,17 +2098,17 @@ _nirt_cmd_print_item(void *ns, int argc, const char **argv)
 	}
 	if (BU_STR_EQUAL(val_type, "INT")) {
 	    _nirt_print_fmt_substr(nss, &oval, "%d", argv[i], nss->i->vals, nss->i->base2local);
-	    nout(nss, "%s\n", bu_vls_addr(&oval));
+	    nout(nss, "%s\n", bu_vls_cstr(&oval));
 	    continue;
 	}
 	if (BU_STR_EQUAL(val_type, "FLOAT") || BU_STR_EQUAL(val_type, "FNOUNIT")) {
 	    _nirt_print_fmt_substr(nss, &oval, "%g", argv[i], nss->i->vals, nss->i->base2local);
-	    nout(nss, "%s\n", bu_vls_addr(&oval));
+	    nout(nss, "%s\n", bu_vls_cstr(&oval));
 	    continue;
 	}
 	if (BU_STR_EQUAL(val_type, "STRING")) {
 	    _nirt_print_fmt_substr(nss, &oval, "%s", argv[i], nss->i->vals, nss->i->base2local);
-	    nout(nss, "%s\n", bu_vls_addr(&oval));
+	    nout(nss, "%s\n", bu_vls_cstr(&oval));
 	    continue;
 	}
 	nerr(nss, "Error: item %s has unknown value type %s\n", argv[i], val_type);
@@ -2144,7 +2144,7 @@ _nirt_cmd_bot_minpieces(void *ns, int argc, const char **argv)
     }
 
     if ((ret = bu_opt_long(&opt_msg, 1, argv, (void *)&minpieces)) == -1) {
-	nerr(nss, "Error: bu_opt value read failure reading minpieces value: %s\n", bu_vls_addr(&opt_msg));
+	nerr(nss, "Error: bu_opt value read failure reading minpieces value: %s\n", bu_vls_cstr(&opt_msg));
 	goto bot_minpieces_done;
     }
 
@@ -2267,7 +2267,7 @@ _nirt_cmd_state(void *ns, int argc, const char *argv[])
 	if (bu_opt_color(&optmsg, argc, argv, (void *)nss->i->hit_odd_color) == -1) {
 	    nerr(nss, "Error: bu_opt color read failure reading parsing");
 	    for (int i = 0; i < argc; i++) {nerr(nss, " %s", argv[i]);}
-	    nerr(nss, ": %s\n", bu_vls_addr(&optmsg));
+	    nerr(nss, ": %s\n", bu_vls_cstr(&optmsg));
 	    bu_vls_free(&optmsg);
 	    return -1;
 	}
@@ -2281,7 +2281,7 @@ _nirt_cmd_state(void *ns, int argc, const char *argv[])
 	if (bu_opt_color(&optmsg, argc, argv, (void *)nss->i->hit_even_color) == -1) {
 	    nerr(nss, "Error: bu_opt color read failure reading parsing");
 	    for (int i = 0; i < argc; i++) {nerr(nss, " %s", argv[i]);}
-	    nerr(nss, ": %s\n", bu_vls_addr(&optmsg));
+	    nerr(nss, ": %s\n", bu_vls_cstr(&optmsg));
 	    bu_vls_free(&optmsg);
 	    return -1;
 	}
@@ -2296,7 +2296,7 @@ _nirt_cmd_state(void *ns, int argc, const char *argv[])
 	if (bu_opt_color(&optmsg, argc, argv, (void *)nss->i->void_color) == -1) {
 	    nerr(nss, "Error: bu_opt color read failure reading parsing");
 	    for (int i = 0; i < argc; i++) {nerr(nss, " %s", argv[i]);}
-	    nerr(nss, ": %s\n", bu_vls_addr(&optmsg));
+	    nerr(nss, ": %s\n", bu_vls_cstr(&optmsg));
 	    bu_vls_free(&optmsg);
 	    return -1;
 	}
@@ -2311,7 +2311,7 @@ _nirt_cmd_state(void *ns, int argc, const char *argv[])
 	if (bu_opt_color(&optmsg, argc, argv, (void *)nss->i->overlap_color) == -1) {
 	    nerr(nss, "Error: bu_opt color read failure reading parsing");
 	    for (int i = 0; i < argc; i++) {nerr(nss, " %s", argv[i]);}
-	    nerr(nss, ": %s\n", bu_vls_addr(&optmsg));
+	    nerr(nss, ": %s\n", bu_vls_cstr(&optmsg));
 	    bu_vls_free(&optmsg);
 	    return -1;
 	}
@@ -2407,20 +2407,20 @@ _nirt_cmd_state(void *ns, int argc, const char *argv[])
 	}
 	struct bu_vls ostr = BU_VLS_INIT_ZERO;
 	_nirt_print_fmt_cmd(&ostr, 'r', nss->i->fmt_ray);
-	bu_vls_printf(&dumpstr, "%s", bu_vls_addr(&ostr));
+	bu_vls_printf(&dumpstr, "%s", bu_vls_cstr(&ostr));
 	_nirt_print_fmt_cmd(&ostr, 'h', nss->i->fmt_head);
-	bu_vls_printf(&dumpstr, "%s", bu_vls_addr(&ostr));
+	bu_vls_printf(&dumpstr, "%s", bu_vls_cstr(&ostr));
 	_nirt_print_fmt_cmd(&ostr, 'p', nss->i->fmt_part);
-	bu_vls_printf(&dumpstr, "%s", bu_vls_addr(&ostr));
+	bu_vls_printf(&dumpstr, "%s", bu_vls_cstr(&ostr));
 	_nirt_print_fmt_cmd(&ostr, 'f', nss->i->fmt_foot);
-	bu_vls_printf(&dumpstr, "%s", bu_vls_addr(&ostr));
+	bu_vls_printf(&dumpstr, "%s", bu_vls_cstr(&ostr));
 	_nirt_print_fmt_cmd(&ostr, 'm', nss->i->fmt_miss);
-	bu_vls_printf(&dumpstr, "%s", bu_vls_addr(&ostr));
+	bu_vls_printf(&dumpstr, "%s", bu_vls_cstr(&ostr));
 	_nirt_print_fmt_cmd(&ostr, 'o', nss->i->fmt_ovlp);
-	bu_vls_printf(&dumpstr, "%s", bu_vls_addr(&ostr));
+	bu_vls_printf(&dumpstr, "%s", bu_vls_cstr(&ostr));
 	_nirt_print_fmt_cmd(&ostr, 'g', nss->i->fmt_gap);
-	bu_vls_printf(&dumpstr, "%s", bu_vls_addr(&ostr));
-	nout(nss, "%s", bu_vls_addr(&dumpstr));
+	bu_vls_printf(&dumpstr, "%s", bu_vls_cstr(&ostr));
+	nout(nss, "%s", bu_vls_cstr(&dumpstr));
 	bu_vls_free(&dumpstr);
 	bu_vls_free(&ostr);
     }
@@ -2568,10 +2568,10 @@ _nirt_parse_script(struct nirt_state *ns, const char *script)
 	bu_vls_sprintf(&tcmd, "%s", cmd.c_str());
 	bu_vls_trimspace(&tcmd);
 	if (bu_vls_strlen(&tcmd) > 0) {
-	    if (strchr(bu_vls_addr(&tcmd), ';')) {
-		ret = _nirt_parse_script(ns, bu_vls_addr(&tcmd));
+	    if (strchr(bu_vls_cstr(&tcmd), ';')) {
+		ret = _nirt_parse_script(ns, bu_vls_cstr(&tcmd));
 	    } else {
-		ret = _nirt_exec_cmd(ns, bu_vls_addr(&tcmd));
+		ret = _nirt_exec_cmd(ns, bu_vls_cstr(&tcmd));
 	    }
 	    if (ret) goto nps_done;
 	}
@@ -2587,7 +2587,7 @@ _nirt_parse_script(struct nirt_state *ns, const char *script)
     bu_vls_sprintf(&tcmd, "%s", s.c_str());
     bu_vls_trimspace(&tcmd);
     if (bu_vls_strlen(&tcmd) > 0) {
-	ret = _nirt_exec_cmd(ns, bu_vls_addr(&tcmd));
+	ret = _nirt_exec_cmd(ns, bu_vls_cstr(&tcmd));
     }
 
 nps_done:
@@ -3025,13 +3025,13 @@ nirt_log(struct bu_vls *o, struct nirt_state *ns, int output_type)
 	    bu_vls_sprintf(o, "%s", "NIRT_ALL: TODO\n");
 	    break;
 	case NIRT_OUT:
-	    bu_vls_strcpy(o, bu_vls_addr(ns->i->out));
+	    bu_vls_strcpy(o, bu_vls_cstr(ns->i->out));
 	    break;
 	case NIRT_MSG:
-	    bu_vls_strcpy(o, bu_vls_addr(ns->i->msg));
+	    bu_vls_strcpy(o, bu_vls_cstr(ns->i->msg));
 	    break;
 	case NIRT_ERR:
-	    bu_vls_strcpy(o, bu_vls_addr(ns->i->err));
+	    bu_vls_strcpy(o, bu_vls_cstr(ns->i->err));
 	    break;
 	case NIRT_SEGS:
 	    bu_vls_sprintf(o, "%s", "NIRT_SEGS: TODO\n");
