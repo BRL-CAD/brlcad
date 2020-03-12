@@ -1,8 +1,12 @@
 #ifndef STRINGBUF_H
 #define STRINGBUF_H
-
-/* (c) 2017 Workware Systems Pty Ltd  -- All Rights Reserved */
-
+/**
+ * resizable string buffer
+ *
+ * (c) 2017-2020 Steve Bennett <steveb@workware.net.au>
+ *
+ * See utf8.c for licence details.
+ */
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -48,7 +52,7 @@ void sb_free(stringbuf *sb);
 stringbuf *sb_copy(stringbuf *sb);
 
 /**
- * Returns the length of the buffer.
+ * Returns the byte length of the buffer.
  * 
  * Returns 0 for both a NULL buffer and an empty buffer.
  */
@@ -98,7 +102,7 @@ static inline char *sb_str(const stringbuf *sb)
 }
 
 /**
- * Inserts the given string *before* (zero-based) 'index' in the stringbuf.
+ * Inserts the given string *before* (zero-based) byte 'index' in the stringbuf.
  * If index is past the end of the buffer, the string is appended,
  * just like sb_append()
  */
@@ -131,6 +135,13 @@ char *sb_to_string(stringbuf *sb);
 #endif
 
 #endif
+/**
+ * resizable string buffer
+ *
+ * (c) 2017-2020 Steve Bennett <steveb@workware.net.au>
+ *
+ * See utf8.c for licence details.
+ */
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -1695,8 +1706,7 @@ static void refreshEnd(struct current *current)
 
 static void refreshStartChars(struct current *current)
 {
-    if (!current)
-        return;
+    (void)current;
 }
 
 static void refreshNewline(struct current *current)
@@ -1707,8 +1717,7 @@ static void refreshNewline(struct current *current)
 
 static void refreshEndChars(struct current *current)
 {
-    if (!current)
-        return;
+    (void)current;
 }
 #endif
 
