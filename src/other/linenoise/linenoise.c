@@ -2303,6 +2303,9 @@ static int linenoiseEdit(struct current *current) {
                 return -1;
             }
             /* Otherwise fall through to delete char to right of cursor */
+#ifdef __GNUC__
+	    __attribute__ ((fallthrough));
+#endif
         case SPECIAL_DELETE:
             if (remove_char(current, current->pos) == 1) {
                 refreshLine(current);
