@@ -27,111 +27,11 @@
 /* BRL-CAD includes */
 #include "common.h"
 
+#include <algorithm>
+
 #include "./nirt.h"
 
 #include "./debug_cmd.c"
-
-void
-_nirt_seg_init(struct nirt_seg **s)
-{
-    if (!s) return;
-
-    BU_GET(*s, struct nirt_seg);
-    (*s)->type = 0;
-    BU_GET((*s)->path_name, struct bu_vls);
-    BU_GET((*s)->reg_name, struct bu_vls);
-    BU_GET((*s)->ov_reg1_name, struct bu_vls);
-    BU_GET((*s)->ov_reg2_name, struct bu_vls);
-    BU_GET((*s)->ov_sol_in, struct bu_vls);
-    BU_GET((*s)->ov_sol_out, struct bu_vls);
-    BU_GET((*s)->claimant_list, struct bu_vls);
-    BU_GET((*s)->claimant_listn, struct bu_vls);
-    BU_GET((*s)->attributes, struct bu_vls);
-    bu_vls_init((*s)->path_name);
-    bu_vls_init((*s)->reg_name);
-    bu_vls_init((*s)->ov_reg1_name);
-    bu_vls_init((*s)->ov_reg2_name);
-    bu_vls_init((*s)->ov_sol_in);
-    bu_vls_init((*s)->ov_sol_out);
-    bu_vls_init((*s)->claimant_list);
-    bu_vls_init((*s)->claimant_listn);
-    bu_vls_init((*s)->attributes);
-}
-
-void
-_nirt_seg_free(struct nirt_seg *s)
-{
-    bu_vls_free(s->path_name);
-    bu_vls_free(s->reg_name);
-    bu_vls_free(s->ov_reg1_name);
-    bu_vls_free(s->ov_reg2_name);
-    bu_vls_free(s->ov_sol_in);
-    bu_vls_free(s->ov_sol_out);
-    bu_vls_free(s->claimant_list);
-    bu_vls_free(s->claimant_listn);
-    bu_vls_free(s->attributes);
-
-    BU_PUT(s->path_name, struct bu_vls);
-    BU_PUT(s->reg_name, struct bu_vls);
-    BU_PUT(s->ov_reg1_name, struct bu_vls);
-    BU_PUT(s->ov_reg2_name, struct bu_vls);
-    BU_PUT(s->ov_sol_in, struct bu_vls);
-    BU_PUT(s->ov_sol_out, struct bu_vls);
-    BU_PUT(s->claimant_list, struct bu_vls);
-    BU_PUT(s->claimant_listn, struct bu_vls);
-    BU_PUT(s->attributes, struct bu_vls);
-    BU_PUT(s, struct nirt_seg);
-}
-
-struct nirt_seg *
-_nirt_seg_cpy(struct nirt_seg *s)
-{
-    struct nirt_seg *n = NULL;
-    if (!s) return NULL;
-
-    _nirt_seg_init(&n);
-
-    n->type = s->type;
-    VMOVE(n->in, s->in);
-    n->d_in = s->d_in;
-    VMOVE(n->out, s->out);
-    n->d_out = s->d_out;
-    n->los = s->los;
-    n->scaled_los = s->scaled_los;
-    bu_vls_sprintf(n->path_name, "%s", bu_vls_cstr(s->path_name));
-    bu_vls_sprintf(n->reg_name, "%s", bu_vls_cstr(s->reg_name));
-    n->reg_id = s->reg_id;
-    n->obliq_in = s->obliq_in;
-    n->obliq_out = s->obliq_out;
-    VMOVE(n->nm_in, s->nm_in);
-    n->nm_d_in = s->nm_d_in;
-    n->nm_h_in = s->nm_h_in;
-    n->nm_v_in = s->nm_v_in;
-    VMOVE(n->nm_out, s->nm_out);
-    n->nm_d_out = s->nm_d_out;
-    n->nm_h_out = s->nm_h_out;
-    n->nm_v_out = s->nm_v_out;
-    bu_vls_sprintf(n->ov_reg1_name, "%s", bu_vls_addr(s->ov_reg1_name));
-    n->ov_reg1_id = s->ov_reg1_id;
-    bu_vls_sprintf(n->ov_reg2_name, "%s", bu_vls_addr(s->ov_reg2_name));
-    n->ov_reg2_id = s->ov_reg2_id;
-    bu_vls_sprintf(n->ov_sol_in, "%s", bu_vls_addr(s->ov_sol_in));
-    bu_vls_sprintf(n->ov_sol_out, "%s", bu_vls_addr(s->ov_sol_out));
-    n->ov_los = s->ov_los;
-    VMOVE(n->ov_in, s->ov_in);
-    n->ov_d_in = s->ov_d_in;
-    VMOVE(n->ov_out, s->ov_out);
-    n->ov_d_out = s->ov_d_out;
-    n->surf_num_in = s->surf_num_in;
-    n->surf_num_out = s->surf_num_out;
-    n->claimant_count = s->claimant_count;
-    bu_vls_sprintf(n->claimant_list, "%s", bu_vls_addr(s->claimant_list));
-    bu_vls_sprintf(n->claimant_listn, "%s", bu_vls_addr(s->claimant_listn));
-    bu_vls_sprintf(n->attributes, "%s", bu_vls_addr(s->attributes));
-    VMOVE(n->gap_in, s->gap_in);
-    n->gap_los = s->gap_los;
-    return n;
-}
 
 /**************************
  * Internal functionality *
@@ -680,7 +580,7 @@ _nirt_fmt_sp_width_precision_check(struct nirt_state *nss, std::string &fmt_sp)
 	int w = 0;
 	const char *wn_cstr = wn.c_str();
 	if (bu_opt_int(&optparse_msg, 1, (const char **)&wn_cstr, (void *)&w) == -1) {
-	    nerr(nss, "Error: bu_opt value read failure reading format specifier width from substring \"%s\" of specifier \"%s\": %s\n", wn.c_str(), fmt_sp.c_str(), bu_vls_addr(&optparse_msg));
+	    nerr(nss, "Error: bu_opt value read failure reading format specifier width from substring \"%s\" of specifier \"%s\": %s\n", wn.c_str(), fmt_sp.c_str(), bu_vls_cstr(&optparse_msg));
 	    bu_vls_free(&optparse_msg);
 	    return -1;
 	}
@@ -696,7 +596,7 @@ _nirt_fmt_sp_width_precision_check(struct nirt_state *nss, std::string &fmt_sp)
 	int p_num = 0;
 	const char *pn_cstr = pn.c_str();
 	if (bu_opt_int(&optparse_msg, 1, (const char **)&pn_cstr, (void *)&p_num) == -1) {
-	    nerr(nss, "Error: bu_opt value read failure reading format specifier precision from substring \"%s\" of specifier \"%s\": %s\n", pn.c_str(), fmt_sp.c_str(), bu_vls_addr(&optparse_msg));
+	    nerr(nss, "Error: bu_opt value read failure reading format specifier precision from substring \"%s\" of specifier \"%s\": %s\n", pn.c_str(), fmt_sp.c_str(), bu_vls_cstr(&optparse_msg));
 	    bu_vls_free(&optparse_msg);
 	    return -1;
 	}
@@ -906,7 +806,7 @@ _nirt_split_fmt(const char *ofmt, char ***breakout)
 		bu_vls_putc(&specifier, *up++);
 	    }
 	}
-	fstrs[fcnt] = bu_strdup(bu_vls_addr(&specifier));
+	fstrs[fcnt] = bu_strdup(bu_vls_cstr(&specifier));
 	fcnt++;
     }
     if (fcnt) {
@@ -1031,8 +931,8 @@ _nirt_print_fmt_substr(struct nirt_state *nss, struct bu_vls *ostr, const char *
 	nirt_print_key("d_out", r->seg->d_out * base2local);
 	nirt_print_key("los", r->seg->los * base2local);
 	nirt_print_key("scaled_los", r->seg->scaled_los * base2local);
-	nirt_print_key("path_name", bu_vls_cstr(r->seg->path_name));
-	nirt_print_key("reg_name", bu_vls_cstr(r->seg->reg_name));
+	nirt_print_key("path_name", r->seg->path_name.c_str());
+	nirt_print_key("reg_name", r->seg->reg_name.c_str());
 	nirt_print_key("reg_id", r->seg->reg_id);
 	nirt_print_key("obliq_in", r->seg->obliq_in);
 	nirt_print_key("obliq_out", r->seg->obliq_out);
@@ -1051,18 +951,18 @@ _nirt_print_fmt_substr(struct nirt_state *nss, struct bu_vls *ostr, const char *
 	nirt_print_key("surf_num_in", r->seg->surf_num_in);
 	nirt_print_key("surf_num_out", r->seg->surf_num_out);
 	nirt_print_key("claimant_count", r->seg->claimant_count);
-	nirt_print_key("claimant_list", bu_vls_cstr(r->seg->claimant_list));
-	nirt_print_key("claimant_listn", bu_vls_cstr(r->seg->claimant_listn));
-	nirt_print_key("attributes", bu_vls_cstr(r->seg->attributes));
+	nirt_print_key("claimant_list", r->seg->claimant_list.c_str());
+	nirt_print_key("claimant_listn", r->seg->claimant_listn.c_str());
+	nirt_print_key("attributes", r->seg->attributes.c_str());
     }
 
     if (r->seg->type == NIRT_OVERLAP_SEG || r->seg->type == NIRT_ALL_SEG) {
-	nirt_print_key("ov_reg1_name", bu_vls_cstr(r->seg->ov_reg1_name));
+	nirt_print_key("ov_reg1_name", r->seg->ov_reg1_name.c_str());
 	nirt_print_key("ov_reg1_id", r->seg->ov_reg1_id);
-	nirt_print_key("ov_reg2_name", bu_vls_cstr(r->seg->ov_reg2_name));
+	nirt_print_key("ov_reg2_name", r->seg->ov_reg2_name.c_str());
 	nirt_print_key("ov_reg2_id", r->seg->ov_reg2_id);
-	nirt_print_key("ov_sol_in", bu_vls_cstr(r->seg->ov_sol_in));
-	nirt_print_key("ov_sol_out", bu_vls_cstr(r->seg->ov_sol_out));
+	nirt_print_key("ov_sol_in", r->seg->ov_sol_in.c_str());
+	nirt_print_key("ov_sol_out", r->seg->ov_sol_out.c_str());
 	nirt_print_key("ov_los", r->seg->ov_los * base2local);
 	nirt_print_key("ov_x_in", r->seg->ov_in[X] * base2local);
 	nirt_print_key("ov_y_in", r->seg->ov_in[Y] * base2local);
@@ -1195,10 +1095,9 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
     int ev_odd = 1; /* first partition is colored as "odd" */
     point_t out_old = VINIT_ZERO;
     double d_out_old = 0.0;
-    struct nirt_seg *s;
-    _nirt_seg_init(&s);
+    struct nirt_seg *s = new struct nirt_seg;
     if (vals->seg) {
-	_nirt_seg_free(vals->seg);
+	delete vals->seg;
 	vals->seg = NULL;
     }
     vals->seg = s;
@@ -1261,11 +1160,11 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 	VMOVE(out_old, s->out); // Stash the out value for gap_los calculation in the next partition
 	d_out_old = s->d_out; // Stash the d_out value for gap_los calculation in the next partition
 
-	bu_vls_sprintf(s->path_name, "%s", part->pt_regionp->reg_name);
+	s->path_name = std::string(part->pt_regionp->reg_name);
 	{
-	    char *tmp_regname = (char *)bu_calloc(bu_vls_strlen(s->path_name) + 1, sizeof(char), "tmp reg_name");
+	    char *tmp_regname = (char *)bu_calloc(s->path_name.size() + 1, sizeof(char), "tmp reg_name");
 	    bu_path_basename(part->pt_regionp->reg_name, tmp_regname);
-	    bu_vls_sprintf(s->reg_name, "%s", tmp_regname);
+	    s->reg_name = std::string(tmp_regname);	
 	    bu_free(tmp_regname, "tmp reg_name");
 	}
 
@@ -1275,8 +1174,8 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 	s->obliq_in = _nirt_get_obliq(ap->a_ray.r_dir, s->nm_in);
 	s->obliq_out = _nirt_get_obliq(ap->a_ray.r_dir, s->nm_out);
 
-	bu_vls_trunc(s->claimant_list, 0);
-	bu_vls_trunc(s->claimant_listn, 0);
+	s->claimant_list = std::string();
+	s->claimant_listn = std::string();
 	if (part->pt_overlap_reg == 0) {
 	    s->claimant_count = 1;
 	} else {
@@ -1285,29 +1184,32 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 	    s->claimant_count = 0;
 	    for (rpp = part->pt_overlap_reg; *rpp != REGION_NULL; ++rpp) {
 		char *base = NULL;
-		if (s->claimant_count) bu_vls_strcat(s->claimant_list, " ");
+		if (s->claimant_count) {
+		    s->claimant_list.push_back(' ');
+		}
 		s->claimant_count++;
 		bu_vls_sprintf(&tmpcp, "%s", (*rpp)->reg_name);
 		base = bu_path_basename(bu_vls_cstr(&tmpcp), NULL);
-		bu_vls_strcat(s->claimant_list, base);
+		s->claimant_list.append(base);
 		bu_free(base, "bu_path_basename");
 	    }
 	    bu_vls_free(&tmpcp);
 
 	    /* insert newlines instead of spaces for listn */
-	    bu_vls_sprintf(s->claimant_listn, "%s", bu_vls_cstr(s->claimant_list));
-	    for (char *cp = bu_vls_addr(s->claimant_listn); *cp != '\0'; ++cp) {
-		if (*cp == ' ') *cp = '\n';
-	    }
+	    s->claimant_listn = s->claimant_list;
+	    s->claimant_listn.replace(s->claimant_listn.begin(), s->claimant_listn.end(), ' ', '\n');
 	}
 
-	bu_vls_trunc(s->attributes, 0);
+	s->attributes = std::string();
 	std::set<std::string>::iterator a_it;
 	for (a_it = nss->i->attrs.begin(); a_it != nss->i->attrs.end(); a_it++) {
 	    const char *key = (*a_it).c_str();
 	    const char *val = bu_avs_get(&part->pt_regionp->attr_values, key);
 	    if (val != NULL) {
-		bu_vls_printf(s->attributes, "%s=%s ", key, val);
+		s->attributes.append(key);
+		s->attributes.append("=");
+		s->attributes.append(val);
+		s->attributes.append(" ");
 	    }
 	}
 
@@ -1335,20 +1237,20 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 	    char *copy_ovlp_reg2 = bu_strdup(ovp->reg2->reg_name);
 	    char *t1 = (char *)bu_calloc(strlen(copy_ovlp_reg1), sizeof(char), "if_hit sval2");
 	    bu_path_basename(copy_ovlp_reg1, t1);
-	    bu_vls_sprintf(s->ov_reg1_name, "%s", t1);
+	    s->ov_reg1_name = std::string(t1);
 	    bu_free(t1, "t1");
 	    bu_free(copy_ovlp_reg1, "cp1");
 	    char *t2 = (char *)bu_calloc(strlen(copy_ovlp_reg2), sizeof(char), "if_hit sval3");
 	    bu_path_basename(copy_ovlp_reg2, t2);
-	    bu_vls_sprintf(s->ov_reg2_name, "%s", t2);
+	    s->ov_reg2_name = std::string(t2);
 	    bu_free(t2, "t2");
 	    bu_free(copy_ovlp_reg2, "cp2");
 
 
 	    s->ov_reg1_id = ovp->reg1->reg_regionid;
 	    s->ov_reg2_id = ovp->reg2->reg_regionid;
-	    bu_vls_sprintf(s->ov_sol_in, "%s", part->pt_inseg->seg_stp->st_dp->d_namep);
-	    bu_vls_sprintf(s->ov_sol_out, "%s", part->pt_outseg->seg_stp->st_dp->d_namep);
+	    s->ov_sol_in = std::string(part->pt_inseg->seg_stp->st_dp->d_namep);
+	    s->ov_sol_out = std::string(part->pt_outseg->seg_stp->st_dp->d_namep);
 	    VMOVE(s->ov_in, ovp->in_point);
 	    VMOVE(s->ov_out, ovp->out_point);
 

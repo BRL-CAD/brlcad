@@ -187,8 +187,8 @@ _nirt_partition_diff(struct nirt_diff *ndiff, struct nirt_seg *left, struct nirt
     fastf_t scaled_los_delta = fabs(left->scaled_los - right->scaled_los);
     fastf_t obliq_in_delta = fabs(left->obliq_in - right->obliq_in);
     fastf_t obliq_out_delta = fabs(left->obliq_out - right->obliq_out);
-    if (bu_vls_strcmp(left->reg_name, right->reg_name)) have_diff = 1;
-    if (bu_vls_strcmp(left->path_name, right->path_name)) have_diff = 1;
+    if (left->reg_name != right->reg_name) have_diff = 1;
+    if (left->path_name != right->path_name) have_diff = 1;
     if (left->reg_id != right->reg_id) have_diff = 1;
     if (in_delta > ndiff->nds->dist_delta_tol) have_diff = 1;
     if (out_delta > ndiff->nds->dist_delta_tol) have_diff = 1;
@@ -220,8 +220,8 @@ _nirt_overlap_diff(struct nirt_diff *ndiff, struct nirt_seg *left, struct nirt_s
     fastf_t ov_in_delta = DIST_PNT_PNT(left->ov_in, right->ov_in);
     fastf_t ov_out_delta = DIST_PNT_PNT(left->ov_out, right->ov_out);
     fastf_t ov_los_delta = fabs(left->ov_los - right->ov_los);
-    if (bu_vls_strcmp(left->ov_reg1_name, right->ov_reg1_name)) have_diff = 1;
-    if (bu_vls_strcmp(left->ov_reg2_name, right->ov_reg2_name)) have_diff = 1;
+    if (left->ov_reg1_name != right->ov_reg1_name) have_diff = 1;
+    if (left->ov_reg2_name != right->ov_reg2_name) have_diff = 1;
     if (left->ov_reg1_id != right->ov_reg1_id) have_diff = 1;
     if (left->ov_reg2_id != right->ov_reg2_id) have_diff = 1;
     if (ov_in_delta > ndiff->nds->dist_delta_tol) have_diff = 1;
@@ -331,7 +331,7 @@ _nirt_diff_report(struct nirt_state *nss)
 	    _nirt_segs_diff(d, &d->old_segs[j], &d->new_segs[j]);
 	}
 	if (d->diffs.size() > 0 && !did_header) {
-	    bu_vls_printf(&dreport, "Diff Results (%s):\n", bu_vls_addr(&nds->diff_file));
+	    bu_vls_printf(&dreport, "Diff Results (%s):\n", bu_vls_cstr(&nds->diff_file));
 	    did_header = 1;
 	}
 
@@ -342,7 +342,7 @@ _nirt_diff_report(struct nirt_state *nss)
 	    struct nirt_seg *right = sd->right;
 	    if (left->type != right->type) {
 		bu_vls_printf(&dreport, "  Segment %zu type mismatch : Original %s, Current %s\n", j, _nirt_seg_string(sd->left->type), _nirt_seg_string(sd->right->type));
-		nout(nss, "%s", bu_vls_addr(&dreport));
+		nout(nss, "%s", bu_vls_cstr(&dreport));
 		bu_vls_free(&dreport);
 		return 1;
 	    }
@@ -354,12 +354,12 @@ _nirt_diff_report(struct nirt_state *nss)
 		case NIRT_PARTITION_SEG:
 		    if (!nds->report_partitions) continue;
 		    bu_vls_printf(&dreport, "  Segment difference(%s)[%zu]:\n", _nirt_seg_string(sd->left->type), j);
-		    if (bu_vls_strcmp(left->reg_name, right->reg_name) && nds->report_partition_reg_names) {
-			bu_vls_printf(&dreport, "    Region Name: '%s' -> '%s'\n", bu_vls_addr(left->reg_name), bu_vls_addr(right->reg_name));
+		    if ((left->reg_name != right->reg_name) && nds->report_partition_reg_names) {
+			bu_vls_printf(&dreport, "    Region Name: '%s' -> '%s'\n", left->reg_name.c_str(), right->reg_name.c_str());
 			reporting_diff = 1;
 		    }
-		    if (bu_vls_strcmp(left->path_name, right->path_name) && nds->report_partition_path_names) {
-			bu_vls_printf(&dreport, "    Path Name: '%s' -> '%s'\n", bu_vls_addr(left->path_name), bu_vls_addr(right->path_name));
+		    if ((left->path_name != right->path_name) && nds->report_partition_path_names) {
+			bu_vls_printf(&dreport, "    Path Name: '%s' -> '%s'\n", left->path_name.c_str(), right->path_name.c_str());
 			reporting_diff = 1;
 		    }
 		    if (left->reg_id != right->reg_id && nds->report_partition_reg_ids) {
@@ -414,12 +414,12 @@ _nirt_diff_report(struct nirt_state *nss)
 		case NIRT_OVERLAP_SEG:
 		    if (!nds->report_overlaps) continue;
 		    bu_vls_printf(&dreport, "  Segment difference(%s)[%zu]:\n", _nirt_seg_string(sd->left->type), j);
-		    if (bu_vls_strcmp(left->ov_reg1_name, right->ov_reg1_name) && nds->report_overlap_reg_names) {
-			bu_vls_printf(&dreport, "    Region 1 Name: '%s' -> '%s'\n", bu_vls_addr(left->ov_reg1_name), bu_vls_addr(right->ov_reg1_name));
+		    if ((left->ov_reg1_name != right->ov_reg1_name) && nds->report_overlap_reg_names) {
+			bu_vls_printf(&dreport, "    Region 1 Name: '%s' -> '%s'\n", left->ov_reg1_name.c_str(), right->ov_reg1_name.c_str());
 			reporting_diff = 1;
 		    }
-		    if (bu_vls_strcmp(left->ov_reg2_name, right->ov_reg2_name) && nds->report_overlap_reg_names) {
-			bu_vls_printf(&dreport, "    Region 2 Name: '%s' -> '%s'\n", bu_vls_addr(left->ov_reg2_name), bu_vls_addr(right->ov_reg2_name));
+		    if ((left->ov_reg2_name != right->ov_reg2_name) && nds->report_overlap_reg_names) {
+			bu_vls_printf(&dreport, "    Region 2 Name: '%s' -> '%s'\n", left->ov_reg2_name.c_str(), right->ov_reg2_name.c_str());
 			reporting_diff = 1;
 		    }
 		    if (left->ov_reg1_id != right->ov_reg1_id && nds->report_overlap_reg_ids) {
@@ -455,7 +455,7 @@ _nirt_diff_report(struct nirt_state *nss)
     }
 
     if (reporting_diff) {
-	nout(nss, "%s", bu_vls_addr(&dreport));
+	nout(nss, "%s", bu_vls_cstr(&dreport));
     } else {
 	nout(nss, "No differences found\n");
     }
@@ -539,13 +539,17 @@ parse_hit(struct nirt_diff_state *nds, std::string &line)
 	    return -1;
 	}
 
-	struct nirt_seg *segp = NULL;
-	BU_GET(segp, struct nirt_seg);
-	_nirt_seg_init(&segp);
+	struct nirt_seg *segp = new struct nirt_seg;
 	segp->type = NIRT_PARTITION_SEG;
-	bu_vls_decode(segp->reg_name, substrs[0].c_str());
+	struct bu_vls rdecode = BU_VLS_INIT_ZERO;
+	bu_vls_decode(&rdecode, substrs[0].c_str());
+	segp->reg_name = std::string(bu_vls_cstr(&rdecode));
+	bu_vls_free(&rdecode);
 	//bu_vls_printf(segp->reg_name, "%s", substrs[0].c_str());
-	bu_vls_decode(segp->path_name, substrs[1].c_str());
+	struct bu_vls pdecode = BU_VLS_INIT_ZERO;
+	bu_vls_decode(&pdecode, substrs[1].c_str());
+	segp->path_name = std::string(bu_vls_cstr(&pdecode));
+	bu_vls_free(&pdecode);
 	segp->reg_id = _nirt_str_to_int(substrs[2]);
 	VSET(segp->in, _nirt_str_to_dbl(substrs[3], 0), _nirt_str_to_dbl(substrs[4], 0), _nirt_str_to_dbl(substrs[5], 0));
 	segp->d_in = _nirt_str_to_dbl(substrs[6], 0);
@@ -557,8 +561,8 @@ parse_hit(struct nirt_diff_state *nds, std::string &line)
 	segp->obliq_out = _nirt_str_to_dbl(substrs[14], 0);
 #ifdef NIRT_DIFF_DEBUG
 	bu_log("Found %s:\n", line.c_str());
-	bu_log("  reg_name: %s\n", bu_vls_addr(segp->reg_name));
-	bu_log("  path_name: %s\n", bu_vls_addr(segp->path_name));
+	bu_log("  reg_name: %s\n", bu_vls_cstr(segp->reg_name));
+	bu_log("  path_name: %s\n", bu_vls_cstr(segp->path_name));
 	bu_log("  reg_id: %d\n", segp->reg_id);
 	bu_log("  in: %0.17f, %0.17f, %0.17f\n", V3ARGS(segp->in));
 	bu_log("  out: %0.17f, %0.17f, %0.17f\n", V3ARGS(segp->out));
@@ -567,7 +571,7 @@ parse_hit(struct nirt_diff_state *nds, std::string &line)
 	bu_log("  obliq_in: %0.17f  obliq_out: %0.17f\n", segp->obliq_in, segp->obliq_out);
 #endif
 	nds->cdiff->old_segs.push_back(*segp);
-	BU_PUT(segp, struct nirt_seg);
+	delete segp;
 	return true;
     }
 
@@ -602,9 +606,7 @@ parse_gap(struct nirt_diff_state *nds, std::string &line)
 	    nerr(nds->nss, "Error processing gap line \"%s\"!\nExpected 7 elements, found %zu\n", gap_data.c_str(), substrs.size());
 	    return -1;
 	}
-	struct nirt_seg *segp = NULL;
-	BU_GET(segp, struct nirt_seg);
-	_nirt_seg_init(&segp);
+	struct nirt_seg *segp = new struct nirt_seg;
 	segp->type = NIRT_GAP_SEG;
 	VSET(segp->gap_in, _nirt_str_to_dbl(substrs[0], 0), _nirt_str_to_dbl(substrs[1], 0), _nirt_str_to_dbl(substrs[2], 0));
 	VSET(segp->in, _nirt_str_to_dbl(substrs[3], 0), _nirt_str_to_dbl(substrs[4], 0), _nirt_str_to_dbl(substrs[5], 0));
@@ -616,7 +618,7 @@ parse_gap(struct nirt_diff_state *nds, std::string &line)
 	bu_log("  gap_los: %0.17f\n", segp->gap_los);
 #endif
 	nds->cdiff->old_segs.push_back(*segp);
-	BU_PUT(segp, struct nirt_seg);
+	delete segp;
 	return true;
     }
 
@@ -644,15 +646,13 @@ parse_miss(struct nirt_diff_state *nds, std::string &line)
     int miss_version = _nirt_str_to_int(s1[1]);
 
     if (miss_version == 1) {
-	struct nirt_seg *segp = NULL;
-	BU_GET(segp, struct nirt_seg);
-	_nirt_seg_init(&segp);
+	struct nirt_seg *segp = new struct nirt_seg;
 	segp->type = NIRT_MISS_SEG;
 #ifdef NIRT_DIFF_DEBUG
 	bu_log("Found MISS\n");
 #endif
 	nds->cdiff->old_segs.push_back(*segp);
-	BU_PUT(segp, struct nirt_seg);
+	delete segp;
 	return true;
     }
 
@@ -686,12 +686,16 @@ parse_overlap(struct nirt_diff_state *nds, std::string &line)
 	    nerr(nds->nss, "Error processing overlap line \"%s\"!\nExpected 11 elements, found %zu\n", overlap_data.c_str(), substrs.size());
 	    return false;
 	}
-	struct nirt_seg *segp = NULL;
-	BU_GET(segp, struct nirt_seg);
-	_nirt_seg_init(&segp);
+	struct nirt_seg *segp = new struct nirt_seg;
 	segp->type = NIRT_OVERLAP_SEG;
-	bu_vls_decode(segp->ov_reg1_name, substrs[0].c_str());
-	bu_vls_decode(segp->ov_reg2_name, substrs[1].c_str());
+	struct bu_vls r1decode = BU_VLS_INIT_ZERO;
+	bu_vls_decode(&r1decode, substrs[0].c_str());
+	segp->ov_reg1_name = std::string(bu_vls_cstr(&r1decode));
+	bu_vls_free(&r1decode);
+	struct bu_vls r2decode = BU_VLS_INIT_ZERO;
+	bu_vls_decode(&r2decode, substrs[1].c_str());
+	segp->ov_reg2_name = std::string(bu_vls_cstr(&r2decode));
+	bu_vls_free(&r2decode);
 	segp->ov_reg1_id = _nirt_str_to_int(substrs[2]);
 	segp->ov_reg2_id = _nirt_str_to_int(substrs[3]);
 	VSET(segp->ov_in, _nirt_str_to_dbl(substrs[4], 0), _nirt_str_to_dbl(substrs[5], 0), _nirt_str_to_dbl(substrs[6], 0));
@@ -699,8 +703,8 @@ parse_overlap(struct nirt_diff_state *nds, std::string &line)
 	segp->ov_los = _nirt_str_to_dbl(substrs[10], 0);
 #ifdef NIRT_DIFF_DEBUG
 	bu_log("Found %s:\n", line.c_str());
-	bu_log("  ov_reg1_name: %s\n", bu_vls_addr(segp->ov_reg1_name));
-	bu_log("  ov_reg2_name: %s\n", bu_vls_addr(segp->ov_reg2_name));
+	bu_log("  ov_reg1_name: %s\n", bu_vls_cstr(&segp->ov_reg1_name));
+	bu_log("  ov_reg2_name: %s\n", bu_vls_cstr(&segp->ov_reg2_name));
 	bu_log("  ov_reg1_id: %d\n", segp->ov_reg1_id);
 	bu_log("  ov_reg2_id: %d\n", segp->ov_reg2_id);
 	bu_log("  ov_in: %0.17f, %0.17f, %0.17f\n", V3ARGS(segp->ov_in));
@@ -708,7 +712,7 @@ parse_overlap(struct nirt_diff_state *nds, std::string &line)
 	bu_log("  ov_los: %0.17f\n", segp->ov_los);
 #endif
 	nds->cdiff->old_segs.push_back(*segp);
-	BU_PUT(segp, struct nirt_seg);
+	delete segp;
 	return true;
     }
 
@@ -1021,7 +1025,7 @@ _nirt_diff_cmd_settings(void *ndsv, int argc, const char **argv)
 
 	if (setting_bool) {
 	    if (bu_opt_bool(&opt_msg, 1, (const char **)&argv[1], (void *)setting_bool) == -1) {
-		nerr(nss, "Error: bu_opt value read failure: %s\n", bu_vls_addr(&opt_msg));
+		nerr(nss, "Error: bu_opt value read failure: %s\n", bu_vls_cstr(&opt_msg));
 		bu_vls_free(&opt_msg);
 		return -1;
 	    }
@@ -1033,7 +1037,7 @@ _nirt_diff_cmd_settings(void *ndsv, int argc, const char **argv)
 		return 0;
 	    }
 	    if (bu_opt_fastf_t(&opt_msg, 1, (const char **)&argv[1], (void *)setting_fastf_t) == -1) {
-		nerr(nss, "Error: bu_opt value read failure: %s\n", bu_vls_addr(&opt_msg));
+		nerr(nss, "Error: bu_opt value read failure: %s\n", bu_vls_cstr(&opt_msg));
 		bu_vls_free(&opt_msg);
 		return -1;
 	    }

@@ -100,15 +100,15 @@ struct nirt_overlap {
 #define NIRT_OVERLAP_NULL ((struct nirt_overlap *)0)
 
 struct nirt_seg {
-    int type;
+    int type = 0;
     point_t in;
     fastf_t d_in;
     point_t out;
     fastf_t d_out;
     fastf_t los;
     fastf_t scaled_los;
-    struct bu_vls *path_name;
-    struct bu_vls *reg_name;
+    std::string path_name;
+    std::string reg_name;
     int reg_id;
     fastf_t obliq_in;
     fastf_t obliq_out;
@@ -120,12 +120,12 @@ struct nirt_seg {
     fastf_t nm_d_out;
     fastf_t nm_h_out;
     fastf_t nm_v_out;
-    struct bu_vls *ov_reg1_name;
+    std::string ov_reg1_name;
     int ov_reg1_id;
-    struct bu_vls *ov_reg2_name;
+    std::string ov_reg2_name;
     int ov_reg2_id;
-    struct bu_vls *ov_sol_in;
-    struct bu_vls *ov_sol_out;
+    std::string ov_sol_in;
+    std::string ov_sol_out;
     fastf_t ov_los;
     point_t ov_in;
     fastf_t ov_d_in;
@@ -134,9 +134,9 @@ struct nirt_seg {
     int surf_num_in;
     int surf_num_out;
     int claimant_count;
-    struct bu_vls *claimant_list;
-    struct bu_vls *claimant_listn; /* uses \n instead of space to separate claimants */
-    struct bu_vls *attributes;
+    std::string claimant_list;
+    std::string claimant_listn; /* uses \n instead of space to separate claimants */
+    std::string attributes;
     point_t gap_in;
     fastf_t gap_los;
 };
@@ -237,11 +237,6 @@ struct nirt_state_impl {
 /**************************
  * Internal functionality *
  **************************/
-void _nirt_seg_init(struct nirt_seg **s);
-void _nirt_seg_free(struct nirt_seg *s);
-struct nirt_seg * _nirt_seg_cpy(struct nirt_seg *s);
-
-
 
 void nmsg(struct nirt_state *nss, const char *fmt, ...) _BU_ATTR_PRINTF23;
 void nout(struct nirt_state *nss, const char *fmt, ...) _BU_ATTR_PRINTF23;
