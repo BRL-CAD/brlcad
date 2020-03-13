@@ -30,6 +30,7 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bu/opt.h"
 #include "rt/geom.h"
 #include "wdb.h"
 
@@ -1465,10 +1466,25 @@ sph_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern, 
 
     intern->idb_ptr = NULL;
 
+    struct bu_vls opt_msg = BU_VLS_INIT_ZERO;
     for (i = 0; i < ELEMENTS_PER_POINT; i++) {
-	center[i] = atof(cmd_argvs[3+i]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	fastf_t optf;
+	bu_vls_trunc(&opt_msg, 0);
+	if (bu_opt_fastf_t(&opt_msg, 1, (const char **)&(cmd_argvs[3+i]), (void *)&optf) < 0) {
+	    bu_vls_printf(gedp->ged_result_str, "Value read error: %s\n", bu_vls_cstr(&opt_msg));
+	    bu_vls_free(&opt_msg);
+	    return GED_ERROR;
+	}
+	center[i] = optf * gedp->ged_wdbp->dbip->dbi_local2base;
     }
-    r = atof(cmd_argvs[6]) * gedp->ged_wdbp->dbip->dbi_local2base;
+    if (bu_opt_fastf_t(&opt_msg, 1, (const char **)&(cmd_argvs[6]), (void *)&r) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Value read error: %s\n", bu_vls_cstr(&opt_msg));
+	bu_vls_free(&opt_msg);
+	return GED_ERROR;
+    }
+    r = r * gedp->ged_wdbp->dbip->dbi_local2base;
+
+    bu_vls_free(&opt_msg);
 
     if (r < RT_LEN_TOL) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR, radius must be greater than zero!\n");
