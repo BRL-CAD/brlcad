@@ -80,15 +80,22 @@
  *
  *     OVERLAPS:   Match if all active criteria match.  If no criteria
  *                 are active, match.  Possible active criteria:
- *                 
+ *
  *                 Overlap region set
  *                 Overlap path set
  *                 Overlap region id set
  *                 Selected "winning" partition in the overlap
  */
 
+typedef enum {
+    NIRT_DIFF_TRANSITION,
+    NIRT_DIFF_SEGMENT
+} ndiff_t;
 
-struct nirt_seg_diff {
+struct nirt_diff_instance {
+    ndiff_t type;
+    point_t *left_pt;
+    point_t *right_pt;
     struct nirt_seg *left;
     struct nirt_seg *right;
     fastf_t in_delta;
@@ -112,7 +119,7 @@ struct nirt_diff {
     vect_t dir;
     std::vector<struct nirt_seg> old_segs;
     std::vector<struct nirt_seg> new_segs;
-    std::vector<struct nirt_seg_diff> diffs;
+    std::vector<struct nirt_diff_instance> diffs;
     struct nirt_diff_state *nds;
 };
 
@@ -179,7 +186,7 @@ static bool
 _nirt_partition_diff(struct nirt_diff *ndiff, struct nirt_seg *left, struct nirt_seg *right)
 {
     int have_diff = 0;
-    struct nirt_seg_diff sd;
+    struct nirt_diff_instance sd;
     if (!ndiff || !ndiff->nds) return false;
     fastf_t in_delta = DIST_PNT_PNT(left->in, right->in);
     fastf_t out_delta = DIST_PNT_PNT(left->in, right->in);
@@ -215,7 +222,7 @@ static bool
 _nirt_overlap_diff(struct nirt_diff *ndiff, struct nirt_seg *left, struct nirt_seg *right)
 {
     int have_diff = 0;
-    struct nirt_seg_diff sd;
+    struct nirt_diff_instance sd;
     if (!ndiff || !ndiff->nds) return false;
     fastf_t ov_in_delta = DIST_PNT_PNT(left->ov_in, right->ov_in);
     fastf_t ov_out_delta = DIST_PNT_PNT(left->ov_out, right->ov_out);
@@ -243,7 +250,7 @@ static bool
 _nirt_gap_diff(struct nirt_diff *ndiff, struct nirt_seg *left, struct nirt_seg *right)
 {
     int have_diff = 0;
-    struct nirt_seg_diff sd;
+    struct nirt_diff_instance sd;
     if (!ndiff || !ndiff->nds) return false;
     fastf_t gap_in_delta = DIST_PNT_PNT(left->gap_in, right->gap_in);
     fastf_t gap_los_delta = fabs(left->gap_los - right->gap_los);
@@ -266,9 +273,9 @@ _nirt_segs_diff(struct nirt_diff *ndiff, struct nirt_seg *left, struct nirt_seg 
     if (!ndiff) return NULL;
     if (!left || !right || left->type != right->type) {
 	/* Fundamental segment difference - no point going further, they're different */
-	struct nirt_seg_diff sd;
+	struct nirt_diff_instance sd;
 	sd.left = left;
-	sd.right = right;	
+	sd.right = right;
 	ndiff->diffs.push_back(sd);
 	return true;
     }
@@ -337,7 +344,7 @@ _nirt_diff_report(struct nirt_state *nss)
 
 	if (d->diffs.size() > 0) bu_vls_printf(&dreport, "Found differences along Ray:\n  xyz %.17f %.17f %.17f\n  dir %.17f %.17f %.17f\n \n", V3ARGS(d->orig), V3ARGS(d->dir));
 	for (size_t j = 0; j < d->diffs.size(); j++) {
-	    struct nirt_seg_diff *sd = &d->diffs[j];
+	    struct nirt_diff_instance *sd = &d->diffs[j];
 	    struct nirt_seg *left = sd->left;
 	    struct nirt_seg *right = sd->right;
 	    if (left->type != right->type) {
@@ -601,7 +608,7 @@ parse_gap(struct nirt_diff_state *nds, std::string &line)
 
     if (gap_version == 1) {
 	std::vector<std::string> substrs = _nirt_string_split(gap_data);
-	
+
 	if (substrs.size() != 7) {
 	    nerr(nds->nss, "Error processing gap line \"%s\"!\nExpected 7 elements, found %zu\n", gap_data.c_str(), substrs.size());
 	    return -1;
@@ -833,7 +840,7 @@ _nirt_diff_cmd_load(void *ndsv, int argc, const char **argv)
 		return -1;
 	    }
 	    continue;
-	}	
+	}
 
 	/* Hit */
 	if (ltype == 1) {
