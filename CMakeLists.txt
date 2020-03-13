@@ -3531,7 +3531,6 @@ if(NOT BRLCAD_IS_SUBBUILD)
     TODO
     configure
     CMakeLists.txt
-    CTestConfig.cmake
     )
   CMAKEFILES(${toplevel_ignore_files})
   if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.gitignore)
