@@ -37,8 +37,7 @@
 #include "./ged_private.h"
 #include "./pnts_util.h"
 
-
-static char *p_half[] = {
+static const char *p_half[] = {
     "Enter X, Y, Z of outward pointing normal vector: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -46,7 +45,7 @@ static char *p_half[] = {
 };
 
 
-static char *p_dsp_v4[] = {
+static const char *p_dsp_v4[] = {
     "Enter name of displacement-map file: ",
     "Enter width of displacement-map (number of values): ",
     "Enter length of displacement-map (number of values): ",
@@ -56,7 +55,7 @@ static char *p_dsp_v4[] = {
 };
 
 
-static char *p_dsp_v5[] = {
+static const char *p_dsp_v5[] = {
     "Take data from file or database binary object [f|o]:",
     "Enter name of file/object: ",
     "Enter width of displacement-map (number of values): ",
@@ -68,7 +67,7 @@ static char *p_dsp_v5[] = {
 };
 
 
-static char *p_hf[] = {
+static const char *p_hf[] = {
     "Enter name of control file (or \"\" for none): ",
     "Enter name of data file (containing heights): ",
     "Enter 'cv' style format of data [h|n][s|u]c|s|i|l|d|8|16|32|64: ",
@@ -91,7 +90,7 @@ static char *p_hf[] = {
 };
 
 
-static char *p_ebm[] = {
+static const char *p_ebm[] = {
     "Take data from file or database binary object [f|o]: ",
     "Enter name of file/object: ",
     "Enter width of bit-map (number of cells): ",
@@ -100,14 +99,14 @@ static char *p_ebm[] = {
 };
 
 
-static char *p_submodel[] = {
+static const char *p_submodel[] = {
     "Enter name of treetop: ",
     "Enter space partitioning method: ",
     "Enter name of .g file (or \"\" for none): "
 };
 
 
-static char *p_vol[] = {
+static const char *p_vol[] = {
     "Enter name of file containing voxel data: ",
     "Enter X, Y, Z dimensions of file (number of cells): ",
     "Enter Y dimension of file (number of cells): ",
@@ -120,7 +119,7 @@ static char *p_vol[] = {
 };
 
 
-static char *p_bot[] = {
+static const char *p_bot[] = {
     "Enter number of vertices: ",
     "Enter number of triangles: ",
     "Enter mode (1->surface, 2->solid, 3->plate): ",
@@ -136,7 +135,7 @@ static char *p_bot[] = {
 };
 
 
-static char *p_arbn[] = {
+static const char *p_arbn[] = {
     "Enter number of planes: ",
     "Enter coefficients",
     "Enter Y-coordinate of normal",
@@ -145,7 +144,7 @@ static char *p_arbn[] = {
 };
 
 
-static char *p_pipe[] = {
+static const char *p_pipe[] = {
     "Enter number of points: ",
     "Enter X, Y, Z, inner diameter, outer diameter, and bend radius for first point: ",
     "Enter Y: ",
@@ -162,7 +161,7 @@ static char *p_pipe[] = {
 };
 
 
-static char *p_ars[] = {
+static const char *p_ars[] = {
     "Enter number of points per waterline, and number of waterlines: ",
     "Enter number of waterlines: ",
     "Enter X, Y, Z for First row point: ",
@@ -174,7 +173,7 @@ static char *p_ars[] = {
 };
 
 
-static char *p_arb[] = {
+static const char *p_arb[] = {
     "Enter X, Y, Z for point 1: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -202,7 +201,7 @@ static char *p_arb[] = {
 };
 
 
-static char *p_sph[] = {
+static const char *p_sph[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -210,7 +209,7 @@ static char *p_sph[] = {
 };
 
 
-static char *p_ellg[] = {
+static const char *p_ellg[] = {
     "Enter X, Y, Z of focus point 1: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -221,7 +220,7 @@ static char *p_ellg[] = {
 };
 
 
-static char *p_ell1[] = {
+static const char *p_ell1[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -232,7 +231,7 @@ static char *p_ell1[] = {
 };
 
 
-static char *p_ell[] = {
+static const char *p_ell[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -248,7 +247,7 @@ static char *p_ell[] = {
 };
 
 
-static char *p_tor[] = {
+static const char *p_tor[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -260,7 +259,7 @@ static char *p_tor[] = {
 };
 
 
-static char *p_rcc[] = {
+static const char *p_rcc[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -271,7 +270,7 @@ static char *p_rcc[] = {
 };
 
 
-static char *p_tec[] = {
+static const char *p_tec[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -288,7 +287,7 @@ static char *p_tec[] = {
 };
 
 
-static char *p_rec[] = {
+static const char *p_rec[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -304,7 +303,7 @@ static char *p_rec[] = {
 };
 
 
-static char *p_trc[] = {
+static const char *p_trc[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -316,7 +315,7 @@ static char *p_trc[] = {
 };
 
 
-static char *p_tgc[] = {
+static const char *p_tgc[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -334,7 +333,7 @@ static char *p_tgc[] = {
 };
 
 
-static char *p_box[] = {
+static const char *p_box[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -350,7 +349,7 @@ static char *p_box[] = {
 };
 
 
-static char *p_rpp[] = {
+static const char *p_rpp[] = {
     "Enter XMIN, XMAX, YMIN, YMAX, ZMIN, ZMAX: ",
     "Enter XMAX: ",
     "Enter YMIN, YMAX, ZMIN, ZMAX: ",
@@ -360,14 +359,14 @@ static char *p_rpp[] = {
 };
 
 
-static char *p_orpp[] = {
+static const char *p_orpp[] = {
     "Enter XMAX, YMAX, ZMAX: ",
     "Enter YMAX, ZMAX: ",
     "Enter ZMAX: "
 };
 
 
-static char *p_rpc[] = {
+static const char *p_rpc[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -381,7 +380,7 @@ static char *p_rpc[] = {
 };
 
 
-static char *p_part[] = {
+static const char *p_part[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -393,7 +392,7 @@ static char *p_part[] = {
 };
 
 
-static char *p_rhc[] = {
+static const char *p_rhc[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -408,7 +407,7 @@ static char *p_rhc[] = {
 };
 
 
-static char *p_epa[] = {
+static const char *p_epa[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -422,7 +421,7 @@ static char *p_epa[] = {
 };
 
 
-static char *p_ehy[] = {
+static const char *p_ehy[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -437,7 +436,7 @@ static char *p_ehy[] = {
 };
 
 
-static char *p_hyp[] = {
+static const char *p_hyp[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -452,7 +451,7 @@ static char *p_hyp[] = {
 };
 
 
-static char *p_eto[] = {
+static const char *p_eto[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -467,14 +466,14 @@ static char *p_eto[] = {
 };
 
 
-static char *p_binunif[] = {
+static const char *p_binunif[] = {
     "Enter minor type (f, d, c, s, i, L, C, S, I, or L): ",
     "Enter name of file containing the data: ",
     "Enter number of values to read (-1 for entire file): "
 };
 
 
-static char *p_extrude[] = {
+static const char *p_extrude[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -492,7 +491,7 @@ static char *p_extrude[] = {
 };
 
 
-static char *p_grip[] = {
+static const char *p_grip[] = {
     "Enter X, Y, Z of center: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -504,7 +503,7 @@ static char *p_grip[] = {
 };
 
 
-static char *p_superell[] = {
+static const char *p_superell[] = {
     "Enter X, Y, Z of superellipse vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -522,7 +521,7 @@ static char *p_superell[] = {
 };
 
 
-static char *p_metaball[] = {
+static const char *p_metaball[] = {
     "Enter render method: ",
     "Enter threshold: ",
     "Enter number of points: ",
@@ -537,7 +536,7 @@ static char *p_metaball[] = {
 };
 
 
-static char *p_revolve[] = {
+static const char *p_revolve[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -552,7 +551,7 @@ static char *p_revolve[] = {
 };
 
 
-static char *p_pnts[] = {
+static const char *p_pnts[] = {
     /*00*/ "Are points in a file (yes/no)? ",
     /*01*/ "Enter number of points (-1 for auto): ",
     /*02*/ "Are the points orientated (yes/no)? ",
@@ -575,7 +574,7 @@ static char *p_pnts[] = {
 };
 
 
-static char *p_hrt[] = {
+static const char *p_hrt[] = {
     "Enter X, Y, Z of the heart vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -591,7 +590,7 @@ static char *p_hrt[] = {
     "Enter distance to cusps: "
 };
 
-static char *p_joint[] = {
+static const char *p_joint[] = {
     "Enter X, Y, Z of the joint location: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -606,7 +605,7 @@ static char *p_joint[] = {
     "Reference Path 2: "
 };
 
-static char *p_datum[] = {
+static const char *p_datum[] = {
     "Enter a datum type ([point|line|plane]): ",
     "Enter X, Y, Z for the datum point: ", /* 1 == point prompts */
     "Enter Y: ",
@@ -630,7 +629,7 @@ static char *p_datum[] = {
  * TODO:
  * Add support for the line,curve,beizer,nurb
  */
-static char *p_annot[] = {
+static const char *p_annot[] = {
     "Enter the point to be annotated: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -646,7 +645,7 @@ static char *p_annot[] = {
  * TODO:
  * add support
  */
-static char *p_script[] = {
+static const char *p_script[] = {
     "Enter the script type: "
 };
 
@@ -1015,7 +1014,7 @@ vol_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 
 
 static int
-bot_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt)
+bot_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, const char **prompt)
 {
     int i;
     int num_verts, num_faces;
@@ -1124,7 +1123,7 @@ bot_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
 
 
 static int
-arbn_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt)
+arbn_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, const char **prompt)
 {
     struct rt_arbn_internal *arbn;
     int num_planes=0;
@@ -1165,7 +1164,7 @@ arbn_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 
 
 static int
-pipe_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt)
+pipe_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, const char **prompt)
 {
     struct rt_pipe_internal *pipeip;
     int i, num_points;
@@ -1223,7 +1222,7 @@ pipe_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 
 
 static int
-ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt)
+ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, const char **prompt)
 {
     struct rt_ars_internal *arip;
     size_t i;
@@ -2434,7 +2433,7 @@ grip_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
  * 1 if unsuccessful read
  */
 static int
-superell_in(struct ged *gedp, char *cmd_argvs[], struct rt_db_internal *intern)
+superell_in(struct ged *gedp, const char *cmd_argvs[], struct rt_db_internal *intern)
 {
     fastf_t vals[14];
     int i, n;
@@ -2472,7 +2471,7 @@ superell_in(struct ged *gedp, char *cmd_argvs[], struct rt_db_internal *intern)
  * should be.
  */
 static int
-metaball_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt)
+metaball_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, const char **prompt)
 {
     struct rt_metaball_internal *metaball;
     static int i, num_points;
@@ -2551,7 +2550,7 @@ metaball_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal
 
 
 static int
-pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt)
+pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, const char **prompt)
 {
     unsigned long i;
     unsigned long numPoints;
@@ -2824,7 +2823,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
  * returns 1 if unsuccessful read
  */
 static int
-hrt_in(struct ged *gedp, char *cmd_argv[], struct rt_db_internal *intern)
+hrt_in(struct ged *gedp, const char *cmd_argv[], struct rt_db_internal *intern)
 {
     fastf_t vals[13];
     int i, n;
@@ -2859,7 +2858,7 @@ hrt_in(struct ged *gedp, char *cmd_argv[], struct rt_db_internal *intern)
  * returns 1 if unsuccessful read
  */
 static int
-joint_in(struct ged *gedp, char *cmd_argv[], struct rt_db_internal *intern)
+joint_in(struct ged *gedp, const char *cmd_argv[], struct rt_db_internal *intern)
 {
     fastf_t vals[10];
     int i, n;
@@ -2897,7 +2896,7 @@ joint_in(struct ged *gedp, char *cmd_argv[], struct rt_db_internal *intern)
  * 1 if unsuccessfully read
  */
 static int
-datum_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt)
+datum_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, const char **prompt)
 {
     struct rt_datum_internal *datums;
     struct rt_datum_internal *prev;
@@ -3108,7 +3107,7 @@ annot_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern
 
 
 static int
-script_in(struct ged *UNUSED(gedp), const char **cmd_argvs, struct rt_db_internal *intern, char *UNUSED(name))
+script_in(struct ged *UNUSED(gedp), const char **cmd_argvs, struct rt_db_internal *intern)
 {
     struct rt_script_internal *script_ip;
     int i=0;
@@ -3141,8 +3140,10 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
     struct directory *dp;
     char *name;
     struct rt_db_internal internal;
-    char **menu;
-    int nvals, (*fn_in)();
+    const char **menu;
+    int nvals;
+    int (*fn_in)(struct ged *, const char **, struct rt_db_internal *) = NULL;
+    int (*fn_in_2)(struct ged *, const char **, struct rt_db_internal *, const char *) = NULL;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -3270,7 +3271,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
     } else if (BU_STR_EQUAL(argv[2], "half")) {
 	nvals = 3*1 + 1;
 	menu = p_half;
-	fn_in = half_in;
+	fn_in_2 = half_in;
     } else if (bu_strncmp(argv[2], "arb", 3) == 0) {
 	int n = atoi(&argv[2][3]);
 
@@ -3287,7 +3288,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
     } else if (BU_STR_EQUAL(argv[2], "sph")) {
 	nvals = 3*1 + 1;
 	menu = p_sph;
-	fn_in = sph_in;
+	fn_in_2 = sph_in;
     } else if (BU_STR_EQUAL(argv[2], "ellg")) {
 	nvals = 3*2 + 1;
 	menu = p_ellg;
@@ -3332,11 +3333,11 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
     } else if (BU_STR_EQUAL(argv[2], "rpp")) {
 	nvals = 3*2;
 	menu = p_rpp;
-	fn_in = rpp_in;
+	fn_in_2 = rpp_in;
     } else if (BU_STR_EQUAL(argv[2], "orpp")) {
 	nvals = 3*1;
 	menu = p_orpp;
-	fn_in = orpp_in;
+	fn_in_2 = orpp_in;
     } else if (BU_STR_EQUAL(argv[2], "rpc")) {
 	nvals = 3*3 + 1;
 	menu = p_rpc;
@@ -3374,7 +3375,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	} else {
 	    nvals = 3;
 	    menu = p_binunif;
-	    fn_in = binunif_in;
+	    fn_in_2 = binunif_in;
 	}
     } else if (BU_STR_EQUAL(argv[2], "extrude")) {
 	nvals = 4*3 + 1;
@@ -3448,14 +3449,30 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	return GED_MORE;
     }
 
-    if (fn_in(gedp, argv, &internal, name) != 0) {
-	bu_vls_printf(gedp->ged_result_str, "%s: ERROR %s not made!\n", argv[0], argv[2]);
-	if (internal.idb_ptr) {
-	    /* a few input functions do not use the internal pointer
-	     * only free it, if it has been used
-	     */
-	    rt_db_free_internal(&internal);
+    if (fn_in) {
+	if (fn_in(gedp, argv, &internal) != 0) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: ERROR %s not made!\n", argv[0], argv[2]);
+	    if (internal.idb_ptr) {
+		/* a few input functions do not use the internal pointer
+		 * only free it, if it has been used
+		 */
+		rt_db_free_internal(&internal);
+	    }
+	    return GED_ERROR;
 	}
+    } else if (fn_in_2) {
+	if (fn_in_2(gedp, argv, &internal, name) != 0) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: ERROR %s not made!\n", argv[0], argv[2]);
+	    if (internal.idb_ptr) {
+		/* a few input functions do not use the internal pointer
+		 * only free it, if it has been used
+		 */
+		rt_db_free_internal(&internal);
+	    }
+	    return GED_ERROR;
+	}
+    } else {
+	bu_vls_printf(gedp->ged_result_str, "%s: ERROR %s not made!\n", argv[0], argv[2]);
 	return GED_ERROR;
     }
 
