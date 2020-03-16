@@ -77,6 +77,7 @@
  *                 Region name
  *                 Path name
  *                 Region ID
+ *                 TODO - Attributes?
  *
  *     OVERLAPS:   Match if all active criteria match.  If no criteria
  *                 are active, match.  Possible active criteria:
@@ -88,9 +89,36 @@
  */
 
 typedef enum {
-    NIRT_DIFF_TRANSITION,
-    NIRT_DIFF_SEGMENT
+    NIRT_DIFF_T_NODIFF = 0,
+    NIRT_DIFF_S_NODIFF,
+    NIRT_DIFF_IN,
+    NIRT_DIFF_OUT,
+    NIRT_DIFF_SEGMENT,
+    NIRT_DIFF_OVLP
 } ndiff_t;
+
+
+#define NIRT_DIFF_UNMATCHED       0x0
+#define NIRT_DIFF_OBLIQ           0x1
+#define NIRT_DIFF_REGNAME         0x2
+#define NIRT_DIFF_PATHNAME        0x4
+#define NIRT_DIFF_ID              0x8
+#define NIRT_DIFF_OVLP_SELECTED   0x16
+
+
+struct nirt_diff_event {
+    ndiff_t type;
+    unsigned long flags;
+    point_t transition_left;
+    point_t transition_right;
+    vect_t obliq_left;
+    vect_t obliq_right;
+    struct nirt_seg unmatched;
+    struct nirt_seg *left;
+    struct nirt_seg *right;
+};
+
+
 
 struct nirt_diff_instance {
     ndiff_t type;
@@ -114,7 +142,7 @@ struct nirt_diff_instance {
 
 struct nirt_diff_state;
 
-struct nirt_diff {
+struct nirt_diff_ray_state {
     point_t orig;
     vect_t dir;
     std::vector<struct nirt_seg> old_segs;
@@ -126,8 +154,10 @@ struct nirt_diff {
 struct nirt_diff_state {
 
     struct bu_vls diff_file = BU_VLS_INIT_ZERO;
-    struct nirt_diff *cdiff = NULL;
-    std::vector<struct nirt_diff> diffs;
+    struct nirt_diff_ray_state *cdiff = NULL;
+    std::vector<struct nirt_diff_ray_state> rays;
+
+    std::vector<struct nirt_diff_event> events;
     bool diff_ready = false;
 
     /* Reporting settings */
@@ -160,6 +190,114 @@ struct nirt_diff_state {
 
 
 void
+_nirt_segs_analyze(struct nirt_diff_state *nds)
+{
+    std::vector<struct nirt_diff_ray_state> &dfs = nds->rays;
+    for (size_t i = 0; i < dfs.size(); i++) {
+	struct nirt_diff_ray_state *rstate = &(dfs[i]);
+	double rdist, ldist;
+	double max_rdist, max_ldist;
+	size_t lind = 0;
+	size_t rind = 0;
+	struct nirt_seg *lseg = NULL;
+	struct nirt_seg *rseg = NULL;
+	point_t *transition_pt = NULL;
+	int transition_type = 0; // 0 = in, 1 = out
+	point_t *next_transition_pt = NULL;
+	int next_transition_type = 0; // 0 = in, 1 = out
+
+
+	lseg = (rstate->old_segs.size()) ? &(rstate->old_segs[rstate->old_segs.size() - 1]) : NULL;	
+	rseg = (rstate->new_segs.size()) ? &(rstate->new_segs[rstate->new_segs.size() - 1]) : NULL;	
+	if (!lseg && !rseg) {
+	    // No segments - nothing to do
+	    continue;
+	}
+	// Find the maximum distances from the origin point along the ray.
+	max_ldist = DIST_PNT_PNT_SQ(rstate->orig, lseg->in);
+	max_rdist = DIST_PNT_PNT_SQ(rstate->orig, rseg->in);
+	
+	// Start at the beginning
+	lseg = (rstate->old_segs.size()) ? &(rstate->old_segs[0]) : NULL;	
+	rseg = (rstate->new_segs.size()) ? &(rstate->new_segs[0]) : NULL;	
+
+	struct nirt_diff_event ev;
+	if (lseg && rseg) {
+	    ldist = DIST_PNT_PNT_SQ(rstate->orig, lseg->in);
+	    rdist = DIST_PNT_PNT_SQ(rstate->orig, rseg->in);
+	    transition_pt = (ldist < rdist) ? &lseg->in : &rseg->in;
+	    if (!NEAR_EQUAL(ldist, rdist, nds->dist_delta_tol)) {
+		ev.type = NIRT_DIFF_IN;
+		ev.flags = NIRT_DIFF_UNMATCHED;
+		if (ldist < rdist) {
+		    VMOVE(ev.transition_left, lseg->in);
+		    VSET(ev.transition_right, DBL_MAX, DBL_MAX, DBL_MAX);
+		    next_transition_pt = &rseg->in;
+		} else {
+		    VMOVE(ev.transition_right, rseg->in);
+		    VSET(ev.transition_left, DBL_MAX, DBL_MAX, DBL_MAX);
+		    next_transition_pt = &lseg->in;
+		}
+		next_transition_type = 0;
+	    } else {
+		ev.type = NIRT_DIFF_T_NODIFF;
+		VMOVE(ev.transition_left, lseg->in);
+		VMOVE(ev.transition_right, rseg->in);
+		next_transition_type = 0;
+	    }
+	} else {
+	    if (lseg) {
+		transition_pt = &lseg->in;
+		ev.type = NIRT_DIFF_IN;
+		ev.flags = NIRT_DIFF_UNMATCHED;
+		VMOVE(ev.transition_left, lseg->in);
+		VSET(ev.transition_right, DBL_MAX, DBL_MAX, DBL_MAX);
+
+	    } else {
+		transition_pt = &rseg->in;
+		ev.type = NIRT_DIFF_IN;
+		ev.flags = NIRT_DIFF_UNMATCHED;
+		VMOVE(ev.transition_right, rseg->in);
+		VSET(ev.transition_left, DBL_MAX, DBL_MAX, DBL_MAX);
+	    }
+	}
+	transition_type = 0;
+	nds->events.push_back(ev);
+
+	if (!next_transition_pt) bu_log("no next pt\n");
+
+	// Walk down the ray, examining what we find as we go.  Every transition
+	// and segment gets an event entry, characterizing the differences (or lack
+	// thereof) between the segments at that point.
+	//
+	// TODO - need to come up with a better organization for this... 
+	while (ldist < max_ldist || rdist < max_rdist) {
+
+	    if (rstate->old_segs.size() && (!lind || lind < rstate->old_segs.size())) {
+		lseg = &(rstate->old_segs[lind]);
+	    }
+	    if (rstate->new_segs.size() && (!rind || rind < rstate->old_segs.size())) {
+		rseg = &(rstate->new_segs[rind]);
+	    }
+
+	    if (lseg && rseg) {
+		if (DIST_PNT_PNT_SQ(*transition_pt, lseg->out) < DIST_PNT_PNT_SQ(*transition_pt, rseg->out)) {
+		    next_transition_pt = &lseg->in;
+		    next_transition_type = 0;
+		} else {
+		    next_transition_pt = &rseg->out;
+		    next_transition_type = 1;
+		} 
+	    }
+	}
+
+	bu_log("%d, %d\n", transition_type, next_transition_type);
+    }	
+}
+
+
+
+void
 _nirt_diff_create(struct nirt_state *nss)
 {
     nss->i->diff_state = new nirt_diff_state;
@@ -183,7 +321,7 @@ _nirt_diff_add_seg(struct nirt_state *nss, struct nirt_seg *nseg)
 }
 
 static bool
-_nirt_partition_diff(struct nirt_diff *ndiff, struct nirt_seg *left, struct nirt_seg *right)
+_nirt_partition_diff(struct nirt_diff_ray_state *ndiff, struct nirt_seg *left, struct nirt_seg *right)
 {
     int have_diff = 0;
     struct nirt_diff_instance sd;
@@ -219,7 +357,7 @@ _nirt_partition_diff(struct nirt_diff *ndiff, struct nirt_seg *left, struct nirt
 }
 
 static bool
-_nirt_overlap_diff(struct nirt_diff *ndiff, struct nirt_seg *left, struct nirt_seg *right)
+_nirt_overlap_diff(struct nirt_diff_ray_state *ndiff, struct nirt_seg *left, struct nirt_seg *right)
 {
     int have_diff = 0;
     struct nirt_diff_instance sd;
@@ -247,7 +385,7 @@ _nirt_overlap_diff(struct nirt_diff *ndiff, struct nirt_seg *left, struct nirt_s
 }
 
 static bool
-_nirt_gap_diff(struct nirt_diff *ndiff, struct nirt_seg *left, struct nirt_seg *right)
+_nirt_gap_diff(struct nirt_diff_ray_state *ndiff, struct nirt_seg *left, struct nirt_seg *right)
 {
     int have_diff = 0;
     struct nirt_diff_instance sd;
@@ -268,7 +406,7 @@ _nirt_gap_diff(struct nirt_diff *ndiff, struct nirt_seg *left, struct nirt_seg *
 }
 
 static bool
-_nirt_segs_diff(struct nirt_diff *ndiff, struct nirt_seg *left, struct nirt_seg *right)
+_nirt_segs_diff(struct nirt_diff_ray_state *ndiff, struct nirt_seg *left, struct nirt_seg *right)
 {
     if (!ndiff) return NULL;
     if (!left || !right || left->type != right->type) {
@@ -326,10 +464,10 @@ _nirt_diff_report(struct nirt_state *nss)
 
     struct nirt_diff_state *nds = nss->i->diff_state;
 
-    if (!nds || nds->diffs.size() == 0) return 0;
-    std::vector<struct nirt_diff> &dfs = nds->diffs;
+    if (!nds || nds->rays.size() == 0) return 0;
+    std::vector<struct nirt_diff_ray_state> &dfs = nds->rays;
     for (size_t i = 0; i < dfs.size(); i++) {
-	struct nirt_diff *d = &(dfs[i]);
+	struct nirt_diff_ray_state *d = &(dfs[i]);
 	// Calculate diffs according to settings.  TODO - need to be more sophisticated about this - if a
 	// segment is "missing" but the rays otherwise match, don't propagate the "offset" and report all
 	// of the subsequent segments as different...
@@ -480,7 +618,7 @@ parse_ray(struct nirt_diff_state *nds, std::string &line)
     // we can take older diff.nrt files and use them in newer code while
     // preserving the ability to adjust the format if we need/want to.
 
-    struct nirt_diff df;
+    struct nirt_diff_ray_state df;
     df.nds = nds;
 
     std::regex ray_regex("RAY,([0-9]+),(.*)");
@@ -510,8 +648,8 @@ parse_ray(struct nirt_diff_state *nds, std::string &line)
 	bu_log("origin   : %0.17f, %0.17f, %0.17f\n", V3ARGS(df.orig));
 	bu_log("direction: %0.17f, %0.17f, %0.17f\n", V3ARGS(df.dir));
 #endif
-	nds->diffs.push_back(df);
-	nds->cdiff = &(nds->diffs[nds->diffs.size() - 1]);
+	nds->rays.push_back(df);
+	nds->cdiff = &(nds->rays[nds->rays.size() - 1]);
 	return true;
     }
 
@@ -756,7 +894,7 @@ _nirt_diff_cmd_clear(void *ndsv, int argc, const char **argv)
 
     argv++; argc--;
 
-    nds->diffs.clear();
+    nds->rays.clear();
     nds->diff_ready = false;
     nds->cdiff = NULL;
     bu_vls_trunc(&nds->diff_file, 0);
@@ -905,10 +1043,13 @@ _nirt_diff_cmd_run(void *ndsv, int argc, const char **argv)
 
     argv++; argc--;
 
-    // TODO - clear any preexisting new_segs in case this is a repeated run
+    // Clear any preexisting new_segs in case this is a repeated run
+    for (unsigned int i = 0; i < nds->rays.size(); i++) {
+	nds->rays[i].new_segs.clear();
+    }
 
-    for (unsigned int i = 0; i < nds->diffs.size(); i++) {
-	nds->cdiff = &(nds->diffs[i]);
+    for (unsigned int i = 0; i < nds->rays.size(); i++) {
+	nds->cdiff = &(nds->rays[i]);
 	VMOVE(nss->i->vals->dir,  nds->cdiff->dir);
 	VMOVE(nss->i->vals->orig, nds->cdiff->orig);
 	_nirt_targ2grid(nss);
@@ -921,6 +1062,10 @@ _nirt_diff_cmd_run(void *ndsv, int argc, const char **argv)
 	_nirt_init_ovlp(nss);
 	(void)rt_shootray(nss->i->ap);
     }
+
+    // Analyze the new partition set
+    //_nirt_segs_analyze(nds);
+
     nds->diff_ready = true;
     return 0;
 }
