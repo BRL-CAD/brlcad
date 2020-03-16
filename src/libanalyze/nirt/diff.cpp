@@ -89,25 +89,71 @@
  */
 
 typedef enum {
-    NIRT_DIFF_T_NODIFF = 0,
-    NIRT_DIFF_S_NODIFF,
-    NIRT_DIFF_IN,
-    NIRT_DIFF_OUT,
-    NIRT_DIFF_SEGMENT,
-    NIRT_DIFF_OVLP
-} ndiff_t;
+    NIRT_PNT_BOTH = 0,
+    NIRT_PNT_LEFT_ONLY,
+    NIRT_PNT_RIGHT_ONLY
+} n_pnt_origin_t;
 
+typedef enum {
+    NIRT_PNT_IN = 0,
+    NIRT_PNT_OUT
+} n_pnt_transition_t;
 
-#define NIRT_DIFF_UNMATCHED       0x0
-#define NIRT_DIFF_OBLIQ           0x1
-#define NIRT_DIFF_REGNAME         0x2
-#define NIRT_DIFF_PATHNAME        0x4
-#define NIRT_DIFF_ID              0x8
-#define NIRT_DIFF_OVLP_SELECTED   0x16
+typedef enum {
+    NIRT_SEG_BOTH = 0,
+    NIRT_SEG_LEFT_ONLY,
+    NIRT_SEG_RIGHT_ONLY
+} n_seg_origin_t;
 
+typedef enum {
+    NIRT_SEG_HIT = 0,
+    NIRT_SEG_OVLP
+} n_seg_t;
+
+#define NIRT_DIFF_PNT_OBLIQ           0x1
+
+#define NIRT_DIFF_OVLPS               0x1
+#define NIRT_DIFF_SEG_REGNAME         0x2
+#define NIRT_DIFF_SEG_PATHNAME        0x4
+#define NIRT_DIFF_SEG_ID              0x8
+#define NIRT_DIFF_SEG_OVLP_SELECTED   0x16
+
+struct nirt_diff_transition {
+    n_pnt_origin_t origin;
+    n_pnt_transition_t type;
+    unsigned long flags;
+    point_t transition_left;
+    point_t transition_right;
+    vect_t obliq_left;
+    vect_t obliq_right;
+};
+
+struct nirt_diff_segment {
+    n_seg_origin_t origin;
+    n_seg_t type;
+    unsigned long flags;
+    struct nirt_seg *left;
+    struct nirt_seg *right;
+    struct nirt_diff_transition *start;
+    struct nirt_diff_transition *end;
+};
+
+#if 0
+struct nirt_diff_transitition
+_nirt_next_transition(struct nirt_diff_ray_state *nr, struct nirt_diff_transition *ct)
+{
+}
+
+// 1.  find first transition nt (ct == NULL);
+// 2.  ct = nt;
+// 3.  find next transition nt, insert into sequence;
+// 4.  if nt != NULL construct segment from ct and nt;
+// 5.  repeat 2 - 4 until nt == NULL;
+
+#endif
 
 struct nirt_diff_event {
-    ndiff_t type;
+    n_pnt_origin_t type;
     unsigned long flags;
     point_t transition_left;
     point_t transition_right;
@@ -121,7 +167,7 @@ struct nirt_diff_event {
 
 
 struct nirt_diff_instance {
-    ndiff_t type;
+    n_pnt_origin_t type;
     point_t *left_pt;
     point_t *right_pt;
     struct nirt_seg *left;
@@ -227,8 +273,7 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 	    rdist = DIST_PNT_PNT_SQ(rstate->orig, rseg->in);
 	    transition_pt = (ldist < rdist) ? &lseg->in : &rseg->in;
 	    if (!NEAR_EQUAL(ldist, rdist, nds->dist_delta_tol)) {
-		ev.type = NIRT_DIFF_IN;
-		ev.flags = NIRT_DIFF_UNMATCHED;
+		ev.type = NIRT_PNT_BOTH;
 		if (ldist < rdist) {
 		    VMOVE(ev.transition_left, lseg->in);
 		    VSET(ev.transition_right, DBL_MAX, DBL_MAX, DBL_MAX);
@@ -240,7 +285,7 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 		}
 		next_transition_type = 0;
 	    } else {
-		ev.type = NIRT_DIFF_T_NODIFF;
+		ev.type = NIRT_PNT_BOTH;
 		VMOVE(ev.transition_left, lseg->in);
 		VMOVE(ev.transition_right, rseg->in);
 		next_transition_type = 0;
@@ -248,15 +293,13 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 	} else {
 	    if (lseg) {
 		transition_pt = &lseg->in;
-		ev.type = NIRT_DIFF_IN;
-		ev.flags = NIRT_DIFF_UNMATCHED;
+		ev.type = NIRT_PNT_LEFT_ONLY;
 		VMOVE(ev.transition_left, lseg->in);
 		VSET(ev.transition_right, DBL_MAX, DBL_MAX, DBL_MAX);
 
 	    } else {
 		transition_pt = &rseg->in;
-		ev.type = NIRT_DIFF_IN;
-		ev.flags = NIRT_DIFF_UNMATCHED;
+		ev.type = NIRT_PNT_RIGHT_ONLY;
 		VMOVE(ev.transition_right, rseg->in);
 		VSET(ev.transition_left, DBL_MAX, DBL_MAX, DBL_MAX);
 	    }
