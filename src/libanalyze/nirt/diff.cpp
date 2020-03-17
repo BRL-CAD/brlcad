@@ -410,16 +410,26 @@ _nirt_next_transition(struct nirt_diff_transition &nt, struct nirt_diff_ray_stat
 void
 _nirt_segs_analyze(struct nirt_diff_state *nds)
 {
+    std::map<n_pnt_origin_t, std::string> postr;
+    postr[NIRT_PNT_BOTH] = "NRT_PNT_BOTH";
+    postr[NIRT_PNT_LEFT_ONLY] = "NRT_PNT_LEFT_ONLY";
+    postr[NIRT_PNT_RIGHT_ONLY] = "NRT_PNT_RIGHT_ONLY";
+    std::map<n_pnt_transition_t, std::string> ptstr;
+    ptstr[NIRT_PNT_MULTI] = "NIRT_PNT_MULTI";
+    ptstr[NIRT_PNT_IN] = "NIRT_PNT_IN";
+    ptstr[NIRT_PNT_OUT] = "NIRT_PNT_OUT";
+
     std::vector<struct nirt_diff_ray_state> &dfs = nds->rays;
     for (size_t i = 0; i < dfs.size(); i++) {
 	struct nirt_diff_ray_state *rstate = &(dfs[i]);
 	struct nirt_diff_transition pt;
 	bool ht = _nirt_next_transition(pt, rstate, NULL);
+	bu_log("found transition: (%s, %s) L: %f %f %f R: %f %f %f\n", postr[pt.origin].c_str(), ptstr[pt.type].c_str(), V3ARGS(pt.transition_left), V3ARGS(pt.transition_right));
 	while (ht) {
 	    struct nirt_diff_transition nt;
 	    ht = _nirt_next_transition(nt, rstate, &pt);
 	    if (ht) {
-		bu_log("found transition\n");
+		bu_log("found transition: (%s, %s) L: %f %f %f R: %f %f %f\n", postr[nt.origin].c_str(), ptstr[nt.type].c_str(), V3ARGS(nt.transition_left), V3ARGS(nt.transition_right));
 		pt = nt;
 	    }
 	}
