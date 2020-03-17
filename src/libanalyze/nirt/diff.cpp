@@ -277,19 +277,22 @@ _nirt_next_transition(struct nirt_diff_transition &nt, struct nirt_diff_ray_stat
 	double dists[4];
 	n_pnt_transition_t types[4] = {NIRT_PNT_IN, NIRT_PNT_OUT, NIRT_PNT_IN, NIRT_PNT_OUT};
 	double min_dist = DBL_MAX;
-	if (lcurr->type == NIRT_PARTITION_SEG) {
+	if (lcurr->type == NIRT_OVERLAP_SEG) {
+	    bu_log("overlap\n");
+	}
+	if (lcurr->type == NIRT_PARTITION_SEG || lcurr->type == NIRT_OVERLAP_SEG) {
 	    dists[0] = (lcurr) ? DIST_PNT_PNT_SQ(nr->orig, lcurr->in)  : DBL_MAX;
 	    dists[1] = (lcurr) ? DIST_PNT_PNT_SQ(nr->orig, lcurr->out) : DBL_MAX;
 	}
-	if (lcurr->type == NIRT_GAP_SEG) {
+	if (rcurr->type == NIRT_GAP_SEG || rcurr->type == NIRT_MISS_SEG) {
 	    dists[0] = DBL_MAX;
 	    dists[1] = DBL_MAX;
 	}
-	if (rcurr->type == NIRT_PARTITION_SEG) {
+	if (lcurr->type == NIRT_PARTITION_SEG || lcurr->type == NIRT_OVERLAP_SEG) {
 	    dists[2] = (rcurr) ? DIST_PNT_PNT_SQ(nr->orig, rcurr->in)  : DBL_MAX;
 	    dists[3] = (rcurr) ? DIST_PNT_PNT_SQ(nr->orig, rcurr->out) : DBL_MAX;
 	}
-	if (rcurr->type == NIRT_GAP_SEG) {
+	if (rcurr->type == NIRT_GAP_SEG || rcurr->type == NIRT_MISS_SEG) {
 	    dists[2] = DBL_MAX;
 	    dists[3] = DBL_MAX;
 	}
@@ -430,20 +433,49 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
     ptstr[NIRT_PNT_MULTI] = "NIRT_PNT_MULTI";
     ptstr[NIRT_PNT_IN] = "NIRT_PNT_IN";
     ptstr[NIRT_PNT_OUT] = "NIRT_PNT_OUT";
+    std::map<int, std::string> stype;
+    stype[NIRT_MISS_SEG] = "NIRT_MISS_SEG";
+    stype[NIRT_PARTITION_SEG] = "NIRT_PARTITION_SEG";
+    stype[NIRT_OVERLAP_SEG] = "NIRT_OVERLAP_SEG";
+    stype[NIRT_GAP_SEG] = "NIRT_GAP_SEG";
 
     std::vector<struct nirt_diff_ray_state> &dfs = nds->rays;
     for (size_t i = 0; i < dfs.size(); i++) {
 	struct nirt_diff_ray_state *rstate = &(dfs[i]);
 	struct nirt_diff_transition pt;
 	bool ht = _nirt_next_transition(pt, rstate, NULL);
+	long lcurr_ind = rstate->lcurr;
+	long rcurr_ind = rstate->rcurr;
 	bu_log("found transition: (%s, %s) L: %f %f %f R: %f %f %f\n", postr[pt.origin].c_str(), ptstr[pt.type].c_str(), V3ARGS(pt.transition_left), V3ARGS(pt.transition_right));
 	while (ht) {
+
 	    struct nirt_diff_transition nt;
 	    ht = _nirt_next_transition(nt, rstate, &pt);
 	    if (ht) {
 		bu_log("found transition: (%s, %s) L: %f %f %f R: %f %f %f\n", postr[nt.origin].c_str(), ptstr[nt.type].c_str(), V3ARGS(nt.transition_left), V3ARGS(nt.transition_right));
-		pt = nt;
 	    }
+
+	    while (lcurr_ind != -1 && (!lcurr_ind || lcurr_ind < rstate->lcurr)) {
+		struct nirt_seg *lcurr = (lcurr_ind >= 0) ? &rstate->old_segs[lcurr_ind] : NULL;
+		if (lcurr) {
+		    bu_log("left seg(%s) %.15f %.15f %.15f -> %.15f %.15f %.15f\n", stype[lcurr->type].c_str(), V3ARGS(pt.transition_left), V3ARGS(nt.transition_left));
+		}
+		lcurr_ind++;
+	    }
+
+	    while (rcurr_ind != -1 && (!rcurr_ind || rcurr_ind < rstate->rcurr)) {
+		struct nirt_seg *rcurr = (rcurr_ind >= 0) ? &rstate->new_segs[rcurr_ind] : NULL;
+		if (rcurr) {
+		    bu_log("right seg(%s) %.15f %.15f %.15f -> %.15f %.15f %.15f\n", stype[rcurr->type].c_str(), V3ARGS(pt.transition_right), V3ARGS(nt.transition_right));
+		}
+		rcurr_ind++;
+	    }
+
+	    if (ht) {
+		pt = nt;
+
+	    }
+
 	}
     }
 }
