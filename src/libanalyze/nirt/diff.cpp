@@ -242,11 +242,11 @@ _nirt_next_transition(struct nirt_diff_transition &nt, struct nirt_diff_ray_stat
 	if (nr->lcurr < 0 && nr->rcurr < 0) {
 	    return false;
 	}
-	lcurr = (nr->lcurr > 0) ? &nr->old_segs[nr->lcurr] : NULL;
-	rcurr = (nr->rcurr > 0) ? &nr->new_segs[nr->rcurr] : NULL;
+	lcurr = (nr->lcurr >= 0) ? &nr->old_segs[nr->lcurr] : NULL;
+	rcurr = (nr->rcurr >= 0) ? &nr->new_segs[nr->rcurr] : NULL;
 	nt.type = NIRT_PNT_IN;
-	ldist = (nr->lcurr > 0) ? DIST_PNT_PNT_SQ(nr->orig, lcurr->in) : DBL_MAX;
-	rdist = (nr->rcurr > 0) ? DIST_PNT_PNT_SQ(nr->orig, rcurr->in) : DBL_MAX;
+	ldist = (nr->lcurr >= 0) ? DIST_PNT_PNT_SQ(nr->orig, lcurr->in) : DBL_MAX;
+	rdist = (nr->rcurr >= 0) ? DIST_PNT_PNT_SQ(nr->orig, rcurr->in) : DBL_MAX;
 	if (NEAR_EQUAL(ldist, rdist, nr->nds->dist_delta_tol)) {
 	    nt.origin = NIRT_PNT_BOTH;
 	    VMOVE(nt.transition_left, lcurr->in);
@@ -268,8 +268,8 @@ _nirt_next_transition(struct nirt_diff_transition &nt, struct nirt_diff_ray_stat
     }
 
     // We are on a point - need to find the next point further from the origin (on either or both segment sets)
-    lcurr = (nr->lcurr > 0) ? &nr->old_segs[nr->lcurr] : NULL;
-    rcurr = (nr->rcurr > 0) ? &nr->new_segs[nr->rcurr] : NULL;
+    lcurr = (nr->lcurr >= 0) ? &nr->old_segs[nr->lcurr] : NULL;
+    rcurr = (nr->rcurr >= 0) ? &nr->new_segs[nr->rcurr] : NULL;
     double cdist = (ct->origin != NIRT_PNT_RIGHT_ONLY) ? DIST_PNT_PNT_SQ(nr->orig, ct->transition_left) :  DIST_PNT_PNT_SQ(nr->orig, ct->transition_right);
     int ncase = -1;
     bool pnt_active[4] = {false, false, false, false};
@@ -282,8 +282,8 @@ _nirt_next_transition(struct nirt_diff_transition &nt, struct nirt_diff_ray_stat
 	dists[2] = (rcurr) ? DIST_PNT_PNT_SQ(nr->orig, rcurr->in)  : DBL_MAX;
 	dists[3] = (rcurr) ? DIST_PNT_PNT_SQ(nr->orig, rcurr->out) : DBL_MAX;
 	for (int i = 0; i < 4; i++) {
-	    if (NEAR_EQUAL(dists[i], cdist, nr->nds->dist_delta_tol) && types[i] == ct->type) {
-		// Don't repeat an identical point (within tolerance) of the same type
+	    if (dists[i] < cdist || (NEAR_EQUAL(dists[i], cdist, nr->nds->dist_delta_tol) && types[i] == ct->type)) {
+		// Don't repeat old points or an identical point (within tolerance) of the same type
 	       	continue;
 	    }
 	    if (!(dists[i] < DBL_MAX)) {
@@ -297,12 +297,12 @@ _nirt_next_transition(struct nirt_diff_transition &nt, struct nirt_diff_ray_stat
 	}
 	if (ncase < 0) {
 	    // We didn't find anything in either current segment - increment the segments
-	    nr->lcurr = (nr->lcurr > 0) ? nr->lcurr + 1 : -1;
-	    nr->rcurr = (nr->rcurr > 0) ? nr->rcurr + 1 : -1;
+	    nr->lcurr = (nr->lcurr >= 0) ? nr->lcurr + 1 : -1;
+	    nr->rcurr = (nr->rcurr >= 0) ? nr->rcurr + 1 : -1;
 	    nr->lcurr = (nr->lcurr >= (long)nr->old_segs.size()) ? -1 : nr->lcurr;
 	    nr->rcurr = (nr->rcurr >= (long)nr->new_segs.size()) ? -1 : nr->rcurr;
-	    lcurr = (nr->lcurr > 0) ? &nr->old_segs[nr->lcurr] : NULL;
-	    rcurr = (nr->rcurr > 0) ? &nr->new_segs[nr->rcurr] : NULL;
+	    lcurr = (nr->lcurr >= 0) ? &nr->old_segs[nr->lcurr] : NULL;
+	    rcurr = (nr->rcurr >= 0) ? &nr->new_segs[nr->rcurr] : NULL;
 	    if (!lcurr && !rcurr) {
 		// End of the segments
 		break;
@@ -318,7 +318,7 @@ _nirt_next_transition(struct nirt_diff_transition &nt, struct nirt_diff_ray_stat
 		nt.type = NIRT_PNT_IN;
 	    }
 	    if (pnt_active[1] || pnt_active[3]) {
-		nt.type = NIRT_PNT_IN;
+		nt.type = NIRT_PNT_OUT;
 	    }
 	    if ((pnt_active[0] || pnt_active[2]) && (pnt_active[1] || pnt_active[3])) {
 		nt.type = NIRT_PNT_MULTI;
@@ -416,8 +416,12 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 	struct nirt_diff_transition pt;
 	bool ht = _nirt_next_transition(pt, rstate, NULL);
 	while (ht) {
-	    struct nirt_diff_transition nt = pt;
-	    ht = _nirt_next_transition(nt, rstate, NULL);
+	    struct nirt_diff_transition nt;
+	    ht = _nirt_next_transition(nt, rstate, &pt);
+	    if (ht) {
+		bu_log("found transition\n");
+		pt = nt;
+	    }
 	}
     }
 }
