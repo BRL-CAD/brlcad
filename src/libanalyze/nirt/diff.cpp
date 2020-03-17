@@ -277,10 +277,22 @@ _nirt_next_transition(struct nirt_diff_transition &nt, struct nirt_diff_ray_stat
 	double dists[4];
 	n_pnt_transition_t types[4] = {NIRT_PNT_IN, NIRT_PNT_OUT, NIRT_PNT_IN, NIRT_PNT_OUT};
 	double min_dist = DBL_MAX;
-	dists[0] = (lcurr) ? DIST_PNT_PNT_SQ(nr->orig, lcurr->in)  : DBL_MAX;
-	dists[1] = (lcurr) ? DIST_PNT_PNT_SQ(nr->orig, lcurr->out) : DBL_MAX;
-	dists[2] = (rcurr) ? DIST_PNT_PNT_SQ(nr->orig, rcurr->in)  : DBL_MAX;
-	dists[3] = (rcurr) ? DIST_PNT_PNT_SQ(nr->orig, rcurr->out) : DBL_MAX;
+	if (lcurr->type == NIRT_PARTITION_SEG) {
+	    dists[0] = (lcurr) ? DIST_PNT_PNT_SQ(nr->orig, lcurr->in)  : DBL_MAX;
+	    dists[1] = (lcurr) ? DIST_PNT_PNT_SQ(nr->orig, lcurr->out) : DBL_MAX;
+	}
+	if (lcurr->type == NIRT_GAP_SEG) {
+	    dists[0] = DBL_MAX;
+	    dists[1] = DBL_MAX;
+	}
+	if (rcurr->type == NIRT_PARTITION_SEG) {
+	    dists[2] = (rcurr) ? DIST_PNT_PNT_SQ(nr->orig, rcurr->in)  : DBL_MAX;
+	    dists[3] = (rcurr) ? DIST_PNT_PNT_SQ(nr->orig, rcurr->out) : DBL_MAX;
+	}
+	if (rcurr->type == NIRT_GAP_SEG) {
+	    dists[2] = DBL_MAX;
+	    dists[3] = DBL_MAX;
+	}
 	for (int i = 0; i < 4; i++) {
 	    if (dists[i] < cdist || (NEAR_EQUAL(dists[i], cdist, nr->nds->dist_delta_tol) && types[i] == ct->type)) {
 		// Don't repeat old points or an identical point (within tolerance) of the same type
