@@ -407,108 +407,18 @@ _nirt_next_transition(struct nirt_diff_transition &nt, struct nirt_diff_ray_stat
 // 4.  if nt != NULL construct segment from ct and nt;
 // 5.  repeat 2 - 4 until nt == NULL;
 
-
 void
 _nirt_segs_analyze(struct nirt_diff_state *nds)
 {
     std::vector<struct nirt_diff_ray_state> &dfs = nds->rays;
     for (size_t i = 0; i < dfs.size(); i++) {
 	struct nirt_diff_ray_state *rstate = &(dfs[i]);
-	double rdist = 0.0;
-	double ldist = 0.0;
-	double max_rdist, max_ldist;
-	size_t lind = 0;
-	size_t rind = 0;
-	struct nirt_seg *lseg = NULL;
-	struct nirt_seg *rseg = NULL;
-	point_t *transition_pt = NULL;
-	int transition_type = 0; // 0 = in, 1 = out
-	point_t *next_transition_pt = NULL;
-	int next_transition_type = 0; // 0 = in, 1 = out
-
-
-	lseg = (rstate->old_segs.size()) ? &(rstate->old_segs[rstate->old_segs.size() - 1]) : NULL;
-	rseg = (rstate->new_segs.size()) ? &(rstate->new_segs[rstate->new_segs.size() - 1]) : NULL;
-	if (!lseg && !rseg) {
-	    // No segments - nothing to do
-	    continue;
+	struct nirt_diff_transition pt;
+	bool ht = _nirt_next_transition(pt, rstate, NULL);
+	while (ht) {
+	    struct nirt_diff_transition nt = pt;
+	    ht = _nirt_next_transition(nt, rstate, NULL);
 	}
-	// Find the maximum distances from the origin point along the ray.
-	max_ldist = DIST_PNT_PNT_SQ(rstate->orig, lseg->in);
-	max_rdist = DIST_PNT_PNT_SQ(rstate->orig, rseg->in);
-
-	// Start at the beginning
-	lseg = (rstate->old_segs.size()) ? &(rstate->old_segs[0]) : NULL;
-	rseg = (rstate->new_segs.size()) ? &(rstate->new_segs[0]) : NULL;
-
-	struct nirt_diff_event ev;
-	if (lseg && rseg) {
-	    ldist = DIST_PNT_PNT_SQ(rstate->orig, lseg->in);
-	    rdist = DIST_PNT_PNT_SQ(rstate->orig, rseg->in);
-	    transition_pt = (ldist < rdist) ? &lseg->in : &rseg->in;
-	    if (!NEAR_EQUAL(ldist, rdist, nds->dist_delta_tol)) {
-		ev.type = NIRT_PNT_BOTH;
-		if (ldist < rdist) {
-		    VMOVE(ev.transition_left, lseg->in);
-		    VSET(ev.transition_right, DBL_MAX, DBL_MAX, DBL_MAX);
-		    next_transition_pt = &rseg->in;
-		} else {
-		    VMOVE(ev.transition_right, rseg->in);
-		    VSET(ev.transition_left, DBL_MAX, DBL_MAX, DBL_MAX);
-		    next_transition_pt = &lseg->in;
-		}
-		next_transition_type = 0;
-	    } else {
-		ev.type = NIRT_PNT_BOTH;
-		VMOVE(ev.transition_left, lseg->in);
-		VMOVE(ev.transition_right, rseg->in);
-		next_transition_type = 0;
-	    }
-	} else {
-	    if (lseg) {
-		transition_pt = &lseg->in;
-		ev.type = NIRT_PNT_LEFT_ONLY;
-		VMOVE(ev.transition_left, lseg->in);
-		VSET(ev.transition_right, DBL_MAX, DBL_MAX, DBL_MAX);
-
-	    } else {
-		transition_pt = &rseg->in;
-		ev.type = NIRT_PNT_RIGHT_ONLY;
-		VMOVE(ev.transition_right, rseg->in);
-		VSET(ev.transition_left, DBL_MAX, DBL_MAX, DBL_MAX);
-	    }
-	}
-	transition_type = 0;
-	nds->events.push_back(ev);
-
-	if (!next_transition_pt) bu_log("no next pt\n");
-
-	// Walk down the ray, examining what we find as we go.  Every transition
-	// and segment gets an event entry, characterizing the differences (or lack
-	// thereof) between the segments at that point.
-	//
-	// TODO - need to come up with a better organization for this...
-	while (ldist < max_ldist || rdist < max_rdist) {
-
-	    if (rstate->old_segs.size() && (!lind || lind < rstate->old_segs.size())) {
-		lseg = &(rstate->old_segs[lind]);
-	    }
-	    if (rstate->new_segs.size() && (!rind || rind < rstate->old_segs.size())) {
-		rseg = &(rstate->new_segs[rind]);
-	    }
-
-	    if (lseg && rseg) {
-		if (DIST_PNT_PNT_SQ(*transition_pt, lseg->out) < DIST_PNT_PNT_SQ(*transition_pt, rseg->out)) {
-		    next_transition_pt = &lseg->in;
-		    next_transition_type = 0;
-		} else {
-		    next_transition_pt = &rseg->out;
-		    next_transition_type = 1;
-		}
-	    }
-	}
-
-	bu_log("%d, %d\n", transition_type, next_transition_type);
     }
 }
 
@@ -855,14 +765,14 @@ static bool
 parse_ray(struct nirt_diff_state *nds, std::string &line)
 {
     // First up, find out what formatting version we need to deal with.
-    // This is done so that as long as the RAY, #, prefix is respected,
+    // This is done so that as long as the RAY,#, prefix is respected,
     // we can take older diff.nrt files and use them in newer code while
     // preserving the ability to adjust the format if we need/want to.
 
     struct nirt_diff_ray_state df;
     df.nds = nds;
 
-    std::regex ray_regex("RAY, ([0-9]+), (.*)");
+    std::regex ray_regex("RAY,([0-9]+),(.*)");
 
     std::smatch s1;
     if (!std::regex_search(line, s1, ray_regex)) {
@@ -902,7 +812,7 @@ parse_ray(struct nirt_diff_state *nds, std::string &line)
 static bool
 parse_hit(struct nirt_diff_state *nds, std::string &line)
 {
-    std::regex hit_regex("HIT, ([0-9]+), (.*)");
+    std::regex hit_regex("HIT,([0-9]+),(.*)");
 
     std::smatch s1;
     if (!std::regex_search(line, s1, hit_regex)) {
@@ -971,7 +881,7 @@ parse_hit(struct nirt_diff_state *nds, std::string &line)
 static bool
 parse_gap(struct nirt_diff_state *nds, std::string &line)
 {
-    std::regex gap_regex("GAP, ([0-9]+), (.*)");
+    std::regex gap_regex("GAP,([0-9]+),(.*)");
 
     std::smatch s1;
     if (!std::regex_search(line, s1, gap_regex)) {
@@ -1019,7 +929,7 @@ parse_gap(struct nirt_diff_state *nds, std::string &line)
 static bool
 parse_miss(struct nirt_diff_state *nds, std::string &line)
 {
-    std::regex miss_regex("MISS, ([0-9]+), (.*)");
+    std::regex miss_regex("MISS,([0-9]+),(.*)");
 
     std::smatch s1;
     if (!std::regex_search(line, s1, miss_regex)) {
@@ -1054,7 +964,7 @@ parse_miss(struct nirt_diff_state *nds, std::string &line)
 static bool
 parse_overlap(struct nirt_diff_state *nds, std::string &line)
 {
-    std::regex overlap_regex("OVERLAP, ([0-9]+), (.*)");
+    std::regex overlap_regex("OVERLAP,([0-9]+),(.*)");
 
     std::smatch s1;
     if (!std::regex_search(line, s1, overlap_regex)) {
@@ -1209,11 +1119,11 @@ _nirt_diff_cmd_load(void *ndsv, int argc, const char **argv)
 
 	/* not a comment - has to be a valid type, or it's an error */
 	int ltype = -1;
-	ltype = (ltype < 0 && !line.compare(0, 4, "RAY, ")) ? 0 : ltype;
-	ltype = (ltype < 0 && !line.compare(0, 4, "HIT, ")) ? 1 : ltype;
-	ltype = (ltype < 0 && !line.compare(0, 4, "GAP, ")) ? 2 : ltype;
-	ltype = (ltype < 0 && !line.compare(0, 5, "MISS, ")) ? 3 : ltype;
-	ltype = (ltype < 0 && !line.compare(0, 8, "OVERLAP, ")) ? 4 : ltype;
+	ltype = (ltype < 0 && !line.compare(0, 4, "RAY,")) ? 0 : ltype;
+	ltype = (ltype < 0 && !line.compare(0, 4, "HIT,")) ? 1 : ltype;
+	ltype = (ltype < 0 && !line.compare(0, 4, "GAP,")) ? 2 : ltype;
+	ltype = (ltype < 0 && !line.compare(0, 5, "MISS,")) ? 3 : ltype;
+	ltype = (ltype < 0 && !line.compare(0, 8, "OVERLAP,")) ? 4 : ltype;
 	if (ltype < 0) {
 	    nerr(nss, "Error processing diff file, line \"%s\"!\nUnknown line type\n", line.c_str());
 	    return -1;
@@ -1313,7 +1223,7 @@ _nirt_diff_cmd_run(void *ndsv, int argc, const char **argv)
     }
 
     // Analyze the new partition set
-    //_nirt_segs_analyze(nds);
+    _nirt_segs_analyze(nds);
 
     nds->diff_ready = true;
     return 0;
