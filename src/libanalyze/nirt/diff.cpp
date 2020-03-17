@@ -282,9 +282,6 @@ _nirt_next_transition(struct nirt_diff_transition &nt, struct nirt_diff_ray_stat
 	double dists[4];
 	n_pnt_transition_t types[4] = {NIRT_PNT_IN, NIRT_PNT_OUT, NIRT_PNT_IN, NIRT_PNT_OUT};
 	nt.dist = DBL_MAX;
-	if (lcurr->type == NIRT_OVERLAP_SEG) {
-	    bu_log("overlap\n");
-	}
 	if (lcurr->type == NIRT_PARTITION_SEG || lcurr->type == NIRT_OVERLAP_SEG) {
 	    dists[0] = (lcurr) ? DIST_PNT_PNT_SQ(nr->orig, lcurr->in)  : DBL_MAX;
 	    dists[1] = (lcurr) ? DIST_PNT_PNT_SQ(nr->orig, lcurr->out) : DBL_MAX;
@@ -469,7 +466,7 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 	    if ((pt.origin == NIRT_PNT_BOTH || pt.origin == NIRT_PNT_LEFT_ONLY) && (nt.origin == NIRT_PNT_BOTH  || nt.origin == NIRT_PNT_LEFT_ONLY)) {
 		double tdist_lin = DIST_PNT_PNT_SQ(rstate->orig, pt.transition_left);
 		double tdist_lout = DIST_PNT_PNT_SQ(rstate->orig, nt.transition_left);
-		bu_log("tdist_lin: %15f, tdist_lout: %15f\n", tdist_lin, tdist_lout);
+		bu_log("\ttdist_lin: %15f, tdist_lout: %15f\n", tdist_lin, tdist_lout);
 		for (size_t j = start_lind; j < rstate->old_segs.size(); j++) {
 		    struct nirt_seg *lcurr = &rstate->old_segs[j];
 		    double ldist_in = DIST_PNT_PNT_SQ(rstate->orig, lcurr->in);
@@ -486,7 +483,7 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 
 		    bool l1 = (ldist_in > tdist_lin || (NEAR_EQUAL(ldist_in, tdist_lin, rstate->nds->dist_delta_tol)));
 		    bool l2 = (ldist_out > tdist_lout || (NEAR_EQUAL(ldist_out, tdist_lout, rstate->nds->dist_delta_tol)));
-		    bu_log("ldist_in : %15f, ldist_out : %15f\n", ldist_in, ldist_out);
+		    bu_log("\tldist_in : %15f, ldist_out : %15f\n", ldist_in, ldist_out);
 
 		    if (l1 && l2) {
 			bu_log("left seg %zd(%s):\n\t\t%.15f %.15f %.15f -> %.15f %.15f %.15f\n\t\t%.15f %.15f %.15f -> %.15f %.15f %.15f\n", j, stype[lcurr->type].c_str(), V3ARGS(lcurr->in), V3ARGS(lcurr->out), V3ARGS(pt.transition_left), V3ARGS(nt.transition_left));
@@ -517,7 +514,7 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 	    if ((pt.origin == NIRT_PNT_BOTH || pt.origin == NIRT_PNT_RIGHT_ONLY) && (nt.origin == NIRT_PNT_BOTH  || nt.origin == NIRT_PNT_RIGHT_ONLY)) {
 		double tdist_rin = DIST_PNT_PNT_SQ(rstate->orig, pt.transition_right);
 		double tdist_rout = DIST_PNT_PNT_SQ(rstate->orig, nt.transition_right);
-		bu_log("tdist_rin: %15f, tdist_rout: %15f\n", tdist_rin, tdist_rout);
+		bu_log("\ttdist_rin: %15f, tdist_rout: %15f\n", tdist_rin, tdist_rout);
 		for (size_t j = start_rind; j < rstate->new_segs.size(); j++) {
 		    struct nirt_seg *rcurr = &rstate->new_segs[j];
 		    double rdist_in = DIST_PNT_PNT_SQ(rstate->orig, rcurr->in);
@@ -528,13 +525,14 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 		       rdist_in = rdist_out;
 		       rdist_out = tmp;
 		   } 
-		 
-		    if (rdist_out < tdist_rin) continue;
-		    if (rdist_in > tdist_rout) break;
-		    bu_log("rdist_in : %15f, rdist_out : %15f\n", rdist_in, rdist_out);
+
+
+		    if (rdist_out < tdist_rin || (NEAR_EQUAL(rdist_out, tdist_rin, rstate->nds->dist_delta_tol))) continue;
+		    if (rdist_in > tdist_rout || (NEAR_EQUAL(rdist_in, tdist_rout, rstate->nds->dist_delta_tol))) break;
 
 		    bool l1 = (rdist_in > tdist_rin || (NEAR_EQUAL(rdist_in, tdist_rin, rstate->nds->dist_delta_tol)));
 		    bool l2 = (rdist_out > tdist_rout || (NEAR_EQUAL(rdist_out, tdist_rout, rstate->nds->dist_delta_tol)));
+		    bu_log("\trdist_in : %15f, rdist_out : %15f\n", rdist_in, rdist_out);
 
 		    if (l1 && l2) {
 			bu_log("right seg %zd(%s):\n\t\t%.15f %.15f %.15f -> %.15f %.15f %.15f\n\t\t%.15f %.15f %.15f -> %.15f %.15f %.15f\n", j, stype[rcurr->type].c_str(), V3ARGS(rcurr->in), V3ARGS(rcurr->out), V3ARGS(pt.transition_right), V3ARGS(nt.transition_right));
