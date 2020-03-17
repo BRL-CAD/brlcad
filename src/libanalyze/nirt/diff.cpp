@@ -95,7 +95,8 @@ typedef enum {
 } n_pnt_origin_t;
 
 typedef enum {
-    NIRT_PNT_IN = 0,
+    NIRT_PNT_MULTI = 0,  /* used if tolerances collapse in and out points into a single transition event */
+    NIRT_PNT_IN,
     NIRT_PNT_OUT
 } n_pnt_transition_t;
 
@@ -111,6 +112,7 @@ typedef enum {
 } n_seg_t;
 
 #define NIRT_DIFF_PNT_OBLIQ           0x1
+#define NIRT_DIFF_PNT_TRANS_TYPE      0x2  /* Points are geometrically the same (within tolerance) but denote opposite state transitions */
 
 #define NIRT_DIFF_OVLPS               0x1
 #define NIRT_DIFF_SEG_REGNAME         0x2
@@ -124,8 +126,8 @@ struct nirt_diff_transition {
     unsigned long flags;
     point_t transition_left;
     point_t transition_right;
-    vect_t obliq_left;
-    vect_t obliq_right;
+    double obliq_left;
+    double obliq_right;
 };
 
 
@@ -141,9 +143,182 @@ struct nirt_diff_segment {
 
 
 #if 0
-struct nirt_diff_transitition
-_nirt_next_transition(struct nirt_diff_ray_state *nr, struct nirt_diff_transition *ct)
+bool
+_nirt_next_transition(struct nirt_diff_transitition &nt, struct nirt_diff_ray_state *nr, struct nirt_diff_transition *ct)
 {
+    struct nirt_seg *lcurr = NULL;
+    struct nirt_seg *rcurr = NULL;
+    struct nirt_diff_translation nt;
+    double rdist = 0.0;
+    double ldist = 0.0;
+
+    if (!ct) {
+	// Initializing - find the first transition
+	nr->lcurr = (nr->old_segs.size()) ? 0 : -1;
+	nr->rcurr = (nr->new_segs.size()) ? 0 : -1;
+	if (nr->lcurr < 0 && nr->rcurr < 0) {
+	    return false;
+	}
+	lcurr = (nr->lcurr > 0) ? &nr->old_segs[nr->lcurr] : NULL;
+	rcurr = (nr->rcurr > 0) ? &nr->new_segs[nr->rcurr] : NULL;
+	nt.type = NIRT_PNT_IN;
+	ldist = (nr->lcurr > 0) ? DIST_PNT_PNT_SQ(rstate->orig, lcurr->in) : DBL_MAX;
+	rdist = (nr->rcurr > 0) ? DIST_PNT_PNT_SQ(rstate->orig, rcurr->in) : DBL_MAX;
+	if (NEAR_EQUAL(ldist, rdist, nr->nds->dist_delta_tol)) {
+	    nt.origin = NIRT_PNT_BOTH;
+	    VMOVE(nt.transition_left, lcurr->in);
+	    VMOVE(nt.transition_right, rcurr->in);
+	    nt.obliq_left = lcurr->obliq_in;
+	    nt.obliq_right = rcurr->obliq_in;
+	} else {
+	    if (ldist < rdist) {
+		nt.origin = NIRT_PNT_LEFT_ONLY ;
+		VMOVE(nt.transition_left, lcurr->in);
+		nt.obliq_left = lcurr->obliq_in;
+	    } else {
+		nt.origin = NIRT_PNT_RIGHT_ONLY;
+		VMOVE(nt.transition_right, rcurr->in);
+		nt.obliq_right = rcurr->obliq_in;
+	    }
+	}
+	return true;
+    }
+
+    // We are on a point - need to find the next point further from the origin (on either or both segment sets)
+    lcurr = (nr->lcurr > 0) ? &nr->old_segs[nr->lcurr] : NULL;
+    rcurr = (nr->rcurr > 0) ? &nr->new_segs[nr->rcurr] : NULL;
+    double cdist = (ct->origin != NIRT_PNT_RIGHT_ONLY) ? DIST_PNT_PNT_SQ(rstate->orig, ct->transition_left) :  DIST_PNT_PNT_SQ(rstate->orig, ct->transition_right);
+    int ncase = -1;
+    n_pnt_transition_t ntype;
+    n_pnt_origin_t norigin;
+    bool pnt_active[4] = {false, false, false, false};
+    while (ncase < 0) {
+	double dists[4];
+	n_pnt_transition_t types[4] = {NIRT_PNT_IN, NIRT_PNT_OUT, NIRT_PNT_IN, NIRT_PNT_OUT};
+	n_pnt_transition_t origins[4] = {NIRT_PNT_LEFT_ONLY, NIRT_PNT_LEFT_ONLY, NIRT_PNT_RIGHT_ONLY, NIRT_PNT_RIGHT_ONLY};
+	double min_dist = DBL_MAX;
+	dists[0] = (lcurr) ? DIST_PNT_PNT_SQ(rstate->orig, lcurr->in)  : DBL_MAX;
+	dists[1] = (lcurr) ? DIST_PNT_PNT_SQ(rstate->orig, lcurr->out) : DBL_MAX;
+	dists[2] = (rcurr) ? DIST_PNT_PNT_SQ(rstate->orig, rcurr->in)  : DBL_MAX;
+	dists[3] = (rcurr) ? DIST_PNT_PNT_SQ(rstate->orig, rcurr->out) : DBL_MAX;
+	for (int i = 0; i < 4; i++) {
+	    if (NEAR_EQUAL(dists[i], cdist, nr->nds->dist_delta_tol) && types[i] == ct->type) {
+		// Don't repeat an identical point (within tolerance) of the same type
+	       	continue;
+	    }
+	    if (!(dists[i] < DBL_MAX)) {
+		// Skip if we don't have a segment on one side
+		continue;
+	    }
+	    if (dists[i] < min_dist) {
+		min_dist = dists[i];
+		ncase = i;
+	    }
+	}
+	if (ncase < 0) {
+	    // We didn't find anything in either current segment - increment the segments
+	    nr->lcurr = (nr->lcurr > 0) ? nr->lcurr++ : -1;
+	    nr->rcurr = (nr->rcurr > 0) ? nr->rcurr++ : -1;
+	    nr->lcurr = (nr->lcurr >= nr->old_segs.size()) ? -1 : nr->lcurr;
+	    nr->rcurr = (nr->rcurr >= nr->new_segs.size()) ? -1 : nr->rcurr;
+	    lcurr = (nr->lcurr > 0) ? &nr->old_segs[nr->lcurr] : NULL;
+	    rcurr = (nr->rcurr > 0) ? &nr->new_segs[nr->rcurr] : NULL;
+	    if (!lcurr && !rcurr) {
+		// End of the segments
+		break;
+	    }
+	} else {
+	    // We've got something, see if more than one point is at this distance
+	    for (int i = 0; i < 4; i++) {
+		if (NEAR_EQUAL(dists[i], min_dist, nr->nds->dist_delta_tol)) {
+		    pnt_active[i] = true;
+		}
+	    }
+	    if (pnt_active[0] || pnt_active[2]) {
+		nt.type = NIRT_PNT_IN;
+	    }
+	    if (pnt_active[1] || pnt_active[3]) {
+		nt.type = NIRT_PNT_IN;
+	    }
+	    if ((pnt_active[0] || pnt_active[2]) && (pnt_active[1] || pnt_active[3])) {
+		nt.type = NIRT_PNT_MULTI;
+	    }
+	    if (pnt_active[0] || pnt_active[1]) {
+		nt.origin = NIRT_PNT_LEFT_ONLY;
+	    }
+	    if (pnt_active[2] || pnt_active[3]) {
+		nt.origin = NIRT_PNT_RIGHT_ONLY;
+	    }
+	    if ((pnt_active[0] || pnt_active[1]) && (pnt_active[2] || pnt_active[3])) {
+		nt.origin = NIRT_PNT_BOTH;
+	    }
+	}
+    }
+
+    if (ncase == -1) {
+	// There is no next point
+	return false;
+    }
+
+    double indist, outdist;
+    switch (ncase) {
+	case 0:
+	    VMOVE(nt.transition_left, lcurr->in);
+	    nt.obliq_left = lcurr->obliq_in;
+	    if (nt.origin == NIRT_PNT_BOTH) {
+		if (nt.origin == NIRT_PNT_IN) {
+		    VMOVE(nt.transition_right, rcurr->in);
+		    nt.obliq_right = rcurr->obliq_in;
+		} else {
+		    VMOVE(nt.transition_right, rcurr->out);
+		    nt.obliq_right = rcurr->obliq_out;
+		}
+	    }
+	    break;
+	case 1:
+	    VMOVE(nt.transition_left, lcurr->out);
+	    nt.obliq_left = lcurr->obliq_in;
+	    if (nt.origin == NIRT_PNT_BOTH) {
+		if (nt.origin == NIRT_PNT_OUT) {
+		    VMOVE(nt.transition_right, lcurr->out);
+		    nt.obliq_right = lcurr->obliq_out;
+		} else {
+		    VMOVE(nt.transition_left, rcurr->in);
+		    nt.obliq_right = lcurr->obliq_in;
+		}
+	    }
+	    break;
+	case 2:
+	    VMOVE(nt.transition_right, rcurr->in);
+	    nt.obliq_right = rcurr->obliq_in;
+	    if (nt.origin == NIRT_PNT_BOTH) {
+		if (nt.origin == NIRT_PNT_IN) {
+		    VMOVE(nt.transition_left, lcurr->in);
+		    nt.obliq_left = lcurr->obliq_in;
+		} else {
+		    VMOVE(nt.transition_left, lcurr->out);
+		    nt.obliq_left = lcurr->obliq_out;
+		}
+	    }
+	    break;
+	case 3:
+	    VMOVE(nt.transition_right, rcurr->out);
+	    nt.obliq_right = rcurr->obliq_out;
+	    if (nt.origin == NIRT_PNT_BOTH) {
+		if (nt.origin == NIRT_PNT_OUT) {
+		    VMOVE(nt.transition_left, lcurr->out);
+		    nt.obliq_left = lcurr->obliq_out;
+		} else {
+		    VMOVE(nt.transition_left, lcurr->in);
+		    nt.obliq_left = lcurr->obliq_in;
+		}
+	    }
+	    break;
+	default:
+	    return false;
+    }
+
+    return true;
 }
 
 
@@ -197,6 +372,8 @@ struct nirt_diff_ray_state {
     std::vector<struct nirt_seg> new_segs;
     std::vector<struct nirt_diff_instance> diffs;
     struct nirt_diff_state *nds;
+    long lcurr;
+    long rcurr;
 };
 
 
