@@ -108,6 +108,7 @@ typedef enum {
 
 typedef enum {
     NIRT_SEG_HIT = 0,
+    NIRT_SEG_GAP,
     NIRT_SEG_OVLP
 } n_seg_t;
 
@@ -128,6 +129,7 @@ struct nirt_diff_transition {
     point_t transition_right;
     double obliq_left;
     double obliq_right;
+    double dist;
 };
 
 
@@ -276,7 +278,7 @@ _nirt_next_transition(struct nirt_diff_transition &nt, struct nirt_diff_ray_stat
     while (ncase < 0) {
 	double dists[4];
 	n_pnt_transition_t types[4] = {NIRT_PNT_IN, NIRT_PNT_OUT, NIRT_PNT_IN, NIRT_PNT_OUT};
-	double min_dist = DBL_MAX;
+	nt.dist = DBL_MAX;
 	if (lcurr->type == NIRT_OVERLAP_SEG) {
 	    bu_log("overlap\n");
 	}
@@ -305,8 +307,8 @@ _nirt_next_transition(struct nirt_diff_transition &nt, struct nirt_diff_ray_stat
 		// Skip if we don't have a segment on one side
 		continue;
 	    }
-	    if (dists[i] < min_dist) {
-		min_dist = dists[i];
+	    if (dists[i] < nt.dist) {
+		nt.dist = dists[i];
 		ncase = i;
 	    }
 	}
@@ -325,7 +327,7 @@ _nirt_next_transition(struct nirt_diff_transition &nt, struct nirt_diff_ray_stat
 	} else {
 	    // We've got something, see if more than one point is at this distance
 	    for (int i = 0; i < 4; i++) {
-		if (NEAR_EQUAL(dists[i], min_dist, nr->nds->dist_delta_tol)) {
+		if (NEAR_EQUAL(dists[i], nt.dist, nr->nds->dist_delta_tol)) {
 		    pnt_active[i] = true;
 		}
 	    }
@@ -444,8 +446,9 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 	struct nirt_diff_ray_state *rstate = &(dfs[i]);
 	struct nirt_diff_transition pt;
 	bool ht = _nirt_next_transition(pt, rstate, NULL);
-	long lcurr_ind = rstate->lcurr;
-	long rcurr_ind = rstate->rcurr;
+	long lcurr_ind = -1;
+	long rcurr_ind = -1;
+	bool have_first_seg = false;
 	bu_log("found transition: (%s, %s) L: %f %f %f R: %f %f %f\n", postr[pt.origin].c_str(), ptstr[pt.type].c_str(), V3ARGS(pt.transition_left), V3ARGS(pt.transition_right));
 	while (ht) {
 
@@ -453,29 +456,36 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 	    ht = _nirt_next_transition(nt, rstate, &pt);
 	    if (ht) {
 		bu_log("found transition: (%s, %s) L: %f %f %f R: %f %f %f\n", postr[nt.origin].c_str(), ptstr[nt.type].c_str(), V3ARGS(nt.transition_left), V3ARGS(nt.transition_right));
+		if (!have_first_seg) {
+		    lcurr_ind = (lcurr_ind == -1) ? rstate->lcurr : lcurr_ind;
+		    rcurr_ind = (rcurr_ind == -1) ? rstate->rcurr : rcurr_ind;
+		}
 	    }
 
-	    while (lcurr_ind != -1 && (!lcurr_ind || lcurr_ind < rstate->lcurr)) {
+	    while (
+		    (lcurr_ind != -1 && (!have_first_seg || lcurr_ind < rstate->lcurr)) ||
+		    (rcurr_ind != -1 && (!have_first_seg || rcurr_ind < rstate->rcurr)) )  {
 		struct nirt_seg *lcurr = (lcurr_ind >= 0) ? &rstate->old_segs[lcurr_ind] : NULL;
-		if (lcurr) {
-		    bu_log("left seg(%s) %.15f %.15f %.15f -> %.15f %.15f %.15f\n", stype[lcurr->type].c_str(), V3ARGS(pt.transition_left), V3ARGS(nt.transition_left));
-		}
-		lcurr_ind++;
-	    }
-
-	    while (rcurr_ind != -1 && (!rcurr_ind || rcurr_ind < rstate->rcurr)) {
 		struct nirt_seg *rcurr = (rcurr_ind >= 0) ? &rstate->new_segs[rcurr_ind] : NULL;
-		if (rcurr) {
-		    bu_log("right seg(%s) %.15f %.15f %.15f -> %.15f %.15f %.15f\n", stype[rcurr->type].c_str(), V3ARGS(pt.transition_right), V3ARGS(nt.transition_right));
+		double ldist = (lcurr) ? DIST_PNT_PNT_SQ(rstate->orig, lcurr->in) : DBL_MAX;
+		double rdist = (rcurr) ? DIST_PNT_PNT_SQ(rstate->orig, rcurr->in) : DBL_MAX;
+
+		if (ldist < nt.dist || (NEAR_EQUAL(ldist, nt.dist, rstate->nds->dist_delta_tol))) {
+		    bu_log("left seg %ld(%s):\n\t\t%.15f %.15f %.15f -> %.15f %.15f %.15f\n\t\t%.15f %.15f %.15f -> %.15f %.15f %.15f\n", lcurr_ind, stype[lcurr->type].c_str(), V3ARGS(lcurr->in), V3ARGS(lcurr->out), V3ARGS(pt.transition_left), V3ARGS(nt.transition_left));
+		    lcurr_ind++;
 		}
-		rcurr_ind++;
+
+		if (rdist < nt.dist || (NEAR_EQUAL(rdist, nt.dist, rstate->nds->dist_delta_tol))) {
+		    bu_log("right seg %ld(%s):\n\t\t%.15f %.15f %.15f -> %.15f %.15f %.15f\n\t\t%.15f %.15f %.15f -> %.15f %.15f %.15f\n", rcurr_ind, stype[rcurr->type].c_str(), V3ARGS(rcurr->in), V3ARGS(rcurr->out), V3ARGS(pt.transition_right), V3ARGS(nt.transition_right));
+		    rcurr_ind++;
+		}
+
+		have_first_seg = true;
 	    }
 
 	    if (ht) {
 		pt = nt;
-
 	    }
-
 	}
     }
 }
