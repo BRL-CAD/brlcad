@@ -234,24 +234,40 @@ struct nirt_diff_state {
 // If we have a lot of small segments (i.e. nearby points) and large distance
 // tolerances, we need to be able to decide when points are the same within
 // tolerance.  Fuzziness of error bars around points means we're going to have
-// to make some sort of binning decision, which will hopefully be consistent
-// across multiple decisions.
+// to make some sort of binning decision, which needs to be consistent across
+// multiple decisions.
 //
-// The attempt here is to use the distance delta tolerance to trim the supplied
+// The intent here is to use the distance delta tolerance to trim the supplied
 // distance's digits down and center the point between the two closest "steps"
-// of size dist_delta_tol along the ray.  We'll still use NEAR_EQUAL for
+// of the order of the tolerance along the ray.  We'll still use NEAR_EQUAL for
 // comparisons, but after pre-processing according to the below procedure
 // everything should be clamped away from the edges of the bin ranges.
+//
+// Once we're within a bin, points within that bin will be resolved only
+// against other points in the same bin.  That means points which land on the
+// edge of a bin near a point in another bin won't be identified as being the
+// same despite being within tolerance (even if there is no nearby point
+// actually in the shared bin), but some such partitioning is inevitable if we
+// want to avoid the classic three point problem:
+//
+//                                A - B - C 
+//
+// where A is within tol of B and B is within tol of C, but A is not within
+// tol of C.  We can only do EITHER A == B or B == C: A == B == C would imply
+// A == C which is not true.
+//
+// This is a basic alternative to a full-fledged decision tree implementation.
 double
 dist_bin(double dist, double dist_delta_tol)
 {
     bu_log("dist: %.15f\n", dist);
 
     // Get the exponent of the base 10 tolerance number (i.e. how may orders).
+    // TODO - should it be one less? e.g. should 0.0005 get 0.000 not 0.0000?
     int tolexp = (int)std::floor(std::log10(std::fabs(dist_delta_tol)));
 
     if (abs(tolexp) > 12) {
-	// Either a super large or super small tolerance - don't bother binning
+	// Either a super large or super small tolerance - don't bin?
 	return dist;
     }
 
