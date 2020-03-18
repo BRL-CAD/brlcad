@@ -1148,7 +1148,14 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 	    if (s->gap_los > 0) {
 		s->type = NIRT_GAP_SEG;
 		_nirt_report(nss, 'g', vals);
-		_nirt_diff_add_seg(nss, s);
+		{
+		    struct nirt_seg gseg;
+		    gseg.type = NIRT_GAP_SEG;
+		    VMOVE(gseg.in, out_old);
+		    VMOVE(gseg.out, s->in);
+		    gseg.gap_los = s->gap_los;
+		    _nirt_diff_add_seg(nss, &gseg);
+		}
 		/* vlist segment for gap */
 		vhead = bn_vlblock_find(nss->i->segs, nss->i->void_color->buc_rgb[RED], nss->i->void_color->buc_rgb[GRN], nss->i->void_color->buc_rgb[BLU]);
 		BN_ADD_VLIST(nss->i->segs->free_vlist_hd, vhead, s->gap_in, BN_VLIST_LINE_MOVE);
@@ -1269,7 +1276,12 @@ _nirt_if_hit(struct application *ap, struct partition *part_head, struct seg *UN
 	    }
 
 	    /* Diff */
-	    _nirt_diff_add_seg(nss, s);
+	    {
+		struct nirt_seg novlp = *s;
+		VMOVE(novlp.in, s->ov_in);
+		VMOVE(novlp.out, s->ov_out);
+		_nirt_diff_add_seg(nss, &novlp);
+	    }
 
 	    _nirt_del_ovlp(ovp);
 	}
