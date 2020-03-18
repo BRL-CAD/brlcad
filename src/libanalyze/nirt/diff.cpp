@@ -231,6 +231,73 @@ struct nirt_diff_state {
     const struct bu_cmdtab *cmds = NULL;
 };
 
+// If we have a lot of small segments (i.e. nearby points) and large distance
+// tolerances, we need to be able to decide when points are the same within
+// tolerance.  Fuzziness of error bars around points means we're going to have
+// to make some sort of binning decision, which will hopefully be consistent
+// across multiple decisions.
+//
+// The attempt here is to use the distance delta tolerance to trim the supplied
+// distance's digits down and center the point between the two closest "steps"
+// of size dist_delta_tol along the ray.  We'll still use NEAR_EQUAL for
+// comparisons, but after pre-processing according to the below procedure
+// everything should be clamped away from the edges of the bin ranges.
+double
+dist_bin(double dist, double dist_delta_tol)
+{
+    bu_log("dist: %.15f\n", dist);
+
+    // Get the exponent of the base 10 tolerance number (i.e. how may orders).
+    int tolexp = (int)std::floor(std::log10(std::fabs(dist_delta_tol)));
+
+    if (abs(tolexp) > 12) {
+	// Either a super large or super small tolerance - don't bother binning
+	return dist;
+    }
+
+    // Do the same for the distance value
+    int distexp = (int)std::floor(std::log10(std::fabs(dist)));
+   
+    // If the tolerance is large compared to the value, clamp 
+    if (abs(tolexp) > (distexp)) {
+	tolexp = 0;
+	distexp = 0;
+    }
+
+    // Break the distance into larger and smaller components.  We'll need to
+    // shift the value to truncate its significant digits, and we store the
+    // larger component of the distance separately so we can do so with greater
+    // safety in case the necessary shift would make for a very large number.
+    double dmult = std::pow(10, (abs(distexp) - abs(tolexp)));
+    double dA = std::trunc(dist/dmult)*dmult;
+    double dB = dist - dA;
+
+    // Now, find out how many digits we need to shift the distance left to
+    // truncate it at dist_delta_tol precision 
+    double tmult = std::pow(10, tolexp);
+
+    // Shift and truncate the smaller portion of the distance
+    double d1 = std::trunc(dB/tmult);
+
+    // Add half the bin range to shift the new number into the
+    // middle of a bin.
+    double d2 = d1 + 0.5;
+
+    // Reassemble the new binned distance value
+    double dbinned = dA +  d2*tmult;
+ 
+    // Debugging 
+    double b1 = dA + d1 * tmult;
+    double b2 = dA + d1 * tmult + 1*std::pow(10,tolexp);
+    bu_log("dist   : %.15f, tol: %15f\n", dist, dist_delta_tol);
+    bu_log("dA: %15f, dB: %.15f, d1: %.15f, d2: %.15f\n", dA, dB, d1, d2);
+    bu_log("bin1: %.15f, dist - bin1: %.15f, bin2: %.15f, bin2 - dist: %.15f\n", b1, dist - b1, b2, b2 - dist);
+    bu_log("dbinned: %.15f, delta: %.15f\n", dbinned, fabs(dist - dbinned));
+
+    return dbinned;
+}
+
+
 // TODO - no good.  If we have multiple messy overlaps, next-transition-point information is not inherent
 // in the segment sets.  We'll have to assemble an ordered set of transitions ourselves, making no
 // assumptions.
@@ -271,6 +338,9 @@ _nirt_next_transition(struct nirt_diff_transition &nt, struct nirt_diff_ray_stat
 		nt.obliq_right = rcurr->obliq_in;
 	    }
 	}
+
+	dist_bin(ldist, nr->nds->dist_delta_tol);
+
 	return true;
     }
 
@@ -1466,12 +1536,12 @@ _nirt_diff_cmd_settings(void *ndsv, int argc, const char **argv)
 	if (setting_fastf_t) {
 	    if (BU_STR_EQUAL(argv[1], "BN_TOL_DIST") || BU_STR_EQUIV(argv[1], "default")) {
 		*setting_fastf_t = BN_TOL_DIST;
-		return 0;
-	    }
-	    if (bu_opt_fastf_t(&opt_msg, 1, (const char **)&argv[1], (void *)setting_fastf_t) == -1) {
-		nerr(nss, "Error: bu_opt value read failure: %s\n", bu_vls_cstr(&opt_msg));
-		bu_vls_free(&opt_msg);
-		return -1;
+	    } else {
+		if (bu_opt_fastf_t(&opt_msg, 1, (const char **)&argv[1], (void *)setting_fastf_t) == -1) {
+		    nerr(nss, "Error: bu_opt value read failure: %s\n", bu_vls_cstr(&opt_msg));
+		    bu_vls_free(&opt_msg);
+		    return -1;
+		}
 	    }
 	    return 0;
 	}
