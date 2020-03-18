@@ -148,6 +148,7 @@ CMAKEFILES(
   moss.ref.pix
   moss.sh
   nirt.sh
+  nirt/ovlps.g
   red.sh
   repository.sh
   rtedge.ref.pix.gz
