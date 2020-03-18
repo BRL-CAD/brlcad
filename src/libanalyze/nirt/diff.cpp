@@ -231,7 +231,9 @@ struct nirt_diff_state {
     const struct bu_cmdtab *cmds = NULL;
 };
 
-
+// TODO - no good.  If we have multiple messy overlaps, next-transition-point information is not inherent
+// in the segment sets.  We'll have to assemble an ordered set of transitions ourselves, making no
+// assumptions.
 bool
 _nirt_next_transition(struct nirt_diff_transition &nt, struct nirt_diff_ray_state *nr, struct nirt_diff_transition *ct)
 {
@@ -282,22 +284,21 @@ _nirt_next_transition(struct nirt_diff_transition &nt, struct nirt_diff_ray_stat
 	double dists[4];
 	n_pnt_transition_t types[4] = {NIRT_PNT_IN, NIRT_PNT_OUT, NIRT_PNT_IN, NIRT_PNT_OUT};
 	nt.dist = DBL_MAX;
-	if (lcurr->type == NIRT_PARTITION_SEG || lcurr->type == NIRT_OVERLAP_SEG) {
-	    dists[0] = (lcurr) ? DIST_PNT_PNT_SQ(nr->orig, lcurr->in)  : DBL_MAX;
-	    dists[1] = (lcurr) ? DIST_PNT_PNT_SQ(nr->orig, lcurr->out) : DBL_MAX;
-	}
-	if (rcurr->type == NIRT_GAP_SEG || rcurr->type == NIRT_MISS_SEG) {
+	if (lcurr && (lcurr->type == NIRT_PARTITION_SEG || lcurr->type == NIRT_OVERLAP_SEG)) {
+	    dists[0] = DIST_PNT_PNT_SQ(nr->orig, lcurr->in);
+	    dists[1] = DIST_PNT_PNT_SQ(nr->orig, lcurr->out);
+	} else {
 	    dists[0] = DBL_MAX;
 	    dists[1] = DBL_MAX;
 	}
-	if (lcurr->type == NIRT_PARTITION_SEG || lcurr->type == NIRT_OVERLAP_SEG) {
-	    dists[2] = (rcurr) ? DIST_PNT_PNT_SQ(nr->orig, rcurr->in)  : DBL_MAX;
-	    dists[3] = (rcurr) ? DIST_PNT_PNT_SQ(nr->orig, rcurr->out) : DBL_MAX;
-	}
-	if (rcurr->type == NIRT_GAP_SEG || rcurr->type == NIRT_MISS_SEG) {
+	if (rcurr && (rcurr->type == NIRT_PARTITION_SEG || rcurr->type == NIRT_OVERLAP_SEG)) {
+	    dists[2] = DIST_PNT_PNT_SQ(nr->orig, rcurr->in);
+	    dists[3] = DIST_PNT_PNT_SQ(nr->orig, rcurr->out);
+	} else {
 	    dists[2] = DBL_MAX;
 	    dists[3] = DBL_MAX;
 	}
+
 	for (int i = 0; i < 4; i++) {
 	    if (dists[i] < cdist || (NEAR_EQUAL(dists[i], cdist, nr->nds->dist_delta_tol) && types[i] == ct->type)) {
 		// Don't repeat old points or an identical point (within tolerance) of the same type
