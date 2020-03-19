@@ -11,7 +11,7 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
---- 2020-XX-XX  Release 7.30.6                                     ---
+--- 2020-03-19  Release 7.30.6                                     ---
 ----------------------------------------------------------------------
 
 * fixed transparent drawing in MGED - Nick Reed
