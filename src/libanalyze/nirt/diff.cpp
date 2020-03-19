@@ -28,6 +28,7 @@
 #include "common.h"
 
 #include <regex>
+#include <cmath>
 
 #include "bu/cmd.h"
 
