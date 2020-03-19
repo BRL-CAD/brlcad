@@ -715,6 +715,33 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
     db_search_free(&found);
     BU_PTBL_INIT(&found);
 
+    // TODO - switch this to a full path search, update names with .r suffix, and update parent
+    // comb with db_comb_mvall as in rename of shapes after parent laysers.
+    //
+    // 	    // If name doesn't have a .r suffix, add it
+    // 	    struct bu_vls ext = BU_VLS_INIT_ZERO;
+    // 	    bool add_ext = false;
+    // 	    if (bu_path_component(&ext, name.c_str(), BU_PATH_EXT)) {
+    // 		if (!BU_STR_EQUAL(bu_vls_cstr(&ext), ".r")) {
+    // 		    // Have an ext, but not the right one - add .r
+    // 		    add_ext = true;
+    // 		}
+    // 	    } else {
+    // 		// Don't have an ext - add it
+    // 		add_ext = true;
+    // 	    }
+    // 	    bu_vls_free(&ext);
+    // 	    if (add_ext) {
+    // 		struct bu_vls nname = BU_VLS_INIT_ZERO;
+    // 		bu_vls_sprintf(&nname, "%s.r", name.c_str());
+    //  if (db_rename(&db, DB_FULL_PATH_CUR_DIR(*entry), bu_vls_cstr(&nname)))){
+    //  }
+    // 	if (!db_comb_mvall((*entry)->fp_names[(*entry)->fp_len - 2], &db, ) {
+    // 	}
+    // 		bu_vls_free(&nname);
+    // 	    }
+    //
+    //
     if (0 > db_search(&found, DB_SEARCH_RETURN_UNIQ_DP,
 		      "-type comb -attr rgb -not -above -attr rgb -or -attr shader -not -above -attr shader",
 		      0, NULL, &db, NULL))
