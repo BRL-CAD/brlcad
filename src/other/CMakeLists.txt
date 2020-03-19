@@ -329,7 +329,7 @@ if(BRLCAD_PNG_BUILD)
   mark_as_advanced(TK_DISABLE_XFT)
 
   SetTargetFolder(png "Third Party Libraries")
-  SetTargetFolder(png-static "Third Party Libraries")
+  SetTargetFolder(png_static "Third Party Libraries")
   SetTargetFolder(genfiles "Third Party Libraries")
 
   # The actual install directory has these in both libpng16 and the toplevel
