@@ -251,31 +251,30 @@ struct nirt_diff_state {
 // actually in the shared bin), but some such partitioning is inevitable if we
 // want to avoid the classic three point problem:
 //
-//                                A - B - C 
+//                                A - B - C
 //
 // where A is within tol of B and B is within tol of C, but A is not within
 // tol of C.  We can only do EITHER A == B or B == C: A == B == C would imply
 // A == C which is not true.
 //
 // This is a basic alternative to a full-fledged decision tree implementation.
-double
+std::pair<long, long>
 dist_bin(double dist, double dist_delta_tol)
 {
     bu_log("dist: %.15f\n", dist);
 
     // Get the exponent of the base 10 tolerance number (i.e. how may orders).
-    // TODO - should it be one less? e.g. should 0.0005 get 0.000 not 0.0000?
     int tolexp = (int)std::floor(std::log10(std::fabs(dist_delta_tol)));
 
     if (abs(tolexp) > 12) {
 	// Either a super large or super small tolerance - don't bin?
-	return dist;
+	return std::make_pair(LONG_MAX, LONG_MAX);
     }
 
     // Do the same for the distance value
     int distexp = (int)std::floor(std::log10(std::fabs(dist)));
-   
-    // If the tolerance is large compared to the value, clamp 
+
+    // If the tolerance is large compared to the value, clamp
     if (abs(tolexp) > (distexp)) {
 	tolexp = 0;
 	distexp = 0;
@@ -286,32 +285,32 @@ dist_bin(double dist, double dist_delta_tol)
     // larger component of the distance separately so we can do so with greater
     // safety in case the necessary shift would make for a very large number.
     double dmult = std::pow(10, (abs(distexp) - abs(tolexp)));
-    double dA = std::trunc(dist/dmult)*dmult;
+    long dA = std::trunc(dist/dmult)*dmult;
     double dB = dist - dA;
 
     // Now, find out how many digits we need to shift the distance left to
-    // truncate it at dist_delta_tol precision 
+    // truncate it at dist_delta_tol precision
     double tmult = std::pow(10, tolexp);
 
     // Shift and truncate the smaller portion of the distance
-    double d1 = std::trunc(dB/tmult);
+    long d1 = std::trunc(dB/tmult/10) * 10;
 
     // Add half the bin range to shift the new number into the
     // middle of a bin.
-    double d2 = d1 + 0.5;
+    long d2 = d1 + 5;
 
     // Reassemble the new binned distance value
     double dbinned = dA +  d2*tmult;
- 
-    // Debugging 
+
+    // Debugging
     double b1 = dA + d1 * tmult;
     double b2 = dA + d1 * tmult + 1*std::pow(10,tolexp);
     bu_log("dist   : %.15f, tol: %15f\n", dist, dist_delta_tol);
-    bu_log("dA: %15f, dB: %.15f, d1: %.15f, d2: %.15f\n", dA, dB, d1, d2);
+    bu_log("dA: %ld, dB: %.15f, d1: %ld, d2: %ld\n", dA, dB, d1, d2);
     bu_log("bin1: %.15f, dist - bin1: %.15f, bin2: %.15f, bin2 - dist: %.15f\n", b1, dist - b1, b2, b2 - dist);
     bu_log("dbinned: %.15f, delta: %.15f\n", dbinned, fabs(dist - dbinned));
 
-    return dbinned;
+    return std::make_pair(dA,d2);
 }
 
 
