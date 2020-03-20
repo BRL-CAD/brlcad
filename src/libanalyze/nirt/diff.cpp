@@ -300,7 +300,7 @@ dist_bin(double dist, double dist_delta_tol)
 void
 _nirt_segs_analyze(struct nirt_diff_state *nds)
 {
-    std::map<long, std::map<long, std::map<n_transition_t, std::set<struct half_segment>>>> ordered_transitions;
+    std::map<long, std::map<long, std::map<n_transition_t, std::set<half_segment>>>> ordered_transitions;
     std::vector<struct nirt_diff_ray_state> &dfs = nds->rays;
     for (size_t i = 0; i < dfs.size(); i++) {
 	struct nirt_diff_ray_state *rstate = &(dfs[i]);
@@ -309,14 +309,14 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 	for (size_t j = 0; j < rstate->old_segs.size(); j++) {
 	    struct nirt_seg *curr = &rstate->old_segs[j];
 	    double dist_in = DIST_PNT_PNT_SQ(rstate->orig, curr->in);
-	    struct half_segment in_seg;
+	    half_segment in_seg;
 	    in_seg.origin = NIRT_LEFT;
 	    in_seg.seg = curr;
 	    key = dist_bin(dist_in, nds->dist_delta_tol);
 	    ordered_transitions[key.first][key.second][NIRT_T_IN].insert(in_seg);
 
 	    double dist_out = DIST_PNT_PNT_SQ(rstate->orig, curr->out);
-	    struct half_segment out_seg;
+	    half_segment out_seg;
 	    out_seg.origin = NIRT_LEFT;
 	    out_seg.seg = curr;
 	    key = dist_bin(dist_out, nds->dist_delta_tol);
@@ -325,35 +325,35 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 	for (size_t j = 0; j < rstate->old_segs.size(); j++) {
 	    struct nirt_seg *curr = &rstate->new_segs[j];
 	    double dist_in = DIST_PNT_PNT_SQ(rstate->orig, curr->in);
-	    struct half_segment in_seg;
+	    half_segment in_seg;
 	    in_seg.origin = NIRT_LEFT;
 	    in_seg.seg = curr;
 	    key = dist_bin(dist_in, nds->dist_delta_tol);
 	    ordered_transitions[key.first][key.second][NIRT_T_IN].insert(in_seg);
 
 	    double dist_out = DIST_PNT_PNT_SQ(rstate->orig, curr->out);
-	    struct half_segment out_seg;
+	    half_segment out_seg;
 	    out_seg.origin = NIRT_LEFT;
 	    out_seg.seg = curr;
 	    key = dist_bin(dist_out, nds->dist_delta_tol);
 	    ordered_transitions[key.first][key.second][NIRT_T_OUT].insert(out_seg);
 	}
     }
-    std::map<long, std::map<long, std::map<n_transition_t, std::set<struct half_segment>>>>::iterator o_it;
+    std::map<long, std::map<long, std::map<n_transition_t, std::set<half_segment>>>>::iterator o_it;
     for (o_it = ordered_transitions.begin(); o_it != ordered_transitions.end(); o_it++) {
 	std::cout << o_it->first;
-	std::map<long, std::map<n_transition_t, std::set<struct half_segment>>> &l2 = o_it->second;
-	std::map<long, std::map<n_transition_t, std::set<struct half_segment>>>::iterator l2_it;
+	std::map<long, std::map<n_transition_t, std::set<half_segment>>> &l2 = o_it->second;
+	std::map<long, std::map<n_transition_t, std::set<half_segment>>>::iterator l2_it;
 	for (l2_it = l2.begin(); l2_it != l2.end(); l2_it++) {
 	    std::cout << "  " << l2_it->first << ":\n";
 	    // If we're in the bin, the points are (basically) the same within tolerance. At the same point,
 	    // out hits are processed first
-	    std::map<n_transition_t, std::set<struct half_segment>> &l3 = l2_it->second;
-	    std::map<n_transition_t, std::set<struct half_segment>>::reverse_iterator l3_it;
+	    std::map<n_transition_t, std::set<half_segment>> &l3 = l2_it->second;
+	    std::map<n_transition_t, std::set<half_segment>>::reverse_iterator l3_it;
 	    for (l3_it = l3.rbegin(); l3_it != l3.rend(); l3_it++) {
 		std::string ttype = (l3_it->first == NIRT_T_IN) ? std::string("NIRT_T_IN") : std::string("NIRT_T_OUT");
-		std::set<struct half_segment> &hsegs = l3_it->second;
-		//std::set<struct half_segment>::iterator h_it;
+		std::set<half_segment> &hsegs = l3_it->second;
+		//std::set<half_segment>::iterator h_it;
 		std::cout << "   " << ttype << ":" << hsegs.size() << "\n";
 	    }
 	}
