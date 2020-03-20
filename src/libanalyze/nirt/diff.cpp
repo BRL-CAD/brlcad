@@ -346,9 +346,11 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 	std::map<long, std::map<n_transition_t, std::set<struct half_segment>>>::iterator l2_it;
 	for (l2_it = l2.begin(); l2_it != l2.end(); l2_it++) {
 	    std::cout << "  " << l2_it->first << ":\n";
+	    // If we're in the bin, the points are (basically) the same within tolerance. At the same point,
+	    // out hits are processed first
 	    std::map<n_transition_t, std::set<struct half_segment>> &l3 = l2_it->second;
-	    std::map<n_transition_t, std::set<struct half_segment>>::iterator l3_it;
-	    for (l3_it = l3.begin(); l3_it != l3.end(); l3_it++) {
+	    std::map<n_transition_t, std::set<struct half_segment>>::reverse_iterator l3_it;
+	    for (l3_it = l3.rbegin(); l3_it != l3.rend(); l3_it++) {
 		std::string ttype = (l3_it->first == NIRT_T_IN) ? std::string("NIRT_T_IN") : std::string("NIRT_T_OUT");
 		std::set<struct half_segment> &hsegs = l3_it->second;
 		//std::set<struct half_segment>::iterator h_it;
