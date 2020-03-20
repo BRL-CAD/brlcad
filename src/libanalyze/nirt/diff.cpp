@@ -27,6 +27,7 @@
 /* BRL-CAD includes */
 #include "common.h"
 
+#include <map>
 #include <regex>
 #include <cmath>
 
@@ -90,22 +91,14 @@
  */
 
 typedef enum {
-    NIRT_PNT_BOTH = 0,
-    NIRT_PNT_LEFT_ONLY,
-    NIRT_PNT_RIGHT_ONLY
-} n_pnt_origin_t;
+    NIRT_LEFT = 0,
+    NIRT_RIGHT
+} n_origin_t;
 
 typedef enum {
-    NIRT_PNT_MULTI = 0,  /* used if tolerances collapse in and out points into a single transition event */
-    NIRT_PNT_IN,
-    NIRT_PNT_OUT
-} n_pnt_transition_t;
-
-typedef enum {
-    NIRT_SEG_BOTH = 0,
-    NIRT_SEG_LEFT_ONLY,
-    NIRT_SEG_RIGHT_ONLY
-} n_seg_origin_t;
+    NIRT_T_IN = 0,
+    NIRT_T_OUT
+} n_transition_t;
 
 typedef enum {
     NIRT_SEG_HIT = 0,
@@ -122,34 +115,24 @@ typedef enum {
 #define NIRT_DIFF_SEG_ID              0x8
 #define NIRT_DIFF_SEG_OVLP_SELECTED   0x16
 
-struct nirt_diff_segment {
-    n_seg_origin_t origin;
-    n_seg_t type;
-    unsigned long flags;
-    struct nirt_seg *left;
-    struct nirt_seg *right;
-};
-
-
-struct nirt_diff_transition {
-    n_pnt_origin_t origin;
-    n_pnt_transition_t type;
-    unsigned long flags;
-    point_t transition_left;
-    point_t transition_right;
-    double obliq_left;
-    double obliq_right;
-    double dist;
-};
-
-struct nirt_diff_region {
-    struct nirt_diff_transition *start;
-    struct nirt_diff_transition *end;
-    std::vector<struct nirt_diff_segment> segs;
+class half_segment {
+    public:
+	n_origin_t origin;
+	struct nirt_seg *seg;
+	bool operator<(half_segment other) const
+	{
+	    if (origin == NIRT_LEFT && other.origin == NIRT_RIGHT) {
+		return true;
+	    }
+	    if (origin == NIRT_RIGHT && other.origin == NIRT_LEFT) {
+		return false;
+	    }
+	    return (seg < other.seg);
+	}
 };
 
 struct nirt_diff_event {
-    n_pnt_origin_t type;
+    n_origin_t type;
     unsigned long flags;
     point_t transition_left;
     point_t transition_right;
@@ -162,7 +145,7 @@ struct nirt_diff_event {
 
 
 struct nirt_diff_instance {
-    n_pnt_origin_t type;
+    n_origin_t type;
     point_t *left_pt;
     point_t *right_pt;
     struct nirt_seg *left;
@@ -314,313 +297,62 @@ dist_bin(double dist, double dist_delta_tol)
 }
 
 
-// TODO - no good.  If we have multiple messy overlaps, next-transition-point information is not inherent
-// in the segment sets.  We'll have to assemble an ordered set of transitions ourselves, making no
-// assumptions.
-bool
-_nirt_next_transition(struct nirt_diff_transition &nt, struct nirt_diff_ray_state *nr, struct nirt_diff_transition *ct)
-{
-    struct nirt_seg *lcurr = NULL;
-    struct nirt_seg *rcurr = NULL;
-    double rdist = 0.0;
-    double ldist = 0.0;
-
-    if (!ct) {
-	// Initializing - find the first transition
-	nr->lcurr = (nr->old_segs.size()) ? 0 : -1;
-	nr->rcurr = (nr->new_segs.size()) ? 0 : -1;
-	if (nr->lcurr < 0 && nr->rcurr < 0) {
-	    return false;
-	}
-	lcurr = (nr->lcurr >= 0) ? &nr->old_segs[nr->lcurr] : NULL;
-	rcurr = (nr->rcurr >= 0) ? &nr->new_segs[nr->rcurr] : NULL;
-	nt.type = NIRT_PNT_IN;
-	ldist = (nr->lcurr >= 0) ? DIST_PNT_PNT_SQ(nr->orig, lcurr->in) : DBL_MAX;
-	rdist = (nr->rcurr >= 0) ? DIST_PNT_PNT_SQ(nr->orig, rcurr->in) : DBL_MAX;
-	if (NEAR_EQUAL(ldist, rdist, nr->nds->dist_delta_tol)) {
-	    nt.origin = NIRT_PNT_BOTH;
-	    VMOVE(nt.transition_left, lcurr->in);
-	    VMOVE(nt.transition_right, rcurr->in);
-	    nt.obliq_left = lcurr->obliq_in;
-	    nt.obliq_right = rcurr->obliq_in;
-	} else {
-	    if (ldist < rdist) {
-		nt.origin = NIRT_PNT_LEFT_ONLY ;
-		VMOVE(nt.transition_left, lcurr->in);
-		nt.obliq_left = lcurr->obliq_in;
-	    } else {
-		nt.origin = NIRT_PNT_RIGHT_ONLY;
-		VMOVE(nt.transition_right, rcurr->in);
-		nt.obliq_right = rcurr->obliq_in;
-	    }
-	}
-
-	dist_bin(ldist, nr->nds->dist_delta_tol);
-
-	return true;
-    }
-
-    // We are on a point - need to find the next point further from the origin (on either or both segment sets)
-    lcurr = (nr->lcurr >= 0) ? &nr->old_segs[nr->lcurr] : NULL;
-    rcurr = (nr->rcurr >= 0) ? &nr->new_segs[nr->rcurr] : NULL;
-    double cdist = (ct->origin != NIRT_PNT_RIGHT_ONLY) ? DIST_PNT_PNT_SQ(nr->orig, ct->transition_left) :  DIST_PNT_PNT_SQ(nr->orig, ct->transition_right);
-    int ncase = -1;
-    bool pnt_active[4] = {false, false, false, false};
-    while (ncase < 0) {
-	double dists[4];
-	n_pnt_transition_t types[4] = {NIRT_PNT_IN, NIRT_PNT_OUT, NIRT_PNT_IN, NIRT_PNT_OUT};
-	nt.dist = DBL_MAX;
-	if (lcurr && (lcurr->type == NIRT_PARTITION_SEG || lcurr->type == NIRT_OVERLAP_SEG)) {
-	    dists[0] = DIST_PNT_PNT_SQ(nr->orig, lcurr->in);
-	    dists[1] = DIST_PNT_PNT_SQ(nr->orig, lcurr->out);
-	} else {
-	    dists[0] = DBL_MAX;
-	    dists[1] = DBL_MAX;
-	}
-	if (rcurr && (rcurr->type == NIRT_PARTITION_SEG || rcurr->type == NIRT_OVERLAP_SEG)) {
-	    dists[2] = DIST_PNT_PNT_SQ(nr->orig, rcurr->in);
-	    dists[3] = DIST_PNT_PNT_SQ(nr->orig, rcurr->out);
-	} else {
-	    dists[2] = DBL_MAX;
-	    dists[3] = DBL_MAX;
-	}
-
-	for (int i = 0; i < 4; i++) {
-	    if (dists[i] < cdist || (NEAR_EQUAL(dists[i], cdist, nr->nds->dist_delta_tol) && types[i] == ct->type)) {
-		// Don't repeat old points or an identical point (within tolerance) of the same type
-	       	continue;
-	    }
-	    if (!(dists[i] < DBL_MAX)) {
-		// Skip if we don't have a segment on one side
-		continue;
-	    }
-	    if (dists[i] < nt.dist) {
-		nt.dist = dists[i];
-		ncase = i;
-	    }
-	}
-	if (ncase < 0) {
-	    // We didn't find anything in either current segment - increment the segments
-	    nr->lcurr = (nr->lcurr >= 0) ? nr->lcurr + 1 : -1;
-	    nr->rcurr = (nr->rcurr >= 0) ? nr->rcurr + 1 : -1;
-	    nr->lcurr = (nr->lcurr >= (long)nr->old_segs.size()) ? -1 : nr->lcurr;
-	    nr->rcurr = (nr->rcurr >= (long)nr->new_segs.size()) ? -1 : nr->rcurr;
-	    lcurr = (nr->lcurr >= 0) ? &nr->old_segs[nr->lcurr] : NULL;
-	    rcurr = (nr->rcurr >= 0) ? &nr->new_segs[nr->rcurr] : NULL;
-	    if (!lcurr && !rcurr) {
-		// End of the segments
-		break;
-	    }
-	} else {
-	    // We've got something, see if more than one point is at this distance
-	    for (int i = 0; i < 4; i++) {
-		if (NEAR_EQUAL(dists[i], nt.dist, nr->nds->dist_delta_tol)) {
-		    pnt_active[i] = true;
-		}
-	    }
-	    if (pnt_active[0] || pnt_active[2]) {
-		nt.type = NIRT_PNT_IN;
-	    }
-	    if (pnt_active[1] || pnt_active[3]) {
-		nt.type = NIRT_PNT_OUT;
-	    }
-	    if ((pnt_active[0] || pnt_active[2]) && (pnt_active[1] || pnt_active[3])) {
-		nt.type = NIRT_PNT_MULTI;
-	    }
-	    if (pnt_active[0] || pnt_active[1]) {
-		nt.origin = NIRT_PNT_LEFT_ONLY;
-	    }
-	    if (pnt_active[2] || pnt_active[3]) {
-		nt.origin = NIRT_PNT_RIGHT_ONLY;
-	    }
-	    if ((pnt_active[0] || pnt_active[1]) && (pnt_active[2] || pnt_active[3])) {
-		nt.origin = NIRT_PNT_BOTH;
-	    }
-	}
-    }
-
-    if (ncase == -1) {
-	// There is no next point
-	return false;
-    }
-
-    switch (ncase) {
-	case 0:
-	    VMOVE(nt.transition_left, lcurr->in);
-	    nt.obliq_left = lcurr->obliq_in;
-	    if (nt.origin == NIRT_PNT_BOTH) {
-		if (nt.type == NIRT_PNT_IN) {
-		    VMOVE(nt.transition_right, rcurr->in);
-		    nt.obliq_right = rcurr->obliq_in;
-		} else {
-		    VMOVE(nt.transition_right, rcurr->out);
-		    nt.obliq_right = rcurr->obliq_out;
-		}
-	    }
-	    break;
-	case 1:
-	    VMOVE(nt.transition_left, lcurr->out);
-	    nt.obliq_left = lcurr->obliq_in;
-	    if (nt.origin == NIRT_PNT_BOTH) {
-		if (nt.type == NIRT_PNT_OUT) {
-		    VMOVE(nt.transition_right, lcurr->out);
-		    nt.obliq_right = lcurr->obliq_out;
-		} else {
-		    VMOVE(nt.transition_left, rcurr->in);
-		    nt.obliq_right = lcurr->obliq_in;
-		}
-	    }
-	    break;
-	case 2:
-	    VMOVE(nt.transition_right, rcurr->in);
-	    nt.obliq_right = rcurr->obliq_in;
-	    if (nt.origin == NIRT_PNT_BOTH) {
-		if (nt.type == NIRT_PNT_IN) {
-		    VMOVE(nt.transition_left, lcurr->in);
-		    nt.obliq_left = lcurr->obliq_in;
-		} else {
-		    VMOVE(nt.transition_left, lcurr->out);
-		    nt.obliq_left = lcurr->obliq_out;
-		}
-	    }
-	    break;
-	case 3:
-	    VMOVE(nt.transition_right, rcurr->out);
-	    nt.obliq_right = rcurr->obliq_out;
-	    if (nt.origin == NIRT_PNT_BOTH) {
-		if (nt.type == NIRT_PNT_OUT) {
-		    VMOVE(nt.transition_left, lcurr->out);
-		    nt.obliq_left = lcurr->obliq_out;
-		} else {
-		    VMOVE(nt.transition_left, lcurr->in);
-		    nt.obliq_left = lcurr->obliq_in;
-		}
-	    }
-	    break;
-	default:
-	    return false;
-    }
-
-    return true;
-}
-
-void
-_nirt_populate_reg(
-	struct nirt_diff_region &nreg,
-	struct nirt_diff_ray_state *rstate,
-	point_t *transition_in, point_t *transition_out,
-	size_t *start_ind, int right)
-{
-    std::map<int, std::string> stype;
-    stype[NIRT_MISS_SEG] = "NIRT_MISS_SEG";
-    stype[NIRT_PARTITION_SEG] = "NIRT_PARTITION_SEG";
-    stype[NIRT_OVERLAP_SEG] = "NIRT_OVERLAP_SEG";
-    stype[NIRT_GAP_SEG] = "NIRT_GAP_SEG";
-
-    const char *tstr = (!right) ? "left" : "right";
-    n_seg_origin_t osegt = (!right) ? NIRT_SEG_LEFT_ONLY : NIRT_SEG_RIGHT_ONLY;
-
-    double tdist_in = DIST_PNT_PNT_SQ(rstate->orig, *transition_in);
-    double tdist_out = DIST_PNT_PNT_SQ(rstate->orig, *transition_out);
-    bu_log("\ttdist_in: %15f, tdist_out: %15f\n", tdist_in, tdist_out);
-    for (size_t j = *start_ind; j < rstate->old_segs.size(); j++) {
-	struct nirt_seg *curr = &rstate->old_segs[j];
-	double dist_in = DIST_PNT_PNT_SQ(rstate->orig, curr->in);
-	double dist_out = DIST_PNT_PNT_SQ(rstate->orig, curr->out);
-	bu_log("\t1 dist_in: %15f,  dist_out: %15f\n", dist_in, dist_out);
-
-	// TODO - if we're sorted by starting distance we can skip some comparisons, but I'm
-	// not sure we're reliably sorted yet and we can't afford to miss overlapping segments.
-	// For now, check everything.
-	if (dist_out < tdist_in || (NEAR_EQUAL(dist_out, tdist_in, rstate->nds->dist_delta_tol))) {
-	    //(*start_ind)++;
-	    continue;
-	}
-	if (dist_in > tdist_out || (NEAR_EQUAL(dist_in, tdist_out, rstate->nds->dist_delta_tol))) {
-	    //break;
-	    continue;
-	}
-
-	bool l1 = (dist_in > tdist_in || (NEAR_EQUAL(dist_in, tdist_in, rstate->nds->dist_delta_tol)));
-	bool l2 = (dist_out > tdist_out || (NEAR_EQUAL(dist_out, tdist_out, rstate->nds->dist_delta_tol)));
-
-	if (l1 && l2) {
-	    bu_log("%s seg %zd(%s):\n\tseg\t%.15f %.15f %.15f -> %.15f %.15f %.15f\n\ttra\t%.15f %.15f %.15f -> %.15f %.15f %.15f\n", tstr, j, stype[curr->type].c_str(), V3ARGS(curr->in), V3ARGS(curr->out), V3ARGS(*transition_in), V3ARGS(*transition_out));
-	    // At this stage the segment is specific to one side or the other -
-	    // the diff comparison will have to resolve if it is common to both
-	    // segments.
-	    struct nirt_diff_segment nseg;
-	    nseg.origin = osegt;
-	    nseg.left = (!right) ? curr : NULL;
-	    nseg.right = (right) ? curr : NULL;
-	    switch (curr->type) {
-		case NIRT_PARTITION_SEG:
-		    nseg.type = NIRT_SEG_HIT;
-		    break;
-		case NIRT_OVERLAP_SEG:
-		    nseg.type = NIRT_SEG_OVLP;
-		    break;
-		case NIRT_GAP_SEG:
-		    nseg.type = NIRT_SEG_GAP;
-		    break;
-		default:
-		    break;
-	    }
-	    nreg.segs.push_back(nseg);
-	}
-    }
-}
-
-// 1.  find first transition nt (ct == NULL);
-// 2.  ct = nt;
-// 3.  find next transition nt, insert into sequence;
-// 4.  if nt != NULL construct segment from ct and nt;
-// 5.  repeat 2 - 4 until nt == NULL;
-
 void
 _nirt_segs_analyze(struct nirt_diff_state *nds)
 {
-    std::map<n_pnt_origin_t, std::string> postr;
-    postr[NIRT_PNT_BOTH] = "NRT_PNT_BOTH";
-    postr[NIRT_PNT_LEFT_ONLY] = "NRT_PNT_LEFT_ONLY";
-    postr[NIRT_PNT_RIGHT_ONLY] = "NRT_PNT_RIGHT_ONLY";
-    std::map<n_pnt_transition_t, std::string> ptstr;
-    ptstr[NIRT_PNT_MULTI] = "NIRT_PNT_MULTI";
-    ptstr[NIRT_PNT_IN] = "NIRT_PNT_IN";
-    ptstr[NIRT_PNT_OUT] = "NIRT_PNT_OUT";
-
+    std::map<long, std::map<long, std::map<n_transition_t, std::set<struct half_segment>>>> ordered_transitions;
     std::vector<struct nirt_diff_ray_state> &dfs = nds->rays;
     for (size_t i = 0; i < dfs.size(); i++) {
 	struct nirt_diff_ray_state *rstate = &(dfs[i]);
-	size_t start_lind = 0;
-	size_t start_rind = 0;
-	struct nirt_diff_transition pt;
-	bool ht = _nirt_next_transition(pt, rstate, NULL);
-	bu_log("found transition: (%s, %s) L: %f %f %f R: %f %f %f\n", postr[pt.origin].c_str(), ptstr[pt.type].c_str(), V3ARGS(pt.transition_left), V3ARGS(pt.transition_right));
-	while (ht) {
+	std::pair<long, long> key;
+	// Map the segments into ordered transitions
+	for (size_t j = 0; j < rstate->old_segs.size(); j++) {
+	    struct nirt_seg *curr = &rstate->old_segs[j];
+	    double dist_in = DIST_PNT_PNT_SQ(rstate->orig, curr->in);
+	    struct half_segment in_seg;
+	    in_seg.origin = NIRT_LEFT;
+	    in_seg.seg = curr;
+	    key = dist_bin(dist_in, nds->dist_delta_tol);
+	    ordered_transitions[key.first][key.second][NIRT_T_IN].insert(in_seg);
 
-	    struct nirt_diff_transition nt;
-	    ht = _nirt_next_transition(nt, rstate, &pt);
-	    if (ht) {
-		bu_log("found transition: (%s, %s) L: %f %f %f R: %f %f %f\n", postr[nt.origin].c_str(), ptstr[nt.type].c_str(), V3ARGS(nt.transition_left), V3ARGS(nt.transition_right));
-	    }
+	    double dist_out = DIST_PNT_PNT_SQ(rstate->orig, curr->out);
+	    struct half_segment out_seg;
+	    out_seg.origin = NIRT_LEFT;
+	    out_seg.seg = curr;
+	    key = dist_bin(dist_out, nds->dist_delta_tol);
+	    ordered_transitions[key.first][key.second][NIRT_T_OUT].insert(out_seg);
+	}
+	for (size_t j = 0; j < rstate->old_segs.size(); j++) {
+	    struct nirt_seg *curr = &rstate->new_segs[j];
+	    double dist_in = DIST_PNT_PNT_SQ(rstate->orig, curr->in);
+	    struct half_segment in_seg;
+	    in_seg.origin = NIRT_LEFT;
+	    in_seg.seg = curr;
+	    key = dist_bin(dist_in, nds->dist_delta_tol);
+	    ordered_transitions[key.first][key.second][NIRT_T_IN].insert(in_seg);
 
-	    // Transitions may or may not line up with nirt_segs - transitions are defined globally using info
-	    // from both segments.  We need to "chop up" segments into pieces that are bounded by transitions.
-	    // All such pieces are collected into a nirt diff "region" which can be locally processed to identify
-	    // differences.
-	    struct nirt_diff_region nreg;
-
-	    if ((pt.origin == NIRT_PNT_BOTH || pt.origin == NIRT_PNT_LEFT_ONLY) && (nt.origin == NIRT_PNT_BOTH  || nt.origin == NIRT_PNT_LEFT_ONLY)) {
-		_nirt_populate_reg(nreg, rstate, &pt.transition_left, &nt.transition_left, &start_lind, 0);
-	    }
-
-	    if ((pt.origin == NIRT_PNT_BOTH || pt.origin == NIRT_PNT_RIGHT_ONLY) && (nt.origin == NIRT_PNT_BOTH  || nt.origin == NIRT_PNT_RIGHT_ONLY)) {
-		_nirt_populate_reg(nreg, rstate, &pt.transition_right, &nt.transition_right, &start_rind, 1);
-	    }
-
-	    if (ht) {
-		pt = nt;
+	    double dist_out = DIST_PNT_PNT_SQ(rstate->orig, curr->out);
+	    struct half_segment out_seg;
+	    out_seg.origin = NIRT_LEFT;
+	    out_seg.seg = curr;
+	    key = dist_bin(dist_out, nds->dist_delta_tol);
+	    ordered_transitions[key.first][key.second][NIRT_T_OUT].insert(out_seg);
+	}
+    }
+    std::map<long, std::map<long, std::map<n_transition_t, std::set<struct half_segment>>>>::iterator o_it;
+    for (o_it = ordered_transitions.begin(); o_it != ordered_transitions.end(); o_it++) {
+	std::cout << o_it->first;
+	std::map<long, std::map<n_transition_t, std::set<struct half_segment>>> &l2 = o_it->second;
+	std::map<long, std::map<n_transition_t, std::set<struct half_segment>>>::iterator l2_it;
+	for (l2_it = l2.begin(); l2_it != l2.end(); l2_it++) {
+	    std::cout << "  " << l2_it->first << ":\n";
+	    std::map<n_transition_t, std::set<struct half_segment>> &l3 = l2_it->second;
+	    std::map<n_transition_t, std::set<struct half_segment>>::iterator l3_it;
+	    for (l3_it = l3.begin(); l3_it != l3.end(); l3_it++) {
+		std::string ttype = (l3_it->first == NIRT_T_IN) ? std::string("NIRT_T_IN") : std::string("NIRT_T_OUT");
+		std::set<struct half_segment> &hsegs = l3_it->second;
+		//std::set<struct half_segment>::iterator h_it;
+		std::cout << "   " << ttype << ":" << hsegs.size() << "\n";
 	    }
 	}
     }
