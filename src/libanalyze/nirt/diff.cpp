@@ -118,6 +118,7 @@ typedef enum {
 class half_segment {
     public:
 	n_origin_t origin;
+	double dist;
 	struct nirt_seg *seg;
 	bool operator<(half_segment other) const
 	{
@@ -129,6 +130,16 @@ class half_segment {
 	    }
 	    return (seg < other.seg);
 	}
+};
+
+// TODO - nirt_seg won't be enough here because we want to record
+// gaps as well - just using it for a starting point until a proper
+// container is defined.
+class segment_bin {
+    std::set<struct nirt_seg *> left;
+    std::set<struct nirt_seg *> right;
+    half_segment *start;
+    half_segment *end;
 };
 
 struct nirt_diff_event {
@@ -307,38 +318,40 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 	// Map the segments into ordered transitions
 	for (size_t j = 0; j < rstate->old_segs.size(); j++) {
 	    struct nirt_seg *curr = &rstate->old_segs[j];
-	    double dist_in = DIST_PNT_PNT(rstate->orig, curr->in);
 	    half_segment in_seg;
+	    in_seg.dist = DIST_PNT_PNT(rstate->orig, curr->in);
 	    in_seg.origin = NIRT_LEFT;
 	    in_seg.seg = curr;
-	    key = dist_bin(dist_in, nds->dist_delta_tol);
+	    key = dist_bin(in_seg.dist, nds->dist_delta_tol);
 	    ordered_transitions[key.first][key.second][NIRT_T_IN].insert(in_seg);
 
-	    double dist_out = DIST_PNT_PNT(rstate->orig, curr->out);
 	    half_segment out_seg;
+	    out_seg.dist = DIST_PNT_PNT(rstate->orig, curr->out);
 	    out_seg.origin = NIRT_LEFT;
 	    out_seg.seg = curr;
-	    key = dist_bin(dist_out, nds->dist_delta_tol);
+	    key = dist_bin(out_seg.dist, nds->dist_delta_tol);
 	    ordered_transitions[key.first][key.second][NIRT_T_OUT].insert(out_seg);
 	}
 	for (size_t j = 0; j < rstate->old_segs.size(); j++) {
 	    struct nirt_seg *curr = &rstate->new_segs[j];
-	    double dist_in = DIST_PNT_PNT(rstate->orig, curr->in);
 	    half_segment in_seg;
+	    in_seg.dist = DIST_PNT_PNT(rstate->orig, curr->in);
 	    in_seg.origin = NIRT_RIGHT;
 	    in_seg.seg = curr;
-	    key = dist_bin(dist_in, nds->dist_delta_tol);
+	    key = dist_bin(in_seg.dist, nds->dist_delta_tol);
 	    ordered_transitions[key.first][key.second][NIRT_T_IN].insert(in_seg);
 
-	    double dist_out = DIST_PNT_PNT(rstate->orig, curr->out);
 	    half_segment out_seg;
+	    out_seg.dist = DIST_PNT_PNT(rstate->orig, curr->out);
 	    out_seg.origin = NIRT_RIGHT;
 	    out_seg.seg = curr;
-	    key = dist_bin(dist_out, nds->dist_delta_tol);
+	    key = dist_bin(out_seg.dist, nds->dist_delta_tol);
 	    ordered_transitions[key.first][key.second][NIRT_T_OUT].insert(out_seg);
 	}
     }
     std::map<long, std::map<long, std::map<n_transition_t, std::set<half_segment>>>>::iterator o_it;
+    std::set<struct nirt_seg *> curr_left;
+    std::set<struct nirt_seg *> curr_right;
     for (o_it = ordered_transitions.begin(); o_it != ordered_transitions.end(); o_it++) {
 	std::cout << o_it->first;
 	std::map<long, std::map<n_transition_t, std::set<half_segment>>> &l2 = o_it->second;
@@ -354,6 +367,30 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 		std::set<half_segment> &hsegs = l3_it->second;
 		//std::set<half_segment>::iterator h_it;
 		std::cout << "   " << ttype << ":" << hsegs.size() << "\n";
+		// At any given transition point, all segments active in the
+		// previous transition with an OUT point in the current bin are
+		// terminated and stored.  If any prior segment does not have
+		// an OUT point corresponding to the current transition bin the
+		// prior segment is still terminated and stored, but a new
+		// segment of the same type is started at the center bin point.
+		// Any IN points in the transition bin also start new segment
+		// definitions.  OUT points will start gap segments, and IN points
+		// will terminate them.
+		//
+		// With all segments defined in this fashion, they can be
+		// indexed by their starting transition bin only - they are all
+		// defined to end at the next transiton point and segment
+		// differencing can be handled locally.  As the transitions are
+		// walked, the segments starting at each transition can be found
+		// using a map container similar to the transition container with
+		// the same dual-long key indexing to assemble an overall diff report
+		// that is distance ordered.
+		//
+		// Transitions are compared first (is a point only defined left or right,
+		// do the obliquities match?) then the sub-segments associated with that
+		// transition (more extensive criteria - region info, names, overlaps, etc.
+		// that define most of the reporting differences.)
+		//
 	    }
 	}
     }
