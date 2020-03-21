@@ -150,9 +150,19 @@ extern int snprintf(char *str, size_t size, const char *format, ...);
 #  define FMIN(a, b)	(((a)<(b))?(a):(b))
 #endif
 
+
+/* We want 64 bit (large file) I/O capabilities whenever they are available.
+ * Always define this before we include sys/types.h */
+#ifndef _FILE_OFFSET_BITS
+#  define _FILE_OFFSET_BITS 64
+#endif
+
 /* If we've got the wrong off_t size, do something about it (*before*
    we include sys/types.h, which can hold the incorrect definition.)
-   Also set any other related defines that might be needed. */
+   Also set any other related defines that might be needed.
+
+   TODO - this trick apparently no longer works reliably with Visual Studio 2019.
+   */
 #if defined(OFF_T_SIZE_MISMATCH)
 /*#  pragma message("Fixing off_t definition")*/
 #  ifdef off_t
