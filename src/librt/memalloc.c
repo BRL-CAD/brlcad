@@ -82,7 +82,7 @@ rt_memalloc(struct mem_map **pp, register size_t size)
 	return 0L;	/* No more space */
 
     addr = (size_t)curp->m_addr;
-    curp->m_addr += (off_t)size;
+    curp->m_addr += (b_off_t)size;
 
     /* If the element size goes to zero, put it on the freelist */
 
@@ -137,12 +137,12 @@ rt_memalloc_nosplit(struct mem_map **pp, register size_t size)
 
 
 void
-rt_memfree(struct mem_map **pp, size_t size, off_t addr)
+rt_memfree(struct mem_map **pp, size_t size, b_off_t addr)
 {
     register int type = 0;
     register struct mem_map *prevp = MAP_NULL;
     register struct mem_map *curp;
-    off_t il;
+    b_off_t il;
     struct mem_map *tmap;
 
     if (size == 0)
@@ -156,14 +156,14 @@ rt_memfree(struct mem_map **pp, size_t size, off_t addr)
     /* Make up the `type' variable */
 
     if (prevp) {
-	il = prevp->m_addr + (off_t)prevp->m_size;
+	il = prevp->m_addr + (b_off_t)prevp->m_size;
 	if (il > addr)
 	    type |= M_BOVFL;
 	if (il == addr)
 	    type |= M_BMTCH;
     }
     if (curp) {
-	il = addr + (off_t)size;
+	il = addr + (b_off_t)size;
 	if (il > curp->m_addr)
 	    type |= M_TOVFL;
 	if (il == curp->m_addr)
@@ -203,7 +203,7 @@ rt_memfree(struct mem_map **pp, size_t size, off_t addr)
 
 	case M_TMTCH:		/* Expand top element downward */
 	    curp->m_size += size;
-	    curp->m_addr -= (off_t)size;
+	    curp->m_addr -= (b_off_t)size;
 	    break;
 
 	default:		/* No matches; allocate and insert */

@@ -306,7 +306,7 @@ view_pixel(struct application *ap)
 		    icv_writepixel(bif, ap->a_x, ap->a_y, ap->a_color);
 		} else if (outfp != NULL) {
 		    bu_semaphore_acquire(BU_SEM_SYSCALL);
-		    if (bu_fseek(outfp, (ap->a_y*width*pwidth) + (ap->a_x*pwidth), 0) != 0)
+		    if (fseek(outfp, (ap->a_y*width*pwidth) + (ap->a_x*pwidth), 0) != 0)
 			fprintf(stderr, "fseek error\n");
 		    if (fwrite(p, 3, 1, outfp) != 1)
 			bu_exit(EXIT_FAILURE, "pixel fwrite error");
@@ -512,7 +512,7 @@ view_pixel(struct application *ap)
 		size_t count;
 
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
-		if (bu_fseek(outfp, ap->a_y*width*pwidth, 0) != 0)
+		if (fseek(outfp, ap->a_y*width*pwidth, 0) != 0)
 		    fprintf(stderr, "fseek error\n");
 		count = fwrite(scanline[ap->a_y].sl_buf,
 			       sizeof(char), width*pwidth, outfp);

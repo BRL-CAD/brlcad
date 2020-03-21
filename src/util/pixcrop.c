@@ -34,9 +34,10 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <limits.h> /* for INT_MAX */
 #include "vmath.h"
+
+#include "bio.h" /* for b_off_t */
 
 #include "bu/file.h"
 #include "bu/malloc.h"
@@ -49,7 +50,7 @@
 unsigned char *buffer;
 ssize_t scanlen;			/* length of infile scanlines */
 ssize_t buflines;		/* Number of lines held in buffer */
-off_t buf_start = -1000;	/* First line in buffer */
+b_off_t buf_start = -1000;	/* First line in buffer */
 
 unsigned long xnum, ynum;	/* Number of pixels in new file */
 float ulx, uly, urx, ury, lrx, lry, llx, lly;	/* Corners of original file */
@@ -102,7 +103,7 @@ fill_buffer(int y)
     buf_start = y - buflines/2;
     if (buf_start < 0) buf_start = 0;
 
-    bu_fseek(ifp, 0, 0);
+    fseek(ifp, 0, 0);
     ret = fread(buffer, scanlen, 3*buflines, ifp);
     if (ret == 0)
 	perror("fread");

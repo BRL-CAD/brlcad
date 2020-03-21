@@ -108,7 +108,7 @@ static struct rt_wdb *fpout;		/* brlcad output file */
 static FILE *fpin;			/* NASTRAN input file */
 static FILE *fptmp;			/* temporary version of NASTRAN input */
 static char *usage = "[-xX lvl] [-t tol.dist] [-n] [-m] [-i NASTRAN_file] -o BRL-CAD_file\n";
-static off_t start_off;
+static b_off_t start_off;
 static char *delims=", \t";
 static struct coord_sys coord_head;	/* head of linked list of coordinate systems */
 static struct pbar pbar_head;		/* head of linked list of PBAR's */
@@ -161,7 +161,7 @@ reset_input(void)
     for (i=0; i < 20; i++)
 	prev_rec[i][0] = '\0';
 
-    bu_fseek(fpin, start_off, SEEK_SET);
+    fseek(fpin, start_off, SEEK_SET);
     line_count = bulk_data_start_line;
 
     tmp = bu_fgets(next_line, MAX_LINE_SIZE, fpin);
@@ -1193,7 +1193,7 @@ main(int argc, char **argv)
 	if (bu_strncmp(line, "BEGIN BULK", 10))
 	    continue;
 
-	start_off = bu_ftell(fpin);
+	start_off = ftell(fpin);
 	break;
     }
 
@@ -1219,7 +1219,7 @@ main(int argc, char **argv)
     nmg_model = (struct model *)NULL;
 
     /* count grid points */
-    bu_fseek(fptmp, 0, SEEK_SET);
+    fseek(fptmp, 0, SEEK_SET);
     while (bu_fgets(line, MAX_LINE_SIZE, fptmp)) {
 	if (!bu_strncmp(line, "GRID", 4))
 	    grid_count++;
@@ -1229,7 +1229,7 @@ main(int argc, char **argv)
     }
 
     /* get default values and properties */
-    bu_fseek(fptmp, 0, SEEK_SET);
+    fseek(fptmp, 0, SEEK_SET);
     while (get_next_record(fptmp, 1, 0)) {
 	if (!bu_strncmp(curr_rec[0], "BAROR", 5)) {
 	    /* get BAR defaults */
@@ -1262,7 +1262,7 @@ main(int argc, char **argv)
     g_pts = (struct grid_point *)bu_calloc(grid_count, sizeof(struct grid_point), "grid points");
 
     /* get all grid points */
-    bu_fseek(fptmp, 0, SEEK_SET);
+    fseek(fptmp, 0, SEEK_SET);
     while (get_next_record(fptmp, 1, 0)) {
 	int gid;
 	int cid;
@@ -1287,7 +1287,7 @@ main(int argc, char **argv)
 
 
     /* find coordinate systems */
-    bu_fseek(fptmp, 0, SEEK_SET);
+    fseek(fptmp, 0, SEEK_SET);
     while (get_next_record(fptmp, 1, 0)) {
 	if (bu_strncmp(curr_rec[0], "CORD", 4))
 	    continue;
@@ -1306,7 +1306,7 @@ main(int argc, char **argv)
     mk_id(fpout, nastran_file);
 
     /* get elements */
-    bu_fseek(fptmp, 0, SEEK_SET);
+    fseek(fptmp, 0, SEEK_SET);
     while (get_next_record(fptmp, 1, 0)) {
 	if (!bu_strncmp(curr_rec[0], "CBAR", 4))
 	    get_cbar();

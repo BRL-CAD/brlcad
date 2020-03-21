@@ -46,7 +46,7 @@
 #include "fb.h"
 
 
-int skipbytes(int fd, off_t num);
+int skipbytes(int fd, b_off_t num);
 
 #define MAX_LINE (16*1024)	/* Largest output scan line length */
 
@@ -334,7 +334,7 @@ general:
  * Throw bytes away.  Use reads into ibuf buffer if a pipe, else seek.
  */
 int
-skipbytes(int fd, off_t num)
+skipbytes(int fd, b_off_t num)
 {
     int n, tries;
 

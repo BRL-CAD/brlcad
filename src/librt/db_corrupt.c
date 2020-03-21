@@ -25,7 +25,7 @@
  */
 
 #include "common.h"
-
+#include "bio.h" /* for b_off_t */
 
 #include "vmath.h"
 #include "raytrace.h"
@@ -41,7 +41,7 @@ struct counter {
 
 
 static int
-db_corrupt_handler(struct db_i *dbip, const char *name, off_t offset, size_t size, int UNUSED(type), void *data)
+db_corrupt_handler(struct db_i *dbip, const char *name, b_off_t offset, size_t size, int UNUSED(type), void *data)
 {
     struct counter *cnt = (struct counter *)data;
     struct bu_external ext;
@@ -54,7 +54,7 @@ db_corrupt_handler(struct db_i *dbip, const char *name, off_t offset, size_t siz
     RT_CK_DBI(dbip);
 
     /* get into position */
-    ret = bu_fseek(dbip->dbi_fp, offset, 0);
+    ret = fseek(dbip->dbi_fp, offset, 0);
     if (ret) {
 	bu_log("Database seek failure, unable to seek [%s]\n", name);
 	return 0;

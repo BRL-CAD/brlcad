@@ -51,7 +51,7 @@ printUsage(void)
 int
 main(int argc, char **argv)
 {
-    off_t image_offset;
+    b_off_t image_offset;
     size_t framenumber;
     char *base_name;
     char name[128];

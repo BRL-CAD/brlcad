@@ -95,7 +95,7 @@ db5_write_free(struct db_i *dbip, struct directory *dp, size_t length)
 int
 db5_realloc(struct db_i *dbip, struct directory *dp, struct bu_external *ep)
 {
-    off_t baseaddr;
+    b_off_t baseaddr;
     size_t baselen;
 
     RT_CK_DBI(dbip);
@@ -155,7 +155,7 @@ db5_realloc(struct db_i *dbip, struct directory *dp, struct bu_external *ep)
 	if (db5_write_free(dbip, dp, dp->d_len) < 0) return -1;
 
 	/* Second, erase back half of storage to remainder. */
-	dp->d_addr = baseaddr + (off_t)ep->ext_nbytes;
+	dp->d_addr = baseaddr + (b_off_t)ep->ext_nbytes;
 	dp->d_len = baselen - ep->ext_nbytes;
 	if (db5_write_free(dbip, dp, dp->d_len) < 0) return -1;
 
@@ -185,7 +185,7 @@ db5_realloc(struct db_i *dbip, struct directory *dp, struct bu_external *ep)
      */
     {
 	struct mem_map *mmp;
-	off_t newaddr;
+	b_off_t newaddr;
 
 	if ((mmp = rt_memalloc_nosplit(&(dbip->dbi_freep), ep->ext_nbytes)) != MAP_NULL) {
 	    if (RT_G_DEBUG&RT_DEBUG_DB)
@@ -201,7 +201,7 @@ db5_realloc(struct db_i *dbip, struct directory *dp, struct bu_external *ep)
 	    newaddr = mmp->m_addr;
 	    if ((size_t)mmp->m_size > (size_t)ep->ext_nbytes) {
 		/* Reformat and free the surplus */
-		dp->d_addr = mmp->m_addr + (off_t)ep->ext_nbytes;
+		dp->d_addr = mmp->m_addr + (b_off_t)ep->ext_nbytes;
 		dp->d_len = mmp->m_size - ep->ext_nbytes;
 		if (RT_G_DEBUG&RT_DEBUG_DB)
 		    bu_log("db5_realloc(%s) returning surplus at %jd, len=%zu\n",
@@ -223,7 +223,7 @@ db5_realloc(struct db_i *dbip, struct directory *dp, struct bu_external *ep)
 
     /* No free storage of the desired size, extend the database */
     dp->d_addr = dbip->dbi_eof;
-    dbip->dbi_eof += (off_t)ep->ext_nbytes;
+    dbip->dbi_eof += (b_off_t)ep->ext_nbytes;
     dp->d_len = ep->ext_nbytes;
     if (RT_G_DEBUG & RT_DEBUG_DB)
 	bu_log("db5_realloc(%s) extending database addr=%jd, len=%zu\n",

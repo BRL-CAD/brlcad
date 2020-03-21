@@ -144,7 +144,7 @@ int	ndir;		/* Entries in directory.			*/
 /* Miscellaneous globals leftover from Keith's KARDS code.		*/
 int		delsol = 0, delreg = 0;
 char		buff[30];
-off_t		savsol;		/* File position of # of solids & regions	*/
+b_off_t		savsol;		/* File position of # of solids & regions	*/
 
 /* Structures.								*/
 mat_t		identity;
@@ -1218,7 +1218,7 @@ deck(char *prefix)
     ewrite(solfp, LF, 1);
 
     /* Save space for number of solids and regions.			*/
-    savsol = bu_ftell(solfp);
+    savsol = ftell(solfp);
     if (savsol < 0) {
 	perror("ftell");
     }
@@ -1272,7 +1272,7 @@ deck(char *prefix)
 
     /* Go back, and add number of solids and regions on second card. */
     if (savsol >= 0)
-	bu_fseek(solfp, savsol, 0);
+	fseek(solfp, savsol, 0);
 
     vdeck_itoa(nns, buff, 5);
     ewrite(solfp, buff, 5);

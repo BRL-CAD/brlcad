@@ -529,7 +529,7 @@ clt_read_code(const char *filename, size_t *length)
     if (!fp) bu_exit(-1, "failed to read OpenCL code file (%s)\n", filename);
 
     fseek(fp, 0, SEEK_END);
-    *length = bu_ftell(fp);
+    *length = ftell(fp);
     rewind(fp);
 
     data = (char*)bu_malloc((*length+1)*sizeof(char), "failed bu_malloc() in clt_read_code()");

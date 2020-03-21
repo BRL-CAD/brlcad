@@ -25,6 +25,7 @@
 #define RT_DB_INSTANCE_H
 
 #include "common.h"
+#include "bio.h" /* for b_off_t */
 
 /* interface headers */
 #include "bu/magic.h"
@@ -76,7 +77,7 @@ struct db_i {
 
     struct directory * dbi_Head[RT_DBNHASH]; /** @brief PRIVATE: object hash table */
     FILE * dbi_fp;                      /**< @brief PRIVATE: standard file pointer */
-    off_t dbi_eof;                      /**< @brief PRIVATE: End+1 pos after db_scan() */
+    b_off_t dbi_eof;                      /**< @brief PRIVATE: End+1 pos after db_scan() */
     size_t dbi_nrec;                    /**< @brief PRIVATE: # records after db_scan() */
     int dbi_uses;                       /**< @brief PRIVATE: # of uses of this struct */
     struct mem_map * dbi_freep;         /**< @brief PRIVATE: map of free granules */

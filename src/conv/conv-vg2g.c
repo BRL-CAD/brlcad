@@ -206,7 +206,7 @@ top:
 	    case ID_ARS_A:
 		if (rec.a.a_name[0] == '\0') {
 		    /* Skip deleted junk */
-		    lseek(ifd, (off_t)(rec.a.a_totlen * sizeof(rec)), 1);
+		    lseek(ifd, (b_off_t)(rec.a.a_totlen * sizeof(rec)), 1);
 		    goto top;
 		}
 		rec.a.a_xmin *= factor;

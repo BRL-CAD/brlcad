@@ -221,7 +221,7 @@ bu_vls_trunc(struct bu_vls *vp, int len)
 
 
 void
-bu_vls_nibble(struct bu_vls *vp, off_t len)
+bu_vls_nibble(struct bu_vls *vp, b_off_t len)
 {
     BU_CK_VLS(vp);
 

@@ -670,7 +670,7 @@ fb_write_fp(fb *ifp, FILE *fp, int req_width, int req_height, int crunch, int in
  * Throw bytes away.  Use reads into scanline buffer if a pipe, else seek.
  */
 static int
-fb_skip_bytes(int fd, off_t num, int fileinput, int scanbytes, unsigned char *scanline)
+fb_skip_bytes(int fd, b_off_t num, int fileinput, int scanbytes, unsigned char *scanline)
 {
     int n, tries;
 
@@ -785,7 +785,7 @@ fb_read_fd(fb *ifp, int fd, int file_width, int file_height, int file_xoff, int 
 	}
     }
 
-    if (file_yoff != 0) fb_skip_bytes(fd, (off_t)file_yoff*(off_t)file_width*sizeof(RGBpixel), fileinput, scanbytes, scanline);
+    if (file_yoff != 0) fb_skip_bytes(fd, (b_off_t)file_yoff*(b_off_t)file_width*sizeof(RGBpixel), fileinput, scanbytes, scanline);
 
     if (multiple_lines) {
 	/* Bottom to top with multi-line reads & writes */
@@ -816,11 +816,11 @@ fb_read_fd(fb *ifp, int fd, int file_width, int file_height, int file_xoff, int 
 	/* Normal way -- bottom to top */
 	for (y = scr_yoff; y < scr_yoff + yout; y++) {
 	    if (y < 0 || y > scr_height) {
-		fb_skip_bytes(fd, (off_t)file_width*sizeof(RGBpixel), fileinput, scanbytes, scanline);
+		fb_skip_bytes(fd, (b_off_t)file_width*sizeof(RGBpixel), fileinput, scanbytes, scanline);
 		continue;
 	    }
 	    if (file_xoff+xskip != 0)
-		fb_skip_bytes(fd, (off_t)(file_xoff+xskip)*sizeof(RGBpixel), fileinput, scanbytes, scanline);
+		fb_skip_bytes(fd, (b_off_t)(file_xoff+xskip)*sizeof(RGBpixel), fileinput, scanbytes, scanline);
 	    n = bu_mread(fd, (char *)scanline, scanbytes);
 	    if (n <= 0) break;
 	    m = fb_write(ifp, xstart, y, scanline, xout);
@@ -832,17 +832,17 @@ fb_read_fd(fb *ifp, int fd, int file_width, int file_height, int file_xoff, int 
 	    }
 	    /* slop at the end of the line? */
 	    if ((size_t)file_xoff+xskip+scanpix < (size_t)file_width)
-		fb_skip_bytes(fd, (off_t)(file_width-file_xoff-xskip-scanpix)*sizeof(RGBpixel), fileinput, scanbytes, scanline);
+		fb_skip_bytes(fd, (b_off_t)(file_width-file_xoff-xskip-scanpix)*sizeof(RGBpixel), fileinput, scanbytes, scanline);
 	}
     } else {
 	/* Inverse -- top to bottom */
 	for (y = scr_height-1-scr_yoff; y >= scr_height-scr_yoff-yout; y--) {
 	    if (y < 0 || y >= scr_height) {
-		fb_skip_bytes(fd, (off_t)file_width*sizeof(RGBpixel), fileinput, scanbytes, scanline);
+		fb_skip_bytes(fd, (b_off_t)file_width*sizeof(RGBpixel), fileinput, scanbytes, scanline);
 		continue;
 	    }
 	    if (file_xoff+xskip != 0)
-		fb_skip_bytes(fd, (off_t)(file_xoff+xskip)*sizeof(RGBpixel), fileinput, scanbytes, scanline);
+		fb_skip_bytes(fd, (b_off_t)(file_xoff+xskip)*sizeof(RGBpixel), fileinput, scanbytes, scanline);
 	    n = bu_mread(fd, (char *)scanline, scanbytes);
 	    if (n <= 0) break;
 	    m = fb_write(ifp, xstart, y, scanline, xout);
@@ -854,7 +854,7 @@ fb_read_fd(fb *ifp, int fd, int file_width, int file_height, int file_xoff, int 
 	    }
 	    /* slop at the end of the line? */
 	    if ((size_t)file_xoff+xskip+scanpix < (size_t)file_width)
-		fb_skip_bytes(fd, (off_t)(file_width-file_xoff-xskip-scanpix)*sizeof(RGBpixel), fileinput, scanbytes, scanline);
+		fb_skip_bytes(fd, (b_off_t)(file_width-file_xoff-xskip-scanpix)*sizeof(RGBpixel), fileinput, scanbytes, scanline);
 	}
     }
     free(scanline);

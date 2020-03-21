@@ -133,7 +133,7 @@ extern int cyclic_path(const struct db_full_path *fp, const char *test_name, lon
 extern int tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *avs, int offset);
 
 /* db_io.c */
-extern int db_read(const struct db_i *dbip, void *addr, size_t count, off_t offset);
+extern int db_read(const struct db_i *dbip, void *addr, size_t count, b_off_t offset);
 
 /* db5_io.c */
 #define DB_SIZE_OBJ 0x1
