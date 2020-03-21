@@ -110,6 +110,13 @@ extern int fileno(FILE *stream);
 #  define b_off_t __int64
 #  define fseek _fseeki64
 #  define ftell _ftelli64
+#  define fstat _fstati64
+#  define lseek _lseeki64
+#  define stat  _stati64
+#elif defined (_WIN32)
+#  define fstat _fstat
+#  define lseek _lseek
+#  define stat  _stat
 #else
 #  define b_off_t off_t
 #endif

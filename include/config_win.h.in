@@ -191,29 +191,6 @@
 #  define strtoll _strtoi64
 #endif
 
-/* set up stat */
-#if defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8
-#   define stat _stati64
-#else
-#   define stat _stat
-#endif
-
-/* set up fstat */
-#if defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8
-#   define fstat _fstati64
-#else
-#   define fstat _fstat
-#endif
-
-/* set up lseek */
-#ifndef HAVE_LSEEK
-#  if defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8
-#    define lseek _lseeki64
-#  else
-#    define lseek _lseek
-#  endif
-#endif
-
 #cmakedefine fmax __max
 #define ioctl ioctlsocket
 
