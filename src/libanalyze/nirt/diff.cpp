@@ -259,7 +259,6 @@ dist_bin(double dist, double dist_delta_tol)
 
     // If the tolerance is large compared to the value, clamp
     if (abs(tolexp) > (distexp)) {
-	tolexp = 0;
 	distexp = 0;
     }
 
@@ -308,14 +307,14 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 	// Map the segments into ordered transitions
 	for (size_t j = 0; j < rstate->old_segs.size(); j++) {
 	    struct nirt_seg *curr = &rstate->old_segs[j];
-	    double dist_in = DIST_PNT_PNT_SQ(rstate->orig, curr->in);
+	    double dist_in = DIST_PNT_PNT(rstate->orig, curr->in);
 	    half_segment in_seg;
 	    in_seg.origin = NIRT_LEFT;
 	    in_seg.seg = curr;
 	    key = dist_bin(dist_in, nds->dist_delta_tol);
 	    ordered_transitions[key.first][key.second][NIRT_T_IN].insert(in_seg);
 
-	    double dist_out = DIST_PNT_PNT_SQ(rstate->orig, curr->out);
+	    double dist_out = DIST_PNT_PNT(rstate->orig, curr->out);
 	    half_segment out_seg;
 	    out_seg.origin = NIRT_LEFT;
 	    out_seg.seg = curr;
@@ -324,16 +323,16 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 	}
 	for (size_t j = 0; j < rstate->old_segs.size(); j++) {
 	    struct nirt_seg *curr = &rstate->new_segs[j];
-	    double dist_in = DIST_PNT_PNT_SQ(rstate->orig, curr->in);
+	    double dist_in = DIST_PNT_PNT(rstate->orig, curr->in);
 	    half_segment in_seg;
-	    in_seg.origin = NIRT_LEFT;
+	    in_seg.origin = NIRT_RIGHT;
 	    in_seg.seg = curr;
 	    key = dist_bin(dist_in, nds->dist_delta_tol);
 	    ordered_transitions[key.first][key.second][NIRT_T_IN].insert(in_seg);
 
-	    double dist_out = DIST_PNT_PNT_SQ(rstate->orig, curr->out);
+	    double dist_out = DIST_PNT_PNT(rstate->orig, curr->out);
 	    half_segment out_seg;
-	    out_seg.origin = NIRT_LEFT;
+	    out_seg.origin = NIRT_RIGHT;
 	    out_seg.seg = curr;
 	    key = dist_bin(dist_out, nds->dist_delta_tol);
 	    ordered_transitions[key.first][key.second][NIRT_T_OUT].insert(out_seg);
