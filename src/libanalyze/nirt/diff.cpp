@@ -548,7 +548,7 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 		    while (hseg_ptrs.size()) {
 			const half_segment *h = *(hseg_ptrs.begin());
 			hseg_ptrs.erase(hseg_ptrs.begin());
-			if (h->type == NIRT_OUT) {
+			if (h->type == NIRT_T_OUT) {
 			    bool paired = false;
 			    // If we have an out hit, check it against prev_subsegs to see if it
 			    // terminates one of them.
@@ -588,6 +588,14 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 				// a new degenerate segment with both this in and out point, and
 				// remove the in point from the working set.
 				std::cout << "degen seg\n";
+				diff_segment cseg;
+				cseg.trans_start = tkey;
+				cseg.trans_end = tkey;
+				cseg.origin = h_lin->origin;
+				cseg.type = (h_lin->seg->type == NIRT_OVERLAP_SEG) ? NIRT_SEG_OVLP : NIRT_SEG_HIT;
+				cseg.seg = h_lin->seg;
+				new_subsegs.push_back(cseg);
+
 			    }
 			    if (!paired) {
 				// Error - every out point must have an in point.
@@ -597,6 +605,12 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 			if (h->type == NIRT_T_IN) {
 			    // In points always start new segment
 			    std::cout << "new in seg\n";
+			    diff_segment cseg;
+			    cseg.trans_start = tkey;
+			    cseg.origin = h->origin;
+			    cseg.type = (h->seg->type == NIRT_OVERLAP_SEG) ? NIRT_SEG_OVLP : NIRT_SEG_HIT;
+			    cseg.seg = h->seg;
+			    new_subsegs.push_back(cseg);
 			}
 		    }
 		    //
