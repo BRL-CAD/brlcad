@@ -107,6 +107,7 @@ extern int fileno(FILE *stream);
  * verions in 2020 - therefore, we instead introduce the b_off_t define to
  * properly substitute the correct numerical type for the correct platform.  */
 #if defined(_WIN64)
+#  include <sys/stat.h>
 #  define b_off_t __int64
 #  define fseek _fseeki64
 #  define ftell _ftelli64
@@ -114,6 +115,7 @@ extern int fileno(FILE *stream);
 #  define lseek _lseeki64
 #  define stat  _stati64
 #elif defined (_WIN32)
+#  include <sys/stat.h>
 #  define fstat _fstat
 #  define lseek _lseek
 #  define stat  _stat
