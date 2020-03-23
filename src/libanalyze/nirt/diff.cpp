@@ -179,7 +179,7 @@ class half_segment {
 	}
 
 	struct nirt_diff_state *nds;
-	
+
 	// Define an equality check that doesn't involve the origin type and
 	// uses geometry tolerances.
 	bool operator==(half_segment other) const
@@ -277,11 +277,12 @@ _nirt_segs_diff(struct nirt_diff_state *nds, struct nirt_seg *left, struct nirt_
 
 class diff_segment {
     public:
+	bool done = false;
 	n_origin_t origin;
 	n_seg_t type;
 	struct nirt_seg *seg = NULL;
-	std::pair<long, long> trans_start;
-	std::pair<long, long> trans_end;
+	std::pair<long, long> trans_start = {LONG_MAX, LONG_MAX};
+	std::pair<long, long> trans_end = {LONG_MAX, LONG_MAX};
 	bool operator<(diff_segment other) const
 	{
 	    if ((type == NIRT_SEG_HIT) && (other.type != NIRT_SEG_HIT)) {
@@ -476,11 +477,6 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 		std::map<n_transition_t, std::set<half_segment>> &l3 = l2_it->second;
 		std::map<n_transition_t, std::set<half_segment>>::reverse_iterator l3_it;
 		for (l3_it = l3.rbegin(); l3_it != l3.rend(); l3_it++) {
-		    std::string ttype = (l3_it->first == NIRT_T_IN) ? std::string("NIRT_T_IN") : std::string("NIRT_T_OUT");
-		    std::set<half_segment> &hsegs = l3_it->second;
-		    std::set<half_segment>::iterator h_it;
-		    std::cout << "   " << ttype << ":" << hsegs.size() << "\n";
-
 		    std::vector<diff_segment> new_subsegs;
 
 		    // At any given transition point, all segments active in the
@@ -496,22 +492,37 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 			for (size_t ps = 0; ps < prev_subsegs->size(); ps++) {
 			    diff_segment &pseg = (*prev_subsegs)[ps];
 			    pseg.nds = nds;
+			    if (pseg.done) continue;
 			    pseg.trans_end = tkey;
-			    // Gaps are handled by always starting a new gap each transition, but if we have
-			    // a nirt_seg being broken up by a transition point from the other side we need
-			    // to special-case the subsegment creation
+			    // If we have a nirt_seg being broken up by a
+			    // transition point from the other side we need to
+			    // special-case the subsegment creation
 			    if (pseg.type == NIRT_SEG_HIT || pseg.type == NIRT_SEG_OVLP) {
 				double dist = DIST_PNT_PNT(rstate->orig, (*prev_subsegs)[ps].seg->out);
 				std::pair<long, long> out_key = dist_bin(dist, nds->dist_tol);
 				if (out_key != tkey) {
 				    // Not ending an existing nirt_seg here - add new diff_segment of same type
+				    // with same origin, but with new start key
 				    diff_segment cseg = pseg;
 				    cseg.trans_start = tkey;
 				    new_subsegs.push_back(cseg);
+				    std::cout << "INFO: existing seg not closed\n";
 				}
 			    }
 			}
 		    }
+
+		    std::set<const half_segment *> hseg_ptrs;
+
+		    std::set<half_segment> &hsegs = l3_it->second;
+		    std::set<half_segment>::iterator h_it;
+		    for (h_it = hsegs.begin(); h_it != hsegs.end(); h_it++) {
+			hseg_ptrs.insert(&(*h_it));
+		    }
+
+		    std::string ttype = (l3_it->first == NIRT_T_IN) ? std::string("NIRT_T_IN") : std::string("NIRT_T_OUT");
+		    std::cout << "   " << ttype << ":" << hsegs.size() << "\n";
+
 
 		    // With all segments defined in this fashion, they can be
 		    // indexed by their starting transition bin only - they are all
@@ -534,7 +545,59 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 		    // corresponding segment in any previous logic and we need
 		    // to hunt up the corresponding in hit in the current bin to
 		    // prevent the assembly logic from getting confused.
-		    for (h_it = hsegs.begin(); h_it != hsegs.end(); h_it++) {
+		    while (hseg_ptrs.size()) {
+			const half_segment *h = *(hseg_ptrs.begin());
+			hseg_ptrs.erase(hseg_ptrs.begin());
+			if (h->type == NIRT_OUT) {
+			    bool paired = false;
+			    // If we have an out hit, check it against prev_subsegs to see if it
+			    // terminates one of them.
+			    for (size_t ps = 0; ps < prev_subsegs->size(); ps++) {
+				diff_segment &pseg = (*prev_subsegs)[ps];
+				// Don't need to check origins in this case - only the exact nirt_seg
+				// will match in this test
+				if (pseg.seg == h->seg) {
+				    paired = true;
+				}
+			    }
+
+			    // If it doesn't terminate one of them, check to see if it terminates
+			    // an IN point in the current bin
+			    const half_segment *h_lin = NULL;
+			    if (!paired) {
+				std::set<const half_segment *>::iterator hp_it;
+				for (hp_it = hseg_ptrs.begin(); hp_it != hseg_ptrs.end(); hp_it++) {
+				    const half_segment *hc = *hp_it;
+				    // Don't need to check origins in this case - only the exact nirt_seg
+				    // will match in this test
+				    if (h->seg == hc->seg) {
+					// Pairing in bin - make degen segment
+					std::cout << "degen seg\n";
+					h_lin = hc;
+					paired = true;
+				    } 
+				}
+			    }
+			    if (paired && !h_lin) {
+				// Standard case - out closing a previous seg.  This does not
+				// require the introduction of a new segment
+				std::cout << "closed prev seg\n";
+			    }
+			    if (paired && h_lin) {
+				// Degen case - in and out pairing within bin.  We must introduce
+				// a new degenerate segment with both this in and out point, and
+				// remove the in point from the working set.
+				std::cout << "degen seg\n";
+			    }
+			    if (!paired) {
+				// Error - every out point must have an in point.
+				std::cout << "error\n";
+			    }
+			}
+			if (h->type == NIRT_T_IN) {
+			    // In points always start new segment
+			    std::cout << "new in seg\n";
+			}
 		    }
 		    //
 		    // Transitions are compared first (is a point only defined left or right,
@@ -564,7 +627,6 @@ void
 _nirt_diff_destroy(struct nirt_state *nss)
 {
     bu_vls_free(&nss->i->diff_state->diff_file);
-    // TODO - clean up nirt_diff objects
     delete nss->i->diff_state;
 }
 
@@ -610,11 +672,6 @@ parse_ray(struct nirt_diff_state *nds, std::string &line)
 	}
 	VSET(df.orig, _nirt_str_to_dbl(substrs[0], 0), _nirt_str_to_dbl(substrs[1], 0), _nirt_str_to_dbl(substrs[2], 0));
 	VSET(df.dir,  _nirt_str_to_dbl(substrs[3], 0), _nirt_str_to_dbl(substrs[4], 0), _nirt_str_to_dbl(substrs[5], 0));
-#ifdef NIRT_DIFF_DEBUG
-	bu_log("Found RAY:\n");
-	bu_log("origin   : %0.17f, %0.17f, %0.17f\n", V3ARGS(df.orig));
-	bu_log("direction: %0.17f, %0.17f, %0.17f\n", V3ARGS(df.dir));
-#endif
 	nds->rays.push_back(df);
 	nds->cdiff = &(nds->rays[nds->rays.size() - 1]);
 	return true;
@@ -658,7 +715,6 @@ parse_hit(struct nirt_diff_state *nds, std::string &line)
 	bu_vls_decode(&rdecode, substrs[0].c_str());
 	segp->reg_name = std::string(bu_vls_cstr(&rdecode));
 	bu_vls_free(&rdecode);
-	//bu_vls_printf(segp->reg_name, "%s", substrs[0].c_str());
 	struct bu_vls pdecode = BU_VLS_INIT_ZERO;
 	bu_vls_decode(&pdecode, substrs[1].c_str());
 	segp->path_name = std::string(bu_vls_cstr(&pdecode));
@@ -672,17 +728,6 @@ parse_hit(struct nirt_diff_state *nds, std::string &line)
 	segp->scaled_los = _nirt_str_to_dbl(substrs[12], 0);
 	segp->obliq_in = _nirt_str_to_dbl(substrs[13], 0);
 	segp->obliq_out = _nirt_str_to_dbl(substrs[14], 0);
-#ifdef NIRT_DIFF_DEBUG
-	bu_log("Found %s:\n", line.c_str());
-	bu_log("  reg_name: %s\n", bu_vls_cstr(segp->reg_name));
-	bu_log("  path_name: %s\n", bu_vls_cstr(segp->path_name));
-	bu_log("  reg_id: %d\n", segp->reg_id);
-	bu_log("  in: %0.17f, %0.17f, %0.17f\n", V3ARGS(segp->in));
-	bu_log("  out: %0.17f, %0.17f, %0.17f\n", V3ARGS(segp->out));
-	bu_log("  d_in: %0.17f d_out: %0.17f\n", segp->d_in, segp->d_out);
-	bu_log("  los: %0.17f  scaled_los: %0.17f\n", segp->los, segp->scaled_los);
-	bu_log("  obliq_in: %0.17f  obliq_out: %0.17f\n", segp->obliq_in, segp->obliq_out);
-#endif
 	nds->cdiff->old_segs.push_back(*segp);
 	delete segp;
 	return true;
@@ -734,16 +779,6 @@ parse_overlap(struct nirt_diff_state *nds, std::string &line)
 	VMOVE(segp->in, segp->ov_in);
 	VMOVE(segp->out, segp->ov_out);
 	segp->ov_los = _nirt_str_to_dbl(substrs[10], 0);
-#ifdef NIRT_DIFF_DEBUG
-	bu_log("Found %s:\n", line.c_str());
-	bu_log("  ov_reg1_name: %s\n", bu_vls_cstr(&segp->ov_reg1_name));
-	bu_log("  ov_reg2_name: %s\n", bu_vls_cstr(&segp->ov_reg2_name));
-	bu_log("  ov_reg1_id: %d\n", segp->ov_reg1_id);
-	bu_log("  ov_reg2_id: %d\n", segp->ov_reg2_id);
-	bu_log("  ov_in: %0.17f, %0.17f, %0.17f\n", V3ARGS(segp->ov_in));
-	bu_log("  ov_out: %0.17f, %0.17f, %0.17f\n", V3ARGS(segp->ov_out));
-	bu_log("  ov_los: %0.17f\n", segp->ov_los);
-#endif
 	nds->cdiff->old_segs.push_back(*segp);
 	delete segp;
 	return true;
@@ -1143,17 +1178,9 @@ _nirt_cmd_diff(void *ns, int argc, const char *argv[])
     struct nirt_state *nss = (struct nirt_state *)ns;
     struct nirt_diff_state *nds = nss->i->diff_state;
     int help = 0;
-    double tol = 0;
-    struct bu_opt_desc d[3];
-    // TODO - add reporting options for enabling/disabling region/path,
-    // partition length, normal, and overlap ordering diffs.  For example, if
-    // r1 and r2 have the same shape in space, we may want to suppress name
-    // based differences and look at other aspects of the shotline.  Also need
-    // sorting options for output - max partition diff first, max normal diff
-    // first, max numerical delta, etc...
+    struct bu_opt_desc d[2];
     BU_OPT(d[0],  "h", "help",       "",             NULL,   &help, "print help and exit");
-    BU_OPT(d[1],  "t", "tol",   "<val>",  &bu_opt_fastf_t,   &tol,  "set diff tolerance");
-    BU_OPT_NULL(d[2]);
+    BU_OPT_NULL(d[1]);
 
     // Need for help printing
     nds->d = (struct bu_opt_desc *)d;
