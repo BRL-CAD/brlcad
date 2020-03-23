@@ -160,14 +160,25 @@ struct nirt_output_record {
 
 struct nirt_diff_state;
 
-struct fmt_state {
-    std::vector<std::pair<std::string,std::string> > ray;
-    std::vector<std::pair<std::string,std::string> > head;
-    std::vector<std::pair<std::string,std::string> > part;
-    std::vector<std::pair<std::string,std::string> > foot;
-    std::vector<std::pair<std::string,std::string> > miss;
-    std::vector<std::pair<std::string,std::string> > ovlp;
-    std::vector<std::pair<std::string,std::string> > gap;
+class nirt_fmt_state {
+    public:
+	std::vector<std::pair<std::string,std::string> > ray;
+	std::vector<std::pair<std::string,std::string> > head;
+	std::vector<std::pair<std::string,std::string> > part;
+	std::vector<std::pair<std::string,std::string> > foot;
+	std::vector<std::pair<std::string,std::string> > miss;
+	std::vector<std::pair<std::string,std::string> > ovlp;
+	std::vector<std::pair<std::string,std::string> > gap;
+
+	void clear() {
+	    ray.clear();
+	    head.clear();
+	    part.clear();
+	    foot.clear();
+	    miss.clear();
+	    ovlp.clear();
+	    gap.clear();
+	};
 };
 
 struct nirt_state_impl {
@@ -234,7 +245,7 @@ struct nirt_state_impl {
     /* internal format specifier arrays */
     struct bu_attribute_value_set *val_types;
     struct bu_attribute_value_set *val_docs;
-    struct fmt_state fmt;
+    nirt_fmt_state fmt;
 
     void *u_data; // user data
 };

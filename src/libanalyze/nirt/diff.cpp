@@ -923,8 +923,10 @@ _nirt_diff_cmd_run(void *ndsv, int argc, const char **argv)
     for (unsigned int i = 0; i < nds->rays.size(); i++) {
 	nds->rays[i].new_segs.clear();
     }
-    
-    // TODO - temporarily suppress all formatting output for a silent diff run...
+
+    // Temporarily suppress all formatting output for a silent diff run...
+    nirt_fmt_state old_fmt = nds->nss->i->fmt;
+    nds->nss->i->fmt.clear();
 
     for (unsigned int i = 0; i < nds->rays.size(); i++) {
 	nds->cdiff = &(nds->rays[i]);
@@ -941,6 +943,7 @@ _nirt_diff_cmd_run(void *ndsv, int argc, const char **argv)
 	(void)rt_shootray(nss->i->ap);
     }
 
+    nds->nss->i->fmt = old_fmt;
     nds->run_complete = true;
 
     return 0;
