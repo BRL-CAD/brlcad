@@ -553,87 +553,59 @@ _nirt_diff_add_seg(struct nirt_state *nss, struct nirt_seg *nseg)
 
 
 static bool
-_nirt_partition_diff(struct nirt_diff_ray_state *ndiff, struct nirt_seg *left, struct nirt_seg *right)
+_nirt_partition_diff(struct nirt_diff_state *nds, struct nirt_seg *left, struct nirt_seg *right)
 {
-    int have_diff = 0;
+    if (!nds) return false;
 
-    if (!ndiff || !ndiff->nds)
-	return false;
+    if (left->reg_id != right->reg_id) return true;
 
-    fastf_t in_delta = DIST_PNT_PNT(left->in, right->in);
-    fastf_t out_delta = DIST_PNT_PNT(left->in, right->in);
+    if (left->reg_name != right->reg_name) return true;
+    
+    if (left->path_name != right->path_name) return true;
+
     fastf_t los_delta = fabs(left->los - right->los);
-    fastf_t scaled_los_delta = fabs(left->scaled_los - right->scaled_los);
-    fastf_t obliq_in_delta = fabs(left->obliq_in - right->obliq_in);
-    fastf_t obliq_out_delta = fabs(left->obliq_out - right->obliq_out);
+    if (los_delta > nds->los_delta_tol) return true;
 
-    if (left->reg_name != right->reg_name) have_diff = 1;
-    if (left->path_name != right->path_name) have_diff = 1;
-    if (left->reg_id != right->reg_id) have_diff = 1;
-    if (in_delta > ndiff->nds->dist_delta_tol) have_diff = 1;
-    if (out_delta > ndiff->nds->dist_delta_tol) have_diff = 1;
-    if (los_delta > ndiff->nds->los_delta_tol) have_diff = 1;
-    if (scaled_los_delta > ndiff->nds->scaled_los_delta_tol) have_diff = 1;
-    if (obliq_in_delta > ndiff->nds->obliq_delta_tol) have_diff = 1;
-    if (obliq_out_delta > ndiff->nds->obliq_delta_tol) have_diff = 1;
-    if (have_diff) {
-	return true;
-    }
+    fastf_t scaled_los_delta = fabs(left->scaled_los - right->scaled_los);
+    if (scaled_los_delta > nds->scaled_los_delta_tol) return true;
+
+    fastf_t obliq_in_delta = fabs(left->obliq_in - right->obliq_in);
+    if (obliq_in_delta > nds->obliq_delta_tol) return true;
+    
+    fastf_t obliq_out_delta = fabs(left->obliq_out - right->obliq_out);
+    if (obliq_out_delta > nds->obliq_delta_tol) return true;
+    
     return false;
 }
 
 
 static bool
-_nirt_overlap_diff(struct nirt_diff_ray_state *ndiff, struct nirt_seg *left, struct nirt_seg *right)
+_nirt_overlap_diff(struct nirt_diff_state *nds, struct nirt_seg *left, struct nirt_seg *right)
 {
-    int have_diff = 0;
+    if (!nds) return false;
 
-    if (!ndiff || !ndiff->nds)
-	return false;
+
+    if (left->ov_reg1_name != right->ov_reg1_name) return true;
+    if (left->ov_reg2_name != right->ov_reg2_name) return true;
+    if (left->ov_reg1_id != right->ov_reg1_id) return true;
+    if (left->ov_reg2_id != right->ov_reg2_id) return true;
 
     fastf_t ov_in_delta = DIST_PNT_PNT(left->ov_in, right->ov_in);
+    if (ov_in_delta > nds->dist_delta_tol) return true;
+    
     fastf_t ov_out_delta = DIST_PNT_PNT(left->ov_out, right->ov_out);
+    if (ov_out_delta > nds->dist_delta_tol) return true;
+   
     fastf_t ov_los_delta = fabs(left->ov_los - right->ov_los);
-
-    if (left->ov_reg1_name != right->ov_reg1_name) have_diff = 1;
-    if (left->ov_reg2_name != right->ov_reg2_name) have_diff = 1;
-    if (left->ov_reg1_id != right->ov_reg1_id) have_diff = 1;
-    if (left->ov_reg2_id != right->ov_reg2_id) have_diff = 1;
-    if (ov_in_delta > ndiff->nds->dist_delta_tol) have_diff = 1;
-    if (ov_out_delta > ndiff->nds->dist_delta_tol) have_diff = 1;
-    if (ov_los_delta > ndiff->nds->los_delta_tol) have_diff = 1;
-    if (have_diff) {
-	return true;
-    }
+    if (ov_los_delta > nds->los_delta_tol) return true;
+  
     return false;
 }
-
-
-static bool
-_nirt_gap_diff(struct nirt_diff_ray_state *ndiff, struct nirt_seg *left, struct nirt_seg *right)
-{
-    int have_diff = 0;
-
-    if (!ndiff || !ndiff->nds)
-	return false;
-
-    fastf_t gap_in_delta = DIST_PNT_PNT(left->gap_in, right->gap_in);
-    fastf_t gap_los_delta = fabs(left->gap_los - right->gap_los);
-
-    if (gap_in_delta > ndiff->nds->dist_delta_tol) have_diff = 1;
-    if (gap_los_delta > ndiff->nds->los_delta_tol) have_diff = 1;
-    if (have_diff) {
-	return true;
-    }
-    return false;
-}
-
 
 bool
-_nirt_segs_diff(struct nirt_diff_ray_state *ndiff, struct nirt_seg *left, struct nirt_seg *right)
+_nirt_segs_diff(struct nirt_diff_state *nds, struct nirt_seg *left, struct nirt_seg *right)
 {
-    if (!ndiff)
-	return false;
+    if (!nds) return false;
 
     if (!left || !right || left->type != right->type) {
 	/* Fundamental segment difference - no point going further, they're different */
@@ -645,13 +617,15 @@ _nirt_segs_diff(struct nirt_diff_ray_state *ndiff, struct nirt_seg *left, struct
 	    /* Types don't differ and they're both misses - we're good */
 	    return false;
 	case NIRT_PARTITION_SEG:
-	    return _nirt_partition_diff(ndiff, left, right);
+	    return _nirt_partition_diff(nds, left, right);
 	case NIRT_GAP_SEG:
-	    return _nirt_gap_diff(ndiff, left, right);
+	    /* With transitions managing the point differences, gaps don't diff with
+	     * other gaps */
+	    return false;
 	case NIRT_OVERLAP_SEG:
-	    return _nirt_overlap_diff(ndiff, left, right);
+	    return _nirt_overlap_diff(nds, left, right);
 	default:
-	    nerr(ndiff->nds->nss, "NIRT diff error: unknown segment type: %d\n", left->type);
+	    nerr(nds->nss, "NIRT diff error: unknown segment type: %d\n", left->type);
 	    return 0;
     }
 }
