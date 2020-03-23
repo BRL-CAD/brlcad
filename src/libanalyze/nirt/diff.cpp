@@ -882,42 +882,6 @@ parse_hit(struct nirt_diff_state *nds, std::string &line)
     return false;
 
 }
-
-static bool
-parse_miss(struct nirt_diff_state *nds, std::string &line)
-{
-    std::regex miss_regex("MISS,([0-9]+),(.*)");
-
-    std::smatch s1;
-    if (!std::regex_search(line, s1, miss_regex)) {
-	nerr(nds->nss, "error processing miss line \"%s\"!\nunable to identify formatting version\n", line.c_str());
-	return false;
-    }
-
-    if (!nds->cdiff) {
-	nerr(nds->nss, "error: miss line found but no ray set.\n");
-	return false;
-    }
-
-    int miss_version = _nirt_str_to_int(s1[1]);
-
-    if (miss_version == 1) {
-	struct nirt_seg *segp = new struct nirt_seg;
-	segp->type = NIRT_MISS_SEG;
-#ifdef NIRT_DIFF_DEBUG
-	bu_log("Found MISS\n");
-#endif
-	nds->cdiff->old_segs.push_back(*segp);
-	delete segp;
-	return true;
-    }
-
-    nerr(nds->nss, "error processing miss line \"%s\"!\nunsupported version: %d\n", line.c_str(), miss_version);
-    return false;
-
-}
-
-
 static bool
 parse_overlap(struct nirt_diff_state *nds, std::string &line)
 {
@@ -1074,7 +1038,6 @@ _nirt_diff_cmd_load(void *ndsv, int argc, const char **argv)
 	int ltype = -1;
 	ltype = (ltype < 0 && !line.compare(0, 4, "RAY,")) ? 0 : ltype;
 	ltype = (ltype < 0 && !line.compare(0, 4, "HIT,")) ? 1 : ltype;
-	ltype = (ltype < 0 && !line.compare(0, 5, "MISS,")) ? 3 : ltype;
 	ltype = (ltype < 0 && !line.compare(0, 8, "OVERLAP,")) ? 4 : ltype;
 	if (ltype < 0) {
 	    nerr(nss, "Error processing diff file, line \"%s\"!\nUnknown line type\n", line.c_str());
@@ -1093,15 +1056,6 @@ _nirt_diff_cmd_load(void *ndsv, int argc, const char **argv)
 	/* Hit */
 	if (ltype == 1) {
 	    if (!parse_hit(nds, line)) {
-		_nirt_diff_cmd_clear((void *)nds, 0, NULL);
-		return -1;
-	    }
-	    continue;
-	}
-
-	/* Miss */
-	if (ltype == 3) {
-	    if (!parse_miss(nds, line)) {
 		_nirt_diff_cmd_clear((void *)nds, 0, NULL);
 		return -1;
 	    }
