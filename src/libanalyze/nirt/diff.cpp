@@ -167,8 +167,6 @@ class diff_segment {
 class segment_bin {
     std::vector<diff_segment> left;
     std::vector<diff_segment> right;
-    half_segment *start;
-    half_segment *end;
 };
 
 struct nirt_diff_event {
