@@ -115,10 +115,56 @@ typedef enum {
 #define NIRT_DIFF_SEG_ID              0x8
 #define NIRT_DIFF_SEG_OVLP_SELECTED   0x16
 
+struct nirt_diff_state;
+
+struct nirt_diff_ray_state {
+    point_t orig;
+    vect_t dir;
+    std::vector<struct nirt_seg> old_segs;
+    std::vector<struct nirt_seg> new_segs;
+    struct nirt_diff_state *nds;
+};
+
+struct nirt_diff_state {
+
+    struct bu_vls diff_file = BU_VLS_INIT_ZERO;
+    struct nirt_diff_ray_state *cdiff = NULL;
+    std::vector<struct nirt_diff_ray_state> rays;
+
+    /* Reporting settings */
+    bool report_partitions = true;
+    bool report_misses = true;
+    bool report_gaps = true;
+    bool report_overlaps = true;
+    bool report_partition_reg_ids = true;
+    bool report_partition_reg_names = true;
+    bool report_partition_path_names = true;
+    bool report_partition_dists = true;
+    bool report_partition_obliq = true;
+    bool report_overlap_reg_names = true;
+    bool report_overlap_reg_ids = true;
+    bool report_overlap_dists = true;
+    bool report_overlap_obliq = true;
+    bool report_gap_dists = true;
+
+    /* Tolerances */
+    fastf_t dist_delta_tol = BN_TOL_DIST;
+    fastf_t obliq_delta_tol = BN_TOL_DIST;
+    fastf_t los_delta_tol = BN_TOL_DIST;
+    fastf_t scaled_los_delta_tol = BN_TOL_DIST;
+
+    struct nirt_state *nss;
+
+    struct bu_opt_desc *d = NULL;
+    const struct bu_cmdtab *cmds = NULL;
+};
+
 class half_segment {
     public:
 	n_origin_t origin;
+	n_transition_t type;
 	double dist;
+	double obliq;
 	struct nirt_seg *seg;
 	bool operator<(half_segment other) const
 	{
@@ -128,9 +174,36 @@ class half_segment {
 	    if (origin == NIRT_RIGHT && other.origin == NIRT_LEFT) {
 		return false;
 	    }
+	    if (type == NIRT_T_OUT && other.type == NIRT_T_IN) {
+		return true;
+	    }
+	    if (type == NIRT_T_IN && other.type == NIRT_T_OUT) {
+		return false;
+	    }
 	    return (seg < other.seg);
 	}
+
+	struct nirt_diff_state *nds;
+	
+	// Define an equality check that doesn't involve the origin type and
+	// uses geometry tolerances.
+	bool operator==(half_segment other) const
+	{
+	    if (type != other.type) {
+		return false;
+	    }
+	    if (!NEAR_EQUAL(dist, other.dist, nds->dist_delta_tol)) {
+		return false;
+	    }
+	    if (!NEAR_EQUAL(obliq, other.obliq, nds->obliq_delta_tol)) {
+		return false;
+	    }
+	    return true;
+	}
 };
+
+bool
+_nirt_segs_diff(struct nirt_diff_state *, struct nirt_seg *left, struct nirt_seg *right); 
 
 class diff_segment {
     public:
@@ -162,11 +235,37 @@ class diff_segment {
 	    return (seg < other.seg);
 	}
 
+	struct nirt_diff_state *nds;
+
+	// TODO - see if we can define a == operator for diff
+	// segments that will incorporate all the necessary logic
+	// to do the diff comparison (tolerance checks, etc.)  If so
+	// it might be a very simple way to implement the actual
+	// segment comparison logic...
+	
+	// Define an equality check that doesn't involve the origin type and
+	// uses geometry tolerances.
+	bool operator==(diff_segment other) const
+	{
+	    if (type != other.type) {
+		return false;
+	    }
+	    if (trans_start != other.trans_start) {
+		return false;
+	    }
+	    if (trans_end != other.trans_end) {
+		return false;
+	    }
+	    return _nirt_segs_diff(nds, seg, other.seg);
+	}
 };
 
 class segment_bin {
-    std::vector<diff_segment> left;
-    std::vector<diff_segment> right;
+    public:
+	std::vector<diff_segment> left;
+	std::vector<diff_segment> right;
+	half_segment *start;
+	half_segment *end;
 };
 
 struct nirt_diff_event {
@@ -202,56 +301,7 @@ struct nirt_diff_instance {
 };
 
 
-struct nirt_diff_state;
 
-struct nirt_diff_ray_state {
-    point_t orig;
-    vect_t dir;
-    std::vector<struct nirt_seg> old_segs;
-    std::vector<struct nirt_seg> new_segs;
-    std::vector<struct nirt_diff_instance> diffs;
-    struct nirt_diff_state *nds;
-    long lcurr;
-    long rcurr;
-};
-
-
-struct nirt_diff_state {
-
-    struct bu_vls diff_file = BU_VLS_INIT_ZERO;
-    struct nirt_diff_ray_state *cdiff = NULL;
-    std::vector<struct nirt_diff_ray_state> rays;
-
-    std::vector<struct nirt_diff_event> events;
-    bool diff_ready = false;
-
-    /* Reporting settings */
-    bool report_partitions = true;
-    bool report_misses = true;
-    bool report_gaps = true;
-    bool report_overlaps = true;
-    bool report_partition_reg_ids = true;
-    bool report_partition_reg_names = true;
-    bool report_partition_path_names = true;
-    bool report_partition_dists = true;
-    bool report_partition_obliq = true;
-    bool report_overlap_reg_names = true;
-    bool report_overlap_reg_ids = true;
-    bool report_overlap_dists = true;
-    bool report_overlap_obliq = true;
-    bool report_gap_dists = true;
-
-    /* Tolerances */
-    fastf_t dist_delta_tol = BN_TOL_DIST;
-    fastf_t obliq_delta_tol = BN_TOL_DIST;
-    fastf_t los_delta_tol = BN_TOL_DIST;
-    fastf_t scaled_los_delta_tol = BN_TOL_DIST;
-
-    struct nirt_state *nss;
-
-    struct bu_opt_desc *d = NULL;
-    const struct bu_cmdtab *cmds = NULL;
-};
 
 // If we have a lot of small segments (i.e. nearby points) and large distance
 // tolerances, we need to be able to decide when points are the same within
@@ -350,14 +400,20 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 	    half_segment in_seg;
 	    in_seg.dist = DIST_PNT_PNT(rstate->orig, curr->in);
 	    in_seg.origin = NIRT_LEFT;
+	    in_seg.type = NIRT_T_IN;
 	    in_seg.seg = curr;
+	    in_seg.obliq = curr->obliq_in;
+	    in_seg.nds = nds;
 	    key = dist_bin(in_seg.dist, nds->dist_delta_tol);
 	    ordered_transitions[key.first][key.second][NIRT_T_IN].insert(in_seg);
 
 	    half_segment out_seg;
 	    out_seg.dist = DIST_PNT_PNT(rstate->orig, curr->out);
 	    out_seg.origin = NIRT_LEFT;
+	    out_seg.type = NIRT_T_OUT;
 	    out_seg.seg = curr;
+	    out_seg.obliq = curr->obliq_out;
+	    out_seg.nds = nds;
 	    key = dist_bin(out_seg.dist, nds->dist_delta_tol);
 	    ordered_transitions[key.first][key.second][NIRT_T_OUT].insert(out_seg);
 	}
@@ -366,14 +422,20 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 	    half_segment in_seg;
 	    in_seg.dist = DIST_PNT_PNT(rstate->orig, curr->in);
 	    in_seg.origin = NIRT_RIGHT;
+	    in_seg.type = NIRT_T_IN;
 	    in_seg.seg = curr;
+	    in_seg.obliq = curr->obliq_in;
+	    in_seg.nds = nds;
 	    key = dist_bin(in_seg.dist, nds->dist_delta_tol);
 	    ordered_transitions[key.first][key.second][NIRT_T_IN].insert(in_seg);
 
 	    half_segment out_seg;
 	    out_seg.dist = DIST_PNT_PNT(rstate->orig, curr->out);
 	    out_seg.origin = NIRT_RIGHT;
+	    out_seg.type = NIRT_T_OUT;
 	    out_seg.seg = curr;
+	    out_seg.obliq = curr->obliq_out;
+	    out_seg.nds = nds;
 	    key = dist_bin(out_seg.dist, nds->dist_delta_tol);
 	    ordered_transitions[key.first][key.second][NIRT_T_OUT].insert(out_seg);
 	}
@@ -494,7 +556,6 @@ static bool
 _nirt_partition_diff(struct nirt_diff_ray_state *ndiff, struct nirt_seg *left, struct nirt_seg *right)
 {
     int have_diff = 0;
-    struct nirt_diff_instance sd;
 
     if (!ndiff || !ndiff->nds)
 	return false;
@@ -516,15 +577,6 @@ _nirt_partition_diff(struct nirt_diff_ray_state *ndiff, struct nirt_seg *left, s
     if (obliq_in_delta > ndiff->nds->obliq_delta_tol) have_diff = 1;
     if (obliq_out_delta > ndiff->nds->obliq_delta_tol) have_diff = 1;
     if (have_diff) {
-	sd.left = left;
-	sd.right = right;
-	sd.in_delta = in_delta;
-	sd.out_delta = out_delta;
-	sd.los_delta = los_delta;
-	sd.scaled_los_delta = scaled_los_delta;
-	sd.obliq_in_delta = obliq_in_delta;
-	sd.obliq_out_delta = obliq_out_delta;
-	ndiff->diffs.push_back(sd);
 	return true;
     }
     return false;
@@ -535,7 +587,6 @@ static bool
 _nirt_overlap_diff(struct nirt_diff_ray_state *ndiff, struct nirt_seg *left, struct nirt_seg *right)
 {
     int have_diff = 0;
-    struct nirt_diff_instance sd;
 
     if (!ndiff || !ndiff->nds)
 	return false;
@@ -552,12 +603,6 @@ _nirt_overlap_diff(struct nirt_diff_ray_state *ndiff, struct nirt_seg *left, str
     if (ov_out_delta > ndiff->nds->dist_delta_tol) have_diff = 1;
     if (ov_los_delta > ndiff->nds->los_delta_tol) have_diff = 1;
     if (have_diff) {
-	sd.left = left;
-	sd.right = right;
-	sd.ov_in_delta = ov_in_delta;
-	sd.ov_out_delta = ov_out_delta;
-	sd.ov_los_delta = ov_los_delta;
-	ndiff->diffs.push_back(sd);
 	return true;
     }
     return false;
@@ -568,7 +613,6 @@ static bool
 _nirt_gap_diff(struct nirt_diff_ray_state *ndiff, struct nirt_seg *left, struct nirt_seg *right)
 {
     int have_diff = 0;
-    struct nirt_diff_instance sd;
 
     if (!ndiff || !ndiff->nds)
 	return false;
@@ -579,18 +623,13 @@ _nirt_gap_diff(struct nirt_diff_ray_state *ndiff, struct nirt_seg *left, struct 
     if (gap_in_delta > ndiff->nds->dist_delta_tol) have_diff = 1;
     if (gap_los_delta > ndiff->nds->los_delta_tol) have_diff = 1;
     if (have_diff) {
-	sd.left = left;
-	sd.right = right;
-	sd.gap_in_delta = gap_in_delta;
-	sd.gap_los_delta = gap_los_delta;
-	ndiff->diffs.push_back(sd);
 	return true;
     }
     return false;
 }
 
 
-static bool
+bool
 _nirt_segs_diff(struct nirt_diff_ray_state *ndiff, struct nirt_seg *left, struct nirt_seg *right)
 {
     if (!ndiff)
@@ -598,10 +637,6 @@ _nirt_segs_diff(struct nirt_diff_ray_state *ndiff, struct nirt_seg *left, struct
 
     if (!left || !right || left->type != right->type) {
 	/* Fundamental segment difference - no point going further, they're different */
-	struct nirt_diff_instance sd;
-	sd.left = left;
-	sd.right = right;
-	ndiff->diffs.push_back(sd);
 	return true;
     }
 
@@ -622,7 +657,7 @@ _nirt_segs_diff(struct nirt_diff_ray_state *ndiff, struct nirt_seg *left, struct
 }
 
 
-static const char *
+const char *
 _nirt_seg_string(int type)
 {
     static const char *p = "Partition";
@@ -657,6 +692,13 @@ _nirt_diff_report(struct nirt_state *nss)
     struct nirt_diff_state *nds = nss->i->diff_state;
 
     if (!nds || nds->rays.size() == 0) return 0;
+
+    if (!did_header) {
+	bu_vls_printf(&dreport, "Diff Results (%s):\n", bu_vls_cstr(&nds->diff_file));
+	did_header = 1;
+    }
+
+#if 0
     std::vector<struct nirt_diff_ray_state> &dfs = nds->rays;
     for (size_t i = 0; i < dfs.size(); i++) {
 	struct nirt_diff_ray_state *d = &(dfs[i]);
@@ -797,7 +839,7 @@ _nirt_diff_report(struct nirt_state *nss)
 	nout(nss, "No differences found\n");
     }
     bu_vls_free(&dreport);
-
+#endif
     return reporting_diff;
 }
 
@@ -1095,7 +1137,6 @@ _nirt_diff_cmd_clear(void *ndsv, int argc, const char **argv)
     argv++; argc--;
 
     nds->rays.clear();
-    nds->diff_ready = false;
     nds->cdiff = NULL;
     bu_vls_trunc(&nds->diff_file, 0);
     return 0;
@@ -1119,11 +1160,6 @@ _nirt_diff_cmd_load(void *ndsv, int argc, const char **argv)
 
     if (argc != 1) {
 	nerr(nss, "please specify a nirt diff file to load.\n");
-	return -1;
-    }
-
-    if (nds->diff_ready) {
-	nerr(nss, "diff file already loaded.  to reset, run \"diff clear\"\n");
 	return -1;
     }
 
@@ -1268,7 +1304,6 @@ _nirt_diff_cmd_run(void *ndsv, int argc, const char **argv)
     // Analyze the new partition set
     _nirt_segs_analyze(nds);
 
-    nds->diff_ready = true;
     return 0;
 }
 
@@ -1287,7 +1322,7 @@ _nirt_diff_cmd_report(void *ndsv, int argc, const char **argv)
     argv++; argc--;
 
     // Report diff results according to the NIRT diff settings.
-    if (!nds->diff_ready) {
+    if (!bu_vls_strlen(&nds->diff_file)) {
 	nerr(nds->nss, "No diff file loaded - please load a diff file with \"diff load <filename>\"\n");
 	return -1;
     } else {
