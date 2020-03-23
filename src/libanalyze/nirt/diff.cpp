@@ -435,6 +435,19 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 		    // using a map container similar to the transition container with
 		    // the same dual-long key indexing to assemble an overall diff report
 		    // that is distance ordered.
+		    //
+		    // TODO - think about what to do for the case where the IN
+		    // and OUT points of a segment are both in the same bin.
+		    // In that case do we have no segment - its length is below
+		    // tolerance - or do we define a degenerate segment so we
+		    // can still report in the diff if we have an unmatched
+		    // region_id or some such in the hits?  My initial though is
+		    // we need the degenerate segment.  Regardless we'll
+		    // need to check for it, since if we're processing OUT hits
+		    // first we may encounter a case where an OUT hit has no
+		    // corresponding segment in any previous logic and we need
+		    // to hunt up the corresponding in hit in the current bin to
+		    // prevent the assembly logic from getting confused.
 		    for (h_it = hsegs.begin(); h_it != hsegs.end(); h_it++) {
 		    }
 		    //
