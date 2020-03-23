@@ -938,7 +938,6 @@ _nirt_diff_cmd_run(void *ndsv, int argc, const char **argv)
 	    nss->i->ap->a_ray.r_pt[ii] = nss->i->vals->orig[ii];
 	    nss->i->ap->a_ray.r_dir[ii] = nss->i->vals->dir[ii];
 	}
-	// TODO - rethink this container...
 	_nirt_init_ovlp(nss);
 	(void)rt_shootray(nss->i->ap);
     }
