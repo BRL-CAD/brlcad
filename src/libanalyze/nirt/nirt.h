@@ -160,6 +160,16 @@ struct nirt_output_record {
 
 struct nirt_diff_state;
 
+struct fmt_state {
+    std::vector<std::pair<std::string,std::string> > ray;
+    std::vector<std::pair<std::string,std::string> > head;
+    std::vector<std::pair<std::string,std::string> > part;
+    std::vector<std::pair<std::string,std::string> > foot;
+    std::vector<std::pair<std::string,std::string> > miss;
+    std::vector<std::pair<std::string,std::string> > ovlp;
+    std::vector<std::pair<std::string,std::string> > gap;
+};
+
 struct nirt_state_impl {
     /* Output options */
     struct bu_color *hit_odd_color;
@@ -224,13 +234,7 @@ struct nirt_state_impl {
     /* internal format specifier arrays */
     struct bu_attribute_value_set *val_types;
     struct bu_attribute_value_set *val_docs;
-    std::vector<std::pair<std::string,std::string> > fmt_ray;
-    std::vector<std::pair<std::string,std::string> > fmt_head;
-    std::vector<std::pair<std::string,std::string> > fmt_part;
-    std::vector<std::pair<std::string,std::string> > fmt_foot;
-    std::vector<std::pair<std::string,std::string> > fmt_miss;
-    std::vector<std::pair<std::string,std::string> > fmt_ovlp;
-    std::vector<std::pair<std::string,std::string> > fmt_gap;
+    struct fmt_state fmt;
 
     void *u_data; // user data
 };

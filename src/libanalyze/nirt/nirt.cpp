@@ -1014,25 +1014,25 @@ _nirt_report(struct nirt_state *nss, char type, struct nirt_output_record *r)
 
     switch (type) {
 	case 'r':
-	    fmt_vect = &nss->i->fmt_ray;
+	    fmt_vect = &nss->i->fmt.ray;
 	    break;
 	case 'h':
-	    fmt_vect = &nss->i->fmt_head;
+	    fmt_vect = &nss->i->fmt.head;
 	    break;
 	case 'p':
-	    fmt_vect = &nss->i->fmt_part;
+	    fmt_vect = &nss->i->fmt.part;
 	    break;
 	case 'f':
-	    fmt_vect = &nss->i->fmt_foot;
+	    fmt_vect = &nss->i->fmt.foot;
 	    break;
 	case 'm':
-	    fmt_vect = &nss->i->fmt_miss;
+	    fmt_vect = &nss->i->fmt.miss;
 	    break;
 	case 'o':
-	    fmt_vect = &nss->i->fmt_ovlp;
+	    fmt_vect = &nss->i->fmt.ovlp;
 	    break;
 	case 'g':
-	    fmt_vect = &nss->i->fmt_gap;
+	    fmt_vect = &nss->i->fmt.gap;
 	    break;
 	default:
 	    nerr(nss, "Error: NIRT internal error, attempt to report using unknown fmt type %c\n", type);
@@ -1844,25 +1844,25 @@ _nirt_cmd_format_output(void *ns, int argc, const char **argv)
 	struct bu_vls ostr = BU_VLS_INIT_ZERO;
 	switch (type) {
 	    case 'r':
-		_nirt_print_fmt_str(&ostr, nss->i->fmt_ray);
+		_nirt_print_fmt_str(&ostr, nss->i->fmt.ray);
 		break;
 	    case 'h':
-		_nirt_print_fmt_str(&ostr, nss->i->fmt_head);
+		_nirt_print_fmt_str(&ostr, nss->i->fmt.head);
 		break;
 	    case 'p':
-		_nirt_print_fmt_str(&ostr, nss->i->fmt_part);
+		_nirt_print_fmt_str(&ostr, nss->i->fmt.part);
 		break;
 	    case 'f':
-		_nirt_print_fmt_str(&ostr, nss->i->fmt_foot);
+		_nirt_print_fmt_str(&ostr, nss->i->fmt.foot);
 		break;
 	    case 'm':
-		_nirt_print_fmt_str(&ostr, nss->i->fmt_miss);
+		_nirt_print_fmt_str(&ostr, nss->i->fmt.miss);
 		break;
 	    case 'o':
-		_nirt_print_fmt_str(&ostr, nss->i->fmt_ovlp);
+		_nirt_print_fmt_str(&ostr, nss->i->fmt.ovlp);
 		break;
 	    case 'g':
-		_nirt_print_fmt_str(&ostr, nss->i->fmt_gap);
+		_nirt_print_fmt_str(&ostr, nss->i->fmt.gap);
 		break;
 	    default:
 		nerr(nss, "Error: unknown fmt type %s\n", argv[1]);
@@ -1950,32 +1950,32 @@ _nirt_cmd_format_output(void *ns, int argc, const char **argv)
 set_fmt:
 	switch (type) {
 	    case 'r':
-		nss->i->fmt_ray.clear();
-		nss->i->fmt_ray = fmt_tmp;
+		nss->i->fmt.ray.clear();
+		nss->i->fmt.ray = fmt_tmp;
 		break;
 	    case 'h':
-		nss->i->fmt_head.clear();
-		nss->i->fmt_head = fmt_tmp;
+		nss->i->fmt.head.clear();
+		nss->i->fmt.head = fmt_tmp;
 		break;
 	    case 'p':
-		nss->i->fmt_part.clear();
-		nss->i->fmt_part = fmt_tmp;
+		nss->i->fmt.part.clear();
+		nss->i->fmt.part = fmt_tmp;
 		break;
 	    case 'f':
-		nss->i->fmt_foot.clear();
-		nss->i->fmt_foot = fmt_tmp;
+		nss->i->fmt.foot.clear();
+		nss->i->fmt.foot = fmt_tmp;
 		break;
 	    case 'm':
-		nss->i->fmt_miss.clear();
-		nss->i->fmt_miss = fmt_tmp;
+		nss->i->fmt.miss.clear();
+		nss->i->fmt.miss = fmt_tmp;
 		break;
 	    case 'o':
-		nss->i->fmt_ovlp.clear();
-		nss->i->fmt_ovlp = fmt_tmp;
+		nss->i->fmt.ovlp.clear();
+		nss->i->fmt.ovlp = fmt_tmp;
 		break;
 	    case 'g':
-		nss->i->fmt_gap.clear();
-		nss->i->fmt_gap = fmt_tmp;
+		nss->i->fmt.gap.clear();
+		nss->i->fmt.gap = fmt_tmp;
 		break;
 	    default:
 		nerr(nss, "Error: unknown fmt type %s\n", argv[1]);
@@ -2320,19 +2320,19 @@ _nirt_cmd_state(void *ns, int argc, const char *argv[])
 		break;
 	}
 	struct bu_vls ostr = BU_VLS_INIT_ZERO;
-	_nirt_print_fmt_cmd(&ostr, 'r', nss->i->fmt_ray);
+	_nirt_print_fmt_cmd(&ostr, 'r', nss->i->fmt.ray);
 	bu_vls_printf(&dumpstr, "%s", bu_vls_cstr(&ostr));
-	_nirt_print_fmt_cmd(&ostr, 'h', nss->i->fmt_head);
+	_nirt_print_fmt_cmd(&ostr, 'h', nss->i->fmt.head);
 	bu_vls_printf(&dumpstr, "%s", bu_vls_cstr(&ostr));
-	_nirt_print_fmt_cmd(&ostr, 'p', nss->i->fmt_part);
+	_nirt_print_fmt_cmd(&ostr, 'p', nss->i->fmt.part);
 	bu_vls_printf(&dumpstr, "%s", bu_vls_cstr(&ostr));
-	_nirt_print_fmt_cmd(&ostr, 'f', nss->i->fmt_foot);
+	_nirt_print_fmt_cmd(&ostr, 'f', nss->i->fmt.foot);
 	bu_vls_printf(&dumpstr, "%s", bu_vls_cstr(&ostr));
-	_nirt_print_fmt_cmd(&ostr, 'm', nss->i->fmt_miss);
+	_nirt_print_fmt_cmd(&ostr, 'm', nss->i->fmt.miss);
 	bu_vls_printf(&dumpstr, "%s", bu_vls_cstr(&ostr));
-	_nirt_print_fmt_cmd(&ostr, 'o', nss->i->fmt_ovlp);
+	_nirt_print_fmt_cmd(&ostr, 'o', nss->i->fmt.ovlp);
 	bu_vls_printf(&dumpstr, "%s", bu_vls_cstr(&ostr));
-	_nirt_print_fmt_cmd(&ostr, 'g', nss->i->fmt_gap);
+	_nirt_print_fmt_cmd(&ostr, 'g', nss->i->fmt.gap);
 	bu_vls_printf(&dumpstr, "%s", bu_vls_cstr(&ostr));
 	nout(nss, "%s", bu_vls_cstr(&dumpstr));
 	bu_vls_free(&dumpstr);
