@@ -130,27 +130,22 @@ struct nirt_diff_state {
     struct nirt_diff_ray_state *cdiff = NULL;
     std::vector<struct nirt_diff_ray_state> rays;
 
-    /* Reporting settings */
-    bool report_partitions = true;
-    bool report_misses = true;
-    bool report_gaps = true;
-    bool report_overlaps = true;
-    bool report_partition_reg_ids = true;
-    bool report_partition_reg_names = true;
-    bool report_partition_path_names = true;
-    bool report_partition_dists = true;
-    bool report_partition_obliq = true;
-    bool report_overlap_reg_names = true;
-    bool report_overlap_reg_ids = true;
-    bool report_overlap_dists = true;
-    bool report_overlap_obliq = true;
-    bool report_gap_dists = true;
+    /* Diff element-specific settings */
+    bool partitions = true;
+    bool partition_reg_ids = true;
+    bool partition_reg_names = true;
+    bool partition_path_names = true;
+    bool partition_obliq = true;
+    bool overlaps = true;
+    bool overlap_reg_names = true;
+    bool overlap_reg_ids = true;
+    bool overlap_obliq = true;
 
     /* Tolerances */
-    fastf_t dist_delta_tol = BN_TOL_DIST;
-    fastf_t obliq_delta_tol = BN_TOL_DIST;
-    fastf_t los_delta_tol = BN_TOL_DIST;
-    fastf_t scaled_los_delta_tol = BN_TOL_DIST;
+    fastf_t dist_tol = BN_TOL_DIST;
+    fastf_t obliq_tol = BN_TOL_DIST;
+    fastf_t los_tol = BN_TOL_DIST;
+    fastf_t scaled_los_tol = BN_TOL_DIST;
 
     struct nirt_state *nss;
     bool run_complete = false;
@@ -192,10 +187,10 @@ class half_segment {
 	    if (type != other.type) {
 		return false;
 	    }
-	    if (!NEAR_EQUAL(dist, other.dist, nds->dist_delta_tol)) {
+	    if (!NEAR_EQUAL(dist, other.dist, nds->dist_tol)) {
 		return false;
 	    }
-	    if (!NEAR_EQUAL(obliq, other.obliq, nds->obliq_delta_tol)) {
+	    if (!NEAR_EQUAL(obliq, other.obliq, nds->obliq_tol)) {
 		return false;
 	    }
 	    return true;
@@ -212,16 +207,16 @@ _nirt_partition_diff(struct nirt_diff_state *nds, struct nirt_seg *left, struct 
     if (left->path_name != right->path_name) return true;
 
     fastf_t los_delta = fabs(left->los - right->los);
-    if (los_delta > nds->los_delta_tol) return true;
+    if (los_delta > nds->los_tol) return true;
 
     fastf_t scaled_los_delta = fabs(left->scaled_los - right->scaled_los);
-    if (scaled_los_delta > nds->scaled_los_delta_tol) return true;
+    if (scaled_los_delta > nds->scaled_los_tol) return true;
 
     fastf_t obliq_in_delta = fabs(left->obliq_in - right->obliq_in);
-    if (obliq_in_delta > nds->obliq_delta_tol) return true;
+    if (obliq_in_delta > nds->obliq_tol) return true;
     
     fastf_t obliq_out_delta = fabs(left->obliq_out - right->obliq_out);
-    if (obliq_out_delta > nds->obliq_delta_tol) return true;
+    if (obliq_out_delta > nds->obliq_tol) return true;
     
     return false;
 }
@@ -238,13 +233,13 @@ _nirt_overlap_diff(struct nirt_diff_state *nds, struct nirt_seg *left, struct ni
     if (left->ov_reg2_id != right->ov_reg2_id) return true;
 
     fastf_t ov_in_delta = DIST_PNT_PNT(left->ov_in, right->ov_in);
-    if (ov_in_delta > nds->dist_delta_tol) return true;
+    if (ov_in_delta > nds->dist_tol) return true;
     
     fastf_t ov_out_delta = DIST_PNT_PNT(left->ov_out, right->ov_out);
-    if (ov_out_delta > nds->dist_delta_tol) return true;
+    if (ov_out_delta > nds->dist_tol) return true;
    
     fastf_t ov_los_delta = fabs(left->ov_los - right->ov_los);
-    if (ov_los_delta > nds->los_delta_tol) return true;
+    if (ov_los_delta > nds->los_tol) return true;
   
     return false;
 }
@@ -358,12 +353,12 @@ class segment_bin {
 //
 // This is a basic alternative to a full-fledged decision tree implementation.
 std::pair<long, long>
-dist_bin(double dist, double dist_delta_tol)
+dist_bin(double dist, double dist_tol)
 {
     bu_log("dist: %.15f\n", dist);
 
     // Get the exponent of the base 10 tolerance number (i.e. how may orders).
-    int tolexp = (int)std::floor(std::log10(std::fabs(dist_delta_tol)));
+    int tolexp = (int)std::floor(std::log10(std::fabs(dist_tol)));
 
     if (abs(tolexp) > 12) {
 	// Either a super large or super small tolerance - don't bin?
@@ -387,7 +382,7 @@ dist_bin(double dist, double dist_delta_tol)
     double dB = dist - dA;
 
     // Now, find out how many digits we need to shift the distance left to
-    // truncate it at dist_delta_tol precision
+    // truncate it at dist_tol precision
     double tmult = std::pow(10, tolexp);
 
     // Shift and truncate the smaller portion of the distance
@@ -403,7 +398,7 @@ dist_bin(double dist, double dist_delta_tol)
     // Debugging
     double b1 = dA + d1 * tmult;
     double b2 = dA + d1 * tmult + 1*std::pow(10,tolexp);
-    bu_log("dist   : %.15f, tol: %15f\n", dist, dist_delta_tol);
+    bu_log("dist   : %.15f, tol: %15f\n", dist, dist_tol);
     bu_log("dA: %ld, dB: %.15f, d1: %ld, d2: %ld\n", dA, dB, d1, d2);
     bu_log("bin1: %.15f, dist - bin1: %.15f, bin2: %.15f, bin2 - dist: %.15f\n", b1, dist - b1, b2, b2 - dist);
     bu_log("dbinned: %.15f, delta: %.15f\n", dbinned, fabs(dist - dbinned));
@@ -432,7 +427,7 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 	    in_seg.seg = curr;
 	    in_seg.obliq = curr->obliq_in;
 	    in_seg.nds = nds;
-	    key = dist_bin(in_seg.dist, nds->dist_delta_tol);
+	    key = dist_bin(in_seg.dist, nds->dist_tol);
 	    ordered_transitions[key.first][key.second][NIRT_T_IN].insert(in_seg);
 
 	    half_segment out_seg;
@@ -442,7 +437,7 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 	    out_seg.seg = curr;
 	    out_seg.obliq = curr->obliq_out;
 	    out_seg.nds = nds;
-	    key = dist_bin(out_seg.dist, nds->dist_delta_tol);
+	    key = dist_bin(out_seg.dist, nds->dist_tol);
 	    ordered_transitions[key.first][key.second][NIRT_T_OUT].insert(out_seg);
 	}
 	for (size_t j = 0; j < rstate->old_segs.size(); j++) {
@@ -454,7 +449,7 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 	    in_seg.seg = curr;
 	    in_seg.obliq = curr->obliq_in;
 	    in_seg.nds = nds;
-	    key = dist_bin(in_seg.dist, nds->dist_delta_tol);
+	    key = dist_bin(in_seg.dist, nds->dist_tol);
 	    ordered_transitions[key.first][key.second][NIRT_T_IN].insert(in_seg);
 
 	    half_segment out_seg;
@@ -464,7 +459,7 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 	    out_seg.seg = curr;
 	    out_seg.obliq = curr->obliq_out;
 	    out_seg.nds = nds;
-	    key = dist_bin(out_seg.dist, nds->dist_delta_tol);
+	    key = dist_bin(out_seg.dist, nds->dist_tol);
 	    ordered_transitions[key.first][key.second][NIRT_T_OUT].insert(out_seg);
 	}
 	std::map<long, std::map<long, std::map<n_transition_t, std::set<half_segment>>>>::iterator o_it;
@@ -507,7 +502,7 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 			    // to special-case the subsegment creation
 			    if (pseg.type == NIRT_SEG_HIT || pseg.type == NIRT_SEG_OVLP) {
 				double dist = DIST_PNT_PNT(rstate->orig, (*prev_subsegs)[ps].seg->out);
-				std::pair<long, long> out_key = dist_bin(dist, nds->dist_delta_tol);
+				std::pair<long, long> out_key = dist_bin(dist, nds->dist_tol);
 				if (out_key != tkey) {
 				    // Not ending an existing nirt_seg here - add new diff_segment of same type
 				    diff_segment cseg = pseg;
@@ -581,194 +576,6 @@ _nirt_diff_add_seg(struct nirt_state *nss, struct nirt_seg *nseg)
 	nss->i->diff_state->cdiff->new_segs.push_back(*nseg);
     }
 }
-
-
-const char *
-_nirt_seg_string(int type)
-{
-    static const char *p = "Partition";
-    static const char *g = "Gap";
-    static const char *o = "Overlap";
-    static const char *m = "Miss";
-
-    switch (type) {
-	case NIRT_MISS_SEG:
-	    return m;
-	case NIRT_PARTITION_SEG:
-	    return p;
-	case NIRT_GAP_SEG:
-	    return g;
-	case NIRT_OVERLAP_SEG:
-	    return o;
-	default:
-	    return NULL;
-    }
-}
-
-
-int
-_nirt_diff_report(struct nirt_state *nss)
-{
-    int reporting_diff = 0;
-    int did_header = 0;
-    struct bu_vls dreport = BU_VLS_INIT_ZERO;
-
-    if (!nss) return 0;
-
-    struct nirt_diff_state *nds = nss->i->diff_state;
-
-    if (!nds || nds->rays.size() == 0) return 0;
-
-    if (!did_header) {
-	bu_vls_printf(&dreport, "Diff Results (%s):\n", bu_vls_cstr(&nds->diff_file));
-	did_header = 1;
-    }
-
-#if 0
-    std::vector<struct nirt_diff_ray_state> &dfs = nds->rays;
-    for (size_t i = 0; i < dfs.size(); i++) {
-	struct nirt_diff_ray_state *d = &(dfs[i]);
-	// Calculate diffs according to settings.  TODO - need to be more sophisticated about this - if a
-	// segment is "missing" but the rays otherwise match, don't propagate the "offset" and report all
-	// of the subsequent segments as different...
-	size_t seg_max = (d->old_segs.size() > d->new_segs.size()) ? d->new_segs.size() : d->old_segs.size();
-	for (size_t j = 0; j < seg_max; j++) {
-	    _nirt_segs_diff(d, &d->old_segs[j], &d->new_segs[j]);
-	}
-	if (d->diffs.size() > 0 && !did_header) {
-	    bu_vls_printf(&dreport, "Diff Results (%s):\n", bu_vls_cstr(&nds->diff_file));
-	    did_header = 1;
-	}
-
-	if (d->diffs.size() > 0) bu_vls_printf(&dreport, "Found differences along Ray:\n  xyz %.17f %.17f %.17f\n  dir %.17f %.17f %.17f\n \n", V3ARGS(d->orig), V3ARGS(d->dir));
-	for (size_t j = 0; j < d->diffs.size(); j++) {
-	    struct nirt_diff_instance *sd = &d->diffs[j];
-	    struct nirt_seg *left = sd->left;
-	    struct nirt_seg *right = sd->right;
-	    if (left->type != right->type) {
-		bu_vls_printf(&dreport, "  Segment %zu type mismatch : Original %s, Current %s\n", j, _nirt_seg_string(sd->left->type), _nirt_seg_string(sd->right->type));
-		nout(nss, "%s", bu_vls_cstr(&dreport));
-		bu_vls_free(&dreport);
-		return 1;
-	    }
-	    switch (sd->left->type) {
-		case NIRT_MISS_SEG:
-		    if (!nds->report_misses) continue;
-		    /* TODO */
-		    break;
-		case NIRT_PARTITION_SEG:
-		    if (!nds->report_partitions) continue;
-		    bu_vls_printf(&dreport, "  Segment difference(%s)[%zu]:\n", _nirt_seg_string(sd->left->type), j);
-		    if ((left->reg_name != right->reg_name) && nds->report_partition_reg_names) {
-			bu_vls_printf(&dreport, "    Region Name: '%s' -> '%s'\n", left->reg_name.c_str(), right->reg_name.c_str());
-			reporting_diff = 1;
-		    }
-		    if ((left->path_name != right->path_name) && nds->report_partition_path_names) {
-			bu_vls_printf(&dreport, "    Path Name: '%s' -> '%s'\n", left->path_name.c_str(), right->path_name.c_str());
-			reporting_diff = 1;
-		    }
-		    if (left->reg_id != right->reg_id && nds->report_partition_reg_ids) {
-			bu_vls_printf(&dreport, "    Region ID: %d -> %d\n", left->reg_id, right->reg_id);
-			reporting_diff = 1;
-		    }
-		    if (sd->in_delta > nds->dist_delta_tol && nds->report_partition_dists) {
-			std::string oval = _nirt_dbl_to_str(sd->in_delta, _nirt_digits(nds->dist_delta_tol));
-			bu_vls_printf(&dreport, "    DIST_PNT_PNT(in_old, in_new): %s\n", oval.c_str());
-			reporting_diff = 1;
-		    }
-		    if (sd->out_delta > nds->dist_delta_tol && nds->report_partition_dists) {
-			std::string oval = _nirt_dbl_to_str(sd->out_delta, _nirt_digits(nds->dist_delta_tol));
-			bu_vls_printf(&dreport, "    DIST_PNT_PNT(out_old, out_new): %s\n", oval.c_str());
-			reporting_diff = 1;
-		    }
-		    if (sd->los_delta > nds->los_delta_tol && nds->report_partition_dists) {
-			std::string oval = _nirt_dbl_to_str(sd->los_delta, _nirt_digits(nds->los_delta_tol));
-			bu_vls_printf(&dreport, "    Line-Of-Sight(LOS) %s: %s\n", delta_str, oval.c_str());
-			reporting_diff = 1;
-		    }
-		    if (sd->scaled_los_delta > nds->scaled_los_delta_tol && nds->report_partition_dists) {
-			std::string oval = _nirt_dbl_to_str(sd->scaled_los_delta, _nirt_digits(nds->los_delta_tol));
-			bu_vls_printf(&dreport, "    Scaled Line-Of-Sight %s: %s\n", delta_str, oval.c_str());
-			reporting_diff = 1;
-		    }
-		    if (sd->obliq_in_delta > nds->obliq_delta_tol && nds->report_partition_obliq) {
-			std::string oval = _nirt_dbl_to_str(sd->obliq_in_delta, _nirt_digits(nds->obliq_delta_tol));
-			bu_vls_printf(&dreport, "    Input Normal Obliquity %s: %s\n", delta_str, oval.c_str());
-			reporting_diff = 1;
-		    }
-		    if (sd->obliq_out_delta > nds->obliq_delta_tol && nds->report_partition_obliq) {
-			std::string oval = _nirt_dbl_to_str(sd->obliq_out_delta, _nirt_digits(nds->obliq_delta_tol));
-			bu_vls_printf(&dreport, "    Output Normal Obliquity %s: %s\n", delta_str, oval.c_str());
-			reporting_diff = 1;
-		    }
-		    break;
-		case NIRT_GAP_SEG:
-		    if (!nds->report_gaps) continue;
-		    bu_vls_printf(&dreport, "  Segment difference(%s)[%zu]:\n", _nirt_seg_string(sd->left->type), j);
-		    if (sd->gap_in_delta > nds->dist_delta_tol && nds->report_gap_dists) {
-			std::string oval = _nirt_dbl_to_str(sd->gap_in_delta, _nirt_digits(nds->dist_delta_tol));
-			bu_vls_printf(&dreport, "    DIST_PNT_PNT(gap_in_old, gap_in_new): %s\n", oval.c_str());
-			reporting_diff = 1;
-		    }
-		    if (sd->gap_los_delta > nds->los_delta_tol && nds->report_gap_dists) {
-			std::string oval = _nirt_dbl_to_str(sd->gap_los_delta, _nirt_digits(nds->los_delta_tol));
-			bu_vls_printf(&dreport, "    Gap Line-Of-Sight (LOS) %s: %s\n", delta_str, oval.c_str());
-			reporting_diff = 1;
-		    }
-		    break;
-		case NIRT_OVERLAP_SEG:
-		    if (!nds->report_overlaps) continue;
-		    bu_vls_printf(&dreport, "  Segment difference(%s)[%zu]:\n", _nirt_seg_string(sd->left->type), j);
-		    if ((left->ov_reg1_name != right->ov_reg1_name) && nds->report_overlap_reg_names) {
-			bu_vls_printf(&dreport, "    Region 1 Name: '%s' -> '%s'\n", left->ov_reg1_name.c_str(), right->ov_reg1_name.c_str());
-			reporting_diff = 1;
-		    }
-		    if ((left->ov_reg2_name != right->ov_reg2_name) && nds->report_overlap_reg_names) {
-			bu_vls_printf(&dreport, "    Region 2 Name: '%s' -> '%s'\n", left->ov_reg2_name.c_str(), right->ov_reg2_name.c_str());
-			reporting_diff = 1;
-		    }
-		    if (left->ov_reg1_id != right->ov_reg1_id && nds->report_overlap_reg_ids) {
-			bu_vls_printf(&dreport, "    Region 1 ID: %d -> %d\n", left->ov_reg1_id, right->ov_reg1_id);
-			reporting_diff = 1;
-		    }
-		    if (left->ov_reg2_id != right->ov_reg2_id && nds->report_overlap_reg_ids) {
-			bu_vls_printf(&dreport, "    Region 2 ID: %d -> %d\n", left->ov_reg2_id, right->ov_reg2_id);
-			reporting_diff = 1;
-		    }
-		    if (sd->ov_in_delta > nds->dist_delta_tol && nds->report_overlap_dists) {
-			std::string oval = _nirt_dbl_to_str(sd->ov_in_delta, _nirt_digits(nds->dist_delta_tol));
-			bu_vls_printf(&dreport, "    DIST_PNT_PNT(ov_in_old, ov_in_new): %s\n", oval.c_str());
-			reporting_diff = 1;
-		    }
-		    if (sd->ov_out_delta > nds->dist_delta_tol && nds->report_overlap_dists) {
-			std::string oval = _nirt_dbl_to_str(sd->ov_out_delta, _nirt_digits(nds->dist_delta_tol));
-			bu_vls_printf(&dreport, "    DIST_PNT_PNT(ov_out_old, ov_out_new): %s\n", oval.c_str());
-			reporting_diff = 1;
-		    }
-		    if (sd->ov_los_delta > nds->los_delta_tol && nds->report_overlap_dists) {
-			std::string oval = _nirt_dbl_to_str(sd->ov_los_delta, _nirt_digits(nds->los_delta_tol));
-			bu_vls_printf(&dreport, "    Overlap Line-Of-Sight (LOS) %s: %s\n", delta_str, oval.c_str());
-			reporting_diff = 1;
-		    }
-		    break;
-		default:
-		    nerr(nss, "NIRT diff error: unknown segment type: %d\n", left->type);
-		    return 0;
-	    }
-	}
-	d->diffs.clear();
-    }
-
-    if (reporting_diff) {
-	nout(nss, "%s", bu_vls_cstr(&dreport));
-    } else {
-	nout(nss, "No differences found\n");
-    }
-    bu_vls_free(&dreport);
-#endif
-    return reporting_diff;
-}
-
 
 static bool
 parse_ray(struct nirt_diff_state *nds, std::string &line)
@@ -1191,46 +998,36 @@ _nirt_diff_cmd_settings(void *ndsv, int argc, const char **argv)
 
     if (!argc) {
 	//print current settings
-	nout(nss, "report_partitions:           %d\n", nds->report_partitions);
-	nout(nss, "report_misses:               %d\n", nds->report_misses);
-	nout(nss, "report_gaps:                 %d\n", nds->report_gaps);
-	nout(nss, "report_overlaps:             %d\n", nds->report_overlaps);
-	nout(nss, "report_partition_reg_ids:    %d\n", nds->report_partition_reg_ids);
-	nout(nss, "report_partition_reg_names:  %d\n", nds->report_partition_reg_names);
-	nout(nss, "report_partition_path_names: %d\n", nds->report_partition_path_names);
-	nout(nss, "report_partition_dists:      %d\n", nds->report_partition_dists);
-	nout(nss, "report_partition_obliq:      %d\n", nds->report_partition_obliq);
-	nout(nss, "report_overlap_reg_names:    %d\n", nds->report_overlap_reg_names);
-	nout(nss, "report_overlap_reg_ids:      %d\n", nds->report_overlap_reg_ids);
-	nout(nss, "report_overlap_dists:        %d\n", nds->report_overlap_dists);
-	nout(nss, "report_overlap_obliq:        %d\n", nds->report_overlap_obliq);
-	nout(nss, "report_gap_dists:            %d\n", nds->report_gap_dists);
-	nout(nss, "dist_delta_tol:              %g\n", nds->dist_delta_tol);
-	nout(nss, "obliq_delta_tol:             %g\n", nds->obliq_delta_tol);
-	nout(nss, "los_delta_tol:               %g\n", nds->los_delta_tol);
-	nout(nss, "scaled_los_delta_tol:        %g\n", nds->scaled_los_delta_tol);
+	nout(nss, "partitions:           %d\n", nds->partitions);
+	nout(nss, "overlaps:             %d\n", nds->overlaps);
+	nout(nss, "partition_reg_ids:    %d\n", nds->partition_reg_ids);
+	nout(nss, "partition_reg_names:  %d\n", nds->partition_reg_names);
+	nout(nss, "partition_path_names: %d\n", nds->partition_path_names);
+	nout(nss, "partition_obliq:      %d\n", nds->partition_obliq);
+	nout(nss, "overlap_reg_names:    %d\n", nds->overlap_reg_names);
+	nout(nss, "overlap_reg_ids:      %d\n", nds->overlap_reg_ids);
+	nout(nss, "overlap_obliq:        %d\n", nds->overlap_obliq);
+	nout(nss, "dist_tol:              %g\n", nds->dist_tol);
+	nout(nss, "obliq_tol:             %g\n", nds->obliq_tol);
+	nout(nss, "los_tol:               %g\n", nds->los_tol);
+	nout(nss, "scaled_los_tol:        %g\n", nds->scaled_los_tol);
 	return 0;
     }
     if (argc == 1) {
 	//print specific setting
-	if (BU_STR_EQUAL(argv[0], "report_partitions")) nout(nss, "%d\n", nds->report_partitions);
-	if (BU_STR_EQUAL(argv[0], "report_misses")) nout(nss, "%d\n", nds->report_misses);
-	if (BU_STR_EQUAL(argv[0], "report_gaps")) nout(nss, "%d\n", nds->report_gaps);
-	if (BU_STR_EQUAL(argv[0], "report_overlaps")) nout(nss, "%d\n", nds->report_overlaps);
-	if (BU_STR_EQUAL(argv[0], "report_partition_reg_ids")) nout(nss, "%d\n", nds->report_partition_reg_ids);
-	if (BU_STR_EQUAL(argv[0], "report_partition_reg_names")) nout(nss, "%d\n", nds->report_partition_reg_names);
-	if (BU_STR_EQUAL(argv[0], "report_partition_path_names")) nout(nss, "%d\n", nds->report_partition_path_names);
-	if (BU_STR_EQUAL(argv[0], "report_partition_dists")) nout(nss, "%d\n", nds->report_partition_dists);
-	if (BU_STR_EQUAL(argv[0], "report_partition_obliq")) nout(nss, "%d\n", nds->report_partition_obliq);
-	if (BU_STR_EQUAL(argv[0], "report_overlap_reg_names")) nout(nss, "%d\n", nds->report_overlap_reg_names);
-	if (BU_STR_EQUAL(argv[0], "report_overlap_reg_ids")) nout(nss, "%d\n", nds->report_overlap_reg_ids);
-	if (BU_STR_EQUAL(argv[0], "report_overlap_dists")) nout(nss, "%d\n", nds->report_overlap_dists);
-	if (BU_STR_EQUAL(argv[0], "report_overlap_obliq")) nout(nss, "%d\n", nds->report_overlap_obliq);
-	if (BU_STR_EQUAL(argv[0], "report_gap_dists")) nout(nss, "%d\n", nds->report_gap_dists);
-	if (BU_STR_EQUAL(argv[0], "dist_delta_tol")) nout(nss, "%g\n", nds->dist_delta_tol);
-	if (BU_STR_EQUAL(argv[0], "obliq_delta_tol")) nout(nss, "%g\n", nds->obliq_delta_tol);
-	if (BU_STR_EQUAL(argv[0], "los_delta_tol")) nout(nss, "%g\n", nds->los_delta_tol);
-	if (BU_STR_EQUAL(argv[0], "scaled_los_delta_tol")) nout(nss, "%g\n", nds->scaled_los_delta_tol);
+	if (BU_STR_EQUAL(argv[0], "partitions")) nout(nss, "%d\n", nds->partitions);
+	if (BU_STR_EQUAL(argv[0], "overlaps")) nout(nss, "%d\n", nds->overlaps);
+	if (BU_STR_EQUAL(argv[0], "partition_reg_ids")) nout(nss, "%d\n", nds->partition_reg_ids);
+	if (BU_STR_EQUAL(argv[0], "partition_reg_names")) nout(nss, "%d\n", nds->partition_reg_names);
+	if (BU_STR_EQUAL(argv[0], "partition_path_names")) nout(nss, "%d\n", nds->partition_path_names);
+	if (BU_STR_EQUAL(argv[0], "partition_obliq")) nout(nss, "%d\n", nds->partition_obliq);
+	if (BU_STR_EQUAL(argv[0], "overlap_reg_names")) nout(nss, "%d\n", nds->overlap_reg_names);
+	if (BU_STR_EQUAL(argv[0], "overlap_reg_ids")) nout(nss, "%d\n", nds->overlap_reg_ids);
+	if (BU_STR_EQUAL(argv[0], "overlap_obliq")) nout(nss, "%d\n", nds->overlap_obliq);
+	if (BU_STR_EQUAL(argv[0], "dist_tol")) nout(nss, "%g\n", nds->dist_tol);
+	if (BU_STR_EQUAL(argv[0], "obliq_tol")) nout(nss, "%g\n", nds->obliq_tol);
+	if (BU_STR_EQUAL(argv[0], "los_tol")) nout(nss, "%g\n", nds->los_tol);
+	if (BU_STR_EQUAL(argv[0], "scaled_los_tol")) nout(nss, "%g\n", nds->scaled_los_tol);
 	return 0;
     }
     if (argc == 2) {
@@ -1238,24 +1035,19 @@ _nirt_diff_cmd_settings(void *ndsv, int argc, const char **argv)
 	struct bu_vls opt_msg = BU_VLS_INIT_ZERO;
 	bool *setting_bool = NULL;
 	fastf_t *setting_fastf_t = NULL;
-	if (BU_STR_EQUAL(argv[0], "report_partitions")) setting_bool = &(nds->report_partitions);
-	if (BU_STR_EQUAL(argv[0], "report_misses")) setting_bool = &(nds->report_misses);
-	if (BU_STR_EQUAL(argv[0], "report_gaps")) setting_bool = &(nds->report_gaps);
-	if (BU_STR_EQUAL(argv[0], "report_overlaps")) setting_bool = &(nds->report_overlaps);
-	if (BU_STR_EQUAL(argv[0], "report_partition_reg_ids")) setting_bool = &(nds->report_partition_reg_ids);
-	if (BU_STR_EQUAL(argv[0], "report_partition_reg_names")) setting_bool = &(nds->report_partition_reg_names);
-	if (BU_STR_EQUAL(argv[0], "report_partition_path_names")) setting_bool = &(nds->report_partition_path_names);
-	if (BU_STR_EQUAL(argv[0], "report_partition_dists")) setting_bool = &(nds->report_partition_dists);
-	if (BU_STR_EQUAL(argv[0], "report_partition_obliq")) setting_bool = &(nds->report_partition_obliq);
-	if (BU_STR_EQUAL(argv[0], "report_overlap_reg_names")) setting_bool = &(nds->report_overlap_reg_names);
-	if (BU_STR_EQUAL(argv[0], "report_overlap_reg_ids")) setting_bool = &(nds->report_overlap_reg_ids);
-	if (BU_STR_EQUAL(argv[0], "report_overlap_dists")) setting_bool = &(nds->report_overlap_dists);
-	if (BU_STR_EQUAL(argv[0], "report_overlap_obliq")) setting_bool = &(nds->report_overlap_obliq);
-	if (BU_STR_EQUAL(argv[0], "report_gap_dists")) setting_bool = &(nds->report_gap_dists);
-	if (BU_STR_EQUAL(argv[0], "dist_delta_tol")) setting_fastf_t = &(nds->dist_delta_tol);
-	if (BU_STR_EQUAL(argv[0], "obliq_delta_tol")) setting_fastf_t = &(nds->obliq_delta_tol);
-	if (BU_STR_EQUAL(argv[0], "los_delta_tol")) setting_fastf_t = &(nds->los_delta_tol);
-	if (BU_STR_EQUAL(argv[0], "scaled_los_delta_tol")) setting_fastf_t = &(nds->scaled_los_delta_tol);
+	if (BU_STR_EQUAL(argv[0], "partitions")) setting_bool = &(nds->partitions);
+	if (BU_STR_EQUAL(argv[0], "overlaps")) setting_bool = &(nds->overlaps);
+	if (BU_STR_EQUAL(argv[0], "partition_reg_ids")) setting_bool = &(nds->partition_reg_ids);
+	if (BU_STR_EQUAL(argv[0], "partition_reg_names")) setting_bool = &(nds->partition_reg_names);
+	if (BU_STR_EQUAL(argv[0], "partition_path_names")) setting_bool = &(nds->partition_path_names);
+	if (BU_STR_EQUAL(argv[0], "partition_obliq")) setting_bool = &(nds->partition_obliq);
+	if (BU_STR_EQUAL(argv[0], "overlap_reg_names")) setting_bool = &(nds->overlap_reg_names);
+	if (BU_STR_EQUAL(argv[0], "overlap_reg_ids")) setting_bool = &(nds->overlap_reg_ids);
+	if (BU_STR_EQUAL(argv[0], "overlap_obliq")) setting_bool = &(nds->overlap_obliq);
+	if (BU_STR_EQUAL(argv[0], "dist_tol")) setting_fastf_t = &(nds->dist_tol);
+	if (BU_STR_EQUAL(argv[0], "obliq_tol")) setting_fastf_t = &(nds->obliq_tol);
+	if (BU_STR_EQUAL(argv[0], "los_tol")) setting_fastf_t = &(nds->los_tol);
+	if (BU_STR_EQUAL(argv[0], "scaled_los_tol")) setting_fastf_t = &(nds->scaled_los_tol);
 
 	if (setting_bool) {
 	    if (bu_opt_bool(&opt_msg, 1, (const char **)&argv[1], (void *)setting_bool) == -1) {
