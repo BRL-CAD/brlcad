@@ -153,6 +153,7 @@ struct nirt_diff_state {
     fastf_t scaled_los_delta_tol = BN_TOL_DIST;
 
     struct nirt_state *nss;
+    bool run_complete = false;
 
     struct bu_opt_desc *d = NULL;
     const struct bu_cmdtab *cmds = NULL;
@@ -411,7 +412,7 @@ dist_bin(double dist, double dist_delta_tol)
 }
 
 
-void
+int
 _nirt_segs_analyze(struct nirt_diff_state *nds)
 {
     std::vector<struct nirt_diff_ray_state> &dfs = nds->rays;
@@ -551,6 +552,8 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 	    }
 	}
     }
+
+    return 0;
 }
 
 
@@ -603,7 +606,7 @@ _nirt_seg_string(int type)
 }
 
 
-static int
+int
 _nirt_diff_report(struct nirt_state *nss)
 {
     int reporting_diff = 0;
@@ -1009,6 +1012,14 @@ _nirt_diff_cmd_load(void *ndsv, int argc, const char **argv)
 	return -1;
     }
 
+    const char *av0 = "diff";
+    const char *av1 = "clear";
+    const char *av[3];
+    av[0] = av0;
+    av[1] = av1;
+    av[2] = NULL;
+    _nirt_diff_cmd_clear(ndsv, 2, (const char **)av);
+
     if (nss->i->need_reprep) {
 	/* if we need to (re)prep, do it now. failure is an error. */
 	if (_nirt_raytrace_prep(nss)) {
@@ -1022,7 +1033,6 @@ _nirt_diff_cmd_load(void *ndsv, int argc, const char **argv)
     }
 
     bu_vls_sprintf(&nds->diff_file, "%s", argv[0]);
-    // TODO - temporarily suppress all formatting output for a silent diff run...
     while (std::getline(ifs, line)) {
 	/* if part of the line is commented, skip that part */
 	cmt = _nirt_find_first_unescaped(line, "#", 0);
@@ -1077,6 +1087,9 @@ _nirt_diff_cmd_load(void *ndsv, int argc, const char **argv)
 
     ifs.close();
 
+    // New loading complete - we now need to do a new shot run
+    nds->run_complete = false;
+
     // Done with if_hit and friends
     return 0;
 }
@@ -1103,6 +1116,8 @@ _nirt_diff_cmd_run(void *ndsv, int argc, const char **argv)
     for (unsigned int i = 0; i < nds->rays.size(); i++) {
 	nds->rays[i].new_segs.clear();
     }
+    
+    // TODO - temporarily suppress all formatting output for a silent diff run...
 
     for (unsigned int i = 0; i < nds->rays.size(); i++) {
 	nds->cdiff = &(nds->rays[i]);
@@ -1119,8 +1134,7 @@ _nirt_diff_cmd_run(void *ndsv, int argc, const char **argv)
 	(void)rt_shootray(nss->i->ap);
     }
 
-    // Analyze the new partition set
-    _nirt_segs_analyze(nds);
+    nds->run_complete = true;
 
     return 0;
 }
@@ -1144,7 +1158,19 @@ _nirt_diff_cmd_report(void *ndsv, int argc, const char **argv)
 	nerr(nds->nss, "No diff file loaded - please load a diff file with \"diff load <filename>\"\n");
 	return -1;
     } else {
-	return (_nirt_diff_report(nds->nss) >= 0) ? 0 : -1;
+
+	if (!nds->run_complete) {
+	    const char *av0 = "diff";
+	    const char *av1 = "run";
+	    const char *av[3];
+	    av[0] = av0;
+	    av[1] = av1;
+	    av[2] = NULL;
+	    _nirt_diff_cmd_run(ndsv, 2, (const char **)av);
+	}
+
+	// Analyze the partition sets
+	return _nirt_segs_analyze(nds);
     }
 }
 
