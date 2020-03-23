@@ -101,8 +101,7 @@ typedef enum {
 } n_transition_t;
 
 typedef enum {
-    NIRT_SEG_GAP = 0,
-    NIRT_SEG_HIT,
+    NIRT_SEG_HIT = 0,
     NIRT_SEG_OVLP
 } n_seg_t;
 
@@ -202,8 +201,83 @@ class half_segment {
 	}
 };
 
-bool
-_nirt_segs_diff(struct nirt_diff_state *, struct nirt_seg *left, struct nirt_seg *right); 
+static bool
+_nirt_partition_diff(struct nirt_diff_state *nds, struct nirt_seg *left, struct nirt_seg *right)
+{
+    if (!nds) return false;
+
+    if (left->reg_id != right->reg_id) return true;
+    if (left->reg_name != right->reg_name) return true;
+    if (left->path_name != right->path_name) return true;
+
+    fastf_t los_delta = fabs(left->los - right->los);
+    if (los_delta > nds->los_delta_tol) return true;
+
+    fastf_t scaled_los_delta = fabs(left->scaled_los - right->scaled_los);
+    if (scaled_los_delta > nds->scaled_los_delta_tol) return true;
+
+    fastf_t obliq_in_delta = fabs(left->obliq_in - right->obliq_in);
+    if (obliq_in_delta > nds->obliq_delta_tol) return true;
+    
+    fastf_t obliq_out_delta = fabs(left->obliq_out - right->obliq_out);
+    if (obliq_out_delta > nds->obliq_delta_tol) return true;
+    
+    return false;
+}
+
+
+static bool
+_nirt_overlap_diff(struct nirt_diff_state *nds, struct nirt_seg *left, struct nirt_seg *right)
+{
+    if (!nds) return false;
+
+    if (left->ov_reg1_name != right->ov_reg1_name) return true;
+    if (left->ov_reg2_name != right->ov_reg2_name) return true;
+    if (left->ov_reg1_id != right->ov_reg1_id) return true;
+    if (left->ov_reg2_id != right->ov_reg2_id) return true;
+
+    fastf_t ov_in_delta = DIST_PNT_PNT(left->ov_in, right->ov_in);
+    if (ov_in_delta > nds->dist_delta_tol) return true;
+    
+    fastf_t ov_out_delta = DIST_PNT_PNT(left->ov_out, right->ov_out);
+    if (ov_out_delta > nds->dist_delta_tol) return true;
+   
+    fastf_t ov_los_delta = fabs(left->ov_los - right->ov_los);
+    if (ov_los_delta > nds->los_delta_tol) return true;
+  
+    return false;
+}
+
+static bool
+_nirt_segs_diff(struct nirt_diff_state *nds, struct nirt_seg *left, struct nirt_seg *right)
+{
+    /* Sanity */
+    if (!nds || (!left && !right)) return false;
+    if ((left && !right) || (!left && right)) return true;
+
+    if (left->type != right->type) {
+	/* Fundamental segment difference - no point going further, they're different */
+	return true;
+    }
+
+    switch(left->type) {
+	case NIRT_MISS_SEG:
+	    /* Types don't differ and they're both misses - we're good */
+	    return false;
+	case NIRT_PARTITION_SEG:
+	    return _nirt_partition_diff(nds, left, right);
+	case NIRT_GAP_SEG:
+	    /* With transitions managing the point differences, gaps don't diff with
+	     * other gaps */
+	    return false;
+	case NIRT_OVERLAP_SEG:
+	    return _nirt_overlap_diff(nds, left, right);
+	default:
+	    nerr(nds->nss, "NIRT diff error: unknown segment type: %d\n", left->type);
+	    return 0;
+    }
+}
+
 
 class diff_segment {
     public:
@@ -214,12 +288,6 @@ class diff_segment {
 	std::pair<long, long> trans_end;
 	bool operator<(diff_segment other) const
 	{
-	    if ((type == NIRT_SEG_GAP) && (other.type != NIRT_SEG_GAP)) {
-		return true;
-	    }
-	    if ((type != NIRT_SEG_GAP) && (other.type == NIRT_SEG_GAP)) {
-		return false;
-	    }
 	    if ((type == NIRT_SEG_HIT) && (other.type != NIRT_SEG_HIT)) {
 		return true;
 	    }
@@ -237,12 +305,6 @@ class diff_segment {
 
 	struct nirt_diff_state *nds;
 
-	// TODO - see if we can define a == operator for diff
-	// segments that will incorporate all the necessary logic
-	// to do the diff comparison (tolerance checks, etc.)  If so
-	// it might be a very simple way to implement the actual
-	// segment comparison logic...
-	
 	// Define an equality check that doesn't involve the origin type and
 	// uses geometry tolerances.
 	bool operator==(diff_segment other) const
@@ -267,41 +329,6 @@ class segment_bin {
 	half_segment *start;
 	half_segment *end;
 };
-
-struct nirt_diff_event {
-    n_origin_t type;
-    unsigned long flags;
-    point_t transition_left;
-    point_t transition_right;
-    vect_t obliq_left;
-    vect_t obliq_right;
-    struct nirt_seg unmatched;
-    struct nirt_seg *left;
-    struct nirt_seg *right;
-};
-
-
-struct nirt_diff_instance {
-    n_origin_t type;
-    point_t *left_pt;
-    point_t *right_pt;
-    struct nirt_seg *left;
-    struct nirt_seg *right;
-    fastf_t in_delta;
-    fastf_t out_delta;
-    fastf_t los_delta;
-    fastf_t scaled_los_delta;
-    fastf_t obliq_in_delta;
-    fastf_t obliq_out_delta;
-    fastf_t ov_in_delta;
-    fastf_t ov_out_delta;
-    fastf_t ov_los_delta;
-    fastf_t gap_in_delta;
-    fastf_t gap_los_delta;
-};
-
-
-
 
 // If we have a lot of small segments (i.e. nearby points) and large distance
 // tolerances, we need to be able to decide when points are the same within
@@ -472,6 +499,7 @@ _nirt_segs_analyze(struct nirt_diff_state *nds)
 		    if (prev_subsegs) {
 			for (size_t ps = 0; ps < prev_subsegs->size(); ps++) {
 			    diff_segment &pseg = (*prev_subsegs)[ps];
+			    pseg.nds = nds;
 			    pseg.trans_end = tkey;
 			    // Gaps are handled by always starting a new gap each transition, but if we have
 			    // a nirt_seg being broken up by a transition point from the other side we need
@@ -548,85 +576,6 @@ _nirt_diff_add_seg(struct nirt_state *nss, struct nirt_seg *nseg)
 {
     if (nss->i->diff_state && nss->i->diff_state->cdiff) {
 	nss->i->diff_state->cdiff->new_segs.push_back(*nseg);
-    }
-}
-
-
-static bool
-_nirt_partition_diff(struct nirt_diff_state *nds, struct nirt_seg *left, struct nirt_seg *right)
-{
-    if (!nds) return false;
-
-    if (left->reg_id != right->reg_id) return true;
-
-    if (left->reg_name != right->reg_name) return true;
-    
-    if (left->path_name != right->path_name) return true;
-
-    fastf_t los_delta = fabs(left->los - right->los);
-    if (los_delta > nds->los_delta_tol) return true;
-
-    fastf_t scaled_los_delta = fabs(left->scaled_los - right->scaled_los);
-    if (scaled_los_delta > nds->scaled_los_delta_tol) return true;
-
-    fastf_t obliq_in_delta = fabs(left->obliq_in - right->obliq_in);
-    if (obliq_in_delta > nds->obliq_delta_tol) return true;
-    
-    fastf_t obliq_out_delta = fabs(left->obliq_out - right->obliq_out);
-    if (obliq_out_delta > nds->obliq_delta_tol) return true;
-    
-    return false;
-}
-
-
-static bool
-_nirt_overlap_diff(struct nirt_diff_state *nds, struct nirt_seg *left, struct nirt_seg *right)
-{
-    if (!nds) return false;
-
-
-    if (left->ov_reg1_name != right->ov_reg1_name) return true;
-    if (left->ov_reg2_name != right->ov_reg2_name) return true;
-    if (left->ov_reg1_id != right->ov_reg1_id) return true;
-    if (left->ov_reg2_id != right->ov_reg2_id) return true;
-
-    fastf_t ov_in_delta = DIST_PNT_PNT(left->ov_in, right->ov_in);
-    if (ov_in_delta > nds->dist_delta_tol) return true;
-    
-    fastf_t ov_out_delta = DIST_PNT_PNT(left->ov_out, right->ov_out);
-    if (ov_out_delta > nds->dist_delta_tol) return true;
-   
-    fastf_t ov_los_delta = fabs(left->ov_los - right->ov_los);
-    if (ov_los_delta > nds->los_delta_tol) return true;
-  
-    return false;
-}
-
-bool
-_nirt_segs_diff(struct nirt_diff_state *nds, struct nirt_seg *left, struct nirt_seg *right)
-{
-    if (!nds) return false;
-
-    if (!left || !right || left->type != right->type) {
-	/* Fundamental segment difference - no point going further, they're different */
-	return true;
-    }
-
-    switch(left->type) {
-	case NIRT_MISS_SEG:
-	    /* Types don't differ and they're both misses - we're good */
-	    return false;
-	case NIRT_PARTITION_SEG:
-	    return _nirt_partition_diff(nds, left, right);
-	case NIRT_GAP_SEG:
-	    /* With transitions managing the point differences, gaps don't diff with
-	     * other gaps */
-	    return false;
-	case NIRT_OVERLAP_SEG:
-	    return _nirt_overlap_diff(nds, left, right);
-	default:
-	    nerr(nds->nss, "NIRT diff error: unknown segment type: %d\n", left->type);
-	    return 0;
     }
 }
 
@@ -934,55 +883,6 @@ parse_hit(struct nirt_diff_state *nds, std::string &line)
 
 }
 
-
-static bool
-parse_gap(struct nirt_diff_state *nds, std::string &line)
-{
-    std::regex gap_regex("GAP,([0-9]+),(.*)");
-
-    std::smatch s1;
-    if (!std::regex_search(line, s1, gap_regex)) {
-	nerr(nds->nss, "Error processing gap line \"%s\"!\nUnable to identify formatting version\n", line.c_str());
-	return false;
-    }
-
-    if (!nds->cdiff) {
-	nerr(nds->nss, "Error: Gap line found but no ray set.\n");
-	return false;
-    }
-
-    int gap_version = _nirt_str_to_int(s1[1]);
-    std::string gap_data = s1[2];
-
-    if (gap_version == 1) {
-	std::vector<std::string> substrs = _nirt_string_split(gap_data);
-
-	if (substrs.size() != 7) {
-	    nerr(nds->nss, "Error processing gap line \"%s\"!\nExpected 7 elements, found %zu\n", gap_data.c_str(), substrs.size());
-	    return -1;
-	}
-	struct nirt_seg *segp = new struct nirt_seg;
-	segp->type = NIRT_GAP_SEG;
-	VSET(segp->in, _nirt_str_to_dbl(substrs[0], 0), _nirt_str_to_dbl(substrs[1], 0), _nirt_str_to_dbl(substrs[2], 0));
-	VSET(segp->out, _nirt_str_to_dbl(substrs[3], 0), _nirt_str_to_dbl(substrs[4], 0), _nirt_str_to_dbl(substrs[5], 0));
-	segp->gap_los = _nirt_str_to_dbl(substrs[6], 0);
-#ifdef NIRT_DIFF_DEBUG
-	bu_log("Found %s:\n", line.c_str());
-	bu_log("  in: %0.17f, %0.17f, %0.17f\n", V3ARGS(segp->gap_in));
-	bu_log("  out: %0.17f, %0.17f, %0.17f\n", V3ARGS(segp->in));
-	bu_log("  gap_los: %0.17f\n", segp->gap_los);
-#endif
-	nds->cdiff->old_segs.push_back(*segp);
-	delete segp;
-	return true;
-    }
-
-    nerr(nds->nss, "Error processing gap line \"%s\"!\nUnsupported version: %d\n", line.c_str(), gap_version);
-    return false;
-
-}
-
-
 static bool
 parse_miss(struct nirt_diff_state *nds, std::string &line)
 {
@@ -1174,7 +1074,6 @@ _nirt_diff_cmd_load(void *ndsv, int argc, const char **argv)
 	int ltype = -1;
 	ltype = (ltype < 0 && !line.compare(0, 4, "RAY,")) ? 0 : ltype;
 	ltype = (ltype < 0 && !line.compare(0, 4, "HIT,")) ? 1 : ltype;
-	ltype = (ltype < 0 && !line.compare(0, 4, "GAP,")) ? 2 : ltype;
 	ltype = (ltype < 0 && !line.compare(0, 5, "MISS,")) ? 3 : ltype;
 	ltype = (ltype < 0 && !line.compare(0, 8, "OVERLAP,")) ? 4 : ltype;
 	if (ltype < 0) {
@@ -1194,15 +1093,6 @@ _nirt_diff_cmd_load(void *ndsv, int argc, const char **argv)
 	/* Hit */
 	if (ltype == 1) {
 	    if (!parse_hit(nds, line)) {
-		_nirt_diff_cmd_clear((void *)nds, 0, NULL);
-		return -1;
-	    }
-	    continue;
-	}
-
-	/* Gap */
-	if (ltype == 2) {
-	    if (!parse_gap(nds, line)) {
 		_nirt_diff_cmd_clear((void *)nds, 0, NULL);
 		return -1;
 	    }
