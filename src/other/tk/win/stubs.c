@@ -444,25 +444,25 @@ int
 XNoOp(
     Display *display)
 {
-	display->request++;
+    display->request++;
     return 0;
 }
 
 XAfterFunction
 XSynchronize(
     Display *display,
-    Bool bool)
+    Bool onoff)
 {
-	display->request++;
+    display->request++;
     return NULL;
 }
 
 int
 XSync(
     Display *display,
-    Bool bool)
+    Bool discard)
 {
-	display->request++;
+    display->request++;
     return 0;
 }
 

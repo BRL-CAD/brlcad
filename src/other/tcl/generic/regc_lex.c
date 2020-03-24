@@ -905,9 +905,7 @@ lexescape(
 
 	v->now = save;
 
-	/*
-	 * And fall through into octal number.
-	 */
+	/* FALLTHRU */
 
     case CHR('0'):
 	NOTE(REG_UUNPORT);

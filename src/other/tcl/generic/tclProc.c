@@ -22,7 +22,6 @@
  */
 
 typedef struct {
-    int isRootEnsemble;
     Command cmd;
     ExtraFrameInfo efi;
 } ApplyExtraData;
@@ -69,9 +68,8 @@ const Tcl_ObjType tclProcBodyType = {
 };
 
 /*
- * The [upvar]/[uplevel] level reference type. Uses the twoPtrValue field,
- * encoding the type of level reference in ptr and the actual parsed out
- * offset in ptr2.
+ * The [upvar]/[uplevel] level reference type. Uses the longValue field
+ * to remember the integer value of a parsed #<integer> format.
  *
  * Uses the default behaviour throughout, and never disposes of the string
  * rep; it's just a cache type.
@@ -126,11 +124,10 @@ Tcl_ProcObjCmd(
 {
     register Interp *iPtr = (Interp *) interp;
     Proc *procPtr;
-    const char *fullName;
-    const char *procName, *procArgs, *procBody;
+    const char *procName;
+    const char *simpleName, *procArgs, *procBody;
     Namespace *nsPtr, *altNsPtr, *cxtNsPtr;
     Tcl_Command cmd;
-    Tcl_DString ds;
 
     if (objc != 4) {
 	Tcl_WrongNumArgs(interp, 1, objv, "name args body");
@@ -143,29 +140,21 @@ Tcl_ProcObjCmd(
      * namespace.
      */
 
-    fullName = TclGetString(objv[1]);
-    TclGetNamespaceForQualName(interp, fullName, NULL, 0,
-	    &nsPtr, &altNsPtr, &cxtNsPtr, &procName);
+    procName = TclGetString(objv[1]);
+    TclGetNamespaceForQualName(interp, procName, NULL, 0,
+	    &nsPtr, &altNsPtr, &cxtNsPtr, &simpleName);
 
     if (nsPtr == NULL) {
 	Tcl_SetObjResult(interp, Tcl_ObjPrintf(
 		"can't create procedure \"%s\": unknown namespace",
-		fullName));
+		procName));
 	Tcl_SetErrorCode(interp, "TCL", "VALUE", "COMMAND", NULL);
 	return TCL_ERROR;
     }
-    if (procName == NULL) {
+    if (simpleName == NULL) {
 	Tcl_SetObjResult(interp, Tcl_ObjPrintf(
 		"can't create procedure \"%s\": bad procedure name",
-		fullName));
-	Tcl_SetErrorCode(interp, "TCL", "VALUE", "COMMAND", NULL);
-	return TCL_ERROR;
-    }
-    if ((nsPtr != iPtr->globalNsPtr)
-	    && (procName != NULL) && (procName[0] == ':')) {
-	Tcl_SetObjResult(interp, Tcl_ObjPrintf(
-		"can't create procedure \"%s\" in non-global namespace with"
-		" name starting with \":\"", procName));
+		procName));
 	Tcl_SetErrorCode(interp, "TCL", "VALUE", "COMMAND", NULL);
 	return TCL_ERROR;
     }
@@ -174,31 +163,16 @@ Tcl_ProcObjCmd(
      * Create the data structure to represent the procedure.
      */
 
-    if (TclCreateProc(interp, nsPtr, procName, objv[2], objv[3],
+    if (TclCreateProc(interp, nsPtr, simpleName, objv[2], objv[3],
 	    &procPtr) != TCL_OK) {
 	Tcl_AddErrorInfo(interp, "\n    (creating proc \"");
-	Tcl_AddErrorInfo(interp, procName);
+	Tcl_AddErrorInfo(interp, simpleName);
 	Tcl_AddErrorInfo(interp, "\")");
 	return TCL_ERROR;
     }
 
-    /*
-     * Now create a command for the procedure. This will initially be in the
-     * current namespace unless the procedure's name included namespace
-     * qualifiers. To create the new command in the right namespace, we
-     * generate a fully qualified name for it.
-     */
-
-    Tcl_DStringInit(&ds);
-    if (nsPtr != iPtr->globalNsPtr) {
-	Tcl_DStringAppend(&ds, nsPtr->fullName, -1);
-	TclDStringAppendLiteral(&ds, "::");
-    }
-    Tcl_DStringAppend(&ds, procName, -1);
-
-    cmd = Tcl_NRCreateCommand(interp, Tcl_DStringValue(&ds), TclObjInterpProc,
-	    TclNRInterpProc, procPtr, TclProcDeleteProc);
-    Tcl_DStringFree(&ds);
+    cmd = TclNRCreateCommandInNs(interp, simpleName, (Tcl_Namespace *) nsPtr,
+	TclObjInterpProc, TclNRInterpProc, procPtr, TclProcDeleteProc);
 
     /*
      * Now initialize the new procedure's cmdPtr field. This will be used
@@ -395,13 +369,11 @@ TclCreateProc(
     Proc **procPtrPtr)		/* Returns: pointer to proc data. */
 {
     Interp *iPtr = (Interp *) interp;
-    const char **argArray = NULL;
 
     register Proc *procPtr;
-    int i, length, result, numArgs;
-    const char *args, *bytes, *p;
+    int i, result, numArgs;
     register CompiledLocal *localPtr = NULL;
-    Tcl_Obj *defPtr;
+    Tcl_Obj **argArray;
     int precompiled = 0;
 
     if (bodyPtr->typePtr == &tclProcBodyType) {
@@ -438,6 +410,8 @@ TclCreateProc(
 	 */
 
 	if (Tcl_IsShared(bodyPtr)) {
+	    const char *bytes;
+	    int length;
 	    Tcl_Obj *sharedBodyPtr = bodyPtr;
 
 	    bytes = TclGetStringFromObj(bodyPtr, &length);
@@ -475,12 +449,9 @@ TclCreateProc(
      * argument specifier. If the body is precompiled, processing is limited
      * to checking that the parsed argument is consistent with the one stored
      * in the Proc.
-     *
-     * THIS FAILS IF THE ARG LIST OBJECT'S STRING REP CONTAINS NULS.
      */
 
-    args = TclGetStringFromObj(argsPtr, &length);
-    result = Tcl_SplitList(interp, args, &numArgs, &argArray);
+    result = Tcl_ListObjGetElements(interp , argsPtr ,&numArgs ,&argArray);
     if (result != TCL_OK) {
 	goto procError;
     }
@@ -502,29 +473,30 @@ TclCreateProc(
     }
 
     for (i = 0; i < numArgs; i++) {
-	int fieldCount, nameLength, valueLength;
-	const char **fieldValues;
+	const char *argname, *argnamei, *argnamelast;
+	int fieldCount, nameLength;
+	Tcl_Obj **fieldValues;
 
 	/*
 	 * Now divide the specifier up into name and default.
 	 */
 
-	result = Tcl_SplitList(interp, argArray[i], &fieldCount,
+	result = Tcl_ListObjGetElements(interp, argArray[i], &fieldCount,
 		&fieldValues);
 	if (result != TCL_OK) {
 	    goto procError;
 	}
 	if (fieldCount > 2) {
-	    ckfree(fieldValues);
-	    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
-		    "too many fields in argument specifier \"%s\"",
-		    argArray[i]));
+	    Tcl_Obj *errorObj = Tcl_NewStringObj(
+		"too many fields in argument specifier \"", -1);
+	    Tcl_AppendObjToObj(errorObj, argArray[i]);
+	    Tcl_AppendToObj(errorObj, "\"", -1);
+	    Tcl_SetObjResult(interp, errorObj);
 	    Tcl_SetErrorCode(interp, "TCL", "OPERATION", "PROC",
 		    "FORMALARGUMENTFORMAT", NULL);
 	    goto procError;
 	}
-	if ((fieldCount == 0) || (*fieldValues[0] == 0)) {
-	    ckfree(fieldValues);
+	if ((fieldCount == 0) || (fieldValues[0]->length == 0)) {
 	    Tcl_SetObjResult(interp, Tcl_NewStringObj(
 		    "argument with no name", -1));
 	    Tcl_SetErrorCode(interp, "TCL", "OPERATION", "PROC",
@@ -532,44 +504,35 @@ TclCreateProc(
 	    goto procError;
 	}
 
-	nameLength = strlen(fieldValues[0]);
-	if (fieldCount == 2) {
-	    valueLength = strlen(fieldValues[1]);
-	} else {
-	    valueLength = 0;
-	}
+	argname = Tcl_GetStringFromObj(fieldValues[0], &nameLength);
 
 	/*
 	 * Check that the formal parameter name is a scalar.
 	 */
 
-	p = fieldValues[0];
-	while (*p != '\0') {
-	    if (*p == '(') {
-		const char *q = p;
-		do {
-		    q++;
-		} while (*q != '\0');
-		q--;
-		if (*q == ')') {	/* We have an array element. */
+	argnamei = argname;
+	argnamelast = Tcl_UtfPrev(argname + nameLength, argname);
+	while (argnamei < argnamelast) {
+	    if (*argnamei == '(') {
+		if (*argnamelast == ')') { /* We have an array element. */
 		    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
 			    "formal parameter \"%s\" is an array element",
-			    fieldValues[0]));
-		    ckfree(fieldValues);
+			    Tcl_GetString(fieldValues[0])));
 		    Tcl_SetErrorCode(interp, "TCL", "OPERATION", "PROC",
 			    "FORMALARGUMENTFORMAT", NULL);
 		    goto procError;
 		}
-	    } else if ((*p == ':') && (*(p+1) == ':')) {
-		Tcl_SetObjResult(interp, Tcl_ObjPrintf(
-			"formal parameter \"%s\" is not a simple name",
-			fieldValues[0]));
-		ckfree(fieldValues);
+	    } else if (*argnamei == ':' && *(argnamei+1) == ':') {
+		Tcl_Obj *errorObj = Tcl_NewStringObj(
+		    "formal parameter \"", -1);
+		Tcl_AppendObjToObj(errorObj, fieldValues[0]);
+		Tcl_AppendToObj(errorObj, "\" is not a simple name", -1);
+		Tcl_SetObjResult(interp, errorObj);
 		Tcl_SetErrorCode(interp, "TCL", "OPERATION", "PROC",
 			"FORMALARGUMENTFORMAT", NULL);
 		goto procError;
 	    }
-	    p++;
+	    argnamei = Tcl_UtfNext(argnamei);
 	}
 
 	if (precompiled) {
@@ -585,7 +548,7 @@ TclCreateProc(
 	     */
 
 	    if ((localPtr->nameLength != nameLength)
-		    || (strcmp(localPtr->name, fieldValues[0]))
+		    || (memcmp(localPtr->name, argname, nameLength) != 0)
 		    || (localPtr->frameIndex != i)
 		    || !(localPtr->flags & VAR_ARGUMENT)
 		    || (localPtr->defValuePtr == NULL && fieldCount == 2)
@@ -593,7 +556,6 @@ TclCreateProc(
 		Tcl_SetObjResult(interp, Tcl_ObjPrintf(
 			"procedure \"%s\": formal parameter %d is "
 			"inconsistent with precompiled body", procName, i));
-		ckfree(fieldValues);
 		Tcl_SetErrorCode(interp, "TCL", "OPERATION", "PROC",
 			"BYTECODELIES", NULL);
 		goto procError;
@@ -604,17 +566,21 @@ TclCreateProc(
 	     */
 
 	    if (localPtr->defValuePtr != NULL) {
-		int tmpLength;
+		int tmpLength, valueLength;
 		const char *tmpPtr = TclGetStringFromObj(localPtr->defValuePtr,
 			&tmpLength);
+		const char *value = TclGetStringFromObj(fieldValues[1],
+			&valueLength);
 
-		if ((valueLength != tmpLength) ||
-			strncmp(fieldValues[1], tmpPtr, (size_t) tmpLength)) {
-		    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
-			    "procedure \"%s\": formal parameter \"%s\" has "
-			    "default value inconsistent with precompiled body",
-			    procName, fieldValues[0]));
-		    ckfree(fieldValues);
+		if ((valueLength != tmpLength)
+		     || memcmp(value, tmpPtr, tmpLength) != 0
+		) {
+		    Tcl_Obj *errorObj = Tcl_ObjPrintf(
+			    "procedure \"%s\": formal parameter \"", procName);
+		    Tcl_AppendObjToObj(errorObj, fieldValues[0]);
+		    Tcl_AppendToObj(errorObj, "\" has "
+			"default value inconsistent with precompiled body", -1);
+		    Tcl_SetObjResult(interp, errorObj);
 		    Tcl_SetErrorCode(interp, "TCL", "OPERATION", "PROC",
 			    "BYTECODELIES", NULL);
 		    goto procError;
@@ -634,7 +600,7 @@ TclCreateProc(
 	     * local variables for the argument.
 	     */
 
-	    localPtr = ckalloc(TclOffset(CompiledLocal, name) + nameLength+1);
+	    localPtr = ckalloc(TclOffset(CompiledLocal, name) + fieldValues[0]->length +1);
 	    if (procPtr->firstLocalPtr == NULL) {
 		procPtr->firstLocalPtr = procPtr->lastLocalPtr = localPtr;
 	    } else {
@@ -648,26 +614,22 @@ TclCreateProc(
 	    localPtr->resolveInfo = NULL;
 
 	    if (fieldCount == 2) {
-		localPtr->defValuePtr =
-			Tcl_NewStringObj(fieldValues[1], valueLength);
+		localPtr->defValuePtr = fieldValues[1];
 		Tcl_IncrRefCount(localPtr->defValuePtr);
 	    } else {
 		localPtr->defValuePtr = NULL;
 	    }
-	    memcpy(localPtr->name, fieldValues[0], nameLength + 1);
+	    memcpy(localPtr->name, argname, fieldValues[0]->length + 1);
 	    if ((i == numArgs - 1)
 		    && (localPtr->nameLength == 4)
 		    && (localPtr->name[0] == 'a')
-		    && (strcmp(localPtr->name, "args") == 0)) {
+		    && (memcmp(localPtr->name, "args", 4) == 0)) {
 		localPtr->flags |= VAR_IS_ARGS;
 	    }
 	}
-
-	ckfree(fieldValues);
     }
 
     *procPtrPtr = procPtr;
-    ckfree(argArray);
     return TCL_OK;
 
   procError:
@@ -679,17 +641,13 @@ TclCreateProc(
 	    localPtr = procPtr->firstLocalPtr;
 	    procPtr->firstLocalPtr = localPtr->nextPtr;
 
-	    defPtr = localPtr->defValuePtr;
-	    if (defPtr != NULL) {
-		Tcl_DecrRefCount(defPtr);
+	    if (localPtr->defValuePtr != NULL) {
+		Tcl_DecrRefCount(localPtr->defValuePtr);
 	    }
 
 	    ckfree(localPtr);
 	}
 	ckfree(procPtr);
-    }
-    if (argArray != NULL) {
-	ckfree(argArray);
     }
     return TCL_ERROR;
 }
@@ -737,17 +695,22 @@ TclGetFrame(
     result = 1;
     curLevel = iPtr->varFramePtr->level;
     if (*name== '#') {
-	if (Tcl_GetInt(interp, name+1, &level) != TCL_OK || level < 0) {
+	if (Tcl_GetInt(NULL, name+1, &level) != TCL_OK || level < 0) {
 	    goto levelError;
 	}
     } else if (isdigit(UCHAR(*name))) { /* INTL: digit */
-	if (Tcl_GetInt(interp, name, &level) != TCL_OK) {
+	if (Tcl_GetInt(NULL, name, &level) != TCL_OK) {
 	    goto levelError;
 	}
 	level = curLevel - level;
     } else {
+	/*
+	 * (historical, TODO) If name does not contain a level (#0 or 1),
+	 * TclGetFrame and Tcl_UpVar2 uses current level - 1
+	 */
 	level = curLevel - 1;
 	result = 0;
+	name = "1"; /* be more consistent with TclObjGetFrame (error at top - 1) */
     }
 
     /*
@@ -785,7 +748,7 @@ TclGetFrame(
  * Results:
  *	The return value is -1 if an error occurred in finding the frame (in
  *	this case an error message is left in the interp's result). 1 is
- *	returned if objPtr was either a number or a number preceded by "#" and
+ *	returned if objPtr was either an int or an int preceded by "#" and
  *	it specified a valid frame. 0 is returned if objPtr isn't one of the
  *	two things above (in this case, the lookup acts as if objPtr were
  *	"1"). The variable pointed to by framePtrPtr is filled in with the
@@ -807,97 +770,71 @@ TclObjGetFrame(
 {
     register Interp *iPtr = (Interp *) interp;
     int curLevel, level, result;
-    CallFrame *framePtr;
-    const char *name;
+    const char *name = NULL;
 
     /*
      * Parse object to figure out which level number to go to.
      */
 
-    result = 1;
+    result = 0;
     curLevel = iPtr->varFramePtr->level;
-    if (objPtr == NULL) {
-	name = "1";
-	goto haveLevel1;
-    }
-
-    name = TclGetString(objPtr);
-    if (objPtr->typePtr == &levelReferenceType) {
-	if (objPtr->internalRep.twoPtrValue.ptr1) {
-	    level = curLevel - PTR2INT(objPtr->internalRep.twoPtrValue.ptr2);
-	} else {
-	    level = PTR2INT(objPtr->internalRep.twoPtrValue.ptr2);
-	}
-	if (level < 0) {
-	    goto levelError;
-	}
-	/* TODO: Consider skipping the typePtr checks */
-    } else if (objPtr->typePtr == &tclIntType
-#ifndef TCL_WIDE_INT_IS_LONG
-	    || objPtr->typePtr == &tclWideIntType
-#endif
-	    ) {
-	if (TclGetIntFromObj(NULL, objPtr, &level) != TCL_OK || level < 0) {
-	    goto levelError;
-	}
-	level = curLevel - level;
-    } else if (*name == '#') {
-	if (Tcl_GetInt(interp, name+1, &level) != TCL_OK || level < 0) {
-	    goto levelError;
-	}
-
-	/*
-	 * Cache for future reference.
-	 */
-
-	TclFreeIntRep(objPtr);
-	objPtr->typePtr = &levelReferenceType;
-	objPtr->internalRep.twoPtrValue.ptr1 = (void *) 0;
-	objPtr->internalRep.twoPtrValue.ptr2 = INT2PTR(level);
-    } else if (isdigit(UCHAR(*name))) { /* INTL: digit */
-	if (Tcl_GetInt(interp, name, &level) != TCL_OK) {
-	    return -1;
-	}
-
-	/*
-	 * Cache for future reference.
-	 */
-
-	TclFreeIntRep(objPtr);
-	objPtr->typePtr = &levelReferenceType;
-	objPtr->internalRep.twoPtrValue.ptr1 = (void *) 1;
-	objPtr->internalRep.twoPtrValue.ptr2 = INT2PTR(level);
-	level = curLevel - level;
-    } else {
-	/*
-	 * Don't cache as the object *isn't* a level reference (might even be
-	 * NULL...)
-	 */
-
-    haveLevel1:
-	level = curLevel - 1;
-	result = 0;
-    }
 
     /*
-     * Figure out which frame to use, and return it to the caller.
+     * Check for integer first, since that has potential to spare us
+     * a generation of a stringrep.
      */
 
-    for (framePtr = iPtr->varFramePtr; framePtr != NULL;
-	    framePtr = framePtr->callerVarPtr) {
-	if (framePtr->level == level) {
-	    break;
+    if (objPtr == NULL) {
+	/* Do nothing */
+    } else if (TCL_OK == Tcl_GetIntFromObj(NULL, objPtr, &level)
+	    && (level >= 0)) {
+	level = curLevel - level;
+	result = 1;
+    } else if (objPtr->typePtr == &levelReferenceType) {
+	level = (int) objPtr->internalRep.longValue;
+	result = 1;
+    } else {
+	name = TclGetString(objPtr);
+	if (name[0] == '#') {
+	    if (TCL_OK == Tcl_GetInt(NULL, name+1, &level) && level >= 0) {
+		TclFreeIntRep(objPtr);
+		objPtr->typePtr = &levelReferenceType;
+		objPtr->internalRep.longValue = level;
+		result = 1;
+	    } else {
+		result = -1;
+	    }
+	} else if (isdigit(UCHAR(name[0]))) { /* INTL: digit */
+	    /*
+	     * If this were an integer, we'd have succeeded already.
+	     * Docs say we have to treat this as a 'bad level'  error.
+	     */
+	    result = -1;
 	}
     }
-    if (framePtr == NULL) {
-	goto levelError;
-    }
-    *framePtrPtr = framePtr;
-    return result;
 
-  levelError:
+    if (result == 0) {
+	level = curLevel - 1;
+	name = "1";
+    }
+    if (result != -1) {
+	if (level >= 0) {
+	    CallFrame *framePtr;
+	    for (framePtr = iPtr->varFramePtr; framePtr != NULL;
+		    framePtr = framePtr->callerVarPtr) {
+		if (framePtr->level == level) {
+		    *framePtrPtr = framePtr;
+		    return result;
+		}
+	    }
+	}
+	if (name == NULL) {
+	    name = TclGetString(objPtr);
+	}
+    }
+
     Tcl_SetObjResult(interp, Tcl_ObjPrintf("bad level \"%s\"", name));
-    Tcl_SetErrorCode(interp, "TCL", "VALUE", "STACKLEVEL", NULL);
+    Tcl_SetErrorCode(interp, "TCL", "LOOKUP", "LEVEL", name, NULL);
     return -1;
 }
 
@@ -1099,7 +1036,6 @@ ProcWrongNumArgs(
 {
     CallFrame *framePtr = ((Interp *)interp)->varFramePtr;
     register Proc *procPtr = framePtr->procPtr;
-    register Var *defPtr;
     int localCt = procPtr->numCompiledLocals, numArgs, i;
     Tcl_Obj **desiredObjs;
     const char *final = NULL;
@@ -1115,33 +1051,34 @@ ProcWrongNumArgs(
     if (framePtr->isProcCallFrame & FRAME_IS_LAMBDA) {
 	desiredObjs[0] = Tcl_NewStringObj("lambdaExpr", -1);
     } else {
-	((Interp *) interp)->ensembleRewrite.numInsertedObjs -= skip - 1;
-
 #ifdef AVOID_HACKS_FOR_ITCL
 	desiredObjs[0] = framePtr->objv[skip-1];
 #else
-	desiredObjs[0] = Tcl_NewListObj(skip, framePtr->objv);
+	desiredObjs[0] = Tcl_NewListObj(1, framePtr->objv + skip - 1);
 #endif /* AVOID_HACKS_FOR_ITCL */
     }
     Tcl_IncrRefCount(desiredObjs[0]);
 
-    defPtr = (Var *) (&framePtr->localCachePtr->varName0 + localCt);
-    for (i=1 ; i<=numArgs ; i++, defPtr++) {
-	Tcl_Obj *argObj;
-	Tcl_Obj *namePtr = localName(framePtr, i-1);
+    if (localCt > 0) {
+	register Var *defPtr = (Var *) (&framePtr->localCachePtr->varName0 + localCt);
 
-	if (defPtr->value.objPtr != NULL) {
-	    TclNewObj(argObj);
-	    Tcl_AppendStringsToObj(argObj, "?", TclGetString(namePtr), "?", NULL);
-	} else if (defPtr->flags & VAR_IS_ARGS) {
-	    numArgs--;
-	    final = "?arg ...?";
-	    break;
-	} else {
-	    argObj = namePtr;
-	    Tcl_IncrRefCount(namePtr);
+	for (i=1 ; i<=numArgs ; i++, defPtr++) {
+	    Tcl_Obj *argObj;
+	    Tcl_Obj *namePtr = localName(framePtr, i-1);
+
+	    if (defPtr->value.objPtr != NULL) {
+		TclNewObj(argObj);
+		Tcl_AppendStringsToObj(argObj, "?", TclGetString(namePtr), "?", NULL);
+	    } else if (defPtr->flags & VAR_IS_ARGS) {
+		numArgs--;
+		final = "?arg ...?";
+		break;
+	    } else {
+		argObj = namePtr;
+		Tcl_IncrRefCount(namePtr);
+	    }
+	    desiredObjs[i] = argObj;
 	}
-	desiredObjs[i] = argObj;
     }
 
     Tcl_ResetResult(interp);
@@ -1555,6 +1492,10 @@ InitArgsAndLocals(
      */
 
   incorrectArgs:
+    if ((skip != 1) &&
+	    TclInitRewriteEnsemble(interp, skip-1, 0, framePtr->objv)) {
+	TclNRAddCallback(interp, TclClearRootEnsemble, NULL, NULL, NULL, NULL);
+    }
     memset(varPtr, 0,
 	    ((framePtr->compiledLocals + localCt)-varPtr) * sizeof(Var));
     return ProcWrongNumArgs(interp, skip);
@@ -1899,9 +1840,7 @@ InterpProcNR2(
 	Tcl_SetErrorCode(interp, "TCL", "RESULT", "UNEXPECTED", NULL);
 	result = TCL_ERROR;
 
-	/*
-	 * Fall through to the TCL_ERROR handling code.
-	 */
+	/* FALLTHRU */
 
     case TCL_ERROR:
 	/*
@@ -2661,7 +2600,7 @@ TclNRApplyObjCmd(
     Interp *iPtr = (Interp *) interp;
     Proc *procPtr = NULL;
     Tcl_Obj *lambdaPtr, *nsObjPtr;
-    int result, isRootEnsemble;
+    int result;
     Tcl_Namespace *nsPtr;
     ApplyExtraData *extraPtr;
 
@@ -2744,16 +2683,6 @@ TclNRApplyObjCmd(
     extraPtr->efi.fields[0].clientData = lambdaPtr;
     extraPtr->cmd.clientData = &extraPtr->efi;
 
-    isRootEnsemble = (iPtr->ensembleRewrite.sourceObjs == NULL);
-    if (isRootEnsemble) {
-	iPtr->ensembleRewrite.sourceObjs = objv;
-	iPtr->ensembleRewrite.numRemovedObjs = 1;
-	iPtr->ensembleRewrite.numInsertedObjs = 0;
-    } else {
-	iPtr->ensembleRewrite.numInsertedObjs -= 1;
-    }
-    extraPtr->isRootEnsemble = isRootEnsemble;
-
     result = TclPushProcCallFrame(procPtr, interp, objc, objv, 1);
     if (result == TCL_OK) {
 	TclNRAddCallback(interp, ApplyNR2, extraPtr, NULL, NULL, NULL);
@@ -2769,10 +2698,6 @@ ApplyNR2(
     int result)
 {
     ApplyExtraData *extraPtr = data[0];
-
-    if (extraPtr->isRootEnsemble) {
-	((Interp *) interp)->ensembleRewrite.sourceObjs = NULL;
-    }
 
     TclStackFree(interp, extraPtr);
     return result;
@@ -2811,6 +2736,41 @@ MakeLambdaError(
 	    "\n    (lambda term \"%.*s%s\" line %d)",
 	    (overflow ? limit : nameLen), procName,
 	    (overflow ? "..." : ""), Tcl_GetErrorLine(interp)));
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TclGetCmdFrameForProcedure --
+ *
+ *	How to get the CmdFrame information for a procedure.
+ *
+ * Results:
+ *	A pointer to the CmdFrame (only guaranteed to be valid until the next
+ *	Tcl command is processed or the interpreter's state is otherwise
+ *	modified) or a NULL if the information is not available.
+ *
+ * Side effects:
+ *	none.
+ *
+ *----------------------------------------------------------------------
+ */
+
+CmdFrame *
+TclGetCmdFrameForProcedure(
+    Proc *procPtr)		/* The procedure whose cmd-frame is to be
+				 * looked up. */
+{
+    Tcl_HashEntry *hePtr;
+
+    if (procPtr == NULL || procPtr->iPtr == NULL) {
+	return NULL;
+    }
+    hePtr = Tcl_FindHashEntry(procPtr->iPtr->linePBodyPtr, procPtr);
+    if (hePtr == NULL) {
+	return NULL;
+    }
+    return (CmdFrame *) Tcl_GetHashValue(hePtr);
 }
 
 /*

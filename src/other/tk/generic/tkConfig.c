@@ -31,7 +31,7 @@
  * the option tables that have been created for a thread.
  */
 
-typedef struct ThreadSpecificData {
+typedef struct {
     int initialized;		/* 0 means table below needs initializing. */
     Tcl_HashTable hashTable;
 } ThreadSpecificData;
@@ -800,11 +800,11 @@ DoObjConfig(
 	Tk_Cursor newCursor;
 
 	if (nullOK && ObjectIsEmpty(valuePtr)) {
-	    newCursor = None;
+	    newCursor = NULL;
 	    valuePtr = NULL;
 	} else {
 	    newCursor = Tk_AllocCursorFromObj(interp, tkwin, valuePtr);
-	    if (newCursor == None) {
+	    if (newCursor == NULL) {
 		return TCL_ERROR;
 	    }
 	}
@@ -862,7 +862,7 @@ DoObjConfig(
 
 	if (nullOK && ObjectIsEmpty(valuePtr)) {
 	    valuePtr = NULL;
-	    newWin = None;
+	    newWin = NULL;
 	} else {
 	    if (TkGetWindowFromObj(interp, tkwin, valuePtr,
 		    &newWin) != TCL_OK) {
@@ -937,16 +937,13 @@ static int
 ObjectIsEmpty(
     Tcl_Obj *objPtr)		/* Object to test. May be NULL. */
 {
-    int length;
-
     if (objPtr == NULL) {
 	return 1;
     }
-    if (objPtr->bytes != NULL) {
-	return (objPtr->length == 0);
+    if (objPtr->bytes == NULL) {
+	Tcl_GetString(objPtr);
     }
-    (void)Tcl_GetStringFromObj(objPtr, &length);
-    return (length == 0);
+    return (objPtr->length == 0);
 }
 
 /*
@@ -1669,9 +1666,9 @@ FreeResources(
 	break;
     case TK_OPTION_CURSOR:
 	if (internalFormExists) {
-	    if (*((Tk_Cursor *) internalPtr) != None) {
+	    if (*((Tk_Cursor *) internalPtr) != NULL) {
 		Tk_FreeCursor(Tk_Display(tkwin), *((Tk_Cursor *) internalPtr));
-		*((Tk_Cursor *) internalPtr) = None;
+		*((Tk_Cursor *) internalPtr) = NULL;
 	    }
 	} else if (objPtr != NULL) {
 	    Tk_FreeCursorFromObj(tkwin, objPtr);
@@ -1942,7 +1939,7 @@ GetObjectForOption(
     case TK_OPTION_CURSOR: {
 	Tk_Cursor cursor = *((Tk_Cursor *) internalPtr);
 
-	if (cursor != None) {
+	if (cursor != NULL) {
 	    objPtr = Tcl_NewStringObj(
 		    Tk_NameOfCursor(Tk_Display(tkwin), cursor), -1);
 	}

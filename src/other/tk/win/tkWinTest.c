@@ -147,7 +147,7 @@ AppendSystemError(
     if (Tcl_IsShared(resultPtr)) {
 	resultPtr = Tcl_DuplicateObj(resultPtr);
     }
-    length = FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM
+    length = FormatMessageW(FORMAT_MESSAGE_FROM_SYSTEM
 	    | FORMAT_MESSAGE_IGNORE_INSERTS
 	    | FORMAT_MESSAGE_ALLOCATE_BUFFER, NULL, error,
 	    MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), (WCHAR *) wMsgPtrPtr,
@@ -175,12 +175,9 @@ AppendSystemError(
 	}
 	msg = msgBuf;
     } else {
-	Tcl_Encoding encoding;
 	char *msgPtr;
 
-	encoding = Tcl_GetEncoding(NULL, "unicode");
-	Tcl_ExternalToUtfDString(encoding, (char *) wMsgPtr, -1, &ds);
-	Tcl_FreeEncoding(encoding);
+	Tcl_WinTCharToUtf((LPCTSTR)wMsgPtr, -1, &ds);
 	LocalFree(wMsgPtr);
 
 	msgPtr = Tcl_DStringValue(&ds);
@@ -419,7 +416,7 @@ TestwineventObjCmd(
 
 /*
  *  testfindwindow title ?class?
- *	Find a Windows window using the FindWindow API call. This takes the window
+ *	Find a Windows window using the FindWindowW API call. This takes the window
  *	title and optionally the window class and if found returns the HWND and
  *	raises an error if the window is not found.
  *	eg: testfindwindow Console TkTopLevel
@@ -435,7 +432,7 @@ TestfindwindowObjCmd(
     int objc,			/* Number of arguments. */
     Tcl_Obj *const objv[])	/* Argument values. */
 {
-    const TCHAR  *title = NULL, *class = NULL;
+	LPCWSTR title = NULL, windowClass = NULL;
     Tcl_DString titleString, classString;
     HWND hwnd = NULL;
     int r = TCL_OK;
@@ -449,21 +446,18 @@ TestfindwindowObjCmd(
         return TCL_ERROR;
     }
 
-    title = Tcl_WinUtfToTChar(Tcl_GetString(objv[1]), -1, &titleString);
+    title = (LPCWSTR)Tcl_WinUtfToTChar(Tcl_GetString(objv[1]), -1, &titleString);
     if (objc == 3) {
-        class = Tcl_WinUtfToTChar(Tcl_GetString(objv[2]), -1, &classString);
+        windowClass = (LPCWSTR)Tcl_WinUtfToTChar(Tcl_GetString(objv[2]), -1, &classString);
     }
     if (title[0] == 0)
         title = NULL;
-#if 0
-    hwnd  = FindWindow(class, title);
-#else
     /* We want find a window the belongs to us and not some other process */
     hwnd = NULL;
     myPid = GetCurrentProcessId();
     while (1) {
         DWORD pid, tid;
-        hwnd = FindWindowEx(NULL, hwnd, class, title);
+        hwnd = FindWindowExW(NULL, hwnd, windowClass, title);
         if (hwnd == NULL)
             break;
         tid = GetWindowThreadProcessId(hwnd, &pid);
@@ -476,14 +470,12 @@ TestfindwindowObjCmd(
             break;              /* Found it */
     }
 
-#endif
-
     if (hwnd == NULL) {
 	Tcl_SetObjResult(interp, Tcl_NewStringObj("failed to find window: ", -1));
 	AppendSystemError(interp, GetLastError());
 	r = TCL_ERROR;
     } else {
-        Tcl_SetObjResult(interp, Tcl_NewLongObj(PTR2INT(hwnd)));
+        Tcl_SetObjResult(interp, Tcl_NewWideIntObj((Tcl_WideInt)(((size_t)hwnd) + 1) - 1));
     }
 
     Tcl_DStringFree(&titleString);
@@ -499,7 +491,7 @@ EnumChildrenProc(
 {
     Tcl_Obj *listObj = (Tcl_Obj *) lParam;
 
-    Tcl_ListObjAppendElement(NULL, listObj, Tcl_NewLongObj(PTR2INT(hwnd)));
+    Tcl_ListObjAppendElement(NULL, listObj, Tcl_NewWideIntObj((Tcl_WideInt)(((size_t)hwnd) + 1) - 1));
     return TRUE;
 }
 
@@ -510,28 +502,29 @@ TestgetwindowinfoObjCmd(
     int objc,
     Tcl_Obj *const objv[])
 {
-    long hwnd;
+    Tcl_WideInt hwnd;
     Tcl_Obj *dictObj = NULL, *classObj = NULL, *textObj = NULL;
     Tcl_Obj *childrenObj = NULL;
-    TCHAR buf[512];
+    WCHAR buf[512];
     int cch, cchBuf = 256;
+    Tcl_DString ds;
 
     if (objc != 2) {
 	Tcl_WrongNumArgs(interp, 1, objv, "hwnd");
 	return TCL_ERROR;
     }
 
-    if (Tcl_GetLongFromObj(interp, objv[1], &hwnd) != TCL_OK)
+    if (Tcl_GetWideIntFromObj(interp, objv[1], &hwnd) != TCL_OK)
 	return TCL_ERROR;
 
-    cch = GetClassName(INT2PTR(hwnd), buf, cchBuf);
+    cch = GetClassNameW(INT2PTR(hwnd), buf, cchBuf);
     if (cch == 0) {
     	Tcl_SetObjResult(interp, Tcl_NewStringObj("failed to get class name: ", -1));
     	AppendSystemError(interp, GetLastError());
     	return TCL_ERROR;
     } else {
 	Tcl_DString ds;
-	Tcl_WinTCharToUtf(buf, -1, &ds);
+	Tcl_WinTCharToUtf((LPCTSTR)buf, -1, &ds);
 	classObj = Tcl_NewStringObj(Tcl_DStringValue(&ds), Tcl_DStringLength(&ds));
 	Tcl_DStringFree(&ds);
     }
@@ -539,14 +532,16 @@ TestgetwindowinfoObjCmd(
     dictObj = Tcl_NewDictObj();
     Tcl_DictObjPut(interp, dictObj, Tcl_NewStringObj("class", 5), classObj);
     Tcl_DictObjPut(interp, dictObj, Tcl_NewStringObj("id", 2),
-	Tcl_NewLongObj(GetWindowLongA(INT2PTR(hwnd), GWL_ID)));
+	    Tcl_NewWideIntObj(GetWindowLongPtrW(INT2PTR(hwnd), GWL_ID)));
 
-    cch = GetWindowText(INT2PTR(hwnd), (LPTSTR)buf, cchBuf);
-    textObj = Tcl_NewUnicodeObj((LPCWSTR)buf, cch);
+    cch = GetWindowTextW(INT2PTR(hwnd), buf, cchBuf);
+    Tcl_WinTCharToUtf((LPCTSTR)buf, cch * sizeof (WCHAR), &ds);
+    textObj = Tcl_NewStringObj(Tcl_DStringValue(&ds), Tcl_DStringLength(&ds));
+    Tcl_DStringFree(&ds);
 
     Tcl_DictObjPut(interp, dictObj, Tcl_NewStringObj("text", 4), textObj);
     Tcl_DictObjPut(interp, dictObj, Tcl_NewStringObj("parent", 6),
-	Tcl_NewLongObj(PTR2INT(GetParent((INT2PTR(hwnd))))));
+	    Tcl_NewWideIntObj((Tcl_WideInt)(((size_t)GetParent((INT2PTR(hwnd)))) + 1) - 1));
 
     childrenObj = Tcl_NewListObj(0, NULL);
     EnumChildWindows(INT2PTR(hwnd), EnumChildrenProc, (LPARAM)childrenObj);

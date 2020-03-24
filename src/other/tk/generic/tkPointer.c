@@ -23,19 +23,7 @@
 #define Cursor XCursor
 #endif
 
-/*
- * Mask that selects any of the state bits corresponding to buttons, plus
- * masks that select individual buttons' bits:
- */
-
-#define ALL_BUTTONS \
-	(Button1Mask|Button2Mask|Button3Mask|Button4Mask|Button5Mask)
-static const unsigned int buttonMasks[] = {
-    Button1Mask, Button2Mask, Button3Mask, Button4Mask, Button5Mask
-};
-#define ButtonMask(b) (buttonMasks[(b)-Button1])
-
-typedef struct ThreadSpecificData {
+typedef struct {
     TkWindow *grabWinPtr;	/* Window that defines the top of the grab
 				 * tree in a global grab. */
     int lastState;		/* Last known state flags. */
@@ -267,7 +255,7 @@ Tk_UpdatePointer(
      */
 
     for (b = Button1; b <= Button5; b++) {
-	mask = ButtonMask(b);
+	mask = TkGetButtonMask(b);
 	if (changes & mask) {
 	    if (state & mask) {
 		type = ButtonPress;
@@ -515,7 +503,15 @@ TkPointerDeadWindow(
 	tsdPtr->restrictWinPtr = NULL;
     }
     if (!(tsdPtr->restrictWinPtr || tsdPtr->grabWinPtr)) {
-	TkpSetCapture(NULL);
+
+        /*
+         * Release mouse capture only if the dead window is the capturing
+         * window.
+         */
+
+        if (winPtr == (TkWindow *)TkpGetCapture()) {
+	    TkpSetCapture(NULL);
+        }
     }
 }
 

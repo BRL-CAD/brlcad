@@ -178,28 +178,27 @@ Tcl_Obj*
 TkWin32ErrorObj(
     HRESULT hrError)
 {
-    LPTSTR lpBuffer = NULL, p = NULL;
-    TCHAR  sBuffer[30];
+    LPWSTR lpBuffer = NULL, p = NULL;
+    WCHAR  sBuffer[30];
     Tcl_Obj* errPtr = NULL;
+    Tcl_DString ds;
 
-    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM
+    FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM
 	    | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, (DWORD)hrError,
-	    LANG_NEUTRAL, (LPTSTR)&lpBuffer, 0, NULL);
+	    LANG_NEUTRAL, (LPWSTR)&lpBuffer, 0, NULL);
 
     if (lpBuffer == NULL) {
 	lpBuffer = sBuffer;
-	wsprintf(sBuffer, TEXT("Error Code: %08lX"), hrError);
+	wsprintfW(sBuffer, L"Error Code: %08lX", hrError);
     }
 
-    if ((p = _tcsrchr(lpBuffer, TEXT('\r'))) != NULL) {
-	*p = TEXT('\0');
+    if ((p = wcsrchr(lpBuffer, '\r')) != NULL) {
+	*p = '\0';
     }
 
-#ifdef _UNICODE
-    errPtr = Tcl_NewUnicodeObj(lpBuffer, (int)wcslen(lpBuffer));
-#else
-    errPtr = Tcl_NewStringObj(lpBuffer, (int)strlen(lpBuffer));
-#endif /* _UNICODE */
+    Tcl_WinTCharToUtf((LPCTSTR)lpBuffer, -1, &ds);
+    errPtr = Tcl_NewStringObj(Tcl_DStringValue(&ds), Tcl_DStringLength(&ds));
+    Tcl_DStringFree(&ds);
 
     if (lpBuffer != sBuffer) {
 	LocalFree((HLOCAL)lpBuffer);

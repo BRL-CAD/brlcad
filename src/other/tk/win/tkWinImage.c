@@ -126,6 +126,7 @@ PutPixel(
 	 */
 
 	destPtr[3] = 0;
+	/* FALLTHRU */
     case 24:
 	/*
 	 * Pixel is triplet: 0xBBGGRR.
@@ -347,7 +348,7 @@ XGetImageZPixmap(
 
     size = sizeof(BITMAPINFO);
     if (depth <= 8) {
-	size += sizeof(unsigned short) * (1 << depth);
+	size += sizeof(unsigned short) << depth;
     }
     bmInfo = ckalloc(size);
 

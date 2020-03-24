@@ -97,7 +97,7 @@ typedef struct PendingCommand {
 				 * NULL means end of list. */
 } PendingCommand;
 
-typedef struct ThreadSpecificData {
+typedef struct {
     PendingCommand *pendingCommands;
 				/* List of all commands currently being waited
 				 * for. */
@@ -261,10 +261,13 @@ RegOpen(
     unsigned long bytesAfter;
     Atom actualType;
     char **propertyPtr;
+    Tk_ErrorHandler handler;
 
     if (dispPtr->commTkwin == NULL) {
 	SendInit(interp, dispPtr);
     }
+
+    handler = Tk_CreateErrorHandler(dispPtr->display, -1, -1, -1, NULL, NULL);
 
     regPtr = ckalloc(sizeof(NameRegistry));
     regPtr->dispPtr = dispPtr;
@@ -306,7 +309,10 @@ RegOpen(
 	XDeleteProperty(dispPtr->display,
 		RootWindow(dispPtr->display, 0),
 		dispPtr->registryProperty);
+        XSync(dispPtr->display, False);
     }
+
+    Tk_DeleteErrorHandler(handler);
 
     /*
      * Xlib placed an extra null byte after the end of the property, just to
@@ -514,6 +520,11 @@ RegClose(
     NameRegistry *regPtr)	/* Pointer to a registry opened with a
 				 * previous call to RegOpen. */
 {
+    Tk_ErrorHandler handler;
+
+    handler = Tk_CreateErrorHandler(regPtr->dispPtr->display, -1, -1, -1,
+            NULL, NULL);
+
     if (regPtr->modified) {
 	if (!regPtr->locked && !localData.sendDebug) {
 	    Tcl_Panic("The name registry was modified without being locked!");
@@ -539,6 +550,8 @@ RegClose(
      */
 
     XFlush(regPtr->dispPtr->display);
+
+    Tk_DeleteErrorHandler(handler);
 
     if (regPtr->property != NULL) {
 	if (regPtr->allocedByX) {
@@ -1095,6 +1108,31 @@ Tk_SendObjCmd(
 	Tcl_DStringAppend(&request, " ", 1);
 	Tcl_DStringAppend(&request, Tcl_GetString(objv[i]), -1);
     }
+
+    if (!async) {
+	/*
+	 * Register the fact that we're waiting for a command to complete
+	 * (this is needed by SendEventProc and by AppendErrorProc to pass
+	 * back the command's results). Set up a timeout handler so that
+	 * we can check during long sends to make sure that the destination
+	 * application is still alive.
+	 *
+	 * We prepare the pending struct here in order to catch potential
+	 * early X errors from AppendPropCarefully() due to XSync().
+	 */
+
+	pending.serial = localData.sendSerial;
+	pending.dispPtr = dispPtr;
+	pending.target = destName;
+	pending.commWindow = commWindow;
+	pending.interp = interp;
+	pending.result = NULL;
+	pending.errorInfo = NULL;
+	pending.errorCode = NULL;
+	pending.gotResponse = 0;
+	pending.nextPtr = tsdPtr->pendingCommands;
+	tsdPtr->pendingCommands = &pending;
+    }
     (void) AppendPropCarefully(dispPtr->display, commWindow,
 	    dispPtr->commProperty, Tcl_DStringValue(&request),
 	    Tcl_DStringLength(&request) + 1, (async ? NULL : &pending));
@@ -1107,26 +1145,6 @@ Tk_SendObjCmd(
 
 	return TCL_OK;
     }
-
-    /*
-     * Register the fact that we're waiting for a command to complete (this is
-     * needed by SendEventProc and by AppendErrorProc to pass back the
-     * command's results). Set up a timeout handler so that we can check
-     * during long sends to make sure that the destination application is
-     * still alive.
-     */
-
-    pending.serial = localData.sendSerial;
-    pending.dispPtr = dispPtr;
-    pending.target = destName;
-    pending.commWindow = commWindow;
-    pending.interp = interp;
-    pending.result = NULL;
-    pending.errorInfo = NULL;
-    pending.errorCode = NULL;
-    pending.gotResponse = 0;
-    pending.nextPtr = tsdPtr->pendingCommands;
-    tsdPtr->pendingCommands = &pending;
 
     /*
      * Enter a loop processing X events until the result comes in or the
@@ -1951,6 +1969,7 @@ TkpTestsendCmd(
 	"bogus",   "prop",   "serial",  NULL
     };
     TkWindow *winPtr = clientData;
+    Tk_ErrorHandler handler;
     int index;
 
     if (objc < 2) {
@@ -1959,16 +1978,19 @@ TkpTestsendCmd(
 	return TCL_ERROR;
     }
 
-	if (Tcl_GetIndexFromObjStruct(interp, objv[1], testsendOptions,
+    if (Tcl_GetIndexFromObjStruct(interp, objv[1], testsendOptions,
 		sizeof(char *), "option", 0, &index) != TCL_OK) {
-	    return TCL_ERROR;
-	}
-	if (index == TESTSEND_BOGUS) {
+	return TCL_ERROR;
+    }
+    if (index == TESTSEND_BOGUS) {
+        handler = Tk_CreateErrorHandler(winPtr->dispPtr->display, -1, -1, -1,
+                NULL, NULL);
 	XChangeProperty(winPtr->dispPtr->display,
 		RootWindow(winPtr->dispPtr->display, 0),
 		winPtr->dispPtr->registryProperty, XA_INTEGER, 32,
 		PropModeReplace,
 		(unsigned char *) "This is bogus information", 6);
+        Tk_DeleteErrorHandler(handler);
     } else if (index == TESTSEND_PROP) {
 	int result, actualFormat;
 	unsigned long length, bytesAfter;
@@ -2007,7 +2029,10 @@ TkpTestsendCmd(
 		XFree(property);
 	    }
 	} else if (Tcl_GetString(objv[4])[0] == 0) {
+            handler = Tk_CreateErrorHandler(winPtr->dispPtr->display,
+                    -1, -1, -1, NULL, NULL);
 	    XDeleteProperty(winPtr->dispPtr->display, w, propName);
+            Tk_DeleteErrorHandler(handler);
 	} else {
 	    Tcl_DString tmp;
 
@@ -2018,10 +2043,12 @@ TkpTestsendCmd(
 		    *p = 0;
 		}
 	    }
-
+            handler = Tk_CreateErrorHandler(winPtr->dispPtr->display,
+                    -1, -1, -1, NULL, NULL);
 	    XChangeProperty(winPtr->dispPtr->display, w, propName, XA_STRING,
 		    8, PropModeReplace, (unsigned char*)Tcl_DStringValue(&tmp),
 		    p-Tcl_DStringValue(&tmp));
+            Tk_DeleteErrorHandler(handler);
 	    Tcl_DStringFree(&tmp);
 	}
     } else if (index == TESTSEND_SERIAL) {

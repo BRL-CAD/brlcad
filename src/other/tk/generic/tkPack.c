@@ -1362,7 +1362,7 @@ Unlink(
      * handling it and should mark it as free.
      */
 
-    if (masterPtr->slavePtr == NULL && masterPtr->flags & ALLOCED_MASTER) {
+    if ((masterPtr->slavePtr == NULL) && (masterPtr->flags & ALLOCED_MASTER)) {
 	TkFreeGeometryMaster(masterPtr->tkwin, "pack");
 	masterPtr->flags &= ~ALLOCED_MASTER;
     }
@@ -1522,6 +1522,7 @@ ConfigureSlaves(
 {
     Packer *masterPtr, *slavePtr, *prevPtr, *otherPtr;
     Tk_Window other, slave, parent, ancestor;
+    TkWindow *master;
     int i, j, numWindows, tmp, positionGiven;
     const char *string;
     static const char *const optionStrings[] = {
@@ -1796,6 +1797,24 @@ ConfigureSlaves(
 		    "can't pack %s inside itself", Tcl_GetString(objv[j])));
 	    Tcl_SetErrorCode(interp, "TK", "GEOMETRY", "SELF", NULL);
 	    return TCL_ERROR;
+	}
+
+	/*
+	 * Check for management loops.
+	 */
+
+	for (master = (TkWindow *)masterPtr->tkwin; master != NULL;
+	     master = (TkWindow *)TkGetGeomMaster(master)) {
+	    if (master == (TkWindow *)slave) {
+		Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		    "can't put %s inside %s, would cause management loop",
+	            Tcl_GetString(objv[j]), Tk_PathName(masterPtr->tkwin)));
+		Tcl_SetErrorCode(interp, "TK", "GEOMETRY", "LOOP", NULL);
+		return TCL_ERROR;
+	    }
+	}
+	if (masterPtr->tkwin != Tk_Parent(slave)) {
+	    ((TkWindow *)slave)->maintainerPtr = (TkWindow *)masterPtr->tkwin;
 	}
 
 	/*

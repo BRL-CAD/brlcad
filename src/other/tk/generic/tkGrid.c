@@ -1913,7 +1913,7 @@ ResolveConstraints(
     GridLayout *layoutPtr;	/* Temporary layout structure. */
     int requiredSize;		/* The natural size of the grid (pixels).
 				 * This is the minimum size needed to
-				 * accomodate all of the slaves at their
+				 * accommodate all of the slaves at their
 				 * requested sizes. */
     int offset;			/* The pixel offset of the right edge of the
 				 * current slot from the beginning of the
@@ -2486,7 +2486,7 @@ GetGrid(
  * Side effects:
  *	The width and height arguments are filled in the master data
  *	structure. Additional space is allocated for the constraints to
- *	accomodate the offsets.
+ *	accommodate the offsets.
  *
  *----------------------------------------------------------------------
  */
@@ -2868,17 +2868,18 @@ GridStructureProc(
 	    }
 	}
     } else if (eventPtr->type == DestroyNotify) {
-	register Gridder *gridPtr2, *nextPtr;
+	register Gridder *slavePtr, *nextPtr;
 
 	if (gridPtr->masterPtr != NULL) {
 	    Unlink(gridPtr);
 	}
-	for (gridPtr2 = gridPtr->slavePtr; gridPtr2 != NULL;
-		gridPtr2 = nextPtr) {
-	    Tk_UnmapWindow(gridPtr2->tkwin);
-	    gridPtr2->masterPtr = NULL;
-	    nextPtr = gridPtr2->nextPtr;
-	    gridPtr2->nextPtr = NULL;
+	for (slavePtr = gridPtr->slavePtr; slavePtr != NULL;
+		slavePtr = nextPtr) {
+	    Tk_ManageGeometry(slavePtr->tkwin, NULL, NULL);
+	    Tk_UnmapWindow(slavePtr->tkwin);
+	    slavePtr->masterPtr = NULL;
+	    nextPtr = slavePtr->nextPtr;
+	    slavePtr->nextPtr = NULL;
 	}
 	Tcl_DeleteHashEntry(Tcl_FindHashEntry(&dispPtr->gridHashTable,
 		(char *) gridPtr->tkwin));
@@ -2894,11 +2895,11 @@ GridStructureProc(
 	    Tcl_DoWhenIdle(ArrangeGrid, gridPtr);
 	}
     } else if (eventPtr->type == UnmapNotify) {
-	register Gridder *gridPtr2;
+	register Gridder *slavePtr;
 
-	for (gridPtr2 = gridPtr->slavePtr; gridPtr2 != NULL;
-		gridPtr2 = gridPtr2->nextPtr) {
-	    Tk_UnmapWindow(gridPtr2->tkwin);
+	for (slavePtr = gridPtr->slavePtr; slavePtr != NULL;
+		slavePtr = slavePtr->nextPtr) {
+	    Tk_UnmapWindow(slavePtr->tkwin);
 	}
     }
 }
@@ -2937,6 +2938,7 @@ ConfigureSlaves(
     Gridder *masterPtr = NULL;
     Gridder *slavePtr;
     Tk_Window other, slave, parent, ancestor;
+    TkWindow *master;
     int i, j, tmp;
     int numWindows;
     int width;
@@ -3083,7 +3085,8 @@ ConfigureSlaves(
     }
 
     /*
-     * If no -row is given, use the first unoccupied row of the master.
+     * If no -row is given, use the next row after the highest occupied row
+     * of the master.
      */
 
     if (defaultRow < 0) {
@@ -3314,6 +3317,9 @@ ConfigureSlaves(
     	}
 
 	if (slavePtr->masterPtr != NULL && slavePtr->masterPtr != masterPtr) {
+            if (slavePtr->masterPtr->tkwin != Tk_Parent(slavePtr->tkwin)) {
+                Tk_UnmaintainGeometry(slavePtr->tkwin, slavePtr->masterPtr->tkwin);
+            }
 	    Unlink(slavePtr);
 	    slavePtr->masterPtr = NULL;
 	}
@@ -3347,17 +3353,23 @@ ConfigureSlaves(
 	}
 
 	/*
-	 * Try to make sure our master isn't managed by us.
+	 * Check for management loops.
 	 */
 
-     	if (masterPtr->masterPtr == slavePtr) {
-	    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+	for (master = (TkWindow *)masterPtr->tkwin; master != NULL;
+	     master = (TkWindow *)TkGetGeomMaster(master)) {
+	    if (master == (TkWindow *)slave) {
+		Tcl_SetObjResult(interp, Tcl_ObjPrintf(
 		    "can't put %s inside %s, would cause management loop",
-		    Tcl_GetString(objv[j]), Tk_PathName(masterPtr->tkwin)));
-	    Tcl_SetErrorCode(interp, "TK", "GEOMETRY", "LOOP", NULL);
-	    Unlink(slavePtr);
-	    return TCL_ERROR;
-     	}
+	            Tcl_GetString(objv[j]), Tk_PathName(masterPtr->tkwin)));
+		Tcl_SetErrorCode(interp, "TK", "GEOMETRY", "LOOP", NULL);
+		Unlink(slavePtr);
+		return TCL_ERROR;
+	    }
+	}
+	if (masterPtr->tkwin != Tk_Parent(slave)) {
+	    ((TkWindow *)slave)->maintainerPtr = (TkWindow *)masterPtr->tkwin;
+	}
 
 	Tk_ManageGeometry(slave, &gridMgrType, slavePtr);
 

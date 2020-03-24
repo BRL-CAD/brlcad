@@ -107,7 +107,7 @@ static const Tk_ConfigSpec configSpecs[] = {
     {TK_CONFIG_BITMAP, "-disabledstipple", NULL, NULL,
 	NULL, Tk_Offset(TextItem, disabledStipple), TK_CONFIG_NULL_OK, NULL},
     {TK_CONFIG_COLOR, "-fill", NULL, NULL,
-	"black", Tk_Offset(TextItem, color), TK_CONFIG_NULL_OK, NULL},
+	DEF_CANVITEM_OUTLINE, Tk_Offset(TextItem, color), TK_CONFIG_NULL_OK, NULL},
     {TK_CONFIG_FONT, "-font", NULL, NULL,
 	DEF_CANVTEXT_FONT, Tk_Offset(TextItem, tkfont), 0, NULL},
     {TK_CONFIG_JUSTIFY, "-justify", NULL, NULL,
@@ -269,9 +269,9 @@ CreateText(
     textPtr->textLayout = NULL;
     textPtr->actualWidth = 0;
     textPtr->drawOrigin[0] = textPtr->drawOrigin[1] = 0.0;
-    textPtr->gc		= None;
-    textPtr->selTextGC	= None;
-    textPtr->cursorOffGC = None;
+    textPtr->gc		= NULL;
+    textPtr->selTextGC	= NULL;
+    textPtr->cursorOffGC = NULL;
     textPtr->sine	= 0.0;
     textPtr->cosine	= 1.0;
 
@@ -447,7 +447,7 @@ ConfigureText(
 	}
     }
 
-    newGC = newSelGC = None;
+    newGC = newSelGC = NULL;
     if (textPtr->tkfont != NULL) {
 	gcValues.font = Tk_FontId(textPtr->tkfont);
 	mask = GCFont;
@@ -472,11 +472,11 @@ ConfigureText(
 	}
 	newSelGC = Tk_GetGC(tkwin, mask|GCForeground, &gcValues);
     }
-    if (textPtr->gc != None) {
+    if (textPtr->gc != NULL) {
 	Tk_FreeGC(Tk_Display(tkwin), textPtr->gc);
     }
     textPtr->gc = newGC;
-    if (textPtr->selTextGC != None) {
+    if (textPtr->selTextGC != NULL) {
 	Tk_FreeGC(Tk_Display(tkwin), textPtr->selTextGC);
     }
     textPtr->selTextGC = newSelGC;
@@ -491,9 +491,9 @@ ConfigureText(
 	}
 	newGC = Tk_GetGC(tkwin, GCForeground, &gcValues);
     } else {
-	newGC = None;
+	newGC = NULL;
     }
-    if (textPtr->cursorOffGC != None) {
+    if (textPtr->cursorOffGC != NULL) {
 	Tk_FreeGC(Tk_Display(tkwin), textPtr->cursorOffGC);
     }
     textPtr->cursorOffGC = newGC;
@@ -592,13 +592,13 @@ DeleteText(
     }
 
     Tk_FreeTextLayout(textPtr->textLayout);
-    if (textPtr->gc != None) {
+    if (textPtr->gc != NULL) {
 	Tk_FreeGC(display, textPtr->gc);
     }
-    if (textPtr->selTextGC != None) {
+    if (textPtr->selTextGC != NULL) {
 	Tk_FreeGC(display, textPtr->selTextGC);
     }
-    if (textPtr->cursorOffGC != None) {
+    if (textPtr->cursorOffGC != NULL) {
 	Tk_FreeGC(display, textPtr->cursorOffGC);
     }
 }
@@ -820,7 +820,7 @@ DisplayCanvText(
 	}
     }
 
-    if (textPtr->gc == None) {
+    if (textPtr->gc == NULL) {
 	return;
     }
 
@@ -932,7 +932,7 @@ DisplayCanvText(
 		Tk_Fill3DPolygon(Tk_CanvasTkwin(canvas), drawable,
 			textInfoPtr->insertBorder, points, 4,
 			textInfoPtr->insertBorderWidth, TK_RELIEF_RAISED);
-	    } else if (textPtr->cursorOffGC != None) {
+	    } else if (textPtr->cursorOffGC != NULL) {
 		/*
 		 * Redraw the background over the area of the cursor, even
 		 * though the cursor is turned off. This guarantees that the

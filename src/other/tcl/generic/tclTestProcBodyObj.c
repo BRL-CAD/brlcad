@@ -21,13 +21,14 @@
  */
 
 static const char packageName[] = "procbodytest";
-static const char packageVersion[] = "1.0";
+static const char packageVersion[] = "1.1";
 
 /*
  * Name of the commands exported by this package
  */
 
 static const char procCommand[] = "proc";
+static const char checkCommand[] = "check";
 
 /*
  * this struct describes an entry in the table of command names and command
@@ -46,6 +47,8 @@ typedef struct CmdTable {
 
 static int	ProcBodyTestProcObjCmd(ClientData dummy,
 			Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
+static int	ProcBodyTestCheckObjCmd(ClientData dummy,
+			Tcl_Interp *interp, int objc, Tcl_Obj *const objv[]);
 static int	ProcBodyTestInitInternal(Tcl_Interp *interp, int isSafe);
 static int	RegisterCommand(Tcl_Interp* interp,
 			const char *namespace, const CmdTable *cmdTablePtr);
@@ -57,11 +60,13 @@ static int	RegisterCommand(Tcl_Interp* interp,
 
 static const CmdTable commands[] = {
     { procCommand,	ProcBodyTestProcObjCmd,	1 },
+    { checkCommand,	ProcBodyTestCheckObjCmd,	1 },
     { 0, 0, 0 }
 };
 
 static const CmdTable safeCommands[] = {
     { procCommand,	ProcBodyTestProcObjCmd,	1 },
+    { checkCommand,	ProcBodyTestCheckObjCmd,	1 },
     { 0, 0, 0 }
 };
 
@@ -298,6 +303,46 @@ ProcBodyTestProcObjCmd(
     Tcl_DecrRefCount(bodyObjPtr);
 
     return result;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * ProcBodyTestCheckObjCmd --
+ *
+ *  Implements the "procbodytest::check" command. Here is the command
+ *  description:
+ *	procbodytest::check
+ *
+ *  Performs an internal check that the Tcl_PkgPresent() command returns
+ *  the same version number as was registered when the procbodytest package
+ *  was provided.  Places a boolean in the interp result indicating the
+ *  test outcome.
+ *
+ * Results:
+ *  Returns a standard Tcl code.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static int
+ProcBodyTestCheckObjCmd(
+    ClientData dummy,		/* context; not used */
+    Tcl_Interp *interp,		/* the current interpreter */
+    int objc,			/* argument count */
+    Tcl_Obj *const objv[])	/* arguments */
+{
+    const char *version;
+
+    if (objc != 1) {
+	Tcl_WrongNumArgs(interp, 1, objv, "");
+	return TCL_ERROR;
+    }
+
+    version = Tcl_PkgPresent(interp, packageName, packageVersion, 1);
+    Tcl_SetObjResult(interp, Tcl_NewBooleanObj(
+	    strcmp(version, packageVersion) == 0));
+    return TCL_OK;
 }
 
 /*

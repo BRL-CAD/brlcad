@@ -81,6 +81,7 @@ proc ttk::spinbox::Release {w} {
 # 	or <<Decrement> (+1, down) events.
 #
 proc ttk::spinbox::MouseWheel {w dir} {
+    if {[$w instate disabled]} { return }
     if {$dir < 0} {
 	event generate $w <<Increment>>
     } else {
@@ -132,6 +133,7 @@ proc ttk::spinbox::Adjust {w v min max} {
 #	-from, -to, and -increment.
 #
 proc ttk::spinbox::Spin {w dir} {
+    if {[$w instate disabled]} { return }
     set nvalues [llength [set values [$w cget -values]]]
     set value [$w get]
     if {$nvalues} {

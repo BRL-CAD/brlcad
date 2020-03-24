@@ -232,7 +232,7 @@ typedef struct {
  * of character is used for error reports is independent of what kind is used
  * in matching.
  *
- ^ extern size_t regerror(int, const regex_t *, char *, size_t);
+ ^ extern size_t regerror(int, char *, size_t);
  */
 #define	REG_OKAY	 0	/* no errors detected */
 #define	REG_NOMATCH	 1	/* failed to match */
@@ -283,7 +283,7 @@ int regexec(regex_t *, const char *, size_t, regmatch_t [], int);
 MODULE_SCOPE int __REG_WIDE_EXEC(regex_t *, const __REG_WIDE_T *, size_t, rm_detail_t *, size_t, regmatch_t [], int);
 #endif
 MODULE_SCOPE void regfree(regex_t *);
-MODULE_SCOPE size_t regerror(int, const regex_t *, char *, size_t);
+MODULE_SCOPE size_t regerror(int, char *, size_t);
 /* automatically gathered by fwd; do not hand-edit */
 /* =====^!^===== end forwards =====^!^===== */
 

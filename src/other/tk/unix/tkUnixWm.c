@@ -980,18 +980,18 @@ TkWmSetClass(
 
     if (winPtr->classUid != NULL) {
 	XClassHint *classPtr;
-	Tcl_DString name, class;
+	Tcl_DString name, ds;
 
 	Tcl_UtfToExternalDString(NULL, winPtr->nameUid, -1, &name);
-	Tcl_UtfToExternalDString(NULL, winPtr->classUid, -1, &class);
+	Tcl_UtfToExternalDString(NULL, winPtr->classUid, -1, &ds);
 	classPtr = XAllocClassHint();
 	classPtr->res_name = Tcl_DStringValue(&name);
-	classPtr->res_class = Tcl_DStringValue(&class);
+	classPtr->res_class = Tcl_DStringValue(&ds);
 	XSetClassHint(winPtr->display, winPtr->wmInfoPtr->wrapperPtr->window,
 		classPtr);
 	XFree((char *) classPtr);
 	Tcl_DStringFree(&name);
-	Tcl_DStringFree(&class);
+	Tcl_DStringFree(&ds);
     }
 }
 
@@ -1871,6 +1871,7 @@ WmFrameCmd(
 {
     register WmInfo *wmPtr = winPtr->wmInfoPtr;
     Window window;
+    char buf[TCL_INTEGER_SPACE];
 
     if (objc != 3) {
 	Tcl_WrongNumArgs(interp, 2, objv, "window");
@@ -1880,7 +1881,8 @@ WmFrameCmd(
     if (window == None) {
 	window = Tk_WindowId((Tk_Window) winPtr);
     }
-    Tcl_SetObjResult(interp, Tcl_ObjPrintf("0x%x", (unsigned) window));
+    sprintf(buf, "0x%" TCL_Z_MODIFIER "x", (size_t)window);
+    Tcl_SetObjResult(interp, Tcl_NewStringObj(buf, -1));
     return TCL_OK;
 }
 
@@ -2444,7 +2446,11 @@ WmIconphotoCmd(
     for (i = 3 + isDefault; i < objc; i++) {
 	photo = Tk_FindPhoto(interp, Tcl_GetString(objv[i]));
 	if (photo == NULL) {
-	    Tcl_Free((char *) iconPropertyData);
+	    ckfree((char *) iconPropertyData);
+	    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+	        "failed to create an iconphoto with image \"%s\"",
+		Tcl_GetString(objv[i])));
+	    Tcl_SetErrorCode(interp, "TK", "WM", "ICONPHOTO", "IMAGE", NULL);
 	    return TCL_ERROR;
 	}
 	Tk_PhotoGetSize(photo, &width, &height);
@@ -3266,6 +3272,8 @@ WmStackorderCmd(
 	    ckfree(windows);
 	    Tcl_SetObjResult(interp, resultObj);
 	    return TCL_OK;
+	} else {
+	    return TCL_ERROR;
 	}
     } else {
 	Tk_Window relWin;
@@ -3524,7 +3532,7 @@ WmTransientCmd(
     Tcl_Obj *const objv[])	/* Argument objects. */
 {
     register WmInfo *wmPtr = winPtr->wmInfoPtr;
-    TkWindow *masterPtr = wmPtr->masterPtr;
+    TkWindow *masterPtr = wmPtr->masterPtr, *w;
     WmInfo *wmPtr2;
 
     if ((objc != 3) && (objc != 4)) {
@@ -3593,12 +3601,18 @@ WmTransientCmd(
 	    return TCL_ERROR;
 	}
 
-	if (masterPtr == winPtr) {
-	    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
-		    "can't make \"%s\" its own master", Tk_PathName(winPtr)));
-	    Tcl_SetErrorCode(interp, "TK", "WM", "TRANSIENT", "SELF", NULL);
-	    return TCL_ERROR;
-	} else if (masterPtr != wmPtr->masterPtr) {
+	for (w = masterPtr; w != NULL && w->wmInfoPtr != NULL;
+	     w = (TkWindow *)w->wmInfoPtr->masterPtr) {
+	    if (w == winPtr) {
+		Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		    "setting \"%s\" as master creates a transient/master cycle",
+		    Tk_PathName(masterPtr)));
+		Tcl_SetErrorCode(interp, "TK", "WM", "TRANSIENT", "SELF", NULL);
+		return TCL_ERROR;
+	    }
+	}
+
+	if (masterPtr != wmPtr->masterPtr) {
 	    /*
 	     * Remove old master map/unmap binding before setting the new
 	     * master. The event handler will ensure that transient states
@@ -5785,6 +5799,18 @@ Tk_GetRootCoords(
  *----------------------------------------------------------------------
  */
 
+static int PointInWindow(
+    int x,
+    int y,
+    WmInfo *wmPtr)
+{
+    XWindowChanges changes = wmPtr->winPtr->changes;
+    return (x >= changes.x &&
+            x < changes.x + changes.width &&
+            y >= changes.y - wmPtr->menuHeight &&
+            y < changes.y + changes.height);
+}
+
 Tk_Window
 Tk_CoordsToWindow(
     int rootX, int rootY,	/* Coordinates of point in root window. If a
@@ -5855,13 +5881,38 @@ Tk_CoordsToWindow(
 	}
 	for (wmPtr = (WmInfo *) dispPtr->firstWmPtr; wmPtr != NULL;
 		wmPtr = wmPtr->nextPtr) {
-	    if (wmPtr->reparent == child) {
-		goto gotToplevel;
+            if (wmPtr->winPtr->mainPtr == NULL) {
+                continue;
+            }
+	    if (child == wmPtr->reparent) {
+                if (PointInWindow(x, y, wmPtr)) {
+                    goto gotToplevel;
+                } else {
+
+                    /*
+                     * Return NULL if the point is in the title bar or border.
+                     */
+
+                    return NULL;
+                }
 	    }
 	    if (wmPtr->wrapperPtr != NULL) {
 		if (child == wmPtr->wrapperPtr->window) {
 		    goto gotToplevel;
-		}
+		} else if (wmPtr->winPtr->flags & TK_EMBEDDED &&
+                           TkpGetOtherWindow(wmPtr->winPtr) == NULL) {
+
+                    /*
+                     * This toplevel is embedded in a window belonging to
+                     * a different application.
+                     */
+
+                    int rx, ry;
+                    Tk_GetRootCoords((Tk_Window) wmPtr->winPtr, &rx, &ry);
+                    childX -= rx;
+                    childY -= ry;
+                    goto gotToplevel;
+                }
 	    } else if (child == wmPtr->winPtr->window) {
 		goto gotToplevel;
 	    }
@@ -5883,9 +5934,6 @@ Tk_CoordsToWindow(
 	handler = NULL;
     }
     winPtr = wmPtr->winPtr;
-    if (winPtr->mainPtr != ((TkWindow *) tkwin)->mainPtr) {
-	return NULL;
-    }
 
     /*
      * Step 3: at this point winPtr and wmPtr refer to the toplevel that
@@ -5942,27 +5990,30 @@ Tk_CoordsToWindow(
 	if (nextPtr == NULL) {
 	    break;
 	}
-	winPtr = nextPtr;
-	x -= winPtr->changes.x;
-	y -= winPtr->changes.y;
-	if ((winPtr->flags & TK_CONTAINER)
-		&& (winPtr->flags & TK_BOTH_HALVES)) {
+	x -= nextPtr->changes.x;
+	y -= nextPtr->changes.y;
+	if ((nextPtr->flags & TK_CONTAINER)
+		&& (nextPtr->flags & TK_BOTH_HALVES)) {
 	    /*
 	     * The window containing the point is a container, and the
 	     * embedded application is in this same process. Switch over to
 	     * the toplevel for the embedded application and start processing
 	     * that toplevel from scratch.
 	     */
-
-	    winPtr = TkpGetOtherWindow(winPtr);
+	    winPtr = TkpGetOtherWindow(nextPtr);
 	    if (winPtr == NULL) {
-		return NULL;
+		return (Tk_Window) nextPtr;
 	    }
 	    wmPtr = winPtr->wmInfoPtr;
 	    childX = x;
 	    childY = y;
 	    goto gotToplevel;
-	}
+	} else {
+            winPtr = nextPtr;
+        }
+    }
+    if (winPtr->mainPtr != ((TkWindow *) tkwin)->mainPtr) {
+        return NULL;
     }
     return (Tk_Window) winPtr;
 }
@@ -6387,6 +6438,9 @@ TkWmStackorderToplevel(
     TkWmStackorderToplevelWrapperMap(parentPtr, parentPtr->display, &table);
 
     window_ptr = windows = ckalloc((table.numEntries+1) * sizeof(TkWindow *));
+    if (windows == NULL) {
+	return NULL;
+    }
 
     /*
      * Special cases: If zero or one toplevels were mapped there is no need to

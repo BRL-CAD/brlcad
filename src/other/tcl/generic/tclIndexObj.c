@@ -878,7 +878,8 @@ Tcl_WrongNumArgs(
 				 * NULL. */
 {
     Tcl_Obj *objPtr;
-    int i, len, elemLen, flags;
+    int i, len, elemLen;
+    char flags;
     Interp *iPtr = (Interp *) interp;
     const char *elementStr;
 
@@ -925,6 +926,14 @@ Tcl_WrongNumArgs(
 	Tcl_Obj *const *origObjv = iPtr->ensembleRewrite.sourceObjs;
 
 	/*
+	 * Check for spelling fixes, and substitute the fixed values.
+	 */
+
+	if (origObjv[0] == NULL) {
+	    origObjv = (Tcl_Obj *const *)origObjv[2];
+	}
+
+	/*
 	 * We only know how to do rewriting if all the replaced objects are
 	 * actually arguments (in objv) to this function. Otherwise it just
 	 * gets too complicated and we'd be better off just giving a slightly
@@ -956,12 +965,6 @@ Tcl_WrongNumArgs(
 			origObjv[i]->internalRep.twoPtrValue.ptr1;
 
 		elementStr = EXPAND_OF(indexRep);
-		elemLen = strlen(elementStr);
-	    } else if (origObjv[i]->typePtr == &tclEnsembleCmdType) {
-		register EnsembleCmdRep *ecrPtr =
-			origObjv[i]->internalRep.twoPtrValue.ptr1;
-
-		elementStr = ecrPtr->fullSubcmdName;
 		elemLen = strlen(elementStr);
 	    } else {
 		elementStr = TclGetStringFromObj(origObjv[i], &elemLen);
@@ -1011,11 +1014,6 @@ Tcl_WrongNumArgs(
 	    register IndexRep *indexRep = objv[i]->internalRep.twoPtrValue.ptr1;
 
 	    Tcl_AppendStringsToObj(objPtr, EXPAND_OF(indexRep), NULL);
-	} else if (objv[i]->typePtr == &tclEnsembleCmdType) {
-	    register EnsembleCmdRep *ecrPtr =
-		    objv[i]->internalRep.twoPtrValue.ptr1;
-
-	    Tcl_AppendStringsToObj(objPtr, ecrPtr->fullSubcmdName, NULL);
 	} else {
 	    /*
 	     * Quote the argument if it contains spaces (Bug 942757).

@@ -75,10 +75,10 @@ extern "C" {
 #define TK_MAJOR_VERSION	8
 #define TK_MINOR_VERSION	6
 #define TK_RELEASE_LEVEL	TCL_FINAL_RELEASE
-#define TK_RELEASE_SERIAL	5
+#define TK_RELEASE_SERIAL	10
 
 #define TK_VERSION		"8.6"
-#define TK_PATCH_LEVEL		"8.6.5"
+#define TK_PATCH_LEVEL		"8.6.10"
 
 /*
  * A special definition used to allow this header file to be included from
@@ -92,13 +92,14 @@ extern "C" {
 
 #ifndef RC_INVOKED
 
-#ifndef _XLIB_H
+#if !defined(_XLIB_H) && !defined(_X11_XLIB_H_)
 #   include <X11/Xlib.h>
 #   ifdef MAC_OSX_TK
 #	include <X11/X.h>
 #   endif
 #endif
-#ifdef __STDC__
+#if defined(STDC_HEADERS) || defined(__STDC__) || defined(__C99__FUNC__) \
+     || defined(__cplusplus) || defined(_MSC_VER) || defined(__ICC)
 #   include <stddef.h>
 #endif
 
@@ -266,10 +267,10 @@ typedef struct Tk_ObjCustomOption {
  * Computes number of bytes from beginning of structure to a given field.
  */
 
-#ifdef offsetof
 #define Tk_Offset(type, field) ((int) offsetof(type, field))
-#else
-#define Tk_Offset(type, field) ((int) ((char *) &((type *) 0)->field))
+/* Workaround for platforms missing offsetof(), e.g. VC++ 6.0 */
+#ifndef offsetof
+#   define offsetof(type, field) ((size_t) ((char *) &((type *) 0)->field))
 #endif
 
 /*
@@ -676,7 +677,7 @@ typedef struct {
 				 * request. */
     Display *display;		/* Display the event was read from. */
     Window event;		/* Window on which event was requested. */
-    Window root;		/* Root window that the event occured on. */
+    Window root;		/* Root window that the event occurred on. */
     Window subwindow;		/* Child window. */
     Time time;			/* Milliseconds. */
     int x, y;			/* Pointer x, y coordinates in event
@@ -813,7 +814,11 @@ typedef struct Tk_FakeWin {
     int internalBorderBottom;
     int minReqWidth;
     int minReqHeight;
-    char *dummy20;		/* geometryMaster */
+#ifdef TK_USE_INPUT_METHODS
+    int dummy20;
+#endif /* TK_USE_INPUT_METHODS */
+    char *dummy21;		/* geomMgrName */
+    Tk_Window dummy22;		/* maintainerPtr */
 } Tk_FakeWin;
 
 /*
@@ -1171,7 +1176,7 @@ typedef struct Tk_TSOffset {
 } Tk_TSOffset;
 
 /*
- * Bit fields in Tk_Offset->flags:
+ * Bit fields in Tk_TSOffset->flags:
  */
 
 #define TK_OFFSET_INDEX		1

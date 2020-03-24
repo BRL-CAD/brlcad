@@ -21,7 +21,7 @@ before asking on the list, many questions have already been answered).
 	http://wiki.tcl.tk/_/ref?N=8361
 
 - Please report bugs with Tcl on Mac OS X to the tracker:
-	http://core.tcl.tk/tcl/reportlist
+	https://core.tcl-lang.org/tcl/reportlist
 
 2. Using Tcl on Mac OS X
 ------------------------
@@ -36,8 +36,8 @@ Weak-linking is available on OS X 10.2 or later, it additionally allows Tcl
 built on 10.x to run on any 10.y with x > y >= z (for a chosen z >= 2).
 
 - Tcl extensions can be installed in any of:
-	$HOME/Library/Tcl /Library/Tcl /System/Library/Tcl
-	$HOME/Library/Frameworks /Library/Frameworks /System/Library/Frameworks
+	$HOME/Library/Tcl /Library/Tcl
+	$HOME/Library/Frameworks /Library/Frameworks
 	(searched in that order).
 Given a potential package directory $pkg, Tcl on OSX checks for the file
 $pkg/Resources/Scripts/pkgIndex.tcl as well as the usual $pkg/pkgIndex.tcl.
@@ -57,7 +57,7 @@ No nroff manpages are installed by default by the GNUmakefile.
 
 - The Tcl framework can be installed in any of the system's standard
 framework directories:
-	$HOME/Library/Frameworks /Library/Frameworks /System/Library/Frameworks
+	$HOME/Library/Frameworks /Library/Frameworks
 
 
 3. Building Tcl on Mac OS X
@@ -127,13 +127,6 @@ be run on the build machine (i.e. ppc on G3/G4, ppc or ppc64 on G5, ppc or i386
 on Core and ppc, i386 or x86_64 on Core2/Xeon).
 Universal builds of Tcl TEA extensions are also possible with CFLAGS set as
 above, they will be [load]able by universal as well as thin binaries of Tcl.
-
-- To enable weak-linking, set the MACOSX_DEPLOYMENT_TARGET environment variable
-to the minimal OS version the binaries should be able to run on, e.g:
-	export MACOSX_DEPLOYMENT_TARGET=10.4
-This requires at least gcc 3.1; with gcc 4 or later, set/add to CFLAGS instead:
-	export CFLAGS="-mmacosx-version-min=10.4"
-Support for weak-linking was added with 8.4.14/8.5a5.
 
 Detailed Instructions for building with macosx/GNUmakefile
 ----------------------------------------------------------

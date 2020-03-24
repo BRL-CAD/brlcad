@@ -256,11 +256,11 @@ Tk_MessageObjCmd(
 	    MessageCmdDeletedProc);
     msgPtr->optionTable = optionTable;
     msgPtr->relief = TK_RELIEF_FLAT;
-    msgPtr->textGC = None;
+    msgPtr->textGC = NULL;
     msgPtr->anchor = TK_ANCHOR_CENTER;
     msgPtr->aspect = 150;
     msgPtr->justify = TK_JUSTIFY_LEFT;
-    msgPtr->cursor = None;
+    msgPtr->cursor = NULL;
 
     Tk_SetClass(msgPtr->tkwin, "Message");
     Tk_SetClassProcs(msgPtr->tkwin, &messageClass, msgPtr);
@@ -398,7 +398,7 @@ DestroyMessage(
      * Tk_FreeConfigOptions handle all the standard option-related stuff.
      */
 
-    if (msgPtr->textGC != None) {
+    if (msgPtr->textGC != NULL) {
 	Tk_FreeGC(msgPtr->display, msgPtr->textGC);
     }
     if (msgPtr->textLayout != NULL) {
@@ -525,7 +525,7 @@ MessageWorldChanged(
     ClientData instanceData)	/* Information about widget. */
 {
     XGCValues gcValues;
-    GC gc = None;
+    GC gc = NULL;
     Tk_FontMetrics fm;
     Message *msgPtr = instanceData;
 
@@ -536,7 +536,7 @@ MessageWorldChanged(
     gcValues.font = Tk_FontId(msgPtr->tkfont);
     gcValues.foreground = msgPtr->fgColorPtr->pixel;
     gc = Tk_GetGC(msgPtr->tkwin, GCForeground | GCFont, &gcValues);
-    if (msgPtr->textGC != None) {
+    if (msgPtr->textGC != NULL) {
 	Tk_FreeGC(msgPtr->display, msgPtr->textGC);
     }
     msgPtr->textGC = gc;
@@ -844,7 +844,27 @@ MessageTextVarProc(
      */
 
     if (flags & TCL_TRACE_UNSETS) {
-	if ((flags & TCL_TRACE_DESTROYED) && !(flags & TCL_INTERP_DESTROYED)) {
+        if (!Tcl_InterpDeleted(interp) && msgPtr->textVarName) {
+            ClientData probe = NULL;
+
+            do {
+                probe = Tcl_VarTraceInfo(interp,
+                        msgPtr->textVarName,
+                        TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
+                        MessageTextVarProc, probe);
+                if (probe == (ClientData)msgPtr) {
+                    break;
+                }
+            } while (probe);
+            if (probe) {
+                /*
+                 * We were able to fetch the unset trace for our
+                 * textVarName, which means it is not unset and not
+                 * the cause of this unset trace. Instead some outdated
+                 * former variable must be, and we should ignore it.
+                 */
+                return NULL;
+            }
 	    Tcl_SetVar2(interp, msgPtr->textVarName, NULL, msgPtr->string,
 		    TCL_GLOBAL_ONLY);
 	    Tcl_TraceVar2(interp, msgPtr->textVarName, NULL,

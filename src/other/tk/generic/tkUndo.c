@@ -353,7 +353,7 @@ TkUndoInitStack(
 /*
  *----------------------------------------------------------------------
  *
- * TkUndoSetDepth --
+ * TkUndoSetMaxDepth --
  *
  *	Set the maximum depth of stack.
  *
@@ -368,7 +368,7 @@ TkUndoInitStack(
  */
 
 void
-TkUndoSetDepth(
+TkUndoSetMaxDepth(
     TkUndoRedoStack *stack,	/* An Undo/Redo stack */
     int maxdepth)		/* The maximum stack depth */
 {
@@ -478,6 +478,52 @@ TkUndoFreeStack(
 /*
  *----------------------------------------------------------------------
  *
+ * TkUndoCanRedo --
+ *
+ *	Returns true if redo is possible, i.e. if the redo stack is not empty.
+ *
+ * Results:
+ *	 A boolean.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+int
+TkUndoCanRedo(
+    TkUndoRedoStack *stack)	/* An Undo/Redo stack */
+{
+    return stack->redoStack != NULL;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TkUndoCanUndo --
+ *
+ *	Returns true if undo is possible, i.e. if the undo stack is not empty.
+ *
+ * Results:
+ *	 A boolean.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+int
+TkUndoCanUndo(
+    TkUndoRedoStack *stack)	/* An Undo/Redo stack */
+{
+    return stack->undoStack != NULL;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
  * TkUndoInsertUndoSeparator --
  *
  *	Insert a separator on the undo stack, indicating a border for an
@@ -498,7 +544,7 @@ TkUndoInsertUndoSeparator(
 {
     if (TkUndoInsertSeparator(&stack->undoStack)) {
 	stack->depth++;
-	TkUndoSetDepth(stack, stack->maxdepth);
+	TkUndoSetMaxDepth(stack, stack->maxdepth);
     }
 }
 

@@ -2978,6 +2978,9 @@ dumpnfa(
 	dumpcolors(nfa->cm, f);
     }
     fflush(f);
+#else
+    (void)nfa;
+    (void)f;
 #endif
 }
 
@@ -3157,6 +3160,9 @@ dumpcnfa(
 	dumpcstate(st, cnfa, f);
     }
     fflush(f);
+#else
+    (void)cnfa;
+    (void)f;
 #endif
 }
 

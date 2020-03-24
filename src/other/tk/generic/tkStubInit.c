@@ -38,6 +38,13 @@ MODULE_SCOPE const TkStubs tkStubs;
  */
 
 #undef Tk_MainEx
+#undef XVisualIDFromVisual
+#undef XSynchronize
+#undef XUngrabServer
+#undef XNoOp
+#undef XGrabServer
+#undef XFree
+#undef XFlush
 
 #ifdef _WIN32
 
@@ -62,6 +69,9 @@ TkCreateXEventSource(void)
 #   define TkUnixContainerId 0
 #   define TkUnixDoOneXEvent 0
 #   define TkUnixSetMenubar 0
+#   define XCreateWindow 0
+#   define XOffsetRegion 0
+#   define XUnionRegion 0
 #   define TkWmCleanup (void (*)(TkDisplay *)) TkpSync
 #   define TkSendCleanup (void (*)(TkDisplay *)) TkpSync
 #   define TkpTestsendCmd 0
@@ -106,7 +116,7 @@ TkpPrintWindowId(
 				 * the hex representation of a pointer. */
     Window window)		/* Window to be printed into buffer. */
 {
-    sprintf(buf, "%#08lx", (unsigned long) (window));
+    sprintf(buf, "0x%" TCL_Z_MODIFIER "x", (size_t)window);
 }
 
 int
@@ -131,29 +141,29 @@ TkRegion TkCreateRegion()
     return (TkRegion) XCreateRegion();
 }
 
-void TkDestroyRegion(TkRegion r)
+int TkDestroyRegion(TkRegion r)
 {
-    XDestroyRegion((Region)r);
+	return XDestroyRegion((Region)r);
 }
 
-void TkSetRegion(Display *d, GC g, TkRegion r)
+int TkSetRegion(Display *d, GC g, TkRegion r)
 {
-    XSetRegion(d, g, (Region)r);
+	return XSetRegion(d, g, (Region)r);
 }
 
-void TkUnionRectWithRegion(XRectangle *a, TkRegion b, TkRegion c)
+int TkUnionRectWithRegion(XRectangle *a, TkRegion b, TkRegion c)
 {
-    XUnionRectWithRegion(a, (Region) b, (Region) c);
+	return XUnionRectWithRegion(a, (Region) b, (Region) c);
 }
 
-void TkClipBox(TkRegion a, XRectangle *b)
+int TkClipBox(TkRegion a, XRectangle *b)
 {
-    XClipBox((Region) a, b);
+	return XClipBox((Region) a, b);
 }
 
-void TkIntersectRegion(TkRegion a, TkRegion b, TkRegion c)
+int TkIntersectRegion(TkRegion a, TkRegion b, TkRegion c)
 {
-    XIntersectRegion((Region) a, (Region) b, (Region) c);
+	return XIntersectRegion((Region) a, (Region) b, (Region) c);
 }
 
 int TkRectInRegion (TkRegion r, int a, int b, unsigned int c, unsigned int d)
@@ -161,9 +171,9 @@ int TkRectInRegion (TkRegion r, int a, int b, unsigned int c, unsigned int d)
     return XRectInRegion((Region) r, a, b, c, d);
 }
 
-void TkSubtractRegion (TkRegion a, TkRegion b, TkRegion c)
+int TkSubtractRegion (TkRegion a, TkRegion b, TkRegion c)
 {
-    XSubtractRegion((Region) a, (Region) b, (Region) c);
+    return XSubtractRegion((Region) a, (Region) b, (Region) c);
 }
 
 	/* TODO: To be implemented for Cygwin */
@@ -175,6 +185,7 @@ void TkSubtractRegion (TkRegion a, TkRegion b, TkRegion c)
 #	define TkAlignImageData 0
 #	define TkGenerateActivateEvents 0
 #	define TkpGetMS 0
+#	define TkpGetCapture 0
 #	define TkPointerDeadWindow 0
 #	define TkpSetCapture 0
 #	define TkpSetCursor 0
@@ -216,14 +227,14 @@ void TkSubtractRegion (TkRegion a, TkRegion b, TkRegion c)
 #	undef TkUnionRectWithRegion
 #	undef TkSubtractRegion
 
-#	define TkClipBox (void (*) (TkRegion, XRectangle *)) XClipBox
+#	define TkClipBox (int (*) (TkRegion, XRectangle *)) XClipBox
 #	define TkCreateRegion (TkRegion (*) ()) XCreateRegion
-#	define TkDestroyRegion (void (*) (TkRegion)) XDestroyRegion
-#	define TkIntersectRegion (void (*) (TkRegion, TkRegion, TkRegion)) XIntersectRegion
+#	define TkDestroyRegion (int (*) (TkRegion)) XDestroyRegion
+#	define TkIntersectRegion (int (*) (TkRegion, TkRegion, TkRegion)) XIntersectRegion
 #	define TkRectInRegion (int (*) (TkRegion, int, int, unsigned int, unsigned int)) XRectInRegion
-#	define TkSetRegion (void (*) (Display *, GC, TkRegion)) XSetRegion
-#	define TkUnionRectWithRegion (void (*) (XRectangle *, TkRegion, TkRegion)) XUnionRectWithRegion
-#	define TkSubtractRegion (void (*) (TkRegion, TkRegion, TkRegion)) XSubtractRegion
+#	define TkSetRegion (int (*) (Display *, GC, TkRegion)) XSetRegion
+#	define TkUnionRectWithRegion (int (*) (XRectangle *, TkRegion, TkRegion)) XUnionRectWithRegion
+#	define TkSubtractRegion (int (*) (TkRegion, TkRegion, TkRegion)) XSubtractRegion
 #   endif
 #endif /* !_WIN32 */
 
@@ -502,6 +513,8 @@ static const TkIntPlatStubs tkIntPlatStubs = {
     TkWmCleanup, /* 43 */
     TkSendCleanup, /* 44 */
     TkpTestsendCmd, /* 45 */
+    0, /* 46 */
+    TkpGetCapture, /* 47 */
 #endif /* WIN */
 #ifdef MAC_OSX_TK /* AQUA */
     TkGenerateActivateEvents, /* 0 */
@@ -544,7 +557,7 @@ static const TkIntPlatStubs tkIntPlatStubs = {
     TkMacOSXWindowOffset, /* 37 */
     TkSetMacColor, /* 38 */
     TkSetWMName, /* 39 */
-    TkSuspendClipboard, /* 40 */
+    0, /* 40 */
     TkMacOSXZoomToplevel, /* 41 */
     Tk_TopCoordsToWindow, /* 42 */
     TkMacOSXContainerId, /* 43 */
@@ -698,27 +711,29 @@ static const TkIntXlibStubs tkIntXlibStubs = {
     XSynchronize, /* 112 */
     XSync, /* 113 */
     XVisualIDFromVisual, /* 114 */
-    NULL, /* 115 */
-    NULL, /* 116 */
-    NULL, /* 117 */
-    NULL, /* 118 */
-    NULL, /* 119 */
-    NULL, /* 120 */
-    NULL, /* 121 */
-    NULL, /* 122 */
-    NULL, /* 123 */
-    NULL, /* 124 */
-    NULL, /* 125 */
-    NULL, /* 126 */
-    NULL, /* 127 */
-    NULL, /* 128 */
-    NULL, /* 129 */
-    NULL, /* 130 */
-    NULL, /* 131 */
-    NULL, /* 132 */
+    0, /* 115 */
+    0, /* 116 */
+    0, /* 117 */
+    0, /* 118 */
+    0, /* 119 */
+    XOffsetRegion, /* 120 */
+    XUnionRegion, /* 121 */
+    XCreateWindow, /* 122 */
+    0, /* 123 */
+    0, /* 124 */
+    0, /* 125 */
+    0, /* 126 */
+    0, /* 127 */
+    0, /* 128 */
+    XLowerWindow, /* 129 */
+    XFillArcs, /* 130 */
+    XDrawArcs, /* 131 */
+    XDrawRectangles, /* 132 */
     XDrawSegments, /* 133 */
     XDrawPoint, /* 134 */
     XDrawPoints, /* 135 */
+    XReparentWindow, /* 136 */
+    XPutImage, /* 137 */
 #endif /* WIN */
 #ifdef MAC_OSX_TK /* AQUA */
     XSetDashes, /* 0 */
@@ -813,6 +828,52 @@ static const TkIntXlibStubs tkIntXlibStubs = {
     XQueryColors, /* 89 */
     XQueryTree, /* 90 */
     XSync, /* 91 */
+    0, /* 92 */
+    0, /* 93 */
+    0, /* 94 */
+    0, /* 95 */
+    0, /* 96 */
+    0, /* 97 */
+    0, /* 98 */
+    0, /* 99 */
+    0, /* 100 */
+    0, /* 101 */
+    0, /* 102 */
+    0, /* 103 */
+    0, /* 104 */
+    0, /* 105 */
+    0, /* 106 */
+    XFlush, /* 107 */
+    XGrabServer, /* 108 */
+    XUngrabServer, /* 109 */
+    XFree, /* 110 */
+    XNoOp, /* 111 */
+    XSynchronize, /* 112 */
+    0, /* 113 */
+    XVisualIDFromVisual, /* 114 */
+    0, /* 115 */
+    0, /* 116 */
+    0, /* 117 */
+    0, /* 118 */
+    0, /* 119 */
+    0, /* 120 */
+    0, /* 121 */
+    0, /* 122 */
+    0, /* 123 */
+    0, /* 124 */
+    0, /* 125 */
+    0, /* 126 */
+    0, /* 127 */
+    0, /* 128 */
+    0, /* 129 */
+    0, /* 130 */
+    0, /* 131 */
+    0, /* 132 */
+    0, /* 133 */
+    0, /* 134 */
+    0, /* 135 */
+    0, /* 136 */
+    XPutImage, /* 137 */
 #endif /* AQUA */
 };
 

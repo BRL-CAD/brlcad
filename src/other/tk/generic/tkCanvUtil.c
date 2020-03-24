@@ -12,7 +12,6 @@
 
 #include "tkInt.h"
 #include "tkCanvas.h"
-#include <assert.h>
 
 /*
  * Structures defined only in this file.
@@ -961,7 +960,7 @@ void
 Tk_CreateOutline(
     Tk_Outline *outline)	/* Outline structure to be filled in. */
 {
-    outline->gc = None;
+    outline->gc = NULL;
     outline->width = 1.0;
     outline->activeWidth = 0.0;
     outline->disabledWidth = 0.0;
@@ -1002,7 +1001,7 @@ Tk_DeleteOutline(
     Display *display,		/* Display containing window. */
     Tk_Outline *outline)
 {
-    if (outline->gc != None) {
+    if (outline->gc != NULL) {
 	Tk_FreeGC(display, outline->gc);
     }
     if ((unsigned) ABS(outline->dash.number) > sizeof(char *)) {
@@ -1136,7 +1135,9 @@ Tk_ConfigOutlineGC(
     if (mask && (dash->number != 0)) {
 	gcValues->line_style = LineOnOffDash;
 	gcValues->dash_offset = outline->offset;
-	if (dash->number > 0) {
+	if ((unsigned int)ABS(dash->number) > sizeof(char *)) {
+	    gcValues->dashes = dash->pattern.pt[0];
+	} else if (dash->number != 0) {
 	    gcValues->dashes = dash->pattern.array[0];
 	} else {
 	    gcValues->dashes = (char) (4 * width + 0.5);
@@ -1340,7 +1341,9 @@ Tk_ResetOutlineGC(
     if ((dash->number > 2) || (dash->number < -1) || (dash->number==2 &&
 	    (dash->pattern.array[0] != dash->pattern.array[1])) ||
 	    ((dash->number == -1) && (dash->pattern.array[0] != ','))) {
-    if (dash->number > 0) {
+	if ((unsigned int)ABS(dash->number) > sizeof(char *)) {
+	    dashList = dash->pattern.pt[0];
+	} else if (dash->number != 0) {
 	    dashList = dash->pattern.array[0];
 	} else {
 	    dashList = (char) (4 * width + 0.5);

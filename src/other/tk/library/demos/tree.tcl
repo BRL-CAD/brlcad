@@ -75,7 +75,7 @@ ttk::scrollbar $w.vsb -orient vertical -command "$w.tree yview"
 ttk::scrollbar $w.hsb -orient horizontal -command "$w.tree xview"
 $w.tree heading \#0 -text "Directory Structure"
 $w.tree heading size -text "File Size"
-$w.tree column size -stretch 0 -width 70
+$w.tree column size -width 70
 populateRoots $w.tree
 bind $w.tree <<TreeviewOpen>> {populateTree %W [%W focus]}
 

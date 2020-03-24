@@ -13,7 +13,9 @@
 
 #include "tkInt.h"
 #include "tkFont.h"
-
+#if defined(MAC_OSX_TK)
+#include "tkMacOSXInt.h"
+#endif
 /*
  * The following structure is used to keep track of all the fonts that exist
  * in the current application. It must be stored in the TkMainInfo for the
@@ -497,7 +499,7 @@ Tk_FontObjCmd(
 	const char *s;
 	Tk_Font tkfont;
 	Tcl_Obj *optPtr, *charPtr, *resultPtr;
-	Tcl_UniChar uniChar = 0;
+	int uniChar = 0;
 	const TkFontAttributes *faPtr;
 	TkFontAttributes fa;
 
@@ -562,17 +564,19 @@ Tk_FontObjCmd(
 	 */
 
 	if (charPtr != NULL) {
-	    if (Tcl_GetCharLength(charPtr) != 1) {
+	    const char *string = Tcl_GetString(charPtr);
+	    int len = TkUtfToUniChar(string, &uniChar);
+
+	    if (len != charPtr->length) {
 		resultPtr = Tcl_NewStringObj(
 			"expected a single character but got \"", -1);
-		Tcl_AppendLimitedToObj(resultPtr, Tcl_GetString(charPtr),
+		Tcl_AppendLimitedToObj(resultPtr, string,
 			-1, 40, "...");
 		Tcl_AppendToObj(resultPtr, "\"", -1);
 		Tcl_SetObjResult(interp, resultPtr);
 		Tcl_SetErrorCode(interp, "TK", "VALUE", "FONT_SAMPLE", NULL);
 		return TCL_ERROR;
 	    }
-	    uniChar = Tcl_GetUniChar(charPtr, 0);
 	}
 
 	/*
@@ -870,7 +874,18 @@ TheWorldHasChanged(
     ClientData clientData)	/* Info about application's fonts. */
 {
     TkFontInfo *fiPtr = clientData;
+#if defined(MAC_OSX_TK)
 
+    /*
+     * On macOS it is catastrophic to recompute all widgets while the
+     * [NSView drawRect] method is drawing. The best that we can do in
+     * that situation is to abort the recomputation and hope for the best.
+     */
+    
+    if (TkpAppIsDrawing()) {
+	return;
+    }
+#endif
     fiPtr->updatePending = 0;
     RecomputeWidgets(fiPtr->mainPtr->winPtr);
 }
@@ -1226,7 +1241,7 @@ Tk_AllocFontFromObj(
 
     descent = fontPtr->fm.descent;
     fontPtr->underlinePos = descent / 2;
-    fontPtr->underlineHeight = TkFontGetPixels(tkwin, fontPtr->fa.size) / 10;
+    fontPtr->underlineHeight = (int) (TkFontGetPixels(tkwin, fontPtr->fa.size) / 10 + 0.5);
     if (fontPtr->underlineHeight == 0) {
 	fontPtr->underlineHeight = 1;
     }
@@ -1694,7 +1709,7 @@ Tk_PostscriptFontName(
     } else if (strcasecmp(family, "ZapfDingbats") == 0) {
 	family = "ZapfDingbats";
     } else {
-	Tcl_UniChar ch;
+	int ch;
 
 	/*
 	 * Inline, capitalize the first letter of each word, lowercase the
@@ -1712,14 +1727,18 @@ Tk_PostscriptFontName(
 		src++;
 		upper = 1;
 	    }
-	    src += Tcl_UtfToUniChar(src, &ch);
-	    if (upper) {
-		ch = Tcl_UniCharToUpper(ch);
-		upper = 0;
+	    src += TkUtfToUniChar(src, &ch);
+	    if (ch <= 0xffff) {
+		if (upper) {
+		    ch = Tcl_UniCharToUpper(ch);
+		    upper = 0;
+		} else {
+		    ch = Tcl_UniCharToLower(ch);
+		}
 	    } else {
-		ch = Tcl_UniCharToLower(ch);
+		upper = 0;
 	    }
-	    dest += Tcl_UniCharToUtf(ch, dest);
+	    dest += TkUniCharToUtf(ch, dest);
 	}
 	*dest = '\0';
 	Tcl_DStringSetLength(dsPtr, dest - Tcl_DStringValue(dsPtr));
@@ -1794,7 +1813,7 @@ Tk_PostscriptFontName(
 	}
     }
 
-    return fontPtr->fa.size;
+    return (int)(fontPtr->fa.size + 0.5);
 }
 
 /*
@@ -3145,14 +3164,13 @@ TkIntersectAngledTextLayout(
 	cy[0] = cy[1] = chunkPtr->y - fontPtr->fm.ascent;
 	cx[1] = cx[2] = chunkPtr->x + chunkPtr->displayWidth;
 	cy[2] = cy[3] = chunkPtr->y + fontPtr->fm.descent;
-	if (	!PointInQuadrilateral(cx, cy, rx[0], ry[0]) ||
-		!PointInQuadrilateral(cx, cy, rx[1], ry[1]) ||
-		!PointInQuadrilateral(cx, cy, rx[2], ry[2]) ||
-		!PointInQuadrilateral(cx, cy, rx[3], ry[3])) {
-	    goto notReverseInside;
-	}
+	if (	PointInQuadrilateral(cx, cy, rx[0], ry[0]) &&
+		PointInQuadrilateral(cx, cy, rx[1], ry[1]) &&
+		PointInQuadrilateral(cx, cy, rx[2], ry[2]) &&
+		PointInQuadrilateral(cx, cy, rx[3], ry[3])) {
+            return 0;
+        }
     }
-    return 0;
 
     /*
      * If we're overlapping now, we must be partially in and out of at least
@@ -3160,7 +3178,6 @@ TkIntersectAngledTextLayout(
      * rectangle that is touching or crossing a line segment of a chunk.
      */
 
-  notReverseInside:
     chunkPtr = layoutPtr->chunks;
 
     for (i=0 ; i<layoutPtr->numChunks ; i++,chunkPtr++) {
@@ -3249,7 +3266,7 @@ Tk_TextLayoutToPostscript(
     int i, j, len;
     const char *p, *glyphname;
     char uindex[5], c, *ps;
-    Tcl_UniChar ch;
+    int ch;
 
     Tcl_AppendToObj(psObj, "[(", -1);
     for (i = 0; i < layoutPtr->numChunks; i++, chunkPtr++) {
@@ -3272,7 +3289,7 @@ Tk_TextLayoutToPostscript(
 	     * international postscript fonts.
 	     */
 
-	    p += Tcl_UtfToUniChar(p, &ch);
+	    p += TkUtfToUniChar(p, &ch);
 	    if ((ch == '(') || (ch == ')') || (ch == '\\') || (ch < 0x20)) {
 		/*
 		 * Tricky point: the "03" is necessary in the sprintf below,
@@ -3298,6 +3315,9 @@ Tk_TextLayoutToPostscript(
 	     * use the full glyph name.
 	     */
 
+	    if (ch > 0xffff) {
+		goto noMapping;
+	    }
 	    sprintf(uindex, "%04X", ch);		/* endianness? */
 	    glyphname = Tcl_GetVar2(interp, "::tk::psglyphs", uindex, 0);
 	    if (glyphname) {
@@ -3318,6 +3338,7 @@ Tk_TextLayoutToPostscript(
 		 * No known mapping for the character into the space of
 		 * PostScript glyphs. Ignore it. :-(
 		 */
+noMapping:	;
 
 #ifdef TK_DEBUG_POSTSCRIPT_OUTPUT
 		fprintf(stderr, "Warning: no mapping to PostScript "
@@ -3399,7 +3420,7 @@ ConfigAttributesObj(
 	    if (Tcl_GetIntFromObj(interp, valuePtr, &n) != TCL_OK) {
 		return TCL_ERROR;
 	    }
-	    faPtr->size = n;
+	    faPtr->size = (double)n;
 	    break;
 	case FONT_WEIGHT:
 	    n = TkFindStateNumObj(interp, optionPtr, weightMap, valuePtr);
@@ -3490,7 +3511,11 @@ GetAttributeInfoObj(
 	    break;
 
 	case FONT_SIZE:
-	    valuePtr = Tcl_NewIntObj(faPtr->size);
+	    if (faPtr->size >= 0.0) {
+		valuePtr = Tcl_NewIntObj((int)(faPtr->size + 0.5));
+	    } else {
+		valuePtr = Tcl_NewIntObj(-(int)(-faPtr->size + 0.5));
+	    }
 	    break;
 
 	case FONT_WEIGHT:
@@ -3639,7 +3664,7 @@ ParseFontNameObj(
 	if (Tcl_GetIntFromObj(interp, objv[1], &n) != TCL_OK) {
 	    return TCL_ERROR;
 	}
-	faPtr->size = n;
+	faPtr->size = (double)n;
     }
 
     i = 2;
@@ -3883,7 +3908,7 @@ TkFontParseXLFD(
      * historical compatibility.
      */
 
-    faPtr->size = 12;
+    faPtr->size = 12.0;
 
     if (FieldSpecified(field[XLFD_POINT_SIZE])) {
 	if (field[XLFD_POINT_SIZE][0] == '[') {
@@ -3897,10 +3922,10 @@ TkFontParseXLFD(
 	     * the purpose of, so I ignore them.
 	     */
 
-	    faPtr->size = atoi(field[XLFD_POINT_SIZE] + 1);
+	    faPtr->size = atof(field[XLFD_POINT_SIZE] + 1);
 	} else if (Tcl_GetInt(NULL, field[XLFD_POINT_SIZE],
-		&faPtr->size) == TCL_OK) {
-	    faPtr->size /= 10;
+		&i) == TCL_OK) {
+	    faPtr->size = i/10.0;
 	} else {
 	    return TCL_ERROR;
 	}
@@ -3922,9 +3947,11 @@ TkFontParseXLFD(
 	     * ignore them.
 	     */
 
-	    faPtr->size = atoi(field[XLFD_PIXEL_SIZE] + 1);
+	    faPtr->size = atof(field[XLFD_PIXEL_SIZE] + 1);
 	} else if (Tcl_GetInt(NULL, field[XLFD_PIXEL_SIZE],
-		&faPtr->size) != TCL_OK) {
+		&i) == TCL_OK) {
+	    faPtr->size = (double)i;
+	} else {
 	    return TCL_ERROR;
 	}
     }
@@ -4000,21 +4027,21 @@ FieldSpecified(
  *---------------------------------------------------------------------------
  */
 
-int
+double
 TkFontGetPixels(
     Tk_Window tkwin,		/* For point->pixel conversion factor. */
-    int size)			/* Font size. */
+    double size)		/* Font size. */
 {
     double d;
 
-    if (size < 0) {
+    if (size <= 0.0) {
 	return -size;
     }
 
     d = size * 25.4 / 72.0;
     d *= WidthOfScreen(Tk_Screen(tkwin));
     d /= WidthMMOfScreen(Tk_Screen(tkwin));
-    return (int) (d + 0.5);
+    return d;
 }
 
 /*
@@ -4034,21 +4061,21 @@ TkFontGetPixels(
  *---------------------------------------------------------------------------
  */
 
-int
+double
 TkFontGetPoints(
     Tk_Window tkwin,		/* For pixel->point conversion factor. */
-    int size)			/* Font size. */
+    double size)		/* Font size. */
 {
     double d;
 
-    if (size >= 0) {
+    if (size >= 0.0) {
 	return size;
     }
 
     d = -size * 72.0 / 25.4;
     d *= WidthMMOfScreen(Tk_Screen(tkwin));
     d /= WidthOfScreen(Tk_Screen(tkwin));
-    return (int) (d + 0.5);
+    return d;
 }
 
 /*

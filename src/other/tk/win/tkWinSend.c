@@ -150,7 +150,7 @@ Tk_SetAppName(
 	    return "";
 	}
 	tsdPtr->initialized = 1;
-	TRACE("Initialized COM library for interp 0x%08X\n", (long)interp);
+	TRACE("Initialized COM library for interp 0x%" TCL_Z_MODIFIER "x\n", (size_t)interp);
     }
 
     /*
@@ -252,8 +252,14 @@ TkGetInterpNames(
 			    LPOLESTR p = olestr + wcslen(oleszStub);
 
 			    if (*p) {
+				Tcl_DString ds;
+
+				Tcl_WinTCharToUtf((LPCTSTR)(p + 1), -1, &ds);
 				result = Tcl_ListObjAppendElement(interp,
-					objList, Tcl_NewUnicodeObj(p + 1, -1));
+					objList,
+					Tcl_NewStringObj(Tcl_DStringValue(&ds),
+						Tcl_DStringLength(&ds)));
+				Tcl_DStringFree(&ds);
 			    }
 			}
 
@@ -613,8 +619,7 @@ BuildMoniker(
 	LPMONIKER pmkItem = NULL;
 	Tcl_DString dString;
 
-	Tcl_DStringInit(&dString);
-	Tcl_UtfToUniCharDString(name, -1, &dString);
+	Tcl_WinUtfToTChar(name, -1, &dString);
 	hr = CreateFileMoniker((LPOLESTR)Tcl_DStringValue(&dString), &pmkItem);
 	Tcl_DStringFree(&dString);
 	if (SUCCEEDED(hr)) {
@@ -740,6 +745,8 @@ Send(
     HRESULT hr = S_OK, ehr = S_OK;
     Tcl_Obj *cmd = NULL;
     DISPID dispid;
+    Tcl_DString ds;
+    const char *src;
 
     cmd = Tcl_ConcatObj(objc, objv);
 
@@ -753,7 +760,10 @@ Send(
     memset(&ei, 0, sizeof(ei));
 
     vCmd.vt = VT_BSTR;
-    vCmd.bstrVal = SysAllocString(Tcl_GetUnicode(cmd));
+    src = Tcl_GetString(cmd);
+    Tcl_WinUtfToTChar(src, cmd->length, &ds);
+    vCmd.bstrVal = SysAllocString((WCHAR *) Tcl_DStringValue(&ds));
+    Tcl_DStringFree(&ds);
 
     dp.cArgs = 1;
     dp.rgvarg = &vCmd;
@@ -774,7 +784,9 @@ Send(
 
     ehr = VariantChangeType(&vResult, &vResult, 0, VT_BSTR);
     if (SUCCEEDED(ehr)) {
-	Tcl_SetObjResult(interp, Tcl_NewUnicodeObj(vResult.bstrVal, -1));
+	Tcl_WinTCharToUtf((LPCTSTR)vResult.bstrVal, SysStringLen(vResult.bstrVal) *
+		sizeof (WCHAR), &ds);
+	Tcl_DStringResult(interp, &ds);
     }
 
     /*
@@ -785,8 +797,11 @@ Send(
 
     if (hr == DISP_E_EXCEPTION && ei.bstrSource != NULL) {
 	Tcl_Obj *opError, *opErrorCode, *opErrorInfo;
-
-	opError = Tcl_NewUnicodeObj(ei.bstrSource, -1);
+	Tcl_WinTCharToUtf((LPCTSTR)ei.bstrSource, SysStringLen(ei.bstrSource) *
+		sizeof (WCHAR), &ds);
+	opError = Tcl_NewStringObj(Tcl_DStringValue(&ds),
+		Tcl_DStringLength(&ds));
+	Tcl_DStringFree(&ds);
 	Tcl_ListObjIndex(interp, opError, 0, &opErrorCode);
 	Tcl_SetObjErrorCode(interp, opErrorCode);
 	Tcl_ListObjIndex(interp, opError, 1, &opErrorInfo);
@@ -833,6 +848,8 @@ TkWinSend_SetExcepInfo(
     ICreateErrorInfo *pCEI;
     IErrorInfo *pEI, **ppEI = &pEI;
     HRESULT hr;
+    Tcl_DString ds;
+    const char *src;
 
     if (!pExcepInfo) {
 	return;
@@ -851,8 +868,16 @@ TkWinSend_SetExcepInfo(
     Tcl_ListObjAppendElement(interp, opErrorCode, opErrorInfo);
     /* TODO: Handle failure to append */
 
-    pExcepInfo->bstrDescription = SysAllocString(Tcl_GetUnicode(opError));
-    pExcepInfo->bstrSource = SysAllocString(Tcl_GetUnicode(opErrorCode));
+    src = Tcl_GetString(opError);
+    Tcl_WinUtfToTChar(src, opError->length, &ds);
+    pExcepInfo->bstrDescription =
+	    SysAllocString((WCHAR *) Tcl_DStringValue(&ds));
+    Tcl_DStringFree(&ds);
+    src = Tcl_GetString(opErrorCode);
+    Tcl_WinUtfToTChar(src, opErrorCode->length, &ds);
+    pExcepInfo->bstrSource =
+	    SysAllocString((WCHAR *) Tcl_DStringValue(&ds));
+    Tcl_DStringFree(&ds);
     Tcl_DecrRefCount(opErrorCode);
     pExcepInfo->scode = E_FAIL;
 

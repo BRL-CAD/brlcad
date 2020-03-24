@@ -944,16 +944,20 @@ Tcl_Exit(
     currentAppExitPtr = appExitPtr;
     Tcl_MutexUnlock(&exitMutex);
 
+    /*
+     * Warning: this function SHOULD NOT return, as there is code that depends
+     * on Tcl_Exit never returning. In fact, we will Tcl_Panic if anyone
+     * returns, so critical is this dependcy.
+     *
+     * If subsystems are not (yet) initialized, proper Tcl-finalization is
+     * impossible, so fallback to system exit, see bug-[f8a33ce3db5d8cc2].
+     */
+
     if (currentAppExitPtr) {
-	/*
-	 * Warning: this code SHOULD NOT return, as there is code that depends
-	 * on Tcl_Exit never returning. In fact, we will Tcl_Panic if anyone
-	 * returns, so critical is this dependcy.
-	 */
 
 	currentAppExitPtr(INT2PTR(status));
-	Tcl_Panic("AppExitProc returned unexpectedly");
-    } else {
+
+    } else if (subsystemsInitialized) {
 
 	if (TclFullFinalizationRequested()) {
 
@@ -986,9 +990,10 @@ Tcl_Exit(
 
 	    FinalizeThread(/* quick */ 1);
 	}
-	TclpExit(status);
-	Tcl_Panic("OS exit failed!");
     }
+
+    TclpExit(status);
+    Tcl_Panic("OS exit failed!");
 }
 
 /*

@@ -23,7 +23,7 @@
  * the current thread.
  */
 
-typedef struct ThreadSpecificData {
+typedef struct {
     int initialized;
 } ThreadSpecificData;
 static Tcl_ThreadDataKey dataKey;
@@ -38,6 +38,8 @@ static void		DisplayFileProc(ClientData clientData, int flags);
 static void		DisplaySetupProc(ClientData clientData, int flags);
 static void		TransferXEventsToTcl(Display *display);
 #ifdef TK_USE_INPUT_METHODS
+static void		InstantiateIMCallback(Display *, XPointer client_data, XPointer call_data);
+static void		DestroyIMCallback(XIM im, XPointer client_data, XPointer call_data);
 static void		OpenIM(TkDisplay *dispPtr);
 #endif
 
@@ -164,7 +166,7 @@ TkpOpenDisplay(
     if (display == NULL) {
 	/*fprintf(stderr,"event=%d error=%d major=%d minor=%d reason=%d\nDisabling xkb\n",
 	event, error, major, minor, reason);*/
-	display  = XOpenDisplay(displayNameStr);
+	display = XOpenDisplay(displayNameStr);
     } else {
 	use_xkb = TK_DISPLAY_USE_XKB;
 	/*fprintf(stderr, "Using xkb %d.%d\n", major, minor);*/
@@ -179,9 +181,36 @@ TkpOpenDisplay(
     dispPtr->flags |= use_xkb;
 #ifdef TK_USE_INPUT_METHODS
     OpenIM(dispPtr);
+    XRegisterIMInstantiateCallback(dispPtr->display, NULL, NULL, NULL,
+	    InstantiateIMCallback, (XPointer) dispPtr);
 #endif
     Tcl_CreateFileHandler(ConnectionNumber(display), TCL_READABLE,
 	    DisplayFileProc, dispPtr);
+
+    /*
+     * Observed weird WidthMMOfScreen() in X on Wayland on a
+     * Fedora 30/i386 running in a VM. Fallback to 75 dpi,
+     * otherwise many other strange things may happen later.
+     * See: [https://core.tcl-lang.org/tk/tktview?name=a01b6f7227]
+     */
+    if (WidthMMOfScreen(DefaultScreenOfDisplay(display)) <= 0) {
+	int mm;
+
+	mm = WidthOfScreen(DefaultScreenOfDisplay(display)) * (25.4 / 75.0);
+	WidthMMOfScreen(DefaultScreenOfDisplay(display)) = mm;
+    }
+    if (HeightMMOfScreen(DefaultScreenOfDisplay(display)) <= 0) {
+	int mm;
+
+	mm = HeightOfScreen(DefaultScreenOfDisplay(display)) * (25.4 / 75.0);
+	HeightMMOfScreen(DefaultScreenOfDisplay(display)) = mm;
+    }
+
+    /*
+     * Key map info must be available immediately, because of "send event".
+     */
+    TkpInitKeymapInfo(dispPtr);
+
     return dispPtr;
 }
 
@@ -664,6 +693,35 @@ TkpSync(
 }
 #ifdef TK_USE_INPUT_METHODS
 
+static void
+InstantiateIMCallback(
+    Display      *display,
+    XPointer     client_data,
+    XPointer     call_data)
+{
+    TkDisplay    *dispPtr;
+
+    dispPtr = (TkDisplay *) client_data;
+    OpenIM(dispPtr);
+    XUnregisterIMInstantiateCallback(dispPtr->display, NULL, NULL, NULL,
+	    InstantiateIMCallback, (XPointer) dispPtr);
+}
+
+static void
+DestroyIMCallback(
+    XIM         im,
+    XPointer    client_data,
+    XPointer    call_data)
+{
+    TkDisplay   *dispPtr;
+
+    dispPtr = (TkDisplay *) client_data;
+    dispPtr->inputMethod = NULL;
+    ++dispPtr->ximGeneration;
+    XRegisterIMInstantiateCallback(dispPtr->display, NULL, NULL, NULL,
+	    InstantiateIMCallback, (XPointer) dispPtr);
+}
+
 /*
  *--------------------------------------------------------------
  *
@@ -693,9 +751,21 @@ OpenIM(
 	return;
     }
 
+    ++dispPtr->ximGeneration;
     dispPtr->inputMethod = XOpenIM(dispPtr->display, NULL, NULL, NULL);
     if (dispPtr->inputMethod == NULL) {
 	return;
+    }
+
+    /* Require X11R6 */
+    {
+	XIMCallback destroy_cb;
+
+	destroy_cb.callback = DestroyIMCallback;
+	destroy_cb.client_data = (XPointer) dispPtr;
+	if (XSetIMValues(dispPtr->inputMethod, XNDestroyCallback,
+		&destroy_cb, NULL))
+	    goto error;
     }
 
     if ((XGetIMValues(dispPtr->inputMethod, XNQueryInputStyle, &stylePtr,
@@ -744,6 +814,7 @@ error:
     if (dispPtr->inputMethod) {
 	XCloseIM(dispPtr->inputMethod);
 	dispPtr->inputMethod = NULL;
+	++dispPtr->ximGeneration;
     }
 }
 #endif /* TK_USE_INPUT_METHODS */

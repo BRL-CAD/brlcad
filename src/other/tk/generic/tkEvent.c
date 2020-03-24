@@ -139,7 +139,7 @@ typedef struct ExitHandler {
  * storage for the current thread.
  */
 
-typedef struct ThreadSpecificData {
+typedef struct {
     int handlersActive;		/* The following variable has a non-zero value
 				 * when a handler is active. */
     InProgress *pendingPtr;	/* Topmost search in progress, or NULL if
@@ -193,7 +193,6 @@ TCL_DECLARE_MUTEX(exitMutex)
 
 static void		CleanUpTkEvent(XEvent *eventPtr);
 static void		DelayedMotionProc(ClientData clientData);
-static int		GetButtonMask(unsigned int Button);
 static unsigned long    GetEventMaskFromXEvent(XEvent *eventPtr);
 static TkWindow *	GetTkWindowFromXEvent(XEvent *eventPtr);
 static void		InvokeClientMessageHandlers(ThreadSpecificData *tsdPtr,
@@ -208,7 +207,6 @@ static Window		ParentXId(Display *display, Window w);
 static int		RefreshKeyboardMappingIfNeeded(XEvent *eventPtr);
 static int		TkXErrorHandler(ClientData clientData,
 			    XErrorEvent *errEventPtr);
-static void		UpdateButtonEventState(XEvent *eventPtr);
 static int		WindowEventProc(Tcl_Event *evPtr, int flags);
 #ifdef TK_USE_INPUT_METHODS
 static void		CreateXIC(TkWindow *winPtr);
@@ -356,6 +354,7 @@ CreateXIC(
 	/* XCreateIC failed. */
 	return;
     }
+    winPtr->ximGeneration = dispPtr->ximGeneration;
 
     /*
      * Adjust the window's event mask if the IM requires it.
@@ -523,7 +522,7 @@ RefreshKeyboardMappingIfNeeded(
 /*
  *----------------------------------------------------------------------
  *
- * GetButtonMask --
+ * TkGetButtonMask --
  *
  *	Return the proper Button${n}Mask for the button.
  *
@@ -536,88 +535,15 @@ RefreshKeyboardMappingIfNeeded(
  *----------------------------------------------------------------------
  */
 
-static int
-GetButtonMask(
+static const unsigned long buttonMasks[] = {
+    0, Button1Mask, Button2Mask, Button3Mask, Button4Mask, Button5Mask
+};
+
+unsigned long
+TkGetButtonMask(
     unsigned int button)
 {
-    switch (button) {
-    case 1:
-	return Button1Mask;
-    case 2:
-	return Button2Mask;
-    case 3:
-	return Button3Mask;
-    case 4:
-	return Button4Mask;
-    case 5:
-	return Button5Mask;
-    }
-    return 0;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * UpdateButtonEventState --
- *
- *	Update the button event state in our TkDisplay using the XEvent
- *	passed. We also may modify the the XEvent passed to fit some aspects
- *	of our TkDisplay.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	The TkDisplay's private button state may be modified. The eventPtr's
- *	state may be updated to reflect masks stored in our TkDisplay that the
- *	event doesn't contain. The eventPtr may also be modified to not
- *	contain a button state for the window in which it was not pressed in.
- *
- *----------------------------------------------------------------------
- */
-
-static void
-UpdateButtonEventState(
-    XEvent *eventPtr)
-{
-    TkDisplay *dispPtr;
-    int allButtonsMask = Button1Mask | Button2Mask | Button3Mask
-	    | Button4Mask | Button5Mask;
-
-    switch (eventPtr->type) {
-    case ButtonPress:
-	dispPtr = TkGetDisplay(eventPtr->xbutton.display);
-	dispPtr->mouseButtonWindow = eventPtr->xbutton.window;
-	eventPtr->xbutton.state |= dispPtr->mouseButtonState;
-
-	dispPtr->mouseButtonState |= GetButtonMask(eventPtr->xbutton.button);
-	break;
-
-    case ButtonRelease:
-	dispPtr = TkGetDisplay(eventPtr->xbutton.display);
-	dispPtr->mouseButtonWindow = None;
-	dispPtr->mouseButtonState &= ~GetButtonMask(eventPtr->xbutton.button);
-	eventPtr->xbutton.state |= dispPtr->mouseButtonState;
-	break;
-
-    case MotionNotify:
-	dispPtr = TkGetDisplay(eventPtr->xmotion.display);
-	if (dispPtr->mouseButtonState & allButtonsMask) {
-	    if (eventPtr->xbutton.window != dispPtr->mouseButtonWindow) {
-		/*
-		 * This motion event should not be interpreted as a button
-		 * press + motion event since this is not the same window the
-		 * button was pressed down in.
-		 */
-
-		dispPtr->mouseButtonState &= ~allButtonsMask;
-		dispPtr->mouseButtonWindow = None;
-	    } else {
-		eventPtr->xmotion.state |= dispPtr->mouseButtonState;
-	    }
-	}
-	break;
-    }
+    return (button > Button5) ? 0 : buttonMasks[button];
 }
 
 /*
@@ -1219,7 +1145,13 @@ Tk_HandleEvent(
     ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
-    UpdateButtonEventState(eventPtr);
+#if !defined(MAC_OSX_TK) && !defined(_WIN32)
+    if (((eventPtr->type == ButtonPress) || (eventPtr->type == ButtonRelease))
+	    && ((eventPtr->xbutton.button - 6) < 2)) {
+	eventPtr->xbutton.button -= 2;
+	eventPtr->xbutton.state ^= ShiftMask;
+    }
+#endif
 
     /*
      * If the generic handler processed this event we are done and can return.
@@ -1288,6 +1220,14 @@ Tk_HandleEvent(
      */
 
 #ifdef TK_USE_INPUT_METHODS
+    /*
+     * If the XIC has been invalidated, it must be recreated.
+     */
+    if (winPtr->dispPtr->ximGeneration != winPtr->ximGeneration) {
+	winPtr->flags &= ~TK_CHECKED_IC;
+	winPtr->inputContext = NULL;
+    }
+
     if ((winPtr->dispPtr->flags & TK_DISPLAY_USE_IM)) {
 	if (!(winPtr->flags & (TK_CHECKED_IC|TK_ALREADY_DEAD))) {
 	    winPtr->flags |= TK_CHECKED_IC;
@@ -1295,7 +1235,9 @@ Tk_HandleEvent(
 		CreateXIC(winPtr);
 	    }
 	}
-	if (eventPtr->type == FocusIn && winPtr->inputContext != NULL) {
+	if ((eventPtr->type == FocusIn) &&
+		(winPtr->dispPtr->inputMethod != NULL) &&
+		(winPtr->inputContext != NULL)) {
 	    XSetICFocus(winPtr->inputContext);
 	}
     }
@@ -1357,7 +1299,7 @@ Tk_HandleEvent(
 	 * handle CreateNotify events, so we gotta pass 'em through.
 	 */
 
-	if ((ip.winPtr != None)
+	if ((ip.winPtr != NULL)
 		&& ((mask != SubstructureNotifyMask)
 		|| (eventPtr->type == CreateNotify))) {
 	    TkBindEventProc(winPtr, eventPtr);
@@ -1428,7 +1370,7 @@ TkEventDeadWindow(
 		ipPtr->nextHandler = NULL;
 	    }
 	    if (ipPtr->winPtr == winPtr) {
-		ipPtr->winPtr = None;
+		ipPtr->winPtr = NULL;
 	    }
 	}
 	ckfree(handlerPtr);

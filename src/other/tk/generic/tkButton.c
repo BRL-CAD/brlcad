@@ -16,7 +16,7 @@
 #include "tkButton.h"
 #include "default.h"
 
-typedef struct ThreadSpecificData {
+typedef struct {
     int defaultsInitialized;
 } ThreadSpecificData;
 static Tcl_ThreadDataKey dataKey;
@@ -710,12 +710,12 @@ ButtonCreate(
     butPtr->normalFg = NULL;
     butPtr->activeFg = NULL;
     butPtr->disabledFg = NULL;
-    butPtr->normalTextGC = None;
-    butPtr->activeTextGC = None;
-    butPtr->disabledGC = None;
-    butPtr->stippleGC = None;
+    butPtr->normalTextGC = NULL;
+    butPtr->activeTextGC = NULL;
+    butPtr->disabledGC = NULL;
+    butPtr->stippleGC = NULL;
     butPtr->gray = None;
-    butPtr->copyGC = None;
+    butPtr->copyGC = NULL;
     butPtr->widthPtr = NULL;
     butPtr->width = 0;
     butPtr->heightPtr = NULL;
@@ -740,7 +740,7 @@ ButtonCreate(
     butPtr->onValuePtr = NULL;
     butPtr->offValuePtr = NULL;
     butPtr->tristateValuePtr = NULL;
-    butPtr->cursor = None;
+    butPtr->cursor = NULL;
     butPtr->takeFocusPtr = NULL;
     butPtr->commandPtr = NULL;
     butPtr->flags = 0;
@@ -878,8 +878,14 @@ ButtonWidgetObjCmd(
 		 */
 
 		Tcl_CancelIdleCall(TkpDisplayButton, butPtr);
-		XFlush(butPtr->display);
+		(void)XFlush(butPtr->display);
+		#ifndef MAC_OSX_TK
+		/*
+		 * On the mac you can not sleep in a display proc, and the
+		 * flash command doesn't do anything anyway.
+		 */
 		Tcl_Sleep(50);
+		#endif
 	    }
 	}
 	break;
@@ -975,22 +981,22 @@ DestroyButton(
     if (butPtr->tristateImage != NULL) {
 	Tk_FreeImage(butPtr->tristateImage);
     }
-    if (butPtr->normalTextGC != None) {
+    if (butPtr->normalTextGC != NULL) {
 	Tk_FreeGC(butPtr->display, butPtr->normalTextGC);
     }
-    if (butPtr->activeTextGC != None) {
+    if (butPtr->activeTextGC != NULL) {
 	Tk_FreeGC(butPtr->display, butPtr->activeTextGC);
     }
-    if (butPtr->disabledGC != None) {
+    if (butPtr->disabledGC != NULL) {
 	Tk_FreeGC(butPtr->display, butPtr->disabledGC);
     }
-    if (butPtr->stippleGC != None) {
+    if (butPtr->stippleGC != NULL) {
 	Tk_FreeGC(butPtr->display, butPtr->stippleGC);
     }
     if (butPtr->gray != None) {
 	Tk_FreeBitmap(butPtr->display, butPtr->gray);
     }
-    if (butPtr->copyGC != None) {
+    if (butPtr->copyGC != NULL) {
 	Tk_FreeGC(butPtr->display, butPtr->copyGC);
     }
     if (butPtr->textLayout != NULL) {
@@ -1169,7 +1175,7 @@ ConfigureButton(
 		 */
 
  		if ((butPtr->type == TYPE_RADIO_BUTTON) &&
-			(*Tcl_GetString(butPtr->onValuePtr) == 0)) {
+			(*Tcl_GetString(butPtr->onValuePtr) == '\0')) {
 		    butPtr->flags |= SELECTED;
 		}
 	    }
@@ -1361,7 +1367,7 @@ TkButtonWorldChanged(
     gcValues.graphics_exposures = False;
     mask = GCForeground | GCBackground | GCFont | GCGraphicsExposures;
     newGC = Tk_GetGC(butPtr->tkwin, mask, &gcValues);
-    if (butPtr->normalTextGC != None) {
+    if (butPtr->normalTextGC != NULL) {
 	Tk_FreeGC(butPtr->display, butPtr->normalTextGC);
     }
     butPtr->normalTextGC = newGC;
@@ -1371,7 +1377,7 @@ TkButtonWorldChanged(
 	gcValues.background = Tk_3DBorderColor(butPtr->activeBorder)->pixel;
 	mask = GCForeground | GCBackground | GCFont;
 	newGC = Tk_GetGC(butPtr->tkwin, mask, &gcValues);
-	if (butPtr->activeTextGC != None) {
+	if (butPtr->activeTextGC != NULL) {
 	    Tk_FreeGC(butPtr->display, butPtr->activeTextGC);
 	}
 	butPtr->activeTextGC = newGC;
@@ -1383,7 +1389,7 @@ TkButtonWorldChanged(
      * Create the GC that can be used for stippling
      */
 
-    if (butPtr->stippleGC == None) {
+    if (butPtr->stippleGC == NULL) {
 	gcValues.foreground = gcValues.background;
 	mask = GCForeground;
 	if (butPtr->gray == None) {
@@ -1409,12 +1415,12 @@ TkButtonWorldChanged(
 	gcValues.foreground = gcValues.background;
     }
     newGC = Tk_GetGC(butPtr->tkwin, mask, &gcValues);
-    if (butPtr->disabledGC != None) {
+    if (butPtr->disabledGC != NULL) {
 	Tk_FreeGC(butPtr->display, butPtr->disabledGC);
     }
     butPtr->disabledGC = newGC;
 
-    if (butPtr->copyGC == None) {
+    if (butPtr->copyGC == NULL) {
 	butPtr->copyGC = Tk_GetGC(butPtr->tkwin, 0, &gcValues);
     }
 
@@ -1617,7 +1623,27 @@ ButtonVarProc(
 
     if (flags & TCL_TRACE_UNSETS) {
 	butPtr->flags &= ~(SELECTED | TRISTATED);
-	if ((flags & TCL_TRACE_DESTROYED) && !(flags & TCL_INTERP_DESTROYED)) {
+	if (!Tcl_InterpDeleted(interp)) {
+	    ClientData probe = NULL;
+
+	    do {
+		probe = Tcl_VarTraceInfo(interp,
+			Tcl_GetString(butPtr->selVarNamePtr),
+			TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
+			ButtonVarProc, probe);
+		if (probe == (ClientData)butPtr) {
+		    break;
+		}
+	    } while (probe);
+	    if (probe) {
+		/*
+		 * We were able to fetch the unset trace for our
+		 * selVarNamePtr, which means it is not unset and not
+		 * the cause of this unset trace. Instead some outdated
+		 * former variable must be, and we should ignore it.
+		 */
+		goto redisplay;
+	    }
 	    Tcl_TraceVar2(interp, Tcl_GetString(butPtr->selVarNamePtr),
 		    NULL, TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
 		    ButtonVarProc, clientData);
@@ -1709,7 +1735,34 @@ ButtonTextVarProc(
      */
 
     if (flags & TCL_TRACE_UNSETS) {
-	if ((flags & TCL_TRACE_DESTROYED) && !(flags & TCL_INTERP_DESTROYED)) {
+	if (!Tcl_InterpDeleted(interp) && butPtr->textVarNamePtr != NULL) {
+
+	    /*
+	     * An unset trace on some variable brought us here, but is it
+	     * the variable we have stored in butPtr->textVarNamePtr ?
+	     */
+
+	    ClientData probe = NULL;
+
+	    do {
+		probe = Tcl_VarTraceInfo(interp,
+			Tcl_GetString(butPtr->textVarNamePtr),
+			TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
+			ButtonTextVarProc, probe);
+		if (probe == (ClientData)butPtr) {
+		    break;
+		}
+	    } while (probe);
+	    if (probe) {
+		/*
+		 * We were able to fetch the unset trace for our
+		 * textVarNamePtr, which means it is not unset and not
+		 * the cause of this unset trace. Instead some outdated
+		 * former textvariable must be, and we should ignore it.
+		 */
+		return NULL;
+	    }
+
 	    Tcl_ObjSetVar2(interp, butPtr->textVarNamePtr, NULL,
 		    butPtr->textPtr, TCL_GLOBAL_ONLY);
 	    Tcl_TraceVar2(interp, Tcl_GetString(butPtr->textVarNamePtr),

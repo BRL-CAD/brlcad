@@ -13,6 +13,9 @@
 /* Do we have access to Darwin CoreFoundation.framework? */
 #undef HAVE_COREFOUNDATION
 
+/* Is 'DIR64' in <sys/types.h>? */
+#undef HAVE_DIR64
+
 /* Compiler support for module scope symbols */
 #undef HAVE_HIDDEN
 
@@ -237,9 +240,6 @@
 
 /* Define to `unsigned' if <sys/types.h> does not define. */
 #undef size_t
-
-/* Do we want to use the strtod() in compat? */
-#undef strtod
 
 /* Define to `int' if <sys/types.h> doesn't define. */
 #undef uid_t

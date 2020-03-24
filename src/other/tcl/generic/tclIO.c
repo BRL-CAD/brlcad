@@ -313,15 +313,20 @@ static int              WillRead(Channel *chanPtr);
 		&& (strncmp(optionName, (nameString), len) == 0))
 
 /*
- * The ChannelObjType type.  We actually store the ChannelState structure
- * as that lives longest and we want to return the bottomChanPtr when
- * requested (consistent with Tcl_GetChannel).  The setFromAny and
- * updateString can be NULL as they should not be called.
+ * The ChannelObjType type.  Used to store the result of looking up
+ * a channel name in the context of an interp.  Saves the lookup
+ * result and values needed to check its continued validity.
  */
 
+typedef struct ResolvedChanName {
+    ChannelState *statePtr;	/* The saved lookup result */
+    Tcl_Interp *interp;		/* The interp in which the lookup was done. */
+    int epoch;			/* The epoch of the channel when the lookup
+				 * was done. Use to verify validity. */
+    int refCount;		/* Share this struct among many Tcl_Obj. */
+} ResolvedChanName;
+
 static void		DupChannelIntRep(Tcl_Obj *objPtr, Tcl_Obj *copyPtr);
-static int		SetChannelFromAny(Tcl_Interp *interp,
-			    Tcl_Obj *objPtr);
 static void		FreeChannelIntRep(Tcl_Obj *objPtr);
 
 static const Tcl_ObjType chanObjType = {
@@ -329,17 +334,8 @@ static const Tcl_ObjType chanObjType = {
     FreeChannelIntRep,		/* freeIntRepProc */
     DupChannelIntRep,		/* dupIntRepProc */
     NULL,			/* updateStringProc */
-    NULL			/* setFromAnyProc SetChannelFromAny */
+    NULL			/* setFromAnyProc */
 };
-
-#define GET_CHANNELSTATE(objPtr) \
-    ((ChannelState *) (objPtr)->internalRep.twoPtrValue.ptr1)
-#define SET_CHANNELSTATE(objPtr, storePtr) \
-    ((objPtr)->internalRep.twoPtrValue.ptr1 = (void *) (storePtr))
-#define GET_CHANNELINTERP(objPtr) \
-    ((Tcl_Interp *) (objPtr)->internalRep.twoPtrValue.ptr2)
-#define SET_CHANNELINTERP(objPtr, storePtr) \
-    ((objPtr)->internalRep.twoPtrValue.ptr2 = (void *) (storePtr))
 
 #define BUSY_STATE(st, fl) \
      ((((st)->csPtrR) && ((fl) & TCL_READABLE)) || \
@@ -715,17 +711,18 @@ Tcl_SetStdChannel(
 {
     ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
 
+    int init = channel ? 1 : -1;
     switch (type) {
     case TCL_STDIN:
-	tsdPtr->stdinInitialized = 1;
+	tsdPtr->stdinInitialized = init;
 	tsdPtr->stdinChannel = channel;
 	break;
     case TCL_STDOUT:
-	tsdPtr->stdoutInitialized = 1;
+	tsdPtr->stdoutInitialized = init;
 	tsdPtr->stdoutChannel = channel;
 	break;
     case TCL_STDERR:
-	tsdPtr->stderrInitialized = 1;
+	tsdPtr->stderrInitialized = init;
 	tsdPtr->stderrChannel = channel;
 	break;
     }
@@ -762,8 +759,8 @@ Tcl_GetStdChannel(
     switch (type) {
     case TCL_STDIN:
 	if (!tsdPtr->stdinInitialized) {
+	    tsdPtr->stdinInitialized = -1;
 	    tsdPtr->stdinChannel = TclpGetDefaultStdChannel(TCL_STDIN);
-	    tsdPtr->stdinInitialized = 1;
 
 	    /*
 	     * Artificially bump the refcount to ensure that the channel is
@@ -775,6 +772,7 @@ Tcl_GetStdChannel(
 	     */
 
 	    if (tsdPtr->stdinChannel != NULL) {
+		tsdPtr->stdinInitialized = 1;
 		Tcl_RegisterChannel(NULL, tsdPtr->stdinChannel);
 	    }
 	}
@@ -782,9 +780,10 @@ Tcl_GetStdChannel(
 	break;
     case TCL_STDOUT:
 	if (!tsdPtr->stdoutInitialized) {
+	    tsdPtr->stdoutInitialized = -1;
 	    tsdPtr->stdoutChannel = TclpGetDefaultStdChannel(TCL_STDOUT);
-	    tsdPtr->stdoutInitialized = 1;
 	    if (tsdPtr->stdoutChannel != NULL) {
+		tsdPtr->stdoutInitialized = 1;
 		Tcl_RegisterChannel(NULL, tsdPtr->stdoutChannel);
 	    }
 	}
@@ -792,9 +791,10 @@ Tcl_GetStdChannel(
 	break;
     case TCL_STDERR:
 	if (!tsdPtr->stderrInitialized) {
+	    tsdPtr->stderrInitialized = -1;
 	    tsdPtr->stderrChannel = TclpGetDefaultStdChannel(TCL_STDERR);
-	    tsdPtr->stderrInitialized = 1;
 	    if (tsdPtr->stderrChannel != NULL) {
+		tsdPtr->stderrInitialized = 1;
 		Tcl_RegisterChannel(NULL, tsdPtr->stderrChannel);
 	    }
 	}
@@ -1021,7 +1021,7 @@ DeleteChannelTable(
 	 */
 
 	Tcl_DeleteHashEntry(hPtr);
-	SetFlag(statePtr, CHANNEL_TAINTED);
+	statePtr->epoch++;
 	if (statePtr->refCount-- <= 1) {
 	    if (!GotFlag(statePtr, BG_FLUSH_SCHEDULED)) {
 		(void) Tcl_Close(interp, (Tcl_Channel) chanPtr);
@@ -1062,7 +1062,7 @@ CheckForStdChannelsBeingClosed(
     ChannelState *statePtr = ((Channel *) chan)->state;
     ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
 
-    if (tsdPtr->stdinInitialized
+    if (tsdPtr->stdinInitialized == 1
 	    && tsdPtr->stdinChannel != NULL
 	    && statePtr == ((Channel *)tsdPtr->stdinChannel)->state) {
 	if (statePtr->refCount < 2) {
@@ -1070,7 +1070,7 @@ CheckForStdChannelsBeingClosed(
 	    tsdPtr->stdinChannel = NULL;
 	    return;
 	}
-    } else if (tsdPtr->stdoutInitialized
+    } else if (tsdPtr->stdoutInitialized == 1
 	    && tsdPtr->stdoutChannel != NULL
 	    && statePtr == ((Channel *)tsdPtr->stdoutChannel)->state) {
 	if (statePtr->refCount < 2) {
@@ -1078,7 +1078,7 @@ CheckForStdChannelsBeingClosed(
 	    tsdPtr->stdoutChannel = NULL;
 	    return;
 	}
-    } else if (tsdPtr->stderrInitialized
+    } else if (tsdPtr->stderrInitialized == 1
 	    && tsdPtr->stderrChannel != NULL
 	    && statePtr == ((Channel *)tsdPtr->stderrChannel)->state) {
 	if (statePtr->refCount < 2) {
@@ -1365,7 +1365,7 @@ DetachChannel(
 	    return TCL_ERROR;
 	}
 	Tcl_DeleteHashEntry(hPtr);
-	SetFlag(statePtr, CHANNEL_TAINTED);
+	statePtr->epoch++;
 
 	/*
 	 * Remove channel handlers that refer to this interpreter, so that
@@ -1498,12 +1498,57 @@ TclGetChannelFromObj(
     int flags)
 {
     ChannelState *statePtr;
+    ResolvedChanName *resPtr = NULL;
+    Tcl_Channel chan;
 
-    if (SetChannelFromAny(interp, objPtr) != TCL_OK) {
+    if (interp == NULL) {
 	return TCL_ERROR;
     }
 
-    statePtr = GET_CHANNELSTATE(objPtr);
+    if (objPtr->typePtr == &chanObjType) {
+	/*
+ 	 * Confirm validity of saved lookup results.
+ 	 */
+
+	resPtr = (ResolvedChanName *) objPtr->internalRep.twoPtrValue.ptr1;
+	statePtr = resPtr->statePtr;
+	if ((resPtr->interp == interp)		/* Same interp context */
+			/* No epoch change in channel since lookup */
+		&& (resPtr->epoch == statePtr->epoch)) {
+
+	    /* Have a valid saved lookup. Jump to end to return it. */
+	    goto valid;
+	}
+    }
+
+    chan = Tcl_GetChannel(interp, TclGetString(objPtr), NULL);
+
+    if (chan == NULL) {
+	if (resPtr) {
+	    FreeChannelIntRep(objPtr);
+	}
+	return TCL_ERROR;
+    }
+
+    if (resPtr && resPtr->refCount == 1) {
+	/* Re-use the ResolvedCmdName struct */
+	Tcl_Release((ClientData) resPtr->statePtr);
+
+    } else {
+	TclFreeIntRep(objPtr);
+
+	resPtr = (ResolvedChanName *) ckalloc(sizeof(ResolvedChanName));
+	resPtr->refCount = 1;
+	objPtr->internalRep.twoPtrValue.ptr1 = (ClientData) resPtr;
+	objPtr->typePtr = &chanObjType;
+    }
+    statePtr = ((Channel *)chan)->state;
+    resPtr->statePtr = statePtr;
+    Tcl_Preserve((ClientData) statePtr);
+    resPtr->interp = interp;
+    resPtr->epoch = statePtr->epoch;
+
+  valid:
     *channelPtr = (Tcl_Channel) statePtr->bottomChanPtr;
 
     if (modePtr != NULL) {
@@ -1675,6 +1720,8 @@ Tcl_CreateChannel(
 
     statePtr->chanMsg		= NULL;
     statePtr->unreportedMsg	= NULL;
+
+    statePtr->epoch		= 0;
 
     /*
      * Link the channel into the list of all channels; create an on-exit
@@ -2850,7 +2897,7 @@ FlushChannel(
 	     * there is some kind failure in the writable event machinery.
 	     *
 	     * The tls extension indeed suffers from flaws in its channel
-	     * event mgmt.  See http://core.tcl.tk/tcl/info/c31ca233ca.
+	     * event mgmt.  See https://core.tcl-lang.org/tcl/info/c31ca233ca.
 	     * Until that patch is broadly distributed, disable the
 	     * assertion checking here, so that programs using Tcl and
 	     * tls can be debugged.
@@ -6617,7 +6664,7 @@ Tcl_Flush(
     chanPtr = statePtr->topChanPtr;
 
     if (CheckChannelErrors(statePtr, TCL_WRITABLE) != 0) {
-	return -1;
+	return TCL_ERROR;
     }
 
     result = FlushChannel(NULL, chanPtr, 0);
@@ -7086,7 +7133,7 @@ Tcl_Tell(
  *
  * Tcl_SeekOld, Tcl_TellOld --
  *
- *	Backward-compatability versions of the seek/tell interface that do not
+ *	Backward-compatibility versions of the seek/tell interface that do not
  *	support 64-bit offsets. This interface is not documented or expected
  *	to be supported indefinitely.
  *
@@ -9274,7 +9321,7 @@ MBWrite(
          * then the calculations involving extra must be made wide too.
          *
          * Noted with Win32/MSVC debug build treating the warning (possible of
-         * data in int64 to int conversion) as error.
+         * data in __int64 to int conversion) as error.
          */
 
 	bufPtr = AllocChannelBuffer(extra);
@@ -11121,73 +11168,11 @@ DupChannelIntRep(
     register Tcl_Obj *copyPtr)	/* Object with internal rep to set. Must not
 				 * currently have an internal rep.*/
 {
-    ChannelState *statePtr  = GET_CHANNELSTATE(srcPtr);
+    ResolvedChanName *resPtr = srcPtr->internalRep.twoPtrValue.ptr1;
 
-    SET_CHANNELSTATE(copyPtr, statePtr);
-    SET_CHANNELINTERP(copyPtr, GET_CHANNELINTERP(srcPtr));
-    Tcl_Preserve(statePtr);
+    resPtr->refCount++;
+    copyPtr->internalRep.twoPtrValue.ptr1 = resPtr;
     copyPtr->typePtr = srcPtr->typePtr;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * SetChannelFromAny --
- *
- *	Create an internal representation of type "Channel" for an object.
- *
- * Results:
- *	This operation always succeeds and returns TCL_OK.
- *
- * Side effects:
- *	Any old internal reputation for objPtr is freed and the internal
- *	representation is set to "Channel".
- *
- *----------------------------------------------------------------------
- */
-
-static int
-SetChannelFromAny(
-    Tcl_Interp *interp,		/* Used for error reporting if not NULL. */
-    register Tcl_Obj *objPtr)	/* The object to convert. */
-{
-    ChannelState *statePtr;
-
-    if (interp == NULL) {
-	return TCL_ERROR;
-    }
-    if (objPtr->typePtr == &chanObjType) {
-	/*
-	 * TODO: TAINT Flag and dup'd channel values?
-	 * The channel is valid until any call to DetachChannel occurs.
-	 * Ensure consistency checks are done.
-	 */
-
-	statePtr = GET_CHANNELSTATE(objPtr);
-	if (GotFlag(statePtr, CHANNEL_TAINTED|CHANNEL_CLOSED)) {
-	    ResetFlag(statePtr, CHANNEL_TAINTED);
-	    Tcl_Release(statePtr);
-	    objPtr->typePtr = NULL;
-	} else if (interp != GET_CHANNELINTERP(objPtr)) {
-	    Tcl_Release(statePtr);
-	    objPtr->typePtr = NULL;
-	}
-    }
-    if (objPtr->typePtr != &chanObjType) {
-	Tcl_Channel chan = Tcl_GetChannel(interp, TclGetString(objPtr), NULL);
-
-	if (chan == NULL) {
-	    return TCL_ERROR;
-	}
-
-	TclFreeIntRep(objPtr);
-	statePtr = ((Channel *) chan)->state;
-	Tcl_Preserve(statePtr);
-	SET_CHANNELSTATE(objPtr, statePtr);
-	SET_CHANNELINTERP(objPtr, interp);
-	objPtr->typePtr = &chanObjType;
-    }
-    return TCL_OK;
 }
 
 /*
@@ -11210,8 +11195,14 @@ static void
 FreeChannelIntRep(
     Tcl_Obj *objPtr)		/* Object with internal rep to free. */
 {
-    Tcl_Release(GET_CHANNELSTATE(objPtr));
+    ResolvedChanName *resPtr = objPtr->internalRep.twoPtrValue.ptr1;
+
     objPtr->typePtr = NULL;
+    if (--resPtr->refCount) {
+	return;
+    }
+    Tcl_Release(resPtr->statePtr);
+    ckfree(resPtr);
 }
 
 #if 0

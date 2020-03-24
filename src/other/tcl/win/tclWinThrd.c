@@ -247,7 +247,7 @@ TclpThreadCreate(
 
 	/*
 	 * The only purpose of this is to decrement the reference count so the
-	 * OS resources will be reaquired when the thread closes.
+	 * OS resources will be reacquired when the thread closes.
 	 */
 
 	CloseHandle(tHandle);
@@ -405,7 +405,7 @@ TclpInitUnlock(void)
  *	mutexes, condition variables, and thread local storage keys.
  *
  *	This lock must be different than the initLock because the initLock is
- *	held during creation of syncronization objects.
+ *	held during creation of synchronization objects.
  *
  * Results:
  *	None.
@@ -555,7 +555,7 @@ static void		FinalizeConditionEvent(ClientData data);
  *	None.
  *
  * Side effects:
- *	May block the current thread. The mutex is aquired when this returns.
+ *	May block the current thread. The mutex is acquired when this returns.
  *
  *----------------------------------------------------------------------
  */
@@ -655,7 +655,7 @@ TclpFinalizeMutex(
  *	None.
  *
  * Side effects:
- *	May block the current thread. The mutex is aquired when this returns.
+ *	May block the current thread. The mutex is acquired when this returns.
  *	Will allocate memory for a HANDLE and initialize this the first time
  *	this Tcl_Condition is used.
  *
@@ -688,7 +688,7 @@ Tcl_ConditionWait(
 	 */
 
 	if (tsdPtr->flags == WIN_THREAD_UNINIT) {
-	    tsdPtr->condEvent = CreateEvent(NULL, TRUE /* manual reset */,
+	    tsdPtr->condEvent = CreateEventW(NULL, TRUE /* manual reset */,
 		    FALSE /* non signaled */, NULL);
 	    tsdPtr->nextPtr = NULL;
 	    tsdPtr->prevPtr = NULL;
@@ -1012,8 +1012,10 @@ TclpFreeAllocCache(
 
     if (ptr != NULL) {
 	/*
-	 * Called by us in TclpFinalizeThreadData when a thread exits and
-	 * destroys the tsd key which stores allocator caches.
+	 * Called by TclFinalizeThreadAlloc() and
+	 * TclFinalizeThreadAllocThread() during Tcl_Finalize() or
+	 * Tcl_FinalizeThread(). This function destroys the tsd key which
+	 * stores allocator caches in thread local storage.
 	 */
 
 	TclFreeAllocCache(ptr);

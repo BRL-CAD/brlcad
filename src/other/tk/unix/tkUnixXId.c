@@ -96,7 +96,6 @@ Tk_FreePixmap(
     Pixmap pixmap)		/* Identifier for pixmap. */
 {
     XFreePixmap(display, pixmap);
-    Tk_FreeXId(display, (XID) pixmap);
 }
 
 

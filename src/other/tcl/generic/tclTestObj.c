@@ -19,6 +19,7 @@
 #endif
 #include "tclInt.h"
 #include "tommath.h"
+#include "tclStringRep.h"
 
 
 /*
@@ -46,13 +47,6 @@ static int		TestobjCmd(ClientData dummy, Tcl_Interp *interp,
 			    int objc, Tcl_Obj *const objv[]);
 static int		TeststringobjCmd(ClientData dummy, Tcl_Interp *interp,
 			    int objc, Tcl_Obj *const objv[]);
-
-typedef struct TestString {
-    int numChars;
-    int allocated;
-    int maxChars;
-    Tcl_UniChar unicode[2];
-} TestString;
 
 #define VARPTR_KEY "TCLOBJTEST_VARPTR"
 #define NUMBER_OF_OBJECT_VARS 20
@@ -137,7 +131,7 @@ TclObjTest_Init(
  *
  * TestbignumobjCmd --
  *
- *	This function implmenets the "testbignumobj" command.  It is used
+ *	This function implements the "testbignumobj" command.  It is used
  *	to exercise the bignum Tcl object type implementation.
  *
  * Results:
@@ -158,10 +152,11 @@ TestbignumobjCmd(
     Tcl_Obj *const objv[])	/* Argument vector */
 {
     const char *const subcmds[] = {
-	"set",	    "get",	"mult10",	"div10", NULL
+	"set", "get", "mult10", "div10", "iseven", "radixsize", NULL
     };
     enum options {
-	BIGNUM_SET, BIGNUM_GET,	BIGNUM_MULT10,	BIGNUM_DIV10
+	BIGNUM_SET, BIGNUM_GET, BIGNUM_MULT10, BIGNUM_DIV10, BIGNUM_ISEVEN,
+	BIGNUM_RADIXSIZE
     };
     int index, varIndex;
     const char *string;
@@ -280,6 +275,50 @@ TestbignumobjCmd(
 	} else {
 	    SetVarToObj(varPtr, varIndex, Tcl_NewBignumObj(&newValue));
 	}
+	break;
+
+    case BIGNUM_ISEVEN:
+	if (objc != 3) {
+	    Tcl_WrongNumArgs(interp, 2, objv, "varIndex");
+	    return TCL_ERROR;
+	}
+	if (CheckIfVarUnset(interp, varPtr,varIndex)) {
+	    return TCL_ERROR;
+	}
+	if (Tcl_GetBignumFromObj(interp, varPtr[varIndex],
+		&bignumValue) != TCL_OK) {
+	    return TCL_ERROR;
+	}
+	if (!Tcl_IsShared(varPtr[varIndex])) {
+	    Tcl_SetIntObj(varPtr[varIndex], !mp_isodd(&bignumValue));
+	} else {
+	    SetVarToObj(varPtr, varIndex, Tcl_NewIntObj(!mp_isodd(&bignumValue)));
+	}
+	mp_clear(&bignumValue);
+	break;
+
+    case BIGNUM_RADIXSIZE:
+	if (objc != 3) {
+	    Tcl_WrongNumArgs(interp, 2, objv, "varIndex");
+	    return TCL_ERROR;
+	}
+	if (CheckIfVarUnset(interp, varPtr,varIndex)) {
+	    return TCL_ERROR;
+	}
+	if (Tcl_GetBignumFromObj(interp, varPtr[varIndex],
+		&bignumValue) != TCL_OK) {
+	    return TCL_ERROR;
+	}
+	if (mp_radix_size(&bignumValue, 10, &index) != MP_OKAY) {
+	    return TCL_ERROR;
+	}
+	if (!Tcl_IsShared(varPtr[varIndex])) {
+	    Tcl_SetIntObj(varPtr[varIndex], index);
+	} else {
+	    SetVarToObj(varPtr, varIndex, Tcl_NewIntObj(index));
+	}
+	mp_clear(&bignumValue);
+	break;
     }
 
     Tcl_SetObjResult(interp, varPtr[varIndex]);
@@ -1141,7 +1180,7 @@ TeststringobjCmd(
     int varIndex, option, i, length;
 #define MAX_STRINGS 11
     const char *index, *string, *strings[MAX_STRINGS+1];
-    TestString *strPtr;
+    String *strPtr;
     Tcl_Obj **varPtr;
     static const char *const options[] = {
 	"append", "appendstrings", "get", "get2", "length", "length2",

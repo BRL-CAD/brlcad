@@ -26,7 +26,7 @@ typedef struct {
     int charOffset;		/* The offset of the next char to retrieve. */
     int byteOffset;		/* The expected byte offset of the next
 				 * chunk. */
-    char buffer[TCL_UTF_MAX];	/* A buffer to hold part of a UTF character
+    char buffer[4];	/* A buffer to hold part of a UTF character
 				 * that is split across chunks. */
     char command[1];		/* Command to invoke. Actual space is
 				 * allocated as large as necessary. This must
@@ -48,7 +48,7 @@ typedef struct LostCommand {
  * The structure below is used to keep each thread's pending list separate.
  */
 
-typedef struct ThreadSpecificData {
+typedef struct {
     TkSelInProgress *pendingPtr;
 				/* Topmost search in progress, or NULL if
 				 * none. */
@@ -190,8 +190,8 @@ Tk_CreateSelHandler(
 		     * should make a copy for this selPtr.
 		     */
 
-		    unsigned cmdInfoLen = Tk_Offset(CommandInfo, command) +
-			    ((CommandInfo *)clientData)->cmdLength + 1;
+		    unsigned cmdInfoLen = Tk_Offset(CommandInfo, command) + 1 +
+			    ((CommandInfo *)clientData)->cmdLength;
 
 		    selPtr->clientData = ckalloc(cmdInfoLen);
 		    memcpy(selPtr->clientData, clientData, cmdInfoLen);
@@ -1185,6 +1185,7 @@ TkSelInit(
     dispPtr->applicationAtom	= Tk_InternAtom(tkwin, "TK_APPLICATION");
     dispPtr->windowAtom		= Tk_InternAtom(tkwin, "TK_WINDOW");
     dispPtr->clipboardAtom	= Tk_InternAtom(tkwin, "CLIPBOARD");
+    dispPtr->atomPairAtom	= Tk_InternAtom(tkwin, "ATOM_PAIR");
 
     /*
      * Using UTF8_STRING instead of the XA_UTF8_STRING macro allows us to

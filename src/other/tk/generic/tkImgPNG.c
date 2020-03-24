@@ -10,7 +10,6 @@
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  */
 
-#include "assert.h"
 #include "tkInt.h"
 
 #define	PNG_INT32(a,b,c,d)	\
@@ -35,7 +34,7 @@ static const int startLine[8] = {
  * Chunk type flags.
  */
 
-#define PNG_CF_ANCILLARY 0x10000000L	/* Non-critical chunk (can ignore). */
+#define PNG_CF_ANCILLARY 0x20000000L	/* Non-critical chunk (can ignore). */
 #define PNG_CF_PRIVATE   0x00100000L	/* Application-specific chunk. */
 #define PNG_CF_RESERVED  0x00001000L	/* Not used. */
 #define PNG_CF_COPYSAFE  0x00000010L	/* Opaque data safe for copying. */
@@ -335,7 +334,7 @@ InitPNGImage(
 
     if (Tcl_ZlibStreamInit(NULL, dir, TCL_ZLIB_FORMAT_ZLIB,
 	    TCL_ZLIB_COMPRESS_DEFAULT, NULL, &pngPtr->stream) != TCL_OK) {
-    if (interp) {
+	if (interp) {
 	    Tcl_SetObjResult(interp, Tcl_NewStringObj(
 		    "zlib initialization failed", -1));
 	    Tcl_SetErrorCode(interp, "TK", "IMAGE", "PNG", "ZLIB_INIT", NULL);
@@ -984,7 +983,7 @@ ReadChunkHeader(
 		     */
 
 		    Tcl_SetObjResult(interp, Tcl_NewStringObj(
-			    "encountered an unsupported criticial chunk type",
+			    "encountered an unsupported critical chunk type",
 			    -1));
 		} else {
 		    char typeString[5];
@@ -995,7 +994,7 @@ ReadChunkHeader(
 		    typeString[3] = (char) (chunkType & 255);
 		    typeString[4] = '\0';
 		    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
-			    "encountered an unsupported criticial chunk type"
+			    "encountered an unsupported critical chunk type"
 			    " \"%s\"", typeString));
 		}
 		Tcl_SetErrorCode(interp, "TK", "IMAGE", "PNG",
@@ -2245,10 +2244,10 @@ ApplyAlpha(
 	p += offset;
 
 	if (16 == pngPtr->bitDepth) {
-	    register int channel;
+	    register unsigned int channel;
 
 	    while (p < endPtr) {
-		channel = (unsigned char)
+		channel = (unsigned int)
 			(((p[0] << 8) | p[1]) * pngPtr->alpha);
 
 		*p++ = (unsigned char) (channel >> 8);

@@ -1,7 +1,7 @@
 /*
  * tkMacOSXFont.h --
  *
- *	Contains the Macintosh implementation of the platform-independant
+ *	Contains the Macintosh implementation of the platform-independent
  *	font package interface.
  *
  * Copyright (c) 1990-1994 The Regents of the University of California.

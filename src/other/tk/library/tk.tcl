@@ -10,10 +10,8 @@
 # See the file "license.terms" for information on usage and redistribution of
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-# Insist on running with compatible version of Tcl
-package require Tcl 8.6
 # Verify that we have Tk binary and script components from the same release
-package require -exact Tk  8.6.5
+package require -exact Tk  8.6.10
 
 # Create a ::tk namespace
 namespace eval ::tk {
@@ -464,7 +462,8 @@ switch -exact -- [tk windowingsystem] {
 	# Official bindings
 	# See http://support.apple.com/kb/HT1343
 	event add <<SelectAll>>		<Command-Key-a>
-	event add <<SelectNone>>	<Option-Command-Key-a>
+	#Attach function keys not otherwise assigned to this event so they no-op - workaround for bug 0e6930dfe7
+	event add <<SelectNone>>	<Option-Command-Key-a> <Key-F5> <Key-F1> <Key-F5> <Key-F6> <Key-F7> <Key-F8> <Key-F9> <Key-F10> <Key-F11> <Key-F12>
 	event add <<Undo>>		<Command-Key-z> <Command-Lock-Key-Z>
 	event add <<Redo>>		<Shift-Command-Key-z> <Shift-Command-Lock-Key-z>
 	event add <<NextChar>>		<Right> <Control-Key-f> <Control-Lock-Key-F>
@@ -602,8 +601,9 @@ proc ::tk::AmpWidget {class path args} {
 # ::tk::AmpMenuArgs --
 #	Processes arguments for a menu entry, turning -label option into
 #	-label and -underline options, returned by ::tk::UnderlineAmpersand.
+#      The cmd argument is supposed to be either "add" or "entryconfigure"
 #
-proc ::tk::AmpMenuArgs {widget add type args} {
+proc ::tk::AmpMenuArgs {widget cmd type args} {
     set options {}
     foreach {opt val} $args {
 	if {$opt eq "-label"} {
@@ -613,7 +613,7 @@ proc ::tk::AmpMenuArgs {widget add type args} {
 	    lappend options $opt $val
 	}
     }
-    $widget add $type {*}$options
+    $widget $cmd $type {*}$options
 }
 
 # ::tk::FindAltKeyTarget --
@@ -677,13 +677,29 @@ proc ::tk::mcmaxamp {args} {
     return $maxlen
 }
 
-# For now, turn off the custom mdef proc for the mac:
+# For now, turn off the custom mdef proc for the Mac:
 
 if {[tk windowingsystem] eq "aqua"} {
     namespace eval ::tk::mac {
 	set useCustomMDEF 0
     }
 }
+
+
+if {[tk windowingsystem] eq "aqua"} {
+    #stub procedures to respond to "do script" Apple Events
+    proc ::tk::mac::DoScriptFile {file} {
+    	source $file
+    }
+    proc ::tk::mac::DoScriptText {script} {
+    	eval $script
+    }
+}
+
+# Create a dictionary to store the starting index of the IME marked
+# text in an Entry or Text widget.
+
+set ::tk::Priv(IMETextMark) [dict create]
 
 # Run the Ttk themed widget set initialization
 if {$::ttk::library ne ""} {

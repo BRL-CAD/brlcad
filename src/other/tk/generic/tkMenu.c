@@ -77,7 +77,7 @@
 
 #define MENU_HASH_KEY "tkMenus"
 
-typedef struct ThreadSpecificData {
+typedef struct {
     int menusInitialized;	/* Flag indicates whether thread-specific
 				 * elements of the Windows Menu module have
 				 * been initialized. */
@@ -90,7 +90,7 @@ static Tcl_ThreadDataKey dataKey;
 
 /*
  * The following flag indicates whether the process-wide state for the Menu
- * module has been intialized. The Mutex protects access to that flag.
+ * module has been initialized. The Mutex protects access to that flag.
  */
 
 static int menusInitialized;
@@ -455,7 +455,7 @@ Tk_MenuObjCmd(
 	    Tk_PathName(menuPtr->tkwin), MenuWidgetObjCmd, menuPtr,
 	    MenuCmdDeletedProc);
     menuPtr->active = -1;
-    menuPtr->cursorPtr = None;
+    menuPtr->cursorPtr = NULL;
     menuPtr->masterMenuPtr = menuPtr;
     menuPtr->menuType = UNKNOWN_TYPE;
     TkMenuInitializeDrawingFields(menuPtr);
@@ -754,7 +754,7 @@ MenuWidgetObjCmd(
 
 	    first = 1;
 	}
-	if ((first < 0) || (last < first)) {
+	if ((first == -1) || (last < first)) {
 	    goto done;
 	}
 	DeleteMenuCloneEntries(menuPtr, first, last);
@@ -870,32 +870,37 @@ MenuWidgetObjCmd(
 	break;
     }
     case MENU_POST: {
-	int x, y;
+	int x, y, index = -1;
 
-	if (objc != 4) {
-	    Tcl_WrongNumArgs(interp, 2, objv, "x y");
+	if (objc != 4 && objc != 5) {
+	    Tcl_WrongNumArgs(interp, 2, objv, "x y ?index?");
 	    goto error;
 	}
 	if ((Tcl_GetIntFromObj(interp, objv[2], &x) != TCL_OK)
 		|| (Tcl_GetIntFromObj(interp, objv[3], &y) != TCL_OK)) {
 	    goto error;
 	}
+	if (objc == 5) {
+            if (TkGetMenuIndex(interp, menuPtr, objv[4], 0, &index) != TCL_OK) {
+                goto error;
+            }
+	}
 
 	/*
-	 * Tearoff menus are posted differently on Mac and Windows than
-	 * non-tearoffs. TkpPostMenu does not actually map the menu's window
-	 * on those platforms, and popup menus have to be handled specially.
-         * Also, menubar menues are not intended to be posted (bug 1567681,
-         * 2160206).
+	 * Tearoff menus are the same as ordinary menus on the Mac and are
+	 * posted differently on Windows than non-tearoffs. TkpPostMenu
+	 * does not actually map the menu's window on those platforms, and
+	 * popup menus have to be handled specially.  Also, menubar menus are
+	 * not intended to be posted (bug 1567681, 2160206).
 	 */
 
 	if (menuPtr->menuType == MENUBAR) {
             Tcl_AppendResult(interp, "a menubar menu cannot be posted", NULL);
             return TCL_ERROR;
         } else if (menuPtr->menuType != TEAROFF_MENU) {
-	    result = TkpPostMenu(interp, menuPtr, x, y);
+	    result = TkpPostMenu(interp, menuPtr, x, y, index);
 	} else {
-	    result = TkPostTearoffMenu(interp, menuPtr, x, y);
+	    result = TkpPostTearoffMenu(interp, menuPtr, x, y, index);
 	}
 	break;
     }
@@ -1700,12 +1705,12 @@ PostProcessEntry(
     if (mePtr->labelPtr == NULL) {
 	mePtr->labelLength = 0;
     } else {
-	(void)Tcl_GetStringFromObj(mePtr->labelPtr, &mePtr->labelLength);
+	Tcl_GetStringFromObj(mePtr->labelPtr, &mePtr->labelLength);
     }
     if (mePtr->accelPtr == NULL) {
 	mePtr->accelLength = 0;
     } else {
-	(void)Tcl_GetStringFromObj(mePtr->accelPtr, &mePtr->accelLength);
+	Tcl_GetStringFromObj(mePtr->accelPtr, &mePtr->accelLength);
     }
 
     /*
@@ -2159,7 +2164,7 @@ TkGetMenuIndex(
 	Tcl_Obj *labelPtr = menuPtr->entries[i]->labelPtr;
 	const char *label = (labelPtr == NULL) ? NULL : Tcl_GetString(labelPtr);
 
-	if ((label != NULL) && (Tcl_StringMatch(label, string))) {
+	if ((label != NULL) && (Tcl_StringCaseMatch(label, string, 0))) {
 	    *indexPtr = i;
 	    goto success;
 	}
@@ -2486,15 +2491,21 @@ MenuVarProc(
     const char *value;
     const char *name, *onValue;
 
-    if (flags & TCL_INTERP_DESTROYED) {
+    if (Tcl_InterpDeleted(interp) || (mePtr->namePtr == NULL)) {
 	/*
-	 * Do nothing if the interpreter is going away.
+	 * Do nothing if the interpreter is going away or we have
+	 * no variable name.
 	 */
 
     	return NULL;
     }
 
     menuPtr = mePtr->menuPtr;
+
+    if (menuPtr->menuFlags & MENU_DELETION_PENDING) {
+    	return NULL;
+    }
+
     name = Tcl_GetString(mePtr->namePtr);
 
     /*
@@ -2502,12 +2513,29 @@ MenuVarProc(
      */
 
     if (flags & TCL_TRACE_UNSETS) {
+        ClientData probe = NULL;
 	mePtr->entryFlags &= ~ENTRY_SELECTED;
-	if (flags & TCL_TRACE_DESTROYED) {
-	    Tcl_TraceVar2(interp, name, NULL,
-		    TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
-		    MenuVarProc, clientData);
-	}
+
+        do {
+                probe = Tcl_VarTraceInfo(interp, name,
+                        TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
+                        MenuVarProc, probe);
+                if (probe == (ClientData)mePtr) {
+                    break;
+                }
+        } while (probe);
+        if (probe) {
+                /*
+                 * We were able to fetch the unset trace for our
+                 * namePtr, which means it is not unset and not
+                 * the cause of this unset trace. Instead some outdated
+                 * former variable must be, and we should ignore it.
+                 */
+		return NULL;
+        }
+	Tcl_TraceVar2(interp, name, NULL,
+		TCL_GLOBAL_ONLY|TCL_TRACE_WRITES|TCL_TRACE_UNSETS,
+		MenuVarProc, clientData);
 	TkpConfigureMenuEntry(mePtr);
 	TkEventuallyRedrawMenu(menuPtr, NULL);
 	return NULL;

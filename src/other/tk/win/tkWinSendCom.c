@@ -370,6 +370,7 @@ Async(
 {
     HRESULT hr = S_OK;
     VARIANT vCmd;
+    Tcl_DString ds;
 
     VariantInit(&vCmd);
 
@@ -382,9 +383,13 @@ Async(
     }
 
     if (SUCCEEDED(hr) && obj->interp) {
-	Tcl_Obj *scriptPtr = Tcl_NewUnicodeObj(vCmd.bstrVal,
-		(int) SysStringLen(vCmd.bstrVal));
+	Tcl_Obj *scriptPtr;
 
+	Tcl_WinTCharToUtf((LPCTSTR)vCmd.bstrVal, SysStringLen(vCmd.bstrVal) *
+		sizeof (WCHAR), &ds);
+	scriptPtr =
+		Tcl_NewStringObj(Tcl_DStringValue(&ds), Tcl_DStringLength(&ds));
+	Tcl_DStringFree(&ds);
 	TkWinSend_QueueCommand(obj->interp, scriptPtr);
     }
 
@@ -424,6 +429,7 @@ Send(
     VARIANT v;
     register Tcl_Interp *interp = obj->interp;
     Tcl_Obj *scriptPtr;
+    Tcl_DString ds;
 
     if (interp == NULL) {
 	return S_OK;
@@ -434,17 +440,26 @@ Send(
 	return hr;
     }
 
-    scriptPtr = Tcl_NewUnicodeObj(v.bstrVal, (int) SysStringLen(v.bstrVal));
+    Tcl_WinTCharToUtf((LPCTSTR)v.bstrVal, SysStringLen(v.bstrVal) *
+	    sizeof(WCHAR), &ds);
+    scriptPtr = Tcl_NewStringObj(Tcl_DStringValue(&ds), Tcl_DStringLength(&ds));
+    Tcl_DStringFree(&ds);
     Tcl_Preserve(interp);
     Tcl_IncrRefCount(scriptPtr);
     result = Tcl_EvalObjEx(interp, scriptPtr,
 	    TCL_EVAL_DIRECT | TCL_EVAL_GLOBAL);
     Tcl_DecrRefCount(scriptPtr);
     if (pvResult != NULL) {
+	Tcl_Obj *obj;
+	const char *src;
+
 	VariantInit(pvResult);
 	pvResult->vt = VT_BSTR;
-	pvResult->bstrVal = SysAllocString(Tcl_GetUnicode(
-		Tcl_GetObjResult(interp)));
+	obj = Tcl_GetObjResult(interp);
+	src = Tcl_GetString(obj);
+	Tcl_WinUtfToTChar(src, obj->length, &ds);
+	pvResult->bstrVal = SysAllocString((WCHAR *) Tcl_DStringValue(&ds));
+	Tcl_DStringFree(&ds);
     }
     if (result == TCL_ERROR) {
 	hr = DISP_E_EXCEPTION;

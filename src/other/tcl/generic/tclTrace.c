@@ -191,8 +191,10 @@ Tcl_TraceObjCmd(
     Tcl_Obj *const objv[])	/* Argument objects. */
 {
     int optionIndex;
+#ifndef TCL_REMOVE_OBSOLETE_TRACES
     const char *name;
     const char *flagOps, *p;
+#endif
     /* Main sub commands to 'trace' */
     static const char *const traceOptions[] = {
 	"add", "info", "remove",
@@ -365,12 +367,14 @@ Tcl_TraceObjCmd(
     }
     return TCL_OK;
 
+#ifndef TCL_REMOVE_OBSOLETE_TRACES
   badVarOps:
     Tcl_SetObjResult(interp, Tcl_ObjPrintf(
 	    "bad operations \"%s\": should be one or more of rwua",
 	    flagOps));
     Tcl_SetErrorCode(interp, "TCL", "OPERATION", "TRACE", "BADOPS", NULL);
     return TCL_ERROR;
+#endif
 }
 
 /*
@@ -533,9 +537,7 @@ TraceExecutionObjCmd(
 
 			Tcl_DeleteTrace(interp, tcmdPtr->stepTrace);
 			tcmdPtr->stepTrace = NULL;
-			if (tcmdPtr->startCmd != NULL) {
-			    ckfree(tcmdPtr->startCmd);
-			}
+			ckfree(tcmdPtr->startCmd);
 		    }
 		    if (tcmdPtr->flags & TCL_TRACE_EXEC_IN_PROGRESS) {
 			/*
@@ -912,9 +914,11 @@ TraceVariableObjCmd(
 		    + 1 + length);
 
 	    ctvarPtr->traceCmdInfo.flags = flags;
+#ifndef TCL_REMOVE_OBSOLETE_TRACES
 	    if (objv[0] == NULL) {
 		ctvarPtr->traceCmdInfo.flags |= TCL_TRACE_OLD_STYLE;
 	    }
+#endif
 	    ctvarPtr->traceCmdInfo.length = length;
 	    flags |= TCL_TRACE_UNSETS | TCL_TRACE_RESULT_OBJECT;
 	    memcpy(ctvarPtr->traceCmdInfo.command, command, length+1);
@@ -939,7 +943,11 @@ TraceVariableObjCmd(
 		TraceVarInfo *tvarPtr = clientData;
 
 		if ((tvarPtr->length == length)
-			&& ((tvarPtr->flags & ~TCL_TRACE_OLD_STYLE)==flags)
+			&& ((tvarPtr->flags
+#ifndef TCL_REMOVE_OBSOLETE_TRACES
+& ~TCL_TRACE_OLD_STYLE
+#endif
+						)==flags)
 			&& (strncmp(command, tvarPtr->command,
 				(size_t) length) == 0)) {
 		    Tcl_UntraceVar2(interp, name, NULL,
@@ -1339,9 +1347,7 @@ TraceCommandProc(
 	if (tcmdPtr->stepTrace != NULL) {
 	    Tcl_DeleteTrace(interp, tcmdPtr->stepTrace);
 	    tcmdPtr->stepTrace = NULL;
-	    if (tcmdPtr->startCmd != NULL) {
-		ckfree(tcmdPtr->startCmd);
-	    }
+	    ckfree(tcmdPtr->startCmd);
 	}
 	if (tcmdPtr->flags & TCL_TRACE_EXEC_IN_PROGRESS) {
 	    /*
@@ -1804,9 +1810,7 @@ TraceExecutionProc(
 		&& (strcmp(command, tcmdPtr->startCmd) == 0)) {
 	    Tcl_DeleteTrace(interp, tcmdPtr->stepTrace);
 	    tcmdPtr->stepTrace = NULL;
-	    if (tcmdPtr->startCmd != NULL) {
-		ckfree(tcmdPtr->startCmd);
-	    }
+	    ckfree(tcmdPtr->startCmd);
 	}
 
 	/*
@@ -1931,9 +1935,7 @@ TraceExecutionProc(
 	if (tcmdPtr->stepTrace != NULL) {
 	    Tcl_DeleteTrace(interp, tcmdPtr->stepTrace);
 	    tcmdPtr->stepTrace = NULL;
-	    if (tcmdPtr->startCmd != NULL) {
-		ckfree(tcmdPtr->startCmd);
-	    }
+	    ckfree(tcmdPtr->startCmd);
 	}
     }
     if (call) {
@@ -2463,6 +2465,47 @@ TclVarTraceExists(
     }
 
     return varPtr;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TclCheckArrayTraces --
+ *
+ *	This function is invoked to when we operate on an array variable,
+ *	to allow any array traces to fire.
+ *
+ * Results:
+ *	Returns TCL_OK to indicate normal operation. Returns TCL_ERROR if
+ *	invocation of a trace function indicated an error. When TCL_ERROR is
+ *	returned, then error information is left in interp.
+ *
+ * Side effects:
+ *	Almost anything can happen, depending on trace; this function itself
+ *	doesn't have any side effects.
+ *
+ *----------------------------------------------------------------------
+ */
+
+int
+TclCheckArrayTraces(
+    Tcl_Interp *interp,
+    Var *varPtr,
+    Var *arrayPtr,
+    Tcl_Obj *name,
+    int index)
+{
+    int code = TCL_OK;
+
+    if (varPtr && (varPtr->flags & VAR_TRACED_ARRAY)
+	&& (TclIsVarArray(varPtr) || TclIsVarUndefined(varPtr))) {
+	Interp *iPtr = (Interp *)interp;
+
+	code = TclObjCallVarTraces(iPtr, arrayPtr, varPtr, name, NULL,
+		(TCL_NAMESPACE_ONLY|TCL_GLOBAL_ONLY| TCL_TRACE_ARRAY),
+		/* leaveErrMsg */ 1, index);
+    }
+    return code;
 }
 
 /*

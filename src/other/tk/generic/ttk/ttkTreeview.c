@@ -6,7 +6,7 @@
 
 #include <string.h>
 #include <stdio.h>
-#include <tk.h>
+#include "tkInt.h"
 #include "ttkTheme.h"
 #include "ttkWidget.h"
 
@@ -282,7 +282,7 @@ static Tk_OptionSpec ColumnOptionSpecs[] = {
 	0,0,0 },
     {TK_OPTION_BOOLEAN, "-stretch", "stretch", "Stretch",
 	"1", -1, Tk_Offset(TreeColumn,stretch),
-	0,0,0 },
+	0,0,GEOMETRY_CHANGED },
     {TK_OPTION_ANCHOR, "-anchor", "anchor", "Anchor",
 	"w", Tk_Offset(TreeColumn,anchorObj), -1,	/* <<NOTE-ANCHOR>> */
 	0,0,0 },
@@ -923,7 +923,7 @@ static void DragColumn(Treeview *tv, int i, int delta)
 
 static TreeItem *IdentifyItem(Treeview *tv, int y); /*forward*/
 
-static const unsigned int TreeviewBindEventMask =
+static const unsigned long TreeviewBindEventMask =
       KeyPressMask|KeyReleaseMask
     | ButtonPressMask|ButtonReleaseMask
     | PointerMotionMask|ButtonMotionMask
@@ -1066,7 +1066,7 @@ static void TreeviewCleanup(void *recordPtr)
     TreeviewFreeColumns(tv);
 
     if (tv->tree.displayColumns)
-	Tcl_Free((ClientData)tv->tree.displayColumns);
+	ckfree((ClientData)tv->tree.displayColumns);
 
     foreachHashEntry(&tv->tree.items, FreeItemCB);
     Tcl_DeleteHashTable(&tv->tree.items);
@@ -1232,12 +1232,12 @@ static int ConfigureColumn(
     if (mask & GEOMETRY_CHANGED) {
 	if (!Tk_IsMapped(tv->core.tkwin)) {
 	    TtkResizeWidget(&tv->core);
-	}
-	RecomputeSlack(tv);
+        } else {
+	    RecomputeSlack(tv);
+	    ResizeColumns(tv, TreeWidth(tv));
+        }
     }
     TtkRedisplayWidget(&tv->core);
-
-    /* ASSERT: SLACKINVARIANT */
 
     Tk_FreeSavedOptions(&savedOptions);
     return TCL_OK;
@@ -1615,13 +1615,10 @@ static void TreeviewDoLayout(void *clientData)
     Treeview *tv = clientData;
     int visibleRows;
 
-    /* ASSERT: SLACKINVARIANT */
-
     Ttk_PlaceLayout(tv->core.layout,tv->core.state,Ttk_WinBox(tv->core.tkwin));
     tv->tree.treeArea = Ttk_ClientRegion(tv->core.layout, "treearea");
 
     ResizeColumns(tv, tv->tree.treeArea.width);
-    /* ASSERT: SLACKINVARIANT */
 
     TtkScrolled(tv->tree.xscrollHandle,
 	    tv->tree.xscroll.first,
@@ -1825,7 +1822,7 @@ static int DrawSubtree(
 static int DrawForest(
     Treeview *tv, TreeItem *item, Drawable d, int depth, int row)
 {
-    while (item && row <= tv->tree.yscroll.last) {
+    while (item && row < tv->tree.yscroll.last) {
         row = DrawSubtree(tv, item, d, depth, row);
 	item = item->next;
     }
@@ -2233,7 +2230,9 @@ static int TreeviewHorribleIdentify(
 	    Ttk_Element element;
 
 	    BoundingBox(tv, item, NULL, &itemBox);
-	    PrepareItem(tv, item, &displayItem); /*@@@ FIX: -text, etc*/
+	    PrepareItem(tv, item, &displayItem);
+            if (item->textObj) { displayItem.textObj = item->textObj; }
+            if (item->imageObj) { displayItem.imageObj = item->imageObj; }
 	    Ttk_RebindSublayout(layout, &displayItem);
 	    Ttk_PlaceLayout(layout, ItemState(tv,item), itemBox);
 	    element = Ttk_IdentifyElement(layout, x, y);
@@ -2345,7 +2344,9 @@ static int TreeviewIdentifyCommand(
 		return TCL_OK;
 	    }
 
-	    PrepareItem(tv, item, &displayItem); /*@@@ FIX: fill in -text,etc */
+	    PrepareItem(tv, item, &displayItem);
+            if (item->textObj) { displayItem.textObj = item->textObj; }
+            if (item->imageObj) { displayItem.imageObj = item->imageObj; }
 	    Ttk_RebindSublayout(layout, &displayItem);
 	    Ttk_PlaceLayout(layout, ItemState(tv,item), bbox);
 	    element = Ttk_IdentifyElement(layout, x, y);
@@ -2680,7 +2681,7 @@ static int TreeviewDeleteCommand(
 {
     Treeview *tv = recordPtr;
     TreeItem **items, *delq;
-    int i;
+    int i, selItemDeleted = 0;
 
     if (objc != 3) {
 	Tcl_WrongNumArgs(interp, 2, objv, "items");
@@ -2707,6 +2708,9 @@ static int TreeviewDeleteCommand(
      */
     delq = 0;
     for (i=0; items[i]; ++i) {
+        if (items[i]->state & TTK_STATE_SELECTED) {
+            selItemDeleted = 1;
+        }
 	delq = DeleteItems(items[i], delq);
     }
 
@@ -2723,6 +2727,9 @@ static int TreeviewDeleteCommand(
     }
 
     ckfree(items);
+    if (selItemDeleted) {
+        TtkSendVirtualEvent(tv->core.tkwin, "TreeviewSelect");
+    }
     TtkRedisplayWidget(&tv->core);
     return TCL_OK;
 }
@@ -2841,10 +2848,10 @@ static int TreeviewSeeCommand(
      */
     rowNumber = RowNumber(tv, item);
     if (rowNumber < tv->tree.yscroll.first) {
-	TtkScrollTo(tv->tree.yscrollHandle, rowNumber);
+	TtkScrollTo(tv->tree.yscrollHandle, rowNumber, 1);
     } else if (rowNumber >= tv->tree.yscroll.last) {
 	TtkScrollTo(tv->tree.yscrollHandle,
-	    tv->tree.yscroll.first + (1+rowNumber - tv->tree.yscroll.last));
+	    tv->tree.yscroll.first + (1+rowNumber - tv->tree.yscroll.last), 1);
     }
 
     return TCL_OK;
@@ -2882,7 +2889,6 @@ static int TreeviewDragCommand(
 	int right = left + c->width;
 	if (c == column) {
 	    DragColumn(tv, i, newx - right);
-	    /* ASSERT: SLACKINVARIANT */
 	    TtkRedisplayWidget(&tv->core);
 	    return TCL_OK;
 	}
@@ -2893,6 +2899,20 @@ static int TreeviewDragCommand(
 	"column %s is not displayed", Tcl_GetString(objv[2])));
     Tcl_SetErrorCode(interp, "TTK", "TREE", "COLUMN_INVISIBLE", NULL);
     return TCL_ERROR;
+}
+
+static int TreeviewDropCommand(
+    void *recordPtr, Tcl_Interp *interp, int objc, Tcl_Obj *const objv[])
+{
+    Treeview *tv = recordPtr;
+
+    if (objc != 2) {
+	Tcl_WrongNumArgs(interp, 1, objv, "drop");
+	return TCL_ERROR;
+    }
+    ResizeColumns(tv, TreeWidth(tv));
+    TtkRedisplayWidget(&tv->core);
+    return TCL_OK;
 }
 
 /*------------------------------------------------------------------------
@@ -3244,6 +3264,7 @@ static const Ttk_Ensemble TreeviewCommands[] = {
     { "delete", 	TreeviewDeleteCommand,0 },
     { "detach", 	TreeviewDetachCommand,0 },
     { "drag",   	TreeviewDragCommand,0 },
+    { "drop",   	TreeviewDropCommand,0 },
     { "exists", 	TreeviewExistsCommand,0 },
     { "focus", 		TreeviewFocusCommand,0 },
     { "heading", 	TreeviewHeadingCommand,0 },

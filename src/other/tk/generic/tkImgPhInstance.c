@@ -19,6 +19,9 @@
  */
 
 #include "tkImgPhoto.h"
+#ifdef MAC_OSX_TK
+#define TKPUTIMAGE_CAN_BLEND
+#endif
 
 /*
  * Declaration for internal Xlib function used here:
@@ -30,8 +33,10 @@ extern int		_XInitImageFuncPtrs(XImage *image);
  * Forward declarations
  */
 
+#ifndef TKPUTIMAGE_CAN_BLEND
 static void		BlendComplexAlpha(XImage *bgImg, PhotoInstance *iPtr,
 			    int xOffset, int yOffset, int width, int height);
+#endif
 static int		IsValidPalette(PhotoInstance *instancePtr,
 			    const char *palette);
 static int		CountBits(pixel mask);
@@ -304,7 +309,7 @@ TkImgPhotoGet(
     nGreen = nBlue = 0;
     mono = 1;
     instancePtr->visualInfo = *visInfoPtr;
-    switch (visInfoPtr->class) {
+    switch (visInfoPtr->c_class) {
     case DirectColor:
     case TrueColor:
 	nRed = 1 << CountBits(visInfoPtr->red_mask);
@@ -404,9 +409,12 @@ TkImgPhotoGet(
  *
  *	Note that Win32 pre-defines those operations that we really need.
  *
+ *	Note that on MacOS, if the background comes from a Retina display
+ *	then it will be twice as wide and twice as high as the photoimage.
+ *
  *----------------------------------------------------------------------
  */
-
+#ifndef TKPUTIMAGE_CAN_BLEND
 #ifndef _WIN32
 #define GetRValue(rgb)	(UCHAR(((rgb) & red_mask) >> red_shift))
 #define GetGValue(rgb)	(UCHAR(((rgb) & green_mask) >> green_shift))
@@ -481,7 +489,7 @@ BlendComplexAlpha(
      * optimized.
      */
 
-#if !(defined(_WIN32) || defined(MAC_OSX_TK))
+#if !defined(_WIN32)
     if (bgImg->depth < 24) {
 	unsigned char red_mlen, green_mlen, blue_mlen;
 
@@ -529,7 +537,7 @@ BlendComplexAlpha(
 	}
 	return;
     }
-#endif /* !_WIN32 && !MAC_OSX_TK */
+#endif /* !_WIN32 */
 
     for (y = 0; y < height; y++) {
 	line = (y + yOffset) * iPtr->masterPtr->width;
@@ -572,6 +580,7 @@ BlendComplexAlpha(
     }
 #undef ALPHA_BLEND
 }
+#endif /* TKPUTIMAGE_CAN_BLEND */
 
 /*
  *----------------------------------------------------------------------
@@ -603,7 +612,9 @@ TkImgPhotoDisplay(
 				 * to imageX and imageY. */
 {
     PhotoInstance *instancePtr = clientData;
+#ifndef TKPUTIMAGE_CAN_BLEND
     XVisualInfo visInfo = instancePtr->visualInfo;
+#endif
 
     /*
      * If there's no pixmap, it means that an error occurred while creating
@@ -614,9 +625,27 @@ TkImgPhotoDisplay(
 	return;
     }
 
+#ifdef TKPUTIMAGE_CAN_BLEND
+    /*
+     * If TkPutImage can handle RGBA Ximages directly there is
+     * no need to call XGetImage or to do the Porter-Duff compositing by hand.
+     */
+
+    unsigned char *rgbaPixels = instancePtr->masterPtr->pix32;
+    XImage *photo = XCreateImage(display, NULL, 32, ZPixmap, 0, (char*)rgbaPixels,
+				 (unsigned int)instancePtr->width,
+				 (unsigned int)instancePtr->height,
+				 0, (unsigned int)(4 * instancePtr->width));
+    TkPutImage(NULL, 0, display, drawable, instancePtr->gc,
+	       photo, imageX, imageY, drawableX, drawableY,
+	       (unsigned int) width, (unsigned int) height);
+    photo->data = NULL;
+    XDestroyImage(photo);
+#else
+
     if ((instancePtr->masterPtr->flags & COMPLEX_ALPHA)
 	    && visInfo.depth >= 15
-	    && (visInfo.class == DirectColor || visInfo.class == TrueColor)) {
+	    && (visInfo.c_class == DirectColor || visInfo.c_class == TrueColor)) {
 	Tk_ErrorHandler handler;
 	XImage *bgImg = NULL;
 
@@ -635,7 +664,9 @@ TkImgPhotoDisplay(
 		(unsigned int)width, (unsigned int)height, AllPlanes, ZPixmap);
 	if (bgImg == NULL) {
 	    Tk_DeleteErrorHandler(handler);
-	    /* We failed to get the image so draw without blending alpha. It's the best we can do */
+	    /* We failed to get the image, so draw without blending alpha.
+	     * It's the best we can do.
+	     */
 	    goto fallBack;
 	}
 
@@ -669,7 +700,8 @@ TkImgPhotoDisplay(
 	XSetClipMask(display, instancePtr->gc, None);
 	XSetClipOrigin(display, instancePtr->gc, 0, 0);
     }
-    XFlush(display);
+    (void)XFlush(display);
+#endif
 }
 
 /*
@@ -700,8 +732,7 @@ TkImgPhotoFree(
     PhotoInstance *instancePtr = clientData;
     ColorTable *colorPtr;
 
-    instancePtr->refCount -= 1;
-    if (instancePtr->refCount > 0) {
+    if (instancePtr->refCount-- > 1) {
 	return;
     }
 
@@ -917,7 +948,7 @@ IsValidPalette(
 	mono = 0;
     }
 
-    switch (instancePtr->visualInfo.class) {
+    switch (instancePtr->visualInfo.c_class) {
     case DirectColor:
     case TrueColor:
 	if ((nRed > (1 << CountBits(instancePtr->visualInfo.red_mask)))
@@ -1182,8 +1213,8 @@ AllocateColors(
 	 * store them in *colors.
 	 */
 
-	if ((colorPtr->visualInfo.class == DirectColor)
-		|| (colorPtr->visualInfo.class == TrueColor)) {
+	if ((colorPtr->visualInfo.c_class == DirectColor)
+		|| (colorPtr->visualInfo.c_class == TrueColor)) {
 
 	    /*
 	     * Direct/True Color: allocate shades of red, green, blue
@@ -1241,7 +1272,7 @@ AllocateColors(
 		}
 	    } else {
 		/*
-		 * Monochrome display - allocate the shades of grey we want.
+		 * Monochrome display - allocate the shades of gray we want.
 		 */
 
 		for (i = 0; i < numColors; ++i) {
@@ -1337,8 +1368,8 @@ AllocateColors(
 	 */
 
 #ifndef _WIN32
-	if ((colorPtr->visualInfo.class != DirectColor)
-		&& (colorPtr->visualInfo.class != TrueColor)) {
+	if ((colorPtr->visualInfo.c_class != DirectColor)
+		&& (colorPtr->visualInfo.c_class != TrueColor)) {
 	    colorPtr->flags |= MAP_COLORS;
 	}
 #endif /* _WIN32 */
@@ -1364,8 +1395,8 @@ AllocateColors(
 	} else {
 	    g = (i * (nGreen - 1) + 127) / 255;
 	    b = (i * (nBlue - 1) + 127) / 255;
-	    if ((colorPtr->visualInfo.class == DirectColor)
-		    || (colorPtr->visualInfo.class == TrueColor)) {
+	    if ((colorPtr->visualInfo.c_class == DirectColor)
+		    || (colorPtr->visualInfo.c_class == TrueColor)) {
 		colorPtr->redValues[i] =
 			colors[r].pixel & colorPtr->visualInfo.red_mask;
 		colorPtr->greenValues[i] =
@@ -1559,7 +1590,7 @@ TkImgDisposeInstance(
     if (instancePtr->pixels != None) {
 	Tk_FreePixmap(instancePtr->display, instancePtr->pixels);
     }
-    if (instancePtr->gc != None) {
+    if (instancePtr->gc != NULL) {
 	Tk_FreeGC(instancePtr->display, instancePtr->gc);
     }
     if (instancePtr->imagePtr != NULL) {
@@ -1623,8 +1654,8 @@ TkImgDitherInstance(
      * DirectColor with many colors).
      */
 
-    if ((colorPtr->visualInfo.class == DirectColor)
-	    || (colorPtr->visualInfo.class == TrueColor)) {
+    if ((colorPtr->visualInfo.c_class == DirectColor)
+	    || (colorPtr->visualInfo.c_class == TrueColor)) {
 	int nRed, nGreen, nBlue, result;
 
 	result = sscanf(colorPtr->id.palette, "%d/%d/%d", &nRed,

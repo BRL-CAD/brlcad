@@ -564,13 +564,13 @@ ParseExpr(
 {
     OpNode *nodes = NULL;	/* Pointer to the OpNode storage array where
 				 * we build the parse tree. */
-    int nodesAvailable = 64;	/* Initial size of the storage array. This
+    unsigned int nodesAvailable = 64; /* Initial size of the storage array. This
 				 * value establishes a minimum tree memory
 				 * cost of only about 1 kibyte, and is large
 				 * enough for most expressions to parse with
 				 * no need for array growth and
 				 * reallocation. */
-    int nodesUsed = 0;		/* Number of OpNodes filled. */
+    unsigned int nodesUsed = 0;	/* Number of OpNodes filled. */
     int scanned = 0;		/* Capture number of byte scanned by parsing
 				 * routines. */
     int lastParsed;		/* Stores info about what the lexeme parsed
@@ -662,7 +662,7 @@ ParseExpr(
 	 */
 
 	if (nodesUsed >= nodesAvailable) {
-	    int size = nodesUsed * 2;
+	    unsigned int size = nodesUsed * 2;
 	    OpNode *newPtr = NULL;
 
 	    do {
@@ -1885,7 +1885,7 @@ ParseLexeme(
 {
     const char *end;
     int scanned;
-    Tcl_UniChar ch;
+    Tcl_UniChar ch = 0;
     Tcl_Obj *literal = NULL;
     unsigned char byte;
 
@@ -2064,13 +2064,13 @@ ParseLexeme(
 
     if (!TclIsBareword(*start) || *start == '_') {
 	if (Tcl_UtfCharComplete(start, numBytes)) {
-	    scanned = Tcl_UtfToUniChar(start, &ch);
+	    scanned = TclUtfToUniChar(start, &ch);
 	} else {
 	    char utfBytes[TCL_UTF_MAX];
 
 	    memcpy(utfBytes, start, (size_t) numBytes);
 	    utfBytes[numBytes] = '\0';
-	    scanned = Tcl_UtfToUniChar(utfBytes, &ch);
+	    scanned = TclUtfToUniChar(utfBytes, &ch);
 	}
 	*lexemePtr = INVALID;
 	Tcl_DecrRefCount(literal);

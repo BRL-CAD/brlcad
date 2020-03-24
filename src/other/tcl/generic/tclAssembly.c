@@ -137,6 +137,8 @@ typedef enum TalInstType {
 				 * ranges */
     ASSEM_BOOL,			/* One Boolean operand */
     ASSEM_BOOL_LVT4,		/* One Boolean, one 4-byte LVT ref. */
+    ASSEM_CLOCK_READ,		/* 1-byte unsigned-integer case number, in the
+				 * range 0-3 */
     ASSEM_CONCAT1,		/* 1-byte unsigned-integer operand count, must
 				 * be strictly positive, consumes N, produces
 				 * 1 */
@@ -285,8 +287,7 @@ static int		GetIntegerOperand(AssemblyEnv*, Tcl_Token**, int*);
 static int		GetNextOperand(AssemblyEnv*, Tcl_Token**, Tcl_Obj**);
 static void		LookForFreshCatches(BasicBlock*, BasicBlock**);
 static void		MoveCodeForJumps(AssemblyEnv*, int);
-static void		MoveExceptionRangesToBasicBlock(AssemblyEnv*, int,
-			    int);
+static void		MoveExceptionRangesToBasicBlock(AssemblyEnv*, int);
 static AssemblyEnv*	NewAssemblyEnv(CompileEnv*, int);
 static int		ProcessCatches(AssemblyEnv*);
 static int		ProcessCatchesInBasicBlock(AssemblyEnv*, BasicBlock*,
@@ -350,6 +351,7 @@ static const TalInstDesc TalInstructionTable[] = {
     {"bitnot",		ASSEM_1BYTE,	INST_BITNOT,		1,	1},
     {"bitor",		ASSEM_1BYTE,	INST_BITOR,		2,	1},
     {"bitxor",		ASSEM_1BYTE,	INST_BITXOR,		2,	1},
+    {"clockRead",	ASSEM_CLOCK_READ, INST_CLOCK_READ,	0,	1},
     {"concat",		ASSEM_CONCAT1,	INST_STR_CONCAT1,	INT_MIN,1},
     {"concatStk",	ASSEM_LIST,	INST_CONCAT_STK,	INT_MIN,1},
     {"coroName",	ASSEM_1BYTE,	INST_COROUTINE_NAME,	0,	1},
@@ -510,6 +512,7 @@ static const unsigned char NonThrowingByteCodes[] = {
     INST_PUSH1, INST_PUSH4, INST_POP, INST_DUP,			/* 1-4 */
     INST_JUMP1, INST_JUMP4,					/* 34-35 */
     INST_END_CATCH, INST_PUSH_RESULT, INST_PUSH_RETURN_CODE,	/* 70-72 */
+    INST_STR_EQ, INST_STR_NEQ, INST_STR_CMP, INST_STR_LEN,	/* 73-76 */
     INST_LIST,							/* 79 */
     INST_OVER,							/* 95 */
     INST_PUSH_RETURN_OPTIONS,					/* 108 */
@@ -780,6 +783,7 @@ TclNRAssembleObjCmd(
     Tcl_Obj* backtrace;		/* Object where extra error information is
 				 * constructed. */
 
+    (void)dummy;
     if (objc != 2) {
 	Tcl_WrongNumArgs(interp, 1, objv, "bytecodeList");
 	return TCL_ERROR;
@@ -955,7 +959,7 @@ TclCompileAssembleCmd(
     int numCommands = envPtr->numCommands;
     int offset = envPtr->codeNext - envPtr->codeStart;
     int depth = envPtr->currStackDepth;
-
+    (void)cmdPtr;
     /*
      * Make sure that the command has a single arg that is a simple word.
      */
@@ -1361,6 +1365,23 @@ AssembleOneLine(
 	}
 	BBEmitInstInt1(assemEnvPtr, tblIdx, opnd, 0);
 	TclEmitInt4(localVar, envPtr);
+	break;
+
+    case ASSEM_CLOCK_READ:
+	if (parsePtr->numWords != 2) {
+	    Tcl_WrongNumArgs(interp, 1, &instNameObj, "imm8");
+	    goto cleanup;
+	}
+	if (GetIntegerOperand(assemEnvPtr, &tokenPtr, &opnd) != TCL_OK) {
+	    goto cleanup;
+	}
+	if (opnd < 0 || opnd > 3) {
+	    Tcl_SetObjResult(interp,
+			     Tcl_NewStringObj("operand must be [0..3]", -1));
+	    Tcl_SetErrorCode(interp, "TCL", "ASSEM", "OPERAND<0,>3", NULL);
+	    goto cleanup;
+	}
+	BBEmitInstInt1(assemEnvPtr, tblIdx, opnd, opnd);
 	break;
 
     case ASSEM_CONCAT1:
@@ -1787,7 +1808,6 @@ CompileEmbeddedScript(
 
     int savedStackDepth = envPtr->currStackDepth;
     int savedMaxStackDepth = envPtr->maxStackDepth;
-    int savedCodeIndex = envPtr->codeNext - envPtr->codeStart;
     int savedExceptArrayNext = envPtr->exceptArrayNext;
 
     envPtr->currStackDepth = 0;
@@ -1820,8 +1840,7 @@ CompileEmbeddedScript(
      * need to be fixed up once the stack depth is known.
      */
 
-    MoveExceptionRangesToBasicBlock(assemEnvPtr, savedCodeIndex,
-	    savedExceptArrayNext);
+    MoveExceptionRangesToBasicBlock(assemEnvPtr, savedExceptArrayNext);
 
     /*
      * Flush the current basic block.
@@ -1880,7 +1899,6 @@ SyncStackDepth(
 static void
 MoveExceptionRangesToBasicBlock(
     AssemblyEnv* assemEnvPtr,	/* Assembly environment */
-    int savedCodeIndex,		/* Start of the embedded code */
     int savedExceptArrayNext)	/* Saved index of the end of the exception
 				 * range array */
 {
@@ -2228,23 +2246,24 @@ GetListIndexOperand(
     Tcl_Token* tokenPtr = *tokenPtrPtr;
 				/* INOUT: Pointer to the next token in the
 				 * source code */
-    Tcl_Obj* intObj;		/* Integer from the source code */
-    int status;			/* Tcl status return */
+    Tcl_Obj *value;
+    int status;
 
-    /*
-     * Extract the next token as a string.
-     */
-
-    if (GetNextOperand(assemEnvPtr, tokenPtrPtr, &intObj) != TCL_OK) {
+    /* General operand validity check */
+    if (GetNextOperand(assemEnvPtr, tokenPtrPtr, &value) != TCL_OK) {
 	return TCL_ERROR;
     }
 
+    /* Convert to an integer, advance to the next token and return. */
     /*
-     * Convert to an integer, advance to the next token and return.
+     * NOTE: Indexing a list with an index before it yields the
+     * same result as indexing after it, and might be more easily portable
+     * when list size limits grow.
      */
+    status = TclIndexEncode(interp, value,
+	    TCL_INDEX_BEFORE,TCL_INDEX_BEFORE, result);
 
-    status = TclGetIntForIndex(interp, intObj, -2, result);
-    Tcl_DecrRefCount(intObj);
+    Tcl_DecrRefCount(value);
     *tokenPtrPtr = TokenAfter(tokenPtr);
     return status;
 }
@@ -3984,10 +4003,12 @@ UnstackExpiredCatches(
 
     while (catchDepth > bbPtr->catchDepth) {
 	--catchDepth;
-	range = envPtr->exceptArrayPtr + catchIndices[catchDepth];
-	range->numCodeBytes = bbPtr->startOffset - range->codeOffset;
-	catches[catchDepth] = NULL;
-	catchIndices[catchDepth] = -1;
+	if (catches[catchDepth] != NULL) {
+	    range = envPtr->exceptArrayPtr + catchIndices[catchDepth];
+	    range->numCodeBytes = bbPtr->startOffset - range->codeOffset;
+	    catches[catchDepth] = NULL;
+	    catchIndices[catchDepth] = -1;
+	}
     }
 
     /*
@@ -4286,6 +4307,8 @@ DupAssembleCodeInternalRep(
     Tcl_Obj *srcPtr,
     Tcl_Obj *copyPtr)
 {
+    (void)srcPtr;
+    (void)copyPtr;
     return;
 }
 

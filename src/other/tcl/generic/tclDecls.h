@@ -1816,6 +1816,25 @@ EXTERN int		Tcl_FSUnloadFile(Tcl_Interp *interp,
 EXTERN void		Tcl_ZlibStreamSetCompressionDictionary(
 				Tcl_ZlibStream zhandle,
 				Tcl_Obj *compressionDictionaryObj);
+/* Slot 631 is reserved */
+/* Slot 632 is reserved */
+/* Slot 633 is reserved */
+/* Slot 634 is reserved */
+/* Slot 635 is reserved */
+/* Slot 636 is reserved */
+/* Slot 637 is reserved */
+/* Slot 638 is reserved */
+/* Slot 639 is reserved */
+/* Slot 640 is reserved */
+/* Slot 641 is reserved */
+/* Slot 642 is reserved */
+/* Slot 643 is reserved */
+/* Slot 644 is reserved */
+/* Slot 645 is reserved */
+/* Slot 646 is reserved */
+/* Slot 647 is reserved */
+/* 648 */
+EXTERN void		TclUnusedStubEntry(void);
 
 typedef struct {
     const struct TclPlatStubs *tclPlatStubs;
@@ -2482,6 +2501,24 @@ typedef struct TclStubs {
     void * (*tcl_FindSymbol) (Tcl_Interp *interp, Tcl_LoadHandle handle, const char *symbol); /* 628 */
     int (*tcl_FSUnloadFile) (Tcl_Interp *interp, Tcl_LoadHandle handlePtr); /* 629 */
     void (*tcl_ZlibStreamSetCompressionDictionary) (Tcl_ZlibStream zhandle, Tcl_Obj *compressionDictionaryObj); /* 630 */
+    void (*reserved631)(void);
+    void (*reserved632)(void);
+    void (*reserved633)(void);
+    void (*reserved634)(void);
+    void (*reserved635)(void);
+    void (*reserved636)(void);
+    void (*reserved637)(void);
+    void (*reserved638)(void);
+    void (*reserved639)(void);
+    void (*reserved640)(void);
+    void (*reserved641)(void);
+    void (*reserved642)(void);
+    void (*reserved643)(void);
+    void (*reserved644)(void);
+    void (*reserved645)(void);
+    void (*reserved646)(void);
+    void (*reserved647)(void);
+    void (*tclUnusedStubEntry) (void); /* 648 */
 } TclStubs;
 
 extern const TclStubs *tclStubsPtr;
@@ -3774,10 +3811,31 @@ extern const TclStubs *tclStubsPtr;
 	(tclStubsPtr->tcl_FSUnloadFile) /* 629 */
 #define Tcl_ZlibStreamSetCompressionDictionary \
 	(tclStubsPtr->tcl_ZlibStreamSetCompressionDictionary) /* 630 */
+/* Slot 631 is reserved */
+/* Slot 632 is reserved */
+/* Slot 633 is reserved */
+/* Slot 634 is reserved */
+/* Slot 635 is reserved */
+/* Slot 636 is reserved */
+/* Slot 637 is reserved */
+/* Slot 638 is reserved */
+/* Slot 639 is reserved */
+/* Slot 640 is reserved */
+/* Slot 641 is reserved */
+/* Slot 642 is reserved */
+/* Slot 643 is reserved */
+/* Slot 644 is reserved */
+/* Slot 645 is reserved */
+/* Slot 646 is reserved */
+/* Slot 647 is reserved */
+#define TclUnusedStubEntry \
+	(tclStubsPtr->tclUnusedStubEntry) /* 648 */
 
 #endif /* defined(USE_TCL_STUBS) */
 
 /* !END!: Do not edit above this line. */
+
+#undef TclUnusedStubEntry
 
 #if defined(USE_TCL_STUBS)
 #   undef Tcl_CreateInterp
@@ -3788,7 +3846,6 @@ extern const TclStubs *tclStubsPtr;
 #   undef Tcl_SetVar
 #   undef Tcl_ObjSetVar2
 #   undef Tcl_StaticPackage
-#   undef TclFSGetNativePath
 #   define Tcl_CreateInterp() (tclStubsPtr->tcl_CreateInterp())
 #   define Tcl_GetStringResult(interp) (tclStubsPtr->tcl_GetStringResult(interp))
 #   define Tcl_Init(interp) (tclStubsPtr->tcl_Init(interp))

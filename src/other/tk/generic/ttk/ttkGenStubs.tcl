@@ -18,8 +18,6 @@
 #	+ Allow trailing semicolon in function declarations
 #
 
-package require Tcl 8.4
-
 namespace eval genStubs {
     # libraryName --
     #

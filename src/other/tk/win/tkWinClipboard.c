@@ -55,9 +55,14 @@ TkSelGetSelection(
     Tcl_Encoding encoding;
     int result, locale, noBackslash = 0;
 
+    if (!OpenClipboard(NULL)) {
+        Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+	        "clipboard cannot be opened, another application grabbed it"));
+        Tcl_SetErrorCode(interp, "TK", "CLIPBOARD", "BUSY", NULL);
+        return TCL_ERROR;
+    }
     if ((selection != Tk_InternAtom(tkwin, "CLIPBOARD"))
-	    || (target != XA_STRING)
-	    || !OpenClipboard(NULL)) {
+	    || (target != XA_STRING)) {
 	goto error;
     }
 
@@ -74,9 +79,7 @@ TkSelGetSelection(
 	    goto error;
 	}
 	data = GlobalLock(handle);
-	Tcl_DStringInit(&ds);
-	Tcl_UniCharToUtfDString((Tcl_UniChar *)data,
-		Tcl_UniCharLen((Tcl_UniChar *)data), &ds);
+	Tcl_WinTCharToUtf((LPCTSTR)data, -1, &ds);
 	GlobalUnlock(handle);
     } else if (IsClipboardFormatAvailable(CF_TEXT)) {
 	/*
@@ -146,15 +149,15 @@ TkSelGetSelection(
 	if (drop->fWide) {
 	    WCHAR *fname = (WCHAR *) ((char *) drop + drop->pFiles);
 	    Tcl_DString dsTmp;
-	    int count = 0, len;
+	    int count = 0;
+	    size_t len;
 
 	    while (*fname != 0) {
 		if (count) {
 		    Tcl_DStringAppend(&ds, "\n", 1);
 		}
-		len = Tcl_UniCharLen((Tcl_UniChar *) fname);
-		Tcl_DStringInit(&dsTmp);
-		Tcl_UniCharToUtfDString((Tcl_UniChar *) fname, len, &dsTmp);
+		len = wcslen(fname);
+		Tcl_WinTCharToUtf((LPCTSTR)fname, len * sizeof(WCHAR), &dsTmp);
 		Tcl_DStringAppend(&ds, Tcl_DStringValue(&dsTmp),
 			Tcl_DStringLength(&dsTmp));
 		Tcl_DStringFree(&dsTmp);
@@ -324,43 +327,21 @@ TkWinClipboardRender(
     }
     *buffer = '\0';
 
-    /*
-     * Depending on the platform, turn the data into Unicode or the system
-     * encoding before placing it on the clipboard.
-     */
-
-#ifdef UNICODE
-	Tcl_DStringInit(&ds);
-	Tcl_UtfToUniCharDString(rawText, -1, &ds);
-	ckfree(rawText);
-	handle = GlobalAlloc(GMEM_MOVEABLE|GMEM_DDESHARE,
-		(unsigned) Tcl_DStringLength(&ds) + 2);
-	if (!handle) {
-	    Tcl_DStringFree(&ds);
-	    return;
-	}
-	buffer = GlobalLock(handle);
-	memcpy(buffer, Tcl_DStringValue(&ds),
-		(unsigned) Tcl_DStringLength(&ds) + 2);
-	GlobalUnlock(handle);
+    Tcl_DStringInit(&ds);
+    Tcl_WinUtfToTChar(rawText, -1, &ds);
+    ckfree(rawText);
+    handle = GlobalAlloc(GMEM_MOVEABLE|GMEM_DDESHARE,
+	    Tcl_DStringLength(&ds) + 2);
+    if (!handle) {
 	Tcl_DStringFree(&ds);
-	SetClipboardData(CF_UNICODETEXT, handle);
-#else
-	Tcl_UtfToExternalDString(NULL, rawText, -1, &ds);
-	ckfree(rawText);
-	handle = GlobalAlloc(GMEM_MOVEABLE|GMEM_DDESHARE,
-		(unsigned) Tcl_DStringLength(&ds) + 1);
-	if (!handle) {
-	    Tcl_DStringFree(&ds);
-	    return;
-	}
-	buffer = GlobalLock(handle);
-	memcpy(buffer, Tcl_DStringValue(&ds),
-		(unsigned) Tcl_DStringLength(&ds) + 1);
-	GlobalUnlock(handle);
-	Tcl_DStringFree(&ds);
-	SetClipboardData(CF_TEXT, handle);
-#endif
+	return;
+    }
+    buffer = GlobalLock(handle);
+    memcpy(buffer, Tcl_DStringValue(&ds),
+	    Tcl_DStringLength(&ds) + 2);
+    GlobalUnlock(handle);
+    Tcl_DStringFree(&ds);
+    SetClipboardData(CF_UNICODETEXT, handle);
 }
 
 /*
@@ -414,16 +395,7 @@ UpdateClipboard(
     OpenClipboard(hwnd);
     EmptyClipboard();
 
-    /*
-     * CF_UNICODETEXT is only supported on NT, but it it is prefered when
-     * possible.
-     */
-
-    if (TkWinGetPlatformId() != VER_PLATFORM_WIN32_WINDOWS) {
-	SetClipboardData(CF_UNICODETEXT, NULL);
-    } else {
-	SetClipboardData(CF_TEXT, NULL);
-    }
+    SetClipboardData(CF_UNICODETEXT, NULL);
     CloseClipboard();
     TkWinUpdatingClipboard(FALSE);
 }

@@ -130,7 +130,7 @@ Tcl_LoadObjCmd(
     Tcl_PackageInitProc *initProc;
     const char *p, *fullFileName, *packageName;
     Tcl_LoadHandle loadHandle;
-    Tcl_UniChar ch;
+    Tcl_UniChar ch = 0;
     unsigned len;
     int index, flags = 0;
     Tcl_Obj *const *savedobjv = objv;
@@ -336,7 +336,7 @@ Tcl_LoadObjCmd(
 		}
 #endif /* __CYGWIN__ */
 		for (p = pkgGuess; *p != 0; p += offset) {
-		    offset = Tcl_UtfToUniChar(p, &ch);
+		    offset = TclUtfToUniChar(p, &ch);
 		    if ((ch > 0x100)
 			    || !(isalpha(UCHAR(ch)) /* INTL: ISO only */
 				    || (UCHAR(ch) == '_'))) {

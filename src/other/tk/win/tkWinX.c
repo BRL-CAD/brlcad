@@ -36,6 +36,15 @@
 #include <zmouse.h>
 
 /*
+ * WM_MOUSEHWHEEL is normally defined by Winuser.h for Vista/2008 or later,
+ * but is also usable on 2000/XP if IntelliPoint drivers are installed.
+ */
+
+#ifndef WM_MOUSEHWHEEL
+#define WM_MOUSEHWHEEL 0x020E
+#endif
+
+/*
  * imm.h is needed by HandleIMEComposition
  */
 
@@ -60,7 +69,7 @@
 static const char winScreenName[] = ":0"; /* Default name of windows display. */
 static HINSTANCE tkInstance = NULL;	/* Application instance handle. */
 static int childClassInitialized;	/* Registered child class? */
-static WNDCLASS childClass;		/* Window class for child windows. */
+static WNDCLASSW childClass;		/* Window class for child windows. */
 static int tkPlatformId = 0;		/* version of Windows platform */
 static int tkWinTheme = 0;		/* See TkWinGetPlatformTheme */
 static Tcl_Encoding keyInputEncoding = NULL;
@@ -77,10 +86,15 @@ static Tcl_Encoding unicodeEncoding = NULL;
  * specific date for threads.
  */
 
-typedef struct ThreadSpecificData {
+typedef struct {
     TkDisplay *winDisplay;	/* TkDisplay structure that represents Windows
 				 * screen. */
     int updatingClipboard;	/* If 1, we are updating the clipboard. */
+    int surrogateBuffer;	/* Buffer for first of surrogate pair. */
+    DWORD vWheelTickPrev;	/* For high resolution wheels (vertical). */
+    DWORD hWheelTickPrev;	/* For high resolution wheels (horizontal). */
+    short vWheelAcc;		/* For high resolution wheels (vertical). */
+    short hWheelAcc;		/* For high resolution wheels (horizontal). */
 } ThreadSpecificData;
 static Tcl_ThreadDataKey dataKey;
 
@@ -91,7 +105,7 @@ static Tcl_ThreadDataKey dataKey;
 static void		GenerateXEvent(HWND hwnd, UINT message,
 			    WPARAM wParam, LPARAM lParam);
 static unsigned int	GetState(UINT message, WPARAM wParam, LPARAM lParam);
-static void 		GetTranslatedKey(XKeyEvent *xkey);
+static void 		GetTranslatedKey(XKeyEvent *xkey, UINT type);
 static void		UpdateInputLanguage(int charset);
 static int		HandleIMEComposition(HWND hwnd, LPARAM lParam);
 
@@ -124,15 +138,12 @@ TkGetServerInfo(
     OSVERSIONINFOW os;
 
     if (!buffer[0]) {
-	HANDLE handle = LoadLibraryW(L"NTDLL");
+	HANDLE handle = GetModuleHandleW(L"NTDLL");
 	int(__stdcall *getversion)(void *) =
 		(int(__stdcall *)(void *))GetProcAddress(handle, "RtlGetVersion");
 	os.dwOSVersionInfoSize = sizeof(OSVERSIONINFOW);
 	if (!getversion || getversion(&os)) {
 	    GetVersionExW(&os);
-	}
-	if (handle) {
-	    FreeLibrary(handle);
 	}
 	/* Write the first character last, preventing multi-thread issues. */
 	sprintf(buffer+1, "indows %d.%d %d %s", (int)os.dwMajorVersion,
@@ -168,7 +179,7 @@ HINSTANCE
 Tk_GetHINSTANCE(void)
 {
     if (tkInstance == NULL) {
-	tkInstance = GetModuleHandle(NULL);
+	tkInstance = GetModuleHandleW(NULL);
     }
     return tkInstance;
 }
@@ -248,7 +259,7 @@ TkWinXInit(
     childClass.hIcon = NULL;
     childClass.hCursor = NULL;
 
-    if (!RegisterClass(&childClass)) {
+    if (!RegisterClassW(&childClass)) {
 	Tcl_Panic("Unable to register TkChild class");
     }
 
@@ -256,9 +267,9 @@ TkWinXInit(
      * Initialize input language info
      */
 
-    if (GetLocaleInfo(LANGIDFROMLCID(PTR2INT(GetKeyboardLayout(0))),
+    if (GetLocaleInfoW(LANGIDFROMLCID(PTR2INT(GetKeyboardLayout(0))),
 	       LOCALE_IDEFAULTANSICODEPAGE | LOCALE_RETURN_NUMBER,
-	       (LPTSTR) &lpCP, sizeof(lpCP)/sizeof(TCHAR))
+	       (LPWSTR) &lpCP, sizeof(lpCP)/sizeof(WCHAR))
 	    && TranslateCharsetInfo(INT2PTR(lpCP), &lpCs, TCI_SRCCODEPAGE)) {
 	UpdateInputLanguage((int) lpCs.ciCharset);
     }
@@ -298,7 +309,7 @@ TkWinXCleanup(
 
     if (childClassInitialized) {
 	childClassInitialized = 0;
-	UnregisterClass(TK_WIN_CHILD_CLASS_NAME, hInstance);
+	UnregisterClassW(TK_WIN_CHILD_CLASS_NAME, hInstance);
     }
 
     if (unicodeEncoding != NULL) {
@@ -354,17 +365,17 @@ TkWinGetPlatformId(void)
 	if ((os.dwPlatformId == VER_PLATFORM_WIN32_NT) &&
 		(os.dwMajorVersion == 5 && os.dwMinorVersion == 1)) {
 	    HKEY hKey;
-	    LPCTSTR szSubKey = TEXT("Control Panel\\Appearance");
-	    LPCTSTR szCurrent = TEXT("Current");
+	    LPCWSTR szSubKey = L"Control Panel\\Appearance";
+	    LPCWSTR szCurrent = L"Current";
 	    DWORD dwSize = 200;
 	    char pBuffer[200];
 
 	    memset(pBuffer, 0, dwSize);
-	    if (RegOpenKeyEx(HKEY_CURRENT_USER, szSubKey, 0L,
+	    if (RegOpenKeyExW(HKEY_CURRENT_USER, szSubKey, 0L,
 		    KEY_READ, &hKey) != ERROR_SUCCESS) {
 		tkWinTheme = TK_THEME_WIN_XP;
 	    } else {
-		RegQueryValueEx(hKey, szCurrent, NULL, NULL, (LPBYTE) pBuffer, &dwSize);
+		RegQueryValueExW(hKey, szCurrent, NULL, NULL, (LPBYTE) pBuffer, &dwSize);
 		RegCloseKey(hKey);
 		if (strcmp(pBuffer, "Windows Standard") == 0) {
 		    tkWinTheme = TK_THEME_WIN_CLASSIC;
@@ -490,30 +501,30 @@ TkWinDisplayChanged(
     screen->root_visual->visualid = 0;
     if (GetDeviceCaps(dc, RASTERCAPS) & RC_PALETTE) {
 	screen->root_visual->map_entries = GetDeviceCaps(dc, SIZEPALETTE);
-	screen->root_visual->class = PseudoColor;
+	screen->root_visual->c_class = PseudoColor;
 	screen->root_visual->red_mask = 0x0;
 	screen->root_visual->green_mask = 0x0;
 	screen->root_visual->blue_mask = 0x0;
     } else if (screen->root_depth == 4) {
-	screen->root_visual->class = StaticColor;
+	screen->root_visual->c_class = StaticColor;
 	screen->root_visual->map_entries = 16;
     } else if (screen->root_depth == 8) {
-	screen->root_visual->class = StaticColor;
+	screen->root_visual->c_class = StaticColor;
 	screen->root_visual->map_entries = 256;
     } else if (screen->root_depth == 12) {
-	screen->root_visual->class = TrueColor;
+	screen->root_visual->c_class = TrueColor;
 	screen->root_visual->map_entries = 32;
 	screen->root_visual->red_mask = 0xf0;
 	screen->root_visual->green_mask = 0xf000;
 	screen->root_visual->blue_mask = 0xf00000;
     } else if (screen->root_depth == 16) {
-	screen->root_visual->class = TrueColor;
+	screen->root_visual->c_class = TrueColor;
 	screen->root_visual->map_entries = 64;
 	screen->root_visual->red_mask = 0xf8;
 	screen->root_visual->green_mask = 0xfc00;
 	screen->root_visual->blue_mask = 0xf80000;
     } else if (screen->root_depth >= 24) {
-	screen->root_visual->class = TrueColor;
+	screen->root_visual->c_class = TrueColor;
 	screen->root_visual->map_entries = 256;
 	screen->root_visual->red_mask = 0xff;
 	screen->root_visual->green_mask = 0xff00;
@@ -555,6 +566,7 @@ TkpOpenDisplay(
     Display *display;
     ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
+    DWORD initialWheelTick;
 
     if (tsdPtr->winDisplay != NULL) {
 	if (!strcmp(tsdPtr->winDisplay->display->display_name, display_name)) {
@@ -585,7 +597,7 @@ TkpOpenDisplay(
 
     twdPtr = ckalloc(sizeof(TkWinDrawable));
     if (twdPtr == NULL) {
-	return None;
+	return NULL;
     }
     twdPtr->type = TWD_WINDOW;
     twdPtr->window.winPtr = NULL;
@@ -610,6 +622,16 @@ TkpOpenDisplay(
     ZeroMemory(tsdPtr->winDisplay, sizeof(TkDisplay));
     tsdPtr->winDisplay->display = display;
     tsdPtr->updatingClipboard = FALSE;
+    initialWheelTick = GetTickCount();
+    tsdPtr->vWheelTickPrev = initialWheelTick;
+    tsdPtr->hWheelTickPrev = initialWheelTick;
+    tsdPtr->vWheelAcc = 0;
+    tsdPtr->hWheelAcc = 0;
+
+    /*
+     * Key map info must be available immediately, because of "send event".
+     */
+    TkpInitKeymapInfo(tsdPtr->winDisplay);
 
     return tsdPtr->winDisplay;
 }
@@ -688,19 +710,6 @@ TkClipCleanup(
     TkDisplay *dispPtr)		/* Display associated with clipboard. */
 {
     if (dispPtr->clipWindow != NULL) {
-	/*
-	 * Force the clipboard to be rendered if we are the clipboard owner.
-	 */
-
-	HWND hwnd = Tk_GetHWND(Tk_WindowId(dispPtr->clipWindow));
-
-	if (GetClipboardOwner() == hwnd) {
-	    OpenClipboard(hwnd);
-	    EmptyClipboard();
-	    TkWinClipboardRender(dispPtr, CF_TEXT);
-	    CloseClipboard();
-	}
-
 	Tk_DeleteSelHandler(dispPtr->clipWindow, dispPtr->clipboardAtom,
 		dispPtr->applicationAtom);
 	Tk_DeleteSelHandler(dispPtr->clipWindow, dispPtr->clipboardAtom,
@@ -771,7 +780,7 @@ TkWinChildProc(
     case WM_IME_COMPOSITION:
 	result = 0;
 	if (HandleIMEComposition(hwnd, lParam) == 0) {
-	    result = DefWindowProc(hwnd, message, wParam, lParam);
+	    result = DefWindowProcW(hwnd, message, wParam, lParam);
 	}
 	break;
 
@@ -791,7 +800,7 @@ TkWinChildProc(
 
     case WM_PAINT:
 	GenerateXEvent(hwnd, message, wParam, lParam);
-	result = DefWindowProc(hwnd, message, wParam, lParam);
+	result = DefWindowProcW(hwnd, message, wParam, lParam);
 	break;
 
     case TK_CLAIMFOCUS:
@@ -828,7 +837,7 @@ TkWinChildProc(
 
     default:
 	if (!Tk_TranslateWinEvent(hwnd, message, wParam, lParam, &result)) {
-	    result = DefWindowProc(hwnd, message, wParam, lParam);
+	    result = DefWindowProcW(hwnd, message, wParam, lParam);
 	}
 	break;
     }
@@ -877,6 +886,23 @@ Tk_TranslateWinEvent(
 	return 1;
     }
 
+    case WM_RENDERALLFORMATS: {
+        TkWindow *winPtr = (TkWindow *) Tk_HWNDToWindow(hwnd);
+
+        if (winPtr && OpenClipboard(hwnd)) {
+            /*
+             * Make sure that nobody had taken ownership of the clipboard
+             * before we opened it.
+             */
+
+            if (GetClipboardOwner() == hwnd) {
+                TkWinClipboardRender(winPtr->dispPtr, CF_TEXT);
+            }
+            CloseClipboard();
+        }
+        return 1;
+    }
+
     case WM_COMMAND:
     case WM_NOTIFY:
     case WM_VSCROLL:
@@ -892,7 +918,7 @@ Tk_TranslateWinEvent(
 		? ((NMHDR*)lParam)->hwndFrom : (HWND) lParam;
 
 	if (target && target != hwnd) {
-	    *resultPtr = SendMessage(target, message, wParam, lParam);
+	    *resultPtr = SendMessageW(target, message, wParam, lParam);
 	    return 1;
 	}
 	break;
@@ -904,24 +930,37 @@ Tk_TranslateWinEvent(
     case WM_MBUTTONDBLCLK:
     case WM_RBUTTONDOWN:
     case WM_RBUTTONDBLCLK:
+    case WM_XBUTTONDOWN:
+    case WM_XBUTTONDBLCLK:
     case WM_LBUTTONUP:
     case WM_MBUTTONUP:
     case WM_RBUTTONUP:
+    case WM_XBUTTONUP:
     case WM_MOUSEMOVE:
 	Tk_PointerEvent(hwnd, (short) LOWORD(lParam), (short) HIWORD(lParam));
 	return 1;
 
+    case WM_SYSKEYDOWN:
+    case WM_KEYDOWN:
+	if (wParam == VK_PACKET) {
+	    /*
+	     * This will trigger WM_CHAR event(s) with unicode data.
+	     */
+	    *resultPtr =
+		PostMessageW(hwnd, message, HIWORD(lParam), LOWORD(lParam));
+	    return 1;
+	}
+	/* else fall through */
     case WM_CLOSE:
     case WM_SETFOCUS:
     case WM_KILLFOCUS:
     case WM_DESTROYCLIPBOARD:
     case WM_UNICHAR:
     case WM_CHAR:
-    case WM_SYSKEYDOWN:
     case WM_SYSKEYUP:
-    case WM_KEYDOWN:
     case WM_KEYUP:
     case WM_MOUSEWHEEL:
+    case WM_MOUSEHWHEEL:
 	GenerateXEvent(hwnd, message, wParam, lParam);
 	return 1;
     case WM_MENUCHAR:
@@ -966,7 +1005,7 @@ GenerateXEvent(
     ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
-    if (message == WM_MOUSEWHEEL) {
+    if ((message == WM_MOUSEWHEEL) || (message == WM_MOUSEHWHEEL)) {
 	union {LPARAM lParam; POINTS point;} root;
 	POINT pos;
 	root.lParam = lParam;
@@ -1081,6 +1120,7 @@ GenerateXEvent(
 	break;
 
     case WM_MOUSEWHEEL:
+    case WM_MOUSEHWHEEL:
     case WM_CHAR:
     case WM_UNICHAR:
     case WM_SYSKEYDOWN:
@@ -1120,7 +1160,23 @@ GenerateXEvent(
 	 */
 
 	switch (message) {
-	case WM_MOUSEWHEEL:
+	case WM_MOUSEWHEEL: {
+	    /*
+	     * Support for high resolution wheels (vertical).
+	     */
+
+	    DWORD wheelTick = GetTickCount();
+
+	    if (wheelTick - tsdPtr->vWheelTickPrev < 1500) {
+		tsdPtr->vWheelAcc += (short) HIWORD(wParam);
+	    } else {
+		tsdPtr->vWheelAcc = (short) HIWORD(wParam);
+	    }
+	    tsdPtr->vWheelTickPrev = wheelTick;
+	    if (abs(tsdPtr->vWheelAcc) < WHEEL_DELTA) {
+		return;
+	    }
+
 	    /*
 	     * We have invented a new X event type to handle this event. It
 	     * still uses the KeyPress struct. However, the keycode field has
@@ -1132,8 +1188,43 @@ GenerateXEvent(
 	    event.type = MouseWheelEvent;
 	    event.xany.send_event = -1;
 	    event.xkey.nbytes = 0;
-	    event.xkey.keycode = (short) HIWORD(wParam);
+	    event.xkey.keycode = tsdPtr->vWheelAcc / WHEEL_DELTA * WHEEL_DELTA;
+	    tsdPtr->vWheelAcc = tsdPtr->vWheelAcc % WHEEL_DELTA;
 	    break;
+	}
+	case WM_MOUSEHWHEEL: {
+	    /*
+	     * Support for high resolution wheels (horizontal).
+	     */
+
+	    DWORD wheelTick = GetTickCount();
+
+	    if (wheelTick - tsdPtr->hWheelTickPrev < 1500) {
+		tsdPtr->hWheelAcc -= (short) HIWORD(wParam);
+	    } else {
+		tsdPtr->hWheelAcc = -((short) HIWORD(wParam));
+	    }
+	    tsdPtr->hWheelTickPrev = wheelTick;
+	    if (abs(tsdPtr->hWheelAcc) < WHEEL_DELTA) {
+		return;
+	    }
+
+	    /*
+	     * We have invented a new X event type to handle this event. It
+	     * still uses the KeyPress struct. However, the keycode field has
+	     * been overloaded to hold the zDelta of the wheel. Set nbytes to
+	     * 0 to prevent conversion of the keycode to a keysym in
+	     * TkpGetString. [Bug 1118340].
+	     */
+
+	    event.type = MouseWheelEvent;
+	    event.xany.send_event = -1;
+	    event.xkey.nbytes = 0;
+	    event.xkey.state |= ShiftMask;
+	    event.xkey.keycode = tsdPtr->hWheelAcc / WHEEL_DELTA * WHEEL_DELTA;
+	    tsdPtr->hWheelAcc = tsdPtr->hWheelAcc % WHEEL_DELTA;
+	    break;
+	}
 	case WM_SYSKEYDOWN:
 	case WM_KEYDOWN:
 	    /*
@@ -1147,7 +1238,8 @@ GenerateXEvent(
 	    event.type = KeyPress;
 	    event.xany.send_event = -1;
 	    event.xkey.keycode = wParam;
-	    GetTranslatedKey(&event.xkey);
+	    GetTranslatedKey(&event.xkey, (message == WM_KEYDOWN) ? WM_CHAR :
+	            WM_SYSCHAR);
 	    break;
 
 	case WM_SYSKEYUP:
@@ -1197,17 +1289,35 @@ GenerateXEvent(
 	    event.type = KeyPress;
 	    event.xany.send_event = -1;
 	    event.xkey.keycode = 0;
-	    event.xkey.nbytes = 1;
-	    event.xkey.trans_chars[0] = (char) wParam;
+	    if ((int)wParam & 0xff00) {
+		int ch1 = wParam & 0xffff;
 
-	    if (IsDBCSLeadByte((BYTE) wParam)) {
-		MSG msg;
+		if ((ch1 & 0xfc00) == 0xd800) {
+		    tsdPtr->surrogateBuffer = ch1;
+		    return;
+		}
+		if ((ch1 & 0xfc00) == 0xdc00) {
+		    ch1 = ((tsdPtr->surrogateBuffer & 0x3ff) << 10) |
+			    (ch1 & 0x3ff) | 0x10000;
+		    tsdPtr->surrogateBuffer = 0;
+		}
+		event.xany.send_event = -3;
+		event.xkey.nbytes = 0;
+		event.xkey.keycode = ch1;
+	    } else {
+		event.xkey.nbytes = 1;
+		event.xkey.trans_chars[0] = (char) wParam;
 
-		if ((PeekMessage(&msg, NULL, 0, 0, PM_NOREMOVE) != 0)
-			&& (msg.message == WM_CHAR)) {
-		    GetMessage(&msg, NULL, 0, 0);
-		    event.xkey.nbytes = 2;
-		    event.xkey.trans_chars[1] = (char) msg.wParam;
+		if (IsDBCSLeadByte((BYTE) wParam)) {
+		    MSG msg;
+
+		    if ((PeekMessageW(&msg, NULL, WM_CHAR, WM_CHAR,
+		            PM_NOREMOVE) != 0)
+			    && (msg.message == WM_CHAR)) {
+			GetMessageW(&msg, NULL, WM_CHAR, WM_CHAR);
+			event.xkey.nbytes = 2;
+			event.xkey.trans_chars[1] = (char) msg.wParam;
+		   }
 		}
 	    }
 	    Tk_QueueWindowEvent(&event, TCL_QUEUE_TAIL);
@@ -1215,15 +1325,10 @@ GenerateXEvent(
 	    break;
 
 	case WM_UNICHAR: {
-	    char buffer[TCL_UTF_MAX+1];
-	    int i;
 	    event.type = KeyPress;
 	    event.xany.send_event = -3;
 	    event.xkey.keycode = wParam;
-	    event.xkey.nbytes = Tcl_UniCharToUtf((int)wParam, buffer);
-	    for (i=0; i<event.xkey.nbytes && i<TCL_UTF_MAX; ++i) {
-		event.xkey.trans_chars[i] = buffer[i];
-	    }
+	    event.xkey.nbytes = 0;
 	    Tk_QueueWindowEvent(&event, TCL_QUEUE_TAIL);
 	    event.type = KeyRelease;
 	    break;
@@ -1321,11 +1426,7 @@ GetState(
 	    state &= ~mask;
 	}
 	if (HIWORD(lParam) & KF_EXTENDED) {
-	    if (message == WM_SYSKEYDOWN || message == WM_KEYDOWN) {
-		state |= EXTENDED_MASK;
-	    } else {
-		state &= ~EXTENDED_MASK;
-	    }
+	    state |= EXTENDED_MASK;
 	}
     }
     return state;
@@ -1352,19 +1453,20 @@ GetState(
 
 static void
 GetTranslatedKey(
-    XKeyEvent *xkey)
+    XKeyEvent *xkey,
+    UINT type)
 {
     MSG msg;
 
     xkey->nbytes = 0;
 
     while ((xkey->nbytes < XMaxTransChars)
-	    && PeekMessageA(&msg, NULL, 0, 0, PM_NOREMOVE)) {
-	if ((msg.message != WM_CHAR) && (msg.message != WM_SYSCHAR)) {
+	    && (PeekMessageA(&msg, NULL, type, type, PM_NOREMOVE) != 0)) {
+	if (msg.message != type) {
 	    break;
 	}
 
-	GetMessageA(&msg, NULL, 0, 0);
+	GetMessageA(&msg, NULL, type, type);
 
 	/*
 	 * If this is a normal character message, we may need to strip off the
@@ -1434,7 +1536,7 @@ UpdateInputLanguage(
 	return;
     }
 
-    wsprintfA(codepage, "cp%d", charsetInfo.ciACP);
+    sprintf(codepage, "cp%d", charsetInfo.ciACP);
 
     if ((encoding = Tcl_GetEncoding(NULL, codepage)) == NULL) {
 	/*
@@ -1495,7 +1597,10 @@ Tcl_Encoding
 TkWinGetUnicodeEncoding(void)
 {
     if (unicodeEncoding == NULL) {
-	unicodeEncoding = Tcl_GetEncoding(NULL, "unicode");
+	unicodeEncoding = Tcl_GetEncoding(NULL, "utf-16");
+	if (unicodeEncoding == NULL) {
+	    unicodeEncoding = Tcl_GetEncoding(NULL, "unicode");
+	}
     }
     return unicodeEncoding;
 }
@@ -1505,13 +1610,13 @@ TkWinGetUnicodeEncoding(void)
  *
  * HandleIMEComposition --
  *
- *	This function works around a definciency in some versions of Windows
+ *	This function works around a deficiency in some versions of Windows
  *	2000 to make it possible to entry multi-lingual characters under all
  *	versions of Windows 2000.
  *
  *	When an Input Method Editor (IME) is ready to send input characters to
  *	an application, it sends a WM_IME_COMPOSITION message with the
- *	GCS_RESULTSTR. However, The DefWindowProc() on English Windows 2000
+ *	GCS_RESULTSTR. However, The DefWindowProcW() on English Windows 2000
  *	arbitrarily converts all non-Latin-1 characters in the composition to
  *	"?".
  *
@@ -1535,6 +1640,7 @@ HandleIMEComposition(
 {
     HIMC hIMC;
     int n;
+    int high = 0;
 
     if ((lParam & GCS_RESULTSTR) == 0) {
 	/*
@@ -1549,21 +1655,21 @@ HandleIMEComposition(
 	return 0;
     }
 
-    n = ImmGetCompositionString(hIMC, GCS_RESULTSTR, NULL, 0);
+    n = ImmGetCompositionStringW(hIMC, GCS_RESULTSTR, NULL, 0);
 
     if (n > 0) {
-	char *buff = ckalloc(n);
+	WCHAR *buff = (WCHAR *) ckalloc(n);
 	TkWindow *winPtr;
 	XEvent event;
 	int i;
 
-	n = ImmGetCompositionString(hIMC, GCS_RESULTSTR, buff, (unsigned) n);
+	n = ImmGetCompositionStringW(hIMC, GCS_RESULTSTR, buff, (unsigned) n) / 2;
 
 	/*
 	 * Set up the fields pertinent to key event.
 	 *
-	 * We set send_event to the special value of -2, so that TkpGetString
-	 * in tkWinKey.c knows that trans_chars[] already contains a UNICODE
+	 * We set send_event to the special value of -3, so that TkpGetString
+	 * in tkWinKey.c knows that keycode already contains a UNICODE
 	 * char and there's no need to do encoding conversion.
 	 *
 	 * Note that the event *must* be zeroed out first; Tk plays cunning
@@ -1574,7 +1680,7 @@ HandleIMEComposition(
 
 	memset(&event, 0, sizeof(XEvent));
 	event.xkey.serial = winPtr->display->request++;
-	event.xkey.send_event = -2;
+	event.xkey.send_event = -3;
 	event.xkey.display = winPtr->display;
 	event.xkey.window = winPtr->window;
 	event.xkey.root = RootWindow(winPtr->display, winPtr->screenNum);
@@ -1582,8 +1688,6 @@ HandleIMEComposition(
 	event.xkey.state = TkWinGetModifierState();
 	event.xkey.time = TkpGetMS();
 	event.xkey.same_screen = True;
-	event.xkey.keycode = 0;
-	event.xkey.nbytes = 2;
 
 	for (i=0; i<n; ) {
 	    /*
@@ -1591,9 +1695,16 @@ HandleIMEComposition(
 	     * UNICODE character in the composition.
 	     */
 
-	    event.xkey.trans_chars[0] = (char) buff[i++];
-	    event.xkey.trans_chars[1] = (char) buff[i++];
+	    event.xkey.keycode = buff[i++];
 
+	    if ((event.xkey.keycode & 0xfc00) == 0xd800) {
+		high = ((event.xkey.keycode & 0x3ff) << 10) + 0x10000;
+		break;
+	    } else if (high && (event.xkey.keycode & 0xfc00) == 0xdc00) {
+		event.xkey.keycode &= 0x3ff;
+		event.xkey.keycode += high;
+		high = 0;
+	    }
 	    event.type = KeyPress;
 	    Tk_QueueWindowEvent(&event, TCL_QUEUE_TAIL);
 
@@ -1637,7 +1748,7 @@ Tk_FreeXId(
  * TkWinResendEvent --
  *
  *	This function converts an X event into a Windows event and invokes the
- *	specified windo function.
+ *	specified window function.
  *
  * Results:
  *	A standard Windows result.
@@ -1675,6 +1786,14 @@ TkWinResendEvent(
 	msg = WM_RBUTTONDOWN;
 	wparam = MK_RBUTTON;
 	break;
+    case Button4:
+	msg = WM_XBUTTONDOWN;
+	wparam = MAKEWPARAM(MK_XBUTTON1, XBUTTON1);
+	break;
+    case Button5:
+	msg = WM_XBUTTONDOWN;
+	wparam = MAKEWPARAM(MK_XBUTTON2, XBUTTON2);
+	break;
     default:
 	return 0;
     }
@@ -1688,6 +1807,12 @@ TkWinResendEvent(
     if (eventPtr->xbutton.state & Button3Mask) {
 	wparam |= MK_RBUTTON;
     }
+    if (eventPtr->xbutton.state & Button4Mask) {
+	wparam |= MK_XBUTTON1;
+    }
+    if (eventPtr->xbutton.state & Button5Mask) {
+	wparam |= MK_XBUTTON2;
+    }
     if (eventPtr->xbutton.state & ShiftMask) {
 	wparam |= MK_SHIFT;
     }
@@ -1696,7 +1821,7 @@ TkWinResendEvent(
     }
     lparam = MAKELPARAM((short) eventPtr->xbutton.x,
 	    (short) eventPtr->xbutton.y);
-    return CallWindowProc(wndproc, hwnd, msg, wparam, lparam);
+    return CallWindowProcW(wndproc, hwnd, msg, wparam, lparam);
 }
 
 /*

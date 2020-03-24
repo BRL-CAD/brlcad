@@ -381,7 +381,7 @@ TkCanvPostscriptCmd(
 	 */
 
 	psInfo.chan = Tcl_GetChannel(interp, psInfo.channelName, &mode);
-	if (psInfo.chan == (Tcl_Channel) NULL) {
+	if (psInfo.chan == NULL) {
 	    result = TCL_ERROR;
 	    goto cleanup;
 	}
@@ -825,7 +825,7 @@ Tk_PostscriptFont(
     fontname = Tcl_DStringValue(&ds);
     Tcl_AppendPrintfToObj(GetPostscriptBuffer(interp),
 	    "/%s findfont %d scalefont%s setfont\n",
-	    fontname, TkFontGetPoints(psInfoPtr->tkwin, points),
+	    fontname, (int)(TkFontGetPoints(psInfoPtr->tkwin, points) + 0.5),
 	    strncasecmp(fontname, "Symbol", 7) ? " ISOEncode" : "");
     Tcl_CreateHashEntry(&psInfoPtr->fontTable, Tcl_DStringValue(&ds), &i);
     Tcl_DStringFree(&ds);
@@ -1279,7 +1279,7 @@ TkPostscriptImage(
     cdata.colors = ckalloc(sizeof(XColor) * ncolors);
     cdata.ncolors = ncolors;
 
-    if (visual->class == DirectColor || visual->class == TrueColor) {
+    if (visual->c_class == DirectColor || visual->c_class == TrueColor) {
 	cdata.separated = 1;
 	cdata.red_mask = visual->red_mask;
 	cdata.green_mask = visual->green_mask;
@@ -1311,7 +1311,7 @@ TkPostscriptImage(
 	}
     }
 
-    if (visual->class == StaticGray || visual->class == GrayScale) {
+    if (visual->c_class == StaticGray || visual->c_class == GrayScale) {
 	cdata.color = 0;
     } else {
 	cdata.color = 1;

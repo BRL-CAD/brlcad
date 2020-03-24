@@ -304,7 +304,7 @@ static const Tk_OptionSpec optionSpecs[] = {
 	 0, orientStrings, GEOMETRY},
     {TK_OPTION_BORDER, "-proxybackground", "proxyBackground", "ProxyBackground",
 	 0, -1, Tk_Offset(PanedWindow, proxyBackground), TK_OPTION_NULL_OK,
-	 (ClientData) DEF_PANEDWINDOW_BG_MONO},
+	 (ClientData) DEF_PANEDWINDOW_BG_MONO, 0},
     {TK_OPTION_PIXELS, "-proxyborderwidth", "proxyBorderWidth", "ProxyBorderWidth",
 	 DEF_PANEDWINDOW_PROXYBORDER, Tk_Offset(PanedWindow, proxyBorderWidthPtr),
 	 Tk_Offset(PanedWindow, proxyBorderWidth), 0, 0, GEOMETRY},
@@ -448,9 +448,9 @@ Tk_PanedWindowObjCmd(
     pwPtr->optionTable = pwOpts->pwOptions;
     pwPtr->slaveOpts = pwOpts->slaveOpts;
     pwPtr->relief = TK_RELIEF_RAISED;
-    pwPtr->gc = None;
-    pwPtr->cursor = None;
-    pwPtr->sashCursor = None;
+    pwPtr->gc = NULL;
+    pwPtr->cursor = NULL;
+    pwPtr->sashCursor = NULL;
 
     /*
      * Keep a hold of the associated tkwin until we destroy the widget,
@@ -862,7 +862,7 @@ ConfigureSlaves(
 
     index = -1;
     haveLoc = 0;
-    if (options.after != None) {
+    if (options.after != NULL) {
 	tkwin = options.after;
 	haveLoc = 1;
 	for (i = 0; i < pwPtr->numSlaves; i++) {
@@ -871,7 +871,7 @@ ConfigureSlaves(
 		break;
 	    }
 	}
-    } else if (options.before != None) {
+    } else if (options.before != NULL) {
 	tkwin = options.before;
 	haveLoc = 1;
 	for (i = 0; i < pwPtr->numSlaves; i++) {
@@ -1304,7 +1304,7 @@ PanedWindowWorldChanged(
 
     gcValues.background = Tk_3DBorderColor(pwPtr->background)->pixel;
     newGC = Tk_GetGC(pwPtr->tkwin, GCBackground, &gcValues);
-    if (pwPtr->gc != None) {
+    if (pwPtr->gc != NULL) {
 	Tk_FreeGC(pwPtr->display, pwPtr->gc);
     }
     pwPtr->gc = newGC;
@@ -1370,11 +1370,15 @@ PanedWindowEventProc(
 	DestroyPanedWindow(pwPtr);
     } else if (eventPtr->type == UnmapNotify) {
         for (i = 0; i < pwPtr->numSlaves; i++) {
-            Tk_UnmapWindow(pwPtr->slaves[i]->tkwin);
+            if (!pwPtr->slaves[i]->hide) {
+                Tk_UnmapWindow(pwPtr->slaves[i]->tkwin);
+            }
         }
     } else if (eventPtr->type == MapNotify) {
         for (i = 0; i < pwPtr->numSlaves; i++) {
-            Tk_MapWindow(pwPtr->slaves[i]->tkwin);
+            if (!pwPtr->slaves[i]->hide) {
+                Tk_MapWindow(pwPtr->slaves[i]->tkwin);
+            }
         }
     }
 }
@@ -1785,10 +1789,18 @@ ArrangePanes(
 	 */
 
 	if (horizontal) {
-	    paneSize = slavePtr->paneWidth;
+            if (slavePtr->width > 0) {
+                paneSize = slavePtr->width;
+            } else {
+                paneSize = slavePtr->paneWidth;
+            }
 	    stretchReserve -= paneSize + (2 * slavePtr->padx);
 	} else {
-	    paneSize = slavePtr->paneHeight;
+            if (slavePtr->height > 0) {
+                paneSize = slavePtr->height;
+            } else {
+                paneSize = slavePtr->paneHeight;
+            }
 	    stretchReserve -= paneSize + (2 * slavePtr->pady);
 	}
 	if (IsStretchable(slavePtr->stretch,i,first,last)
@@ -1838,10 +1850,18 @@ ArrangePanes(
 	 */
 
 	if (horizontal) {
-	    paneSize = slavePtr->paneWidth;
+            if (slavePtr->width > 0) {
+                paneSize = slavePtr->width;
+            } else {
+                paneSize = slavePtr->paneWidth;
+            }
 	    pwSize = pwWidth;
 	} else {
-	    paneSize = slavePtr->paneHeight;
+            if (slavePtr->height > 0) {
+                paneSize = slavePtr->height;
+            } else {
+                paneSize = slavePtr->paneHeight;
+            }
 	    pwSize = pwHeight;
 	}
 	if (IsStretchable(slavePtr->stretch, i, first, last)) {
@@ -2024,10 +2044,10 @@ Unlink(
 
     for (i = 0; i < masterPtr->numSlaves; i++) {
 	if (masterPtr->slaves[i]->before == slavePtr->tkwin) {
-	    masterPtr->slaves[i]->before = None;
+	    masterPtr->slaves[i]->before = NULL;
 	}
 	if (masterPtr->slaves[i]->after == slavePtr->tkwin) {
-	    masterPtr->slaves[i]->after = None;
+	    masterPtr->slaves[i]->after = NULL;
 	}
     }
 
@@ -2972,16 +2992,13 @@ static int
 ObjectIsEmpty(
     Tcl_Obj *objPtr)		/* Object to test. May be NULL. */
 {
-    int length;
-
     if (objPtr == NULL) {
 	return 1;
     }
-    if (objPtr->bytes != NULL) {
-	return (objPtr->length == 0);
+    if (objPtr->bytes == NULL) {
+	Tcl_GetString(objPtr);
     }
-    (void)Tcl_GetStringFromObj(objPtr, &length);
-    return (length == 0);
+    return (objPtr->length == 0);
 }
 
 /*

@@ -71,8 +71,7 @@ typedef struct ThreadSpecificData {
  * Prototypes for functions defined later in this file.
  */
 
-static int		EvalFileCallback(ClientData data[],
-			    Tcl_Interp *interp, int result);
+static Tcl_NRPostProc	EvalFileCallback;
 static FilesystemRecord*FsGetFirstFilesystem(void);
 static void		FsThrExitProc(ClientData cd);
 static Tcl_Obj *	FsListMounts(Tcl_Obj *pathPtr, const char *pattern);
@@ -140,7 +139,6 @@ Tcl_FSRenameFileProc		TclpObjRenameFile;
 Tcl_FSCreateDirectoryProc	TclpObjCreateDirectory;
 Tcl_FSCopyDirectoryProc		TclpObjCopyDirectory;
 Tcl_FSRemoveDirectoryProc	TclpObjRemoveDirectory;
-Tcl_FSUnloadFileProc		TclpUnloadFile;
 Tcl_FSLinkProc			TclpObjLink;
 Tcl_FSListVolumesProc		TclpObjListVolumes;
 
@@ -329,9 +327,9 @@ Tcl_Stat(
 	oldStyleBuf->st_uid	= buf.st_uid;
 	oldStyleBuf->st_gid	= buf.st_gid;
 	oldStyleBuf->st_size	= (off_t) buf.st_size;
-	oldStyleBuf->st_atime	= buf.st_atime;
-	oldStyleBuf->st_mtime	= buf.st_mtime;
-	oldStyleBuf->st_ctime	= buf.st_ctime;
+	oldStyleBuf->st_atime	= Tcl_GetAccessTimeFromStat(&buf);
+	oldStyleBuf->st_mtime	= Tcl_GetModificationTimeFromStat(&buf);
+	oldStyleBuf->st_ctime	= Tcl_GetChangeTimeFromStat(&buf);
 #ifdef HAVE_STRUCT_STAT_ST_BLKSIZE
 	oldStyleBuf->st_blksize	= buf.st_blksize;
 #endif
@@ -1896,7 +1894,7 @@ TclNREvalFile(
      * this cross-platform to allow for scripted documents. [Bug: 2040]
      */
 
-    Tcl_SetChannelOption(interp, chan, "-eofchar", "\32");
+    Tcl_SetChannelOption(interp, chan, "-eofchar", "\32 {}");
 
     /*
      * If the encoding is specified, set it for the channel. Else don't touch
@@ -3160,8 +3158,8 @@ Tcl_FSLoadFile(
  * present and set to true (any integer > 0) then the unlink is skipped.
  */
 
-int
-TclSkipUnlink (Tcl_Obj* shlibFile)
+static int
+skipUnlink (Tcl_Obj* shlibFile)
 {
     /* Order of testing:
      * 1. On hpux we generally want to skip unlink in general
@@ -3415,7 +3413,7 @@ Tcl_LoadFile(
      */
 
     if (
-	!TclSkipUnlink (copyToPtr) &&
+	!skipUnlink (copyToPtr) &&
 	(Tcl_FSDeleteFile(copyToPtr) == TCL_OK)) {
 	Tcl_DecrRefCount(copyToPtr);
 
@@ -3684,30 +3682,10 @@ Tcl_FSUnloadFile(
 	}
 	return TCL_ERROR;
     }
-    TclpUnloadFile(handle);
-    return TCL_OK;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * TclpUnloadFile --
- *
- *	Unloads a library given its handle
- *
- * This function was once filesystem-specific, but has been made portable by
- * having TclpDlopen return a structure that includes procedure pointers.
- *
- *----------------------------------------------------------------------
- */
-
-void
-TclpUnloadFile(
-    Tcl_LoadHandle handle)
-{
     if (handle->unloadFileProcPtr != NULL) {
 	handle->unloadFileProcPtr(handle);
     }
+    return TCL_OK;
 }
 
 /*
@@ -4414,8 +4392,8 @@ TclCrossFilesystemCopy(
      */
 
     if (Tcl_FSLstat(source, &sourceStatBuf) == 0) {
-	tval.actime = sourceStatBuf.st_atime;
-	tval.modtime = sourceStatBuf.st_mtime;
+	tval.actime = Tcl_GetAccessTimeFromStat(&sourceStatBuf);
+	tval.modtime = Tcl_GetModificationTimeFromStat(&sourceStatBuf);
 	Tcl_FSUtime(target, &tval);
     }
 
@@ -4691,7 +4669,7 @@ Tcl_FSGetFileSystemForPath(
  * Tcl_FSGetNativePath --
  *
  *	This function is for use by the Win/Unix native filesystems, so that
- *	they can easily retrieve the native (char* or TCHAR*) representation
+ *	they can easily retrieve the native (char* or WCHAR*) representation
  *	of a path. Other filesystems will probably want to implement similar
  *	functions. They basically act as a safety net around
  *	Tcl_FSGetInternalRep. Normally your file-system functions will always

@@ -70,18 +70,12 @@ static inline void	DeleteChainTable(struct Dict *dict);
 static inline Tcl_HashEntry *CreateChainEntry(struct Dict *dict,
 			    Tcl_Obj *keyPtr, int *newPtr);
 static inline int	DeleteChainEntry(struct Dict *dict, Tcl_Obj *keyPtr);
-static int		FinalizeDictUpdate(ClientData data[],
-			    Tcl_Interp *interp, int result);
-static int		FinalizeDictWith(ClientData data[],
-			    Tcl_Interp *interp, int result);
-static int		DictForNRCmd(ClientData dummy, Tcl_Interp *interp,
-			    int objc, Tcl_Obj *const *objv);
-static int		DictMapNRCmd(ClientData dummy, Tcl_Interp *interp,
-			    int objc, Tcl_Obj *const *objv);
-static int		DictForLoopCallback(ClientData data[],
-			    Tcl_Interp *interp, int result);
-static int		DictMapLoopCallback(ClientData data[],
-			    Tcl_Interp *interp, int result);
+static Tcl_NRPostProc	FinalizeDictUpdate;
+static Tcl_NRPostProc	FinalizeDictWith;
+static Tcl_ObjCmdProc	DictForNRCmd;
+static Tcl_ObjCmdProc	DictMapNRCmd;
+static Tcl_NRPostProc	DictForLoopCallback;
+static Tcl_NRPostProc	DictMapLoopCallback;
 
 /*
  * Table of dict subcommand names and implementations.
@@ -148,7 +142,7 @@ typedef struct Dict {
 				 * the entries in the order that they are
 				 * created. */
     int epoch;			/* Epoch counter */
-    int refcount;		/* Reference counter (see above) */
+    size_t refCount;		/* Reference counter (see above) */
     Tcl_Obj *chain;		/* Linked list used for invalidating the
 				 * string representations of updated nested
 				 * dictionaries. */
@@ -159,7 +153,7 @@ typedef struct Dict {
  * must be assignable as well as readable.
  */
 
-#define DICT(dictObj)   (*((Dict **)&(dictObj)->internalRep.twoPtrValue.ptr1))
+#define DICT(dictObj)   ((dictObj)->internalRep.twoPtrValue.ptr1)
 
 /*
  * The structure below defines the dictionary object type by means of
@@ -398,7 +392,7 @@ DupDictInternalRep(
 
     newDict->epoch = 0;
     newDict->chain = NULL;
-    newDict->refcount = 1;
+    newDict->refCount = 1;
 
     /*
      * Store in the object.
@@ -433,8 +427,7 @@ FreeDictInternalRep(
 {
     Dict *dict = DICT(dictPtr);
 
-    dict->refcount--;
-    if (dict->refcount <= 0) {
+    if (dict->refCount-- <= 1) {
 	DeleteDict(dict);
     }
     dictPtr->typePtr = NULL;
@@ -494,15 +487,14 @@ static void
 UpdateStringOfDict(
     Tcl_Obj *dictPtr)
 {
-#define LOCAL_SIZE 20
-    int localFlags[LOCAL_SIZE], *flagPtr = NULL;
+#define LOCAL_SIZE 64
+    char localFlags[LOCAL_SIZE], *flagPtr = NULL;
     Dict *dict = DICT(dictPtr);
     ChainEntry *cPtr;
     Tcl_Obj *keyPtr, *valuePtr;
     int i, length, bytesNeeded = 0;
     const char *elem;
     char *dst;
-    const int maxFlags = UINT_MAX / sizeof(int);
 
     /*
      * This field is the most useful one in the whole hash structure, and it
@@ -524,10 +516,8 @@ UpdateStringOfDict(
 
     if (numElems <= LOCAL_SIZE) {
 	flagPtr = localFlags;
-    } else if (numElems > maxFlags) {
-	Tcl_Panic("max size for a Tcl value (%d bytes) exceeded", INT_MAX);
     } else {
-	flagPtr = ckalloc(numElems * sizeof(int));
+	flagPtr = ckalloc(numElems);
     }
     for (i=0,cPtr=dict->entryChainHead; i<numElems; i+=2,cPtr=cPtr->nextPtr) {
 	/*
@@ -719,7 +709,7 @@ SetDictFromAny(
     TclFreeIntRep(objPtr);
     dict->epoch = 0;
     dict->chain = NULL;
-    dict->refcount = 1;
+    dict->refCount = 1;
     DICT(objPtr) = dict;
     objPtr->internalRep.twoPtrValue.ptr2 = NULL;
     objPtr->typePtr = &tclDictType;
@@ -1123,7 +1113,7 @@ Tcl_DictObjFirst(
 	searchPtr->dictionaryPtr = (Tcl_Dict) dict;
 	searchPtr->epoch = dict->epoch;
 	searchPtr->next = cPtr->nextPtr;
-	dict->refcount++;
+	dict->refCount++;
 	if (keyPtrPtr != NULL) {
 	    *keyPtrPtr = Tcl_GetHashKey(&dict->table, &cPtr->entry);
 	}
@@ -1237,8 +1227,7 @@ Tcl_DictObjDone(
     if (searchPtr->epoch != -1) {
 	searchPtr->epoch = -1;
 	dict = (Dict *) searchPtr->dictionaryPtr;
-	dict->refcount--;
-	if (dict->refcount <= 0) {
+	if (dict->refCount-- <= 1) {
 	    DeleteDict(dict);
 	}
     }
@@ -1390,7 +1379,7 @@ Tcl_NewDictObj(void)
     InitChainTable(dict);
     dict->epoch = 0;
     dict->chain = NULL;
-    dict->refcount = 1;
+    dict->refCount = 1;
     DICT(dictPtr) = dict;
     dictPtr->internalRep.twoPtrValue.ptr2 = NULL;
     dictPtr->typePtr = &tclDictType;
@@ -1440,7 +1429,7 @@ Tcl_DbNewDictObj(
     InitChainTable(dict);
     dict->epoch = 0;
     dict->chain = NULL;
-    dict->refcount = 1;
+    dict->refCount = 1;
     DICT(dictPtr) = dict;
     dictPtr->internalRep.twoPtrValue.ptr2 = NULL;
     dictPtr->typePtr = &tclDictType;
@@ -3094,6 +3083,7 @@ DictFilterCmd(
 
 		Tcl_ResetResult(interp);
 		Tcl_DictObjDone(&search);
+	    /* FALLTHRU */
 	    case TCL_CONTINUE:
 		result = TCL_OK;
 		break;
@@ -3543,7 +3533,7 @@ TclDictWithFinish(
      * If the dictionary variable doesn't exist, drop everything silently.
      */
 
-    dictPtr = TclPtrGetVar(interp, varPtr, arrayPtr, part1Ptr, part2Ptr,
+    dictPtr = TclPtrGetVarIdx(interp, varPtr, arrayPtr, part1Ptr, part2Ptr,
 	    TCL_LEAVE_ERR_MSG, index);
     if (dictPtr == NULL) {
 	return TCL_OK;
@@ -3626,8 +3616,8 @@ TclDictWithFinish(
      * Write back the outermost dictionary to the variable.
      */
 
-    if (TclPtrSetVar(interp, varPtr, arrayPtr, part1Ptr, part2Ptr, dictPtr,
-	    TCL_LEAVE_ERR_MSG, index) == NULL) {
+    if (TclPtrSetVarIdx(interp, varPtr, arrayPtr, part1Ptr, part2Ptr,
+	    dictPtr, TCL_LEAVE_ERR_MSG, index) == NULL) {
 	if (allocdict) {
 	    TclDecrRefCount(dictPtr);
 	}

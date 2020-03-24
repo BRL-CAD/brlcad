@@ -14,8 +14,8 @@
  */
 
 #include "tclInt.h"
-/* Darwin/Mac OS X CoreFoundation notifier is in tclMacOSXNotify.c */
-#ifndef HAVE_COREFOUNDATION
+#ifndef HAVE_COREFOUNDATION	/* Darwin/Mac OS X CoreFoundation notifier is
+				 * in tclMacOSXNotify.c */
 #include <signal.h>
 
 /*
@@ -152,8 +152,8 @@ static int triggerPipe = -1;
  * The notifierMutex locks access to all of the global notifier state.
  */
 
-pthread_mutex_t notifierInitMutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t notifierMutex     = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t notifierInitMutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t notifierMutex     = PTHREAD_MUTEX_INITIALIZER;
 /*
  * The following static indicates if the notifier thread is running.
  *
@@ -231,7 +231,7 @@ typedef struct {
     void *hbrBackground;
     void *lpszMenuName;
     const void *lpszClassName;
-} WNDCLASS;
+} WNDCLASSW;
 
 extern void __stdcall	CloseHandle(void *);
 extern void *__stdcall	CreateEventW(void *, unsigned char, unsigned char,
@@ -248,7 +248,7 @@ extern unsigned char __stdcall	PeekMessageW(MSG *, void *, int, int, int);
 extern unsigned char __stdcall	PostMessageW(void *, unsigned int, void *,
 				    void *);
 extern void __stdcall	PostQuitMessage(int);
-extern void *__stdcall	RegisterClassW(const WNDCLASS *);
+extern void *__stdcall	RegisterClassW(const WNDCLASSW *);
 extern unsigned char __stdcall	ResetEvent(void *);
 extern unsigned char __stdcall	TranslateMessage(const MSG *);
 
@@ -337,7 +337,7 @@ Tcl_InitNotifier(void)
 	 */
 	if (tsdPtr->waitCVinitialized == 0) {
 #ifdef __CYGWIN__
-	    WNDCLASS class;
+	    WNDCLASSW class;
 
 	    class.style = 0;
 	    class.cbClsExtra = 0;
@@ -433,9 +433,11 @@ Tcl_FinalizeNotifier(
 			    "unable to write q to triggerPipe");
 		}
 		close(triggerPipe);
+		pthread_mutex_lock(&notifierMutex);
 		while(triggerPipe != -1) {
 		    pthread_cond_wait(&notifierCV, &notifierMutex);
 		}
+		pthread_mutex_unlock(&notifierMutex);
 		if (notifierThreadRunning) {
 		    int result = pthread_join((pthread_t) notifierThread, NULL);
 

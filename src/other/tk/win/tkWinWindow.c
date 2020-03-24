@@ -13,7 +13,7 @@
 #include "tkWinInt.h"
 #include "tkBusy.h"
 
-typedef struct ThreadSpecificData {
+typedef struct {
     int initialized;		/* 0 means table below needs initializing. */
     Tcl_HashTable windowTable;  /* The windowTable maps from HWND to Tk_Window
 				 * handles. */
@@ -170,16 +170,7 @@ TkpPrintWindowId(
 {
     HWND hwnd = (window) ? Tk_GetHWND(window) : 0;
 
-    /*
-     * Use pointer representation, because Win64 is P64 (*not* LP64). Windows
-     * doesn't print the 0x for %p, so we do it.
-     * Bug 2026405: cygwin does output 0x for %p so test and recover.
-     */
-
-    sprintf(buf, "0x%p", hwnd);
-    if (buf[2] == '0' && buf[3] == 'x') {
-	sprintf(buf, "%p", hwnd);
-    }
+    sprintf(buf, "0x%" TCL_Z_MODIFIER "x", (size_t)hwnd);
 }
 
 /*
@@ -277,7 +268,7 @@ TkpMakeWindow(
      * order.
      */
 
-    hwnd = CreateWindowEx(WS_EX_NOPARENTNOTIFY, TK_WIN_CHILD_CLASS_NAME, NULL,
+    hwnd = CreateWindowExW(WS_EX_NOPARENTNOTIFY, TK_WIN_CHILD_CLASS_NAME, NULL,
 	    (DWORD) style, Tk_X(winPtr), Tk_Y(winPtr), Tk_Width(winPtr),
 	    Tk_Height(winPtr), parentWin, NULL, Tk_GetHINSTANCE(), NULL);
     SetWindowPos(hwnd, HWND_TOP, 0, 0, 0, 0,
@@ -590,7 +581,7 @@ XResizeWindow(
 /*
  *----------------------------------------------------------------------
  *
- * XRaiseWindow --
+ * XRaiseWindow, XLowerWindow --
  *
  *	Change the stacking order of a window.
  *
@@ -612,6 +603,18 @@ XRaiseWindow(
 
     display->request++;
     SetWindowPos(window, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+    return Success;
+}
+
+int
+XLowerWindow(
+    Display *display,
+    Window w)
+{
+    HWND window = Tk_GetHWND(w);
+
+    display->request++;
+    SetWindowPos(window, HWND_BOTTOM, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
     return Success;
 }
 
@@ -753,6 +756,33 @@ XChangeWindowAttributes(
 /*
  *----------------------------------------------------------------------
  *
+ * XReparentWindow --
+ *
+ *	TODO: currently placeholder to satisfy Xlib stubs.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	TODO.
+ *
+ *----------------------------------------------------------------------
+ */
+
+int
+XReparentWindow(
+    Display *display,
+    Window w,
+    Window parent,
+    int x,
+    int y)
+{
+    return BadWindow;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
  * TkWinSetWindowPos --
  *
  *	Adjust the stacking order of a window relative to a second window (or
@@ -843,7 +873,7 @@ TkpShowBusyWindow(
      */
 
     GetCursorPos(&point);
-    SetCursorPos(point.x, point.y);
+    TkSetCursorPos(point.x, point.y);
 }
 
 /*
@@ -885,7 +915,7 @@ TkpHideBusyWindow(
      */
 
     GetCursorPos(&point);
-    SetCursorPos(point.x, point.y);
+    TkSetCursorPos(point.x, point.y);
 }
 
 /*
@@ -914,7 +944,7 @@ TkpMakeTransparentWindowExist(
     int style = WS_CHILD | WS_CLIPCHILDREN | WS_CLIPSIBLINGS;
     DWORD exStyle = WS_EX_TRANSPARENT | WS_EX_TOPMOST;
 
-    hWnd = CreateWindowEx(exStyle, TK_WIN_CHILD_CLASS_NAME, NULL, style,
+    hWnd = CreateWindowExW(exStyle, TK_WIN_CHILD_CLASS_NAME, NULL, style,
 	    Tk_X(tkwin), Tk_Y(tkwin), Tk_Width(tkwin), Tk_Height(tkwin),
 	    hParent, NULL, Tk_GetHINSTANCE(), NULL);
     winPtr->window = Tk_AttachHWND(tkwin, hWnd);

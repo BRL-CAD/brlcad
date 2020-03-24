@@ -347,6 +347,9 @@ typedef struct TkTextTag {
     int lMargin2;		/* Left margin for second and later display
 				 * lines of each text line, in pixels. Only
 				 * valid if lMargin2String is non-NULL. */
+    Tk_3DBorder lMarginColor;	/* Used for drawing background in left margins.
+                                 * This is used for both lmargin1 and lmargin2.
+				 * NULL means no value specified here. */
     char *offsetString;		/* -offset option string (malloc-ed). NULL
 				 * means option not specified. */
     int offset;			/* Vertical offset of text's baseline from
@@ -358,10 +361,18 @@ typedef struct TkTextTag {
     int overstrike;		/* Non-zero means draw horizontal line through
 				 * middle of text. Only valid if
 				 * overstrikeString is non-NULL. */
+    XColor *overstrikeColor;    /* Color for the overstrike. NULL means same
+                                 * color as foreground. */
     char *rMarginString;	/* -rmargin option string (malloc-ed). NULL
 				 * means option not specified. */
     int rMargin;		/* Right margin for text, in pixels. Only
 				 * valid if rMarginString is non-NULL. */
+    Tk_3DBorder rMarginColor;	/* Used for drawing background in right margin.
+				 * NULL means no value specified here. */
+    Tk_3DBorder selBorder;	/* Used for drawing background for selected text.
+				 * NULL means no value specified here. */
+    XColor *selFgColor;		/* Foreground color for selected text. NULL means
+				 * no value specified here. */
     char *spacing1String;	/* -spacing1 option string (malloc-ed). NULL
 				 * means option not specified. */
     int spacing1;		/* Extra spacing above first display line for
@@ -389,6 +400,8 @@ typedef struct TkTextTag {
     int underline;		/* Non-zero means draw underline underneath
 				 * text. Only valid if underlineString is
 				 * non-NULL. */
+    XColor *underlineColor;     /* Color for the underline. NULL means same
+                                 * color as foreground. */
     TkWrapMode wrapMode;	/* How to handle wrap-around for this tag.
 				 * Must be TEXT_WRAPMODE_CHAR,
 				 * TEXT_WRAPMODE_NONE, TEXT_WRAPMODE_WORD, or
@@ -654,7 +667,7 @@ typedef struct TkText {
 				/* Color for drawing traversal highlight area
 				 * when highlight is off. */
     XColor *highlightColorPtr;	/* Color for drawing traversal highlight. */
-    Tk_Cursor cursor;		/* Current cursor for window, or None. */
+    Tk_Cursor cursor;		/* Current cursor for window, or NULL. */
     XColor *fgColor;		/* Default foreground color for text. */
     Tk_Font tkfont;		/* Default font for displaying text. */
     int charWidth;		/* Width of average character in default
@@ -1057,7 +1070,7 @@ MODULE_SCOPE int	TkTextGetObjIndex(Tcl_Interp *interp, TkText *textPtr,
 MODULE_SCOPE int	TkTextSharedGetObjIndex(Tcl_Interp *interp,
 			    TkSharedText *sharedTextPtr, Tcl_Obj *idxPtr,
 			    TkTextIndex *indexPtr);
-MODULE_SCOPE const TkTextIndex *TkTextGetIndexFromObj(Tcl_Interp *interp,
+MODULE_SCOPE const	TkTextIndex *TkTextGetIndexFromObj(Tcl_Interp *interp,
 			    TkText *textPtr, Tcl_Obj *objPtr);
 MODULE_SCOPE TkTextTabArray *TkTextGetTabs(Tcl_Interp *interp,
 			    TkText *textPtr, Tcl_Obj *stringPtr);
@@ -1146,7 +1159,7 @@ MODULE_SCOPE int	TkTextYviewCmd(TkText *textPtr, Tcl_Interp *interp,
 			    int objc, Tcl_Obj *const objv[]);
 MODULE_SCOPE void	TkTextWinFreeClient(Tcl_HashEntry *hPtr,
 			    TkTextEmbWindowClient *client);
-
+MODULE_SCOPE void       TkTextRunAfterSyncCmd(ClientData clientData);
 #endif /* _TKTEXT */
 
 /*

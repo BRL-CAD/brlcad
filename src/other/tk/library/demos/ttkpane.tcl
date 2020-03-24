@@ -104,7 +104,7 @@ if {[tk windowingsystem] ne "aqua"} {
     pack $w.outer -fill both -expand 1
 } else {
     text $w.txt -wrap word -yscroll "$w.sb set" -width 30 -borderwidth 0
-    scrollbar $w.sb -orient vertical -command "$w.txt yview"
+    ttk::scrollbar $w.sb -orient vertical -command "$w.txt yview"
     pack $w.sb -side right -fill y -in $w.outer.inRight.bot
     pack $w.txt -fill both -expand 1 -in $w.outer.inRight.bot
     pack $w.outer -fill both -expand 1 -padx 10 -pady {6 10}

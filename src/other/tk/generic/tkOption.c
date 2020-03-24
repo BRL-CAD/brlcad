@@ -176,7 +176,7 @@ typedef struct StackLevel {
 				 * of a level. */
 } StackLevel;
 
-typedef struct ThreadSpecificData {
+typedef struct {
     int initialized;		/* 0 means the ThreadSpecific Data structure
 				 * for the current thread needs to be
 				 * initialized. */
@@ -996,6 +996,9 @@ AddFromString(
 	while ((*src == ' ') || (*src == '\t')) {
 	    src++;
 	}
+	if (*src == '\\' && (src[1] == '\t' || src[1] == ' ')) {
+	    src++;
+	}
 	if (*src == '\0') {
 	    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
 		    "missing value on line %d", lineNum));
@@ -1025,7 +1028,7 @@ AddFromString(
 		    src += 2;
 		    *dst++ = '\n';
 		    continue;
-		} else if (src[1] == '\t' || src[1] == ' ' || src[1] == '\\') {
+		} else if (src[1] == '\\') {
 		    ++src;
 		} else if (src[1] >= '0' && src[1] <= '3' && src[2] >= '0' &&
 			src[2] <= '9' && src[3] >= '0' && src[3] <= '9') {

@@ -73,3 +73,6 @@ set auto_index(::tcl::tm::Defaults) [list source [file join $dir tm.tcl]]
 set auto_index(::tcl::tm::UnknownHandler) [list source [file join $dir tm.tcl]]
 set auto_index(::tcl::tm::roots) [list source [file join $dir tm.tcl]]
 set auto_index(::tcl::tm::path) [list source [file join $dir tm.tcl]]
+if {[namespace exists ::tcl::unsupported]} {
+    set auto_index(timerate) {namespace import ::tcl::unsupported::timerate}
+}

@@ -502,10 +502,17 @@ Tcl_RegExpMatchObj(
 {
     Tcl_RegExp re;
 
-    re = Tcl_GetRegExpFromObj(interp, patternObj,
-	    TCL_REG_ADVANCED | TCL_REG_NOSUB);
-    if (re == NULL) {
-	return -1;
+    /*
+     * For performance reasons, first try compiling the RE without support for
+     * subexpressions. On failure, try again without TCL_REG_NOSUB in case the
+     * RE has backreferences in it. Closely related to [Bug 1366683]. If this
+     * still fails, an error message will be left in the interpreter.
+     */
+
+    if (!(re = Tcl_GetRegExpFromObj(interp, patternObj,
+            TCL_REG_ADVANCED | TCL_REG_NOSUB))
+     && !(re = Tcl_GetRegExpFromObj(interp, patternObj, TCL_REG_ADVANCED))) {
+        return -1;
     }
     return Tcl_RegExpExecObj(interp, re, textObj, 0 /* offset */,
 	    0 /* nmatches */, 0 /* flags */);
@@ -719,12 +726,12 @@ TclRegError(
     const char *p;
 
     Tcl_ResetResult(interp);
-    n = TclReError(status, NULL, buf, sizeof(buf));
+    n = TclReError(status, buf, sizeof(buf));
     p = (n > sizeof(buf)) ? "..." : "";
     Tcl_SetObjResult(interp, Tcl_ObjPrintf("%s%s%s", msg, buf, p));
 
     sprintf(cbuf, "%d", status);
-    (void) TclReError(REG_ITOA, NULL, cbuf, sizeof(cbuf));
+    (void) TclReError(REG_ITOA, cbuf, sizeof(cbuf));
     Tcl_SetErrorCode(interp, "REGEXP", cbuf, buf, NULL);
 }
 

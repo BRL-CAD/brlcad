@@ -311,7 +311,7 @@ proc ::tcl::tm::UnknownHandler {original name args} {
 proc ::tcl::tm::Defaults {} {
     global env tcl_platform
 
-    lassign [split [info tclversion] .] major minor
+    regexp {^(\d+)\.(\d+)} [package provide Tcl] - major minor
     set exe [file normalize [info nameofexecutable]]
 
     # Note that we're using [::list], not [list] because [list] means
@@ -354,7 +354,7 @@ proc ::tcl::tm::Defaults {} {
 #	Calls 'path add' to paths to the list of module search paths.
 
 proc ::tcl::tm::roots {paths} {
-    regexp {^(\d+)\.(\d+)} [package present Tcl] - major minor
+    regexp {^(\d+)\.(\d+)} [package provide Tcl] - major minor
     foreach pa $paths {
 	set p [file join $pa tcl$major]
 	for {set n $minor} {$n >= 0} {incr n -1} {

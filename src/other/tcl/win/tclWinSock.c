@@ -90,7 +90,7 @@
  */
 
 static int initialized = 0;
-static const TCHAR classname[] = TEXT("TclSocket");
+static const WCHAR classname[] = L"TclSocket";
 TCL_DECLARE_MUTEX(socketMutex)
 
 /*
@@ -232,7 +232,7 @@ typedef struct {
 } ThreadSpecificData;
 
 static Tcl_ThreadDataKey dataKey;
-static WNDCLASS windowClass;
+static WNDCLASSW windowClass;
 
 /*
  * Static routines for this file:
@@ -343,16 +343,16 @@ InitializeHostName(
     int *lengthPtr,
     Tcl_Encoding *encodingPtr)
 {
-    TCHAR tbuf[MAX_COMPUTERNAME_LENGTH + 1];
+    WCHAR wbuf[MAX_COMPUTERNAME_LENGTH + 1];
     DWORD length = MAX_COMPUTERNAME_LENGTH + 1;
     Tcl_DString ds;
 
-    if (GetComputerName(tbuf, &length) != 0) {
+    if (GetComputerNameW(wbuf, &length) != 0) {
 	/*
 	 * Convert string from native to UTF then change to lowercase.
 	 */
 
-	Tcl_UtfToLower(Tcl_WinTCharToUtf(tbuf, -1, &ds));
+	Tcl_UtfToLower(Tcl_WinTCharToUtf((TCHAR *)wbuf, -1, &ds));
 
     } else {
 	Tcl_DStringInit(&ds);
@@ -481,7 +481,7 @@ TclpFinalizeSockets(void)
 
     if (tsdPtr->socketThread != NULL) {
 	if (tsdPtr->hwnd != NULL) {
-	    PostMessage(tsdPtr->hwnd, SOCKET_TERMINATE, 0, 0);
+	    PostMessageW(tsdPtr->hwnd, SOCKET_TERMINATE, 0, 0);
 
 	    /*
 	     * Wait for the thread to exit. This ensures that we are
@@ -686,7 +686,7 @@ WaitForConnect(
 	}
 
 	/*
-	 * A non blocking socket waiting for an asyncronous connect
+	 * A non blocking socket waiting for an asynchronous connect
 	 * returns directly the error EWOULDBLOCK
 	 */
 
@@ -777,7 +777,7 @@ TcpInputProc(
      */
 
     while (1) {
-	SendMessage(tsdPtr->hwnd, SOCKET_SELECT,
+	SendMessageW(tsdPtr->hwnd, SOCKET_SELECT,
 		(WPARAM) UNSELECT, (LPARAM) statePtr);
 	/* single fd operation: this proc is only called for a connected socket. */
 	bytesRead = recv(statePtr->sockets->fd, buf, bufSize, 0);
@@ -840,7 +840,7 @@ TcpInputProc(
 	}
     }
 
-    SendMessage(tsdPtr->hwnd, SOCKET_SELECT, (WPARAM)SELECT, (LPARAM)statePtr);
+    SendMessageW(tsdPtr->hwnd, SOCKET_SELECT, (WPARAM)SELECT, (LPARAM)statePtr);
 
     return bytesRead;
 }
@@ -898,7 +898,7 @@ TcpOutputProc(
     }
 
     while (1) {
-	SendMessage(tsdPtr->hwnd, SOCKET_SELECT,
+	SendMessageW(tsdPtr->hwnd, SOCKET_SELECT,
 		(WPARAM) UNSELECT, (LPARAM) statePtr);
 
 	/* single fd operation: this proc is only called for a connected socket. */
@@ -950,7 +950,7 @@ TcpOutputProc(
 	}
     }
 
-    SendMessage(tsdPtr->hwnd, SOCKET_SELECT, (WPARAM)SELECT, (LPARAM)statePtr);
+    SendMessageW(tsdPtr->hwnd, SOCKET_SELECT, (WPARAM)SELECT, (LPARAM)statePtr);
 
     return written;
 }
@@ -1606,9 +1606,9 @@ TcpGetHandleProc(
  *
  *	This might be called in 3 circumstances:
  *	-   By a regular socket command
- *	-   By the event handler to continue an asynchroneous connect
+ *	-   By the event handler to continue an asynchronously connect
  *	-   By a blocking socket function (gets/puts) to terminate the
- *	    connect synchroneously
+ *	    connect synchronously
  *
  * Results:
  *      TCL_OK, if the socket was successfully connected or an asynchronous
@@ -1620,7 +1620,7 @@ TcpGetHandleProc(
  *
  * Remarks:
  *	A single host name may resolve to more than one IP address, e.g. for
- *	an IPv4/IPv6 dual stack host. For handling asyncronously connecting
+ *	an IPv4/IPv6 dual stack host. For handling asynchronously connecting
  *	sockets in the background for such hosts, this function can act as a
  *	coroutine. On the first call, it sets up the control variables for the
  *	two nested loops over the local and remote addresses. Once the first
@@ -1628,7 +1628,7 @@ TcpGetHandleProc(
  *	event handler for that socket, and returns. When the callback occurs,
  *	control is transferred to the "reenter" label, right after the initial
  *	return and the loops resume as if they had never been interrupted.
- *	For syncronously connecting sockets, the loops work the usual way.
+ *	For synchronously connecting sockets, the loops work the usual way.
  *
  *----------------------------------------------------------------------
  */
@@ -1718,7 +1718,7 @@ TcpConnect(
 		continue;
 	    }
 	    /*
-	     * For asyncroneous connect set the socket in nonblocking mode
+	     * For asynchroneous connect set the socket in nonblocking mode
 	     * and activate connect notification
 	     */
 	    if (async_connect) {
@@ -1761,7 +1761,7 @@ TcpConnect(
 		SetEvent(tsdPtr->socketListLock);
 
     		/* activate accept notification */
-		SendMessage(tsdPtr->hwnd, SOCKET_SELECT, (WPARAM) SELECT,
+		SendMessageW(tsdPtr->hwnd, SOCKET_SELECT, (WPARAM) SELECT,
 			(LPARAM) statePtr);
 	    }
 
@@ -1806,7 +1806,7 @@ TcpConnect(
 
 	    /*
 	     * Clear the tsd socket list pointer if we did not wait for
-	     * the FD_CONNECT asyncroneously
+	     * the FD_CONNECT asynchroneously
 	     */
 	    tsdPtr->pendingTcpState = NULL;
 
@@ -1841,7 +1841,7 @@ out:
 	 * automatically places the socket into non-blocking mode.
 	 */
 
-	SendMessage(tsdPtr->hwnd, SOCKET_SELECT, (WPARAM) SELECT,
+	SendMessageW(tsdPtr->hwnd, SOCKET_SELECT, (WPARAM) SELECT,
 		    (LPARAM) statePtr);
     } else {
 	/*
@@ -1868,7 +1868,7 @@ out:
 	    SetEvent(tsdPtr->socketListLock);
 	}
 	/*
-	 * Error message on syncroneous connect
+	 * Error message on synchroneous connect
 	 */
 	if (interp != NULL) {
 	    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
@@ -2017,7 +2017,7 @@ Tcl_MakeTcpClientChannel(
      */
 
     statePtr->selectEvents = FD_READ | FD_CLOSE | FD_WRITE;
-    SendMessage(tsdPtr->hwnd, SOCKET_SELECT, (WPARAM)SELECT, (LPARAM)statePtr);
+    SendMessageW(tsdPtr->hwnd, SOCKET_SELECT, (WPARAM)SELECT, (LPARAM)statePtr);
 
     sprintf(channelName, SOCK_TEMPLATE, statePtr);
     statePtr->channel = Tcl_CreateChannel(&tcpChannelType, channelName,
@@ -2061,7 +2061,6 @@ Tcl_OpenTcpServer(
     char channelName[SOCK_CHAN_LENGTH];
     u_long flag = 1;		/* Indicates nonblocking mode. */
     const char *errorMsg = NULL;
-    ThreadSpecificData *tsdPtr = TclThreadDataKeyGet(&dataKey);
 
     if (TclpHasSockets(interp) != TCL_OK) {
 	return NULL;
@@ -2177,6 +2176,7 @@ error:
     }
 
     if (statePtr != NULL) {
+	ThreadSpecificData *tsdPtr = TclThreadDataKeyGet(&dataKey);
 
 	statePtr->acceptProc = acceptProc;
 	statePtr->acceptProcData = acceptProcData;
@@ -2195,7 +2195,7 @@ error:
 	 */
 
 	ioctlsocket(sock, (long) FIONBIO, &flag);
-	SendMessage(tsdPtr->hwnd, SOCKET_SELECT, (WPARAM) SELECT,
+	SendMessageW(tsdPtr->hwnd, SOCKET_SELECT, (WPARAM) SELECT,
 		    (LPARAM) statePtr);
 	if (Tcl_SetChannelOption(interp, statePtr->channel, "-eofchar", "")
 	    == TCL_ERROR) {
@@ -2265,7 +2265,7 @@ TcpAccept(
      */
 
     newInfoPtr->selectEvents = (FD_READ | FD_WRITE | FD_CLOSE);
-    SendMessage(tsdPtr->hwnd, SOCKET_SELECT, (WPARAM) SELECT,
+    SendMessageW(tsdPtr->hwnd, SOCKET_SELECT, (WPARAM) SELECT,
 	    (LPARAM) newInfoPtr);
 
     sprintf(channelName, SOCK_TEMPLATE, newInfoPtr);
@@ -2341,7 +2341,7 @@ InitSockets(void)
 	windowClass.hIcon = NULL;
 	windowClass.hCursor = NULL;
 
-	if (!RegisterClass(&windowClass)) {
+	if (!RegisterClassW(&windowClass)) {
 	    TclWinConvertError(GetLastError());
 	    goto initFailure;
 	}
@@ -2366,11 +2366,11 @@ InitSockets(void)
     tsdPtr->socketList = NULL;
     tsdPtr->hwnd       = NULL;
     tsdPtr->threadId   = Tcl_GetCurrentThread();
-    tsdPtr->readyEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+    tsdPtr->readyEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
     if (tsdPtr->readyEvent == NULL) {
 	goto initFailure;
     }
-    tsdPtr->socketListLock = CreateEvent(NULL, FALSE, TRUE, NULL);
+    tsdPtr->socketListLock = CreateEventW(NULL, FALSE, TRUE, NULL);
     if (tsdPtr->socketListLock == NULL) {
 	goto initFailure;
     }
@@ -2466,7 +2466,7 @@ SocketExitHandler(
      */
 
     TclpFinalizeSockets();
-    UnregisterClass(classname, TclWinGetTclInstance());
+    UnregisterClassW(classname, TclWinGetTclInstance());
     initialized = 0;
     Tcl_MutexUnlock(&socketMutex);
 }
@@ -2771,7 +2771,7 @@ SocketEventProc(
 	     * async select handler and keep waiting.
 	     */
 
-	    SendMessage(tsdPtr->hwnd, SOCKET_SELECT,
+	    SendMessageW(tsdPtr->hwnd, SOCKET_SELECT,
 		    (WPARAM) UNSELECT, (LPARAM) statePtr);
 
 	    FD_ZERO(&readFds);
@@ -2783,7 +2783,7 @@ SocketEventProc(
 		mask |= TCL_READABLE;
 	    } else {
 		statePtr->readyEvents &= ~(FD_READ);
-		SendMessage(tsdPtr->hwnd, SOCKET_SELECT,
+		SendMessageW(tsdPtr->hwnd, SOCKET_SELECT,
 			(WPARAM) SELECT, (LPARAM) statePtr);
 	    }
 	}
@@ -2925,9 +2925,9 @@ WaitForSocketEvent(
      * Reset WSAAsyncSelect so we have a fresh set of events pending.
      */
 
-    SendMessage(tsdPtr->hwnd, SOCKET_SELECT, (WPARAM) UNSELECT,
+    SendMessageW(tsdPtr->hwnd, SOCKET_SELECT, (WPARAM) UNSELECT,
 	    (LPARAM) statePtr);
-    SendMessage(tsdPtr->hwnd, SOCKET_SELECT, (WPARAM) SELECT,
+    SendMessageW(tsdPtr->hwnd, SOCKET_SELECT, (WPARAM) SELECT,
 	    (LPARAM) statePtr);
 
     while (1) {
@@ -2992,7 +2992,7 @@ SocketThread(
      * Create a dummy window receiving socket events.
      */
 
-    tsdPtr->hwnd = CreateWindow(classname, classname, WS_TILED, 0, 0, 0, 0,
+    tsdPtr->hwnd = CreateWindowW(classname, classname, WS_TILED, 0, 0, 0, 0,
 	    NULL, NULL, windowClass.hInstance, arg);
 
     /*
@@ -3012,11 +3012,11 @@ SocketThread(
     /*
      * Process all messages on the socket window until WM_QUIT. This threads
      * exits only when instructed to do so by the call to
-     * PostMessage(SOCKET_TERMINATE) in TclpFinalizeSockets().
+     * PostMessageW(SOCKET_TERMINATE) in TclpFinalizeSockets().
      */
 
-    while (GetMessage(&msg, NULL, 0, 0) > 0) {
-	DispatchMessage(&msg);
+    while (GetMessageW(&msg, NULL, 0, 0) > 0) {
+	DispatchMessageW(&msg);
     }
 
     /*
@@ -3061,14 +3061,14 @@ SocketProc(
     TcpFdList *fds = NULL;
     ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 #ifdef _WIN64
-	    GetWindowLongPtr(hwnd, GWLP_USERDATA);
+	    GetWindowLongPtrW(hwnd, GWLP_USERDATA);
 #else
-	    GetWindowLong(hwnd, GWL_USERDATA);
+	    GetWindowLongW(hwnd, GWL_USERDATA);
 #endif
 
     switch (message) {
     default:
-	return DefWindowProc(hwnd, message, wParam, lParam);
+	return DefWindowProcW(hwnd, message, wParam, lParam);
 	break;
 
     case WM_CREATE:
@@ -3078,10 +3078,10 @@ SocketProc(
 	 */
 
 #ifdef _WIN64
-	SetWindowLongPtr(hwnd, GWLP_USERDATA,
+	SetWindowLongPtrW(hwnd, GWLP_USERDATA,
 		(LONG_PTR) ((LPCREATESTRUCT)lParam)->lpCreateParams);
 #else
-	SetWindowLong(hwnd, GWL_USERDATA,
+	SetWindowLongW(hwnd, GWL_USERDATA,
 		(LONG) ((LPCREATESTRUCT)lParam)->lpCreateParams);
 #endif
 	break;
@@ -3361,7 +3361,7 @@ TcpThreadActionProc(
      * thread.
      */
 
-    SendMessage(tsdPtr->hwnd, SOCKET_SELECT,
+    SendMessageW(tsdPtr->hwnd, SOCKET_SELECT,
 	    (WPARAM) notifyCmd, (LPARAM) statePtr);
 }
 

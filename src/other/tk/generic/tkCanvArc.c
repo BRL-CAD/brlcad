@@ -12,6 +12,7 @@
 
 #include "tkInt.h"
 #include "tkCanvas.h"
+#include "default.h"
 
 /*
  * The structure below defines the record for each arc item.
@@ -144,7 +145,7 @@ static const Tk_ConfigSpec configSpecs[] = {
 	"0,0", Tk_Offset(ArcItem, tsoffset),
 	TK_CONFIG_DONT_SET_DEFAULT, &offsetOption},
     {TK_CONFIG_COLOR, "-outline", NULL, NULL,
-	"black", Tk_Offset(ArcItem, outline.color), TK_CONFIG_NULL_OK, NULL},
+	DEF_CANVITEM_OUTLINE, Tk_Offset(ArcItem, outline.color), TK_CONFIG_NULL_OK, NULL},
     {TK_CONFIG_CUSTOM, "-outlineoffset", NULL, NULL,
 	"0,0", Tk_Offset(ArcItem, outline.tsoffset),
 	TK_CONFIG_DONT_SET_DEFAULT, &offsetOption},
@@ -290,7 +291,7 @@ CreateArc(
     arcPtr->activeFillStipple = None;
     arcPtr->disabledFillStipple = None;
     arcPtr->style = PIESLICE_STYLE;
-    arcPtr->fillGC = None;
+    arcPtr->fillGC = NULL;
 
     /*
      * Process the arguments to fill in the item record.
@@ -478,9 +479,9 @@ ConfigureArc(
 	mask |= GCCapStyle;
 	newGC = Tk_GetGC(tkwin, mask, &gcValues);
     } else {
-	newGC = None;
+	newGC = NULL;
     }
-    if (arcPtr->outline.gc != None) {
+    if (arcPtr->outline.gc != NULL) {
 	Tk_FreeGC(Tk_Display(tkwin), arcPtr->outline.gc);
     }
     arcPtr->outline.gc = newGC;
@@ -512,9 +513,9 @@ ConfigureArc(
       }
 
     if (arcPtr->style == ARC_STYLE) {
-	newGC = None;
+	newGC = NULL;
     } else if (color == NULL) {
-	newGC = None;
+	newGC = NULL;
     } else {
 	gcValues.foreground = color->pixel;
 	if (arcPtr->style == CHORD_STYLE) {
@@ -530,7 +531,7 @@ ConfigureArc(
 	}
 	newGC = Tk_GetGC(tkwin, mask, &gcValues);
     }
-    if (arcPtr->fillGC != None) {
+    if (arcPtr->fillGC != NULL) {
 	Tk_FreeGC(Tk_Display(tkwin), arcPtr->fillGC);
     }
     arcPtr->fillGC = newGC;
@@ -603,7 +604,7 @@ DeleteArc(
     if (arcPtr->disabledFillStipple != None) {
 	Tk_FreeBitmap(display, arcPtr->disabledFillStipple);
     }
-    if (arcPtr->fillGC != None) {
+    if (arcPtr->fillGC != NULL) {
 	Tk_FreeGC(display, arcPtr->fillGC);
     }
 }
@@ -734,7 +735,7 @@ ComputeArcBbox(
      * drawn) and add one extra pixel just for safety.
      */
 
-    if (arcPtr->outline.gc == None) {
+    if (arcPtr->outline.gc == NULL) {
 	tmp = 1;
     } else {
 	tmp = (int) ((width + 1.0)/2.0 + 1);
@@ -833,7 +834,7 @@ DisplayArc(
      * window servers to crash and should be a no-op anyway.
      */
 
-    if ((arcPtr->fillGC != None) && (extent != 0)) {
+    if ((arcPtr->fillGC != NULL) && (extent != 0)) {
 	if (stipple != None) {
 	    int w = 0;
 	    int h = 0;
@@ -867,7 +868,7 @@ DisplayArc(
 	    XSetTSOrigin(display, arcPtr->fillGC, 0, 0);
 	}
     }
-    if (arcPtr->outline.gc != None) {
+    if (arcPtr->outline.gc != NULL) {
 	Tk_ChangeOutlineGC(canvas, itemPtr, &(arcPtr->outline));
 
 	if (extent != 0) {
@@ -905,13 +906,13 @@ DisplayArc(
 	} else {
 	    if (arcPtr->style == CHORD_STYLE) {
 		TkFillPolygon(canvas, arcPtr->outlinePtr, CHORD_OUTLINE_PTS,
-			display, drawable, arcPtr->outline.gc, None);
+			display, drawable, arcPtr->outline.gc, NULL);
 	    } else if (arcPtr->style == PIESLICE_STYLE) {
 		TkFillPolygon(canvas, arcPtr->outlinePtr, PIE_OUTLINE1_PTS,
-			display, drawable, arcPtr->outline.gc, None);
+			display, drawable, arcPtr->outline.gc, NULL);
 		TkFillPolygon(canvas, arcPtr->outlinePtr + 2*PIE_OUTLINE1_PTS,
 			PIE_OUTLINE2_PTS, display, drawable,
-			arcPtr->outline.gc, None);
+			arcPtr->outline.gc, NULL);
 	    }
 	}
 
@@ -1017,12 +1018,12 @@ ArcToPoint(
 	return dist;
     }
 
-    if ((arcPtr->fillGC != None) || (arcPtr->outline.gc == None)) {
+    if ((arcPtr->fillGC != NULL) || (arcPtr->outline.gc == NULL)) {
 	filled = 1;
     } else {
 	filled = 0;
     }
-    if (arcPtr->outline.gc == None) {
+    if (arcPtr->outline.gc == NULL) {
 	width = 0.0;
     }
 
@@ -1144,12 +1145,12 @@ ArcToArea(
 	}
     }
 
-    if ((arcPtr->fillGC != None) || (arcPtr->outline.gc == None)) {
+    if ((arcPtr->fillGC != NULL) || (arcPtr->outline.gc == NULL)) {
 	filled = 1;
     } else {
 	filled = 0;
     }
-    if (arcPtr->outline.gc == None) {
+    if (arcPtr->outline.gc == NULL) {
 	width = 0.0;
     }
 
@@ -1883,7 +1884,7 @@ ArcToPostscript(
      * arc.
      */
 
-    if (arcPtr->fillGC != None) {
+    if (arcPtr->fillGC != NULL) {
 	Tcl_AppendPrintfToObj(psObj,
 		"matrix currentmatrix\n"
 		"%.15g %.15g translate %.15g %.15g scale\n",
@@ -1912,7 +1913,7 @@ ArcToPostscript(
 	    }
 	    Tcl_AppendObjToObj(psObj, Tcl_GetObjResult(interp));
 
-	    if (arcPtr->outline.gc != None) {
+	    if (arcPtr->outline.gc != NULL) {
 		Tcl_AppendToObj(psObj, "grestore gsave\n", -1);
 	    }
 	} else {
@@ -1924,7 +1925,7 @@ ArcToPostscript(
      * If there's an outline for the arc, draw it.
      */
 
-    if (arcPtr->outline.gc != None) {
+    if (arcPtr->outline.gc != NULL) {
 	Tcl_AppendPrintfToObj(psObj,
 		"matrix currentmatrix\n"
 		"%.15g %.15g translate %.15g %.15g scale\n",

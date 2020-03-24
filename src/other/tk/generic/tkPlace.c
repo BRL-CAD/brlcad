@@ -395,7 +395,7 @@ CreateSlave(
     slavePtr = ckalloc(sizeof(Slave));
     memset(slavePtr, 0, sizeof(Slave));
     slavePtr->tkwin = tkwin;
-    slavePtr->inTkwin = None;
+    slavePtr->inTkwin = NULL;
     slavePtr->anchor = TK_ANCHOR_NW;
     slavePtr->borderMode = BM_INSIDE;
     slavePtr->optionTable = table;
@@ -616,7 +616,8 @@ ConfigureSlave(
     Tk_SavedOptions savedOptions;
     int mask;
     Slave *slavePtr;
-    Tk_Window masterWin = (Tk_Window) NULL;
+    Tk_Window masterWin = NULL;
+    TkWindow *master;
 
     if (Tk_TopWinHierarchy(tkwin)) {
 	Tcl_SetObjResult(interp, Tcl_ObjPrintf(
@@ -694,6 +695,25 @@ ConfigureSlave(
 	    Tcl_SetErrorCode(interp, "TK", "GEOMETRY", "LOOP", NULL);
 	    goto error;
 	}
+
+	/*
+	 * Check for management loops.
+	 */
+
+	for (master = (TkWindow *)tkwin; master != NULL;
+	     master = (TkWindow *)TkGetGeomMaster(master)) {
+	    if (master == (TkWindow *)slavePtr->tkwin) {
+		Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		    "can't put %s inside %s, would cause management loop",
+	            Tk_PathName(slavePtr->tkwin), Tk_PathName(tkwin)));
+		Tcl_SetErrorCode(interp, "TK", "GEOMETRY", "LOOP", NULL);
+		goto error;
+	    }
+	}
+	if (tkwin != Tk_Parent(slavePtr->tkwin)) {
+	    ((TkWindow *)slavePtr->tkwin)->maintainerPtr = (TkWindow *)tkwin;
+	}
+
 	if ((slavePtr->masterPtr != NULL)
 		&& (slavePtr->masterPtr->tkwin == tkwin)) {
 	    /*
@@ -1185,6 +1205,12 @@ PlaceRequestProc(
 
     if ((slavePtr->flags & (CHILD_WIDTH|CHILD_REL_WIDTH))
 	    && (slavePtr->flags & (CHILD_HEIGHT|CHILD_REL_HEIGHT))) {
+        /*
+         * Send a ConfigureNotify to indicate that the size change
+         * request was rejected.
+         */
+
+        TkDoConfigureNotify((TkWindow *)(slavePtr->tkwin));
 	return;
     }
     masterPtr = slavePtr->masterPtr;

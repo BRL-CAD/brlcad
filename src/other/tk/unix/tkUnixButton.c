@@ -351,6 +351,47 @@ TkpCreateButton(
  *----------------------------------------------------------------------
  */
 
+static void
+ShiftByOffset(
+    TkButton *butPtr,
+    int relief,
+    int *x,		/* shift this x coordinate */
+    int *y,		/* shift this y coordinate */
+    int width,		/* width of image/text */
+    int height)		/* height of image/text */
+{
+    if (relief != TK_RELIEF_RAISED
+	    && butPtr->type == TYPE_BUTTON
+	    && !Tk_StrictMotif(butPtr->tkwin)) {
+	int shiftX;
+	int shiftY;
+
+	/*
+	 * This is an (unraised) button widget, so we offset the text to make
+	 * the button appear to move up and down as the relief changes.
+	 */
+
+	shiftX = shiftY = (relief == TK_RELIEF_SUNKEN) ? 2 : 1;
+
+	if (relief != TK_RELIEF_RIDGE) {
+	    /*
+	     * Take back one pixel if the padding is even, otherwise the
+	     * content will be displayed too far right/down.
+	     */
+
+	    if ((Tk_Width(butPtr->tkwin) - width) % 2 == 0) {
+		shiftX -= 1;
+	    }
+	    if ((Tk_Height(butPtr->tkwin) - height) % 2 == 0) {
+		shiftY -= 1;
+	    }
+	}
+
+	*x += shiftX;
+	*y += shiftY;
+    }
+}
+
 void
 TkpDisplayButton(
     ClientData clientData)	/* Information about widget. */
@@ -366,10 +407,6 @@ TkpDisplayButton(
     int width = 0, height = 0, fullWidth, fullHeight;
     int textXOffset, textYOffset;
     int haveImage = 0, haveText = 0;
-    int offset;			/* 1 means this is a button widget, so we
-				 * offset the text to make the button appear
-				 * to move up and down as the relief
-				 * changes. */
     int imageWidth, imageHeight;
     int imageXOffset = 0, imageYOffset = 0;
 				/* image information that will be used to
@@ -431,8 +468,6 @@ TkpDisplayButton(
 	    relief = butPtr->offRelief;
 	}
     }
-
-    offset = (butPtr->type == TYPE_BUTTON) && !Tk_StrictMotif(butPtr->tkwin);
 
     /*
      * In order to avoid screen flashes, this function redraws the button in a
@@ -525,17 +560,7 @@ TkpDisplayButton(
 		butPtr->indicatorSpace + fullWidth, fullHeight, &x, &y);
 
 	x += butPtr->indicatorSpace;
-
-	x += offset;
-	y += offset;
-	if (relief == TK_RELIEF_RAISED) {
-	    x -= offset;
-	    y -= offset;
-	} else if (relief == TK_RELIEF_SUNKEN) {
-	    x += offset;
-	    y += offset;
-	}
-
+	ShiftByOffset(butPtr, relief, &x, &y, width, height);
 	imageXOffset += x;
 	imageYOffset += y;
 
@@ -593,16 +618,7 @@ TkpDisplayButton(
 	    TkComputeAnchor(butPtr->anchor, tkwin, 0, 0,
 		    butPtr->indicatorSpace + width, height, &x, &y);
 	    x += butPtr->indicatorSpace;
-
-	    x += offset;
-	    y += offset;
-	    if (relief == TK_RELIEF_RAISED) {
-		x -= offset;
-		y -= offset;
-	    } else if (relief == TK_RELIEF_SUNKEN) {
-		x += offset;
-		y += offset;
-	    }
+	    ShiftByOffset(butPtr, relief, &x, &y, width, height);
 	    imageXOffset += x;
 	    imageYOffset += y;
 	    if (butPtr->image != NULL) {
@@ -655,16 +671,7 @@ TkpDisplayButton(
 		    butPtr->textHeight, &x, &y);
 
 	    x += butPtr->indicatorSpace;
-
-	    x += offset;
-	    y += offset;
-	    if (relief == TK_RELIEF_RAISED) {
-		x -= offset;
-		y -= offset;
-	    } else if (relief == TK_RELIEF_SUNKEN) {
-		x += offset;
-		y += offset;
-	    }
+	    ShiftByOffset(butPtr, relief, &x, &y, width, height);
 	    Tk_DrawTextLayout(butPtr->display, pixmap, gc, butPtr->textLayout,
 		    x, y, 0, -1);
 	    Tk_UnderlineTextLayout(butPtr->display, pixmap, gc,

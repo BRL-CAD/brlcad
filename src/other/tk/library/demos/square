@@ -27,7 +27,7 @@ focus .s
 
 proc center {x y} {
     set a [.s size]
-    .s position [expr $x-($a/2)] [expr $y-($a/2)]
+    .s position [expr {$x-($a/2)}] [expr {$y-($a/2)}]
 }
 
 # The procedures below provide a simple form of animation where

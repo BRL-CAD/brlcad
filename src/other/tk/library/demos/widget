@@ -10,7 +10,6 @@ exec wish "$0" ${1+"$@"}
 # separate ".tcl" files is this directory, which are sourced by this script as
 # needed.
 
-package require Tcl	8.5
 package require Tk	8.5
 package require msgcat
 
@@ -93,13 +92,14 @@ image create photo ::img::new -format GIF -data [mc {
 }]
 
 #----------------------------------------------------------------
-# The code below create the main window, consisting of a menu bar and a text
+# The code below creates the main window, consisting of a menu bar and a text
 # widget that explains how to use the program, plus lists all of the demos as
 # hypertext items.
 #----------------------------------------------------------------
 
 menu .menuBar -tearoff 0
 
+# On Aqua, just use the default menu.
 if {[tk windowingsystem] ne "aqua"} {
     # This is a tk-internal procedure to make i18n easier
     ::tk::AmpMenuArgs .menuBar add cascade -label [mc "&File"] \
@@ -119,9 +119,8 @@ if {[tk windowingsystem] ne "aqua"} {
 		-command {exit} -accelerator [mc "Meta-Q"]
 	bind . <[mc "Meta-q"]> {exit}
     }
+    . configure -menu .menuBar
 }
-
-. configure -menu .menuBar
 
 ttk::frame .statusBar
 ttk::label .statusBar.lab -text "   " -anchor w

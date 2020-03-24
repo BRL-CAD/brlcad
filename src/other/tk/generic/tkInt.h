@@ -84,6 +84,16 @@
 #   endif
 #endif
 
+#ifndef TCL_Z_MODIFIER
+#   if defined(_WIN64)
+#	define TCL_Z_MODIFIER	"I"
+#   elif defined(__GNUC__) && !defined(_WIN32)
+#	define TCL_Z_MODIFIER	"z"
+#   else
+#	define TCL_Z_MODIFIER	""
+#   endif
+#endif /* !TCL_Z_MODIFIER */
+
 /*
  * Opaque type declarations:
  */
@@ -323,6 +333,9 @@ typedef struct TkDisplay {
 				 * by that master. */
     int geomInit;
 
+#define TkGetGeomMaster(tkwin) (((TkWindow *)tkwin)->maintainerPtr != NULL ? \
+    ((TkWindow *)tkwin)->maintainerPtr : ((TkWindow *)tkwin)->parentPtr)
+
     /*
      * Information used by tkGet.c only:
      */
@@ -423,6 +436,7 @@ typedef struct TkDisplay {
     Atom windowAtom;		/* Atom for TK_WINDOW. */
     Atom clipboardAtom;		/* Atom for CLIPBOARD. */
     Atom utf8Atom;		/* Atom for UTF8_STRING. */
+    Atom atomPairAtom;          /* Atom for ATOM_PAIR. */
 
     Tk_Window clipWindow;	/* Window used for clipboard ownership and to
 				 * retrieve selections between processes. NULL
@@ -488,7 +502,7 @@ typedef struct TkDisplay {
      */
 
     int mouseButtonState;	/* Current mouse button state for this
-				 * display. */
+				 * display. NOT USED as of 8.6.10 */
     Window mouseButtonWindow;	/* Window the button state was set in, added
 				 * in Tk 8.4. */
     Tk_Window warpWindow;
@@ -508,6 +522,9 @@ typedef struct TkDisplay {
 
     int iconDataSize;		/* Size of default iconphoto image data. */
     unsigned char *iconDataPtr;	/* Default iconphoto image data, if set. */
+#ifdef TK_USE_INPUT_METHODS
+    int ximGeneration;          /* Used to invalidate XIC */
+#endif /* TK_USE_INPUT_METHODS */
 } TkDisplay;
 
 /*
@@ -808,7 +825,14 @@ typedef struct TkWindow {
 
     int minReqWidth;		/* Minimum requested width. */
     int minReqHeight;		/* Minimum requested height. */
-    char *geometryMaster;
+#ifdef TK_USE_INPUT_METHODS
+    int ximGeneration;          /* Used to invalidate XIC */
+#endif /* TK_USE_INPUT_METHODS */
+    char *geomMgrName;          /* Records the name of the geometry manager. */
+    struct TkWindow *maintainerPtr;
+				/* The geometry master for this window. The
+				 * value is NULL if the window has no master or
+				 * if its master is its parent. */
 } TkWindow;
 
 /*
@@ -918,6 +942,17 @@ typedef struct TkpClipMask {
 #define EXTENDED_MASK	(AnyModifier<<3)
 
 /*
+ * Mask that selects any of the state bits corresponding to buttons, plus
+ * masks that select individual buttons' bits:
+ */
+
+#define ALL_BUTTONS \
+	(Button1Mask|Button2Mask|Button3Mask|Button4Mask|Button5Mask)
+
+
+MODULE_SCOPE unsigned long TkGetButtonMask(unsigned int);
+
+/*
  * Object types not declared in tkObj.c need to be mentioned here so they can
  * be properly registered with Tcl:
  */
@@ -970,7 +1005,6 @@ MODULE_SCOPE const char *const tkWebColors[20];
 void Tcl_Panic(const char *, ...) __attribute__((analyzer_noreturn));
 #endif
 #if !defined(CLANG_ASSERT)
-#include <assert.h>
 #define CLANG_ASSERT(x) assert(x)
 #endif
 #elif !defined(CLANG_ASSERT)
@@ -1196,7 +1230,7 @@ MODULE_SCOPE void	TkUnderlineCharsInContext(Display *display,
 			    const char *string, int numBytes, int x, int y,
 			    int firstByte, int lastByte);
 MODULE_SCOPE void	TkpGetFontAttrsForChar(Tk_Window tkwin, Tk_Font tkfont,
-			    Tcl_UniChar c, struct TkFontAttributes *faPtr);
+			    int c, struct TkFontAttributes *faPtr);
 MODULE_SCOPE Tcl_Obj *	TkNewWindowObj(Tk_Window tkwin);
 MODULE_SCOPE void	TkpShowBusyWindow(TkBusy busy);
 MODULE_SCOPE void	TkpHideBusyWindow(TkBusy busy);
@@ -1208,7 +1242,7 @@ MODULE_SCOPE void	TkpCreateBusy(Tk_FakeWin *winPtr, Tk_Window tkRef,
 MODULE_SCOPE int	TkBackgroundEvalObjv(Tcl_Interp *interp,
 			    int objc, Tcl_Obj *const *objv, int flags);
 MODULE_SCOPE void	TkSendVirtualEvent(Tk_Window tgtWin,
-			    const char *eventName);
+			    const char *eventName, Tcl_Obj *detail);
 MODULE_SCOPE Tcl_Command TkMakeEnsemble(Tcl_Interp *interp,
 			    const char *nsname, const char *name,
 			    ClientData clientData, const TkEnsemble *map);
@@ -1217,6 +1251,10 @@ MODULE_SCOPE int	TkInitTkCmd(Tcl_Interp *interp,
 MODULE_SCOPE int	TkInitFontchooser(Tcl_Interp *interp,
 			    ClientData clientData);
 MODULE_SCOPE void	TkpWarpPointer(TkDisplay *dispPtr);
+MODULE_SCOPE void	TkpCancelWarp(TkDisplay *dispPtr);
+MODULE_SCOPE int	TkListCreateFrame(ClientData clientData,
+			    Tcl_Interp *interp, Tcl_Obj *listObj,
+			    int toplevel, Tcl_Obj *nameObj);
 
 #ifdef _WIN32
 #define TkParseColor XParseColor
@@ -1227,6 +1265,18 @@ MODULE_SCOPE Status TkParseColor (Display * display,
 #endif
 #ifdef HAVE_XFT
 MODULE_SCOPE void	TkUnixSetXftClipRegion(TkRegion clipRegion);
+#endif
+
+#if !defined(__cplusplus) && !defined(c_plusplus)
+# define c_class class
+#endif
+
+#if TCL_UTF_MAX > 4
+#   define TkUtfToUniChar Tcl_UtfToUniChar
+#   define TkUniCharToUtf Tcl_UniCharToUtf
+#else
+    MODULE_SCOPE int TkUtfToUniChar(const char *, int *);
+    MODULE_SCOPE int TkUniCharToUtf(int, char *);
 #endif
 
 /*

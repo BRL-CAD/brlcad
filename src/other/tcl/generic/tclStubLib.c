@@ -68,7 +68,7 @@ Tcl_InitStubs(
      */
 
     if (!stubsPtr || (stubsPtr->magic != TCL_STUB_MAGIC)) {
-	iPtr->result = "interpreter uses an incompatible stubs mechanism";
+	iPtr->result = (char *)"interpreter uses an incompatible stubs mechanism";
 	iPtr->freeProc = TCL_STATIC;
 	return NULL;
     }

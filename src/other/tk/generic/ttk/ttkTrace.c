@@ -34,7 +34,7 @@ VarTraceProc(
     const char *name, *value;
     Tcl_Obj *valuePtr;
 
-    if (flags & TCL_INTERP_DESTROYED) {
+    if (Tcl_InterpDeleted(interp)) {
 	return NULL;
     }
 

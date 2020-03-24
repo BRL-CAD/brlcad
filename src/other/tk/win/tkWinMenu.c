@@ -19,8 +19,8 @@
  * The class of the window for popup menus.
  */
 
-#define MENU_CLASS_NAME			TEXT("MenuWindowClass")
-#define EMBEDDED_MENU_CLASS_NAME	TEXT("EmbeddedMenuWindowClass")
+#define MENU_CLASS_NAME			L"MenuWindowClass"
+#define EMBEDDED_MENU_CLASS_NAME	L"EmbeddedMenuWindowClass"
 
 /*
  * Used to align a windows bitmap inside a rectangle
@@ -85,7 +85,7 @@ static int indicatorDimensions[2];
 
 static BOOL showMenuAccelerators;
 
-typedef struct ThreadSpecificData {
+typedef struct {
     int inPostMenu;		/* We cannot be re-entrant like X Windows. */
     WORD lastCommandID;		/* The last command ID we allocated. */
     HWND menuHWND;		/* A window to service popup-menu messages
@@ -155,7 +155,7 @@ static void		DrawWindowsSystemBitmap(Display *display,
 			    Drawable drawable, GC gc, const RECT *rectPtr,
 			    int bitmapID, int alignFlags);
 static void		FreeID(WORD commandID);
-static char *		GetEntryText(TkMenuEntry *mePtr);
+static char *		GetEntryText(TkMenu *menuPtr, TkMenuEntry *mePtr);
 static void		GetMenuAccelGeometry(TkMenu *menuPtr,
 			    TkMenuEntry *mePtr, Tk_Font tkfont,
 			    const Tk_FontMetrics *fmPtr, int *widthPtr,
@@ -486,6 +486,7 @@ TkpDestroyMenuEntry(
 
 static char *
 GetEntryText(
+    TkMenu *menuPtr,		/* The menu considered. */
     TkMenuEntry *mePtr)		/* A pointer to the menu entry. */
 {
     char *itemText;
@@ -506,7 +507,7 @@ GetEntryText(
 	int i;
 	const char *label = (mePtr->labelPtr == NULL) ? ""
 		: Tcl_GetString(mePtr->labelPtr);
-	const char *accel = (mePtr->accelPtr == NULL) ? ""
+	const char *accel = ((menuPtr->menuType == MENUBAR) || (mePtr->accelPtr == NULL)) ? ""
 		: Tcl_GetString(mePtr->accelPtr);
 	const char *p, *next;
 	Tcl_DString itemString;
@@ -572,7 +573,7 @@ ReconfigureWindowsMenu(
     TkMenuEntry *mePtr;
     HMENU winMenuHdl = (HMENU) menuPtr->platformData;
     char *itemText = NULL;
-    const TCHAR *lpNewItem;
+    LPCWSTR lpNewItem;
     UINT flags;
     UINT itemID;
     int i, count, systemMenu = 0, base;
@@ -605,14 +606,14 @@ ReconfigureWindowsMenu(
 	    continue;
 	}
 
-	itemText = GetEntryText(mePtr);
+	itemText = GetEntryText(menuPtr, mePtr);
 	if ((menuPtr->menuType == MENUBAR)
 		|| (menuPtr->menuFlags & MENU_SYSTEM_MENU)) {
 	    Tcl_WinUtfToTChar(itemText, -1, &translatedText);
-	    lpNewItem = (const TCHAR *) Tcl_DStringValue(&translatedText);
+	    lpNewItem = (LPCWSTR) Tcl_DStringValue(&translatedText);
 	    flags |= MF_STRING;
 	} else {
-	    lpNewItem = (LPCTSTR) mePtr;
+	    lpNewItem = (LPCWSTR) mePtr;
 	    flags |= MF_OWNERDRAW;
 	}
 
@@ -715,7 +716,7 @@ ReconfigureWindowsMenu(
 	    }
 	}
 	if (!systemMenu) {
-	    InsertMenu(winMenuHdl, 0xFFFFFFFF, flags, itemID, lpNewItem);
+	    InsertMenuW(winMenuHdl, 0xFFFFFFFF, flags, itemID, lpNewItem);
 	}
 	Tcl_DStringFree(&translatedText);
 	if (itemText != NULL) {
@@ -742,7 +743,10 @@ ReconfigureWindowsMenu(
  *
  * TkpPostMenu --
  *
- *	Posts a menu on the screen
+ *	Posts a menu on the screen so that the top left corner of the
+ *      specified entry is located at the point (x, y) in screen coordinates.
+ *      If the entry parameter is negative, the upper left corner of the
+ *      menu itself is placed at the point.
  *
  * Results:
  *	None.
@@ -757,7 +761,7 @@ int
 TkpPostMenu(
     Tcl_Interp *interp,
     TkMenu *menuPtr,
-    int x, int y)
+    int x, int y, int index)
 {
     HMENU winMenuHdl = (HMENU) menuPtr->platformData;
     int result, flags;
@@ -769,13 +773,19 @@ TkpPostMenu(
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     tsdPtr->inPostMenu++;
-
     CallPendingReconfigureImmediately(menuPtr);
 
     result = TkPreprocessMenu(menuPtr);
     if (result != TCL_OK) {
 	tsdPtr->inPostMenu--;
 	return result;
+    }
+
+    if (index >= menuPtr->numEntries) {
+	index = menuPtr->numEntries - 1;
+    }
+    if (index >= 0) {
+	y -= menuPtr->entries[index]->y;
     }
 
     /*
@@ -834,6 +844,100 @@ TkpPostMenu(
     if (tsdPtr->inPostMenu) {
 	tsdPtr->inPostMenu = 0;
     }
+    return TCL_OK;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TkpPostTearoffMenu --
+ *
+ *	Posts a tearoff menu on the screen so that the top left corner of the
+ *      specified entry is located at the point (x, y) in screen coordinates.
+ *      If the index parameter is negative, the upper left corner of the menu
+ *      itself is placed at the point.  Adjusts the menu's position so that it
+ *      fits on the screen, and maps and raises the menu.
+ *
+ * Results:
+ *	Returns a standard Tcl Error.
+ *
+ * Side effects:
+ *	The menu is posted.
+ *
+ *----------------------------------------------------------------------
+ */
+
+int
+TkpPostTearoffMenu(
+    Tcl_Interp *interp,		/* The interpreter of the menu */
+    TkMenu *menuPtr,		/* The menu we are posting */
+    int x, int y, int index)	/* The root X,Y coordinates where we are
+				 * posting */
+{
+    int vRootX, vRootY, vRootWidth, vRootHeight;
+    int result;
+
+    if (index >= menuPtr->numEntries) {
+	index = menuPtr->numEntries - 1;
+    }
+    if (index >= 0) {
+	y -= menuPtr->entries[index]->y;
+    }
+
+    TkActivateMenuEntry(menuPtr, -1);
+    TkRecomputeMenu(menuPtr);
+    result = TkPostCommand(menuPtr);
+    if (result != TCL_OK) {
+    	return result;
+    }
+
+    /*
+     * The post commands could have deleted the menu, which means we are dead
+     * and should go away.
+     */
+
+    if (menuPtr->tkwin == NULL) {
+    	return TCL_OK;
+    }
+
+    /*
+     * Adjust the position of the menu if necessary to keep it visible on the
+     * screen. There are two special tricks to make this work right:
+     *
+     * 1. If a virtual root window manager is being used then the coordinates
+     *    are in the virtual root window of menuPtr's parent; since the menu
+     *    uses override-redirect mode it will be in the *real* root window for
+     *    the screen, so we have to map the coordinates from the virtual root
+     *    (if any) to the real root. Can't get the virtual root from the menu
+     *    itself (it will never be seen by the wm) so use its parent instead
+     *    (it would be better to have an an option that names a window to use
+     *    for this...).
+     * 2. The menu may not have been mapped yet, so its current size might be
+     *    the default 1x1. To compute how much space it needs, use its
+     *    requested size, not its actual size.
+     */
+
+    Tk_GetVRootGeometry(Tk_Parent(menuPtr->tkwin), &vRootX, &vRootY,
+	&vRootWidth, &vRootHeight);
+    vRootWidth -= Tk_ReqWidth(menuPtr->tkwin);
+    if (x > vRootX + vRootWidth) {
+	x = vRootX + vRootWidth;
+    }
+    if (x < vRootX) {
+	x = vRootX;
+    }
+    vRootHeight -= Tk_ReqHeight(menuPtr->tkwin);
+    if (y > vRootY + vRootHeight) {
+	y = vRootY + vRootHeight;
+    }
+    if (y < vRootY) {
+	y = vRootY;
+    }
+    Tk_MoveToplevelWindow(menuPtr->tkwin, x, y);
+    if (!Tk_IsMapped(menuPtr->tkwin)) {
+	Tk_MapWindow(menuPtr->tkwin);
+    }
+    TkWmRestackToplevel((TkWindow *) menuPtr->tkwin, Above, NULL);
     return TCL_OK;
 }
 
@@ -899,7 +1003,7 @@ TkWinMenuProc(
     LRESULT lResult;
 
     if (!TkWinHandleMenuEvent(&hwnd, &message, &wParam, &lParam, &lResult)) {
-	lResult = DefWindowProcA(hwnd, message, wParam, lParam);
+	lResult = DefWindowProcW(hwnd, message, wParam, lParam);
     }
     return lResult;
 }
@@ -996,9 +1100,9 @@ TkWinEmbeddedMenuProc(
 	if (lResult || (GetCapture() != hwnd)) {
 	    break;
 	}
-
+	/* FALLTHRU */
     default:
-	lResult = DefWindowProcA(hwnd, message, wParam, lParam);
+	lResult = DefWindowProcW(hwnd, message, wParam, lParam);
 	break;
     }
     return lResult;
@@ -1145,7 +1249,9 @@ TkWinHandleMenuEvent(
 	if (hashEntryPtr != NULL) {
 	    int i, len, underline;
 	    Tcl_Obj *labelPtr;
-	    Tcl_UniChar *wlabel, menuChar;
+	    LPCWSTR wlabel;
+	    int menuChar;
+	    Tcl_DString ds;
 
 	    *plResult = 0;
 	    menuPtr = Tcl_GetHashValue(hashEntryPtr);
@@ -1153,8 +1259,9 @@ TkWinHandleMenuEvent(
 	     * Assume we have something directly convertable to Tcl_UniChar.
 	     * True at least for wide systems.
 	     */
-	    menuChar = Tcl_UniCharToUpper((Tcl_UniChar) LOWORD(*pwParam));
+	    menuChar = Tcl_UniCharToUpper(LOWORD(*pwParam));
 
+	    Tcl_DStringInit(&ds);
 	    for (i = 0; i < menuPtr->numEntries; i++) {
 		underline = menuPtr->entries[i]->underline;
 		labelPtr = menuPtr->entries[i]->labelPtr;
@@ -1162,7 +1269,10 @@ TkWinHandleMenuEvent(
 		    /*
 		     * Ensure we don't exceed the label length, then check
 		     */
-		    wlabel = Tcl_GetUnicodeFromObj(labelPtr, &len);
+		    const char *src = Tcl_GetStringFromObj(labelPtr, &len);
+
+		    Tcl_DStringFree(&ds);
+		    wlabel = (LPCWSTR) Tcl_WinUtfToTChar(src, len, &ds);
 		    if ((underline < len) && (menuChar ==
 				Tcl_UniCharToUpper(wlabel[underline]))) {
 			*plResult = (2 << 16) | i;
@@ -1171,6 +1281,7 @@ TkWinHandleMenuEvent(
 		    }
 		}
 	    }
+	    Tcl_DStringFree(&ds);
 	}
 	break;
     }
@@ -1287,7 +1398,17 @@ TkWinHandleMenuEvent(
 	    if (menuPtr != NULL) {
 		long entryIndex = LOWORD(*pwParam);
 
-		mePtr = NULL;
+                if ((menuPtr->menuType == MENUBAR) && menuPtr->tearoff) {
+                    /*
+                     * Windows passes the entry index starting at 0 for
+                     * the first menu entry. However this entry #0 is the
+                     * tearoff entry for Tk (the menu has -tearoff 1),
+                     * which is ignored for MENUBAR menues on Windows.
+                     */
+
+                    entryIndex++;
+                }
+                mePtr = NULL;
 		if (flags != 0xFFFF) {
 		    if ((flags&MF_POPUP) && (entryIndex<menuPtr->numEntries)) {
 			mePtr = menuPtr->entries[entryIndex];
@@ -1471,6 +1592,15 @@ GetMenuIndicatorGeometry(
 	Tk_GetPixelsFromObj(menuPtr->interp, menuPtr->tkwin,
 		menuPtr->borderWidthPtr, &borderWidth);
 	*widthPtr = indicatorDimensions[1] - borderWidth;
+
+        /*
+         * Quite dubious about the above (why would borderWidth play a role?)
+         * and about how indicatorDimensions[1] is obtained in SetDefaults().
+         * At least don't let the result be negative!
+         */
+        if (*widthPtr < 0) {
+            *widthPtr = 0;
+        }
     }
 }
 
@@ -1502,12 +1632,12 @@ GetMenuAccelGeometry(
     *heightPtr = fmPtr->linespace;
     if (mePtr->type == CASCADE_ENTRY) {
 	*widthPtr = 0;
-    } else if (mePtr->accelPtr == NULL) {
-	*widthPtr = 0;
-    } else {
+    } else if ((menuPtr->menuType != MENUBAR) && (mePtr->accelPtr != NULL)) {
 	const char *accel = Tcl_GetString(mePtr->accelPtr);
 
 	*widthPtr = Tk_TextWidth(tkfont, accel, mePtr->accelLength);
+    } else {
+    	*widthPtr = 0;
     }
 }
 
@@ -1616,7 +1746,7 @@ DrawWindowsSystemBitmap(
     SetTextColor(hdc, gc->foreground);
 
     scratchDC = CreateCompatibleDC(hdc);
-    bitmap = LoadBitmap(NULL, MAKEINTRESOURCE(bitmapID));
+    bitmap = LoadBitmapW(NULL, (LPCWSTR)MAKEINTRESOURCE(bitmapID));
 
     SelectObject(scratchDC, bitmap);
     SetMapMode(scratchDC, GetMapMode(hdc));
@@ -1763,6 +1893,10 @@ DrawMenuEntryAccelerator(
     int leftEdge = x + mePtr->indicatorSpace + mePtr->labelWidth;
     const char *accel;
 
+    if (menuPtr->menuType == MENUBAR) {
+        return;
+    }
+
     if (mePtr->accelPtr != NULL) {
 	accel = Tcl_GetString(mePtr->accelPtr);
     } else {
@@ -1825,7 +1959,7 @@ DrawMenuEntryArrow(
     int width,			/* Width of menu entry */
     int height,			/* Height of menu entry */
     int drawArrow)		/* For cascade menus, whether of not to draw
-				 * the arraw. I cannot figure out Windows'
+				 * the arrow. I cannot figure out Windows'
 				 * algorithm for where to draw this. */
 {
     COLORREF oldFgColor;
@@ -1943,8 +2077,7 @@ DrawMenuUnderline(
     if ((mePtr->underline >= 0) && (mePtr->labelPtr != NULL)) {
 	int len;
 
-	/* do the unicode call just to prevent overruns */
-	Tcl_GetUnicodeFromObj(mePtr->labelPtr, &len);
+	len = Tcl_GetCharLength(mePtr->labelPtr);
 	if (mePtr->underline < len) {
 	    const char *label, *start, *end;
 
@@ -1966,7 +2099,7 @@ DrawMenuUnderline(
  *
  *	This function is invoked when keys related to pulling down menus is
  *	pressed. The corresponding Windows events are generated and passed to
- *	DefWindowProc if appropriate. This cmd is registered as tk::WinMenuKey
+ *	DefWindowProcW if appropriate. This cmd is registered as tk::WinMenuKey
  *	in the interp.
  *
  * Results:
@@ -2021,33 +2154,33 @@ TkWinMenuKeyObjCmd(
     if (eventPtr->type == KeyPress) {
 	switch (keySym) {
 	case XK_Alt_L:
-	    scanCode = MapVirtualKeyA(VK_LMENU, 0);
-	    CallWindowProcA(DefWindowProcA, Tk_GetHWND(Tk_WindowId(tkwin)),
+	    scanCode = MapVirtualKeyW(VK_LMENU, 0);
+	    CallWindowProcW(DefWindowProcW, Tk_GetHWND(Tk_WindowId(tkwin)),
 		    WM_SYSKEYDOWN, VK_MENU,
 		    (int) (scanCode << 16) | (1 << 29));
 	    break;
 	case XK_Alt_R:
-	    scanCode = MapVirtualKeyA(VK_RMENU, 0);
-	    CallWindowProcA(DefWindowProcA, Tk_GetHWND(Tk_WindowId(tkwin)),
+	    scanCode = MapVirtualKeyW(VK_RMENU, 0);
+	    CallWindowProcW(DefWindowProcW, Tk_GetHWND(Tk_WindowId(tkwin)),
 		    WM_SYSKEYDOWN, VK_MENU,
 		    (int) (scanCode << 16) | (1 << 29) | (1 << 24));
 	    break;
 	case XK_F10:
-	    scanCode = MapVirtualKeyA(VK_F10, 0);
-	    CallWindowProcA(DefWindowProcA, Tk_GetHWND(Tk_WindowId(tkwin)),
+	    scanCode = MapVirtualKeyW(VK_F10, 0);
+	    CallWindowProcW(DefWindowProcW, Tk_GetHWND(Tk_WindowId(tkwin)),
 		    WM_SYSKEYDOWN, VK_F10, (int) (scanCode << 16));
 	    break;
 	default:
 	    virtualKey = XKeysymToKeycode(winPtr->display, keySym);
-	    scanCode = MapVirtualKeyA(virtualKey, 0);
+	    scanCode = MapVirtualKeyW(virtualKey, 0);
 	    if (0 != scanCode) {
 		XKeyEvent xkey = eventPtr->xkey;
-		CallWindowProcA(DefWindowProcA, Tk_GetHWND(Tk_WindowId(tkwin)),
+		CallWindowProcW(DefWindowProcW, Tk_GetHWND(Tk_WindowId(tkwin)),
 			WM_SYSKEYDOWN, virtualKey,
 			(int) ((scanCode << 16) | (1 << 29)));
 		if (xkey.nbytes > 0) {
 		    for (i = 0; i < xkey.nbytes; i++) {
-			CallWindowProcA(DefWindowProcA,
+			CallWindowProcW(DefWindowProcW,
 				Tk_GetHWND(Tk_WindowId(tkwin)), WM_SYSCHAR,
 				xkey.trans_chars[i],
 				(int) ((scanCode << 16) | (1 << 29)));
@@ -2058,28 +2191,28 @@ TkWinMenuKeyObjCmd(
     } else if (eventPtr->type == KeyRelease) {
 	switch (keySym) {
 	case XK_Alt_L:
-	    scanCode = MapVirtualKeyA(VK_LMENU, 0);
-	    CallWindowProcA(DefWindowProcA, Tk_GetHWND(Tk_WindowId(tkwin)),
+	    scanCode = MapVirtualKeyW(VK_LMENU, 0);
+	    CallWindowProcW(DefWindowProcW, Tk_GetHWND(Tk_WindowId(tkwin)),
 		    WM_SYSKEYUP, VK_MENU, (int) (scanCode << 16)
 		    | (1 << 29) | (1 << 30) | (1 << 31));
 	    break;
 	case XK_Alt_R:
-	    scanCode = MapVirtualKeyA(VK_RMENU, 0);
-	    CallWindowProcA(DefWindowProcA, Tk_GetHWND(Tk_WindowId(tkwin)),
+	    scanCode = MapVirtualKeyW(VK_RMENU, 0);
+	    CallWindowProcW(DefWindowProcW, Tk_GetHWND(Tk_WindowId(tkwin)),
 		    WM_SYSKEYUP, VK_MENU, (int) (scanCode << 16) | (1 << 24)
-		    | (0x111 << 29) | (1 << 30) | (1 << 31));
+		    | (1 << 29) | (1 << 30) | (1 << 31));
 	    break;
 	case XK_F10:
-	    scanCode = MapVirtualKeyA(VK_F10, 0);
-	    CallWindowProcA(DefWindowProcA, Tk_GetHWND(Tk_WindowId(tkwin)),
+	    scanCode = MapVirtualKeyW(VK_F10, 0);
+	    CallWindowProcW(DefWindowProcW, Tk_GetHWND(Tk_WindowId(tkwin)),
 		    WM_SYSKEYUP, VK_F10,
 		    (int) (scanCode << 16) | (1 << 30) | (1 << 31));
 	    break;
 	default:
 	    virtualKey = XKeysymToKeycode(winPtr->display, keySym);
-	    scanCode = MapVirtualKeyA(virtualKey, 0);
+	    scanCode = MapVirtualKeyW(virtualKey, 0);
 	    if (0 != scanCode) {
-		CallWindowProcA(DefWindowProcA, Tk_GetHWND(Tk_WindowId(tkwin)),
+		CallWindowProcW(DefWindowProcW, Tk_GetHWND(Tk_WindowId(tkwin)),
 			WM_SYSKEYUP, virtualKey, (int) ((scanCode << 16)
 			| (1 << 29) | (1 << 30) | (1 << 31)));
 	    }
@@ -2340,7 +2473,7 @@ DrawMenuEntryLabel(
 	    XFillRectangle(menuPtr->display, d, menuPtr->disabledGC, x, y,
 		    (unsigned) width, (unsigned) height);
 	} else if ((mePtr->image != NULL)
-		&& (menuPtr->disabledImageGC != None)) {
+		&& menuPtr->disabledImageGC) {
 	    XFillRectangle(menuPtr->display, d, menuPtr->disabledImageGC,
 		    leftEdge + imageXOffset,
 		    (int) (y + (mePtr->height - imageHeight)/2 + imageYOffset),
@@ -2413,7 +2546,7 @@ DrawTearoffEntry(
     points[0].y = y + height/2;
     points[1].y = points[0].y;
     segmentWidth = 6;
-    maxX = width - 1;
+    maxX = x + width - 1;
     border = Tk_Get3DBorderFromObj(menuPtr->tkwin, menuPtr->borderPtr);
 
     while (points[0].x < maxX) {
@@ -2485,7 +2618,7 @@ TkpDrawMenuEntry(
     int strictMotif,		/* Boolean flag */
     int drawingParameters)	/* Whether or not to draw the cascade arrow
 				 * for cascade items and accelerator
-				 * cues. Only applies to Windows. */
+				 * cues. */
 {
     GC gc, indicatorGC;
     TkMenu *menuPtr = mePtr->menuPtr;
@@ -2859,7 +2992,7 @@ TkpComputeStandardMenuGeometry(
 		menuPtr->entries[j]->entryFlags &= ~ENTRY_LAST_COLUMN;
 	    }
 	    x += indicatorSpace + labelWidth + accelWidth
-		    + 2 * borderWidth;
+		    + 2 * activeBorderWidth;
 	    indicatorSpace = labelWidth = accelWidth = 0;
 	    lastColumnBreak = i;
 	    y = borderWidth;
@@ -2873,7 +3006,6 @@ TkpComputeStandardMenuGeometry(
 	    GetTearoffEntryGeometry(menuPtr, menuPtr->entries[i], tkfont,
 	    	    fmPtr, &width, &height);
 	    menuPtr->entries[i]->height = height;
-
 	} else {
 	    /*
 	     * For each entry, compute the height required by that particular
@@ -2929,10 +3061,8 @@ TkpComputeStandardMenuGeometry(
 	menuPtr->entries[j]->x = x;
 	menuPtr->entries[j]->entryFlags |= ENTRY_LAST_COLUMN;
     }
-    windowWidth = x + indicatorSpace + labelWidth + accelWidth + accelSpace
-	    + 2 * activeBorderWidth + 2 * borderWidth;
-
-
+    windowWidth = x + indicatorSpace + labelWidth + accelWidth
+	    + 2 * activeBorderWidth + borderWidth;
     windowHeight += borderWidth;
 
     /*
@@ -3083,8 +3213,8 @@ static void
 MenuExitHandler(
     ClientData clientData)	    /* Not used */
 {
-    UnregisterClass(MENU_CLASS_NAME, Tk_GetHINSTANCE());
-    UnregisterClass(EMBEDDED_MENU_CLASS_NAME, Tk_GetHINSTANCE());
+    UnregisterClassW(MENU_CLASS_NAME, Tk_GetHINSTANCE());
+    UnregisterClassW(EMBEDDED_MENU_CLASS_NAME, Tk_GetHINSTANCE());
 }
 
 /*
@@ -3184,12 +3314,12 @@ SetDefaults(
     HDC scratchDC;
     int bold = 0;
     int italic = 0;
-    TEXTMETRICA tm;
+    TEXTMETRICW tm;
     int pointSize;
     HFONT menuFont;
     /* See: [Bug #3239768] tk8.4.19 (and later) WIN32 menu font support */
     struct {
-        NONCLIENTMETRICS metrics;
+        NONCLIENTMETRICSW metrics;
 #if (WINVER < 0x0600)
         int padding;
 #endif
@@ -3206,7 +3336,7 @@ SetDefaults(
 	defaultBorderWidth = GetSystemMetrics(SM_CYBORDER);
     }
 
-    scratchDC = CreateDCA("DISPLAY", NULL, NULL, NULL);
+    scratchDC = CreateDCW(L"DISPLAY", NULL, NULL, NULL);
     if (!firstTime) {
 	Tcl_DStringFree(&menuFontDString);
     }
@@ -3220,11 +3350,11 @@ SetDefaults(
 	nc.metrics.cbSize -= sizeof(int);
     }
 
-    SystemParametersInfo(SPI_GETNONCLIENTMETRICS, nc.metrics.cbSize,
+    SystemParametersInfoW(SPI_GETNONCLIENTMETRICS, nc.metrics.cbSize,
 	    &nc.metrics, 0);
-    menuFont = CreateFontIndirect(&nc.metrics.lfMenuFont);
+    menuFont = CreateFontIndirectW(&nc.metrics.lfMenuFont);
     SelectObject(scratchDC, menuFont);
-    GetTextMetricsA(scratchDC, &tm);
+    GetTextMetricsW(scratchDC, &tm);
     GetTextFaceA(scratchDC, LF_FACESIZE, faceName);
     pointSize = MulDiv(tm.tmHeight - tm.tmInternalLeading,
 	    72, GetDeviceCaps(scratchDC, LOGPIXELSY));
@@ -3266,6 +3396,7 @@ SetDefaults(
      *
      * The code below was given to me by Microsoft over the phone. It is the
      * only way to ensure menu items line up, and is not documented.
+     * How strange the calculation of indicatorDimensions[1] is...!
      */
 
     indicatorDimensions[0] = GetSystemMetrics(SM_CYMENUCHECK);
@@ -3280,9 +3411,7 @@ SetDefaults(
      */
 
     showMenuAccelerators = TRUE;
-    if (TkWinGetPlatformId() == VER_PLATFORM_WIN32_NT) {
-	SystemParametersInfoA(SPI_GETKEYBOARDCUES, 0, &showMenuAccelerators, 0);
-    }
+    SystemParametersInfoW(SPI_GETKEYBOARDCUES, 0, &showMenuAccelerators, 0);
 }
 
 /*
@@ -3304,7 +3433,7 @@ SetDefaults(
 void
 TkpMenuInit(void)
 {
-    WNDCLASS wndClass;
+    WNDCLASSW wndClass;
 
     wndClass.style = CS_OWNDC;
     wndClass.lpfnWndProc = TkWinMenuProc;
@@ -3316,13 +3445,13 @@ TkpMenuInit(void)
     wndClass.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
     wndClass.lpszMenuName = NULL;
     wndClass.lpszClassName = MENU_CLASS_NAME;
-    if (!RegisterClass(&wndClass)) {
+    if (!RegisterClassW(&wndClass)) {
 	Tcl_Panic("Failed to register menu window class");
     }
 
     wndClass.lpfnWndProc = TkWinEmbeddedMenuProc;
     wndClass.lpszClassName = EMBEDDED_MENU_CLASS_NAME;
-    if (!RegisterClass(&wndClass)) {
+    if (!RegisterClassW(&wndClass)) {
 	Tcl_Panic("Failed to register embedded menu window class");
     }
 
@@ -3353,7 +3482,7 @@ TkpMenuThreadInit(void)
     ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
-    tsdPtr->menuHWND = CreateWindow(MENU_CLASS_NAME, TEXT("MenuWindow"), WS_POPUP,
+    tsdPtr->menuHWND = CreateWindowW(MENU_CLASS_NAME, L"MenuWindow", WS_POPUP,
 	    0, 0, 10, 10, NULL, NULL, Tk_GetHINSTANCE(), NULL);
 
     if (!tsdPtr->menuHWND) {
@@ -3361,7 +3490,7 @@ TkpMenuThreadInit(void)
     }
 
     tsdPtr->embeddedMenuHWND =
-	    CreateWindow(EMBEDDED_MENU_CLASS_NAME, TEXT("EmbeddedMenuWindow"),
+	    CreateWindowW(EMBEDDED_MENU_CLASS_NAME, L"EmbeddedMenuWindow",
 	    WS_POPUP, 0, 0, 10, 10, NULL, NULL, Tk_GetHINSTANCE(), NULL);
 
     if (!tsdPtr->embeddedMenuHWND) {

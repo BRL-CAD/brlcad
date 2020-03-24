@@ -130,7 +130,8 @@ static void StateSpecUpdateString(Tcl_Obj *objPtr)
     unsigned int offbits = objPtr->internalRep.longValue & 0x0000FFFF;
     unsigned int mask = onbits | offbits;
     Tcl_DString result;
-    int i, len;
+    int i;
+    int len;
 
     Tcl_DStringInit(&result);
 
@@ -146,14 +147,14 @@ static void StateSpecUpdateString(Tcl_Obj *objPtr)
     len = Tcl_DStringLength(&result);
     if (len) {
 	/* 'len' includes extra trailing ' ' */
-	objPtr->bytes = Tcl_Alloc((unsigned)len);
+	objPtr->bytes = ckalloc(len);
 	objPtr->length = len-1;
-	strncpy(objPtr->bytes, Tcl_DStringValue(&result), (size_t)len-1);
+	strncpy(objPtr->bytes, Tcl_DStringValue(&result), len-1);
 	objPtr->bytes[len-1] = '\0';
     } else {
 	/* empty string */
 	objPtr->length = 0;
-	objPtr->bytes = Tcl_Alloc(1);
+	objPtr->bytes = ckalloc(1);
 	*objPtr->bytes = '\0';
     }
 

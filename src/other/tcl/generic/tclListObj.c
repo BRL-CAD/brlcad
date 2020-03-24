@@ -55,20 +55,22 @@ const Tcl_ObjType tclListType = {
  *
  * NewListIntRep --
  *
- *	Creates a list internal rep with space for objc elements.  objc
- *	must be > 0.  If objv!=NULL, initializes with the first objc values
- *	in that array.  If objv==NULL, initalize list internal rep to have
- *	0 elements, with space to add objc more.  Flag value "p" indicates
+ *	Creates a 'List' structure with space for 'objc' elements.  'objc' must
+ *	be > 0.  If 'objv' is not NULL, The list is initialized with first
+ *	'objc' values in that array.  Otherwise the list is initialized to have
+ *	0 elements, with space to add 'objc' more.  Flag value 'p' indicates
  *	how to behave on failure.
  *
- * Results:
- *	A new List struct with refCount 0 is returned. If some failure
- *	prevents this then if p=0, NULL is returned and otherwise the
- *	routine panics.
+ * Value
  *
- * Side effects:
- *	The ref counts of the elements in objv are incremented since the
- *	resulting list now refers to them.
+ *	A new 'List' structure with refCount 0. If some failure
+ *	prevents this NULL is returned if 'p' is 0 , and 'Tcl_Panic'
+ *	is called if it is not.
+ *
+ * Effect
+ *
+ *	The refCount of each value in 'objv' is incremented as it is added
+ *	to the list.
  *
  *----------------------------------------------------------------------
  */
@@ -132,21 +134,9 @@ NewListIntRep(
 /*
  *----------------------------------------------------------------------
  *
- * AttemptNewList --
+ *  AttemptNewList --
  *
- *	Creates a list internal rep with space for objc elements.  objc
- *	must be > 0.  If objv!=NULL, initializes with the first objc values
- *	in that array.  If objv==NULL, initalize list internal rep to have
- *	0 elements, with space to add objc more.
- *
- * Results:
- *	A new List struct with refCount 0 is returned. If some failure
- *	prevents this then NULL is returned, and an error message is left
- *	in the interp result, unless interp is NULL.
- *
- * Side effects:
- *	The ref counts of the elements in objv are incremented since the
- *	resulting list now refers to them.
+ *	Like NewListIntRep, but additionally sets an error message on failure.
  *
  *----------------------------------------------------------------------
  */
@@ -179,23 +169,20 @@ AttemptNewList(
  *
  * Tcl_NewListObj --
  *
- *	This function is normally called when not debugging: i.e., when
- *	TCL_MEM_DEBUG is not defined. It creates a new list object from an
- *	(objc,objv) array: that is, each of the objc elements of the array
- *	referenced by objv is inserted as an element into a new Tcl object.
+ *	Creates a new list object and adds values to it. When TCL_MEM_DEBUG is
+ *	defined, 'Tcl_DbNewListObj' is called instead.
  *
- *	When TCL_MEM_DEBUG is defined, this function just returns the result
- *	of calling the debugging version Tcl_DbNewListObj.
+ * Value
  *
- * Results:
- *	A new list object is returned that is initialized from the object
- *	pointers in objv. If objc is less than or equal to zero, an empty
- *	object is returned. The new object's string representation is left
- *	NULL. The resulting new list object has ref count 0.
+ *	A new list 'Tcl_Obj' to which is appended values from 'objv', or if
+ *	'objc' is less than or equal to zero, a list 'Tcl_Obj' having no
+ *	elements.  The string representation of the new 'Tcl_Obj' is set to
+ *	NULL.  The refCount of the list is 0.
  *
- * Side effects:
- *	The ref counts of the elements in objv are incremented since the
- *	resulting list now refers to them.
+ * Effect
+ *
+ *	The refCount of each elements in 'objv' is incremented as it is added
+ *	to the list.
  *
  *----------------------------------------------------------------------
  */
@@ -246,28 +233,14 @@ Tcl_NewListObj(
 /*
  *----------------------------------------------------------------------
  *
- * Tcl_DbNewListObj --
+ *  Tcl_DbNewListObj --
  *
- *	This function is normally called when debugging: i.e., when
- *	TCL_MEM_DEBUG is defined. It creates new list objects. It is the same
- *	as the Tcl_NewListObj function above except that it calls
- *	Tcl_DbCkalloc directly with the file name and line number from its
- *	caller. This simplifies debugging since then the [memory active]
- *	command will report the correct file name and line number when
- *	reporting objects that haven't been freed.
+ *	Like 'Tcl_NewListObj', but it calls Tcl_DbCkalloc directly with the
+ *	file name and line number from its caller.  This simplifies debugging
+ *	since the [memory active] command will report the correct file
+ *	name and line number when reporting objects that haven't been freed.
  *
- *	When TCL_MEM_DEBUG is not defined, this function just returns the
- *	result of calling Tcl_NewListObj.
- *
- * Results:
- *	A new list object is returned that is initialized from the object
- *	pointers in objv. If objc is less than or equal to zero, an empty
- *	object is returned. The new object's string representation is left
- *	NULL. The new list object has ref count 0.
- *
- * Side effects:
- *	The ref counts of the elements in objv are incremented since the
- *	resulting list now refers to them.
+ *	When TCL_MEM_DEBUG is not defined, 'Tcl_NewListObj' is called instead.
  *
  *----------------------------------------------------------------------
  */
@@ -328,19 +301,8 @@ Tcl_DbNewListObj(
  *
  * Tcl_SetListObj --
  *
- *	Modify an object to be a list containing each of the objc elements of
- *	the object array referenced by objv.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	The object is made a list object and is initialized from the object
- *	pointers in objv. If objc is less than or equal to zero, an empty
- *	object is returned. The new object's string representation is left
- *	NULL. The ref counts of the elements in objv are incremented since the
- *	list now refers to them. The object's old string and internal
- *	representations are freed and its type is set NULL.
+ *	Like 'Tcl_NewListObj', but operates on an existing 'Tcl_Obj'instead of
+ *	creating a new one.
  *
  *----------------------------------------------------------------------
  */
@@ -384,18 +346,20 @@ Tcl_SetListObj(
  *
  * TclListObjCopy --
  *
- *	Makes a "pure list" copy of a list value. This provides for the C
- *	level a counterpart of the [lrange $list 0 end] command, while using
- *	internals details to be as efficient as possible.
+ *	Creates a new 'Tcl_Obj' which is a pure copy of a list value. This
+ *	provides for the C level a counterpart of the [lrange $list 0 end]
+ *	command, while using internals details to be as efficient as possible.
  *
- * Results:
- *	Normally returns a pointer to a new Tcl_Obj, that contains the same
- *	list value as *listPtr does. The returned Tcl_Obj has a refCount of
- *	zero. If *listPtr does not hold a list, NULL is returned, and if
- *	interp is non-NULL, an error message is recorded there.
+ * Value
  *
- * Side effects:
- *	None.
+ *	The address of the new 'Tcl_Obj' which shares its internal
+ *	representation with 'listPtr', and whose refCount is 0.  If 'listPtr'
+ *	is not actually a list, the value is NULL, and an error message is left
+ *	in 'interp' if it is not NULL.
+ *
+ * Effect
+ *
+ *	'listPtr' is converted to a list if it isn't one already.
  *
  *----------------------------------------------------------------------
  */
@@ -425,27 +389,30 @@ TclListObjCopy(
  *
  * Tcl_ListObjGetElements --
  *
- *	This function returns an (objc,objv) array of the elements in a list
- *	object.
+ *	Retreive the elements in a list 'Tcl_Obj'.
  *
- * Results:
- *	The return value is normally TCL_OK; in this case *objcPtr is set to
- *	the count of list elements and *objvPtr is set to a pointer to an
- *	array of (*objcPtr) pointers to each list element. If listPtr does not
- *	refer to a list object and the object can not be converted to one,
- *	TCL_ERROR is returned and an error message will be left in the
- *	interpreter's result if interp is not NULL.
+ * Value
  *
- *	The objects referenced by the returned array should be treated as
- *	readonly and their ref counts are _not_ incremented; the caller must
- *	do that if it holds on to a reference. Furthermore, the pointer and
- *	length returned by this function may change as soon as any function is
- *	called on the list object; be careful about retaining the pointer in a
- *	local data structure.
+ *	TCL_OK
  *
- * Side effects:
- *	The possible conversion of the object referenced by listPtr
- *	to a list object.
+ *	    A count of list elements is stored, 'objcPtr', And a pointer to the
+ *	    array of elements in the list is stored in 'objvPtr'.
+ *
+ *	    The elements accessible via 'objvPtr' should be treated as readonly
+ *	    and the refCount for each object is _not_ incremented; the caller
+ *	    must do that if it holds on to a reference. Furthermore, the
+ *	    pointer and length returned by this function may change as soon as
+ *	    any function is called on the list object. Be careful about
+ *	    retaining the pointer in a local data structure.
+ *
+ *	TCL_ERROR
+ *
+ *	    'listPtr' is not a valid list. An error message is left in the
+ *	    interpreter's result if 'interp' is not NULL.
+ *
+ * Effect
+ *
+ *	'listPtr' is converted to a list object if it isn't one already.
  *
  *----------------------------------------------------------------------
  */
@@ -486,20 +453,27 @@ Tcl_ListObjGetElements(
  *
  * Tcl_ListObjAppendList --
  *
- *	This function appends the elements in the list value referenced by
- *	elemListPtr to the list value referenced by listPtr.
+ *	Appends the elements of elemListPtr to those of listPtr.
  *
- * Results:
- *	The return value is normally TCL_OK. If listPtr or elemListPtr do not
- *	refer to list values, TCL_ERROR is returned and an error message is
- *	left in the interpreter's result if interp is not NULL.
+ * Value
  *
- * Side effects:
- *	The reference counts of the elements in elemListPtr are incremented
- *	since the list now refers to them. listPtr and elemListPtr are
- *	converted, if necessary, to list objects. Also, appending the new
- *	elements may cause listObj's array of element pointers to grow.
- *	listPtr's old string representation, if any, is invalidated.
+ *	TCL_OK
+ *
+ *	    Success.
+ *
+ *	TCL_ERROR
+ *
+ *	    'listPtr' or 'elemListPtr' are not valid lists.  An error
+ *	    message is left in the interpreter's result if 'interp' is not NULL.
+ *
+ * Effect
+ *
+ *	The reference count of each element of 'elemListPtr' as it is added to
+ *	'listPtr'. 'listPtr' and 'elemListPtr' are converted to 'tclListType'
+ *	if they are not already. Appending the new elements may cause the
+ *	array of element pointers in 'listObj' to grow.  If any objects are
+ *	appended to 'listPtr'. Any preexisting string representation of
+ *	'listPtr' is invalidated.
  *
  *----------------------------------------------------------------------
  */
@@ -538,24 +512,27 @@ Tcl_ListObjAppendList(
  *
  * Tcl_ListObjAppendElement --
  *
- *	This function is a special purpose version of Tcl_ListObjAppendList:
- *	it appends a single object referenced by objPtr to the list object
- *	referenced by listPtr. If listPtr is not already a list object, an
- *	attempt will be made to convert it to one.
+ *	Like 'Tcl_ListObjAppendList', but Appends a single value to a list.
  *
- * Results:
- *	The return value is normally TCL_OK; in this case objPtr is added to
- *	the end of listPtr's list. If listPtr does not refer to a list object
- *	and the object can not be converted to one, TCL_ERROR is returned and
- *	an error message will be left in the interpreter's result if interp is
- *	not NULL.
+ * Value
  *
- * Side effects:
- *	The ref count of objPtr is incremented since the list now refers to
- *	it. listPtr will be converted, if necessary, to a list object. Also,
- *	appending the new element may cause listObj's array of element
- *	pointers to grow. listPtr's old string representation, if any, is
- *	invalidated.
+ *	TCL_OK
+ *
+ *	    'objPtr' is appended to the elements of 'listPtr'.
+ *
+ *	TCL_ERROR
+ *
+ *	    listPtr does not refer to a list object and the object can not be
+ *	    converted to one. An error message will be left in the
+ *	    interpreter's result if interp is not NULL.
+ *
+ * Effect
+ *
+ *	If 'listPtr' is not already of type 'tclListType', it is converted.
+ *	The 'refCount' of 'objPtr' is incremented as it is added to 'listPtr'.
+ *	Appending the new element may cause the the array of element pointers
+ *	in 'listObj' to grow.  Any preexisting string representation of
+ *	'listPtr' is invalidated.
  *
  *----------------------------------------------------------------------
  */
@@ -706,23 +683,27 @@ Tcl_ListObjAppendElement(
  *
  * Tcl_ListObjIndex --
  *
- *	This function returns a pointer to the index'th object from the list
- *	referenced by listPtr. The first element has index 0. If index is
- *	negative or greater than or equal to the number of elements in the
- *	list, a NULL is returned. If listPtr is not a list object, an attempt
- *	will be made to convert it to a list.
+ * 	Retrieve a pointer to the element of 'listPtr' at 'index'.  The index
+ * 	of the first element is 0.
  *
- * Results:
- *	The return value is normally TCL_OK; in this case objPtrPtr is set to
- *	the Tcl_Obj pointer for the index'th list element or NULL if index is
- *	out of range. This object should be treated as readonly and its ref
- *	count is _not_ incremented; the caller must do that if it holds on to
- *	the reference. If listPtr does not refer to a list and can't be
- *	converted to one, TCL_ERROR is returned and an error message is left
- *	in the interpreter's result if interp is not NULL.
+ * Value
  *
- * Side effects:
- *	listPtr will be converted, if necessary, to a list object.
+ * 	TCL_OK
+ *
+ *	    A pointer to the element at 'index' is stored in 'objPtrPtr'.  If
+ *	    'index' is out of range, NULL is stored in 'objPtrPtr'.  This
+ *	    object should be treated as readonly and its 'refCount' is _not_
+ *	    incremented. The caller must do that if it holds on to the
+ *	    reference.
+ *
+ * 	TCL_ERROR
+ *
+ * 	    'listPtr' is not a valid list. An an error message is left in the
+ * 	    interpreter's result if 'interp' is not NULL.
+ *
+ *  Effect
+ *
+ * 	If 'listPtr' is not already of type 'tclListType', it is converted.
  *
  *----------------------------------------------------------------------
  */
@@ -764,19 +745,20 @@ Tcl_ListObjIndex(
  *
  * Tcl_ListObjLength --
  *
- *	This function returns the number of elements in a list object. If the
- *	object is not already a list object, an attempt will be made to
- *	convert it to one.
+ * 	Retrieve the number of elements in a list.
  *
- * Results:
- *	The return value is normally TCL_OK; in this case *intPtr will be set
- *	to the integer count of list elements. If listPtr does not refer to a
- *	list object and the object can not be converted to one, TCL_ERROR is
- *	returned and an error message will be left in the interpreter's result
- *	if interp is not NULL.
+ * Value
  *
- * Side effects:
- *	The possible conversion of the argument object to a list object.
+ *	TCL_OK
+ *
+ *	    A count of list elements is stored at the address provided by
+ *	    'intPtr'. If 'listPtr' is not already of type 'tclListPtr', it is
+ *	    converted.
+ *
+ *	TCL_ERROR
+ *
+ *	    'listPtr' is not a valid list.  An error message will be left in
+ *	    the interpreter's result if 'interp' is not NULL.
  *
  *----------------------------------------------------------------------
  */
@@ -812,35 +794,36 @@ Tcl_ListObjLength(
  *
  * Tcl_ListObjReplace --
  *
- *	This function replaces zero or more elements of the list referenced by
- *	listPtr with the objects from an (objc,objv) array. The objc elements
- *	of the array referenced by objv replace the count elements in listPtr
- *	starting at first.
+ *	Replace values in a list.
  *
- *	If the argument first is zero or negative, it refers to the first
- *	element. If first is greater than or equal to the number of elements
- *	in the list, then no elements are deleted; the new elements are
- *	appended to the list. Count gives the number of elements to replace.
- *	If count is zero or negative then no elements are deleted; the new
- *	elements are simply inserted before first.
+ *	If 'first' is zero or negative, it refers to the first element. If
+ *	'first' outside the range of elements in the list, no elements are
+ *	deleted.
  *
- *	The argument objv refers to an array of objc pointers to the new
- *	elements to be added to listPtr in place of those that were deleted.
- *	If objv is NULL, no new elements are added. If listPtr is not a list
- *	object, an attempt will be made to convert it to one.
+ *	If 'count' is zero or negative no elements are deleted, and any new
+ *	elements are inserted at the beginning of the list.
  *
- * Results:
- *	The return value is normally TCL_OK. If listPtr does not refer to a
- *	list object and can not be converted to one, TCL_ERROR is returned and
- *	an error message will be left in the interpreter's result if interp is
- *	not NULL.
+ * Value
  *
- * Side effects:
- *	The ref counts of the objc elements in objv are incremented since the
- *	resulting list now refers to them. Similarly, the ref counts for
- *	replaced objects are decremented. listPtr is converted, if necessary,
- *	to a list object. listPtr's old string representation, if any, is
- *	freed.
+ *	TCL_OK
+ *
+ *	    The first 'objc' values of 'objv' replaced 'count' elements in 'listPtr'
+ *	    starting at 'first'.  If 'objc' 0, no new elements are added.
+ *
+ *	TCL_ERROR
+ *
+ *	    'listPtr' is not a valid list.   An error message is left in the
+ *	    interpreter's result if 'interp' is not NULL.
+ *
+ * Effect
+ *
+ *	If 'listPtr' is not of type 'tclListType', it is converted if possible.
+ *
+ *	The 'refCount' of each element appended to the list is incremented.
+ *	Similarly, the 'refCount' for each replaced element is decremented.
+ *
+ *	If 'listPtr' is modified, any previous string representation is
+ *	invalidated.
  *
  *----------------------------------------------------------------------
  */
@@ -897,18 +880,18 @@ Tcl_ListObjReplace(
     }
     if (count < 0) {
 	count = 0;
-    } else if (numElems < first+count || first+count < 0) {
-	/*
-	 * The 'first+count < 0' condition here guards agains integer
-	 * overflow in determining 'first+count'.
-	 */
+    } else if (first > INT_MAX - count /* Handle integer overflow */
+	    || numElems < first+count) {
 
 	count = numElems - first;
     }
 
     if (objc > LIST_MAX - (numElems - count)) {
-	Tcl_SetObjResult(interp, Tcl_ObjPrintf(
-		"max length of a Tcl list (%d elements) exceeded", LIST_MAX));
+	if (interp != NULL) {
+	    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		    "max length of a Tcl list (%d elements) exceeded",
+		    LIST_MAX));
+	}
 	return TCL_ERROR;
     }
     isShared = (listRepPtr->refCount > 1);
@@ -1098,22 +1081,19 @@ Tcl_ListObjReplace(
  *
  * TclLindexList --
  *
- *	This procedure handles the 'lindex' command when objc==3.
+ *	Implements the 'lindex' command when objc==3.
  *
- * Results:
- *	Returns a pointer to the object extracted, or NULL if an error
- *	occurred. The returned object already includes one reference count for
- *	the pointer returned.
+ *	Implemented entirely as a wrapper around 'TclLindexFlat'. Reconfigures
+ *	the argument format into required form while taking care to manage
+ *	shimmering so as to tend to keep the most useful intreps
+ *	and/or avoid the most expensive conversions.
  *
- * Side effects:
- *	None.
+ * Value
  *
- * Notes:
- *	This procedure is implemented entirely as a wrapper around
- *	TclLindexFlat. All it does is reconfigure the argument format into the
- *	form required by TclLindexFlat, while taking care to manage shimmering
- *	in such a way that we tend to keep the most useful intreps and/or
- *	avoid the most expensive conversions.
+ *	A pointer to the specified element, with its 'refCount' incremented, or
+ *	NULL if an error occurred.
+ *
+ * Notes
  *
  *----------------------------------------------------------------------
  */
@@ -1165,17 +1145,11 @@ TclLindexList(
 	return TclLindexFlat(interp, listPtr, 1, &argPtr);
     }
 
-    if (indexListCopy->typePtr == &tclListType) {
-	List *listRepPtr = ListRepPtr(indexListCopy);
+    {
+	int indexCount = -1;		/* Size of the array of list indices. */
+	Tcl_Obj **indices = NULL; 	/* Array of list indices. */
 
-	listPtr = TclLindexFlat(interp, listPtr, listRepPtr->elemCount,
-		&listRepPtr->elements);
-    } else {
-	int indexCount = -1;	/* Size of the array of list indices. */
-	Tcl_Obj **indices = NULL;
-				/* Array of list indices. */
-
-	Tcl_ListObjGetElements(NULL, indexListCopy, &indexCount, &indices);
+	TclListObjGetElements(NULL, indexListCopy, &indexCount, &indices);
 	listPtr = TclLindexFlat(interp, listPtr, indexCount, indices);
     }
     Tcl_DecrRefCount(indexListCopy);
@@ -1185,25 +1159,20 @@ TclLindexList(
 /*
  *----------------------------------------------------------------------
  *
- * TclLindexFlat --
+ *  TclLindexFlat --
  *
- *	This procedure is the core of the 'lindex' command, with all index
- *	arguments presented as a flat list.
+ * 	The core of the 'lindex' command, with all index
+ * 	arguments presented as a flat list.
  *
- * Results:
- *	Returns a pointer to the object extracted, or NULL if an error
- *	occurred. The returned object already includes one reference count for
- *	the pointer returned.
+ *  Value
  *
- * Side effects:
- *	None.
+ *	A pointer to the object extracted, with its 'refCount' incremented,  or
+ *	NULL if an error occurred.  Thus, the calling code will usually do
+ *	something like:
  *
- * Notes:
- *	The reference count of the returned object includes one reference
- *	corresponding to the pointer returned. Thus, the calling code will
- *	usually do something like:
- *		Tcl_SetObjResult(interp, result);
- *		Tcl_DecrRefCount(result);
+ * 		Tcl_SetObjResult(interp, result);
+ * 		Tcl_DecrRefCount(result);
+ *
  *
  *----------------------------------------------------------------------
  */
@@ -1279,23 +1248,16 @@ TclLindexFlat(
  *
  * TclLsetList --
  *
- *	Core of the 'lset' command when objc == 4. Objv[2] may be either a
+ *	The core of [lset] when objc == 4. Objv[2] may be either a
  *	scalar index or a list of indices.
  *
- * Results:
- *	Returns the new value of the list variable, or NULL if there was an
- *	error. The returned object includes one reference count for the
- *	pointer returned.
+ *	Implemented entirely as a wrapper around 'TclLindexFlat', as described
+ *	for 'TclLindexList'.
  *
- * Side effects:
- *	None.
+ * Value
  *
- * Notes:
- *	This procedure is implemented entirely as a wrapper around
- *	TclLsetFlat. All it does is reconfigure the argument format into the
- *	form required by TclLsetFlat, while taking care to manage shimmering
- *	in such a way that we tend to keep the most useful intreps and/or
- *	avoid the most expensive conversions.
+ *	The new list, with the 'refCount' of 'valuPtr' incremented, or NULL if
+ *	there was an error.
  *
  *----------------------------------------------------------------------
  */
@@ -1357,36 +1319,39 @@ TclLsetList(
  *
  *	Core engine of the 'lset' command.
  *
- * Results:
- *	Returns the new value of the list variable, or NULL if an error
- *	occurred. The returned object includes one reference count for the
- *	pointer returned.
+ * Value
  *
- * Side effects:
- *	On entry, the reference count of the variable value does not reflect
- *	any references held on the stack. The first action of this function is
- *	to determine whether the object is shared, and to duplicate it if it
- *	is. The reference count of the duplicate is incremented. At this
- *	point, the reference count will be 1 for either case, so that the
- *	object will appear to be unshared.
+ *	The resulting list
  *
- *	If an error occurs, and the object has been duplicated, the reference
- *	count on the duplicate is decremented so that it is now 0: this
- *	dismisses any memory that was allocated by this function.
+ *	    The 'refCount' of 'valuePtr' is incremented.  If 'listPtr' was not
+ *	    duplicated, its 'refCount' is incremented.  The reference count of
+ *	    an unduplicated object is therefore 2 (one for the returned pointer
+ *	    and one for the variable that holds it).  The reference count of a
+ *	    duplicate object is 1, reflecting that result is the only active
+ *	    reference. The caller is expected to store the result in the
+ *	    variable and decrement its reference count. (INST_STORE_* does
+ *	    exactly this.)
  *
- *	If no error occurs, the reference count of the original object is
- *	incremented if the object has not been duplicated, and nothing is done
- *	to a reference count of the duplicate. Now the reference count of an
- *	unduplicated object is 2 (the returned pointer, plus the one stored in
- *	the variable). The reference count of a duplicate object is 1,
- *	reflecting that the returned pointer is the only active reference. The
- *	caller is expected to store the returned value back in the variable
- *	and decrement its reference count. (INST_STORE_* does exactly this.)
+ *	NULL
  *
- *	Surgery is performed on the unshared list value to produce the result.
- *	TclLsetFlat maintains a linked list of Tcl_Obj's whose string
+ *	    An error occurred.  If 'listPtr' was duplicated, the reference
+ *	    count on the duplicate is decremented so that it is 0, causing any
+ *	    memory allocated by this function to be freed.
+ *
+ *
+ * Effect
+ *
+ *	On entry, the reference count of 'listPtr' does not reflect any
+ *	references held on the stack. The first action of this function is to
+ *	determine whether 'listPtr' is shared and to create a duplicate
+ *	unshared copy if it is.  The reference count of the duplicate is
+ *	incremented. At this point, the reference count is 1 in either case so
+ *	that the object is considered unshared.
+ *
+ *	The unshared list is altered directly to produce the result.
+ *	'TclLsetFlat' maintains a linked list of 'Tcl_Obj' values whose string
  *	representations must be spoilt by threading via 'ptr2' of the
- *	two-pointer internal representation. On entry to TclLsetFlat, the
+ *	two-pointer internal representation. On entry to 'TclLsetFlat', the
  *	values of 'ptr2' are immaterial; on exit, the 'ptr2' field of any
  *	Tcl_Obj that has been modified is set to NULL.
  *
@@ -1601,26 +1566,38 @@ TclLsetFlat(
  *
  * TclListObjSetElement --
  *
- *	Set a single element of a list to a specified value
- *
- * Results:
- *	The return value is normally TCL_OK. If listPtr does not refer to a
- *	list object and cannot be converted to one, TCL_ERROR is returned and
- *	an error message will be left in the interpreter result if interp is
- *	not NULL. Similarly, if index designates an element outside the range
- *	[0..listLength-1], where listLength is the count of elements in the
- *	list object designated by listPtr, TCL_ERROR is returned and an error
- *	message is left in the interpreter result.
- *
- * Side effects:
- *	Tcl_Panic if listPtr designates a shared object. Otherwise, attempts
- *	to convert it to a list with a non-shared internal rep. Decrements the
- *	ref count of the object at the specified index within the list,
- *	replaces with the object designated by valuePtr, and increments the
- *	ref count of the replacement object.
+ *	Set a single element of a list to a specified value.
  *
  *	It is the caller's responsibility to invalidate the string
- *	representation of the object.
+ *	representation of the 'listPtr'.
+ *
+ * Value
+ *
+ * 	TCL_OK
+ *
+ *	    Success.
+ *
+ *	TCL_ERROR
+ *
+ *	    'listPtr' does not refer to a list object and cannot be converted
+ *	    to one.  An error message will be left in the interpreter result if
+ *	    interp is not NULL.
+ *
+ *	TCL_ERROR
+ *
+ *	    An index designates an element outside the range [0..listLength-1],
+ *	    where 'listLength' is the count of elements in the list object
+ *	    designated by 'listPtr'.  An error message is left in the
+ *	    interpreter result.
+ *
+ * Effect
+ *
+ *	If 'listPtr' designates a shared object, 'Tcl_Panic' is called.  If
+ *	'listPtr' is not already of type 'tclListType', it is converted and the
+ *	internal representation is unshared. The 'refCount' of the element at
+ *	'index' is decremented and replaced in the list with the 'valuePtr',
+ *	whose 'refCount' in turn is incremented.
+ *
  *
  *----------------------------------------------------------------------
  */
@@ -1738,16 +1715,14 @@ TclListObjSetElement(
  *
  * FreeListInternalRep --
  *
- *	Deallocate the storage associated with a list object's internal
- *	representation.
+ *	Deallocate the storage associated with the internal representation of a
+ *	a list object.
  *
- * Results:
- *	None.
+ * Effect
  *
- * Side effects:
- *	Frees listPtr's List* internal representation and sets listPtr's
- *	internalRep.twoPtrValue.ptr1 to NULL. Decrements the ref counts of all
- *	element objects, which may free them.
+ *	The storage for the internal 'List' pointer of 'listPtr' is freed, the
+ *	'internalRep.twoPtrValue.ptr1' of 'listPtr' is set to NULL, and the 'refCount'
+ *	of each element of the list is decremented.
  *
  *----------------------------------------------------------------------
  */
@@ -1776,14 +1751,12 @@ FreeListInternalRep(
  *
  * DupListInternalRep --
  *
- *	Initialize the internal representation of a list Tcl_Obj to share the
+ *	Initialize the internal representation of a list 'Tcl_Obj' to share the
  *	internal representation of an existing list object.
  *
- * Results:
- *	None.
+ * Effect
  *
- * Side effects:
- *	The reference count of the List internal rep is incremented.
+ *	The 'refCount' of the List internal rep is incremented.
  *
  *----------------------------------------------------------------------
  */
@@ -1803,16 +1776,20 @@ DupListInternalRep(
  *
  * SetListFromAny --
  *
- *	Attempt to generate a list internal form for the Tcl object "objPtr".
+ *	Convert any object to a list.
  *
- * Results:
- *	The return value is TCL_OK or TCL_ERROR. If an error occurs during
- *	conversion, an error message is left in the interpreter's result
- *	unless "interp" is NULL.
+ * Value
  *
- * Side effects:
- *	If no error occurs, a list is stored as "objPtr"s internal
- *	representation.
+ *    TCL_OK
+ *
+ *	Success.  The internal representation of 'objPtr' is set, and the type
+ *	of 'objPtr' is 'tclListType'.
+ *
+ *    TCL_ERROR
+ *
+ *	An error occured during conversion. An error message is left in the
+ *	interpreter's result if 'interp' is not NULL.
+ *
  *
  *----------------------------------------------------------------------
  */
@@ -1937,18 +1914,16 @@ SetListFromAny(
  *
  * UpdateStringOfList --
  *
- *	Update the string representation for a list object. Note: This
- *	function does not invalidate an existing old string rep so storage
- *	will be lost if this has not already been done.
+ *	Update the string representation for a list object.
  *
- * Results:
- *	None.
+ *	Any previously-exising string representation is not invalidated, so
+ *	storage is lost if this has not been taken care of.
  *
- * Side effects:
- *	The object's string is set to a valid string that results from the
- *	list-to-string conversion. This string will be empty if the list has
- *	no elements. The list internal representation should not be NULL and
- *	we assume it is not NULL.
+ * Effect
+ *
+ *	The string representation of 'listPtr' is set to the resulting string.
+ *	This string will be empty if the list has no elements. It is assumed
+ *	that the list internal representation is not NULL.
  *
  *----------------------------------------------------------------------
  */
@@ -1957,8 +1932,8 @@ static void
 UpdateStringOfList(
     Tcl_Obj *listPtr)		/* List object with string rep to update. */
 {
-#   define LOCAL_SIZE 20
-    int localFlags[LOCAL_SIZE], *flagPtr = NULL;
+#   define LOCAL_SIZE 64
+    char localFlags[LOCAL_SIZE], *flagPtr = NULL;
     List *listRepPtr = ListRepPtr(listPtr);
     int numElems = listRepPtr->elemCount;
     int i, length, bytesNeeded = 0;
@@ -1995,7 +1970,7 @@ UpdateStringOfList(
 	 * We know numElems <= LIST_MAX, so this is safe.
 	 */
 
-	flagPtr = ckalloc(numElems * sizeof(int));
+	flagPtr = ckalloc(numElems);
     }
     elemPtrs = &listRepPtr->elements;
     for (i = 0; i < numElems; i++) {
@@ -2015,7 +1990,21 @@ UpdateStringOfList(
      * Pass 2: copy into string rep buffer.
      */
 
+    /*
+     * We used to set the string length here, relying on a presumed
+     * guarantee that the number of bytes TclScanElement() calls reported
+     * to be needed was a precise count and not an over-estimate, so long
+     * as the same flag values were passed to TclConvertElement().
+     *
+     * Then we saw [35a8f1c04a], where a bug in TclScanElement() caused
+     * that guarantee to fail. Rather than trust there are no more bugs,
+     * we set the length after the loop based on what was actually written,
+     * an not on what was predicted.
+     *
     listPtr->length = bytesNeeded - 1;
+     *
+     */
+
     listPtr->bytes = ckalloc(bytesNeeded);
     dst = listPtr->bytes;
     for (i = 0; i < numElems; i++) {
@@ -2024,7 +2013,10 @@ UpdateStringOfList(
 	dst += TclConvertElement(elem, length, dst, flagPtr[i]);
 	*dst++ = ' ';
     }
-    listPtr->bytes[listPtr->length] = '\0';
+    dst[-1] = '\0';
+
+    /* Here is the safe setting of the string length. */
+    listPtr->length = dst - 1 - listPtr->bytes;
 
     if (flagPtr != localFlags) {
 	ckfree(flagPtr);

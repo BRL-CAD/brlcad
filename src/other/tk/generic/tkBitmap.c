@@ -88,7 +88,7 @@ typedef struct {
     int width, height;		/* Dimensions of bitmap. */
 } DataKey;
 
-typedef struct ThreadSpecificData {
+typedef struct {
     int initialized;		/* 0 means table below needs initializing. */
     Tcl_HashTable predefBitmapTable;
 				/* Hash table created by Tk_DefineBitmap to

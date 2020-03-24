@@ -180,7 +180,7 @@ FileCopyRename(
 	}
 	jargv[0] = objv[objc - 1];
 	jargv[1] = source;
-	newFileName = TclJoinPath(2, jargv);
+	newFileName = TclJoinPath(2, jargv, 1);
 	Tcl_IncrRefCount(newFileName);
 	result = CopyRenameOneFile(interp, objv[i], newFileName, copyFlag,
 		force);
@@ -240,8 +240,12 @@ TclFileMakeDirsCmd(
 	    break;
 	}
 	for (j = 0; j < pobjc; j++) {
+	    int errCount = 2;
+
 	    target = Tcl_FSJoinPath(split, j + 1);
 	    Tcl_IncrRefCount(target);
+
+	createDir:
 
 	    /*
 	     * Call Tcl_FSStat() so that if target is a symlink that points to
@@ -269,23 +273,25 @@ TclFileMakeDirsCmd(
 		 * subdirectory.
 		 */
 
-		if (errno != EEXIST) {
-		    errfile = target;
-		    goto done;
-		} else if ((Tcl_FSStat(target, &statBuf) == 0)
-			&& S_ISDIR(statBuf.st_mode)) {
-		    /*
-		     * It is a directory that wasn't there before, so keep
-		     * going without error.
-		     */
-
-		    Tcl_ResetResult(interp);
-		} else {
-		    errfile = target;
-		    goto done;
+		if (errno == EEXIST) {
+		    /* Be aware other workers could delete it immediately after
+		     * creation, so give this worker still one chance (repeat once),
+		     * see [270f78ca95] for description of the race-condition.
+		     * Don't repeat the create always (to avoid endless loop). */
+		    if (--errCount > 0) {
+			goto createDir;
+		    }
+		    /* Already tried, with delete in-between directly after
+		     * creation, so just continue (assume created successful). */
+		    goto nextPart;
 		}
+
+		/* return with error */
+		errfile = target;
+		goto done;
 	    }
 
+	nextPart:
 	    /*
 	     * Forget about this sub-path.
 	     */
@@ -363,14 +369,7 @@ TclFileDeleteCmd(
 	 */
 
 	if (Tcl_FSLstat(objv[i], &statBuf) != 0) {
-	    /*
-	     * Trying to delete a file that does not exist is not considered
-	     * an error, just a no-op
-	     */
-
-	    if (errno != ENOENT) {
-		result = TCL_ERROR;
-	    }
+	    result = TCL_ERROR;
 	} else if (S_ISDIR(statBuf.st_mode)) {
 	    /*
 	     * We own a reference count on errorBuffer, if it was set as a
@@ -406,13 +405,20 @@ TclFileDeleteCmd(
 	}
 
 	if (result != TCL_OK) {
-	    result = TCL_ERROR;
 
+	    /*
+	     * Avoid possible race condition (file/directory deleted after call
+	     * of lstat), so bypass ENOENT because not an error, just a no-op
+	     */
+	    if (errno == ENOENT) {
+		result = TCL_OK;
+		continue;
+	    }
 	    /*
 	     * It is important that we break on error, otherwise we might end
 	     * up owning reference counts on numerous errorBuffers.
 	     */
-
+	    result = TCL_ERROR;
 	    break;
 	}
     }

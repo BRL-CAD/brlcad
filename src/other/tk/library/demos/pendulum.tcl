@@ -126,16 +126,16 @@ bind $w.c <ButtonRelease-1> {
 }
 bind $w.c <Configure> {
     %W coords plate 0 25 %w 25
-    set home [expr %w/2]
-    %W coords pivot [expr $home-5] 20 [expr $home+5] 30
+    set home [expr {%w/2}]
+    %W coords pivot [expr {$home-5}] 20 [expr {$home+5}] 30
 }
 bind $w.k <Configure> {
-    set psh [expr %h/2]
-    set psw [expr %w/2]
-    %W coords x_axis 2 $psh [expr %w-2] $psh
-    %W coords y_axis $psw [expr %h-2] $psw 2
-    %W coords label_dtheta [expr $psw-4] 6
-    %W coords label_theta [expr %w-6] [expr $psh+4]
+    set psh [expr {%h/2}]
+    set psw [expr {%w/2}]
+    %W coords x_axis 2 $psh [expr {%w-2}] $psh
+    %W coords y_axis $psw [expr {%h-2}] $psw 2
+    %W coords label_dtheta [expr {$psw-4}] 6
+    %W coords label_theta [expr {%w-6}] [expr {$psh+4}]
 }
 
 # This procedure is the "business" part of the simulation that does

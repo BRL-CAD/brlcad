@@ -122,11 +122,9 @@ proc tcl_findLibrary {basename version patch initScript enVarName varName} {
     # uniquify $dirs in order
     array set seen {}
     foreach i $dirs {
-	# Take note that the [file normalize] below has been noted to cause
-	# difficulties for the freewrap utility.  See Bug 1072136.  Until
-	# freewrap resolves the matter, one might work around the problem by
-	# disabling that branch.
+	# Make sure $i is unique under normalization. Avoid repeated [source].
 	if {[interp issafe]} {
+	    # Safe interps have no [file normalize].
 	    set norm $i
 	} else {
 	    set norm [file normalize $i]
@@ -135,10 +133,7 @@ proc tcl_findLibrary {basename version patch initScript enVarName varName} {
 	    continue
 	}
 	set seen($norm) {}
-	lappend uniqdirs $i
-    }
-    set dirs $uniqdirs
-    foreach i $dirs {
+
         set the_library $i
         set file [file join $i $initScript]
 

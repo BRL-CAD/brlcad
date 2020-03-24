@@ -131,6 +131,10 @@ addSample $w Japanese \
 addSample $w Korean "\uB300\uD55C\uBBFC\uAD6D\uC758 \uD55C\uAE00"
 addSample $w Russian \
 	"\u0420\u0443\u0441\u0441\u043A\u0438\u0439 \u044F\u0437\u044B\u043A"
+if {[tk windowingsystem] ne "x11"} {
+    addSample $w Emoji \
+	    "\uD83D\uDE00\uD83D\uDCA9\uD83D\uDC4D\uD83C\uDDF3\uD83C\uDDF1"
+}
 
 ## We're done processing, so change things back to normal running...
 destroy $w.wait

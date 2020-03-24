@@ -347,7 +347,7 @@ XAllocColor(
 		color->blue  = closeEntry.peBlue * 257;
 		entry = closeEntry;
 		if (index >= cmap->size) {
-		    OutputDebugStringA("XAllocColor: Colormap is bigger than we thought");
+		    OutputDebugStringW(L"XAllocColor: Colormap is bigger than we thought");
 		}
 	    } else {
 		cmap->size++;

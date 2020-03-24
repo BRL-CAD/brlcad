@@ -446,6 +446,17 @@ package require Tk 8.6
 	bind $canvas <Control-B1-Motion> {;}
 	bind $canvas <Shift-B1-Motion>	[namespace code {my ShiftMotion1 %x %y}]
 
+	if {[tk windowingsystem] eq "aqua"} {
+	    bind $canvas <Shift-MouseWheel>	[namespace code {my MouseWheel [expr {40 * (%D)}]}]
+	    bind $canvas <Option-Shift-MouseWheel>	[namespace code {my MouseWheel [expr {400 * (%D)}]}]
+	} else {
+	    bind $canvas <Shift-MouseWheel>	[namespace code {my MouseWheel %D}]
+	}
+	if {[tk windowingsystem] eq "x11"} {
+	    bind $canvas <Shift-4>	[namespace code {my MouseWheel 120}]
+	    bind $canvas <Shift-5>	[namespace code {my MouseWheel -120}]
+	}
+
 	bind $canvas <<PrevLine>>	[namespace code {my UpDown -1}]
 	bind $canvas <<NextLine>>	[namespace code {my UpDown  1}]
 	bind $canvas <<PrevChar>>	[namespace code {my LeftRight -1}]
@@ -492,6 +503,16 @@ package require Tk 8.6
     # ----------------------------------------------------------------------
 
     # Event handlers
+    method MouseWheel {amount} {
+	if {$noScroll || $::tk_strictMotif} {
+	    return
+	}
+	if {$amount > 0} {
+	    $canvas xview scroll [expr {(-119-$amount) / 120}] units
+	} else {
+	    $canvas xview scroll [expr {-($amount / 120)}] units
+	}
+    }
     method Btn1 {x y} {
 	focus $canvas
 	set i [$w index @$x,$y]

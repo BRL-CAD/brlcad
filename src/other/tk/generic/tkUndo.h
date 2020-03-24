@@ -96,9 +96,11 @@ MODULE_SCOPE void	TkUndoClearStack(TkUndoAtom **stack);
  */
 
 MODULE_SCOPE TkUndoRedoStack *TkUndoInitStack(Tcl_Interp *interp, int maxdepth);
-MODULE_SCOPE void	TkUndoSetDepth(TkUndoRedoStack *stack, int maxdepth);
+MODULE_SCOPE void	TkUndoSetMaxDepth(TkUndoRedoStack *stack, int maxdepth);
 MODULE_SCOPE void	TkUndoClearStacks(TkUndoRedoStack *stack);
 MODULE_SCOPE void	TkUndoFreeStack(TkUndoRedoStack *stack);
+MODULE_SCOPE int	TkUndoCanRedo(TkUndoRedoStack *stack);
+MODULE_SCOPE int	TkUndoCanUndo(TkUndoRedoStack *stack);
 MODULE_SCOPE void	TkUndoInsertUndoSeparator(TkUndoRedoStack *stack);
 MODULE_SCOPE TkUndoSubAtom *TkUndoMakeCmdSubAtom(Tcl_Command command,
 			    Tcl_Obj *actionScript, TkUndoSubAtom *subAtomList);

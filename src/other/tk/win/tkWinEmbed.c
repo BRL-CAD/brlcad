@@ -34,7 +34,7 @@ typedef struct Container {
 				 * process. */
 } Container;
 
-typedef struct ThreadSpecificData {
+typedef struct {
     Container *firstContainerPtr;
 				/* First in list of all containers managed by
 				 * this process. */
@@ -160,7 +160,7 @@ void Tk_MapEmbeddedWindow(
 {
     if(!(winPtr->flags & TK_ALREADY_DEAD)) {
 	HWND hwnd = (HWND)winPtr->privatePtr;
-	int state = SendMessage(hwnd, TK_STATE, -1, -1) - 1;
+	int state = SendMessageW(hwnd, TK_STATE, -1, -1) - 1;
 
 	if (state < 0 || state > 3) {
 	    state = NormalState;
@@ -200,7 +200,7 @@ void Tk_MapEmbeddedWindow(
  *	The TK_INFO messages are required in order to verify if the window to
  *	use is a valid container. Without an id verification, an invalid
  *	window attachment may cause unexpected crashes/panics (bug 1096074).
- *	Additional sub messages may be definded/used in future for other
+ *	Additional sub messages may be defined/used in future for other
  *	needs.
  *
  *	We do not enforce the above protocol for the reason of backward
@@ -283,9 +283,9 @@ TkpUseWindow(
 	return TCL_ERROR;
     }
 
-    id = SendMessage(hwnd, TK_INFO, TK_CONTAINER_VERIFY, 0);
+    id = SendMessageW(hwnd, TK_INFO, TK_CONTAINER_VERIFY, 0);
     if (id == PTR2INT(hwnd)) {
-	if (!SendMessage(hwnd, TK_INFO, TK_CONTAINER_ISAVAILABLE, 0)) {
+	if (!SendMessageW(hwnd, TK_INFO, TK_CONTAINER_ISAVAILABLE, 0)) {
     	    Tcl_SetObjResult(interp, Tcl_NewStringObj(
 		    "The container is already in use", -1));
 	    Tcl_SetErrorCode(interp, "TK", "EMBED", "IN_USE", NULL);
@@ -303,10 +303,10 @@ TkpUseWindow(
 	 * order to avoid bug 1096074 in future.
 	 */
 
-	char msg[256];
+	WCHAR msg[256];
 
-	sprintf(msg, "Unable to get information of window \"%.80s\".  Attach to this\nwindow may have unpredictable results if it is not a valid container.\n\nPress Ok to proceed or Cancel to abort attaching.", string);
-	if (IDCANCEL == MessageBoxA(hwnd, msg, "Tk Warning",
+	wsprintfW(msg, L"Unable to get information of window \"%.40hs\".  Attach to this\nwindow may have unpredictable results if it is not a valid container.\n\nPress Ok to proceed or Cancel to abort attaching.", string);
+	if (IDCANCEL == MessageBoxW(hwnd, msg, L"Tk Warning",
 		MB_OKCANCEL | MB_ICONWARNING)) {
     	    Tcl_SetObjResult(interp, Tcl_NewStringObj(
 		    "Operation has been canceled", -1));
@@ -856,6 +856,15 @@ ContainerEventProc(
     Tk_Window tkwin = (Tk_Window)containerPtr->parentPtr;
 
     if (eventPtr->type == ConfigureNotify) {
+
+	/*
+         * Send a ConfigureNotify  to the embedded application.
+         */
+
+        if (containerPtr->embeddedPtr != NULL) {
+            TkDoConfigureNotify(containerPtr->embeddedPtr);
+        }
+
 	/*
 	 * Resize the embedded window, if there is any.
 	 */
@@ -1009,7 +1018,7 @@ TkpClaimFocus(
 				 * it. */
 {
     HWND hwnd = GetParent(Tk_GetHWND(topLevelPtr->window));
-    SendMessage(hwnd, TK_CLAIMFOCUS, (WPARAM) force, 0);
+    SendMessageW(hwnd, TK_CLAIMFOCUS, (WPARAM) force, 0);
 }
 
 /*
@@ -1087,7 +1096,7 @@ EmbedWindowDeleted(
 	    break;
 	}
 	if (containerPtr->parentPtr == winPtr) {
-	    SendMessage(containerPtr->embeddedHWnd, WM_CLOSE, 0, 0);
+	    SendMessageW(containerPtr->embeddedHWnd, WM_CLOSE, 0, 0);
 	    containerPtr->parentPtr = NULL;
 	    containerPtr->embeddedPtr = NULL;
 	    break;

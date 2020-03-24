@@ -477,16 +477,16 @@ DoConfig(
 	    Tk_Cursor newCursor, oldCursor;
 
 	    if (nullValue) {
-		newCursor = None;
+		newCursor = NULL;
 	    } else {
 		uid = valueIsUid ? (Tk_Uid) value : Tk_GetUid(value);
 		newCursor = Tk_GetCursor(interp, tkwin, uid);
-		if (newCursor == None) {
+		if (newCursor == NULL) {
 		    return TCL_ERROR;
 		}
 	    }
 	    oldCursor = *((Tk_Cursor *) ptr);
-	    if (oldCursor != None) {
+	    if (oldCursor != NULL) {
 		Tk_FreeCursor(Tk_Display(tkwin), oldCursor);
 	    }
 	    *((Tk_Cursor *) ptr) = newCursor;
@@ -837,7 +837,7 @@ FormatConfigValue(
     case TK_CONFIG_ACTIVE_CURSOR: {
 	Tk_Cursor cursor = *((Tk_Cursor *) ptr);
 
-	if (cursor != None) {
+	if (cursor != NULL) {
 	    result = Tk_NameOfCursor(Tk_Display(tkwin), cursor);
 	}
 	break;
@@ -1022,9 +1022,9 @@ Tk_FreeOptions(
 	    break;
 	case TK_CONFIG_CURSOR:
 	case TK_CONFIG_ACTIVE_CURSOR:
-	    if (*((Tk_Cursor *) ptr) != None) {
+	    if (*((Tk_Cursor *) ptr) != NULL) {
 		Tk_FreeCursor(display, *((Tk_Cursor *) ptr));
-		*((Tk_Cursor *) ptr) = None;
+		*((Tk_Cursor *) ptr) = NULL;
 	    }
 	}
     }

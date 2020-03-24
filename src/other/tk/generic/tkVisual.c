@@ -23,7 +23,7 @@ typedef struct VisualDictionary {
     const char *name;		/* Textual name of class. */
     int minLength;		/* Minimum # characters that must be specified
 				 * for an unambiguous match. */
-    int class;			/* X symbol for class. */
+    int c_class;			/* X symbol for class. */
 } VisualDictionary;
 static const VisualDictionary visualNames[] = {
     {"best",		1,	0},
@@ -145,7 +145,7 @@ Tk_GetVisual(
 	    return visual;
 	}
 	template.depth = Tk_Depth(tkwin2);
-	template.class = visual->class;
+	template.c_class = visual->c_class;
 	template.red_mask = visual->red_mask;
 	template.green_mask = visual->green_mask;
 	template.blue_mask = visual->blue_mask;
@@ -192,16 +192,16 @@ Tk_GetVisual(
 	    }
 	}
 	length = p - string;
-	template.class = -1;
+	template.c_class = -1;
 	for (dictPtr = visualNames; dictPtr->name != NULL; dictPtr++) {
 	    if ((dictPtr->name[0] == c) && (length >= dictPtr->minLength)
 		    && (strncmp(string, dictPtr->name,
 		    (size_t) length) == 0)) {
-		template.class = dictPtr->class;
+		template.c_class = dictPtr->c_class;
 		break;
 	    }
 	}
-	if (template.class == -1) {
+	if (template.c_class == -1) {
 	    Tcl_Obj *msgObj = Tcl_ObjPrintf(
 		    "unknown or ambiguous visual name \"%s\": class must be ",
 		    string);
@@ -262,7 +262,7 @@ Tk_GetVisual(
     bestPrio = 0;
     bestPtr = NULL;
     for (i = 0; i < numVisuals; i++) {
-	switch (visInfoList[i].class) {
+	switch (visInfoList[i].c_class) {
 	case DirectColor:
 	    prio = 5; break;
 	case GrayScale:

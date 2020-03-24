@@ -31,6 +31,17 @@
 /* Is the cpuid instruction usable? */
 #undef HAVE_CPUID
 
+/* Define to 1 if you have the declaration of `gethostbyaddr_r', and to 0 if
+   you don't. */
+#undef HAVE_DECL_GETHOSTBYADDR_R
+
+/* Define to 1 if you have the declaration of `gethostbyname_r', and to 0 if
+   you don't. */
+#undef HAVE_DECL_GETHOSTBYNAME_R
+
+/* Is 'DIR64' in <sys/types.h>? */
+#undef HAVE_DIR64
+
 /* Define to 1 if you have the `freeaddrinfo' function. */
 #undef HAVE_FREEADDRINFO
 
@@ -492,9 +503,6 @@
 
 /* Define as int if socklen_t is not available */
 #undef socklen_t
-
-/* Do we want to use the strtod() in compat? */
-#undef strtod
 
 /* Define to `int' if <sys/types.h> doesn't define. */
 #undef uid_t

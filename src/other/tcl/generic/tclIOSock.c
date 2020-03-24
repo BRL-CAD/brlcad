@@ -29,7 +29,7 @@ static const char *gai_strerror(int code) {
     } else {
 	tsdPtr->initialized = 1;
     }
-    Tcl_WinTCharToUtf(gai_strerrorW(code), -1, &tsdPtr->errorMsg);
+    Tcl_WinTCharToUtf((TCHAR *)gai_strerrorW(code), -1, &tsdPtr->errorMsg);
     return Tcl_DStringValue(&tsdPtr->errorMsg);
 }
 #endif

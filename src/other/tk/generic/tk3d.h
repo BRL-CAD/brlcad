@@ -54,10 +54,10 @@ typedef struct TkBorder {
     GC bgGC;			/* Used (if necessary) to draw areas in the
 				 * background color. */
     GC darkGC;			/* Used to draw darker parts of the border.
-				 * None means the shadow colors haven't been
+				 * NULL means the shadow colors haven't been
 				 * allocated yet.*/
     GC lightGC;			/* Used to draw lighter parts of the border.
-				 * None means the shadow colors haven't been
+				 * NULL means the shadow colors haven't been
 				 * allocated yet. */
     Tcl_HashEntry *hashPtr;	/* Entry in borderTable (needed in order to
 				 * delete structure). */

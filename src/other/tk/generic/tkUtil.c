@@ -733,7 +733,7 @@ Tk_GetScrollInfoObj(
     size_t length = objv[2]->length;
 
 #define ArgPfxEq(str) \
-	((arg[0] == str[0]) && !strncmp(arg, str, (unsigned)length))
+	((arg[0] == str[0]) && !strncmp(arg, str, length))
 
     if (ArgPfxEq("moveto")) {
 	if (objc != 4) {
@@ -1162,7 +1162,8 @@ TkMakeEnsemble(
  * TkSendVirtualEvent --
  *
  * 	Send a virtual event notification to the specified target window.
- * 	Equivalent to "event generate $target <<$eventName>>"
+ * 	Equivalent to:
+ * 	    "event generate $target <<$eventName>> -data $detail"
  *
  * 	Note that we use Tk_QueueWindowEvent, not Tk_HandleEvent, so this
  * 	routine does not reenter the interpreter.
@@ -1173,7 +1174,8 @@ TkMakeEnsemble(
 void
 TkSendVirtualEvent(
     Tk_Window target,
-    const char *eventName)
+    const char *eventName,
+    Tcl_Obj *detail)
 {
     union {XEvent general; XVirtualEvent virtual;} event;
 
@@ -1184,9 +1186,94 @@ TkSendVirtualEvent(
     event.general.xany.window = Tk_WindowId(target);
     event.general.xany.display = Tk_Display(target);
     event.virtual.name = Tk_GetUid(eventName);
+    if (detail != NULL) {
+        event.virtual.user_data = detail;
+    }
 
     Tk_QueueWindowEvent(&event.general, TCL_QUEUE_TAIL);
 }
+
+#if TCL_UTF_MAX <= 4
+/*
+ *---------------------------------------------------------------------------
+ *
+ * TkUtfToUniChar --
+ *
+ *	Almost the same as Tcl_UtfToUniChar but using int instead of Tcl_UniChar.
+ *	This function is capable of collapsing a upper/lower surrogate pair to a
+ *	single unicode character. So, up to 6 bytes might be consumed.
+ *
+ * Results:
+ *	*chPtr is filled with the Tcl_UniChar, and the return value is the
+ *	number of bytes from the UTF-8 string that were consumed.
+ *
+ * Side effects:
+ *	None.
+ *
+ *---------------------------------------------------------------------------
+ */
+
+int
+TkUtfToUniChar(
+    const char *src,	/* The UTF-8 string. */
+    int *chPtr)		/* Filled with the Tcl_UniChar represented by
+			 * the UTF-8 string. */
+{
+    Tcl_UniChar uniChar = 0;
+
+    int len = Tcl_UtfToUniChar(src, &uniChar);
+    if ((uniChar & 0xfc00) == 0xd800) {
+	Tcl_UniChar high = uniChar;
+	/* This can only happen if Tcl is compiled with TCL_UTF_MAX=4,
+	 * or when a high surrogate character is detected in UTF-8 form */
+	int len2 = Tcl_UtfToUniChar(src+len, &uniChar);
+	if ((uniChar & 0xfc00) == 0xdc00) {
+	    *chPtr = (((high & 0x3ff) << 10) | (uniChar & 0x3ff)) + 0x10000;
+	    len += len2;
+	} else {
+	    *chPtr = high;
+	}
+    } else {
+	*chPtr = uniChar;
+    }
+    return len;
+}
+
+/*
+ *---------------------------------------------------------------------------
+ *
+ * TkUniCharToUtf --
+ *
+ *	Almost the same as Tcl_UniCharToUtf but producing 4-byte UTF-8
+ *	sequences even when TCL_UTF_MAX==3. So, up to 4 bytes might be produced.
+ *
+ * Results:
+ *	*buf is filled with the UTF-8 string, and the return value is the
+ *	number of bytes produced.
+ *
+ * Side effects:
+ *	None.
+ *
+ *---------------------------------------------------------------------------
+ */
+
+int TkUniCharToUtf(int ch, char *buf)
+{
+    int size = Tcl_UniCharToUtf(ch, buf);
+    if ((((unsigned)(ch - 0x10000) <= 0xFFFFF)) && (size < 4)) {
+	/* Hey, this is wrong, we must be running TCL_UTF_MAX==3
+	 * The best thing we can do is spit out a 4-byte UTF-8 character */
+	buf[3] = (char) ((ch | 0x80) & 0xBF);
+	buf[2] = (char) (((ch >> 6) | 0x80) & 0xBF);
+	buf[1] = (char) (((ch >> 12) | 0x80) & 0xBF);
+	buf[0] = (char) ((ch >> 18) | 0xF0);
+	size = 4;
+    }
+    return size;
+}
+
+
+#endif
 /*
  * Local Variables:
  * mode: c

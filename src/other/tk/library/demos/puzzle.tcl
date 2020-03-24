@@ -73,7 +73,7 @@ for {set i 0} {$i < 15} {set i [expr {$i+1}]} {
     set num [lindex $order $i]
     set xpos($num) [expr {($i%4)*.25}]
     set ypos($num) [expr {($i/4)*.25}]
-    button $w.frame.$num -relief raised -text $num -highlightthickness 0 \
+    button $w.frame.$num -relief raised -text $num -bd 0 -highlightthickness 0 \
 	    -command "puzzleSwitch $w $num"
     place $w.frame.$num -relx $xpos($num) -rely $ypos($num) \
 	-relwidth .25 -relheight .25

@@ -91,7 +91,7 @@ static int              ImageObjCmd(ClientData dummy,
  *
  * TkOldTestInit --
  *
- *	This function performs intialization for the Tk test suite
+ *	This function performs initialization for the Tk test suite
  *	extensions for testing support for legacy interfaces.
  *
  * Results:
@@ -172,9 +172,9 @@ ImageCreate(
     timPtr->interp = interp;
     timPtr->width = 30;
     timPtr->height = 15;
-    timPtr->imageName = ckalloc((unsigned) (strlen(name) + 1));
+    timPtr->imageName = ckalloc(strlen(name) + 1);
     strcpy(timPtr->imageName, name);
-    timPtr->varName = ckalloc((unsigned) (strlen(varName) + 1));
+    timPtr->varName = ckalloc(strlen(varName) + 1);
     strcpy(timPtr->varName, varName);
     Tcl_CreateObjCommand(interp, name, ImageObjCmd, timPtr, NULL);
     *clientDataPtr = timPtr;

@@ -30,7 +30,7 @@ static const char *const wrapStrings[] = {
 /*
  * The 'TkTextTabStyle' enum in tkText.h is used to define a type for the
  * -tabstyle option of the Text widget. These values are used as indices into
- * the string table below. Tags are allowed an empty wrap value, but the
+ * the string table below. Tags are allowed an empty tabstyle value, but the
  * widget as a whole is not.
  */
 
@@ -61,15 +61,26 @@ static const Tk_OptionSpec tagOptionSpecs[] = {
 	NULL, -1, Tk_Offset(TkTextTag, lMargin1String), TK_OPTION_NULL_OK,0,0},
     {TK_OPTION_STRING, "-lmargin2", NULL, NULL,
 	NULL, -1, Tk_Offset(TkTextTag, lMargin2String), TK_OPTION_NULL_OK,0,0},
+    {TK_OPTION_BORDER, "-lmargincolor", NULL, NULL,
+	NULL, -1, Tk_Offset(TkTextTag, lMarginColor), TK_OPTION_NULL_OK, 0, 0},
     {TK_OPTION_STRING, "-offset", NULL, NULL,
 	NULL, -1, Tk_Offset(TkTextTag, offsetString), TK_OPTION_NULL_OK, 0, 0},
     {TK_OPTION_STRING, "-overstrike", NULL, NULL,
 	NULL, -1, Tk_Offset(TkTextTag, overstrikeString),
 	TK_OPTION_NULL_OK, 0, 0},
+    {TK_OPTION_COLOR, "-overstrikefg", NULL, NULL,
+	NULL, -1, Tk_Offset(TkTextTag, overstrikeColor),
+        TK_OPTION_NULL_OK, 0, 0},
     {TK_OPTION_STRING, "-relief", NULL, NULL,
 	NULL, -1, Tk_Offset(TkTextTag, reliefString), TK_OPTION_NULL_OK, 0, 0},
     {TK_OPTION_STRING, "-rmargin", NULL, NULL,
 	NULL, -1, Tk_Offset(TkTextTag, rMarginString), TK_OPTION_NULL_OK, 0,0},
+    {TK_OPTION_BORDER, "-rmargincolor", NULL, NULL,
+	NULL, -1, Tk_Offset(TkTextTag, rMarginColor), TK_OPTION_NULL_OK, 0, 0},
+    {TK_OPTION_BORDER, "-selectbackground", NULL, NULL,
+	NULL, -1, Tk_Offset(TkTextTag, selBorder), TK_OPTION_NULL_OK, 0, 0},
+    {TK_OPTION_COLOR, "-selectforeground", NULL, NULL,
+	NULL, -1, Tk_Offset(TkTextTag, selFgColor), TK_OPTION_NULL_OK, 0, 0},
     {TK_OPTION_STRING, "-spacing1", NULL, NULL,
 	NULL, -1, Tk_Offset(TkTextTag, spacing1String), TK_OPTION_NULL_OK,0,0},
     {TK_OPTION_STRING, "-spacing2", NULL, NULL,
@@ -84,6 +95,9 @@ static const Tk_OptionSpec tagOptionSpecs[] = {
     {TK_OPTION_STRING, "-underline", NULL, NULL,
 	NULL, -1, Tk_Offset(TkTextTag, underlineString),
 	TK_OPTION_NULL_OK, 0, 0},
+    {TK_OPTION_COLOR, "-underlinefg", NULL, NULL,
+	NULL, -1, Tk_Offset(TkTextTag, underlineColor),
+        TK_OPTION_NULL_OK, 0, 0},
     {TK_OPTION_STRING_TABLE, "-wrap", NULL, NULL,
 	NULL, -1, Tk_Offset(TkTextTag, wrapMode),
 	TK_OPTION_NULL_OK, wrapStrings, 0},
@@ -229,6 +243,7 @@ TkTextTagCmd(
 		    TkTextSelectionEvent(textPtr);
 
 		    if (addTag && textPtr->exportSelection
+			    && (!Tcl_IsSafe(textPtr->interp))
 			    && !(textPtr->flags & GOT_SELECTION)) {
 			Tk_OwnSelection(textPtr->tkwin, XA_PRIMARY,
 				TkTextLostSelection, textPtr);
@@ -277,7 +292,7 @@ TkTextTagCmd(
 	    if (mask == 0) {
 		return TCL_ERROR;
 	    }
-	    if (mask & (unsigned) ~(ButtonMotionMask|Button1MotionMask
+	    if (mask & ~(unsigned long)(ButtonMotionMask|Button1MotionMask
 		    |Button2MotionMask|Button3MotionMask|Button4MotionMask
 		    |Button5MotionMask|ButtonPressMask|ButtonReleaseMask
 		    |EnterWindowMask|LeaveWindowMask|KeyPressMask
@@ -484,16 +499,24 @@ TkTextTagCmd(
 	     */
 
 	    if (tagPtr == textPtr->selTagPtr) {
-		textPtr->selBorder = tagPtr->border;
+                if (tagPtr->selBorder == NULL) {
+                    textPtr->selBorder = tagPtr->border;
+                } else {
+                    textPtr->selBorder = tagPtr->selBorder;
+                }
 		textPtr->selBorderWidth = tagPtr->borderWidth;
 		textPtr->selBorderWidthPtr = tagPtr->borderWidthPtr;
-		textPtr->selFgColorPtr = tagPtr->fgColor;
+                if (tagPtr->selFgColor == NULL) {
+                    textPtr->selFgColorPtr = tagPtr->fgColor;
+                } else {
+                    textPtr->selFgColorPtr = tagPtr->selFgColor;
+                }
 	    }
 
 	    tagPtr->affectsDisplay = 0;
 	    tagPtr->affectsDisplayGeometry = 0;
 	    if ((tagPtr->elideString != NULL)
-		    || (tagPtr->tkfont != None)
+		    || (tagPtr->tkfont != NULL)
 		    || (tagPtr->justifyString != NULL)
 		    || (tagPtr->lMargin1String != NULL)
 		    || (tagPtr->lMargin2String != NULL)
@@ -509,12 +532,18 @@ TkTextTagCmd(
 		tagPtr->affectsDisplayGeometry = 1;
 	    }
 	    if ((tagPtr->border != NULL)
+		    || (tagPtr->selBorder != NULL)
 		    || (tagPtr->reliefString != NULL)
 		    || (tagPtr->bgStipple != None)
 		    || (tagPtr->fgColor != NULL)
+		    || (tagPtr->selFgColor != NULL)
 		    || (tagPtr->fgStipple != None)
 		    || (tagPtr->overstrikeString != NULL)
-		    || (tagPtr->underlineString != NULL)) {
+                    || (tagPtr->overstrikeColor != NULL)
+		    || (tagPtr->underlineString != NULL)
+                    || (tagPtr->underlineColor != NULL)
+                    || (tagPtr->lMarginColor != NULL)
+                    || (tagPtr->rMarginColor != NULL)) {
 		tagPtr->affectsDisplay = 1;
 	    }
 	    if (!newTag) {
@@ -1011,12 +1040,17 @@ TkTextCreateTag(
     tagPtr->lMargin1 = 0;
     tagPtr->lMargin2String = NULL;
     tagPtr->lMargin2 = 0;
+    tagPtr->lMarginColor = NULL;
     tagPtr->offsetString = NULL;
     tagPtr->offset = 0;
     tagPtr->overstrikeString = NULL;
     tagPtr->overstrike = 0;
+    tagPtr->overstrikeColor = NULL;
     tagPtr->rMarginString = NULL;
     tagPtr->rMargin = 0;
+    tagPtr->rMarginColor = NULL;
+    tagPtr->selBorder = NULL;
+    tagPtr->selFgColor = NULL;
     tagPtr->spacing1String = NULL;
     tagPtr->spacing1 = 0;
     tagPtr->spacing2String = NULL;
@@ -1028,6 +1062,7 @@ TkTextCreateTag(
     tagPtr->tabStyle = TK_TEXT_TABSTYLE_NONE;
     tagPtr->underlineString = NULL;
     tagPtr->underline = 0;
+    tagPtr->underlineColor = NULL;
     tagPtr->elideString = NULL;
     tagPtr->elide = 0;
     tagPtr->wrapMode = TEXT_WRAPMODE_NULL;
@@ -1224,8 +1259,7 @@ TkTextFreeTag(
 	if (textPtr != tagPtr->textPtr) {
 	    Tcl_Panic("Tag being deleted from wrong widget");
 	}
-	textPtr->refCount--;
-	if (textPtr->refCount == 0) {
+	if (textPtr->refCount-- <= 1) {
 	    ckfree(textPtr);
 	}
 	tagPtr->textPtr = NULL;
@@ -1412,9 +1446,6 @@ TkTextBindProc(
     TkText *textPtr = clientData;
     int repick = 0;
 
-# define AnyButtonMask \
-	(Button1Mask|Button2Mask|Button3Mask|Button4Mask|Button5Mask)
-
     textPtr->refCount++;
 
     /*
@@ -1426,35 +1457,16 @@ TkTextBindProc(
     if (eventPtr->type == ButtonPress) {
 	textPtr->flags |= BUTTON_DOWN;
     } else if (eventPtr->type == ButtonRelease) {
-	int mask;
+	unsigned int mask;
 
-	switch (eventPtr->xbutton.button) {
-	case Button1:
-	    mask = Button1Mask;
-	    break;
-	case Button2:
-	    mask = Button2Mask;
-	    break;
-	case Button3:
-	    mask = Button3Mask;
-	    break;
-	case Button4:
-	    mask = Button4Mask;
-	    break;
-	case Button5:
-	    mask = Button5Mask;
-	    break;
-	default:
-	    mask = 0;
-	    break;
-	}
-	if ((eventPtr->xbutton.state & AnyButtonMask) == (unsigned) mask) {
+	mask = TkGetButtonMask(eventPtr->xbutton.button);
+	if ((eventPtr->xbutton.state & ALL_BUTTONS) == mask) {
 	    textPtr->flags &= ~BUTTON_DOWN;
 	    repick = 1;
 	}
     } else if ((eventPtr->type == EnterNotify)
 	    || (eventPtr->type == LeaveNotify)) {
-	if (eventPtr->xcrossing.state & AnyButtonMask) {
+	if (eventPtr->xcrossing.state & ALL_BUTTONS) {
 	    textPtr->flags |= BUTTON_DOWN;
 	} else {
 	    textPtr->flags &= ~BUTTON_DOWN;
@@ -1462,7 +1474,7 @@ TkTextBindProc(
 	TkTextPickCurrent(textPtr, eventPtr);
 	goto done;
     } else if (eventPtr->type == MotionNotify) {
-	if (eventPtr->xmotion.state & AnyButtonMask) {
+	if (eventPtr->xmotion.state & ALL_BUTTONS) {
 	    textPtr->flags |= BUTTON_DOWN;
 	} else {
 	    textPtr->flags &= ~BUTTON_DOWN;
@@ -1479,8 +1491,7 @@ TkTextBindProc(
 	unsigned int oldState;
 
 	oldState = eventPtr->xbutton.state;
-	eventPtr->xbutton.state &= ~(Button1Mask|Button2Mask
-		|Button3Mask|Button4Mask|Button5Mask);
+	eventPtr->xbutton.state &= ~(unsigned long)ALL_BUTTONS;
 	if (!(textPtr->flags & DESTROYED)) {
 	    TkTextPickCurrent(textPtr, eventPtr);
 	}
@@ -1488,7 +1499,7 @@ TkTextBindProc(
     }
 
   done:
-    if (--textPtr->refCount == 0) {
+    if (textPtr->refCount-- <= 1) {
 	ckfree(textPtr);
     }
 }

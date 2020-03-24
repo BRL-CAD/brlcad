@@ -119,7 +119,8 @@ TclSetupEnv(
 	Tcl_MutexLock(&envMutex);
 	for (i = 0; environ[i] != NULL; i++) {
 	    Tcl_Obj *obj1, *obj2;
-	    char *p1, *p2;
+	    const char *p1;
+	    char *p2;
 
 	    p1 = Tcl_ExternalToUtfDString(NULL, environ[i], -1, &envString);
 	    p2 = strchr(p1, '=');
@@ -130,10 +131,23 @@ TclSetupEnv(
 		 * '='; ignore the entry.
 		 */
 
+		Tcl_DStringFree(&envString);
 		continue;
 	    }
 	    p2++;
 	    p2[-1] = '\0';
+#if defined(_WIN32)
+	    /*
+	     * Enforce PATH and COMSPEC to be all uppercase. This eliminates
+	     * additional trace logic otherwise required in init.tcl.
+	     */
+
+	    if (strcasecmp(p1, "PATH") == 0) {
+		p1 = "PATH";
+	    } else if (strcasecmp(p1, "COMSPEC") == 0) {
+		p1 = "COMSPEC";
+	    }
+#endif
 	    obj1 = Tcl_NewStringObj(p1, -1);
 	    obj2 = Tcl_NewStringObj(p2, -1);
 	    Tcl_DStringFree(&envString);
@@ -722,14 +736,25 @@ TclFinalizeEnvironment(void)
      * strings. This may leak more memory that strictly necessary, since some
      * of the strings may no longer be in the environment. However,
      * determining which ones are ok to delete is n-squared, and is pretty
-     * unlikely, so we don't bother.
+     * unlikely, so we don't bother.  However, in the case of DPURIFY, just
+     * free all strings in the cache.
      */
 
     if (env.cache) {
+#ifdef PURIFY
+	int i;
+	for (i = 0; i < env.cacheSize; i++) {
+	    ckfree(env.cache[i]);
+	}
+#endif
 	ckfree(env.cache);
 	env.cache = NULL;
 	env.cacheSize = 0;
 #ifndef USE_PUTENV
+	if ((env.ourEnviron != NULL)) {
+	    ckfree(env.ourEnviron);
+	    env.ourEnviron = NULL;
+	}
 	env.ourEnvironSize = 0;
 #endif
     }

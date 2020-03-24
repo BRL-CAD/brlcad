@@ -350,11 +350,11 @@ XParseColor(
 	 * digits in the spec. Ergo, it is not a vailid color string.
 	 * (Bug f0188aca9e)
 	 */
-	
+
 	if (*p != '\0') {
 	    return 0;
 	}
-	
+
 	switch ((int)(p-spec)) {
 	case 3:
 	    colorPtr->red = US(((value >> 8) & 0xf) * 0x1111);

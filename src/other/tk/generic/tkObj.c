@@ -47,7 +47,7 @@ typedef struct PixelRep {
  * thread.
  */
 
-typedef struct ThreadSpecificData {
+typedef struct {
     const Tcl_ObjType *doubleTypePtr;
     const Tcl_ObjType *intTypePtr;
 } ThreadSpecificData;
@@ -96,7 +96,7 @@ static int		SetWindowFromAny(Tcl_Interp *interp, Tcl_Obj *objPtr);
 /*
  * The following structure defines the implementation of the "pixel" Tcl
  * object, used for measuring distances. The pixel object remembers its
- * initial display-independant settings.
+ * initial display-independent settings.
  */
 
 static const Tcl_ObjType pixelObjType = {
@@ -110,7 +110,7 @@ static const Tcl_ObjType pixelObjType = {
 /*
  * The following structure defines the implementation of the "pixel" Tcl
  * object, used for measuring distances. The pixel object remembers its
- * initial display-independant settings.
+ * initial display-independent settings.
  */
 
 static const Tcl_ObjType mmObjType = {
@@ -153,8 +153,19 @@ GetTypeCache(void)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     if (tsdPtr->doubleTypePtr == NULL) {
-	tsdPtr->doubleTypePtr = Tcl_GetObjType("double");
-	tsdPtr->intTypePtr = Tcl_GetObjType("int");
+	/* Smart initialization of doubleTypePtr/intTypePtr without
+	 * hash-table lookup or creating complete Tcl_Obj's */
+	Tcl_Obj obj;
+	obj.length = 3;
+	obj.bytes = (char *)"0.0";
+	obj.typePtr = NULL;
+	Tcl_GetDoubleFromObj(NULL, &obj, &obj.internalRep.doubleValue);
+	tsdPtr->doubleTypePtr = obj.typePtr;
+	obj.bytes += 2;
+	obj.length = 1;
+	obj.typePtr = NULL;
+	Tcl_GetLongFromObj(NULL, &obj, &obj.internalRep.longValue);
+	tsdPtr->intTypePtr = obj.typePtr;
     }
     return tsdPtr;
 }
@@ -657,7 +668,7 @@ UpdateStringOfMM(
 {
     MMRep *mmPtr;
     char buffer[TCL_DOUBLE_SPACE];
-    register int len;
+    size_t len;
 
     mmPtr = objPtr->internalRep.twoPtrValue.ptr1;
     /* assert( mmPtr->units == -1 && objPtr->bytes == NULL ); */
@@ -666,7 +677,7 @@ UpdateStringOfMM(
     }
 
     Tcl_PrintDouble(NULL, mmPtr->value, buffer);
-    len = (int)strlen(buffer);
+    len = strlen(buffer);
 
     objPtr->bytes = ckalloc(len + 1);
     strcpy(objPtr->bytes, buffer);
@@ -881,7 +892,7 @@ SetWindowFromAny(
      * Free the old internalRep before setting the new one.
      */
 
-    (void)Tcl_GetString(objPtr);
+    Tcl_GetString(objPtr);
     typePtr = objPtr->typePtr;
     if ((typePtr != NULL) && (typePtr->freeIntRepProc != NULL)) {
 	typePtr->freeIntRepProc(objPtr);
@@ -1112,7 +1123,7 @@ TkParsePadAmount(
  *	None
  *
  * Side effects:
- *	All instances of Tcl_ObjType structues used in Tk are registered with
+ *	All instances of Tcl_ObjType structures used in Tk are registered with
  *	Tcl.
  *
  *----------------------------------------------------------------------

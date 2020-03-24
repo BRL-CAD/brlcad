@@ -319,7 +319,7 @@ TclMacOSXSetFileAttribute(
     } else {
 	Tcl_WideInt newRsrcForkSize;
 
-	if (Tcl_GetWideIntFromObj(interp, attributePtr,
+	if (TclGetWideIntFromObj(interp, attributePtr,
 		&newRsrcForkSize) != TCL_OK) {
 	    return TCL_ERROR;
 	}

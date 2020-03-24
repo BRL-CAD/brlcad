@@ -21,7 +21,7 @@ ttk::label $w.msg -font $font -wraplength 4i -justify left -text "Ttk is the new
 pack $w.msg -side top -fill x
 
 ## See Code / Dismiss
-pack [addSeeDismiss $w.seeDismiss $w {enabled cheese tomato basil oregano happyness}]\
+pack [addSeeDismiss $w.seeDismiss $w {enabled cheese tomato basil oregano happiness}]\
 	-side bottom -fill x
 
 ## Add buttons for setting the theme
@@ -69,11 +69,11 @@ pack $w.checks.e $w.checks.sep1 $w.checks.c1 $w.checks.c2 $w.checks.sep2 \
 
 ## Set up the radiobutton group
 ttk::labelframe $w.radios -text "Radiobuttons"
-ttk::radiobutton $w.radios.r1 -text "Great" -variable happyness -value great
-ttk::radiobutton $w.radios.r2 -text "Good" -variable happyness -value good
-ttk::radiobutton $w.radios.r3 -text "OK" -variable happyness -value ok
-ttk::radiobutton $w.radios.r4 -text "Poor" -variable happyness -value poor
-ttk::radiobutton $w.radios.r5 -text "Awful" -variable happyness -value awful
+ttk::radiobutton $w.radios.r1 -text "Great" -variable happiness -value great
+ttk::radiobutton $w.radios.r2 -text "Good" -variable happiness -value good
+ttk::radiobutton $w.radios.r3 -text "OK" -variable happiness -value ok
+ttk::radiobutton $w.radios.r4 -text "Poor" -variable happiness -value poor
+ttk::radiobutton $w.radios.r5 -text "Awful" -variable happiness -value awful
 pack $w.radios.r1 $w.radios.r2 $w.radios.r3 $w.radios.r4 $w.radios.r5 \
 	-fill x -padx 3 -pady 2
 

@@ -100,13 +100,13 @@ Tk_GetPixmap(
 	    LPVOID lpMsgBuf;
 
 	    repeatError = 1;
-	    if (FormatMessageA(FORMAT_MESSAGE_ALLOCATE_BUFFER |
+	    if (FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER |
 		    FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_IGNORE_INSERTS,
 		    NULL, GetLastError(),
 		    MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		    (LPSTR) &lpMsgBuf, 0, NULL)) {
-		MessageBoxA(NULL, (LPCSTR) lpMsgBuf,
-			"Tk_GetPixmap: Error from CreateDIBSection",
+		    (LPWSTR)&lpMsgBuf, 0, NULL)) {
+		MessageBoxW(NULL, (LPWSTR) lpMsgBuf,
+			L"Tk_GetPixmap: Error from CreateDIBSection",
 			MB_OK | MB_ICONINFORMATION);
 		LocalFree(lpMsgBuf);
 	    }

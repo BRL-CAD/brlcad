@@ -279,8 +279,8 @@ TkFocusFilterEvent(
      * pass the event through to Tk bindings.
      */
 
-    if (eventPtr->xfocus.send_event == GENERATED_FOCUS_EVENT_MAGIC) {
-	eventPtr->xfocus.send_event = 0;
+    if ((eventPtr->xfocus.send_event & GENERATED_FOCUS_EVENT_MAGIC) == GENERATED_FOCUS_EVENT_MAGIC) {
+	eventPtr->xfocus.send_event &= ~GENERATED_FOCUS_EVENT_MAGIC;
 	return 1;
     }
 
@@ -551,12 +551,17 @@ TkSetFocusWin(
 	return;
     }
 
+    /*
+     * Get the current focus window with the same display and application
+     * as winPtr.
+     */
+
     displayFocusPtr = FindDisplayFocusInfo(winPtr->mainPtr, winPtr->dispPtr);
 
     /*
-     * If force is set, we should make sure we grab the focus regardless of
-     * the current focus window since under Windows, we may need to take
-     * control away from another application.
+     * Do nothing if the window already has focus and force is not set.  If
+     * force is set, we need to grab the focus, since under Windows or macOS
+     * this may involve taking control away from another application.
      */
 
     if (winPtr == displayFocusPtr->focusWinPtr && !force) {
@@ -564,14 +569,15 @@ TkSetFocusWin(
     }
 
     /*
-     * Find the top-level window for winPtr, then find (or create) a record
-     * for the top-level. Also see whether winPtr and all its ancestors are
+     * Find the toplevel window for winPtr, then find (or create) a record
+     * for the toplevel. Also see whether winPtr and all its ancestors are
      * mapped.
      */
 
     allMapped = 1;
     for (topLevelPtr = winPtr; ; topLevelPtr = topLevelPtr->parentPtr) {
 	if (topLevelPtr == NULL) {
+
 	    /*
 	     * The window is being deleted. No point in worrying about giving
 	     * it the focus.
@@ -588,11 +594,11 @@ TkSetFocusWin(
     }
 
     /*
-     * If the new focus window isn't mapped, then we can't focus on it (X will
-     * generate an error, for example). Instead, create an event handler that
-     * will set the focus to this window once it gets mapped. At the same
-     * time, delete any old handler that might be around; it's no longer
-     * relevant.
+     * If any ancestor of the new focus window isn't mapped, then we can't set
+     * focus for it (X will generate an error, for example). Instead, create
+     * an event handler that will set the focus to this window once it gets
+     * mapped. At the same time, delete any old handler that might be around;
+     * it's no longer relevant.
      */
 
     if (displayFocusPtr->focusOnMapPtr != NULL) {
@@ -623,28 +629,37 @@ TkSetFocusWin(
     }
     tlFocusPtr->focusWinPtr = winPtr;
 
-    /*
-     * Reset the window system's focus window and generate focus events, with
-     * two special cases:
-     *
-     * 1. If the application is embedded and doesn't currently have the focus,
-     *    don't set the focus directly. Instead, see if the embedding code can
-     *    claim the focus from the enclosing container.
-     * 2. Otherwise, if the application doesn't currently have the focus,
-     *    don't change the window system's focus unless it was already in this
-     *    application or "force" was specified.
-     */
+    if (topLevelPtr->flags & TK_EMBEDDED &&
+        (displayFocusPtr->focusWinPtr == NULL)) {
 
-    if ((topLevelPtr->flags & TK_EMBEDDED)
-	    && (displayFocusPtr->focusWinPtr == NULL)) {
+	/*
+	 * We are assigning focus to an embedded toplevel.  The platform
+	 * specific function TkpClaimFocus needs to handle the job of
+	 * assigning focus to the container, since we have no way to find the
+	 * contaiuner.
+	 */
+
 	TkpClaimFocus(topLevelPtr, force);
     } else if ((displayFocusPtr->focusWinPtr != NULL) || force) {
+
 	/*
-	 * Generate events to shift focus between Tk windows. We do this
-	 * regardless of what TkpChangeFocus does with the real X focus so
-	 * that Tk widgets track focus commands when there is no window
-	 * manager. GenerateFocusEvents will set up a serial number marker so
-	 * we discard focus events that are triggered by the ChangeFocus.
+	 * If we are forcing removal of focus from a container hosting a
+	 * toplevel from a different application, clear the focus in that
+	 * application.
+	 */
+
+    	if (force) {
+	    TkWindow *focusPtr = winPtr->dispPtr->focusPtr;
+	    if (focusPtr && focusPtr->mainPtr != winPtr->mainPtr) {
+		DisplayFocusInfo *displayFocusPtr2 = FindDisplayFocusInfo(
+		    focusPtr->mainPtr, focusPtr->dispPtr);
+		displayFocusPtr2->focusWinPtr = NULL;
+	    }
+    	}
+
+	/*
+	 * Call the platform specific function TkpChangeFocus to move the
+	 * window manager's focus to a new toplevel.
 	 */
 
 	serial = TkpChangeFocus(TkpGetWrapperWindow(topLevelPtr), force);

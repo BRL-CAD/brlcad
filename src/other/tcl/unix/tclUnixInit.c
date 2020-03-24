@@ -14,11 +14,11 @@
 #ifdef HAVE_LANGINFO
 #   include <langinfo.h>
 #   ifdef __APPLE__
-#       if defined(HAVE_WEAK_IMPORT) && MAC_OS_X_VERSION_MIN_REQUIRED < 1030
+#	if defined(HAVE_WEAK_IMPORT) && MAC_OS_X_VERSION_MIN_REQUIRED < 1030
 	    /* Support for weakly importing nl_langinfo on Darwin. */
 #	    define WEAK_IMPORT_NL_LANGINFO
 	    extern char *nl_langinfo(nl_item) WEAK_IMPORT_ATTRIBUTE;
-#       endif
+#	endif
 #    endif
 #endif
 #include <sys/resource.h>
@@ -34,7 +34,7 @@
 
 #ifdef __CYGWIN__
 DLLIMPORT extern __stdcall unsigned char GetVersionExW(void *);
-DLLIMPORT extern __stdcall void *LoadLibraryW(const void *);
+DLLIMPORT extern __stdcall void *GetModuleHandleW(const void *);
 DLLIMPORT extern __stdcall void FreeLibrary(void *);
 DLLIMPORT extern __stdcall void *GetProcAddress(void *, const char *);
 DLLIMPORT extern __stdcall void GetSystemInfo(void *);
@@ -45,12 +45,12 @@ static const char *const platforms[NUMPLATFORMS] = {
 };
 
 #define NUMPROCESSORS 11
-static const char *const  processors[NUMPROCESSORS] = {
+static const char *const processors[NUMPROCESSORS] = {
     "intel", "mips", "alpha", "ppc", "shx", "arm", "ia64", "alpha64", "msil",
     "amd64", "ia32_on_win64"
 };
 
-typedef struct _SYSTEM_INFO {
+typedef struct {
   union {
     DWORD  dwOemId;
     struct {
@@ -69,7 +69,7 @@ typedef struct _SYSTEM_INFO {
   int      wProcessorRevision;
 } SYSTEM_INFO;
 
-typedef struct _OSVERSIONINFOW {
+typedef struct {
   DWORD dwOSVersionInfoSize;
   DWORD dwMajorVersion;
   DWORD dwMinorVersion;
@@ -340,7 +340,7 @@ long tclMacOSXDarwinRelease = 0;
  *
  * TclpInitPlatform --
  *
- *	Initialize all the platform-dependant things like signals and
+ *	Initialize all the platform-dependent things like signals and
  *	floating-point error handling.
  *
  *	Called at process initialization time.
@@ -744,6 +744,43 @@ Tcl_GetEncodingNameFromEnvironment(
  *----------------------------------------------------------------------
  */
 
+#if defined(HAVE_COREFOUNDATION) && MAC_OS_X_VERSION_MAX_ALLOWED > 1020
+/*
+ * Helper because whether CFLocaleCopyCurrent and CFLocaleGetIdentifier are
+ * strongly or weakly bound varies by version of OSX, triggering warnings.
+ */
+
+static inline void
+InitMacLocaleInfoVar(
+    CFLocaleRef (*localeCopyCurrent)(void),
+    CFStringRef (*localeGetIdentifier)(CFLocaleRef),
+    Tcl_Interp *interp)
+{
+    CFLocaleRef localeRef;
+    CFStringRef locale;
+    char loc[256];
+
+    if (localeCopyCurrent == NULL || localeGetIdentifier == NULL) {
+	return;
+    }
+
+    localeRef = localeCopyCurrent();
+    if (!localeRef) {
+	return;
+    }
+
+    locale = localeGetIdentifier(localeRef);
+    if (locale && CFStringGetCString(locale, loc, 256,
+	    kCFStringEncodingUTF8)) {
+	if (!Tcl_CreateNamespace(interp, "::tcl::mac", NULL, NULL)) {
+	    Tcl_ResetResult(interp);
+	}
+	Tcl_SetVar(interp, "::tcl::mac::locale", loc, TCL_GLOBAL_ONLY);
+    }
+    CFRelease(localeRef);
+}
+#endif /*defined(HAVE_COREFOUNDATION) && MAC_OS_X_VERSION_MAX_ALLOWED > 1020*/
+
 void
 TclpSetVariables(
     Tcl_Interp *interp)
@@ -762,29 +799,12 @@ TclpSetVariables(
 #ifdef HAVE_COREFOUNDATION
     char tclLibPath[MAXPATHLEN + 1];
 
-#if MAC_OS_X_VERSION_MAX_ALLOWED > 1020
     /*
      * Set msgcat fallback locale to current CFLocale identifier.
      */
 
-    CFLocaleRef localeRef;
-
-    if (CFLocaleCopyCurrent != NULL && CFLocaleGetIdentifier != NULL &&
-	    (localeRef = CFLocaleCopyCurrent())) {
-	CFStringRef locale = CFLocaleGetIdentifier(localeRef);
-
-	if (locale) {
-	    char loc[256];
-
-	    if (CFStringGetCString(locale, loc, 256, kCFStringEncodingUTF8)) {
-		if (!Tcl_CreateNamespace(interp, "::tcl::mac", NULL, NULL)) {
-		    Tcl_ResetResult(interp);
-		}
-		Tcl_SetVar(interp, "::tcl::mac::locale", loc, TCL_GLOBAL_ONLY);
-	    }
-	}
-	CFRelease(localeRef);
-    }
+#if MAC_OS_X_VERSION_MAX_ALLOWED > 1020
+    InitMacLocaleInfoVar(CFLocaleCopyCurrent, CFLocaleGetIdentifier, interp);
 #endif /* MAC_OS_X_VERSION_MAX_ALLOWED > 1020 */
 
     if (MacOSXGetLibraryPath(interp, MAXPATHLEN, tclLibPath) == TCL_OK) {
@@ -865,15 +885,12 @@ TclpSetVariables(
 #ifdef __CYGWIN__
 	unameOK = 1;
     if (!osInfoInitialized) {
-	HANDLE handle = LoadLibraryW(L"NTDLL");
+	HANDLE handle = GetModuleHandleW(L"NTDLL");
 	int(__stdcall *getversion)(void *) =
 		(int(__stdcall *)(void *))GetProcAddress(handle, "RtlGetVersion");
 	osInfo.dwOSVersionInfoSize = sizeof(OSVERSIONINFOW);
 	if (!getversion || getversion(&osInfo)) {
 	    GetVersionExW(&osInfo);
-	}
-	if (handle) {
-	    FreeLibrary(handle);
 	}
 	osInfoInitialized = 1;
     }
@@ -1031,7 +1048,6 @@ TclpFindVariable(
     Tcl_DStringFree(&envString);
     return result;
 }
-
 
 /*
  *----------------------------------------------------------------------

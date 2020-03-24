@@ -59,7 +59,6 @@ static void wordchrs(struct vars *);
 static struct subre *subre(struct vars *, int, int, struct state *, struct state *);
 static void freesubre(struct vars *, struct subre *);
 static void freesrnode(struct vars *, struct subre *);
-static void optst(struct vars *, struct subre *);
 static int numst(struct subre *, int);
 static void markst(struct subre *);
 static void cleanst(struct vars *);
@@ -244,6 +243,7 @@ struct vars {
 #define	EMPTYARC(x, y)	newarc(v->nfa, EMPTY, 0, x, y)
 
 /* token type codes, some also used as NFA arc types */
+#undef	DIGIT /* prevent conflict with libtommath */
 #define	EMPTY	'n'		/* no token present */
 #define	EOS	'e'		/* end of string */
 #define	PLAIN	'p'		/* ordinary character */
@@ -395,7 +395,6 @@ compile(
 	dumpnfa(v->nfa, debug);
 	dumpst(v->tree, debug, 1);
     }
-    optst(v, v->tree);
     v->ntree = numst(v->tree, 1);
     markst(v->tree);
     cleanst(v);
@@ -923,7 +922,7 @@ parseqatom(
 	 */
 
 	NOTE(REG_UPBOTCH);
-	/* fallthrough into case PLAIN */
+	/* FALLTHRU */
     case PLAIN:
 	onechr(v, v->nextvalue, lp, rp);
 	okcolors(v->nfa, v->cm);
@@ -1812,25 +1811,6 @@ freesrnode(
 }
 
 /*
- - optst - optimize a subRE subtree
- ^ static void optst(struct vars *, struct subre *);
- */
-static void
-optst(
-    struct vars *v,
-    struct subre *t)
-{
-    /*
-     * DGP (2007-11-13): I assume it was the programmer's intent to eventually
-     * come back and add code to optimize subRE trees, but the routine coded
-     * just spends effort traversing the tree and doing nothing. We can do
-     * nothing with less effort.
-     */
-
-    return;
-}
-
-/*
  - numst - number tree nodes (assigning "id" indexes)
  ^ static int numst(struct subre *, int);
  */
@@ -2101,6 +2081,9 @@ dump(
     }
     fprintf(f, "\n");
     dumpst(g->tree, f, 0);
+#else
+    (void)re;
+    (void)f;
 #endif
 }
 

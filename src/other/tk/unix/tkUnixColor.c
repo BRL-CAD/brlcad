@@ -85,7 +85,7 @@ TkpFreeColor(
      */
 
     visual = tkColPtr->visual;
-    if ((visual->class != StaticGray) && (visual->class != StaticColor)
+    if ((visual->c_class != StaticGray) && (visual->c_class != StaticColor)
 	    && (tkColPtr->color.pixel != BlackPixelOfScreen(screen))
 	    && (tkColPtr->color.pixel != WhitePixelOfScreen(screen))) {
 	Tk_ErrorHandler handler;
@@ -157,7 +157,7 @@ TkpGetColor(
 	}
 	if (strlen(name) > 99) {
 	/* Don't bother to parse this. [Bug 2809525]*/
-	return (TkColor *) NULL;
+	return NULL;
     } else if (XAllocNamedColor(display, colormap, name, &screen, &color) != 0) {
 	    DeleteStressedCmap(display, colormap);
 	} else {

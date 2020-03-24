@@ -34,7 +34,7 @@
  * TtkScrollbarUpdateRequired, which will invoke step (5) (@@@ Fix this)
  */
 
-#include <tkInt.h>
+#include "tkInt.h"
 #include "ttkTheme.h"
 #include "ttkWidget.h"
 
@@ -181,6 +181,19 @@ void TtkScrollbarUpdateRequired(ScrollHandle h)
     h->flags |= SCROLL_UPDATE_REQUIRED;
 }
 
+/* TtkUpdateScrollInfo --
+ * 	Call the layoutProc to update the scroll info first, last, and total.
+ * 	Do it only if needed, that is when a redisplay is pending (which
+ * 	indicates scroll info are possibly out of date).
+ */
+
+void TtkUpdateScrollInfo(ScrollHandle h)
+{
+    if (h->corePtr->flags & REDISPLAY_PENDING) {
+        h->corePtr->widgetSpec->layoutProc(h->corePtr);
+    }
+}
+
 /* TtkScrollviewCommand --
  * 	Widget [xy]view command implementation.
  *
@@ -193,7 +206,10 @@ int TtkScrollviewCommand(
     Tcl_Interp *interp, int objc, Tcl_Obj *const objv[], ScrollHandle h)
 {
     Scrollable *s = h->scrollPtr;
-    int newFirst = s->first;
+    int newFirst;
+
+    TtkUpdateScrollInfo(h);
+    newFirst = s->first;
 
     if (objc == 2) {
 	Tcl_Obj *result[2];
@@ -226,14 +242,18 @@ int TtkScrollviewCommand(
 	}
     }
 
-    TtkScrollTo(h, newFirst);
+    TtkScrollTo(h, newFirst, 0);
 
     return TCL_OK;
 }
 
-void TtkScrollTo(ScrollHandle h, int newFirst)
+void TtkScrollTo(ScrollHandle h, int newFirst, int updateScrollInfo)
 {
     Scrollable *s = h->scrollPtr;
+
+    if (updateScrollInfo) {
+        TtkUpdateScrollInfo(h);
+    }
 
     if (newFirst >= s->total)
 	newFirst = s->total - 1;

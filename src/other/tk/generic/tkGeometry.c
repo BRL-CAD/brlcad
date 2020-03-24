@@ -220,13 +220,12 @@ Tk_SetInternalBorderEx(
     /*
      * All the slaves for which this is the master window must now be
      * repositioned to take account of the new internal border width. To
-     * signal all the geometry managers to do this, just resize the window to
-     * its current size. The ConfigureNotify event will cause geometry
-     * managers to recompute everything.
+     * signal all the geometry managers to do this, trigger a ConfigureNotify
+     * event. This will cause geometry managers to recompute everything.
      */
 
     if (changed) {
-	Tk_ResizeWindow(tkwin, Tk_Width(tkwin), Tk_Height(tkwin));
+	TkDoConfigureNotify(winPtr);
     }
 }
 
@@ -327,23 +326,23 @@ TkSetGeometryMaster(
 {
     register TkWindow *winPtr = (TkWindow *) tkwin;
 
-    if (winPtr->geometryMaster != NULL &&
-	    strcmp(winPtr->geometryMaster, master) == 0) {
+    if (winPtr->geomMgrName != NULL &&
+	    strcmp(winPtr->geomMgrName, master) == 0) {
 	return TCL_OK;
     }
-    if (winPtr->geometryMaster != NULL) {
+    if (winPtr->geomMgrName != NULL) {
 	if (interp != NULL) {
 	    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
 		    "cannot use geometry manager %s inside %s which already"
 		    " has slaves managed by %s",
-		    master, Tk_PathName(tkwin), winPtr->geometryMaster));
+		    master, Tk_PathName(tkwin), winPtr->geomMgrName));
 	    Tcl_SetErrorCode(interp, "TK", "GEOMETRY", "FIGHT", NULL);
 	}
 	return TCL_ERROR;
     }
 
-    winPtr->geometryMaster = ckalloc(strlen(master) + 1);
-    strcpy(winPtr->geometryMaster, master);
+    winPtr->geomMgrName = ckalloc(strlen(master) + 1);
+    strcpy(winPtr->geomMgrName, master);
     return TCL_OK;
 }
 
@@ -372,14 +371,14 @@ TkFreeGeometryMaster(
 {
     register TkWindow *winPtr = (TkWindow *) tkwin;
 
-    if (winPtr->geometryMaster != NULL &&
-	    strcmp(winPtr->geometryMaster, master) != 0) {
+    if (winPtr->geomMgrName != NULL &&
+	    strcmp(winPtr->geomMgrName, master) != 0) {
 	Tcl_Panic("Trying to free %s from geometry manager %s",
-		winPtr->geometryMaster, master);
+		winPtr->geomMgrName, master);
     }
-    if (winPtr->geometryMaster != NULL) {
-	ckfree(winPtr->geometryMaster);
-	winPtr->geometryMaster = NULL;
+    if (winPtr->geomMgrName != NULL) {
+	ckfree(winPtr->geomMgrName);
+	winPtr->geomMgrName = NULL;
     }
 }
 
@@ -425,6 +424,9 @@ Tk_MaintainGeometry(
     Tk_Window ancestor, parent;
     TkDisplay *dispPtr = ((TkWindow *) master)->dispPtr;
 
+    ((TkWindow *)slave)->maintainerPtr = (TkWindow *)master;
+
+    ((TkWindow *)slave)->maintainerPtr = (TkWindow *)master;
     if (master == Tk_Parent(slave)) {
 	/*
 	 * If the slave is a direct descendant of the master, don't bother
@@ -570,6 +572,9 @@ Tk_UnmaintainGeometry(
     Tk_Window ancestor;
     TkDisplay *dispPtr = ((TkWindow *) slave)->dispPtr;
 
+    ((TkWindow *)slave)->maintainerPtr = NULL;
+
+    ((TkWindow *)slave)->maintainerPtr = NULL;
     if (master == Tk_Parent(slave)) {
 	/*
 	 * If the slave is a direct descendant of the master,

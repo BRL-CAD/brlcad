@@ -101,6 +101,7 @@ Tk_BellObjCmd(
     enum options { TK_BELL_DISPLAYOF, TK_BELL_NICE };
     Tk_Window tkwin = clientData;
     int i, index, nice = 0;
+    Tk_ErrorHandler handler;
 
     if (objc > 4) {
     wrongArgs:
@@ -128,11 +129,13 @@ Tk_BellObjCmd(
 	    break;
 	}
     }
+    handler = Tk_CreateErrorHandler(Tk_Display(tkwin), -1, -1, -1, NULL, NULL);
     XBell(Tk_Display(tkwin), 0);
     if (!nice) {
 	XForceScreenSaver(Tk_Display(tkwin), ScreenSaverReset);
     }
-    XFlush(Tk_Display(tkwin));
+    (void)XFlush(Tk_Display(tkwin));
+    Tk_DeleteErrorHandler(handler);
     return TCL_OK;
 }
 
@@ -1282,7 +1285,7 @@ Tk_WinfoObjCmd(
     int objc,			/* Number of arguments. */
     Tcl_Obj *const objv[])	/* Argument objects. */
 {
-    int index, x, y, width, height, useX, useY, class, skip;
+    int index, x, y, width, height, useX, useY, c_class, skip;
     const char *string;
     TkWindow *winPtr;
     Tk_Window tkwin = clientData;
@@ -1493,7 +1496,7 @@ Tk_WinfoObjCmd(
 		Tcl_NewIntObj(WidthMMOfScreen(Tk_Screen(tkwin))));
 	break;
     case WIN_SCREENVISUAL:
-	class = DefaultVisualOfScreen(Tk_Screen(tkwin))->class;
+	c_class = DefaultVisualOfScreen(Tk_Screen(tkwin))->c_class;
 	goto visual;
     case WIN_SERVER:
 	TkGetServerInfo(interp, tkwin);
@@ -1521,10 +1524,10 @@ Tk_WinfoObjCmd(
 	break;
     }
     case WIN_VISUAL:
-	class = Tk_Visual(tkwin)->class;
+	c_class = Tk_Visual(tkwin)->c_class;
 
     visual:
-	string = TkFindStateString(visualMap, class);
+	string = TkFindStateString(visualMap, c_class);
 	if (string == NULL) {
 	    string = "unknown";
 	}
@@ -1787,15 +1790,15 @@ Tk_WinfoObjCmd(
 	}
 	resultPtr = Tcl_NewObj();
 	for (i = 0; i < count; i++) {
-	    string = TkFindStateString(visualMap, visInfoPtr[i].class);
+	    string = TkFindStateString(visualMap, visInfoPtr[i].c_class);
 	    if (string == NULL) {
 		strcpy(buf, "unknown");
 	    } else {
 		sprintf(buf, "%s %d", string, visInfoPtr[i].depth);
 	    }
 	    if (includeVisualId) {
-		sprintf(visualIdString, " 0x%x",
-			(unsigned) visInfoPtr[i].visualid);
+		sprintf(visualIdString, " 0x%lx",
+			(unsigned long) visInfoPtr[i].visualid);
 		strcat(buf, visualIdString);
 	    }
 	    strPtr = Tcl_NewStringObj(buf, -1);

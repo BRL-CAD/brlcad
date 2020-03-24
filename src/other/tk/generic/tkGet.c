@@ -22,7 +22,7 @@
  * the current thread.
  */
 
-typedef struct ThreadSpecificData {
+typedef struct {
     int initialized;
     Tcl_HashTable uidTable;
 } ThreadSpecificData;

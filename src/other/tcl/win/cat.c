@@ -28,14 +28,14 @@ _tmain(void)
     const char *err;
 
     while (1) {
-	n = read(0, buf, sizeof(buf));
+	n = _read(0, buf, sizeof(buf));
 	if (n <= 0) {
 	    break;
 	}
-        write(1, buf, n);
+	_write(1, buf, n);
     }
     err = (sizeof(int) == 2) ? "stderr16" : "stderr32";
-    write(2, err, strlen(err));
+    _write(2, err, (unsigned int)strlen(err));
 
     return 0;
 }

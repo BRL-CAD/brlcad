@@ -129,7 +129,7 @@ int exec(regex_t *, const chr *, size_t, rm_detail_t *, size_t, regmatch_t [], i
 static struct dfa *getsubdfa(struct vars *, struct subre *);
 static int simpleFind(struct vars *const, struct cnfa *const, struct colormap *const);
 static int complicatedFind(struct vars *const, struct cnfa *const, struct colormap *const);
-static int complicatedFindLoop(struct vars *const, struct cnfa *const, struct colormap *const, struct dfa *const, struct dfa *const, chr **const);
+static int complicatedFindLoop(struct vars *const, struct dfa *const, struct dfa *const, chr **const);
 static void zapallsubs(regmatch_t *const, const size_t);
 static void zaptreesubs(struct vars *const, struct subre *const);
 static void subset(struct vars *const, struct subre *const, chr *const, chr *const);
@@ -434,7 +434,7 @@ complicatedFind(
 	return v->err;
     }
 
-    ret = complicatedFindLoop(v, cnfa, cm, d, s, &cold);
+    ret = complicatedFindLoop(v, d, s, &cold);
 
     freeDFA(d);
     freeDFA(s);
@@ -453,14 +453,12 @@ complicatedFind(
 
 /*
  - complicatedFindLoop - the heart of complicatedFind
- ^ static int complicatedFindLoop(struct vars *, struct cnfa *, struct colormap *,
+ ^ static int complicatedFindLoop(struct vars *,
  ^	struct dfa *, struct dfa *, chr **);
  */
 static int
 complicatedFindLoop(
     struct vars *const v,
-    struct cnfa *const cnfa,
-    struct colormap *const cm,
     struct dfa *const d,
     struct dfa *const s,
     chr **const coldp)		/* where to put coldstart pointer */

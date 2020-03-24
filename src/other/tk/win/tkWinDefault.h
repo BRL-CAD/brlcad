@@ -247,7 +247,7 @@
 #define DEF_MENU_ENTRY_ACTIVE_FG	((char *) NULL)
 #define DEF_MENU_ENTRY_ACCELERATOR	((char *) NULL)
 #define DEF_MENU_ENTRY_BG		((char *) NULL)
-#define DEF_MENU_ENTRY_BITMAP		None
+#define DEF_MENU_ENTRY_BITMAP		NULL
 #define DEF_MENU_ENTRY_COLUMN_BREAK	"0"
 #define DEF_MENU_ENTRY_COMMAND		((char *) NULL)
 #define DEF_MENU_ENTRY_COMPOUND 	"none"
@@ -516,6 +516,14 @@
  */
 
 #define DEF_CANVTEXT_FONT		"TkDefaultFont"
+
+/*
+ * Defaults for canvas items
+ * (arcs, bitmaps, lines, polygons, rectangles, and ovals):
+ */
+
+#define DEF_CANVBMAP_FG			NORMAL_FG
+#define DEF_CANVITEM_OUTLINE		NORMAL_FG
 
 /*
  * Defaults for toplevels (most of the defaults for frames also apply

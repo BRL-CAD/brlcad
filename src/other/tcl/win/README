@@ -93,7 +93,7 @@ tests are timing dependent and will fail from time to time.  If a test is
 failing consistently, please send us a bug report with as much detail as
 you can manage to our tracker:
 
-	http://core.tcl.tk/tcl/reportlist
+	https://core.tcl-lang.org/tcl/reportlist
 
 In order to run the test suite, you build the "test" target using the
 appropriate makefile for your compiler.

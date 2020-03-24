@@ -23,7 +23,7 @@
 struct TkFontAttributes {
     Tk_Uid family;		/* Font family, or NULL to represent plaform-
 				 * specific default system font. */
-    int size;			/* Pointsize of font, 0 for default size, or
+    double size;		/* Pointsize of font, 0.0 for default size, or
 				 * negative number meaning pixel size. */
     int weight;			/* Weight flag; see below for def'n. */
     int slant;			/* Slant flag; see below for def'n. */
@@ -198,8 +198,8 @@ MODULE_SCOPE int	TkFontParseXLFD(const char *string,
 			    TkFontAttributes *faPtr, TkXLFDAttributes *xaPtr);
 MODULE_SCOPE const char *const * TkFontGetAliasList(const char *faceName);
 MODULE_SCOPE const char *const *const * TkFontGetFallbacks(void);
-MODULE_SCOPE int	TkFontGetPixels(Tk_Window tkwin, int size);
-MODULE_SCOPE int	TkFontGetPoints(Tk_Window tkwin, int size);
+MODULE_SCOPE double	TkFontGetPixels(Tk_Window tkwin, double size);
+MODULE_SCOPE double	TkFontGetPoints(Tk_Window tkwin, double size);
 MODULE_SCOPE const char *const * TkFontGetGlobalClass(void);
 MODULE_SCOPE const char *const * TkFontGetSymbolClass(void);
 MODULE_SCOPE int	TkCreateNamedFont(Tcl_Interp *interp, Tk_Window tkwin,

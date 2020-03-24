@@ -310,8 +310,8 @@ TclCreateAbsoluteTimerHandler(
     timerHandlerPtr->token = (Tcl_TimerToken) INT2PTR(tsdPtr->lastTimerId);
 
     /*
-     * Add the event to the queue in the correct position
-     * (ordered by event firing time).
+     * Add the event to the queue in the correct position (ordered by event
+     * firing time).
      */
 
     for (tPtr2 = tsdPtr->firstTimerHandlerPtr, prevPtr = NULL; tPtr2 != NULL;
@@ -1019,8 +1019,8 @@ AfterDelay(
 
     Tcl_GetTime(&now);
     endTime = now;
-    endTime.sec += (long)(ms/1000);
-    endTime.usec += ((int)(ms%1000))*1000;
+    endTime.sec += (long)(ms / 1000);
+    endTime.usec += ((int)(ms % 1000)) * 1000;
     if (endTime.usec >= 1000000) {
 	endTime.sec++;
 	endTime.usec -= 1000000;
@@ -1053,11 +1053,17 @@ AfterDelay(
 	    if (diff > TCL_TIME_MAXIMUM_SLICE) {
 		diff = TCL_TIME_MAXIMUM_SLICE;
 	    }
-            if (diff == 0 && TCL_TIME_BEFORE(now, endTime)) diff = 1;
+            if (diff == 0 && TCL_TIME_BEFORE(now, endTime)) {
+                diff = 1;
+            }
 	    if (diff > 0) {
 		Tcl_Sleep((long) diff);
-                if (diff < SLEEP_OFFLOAD_GETTIMEOFDAY) break;
-	    } else break;
+                if (diff < SLEEP_OFFLOAD_GETTIMEOFDAY) {
+                    break;
+                }
+	    } else {
+                break;
+            }
 	} else {
 	    diff = TCL_TIME_DIFF_MS(iPtr->limit.time, now);
 #ifndef TCL_WIDE_INT_IS_LONG

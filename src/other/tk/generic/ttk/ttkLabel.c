@@ -6,8 +6,7 @@
  *
  */
 
-#include <tcl.h>
-#include <tkInt.h>
+#include "tkInt.h"
 #include "ttkTheme.h"
 
 /*----------------------------------------------------------------------
@@ -183,7 +182,7 @@ static void TextDraw(TextElement *text, Tk_Window tkwin, Drawable d, Ttk_Box b)
 
     if (clipRegion != NULL) {
 #ifdef HAVE_XFT
-	TkUnixSetXftClipRegion(None);
+	TkUnixSetXftClipRegion(NULL);
 #endif
 	XSetClipMask(Tk_Display(tkwin), gc1, None);
 	XSetClipMask(Tk_Display(tkwin), gc2, None);

@@ -150,7 +150,7 @@ Tk_AllocCursorFromObj(
     cursorPtr = TkcGetCursor(interp, tkwin, Tcl_GetString(objPtr));
     objPtr->internalRep.twoPtrValue.ptr1 = cursorPtr;
     if (cursorPtr == NULL) {
-	return None;
+	return NULL;
     }
     cursorPtr->objRefCount++;
     return cursorPtr->cursor;
@@ -190,7 +190,7 @@ Tk_GetCursor(
     TkCursor *cursorPtr = TkcGetCursor(interp, tkwin, string);
 
     if (cursorPtr == NULL) {
-	return None;
+	return NULL;
     }
     return cursorPtr->cursor;
 }
@@ -388,7 +388,7 @@ Tk_GetCursorFromData(
 
   error:
     Tcl_DeleteHashEntry(dataHashPtr);
-    return None;
+    return NULL;
 }
 
 /*
@@ -425,7 +425,7 @@ Tk_NameOfCursor(
 
     if (!dispPtr->cursorInit) {
     printid:
-	sprintf(dispPtr->cursorString, "cursor id %p", cursor);
+	sprintf(dispPtr->cursorString, "cursor id 0x%" TCL_Z_MODIFIER "x", (size_t)cursor);
 	return dispPtr->cursorString;
     }
     idHashPtr = Tcl_FindHashEntry(&dispPtr->cursorIdTable, (char *) cursor);

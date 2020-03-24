@@ -120,8 +120,18 @@ proc ttk::treeview::ActivateHeading {w heading} {
     variable State
 
     if {$w != $State(activeWidget) || $heading != $State(activeHeading)} {
-	if {$State(activeHeading) != {}} {
-	    $State(activeWidget) heading $State(activeHeading) state !active
+	if {[winfo exists $State(activeWidget)] && $State(activeHeading) != {}} {
+	    # It may happen that $State(activeHeading) no longer corresponds
+	    # to an existing display column. This happens for instance when
+	    # changing -displaycolumns in a bound script when this change
+	    # triggers a <Leave> event. A proc checking if the display column
+	    # $State(activeHeading) is really still present or not could be
+	    # written but it would need to check several special cases:
+	    #   a. -displaycolumns "#all" or being an explicit columns list 
+	    #   b. column #0 display is not governed by the -displaycolumn
+	    #      list but by the value of the -show option
+	    # --> Let's rather catch the following line.
+	    catch {$State(activeWidget) heading $State(activeHeading) state !active}
 	}
 	if {$heading != {}} {
 	    $w heading $heading state active
@@ -205,7 +215,7 @@ proc ttk::treeview::resize.drag {w x} {
 }
 
 proc ttk::treeview::resize.release {w x} {
-    # no-op
+    $w drop
 }
 
 ### Heading activation.
@@ -336,6 +346,12 @@ proc ttk::treeview::CloseItem {w item} {
 ## Toggle -- toggle opened/closed state of item
 #
 proc ttk::treeview::Toggle {w item} {
+    # don't allow toggling on indicators that
+    # are not present in front of leaf items
+    if {[$w children $item] == {}} {
+        return
+    }
+    # not a leaf, toggle!
     if {[$w item $item -open]} {
 	CloseItem $w $item
     } else {

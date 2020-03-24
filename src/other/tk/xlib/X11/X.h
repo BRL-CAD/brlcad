@@ -41,7 +41,7 @@ SOFTWARE.
 /* Resources */
 
 #ifdef _WIN64
-typedef __int64 XID;
+typedef unsigned __int64 XID;
 #else
 typedef unsigned long XID;
 #endif
@@ -73,7 +73,9 @@ typedef unsigned long KeyCode;	/* In order to use IME, the Macintosh needs
  * RESERVED RESOURCE AND CONSTANT DEFINITIONS
  *****************************************************************/
 
-#define None                 0L	/* universal null resource or null atom */
+#ifndef _WIN32
+#   define None              0L      /* See bug [9e31fd9449] and below */
+#endif
 
 #define ParentRelative       1L	/* background pixmap in CreateWindow
 				    and ChangeWindowAttributes */
@@ -179,12 +181,19 @@ are reserved in the protocol for errors and replies. */
 
 #define ShiftMask		(1<<0)
 #define LockMask		(1<<1)
-#define ControlMask		(1<<2)
+#ifndef _WIN32
+#   define ControlMask		(1<<2) /* See bug [9e31fd9449] and below */
+#endif
 #define Mod1Mask		(1<<3)
 #define Mod2Mask		(1<<4)
 #define Mod3Mask		(1<<5)
 #define Mod4Mask		(1<<6)
 #define Mod5Mask		(1<<7)
+
+/* See bug [9e31fd9449], this way prevents conflicts with Win32 headers */
+#ifdef _WIN32
+enum _Bug9e31fd9449 { None = 0, ControlMask = (1<<2) };
+#endif
 
 /* modifier names.  Used to build a SetModifierMapping request or
    to read a GetModifierMapping request.  These correspond to the

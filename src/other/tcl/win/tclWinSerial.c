@@ -93,17 +93,12 @@ typedef struct SerialInfo {
 				 * threads. */
     OVERLAPPED osRead;		/* OVERLAPPED structure for read operations. */
     OVERLAPPED osWrite;		/* OVERLAPPED structure for write operations */
+    TclPipeThreadInfo *writeTI;	/* Thread info structure of writer worker. */
     HANDLE writeThread;		/* Handle to writer thread. */
     CRITICAL_SECTION csWrite;	/* Writer thread synchronisation. */
     HANDLE evWritable;		/* Manual-reset event to signal when the
 				 * writer thread has finished waiting for the
 				 * current buffer to be written. */
-    HANDLE evStartWriter;	/* Auto-reset event used by the main thread to
-				 * signal when the writer thread should
-				 * attempt to write to the serial. */
-    HANDLE evStopWriter;	/* Auto-reset event used by the main thread to
-				 * signal when the writer thread should close.
-				 */
     DWORD writeError;		/* An error caused by the last background
 				 * write. Set to 0 if no error has been
 				 * detected. This word is shared with the
@@ -599,7 +594,6 @@ SerialCloseProc(
     int errorCode, result = 0;
     SerialInfo *infoPtr, **nextPtrPtr;
     ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
-    DWORD exitCode;
 
     errorCode = 0;
 
@@ -609,56 +603,13 @@ SerialCloseProc(
     }
     serialPtr->validMask &= ~TCL_READABLE;
 
-    if (serialPtr->validMask & TCL_WRITABLE) {
-	/*
-	 * Generally we cannot wait for a pending write operation because it
-	 * may hang due to handshake
-	 *    WaitForSingleObject(serialPtr->evWritable, INFINITE);
-	 */
+    if (serialPtr->writeThread) {
 
-	/*
-	 * The thread may have already closed on it's own. Check it's exit
-	 * code.
-	 */
+    	TclPipeThreadStop(&serialPtr->writeTI, serialPtr->writeThread);
 
-	GetExitCodeThread(serialPtr->writeThread, &exitCode);
-
-	if (exitCode == STILL_ACTIVE) {
-	    /*
-	     * Set the stop event so that if the writer thread is blocked in
-	     * SerialWriterThread on WaitForMultipleEvents, it will exit
-	     * cleanly.
-	     */
-
-	    SetEvent(serialPtr->evStopWriter);
-
-	    /*
-	     * Wait at most 20 milliseconds for the writer thread to close.
-	     */
-
-	    if (WaitForSingleObject(serialPtr->writeThread,
-		    20) == WAIT_TIMEOUT) {
-		/*
-		 * Forcibly terminate the background thread as a last resort.
-		 * Note that we need to guard against terminating the thread
-		 * while it is in the middle of Tcl_ThreadAlert because it
-		 * won't be able to release the notifier lock.
-		 */
-
-		Tcl_MutexLock(&serialMutex);
-
-		/* BUG: this leaks memory */
-		TerminateThread(serialPtr->writeThread, 0);
-
-		Tcl_MutexUnlock(&serialMutex);
-	    }
-	}
-
-	CloseHandle(serialPtr->writeThread);
 	CloseHandle(serialPtr->osWrite.hEvent);
 	CloseHandle(serialPtr->evWritable);
-	CloseHandle(serialPtr->evStartWriter);
-	CloseHandle(serialPtr->evStopWriter);
+	CloseHandle(serialPtr->writeThread);
 	serialPtr->writeThread = NULL;
 
 	PurgeComm(serialPtr->handle, PURGE_TXABORT | PURGE_TXCLEAR);
@@ -1076,7 +1027,7 @@ SerialOutputProc(
 	memcpy(infoPtr->writeBuf, buf, (size_t) toWrite);
 	infoPtr->toWrite = toWrite;
 	ResetEvent(infoPtr->evWritable);
-	SetEvent(infoPtr->evStartWriter);
+	TclPipeThreadSignal(&infoPtr->writeTI);
 	bytesWritten = (DWORD) toWrite;
 
     } else {
@@ -1313,39 +1264,26 @@ static DWORD WINAPI
 SerialWriterThread(
     LPVOID arg)
 {
-    SerialInfo *infoPtr = (SerialInfo *)arg;
-    DWORD bytesWritten, toWrite, waitResult;
+    TclPipeThreadInfo *pipeTI = (TclPipeThreadInfo *)arg;
+    SerialInfo *infoPtr = NULL; /* access info only after success init/wait */
+    DWORD bytesWritten, toWrite;
     char *buf;
     OVERLAPPED myWrite;		/* Have an own OVERLAPPED in this thread. */
-    HANDLE wEvents[2];
-
-    /*
-     * The stop event takes precedence by being first in the list.
-     */
-
-    wEvents[0] = infoPtr->evStopWriter;
-    wEvents[1] = infoPtr->evStartWriter;
 
     for (;;) {
 	/*
 	 * Wait for the main thread to signal before attempting to write.
 	 */
-
-	waitResult = WaitForMultipleObjects(2, wEvents, FALSE, INFINITE);
-
-	if (waitResult != (WAIT_OBJECT_0 + 1)) {
-	    /*
-	     * The start event was not signaled. It might be the stop event or
-	     * an error, so exit.
-	     */
-
+	if (!TclPipeThreadWaitForSignal(&pipeTI)) {
+	    /* exit */
 	    break;
 	}
+	infoPtr = (SerialInfo *)pipeTI->clientData;
 
 	buf = infoPtr->writeBuf;
 	toWrite = infoPtr->toWrite;
 
-	myWrite.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	myWrite.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
 
 	/*
 	 * Loop until all of the bytes are written or an error occurs.
@@ -1404,6 +1342,9 @@ SerialWriterThread(
 	Tcl_MutexUnlock(&serialMutex);
     }
 
+    /* Worker exit, so inform the main thread or free TI-structure (if owned) */
+    TclPipeThreadExit(&pipeTI);
+
     return 0;
 }
 
@@ -1427,7 +1368,7 @@ SerialWriterThread(
 HANDLE
 TclWinSerialOpen(
     HANDLE handle,
-    const TCHAR *name,
+    const WCHAR *name,
     DWORD access)
 {
     SerialInit();
@@ -1446,7 +1387,7 @@ TclWinSerialOpen(
      * finished
      */
 
-    handle = CreateFile(name, access, 0, 0, OPEN_EXISTING,
+    handle = CreateFileW(name, access, 0, 0, OPEN_EXISTING,
 	    FILE_FLAG_OVERLAPPED, 0);
 
     return handle;
@@ -1477,7 +1418,6 @@ TclWinOpenSerialChannel(
     int permissions)
 {
     SerialInfo *infoPtr;
-    DWORD id;
 
     SerialInit();
 
@@ -1520,19 +1460,18 @@ TclWinOpenSerialChannel(
 
     InitializeCriticalSection(&infoPtr->csWrite);
     if (permissions & TCL_READABLE) {
-	infoPtr->osRead.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
+	infoPtr->osRead.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
     }
     if (permissions & TCL_WRITABLE) {
 	/*
 	 * Initially the channel is writable and the writeThread is idle.
 	 */
 
-	infoPtr->osWrite.hEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
-	infoPtr->evWritable = CreateEvent(NULL, TRUE, TRUE, NULL);
-	infoPtr->evStartWriter = CreateEvent(NULL, FALSE, FALSE, NULL);
-	infoPtr->evStopWriter = CreateEvent(NULL, FALSE, FALSE, NULL);
+	infoPtr->osWrite.hEvent = CreateEventW(NULL, TRUE, FALSE, NULL);
+	infoPtr->evWritable = CreateEventW(NULL, TRUE, TRUE, NULL);
 	infoPtr->writeThread = CreateThread(NULL, 256, SerialWriterThread,
-		infoPtr, 0, &id);
+		TclPipeThreadCreateTI(&infoPtr->writeTI, infoPtr,
+			infoPtr->evWritable), 0, NULL);
     }
 
     /*
@@ -1656,7 +1595,7 @@ SerialSetOptionProc(
     BOOL result, flag;
     size_t len, vlen;
     Tcl_DString ds;
-    const TCHAR *native;
+    const WCHAR *native;
     int argc;
     const char **argv;
 
@@ -1678,8 +1617,8 @@ SerialSetOptionProc(
 	if (!GetCommState(infoPtr->handle, &dcb)) {
 	    goto getStateFailed;
 	}
-	native = Tcl_WinUtfToTChar(value, -1, &ds);
-	result = BuildCommDCB(native, &dcb);
+	native = (const WCHAR *)Tcl_WinUtfToTChar(value, -1, &ds);
+	result = BuildCommDCBW(native, &dcb);
 	Tcl_DStringFree(&ds);
 
 	if (result == FALSE) {

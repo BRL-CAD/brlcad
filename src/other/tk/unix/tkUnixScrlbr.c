@@ -65,8 +65,8 @@ TkpCreateScrollbar(
 {
     UnixScrollbar *scrollPtr = ckalloc(sizeof(UnixScrollbar));
 
-    scrollPtr->troughGC = None;
-    scrollPtr->copyGC = None;
+    scrollPtr->troughGC = NULL;
+    scrollPtr->copyGC = NULL;
 
     Tk_CreateEventHandler(tkwin,
 	    ExposureMask|StructureNotifyMask|FocusChangeMask,
@@ -289,6 +289,11 @@ TkpComputeScrollbarGeometry(
     scrollPtr->inset = scrollPtr->highlightWidth + scrollPtr->borderWidth;
     width = (scrollPtr->vertical) ? Tk_Width(scrollPtr->tkwin)
 	    : Tk_Height(scrollPtr->tkwin);
+
+    /*
+     * Next line assumes that the arrow area is a square.
+     */
+
     scrollPtr->arrowLength = width - 2*scrollPtr->inset + 1;
     fieldLength = (scrollPtr->vertical ? Tk_Height(scrollPtr->tkwin)
 	    : Tk_Width(scrollPtr->tkwin))
@@ -361,10 +366,10 @@ TkpDestroyScrollbar(
 {
     UnixScrollbar *unixScrollPtr = (UnixScrollbar *)scrollPtr;
 
-    if (unixScrollPtr->troughGC != None) {
+    if (unixScrollPtr->troughGC != NULL) {
 	Tk_FreeGC(scrollPtr->display, unixScrollPtr->troughGC);
     }
-    if (unixScrollPtr->copyGC != None) {
+    if (unixScrollPtr->copyGC != NULL) {
 	Tk_FreeGC(scrollPtr->display, unixScrollPtr->copyGC);
     }
 }
@@ -401,11 +406,11 @@ TkpConfigureScrollbar(
 
     gcValues.foreground = scrollPtr->troughColorPtr->pixel;
     new = Tk_GetGC(scrollPtr->tkwin, GCForeground, &gcValues);
-    if (unixScrollPtr->troughGC != None) {
+    if (unixScrollPtr->troughGC != NULL) {
 	Tk_FreeGC(scrollPtr->display, unixScrollPtr->troughGC);
     }
     unixScrollPtr->troughGC = new;
-    if (unixScrollPtr->copyGC == None) {
+    if (unixScrollPtr->copyGC == NULL) {
 	gcValues.graphics_exposures = False;
 	unixScrollPtr->copyGC = Tk_GetGC(scrollPtr->tkwin,
 		GCGraphicsExposures, &gcValues);

@@ -63,9 +63,9 @@ typedef struct mFile {
  * Most data in a GIF image is binary and is treated as such. However, a few
  * key bits are stashed in ASCII. If we try to compare those pieces to the
  * char they represent, it will fail on any non-ASCII (eg, EBCDIC) system. To
- * accomodate these systems, we test against the numeric value of the ASCII
+ * accommodate these systems, we test against the numeric value of the ASCII
  * characters instead of the characters themselves. This is encoding
- * independant.
+ * independent.
  */
 
 static const char GIF87a[] = {			/* ASCII GIF87a */
@@ -1034,7 +1034,7 @@ ReadImage(
     int transparent)
 {
     unsigned char initialCodeSize;
-    int xpos = 0, ypos = 0, pass = 0, i;
+    int xpos = 0, ypos = 0, pass = 0, i, count;
     register unsigned char *pixelPtr;
     static const int interlaceStep[] = { 8, 8, 4, 2 };
     static const int interlaceStart[] = { 0, 4, 2, 1 };
@@ -1141,9 +1141,9 @@ ReadImage(
 		     * Last pass reset the decoder, so the first code we see
 		     * must be a singleton. Seed the stack with it, and set up
 		     * the old/first code pointers for insertion into the
-		     * string table. We can't just roll this into the
-		     * clearCode test above, because at that point we have not
-		     * yet read the next code.
+		     * codes table. We can't just roll this into the clearCode
+		     * test above, because at that point we have not yet read
+		     * the next code.
 		     */
 
 		    *top++ = append[code];
@@ -1154,11 +1154,11 @@ ReadImage(
 
 		inCode = code;
 
-		if (code == maxCode) {
+		if ((code == maxCode) && (maxCode < (1 << MAX_LWZ_BITS))) {
 		    /*
 		     * maxCode is always one bigger than our highest assigned
 		     * code. If the code we see is equal to maxCode, then we
-		     * are about to add a new string to the table. ???
+		     * are about to add a new entry to the codes table.
 		     */
 
 		    *top++ = firstCode;
@@ -1167,7 +1167,7 @@ ReadImage(
 
 		while (code > clearCode) {
 		    /*
-		     * Populate the stack by tracing the string in the string
+		     * Populate the stack by tracing the code in the codes
 		     * table from its tail to its head
 		     */
 
@@ -1176,28 +1176,24 @@ ReadImage(
 		}
 		firstCode = append[code];
 
-		/*
-		 * If there's no more room in our string table, quit.
-		 * Otherwise, add a new string to the table
-		 */
+	        /*
+	         * Push the head of the code onto the stack.
+	         */
 
-		if (maxCode >= (1 << MAX_LWZ_BITS)) {
-		    return TCL_OK;
-		}
+	        *top++ = firstCode;
 
-		/*
-		 * Push the head of the string onto the stack.
-		 */
+                if (maxCode < (1 << MAX_LWZ_BITS)) {
+		    /*
+		     * If there's still room in our codes table, add a new entry.
+		     * Otherwise don't, and keep using the current table.
+                     * See DEFERRED CLEAR CODE IN LZW COMPRESSION in the GIF89a
+                     * specification.
+		     */
 
-		*top++ = firstCode;
-
-		/*
-		 * Add a new string to the string table
-		 */
-
-		prefix[maxCode] = oldCode;
-		append[maxCode] = firstCode;
-		maxCode++;
+		    prefix[maxCode] = oldCode;
+		    append[maxCode] = firstCode;
+		    maxCode++;
+                }
 
 		/*
 		 * maxCode tells us the maximum code value we can accept. If
@@ -1255,6 +1251,25 @@ ReadImage(
 	    ypos++;
 	}
 	pixelPtr = imagePtr + (ypos) * len * ((transparent>=0)?4:3);
+    }
+
+    /*
+     * Now read until the final zero byte.
+     * It was observed that there might be 1 length blocks
+     * (test imgPhoto-14.1) which are not read.
+     *
+     * The field "stack" is abused for temporary buffer. it has 4096 bytes
+     * and we need 256.
+     *
+     * Loop until we hit a 0 length block which is the end sign.
+     */
+    while ( 0 < (count = GetDataBlock(gifConfPtr, chan, stack)))
+    {
+	if (-1 == count ) {
+	    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		    "error reading GIF image: %s", Tcl_PosixError(interp)));
+	    return TCL_ERROR;
+	}
     }
     return TCL_OK;
 }

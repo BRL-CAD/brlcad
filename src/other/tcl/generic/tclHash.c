@@ -326,7 +326,10 @@ CreateHashEntry(
 		continue;
 	    }
 #endif
-	    if (((void *) key == hPtr) || compareKeysProc((void *) key, hPtr)) {
+	    /* if keys pointers or values are equal */
+	    if ((key == hPtr->key.oneWordValue)
+		|| compareKeysProc((void *) key, hPtr)
+	    ) {
 		if (newPtr) {
 		    *newPtr = 0;
 		}
@@ -836,6 +839,7 @@ AllocStringEntry(
 	allocsize = sizeof(hPtr->key);
     }
     hPtr = ckalloc(TclOffset(Tcl_HashEntry, key) + allocsize);
+    memset(hPtr, 0, sizeof(Tcl_HashEntry) + allocsize - sizeof(hPtr->key));
     memcpy(hPtr->key.string, string, size);
     hPtr->clientData = 0;
     return hPtr;

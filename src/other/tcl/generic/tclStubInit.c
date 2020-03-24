@@ -10,7 +10,11 @@
  */
 
 #include "tclInt.h"
-#include "tommath.h"
+#include "tommath_private.h"
+
+#ifdef __CYGWIN__
+#   include <wchar.h>
+#endif
 
 #ifdef __GNUC__
 #pragma GCC dependency "tcl.decls"
@@ -47,6 +51,13 @@
 #undef TclWinGetServByName
 #undef TclWinGetSockOpt
 #undef TclWinSetSockOpt
+#undef TclBN_mp_tc_and
+#undef TclBN_mp_tc_or
+#undef TclBN_mp_tc_xor
+#define TclBN_mp_tc_and TclBN_mp_and
+#define TclBN_mp_tc_or TclBN_mp_or
+#define TclBN_mp_tc_xor TclBN_mp_xor
+#define TclUnusedStubEntry NULL
 
 /* See bug 510001: TclSockMinimumBuffers needs plat imp */
 #ifdef _WIN64
@@ -58,6 +69,29 @@ static int TclSockMinimumBuffersOld(int sock, int size)
     return TclSockMinimumBuffers(INT2PTR(sock), size);
 }
 #endif
+
+MP_SET_UNSIGNED(mp_set_ull, Tcl_WideUInt)
+
+
+mp_err TclBN_mp_set_int(mp_int *a, unsigned long i)
+{
+	mp_set_ull(a, i);
+	return MP_OKAY;
+}
+
+mp_err TclBN_mp_init_set_int(mp_int *a, unsigned long i)
+{
+    mp_err result = mp_init(a);
+    if (result == MP_OKAY) {
+	mp_set_ull(a, i);
+    }
+	return result;
+}
+
+int TclBN_mp_expt_d_ex(const mp_int *a, mp_digit b, mp_int *c, int fast)
+{
+	return mp_expt_u32(a, b, c);
+}
 
 #define TclSetStartupScriptPath setStartupScriptPath
 static void TclSetStartupScriptPath(Tcl_Obj *path)
@@ -106,8 +140,6 @@ static unsigned short TclWinNToHS(unsigned short ns) {
 #   define TclWinFlushDirtyChannels doNothing
 #   define TclWinResetInterfaces doNothing
 
-static Tcl_Encoding winTCharEncoding;
-
 static int
 TclpIsAtty(int fd)
 {
@@ -127,7 +159,7 @@ void *TclWinGetTclInstance()
 {
     void *hInstance = NULL;
     GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS,
-	    (const char *)&winTCharEncoding, &hInstance);
+	    (const char *)&TclpIsAtty, &hInstance);
     return hInstance;
 }
 
@@ -186,11 +218,68 @@ Tcl_WinUtfToTChar(
     int len,
     Tcl_DString *dsPtr)
 {
-    if (!winTCharEncoding) {
-	winTCharEncoding = Tcl_GetEncoding(0, "unicode");
+#if TCL_UTF_MAX > 4
+    Tcl_UniChar ch = 0;
+    wchar_t *w, *wString;
+    const char *p, *end;
+    int oldLength;
+#endif
+
+    Tcl_DStringInit(dsPtr);
+    if (!string) {
+	return NULL;
     }
-    return Tcl_UtfToExternalDString(winTCharEncoding,
-	    string, len, dsPtr);
+#if TCL_UTF_MAX > 4
+
+    if (len < 0) {
+	len = strlen(string);
+    }
+
+    /*
+     * Unicode string length in Tcl_UniChars will be <= UTF-8 string length in
+     * bytes.
+     */
+
+    oldLength = Tcl_DStringLength(dsPtr);
+
+    Tcl_DStringSetLength(dsPtr,
+	    oldLength + (int) ((len + 1) * sizeof(wchar_t)));
+    wString = (wchar_t *) (Tcl_DStringValue(dsPtr) + oldLength);
+
+    w = wString;
+    p = string;
+    end = string + len - 4;
+    while (p < end) {
+	p += TclUtfToUniChar(p, &ch);
+	if (ch > 0xFFFF) {
+	    *w++ = (wchar_t) (0xD800 + ((ch -= 0x10000) >> 10));
+	    *w++ = (wchar_t) (0xDC00 | (ch & 0x3FF));
+	} else {
+	    *w++ = ch;
+	}
+    }
+    end += 4;
+    while (p < end) {
+	if (Tcl_UtfCharComplete(p, end-p)) {
+	    p += TclUtfToUniChar(p, &ch);
+	} else {
+	    ch = UCHAR(*p++);
+	}
+	if (ch > 0xFFFF) {
+	    *w++ = (wchar_t) (0xD800 + ((ch -= 0x10000) >> 10));
+	    *w++ = (wchar_t) (0xDC00 | (ch & 0x3FF));
+	} else {
+	    *w++ = ch;
+	}
+    }
+    *w = '\0';
+    Tcl_DStringSetLength(dsPtr,
+	    oldLength + ((char *) w - (char *) wString));
+
+    return (char *)wString;
+#else
+    return (char *)Tcl_UtfToUniCharDString(string, len, dsPtr);
+#endif
 }
 
 char *
@@ -199,11 +288,51 @@ Tcl_WinTCharToUtf(
     int len,
     Tcl_DString *dsPtr)
 {
-    if (!winTCharEncoding) {
-	winTCharEncoding = Tcl_GetEncoding(0, "unicode");
+#if TCL_UTF_MAX > 4
+    const wchar_t *w, *wEnd;
+    char *p, *result;
+    int oldLength, blen = 1;
+#endif
+
+    Tcl_DStringInit(dsPtr);
+    if (!string) {
+	return NULL;
     }
-    return Tcl_ExternalToUtfDString(winTCharEncoding,
-	    string, len, dsPtr);
+    if (len < 0) {
+	len = wcslen((wchar_t *)string);
+    } else {
+	len /= 2;
+    }
+#if TCL_UTF_MAX > 4
+    oldLength = Tcl_DStringLength(dsPtr);
+    Tcl_DStringSetLength(dsPtr, oldLength + (len + 1) * 4);
+    result = Tcl_DStringValue(dsPtr) + oldLength;
+
+    p = result;
+    wEnd = (wchar_t *)string + len;
+    for (w = (wchar_t *)string; w < wEnd; ) {
+	if (!blen && ((*w & 0xFC00) != 0xDC00)) {
+	    /* Special case for handling high surrogates. */
+	    p += Tcl_UniCharToUtf(-1, p);
+	}
+	blen = Tcl_UniCharToUtf(*w, p);
+	p += blen;
+	if ((*w >= 0xD800) && (blen < 3)) {
+	    /* Indication that high surrogate is handled */
+	    blen = 0;
+	}
+	w++;
+    }
+    if (!blen) {
+	/* Special case for handling high surrogates. */
+	p += Tcl_UniCharToUtf(-1, p);
+    }
+    Tcl_DStringSetLength(dsPtr, oldLength + (p - result));
+
+    return result;
+#else
+    return Tcl_UniCharToUtfDString((Tcl_UniChar *)string, len, dsPtr);
+#endif
 }
 
 #if defined(TCL_WIDE_INT_IS_LONG)
@@ -293,6 +422,36 @@ static int formatInt(char *buffer, int n){
 #   define TclpLocaltime_unix TclpLocaltime
 #   define TclpGmtime_unix TclpGmtime
 #endif
+
+mp_err mp_to_unsigned_bin(const mp_int *a, unsigned char *b)
+{
+   return mp_to_ubin(a, b, INT_MAX, NULL);
+}
+
+mp_err mp_to_unsigned_bin_n(const mp_int *a, unsigned char *b, unsigned long *outlen)
+{
+   size_t n = mp_ubin_size(a);
+   if (*outlen < (unsigned long)n) {
+      return MP_VAL;
+   }
+   *outlen = (unsigned long)n;
+   return mp_to_ubin(a, b, n, NULL);
+}
+
+mp_err mp_toradix_n(const mp_int *a, char *str, int radix, int maxlen)
+{
+   if (maxlen < 0) {
+      return MP_VAL;
+   }
+   return mp_to_radix(a, str, (size_t)maxlen, NULL, radix);
+}
+
+void bn_reverse(unsigned char *s, int len)
+{
+   if (len > 0) {
+      s_mp_reverse(s, (size_t)len);
+   }
+}
 
 /*
  * WARNING: The contents of this file is automatically generated by the
@@ -560,6 +719,13 @@ static const TclIntStubs tclIntStubs = {
     TclDoubleDigits, /* 249 */
     TclSetSlaveCancelFlags, /* 250 */
     TclRegisterLiteral, /* 251 */
+    TclPtrGetVar, /* 252 */
+    TclPtrSetVar, /* 253 */
+    TclPtrIncrObjVar, /* 254 */
+    TclPtrObjMakeUpvar, /* 255 */
+    TclPtrUnsetVar, /* 256 */
+    0, /* 257 */
+    TclUnusedStubEntry, /* 258 */
 };
 
 static const TclIntPlatStubs tclIntPlatStubs = {
@@ -749,6 +915,20 @@ const TclTomMathStubs tclTomMathStubs = {
     TclBNInitBignumFromLong, /* 64 */
     TclBNInitBignumFromWideInt, /* 65 */
     TclBNInitBignumFromWideUInt, /* 66 */
+    TclBN_mp_expt_d_ex, /* 67 */
+    TclBN_mp_set_ull, /* 68 */
+    0, /* 69 */
+    0, /* 70 */
+    0, /* 71 */
+    0, /* 72 */
+    TclBN_mp_tc_and, /* 73 */
+    TclBN_mp_tc_or, /* 74 */
+    TclBN_mp_tc_xor, /* 75 */
+    TclBN_mp_signed_rsh, /* 76 */
+    0, /* 77 */
+    TclBN_mp_to_ubin, /* 78 */
+    0, /* 79 */
+    TclBN_mp_to_radix, /* 80 */
 };
 
 static const TclStubHooks tclStubHooks = {
@@ -1415,6 +1595,24 @@ const TclStubs tclStubs = {
     Tcl_FindSymbol, /* 628 */
     Tcl_FSUnloadFile, /* 629 */
     Tcl_ZlibStreamSetCompressionDictionary, /* 630 */
+    0, /* 631 */
+    0, /* 632 */
+    0, /* 633 */
+    0, /* 634 */
+    0, /* 635 */
+    0, /* 636 */
+    0, /* 637 */
+    0, /* 638 */
+    0, /* 639 */
+    0, /* 640 */
+    0, /* 641 */
+    0, /* 642 */
+    0, /* 643 */
+    0, /* 644 */
+    0, /* 645 */
+    0, /* 646 */
+    0, /* 647 */
+    TclUnusedStubEntry, /* 648 */
 };
 
 /* !END!: Do not edit above this line. */

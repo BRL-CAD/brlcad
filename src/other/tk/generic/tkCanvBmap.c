@@ -12,6 +12,7 @@
 
 #include "tkInt.h"
 #include "tkCanvas.h"
+#include "default.h"
 
 /*
  * The structure below defines the record for each bitmap item.
@@ -70,7 +71,7 @@ static const Tk_ConfigSpec configSpecs[] = {
 	NULL, Tk_Offset(BitmapItem, disabledFgColor),
 	TK_CONFIG_NULL_OK, NULL},
     {TK_CONFIG_COLOR, "-foreground", NULL, NULL,
-	"black", Tk_Offset(BitmapItem, fgColor), 0, NULL},
+	DEF_CANVBMAP_FG, Tk_Offset(BitmapItem, fgColor), 0, NULL},
     {TK_CONFIG_CUSTOM, "-state", NULL, NULL,
 	NULL, Tk_Offset(Tk_Item, state), TK_CONFIG_NULL_OK,
 	&stateOption},
@@ -189,7 +190,7 @@ TkcCreateBitmap(
     bmapPtr->bgColor = NULL;
     bmapPtr->activeBgColor = NULL;
     bmapPtr->disabledBgColor = NULL;
-    bmapPtr->gc = None;
+    bmapPtr->gc = NULL;
 
     /*
      * Process the arguments to fill in the item record. Only 1 (list) or 2 (x
@@ -372,7 +373,7 @@ ConfigureBitmap(
     }
 
     if (bitmap == None) {
-	newGC = None;
+	newGC = NULL;
     } else {
 	gcValues.foreground = fgColor->pixel;
 	mask = GCForeground;
@@ -385,7 +386,7 @@ ConfigureBitmap(
 	}
 	newGC = Tk_GetGC(tkwin, mask, &gcValues);
     }
-    if (bmapPtr->gc != None) {
+    if (bmapPtr->gc != NULL) {
 	Tk_FreeGC(Tk_Display(tkwin), bmapPtr->gc);
     }
     bmapPtr->gc = newGC;

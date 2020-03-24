@@ -286,6 +286,7 @@ proc ::tk::ConsoleHistory {cmd} {
     	    }
 	    .console delete promptEnd end
     	    .console insert promptEnd $cmd {input stdin}
+	    .console see end
     	}
     	next {
 	    incr HistNum
@@ -302,6 +303,7 @@ proc ::tk::ConsoleHistory {cmd} {
 	    }
 	    .console delete promptEnd end
 	    .console insert promptEnd $cmd {input stdin}
+	    .console see end
     	}
     	reset {
     	    set HistNum 1

@@ -73,7 +73,7 @@ typedef struct FileState {
 
 /*
  * The following structure is used to set or get the serial port attributes in
- * a platform-independant manner.
+ * a platform-independent manner.
  */
 
 typedef struct TtyAttrs {
@@ -1725,9 +1725,9 @@ Tcl_GetOpenFile(
 	    NULL);
     return TCL_ERROR;
 }
-
-/* Darwin/Mac OS X CoreFoundation notifier is in tclMacOSXNotify.c */
-#ifndef HAVE_COREFOUNDATION
+
+#ifndef HAVE_COREFOUNDATION	/* Darwin/Mac OS X CoreFoundation notifier is
+				 * in tclMacOSXNotify.c */
 /*
  *----------------------------------------------------------------------
  *

@@ -13,7 +13,7 @@
 #include "tkInt.h"
 #include "tkMenu.h"
 
-typedef struct ThreadSpecificData {
+typedef struct {
     int postCommandGeneration;
 } ThreadSpecificData;
 static Tcl_ThreadDataKey dataKey;

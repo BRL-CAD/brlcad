@@ -170,7 +170,7 @@ typedef struct {
     				 * "left" and "right" will pop the menu left
     				 * or right, and the active item will be next
     				 * to the button. */
-    Tk_Cursor cursor;		/* Current cursor for window, or None. */
+    Tk_Cursor cursor;		/* Current cursor for window, or NULL. */
     char *takeFocus;		/* Value of -takefocus option; not used in the
 				 * C code, but used by keyboard traversal
 				 * scripts. Malloc'ed, but may be NULL. */

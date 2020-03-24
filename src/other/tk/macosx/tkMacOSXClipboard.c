@@ -12,6 +12,7 @@
  */
 
 #include "tkMacOSXPrivate.h"
+#include "tkMacOSXConstants.h"
 #include "tkSelect.h"
 
 static NSInteger changeCount = -1;
@@ -34,10 +35,7 @@ static Tk_Window clipboardOwner = NULL;
 		    targetPtr->type == dispPtr->utf8Atom) {
 		for (TkClipboardBuffer *cbPtr = targetPtr->firstBufferPtr;
 			cbPtr; cbPtr = cbPtr->nextPtr) {
-		    NSString *s = [[NSString alloc] initWithBytesNoCopy:
-			    cbPtr->buffer length:cbPtr->length
-			    encoding:NSUTF8StringEncoding freeWhenDone:NO];
-
+		    NSString *s = TclUniToNSString(cbPtr->buffer, cbPtr->length);
 		    [string appendString:s];
 		    [s release];
 		}
@@ -70,10 +68,8 @@ static Tk_Window clipboardOwner = NULL;
     if (clipboardOwner && [[NSPasteboard generalPasteboard] changeCount] !=
 	    changeCount) {
 	TkDisplay *dispPtr = TkGetDisplayList();
-
 	if (dispPtr) {
 	    XEvent event;
-
 	    event.xany.type = SelectionClear;
 	    event.xany.serial = NextRequest(Tk_Display(clipboardOwner));
 	    event.xany.send_event = False;
@@ -124,9 +120,12 @@ TkSelGetSelection(
 {
     int result = TCL_ERROR;
     TkDisplay *dispPtr = ((TkWindow *) tkwin)->dispPtr;
+    int haveExternalClip =
+	    ([[NSPasteboard generalPasteboard] changeCount] != changeCount);
 
-    if (dispPtr && selection == dispPtr->clipboardAtom && (target == XA_STRING
-	    || target == dispPtr->utf8Atom)) {
+    if (dispPtr && (haveExternalClip || dispPtr->clipboardActive)
+	        && selection == dispPtr->clipboardAtom
+	        && (target == XA_STRING || target == dispPtr->utf8Atom)) {
 	NSString *string = nil;
 	NSPasteboard *pb = [NSPasteboard generalPasteboard];
 	NSString *type = [pb availableTypeFromArray:[NSArray arrayWithObject:
@@ -135,7 +134,22 @@ TkSelGetSelection(
 	if (type) {
 	    string = [pb stringForType:type];
 	}
-	result = proc(clientData, interp, string ? [string UTF8String] : "");
+	if (string) {
+
+	    /*
+	     * Encode the string using the encoding which is used in Tcl
+	     * when TCL_UTF_MAX = 3.  This replaces each UTF-16 surrogate with
+	     * a 3-byte sequence generated using the UTF-8 algorithm. (Even
+	     * though UTF-8 does not allow encoding surrogates, the algorithm
+	     * does produce a 3-byte sequence.)
+	     */
+
+	    char *bytes = NSStringToTclUni(string, NULL);
+	    result = proc(clientData, interp, bytes);
+	    if (bytes) {
+		ckfree(bytes);
+	    }
+	}
     } else {
 	Tcl_SetObjResult(interp, Tcl_ObjPrintf(
 		"%s selection doesn't exist or form \"%s\" not defined",
@@ -188,8 +202,8 @@ XSetSelectionOwner(
  *
  * TkMacOSXSelDeadWindow --
  *
- *	This function is invoked just before a TkWindow is deleted. It
- *	performs selection-related cleanup.
+ *	This function is invoked just before a TkWindow is deleted. It performs
+ *	selection-related cleanup.
  *
  * Results:
  *	None.
@@ -287,28 +301,6 @@ void
 TkSelPropProc(
     register XEvent *eventPtr)	/* X PropertyChange event. */
 {
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * TkSuspendClipboard --
- *
- *	Handle clipboard conversion as required by the suppend event.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	The local scrap is moved to the global scrap.
- *
- *----------------------------------------------------------------------
- */
-
-void
-TkSuspendClipboard(void)
-{
-    changeCount = [[NSPasteboard generalPasteboard] changeCount];
 }
 
 /*

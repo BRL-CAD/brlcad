@@ -1119,6 +1119,8 @@ Tcl_AttemptDbCkalloc(
     int line)
 {
     char *result;
+    (void)file;
+    (void)line;
 
     result = (char *) TclpAlloc(size);
     return result;
@@ -1198,6 +1200,8 @@ Tcl_AttemptDbCkrealloc(
     int line)
 {
     char *result;
+    (void)file;
+    (void)line;
 
     result = (char *) TclpRealloc(ptr, size);
     return result;
@@ -1228,6 +1232,8 @@ Tcl_DbCkfree(
     const char *file,
     int line)
 {
+    (void)file;
+    (void)line;
     TclpFree(ptr);
 }
 
@@ -1246,12 +1252,14 @@ void
 Tcl_InitMemory(
     Tcl_Interp *interp)
 {
+    (void)interp;
 }
 
 int
 Tcl_DumpActiveMemory(
     const char *fileName)
 {
+    (void)fileName;
     return TCL_OK;
 }
 
@@ -1260,6 +1268,8 @@ Tcl_ValidateAllMemory(
     const char *file,
     int line)
 {
+    (void)file;
+    (void)line;
 }
 
 int
@@ -1267,6 +1277,8 @@ TclDumpMemoryInfo(
     ClientData clientData,
     int flags)
 {
+    (void)clientData;
+    (void)flags;
     return 1;
 }
 

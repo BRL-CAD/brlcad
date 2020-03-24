@@ -17,16 +17,14 @@
 #include "default.h"
 
 /*
- * Things about the busy system that may be configured. Note that currently on
- * OSX/Aqua, that's nothing at all.
+ * Things about the busy system that may be configured. Note that on some
+ * platforms this may or may not have an effect.
  */
 
 static const Tk_OptionSpec busyOptionSpecs[] = {
-#ifndef MAC_OSX_TK
     {TK_OPTION_CURSOR, "-cursor", "cursor", "Cursor",
 	DEF_BUSY_CURSOR, -1, Tk_Offset(Busy, cursor),
 	TK_OPTION_NULL_OK, 0, 0},
-#endif
     {TK_OPTION_END, NULL, NULL, NULL, NULL, 0, 0, 0, 0, 0}
 };
 
@@ -433,6 +431,10 @@ MakeTransparentWindowExist(
 
     TkpMakeTransparentWindowExist(tkwin, parent);
 
+    if (winPtr->window == None) {
+	return;			/* Platform didn't make Window. */
+    }
+
     dispPtr = winPtr->dispPtr;
     hPtr = Tcl_CreateHashEntry(&dispPtr->winTable, (char *) winPtr->window,
 	    &notUsed);
@@ -517,7 +519,8 @@ CreateBusy(
     Tk_Window tkRef)		/* Window hosting the busy window */
 {
     Busy *busyPtr;
-    int length, x, y;
+    size_t length;
+    int x, y;
     const char *fmt;
     char *name;
     Tk_Window tkBusy, tkChild, tkParent;
@@ -566,7 +569,7 @@ CreateBusy(
     busyPtr->height = Tk_Height(tkRef);
     busyPtr->x = Tk_X(tkRef);
     busyPtr->y = Tk_Y(tkRef);
-    busyPtr->cursor = None;
+    busyPtr->cursor = NULL;
     Tk_SetClass(tkBusy, "Busy");
     busyPtr->optionTable = Tk_CreateOptionTable(interp, busyOptionSpecs);
     if (Tk_InitOptions(interp, (char *) busyPtr, busyPtr->optionTable,
@@ -596,7 +599,7 @@ CreateBusy(
      */
 
     Tk_ManageGeometry(tkBusy, &busyMgrInfo, busyPtr);
-    if (busyPtr->cursor != None) {
+    if (busyPtr->cursor != NULL) {
 	Tk_DefineCursor(tkBusy, busyPtr->cursor);
     }
 
@@ -641,7 +644,7 @@ ConfigureBusy(
 	return TCL_ERROR;
     }
     if (busyPtr->cursor != oldCursor) {
-	if (busyPtr->cursor == None) {
+	if (busyPtr->cursor == NULL) {
 	    Tk_UndefineCursor(busyPtr->tkBusy);
 	} else {
 	    Tk_DefineCursor(busyPtr->tkBusy, busyPtr->cursor);
@@ -876,7 +879,7 @@ Tk_BusyObjCmd(
 		hPtr = Tcl_NextHashEntry(&cursor)) {
 	    busyPtr = Tcl_GetHashValue(hPtr);
 	    if (pattern == NULL ||
-		    Tcl_StringMatch(Tk_PathName(busyPtr->tkRef), pattern)) {
+		    Tcl_StringCaseMatch(Tk_PathName(busyPtr->tkRef), pattern, 0)) {
 		Tcl_ListObjAppendElement(interp, objPtr,
 			TkNewWindowObj(busyPtr->tkRef));
 	    }

@@ -42,7 +42,7 @@ typedef struct Container {
 				 * process. */
 } Container;
 
-typedef struct ThreadSpecificData {
+typedef struct {
     Container *firstContainerPtr;
 				/* First in list of all containers managed by
 				 * this process. */
@@ -503,7 +503,15 @@ EmbedStructureProc(
     Tk_ErrorHandler errHandler;
 
     if (eventPtr->type == ConfigureNotify) {
+        /*
+         * Send a ConfigureNotify  to the embedded application.
+         */
+
+        if (containerPtr->embeddedPtr != None) {
+            TkDoConfigureNotify(containerPtr->embeddedPtr);
+        }
 	if (containerPtr->wrapper != None) {
+
 	    /*
 	     * Ignore errors, since the embedded application could have
 	     * deleted its window.
@@ -873,6 +881,7 @@ TkpTestembedCmd(
     Container *containerPtr;
     Tcl_DString dString;
     char buffer[50];
+    Tcl_Interp *embeddedInterp = NULL, *parentInterp = NULL;
     ThreadSpecificData *tsdPtr =
             Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
@@ -884,30 +893,45 @@ TkpTestembedCmd(
     Tcl_DStringInit(&dString);
     for (containerPtr = tsdPtr->firstContainerPtr; containerPtr != NULL;
 	    containerPtr = containerPtr->nextPtr) {
+	if (containerPtr->embeddedPtr != NULL) {
+	    embeddedInterp = containerPtr->embeddedPtr->mainPtr->interp;
+	}
+	if (containerPtr->parentPtr != NULL) {
+	    parentInterp = containerPtr->parentPtr->mainPtr->interp;
+	}
+	if (embeddedInterp != interp && parentInterp != interp) {
+	    continue;
+	}
 	Tcl_DStringStartSublist(&dString);
+	/* Parent id */
 	if (containerPtr->parent == None) {
 	    Tcl_DStringAppendElement(&dString, "");
 	} else if (all) {
-	    sprintf(buffer, "0x%x", (int) containerPtr->parent);
+	    sprintf(buffer, "0x%lx", containerPtr->parent);
 	    Tcl_DStringAppendElement(&dString, buffer);
 	} else {
 	    Tcl_DStringAppendElement(&dString, "XXX");
 	}
-	if (containerPtr->parentPtr == NULL) {
+	/* Parent pathName */
+	if (containerPtr->parentPtr == NULL ||
+	    parentInterp != interp) {
 	    Tcl_DStringAppendElement(&dString, "");
 	} else {
 	    Tcl_DStringAppendElement(&dString,
 		    containerPtr->parentPtr->pathName);
 	}
+        /* Wrapper */
 	if (containerPtr->wrapper == None) {
 	    Tcl_DStringAppendElement(&dString, "");
 	} else if (all) {
-	    sprintf(buffer, "0x%x", (int) containerPtr->wrapper);
+	    sprintf(buffer, "0x%lx", containerPtr->wrapper);
 	    Tcl_DStringAppendElement(&dString, buffer);
 	} else {
 	    Tcl_DStringAppendElement(&dString, "XXX");
 	}
-	if (containerPtr->embeddedPtr == NULL) {
+	/* Embedded window pathName */
+	if (containerPtr->embeddedPtr == NULL ||
+	    embeddedInterp != interp) {
 	    Tcl_DStringAppendElement(&dString, "");
 	} else {
 	    Tcl_DStringAppendElement(&dString,

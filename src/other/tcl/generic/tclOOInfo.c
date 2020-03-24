@@ -114,12 +114,14 @@ TclOOInitInfo(
      */
 
     infoCmd = Tcl_FindCommand(interp, "info", NULL, TCL_GLOBAL_ONLY);
-    Tcl_GetEnsembleMappingDict(NULL, infoCmd, &mapDict);
-    Tcl_DictObjPut(NULL, mapDict, Tcl_NewStringObj("object", -1),
-	    Tcl_NewStringObj("::oo::InfoObject", -1));
-    Tcl_DictObjPut(NULL, mapDict, Tcl_NewStringObj("class", -1),
-	    Tcl_NewStringObj("::oo::InfoClass", -1));
-    Tcl_SetEnsembleMappingDict(interp, infoCmd, mapDict);
+    if (infoCmd) {
+	Tcl_GetEnsembleMappingDict(NULL, infoCmd, &mapDict);
+	Tcl_DictObjPut(NULL, mapDict, Tcl_NewStringObj("object", -1),
+		Tcl_NewStringObj("::oo::InfoObject", -1));
+	Tcl_DictObjPut(NULL, mapDict, Tcl_NewStringObj("class", -1),
+		Tcl_NewStringObj("::oo::InfoClass", -1));
+	Tcl_SetEnsembleMappingDict(interp, infoCmd, mapDict);
+    }
 }
 
 /*

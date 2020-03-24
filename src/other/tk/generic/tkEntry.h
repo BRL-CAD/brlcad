@@ -82,7 +82,7 @@ typedef struct {
 				 * in readonly state, plus used for
 				 * background. */
     int borderWidth;		/* Width of 3-D border around window. */
-    Tk_Cursor cursor;		/* Current cursor for window, or None. */
+    Tk_Cursor cursor;		/* Current cursor for window, or NULL. */
     int exportSelection;	/* Non-zero means tie internal entry selection
 				 * to X selection. */
     Tk_Font tkfont;		/* Information about text font, or NULL. */
@@ -192,7 +192,7 @@ typedef struct {
     Tk_3DBorder activeBorder;	/* Used for drawing border around active
 				 * buttons. */
     Tk_3DBorder buttonBorder;	/* Used for drawing border around buttons. */
-    Tk_Cursor bCursor;		/* cursor for buttons, or None. */
+    Tk_Cursor bCursor;		/* cursor for buttons, or NULL. */
     int bdRelief;		/* 3-D effect: TK_RELIEF_RAISED, etc. */
     int buRelief;		/* 3-D effect: TK_RELIEF_RAISED, etc. */
     char *command;		/* Command to invoke for spin buttons. NULL
@@ -221,7 +221,7 @@ typedef struct {
 				 * value that the users requests. Malloc'ed */
     char *valueFormat;		/* Sprintf conversion specifier used for the
 				 * value. */
-    char digitFormat[10];	/* Sprintf conversion specifier computed from
+    char digitFormat[16];	/* Sprintf conversion specifier computed from
 				 * digits and other information; used for the
 				 * value. */
 

@@ -8,11 +8,7 @@
  * Copyright (c) 2004 Joe English
  */
 
-#include <string.h>
-#include <stdio.h>
-#include <tkInt.h>
-#include <X11/Xatom.h>
-
+#include "tkInt.h"
 #include "ttkTheme.h"
 #include "ttkWidget.h"
 
@@ -282,15 +278,16 @@ static char *EntryDisplayString(const char *showChar, int numChars)
 {
     char *displayString, *p;
     int size;
-    Tcl_UniChar ch;
-    char buf[TCL_UTF_MAX];
+    int ch;
+    char buf[6];
 
-    Tcl_UtfToUniChar(showChar, &ch);
-    size = Tcl_UniCharToUtf(ch, buf);
+    TkUtfToUniChar(showChar, &ch);
+    size = TkUniCharToUtf(ch, buf);
     p = displayString = ckalloc(numChars * size + 1);
 
     while (numChars--) {
-	p += Tcl_UniCharToUtf(ch, p);
+	memcpy(p, buf, size);
+	p += size;
     }
     *p = '\0';
 
@@ -332,11 +329,12 @@ EntryFetchSelection(
     ClientData clientData, int offset, char *buffer, int maxBytes)
 {
     Entry *entryPtr = (Entry *) clientData;
-    size_t byteCount;
+    int byteCount;
     const char *string;
     const char *selStart, *selEnd;
 
-    if (entryPtr->entry.selectFirst < 0 || !entryPtr->entry.exportSelection) {
+    if (entryPtr->entry.selectFirst < 0 || (!entryPtr->entry.exportSelection)
+	    || Tcl_IsSafe(entryPtr->core.interp)) {
 	return -1;
     }
     string = entryPtr->entry.displayString;
@@ -345,7 +343,7 @@ EntryFetchSelection(
     selEnd = Tcl_UtfAtIndex(selStart,
 	    entryPtr->entry.selectLast - entryPtr->entry.selectFirst);
     byteCount = selEnd - selStart - offset;
-    if (byteCount > (size_t)maxBytes) {
+    if (byteCount > maxBytes) {
     /* @@@POSSIBLE BUG: Can transfer partial UTF-8 sequences.  Is this OK? */
 	byteCount = maxBytes;
     }
@@ -371,11 +369,12 @@ static void EntryLostSelection(ClientData clientData)
 
 /* EntryOwnSelection --
  * 	Assert ownership of the PRIMARY selection,
- * 	if -exportselection set and selection is present.
+ * 	if -exportselection set and selection is present and interp is unsafe.
  */
 static void EntryOwnSelection(Entry *entryPtr)
 {
     if (entryPtr->entry.exportSelection
+	&& (!Tcl_IsSafe(entryPtr->core.interp))
 	&& !(entryPtr->core.flags & GOT_SELECTION)) {
 	Tk_OwnSelection(entryPtr->core.tkwin, XA_PRIMARY, EntryLostSelection,
 		(ClientData) entryPtr);
@@ -405,7 +404,7 @@ ExpandPercents(
     int number, length;
     const char *string;
     int stringLength;
-    Tcl_UniChar ch;
+    int ch;
     char numStorage[2*TCL_INTEGER_SPACE];
 
     while (*template) {
@@ -429,7 +428,7 @@ ExpandPercents(
 	 */
 	++template; /* skip over % */
 	if (*template != '\0') {
-	    template += Tcl_UtfToUniChar(template, &ch);
+	    template += TkUtfToUniChar(template, &ch);
 	} else {
 	    ch = '%';
 	}
@@ -479,7 +478,7 @@ ExpandPercents(
 		string = Tk_PathName(entryPtr->core.tkwin);
 		break;
 	    default:
-		length = Tcl_UniCharToUtf(ch, numStorage);
+		length = TkUniCharToUtf(ch, numStorage);
 		numStorage[length] = '\0';
 		string = numStorage;
 		break;
@@ -976,7 +975,7 @@ static int EntryConfigure(Tcl_Interp *interp, void *recordPtr, int mask)
     Ttk_TraceHandle *vt = 0;
 
     if (mask & TEXTVAR_CHANGED) {
-	if (textVarName && *Tcl_GetString(textVarName)) {
+	if (textVarName && *Tcl_GetString(textVarName) != '\0') {
 	    vt = Ttk_TraceVariable(interp,
 		    textVarName,EntryTextVariableTrace,entryPtr);
 	    if (!vt) return TCL_ERROR;
@@ -998,7 +997,8 @@ static int EntryConfigure(Tcl_Interp *interp, void *recordPtr, int mask)
 
     /* Claim the selection, in case we've suddenly started exporting it.
      */
-    if (entryPtr->entry.exportSelection && entryPtr->entry.selectFirst != -1) {
+    if (entryPtr->entry.exportSelection && (entryPtr->entry.selectFirst != -1)
+	    && (!Tcl_IsSafe(entryPtr->core.interp))) {
 	EntryOwnSelection(entryPtr);
     }
 
@@ -1151,7 +1151,7 @@ static GC EntryGetGC(Entry *entryPtr, Tcl_Obj *colorObj, TkRegion clip)
 	mask |= GCForeground;
     }
     gc = Tk_GetGC(entryPtr->core.tkwin, mask, &gcValues);
-    if (clip != None) {
+    if (clip != NULL) {
 	TkSetRegion(Tk_Display(entryPtr->core.tkwin), gc, clip);
     }
     return gc;
@@ -1240,6 +1240,7 @@ static void EntryDisplay(void *clientData, Drawable d)
     /* Draw cursor:
      */
     if (showCursor) {
+        Ttk_Box field = Ttk_ClientRegion(entryPtr->core.layout, "field");
 	int cursorX = EntryCharPosition(entryPtr, entryPtr->entry.insertPos),
 	    cursorY = entryPtr->entry.layoutY,
 	    cursorHeight = entryPtr->entry.layoutHeight,
@@ -1253,10 +1254,16 @@ static void EntryDisplay(void *clientData, Drawable d)
 	/* @@@ should: maybe: SetCaretPos even when blinked off */
 	Tk_SetCaretPos(tkwin, cursorX, cursorY, cursorHeight);
 
-	gc = EntryGetGC(entryPtr, es.insertColorObj, clipRegion);
+	cursorX -= cursorWidth/2;
+	if (cursorX < field.x) {
+	    cursorX = field.x;
+	} else if (cursorX + cursorWidth > field.x + field.width) {
+	    cursorX = field.x + field.width - cursorWidth;
+	}
+
+	gc = EntryGetGC(entryPtr, es.insertColorObj, NULL);
 	XFillRectangle(Tk_Display(tkwin), d, gc,
-	    cursorX-cursorWidth/2, cursorY, cursorWidth, cursorHeight);
-	XSetClipMask(Tk_Display(tkwin), gc, None);
+	    cursorX, cursorY, cursorWidth, cursorHeight);
 	Tk_FreeGC(Tk_Display(tkwin), gc);
     }
 
@@ -1286,7 +1293,7 @@ static void EntryDisplay(void *clientData, Drawable d)
      * it from the Xft guts (if they're being used).
      */
 #ifdef HAVE_XFT
-    TkUnixSetXftClipRegion(None);
+    TkUnixSetXftClipRegion(NULL);
 #endif
     TkDestroyRegion(clipRegion);
 }
@@ -1355,6 +1362,7 @@ EntryIndex(
 	*indexPtr = Tk_PointToChar(entryPtr->entry.textLayout,
 		x - entryPtr->entry.layoutX, 0);
 
+        TtkUpdateScrollInfo(entryPtr->entry.xscrollHandle);
 	if (*indexPtr < entryPtr->entry.xscroll.first) {
 	    *indexPtr = entryPtr->entry.xscroll.first;
 	}
@@ -1649,7 +1657,7 @@ static int EntryXViewCommand(
 	if (EntryIndex(interp, entryPtr, objv[2], &newFirst) != TCL_OK) {
 	    return TCL_ERROR;
 	}
-	TtkScrollTo(entryPtr->entry.xscrollHandle, newFirst);
+	TtkScrollTo(entryPtr->entry.xscrollHandle, newFirst, 1);
 	return TCL_OK;
     }
     return TtkScrollviewCommand(interp, objc, objv, entryPtr->entry.xscrollHandle);
@@ -1690,6 +1698,16 @@ static WidgetSpec EntryWidgetSpec = {
     TtkWidgetSize, 		/* sizeProc */
     EntryDoLayout,		/* layoutProc */
     EntryDisplay		/* displayProc */
+};
+
+/*------------------------------------------------------------------------
+ * Named indices for the combobox "current" command
+ */
+static const char *const comboboxCurrentIndexNames[] = {
+    "end", NULL
+};
+enum comboboxCurrentIndices {
+    INDEX_END
 };
 
 /*------------------------------------------------------------------------
@@ -1793,15 +1811,42 @@ static int ComboboxCurrentCommand(
 	Tcl_SetObjResult(interp, Tcl_NewIntObj(currentIndex));
 	return TCL_OK;
     } else if (objc == 3) {
-	if (Tcl_GetIntFromObj(interp, objv[2], &currentIndex) != TCL_OK) {
-	    return TCL_ERROR;
-	}
-	if (currentIndex < 0 || currentIndex >= nValues) {
-	    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
-		    "Index %s out of range", Tcl_GetString(objv[2])));
-	    Tcl_SetErrorCode(interp, "TTK", "COMBOBOX", "IDX_RANGE", NULL);
-	    return TCL_ERROR;
-	}
+        int result, index;
+
+        result = Tcl_GetIndexFromObj(NULL, objv[2], comboboxCurrentIndexNames,
+                "", 0, &index);
+        if (result == TCL_OK) {
+
+            /*
+             * The index is one of the named indices.
+             */
+
+	    switch (index) {
+	    case INDEX_END:
+	        /* "end" index */
+                currentIndex = nValues - 1;
+                break;
+	    }
+        } else {
+
+            /*
+             * The index should be just an integer.
+             */
+
+	    if (Tcl_GetIntFromObj(NULL, objv[2], &currentIndex) != TCL_OK) {
+	        Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		        "Incorrect index %s", Tcl_GetString(objv[2])));
+	        Tcl_SetErrorCode(interp, "TTK", "COMBOBOX", "IDX_VALUE", NULL);
+	        return TCL_ERROR;
+	    }
+
+	    if (currentIndex < 0 || currentIndex >= nValues) {
+	        Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		        "Index %s out of range", Tcl_GetString(objv[2])));
+	        Tcl_SetErrorCode(interp, "TTK", "COMBOBOX", "IDX_RANGE", NULL);
+	        return TCL_ERROR;
+	    }
+        }
 
 	cbPtr->combobox.currentIndex = currentIndex;
 

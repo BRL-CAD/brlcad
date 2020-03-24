@@ -678,7 +678,7 @@ Tk_CanvasObjCmd(
     canvasPtr->highlightBgColorPtr = NULL;
     canvasPtr->highlightColorPtr = NULL;
     canvasPtr->inset = 0;
-    canvasPtr->pixmapGC = None;
+    canvasPtr->pixmapGC = NULL;
     canvasPtr->width = None;
     canvasPtr->height = None;
     canvasPtr->confine = 0;
@@ -698,7 +698,7 @@ Tk_CanvasObjCmd(
     canvasPtr->textInfo.cursorOn = 0;
     canvasPtr->insertOnTime = 0;
     canvasPtr->insertOffTime = 0;
-    canvasPtr->insertBlinkHandler = (Tcl_TimerToken) NULL;
+    canvasPtr->insertBlinkHandler = NULL;
     canvasPtr->xOrigin = canvasPtr->yOrigin = 0;
     canvasPtr->drawableXOrigin = canvasPtr->drawableYOrigin = 0;
     canvasPtr->bindingTable = NULL;
@@ -724,7 +724,7 @@ Tk_CanvasObjCmd(
     canvasPtr->scanYOrigin = 0;
     canvasPtr->hotPtr = NULL;
     canvasPtr->hotPrevPtr = NULL;
-    canvasPtr->cursor = None;
+    canvasPtr->cursor = NULL;
     canvasPtr->takeFocus = NULL;
     canvasPtr->pixelsPerMM = WidthOfScreen(Tk_Screen(newWin));
     canvasPtr->pixelsPerMM /= WidthMMOfScreen(Tk_Screen(newWin));
@@ -1027,7 +1027,7 @@ CanvasWidgetCmd(
 		result = TCL_ERROR;
 		goto done;
 	    }
-	    if (mask & (unsigned) ~(ButtonMotionMask|Button1MotionMask
+	    if (mask & ~(unsigned long)(ButtonMotionMask|Button1MotionMask
 		    |Button2MotionMask|Button3MotionMask|Button4MotionMask
 		    |Button5MotionMask|ButtonPressMask|ButtonReleaseMask
 		    |EnterWindowMask|LeaveWindowMask|KeyPressMask
@@ -1186,8 +1186,8 @@ CanvasWidgetCmd(
 
 	FOR_EVERY_CANVAS_ITEM_MATCHING(objv[2], &searchPtr, goto doneImove) {
 	    int index;
-	    int x1,x2,y1,y2;
-	    int dontRedraw1,dontRedraw2;
+	    int x1, x2, y1, y2;
+	    int dontRedraw1, dontRedraw2;
 
 	    /*
 	     * The TK_MOVABLE_POINTS flag should only be set for types that
@@ -1217,11 +1217,11 @@ CanvasWidgetCmd(
 
 	    itemPtr->redraw_flags &= ~TK_ITEM_DONT_REDRAW;
 	    ItemDelChars(canvasPtr, itemPtr, index, index);
-	    dontRedraw1=itemPtr->redraw_flags & TK_ITEM_DONT_REDRAW;
+	    dontRedraw1 = itemPtr->redraw_flags & TK_ITEM_DONT_REDRAW;
 
 	    itemPtr->redraw_flags &= ~TK_ITEM_DONT_REDRAW;
 	    ItemInsert(canvasPtr, itemPtr, index, tmpObj);
-	    dontRedraw2=itemPtr->redraw_flags & TK_ITEM_DONT_REDRAW;
+	    dontRedraw2 = itemPtr->redraw_flags & TK_ITEM_DONT_REDRAW;
 
 	    if (!(dontRedraw1 && dontRedraw2)) {
 		Tk_CanvasEventuallyRedraw((Tk_Canvas) canvasPtr,
@@ -1334,7 +1334,7 @@ CanvasWidgetCmd(
     }
     case CANV_DCHARS: {
 	int first, last;
-	int x1,x2,y1,y2;
+	int x1, x2, y1, y2;
 
 	if ((objc != 4) && (objc != 5)) {
 	    Tcl_WrongNumArgs(interp, 2, objv, "tagOrId first ?last?");
@@ -1362,7 +1362,7 @@ CanvasWidgetCmd(
 	    /*
 	     * Redraw both item's old and new areas: it's possible that a
 	     * delete could result in a new area larger than the old area.
-	     * Except if the insertProc sets the TK_ITEM_DONT_REDRAW flag,
+	     * Except if the dCharsProc sets the TK_ITEM_DONT_REDRAW flag,
 	     * nothing more needs to be done.
 	     */
 
@@ -1572,7 +1572,7 @@ CanvasWidgetCmd(
     }
     case CANV_INSERT: {
 	int beforeThis;
-	int x1,x2,y1,y2;
+	int x1, x2, y1, y2;
 
 	if (objc != 5) {
 	    Tcl_WrongNumArgs(interp, 2, objv, "tagOrId beforeThis string");
@@ -1800,7 +1800,8 @@ CanvasWidgetCmd(
     }
     case CANV_RCHARS: {
 	int first, last;
-	int x1,x2,y1,y2;
+	int x1, x2, y1, y2;
+	int dontRedraw1, dontRedraw2;
 
 	if (objc != 6) {
 	    Tcl_WrongNumArgs(interp, 2, objv, "tagOrId first last string");
@@ -1831,12 +1832,16 @@ CanvasWidgetCmd(
 
 	    x1 = itemPtr->x1; y1 = itemPtr->y1;
 	    x2 = itemPtr->x2; y2 = itemPtr->y2;
-	    itemPtr->redraw_flags &= ~TK_ITEM_DONT_REDRAW;
 
+            itemPtr->redraw_flags &= ~TK_ITEM_DONT_REDRAW;
 	    ItemDelChars(canvasPtr, itemPtr, first, last);
-	    ItemInsert(canvasPtr, itemPtr, first, objv[5]);
+	    dontRedraw1 = itemPtr->redraw_flags & TK_ITEM_DONT_REDRAW;
 
-	    if (!(itemPtr->redraw_flags & TK_ITEM_DONT_REDRAW)) {
+            itemPtr->redraw_flags &= ~TK_ITEM_DONT_REDRAW;
+	    ItemInsert(canvasPtr, itemPtr, first, objv[5]);
+	    dontRedraw2 = itemPtr->redraw_flags & TK_ITEM_DONT_REDRAW;
+
+            if (!(dontRedraw1 && dontRedraw2)) {
 		Tk_CanvasEventuallyRedraw((Tk_Canvas) canvasPtr,
 			x1, y1, x2, y2);
 		EventuallyRedrawItem(canvasPtr, itemPtr);
@@ -2184,7 +2189,7 @@ DestroyCanvas(
      */
 
     Tcl_DeleteHashTable(&canvasPtr->idTable);
-    if (canvasPtr->pixmapGC != None) {
+    if (canvasPtr->pixmapGC != NULL) {
 	Tk_FreeGC(canvasPtr->display, canvasPtr->pixmapGC);
     }
 #ifndef USE_OLD_TAG_SEARCH
@@ -2260,7 +2265,7 @@ ConfigureCanvas(
     gcValues.foreground = Tk_3DBorderColor(canvasPtr->bgBorder)->pixel;
     newGC = Tk_GetGC(canvasPtr->tkwin,
 	    GCFunction|GCGraphicsExposures|GCForeground, &gcValues);
-    if (canvasPtr->pixmapGC != None) {
+    if (canvasPtr->pixmapGC != NULL) {
 	Tk_FreeGC(canvasPtr->display, canvasPtr->pixmapGC);
     }
     canvasPtr->pixmapGC = newGC;
@@ -2884,7 +2889,7 @@ EventuallyRedrawItem(
     Tk_Item *itemPtr)		/* Item to be redrawn. May be NULL, in which
 				 * case nothing happens. */
 {
-    if (itemPtr == NULL) {
+    if (itemPtr == NULL || canvasPtr->tkwin == NULL) {
 	return;
     }
     if ((itemPtr->x1 >= itemPtr->x2) || (itemPtr->y1 >= itemPtr->y2) ||
@@ -4742,7 +4747,7 @@ CanvasBindProc(
     XEvent *eventPtr)		/* Pointer to X event that just happened. */
 {
     TkCanvas *canvasPtr = clientData;
-    int mask;
+    unsigned long mask;
 
     Tcl_Preserve(canvasPtr);
 
@@ -4755,26 +4760,7 @@ CanvasBindProc(
     switch (eventPtr->type) {
     case ButtonPress:
     case ButtonRelease:
-	switch (eventPtr->xbutton.button) {
-	case Button1:
-	    mask = Button1Mask;
-	    break;
-	case Button2:
-	    mask = Button2Mask;
-	    break;
-	case Button3:
-	    mask = Button3Mask;
-	    break;
-	case Button4:
-	    mask = Button4Mask;
-	    break;
-	case Button5:
-	    mask = Button5Mask;
-	    break;
-	default:
-	    mask = 0;
-	    break;
-	}
+	mask = TkGetButtonMask(eventPtr->xbutton.button);
 
 	/*
 	 * For button press events, repick the current item using the button
@@ -4857,7 +4843,7 @@ PickCurrentItem(
 				 * ButtonRelease, or MotionNotify. */
 {
     double coords[2];
-    int buttonDown;
+    unsigned long buttonDown;
     Tk_Item *prevItemPtr;
 #ifndef USE_OLD_TAG_SEARCH
     SearchUids *searchUids = GetStaticUids();
@@ -4870,8 +4856,7 @@ PickCurrentItem(
      * for windows.
      */
 
-    buttonDown = canvasPtr->state
-	    & (Button1Mask|Button2Mask|Button3Mask|Button4Mask|Button5Mask);
+    buttonDown = canvasPtr->state & ALL_BUTTONS;
 
     /*
      * Save information about this event in the canvas. The event in the
@@ -5302,7 +5287,7 @@ CanvasFocusProc(
     } else {
 	canvasPtr->textInfo.gotFocus = 0;
 	canvasPtr->textInfo.cursorOn = 0;
-	canvasPtr->insertBlinkHandler = (Tcl_TimerToken) NULL;
+	canvasPtr->insertBlinkHandler = NULL;
     }
     EventuallyRedrawItem(canvasPtr, canvasPtr->textInfo.focusItemPtr);
     if (canvasPtr->highlightWidth > 0) {

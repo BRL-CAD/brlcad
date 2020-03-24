@@ -17,20 +17,10 @@
  */
 
 /*
- * On Windows, this file needs to be compiled twice, once with TCL_ASCII_MAIN
- * defined. This way both Tcl_Main and Tcl_MainExW can be implemented, sharing
- * the same source code.
+ * On Windows, this file needs to be compiled twice, once with UNICODE and
+ * _UNICODE defined. This way both Tcl_Main and Tcl_MainExW can be
+ * implemented, sharing the same source code.
  */
-
-#if defined(TCL_ASCII_MAIN)
-#   ifdef UNICODE
-#	undef UNICODE
-#	undef _UNICODE
-#   else
-#	define UNICODE
-#	define _UNICODE
-#   endif
-#endif
 
 #include "tclInt.h"
 
@@ -53,26 +43,19 @@
 #   define _tcscmp strcmp
 #endif
 
-/*
- * Further on, in UNICODE mode we just use Tcl_NewUnicodeObj, otherwise
- * NewNativeObj is needed (which provides proper conversion from native
- * encoding to UTF-8).
- */
-
-#ifdef UNICODE
-#   define NewNativeObj Tcl_NewUnicodeObj
-#else /* !UNICODE */
 static inline Tcl_Obj *
 NewNativeObj(
-    char *string,
-    int length)
+    TCHAR *string)
 {
     Tcl_DString ds;
 
-    Tcl_ExternalToUtfDString(NULL, string, length, &ds);
+#ifdef UNICODE
+    Tcl_WinTCharToUtf(string, -1, &ds);
+#else
+    Tcl_ExternalToUtfDString(NULL, (char *) string, -1, &ds);
+#endif
     return TclDStringToObj(&ds);
 }
-#endif /* !UNICODE */
 
 /*
  * Declarations for various library functions and variables (don't want to
@@ -134,7 +117,7 @@ static void		Prompt(Tcl_Interp *interp, InteractiveState *isPtr);
 static void		StdinProc(ClientData clientData, int mask);
 static void		FreeMainInterp(ClientData clientData);
 
-#ifndef TCL_ASCII_MAIN
+#if !defined(_WIN32) || defined(UNICODE)
 static Tcl_ThreadDataKey dataKey;
 
 /*
@@ -279,7 +262,7 @@ Tcl_SourceRCFile(
 	Tcl_DStringFree(&temp);
     }
 }
-#endif /* !TCL_ASCII_MAIN */
+#endif /* !UNICODE */
 
 /*----------------------------------------------------------------------
  *
@@ -341,14 +324,14 @@ Tcl_MainEx(
 
 	if ((argc > 3) && (0 == _tcscmp(TEXT("-encoding"), argv[1]))
 		&& ('-' != argv[3][0])) {
-	    Tcl_Obj *value = NewNativeObj(argv[2], -1);
-	    Tcl_SetStartupScript(NewNativeObj(argv[3], -1),
+	    Tcl_Obj *value = NewNativeObj(argv[2]);
+	    Tcl_SetStartupScript(NewNativeObj(argv[3]),
 		    Tcl_GetString(value));
 	    Tcl_DecrRefCount(value);
 	    argc -= 3;
 	    argv += 3;
 	} else if ((argc > 1) && ('-' != argv[1][0])) {
-	    Tcl_SetStartupScript(NewNativeObj(argv[1], -1), NULL);
+	    Tcl_SetStartupScript(NewNativeObj(argv[1]), NULL);
 	    argc--;
 	    argv++;
 	}
@@ -356,7 +339,7 @@ Tcl_MainEx(
 
     path = Tcl_GetStartupScript(&encodingName);
     if (path == NULL) {
-	appName = NewNativeObj(argv[0], -1);
+	appName = NewNativeObj(argv[0]);
     } else {
 	appName = path;
     }
@@ -368,7 +351,7 @@ Tcl_MainEx(
 
     argvPtr = Tcl_NewListObj(0, NULL);
     while (argc--) {
-	Tcl_ListObjAppendElement(NULL, argvPtr, NewNativeObj(*argv++, -1));
+	Tcl_ListObjAppendElement(NULL, argvPtr, NewNativeObj(*argv++));
     }
     Tcl_SetVar2Ex(interp, "argv", NULL, argvPtr, TCL_GLOBAL_ONLY);
 
@@ -650,7 +633,7 @@ Tcl_Main(
 }
 #endif /* TCL_MAJOR_VERSION == 8 && !UNICODE */
 
-#ifndef TCL_ASCII_MAIN
+#if !defined(_WIN32) || defined(UNICODE)
 
 /*
  *---------------------------------------------------------------
@@ -741,7 +724,7 @@ TclFullFinalizationRequested(void)
     return finalize;
 #endif /* PURIFY */
 }
-#endif /* !TCL_ASCII_MAIN */
+#endif /* UNICODE */
 
 /*
  *----------------------------------------------------------------------

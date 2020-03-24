@@ -66,7 +66,7 @@ typedef struct ImageMaster {
 				 * when the world is falling apart.) */
 } ImageMaster;
 
-typedef struct ThreadSpecificData {
+typedef struct {
     Tk_ImageType *imageTypeList;/* First in a list of all known image
 				 * types. */
     Tk_ImageType *oldImageTypeList;
@@ -775,7 +775,7 @@ Tk_PostscriptImage(
 
     gcValues.foreground = WhitePixelOfScreen(Tk_Screen(tkwin));
     newGC = Tk_GetGC(tkwin, GCForeground, &gcValues);
-    if (newGC != None) {
+    if (newGC != NULL) {
 	XFillRectangle(Tk_Display(tkwin), pmap, newGC, 0, 0,
 		(unsigned) width, (unsigned) height);
 	Tk_FreeGC(Tk_Display(tkwin), newGC);

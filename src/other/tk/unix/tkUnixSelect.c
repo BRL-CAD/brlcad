@@ -21,7 +21,7 @@ typedef struct ConvertInfo {
 				 * offset of the next chunk of data to
 				 * transfer. */
     Tcl_EncodingState state;	/* The encoding state needed across chunks. */
-    char buffer[TCL_UTF_MAX];	/* A buffer to hold part of a UTF character
+    char buffer[4];	/* A buffer to hold part of a UTF character
 				 * that is split across chunks.*/
 } ConvertInfo;
 
@@ -68,7 +68,7 @@ typedef struct IncrInfo {
 				 * currently pending. */
 } IncrInfo;
 
-typedef struct ThreadSpecificData {
+typedef struct {
     IncrInfo *pendingIncrs;	/* List of all incr structures currently
 				 * active. */
 } ThreadSpecificData;
@@ -164,6 +164,13 @@ TkSelGetSelection(
     retr.nextPtr = pendingRetrievals;
     Tcl_DStringInit(&retr.buf);
     pendingRetrievals = &retr;
+
+    /*
+     * Delete the property to indicate that no parameters are supplied for
+     * the conversion request.
+     */
+
+    XDeleteProperty(winPtr->display, retr.winPtr->window, retr.property);
 
     /*
      * Initiate the request for the selection. Note: can't use TkCurrentTime
@@ -439,7 +446,7 @@ TkSelPropProc(
 		 * Preserve any left-over bytes.
 		 */
 
-		if (srcLen > TCL_UTF_MAX) {
+		if (srcLen > 3) {
 		    Tcl_Panic("selection conversion left too many bytes unconverted");
 		}
 		memcpy(incrPtr->converts[i].buffer, src, (size_t) srcLen+1);
@@ -865,8 +872,9 @@ ConvertSelection(
 	    goto refuse;
 	}
 	result = XGetWindowProperty(eventPtr->display, eventPtr->requestor,
-		eventPtr->property, 0, MAX_PROP_WORDS, False, XA_ATOM,
-		&type, &format, &incr.numConversions, &bytesAfter,
+		eventPtr->property, 0, MAX_PROP_WORDS, False,
+		winPtr->dispPtr->atomPairAtom, &type, &format,
+		&incr.numConversions, &bytesAfter,
 		(unsigned char **) multAtomsPtr);
 	if ((result != Success) || (bytesAfter != 0) || (format != 32)
 		|| (type == None)) {
@@ -1028,8 +1036,8 @@ ConvertSelection(
     }
     if (multiple) {
 	XChangeProperty(reply.xsel.display, reply.xsel.requestor,
-		reply.xsel.property, XA_ATOM, 32, PropModeReplace,
-		(unsigned char *) incr.multAtoms,
+		reply.xsel.property, winPtr->dispPtr->atomPairAtom,
+		32, PropModeReplace, (unsigned char *) incr.multAtoms,
 		(int) incr.numConversions*2);
     } else {
 	/*
