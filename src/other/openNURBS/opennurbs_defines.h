@@ -1228,7 +1228,7 @@ public:
 
     pointcloud_point   =  41,
 
-    on_group_member       =  51,
+    group_member       =  51,
 
 
     extrusion_bottom_profile = 61, // 3d bottom profile curves
@@ -1340,7 +1340,7 @@ public:
 
   /*
   Returns:
-    True if m_type = on_group_member and m_index >= 0.
+    True if m_type = group_member and m_index >= 0.
   */
   bool IsGroupMemberComponentIndex() const;
 

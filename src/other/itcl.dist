@@ -2,8 +2,10 @@ set(itcl_ignore_files
 generic/itcl.decls
 generic/itclInt.decls
 generic/itclIntDecls.h
-library
+library/itcl.tcl
 license.terms
-win
 tcl_pkgindex.cmake
+win/dllEntryPoint.c
+win/itcl.rc
+win/toaster.bmp
 )

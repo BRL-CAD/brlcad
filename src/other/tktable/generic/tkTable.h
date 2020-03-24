@@ -69,16 +69,15 @@
 #   endif
 #endif
 
+#if defined(WIN32) || defined(MAC_TCL) || defined(MAC_OSX_TK)
+/* XSync call defined in the internals for some reason */
+#   ifndef XSync
+#	define XSync(display, bool) {display->request++;}
+#   endif
+#endif /* defn of XSync */
+
 #ifndef NORMAL_BG
-#   ifdef WIN32
-#	define NORMAL_BG	"SystemButtonFace"
-#	define ACTIVE_BG	NORMAL_BG
-#	define SELECT_BG	"SystemHighlight"
-#	define SELECT_FG	"SystemHighlightText"
-#	define DISABLED		"SystemDisabledText"
-#	define HIGHLIGHT	"SystemWindowFrame"
-#	define DEF_TABLE_FONT	"{MS Sans Serif} 8"
-#   elif defined(MAC_TCL) || defined(MAC_OSX_TK)
+#   if defined(MAC_TCL) || defined(MAC_OSX_TK)
 #	define NORMAL_BG	"systemWindowBody"
 #	define ACTIVE_BG	"#ececec"
 #	define SELECT_BG	"systemHighlight"
@@ -93,7 +92,11 @@
 #	define SELECT_FG	"Black"
 #	define DISABLED		"#a3a3a3"
 #	define HIGHLIGHT	"Black"
-#	define DEF_TABLE_FONT	"Helvetica -12"
+#      ifdef WIN32
+#	   define DEF_TABLE_FONT	"{MS Sans Serif} 8"
+#      else
+#	   define DEF_TABLE_FONT	"Helvetica -12"
+#      endif
 #   endif
 #endif /* NORMAL_BG */
 
@@ -101,7 +104,7 @@
 #define MIN(A,B)	(((A)>(B))?(B):(A))
 #define BETWEEN(val,min,max)	( ((val)<(min)) ? (min) : \
 				( ((val)>(max)) ? (max) : (val) ) )
-#define CONSTRAIN(val,min,max)	if ((val) < (min)) { (val) = MIN(min,max); } \
+#define CONSTRAIN(val,min,max)	if ((val) < (min)) { (val) = (min); } \
 				else if ((val) > (max)) { (val) = (max); }
 #define STREQ(s1, s2)	(strcmp((s1), (s2)) == 0)
 #define ARSIZE(A)	(sizeof(A)/sizeof(*A))

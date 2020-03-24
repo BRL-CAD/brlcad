@@ -1,10 +1,10 @@
 
 /* pngpread.c - read a png file in push mode
  *
- * Copyright (c) 2018 Cosmin Truta
- * Copyright (c) 1998-2002,2004,2006-2018 Glenn Randers-Pehrson
- * Copyright (c) 1996-1997 Andreas Dilger
- * Copyright (c) 1995-1996 Guy Eric Schalnat, Group 42, Inc.
+ * Last changed in libpng 1.6.24 [August 4, 2016]
+ * Copyright (c) 1998-2002,2004,2006-2016 Glenn Randers-Pehrson
+ * (Version 0.96 Copyright (c) 1996, 1997 Andreas Dilger)
+ * (Version 0.88 Copyright (c) 1995, 1996 Guy Eric Schalnat, Group 42, Inc.)
  *
  * This code is released under the libpng license.
  * For conditions of distribution and use, see the disclaimer
@@ -34,7 +34,7 @@ if (png_ptr->buffer_size < N) \
 
 void PNGAPI
 png_process_data(png_structrp png_ptr, png_inforp info_ptr,
-    png_bytep buffer, size_t buffer_size)
+    png_bytep buffer, png_size_t buffer_size)
 {
    if (png_ptr == NULL || info_ptr == NULL)
       return;
@@ -47,7 +47,7 @@ png_process_data(png_structrp png_ptr, png_inforp info_ptr,
    }
 }
 
-size_t PNGAPI
+png_size_t PNGAPI
 png_process_data_pause(png_structrp png_ptr, int save)
 {
    if (png_ptr != NULL)
@@ -60,7 +60,7 @@ png_process_data_pause(png_structrp png_ptr, int save)
       else
       {
          /* This includes any pending saved bytes: */
-         size_t remaining = png_ptr->buffer_size;
+         png_size_t remaining = png_ptr->buffer_size;
          png_ptr->buffer_size = 0;
 
          /* So subtract the saved buffer size, unless all the data
@@ -133,8 +133,8 @@ png_process_some_data(png_structrp png_ptr, png_inforp info_ptr)
 void /* PRIVATE */
 png_push_read_sig(png_structrp png_ptr, png_inforp info_ptr)
 {
-   size_t num_checked = png_ptr->sig_bytes; /* SAFE, does not exceed 8 */
-   size_t num_to_check = 8 - num_checked;
+   png_size_t num_checked = png_ptr->sig_bytes, /* SAFE, does not exceed 8 */
+       num_to_check = 8 - num_checked;
 
    if (png_ptr->buffer_size < num_to_check)
    {
@@ -189,7 +189,6 @@ png_push_read_chunk(png_structrp png_ptr, png_inforp info_ptr)
       png_crc_read(png_ptr, chunk_tag, 4);
       png_ptr->chunk_name = PNG_CHUNK_FROM_STRING(chunk_tag);
       png_check_chunk_name(png_ptr, png_ptr->chunk_name);
-      png_check_chunk_length(png_ptr, png_ptr->push_length);
       png_ptr->mode |= PNG_HAVE_CHUNK_HEADER;
    }
 
@@ -418,7 +417,7 @@ png_push_read_chunk(png_structrp png_ptr, png_inforp info_ptr)
 }
 
 void PNGCBAPI
-png_push_fill_buffer(png_structp png_ptr, png_bytep buffer, size_t length)
+png_push_fill_buffer(png_structp png_ptr, png_bytep buffer, png_size_t length)
 {
    png_bytep ptr;
 
@@ -428,7 +427,7 @@ png_push_fill_buffer(png_structp png_ptr, png_bytep buffer, size_t length)
    ptr = buffer;
    if (png_ptr->save_buffer_size != 0)
    {
-      size_t save_size;
+      png_size_t save_size;
 
       if (length < png_ptr->save_buffer_size)
          save_size = length;
@@ -445,7 +444,7 @@ png_push_fill_buffer(png_structp png_ptr, png_bytep buffer, size_t length)
    }
    if (length != 0 && png_ptr->current_buffer_size != 0)
    {
-      size_t save_size;
+      png_size_t save_size;
 
       if (length < png_ptr->current_buffer_size)
          save_size = length;
@@ -467,7 +466,7 @@ png_push_save_buffer(png_structrp png_ptr)
    {
       if (png_ptr->save_buffer_ptr != png_ptr->save_buffer)
       {
-         size_t i, istop;
+         png_size_t i, istop;
          png_bytep sp;
          png_bytep dp;
 
@@ -482,7 +481,7 @@ png_push_save_buffer(png_structrp png_ptr)
    if (png_ptr->save_buffer_size + png_ptr->current_buffer_size >
        png_ptr->save_buffer_max)
    {
-      size_t new_max;
+      png_size_t new_max;
       png_bytep old_buffer;
 
       if (png_ptr->save_buffer_size > PNG_SIZE_MAX -
@@ -494,7 +493,7 @@ png_push_save_buffer(png_structrp png_ptr)
       new_max = png_ptr->save_buffer_size + png_ptr->current_buffer_size + 256;
       old_buffer = png_ptr->save_buffer;
       png_ptr->save_buffer = (png_bytep)png_malloc_warn(png_ptr,
-          (size_t)new_max);
+          (png_size_t)new_max);
 
       if (png_ptr->save_buffer == NULL)
       {
@@ -522,7 +521,7 @@ png_push_save_buffer(png_structrp png_ptr)
 
 void /* PRIVATE */
 png_push_restore_buffer(png_structrp png_ptr, png_bytep buffer,
-    size_t buffer_length)
+    png_size_t buffer_length)
 {
    png_ptr->current_buffer = buffer;
    png_ptr->current_buffer_size = buffer_length;
@@ -562,7 +561,7 @@ png_push_read_IDAT(png_structrp png_ptr)
 
    if (png_ptr->idat_size != 0 && png_ptr->save_buffer_size != 0)
    {
-      size_t save_size = png_ptr->save_buffer_size;
+      png_size_t save_size = png_ptr->save_buffer_size;
       png_uint_32 idat_size = png_ptr->idat_size;
 
       /* We want the smaller of 'idat_size' and 'current_buffer_size', but they
@@ -572,7 +571,7 @@ png_push_read_IDAT(png_structrp png_ptr)
        * will break on either 16-bit or 64-bit platforms.
        */
       if (idat_size < save_size)
-         save_size = (size_t)idat_size;
+         save_size = (png_size_t)idat_size;
 
       else
          idat_size = (png_uint_32)save_size;
@@ -589,7 +588,7 @@ png_push_read_IDAT(png_structrp png_ptr)
 
    if (png_ptr->idat_size != 0 && png_ptr->current_buffer_size != 0)
    {
-      size_t save_size = png_ptr->current_buffer_size;
+      png_size_t save_size = png_ptr->current_buffer_size;
       png_uint_32 idat_size = png_ptr->idat_size;
 
       /* We want the smaller of 'idat_size' and 'current_buffer_size', but they
@@ -598,7 +597,7 @@ png_push_read_IDAT(png_structrp png_ptr)
        * larger - this cannot overflow.
        */
       if (idat_size < save_size)
-         save_size = (size_t)idat_size;
+         save_size = (png_size_t)idat_size;
 
       else
          idat_size = (png_uint_32)save_size;
@@ -625,7 +624,7 @@ png_push_read_IDAT(png_structrp png_ptr)
 
 void /* PRIVATE */
 png_process_IDAT_data(png_structrp png_ptr, png_bytep buffer,
-    size_t buffer_length)
+    png_size_t buffer_length)
 {
    /* The caller checks for a non-zero buffer length. */
    if (!(buffer_length > 0) || buffer == NULL)
@@ -972,20 +971,20 @@ png_read_push_finish_row(png_structrp png_ptr)
    /* Arrays to facilitate easy interlacing - use pass (0 - 6) as index */
 
    /* Start of interlace block */
-   static const png_byte png_pass_start[] = {0, 4, 0, 2, 0, 1, 0};
+   static PNG_CONST png_byte png_pass_start[] = {0, 4, 0, 2, 0, 1, 0};
 
    /* Offset to next interlace block */
-   static const png_byte png_pass_inc[] = {8, 8, 4, 4, 2, 2, 1};
+   static PNG_CONST png_byte png_pass_inc[] = {8, 8, 4, 4, 2, 2, 1};
 
    /* Start of interlace block in the y direction */
-   static const png_byte png_pass_ystart[] = {0, 0, 4, 0, 2, 0, 1};
+   static PNG_CONST png_byte png_pass_ystart[] = {0, 0, 4, 0, 2, 0, 1};
 
    /* Offset to next interlace block in the y direction */
-   static const png_byte png_pass_yinc[] = {8, 8, 8, 4, 4, 2, 2};
+   static PNG_CONST png_byte png_pass_yinc[] = {8, 8, 8, 4, 4, 2, 2};
 
    /* Height of interlace block.  This is not currently used - if you need
     * it, uncomment it here and in png.h
-   static const png_byte png_pass_height[] = {8, 8, 4, 4, 2, 2, 1};
+   static PNG_CONST png_byte png_pass_height[] = {8, 8, 4, 4, 2, 2, 1};
    */
 #endif
 

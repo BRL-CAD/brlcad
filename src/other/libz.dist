@@ -25,7 +25,7 @@ trees.h
 uncompr.c
 win32/zlib1.rc
 zconf.h
-zlib.h.in
+zlib.h
 zlib.map
 zutil.c
 zutil.h

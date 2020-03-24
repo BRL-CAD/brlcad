@@ -49,7 +49,7 @@ ON_COMPONENT_INDEX::TYPE ON_COMPONENT_INDEX::Type(int i)
   case idef_part:          t = idef_part;          break;
   case polycurve_segment:  t = polycurve_segment;  break;
   case pointcloud_point:   t = pointcloud_point;   break;
-  case on_group_member:    t = on_group_member;    break;
+  case group_member:       t = group_member;       break;
 
   case extrusion_bottom_profile: t = extrusion_bottom_profile; break;
   case extrusion_top_profile:    t = extrusion_top_profile;    break;
@@ -160,7 +160,7 @@ bool  ON_COMPONENT_INDEX::IsPolyCurveComponentIndex() const
 
 bool  ON_COMPONENT_INDEX::IsGroupMemberComponentIndex() const
 {
-  return ( ON_COMPONENT_INDEX::on_group_member == m_type && m_index >= 0 );
+  return ( ON_COMPONENT_INDEX::group_member == m_type && m_index >= 0 );
 }
 
 bool  ON_COMPONENT_INDEX::IsExtrusionProfileComponentIndex() const
@@ -249,7 +249,7 @@ bool ON_COMPONENT_INDEX::IsSet() const
   case idef_part:
   case polycurve_segment:
   case pointcloud_point:
-  case on_group_member:
+  case group_member:
     rc = (m_index != -1);
     break;
 

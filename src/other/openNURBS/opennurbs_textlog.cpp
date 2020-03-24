@@ -374,8 +374,8 @@ void ON_TextLog::Print( const ON_COMPONENT_INDEX& ci )
     case ON_COMPONENT_INDEX::pointcloud_point:
       Print("pointcloud_point(%d)",ci.m_index);
       break;
-    case ON_COMPONENT_INDEX::on_group_member:
-      Print("on_group_member(%d)",ci.m_index);
+    case ON_COMPONENT_INDEX::group_member:
+      Print("group_member(%d)",ci.m_index);
       break;
     case ON_COMPONENT_INDEX::no_type:
       Print("no_type(%d)",ci.m_index);

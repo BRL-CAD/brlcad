@@ -8,9 +8,9 @@ extern "C" {
 /**
  * UTF-8 utility functions
  *
- * (c) 2010-2019 Steve Bennett <steveb@workware.net.au>
+ * (c) 2010-2016 Steve Bennett <steveb@workware.net.au>
  *
- * See utf8.c for licence details.
+ * See LICENCE for licence details.
  */
 
 #ifndef USE_UTF8
