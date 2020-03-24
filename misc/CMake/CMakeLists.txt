@@ -12,12 +12,15 @@ set(cmake_ignore_files
   CheckCXX11Features.cmake
   CheckCXX11Features/cxx11-test-nullptr.cpp
   CheckCXX11Features/cxx11-test-nullptr_fail_compile.cpp
+  CheckCXX11Features/cxx11-test-lib_regex.cpp
   CompilerFlags.cmake
   Distcheck.cmake
   DocBook.cmake
   Doxygen.cmake
   FindADAPTAGRAMS.cmake
   FindASTYLE.cmake
+  FindAppleseed.cmake
+  FindBlosc.cmake
   FindBRLCADTCL.cmake
   FindBRLCADZLIB.cmake
   FindBSON.cmake
@@ -25,15 +28,14 @@ set(cmake_ignore_files
   FindGDAL.cmake
   FindGECODE.cmake
   FindGL.cmake
+  FindIlmBase.cmake
   FindLEMON.cmake
-  FindLEX.cmake
   FindLZ4.cmake
   FindNETPBM.cmake
-  FindOIIO.cmake
   FindOPENNURBS.cmake
   FindOSL.cmake
   FindOpenCL.cmake
-  FindOpenEXR.cmake
+  FindOpenVDB.cmake
   FindPERPLEX.cmake
   FindPkgMacros.cmake
   FindPROJ4.cmake
@@ -53,6 +55,8 @@ set(cmake_ignore_files
   FindXSLTPROC.cmake
   Fink_MacPorts.cmake
   NSIS.template.in
+  NSIS_silent.template.in
+  OpenVDBUtils.cmake
   Path_Setup.cmake
   RPath_Setup.cmake
   ResetCache.cmake
@@ -95,6 +99,8 @@ set(cmake_ignore_files
   tcltest.tcl.in
   )
 CMAKEFILES(${cmake_ignore_files})
+
+CMAKEFILES(NOTES)
 
 # Local Variables:
 # tab-width: 8

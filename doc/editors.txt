@@ -75,6 +75,26 @@ set cinoptions+=t0
 
 Emacs .emacs file:
 
+;; Run btclsh within emacs - function set up as
+;; discussed in https://emacs.stackexchange.com/q/18672
+;;
+;; Note also https://superuser.com/q/794145
+;;
+;; To launch directly into btclsh in terminal mode:
+;;
+;; emacs -nw -f btclsh
+;;
+(defun btclsh ()
+  (interactive)
+  (require 'term)
+  (let* ((cmd "btclsh")
+         (termbuf (apply 'make-term "btclsh console" cmd nil nil)))
+    (set-buffer termbuf)
+    (term-mode)
+    (term-line-mode)
+    (switch-to-buffer termbuf))) 
+
+
 ;; Nxml mode for DocBook:
 ;; https://www.gnu.org/software/emacs/manual/html_mono/nxml-mode.html
 ;; To set the DocBook 5 schema, select the file

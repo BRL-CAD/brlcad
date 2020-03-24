@@ -1,7 +1,7 @@
 /*                        E X T E R N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,16 +37,13 @@
 #include "./trie.h"
 #include "./Hm.h"
 
-/* External variables from termlib. */
-#ifdef HAVE_TERMLIB
-extern char *CS, *DL;
-extern int CO, LI;
-#endif
-
 /* External functions from application. */
+
+extern Func *getTrie(char *name, Trie *triep);
+extern Trie *addTrie(char *name, Trie **triepp);
+extern void prntTrie(Trie *triep, int level);
+
 extern Colors *findColors();
-extern Func *getTrie();
-extern Trie *addTrie();
 extern int chkEntryNorm();
 extern int chkExitNorm();
 extern int closFbDevice();

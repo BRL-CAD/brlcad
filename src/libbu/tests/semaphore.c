@@ -1,7 +1,7 @@
 /*                  S E M A P H O R E . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2018 United States Government as represented by
+ * Copyright (c) 2013-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
 #include "bu.h"
 
 
-const int SEM = BU_SEM_LAST+1;
+const int SEM = 1000; /* FIXME */
 
 
 struct increment_thread_args {

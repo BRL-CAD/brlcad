@@ -51,8 +51,8 @@ set(level_2_dirs
   libfb
   libgcv
   libanalyze
-  libged
   liboptical
+  libged
   libcursor
   libdm
   libfft
@@ -72,24 +72,20 @@ if(NOT WIN32)
 endif(NOT WIN32)
 
 set(level_3_dirs
-  anim
   brlman
   burst
   bwish
   conv
   fb
-  fbed
   fbserv
   gtools
   halftone
-  irprep
-  lgt
   nirt
   proc-db
   rt
+  art
   shapes
   sig
-  tab
   util
   external
   ${non_win32_dirs}

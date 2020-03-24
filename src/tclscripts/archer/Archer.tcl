@@ -1,7 +1,7 @@
 #                     A R C H E R . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2018 United States Government as represented by
+# Copyright (c) 2002-2020 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -768,7 +768,7 @@ package provide Archer 1.0
     # Archer may want to provide the callback in order to do something before passing
     # things through to PipeEditFrame.
 
-    $itk_component(ged) init_add_metaballpt $_obj $_button $_callback
+    $itk_component(ged) init_metaball_add_pnt $_obj $_button $_callback
 }
 
 
@@ -784,7 +784,7 @@ package provide Archer 1.0
     # Archer may want to provide the callback in order to do something before passing
     # things through to PipeEditFrame.
 
-    $itk_component(ged) init_append_pipept $_obj $_button $_callback
+    $itk_component(ged) init_pipe_append_pnt $_obj $_button $_callback
 }
 
 
@@ -858,7 +858,7 @@ package provide Archer 1.0
 	set mDefaultBindingMode FIRST_FREE_BINDING_MODE
     }
 
-    $itk_component(ged) init_find_metaballpt $_obj $_button $_callback
+    $itk_component(ged) init_find_metaball_pnt $_obj $_button $_callback
 }
 
 
@@ -876,7 +876,7 @@ package provide Archer 1.0
     # Archer may want to provide the callback in order to do something before passing
     # things through to PipeEditFrame.
 
-    $itk_component(ged) init_find_pipept $_obj $_button $_callback
+    $itk_component(ged) init_find_pipe_pnt $_obj $_button $_callback
 }
 
 
@@ -892,7 +892,7 @@ package provide Archer 1.0
     # Archer may want to provide the callback in order to do something before passing
     # things through to PipeEditFrame.
 
-    $itk_component(ged) init_prepend_pipept $_obj $_button $_callback
+    $itk_component(ged) init_pipe_prepend_pnt $_obj $_button $_callback
 }
 
 

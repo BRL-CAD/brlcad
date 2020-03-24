@@ -1,7 +1,7 @@
 /*                  R H I N O _ R E A D . C P P
  * BRL-CAD
  *
- * Copyright (c) 2016-2018 United States Government as represented by
+ * Copyright (c) 2016-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -124,6 +124,41 @@ comb_to_region(db_i &db, const std::string &name)
 	bu_bomb("db_lookup() failed");
 }
 
+static void
+comb_region_name_check(std::map<const directory *, std::string> &renamed, db_i &db, const std::string &name)
+{
+    RT_CK_DBI(&db);
+    // If name doesn't have a .r suffix, add it
+    struct bu_vls ext = BU_VLS_INIT_ZERO;
+    bool add_ext = false;
+    if (bu_path_component(&ext, name.c_str(), BU_PATH_EXT)) {
+	if (!BU_STR_EQUAL(bu_vls_cstr(&ext), ".r")) {
+	    // Have an ext, but not the right one - add .r
+	    add_ext = true;
+	}
+    } else {
+	// Don't have an ext - add it
+	add_ext = true;
+    }
+    bu_vls_free(&ext);
+
+    if (!add_ext) {
+	return;
+    }
+
+    struct bu_vls nname = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&nname, "%s.r", name.c_str());
+
+    directory * const dir = db_lookup(&db, name.c_str(), true);
+    if (dir == RT_DIR_NULL) {
+	return;
+    }
+    std::pair<const directory *, std::string> rpair = std::make_pair(dir, name);
+    if (db_rename(&db, dir, bu_vls_cstr(&nname))){
+	return;
+    }
+    renamed.insert(rpair);
+}
 
 struct UuidCompare {
     bool operator()(const ON_UUID &left, const ON_UUID &right) const
@@ -699,6 +734,7 @@ import_model_layers(rt_wdb &wdb, const ONX_Model &model,
 HIDDEN void
 polish_output(const gcv_opts &gcv_options, db_i &db)
 {
+    std::map<const directory *, std::string> renamed;
     bu_ptbl found = BU_PTBL_INIT_ZERO;
     AutoPtr<bu_ptbl, db_search_free> autofree_found(&found);
 
@@ -715,21 +751,30 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
     db_search_free(&found);
     BU_PTBL_INIT(&found);
 
-    if (0 > db_search(&found, DB_SEARCH_RETURN_UNIQ_DP,
-		      "-type comb -attr rgb -not -above -attr rgb -or -attr shader -not -above -attr shader",
-		      0, NULL, &db, NULL))
+    // Set region flags, add .r suffix to regions if not already present
+    renamed.clear();
+    const char *reg_search = "-type comb -attr rgb -not -above -attr rgb -or -attr shader -not -above -attr shader";
+    if (0 > db_search(&found, DB_SEARCH_RETURN_UNIQ_DP, reg_search, 0, NULL, &db, NULL))
+	bu_bomb("db_search() failed");
+    bu_ptbl found_instances = BU_PTBL_INIT_ZERO;
+    AutoPtr<bu_ptbl, db_search_free> autofree_found_instances(&found_instances);
+    if (0 > db_search(&found_instances, DB_SEARCH_TREE, reg_search, 0, NULL, &db, NULL))
 	bu_bomb("db_search() failed");
 
     if (BU_PTBL_LEN(&found)) {
 	directory **entry;
 
 	for (BU_PTBL_FOR(entry, (directory **), &found)) {
+
 	    comb_to_region(db, (*entry)->d_namep);
 
-	    if (gcv_options.debug_mode) {
-		// random colors debug mode: TODO: move this into a filter after 7.26.0
+	    comb_region_name_check(renamed, db, (*entry)->d_namep);
+
+	    if (gcv_options.randomize_colors) {
+		// random colors mode: TODO: move this into a filter after 7.26.0
 		std::string rgb;
 
+		// TODO - use bu_color for this...
 		for (std::size_t i = 0; i < 3; ++i)
 		    rgb.append(lexical_cast<std::string>(static_cast<unsigned>
 							 (drand48() * 255.0 + 0.5)) + (i != 2 ? "/" : ""));
@@ -741,11 +786,29 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 	}
     }
 
+    // Update any combs that referred to old region names to reference the new ones instead
+    if (BU_PTBL_LEN(&found_instances)) {
+	db_full_path **entry;
+	for (BU_PTBL_FOR(entry, (db_full_path **), &found_instances)) {
+	    struct directory *ec = DB_FULL_PATH_CUR_DIR(*entry);
+	    struct directory *ep = (*entry)->fp_names[(*entry)->fp_len - 2];
+	    std::map<const directory *, std::string>::iterator rentry = renamed.find(ec);
+	    if (rentry == renamed.end()) {
+		continue;
+	    }
+	    bu_ptbl stack = BU_PTBL_INIT_ZERO;
+	    AutoPtr<bu_ptbl, bu_ptbl_free> autofree_stack(&stack);
+	    if (!db_comb_mvall(ep, &db, rentry->second.c_str(), ec->d_namep, &stack))
+		bu_bomb("db_comb_mvall() failed");
+	}
+    }
+    db_search_free(&found_instances);
+
     // rename shapes after their parent layers
     db_search_free(&found);
     BU_PTBL_INIT(&found);
-    std::map<const directory *, std::string> renamed;
 
+    renamed.clear();
     if (0 > db_search(&found, DB_SEARCH_TREE, "-type shape", 0, NULL, &db, NULL))
 	bu_bomb("db_search() failed");
 

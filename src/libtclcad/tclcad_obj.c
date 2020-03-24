@@ -1,7 +1,7 @@
 /*                       T C L C A D _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2018 United States Government as represented by
+ * Copyright (c) 2000-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -193,6 +193,11 @@ HIDDEN int to_data_axes(struct ged *gedp,
 			ged_func_ptr func,
 			const char *usage,
 			int maxargs);
+HIDDEN int to_data_axes_func(Tcl_Interp *interp,
+			     struct ged *gedp,
+			     struct ged_dm_view *gdvp,
+			     int argc,
+			     const char *argv[]);
 HIDDEN int to_data_labels(struct ged *gedp,
 			  int argc,
 			  const char *argv[],
@@ -210,30 +215,55 @@ HIDDEN int to_data_lines(struct ged *gedp,
 			 ged_func_ptr func,
 			 const char *usage,
 			 int maxargs);
+HIDDEN int to_data_lines_func(Tcl_Interp *interp,
+			      struct ged *gedp,
+			      struct ged_dm_view *gdvp,
+			      int argc,
+			      const char *argv[]);
 HIDDEN int to_data_polygons(struct ged *gedp,
 			    int argc,
 			    const char *argv[],
 			    ged_func_ptr func,
 			    const char *usage,
 			    int maxargs);
+HIDDEN int to_data_polygons_func(Tcl_Interp *interp,
+				 struct ged *gedp,
+				 struct ged_dm_view *gdvp,
+				 int argc,
+				 const char *argv[]);
 HIDDEN int to_data_move(struct ged *gedp,
 			int argc,
 			const char *argv[],
 			ged_func_ptr func,
 			const char *usage,
 			int maxargs);
+HIDDEN int to_data_move_func(struct ged *gedp,
+			     struct ged_dm_view *gdvp,
+			     int argc,
+			     const char *argv[],
+			     const char *usage);
 HIDDEN int to_data_move_object_mode(struct ged *gedp,
 				    int argc,
 				    const char *argv[],
 				    ged_func_ptr func,
 				    const char *usage,
 				    int maxargs);
+HIDDEN int to_data_move_object_mode_func(struct ged *gedp,
+					 struct ged_dm_view *gdvp,
+					 int argc,
+					 const char *argv[],
+					 const char *usage);
 HIDDEN int to_data_move_point_mode(struct ged *gedp,
 				   int argc,
 				   const char *argv[],
 				   ged_func_ptr func,
 				   const char *usage,
 				   int maxargs);
+HIDDEN int to_data_move_point_mode_func(struct ged *gedp,
+					struct ged_dm_view *gdvp,
+					int argc,
+					const char *argv[],
+					const char *usage);
 HIDDEN int to_data_pick(struct ged *gedp,
 			int argc,
 			const char *argv[],
@@ -283,11 +313,11 @@ HIDDEN int to_get_prev_mouse(struct ged *gedp,
 			     const char *usage,
 			     int maxargs);
 HIDDEN int to_fit_png_image(struct ged *gedp,
-		  int argc,
-		  const char *argv[],
-		  ged_func_ptr func,
-		  const char *usage,
-		  int maxargs);
+			    int argc,
+			    const char *argv[],
+			    ged_func_ptr func,
+			    const char *usage,
+			    int maxargs);
 HIDDEN int to_init_view_bindings(struct ged *gedp,
 				 int argc,
 				 const char *argv[],
@@ -387,12 +417,12 @@ HIDDEN int to_more_args_callback(struct ged *gedp,
 				 ged_func_ptr func,
 				 const char *usage,
 				 int maxargs);
-HIDDEN int to_mouse_append_pt_common(struct ged *gedp,
-				     int argc,
-				     const char *argv[],
-				     ged_func_ptr func,
-				     const char *usage,
-				     int maxargs);
+HIDDEN int to_mouse_append_pnt_common(struct ged *gedp,
+				      int argc,
+				      const char *argv[],
+				      ged_func_ptr func,
+				      const char *usage,
+				      int maxargs);
 HIDDEN int to_mouse_brep_selection_append(struct ged *gedp,
 					  int argc,
 					  const char *argv[],
@@ -429,24 +459,24 @@ HIDDEN int to_mouse_find_bot_edge(struct ged *gedp,
 				  ged_func_ptr func,
 				  const char *usage,
 				  int maxargs);
-HIDDEN int to_mouse_find_botpt(struct ged *gedp,
-			       int argc,
-			       const char *argv[],
-			       ged_func_ptr func,
-			       const char *usage,
-			       int maxargs);
-HIDDEN int to_mouse_find_metaballpt(struct ged *gedp,
-				    int argc,
-				    const char *argv[],
-				    ged_func_ptr func,
-				    const char *usage,
-				    int maxargs);
-HIDDEN int to_mouse_find_pipept(struct ged *gedp,
-				int argc,
-				const char *argv[],
-				ged_func_ptr func,
-				const char *usage,
-				int maxargs);
+HIDDEN int to_mouse_find_bot_pnt(struct ged *gedp,
+				 int argc,
+				 const char *argv[],
+				 ged_func_ptr func,
+				 const char *usage,
+				 int maxargs);
+HIDDEN int to_mouse_find_metaball_pnt(struct ged *gedp,
+				      int argc,
+				      const char *argv[],
+				      ged_func_ptr func,
+				      const char *usage,
+				      int maxargs);
+HIDDEN int to_mouse_find_pipe_pnt(struct ged *gedp,
+				  int argc,
+				  const char *argv[],
+				  ged_func_ptr func,
+				  const char *usage,
+				  int maxargs);
 HIDDEN int to_mouse_joint_select(struct ged *gedp,
 				 int argc,
 				 const char *argv[],
@@ -471,24 +501,24 @@ HIDDEN int to_mouse_move_arb_face(struct ged *gedp,
 				  ged_func_ptr func,
 				  const char *usage,
 				  int maxargs);
-HIDDEN int to_mouse_move_botpt(struct ged *gedp,
-			       int argc,
-			       const char *argv[],
-			       ged_func_ptr func,
-			       const char *usage,
-			       int maxargs);
-HIDDEN int to_mouse_move_botpts(struct ged *gedp,
-				int argc,
-				const char *argv[],
-				ged_func_ptr func,
-				const char *usage,
-				int maxargs);
-HIDDEN int to_mouse_move_pt_common(struct ged *gedp,
-				   int argc,
-				   const char *argv[],
-				   ged_func_ptr func,
-				   const char *usage,
-				   int maxargs);
+HIDDEN int to_mouse_move_bot_pnt(struct ged *gedp,
+				 int argc,
+				 const char *argv[],
+				 ged_func_ptr func,
+				 const char *usage,
+				 int maxargs);
+HIDDEN int to_mouse_move_bot_pnts(struct ged *gedp,
+				  int argc,
+				  const char *argv[],
+				  ged_func_ptr func,
+				  const char *usage,
+				  int maxargs);
+HIDDEN int to_mouse_move_pnt_common(struct ged *gedp,
+				    int argc,
+				    const char *argv[],
+				    ged_func_ptr func,
+				    const char *usage,
+				    int maxargs);
 HIDDEN int to_mouse_orotate(struct ged *gedp,
 			    int argc,
 			    const char *argv[],
@@ -513,24 +543,48 @@ HIDDEN int to_mouse_poly_circ(struct ged *gedp,
 			      ged_func_ptr func,
 			      const char *usage,
 			      int maxargs);
+HIDDEN int to_mouse_poly_circ_func(Tcl_Interp *interp,
+				   struct ged *gedp,
+				   struct ged_dm_view *gdvp,
+				   int argc,
+				   const char *argv[],
+				   const char *usage);
 HIDDEN int to_mouse_poly_cont(struct ged *gedp,
 			      int argc,
 			      const char *argv[],
 			      ged_func_ptr func,
 			      const char *usage,
 			      int maxargs);
+HIDDEN int to_mouse_poly_cont_func(Tcl_Interp *interp,
+				   struct ged *gedp,
+				   struct ged_dm_view *gdvp,
+				   int argc,
+				   const char *argv[],
+				   const char *usage);
 HIDDEN int to_mouse_poly_ell(struct ged *gedp,
 			     int argc,
 			     const char *argv[],
 			     ged_func_ptr func,
 			     const char *usage,
 			     int maxargs);
+HIDDEN int to_mouse_poly_ell_func(Tcl_Interp *interp,
+				  struct ged *gedp,
+				  struct ged_dm_view *gdvp,
+				  int argc,
+				  const char *argv[],
+				  const char *usage);
 HIDDEN int to_mouse_poly_rect(struct ged *gedp,
 			      int argc,
 			      const char *argv[],
 			      ged_func_ptr func,
 			      const char *usage,
 			      int maxargs);
+HIDDEN int to_mouse_poly_rect_func(Tcl_Interp *interp,
+				   struct ged *gedp,
+				   struct ged_dm_view *gdvp,
+				   int argc,
+				   const char *argv[],
+				   const char *usage);
 HIDDEN int to_mouse_ray(struct ged *gedp,
 			int argc,
 			const char *argv[],
@@ -603,48 +657,48 @@ HIDDEN int to_move_arb_face_mode(struct ged *gedp,
 				 ged_func_ptr func,
 				 const char *usage,
 				 int maxargs);
-HIDDEN int to_move_botpt(struct ged *gedp,
-			 int argc,
-			 const char *argv[],
-			 ged_func_ptr func,
-			 const char *usage,
-			 int maxargs);
-HIDDEN int to_move_botpts(struct ged *gedp,
-			  int argc,
-			  const char *argv[],
-			  ged_func_ptr func,
-			  const char *usage,
-			  int maxargs);
-HIDDEN int to_move_botpt_mode(struct ged *gedp,
+HIDDEN int to_bot_move_pnt(struct ged *gedp,
+			   int argc,
+			   const char *argv[],
+			   ged_func_ptr func,
+			   const char *usage,
+			   int maxargs);
+HIDDEN int to_bot_move_pnts(struct ged *gedp,
+			    int argc,
+			    const char *argv[],
+			    ged_func_ptr func,
+			    const char *usage,
+			    int maxargs);
+HIDDEN int to_bot_move_pnt_mode(struct ged *gedp,
+				int argc,
+				const char *argv[],
+				ged_func_ptr func,
+				const char *usage,
+				int maxargs);
+HIDDEN int to_bot_move_pnts_mode(struct ged *gedp,
+				 int argc,
+				 const char *argv[],
+				 ged_func_ptr func,
+				 const char *usage,
+				 int maxargs);
+HIDDEN int to_metaball_move_pnt_mode(struct ged *gedp,
+				     int argc,
+				     const char *argv[],
+				     ged_func_ptr func,
+				     const char *usage,
+				     int maxargs);
+HIDDEN int to_pipe_move_pnt_mode(struct ged *gedp,
+				 int argc,
+				 const char *argv[],
+				 ged_func_ptr func,
+				 const char *usage,
+				 int maxargs);
+HIDDEN int to_move_pnt_common(struct ged *gedp,
 			      int argc,
 			      const char *argv[],
 			      ged_func_ptr func,
 			      const char *usage,
 			      int maxargs);
-HIDDEN int to_move_botpts_mode(struct ged *gedp,
-			       int argc,
-			       const char *argv[],
-			       ged_func_ptr func,
-			       const char *usage,
-			       int maxargs);
-HIDDEN int to_move_metaballpt_mode(struct ged *gedp,
-				   int argc,
-				   const char *argv[],
-				   ged_func_ptr func,
-				   const char *usage,
-				   int maxargs);
-HIDDEN int to_move_pipept_mode(struct ged *gedp,
-			       int argc,
-			       const char *argv[],
-			       ged_func_ptr func,
-			       const char *usage,
-			       int maxargs);
-HIDDEN int to_move_pt_common(struct ged *gedp,
-			     int argc,
-			     const char *argv[],
-			     ged_func_ptr func,
-			     const char *usage,
-			     int maxargs);
 HIDDEN int to_new_view(struct ged *gedp,
 		       int argc,
 		       const char *argv[],
@@ -696,30 +750,58 @@ HIDDEN int to_poly_circ_mode(struct ged *gedp,
 			     ged_func_ptr func,
 			     const char *usage,
 			     int maxargs);
+HIDDEN int to_poly_circ_mode_func(Tcl_Interp *interp,
+				  struct ged *gedp,
+				  struct ged_dm_view *gdvp,
+				  int argc,
+				  const char *argv[],
+				  const char *usage);
 HIDDEN int to_poly_cont_build(struct ged *gedp,
 			      int argc,
 			      const char *argv[],
 			      ged_func_ptr func,
 			      const char *usage,
 			      int maxargs);
+HIDDEN int to_poly_cont_build_func(Tcl_Interp *interp,
+				   struct ged *gedp,
+				   struct ged_dm_view *gdvp,
+				   int argc,
+				   const char *argv[],
+				   const char *usage,
+				   int doBind);
 HIDDEN int to_poly_cont_build_end(struct ged *gedp,
 				  int argc,
 				  const char *argv[],
 				  ged_func_ptr func,
 				  const char *usage,
 				  int maxargs);
+HIDDEN int to_poly_cont_build_end_func(struct ged_dm_view *gdvp,
+				       int argc,
+				       const char *argv[]);
 HIDDEN int to_poly_ell_mode(struct ged *gedp,
 			    int argc,
 			    const char *argv[],
 			    ged_func_ptr func,
 			    const char *usage,
 			    int maxargs);
+HIDDEN int to_poly_ell_mode_func(Tcl_Interp *interp,
+				 struct ged *gedp,
+				 struct ged_dm_view *gdvp,
+				 int argc,
+				 const char *argv[],
+				 const char *usage);
 HIDDEN int to_poly_rect_mode(struct ged *gedp,
 			     int argc,
 			     const char *argv[],
 			     ged_func_ptr func,
 			     const char *usage,
 			     int maxargs);
+HIDDEN int to_poly_rect_mode_func(Tcl_Interp *interp,
+				  struct ged *gedp,
+				  struct ged_dm_view *gdvp,
+				  int argc,
+				  const char *argv[],
+				  const char *usage);
 HIDDEN int to_prim_label(struct ged *gedp,
 			 int argc,
 			 const char *argv[],
@@ -993,6 +1075,7 @@ struct path_edit_params {
     mat_t edit_mat;
 };
 
+
 struct to_cmdtab {
     char *to_name;
     char *to_usage;
@@ -1010,7 +1093,7 @@ static struct to_cmdtab to_cmds[] = {
     {"aet",	"[[-i] az el [tw]]", 6, to_view_func_plus, ged_aet},
     {"analyze",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_analyze},
     {"annotate", (char *)0, TO_UNLIMITED, to_pass_through_func, ged_annotate},
-    {"append_pipept",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_append_pipept},
+    {"pipe_append_pnt",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_pipe_append_pnt},
     {"arb",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_arb},
     {"arced",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_arced},
     {"arot",	"x y z angle", 6, to_view_func_plus, ged_arot},
@@ -1074,14 +1157,15 @@ static struct to_cmdtab to_cmds[] = {
     {"dbfind",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_find},
     {"dbip",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_dbip},
     {"dbot_dump",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_dbot_dump},
+    {"debug", 	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_debug},
     {"debugbu", 	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_debugbu},
     {"debugdir",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_debugdir},
     {"debuglib",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_debuglib},
     {"debugnmg",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_debugnmg},
     {"decompose",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_decompose},
     {"delay",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_delay},
-    {"delete_metaballpt",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_delete_metaballpt},
-    {"delete_pipept",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_delete_pipept},
+    {"metaball_delete_pnt",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_metaball_delete_pnt},
+    {"pipe_delete_pnt",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_pipe_delete_pnt},
     {"delete_view",	"vname", TO_UNLIMITED, to_delete_view, GED_FUNC_PTR_NULL},
     {"dir2ae",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_dir2ae},
     {"dlist_on",	"[0|1]", TO_UNLIMITED, to_dlist_on, GED_FUNC_PTR_NULL},
@@ -1098,6 +1182,7 @@ static struct to_cmdtab to_cmds[] = {
     {"edcomb",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_edcomb},
     {"edit",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_edit},
     {"edmater",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_edmater},
+    {"env",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_env},
     {"erase",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_erase},
     {"ev",	(char *)0, TO_UNLIMITED, to_autoview_func, ged_ev},
     {"expand",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_expand},
@@ -1110,10 +1195,10 @@ static struct to_cmdtab to_cmds[] = {
     {"voxelize",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_voxelize},
     {"fb2pix",  	"[-h -i -c] [-s squaresize] [-w width] [-n height] [file.pix]", TO_UNLIMITED, to_view_func, ged_fb2pix},
     {"fbclear",  	"[r g b]", TO_UNLIMITED, to_view_func, ged_fbclear},
-    {"find_arb_edge",	"arb vx vy ptol", 5, to_view_func, ged_find_arb_edge_nearest_pt},
-    {"find_bot_edge",	"bot vx vy", 5, to_view_func, ged_find_bot_edge_nearest_pt},
-    {"find_botpt",	"bot vx vy", 5, to_view_func, ged_find_botpt_nearest_pt},
-    {"find_pipept",	"pipe x y z", 6, to_view_func, ged_find_pipept_nearest_pt},
+    {"find_arb_edge",	"arb vx vy ptol", 5, to_view_func, ged_find_arb_edge_nearest_pnt},
+    {"find_bot_edge",	"bot vx vy", 5, to_view_func, ged_find_bot_edge_nearest_pnt},
+    {"find_bot_pnt",	"bot vx vy", 5, to_view_func, ged_find_bot_pnt_nearest_pnt},
+    {"find_pipe_pnt",	"pipe x y z", 6, to_view_func, ged_find_pipe_pnt_nearest_pnt},
     {"fit_png_image",	"image_file_in req_width req_height scale image_file_out", 6, to_fit_png_image, GED_FUNC_PTR_NULL},
     {"fontsize",	"[fontsize]", 3, to_fontsize, GED_FUNC_PTR_NULL},
     {"form",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_form},
@@ -1187,16 +1272,16 @@ static struct to_cmdtab to_cmds[] = {
     {"move_arb_edge_mode",	"obj edge x y", TO_UNLIMITED, to_move_arb_edge_mode, GED_FUNC_PTR_NULL},
     {"move_arb_face",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_move_arb_face},
     {"move_arb_face_mode",	"obj face x y", TO_UNLIMITED, to_move_arb_face_mode, GED_FUNC_PTR_NULL},
-    {"move_botpt",	(char *)0, TO_UNLIMITED, to_move_botpt, GED_FUNC_PTR_NULL},
-    {"move_botpts",	(char *)0, TO_UNLIMITED, to_move_botpts, GED_FUNC_PTR_NULL},
-    {"move_botpt_mode",	"obj i mx my", TO_UNLIMITED, to_move_botpt_mode, GED_FUNC_PTR_NULL},
-    {"move_botpts_mode",	"mx my obj i1 [i2 ... iN]", TO_UNLIMITED, to_move_botpts_mode, GED_FUNC_PTR_NULL},
-    {"move_metaballpt",	(char *)0, TO_UNLIMITED, to_move_pt_common, ged_move_metaballpt},
-    {"move_metaballpt_mode",	"obj pt_i mx my", TO_UNLIMITED, to_move_metaballpt_mode, GED_FUNC_PTR_NULL},
-    {"move_pipept",	(char *)0, TO_UNLIMITED, to_move_pt_common, ged_move_pipept},
-    {"move_pipept_mode",	"obj seg_i mx my", TO_UNLIMITED, to_move_pipept_mode, GED_FUNC_PTR_NULL},
-    {"mouse_add_metaballpt",	"obj mx my", TO_UNLIMITED, to_mouse_append_pt_common, ged_add_metaballpt},
-    {"mouse_append_pipept",	"obj mx my", TO_UNLIMITED, to_mouse_append_pt_common, ged_append_pipept},
+    {"bot_move_pnt",	(char *)0, TO_UNLIMITED, to_bot_move_pnt, GED_FUNC_PTR_NULL},
+    {"bot_move_pnts",	(char *)0, TO_UNLIMITED, to_bot_move_pnts, GED_FUNC_PTR_NULL},
+    {"bot_move_pnt_mode",	"obj i mx my", TO_UNLIMITED, to_bot_move_pnt_mode, GED_FUNC_PTR_NULL},
+    {"bot_move_pnts_mode",	"mx my obj i1 [i2 ... iN]", TO_UNLIMITED, to_bot_move_pnts_mode, GED_FUNC_PTR_NULL},
+    {"metaball_move_pnt",	(char *)0, TO_UNLIMITED, to_move_pnt_common, ged_metaball_move_pnt},
+    {"metaball_move_pnt_mode",	"obj pt_i mx my", TO_UNLIMITED, to_metaball_move_pnt_mode, GED_FUNC_PTR_NULL},
+    {"pipe_move_pnt",	(char *)0, TO_UNLIMITED, to_move_pnt_common, ged_pipe_move_pnt},
+    {"pipe_pnt_mode",	"obj seg_i mx my", TO_UNLIMITED, to_pipe_move_pnt_mode, GED_FUNC_PTR_NULL},
+    {"mouse_add_metaball_pnt",	"obj mx my", TO_UNLIMITED, to_mouse_append_pnt_common, ged_metaball_add_pnt},
+    {"mouse_append_pipe_pnt",	"obj mx my", TO_UNLIMITED, to_mouse_append_pnt_common, ged_pipe_append_pnt},
     {"mouse_brep_selection_append", "obj mx my", 5, to_mouse_brep_selection_append, GED_FUNC_PTR_NULL},
     {"mouse_brep_selection_translate", "obj mx my", 5, to_mouse_brep_selection_translate, GED_FUNC_PTR_NULL},
     {"mouse_constrain_rot",	"coord mx my", TO_UNLIMITED, to_mouse_constrain_rot, GED_FUNC_PTR_NULL},
@@ -1204,17 +1289,17 @@ static struct to_cmdtab to_cmds[] = {
     {"mouse_data_scale",	"mx my", TO_UNLIMITED, to_mouse_data_scale, GED_FUNC_PTR_NULL},
     {"mouse_find_arb_edge",	"obj mx my ptol", TO_UNLIMITED, to_mouse_find_arb_edge, GED_FUNC_PTR_NULL},
     {"mouse_find_bot_edge",	"obj mx my", TO_UNLIMITED, to_mouse_find_bot_edge, GED_FUNC_PTR_NULL},
-    {"mouse_find_botpt",	"obj mx my", TO_UNLIMITED, to_mouse_find_botpt, GED_FUNC_PTR_NULL},
-    {"mouse_find_metaballpt",	"obj mx my", TO_UNLIMITED, to_mouse_find_metaballpt, GED_FUNC_PTR_NULL},
-    {"mouse_find_pipept",	"obj mx my", TO_UNLIMITED, to_mouse_find_pipept, GED_FUNC_PTR_NULL},
+    {"mouse_find_bot_pnt",	"obj mx my", TO_UNLIMITED, to_mouse_find_bot_pnt, GED_FUNC_PTR_NULL},
+    {"mouse_find_metaball_pnt",	"obj mx my", TO_UNLIMITED, to_mouse_find_metaball_pnt, GED_FUNC_PTR_NULL},
+    {"mouse_find_pipe_pnt",	"obj mx my", TO_UNLIMITED, to_mouse_find_pipe_pnt, GED_FUNC_PTR_NULL},
     {"mouse_joint_select", "obj mx my", 5, to_mouse_joint_select, GED_FUNC_PTR_NULL},
     {"mouse_joint_selection_translate", "obj mx my", 5, to_mouse_joint_selection_translate, GED_FUNC_PTR_NULL},
     {"mouse_move_arb_edge",	"obj edge mx my", TO_UNLIMITED, to_mouse_move_arb_edge, GED_FUNC_PTR_NULL},
     {"mouse_move_arb_face",	"obj face mx my", TO_UNLIMITED, to_mouse_move_arb_face, GED_FUNC_PTR_NULL},
-    {"mouse_move_botpt",	"[-r] obj i mx my", TO_UNLIMITED, to_mouse_move_botpt, GED_FUNC_PTR_NULL},
-    {"mouse_move_botpts",	"mx my obj i1 [i2 ... iN]", TO_UNLIMITED, to_mouse_move_botpts, GED_FUNC_PTR_NULL},
-    {"mouse_move_metaballpt",	"obj i mx my", TO_UNLIMITED, to_mouse_move_pt_common, ged_move_metaballpt},
-    {"mouse_move_pipept",	"obj i mx my", TO_UNLIMITED, to_mouse_move_pt_common, ged_move_pipept},
+    {"mouse_move_bot_pnt",	"[-r] obj i mx my", TO_UNLIMITED, to_mouse_move_bot_pnt, GED_FUNC_PTR_NULL},
+    {"mouse_move_bot_pnts",	"mx my obj i1 [i2 ... iN]", TO_UNLIMITED, to_mouse_move_bot_pnts, GED_FUNC_PTR_NULL},
+    {"mouse_move_metaball_pnt",	"obj i mx my", TO_UNLIMITED, to_mouse_move_pnt_common, ged_metaball_move_pnt},
+    {"mouse_move_pipe_pnt",	"obj i mx my", TO_UNLIMITED, to_mouse_move_pnt_common, ged_pipe_move_pnt},
     {"mouse_orotate",	"obj mx my", TO_UNLIMITED, to_mouse_orotate, GED_FUNC_PTR_NULL},
     {"mouse_oscale",	"obj mx my", TO_UNLIMITED, to_mouse_oscale, GED_FUNC_PTR_NULL},
     {"mouse_otranslate",	"obj mx my", TO_UNLIMITED, to_mouse_otranslate, GED_FUNC_PTR_NULL},
@@ -1222,7 +1307,7 @@ static struct to_cmdtab to_cmds[] = {
     {"mouse_poly_cont",	"mx my", TO_UNLIMITED, to_mouse_poly_cont, GED_FUNC_PTR_NULL},
     {"mouse_poly_ell",	"mx my", TO_UNLIMITED, to_mouse_poly_ell, GED_FUNC_PTR_NULL},
     {"mouse_poly_rect",	"mx my", TO_UNLIMITED, to_mouse_poly_rect, GED_FUNC_PTR_NULL},
-    {"mouse_prepend_pipept",	"obj mx my", TO_UNLIMITED, to_mouse_append_pt_common, ged_prepend_pipept},
+    {"mouse_prepend_pipe_pnt",	"obj mx my", TO_UNLIMITED, to_mouse_append_pnt_common, ged_pipe_prepend_pnt},
     {"mouse_ray",	"mx my", TO_UNLIMITED, to_mouse_ray, GED_FUNC_PTR_NULL},
     {"mouse_rect",	"mx my", TO_UNLIMITED, to_mouse_rect, GED_FUNC_PTR_NULL},
     {"mouse_rot",	"mx my", TO_UNLIMITED, to_mouse_rot, GED_FUNC_PTR_NULL},
@@ -1271,12 +1356,12 @@ static struct to_cmdtab to_cmds[] = {
     {"poly_rect_mode",	"x y [s]", TO_UNLIMITED, to_poly_rect_mode, GED_FUNC_PTR_NULL},
     {"prcolor",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_prcolor},
     {"prefix",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_prefix},
-    {"prepend_pipept",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_prepend_pipept},
+    {"pipe_prepend_pnt",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_pipe_prepend_pnt},
     {"preview",	"[options] script", TO_UNLIMITED, to_dm_func, ged_preview},
     {"prim_label",	"[prim_1 prim_2 ... prim_N]", TO_UNLIMITED, to_prim_label, GED_FUNC_PTR_NULL},
     {"protate",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_protate},
     {"protate_mode",	"obj attribute x y", TO_UNLIMITED, to_protate_mode, GED_FUNC_PTR_NULL},
-    {"ps",	"[options] file.ps", 16, to_view_func, ged_ps},
+    {"postscript", "[options] file.ps", 16, to_view_func, ged_ps},
     {"pscale",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_pscale},
     {"pscale_mode",	"obj attribute x y", TO_UNLIMITED, to_pscale_mode, GED_FUNC_PTR_NULL},
     {"pset",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_pset},
@@ -1436,6 +1521,7 @@ dm_list_tcl(ClientData UNUSED(clientData),
     return TCL_OK;
 }
 
+
 /**
  * @brief create the Tcl command for to_open
  *
@@ -1570,21 +1656,10 @@ to_deleteProc(ClientData clientData)
     bu_hash_destroy(top->to_gop->go_edited_paths);
 
     while (BU_LIST_WHILE(gdvp, ged_dm_view, &top->to_gop->go_head_views.l)) {
-#if 1
-	/* This removes the view related command and results in a call to to_deleteViewProc to release resources. */
+	/* This removes the view related command and results in a call
+	 * to to_deleteViewProc to release resources.
+	 */
 	Tcl_DeleteCommand(top->to_interp, bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)));
-#else
-	BU_LIST_DEQUEUE(&(gdvp->l));
-	bu_vls_free(&gdvp->gdv_name);
-	bu_vls_free(&gdvp->gdv_callback);
-	bu_vls_free(&gdvp->gdv_edit_motion_delta_callback);
-	(void)dm_close(gdvp->gdv_dmp);
-	bu_free((void *)gdvp->gdv_view, "ged_view");
-
-	to_close_fbs(gdvp);
-
-	bu_free((void *)gdvp, "ged_dm_view");
-#endif
     }
 
     bu_free((void *)top, "struct ged_obj");
@@ -2233,9 +2308,9 @@ to_bg(struct ged *gedp,
 	unsigned char *dm_bg = dm_get_bg(gdvp->gdv_dmp);
 	if (dm_bg) {
 	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
-		    dm_bg[0],
-		    dm_bg[1],
-		    dm_bg[2]);
+			  dm_bg[0],
+			  dm_bg[1],
+			  dm_bg[2]);
 	}
 	return GED_OK;
     }
@@ -2330,7 +2405,7 @@ to_bounds(struct ged *gedp,
 	vect_t *cmax = dm_get_clipmax(gdvp->gdv_dmp);
 	if (cmin && cmax) {
 	    bu_vls_printf(gedp->ged_result_str, "%g %g %g %g %g %g",
-		    (*cmin)[X], (*cmax)[X], (*cmin)[Y], (*cmax)[Y], (*cmin)[Z], (*cmax)[Z]);
+			  (*cmin)[X], (*cmax)[X], (*cmin)[Y], (*cmax)[Y], (*cmin)[Z], (*cmax)[Z]);
 	}
 	return GED_OK;
     }
@@ -2484,10 +2559,10 @@ to_constrain_rmode(struct ged *gedp,
 
     if (dm_get_pathname(gdvp->gdv_dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_constrain_rot %s %s %%x %%y}; break",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name),
-		argv[2]);
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name),
+		      argv[2]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
     bu_vls_free(&bindings);
@@ -2553,10 +2628,10 @@ to_constrain_tmode(struct ged *gedp,
 
     if (dm_get_pathname(gdvp->gdv_dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_constrain_trans %s %s %%x %%y}; break",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name),
-		argv[2]);
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name),
+		      argv[2]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
     bu_vls_free(&bindings);
@@ -2762,7 +2837,7 @@ to_data_arrows(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    /* shift the command name to argv[1] before calling to_data_labels_func */
+    /* shift the command name to argv[1] before calling to_data_arrows_func */
     argv[1] = argv[0];
     ret = to_data_arrows_func(current_top->to_interp, gedp, gdvp, argc-1, argv+1);
     if (ret == GED_ERROR)
@@ -2974,6 +3049,42 @@ bad:
 }
 
 
+int
+go_data_axes(Tcl_Interp *interp,
+	     struct ged *gedp,
+	     struct ged_dm_view *gdvp,
+	     int argc,
+	     const char *argv[],
+	     const char *usage)
+{
+    int ret;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc < 2 || 5 < argc) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    /* Don't allow go_refresh() to be called */
+    if (current_top != NULL)
+	current_top->to_gop->go_refresh_on = 0;
+
+    ret = to_data_axes_func(interp, gedp, gdvp, argc, argv);
+    if (ret == GED_ERROR)
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+
+    return ret;
+}
+
+
 HIDDEN int
 to_data_axes(struct ged *gedp,
 	     int argc,
@@ -2983,7 +3094,7 @@ to_data_axes(struct ged *gedp,
 	     int UNUSED(maxargs))
 {
     struct ged_dm_view *gdvp;
-    struct bview_data_axes_state *gdasp;
+    int ret;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -3009,21 +3120,40 @@ to_data_axes(struct ged *gedp,
 	return GED_ERROR;
     }
 
+    /* shift the command name to argv[1] before calling to_data_axes_func */
+    argv[1] = argv[0];
+    ret = to_data_axes_func(current_top->to_interp, gedp, gdvp, argc-1, argv+1);
+    if (ret == GED_ERROR)
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+
+    return ret;
+}
+
+
+HIDDEN int
+to_data_axes_func(Tcl_Interp *interp,
+		  struct ged *gedp,
+		  struct ged_dm_view *gdvp,
+		  int argc,
+		  const char *argv[])
+{
+    struct bview_data_axes_state *gdasp;
+
     if (argv[0][0] == 's')
 	gdasp = &gdvp->gdv_view->gv_sdata_axes;
     else
 	gdasp = &gdvp->gdv_view->gv_data_axes;
 
-    if (BU_STR_EQUAL(argv[2], "draw")) {
-	if (argc == 3) {
+    if (BU_STR_EQUAL(argv[1], "draw")) {
+	if (argc == 2) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gdasp->draw);
 	    return GED_OK;
 	}
 
-	if (argc == 4) {
+	if (argc == 3) {
 	    int i;
 
-	    if (bu_sscanf(argv[3], "%d", &i) != 1)
+	    if (bu_sscanf(argv[2], "%d", &i) != 1)
 		goto bad;
 
 	    if (0 <= i && i <= 2)
@@ -3038,20 +3168,20 @@ to_data_axes(struct ged *gedp,
 	goto bad;
     }
 
-    if (BU_STR_EQUAL(argv[2], "color")) {
-	if (argc == 3) {
+    if (BU_STR_EQUAL(argv[1], "color")) {
+	if (argc == 2) {
 	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
 			  V3ARGS(gdasp->color));
 	    return GED_OK;
 	}
 
-	if (argc == 6) {
+	if (argc == 5) {
 	    int r, g, b;
 
 	    /* set background color */
-	    if (bu_sscanf(argv[3], "%d", &r) != 1 ||
-		bu_sscanf(argv[4], "%d", &g) != 1 ||
-		bu_sscanf(argv[5], "%d", &b) != 1)
+	    if (bu_sscanf(argv[2], "%d", &r) != 1 ||
+		bu_sscanf(argv[3], "%d", &g) != 1 ||
+		bu_sscanf(argv[4], "%d", &b) != 1)
 		goto bad;
 
 	    /* validate color */
@@ -3069,16 +3199,16 @@ to_data_axes(struct ged *gedp,
 	goto bad;
     }
 
-    if (BU_STR_EQUAL(argv[2], "line_width")) {
-	if (argc == 3) {
+    if (BU_STR_EQUAL(argv[1], "line_width")) {
+	if (argc == 2) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gdasp->line_width);
 	    return GED_OK;
 	}
 
-	if (argc == 4) {
+	if (argc == 3) {
 	    int line_width;
 
-	    if (bu_sscanf(argv[3], "%d", &line_width) != 1)
+	    if (bu_sscanf(argv[2], "%d", &line_width) != 1)
 		goto bad;
 
 	    gdasp->line_width = line_width;
@@ -3090,16 +3220,16 @@ to_data_axes(struct ged *gedp,
 	goto bad;
     }
 
-    if (BU_STR_EQUAL(argv[2], "size")) {
-	if (argc == 3) {
+    if (BU_STR_EQUAL(argv[1], "size")) {
+	if (argc == 2) {
 	    bu_vls_printf(gedp->ged_result_str, "%lf", gdasp->size);
 	    return GED_OK;
 	}
 
-	if (argc == 4) {
+	if (argc == 3) {
 	    double size; /* must be double for scanf */
 
-	    if (bu_sscanf(argv[3], "%lf", &size) != 1)
+	    if (bu_sscanf(argv[2], "%lf", &size) != 1)
 		goto bad;
 
 	    gdasp->size = size;
@@ -3111,10 +3241,10 @@ to_data_axes(struct ged *gedp,
 	goto bad;
     }
 
-    if (BU_STR_EQUAL(argv[2], "points")) {
+    if (BU_STR_EQUAL(argv[1], "points")) {
 	register int i;
 
-	if (argc == 3) {
+	if (argc == 2) {
 	    for (i = 0; i < gdasp->num_points; ++i) {
 		bu_vls_printf(gedp->ged_result_str, " {%lf %lf %lf} ",
 			      V3ARGS(gdasp->points[i]));
@@ -3122,12 +3252,12 @@ to_data_axes(struct ged *gedp,
 	    return GED_OK;
 	}
 
-	if (argc == 4) {
+	if (argc == 3) {
 	    int ac;
 	    const char **av;
 
-	    if (Tcl_SplitList(current_top->to_interp, argv[3], &ac, &av) != TCL_OK) {
-		bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(current_top->to_interp));
+	    if (Tcl_SplitList(interp, argv[2], &ac, &av) != TCL_OK) {
+		bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(interp));
 		return GED_ERROR;
 	    }
 
@@ -3171,7 +3301,6 @@ to_data_axes(struct ged *gedp,
     }
 
 bad:
-    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return GED_ERROR;
 }
 
@@ -3459,6 +3588,42 @@ bad:
 }
 
 
+int
+go_data_lines(Tcl_Interp *interp,
+	      struct ged *gedp,
+	      struct ged_dm_view *gdvp,
+	      int argc,
+	      const char *argv[],
+	      const char *usage)
+{
+    int ret;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc < 2 || 5 < argc) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    /* Don't allow go_refresh() to be called */
+    if (current_top != NULL)
+	current_top->to_gop->go_refresh_on = 0;
+
+    ret = to_data_lines_func(interp, gedp, gdvp, argc, argv);
+    if (ret == GED_ERROR)
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+
+    return ret;
+}
+
+
 HIDDEN int
 to_data_lines(struct ged *gedp,
 	      int argc,
@@ -3468,7 +3633,7 @@ to_data_lines(struct ged *gedp,
 	      int UNUSED(maxargs))
 {
     struct ged_dm_view *gdvp;
-    struct bview_data_line_state *gdlsp;
+    int ret;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -3494,21 +3659,40 @@ to_data_lines(struct ged *gedp,
 	return GED_ERROR;
     }
 
+    /* shift the command name to argv[1] before calling to_data_lines_func */
+    argv[1] = argv[0];
+    ret = to_data_lines_func(current_top->to_interp, gedp, gdvp, argc-1, argv+1);
+    if (ret == GED_ERROR)
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+
+    return ret;
+}
+
+
+HIDDEN int
+to_data_lines_func(Tcl_Interp *interp,
+		   struct ged *gedp,
+		   struct ged_dm_view *gdvp,
+		   int argc,
+		   const char *argv[])
+{
+    struct bview_data_line_state *gdlsp;
+
     if (argv[0][0] == 's')
 	gdlsp = &gdvp->gdv_view->gv_sdata_lines;
     else
 	gdlsp = &gdvp->gdv_view->gv_data_lines;
 
-    if (BU_STR_EQUAL(argv[2], "draw")) {
-	if (argc == 3) {
+    if (BU_STR_EQUAL(argv[1], "draw")) {
+	if (argc == 2) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gdlsp->gdls_draw);
 	    return GED_OK;
 	}
 
-	if (argc == 4) {
+	if (argc == 3) {
 	    int i;
 
-	    if (bu_sscanf(argv[3], "%d", &i) != 1)
+	    if (bu_sscanf(argv[2], "%d", &i) != 1)
 		goto bad;
 
 	    if (i)
@@ -3523,20 +3707,20 @@ to_data_lines(struct ged *gedp,
 	goto bad;
     }
 
-    if (BU_STR_EQUAL(argv[2], "color")) {
-	if (argc == 3) {
+    if (BU_STR_EQUAL(argv[1], "color")) {
+	if (argc == 2) {
 	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
 			  V3ARGS(gdlsp->gdls_color));
 	    return GED_OK;
 	}
 
-	if (argc == 6) {
+	if (argc == 5) {
 	    int r, g, b;
 
 	    /* set background color */
-	    if (bu_sscanf(argv[3], "%d", &r) != 1 ||
-		bu_sscanf(argv[4], "%d", &g) != 1 ||
-		bu_sscanf(argv[5], "%d", &b) != 1)
+	    if (bu_sscanf(argv[2], "%d", &r) != 1 ||
+		bu_sscanf(argv[3], "%d", &g) != 1 ||
+		bu_sscanf(argv[4], "%d", &b) != 1)
 		goto bad;
 
 	    /* validate color */
@@ -3554,16 +3738,16 @@ to_data_lines(struct ged *gedp,
 	goto bad;
     }
 
-    if (BU_STR_EQUAL(argv[2], "line_width")) {
-	if (argc == 3) {
+    if (BU_STR_EQUAL(argv[1], "line_width")) {
+	if (argc == 2) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gdlsp->gdls_line_width);
 	    return GED_OK;
 	}
 
-	if (argc == 4) {
+	if (argc == 3) {
 	    int line_width;
 
-	    if (bu_sscanf(argv[3], "%d", &line_width) != 1)
+	    if (bu_sscanf(argv[2], "%d", &line_width) != 1)
 		goto bad;
 
 	    gdlsp->gdls_line_width = line_width;
@@ -3575,10 +3759,10 @@ to_data_lines(struct ged *gedp,
 	goto bad;
     }
 
-    if (BU_STR_EQUAL(argv[2], "points")) {
+    if (BU_STR_EQUAL(argv[1], "points")) {
 	register int i;
 
-	if (argc == 3) {
+	if (argc == 2) {
 	    for (i = 0; i < gdlsp->gdls_num_points; ++i) {
 		bu_vls_printf(gedp->ged_result_str, " {%lf %lf %lf} ",
 			      V3ARGS(gdlsp->gdls_points[i]));
@@ -3586,12 +3770,12 @@ to_data_lines(struct ged *gedp,
 	    return GED_OK;
 	}
 
-	if (argc == 4) {
+	if (argc == 3) {
 	    int ac;
 	    const char **av;
 
-	    if (Tcl_SplitList(current_top->to_interp, argv[3], &ac, &av) != TCL_OK) {
-		bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(current_top->to_interp));
+	    if (Tcl_SplitList(interp, argv[2], &ac, &av) != TCL_OK) {
+		bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(interp));
 		return GED_ERROR;
 	    }
 
@@ -3640,7 +3824,6 @@ to_data_lines(struct ged *gedp,
     }
 
 bad:
-    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
     return GED_ERROR;
 }
 
@@ -3683,7 +3866,7 @@ to_polygons_free(bview_polygons *gpp)
 
 
 HIDDEN int
-to_extract_contours_av(struct ged *gedp, struct ged_dm_view *gdvp, bview_polygon *gpp, size_t contour_ac, const char **contour_av, int mode, int vflag)
+to_extract_contours_av(Tcl_Interp *interp, struct ged *gedp, struct ged_dm_view *gdvp, bview_polygon *gpp, size_t contour_ac, const char **contour_av, int mode, int vflag)
 {
     register size_t j = 0, k = 0;
 
@@ -3704,8 +3887,8 @@ to_extract_contours_av(struct ged *gedp, struct ged_dm_view *gdvp, bview_polygon
 	int hole;
 
 	/* Split contour j into points */
-	if (Tcl_SplitList(current_top->to_interp, contour_av[j], &ac, &point_av) != TCL_OK) {
-	    bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(current_top->to_interp));
+	if (Tcl_SplitList(interp, contour_av[j], &ac, &point_av) != TCL_OK) {
+	    bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(interp));
 	    return GED_ERROR;
 	}
 	point_ac = ac;
@@ -3754,35 +3937,72 @@ to_extract_contours_av(struct ged *gedp, struct ged_dm_view *gdvp, bview_polygon
 
 
 HIDDEN int
-to_extract_polygons_av(struct ged *gedp, struct ged_dm_view *gdvp, bview_polygons *gpp, size_t polygon_ac, const char **polygon_av, int mode, int vflag)
+to_extract_polygons_av(Tcl_Interp *interp, struct ged *gedp, struct ged_dm_view *gdvp, bview_data_polygon_state *gdpsp, size_t polygon_ac, const char **polygon_av, int mode, int vflag)
 {
     register size_t i;
     int ac;
 
-    gpp->gp_num_polygons = polygon_ac;
-    gpp->gp_polygon = (bview_polygon *)bu_calloc(polygon_ac, sizeof(bview_polygon), "data polygons");
+    gdpsp->gdps_polygons.gp_num_polygons = polygon_ac;
+    gdpsp->gdps_polygons.gp_polygon = (bview_polygon *)bu_calloc(polygon_ac, sizeof(bview_polygon), "data polygons");
 
     for (i = 0; i < polygon_ac; ++i) {
 	size_t contour_ac;
 	const char **contour_av;
 
 	/* Split polygon i into contours */
-	if (Tcl_SplitList(current_top->to_interp, polygon_av[i], &ac, &contour_av) != TCL_OK) {
-	    bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(current_top->to_interp));
+	if (Tcl_SplitList(interp, polygon_av[i], &ac, &contour_av) != TCL_OK) {
+	    bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(interp));
 	    return GED_ERROR;
 	}
 	contour_ac = ac;
 
-	if (to_extract_contours_av(gedp, gdvp, &gpp->gp_polygon[i], contour_ac, contour_av, mode, vflag) != GED_OK) {
+	if (to_extract_contours_av(interp, gedp, gdvp, &gdpsp->gdps_polygons.gp_polygon[i], contour_ac, contour_av, mode, vflag) != GED_OK) {
 	    Tcl_Free((char *)contour_av);
 	    return GED_ERROR;
 	}
 
+	VMOVE(gdpsp->gdps_polygons.gp_polygon[i].gp_color, gdpsp->gdps_color);
 	if (contour_ac)
 	    Tcl_Free((char *)contour_av);
     }
 
     return GED_OK;
+}
+
+
+int
+go_data_polygons(Tcl_Interp *interp,
+		 struct ged *gedp,
+		 struct ged_dm_view *gdvp,
+		 int argc,
+		 const char *argv[],
+		 const char *usage)
+{
+    int ret;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc < 2 || 6 < argc) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    /* Don't allow go_refresh() to be called */
+    if (current_top != NULL)
+	current_top->to_gop->go_refresh_on = 0;
+
+    ret = to_data_polygons_func(interp, gedp, gdvp, argc, argv);
+    if (ret == GED_ERROR)
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+
+    return ret;
 }
 
 
@@ -3795,7 +4015,7 @@ to_data_polygons(struct ged *gedp,
 		 int UNUSED(maxargs))
 {
     struct ged_dm_view *gdvp;
-    bview_data_polygon_state *gdpsp;
+    int ret;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -3821,6 +4041,26 @@ to_data_polygons(struct ged *gedp,
 	return GED_ERROR;
     }
 
+    /* shift the command name to argv[1] before calling to_data_polygons_func */
+    argv[1] = argv[0];
+    ret = to_data_polygons_func(current_top->to_interp, gedp, gdvp, argc-1, argv+1);
+    if (ret == GED_ERROR) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+    }
+
+    return ret;
+}
+
+
+HIDDEN int
+to_data_polygons_func(Tcl_Interp *interp,
+		      struct ged *gedp,
+		      struct ged_dm_view *gdvp,
+		      int argc,
+		      const char *argv[])
+{
+    bview_data_polygon_state *gdpsp;
+
     if (argv[0][0] == 's')
 	gdpsp = &gdvp->gdv_view->gv_sdata_polygons;
     else
@@ -3833,16 +4073,16 @@ to_data_polygons(struct ged *gedp,
     MAT_COPY(gdpsp->gdps_model2view, gdvp->gdv_view->gv_model2view);
     MAT_COPY(gdpsp->gdps_view2model, gdvp->gdv_view->gv_view2model);
 
-    if (BU_STR_EQUAL(argv[2], "target_poly")) {
-	if (argc == 3) {
-	    bu_vls_printf(gedp->ged_result_str, "%zu", gdpsp->gdps_target_polygon_i);
+    if (BU_STR_EQUAL(argv[1], "target_poly")) {
+	if (argc == 2) {
+	    bu_vls_printf(gedp->ged_result_str, "%lu", gdpsp->gdps_target_polygon_i);
 	    return GED_OK;
 	}
 
-	if (argc == 4) {
+	if (argc == 3) {
 	    size_t i;
 
-	    if (bu_sscanf(argv[3], "%zu", &i) != 1 || i > gdpsp->gdps_polygons.gp_num_polygons)
+	    if (bu_sscanf(argv[2], "%zu", &i) != 1 || i > gdpsp->gdps_polygons.gp_num_polygons)
 		goto bad;
 
 	    gdpsp->gdps_target_polygon_i = i;
@@ -3853,16 +4093,16 @@ to_data_polygons(struct ged *gedp,
 	goto bad;
     }
 
-    if (BU_STR_EQUAL(argv[2], "clip_type")) {
-	if (argc == 3) {
+    if (BU_STR_EQUAL(argv[1], "clip_type")) {
+	if (argc == 2) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gdpsp->gdps_clip_type);
 	    return GED_OK;
 	}
 
-	if (argc == 4) {
+	if (argc == 3) {
 	    int op;
 
-	    if (bu_sscanf(argv[3], "%d", &op) != 1 || op > gctXor)
+	    if (bu_sscanf(argv[2], "%d", &op) != 1 || op > gctXor)
 		goto bad;
 
 	    gdpsp->gdps_clip_type = (ClipType)op;
@@ -3873,16 +4113,16 @@ to_data_polygons(struct ged *gedp,
 	goto bad;
     }
 
-    if (BU_STR_EQUAL(argv[2], "draw")) {
-	if (argc == 3) {
+    if (BU_STR_EQUAL(argv[1], "draw")) {
+	if (argc == 2) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gdpsp->gdps_draw);
 	    return GED_OK;
 	}
 
-	if (argc == 4) {
+	if (argc == 3) {
 	    int i;
 
-	    if (bu_sscanf(argv[3], "%d", &i) != 1)
+	    if (bu_sscanf(argv[2], "%d", &i) != 1)
 		goto bad;
 
 	    if (i)
@@ -3897,16 +4137,16 @@ to_data_polygons(struct ged *gedp,
 	goto bad;
     }
 
-    if (BU_STR_EQUAL(argv[2], "moveall")) {
-	if (argc == 3) {
+    if (BU_STR_EQUAL(argv[1], "moveall")) {
+	if (argc == 2) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gdpsp->gdps_moveAll);
 	    return GED_OK;
 	}
 
-	if (argc == 4) {
+	if (argc == 3) {
 	    int i;
 
-	    if (bu_sscanf(argv[3], "%d", &i) != 1)
+	    if (bu_sscanf(argv[2], "%d", &i) != 1)
 		goto bad;
 
 	    if (i)
@@ -3925,12 +4165,12 @@ to_data_polygons(struct ged *gedp,
      *
      * Set/get the color of polygon i.
      */
-    if (BU_STR_EQUAL(argv[2], "poly_color")) {
+    if (BU_STR_EQUAL(argv[1], "poly_color")) {
 	size_t i;
 
-	if (argc == 4) {
+	if (argc == 3) {
 	    /* Get the color for polygon i */
-	    if (bu_sscanf(argv[3], "%zu", &i) != 1 ||
+	    if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
 		i >= gdpsp->gdps_polygons.gp_num_polygons)
 		goto bad;
 
@@ -3940,17 +4180,18 @@ to_data_polygons(struct ged *gedp,
 	    return GED_OK;
 	}
 
-	if (argc == 7) {
+	if (argc == 6) {
 	    int r, g, b;
 
-	    if (bu_sscanf(argv[3], "%zu", &i) != 1 ||
+
+	    if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
 		i >= gdpsp->gdps_polygons.gp_num_polygons)
 		goto bad;
 
 	    /* set background color */
-	    if (bu_sscanf(argv[4], "%d", &r) != 1 ||
-		bu_sscanf(argv[5], "%d", &g) != 1 ||
-		bu_sscanf(argv[6], "%d", &b) != 1)
+	    if (bu_sscanf(argv[3], "%d", &r) != 1 ||
+		bu_sscanf(argv[4], "%d", &g) != 1 ||
+		bu_sscanf(argv[5], "%d", &b) != 1)
 		goto bad;
 
 	    /* validate color */
@@ -3973,23 +4214,23 @@ to_data_polygons(struct ged *gedp,
      *
      * Set the color of all polygons, or get the default polygon color.
      */
-    if (BU_STR_EQUAL(argv[2], "color")) {
+    if (BU_STR_EQUAL(argv[1], "color")) {
 	size_t i;
 
-	if (argc == 3) {
+	if (argc == 2) {
 	    bu_vls_printf(gedp->ged_result_str, "%d %d %d",
 			  V3ARGS(gdpsp->gdps_color));
 
 	    return GED_OK;
 	}
 
-	if (argc == 6) {
+	if (argc == 5) {
 	    int r, g, b;
 
 	    /* set background color */
-	    if (bu_sscanf(argv[3], "%d", &r) != 1 ||
-		bu_sscanf(argv[4], "%d", &g) != 1 ||
-		bu_sscanf(argv[5], "%d", &b) != 1)
+	    if (bu_sscanf(argv[2], "%d", &r) != 1 ||
+		bu_sscanf(argv[3], "%d", &g) != 1 ||
+		bu_sscanf(argv[4], "%d", &b) != 1)
 		goto bad;
 
 	    /* validate color */
@@ -4017,12 +4258,12 @@ to_data_polygons(struct ged *gedp,
      *
      * Set/get the line width of polygon i.
      */
-    if (BU_STR_EQUAL(argv[2], "poly_line_width")) {
+    if (BU_STR_EQUAL(argv[1], "poly_line_width")) {
 	size_t i;
 
-	if (argc == 4) {
+	if (argc == 3) {
 	    /* Get the line width for polygon i */
-	    if (bu_sscanf(argv[3], "%zu", &i) != 1 ||
+	    if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
 		i >= gdpsp->gdps_polygons.gp_num_polygons)
 		goto bad;
 
@@ -4031,14 +4272,14 @@ to_data_polygons(struct ged *gedp,
 	    return GED_OK;
 	}
 
-	if (argc == 5) {
+	if (argc == 4) {
 	    int line_width;
 
-	    if (bu_sscanf(argv[3], "%zu", &i) != 1 ||
+	    if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
 		i >= gdpsp->gdps_polygons.gp_num_polygons)
 		goto bad;
 
-	    if (bu_sscanf(argv[4], "%d", &line_width) != 1)
+	    if (bu_sscanf(argv[3], "%d", &line_width) != 1)
 		goto bad;
 
 	    if (line_width < 0)
@@ -4057,18 +4298,18 @@ to_data_polygons(struct ged *gedp,
      *
      * Set the line width of all polygons, or get the default polygon line width.
      */
-    if (BU_STR_EQUAL(argv[2], "line_width")) {
+    if (BU_STR_EQUAL(argv[1], "line_width")) {
 	size_t i;
 
-	if (argc == 3) {
+	if (argc == 2) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gdpsp->gdps_line_width);
 	    return GED_OK;
 	}
 
-	if (argc == 4) {
+	if (argc == 3) {
 	    int line_width;
 
-	    if (bu_sscanf(argv[3], "%d", &line_width) != 1)
+	    if (bu_sscanf(argv[2], "%d", &line_width) != 1)
 		goto bad;
 
 	    if (line_width < 0)
@@ -4093,12 +4334,12 @@ to_data_polygons(struct ged *gedp,
      *
      * Set/get the line style of polygon i.
      */
-    if (BU_STR_EQUAL(argv[2], "poly_line_style")) {
+    if (BU_STR_EQUAL(argv[1], "poly_line_style")) {
 	size_t i;
 
-	if (argc == 4) {
+	if (argc == 3) {
 	    /* Get the line style for polygon i */
-	    if (bu_sscanf(argv[3], "%zu", &i) != 1 ||
+	    if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
 		i >= gdpsp->gdps_polygons.gp_num_polygons)
 		goto bad;
 
@@ -4107,14 +4348,14 @@ to_data_polygons(struct ged *gedp,
 	    return GED_OK;
 	}
 
-	if (argc == 5) {
+	if (argc == 4) {
 	    int line_style;
 
-	    if (bu_sscanf(argv[3], "%zu", &i) != 1 ||
+	    if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
 		i >= gdpsp->gdps_polygons.gp_num_polygons)
 		goto bad;
 
-	    if (bu_sscanf(argv[4], "%d", &line_style) != 1)
+	    if (bu_sscanf(argv[3], "%d", &line_style) != 1)
 		goto bad;
 
 
@@ -4134,18 +4375,18 @@ to_data_polygons(struct ged *gedp,
      *
      * Set the line style of all polygons, or get the default polygon line style.
      */
-    if (BU_STR_EQUAL(argv[2], "line_style")) {
+    if (BU_STR_EQUAL(argv[1], "line_style")) {
 	size_t i;
 
-	if (argc == 3) {
+	if (argc == 2) {
 	    bu_vls_printf(gedp->ged_result_str, "%d", gdpsp->gdps_line_style);
 	    return GED_OK;
 	}
 
-	if (argc == 4) {
+	if (argc == 3) {
 	    int line_style;
 
-	    if (bu_sscanf(argv[3], "%d", &line_style) != 1)
+	    if (bu_sscanf(argv[2], "%d", &line_style) != 1)
 		goto bad;
 
 	    if (line_style <= 0)
@@ -4172,20 +4413,20 @@ to_data_polygons(struct ged *gedp,
      *
      * Append the polygon specified by plist.
      */
-    if (BU_STR_EQUAL(argv[2], "append_poly")) {
-	if (argc != 4)
+    if (BU_STR_EQUAL(argv[1], "append_poly")) {
+	if (argc != 3)
 	    goto bad;
 
-	if (argc == 4) {
+	if (argc == 3) {
 	    register size_t i;
 	    int ac;
 	    size_t contour_ac;
 	    const char **contour_av;
 
-	    /* Split the polygon in argv[3] into contours */
-	    if (Tcl_SplitList(current_top->to_interp, argv[3], &ac, &contour_av) != TCL_OK ||
+	    /* Split the polygon in argv[2] into contours */
+	    if (Tcl_SplitList(interp, argv[2], &ac, &contour_av) != TCL_OK ||
 		ac < 1) {
-		bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(current_top->to_interp));
+		bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(interp));
 		return GED_ERROR;
 	    }
 	    contour_ac = ac;
@@ -4193,10 +4434,10 @@ to_data_polygons(struct ged *gedp,
 	    i = gdpsp->gdps_polygons.gp_num_polygons;
 	    ++gdpsp->gdps_polygons.gp_num_polygons;
 	    gdpsp->gdps_polygons.gp_polygon = (bview_polygon *)bu_realloc(gdpsp->gdps_polygons.gp_polygon,
-									gdpsp->gdps_polygons.gp_num_polygons * sizeof(bview_polygon),
-									"realloc gp_polygon");
+									  gdpsp->gdps_polygons.gp_num_polygons * sizeof(bview_polygon),
+									  "realloc gp_polygon");
 
-	    if (to_extract_contours_av(gedp, gdvp, &gdpsp->gdps_polygons.gp_polygon[i],
+	    if (to_extract_contours_av(interp, gedp, gdvp, &gdpsp->gdps_polygons.gp_polygon[i],
 				       contour_ac, contour_av, gdvp->gdv_view->gv_mode, 0) != GED_OK) {
 		Tcl_Free((char *)contour_av);
 		return GED_ERROR;
@@ -4218,31 +4459,35 @@ to_data_polygons(struct ged *gedp,
      *
      * Clip polygon i using polygon j and op.
      */
-    if (BU_STR_EQUAL(argv[2], "clip")) {
+    if (BU_STR_EQUAL(argv[1], "clip")) {
 	size_t i, j;
 	int op;
 	bview_polygon *gpp;
 
-	if (argc > 6)
+	if (argc > 5)
 	    goto bad;
 
-	if (argc > 3) {
-	    if (bu_sscanf(argv[3], "%zu", &i) != 1 ||
+	if (argc > 2) {
+	    if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
 		i >= gdpsp->gdps_polygons.gp_num_polygons)
 		goto bad;
 	} else
 	    i = gdpsp->gdps_target_polygon_i;
 
-	if (argc > 4) {
-	    if (bu_sscanf(argv[4], "%zu", &j) != 1 ||
+	if (argc > 3) {
+	    if (bu_sscanf(argv[3], "%zu", &j) != 1 ||
 		j >= gdpsp->gdps_polygons.gp_num_polygons)
 		goto bad;
 	} else
 	    j = gdpsp->gdps_polygons.gp_num_polygons - 1; /* Default - use last polygon as the clip polygon */
 
-	if (argc != 6)
+	/* Nothing to do */
+	if (i == j)
+	    return GED_OK;
+
+	if (argc != 5)
 	    op = gdpsp->gdps_clip_type;
-	else if (bu_sscanf(argv[5], "%d", &op) != 1 || op > gctXor)
+	else if (bu_sscanf(argv[4], "%d", &op) != 1 || op > gctXor)
 	    goto bad;
 
 	gpp = ged_clip_polygon((ClipType)op,
@@ -4256,15 +4501,15 @@ to_data_polygons(struct ged *gedp,
 	to_polygon_free(&gdpsp->gdps_polygons.gp_polygon[i]);
 
 	/* When using defaults, the clip polygon is assumed to be temporary and is removed after clipping */
-	if (argc == 3) {
+	if (argc == 2) {
 	    /* Free the clip polygon */
 	    to_polygon_free(&gdpsp->gdps_polygons.gp_polygon[j]);
 
 	    /* No longer need space for the clip polygon */
 	    --gdpsp->gdps_polygons.gp_num_polygons;
 	    gdpsp->gdps_polygons.gp_polygon = (bview_polygon *)bu_realloc(gdpsp->gdps_polygons.gp_polygon,
-									gdpsp->gdps_polygons.gp_num_polygons * sizeof(bview_polygon),
-									"realloc gp_polygon");
+									  gdpsp->gdps_polygons.gp_num_polygons * sizeof(bview_polygon),
+									  "realloc gp_polygon");
 	}
 
 	/* Replace the target polygon with the newly clipped polygon. */
@@ -4284,19 +4529,19 @@ to_data_polygons(struct ged *gedp,
      *
      * Export polygon i to sketch_name
      */
-    if (BU_STR_EQUAL(argv[2], "export")) {
+    if (BU_STR_EQUAL(argv[1], "export")) {
 	size_t i;
 	int ret;
 
-	if (argc != 5)
+	if (argc != 4)
 	    goto bad;
 
-	if (bu_sscanf(argv[3], "%zu", &i) != 1 ||
+	if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
 	    i >= gdpsp->gdps_polygons.gp_num_polygons)
 	    goto bad;
 
-	if ((ret = ged_export_polygon(gedp, gdpsp, i, argv[4])) != GED_OK)
-	    bu_vls_printf(gedp->ged_result_str, "%s: failed to export polygon %zu to %s", argv[0], i, argv[4]);
+	if ((ret = ged_export_polygon(gedp, gdpsp, i, argv[3])) != GED_OK)
+	    bu_vls_printf(gedp->ged_result_str, "%s: failed to export polygon %lu to %s", argv[0], i, argv[3]);
 
 	return ret;
     }
@@ -4305,23 +4550,23 @@ to_data_polygons(struct ged *gedp,
      *
      * Import sketch_name and append
      */
-    if (BU_STR_EQUAL(argv[2], "import")) {
+    if (BU_STR_EQUAL(argv[1], "import")) {
 	bview_polygon *gpp;
 	size_t i;
 
-	if (argc != 4)
+	if (argc != 3)
 	    goto bad;
 
-	if ((gpp = ged_import_polygon(gedp, argv[3])) == (bview_polygon *)0) {
-	    bu_vls_printf(gedp->ged_result_str, "%s: failed to import sketch %s", argv[0], argv[3]);
+	if ((gpp = ged_import_polygon(gedp, argv[2])) == (bview_polygon *)0) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: failed to import sketch %s", argv[0], argv[2]);
 	    return GED_ERROR;
 	}
 
 	i = gdpsp->gdps_polygons.gp_num_polygons;
 	++gdpsp->gdps_polygons.gp_num_polygons;
 	gdpsp->gdps_polygons.gp_polygon = (bview_polygon *)bu_realloc(gdpsp->gdps_polygons.gp_polygon,
-								    gdpsp->gdps_polygons.gp_num_polygons * sizeof(bview_polygon),
-								    "realloc gp_polygon");
+								      gdpsp->gdps_polygons.gp_num_polygons * sizeof(bview_polygon),
+								      "realloc gp_polygon");
 
 	gdpsp->gdps_polygons.gp_polygon[i] = *gpp;  /* struct copy */
 	VMOVE(gdpsp->gdps_polygons.gp_polygon[i].gp_color, gdpsp->gdps_color);
@@ -4332,25 +4577,25 @@ to_data_polygons(struct ged *gedp,
 	return GED_OK;
     }
 
-    if (BU_STR_EQUAL(argv[2], "fill")) {
+    if (BU_STR_EQUAL(argv[1], "fill")) {
 	size_t i;
 	vect2d_t vdir;
 	fastf_t vdelta;
 
-	if (argc != 6)
+	if (argc != 5)
 	    goto bad;
 
-	if (bu_sscanf(argv[3], "%zu", &i) != 1 ||
+	if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
 	    i >= gdpsp->gdps_polygons.gp_num_polygons)
 	    goto bad;
 
-	if (bu_sscanf(argv[4], "%lf %lf", &vdir[X], &vdir[Y]) != 2) {
-	    bu_vls_printf(gedp->ged_result_str, "%s: bad dir: %s", argv[0], argv[4]);
+	if (bu_sscanf(argv[3], "%lf %lf", &vdir[X], &vdir[Y]) != 2) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: bad dir: %s", argv[0], argv[3]);
 	    goto bad;
 	}
 
-	if (bu_sscanf(argv[5], "%lf", &vdelta) != 1) {
-	    bu_vls_printf(gedp->ged_result_str, "%s: bad delta: %s", argv[0], argv[5]);
+	if (bu_sscanf(argv[4], "%lf", &vdelta) != 1) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: bad delta: %s", argv[0], argv[4]);
 	    goto bad;
 	}
 
@@ -4363,14 +4608,14 @@ to_data_polygons(struct ged *gedp,
      *
      * Find area of polygon i
      */
-    if (BU_STR_EQUAL(argv[2], "area")) {
+    if (BU_STR_EQUAL(argv[1], "area")) {
 	size_t i;
 	double area;
 
-	if (argc != 4)
+	if (argc != 3)
 	    goto bad;
 
-	if (bu_sscanf(argv[3], "%zu", &i) != 1 ||
+	if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
 	    i >= gdpsp->gdps_polygons.gp_num_polygons)
 	    goto bad;
 
@@ -4385,18 +4630,18 @@ to_data_polygons(struct ged *gedp,
      *
      * Do polygons i and j overlap?
      */
-    if (BU_STR_EQUAL(argv[2], "polygons_overlap")) {
+    if (BU_STR_EQUAL(argv[1], "polygons_overlap")) {
 	size_t i, j;
 	int ret;
 
-	if (argc != 5)
+	if (argc != 4)
 	    goto bad;
 
-	if (bu_sscanf(argv[3], "%zu", &i) != 1 ||
+	if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
 	    i >= gdpsp->gdps_polygons.gp_num_polygons)
 	    goto bad;
 
-	if (bu_sscanf(argv[4], "%zu", &j) != 1 ||
+	if (bu_sscanf(argv[3], "%zu", &j) != 1 ||
 	    j >= gdpsp->gdps_polygons.gp_num_polygons)
 	    goto bad;
 
@@ -4411,17 +4656,16 @@ to_data_polygons(struct ged *gedp,
      * Set/get the polygon list. If vpolygons is specified then
      * the polygon list is in view coordinates.
      */
-    if (BU_STR_EQUAL(argv[2], "polygons") || BU_STR_EQUAL(argv[2], "vpolygons")) {
+    if (BU_STR_EQUAL(argv[1], "polygons") || BU_STR_EQUAL(argv[1], "vpolygons")) {
 	register size_t i, j, k;
 	int ac;
 	int vflag;
 
-	if (BU_STR_EQUAL(argv[2], "polygons"))
+	if (BU_STR_EQUAL(argv[1], "polygons"))
 	    vflag = 0;
 	else
 	    vflag = 1;
-
-	if (argc == 3) {
+	if (argc == 2) {
 	    for (i = 0; i < gdpsp->gdps_polygons.gp_num_polygons; ++i) {
 		bu_vls_printf(gedp->ged_result_str, " {");
 
@@ -4449,13 +4693,13 @@ to_data_polygons(struct ged *gedp,
 	    return GED_OK;
 	}
 
-	if (argc == 4) {
+	if (argc == 3) {
 	    size_t polygon_ac;
 	    const char **polygon_av;
 
 	    /* Split into polygons */
-	    if (Tcl_SplitList(current_top->to_interp, argv[3], &ac, &polygon_av) != TCL_OK) {
-		bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(current_top->to_interp));
+	    if (Tcl_SplitList(interp, argv[2], &ac, &polygon_av) != TCL_OK) {
+		bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(interp));
 		return GED_ERROR;
 	    }
 	    polygon_ac = ac;
@@ -4468,7 +4712,7 @@ to_data_polygons(struct ged *gedp,
 		return GED_OK;
 	    }
 
-	    if (to_extract_polygons_av(gedp, gdvp, &gdpsp->gdps_polygons, polygon_ac, polygon_av, gdvp->gdv_view->gv_mode, vflag) != GED_OK) {
+	    if (to_extract_polygons_av(interp, gedp, gdvp, gdpsp, polygon_ac, polygon_av, gdvp->gdv_view->gv_mode, vflag) != GED_OK) {
 		Tcl_Free((char *)polygon_av);
 		return GED_ERROR;
 	    }
@@ -4483,29 +4727,29 @@ to_data_polygons(struct ged *gedp,
      *
      * Replace polygon i with plist.
      */
-    if (BU_STR_EQUAL(argv[2], "replace_poly")) {
+    if (BU_STR_EQUAL(argv[1], "replace_poly")) {
 	size_t i;
 	int ac;
 	size_t contour_ac;
 	const char **contour_av;
 	bview_polygon gp;
 
-	if (argc != 5)
+	if (argc != 4)
 	    goto bad;
 
-	if (bu_sscanf(argv[3], "%zu", &i) != 1 ||
+	if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
 	    i >= gdpsp->gdps_polygons.gp_num_polygons)
 	    goto bad;
 
-	/* Split the polygon in argv[4] into contours */
-	if (Tcl_SplitList(current_top->to_interp, argv[4], &ac, &contour_av) != TCL_OK ||
+	/* Split the polygon in argv[3] into contours */
+	if (Tcl_SplitList(interp, argv[3], &ac, &contour_av) != TCL_OK ||
 	    ac < 1) {
-	    bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(current_top->to_interp));
+	    bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(interp));
 	    return GED_ERROR;
 	}
 	contour_ac = ac;
 
-	if (to_extract_contours_av(gedp, gdvp, &gp, contour_ac, contour_av, gdvp->gdv_view->gv_mode, 0) != GED_OK) {
+	if (to_extract_contours_av(interp, gedp, gdvp, &gp, contour_ac, contour_av, gdvp->gdv_view->gv_mode, 0) != GED_OK) {
 	    Tcl_Free((char *)contour_av);
 	    return GED_ERROR;
 	}
@@ -4525,22 +4769,22 @@ to_data_polygons(struct ged *gedp,
      *
      * Append pt to polygon_i/contour_j
      */
-    if (BU_STR_EQUAL(argv[2], "append_point")) {
+    if (BU_STR_EQUAL(argv[1], "append_point")) {
 	size_t i, j, k;
 	double pt[ELEMENTS_PER_POINT]; /* must be double for scan */
 
-	if (argc != 6)
+	if (argc != 5)
 	    goto bad;
 
-	if (bu_sscanf(argv[3], "%zu", &i) != 1 ||
+	if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
 	    i >= gdpsp->gdps_polygons.gp_num_polygons)
 	    goto bad;
 
-	if (bu_sscanf(argv[4], "%zu", &j) != 1 ||
+	if (bu_sscanf(argv[3], "%zu", &j) != 1 ||
 	    j >= gdpsp->gdps_polygons.gp_polygon[i].gp_num_contours)
 	    goto bad;
 
-	if (bu_sscanf(argv[5], "%lf %lf %lf", &pt[X], &pt[Y], &pt[Z]) != 3)
+	if (bu_sscanf(argv[4], "%lf %lf %lf", &pt[X], &pt[Y], &pt[Z]) != 3)
 	    goto bad;
 
 	k = gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_num_points;
@@ -4557,21 +4801,21 @@ to_data_polygons(struct ged *gedp,
      *
      * Get polygon_i/contour_j/point_k
      */
-    if (BU_STR_EQUAL(argv[2], "get_point")) {
+    if (BU_STR_EQUAL(argv[1], "get_point")) {
 	size_t i, j, k;
 
-	if (argc != 6)
+	if (argc != 5)
 	    goto bad;
 
-	if (bu_sscanf(argv[3], "%zu", &i) != 1 ||
+	if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
 	    i >= gdpsp->gdps_polygons.gp_num_polygons)
 	    goto bad;
 
-	if (bu_sscanf(argv[4], "%zu", &j) != 1 ||
+	if (bu_sscanf(argv[3], "%zu", &j) != 1 ||
 	    j >= gdpsp->gdps_polygons.gp_polygon[i].gp_num_contours)
 	    goto bad;
 
-	if (bu_sscanf(argv[5], "%zu", &k) != 1 ||
+	if (bu_sscanf(argv[4], "%zu", &k) != 1 ||
 	    k >= gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_num_points)
 	    goto bad;
 
@@ -4583,26 +4827,26 @@ to_data_polygons(struct ged *gedp,
      *
      * Replace polygon_i/contour_j/point_k with pt
      */
-    if (BU_STR_EQUAL(argv[2], "replace_point")) {
+    if (BU_STR_EQUAL(argv[1], "replace_point")) {
 	size_t i, j, k;
 	double pt[ELEMENTS_PER_POINT];
 
-	if (argc != 7)
+	if (argc != 6)
 	    goto bad;
 
-	if (bu_sscanf(argv[3], "%zu", &i) != 1 ||
+	if (bu_sscanf(argv[2], "%zu", &i) != 1 ||
 	    i >= gdpsp->gdps_polygons.gp_num_polygons)
 	    goto bad;
 
-	if (bu_sscanf(argv[4], "%zu", &j) != 1 ||
+	if (bu_sscanf(argv[3], "%zu", &j) != 1 ||
 	    j >= gdpsp->gdps_polygons.gp_polygon[i].gp_num_contours)
 	    goto bad;
 
-	if (bu_sscanf(argv[5], "%zu", &k) != 1 ||
+	if (bu_sscanf(argv[4], "%zu", &k) != 1 ||
 	    k >= gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_num_points)
 	    goto bad;
 
-	if (bu_sscanf(argv[6], "%lf %lf %lf", &pt[X], &pt[Y], &pt[Z]) != 3)
+	if (bu_sscanf(argv[5], "%lf %lf %lf", &pt[X], &pt[Y], &pt[Z]) != 3)
 	    goto bad;
 
 	VMOVE(gdpsp->gdps_polygons.gp_polygon[i].gp_contour[j].gpc_point[k], pt);
@@ -4611,8 +4855,38 @@ to_data_polygons(struct ged *gedp,
     }
 
 bad:
-    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+
     return GED_ERROR;
+}
+
+
+int
+go_data_move(Tcl_Interp *UNUSED(interp),
+	     struct ged *gedp,
+	     struct ged_dm_view *gdvp,
+	     int argc,
+	     const char *argv[],
+	     const char *usage)
+{
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc < 4 || 5 < argc) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    /* Don't allow go_refresh() to be called */
+    if (current_top != NULL)
+	current_top->to_gop->go_refresh_on = 0;
+
+    return to_data_move_func(gedp, gdvp, argc, argv, usage);
 }
 
 
@@ -4627,13 +4901,6 @@ to_data_move(struct ged *gedp,
 	     const char *usage,
 	     int UNUSED(maxargs))
 {
-    int mx, my;
-    int width, height;
-    int dindex;
-    fastf_t cx, cy;
-    fastf_t vx, vy;
-    fastf_t sf;
-    point_t mpoint, vpoint;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -4660,17 +4927,38 @@ to_data_move(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (bu_sscanf(argv[3], "%d", &dindex) != 1 || dindex < 0)
+    /* shift the command name to argv[1] before calling to_data_arrows_func */
+    argv[1] = argv[0];
+    return to_data_move_func(gedp, gdvp, argc-1, argv+1, usage);
+}
+
+
+HIDDEN int
+to_data_move_func(struct ged *gedp,
+		  struct ged_dm_view *gdvp,
+		  int argc,
+		  const char *argv[],
+		  const char *usage)
+{
+    int mx, my;
+    int width, height;
+    int dindex;
+    fastf_t cx, cy;
+    fastf_t vx, vy;
+    fastf_t sf;
+    point_t mpoint, vpoint;
+
+    if (bu_sscanf(argv[2], "%d", &dindex) != 1 || dindex < 0)
 	goto bad;
 
-    if (argc == 5) {
-	if (bu_sscanf(argv[4], "%d %d", &mx, &my) != 2)
+    if (argc == 4) {
+	if (bu_sscanf(argv[3], "%d %d", &mx, &my) != 2)
 	    goto bad;
     } else {
-	if (bu_sscanf(argv[4], "%d", &mx) != 1)
+	if (bu_sscanf(argv[3], "%d", &mx) != 1)
 	    goto bad;
 
-	if (bu_sscanf(argv[5], "%d", &my) != 1)
+	if (bu_sscanf(argv[4], "%d", &my) != 1)
 	    goto bad;
     }
 
@@ -4682,11 +4970,11 @@ to_data_move(struct ged *gedp,
     vx = (mx - cx) * sf;
     vy = (cy - my) * sf;
 
-    if (BU_STR_EQUAL(argv[2], "data_polygons")) {
+    if (BU_STR_EQUAL(argv[1], "data_polygons")) {
 	size_t i, j, k;
 	bview_data_polygon_state *gdpsp = &gdvp->gdv_view->gv_data_polygons;
 
-	if (bu_sscanf(argv[3], "%zu %zu %zu", &i, &j, &k) != 3)
+	if (bu_sscanf(argv[2], "%zu %zu %zu", &i, &j, &k) != 3)
 	    goto bad;
 
 	/* Silently ignore */
@@ -4740,7 +5028,7 @@ to_data_move(struct ged *gedp,
 	return GED_OK;
     }
 
-    if (BU_STR_EQUAL(argv[2], "data_arrows")) {
+    if (BU_STR_EQUAL(argv[1], "data_arrows")) {
 	struct bview_data_arrow_state *gdasp = &gdvp->gdv_view->gv_data_arrows;
 
 	/* Silently ignore */
@@ -4781,7 +5069,7 @@ to_data_move(struct ged *gedp,
 	return GED_OK;
     }
 
-    if (BU_STR_EQUAL(argv[2], "sdata_arrows")) {
+    if (BU_STR_EQUAL(argv[1], "sdata_arrows")) {
 	struct bview_data_arrow_state *gdasp = &gdvp->gdv_view->gv_sdata_arrows;
 
 	/* Silently ignore */
@@ -4822,7 +5110,7 @@ to_data_move(struct ged *gedp,
 	return GED_OK;
     }
 
-    if (BU_STR_EQUAL(argv[2], "data_axes")) {
+    if (BU_STR_EQUAL(argv[1], "data_axes")) {
 	struct bview_data_axes_state *gdasp = &gdvp->gdv_view->gv_data_axes;
 
 	/* Silently ignore */
@@ -4839,7 +5127,7 @@ to_data_move(struct ged *gedp,
 	return GED_OK;
     }
 
-    if (BU_STR_EQUAL(argv[2], "sdata_axes")) {
+    if (BU_STR_EQUAL(argv[1], "sdata_axes")) {
 	struct bview_data_axes_state *gdasp = &gdvp->gdv_view->gv_sdata_axes;
 
 	/* Silently ignore */
@@ -4857,7 +5145,7 @@ to_data_move(struct ged *gedp,
     }
 
 
-    if (BU_STR_EQUAL(argv[2], "data_labels")) {
+    if (BU_STR_EQUAL(argv[1], "data_labels")) {
 	struct bview_data_label_state *gdlsp = &gdvp->gdv_view->gv_data_labels;
 
 	/* Silently ignore */
@@ -4874,7 +5162,7 @@ to_data_move(struct ged *gedp,
 	return GED_OK;
     }
 
-    if (BU_STR_EQUAL(argv[2], "sdata_labels")) {
+    if (BU_STR_EQUAL(argv[1], "sdata_labels")) {
 	struct bview_data_label_state *gdlsp = &gdvp->gdv_view->gv_sdata_labels;
 
 	/* Silently ignore */
@@ -4891,7 +5179,7 @@ to_data_move(struct ged *gedp,
 	return GED_OK;
     }
 
-    if (BU_STR_EQUAL(argv[2], "data_lines")) {
+    if (BU_STR_EQUAL(argv[1], "data_lines")) {
 	struct bview_data_line_state *gdlsp = &gdvp->gdv_view->gv_data_lines;
 
 	/* Silently ignore */
@@ -4932,7 +5220,7 @@ to_data_move(struct ged *gedp,
 	return GED_OK;
     }
 
-    if (BU_STR_EQUAL(argv[2], "sdata_lines")) {
+    if (BU_STR_EQUAL(argv[1], "sdata_lines")) {
 	struct bview_data_line_state *gdlsp = &gdvp->gdv_view->gv_sdata_lines;
 
 	/* Silently ignore */
@@ -5068,6 +5356,36 @@ to_data_scale(struct ged *gedp,
 }
 
 
+int
+go_data_move_object_mode(Tcl_Interp *UNUSED(interp),
+			 struct ged *gedp,
+			 struct ged_dm_view *gdvp,
+			 int argc,
+			 const char *argv[],
+			 const char *usage)
+{
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc != 3) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    /* Don't allow go_refresh() to be called */
+    if (current_top != NULL)
+	current_top->to_gop->go_refresh_on = 0;
+
+    return to_data_move_object_mode_func(gedp, gdvp, argc, argv, usage);
+}
+
+
 HIDDEN int
 to_data_move_object_mode(struct ged *gedp,
 			 int argc,
@@ -5076,7 +5394,6 @@ to_data_move_object_mode(struct ged *gedp,
 			 const char *usage,
 			 int UNUSED(maxargs))
 {
-    int x, y;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -5103,10 +5420,25 @@ to_data_move_object_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
+    /* shift the command name to argv[1] before calling to_data_move_point_mode_func */
+    argv[1] = argv[0];
+    return to_data_move_object_mode_func(gedp, gdvp, argc-1, argv+1, usage);
+}
+
+
+HIDDEN int
+to_data_move_object_mode_func(struct ged *gedp,
+			      struct ged_dm_view *gdvp,
+			      int UNUSED(argc),
+			      const char *argv[],
+			      const char *usage)
+{
+    int x, y;
+
     gedp->ged_gvp = gdvp->gdv_view;
 
-    if (bu_sscanf(argv[2], "%d", &x) != 1 ||
-	bu_sscanf(argv[3], "%d", &y) != 1) {
+    if (bu_sscanf(argv[1], "%d", &x) != 1 ||
+	bu_sscanf(argv[2], "%d", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -5120,6 +5452,36 @@ to_data_move_object_mode(struct ged *gedp,
 }
 
 
+int
+go_data_move_point_mode(Tcl_Interp *UNUSED(interp),
+			struct ged *gedp,
+			struct ged_dm_view *gdvp,
+			int argc,
+			const char *argv[],
+			const char *usage)
+{
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc != 3) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    /* Don't allow go_refresh() to be called */
+    if (current_top != NULL)
+	current_top->to_gop->go_refresh_on = 0;
+
+    return to_data_move_point_mode_func(gedp, gdvp, argc, argv, usage);
+}
+
+
 HIDDEN int
 to_data_move_point_mode(struct ged *gedp,
 			int argc,
@@ -5128,7 +5490,6 @@ to_data_move_point_mode(struct ged *gedp,
 			const char *usage,
 			int UNUSED(maxargs))
 {
-    int x, y;
     struct ged_dm_view *gdvp;
 
     /* initialize result */
@@ -5155,10 +5516,25 @@ to_data_move_point_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
+    /* shift the command name to argv[1] before calling to_data_move_point_mode_func */
+    argv[1] = argv[0];
+    return to_data_move_point_mode_func(gedp, gdvp, argc-1, argv+1, usage);
+}
+
+
+HIDDEN int
+to_data_move_point_mode_func(struct ged *gedp,
+			     struct ged_dm_view *gdvp,
+			     int UNUSED(argc),
+			     const char *argv[],
+			     const char *usage)
+{
+    int x, y;
+
     gedp->ged_gvp = gdvp->gdv_view;
 
-    if (bu_sscanf(argv[2], "%d", &x) != 1 ||
-	bu_sscanf(argv[3], "%d", &y) != 1) {
+    if (bu_sscanf(argv[1], "%d", &x) != 1 ||
+	bu_sscanf(argv[2], "%d", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -5678,257 +6054,257 @@ to_init_default_bindings(struct ged_dm_view *gdvp)
 
     if (dm_get_pathname(gdvp->gdv_dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Configure> {%s configure %s; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s <Enter> {focus %s; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)));
 	bu_vls_printf(&bindings, "bind %s <Expose> {%s handle_expose %s %%c; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "catch {wm protocol %s WM_DELETE_WINDOW {%s delete_view %s; break}}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 
 	/* Mouse Bindings */
 	bu_vls_printf(&bindings, "bind %s <2> {%s vslew %s %%x %%y; focus %s; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name),
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)));
 	bu_vls_printf(&bindings, "bind %s <1> {%s zoom %s 0.5; focus %s; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name),
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)));
 	bu_vls_printf(&bindings, "bind %s <3> {%s zoom %s 2.0; focus %s;  break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name),
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)));
 #ifdef DM_X
 	bu_vls_printf(&bindings, "bind %s <4> {%s zoom %s 1.1; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s <5> {%s zoom %s 0.9; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 #endif
 #ifdef DM_WGL
 	bu_vls_printf(&bindings, "bind %s <MouseWheel> {if {%%D < 0} {%s zoom %s 0.9} else {%s zoom %s 1.1}; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 #endif
 
 	/* Idle Mode */
 	bu_vls_printf(&bindings, "bind %s <ButtonRelease> {%s idle_mode %s}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s <KeyRelease-Control_L> {%s idle_mode %s}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s <KeyRelease-Control_R> {%s idle_mode %s}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s <KeyRelease-Shift_L> {%s idle_mode %s}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s <KeyRelease-Shift_R> {%s idle_mode %s}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s <KeyRelease-Alt_L> {%s idle_mode %s; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s <KeyRelease-Alt_R> {%s idle_mode %s; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 
 	/* Rotate Mode */
 	bu_vls_printf(&bindings, "bind %s <Control-ButtonRelease-1> {%s idle_mode %s}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s <Control-ButtonPress-1> {%s rotate_mode %s %%x %%y}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s <Control-ButtonPress-2> {%s rotate_mode %s %%x %%y}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s <Control-ButtonPress-3> {%s rotate_mode %s %%x %%y}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 
 	/* Translate Mode */
 	bu_vls_printf(&bindings, "bind %s <Shift-ButtonRelease-1> {%s idle_mode %s}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s <Shift-ButtonPress-1> {%s translate_mode %s %%x %%y}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s <Shift-ButtonPress-2> {%s translate_mode %s %%x %%y}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s <Shift-ButtonPress-3> {%s translate_mode %s %%x %%y}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 
 	/* Scale Mode */
 	bu_vls_printf(&bindings, "bind %s <Control-Shift-ButtonRelease-1> {%s idle_mode %s}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s <Control-Shift-ButtonPress-1> {%s scale_mode %s %%x %%y}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s <Control-Shift-ButtonPress-2> {%s scale_mode %s %%x %%y}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s <Control-Shift-ButtonPress-3> {%s scale_mode %s %%x %%y}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 
 	/* Constrained Rotate Mode */
 	bu_vls_printf(&bindings, "bind %s <Control-Lock-ButtonRelease-1> {%s idle_mode %s}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s <Control-Lock-ButtonPress-1> {%s constrain_rmode %s x %%x %%y; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s <Control-Lock-ButtonPress-2> {%s constrain_rmode %s y %%x %%y; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s <Control-Lock-ButtonPress-3> {%s constrain_rmode %s z %%x %%y; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 
 	/* Constrained Translate Mode */
 	bu_vls_printf(&bindings, "bind %s <Shift-Lock-ButtonRelease-1> {%s idle_mode %s; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s <Shift-Lock-ButtonPress-1> {%s constrain_tmode %s x %%x %%y; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s <Shift-Lock-ButtonPress-2> {%s constrain_tmode %s y %%x %%y; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s <Shift-Lock-ButtonPress-3> {%s constrain_tmode %s z %%x %%y; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 
 	/* Key Bindings */
 	bu_vls_printf(&bindings, "bind %s 3 {%s aet %s 35 25; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s 4 {%s aet %s 45 45; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s f {%s aet %s 0 0; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s F {%s aet %s 0 0; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s R {%s aet %s 180 0; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s r {%s aet %s 270 0; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s l {%s aet %s 90 0; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s L {%s aet %s 90 0; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s t {%s aet %s 270 90; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s T {%s aet %s 270 90; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s b {%s aet %s 270 -90; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s B {%s aet %s 270 -90; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s + {%s zoom %s 2.0; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s = {%s zoom %s 2.0; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s _ {%s zoom %s 0.5; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s - {%s zoom %s 0.5; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s <Key-Left> {%s rot %s -v 0 1 0; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s <Key-Right> {%s rot %s -v 0 -1 0; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s <Key-Up> {%s rot %s -v 1 0 0; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	bu_vls_printf(&bindings, "bind %s <Key-Down> {%s rot %s -v -1 0 0; break}; ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 
 
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
@@ -6072,11 +6448,11 @@ to_get_prev_mouse(struct ged *gedp,
 
 HIDDEN int
 to_fit_png_image(struct ged *gedp,
-       int argc,
-       const char *argv[],
-       ged_func_ptr UNUSED(func),
-       const char *usage,
-       int UNUSED(maxargs))
+		 int argc,
+		 const char *argv[],
+		 ged_func_ptr UNUSED(func),
+		 const char *usage,
+		 int UNUSED(maxargs))
 {
     icv_image_t *img;
     size_t i_w, i_n;
@@ -6603,9 +6979,9 @@ redraw_edited_paths(struct bu_hash_tbl *t, void *udata)
 	    MAT_IDN(params->edit_mat);
 
 	    bu_vls_printf(&tcl_cmd, "%s otranslate %s %s %s",
-		    bu_vls_addr(&data->gdvp->gdv_edit_motion_delta_callback),
-		    bu_vls_addr(&tran_x_vls), bu_vls_addr(&tran_y_vls),
-		    bu_vls_addr(&tran_z_vls));
+			  bu_vls_addr(&data->gdvp->gdv_edit_motion_delta_callback),
+			  bu_vls_addr(&tran_x_vls), bu_vls_addr(&tran_y_vls),
+			  bu_vls_addr(&tran_z_vls));
 	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&tcl_cmd));
 
 	    bu_vls_free(&tcl_cmd);
@@ -6702,7 +7078,7 @@ to_idle_mode(struct ged *gedp,
 
 	if (dm_get_pathname(gdvp->gdv_dmp)) {
 	    bu_vls_printf(&bindings, "bind %s <Motion> {}",
-		    bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)));
+			  bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)));
 	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
 	}
 	bu_vls_free(&bindings);
@@ -7130,12 +7506,12 @@ to_more_args_callback(struct ged *gedp,
 
 
 HIDDEN int
-to_mouse_append_pt_common(struct ged *gedp,
-			  int argc,
-			  const char *argv[],
-			  ged_func_ptr func,
-			  const char *usage,
-			  int UNUSED(maxargs))
+to_mouse_append_pnt_common(struct ged *gedp,
+			   int argc,
+			   const char *argv[],
+			   ged_func_ptr func,
+			   const char *usage,
+			   int UNUSED(maxargs))
 {
     int ret;
     char *av[4];
@@ -7302,13 +7678,13 @@ to_mouse_brep_selection_append(struct ged *gedp,
 
     if (dm_get_pathname(gdvp->gdv_dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_brep_selection_translate %s %s %%x %%y; "
-		"%s brep %s plot SCV}",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name),
-		brep_name,
-		bu_vls_addr(&current_top->to_gop->go_name),
-		brep_name);
+		      "%s brep %s plot SCV}",
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name),
+		      brep_name,
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      brep_name);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
     bu_vls_free(&bindings);
@@ -7690,13 +8066,13 @@ to_mouse_find_arb_edge(struct ged *gedp,
     bu_vls_printf(&pt_vls, "%lf %lf %lf", view[X], view[Y], view[Z]);
 
     gedp->ged_gvp = gdvp->gdv_view;
-    av[0] = "find_arb_edge_nearest_pt";
+    av[0] = "find_arb_edge_nearest_pnt";
     av[1] = (char *)argv[2];
     av[2] = bu_vls_addr(&pt_vls);
     av[3] = (char *)argv[5];
     av[4] = (char *)0;
 
-    (void)ged_find_arb_edge_nearest_pt(gedp, 4, (const char **)av);
+    (void)ged_find_arb_edge_nearest_pnt(gedp, 4, (const char **)av);
     bu_vls_free(&pt_vls);
 
     return GED_OK;
@@ -7756,12 +8132,12 @@ to_mouse_find_bot_edge(struct ged *gedp,
     bu_vls_printf(&pt_vls, "%lf %lf %lf", view[X], view[Y], view[Z]);
 
     gedp->ged_gvp = gdvp->gdv_view;
-    av[0] = "find_bot_edge_nearest_pt";
+    av[0] = "find_bot_edge_nearest_pnt";
     av[1] = (char *)argv[2];
     av[2] = bu_vls_addr(&pt_vls);
     av[3] = (char *)0;
 
-    (void)ged_find_bot_edge_nearest_pt(gedp, 3, (const char **)av);
+    (void)ged_find_bot_edge_nearest_pnt(gedp, 3, (const char **)av);
     bu_vls_free(&pt_vls);
 
     return GED_OK;
@@ -7769,12 +8145,12 @@ to_mouse_find_bot_edge(struct ged *gedp,
 
 
 HIDDEN int
-to_mouse_find_botpt(struct ged *gedp,
-		    int argc,
-		    const char *argv[],
-		    ged_func_ptr UNUSED(func),
-		    const char *usage,
-		    int UNUSED(maxargs))
+to_mouse_find_bot_pnt(struct ged *gedp,
+		      int argc,
+		      const char *argv[],
+		      ged_func_ptr UNUSED(func),
+		      const char *usage,
+		      int UNUSED(maxargs))
 {
     char *av[6];
     point_t view;
@@ -7821,12 +8197,12 @@ to_mouse_find_botpt(struct ged *gedp,
     bu_vls_printf(&pt_vls, "%lf %lf %lf", view[X], view[Y], view[Z]);
 
     gedp->ged_gvp = gdvp->gdv_view;
-    av[0] = "find_botpt_nearest_pt";
+    av[0] = "find_bot_pnt_nearest_pnt";
     av[1] = (char *)argv[2];
     av[2] = bu_vls_addr(&pt_vls);
     av[3] = (char *)0;
 
-    (void)ged_find_botpt_nearest_pt(gedp, 3, (const char **)av);
+    (void)ged_find_bot_pnt_nearest_pnt(gedp, 3, (const char **)av);
     bu_vls_free(&pt_vls);
 
     return GED_OK;
@@ -7834,12 +8210,12 @@ to_mouse_find_botpt(struct ged *gedp,
 
 
 HIDDEN int
-to_mouse_find_metaballpt(struct ged *gedp,
-			 int argc,
-			 const char *argv[],
-			 ged_func_ptr UNUSED(func),
-			 const char *usage,
-			 int UNUSED(maxargs))
+to_mouse_find_metaball_pnt(struct ged *gedp,
+			   int argc,
+			   const char *argv[],
+			   ged_func_ptr UNUSED(func),
+			   const char *usage,
+			   int UNUSED(maxargs))
 {
     char *av[6];
     point_t model;
@@ -7888,12 +8264,12 @@ to_mouse_find_metaballpt(struct ged *gedp,
     bu_vls_printf(&pt_vls, "%lf %lf %lf", model[X], model[Y], model[Z]);
 
     gedp->ged_gvp = gdvp->gdv_view;
-    av[0] = "find_metaballpt_nearest_pt";
+    av[0] = "find_metaball_pnt_nearest_pnt";
     av[1] = (char *)argv[2];
     av[2] = bu_vls_addr(&pt_vls);
     av[3] = (char *)0;
 
-    (void)ged_find_metaballpt_nearest_pt(gedp, 3, (const char **)av);
+    (void)ged_find_metaball_pnt_nearest_pnt(gedp, 3, (const char **)av);
     bu_vls_free(&pt_vls);
 
     return GED_OK;
@@ -7901,12 +8277,12 @@ to_mouse_find_metaballpt(struct ged *gedp,
 
 
 HIDDEN int
-to_mouse_find_pipept(struct ged *gedp,
-		     int argc,
-		     const char *argv[],
-		     ged_func_ptr UNUSED(func),
-		     const char *usage,
-		     int UNUSED(maxargs))
+to_mouse_find_pipe_pnt(struct ged *gedp,
+		       int argc,
+		       const char *argv[],
+		       ged_func_ptr UNUSED(func),
+		       const char *usage,
+		       int UNUSED(maxargs))
 {
     char *av[6];
     point_t model;
@@ -7955,12 +8331,12 @@ to_mouse_find_pipept(struct ged *gedp,
     bu_vls_printf(&pt_vls, "%lf %lf %lf", model[X], model[Y], model[Z]);
 
     gedp->ged_gvp = gdvp->gdv_view;
-    av[0] = "find_pipept_nearest_pt";
+    av[0] = "find_pipe_pnt_nearest_pnt";
     av[1] = (char *)argv[2];
     av[2] = bu_vls_addr(&pt_vls);
     av[3] = (char *)0;
 
-    (void)ged_find_pipept_nearest_pt(gedp, 3, (const char **)av);
+    (void)ged_find_pipe_pnt_nearest_pnt(gedp, 3, (const char **)av);
     bu_vls_free(&pt_vls);
 
     return GED_OK;
@@ -8064,10 +8440,10 @@ to_mouse_joint_select(
 
     if (dm_get_pathname(gdvp->gdv_dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_joint_selection_translate %s %s %%x %%y}",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name),
-		joint_name);
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name),
+		      joint_name);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
     bu_vls_free(&bindings);
@@ -8423,12 +8799,12 @@ to_mouse_move_arb_face(struct ged *gedp,
 
 
 HIDDEN int
-to_mouse_move_botpt(struct ged *gedp,
-		    int argc,
-		    const char *argv[],
-		    ged_func_ptr UNUSED(func),
-		    const char *usage,
-		    int UNUSED(maxargs))
+to_mouse_move_bot_pnt(struct ged *gedp,
+		      int argc,
+		      const char *argv[],
+		      ged_func_ptr UNUSED(func),
+		      const char *usage,
+		      int UNUSED(maxargs))
 {
     int width;
     int ret;
@@ -8571,12 +8947,12 @@ to_mouse_move_botpt(struct ged *gedp,
     VSET(view, dx, dy, dz);
     MAT4X3PNT(model, v2m_mat, view);
 
-    /* ged_move_botpt expects things to be in local units */
+    /* ged_bot_move_pnt expects things to be in local units */
     VSCALE(model, model, gedp->ged_wdbp->dbip->dbi_base2local);
     bu_vls_printf(&pt_vls, "%lf %lf %lf", model[X], model[Y], model[Z]);
 
     gedp->ged_gvp = gdvp->gdv_view;
-    av[0] = "move_botpt";
+    av[0] = "bot_move_pnt";
 
     if (rflag) {
 	av[1] = "-r";
@@ -8585,14 +8961,14 @@ to_mouse_move_botpt(struct ged *gedp,
 	av[4] = bu_vls_addr(&pt_vls);
 	av[5] = (char *)0;
 
-	ret = ged_move_botpt(gedp, 5, (const char **)av);
+	ret = ged_bot_move_pnt(gedp, 5, (const char **)av);
     } else {
 	av[1] = (char *)argv[2];
 	av[2] = (char *)argv[3];
 	av[3] = bu_vls_addr(&pt_vls);
 	av[4] = (char *)0;
 
-	ret = ged_move_botpt(gedp, 4, (const char **)av);
+	ret = ged_bot_move_pnt(gedp, 4, (const char **)av);
     }
 
     bu_vls_free(&pt_vls);
@@ -8609,12 +8985,12 @@ to_mouse_move_botpt(struct ged *gedp,
 
 
 HIDDEN int
-to_mouse_move_botpts(struct ged *gedp,
-		     int argc,
-		     const char *argv[],
-		     ged_func_ptr UNUSED(func),
-		     const char *usage,
-		     int UNUSED(maxargs))
+to_mouse_move_bot_pnts(struct ged *gedp,
+		       int argc,
+		       const char *argv[],
+		       ged_func_ptr UNUSED(func),
+		       const char *usage,
+		       int UNUSED(maxargs))
 {
     int ret, width;
     const char *cmd;
@@ -8689,7 +9065,7 @@ to_mouse_move_botpts(struct ged *gedp,
     VSET(view, dx, dy, dz);
     MAT4X3PNT(model, v2m_mat, view);
 
-    /* ged_move_botpts expects things to be in local units */
+    /* ged_bot_move_pnts expects things to be in local units */
     VSCALE(model, model, gedp->ged_wdbp->dbip->dbi_base2local);
     bu_vls_printf(&pt_vls, "%lf %lf %lf", model[X], model[Y], model[Z]);
 
@@ -8698,8 +9074,8 @@ to_mouse_move_botpts(struct ged *gedp,
     {
 	register int i, j;
 	int ac = argc - 2;
-	char **av = (char **)bu_calloc(ac, sizeof(char *), "to_mouse_move_botpts: av[]");
-	av[0] = "move_botpts";
+	char **av = (char **)bu_calloc(ac, sizeof(char *), "to_mouse_move_bot_pnts: av[]");
+	av[0] = "bot_move_pnts";
 
 	av[1] = (char *)argv[4];
 	av[2] = bu_vls_addr(&pt_vls);
@@ -8708,7 +9084,7 @@ to_mouse_move_botpts(struct ged *gedp,
 	for (i=3, j=5; i < ac; ++i, ++j)
 	    av[i] = (char *)argv[j];
 
-	ret = ged_move_botpts(gedp, ac, (const char **)av);
+	ret = ged_bot_move_pnts(gedp, ac, (const char **)av);
 	bu_vls_free(&pt_vls);
 
 	if (ret == GED_OK) {
@@ -8718,7 +9094,7 @@ to_mouse_move_botpts(struct ged *gedp,
 	    to_edit_redraw(gedp, 2, (const char **)av);
 	}
 
-	bu_free((void *)av, "to_mouse_move_botpts: av[]");
+	bu_free((void *)av, "to_mouse_move_bot_pnts: av[]");
     }
 
     return GED_OK;
@@ -8726,12 +9102,12 @@ to_mouse_move_botpts(struct ged *gedp,
 
 
 HIDDEN int
-to_mouse_move_pt_common(struct ged *gedp,
-			int argc,
-			const char *argv[],
-			ged_func_ptr func,
-			const char *usage,
-			int UNUSED(maxargs))
+to_mouse_move_pnt_common(struct ged *gedp,
+			 int argc,
+			 const char *argv[],
+			 ged_func_ptr func,
+			 const char *usage,
+			 int UNUSED(maxargs))
 {
     int ret, width;
     char *av[6];
@@ -8794,7 +9170,7 @@ to_mouse_move_pt_common(struct ged *gedp,
 
     width = dm_get_width(gdvp->gdv_dmp);
     inv_width = 1.0 / (fastf_t)width;
-    /* ged_move_pipept expects things to be in local units */
+    /* ged_pipe_move_pnt expects things to be in local units */
     dx *= inv_width * gdvp->gdv_view->gv_size * gedp->ged_wdbp->dbip->dbi_base2local;
     dy *= inv_width * gdvp->gdv_view->gv_size * gedp->ged_wdbp->dbip->dbi_base2local;
     VSET(view, dx, dy, 0.0);
@@ -9130,16 +9506,16 @@ to_mouse_otranslate(struct ged *gedp,
 	const char *path_string = argv[2];
 	vect_t dvec;
 	struct path_edit_params *params = (struct path_edit_params *)bu_hash_get(current_top->to_gop->go_edited_paths,
-				(uint8_t *)path_string,
-				sizeof(char) * strlen(path_string) + 1);
+										 (uint8_t *)path_string,
+										 sizeof(char) * strlen(path_string) + 1);
 
 	if (!params) {
 	    BU_GET(params, struct path_edit_params);
 	    params->edit_mode = gdvp->gdv_view->gv_mode;
 	    params->dx = params->dy = 0.0;
 	    (void)bu_hash_set(current_top->to_gop->go_edited_paths,
-		    (uint8_t *)path_string,
-		    sizeof(char) * strlen(path_string) + 1, (void *)params);
+			      (uint8_t *)path_string,
+			      sizeof(char) * strlen(path_string) + 1, (void *)params);
 	}
 
 	params->dx += dx;
@@ -9180,6 +9556,36 @@ to_mouse_otranslate(struct ged *gedp,
 }
 
 
+int
+go_mouse_poly_circ(Tcl_Interp *interp,
+		   struct ged *gedp,
+		   struct ged_dm_view *gdvp,
+		   int argc,
+		   const char *argv[],
+		   const char *usage)
+{
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc != 3) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    /* Don't allow go_refresh() to be called */
+    if (current_top != NULL)
+	current_top->to_gop->go_refresh_on = 0;
+
+    return to_mouse_poly_circ_func(interp, gedp, gdvp, argc, argv, usage);
+}
+
+
 HIDDEN int
 to_mouse_poly_circ(struct ged *gedp,
 		   int argc,
@@ -9188,15 +9594,8 @@ to_mouse_poly_circ(struct ged *gedp,
 		   const char *usage,
 		   int UNUSED(maxargs))
 {
-    int ac;
-    char *av[7];
-    int x, y;
-    fastf_t fx, fy;
-    point_t v_pt, m_pt;
-    struct bu_vls plist = BU_VLS_INIT_ZERO;
-    struct bu_vls i_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
-    bview_data_polygon_state *gdpsp;
+    int ret;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -9222,13 +9621,44 @@ to_mouse_poly_circ(struct ged *gedp,
 	return GED_ERROR;
     }
 
+    /* shift the command name to argv[1] before calling to_mouse_poly_circ_func */
+    argv[1] = argv[0];
+    ret = to_mouse_poly_circ_func(current_top->to_interp, gedp, gdvp, argc-1, argv+1, usage);
+#if 0
+    if (ret == GED_ERROR)
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+#endif
+
+    to_refresh_view(gdvp);
+
+    return ret;
+}
+
+
+HIDDEN int
+to_mouse_poly_circ_func(Tcl_Interp *interp,
+			struct ged *gedp,
+			struct ged_dm_view *gdvp,
+			int UNUSED(argc),
+			const char *argv[],
+			const char *usage)
+{
+    int ac;
+    char *av[5];
+    int x, y;
+    fastf_t fx, fy;
+    point_t v_pt, m_pt;
+    struct bu_vls plist = BU_VLS_INIT_ZERO;
+    struct bu_vls i_vls = BU_VLS_INIT_ZERO;
+    bview_data_polygon_state *gdpsp;
+
     if (argv[0][0] == 's')
 	gdpsp = &gdvp->gdv_view->gv_sdata_polygons;
     else
 	gdpsp = &gdvp->gdv_view->gv_data_polygons;
 
-    if (bu_sscanf(argv[2], "%d", &x) != 1 ||
-	bu_sscanf(argv[3], "%d", &y) != 1) {
+    if (bu_sscanf(argv[1], "%d", &x) != 1 ||
+	bu_sscanf(argv[2], "%d", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -9283,21 +9713,48 @@ to_mouse_poly_circ(struct ged *gedp,
     bu_vls_printf(&i_vls, "%zu", gdpsp->gdps_curr_polygon_i);
 
     gedp->ged_gvp = gdvp->gdv_view;
-    ac = 5;
+    ac = 4;
     av[0] = "data_polygons";
-    av[1] = bu_vls_addr(&gdvp->gdv_name);
-    av[2] = "replace_poly";
-    av[3] = bu_vls_addr(&i_vls);
-    av[4] = bu_vls_addr(&plist);
-    av[5] = (char *)0;
+    av[1] = "replace_poly";
+    av[2] = bu_vls_addr(&i_vls);
+    av[3] = bu_vls_addr(&plist);
+    av[4] = (char *)0;
 
-    (void)to_data_polygons(gedp, ac, (const char **)av, (ged_func_ptr)0, "", 0);
+    (void)to_data_polygons_func(interp, gedp, gdvp, ac, (const char **)av);
     bu_vls_free(&plist);
     bu_vls_free(&i_vls);
 
-    to_refresh_view(gdvp);
-
     return GED_OK;
+}
+
+
+int
+go_mouse_poly_cont(Tcl_Interp *interp,
+		   struct ged *gedp,
+		   struct ged_dm_view *gdvp,
+		   int argc,
+		   const char *argv[],
+		   const char *usage)
+{
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc != 3) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    /* Don't allow go_refresh() to be called */
+    if (current_top != NULL)
+	current_top->to_gop->go_refresh_on = 0;
+
+    return to_mouse_poly_cont_func(interp, gedp, gdvp, argc, argv, usage);
 }
 
 
@@ -9309,13 +9766,8 @@ to_mouse_poly_cont(struct ged *gedp,
 		   const char *usage,
 		   int UNUSED(maxargs))
 {
-    int ac;
-    char *av[8];
-    int x, y;
-    fastf_t fx, fy;
-    point_t v_pt, m_pt;
     struct ged_dm_view *gdvp;
-    bview_data_polygon_state *gdpsp;
+    int ret;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -9341,13 +9793,42 @@ to_mouse_poly_cont(struct ged *gedp,
 	return GED_ERROR;
     }
 
+    /* shift the command name to argv[1] before calling to_mouse_poly_cont_func */
+    argv[1] = argv[0];
+    ret = to_mouse_poly_cont_func(current_top->to_interp, gedp, gdvp, argc-1, argv+1, usage);
+#if 0
+    if (ret == GED_ERROR)
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+#endif
+
+    to_refresh_view(gdvp);
+
+    return ret;
+}
+
+
+HIDDEN int
+to_mouse_poly_cont_func(Tcl_Interp *interp,
+			struct ged *gedp,
+			struct ged_dm_view *gdvp,
+			int UNUSED(argc),
+			const char *argv[],
+			const char *usage)
+{
+    int ac;
+    char *av[7];
+    int x, y;
+    fastf_t fx, fy;
+    point_t v_pt, m_pt;
+    bview_data_polygon_state *gdpsp;
+
     if (argv[0][0] == 's')
 	gdpsp = &gdvp->gdv_view->gv_sdata_polygons;
     else
 	gdpsp = &gdvp->gdv_view->gv_data_polygons;
 
-    if (bu_sscanf(argv[2], "%d", &x) != 1 ||
-	bu_sscanf(argv[3], "%d", &y) != 1) {
+    if (bu_sscanf(argv[1], "%d", &x) != 1 ||
+	bu_sscanf(argv[2], "%d", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -9371,25 +9852,52 @@ to_mouse_poly_cont(struct ged *gedp,
 	bu_vls_printf(&k_vls, "%zu", gdpsp->gdps_curr_point_i);
 	bu_vls_printf(&plist, "%lf %lf %lf", V3ARGS(m_pt));
 
-	ac = 7;
+	ac = 6;
 	av[0] = "data_polygons";
-	av[1] = bu_vls_addr(&gdvp->gdv_name);
-	av[2] = "replace_point";
-	av[3] = bu_vls_addr(&i_vls);
-	av[4] = "0";
-	av[5] = bu_vls_addr(&k_vls);
-	av[6] = bu_vls_addr(&plist);
-	av[7] = (char *)0;
+	av[1] = "replace_point";
+	av[2] = bu_vls_addr(&i_vls);
+	av[3] = "0";
+	av[4] = bu_vls_addr(&k_vls);
+	av[5] = bu_vls_addr(&plist);
+	av[6] = (char *)0;
 
-	(void)to_data_polygons(gedp, ac, (const char **)av, (ged_func_ptr)0, "", 0);
+	(void)to_data_polygons_func(interp, gedp, gdvp, ac, (const char **)av);
 	bu_vls_free(&i_vls);
 	bu_vls_free(&k_vls);
 	bu_vls_free(&plist);
     }
 
-    to_refresh_view(gdvp);
-
     return GED_OK;
+}
+
+
+int
+go_mouse_poly_ell(Tcl_Interp *interp,
+		  struct ged *gedp,
+		  struct ged_dm_view *gdvp,
+		  int argc,
+		  const char *argv[],
+		  const char *usage)
+{
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc != 3) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    /* Don't allow go_refresh() to be called */
+    if (current_top != NULL)
+	current_top->to_gop->go_refresh_on = 0;
+
+    return to_mouse_poly_ell_func(interp, gedp, gdvp, argc, argv, usage);
 }
 
 
@@ -9401,15 +9909,8 @@ to_mouse_poly_ell(struct ged *gedp,
 		  const char *usage,
 		  int UNUSED(maxargs))
 {
-    int ac;
-    char *av[7];
-    int x, y;
-    fastf_t fx, fy;
-    point_t m_pt;
-    struct bu_vls plist = BU_VLS_INIT_ZERO;
-    struct bu_vls i_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
-    bview_data_polygon_state *gdpsp;
+    int ret;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -9435,13 +9936,44 @@ to_mouse_poly_ell(struct ged *gedp,
 	return GED_ERROR;
     }
 
+    /* shift the command name to argv[1] before calling to_mouse_poly_ell_func */
+    argv[1] = argv[0];
+    ret = to_mouse_poly_ell_func(current_top->to_interp, gedp, gdvp, argc-1, argv+1, usage);
+#if 0
+    if (ret == GED_ERROR)
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+#endif
+
+    to_refresh_view(gdvp);
+
+    return ret;
+}
+
+
+HIDDEN int
+to_mouse_poly_ell_func(Tcl_Interp *interp,
+		       struct ged *gedp,
+		       struct ged_dm_view *gdvp,
+		       int UNUSED(argc),
+		       const char *argv[],
+		       const char *usage)
+{
+    int ac;
+    char *av[5];
+    int x, y;
+    fastf_t fx, fy;
+    point_t m_pt;
+    struct bu_vls plist = BU_VLS_INIT_ZERO;
+    struct bu_vls i_vls = BU_VLS_INIT_ZERO;
+    bview_data_polygon_state *gdpsp;
+
     if (argv[0][0] == 's')
 	gdpsp = &gdvp->gdv_view->gv_sdata_polygons;
     else
 	gdpsp = &gdvp->gdv_view->gv_data_polygons;
 
-    if (bu_sscanf(argv[2], "%d", &x) != 1 ||
-	bu_sscanf(argv[3], "%d", &y) != 1) {
+    if (bu_sscanf(argv[1], "%d", &x) != 1 ||
+	bu_sscanf(argv[2], "%d", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -9505,21 +10037,48 @@ to_mouse_poly_ell(struct ged *gedp,
     bu_vls_printf(&i_vls, "%zu", gdpsp->gdps_curr_polygon_i);
 
     gedp->ged_gvp = gdvp->gdv_view;
-    ac = 5;
+    ac = 4;
     av[0] = "data_polygons";
-    av[1] = bu_vls_addr(&gdvp->gdv_name);
-    av[2] = "replace_poly";
-    av[3] = bu_vls_addr(&i_vls);
-    av[4] = bu_vls_addr(&plist);
-    av[5] = (char *)0;
+    av[1] = "replace_poly";
+    av[2] = bu_vls_addr(&i_vls);
+    av[3] = bu_vls_addr(&plist);
+    av[4] = (char *)0;
 
-    (void)to_data_polygons(gedp, ac, (const char **)av, (ged_func_ptr)0, "", 0);
+    (void)to_data_polygons_func(interp, gedp, gdvp, ac, (const char **)av);
     bu_vls_free(&plist);
     bu_vls_free(&i_vls);
 
-    to_refresh_view(gdvp);
-
     return GED_OK;
+}
+
+
+int
+go_mouse_poly_rect(Tcl_Interp *interp,
+		   struct ged *gedp,
+		   struct ged_dm_view *gdvp,
+		   int argc,
+		   const char *argv[],
+		   const char *usage)
+{
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc != 3) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    /* Don't allow go_refresh() to be called */
+    if (current_top != NULL)
+	current_top->to_gop->go_refresh_on = 0;
+
+    return to_mouse_poly_rect_func(interp, gedp, gdvp, argc, argv, usage);
 }
 
 
@@ -9531,15 +10090,8 @@ to_mouse_poly_rect(struct ged *gedp,
 		   const char *usage,
 		   int UNUSED(maxargs))
 {
-    int ac;
-    char *av[7];
-    int x, y;
-    fastf_t fx, fy;
-    point_t v_pt, m_pt;
-    struct bu_vls plist = BU_VLS_INIT_ZERO;
-    struct bu_vls i_vls = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
-    bview_data_polygon_state *gdpsp;
+    int ret;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -9565,13 +10117,44 @@ to_mouse_poly_rect(struct ged *gedp,
 	return GED_ERROR;
     }
 
+    /* shift the command name to argv[1] before calling to_mouse_poly_rect_func */
+    argv[1] = argv[0];
+    ret = to_mouse_poly_rect_func(current_top->to_interp, gedp, gdvp, argc-1, argv+1, usage);
+#if 0
+    if (ret == GED_ERROR)
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+#endif
+
+    to_refresh_view(gdvp);
+
+    return ret;
+}
+
+
+HIDDEN int
+to_mouse_poly_rect_func(Tcl_Interp *interp,
+			struct ged *gedp,
+			struct ged_dm_view *gdvp,
+			int UNUSED(argc),
+			const char *argv[],
+			const char *usage)
+{
+    int ac;
+    char *av[5];
+    int x, y;
+    fastf_t fx, fy;
+    point_t v_pt, m_pt;
+    struct bu_vls plist = BU_VLS_INIT_ZERO;
+    struct bu_vls i_vls = BU_VLS_INIT_ZERO;
+    bview_data_polygon_state *gdpsp;
+
     if (argv[0][0] == 's')
 	gdpsp = &gdvp->gdv_view->gv_sdata_polygons;
     else
 	gdpsp = &gdvp->gdv_view->gv_data_polygons;
 
-    if (bu_sscanf(argv[2], "%d", &x) != 1 ||
-	bu_sscanf(argv[3], "%d", &y) != 1) {
+    if (bu_sscanf(argv[1], "%d", &x) != 1 ||
+	bu_sscanf(argv[2], "%d", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -9621,19 +10204,16 @@ to_mouse_poly_rect(struct ged *gedp,
     bu_vls_printf(&i_vls, "%zu", gdpsp->gdps_curr_polygon_i);
 
     gedp->ged_gvp = gdvp->gdv_view;
-    ac = 5;
+    ac = 4;
     av[0] = "data_polygons";
-    av[1] = bu_vls_addr(&gdvp->gdv_name);
-    av[2] = "replace_poly";
-    av[3] = bu_vls_addr(&i_vls);
-    av[4] = bu_vls_addr(&plist);
-    av[5] = (char *)0;
+    av[1] = "replace_poly";
+    av[2] = bu_vls_addr(&i_vls);
+    av[3] = bu_vls_addr(&plist);
+    av[4] = (char *)0;
 
-    (void)to_data_polygons(gedp, ac, (const char **)av, (ged_func_ptr)0, "", 0);
+    (void)to_data_polygons_func(interp, gedp, gdvp, ac, (const char **)av);
     bu_vls_free(&plist);
     bu_vls_free(&i_vls);
-
-    to_refresh_view(gdvp);
 
     return GED_OK;
 }
@@ -9911,72 +10491,72 @@ to_mouse_rotate_arb_face(struct ged *gedp,
 
 
 #define TO_COMMON_MOUSE_SCALE(_gdvp, _zoom_vls, _argc, _argv, _usage) { \
-    int _width; \
-    fastf_t _dx, _dy; \
-    fastf_t _inv_width; \
-    fastf_t _sf; \
+	int _width; \
+	fastf_t _dx, _dy; \
+	fastf_t _inv_width; \
+	fastf_t _sf; \
  \
-    /* must be double for scanf */ \
-    double _x, _y; \
+	/* must be double for scanf */ \
+	double _x, _y; \
  \
-    /* initialize result */ \
-    bu_vls_trunc(gedp->ged_result_str, 0); \
+	/* initialize result */ \
+	bu_vls_trunc(gedp->ged_result_str, 0); \
  \
-    /* must be wanting help */ \
-    if ((_argc) == 1) { \
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", (_argv)[0], (_usage)); \
-	return GED_HELP; \
-    } \
+	/* must be wanting help */ \
+	if ((_argc) == 1) { \
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", (_argv)[0], (_usage)); \
+	    return GED_HELP; \
+	} \
  \
-    if ((_argc) != 4) { \
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", (_argv)[0], (_usage)); \
-	return GED_ERROR; \
-    } \
+	if ((_argc) != 4) { \
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", (_argv)[0], (_usage)); \
+	    return GED_ERROR; \
+	} \
  \
-    for (BU_LIST_FOR((_gdvp), ged_dm_view, &current_top->to_gop->go_head_views.l)) { \
-	if (BU_STR_EQUAL(bu_vls_addr(&(_gdvp)->gdv_name), (_argv)[1])) \
-	    break; \
-    } \
+	for (BU_LIST_FOR((_gdvp), ged_dm_view, &current_top->to_gop->go_head_views.l)) { \
+	    if (BU_STR_EQUAL(bu_vls_addr(&(_gdvp)->gdv_name), (_argv)[1])) \
+		break; \
+	} \
  \
-    if (BU_LIST_IS_HEAD(&(_gdvp)->l, &current_top->to_gop->go_head_views.l)) { \
-	bu_vls_printf(gedp->ged_result_str, "View not found - %s", (_argv)[1]); \
-	return GED_ERROR; \
-    } \
+	if (BU_LIST_IS_HEAD(&(_gdvp)->l, &current_top->to_gop->go_head_views.l)) { \
+	    bu_vls_printf(gedp->ged_result_str, "View not found - %s", (_argv)[1]); \
+	    return GED_ERROR; \
+	} \
  \
-    if (bu_sscanf((_argv)[2], "%lf", &_x) != 1 || \
-	bu_sscanf((_argv)[3], "%lf", &_y) != 1) { \
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", (_argv)[0], (_usage)); \
-	return GED_ERROR; \
-    } \
+	if (bu_sscanf((_argv)[2], "%lf", &_x) != 1 || \
+	    bu_sscanf((_argv)[3], "%lf", &_y) != 1) { \
+	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", (_argv)[0], (_usage)); \
+	    return GED_ERROR; \
+	} \
  \
-    _dx = _x - (_gdvp)->gdv_view->gv_prevMouseX; \
-    _dy = (_gdvp)->gdv_view->gv_prevMouseY - _y; \
+	_dx = _x - (_gdvp)->gdv_view->gv_prevMouseX; \
+	_dy = (_gdvp)->gdv_view->gv_prevMouseY - _y; \
  \
-    (_gdvp)->gdv_view->gv_prevMouseX = _x; \
-    (_gdvp)->gdv_view->gv_prevMouseY = _y; \
+	(_gdvp)->gdv_view->gv_prevMouseX = _x; \
+	(_gdvp)->gdv_view->gv_prevMouseY = _y; \
  \
-    if (_dx < (_gdvp)->gdv_view->gv_minMouseDelta) \
-	_dx = (_gdvp)->gdv_view->gv_minMouseDelta; \
-    else if ((_gdvp)->gdv_view->gv_maxMouseDelta < _dx) \
-	_dx = (_gdvp)->gdv_view->gv_maxMouseDelta; \
+	if (_dx < (_gdvp)->gdv_view->gv_minMouseDelta) \
+	    _dx = (_gdvp)->gdv_view->gv_minMouseDelta; \
+	else if ((_gdvp)->gdv_view->gv_maxMouseDelta < _dx) \
+	    _dx = (_gdvp)->gdv_view->gv_maxMouseDelta; \
  \
-    if (_dy < (_gdvp)->gdv_view->gv_minMouseDelta) \
-	_dy = (_gdvp)->gdv_view->gv_minMouseDelta; \
-    else if ((_gdvp)->gdv_view->gv_maxMouseDelta < _dy) \
-	_dy = (_gdvp)->gdv_view->gv_maxMouseDelta; \
+	if (_dy < (_gdvp)->gdv_view->gv_minMouseDelta) \
+	    _dy = (_gdvp)->gdv_view->gv_minMouseDelta; \
+	else if ((_gdvp)->gdv_view->gv_maxMouseDelta < _dy) \
+	    _dy = (_gdvp)->gdv_view->gv_maxMouseDelta; \
  \
-    _width = dm_get_width((_gdvp)->gdv_dmp); \
-    _inv_width = 1.0 / (fastf_t)_width; \
-    _dx *= _inv_width * (_gdvp)->gdv_view->gv_sscale; \
-    _dy *= _inv_width * (_gdvp)->gdv_view->gv_sscale; \
+	_width = dm_get_width((_gdvp)->gdv_dmp); \
+	_inv_width = 1.0 / (fastf_t)_width; \
+	_dx *= _inv_width * (_gdvp)->gdv_view->gv_sscale; \
+	_dy *= _inv_width * (_gdvp)->gdv_view->gv_sscale; \
  \
-    if (fabs(_dx) > fabs(_dy)) \
-	_sf = 1.0 + _dx; \
-    else \
-	_sf = 1.0 + _dy; \
+	if (fabs(_dx) > fabs(_dy)) \
+	    _sf = 1.0 + _dx; \
+	else \
+	    _sf = 1.0 + _dy; \
  \
-    bu_vls_printf(&(_zoom_vls), "%lf", _sf);	\
-}
+	bu_vls_printf(&(_zoom_vls), "%lf", _sf);	\
+    }
 
 
 HIDDEN int
@@ -10491,11 +11071,11 @@ to_move_arb_edge_mode(struct ged *gedp,
 
     if (dm_get_pathname(gdvp->gdv_dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_move_arb_edge %s %s %s %%x %%y}",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name),
-		argv[2],
-		argv[3]);
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name),
+		      argv[2],
+		      argv[3]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
     bu_vls_free(&bindings);
@@ -10554,11 +11134,11 @@ to_move_arb_face_mode(struct ged *gedp,
 
     if (dm_get_pathname(gdvp->gdv_dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_move_arb_face %s %s %s %%x %%y}",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name),
-		argv[2],
-		argv[3]);
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name),
+		      argv[2],
+		      argv[3]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
     bu_vls_free(&bindings);
@@ -10568,16 +11148,16 @@ to_move_arb_face_mode(struct ged *gedp,
 
 
 HIDDEN int
-to_move_botpt(struct ged *gedp,
-	      int argc,
-	      const char *argv[],
-	      ged_func_ptr UNUSED(func),
-	      const char *UNUSED(usage),
-	      int UNUSED(maxargs))
+to_bot_move_pnt(struct ged *gedp,
+		int argc,
+		const char *argv[],
+		ged_func_ptr UNUSED(func),
+		const char *UNUSED(usage),
+		int UNUSED(maxargs))
 {
     int ret;
 
-    if ((ret = ged_move_botpt(gedp, argc, argv)) == GED_OK) {
+    if ((ret = ged_bot_move_pnt(gedp, argc, argv)) == GED_OK) {
 	char *av[3];
 	int i;
 
@@ -10599,16 +11179,16 @@ to_move_botpt(struct ged *gedp,
 
 
 HIDDEN int
-to_move_botpts(struct ged *gedp,
-	       int argc,
-	       const char *argv[],
-	       ged_func_ptr UNUSED(func),
-	       const char *UNUSED(usage),
-	       int UNUSED(maxargs))
+to_bot_move_pnts(struct ged *gedp,
+		 int argc,
+		 const char *argv[],
+		 ged_func_ptr UNUSED(func),
+		 const char *UNUSED(usage),
+		 int UNUSED(maxargs))
 {
     int ret;
 
-    if ((ret = ged_move_botpts(gedp, argc, argv)) == GED_OK) {
+    if ((ret = ged_bot_move_pnts(gedp, argc, argv)) == GED_OK) {
 	char *av[3];
 
 	av[0] = "draw";
@@ -10624,12 +11204,12 @@ to_move_botpts(struct ged *gedp,
 
 
 HIDDEN int
-to_move_botpt_mode(struct ged *gedp,
-		   int argc,
-		   const char *argv[],
-		   ged_func_ptr UNUSED(func),
-		   const char *usage,
-		   int UNUSED(maxargs))
+to_bot_move_pnt_mode(struct ged *gedp,
+		     int argc,
+		     const char *argv[],
+		     ged_func_ptr UNUSED(func),
+		     const char *usage,
+		     int UNUSED(maxargs))
 {
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
@@ -10672,12 +11252,12 @@ to_move_botpt_mode(struct ged *gedp,
     gdvp->gdv_view->gv_mode = TCLCAD_MOVE_BOT_POINT_MODE;
 
     if (dm_get_pathname(gdvp->gdv_dmp)) {
-	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_move_botpt -r %s %s %s %%x %%y}",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name),
-		argv[2],
-		argv[3]);
+	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_bot_move_pnt -r %s %s %s %%x %%y}",
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name),
+		      argv[2],
+		      argv[3]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
     bu_vls_free(&bindings);
@@ -10687,12 +11267,12 @@ to_move_botpt_mode(struct ged *gedp,
 
 
 HIDDEN int
-to_move_botpts_mode(struct ged *gedp,
-		    int argc,
-		    const char *argv[],
-		    ged_func_ptr UNUSED(func),
-		    const char *usage,
-		    int UNUSED(maxargs))
+to_bot_move_pnts_mode(struct ged *gedp,
+		      int argc,
+		      const char *argv[],
+		      ged_func_ptr UNUSED(func),
+		      const char *usage,
+		      int UNUSED(maxargs))
 {
     register int i;
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
@@ -10736,11 +11316,11 @@ to_move_botpts_mode(struct ged *gedp,
     gdvp->gdv_view->gv_mode = TCLCAD_MOVE_BOT_POINTS_MODE;
 
     if (dm_get_pathname(gdvp->gdv_dmp)) {
-	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_move_botpts %s %%x %%y %s ",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name),
-		argv[4]);
+	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_bot_move_pnts %s %%x %%y %s ",
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name),
+		      argv[4]);
     }
     for (i = 5; i < argc; ++i)
 	bu_vls_printf(&bindings, "%s ", argv[i]);
@@ -10754,12 +11334,12 @@ to_move_botpts_mode(struct ged *gedp,
 
 
 HIDDEN int
-to_move_metaballpt_mode(struct ged *gedp,
-			int argc,
-			const char *argv[],
-			ged_func_ptr UNUSED(func),
-			const char *usage,
-			int UNUSED(maxargs))
+to_metaball_move_pnt_mode(struct ged *gedp,
+			  int argc,
+			  const char *argv[],
+			  ged_func_ptr UNUSED(func),
+			  const char *usage,
+			  int UNUSED(maxargs))
 {
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
@@ -10802,12 +11382,12 @@ to_move_metaballpt_mode(struct ged *gedp,
     gdvp->gdv_view->gv_mode = TCLCAD_MOVE_METABALL_POINT_MODE;
 
     if (dm_get_pathname(gdvp->gdv_dmp)) {
-	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_move_metaballpt %s %s %s %%x %%y}",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name),
-		argv[2],
-		argv[3]);
+	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_metaball_move_pnt %s %s %s %%x %%y}",
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name),
+		      argv[2],
+		      argv[3]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
     bu_vls_free(&bindings);
@@ -10817,12 +11397,12 @@ to_move_metaballpt_mode(struct ged *gedp,
 
 
 HIDDEN int
-to_move_pipept_mode(struct ged *gedp,
-		    int argc,
-		    const char *argv[],
-		    ged_func_ptr UNUSED(func),
-		    const char *usage,
-		    int UNUSED(maxargs))
+to_pipe_move_pnt_mode(struct ged *gedp,
+		      int argc,
+		      const char *argv[],
+		      ged_func_ptr UNUSED(func),
+		      const char *usage,
+		      int UNUSED(maxargs))
 {
     struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
@@ -10865,12 +11445,12 @@ to_move_pipept_mode(struct ged *gedp,
     gdvp->gdv_view->gv_mode = TCLCAD_MOVE_PIPE_POINT_MODE;
 
     if (dm_get_pathname(gdvp->gdv_dmp)) {
-	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_move_pipept %s %s %s %%x %%y}",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name),
-		argv[2],
-		argv[3]);
+	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_pipe_move_pnt %s %s %s %%x %%y}",
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name),
+		      argv[2],
+		      argv[3]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
     bu_vls_free(&bindings);
@@ -10880,12 +11460,12 @@ to_move_pipept_mode(struct ged *gedp,
 
 
 HIDDEN int
-to_move_pt_common(struct ged *gedp,
-		  int argc,
-		  const char *argv[],
-		  ged_func_ptr func,
-		  const char *UNUSED(usage),
-		  int UNUSED(maxargs))
+to_move_pnt_common(struct ged *gedp,
+		   int argc,
+		   const char *argv[],
+		   ged_func_ptr func,
+		   const char *UNUSED(usage),
+		   int UNUSED(maxargs))
 {
     int ret;
 
@@ -11049,19 +11629,19 @@ to_new_view(struct ged *gedp,
 
     if (dm_get_pathname(new_gdvp->gdv_dmp)) {
 	bu_vls_printf(&event_vls, "event generate %s <Configure>; %s autoview %s",
-		bu_vls_addr(dm_get_pathname(new_gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&new_gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(new_gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&new_gdvp->gdv_name));
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&event_vls));
     }
     bu_vls_free(&event_vls);
 
     if (dm_get_pathname(new_gdvp->gdv_dmp)) {
 	(void)Tcl_CreateCommand(current_top->to_interp,
-		bu_vls_addr(dm_get_pathname(new_gdvp->gdv_dmp)),
-		(Tcl_CmdProc *)to_view_cmd,
-		(ClientData)new_gdvp,
-		to_deleteViewProc);
+				bu_vls_addr(dm_get_pathname(new_gdvp->gdv_dmp)),
+				(Tcl_CmdProc *)to_view_cmd,
+				(ClientData)new_gdvp,
+				to_deleteViewProc);
     }
 
     bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&new_gdvp->gdv_name));
@@ -11119,10 +11699,10 @@ to_orotate_mode(struct ged *gedp,
 
     if (dm_get_pathname(gdvp->gdv_dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_orotate %s %s %%x %%y}",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name),
-		argv[2]);
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name),
+		      argv[2]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
     bu_vls_free(&bindings);
@@ -11181,10 +11761,10 @@ to_oscale_mode(struct ged *gedp,
 
     if (dm_get_pathname(gdvp->gdv_dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_oscale %s %s %%x %%y}",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name),
-		argv[2]);
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name),
+		      argv[2]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
     bu_vls_free(&bindings);
@@ -11244,10 +11824,10 @@ to_otranslate_mode(struct ged *gedp,
 
     if (dm_get_pathname(gdvp->gdv_dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_otranslate %s %s %%x %%y}",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name),
-		argv[2]);
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name),
+		      argv[2]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
     bu_vls_free(&bindings);
@@ -11499,6 +12079,36 @@ to_png(struct ged *gedp,
 #endif
 
 
+int
+go_poly_circ_mode(Tcl_Interp *interp,
+		  struct ged *gedp,
+		  struct ged_dm_view *gdvp,
+		  int argc,
+		  const char *argv[],
+		  const char *usage)
+{
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc != 3) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    /* Don't allow go_refresh() to be called */
+    if (current_top != NULL)
+	current_top->to_gop->go_refresh_on = 0;
+
+    return to_poly_circ_mode_func(interp, gedp, gdvp, argc, argv, usage);
+}
+
+
 HIDDEN int
 to_poly_circ_mode(struct ged *gedp,
 		  int argc,
@@ -11507,15 +12117,9 @@ to_poly_circ_mode(struct ged *gedp,
 		  const char *usage,
 		  int UNUSED(maxargs))
 {
-    int ac;
-    char *av[5];
-    int x, y;
-    fastf_t fx, fy;
-    point_t v_pt, m_pt;
-    struct bu_vls plist = BU_VLS_INIT_ZERO;
-    struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
-    bview_data_polygon_state *gdpsp;
+    struct bu_vls bindings = BU_VLS_INIT_ZERO;
+    int ret;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -11541,6 +12145,41 @@ to_poly_circ_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
+    /* shift the command name to argv[1] before calling to_poly_circ_mode_func */
+    argv[1] = argv[0];
+    ret = to_poly_circ_mode_func(current_top->to_interp, gedp, gdvp, argc-1, argv+1, usage);
+
+    if (dm_get_pathname(gdvp->gdv_dmp)) {
+	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_poly_circ %s %%x %%y}",
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
+	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
+    }
+    bu_vls_free(&bindings);
+
+    to_refresh_view(gdvp);
+
+    return ret;
+}
+
+
+HIDDEN int
+to_poly_circ_mode_func(Tcl_Interp *interp,
+		       struct ged *gedp,
+		       struct ged_dm_view *gdvp,
+		       int UNUSED(argc),
+		       const char *argv[],
+		       const char *usage)
+{
+    int ac;
+    char *av[4];
+    int x, y;
+    fastf_t fx, fy;
+    point_t v_pt, m_pt;
+    struct bu_vls plist = BU_VLS_INIT_ZERO;
+    bview_data_polygon_state *gdpsp;
+
     if (argv[0][0] == 's')
 	gdpsp = &gdvp->gdv_view->gv_sdata_polygons;
     else
@@ -11554,8 +12193,8 @@ to_poly_circ_mode(struct ged *gedp,
 
     gedp->ged_gvp = gdvp->gdv_view;
 
-    if (bu_sscanf(argv[2], "%d", &x) != 1 ||
-	bu_sscanf(argv[3], "%d", &y) != 1) {
+    if (bu_sscanf(argv[1], "%d", &x) != 1 ||
+	bu_sscanf(argv[2], "%d", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -11575,33 +12214,51 @@ to_poly_circ_mode(struct ged *gedp,
 
     bu_vls_printf(&plist, "{ {%lf %lf %lf} {%lf %lf %lf} {%lf %lf %lf} {%lf %lf %lf} }",
 		  V3ARGS(m_pt), V3ARGS(m_pt), V3ARGS(m_pt), V3ARGS(m_pt));
-    ac = 4;
+    ac = 3;
     av[0] = "data_polygons";
-    av[1] = bu_vls_addr(&gdvp->gdv_name);
-    av[2] = "append_poly";
-    av[3] = bu_vls_addr(&plist);
-    av[4] = (char *)0;
+    av[1] = "append_poly";
+    av[2] = bu_vls_addr(&plist);
+    av[3] = (char *)0;
 
     if (gdpsp->gdps_polygons.gp_num_polygons == gdpsp->gdps_target_polygon_i)
 	gdpsp->gdps_curr_polygon_i = gdpsp->gdps_target_polygon_i;
     else
 	gdpsp->gdps_curr_polygon_i = gdpsp->gdps_polygons.gp_num_polygons;
 
-    (void)to_data_polygons(gedp, ac, (const char **)av, (ged_func_ptr)0, "", 0);
+    (void)to_data_polygons_func(interp, gedp, gdvp, ac, (const char **)av);
     bu_vls_free(&plist);
 
-    if (dm_get_pathname(gdvp->gdv_dmp)) {
-	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_poly_circ %s %%x %%y}",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
-	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
-    }
-    bu_vls_free(&bindings);
-
-    to_refresh_view(gdvp);
-
     return GED_OK;
+}
+
+
+int
+go_poly_cont_build(Tcl_Interp *interp,
+		   struct ged *gedp,
+		   struct ged_dm_view *gdvp,
+		   int argc,
+		   const char *argv[],
+		   const char *usage)
+{
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc != 3) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    /* Don't allow go_refresh() to be called */
+    if (current_top != NULL)
+	current_top->to_gop->go_refresh_on = 0;
+
+    return to_poly_cont_build_func(interp, gedp, gdvp, argc, argv, usage, 0);
 }
 
 
@@ -11613,13 +12270,8 @@ to_poly_cont_build(struct ged *gedp,
 		   const char *usage,
 		   int UNUSED(maxargs))
 {
-    int ac;
-    char *av[8];
-    int x, y;
-    fastf_t fx, fy;
-    point_t v_pt, m_pt;
     struct ged_dm_view *gdvp;
-    bview_data_polygon_state *gdpsp;
+    int ret;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -11645,6 +12297,32 @@ to_poly_cont_build(struct ged *gedp,
 	return GED_ERROR;
     }
 
+    /* shift the command name to argv[1] before calling to_mouse_poly_ell_func */
+    argv[1] = argv[0];
+    ret = to_poly_cont_build_func(current_top->to_interp, gedp, gdvp, argc-1, argv+1, usage, 1);
+
+    to_refresh_view(gdvp);
+
+    return ret;
+}
+
+
+HIDDEN int
+to_poly_cont_build_func(Tcl_Interp *interp,
+			struct ged *gedp,
+			struct ged_dm_view *gdvp,
+			int UNUSED(argc),
+			const char *argv[],
+			const char *usage,
+			int doBind)
+{
+    int ac;
+    char *av[7];
+    int x, y;
+    fastf_t fx, fy;
+    point_t v_pt, m_pt;
+    bview_data_polygon_state *gdpsp;
+
     if (argv[0][0] == 's')
 	gdpsp = &gdvp->gdv_view->gv_sdata_polygons;
     else
@@ -11658,8 +12336,8 @@ to_poly_cont_build(struct ged *gedp,
 
     gedp->ged_gvp = gdvp->gdv_view;
 
-    if (bu_sscanf(argv[2], "%d", &x) != 1 ||
-	bu_sscanf(argv[3], "%d", &y) != 1) {
+    if (bu_sscanf(argv[1], "%d", &x) != 1 ||
+	bu_sscanf(argv[2], "%d", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -11677,7 +12355,6 @@ to_poly_cont_build(struct ged *gedp,
     MAT4X3PNT(m_pt, gdvp->gdv_view->gv_view2model, v_pt);
 
     av[0] = "data_polygons";
-    av[1] = bu_vls_addr(&gdvp->gdv_name);
     if (gdpsp->gdps_cflag == 0) {
 	struct bu_vls plist = BU_VLS_INIT_ZERO;
 	struct bu_vls bindings = BU_VLS_INIT_ZERO;
@@ -11691,20 +12368,20 @@ to_poly_cont_build(struct ged *gedp,
 	gdpsp->gdps_curr_point_i = 1;
 
 	bu_vls_printf(&plist, "{ {%lf %lf %lf} {%lf %lf %lf} }", V3ARGS(m_pt), V3ARGS(m_pt));
-	ac = 4;
-	av[2] = "append_poly";
-	av[3] = bu_vls_addr(&plist);
-	av[4] = (char *)0;
+	ac = 3;
+	av[1] = "append_poly";
+	av[2] = bu_vls_addr(&plist);
+	av[3] = (char *)0;
 
-	(void)to_data_polygons(gedp, ac, (const char **)av, (ged_func_ptr)0, "", 0);
+	(void)to_data_polygons_func(interp, gedp, gdvp, ac, (const char **)av);
 	bu_vls_free(&plist);
 
-	if (dm_get_pathname(gdvp->gdv_dmp)) {
+	if (doBind && dm_get_pathname(gdvp->gdv_dmp)) {
 	    bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_poly_cont %s %%x %%y}",
-		    bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		    bu_vls_addr(&current_top->to_gop->go_name),
-		    bu_vls_addr(&gdvp->gdv_name));
-	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
+			  bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+			  bu_vls_addr(&current_top->to_gop->go_name),
+			  bu_vls_addr(&gdvp->gdv_name));
+	    Tcl_Eval(interp, bu_vls_addr(&bindings));
 	}
 	bu_vls_free(&bindings);
     } else {
@@ -11716,20 +12393,20 @@ to_poly_cont_build(struct ged *gedp,
 	bu_vls_printf(&k_vls, "%zu", gdpsp->gdps_curr_point_i);
 	bu_vls_printf(&plist, "%lf %lf %lf", V3ARGS(m_pt));
 
-	ac = 7;
-	av[2] = "replace_point";
-	av[3] = bu_vls_addr(&i_vls);
-	av[4] = "0";
-	av[5] = bu_vls_addr(&k_vls);
-	av[6] = bu_vls_addr(&plist);
-	av[7] = (char *)0;
-	(void)to_data_polygons(gedp, ac, (const char **)av, (ged_func_ptr)0, "", 0);
-
 	ac = 6;
-	av[2] = "append_point";
+	av[1] = "replace_point";
+	av[2] = bu_vls_addr(&i_vls);
+	av[3] = "0";
+	av[4] = bu_vls_addr(&k_vls);
 	av[5] = bu_vls_addr(&plist);
 	av[6] = (char *)0;
-	(void)to_data_polygons(gedp, ac, (const char **)av, (ged_func_ptr)0, "", 0);
+	(void)to_data_polygons_func(interp, gedp, gdvp, ac, (const char **)av);
+
+	ac = 5;
+	av[1] = "append_point";
+	av[4] = bu_vls_addr(&plist);
+	av[5] = (char *)0;
+	(void)to_data_polygons_func(interp, gedp, gdvp, ac, (const char **)av);
 	bu_vls_free(&i_vls);
 	bu_vls_free(&k_vls);
 	bu_vls_free(&plist);
@@ -11737,9 +12414,31 @@ to_poly_cont_build(struct ged *gedp,
 	++gdpsp->gdps_curr_point_i;
     }
 
-    to_refresh_view(gdvp);
-
     return GED_OK;
+}
+
+
+int
+go_poly_cont_build_end(Tcl_Interp *UNUSED(interp),
+		       struct ged *gedp,
+		       struct ged_dm_view *gdvp,
+		       int argc,
+		       const char *argv[],
+		       const char *usage)
+{
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    if (argc != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    /* Don't allow go_refresh() to be called */
+    if (current_top != NULL)
+	current_top->to_gop->go_refresh_on = 0;
+
+    return to_poly_cont_build_end_func(gdvp, argc, argv);
 }
 
 
@@ -11752,6 +12451,7 @@ to_poly_cont_build_end(struct ged *gedp,
 		       int UNUSED(maxargs))
 {
     struct ged_dm_view *gdvp;
+    int ret;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -11777,15 +12477,56 @@ to_poly_cont_build_end(struct ged *gedp,
 	return GED_ERROR;
     }
 
+    /* shift the command name to argv[1] before calling to_poly_ell_mode_func */
+    argv[1] = argv[0];
+    ret = to_poly_cont_build_end_func(gdvp, argc-1, argv+1);
+
+    to_refresh_view(gdvp);
+    return ret;
+}
+
+
+HIDDEN int
+to_poly_cont_build_end_func(struct ged_dm_view *gdvp,
+			    int UNUSED(argc),
+			    const char *argv[])
+{
     if (argv[0][0] == 's')
 	gdvp->gdv_view->gv_sdata_polygons.gdps_cflag = 0;
     else
 	gdvp->gdv_view->gv_data_polygons.gdps_cflag = 0;
 
-    gedp->ged_gvp = gdvp->gdv_view;
-    to_refresh_view(gdvp);
-
     return GED_OK;
+}
+
+
+int
+go_poly_ell_mode(Tcl_Interp *interp,
+		 struct ged *gedp,
+		 struct ged_dm_view *gdvp,
+		 int argc,
+		 const char *argv[],
+		 const char *usage)
+{
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc != 3) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    /* Don't allow go_refresh() to be called */
+    if (current_top != NULL)
+	current_top->to_gop->go_refresh_on = 0;
+
+    return to_poly_ell_mode_func(interp, gedp, gdvp, argc, argv, usage);
 }
 
 
@@ -11797,15 +12538,9 @@ to_poly_ell_mode(struct ged *gedp,
 		 const char *usage,
 		 int UNUSED(maxargs))
 {
-    int ac;
-    char *av[5];
-    int x, y;
-    fastf_t fx, fy;
-    point_t v_pt, m_pt;
-    struct bu_vls plist = BU_VLS_INIT_ZERO;
-    struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
-    bview_data_polygon_state *gdpsp;
+    struct bu_vls bindings = BU_VLS_INIT_ZERO;
+    int ret;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -11831,6 +12566,41 @@ to_poly_ell_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
+    /* shift the command name to argv[1] before calling to_poly_ell_mode_func */
+    argv[1] = argv[0];
+    ret = to_poly_ell_mode_func(current_top->to_interp, gedp, gdvp, argc-1, argv+1, usage);
+
+    if (dm_get_pathname(gdvp->gdv_dmp)) {
+	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_poly_ell %s %%x %%y}",
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
+	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
+    }
+    bu_vls_free(&bindings);
+
+    to_refresh_view(gdvp);
+
+    return ret;
+}
+
+
+HIDDEN int
+to_poly_ell_mode_func(Tcl_Interp *interp,
+		      struct ged *gedp,
+		      struct ged_dm_view *gdvp,
+		      int UNUSED(argc),
+		      const char *argv[],
+		      const char *usage)
+{
+    int ac;
+    char *av[4];
+    int x, y;
+    fastf_t fx, fy;
+    point_t v_pt, m_pt;
+    struct bu_vls plist = BU_VLS_INIT_ZERO;
+    bview_data_polygon_state *gdpsp;
+
     if (argv[0][0] == 's')
 	gdpsp = &gdvp->gdv_view->gv_sdata_polygons;
     else
@@ -11844,8 +12614,8 @@ to_poly_ell_mode(struct ged *gedp,
 
     gedp->ged_gvp = gdvp->gdv_view;
 
-    if (bu_sscanf(argv[2], "%d", &x) != 1 ||
-	bu_sscanf(argv[3], "%d", &y) != 1) {
+    if (bu_sscanf(argv[1], "%d", &x) != 1 ||
+	bu_sscanf(argv[2], "%d", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
@@ -11865,33 +12635,51 @@ to_poly_ell_mode(struct ged *gedp,
 
     bu_vls_printf(&plist, "{ {%lf %lf %lf} {%lf %lf %lf} {%lf %lf %lf} {%lf %lf %lf} }",
 		  V3ARGS(m_pt), V3ARGS(m_pt), V3ARGS(m_pt), V3ARGS(m_pt));
-    ac = 4;
+    ac = 3;
     av[0] = "data_polygons";
-    av[1] = bu_vls_addr(&gdvp->gdv_name);
-    av[2] = "append_poly";
-    av[3] = bu_vls_addr(&plist);
-    av[4] = (char *)0;
+    av[1] = "append_poly";
+    av[2] = bu_vls_addr(&plist);
+    av[3] = (char *)0;
 
     if (gdpsp->gdps_polygons.gp_num_polygons == gdpsp->gdps_target_polygon_i)
 	gdpsp->gdps_curr_polygon_i = gdpsp->gdps_target_polygon_i;
     else
 	gdpsp->gdps_curr_polygon_i = gdpsp->gdps_polygons.gp_num_polygons;
 
-    (void)to_data_polygons(gedp, ac, (const char **)av, (ged_func_ptr)0, "", 0);
+    (void)to_data_polygons_func(interp, gedp, gdvp, ac, (const char **)av);
     bu_vls_free(&plist);
 
-    if (dm_get_pathname(gdvp->gdv_dmp)) {
-	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_poly_ell %s %%x %%y}",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
-	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
-    }
-    bu_vls_free(&bindings);
-
-    to_refresh_view(gdvp);
-
     return GED_OK;
+}
+
+
+int
+go_poly_rect_mode(Tcl_Interp *interp,
+		  struct ged *gedp,
+		  struct ged_dm_view *gdvp,
+		  int argc,
+		  const char *argv[],
+		  const char *usage)
+{
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc < 3 || 4 < argc) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    /* Don't allow go_refresh() to be called */
+    if (current_top != NULL)
+	current_top->to_gop->go_refresh_on = 0;
+
+    return to_poly_rect_mode_func(interp, gedp, gdvp, argc, argv, usage);
 }
 
 
@@ -11903,16 +12691,9 @@ to_poly_rect_mode(struct ged *gedp,
 		  const char *usage,
 		  int UNUSED(maxargs))
 {
-    int ac;
-    char *av[5];
-    int x, y;
-    int sflag;
-    fastf_t fx, fy;
-    point_t v_pt, m_pt;
-    struct bu_vls plist = BU_VLS_INIT_ZERO;
-    struct bu_vls bindings = BU_VLS_INIT_ZERO;
     struct ged_dm_view *gdvp;
-    bview_data_polygon_state *gdpsp;
+    struct bu_vls bindings = BU_VLS_INIT_ZERO;
+    int ret;
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -11938,6 +12719,42 @@ to_poly_rect_mode(struct ged *gedp,
 	return GED_ERROR;
     }
 
+    /* shift the command name to argv[1] before calling to_poly_rect_mode_func */
+    argv[1] = argv[0];
+    ret = to_poly_rect_mode_func(current_top->to_interp, gedp, gdvp, argc-1, argv+1, usage);
+
+    if (dm_get_pathname(gdvp->gdv_dmp)) {
+	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_poly_rect %s %%x %%y}",
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
+	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
+    }
+    bu_vls_free(&bindings);
+
+    to_refresh_view(gdvp);
+
+    return ret;
+}
+
+
+HIDDEN int
+to_poly_rect_mode_func(Tcl_Interp *interp,
+		       struct ged *gedp,
+		       struct ged_dm_view *gdvp,
+		       int argc,
+		       const char *argv[],
+		       const char *usage)
+{
+    int ac;
+    char *av[4];
+    int x, y;
+    int sflag;
+    fastf_t fx, fy;
+    point_t v_pt, m_pt;
+    struct bu_vls plist = BU_VLS_INIT_ZERO;
+    bview_data_polygon_state *gdpsp;
+
     if (argv[0][0] == 's')
 	gdpsp = &gdvp->gdv_view->gv_sdata_polygons;
     else
@@ -11951,16 +12768,16 @@ to_poly_rect_mode(struct ged *gedp,
 
     gedp->ged_gvp = gdvp->gdv_view;
 
-    if (bu_sscanf(argv[2], "%d", &x) != 1 ||
-	bu_sscanf(argv[3], "%d", &y) != 1) {
+    if (bu_sscanf(argv[1], "%d", &x) != 1 ||
+	bu_sscanf(argv[2], "%d", &y) != 1) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;
     }
 
-    if (argc == 4)
+    if (argc == 3)
 	sflag = 0;
     else {
-	if (bu_sscanf(argv[4], "%d", &sflag) != 1) {
+	if (bu_sscanf(argv[3], "%d", &sflag) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return GED_ERROR;
 	}
@@ -11984,31 +12801,19 @@ to_poly_rect_mode(struct ged *gedp,
 
     bu_vls_printf(&plist, "{ {%lf %lf %lf} {%lf %lf %lf} {%lf %lf %lf} {%lf %lf %lf} }",
 		  V3ARGS(m_pt), V3ARGS(m_pt), V3ARGS(m_pt), V3ARGS(m_pt));
-    ac = 4;
+    ac = 3;
     av[0] = "data_polygons";
-    av[1] = bu_vls_addr(&gdvp->gdv_name);
-    av[2] = "append_poly";
-    av[3] = bu_vls_addr(&plist);
-    av[4] = (char *)0;
+    av[1] = "append_poly";
+    av[2] = bu_vls_addr(&plist);
+    av[3] = (char *)0;
 
     if (gdpsp->gdps_polygons.gp_num_polygons == gdpsp->gdps_target_polygon_i)
 	gdpsp->gdps_curr_polygon_i = gdpsp->gdps_target_polygon_i;
     else
 	gdpsp->gdps_curr_polygon_i = gdpsp->gdps_polygons.gp_num_polygons;
 
-    (void)to_data_polygons(gedp, ac, (const char **)av, (ged_func_ptr)0, "", 0);
+    (void)to_data_polygons_func(interp, gedp, gdvp, ac, (const char **)av);
     bu_vls_free(&plist);
-
-    if (dm_get_pathname(gdvp->gdv_dmp)) {
-	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_poly_rect %s %%x %%y}",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
-	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
-    }
-    bu_vls_free(&bindings);
-
-    to_refresh_view(gdvp);
 
     return GED_OK;
 }
@@ -12129,9 +12934,9 @@ to_rect_mode(struct ged *gedp,
 
     if (dm_get_pathname(gdvp->gdv_dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_rect %s %%x %%y}",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
     bu_vls_free(&bindings);
@@ -12299,12 +13104,12 @@ to_rotate_arb_face_mode(struct ged *gedp,
 
     if (dm_get_pathname(gdvp->gdv_dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_rotate_arb_face %s %s %s %s %%x %%y}",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name),
-		argv[2],
-		argv[3],
-		argv[4]);
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name),
+		      argv[2],
+		      argv[3],
+		      argv[4]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
     bu_vls_free(&bindings);
@@ -12363,9 +13168,9 @@ to_rotate_mode(struct ged *gedp,
 
     if (dm_get_pathname(gdvp->gdv_dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_rot %s %%x %%y}",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
     bu_vls_free(&bindings);
@@ -12529,11 +13334,11 @@ to_protate_mode(struct ged *gedp,
 
     if (dm_get_pathname(gdvp->gdv_dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_protate %s %s %s %%x %%y}",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name),
-		argv[2],
-		argv[3]);
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name),
+		      argv[2],
+		      argv[3]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
     bu_vls_free(&bindings);
@@ -12592,11 +13397,11 @@ to_pscale_mode(struct ged *gedp,
 
     if (dm_get_pathname(gdvp->gdv_dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_pscale %s %s %s %%x %%y}",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name),
-		argv[2],
-		argv[3]);
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name),
+		      argv[2],
+		      argv[3]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
     bu_vls_free(&bindings);
@@ -12655,11 +13460,11 @@ to_ptranslate_mode(struct ged *gedp,
 
     if (dm_get_pathname(gdvp->gdv_dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_ptranslate %s %s %s %%x %%y}",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name),
-		argv[2],
-		argv[3]);
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name),
+		      argv[2],
+		      argv[3]);
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
     bu_vls_free(&bindings);
@@ -12718,9 +13523,9 @@ to_data_scale_mode(struct ged *gedp,
 
     if (dm_get_pathname(gdvp->gdv_dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_data_scale %s %%x %%y}",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
     bu_vls_free(&bindings);
@@ -12779,9 +13584,9 @@ to_scale_mode(struct ged *gedp,
 
     if (dm_get_pathname(gdvp->gdv_dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_scale %s %%x %%y}",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
     bu_vls_free(&bindings);
@@ -13185,9 +13990,9 @@ to_translate_mode(struct ged *gedp,
 
     if (dm_get_pathname(gdvp->gdv_dmp)) {
 	bu_vls_printf(&bindings, "bind %s <Motion> {%s mouse_trans %s %%x %%y}",
-		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
-		bu_vls_addr(&current_top->to_gop->go_name),
-		bu_vls_addr(&gdvp->gdv_name));
+		      bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
+		      bu_vls_addr(&current_top->to_gop->go_name),
+		      bu_vls_addr(&gdvp->gdv_name));
 	Tcl_Eval(current_top->to_interp, bu_vls_addr(&bindings));
     }
     bu_vls_free(&bindings);
@@ -13425,7 +14230,7 @@ to_view_win_size(struct ged *gedp,
 #   if (defined HAVE_TK)
     if (dm_get_public_vars(gdvp->gdv_dmp)) {
 	Tk_GeometryRequest(((struct dm_xvars *)(dm_get_public_vars(gdvp->gdv_dmp)))->xtkwin,
-		width, height);
+			   width, height);
     }
 #   endif
 #endif
@@ -14306,13 +15111,14 @@ to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp)
     return TCL_OK;
 }
 
+
 HIDDEN void
 to_create_vlist_callback_solid(struct solid *sp)
 {
     struct ged_dm_view *gdvp;
     register int first = 1;
 
-	for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
+    for (BU_LIST_FOR(gdvp, ged_dm_view, &current_top->to_gop->go_head_views.l)) {
 	if (current_top->to_gop->go_dlist_on && to_is_viewable(gdvp)) {
 
 	    (void)dm_make_current(gdvp->gdv_dmp);
@@ -14328,9 +15134,9 @@ to_create_vlist_callback_solid(struct solid *sp)
 		(void)dm_set_fg(gdvp->gdv_dmp, 255, 255, 255, 0, sp->s_transparency);
 	    else
 		(void)dm_set_fg(gdvp->gdv_dmp,
-			       (unsigned char)sp->s_color[0],
-			       (unsigned char)sp->s_color[1],
-			       (unsigned char)sp->s_color[2], 0, sp->s_transparency);
+				(unsigned char)sp->s_color[0],
+				(unsigned char)sp->s_color[1],
+				(unsigned char)sp->s_color[2], 0, sp->s_transparency);
 
 	    if (sp->s_hiddenLine) {
 		(void)dm_draw_vlist_hidden_line(gdvp->gdv_dmp, (struct bn_vlist *)&sp->s_vlist);
@@ -14465,6 +15271,7 @@ to_output_handler(struct ged *gedp, char *line)
     tclcad_eval_noresult(current_top->to_interp, script, 1, (const char **)&line);
 }
 
+
 HIDDEN void go_dm_draw_arrows(dm *dmp, struct bview_data_arrow_state *gdasp, fastf_t sf);
 HIDDEN void go_dm_draw_labels(dm *dmp, struct bview_data_label_state *gdlsp, matp_t m2vmat);
 HIDDEN void go_dm_draw_lines(dm *dmp, struct bview_data_line_state *gdlsp);
@@ -14491,9 +15298,9 @@ go_dm_draw_arrows(dm *dmp, struct bview_data_arrow_state *gdasp, fastf_t sf)
 
     /* set color */
     (void)dm_set_fg(dmp,
-			 gdasp->gdas_color[0],
-			 gdasp->gdas_color[1],
-			 gdasp->gdas_color[2], 1, 1.0);
+		    gdasp->gdas_color[0],
+		    gdasp->gdas_color[1],
+		    gdasp->gdas_color[2], 1, 1.0);
 
     /* set linewidth */
     (void)dm_set_line_attr(dmp, gdasp->gdas_line_width, 0);  /* solid lines */
@@ -14565,9 +15372,9 @@ go_dm_draw_labels(dm *dmp, struct bview_data_label_state *gdlsp, matp_t m2vmat)
 
     /* set color */
     (void)dm_set_fg(dmp,
-			 gdlsp->gdls_color[0],
-			 gdlsp->gdls_color[1],
-			 gdlsp->gdls_color[2], 1, 1.0);
+		    gdlsp->gdls_color[0],
+		    gdlsp->gdls_color[1],
+		    gdlsp->gdls_color[2], 1, 1.0);
 
     for (i = 0; i < gdlsp->gdls_num_labels; ++i) {
 	point_t vpoint;
@@ -14594,9 +15401,9 @@ go_dm_draw_lines(dm *dmp, struct bview_data_line_state *gdlsp)
 
     /* set color */
     (void)dm_set_fg(dmp,
-			 gdlsp->gdls_color[0],
-			 gdlsp->gdls_color[1],
-			 gdlsp->gdls_color[2], 1, 1.0);
+		    gdlsp->gdls_color[0],
+		    gdlsp->gdls_color[1],
+		    gdlsp->gdls_color[2], 1, 1.0);
 
     /* set linewidth */
     (void)dm_set_line_attr(dmp, gdlsp->gdls_line_width, 0);  /* solid lines */
@@ -14615,10 +15422,10 @@ go_dm_draw_lines(dm *dmp, struct bview_data_line_state *gdlsp)
 	\
 	/* set color */ \
 	(void)dm_set_fg((_dmp), \
-			     (_gdpsp)->gdps_polygons.gp_polygon[_i].gp_color[0], \
-			     (_gdpsp)->gdps_polygons.gp_polygon[_i].gp_color[1], \
-			     (_gdpsp)->gdps_polygons.gp_polygon[_i].gp_color[2], \
-			     1, 1.0);					\
+			(_gdpsp)->gdps_polygons.gp_polygon[_i].gp_color[0], \
+			(_gdpsp)->gdps_polygons.gp_polygon[_i].gp_color[1], \
+			(_gdpsp)->gdps_polygons.gp_polygon[_i].gp_color[2], \
+			1, 1.0);					\
 	\
 	for (_j = 0; _j < (_gdpsp)->gdps_polygons.gp_polygon[_i].gp_num_contours; ++_j) { \
 	    size_t _last = (_gdpsp)->gdps_polygons.gp_polygon[_i].gp_contour[_j].gpc_num_points-1; \
@@ -14777,10 +15584,10 @@ go_draw_faceplate(struct ged_obj *gop, struct ged_dm_view *gdvp)
     /* Center dot */
     if (gdvp->gdv_view->gv_center_dot.gos_draw) {
 	(void)dm_set_fg(gdvp->gdv_dmp,
-			     gdvp->gdv_view->gv_center_dot.gos_line_color[0],
-			     gdvp->gdv_view->gv_center_dot.gos_line_color[1],
-			     gdvp->gdv_view->gv_center_dot.gos_line_color[2],
-			     1, 1.0);
+			gdvp->gdv_view->gv_center_dot.gos_line_color[0],
+			gdvp->gdv_view->gv_center_dot.gos_line_color[1],
+			gdvp->gdv_view->gv_center_dot.gos_line_color[2],
+			1, 1.0);
 	(void)dm_draw_point_2d(gdvp->gdv_dmp, 0.0, 0.0);
     }
 
@@ -14844,10 +15651,10 @@ go_draw_faceplate(struct ged_obj *gop, struct ged_dm_view *gdvp)
 		      V3ARGS(center),
 		      V3ARGS(gdvp->gdv_view->gv_aet));
 	(void)dm_set_fg(gdvp->gdv_dmp,
-			     gdvp->gdv_view->gv_view_params.gos_text_color[0],
-			     gdvp->gdv_view->gv_view_params.gos_text_color[1],
-			     gdvp->gdv_view->gv_view_params.gos_text_color[2],
-			     1, 1.0);
+			gdvp->gdv_view->gv_view_params.gos_text_color[0],
+			gdvp->gdv_view->gv_view_params.gos_text_color[1],
+			gdvp->gdv_view->gv_view_params.gos_text_color[2],
+			1, 1.0);
 	(void)dm_draw_string_2d(gdvp->gdv_dmp, bu_vls_addr(&vls), -0.98, -0.965, 10, 0);
 	bu_vls_free(&vls);
     }
@@ -14931,9 +15738,9 @@ go_draw_solid(struct ged_dm_view *gdvp, struct solid *sp)
 	    (void)dm_set_fg(dmp, 255, 255, 255, 0, sp->s_transparency);
 	else
 	    (void)dm_set_fg(dmp,
-				 (unsigned char)sp->s_color[0],
-				 (unsigned char)sp->s_color[1],
-				 (unsigned char)sp->s_color[2], 0, sp->s_transparency);
+			    (unsigned char)sp->s_color[0],
+			    (unsigned char)sp->s_color[1],
+			    (unsigned char)sp->s_color[2], 0, sp->s_transparency);
 
 	if (sp->s_hiddenLine) {
 	    (void)dm_draw_vlist_hidden_line(dmp, (struct bn_vlist *)&sp->s_vlist);
@@ -15106,6 +15913,24 @@ go_refresh_draw(struct ged_obj *gop, struct ged_dm_view *gdvp, int restore_zbuff
     }
 
     go_draw_other(gop, gdvp);
+}
+
+
+int
+go_run_tclscript(Tcl_Interp *interp,
+		 const char *tclscript,
+		 struct bu_vls *result_str)
+{
+    int ret;
+
+    /* initialize result */
+    bu_vls_trunc(result_str, 0);
+
+    ret = Tcl_Eval(interp, tclscript);
+    bu_vls_printf(result_str, "%s", Tcl_GetStringResult(interp));
+    Tcl_ResetResult(interp);
+
+    return ret;
 }
 
 

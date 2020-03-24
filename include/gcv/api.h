@@ -1,7 +1,7 @@
 /*                       G C V _ A P I . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -101,7 +101,7 @@ struct gcv_opts
     unsigned max_cpus;
 
     struct bn_tol calculational_tolerance;
-    struct rt_tess_tol tessellation_tolerance;
+    struct bg_tess_tol tessellation_tolerance;
     enum gcv_tessellation_algorithm tessellation_algorithm;
 
     /* conversion to units */
@@ -116,6 +116,9 @@ struct gcv_opts
 
     /* objects to convert */
     const char * const *object_names;
+
+    /* Apply color randomization */
+    unsigned randomize_colors;
 };
 
 

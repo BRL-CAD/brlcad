@@ -1,7 +1,7 @@
 /*                         T A B L E S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -101,7 +101,7 @@ tables_check(char *a, char *b)
 HIDDEN size_t
 tables_sol_number(const matp_t matrix, char *name, size_t *old, size_t *numsol)
 {
-    off_t i;
+    b_off_t i;
     struct identt idbuf1, idbuf2;
     static struct identt identt = {0, {0}, MAT_INIT_ZERO};
     ssize_t readval;

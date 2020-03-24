@@ -1,7 +1,7 @@
 /*                     R E G I O N F I X . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2018 United States Government as represented by
+ * Copyright (c) 1989-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -98,7 +98,7 @@ rt_regionfix(struct rt_i *rtip)
 
 	for (BU_LIST_FOR(rp, region, &(rtip->HeadRegion))) {
 	    ret = regexec(&re_space, (char *)rp->reg_name, 0, 0, 0);
-	    if (RT_G_DEBUG&DEBUG_INSTANCE) {
+	    if (RT_G_DEBUG&RT_DEBUG_INSTANCE) {
 		bu_log("'%s' %s '%s'\n", line,
 		       ret==1 ? "==" : "!=",
 		       rp->reg_name);
@@ -129,7 +129,7 @@ rt_regionfix(struct rt_i *rtip)
 		newid = atoi(tabp);
 		if (newid == 0) bu_log("%s, line %d Warning:  new id = 0\n", file, linenum);
 	    }
-	    if (RT_G_DEBUG&DEBUG_INSTANCE) {
+	    if (RT_G_DEBUG&RT_DEBUG_INSTANCE) {
 		bu_log("%s instance %ld:  region id changed from %d to %d\n",
 		       rp->reg_name, rp->reg_instnum,
 		       oldid, newid);

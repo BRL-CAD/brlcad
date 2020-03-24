@@ -1,7 +1,7 @@
 /*                         B E V . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -48,7 +48,7 @@ bev_facetize_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_
 
     BU_LIST_INIT(&vhead);
 
-    if (RT_G_DEBUG&DEBUG_TREEWALK) {
+    if (RT_G_DEBUG&RT_DEBUG_TREEWALK) {
 	char *sofar = db_path_to_string(pathp);
 
 	bu_vls_printf(gedp->ged_result_str, "bev_facetize_region_end() path='%s'\n", sofar);
@@ -120,7 +120,7 @@ ged_bev(struct ged *gedp, int argc, const char *argv[])
     gedp->ged_wdbp->wdb_initial_tree_state.ts_ttol = &gedp->ged_wdbp->wdb_ttol;
     gedp->ged_wdbp->wdb_initial_tree_state.ts_tol = &gedp->ged_wdbp->wdb_tol;
 
-    gedp->ged_wdbp->wdb_ttol.magic = RT_TESS_TOL_MAGIC;
+    gedp->ged_wdbp->wdb_ttol.magic = BG_TESS_TOL_MAGIC;
 
     /* Initial values for options, must be reset each time */
     ncpu = 1;

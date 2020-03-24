@@ -7,6 +7,11 @@ set(ADRT_INCLUDE_DIRS
 list(REMOVE_DUPLICATES ADRT_INCLUDE_DIRS)
 BRLCAD_INCLUDE_DIRS(ADRT_INCLUDE_DIRS)
 
+if(NOT "${Z_PREFIX_STR}" STREQUAL "")
+  add_definitions(-DZ_PREFIX)
+  add_definitions(-DZ_PREFIX_STR=${Z_PREFIX_STR})
+endif(NOT "${Z_PREFIX_STR}" STREQUAL "")
+
 set(LIBRENDER_SRCS
   load.c
   load_g.c
@@ -80,8 +85,8 @@ if(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
 
 endif(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
 
+CMAKEFILES(isst.tcl)
 CMAKEFILES(isst.c)
-
 
 add_subdirectory(master)
 # add_subdirectory(slave)

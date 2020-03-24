@@ -1,7 +1,7 @@
 /*                         L O G . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -49,29 +49,29 @@ __BEGIN_DECLS
  * presently writes to STDERR by default, this behavior should not be relied
  * upon and may be changed to STDOUT in the future without notice.
  *
- @code
- --- BEGIN EXAMPLE ---
-
- int log_output_to_file(void *data, void *str)
- {
-   FILE *fp = (FILE *)data;
-   fprintf(fp, "LOG: %s", str);
-   return 0;
- }
-
- int main(int ac, char *av[])
- {
-   FILE *fp = fopen("whatever.log", "w+");
-   bu_log_add_hook(log_output_to_file, (void *)fp);
-   bu_log("Logging to file.\n");
-   bu_log_delete_hook(log_output_to_file, (void *)fp);
-   bu_log("Logging to stderr.\n");
-   fclose(fp);
-   return 0;
- }
-
- --- END EXAMPLE ---
- @endcode
+ * @code
+ * --- BEGIN EXAMPLE ---
+ *
+ * int log_output_to_file(void *data, void *str)
+ * {
+ *   FILE *fp = (FILE *)data;
+ *   fprintf(fp, "LOG: %s", str);
+ *   return 0;
+ * }
+ *
+ * int main(int ac, char *av[])
+ * {
+ *   FILE *fp = fopen("whatever.log", "w+");
+ *   bu_log_add_hook(log_output_to_file, (void *)fp);
+ *   bu_log("Logging to file.\n");
+ *   bu_log_delete_hook(log_output_to_file, (void *)fp);
+ *   bu_log("Logging to stderr.\n");
+ *   fclose(fp);
+ *   return 0;
+ * }
+ *
+ * --- END EXAMPLE ---
+ * @endcode
  *
  */
 /** @{ */
@@ -142,19 +142,15 @@ BU_EXPORT extern void bu_putchar(int c);
  *
  * The function is essentially a semaphore-protected version of
  * fprintf(stderr) with optional logging hooks and automatic
- * indentation options.  The main difference is that this function
- * does not keep track of characters printed, so nothing is returned.
- *
- * This function recognizes a %V format specifier to print a bu_vls
- * struct pointer.  See bu_vsscanf() for details.
+ * indentation options.
  */
-BU_EXPORT extern void bu_log(const char *, ...) _BU_ATTR_PRINTF12;
+BU_EXPORT extern int bu_log(const char *, ...) _BU_ATTR_PRINTF12;
 
 /**
  * Just like bu_log() except that you can send output to a specified
  * file pointer.
  */
-BU_EXPORT extern void bu_flog(FILE *, const char *, ...) _BU_ATTR_PRINTF23;
+BU_EXPORT extern int bu_flog(FILE *, const char *, ...) _BU_ATTR_PRINTF23;
 
 /**
  * @brief

@@ -1,7 +1,7 @@
 /*                        B W H I S T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2018 United States Government as represented by
+ * Copyright (c) 1986-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -45,8 +45,8 @@ static char *Usage = "Usage: bwhist [-v] [file.bw]\n";
 int
 main(int argc, char **argv)
 {
-    int i;
-    int n;
+    size_t i;
+    size_t n;
     long max;
     static double scale;
     unsigned char buf[512];
@@ -108,7 +108,7 @@ main(int argc, char **argv)
 	fb_write(fbp, 0, 2*i, white, value);
 	fb_write(fbp, 0, 2*i+1, white, value);
 	if (verbose)
-	    printf("%3d: %10ld (%10f)\n", i, bin[i], (float)bin[i]/(float)max);
+	    printf("%3lu: %10ld (%10f)\n", (long unsigned)i, bin[i], (float)bin[i]/(float)max);
     }
 
     fb_close(fbp);

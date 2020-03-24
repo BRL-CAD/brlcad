@@ -1,7 +1,7 @@
 /*                         G - D X F . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2018 United States Government as represented by
+ * Copyright (c) 2003-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -91,7 +91,7 @@ static int	polyface_mesh = 0;	/* flag for output type (default is 3DFACE) */
 static char	*output_file = NULL;	/* output filename */
 static FILE	*fp;		/* Output file pointer */
 static struct db_i		*dbip;
-static struct rt_tess_tol	ttol;	/* tessellation tolerance in mm */
+static struct bg_tess_tol	ttol;	/* tessellation tolerance in mm */
 static struct bn_tol		tol;	/* calculation tolerance */
 static struct model		*the_model;
 
@@ -277,7 +277,7 @@ nmg_to_dxf(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 		    NMG_CK_VERTEX(v);
 
 		    if (polyface_mesh) {
-			fprintf(fp, "%d\n%d\n",
+			fprintf(fp, "%d\n%jd\n",
 				 vert_count+70, bu_ptbl_locate(&verts, (long *)v) + 1);
 		    } else {
 			if (inches) {
@@ -394,7 +394,7 @@ main(int argc, char *argv[])
     tree_state.ts_m = &the_model;
 
     /* Set up tessellation tolerance defaults */
-    ttol.magic = RT_TESS_TOL_MAGIC;
+    ttol.magic = BG_TESS_TOL_MAGIC;
     /* Defaults, updated by command line options. */
     ttol.abs = 0.0;
     ttol.rel = 0.01;
@@ -437,7 +437,7 @@ main(int argc, char *argv[])
 		ncpu = atoi(bu_optarg);
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
 		break;
 	    case 'D':
 		tol.dist = atof(bu_optarg);
@@ -487,7 +487,7 @@ main(int argc, char *argv[])
     }
 
     BN_CK_TOL(tree_state.ts_tol);
-    RT_CK_TESS_TOL(tree_state.ts_ttol);
+    BG_CK_TESS_TOL(tree_state.ts_ttol);
 
     if (verbose) {
 	int i;

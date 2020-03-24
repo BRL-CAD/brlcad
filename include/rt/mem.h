@@ -1,7 +1,7 @@
 /*                          M E M . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2018 United States Government as represented by
+ * Copyright (c) 1993-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@
 #define RT_MEM_H
 
 #include "common.h"
+#include "bio.h" /* for b_off_t */
 #include "vmath.h"
 #include "rt/defines.h"
 
@@ -37,7 +38,7 @@ __BEGIN_DECLS
 struct mem_map {
     struct mem_map *m_nxtp;     /**< @brief Linking pointer to next element */
     size_t m_size;              /**< @brief Size of this free element */
-    off_t m_addr;               /**< @brief Address of start of this element */
+    b_off_t m_addr;               /**< @brief Address of start of this element */
 };
 #define MAP_NULL        ((struct mem_map *) 0)
 
@@ -54,7 +55,7 @@ struct mem_map {
  * Algorithm is first fit.
  */
 RT_EXPORT extern size_t rt_memalloc(struct mem_map **pp,
-                                    size_t size);
+				    size_t size);
 
 /**
  * Takes:               & pointer of map,
@@ -67,19 +68,7 @@ RT_EXPORT extern size_t rt_memalloc(struct mem_map **pp,
  * Algorithm is BEST fit.
  */
 RT_EXPORT extern struct mem_map * rt_memalloc_nosplit(struct mem_map **pp,
-                                                      size_t size);
-
-/**
- * Returns:     NULL Error
- * address Otherwise
- *
- * Comments:
- * Algorithm is first fit.
- * Free space can be split
- */
-RT_EXPORT extern size_t rt_memget(struct mem_map **pp,
-                                  size_t size,
-                                  off_t place);
+						      size_t size);
 
 /**
  * Takes:
@@ -91,8 +80,8 @@ RT_EXPORT extern size_t rt_memget(struct mem_map **pp,
  * or changing addresses.  Other wrap-around conditions are flagged.
  */
 RT_EXPORT extern void rt_memfree(struct mem_map **pp,
-                                 size_t size,
-                                 off_t addr);
+				 size_t size,
+				 b_off_t addr);
 
 /**
  * Take everything on the current memory chain, and place it on the
@@ -104,10 +93,6 @@ RT_EXPORT extern void rt_mempurge(struct mem_map **pp);
  * Return all the storage used by the rt_mem_freemap.
  */
 RT_EXPORT extern void rt_memclose(void);
-
-
-/* DEPRECATED */
-/*RT_EXPORT extern void rt_memprint(struct mem_map **pp);*/
 
 
 __END_DECLS

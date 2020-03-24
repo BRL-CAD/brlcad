@@ -1,7 +1,7 @@
 /*                        B W D I F F . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2018 United States Government as represented by
+ * Copyright (c) 1986-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -70,7 +70,7 @@ int
 main(int argc, char **argv)
 {
     unsigned char *p1, *p2, *op;
-    int i, n, m;
+    size_t i, n, m;
     size_t ret;
 
     while (argc > 3) {

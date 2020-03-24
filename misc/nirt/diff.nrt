@@ -1,0 +1,13 @@
+# diff.nrt
+# Description: Output formatted for processing by the NIRT diff command.  The
+# numbers after each label (RAY, HIT, etc.) are for versioning purposes, to allow
+# new variations on this format to be processed while allowing for backwards
+# compatibility.
+units mm
+fmt r "%s\nRAY,1,%.17f,%.17f,%.17f,%.17f,%.17f,%.17f\n" nirt_cmd x_orig y_orig z_orig x_dir y_dir z_dir
+fmt h ""
+fmt p "HIT,1,\"%s\",\"%s\",%d,%.17f,%.17f,%.17f,%.17f,%.17f,%.17f,%.17f,%.17f,%.17f,%.17f,%.17f,%.17f\n" reg_name path_name reg_id x_in y_in z_in d_in x_out y_out z_out d_out los scaled_los obliq_in obliq_out
+fmt f ""
+fmt m ""
+fmt o "OVERLAP,1,\"%s\",\"%s\",%d,%d,%.17f,%.17f,%.17f,%.17f,%.17f,%.17f,%.17f\n" ov_reg1_name ov_reg2_name ov_reg1_id ov_reg2_id ov_x_in ov_y_in ov_z_in ov_x_out ov_y_out ov_z_out ov_los
+fmt g ""

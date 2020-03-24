@@ -1,7 +1,7 @@
 /*                        S C R I P T . C
  * BRL-CAD
  *
- * Copyright (c) 2017-2018 United States Government as represented by
+ * Copyright (c) 2017-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -157,7 +157,7 @@ rt_script_free(struct soltab *stp)
 
 
 int
-rt_script_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_script_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     struct rt_script_internal *script_ip;
 

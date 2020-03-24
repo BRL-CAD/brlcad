@@ -1,7 +1,7 @@
 /*                        M A L L O C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,6 +21,7 @@
 #include "common.h"
 
 #include <stdlib.h>
+#include <limits.h>
 #include <string.h>
 #ifdef HAVE_SYS_IPC_H
 #  include <sys/ipc.h>
@@ -41,6 +42,8 @@
 #ifndef HAVE_DECL_POSIX_MEMALIGN
 extern int posix_memalign(void **, size_t, size_t);
 #endif
+
+int BU_SEM_MALLOC;
 
 
 /**
@@ -180,7 +183,24 @@ bu_free(void *ptr, const char *str)
 	str = nul;
 
     if (UNLIKELY(ptr == (char *)0 || ptr == (char *)(-1L))) {
+	const char *msg_sleep_time_str = NULL;
 	fprintf(stderr, "%p free ERROR %s\n", ptr, str);
+	/* There is a class of parallel failures that produce attempts to free
+	 * NULL values, but are difficult to reproduce.  To get a debugger on
+	 * those cases to see how we got there, we need time.  If we hit this
+	 * case, spend a little extra time to see if an environment variable is
+	 * set to a time value in seconds.  If it is set, sleep to give the
+	 * user time to attach the debugger. */
+	msg_sleep_time_str = getenv("BU_NIL_FREE_SLEEP_SEC");
+	if (msg_sleep_time_str) {
+	    long stime = 0;
+	    char *end;
+	    errno = 0;
+	    stime = strtol(msg_sleep_time_str, &end, 10);
+	    if (errno != ERANGE && errno != EINVAL && stime > 0 && stime < UINT_MAX) {
+		sleep((unsigned int)stime);
+	    }
+	}
 	return;
     }
 
@@ -327,7 +347,7 @@ int
 #ifdef HAVE_SYS_SHM_H
 bu_shmget(int *shmid, char **shared_memory, int key, size_t size)
 #else
-bu_shmget(int *UNUSED(shmid), char **UNUSED(shared_memory), int UNUSED(key), size_t UNUSED(size))
+    bu_shmget(int *UNUSED(shmid), char **UNUSED(shared_memory), int UNUSED(key), size_t UNUSED(size))
 #endif
 {
     int ret = 1;
@@ -339,16 +359,16 @@ bu_shmget(int *UNUSED(shmid), char **UNUSED(shared_memory), int UNUSED(key), siz
 #ifdef _SC_PAGESIZE
     psize = sysconf(_SC_PAGESIZE);
 #else
-    psize = 4096;
+    psize = BU_PAGE_SIZE;
 #endif
 
     ret = 0;
     errno = 0;
 
     /*
-       make more portable
-       shmsize = (size + getpagesize()-1) & ~(getpagesize()-1);
-       */
+      make more portable
+      shmsize = (size + getpagesize()-1) & ~(getpagesize()-1);
+    */
     shmsize = (size + psize - 1) & ~(psize - 1);
     /* First try to attach to an existing one */
     if (((*shmid) = shmget(key, shmsize, 0)) < 0) {

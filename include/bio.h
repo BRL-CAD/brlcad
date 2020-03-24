@@ -1,7 +1,7 @@
 /*                           B I O . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,6 +39,11 @@
 #define BIO_H
 
 #include <stdio.h>
+
+/* strict mode may not declare fileno() */
+# if !defined(fileno) && !defined(__cplusplus)
+extern int fileno(FILE *stream);
+# endif
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 
@@ -88,6 +93,35 @@
    this is the work-around for older compilers */
 #ifndef S_ISDIR
 #   define S_ISDIR(_st_mode) (((_st_mode) & S_IFMT) == S_IFDIR)
+#endif
+
+/* We want 64 bit (large file) I/O capabilities whenever they are available.
+ * Always define this before we include sys/types.h */
+#ifndef _FILE_OFFSET_BITS
+#  define _FILE_OFFSET_BITS 64
+#endif
+#include <sys/types.h>
+
+/* off_t is 32 bit size even on 64 bit Windows. In the past we have tried to
+ * force off_t to be 64 bit but this is failing on newer Windows/Visual Studio
+ * verions in 2020 - therefore, we instead introduce the b_off_t define to
+ * properly substitute the correct numerical type for the correct platform.  */
+#if defined(_WIN64)
+#  include <sys/stat.h>
+#  define b_off_t __int64
+#  define fseek _fseeki64
+#  define ftell _ftelli64
+#  define fstat _fstati64
+#  define lseek _lseeki64
+#  define stat  _stati64
+#elif defined (_WIN32)
+#  include <sys/stat.h>
+#  define b_off_t _off_t
+#  define fstat _fstat
+#  define lseek _lseek
+#  define stat  _stat
+#else
+#  define b_off_t off_t
 #endif
 
 #endif /* BIO_H */

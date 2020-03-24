@@ -504,7 +504,7 @@ void mmInit()
 	    mmcontext.pagesize = sysinfo.dwPageSize;
 	}
 #else
-	mmcontext.pagesize = 4096;
+	mmcontext.pagesize = BU_PAGE_SIZE;
 #endif
 #if defined(MM_UNIX) && defined(_SC_PHYS_PAGES)
 	sysmemory = sysconf(_SC_PHYS_PAGES);

@@ -1,7 +1,7 @@
 /*                        S O B O L . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,18 +25,18 @@
  * Generation of the Sobol quasi-random low-discrepancy sequence of numbers.
  *
  * @par Usage:
-@code
-double *snums;
-struct bn_soboldata *sd = bn_sobol_create(3, time(NULL));
-if (sd) {
-    bn_sobol_skip(s, 4000, snums);
-    for (i = 0; i < 4000; i++) {
-	snums = bn_sobol_next(s, NULL, NULL);
-	printf("x[%d]: %g %g %g", i, snums[0], snums[1], snums[2]);
-    }
-    bn_sobol_destroy(sd);
-}
-@endcode
+ * @code
+ * double *snums;
+ * struct bn_soboldata *sd = bn_sobol_create(3, time(NULL));
+ * if (sd) {
+ *   bn_sobol_skip(s, 4000, snums);
+ *   for (i = 0; i < 4000; i++) {
+ *     snums = bn_sobol_next(s, NULL, NULL);
+ *     printf("x[%d]: %g %g %g", i, snums[0], snums[1], snums[2]);
+ *   }
+ *   bn_sobol_destroy(sd);
+ * }
+ * @endcode
  *
  */
 /** @{ */

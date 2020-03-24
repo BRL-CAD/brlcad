@@ -95,7 +95,7 @@ header, and is published via the 7.50.4 release.
 
 The soonest that function could be removed / obsoleted would be in
 7.54.0 during 7.53.* development provided more than 90 days had passed
-since the intiial announcement.  It could NOT be removed in 7.54.2 as
+since the initial announcement.  It could NOT be removed in 7.54.2 as
 that's a patch version, prior to 7.54, nor during 7.54.0 if less than
 90 days had passed since 7.50.6 was posted.
 
@@ -120,12 +120,36 @@ under MINIMALLY IMPACTING CHANGES.
 
 The interfaces announced below are scheduled to significantly change
 or be removed.  They are categorized by the release in which
-deprecation was first announced.  If the inteface change involved a
+deprecation was first announced.  If the interface change involved a
 removal or transition, both the original and new interface names are
 generally listed for reference.
 
 Items marked with a "'" (single quote) are undocumented and may be
 removed at any time.
+
+7.30
+----
+~/.density
+        automatic reading of .density file in home directory
+        materials need to be specified or imported [deprecated 7.28]
+
+btclsh, bwish
+	Emacs key binding emulation
+	achieved by running btclsh in Emacs [deprecated 7.30]
+
+include/bu/redblach.h
+	All redblack related functions, structures and macros
+	defined in libbu's redblack.h.  Functions are:
+	bu_rb_create, bu_rb_delete, bu_rb_diagnose_tree,
+	bu_rb_summarize_tree, bu_rb_extreme, bu_rb_neighbor,
+	bu_rb_curr, bu_rb_free, bu_rb_insert, bu_rb_is_uniq,
+	bu_rb_set_uniqv, bu_rb_uniq_all_off, bu_rb_uniq_all_on,
+	bu_rb_uniq_on, bu_rb_uniq_off, bu_rb_rank, bu_rb_select,
+	bu_rb_search, bu_rb_walk
+	Use C++ containers set/map from std [deprecated 7.30]
+
+nirt
+	Behavior available under the --old flag [deprecated 7.30]
 
 7.28
 ----
@@ -154,35 +178,9 @@ libtermio, libcursor
 
 7.26
 ----
-ray tracing tools
-	lgt : functionally replaced by nirt
-	rtcell', rtfrac', rtpp, rtrad', rtrange, rtray, rtregis
-	Removed as part of distillation effort [deprecated 7.26]
-converter tools
-	cy-g, euclid-g, euclid_format', euclid_unformat', g-euclid,
-	g-euclid1', g-tankill, intaval-g.py, viewpoint-g : obsolete formats
-	plot3-X, plot3-hpgl, plot3-tek : obsolete interface, see overlay command
-	plot3debug, xyz-plot3 : see plot3-asc,asc-plot3
-	bot-bldxf', bot_shell-vtk, g-nmg, nmg-bot, nmg-rib, nmg-sgp',
-	poly-bot, rt_bot_faces, : primitive-specific converters
-	Removed as part of distillation effort [deprecated 7.26]
 image tools
-	cmap-fb, fb-cmap, fbcmrot : colormap support obsolete
-	fbed, cell-fb : outside scope
-	fbscanplot, polar-fb, pp-fb, bw-imp, pixinfo.sh : obsolete
-	png_info : incorporating into icv
-	pixpaste : outside scope, license
 	alias-pix' : incorporating into icv
 	asc2pix' : incorporating into icv
-	pix-yuv', yuv-pix' : obsolete non-standard format
-	texturescale : obsolete implementation
-	Removed as part of distillation effort [deprecated 7.26]
-video & animation tools
-	anim_*', fbanim, chan_add', chan_mult, chan_permute,
-	pixflip-fb' : outside scope
-	pixfields', pixfieldsep' : outside scope
-	orbit.sh, rtwalk, scriptsort, script-tab', tabinterp, tabsup,
-	azel, bary
 	Removed as part of distillation effort [deprecated 7.26]
 signal analysis tools
 	a-d', d-a', bw-a', i-a', u-a' : incorporating into cv
@@ -191,30 +189,13 @@ signal analysis tools
 	f-d', f-i', d-f', i-f', u-f', u-bw' : incorporating into cv
 	d2-c', double-asc' : incorporating into cv
 	Removed as part of distillation effort [deprecated 7.26]
-infrared & shapefactor tools
-	all_sf', if-X, ifdisp, pictx, showterm, firpass, secpass, shapefact
-	Removed as part of distillation effort [deprecated 7.26]
-misc tools
-	fix_polysolids' : obsolete primitive
-	remapid : superseded by reid+remat
-	buffer : unnecessary network/stream buffering tool
-	hex : superseded by hexdump
-	Removed as part of distillation effort [deprecated 7.26]
 include/bu/ptbl.h
         BU_PTBL_BASEADDR, BU_PTBL_LASTADDR, BU_PTBL_END
         Removed as private implementation detail [deprecated 7.26
-include/bu/hash.h
-	bu_hash_tbl_find, bu_set_hash_value, bu_get_hash_value, bu_get_hash_key,
-	bu_hash_tbl_add, bu_hash_tbl_print, bu_hash_tbl_free, bu_hash_tbl_first,
-	bu_hash_tbl_next, bu_hash_tbl_traverse, public structs bu_hash_entry and
-	bu_hash_tbl will be made private.
-	Replaced with new API [deprecated 7.26]
 include/bu/cmd.h
 	remove struct bu_cmdhist and struct bu_cmdhist_obj [deprecated 7.26]
 	BU_CMDHIST_NULL, BU_CMDHIST_OBJ_NULL, bu_cmdhist_histor, bu_cmdhist_add,
 	bu_cmdhist_curr, bu_cmdhist_nest, bu_cmdhist_prev [deprecated 7.26]
-fb-rle, rle-fb, bw-rle, pix-rle, rle-pix
-	All tools focused specifically on the RLE image format. [deprecated 7.26]
 nirt
 	-T - use LIBRT_BOT_MINTIE environment variable instead [deprecated 7.26]
 all global variables
@@ -228,7 +209,6 @@ include/raytrace.h
 	tcl_obj_to_fastf_array tcl_list_to_int_array
 	tcl_list_to_fastf_array *_tcl_*, removal of all tcl-specific
 	API functions [deprecated 7.26]
-	db_regexp_match_all() -> db_ls() [deprecated 7.26]
 include/rt/solid.h
 	shouldn't be public API - this level of detail belongs inside the display
         manager [deprecated 7.26]
@@ -242,8 +222,6 @@ include/tclcad.h
 	tclcad_bn_mat_print tclcad_rt_parse_ray tclcad_rt_pr_cutter
 	tclcad_rt_pr_hit tclcad_rt_rt tclcad_rt_import_from_path, removal of all
 	tcl-specific API functions [deprecated 7.26]
-pixcut, pixpaste
-	copyright cleanup [deprecated 7.26]
 librt, fast4-g
 	removal of CLINE entity support [deprecated 7.26]
 mged
@@ -256,19 +234,9 @@ mged
 	expand was regex were wrong - uses bu_fnmatch.) [deprecated 7.26]
 
 	pathlist, paths -> replaced by search [deprecated 7.26]
-burst
-	remove termlib-based interactive menu interface [deprecated 7.26]
 
 7.24
 ----
-fbed, pp-fb
-	removes termcap use, no known users [deprecated 7.24]
-include/raytrace librt
-	db_full_path_list_add(), db_free_full_path_list() [deprecated 7.24]
-	db_search_formplan(), db_search_freeplan(), db_search_full_paths() [deprecated 7.24]
-	db_search_unique_objects(), struct db_full_path_list [deprecated 7.24]
-src/irprep
-	all_sf, firpass, ir-X, irdisp, pictx, secpass, shapefact, showterm [deprecated 7.24]
 include/raytrace.h librt
 	RT_DBHASH and RT_DBNHASH [deprecated 7.24]
 
@@ -278,10 +246,6 @@ include/raytrace.h librt
 	nmg_model_break_e_on_v -> nmg_break_e_on_v [deprecation 7.22]
 	RT_GET_TREE -> BU_GET [deprecation 7.22]
 	RT_FREE_TREE -> BU_PUT [deprecation 7.22]
-include/bu.h
-	bu_parse_mm() [deprecated 7.22]
-mged
-	em, e_muves, l_muves, lm, read_muves, and t_muves MUVES-specific commands [deprecated 7.22]
 
 7.20
 ----
@@ -297,7 +261,6 @@ GNU Autotools configure compatibility script
 	./configure -> cmake . [deprecated 7.20]
 include/raytrace.h
 	rt_load_attrs() -> rt_gettrees_and_attrs() or db5_import_attributs() [deprecated 7.20]
-	db_regexp_match() -> !bu_fnmatch() [deprecated 7.20]
 
 7.18
 ----
@@ -391,6 +354,72 @@ include/raytrace.h
 ***                       OBSOLETED CHANGES                        ***
 **********************************************************************
                     (reverse chronological order)
+7.30.2
+------
+ray tracing tools
+	lgt : functionally replaced by nirt
+	rtcell', rtfrac', rtpp, rtrad', rtrange, rtray, rtregis
+	Removed as part of distillation effort [deprecated 7.26]
+converter tools
+	cy-g, euclid-g, euclid_format', euclid_unformat', g-euclid,
+	g-euclid1', g-tankill, intaval-g.py, viewpoint-g : obsolete formats
+	plot3-X, plot3-hpgl, plot3-tek : obsolete interface, see overlay command
+	plot3debug, xyz-plot3 : see plot3-asc,asc-plot3
+	bot-bldxf', bot_shell-vtk, g-nmg, nmg-bot, nmg-rib, nmg-sgp',
+	poly-bot, rt_bot_faces, : primitive-specific converters
+	Removed as part of distillation effort [deprecated 7.26]
+image tools
+	cmap-fb, fb-cmap, fbcmrot : colormap support obsolete
+	fbed, cell-fb : outside scope
+	fbscanplot, polar-fb, bw-imp, pixinfo.sh : obsolete
+	png_info : incorporating into icv
+	pix-yuv', yuv-pix' : obsolete non-standard format
+	texturescale : obsolete implementation
+        pixcut, pixpaste : license, copyright cleanup
+	Removed as part of distillation effort [deprecated 7.26]
+video & animation tools
+	anim_*', fbanim, chan_add', chan_mult, chan_permute,
+	pixflip-fb' : outside scope
+	pixfields', pixfieldsep' : outside scope
+	orbit.sh, rtwalk, scriptsort, script-tab', tabinterp, tabsup,
+	azel, bary
+	Removed as part of distillation effort [deprecated 7.26]
+infrared & shapefactor tools
+	all_sf', if-X, ifdisp, pictx, showterm, firpass, secpass, shapefact
+	Removed as part of distillation effort [deprecated 7.26]
+misc tools
+	fix_polysolids' : obsolete primitive
+	remapid : superseded by reid+remat
+	buffer : unnecessary network/stream buffering tool
+	hex : superseded by hexdump
+	Removed as part of distillation effort [deprecated 7.26]
+fb-rle, rle-fb, bw-rle, pix-rle, rle-pix
+	All tools focused specifically on the RLE image format. [deprecated 7.26]
+burst
+	remove termlib-based interactive menu interface [deprecated 7.26]
+include/bu/hash.h
+	bu_hash_tbl_find, bu_set_hash_value, bu_get_hash_value, bu_get_hash_key,
+	bu_hash_tbl_add, bu_hash_tbl_print, bu_hash_tbl_free, bu_hash_tbl_first,
+	bu_hash_tbl_next, bu_hash_tbl_traverse, public structs bu_hash_entry and
+	bu_hash_tbl will be made private.
+	Replaced with new API [deprecated 7.26]
+
+7.30.0
+------
+fbed, pp-fb
+	removes termcap use, no known users [deprecated 7.24]
+src/irprep
+	all_sf, firpass, ir-X, irdisp, pictx, secpass, shapefact, showterm [deprecated 7.24]
+include/raytrace librt
+	db_full_path_list_add(), db_free_full_path_list() [deprecated 7.24]
+	db_search_formplan(), db_search_freeplan(), db_search_full_paths() [deprecated 7.24]
+	db_search_unique_objects(), struct db_full_path_list [deprecated 7.24]
+	db_regexp_match() -> !bu_fnmatch() [deprecated 7.20]
+	db_regexp_match_all() -> db_ls() [deprecated 7.26]
+mged
+	em, e_muves, l_muves, lm, read_muves, and t_muves MUVES-specific commands [deprecated 7.22]
+include/bu.h
+	bu_parse_mm() [deprecated 7.22]
 
 7.28.0
 ------
@@ -661,6 +690,8 @@ To apply an expression to an entire source tree, the following pattern
 may work:
 
 find . -type f -not -path "*.svn/*" -regex '.*\(c\|cpp\|cxx\|h\|hpp\)$' -exec perl -0777 -pi -e 'EXPRESSION' {} \;
+
+find src \( -name '*.c' -or -name '*.cxx' -or -name '*.cpp' -or -name '*.h' -or -name '*.hxx' -or -name '*.hpp' -or -name '*.java' -or -name '*.f' -or -name '*.sh' -or -name '*.tcl' -or -name '*.tk' -or -name '*.itcl' -or -name '*.itk' -or -name '*.pl' -or -name '*.php' -or -name '*.inc' -or -name '*.mged' -or -name '*.y' -or -name '*.l' -or -name '*.yy' \) -not \( -name other -or -regex '.*/other/.*' -or -name tools -or -regex '.*/misc/tools/.*' -or -regex '.*/\.[^\.].*' -or -regex '.*~' -or -regex '.*/#.*' \)
 
 Expressions are minimally tested, use with caution.  Make a backup.
 
@@ -1375,8 +1406,122 @@ s/bu_restore_interrupts/bu_interrupt_restore/g
         renamed for API consistency [7.27]
 s/bu_brlcad_data[[:space:]]*\(/bu_brlcad_root("share/"/g
         replaced by new BU API
+s/struct[[:space:]]*ged_run_rt/struct ged_subprocess/g
 
-# tentative
-s/bu_getprogname\([[:space:]]*\)/bu_app_name\(NULL\)/g
-s/bu_setprogname/bu_app_name/g
-s/bu_argv0_full_path\([[:space:]]*\)/bu_file_realpath\(bu_app_name\(NULL\)\)/g
+7.30
+----
+s/BU_DEBUG_MEM_LOG/0/g
+	bu memory debugging API removed [7.29]
+s/ged_count_tops/ged_who_argc/g
+s/ged_build_tops/ged_who_argv/g
+        functions renamed as they pertain to 'who' listings, not 'tops' [7.30]
+s/rt_tess_tol/bg_tess_tol/g
+s/RT_TESS_TOL_MAGIC/BG_TESS_TOL_MAGIC/g
+s/RT_TESS_TOL_INIT_ZERO/BG_TESS_TOL_INIT_ZERO/g
+s/RT_CK_TESS_TOL/BG_CK_TESS_TOL/g
+        moved librt tolerances to libbg [7.30]
+s/DEBUG_PT_FU/DEBUG_PNT_FU/g
+s/DIST_PT2_PT2/DIST_PNT2_PNT2/g
+s/DIST_PT2_PT2_SQ/DIST_PNT2_PNT2_SQ/g
+s/DIST_PT_PLANE/DIST_PNT_PLANE/g
+s/DIST_PT_PT/DIST_PNT_PNT/g
+s/DIST_PT_PT_SQ/DIST_PNT_PNT_SQ/g
+s/V3PT_IN_RPP/V3PNT_IN_RPP/g
+s/V3PT_IN_RPP_TOL/V3PNT_IN_RPP_TOL/g
+s/V3PT_OUT_RPP_TOL/V3PNT_OUT_RPP_TOL/g
+s/WDB_METABALLPT_NULL/WDB_METABALL_PNT_NULL/g
+s/_ged_cm_lookat_pt/_ged_cm_lookat_pnt/g
+s/_ged_get_metaball_i_pt/_ged_get_metaball_i_pnt/g
+s/add_metaballpt/metaball_add_pnt/g
+s/add_pipept/pipe_add_pnt/g
+s/append_pipept/pipe_append_pnt/g
+s/bg_3d_polygon_mk_pts_planes/bg_3d_polygon_make_pnts_planes/g
+s/bg_pt_in_polygon/bg_pnt_in_polygon/g
+s/bn_3pts_collinear/bn_3pnts_collinear/g
+s/bn_3pts_distinct/bn_3pnts_distinct/g
+s/bn_dist_line3_pt3/bn_dist_line3_pnt3/g
+s/bn_dist_pt2_along_line2/bn_dist_pnt2_along_line2/g
+s/bn_dist_pt2_lseg2/bn_dist_pnt2_lseg2/g
+s/bn_dist_pt3_along_line3/bn_dist_pnt3_along_line3/g
+s/bn_dist_pt3_line3/bn_dist_pnt3_line3/g
+s/bn_dist_pt3_lseg3/bn_dist_pnt3_lseg3/g
+s/bn_dist_pt3_pt3/bn_dist_pnt3_pnt3/g
+s/bn_dist_pt_lseg/bn_dist_pnt_lseg/g
+s/bn_distsq_line3_pt3/bn_distsq_line3_pnt3/g
+s/bn_distsq_pt3_lseg3_v2/bn_distsq_pnt3_lseg3_v2/g
+s/bn_isect_pt2_lseg2/bn_isect_pnt2_lseg2/g
+s/bn_isect_pt_lseg/bn_isect_pnt_lseg/g
+s/bn_mat_scale_about_pt/bn_mat_scale_about_pnt/g
+s/bn_mat_xform_about_pt/bn_mat_xform_about_pnt/g
+s/bn_mk_plane_3pts/bn_make_plane_3pnts/g
+s/bn_mkpoint_3planes/bn_make_pnt_3planes/g
+s/bn_npts_distinct/bn_npnts_distinct/g
+s/bn_pt2_pt2_equal/bn_pnt2_pnt2_equal/g
+s/bn_pt3_pt3_equal/bn_pnt3_pnt3_equal/g
+s/bn_sph_pts/bn_sph_pnts/g
+s/bn_table_delete_sample_pts/bn_table_delete_sample_pnts/g
+s/del_pipept/pipe_del_pnt/g
+s/delete_metaballpt/metaball_delete_pnt/g
+s/delete_pipept/pipe_pnt_delete/g
+s/exported_pipept/exported_pipe_pnt/g
+s/find_arb_edge_nearest_pt/find_arb_edge_nearest_pnt/g
+s/find_botpt_nearest_pt/find_bot_pnt_nearest_pnt/g
+s/find_metaballpt_nearest_pt/find_metaball_pnt_nearest_pnt/g
+s/find_nearest_ars_pt/find_ars_nearest_pnt/g
+s/find_pipept_nearest_pt/find_pipe_pnt_nearest_pnt/g
+s/ged_add_metaballpt/ged_metaball_add_pnt/g
+s/ged_append_pipept/ged_pipe_append_pnt/g
+s/ged_delete_metaballpt/ged_metaball_delete_pnt/g
+s/ged_delete_pipept/ged_pipe_pnt_delete/g
+s/ged_find_arb_edge_nearest_pt/ged_find_arb_edge_nearest_pnt/g
+s/ged_find_botpt_nearest_pt/ged_find_bot_pnt_nearest_pnt/g
+s/ged_find_metaballpt_nearest_pt/ged_find_metaball_pnt_nearest_pnt/g
+s/ged_find_pipept_nearest_pt/ged_find_pipe_pnt_nearest_pnt/g
+s/ged_mat_scale_about_pt/ged_mat_scale_about_pnt/g
+s/ged_move_botpt/ged_bot_move_pnt/g
+s/ged_move_botpts/ged_bot_move_pnts/g
+s/ged_move_metaballpt/ged_metaball_move_pnt/g
+s/ged_move_pipept/ged_pipe_move_pnt/g
+s/ged_prepend_pipept/ged_pipe_prepend_pnt/g
+s/ins_pipept/pipe_ins_pnt/g
+s/jitter_start_pt/jitter_start_pnt/g
+s/kdtree_get_pt/kdtree_get_pnt/g
+s/mat_scale_about_pt/mat_scale_about_pnt/g
+s/metaballpt/metaball_pnt/g
+s/mk_add_pipe_pt/mk_add_pipe_pnt/g
+s/move_botpt/bot_move_pnt/g
+s/move_botpts/bot_move_pnts/g
+s/move_metaballpt/metaball_move_pnt/g
+s/move_pipept/pipe_move_pnt/g
+s/move_pipept/pipe_move_pnt/g
+s/nmg_class_pt_f/nmg_class_pnt_f/g
+s/nmg_class_pt_fu_except/nmg_class_pnt_fu_except/g
+s/nmg_class_pt_l/nmg_class_pnt_l/g
+s/nmg_class_pt_lu_except/nmg_class_pnt_lu_except/g
+s/nmg_class_pt_s/nmg_class_pnt_s/g
+s/nmg_classify_pt_loop/nmg_classify_pnt_loop/g
+s/nmg_find_pt_in_face/nmg_find_pnt_in_face/g
+s/nmg_find_pt_in_lu/nmg_find_pnt_in_lu/g
+s/nmg_find_pt_in_model/nmg_find_pnt_in_model/g
+s/nmg_find_pt_in_shell/nmg_find_pnt_in_shell/g
+s/nmg_get_interior_pt/nmg_get_interior_pnt/g
+s/nmg_move_edge_thru_pt/nmg_move_edge_thru_pnt/g
+s/nmg_nurb_print_pt_type/nmg_nurb_print_pnt_type/g
+s/pipept/pipe_pnt/g
+s/prepend_pipept/pipe_prepend_pnt/g
+s/rt_arb_add_pt/rt_arb_add_pnt/g
+s/rt_ell_16pts/rt_ell_16pnts/g
+s/rt_metaballpt_print/rt_metaball_pnt_print/g
+s/rt_pipept_print/rt_pipe_pnt_print/g
+s/rt_pr_pt/rt_pr_partition/g
+s/rt_pr_pt_vls/rt_pr_partition_vls/g
+s/rt_pt_node/rt_pnt_node/g
+s/rt_pt_sort/rt_pnt_sort/g
+s/rt_vls_metaballpt/rt_metaball_pnt_vls/g
+s/rt_vls_pipept/rt_pipe_pnt_vls/g
+s/split_pipept/pipe_split_pnt/g
+s/tclcad_bn_dist_pt2_lseg2/tclcad_bn_dist_pnt2_lseg2/g
+s/tclcad_bn_mat_xform_about_pt/tclcad_bn_mat_xform_about_pnt/g
+s/wdb_metaballpt/wdb_metaball_pnt/g
+s/wdb_pipept/wdb_pipe_pnt/g
+        renamed points from pt to pnt for consistency [7.30]

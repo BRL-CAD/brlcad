@@ -1,7 +1,7 @@
 /*                      O B J _ R E A D . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2018 United States Government as represented by
+ * Copyright (c) 2010-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -708,8 +708,8 @@ test_face(struct ga_t *ga,
 		 */
 		VSCALE(tmp_v_o, tmp_v_o, conv_factor);
 		VSCALE(tmp_v_i, tmp_v_i, conv_factor);
-		if (bn_pt3_pt3_equal(tmp_v_o, tmp_v_i, tol)) {
-		    distance_between_vertices = DIST_PT_PT(tmp_v_o, tmp_v_i);
+		if (bn_pnt3_pnt3_equal(tmp_v_o, tmp_v_i, tol)) {
+		    distance_between_vertices = DIST_PNT_PNT(tmp_v_o, tmp_v_i);
 		    degenerate_face = 3;
 		    if (gfi->grouping_type != GRP_NONE) {
 			if (ga->gcv_options->verbosity_level || ga->gcv_options->debug_mode) {
@@ -1942,9 +1942,9 @@ populate_fuse_map(struct ga_t *ga,
 		    VMOVE(tmp_v2, ga->vert_list[unique_index_list[idx2]]);
 		    VSCALE(tmp_v2, tmp_v2, conv_factor);
 		    if ((compare_type == FUSE_EQUAL) ? VEQUAL(tmp_v1, tmp_v2) :
-			bn_pt3_pt3_equal(tmp_v1, tmp_v2, tol)) {
+			bn_pnt3_pnt3_equal(tmp_v1, tmp_v2, tol)) {
 			if (ga->gcv_options->debug_mode) {
-			    distance_between_vertices = DIST_PT_PT(tmp_v1, tmp_v2);
+			    distance_between_vertices = DIST_PNT_PNT(tmp_v1, tmp_v2);
 			    bu_log("found equal i1=(%zu)vi1=(%zu)v1=(%f)(%f)(%f), i2=(%zu)vi2=(%zu)v2=(%f)(%f)(%f), dist = (%lu mm)\n",
 				   idx1, unique_index_list[idx1], tmp_v1[0], tmp_v1[1], tmp_v1[2],
 				   idx2, unique_index_list[idx2], tmp_v2[0], tmp_v2[1], tmp_v2[2],
@@ -2562,7 +2562,23 @@ output_to_bot(struct ga_t *ga,
     }
 
     /* write bot to ".g" file */
-    if (ti.tri_type == FACE_NV || ti.tri_type == FACE_TNV) {
+    if (ti.tri_type == FACE_TNV) {
+	ret = mk_bot_w_normals_and_uvs(outfp, bu_vls_addr(gfi->primitive_name),
+				       ti.bot_mode, bot_orientation,
+				       RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS | RT_BOT_HAS_TEXTURE_UVS,
+				       ti.bot_num_vertices, ti.bot_num_faces, ti.bot_vertices,
+				       ti.bot_faces, ti.bot_thickness, ti.bot_face_mode,
+				       ti.bot_num_normals, ti.bot_normals, ti.bot_face_normals,
+				       ti.bot_num_texture_vertices, ti.bot_texture_vertices, ti.bot_textures);
+    } else if (ti.tri_type == FACE_TV) {
+	ret = mk_bot_w_normals_and_uvs(outfp, bu_vls_addr(gfi->primitive_name),
+				       ti.bot_mode, bot_orientation,
+				       RT_BOT_HAS_TEXTURE_UVS,
+				       ti.bot_num_vertices, ti.bot_num_faces, ti.bot_vertices,
+				       ti.bot_faces, ti.bot_thickness, ti.bot_face_mode,
+				       0, NULL, NULL,
+				       ti.bot_num_texture_vertices, ti.bot_texture_vertices, ti.bot_textures);
+    } else if (ti.tri_type == FACE_NV) {
 	ret = mk_bot_w_normals(outfp, bu_vls_addr(gfi->primitive_name),
 			       ti.bot_mode, bot_orientation,
 			       RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS,
@@ -3096,7 +3112,7 @@ struct obj_read_options
 
 
 HIDDEN int
-parse_grouping_option(struct bu_vls *error_msg, int argc, const char **argv, void *set_var)
+parse_grouping_option(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
 {
     char * const value = (char *)set_var;
 
@@ -3124,7 +3140,7 @@ parse_grouping_option(struct bu_vls *error_msg, int argc, const char **argv, voi
 
 
 HIDDEN int
-parse_mode_option(struct bu_vls *error_msg, int argc, const char **argv, void *set_var)
+parse_mode_option(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
 {
     struct obj_read_options * const options = (struct obj_read_options *)set_var;
 
@@ -3150,7 +3166,7 @@ parse_mode_option(struct bu_vls *error_msg, int argc, const char **argv, void *s
 
 
 HIDDEN int
-parse_bot_thickness_option(struct bu_vls *error_msg, int argc, const char **argv, void *set_var)
+parse_bot_thickness_option(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
 {
     struct obj_read_options * const options = (struct obj_read_options *)set_var;
 
@@ -3173,7 +3189,7 @@ parse_bot_thickness_option(struct bu_vls *error_msg, int argc, const char **argv
 
 
 HIDDEN int
-parse_normal_mode_option(struct bu_vls *UNUSED(error_msg), int UNUSED(argc), const char **UNUSED(argv), void *set_var)
+parse_normal_mode_option(struct bu_vls *UNUSED(error_msg), size_t UNUSED(argc), const char **UNUSED(argv), void *set_var)
 {
     int * const value = (int *)set_var;
 
@@ -3185,7 +3201,7 @@ parse_normal_mode_option(struct bu_vls *UNUSED(error_msg), int UNUSED(argc), con
 
 
 HIDDEN int
-parse_open_bot_output_mode_option(struct bu_vls *error_msg, int argc, const char **argv, void *set_var)
+parse_open_bot_output_mode_option(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
 {
     int * const value = (int *)set_var;
 
@@ -3209,7 +3225,7 @@ parse_open_bot_output_mode_option(struct bu_vls *error_msg, int argc, const char
 
 
 HIDDEN int
-parse_plot_mode_option(struct bu_vls *UNUSED(error_msg), int UNUSED(argc), const char **UNUSED(argv), void *set_var)
+parse_plot_mode_option(struct bu_vls *UNUSED(error_msg), size_t UNUSED(argc), const char **UNUSED(argv), void *set_var)
 {
     int * const value = (int *)set_var;
 
@@ -3221,7 +3237,7 @@ parse_plot_mode_option(struct bu_vls *UNUSED(error_msg), int UNUSED(argc), const
 
 
 HIDDEN int
-parse_bot_orientation_option(struct bu_vls *error_msg, int argc, const char **argv, void *set_var)
+parse_bot_orientation_option(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
 {
     int have_orientation = 0;
     int * const value = (int *)set_var;

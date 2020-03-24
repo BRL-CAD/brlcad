@@ -1,7 +1,7 @@
 /*                           T E M P . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2018 United States Government as represented by
+ * Copyright (c) 2001-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -72,10 +72,10 @@ static struct temp_file_list {
  * to avoid the issue. */
 #if defined(HAVE_WINDOWS_H)
 static void disable_duplicate_close_check(const wchar_t* UNUSED(expression),
-	const wchar_t* UNUSED(function),
-	const wchar_t* UNUSED(file),
-	unsigned int UNUSED(line),
-	uintptr_t UNUSED(pReserved)) {}
+					  const wchar_t* UNUSED(function),
+					  const wchar_t* UNUSED(file),
+					  unsigned int UNUSED(line),
+					  uintptr_t UNUSED(pReserved)) {}
 #endif
 
 HIDDEN void
@@ -238,9 +238,9 @@ bu_temp_file(char *filepath, size_t len)
     }
 
     if (strlen(dir) > 1 && dir[strlen(dir)-1] == BU_DIR_SEPARATOR)
-	snprintf(tempfile, MAXPATHLEN, "%sBRL-CAD_temp_XXXXXXX", dir);
+	snprintf(tempfile, MAXPATHLEN, "%s" PACKAGE_NAME "_temp_XXXXXXX", dir);
     else
-	snprintf(tempfile, MAXPATHLEN, "%s%cBRL-CAD_temp_XXXXXXX", dir, BU_DIR_SEPARATOR);
+	snprintf(tempfile, MAXPATHLEN, "%s%c" PACKAGE_NAME "_temp_XXXXXXX", dir, BU_DIR_SEPARATOR);
 
     /* secure the temp file with user read-write only */
     mask = umask(S_IXUSR | S_IRGRP | S_IWGRP | S_IXGRP | S_IROTH | S_IWOTH | S_IXOTH);

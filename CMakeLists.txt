@@ -1,7 +1,7 @@
 #                     C M A K E L I S T S . T X T
 # BRL-CAD
 #
-# Copyright (c) 2010-2018 United States Government as represented by
+# Copyright (c) 2010-2020 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -96,6 +96,9 @@ file(READ "${BRLCAD_SOURCE_DIR}/include/conf/PATCH" BRLCAD_VERSION_PATCH)
 string(STRIP ${BRLCAD_VERSION_PATCH} BRLCAD_VERSION_PATCH)
 
 set(BRLCAD_VERSION "${BRLCAD_VERSION_MAJOR}.${BRLCAD_VERSION_MINOR}.${BRLCAD_VERSION_PATCH}")
+if(DEFINED BRLCAD_VERSION_AMEND)
+  set(BRLCAD_VERSION "${BRLCAD_VERSION}-${BRLCAD_VERSION_AMEND}")
+endif(DEFINED BRLCAD_VERSION_AMEND)
 
 #---------------------------------------------------------------------
 # Let CMake know where to look for our counting file for configuration
@@ -149,7 +152,7 @@ record_cmdline_args()
 # Set up the necessary support for timing of the configuration and
 # build processes
 set_config_time()
-generate_timer_exes()
+generate_sstamp()
 
 #---------------------------------------------------------------------
 # Mark the time at which the configuration process began.
@@ -782,6 +785,36 @@ endif(CMAKE_CONFIGURATION_TYPES)
 # The location in which to install BRL-CAD.  Only do this if
 # CMAKE_INSTALL_PREFIX hasn't been set already, to try and allow
 # parent builds (if any) some control.
+
+# TODO - generator expressions may be a way to replace some of this logic (or
+# improve it) by letting us ditch the logic tracking whether the path is
+# initialized to default - that's used to know whether or not it is safe to
+# override CMAKE_INSTALL_PREFIX based on build type.  If we use the generator
+# expressions, we won't have to be concerned about that - problem is that
+# change will require updating all the install commands in the build target
+# functions.  Third party logic will probably need to shift over to the new
+# ExternalProject_Add approach first as well - that way unmodified install
+# commands in 3rd party CMake files will be moot.
+#
+# if (NOT CMAKE_INSTALL_PREFIX)
+# set(CMAKE_INSTALL_PREFIX "/usr/brlcad/")
+#    if (NOT MSVC)
+#       set(gen_exp $<IF:$<CONFIG:Debug>,dev-${BRLCAD_VERSION}/,$<IF:$<CONFIG:Release>,rel-${BRLCAD_VERSION}/${BRLCAD_VERSION},>>)
+#    else (NOT MSVC)
+#       set(gen_exp)
+#        if(CMAKE_CL_64)
+#          set(CMAKE_INSTALL_PREFIX "C:/Program Files/BRL-CAD ${BRLCAD_VERSION}")
+#        else(CMAKE_CL_64)
+#          set(CMAKE_INSTALL_PREFIX "C:/Program Files (x86)/BRL-CAD ${BRLCAD_VERSION}")
+#        endif(CMAKE_CL_64)
+#    endif (NOT MSVC)
+# endif (NOT CMAKE_INSTALL_PREFIX)
+# install(TARGETS mged DESTINATION ${gen_exp}${BIN_DIR})
+#
+# Another (maybe better) option instead of generators might be to use the CONFIGURATIONS
+# option in our macros and the ExternalProject_Add management:
+# https://cmake.org/cmake/help/latest/command/install.html
+#
 if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT CMAKE_INSTALL_PREFIX)
   if(NOT CMAKE_CONFIGURATION_TYPES)
     if("${CMAKE_BUILD_TYPE}" MATCHES "Release")
@@ -816,6 +849,11 @@ endif("${CMAKE_BUILD_TYPE}" MATCHES "Release" AND "${CMAKE_INSTALL_PREFIX}" STRE
 if("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/brlcad/rel-${BRLCAD_VERSION}")
   message(FATAL_ERROR "\nInstallation directory (CMAKE_INSTALL_PREFIX) is set to /usr/brlcad/rel-${BRLCAD_VERSION}, but build type is set to Debug!\n")
 endif("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/brlcad/rel-${BRLCAD_VERSION}")
+
+#------------------------------------------------------------------------------
+# Now that we know the install prefix, generate the binary for calculating
+# and reporting time deltas
+generate_dreport()
 
 #---------------------------------------------------------------------
 # The following logic is what allows binaries to run successfully in
@@ -922,9 +960,27 @@ CONFIG_H_APPEND(BRLCAD "#define PACKAGE_NAME \"BRL-CAD\"\n")
 CONFIG_H_APPEND(BRLCAD "#define PACKAGE_STRING \"BRL-CAD ${BRLCAD_VERSION}\"\n")
 CONFIG_H_APPEND(BRLCAD "#define PACKAGE_TARNAME \"brlcad\"\n")
 
-# Let programs know what the executable suffix is on this platform, if any
+# Let programs know what the executable suffix and lib suffix are on this platform, if any
 CONFIG_H_APPEND(BRLCAD "#define EXECUTABLE_SUFFIX \"${CMAKE_EXECUTABLE_SUFFIX}\"\n")
+CONFIG_H_APPEND(BRLCAD "#define SHARED_LIBRARY_SUFFIX \"${CMAKE_SHARED_LIBRARY_SUFFIX}\"\n")
 
+# Let bu_dir know what the target install directory is
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_ROOT \"${CMAKE_INSTALL_PREFIX}\"\n")
+
+# Define the various relative paths for bu_dir (be sure to have included
+# Path_Setup.cmake before this point, as that file defines these variables.)
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_BIN_DIR \"${BIN_DIR}\"\n")
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_LIB_DIR \"${LIB_DIR}\"\n")
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_LIBEXEC_DIR \"${LIBEXEC_DIR}\"\n")
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_INCLUDE_DIR \"${INCLUDE_DIR}\"\n")
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_DATA_DIR \"${DATA_DIR}\"\n")
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_DOC_DIR \"${DOC_DIR}\"\n")
+CONFIG_H_APPEND(BRLCAD "#define BRLCAD_MAN_DIR \"${MAN_DIR}\"\n")
+
+# Define the ammendment count if we have one
+if(DEFINED BRLCAD_VERSION_AMEND)
+  CONFIG_H_APPEND(BRLCAD "#define BRLCAD_VERSION_AMEND ${BRLCAD_VERSION_AMEND}\n")
+endif(DEFINED BRLCAD_VERSION_AMEND)
 
 #----------------------------------------------------------------------
 # If we're not debugging, we want HIDDEN to be defined as static.  Set
@@ -1310,6 +1366,17 @@ if(BRLCAD_ENABLE_OPENCL)
   endif(NOT OPENCL_FOUND)
 endif(BRLCAD_ENABLE_OPENCL)
 
+# Enable features requiring OpenVDB
+option(BRLCAD_ENABLE_OPENVDB "Enable features requiring OpenVDB" OFF)
+mark_as_advanced(BRLCAD_ENABLE_OPENVDB)
+if(BRLCAD_ENABLE_OPENVDB)
+  find_package(OpenVDB)
+  if(NOT OpenVDB_FOUND)
+    message("OpenVDB enablement requested, but OpenVDB is not found - disabling")
+    set(BRLCAD_ENABLE_OPENVDB OFF)
+  endif(NOT OpenVDB_FOUND)
+endif(BRLCAD_ENABLE_OPENVDB)
+
 # Enable experimental support for binary attributes
 option(BRLCAD_ENABLE_BINARY_ATTRIBUTES "Enable support for binary attributes" OFF)
 mark_as_advanced(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
@@ -1602,11 +1669,6 @@ endif(BRLCAD_PRINT_MSGS)
 # a Bourne shell and other commands - check for them.
 include(FindShellDeps)
 
-# CMake can detect flex, but apparently not generic lex.
-# Solution is to make our own generic lex Find routine that looks
-# first for flex, but will take whatever's available.
-include(FindLEX)
-
 # If using dtrace, we will need to find it
 if(BRLCAD_ENABLE_DTRACE)
   find_program(DTRACE_EXEC NAMES dtrace DOC "path to dtrace executable")
@@ -1803,6 +1865,24 @@ if (ERROR_FLAG)
   set(CMAKE_REQUIRED_FLAGS "-Werror")
 endif (ERROR_FLAG)
 
+# Check whether the compiler supports __attribute__((format (__printf__, 1, 2)))
+check_c_source_compiles("int pf(const char *f, ...) __attribute__((format (__printf__, 1, 2))); int pf(const char *f, ...){return 1;} int main(int argc, char *argv[]) {return pf(\"%c\",'a');}" HAVE_PRINTF12_ATTRIBUTE)
+if(HAVE_PRINTF12_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_PRINTF12_ATTRIBUTE 1\n")
+endif(HAVE_PRINTF12_ATTRIBUTE)
+
+# Check whether the compiler supports __attribute__((format (__printf__, 2, 3)))
+check_c_source_compiles("int pf(void *o, const char *f, ...) __attribute__((format (__printf__, 2, 3))); int pf(void *o, const char *f, ...){return 1;} int main(int argc, char *argv[]) {return pf((void *)0, \"%c\",'a');}" HAVE_PRINTF23_ATTRIBUTE)
+if(HAVE_PRINTF23_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_PRINTF23_ATTRIBUTE 1\n")
+endif(HAVE_PRINTF23_ATTRIBUTE)
+
+# Check whether the compiler supports __attribute__((format (__scanf__, 2, 3)))
+check_c_source_compiles("int sf(void *o, const char *f, ...) __attribute__((format (__scanf__, 2, 3))); int sf(void *o, const char *f, ...){return 1;} int main(int argc, char *argv[]) {int i = 1; return sf((void *)0, \"%d\", &i);}" HAVE_SCANF23_ATTRIBUTE)
+if(HAVE_SCANF23_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_SCANF23_ATTRIBUTE 1\n")
+endif(HAVE_SCANF23_ATTRIBUTE)
+
 include(CheckCSourceCompiles)
 # Check whether the compiler supports __attribute__((__noreturn__))
 check_c_source_compiles("#include <stdlib.h>\n
@@ -1823,23 +1903,35 @@ if(HAVE_ALWAYS_INLINE_ATTRIBUTE)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_ALWAYS_INLINE_ATTRIBUTE 1\n")
 endif(HAVE_ALWAYS_INLINE_ATTRIBUTE)
 
-# Check whether the compiler supports __attribute__((format (__printf__, 1, 2)))
-check_c_source_compiles("int pf(const char *f, ...) __attribute__((format (__printf__, 1, 2))); int pf(const char *f, ...){return 1;} int main(int argc, char *argv[]) {return pf(\"%c\",'a');}" HAVE_PRINTF12_ATTRIBUTE)
-if(HAVE_PRINTF12_ATTRIBUTE)
-  CONFIG_H_APPEND(BRLCAD "#define HAVE_PRINTF12_ATTRIBUTE 1\n")
-endif(HAVE_PRINTF12_ATTRIBUTE)
+# Check whether the compiler supports __attribute__((const))
+check_c_source_compiles("void func() __attribute__((const)); void func(){return;} int main(int argc, char *argv[]) {func(); return 0;}" HAVE_CONST_ATTRIBUTE)
+if(HAVE_CONST_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_CONST_ATTRIBUTE 1\n")
+endif(HAVE_CONST_ATTRIBUTE)
 
-# Check whether the compiler supports __attribute__((format (__printf__, 2, 3)))
-check_c_source_compiles("int pf(void *o, const char *f, ...) __attribute__((format (__printf__, 2, 3))); int pf(void *o, const char *f, ...){return 1;} int main(int argc, char *argv[]) {return pf((void *)0, \"%c\",'a');}" HAVE_PRINTF23_ATTRIBUTE)
-if(HAVE_PRINTF23_ATTRIBUTE)
-  CONFIG_H_APPEND(BRLCAD "#define HAVE_PRINTF23_ATTRIBUTE 1\n")
-endif(HAVE_PRINTF23_ATTRIBUTE)
+# Check whether the compiler supports __attribute__((pure))
+check_c_source_compiles("void func() __attribute__((pure)); void func(){return;} int main(int argc, char *argv[]) {func(); return 0;}" HAVE_PURE_ATTRIBUTE)
+if(HAVE_PURE_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_PURE_ATTRIBUTE 1\n")
+endif(HAVE_PURE_ATTRIBUTE)
 
-# Check whether the compiler supports __attribute__((format (__scanf__, 2, 3)))
-check_c_source_compiles("int sf(void *o, const char *f, ...) __attribute__((format (__scanf__, 2, 3))); int sf(void *o, const char *f, ...){return 1;} int main(int argc, char *argv[]) {int i = 1; return sf((void *)0, \"%d\", &i);}" HAVE_SCANF23_ATTRIBUTE)
-if(HAVE_SCANF23_ATTRIBUTE)
-  CONFIG_H_APPEND(BRLCAD "#define HAVE_SCANF23_ATTRIBUTE 1\n")
-endif(HAVE_SCANF23_ATTRIBUTE)
+# Check whether the compiler supports __attribute__((cold))
+check_c_source_compiles("void func() __attribute__((cold)); void func(){return;} int main(int argc, char *argv[]) {func(); return 0;}" HAVE_COLD_ATTRIBUTE)
+if(HAVE_COLD_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_COLD_ATTRIBUTE 1\n")
+endif(HAVE_COLD_ATTRIBUTE)
+
+# Check whether the compiler supports __attribute__((nonnull))
+check_c_source_compiles("int *func(int *) __attribute__((nonnull)); int *func(int *v){(*v)-=1; return v;} int main(int argc, char *argv[]) {int v = 1; int *vp = func(&v); return *vp;}" HAVE_NONNULL_ATTRIBUTE)
+if(HAVE_NONNULL_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_NONNULL_ATTRIBUTE 1\n")
+endif(HAVE_NONNULL_ATTRIBUTE)
+
+# Check whether the compiler supports __attribute__((warn_unused_result))
+check_c_source_compiles("int *func(int *) __attribute__((warn_unused_result)); int *func(int *v){(*v)-=1; return v;} int main(int argc, char *argv[]) {int v = 1; int *vp = func(&v); return *vp;}" HAVE_WARN_UNUSED_RESULT_ATTRIBUTE)
+if(HAVE_WARN_UNUSED_RESULT_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_WARN_UNUSED_RESULT_ATTRIBUTE 1\n")
+endif(HAVE_WARN_UNUSED_RESULT_ATTRIBUTE)
 
 
 # Silence check for unused arguments (used to silence clang warnings about
@@ -1924,6 +2016,10 @@ if(NOT MSVC)
 
   if(BRLCAD_PGO AND NOT EXISTS "${BRLCAD_PGO_PATH}")
 
+    if("${CMAKE_C_FLAGS}" MATCHES ".*fprofile-use.*")
+      message(FATAL_ERROR "PGO path ${BRLCAD_PGO_PATH} does not exist, but C flags contain the -fprofile-use flag.  This probably means you need to remove a stale CMakeCache.txt file to clear the build flags before performing the first pass of the PGO compilation.\n")
+    endif("${CMAKE_C_FLAGS}" MATCHES ".*fprofile-use.*")
+
     # gcc-style GEN
     if("${pgo_flags_found}" STREQUAL "")
       cmake_push_check_state()
@@ -1949,6 +2045,12 @@ if(NOT MSVC)
     endif(NOT "${pgo_flags_found}" STREQUAL "")
 
   elseif(BRLCAD_PGO AND EXISTS "${BRLCAD_PGO_PATH}")
+
+    if(CMAKE_C_FLAGS)
+      if("${CMAKE_C_FLAGS}" MATCHES ".*fprofile-generate.*")
+	message(FATAL_ERROR "PGO path ${BRLCAD_PGO_PATH} exists, but C flags contain the -fprofile-generate flag.  This probably means you need to remove a stale CMakeCache.txt file to clear the build flags before performing the second pass of the PGO compilation.\n")
+      endif("${CMAKE_C_FLAGS}" MATCHES ".*fprofile-generate.*")
+    endif(CMAKE_C_FLAGS)
 
     # gcc-style USE
     if("${pgo_flags_found}" STREQUAL "")
@@ -2129,10 +2231,6 @@ if(NOT MSVC)
     CHECK_C_FLAG(Wbad-function-cast)
     CHECK_CXX_FLAG(Wbad-function-cast)
 
-    # this makes sure we don't declare variables mid-scope, helps build on Windows
-    CHECK_C_FLAG(Wdeclaration-after-statement)
-    CHECK_CXX_FLAG(Wdeclaration-after-statement)
-
     # C-only: this makes sure C sources will compile as C++ code
     CHECK_C_FLAG(Wc++-compat)
 
@@ -2284,6 +2382,9 @@ find_package(Threads)
 # some compilation situations
 find_package(STL)
 
+# Check for an MPI library
+find_package(MPI)
+
 # Check for the daemon function in -lbsd and/or -lc for adrt
 BRLCAD_CHECK_LIBRARY(BSD bsd daemon)
 BRLCAD_CHECK_LIBRARY(BSD c daemon)
@@ -2410,6 +2511,7 @@ BRLCAD_INCLUDE_FILE(grp.h HAVE_GRP_H)
 BRLCAD_INCLUDE_FILE(inttypes.h HAVE_INTTYPES_H)
 BRLCAD_INCLUDE_FILE(io.h HAVE_IO_H)
 BRLCAD_INCLUDE_FILE(libgen.h HAVE_LIBGEN_H)
+# BRLCAD_INCLUDE_FILE(libproc.h HAVE_LIBPROC_H) - see below
 BRLCAD_INCLUDE_FILE(mach/thread_policy.h HAVE_MACH_THREAD_POLICY_H)
 BRLCAD_INCLUDE_FILE(memory.h HAVE_MEMORY_H)
 BRLCAD_INCLUDE_FILE(netdb.h HAVE_NETDB_H)
@@ -2461,11 +2563,17 @@ BRLCAD_INCLUDE_FILE(unistd.h HAVE_UNISTD_H)
 BRLCAD_INCLUDE_FILE(uuid/uuid.h HAVE_UUID_UUID_H) # for uuid_generate() on Mac & Linux
 BRLCAD_INCLUDE_FILE(windows.h HAVE_WINDOWS_H) # for QueryPerformanceCounter() on Windows
 
-# custom sys/sysctl.h test due to BSDisms when compiling as c90-era API
-check_c_source_compiles("typedef unsigned char u_char;\ntypedef unsigned int u_int;\ntypedef unsigned long u_long;\ntypedef unsigned short u_short;\n#include <sys/sysctl.h>\nint main() { return 0; }" HAVE_SYS_SYSCTL_H)
+# custom sys/sysctl.h test due to BSDisms when compiling
+check_c_source_compiles("typedef void *rusage_info_t;\ntypedef unsigned char u_char;\ntypedef unsigned int u_int;\ntypedef unsigned long u_long;\ntypedef unsigned short u_short;\n#define SOCK_MAXADDRLEN 255\n#include <sys/types.h>\n#include <sys/sysctl.h>\nint main() { return 0; }" HAVE_SYS_SYSCTL_H)
 if(HAVE_SYS_SYSCTL_H)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_SYS_SYSCTL_H 1\n")
 endif(HAVE_SYS_SYSCTL_H)
+
+# custom libproc.h test due to BSDisms when compiling
+check_c_source_compiles("typedef void *rusage_info_t;\ntypedef unsigned char u_char;\ntypedef unsigned int u_int;\ntypedef unsigned long u_long;\ntypedef unsigned short u_short;\n#define SOCK_MAXADDRLEN 255\n#include <sys/types.h>\n#include <libproc.h>\nint main() { return 0; }" HAVE_LIBPROC_H)
+if(HAVE_LIBPROC_H)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_LIBPROC_H 1\n")
+endif(HAVE_LIBPROC_H)
 
 # Termlib related headers - these will be checked for in FindTERMLIB.cmake
 # testing logic, so at this stage just let the config header know we're
@@ -2545,6 +2653,31 @@ BRLCAD_TYPE_SIZE("uint64_t" "")
 BRLCAD_TYPE_SIZE("uintptr_t" "")
 BRLCAD_TYPE_SIZE("sig_t" "signal.h")
 
+# see if compile settings disable historic unsigned bsd types.
+# typically disabled on posix conformant systems.
+BRLCAD_TYPE_SIZE("u_char" "sys/types.h")
+BRLCAD_TYPE_SIZE("u_int" "sys/types.h")
+BRLCAD_TYPE_SIZE("u_long" "sys/types.h")
+BRLCAD_TYPE_SIZE("u_short" "sys/types.h")
+if (HAVE_U_CHAR AND HAVE_U_INT AND HAVE_U_LONG AND HAVE_U_SHORT)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_U_TYPES 1\n")
+endif (HAVE_U_CHAR AND HAVE_U_INT AND HAVE_U_LONG AND HAVE_U_SHORT)
+
+# If we have an off_t that's too small, we'll need to deal with that in order to
+# support large files successfully.
+if (CMAKE_SIZEOF_VOID_P AND HAVE_OFF_T)
+  if (${CMAKE_SIZEOF_VOID_P} GREATER ${HAVE_OFF_T})
+    if (NOT DEFINED OFF_T_SIZE_MISMATCH)
+      message("Note: platform void pointer size (${CMAKE_SIZEOF_VOID_P}) is greater than off_t size (${HAVE_OFF_T})")
+    endif (NOT DEFINED OFF_T_SIZE_MISMATCH)
+    CONFIG_H_APPEND(BRLCAD "#define OFF_T_SIZE_MISMATCH 1\n")
+    set(OFF_T_SIZE_MISMATCH  1 CACHE INTERNAL "Have off_t that is too small for platform.")
+  endif (${CMAKE_SIZEOF_VOID_P} GREATER ${HAVE_OFF_T})
+  if (CMAKE_WORD_SIZE STREQUAL "64BIT")
+    CONFIG_H_APPEND(BRLCAD "#define HAVE_OFF_T_64BIT 1\n")
+  endif (CMAKE_WORD_SIZE STREQUAL "64BIT")
+endif (CMAKE_SIZEOF_VOID_P AND HAVE_OFF_T)
+
 # see if we have a TLS intrinsic, first check C++11 compliance
 check_cxx_source_compiles("static thread_local int i = 0; int main() { return i; }" HAVE_THREAD_LOCAL)
 if (HAVE_THREAD_LOCAL)
@@ -2569,7 +2702,7 @@ endif (HAVE_THREAD_LOCAL)
 # ends up lacking in practice.
 include(CheckCXX11Features)
 cxx11_check_feature("nullptr" HAS_CXX11_NULLPTR)
-
+cxx11_check_feature("lib_regex" HAS_CXX11_LIB_REGEX)
 
 # see if the compiler supports %z as a size_t print width specifier
 BRLCAD_CHECK_PERCENT_Z()
@@ -2588,18 +2721,24 @@ if(BRLCAD_PRINT_MSGS)
   message("***********************************************************")
 endif(BRLCAD_PRINT_MSGS)
 
+include(CheckSymbolExists)
+
 BRLCAD_FUNCTION_EXISTS(XQueryExtension)
 BRLCAD_FUNCTION_EXISTS(_putenv_s)
 BRLCAD_FUNCTION_EXISTS(_splitpath)
 BRLCAD_FUNCTION_EXISTS(_strtoi64)
 BRLCAD_FUNCTION_EXISTS(alarm)
 BRLCAD_FUNCTION_EXISTS(asinh REQUIRED_LIBS ${M_LIBRARY})
+BRLCAD_FUNCTION_EXISTS(confstr) # darwin/mac
 BRLCAD_FUNCTION_EXISTS(dlopen)
+BRLCAD_FUNCTION_EXISTS(dladdr)
 BRLCAD_FUNCTION_EXISTS(drand48)
 BRLCAD_FUNCTION_EXISTS(fchmod)
 BRLCAD_FUNCTION_EXISTS(fdopen)
+BRLCAD_FUNCTION_EXISTS(fmemopen)
 BRLCAD_FUNCTION_EXISTS(fseeko) # implies ftello
 BRLCAD_FUNCTION_EXISTS(fsync)
+BRLCAD_FUNCTION_EXISTS(funopen)
 BRLCAD_FUNCTION_EXISTS(getcwd)
 BRLCAD_FUNCTION_EXISTS(getegid)
 BRLCAD_FUNCTION_EXISTS(getenv_s)
@@ -2608,6 +2747,7 @@ BRLCAD_FUNCTION_EXISTS(gethostbyname)
 BRLCAD_FUNCTION_EXISTS(gethostname)
 BRLCAD_FUNCTION_EXISTS(getloadavg)
 BRLCAD_FUNCTION_EXISTS(getopt_long)
+BRLCAD_FUNCTION_EXISTS(getpid)
 BRLCAD_FUNCTION_EXISTS(getprogname)
 BRLCAD_FUNCTION_EXISTS(gettimeofday)
 BRLCAD_FUNCTION_EXISTS(htonl)
@@ -2618,6 +2758,7 @@ BRLCAD_FUNCTION_EXISTS(isinf REQUIRED_LIBS ${M_LIBRARY})
 BRLCAD_FUNCTION_EXISTS(isnan REQUIRED_LIBS ${M_LIBRARY})
 BRLCAD_FUNCTION_EXISTS(logb REQUIRED_LIBS ${M_LIBRARY})
 BRLCAD_FUNCTION_EXISTS(lrand48)
+BRLCAD_FUNCTION_EXISTS(lseek)
 BRLCAD_FUNCTION_EXISTS(mkstemp)
 BRLCAD_FUNCTION_EXISTS(modff REQUIRED_LIBS ${M_LIBRARY})
 BRLCAD_FUNCTION_EXISTS(nextafter REQUIRED_LIBS ${M_LIBRARY})
@@ -2626,6 +2767,8 @@ BRLCAD_FUNCTION_EXISTS(ntohll)
 BRLCAD_FUNCTION_EXISTS(pipe)
 BRLCAD_FUNCTION_EXISTS(popen) # implies pclose
 BRLCAD_FUNCTION_EXISTS(posix_memalign) # IEEE Std 1003.1-2001
+BRLCAD_FUNCTION_EXISTS(proc_pidpath) # Mac OS X
+BRLCAD_FUNCTION_EXISTS(program_invocation_name)
 BRLCAD_FUNCTION_EXISTS(random)
 BRLCAD_FUNCTION_EXISTS(realpath)
 BRLCAD_FUNCTION_EXISTS(rint REQUIRED_LIBS ${M_LIBRARY})
@@ -2656,6 +2799,7 @@ BRLCAD_FUNCTION_EXISTS(uname)
 BRLCAD_FUNCTION_EXISTS(vfork)
 BRLCAD_FUNCTION_EXISTS(vsnprintf)
 BRLCAD_FUNCTION_EXISTS(vsscanf)
+BRLCAD_FUNCTION_EXISTS(wait)
 BRLCAD_FUNCTION_EXISTS(writev)
 
 # ALLOCA test - based on AC_FUNC_ALLOCA
@@ -2671,6 +2815,9 @@ BRLCAD_FUNCTION_EXISTS(fileno)
 BRLCAD_FUNCTION_EXISTS(daemon)
 if (HAVE_DAEMON)
   check_c_source_compiles("#include <stdlib.h>\nint main() { (void)daemon; return 0; }" HAVE_WORKING_DAEMON_FUNCTION)
+  if (HAVE_WORKING_DAEMON_FUNCTION)
+    CONFIG_H_APPEND(BRLCAD "#define HAVE_WORKING_DAEMON_FUNCTION 1\n")
+  endif (HAVE_WORKING_DAEMON_FUNCTION)
 endif (HAVE_DAEMON)
 
 # ntohll and htonll may be harder to spot - do some extra tests
@@ -2697,6 +2844,19 @@ if(NOT HAVE_SNPRINTF)
   endif(HAVE__SNPRINTF)
 endif(NOT HAVE_SNPRINTF)
 
+# So far I haven't been able to come up with a reliable self contained
+# test for this, but libbu's #2 realpath test triggers a stack smash
+# on some linux systems.  For the moment, fall back on OpenBSD's
+# userspace implementation, which does seem to work.  Once we can
+# get a self-contained reproduction of this failure, put it below
+# and we can use the system realpath again.
+if(HAVE_REALPATH)
+  #check_c_source_runs("#include<limits.h>\n#include <stdlib.h>\nint main() { char dir[512]; const char *d = \"/tmp/REALPATH_TEST_PATH\"; d = (const char *)realpath(d, dir); return 0; }" HAVE_WORKING_REALPATH)
+  #if(HAVE_WORKING_REALPATH)
+  #  CONFIG_H_APPEND(BRLCAD "#define HAVE_WORKING_REALPATH 1\n")
+  #endif(HAVE_WORKING_REALPATH)
+endif(HAVE_REALPATH)
+
 # GetFullPathName
 check_c_source_compiles("
 #include <windows.h>
@@ -2711,13 +2871,17 @@ if(HAVE_GETFULLPATHNAME)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_GETFULLPATHNAME 1\n")
 endif(HAVE_GETFULLPATHNAME)
 
-# test for program_invocation_name global variable
-if("${HAVE_PROGRAM_INVOCATION_NAME}" MATCHES "^${HAVE_PROGRAM_INVOCATION_NAME}$")
-  check_c_source_compiles("#define _GNU_SOURCE\n#include <errno.h>\nint main() { return (program_invocation_name)?0:1; }" HAVE_PROGRAM_INVOCATION_NAME)
-  if(HAVE_PROGRAM_INVOCATION_NAME)
-    CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_PROGRAM_INVOCATION_NAME 1\n")
-  endif(HAVE_PROGRAM_INVOCATION_NAME)
-endif("${HAVE_PROGRAM_INVOCATION_NAME}" MATCHES "^${HAVE_PROGRAM_INVOCATION_NAME}$")
+# GetCurrentProcessId
+check_c_source_compiles("
+#include <windows.h>
+int main() {
+DWORD cpid = GetCurrentProcessId();
+return 0;
+}
+" HAVE_GETCURRENTPROCESSID)
+if(HAVE_GETCURRENTPROCESSID)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_GETCURRENTPROCESSID 1\n")
+endif(HAVE_GETCURRENTPROCESSID)
 
 # functionality tests for lrint
 set(lrint_test "long int lrint(double); int main() {return lrint(3.14);}")
@@ -3031,7 +3195,6 @@ mark_as_advanced(BUILD_TESTING)
 
 # We've done the toplevel configure steps, now add the subdirectories
 function(verbose_add_subdirectory root dir)
-  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir})
     if(BRLCAD_PRINT_MSGS)
       if(NOT "${root}" STREQUAL "")
 	message("-- Adding ${root}/${dir}...")
@@ -3047,15 +3210,6 @@ function(verbose_add_subdirectory root dir)
 	message("-- Adding ${dir} - done")
       endif(NOT "${root}" STREQUAL "")
     endif(BRLCAD_PRINT_MSGS)
-  else(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir})
-    if(BRLCAD_PRINT_MSGS)
-      if(NOT "${root}" STREQUAL "")
-	message("-- Addition of directory ${root}/${dir} requested, but not found on filesystem - skipping")
-      else(NOT "${root}" STREQUAL "")
-	message("-- Addition of directory ${dir} requested, but not found on filesystem - skipping")
-      endif(NOT "${root}" STREQUAL "")
-    endif(BRLCAD_PRINT_MSGS)
-  endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir})
 endfunction()
 
 verbose_add_subdirectory("" src)
@@ -3291,9 +3445,14 @@ if(NOT BRLCAD_IS_SUBBUILD)
     set(CPACK_RPM_SPEC_INSTALL_POST /bin/true)
 
     if(CPACK_RPM_VERSION)
-      set(CPACK_RPM_PACKAGE_NAME "brlcad_${BRLCAD_VERSION_MAJOR}_${BRLCAD_VERSION_MINOR}_${BRLCAD_VERSION_PATCH}")
-      # If we've got a Redhat release, include some info about the specific release in the name.
-      # Otherwise, just go generic.
+      if(DEFINED BRLCAD_VERSION_AMEND)
+	set(CPACK_RPM_PACKAGE_NAME "brlcad_${BRLCAD_VERSION_MAJOR}_${BRLCAD_VERSION_MINOR}_${BRLCAD_VERSION_PATCH}_${BRLCAD_VERSION_AMEND}")
+      else(DEFINED BRLCAD_VERSION_AMEND)
+	set(CPACK_RPM_PACKAGE_NAME "brlcad_${BRLCAD_VERSION_MAJOR}_${BRLCAD_VERSION_MINOR}_${BRLCAD_VERSION_PATCH}")
+      endif(DEFINED BRLCAD_VERSION_AMEND)
+
+      # If we've got a Redhat release, include some info about the
+      # specific release in the name.  Otherwise, just go generic.
       if(EXISTS /etc/redhat-release)
 	file(READ /etc/redhat-release REDHAT_RELEASE)
 	string(REGEX MATCH "[0-9]+" REDHAT_VERSION ${REDHAT_RELEASE})
@@ -3307,6 +3466,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
       else(EXISTS /etc/redhat-release)
 	set(CPACK_RPM_PACKAGE_RELEASE ${CPACK_RPM_VERSION})
       endif(EXISTS /etc/redhat-release)
+
     endif(CPACK_RPM_VERSION)
   endif(RPMBUILD_EXEC AND NOT CPACK_RPM_SKIP)
 
@@ -3325,6 +3485,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
     set(CPACK_NSIS_INSTALL_DIRECTORY "BRL-CAD ${BRLCAD_VERSION}")
     set(CPACK_SOURCE_DIR "${CMAKE_SOURCE_DIR}")
     set(CPACK_DATA_DIR "${DATA_DIR}")
+    set(CPACK_DOC_DIR "${DOC_DIR}")
     # There is a bug in NSI that does not handle full unix paths properly. Make
     # sure there is at least one set of four (4) backslashes.
     set(CPACK_NSIS_MUI_ICON "${CMAKE_SOURCE_DIR}/misc/nsis\\\\brlcad.ico")
@@ -3370,9 +3531,11 @@ if(NOT BRLCAD_IS_SUBBUILD)
     TODO
     configure
     CMakeLists.txt
-    CTestConfig.cmake
     )
   CMAKEFILES(${toplevel_ignore_files})
+  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.gitignore)
+    CMAKEFILES(.gitignore)
+  endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.gitignore)
 
   # Handle some toplevel distclean listings
   DISTCLEAN("${CMAKE_BINARY_DIR}/CMakeCache.txt")

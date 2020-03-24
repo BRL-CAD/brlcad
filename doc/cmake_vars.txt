@@ -1,0 +1,99 @@
+# This is a worksheet to help with organizing our CMake options with
+# an eye towards consistency, clarity, and simplification.
+#
+# TODO:
+#  * consistent naming convention
+#  * eliminate aliases
+#  * drop unnecessary/unhelpful/obsolete flags
+#  * audit what ccmake presents by default
+#
+
+### HOW TO COMPILE ###
+
+CMAKE_BUILD_TYPE := Release | Debug
+
+BRLCAD_ENABLE_VERBOSE_PROGRESS "verbose output" OFF
+BRLCAD_ENABLE_COVERAGE "Build with coverage enabled" OFF
+
+ENABLE_ALL_CXX_COMPILE "Build all C and C++ files with a C++ compiler." OFF
+  ENABLE_ALL_CXX
+ENABLE_POSIX_COMPLIANCE
+  ENABLE_POSIX
+
+BRLCAD_ENABLE_PROFILING
+BRLCAD_ENABLE_DTRACE "Build with dtrace support" OFF
+
+BRLCAD_ENABLE_SMP "Enable SMP architecture parallel computation support" ON
+BRLCAD_ENABLE_RUNTIME_DEBUG
+  ENABLE_RUNTIME_DEBUG
+  ENABLE_RUN_TIME_DEBUG
+  ENABLE_RUNTIME_DEBUGGING
+  ENABLE_RUN_TIME_DEBUGGING
+BRLCAD_FLAGS_DEBUG
+  ENABLE_DEBUG
+  ENABLE_FLAGS_DEBUG
+  ENABLE_DEBUG_FLAGS
+BRLCAD_ENABLE_COMPILER_WARNINGS
+  ENABLE_WARNINGS
+  ENABLE_COMPILER_WARNINGS
+BRLCAD_ENABLE_STRICT
+  ENABLE_STRICT
+  ENABLE_STRICT_COMPILE
+  ENABLE_STRICT_COMPILE_FLAGS
+ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE "Build with strict ISO C compliance checking.  Defaults to OFF." OFF
+
+
+### WHAT TO COMPILE ###
+
+BRLCAD_ENABLE_MINIMAL "Skip GUI support and docs. Faster builds." OFF
+BUILD_SHARED_LIBS "Build shared libraries" ON
+BUILD_STATIC_LIBS "Build static libraries" ON
+BRLCAD_ENABLE_BRLCAD_LIBRARY "Build the brlcad.dll" OFF
+
+BRLCAD_BUNDLED_LIBS := AUTO | BUNDLED | SYSTEM
+ ENABLE_ALL
+
+BRLCAD_ENABLE_AQUA "Use Aqua instead of X11 whenever possible on OSX." OFF
+BRLCAD_ENABLE_X11 "Use X11." OFF
+BRLCAD_ENABLE_TK "Enable features requiring the Tk toolkit" ON
+BRLCAD_ENABLE_OPENGL "Enable support for OpenGL based Display Managers in BRL-CAD." ON
+                     OFF "Disabled - NOT BRLCAD_ENABLE_X11 and NOT BRLCAD_ENABLE_AQUA"
+  ENABLE_OPENGL
+BRLCAD_ENABLE_QT "Enable features requiring Qt" OFF
+BRLCAD_ENABLE_OSG "Enable features requiring OpenSceneGraph" OFF
+
+BRLCAD_ENABLE_RTGL "Enable experimental RTGL code." OFF
+BRLCAD_ENABLE_BULLET "Enable features requiring the Bullet Physics Library" ON
+BRLCAD_ENABLE_GCT "Enable features requiring GCT" ON
+BRLCAD_ENABLE_GDAL "Enable features requiring the Geospatial Data Abstraction Library" ON
+BRLCAD_ENABLE_SPR "Enable features requiring Screened Poisson Surface Reconstruction" OFF
+
+BRLCAD_ENABLE_BINARY_ATTRIBUTES "Enable support for binary attributes" OFF
+
+BRLCAD_ENABLE_OPENCL "Enable features requiring OpenCL" OFF
+
+BRLCAD_EXTRADOCS
+ ENABLE_DOCS
+ ENABLE_EXTRA_DOCS
+ ENABLE_DOCBOOK
+BRLCAD_EXTRADOCS_VALIDATE "Perform validation for DocBook documentation" ON
+BRLCAD_EXTRADOCS_HTML "Build MAN page output from DocBook documentation" ON
+BRLCAD_EXTRADOCS_PHP "Build MAN page output from DocBook documentation" OFF
+BRLCAD_EXTRADOCS_PPT "Build MAN page output from DocBook documentation" ON
+BRLCAD_EXTRADOCS_MAN "Build MAN page output from DocBook documentation" ON
+BRLCAD_EXTRADOCS_PDF "Build PDF output from DocBook documentation" OFF
+BRLCAD_ENABLE_TARGETS "controls all DocBook based documentation.  Keys off what target level is enabled."
+  EXTRADOCS_DEFAULT is ON when <= 2 ; OFF when > 2
+
+
+### HOW TO INSTALL ###
+
+BRLCAD_ENABLE_WIX
+BRLCAD_INSTALL_EXAMPLE_GEOMETRY "Install the example BRL-CAD geometry files." ON
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

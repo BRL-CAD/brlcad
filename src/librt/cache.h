@@ -1,7 +1,7 @@
 /*                         C A C H E . H
  * BRL-CAD
  *
- * Copyright (c) 2016-2018 United States Government as represented by
+ * Copyright (c) 2016-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,6 +36,24 @@
 
 __BEGIN_DECLS
 
+/*
+ * TODO:
+ *
+ * - put an rt_cache in dbip or rtip so you can have cached and
+ *   uncached databases open at the same time, instead of as tree
+ *   walker data
+ *
+ * - make rt_cache_prep an implementation detail in prep
+ *
+ * - rt_cache_open(dir) instead of relying on LIBRT_CACHE global
+ *
+ * - move LIBRT_CACHE environment variable access into caller
+ *   locations instead of from within rt_cache_open
+ *
+ * - use sem_open/sem_wait/sem_post for cross-application coordination
+ *   of cache writing
+ *
+ */
 
 /**
  * cache handle, opaque type

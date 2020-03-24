@@ -1,7 +1,7 @@
 /*                         F I L T E R S . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2018 United States Government as represented by
+ * Copyright (c) 2011-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -78,9 +78,9 @@ ICV_EXPORT extern int icv_filter(icv_image_t *img, ICV_FILTER filter_type);
  *
  */
 ICV_EXPORT extern icv_image_t *icv_filter3(icv_image_t *old_img,
-					       icv_image_t *curr_img,
-					       icv_image_t *new_img,
-					       ICV_FILTER3 filter_type);
+					   icv_image_t *curr_img,
+					   icv_image_t *new_img,
+					   ICV_FILTER3 filter_type);
 
 /**
  * @brief

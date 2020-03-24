@@ -1,7 +1,7 @@
 /*                    R E V O L V E _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@
 #include "brep.h"
 
 extern "C" {
-    extern void rt_sketch_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
+    extern void rt_sketch_brep(ON_Brep **bi, const struct rt_db_internal *ip, const struct bn_tol *tol);
 }
 
 
@@ -109,7 +109,7 @@ void FindLoops(ON_Brep **b, const ON_Line* revaxis, const fastf_t ang) {
 	double currdist;
 	VSET(minpt, lbbox.m_min[0], lbbox.m_min[1], lbbox.m_min[2]);
 	VSET(maxpt, lbbox.m_max[0], lbbox.m_max[1], lbbox.m_max[2]);
-	currdist = DIST_PT_PT(minpt, maxpt);
+	currdist = DIST_PNT_PNT(minpt, maxpt);
 	if (currdist > maxdist) {
 	    maxdist = currdist;
 	    largest_loop_index = i;

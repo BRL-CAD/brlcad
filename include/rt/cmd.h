@@ -1,7 +1,7 @@
 /*                        C M D . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2018 United States Government as represented by
+ * Copyright (c) 1993-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -76,8 +76,8 @@ RT_EXPORT extern char *rt_read_cmd(FILE *fp);
  * DEPRECATED: needs to migrate to libbu
  */
 RT_EXPORT extern int rt_do_cmd(struct rt_i *rtip,
-                               const char *ilp,
-                               const struct command_tab *tp);
+			       const char *ilp,
+			       const struct command_tab *tp);
 
 __END_DECLS
 

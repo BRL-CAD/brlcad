@@ -90,25 +90,17 @@ ELSE(NOT SC_IS_SUBBUILD)
   SET(CMAKE_BUILD_TYPE ${SC_BUILD_TYPE} )
 ENDIF(NOT SC_IS_SUBBUILD)
 
-# Define helper macro OPTION_WITH_DEFAULT
-MACRO( OPTION_WITH_DEFAULT OPTION_NAME OPTION_STRING OPTION_DEFAULT )
-  IF( NOT DEFINED ${OPTION_NAME} )
-    SET( ${OPTION_NAME} ${OPTION_DEFAULT} )
-  ENDIF( NOT DEFINED ${OPTION_NAME} )
-  OPTION( ${OPTION_NAME} "${OPTION_STRING}" ${${OPTION_NAME}} )
-ENDMACRO( OPTION_WITH_DEFAULT OPTION_NAME OPTION_STRING OPTION_DEFAULT )
-
 # build shared libs by default
-OPTION_WITH_DEFAULT(SC_BUILD_SHARED_LIBS "Build shared libs" ON )
+OPTION(SC_BUILD_SHARED_LIBS "Build shared libs" ON)
 
 # don't build static libs by default
-OPTION_WITH_DEFAULT(SC_BUILD_STATIC_LIBS "Build static libs" OFF)
+OPTION(SC_BUILD_STATIC_LIBS "Build static libs" OFF)
 
-OPTION_WITH_DEFAULT(SC_PYTHON_GENERATOR "Compile exp2python" ON)
-OPTION_WITH_DEFAULT(SC_CPP_GENERATOR "Compile exp2cxx" ON)
+OPTION(SC_PYTHON_GENERATOR "Compile exp2python" ON)
+OPTION(SC_CPP_GENERATOR "Compile exp2cxx" ON)
 
-OPTION_WITH_DEFAULT(SC_MEMMGR_ENABLE_CHECKS "Enable sc_memmgr's memory leak detection" OFF)
-OPTION_WITH_DEFAULT(SC_TRACE_FPRINTF "Enable extra comments in generated code so the code's source in exp2cxx may be located" OFF)
+OPTION(SC_MEMMGR_ENABLE_CHECKS "Enable sc_memmgr's memory leak detection" OFF)
+OPTION(SC_TRACE_FPRINTF "Enable extra comments in generated code so the code's source in exp2cxx may be located" OFF)
 
 if(NOT DEFINED SC_SDAI_ADDITIONAL_EXES_SRCS )
   set( SC_SDAI_ADDITIONAL_EXES_SRCS "" CACHE STRING "Source files for additional executables to be linked with SDAI libs" )
@@ -149,7 +141,7 @@ ENDIF(_orig_lang)
 
 #---------------------------------------------------------------------
 # Coverage option
-OPTION_WITH_DEFAULT( SC_ENABLE_COVERAGE "Enable code coverage test" OFF )
+OPTION( SC_ENABLE_COVERAGE "Enable code coverage test" OFF )
 IF(SC_ENABLE_COVERAGE)
   SET(SC_ENABLE_TESTING ON CACHE BOOL "Testing enabled by coverage option" FORCE)
   # build static libs, better coverage report
@@ -164,7 +156,7 @@ ENDIF(SC_ENABLE_COVERAGE)
 
 #---------------------------------------------------------------------
 # Testing option
-OPTION_WITH_DEFAULT( SC_ENABLE_TESTING "Enable unittesting framework" OFF )
+OPTION( SC_ENABLE_TESTING "Enable unittesting framework" OFF )
 IF(SC_ENABLE_TESTING)
   if( NOT DEFINED SC_BUILD_SCHEMAS )
     set( SC_BUILD_SCHEMAS "ALL" ) #test all schemas, unless otherwise specified

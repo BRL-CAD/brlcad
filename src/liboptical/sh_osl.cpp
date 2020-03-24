@@ -2,7 +2,7 @@
 /*                        S H _ O S L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -378,7 +378,7 @@ HIDDEN int osl_setup(register struct region *rp, struct bu_vls *matparm,
     BU_CK_VLS(matparm);
     RT_CK_REGION(rp);
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_log("osl_setup(%s)\n", rp->reg_name);
 
     /* Get memory for the shader parameters and shader-specific data */
@@ -409,7 +409,7 @@ HIDDEN int osl_setup(register struct region *rp, struct bu_vls *matparm,
     /* Add this shader to OSL system */
     osl_sp->shader_ref = oslr->AddShader(group_info);
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	bu_struct_print(" Parameters:", osl_print_tab, (char *)osl_sp);
     }
 
@@ -520,7 +520,7 @@ HIDDEN int osl_render(struct application *ap, const struct partition *pp,
     RT_CHECK_PT(pp);
     CK_OSL_SP(osl_sp);
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_struct_print("osl_render Parameters:", osl_print_tab,
 			(char *)osl_sp);
 

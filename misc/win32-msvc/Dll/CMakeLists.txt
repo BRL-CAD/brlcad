@@ -66,10 +66,10 @@ set(BRLCAD_SOURCES
 
 set(COREINTERFACE_SOURCES
   ../../../../rt^3/src/coreInterface/Arb8.cpp
+  ../../../../rt^3/src/coreInterface/BagOfTriangles.cpp
   ../../../../rt^3/src/coreInterface/Combination.cpp
   ../../../../rt^3/src/coreInterface/Cone.cpp
   ../../../../rt^3/src/coreInterface/ConstDatabase.cpp
-  ../../../../rt^3/src/coreInterface/BagOfTriangles.cpp
   ../../../../rt^3/src/coreInterface/Database.cpp
   ../../../../rt^3/src/coreInterface/Ellipsoid.cpp
   ../../../../rt^3/src/coreInterface/EllipticalTorus.cpp
@@ -83,6 +83,8 @@ set(COREINTERFACE_SOURCES
   ../../../../rt^3/src/coreInterface/ParabolicCylinder.cpp
   ../../../../rt^3/src/coreInterface/Paraboloid.cpp
   ../../../../rt^3/src/coreInterface/Particle.cpp
+  ../../../../rt^3/src/coreInterface/Pipe.cpp
+  ../../../../rt^3/src/coreInterface/Sketch.cpp
   ../../../../rt^3/src/coreInterface/Sphere.cpp
   ../../../../rt^3/src/coreInterface/Torus.cpp
   ../../../../rt^3/src/coreInterface/Unknown.cpp

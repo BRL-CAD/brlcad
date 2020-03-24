@@ -1,7 +1,7 @@
 /*                        P I X - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2018 United States Government as represented by
+ * Copyright (c) 1986-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -186,7 +186,7 @@ get_args(int argc, char **argv)
  * Throw bytes away.  Use reads into scanline buffer if a pipe, else seek.
  */
 int
-skipbytes(int fd, off_t num)
+skipbytes(int fd, b_off_t num)
 {
     int n, tries;
 
@@ -309,7 +309,7 @@ main(int argc, char **argv)
 	}
     }
 
-    if (file_yoff != 0) skipbytes(infd, (off_t)file_yoff*(off_t)file_width*sizeof(RGBpixel));
+    if (file_yoff != 0) skipbytes(infd, (b_off_t)file_yoff*(b_off_t)file_width*sizeof(RGBpixel));
 
     if (multiple_lines) {
 	/* Bottom to top with multi-line reads & writes */
@@ -340,11 +340,11 @@ main(int argc, char **argv)
 	/* Normal way -- bottom to top */
 	for (y = scr_yoff; y < scr_yoff + yout; y++) {
 	    if (y < 0 || y > scr_height) {
-		skipbytes(infd, (off_t)file_width*sizeof(RGBpixel));
+		skipbytes(infd, (b_off_t)file_width*sizeof(RGBpixel));
 		continue;
 	    }
 	    if (file_xoff+xskip != 0)
-		skipbytes(infd, (off_t)(file_xoff+xskip)*sizeof(RGBpixel));
+		skipbytes(infd, (b_off_t)(file_xoff+xskip)*sizeof(RGBpixel));
 	    n = bu_mread(infd, (char *)scanline, scanbytes);
 	    if (n <= 0) break;
 	    m = fb_write(fbp, xstart, y, scanline, xout);
@@ -356,17 +356,17 @@ main(int argc, char **argv)
 	    }
 	    /* slop at the end of the line? */
 	    if ((size_t)file_xoff+xskip+scanpix < file_width)
-		skipbytes(infd, (off_t)(file_width-file_xoff-xskip-scanpix)*sizeof(RGBpixel));
+		skipbytes(infd, (b_off_t)(file_width-file_xoff-xskip-scanpix)*sizeof(RGBpixel));
 	}
     } else {
 	/* Inverse -- top to bottom */
 	for (y = scr_height-1-scr_yoff; y >= scr_height-scr_yoff-yout; y--) {
 	    if (y < 0 || y >= scr_height) {
-		skipbytes(infd, (off_t)file_width*sizeof(RGBpixel));
+		skipbytes(infd, (b_off_t)file_width*sizeof(RGBpixel));
 		continue;
 	    }
 	    if (file_xoff+xskip != 0)
-		skipbytes(infd, (off_t)(file_xoff+xskip)*sizeof(RGBpixel));
+		skipbytes(infd, (b_off_t)(file_xoff+xskip)*sizeof(RGBpixel));
 	    n = bu_mread(infd, (char *)scanline, scanbytes);
 	    if (n <= 0) break;
 	    m = fb_write(fbp, xstart, y, scanline, xout);
@@ -378,7 +378,7 @@ main(int argc, char **argv)
 	    }
 	    /* slop at the end of the line? */
 	    if ((size_t)file_xoff+xskip+scanpix < file_width)
-		skipbytes(infd, (off_t)(file_width-file_xoff-xskip-scanpix)*sizeof(RGBpixel));
+		skipbytes(infd, (b_off_t)(file_width-file_xoff-xskip-scanpix)*sizeof(RGBpixel));
 	}
     }
     bu_snooze(BU_SEC2USEC(pause_sec));

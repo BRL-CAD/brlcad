@@ -1,7 +1,7 @@
 /*                       G L O B A L S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,6 +34,9 @@
 
 #include "raytrace.h"
 #include "rt/db4.h"
+#include "rt/debug.h"
+
+unsigned int rt_debug = 0;
 
 struct rt_g RTG = RT_G_INIT_ZERO;
 

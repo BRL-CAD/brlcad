@@ -10,8 +10,8 @@ add_test(NAME regress-gcv-dem COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BIN
 add_custom_target(regress-gcv-dem DEPENDS gcv "${CMAKE_CURRENT_BINARY_DIR}/dem.done")
 set_target_properties(regress-gcv-dem PROPERTIES FOLDER "BRL-CAD Regression Tests")
 set_target_properties(regress-gcv-dem PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
-Add_Regression_Test(gcv-dem "gcv;libgcv_gdal")
-add_dependencies(regress-gcv regress-gcv-dem)
+#Add_Regression_Test(gcv-dem "gcv;libgcv_gdal")
+#add_dependencies(regress-gcv regress-gcv-dem)
 
 DISTCLEAN(
   "${CMAKE_CURRENT_BINARY_DIR}/dem.done"

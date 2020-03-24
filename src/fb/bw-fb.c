@@ -1,7 +1,7 @@
 /*                         B W - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2018 United States Government as represented by
+ * Copyright (c) 1986-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -46,7 +46,7 @@
 #include "fb.h"
 
 
-int skipbytes(int fd, off_t num);
+int skipbytes(int fd, b_off_t num);
 
 #define MAX_LINE (16*1024)	/* Largest output scan line length */
 
@@ -334,7 +334,7 @@ general:
  * Throw bytes away.  Use reads into ibuf buffer if a pipe, else seek.
  */
 int
-skipbytes(int fd, off_t num)
+skipbytes(int fd, b_off_t num)
 {
     int n, tries;
 

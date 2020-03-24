@@ -1,7 +1,7 @@
 #               B R L C A D _ U T I L . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2018 United States Government as represented by
+# Copyright (c) 2011-2020 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -85,14 +85,14 @@ function(message)
   # optional arg, so we extract it and test.
   list(GET ARGV 0 MessageType)
 
-  if (MessageType STREQUAL FATAL_ERROR OR MessageType STREQUAL SEND_ERROR OR MessageType STREQUAL WARNING OR MessageType STREQUAL AUTHOR_WARNING OR MessageType STREQUAL STATUS)
+  if (MessageType STREQUAL FATAL_ERROR OR MessageType STREQUAL SEND_ERROR OR MessageType STREQUAL WARNING OR MessageType STREQUAL AUTHOR_WARNING OR MessageType STREQUAL STATUS OR MessageType STREQUAL CHECK_START OR MessageType STREQUAL CHECK_PASS OR MessageType STREQUAL CHECK_FAIL )
     list(REMOVE_AT ARGV 0)
     _message(${MessageType} "${ARGV}")
     file(APPEND "${BRLCAD_BINARY_DIR}/CMakeFiles/CMakeOutput.log" "${MessageType}: ${ARGV}\n")
-  else (MessageType STREQUAL FATAL_ERROR OR MessageType STREQUAL SEND_ERROR OR MessageType STREQUAL WARNING OR MessageType STREQUAL AUTHOR_WARNING OR MessageType STREQUAL STATUS)
+  else ()
     _message("${ARGV}")
     file(APPEND "${BRLCAD_BINARY_DIR}/CMakeFiles/CMakeOutput.log" "${ARGV}\n")
-  endif (MessageType STREQUAL FATAL_ERROR OR MessageType STREQUAL SEND_ERROR OR MessageType STREQUAL WARNING OR MessageType STREQUAL AUTHOR_WARNING OR MessageType STREQUAL STATUS)
+  endif ()
 
   # ~10% slower alternative that avoids adding '--' to STATUS messages
   # execute_process(COMMAND ${CMAKE_COMMAND} -E echo "${ARGV}")
@@ -571,7 +571,7 @@ endfunction(set_config_time)
 # Code for timing configuration and building of BRL-CAD.  These executables
 # are used to define build targets for cross-platform reporting.  Run after
 # set_config_time.
-function(generate_timer_exes)
+function(generate_sstamp)
 
   #########################################################################
   # Print a basic time stamp
@@ -635,6 +635,11 @@ int main(int argc, const char **argv) {
   if(COMMAND distclean)
     distclean("${CMAKE_BINARY_DIR}/CMakeTmp/sstamp")
   endif(COMMAND distclean)
+
+endfunction(generate_sstamp)
+
+
+function(generate_dreport)
 
   #########################################################################
   # To report at the end what the actual deltas are, we need to read in the
@@ -716,7 +721,7 @@ int main(int argc, const char **argv) {
     distclean("${CMAKE_BINARY_DIR}/CMakeTmp/dreport")
   endif(COMMAND distclean)
 
-endfunction(generate_timer_exes)
+endfunction(generate_dreport)
 
 # Local Variables:
 # tab-width: 8

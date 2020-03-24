@@ -97,7 +97,6 @@ set(LIBRT_SOURCES
   primitives/bot/btgf.c
   primitives/bot/decimate.c
   primitives/brep/brep.cpp
-  primitives/brep/brep_debug.cpp
   primitives/bspline/bspline.cpp
   primitives/bspline/bspline_brep.cpp
   primitives/bspline/bspline_mirror.c
@@ -219,6 +218,7 @@ set(LIBRT_SOURCES
   tol.c
   transform.c
   tree.c
+  uv.c
   vers.c
   vlist.c
   vshoot.c
@@ -297,6 +297,7 @@ set(librt_ignored_files
   subd_test_bot.asc
   test_bot2nurbs.cpp
   test_brepreport.cpp
+  test_dbio.c
   test_nurbsfit.cpp
   test_root3-subd.cpp
   timer-nt.c
@@ -389,7 +390,7 @@ endif(CPP_DLL_DEFINES)
 add_subdirectory(tests)
 
 CMAKEFILES(CMakeLists.txt)
-CMAKEFILES(db_fp.cxx)
+CMAKEFILES(db_fp.cpp)
 
 # Local Variables:
 # tab-width: 8

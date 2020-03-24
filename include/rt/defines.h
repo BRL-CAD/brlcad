@@ -1,7 +1,7 @@
 /*                       D E F I N E S . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2018 United States Government as represented by
+ * Copyright (c) 2011-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -48,6 +48,8 @@
 #define CL_USE_DEPRECATED_OPENCL_1_2_APIS
 #define CL_USE_DEPRECATED_OPENCL_2_0_APIS
 
+#define CL_TARGET_OPENCL_VERSION 120
+
 #ifdef __APPLE__
 #include <OpenCL/cl.h>
 #else
@@ -66,6 +68,7 @@
 #endif
 #endif
 
+#include "bg/defines.h"
 
 /*
  * Values for Solid ID.
@@ -142,11 +145,11 @@
  * down into LIBRT.  External applications should not use this.
  */
 #define RT_DBNHASH              8192    /**< @brief hash table is an
-                                         * array of linked lists with
-                                         * this many array pointer
-                                         * elements (Memory use for
-                                         * 32-bit: 32KB, 64-bit: 64KB)
-                                         */
+					 * array of linked lists with
+					 * this many array pointer
+					 * elements (Memory use for
+					 * 32-bit: 32KB, 64-bit: 64KB)
+					 */
 
 #if     ((RT_DBNHASH)&((RT_DBNHASH)-1)) != 0
 /**
@@ -168,34 +171,6 @@
 #define RT_DEFAULT_MINTIE               0       /* TODO: find the best value */
 
 
-/* Normally set when in production mode, setting the RT_G_DEBUG define
- * to 0 will allow chucks of code to poof away at compile time (since
- * they are truth-functionally constant (false)) This can boost
- * raytrace performance considerably (~10%).
- */
-#ifdef NO_DEBUG_CHECKING
-#  define RT_G_DEBUG 0
-#else
-#  define RT_G_DEBUG RTG.debug
-#endif
-
-/**
- * Definition of global parallel-processing semaphores.
- *
- * res_syscall is now   BU_SEM_SYSCALL
- */
-#define RT_SEM_TREE0    (BU_SEM_LAST)
-#define RT_SEM_TREE1    (RT_SEM_TREE0+1)
-#define RT_SEM_TREE2    (RT_SEM_TREE1+1)
-#define RT_SEM_TREE3    (RT_SEM_TREE2+1)
-#define RT_SEM_WORKER   (RT_SEM_TREE3+1)
-#define RT_SEM_STATS    (RT_SEM_WORKER+1)
-#define RT_SEM_RESULTS  (RT_SEM_STATS+1)
-#define RT_SEM_MODEL    (RT_SEM_RESULTS+1)
-
-#define RT_SEM_LAST     (RT_SEM_MODEL+1)
-
-
 #define BACKING_DIST    (-2.0)          /**< @brief  mm to look behind start point */
 #define OFFSET_DIST     0.01            /**< @brief  mm to advance point into box */
 
@@ -209,16 +184,6 @@
 #define RT_MAXLINE              10240
 
 #define RT_PART_NUBSPT  0
-
-/*
- *  * Replacements for definitions from vmath.h
- *   */
-#undef V2PRINT
-#undef VPRINT
-#undef HPRINT
-#define V2PRINT(a, b) bu_log("%s (%g, %g)\n", a, (b)[0], (b)[1]);
-#define VPRINT(a, b) bu_log("%s (%g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2])
-#define HPRINT(a, b) bu_log("%s (%g, %g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2], (b)[3])
 
 #endif /* RT_DEFINES_H */
 

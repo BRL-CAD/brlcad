@@ -1,7 +1,7 @@
 /*                     G - V O X E L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -134,9 +134,8 @@ main(int argc, char **argv)
     argc--;
     argv++;
 
-    /* Walk the geometry trees.  Here you identify any objects in the
-     * database that you want included in the ray trace by iterating
-     * of the object names that were specified on the command-line.
+    /* Load geometry database objects that were specified on the
+     * command line.
      */
     while (argc > 0) {
 	if (rt_gettree(rtip, argv[0]) < 0)
@@ -153,7 +152,7 @@ main(int argc, char **argv)
 
 	callBackData = (void *)(& dataValues);
 
-	/* voxelize function is called here with rtip(ray trace instance), userParameters and printToFile/printToScreen options */
+	/* work horse */
 	voxelize(rtip, dataValues.voxelSize, levelOfDetail, printToFile, callBackData);
     }
 

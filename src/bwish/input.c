@@ -1,7 +1,7 @@
 /*                         I N P U T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2018 United States Government as represented by
+ * Copyright (c) 1998-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,8 +37,9 @@
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
-
 #include "bio.h"
+
+#include "bu/malloc.h"
 #include "bu/log.h"
 #include "bu/vls.h"
 
@@ -124,12 +125,12 @@ inputHandler(ClientData clientData, int UNUSED(mask))
     int count;
     int ch;
     long fd;
-    char buf[4096];
+    char buf[BU_PAGE_SIZE] = {0};
     int i;
 
     fd = (long)clientData;
 
-    count = read((int)fd, (void *)buf, 4096);
+    count = read((int)fd, (void *)buf, BU_PAGE_SIZE);
 
     if (count < 0) {
 	perror("READ ERROR");

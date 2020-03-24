@@ -1,7 +1,7 @@
 /*                      P A R A L L E L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,19 +28,6 @@
 
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
-/* sys/sysctl.h may need help with c90-era BSD/XOPEN API */
-#  ifndef _U_LONG
-#    define u_long unsigned long
-#  endif
-#  ifndef _U_INT
-#    define u_int unsigned int
-#  endif
-#  ifndef _U_SHORT
-#    define u_short unsigned short
-#  endif
-#  ifndef _U_CHAR
-#    define u_char unsigned char
-#  endif
 #endif
 
 #ifdef HAVE_SYS_TIME_H
@@ -123,6 +110,8 @@
 #if defined(CPP11THREAD)
 void parallel_cpp11thread(void (*func)(int, void *), size_t ncpu, void *arg);
 #endif /* CPP11THREAD */
+
+int BU_SEM_THREAD;
 
 
 typedef enum {
@@ -407,7 +396,7 @@ parallel_wait_for_slot(int throttle, struct parallel_info *parent, size_t max_th
 	threads = parent->started - parent->finished;
 
 	/*bu_log("threads=%d (start %d - done %d)\n", threads, parent->started, parent->finished);
-	bu_log("max_threads=%d, throttle: %d\n", max_threads, throttle);*/
+	  bu_log("max_threads=%d, throttle: %d\n", max_threads, throttle);*/
 
 	if (threads < max_threads || !throttle) {
 	    return;

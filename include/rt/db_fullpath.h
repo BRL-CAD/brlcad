@@ -1,7 +1,7 @@
 /*                   D B _ F U L L P A T H . H
  * BRL-CAD
  *
- * Copyright (c) 2014-2018 United States Government as represented by
+ * Copyright (c) 2014-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,6 +22,7 @@
 #define RT_DB_FULLPATH_H
 
 #include "common.h"
+#include "bio.h" /* for b_off_t */
 #include "bu/vls.h"
 #include "rt/defines.h"
 
@@ -93,7 +94,7 @@ RT_EXPORT extern void db_append_full_path(struct db_full_path *dest,
  */
 RT_EXPORT extern void db_dup_path_tail(struct db_full_path *newp,
 				       const struct db_full_path *oldp,
-				       off_t start);
+				       b_off_t start);
 
 
 /**
@@ -117,7 +118,7 @@ RT_EXPORT extern void db_path_to_vls(struct bu_vls *str,
 #define DB_FP_PRINT_TYPE         0x2    /* print object types */
 #define DB_FP_PRINT_MATRIX       0x4    /* print notice that a matrix is present */
 RT_EXPORT extern void db_fullpath_to_vls(struct bu_vls *vls,
-	                                 const struct db_full_path *full_path,
+					 const struct db_full_path *full_path,
 					 const struct db_i *dbip,  /* needed for type determination */
 					 int fp_flags);
 

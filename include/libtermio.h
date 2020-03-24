@@ -1,7 +1,7 @@
 /*                     L I B T E R M I O . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -77,7 +77,7 @@ void prnt_Tio(
 #else
     void *tio_ptr
 #endif
-    );
+	     );
 
 __END_DECLS
 

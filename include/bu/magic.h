@@ -1,7 +1,7 @@
 /*                         M A G I C . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -85,6 +85,9 @@ __BEGIN_DECLS
 #define BN_VERT_TREE_MAGIC		0x56455254 /**< VERT */
 #define BN_VLBLOCK_MAGIC		0x981bd112 /**< ???? */
 #define BN_VLIST_MAGIC			0x98237474 /**< ?\#tt */
+
+/* libbg */
+#define BG_TESS_TOL_MAGIC		0xb9090dab /**< ???? */
 
 /* primitive internals */
 
@@ -180,7 +183,6 @@ __BEGIN_DECLS
 #define RT_SEG_MAGIC			0x98bcdef1 /**< ???? */
 #define RT_SOLTAB2_MAGIC		0x92bfcde2 /**< ???? => l2.magic */
 #define RT_SOLTAB_MAGIC			0x92bfcde0 /**< ???? => l.magic */
-#define RT_TESS_TOL_MAGIC		0xb9090dab /**< ???? */
 #define RT_TREE_MAGIC			0x91191191 /**< ???? */
 #define RT_WDB_MAGIC		       	0x5f576462 /**< _Wdb */
 
@@ -238,9 +240,9 @@ __BEGIN_DECLS
 #  define BU_CKMAG(_ptr, _magic, _str) (void)(_ptr)
 #else
 #  define BU_CKMAG(_ptr, _magic, _str) do { \
-        if (UNLIKELY(((uintptr_t)(_ptr) == 0) || ((uintptr_t)(_ptr) & (sizeof((uintptr_t)(_ptr))-1)) || *((const uint32_t *)(_ptr)) != (uint32_t)(_magic))) { \
-            bu_badmagic((const uint32_t *)(_ptr), (uint32_t)(_magic), _str, __FILE__, __LINE__); \
-        } \
+	if (UNLIKELY(((uintptr_t)(_ptr) == 0) || ((uintptr_t)(_ptr) & (sizeof((uintptr_t)(_ptr))-1)) || *((const uint32_t *)(_ptr)) != (uint32_t)(_magic))) { \
+	    bu_badmagic((const uint32_t *)(_ptr), (uint32_t)(_magic), _str, __FILE__, __LINE__); \
+	} \
     } while (0)
 #endif
 

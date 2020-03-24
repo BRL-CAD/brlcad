@@ -1,7 +1,7 @@
 /*                       G - S A T . C P P
  * BRL-CAD
  *
- * Copyright (c) 1993-2018 United States Government as represented by
+ * Copyright (c) 1993-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -80,7 +80,7 @@ const int DEBUG_NAMES = 1;
 const long debug = 1;
 int verbose = 0;
 
-static rt_tess_tol ttol;   /* tessellation tolerance in mm */
+static bg_tess_tol ttol;   /* tessellation tolerance in mm */
 static bn_tol tol;    /* calculation tolerance */
 
 // Global map for bodies names in the CGM global list
@@ -194,8 +194,8 @@ parse_args(int ac, char **av)
 		verbose++;
 		break;
 	    case 'x':               /* librt debug flag */
-		sscanf(bu_optarg, "%x", &RTG.debug);
-		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT);
+		sscanf(bu_optarg, "%x", &rt_debug);
+		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, RT_DEBUG_FORMAT);
 		bu_log("\n");
 		break;
 	    case 'X':               /* NMG debug flag */

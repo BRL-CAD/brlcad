@@ -1,7 +1,7 @@
 /*                      R A N D S P H . C
  * BRL-CAD
  *
- * Copyright (c) 2014-2018 United States Government as represented by
+ * Copyright (c) 2014-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -76,7 +76,7 @@ main(int argc, const char *argv[])
     bu_free(parray, "free array");
 
 
-  return 1;
+    return 1;
 }
 
 

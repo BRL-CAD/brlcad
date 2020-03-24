@@ -1,7 +1,7 @@
 /*                     S H _ S C L O U D . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2018 United States Government as represented by
+ * Copyright (c) 1998-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -140,13 +140,13 @@ scloud_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, con
     }
 
     memcpy(scloud, &scloud_defaults, sizeof(struct scloud_specific));
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_log("scloud_setup\n");
 
     if (bu_struct_parse(matparm, scloud_parse, (char *)scloud, NULL) < 0)
 	return -1;
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	(void)bu_struct_print(rp->reg_name, scloud_parse, (char *)scloud);
 
     /* get transformation between world and "region" coordinates */
@@ -290,7 +290,7 @@ scloud_render(struct application *ap, const struct partition *pp, struct shadewo
     steps = pow(scloud_sp->lacunarity, scloud_sp->octaves-1) * 4;
     step_delta = thickness / (double)steps;
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_log("steps=%d  delta=%g  thickness=%g\n",
 	       steps, step_delta, thickness);
 
@@ -378,7 +378,7 @@ scloud_render(struct application *ap, const struct partition *pp, struct shadewo
     VELMUL(swp->sw_color, swp->sw_color, incident_light);
 
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	pr_shadework("scloud: after light vis, before rr_render", swp);
     }
 

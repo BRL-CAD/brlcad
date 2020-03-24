@@ -1,7 +1,7 @@
 /*                         T I M E . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,10 +23,9 @@
 
 #include "common.h"
 
-#include <stdio.h> /* For FILE */
-#include <sys/types.h> /* for off_t */
 #include <stddef.h> /* for size_t */
 #include <stdlib.h> /* for getenv */
+#include "bio.h" /* for b_off_t */
 
 #include "bu/defines.h"
 #include "bu/vls.h"
@@ -44,13 +43,13 @@ __BEGIN_DECLS
  * Returns a microsecond-accurate wall-clock time counter.
  *
  * Example use:
-@code
-int64_t start = bu_gettime();
-do_some_work_here();
-int64_t elapsed = bu_gettime() - start;
-int seconds = elapsed / 1000000LL;
-printf("time: %02d\n", seconds);
-@endcode
+ * @code
+ * int64_t start = bu_gettime();
+ * do_some_work_here();
+ * double elapsed = bu_gettime() - start;
+ * double seconds = elapsed / 1000000.0;
+ * printf("time: %.2f\n", seconds);
+ * @endcode
  *
  */
 BU_EXPORT extern int64_t bu_gettime(void);

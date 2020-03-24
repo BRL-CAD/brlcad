@@ -1,7 +1,7 @@
 /*                 Curve.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2018 United States Government as represented by
+ * Copyright (c) 1994-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -41,7 +41,7 @@ public:
 	OFFSET_CURVE_2D,
 	OFFSET_CURVE_3D,
 	CURVE_REPLICA,
-	UNKNOWN_CURVE
+	CURVE_UNKNOWN
     };
 
 private:
@@ -62,7 +62,7 @@ public:
     Curve();
     virtual ~Curve();
     virtual curve_type CurveType() {
-	return UNKNOWN_CURVE;
+	return CURVE_UNKNOWN;
     };
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual bool LoadONBrep(ON_Brep *brep);

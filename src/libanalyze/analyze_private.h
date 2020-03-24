@@ -1,7 +1,7 @@
 /*               A N A L Y Z E _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2015-2018 United States Government as represented by
+ * Copyright (c) 2015-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,8 +50,8 @@ extern void analyze_gen_worker(int cpu, void *ptr);
 ANALYZE_EXPORT extern int analyze_get_bbox_rays(fastf_t **rays, point_t min, point_t max, struct bn_tol *tol);
 ANALYZE_EXPORT extern int analyze_get_scaled_bbox_rays(fastf_t **rays, point_t min, point_t max, fastf_t ratio);
 
-ANALYZE_EXPORT extern int analyze_get_solid_partitions(struct bu_ptbl *results, struct rt_gen_worker_vars *pstate, fastf_t *rays, int ray_cnt,
-	struct db_i *dbip, const char *obj, struct bn_tol *tol, int ncpus, int filter);
+ANALYZE_EXPORT extern int analyze_get_solid_partitions(struct bu_ptbl *results, struct rt_gen_worker_vars *pstate, fastf_t *rays, size_t ray_cnt,
+	struct db_i *dbip, const char *obj, struct bn_tol *tol, size_t ncpus, int filter);
 
 typedef struct xray * (*getray_t)(void *ptr);
 typedef int *         (*getflag_t)(void *ptr);
@@ -100,10 +100,14 @@ struct current_state {
     int v_axis;    	/* is being used for the U, V, or invariant vector direction */
     int i_axis;
 
-    /* ANALYZE_SEM_WORKER protects this */
+    int sem_worker;
+
+    /* sem_worker protects this */
     int v;         	/* indicates how many "grid_size" steps in the v direction have been taken */
 
-    /* ANALYZE_SEM_STATS protects this */
+    int sem_stats;
+
+    /* sem_stats protects this */
     double *m_lenDensity;
     double *m_len;
     unsigned long *shots;
@@ -120,8 +124,7 @@ struct current_state {
     struct per_obj_data *objs;
     struct per_region_data *reg_tbl;
 
-    struct density_entry *densities;
-    int num_densities;
+    struct analyze_densities *densities;
 
     /* the parameters */
     int num_views;

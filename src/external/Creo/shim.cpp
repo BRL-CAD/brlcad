@@ -47,7 +47,7 @@ extern "C" int ProParameterInit(void *,wchar_t *,void *) {return 0;}
 extern "C" int ProParameterValueGet(ProParameter *,void *) {return 0;}
 extern "C" int ProParameterVisit (void **,	void*,int (*)(ProParameter*,int,void*),void *) {return 0;}
 extern "C" int ProParamvalueTypeGet(void **,void *) {return 0;}
-extern "C" int ProParamvalueValueGet(void **,int,wchar_t *) {return 0;}
+extern "C" int ProParamvalueValueGet(void **,int,void *) {return 0;}
 extern "C" int ProPartMaterialNameGet(void*,wchar_t *) {return 0;}
 extern "C" int ProPartMaterialdataGet(void*,wchar_t*,ProMaterialProps*) {return 0;}
 extern "C" int ProPartTessellate(void*,double,double,int,ProSurfaceTessellationData**) {return 0;}

@@ -1,7 +1,7 @@
 /*                         C L O N E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,34 +19,35 @@
  */
 /** @file libged/clone.c
  *
- * The clone command.
+ * The clone command.  Performs a deep copy of an object.
  *
- * routines related to performing deep object copies
+ * ISSUES/TODO:
  *
- * TODO:
- *   use bu_vls strings
- *   use bu_list lists
+ * * Fix bug when number is at beginning of a name, replaces with a
+ *   number, sometimes crashes.
  *
- * ISSUES/TODO (for DK, ^D means done)
- *  1. No -c option.  This allows the increment given in the '-i' to
- *  act on the second number
- * D2. Remove 15 char name limit.  I ran into this today.
- *  3. No -p option.  I couldn't get this to work.  I re-centered the
- *     geometry, then it tried to work but I ran into the 15 char limit
- *     and had to kill the process (^C).
- *  4. Names - This tool is built around a naming convention.  Currently,
- *     the second number does not list properly (it just truncated the
- *     second number of the 'cut' prims so they ended up 'mess.s1.c' instead
- *     of 'mess.s1.c1').  And the '+' and '-' didn't work, I had to switch
- *     from 'mess.s1-1' to 'mess.s1.c1'.  Also, prims need to increment
- *     by the 'i' number but combs, regions, and assemblies (.c#, .r#, or
- *     just name with a # at the end) should increment by 1.  So you end
- *     up with widget_1, widget_2, widget_3 and not widget_1, widget_4,
- *     widget_7...
- *  5. Tree structure - please retain tree structure to the extent that
- *     you can and try not to re-create prims or combs used more than once.
- *     No warning needed for redundant copies.  Warnings can come later...
- * D6. Display - do display clones but do not resize or re-center view.
+ * * use libbu strings/lists
+ *
+ * * No -c option.  This allows the increment given in the '-i' to act
+ *   on the second number
+ *
+ * * No -p option.  I couldn't get this to work.  I re-centered the
+ *   geometry, then it tried to work but I ran into the 15 char limit
+ *   and had to kill the process (^C).
+ *
+ * * Names - This tool is built around a naming convention.
+ *   Currently, the second number does not list properly (it just
+ *   truncated the second number of the 'cut' prims so they ended up
+ *   'mess.s1.c' instead of 'mess.s1.c1').  And the '+' and '-' didn't
+ *   work, I had to switch from 'mess.s1-1' to 'mess.s1.c1'.  Also,
+ *   prims need to increment by the 'i' number but combs, regions, and
+ *   assemblies (.c#, .r#, or just name with a # at the end) should
+ *   increment by 1.  So you end up with widget_1, widget_2, widget_3
+ *   and not widget_1, widget_4, widget_7...
+ *
+ * * Tree structure - retain tree structure to the extent that we can
+ *   and try not to re-create prims or combs used more than once.  No
+ *   warning needed for redundant copies.  Warnings can come later...
  */
 
 #include "common.h"
@@ -64,8 +65,9 @@
 #include "./ged_private.h"
 
 
-#define CLONE_VERSION "Clone ver 4.0\n2006-08-08\n"
+#define CLONE_BUFPARTSIZE 511
 #define CLONE_BUFSIZE 512
+
 
 /**
  * state structure used to keep track of what actions the user
@@ -81,7 +83,6 @@ struct ged_clone_state {
     hvect_t rpnt;		/* Point to rotate about (default 0 0 0) */
     int miraxis;		/* Axis to mirror copy */
     fastf_t mirpos;		/* Point on axis to mirror copy */
-    int autoview;		/* Execute autoview after drawing all objects */
     int updpos;			/* Position of number to update (for -c) */
     struct bu_vls olist;        /* List of cloned object names */
 };
@@ -94,9 +95,9 @@ struct name {
 
 
 /**
- * structure used to store the names of objects that are to be
- * cloned.  space is preallocated via names with len and used keeping
- * track of space available and used.
+ * structure used to store the names of objects that are to be cloned.
+ * space is preallocated via names with len and used keeping track of
+ * space available and used.
  */
 struct nametbl {
     struct name *names;
@@ -184,8 +185,8 @@ add_to_list(struct nametbl *l, char *name)
 
 
 /**
- * returns the location of 'name' in the list if it exists, returns
- * -1 otherwise.
+ * returns the location of 'name' in the list if it exists, returns -1
+ * otherwise.
  */
 static int
 index_in_list(struct nametbl l, char *name)
@@ -218,7 +219,7 @@ static struct bu_vls *
 clone_get_name(struct directory *dp, struct ged_clone_state *state, size_t iter)
 {
     struct bu_vls *newname;
-    char prefix[CLONE_BUFSIZE] = {0}, suffix[CLONE_BUFSIZE] = {0}, buf[CLONE_BUFSIZE] = {0}, suffix2[CLONE_BUFSIZE] = {0};
+    char prefix[CLONE_BUFPARTSIZE] = {0}, suffix[CLONE_BUFPARTSIZE] = {0}, buf[CLONE_BUFSIZE] = {0}, suffix2[CLONE_BUFPARTSIZE] = {0};
     int num = 0, i = 1, j = 0;
 
     newname = bu_vls_vlsinit();
@@ -226,9 +227,9 @@ clone_get_name(struct directory *dp, struct ged_clone_state *state, size_t iter)
     /* Ugh. This needs much repair/cleanup. */
     if (state->updpos == 0) {
 	struct bu_vls tmpbuf = BU_VLS_INIT_ZERO;
-	sscanf(dp->d_namep, "%[!-/, :-~]%d%[!-/, :-~]%512s", prefix, &num, suffix, suffix2); /* CLONE_BUFSIZE */
+	sscanf(dp->d_namep, "%[!-/, :-~]%d%[!-/, :-~]%510s", prefix, &num, suffix, suffix2); /* CLONE_BUFPARTSIZE - 1 */
 	bu_vls_sprintf(&tmpbuf, "%s%s", suffix, suffix2);
-	snprintf(suffix, CLONE_BUFSIZE, "%s", bu_vls_addr(&tmpbuf));
+	snprintf(suffix, sizeof(suffix), "%s", bu_vls_addr(&tmpbuf));
 	bu_vls_free(&tmpbuf);
     } else if (state->updpos == 1) {
 	int num2 = 0;
@@ -240,7 +241,7 @@ clone_get_name(struct directory *dp, struct ged_clone_state *state, size_t iter)
 	    num = num2;
 	    bu_vls_sprintf(&tmpbuf, "%s%s", prefix, suffix2);
 	}
-	snprintf(prefix, CLONE_BUFSIZE, "%s", bu_vls_addr(&tmpbuf));
+	snprintf(prefix, sizeof(prefix), "%s", bu_vls_addr(&tmpbuf));
 	bu_vls_free(&tmpbuf);
     } else
 	bu_exit(EXIT_FAILURE, "multiple -c options not supported yet.");
@@ -390,7 +391,7 @@ copy_v5_solid(struct db_i *dbip, struct directory *proto, struct ged_clone_state
 	if (!ZERO(state->rpnt[W])) {
 	    mat_t m3;
 
-	    bn_mat_xform_about_pt(m3, m2, state->rpnt);
+	    bn_mat_xform_about_pnt(m3, m2, state->rpnt);
 	    bn_mat_mul(t, matrix, m3);
 	} else
 	    bn_mat_mul(t, matrix, m2);
@@ -563,6 +564,7 @@ copy_v4_comb(struct db_i *dbip, struct directory *proto, struct ged_clone_state 
 
 /*
  * update the v5 combination tree with the new names.
+ *
  * DESTRUCTIVE RECURSIVE
  */
 static int
@@ -789,8 +791,8 @@ done_copy_tree:
 
 
 /**
- * copy an object, recursively copying all of the object's contents
- * if it's a combination/region.
+ * copy an object, recursively copying all of the object's contents if
+ * it's a combination/region.
  */
 static struct directory *
 deep_copy_object(struct resource *resp, struct ged_clone_state *state)
@@ -831,20 +833,46 @@ deep_copy_object(struct resource *resp, struct ged_clone_state *state)
 static void
 print_usage(struct bu_vls *str)
 {
-    bu_vls_printf(str, "Usage: clone [-abhimnprtv] <object>\n\n");
-    bu_vls_printf(str, "-a <n> <x> <y> <z>\t- Specifies a translation split between n copies.\n");
-    bu_vls_printf(str, "-b <n> <x> <y> <z>\t- Specifies a rotation around x, y, and z axes \n\t\t\t  split between n copies.\n");
-    bu_vls_printf(str, "-c\t\t\t- Increment the second number in object names.\n");
-    bu_vls_printf(str, "-f\t\t\t- Don't draw the new object.\n");
-    bu_vls_printf(str, "-g\t\t\t- Don't resize the view after drawing new objects.\n");
-    bu_vls_printf(str, "-h\t\t\t- Prints this message.\n");
-    bu_vls_printf(str, "-i <n>\t\t\t- Specifies the increment between each copy.\n");
-    bu_vls_printf(str, "-m <axis> <pos>\t\t- Specifies the axis and point to mirror the group.\n");
-    bu_vls_printf(str, "-n <# copies>\t\t- Specifies the number of copies to make.\n");
-    bu_vls_printf(str, "-p <x> <y> <z>\t\t- Specifies point to rotate around for -r. \n\t\t\t  Default is 0 0 0.\n");
-    bu_vls_printf(str, "-r <x> <y> <z>\t\t- Specifies the rotation around x, y, and z axes.\n");
-    bu_vls_printf(str, "-t <x> <y> <z>\t\t- Specifies translation between each copy.\n");
-    bu_vls_printf(str, "-v\t\t\t- Prints version info.\n");
+    bu_vls_printf(str,\
+		  "Usage: clone [-h]\n"
+		  "       clone [-i #] [-c] [-n #] [-t x y z] [-r x y z] [-p x y z] {object}\n"
+		  "       clone [-i #] [-c] [-a n x y z] [-b n x y z] {object}\n"
+		  "       clone [-i #] [-c] [-m [xyz] #] {object}\n"
+		  "\n");
+
+    bu_vls_printf(str,
+		  "\t-h           - Prints this help message.\n"
+		  "\n");
+
+    bu_vls_printf(str,
+		  "\t-n #_copies  - Specifies the number of copies to make.\n"
+		  "\t               (Default is 1)\n");
+    bu_vls_printf(str,
+		  "\t-t x y z     - Specifies translation between each copy.\n"
+		  "\t               (Default is 0 0 0)\n");
+    bu_vls_printf(str,
+		  "\t-r x y z     - Specifies rotation around x, y, and z axes.\n"
+		  "\t               (Default is 0 0 0)\n");
+    bu_vls_printf(str,
+		  "\t-p x y z     - Specifies point to rotate around for -r.\n"
+		  "\t               (Default is 0 0 0)\n"
+		  "\n");
+
+    bu_vls_printf(str,
+		  "\t-a n x y z   - Specifies total translation divided over n copies.\n");
+    bu_vls_printf(str,
+		  "\t-b n x y z   - Specifies total rotation around x, y, & z axes\n"
+		  "\t               divided over n copies.\n");
+    bu_vls_printf(str,
+		  "\t-m [xyz] d   - Specifies x/y/z axis and distance to mirror across.\n"
+		  "\n");
+
+    bu_vls_printf(str,
+		  "\t-i #_incr    - Specifies increment to use when naming copies.\n"
+		  "\t               (Default is 100)\n");
+    bu_vls_printf(str,
+		  "\t-c           - Increment the next number in object names.\n");
+
     return;
 }
 
@@ -863,15 +891,17 @@ get_args(struct ged *gedp, int argc, char **argv, struct ged_clone_state *state)
     state->gedp = gedp;
     state->incr = 100;
     state->n_copies = 1;
-    state->autoview = 1;
     state->rot[W] = 0;
     state->rpnt[W] = 0;
     state->trans[W] = 0;
     state->miraxis = W;
     state->updpos = 0;
 
-    while ((k = bu_getopt(argc, argv, "a:b:cgi:m:n:p:r:t:vh?")) != -1) {
-	if (bu_optopt == '?') k='h';
+    while ((k = bu_getopt(argc, argv, "a:b:cgi:m:n:p:r:t:h?")) != -1) {
+
+	if (bu_optopt == '?')
+	    k = 'h';
+
 	switch (k) {
 	    case 'a':
 		state->n_copies = atoi(bu_optarg);
@@ -888,15 +918,13 @@ get_args(struct ged *gedp, int argc, char **argv, struct ged_clone_state *state)
 		state->rot[W] = 1;
 		break;
 	    case 'c':
-		/* I'd like to have an optional argument to -c, but for now,
-		 * just let multiple -c's add it up as a hack. I believe the
-		 * variant of this that was lost used this as a binary
-		 * operation, so it SHOULD be functionally equivalent for a user
-		 * who's dealt with this before. */
+		/* I'd like to have an optional argument to -c, but
+		 * for now, just let multiple -c's add it up as a
+		 * hack. I believe the variant of this that was lost
+		 * used this as a binary operation, so it SHOULD be
+		 * functionally equivalent for a user who's dealt with
+		 * this before. */
 		state->updpos++;
-		break;
-	    case 'g':
-		state->autoview = 0;
 		break;
 	    case 'i':
 		state->incr = atoi(bu_optarg);
@@ -926,10 +954,6 @@ get_args(struct ged *gedp, int argc, char **argv, struct ged_clone_state *state)
 		state->trans[Z] = atof(argv[bu_optind++]);
 		state->trans[W] = 1;
 		break;
-	    case 'v':
-		bu_vls_printf(gedp->ged_result_str, CLONE_VERSION);
-		return GED_ERROR;
-		break;
 	    default:
 		print_usage(gedp->ged_result_str);
 		return GED_ERROR;
@@ -938,11 +962,11 @@ get_args(struct ged *gedp, int argc, char **argv, struct ged_clone_state *state)
 
     /* make sure not too few/many args */
     if ((argc - bu_optind) == 0) {
-	bu_vls_printf(gedp->ged_result_str, "Need to specify an <object> to be cloned.\n");
+	bu_vls_printf(gedp->ged_result_str, "Need to specify an object to be cloned.\n");
 	print_usage(gedp->ged_result_str);
 	return GED_ERROR;
     } else if (bu_optind + 1 < argc) {
-	bu_vls_printf(gedp->ged_result_str, "clone:  Can only clone exactly one <object> at a time right now.\n");
+	bu_vls_printf(gedp->ged_result_str, "clone:  Can only clone exactly one object at a time right now.\n");
 	print_usage(gedp->ged_result_str);
 	return GED_ERROR;
     }

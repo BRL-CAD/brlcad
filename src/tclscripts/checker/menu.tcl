@@ -1,7 +1,7 @@
 #                     M E N U . T C L
 # BRL-CAD
 #
-# Copyright (c) 2018 United States Government as represented by
+# Copyright (c) 2018-2020 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -30,6 +30,9 @@ package require Itcl
 package require Itk
 package require OverlapFileTool
 package require GeometryChecker
+
+# replace existing class
+catch {delete class OverlapMenu} error
 
 ::itcl::class OverlapMenu {
     inherit ::itk::Widget
@@ -155,12 +158,19 @@ body OverlapMenu::runCheckerTool { } {
     wm title $checkerWindow "Geometry Checker"
     pack $checker -expand true -fill both
 
+    # calculate default geometry
+    wm withdraw $checkerWindow
+    update
+
     # ensure window isn't too narrow
     set geom [split [wm geometry $checkerWindow] "=x+-"]
     if {[lindex $geom 0] > [lindex $geom 1]} {
 	lreplace $geom 1 1 [lindex $geom 0]
     }
     wm geometry $checkerWindow "=[::tcl::mathfunc::round [expr 1.62 * [lindex $geom 1]]]x[lindex $geom 1]"
+
+    # raise to front
+    wm deiconify $checkerWindow
 
     destroy $parent.overlapmenu
 }
@@ -299,10 +309,8 @@ proc overlaps_tool { args } {
 
     # if filename is specified directly run checker tool
     if {$filename != ""} {
-	if { [validateOvFile $filename] == 0 } {
-	    $overlapmenu configure -ovfile $filename
-	    $overlapmenu runCheckerTool
-	}
+	$overlapmenu configure -ovfile $filename
+	$overlapmenu runCheckerTool
     }
 }
 

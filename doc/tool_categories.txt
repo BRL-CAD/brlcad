@@ -254,7 +254,6 @@ pixclump
 pixcmp
 pixcolors
 pixcount
-pixcut
 pixdiff
 pixelswap
 pixembed
@@ -271,7 +270,6 @@ pixinterp2x
 pixmatte
 pixmerge
 pixmorph
-pixpaste
 pixread.sh
 pixrect
 pixrot
@@ -295,35 +293,6 @@ texturescale
 umod
 ustats
 wavelet
-
-Animation Tools
-===============
-anim_cascade
-anim_fly
-anim_hardtrack
-anim_keyread
-anim_lookat
-anim_offset
-anim_orient
-anim_script
-anim_sort
-anim_time
-anim_track
-anim_turn
-chan_add
-chan_mult
-chan_permute
-
-Infrared Tools
-==============
-all_sf
-firpass
-ir-X
-ir-sgi
-irdisp
-secpass
-shapefact
-showtherm
 
 Plotter Tools
 =============
@@ -398,7 +367,6 @@ bombardier
 brlcad-config
 brlman
 btclsh
-cadbug.sh
 cray.sh
 elapsed.sh
 indent.sh

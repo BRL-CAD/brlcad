@@ -1,7 +1,7 @@
 /*               O P E N N U R B S _ E X T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2007-2018 United States Government as represented by
+ * Copyright (c) 2007-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,8 +34,15 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
-#include "brep.h"
-#include "libbrep_brep_tools.h"
+#include "brep/defines.h"
+#include "brep/curvetree.h"
+#include "brep/surfacetree.h"
+#include "brep/ray.h"
+#include "brep/pullback.h"
+#include "brep/cdt.h" // for ON_Brep_Report_Faces - should go away
+#include "bg/tri_ray.h" // for ON_Brep_Report_Faces - should go away
+#include "bg/lseg.h"
+#include "./tools/tools.h"
 #include "bn/dvec.h"
 
 #define RANGE_HI 0.55
@@ -47,13 +54,8 @@
 /// grows 3D BBox along each axis by this factor
 #define BBOX_GROW_3D 0.1
 
-/// arbitrary calculation tolerance (need to try VDIVIDE_TOL or VUNITIZE_TOL to tighten the bounds)
-#define TOL 0.000001
-
 /// another arbitrary calculation tolerance (need to try VDIVIDE_TOL or VUNITIZE_TOL to tighten the bounds)
 #define TOL2 0.00001
-
-//#define _OLD_SUBDIVISION_
 
 void
 brep_get_plane_ray(const ON_Ray& r, plane_ray& pr)
@@ -112,10 +114,449 @@ brep_newton_iterate(const plane_ray& pr, pt2d_t R, const ON_3dVector& su, const 
 	mat2d_pt2d_mul(tmp, inv_jacob, R);
 	pt2dsub(out_uv, uv, tmp);
     } else {
-	TRACE2("inverse failed"); // FIXME: how to handle this?
+	// FIXME: how to handle this?
+	// TRACE2("inverse failed");
 	move(out_uv, uv);
     }
 }
+
+// This doesn't belong here - just not sure where to put it yet.  By rights
+// this should do a ray intersection and report on the faces with that info,
+// which means this should really be in libanalyze.  For now, just do a quick
+// and dirty bbox check to at least let us narrow down what faces are active
+// along a ray.
+int
+ON_Brep_Report_Faces(struct bu_vls *log, void *bp, const vect_t center, const vect_t dir)
+{
+    struct bu_vls faces = BU_VLS_INIT_ZERO;
+    point_t p1, p2;
+    if (!log || !bp) return -1;
+    VMOVE(p1, center);
+    VADD2(p2, center, dir);
+    ON_Line l(ON_3dPoint(p1[X], p1[Y], p1[Z]), ON_3dPoint(p2[X], p2[Y], p2[Z]));
+
+    ON_Brep *brep = (ON_Brep *)bp;
+    ON_Brep_CDT_State *s_cdt = ON_Brep_CDT_Create((void *)brep, NULL);
+    ON_Brep_CDT_Tessellate(s_cdt, 0, NULL);
+
+    for (int i = 0; i < brep->m_F.Count(); i++) {
+	ON_BrepFace &face = brep->m_F[i];
+	ON_3dPoint bmin, bmax;
+	face.SurfaceOf()->GetBoundingBox(bmin, bmax);
+	ON_BoundingBox bb(bmin, bmax);
+	double t1, t2;
+	if (bb.Intersection(l, &t1, &t2)) {
+	    int faces_array = face.m_face_index;
+	    int fcnt, vcnt;
+	    int *csg_faces;
+	    point_t *csg_vertices;
+	    ON_Brep_CDT_Mesh(&csg_faces, &fcnt, (fastf_t **)&csg_vertices, &vcnt, NULL, NULL, NULL, NULL, s_cdt, 1, &faces_array);
+	    int is_hit = 0;
+	    for (int j = 0; j < fcnt; j++) {
+		point_t cp1, cp2, cp3, isect;
+		VMOVE(cp1, csg_vertices[csg_faces[j*3+0]]);
+		VMOVE(cp2, csg_vertices[csg_faces[j*3+1]]);
+		VMOVE(cp3, csg_vertices[csg_faces[j*3+2]]);
+		is_hit = bg_isect_tri_ray(center, dir, cp1, cp2, cp3, &isect);
+		if (is_hit) {
+		    if (!bu_vls_strlen(&faces)) {
+			bu_vls_printf(&faces, "%d", face.m_face_index);
+		    } else {
+			bu_vls_printf(&faces, ",%d", face.m_face_index);
+		    }
+		    break;
+		}
+	    }
+	    bu_free(csg_faces, "free faces");
+	    bu_free(csg_vertices, "free faces");
+	}
+    }
+
+    ON_Brep_CDT_Destroy(s_cdt);
+    bu_vls_printf(log, "%s", bu_vls_cstr(&faces));
+    bu_vls_free(&faces);
+
+    return 0;
+}
+
+
+/* Implement the closest point on curve algorithm from
+ * https://github.com/pboyer/verb - specifically:
+ *
+ * verb/src/verb/eval/Tess.hx 
+ * verb/src/verb/eval/Analyze.hx 
+ */
+
+struct curve_search_args {
+    const ON_NurbsCurve *nc;
+    ON_3dPoint tp;
+};
+
+int
+curve_closest_search_func(void *farg, double t, double *ft, double *dft)
+{
+    struct curve_search_args *cargs = (struct curve_search_args *)farg;
+    const ON_NurbsCurve *nc = cargs->nc;
+    ON_3dPoint tp = cargs->tp;
+    ON_3dPoint crv_pnt;
+    ON_3dVector crv_d1;
+    ON_3dVector crv_d2;
+    if (!nc->Ev2Der(t, crv_pnt, crv_d1, crv_d2)) return -1;
+    ON_3dVector fparam2 = crv_pnt - tp;
+    *ft = ON_DotProduct(crv_d1, fparam2);
+    *dft = ON_DotProduct(crv_d2, fparam2) + ON_DotProduct(crv_d1, crv_d1);
+
+    if (*ft < ON_ZERO_TOLERANCE) return 1;
+    return 0;
+}
+
+bool
+ON_NurbsCurve_GetClosestPoint(
+	double *t,
+	const ON_NurbsCurve *nc,
+	const ON_3dPoint &p,
+	double maximum_distance = 0.0,
+	const ON_Interval *sub_domain = NULL
+	)
+{
+    if (!t || !nc) return false;
+
+    ON_Interval domain = (sub_domain) ? *sub_domain : nc->Domain();
+    size_t init_sample_cnt = nc->CVCount() * nc->Degree();
+    double span = 1.0/(double)(init_sample_cnt);
+
+    // Get an initial sampling of uniform points along the active
+    // curve domain
+    std::vector<ON_3dPoint> pnts;
+    for (size_t i = 0; i <= init_sample_cnt; i++) {
+	double st = domain.ParameterAt(i * span);
+	pnts.push_back(nc->PointAt(st));
+    }
+
+    // Find an initial domain subset based on the breakdown into segments
+    double d1 = domain.Min();
+    double d2 = domain.Max();
+    double vmin = DBL_MAX;
+    for (size_t i = 0; i < pnts.size() - 1; i++) {
+	ON_Line l(pnts[i], pnts[i+1]);
+	double lt;
+	l.ClosestPointTo(p, &lt);
+	ON_3dPoint pl = l.PointAt(lt);
+	if ((lt < 0 || NEAR_ZERO(lt, ON_ZERO_TOLERANCE))) {
+	    pl = l.PointAt(0);
+	}
+	if ((lt > 1 || NEAR_EQUAL(lt, 1, ON_ZERO_TOLERANCE))) {
+	    pl = l.PointAt(1);
+	}
+	if (pl.DistanceTo(p) < vmin) {
+	    vmin = pl.DistanceTo(p);
+	    d1 = domain.ParameterAt(i*span);
+	    d2 = domain.ParameterAt((i+1)*span);
+	}
+    }
+
+    // Iterate to find the closest point
+    double vdist = DBL_MAX;
+    double u = (d1 + d2) * 0.5;
+    struct curve_search_args cargs;
+    cargs.nc = nc;
+    cargs.tp = p;
+    double st;
+    int osearch = 0;
+
+    if (!nc->IsLinear(TOL2)) {
+	osearch = ON_FindLocalMinimum(curve_closest_search_func, &cargs, d1, u, d2, ON_EPSILON, 0.5*ON_ZERO_TOLERANCE, 100, &st);
+    }
+
+    if (osearch == 1) {
+
+	(*t) = st;
+	vdist = (p.DistanceTo(nc->PointAt(st)));
+
+    } else {
+
+	// ON_FindLocalMinimum failed, fall back on binary search
+	double vmin_delta = DBL_MAX;
+	ON_3dPoint p1 = nc->PointAt(d1);
+	ON_3dPoint p2 = nc->PointAt(d2);
+	double vmin_prev = (p1.DistanceTo(p) > p2.DistanceTo(p)) ? p1.DistanceTo(p) : p2.DistanceTo(p);
+	while (vmin_delta > ON_ZERO_TOLERANCE) {
+	    u = (d1 + d2) * 0.5;
+	    if (p1.DistanceTo(p) < p2.DistanceTo(p)) {
+		d2 = u;
+		p2 = nc->PointAt(u);
+	    } else {
+		d1 = u;
+		p1 = nc->PointAt(u);
+	    }
+	    vdist = (p.DistanceTo(nc->PointAt(u)));
+	    vmin_delta = fabs(vmin_prev - vdist);
+	    vmin_prev = vdist;
+	}
+
+	(*t) = u;
+
+    }
+
+    if (maximum_distance > 0 && vdist > maximum_distance) return false;
+
+    return true;
+}
+
+struct curve_line_search_args {
+    const ON_NurbsCurve *nc;
+    const ON_Line *l;
+    double vdist;
+};
+
+int
+curve_line_closest_search_func(void *farg, double t, double *ft, double *dft)
+{
+    struct curve_line_search_args *largs = (struct curve_line_search_args *)farg;
+    const ON_NurbsCurve *nc = largs->nc;
+    ON_3dPoint crv_pnt;
+    ON_3dVector crv_d1;
+    ON_3dVector crv_d2;
+    if (!nc->Ev2Der(t, crv_pnt, crv_d1, crv_d2)) return -1;
+
+    // Unlike the closet point to test point case, we don't have a single target point
+    // to use.  Instead, for the current curve point, find the closest point on the
+    // line to that point and use it as the "current" test point.
+    double lt;
+    largs->l->ClosestPointTo(crv_pnt, &lt);
+    ON_3dPoint tp = largs->l->PointAt(lt);
+  
+    // Since the test point is ephemeral, calculate and stash the distance
+    // while we have it  
+    largs->vdist = crv_pnt.DistanceTo(tp);
+   
+    ON_3dVector fparam2 = crv_pnt - tp;
+    *ft = ON_DotProduct(crv_d1, fparam2);
+    *dft = ON_DotProduct(crv_d2, fparam2) + ON_DotProduct(crv_d1, crv_d1);
+
+    if (*ft < ON_ZERO_TOLERANCE) return 1;
+    return 0;
+}
+
+bool
+ON_NurbsCurve_ClosestPointToLineSegment(
+	double *dist,
+	double *t,
+	const ON_NurbsCurve *nc,
+	const ON_Line &l,
+	double maximum_distance,
+	const ON_Interval *sub_domain
+	)
+{
+    if (!nc) return false;
+
+    ON_Interval domain = (sub_domain) ? *sub_domain : nc->Domain();
+
+    if (nc->IsLinear(TOL2)) {
+	// If the curve is linear, this reduces to an lseg/lseg test and
+	// (optionally depending on what the user has requested) a get closest
+	// point operation to figure out the corresponding t paramater.
+	ON_3dPoint onl1 = l.PointAt(0);
+	ON_3dPoint onl2 = l.PointAt(1);
+	ON_3dPoint onc1 = nc->PointAt(domain.ParameterAt(0));
+	ON_3dPoint onc2 = nc->PointAt(domain.ParameterAt(1));
+	point_t C0, C1, L0, L1;
+	VSET(C0, onc1.x, onc1.y, onc1.z);
+	VSET(C1, onc2.x, onc2.y, onc2.z);
+	VSET(L0, onl1.x, onl1.y, onl1.z);
+	VSET(L1, onl2.x, onl2.y, onl2.z);
+	double ndist;
+	if (t) {
+	    point_t c1i, l1i;
+	    ndist = bg_lseg_lseg_dist(&c1i, &l1i, C0, C1, L0, L1);
+	    double nt;
+	    ON_3dPoint tp(c1i[0], c1i[1], c1i[2]);
+	    if (!ON_NurbsCurve_GetClosestPoint(&nt, nc, tp, maximum_distance, &domain)) {
+		bu_log("ON_NurbsCurve_ClosestPointToLineSegment: linear closest point t param search failed\n");
+		if (dist) {
+		    (*dist) = ndist;
+		}
+		return false;
+	    }
+	    (*t) = nt;
+	} else {
+	    ndist = bg_lseg_lseg_dist(NULL, NULL, C0, C1, L0, L1);
+	}
+	if (dist) {
+	    (*dist) = ndist;
+	}
+
+	if (maximum_distance > 0 && ndist > maximum_distance) return false;
+	return true;
+    }
+
+    size_t init_sample_cnt = nc->CVCount() * nc->Degree();
+    double span = 1.0/(double)(init_sample_cnt);
+
+    // Get an initial sampling of uniform points along the active
+    // curve domain
+    std::vector<ON_3dPoint> pnts;
+    for (size_t i = 0; i <= init_sample_cnt; i++) {
+	double st = domain.ParameterAt(i * span);
+	pnts.push_back(nc->PointAt(st));
+    }
+
+    // Find an initial domain subset based on the breakdown into segments
+    double d1 = domain.Min();
+    double d2 = domain.Max();
+    double vmin = DBL_MAX;
+    for (size_t i = 0; i < pnts.size() - 1; i++) {
+	ON_Line lseg(pnts[i], pnts[i+1]);
+	double lseglen = lseg.MinimumDistanceTo(l);
+	if (lseglen < vmin) {
+	    vmin = lseglen;
+	    d1 = domain.ParameterAt(i*span);
+	    d2 = domain.ParameterAt((i+1)*span);
+	}
+    }
+
+    // Iterate to find the closest point
+    double u = (d1 + d2) * 0.5;
+    struct curve_line_search_args largs;
+    largs.nc = nc;
+    largs.l = &l;
+    double st;
+    int osearch = ON_FindLocalMinimum(curve_line_closest_search_func, &largs, d1, u, d2, ON_EPSILON, 0.5*ON_ZERO_TOLERANCE, 100, &st);
+
+    if (osearch == 1) {
+
+	if (t) {
+	    (*t) = st;
+	}
+	if (dist) {
+	    (*dist) = largs.vdist;
+	}
+
+    } else {
+
+	bu_log("ON_NurbsCurve_ClosestPointToLineSegment: ON_FindLocalMinimum search failed\n");
+	return false;
+
+    }
+
+    if (maximum_distance > 0 && largs.vdist > maximum_distance) return false;
+
+    return true;
+}
+
+
+
+static double
+trim_binary_search(fastf_t *tparam, const ON_BrepTrim *trim, double tstart, double tend, const ON_3dPoint &edge_3d, double tol, int depth, int force)
+{
+    double tcparam = (tstart + tend) / 2.0;
+    ON_3dPoint trim_2d = trim->PointAt(tcparam);
+    const ON_Surface *s = trim->SurfaceOf();
+    ON_3dPoint trim_3d = s->PointAt(trim_2d.x, trim_2d.y);
+    double dist = edge_3d.DistanceTo(trim_3d);
+
+    if (dist > tol && !force) {
+	ON_3dPoint trim_start_2d = trim->PointAt(tstart);
+	ON_3dPoint trim_end_2d = trim->PointAt(tend);
+	ON_3dPoint trim_start_3d = s->PointAt(trim_start_2d.x, trim_start_2d.y);
+	ON_3dPoint trim_end_3d = s->PointAt(trim_end_2d.x, trim_end_2d.y);
+
+	ON_3dVector v1 = edge_3d - trim_start_3d;
+	ON_3dVector v2 = edge_3d - trim_end_3d;
+	double vdot = ON_DotProduct(v1,v2);
+
+	if (vdot < 0 && dist > ON_ZERO_TOLERANCE) {
+	    double tlparam, trparam;
+	    double fldist = trim_binary_search(&tlparam, trim, tstart, tcparam, edge_3d, tol, depth+1, 0);
+	    double frdist = trim_binary_search(&trparam, trim, tcparam, tend, edge_3d, tol, depth+1, 0);
+	    if (fldist >= 0 && frdist < -1) {
+		(*tparam) = tlparam;
+		return fldist;
+	    }
+	    if (frdist >= 0 && fldist < -1) {
+		(*tparam) = trparam;
+		return frdist;
+	    }
+	    if (fldist < -1 && frdist < -1) {
+		fldist = trim_binary_search(&tlparam, trim, tstart, tcparam, edge_3d, tol, depth+1, 1);
+		frdist = trim_binary_search(&trparam, trim, tcparam, tend, edge_3d, tol, depth+1, 1);
+		if ((fldist < frdist) && (fldist < dist)) {
+		    (*tparam) = tlparam;
+		    return fldist;
+		}
+		if ((frdist < fldist) && (frdist < dist)) {
+		    (*tparam) = trparam;
+		    return frdist;
+		}
+		(*tparam) = tcparam;
+		return dist;
+
+	    }
+	} else if (NEAR_ZERO(vdot, ON_ZERO_TOLERANCE)) {
+	    (*tparam) = tcparam;
+	    return dist;
+	} else {
+	    // Not in this span
+	    if (depth == 0) {
+		(*tparam) = tcparam;
+		return dist;
+	    } else {
+		return -2;
+	    }
+	}
+    }
+
+    // close enough - this works
+    (*tparam) = tcparam;
+    return dist;
+}
+
+bool
+ON_TrimCurve_GetClosestPoint(
+	double *t,
+	const ON_BrepTrim *trim,
+	const ON_3dPoint &p,
+	double maximum_distance,
+	const ON_Interval *sub_domain
+	)
+{
+    ON_3dPoint trim_2d;
+    ON_3dPoint trim_3d;
+    if (!t || !trim) {
+	return false;
+    }
+
+    ON_Interval domain = (sub_domain) ? *sub_domain : trim->Domain();
+
+    if (trim->m_type == ON_BrepTrim::singular) {
+	// If the trim is singular, there's only one point to check.
+	if (maximum_distance > 0) {
+	    trim_3d = trim->Brep()->m_V[trim->m_vi[0]].Point();
+	    if (trim_3d.DistanceTo(p) > maximum_distance) {
+		return false;
+	    }
+	}
+	(*t) = domain.ParameterAt(0);
+	return true;
+    }
+
+    double vdist = trim_binary_search(t, trim, domain.ParameterAt(0), domain.ParameterAt(1), p, maximum_distance, 0, 0);
+    if (vdist < 0) {
+	return false;
+    }
+
+    if (maximum_distance > 0 && vdist > maximum_distance) {
+	return false;
+    }
+
+    return true;
+}
+
+
+
+
+
+
 
 
 namespace brlcad {
@@ -215,12 +656,12 @@ CurveTree::CurveTree(const ON_BrepFace* face) :
 		for (int knot_index = 1; knot_index <= knotcnt; knot_index++) {
 		    ON_Interval range(knots[knot_index - 1], knots[knot_index]);
 
-		    if (range.Length() > TOL)
+		    if (range.Length() > BREP_UV_DIST_FUZZ)
 			getHVTangents(trimCurve, range, splitlist);
 		}
 		for (std::list<fastf_t>::const_iterator l = splitlist.begin(); l != splitlist.end(); l++) {
 		    double xmax = *l;
-		    if (!NEAR_EQUAL(xmax, min, TOL)) {
+		    if (!NEAR_EQUAL(xmax, min, BREP_UV_DIST_FUZZ)) {
 			m_root->addChild(subdivideCurve(trimCurve, trim_index, adj_face_index, min, xmax, innerLoop, 0));
 		    }
 		    min = xmax;
@@ -233,7 +674,7 @@ CurveTree::CurveTree(const ON_BrepFace* face) :
 		trimCurve->GetSpanVector(knots);
 		for (int knot_index = 1; knot_index <= knotcnt; knot_index++) {
 		    double xmax = knots[knot_index];
-		    if (!NEAR_EQUAL(xmax, min, TOL)) {
+		    if (!NEAR_EQUAL(xmax, min, BREP_UV_DIST_FUZZ)) {
 			m_root->addChild(subdivideCurve(trimCurve, trim_index, adj_face_index, min, xmax, innerLoop, 0));
 		    }
 		    min = xmax;
@@ -241,7 +682,7 @@ CurveTree::CurveTree(const ON_BrepFace* face) :
 		delete [] knots;
 	    }
 
-	    if (!NEAR_EQUAL(max, min, TOL)) {
+	    if (!NEAR_EQUAL(max, min, BREP_UV_DIST_FUZZ)) {
 		m_root->addChild(subdivideCurve(trimCurve, trim_index, adj_face_index, min, max, innerLoop, 0));
 	    }
 	}
@@ -370,7 +811,7 @@ CurveTree::getLeavesAbove(std::list<const BRNode*>& out_leaves, const ON_Interva
 	const BRNode* br = *i;
 	br->GetBBox(bmin, bmax);
 
-	dist = TOL;//0.03*DIST_PT_PT(bmin, bmax);
+	dist = BREP_UV_DIST_FUZZ;//0.03*DIST_PNT_PNT(bmin, bmax);
 	if (bmax[X]+dist < u[0])
 	    continue;
 	if (bmin[X]-dist < u[1]) {
@@ -410,7 +851,7 @@ CurveTree::getLeavesRight(std::list<const BRNode*>& out_leaves, const ON_Interva
 	const BRNode* br = *i;
 	br->GetBBox(bmin, bmax);
 
-	dist = TOL;//0.03*DIST_PT_PT(bmin, bmax);
+	dist = BREP_UV_DIST_FUZZ;//0.03*DIST_PNT_PNT(bmin, bmax);
 	if (bmax[Y]+dist < v[0])
 	    continue;
 	if (bmin[Y]-dist < v[1]) {
@@ -448,7 +889,7 @@ CurveTree::getHVTangents(const ON_Curve* curve, const ON_Interval& t, std::list<
     double midpoint = (t[1]+t[0])/2.0;
     ON_Interval left(t[0], midpoint);
     ON_Interval right(midpoint, t[1]);
-    int status = ON_Curve_Has_Tangent(curve, t[0], t[1], TOL);
+    int status = ON_Curve_Has_Tangent(curve, t[0], t[1], BREP_UV_DIST_FUZZ);
 
     switch (status) {
 
@@ -463,9 +904,9 @@ CurveTree::getHVTangents(const ON_Curve* curve, const ON_Interval& t, std::list<
 	    return true;
 
 	case 3: /* Horizontal and vertical tangents present - Simple midpoint split */
-	    if (left.Length() > TOL)
+	    if (left.Length() > BREP_UV_DIST_FUZZ)
 		getHVTangents(curve, left, list);
-	    if (right.Length() > TOL)
+	    if (right.Length() > BREP_UV_DIST_FUZZ)
 		getHVTangents(curve, right, list);
 	    return true;
 
@@ -589,8 +1030,8 @@ CurveTree::isLinear(const ON_Curve* curve, double min, double max) const
     point_t a, b;
     VSET(a, u[0], v[0], 0.0);
     VSET(b, u[1], v[1], 0.0);
-    double dd = DIST_PT_PT(a, b);
-    double cd = DIST_PT_PT(pmin, pmax);
+    double dd = DIST_PNT_PNT(a, b);
+    double cd = DIST_PNT_PNT(pmin, pmax);
 
     if (cd > BREP_TRIM_SUB_FACTOR*dd)
 	return false;
@@ -662,7 +1103,6 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthL
     ON_Interval u = surf->Domain(0);
     ON_Interval v = surf->Domain(1);
 
-#ifndef _OLD_SUBDIVISION_
 #ifdef LOOSEN_UV
     min[0] -= within_distance_tol;
     max[0] += within_distance_tol;
@@ -673,7 +1113,6 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthL
 	u.Set(min[0], max[0]);
 	v.Set(min[1], max[1]);
     }
-#endif
 
     double uq = u.Length()*0.25;
     double vq = v.Length()*0.25;
@@ -908,14 +1347,10 @@ SurfaceTree::surfaceBBox(const ON_Surface *localsurf,
 			 double within_distance_tol) const
 {
     point_t min, max, buffer;
-#ifdef _OLD_SUBDIVISION_
-    ON_BoundingBox bbox = localsurf->BoundingBox();
-#else
     ON_BoundingBox bbox = ON_BoundingBox::EmptyBoundingBox;
     if (!surface_GetBoundingBox(localsurf, u, v, bbox, false)) {
 	return NULL;
     }
-#endif
 
     VSETALL(buffer, within_distance_tol);
 
@@ -964,14 +1399,10 @@ SurfaceTree::surfaceBBox(const ON_Surface *localsurf,
 HIDDEN BBNode*
 initialBBox(const CurveTree* ctree, const ON_Surface* surf, const ON_Interval& u, const ON_Interval& v)
 {
-#ifdef _OLD_SUBDIVISION_
-    ON_BoundingBox bb = surf->BoundingBox();
-#else
     ON_BoundingBox bb = ON_BoundingBox::EmptyBoundingBox;
     if (!surface_GetBoundingBox(surf, u, v, bb, false)) {
 	return NULL;
     }
-#endif
     BBNode* node = new BBNode(ctree, bb, u, v, false, false);
     ON_3dPoint estimate;
     ON_3dVector normal;
@@ -1089,21 +1520,15 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
     usplit = u.Mid();
     vsplit = v.Mid();
 
-#ifndef _OLD_SUBDIVISION_
     if (divDepth >= depthLimit) {
 	return surfaceBBox(localsurf, true, frames, u, v, within_distance_tol);
     }
-#endif
 
     // The non-knot case where all criteria are satisfied is the
     // terminating case for the recursion - handle that first
     if (!prev_knot) {
-#ifdef _OLD_SUBDIVISION_
-	localsurf->GetSurfaceSize(&width, &height);
-#else
 	width = u.Length();
 	height = v.Length();
-#endif
 	if (((width/height < ratio) && (width/height > 1.0/ratio) && isFlat(frames) && isStraight(frames))
 	    || (divDepth >= depthLimit)) { //BREP_MAX_FT_DEPTH
 	    return surfaceBBox(localsurf, true, frames, u, v, within_distance_tol);
@@ -1112,30 +1537,6 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 
     // Knots
     if (prev_knot) {
-#ifdef _OLD_SUBDIVISION_
-	int spanu_cnt = localsurf->SpanCount(0);
-	int spanv_cnt = localsurf->SpanCount(1);
-	parent = initialBBox(m_ctree, localsurf, u, v);
-	if (spanu_cnt > 1) {
-	    double *spanu = new double[spanu_cnt+1];
-	    localsurf->GetSpanVector(0, spanu);
-	    do_u_split = 1;
-	    usplit = spanu[(spanu_cnt+1)/2];
-	    delete [] spanu;
-	}
-	if (spanv_cnt > 1) {
-	    double *spanv = new double[spanv_cnt+1];
-	    localsurf->GetSpanVector(1, spanv);
-	    do_v_split = 1;
-	    vsplit = spanv[(spanv_cnt+1)/2];
-	    delete [] spanv;
-	}
-	if (do_u_split && do_v_split) {
-	    do_both_splits = 1;
-	    do_u_split = 0;
-	    do_v_split = 0;
-	}
-#else
 	int dir = 0; // U direction
 	if (hasSplit(localsurf, dir, u, usplit)) {
 	    do_u_split = 1;
@@ -1150,7 +1551,6 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	    }
 	}
 	parent = initialBBox(m_ctree, localsurf, u, v);
-#endif
     }
     // Flatness
     if (!prev_knot) {
@@ -1178,29 +1578,11 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	ON_Interval firstv(v.Min(), vsplit);
 	ON_Interval secondv(vsplit, v.Max());
 
-#ifdef _OLD_SUBDIVISION_
-	ON_Surface *q0surf = NULL;
-	ON_Surface *q1surf = NULL;
-	ON_Surface *q2surf = NULL;
-	ON_Surface *q3surf = NULL;
-
-	bool split = ON_Surface_Quad_Split(localsurf, u, v, usplit, vsplit, &q0surf, &q1surf, &q2surf, &q3surf);
-	/* FIXME: this needs to be handled more gracefully */
-	if (!split) {
-	    delete parent;
-	    return NULL;
-	}
-	q0surf->ClearBoundingBox();
-	q1surf->ClearBoundingBox();
-	q2surf->ClearBoundingBox();
-	q3surf->ClearBoundingBox();
-#else
 	const ON_Surface *q0surf = localsurf;
 	const ON_Surface *q1surf = localsurf;
 	const ON_Surface *q2surf = localsurf;
 	const ON_Surface *q3surf = localsurf;
 
-#endif
 
 	/*********************************************************************
 	 * In order to avoid fairly expensive re-calculation of 3d points at
@@ -1282,36 +1664,24 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	newframes[3] = sharedframes[1];
 	newframes[4] = frames[5];
 	quads[0] = subdivideSurface(q0surf, firstu, firstv, newframes, divDepth+1, depthLimit, prev_knot, within_distance_tol);
-#ifdef _OLD_SUBDIVISION_
-	delete q0surf;
-#endif
 	newframes[0] = sharedframes[0];
 	newframes[1] = frames[1];
 	newframes[2] = sharedframes[3];
 	newframes[3] = frames[4];
 	newframes[4] = frames[7];
 	quads[1] = subdivideSurface(q1surf, secondu, firstv, newframes, divDepth+1, depthLimit, prev_knot, within_distance_tol);
-#ifdef _OLD_SUBDIVISION_
-	delete q1surf;
-#endif
 	newframes[0] = frames[4];
 	newframes[1] = sharedframes[3];
 	newframes[2] = frames[2];
 	newframes[3] = sharedframes[2];
 	newframes[4] = frames[8];
 	quads[2] = subdivideSurface(q2surf, secondu, secondv, newframes, divDepth+1, depthLimit, prev_knot, within_distance_tol);
-#ifdef _OLD_SUBDIVISION_
-	delete q2surf;
-#endif
 	newframes[0] = sharedframes[1];
 	newframes[1] = frames[4];
 	newframes[2] = sharedframes[2];
 	newframes[3] = frames[3];
 	newframes[4] = frames[6];
 	quads[3] = subdivideSurface(q3surf, firstu, secondv, newframes, divDepth+1, depthLimit, prev_knot, within_distance_tol);
-#ifdef _OLD_SUBDIVISION_
-	delete q3surf;
-#endif
 	for (int i = 0; i < 9; i++) newframes[i] = ON_Plane();
 	m_f_queue->push(newframes);
 
@@ -1348,35 +1718,11 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
     }
     //////////////////////////////////////
     if (do_u_split) {
-#ifdef _OLD_SUBDIVISION_
-	bool split;
-#endif
 	ON_Interval firstu(u.Min(), usplit);
 	ON_Interval secondu(usplit, u.Max());
-#ifdef _OLD_SUBDIVISION_
-	ON_Surface *east = NULL;
-	ON_Surface *west = NULL;
 
-	int dir = 0;
-	if (prev_knot) {
-	    split = localsurf->Split(dir, usplit, east, west);
-	} else {
-	    split = localsurf->Split(dir, localsurf->Domain(dir).Mid(), east, west);
-	}
-
-	/* FIXME: this needs to be handled more gracefully */
-	if (!split || !east || !west) {
-	    bu_log("DEBUG: Split failure (split:%d, east:%p, west:%p)\n", split, (void *)east, (void *)west);
-	    delete parent;
-	    return NULL;
-	}
-
-	east->ClearBoundingBox();
-	west->ClearBoundingBox();
-#else
 	const ON_Surface *east = localsurf;
 	const ON_Surface *west = localsurf;
-#endif
 
 	//////////////////////////////////
 	/*********************************************************************
@@ -1478,9 +1824,6 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	    localsurf->FrameAt(u.Mid() - uq, v.Mid(), newframes[4]);
 	    quads[0] = subdivideSurface(east, u.ParameterAt(first), v, newframes, divDepth + 1, depthLimit, prev_knot, within_distance_tol);
 	}
-#ifdef _OLD_SUBDIVISION_
-	delete east;
-#endif
 
 	newframes[0] = sharedframes[0];
 	newframes[1] = frames[1];
@@ -1495,9 +1838,6 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	    localsurf->FrameAt(u.Mid() + uq, v.Mid(), newframes[4]);
 	    quads[1] = subdivideSurface(west, u.ParameterAt(second), v, newframes, divDepth + 1, depthLimit, prev_knot, within_distance_tol);
 	}
-#ifdef _OLD_SUBDIVISION_
-	delete west;
-#endif
 
 	for (int i = 0; i < 9; i++) newframes[i] = ON_Plane();
 	m_f_queue->push(newframes);
@@ -1534,37 +1874,11 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	return parent;
     }
     if (do_v_split || !prev_knot) {
-#ifdef _OLD_SUBDIVISION_
-	bool split;
-#endif
 	ON_Interval firstv(v.Min(), vsplit);
 	ON_Interval secondv(vsplit, v.Max());
 
-#ifdef _OLD_SUBDIVISION_
-	//////////////////////////////////////
-	ON_Surface *north = NULL;
-	ON_Surface *south = NULL;
-
-	int dir = 1;
-	if (prev_knot) {
-	    split = localsurf->Split(dir, vsplit, south, north);
-	} else {
-	    split = localsurf->Split(dir, localsurf->Domain(dir).Mid(), south, north);
-	}
-
-	/* FIXME: this needs to be handled more gracefully */
-	if (!split || !south || !north) {
-	    bu_log("DEBUG: Split failure (split:%d, surf1:%p, surf2:%p)\n", split, (void *)south, (void *)north);
-	    delete parent;
-	    return NULL;
-	}
-
-	south->ClearBoundingBox();
-	north->ClearBoundingBox();
-#else
 	const ON_Surface *north = localsurf;
 	const ON_Surface *south = localsurf;
-#endif
 	//////////////////////////////////
 	/*********************************************************************
 	 * In order to avoid fairly expensive re-calculation of 3d points at
@@ -1647,9 +1961,6 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	    localsurf->FrameAt(u.Mid(), v.Mid() - vq, newframes[4]);
 	    quads[0] = subdivideSurface(south, u, v.ParameterAt(first), newframes, divDepth + 1, depthLimit, prev_knot, within_distance_tol);
 	}
-#ifdef _OLD_SUBDIVISION_
-	delete south;
-#endif
 
 	newframes[0] = sharedframes[0];
 	newframes[1] = sharedframes[1];
@@ -1664,9 +1975,6 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	    localsurf->FrameAt(u.Mid(), v.Mid() + vq, newframes[4]);
 	    quads[1] = subdivideSurface(north, u, v.ParameterAt(second), newframes, divDepth + 1, depthLimit, prev_knot, within_distance_tol);
 	}
-#ifdef _OLD_SUBDIVISION_
-	delete north;
-#endif
 
 	for (int i = 0; i < 9; i++) newframes[i] = ON_Plane();
 	m_f_queue->push(newframes);
@@ -1795,7 +2103,8 @@ gcp_newton_iteration(pt2d_t out_uv, const GCPData& data, pt2d_t grad, pt2d_t in_
 	pt2dsub(out_uv, in_uv, tmp);
 	return true;
     } else {
-	std::cerr << "inverse failed!" << std::endl; // XXX fix the error handling
+	// XXX fix the error handling
+	// std::cerr << "inverse failed!" << std::endl;
 	return false;
     }
 }
@@ -1803,7 +2112,7 @@ gcp_newton_iteration(pt2d_t out_uv, const GCPData& data, pt2d_t grad, pt2d_t in_
 
 bool
 get_closest_point(ON_2dPoint& outpt,
-		  const ON_BrepFace* face,
+		  const ON_BrepFace& face,
 		  const ON_3dPoint& point,
 		  const SurfaceTree* tree,
 		  double tolerance)
@@ -1815,7 +2124,7 @@ get_closest_point(ON_2dPoint& outpt,
     pt2d_t curr_grad = {0.0, 0.0};
     pt2d_t new_uv = {0.0, 0.0};
     GCPData data;
-    data.surf = face->SurfaceOf();
+    data.surf = face.SurfaceOf();
     data.pt = point;
 
     TRACE("get_closest_point: " << PT(point));
@@ -1823,7 +2132,7 @@ get_closest_point(ON_2dPoint& outpt,
     // get initial estimate
     const SurfaceTree* a_tree = tree;
     if (a_tree == NULL) {
-	a_tree = new SurfaceTree(face);
+	a_tree = new SurfaceTree(&face);
 	delete_tree = true;
     }
     ON_Interval u, v;

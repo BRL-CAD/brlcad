@@ -1,7 +1,7 @@
 /*                        F B T H R E A D T E S T. C
  * BRL-CAD
  *
- * Copyright (c) 1986-2018 United States Government as represented by
+ * Copyright (c) 1986-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -93,7 +93,7 @@ static Tcl_ThreadCreateType threadprocprint(ClientData data) {
 }
 
 
-int skipbytes(int fd, off_t num);
+int skipbytes(int fd, b_off_t num);
 
 static unsigned char *scanline;		/* 1 scanline pixel buffer */
 static int scanbytes;		/* # of bytes of scanline */

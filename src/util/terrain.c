@@ -1,7 +1,7 @@
 /*                       T E R R A I N . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -675,7 +675,7 @@ main(int ac, char *av[])
     int arg_count;
     unsigned short *buf;
     int in_cookie, out_cookie;
-    int count;
+    size_t count;
     size_t ret;
 
     /* function to call to generate the terrain.  Default noise pattern is fbm */

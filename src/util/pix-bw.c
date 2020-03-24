@@ -1,7 +1,7 @@
 /*                        P I X - B W . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2018 United States Government as represented by
+ * Copyright (c) 1986-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -41,6 +41,7 @@
 #include "bu/str.h"
 #include "bu/log.h"
 #include "bu/mime.h"
+#include "bu/file.h"
 #include "icv.h"
 
 
@@ -136,6 +137,8 @@ get_args(int argc, char **argv)
     } else {
 	in_file = argv[bu_optind];
 	bu_optind++;
+	if (!in_file || !bu_file_exists(in_file, NULL))
+	    return 0;
 	return 1;
     }
 

@@ -1,7 +1,7 @@
 /*                       I F _ W G L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -418,7 +418,7 @@ MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
 	case WM_MBUTTONDOWN:
 	    break;
 	case WM_CLOSE:
-	    WGL(saveifp)->alive = -1;
+	    WGL(saveifp)->alive = 0;
 	    break;
 	case WM_LBUTTONUP:
 	    WGL(saveifp)->alive = 0;

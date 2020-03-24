@@ -1,7 +1,7 @@
 /*                     S T E P - G . C P P
  * BRL-CAD
  *
- * Copyright (c) 1994-2018 United States Government as represented by
+ * Copyright (c) 1994-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -59,7 +59,7 @@ struct OutputFile {
 };
 
 static int
-parse_opt_O(struct bu_vls *error_msg, int argc, const char **argv, void *set_var)
+parse_opt_O(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
 {
     int ret;
     OutputFile *ofile = (OutputFile *)set_var;

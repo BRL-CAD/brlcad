@@ -1,7 +1,7 @@
 /*                  C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -495,7 +495,7 @@ comb_decimate(struct ged *gedp, struct directory *dp)
 	bot = (struct rt_bot_internal *)intern.idb_ptr;
 	RT_BOT_CK_MAGIC(bot);
 	ged_get_obj_bounds(gedp, 1, (const char **)&bot_dp->d_namep, 0, obj_min, obj_max);
-	bbox_diag = DIST_PT_PT(obj_min, obj_max);
+	bbox_diag = DIST_PNT_PNT(obj_min, obj_max);
 
 	/* Get avg thickness from raytracer */
 	if (analyze_obj_to_pnts(NULL, &avg_thickness, dbip, bot_dp->d_namep, &btol, ANALYZE_OBJ_TO_PNTS_RAND, 100000, 5, 0)) {

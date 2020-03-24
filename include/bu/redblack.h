@@ -1,7 +1,7 @@
 /*                      R E D B L A C K . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -89,9 +89,9 @@ struct bu_rb_list
 #define rbl_package rbl_u.rbl_p
 #define BU_RB_LIST_NULL ((struct bu_rb_list *) 0)
 #define BU_RB_LIST_INIT(_l, _m) { \
-    (_l).size = (_l).capacity = 0; \
-    (_l)._m = NULL; \
-}
+	(_l).size = (_l).capacity = 0; \
+	(_l)._m = NULL; \
+    }
 
 #define BU_RB_LIST_INIT_CAPACITY 4
 

@@ -1,7 +1,7 @@
 /*                      S H _ G A U S S . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2018 United States Government as represented by
+ * Copyright (c) 1998-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -197,7 +197,7 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 		    bu_log("Non-ellipse \"union\" primitive of \"%s\" being ignored\n",
 			   tb->name);
 
-		if (rdebug&RDEBUG_SHADE)
+		if (optical_debug&OPTICAL_DEBUG_SHADE)
 		    bu_log(" got a primitive type %ld \"%s\".  This primitive ain't no ellipse bucko!\n",
 			   sol_id, OBJ[sol_id].ft_name);
 
@@ -207,14 +207,14 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 
 	    ell_p = (struct rt_ell_internal *)dbint->ip.idb_ptr;
 
-	    if (rdebug&RDEBUG_SHADE)
+	    if (optical_debug&OPTICAL_DEBUG_SHADE)
 		bu_log(" got a primitive type %ld \"%s\"\n",
 		       sol_id,
 		       OBJ[sol_id].ft_name);
 
 	    RT_ELL_CK_MAGIC(ell_p);
 
-	    if (rdebug&RDEBUG_SHADE) {
+	    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 		VPRINT("point", ell_p->v);
 		VPRINT("a", ell_p->a);
 		VPRINT("b", ell_p->b);
@@ -248,7 +248,7 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
 		 MAGNITUDE(ell_p->c) / tb->gs->gauss_sigma);
 
 
-	    if (rdebug&RDEBUG_SHADE) {
+	    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 		VPRINT("sigma", dbint->one_sigma);
 	    }
 	    BU_LIST_APPEND(tb->l, &(dbint->l));
@@ -308,7 +308,7 @@ gauss_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, cons
     RT_CK_REGION(rp);
 
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_log("gauss_setup(%s)\n", rp->reg_name);
 
     if (! rtip->useair)
@@ -348,7 +348,7 @@ gauss_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, cons
      * computation in the space defined by this ellipsoid.
      */
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	bu_struct_print(" Parameters:", gauss_print_tab, (char *)gauss_sp);
 	bn_mat_print("m_to_sh", gauss_sp->gauss_m_to_sh);
     }
@@ -409,7 +409,7 @@ gauss_eval(fastf_t *pt, fastf_t *ell_center, fastf_t *sigma)
 
     val = exp(-0.5 * term2);
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_log("pt(%g %g %g) term2:%g val:%g\n",
 	       V3ARGS(pt), term2, val);
 
@@ -446,7 +446,7 @@ eval_seg(struct application *ap, struct reg_db_internals *dbint, struct seg *seg
     step_dist = span / (double)steps;
 
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	bu_log("Evaluating Segment:\n");
 	bu_log("dist_in:%g dist_out:%g span:%g step_dist:%g steps:%d\n",
 	       seg_p->seg_in.hit_dist,
@@ -487,7 +487,7 @@ gauss_render(struct application *ap, const struct partition *pp, struct shadewor
     RT_CHECK_PT(pp);
     CK_gauss_SP(gauss_sp);
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	bu_struct_print("gauss_render Parameters:", gauss_print_tab, (char *)gauss_sp);
 
 	bu_log("r_pt(%g %g %g) r_dir(%g %g %g)\n",
@@ -502,7 +502,7 @@ gauss_render(struct application *ap, const struct partition *pp, struct shadewor
     /* look at each segment that participated in the ray partition(s) */
     for (BU_LIST_FOR(seg_p, seg, &swp->sw_segs->l)) {
 
-	if (rdebug&RDEBUG_SHADE) {
+	if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	    bu_log("seg %g -> %g\n",
 		   seg_p->seg_in.hit_dist,
 		   seg_p->seg_out.hit_dist);
@@ -531,13 +531,13 @@ gauss_render(struct application *ap, const struct partition *pp, struct shadewor
 		}
 	    }
 	} else {
-	    if (rdebug&RDEBUG_SHADE)
+	    if (optical_debug&OPTICAL_DEBUG_SHADE)
 		bu_log("gauss_render() bittest failed\n");
 	}
     }
 
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_log("Optical Density %g\n", optical_density);
 
     /* get the path length right */

@@ -1,7 +1,7 @@
 /*                           V L S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -55,7 +55,7 @@ static const unsigned int VLS_ALLOC_MIN = 32;
 static const size_t VLS_ALLOC_STEP = 128;
 
 /* minimum vls buffer allocation size */
-static const unsigned int VLS_ALLOC_READ = 4096;
+static const unsigned int VLS_ALLOC_READ = BU_PAGE_SIZE;
 
 void
 bu_vls_init(struct bu_vls *vp)
@@ -214,14 +214,14 @@ bu_vls_trunc(struct bu_vls *vp, int len)
 	vp->vls_offset = 0;
 
     if (vp->vls_str)
-       	vp->vls_str[len+vp->vls_offset] = '\0'; /* force null termination */
+	vp->vls_str[len+vp->vls_offset] = '\0'; /* force null termination */
 
     vp->vls_len = len;
 }
 
 
 void
-bu_vls_nibble(struct bu_vls *vp, off_t len)
+bu_vls_nibble(struct bu_vls *vp, b_off_t len)
 {
     BU_CK_VLS(vp);
 
@@ -674,7 +674,7 @@ bu_vls_gets(struct bu_vls *vp, FILE *fp)
     if (endlen < startlen)
 	return -1;
 
-    return endlen;
+    return (int)endlen;
 }
 
 void
@@ -897,7 +897,8 @@ bu_vls_simplify(struct bu_vls *vp, const char *keep, const char *de_dup, const c
 	ccnt = 0;
 	c = (unsigned char *)&(bu_vls_addr(&tmpstr)[(strlen(bu_vls_addr(&tmpstr)) - 1)]);
 	while (*c && vls_char_in_set((const char *)c, trim)) {ccnt++; c--;}
-	if (ccnt) bu_vls_trunc(&tmpstr, bu_vls_strlen(&tmpstr) - ccnt);
+	if (ccnt)
+	    bu_vls_trunc(&tmpstr, (int)(bu_vls_strlen(&tmpstr) - ccnt));
     }
 
     ret = (!bu_vls_strcmp(&tmpstr, vp)) ? 0 : 1;
@@ -913,7 +914,7 @@ vls_incr_next(struct bu_vls *next_incr, const char *incr_state, const char *inc_
     int i = 0;
     long ret = 0;
     /*char bsep = '\0';
-    char esep = '\0';*/
+      char esep = '\0';*/
     long vals[4] = {0}; /* 0 = width, 1 = min/init, 2 = max, 3 = increment */
     long state_val = 0;
     const char *wstr = inc_specifier;
@@ -991,8 +992,8 @@ int
 bu_vls_incr(struct bu_vls *name, const char *regex_str, const char *incr_spec, bu_vls_uniq_t ut, void *data)
 {
     int ret = 0;
-    int i = 0;
-    int j = 0;
+    size_t i = 0;
+    size_t j = 0;
     int offset = 0;
     regmatch_t *incr_substrs;
     regmatch_t *num_substrs;
@@ -1034,9 +1035,11 @@ bu_vls_incr(struct bu_vls *name, const char *regex_str, const char *incr_spec, b
 	    regfree(&compiled_regex);
 	}
 	i = bu_vls_strlen(name);
-	while(incr_substrs[i].rm_so == -1 || incr_substrs[i].rm_eo == -1) i--;
+	while(incr_substrs[i].rm_so == -1 || incr_substrs[i].rm_eo == -1)
+	    i--;
 
-	if (i != 1) return -1;
+	if (i != 1)
+	    return -1;
 
 	/* Now we know where the incrementer is - process, find the number, and assemble the new string */
 	bu_vls_trunc(&new_name, 0);

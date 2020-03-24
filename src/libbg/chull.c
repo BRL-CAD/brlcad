@@ -1,7 +1,7 @@
 /*                       C H U L L . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2018 United States Government as represented by
+ * Copyright (c) 2013-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Copyright 2001 softSurfer, 2012 Dan Sunday
@@ -74,7 +74,7 @@ bg_polyline_2d_chull(point2d_t** hull, const point2d_t* polyline, int n)
 	/* test if next vertex is inside the deque hull */
 	if ((isLeft(D[bot], D[bot+1], polyline[i]) > 0) &&
 	    (isLeft(D[top-1], D[top], polyline[i]) > 0) )
-		 continue;         /* skip an interior vertex */
+	    continue;         /* skip an interior vertex */
 
 	/* incrementally add an exterior vertex to the deque hull
 	   get the rightmost tangent at the deque bot */

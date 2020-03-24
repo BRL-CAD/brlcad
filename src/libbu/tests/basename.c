@@ -1,7 +1,7 @@
 /*                     B A S E N A M E . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2018 United States Government as represented by
+ * Copyright (c) 2011-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,13 +39,13 @@
 char *
 get_system_output(const char *input)
 {
-	char *in = input ? bu_strdup(input) : NULL;
-	char *out = bu_strdup(basename(in));
+    char *in = input ? bu_strdup(input) : NULL;
+    char *out = bu_strdup(basename(in));
 
-	if (in) {
-		bu_free(in, "input copy");
-	}
-	return out;
+    if (in) {
+	bu_free(in, "input copy");
+    }
+    return out;
 }
 #endif
 
@@ -53,38 +53,38 @@ get_system_output(const char *input)
 char *
 get_system_output(const char *input)
 {
-	char fname[_MAX_FNAME];
-	char dir[_MAX_DIR];
-	char *base = NULL;
-	if (input && !strlen(input) == 0) {
-		char *in = bu_strdup(input);
-		if (!strchr(in, '/') && !strchr(in, '\\')) return in;
-		if (BU_STR_EQUAL(in, "/")) {
-			base = bu_strdup("/");
-			bu_free(in, "input copy");
-			return base;
-		}
-		_splitpath(in, NULL, dir, fname, NULL);
-		if (strlen(dir) != strlen(in) && strlen(fname) == 0 && in[strlen(in) - 1] == '.') {
-			base = bu_strdup(&(in[strlen(in) - 1]));
-			bu_free(in, "input copy");
-			return base;
-		}
-		while (strlen(dir) > 1 && strlen(fname) == 0) {
-			in[strlen(in) - 1] = '\0';
-			_splitpath(in, NULL, dir, fname, NULL);
-		}
-		if (strlen(fname) > 0) {
-			base = bu_strdup(fname);
-		} else {
-			if (in[strlen(in) - 1] == '/') {
-				base = bu_strdup("/");
-			}
-		}
-		bu_free(in, "input copy");
-	} else {
-		base = bu_strdup(".");
+    char fname[_MAX_FNAME];
+    char dir[_MAX_DIR];
+    char *base = NULL;
+    if (input && !strlen(input) == 0) {
+	char *in = bu_strdup(input);
+	if (!strchr(in, '/') && !strchr(in, '\\')) return in;
+	if (BU_STR_EQUAL(in, "/")) {
+	    base = bu_strdup("/");
+	    bu_free(in, "input copy");
+	    return base;
 	}
+	_splitpath(in, NULL, dir, fname, NULL);
+	if (strlen(dir) != strlen(in) && strlen(fname) == 0 && in[strlen(in) - 1] == '.') {
+	    base = bu_strdup(&(in[strlen(in) - 1]));
+	    bu_free(in, "input copy");
+	    return base;
+	}
+	while (strlen(dir) > 1 && strlen(fname) == 0) {
+	    in[strlen(in) - 1] = '\0';
+	    _splitpath(in, NULL, dir, fname, NULL);
+	}
+	if (strlen(fname) > 0) {
+	    base = bu_strdup(fname);
+	} else {
+	    if (in[strlen(in) - 1] == '/') {
+		base = bu_strdup("/");
+	    }
+	}
+	bu_free(in, "input copy");
+    } else {
+	base = bu_strdup(".");
+    }
     return base;
 }
 #endif
@@ -103,11 +103,11 @@ get_bu_output(const char *input)
     return output;
 }
 
+#if defined(HAVE_BASENAME) || defined(HAVE__SPLITPATH)
 void
 compare_bu_to_system_basename(const char *input)
 {
-#if defined(HAVE_BASENAME) || defined(HAVE__SPLITPATH)
-    char *sys_out = get_system_output(input);
+   char *sys_out = get_system_output(input);
     char *bu_out = get_bu_output(input);
 
     if (BU_STR_EQUAL(sys_out, bu_out)) {
@@ -121,6 +121,9 @@ compare_bu_to_system_basename(const char *input)
 	bu_exit(EXIT_FAILURE, "compare_bu_to_system_basename failed");
     }
 #else
+void
+compare_bu_to_system_basename(const char *UNUSED(input))
+{
     bu_exit(EXIT_FAILURE, "BASENAME not available on this platform\n");
 #endif
 }
@@ -136,8 +139,8 @@ main(int argc, char *argv[])
 
     /* If we have something, print it and test it */
     if (argc > 1) {
-       bu_log("Testing string \"%s\"\n", argv[1]);
-       compare_bu_to_system_basename(argv[1]);
+	bu_log("Testing string \"%s\"\n", argv[1]);
+	compare_bu_to_system_basename(argv[1]);
     }
 
     return 0;

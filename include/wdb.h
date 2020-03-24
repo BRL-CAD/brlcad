@@ -1,7 +1,7 @@
 /*                           W D B . H
  * BRL-CAD
  *
- * Copyright (c) 1988-2018 United States Government as represented by
+ * Copyright (c) 1988-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -347,6 +347,10 @@ WDB_EXPORT extern int mk_ars(struct rt_wdb *fp, const char *name, size_t ncurves
 WDB_EXPORT extern int mk_constraint(struct rt_wdb *wdbp, const char *name, const char *expr);
 
 
+/* FIXME: are the variable-sized types actually necessary?  should be
+ * able to rely on stdint types.  the file+nonfile duplication seems
+ * silly too.
+ */
 typedef enum {
     WDB_BINUNIF_FLOAT,
     WDB_BINUNIF_DOUBLE,
@@ -466,6 +470,44 @@ WDB_EXPORT int mk_bot_w_normals(
     );
 
 /**
+ * Create a BOT (Bag O'Triangles) solid with face normals and uv texture coordinates
+ */
+WDB_EXPORT int mk_bot_w_normals_and_uvs(
+    struct rt_wdb *fp,			/**< database file pointer to write to */
+    const char *name,			/**< name of bot object to write out */
+    unsigned char	mode,		/**< bot mode */
+    unsigned char	orientation,	/**< bot orientation */
+    unsigned char	flags,		/**< additional bot flags */
+    size_t		num_vertices,	/**< number of bot vertices */
+    size_t		num_faces,	/**< number of bot faces */
+    const fastf_t		*vertices,	/**< array of floats for vertices [num_vertices*3] */
+    const int			*faces,		/**< array of ints for faces [num_faces*3] */
+    const fastf_t		*thickness,	/**< array of plate mode
+						 * thicknesses (corresponds to
+						 * array of faces) NULL for
+						 * modes RT_BOT_SURFACE and
+						 * RT_BOT_SOLID.
+						 */
+    struct bu_bitv	*face_mode,	/**< a flag for each face
+					 * indicating thickness is
+					 * appended to hit point,
+					 * otherwise thickness is
+					 * centered about hit point
+					 */
+    size_t		num_normals,	/**< number of unit normals in normals array */
+    fastf_t		*normals,	/**< array of floats for normals [num_normals*3] */
+    int			*face_normals,	/**< array of ints (indices
+					 * into normals array), must
+					 * have 3*num_faces entries
+					 */
+    size_t num_uvs, /* number of uv texture coordinates in uvs array */
+    fastf_t *uvs,   /* array of floats for uv texture coordinates [num_uvs*3] */
+    int *face_uvs   /* array of ints (indices into uvs array),
+		     * must have 3*num_faces entries
+		     */
+    );
+
+/**
  * Create a brep in the geometry file.  vbrep must be a void cast pointer to
  * an ON_Brep shape.
  */
@@ -574,7 +616,7 @@ WDB_EXPORT void mk_pipe_free(struct bu_list *headp);
 /**
  * Add another pipe segment to the linked list of pipe segments.
  */
-WDB_EXPORT void mk_add_pipe_pt(
+WDB_EXPORT void mk_add_pipe_pnt(
     struct bu_list *headp,
     const point_t coord,
     double od,

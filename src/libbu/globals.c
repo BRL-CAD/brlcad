@@ -1,7 +1,7 @@
 /*                       G L O B A L S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -92,7 +92,7 @@ int bu_setjmp_valid[MAX_PSW] = {0};
 jmp_buf bu_jmpbuf[MAX_PSW];
 
 /* externed in bu/ headers */
-int bu_debug = 0;
+unsigned int bu_debug = 0;
 int bu_opterr = 1;
 int bu_optind = 1;
 int bu_optopt = 0;

@@ -1,7 +1,7 @@
 /*                            F B . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -190,8 +190,8 @@ FB_EXPORT extern int fb_scursor(fb *ifp, int mode, int x, int y);
  * Copy one RGB pixel to another.
  */
 #define COPYRGB(to, from) { (to)[RED]=(from)[RED];\
-			   (to)[GRN]=(from)[GRN];\
-			   (to)[BLU]=(from)[BLU]; }
+	(to)[GRN]=(from)[GRN];\
+	(to)[BLU]=(from)[BLU]; }
 
 /* Debug Bitvector Definition */
 #define FB_DEBUG_BIO 1	/* Buffered io calls (less r/wpixel) */

@@ -1,7 +1,7 @@
 /*                  P I C K E T _ F E N C E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,10 +43,10 @@ main(int argc, char *argv[])
     long i, j, k, l;
     struct rt_wdb *fp_db = NULL;
 
-    char name[256] = {0};
-    char pname[256] = {0};
-    char w1name[256] = {0};
-    char w2name[256] = {0};
+    char name[264] = {0};
+    char pname[261] = {0};
+    char w1name[266] = {0};
+    char w2name[266] = {0};
     char firstname[256] = {0};
     char prefix[256] = {0};
 

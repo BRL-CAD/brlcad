@@ -1,7 +1,7 @@
 /*                         T O R I I . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -161,7 +161,7 @@ main(int ac, char *av[])
 
     char fileName[512];
     struct rt_wdb *db_fp;
-    char scratch[512];
+    char scratch[518];
     int levels=2;
     int direction=4;
     point_t initialPosition = {0.0, 0.0, 0.0};
@@ -191,7 +191,7 @@ main(int ac, char *av[])
     }
 
     /* create the database header record */
-    snprintf(scratch, 512, "%s Torii", fileName);
+    snprintf(scratch, sizeof(scratch), "%s Torii", fileName);
     mk_id(db_fp, scratch);
 
     /* init the levels array */

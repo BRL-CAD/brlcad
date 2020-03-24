@@ -3,6 +3,7 @@
 
 set(bu_test_srcs
   b64.c
+  backtrace.c
   badmagic.c
   basename.c
   bitv.c
@@ -13,17 +14,20 @@ set(bu_test_srcs
   dirname.c
   encode.c
   escape.c
+  file.c
   file_mime.c
   heap.c
   hook.c
   humanize_number.c
   vls_incr.c
   vls_simplify.c
+  mappedfile.c
   opt.c
   parallel.c
   path_component.c
+  process.c
   ptbl.c
-  redblack.c
+  realpath.c
   semaphore.c
   sort.c
   str.c
@@ -32,6 +36,7 @@ set(bu_test_srcs
   vls.c
   vls_vprintf.c
   )
+#  file_glob.c
 
 # Generate and assemble the necessary per-test-type source code
 set(BU_TEST_SRC_INCLUDES)
@@ -107,14 +112,17 @@ add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_dir_core     COMMAND bu_te
 add_test(NAME bu_path_component_c_sl_usr_sl_dir_sl_file_dir_core   COMMAND bu_test path_component "C:/usr/dir/file.ext" "C:/usr/dir/file" 1)
 
 
-################################
-#      bu_file_mime testing    #
-################################
+#############################
+#      bu_file_* testing    #
+#############################
+add_test(NAME bu_file  COMMAND bu_test file) # tests bu/file.h API
 
 # NOTE: these test numbers correspond with the bu_mime_t enum values in include/bu/mime.h
 add_test(NAME bu_file_mime_dxf   COMMAND bu_test file_mime dxf 5 1) # tests dxf extension in model context
 add_test(NAME bu_file_mime_stp   COMMAND bu_test file_mime stp 5 7) # tests stp extension in model context
 add_test(NAME bu_file_mime_png   COMMAND bu_test file_mime png 3 13) # tests png extension in image context
+
+#add_test(NAME bu_file_glob   COMMAND bu_test file_glob) # runs a series of built-in unit tests
 
 #
 #  ************ bitv.c tests *************
@@ -242,6 +250,7 @@ add_test(NAME bu_heap_1 COMMAND bu_test heap)
 #      bu_progname testing    #
 ###############################
 BRLCAD_ADDEXEC(bu_progname progname.c libbu TEST)
+add_dependencies(bu_test bu_progname)
 add_test(NAME bu_progname_tests COMMAND bu_progname)
 
 #
@@ -262,12 +271,6 @@ endforeach()
 # approach - the tests below all test both bu_b64_encode and bu_b64_decode.
 add_test(NAME "bu_b64_test" COMMAND bu_test b64)
 
-
-#
-#  ************ rb_*.c tests *************
-#
-add_test(NAME bu_redblack_test COMMAND bu_test redblack)
-
 #
 #  ************ bu_semaphore.c tests *************
 #
@@ -280,6 +283,9 @@ add_test(NAME bu_semaphore_P3 COMMAND bu_test semaphore -P3)
 #  ************ bu_parallel.c tests *************
 #
 add_test(NAME bu_parallel_test COMMAND bu_test parallel)
+
+# TODO - add a parallel test for the static version of the library,
+# maybe using bu_getiwd
 
 #
 #  ************ vls_vprintf.c tests *************
@@ -516,6 +522,7 @@ add_test(NAME bu_vls_incr_15 COMMAND bu_test vls_incr "test"         0 "NULL"   
 add_test(NAME bu_vls_incr_16 COMMAND bu_test vls_incr "test"         0 "0:0:0:0:-"   1  "test-1")
 
 BRLCAD_ADDEXEC(bu_vls_incr_uniq vls_incr_uniq.cpp libbu TEST)
+add_dependencies(bu_test bu_vls_incr_uniq)
 add_test(NAME bu_vls_incr_uniq_1  COMMAND bu_vls_incr_uniq  "test.r1" "test.r3")
 add_test(NAME bu_vls_incr_uniq_2  COMMAND bu_vls_incr_uniq  "test.r2" "test.r3")
 
@@ -579,6 +586,9 @@ add_test(NAME bu_opt_1_b_04  COMMAND bu_test opt 1 b 4)
 # String option testing
 add_test(NAME bu_opt_1_s_01  COMMAND bu_test opt 1 s 1)
 add_test(NAME bu_opt_1_s_02  COMMAND bu_test opt 1 s 2)
+add_test(NAME bu_opt_1_s_03  COMMAND bu_test opt 1 s 3)
+add_test(NAME bu_opt_1_s_04  COMMAND bu_test opt 1 s 4)
+add_test(NAME bu_opt_1_s_05  COMMAND bu_test opt 1 s 5)
 
 # Integer option testing
 add_test(NAME bu_opt_1_i_01  COMMAND bu_test opt 1 i 1)
@@ -630,7 +640,7 @@ add_test(NAME bu_opt_3_vect_04  COMMAND bu_test opt 3 V 4)
 #  *********** datetime.c tests ************
 #
 
-foreach(num RANGE 0 10)
+foreach(num RANGE 0 11)
   add_test(NAME "bu_datetime${num}" COMMAND bu_test datetime "${num}")
 endforeach()
 
@@ -638,6 +648,7 @@ endforeach()
 #  *********** hash.c tests ************
 #
 BRLCAD_ADDEXEC(bu_hash hash.cpp libbu TEST)
+add_dependencies(bu_test bu_hash)
 add_test(NAME bu_hash_noop         COMMAND bu_hash 0)
 add_test(NAME bu_hash_one_entry    COMMAND bu_hash 1)
 add_test(NAME bu_hash_lorem_ipsum  COMMAND bu_hash 2)
@@ -667,7 +678,6 @@ add_test(NAME bu_ptbl_init_0 COMMAND bu_test ptbl init 0)
 add_test(NAME bu_ptbl_init_10000 COMMAND bu_test ptbl init 10000)
 
 add_test(NAME bu_ptbl_reset COMMAND bu_test ptbl reset)
-add_test(NAME bu_ptbl_zero COMMAND bu_test ptbl zero)
 
 add_test(NAME bu_ptbl_ins COMMAND bu_test ptbl ins)
 add_test(NAME bu_ptbl_ins_uniq COMMAND bu_test ptbl ins uniq)
@@ -688,6 +698,41 @@ add_test(NAME bu_ptbl_trunc COMMAND bu_test ptbl trunc)
 add_test(NAME bu_hook_basic COMMAND bu_test hook basic)
 add_test(NAME bu_hook_multiadd COMMAND bu_test hook multiadd)
 add_test(NAME bu_hook_saverestore COMMAND bu_test hook saverestore)
+
+#
+#  *********** process.c tests ************
+#
+
+# Make a binary to launch as a subprocess, and add it as
+# dependency of bu_test to make sure it is present when
+# bu_test runs its process tests
+BRLCAD_ADDEXEC(bu_subprocess subprocess.cpp libbu TEST)
+add_dependencies(bu_test bu_subprocess)
+add_test(NAME bu_process_basic COMMAND bu_test process "$<TARGET_FILE:bu_subprocess>" basic)
+add_test(NAME bu_process_abort COMMAND bu_test process "$<TARGET_FILE:bu_subprocess>" abort)
+
+#  *********** mappedfile.c tests ************
+add_test(NAME bu_mappedfile_serial_1 COMMAND bu_test mappedfile 1 1)
+add_test(NAME bu_mappedfile_parallel_1 COMMAND bu_test mappedfile 2 1)
+add_test(NAME bu_mappedfile_serial_16 COMMAND bu_test mappedfile 1 16)
+add_test(NAME bu_mappedfile_parallel_16 COMMAND bu_test mappedfile 2 16)
+add_test(NAME bu_mappedfile_serial_128 COMMAND bu_test mappedfile 1 128)
+add_test(NAME bu_mappedfile_parallel_128 COMMAND bu_test mappedfile 2 128)
+add_test(NAME bu_mappedfile_serial_1024 COMMAND bu_test mappedfile 1 1024)
+add_test(NAME bu_mappedfile_parallel_1024 COMMAND bu_test mappedfile 2 1024)
+add_test(NAME bu_mappedfile_serial_2048 COMMAND bu_test mappedfile 1 2048)
+add_test(NAME bu_mappedfile_parallel_2048 COMMAND bu_test mappedfile 2 2048)
+add_test(NAME bu_mappedfile_serial_16384 COMMAND bu_test mappedfile 1 16384)
+add_test(NAME bu_mappedfile_parallel_16384 COMMAND bu_test mappedfile 2 16384)
+add_test(NAME bu_mappedfile_repeat_serial_10 COMMAND bu_test mappedfile 3 10)
+add_test(NAME bu_mappedfile_repeat_parallel_10 COMMAND bu_test mappedfile 4 10)
+#add_test(NAME bu_mappedfile_parallel_free COMMAND bu_test mappedfile 5)
+
+#
+#  *********** realpath.c tests ************
+#
+add_test(NAME bu_file_realpath_1 COMMAND bu_test realpath 1)
+add_test(NAME bu_file_realpath_2 COMMAND bu_test realpath 2)
 
 CMAKEFILES(
   tests_bitv.cmake

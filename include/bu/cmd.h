@@ -1,7 +1,7 @@
 /*                          C M D . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2018 United States Government as represented by
+ * Copyright (c) 1993-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -82,8 +82,18 @@ __BEGIN_DECLS
 /**
  * This function is intended to be used for parsing subcommands.  If
  * the command is found in the array of commands, the associated
- * function is called. Otherwise, an error message is created and
- * added to interp.
+ * function is called. Otherwise, an error message is printed along
+ * with a list of available commands.  This behavior can be suppressed
+ * by registering a bu_log() callback.
+ *
+ * @code
+ * struct bu_hook_list saved_hooks = BU_HOOK_LIST_INIT_ZERO;
+ * bu_log_hook_save_all(&saved_hooks);
+ * bu_log_hook_delete_all();
+ * bu_log_add_hook(NULL, NULL); // disables logging
+ * bu_cmd(...);
+ * bu_log_hook_restore_all(&saved_hooks);
+ * @endcode
  *
  * @param cmds		- commands and related function pointers
  * @param argc		- number of arguments in argv
@@ -95,6 +105,10 @@ __BEGIN_DECLS
  * @return BRLCAD_OK if command was found, otherwise, BRLCAD_ERROR.
  */
 BU_EXPORT extern int bu_cmd(const struct bu_cmdtab *cmds, int argc, const char *argv[], int cmd_index, void *data, int *result);
+
+/**
+ * Returns BRLCAD_OK if cmdname defines a command in the cmds table, and BRLCAD_ERROR otherwise */
+BU_EXPORT extern int bu_cmd_valid(const struct bu_cmdtab *cmds, const char *cmdname);
 
 /** @brief Routines for maintaining a command history */
 

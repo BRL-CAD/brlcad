@@ -1,7 +1,7 @@
 /*                C H E C K _ E X P _ A I R . C
  * BRL-CAD
  *
- * Copyright (c) 2018 United States Government as represented by
+ * Copyright (c) 2018-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,13 +41,13 @@ exposed_air(const struct partition *pp,
 {
     struct exp_air_context *context = (struct exp_air_context*) callback_data;
     /* this shouldn't be air */
-    bu_semaphore_acquire(GED_SEM_LIST);
+    bu_semaphore_acquire(BU_SEM_GENERAL);
     add_to_list(context->exposedAirList,
 		pp->pt_regionp->reg_name,
 		(char *)NULL,
 		pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist,
 		last_out_point);
-    bu_semaphore_release(GED_SEM_LIST);
+    bu_semaphore_release(BU_SEM_GENERAL);
 
     if (context->plot_exp_air) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);

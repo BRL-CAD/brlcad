@@ -1,7 +1,7 @@
 /*                        C H U L L . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,7 +24,7 @@
 /** @{ */
 
 /**
- *  @brief Routines for the computation of convex hulls in 2D and 3D
+ *  @brief Routines for the computation of convex and concave hulls in 2D and 3D
  */
 
 #ifndef BG_CHULL_H
@@ -52,6 +52,27 @@ __BEGIN_DECLS
  */
 BG_EXPORT int bg_polyline_2d_chull(point2d_t** hull, const point2d_t* polyline, int n);
 
+BG_EXPORT int bg_polyline_2d_chull2(int** hull, const int *polyline, int n, const point2d_t* pnts);
+
+
+/**
+ * @brief
+ * Return an array that contains just the set of 2D points active in the polyline.
+ *
+ * @param[out] opoly array containing just the active points in the polyline.
+ * @param[in] n number of points in polyline
+ * @param[in] polyline indices of polyline points in pnts array
+ * @param[in] pnts array that holds the points defining the polyline
+ *
+ * The output array will store the points in polyline order, avoiding the need
+ * for an explicit index array of point positions to define the polyline.
+ *
+ * @return number of points in opoly if calculation was successful
+ * @return -1 if error
+ */
+BG_EXPORT extern int bg_2d_polyline_gc(point2d_t **opoly, int n, int *polyline, const point2d_t *pnts);
+
+
 /**
  * @brief
  * Find 2D convex hull for unordered co-planar point sets
@@ -69,15 +90,15 @@ BG_EXPORT int bg_polyline_2d_chull(point2d_t** hull, const point2d_t* polyline, 
  * defining a simple polyline and use Melkman's algorithm for the
  * hull building.
  *
- * The input point array currently uses type point_t, but all Z
- * values should be zero.
- *
  * @param[out]	hull 2D convex hull array vertices in ccw orientation (max is n)
  * @param	points_2d The input 2d points for which a convex hull will be built
  * @param	n the number of points in the input set
  * @return the number of points in the output hull array or zero if error.
  */
 BG_EXPORT int bg_2d_chull(point2d_t** hull, const point2d_t* points_2d, int n);
+
+
+BG_EXPORT int bg_2d_chull2(int** hull, const point2d_t* points_2d, int n);
 
 /**
  * @brief
@@ -100,6 +121,9 @@ BG_EXPORT int bg_2d_chull(point2d_t** hull, const point2d_t* points_2d, int n);
  */
 BG_EXPORT int bg_3d_coplanar_chull(point_t** hull, const point_t* points_3d, int n);
 
+
+BG_EXPORT int bg_3d_coplanar_chull2(int** hull, const point_t* points_3d, int n);
+
 /**
  * @brief
  * Find 3D point convex hull for unordered point sets
@@ -116,12 +140,11 @@ BG_EXPORT int bg_3d_coplanar_chull(point_t** hull, const point_t* points_3d, int
  * @param	num_input_pnts the number of points in the input set
  * @return dimension of output (3 is three dimensional faces and hulls, 2 is a polygon hull in a plane, etc.)
  *
- * This routine is based off of Ken Clarkson's hull program from
- * http://www.netlib.org/voronoi/hull.html - see the file chull3d.c
- * for the full copyright and license statement.
-*/
+ * This routine is based off of Antti Kuukka's implementation of the QuickHull
+ * algorithm: https://github.com/akuukka/quickhull implementation
+ */
 BG_EXPORT int bg_3d_chull(int **faces, int *num_faces, point_t **vertices, int *num_vertices,
-                          const point_t *input_points_3d, int num_input_pnts);
+			  const point_t *input_points_3d, int num_input_pnts);
 
 
 __END_DECLS

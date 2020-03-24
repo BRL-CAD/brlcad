@@ -240,11 +240,11 @@ find_library(ICONV_LIBRARY NAMES iconv)
 mark_as_advanced(ICONV_LIBRARY)
 
 # Clang usually matches GNU, but linker flags are different on Apple
-if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
-  set(fail_on_undefined_flag "Wl,--no-undefined")
-elseif(${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
-  set(fail_on_undefined_flag "Wl,-undefined,error")
-endif()
+# if(${CMAKE_CXX_COMPILER_ID} STREQUAL "GNU")
+#   set(fail_on_undefined_flag "Wl,--no-undefined")
+# elseif(${CMAKE_CXX_COMPILER_ID} MATCHES "Clang")
+#   set(fail_on_undefined_flag "Wl,-undefined,error")
+# endif()
 
 # Make sure to put these after the other tests, so we don't
 # mess up the detections with Wl,--no-undefined

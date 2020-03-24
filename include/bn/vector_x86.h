@@ -1,7 +1,7 @@
 /*                    V E C T O R _ X 8 6 . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -139,12 +139,12 @@ dvec<LEN>::operator==(const dvec<LEN>& b) const
 }
 
 #define DOP_IMPL(__op__) {                             \
-    dvec_internal<LEN> result;                         \
-    for (int i = 0; i < LEN/2; i++) {                 \
-	result.v[i] = __op__(data.v[i], b.data.v[i]); \
-    }                                                 \
-    return dvec<LEN>(result);                         \
-}
+	dvec_internal<LEN> result;                         \
+	for (int i = 0; i < LEN/2; i++) {                 \
+	    result.v[i] = __op__(data.v[i], b.data.v[i]); \
+	}                                                 \
+	return dvec<LEN>(result);                         \
+    }
 
 template<int LEN>
 inline dvec<LEN>

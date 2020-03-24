@@ -111,6 +111,7 @@ set(stepg_SOURCES
   LuminousIntensitySiUnit.cpp
   LuminousIntensityUnit.cpp
   ManifoldSolidBrep.cpp
+  ManifoldSurfaceShapeRepresentation.cpp
   MassContextDependentUnit.cpp
   MassConversionBasedUnit.cpp
   MassSiUnit.cpp
@@ -124,6 +125,7 @@ set(stepg_SOURCES
   OffsetCurve3D.cpp
   OffsetSurface.cpp
   OpenNurbsInterfaces.cpp
+  OpenShell.cpp
   OrientedClosedShell.cpp
   OrientedEdge.cpp
   OrientedFace.cpp
@@ -189,6 +191,7 @@ set(stepg_SOURCES
   ShapeDefinitionRepresentation.cpp
   ShapeRepresentation.cpp
   ShapeRepresentationRelationship.cpp
+  ShellBasedSurfaceModel.cpp
   SiUnit.cpp
   SolidAngleContextDependentUnit.cpp
   SolidAngleConversionBasedUnit.cpp
@@ -327,6 +330,7 @@ set(stepg_HDRS
   LuminousIntensitySiUnit.h
   LuminousIntensityUnit.h
   ManifoldSolidBrep.h
+  ManifoldSurfaceShapeRepresentation.h
   MassContextDependentUnit.h
   MassConversionBasedUnit.h
   MassSiUnit.h
@@ -339,6 +343,7 @@ set(stepg_HDRS
   OffsetCurve2D.h
   OffsetCurve3D.h
   OffsetSurface.h
+  OpenShell.h
   OrientedClosedShell.h
   OrientedEdge.h
   OrientedFace.h
@@ -404,6 +409,7 @@ set(stepg_HDRS
   ShapeDefinitionRepresentation.h
   ShapeRepresentation.h
   ShapeRepresentationRelationship.h
+  ShellBasedSurfaceModel.h
   SiUnit.h
   SolidAngleContextDependentUnit.h
   SolidAngleConversionBasedUnit.h

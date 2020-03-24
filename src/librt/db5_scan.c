@@ -1,7 +1,7 @@
 /*                      D B 5 _ S C A N . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,17 +37,17 @@ db5_scan(
     struct db_i *dbip,
     void (*handler)(struct db_i *,
 		    const struct db5_raw_internal *,
-		    off_t addr, void *client_data),
+		    b_off_t addr, void *client_data),
     void *client_data)
 {
     unsigned char header[8];
     struct db5_raw_internal raw;
     int got;
     size_t nrec;
-    off_t addr;
+    b_off_t addr;
 
     RT_CK_DBI(dbip);
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db5_scan(%p, %lx)\n",
+    if (RT_G_DEBUG&RT_DEBUG_DB) bu_log("db5_scan(%p, %lx)\n",
 				    (void *)dbip, (long unsigned int)handler);
 
     raw.magic = DB5_RAW_INTERNAL_MAGIC;
@@ -56,26 +56,26 @@ db5_scan(
     /* Fast-path when file is already memory-mapped */
     if (dbip->dbi_mf) {
 	const unsigned char *cp = (const unsigned char *)dbip->dbi_inmem;
-	off_t eof;
+	b_off_t eof;
 
-	eof = (off_t)dbip->dbi_mf->buflen;
+	eof = (b_off_t)dbip->dbi_mf->buflen;
 
 	if (db5_header_is_valid(cp) == 0) {
 	    bu_log("db5_scan ERROR:  %s is lacking a proper BRL-CAD v5 database header\n", dbip->dbi_filename);
 	    goto fatal;
 	}
 	cp += sizeof(header);
-	addr = (off_t)sizeof(header);
+	addr = (b_off_t)sizeof(header);
 	while (addr < eof) {
 	    if ((cp = db5_get_raw_internal_ptr(&raw, cp)) == NULL) {
 		goto fatal;
 	    }
 	    (*handler)(dbip, &raw, addr, client_data);
 	    nrec++;
-	    addr += (off_t)raw.object_length;
+	    addr += (b_off_t)raw.object_length;
 	}
 	dbip->dbi_eof = addr;
-	BU_ASSERT(dbip->dbi_eof == (off_t)dbip->dbi_mf->buflen);
+	BU_ASSERT(dbip->dbi_eof == (b_off_t)dbip->dbi_mf->buflen);
     } else {
 	/* In a totally portable way, read the database with stdio */
 	rewind(dbip->dbi_fp);
@@ -114,7 +114,7 @@ struct directory *
 db_diradd5(
     struct db_i *dbip,
     const char *name,
-    off_t laddr,
+    b_off_t laddr,
     unsigned char major_type,
     unsigned char minor_type,
     unsigned char name_hidden,
@@ -186,7 +186,7 @@ db_diradd5(
 struct directory *
 db5_diradd(struct db_i *dbip,
 	   const struct db5_raw_internal *rip,
-	   off_t laddr,
+	   b_off_t laddr,
 	   void *client_data)
 {
     struct directory **headp;
@@ -195,7 +195,7 @@ db5_diradd(struct db_i *dbip,
 
     RT_CK_DBI(dbip);
 
-    if (client_data && RT_G_DEBUG&DEBUG_DB) {
+    if (client_data && RT_G_DEBUG&RT_DEBUG_DB) {
 	bu_log("WARNING: db5_diradd() received non-NULL client_data\n");
     }
 
@@ -271,7 +271,7 @@ HIDDEN void
 db5_diradd_handler(
     struct db_i *dbip,
     const struct db5_raw_internal *rip,
-    off_t laddr,
+    b_off_t laddr,
     void *client_data)	/* unused client_data from db5_scan() */
 {
     RT_CK_DBI(dbip);
@@ -286,9 +286,9 @@ db5_diradd_handler(
     /* If somehow it doesn't have a name, ignore it */
     if (rip->name.ext_buf == NULL) return;
 
-    if (RT_G_DEBUG&DEBUG_DB) {
-	bu_log("db5_diradd_handler(dbip=%p, name='%s', addr=%ld, len=%zu)\n",
-	       (void *)dbip, rip->name.ext_buf, laddr, rip->object_length);
+    if (RT_G_DEBUG&RT_DEBUG_DB) {
+	bu_log("db5_diradd_handler(dbip=%p, name='%s', addr=%jd, len=%zu)\n",
+	       (void *)dbip, rip->name.ext_buf, (intmax_t)laddr, rip->object_length);
     }
 
     db5_diradd(dbip, rip, laddr, client_data);
@@ -297,7 +297,7 @@ db5_diradd_handler(
 }
 
 HIDDEN int
-db_diradd4(struct db_i *dbi, const char *s, off_t o,  size_t st,  int i,  void *v)
+db_diradd4(struct db_i *dbi, const char *s, b_off_t o,  size_t st,  int i,  void *v)
 {
     if (!db_diradd(dbi, s, o, st, i, v)) return 0;
     return 1;

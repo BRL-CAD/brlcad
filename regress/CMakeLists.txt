@@ -13,7 +13,7 @@ macro(Add_Regression_Test testname depends_list)
     endif(TARGET check)
   endif(NOT "${depends_list}" STREQUAL "")
   if(NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
-    set_tests_properties(regress-${testname} PROPERTIES TIMEOUT 60)
+    set_tests_properties(regress-${testname} PROPERTIES TIMEOUT 300) # FIXME: want <60
   endif(NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
 endmacro(Add_Regression_Test)
 
@@ -34,8 +34,17 @@ set_target_properties(regress PROPERTIES FOLDER "BRL-CAD Regression Tests")
 # Image Conversion Regression Tests
 add_subdirectory(icv)
 
+# Geometry Editing Library Regression Tests
+add_subdirectory(ged)
+
 # Geometry Conversion Regression Tests
 add_subdirectory(gcv)
+
+# NURBS Regression Tests
+add_subdirectory(nurbs)
+
+# Burst Regression Tests
+add_subdirectory(burst)
 
 # RtWizard Image Generation Regression Tests
 add_subdirectory(rtwizard)
@@ -62,7 +71,7 @@ if(SH_EXEC)
       endif(TARGET check)
     endif(NOT "${depends_list}" STREQUAL "")
     if(NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
-      set_tests_properties(regress-${testname} PROPERTIES TIMEOUT 60)
+      set_tests_properties(regress-${testname} PROPERTIES TIMEOUT 300) # FIXME: want <60
     endif(NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
   endmacro(Sh_Regression_Test)
 
@@ -71,6 +80,7 @@ if(SH_EXEC)
   Sh_Regression_Test(solids "rt;mged;pixdiff;asc2pix;gencolor")
   Sh_Regression_Test(shaders "rt;mged;pixdiff;gencolor")
   Sh_Regression_Test(spdi "rt;mged;pixdiff")
+  Sh_Regression_Test(rtedge "rt;rtedge;pixdiff;asc2g")
   Sh_Regression_Test(iges "iges-g;g-iges;mged;asc2g")
   Sh_Regression_Test(weight "rtweight;mged")
   Sh_Regression_Test(gqa "gqa;mged")
@@ -78,9 +88,10 @@ if(SH_EXEC)
   Sh_Regression_Test(usage "rt" EXCLUDE_FROM_REGRESS)
   Sh_Regression_Test(flawfinder "" EXCLUDE_FROM_REGRESS)
 
-  # TODO - keep all tests short.  right now, regress repository
-  # violates this as it spends considerable time scanning the entire
-  # source tree, then scanning different sets of files for properties.
+  # TODO - keep all tests short, GOAL < 1MIN.  right now, regress
+  # repository violates this as it spends considerable time scanning
+  # the entire source tree, then scanning different sets of files for
+  # properties.
   Sh_Regression_Test(repository "")
   if(NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
     set_tests_properties(regress-repository PROPERTIES TIMEOUT 600)
@@ -99,10 +110,6 @@ CMAKEFILES(
   analyze.asc
   asc2dsp.sh
   bots.sh
-  burst/ktank.b
-  burst/ktank_air.ids
-  burst/ktank_armor.ids
-  burst/ktank_crit.ids
   comgeom.sh
   dsp.sh
   dsp/asc2dsp-new.asc
@@ -141,9 +148,15 @@ CMAKEFILES(
   moss.ref.pix
   moss.sh
   nirt.sh
-  nurbs/brep-3dm.tar.bz2
+  nirt/ovlps.g
   red.sh
   repository.sh
+  rtedge.ref.pix.gz
+  rtedge.ref2.pix.gz
+  rtedge.ref3.pix.gz
+  rtedge.ref4.pix.gz
+  rtedge.ref5.pix.gz
+  rtedge.sh
   shaders.eagleCAD-512x438.pix
   shaders.ref.pix
   shaders.sh
@@ -155,6 +168,7 @@ CMAKEFILES(
   tgms/comgeom.cg
   tgms/comgeom.tgt-1-v4-documented.cg
   tgms/comgeom.tgt-1-v4.cg
+  tgms/havoc.g.gz
   tgms/m35.asc.gz
   tgms/m35.cg.gz
   tgms/solids.dsp.dat
@@ -192,26 +206,36 @@ set(regress_outfiles
   comgeom.t-v4.g
   comgeom.t-v5.g
   density_table.txt
-  dsp.2-1.bw
-  dsp.2-1.dsp
-  dsp.2-1.g
-  dsp.2-1.log
-  dsp.2-2.bw
-  dsp.2-2.dsp
-  dsp.2-2.g
-  dsp.2-2.log
-  dsp.2-3.bw
-  dsp.2-3.dsp
-  dsp.2-3.g
-  dsp.2-3.log
-  dsp.2-4.bw
-  dsp.2-4.dsp
-  dsp.2-4.g
-  dsp.2-4.log
-  dsp.2-5.bw
-  dsp.2-5.dsp
-  dsp.2-5.g
-  dsp.2-5.log
+  dsp-2-1.bw
+  dsp-2-1.dsp
+  dsp-2-1.g
+  dsp-2-1.log
+  dsp-2-1.pix
+  dsp-2-1.rt.pix
+  dsp-2-2.bw
+  dsp-2-2.dsp
+  dsp-2-2.g
+  dsp-2-2.log
+  dsp-2-2.pix
+  dsp-2-2.rt.pix
+  dsp-2-3.bw
+  dsp-2-3.dsp
+  dsp-2-3.g
+  dsp-2-3.log
+  dsp-2-3.pix
+  dsp-2-3.rt.pix
+  dsp-2-4.bw
+  dsp-2-4.dsp
+  dsp-2-4.g
+  dsp-2-4.log
+  dsp-2-4.pix
+  dsp-2-4.rt.pix
+  dsp-2-5.bw
+  dsp-2-5.dsp
+  dsp-2-5.g
+  dsp-2-5.log
+  dsp-2-5.pix
+  dsp-2-5.rt.pix
   dsp.log
   gqa.adj_air.plot3
   gqa.exp_air.plot3
@@ -222,14 +246,18 @@ set(regress_outfiles
   gqa.overlaps.plot3
   gqa.volume.plot3
   iges.export.iges
-  iges.export2.iges
+  iges.export.stdout.iges
   iges.g
+  iges.import.export.iges
   iges.import.g
+  iges.import2.export.iges
+  iges.import2.g
+  iges.import3.export.iges
+  iges.import3.g
   iges.log
   iges.m35.asc
   iges.m35.g
-  iges_file3.iges
-  iges_stdout_new.g
+  iges.m35.r516.iges
   lights.asc
   lights.diff.pix
   lights.g
@@ -344,6 +372,23 @@ set(regress_outfiles
   region_ids
   regions
   repository.log
+  rtedge.2.pix
+  rtedge.3.pix
+  rtedge.4.pix
+  rtedge.5.pix
+  rtedge.diff.pix
+  rtedge.diff2.pix
+  rtedge.diff3.pix
+  rtedge.diff4.pix
+  rtedge.diff5.pix
+  rtedge.havoc.g
+  rtedge.log
+  rtedge.pix
+  rtedge.ref.pix
+  rtedge.ref2.pix
+  rtedge.ref3.pix
+  rtedge.ref4.pix
+  rtedge.ref5.pix
   shaders.ebm.bw
   shaders.ell_2.prj
   shaders.g

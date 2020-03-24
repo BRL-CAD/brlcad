@@ -1,7 +1,7 @@
 /*                         P N T S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -253,6 +253,244 @@ _pnts_to_bot(struct ged *gedp, int argc, const char **argv)
     return GED_OK;
 }
 
+#if 0
+HIDDEN int
+_pnts_wn(struct ged *gedp, int argc, const char **argv)
+{
+    struct directory *pnt_dp;
+    int print_help = 0;
+    int opt_ret = 0;
+    fastf_t beta = 0.0;
+    struct rt_db_internal intern;
+    struct rt_pnts_internal *pnts = NULL;
+    const char *pnt_prim= NULL;
+    const char *usage = "Usage: pnts wn [options] <pnts> <output_bot>\n\n";
+    struct bu_opt_desc d[3];
+    struct pnt_normal q;
+    point_t qp;
+    BU_OPT(d[0], "h", "help",      "",  NULL,            &print_help,   "Print help and exit");
+    BU_OPT(d[1], "b", "beta",     "#", &bu_opt_fastf_t, &beta,        "Accuracy parameter - paper uses 2.3 for pnts");
+    BU_OPT_NULL(d[2]);
+
+    argc-=(argc>0); argv+=(argc>0); /* skip command name argv[0] */
+
+    /* must be wanting help */
+    if (argc < 1) {
+	_ged_cmd_help(gedp, usage, d);
+	return GED_OK;
+    }
+
+    /* parse standard options */
+    opt_ret = bu_opt_parse(NULL, argc, argv, d);
+
+    if (print_help) {
+	_ged_cmd_help(gedp, usage, d);
+	return GED_OK;
+    }
+
+    /* adjust argc to match the leftovers of the options parsing */
+    argc = opt_ret;
+
+    if (argc != 4) {
+	_ged_cmd_help(gedp, usage, d);
+	return GED_ERROR;
+    }
+
+    pnt_prim = argv[0];
+
+    (void)bu_opt_fastf_t(NULL, 1, (const char **)&argv[1], (void *)&(qp[X]));
+    (void)bu_opt_fastf_t(NULL, 1, (const char **)&argv[2], (void *)&(qp[Y]));
+    (void)bu_opt_fastf_t(NULL, 1, (const char **)&argv[3], (void *)&(qp[Z]));
+
+    /* get pnt */
+    GED_DB_LOOKUP(gedp, pnt_dp, pnt_prim, LOOKUP_NOISY, GED_ERROR & GED_QUIET);
+    GED_DB_GET_INTERNAL(gedp, &intern, pnt_dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+
+    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PNTS) {
+	bu_vls_printf(gedp->ged_result_str, "pnts tri: %s is not a pnts object!", pnt_prim);
+	rt_db_free_internal(&intern);
+	return GED_ERROR;
+    }
+
+    pnts = (struct rt_pnts_internal *)intern.idb_ptr;
+    RT_PNTS_CK_MAGIC(pnts);
+
+    /* Sanity */
+
+    /* For the moment, only generate BoTs when we have a PNT/NRM type. */
+    if (pnts->type != RT_PNT_TYPE_NRM) {
+	bu_vls_sprintf(gedp->ged_result_str, "Error: point cloud data does not define normals\n");
+	return GED_ERROR;
+    }
+
+    /* initialize */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* Go with paper's default for pnts */
+    if (NEAR_ZERO(beta, SMALL_FASTF)) {
+	beta = 2.3;
+    }
+
+    VMOVE(q.v, qp);
+
+    bu_log("wn: %g\n", wn_report(pnts, beta, &q));
+
+    return GED_OK;
+}
+
+HIDDEN int
+_pnts_to_wnmesh(struct ged *gedp, int argc, const char **argv)
+{
+    fastf_t beta = 0.0;
+    int have_normals = 1;
+    unsigned long pntcnt = 0;
+    struct rt_db_internal intern, internal;
+    struct rt_bot_internal *bot_ip;
+    struct directory *pnt_dp;
+    struct directory *dp;
+    int print_help = 0;
+    int opt_ret = 0;
+    fastf_t scale;
+    struct rt_pnts_internal *pnts = NULL;
+    const char *pnt_prim= NULL;
+    const char *bot_name = NULL;
+    const char *usage = "Usage: pnts wnmesh [options] <pnts> <output_bot>\n\n";
+    struct bu_opt_desc d[3];
+    BU_OPT(d[0], "h", "help",      "",  NULL,            &print_help,   "Print help and exit");
+    BU_OPT(d[1], "b", "beta",     "#", &bu_opt_fastf_t, &beta,        "Accuracy parameter - paper uses 2.3 for pnts");
+    BU_OPT_NULL(d[2]);
+
+    argc-=(argc>0); argv+=(argc>0); /* skip command name argv[0] */
+
+    /* must be wanting help */
+    if (argc < 1) {
+	_ged_cmd_help(gedp, usage, d);
+	return GED_OK;
+    }
+
+    /* parse standard options */
+    opt_ret = bu_opt_parse(NULL, argc, argv, d);
+
+    if (print_help) {
+	_ged_cmd_help(gedp, usage, d);
+	return GED_OK;
+    }
+
+    /* adjust argc to match the leftovers of the options parsing */
+    argc = opt_ret;
+
+    if (argc != 2) {
+	_ged_cmd_help(gedp, usage, d);
+	return GED_ERROR;
+    }
+
+    pnt_prim = argv[0];
+    bot_name = argv[1];
+
+    /* get pnt */
+    GED_DB_LOOKUP(gedp, pnt_dp, pnt_prim, LOOKUP_NOISY, GED_ERROR & GED_QUIET);
+    GED_DB_GET_INTERNAL(gedp, &intern, pnt_dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+
+    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_PNTS) {
+	bu_vls_printf(gedp->ged_result_str, "pnts tri: %s is not a pnts object!", pnt_prim);
+	rt_db_free_internal(&intern);
+	return GED_ERROR;
+    }
+
+    pnts = (struct rt_pnts_internal *)intern.idb_ptr;
+    RT_PNTS_CK_MAGIC(pnts);
+
+    /* Sanity */
+    if (!bot_name || !gedp) return GED_ERROR;
+    GED_CHECK_EXISTS(gedp, bot_name, LOOKUP_QUIET, GED_ERROR);
+
+    /* For the moment, only generate BoTs when we have a normal to guide us.  Eventually,
+     * we might add logic to find the avg center point and calculate normals radiating out
+     * from that center, but for now skip anything that doesn't provide normals up front. */
+    if (pnts->type != RT_PNT_TYPE_NRM) {;
+	bu_vls_sprintf(gedp->ged_result_str, "Error: point cloud data is not of type PNT_NRM\n");
+	return GED_ERROR;
+    }
+
+    /* initialize */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* Set up BoT container */
+    RT_DB_INTERNAL_INIT(&internal);
+    internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    internal.idb_type = ID_BOT;
+    internal.idb_meth = &OBJ[ID_BOT];
+    BU_ALLOC(bot_ip, struct rt_bot_internal);
+    internal.idb_ptr = (void *)bot_ip;
+    bot_ip = (struct rt_bot_internal *)internal.idb_ptr;
+    bot_ip->magic = RT_BOT_INTERNAL_MAGIC;
+    bot_ip->mode = RT_BOT_SURFACE;
+    bot_ip->orientation = 2;
+
+
+    /* Go with paper's default for pnts */
+    if (NEAR_ZERO(beta, SMALL_FASTF)) {
+	beta = 2.3;
+    }
+
+    VMOVE(q.v, qp);
+
+    wn_mesh(pnts, beta, &q, );
+
+    /* Allocate BoT memory */
+    bot_ip->num_vertices = pnts->count * 3;
+    bot_ip->num_faces = pnts->count;
+    bot_ip->faces = (int *)bu_calloc(bot_ip->num_faces * 3 + 3, sizeof(int), "bot faces");
+    bot_ip->vertices = (fastf_t *)bu_calloc(bot_ip->num_vertices * 3 + 3, sizeof(fastf_t), "bot vertices");
+    bot_ip->thickness = (fastf_t *)NULL;
+    bot_ip->face_mode = (struct bu_bitv *)NULL;
+
+    pntcnt = 0;
+    if (pnts->type == RT_PNT_TYPE_NRM) {
+	struct pnt_normal *pn = NULL;
+	struct pnt_normal *pl = (struct pnt_normal *)pnts->point;
+	for (BU_LIST_FOR(pn, pnt_normal, &(pl->l))) {
+	    _pnt_to_tri(&(pn->v), &(pn->n), bot_ip, scale, pntcnt);
+	    pntcnt++;
+	}
+    }
+    if (pnts->type == RT_PNT_TYPE_COL_NRM) {
+	struct pnt_color_normal *pcn = NULL;
+	struct pnt_color_normal *pl = (struct pnt_color_normal *)pnts->point;
+	for (BU_LIST_FOR(pcn, pnt_color_normal, &(pl->l))) {
+	    _pnt_to_tri(&(pcn->v), &(pcn->n), bot_ip, scale, pntcnt);
+	    pntcnt++;
+	}
+    }
+    if (pnts->type == RT_PNT_TYPE_SCA_NRM) {
+	struct pnt_scale_normal *psn = NULL;
+	struct pnt_scale_normal *pl = (struct pnt_scale_normal *)pnts->point;
+	for (BU_LIST_FOR(psn, pnt_scale_normal, &(pl->l))) {
+	    _pnt_to_tri(&(psn->v), &(psn->n), bot_ip, scale, pntcnt);
+	    pntcnt++;
+	}
+    }
+    if (pnts->type == RT_PNT_TYPE_COL_SCA_NRM) {
+	struct pnt_color_scale_normal *pcsn = NULL;
+	struct pnt_color_scale_normal *pl = (struct pnt_color_scale_normal *)pnts->point;
+	for (BU_LIST_FOR(pcsn, pnt_color_scale_normal, &(pl->l))) {
+	    _pnt_to_tri(&(pcsn->v), &(pcsn->n), bot_ip, scale, pntcnt);
+	    pntcnt++;
+	}
+    }
+
+    GED_DB_DIRADD(gedp, dp, bot_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, GED_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
+
+    bu_vls_printf(gedp->ged_result_str, "Generated BoT object %s with %d triangles", bot_name, pntcnt);
+
+    rt_db_free_internal(&intern);
+    return GED_OK;
+}
+
+#endif
+
+
 HIDDEN int
 _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
 {
@@ -345,7 +583,7 @@ _obj_to_pnts(struct ged *gedp, int argc, const char **argv)
 	ged_get_obj_bounds(gedp, 1, (const char **)&obj_name, 0, obj_min, obj_max);
 	VMINMAX(rpp_min, rpp_max, (double *)obj_min);
 	VMINMAX(rpp_min, rpp_max, (double *)obj_max);
-	len_tol = DIST_PT_PT(rpp_max, rpp_min) * 0.01;
+	len_tol = DIST_PNT_PNT(rpp_max, rpp_min) * 0.01;
 	bu_log("Note - no tolerance specified, using %f\n", len_tol);
     }
     btol.dist = len_tol;
@@ -923,7 +1161,7 @@ ged_pnts(struct ged *gedp, int argc, const char *argv[])
     int opt_ret = 0;
     int opt_argc = argc;
     struct bu_opt_desc d[2];
-    const char * const pnt_subcommands[] = {"gen", "read", "tri", "write", NULL};
+    const char * const pnt_subcommands[] = {"gen", "read", "tri", "wn", "write", NULL};
     const char * const *subcmd;
 
     BU_OPT(d[0], "h", "help",      "", NULL, &print_help,        "Print help and exit");
@@ -988,6 +1226,11 @@ ged_pnts(struct ged *gedp, int argc, const char *argv[])
     if (bu_strncmp(argv[0], "write", len) == 0) return _write_pnts(gedp, argc, argv);
 
     if (bu_strncmp(argv[0], "read", len) == 0) return _read_pnts(gedp, argc, argv);
+
+    if (bu_strncmp(argv[0], "wn", len) == 0) {
+	bu_vls_printf(gedp->ged_result_str, "%s: %s UNIMPLEMENTED\n", cmd, argv[0]);
+	return GED_ERROR;
+    }
 
     /* If we don't have a valid subcommand, we're done */
     bu_vls_printf(gedp->ged_result_str, "%s: %s is not a known subcommand!\n", cmd, argv[0]);

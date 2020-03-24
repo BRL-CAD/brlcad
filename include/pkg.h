@@ -1,7 +1,7 @@
 /*                           P K G . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -110,7 +110,7 @@ struct pkg_conn {
  * Sends a VLS as a given message type across a pkg connection.
  */
 #define pkg_send_vls(type, vlsp, pkg)	\
-	pkg_send( (type), bu_vls_addr((vlsp)), bu_vls_strlen((vlsp))+1, (pkg) )
+    pkg_send( (type), bu_vls_addr((vlsp)), bu_vls_strlen((vlsp))+1, (pkg) )
 
 
 /**

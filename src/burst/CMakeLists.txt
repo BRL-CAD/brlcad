@@ -1,17 +1,10 @@
 set(BURST_INCLUDE_DIRS
-  ${TERMIO_INCLUDE_DIRS}
   ${FB_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
 list(REMOVE_DUPLICATES BURST_INCLUDE_DIRS)
 include_directories(${BURST_INCLUDE_DIRS})
-
-if(HAVE_TERMLIB)
-  add_definitions(-DHAVE_TERMLIB)
-  set(LIBTERMIO libtermio)
-endif(HAVE_TERMLIB)
-
 
 set(burst_SOURCES
   Hm.c
@@ -33,7 +26,7 @@ set(burst_SOURCES
   )
 
 
-BRLCAD_ADDEXEC(burst "${burst_SOURCES}" "librt;libfb;${LIBTERMIO};${TERMLIB_LIBRARY};${M_LIBRARY}")
+BRLCAD_ADDEXEC(burst "${burst_SOURCES}" "librt;libfb;${M_LIBRARY}")
 
 set(burst_noinst_HEADERS
   CMakeLists.txt

@@ -1,7 +1,7 @@
 /*                           P K G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -136,10 +136,6 @@ extern struct hostent *gethostbyname(const char *);
 #  define DMSG(s) if (_pkg_debug) { _pkg_timestamp(); fprintf(_pkg_debug, "%s", s); fflush(_pkg_debug); }
 #else
 #  define DMSG(s) /**/
-#endif
-
-#if !defined(_WIN32) || defined(__CYGWIN__)
-#include <errno.h>
 #endif
 
 int pkg_nochecking = 0;	/* set to disable extra checking for input */

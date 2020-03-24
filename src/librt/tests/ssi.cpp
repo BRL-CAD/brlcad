@@ -1,7 +1,7 @@
 /*                   T E S T _ S S I . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2018 United States Government as represented by
+ * Copyright (c) 2013-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -251,11 +251,11 @@ main(int argc, char** argv)
 		pi->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
 		pi->pipe_count = nurbscurve3d->CVCount();
 		BU_LIST_INIT(&(pi->pipe_segs_head));
-		struct wdb_pipept *ps;
+		struct wdb_pipe_pnt *ps;
 
 		fastf_t od = nurbscurve3d->BoundingBox().Diagonal().Length() * 0.05;
 		for (int j = 0; j < nurbscurve3d->CVCount(); j++) {
-		    BU_ALLOC(ps, struct wdb_pipept);
+		    BU_ALLOC(ps, struct wdb_pipe_pnt);
 		    ps->l.magic = WDB_PIPESEG_MAGIC;
 		    ps->l.back = NULL;
 		    ps->l.forw = NULL;

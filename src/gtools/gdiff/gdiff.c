@@ -1,7 +1,7 @@
 /*                     G D I F F 2 . C
  * BRL-CAD
  *
- * Copyright (c) 2014-2018 United States Government as represented by
+ * Copyright (c) 2014-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -84,7 +84,7 @@ do_diff(struct db_i *left_dbip, struct db_i *right_dbip, struct diff_state *stat
 	struct db_i *inmem_dbip;
 	BU_PTBL_INIT(&diff3_results);
 	BU_GET(inmem_dbip, struct db_i);
-	inmem_dbip->dbi_eof = (off_t)-1L;
+	inmem_dbip->dbi_eof = (b_off_t)-1L;
 	inmem_dbip->dbi_fp = NULL;
 	inmem_dbip->dbi_mf = NULL;
 	inmem_dbip->dbi_read_only = 0;

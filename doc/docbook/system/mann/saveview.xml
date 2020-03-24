@@ -60,10 +60,6 @@ EOF
 	paste, or <emphasis>source</emphasis>, the viewsize, orientation, and eye_pt lines from the <emphasis>	saveview</emphasis> file into MGED.
 </para>
 
-<para>Related MGED commands are <command>preview</command>, for viewing the effects of an entire animation
-	script, and <command>savekey</command>.  Related BRL-CAD programs are <emphasis>tabsub</emphasis> and 	<emphasis>tabinterp</emphasis>.
-</para>
-
 <para> The following options are valid for this command:
 </para>
 <variablelist>
@@ -117,7 +113,7 @@ EOF
 
   <para>
     Reports of bugs or problems should be submitted via electronic
-    mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
+    mail to <email>devs@brlcad.org</email>
   </para>
 </refsection>
 </refentry>

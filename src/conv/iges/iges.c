@@ -1,7 +1,7 @@
 /*                          I G E S . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2018 United States Government as represented by
+ * Copyright (c) 1993-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -66,7 +66,7 @@ static const char *global_form = "%-72.72s%c%07d\n"; /* format for global sectio
 static const char *param_form = "%-64.64s %7d%c%07d\n"; /* format for parameter section */
 static const char *att_string = "BRL-CAD attribute definition:material name, material parameters, region flag, ident number, air code, material code (GIFT), los density, inheritance";
 static struct bn_tol tol;	/* tolerances */
-static struct rt_tess_tol ttol;	/* tolerances */
+static struct bg_tess_tol ttol;	/* tolerances */
 static struct db_i *dbip = NULL;
 static const char *unknown = "Unknown";
 static int unknown_count = 0;
@@ -565,12 +565,12 @@ write_attribute_definition(FILE *fp_dir, FILE *fp_param)
 
 void
 iges_init(struct bn_tol *set_tol,
-	  struct rt_tess_tol *set_ttol,
+	  struct bg_tess_tol *set_ttol,
 	  int set_verbose,
 	  struct db_i *dbip_set)
 {
     BN_CK_TOL(set_tol);
-    RT_CK_TESS_TOL(set_ttol);
+    BG_CK_TESS_TOL(set_ttol);
     tol = (*set_tol);
     ttol = (*set_ttol);
     verbose = set_verbose;
@@ -1277,7 +1277,7 @@ write_edge_list(struct nmgregion *r,
 	    line_de = write_linear_bspline(start_vg, end_vg, fp_dir, fp_param);
 	else
 	    line_de = write_line_entity(start_vg, end_vg, fp_dir, fp_param);
-	bu_vls_printf(&str, ",%d,%d,%d,%d,%d",
+	bu_vls_printf(&str, ",%d,%d,%jd,%d,%jd",
 		      line_de,
 		      vert_de, bu_ptbl_locate(vtab, (long *)start_v) + 1,
 		      vert_de, bu_ptbl_locate(vtab, (long *)end_v) + 1);
@@ -1629,7 +1629,7 @@ write_shell_face_loop(char *name,
 			else
 			    orientation = 0;
 
-			bu_vls_printf(&str, ",0,%d,%d,%d,0",
+			bu_vls_printf(&str, ",0,%d,%jd,%d,0",
 				      edge_de ,
 				      bu_ptbl_locate(etab, (long *)(e)) + 1,
 				      orientation);
@@ -1638,7 +1638,7 @@ write_shell_face_loop(char *name,
 		    }
 		} else if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
 		    v = BU_LIST_PNEXT(vertexuse, &lu->down_hd)->v_p;
-		    bu_vls_printf(&str, ",1,%d,%d,1,0",
+		    bu_vls_printf(&str, ",1,%d,%jd,1,0",
 				  vert_de,
 				  bu_ptbl_locate(vtab, (long *)v)+1);
 		} else

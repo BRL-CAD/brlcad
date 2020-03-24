@@ -1,7 +1,7 @@
 /*                        R H C . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2018 United States Government as represented by
+ * Copyright (c) 1993-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,12 +31,12 @@
 __BEGIN_DECLS
 
 /* rhc.c */
-RT_EXPORT extern int rt_mk_hyperbola(struct rt_pt_node *pts,
-                                     fastf_t r,
-                                     fastf_t b,
-                                     fastf_t c,
-                                     fastf_t dtol,
-                                     fastf_t ntol);
+RT_EXPORT extern int rt_mk_hyperbola(struct rt_pnt_node *pts,
+				     fastf_t r,
+				     fastf_t b,
+				     fastf_t c,
+				     fastf_t dtol,
+				     fastf_t ntol);
 
 /** @} */
 

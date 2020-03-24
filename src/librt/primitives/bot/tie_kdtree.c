@@ -1,7 +1,7 @@
 /*                    T I E _ K D T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -163,7 +163,7 @@ tie_kdtree_prep_head(struct tie_s *tie, struct tie_tri_s *tri_list, unsigned int
 	VMAX(tie->max, max.v);
     }
     VADD2SCALE(tie->mid, tie->min, tie->max, 0.5);
-    tie->radius = DIST_PT_PT(tie->max, tie->mid);
+    tie->radius = DIST_PNT_PNT(tie->max, tie->mid);
     g->tri_num = tri_num;
 }
 

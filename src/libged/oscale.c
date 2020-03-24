@@ -1,7 +1,7 @@
 /*                         O S C A L E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -116,7 +116,7 @@ ged_oscale(struct ged *gedp, int argc, const char *argv[])
     }
 
     MAT_IDN(smat);
-    bn_mat_scale_about_pt(smat, keypoint, sf);
+    bn_mat_scale_about_pnt(smat, keypoint, sf);
 
     bn_mat_inv(invXform, gtd.gtd_xform);
     bn_mat_mul(tmpMat, invXform, smat);
