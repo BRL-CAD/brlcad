@@ -400,7 +400,7 @@ BrlcadObject::configure_raytrace_application(const char* path, int objc, std::ve
     }
 
     /* include objects from database */
-    if (rt_gettrees(rtip, objc, (const char**)objv, npsw) < 0)
+    if (rt_gettrees(rtip, objc, objv, npsw) < 0)
     {
 	fprintf(output, "Loading the geometry for [%s] FAILED\n", objects);
 	fflush(output);
