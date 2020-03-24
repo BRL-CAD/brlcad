@@ -30,7 +30,7 @@
  * Headers if any.
  */
 
-#include "regex.h"
+#include "regextcl.h"
 
 /*
  * Overrides for regguts.h definitions, if any.
@@ -43,7 +43,7 @@
 
 /*
  * Do not insert extras between the "begin" and "end" lines - this chunk is
- * automatically extracted to be fitted into regex.h.
+ * automatically extracted to be fitted into regextcl.h.
  */
 
 /* --- begin --- */
