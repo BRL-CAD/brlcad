@@ -116,6 +116,7 @@ extern int fileno(FILE *stream);
 #  define stat  _stati64
 #elif defined (_WIN32)
 #  include <sys/stat.h>
+#  define b_off_t _off_t
 #  define fstat _fstat
 #  define lseek _lseek
 #  define stat  _stat
