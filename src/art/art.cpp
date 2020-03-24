@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt/art.cpp
+/** @file art/art.cpp
  *
  * Once you have appleseed installed, run BRL-CAD's CMake with APPLESEED_ROOT
  * set to enable this program:
@@ -63,6 +63,8 @@
  */
 
 #include "common.h"
+/* avoid redefining the appleseed sleep function */
+#undef sleep
 
 #include <stdlib.h>
 #include <math.h>
@@ -93,6 +95,7 @@
 #  pragma clang diagnostic ignored "-Wclass-memaccess"
 #  pragma clang diagnostic ignored "-Wignored-qualifiers"
 #endif
+
 
 // appleseed.renderer headers. Only include header files from renderer/api/.
 #include "renderer/api/bsdf.h"
@@ -131,26 +134,141 @@
 #endif
 
 
-#include "vmath.h"		/* vector math macros */
-#include "raytrace.h"		/* librt interface definitions */
+#include "vmath.h"	/* vector math macros */
+#include "raytrace.h"	    /* librt interface definitions */
+#include "bu/getopt.h"
+#include "bu/vls.h"
+#include "brlcadplugin.h"
 
+struct application APP;
+struct resource* resources;
+extern "C" {
+    FILE* outfp = NULL;
+    int	save_overlaps = 1;
+    size_t		n_malloc;		/* Totals at last check */
+    size_t		n_free;
+    size_t		n_realloc;
+    mat_t view2model;
+    mat_t model2view;
+    struct icv_image* bif = NULL;
+}
 
 /* NOTE: stub in empty rt_cmdtab to satisfy ../rt/opt.c - this means
  * we can't run the commands, but they are tied deeply into the various
  * src/rt files and a significant refactor is in order to properly
  * extract that functionality into a library... */
-struct command_tab rt_cmdtab[] = {{NULL, NULL, NULL, 0, 0, 0}};
 
+extern "C" {
+    struct command_tab rt_cmdtab[] = { {NULL, NULL, NULL, 0, 0, 0} };
+    void usage(const char* argv0, int verbose);
+    int get_args(int argc, const char* argv[]);
+
+    extern char* outputfile;
+    extern int objc;
+    extern char** objv;
+    extern size_t npsw;
+    extern struct bu_ptbl* cmd_objs;
+    extern size_t width, height;
+    extern fastf_t azimuth, elevation;
+    extern point_t eye_model; /* model-space location of eye */
+    extern fastf_t eye_backoff; /* dist from eye to center */
+    extern mat_t Viewrotscale;
+    extern fastf_t viewsize;
+    extern fastf_t aspect;
+
+    void grid_setup();
+}
+
+void
+do_ae(double azim, double elev)
+{
+    vect_t temp;
+    vect_t diag;
+    mat_t toEye;
+    struct rt_i* rtip = APP.a_rt_i;
+
+    if (rtip == NULL)
+	return;
+
+    if (rtip->nsolids <= 0)
+	bu_exit(EXIT_FAILURE, "ERROR: no primitives active\n");
+
+    if (rtip->nregions <= 0)
+	bu_exit(EXIT_FAILURE, "ERROR: no regions active\n");
+
+    if (rtip->mdl_max[X] >= INFINITY) {
+	bu_log("do_ae: infinite model bounds? setting a unit minimum\n");
+	VSETALL(rtip->mdl_min, -1);
+    }
+    if (rtip->mdl_max[X] <= -INFINITY) {
+	bu_log("do_ae: infinite model bounds? setting a unit maximum\n");
+	VSETALL(rtip->mdl_max, 1);
+    }
+
+    /*
+     * Enlarge the model RPP just slightly, to avoid nasty effects
+     * with a solid's face being exactly on the edge NOTE: This code
+     * is duplicated out of librt/tree.c/rt_prep(), and has to appear
+     * here to enable the viewsize calculation to match the final RPP.
+     */
+    rtip->mdl_min[X] = floor(rtip->mdl_min[X]);
+    rtip->mdl_min[Y] = floor(rtip->mdl_min[Y]);
+    rtip->mdl_min[Z] = floor(rtip->mdl_min[Z]);
+    rtip->mdl_max[X] = ceil(rtip->mdl_max[X]);
+    rtip->mdl_max[Y] = ceil(rtip->mdl_max[Y]);
+    rtip->mdl_max[Z] = ceil(rtip->mdl_max[Z]);
+
+    MAT_IDN(Viewrotscale);
+    bn_mat_angles(Viewrotscale, 270.0 + elev, 0.0, 270.0 - azim);
+
+    /* Look at the center of the model */
+    MAT_IDN(toEye);
+    toEye[MDX] = -((rtip->mdl_max[X] + rtip->mdl_min[X]) / 2.0);
+    toEye[MDY] = -((rtip->mdl_max[Y] + rtip->mdl_min[Y]) / 2.0);
+    toEye[MDZ] = -((rtip->mdl_max[Z] + rtip->mdl_min[Z]) / 2.0);
+
+    /* Fit a sphere to the model RPP, diameter is viewsize, unless
+     * viewsize command used to override.
+     */
+    if (viewsize <= 0) {
+	VSUB2(diag, rtip->mdl_max, rtip->mdl_min);
+	viewsize = MAGNITUDE(diag);
+	if (aspect > 1) {
+	    /* don't clip any of the image when autoscaling */
+	    viewsize *= aspect;
+	}
+    }
+
+    /* sanity check: make sure viewsize still isn't zero in case
+     * bounding box is empty, otherwise bn_mat_int() will bomb.
+     */
+    if (viewsize < 0 || ZERO(viewsize)) {
+	viewsize = 2.0; /* arbitrary so Viewrotscale is normal */
+    }
+
+    Viewrotscale[15] = 0.5 * viewsize;	/* Viewscale */
+    bn_mat_mul(model2view, Viewrotscale, toEye);
+    bn_mat_inv(view2model, model2view);
+    VSET(temp, 0, 0, eye_backoff);
+    MAT4X3PNT(eye_model, view2model, temp);
+}
 
 // Define shorter namespaces for convenience.
 namespace asf = foundation;
 namespace asr = renderer;
 
-asf::auto_release_ptr<asr::Project> build_project()
+asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* objects)
 {
+    /* If user gave no sizing info at all, use 512 as default */
+    struct bu_vls dimensions = BU_VLS_INIT_ZERO;
+    if (width <= 0)
+	width = 512;
+    if (height <= 0)
+	height = 512;
+
     // Create an empty project.
     asf::auto_release_ptr<asr::Project> project(asr::ProjectFactory::create("test project"));
-    project->search_paths().push_back_explicit_path("data");
+    project->search_paths().push_back_explicit_path("build/Debug");
 
     // Add default configurations to the project.
     project->add_default_configurations();
@@ -159,7 +277,12 @@ asf::auto_release_ptr<asr::Project> build_project()
     // number of samples, the smoother the image but the longer the rendering time.
     project->configurations()
     .get_by_name("final")->get_parameters()
-    .insert_path("uniform_pixel_renderer.samples", "25");
+    .insert_path("uniform_pixel_renderer.samples", "25")
+    .insert_path("rendering_threads", "1"); /* multithreading not supported yet */
+
+    project->configurations()
+	.get_by_name("interactive")->get_parameters()
+	.insert_path("rendering_threads", "1"); /* no multithreading - for debug rendering on appleseed */
 
     // Create a scene.
     asf::auto_release_ptr<asr::Scene> scene(asr::SceneFactory::create());
@@ -208,33 +331,34 @@ asf::auto_release_ptr<asr::Project> build_project()
     // Geometry
     //------------------------------------------------------------------------
 
-    // Load the scene geometry from disk.
-    asr::MeshObjectArray objects;
-    asr::MeshObjectReader::read(
-	project->search_paths(),
-	"cube",
-	asr::ParamArray()
-	.insert("filename", "scene.obj"),
-	objects);
-
-    // Insert all the objects into the assembly.
-    for (size_t i = 0; i < objects.size(); ++i) {
-	// Insert this object into the scene.
-	asr::MeshObject* object = objects[i];
-	assembly->objects().insert(asf::auto_release_ptr<asr::Object>(object));
-
-	// Create an instance of this object and insert it into the assembly.
-	const std::string instance_name = std::string(object->get_name()) + "_inst";
-	assembly->object_instances().insert(
-	    asr::ObjectInstanceFactory::create(
-		instance_name.c_str(),
-		asr::ParamArray(),
-		object->get_name(),
-		asf::Transformd::identity(),
-		asf::StringDictionary()
-		.insert("default", "gray_material")
-		.insert("default2", "gray_material")));
+    // Load the brlcad geometry
+    renderer::ParamArray geometry_parameters = asr::ParamArray()
+					       .insert("database_path", file)
+					       .insert("object_count", objc);
+    for (int i = 0; i < objc; i++)
+    {
+	std::string obj_num = std::string("object.") + std::to_string(i + 1);
+	std::string obj_name = std::string(objv[i]);
+	geometry_parameters.insert_path(obj_num, obj_name);
     }
+
+    asf::auto_release_ptr<renderer::Object> brlcad_object(
+	new BrlcadObject{"brlcad geometry",
+			 geometry_parameters,
+			 &APP, resources});
+    assembly->objects().insert(brlcad_object);
+
+    const std::string instance_name = "brlcad_inst";
+    assembly->object_instances().insert(
+	asr::ObjectInstanceFactory::create(
+	    instance_name.c_str(),
+	    asr::ParamArray(),
+	    "brlcad geometry",
+	    asf::Transformd::identity(),
+	    asf::StringDictionary()
+	    .insert("default", "gray_material")
+	    .insert("default2", "gray_material")));
+
 
     //------------------------------------------------------------------------
     // Light
@@ -321,12 +445,13 @@ asf::auto_release_ptr<asr::Project> build_project()
     // Camera
     //------------------------------------------------------------------------
 
-    // Create a pinhole camera with film dimensions 0.980 x 0.735 in (24.892 x 18.669 mm).
+    // Create a pinhole camera with film dimensions
+    bu_vls_sprintf(&dimensions, "%f %f", 0.08 * (double) width / height, 0.08);
     asf::auto_release_ptr<asr::Camera> camera(
 	asr::PinholeCameraFactory().create(
 	    "camera",
 	    asr::ParamArray()
-	    .insert("film_dimensions", "0.024892 0.018669")
+	    .insert("film_dimensions", bu_vls_cstr(&dimensions))
 	    .insert("focal_length", "0.035")));
 
     // Place and orient the camera. By default cameras are located in (0.0, 0.0, 0.0)
@@ -334,8 +459,10 @@ asf::auto_release_ptr<asr::Project> build_project()
     camera->transform_sequence().set_transform(
 	0.0f,
 	asf::Transformd::from_local_to_parent(
-	    asf::Matrix4d::make_rotation(asf::Vector3d(1.0, 0.0, 0.0), asf::deg_to_rad(-20.0)) *
-	    asf::Matrix4d::make_translation(asf::Vector3d(0.0, 0.8, 11.0))));
+	    asf::Matrix4d::make_translation(asf::Vector3d(eye_model[0], eye_model[2], -eye_model[1])) * /* camera location */
+	    asf::Matrix4d::make_rotation(asf::Vector3d(0.0, 1.0, 0.0), asf::deg_to_rad(azimuth - 270)) * /* azimuth */
+	    asf::Matrix4d::make_rotation(asf::Vector3d(1.0, 0.0, 0.0), asf::deg_to_rad(-elevation)) /* elevation */
+	));
 
     // Bind the camera to the scene.
     scene->cameras().insert(camera);
@@ -345,12 +472,13 @@ asf::auto_release_ptr<asr::Project> build_project()
     //------------------------------------------------------------------------
 
     // Create a frame and bind it to the project.
+    bu_vls_sprintf(&dimensions, "%d %d", width, height);
     project->set_frame(
 	asr::FrameFactory::create(
 	    "beauty",
 	    asr::ParamArray()
 	    .insert("camera", "camera")
-	    .insert("resolution", "640 480")));
+	    .insert("resolution", bu_vls_cstr(&dimensions))));
 
     // Bind the scene to the project.
     project->set_scene(scene);
@@ -358,13 +486,10 @@ asf::auto_release_ptr<asr::Project> build_project()
     return project;
 }
 
+
 int
 main(int argc, char **argv)
 {
-    if (argc > 1) {
-	bu_log("TODO: %s is currently only a demo, doesn't accept a .g file and objects...\n", argv[0]);
-    }
-
     // Create a log target that outputs to stderr, and binds it to the renderer's global logger.
     // Eventually you will probably want to redirect log messages to your own target. For this
     // you will need to implement foundation::ILogTarget (foundation/utility/log/ilogtarget.h).
@@ -373,9 +498,94 @@ main(int argc, char **argv)
 
     // Print appleseed's version string.
     RENDERER_LOG_INFO("%s", asf::Appleseed::get_synthetic_version_string());
+    
+    struct rt_i* rtip;
+    const char* title_file = NULL, * title_obj = NULL;	/* name of file and first object */
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    int objs_free_argv = 0;
+
+    /* Process command line options */
+    int i = get_args(argc, (const char**)argv);
+    if (i < 0) {
+	usage(argv[0], 0);
+	return 1;
+    }
+    else if (i == 0) {
+	usage(argv[0], 100);
+	return 0;
+    }
+
+    if (bu_optind >= argc) {
+	RENDERER_LOG_INFO("%s: BRL-CAD geometry database not specified\n", argv[0]);
+	usage(argv[0], 0);
+	return 1;
+    }
+
+    title_file = argv[bu_optind];
+    title_obj = argv[bu_optind + 1];
+    if (!objv) {
+	objc = argc - bu_optind - 1;
+	if (objc) {
+	    objv = (char **)&(argv[bu_optind+1]);
+	} else {
+	    /* No objects in either input file or argv - try getting objs from
+	     * command processing.  Initialize the table. */
+	    BU_GET(cmd_objs, struct bu_ptbl);
+	    bu_ptbl_init(cmd_objs, 8, "initialize cmdobjs table");
+	}
+    } else {
+	objs_free_argv = 1;
+    }
+
+    bu_vls_from_argv(&str, objc, (const char**)objv);
+
+    resources = static_cast<resource*>(bu_calloc(1, sizeof(resource) * MAX_PSW, "appleseed"));
+    char title[1024] = { 0 };
+
+    /* load the specified geometry database */
+    rtip = rt_dirbuild(title_file, title, sizeof(title));
+    if (rtip == RTI_NULL)
+    {
+	RENDERER_LOG_INFO("building the database directory for [%s] FAILED\n", title_file);
+	return -1;
+    }
+
+    for (int i = 0; i < MAX_PSW; i++) {
+	rt_init_resource(&resources[i], i, rtip);
+	RT_CK_RESOURCE(&resources[i]);
+    }
+
+    /* print optional title */
+    if (title[0])
+    {
+	RENDERER_LOG_INFO("database title: %s\n", title);
+    }
+
+    /* include objects from database */
+    if (rt_gettrees(rtip, objc, (const char**)objv, npsw) < 0)
+    {
+	RENDERER_LOG_INFO("loading the geometry for [%s...] FAILED\n", objv[0]);
+	return -1;
+    }
+
+    /* prepare database for raytracing */
+    if (rtip->needprep)
+	rt_prep_parallel(rtip, 1);
+
+    /* initialize values in application struct */
+    RT_APPLICATION_INIT(&APP);
+
+    /* configure raytrace application */
+    APP.a_rt_i = rtip;
+    APP.a_onehit = -1;
+    APP.a_hit = brlcad_hit;
+    APP.a_miss = brlcad_miss;
+
+    do_ae(azimuth, elevation);
+    RENDERER_LOG_INFO("View model: (%f, %f, %f)", eye_model[0], -eye_model[2], eye_model[1]);
 
     // Build the project.
-    asf::auto_release_ptr<asr::Project> project(build_project());
+    asf::auto_release_ptr<asr::Project> project(build_project(title_file, bu_vls_cstr(&str)));
 
     // Create the master renderer.
     asr::DefaultRendererController renderer_controller;
@@ -390,10 +600,10 @@ main(int argc, char **argv)
     renderer->render(renderer_controller);
 
     // Save the frame to disk.
-    project->get_frame()->write_main_image("output/test.png");
+    project->get_frame()->write_main_image(outputfile);
 
     // Save the project to disk.
-    asr::ProjectFileWriter::write(project.ref(), "output/test.appleseed");
+    asr::ProjectFileWriter::write(project.ref(), "output/objects.appleseed");
 
     // Make sure to delete the master renderer before the project and the logger / log target.
     renderer.reset();
