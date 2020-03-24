@@ -1,3 +1,8 @@
+TODO - investigate changes for Z_PREFIX work from:
+
+https://github.com/madler/zlib/pull/323/commits/58b79f449eb2d2deb0388c63fdfa18429e1eb70a
+
+
 ZLIB DATA COMPRESSION LIBRARY
 
 zlib 1.2.11 is a general purpose data compression library.  All the code is
