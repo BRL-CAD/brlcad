@@ -32,8 +32,11 @@ configure_file(${BRLCAD_CMAKE_DIR}/rpath_replace.cxx.in ${CMAKE_CURRENT_BINARY_D
 add_executable(rpath_replace ${CMAKE_CURRENT_BINARY_DIR}/rpath_replace.cxx)
 
 function(ExternalProject_ByProducts extproj E_IMPORT_PREFIX)
+
   cmake_parse_arguments(E "FIXPATH" "" "" ${ARGN})
+
   if (EXTPROJ_VERBOSE)
+
     list(LENGTH E_UNPARSED_ARGUMENTS FCNT)
     if (E_FIXPATH)
       if (FCNT GREATER 1)
@@ -48,21 +51,29 @@ function(ExternalProject_ByProducts extproj E_IMPORT_PREFIX)
 	message("${extproj}: Adding install rules for ${FCNT} byproduct")
       endif (FCNT GREATER 1)
     endif (E_FIXPATH)
+
   endif (EXTPROJ_VERBOSE)
+
   foreach (bpf ${E_UNPARSED_ARGUMENTS})
-    set(I_IMPORT_PREFIX ${CMAKE_BINARY_DIR}/${E_IMPORT_PREFIX})
-    get_filename_component(BPF_DIR "${bpf}" DIRECTORY)
+
     set(D_IMPORT_PREFIX "${E_IMPORT_PREFIX}")
+    get_filename_component(BPF_DIR "${bpf}" DIRECTORY)
     if (BPF_DIR)
       set(D_IMPORT_PREFIX "${D_IMPORT_PREFIX}/${BPF_DIR}")
     endif (BPF_DIR)
+
+    set(I_IMPORT_PREFIX ${CMAKE_BINARY_DIR}/${E_IMPORT_PREFIX})
     install(FILES "${I_IMPORT_PREFIX}/${bpf}" DESTINATION "${D_IMPORT_PREFIX}/")
     if (E_FIXPATH)
       # Note - proper quoting for install(CODE) is extremely important for CPack, see
       # https://stackoverflow.com/a/48487133
       install(CODE "execute_process(COMMAND ${CMAKE_BINARY_DIR}/${BIN_DIR}/buildpath_replace${CMAKE_EXECUTABLE_SUFFIX} \"\${CMAKE_INSTALL_PREFIX}/${E_IMPORT_PREFIX}/${bpf}\")")
     endif (E_FIXPATH)
+
+    DISTCLEAN("${I_IMPORT_PREFIX}/${bpf}")
+
   endforeach (bpf ${E_UNPARSED_ARGUMENTS})
+
 endfunction(ExternalProject_ByProducts)
 
 
