@@ -26,58 +26,6 @@
 #
 #-----------------------------------------------------------------------
 
-# Clear all BRL-CAD defined CMake flags
-CLEAR_BUILD_FLAGS()
-
-# Restore CMake's original flags
-RESTORE_CACHED_BUILD_FLAGS(_CMAKE_DEFAULT)
-
-# Quiet all warnings in this directory
-DISABLE_WARNINGS()
-
-# For src/other, be liberal about standards
-unset(CMAKE_C_EXTENSIONS)
-unset(CMAKE_C_STANDARD_REQUIRED)
-unset(CMAKE_C_STANDARD)
-unset(CMAKE_CXX_EXTENSIONS)
-unset(CMAKE_CXX_STANDARD_REQUIRED)
-unset(CMAKE_CXX_STANDARD)
-
-###############################################################################
-# Unlike the misc/tools directory components built in src/other are part of
-# the distribution, not just the compilation.  Hence we need to make sure of
-# some basic compatibility between the build settings.
-
-# We don't want to try to mix 32 and 64 bit builds so despite clearing the
-# parent build flags,  set the 32/64 bit flag specifically if we have it from
-# the parent build.
-if(${CMAKE_WORD_SIZE} MATCHES "64BIT" AND NOT CMAKE_CL_64 AND DEFINED 64BIT_FLAG)
-  ADD_NEW_FLAG(C 64BIT_FLAG ALL)
-  ADD_NEW_FLAG(CXX 64BIT_FLAG ALL)
-  ADD_NEW_FLAG(SHARED_LINKER 64BIT_FLAG ALL)
-  ADD_NEW_FLAG(EXE_LINKER 64BIT_FLAG ALL)
-endif(${CMAKE_WORD_SIZE} MATCHES "64BIT" AND NOT CMAKE_CL_64 AND DEFINED 64BIT_FLAG)
-if(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND NOT MSVC AND DEFINED 32BIT_FLAG)
-  ADD_NEW_FLAG(C 32BIT_FLAG ALL)
-  ADD_NEW_FLAG(CXX 32BIT_FLAG ALL)
-  ADD_NEW_FLAG(SHARED_LINKER 32BIT_FLAG ALL)
-  ADD_NEW_FLAG(EXE_LINKER 32BIT_FLAG ALL)
-endif(${CMAKE_WORD_SIZE} MATCHES "32BIT" AND NOT MSVC AND DEFINED 32BIT_FLAG)
-
-###############################################################################
-
-# Set a variable that will tell build logic in subdirectories that there is a
-# parent build.  This will in some cases disable attempts to define settings
-# such as RPATH values that we need the parent build to manage.
-set(HAVE_PARENT_BUILD 1)
-
-# Ideally we wouldn't need this, but in a few cases we're using BRL-CAD's
-# include dirs.
-include_directories(
-  "${BRLCAD_BINARY_DIR}/include"
-  "${BRLCAD_SOURCE_DIR}/include"
-  )
-
 # Most third party items have a list calling out files for distcheck -
 # these are stored in files in the dlists directory.  Ignore that
 # directory for distcheck
@@ -177,7 +125,7 @@ if(BRLCAD_LZ4_BUILD)
   BRLCAD_MANAGE_FILES(lz4/lz4hc.h ${INCLUDE_DIR})
 endif(BRLCAD_LZ4_BUILD)
 
-
+if (0)
 # FreeType Libraries
 set(freetype_DESCRIPTION "
 Option for enabling and disabling compilation of the FreeType
@@ -220,6 +168,7 @@ mark_as_advanced(FREETYPE_INCLUDE_DIRS)
 mark_as_advanced(FREETYPE_INCLUDE_DIR_freetype2)
 mark_as_advanced(FREETYPE_INCLUDE_DIR_ft2build)
 mark_as_advanced(FREETYPE_LIBRARIES)
+endif (0)
 
 # --------------------------------------------------------------------
 # libtermlib Library Only on WIN32 will the combination of the build
@@ -380,6 +329,7 @@ mark_as_advanced(PNG_SHARED)
 mark_as_advanced(PNG_STATIC)
 mark_as_advanced(uname_executable)
 
+if (0)
 
 # libutahrle Library - The directory to perform ADD_SUBDIRECTORY on
 # and the include directory for utahrle are different, so override the
@@ -1238,6 +1188,8 @@ CMAKEFILES_IN_DIR(gct_ignore_files gct)
 # linenoise is used by applications directly
 include(${CMAKE_CURRENT_SOURCE_DIR}/linenoise.dist)
 CMAKEFILES_IN_DIR(linenoise_ignore_files linenoise)
+
+endif (0)
 
 # Eigen is header only
 include("${CMAKE_CURRENT_SOURCE_DIR}/Eigen.dist")
