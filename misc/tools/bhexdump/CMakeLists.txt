@@ -33,7 +33,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 ###
 
-project(HEXDUMP)
+project(BHEXDUMP)
 
 cmake_minimum_required(VERSION 3.12)
 
@@ -46,8 +46,8 @@ if (NOT DEFINED BIN_DIR)
   set(BIN_DIR bin)
 endif (NOT DEFINED BIN_DIR)
 
-add_executable(hexdump hexdump.c)
-set_property(TARGET hexdump APPEND PROPERTY COMPILE_DEFINITIONS "HEXDUMP_MAIN")
+add_executable(bhexdump hexdump.c)
+set_property(TARGET bhexdump APPEND PROPERTY COMPILE_DEFINITIONS "HEXDUMP_MAIN")
 
 # Local Variables:
 # tab-width: 8
