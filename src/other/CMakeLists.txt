@@ -65,8 +65,10 @@ THIRD_PARTY(libregex REGEX regex regex_DESCRIPTION ALIASES ENABLE_REGEX)
 
 if (${CMAKE_PROJECT_NAME}_REGEX_BUILD)
 
-  CHECK_LIBRARY_EXISTS(c regcomp "" HAVE_LIBC_REGEX)
+  check_library_exists(c regcomp "" HAVE_LIBC_REGEX)
+
   if (BUILD_SHARED_LIBS AND HAVE_LIBC_REGEX AND "${BRLCAD_REGEX}" MATCHES "BUNDLED")
+
     # Our tests indicate that the system libc defines regex symbols, but
     # we're still building with our local libregex.
     #
@@ -74,18 +76,9 @@ if (${CMAKE_PROJECT_NAME}_REGEX_BUILD)
     # to guarantee that our libregex symbols will override libc. We'll
     # avoid the issue by renaming our libregex symbols to be
     # incompatible with libc.
-
-    # First we add definitions to our config file to rename all of the
-    # regex function calls in our first-party code.
-    set(REGEX_PREFIX libregex_)
-    CONFIG_H_APPEND(BRLCAD "#define regcomp  ${REGEX_PREFIX}regcomp\n")
-    CONFIG_H_APPEND(BRLCAD "#define regerror ${REGEX_PREFIX}regerror\n")
-    CONFIG_H_APPEND(BRLCAD "#define regexec  ${REGEX_PREFIX}regexec\n")
-    CONFIG_H_APPEND(BRLCAD "#define regfree  ${REGEX_PREFIX}regfree\n")
-
     ExternalProject_Add(REGEX_BLD
       SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libregex"
-      CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DREGEX_PREFIX_STR=${REGEX_PREFIX}
+      CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DREGEX_PREFIX_STR=libregex_
       )
 
   else (BUILD_SHARED_LIBS AND HAVE_LIBC_REGEX AND "${BRLCAD_REGEX}" MATCHES "BUNDLED")
@@ -108,34 +101,65 @@ if (${CMAKE_PROJECT_NAME}_REGEX_BUILD)
     regex.h
     )
 
+  set(REGEX_LIBRARIES regex CACHE STRING "Building bundled libregex" FORCE)
+  set(REGEX_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing regex headers." FORCE)
+
+  SetTargetFolder(REGEX_BLD "Third Party Libraries")
+  SetTargetFolder(regex "Third Party Libraries")
+
 endif (${CMAKE_PROJECT_NAME}_REGEX_BUILD)
 
-if (0)
-# Same deal for zlib Library - common requirement, deal with it up front
-set(zlib_DESCRIPTION "
+###############################################################################
+#                                 Zlib
+###############################################################################
+
+set (zlib_DESCRIPTION "
 Option for enabling and disabling compilation of the zlib library
 provided with BRL-CAD's source distribution.  Default is AUTO,
 responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
 first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-set(Z_PREFIX_STR "brl_")
-THIRD_PARTY(libz ZLIB zlib zlib_DESCRIPTION ALIASES ENABLE_ZLIB ENABLE_LIBZ FIND_NAME BRLCADZLIB)
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libz/CTestTestfile.cmake")
-SetTargetFolder(zlib "Third Party Libraries")
-SetTargetFolder(zlib-static "Third Party Libraries")
-SetTargetFolder(example "Third Party Executables")
-SetTargetFolder(minigzip "Third Party Executables")
-if(BRLCAD_ZLIB_BUILD)
-  add_definitions(-DZ_PREFIX)
-  add_definitions(-DZ_PREFIX_STR=${Z_PREFIX_STR})
-  set(Z_PREFIX_STR "${Z_PREFIX_STR}" CACHE STRING "prefix for zlib functions" FORCE)
-  BRLCAD_MANAGE_FILES(${CMAKE_CURRENT_BINARY_DIR}/libz/zlib.h ${INCLUDE_DIR})
-  BRLCAD_MANAGE_FILES(${CMAKE_CURRENT_BINARY_DIR}/libz/zconf.h ${INCLUDE_DIR})
-else(BRLCAD_ZLIB_BUILD)
-  set(Z_PREFIX_STR "" CACHE STRING "clear prefix for zlib functions" FORCE)
-  set(Z_PREFIX_STR)
-endif(BRLCAD_ZLIB_BUILD)
 
+THIRD_PARTY(libz ZLIB zlib zlib_DESCRIPTION ALIASES ENABLE_ZLIB ENABLE_LIBZ)
+
+if (${CMAKE_PROJECT_NAME}_ZLIB_BUILD)
+
+  set(ZLIB_VERSION 1.2.11)
+
+  ExternalProject_Add(ZLIB_BLD
+    SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libz"
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DZ_PREFIX_STR=brl_
+    )
+  if (NOT MSVC)
+    ExternalProject_Target(zlib ZLIB_BLD
+      OUTPUT_FILE libz${CMAKE_SHARED_LIBRARY_SUFFIX}.${ZLIB_VERSION}
+      STATIC_OUTPUT_FILE libz${CMAKE_STATIC_LIBRARY_SUFFIX}
+      SYMLINKS "${LIB_DIR}/libz${CMAKE_SHARED_LIBRARY_SUFFIX};${LIB_DIR}/libz${CMAKE_SHARED_LIBRARY_SUFFIX}.1"
+      LINK_TARGET "libz${CMAKE_SHARED_LIBRARY_SUFFIX}"
+      )
+  else (NOT MSVC)
+    ExternalProject_Target(zlib ZLIB_BLD
+      OUTPUT_FILE zlib${CMAKE_SHARED_LIBRARY_SUFFIX}
+      STATIC_OUTPUT_FILE zlibstatic${CMAKE_STATIC_LIBRARY_SUFFIX}
+      LINK_TARGET_DEBUG "zlibd${CMAKE_SHARED_LIBRARY_SUFFIX}"
+      STATIC_LINK_TARGET_DEBUG "zlibstaticd${CMAKE_STATIC_LIBRARY_SUFFIX}"
+      )
+  endif (NOT MSVC)
+
+  ExternalProject_ByProducts(ZLIB_BLD ${INCLUDE_DIR}
+    zconf.h
+    zlib.h
+    )
+
+  set(ZLIB_LIBRARIES zlib CACHE STRING "Building bundled zlib" FORCE)
+  set(ZLIB_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing zlib headers." FORCE)
+
+  SetTargetFolder(ZLIB_BLD "Third Party Libraries")
+  SetTargetFolder(zlib "Third Party Libraries")
+
+endif (${CMAKE_PROJECT_NAME}_ZLIB_BUILD)
+
+if (0)
 # LZ4 compression/decompression library
 set(lz4_DESCRIPTION "
 Option for enabling and disabling compilation of the lz4 data
