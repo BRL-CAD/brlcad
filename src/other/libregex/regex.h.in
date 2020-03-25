@@ -156,6 +156,23 @@ typedef struct {
 #define	REG_LARGE	01000	/* force large representation */
 #define	REG_BACKR	02000	/* force use of backref code */
 
+#cmakedefine REGEX_PREFIX 1
+#cmakedefine REGEX_PREFIX_STR @REGEX_PREFIX_STR@
+#ifdef REGEX_PREFIX
+/* Allow a user configurable prefix string, defaulting to "z_" */
+#  if !defined(REGEX_PREFIX_STR)
+#    define REGEX_PREFIX_STR regex_
+#  endif
+#  define REGEXLIB_CONCAT2(a, b) a ## b
+#  define REGEXLIB_CONCAT(a, b) REGEXLIB_CONCAT2(a,b)
+#  define REGEX_ADD_PREFIX(b) REGEXLIB_CONCAT(REGEX_PREFIX_STR,b)
+
+#  define regcomp  REGEX_ADD_PREFIX(regcomp)
+#  define regerror REGEX_ADD_PREFIX(regerror)
+#  define regexec  REGEX_ADD_PREFIX(regexec)
+#  define regfree  REGEX_ADD_PREFIX(regfree)
+#endif
+
 __BEGIN_DECLS
 REGEX_EXPORT int	regcomp (regex_t *, const char *, int);
 REGEX_EXPORT size_t	regerror (int, const regex_t *, char *, size_t);
