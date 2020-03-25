@@ -263,10 +263,6 @@ routines needed for the manipulation and analysis of Non-Uniform
 Rational BSpline based boundary representations.
 	Depends on: libbg libbn libbu OpenNURBS
 
-libcursor: The cursor library is a lightweight cursor manipulation
-library similar to curses but with less overhead.
-	Depends on: termlib
-
 libdm: The display manager library contains the logic for generalizing
 a drawable context.  This includes the ability to output
 drawing/plotting instructions to a variety of devices such as X11,
