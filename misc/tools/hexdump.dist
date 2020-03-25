@@ -1,0 +1,6 @@
+set(hexdump_ignore_files
+CMakeLists.txt
+README.md
+hexdump.c
+hexdump.h
+)
