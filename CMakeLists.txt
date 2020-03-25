@@ -3193,6 +3193,8 @@ endif(BRLCAD_PRINT_MSGS)
 include(CTest)
 mark_as_advanced(BUILD_TESTING)
 
+if (0)
+
 # We've done the toplevel configure steps, now add the subdirectories
 function(verbose_add_subdirectory root dir)
     if(BRLCAD_PRINT_MSGS)
@@ -3699,6 +3701,8 @@ add_custom_target(print-warning-message ${CMAKE_COMMAND} -E echo ""
   )
 set_target_properties(print-warning-message PROPERTIES FOLDER "Compilation Utilities")
 add_test(NAME "NOTE:\\ some\\ 'test'\\ tests\\ are\\ expected\\ to\\ fail,\\ 'regress'\\ must\\ pass" COMMAND ${CMAKE_COMMAND} --build . --target print-warning-message)
+
+endif (0)
 
 # Local Variables:
 # tab-width: 8
