@@ -1,4 +1,4 @@
-set(hexdump_ignore_files
+set(bhexdump_ignore_files
 CMakeLists.txt
 README.md
 hexdump.c
