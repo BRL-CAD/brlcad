@@ -78,7 +78,7 @@ if (${CMAKE_PROJECT_NAME}_REGEX_BUILD)
     # incompatible with libc.
     ExternalProject_Add(REGEX_BLD
       SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libregex"
-      CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DREGEX_PREFIX_STR=libregex_
+      CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR} -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DREGEX_PREFIX_STR=libregex_
       )
 
   else (BUILD_SHARED_LIBS AND HAVE_LIBC_REGEX AND "${BRLCAD_REGEX}" MATCHES "BUNDLED")
@@ -128,7 +128,7 @@ if (${CMAKE_PROJECT_NAME}_ZLIB_BUILD)
 
   ExternalProject_Add(ZLIB_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libz"
-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DZ_PREFIX_STR=brl_
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR} -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DZ_PREFIX_STR=brl_
     )
   if (NOT MSVC)
     ExternalProject_Target(zlib ZLIB_BLD
@@ -159,8 +159,10 @@ if (${CMAKE_PROJECT_NAME}_ZLIB_BUILD)
 
 endif (${CMAKE_PROJECT_NAME}_ZLIB_BUILD)
 
-if (0)
-# LZ4 compression/decompression library
+###############################################################################
+#                 LZ4 compression/decompression library
+###############################################################################
+
 set(lz4_DESCRIPTION "
 Option for enabling and disabling compilation of the lz4 data
 compression library provided with BRL-CAD's source code.  Default
@@ -169,16 +171,32 @@ testing first for a system version if BRLCAD_BUNDLED_LIBS is also
 AUTO.
 ")
 THIRD_PARTY(lz4 LZ4 lz4 lz4_DESCRIPTION ALIASES ENABLE_LZ4 FLAGS NOSYS)
-if(BRLCAD_LZ4_BUILD)
-  set(LIBLZ4_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/lz4" CACHE STRING "Directory containing lz4 headers." FORCE)
-  mark_as_advanced(LIBLZ4_INCLUDE_DIR)
+
+if (${CMAKE_PROJECT_NAME}_LZ4_BUILD)
+
+  ExternalProject_Add(LZ4_BLD
+    SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lz4"
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR} -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} 
+    )
+  ExternalProject_Target(lz4 LZ4_BLD
+    OUTPUT_FILE liblz4${CMAKE_SHARED_LIBRARY_SUFFIX}
+    STATIC_OUTPUT_FILE liblz4${CMAKE_STATIC_LIBRARY_SUFFIX}
+    RPATH
+    )
+
+  ExternalProject_ByProducts(LZ4_BLD ${INCLUDE_DIR}
+    lz4.h
+    lz4hc.h
+    lz4frame.h
+    )
+
+  set(LZ4_LIBRARIES lz4 CACHE STRING "Building bundled lz4" FORCE)
+  set(LZ4_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing lz4 headers." FORCE)
+
+  SetTargetFolder(LZ4_BLD "Third Party Libraries")
   SetTargetFolder(lz4 "Third Party Libraries")
-  SetTargetFolder(lz4-static "Third Party Libraries")
-  BRLCAD_MANAGE_FILES(lz4/lz4.h ${INCLUDE_DIR})
-  BRLCAD_MANAGE_FILES(lz4/lz4frame.h ${INCLUDE_DIR})
-  BRLCAD_MANAGE_FILES(lz4/lz4hc.h ${INCLUDE_DIR})
-endif(BRLCAD_LZ4_BUILD)
-endif (0)
+
+endif (${CMAKE_PROJECT_NAME}_LZ4_BUILD)
 
 if (0)
 # FreeType Libraries

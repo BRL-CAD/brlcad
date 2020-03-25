@@ -31,50 +31,74 @@
 
 #---------------------------------------------------------------------
 # The following logic is what allows binaries to run successfully in
-# the build directory AND install directory.  Thanks to plplot for
-# identifying the necessity of setting CMAKE_INSTALL_NAME_DIR on OSX.
-# Documentation of these options is available at
+# the build directory AND install directory.
 # http://www.cmake.org/Wiki/CMake_RPATH_handling
+
+include(CMakeParseArguments)
 
 if(NOT COMMAND cmake_set_rpath)
 
   function(cmake_set_rpath)
 
-    if(NOT CMAKE_RPATH_SET)
+    # See if we have a suffix for the paths
+    cmake_parse_arguments(R "" "SUFFIX" "" ${ARGN})
 
-      # We want the full RPATH set in the build tree so we can run programs without
-      # needing to set LD_LIBRARY_PATH
-      set(CMAKE_SKIP_BUILD_RPATH FALSE PARENT_SCOPE)
+    # We want the full RPATH set in the build tree so we can run programs without
+    # needing to set LD_LIBRARY_PATH
+    set(CMAKE_SKIP_BUILD_RPATH FALSE PARENT_SCOPE)
 
-      # We DON'T want the final install directory RPATH set in the build directory
-      # - it should only be set to the installation value when actually installed.
-      set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE PARENT_SCOPE)
+    # We DON'T want the final install directory RPATH set in the build directory
+    # - it should only be set to the installation value when actually installed.
+    set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE PARENT_SCOPE)
 
-      # Set RPATH value to use when installing.  This should be set to always
-      # prefer the version in the installed path when possible, but fall back on a
-      # location relative to the loading file's path if the installed version is
-      # not present.  How to do so is platform specific.
+    # Add the automatically determined parts of the RPATH which point to
+    # directories outside the build tree to the install RPATH
+    set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE PARENT_SCOPE)
+
+
+    # Set RPATH value to use when installing.  This should be set to always
+    # prefer the version in the installed path when possible, but fall back on a
+    # location relative to the loading file's path if the installed version is
+    # not present.  How to do so is platform specific.
+    if(NOT R_SUFFIX)
       if(NOT APPLE)
-	set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}:\$ORIGIN/../${LIB_DIR}" PARENT_SCOPE)
+	set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}:\$ORIGIN/../${LIB_DIR}")
       else(NOT APPLE)
-	set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR};@loader_path/../${LIB_DIR}" PARENT_SCOPE)
+	set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR};@loader_path/../${LIB_DIR}")
       endif(NOT APPLE)
+    else(NOT R_SUFFIX)
+      if(NOT APPLE)
+	set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}/${R_SUFFIX}:\$ORIGIN/../${LIB_DIR}/${R_SUFFIX}")
+      else(NOT APPLE)
+	set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}/${R_SUFFIX};@loader_path/../${LIB_DIR}/${R_SUFFIX}")
+      endif(NOT APPLE)
+    endif(NOT R_SUFFIX)
 
-      # On OSX, we need to set INSTALL_NAME_DIR instead of RPATH for CMake < 3.0
-      # http://www.cmake.org/cmake/help/cmake-2-8-docs.html#variable:CMAKE_INSTALL_NAME_DIR
-      # http://www.cmake.org/cmake/help/v3.2/policy/CMP0042.html
-      if ("${CMAKE_VERSION}" VERSION_LESS 3.0)
-	set(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}" PARENT_SCOPE)
-      endif ("${CMAKE_VERSION}" VERSION_LESS 3.0)
+    # Determine what the build time RPATH will be that is used to support
+    # CMake's RPATH manipulation, so it can be used in external projects.
+    if(NOT R_SUFFIX)
+      set(CMAKE_BUILD_RPATH "${CMAKE_BINARY_DIR}/${LIB_DIR}")
+    else(NOT R_SUFFIX)
+      set(CMAKE_BUILD_RPATH "${CMAKE_BINARY_DIR}/${LIB_DIR}/${suffix}")
+    endif(NOT R_SUFFIX)
+    string(LENGTH "${CMAKE_INSTALL_RPATH}" INSTALL_LEN)
+    string(LENGTH "${CMAKE_BUILD_RPATH}" CURR_LEN)
+    while("${CURR_LEN}" LESS "${INSTALL_LEN}")
+      # This is the key to the process - the ":" characters appended to the
+      # build time path result in a path string in the compile outputs that
+      # has sufficient length to hold the install directory, while is what
+      # allows CMake's file command to manipulate the paths.  At the same time,
+      # the colon lengthened paths do not break the functioning of the shorter
+      # build path.  Normally this is an internal CMake detail, but we need it
+      # to supply to external build systems so their outputs can be manipulated
+      # as if they were outputs of our own build.
+      set(CMAKE_BUILD_RPATH "${CMAKE_BUILD_RPATH}:")
+      string(LENGTH "${CMAKE_BUILD_RPATH}" CURR_LEN)
+    endwhile("${CURR_LEN}" LESS "${INSTALL_LEN}")
 
-      # Add the automatically determined parts of the RPATH which point to
-      # directories outside the build tree to the install RPATH
-      set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE PARENT_SCOPE)
-
-      # RPATH setup is now complete
-      set(CMAKE_RPATH_SET 1 PARENT_SCOPE)
-
-    endif(NOT CMAKE_RPATH_SET)
+    # Done - let the parent know what the answers are
+    set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_RPATH}" PARENT_SCOPE)
+    set(CMAKE_BUILD_RPATH "${CMAKE_BUILD_RPATH}" PARENT_SCOPE)
 
   endfunction(cmake_set_rpath)
 
