@@ -62,7 +62,30 @@
   *
   */
 
-  /* appleseed.renderer headers */
+#include "common.h"
+
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic push
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#endif
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic ignored "-Wfloat-equal"
+#  pragma GCC diagnostic ignored "-Wunused-parameter"
+#  pragma GCC diagnostic ignored "-Wpedantic"
+#  pragma GCC diagnostic ignored "-Wclass-memaccess"
+#  pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic ignored "-Wfloat-equal"
+#  pragma clang diagnostic ignored "-Wunused-parameter"
+#  pragma clang diagnostic ignored "-Wpedantic"
+#  pragma clang diagnostic ignored "-Wclass-memaccess"
+#  pragma clang diagnostic ignored "-Wignored-qualifiers"
+#endif
+
+/* appleseed.renderer headers */
 #include "renderer/api/object.h"
 #include "renderer/api/project.h"
 #include "renderer/api/rendering.h"
@@ -85,6 +108,14 @@
 /* appleseed.main headers */
 #include "main/dllvisibility.h"
 
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#endif
+
+
 /* standard library */
 #include <algorithm>
 #include <cmath>
@@ -96,7 +127,6 @@
 #include <thread>
 
 /* brlcad headers */
-#include "common.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "brlcadplugin.h"
@@ -108,13 +138,13 @@ FILE* output = fopen("print_statements.txt", "wb");
 
 /* brlcad raytrace hit callback */
 int
-brlcad_hit(struct application* ap, struct partition* PartHeadp, struct seg* UNUSED(segs))
+brlcad_hit(struct application* UNUSED(ap), struct partition* PartHeadp, struct seg* UNUSED(segs))
 {
     struct partition* pp;
     struct hit* hitp;
     struct soltab* stp;
 
-    point_t pt;
+    //point_t pt;
     vect_t inormal;
 
     pp = PartHeadp->pt_forw;
@@ -125,7 +155,7 @@ brlcad_hit(struct application* ap, struct partition* PartHeadp, struct seg* UNUS
     /* construct the actual (entry) hit-point from the ray and the
 	* distance to the intersection point (i.e., the 't' value).
 	*/
-    VJOIN1(pt, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir);
+    //VJOIN1(pt, ap->a_ray.r_pt, hitp->hit_dist, ap->a_ray.r_dir);
     brlcad_ray_info.distance = hitp->hit_dist;
 
     /* primitive we encountered on entry */
@@ -166,12 +196,12 @@ BrlcadObject::BrlcadObject(
 BrlcadObject:: BrlcadObject(
     const char* name,
     const asr::ParamArray& params,
-    struct application* ap, struct resource* resources)
+    struct application* p_ap, struct resource* p_resources)
     : asr::ProceduralObject(name, params)
 {
-    this->ap = ap;
-    this->rtip = ap->a_rt_i;
-    this->resources = resources;
+    this->ap = p_ap;
+    this->rtip = p_ap->a_rt_i;
+    this->resources = p_resources;
 }
 
 
@@ -180,7 +210,7 @@ void
 BrlcadObject::release()
 {
     bu_free(resources, "appleseed");
-    bu_free(ap, "appleseed");
+    //bu_free(ap, "appleseed");
     delete this;
 }
 
@@ -213,14 +243,14 @@ asr::GAABB3
 BrlcadObject::compute_local_bbox() const
 {
     // const auto r = static_cast<asr::GScalar>(get_uncached_radius());
-    struct rt_i* rtip = ap->a_rt_i;
-    if (rtip->needprep)
-	rt_prep_parallel(rtip, 1);
+    struct rt_i* l_rtip = ap->a_rt_i;
+    if (l_rtip->needprep)
+	rt_prep_parallel(l_rtip, 1);
 
-    fprintf(output, "Local Bounding Box: (%f, %f, %f) , (%f, %f, %f)\n", rtip->mdl_min[X], -rtip->mdl_min[Z], rtip->mdl_min[Y], rtip->mdl_max[X], -rtip->mdl_max[Z], rtip->mdl_max[Y]);
+    fprintf(output, "Local Bounding Box: (%f, %f, %f) , (%f, %f, %f)\n", l_rtip->mdl_min[X], -l_rtip->mdl_min[Z], l_rtip->mdl_min[Y], l_rtip->mdl_max[X], -l_rtip->mdl_max[Z], l_rtip->mdl_max[Y]);
     fflush(output);
 
-    return asr::GAABB3(asr::GVector3(rtip->mdl_min[X], -rtip->mdl_min[Z], rtip->mdl_min[Y]), asr::GVector3(rtip->mdl_max[X], -rtip->mdl_max[Z], rtip->mdl_max[Y]));
+    return asr::GAABB3(asr::GVector3(l_rtip->mdl_min[X], -l_rtip->mdl_min[Z], l_rtip->mdl_min[Y]), asr::GVector3(l_rtip->mdl_max[X], -l_rtip->mdl_max[Z], l_rtip->mdl_max[Y]));
     // return asr::GAABB3(asr::GVector3(-r), asr::GVector3(r));
 }
 
@@ -234,7 +264,7 @@ BrlcadObject::get_material_slot_count() const
 
 
 const char*
-BrlcadObject::get_material_slot(const size_t index) const
+BrlcadObject::get_material_slot(const size_t UNUSED(index)) const
 {
     return "default";
 }
@@ -248,7 +278,7 @@ BrlcadObject::intersect(
 {
     /* brlcad raytracing */
     int cpu = get_id();
-    ap->a_resource = &m_resources[cpu];
+    ap->a_resource = &resources[cpu];
 
     const asf::Vector3d dir = asf::normalize(ray.m_dir);
     VSET(ap->a_ray.r_dir, dir[0], -dir[2], dir[1]);
@@ -285,7 +315,7 @@ BrlcadObject::intersect(const asr::ShadingRay& ray) const
 {
     /* brlcad raytracing */
     int cpu = get_id();
-    ap->a_resource = &m_resources[cpu];
+    ap->a_resource = &resources[cpu];
 
     const asf::Vector3d dir = asf::normalize(ray.m_dir);
     VSET(ap->a_ray.r_dir, dir[0], -dir[2], dir[1]);
@@ -402,7 +432,7 @@ BrlcadObject::configure_raytrace_application(const char* path, int objc, std::ve
     /* include objects from database */
     if (rt_gettrees(rtip, objc, objv, npsw) < 0)
     {
-	fprintf(output, "Loading the geometry for [%s] FAILED\n", objects);
+	fprintf(output, "Loading the geometry for [%s] FAILED\n", objects[0].c_str());
 	fflush(output);
     }
 
@@ -489,8 +519,8 @@ bool
 BrlcadObjectFactory::create(
     const char* name,
     const asr::ParamArray& params,
-    const asf::SearchPaths& search_paths,
-    const bool omit_loading_assets,
+    const asf::SearchPaths& UNUSED(search_paths),
+    const bool UNUSED(omit_loading_assets),
     asr::ObjectArray& objects) const
 {
     objects.push_back(create(name, params).release());

@@ -138,7 +138,7 @@
 #include "raytrace.h"	    /* librt interface definitions */
 #include "bu/getopt.h"
 #include "bu/vls.h"
-#include "brlcadplugin.h"
+#include "art.h"
 
 struct application APP;
 struct resource* resources;
@@ -257,7 +257,7 @@ do_ae(double azim, double elev)
 namespace asf = foundation;
 namespace asr = renderer;
 
-asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* objects)
+asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* UNUSED(objects))
 {
     /* If user gave no sizing info at all, use 512 as default */
     struct bu_vls dimensions = BU_VLS_INIT_ZERO;
@@ -472,7 +472,7 @@ asf::auto_release_ptr<asr::Project> build_project(const char* file, const char* 
     //------------------------------------------------------------------------
 
     // Create a frame and bind it to the project.
-    bu_vls_sprintf(&dimensions, "%d %d", width, height);
+    bu_vls_sprintf(&dimensions, "%zd %zd", width, height);
     project->set_frame(
 	asr::FrameFactory::create(
 	    "beauty",
@@ -498,31 +498,32 @@ main(int argc, char **argv)
 
     // Print appleseed's version string.
     RENDERER_LOG_INFO("%s", asf::Appleseed::get_synthetic_version_string());
-    
+
     struct rt_i* rtip;
-    const char* title_file = NULL, * title_obj = NULL;	/* name of file and first object */
+    const char *title_file = NULL;
+    //const char *title_obj = NULL;	/* name of file and first object */
     struct bu_vls str = BU_VLS_INIT_ZERO;
-    int objs_free_argv = 0;
+    //int objs_free_argv = 0;
 
     /* Process command line options */
     int i = get_args(argc, (const char**)argv);
     if (i < 0) {
-	usage(argv[0], 0);
+	//usage(argv[0], 0);
 	return 1;
     }
     else if (i == 0) {
-	usage(argv[0], 100);
+	//usage(argv[0], 100);
 	return 0;
     }
 
     if (bu_optind >= argc) {
 	RENDERER_LOG_INFO("%s: BRL-CAD geometry database not specified\n", argv[0]);
-	usage(argv[0], 0);
+	//usage(argv[0], 0);
 	return 1;
     }
 
     title_file = argv[bu_optind];
-    title_obj = argv[bu_optind + 1];
+    //title_obj = argv[bu_optind + 1];
     if (!objv) {
 	objc = argc - bu_optind - 1;
 	if (objc) {
@@ -534,7 +535,7 @@ main(int argc, char **argv)
 	    bu_ptbl_init(cmd_objs, 8, "initialize cmdobjs table");
 	}
     } else {
-	objs_free_argv = 1;
+	//objs_free_argv = 1;
     }
 
     bu_vls_from_argv(&str, objc, (const char**)objv);
@@ -550,9 +551,9 @@ main(int argc, char **argv)
 	return -1;
     }
 
-    for (int i = 0; i < MAX_PSW; i++) {
-	rt_init_resource(&resources[i], i, rtip);
-	RT_CK_RESOURCE(&resources[i]);
+    for (int ic = 0; ic < MAX_PSW; ic++) {
+	rt_init_resource(&resources[ic], ic, rtip);
+	RT_CK_RESOURCE(&resources[ic]);
     }
 
     /* print optional title */
@@ -600,10 +601,13 @@ main(int argc, char **argv)
     renderer->render(renderer_controller);
 
     // Save the frame to disk.
+    char *default_out = bu_strdup("art.png");
+    outputfile = default_out;
     project->get_frame()->write_main_image(outputfile);
+    bu_free(default_out, "default name");
 
     // Save the project to disk.
-    asr::ProjectFileWriter::write(project.ref(), "output/objects.appleseed");
+    //asr::ProjectFileWriter::write(project.ref(), "output/objects.appleseed");
 
     // Make sure to delete the master renderer before the project and the logger / log target.
     renderer.reset();
