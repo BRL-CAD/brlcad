@@ -35,8 +35,26 @@ foreach(ITEM ${dlists})
   CMAKEFILES(${dlist})
 endforeach(ITEM ${dlists})
 
-# libregex library -  often needed by tools, so do this one first.
-set(regex_DESCRIPTION "
+
+# Use this variable to key both CMake messages and tools like rpath_replace
+if(NOT DEFINED EXTPROJ_VERBOSE)
+  set(EXTPROJ_VERBOSE 0)
+endif(NOT DEFINED EXTPROJ_VERBOSE)
+
+# ExternalProject_Add uses configure_file internally - we don't want warnings
+# about those files, so suppress our warning system
+set(SUPPRESS_GENERATED_TAG TRUE)
+
+# Custom patch utility for external RPath preparation
+include(ExternalProject)
+# Note- make sure CMAKE_BINARY_DIR and CMAKE_INSTALL_PREFIX are finalized BEFORE including this file!
+include(${BRLCAD_CMAKE_DIR}/ExternalProject_Target.cmake)
+
+###############################################################################
+#                               libregex
+###############################################################################
+
+set (regex_DESCRIPTION "
 Option for enabling and disabling compilation of the Regular
 Expression Library provided with BRL-CAD's source distribution.
 Default is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option
@@ -44,43 +62,55 @@ and testing first for a system version if BRLCAD_BUNDLED_LIBS is also
 AUTO.
 ")
 THIRD_PARTY(libregex REGEX regex regex_DESCRIPTION ALIASES ENABLE_REGEX)
-BRLCAD_INCLUDE_FILE(regex.h HAVE_REGEX_H)
-SetTargetFolder(regex "Third Party Libraries")
-SetTargetFolder(regex-static "Third Party Libraries")
-if(BRLCAD_REGEX_BUILD)
-  BRLCAD_MANAGE_FILES(libregex/regex.h ${INCLUDE_DIR})
-endif(BRLCAD_REGEX_BUILD)
 
-CHECK_LIBRARY_EXISTS(c regcomp "" HAVE_LIBC_REGEX)
-if(BUILD_SHARED_LIBS AND HAVE_LIBC_REGEX AND "${BRLCAD_REGEX}" MATCHES "BUNDLED")
-  # Our tests indicate that the system libc defines regex symbols, but
-  # we're still building with our local libregex.
-  #
-  # Platform differences in default linker behavior make it difficult
-  # to guarantee that our libregex symbols will override libc. We'll
-  # avoid the issue by renaming our libregex symbols to be
-  # incompatible with libc.
+if (${CMAKE_PROJECT_NAME}_REGEX_BUILD)
 
-  # First we add definitions to our config file to rename all of the
-  # regex function calls in our first-party code.
-  CONFIG_H_APPEND(BRLCAD "#define regcomp  libregex_regcomp\n")
-  CONFIG_H_APPEND(BRLCAD "#define regerror libregex_regerror\n")
-  CONFIG_H_APPEND(BRLCAD "#define regexec  libregex_regexec\n")
-  CONFIG_H_APPEND(BRLCAD "#define regfree  libregex_regfree\n")
+  CHECK_LIBRARY_EXISTS(c regcomp "" HAVE_LIBC_REGEX)
+  if (BUILD_SHARED_LIBS AND HAVE_LIBC_REGEX AND "${BRLCAD_REGEX}" MATCHES "BUNDLED")
+    # Our tests indicate that the system libc defines regex symbols, but
+    # we're still building with our local libregex.
+    #
+    # Platform differences in default linker behavior make it difficult
+    # to guarantee that our libregex symbols will override libc. We'll
+    # avoid the issue by renaming our libregex symbols to be
+    # incompatible with libc.
 
-  # Second, we add the same definitions to libregex to rename the
-  # function declarations and definitions to match the calls.
-  #
-  # Note that this is necessary despite the fact that libregex/regex.h
-  # includes common.h. Our config file is intentionally omitted from
-  # common.h until after the third party dirs are processed, so the
-  # above definitions don't affect libregex.
-  set_property(DIRECTORY libregex APPEND PROPERTY COMPILE_DEFINITIONS regcomp=libregex_regcomp)
-  set_property(DIRECTORY libregex APPEND PROPERTY COMPILE_DEFINITIONS regerror=libregex_regerror)
-  set_property(DIRECTORY libregex APPEND PROPERTY COMPILE_DEFINITIONS regexec=libregex_regexec)
-  set_property(DIRECTORY libregex APPEND PROPERTY COMPILE_DEFINITIONS regfree=libregex_regfree)
-endif(BUILD_SHARED_LIBS AND HAVE_LIBC_REGEX AND "${BRLCAD_REGEX}" MATCHES "BUNDLED")
+    # First we add definitions to our config file to rename all of the
+    # regex function calls in our first-party code.
+    set(REGEX_PREFIX libregex_)
+    CONFIG_H_APPEND(BRLCAD "#define regcomp  ${REGEX_PREFIX}regcomp\n")
+    CONFIG_H_APPEND(BRLCAD "#define regerror ${REGEX_PREFIX}regerror\n")
+    CONFIG_H_APPEND(BRLCAD "#define regexec  ${REGEX_PREFIX}regexec\n")
+    CONFIG_H_APPEND(BRLCAD "#define regfree  ${REGEX_PREFIX}regfree\n")
 
+    ExternalProject_Add(REGEX_BLD
+      SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libregex"
+      CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DREGEX_PREFIX_STR=${REGEX_PREFIX}
+      )
+
+  else (BUILD_SHARED_LIBS AND HAVE_LIBC_REGEX AND "${BRLCAD_REGEX}" MATCHES "BUNDLED")
+
+    ExternalProject_Add(REGEX_BLD
+      SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libregex"
+      CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}
+      )
+
+  endif (BUILD_SHARED_LIBS AND HAVE_LIBC_REGEX AND "${BRLCAD_REGEX}" MATCHES "BUNDLED")
+
+  ExternalProject_Target(regex REGEX_BLD
+    OUTPUT_FILE libregex${CMAKE_SHARED_LIBRARY_SUFFIX}.1.0.4
+    STATIC_OUTPUT_FILE libregex${CMAKE_STATIC_LIBRARY_SUFFIX}
+    SYMLINKS "${LIB_DIR}/libregex${CMAKE_SHARED_LIBRARY_SUFFIX};${LIB_DIR}/libregex${CMAKE_SHARED_LIBRARY_SUFFIX}.1"
+    LINK_TARGET "libregex${CMAKE_SHARED_LIBRARY_SUFFIX}"
+    STATIC_LINK_TARGET "libregex${CMAKE_STATIC_LIBRARY_SUFFIX}"
+    )
+  ExternalProject_ByProducts(REGEX_BLD ${INCLUDE_DIR}
+    regex.h
+    )
+
+endif (${CMAKE_PROJECT_NAME}_REGEX_BUILD)
+
+if (0)
 # Same deal for zlib Library - common requirement, deal with it up front
 set(zlib_DESCRIPTION "
 Option for enabling and disabling compilation of the zlib library
@@ -124,6 +154,7 @@ if(BRLCAD_LZ4_BUILD)
   BRLCAD_MANAGE_FILES(lz4/lz4frame.h ${INCLUDE_DIR})
   BRLCAD_MANAGE_FILES(lz4/lz4hc.h ${INCLUDE_DIR})
 endif(BRLCAD_LZ4_BUILD)
+endif (0)
 
 if (0)
 # FreeType Libraries
@@ -170,6 +201,7 @@ mark_as_advanced(FREETYPE_INCLUDE_DIR_ft2build)
 mark_as_advanced(FREETYPE_LIBRARIES)
 endif (0)
 
+if (0)
 # --------------------------------------------------------------------
 # libtermlib Library Only on WIN32 will the combination of the build
 # search tests and libtermlib fail to find a valid term, so set
@@ -328,6 +360,7 @@ mark_as_advanced(PNG_DEBUG)
 mark_as_advanced(PNG_SHARED)
 mark_as_advanced(PNG_STATIC)
 mark_as_advanced(uname_executable)
+endif (0)
 
 if (0)
 
@@ -1197,6 +1230,9 @@ CMAKEFILES_IN_DIR(Eigen_ignore_files Eigen)
 
 CMAKEFILES(README)
 CMAKEFILES(CMakeLists.txt)
+
+# Done with ExternalProject_Add
+set(SUPPRESS_GENERATED_TAG FALSE)
 
 # Local Variables:
 # tab-width: 8
