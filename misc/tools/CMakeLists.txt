@@ -18,6 +18,8 @@
 # situations, CMake provides a variable CMAKE_CFG_INTDIR that will
 # insert the correct logic for config-dependent paths.
 
+include("${CMAKE_CURRENT_SOURCE_DIR}/Third_Party_Exec.cmake")
+
 # Clear all pre-defined CMake flags
 CLEAR_BUILD_FLAGS()
 
