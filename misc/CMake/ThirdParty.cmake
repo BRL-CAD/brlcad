@@ -56,7 +56,7 @@ include(CMakeParseArguments)
 function(THIRD_PARTY dir varname_root build_target description)
 
   # Parse extra arguments
-  CMAKE_PARSE_ARGUMENTS(TP "UNDOCUMENTED;NOSYS" "FIND_NAME;FIND_VERSION" "FIND_COMPONENTS;REQUIRED_VARS;RESET_VARS;ALIASES;FLAGS" ${ARGN})
+  cmake_parse_arguments(TP "UNDOCUMENTED;NOSYS" "FIND_NAME;FIND_VERSION" "FIND_COMPONENTS;REQUIRED_VARS;RESET_VARS;ALIASES;FLAGS" ${ARGN})
 
   # If the library variable has been explicitly set, get
   # a normalized version of it for easier matching
@@ -227,8 +227,8 @@ function(THIRD_PARTY dir varname_root build_target description)
     file(GLOB STALE_FILES "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${CMAKE_SHARED_LIBRARY_PREFIX}${rootname}*${CMAKE_SHARED_LIBRARY_SUFFIX}*")
 
     foreach(stale_file ${STALE_FILES})
-      EXEC_PROGRAM(
-	${CMAKE_COMMAND} ARGS -E remove ${stale_file}
+      execute_process(
+	COMMAND ${CMAKE_COMMAND} ARGS -E remove ${stale_file}
 	OUTPUT_VARIABLE rm_out
 	RETURN_VALUE rm_retval
 	)
