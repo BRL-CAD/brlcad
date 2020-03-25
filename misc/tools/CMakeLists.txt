@@ -194,10 +194,10 @@ THIRD_PARTY_EXECUTABLE(debug2c DEBUG2C debug2c REQUIRED "BRLCAD_LEVEL2" NOSYS)
 SetTargetFolder(debug2c "Compilation Utilities")
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/debug2c/Makefile)
 
-# hexdump - used to translate text files into a form suitable for inclusion in C code
-THIRD_PARTY_EXECUTABLE(hexdump HEXDUMP hexdump REQUIRED "BRLCAD_LEVEL2" NOSYS)
-DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/perplex/Makefile)
-SetTargetFolder(hexdump "Compilation Utilities")
+# bhexdump - used to translate text files into a form suitable for inclusion in C code
+THIRD_PARTY_EXECUTABLE(bhexdump BHEXDUMP bhexdump REQUIRED "BRLCAD_LEVEL2" NOSYS)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/bhexdump/Makefile)
+SetTargetFolder(bhexdump "Compilation Utilities")
 
 CMAKEFILES(README)
 CMAKEFILES(CMakeLists.txt)
