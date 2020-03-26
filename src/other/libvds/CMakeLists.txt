@@ -43,23 +43,33 @@ if (NOT LIB_DIR)
   set(LIB_DIR lib)
 endif (NOT LIB_DIR)
 
+if (NOT DEFINED BUILD_SHARED_LIBS)
+  set(BUILD_SHARED_LIBS ON)
+endif (NOT DEFINED BUILD_SHARED_LIBS)
+
+if (NOT DEFINED BUILD_STATIC_LIBS)
+  set(BUILD_STATIC_LIBS OFF)
+endif (NOT DEFINED BUILD_STATIC_LIBS)
+
 include(CheckLibraryExists)
 check_library_exists(m cos "" HAVE_M_LIBRARY)
 if (HAVE_M_LIBRARY)
   set(SYS_LIBS ${SYS_LIBS} m)
 endif (HAVE_M_LIBRARY)
 
-add_library(vds SHARED vds.c)
-if (SYS_LIBS)
-  target_link_libraries(vds ${SYS_LIBS})
-endif (SYS_LIBS)
-if (MSVC)
-  set_property(TARGET vds APPEND PROPERTY COMPILE_DEFINITIONS "VDS_DLL_EXPORTS")
-endif (MSVC)
-install(TARGETS vds
-  RUNTIME DESTINATION ${BIN_DIR}
-  LIBRARY DESTINATION ${LIB_DIR}
-  ARCHIVE DESTINATION ${LIB_DIR})
+if (BUILD_SHARED_LIBS)
+  add_library(vds SHARED vds.c)
+  if (SYS_LIBS)
+    target_link_libraries(vds ${SYS_LIBS})
+  endif (SYS_LIBS)
+  if (MSVC)
+    set_property(TARGET vds APPEND PROPERTY COMPILE_DEFINITIONS "VDS_DLL_EXPORTS")
+  endif (MSVC)
+  install(TARGETS vds
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR})
+endif (BUILD_SHARED_LIBS)
 
 if (BUILD_STATIC_LIBS)
   add_library(vds-static STATIC vds.c)

@@ -194,21 +194,39 @@ set(all_srcs ${pj_srcs} ${core_srcs})
 if(WIN32 AND BUILD_SHARED_LIBS)
   set(all_srcs ${all_srcs} proj.def )
 endif(WIN32 AND BUILD_SHARED_LIBS)
-add_library(proj ${all_srcs} ${hdr_files})
-set_target_properties(proj PROPERTIES VERSION "${PROJ_BUILD_VERSION}")
-set_target_properties(proj PROPERTIES LINKER_LANGUAGE C)
-set(proj_libs ${M_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
-if(proj_libs)
-  target_link_libraries(proj ${proj_libs})
-endif(proj_libs)
 
-install(TARGETS proj
-  RUNTIME DESTINATION ${BIN_DIR}
-  LIBRARY DESTINATION ${LIB_DIR}
-  ARCHIVE DESTINATION ${LIB_DIR}
-  )
+if (BUILD_SHARED_LIBS)
+  add_library(proj SHARED ${all_srcs} ${hdr_files})
+  set_target_properties(proj PROPERTIES VERSION "${PROJ_BUILD_VERSION}" SOVERSION "${PROJ_API_VERSION}")
+  set_target_properties(proj PROPERTIES LINKER_LANGUAGE C)
+  set(proj_libs ${M_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+  if(proj_libs)
+    target_link_libraries(proj ${proj_libs})
+  endif(proj_libs)
 
-install(FILES ${ALL_LIBPROJ_HEADERS} DESTINATION ${INCLUDEDIR})
+  install(TARGETS proj
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR}
+    )
+endif (BUILD_SHARED_LIBS)
+
+if (BUILD_STATIC_LIBS)
+  add_library(proj-static STATIC ${all_srcs} ${hdr_files})
+  if (MSVC)
+    # msvc does not append 'lib' - do it here to have consistent name
+    set_target_properties(proj-static PROPERTIES PREFIX "lib")
+  else (MSVC)
+    set_target_properties(proj-static PROPERTIES OUTPUT_NAME "proj")
+  endif (MSVC)
+  install(TARGETS proj-static
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR}
+    )
+endif (BUILD_STATIC_LIBS)
+
+install(FILES ${ALL_LIBPROJ_HEADERS} DESTINATION ${INCLUDE_DIR})
 
 
 # Local Variables:

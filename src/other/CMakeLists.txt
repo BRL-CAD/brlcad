@@ -57,11 +57,13 @@ include(ExternalProject)
 # Note- make sure CMAKE_BINARY_DIR and CMAKE_INSTALL_PREFIX are finalized BEFORE including this file!
 include(${BRLCAD_CMAKE_DIR}/ExternalProject_Target.cmake)
 
-set(LOG_OPTS
-  LOG_DIR "${CMAKE_BINARY_DIR}/CMakeFiles/ExternalProject_logs"
-  LOG_CONFIGURE ON LOG_BUILD ON LOG_INSTALL ON
-  LOG_MERGED_STDOUTERR ON LOG_OUTPUT_ON_FAILURE ON
-  )
+#set(LOG_OPTS
+#  LOG_DIR "${CMAKE_BINARY_DIR}/CMakeFiles/ExternalProject_logs"
+#  LOG_CONFIGURE ON LOG_BUILD ON LOG_INSTALL ON
+#  LOG_MERGED_STDOUTERR ON LOG_OUTPUT_ON_FAILURE ON
+#  )
+
+set(LOG_OPTS)
 
 ###############################################################################
 #                               libregex
@@ -948,9 +950,10 @@ if (${CMAKE_PROJECT_NAME}_RPLY_BUILD)
 endif (${CMAKE_PROJECT_NAME}_RPLY_BUILD)
 
 
-if (0)
+###############################################################################
+#               PROJ - generic coordinate transformation
+###############################################################################
 
-# PROJ.4 library - used by GDAL
 set(proj4_DESCRIPTION "
 Option for enabling and disabling compilation of the PROJ.4 geographic
 projection library provided with BRL-CAD's source code.  Default
@@ -959,6 +962,54 @@ testing first for a system version if BRLCAD_BUNDLED_LIBS is also
 AUTO.
 ")
 THIRD_PARTY(proj-4 PROJ4 proj4 proj4_DESCRIPTION REQUIRED_VARS "BRLCAD_ENABLE_GDAL;BRLCAD_LEVEL2" ALIASES ENABLE_PROJ4)
+
+if (${CMAKE_PROJECT_NAME}_PROJ4_BUILD)
+
+  set(PROJ_MAJOR_VERSION 4)
+  set(PROJ_MINOR_VERSION 9)
+  set(PROJ_API_VERSION 12)
+  set(PROJ_VERSION ${PROJ_MAJOR_VERSION}.${PROJ_MINOR_VERSION}.${PROJ_API_VERSION})
+
+  ExternalProject_Add(PROJ4_BLD
+    SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/proj-4"
+    BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
+               -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
+    )
+  ExternalProject_Target(proj PROJ4_BLD
+    OUTPUT_FILE libproj${CMAKE_SHARED_LIBRARY_SUFFIX}.${PROJ_VERSION}
+    STATIC_OUTPUT_FILE libproj${CMAKE_STATIC_LIBRARY_SUFFIX}
+    SYMLINKS "${LIB_DIR}/libproj${CMAKE_SHARED_LIBRARY_SUFFIX};${LIB_DIR}/libproj${CMAKE_SHARED_LIBRARY_SUFFIX}.${PROJ_API_VERSION}"
+    LINK_TARGET "libproj${CMAKE_SHARED_LIBRARY_SUFFIX}"
+    STATIC_LINK_TARGET "libproj${CMAKE_STATIC_LIBRARY_SUFFIX}"
+    RPATH
+    )
+
+  ExternalProject_ByProducts(PROJ4_BLD ${DATA_DIR}
+    proj/epsg
+    proj/esri
+    proj/world
+    proj/esri.extra
+    proj/other.extra
+    proj/IGNF
+    proj/nad27
+    proj/GL27
+    proj/nad83
+    proj/nad.lst
+    proj/proj_def.dat
+    proj/CH
+    )
+
+  set(PROJ4_LIBRARIES proj CACHE STRING "Building bundled proj" FORCE)
+  set(PROJ4_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing proj headers." FORCE)
+
+  SetTargetFolder(PROJ4_BLD "Third Party Libraries")
+  SetTargetFolder(proj "Third Party Libraries")
+
+endif (${CMAKE_PROJECT_NAME}_PROJ4_BUILD)
+
+
+if (0)
 if(BRLCAD_PROJ4_BUILD)
   set(PROJ4_LIBRARY proj CACHE STRING "libproj" FORCE)
   set(PROJ4_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/proj-4;${CMAKE_CURRENT_SOURCE_DIR}/proj-4/src" CACHE STRING "proj-4 includes" FORCE)
