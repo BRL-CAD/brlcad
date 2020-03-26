@@ -776,23 +776,6 @@ if(BRLCAD_SC_BUILD)
 endif(BRLCAD_SC_BUILD)
 
 if (0)
-if(BRLCAD_ENABLE_GECODE)
-  set(gecode_DESCRIPTION "
-  Option for enabling and disabling compilation of the Gecode Constraint
-  Solving Libraries provided with BRL-CAD's source code.  Default is AUTO,
-  responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
-  first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
-  ")
-  set(GECODE_USE_QT OFF)
-  mark_as_advanced(GECODE_USE_QT)
-  THIRD_PARTY(gecode GECODE gecode gecode_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL3 ALIASES ENABLE_GECODE)
-  if(BRLCAD_GECODE_BUILD)
-    set(GECODE_LIBRARIES gecodesupport gecodekernel gecodesearch gecodeint
-      gecodeset gecodefloat gecodeminimodel gecodedriver gecodeflatzinc)
-    set(GECODE_LIBRARIES "${GECODE_LIBRARIES}"  CACHE STRING "Gecode libraries in BRL-CAD" FORCE)
-    set(GECODE_INCLUDE_DIR "${BRLCAD_BINARY_DIR}/src/other/gecode;${BRLCAD_SOURCE_DIR}/src/other/gecode"  CACHE STRING "Gecode headers in BRL-CAD" FORCE)
-  endif(BRLCAD_GECODE_BUILD)
-endif(BRLCAD_ENABLE_GECODE)
 
 # VDSlib - A View-Dependent Simplification and Rendering Library For
 # the moment, this is marked NOSYS - it's possible that some Debian
