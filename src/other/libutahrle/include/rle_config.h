@@ -10,10 +10,6 @@
 #ifndef RLE_CONFIG_H
 #define RLE_CONFIG_H
 
-#ifdef HAVE_COMMON_H
-# include "common.h"
-#endif
-
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
