@@ -510,40 +510,48 @@ if (${CMAKE_PROJECT_NAME}_OPENNURBS_BUILD)
 
 endif (${CMAKE_PROJECT_NAME}_OPENNURBS_BUILD)
 
-if (0)
 
-SetTargetFolder(openNURBS "Third Party Libraries")
-SetTargetFolder(openNURBS-static "Third Party Libraries")
-SetTargetFolder(openNURBS-obj "Third Party Libraries")
-if(BRLCAD_OPENNURBS_BUILD)
-  set(OPENNURBS_INCLUDE_DIRS "${OPENNURBS_INCLUDE_DIR};${ZLIB_INCLUDE_DIR}" CACHE STRING "Require opennurbs header includes" FORCE)
-  set(OPENNURBS_LIBRARIES "${OPENNURBS_LIBRARY};${ZLIB_LIBRARY}" CACHE STRING "Require opennurbs libraries" FORCE)
-  mark_as_advanced(OPENNURBS_INCLUDE_DIRS)
-  mark_as_advanced(OPENNURBS_LIBRARIES)
-  get_directory_property(openNURBS_headers_orig DIRECTORY openNURBS DEFINITION OPENNURBS_HEADERS)
-  set(openNURBS_headers)
-  foreach(onhfile ${openNURBS_headers_orig})
-    set(openNURBS_headers ${openNURBS_headers} openNURBS/${onhfile})
-  endforeach(onhfile ${openNURBS_headers_orig})
-  BRLCAD_MANAGE_FILES(openNURBS_headers ${INCLUDE_DIR}/openNURBS)
-endif(BRLCAD_OPENNURBS_BUILD)
+###############################################################################
+#                  Screened Poisson Reconstruction Library
+###############################################################################
 
-# Screened Poisson Reconstruction Library
 set(spsr_DESCRIPTION "
 Option for enabling and disabling compilation of the Screened Poisson
 Surface Reconstruction library provided with BRL-CAD's source code.
 Default is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option
 and testing first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(libspsr SPSR libspsr spsr_DESCRIPTION ALIASES
-  ENABLE_SPSR FLAGS NOSYS)
-if(BRLCAD_SPSR_BUILD)
-  SetTargetFolder(PoissonRecon "Third Party Executables")
-  SetTargetFolder(SurfaceTrimmer "Third Party Executables")
-  SetTargetFolder(libSPSR "Third Party Libraries")
-  SetTargetFolder(libSPSR-static "Third Party Libraries")
-endif(BRLCAD_SPSR_BUILD)
+THIRD_PARTY(libspsr SPSR libspsr spsr_DESCRIPTION ALIASES ENABLE_SPSR FLAGS NOSYS)
 
+if (${CMAKE_PROJECT_NAME}_SPSR_BUILD)
+
+  ExternalProject_Add(SPSR_BLD
+    SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libspsr"
+    BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE}
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
+               -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
+    )
+  ExternalProject_Target(spsr SPSR_BLD
+    OUTPUT_FILE libspsr${CMAKE_SHARED_LIBRARY_SUFFIX}
+    STATIC_OUTPUT_FILE libspsr${CMAKE_STATIC_LIBRARY_SUFFIX}
+    RPATH
+    )
+
+  ExternalProject_ByProducts(SPSR_BLD ${INCLUDE_DIR}
+    SPSR/SPSR.h
+    SPSR/cvertex.h
+    )
+
+  set(SPSR_LIBRARIES spsr CACHE STRING "Building bundled spsr" FORCE)
+  set(SPSR_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}/spsr" CACHE STRING "Directory containing spsr headers." FORCE)
+
+  SetTargetFolder(SPSR_BLD "Third Party Libraries")
+  SetTargetFolder(spsr "Third Party Libraries")
+
+endif (${CMAKE_PROJECT_NAME}_SPSR_BUILD)
+
+
+if (0)
 if(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
 #=== LIBBSON ==================================================
 # Libbson needed for binary attributes, always use this local version

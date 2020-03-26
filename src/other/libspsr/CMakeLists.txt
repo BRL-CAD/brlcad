@@ -40,6 +40,18 @@ cmake_minimum_required(VERSION 3.1.3)
 # (Screened Poisson Surface Reconstruction - SPSR)
 project(SPSR)
 
+if (NOT DEFINED INCLUDE_DIR)
+  set(INCLUDE_DIR include)
+endif (NOT DEFINED INCLUDE_DIR)
+
+if (NOT DEFINED BUILD_SHARED_LIBS)
+  set(BUILD_SHARED_LIBS ON)
+endif (NOT DEFINED BUILD_SHARED_LIBS)
+
+if (NOT DEFINED BUILD_STATIC_LIBS)
+  set(BUILD_STATIC_LIBS OFF)
+endif (NOT DEFINED BUILD_STATIC_LIBS)
+
 if(SPSR_ENABLE_OPENMP)
   find_package(OpenMP)
   set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_C_FLAGS}")
@@ -52,6 +64,14 @@ set(libSPSR_srcs
   Src/MarchingCubes.cpp
   Src/SPSR.cpp
   )
+
+set(SPSR_HDRS
+  Src/SPSR.h
+  Src/cvertex.h
+  )
+if (NOT SKIP_INSTALL_HDRS)
+  install (FILES ${SPSR_HDRS} DESTINATION ${INCLUDE_DIR}/SPSPR)
+endif (NOT SKIP_INSTALL_HDRS)
 
 if(MSVC)
   add_definitions("-DSPSR_DLL_EXPORTS")
