@@ -350,8 +350,8 @@ if (${CMAKE_PROJECT_NAME}_UTAHRLE_BUILD)
     rle_raw.h
     )
 
-  set(UTAHRLE_LIBRARIES utahrle CACHE STRING "Building bundled libregex" FORCE)
-  set(UTAHRLE_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing regex headers." FORCE)
+  set(UTAHRLE_LIBRARIES utahrle CACHE STRING "Building bundled libutahrle" FORCE)
+  set(UTAHRLE_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing utahrle headers." FORCE)
 
   SetTargetFolder(UTAHRLE_BLD "Third Party Libraries")
   SetTargetFolder(utahrle "Third Party Libraries")
@@ -551,27 +551,80 @@ if (${CMAKE_PROJECT_NAME}_SPSR_BUILD)
 endif (${CMAKE_PROJECT_NAME}_SPSR_BUILD)
 
 
-if (0)
-if(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
-#=== LIBBSON ==================================================
-# Libbson needed for binary attributes, always use this local version
+###############################################################################
+#     libbson - for binary attributes, always use this local version
+###############################################################################
+
+# For testing
+# set(BRLCAD_ENABLE_BINARY_ATTRIBUTES ON)
+
 set(libbson_DESCRIPTION "
 Option for enabling and disabling compilation of the Libbson library
 provided with BRL-CAD's source code.  Default is BUNDLED, using
 the included other/src version.
 ")
-THIRD_PARTY(libbson BSON Libbson libbson_DESCRIPTION ALIASES
-  ENABLE_BSON FLAGS NOSYS UNDOCUMENTED)
-if(BRLCAD_BSON_BUILD)
-  SetTargetFolder(libBSON "Third Party Libraries")
-  SetTargetFolder(libBSON-static "Third Party Libraries")
-endif(BRLCAD_BSON_BUILD)
-#=== END LIBBSON ==================================================
-else(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
-  include("${CMAKE_CURRENT_SOURCE_DIR}/libbson.dist")
-  CMAKEFILES_IN_DIR(libbson_ignore_files libbson)
-endif(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
+THIRD_PARTY(libbson BSON Libbson libbson_DESCRIPTION ALIASES ENABLE_BSON REQUIRED_VARS BRLCAD_ENABLE_BINARY_ATTRIBUTES FLAGS NOSYS UNDOCUMENTED)
 
+if (${CMAKE_PROJECT_NAME}_BSON_BUILD)
+
+  set(BSON_MAJOR_VERSION 1)
+  set(BSON_MINOR_VERSION 3)
+  set(BSON_PATCH_VERSION 5)
+  set(BSON_VERSION ${BSON_MAJOR_VERSION}.${BSON_MINOR_VERSION}.${BSON_PATCH_VERSION})
+
+  ExternalProject_Add(BSON_BLD
+    SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libbson"
+    BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE}
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
+               -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
+    )
+
+  ExternalProject_Target(bson BSON_BLD
+    OUTPUT_FILE libbson-1.0${CMAKE_SHARED_LIBRARY_SUFFIX}.${BSON_VERSION}
+    STATIC_OUTPUT_FILE libbson-1.0${CMAKE_STATIC_LIBRARY_SUFFIX}
+    SYMLINKS "${LIB_DIR}/libbson-1.0${CMAKE_SHARED_LIBRARY_SUFFIX};${LIB_DIR}/libbson-1.0${CMAKE_SHARED_LIBRARY_SUFFIX}.${BSON_MAJOR_VERSION}"
+    LINK_TARGET "libbson-1.0${CMAKE_SHARED_LIBRARY_SUFFIX}"
+    STATIC_LINK_TARGET "libbson-1.0${CMAKE_STATIC_LIBRARY_SUFFIX}"
+    RPATH
+    )
+  ExternalProject_ByProducts(BSON_BLD ${INCLUDE_DIR}
+    libbson-1.0/bson-endian.h
+    libbson-1.0/bson-md5.h
+    libbson-1.0/bson-value.h
+    libbson-1.0/bson-stdint.h
+    libbson-1.0/bson-reader.h
+    libbson-1.0/bson-context.h
+    libbson-1.0/bson-string.h
+    libbson-1.0/bson-error.h
+    libbson-1.0/bson-macros.h
+    libbson-1.0/bson-compat.h
+    libbson-1.0/bson-version.h
+    libbson-1.0/bson-oid.h
+    libbson-1.0/bson-version-functions.h
+    libbson-1.0/bson-iter.h
+    libbson-1.0/bson-stdint-win32.h
+    libbson-1.0/bson-atomic.h
+    libbson-1.0/bson-memory.h
+    libbson-1.0/bcon.h
+    libbson-1.0/bson-json.h
+    libbson-1.0/bson-keys.h
+    libbson-1.0/bson-utf8.h
+    libbson-1.0/bson-types.h
+    libbson-1.0/bson.h
+    libbson-1.0/bson-writer.h
+    libbson-1.0/bson-config.h
+    libbson-1.0/bson-clock.h
+    )
+
+  set(BSON_LIBRARIES utahrle CACHE STRING "Building bundled libbson" FORCE)
+  set(BSON_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing bson headers." FORCE)
+
+  SetTargetFolder(BSON_BLD "Third Party Libraries")
+  SetTargetFolder(utahrle "Third Party Libraries")
+
+endif (${CMAKE_PROJECT_NAME}_BSON_BUILD)
+
+if (0)
 # STEPcode
 # Need Lemon/Perplex to build STEP - conditionalize
 
