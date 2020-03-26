@@ -119,7 +119,7 @@ if (${CMAKE_PROJECT_NAME}_REGEX_BUILD)
 endif (${CMAKE_PROJECT_NAME}_REGEX_BUILD)
 
 ###############################################################################
-#                                 Zlib
+#                 zlib compression/decompression library
 ###############################################################################
 
 set (zlib_DESCRIPTION "
@@ -210,7 +210,7 @@ if (${CMAKE_PROJECT_NAME}_LZ4_BUILD)
 endif (${CMAKE_PROJECT_NAME}_LZ4_BUILD)
 
 ###############################################################################
-#           netpbm library support for pnm,ppm,pbm, etc. image files
+#           netpbm library - support for pnm,ppm,pbm, etc. image files
 ###############################################################################
 
 set(netpbm_DESCRIPTION "
@@ -252,7 +252,7 @@ if (${CMAKE_PROJECT_NAME}_NETPBM_BUILD)
     )
 
   set(NETPBM_LIBRARIES netpbm CACHE STRING "Building bundled netpbm" FORCE)
-  set(NETPBM_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}/netpbm" CACHE STRING "Directory containing lz4 headers." FORCE)
+  set(NETPBM_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}/netpbm" CACHE STRING "Directory containing netpbm headers." FORCE)
 
   SetTargetFolder(NETPBM_BLD "Third Party Libraries")
   SetTargetFolder(netpbm "Third Party Libraries")
@@ -260,38 +260,14 @@ if (${CMAKE_PROJECT_NAME}_NETPBM_BUILD)
 endif (${CMAKE_PROJECT_NAME}_NETPBM_BUILD)
 
 
-if (0)
-# libpng Library - Checks for ZLIB, so need to handle libpng AFTER
-# zlib to set the variables if using a local copy of zlib.  If not
-# using a local copy of zlib, FindZLIB results will be identical in
-# both cases so there is no danger of harming the libpng setup.  The
-# PNG CMake system needs some options set and some variables
-# translated to fit BRL-CAD's standard assumptions, so handle that
-# here as well.  BRL-CAD needs PNG's IO - turn it on (i.e. turn off
-# the disabling flags)
-set(SKIP_INSTALL_FILES ON CACHE BOOL "Don't install files from libpng" FORCE)
-mark_as_advanced(SKIP_INSTALL_FILES)
-set(SKIP_INSTALL_EXECUTABLES ON CACHE BOOL "Don't install files from libpng" FORCE)
-mark_as_advanced(SKIP_INSTALL_EXECUTABLES)
-set(PNG_NO_CONSOLE_IO OFF CACHE BOOL "Option to disable Console IO in PNG" FORCE)
-mark_as_advanced(PNG_NO_CONSOLE_IO)
-set(PNG_NO_STDIO OFF CACHE BOOL "Option to disable STDIO in PNG" FORCE)
-mark_as_advanced(PNG_NO_STDIO)
-set(SKIP_INSTALL_EXPORT ON CACHE BOOL "We dont't want export for this application" FORCE)
-mark_as_advanced(SKIP_INSTALL_EXPORT)
-set(PNG_MAN_DIR ${MAN_DIR} CACHE STRING "Set PNG_MAN_DIR to the global MAN_DIR" FORCE)
-mark_as_advanced(PNG_MAN_DIR)
-set(PNG_TESTS 0 CACHE STRING "Disable building png test executables" FORCE)
-mark_as_advanced(PNG_TESTS)
-set(PNG_PREFIX "brl_" CACHE STRING "BRL-CAD prefix for libpng" FORCE)
-mark_as_advanced(PNG_PREFIX)
-set(ld-version-script OFF CACHE STRING "Disable linker script" FORCE)
-mark_as_advanced(ld-version-script)
-mark_as_advanced(PNG_PREFIX)
-mark_as_advanced(PNG_FRAMEWORK)
-mark_as_advanced(DFA_XTRA)
-mark_as_advanced(AWK)
-set(CMAKE_INSTALL_LIBDIR ${LIB_DIR})
+###############################################################################
+#           libpng - Portable Network Graphics image file support
+###############################################################################
+
+# NOTE: we need to have libpng's internal call to find_package looking for zlib
+# locate our local copy if we have one.  Defining the ZLIB_ROOT prefix for
+# find_package is intended to do this (requires CMake 3.12).
+
 set(png_DESCRIPTION "
 Option for enabling and disabling compilation of the Portable Network
 Graphics library provided with BRL-CAD's source distribution.  Default
@@ -299,83 +275,44 @@ is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
 testing first for a system version if BRLCAD_BUNDLED_LIBS is also
 AUTO.
 ")
-# Note - we don't actually know the libpng build target name for the
-# shared library at this point - use png as a stub and override
-# once we know what PNG_LIB_NAME is.
+
+# We generally don't want the Mac framework libpng...
 set(CMAKE_FIND_FRAMEWORK LAST)
+
 THIRD_PARTY(libpng PNG png png_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL2 ALIASES ENABLE_PNG)
-if(BRLCAD_PNG_BUILD)
+set(PNG_VERSION_MAJOR 16)
+set(PNG_VERSION_MINOR 37)
 
-  set(PNG_LIBRARY png CACHE STRING "PNG_LIBRARY" FORCE)
-  set(PNG_PNG_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/libpng;${CMAKE_CURRENT_SOURCE_DIR}/libpng" CACHE STRING "PNG include directory" FORCE)
-  mark_as_advanced(PNG_PNG_INCLUDE_DIR)
-
-  # On Haiku the find_library call sets this variable directly, which is not
-  # how we handle things elsewhere in BRL-CAD - unset the variable in that
-  # situation so the remainder of the build logic works normally
-  if("${M_LIBRARY}" MATCHES "NOTFOUND")
-    unset(M_LIBRARY CACHE)
-  endif("${M_LIBRARY}" MATCHES "NOTFOUND")
-
-  # If we enable XFT support Tk when building our own libpng, the linking of
-  # freetype and fontconfig often pulls in the system libpng anyway, which
-  # causes conflicts.  Make sure, if we do have to build Tk, that we don't try
-  # enabling XFT.
-  set(TK_DISABLE_XFT 1 CACHE STRING "Disable due to building local libpng" FORCE)
-  mark_as_advanced(TK_DISABLE_XFT)
-
-  SetTargetFolder(png "Third Party Libraries")
-  SetTargetFolder(png_static "Third Party Libraries")
-  SetTargetFolder(genfiles "Third Party Libraries")
-
-  # The actual install directory has these in both libpng16 and the toplevel
-  # include directory.  Just put them in the top level include directory - we
-  # don't guarantee libpng16, so an include directory with that version may or
-  # may not be there anyway.
-  BRLCAD_MANAGE_FILES(libpng/png.h ${INCLUDE_DIR} FOLDER libpng)
-  BRLCAD_MANAGE_FILES(libpng/pngconf.h ${INCLUDE_DIR} FOLDER libpng)
-  add_custom_command(
-    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.sentinel"
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/libpng/pnglibconf.h ${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/pnglibconf.h
-    COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.sentinel"
-    DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/libpng/pnglibconf.h
+if (${CMAKE_PROJECT_NAME}_PNG_BUILD)
+  ExternalProject_Add(PNG_BLD
+    SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libpng"
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DCMAKE_INSTALL_LIBDIR=${LIB_DIR} -DCMAKE_PREFIX_PATH=${CMAKE_BINARY_DIR}/${LIB_DIR} -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DPNG_STATIC=${BUILD_STATIC_LIBS} -DZLIB_ROOT=${CMAKE_BINARY_DIR} -DPNG_PREFIX=brl_ -DSKIP_INSTALL_FILES=ON -DSKIP_INSTALL_EXECUTABLES=ON -DSKIP_INSTALL_EXPORT=ON -DPNG_TESTS=OFF -Dld-version-script=OFF
+    DEPENDS ${ZLIB_LIBRARIES}
     )
-  add_custom_target(pnglibconf_cp ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/pnglibconf.sentinel")
-  BRLCAD_ADD_DIR_LIST_ENTRY(DATA_TARGETS "${CMAKE_CURRENT_BINARY_DIR}" pnglibconf_cp)
-  set_target_properties(pnglibconf_cp PROPERTIES FOLDER "BRL-CAD File Setup/libpng")
-  add_dependencies(pnglibconf_cp genfiles)
-  add_dependencies(png pnglibconf_cp)
-  DISTCLEAN("${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/pnglibconf.h")
+  ExternalProject_Target(png PNG_BLD
+    OUTPUT_FILE libpng${PNG_VERSION_MAJOR}${CMAKE_SHARED_LIBRARY_SUFFIX}.${PNG_VERSION_MAJOR}.${PNG_VERSION_MINOR}.0
+    STATIC_OUTPUT_FILE libpng16${CMAKE_STATIC_LIBRARY_SUFFIX}
+    SYMLINKS "${LIB_DIR}/libpng${CMAKE_SHARED_LIBRARY_SUFFIX};${LIB_DIR}/libpng${PNG_VERSION_MAJOR}${CMAKE_SHARED_LIBRARY_SUFFIX};${LIB_DIR}/libpng${PNG_VERSION_MAJOR}${CMAKE_SHARED_LIBRARY_SUFFIX}.${PNG_VERSION_MAJOR};${LIB_DIR}/libpng${CMAKE_STATIC_LIBRARY_SUFFIX}"
+    LINK_TARGET "libpng${CMAKE_SHARED_LIBRARY_SUFFIX}"
+    STATIC_LINK_TARGET "libpng${CMAKE_STATIC_LIBRARY_SUFFIX}"
+    RPATH
+    )
+  ExternalProject_ByProducts(PNG_BLD ${INCLUDE_DIR}
+    png.h
+    pngconf.h
+    pnglibconf.h
+    libpng${PNG_VERSION_MAJOR}/png.h
+    libpng${PNG_VERSION_MAJOR}/pngconf.h
+    libpng${PNG_VERSION_MAJOR}/pnglibconf.h
+    )
 
-endif(BRLCAD_PNG_BUILD)
+  set(PNG_LIBRARIES netpbm CACHE STRING "Building bundled libpng" FORCE)
+  set(PNG_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing libpng headers." FORCE)
 
-set(PNG_INCLUDE_DIR ${PNG_PNG_INCLUDE_DIR} CACHE STRING "PNG include directory" FORCE)
-# Since SKIP_INSTALL_FILES doesn't have a PNG prefix, we'll unset it once we're done
-unset(SKIP_INSTALL_FILES CACHE)
-unset(SKIP_INSTALL_FILES)
-unset(SKIP_INSTALL_EXECUTABLES CACHE)
-unset(SKIP_INSTALL_EXECUTABLES)
+  SetTargetFolder(PNG_BLD "Third Party Libraries")
+  SetTargetFolder(png "Third Party Libraries")
 
-# Make sure this value is in the cache, regardless of
-# BRLCAD_PNG_BUILD, so it can be referenced unconditionally elsewhere.
-set(PNG_LIBRARY "${PNG_LIBRARY}" CACHE STRING "libpng name for targets" FORCE)
-
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libpng/CTestTestfile.cmake")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libpng/libpng.pc")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libpng/libpng-config")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libpng/libpng${CMAKE_SHARED_LIBRARY_SUFFIX}")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libpng/libpng${CMAKE_STATIC_LIBRARY_SUFFIX}")
-DISTCLEAN(${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libpng.pc)
-DISTCLEAN(${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libpng-config)
-DISTCLEAN(${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libpng${CMAKE_SHARED_LIBRARY_SUFFIX})
-DISTCLEAN(${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/libpng${CMAKE_STATIC_LIBRARY_SUFFIX})
-# Other PNG options to mark as advanced
-mark_as_advanced(PNGARG)
-mark_as_advanced(PNG_DEBUG)
-mark_as_advanced(PNG_SHARED)
-mark_as_advanced(PNG_STATIC)
-mark_as_advanced(uname_executable)
-endif (0)
+endif (${CMAKE_PROJECT_NAME}_PNG_BUILD)
 
 if (0)
 
