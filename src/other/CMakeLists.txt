@@ -72,32 +72,16 @@ THIRD_PARTY(libregex REGEX regex regex_DESCRIPTION ALIASES ENABLE_REGEX)
 
 if (${CMAKE_PROJECT_NAME}_REGEX_BUILD)
 
-  check_library_exists(c regcomp "" HAVE_LIBC_REGEX)
-
-  if (BUILD_SHARED_LIBS AND HAVE_LIBC_REGEX AND "${BRLCAD_REGEX}" MATCHES "BUNDLED")
-
-    # Our tests indicate that the system libc defines regex symbols, but
-    # we're still building with our local libregex.
-    #
-    # Platform differences in default linker behavior make it difficult
-    # to guarantee that our libregex symbols will override libc. We'll
-    # avoid the issue by renaming our libregex symbols to be
-    # incompatible with libc.
-    ExternalProject_Add(REGEX_BLD
-      SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libregex"
-      BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE}
-      CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR} -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS} -DREGEX_PREFIX_STR=libregex_
-      )
-
-  else (BUILD_SHARED_LIBS AND HAVE_LIBC_REGEX AND "${BRLCAD_REGEX}" MATCHES "BUNDLED")
-
-    ExternalProject_Add(REGEX_BLD
-      SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libregex"
-      BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE}
-      CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}
-      )
-
-  endif (BUILD_SHARED_LIBS AND HAVE_LIBC_REGEX AND "${BRLCAD_REGEX}" MATCHES "BUNDLED")
+  # Platform differences in default linker behavior make it difficult to
+  # guarantee that our libregex symbols will override libc. We'll avoid the
+  # issue by renaming our libregex symbols to be incompatible with libc.
+  ExternalProject_Add(REGEX_BLD
+    SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libregex"
+    BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE}
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
+    -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
+    -DREGEX_PREFIX_STR=libregex_
+    )
 
   ExternalProject_Target(regex REGEX_BLD
     OUTPUT_FILE libregex${CMAKE_SHARED_LIBRARY_SUFFIX}.1.0.4
@@ -138,7 +122,9 @@ if (${CMAKE_PROJECT_NAME}_ZLIB_BUILD)
   ExternalProject_Add(ZLIB_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libz"
     BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE}
-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR} -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS} -DZ_PREFIX_STR=brl_
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
+               -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
+	       -DZ_PREFIX_STR=brl_
     )
   if (NOT MSVC)
     ExternalProject_Target(zlib ZLIB_BLD
@@ -187,7 +173,8 @@ if (${CMAKE_PROJECT_NAME}_LZ4_BUILD)
   ExternalProject_Add(LZ4_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lz4"
     BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE}
-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR} -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
+               -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
     )
   ExternalProject_Target(lz4 LZ4_BLD
     OUTPUT_FILE liblz4${CMAKE_SHARED_LIBRARY_SUFFIX}
@@ -226,7 +213,8 @@ if (${CMAKE_PROJECT_NAME}_NETPBM_BUILD)
   ExternalProject_Add(NETPBM_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libnetpbm"
     BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE}
-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR} -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
+               -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
     )
   ExternalProject_Target(netpbm NETPBM_BLD
     OUTPUT_FILE libnetpbm${CMAKE_SHARED_LIBRARY_SUFFIX}
@@ -286,7 +274,12 @@ set(PNG_VERSION_MINOR 37)
 if (${CMAKE_PROJECT_NAME}_PNG_BUILD)
   ExternalProject_Add(PNG_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libpng"
-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DCMAKE_INSTALL_LIBDIR=${LIB_DIR} -DCMAKE_PREFIX_PATH=${CMAKE_BINARY_DIR}/${LIB_DIR} -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DPNG_STATIC=${BUILD_STATIC_LIBS} -DZLIB_ROOT=${CMAKE_BINARY_DIR} -DPNG_PREFIX=brl_ -DSKIP_INSTALL_FILES=ON -DSKIP_INSTALL_EXECUTABLES=ON -DSKIP_INSTALL_EXPORT=ON -DPNG_TESTS=OFF -Dld-version-script=OFF
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DCMAKE_INSTALL_LIBDIR=${LIB_DIR}
+    	       -DCMAKE_PREFIX_PATH=${CMAKE_BINARY_DIR}/${LIB_DIR} -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH}
+	       -DPNG_STATIC=${BUILD_STATIC_LIBS} -DZLIB_ROOT=${CMAKE_BINARY_DIR} -DSKIP_INSTALL_FILES=ON
+	       -DSKIP_INSTALL_EXECUTABLES=ON -DSKIP_INSTALL_EXPORT=ON -DPNG_TESTS=OFF -Dld-version-script=OFF
+	       -DPNG_PREFIX=brl_
+
     DEPENDS ${ZLIB_LIBRARIES}
     )
   ExternalProject_Target(png PNG_BLD
@@ -314,37 +307,58 @@ if (${CMAKE_PROJECT_NAME}_PNG_BUILD)
 
 endif (${CMAKE_PROJECT_NAME}_PNG_BUILD)
 
-if (0)
 
-# libutahrle Library - The directory to perform ADD_SUBDIRECTORY on
-# and the include directory for utahrle are different, so override the
-# macro's setting of UTAHRLE_INCLUDE_DIR here.
-set(UTAHRLE_HAVE_COMMON_H 1)
+###############################################################################
+#           libutahrle - Runtime Length Encoding image file support
+###############################################################################
+
 set(utahrle_DESCRIPTION "
 Option for enabling and disabling compilation of the Utah Raster
 Toolkit library provided with BRL-CAD's source code.  Default is AUTO,
 responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
 first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(libutahrle UTAHRLE utahrle utahrle_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL3
-  ALIASES ENABLE_UTAHRLE FLAGS NOSYS)
-if(BRLCAD_UTAHRLE_BUILD)
-  SetTargetFolder(utahrle "Third Party Libraries")
-  SetTargetFolder(utahrle-static "Third Party Libraries")
-  set(UTAHRLE_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libutahrle/include" CACHE STRING "directory with rle.h header" FORCE)
-  set(BRLCAD_UTAHRLE_INCLUDE_DIR "${UTAHRLE_INCLUDE_DIR}" CACHE STRING "directory with rle.h header" FORCE)
-  mark_as_advanced(UTAHRLE_INCLUDE_DIR)
-  mark_as_advanced(BRLCAD_UTAHRLE_INCLUDE_DIR)
+THIRD_PARTY(libutahrle UTAHRLE utahrle utahrle_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL3 ALIASES ENABLE_UTAHRLE FLAGS NOSYS)
 
-  # manage installed headers
-  get_directory_property(libutahrle_headers_orig DIRECTORY libutahrle DEFINITION LIBUTAHRLE_PUBLIC_HDRS)
-  set(libutahrle_headers)
-  foreach(utahh ${libutahrle_headers_orig})
-    get_filename_component(utahhf ${utahh} NAME)
-    set(libutahrle_headers ${libutahrle_headers} libutahrle/include/${utahhf})
-  endforeach(utahh ${libutahrle_headers_orig})
-  BRLCAD_MANAGE_FILES(libutahrle_headers ${INCLUDE_DIR})
-endif(BRLCAD_UTAHRLE_BUILD)
+if (${CMAKE_PROJECT_NAME}_UTAHRLE_BUILD)
+
+  set(UTAHRLE_MAJOR_VERSION 19)
+  set(UTAHRLE_MINOR_VERSION 0)
+  set(UTAHRLE_PATCH_VERSION 1)
+  set(UTAHRLE_VERSION ${UTAHRLE_MAJOR_VERSION}.${UTAHRLE_MINOR_VERSION}.${UTAHRLE_PATCH_VERSION})
+
+  ExternalProject_Add(UTAHRLE_BLD
+    SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libutahrle"
+    BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE}
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
+    -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
+    )
+
+  ExternalProject_Target(utahrle UTAHRLE_BLD
+    OUTPUT_FILE libutahrle${CMAKE_SHARED_LIBRARY_SUFFIX}.${UTAHRLE_VERSION}
+    STATIC_OUTPUT_FILE libutahrle${CMAKE_STATIC_LIBRARY_SUFFIX}
+    SYMLINKS "${LIB_DIR}/libutahrle${CMAKE_SHARED_LIBRARY_SUFFIX};${LIB_DIR}/libutahrle${CMAKE_SHARED_LIBRARY_SUFFIX}.${UTAHRLE_MAJOR_VERSION}"
+    LINK_TARGET "libutahrle${CMAKE_SHARED_LIBRARY_SUFFIX}"
+    STATIC_LINK_TARGET "libutahrle${CMAKE_STATIC_LIBRARY_SUFFIX}"
+    RPATH
+    )
+  ExternalProject_ByProducts(UTAHRLE_BLD ${INCLUDE_DIR}
+    rle.h
+    rle_code.h
+    rle_config.h
+    rle_put.h
+    rle_raw.h
+    )
+
+  set(UTAHRLE_LIBRARIES utahrle CACHE STRING "Building bundled libregex" FORCE)
+  set(UTAHRLE_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing regex headers." FORCE)
+
+  SetTargetFolder(UTAHRLE_BLD "Third Party Libraries")
+  SetTargetFolder(utahrle "Third Party Libraries")
+
+endif (${CMAKE_PROJECT_NAME}_UTAHRLE_BUILD)
+
+if (0)
 
 # Tcl/Tk presents a number of complexities for BRL-CAD and CMake.
 # BRL-CAD requires far more knowledge of the details of a Tcl/Tk
