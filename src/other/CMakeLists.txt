@@ -35,6 +35,13 @@ foreach(ITEM ${dlists})
   CMAKEFILES(${dlist})
 endforeach(ITEM ${dlists})
 
+# By default, changes in src/other files won't trigger a rebuild.  Setting this
+# to 1 at configure time changes that, but at the expense of running the build
+# step every time.  This may be fast if there is nothing to update in the
+# project, but it will be slower than skipping the step completely.
+if (NOT DEFINED EXTERNAL_BUILD_UPDATE)
+  set(EXTERNAL_BUILD_UPDATE 0)
+endif (NOT DEFINED EXTERNAL_BUILD_UPDATE)
 
 # Use this variable to key both CMake messages and tools like rpath_replace
 if(NOT DEFINED EXTPROJ_VERBOSE)
@@ -78,6 +85,7 @@ if (${CMAKE_PROJECT_NAME}_REGEX_BUILD)
     # incompatible with libc.
     ExternalProject_Add(REGEX_BLD
       SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libregex"
+      BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE}
       CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR} -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DREGEX_PREFIX_STR=libregex_
       )
 
@@ -85,6 +93,7 @@ if (${CMAKE_PROJECT_NAME}_REGEX_BUILD)
 
     ExternalProject_Add(REGEX_BLD
       SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libregex"
+      BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE}
       CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}
       )
 
@@ -128,6 +137,7 @@ if (${CMAKE_PROJECT_NAME}_ZLIB_BUILD)
 
   ExternalProject_Add(ZLIB_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libz"
+    BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE}
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR} -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DZ_PREFIX_STR=brl_
     )
   if (NOT MSVC)
@@ -176,6 +186,7 @@ if (${CMAKE_PROJECT_NAME}_LZ4_BUILD)
 
   ExternalProject_Add(LZ4_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lz4"
+    BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE}
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR} -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} 
     )
   ExternalProject_Target(lz4 LZ4_BLD
