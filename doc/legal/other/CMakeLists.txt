@@ -8,7 +8,6 @@ set(other_licenses
   libnetpbm.txt
   libpng.txt
   libregex.txt
-  libtermlib.txt
   libutahrle.txt
   libvds.txt
   libz.txt

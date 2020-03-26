@@ -1,5 +1,4 @@
 set(man3_EN
-  libcursor.xml
   libfb.xml
   libplot3.xml
   librt.xml
