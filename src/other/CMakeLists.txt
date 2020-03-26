@@ -86,7 +86,7 @@ if (${CMAKE_PROJECT_NAME}_REGEX_BUILD)
     ExternalProject_Add(REGEX_BLD
       SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libregex"
       BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE}
-      CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR} -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DREGEX_PREFIX_STR=libregex_
+      CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR} -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS} -DREGEX_PREFIX_STR=libregex_
       )
 
   else (BUILD_SHARED_LIBS AND HAVE_LIBC_REGEX AND "${BRLCAD_REGEX}" MATCHES "BUNDLED")
@@ -138,7 +138,7 @@ if (${CMAKE_PROJECT_NAME}_ZLIB_BUILD)
   ExternalProject_Add(ZLIB_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libz"
     BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE}
-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR} -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DZ_PREFIX_STR=brl_
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR} -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS} -DZ_PREFIX_STR=brl_
     )
   if (NOT MSVC)
     ExternalProject_Target(zlib ZLIB_BLD
@@ -187,7 +187,7 @@ if (${CMAKE_PROJECT_NAME}_LZ4_BUILD)
   ExternalProject_Add(LZ4_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lz4"
     BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE}
-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR} -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} 
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR} -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
     )
   ExternalProject_Target(lz4 LZ4_BLD
     OUTPUT_FILE liblz4${CMAKE_SHARED_LIBRARY_SUFFIX}
@@ -209,8 +209,10 @@ if (${CMAKE_PROJECT_NAME}_LZ4_BUILD)
 
 endif (${CMAKE_PROJECT_NAME}_LZ4_BUILD)
 
-if (0)
-# libnetpbm Library support for pnm,ppm,pbm, etc. image files
+###############################################################################
+#           netpbm library support for pnm,ppm,pbm, etc. image files
+###############################################################################
+
 set(netpbm_DESCRIPTION "
 Option for enabling and disabling compilation of the netpbm library
 provided with BRL-CAD's source code.  Default is AUTO, responsive to
@@ -218,16 +220,47 @@ the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
 version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 THIRD_PARTY(libnetpbm NETPBM netpbm netpbm_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL2 ALIASES ENABLE_NETPBM)
-if(BRLCAD_NETPBM_BUILD)
-  SetTargetFolder(libnetpbm "Third Party Libraries")
-  SetTargetFolder(libnetpbm-static "Third Party Libraries")
-endif(BRLCAD_NETPBM_BUILD)
-SetTargetFolder(netpbm "Third Party Libraries")
-SetTargetFolder(netpbm-static "Third Party Libraries")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libnetpbm/version.h")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libnetpbm/compile.h")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libnetpbm/pm_config.h")
 
+if (${CMAKE_PROJECT_NAME}_NETPBM_BUILD)
+
+  ExternalProject_Add(NETPBM_BLD
+    SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libnetpbm"
+    BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE}
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR} -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
+    )
+  ExternalProject_Target(netpbm NETPBM_BLD
+    OUTPUT_FILE libnetpbm${CMAKE_SHARED_LIBRARY_SUFFIX}
+    STATIC_OUTPUT_FILE libnetpbm${CMAKE_STATIC_LIBRARY_SUFFIX}
+    RPATH
+    )
+
+  ExternalProject_ByProducts(NETPBM_BLD ${INCLUDE_DIR}
+    netpbm/bitio.h
+    netpbm/colorname.h
+    netpbm/pam.h
+    netpbm/pammap.h
+    netpbm/pbm.h
+    netpbm/pbmfont.h
+    netpbm/pgm.h
+    netpbm/pm.h
+    netpbm/pm_gamma.h
+    netpbm/pm_system.h
+    netpbm/pnm.h
+    netpbm/ppm.h
+    netpbm/ppmcmap.h
+    netpbm/ppmfloyd.h
+    )
+
+  set(NETPBM_LIBRARIES netpbm CACHE STRING "Building bundled netpbm" FORCE)
+  set(NETPBM_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}/netpbm" CACHE STRING "Directory containing lz4 headers." FORCE)
+
+  SetTargetFolder(NETPBM_BLD "Third Party Libraries")
+  SetTargetFolder(netpbm "Third Party Libraries")
+
+endif (${CMAKE_PROJECT_NAME}_NETPBM_BUILD)
+
+
+if (0)
 # libpng Library - Checks for ZLIB, so need to handle libpng AFTER
 # zlib to set the variables if using a local copy of zlib.  If not
 # using a local copy of zlib, FindZLIB results will be identical in
