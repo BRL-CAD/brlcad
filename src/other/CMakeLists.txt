@@ -1009,25 +1009,9 @@ if (${CMAKE_PROJECT_NAME}_PROJ4_BUILD)
 endif (${CMAKE_PROJECT_NAME}_PROJ4_BUILD)
 
 
-if (0)
-if(BRLCAD_PROJ4_BUILD)
-  set(PROJ4_LIBRARY proj CACHE STRING "libproj" FORCE)
-  set(PROJ4_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/proj-4;${CMAKE_CURRENT_SOURCE_DIR}/proj-4/src" CACHE STRING "proj-4 includes" FORCE)
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/proj-4/proj_config.h")
-  SetTargetFolder(proj "Third Party Libraries/GDAL")
-  # Need data files in order for PROJ-4 to work...
-  get_directory_property(PROJ_DICTIONARY DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/proj-4/nad DEFINITION PROJ_DICTIONARY)
-  set(proj_dict)
-  foreach(pfile ${PROJ_DICTIONARY})
-    set(proj_dict ${proj_dict} proj-4/nad/${pfile})
-  endforeach(pfile ${PROJ_DICTIONARY})
-  BRLCAD_MANAGE_FILES("${proj_dict}" "${DATA_DIR}/proj")
-endif(BRLCAD_PROJ4_BUILD)
-mark_as_advanced(PROJ4_INCLUDE_DIRS)
-mark_as_advanced(PROJ4_LIBRARY)
-mark_as_advanced(USE_THREAD)
-
-# GDAL library
+###############################################################################
+#  GDAL -  translator library for raster and vector geospatial data formats
+###############################################################################
 set(gdal_DESCRIPTION "
 Option for enabling and disabling compilation of the GDAL geographic
 library provided with BRL-CAD's source code.  Default
@@ -1036,6 +1020,42 @@ testing first for a system version if BRLCAD_BUNDLED_LIBS is also
 AUTO.
 ")
 THIRD_PARTY(gdal GDAL gdal gdal_DESCRIPTION REQUIRED_VARS "BRLCAD_ENABLE_GDAL;BRLCAD_LEVEL2" ALIASES ENABLE_GDAL)
+
+if (${CMAKE_PROJECT_NAME}_GDAL_BUILD)
+
+  #set(GDAL_MAJOR_VERSION 4)
+  #set(GDAL_MINOR_VERSION 9)
+  #set(GDAL_API_VERSION 12)
+  #set(GDAL_VERSION ${GDAL_MAJOR_VERSION}.${GDAL_MINOR_VERSION}.${GDAL_API_VERSION})
+
+  ExternalProject_Add(GDAL_BLD
+    SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/gdal"
+    BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
+               -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
+    )
+  ExternalProject_Target(gdal GDAL_BLD
+    OUTPUT_FILE libgdal${CMAKE_SHARED_LIBRARY_SUFFIX}.${GDAL_VERSION}
+    STATIC_OUTPUT_FILE libgdal${CMAKE_STATIC_LIBRARY_SUFFIX}
+    SYMLINKS "${LIB_DIR}/libgdal${CMAKE_SHARED_LIBRARY_SUFFIX};${LIB_DIR}/libgdal${CMAKE_SHARED_LIBRARY_SUFFIX}.${GDAL_API_VERSION}"
+    LINK_TARGET "libgdal${CMAKE_SHARED_LIBRARY_SUFFIX}"
+    STATIC_LINK_TARGET "libgdal${CMAKE_STATIC_LIBRARY_SUFFIX}"
+    RPATH
+    )
+
+  ExternalProject_ByProducts(GDAL_BLD ${INCLUDE_DIR}
+    )
+
+  set(GDAL_LIBRARIES gdal CACHE STRING "Building bundled proj" FORCE)
+  set(GDAL_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing GDAL headers." FORCE)
+
+  SetTargetFolder(GDAL_BLD "Third Party Libraries")
+  SetTargetFolder(gdal "Third Party Libraries")
+
+endif (${CMAKE_PROJECT_NAME}_GDAL_BUILD)
+
+
+if (0)
 if(BRLCAD_GDAL_BUILD)
   set(GDAL_LIBRARY gdal CACHE STRING "libgdal" FORCE)
   set(GDAL_INCLUDE_DIR

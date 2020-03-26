@@ -35,7 +35,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 3.1.3)
+cmake_minimum_required(VERSION 3.12)
 
 # Set CMake project name
 project(GDAL)
@@ -43,6 +43,10 @@ project(GDAL)
 if(NOT MSVC OR "${MSVC_VERSION}" GREATER 1700)
    set(CMAKE_CXX_STANDARD 11)
 endif(NOT MSVC OR "${MSVC_VERSION}" GREATER 1700)
+
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake")
+
+find_package(PROJ4 REQUIRED)
 
 include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
@@ -53,7 +57,7 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/ogr/ogrsf_frmts
   ${CMAKE_CURRENT_SOURCE_DIR}/gnm
   ${CMAKE_CURRENT_SOURCE_DIR}/apps
-  ${PROJ4_INCLUDE_DIR}
+  ${PROJ4_INCLUDE_DIRS}
   )
 
 if(NOT LIB_DIR)
@@ -347,7 +351,7 @@ foreach(frmt ${OGR_FORMATS})
 endforeach(frmt ${OGR_FORMATS})
 
 set(lib_list ZLIB PNG M DL ICONV)
-set(gdal_libs ${PROJ4_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+set(gdal_libs ${PROJ4_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 foreach(ll ${lib_list})
   if(${ll}_LIBRARY)
     set(gdal_libs ${gdal_libs} ${${ll}_LIBRARY})
