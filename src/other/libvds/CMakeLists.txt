@@ -29,6 +29,8 @@ cmake_minimum_required(VERSION 3.1.3)
 # set CMake project name
 project(VDS)
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+
 if (NOT BIN_DIR)
   set(BIN_DIR bin)
 endif (NOT BIN_DIR)

@@ -813,16 +813,17 @@ if (${CMAKE_PROJECT_NAME}_VDS_BUILD)
     )
 
   set(VDS_LIBRARIES vds CACHE STRING "Building bundled netpbm" FORCE)
-  set(VDS_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}/vds" CACHE STRING "Directory containing netpbm headers." FORCE)
+  set(VDS_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing vds headers." FORCE)
 
   SetTargetFolder(VDS_BLD "Third Party Libraries")
   SetTargetFolder(vds "Third Party Libraries")
 
 endif (${CMAKE_PROJECT_NAME}_VDS_BUILD)
 
-if (0)
+###############################################################################
+#               gdiam - approximate tight bounding boxes
+###############################################################################
 
-# gdiam
 set(libgdiam_DESCRIPTION "
 Option for enabling and disabling compilation of the libgdiam approximate
 tight bounding box library provided with BRL-CAD's source code.  Default
@@ -836,21 +837,35 @@ mark_as_advanced(LIBGDIAM_INCLUDE_DIR)
 SetTargetFolder(libgdiam "Third Party Libraries")
 SetTargetFolder(libgdiam-static "Third Party Libraries")
 
-# Adaptagrams is not yet integrated as a src/other subbuild, but there
-# is code that will make use of it if it is available.  If that code
-# becomes sufficiently useful, Adaptagrams will be integrated.  In the
-# meantime, locate the find logic for that package here.
-# Adaptagrams library
-#if(BRLCAD_LEVEL2)
-# find_package(ADAPTAGRAMS)
-# if(ADAPTAGRAMS_FOUND)
-#   CONFIG_H_APPEND(BRLCAD "#define HAVE_ADAPTAGRAMS 1\n")
-# endif(ADAPTAGRAMS_FOUND)
-# set(ADAPTAGRAMS_LIBRARIES "${ADAPTAGRAMS_LIBRARIES}" CACHE STRING "Adaptagrams libs" FORCE)
-# set(ADAPTAGRAMS_FOUND "${ADAPTAGRAMS_FOUND}" CACHE BOOL "Adaptagrams status" FORCE)
-# mark_as_advanced(ADAPTAGRAMS_FOUND)
-# mark_as_advanced(ADAPTAGRAMS_LIBRARIES)
-#endif(BRLCAD_LEVEL2)
+if (${CMAKE_PROJECT_NAME}_GDIAM_BUILD)
+
+  ExternalProject_Add(GDIAM_BLD
+    SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libgdiam"
+    BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE}
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
+               -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
+    )
+  ExternalProject_Target(gdiam GDIAM_BLD
+    OUTPUT_FILE libgdiam${CMAKE_SHARED_LIBRARY_SUFFIX}
+    STATIC_OUTPUT_FILE libgdiam${CMAKE_STATIC_LIBRARY_SUFFIX}
+    RPATH
+    )
+
+  ExternalProject_ByProducts(GDIAM_BLD ${INCLUDE_DIR}
+    gdiam.hpp
+    )
+
+  set(GDIAM_LIBRARIES gdiam CACHE STRING "Building bundled gdiam" FORCE)
+  set(GDIAM_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing netpbm headers." FORCE)
+
+  SetTargetFolder(GDIAM_BLD "Third Party Libraries")
+  SetTargetFolder(gdiam "Third Party Libraries")
+
+endif (${CMAKE_PROJECT_NAME}_GDIAM_BUILD)
+
+
+
+if (0)
 
 # Poly2Tri CDT library
 add_subdirectory(poly2tri)
