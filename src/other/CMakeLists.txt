@@ -1150,27 +1150,6 @@ if (${CMAKE_PROJECT_NAME}_GDAL_BUILD)
 endif (${CMAKE_PROJECT_NAME}_GDAL_BUILD)
 
 if (0)
-if(BRLCAD_GDAL_BUILD)
-  set(GDAL_LIBRARY gdal CACHE STRING "libgdal" FORCE)
-  set(GDAL_INCLUDE_DIR
-    "${CMAKE_CURRENT_BINARY_DIR}/gdal"
-    "${BRLCAD_SOURCE_DIR}/src/other/gdal/port"
-    "${BRLCAD_SOURCE_DIR}/src/other/gdal/gcore"
-    "${BRLCAD_SOURCE_DIR}/src/other/gdal/alg"
-    "${BRLCAD_SOURCE_DIR}/src/other/gdal/ogr"
-    "${BRLCAD_SOURCE_DIR}/src/other/gdal/ogr/ogrsf_frmts"
-    "${BRLCAD_SOURCE_DIR}/src/other/gdal/gnm"
-    "${BRLCAD_SOURCE_DIR}/src/other/gdal/apps"
-    "${BRLCAD_SOURCE_DIR}/src/other/gdal/frmts/vrt"
-    )
-  set(GDAL_INCLUDE_DIR "${GDAL_INCLUDE_DIR}" CACHE STRING "libgdal includes" FORCE)
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/gdal/cpl_config.h")
-endif(BRLCAD_GDAL_BUILD)
-mark_as_advanced(GDAL_CONFIG)
-mark_as_advanced(GDAL_INCLUDE_DIR)
-mark_as_advanced(GDAL_LIBRARY)
-
-
 
 # Tcl/Tk presents a number of complexities for BRL-CAD and CMake.
 # BRL-CAD requires far more knowledge of the details of a Tcl/Tk
