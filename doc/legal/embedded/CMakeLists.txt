@@ -19,6 +19,7 @@ set(embedded_licenses
   hv3.txt
   hv3_combobox.txt
   hv3_snit.txt
+  libtermlib.txt
   msinttypes.txt
   nurbs_fit.txt
   obr.txt

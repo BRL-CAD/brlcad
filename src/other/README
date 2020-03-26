@@ -11,9 +11,6 @@ libregex	http://www.arglist.com/regex			Regular expression library.  It might be
 	                                                        has a nasty habit of colliding with Tcl's regex and/or system regex
 								functionality.  Used by the red command, as well as search in librt and
                 	                                        src/conv/proe-g.c
-libtermlib	early bsd termlib from vi			Used by burst and libcursor, possibly others - long term goal is to 
-								move away from this API as it does not work on Windows (and neither 
-								do any of the tools using it.)
 libutahrle							Utah run length encoded format - used by image processing tools, (?)
 libvds		http://vdslib.virginia.edu			View dependent simplification.  Used for MGED/Archer level of detail control
 libz		http://zlib.net/				zlib data compression library. Used widely - png and openNURBS 
