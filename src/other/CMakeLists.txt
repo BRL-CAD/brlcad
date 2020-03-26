@@ -624,123 +624,159 @@ if (${CMAKE_PROJECT_NAME}_BSON_BUILD)
 
 endif (${CMAKE_PROJECT_NAME}_BSON_BUILD)
 
-if (0)
-# STEPcode
-# Need Lemon/Perplex to build STEP - conditionalize
+###############################################################################
+#       STEPcode - support for reading and writing STEP files
+###############################################################################
 
-# Set some options for the SCL build
-option(SC_PYTHON_GENERATOR "Compile exp2python" OFF)
-option(SC_ENABLE_TESTING "Enable unittesting framework" OFF)
-option(SC_ENABLE_COVERAGE "Enable code coverage test" OFF)
-
-set(SC_IS_SUBBUILD ON)
-set(SC_SKIP_EXEC_INSTALL ON)
-set(SC_BUILD_TYPE "${CMAKE_BUILD_TYPE}")
-set(INCLUDE_INSTALL_DIR ${INCLUDE_DIR})
-set(BIN_INSTALL_DIR ${BIN_DIR})
-set(LIB_INSTALL_DIR ${LIB_DIR})
-
-function(SC_MANAGE_HDRS src_dir src_var target_dir)
-  get_directory_property(sc_headers_orig DIRECTORY ${src_dir} DEFINITION ${src_var})
-  set(sc_headers)
-  foreach(scfile ${sc_headers_orig})
-    get_filename_component(scf ${scfile} NAME)
-    set(sc_headers ${sc_headers} ${src_dir}/${scf})
-  endforeach(scfile ${sc_headers_orig})
-  BRLCAD_MANAGE_FILES("${sc_headers}" "${target_dir}" FOLDER stepcode)
-endfunction(SC_MANAGE_HDRS)
-
-function(SC_MANAGE_HDRS2 src_dir src_var target_dir)
-  get_directory_property(sc_headers_orig DIRECTORY ${src_dir} DEFINITION ${src_var})
-  set(sc_headers)
-  foreach(scfile ${sc_headers_orig})
-    set(sc_headers ${sc_headers} ${src_dir}/${scfile})
-  endforeach(scfile ${sc_headers_orig})
-  BRLCAD_MANAGE_FILES("${sc_headers}" "${target_dir}" FOLDER stepcode)
-endfunction(SC_MANAGE_HDRS2)
-
-set(sc_ALIASES ENABLE_SCL ENABLE_STEP ENABLE_STEP_CLASS_LIBRARIES)
 set(sc_DESCRIPTION "
 Option for enabling and disabling compilation of the NIST Step Class
 Libraries provided with BRL-CAD's source code.  Default is AUTO,
 responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
 first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-set(IS_SUBBUILD_STASH ${IS_SUBBUILD})
-set(IS_SUBBUILD ON)
-set(SC_BUILD_SCHEMAS "" CACHE STRING "Disable schema builds for BRL-CAD" FORCE)
-# Lots of "libraries" associated with stepcode - use "stepcode" as the
-# stand-in for the build target var.
-THIRD_PARTY(stepcode SC stepcode sc_DESCRIPTION REQUIRED_VARS LEMON_EXECUTABLE
-  PERPLEX_EXECUTABLE BRLCAD_LEVEL3 ALIASES ${sc_ALIASES} RESET_VARS
-  EXP2CXX_EXEC EXP2CXX_EXECUTABLE_TARGET FLAGS NOSYS)
-if(BRLCAD_SC_BUILD)
-  set(EXP2CXX_EXEC exp2cxx CACHE STRING "Express to C++ executable" FORCE)
-  set(EXP2CXX_EXECUTABLE_TARGET exp2cxx CACHE STRING "Express to C++ executable target" FORCE)
-  mark_as_advanced(EXP2CXX_EXEC)
-  mark_as_advanced(EXP2CXX_EXECUTABLE_TARGET)
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/stepcode/include/sc_cf.h.in")
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/stepcode/include/sc_version_string.h")
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/stepcode/src/express/ExpParser_expparse/expparse.y")
 
-  # stepcode has a lot of installed headers...
-  SC_MANAGE_HDRS(stepcode/src/base SC_BASE_HDRS ${INCLUDE_DIR}/stepcode/base)
-  SC_MANAGE_HDRS(stepcode/src/cldai SC_CLDAI_HDRS ${INCLUDE_DIR}/stepcode/cldai)
-  SC_MANAGE_HDRS(stepcode/src/cleditor SC_CLEDITOR_HDRS ${INCLUDE_DIR}/stepcode/cleditor)
-  SC_MANAGE_HDRS(stepcode/src/clstepcore SC_CLSTEPCORE_HDRS ${INCLUDE_DIR}/stepcode/clstepcore)
-  SC_MANAGE_HDRS(stepcode/src/clutils SC_CLUTILS_HDRS ${INCLUDE_DIR}/stepcode/clutils)
-  SC_MANAGE_HDRS2(stepcode/include express_HDRS ${INCLUDE_DIR}/stepcode/express)
-  SC_MANAGE_HDRS2(stepcode/include exppp_HDRS ${INCLUDE_DIR}/stepcode/exppp)
-  BRLCAD_MANAGE_FILES(stepcode/include/ordered_attrs.h ${INCLUDE_DIR}/stepcode)
-  BRLCAD_MANAGE_FILES(stepcode/include/sc_export.h ${INCLUDE_DIR}/stepcode)
-  BRLCAD_MANAGE_FILES(stepcode/include/sc_stdbool.h ${INCLUDE_DIR}/stepcode)
-  get_directory_property(scbdir DIRECTORY stepcode/include DEFINITION SC_BINARY_DIR)
-  get_directory_property(sciidir DIRECTORY stepcode/include DEFINITION INCLUDE_INSTALL_DIR)
-  add_custom_command(
-    OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/sc_gen_hdrs.sentinel"
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different ${scbdir}/${sciidir}/sc_cf.h ${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/stepcode/sc_cf.h
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different ${scbdir}/${sciidir}/sc_version_string.h ${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/stepcode/sc_version_string.h
-    COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_CURRENT_BINARY_DIR}/sc_gen_hdrs.sentinel"
-    DEPENDS ${scbdir}/${sciidir}/sc_cf.h
+THIRD_PARTY(stepcode SC stepcode sc_DESCRIPTION
+  REQUIRED_VARS LEMON_EXECUTABLE PERPLEX_EXECUTABLE BRLCAD_LEVEL3
+  ALIASES ${sc_ALIASES}
+  RESET_VARS EXP2CXX_EXEC EXP2CXX_EXECUTABLE_TARGET
+  FLAGS NOSYS)
+
+if(BRLCAD_SC_BUILD)
+
+  set(LEMON_TARGET)
+  if (TARGET lemon)
+    set(LEMON_TARGET lemon)
+  endif (TARGET lemon)
+
+  set(PERPLEX_TARGET)
+  if (TARGET lemon)
+    set(PERPLEX_TARGET lemon)
+  endif (TARGET lemon)
+
+  ExternalProject_Add(STEPCODE_BLD
+    SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/stepcode"
+    BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE}
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
+               -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
+	       -DPERPLEX_ROOT=${CMAKE_BINARY_DIR} -DLEMON_ROOT=${CMAKE_BINARY_DIR}
+	       -DLEMON_TEMPLATE=${CMAKE_BINARY_DIR}/share/lemon/lempar.c
+	       -DSC_IS_SUBBUILD=ON -DSC_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DSC_PYTHON_GENERATOR=OFF
+	       -DSC_ENABLE_TESTING=OFF -DSC_ENABLE_COVERAGE=OFF -DSC_SKIP_EXEC_INSTALL=ON
+	       -DINCLUDE_INSTALL_DIR=${INCLUDE_DIR} -DBIN_INSTALL_DIR=${BIN_DIR} -DLIB_INSTALL_DIR=${LIB_DIR}
+               -DSC_BUILD_SCHEMAS=
+    DEPENDS ${LEMON_TARGET} ${PERPLEX_TARGET}
     )
-  add_custom_target(sc_gen_hdrs_cp ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/sc_gen_hdrs.sentinel")
-  BRLCAD_ADD_DIR_LIST_ENTRY(DATA_TARGETS "${CMAKE_CURRENT_BINARY_DIR}" sc_gen_hdrs_cp)
-  set_target_properties(sc_gen_hdrs_cp PROPERTIES FOLDER "BRL-CAD File Setup/stepcode")
-  add_dependencies(express sc_gen_hdrs_cp)
-  DISTCLEAN("${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/stepcode/sc_cf.h")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/stepcode/sc_version_string.h")
+
+  set(STEPCODE_LIBS base express exppp stepcore stepeditor stepdai steputils)
+  foreach(SCLIB ${STEPCODE_LIBS})
+    ExternalProject_Target(lib${SCLIB} STEPCODE_BLD
+      OUTPUT_FILE lib${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX}.2.0.0
+      SYMLINKS "lib${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX};lib${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX}.2"
+      LINK_TARGET "lib${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX}"
+      RPATH
+      )
+  endforeach(SCLIB ${STEPCODE_LIBS})
+  set(STEPCODE_EXECS check-express exppp exp2cxx)
+  foreach(SCEXEC ${STEPCODE_EXECS})
+    ExternalProject_Target(${SCEXEC} STEPCODE_BLD
+      OUTPUT_FILE ${SCEXEC}${CMAKE_EXECUTABLE_SUFFIX}
+      RPATH EXEC
+      )
+  endforeach(SCEXEC ${STEPCODE_EXECS})
+
+  set(EXP2CXX_EXEC exp2cxx CACHE STRING "Express to C++ executable" FORCE)
+  mark_as_advanced(EXP2CXX_EXEC)
+  set(EXP2CXX_EXECUTABLE_TARGET exp2cxx CACHE STRING "Express to C++ executable target" FORCE)
+  mark_as_advanced(EXP2CXX_EXECUTABLE_TARGET)
+
+  ExternalProject_ByProducts(STEPCODE_BLD ${INCLUDE_DIR}
+    stepcode/cldai/sdaiApplication_instance_set.h
+    stepcode/cldai/sdaiSession_instance.h
+    stepcode/cldai/sdaiObject.h
+    stepcode/cldai/sdaiString.h
+    stepcode/cldai/sdaiEntity_extent.h
+    stepcode/cldai/sdaiEnum.h
+    stepcode/cldai/sdaiModel_contents.h
+    stepcode/cldai/sdaiBinary.h
+    stepcode/cldai/sdaiEntity_extent_set.h
+    stepcode/cldai/sdaiModel_contents_list.h
+    stepcode/cldai/sdaiDaObject.h
+    stepcode/ordered_attrs.h
+    stepcode/exppp/exppp.h
+    stepcode/express/hash.h
+    stepcode/express/error.h
+    stepcode/express/linklist.h
+    stepcode/express/basic.h
+    stepcode/express/memory.h
+    stepcode/express/lexact.h
+    stepcode/express/type.h
+    stepcode/express/caseitem.h
+    stepcode/express/entity.h
+    stepcode/express/resolve.h
+    stepcode/express/schema.h
+    stepcode/express/stmt.h
+    stepcode/express/expr.h
+    stepcode/express/dict.h
+    stepcode/express/expbasic.h
+    stepcode/express/alg.h
+    stepcode/express/variable.h
+    stepcode/express/express.h
+    stepcode/express/object.h
+    stepcode/express/symbol.h
+    stepcode/express/scope.h
+    stepcode/sc_export.h
+    stepcode/sc_cf.h
+    stepcode/clutils/Str.h
+    stepcode/clutils/gennodearray.h
+    stepcode/clutils/gennode.h
+    stepcode/clutils/errordesc.h
+    stepcode/clutils/gennodelist.h
+    stepcode/clutils/sc_hash.h
+    stepcode/clutils/dirobj.h
+    stepcode/cleditor/cmdmgr.h
+    stepcode/cleditor/editordefines.h
+    stepcode/cleditor/SdaiHeaderSchemaClasses.h
+    stepcode/cleditor/seeinfodefault.h
+    stepcode/cleditor/SdaiHeaderSchema.h
+    stepcode/cleditor/SdaiSchemaInit.h
+    stepcode/cleditor/STEPfile.h
+    stepcode/sc_version_string.h
+    stepcode/sc_stdbool.h
+    stepcode/base/sc_getopt.h
+    stepcode/base/sc_trace_fprintf.h
+    stepcode/base/sc_benchmark.h
+    stepcode/base/sc_memmgr.h
+    stepcode/clstepcore/STEPundefined.h
+    stepcode/clstepcore/mgrnodelist.h
+    stepcode/clstepcore/STEPattribute.h
+    stepcode/clstepcore/STEPaggregate.h
+    stepcode/clstepcore/ExpDict.h
+    stepcode/clstepcore/read_func.h
+    stepcode/clstepcore/needFunc.h
+    stepcode/clstepcore/mgrnodearray.h
+    stepcode/clstepcore/mgrnode.h
+    stepcode/clstepcore/dispnode.h
+    stepcode/clstepcore/sdai.h
+    stepcode/clstepcore/STEPcomplex.h
+    stepcode/clstepcore/instmgr.h
+    stepcode/clstepcore/baseType.h
+    stepcode/clstepcore/sdaiSelect.h
+    stepcode/clstepcore/SubSuperIterators.h
+    stepcode/clstepcore/dictdefs.h
+    stepcode/clstepcore/SingleLinkList.h
+    stepcode/clstepcore/STEPattributeList.h
+    stepcode/clstepcore/dispnodelist.h
+    stepcode/clstepcore/sdaiApplication_instance.h
+    stepcode/clstepcore/Registry.h
+    stepcode/clstepcore/complexSupport.h
+    )
+
+  SetTargetFolder(STEPCODE_BLD "Third Party Libraries")
+  SetTargetFolder(stepcode "Third Party Libraries")
 
 endif(BRLCAD_SC_BUILD)
-set(IS_SUBBUILD ${IS_SUBBUILD_STASH})
-mark_as_advanced(SC_BUILD_TYPE)
-mark_as_advanced(SC_BUILD_SCHEMAS)
-mark_as_advanced(SC_GENERATE_LEXER_PARSER)
-mark_as_advanced(SC_BUILD_SHARED_LIBS)
-mark_as_advanced(SC_BUILD_STATIC_LIBS)
-mark_as_advanced(SC_CPP_GENERATOR)
-mark_as_advanced(SC_ENABLE_COVERAGE)
-mark_as_advanced(SC_ENABLE_TESTING)
-mark_as_advanced(SC_PYTHON_GENERATOR)
-mark_as_advanced(SC_MEMMGR_ENABLE_CHECKS)
-mark_as_advanced(SC_SDAI_ADDITIONAL_EXES_SRCS)
-mark_as_advanced(SC_TRACE_FPRINTF)
-SetTargetFolder(exp2cxx "Third Party Executables")
-SetTargetFolder(core "Compilation Utilities")
-SetTargetFolder(print_attrs "Compilation Utilities")
-SetTargetFolder(print_schemas "Compilation Utilities")
-SetTargetFolder(exppp "Third Party Executables")
-SetTargetFolder(libexppp "Third Party Libraries")
-SetTargetFolder(check-express "Third Party Executables")
-SetTargetFolder(express "Third Party Libraries")
-SetTargetFolder(express_md5gen "Third Party Executables")
-SetTargetFolder(express_verify "Third Party Libraries")
-SetTargetFolder(base "Third Party Libraries")
-SetTargetFolder(stepcore "Third Party Libraries")
-SetTargetFolder(stepdai "Third Party Libraries")
-SetTargetFolder(stepeditor "Third Party Libraries")
-SetTargetFolder(steputils "Third Party Libraries")
-SetTargetFolder(version_string "Compilation Utilities")
 
+if (0)
 if(BRLCAD_ENABLE_GECODE)
   set(gecode_DESCRIPTION "
   Option for enabling and disabling compilation of the Gecode Constraint
