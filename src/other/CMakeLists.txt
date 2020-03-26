@@ -832,10 +832,6 @@ testing first for a system version if BRLCAD_BUNDLED_LIBS is also
 AUTO.
 ")
 THIRD_PARTY(libgdiam GDIAM libgdiam libgdiam_DESCRIPTION ALIASES ENABLE_GDIAM FLAGS NOSYS)
-set(LIBGDIAM_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libgdiam" CACHE STRING "Directory containing libgdiam headers." FORCE)
-mark_as_advanced(LIBGDIAM_INCLUDE_DIR)
-SetTargetFolder(libgdiam "Third Party Libraries")
-SetTargetFolder(libgdiam-static "Third Party Libraries")
 
 if (${CMAKE_PROJECT_NAME}_GDIAM_BUILD)
 
@@ -856,36 +852,57 @@ if (${CMAKE_PROJECT_NAME}_GDIAM_BUILD)
     )
 
   set(GDIAM_LIBRARIES gdiam CACHE STRING "Building bundled gdiam" FORCE)
-  set(GDIAM_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing netpbm headers." FORCE)
+  set(GDIAM_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing gdiam headers." FORCE)
 
   SetTargetFolder(GDIAM_BLD "Third Party Libraries")
   SetTargetFolder(gdiam "Third Party Libraries")
 
 endif (${CMAKE_PROJECT_NAME}_GDIAM_BUILD)
 
+###############################################################################
+#             Poly2Tri - 2D constrained Delaunay triangulation
+###############################################################################
 
+set(poly2tri_DESCRIPTION "
+Option for enabling and disabling compilation of the poly2tri 2D constrained
+Delaunay triangulation library provided with BRL-CAD's source code.  Default is
+AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing first
+for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
+")
+THIRD_PARTY(poly2tri POLY2TRI poly2tri poly2tri_DESCRIPTION ALIASES ENABLE_POLY2TRI FLAGS NOSYS)
+
+if (${CMAKE_PROJECT_NAME}_POLY2TRI_BUILD)
+
+  ExternalProject_Add(POLY2TRI_BLD
+    SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/poly2tri"
+    BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE}
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
+               -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
+    )
+  ExternalProject_Target(poly2tri POLY2TRI_BLD
+    OUTPUT_FILE libpoly2tri${CMAKE_SHARED_LIBRARY_SUFFIX}
+    STATIC_OUTPUT_FILE libpoly2tri${CMAKE_STATIC_LIBRARY_SUFFIX}
+    RPATH
+    )
+
+  ExternalProject_ByProducts(POLY2TRI_BLD ${INCLUDE_DIR}
+    poly2tri/poly2tri.h
+    poly2tri/common/shapes.h
+    poly2tri/sweep/cdt.h
+    poly2tri/sweep/advancing_front.h
+    poly2tri/sweep/sweep.h
+    poly2tri/sweep/sweep_context.h
+    )
+
+  set(POLY2TRI_LIBRARIES poly2tri CACHE STRING "Building bundled poly2tri" FORCE)
+  set(POLY2TRI_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing poly2tri headers." FORCE)
+
+  SetTargetFolder(POLY2TRI_BLD "Third Party Libraries")
+  SetTargetFolder(poly2tri "Third Party Libraries")
+
+endif (${CMAKE_PROJECT_NAME}_POLY2TRI_BUILD)
 
 if (0)
-
-# Poly2Tri CDT library
-add_subdirectory(poly2tri)
-include("${CMAKE_CURRENT_SOURCE_DIR}/poly2tri.dist")
-CMAKEFILES_IN_DIR(poly2tri_ignore_files poly2tri)
-DISTCLEAN("${CMAKE_CURRENT_SOURCE_DIR}/poly2tri/Makefile")
-set(P2T_LIBRARY "p2t" CACHE STRING "Poly2Tri library" FORCE)
-set(P2T_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/poly2tri" CACHE STRING "Directory containing poly2tri header" FORCE)
-get_directory_property(poly2tri_headers DIRECTORY poly2tri DEFINITION LIBP2T_PUBLIC_HDRS)
-foreach(phfile ${poly2tri_headers})
-  get_filename_component(phfile_dir ${phfile} DIRECTORY)
-  BRLCAD_MANAGE_FILES(poly2tri/${phfile} ${INCLUDE_DIR}/${phfile_dir})
-endforeach(phfile ${poly2tri_headers})
-SetTargetFolder(p2t "Third Party Libraries")
-SetTargetFolder(p2t-static "Third Party Libraries")
-mark_as_advanced(P2T_LIBRARY)
-mark_as_advanced(P2T_INCLUDE_DIR)
-mark_as_advanced(P2T_SHARED)
-mark_as_advanced(P2T_STATIC)
-mark_as_advanced(P2T_TESTS)
 
 # RPLY I/O library
 add_subdirectory(rply)

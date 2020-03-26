@@ -44,7 +44,7 @@ if (NOT LIB_DIR)
 endif (NOT LIB_DIR)
 
 include(CheckLibraryExists)
-CHECK_LIBRARY_EXISTS(m cos "" HAVE_M_LIBRARY)
+check_library_exists(m cos "" HAVE_M_LIBRARY)
 if (HAVE_M_LIBRARY)
   set(SYS_LIBS ${SYS_LIBS} m)
 endif (HAVE_M_LIBRARY)
