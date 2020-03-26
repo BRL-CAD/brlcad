@@ -775,13 +775,16 @@ if(BRLCAD_SC_BUILD)
 
 endif(BRLCAD_SC_BUILD)
 
-if (0)
 
-# VDSlib - A View-Dependent Simplification and Rendering Library For
-# the moment, this is marked NOSYS - it's possible that some Debian
-# systems would have 0.9 of vdslib installed, but it's unmaintained
-# and we're likely to be making changes.  If our own copy of VDSlib
-# ever spins back off into its own project, revisit the NOSYS
+###############################################################################
+#      VDSlib - A View-Dependent Simplification and Rendering Library
+###############################################################################
+
+#  For the moment, this is marked NOSYS - it's possible that some Debian
+#  systems would have 0.9 of vdslib installed, but it's unmaintained and we're
+#  likely to be making changes.  If our own copy of VDSlib ever spins back off
+#  into its own project, revisit the NOSYS
+
 set(libvds_DESCRIPTION "
 Option for enabling and disabling compilation of the libvds triangle
 simplification library provided with BRL-CAD's source code.  Default
@@ -790,14 +793,34 @@ testing first for a system version if BRLCAD_BUNDLED_LIBS is also
 AUTO.
 ")
 THIRD_PARTY(libvds VDS libvds libvds_DESCRIPTION ALIASES ENABLE_VDS FLAGS NOSYS)
-set(LIBVDS_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libvds" CACHE STRING "Directory containing libvds headers." FORCE)
-mark_as_advanced(LIBVDS_INCLUDE_DIR)
-SetTargetFolder(libvds "Third Party Libraries")
-SetTargetFolder(libvds-static "Third Party Libraries")
-SetTargetFolder(stdvds "Third Party Libraries")
-SetTargetFolder(stdvds-static "Third Party Libraries")
 
+if (${CMAKE_PROJECT_NAME}_VDS_BUILD)
 
+  ExternalProject_Add(VDS_BLD
+    SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libvds"
+    BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE}
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
+               -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
+    )
+  ExternalProject_Target(vds VDS_BLD
+    OUTPUT_FILE libvds${CMAKE_SHARED_LIBRARY_SUFFIX}
+    STATIC_OUTPUT_FILE libvds${CMAKE_STATIC_LIBRARY_SUFFIX}
+    RPATH
+    )
+
+  ExternalProject_ByProducts(VDS_BLD ${INCLUDE_DIR}
+    vds.h
+    )
+
+  set(VDS_LIBRARIES vds CACHE STRING "Building bundled netpbm" FORCE)
+  set(VDS_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}/vds" CACHE STRING "Directory containing netpbm headers." FORCE)
+
+  SetTargetFolder(VDS_BLD "Third Party Libraries")
+  SetTargetFolder(vds "Third Party Libraries")
+
+endif (${CMAKE_PROJECT_NAME}_VDS_BUILD)
+
+if (0)
 # OpenSceneGraph Libraries
 set(openscenegraph_DESCRIPTION "
 Option for enabling and disabling compilation of the OpenSceneGraph
