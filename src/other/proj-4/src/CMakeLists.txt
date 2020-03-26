@@ -226,7 +226,7 @@ if (BUILD_STATIC_LIBS)
     )
 endif (BUILD_STATIC_LIBS)
 
-install(FILES ${ALL_LIBPROJ_HEADERS} DESTINATION ${INCLUDE_DIR})
+install(FILES ${hdr_files} DESTINATION ${INCLUDE_DIR}/proj)
 
 
 # Local Variables:

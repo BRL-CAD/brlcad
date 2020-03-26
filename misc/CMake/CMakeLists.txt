@@ -41,7 +41,6 @@ set(cmake_ignore_files
   FindRE2C.cmake
   FindREGEX.cmake
   FindSCL.cmake
-  FindSSE.cmake
   FindSTL.cmake
   FindShellDeps.cmake
   FindTBB.cmake

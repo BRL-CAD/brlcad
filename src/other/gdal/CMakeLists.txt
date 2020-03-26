@@ -57,7 +57,7 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/ogr/ogrsf_frmts
   ${CMAKE_CURRENT_SOURCE_DIR}/gnm
   ${CMAKE_CURRENT_SOURCE_DIR}/apps
-  ${PROJ4_INCLUDE_DIRS}
+  ${PROJ4_INCLUDE_DIR}
   )
 
 if(NOT LIB_DIR)
@@ -73,6 +73,10 @@ endif(NOT DATA_DIR)
 if(NOT DEFINED BUILD_SHARED_LIBS)
   set(BUILD_SHARED_LIBS ON)
 endif(NOT DEFINED BUILD_SHARED_LIBS)
+
+if (NOT DEFINED BUILD_STATIC_LIBS)
+  set(BUILD_STATIC_LIBS OFF)
+endif (NOT DEFINED BUILD_STATIC_LIBS)
 
 include(CheckCCompilerFlag)
 include(CheckCXXCompilerFlag)
@@ -135,12 +139,12 @@ endif(MSVC)
 
 find_package(ZLIB)
 if(ZLIB_LIBRARY)
-  include_directories(${ZLIB_INCLUDE_DIR})
+  include_directories(${ZLIB_INCLUDE_DIRS})
   add_definitions(-DHAVE_LIBZ)
 endif(ZLIB_LIBRARY)
 find_package(PNG)
 if(PNG_LIBRARY)
-  include_directories(${PNG_INCLUDE_DIR})
+  include_directories(${PNG_INCLUDE_DIRS})
   add_definitions(-DUSE_PNG)
 endif(PNG_LIBRARY)
 
@@ -361,17 +365,34 @@ if(MSVC)
   set(gdal_libs ${gdal_libs} ws2_32.lib kernel32.lib psapi.lib)
 endif(MSVC)
 
-add_library(gdal ${gdal_srcs})
-if(gdal_libs)
-  target_link_libraries(gdal ${gdal_libs})
-endif(gdal_libs)
-install(TARGETS gdal
-  RUNTIME DESTINATION ${BIN_DIR}
-  LIBRARY DESTINATION ${LIB_DIR}
-  ARCHIVE DESTINATION ${LIB_DIR})
-SetTargetFolder(gdal "Third Party Libraries/GDAL")
+if (BUILD_SHARED_LIBS)
+  add_library(gdal SHARED ${gdal_srcs})
+  if(gdal_libs)
+    target_link_libraries(gdal ${gdal_libs})
+  endif(gdal_libs)
+  install(TARGETS gdal
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR})
+endif (BUILD_SHARED_LIBS)
 
-add_subdirectory(progs)
+if (BUILD_STATIC_LIBS)
+  add_library(gdal-static STATIC ${gdal_srcs})
+  if (MSVC)
+    # msvc does not append 'lib' - do it here to have consistent name
+    set_target_properties(gdal-static PROPERTIES PREFIX "lib")
+  else (MSVC)
+    set_target_properties(gdal-static PROPERTIES OUTPUT_NAME "gdal")
+  endif (MSVC)
+  install(TARGETS gdal-static
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR})
+endif (BUILD_STATIC_LIBS)
+
+if (BUILD_SHARED_LIBS)
+  add_subdirectory(progs)
+endif (BUILD_SHARED_LIBS)
 
 # Handle Data files
 install(FILES LICENSE.TXT DESTINATION ${DATA_DIR}/gdal)
