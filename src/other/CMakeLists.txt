@@ -902,19 +902,46 @@ if (${CMAKE_PROJECT_NAME}_POLY2TRI_BUILD)
 
 endif (${CMAKE_PROJECT_NAME}_POLY2TRI_BUILD)
 
-if (0)
+###############################################################################
+#         RPly - support for reading and writign PLY geometry files
+###############################################################################
 
-# RPLY I/O library
-add_subdirectory(rply)
-include("${CMAKE_CURRENT_SOURCE_DIR}/rply.dist")
-CMAKEFILES_IN_DIR(rply_ignore_files rply)
-DISTCLEAN("${CMAKE_CURRENT_SOURCE_DIR}/rply/Makefile")
-set(RPLY_LIBRARIES "rply" CACHE STRING "RPLY library" FORCE)
-set(RPLY_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/src/other/rply" CACHE STRING "Directory containing rply header" FORCE)
-SetTargetFolder(rply "Third Party Libraries")
-SetTargetFolder(rply-static "Third Party Libraries")
-mark_as_advanced(RPLY_LIBRARIES)
-mark_as_advanced(RPLY_INCLUDE_DIRS)
+set(rply_DESCRIPTION "
+Option for enabling and disabling compilation of the RPly library for PLY file
+input and ouput provided with BRL-CAD's source code.  Default is AUTO,
+responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a
+system version if BRLCAD_BUNDLED_LIBS is also AUTO.
+")
+THIRD_PARTY(rply RPLY rply rply_DESCRIPTION ALIASES ENABLE_RPLY FLAGS NOSYS)
+
+if (${CMAKE_PROJECT_NAME}_RPLY_BUILD)
+
+  ExternalProject_Add(RPLY_BLD
+    SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/rply"
+    BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE}
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
+               -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
+    )
+  ExternalProject_Target(rply RPLY_BLD
+    OUTPUT_FILE librply${CMAKE_SHARED_LIBRARY_SUFFIX}
+    STATIC_OUTPUT_FILE librply${CMAKE_STATIC_LIBRARY_SUFFIX}
+    RPATH
+    )
+
+  ExternalProject_ByProducts(RPLY_BLD ${INCLUDE_DIR}
+    rply.h
+    )
+
+  set(RPLY_LIBRARIES rply CACHE STRING "Building bundled rply" FORCE)
+  set(RPLY_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing rply headers." FORCE)
+
+  SetTargetFolder(RPLY_BLD "Third Party Libraries")
+  SetTargetFolder(rply "Third Party Libraries")
+
+endif (${CMAKE_PROJECT_NAME}_RPLY_BUILD)
+
+
+if (0)
 
 # PROJ.4 library - used by GDAL
 set(proj4_DESCRIPTION "
