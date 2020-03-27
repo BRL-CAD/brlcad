@@ -1,0 +1,38 @@
+WHAT:   Tktable v2.10, 2D editable table/matrix widget
+
+WHERE:  http://tktable.sourceforge.net/
+    Tktable binaries are part of ActiveTcl:
+        http://www.ActiveState.com/Tcl
+
+REQUIREMENTS:   Tcl/Tk8.0+, compiling is required
+        Compiles everywhere Tk does!
+
+UPDATES TO 2.10:
+    * Code cleanup
+    * Work around Xft font clipping issues
+    * Updated build system
+
+    See ChangeLog and updated man page for full details
+
+BASIC FEATURES:
+ * multi-line cells
+ * support for embedded windows (one per cell)
+ * variable width columns / height rows (interactively resizable)
+ * row and column titles
+ * multiple data sources ((Tcl array || Tcl command) &| internal caching)
+ * supports standard Tk reliefs, fonts, etc.
+ * x/y scrollbar support
+ * 'tag' styles per row, column or cell to change
+   colors, font, relief, image, etc...
+ * in-cell editing - returns value back to data source
+ * support for disabled (read-only) tables or cells (via tags)
+ * multiple selection modes, with "active" cell
+ * optional 'flashes' when things update
+ * cell validation support
+ * Builds on Windows, Mac and Unix
+ * Unicode support (8.1+)
+
+Mailing list for Tktable users:
+    http://lists.sourceforge.net/lists/listinfo/tktable-users
+
+CONTACT: jeff at hobbs.org, Jeff Hobbs

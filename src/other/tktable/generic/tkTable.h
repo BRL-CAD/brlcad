@@ -77,7 +77,15 @@
 #endif /* defn of XSync */
 
 #ifndef NORMAL_BG
-#   if defined(MAC_TCL) || defined(MAC_OSX_TK)
+#   ifdef WIN32
+#	define NORMAL_BG	"SystemButtonFace"
+#	define ACTIVE_BG	NORMAL_BG
+#	define SELECT_BG	"SystemHighlight"
+#	define SELECT_FG	"SystemHighlightText"
+#	define DISABLED		"SystemDisabledText"
+#	define HIGHLIGHT	"SystemWindowFrame"
+#	define DEF_TABLE_FONT	"{MS Sans Serif} 8"
+#   elif defined(MAC_TCL) || defined(MAC_OSX_TK)
 #	define NORMAL_BG	"systemWindowBody"
 #	define ACTIVE_BG	"#ececec"
 #	define SELECT_BG	"systemHighlight"
@@ -92,11 +100,7 @@
 #	define SELECT_FG	"Black"
 #	define DISABLED		"#a3a3a3"
 #	define HIGHLIGHT	"Black"
-#      ifdef WIN32
-#	   define DEF_TABLE_FONT	"{MS Sans Serif} 8"
-#      else
-#	   define DEF_TABLE_FONT	"Helvetica -12"
-#      endif
+#	define DEF_TABLE_FONT	"Helvetica -12"
 #   endif
 #endif /* NORMAL_BG */
 

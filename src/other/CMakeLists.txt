@@ -1440,6 +1440,97 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
     SetTargetFolder(IWIDGETS_BLD "Third Party Libraries")
     SetTargetFolder(iwidgets "Third Party Libraries")
 
+    #############
+    #   TkTable
+    #############
+
+    if (NOT MSVC)
+
+      set(TKTABLE_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/TKTABLE_BLD-prefix/src/TKTABLE_BLD")
+      set(TKTABLE_VERSION 2.10)
+
+      set(TKTABLE_PATCH_FILES "${TKTABLE_SRC_DIR}/configure" "${TKTABLE_SRC_DIR}/tclconfig/tcl.m4")
+
+      ExternalProject_Add(TKTABLE_BLD
+	URL "${CMAKE_CURRENT_SOURCE_DIR}/tktable"
+	BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
+	PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${TKTABLE_PATCH_FILES}
+	CONFIGURE_COMMAND CPPFLAGS=-I${CMAKE_BINARY_DIR}/${INCLUDE_DIR} LDFLAGS=-L${CMAKE_BINARY_DIR}/${LIB_DIR} ${TKTABLE_SRC_DIR}/configure --prefix=${CMAKE_BINARY_DIR} --with-tcl=${CMAKE_BINARY_DIR}/${LIB_DIR} --with-tk=${CMAKE_BINARY_DIR}/${LIB_DIR}
+	BUILD_COMMAND make -j${pcnt}
+	INSTALL_COMMAND make install
+	DEPENDS TK_BLD TCL_BLD
+	)
+    else (NOT MSVC)
+
+      ExternalProject_Add(TKTABLE_BLD
+	SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tk"
+	BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
+	CONFIGURE_COMMAND ""
+	BINARY_DIR ${TKTABLE_SRC_DIR}/win
+	BUILD_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc INSTALLDIR=${CMAKE_BINARY_DIR} TCLDIR=${TCL_SRC_DIR} TKDIR=${TK_SRC_DIR}
+	INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install INSTALLDIR=${CMAKE_BINARY_DIR} TCLDIR=${TCL_SRC_DIR} TKDIR=${TK_SRC_DIR}
+	DEPENDS TK_BLD TCL_BLD
+	)
+
+    endif (NOT MSVC)
+
+
+    ExternalProject_Target(tktable TKTABLE_BLD
+      IMPORT_PREFIX TkTable${TKTABLE_VERSION}
+      OUTPUT_FILE libTktable${TKTABLE_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}
+      )
+
+    ExternalProject_ByProducts(TKTABLE_BLD ${LIB_DIR}
+      Tktable2.10/README.txt
+      Tktable2.10/html/tkTable.html
+      Tktable2.10/pkgIndex.tcl
+      Tktable2.10/tkTable.tcl
+      Tktable2.10/tktable.py
+      Tktable2.10/license.txt
+      )
+
+    SetTargetFolder(TKTABLE_BLD "Third Party Libraries")
+    SetTargetFolder(tktable "Third Party Libraries")
+
+    #############
+    #   Tkhtml
+    #############
+
+    cmake_set_rpath(SUFFIX "Tkhtml3.0.1")
+    ExternalProject_Add(TKHTML_BLD
+      SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tkhtml
+      CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}
+      -DCMAKE_PREFIX_PATH=${CMAKE_BINARY_DIR}/${LIB_DIR} -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH}
+      -DTCL_INCLUDE_DIRS=${CMAKE_BINARY_DIR}/${INCLUDE_DIR}
+      -DTCL_INCLUDE_PATH=${CMAKE_BINARY_DIR}/${INCLUDE_DIR}
+      -DTCL_LIBRARY=${CMAKE_BINARY_DIR}/${LIB_DIR}/libtcl8.${TCL_MINOR_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}
+      -DTCL_STUB_LIBRARY=${CMAKE_BINARY_DIR}/${LIB_DIR}/libtclstub8.${TCL_MINOR_VERSION}${CMAKE_STATIC_LIBRARY_SUFFIX}
+      -DTCL_TCLSH=${CMAKE_BINARY_DIR}/${BIN_DIR}/tclsh8.${TCL_MINOR_VERSION}${CMAKE_EXECUTABLE_SUFFIX}
+      -DTCL_TCLSH_EXECUTABLE=${CMAKE_BINARY_DIR}/${BIN_DIR}/tclsh8.${TCL_MINOR_VERSION}${CMAKE_EXECUTABLE_SUFFIX}
+      -DTCL_TK_CONF_PREFIX=${CMAKE_BINARY_DIR}/${LIB_DIR}
+      -DTCL_TK_LIBRARY=${CMAKE_BINARY_DIR}/${LIB_DIR}/libtk8.${TCL_MINOR_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}
+      -DTCL_TK_STUB_LIBRARY=${CMAKE_BINARY_DIR}/${LIB_DIR}/libtkstub8.${TCL_MINOR_VERSION}${CMAKE_STATIC_LIBRARY_SUFFIX}
+      -DTCL_WISH_EXECUTABLE=${CMAKE_BINARY_DIR}/${BIN_DIR}/wish8.${TCL_MINOR_VERSION}${CMAKE_EXECUTABLE_SUFFIX}
+      -DTK_INCLUDE_PATH=${CMAKE_BINARY_DIR}/${INCLUDE_DIR}
+      -DTK_LIBRARY=${CMAKE_BINARY_DIR}/${LIB_DIR}/libtk8.${TCL_MINOR_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}
+      DEPENDS TCL_BLD TK_BLD
+      )
+    ExternalProject_Target(tkhtml TKHTML_BLD
+      IMPORT_PREFIX Tkhtml3.0.1
+      OUTPUT_FILE libTkhtml${CMAKE_SHARED_LIBRARY_SUFFIX}.3.0
+      SYMLINKS "libTkhtml${CMAKE_SHARED_LIBRARY_SUFFIX}"
+      LINK_TARGET "libTkhtml${CMAKE_SHARED_LIBRARY_SUFFIX}"
+      RPATH
+      )
+    cmake_set_rpath("")
+
+    ExternalProject_ByProducts(TKHTML_BLD ${LIB_DIR}/Tkhtml3.0.1
+      Tkhtml3.0.1/pkgIndex.tcl
+      )
+
+    SetTargetFolder(TKHTML_BLD "Third Party Libraries")
+    SetTargetFolder(tkhtml "Third Party Libraries")
+
   else(BRLCAD_ENABLE_TK)
 
     set(HAVE_TK 0 CACHE STRING "C level Tk flag" FORCE)

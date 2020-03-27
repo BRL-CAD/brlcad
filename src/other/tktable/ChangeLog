@@ -1,0 +1,1700 @@
+2008-11-14  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	**** 2.10 TAGGED FOR RELEASE ****
+
+	* generic/tkTable.c: Set NO_XSETCLIP universally as Tk 8.5/Xft
+	seems to ignore XSetClipRectangles.  This may slow things down a
+	little, but draws correctly. [Bug 1805350]
+
+	* UPGRADING.txt (removed): no longer need this old v1 upgrade doc.
+
+	* README.txt: remove refs to mac classic stuff, update notes
+
+	* configure, configure.in, tclconfig/tcl.m4: Update to TEA 3.7
+	* tests/tkTable.test, unix/tktable.spec, generic/version.h:
+	* demos/loadtable.tcl: Update version to 2.10
+	* Makefile.in: update dist target, include library/tktable.py
+
+	* demos/tktable.py: note that this version is outdated
+	* library/tktable.py (NEW): Added new version of tktable wrapper
+	for Python/Tkinter from GPolo.  Not 100% compatible with previous
+	version. [Patch 2244167]
+
+	* generic/tkTableTag.c (Table_TagCmd): remove interp->result set
+	work-around for old bug as i->result is no longer exposed in 8.6.
+
+	* generic/tkTable.c:     Use safe Tcl_SetObjResult instead of trying
+	* generic/tkTableCell.c: to set existing objResult value.
+	* generic/tkTableCmds.c: 
+
+2006-07-10  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* license.txt (bourbon_ware): Be less restrictive in the
+	bourbon_ware clause.
+
+2006-01-25  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* configure.in, configure, tclconfig/tcl.m4: update to TEA 3.5
+
+2006-01-22  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tclconfig/tcl.m4, configure: update to TEA 3.4 interim
+
+2005-12-13  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tkTableCmds.c (Table_ActivateCmd): remove potential
+	undefined behavior warning.
+
+2005-12-02  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tclconfig/tcl.m4, configure.in, configure: update to TEA 3.4
+
+2005-05-11  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* Makefile.in (html): switch to groff to fix botched html output.
+	* doc/tkTable.html: regen [Bug 1198478]
+	* doc/tkTable.n: use '' around \\ items.
+
+2005-03-18  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* Makefile.in (AR): use @AR@, improve html doc target
+	* configure, configure.in, tclconfig/tcl.m4: TEA 3.2 patch update
+
+	* doc/tkTable.n, doc/kTable.html: doc cleanup
+
+2005-02-01  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* configure, configure.in, tclconfig/tcl.m4: update to TEA 3.2
+
+2004-11-18  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* library/tkTable.tcl (::tk::table::SelectAll): remove invalid ref
+	to HandleType proc. [Bug 1068874] (ade)
+
+2004-07-22  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	**** 2.9 TAGGED FOR RELEASE ****
+
+	* configure, tclconfig/tcl.m4: update tcl.m4 TEA_PATH_X that adds
+	Aqua build recognition and TEA_WINDOWINGSYSTEM variable.
+
+2004-07-20  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/version.h, unix/tktable.spec:    updated for v2.9
+	* demos/loadtable.tcl, tests/tkTable.test:
+
+	* Makefile.in, configure.in, configure, tclconfig/tcl.m4: update
+	to TEA 3.1, use CFLAGS instead of EXTRA_CFLAGS and bump the
+	version number of Tktable to 2.9.
+
+	* generic/tkTable.h: add #include <ctype.h>
+
+	* generic/tkTableCell.c (TableGetCellValue, TableSetCellValue): 
+	Do faster cache checks when DATA_CACHE is the only data source.
+	In fallback from command that errors to array var, retrieve array
+	value immediately on current get|set request.
+	When setting the value with cache and array sources, don't do the
+	caching branch as the array trace will do that already.
+	(TableMoveCellValue): Do the efficient cache value management when
+	cache is the only data source, otherwise the regular fallback has
+	all the necessary checks. [Bug #919872]
+
+	* generic/tkTable.c (TableVarProc): allow setting NULL value in
+	cache hash from array trace.
+
+2004-06-10  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tkTableWin.c (EmbWinDisplay): make min window displayed
+	have width/height 1 pixel min (was 3px)
+
+	* generic/tkTable.c (TableDisplay): Don't draw when we don't have
+	the space for it. [Bug 747038]
+
+	* doc/tkTable.html, doc/tkTable.n: improve docs to note
+	requirement of specifying a data source. [Bug 963204]
+
+2004-02-17  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tkTableCmds.c (Table_ActivateCmd): test implementation
+	of an "unactivate" ($table activate "") command to remove the
+	active cell. (becroft)
+
+2004-02-13  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* library/tkTable.tcl (::tk::table::Button1): account for what
+	resizeborders are set when selecting cell [Bug 876320] (ferenc) 
+	(<Prior> <Next>): activate topleft, not @0,0 (accounts for title
+	rows) [Bug 879347] (ferenc)
+
+2003-12-10  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* Makefile.in: updated to TEA3 spec
+	* configure:
+	* configure.in:
+	* generic/tkTable.c:
+	* generic/tkTableInitScript.h:
+	* generic/version.h:
+	* mac/mac_tkTable.r:
+	* tclconfig/tcl.m4:
+
+	* win/makefile.vc: minor updates, probably still out of date
+
+	* tclconfig/ChangeLog (removed): not necessary
+
+	* generic/tkTable.c: added Tk_ClassProcs and TableWorldChanged
+	proc if built against 8.4
+
+	* generic/tkTable.h: add 8.4 ifdef, remove ANSI_ARGS usage
+
+2003-07-16  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* doc/tkTable.n: add note about -window "" behavior
+
+2003-04-10  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* configure: regen
+	* tclconfig/tcl.m4: updated
+
+	* library/tkTable.tcl (BeginExtend): avoid error in tables that
+	have no anchor index yet. (renshaw)
+
+2003-04-09  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* configure: regen
+	* tclconfig/tcl.m4: Updated to newest tcl.m4, (WinCE support)
+
+	* demos/loadtable.tcl: redefine 'puts' on Windows CE
+
+	* generic/tkTable.c (TableDisplay): correctly copy clipwindow area
+	for NO_XSETCLIP case and use that when UNDER_CE as well.  Also add
+	support for drawing ellipsis in NO_XSETCLIP case.
+	Comment out OffsetClipRgn call - it was a noop.
+
+2003-04-04  Andreas Kupries  <andreask@activestate.com>
+
+	* configure.in:
+	* tclconfig/tcl.m4: Updated to newest tcl.m4, regenerated
+	  configure's.
+
+2003-02-24  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tkTable.c (TableDisplay): do not use buffer pixmap for
+	slow -drawmode on Win32 because we aren't clipping it correctly.
+
+2003-01-30  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* Makefile.in: remove use of nested $(PACKAGE) to enable building
+	on older, cruftier make versions
+
+	* doc/tkTable.n:        add -ellipsis tag /global option which
+	* tests/tkTable.test:   takes a char string (ie: "...") to display
+	* generic/tkTableTag.c: as an ellipsis.  These will only be shown
+	* generic/tkTable.h:    on non-wrapping, non-multiline cells.
+	* generic/tkTable.c: 
+
+2002-12-10  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tests/tkTable.test:
+	* generic/tkTableCell.c (TableGetCellValue): make caching allows
+	NULLs throughout to save mem.
+	Do not call Tcl_FreeResult as it will be freed before the next
+	result is set, and causes us to lose large results. [Bug #651685]
+
+2002-10-16  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	**** 2.8 TAGGED FOR RELEASE ****
+
+	* Makefile.in: updated dist target to get changed fileset.
+
+	* generic/tkTableEdit.c (Table_EditCmd): Ensure that embedded
+	widgets being moved offscreen get unmapped. [Bug #551325]
+
+	* generic/tkTableCell.c (TableAtBorder): refine border detection
+	in the midst of spanned cells. [Patch #544117] (duxbury)
+
+	* doc/tkTable.n:
+	* doc/tkTable.html:
+	* tests/tkTable.test:
+	* generic/tkTable.c: Add global -justify option. [Bug #623557]
+
+	* generic/tkTableTag.c: more CONST84 casting fixes.
+	Allowing setting of tag relief to "". [Bug #233619]
+
+	* generic/tkTable.h:
+	* generic/tkTableUtil.c: 
+	* generic/tkTableWin.c: more CONST84 casting fixes.
+
+	* library/tkTable.tcl: Add <FocusOut> as a default auto-commit
+	event. [Bug #611132]
+	(::tk::table::Motion): abort "extended" arm if the anchor cell
+	isn't defined. [Bug #604470]
+
+2002-10-15  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tclconfig/tcl.m4:
+	* configure:
+	* configure.in: move the CFLAGS definition into TEA_MAKE_LIB
+	and make it pick up the env CFLAGS at configure time.
+
+2002-10-15  Andreas Kupries  <andreask@pliers.activestate.com>
+
+	* configure.in: Changed to propagate an initial CFLAGS value to
+	  the final definition. A TEA condition (SHARED_BUILD == 1)
+	  squashed it, causing it the build system to loose the
+	  +DAportable we specify for the AS PA-RISC2.2 build host. This is
+	  a problem for _all_ TEA and TEA 2 based configure files.
+
+2002-10-09  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* configure:
+	* configure.in: move TEA_PATH_X below TEA_CONFIG_CFLAGS as it can
+	mess with the configure results.
+
+	* unix/tktable.spec (new): RPM spec file. (fontaine)
+
+	* demos/tktable.py: added a contributed tktable wrapper for
+	Python/Tkinter from Klaus Roethemeyer.
+
+2002-09-27  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* Makefile.in: correct tkTable.tcl.h target to work with FreeBSD's
+	default make.
+
+2002-09-25  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tkTable.c: 
+	* generic/tkTable.h: added support for building on OS X (steffen)
+
+2002-06-21  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* Makefile.in: call cygpath on INCLUDES $(srcdir)/generic.
+
+	* tests/all.tcl: minor cleanup
+
+	* tests/tkTable.test (table-30.1):
+	* generic/tkTableEdit.c (Table_EditCmd): fixed problem where row
+	insertion could segfault. [Bug #487747]
+
+2002-04-11  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tclconfig/tcl.m4:
+	* configure: Enabled COFF as well as CV style debug info with
+	--enable-symbols to allow Dr. Watson users to see function info.
+	More info on debugging levels can be obtained at:
+	http://msdn.microsoft.com/library/en-us/dnvc60/html/gendepdebug.asp
+
+2002-04-03  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* Makefile.in: improved use of DESTDIR in install targets.
+	Removed need for installdirs target.
+	Broke TCLSH_PROG into TCLSH_ENV and TCLSH_PROG with TCLSH var and
+	added comments about TCLSH_ENV.
+	Added default shell and gdb targets.
+
+	* tclconfig/tcl.m4:
+	* configure: 
+	* configure.in: updated to new TEA base that: prefixes all macros
+	with TEA_* instead of SC_*; adds TEA_PREFIX, which defaults the
+	prefix and exec_prefix values to what Tcl used; adds
+	TEA_SETUP_COMPILER, which handles basic compiler / support program
+	checks and simplifies the configure.in.  Turn on --enable-threads
+	by default and do sanity checking as well.
+
+2002-04-02  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* configure: regened
+	* configure.in: added user32.lib to LIBS for Windows
+	* tclconfig/tcl.m4: updated from TEA sample
+
+2002-03-27  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* Makefile.in (WISH_PROG): moved and updated env var definitions
+	to have wish work from build dir.  Removed TCL_EXTRA_CFLAGS,
+	TCL_LD_FLAGS, TCL_SHLIB_LD_LIBS, TCL_DBGX, TCL_STUB_LIB_FILE,
+	TCL_STUB_LIB_SPEC as they aren't needed (configure acquires all
+	that info for us).  TCL_LIBS is also not needed, but left in as a
+	reference to the libs Tcl used.
+
+	* configure: regen based on updated tclconfig/tcl.m4
+	* configure.in: moved the SHLIB_LD_LIBS magic into
+	tclconfig/tcl.m4 and noted where users can modify (SHLIB_LD_)LIBS.
+	* tclconfig/tcl.m4: updated from sample to be more independent of
+	*Config.sh.
+
+	* unix/Makefile.in (removed):
+	* unix/configure.in (removed):
+	* unix/configure (removed):
+	* unix/install-sh (removed): removed old makefile files to force
+	use of new toplevel TEA 2002 configure/make.
+
+2002-03-21  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tests/tkTable.test: more icursor tests
+	* generic/tkTable.c (TableWidgetObjCmd): corrected placing the
+	icursor and retaining the position.
+
+2002-03-20  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tkTable.c:
+	* generic/tkTable.h:
+	* generic/tkTableCmds.c:
+	* generic/tkTableUtil.c: cleaned up several areas where cache data
+	was not getting freed. [Bug #532447] (bloisi)
+
+2002-03-19  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* tests/tkTable.test: added tag configure tests
+
+	* generic/tkTableTag.c (Table_TagCmd): work-around for bug in
+	Tk_ConfigureValue that sets interp->result to NULL. [Bug #522882]
+
+	* generic/tkTable.c (TableDisplay): when building with threads on
+	WIN32, use NO_XSETCLIP instead of direct DC hacks because Tk
+	doesn't use CS_CLASSDC on threaded builds.
+	(Tktable_Init) Corrected to use BUILD_Tktable for EXTERN changes.
+
+	* configure:
+	* configure.in: use double-eval to substitute DBGX var for
+	${PACKAGE}_LIB_FILE.
+
+	* Makefile.in: cleaned up install target
+
+2002-03-13  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* demos/loadtable.tcl:
+	* tests/tkTable.test: adapted load to new configure style where
+	unix gets the 'lib' suffix for the library.
+
+	* tclconfig/ChangeLog:
+	* tclconfig/README.txt:
+	* tclconfig/install-sh:
+	* tclconfig/tcl.m4:
+	* README.txt:
+	* Makefile.in:
+	* aclocal.m4:
+	* configure:
+	* configure.in: introduction of next-gen TEA based config files.
+	The unix/ configure files should no longer be used.
+
+	* generic/tkTable.c:
+	* generic/tkTableCell.c:
+	* generic/tkTableCellSort.c:
+	* generic/tkTableCmds.c:
+	* generic/tkTableEdit.c:
+	* generic/tkTableTag.c:
+	* generic/tkTableUtil.c:
+	* generic/tkTableWin.c:
+	* generic/tkTable.h: introduced CONST84 define for compatibility
+	with new 8.4 CONST-ed headers and older headers and fixed up
+	sources where necessary.
+
+	* generic/tkTableInitScript.h:
+	* generic/tkTable.c:
+	* generic/version.h:
+	* mac/mac_tkTable.r:
+	* win/makefile.vc: changed TBL_VERSION to VERSION, upped to 2.8.
+	Added Win64 build support to makefile.vc
+
+2002-03-07  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* library/tkTable.tcl (tk_tablePasteHandler): "string comp" fixed
+	to "string compare" [Bug #500449]
+
+2002-01-16  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tkTable.c (TableWidgetObjCmd): corrected dangerous
+	caching of resultPtr that could lead to segfault.
+
+2001-08-24  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* README.txt: corrected outdated notes. [Bug #455116] (kriehbel)
+
+2001-08-23  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* unix/Makefile.in (tkTable.tcl.h): corrected target to sed \'s
+	properly in the .tcl file.
+
+	* library/tkTable.tcl: added the ability to select borders with
+	button 1. (backe)  The user can turn off this ability by calling
+	[set ::tk::table::Priv(borderB1) 0] in their code.  button 3 is
+	still active for selecting borders as well.
+	fixed a couple references to work on Mac/Tk. (steffen)
+
+	* mac/mac_tkTable_prefix.h:
+	* mac/mac_tkTable.r: corrected Mac build. (steffen)
+
+	* doc/tkTable.html: regen'd
+	* doc/tkTable.n: Clarified that any <row>,<col> index
+	specification will always return a valid cell.  [Bug #450397]
+	Corrected what 'units' scrolls. [Bug #448837]
+
+	* mac/mac_tkTable.mcp: removed in favor of XML project file
+	* mac/mac_tkTable.mcp.xml: XML CodeWarrior project file for the
+	mac. (steffen)
+
+2001-07-18  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tkTable.c (TableDestroy): freed cached values in destroy.
+
+2001-06-30  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	**** 2.7 RELEASE ****
+
+	* generic/tkTable.h: added STREQ #def to replace strcmp(a,b) == 0
+	* generic/tkTable.c:
+	* generic/tkTableTag.c: made use of STREQ #define.
+	Redid tag merging to make use of only one allocated tag.
+
+	* doc/tkTable.html:
+	* doc/tkTable.n: updated docs with feature change info
+
+	* tests/tkTable.test: added more tests
+
+	* generic/tkTableCmds.c (Table_ActivateCmd): made table refresh
+	when moving the cursor in the active cell.
+
+2001-06-24  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tkTableTag.c (Table_TagCmd): corrected patch for Patch
+	#423332 that does prevent excess refresh in the simple case.
+
+2001-06-23  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tkTable.c (TableConfigure): corrected possible crash
+	during configure when switching array vars and changed name of
+	'restrict' var to something that is not a reserved word. (berggren)
+
+	* library/tkTable.tcl: support for future UTF8_STRING selection on
+	unix.
+
+	* generic/tkTable.c:
+	* generic/tkTable.h:
+	* generic/tkTableTag.c: added support for priorities in tags.
+	There are new 'tag lower' and 'tag raise' methods.  This may lead
+	to different view characteristics because the default priority
+	order is creation order, starting with flash, active, sel, title,
+	followed by whatever the user creates.  The old order was fixed at
+	flash, active, sel, <celltag>, title, <rowtag>, <coltag>
+		**** POTENTIAL INCOMPATABILITY ****
+
+	* tests/tkTable.test: makings of an initial test suite
+
+	* generic/tkTableCmds.c (Table_CurvalueCmd): removed extra curvalue
+	in error message.
+
+2001-06-22  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tkTableTag.c (Table_TagCmd): made adding tags to
+	cell/row/col create the tag if it didn't exist.  This was
+	previously an error.
+
+	* generic/tkTable.c (TableDisplay): changed use of NO_XSETCLIP to
+	only operate on Macintosh, added new Windows code that is the
+	equivalent of XSetClipRectangles. (teske)
+	Removed XFillRectangle function that was there for support with
+	8.1 (nobody should use 8.1 anymore).
+	(TableDisplay): Corrected clearing of the area beyond the last
+	cell to not be incorrect when there is a span on the last cell.
+	(TableAdjustParams): handle possible div-by-zero for scrollbar
+	calculations. (christian brunner)
+
+	* generic/tkTable.h: added TableMoveCellValue decl.
+	* generic/tkTableEdit.c (TableModifyRC): made use of
+	TableMoveCellValue.
+	* generic/tkTableCell.c (TableSetCellValue): fixed mem leak in
+	-cache option.
+	(TableMoveCellValue): new function to support possible speedier
+	movement of cells when caching is being used. (michael teske)
+
+	* generic/tkTableCell.c (TableCellCoords): corrected
+	rowspan/colspan dimension calculation for title cells.
+	(Table_SetCmd): correct possible abuse in setting result object
+	pointer.
+
+	* README.txt: updated links
+
+	* win/makefile.vc (pkgIndex.tcl):
+	* unix/Makefile.in (pkgIndex.tcl): made 8.2 the required base for
+	the stubs version
+
+	* generic/tkTableCmds.c (Table_GetCmd): fixed potential crash from
+	abusing object pointer. (jonas hodges) Bug #230701
+
+	* generic/tkTableTag.c (Table_TagCmd): fix possible hang situation
+	by preventing refresh when setting the same tag on a cell/row/col.
+	(Michael Shulz)
+
+2001-03-28  Jeff Hobbs  <jeffh@ActiveState.com>
+
+	* generic/tkTable.h: change 'char *new' -> 'char *newVal' to not
+	stump C++ compilers
+
+2000-10-19  Jeff Hobbs  <jeff at hobbs org>
+
+	* tests/all.tcl: new file
+	* tests/tkTable.test: copied listbox.test in to serve as a base
+	for tests on the table widget.  Conversion still needs to be done.
+
+	* generic/tkTableCmds.c: #if 0'd stub function Table_Cmd
+
+	* generic/tkTable.h:
+	* generic/tkTable.c: corrected headers, made TableConfigure static
+
+2000-08-30  Jeff Hobbs  <hobbs@scriptics.com>
+
+	* generic/tkTable.h:
+	* generic/tkTableWin.c (EmbWinConfigure):
+	* generic/tkTableTag.c (Table_TagCmd):
+	* generic/tkTable.c (TableConfigure): changed -borderwidth to use
+	TK_CONFIG_CUSTOM functions for option parsing.
+
+	* win/makefile.vc:
+	* unix/Makefile.in: updated for added/removed source files
+
+	* generic/cmd.c (removed):
+	* generic/mm.h (removed):
+	* generic/tkTableUtil.c (new): moved the few used Cmd_* functions
+	into tkTableUtil.c (Cmd_Struct moved to tkTable.h), removing the
+	need for the other accessory files.
+
+	* unix/configure:
+	* unix/configure.in (uname check): added support for systems where
+	uname has no -p option (ie HP).
+
+2000-08-21  Jeff Hobbs  <hobbs@scriptics.com>
+
+	* generic/tkTable.c (TableConfigure): added check for NULL
+	oldBorders during configure.
+
+2000-08-18  Jeff Hobbs  <hobbs@scriptics.com>
+
+	* generic/tkTable.c: changed the -ipad* defaults to 0, to go along
+	with the -pad* defaults.  For users looking for backwards
+	compatability with 2.5 padding, add:
+	    option add *Table.ipadX 2
+	    option add *Table.ipadY 1
+	Users will likely find that -pad* is more intuitive though.
+		**** POTENTIAL INCOMPATABILITY ****
+
+	* doc/tkTable.html:
+	* doc/tkTable.n: updated docs to reflect new -(i)pad* definitions
+	and enhanced -bd behavior.
+
+	* generic/tkTable.c (TableCursorEvent, TableConfigCursor): reduced
+	unnecessary redraws when the cursor was in a non-editable cell.
+
+2000-08-17  Jeff Hobbs  <hobbs@scriptics.com>
+
+	* generic/tkTable.c: enhanced -borderwidth option to support
+	per-edge configuration of borderwith.  -bd now takes a list of
+	pixel sizes, 1, 2 or 4 in length.  1 is traditional, 2 specifies
+	just the left and right border sizes (to emulate a multicolumn
+	listbox), and 4 specifies {left right top bottom} for ultimate
+	control.  Tags may override the default.
+	Also redid the handling of -(i)pad[xy].  Swapped the basic meaning
+	(-pad* from v2.5 should now be -ipad* in 2.7).  -pad* now enforces
+	absolute empty padding for cells, expanding the default size.
+	Embedded windows can override the -pad* value.  See docs for more.
+		**** POTENTIAL INCOMPATABILITY ****
+
+	* generic/tkTable.h: removed use of INLINE, added new border style
+	support to structures.
+
+	* generic/tkTableCell.c (TableAtBorder): made it aware of the new
+	configurable border style.  It bases its calculations off the
+	default border width(s).  Also did lots of comment cleanup.
+
+	* generic/tkTableWin.c (EmbWinDisplay): changed interpretation of
+	-pad* for windows to be per side (instead of overall).  This is
+	more intuitive.  Added support of new border styles.
+
+	* generic/tkTableTag.c: Added new border style control per tag.
+	New TableGetTagBorders function to determine border values based
+	on input.  Lots of comment/code cleanup.
+
+	* generic/tkTableEdit.c (Table_EditCmd): corrected code to ensure
+	that when rows where deleted, rows/cols would not fall below 1,
+	the minimum dimension size (otherwise "bad things" happen).
+	(Table_EditCmd): corrected problem when specifying a negative
+	count deleting more rows than exist before the specified index.
+
+	* unix/Makefile.in ($(DLL)): corrected ld build line to not use
+	SHLIB_CFLAGS, instead adding TK_LD_SEARCH_FLAGS. (virden)
+
+2000-08-10  Jeff Hobbs  <hobbs@scriptics.com>
+
+	* unix/Makefile.in: cleaned up Makefile to correctly use the right
+	flags for building with stubs support.
+
+	* generic/version.h: bumped version to 2.7
+
+	* generic/tkTable.h: added ipadX, ipadY to table struct.
+	* generic/tkTable.c (TableConfigure): removed code setting
+	forceUpdate to 1 for any configure options.
+	(TableAdjustParams): added -ipdax/-ipday, giving them the meaning
+	that -pad* was extended to use in 2.6.  -pad* are as they were in
+	2.5, and -ipad* does the extended cell padding for 2.7+.  See docs
+	for details.
+	(TableEventProc): removed xexpose.count check that would delay
+	necessary invalidate calls. (Wangnick)
+
+	* library/tkTable.tcl: added ::tk::table::BackSpace proc instead
+	of inlined event binding, taking out \ at eol that confused the
+	tcl2c converter when inlining the tkTable.tcl.h runtime.
+
+2000-08-02  Jeff Hobbs  <hobbs@scriptics.com>
+
+	2.6 RELEASE
+
+	* unix/Makefile.in: added bindist and cleanall targets, and
+	cleared up the use of some variables to allow for correct building
+	of the tktable library across platforms (including AIX).
+	The distclean target no longer removes the generated html doc.
+	* unix/configure:
+	* unix/configure.in: added check of available compression program
+	and SYSID for Unix make bindist target.  Also cleaned up the use
+	of some other variables.
+
+	* generic/tkTable.c (TableConfigCursor, TableCursorEvent)
+	(TableFlashEvent, TableEventProc):
+	* generic/tkTableEdit.c (TableDeleteChars, TableInsertChars):
+	* generic/tkTableCmds.c (Table_CurvalueCmd): removed INV_FORCE
+	from TableRefresh call.  This means more refreshes are delayed.
+
+	* generic/tkTable.c (BUILD_tkTable): corrected EXTERN def'n of
+	Init funcs.
+
+2000-08-01  Jeff Hobbs  <hobbs@scriptics.com>
+
+	* library/tkTable.tcl: rewritten to use ::tk::table namespace
+
+	* generic/tkTable.h: added CONSTRAIN and BETWEEN macros to simply
+	some MIN/MAX cases.
+	* generic/tkTable.c:
+	* generic/tkTableCell.c:
+	* generic/tkTableCmds.c: updated to use CONSTRAIN/BETWEEN instead
+	of MIN(MAX()).
+
+	* generic/tkTable.c (TableRefresh): changed to not do anything
+	when coords < 0 are passed in (like asking to refresh non-existent
+	active cell).
+	(TableEventProc): added (likely redundant) check for xexpose.count
+	== 0 before redisplaying in Expose case. (Halpin)
+
+	* generic/tkTable.c (XFillRectangle): added compat XFillRectangle
+	to make up for lack of one in Tk8.1.  (Nijtmans)
+	(TableAdjustParams): Made -padx and -pady actually work as
+	intended for each cell.  This actually affects the default size
+	for a table, as more spacing is given to each cell by default.
+	Use -padx/y to control this. (Lennard, Hobbs)
+	(TableDisplay): removed extra call to TableCellCoords (leftover
+	from NO_SPANS).  (Deich)
+
+	* generic/tkTableCmds.c (Table_SelSetCmd): Corrected the selection
+	of title cells when only title cells are available. (Brutti)
+
+	* library/tkTable.tcl (tkTableChangeWidth): changed -$a to
+	[expr {-$a}]. (Dubiner)
+	(tkTableBeginSelect): Changed behavior for extended selectmode to
+	select in the topleft title area when appropriate. (Dubiner)
+	(tkTableSelectAll): Changed behavior to select *all* cells
+	(including title cells) when -selecttitles is 1.
+
+	* demos/loadtable.tcl: corrected to search better in new directory
+	structure.
+
+2000-03-22  Jeff Hobbs  <hobbs@scriptics.com>
+
+	* */*: complete restructure of tktable sources
+	* CHANGES.txt: moved to ChangeLog, will now use ChangeLog format
+
+##########################################################################
+## TkTable CHANGES
+##
+## Newest changes at the top of the file.
+## Release dates between "****"s.
+##
+## changes by Hobbs COPYRIGHT 1996-1997 Jeffrey Hobbs, CADIX International
+## changes by Hobbs COPYRIGHT 1998-2000 Jeffrey Hobbs
+## jeff at hobbs org
+##
+# * tkTable v0.55-1.x includes additions contributed by:
+# *        tmoore@spatial.ca (Tom Moore)
+# *        sebastian.wangnick@eurocontrol.de (Sebastian Wangnick)
+# *        paulf@lamont.ldgo.columbia.edu
+# *        peter@bj-ig.de (Peter Brueckner)
+# *        jeff at hobbs org (Jeffrey Hobbs)
+# *        ellson@lucent.com (John Ellson)
+##
+## Mac support provided by Chuck Houpt (choupt@als.com). (v2.3+)
+##
+##########################################################################
+
+**** v2.6alpha 29 February 2000 ****
+
+Fixed row/col insertion/deletion to correctly handle embedded windows.
+(fix in part by albrecht@DAnalyse.de)
+
+Added stubs support to makefile.
+
+Added support for safe init script (requires embedded runtime) to
+be used in safe interpreters.
+
+Fixed bug in Table_BorderCmd on passing the 6th arg (the optional
+row|col).  (rickm@vsl.com)
+
+Added -holdselection arg to row/col insert/delete. (Paolo.Brutti@tlsoft.it)
+
+Added -DNO_SORT_CELLS ...
+
+Created tkTableCellSort.c with cell sorting routines.  Redid ...
+
+Fixed bug in tk_tableCut due to change in curselection syntax.
+
+Fixed missing comma in tkTableEdit.c:32 (Brutti)
+
+**** v2.5 31 May 1999 ****
+
+Fixed row/col insertion/deletion to move embedded windows, added
+-holdwindows option and Table_Win(Delete|Move).
+
+Removed -rows/-cols switch to insert/delete row/col, as it could
+cause very odd behavioral problems.
+
+Removed ckfree/ckalloc's between a quick delete/init of a hash table.
+
+Upgraded ExpandPercents for UTF awareness.
+
+Changed "tag cell|row|col" to complain when the tag is unknown.
+
+Fixed bug in UTF char length handling (actually due to change in
+the Tk API from 8.1beta to final) for active cell.
+
+fixed bug where scanMark* weren't properly initialized.
+
+Changed icursor method to always return an int, being -1 if there
+really isn't a valid cursor in the active cell (ie - it's disabled).
+
+Converted table widget to mostly Tcl_Obj in/output.
+Reorganized a lot of code in the process.
+
+**** v2.4 10 December 1998 ****
+
+Changed exit handler to not be used (unless -DUSE_EXIT_HANDLER is specified).
+
+Changed distribution directory name to go with new 'make distrib'.
+
+Changed TableUndisplay to properly handle unmapping embedded windows
+in title areas.  Added TableTrueCell for this.
+
+Changed EmbWinUnmapNow to always call Tk_UnmapWindow.
+
+Changed cell border drawing so that any 1-pixel border would use the
+fast drawing mode (except for when single drawmode is set).
+
+Changed borderWidth to be a tag-definable value.
+
+Removed used of borderWidth in border resize cmd calculations.
+
+Modified various C and Tcl procs to support spanning cells.
+
+Changed ckfree(value) to Tcl_Free(value) in TableFetchSelection.
+
+Streamlined use of NO_XSETCLIP, improved boundary checking for
+determining whether the cell needs clipping at all.
+
+Fixed bug in drawing with NO_XSETCLIP to copy the area from the source
+window to the clip window, draw on it, then copy it back.  Before the
+clip window was drawn on clean, losing what might be important stuff in
+the source (like an image).
+
+Added row/col spanning.  This involved a lot of code changes, mostly
+in tkTableCell.c, mostly #ifndef'ed with NO_SPANS.  See docs for behavior.
+Added 'spans' and 'hidden' command.
+
+Fixed bug in TableAtBorder that was messing up certain border cases.
+
+Added delta error of 1 pixel to the B1-Motion routine, so that the mouse
+must move more than a pixel for the tkTableMotion routine to kick in.
+
+Fixed tkTableBeginToggle to handle Control-B1 properly. (rickm@vsl.com)
+
+Fixed seg fault in Table_BorderCmd when called with too few args
+(reported by rbansal@ltcm.com).
+
+Added TableGeometryRequest to TableModifyRC to update a table's
+geometry according to the new row/col size.
+
+Fixed EmbWinDelete to clean up properly (it wouldn't clean up if there
+wasn't a window associated with the tag).
+
+Removed unused type arg from TableModifyRCaux.
+
+Fixed EmbWinRemove to actually remove all info about the window from
+the table (as advertised).
+	*** BEHAVIORAL CHANGE ***
+
+Fixed "window delete ..." to actually delete the window entry.
+
+Fixed flashing so that it will flash if any valid data source is
+being used (before only the Tcl array source caused flashes).
+
+Removed deprecated 'flush' command.  [.t flush ...] is equivalent
+to [.t clear cache ...].
+
+Improved TableUndisplay to really work within the proper seen
+constraints. (rickm@vsl.com)
+
+Removed dependency on source for Windows (only for the XSync call).
+Should now be able to compile against a binary installed version of wish.
+
+Use of EXTERN and EXPORT reworked to follow 8.0.3 guidelines.  EXPORT
+was dropped, meaning that compiling for older versions of the Borland
+compiler is not possible.
+
+Changed use of "$*.h" in Makefile.in to "$@" - some makes seemed to
+choke on the proper interpretation of $* (notably HP-UX).
+
+Added "-fg SELECT_FG" to the default sel tag definition.
+
+Swapped proto define of Tcl_DStringAppendAll with actual header.
+
+Fixed #endif SPANS syntax error in Makefile.
+
+Changed #define CELL from (ROW|COL) to it's own significant bit (this
+is used by TableRefresh).
+
+Added -sparsearray option to allow the user to choose whether the
+table treats associated arrays as "sparse", deleting the empty
+elements (default), or whether every element set is kept.
+
+Fixed demos/spreadsheet.tcl to start column labeling with "A".
+
+Changed Tcl_StaticPackage call in tkAppInit.c to include
+SafeInit function.
+
+Added "empty" bindings to tkTable.tcl to prevent the magic Alt-"menu"
+bindings from inserting chars into the table as well.
+
+**** v2.3 23 July 1998 ****
+
+Moved the 'set' command into tkTableCell.c and extended it to
+understand full row/col setting with Tcl lists.
+
+Created tkTableInitScript.h to mirror the spirit of tclInitScript.h.
+The user can now define a tkTableInit to be eval'ed at load time
+that finds the appropriate tkTable.tcl file.  Also added env support
+for these locations.
+
+Changed version.in to version.h, a file that is both readable in C
+(for the Mac build) and by make (for Unix/Windows).
+
+Changed TableDisplay #ifdef's to be more specific (NO_XSETCLIP).
+Expecting XSetClipRectangles to be available in Tk8.0.3 for Win,
+and maybe also in the future for Mac.
+
+Attempted row/col spanning with limited success.  Half functional
+code left in for reference, delimited by #ifdef SPANS/#endif.
+
+Changed TableCellCoords to no longer do bounds checking on row/col.
+
+Changed several more instances of TableCellCoords/TableInvalidate
+to TableRefresh.
+
+Fixed bug in table insertion/deletion concerning the calculation of
+the minkey (minimum valid row/col to insert/delete) when titles were
+allowed to be moved.
+
+Mac support courtesy Chuck Houpt (choupt@als.com).
+
+**** v2.2 10 July 1998 ****
+
+Undid caching of activeLayout in favor of activeTagPtr because I was
+abusing the nature of the token returned by Tk_ComputeTextLayout,
+causing amazingly odd cores.
+
+Changed TableGetLastCell definition to fix scrollbar bug. (Brutti)
+
+Changed "#if (TK_MINOR_VERSION > 0)" to "#ifdef TCL_UTF_MAX" to
+remove the ambiguity of purpose (for UTF code).
+
+Fixed bug in TableInsertChars that mangled the purpose of -autoclear,
+as well as confusing icursor index when using it.
+
+**** v2.1 2 July 1998 ****
+
+Updated man pages, generated new HTML file.
+
+Reworked directory structure, updated makefiles.
+
+Removed -batchmode.  It was pretty useless, and potentially confusing.
+	**** POTENTIAL INCOMPATIBILITY ****
+
+Fixed bug for Tk8.1a2 Unicode display in TableDisplay where the length
+of the display string was not calculated correctly.
+
+Fixed background area redraw bug in Windows.  Reworked to take out the
+#ifdef WIN32 code without too much compromise.
+
+Added TableRefresh command that subsumes many CellVCoords/Invalidate
+call combos.
+
+Adjusted TableWhatCell to what it was in v1.82, and made fix in
+TableDisplay for bounds to prevent <=0 invalidWidth|Height.
+
+Added clear command, subsumes flush command, plus adds features.
+
+Made some cleanup from DestroyNotify repetitive in TableDestroy.
+
+Added MapNotify event handler to ensure that changes to the table
+made when iconified will still cause an update.
+
+Changed "single" and "fast" drawmodes to not set -bd 1 as a side
+effect, but instead to force 0..1 to allow for fast drawing without
+any borders.  Skipped border drawing case statement when -bd is 0.
+
+Changed "tag cell ..." to only invalidate for redraw when the affected
+cell is visible.
+
+Added check for NULL tablePtr->tkwin in TableCellVCoords.  Could
+cause problems where it was used to replace TableCellCoords.
+
+Fixed bug in TableFetchSelection that truncated the string returned
+by -selectioncommand to the length of the original string.  Also
+fixed mem leak (didn't free all DStrings in an error), and changed
+it so that a background error is triggered if there is a problem
+with the -selectioncommand.
+
+Fixed bug in TableDisplay where last row, if one pixel hi, wouldn't
+get redrawn properly.
+
+Changed default fonts to those used for entry widgets.
+	**** POTENTIAL INCOMPATIBILITY ****
+
+Added UTF char (Unicode) support, based on 8.1a2 tkEntry.c.  Had
+to be conditionalized because it doesn't exist in 8.0.
+
+Added -multiline option for tags to allow old one-line text only,
+Reworked tag options so that tag values that aren't ever set won't
+affect other tags.
+
+Fixed seg fault bug in CMD_ACTIVATE when Tk_PointToChar could be called
+on double-click, but TableDisplay hadn't yet been called (because it is
+waiting for idle) which is required to set tablePtr->activeLayout
+properly.  Also fixed mem leak with old activeLayout not being freed when
+it changed.
+
+Speed improvement - changed from using Tk_GetGC/Tk_FreeGC to XCreateGc/
+XChangeGC/XFreeGC.  Since it was highly unlikely that the caching
+provided in the Tk routines would ever benefit us, moving to direct
+X calls and manipulating just one GC should be faster.
+
+**** v2.00 24 April 1998 ****
+
+Update man pages, generated new HTML version.
+
+Added "single" drawing mode, and made "single" and "fast" both set
+-borderwidth to 1 as a side effect.
+
+Fixed seg fault on Windows involving large numbers of rows.  Unsure
+exactly what fixed it, but the problem disappeared amidst all the
+changes since v1.82...
+
+Updated tkAppInit.c to Tk8.1 version.
+
+Added ifdef for Win32 default colors.
+
+Since we can now have multi-line cells, changed -rowheight and height
+to work the same as -colwidth and width did (+ nums for size in line,
+- for sizes in pixels).
+	**** POTENTIAL INCOMPATIBILITY ****
+
+Added new "make static" option for making a static library.
+
+Reworked scrollbar calcs again based on pixels.  Fixes all funny off by
+half a cell problems.  Also prevents scrolling when only title areas are
+visible (those are, by design, not scrollable).
+
+Changed stretching to stretch the last row/col for any stretchmode but
+"none", to prevent empty space from appearing.
+
+Fixed interpretation of CellVCoords to return 1 on slightly visible
+cells (now only a 1 pixel square size is required to be considered
+visible - used to be 1/4 the desired cell size).
+
+Added support to allow the second click into the active cell to select
+the nearest character.
+
+Changed <Return> binding to work with multi-line cells.
+	**** POTENTIAL INCOMPATIBILITY ****
+
+*** Undid 60.06.98 - bad fix
+Fixed bug in TableWhatCell that caused the returned cell to be one more
+than expected when the edge was passed in.
+***
+
+Made TableVarProc not cause an Invalidate call if it was
+triggered by SetActiveIndex.
+
+Changed around some function names for sense of modularity (preparing
+better C API).
+
+Commented all procedures in tkTable.c.
+
+Broke up tkTable.c into constituent files.
+
+Added support for embedded windows via "window" submethod.
+
+Fixed quirk in xscrollbar that would make it appear as it all was
+in view when the last column was only partially visible. (Brutti)
+
+Changed several CellCoord calls to CellVCoord calls to only invalidate
+if necessary.
+
+Reworked merging of tags and determination of active cell.  State
+disabled cells no longer receive the "active" look, although they
+are still indexed as active.
+
+New -selecttitles option, removed prohibition of selecting title areas.
+	**** POTENTIAL INCOMPATIBILITY ****
+
+Removed all KANJI, IMP and TK4 #ifdef code.  tkTable development now
+focused 100% on Tk8+.  Also removed Itcl stuff since itcl for Tcl8
+should be different.
+	**** INCOMPATIBILITY FOR TK4/KANJI/ITCL USERS ****
+
+**** v1.82 3 April 1998 ****
+
+Update man pages, generated new HTML version.
+
+Fixed bug in row start location calculation, reorg'ed some code
+for row stretch fill mode.
+
+Simplified caching of col tags for display.
+
+Changed code that referenced interp->result to use accessor functions.
+
+Fixed problem where flat reliefs would be eliminated because they
+were assumed to be undefined (TK_RELIEF_FLAT changed in Tk8.1).
+
+Added -bordercursor and -resizeborders option, added PointerMotionMask
+to event handler, moving the tkTableCheckBorder event into C.  Should
+be much more efficient.
+	**** POTENTIAL INCOMPATIBILITY ****
+
+Changed "$(COMPILE.c)" to "$(CC) $(CFLAGS) $(CPPFLAGS) -c" in Makefile.in.
+Should be equivalent, but some make's don't understand.
+
+Change border dragging routines for column to support pixel movement.
+
+Fixed problem with column widths and row heights being shifted improperly
+during row/col deletion (didn't account for - row/col offset).
+
+Updated tkTable.itcl to same versions as tkTable.tcl (ignored over
+several revisions).
+
+Fixed binding bug in tkTable.tcl for <Control-(Left|Right)>. (Becker)
+
+changed TableModifyRC to be more selective about what is invalidated
+for redraw. (Brutti)
+
+made 'title' tag have -state disabled by default (an oversight from
+the addition of -state tag option in 1.80).
+
+**** v1.81 March 20 1998 ****
+
+added support for exact pixel dimensions for column width by using
+negative numbers, also supported in -colwidth.  Changed width|height
+to support 'default' key instead of assuming negative number means default.
+	**** POTENTIAL INCOMPATIBILITY ****
+
+added -state tag option (cheap hack, must be improved).
+
+changed handling of -state table option. (Ellson)
+
+added -invertselected option. (Brutti)
+
+added FocusOut binding to commit cell on FocusOut events.
+
+made the cell commit changes anytime "activate" is called, regardless
+of whether the active cell was moved or not.
+
+"tag cell|col|row|includes tagName" no longer return an error if the tag name
+is unknown (just returns empty string, or 0 for "includes").  Only "tag cget"
+complains about unknown tag names.
+	**** POTENTIAL INCOMPATIBILITY ****
+
+Improved makefiles. (patches courtesy Dukhovni)
+
+Fixed bug in tkTable.itcl (improperly handled backslash).
+
+Fix for 8.0 w/ plus/dash patch (Ellson).
+
+Fixed minor -Wall complaints.
+
+Changed the way row/col tags were determined to be on a cell. (JMH)
+
+Made title tag have lower priority than a cell tag.
+
+Fixed bug where the last table row/col would be deleted when table -state was
+disabled (should be a no op).
+
+**** v1.8 May 28 1997 **** (changes hobbs)
+
+Moved the instantiation of the tk*Uid variables from the DLLEntryPoint
+into the *Init functions for those not compiling this as a DLL.
+
+Fixed bug where "active" index for an array might not update properly after
+the table changes arrays if the previous array's cell had the same value
+for the active cell.
+
+Updated Windows makefile.vc (still far from perfect).
+
+Fixed calculation error where WhatCell would look for the bottomright
+cell a few pixels off (didn't account for highlightWidth).
+
+Fixed numerous places where cells weren't being invalidated (to be
+redrawn) but should have been.
+
+Fixed bug in curvalue that didn't mark the active text as changed which
+would cause editions to be lost when the active cell changed.
+
+Changed default font for Tk8 from "Helvetica 12" to just "Helvetica" because
+the 12 was a tweaking large font on my Sol2.5 machine.
+
+Renamed -width to -colwidth and -height to -rowheight, replaced with
+different interpretation such that -width, -height set the viewable
+# of cols, rows (a la listbox or text widget).
+	**** POTENTIAL INCOMPATIBILITY ****
+
+Made default title foreground white for better readability.
+
+Fixed INF/divide by zero possible error for scrollbars when no editable
+cells are in view.  Possible funky behavior still exists when no editable
+cells are available (for selection).
+
+Fixed possible access violation where TableInvalidate would be called
+after the tkwin had been destroyed.
+
+Enhancement ideas from Pawel Gorazda <pawel.gorazda@solidex.com.pl>:
+	* Added TCL_DEFS to TCL_CFLAGS in Makefile.in
+	* Make "tag cell tagName" list cells for the special tags
+	* new "tag includes" method for finding if a cell has a specific tag
+	* changed selection to not change selection (do nothing) when
+	  the user clicks on a title cell
+	**** BEHAVIORAL CHANGE ****
+
+Fixed missing 'q' in tkTable.itcl
+
+Fixed interaction with -command to only blow up when an error occurs,
+not for return/break/ok.
+
+Changed tkTableCheckBorder to use crosshair instead of fleur because of
+complaint of lack of fleur cursor on WinNT.
+
+Added internal caching with -cache option and flush method for speed
+improvements.
+
+Changed "sel clear all" to use old iterated method of clearing selection
+for people who use "sel clear all" in Motion events and such.
+
+**** v1.7 Apr 11 1997 **** (changes hobbs)
+
+Changed instances of clearing selection to delete and reinit the
+sel hash table instead of going through each entry.
+
+Updated docs and added demo and basic spreadsheet class for [incr Tcl].
+
+Changed default selectmode to browse, same as listbox.
+	**** POTENTIAL INCOMPATIBLITY ****
+
+Added forceUpdate arg to TableConfigure to make sure that necessary
+parameters will be adjusted at instantiation.
+
+Changed TableSetCellValue to *unset* empty valued indices instead of
+setting them to "".
+
+Introduced support for row/col insertion/deletion with numerous options.
+
+Fixed geometry bug that didn't account for highlightWidth in GeometryRequest.
+
+Added selecttype option to alter the way selection is handled.
+
+Added padx and pady configuration options.
+
+Some changes to Makefile.in to get better behavior out of it.
+
+Changed "see" to ensure cell is fully visible by adding param to
+TableCellVCoords.
+
+Added support for [incr Tcl] (tested against v2.2).
+
+Fixed TableGetIndex to properly account for row/colOffset > 0.  Also
+adjusted constraining of user index in TableGetIndex.
+
+**** v1.6 Feb 7 1997 **** (changes hobbs)
+
+Fixed x && y offset bug for SLOW drawmode (reported by Michael Johnson).
+
+Now whenever you move from a cell where an edit has occured, it will
+save that edition.  You can always use <Escape> (reread) to get the
+old value back before you move the cell.
+	**** BEHAVIORAL CHANGE ****
+
+Fixed the bug where inserting characters with autoclear off didn't set
+TEXT_CHANGED properly, so you could move without a cell registering the
+change (reported by Eric Dolce).
+
+**** v1.5 Feb 6 1997 **** (changes hobbs)
+
+Fixed xview/yview scroll page/units problems.
+
+Fixed TableConfigure error return problems.
+
+Fixed font display problem for Tk8 (stupid reference error).
+
+Fixed "set" && "curselection" to understand need for command OR array
+existence.
+
+Fixed conceptual bug in -command %-substitution - there was no way to
+get the write value!  Redefined %s/S value for -command.
+	**** POTENTIAL INCOMPATIBLITY ****
+
+Fixed bug in "see" method reported by PHIL SMITH <pjsmith@netins.net>.
+It did the opposite of what it should, caused by the change from
+TableCellHidden to TableCellVCoords.
+
+Optimized TableDisplay.  offsetX, offsetY were useless because they were
+always subtracted from x && y (so why not do it once... doh!).
+
+Removed CheckTagCmd and inlined some code.  This optimizes certain things
+(there was no reason to cache row tags, just move the lookup code!).
+
+changed TableSetCellValue to not use GetVar, thus a write always occurs,
+even if the value is the same.  This prevents a read trace from triggering,
+but now a write trace will always trigger.
+
+**** v1.4 Feb 2 1997 **** (changes hobbs)
+
+Changed default unix font to medium weight (from bold).
+
+Updated "bbox" method to allow range.
+
+Added auto-resizable border code with new "border" method, TableAtBorder
+function and new Table bindings.
+
+Changed TableCellHidden to TableCellVCoords & extended it.  Now understands
+highlightWidth variation and clips area to actual visible coords.
+
+Added code in TableConfigure to prevent spurious redisplays of the
+entire table for any config request.
+
+fixed index bug where "ROW,COL<extrajunk>" translated to "ROW,COL" and
+a couple other similar interpretive bugs.
+
+fixed potential segfault in unsetting "active" element of attached array.
+
+changed min()/max() to MIN()/MAX() - avoids Windoze warning.
+
+changed textCurPosn to icursor.
+
+greatly simplified KANJI interoperability by making activeBuf a regular
+char *, changing a few interfaces, and some other stuff.  This reduced
+the number of KANJI #ifdef's significantly.
+
+added -command and -usecommand options.
+
+**** v1.3 Jan 28 1997 **** (changes hobbs)
+
+Included precompiled Win95/Tk8.0a2 DLL.
+
+Fixed several compiler warning problems.
+
+Moved header code to its own header file.
+
+Fixed some potential mem leaks.
+
+Added Windows support.  HACK ALERT!  Without an XSetClipRectangles, an
+extra Drawable is used for WIN32.  There may be a better way to do this.
+If so, make me a patch.
+
+Data struct / Cmd name changes to avoid any conflict when compiling older
+version of Table with newer version in same executable.
+
+Added -image option to tags.
+
+Removed NO_TOP_LEFT ifdef'ed code.  Topleft should be showing.
+
+**** v1.2 Jan 18 1997 **** (changes hobbs)
+
+Updated man page and HTML help page.
+
+Added TableCellSort to sort a row,col properly.
+
+Added arg for curvalue method to set the current active buffer.
+
+Added validation mechanism, validate method and -validate, -validatecommand
+options.  See docs for details.
+
+Added "active" key element to traced Tcl array for table.  This holds
+the activeBuf value of the table.
+
+Change arrayVar configuration in TableConfigure to only trigger if
+the arrayVar actually changed.
+
+Moved inserting/deleting in active cell to separate functions and
+bullet-proofed the code.
+
+Removed TableFlashConfigure.  Not used since "flash" became permanent tag.
+
+Changed TableSetCellValue to only set the variable if the value
+has changed.  This will prevent spurious flashing.
+
+Removed Roland King's COPYRIGHT, replaced with acknowledgements.
+This code represents a 90% rewrite of his original code.
+
+Added -O as default CFLAGS in Makefile.in, along with HP cc note.
+
+Fixed bug with cursor at position 0 for KANJI (appears to be a bug
+in TkWSTextExtents).
+
+Get/Set variable overhaul to ensure that everything works correctly
+for KANJI support (without compile warnings).
+
+Changed TableBufLengthen to a #define which uses ckrealloc.
+
+Removed -rowfirstmode and its use in code.  It actually didn't work for
+many functions and indices would be incorrectly returned.
+	**** POTENTIAL INCOMPATIBLITY ****
+
+Fixed handling of arrayVar to accept vars with funny chars (including spaces).
+
+Added "see active" to tkTableMoveCell.
+
+Changed calculation of hidden cell to require at least 3/4 of
+the cell to be off the screen.
+
+Cleaned up, optimized lots of code.  Cleaned up some memory leaks.
+
+Removed undocumented "setlist" functionality - it was never used
+and I deemed it extraneous.
+
+Numerous name changes in tkTable.tcl (conforming to standards).  Also
+added full row/col selection capability && cut/copy/paste functionality.
+	**** POTENTIAL INCOMPATIBLITY ****
+
+Changed ".table get ..." to return items in the same way as that
+of listbox (only affects handling of spaced values being returned).
+	**** POTENTIAL INCOMPATIBLITY ****
+
+Changed Table_GetIndex to TableGetIndex (it was the only _ func).
+
+Optimized calling of TableAdjustParams in [xy]view and scan dragto
+as well as TAP code.
+
+Removed useless selectionOn C var and "select" index.
+	**** POTENTIAL INCOMPATIBLITY ****
+
+Changed the [xy]scrollcmd to receive Tk4+ style args (2 doubles
+instead of 4 ints).
+
+Fixed problems with [xy]view and scan.  Might not be perfect yet.
+Removed boundary command as it reiterates [yx]view and index,
+added "bottomright" special index.  Change of code example:
+    .table bound bottom	=>	.table index bottomright row|col
+	**** POTENTIAL INCOMPATIBLITY ****
+
+Fixed problem with cursor not disappearing on focus out.
+
+Added -browsecommand option for monitoring active cell movement.
+
+Added selection handler and -rowseparator, -colseparator,
+-selectioncommand, -exportselection options.
+
+Fixed problem with changing var to a simple variable.
+
+Fixed problems with compiling for KANJI, now seems to work again.
+
+Fixed highlight border bug. (bruecker)
+
+Fixed typo that prevented IMP from working.
+
+**** v1.1 Dec 30 1996 **** (changes hobbs)
+
+Updated code to handle Tk8 font mechanism.  Now works with Tk8.
+
+Added Tktable_SafeInit procedure so it could be loaded into a safe
+interpreter.
+
+Integrated Bruecker's (peter@bj-ig.de) changes to 0.63:
+  - Moved IMP-Code to one place, needs testing.
+  - Some changes to TableCreate and TableDestroy:
+      Hashtables ever needed are created in Create 
+      so no tests in configure and later needed.
+  - Removed GcCache (will be placed in TableDisplay)
+  - Repaired Focus-Code little bug remains in the right
+    and bottom of HL-Frame.
+  
+Updated README to reflect file name changes.
+
+Changed tkAppInit.c to reflect tk4.2 appinit.
+
+Changed Makefile.in to support get X_INCLUDES right.
+
+**** v1.0 Dec 19 1996 **** (changes hobbs)
+
+BUMPED VERSION TO 1.0 for initial (re)release.
+
+Updated man pages, in particular documenting bindings.
+
+Updated tkTable.tcl to use origin where appropriate.
+
+Added origin index.
+
+Added extra arg to insert/delete to specify what is really being
+inserted/deleted to/from.
+
+Corrected insert/delete/icursor to not do edit the active cell if
+it has not been set yet.
+
+Fixed TableScanTo.
+
+Enabled the display of the topleft title cells.
+
+Fixed cursor constraint for oversized fonts in a row.
+
+**** v0.63 Dec 18 96 **** (changes hobbs)
+
+Removed TableSetCell from tkTable.tcl, rearranged bindings as well.
+
+Rewrote checkTagCmd, fixed spurious return values.
+
+Reordered trigger path for Table_GetIndex.
+
+Fixed see to not be forceful, but to only move if necessary, and to
+use the +1,+1 offset from topleft (more like centering).
+
+Added topleft index.
+
+ellson patch:
+	Fixed package require in Makefile.in and demo files
+	Moved Table_GetIndex to avoid implicit declaration warning.
+
+Changed how "anchor" was indexed internally.
+
+Fixed cursor showing in an active cell of width 0.
+
+Removed check for bounds in SEL_CLEAR (SEL_SET did it for us).
+
+**** v0.62 Dec 18 96 **** (changes hobbs)
+
+Updated man pages.
+
+Removed "#ifdef KANJI0" code (it was useless).
+
+Added in use of the active tag (it was previously ignored).
+
+Removed restriction on see method that kept the active cell in the view.
+
+Changed xview/yview/scan methods to not adjust selRow/Col.
+
+Changed code to use active cell as active, rather then sel cell.
+
+Made "flash" tag have higher display priority than "sel".
+
+Added pattern match support for "tag names".
+
+Added "tag exists" and "tag cget" submethods.
+
+Changed "tag celltag" to use Table_GetIndex instead of sscanf
+
+**** v0.61 patch Dec 14 96 **** (ellson@lucent.com)
+
+Change "tag celltag" to use index form of cell address,"x,y" instead of list
+form "{x y}"
+
+Add back support for zero width columns and zero height rows.
+
+Added installation of tkTable.tcl in 
+   [lindex $tcl_pkgPath 0]/Tktable/tkTable.tcl
+(0.61 was using the built-in copy of tkTable.tcl so the lack of
+installation wasn't noticed.   Perhaps we don't need the built-in
+version???)  I put the runtime script in this directory to make it 
+trivial to generate binary distributions of the widget consisting of 
+a single Tktable directory that is just dropped into lib/.
+
+Added a make target for tablewish (not normally needed with dynamic loading
+but sometimes handy for debugging)
+
+Corrected package name (Wasn't loading from tkcon Interp->Packages menu.
+Package name should start with capital letter to match Init entry point.)
+
+Added configure code to automatically discover --prefix from existing
+tclsh installation.  Installation is now simply:
+      ./configure
+      make install
+
+**** v0.61 Dec 13 96 **** (all changes jhobbs except noted)
+
+Updated, corrected, expanded man pages.
+
+Updated internal code comments, fixed result strings.
+
+Fixed see problem (reported by Jean-Paul).
+
+Removed getwidth && getheight and rewrote width && height to be more
+flexible and subsume the previous methods.
+
+Changed flashtime to really be a number representing 1/4 sec and
+changed the default to 3 (750ms).  Added "flash" as a permanent tag
+(like "title", "active", and "sel").  Added options:
+	-flashmode
+	-flashtime
+
+Changed "Title" tag to "title".  Why cap it?
+
+Reformatted most code to fit in 80 cols.
+
+Fixed activate index offset bug.
+
+Changed -*title options to -title*.  The original version was too
+misleading as to its purpose.
+
+Added fixes from ellson@lucent.com.
+	test.tcl updates
+	SIGSEV bug from improper argc count
+
+Added some changes from peter@bj-ig.de.
+	New stretch modes LAST && FILL
+	Highlight/Focus fixes
+	More options instead of methods
+
+Improved curselection code.
+
+added the following options:
+	-autoclear	replaces editmode method
+	-state		replaces editmode method
+	-insert*	from Tk entry, manipulate cursor style
+	-batchmode	replaces batch method
+
+Changed the dynamic load path for tkTable.tcl from
+"$tk_library/tkTable/tkTable.tcl" to "$tk_library/tkTable.tcl".
+
+**** v0.60 Dec 10 96 **** (all changes jhobbs)
+OPTIONS:
+ 
+Altered man pages to properly reflect what options are handled (there
+were numerous extra, plus many missing).
+ 
+changed -procrowtag => -rowtagcommand
+changed -proccoltag => -coltagcommand
+ 
+Added -bd synonym
+ 
+Fixed all internal coding for readability, concise representation
+ 
+changed -cursorbg => -insertbackground
+ 
+METHODS:
+
+Fixed lack of break in CMD_*STRETCH
+ 
+removed whatcell:  code change:
+        .table whatcell x y     => .table index @x,y
+ 
+removed whereis, changed to bbox:  code change:
+        .table whereis row col  => .table bbox <index>
+This needs to be improved to take multiple indices.
+ 
+removed toprow && leftcol, added boundary:  code change:
+        .table leftcol|toprow|bottomrow|rightcol ?rowOrCol?
+        =>
+        .table boundary left|right|top|bottom ?rowOrCol?
+rowOrCol can only be specified for top|left, as appropriate (though
+a bug in the code didn't check properly).
+ 
+removed [rc]index: code change:
+        .table [rc]index <index>        => .table index <index> row|col
+ 
+changed get so (1) it works and (2) it returns values more like the
+listbox command
+ 
+removed setcell.  This has been subsumed by the improved selection method.
+code likeness:
+        .table setcell          => .table index select
+        OR                      => .table curselection
+        .table setcell 4 2      => .table selection set 4,2
+The "index select" is there for 100% compatibility, but curselection is
+what should be used to properly represent all selected cells.
+ 
+MISC:
+ 
+fixed parse_command to handle full non-ambiguous method names
+ 
+updated man pages to include all methods/options in Tk4 style.
+
+reordered a lot of code to be in "alphabetical" order.
+
+**** v0.56 Nov 96 ****
+   - merged changes from tkSpread from Jeffrey Hobbs <hobbs>
+	- added support for Japanization patch
+	- added multi-node select support
+	- removed -underline option for tags
+   - included default bindings in loadable library	
+
+**** v0.5 Oct 96 ****
+   - merged changes from Peter Brueckner <peter@peter.bj-ig.de>
+	- takefocus
+	- highlight border
+	- "gcc -Wall -pedantic" cleanup
+   - updated for tcl7.6/tk4.2
+   - autoconf
+   - only one c-file
+
+**** v0.4p8 ****
+   - added patch from wangnick@orthogon.de to make tkTable accept -rows 0
+   - added patch from tmoore@pnfi.forestry.ca for handling of bad
+     array indexes
+   - added patch from tmoore@pnfi.forestry.ca to add rowTagProc and
+     colTagProc
+   - added patch from ellson@lucent.com to support cget so that
+     tkTable can be used with the dragdrop extension by
+     fellowsd@cs.man.ac.uk (Donal K. Fellows).
+
+version 0.3 --> version 0.4
+---------------------------
+tk4.1 and tk4.0 compatability  (ellson@lucent.com)
+   - dynamically loadable library (SunOS 4.1.3 only so far)
+   - changed BISQUE to GRAY
+   - statically included TableInit.tcl into dynamic library
+   - fixed various compiler warnings
+       (now none with tk4.1, but still one with tk4.0)
+   - upgraded tkAppInit.c
+   - changed a few names:     library:  libtktable.so.0.4
+			  entry point:  Tktable_Init
+		        extended wish:  tablewish
+
+version 0.2 --> version 0.3
+---------------------------
+Upgraded to tk4.0 (Paul Friberg)
+
+version 0.1 --> version 0.2
+---------------------------
+Changed the tag code to apply the effects of multiple tags to a cell. 
+
+Fixed a bug with the flash code which forgot to delete the flash when
+a table was deleted
+
+Fixed a bug which meant that row, column and cell tag changes didn't
+update to the screen immediately when there was a row or column offset.
+
+Fixed the anchor code which was adding/subtracting a pixel from the
+string in certain circumstances
+
+Fixed a cursor movement bug which caused the same cell to appear twice
+when the cursor was moved
+
+Thanks particularly to Lou Salkind for pointing out some of the above
+and suggesting fixes.
+
+

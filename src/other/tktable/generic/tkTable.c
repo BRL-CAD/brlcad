@@ -22,12 +22,7 @@
  * RCS: @(#) $Id$
  */
 
-#include "tktable_cfg.h"
 #include "tkTable.h"
-
-#ifndef TkNone
-#  define TkNone             0L /* universal null resource or null atom */
-#endif
 
 #ifdef DEBUG
 #include "dprint.h"
@@ -539,8 +534,8 @@ Tk_TableObjCmd(clientData, interp, objc, objv)
     tablePtr->activeBuf		= ckalloc(1);
     *(tablePtr->activeBuf)	= '\0';
 
-    tablePtr->cursor		= TkNone;
-    tablePtr->bdcursor		= TkNone;
+    tablePtr->cursor		= None;
+    tablePtr->bdcursor		= None;
 
     tablePtr->defaultTag.justify	= TK_JUSTIFY_LEFT;
     tablePtr->defaultTag.state		= STATE_UNKNOWN;
@@ -1337,7 +1332,7 @@ TableEventProc(clientData, eventPtr)
     switch (eventPtr->type) {
 	case MotionNotify:
 	    if (!(tablePtr->resize & SEL_NONE)
-		    && (tablePtr->bdcursor != TkNone) &&
+		    && (tablePtr->bdcursor != None) &&
 		    TableAtBorder(tablePtr, eventPtr->xmotion.x,
 			    eventPtr->xmotion.y, &row, &col) &&
 		    ((row>=0 && (tablePtr->resize & SEL_ROW)) ||
@@ -1353,7 +1348,7 @@ TableEventProc(clientData, eventPtr)
 		}
 	    } else if (tablePtr->flags & OVER_BORDER) {
 		tablePtr->flags &= ~OVER_BORDER;
-		if (tablePtr->cursor != TkNone) {
+		if (tablePtr->cursor != None) {
 		    Tk_DefineCursor(tablePtr->tkwin, tablePtr->cursor);
 		} else {
 		    Tk_UndefineCursor(tablePtr->tkwin);
@@ -1364,7 +1359,7 @@ TableEventProc(clientData, eventPtr)
 
 		//tablePtr->flags &= ~(OVER_BORDER|OVER_TITLE);
 
-		if (tablePtr->titleCursor != TkNone) {
+		if (tablePtr->titleCursor != None) {
 		    TableWhatCell(tablePtr, eventPtr->xmotion.x,
 			    eventPtr->xmotion.y, &row, &col);
 		    if ((row < tablePtr->titleRows) ||
@@ -1376,12 +1371,12 @@ TableEventProc(clientData, eventPtr)
 			cursor = tablePtr->titleCursor;
 		    }
 		}
-		if (cursor != TkNone) {
+		if (cursor != None) {
 		    Tk_DefineCursor(tablePtr->tkwin, cursor);
 		} else {
 		    Tk_UndefineCursor(tablePtr->tkwin);
 		}
-	    } else if (tablePtr->titleCursor != TkNone) {
+	    } else if (tablePtr->titleCursor != None) {
 		Tk_Cursor cursor = tablePtr->cursor;
 
 		TableWhatCell(tablePtr, eventPtr->xmotion.x,
@@ -2362,7 +2357,7 @@ TableDisplay(ClientData clientdata)
 				x0 + (ellEast? width-useEllLen : 0),
 				y0 + originY + fm.ascent);
 		    }
-		    XSetClipMask(display, tagGc, TkNone);
+		    XSetClipMask(display, tagGc, None);
 #endif
 		} else {
 		    Tk_DrawTextLayout(display, window, tagGc, textLayout,
@@ -3305,7 +3300,7 @@ TableAdjustParams(register Table *tablePtr)
     /*
      * If we don't have the info, don't bother to fix up the other parameters
      */
-    if (Tk_WindowId(tablePtr->tkwin) == TkNone) {
+    if (Tk_WindowId(tablePtr->tkwin) == None) {
 	tablePtr->oldTopRow = tablePtr->oldLeftCol = -1;
 	return;
     }
