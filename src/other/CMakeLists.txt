@@ -91,6 +91,14 @@ if(MSVC)
   endif(NOT EXISTS "${VCVARS_BAT}")
 endif(MSVC)
 
+# In case we need to pass some sort of reasonable parallel
+# flag to a build system, check our processor count
+include(ProcessorCount)
+ProcessorCount(N)
+math(EXPR pcnt "${N} / 2")
+if (NOT pcnt)
+  set(pcnt 1)
+endif (NOT pcnt)
 
 ###############################################################################
 #                               libregex
@@ -130,7 +138,7 @@ if (${CMAKE_PROJECT_NAME}_REGEX_BUILD)
     )
 
   set(REGEX_LIBRARIES regex CACHE STRING "Building bundled libregex" FORCE)
-  set(REGEX_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing regex headers." FORCE)
+  set(REGEX_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing regex headers." FORCE)
 
   SetTargetFolder(REGEX_BLD "Third Party Libraries")
   SetTargetFolder(regex "Third Party Libraries")
@@ -183,7 +191,7 @@ if (${CMAKE_PROJECT_NAME}_ZLIB_BUILD)
     )
 
   set(ZLIB_LIBRARIES zlib CACHE STRING "Building bundled zlib" FORCE)
-  set(ZLIB_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing zlib headers." FORCE)
+  set(ZLIB_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing zlib headers." FORCE)
 
   SetTargetFolder(ZLIB_BLD "Third Party Libraries")
   SetTargetFolder(zlib "Third Party Libraries")
@@ -224,7 +232,7 @@ if (${CMAKE_PROJECT_NAME}_LZ4_BUILD)
     )
 
   set(LZ4_LIBRARIES lz4 CACHE STRING "Building bundled lz4" FORCE)
-  set(LZ4_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing lz4 headers." FORCE)
+  set(LZ4_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing lz4 headers." FORCE)
 
   SetTargetFolder(LZ4_BLD "Third Party Libraries")
   SetTargetFolder(lz4 "Third Party Libraries")
@@ -275,7 +283,7 @@ if (${CMAKE_PROJECT_NAME}_NETPBM_BUILD)
     )
 
   set(NETPBM_LIBRARIES netpbm CACHE STRING "Building bundled netpbm" FORCE)
-  set(NETPBM_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}/netpbm" CACHE STRING "Directory containing netpbm headers." FORCE)
+  set(NETPBM_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/netpbm" CACHE STRING "Directory containing netpbm headers." FORCE)
 
   SetTargetFolder(NETPBM_BLD "Third Party Libraries")
   SetTargetFolder(netpbm "Third Party Libraries")
@@ -336,7 +344,7 @@ if (${CMAKE_PROJECT_NAME}_PNG_BUILD)
     )
 
   set(PNG_LIBRARIES netpbm CACHE STRING "Building bundled libpng" FORCE)
-  set(PNG_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing libpng headers." FORCE)
+  set(PNG_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing libpng headers." FORCE)
 
   SetTargetFolder(PNG_BLD "Third Party Libraries")
   SetTargetFolder(png "Third Party Libraries")
@@ -387,7 +395,7 @@ if (${CMAKE_PROJECT_NAME}_UTAHRLE_BUILD)
     )
 
   set(UTAHRLE_LIBRARIES utahrle CACHE STRING "Building bundled libutahrle" FORCE)
-  set(UTAHRLE_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing utahrle headers." FORCE)
+  set(UTAHRLE_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing utahrle headers." FORCE)
 
   SetTargetFolder(UTAHRLE_BLD "Third Party Libraries")
   SetTargetFolder(utahrle "Third Party Libraries")
@@ -539,7 +547,7 @@ if (${CMAKE_PROJECT_NAME}_OPENNURBS_BUILD)
     )
 
   set(OPENNURBS_LIBRARIES openNURBS CACHE STRING "openNURBS" FORCE)
-  set(OPENNURBS_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}/openNURBS;${ZLIB_INCLUDE_DIRS}" CACHE STRING "Directory containing openNURBS headers." FORCE)
+  set(OPENNURBS_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/openNURBS;${ZLIB_INCLUDE_DIRS}" CACHE STRING "Directory containing openNURBS headers." FORCE)
 
   SetTargetFolder(OPENNURBS_BLD "Third Party Libraries")
   SetTargetFolder(openNURBS "Third Party Libraries")
@@ -579,7 +587,7 @@ if (${CMAKE_PROJECT_NAME}_SPSR_BUILD)
     )
 
   set(SPSR_LIBRARIES spsr CACHE STRING "Building bundled spsr" FORCE)
-  set(SPSR_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}/spsr" CACHE STRING "Directory containing spsr headers." FORCE)
+  set(SPSR_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/spsr" CACHE STRING "Directory containing spsr headers." FORCE)
 
   SetTargetFolder(SPSR_BLD "Third Party Libraries")
   SetTargetFolder(spsr "Third Party Libraries")
@@ -653,7 +661,7 @@ if (${CMAKE_PROJECT_NAME}_BSON_BUILD)
     )
 
   set(BSON_LIBRARIES utahrle CACHE STRING "Building bundled libbson" FORCE)
-  set(BSON_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing bson headers." FORCE)
+  set(BSON_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing bson headers." FORCE)
 
   SetTargetFolder(BSON_BLD "Third Party Libraries")
   SetTargetFolder(utahrle "Third Party Libraries")
@@ -849,7 +857,7 @@ if (${CMAKE_PROJECT_NAME}_VDS_BUILD)
     )
 
   set(VDS_LIBRARIES vds CACHE STRING "Building bundled netpbm" FORCE)
-  set(VDS_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing vds headers." FORCE)
+  set(VDS_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing vds headers." FORCE)
 
   SetTargetFolder(VDS_BLD "Third Party Libraries")
   SetTargetFolder(vds "Third Party Libraries")
@@ -888,7 +896,7 @@ if (${CMAKE_PROJECT_NAME}_GDIAM_BUILD)
     )
 
   set(GDIAM_LIBRARIES gdiam CACHE STRING "Building bundled gdiam" FORCE)
-  set(GDIAM_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing gdiam headers." FORCE)
+  set(GDIAM_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing gdiam headers." FORCE)
 
   SetTargetFolder(GDIAM_BLD "Third Party Libraries")
   SetTargetFolder(gdiam "Third Party Libraries")
@@ -931,7 +939,7 @@ if (${CMAKE_PROJECT_NAME}_POLY2TRI_BUILD)
     )
 
   set(POLY2TRI_LIBRARIES poly2tri CACHE STRING "Building bundled poly2tri" FORCE)
-  set(POLY2TRI_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing poly2tri headers." FORCE)
+  set(POLY2TRI_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing poly2tri headers." FORCE)
 
   SetTargetFolder(POLY2TRI_BLD "Third Party Libraries")
   SetTargetFolder(poly2tri "Third Party Libraries")
@@ -969,7 +977,7 @@ if (${CMAKE_PROJECT_NAME}_RPLY_BUILD)
     )
 
   set(RPLY_LIBRARIES rply CACHE STRING "Building bundled rply" FORCE)
-  set(RPLY_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing rply headers." FORCE)
+  set(RPLY_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing rply headers." FORCE)
 
   SetTargetFolder(RPLY_BLD "Third Party Libraries")
   SetTargetFolder(rply "Third Party Libraries")
@@ -1061,6 +1069,7 @@ if (${CMAKE_PROJECT_NAME}_GDAL_BUILD)
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
                -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
 	       -DZLIB_ROOT=${CMAKE_BINARY_DIR} -DPNG_ROOT=${CMAKE_BINARY_DIR} -DPROJ4_ROOT=${CMAKE_BINARY_DIR}
+    DEPENDS ${PROJ4_LIBRARIES}
     )
   ExternalProject_Target(gdal GDAL_BLD
     OUTPUT_FILE libgdal${CMAKE_SHARED_LIBRARY_SUFFIX}
@@ -1169,7 +1178,7 @@ if (${CMAKE_PROJECT_NAME}_GDAL_BUILD)
     )
 
   set(GDAL_LIBRARIES gdal CACHE STRING "Building bundled gdal" FORCE)
-  set(GDAL_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}/gdal" CACHE STRING "Directory containing GDAL headers." FORCE)
+  set(GDAL_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/gdal" CACHE STRING "Directory containing GDAL headers." FORCE)
 
   SetTargetFolder(GDAL_BLD "Third Party Libraries")
   SetTargetFolder(gdal "Third Party Libraries")
@@ -1177,7 +1186,7 @@ if (${CMAKE_PROJECT_NAME}_GDAL_BUILD)
 endif (${CMAKE_PROJECT_NAME}_GDAL_BUILD)
 
 ###############################################################################
-#                                 Tcl
+#                                 Tcl/Tk
 ###############################################################################
 
 set(tcl_DESCRIPTION "
@@ -1189,20 +1198,30 @@ version if BRLCAD_BUNDLED_LIBS is also AUTO.
 
 THIRD_PARTY(tcl TCL tcl tcl_DESCRIPTION ALIASES ENABLE_TCL REQUIRED_VARS BRLCAD_LEVEL2)
 
+if (NOT ${CMAKE_PROJECT_NAME}_TCL_BUILD)
+  # Trying to manage all the component pieces of a Tcl install (mixing and
+  # matching system and local) is way too complex for too little benefit.
+  # For the most part this is an all or nothing arrangement - either the
+  # system version is adequate, or we're on our own.  If we think we have a
+  # system version, check to see if it has everything we need.  If not, we're
+  # rolling our own.
+  #
+  # (TODO - Might make an exception for tkhtml since that's not very standard
+  # in the broader ecosystem...
+endif (NOT ${CMAKE_PROJECT_NAME}_TCL_BUILD)
 
+# If we're building, build it all
 if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
+
+  ############
+  #    Tcl
+  ############
 
   set(TCL_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/TCL_BLD-prefix/src/TCL_BLD")
   set(TCL_MINOR_VERSION 6)
   set(ITCL_VERSION 4.1.2)
 
   if (NOT MSVC)
-    include(ProcessorCount)
-    ProcessorCount(N)
-    math(EXPR pcnt "${N} / 2")
-    if (NOT pcnt)
-      set(pcnt 1)
-    endif (NOT pcnt)
 
     set(TCL_PATCH_FILES "${TCL_SRC_DIR}/unix/configure" "${TCL_SRC_DIR}/macosx/configure" "${TCL_SRC_DIR}/unix/tcl.m4")
 
@@ -1210,9 +1229,10 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
       URL "${CMAKE_CURRENT_SOURCE_DIR}/tcl"
       BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
       PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${TCL_PATCH_FILES}
-      CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tcl/unix/configure --prefix=${CMAKE_BINARY_DIR}
+      CONFIGURE_COMMAND CPPFLAGS=-I${CMAKE_BINARY_DIR}/${INCLUDE_DIR} LDFLAGS=-L${CMAKE_BINARY_DIR}/${LIB_DIR} ${TCL_SRC_DIR}/unix/configure --prefix=${CMAKE_BINARY_DIR}
       BUILD_COMMAND make -j${pcnt}
       INSTALL_COMMAND make install
+      DEPENDS ${ZLIB_LIBRARIES}
       )
   else (NOT MSVC)
 
@@ -1251,38 +1271,82 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
     )
 
   set(TCL_LIBRARIES tcl CACHE STRING "Building bundled tcl" FORCE)
-  set(TCL_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
+  set(TCL_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
 
   SetTargetFolder(TCL_BLD "Third Party Libraries")
   SetTargetFolder(tcl "Third Party Libraries")
 
+  ############
+  #    Tk
+  ############
+
+
+  set(TK_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/TK_BLD-prefix/src/TK_BLD")
+  set(TK_MINOR_VERSION 6)
+
+  if (NOT MSVC)
+
+    set(TK_PATCH_FILES "${TK_SRC_DIR}/unix/configure" "${TK_SRC_DIR}/macosx/configure" "${TK_SRC_DIR}/unix/tcl.m4")
+
+    ExternalProject_Add(TK_BLD
+      URL "${CMAKE_CURRENT_SOURCE_DIR}/tk"
+      BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
+      PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${TK_PATCH_FILES}
+      CONFIGURE_COMMAND CPPFLAGS=-I${CMAKE_BINARY_DIR}/${INCLUDE_DIR} LDFLAGS=-L${CMAKE_BINARY_DIR}/${LIB_DIR} ${TK_SRC_DIR}/unix/configure --prefix=${CMAKE_BINARY_DIR} --with-tcl=${CMAKE_BINARY_DIR}/${LIB_DIR} --disable-xft --enable-64bit --enable-rpath
+      BUILD_COMMAND make -j${pcnt}
+      INSTALL_COMMAND make install
+      DEPENDS TCL_BLD ${PNG_LIBRARIES}
+      )
+  else (NOT MSVC)
+
+    ExternalProject_Add(TK_BLD
+      SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tk"
+      BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
+      CONFIGURE_COMMAND ""
+      BINARY_DIR ${TK_SRC_DIR}/win
+      BUILD_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc INSTALLDIR=${CMAKE_BINARY_DIR} TCLDIR=${TCL_SRC_DIR}
+      INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install INSTALLDIR=${CMAKE_BINARY_DIR} TCLDIR=${TCL_SRC_DIR}
+      DEPENDS TCL_BLD ${PNG_LIBRARIES}
+      )
+
+  endif (NOT MSVC)
+
+  ExternalProject_Target(tk TK_BLD
+    OUTPUT_FILE libtk8.${TK_MINOR_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}
+    STATIC_OUTPUT_FILE libtkstub8.${TK_MINOR_VERSION}${CMAKE_STATIC_LIBRARY_SUFFIX}
+    RPATH
+    )
+  ExternalProject_Target(wish TK_BLD
+    OUTPUT_FILE wish8.${TK_MINOR_VERSION}${CMAKE_EXECUTABLE_SUFFIX}
+    RPATH EXEC
+    )
+
+  ExternalProject_ByProducts(TK_BLD ${LIB_DIR} FIXPATH
+    tkConfig.sh
+    )
+
+  ExternalProject_ByProducts(TK_BLD ${INCLUDE_DIR}
+    tkDecls.h
+    tk.h
+    tkPlatDecls.h
+    )
+
+  set(TK_LIBRARIES tk CACHE STRING "Building bundled tk" FORCE)
+  set(TK_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
+
+  SetTargetFolder(TK_BLD "Third Party Libraries")
+  SetTargetFolder(tk "Third Party Libraries")
+
 endif (${CMAKE_PROJECT_NAME}_TCL_BUILD)
 
-if (0)
-# Depending on the Tcl/Tk results, look for packages required by BRL-CAD.  If
-# building local Tcl/Tk, go ahead and enable all the packages as well - otherwise,
-# check the found Tcl/Tk and enable what it doesn't supply.  If doing a non-graphical
-# build, only compile extensions that don't use Tk.
-include("${BRLCAD_CMAKE_DIR}/ThirdParty_TCL.cmake")
 
-# The first package to settle is Tk itself
-set(tk_ALIASES ENABLE_TK)
-set(tk_DESCRIPTION "
-Option for enabling and disabling compilation of the Tk library
-provided with BRL-CAD's source code.  Default is AUTO, responsive to
-the BRLCAD_TCL option and testing first for a system version if
-BRLCAD_BUNDLED_LIBS is also AUTO. Option for enabling and disabling
-compilation of the Tk graphics package for Tcl provided with BRL-CAD's
-source distribution.  Default is AUTO, auto-enabling if the BRLCAD_TCL
-option is set to BUNDLED and testing first for a system version if
-BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_TK is set to BUNDLED,
-local copy is built even if a system version is present.  This option
-also depends on BRLCAD_ENABLE_TK being ON.
-")
-if(BRLCAD_ENABLE_AQUA)
-  set(TK_ENABLE_AQUA ON CACHE STRING "BRL-CAD setting to enable AQUA" FORCE)
-endif(BRLCAD_ENABLE_AQUA)
+if (0)
+#if(BRLCAD_ENABLE_AQUA)
+#  set(TK_ENABLE_AQUA ON CACHE STRING "BRL-CAD setting to enable AQUA" FORCE)
+#endif(BRLCAD_ENABLE_AQUA)
+
 THIRD_PARTY_TCL_PACKAGE(Tk tk "${TCL_TCLSH_EXECUTABLE}" "tcl" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL2" "tk" tk_ALIASES tk_DESCRIPTION)
+
 if(BRLCAD_TK_BUILD)
   SetTargetFolder(wish "Third Party Executables")
   SetTargetFolder(tk "Third Party Libraries") 
