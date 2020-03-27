@@ -13,6 +13,8 @@
 tk::mac \- Access Mac-Specific Functionality on OS X from Tk
 .SH SYNOPSIS
 .nf
+\fB::tk::mac::DoScriptFile\fR
+\fB::tk::mac::DoScriptText\fR
 \fB::tk::mac::ShowPreferences\fR
 \fB::tk::mac::OpenApplication\fR
 \fB::tk::mac::ReopenApplication\fR
@@ -22,6 +24,9 @@ tk::mac \- Access Mac-Specific Functionality on OS X from Tk
 \fB::tk::mac::OnHide\fR
 \fB::tk::mac::OnShow\fR
 \fB::tk::mac::ShowHelp\fR
+\fB::tk::mac::PerformService\fR
+\fB::tk::mac::LaunchURL \fIURL...\fR
+\fB::tk::mac::GetAppPath\fR
 
 \fB::tk::mac::standardAboutPanel\fR
 
@@ -29,6 +34,7 @@ tk::mac \- Access Mac-Specific Functionality on OS X from Tk
 \fB::tk::mac::CGAntialiasLimit \fIlimit\fR
 \fB::tk::mac::antialiasedtext \fInumber\fR
 \fB::tk::mac::useThemedToplevel \fIboolean\fR
+
 
 \fB::tk::mac::iconBitmap \fIname width height \-kind value\fR
 .fi
@@ -39,6 +45,20 @@ The Aqua/Mac OS X application environment defines a number of additional
 events that applications should respond to. These events are mapped by Tk to
 calls to commands in the \fB::tk::mac\fR namespace; unless otherwise noted, if
 the command is absent, no action will be taken.
+.TP
+\fB::tk::mac::DoScriptFile\fR
+.
+The default Apple Event handler for AEDoScriptHandler. This command 
+executes a Tcl file when an AppleScript sends a
+.QW "do script"
+command to Wish with a file path as a parameter. 
+.TP
+\fB::tk::mac::DoScriptText\fR
+.
+The default Apple Event handler for AEDoScriptHandler. This command
+executes Tcl code when an AppleScript sends a
+.QW "do script"
+command to Wish with Tcl code or a Tcl procedure as a parameter.
 .TP
 \fB::tk::mac::ShowPreferences\fR
 .
@@ -61,7 +81,7 @@ proc ::tk::mac::ShowPreferences {} {
 \fB::tk::mac::OpenApplication\fR
 .
 If a proc of this name is defined, this proc fill fire when your application
-is intially opened. It is the default Apple Event handler for
+is initially opened. It is the default Apple Event handler for
 kAEOpenApplication,
 .QW oapp .
 .TP
@@ -110,9 +130,8 @@ proc ::tk::mac::OpenDocument {args} {
 If a proc of this name is defined it is the default Apple Event handler for
 kAEPrintDocuments,
 .QW pdoc ,
-the Apple Event sent when your application is asked to print one or more
-documents (e.g., via the Print menu item in the Finder).  It works the same
-way as \fBtk::mac::OpenDocument\fR in terms of arguments.
+the Apple Event sent when your application is asked to print a
+document.  It takes a single absolute file path as an argument. 
 .TP
 \fB::tk::mac::Quit\fR
 .
@@ -141,7 +160,57 @@ Customizes behavior of Apple Help menu; if this procedure is not defined, the
 platform-specific standard Help menu item
 .QW "YourApp Help"
 performs the default Cocoa action of showing the Help Book configured in the
-application's Info.plist (or displaying an alert if no Help Book is set).
+application's Info.plist (or displaying an alert if no Help Book is
+set).
+.TP
+\fB::tk::mac::PerformService\fR
+.
+Executes a Tcl procedure called from the macOS 
+.QW Services 
+menu in the Application menu item. The
+.QW Services
+menu item allows for inter-application communication; data from one
+application, such as selected text, can be sent to another application
+for processing, for example to Safari as a search item for Google, or
+to TextEdit to be appended to a file. An example of the proc is below,
+and should be rewritten in an application script for customization: 
+.RS
+.PP
+.CS
+proc ::tk::mac::PerformService {} {
+    set data [clipboard get]
+    $w insert end $data
+}
+.CE
+.RE
+Note that the mechanism for retrieving the data is from the clipboard;
+there is no other supported way to obtain the data.  If the Services 
+process is not desired, the NSServices keys can be deleted from
+the application's Info.plist file. The underlying code supporting this
+command also allows the text, entry and ttk::entry widgets to access
+services from other applications via the Services menu. The NSPortName
+key in Wish's Info.plist file is currently set as
+.QW "Wish"
+; if a developer changes the name of the Wish executable to something
+  else, this key should be modified with the same name.
+.TP
+\fB::tk::mac::LaunchURL \fIURL...\fR
+.
+If defined, launches a URL within Tk. This would be used if a Tk
+application wants to handle a URL itself, such as displaying data from
+an RSS feed, rather than launching a default application to handle the
+URL, although it can defined as such. Wish includes a stub URL scheme
+of
+.QW foo://
+in the CFBundleURLSchemes key of its Info.plist file; this should be customized for the specific URL
+scheme the developer wants to support. 
+.TP
+\fB::tk::mac::GetAppPath\fR
+.
+Returns the current applications's file path.
+.TP
+
+
 .SH "ADDITIONAL DIALOGS"
 .PP
 The Aqua/Mac OS X defines additional dialogs that applications should

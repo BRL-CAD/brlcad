@@ -4,7 +4,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 .TH Tk_AllocFontFromObj 3 8.1 Tk "Tk Library Procedures"
 .so man.macros
 .BS
@@ -14,24 +14,23 @@ Tk_AllocFontFromObj, Tk_GetFont, Tk_GetFontFromObj, Tk_NameOfFont, Tk_FreeFontFr
 .nf
 \fB#include <tk.h>\fR
 .sp
-Tk_Font 
+Tk_Font
 \fBTk_AllocFontFromObj(\fIinterp, tkwin, objPtr\fB)\fR
 .sp
-Tk_Font 
-\fBTk_GetFont(\fIinterp, tkwin, string\fB)\fR 
+Tk_Font
+\fBTk_GetFont(\fIinterp, tkwin, string\fB)\fR
 .sp
-Tk_Font 
+Tk_Font
 \fBTk_GetFontFromObj(\fItkwin, objPtr\fB)\fR
 .sp
 const char *
 \fBTk_NameOfFont(\fItkfont\fB)\fR
 .sp
-Tk_Font 
+Tk_Font
 \fBTk_FreeFontFromObj(\fItkwin, objPtr\fB)\fR
 .sp
 void
 \fBTk_FreeFont(\fItkfont\fB)\fR
-
 .SH ARGUMENTS
 .AS "const char" *tkfont
 .AP "Tcl_Interp" *interp in
@@ -56,7 +55,7 @@ returns a token that represents the font.  The return value can be used
 in subsequent calls to procedures such as \fBTk_GetFontMetrics\fR,
 \fBTk_MeasureChars\fR, and \fBTk_FreeFont\fR.  The Tk_Font token
 will remain valid until
-\fBTk_FreeFontFromObj\fR or \fBTk_FreeFont\fR is called to release it. 
+\fBTk_FreeFontFromObj\fR or \fBTk_FreeFont\fR is called to release it.
 \fIObjPtr\fR can contain either a symbolic name or a font description; see
 the documentation for the \fBfont\fR command for a description of the
 valid formats.  If \fBTk_AllocFontFromObj\fR is unsuccessful (because,
@@ -105,7 +104,6 @@ with the same information used to create it; for
 with its Tk_Font token.  There should be
 exactly one call to \fBTk_FreeFontFromObj\fR or \fBTk_FreeFont\fR
 for each call to \fBTk_AllocFontFromObj\fR or \fBTk_GetFont\fR.
-
 .SH "SEE ALSO"
 Tk_FontId(3)
 .SH KEYWORDS

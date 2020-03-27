@@ -12,7 +12,6 @@ exec wish "$0" ${1+"$@"}
 
 package require Tk	8.5
 package require msgcat
-package require Ttk
 
 eval destroy [winfo child .]
 set tk_demoDirectory [file join [pwd] [file dirname [info script]]]
@@ -93,13 +92,14 @@ image create photo ::img::new -format GIF -data [mc {
 }]
 
 #----------------------------------------------------------------
-# The code below create the main window, consisting of a menu bar and a text
+# The code below creates the main window, consisting of a menu bar and a text
 # widget that explains how to use the program, plus lists all of the demos as
 # hypertext items.
 #----------------------------------------------------------------
 
 menu .menuBar -tearoff 0
 
+# On Aqua, just use the default menu.
 if {[tk windowingsystem] ne "aqua"} {
     # This is a tk-internal procedure to make i18n easier
     ::tk::AmpMenuArgs .menuBar add cascade -label [mc "&File"] \
@@ -119,9 +119,8 @@ if {[tk windowingsystem] ne "aqua"} {
 		-command {exit} -accelerator [mc "Meta-Q"]
 	bind . <[mc "Meta-q"]> {exit}
     }
+    . configure -menu .menuBar
 }
-
-. configure -menu .menuBar
 
 ttk::frame .statusBar
 ttk::label .statusBar.lab -text "   " -anchor w
@@ -145,7 +144,7 @@ catch {
 }
 
 ttk::frame .textFrame
-scrollbar .s -orient vertical -command {.t yview} -takefocus 1
+ttk::scrollbar .s -orient vertical -command {.t yview} -takefocus 1
 pack .s -in .textFrame -side right -fill y
 text .t -yscrollcommand {.s set} -wrap word -width 70 -height $textheight \
 	-font mainFont -setgrid 1 -highlightthickness 0 \
@@ -317,16 +316,13 @@ addFormattedText {
     @@demo image1	Two labels displaying images
     @@demo image2	A simple user interface for viewing images
     @@demo labelframe	Labelled frames
-    @@new
     @@demo ttkbut	The simple Themed Tk widgets
 
     @@subtitle	Listboxes and Trees
     @@demo states	The 50 states
     @@demo colors	Colors: change the color scheme for the application
     @@demo sayings	A collection of famous and infamous sayings
-    @@new
     @@demo mclist	A multi-column list of countries
-    @@new
     @@demo tree		A directory browser tree
 
     @@subtitle	Entries, Spin-boxes and Combo-boxes
@@ -334,7 +330,6 @@ addFormattedText {
     @@demo entry2	Entries with scrollbars
     @@demo entry3	Validated entries and password fields
     @@demo spin		Spin-boxes
-    @@new
     @@demo combo	Combo-boxes
     @@demo form		Simple Rolodex-like form
 
@@ -344,7 +339,6 @@ addFormattedText {
     @@demo bind		Hypertext (tag bindings)
     @@demo twind	A text widget with embedded windows and other features
     @@demo search	A search tool built with a text widget
-    @@new
     @@demo textpeer	Peering text widgets
 
     @@subtitle	Canvases
@@ -355,7 +349,6 @@ addFormattedText {
     @@demo ruler	A ruler with adjustable tab stops
     @@demo floor	A building floor plan
     @@demo cscroll	A simple scrollable canvas
-    @@new
     @@demo knightstour  A Knight's tour of the chess board
 
     @@subtitle	Scales and Progress Bars
@@ -363,38 +356,30 @@ addFormattedText {
     @@demo vscale	Vertical scale
     @@new
     @@demo ttkscale	Themed scale linked to a label with traces
-    @@new
     @@demo ttkprogress	Progress bar
 
     @@subtitle	Paned Windows and Notebooks
     @@demo paned1	Horizontal paned window
     @@demo paned2	Vertical paned window
-    @@new
     @@demo ttkpane	Themed nested panes
-    @@new
     @@demo ttknote	Notebook widget
 
     @@subtitle	Menus and Toolbars
     @@demo menu		Menus and cascades (sub-menus)
     @@demo menubu	Menu-buttons
-    @@new
     @@demo ttkmenu	Themed menu buttons
-    @@new
     @@demo toolbar	Themed toolbar
 
     @@subtitle	Common Dialogs
     @@demo msgbox	Message boxes
     @@demo filebox	File selection dialog
     @@demo clrpick	Color picker
+    @@demo fontchoose	Font selection dialog
 
     @@subtitle	Animation
-    @@new
     @@demo anilabel	Animated labels
-    @@new
     @@demo aniwave	Animated wave
-    @@new
     @@demo pendulum	Pendulum simulation
-    @@new
     @@demo goldberg	A celebration of Rube Goldberg
 
     @@subtitle	Miscellaneous
@@ -579,8 +564,10 @@ proc showCode w {
 		      -xscrollcommand [list $t.xscroll set] \
 		      -yscrollcommand [list $t.yscroll set] \
 		      -setgrid 1 -highlightthickness 0 -pady 2 -padx 3]
-	scrollbar $t.xscroll -command [list $t.text xview] -orient horizontal
-	scrollbar $t.yscroll -command [list $t.text yview] -orient vertical
+	ttk::scrollbar $t.xscroll -command [list $t.text xview] \
+	    -orient horizontal
+	ttk::scrollbar $t.yscroll -command [list $t.text yview] \
+	    -orient vertical
 
 	grid $t.text $t.yscroll -sticky news
 	#grid $t.xscroll
@@ -725,7 +712,7 @@ proc tkAboutDialog {} {
 	    -message [mc "Tk widget demonstration application"] -detail \
 "[mc "Copyright \u00a9 %s" {1996-1997 Sun Microsystems, Inc.}]
 [mc "Copyright \u00a9 %s" {1997-2000 Ajuba Solutions, Inc.}]
-[mc "Copyright \u00a9 %s" {2001-2007 Donal K. Fellows}]
+[mc "Copyright \u00a9 %s" {2001-2009 Donal K. Fellows}]
 [mc "Copyright \u00a9 %s" {2002-2007 Daniel A. Steffen}]"
 }
 

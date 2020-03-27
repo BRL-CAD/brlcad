@@ -140,7 +140,7 @@ test wm-attributes-1.2.4 {usage} -constraints {unix notAqua} -returnCodes error 
 } -result {bad attribute "_": must be -alpha, -topmost, -zoomed, -fullscreen, or -type}
 test wm-attributes-1.2.5 {usage} -constraints aqua -returnCodes error -body {
     wm attributes . _
-} -result {bad attribute "_": must be -alpha, -modified, -notify, or -titlepath}
+} -result {bad attribute "_": must be -alpha, -fullscreen, -modified, -notify, -titlepath, -topmost, -transparent, or -type}
 
 
 ### wm client ###
@@ -641,16 +641,16 @@ test wm-geometry-1.3 {usage} -returnCodes error -body {
     wm geometry . bogus
 } -result {bad geometry specifier "bogus"}
 
-test wm-geometry-2.1 {setting values} -setup {
-    set result {}
-} -body {
+test wm-geometry-2.1 {setting values} -body {
     wm geometry .t 150x150+50+50
     update
-    lappend result [wm geometry .t]
+    set result [wm geometry .t]
     wm geometry .t {}
     update
-    lappend result [string equal [wm geometry .t] "150x150+50+50"]
-} -result [list 150x150+50+50 0]
+    return [list $result [string equal [wm geometry .t] $result]]
+} -cleanup {
+    unset result
+} -match glob -result [list 150x150+*+* 0]
 
 
 ### wm grid ###
@@ -737,11 +737,11 @@ test wm-iconbitmap-1.2.2 {usage} -constraints win -returnCodes error -body {
 test wm-iconbitmap-1.3 {usage} -constraints win -returnCodes error -body {
     wm iconbitmap .t 12 13
 } -result {illegal option "12" must be "-default"}
-test wm-iconbitmap-1.4 {usage} -returnCodes error -body {
+test wm-iconbitmap-1.4 {usage} -constraints notAqua -returnCodes error -body {
     wm iconbitmap .t bad-bitmap
 } -result {bitmap "bad-bitmap" not defined}
 
-test wm-iconbitmap-2.1 {setting and reading values} -setup {
+test wm-iconbitmap-2.1 {setting and reading values} -constraints notAqua -setup {
     set result {}
 } -body {
     lappend result [wm iconbitmap .t]
@@ -873,6 +873,12 @@ test wm-iconphoto-1.4 {usage} -returnCodes error -body {
     # we currently have no return info
     wm iconphoto . -default
 } -result {wrong # args: should be "wm iconphoto window ?-default? image1 ?image2 ...?"}
+test wm-iconphoto-1.5.1 {usage} -constraints aquaOrWin32 -returnCodes error -body {
+    wm iconphoto . -default [image create photo -file {}]
+} -match {glob} -result {failed to create an iconphoto with image *}
+test wm-iconphoto-1.5.2 {usage} -constraints x11 -body {
+    wm iconphoto . -default [image create photo -file {}]
+} -result {}
 
 # All other iconphoto tests are platform specific
 
@@ -1242,13 +1248,15 @@ test wm-resizable-1.5 {usage} -returnCodes error -body {
 } -result {expected boolean value but got "bad"}
 
 test wm-resizable-2.1 {setting and reading values} {
-    wm resizable .t 0 1
+    wm resizable .t 0 0
     set result [wm resizable .t]
+    wm resizable .t 0 1
+    lappend result [wm resizable .t]
     wm resizable .t 1 0
     lappend result [wm resizable .t]
     wm resizable .t 1 1
     lappend result [wm resizable .t]
-} {0 1 {1 0} {1 1}}
+} {0 0 {0 1} {1 0} {1 1}}
 
 
 ### wm sizefrom ###
@@ -1354,6 +1362,7 @@ test wm-stackorder-2.3 {stacking order} -body {
     toplevel .t ; update
     toplevel .t2 ; update
     raise .
+    raiseDelay
     raise .t2
     raiseDelay
     wm stackorder .
@@ -1513,9 +1522,10 @@ test wm-stackorder-5.1 {a menu is not a toplevel} -body {
 } -cleanup {
     destroy .t
 } -result {.t .}
-test wm-stackorder-5.2 {A normal toplevel can't be\
-        raised above an overrideredirect toplevel} -body {
+test wm-stackorder-5.2 {A normal toplevel can't be raised above an \
+    overrideredirect toplevel on unix} -constraints x11 -body {
     toplevel .t
+    tkwait visibility .t	    
     wm overrideredirect .t 1
     raise .
     update
@@ -1524,9 +1534,22 @@ test wm-stackorder-5.2 {A normal toplevel can't be\
 } -cleanup {
     destroy .t
 } -result 0
+test wm-stackorder-5.2.1 {A normal toplevel can be raised above an \
+    overrideredirect toplevel on macOS or win} -constraints aquaOrWin32 -body {
+    toplevel .t
+    tkwait visibility .t	    
+    wm overrideredirect .t 1
+    raise .
+    update
+    raiseDelay
+    wm stackorder . isabove .t
+} -cleanup {
+    destroy .t
+} -result 1
 test wm-stackorder-5.3 {An overrideredirect window\
         can be explicitly lowered} -body {
     toplevel .t
+    tkwait visibility .t	    
     wm overrideredirect .t 1
     lower .t
     update
@@ -1536,8 +1559,8 @@ test wm-stackorder-5.3 {An overrideredirect window\
     destroy .t
 } -result 1
 
-test wm-stackorder-6.1 {An embedded toplevel does not\
-        appear in the stacking order} -body {
+test wm-stackorder-6.1 {An embedded toplevel does not appear in the \
+	stacking order} -body {
     toplevel .real -container 1
     toplevel .embd -bg blue -use [winfo id .real]
     update
@@ -1545,7 +1568,6 @@ test wm-stackorder-6.1 {An embedded toplevel does not\
 } -cleanup {
     deleteWindows
 } -result {. .real}
-
 
 stdWindow
 
@@ -1614,14 +1636,24 @@ test wm-transient-1.7 {usage} -returnCodes error -body {
     wm transient .master .master
 } -cleanup {
     deleteWindows
-} -result {can't make ".master" its own master}
+} -result {setting ".master" as master creates a transient/master cycle}
 test wm-transient-1.8 {usage} -returnCodes error -body {
+    toplevel .t1
+    toplevel .t2
+    toplevel .t3
+    wm transient .t2 .t1
+    wm transient .t3 .t2
+    wm transient .t1 .t3
+} -cleanup {
+    deleteWindows
+} -result {setting ".t3" as master creates a transient/master cycle}
+test wm-transient-1.9 {usage} -returnCodes error -body {
     toplevel .master
     frame .master.f
     wm transient .master .master.f
 } -cleanup {
     deleteWindows
-} -result {can't make ".master" its own master}
+} -result {setting ".master" as master creates a transient/master cycle}
 
 test wm-transient-2.1 {basic get/set of master} -setup {
     set results [list]
@@ -1704,6 +1736,7 @@ test wm-transient-4.1 {transient toplevel is withdrawn
 test wm-transient-4.2 {already mapped transient toplevel
         is withdrawn if master is iconic} -body {
     toplevel .master
+    raiseDelay
     wm iconify .master
     update
     toplevel .subject
@@ -2273,6 +2306,32 @@ test wm-forget-1.4 "pack into unmapped toplevel causes crash" -body {
 } -cleanup {
     deleteWindows
 } -result {}
+
+test wm-forget-2 {bug [e9112ef96e] - [wm forget] doesn't completely} -setup {
+    catch {destroy .l .f.b .f}
+    set res {}
+} -body {
+    label .l -text "Top Dot"
+    frame .f
+    button .f.b -text Hello -command "puts Hello!"
+    pack .l -side top
+    pack .f.b
+    pack .f -side bottom
+    update
+    set res [winfo manager .f]
+    pack forget .f
+    update
+    lappend res [winfo manager .f]
+    wm manage .f
+    update
+    lappend res [winfo manager .f]
+    wm forget .f
+    update
+    lappend res [winfo manager .f]
+} -cleanup {
+    destroy .l .f.b .f
+    unset res
+} -result {pack {} wm {}}
 
 # FIXME:
 

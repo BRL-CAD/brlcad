@@ -54,13 +54,14 @@ TkCreateRegion(void)
  *----------------------------------------------------------------------
  */
 
-void
+int
 TkDestroyRegion(
     TkRegion r)
 {
     if (r) {
 	CFRelease(r);
     }
+    return Success;
 }
 
 /*
@@ -80,7 +81,7 @@ TkDestroyRegion(
  *----------------------------------------------------------------------
  */
 
-void
+int
 TkIntersectRegion(
     TkRegion sra,
     TkRegion srb,
@@ -88,6 +89,7 @@ TkIntersectRegion(
 {
     ChkErr(HIShapeIntersect, (HIShapeRef) sra, (HIShapeRef) srb,
 	   (HIMutableShapeRef) dr_return);
+    return Success;
 }
 
 /*
@@ -107,7 +109,7 @@ TkIntersectRegion(
  *----------------------------------------------------------------------
  */
 
-void
+int
 TkSubtractRegion(
     TkRegion sra,
     TkRegion srb,
@@ -115,6 +117,7 @@ TkSubtractRegion(
 {
     ChkErr(HIShapeDifference, (HIShapeRef) sra, (HIShapeRef) srb,
 	   (HIMutableShapeRef) dr_return);
+    return Success;
 }
 
 /*
@@ -134,7 +137,7 @@ TkSubtractRegion(
  *----------------------------------------------------------------------
  */
 
-void
+int
 TkUnionRectWithRegion(
     XRectangle* rectangle,
     TkRegion src_region,
@@ -153,6 +156,7 @@ TkUnionRectWithRegion(
 		(HIMutableShapeRef) dest_region_return);
 	CFRelease(rectRgn);
     }
+    return Success;
 }
 
 /*
@@ -187,8 +191,8 @@ TkMacOSXIsEmptyRegion(
  *	Xwindow documentation for more details.
  *
  * Results:
- *	Returns RectanglePart or RectangleOut. Note that this is not a
- *	complete implementation since it doesn't test for RectangleIn.
+ *	Returns RectanglePart or RectangleOut. Note that this is not a complete
+ *	implementation since it doesn't test for RectangleIn.
  *
  * Side effects:
  *	None.
@@ -204,13 +208,13 @@ TkRectInRegion(
     unsigned int width,
     unsigned int height)
 {
-    if ( TkMacOSXIsEmptyRegion(region) ) {
-	    return RectangleOut;
-	}
-    else {    
+    if (TkMacOSXIsEmptyRegion(region)) {
+	return RectangleOut;
+    } else {
 	const CGRect r = CGRectMake(x, y, width, height);
+
 	return HIShapeIntersectsRect((HIShapeRef) region, &r) ?
-	    RectanglePart : RectangleOut;
+		RectanglePart : RectangleOut;
     }
 }
 
@@ -231,10 +235,10 @@ TkRectInRegion(
  *----------------------------------------------------------------------
  */
 
-void
+int
 TkClipBox(
     TkRegion r,
-    XRectangle* rect_return)
+    XRectangle *rect_return)
 {
     CGRect rect;
 
@@ -243,6 +247,7 @@ TkClipBox(
     rect_return->y = rect.origin.y;
     rect_return->width = rect.size.width;
     rect_return->height = rect.size.height;
+    return Success;
 }
 
 /*

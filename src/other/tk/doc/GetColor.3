@@ -4,7 +4,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 .TH Tk_AllocColorFromObj 3 8.1 Tk "Tk Library Procedures"
 .so man.macros
 .BS
@@ -58,7 +58,6 @@ call to \fBTk_AllocColorFromObj\fR, \fBTk_GetColor\fR or
 Drawable in which the result graphics context will be used.  Must have
 same screen and depth as the window for which the color was allocated.
 .BE
-
 .SH DESCRIPTION
 .PP
 These procedures manage the colors being used by a Tk application.
@@ -68,8 +67,8 @@ colormap space is exhausted.
 .PP
 Given a textual description of a color, \fBTk_AllocColorFromObj\fR
 locates a pixel value that may be used to render the color
-in a particular window.  The desired color is specified with an
-object whose string value must have one of the following forms:
+in a particular window.  The desired color is specified with a
+value whose string value must have one of the following forms:
 .TP 20
 \fIcolorname\fR
 Any of the valid textual names for a color defined in the
@@ -107,7 +106,7 @@ such as \fBTk_AllocColorFromObj\fR and \fBTk_GetColorFromObj\fR.
 .PP
 \fBTk_GetColor\fR is identical to \fBTk_AllocColorFromObj\fR except
 that the description of the color is specified with a string instead
-of an object.  This prevents \fBTk_GetColor\fR from caching the
+of a value.  This prevents \fBTk_GetColor\fR from caching the
 return value, so \fBTk_GetColor\fR is less efficient than
 \fBTk_AllocColorFromObj\fR.
 .PP
@@ -128,7 +127,7 @@ This package maintains a database
 of all the colors currently in use.
 If the same color is requested multiple times from
 \fBTk_GetColor\fR or \fBTk_AllocColorFromObj\fR (e.g. by different
-windows), or if the 
+windows), or if the
 same intensities are requested multiple times from
 \fBTk_GetColorByValue\fR, then existing pixel values will
 be re-used.  Re-using an existing pixel avoids any interaction
@@ -174,4 +173,4 @@ There should be exactly one call to \fBTk_FreeColorFromObj\fR
 or \fBTk_FreeColor\fR for each call to \fBTk_AllocColorFromObj\fR,
 \fBTk_GetColor\fR, or \fBTk_GetColorByValue\fR.
 .SH KEYWORDS
-color, intensity, object, pixel value
+color, intensity, value, pixel value

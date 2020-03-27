@@ -110,8 +110,10 @@ if {$tcl_platform(platform) == "unix"} {
     set modes 1
 }
 
-set unknownOptionsMsg(tk_getOpenFile) {bad option "-foo": must be -defaultextension, -filetypes, -initialdir, -initialfile, -multiple, -parent, -title, or -typevariable}
-set unknownOptionsMsg(tk_getSaveFile) {bad option "-foo": must be -confirmoverwrite, -defaultextension, -filetypes, -initialdir, -initialfile, -parent, -title, or -typevariable}
+set unknownOptionsMsg(tk_getOpenFile,notAqua) {bad option "-foo": must be -defaultextension, -filetypes, -initialdir, -initialfile, -multiple, -parent, -title, or -typevariable}
+set unknownOptionsMsg(tk_getOpenFile,aqua) {bad option "-foo": must be -defaultextension, -filetypes, -initialdir, -initialfile, -message, -multiple, -parent, -title, -typevariable, or -command}
+set unknownOptionsMsg(tk_getSaveFile,notAqua) {bad option "-foo": must be -confirmoverwrite, -defaultextension, -filetypes, -initialdir, -initialfile, -parent, -title, or -typevariable}
+set unknownOptionsMsg(tk_getSaveFile,aqua) {bad option "-foo": must be -defaultextension, -filetypes, -initialdir, -initialfile, -message, -parent, -title, -typevariable, -command, or -confirmoverwrite}
 
 set tmpFile "filebox.tmp"
 makeFile {
@@ -155,9 +157,12 @@ foreach mode $modes {
 	}
     }
 
-    test filebox-1.1-$mode "tk_getOpenFile command" -body {
+    test filebox-1.1.1-$mode "tk_getOpenFile command" -constraints notAqua -body {
 	tk_getOpenFile -foo
-    } -returnCodes error -result $unknownOptionsMsg(tk_getOpenFile)
+    } -returnCodes error -result $unknownOptionsMsg(tk_getOpenFile,notAqua)
+    test filebox-1.1.2-$mode "tk_getOpenFile command" -constraints aqua -body {
+	tk_getOpenFile -foo
+    } -returnCodes error -result $unknownOptionsMsg(tk_getOpenFile,aqua)
 
     catch {tk_getOpenFile -foo 1} msg
     regsub -all ,      $msg "" options
@@ -171,9 +176,12 @@ foreach mode $modes {
         }
     }
 
-    test filebox-1.3-$mode "tk_getOpenFile command" -body {
+    test filebox-1.3.1-$mode "tk_getOpenFile command" -constraints notAqua -body {
         tk_getOpenFile -foo bar
-    } -returnCodes error -result $unknownOptionsMsg(tk_getOpenFile)
+    } -returnCodes error -result $unknownOptionsMsg(tk_getOpenFile,notAqua)
+    test filebox-1.3.2-$mode "tk_getOpenFile command" -constraints aqua -body {
+        tk_getOpenFile -foo bar
+    } -returnCodes error -result $unknownOptionsMsg(tk_getOpenFile,aqua)
     test filebox-1.4-$mode "tk_getOpenFile command" -body {
         tk_getOpenFile -initialdir
     } -returnCodes error -result {value for "-initialdir" missing}
@@ -281,7 +289,7 @@ foreach mode $modes {
 		    -initialfile $fileName -initialdir $fileDir \
 		    -typevariable tv]
 	    if {[info exists tv]} {
-		regexp {^(.*) \(.*\)$} $tv dummy typeName
+		set typeName $tv
 	    } else {
 		set typeName "-unset-"
 	    }
@@ -289,9 +297,12 @@ foreach mode $modes {
         } $res
     }
 
-    test filebox-4.1-$mode "tk_getSaveFile command" -body {
+    test filebox-4.1.1-$mode "tk_getSaveFile command" -constraints notAqua -body {
 	tk_getSaveFile -foo
-    } -returnCodes error -result $unknownOptionsMsg(tk_getSaveFile)
+    } -returnCodes error -result $unknownOptionsMsg(tk_getSaveFile,notAqua)
+    test filebox-4.1.2-$mode "tk_getSaveFile command" -constraints aqua -body {
+	tk_getSaveFile -foo
+    } -returnCodes error -result $unknownOptionsMsg(tk_getSaveFile,aqua)
 
     catch {tk_getSaveFile -foo 1} msg
     regsub -all ,      $msg "" options
@@ -305,9 +316,12 @@ foreach mode $modes {
 	}
     }
 
-    test filebox-4.3-$mode "tk_getSaveFile command" -body {
+    test filebox-4.3.1-$mode "tk_getSaveFile command" -constraints notAqua -body {
 	tk_getSaveFile -foo bar
-    } -returnCodes error -result $unknownOptionsMsg(tk_getSaveFile)
+    } -returnCodes error -result $unknownOptionsMsg(tk_getSaveFile,notAqua)
+    test filebox-4.3.2-$mode "tk_getSaveFile command" -constraints aqua -body {
+	tk_getSaveFile -foo bar
+    } -returnCodes error -result $unknownOptionsMsg(tk_getSaveFile,aqua)
     test filebox-4.4-$mode "tk_getSaveFile command" -body {
 	tk_getSaveFile -initialdir
     } -returnCodes error -result {value for "-initialdir" missing}
@@ -463,7 +477,7 @@ foreach mode $modes {
     }
 
     # The rest of the tests need to be executed on Unix only.
-    # The test whether the dialog box widgets were implemented correctly.
+    # They test whether the dialog box widgets were implemented correctly.
     # These tests are not
     # needed on the other platforms because they use native file dialogs.
 }

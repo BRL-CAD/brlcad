@@ -21,16 +21,19 @@ bind TScale <ButtonPress-3>   { ttk::scale::Jump %W %x %y }
 bind TScale <B3-Motion>       { ttk::scale::Drag %W %x %y }
 bind TScale <ButtonRelease-3> { ttk::scale::Release %W %x %y }
 
-bind TScale <Left>            { ttk::scale::Increment %W -1 }
-bind TScale <Up>              { ttk::scale::Increment %W -1 }
-bind TScale <Right>           { ttk::scale::Increment %W 1 }
-bind TScale <Down>            { ttk::scale::Increment %W 1 }
-bind TScale <Control-Left>    { ttk::scale::Increment %W -10 }
-bind TScale <Control-Up>      { ttk::scale::Increment %W -10 }
-bind TScale <Control-Right>   { ttk::scale::Increment %W 10 }
-bind TScale <Control-Down>    { ttk::scale::Increment %W 10 }
-bind TScale <Home>            { %W set [%W cget -from] }
-bind TScale <End>             { %W set [%W cget -to] }
+## Keyboard navigation bindings:
+#
+bind TScale <<LineStart>>     { %W set [%W cget -from] }
+bind TScale <<LineEnd>>       { %W set [%W cget -to] }
+
+bind TScale <<PrevChar>>      { ttk::scale::Increment %W -1 }
+bind TScale <<PrevLine>>      { ttk::scale::Increment %W -1 }
+bind TScale <<NextChar>>      { ttk::scale::Increment %W 1 }
+bind TScale <<NextLine>>      { ttk::scale::Increment %W 1 }
+bind TScale <<PrevWord>>      { ttk::scale::Increment %W -10 }
+bind TScale <<PrevPara>>      { ttk::scale::Increment %W -10 }
+bind TScale <<NextWord>>      { ttk::scale::Increment %W 10 }
+bind TScale <<NextPara>>      { ttk::scale::Increment %W 10 }
 
 proc ttk::scale::Press {w x y} {
     variable State

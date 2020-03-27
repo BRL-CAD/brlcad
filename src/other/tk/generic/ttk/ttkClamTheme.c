@@ -12,7 +12,7 @@
  * off-by-one error in the end point. This is especially apparent with this
  * theme. Defining this macro as true handles this case.
  */
-#if defined(WIN32) && !defined(WIN32_XDRAWLINE_HACK)
+#if defined(_WIN32) && !defined(WIN32_XDRAWLINE_HACK)
 #	define WIN32_XDRAWLINE_HACK 1
 #else
 #	define WIN32_XDRAWLINE_HACK 0

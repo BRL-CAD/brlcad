@@ -13,7 +13,7 @@
 
 #include "tkInt.h"
 
-#ifdef __WIN32__
+#ifdef _WIN32
 #include "tkWinInt.h"
 #endif
 
@@ -21,7 +21,7 @@
 #include "tkMacOSXInt.h"
 #endif
 
-#if !(defined(__WIN32__) || defined(MAC_OSX_TK))
+#if !(defined(_WIN32) || defined(MAC_OSX_TK))
 #include "tkUnixInt.h"
 #endif
 
@@ -29,11 +29,17 @@
 #include "tkPlatDecls.h"
 #include "tkIntXlibDecls.h"
 
-TkStubs *tkStubsPtr = NULL;
-TkPlatStubs *tkPlatStubsPtr = NULL;
-TkIntStubs *tkIntStubsPtr = NULL;
-TkIntPlatStubs *tkIntPlatStubsPtr = NULL;
-TkIntXlibStubs *tkIntXlibStubsPtr = NULL;
+MODULE_SCOPE const TkStubs *tkStubsPtr;
+MODULE_SCOPE const TkPlatStubs *tkPlatStubsPtr;
+MODULE_SCOPE const TkIntStubs *tkIntStubsPtr;
+MODULE_SCOPE const TkIntPlatStubs *tkIntPlatStubsPtr;
+MODULE_SCOPE const TkIntXlibStubs *tkIntXlibStubsPtr;
+
+const TkStubs *tkStubsPtr = NULL;
+const TkPlatStubs *tkPlatStubsPtr = NULL;
+const TkIntStubs *tkIntStubsPtr = NULL;
+const TkIntPlatStubs *tkIntPlatStubsPtr = NULL;
+const TkIntXlibStubs *tkIntXlibStubsPtr = NULL;
 
 /*
  * Use our own isdigit to avoid linking to libc on windows
@@ -63,32 +69,32 @@ isDigit(const int c)
  *----------------------------------------------------------------------
  */
 #undef Tk_InitStubs
-CONST char *
+MODULE_SCOPE const char *
 Tk_InitStubs(
     Tcl_Interp *interp,
-    CONST char *version,
+    const char *version,
     int exact)
 {
     const char *packageName = "Tk";
     const char *errMsg = NULL;
     ClientData clientData = NULL;
-    CONST char *actualVersion = tclStubsPtr->tcl_PkgRequireEx(interp,
+    const char *actualVersion = tclStubsPtr->tcl_PkgRequireEx(interp,
 	    packageName, version, 0, &clientData);
-    TkStubs *stubsPtr = (TkStubs *)clientData;
+    const TkStubs *stubsPtr = clientData;
 
     if (actualVersion == NULL) {
 	return NULL;
     }
 
     if (exact) {
-	CONST char *p = version;
+	const char *p = version;
 	int count = 0;
 
 	while (*p) {
 	    count += !isDigit(*p++);
 	}
 	if (count == 1) {
-	    CONST char *q = actualVersion;
+	    const char *q = actualVersion;
 
 	    p = version;
 	    while (*p && (*p == *q)) {
@@ -96,11 +102,11 @@ Tk_InitStubs(
 	    }
 	    if (*p || isDigit(*q)) {
 		/* Construct error message */
-		tclStubsPtr->tcl_PkgRequireEx(interp, "Tk", version, 1, NULL);
+		tclStubsPtr->tcl_PkgRequireEx(interp, packageName, version, 1, NULL);
 		return NULL;
 	    }
 	} else {
-	    actualVersion = tclStubsPtr->tcl_PkgRequireEx(interp, "Tk",
+	    actualVersion = tclStubsPtr->tcl_PkgRequireEx(interp, packageName,
 		    version, 1, NULL);
 	    if (actualVersion == NULL) {
 		return NULL;

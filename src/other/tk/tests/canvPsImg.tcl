@@ -35,7 +35,7 @@ toplevel .t
 wm title .t "Postscript Tests for Canvases: Images"
 wm iconname .t "Postscript"
 
-message .t.m -text {This screen exercises the Postscript-generation abilities of Tk canvas widgets for images.  Click the buttons below to select a Visual type for the canvas and colormode for the Postscript output.  Then click "Print" to send the results to the default printer, or "Print to file" to put the Postscript output in a file called "/tmp/test.ps".  You can also click on items in the canvas to delete them.  
+message .t.m -text {This screen exercises the Postscript-generation abilities of Tk canvas widgets for images.  Click the buttons below to select a Visual type for the canvas and colormode for the Postscript output.  Then click "Print" to send the results to the default printer, or "Print to file" to put the Postscript output in a file called "/tmp/test.ps".  You can also click on items in the canvas to delete them.
 NOTE: Some Postscript printers may not be able to handle Postscript generated in color mode.} -width 6i
 pack .t.m -side top -fill both
 

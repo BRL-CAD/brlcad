@@ -21,5 +21,8 @@ test layout-1.1 "Size computations for mixed-orientation layouts" -body {
 
 } -cleanup { destroy .b } -result [list 24 24]
 
+test layout-2 "Empty -children not allowed" -body {
+    ttk::style layout Test.Tentry {Entry.field -children {}}
+} -returnCodes error -result {Invalid -children value}
 
 tcltest::cleanupTests

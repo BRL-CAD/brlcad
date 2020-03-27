@@ -3,7 +3,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 .TH tk_getOpenFile n 4.2 Tk "Tk Built-In Commands"
 .so man.macros
 .BS
@@ -35,6 +35,13 @@ whether the existing file should be overwritten or not.
 The following \fIoption\-value\fR pairs are possible as command line
 arguments to these two commands:
 .TP
+\fB\-command\fR \fIstring\fR
+Specifies the prefix of a Tcl command to invoke when the user closes the
+dialog after having selected an item. This callback is not called if the
+user cancelled the dialog. The actual command consists of \fIstring\fR
+followed by a space and the value selected by the user in the dialog. This
+is only available on Mac OS X.
+.TP
 \fB\-confirmoverwrite\fR \fIboolean\fR
 Configures how the Save dialog reacts when the selected file already
 exists, and saving would overwrite it.  A true value requests a
@@ -42,6 +49,7 @@ confirmation dialog be presented to the user.  A false value requests
 that the overwrite take place without confirmation.  Default value is true.
 .TP
 \fB\-defaultextension\fR \fIextension\fR
+.
 Specifies a string that will be appended to the filename if the user
 enters a filename without an extension. The default value is the empty
 string, which means no extension will be appended to the filename in
@@ -51,6 +59,7 @@ and the UNIX implementation guesses reasonable values for this from
 the \fB\-filetypes\fR option when this is not supplied.
 .TP
 \fB\-filetypes\fR \fIfilePatternList\fR
+.
 If a \fBFile types\fR listbox exists in the file dialog on the particular
 platform, this option gives the \fIfiletype\fRs in this listbox. When
 the user choose a filetype in the listbox, only the files of that type
@@ -61,32 +70,42 @@ types. See the section \fBSPECIFYING FILE PATTERNS\fR below for a
 discussion on the contents of \fIfilePatternList\fR.
 .TP
 \fB\-initialdir\fR \fIdirectory\fR
+.
 Specifies that the files in \fIdirectory\fR should be displayed
-when the dialog pops up. If this parameter is not specified, then
-the files in the current working directory are displayed. If the
+when the dialog pops up. If this parameter is not specified,
+the initial directory defaults to the current working directory
+on non-Windows systems and on Windows systems prior to Vista.
+On Vista and later systems, the initial directory defaults to the last
+user-selected directory for the application. If the
 parameter specifies a relative path, the return value will convert the
 relative path to an absolute path.
 .TP
 \fB\-initialfile\fR \fIfilename\fR
+.
 Specifies a filename to be displayed in the dialog when it pops up.
 .TP
 \fB\-message\fR \fIstring\fR
+.
 Specifies a message to include in the client area of the dialog.
 This is only available on Mac OS X.
 .TP
 \fB\-multiple\fR \fIboolean\fR
+.
 Allows the user to choose multiple files from the Open dialog.
 .TP
 \fB\-parent\fR \fIwindow\fR
+.
 Makes \fIwindow\fR the logical parent of the file dialog. The file
 dialog is displayed on top of its parent window. On Mac OS X, this
 turns the file dialog into a sheet attached to the parent window.
 .TP
 \fB\-title\fR \fItitleString\fR
+.
 Specifies a string to display as the title of the dialog box. If this
-option is not specified, then a default title is displayed. 
+option is not specified, then a default title is displayed.
 .TP
 \fB\-typevariable\fR \fIvariableName\fR
+.
 The global variable \fIvariableName\fR is used to preselect which filter is
 used from \fIfilterList\fR when the dialog box is opened and is
 updated when the dialog box is closed, to the last selected
@@ -163,6 +182,7 @@ Extensions without a full stop character (e.g.
 .QW ~ )
 are allowed but may not work on all platforms.
 .SH EXAMPLE
+.PP
 .CS
 set types {
     {{Text Files}       {.txt}        }
@@ -172,9 +192,9 @@ set types {
     {{GIF Files}        {}        GIFF}
     {{All Files}        *             }
 }
-set filename [tk_getOpenFile \-filetypes $types]
+set filename [\fBtk_getOpenFile\fR \-filetypes $types]
 
-if {$filename != ""} {
+if {$filename ne ""} {
     # Open the file ...
 }
 .CE
@@ -182,3 +202,6 @@ if {$filename != ""} {
 tk_chooseDirectory
 .SH KEYWORDS
 file selection dialog
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

@@ -5218,7 +5218,7 @@
 2000-05-31  Eric Melski  <ericm@scriptics.com>
 
 	* library/bgerror.tcl: Improved bgerror based on work by Donal
-	K. Fellows; no longer dependant on tk_dialog; features a
+	K. Fellows; no longer dependent on tk_dialog; features a
 	Windows-esque "Details" button, and a customizable extra function
 	button that allows the user to (for example) save the stack trace
 	to a file.

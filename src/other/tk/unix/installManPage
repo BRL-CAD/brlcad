@@ -59,9 +59,7 @@ test -z "$SymOrLoc" && SymOrLoc="$Dir/"
 # backticks which doesn't pass backslashes literally.
 #
 Names=`sed -n '
-#                               Look for a line, that starts with .SH NAME
-#                               optionally allow NAME to be surrounded
-#                               by quotes.
+#                               Look for a line that starts with .SH NAME
     /^\.SH NAME/{
 #                               Read next line
 	n
@@ -71,6 +69,9 @@ Names=`sed -n '
 	s/\\\ //g
 #                               Delete from \- to the end of line
 	s/ \\\-.*//
+#                               Convert all non-space non-alphanum sequences
+#                               to single underscores.
+	s/[^ A-Za-z0-9][^ A-Za-z0-9]*/_/g
 #                               print the result and exit
 	p;q
     }' $ManPage`
@@ -91,11 +92,19 @@ case $ManPage in
 	exit 2 ;;
 esac
 
+Name=`basename $ManPage .$Section`
 SrcDir=`dirname $ManPage`
 
 ########################################################################
 ### Process Page to Create Target Pages
 ###
+
+Specials="FindPhoto FontId MeasureChar"
+for n in $Specials; do
+    if [ "$Name" = "$n" ] ; then
+	Names="$n $Names"
+    fi
+done
 
 First=""
 for Target in $Names; do
@@ -105,7 +114,7 @@ for Target in $Names; do
 	First=$Target
 	sed -e "/man\.macros/r $SrcDir/man.macros" -e "/man\.macros/d" \
 	    $ManPage > $Dir/$First
-	chmod 444 $Dir/$First
+	chmod 644 $Dir/$First
 	$Gzip $Dir/$First
     else
 	ln $SymOrLoc$First$Gz $Dir/$Target$Gz

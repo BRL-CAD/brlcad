@@ -11,10 +11,10 @@ AC_PREREQ(2.59)
 # /bin/sh. The bash shell seems to suffer from some strange failures.
 SHELL=/bin/sh
 
-TK_VERSION=8.5
+TK_VERSION=8.6
 TK_MAJOR_VERSION=8
-TK_MINOR_VERSION=5
-TK_PATCH_LEVEL=".19"
+TK_MINOR_VERSION=6
+TK_PATCH_LEVEL=".10"
 VER=$TK_MAJOR_VERSION$TK_MINOR_VERSION
 
 #------------------------------------------------------------------------
@@ -81,6 +81,17 @@ SC_ENABLE_SHARED
 SC_PATH_TCLCONFIG($TK_PATCH_LEVEL)
 SC_LOAD_TCLCONFIG
 
+if test "${TCL_MAJOR_VERSION}" != "${TK_MAJOR_VERSION}"; then
+    AC_MSG_ERROR([${TCL_BIN_DIR}/tclConfig.sh is for Tcl ${TCL_VERSION}.
+Tk ${TK_VERSION}${TK_PATCH_LEVEL} needs Tcl ${TK_VERSION}.
+Use --with-tcl= option to indicate location of tclConfig.sh file for Tcl ${TK_VERSION}.])
+fi
+if test "${TCL_MINOR_VERSION}" -lt "${TK_MINOR_VERSION}"; then
+    AC_MSG_ERROR([${TCL_BIN_DIR}/tclConfig.sh is for Tcl ${TCL_VERSION}.
+Tk ${TK_VERSION}${TK_PATCH_LEVEL} needs Tcl ${TK_VERSION}.
+Use --with-tcl= option to indicate location of tclConfig.sh file for Tcl ${TK_VERSION}.])
+fi
+
 #--------------------------------------------------------------------
 # The statements below define a collection of compile flags.  This
 # macro depends on the value of SHARED_BUILD, and should be called
@@ -115,6 +126,9 @@ fi
 AC_CHECK_HEADER([uxtheme.h], [AC_DEFINE(HAVE_UXTHEME_H)],
 	[AC_MSG_NOTICE([xpnative theme will be unavailable])],
 	[#include <windows.h>])
+AC_CHECK_HEADER([vssym32.h], [AC_DEFINE(HAVE_VSSYM32_H)], [],
+	[#include <windows.h>
+#include <uxtheme.h>])
 
 #--------------------------------------------------------------------
 # Set the default compiler switches based on the --enable-symbols
@@ -229,25 +243,22 @@ AC_SUBST(TCL_VERSION)
 AC_SUBST(TCL_MAJOR_VERSION)
 AC_SUBST(TCL_MINOR_VERSION)
 AC_SUBST(TCL_PATCH_LEVEL)
+
 AC_SUBST(TCL_SRC_DIR)
 AC_SUBST(TCL_BIN_DIR)
 AC_SUBST(TCL_DBGX)
 AC_SUBST(CFG_TK_SHARED_LIB_SUFFIX)
 AC_SUBST(CFG_TK_UNSHARED_LIB_SUFFIX)
 AC_SUBST(CFG_TK_EXPORT_FILE_SUFFIX)
-AC_SUBST(TK_SHARED_BUILD)
 
-AC_SUBST(CYGPATH)
-AC_SUBST(DEPARG)
 AC_SUBST(CFLAGS_DEFAULT)
 AC_SUBST(EXTRA_CFLAGS)
-AC_SUBST(STLIB_LD)
-AC_SUBST(SHLIB_LD)
-AC_SUBST(SHLIB_LD_LIBS)
-AC_SUBST(SHLIB_CFLAGS)
-AC_SUBST(SHLIB_SUFFIX)
+AC_SUBST(CYGPATH)
+AC_SUBST(DEPARG)
 AC_SUBST(CC_OBJNAME)
 AC_SUBST(CC_EXENAME)
+
+# win/tcl.m4 doesn't set (LDFLAGS)
 AC_SUBST(LDFLAGS_DEFAULT)
 AC_SUBST(LDFLAGS_DEBUG)
 AC_SUBST(LDFLAGS_OPTIMIZE)
@@ -255,14 +266,15 @@ AC_SUBST(LDFLAGS_CONSOLE)
 AC_SUBST(LDFLAGS_WINDOW)
 AC_SUBST(AR)
 AC_SUBST(RANLIB)
-AC_SUBST(RC)
-AC_SUBST(RC_OUT)
-AC_SUBST(RC_TYPE)
-AC_SUBST(RC_INCLUDE)
-AC_SUBST(RC_DEFINE)
-AC_SUBST(RC_DEFINES)
 AC_SUBST(TK_RES)
-AC_SUBST(RES)
+
+AC_SUBST(STLIB_LD)
+AC_SUBST(SHLIB_LD)
+AC_SUBST(SHLIB_LD_LIBS)
+AC_SUBST(SHLIB_CFLAGS)
+AC_SUBST(SHLIB_SUFFIX)
+AC_SUBST(TK_SHARED_BUILD)
+
 AC_SUBST(LIBS)
 AC_SUBST(LIBS_GUI)
 AC_SUBST(DLLSUFFIX)
@@ -287,7 +299,15 @@ AC_SUBST(TK_BUILD_STUB_LIB_PATH)
 AC_SUBST(TK_CC_SEARCH_FLAGS)
 AC_SUBST(TK_LD_SEARCH_FLAGS)
 
-AC_OUTPUT([Makefile tkConfig.sh wish.exe.manifest])
+AC_SUBST(RC)
+AC_SUBST(RC_OUT)
+AC_SUBST(RC_TYPE)
+AC_SUBST(RC_INCLUDE)
+AC_SUBST(RC_DEFINE)
+AC_SUBST(RC_DEFINES)
+AC_SUBST(RES)
+
+AC_OUTPUT(Makefile tkConfig.sh wish.exe.manifest)
 
 dnl Local Variables:
 dnl mode: autoconf;

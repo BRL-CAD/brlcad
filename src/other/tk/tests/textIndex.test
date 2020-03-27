@@ -13,7 +13,7 @@ namespace import -force tcltest::test
 
 catch {destroy .t}
 text .t -font {Courier -12} -width 20 -height 10
-pack append . .t {top expand fill}
+pack .t -expand 1 -fill both
 update
 .t debug on
 wm geometry . {}
@@ -714,7 +714,7 @@ test textIndex-18.1 {Object indices don't cache mark names} {
 } {3.4 3.0 1.0}
 
 frame .f -width 100 -height 20
-pack append . .f left
+pack .f -side left
 
 set fixedFont {Courier -12}
 set fixedHeight [font metrics $fixedFont -linespace]
@@ -724,7 +724,7 @@ set varFont {Times -14}
 set bigFont {Helvetica -24}
 destroy .t
 text .t -font $fixedFont -width 20 -height 10 -wrap char
-pack append . .t {top expand fill}
+pack .t -expand 1 -fill both
 .t tag configure big -font $bigFont
 .t debug on
 wm geometry . {}
@@ -803,8 +803,16 @@ test textIndex-19.12 {Display lines} {
     .t index "2.40 -1displaylines"
 } {2.20}
 
+test textIndex-19.12.1 {Display lines} {
+    .t index "2.50 - 100 displaylines"
+} {1.0}
+
+test textIndex-19.12.2 {Display lines} {
+    .t compare [.t index "2.50 + 100 displaylines"] == "end - 1 c"
+} {1}
+
 test textIndex-19.13 {Display lines} {
-    destroy .t
+    destroy {*}[pack slaves .]
     text .txt -height 1 -wrap word -yscroll ".sbar set" -width 400
     scrollbar .sbar -command ".txt yview"
     grid .txt .sbar -sticky news

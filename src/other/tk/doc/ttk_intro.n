@@ -3,7 +3,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 .TH ttk::intro n 8.5 Tk "Tk Themed Widget"
 .so man.macros
 .BS
@@ -13,7 +13,7 @@ ttk::intro \- Introduction to the Tk theme engine
 .SH "OVERVIEW"
 .PP
 The Tk themed widget set is based on a revised and enhanced version
-of TIP #48 (http://tip.tcl.tk/48) specified style engine.
+of TIP #48 (https://tip.tcl-lang.org/48) specified style engine.
 The main concepts are described below.
 The basic idea is to separate, to the extent possible,
 the code implementing a widget's behavior from
@@ -24,7 +24,7 @@ all aspects of the widget's appearance are controlled by the style of
 the widget (i.e. the style of the elements of the widget).
 .SH "THEMES"
 .PP
-A \fItheme\fR is a collection of elements and styles 
+A \fItheme\fR is a collection of elements and styles
 that determine the look and feel of the widget set.
 Themes can be used to:
 .IP \(bu
@@ -47,7 +47,7 @@ For example, a vertical scrollbar widget contains \fBuparrow\fR,
 .PP
 Element names use a recursive dotted notation.
 For example, \fBuparrow\fR identifies a generic arrow element,
-and \fBScrollbar.uparrow\fR and \fBCombobox.uparrow\fR identify 
+and \fBScrollbar.uparrow\fR and \fBCombobox.uparrow\fR identify
 widget-specific elements.
 When looking for an element, the style engine looks for
 the specific name first, and if an element of that name is
@@ -56,9 +56,9 @@ successive leading components of the element name.
 .PP
 Like widgets, elements have \fIoptions\fR which
 specify what to display and how to display it.
-For example, the \fBtext\fR element 
+For example, the \fBtext\fR element
 (which displays a text string) has
-\fB\-text\fR, \fB\-font\fR, \fB\-foreground\fR, \fB\-background\fR, 
+\fB\-text\fR, \fB\-font\fR, \fB\-foreground\fR, \fB\-background\fR,
 \fB\-underline\fR, and \fB\-width\fR options.
 The value of an element option is taken from:
 .IP \(bu
@@ -105,14 +105,14 @@ and the various flavors of buttons which have \fBactive\fR state.
 The themed Tk widgets generalizes this idea:
 every widget has a bitmap of independent state flags.
 Widget state flags include \fBactive\fR, \fBdisabled\fR,
-\fBpressed\fR, \fBfocus\fR, etc., 
+\fBpressed\fR, \fBfocus\fR, etc.,
 (see \fIttk::widget(n)\fR for the full list of state flags).
 .PP
-Instead of a \fB\-state\fR option, every widget now has 
+Instead of a \fB\-state\fR option, every widget now has
 a \fBstate\fR widget command which is used to set or query
 the state.
 A \fIstate specification\fR is a list of symbolic state names
-indicating which bits are set, each optionally prefixed with an 
+indicating which bits are set, each optionally prefixed with an
 exclamation point indicating that the bit is cleared instead.
 .PP
 For example, the class bindings for the \fBttk::button\fR
@@ -132,7 +132,7 @@ This specifies that the widget becomes \fBactive\fR when
 the pointer enters the widget, and inactive when it leaves.
 Similarly it becomes \fBpressed\fR when the mouse button is pressed,
 and \fB!pressed\fR on the ButtonRelease event.
-In addition, the button unpresses if 
+In addition, the button unpresses if
 pointer is dragged outside the widget while Button-1 is held down,
 and represses if it's dragged back in.
 Finally, when the mouse button is released, the widget's
@@ -143,7 +143,7 @@ but not by much).
 '\" Note to self: rewrite that paragraph.  It's horrible.
 .SH "STYLES"
 .PP
-Each widget is associated with a \fIstyle\fR, 
+Each widget is associated with a \fIstyle\fR,
 which specifies values for element options.
 Style names use a recursive dotted notation like layouts and elements;
 by default, widgets use the class name to look up a style in the current theme.
@@ -157,7 +157,7 @@ ttk::\fBstyle configure\fR TButton \e
 	;
 .CE
 .PP
-Many elements are displayed differently depending on the widget state.  
+Many elements are displayed differently depending on the widget state.
 For example, buttons have a different background when they are active,
 a different foreground when disabled, and a different relief when pressed.
 The \fBstyle map\fR command specifies dynamic option settings

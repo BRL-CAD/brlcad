@@ -14,6 +14,7 @@ namespace eval ttk::theme::alt {
 	-disabledfg	"#a3a3a3"
 	-selectbg	"#4a6984"
 	-selectfg	"#ffffff"
+	-altindicator	"#aaaaaa"
     }
 
     ttk::style theme settings alt {
@@ -46,9 +47,13 @@ namespace eval ttk::theme::alt {
 	ttk::style configure TCheckbutton -indicatorcolor "#ffffff" -padding 2
 	ttk::style configure TRadiobutton -indicatorcolor "#ffffff" -padding 2
 	ttk::style map TCheckbutton -indicatorcolor \
-	    [list  disabled $colors(-frame)  pressed $colors(-frame)]
+	    [list  pressed $colors(-frame) \
+	           alternate $colors(-altindicator) \
+	           disabled $colors(-frame)]
 	ttk::style map TRadiobutton -indicatorcolor \
-	    [list  disabled $colors(-frame)  pressed $colors(-frame)]
+	    [list  pressed $colors(-frame) \
+	           alternate $colors(-altindicator) \
+	           disabled $colors(-frame)]
 
 	ttk::style configure TMenubutton \
 	    -width -11 -padding "3 3" -relief raised
@@ -58,7 +63,8 @@ namespace eval ttk::theme::alt {
 		[list readonly $colors(-frame) disabled $colors(-frame)]
 	ttk::style configure TCombobox -padding 1
 	ttk::style map TCombobox -fieldbackground \
-		[list readonly $colors(-frame) disabled $colors(-frame)]
+		[list readonly $colors(-frame) disabled $colors(-frame)] \
+		-arrowcolor [list disabled $colors(-disabledfg)]
 	ttk::style configure ComboboxPopdownFrame \
 	    -relief solid -borderwidth 1
 
@@ -89,8 +95,10 @@ namespace eval ttk::theme::alt {
 	ttk::style configure Heading -font TkHeadingFont -relief raised
 	ttk::style configure Treeview -background $colors(-window)
 	ttk::style map Treeview \
-	    -background [list selected $colors(-selectbg)] \
-	    -foreground [list selected $colors(-selectfg)] ;
+	    -background [list disabled $colors(-frame)\
+				selected $colors(-selectbg)] \
+	    -foreground [list disabled $colors(-disabledfg) \
+				selected $colors(-selectfg)]
 
 	ttk::style configure TScale \
 	    -groovewidth 4 -troughrelief sunken \

@@ -168,7 +168,7 @@ test color-1.5 {Color table} nonPortable {
 	if {$rgb != [lrange $line 0 2] } {
 		append result $line\n
 	}
-	
+
     }
     return $result
 } {}
@@ -277,13 +277,17 @@ test color-3.4 {Tk_FreeColorFromObj - unlinking from list} colorsFree {
     lappend result [testcolor purple]
 } {{{4 1} {3 0} {2 0} {1 0}} {{4 1} {2 0} {1 0}} {{4 1} {2 0}} {{2 0}} {}}
 
-test color-4.1 {FreeColorObjProc} colorsFree {
+test color-4.1 {FreeColorObjProc} -constraints {
+    colorsFree
+} -setup {
+    proc copy {s} {return [string index $s 0][string range $s 1 end]}
+} -body {
     destroy .b
-    set x [format purple]
+    set x [copy purple]
     button .b -foreground $x -text .b1
-    set y [format purple]
+    set y [copy purple]
     .b configure -foreground $y
-    set z [format purple]
+    set z [copy purple]
     .b configure -foreground $z
     set result {}
     lappend result [testcolor purple]
@@ -295,7 +299,9 @@ test color-4.1 {FreeColorObjProc} colorsFree {
     lappend result [testcolor purple]
     set y bogus
     set result
-} {{{1 3}} {{1 2}} {{1 1}} {}}
+} -cleanup {
+    rename copy {}
+} -result {{{1 3}} {{1 2}} {{1 1}} {}}
 
 destroy .t
 

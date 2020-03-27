@@ -11,6 +11,7 @@
  */
 
 #include "tkWinInt.h"
+#include "X11/XF86keysym.h"
 
 /*
  * The keymap table holds mappings of Windows keycodes to X keysyms. If
@@ -21,46 +22,47 @@
  * like a worthwhile improvement to use the table.
  */
 
-#define MAX_KEYCODE 179 /* VK_MEDIA_PLAY_PAUSE is the last entry in our table below */
+#define MAX_KEYCODE 183 /* VK_LAUNCH_APP2 is the last entry in our table below */
 /* cf. https://msdn.microsoft.com/en-us/library/windows/desktop/dd375731(v=vs.85).aspx */
 
-static KeySym keymap[] = {
-    NoSymbol, NoSymbol, NoSymbol, XK_Cancel, NoSymbol,
-    NoSymbol, NoSymbol, NoSymbol, XK_BackSpace, XK_Tab,
-    NoSymbol, NoSymbol, XK_Clear, XK_Return, NoSymbol,
-    NoSymbol, XK_Shift_L, XK_Control_L, XK_Alt_L, XK_Pause,
-    XK_Caps_Lock, NoSymbol, NoSymbol, NoSymbol, NoSymbol,
-    NoSymbol, NoSymbol, XK_Escape, NoSymbol, NoSymbol,
-    NoSymbol, NoSymbol, XK_space, XK_Prior, XK_Next,
-    XK_End, XK_Home, XK_Left, XK_Up, XK_Right,
-    XK_Down, XK_Select, XK_Print, XK_Execute, NoSymbol,
-    XK_Insert, XK_Delete, XK_Help, NoSymbol, NoSymbol,
-    NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol,
-    NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol,
-    NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol,
-    NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol,
-    NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol,
-    NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol,
-    NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol,
-    NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol,
-    NoSymbol, XK_Win_L, XK_Win_R, XK_App, NoSymbol,
-    NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol,
-    NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol,
-    NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol,
-    NoSymbol, NoSymbol, XK_F1, XK_F2, XK_F3,
-    XK_F4, XK_F5, XK_F6, XK_F7, XK_F8,
-    XK_F9, XK_F10, XK_F11, XK_F12, XK_F13,
-    XK_F14, XK_F15, XK_F16, XK_F17, XK_F18,
-    XK_F19, XK_F20, XK_F21, XK_F22, XK_F23,
-    XK_F24, NoSymbol, NoSymbol, NoSymbol, NoSymbol,
-    NoSymbol, NoSymbol, NoSymbol, NoSymbol, XK_Num_Lock,
-    XK_Scroll_Lock, NoSymbol, NoSymbol, NoSymbol, NoSymbol,
+static const KeySym keymap[] = {
+    NoSymbol, NoSymbol, NoSymbol, XK_Cancel, NoSymbol, /*0 0x0*/
+    NoSymbol, NoSymbol, NoSymbol, XK_BackSpace, XK_Tab, /*5 0x5*/
+    NoSymbol, NoSymbol, XK_Clear, XK_Return, NoSymbol, /*10 0xA*/
+    NoSymbol, XK_Shift_L, XK_Control_L, XK_Alt_L, XK_Pause, /*15 0xE*/
+    XK_Caps_Lock, NoSymbol, NoSymbol, NoSymbol, NoSymbol, /*20 0x14*/
+    NoSymbol, NoSymbol, XK_Escape, NoSymbol, NoSymbol, /*25 0x19*/
+    NoSymbol, NoSymbol, XK_space, XK_Prior, XK_Next, /*30 0x1E*/
+    XK_End, XK_Home, XK_Left, XK_Up, XK_Right, /*35 0x23*/
+    XK_Down, XK_Select, XK_Print, XK_Execute, NoSymbol, /*40 0x28*/
+    XK_Insert, XK_Delete, XK_Help, NoSymbol, NoSymbol, /*45 0x2D*/
+    NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol, /*50 0x32*/
+    NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol, /*55 0x37*/
+    NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol, /*60 0x3C*/
+    NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol, /*65 0x41*/
+    NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol, /*70 0x46*/
+    NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol, /*75 0x4B*/
+    NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol, /*80 0x50*/
+    NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol, /*85 0x55*/
+    NoSymbol, XK_Win_L, XK_Win_R, XK_App, NoSymbol, /*90 0x5A*/
+    NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol, /*95 0x5F*/
+    NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol, /*100 0x64*/
+    NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol, /*105 0x69*/
+    NoSymbol, NoSymbol, XK_F1, XK_F2, XK_F3, /*110 0x6E*/
+    XK_F4, XK_F5, XK_F6, XK_F7, XK_F8, /*115 0x73*/
+    XK_F9, XK_F10, XK_F11, XK_F12, XK_F13, /*120 0x78*/
+    XK_F14, XK_F15, XK_F16, XK_F17, XK_F18, /*125 0x7D*/
+    XK_F19, XK_F20, XK_F21, XK_F22, XK_F23, /*130 0x82*/
+    XK_F24, NoSymbol, NoSymbol, NoSymbol, NoSymbol, /*135 0x87*/
+    NoSymbol, NoSymbol, NoSymbol, NoSymbol, XK_Num_Lock, /*140 0x8C*/
+    XK_Scroll_Lock, NoSymbol, NoSymbol, NoSymbol, NoSymbol, /*145 0x91*/
     NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol, /*150 0x96*/
-    NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol, /*155 0x9b*/
-    NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol, /*160 0xa0*/
-    NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol, /*165 0xa5*/
-    NoSymbol, NoSymbol, NoSymbol, XK_XF86AudioMute, XK_XF86AudioLowerVolume, /*170 0xaa*/
-    XK_XF86AudioRaiseVolume, XK_XF86AudioNext, XK_XF86AudioPrev, XK_XF86AudioStop, XK_XF86AudioPlay  /*175 0xaf*/
+    NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol, /*155 0x9B*/
+    NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol, /*160 0xA0*/
+    NoSymbol, NoSymbol, NoSymbol, NoSymbol, NoSymbol, /*165 0xA5*/
+    NoSymbol, NoSymbol, NoSymbol, XF86XK_AudioMute, XF86XK_AudioLowerVolume, /*170 0xAA*/
+    XF86XK_AudioRaiseVolume, XF86XK_AudioNext, XF86XK_AudioPrev, XF86XK_AudioStop, XF86XK_AudioPlay, /*175 0xAF*/
+    XF86XK_Mail, XF86XK_AudioMedia, XF86XK_Launch0, XF86XK_Launch1  /*180 0xB4*/
 };
 
 /*
@@ -86,7 +88,7 @@ static KeySym		KeycodeToKeysym(unsigned int keycode,
  *----------------------------------------------------------------------
  */
 
-char *
+const char *
 TkpGetString(
     TkWindow *winPtr,		/* Window where event occurred: needed to get
 				 * input context. */
@@ -95,6 +97,8 @@ TkpGetString(
 				 * result. */
 {
     XKeyEvent *keyEv = &eventPtr->xkey;
+    char buf[6];
+    int len;
 
     Tcl_DStringInit(dsPtr);
     if (keyEv->send_event == -1) {
@@ -102,30 +106,14 @@ TkpGetString(
 	    Tcl_ExternalToUtfDString(TkWinGetKeyInputEncoding(),
 		    keyEv->trans_chars, keyEv->nbytes, dsPtr);
 	}
-    } else if (keyEv->send_event == -2) {
-	/*
-	 * Special case for win2000 multi-lingal IME input. xkey.trans_chars[]
-	 * already contains a UNICODE char.
-	 */
-
-	int unichar;
-	char buf[TCL_UTF_MAX];
-	int len;
-
-	unichar = keyEv->trans_chars[1] & 0xff;
-	unichar <<= 8;
-	unichar |= keyEv->trans_chars[0] & 0xff;
-
-	len = Tcl_UniCharToUtf((Tcl_UniChar) unichar, buf);
-
-	Tcl_DStringAppend(dsPtr, buf, len);
     } else if (keyEv->send_event == -3) {
+
 	/*
-	 * Special case for WM_UNICHAR. xkey.trans_chars[] already contains a
-	 * UTF-8 char.
+	 * Special case for WM_UNICHAR and win2000 multi-lingal IME input
 	 */
 
-	Tcl_DStringAppend(dsPtr, keyEv->trans_chars, keyEv->nbytes);
+	len = TkUniCharToUtf(keyEv->keycode, buf);
+	Tcl_DStringAppend(dsPtr, buf, len);
     } else {
 	/*
 	 * This is an event generated from generic code. It has no nchars or
@@ -136,10 +124,7 @@ TkpGetString(
 
 	if (((keysym != NoSymbol) && (keysym > 0) && (keysym < 256))
 		|| (keysym == XK_Return) || (keysym == XK_Tab)) {
-	    char buf[TCL_UTF_MAX];
-	    int len;
-
-	    len = Tcl_UniCharToUtf((Tcl_UniChar) (keysym & 255), buf);
+	    len = TkUniCharToUtf(keysym & 255, buf);
 	    Tcl_DStringAppend(dsPtr, buf, len);
 	}
     }
@@ -203,25 +188,25 @@ KeycodeToKeysym(
 {
     BYTE keys[256];
     int result, deadkey, shift;
-    char buf[4];
-    unsigned int scancode = MapVirtualKey(keycode, 0);
+    WCHAR buf[4];
+    unsigned int scancode = MapVirtualKeyW(keycode, 0);
 
     /*
-     * Do not run keycodes of lock keys through ToAscii(). One of ToAscii()'s
+     * Do not run keycodes of lock keys through ToUnicode(). One of ToUnicode()'s
      * side effects is to handle the lights on the keyboard, and we don't want
      * to mess that up.
      */
 
     if (noascii || keycode == VK_CAPITAL || keycode == VK_SCROLL ||
 	    keycode == VK_NUMLOCK) {
-	goto skipToAscii;
+	goto skipToUnicode;
     }
 
     /*
-     * Use MapVirtualKey() to detect some dead keys.
+     * Use MapVirtualKeyW() to detect some dead keys.
      */
 
-    if (MapVirtualKey(keycode, 2) > 0x7fffUL) {
+    if (MapVirtualKeyW(keycode, 2) > 0x7fffUL) {
 	return XK_Multi_key;
     }
 
@@ -233,7 +218,7 @@ KeycodeToKeysym(
     if (state & ShiftMask) {
 	keys[VK_SHIFT] = 0x80;
     }
-    if (state & TkControlMask) {
+    if (state & ControlMask) {
 	keys[VK_CONTROL] = 0x80;
     }
     if (state & Mod2Mask) {
@@ -255,33 +240,33 @@ KeycodeToKeysym(
 	keys[VK_NUMLOCK] = 1;
     }
 
-    result = ToAscii(keycode, scancode, keys, (LPWORD) buf, 0);
+    result = ToUnicode(keycode, scancode, keys, buf, 4, 0);
 
     if (result < 0) {
 	/*
 	 * Win95/98: This was a dead char, which is now remembered by the
-	 * keyboard. Call ToAscii() again to forget it.
+	 * keyboard. Call ToUnicode() again to forget it.
 	 * WinNT: This was a dead char, overwriting any previously remembered
-	 * key. Calling ToAscii() again does not affect anything.
+	 * key. Calling ToUnicode() again does not affect anything.
 	 */
 
-	ToAscii(keycode, scancode, keys, (LPWORD) buf, 0);
+	ToUnicode(keycode, scancode, keys, buf, 4, 0);
 	return XK_Multi_key;
     }
 
     if (result == 2) {
 	/*
 	 * This was a dead char, and there were one previously remembered by
-	 * the keyboard. Call ToAscii() again with proper parameters to
+	 * the keyboard. Call ToUnicode() again with proper parameters to
 	 * restore it.
 	 *
 	 * Get information about the old char
 	 */
 
-	deadkey = VkKeyScan(buf[0]);
+	deadkey = VkKeyScanW(buf[0]);
 	shift = deadkey >> 8;
 	deadkey &= 255;
-	scancode = MapVirtualKey(deadkey, 0);
+	scancode = MapVirtualKeyW(deadkey, 0);
 
 	/*
 	 * Set up a keyboard with proper modifier keys
@@ -297,26 +282,26 @@ KeycodeToKeysym(
 	if (shift & 4) {
 	    keys[VK_MENU] = 0x80;
 	}
-	ToAscii(deadkey, scancode, keys, (LPWORD) buf, 0);
+	ToUnicode(deadkey, scancode, keys, buf, 4, 0);
 	return XK_Multi_key;
     }
 
     /*
-     * Keycode mapped to a valid Latin-1 character. Since the keysyms for
-     * alphanumeric characters map onto Latin-1, we just return it.
+     * Keycode mapped to a valid Unicode character. Since the keysyms for
+     * alphanumeric characters map onto Unicode, we just return it.
      *
      * We treat 0x7F as a special case mostly for backwards compatibility. In
      * versions of Tk<=8.2, Control-Backspace returned "XK_BackSpace" as the X
      * Keysym. This was due to the fact that we did not initialize the keys
-     * array properly when we passed it to ToAscii, above. We had previously
+     * array properly when we passed it to ToUnicode, above. We had previously
      * not been setting the state bit for the Control key. When we fixed that,
      * we found that Control-Backspace on Windows is interpreted as ASCII-127
      * (0x7F), which corresponds to the Delete key.
      *
      * Upon discovering this, we realized we had two choices: return XK_Delete
      * or return XK_BackSpace. If we returned XK_Delete, that could be
-     * considered "more correct" (although the correctness would be dependant
-     * on whether you believe that ToAscii is doing the right thing in that
+     * considered "more correct" (although the correctness would be dependent
+     * on whether you believe that ToUnicode is doing the right thing in that
      * case); however, this would break backwards compatibility, and worse, it
      * would limit application programmers; they would effectively be unable
      * to bind to <Control-Backspace> on Windows. We therefore chose instead
@@ -326,15 +311,15 @@ KeycodeToKeysym(
      * XK_BackSpace).
      */
 
-    if (result == 1 && UCHAR(buf[0]) >= 0x20 && UCHAR(buf[0]) != 0x7F) {
-	return (KeySym) UCHAR(buf[0]);
+    if (result == 1 && buf[0] >= 0x20 && buf[0] != 0x7F) {
+	return (KeySym) buf[0];
     }
 
     /*
      * Keycode is a non-alphanumeric key, so we have to do the lookup.
      */
 
-  skipToAscii:
+  skipToUnicode:
     if (keycode > MAX_KEYCODE) {
 	return NoSymbol;
     }
@@ -342,18 +327,24 @@ KeycodeToKeysym(
 	/*
 	 * Windows only gives us an undifferentiated VK_CONTROL code (for
 	 * example) when either Control key is pressed. To distinguish between
-	 * left and right, we have to query the state of one of the two to
-	 * determine which was actually pressed. So if the keycode indicates
-	 * Control, Shift, or Menu (the key that everybody else calls Alt), do
-	 * this extra test. If the right-side key was pressed, return the
-	 * appropriate keycode. Otherwise, we fall through and rely on the
-	 * keymap table to hold the correct keysym value.
+	 * left and right, we use the Extended flag. Indeed, the right Control
+	 * and Alt (aka Menu) keys are such extended keys (which their left
+	 * counterparts are not).
+	 * Regarding the shift case, Windows does not set the Extended flag for
+	 * the neither the left nor the right shift key. As a consequence another
+	 * way to distinguish between the two keys is to query the state of one
+	 * of the two to determine which was actually pressed. So if the keycode
+	 * indicates Shift, do this extra test. If the right-side key was
+	 * pressed, return the appropriate keycode. Otherwise, we fall through
+	 * and rely on the keymap table to hold the correct keysym value.
+	 * Note: this little trick only works for KeyPress, not for KeyRelease,
+	 * for reasons stated in bug [2945130]
 	 */
 
     case VK_CONTROL:
-	if (GetKeyState(VK_RCONTROL) & 0x80) {
-	    return XK_Control_R;
-	}
+        if (state & EXTENDED_MASK) {
+            return XK_Control_R;
+        }
 	break;
     case VK_SHIFT:
 	if (GetKeyState(VK_RSHIFT) & 0x80) {
@@ -361,9 +352,9 @@ KeycodeToKeysym(
 	}
 	break;
     case VK_MENU:
-	if (GetKeyState(VK_RMENU) & 0x80) {
-	    return XK_Alt_R;
-	}
+        if (state & EXTENDED_MASK) {
+            return XK_Alt_R;
+        }
 	break;
     }
     return keymap[keycode];
@@ -411,8 +402,8 @@ TkpGetKeySym(
      * keysym defined, try without the modifiers.
      */
 
-    if ((sym == NoSymbol) && ((state & TkControlMask) || (state & Mod2Mask))) {
-	state &= ~(TkControlMask | Mod2Mask);
+    if ((sym == NoSymbol) && ((state & ControlMask) || (state & Mod2Mask))) {
+	state &= ~(ControlMask | Mod2Mask);
 	sym = KeycodeToKeysym(eventPtr->xkey.keycode, state, 0);
     }
     if ((sym == NoSymbol) && (state & ShiftMask)) {
@@ -509,12 +500,11 @@ TkpInitKeymapInfo(
      */
 
     if (dispPtr->modKeyCodes != NULL) {
-	ckfree((char *) dispPtr->modKeyCodes);
+	ckfree(dispPtr->modKeyCodes);
     }
     dispPtr->numModKeyCodes = 0;
     arraySize = KEYCODE_ARRAY_SIZE;
-    dispPtr->modKeyCodes = (KeyCode *) ckalloc((unsigned)
-	    (KEYCODE_ARRAY_SIZE * sizeof(KeyCode)));
+    dispPtr->modKeyCodes = ckalloc(KEYCODE_ARRAY_SIZE * sizeof(KeyCode));
     for (i = 0, codePtr = modMapPtr->modifiermap; i < max; i++, codePtr++) {
 	if (*codePtr == 0) {
 	    continue;
@@ -537,11 +527,10 @@ TkpInitKeymapInfo(
 	     */
 
 	    arraySize *= 2;
-	    new = (KeyCode *) ckalloc((unsigned)
-		    (arraySize * sizeof(KeyCode)));
-	    memcpy((void *) new, (void *) dispPtr->modKeyCodes,
-		    (dispPtr->numModKeyCodes * sizeof(KeyCode)));
-	    ckfree((char *) dispPtr->modKeyCodes);
+	    new = ckalloc(arraySize * sizeof(KeyCode));
+	    memcpy(new, dispPtr->modKeyCodes,
+		    dispPtr->numModKeyCodes * sizeof(KeyCode));
+	    ckfree(dispPtr->modKeyCodes);
 	    dispPtr->modKeyCodes = new;
 	}
 	dispPtr->modKeyCodes[dispPtr->numModKeyCodes] = *codePtr;
@@ -585,13 +574,13 @@ TkpSetKeycodeAndState(
 	}
     }
     if (keySym >= 0x20) {
-	result = VkKeyScan((char) keySym);
+	result = VkKeyScanW((WCHAR) keySym);
 	if (result != -1) {
 	    shift = result >> 8;
 	    if (shift & 1)
 		eventPtr->xkey.state |= ShiftMask;
 	    if (shift & 2)
-		eventPtr->xkey.state |= TkControlMask;
+		eventPtr->xkey.state |= ControlMask;
 	    if (shift & 4)
 		eventPtr->xkey.state |= Mod2Mask;
 	    eventPtr->xkey.keycode = (KeyCode) (result & 0xff);
@@ -638,7 +627,7 @@ XKeysymToKeycode(
 	}
     }
     if (keysym >= 0x20) {
-	result = VkKeyScan((char) keysym);
+	result = VkKeyScanW((WCHAR) keysym);
 	if (result != -1) {
 	    return (KeyCode) (result & 0xff);
 	}
@@ -667,11 +656,10 @@ XModifierKeymap	*
 XGetModifierMapping(
     Display *display)
 {
-    XModifierKeymap *map = (XModifierKeymap *)
-	    ckalloc(sizeof(XModifierKeymap));
+    XModifierKeymap *map = ckalloc(sizeof(XModifierKeymap));
 
     map->max_keypermod = 1;
-    map->modifiermap = (KeyCode *) ckalloc(sizeof(KeyCode)*8);
+    map->modifiermap = ckalloc(sizeof(KeyCode) * 8);
     map->modifiermap[ShiftMapIndex] = VK_SHIFT;
     map->modifiermap[LockMapIndex] = VK_CAPITAL;
     map->modifiermap[ControlMapIndex] = VK_CONTROL;
@@ -703,8 +691,8 @@ int
 XFreeModifiermap(
     XModifierKeymap *modmap)
 {
-    ckfree((char *) modmap->modifiermap);
-    ckfree((char *) modmap);
+    ckfree(modmap->modifiermap);
+    ckfree(modmap);
     return Success;
 }
 

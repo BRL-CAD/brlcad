@@ -17,29 +17,10 @@
 
 #define __UNIX__ 1
 
-/*
- * Macro to use instead of "void" for arguments that must have
- * type "void *" in ANSI C;  maps them to type "char *" in
- * non-ANSI systems.  This macro may be used in some of the include
- * files below, which is why it is defined here.
- */
-
-#ifndef VOID
-#   ifdef __STDC__
-#       define VOID void
-#   else
-#       define VOID char
-#   endif
-#endif
-
 #include <stdio.h>
 #include <ctype.h>
 #include <fcntl.h>
-#ifndef NO_LIMITS_H
-#   include <limits.h>
-#else
-#   include "../compat/limits.h"
-#endif
+#include <limits.h>
 #include <math.h>
 #include <pwd.h>
 #ifdef NO_STDLIB_H
@@ -47,6 +28,7 @@
 #else
 #   include <stdlib.h>
 #endif
+#include <assert.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/file.h>
@@ -195,8 +177,8 @@
  */
 
 #define TkpDefineNativeBitmaps()
-#define TkpCreateNativeBitmap(display, source) TkNone
-#define TkpGetNativeAppBitmap(display, name, w, h) TkNone
+#define TkpCreateNativeBitmap(display, source) None
+#define TkpGetNativeAppBitmap(display, name, w, h) None
 
 /*
  * This macro stores a representation of the window handle in a string.
@@ -207,16 +189,5 @@
 #define TkpPrintWindowId(buf,w) \
 	sprintf((buf), "%#08lx", (unsigned long) (w))
 #endif
-
-/*
- * The following declaration is used to get access to a private Tcl interface
- * that is needed for portability reasons.
- *
- * Disabled for now to determined whether we really still need this.
-
-#ifndef _TCLINT
-#include <tclInt.h>
-#endif
- */
 
 #endif /* _UNIXPORT */

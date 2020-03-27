@@ -4,12 +4,12 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 .TH ttk::scrollbar n 8.5 Tk "Tk Themed Widget"
 .so man.macros
 .BS
 .SH NAME
-ttk::scrollbar \- Control the viewport of a scrollable widget 
+ttk::scrollbar \- Control the viewport of a scrollable widget
 .SH SYNOPSIS
 \fBttk::scrollbar\fR \fIpathName \fR?\fIoptions...\fR?
 .BE
@@ -30,7 +30,7 @@ these are used to scroll the visible region in discrete units.
 .SE
 .SH "WIDGET-SPECIFIC OPTIONS"
 .OP \-command command Command
-A Tcl script prefix to evaluate 
+A Tcl script prefix to evaluate
 to change the view in the widget associated with the scrollbar.
 Additional arguments are appended to the value of this option,
 as described in \fBSCROLLING COMMANDS\fR below,
@@ -48,7 +48,7 @@ Specifies the orientation of the scrollbar.
 .SH "WIDGET COMMAND"
 .PP
 .TP
-\fIpathName \fBcget\fR \fIoption\fR
+\fIpathName \fBcget \fIoption\fR
 Returns the current value of the specified \fIoption\fR; see \fIttk::widget(n)\fR.
 .TP
 \fIpathName \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
@@ -58,15 +58,15 @@ Modify or query widget options; see \fIttk::widget(n)\fR.
 Returns the scrollbar settings in the form of a list whose
 elements are the arguments to the most recent \fBset\fR widget command.
 .TP
-\fIpathName \fBidentify\fR \fIx y\fR
+\fIpathName \fBidentify \fIx y\fR
 Returns the name of the element at position \fIx\fR, \fIy\fR.
 See \fIttk::widget(n)\fR.
 .TP
 \fIpathName \fBinstate \fIstatespec\fR ?\fIscript\fR?
 Test the widget state; see \fIttk::widget(n)\fR.
 .TP
-\fIpathName \fBset\fR \fIfirst last\fR
-This command is normally invoked by the scrollbar's associated widget 
+\fIpathName \fBset \fIfirst last\fR
+This command is normally invoked by the scrollbar's associated widget
 from an \fB\-xscrollcommand\fR or \fB\-yscrollcommand\fR callback.
 Specifies the visible range to be displayed.
 \fIfirst\fR and \fIlast\fR are real fractions between 0 and 1.
@@ -76,7 +76,7 @@ Modify or query the widget state; see \fIttk::widget(n)\fR.
 .SH "INTERNAL COMMANDS"
 .PP
 The following widget commands are used internally
-by the TScrollbar widget class bindings.
+by the \fBTScrollbar\fP widget class bindings.
 .TP
 \fIpathName \fBdelta \fIdeltaX deltaY\fR
 Returns a real number indicating the fractional change in
@@ -147,13 +147,46 @@ of individual elements, based on the position and state of the mouse pointer.
 set f [frame .f]
 ttk::scrollbar $f.hsb \-orient horizontal \-command [list $f.t xview]
 ttk::scrollbar $f.vsb \-orient vertical \-command [list $f.t yview]
-text $f.t \-xscrollcommand [list $f.hsb set] \-yscrollcommand [list $f.vsb set] 
+text $f.t \-xscrollcommand [list $f.hsb set] \-yscrollcommand [list $f.vsb set]
 grid $f.t \-row 0 \-column 0 \-sticky nsew
 grid $f.vsb \-row 0 \-column 1 \-sticky nsew
 grid $f.hsb \-row 1 \-column 0 \-sticky nsew
 grid columnconfigure $f 0 \-weight 1
 grid rowconfigure $f 0 \-weight 1
+pack $f
 .CE
+.SH "STYLING OPTIONS"
+.PP
+The class name for a \fBttk::scrollbar\fP is \fBTScrollbar\fP.
+.PP
+Dynamic states: \fBactive\fP, \fBdisabled\fP.
+.PP
+\fBTScrollbar\fP (or more specifically \fBVertical.TScrollbar\fP and
+\fBHorizontal.TScrollbar\fP) styling options that are configurable with
+\fBttk::style\fP are:
+.PP
+\fB\-arrowcolor\fP \fIcolor\fP
+.br
+\fB\-arrowsize\fP \fIamount\fP
+.br
+\fB\-background\fP \fIcolor\fP
+.br
+\fB\-bordercolor\fP \fIcolor\fP
+.br
+\fB\-darkcolor\fP \fIcolor\fP (color of the dark part of the 3D relief)
+.br
+\fB\-foreground\fP \fIcolor\fP
+.br
+\fB\-gripcount\fP \fIcount\fP (number of lines on the thumb)
+.br
+\fB\-lightcolor\fP \fIcolor\fP (color of the light part of the 3D relief)
+.br
+\fB\-troughcolor\fP \fIcolor\fP
+.PP
+Some options are only available for specific themes.
+.PP
+See the \fBttk::style\fP manual page for information on how to configure
+ttk styles.
 .SH "SEE ALSO"
 ttk::widget(n), scrollbar(n)
 .SH KEYWORDS

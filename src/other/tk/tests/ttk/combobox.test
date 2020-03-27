@@ -43,8 +43,28 @@ test combobox-2.4 "current -- value not in list" -body {
     .cb current
 } -result -1
 
+test combobox-2.5 "current -- set to end index" -body { 
+    .cb configure -values [list a b c d e thelastone]
+    .cb current end
+    .cb get
+} -result thelastone
+
+test combobox-2.6 "current -- set to unknown index" -body { 
+    .cb configure -values [list a b c d e]
+    .cb current notanindex
+} -returnCodes error -result {Incorrect index notanindex}
+
 test combobox-2.end "Cleanup" -body { destroy .cb }
 
+test combobox-3 "Read postoffset value dynamically from current style" -body {
+    ttk::combobox .cb -values [list a b c] -style "DerivedStyle.TCombobox"
+    pack .cb -expand true -fill both 
+    ttk::style configure DerivedStyle.TCombobox -postoffset [list 25 0 0 0]
+    ttk::combobox::Post .cb
+    expr {[winfo rootx .cb.popdown] - [winfo rootx .cb]}
+} -result 25 -cleanup {
+    destroy .cb
+}
 
 test combobox-1890211 "ComboboxSelected event after listbox unposted" -body {
     # whitebox test...

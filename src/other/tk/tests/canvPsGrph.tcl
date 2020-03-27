@@ -50,13 +50,13 @@ proc mkObjs c {
 	$c create rect 380 200 420 240 -fill black
 	$c create rect 200 330 240 370 -fill black
     }
-    
+
     if {$what == "oval"} {
 	$c create oval 50 10 150 80 -fill black -stipple gray25 -outline {}
 	$c create oval 100 100 200 150 -outline {} -fill black -stipple gray50
 	$c create oval 250 100 400 300 -width .5c
     }
-    
+
     if {$what == "poly"} {
 	$c create poly 100 200 200 50 300 200 -smooth yes -stipple gray25 \
 		-outline black -width 4
@@ -68,7 +68,7 @@ proc mkObjs c {
 	$c create poly 20 200 100 220 90 100 40 250 \
 		-fill {} -outline brown -width 3
     }
-    
+
     if {$what == "line"} {
 	$c create line 20 20 120 20 -arrow both -width 5
 	$c create line 20 80 150 80 20 200 150 200 -smooth yes

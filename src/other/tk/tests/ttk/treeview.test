@@ -405,7 +405,7 @@ test treeview-7.1 "move" -body {
 
 test treeview-7.2 "illegal move" -body {
    .tv move d d2 end
-} -returnCodes 1 -result "Cannot insert d as a descendant of d2"
+} -returnCodes 1 -result "Cannot insert d as descendant of d2"
 
 test treeview-7.3 "illegal move has no effect" -body {
     consistencyCheck .tv
@@ -426,7 +426,7 @@ test treeview-7.5 "replace children - precondition" -body {
 
 test treeview-7.6 "Replace children - illegal move" -body {
     .tv children newnode.n1 [list newnode.n1 newnode.n2 newnode.n3]
-} -returnCodes 1 -result "Cannot insert newnode.n1 as a descendant of newnode.n1"
+} -returnCodes 1 -result "Cannot insert newnode.n1 as descendant of newnode.n1"
 
 consistencyCheck .tv
 
@@ -459,6 +459,31 @@ test treeview-8.5 "Selection - bad operation" -body {
     .tv selection badop foo
 } -returnCodes 1 -match glob -result {bad selection operation "badop": must be *}
 
+test treeview-8.6 "Selection - <<TreeviewSelect>> on selection add" -body {
+    .tv selection set {}
+    bind .tv <<TreeviewSelect>> {set res 1}
+    set res 0
+    .tv selection add newnode.n1
+    update
+    set res
+} -result {1}
+
+test treeview-8.7 "<<TreeviewSelect>> on selected item deletion" -body {
+    .tv selection set {}
+    .tv insert "" end -id selectedDoomed -text DeadItem
+    .tv insert "" end -id doomed -text AlsoDead
+    .tv selection add selectedDoomed
+    update
+    bind .tv <<TreeviewSelect>> {lappend res 1}
+    set res 0
+    .tv delete doomed
+    update
+    set res [expr {$res == 0}]
+    .tv delete selectedDoomed
+    update
+    set res
+} -result {1 1}
+
 ### NEED: more tests for see/yview/scrolling
 
 proc scrollcallback {args} {
@@ -470,6 +495,18 @@ test treeview-9.0 "scroll callback - empty tree" -body {
     update
     set ::scrolldata
 } -result [list 0.0 1.0]
+
+test treeview-9.1 "scrolling" -setup {
+    pack [ttk::treeview .tree -show tree] -fill y
+    for {set i 1} {$i < 100} {incr i} {
+        .tree insert {} end -text $i
+    }
+} -body {
+    .tree yview scroll 5 units
+    .tree identify item 2 2
+} -cleanup {
+    destroy .tree
+} -result {I006}
 
 ### identify tests:
 #
@@ -635,5 +672,112 @@ test treeview-3085489-2 "tag remove, no -tags" -setup {
 } -cleanup {
     destroy .tv
 } -result [list]
+
+test treeview-368fa4561e "indicators cannot be clicked on leafs" -setup {
+    pack [ttk::treeview .tv]
+    .tv insert {} end -id foo -text "<-- (1) Click the blank space to my left" 
+    update
+} -body {
+    foreach {x y w h} [.tv bbox foo #0] {}
+    set res [.tv item foo -open]
+    # using $h even for x computation is intentional here in order to simulate
+    # a mouse click on the (invisible since we're on a leaf) indicator
+    event generate .tv <ButtonPress-1> \
+            -x [expr {$x + $h / 2}] \
+            -y [expr {$y + $h / 2}]
+    lappend res [.tv item foo -open]
+    .tv insert foo end -text "sub"
+    lappend res [.tv item foo -open]
+} -cleanup {
+    destroy .tv
+} -result {0 0 0}
+
+test treeview-ce470f20fd-1 "dragging further than the right edge of the treeview is allowed" -setup {
+    pack [ttk::treeview .tv]
+    .tv heading #0 -text "Drag my right edge -->" 
+    update
+} -body {
+    set res [.tv column #0 -width]
+    .tv drag #0 400
+    lappend res [expr {[.tv column #0 -width] > $res}]
+} -cleanup {
+    destroy .tv
+} -result {200 1}
+
+proc nostretch {tv} {
+    foreach col [$tv cget -columns] {
+        $tv column $col -stretch 0
+    }
+    $tv column #0 -stretch 0
+    update idletasks ; # redisplay $tv
+}
+
+test treeview-ce470f20fd-2 "changing -stretch resizes columns" -setup {
+    pack [ttk::treeview .tv -columns {bar colA colB colC foo}]
+    foreach col [.tv cget -columns] {
+        .tv heading $col -text $col
+    }
+    nostretch .tv
+    .tv column colA -width 50 ; .tv column colB -width 50 ; # slack created
+    update idletasks ; # redisplay treeview
+} -body {
+    # when no column is stretchable and one of them becomes stretchable
+    # the stretchable column takes the slack and the widget is redisplayed
+    # automatically at idle time
+    set res [.tv column colA -width]
+    .tv column colA -stretch 1
+    update idletasks ; # no slack anymore, widget redisplayed
+    lappend res [expr {[.tv column colA -width] > $res}]
+} -cleanup {
+    destroy .tv
+} -result {50 1}
+
+test treeview-ce470f20fd-3 "changing -stretch resizes columns" -setup {
+    pack [ttk::treeview .tv -columns {bar colA colB colC foo}]
+    foreach col [.tv cget -columns] {
+        .tv heading $col -text $col
+    }
+    .tv configure -displaycolumns {colB colA colC}
+    nostretch .tv
+    .tv column colA -width 50 ; .tv column colB -width 50 ; # slack created
+    update idletasks ; # redisplay treeview
+} -body {
+    # only some columns are displayed (and in a different order than declared
+    # in -columns), a displayed column becomes stretchable  --> the stretchable
+    # column expands
+    set res [.tv column colA -width]
+    .tv column colA -stretch 1
+    update idletasks ; # no slack anymore, widget redisplayed
+    lappend res [expr {[.tv column colA -width] > $res}]
+} -cleanup {
+    destroy .tv
+} -result {50 1}
+
+test treeview-ce470f20fd-4 "changing -stretch resizes columns" -setup {
+    pack [ttk::treeview .tv -columns {bar colA colB colC foo}]
+    foreach col [.tv cget -columns] {
+        .tv heading $col -text $col
+    }
+    .tv configure -displaycolumns {colB colA colC}
+    nostretch .tv
+    .tv column colA -width 50 ; .tv column bar -width 60 ; # slack created
+    update idletasks ; # redisplay treeview
+} -body {
+    # only some columns are displayed (and in a different order than declared
+    # in -columns), a non-displayed column becomes stretchable  --> nothing 
+    # happens
+    set origTreeWidth [winfo width .tv]
+    set res [list [.tv column bar -width] [.tv column colA -width]]
+    .tv column bar -stretch 1
+    update idletasks ; # no change, widget redisplayed
+    lappend res [.tv column bar -width] [.tv column colA -width]
+    # this column becomes visible  --> widget resizes
+    .tv configure -displaycolumns {bar colC colA colB}
+    update idletasks ; # no slack anymore because the widget resizes (shrinks)
+    lappend res [.tv column bar -width] [.tv column colA -width] \
+                [expr {[winfo width .tv] < $origTreeWidth}]
+} -cleanup {
+    destroy .tv
+} -result {60 50 60 50 60 50 1}
 
 tcltest::cleanupTests

@@ -51,7 +51,7 @@ typedef struct RegisteredInterp {
  * A registry of all interpreters for a display is kept in a property
  * "InterpRegistry" on the root window of the display. It is organized as a
  * series of zero or more concatenated strings (in no particular order), each
- * of the form
+ * of the form:
  *	window space name '\0'
  * where "window" is the hex id of the comm. window to use to talk to an
  * interpreter named "name".
@@ -78,7 +78,7 @@ typedef struct NameRegistry {
 				 * XFree; zero means use ckfree. */
 } NameRegistry;
 
-static int initialized = 0; /* A flag to denote if we have initialized
+static int initialized = 0;	/* A flag to denote if we have initialized
 				 * yet. */
 
 static RegisteredInterp *interpListPtr = NULL;
@@ -281,7 +281,7 @@ Tk_SetAppName(
      * We have found a unique name. Now add it to the registry.
      */
 
-    riPtr = (RegisteredInterp *) ckalloc(sizeof(RegisteredInterp));
+    riPtr = ckalloc(sizeof(RegisteredInterp));
     riPtr->interp = interp;
     riPtr->name = ckalloc(strlen(actualName) + 1);
     riPtr->nextPtr = interpListPtr;
@@ -325,7 +325,7 @@ Tk_SendObjCmd(
     int objc,			/* Number of arguments */
     Tcl_Obj *const objv[])	/* The arguments */
 {
-    const char *sendOptions[] = {"-async", "-displayof", "-", NULL};
+    const char *const sendOptions[] = {"-async", "-displayof", "--", NULL};
     char *stringRep, *destName;
     /*int async = 0;*/
     int i, index, firstArg;
@@ -336,8 +336,8 @@ Tk_SendObjCmd(
     for (i = 1; i < (objc - 1); ) {
 	stringRep = Tcl_GetString(objv[i]);
 	if (stringRep[0] == '-') {
-	    if (Tcl_GetIndexFromObj(interp, objv[i], sendOptions, "option", 0,
-		    &index) != TCL_OK) {
+	    if (Tcl_GetIndexFromObjStruct(interp, objv[i], sendOptions,
+		    sizeof(char *), "option", 0, &index) != TCL_OK) {
 		return TCL_ERROR;
 	    }
 	    if (index == 0) {

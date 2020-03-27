@@ -4,7 +4,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 .TH options n 4.4 Tk "Tk Built-In Commands"
 .so man.macros
 .BS
@@ -12,8 +12,8 @@
 .SH NAME
 options \- Standard options supported by widgets
 .BE
-
 .SH DESCRIPTION
+.PP
 This manual entry describes the common configuration options supported
 by widgets in the Tk toolkit.  Every widget does not necessarily support
 every option (see the manual entries for individual widgets for a list
@@ -72,18 +72,18 @@ widget.
 Specifies a bitmap to display in the widget, in any of the forms
 acceptable to \fBTk_GetBitmap\fR.
 The exact way in which the bitmap is displayed may be affected by
-other options such as \fBanchor\fR or \fBjustify\fR.
+other options such as \fB\-anchor\fR or \fB\-justify\fR.
 Typically, if this option is specified then it overrides other
 options that specify a textual value to display in the widget
-but this is controlled by the \fBcompound\fR option;
-the \fBbitmap\fR option may be reset to an empty string to re-enable
+but this is controlled by the \fB\-compound\fR option;
+the \fB\-bitmap\fR option may be reset to an empty string to re-enable
 a text display.
-In widgets that support both \fBbitmap\fR and \fBimage\fR options,
-\fBimage\fR will usually override \fBbitmap\fR.
+In widgets that support both \fB\-bitmap\fR and \fB\-image\fR options,
+\fB\-image\fR will usually override \fB\-bitmap\fR.
 .OP "\-borderwidth or \-bd" borderWidth BorderWidth
 Specifies a non-negative value indicating the width
 of the 3-D border to draw around the outside of the widget (if such a
-border is being drawn;  the \fBrelief\fR option typically determines
+border is being drawn;  the \fB\-relief\fR option typically determines
 this).  The value may also be used when drawing 3-D effects in the
 interior of the widget.
 The value may have any of the forms acceptable to \fBTk_GetPixels\fR.
@@ -139,10 +139,10 @@ If the value is zero, no focus highlight is drawn around the widget.
 .OP \-image image Image
 Specifies an image to display in the widget, which must have been
 created with the \fBimage create\fR command.
-Typically, if the \fBimage\fR option is specified then it overrides other
+Typically, if the \fB\-image\fR option is specified then it overrides other
 options that specify a bitmap or textual value to display in the
-widget, though this is controlled by the \fBcompound\fR option;
-the \fBimage\fR option may be reset to an empty string to re-enable
+widget, though this is controlled by the \fB\-compound\fR option;
+the \fB\-image\fR option may be reset to an empty string to re-enable
 a bitmap or text display.
 .OP \-insertbackground insertBackground Foreground
 Specifies the color to use as background in the area covered by the
@@ -169,8 +169,8 @@ in each blink cycle.
 Specifies a  value indicating the total width of the insertion cursor.
 The value may have any of the forms acceptable to \fBTk_GetPixels\fR.
 If a border has been specified for the insertion
-cursor (using the \fBinsertBorderWidth\fR option), the border
-will be drawn inside the width specified by the \fBinsertWidth\fR
+cursor (using the \fB\-insertborderwidth\fR option), the border
+will be drawn inside the width specified by the \fB\-insertwidth\fR
 option.
 .OP \-jump jump Jump
 For widgets with a slider that can be dragged to adjust a value,
@@ -235,7 +235,7 @@ Specifies the number of milliseconds a button or key must be held
 down before it begins to auto-repeat.  Used, for example, on the
 up- and down-arrows in scrollbars.
 .OP \-repeatinterval repeatInterval RepeatInterval
-Used in conjunction with \fBrepeatDelay\fR:  once auto-repeat
+Used in conjunction with \fB\-repeatdelay\fR:  once auto-repeat
 begins, this option determines the number of milliseconds between
 auto-repeats.
 .OP \-selectbackground selectBackground Foreground
@@ -255,7 +255,7 @@ This option is typically used in text widgets, where the information
 in the widget has a natural size (the size of a character) and it makes
 sense for the window's dimensions to be integral numbers of these units.
 These natural window sizes form a grid.
-If the \fBsetGrid\fR option is set to true then the widget will
+If the \fB\-setgrid\fR option is set to true then the widget will
 communicate with the window manager so that when the user interactively
 resizes the top-level window that contains the widget, the dimensions of
 the window will be displayed to the user in grid units and the window
@@ -266,9 +266,9 @@ entry for more details.
 Determines whether the window accepts the focus during keyboard
 traversal (e.g., Tab and Shift-Tab).
 Before setting the focus to a window, the traversal scripts
-consult the value of the \fBtakeFocus\fR option.
+consult the value of the \fB\-takefocus\fR option.
 A value of \fB0\fR means that the window should be skipped entirely
-during keyboard traversal. 
+during keyboard traversal.
 \fB1\fR means that the window should receive the input
 focus as long as it is viewable (it and all of its ancestors are mapped).
 An empty value for the option means that the traversal scripts make
@@ -278,7 +278,7 @@ disabled, if it has no key bindings, or if it is not viewable.
 If the value has any other form, then the traversal scripts take
 the value, append the name of the window to it (with a separator space),
 and evaluate the resulting string as a Tcl script.
-The script must return \fB0\fR, \fB1\fR, or an empty string:  a 
+The script must return \fB0\fR, \fB1\fR, or an empty string:  a
 \fB0\fR or \fB1\fR value specifies whether the window will receive
 the input focus, and an empty string results in the default decision
 described above.
@@ -289,14 +289,14 @@ redefine the keyboard traversal scripts.
 .OP \-text text Text
 Specifies a string to be displayed inside the widget.  The way in which
 the string is displayed depends on the particular widget and may be
-determined by other options, such as \fBanchor\fR or \fBjustify\fR.
+determined by other options, such as \fB\-anchor\fR or \fB\-justify\fR.
 .OP \-textvariable textVariable Variable
 Specifies the name of a global variable.  The value of the variable is a text
 string to be displayed inside the widget;  if the variable value changes
 then the widget will automatically update itself to reflect the new value.
 The way in which the string is displayed in the widget depends on the
 particular widget and may be determined by other options, such as
-\fBanchor\fR or \fBjustify\fR.
+\fB\-anchor\fR or \fB\-justify\fR.
 .OP \-troughcolor troughColor Background
 Specifies the color to use for the rectangular trough areas
 in widgets such as scrollbars and scales.  This option is ignored for
@@ -334,7 +334,7 @@ that is visible in the window, and the second fraction indicates
 the information just after the last portion that is visible.
 The command is
 then passed to the Tcl interpreter for execution.  Typically the
-\fBxScrollCommand\fR option consists of the path name of a scrollbar
+\fB\-xscrollcommand\fR option consists of the path name of a scrollbar
 widget followed by
 .QW set ,
 e.g.
@@ -345,13 +345,14 @@ If this option is not specified, then no command will be executed.
 .OP \-yscrollcommand yScrollCommand ScrollCommand
 Specifies the prefix for a command used to communicate with vertical
 scrollbars.  This option is treated in the same way as the
-\fBxScrollCommand\fR option, except that it is used for vertical
+\fB\-xscrollcommand\fR option, except that it is used for vertical
 scrollbars and is provided by widgets that support vertical scrolling.
-See the description of \fBxScrollCommand\fR for details
+See the description of \fB\-xscrollcommand\fR for details
 on how this option is used.
-
 .SH "SEE ALSO"
 colors, cursors, font
-
 .SH KEYWORDS
 class, name, standard option, switch
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

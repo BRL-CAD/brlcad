@@ -1145,7 +1145,7 @@ static void TabElementDraw(
 	Tk_3DBorderGC(tkwin, border, TK_3D_FLAT_GC),
 	pts, 6, Convex, CoordModeOrigin);
 
-#ifndef WIN32
+#ifndef _WIN32
     /*
      * Account for whether XDrawLines draws endpoints by platform
      */
@@ -1275,7 +1275,7 @@ void TtkElements_Init(Tcl_Interp *interp)
     /*
      * Register "default" as a user-loadable theme (for now):
      */
-    Tcl_PkgProvide(interp, "ttk::theme::default", TTK_VERSION);
+    Tcl_PkgProvideEx(interp, "ttk::theme::default", TTK_VERSION, NULL);
 }
 
 /*EOF*/

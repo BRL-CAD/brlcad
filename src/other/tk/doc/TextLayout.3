@@ -3,7 +3,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 .TH Tk_ComputeTextLayout 3 8.1 Tk "Tk Library Procedures"
 .so man.macros
 .BS
@@ -39,7 +39,6 @@ int
 .sp
 void
 \fBTk_TextLayoutToPostscript(\fIinterp, layout\fB)\fR
-
 .SH ARGUMENTS
 .AS Tk_TextLayout "*xPtr, *yPtr"
 .AP Tk_Font tkfont in
@@ -49,7 +48,7 @@ have been returned by a previous call to \fBTk_GetFont\fR.
 .AP "const char" *string in
 Potentially multi-line string whose dimensions are to be computed and
 stored in the text layout.  The \fIstring\fR must remain valid for the
-lifetime of the text layout.  
+lifetime of the text layout.
 .AP int numChars in
 The number of characters to consider from \fIstring\fR.  If
 \fInumChars\fR is less than 0, then assumes \fIstring\fR is null
@@ -78,7 +77,7 @@ measured and displayed in a platform-dependent manner as described in
 \fBTk_MeasureChars\fR, and will not have any special behaviors.
 .AP int *widthPtr out
 If non-NULL, filled with either the width, in pixels, of the widest
-line in the text layout, or the width, in pixels, of the bounding box for the 
+line in the text layout, or the width, in pixels, of the bounding box for the
 character specified by \fIindex\fR.
 .AP int *heightPtr out
 If non-NULL, filled with either the total height, in pixels, of all
@@ -102,7 +101,7 @@ text layout when it is being drawn, or the coordinates of a point (with
 respect to the upper-left hand corner of the text layout) to check
 against the text layout.
 .AP int firstChar in
-The index of the first character to draw from the given text layout.  
+The index of the first character to draw from the given text layout.
 The number 0 means to draw from the beginning.
 .AP int lastChar in
 The index of the last character up to which to draw.  The character
@@ -120,13 +119,12 @@ for the character specified by \fIindex\fR.  Either or both \fIxPtr\fR
 and \fIyPtr\fR may be NULL, in which case the corresponding value
 is not calculated.
 .AP int "width, height" in
-Specifies the width and height, in pixels, of the rectangular area to 
+Specifies the width and height, in pixels, of the rectangular area to
 compare for intersection against the text layout.
 .AP Tcl_Interp *interp out
 Postscript code that will print the text layout is appended to
-\fIinterp->result\fR.
+the result of interpreter \fIinterp\fR.
 .BE
-
 .SH DESCRIPTION
 .PP
 These routines are for measuring and displaying single-font, multi-line,
@@ -134,7 +132,7 @@ justified text.  To measure and display simple single-font, single-line
 strings, refer to the documentation for \fBTk_MeasureChars\fR.  There is
 no programming interface in the core of Tk that supports multi-font,
 multi-line text; support for that behavior must be built on top of
-simpler layers.  
+simpler layers.
 Note that unlike the lower level text display routines, the functions
 described here all operate on character-oriented lengths and indices
 rather than byte-oriented values.  See the description of
@@ -152,11 +150,11 @@ returns a Tk_TextLayout token that holds this information.  This token is
 used in subsequent calls to procedures such as \fBTk_DrawTextLayout\fR,
 \fBTk_DistanceToTextLayout\fR, and \fBTk_FreeTextLayout\fR.  The
 \fIstring\fR and \fItkfont\fR used when computing the layout must remain
-valid for the lifetime of this token.  
+valid for the lifetime of this token.
 .PP
 \fBTk_FreeTextLayout\fR is called to release the storage associated with
 \fIlayout\fR when it is no longer needed.  A \fIlayout\fR should not be used
-in any other text layout procedures once it has been released. 
+in any other text layout procedures once it has been released.
 .PP
 \fBTk_DrawTextLayout\fR uses the information in \fIlayout\fR to display a
 single-font, multi-line, justified string of text at the specified location.
@@ -184,14 +182,16 @@ whose \fIx\fR-value is less than 0 will be considered closest to the first
 character on that line; any point whose \fIx\fR-value is greater than the
 width of the text layout will be considered closest to the last character on
 that line.  The return value is the index of the character that was closest
-to the point.  Given a \fIlayout\fR with no characters, the value 0 will
-always be returned, referring to a hypothetical zero-width placeholder
-character.  
+to the point, or one more than the index of any character (to indicate that
+the point was after the end of the string and that the corresponding caret
+would be at the end of the string).  Given a \fIlayout\fR with no characters,
+the value 0 will always be returned, referring to a hypothetical zero-width
+placeholder character.
 .PP
 \fBTk_CharBbox\fR uses the information in \fIlayout\fR to return the
 bounding box for the character specified by \fIindex\fR.  The width of the
 bounding box is the advance width of the character, and does not include any
-left or right bearing.  Any character that extends partially outside of 
+left or right bearing.  Any character that extends partially outside of
 \fIlayout\fR is considered to be truncated at the edge.  Any character
 that would be located completely outside of \fIlayout\fR is considered to
 be zero-width and pegged against the edge.  The height of the bounding
@@ -231,8 +231,9 @@ array of strings that represent the individual lines in \fIlayout\fR.  It
 is the responsibility of the caller to take the Postscript array of
 strings and add some Postscript function operate on the array to render
 each of the lines.  The code that represents the Postscript array of
-strings is appended to \fIinterp->result\fR.
+strings is appended to interpreter \fIinterp\fR's result.
 .SH "DISPLAY MODEL"
+.PP
 When measuring a text layout, space characters that occur at the end of a
 line are ignored.  The space characters still exist and the insertion point
 can be positioned amongst them, but their additional width is ignored when
@@ -263,13 +264,13 @@ much as fits placed on the line and the rest on subsequent line(s).  If
 \fIwrapLength\fR is so small that not even one character can fit on a
 given line, the \fIwrapLength\fR is ignored for that line and one
 character will be placed on the line anyhow.  When wrapping is turned
-off, only newline/return characters may cause a line break.  
+off, only newline/return characters may cause a line break.
 .PP
 When a text layout has been created using an underlined \fItkfont\fR,
 then any space characters that occur at the end of individual lines,
-newlines/returns, and tabs will not be displayed underlined when 
+newlines/returns, and tabs will not be displayed underlined when
 \fBTk_DrawTextLayout\fR is called, because those characters are never
 actually drawn \- they are merely placeholders maintained in the
-\fIlayout\fR.  
+\fIlayout\fR.
 .SH KEYWORDS
 font

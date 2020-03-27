@@ -4,13 +4,13 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 .TH radiobutton n 4.4 Tk "Tk Built-In Commands"
 .so man.macros
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
-radiobutton \- Create and manipulate radiobutton widgets
+radiobutton \- Create and manipulate 'radiobutton' pick-one widgets
 .SH SYNOPSIS
 \fBradiobutton\fR \fIpathName \fR?\fIoptions\fR?
 .SO
@@ -38,19 +38,9 @@ If this option is not specified, the button's desired height is computed
 from the size of the image or bitmap or text being displayed in it.
 .OP \-indicatoron indicatorOn IndicatorOn
 Specifies whether or not the indicator should be drawn.  Must be a
-proper boolean value.  If false, the \fBrelief\fR option is
+proper boolean value.  If false, the \fB\-relief\fR option is
 ignored and the widget's relief is always sunken if the widget is
 selected and raised otherwise.
-.OP \-selectcolor selectColor Background
-Specifies a background color to use when the button is selected.
-If \fBindicatorOn\fR is true then the color applies to the indicator.
-Under Windows, this color is used as the background for the indicator
-regardless of the select state.
-If \fBindicatorOn\fR is false, this color is used as the background
-for the entire widget, in place of \fBbackground\fR or \fBactiveBackground\fR,
-whenever the widget is selected.
-If specified as an empty string then no special color is used for
-displaying when the widget is selected.
 .OP \-offrelief offRelief OffRelief
 Specifies the relief for the checkbutton when the indicator is not drawn and
 the checkbutton is off.  The default value is
@@ -59,10 +49,10 @@ By setting this option to
 .QW flat
 and setting \fB\-indicatoron\fR to false and \fB\-overrelief\fR to
 .QW raised ,
-the effect is achieved 
+the effect is achieved
 of having a flat button that raises on mouse-over and which is
 depressed when activated.  This is the behavior typically exhibited by
-the Align-Left, Align-Right, and Center radiobuttons on the toolbar of a 
+the Align-Left, Align-Right, and Center radiobuttons on the toolbar of a
 word-processor, for example.
 .OP \-overrelief overRelief OverRelief
 Specifies an alternative relief for the radiobutton, to be used when the
@@ -71,35 +61,40 @@ toolbar buttons, by configuring \fB\-relief flat \-overrelief
 raised\fR.  If the value of this option is the empty string, then no
 alternative relief is used when the mouse cursor is over the radiobutton.
 The empty string is the default value.
+.OP \-selectcolor selectColor Background
+Specifies a background color to use when the button is selected.
+If \fBindicatorOn\fR is true then the color is used as the background for
+the indicator regardless of the select state.
+If \fB\-indicatoron\fR is false, this color is used as the background
+for the entire widget, in place of \fB\-background\fR or \fB\-activeBackground\fR,
+whenever the widget is selected.
+If specified as an empty string then no special color is used for
+displaying when the widget is selected.
 .OP \-selectimage selectImage SelectImage
-Specifies an image to display (in place of the \fBimage\fR option)
+Specifies an image to display (in place of the \fB\-image\fR option)
 when the radiobutton is selected.
-This option is ignored unless the \fBimage\fR option has been
+This option is ignored unless the \fB\-image\fR option has been
 specified.
 .OP \-state state State
 Specifies one of three states for the radiobutton:  \fBnormal\fR, \fBactive\fR,
 or \fBdisabled\fR.  In normal state the radiobutton is displayed using the
-\fBforeground\fR and \fBbackground\fR options.  The active state is
+\fB\-foreground\fR and \fB\-background\fR options.  The active state is
 typically used when the pointer is over the radiobutton.  In active state
-the radiobutton is displayed using the \fBactiveForeground\fR and
-\fBactiveBackground\fR options.  Disabled state means that the radiobutton
+the radiobutton is displayed using the \fB\-activeforeground\fR and
+\fB\-activebackground\fR options.  Disabled state means that the radiobutton
 should be insensitive:  the default bindings will refuse to activate
 the widget and will ignore mouse button presses.
-In this state the \fBdisabledForeground\fR and
-\fBbackground\fR options determine how the radiobutton is displayed.
+In this state the \fB\-disabledforeground\fR and
+\fB\-background\fR options determine how the radiobutton is displayed.
 .OP \-tristateimage tristateImage TristateImage
-.VS 8.5
-Specifies an image to display (in place of the \fBimage\fR option)
+Specifies an image to display (in place of the \fB\-image\fR option)
 when the radiobutton is selected.
-This option is ignored unless the \fBimage\fR option has been
+This option is ignored unless the \fB\-image\fR option has been
 specified.
-.VE 8.5
 .OP \-tristatevalue tristateValue Value
-.VS 8.5
-Specifies the value that causes the radiobutton to display the multi-value 
+Specifies the value that causes the radiobutton to display the multi-value
 selection, also known as the tri-state mode.  Defaults to
 .QW "" .
-.VE 8.5
 .OP \-value value Value
 Specifies value to store in the button's associated variable whenever
 this button is selected.
@@ -133,11 +128,11 @@ A radiobutton is a widget that displays a textual string, bitmap or image
 and a diamond or circle called an \fIindicator\fR.
 If text is displayed, it must all be in a single font, but it
 can occupy multiple lines on the screen (if it contains newlines
-or if wrapping occurs because of the \fBwrapLength\fR option) and
+or if wrapping occurs because of the \fB\-wraplength\fR option) and
 one of the characters may optionally be underlined using the
-\fBunderline\fR option.  A radiobutton has
+\fB\-underline\fR option.  A radiobutton has
 all of the behavior of a simple button: it can display itself in either
-of three different ways, according to the \fBstate\fR option;
+of three different ways, according to the \fB\-state\fR option;
 it can be made to appear
 raised, sunken, or flat; it can be made to flash; and it invokes
 a Tcl command whenever mouse button 1 is clicked over the
@@ -160,12 +155,10 @@ When a radiobutton is selected it sets the value of the variable to
 indicate that fact;  each radiobutton also monitors the value of
 the variable and automatically selects and deselects itself when the
 variable's value changes.
-.VS 8.5
-If the variable's value matches the \fBtristateValue\fR, then the radiobutton is 
-drawn using the tri-state mode.  This mode is used to indicate mixed or 
-multiple values.  (This is used when the radiobutton represents the state 
+If the variable's value matches the \fB\-tristatevalue\fR, then the radiobutton
+is drawn using the tri-state mode.  This mode is used to indicate mixed or
+multiple values.  (This is used when the radiobutton represents the state
 of multiple items.)
-.VE 8.5
 By default the variable \fBselectedButton\fR
 is used;  its contents give the name of the button that is
 selected, or the empty string if no button associated with that
@@ -190,12 +183,14 @@ determine the exact behavior of the command.  The following
 commands are possible for radiobutton widgets:
 .TP
 \fIpathName \fBcget\fR \fIoption\fR
+.
 Returns the current value of the configuration option given
 by \fIoption\fR.
 \fIOption\fR may have any of the values accepted by the \fBradiobutton\fR
 command.
 .TP
 \fIpathName \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
+.
 Query or modify the configuration options of the widget.
 If no \fIoption\fR is specified, returns a list describing all of
 the available options for \fIpathName\fR (see \fBTk_ConfigureInfo\fR for
@@ -210,12 +205,14 @@ this case the command returns an empty string.
 command.
 .TP
 \fIpathName \fBdeselect\fR
+.
 Deselects the radiobutton and sets the associated variable to an
 empty string.
 If this radiobutton was not currently selected, the command has
 no effect.
 .TP
 \fIpathName \fBflash\fR
+.
 Flashes the radiobutton.  This is accomplished by redisplaying the radiobutton
 several times, alternating between active and normal colors.  At
 the end of the flash the radiobutton is left in the same normal/active
@@ -223,6 +220,7 @@ state as when the command was invoked.
 This command is ignored if the radiobutton's state is \fBdisabled\fR.
 .TP
 \fIpathName \fBinvoke\fR
+.
 Does just what would have happened if the user invoked the radiobutton
 with the mouse: selects the button and invokes
 its associated Tcl command, if there is one.
@@ -231,6 +229,7 @@ empty string if there is no command associated with the radiobutton.
 This command is ignored if the radiobutton's state is \fBdisabled\fR.
 .TP
 \fIpathName \fBselect\fR
+.
 Selects the radiobutton and sets the associated variable to the
 value corresponding to this widget.
 .SH BINDINGS
@@ -261,3 +260,6 @@ individual widgets or by redefining the class bindings.
 checkbutton(n), labelframe(n), listbox(n), options(n), scale(n), ttk::radiobutton(n)
 .SH KEYWORDS
 radiobutton, widget
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

@@ -63,15 +63,15 @@ if "%TCLDIR%" == "" set TCLDIR=..\..\tcl
 
 :: Build the normal stuff along with the help file.
 ::
-set OPTS=threads
-if not %SYMBOLS%.==. set OPTS=symbols,threads
-nmake -nologo -f makefile.vc release OPTS=%OPTS% %1
+set OPTS=none
+if not %SYMBOLS%.==. set OPTS=symbols
+nmake -nologo -f makefile.vc release htmlhelp OPTS=%OPTS% %1
 if errorlevel 1 goto error
 
 :: Build the static core and shell.
 ::
-set OPTS=static,msvcrt,threads
-if not %SYMBOLS%.==. set OPTS=symbols,static,msvcrt,threads
+set OPTS=static,msvcrt
+if not %SYMBOLS%.==. set OPTS=symbols,static,msvcrt
 nmake -nologo -f makefile.vc shell OPTS=%OPTS% %1
 if errorlevel 1 goto error
 
@@ -93,7 +93,7 @@ echo usage:
 echo   %0                 : builds Tk for all build types (do this first)
 echo   %0 install         : installs all the release builds (do this second)
 echo   %0 symbols         : builds Tk for all debugging build types
-echo   %0 symbols install : install all the debug builds
+echo   %0 symbols install : install all the debug builds.
 echo.
 goto out
 

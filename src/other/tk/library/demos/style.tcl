@@ -26,7 +26,7 @@ set family Courier
 
 text $w.text -yscrollcommand "$w.scroll set" -setgrid true \
 	-width 70 -height 32 -wrap word -font "$family 12"
-scrollbar $w.scroll -command "$w.text yview"
+ttk::scrollbar $w.scroll -command "$w.text yview"
 pack $w.scroll -side right -fill y
 pack $w.text -expand yes -fill both
 

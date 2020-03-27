@@ -39,21 +39,21 @@ EvalObjv(
     Tcl_Interp *interp,		/* Current interpreter. */
     char *cmdName,		/* Name of the TCL command to call */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST *objv)	/* Arguments. */
+    Tcl_Obj *const *objv)	/* Arguments. */
 {
     Tcl_Obj *cmdObj, **objs;
     int result;
 
     cmdObj = Tcl_NewStringObj(cmdName, -1);
     Tcl_IncrRefCount(cmdObj);
-    objs = (Tcl_Obj **) ckalloc(sizeof(Tcl_Obj*) * (unsigned)(objc+1));
+    objs = ckalloc(sizeof(Tcl_Obj *) * (objc+1));
     objs[0] = cmdObj;
     memcpy(objs+1, objv, sizeof(Tcl_Obj *) * (unsigned)objc);
 
     result = Tcl_EvalObjv(interp, objc+1, objs, 0);
 
     Tcl_DecrRefCount(cmdObj);
-    ckfree((char *) objs);
+    ckfree(objs);
 
     return result;
 }
@@ -82,7 +82,7 @@ Tk_ChooseColorObjCmd(
     ClientData clientData,	/* Main window associated with interpreter. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST *objv)	/* Arguments. */
+    Tcl_Obj *const *objv)	/* Arguments. */
 {
     return EvalObjv(interp, "tk::ColorDialog", objc-1, objv+1);
 }
@@ -111,9 +111,9 @@ Tk_GetOpenFileObjCmd(
     ClientData clientData,	/* Main window associated with interpreter. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST *objv)	/* Arguments. */
+    Tcl_Obj *const *objv)	/* Arguments. */
 {
-    Tk_Window tkwin = (Tk_Window)clientData;
+    Tk_Window tkwin = clientData;
 
     if (Tk_StrictMotif(tkwin)) {
 	return EvalObjv(interp, "tk::MotifOpenFDialog", objc-1, objv+1);
@@ -143,9 +143,9 @@ Tk_GetSaveFileObjCmd(
     ClientData clientData,	/* Main window associated with interpreter. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST *objv)	/* Arguments. */
+    Tcl_Obj *const *objv)	/* Arguments. */
 {
-    Tk_Window tkwin = (Tk_Window)clientData;
+    Tk_Window tkwin = clientData;
 
     if (Tk_StrictMotif(tkwin)) {
 	return EvalObjv(interp, "tk::MotifSaveFDialog", objc-1, objv+1);
@@ -177,7 +177,7 @@ Tk_MessageBoxCmd(
     ClientData clientData,	/* Main window associated with interpreter. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST *objv)	/* Arguments. */
+    Tcl_Obj *const *objv)	/* Arguments. */
 {
     return EvalObjv(interp, "tk::MessageBox", objc-1, objv+1);
 }

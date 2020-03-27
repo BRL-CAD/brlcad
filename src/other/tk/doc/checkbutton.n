@@ -4,13 +4,13 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 .TH checkbutton n 4.4 Tk "Tk Built-In Commands"
 .so man.macros
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
-checkbutton \- Create and manipulate checkbutton widgets
+checkbutton \- Create and manipulate 'checkbutton' boolean selection widgets
 .SH SYNOPSIS
 \fBcheckbutton\fI pathName \fR?\fIoptions\fR?
 .SO
@@ -38,7 +38,7 @@ If this option is not specified, the button's desired height is computed
 from the size of the image or bitmap or text being displayed in it.
 .OP \-indicatoron indicatorOn IndicatorOn
 Specifies whether or not the indicator should be drawn.  Must be a
-proper boolean value.  If false, the \fBrelief\fR option is
+proper boolean value.  If false, the \fB\-relief\fR option is
 ignored and the widget's relief is always sunken if the widget is
 selected and raised otherwise.
 .OP \-offrelief offRelief OffRelief
@@ -52,7 +52,7 @@ and setting \fB\-indicatoron\fR to false and \fB\-overrelief\fR to
 the effect is achieved
 of having a flat button that raises on mouse-over and which is
 depressed when activated.  This is the behavior typically exhibited by
-the Bold, Italic, and Underline checkbuttons on the toolbar of a 
+the Bold, Italic, and Underline checkbuttons on the toolbar of a
 word-processor, for example.
 .OP \-offvalue offValue Value
 Specifies value to store in the button's associated variable whenever
@@ -79,34 +79,30 @@ whenever the widget is selected.
 If specified as an empty string then no special color is used for
 displaying when the widget is selected.
 .OP \-selectimage selectImage SelectImage
-Specifies an image to display (in place of the \fBimage\fR option)
+Specifies an image to display (in place of the \fB\-image\fR option)
 when the checkbutton is selected.
-This option is ignored unless the \fBimage\fR option has been
+This option is ignored unless the \fB\-image\fR option has been
 specified.
 .OP \-state state State
 Specifies one of three states for the checkbutton:  \fBnormal\fR, \fBactive\fR,
 or \fBdisabled\fR.  In normal state the checkbutton is displayed using the
-\fBforeground\fR and \fBbackground\fR options.  The active state is
+\fB\-foreground\fR and \fB\-background\fR options.  The active state is
 typically used when the pointer is over the checkbutton.  In active state
-the checkbutton is displayed using the \fBactiveForeground\fR and
-\fBactiveBackground\fR options.  Disabled state means that the checkbutton
+the checkbutton is displayed using the \fB\-activeforeground\fR and
+\fB\-activebackground\fR options.  Disabled state means that the checkbutton
 should be insensitive:  the default bindings will refuse to activate
 the widget and will ignore mouse button presses.
-In this state the \fBdisabledForeground\fR and
-\fBbackground\fR options determine how the checkbutton is displayed.
+In this state the \fB\-disabledforeground\fR and
+\fB\-background\fR options determine how the checkbutton is displayed.
 .OP \-tristateimage tristateImage TristateImage
-.VS 8.5
-Specifies an image to display (in place of the \fBimage\fR option)
+Specifies an image to display (in place of the \fB\-image\fR option)
 when the checkbutton is in tri-state mode.
-This option is ignored unless the \fBimage\fR option has been
+This option is ignored unless the \fB\-image\fR option has been
 specified.
-.VE 8.5
 .OP \-tristatevalue tristateValue Value
-.VS 8.5
-Specifies the value that causes the checkbutton to display the multi-value 
+Specifies the value that causes the checkbutton to display the multi-value
 selection, also known as the tri-state mode.  Defaults to
 .QW "" .
-.VE 8.5
 .OP \-variable variable Variable
 Specifies the name of a global variable to set to indicate whether
 or not this button is selected.  Defaults to the name of the
@@ -138,13 +134,13 @@ that displays a textual string, bitmap or image
 and a square called an \fIindicator\fR.
 If text is displayed, it must all be in a single font, but it
 can occupy multiple lines on the screen (if it contains newlines
-or if wrapping occurs because of the \fBwrapLength\fR option) and
+or if wrapping occurs because of the \fB\-wraplength\fR option) and
 one of the characters may optionally be underlined using the
-\fBunderline\fR option.
+\fB\-underline\fR option.
 A checkbutton has
 all of the behavior of a simple button, including the
 following: it can display itself in either of three different
-ways, according to the \fBstate\fR option;
+ways, according to the \fB\-state\fR option;
 it can be made to appear
 raised, sunken, or flat; it can be made to flash; and it invokes
 a Tcl command whenever mouse button 1 is clicked over the
@@ -155,17 +151,16 @@ If a checkbutton is selected then the indicator is normally
 drawn with a selected appearance, and
 a Tcl variable associated with the checkbutton is set to a particular
 value (normally 1).
-.VS 8.5
 The indicator is drawn with a check mark inside.
 If the checkbutton is not selected, then the indicator is drawn with a
 deselected appearance, and the associated variable is
 set to a different value (typically 0).
-The indicator is drawn without a check mark inside.  In the special case 
-where the variable (if specified) has a value that matches the tristatevalue, 
-the indicator is drawn with a tri-state appearance and is in the tri-state 
-mode indicating mixed or multiple values.  (This is used when the check 
+The indicator is drawn without a check mark inside.  In the special case
+where the variable (if specified) has a value that matches the tristatevalue,
+the indicator is drawn with a tri-state appearance and is in the tri-state
+mode indicating mixed or multiple values.  (This is used when the check
 box represents the state of multiple items.)
-The indicator is drawn in a platform dependent manner.  Under Unix and 
+The indicator is drawn in a platform dependent manner.  Under Unix and
 Windows, the background interior of the box is
 .QW grayed .
 Under Mac, the indicator is drawn with a dash mark inside.
@@ -190,7 +185,6 @@ changes to and from the button's
 and
 .QW tristate
 values.
-.VE 8.5
 .SH "WIDGET COMMAND"
 .PP
 The \fBcheckbutton\fR command creates a new Tcl command whose
@@ -270,7 +264,8 @@ invoked, if there is one).
 .IP [3]
 When a checkbutton has the input focus, the space key causes the checkbutton
 to be invoked.  Under Windows, there are additional key bindings; plus
-(+) and equal (=) select the button, and minus (\-) deselects the button.
+(\fB+\fR) and equal (\fB=\fR) select the button, and minus (\fB\-\fR)
+deselects the button.
 .PP
 If the checkbutton's state is \fBdisabled\fR then none of the above
 actions occur:  the checkbutton is completely non-responsive.
@@ -278,17 +273,21 @@ actions occur:  the checkbutton is completely non-responsive.
 The behavior of checkbuttons can be changed by defining new bindings for
 individual widgets or by redefining the class bindings.
 .SH EXAMPLE
+.PP
 This example shows a group of uncoupled checkbuttons.
 .PP
 .CS
-    labelframe .lbl \-text "Steps:"
-    \fBcheckbutton\fR .c1 \-text Lights  \-variable lights
-    \fBcheckbutton\fR .c2 \-text Cameras \-variable cameras
-    \fBcheckbutton\fR .c3 \-text Action! \-variable action
-    pack .c1 .c2 .c3 \-in .lbl
-    pack .lbl
+labelframe .lbl \-text "Steps:"
+\fBcheckbutton\fR .c1 \-text Lights  \-variable lights
+\fBcheckbutton\fR .c2 \-text Cameras \-variable cameras
+\fBcheckbutton\fR .c3 \-text Action! \-variable action
+pack .c1 .c2 .c3 \-in .lbl
+pack .lbl
 .CE
 .SH "SEE ALSO"
 button(n), options(n), radiobutton(n), ttk::checkbutton(n)
 .SH KEYWORDS
 checkbutton, widget
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

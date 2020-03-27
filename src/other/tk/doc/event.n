@@ -4,7 +4,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 .TH event n 8.3 Tk "Tk Built-In Commands"
 .so man.macros
 .BS
@@ -76,7 +76,7 @@ defined for the given virtual event;  if the virtual event is
 not defined then an empty string is returned.
 .RS
 .PP
-Note that virtual events that that are not bound to physical event
+Note that virtual events that are not bound to physical event
 sequences are \fInot\fR returned by \fBevent info\fR.
 .RE
 .SH "EVENT FIELDS"
@@ -108,13 +108,11 @@ Corresponds to the \fB%b\fR substitution for binding scripts.
 \fINumber\fR must be an integer;  it specifies the \fIcount\fR field
 for the event.  Valid for \fBExpose\fR events.
 Corresponds to the \fB%c\fR substitution for binding scripts.
-.VS 8.5
 .TP
 \fB\-data\fI string\fR
 \fIString\fR may be any value; it specifies the \fIuser_data\fR field
 for the event.  Only valid for virtual events.  Corresponds to the
 \fB%d\fR substitution for virtual events in binding scripts.
-.VE 8.5
 .TP
 \fB\-delta\fI number\fR
 \fINumber\fR must be an integer;  it specifies the \fIdelta\fR field
@@ -174,7 +172,7 @@ one of \fBNotifyNormal\fR, \fBNotifyGrab\fR, \fBNotifyUngrab\fR, or
 \fBNotifyWhileGrabbed\fR.
 Valid for \fBEnter\fR, \fBLeave\fR, \fBFocusIn\fR, and
 \fBFocusOut\fR events.
-Corresponds to the \fB%m\fR substitution for binding scripts.  
+Corresponds to the \fB%m\fR substitution for binding scripts.
 .TP
 \fB\-override\fI boolean\fR
 \fIBoolean\fR must be a boolean value;  it specifies the
@@ -226,7 +224,7 @@ Corresponds to the \fB%#\fR substitution for binding scripts.
 For \fBKeyPress\fR, \fBKeyRelease\fR, \fBButtonPress\fR,
 \fBButtonRelease\fR, \fBEnter\fR, \fBLeave\fR, and \fBMotion\fR events
 it must be an integer value.
-For \fBVisibility\fR events it must be one of \fBVisibilityUnobscured\fR, 
+For \fBVisibility\fR events it must be one of \fBVisibilityUnobscured\fR,
 \fBVisibilityPartiallyObscured\fR, or \fBVisibilityFullyObscured\fR.
 This option overrides any modifiers such as \fBMeta\fR or \fBControl\fR
 specified in the base \fIevent\fR.
@@ -241,7 +239,8 @@ Similar to \fB%S\fR substitution for binding scripts.
 .TP
 \fB\-time\fI integer\fR
 \fIInteger\fR must be an integer value;  it specifies the \fItime\fR field
-for the event.
+for the event. Additonally the special value \fBcurrent\fR is allowed,
+this value will be substituted by the current event time.
 Valid for \fBKeyPress\fR, \fBKeyRelease\fR, \fBButtonPress\fR,
 \fBButtonRelease\fR, \fBEnter\fR, \fBLeave\fR, \fBMotion\fR,
 and \fBProperty\fR events.
@@ -304,10 +303,11 @@ If \fIWindow\fR is empty the coordinate is relative to the
 screen, and this option corresponds to the \fB%Y\fR substitution
 for binding scripts.
 .PP
-Any options that are not specified when generating an event are filled 
-with the value 0, except for \fIserial\fR, which is filled with the 
-next X event serial number.  
+Any options that are not specified when generating an event are filled
+with the value 0, except for \fIserial\fR, which is filled with the
+next X event serial number.
 .SH "PREDEFINED VIRTUAL EVENTS"
+.PP
 Tk defines the following virtual events for the purposes of
 notification:
 .TP
@@ -339,7 +339,9 @@ This is sent to a text widget when the selection in the widget is
 changed.
 .TP
 \fB<<ThemeChanged>>\fR
-This is sent to a text widget when the ttk (Tile) theme changed.
+This is sent to all widgets when the ttk theme changed. The ttk
+widgets listen to this event and redisplay themselves when it fires.
+The legacy widgets ignore this event.
 .TP
 \fB<<TraverseIn>>\fR
 This is sent to a widget when the focus enters the widget because of a
@@ -352,6 +354,16 @@ This is sent to a widget when the focus leaves the widget because of a
 user-driven
 .QW "tab to widget"
 action.
+.TP
+\fB<<UndoStack>>\fR
+This is sent to a text widget when its undo stack or redo stack becomes
+empty or unempty.
+.TP
+\fB<<WidgetViewSync>>\fR
+This is sent to a text widget when its internal data become obsolete,
+and again when these internal data are back in sync with the widget
+view. The detail field (%d substitution) is either true (when the
+widget is in sync) or false (when it is not).
 .PP
 Tk defines the following virtual events for the purposes of unifying
 bindings across multiple platforms. Users expect them to behave in the
@@ -366,6 +378,36 @@ Copy the currently selected widget contents to the clipboard.
 \fB<<Cut>>\fR
 Move the currently selected widget contents to the clipboard.
 .TP
+\fB<<LineEnd>>\fR
+.
+Move to the end of the line in the current widget while deselecting any
+selected contents.
+.TP
+\fB<<LineStart>>\fR
+.
+Move to the start of the line in the current widget while deselecting any
+selected contents.
+.TP
+\fB<<NextChar>>\fR
+.
+Move to the next item (i.e., visible character) in the current widget while
+deselecting any selected contents.
+.TP
+\fB<<NextLine>>\fR
+.
+Move to the next line in the current widget while deselecting any selected
+contents.
+.TP
+\fB<<NextPara>>\fR
+.
+Move to the next paragraph in the current widget while deselecting any
+selected contents.
+.TP
+\fB<<NextWord>>\fR
+.
+Move to the next group of items (i.e., visible word) in the current widget
+while deselecting any selected contents.
+.TP
 \fB<<Paste>>\fR
 Replace the currently selected widget contents with the contents of
 the clipboard.
@@ -374,32 +416,123 @@ the clipboard.
 Insert the contents of the selection at the mouse location. (This
 event has meaningful \fB%x\fR and \fB%y\fR substitutions).
 .TP
+\fB<<PrevChar>>\fR
+.
+Move to the previous item (i.e., visible character) in the current widget
+while deselecting any selected contents.
+.TP
+\fB<<PrevLine>>\fR
+.
+Move to the previous line in the current widget while deselecting any selected
+contents.
+.TP
+\fB<<PrevPara>>\fR
+.
+Move to the previous paragraph in the current widget while deselecting any
+selected contents.
+.TP
 \fB<<PrevWindow>>\fR
 Traverse to the previous window.
+.TP
+\fB<<PrevWord>>\fR
+.
+Move to the previous group of items (i.e., visible word) in the current widget
+while deselecting any selected contents.
 .TP
 \fB<<Redo>>\fR
 Redo one undone action.
 .TP
+\fB<<SelectAll>>\fR
+.
+Set the range of selected contents to the complete widget.
+.TP
+\fB<<SelectLineEnd>>\fR
+.
+Move to the end of the line in the current widget while extending the range
+of selected contents.
+.TP
+\fB<<SelectLineStart>>\fR
+.
+Move to the start of the line in the current widget while extending the range
+of selected contents.
+.TP
+\fB<<SelectNextChar>>\fR
+.
+Move to the next item (i.e., visible character) in the current widget while
+extending the range of selected contents.
+.TP
+\fB<<SelectNextLine>>\fR
+.
+Move to the next line in the current widget while extending the range of
+selected contents.
+.TP
+\fB<<SelectNextPara>>\fR
+.
+Move to the next paragraph in the current widget while extending the range
+of selected contents.
+.TP
+\fB<<SelectNextWord>>\fR
+.
+Move to the next group of items (i.e., visible word) in the current widget
+while extending the range of selected contents.
+.TP
+\fB<<SelectNone>>\fR
+.
+Reset the range of selected contents to be empty.
+.TP
+\fB<<SelectPrevChar>>\fR
+.
+Move to the previous item (i.e., visible character) in the current widget
+while extending the range of selected contents.
+.TP
+\fB<<SelectPrevLine>>\fR
+.
+Move to the previous line in the current widget while extending the range of
+selected contents.
+.TP
+\fB<<SelectPrevPara>>\fR
+.
+Move to the previous paragraph in the current widget while extending the
+range of selected contents.
+.TP
+\fB<<SelectPrevWord>>\fR
+.
+Move to the previous group of items (i.e., visible word) in the current widget
+while extending the range of selected contents.
+.TP
+\fB<<ToggleSelection>>\fR
+.
+Toggle the selection.
+.TP
 \fB<<Undo>>\fR
+.
 Undo the last action.
-.SH "VIRTUAL EVENT EXAMPLES"
+.SH EXAMPLES
+.SS "MAPPING KEYS TO VIRTUAL EVENTS"
 .PP
 In order for a virtual event binding to trigger, two things must
 happen.  First, the virtual event must be defined with the
 \fBevent add\fR command.  Second, a binding must be created for
 the virtual event with the \fBbind\fR command.
 Consider the following virtual event definitions:
+.PP
 .CS
-event add <<Paste>> <Control-y>
-event add <<Paste>> <Button-2>
-event add <<Save>> <Control-X><Control-S>
-event add <<Save>> <Shift-F12>
+\fBevent add\fR <<Paste>> <Control-y>
+\fBevent add\fR <<Paste>> <Button-2>
+\fBevent add\fR <<Save>> <Control-X><Control-S>
+\fBevent add\fR <<Save>> <Shift-F12>
+if {[tk windowingsystem] eq "aqua"} {
+    \fBevent add\fR <<Save>> <Command-s>
+}
 .CE
+.PP
 In the \fBbind\fR command, a virtual event can be bound like any other
 builtin event type as follows:
+.PP
 .CS
 bind Entry <<Paste>> {%W insert [selection get]}
 .CE
+.PP
 The double angle brackets are used to specify that a virtual event is being
 bound.  If the user types Control-y or presses button 2, or if
 a \fB<<Paste>>\fR virtual event is synthesized with \fBevent generate\fR,
@@ -408,17 +541,19 @@ then the \fB<<Paste>>\fR binding will be invoked.
 If a virtual binding has the exact same sequence as a separate
 physical binding, then the physical binding will take precedence.
 Consider the following example:
+.PP
 .CS
-event add <<Paste>> <Control-y> <Meta-Control-y>
+\fBevent add\fR <<Paste>> <Control-y> <Meta-Control-y>
 bind Entry <Control-y> {puts Control-y}
 bind Entry <<Paste>> {puts Paste}
 .CE
+.PP
 When the user types Control-y the \fB<Control-y>\fR binding
 will be invoked, because a physical event is considered
 more specific than a virtual event, all other things being equal.
 However, when the user types Meta-Control-y the
 \fB<<Paste>>\fR binding will be invoked, because the
-\fBMeta\fR modifier in the physical pattern associated with the 
+\fBMeta\fR modifier in the physical pattern associated with the
 virtual binding is more specific than the \fB<Control-y\fR> sequence for
 the physical event.
 .PP
@@ -430,18 +565,41 @@ ungeneratable.
 When a definition of a virtual event changes at run time, all windows
 will respond immediately to the new definition.
 Starting from the preceding example, if the following code is executed:
+.PP
 .CS
-bind <Entry> <Control-y> {}
-event add <<Paste>> <Key-F6>
+bind Entry <Control-y> {}
+\fBevent add\fR <<Paste>> <Key-F6>
 .CE
+.PP
 the behavior will change such in two ways.  First, the shadowed
 \fB<<Paste>>\fR binding will emerge.
-Typing Control-y will no longer invoke the \fB<Control-y>\fR binding, 
+Typing Control-y will no longer invoke the \fB<Control-y>\fR binding,
 but instead invoke the virtual event \fB<<Paste>>\fR.  Second,
 pressing the F6 key will now also invoke the \fB<<Paste>>\fR binding.
-
+.SS "MOVING THE MOUSE POINTER"
+.PP
+Sometimes it is useful to be able to really move the mouse pointer. For
+example, if you have some software that is capable of demonstrating directly
+to the user how to use the program. To do this, you need to
+.QW warp
+the mouse around by using \fBevent generate\fR, like this:
+.PP
+.CS
+for {set xy 0} {$xy < 200} {incr xy} {
+    \fBevent generate\fR . <Motion> -x $xy -y $xy -warp 1
+    update
+    after 50
+}
+.CE
+.PP
+Note that it is usually considered bad style to move the mouse pointer for the
+user because it removes control from them. Therefore this technique should be
+used with caution. Also note that it is not guaranteed to function on all
+platforms.
 .SH "SEE ALSO"
 bind(n)
-
 .SH KEYWORDS
 event, binding, define, handle, virtual event
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

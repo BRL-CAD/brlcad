@@ -4,7 +4,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 .TH Tk_CreateWindow 3 4.2 Tk "Tk Library Procedures"
 .so man.macros
 .BS
@@ -52,14 +52,14 @@ Name of new window, specified as path name within application
 .BE
 .SH DESCRIPTION
 .PP
-The procedures \fBTk_CreateWindow\fR, 
+The procedures \fBTk_CreateWindow\fR,
 \fBTk_CreateAnonymousWindow\fR, and \fBTk_CreateWindowFromPath\fR
 are used to create new windows for
 use in Tk-based applications.  Each of the procedures returns a token
 that can be used to manipulate the window in other calls to the Tk
 library.  If the window could not be created successfully, then NULL
-is returned and \fIinterp->result\fR is modified to hold an error
-message.
+is returned and the result of interpreter \fIinterp\fR is modified to
+hold an error message.
 .PP
 Tk supports two different kinds of windows:  internal
 windows and top-level windows.
@@ -86,7 +86,7 @@ which would in turn be a child of the menu bar window.  A dialog box might
 have the application's main window as its parent.
 .PP
 \fBTk_CreateAnonymousWindow\fR differs from \fBTk_CreateWindow\fR in
-that it creates an unnamed window.  This window will be manipulable
+that it creates an unnamed window.  This window will be manipulatable
 only using C interfaces, and will not be visible to Tcl scripts.  Both
 interior windows and top-level windows may be created with
 \fBTk_CreateAnonymousWindow\fR.
@@ -141,7 +141,6 @@ but has not been mapped, so no X window exists, it is
 possible to force the creation of the X window by
 calling \fBTk_MakeWindowExist\fR.  This procedure issues
 the X commands to instantiate the window given by \fItkwin\fR.
-
 .SH KEYWORDS
 create, deferred creation, destroy, display, internal window,
 screen, top-level window, window

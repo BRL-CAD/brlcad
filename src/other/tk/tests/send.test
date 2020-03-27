@@ -197,7 +197,8 @@ test send-7.4 {Tk_SetAppName procedure, name in use} {secureserver testsend} {
     list [tk appname foo] [testsend prop root InterpRegistry]
 } "{foo #4} {$commId foo #4\n$id foo\n$id foo #2\n$id foo #3\n}"
 
-test send-8.1 {Tk_SendCmd procedure, options} {secureserver} {
+#macOS does not send to other processes
+test send-8.1 {Tk_SendCmd procedure, options} {secureserver notAqua} {
     setupbg
     set app [dobg {tk appname}]
     set a 66
@@ -222,18 +223,19 @@ test send-8.2 {Tk_SendCmd procedure, options} {secureserver altDisplay} {
     cleanupbg
     set result
 } {altDisplay homeDisplay}
-test send-8.3 {Tk_SendCmd procedure, options} {secureserver} {
+# Since macOS has no registry of interpreters, 8.3, 8.4 and 8.10 will fail.
+test send-8.3 {Tk_SendCmd procedure, options} {secureserver notAqua} {
     list [catch {send -- -async foo bar baz} msg] $msg
 } {1 {no application named "-async"}}
-test send-8.4 {Tk_SendCmd procedure, options} {secureserver} {
+test send-8.4 {Tk_SendCmd procedure, options} {secureserver notAqua} {
     list [catch {send -gorp foo bar baz} msg] $msg
-} {1 {bad option "-gorp": must be -async, -displayof, or --}}
+} {1 {no application named "-gorp"}}
 test send-8.5 {Tk_SendCmd procedure, options} {secureserver} {
     list [catch {send -async foo} msg] $msg
-} {1 {wrong # args: should be "send ?options? interpName arg ?arg ...?"}}
+} {1 {wrong # args: should be "send ?-option value ...? interpName arg ?arg ...?"}}
 test send-8.6 {Tk_SendCmd procedure, options} {secureserver} {
     list [catch {send foo} msg] $msg
-} {1 {wrong # args: should be "send ?options? interpName arg ?arg ...?"}}
+} {1 {wrong # args: should be "send ?-option value ...? interpName arg ?arg ...?"}}
 test send-8.7 {Tk_SendCmd procedure, local execution} {secureserver} {
     set a initial
     send [tk appname] {set a new}
@@ -253,7 +255,7 @@ test send-8.9 {Tk_SendCmd procedure, local execution} {secureserver} {
 "open bad_file"
     invoked from within
 "send [tk appname] open bad_file"} {posix enoent {no such file or directory}}}
-test send-8.10 {Tk_SendCmd procedure, no such interpreter} {secureserver} {
+test send-8.10 {Tk_SendCmd procedure, no such interpreter} {secureserver notAqua} {
     list [catch {send bogus_name bogus_command} msg] $msg
 } {1 {no application named "bogus_name"}}
 
@@ -542,7 +544,8 @@ test send-12.1 {TimeoutProc procedure} {secureserver testsend} {
 
 catch {testsend prop root InterpRegistry ""}
 
-test send-12.2 {TimeoutProc procedure} {secureserver} {
+#macOS does not send to other processes
+test send-12.2 {TimeoutProc procedure} {secureserver notAqua} {
     winfo interps
     tk appname tktest
     update
@@ -557,16 +560,17 @@ test send-12.2 {TimeoutProc procedure} {secureserver} {
     set result
 } {1 {target application died}}
 
+#macOS does not send to other processes
 winfo interps
 tk appname tktest
-test send-13.1 {DeleteProc procedure} {secureserver} {
+test send-13.1 {DeleteProc procedure} {secureserver notAqua} {
     setupbg
     set app [dobg {rename send {}; tk appname}]
     set result [list [catch {send $app foo} msg] $msg [winfo interps]]
     cleanupbg
     set result
 } {1 {no application named "tktest #2"} tktest}
-test send-13.2 {DeleteProc procedure} {secureserver} {
+test send-13.2 {DeleteProc procedure} {secureserver notAqua} {
     winfo interps
     tk appname tktest
     rename send {}

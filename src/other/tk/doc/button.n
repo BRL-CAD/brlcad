@@ -4,13 +4,13 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 .TH button n 4.4 Tk "Tk Built-In Commands"
 .so man.macros
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
-button \- Create and manipulate button widgets
+button \- Create and manipulate 'button' action widgets
 .SH SYNOPSIS
 \fBbutton\fR \fIpathName \fR?\fIoptions\fR?
 .SO
@@ -57,25 +57,24 @@ The empty string is the default value.
 .OP \-state state State
 Specifies one of three states for the button:  \fBnormal\fR, \fBactive\fR,
 or \fBdisabled\fR.  In normal state the button is displayed using the
-\fBforeground\fR and \fBbackground\fR options.  The active state is
+\fB\-foreground\fR and \fB\-background\fR options.  The active state is
 typically used when the pointer is over the button.  In active state
-the button is displayed using the \fBactiveForeground\fR and
-\fBactiveBackground\fR options.  Disabled state means that the button
+the button is displayed using the \fB\-activeforeground\fR and
+\fB\-activebackground\fR options.  Disabled state means that the button
 should be insensitive:  the default bindings will refuse to activate
 the widget and will ignore mouse button presses.
-In this state the \fBdisabledForeground\fR and
-\fBbackground\fR options determine how the button is displayed.
+In this state the \fB\-disabledforeground\fR and
+\fB\-background\fR options determine how the button is displayed.
 .OP \-width width Width
 Specifies a desired width for the button.
 If an image or bitmap is being displayed in the button then the value is in
 screen units (i.e. any of the forms acceptable to \fBTk_GetPixels\fR).
-For a text button (no image or with \fB\-compound none\fR) then the width 
+For a text button (no image or with \fB\-compound none\fR) then the width
 specifies how much space in characters to allocate for the text label.
 If the width is negative then this specifies a minimum width.
 If this option is not specified, the button's desired width is computed
 from the size of the image or bitmap or text being displayed in it.
 .BE
-
 .SH DESCRIPTION
 .PP
 The \fBbutton\fR command creates a new window (given by the
@@ -92,18 +91,17 @@ there must not exist a window named \fIpathName\fR, but
 A button is a widget that displays a textual string, bitmap or image.
 If text is displayed, it must all be in a single font, but it
 can occupy multiple lines on the screen (if it contains newlines
-or if wrapping occurs because of the \fBwrapLength\fR option) and
+or if wrapping occurs because of the \fB\-wraplength\fR option) and
 one of the characters may optionally be underlined using the
-\fBunderline\fR option.
+\fB\-underline\fR option.
 It can display itself in either of three different ways, according
 to
-the \fBstate\fR option; 
+the \fB\-state\fR option;
 it can be made to appear raised, sunken, or flat;
 and it can be made to flash.  When a user invokes the
 button (by pressing mouse button 1 with the cursor over the
 button), then the Tcl command specified in the \fB\-command\fR
 option is invoked.
-
 .SH "WIDGET COMMAND"
 .PP
 The \fBbutton\fR command creates a new Tcl command whose
@@ -139,9 +137,9 @@ command.
 .TP
 \fIpathName \fBflash\fR
 Flash the button.  This is accomplished by redisplaying the button
-several times, alternating between active and normal colors.  At
-the end of the flash the button is left in the same normal/active
-state as when the command was invoked.
+several times, alternating between the configured activebackground
+and background colors.  At the end of the flash the button is left
+in the same normal/active state as when the command was invoked.
 This command is ignored if the button's state is \fBdisabled\fR.
 .TP
 \fIpathName \fBinvoke\fR
@@ -149,7 +147,6 @@ Invoke the Tcl command associated with the button, if there is one.
 The return value is the return value from the Tcl command, or an
 empty string if there is no command associated with the button.
 This command is ignored if the button's state is \fBdisabled\fR.
-
 .SH "DEFAULT BINDINGS"
 .PP
 Tk automatically creates class bindings for buttons that give them
@@ -176,27 +173,38 @@ actions occur:  the button is completely non-responsive.
 .PP
 The behavior of buttons can be changed by defining new bindings for
 individual widgets or by redefining the class bindings.
-
+.SH "PLATFORM NOTES"
+.PP
+On Aqua/Mac OS X, some configuration options are ignored for the purpose of
+drawing of the widget because they would otherwise conflict with platform
+guidelines. The \fBconfigure\fR and \fBcget\fR subcommands can still
+manipulate the values, but do not cause any variation to the look of the
+widget. The options affected notably include \fB\-background\fR and
+\fB\-relief\fR.
 .SH EXAMPLES
+.PP
 This is the classic Tk
 .QW "Hello, World!"
 demonstration:
 .PP
 .CS
-    \fBbutton\fR .b \-text "Hello, World!" \-command exit
-    pack .b
+\fBbutton\fR .b \-text "Hello, World!" \-command exit
+pack .b
 .CE
 .PP
 This example demonstrates how to handle button accelerators:
 .PP
 .CS
-    \fBbutton\fR .b1 \-text Hello \-underline 0
-    \fBbutton\fR .b2 \-text World \-underline 0
-    bind . <Key\-h> {.b1 flash; .b1 invoke}
-    bind . <Key\-w> {.b2 flash; .b2 invoke}
-    pack .b1 .b2
+\fBbutton\fR .b1 \-text Hello \-underline 0
+\fBbutton\fR .b2 \-text World \-underline 0
+bind . <Key\-h> {.b1 flash; .b1 invoke}
+bind . <Key\-w> {.b2 flash; .b2 invoke}
+pack .b1 .b2
 .CE
 .SH "SEE ALSO"
 ttk::button(n)
 .SH KEYWORDS
 button, widget
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

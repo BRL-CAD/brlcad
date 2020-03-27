@@ -14,7 +14,6 @@ winfo \- Return window-related information
 .SH SYNOPSIS
 \fBwinfo\fR \fIoption \fR?\fIarg arg ...\fR?
 .BE
-
 .SH DESCRIPTION
 .PP
 The \fBwinfo\fR command is used to retrieve information about windows
@@ -74,6 +73,9 @@ to the screen containing \fIwindow\fR;  otherwise they refer to the
 screen of the application's main window.
 If no window in this application contains the point then an empty
 string is returned.
+An empty string is also returned if the point lies in the title bar
+or border of its highest containing toplevel in this application.
+(Note that with some window managers the borders may be invisible.)
 In selecting the containing window, children are given higher priority
 than parents and among siblings the highest one in the stacking order is
 chosen.
@@ -105,7 +107,7 @@ in pixels.
 \fBwinfo height \fIwindow\fR
 Returns a decimal string giving \fIwindow\fR's height in pixels.
 When a window is first created its height will be 1 pixel;  the
-height will eventually be changed by a geometry manager to fulfill
+height will eventually be changed by a geometry manager to fulfil
 the window's needs.
 If you need the true height immediately after creating a widget,
 invoke \fBupdate\fR to force the geometry manager to arrange it,
@@ -316,7 +318,7 @@ Returns 0 if there is no virtual root window for \fIwindow\fR.
 \fBwinfo width \fIwindow\fR
 Returns a decimal string giving \fIwindow\fR's width in pixels.
 When a window is first created its width will be 1 pixel;  the
-width will eventually be changed by a geometry manager to fulfill
+width will eventually be changed by a geometry manager to fulfil
 the window's needs.
 If you need the true width immediately after creating a widget,
 invoke \fBupdate\fR to force the geometry manager to arrange it,
@@ -335,6 +337,7 @@ parent, of the
 upper-left corner of \fIwindow\fR's border (or \fIwindow\fR if it
 has no border).
 .SH EXAMPLE
+.PP
 Print where the mouse pointer is and what window it is currently over:
 .CS
 lassign [\fBwinfo pointerxy\fR .] x y
@@ -346,7 +349,9 @@ if {$win eq ""} {
     puts "over $win"
 }
 .CE
-
 .SH KEYWORDS
 atom, children, class, geometry, height, identifier, information, interpreters,
 mapped, parent, path name, screen, virtual root, width, window
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

@@ -5,7 +5,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 .TH bind n 8.0 Tk "Tk Built-In Commands"
 .so man.macros
 .BS
@@ -19,9 +19,10 @@ bind \- Arrange for X events to invoke Tcl scripts
 .PP
 The \fBbind\fR command associates Tcl scripts with X events.
 If all three arguments are specified, \fBbind\fR will
-arrange for \fIscript\fR (a Tcl script) to be evaluated whenever
-the event(s) given by \fIsequence\fR occur in the window(s)
-identified by \fItag\fR.
+arrange for \fIscript\fR (a Tcl script called the
+.QW "binding script")
+to be evaluated whenever the event(s) given by \fIsequence\fR
+occur in the window(s) identified by \fItag\fR.
 If \fIscript\fR is prefixed with a
 .QW + ,
 then it is appended to
@@ -151,7 +152,6 @@ requirement.
 The \fBCommand\fR and \fBOption\fR modifiers are equivalents of \fBMod1\fR
 resp. \fBMod2\fR, they correspond to Macintosh-specific modifier keys.
 .PP
-.VS 8.5
 The \fBExtended\fR modifier is, at present, specific to Windows.  It
 appears on events that are associated with the keys on the
 .QW "extended keyboard" .
@@ -160,7 +160,6 @@ and \fBControl\fR keys at the right of the keyboard, the cursor keys
 in the cluster to the left of the numeric pad, the \fBNumLock\fR key,
 the \fBBreak\fR key, the \fBPrintScreen\fR key, and the \fB/\fR and
 \fBEnter\fR keys in the numeric keypad.
-.VE 8.5
 .SS "EVENT TYPES"
 .PP
 The \fItype\fR field may be any of the standard X event types, with a
@@ -207,9 +206,7 @@ always routed to the window that currently has focus. When the event
 is received you can use the \fB%D\fR substitution to get the
 \fIdelta\fR field for the event, which is a integer value describing how
 the mouse wheel has moved.  The smallest value for which the
-system will report is defined by the OS.  On Windows 95 & 98 machines
-this value is at least 120 before it is reported.  However, higher
-resolution devices may be available in the future.  The sign of the
+system will report is defined by the OS. The sign of the
 value determines which direction your widget should scroll.  Positive
 values should scroll up and negative values should scroll down.
 .IP "\fBKeyPress\fR, \fBKeyRelease\fR" 5
@@ -391,7 +388,8 @@ For example, \fB<Control\-comma>\fR is equivalent to
 \fB<Control\-KeyPress\-comma>\fR.
 .SH "BINDING SCRIPTS AND SUBSTITUTIONS"
 .PP
-The \fIscript\fR argument to \fBbind\fR is a Tcl script,
+The \fIscript\fR argument to \fBbind\fR is a Tcl script, called the
+.QW "binding script",
 which will be executed whenever the given event sequence occurs.
 \fICommand\fR will be executed in the same interpreter that the
 \fBbind\fR command was executed in, and it will run at global
@@ -429,10 +427,7 @@ The \fIcount\fR field from the event.  Valid only for \fBExpose\fR events.
 Indicates that there are \fIcount\fR pending \fBExpose\fR events which have not
 yet been delivered to the window.
 .IP \fB%d\fR 5
-The \fIdetail\fR
-.VS 8.5
-or \fIuser_data\fR
-.VE 8.5
+The \fIdetail\fR or \fIuser_data\fR
 field from the event.  The \fB%d\fR is replaced by
 a string identifying the detail.  For \fBEnter\fR,
 \fBLeave\fR, \fBFocusIn\fR, and \fBFocusOut\fR events,
@@ -452,13 +447,11 @@ For \fBConfigureRequest\fR events, the string will be one of:
 \fBBelow\fR	\fBNone\fR
 \fBBottomIf\fR	\fBTopIf\fR
 .DE
-.VS 8.5
 For virtual events, the string will be whatever value is stored in the
 \fIuser_data\fR field when the event was created (typically with
 \fBevent generate\fR), or the empty string if the field is NULL.
 Virtual events corresponding to key sequence presses (see \fBevent
 add\fR for details) set the \fIuser_data\fR to NULL.
-.VE 8.5
 For events other than these, the substituted string is undefined.
 .RE
 .IP \fB%f\fR 5
@@ -534,9 +527,7 @@ The \fIborder_width\fR field from the event.  Valid only for
 .IP \fB%D\fR 5
 This reports the \fIdelta\fR value of a \fBMouseWheel\fR event.  The
 \fIdelta\fR value represents the rotation units the mouse wheel has
-been moved.  On Windows 95 & 98 systems the smallest value for the
-delta is 120.  Future systems may support higher resolution values for
-the delta.  The sign of the value represents the direction the mouse
+been moved. The sign of the value represents the direction the mouse
 wheel was scrolled.
 .IP \fB%E\fR 5
 The \fIsend_event\fR field from the event.  Valid for all event types.
@@ -575,8 +566,8 @@ The \fIx_root\fR and  \fIy_root\fR fields from the event.
 If a virtual-root window manager is being used then the substituted
 values are the corresponding x-coordinate and y-coordinate in the virtual root.
 Valid only for
-\fBButtonPress\fR, \fBButtonRelease\fR, \fBKeyPress\fR, \fBKeyRelease\fR,
-and \fBMotion\fR events.
+\fBButtonPress\fR, \fBButtonRelease\fR, \fBEnter\fR, \fBKeyPress\fR,
+\fBKeyRelease\fR, \fBLeave\fR and \fBMotion\fR events.
 Same meaning as \fB%x\fR and \fB%y\fR, except relative to the (virtual) root
 window.
 .LP
@@ -617,12 +608,20 @@ the window.
 .PP
 The \fBcontinue\fR and \fBbreak\fR commands may be used inside a
 binding script to control the processing of matching scripts.
-If \fBcontinue\fR is invoked, then the current binding script
-is terminated but Tk will continue processing binding scripts
-associated with other \fItag\fR's.
+If \fBcontinue\fR is invoked within a binding script, then this
+binding script, including all other
+.QW +
+appended scripts, is terminated but Tk will continue processing
+binding scripts associated with other \fItag\fR's.
 If the \fBbreak\fR command is invoked within a binding script,
 then that script terminates and no other scripts will be invoked
 for the event.
+.PP
+Within a script called from the binding script, \fBreturn\fR
+\fB-code ok\fR may be used to continue processing (including
+.QW +
+appended scripts), or \fBreturn\fR \fB-code break\fR may be used to
+stop processing all other binding scripts.
 .PP
 If more than one binding matches a particular event and they
 have the same \fItag\fR, then the most specific binding
@@ -639,11 +638,11 @@ of events matched) is more specific than a shorter sequence;
 .IP (c)
 if the modifiers specified in one pattern are a subset of the
 modifiers in another pattern, then the pattern with more modifiers
-is more specific.
+is more specific;
 .IP (d)
 a virtual event whose physical pattern matches the sequence is less
 specific than the same physical pattern that is not associated with a
-virtual event.
+virtual event;
 .IP (e)
 given a sequence that matches two or more virtual events, one
 of the virtual events will be chosen, but the order is undefined.
@@ -704,6 +703,7 @@ If an error occurs in executing the script for a binding then the
 The \fBbgerror\fR command will be executed at global level
 (outside the context of any Tcl procedure).
 .SH "EXAMPLES"
+.PP
 Arrange for a string describing the motion of the mouse to be printed
 out when the mouse is double-clicked:
 .CS
@@ -725,3 +725,6 @@ pack [label .l \-textvariable keysym \-padx 2m \-pady 1m]
 bgerror(n), bindtags(n), event(n), focus(n), grab(n), keysyms(n)
 .SH KEYWORDS
 binding, event
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

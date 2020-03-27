@@ -99,7 +99,7 @@ bind .t.c <Shift-1> {
 }
 
 bind .t.c <Shift-B1-Motion> {
-    .t.c move circle [expr %x-$curx] [expr %y-$cury]
+    .t.c move circle [expr {%x-$curx}] [expr {%y-$cury}]
     set curx %x
     set cury %y
 }
@@ -127,7 +127,7 @@ bind .t.c a {
 	}
 	incr i $delta
 	c -start $i
-	c -extent [expr 360-2*$i]
+	c -extent [expr {360-2*$i}]
 	after 20
 	update
     }

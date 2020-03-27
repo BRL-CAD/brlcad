@@ -96,7 +96,7 @@ test winSend-1.6 {Tk_SetAppName - safe interps} winSend {
 
 test winSend-2.1 {Tk_SendObjCmd - # of args} winSend {
     list [catch {send tktest} msg] $msg
-} {1 {wrong # args: should be "send ?options? interpName arg ?arg ...?"}}
+} {1 {wrong # args: should be "send ?-option value ...? interpName arg ?arg ...?"}}
 test winSend-2.1a {Tk_SendObjCmd: arguments} winSend {
     list [catch {send -bogus tktest} msg] $msg
 } {1 {bad option "-bogus": must be -async, -displayof, or --}}
@@ -118,8 +118,8 @@ test winSend-2.3 {Tk_SendObjCmd - sending to ourselves in a different interprete
 } {0 b {}}
 test winSend-2.4 {Tk_SendObjCmd - sending to ourselves in a different interp with errors} winSend {
     newApp testApp
-    list [catch {send testApp {expr 2 / 0}} msg] $msg $errorCode $errorInfo [interp delete testApp]
-} "1 {divide by zero} {ARITH DIVZERO {divide by zero}} {divide by zero\n    while executing\n\"expr 2 / 0\"\n    invoked from within\n\"send testApp {expr 2 / 0}\"} {}"
+    list [catch {send testApp {expr {2 / 0}}} msg] $msg $errorCode $errorInfo [interp delete testApp]
+} "1 {divide by zero} {ARITH DIVZERO {divide by zero}} {divide by zero\n    while executing\n\"expr {2 / 0}\"\n    invoked from within\n\"send testApp {expr {2 / 0}}\"} {}"
 test winSend-2.5 {Tk_SendObjCmd - sending to another app async} winSend {
     set newInterps [winfo interps]
     foreach interp $newInterps {
@@ -145,8 +145,8 @@ test winSend-2.7 {Tk_SendObjCmd - sending to another app - error} winSend {
 	    break
 	}
     }
-    list [catch {send $interp {expr 2 / 0}} msg] $msg $errorCode $errorInfo
-} "1 {divide by zero} {ARITH DIVZERO {divide by zero}} {divide by zero\n    while executing\n\"expr 2 / 0\"\n    invoked from within\n\"send \$interp {expr 2 / 0}\"}"
+    list [catch {send $interp {expr {2 / 0}}} msg] $msg $errorCode $errorInfo
+} "1 {divide by zero} {ARITH DIVZERO {divide by zero}} {divide by zero\n    while executing\n\"expr {2 / 0}\"\n    invoked from within\n\"send \$interp {expr {2 / 0}}\"}"
 
 test winSend-3.1 {TkGetInterpNames} winSend {
     set origLength [llength $currentInterps]
@@ -170,7 +170,7 @@ test winSend-5.1 {ExecuteRemoteObject - no error} winSend {
 	    break
 	}
     }
-    list [send $interp {send [tk appname] {expr 2 / 1}}]
+    list [send $interp {send [tk appname] {expr {2 / 1}}}]
 } {2}
 test winSend-5.2 {ExecuteRemoteObject - error} winSend {
     set newInterps [winfo interps]
@@ -179,7 +179,7 @@ test winSend-5.2 {ExecuteRemoteObject - error} winSend {
 	    break
 	}
     }
-    list [catch {send $interp {send [tk appname] {expr 2 / 0}}} msg] $msg
+    list [catch {send $interp {send [tk appname] {expr {2 / 0}}}} msg] $msg
 } {1 {divide by zero}}
 
 test winSend-6.1 {SendDDEServer - XTYP_CONNECT} winSend {
@@ -246,7 +246,7 @@ test winSend-6.6 {SendDDEServer - XTYP_REQUEST return results} winSend {
 	    break
 	}
     }
-    set command "send [tk appname] {expr $foo + 1}"
+    set command "send [tk appname] {expr {$foo + 1}}"
     list [catch "send \{$interp\} \{$command\}" msg] $msg
 } {0 4}
 test winSend-6.7 {SendDDEServer - XTYP_EXECUTE} winSend {
@@ -256,7 +256,7 @@ test winSend-6.7 {SendDDEServer - XTYP_EXECUTE} winSend {
 	    break
 	}
     }
-    set command "send [tk appname] {expr 4 / 2}"
+    set command "send [tk appname] {expr {4 / 2}}"
     list [catch "send \{$interp\} \{$command\}" msg] $msg
 } {0 2}
 test winSend-6.8 {SendDDEServer - XTYP_WILDCONNECT} winSend {
@@ -386,7 +386,7 @@ test winSend-10.17 {Tk_DDEObjCmd - valid variable} winSend {
 } {0 winSend-10.17}
 test winSend-10.18 {Tk_DDEObjCmd - services} winSend {
     set currentService [list Tk [tk appname]]
-    list [catch {dde services Tk {}} msg] [expr [lsearch $msg $currentService] >= 0]
+    list [catch {dde services Tk {}} msg] [expr {[lsearch $msg $currentService] >= 0}]
 } {0 1}
 
 # Get rid of the other app and all of its interps

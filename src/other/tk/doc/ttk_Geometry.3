@@ -75,7 +75,7 @@ Used to store error messages.
 .AP int left in
 Extra padding (in pixels) to add to the left side of a region.
 .AP "Tcl_Obj *" objPtr in
-String value contains a symbolic name 
+String value contains a symbolic name
 to be converted to an enumerated value or bitmask.
 Internal rep may be be modified to cache corresponding value.
 .AP Ttk_Padding padding in
@@ -84,18 +84,18 @@ Extra padding to add on the inside of a region.
 .AP Ttk_Box parcel in
 A rectangular region, allocated from a cavity.
 .AP int relief in
-One of the standard Tk relief options 
-(TK_RELIEF_RAISED, TK_RELIEF_SUNKEN, etc.).  
+One of the standard Tk relief options
+(TK_RELIEF_RAISED, TK_RELIEF_SUNKEN, etc.).
 See \fBTk_GetReliefFromObj\fR.
 .AP short right in
-Extra padding (in pixles) to add to the right side of a region.
+Extra padding (in pixels) to add to the right side of a region.
 .AP Ttk_Side side in
-One of \fBTTK_SIDE_LEFT\fR, \fBTTK_SIDE_TOP\fR, 
+One of \fBTTK_SIDE_LEFT\fR, \fBTTK_SIDE_TOP\fR,
 \fBTTK_SIDE_RIGHT\fR, or \fBTTK_SIDE_BOTTOM\fR.
 .AP unsigned sticky in
 A bitmask containing one or more of the bits
-\fBTTK_STICK_W\fR (west, or left), 
-\fBTTK_STICK_E\fR (east, or right, 
+\fBTTK_STICK_W\fR (west, or left),
+\fBTTK_STICK_E\fR (east, or right,
 \fBTTK_STICK_N\fR (north, or top), and
 \fBTTK_STICK_S\fR (south, or bottom).
 \fBTTK_FILL_X\fR is defined as a synonym for (TTK_STICK_W|TTK_STICK_E),
@@ -104,7 +104,7 @@ and  \fBTTK_FILL_BOTH\fR and \fBTTK_STICK_ALL\fR
 are synonyms for (TTK_FILL_X|TTK_FILL_Y).
 See also: \fIgrid(n)\fR.
 .AP Tk_Window tkwin in
-Window whose screen geometry determines 
+Window whose screen geometry determines
 the conversion between absolute units and pixels.
 .AP short top in
 Extra padding at the top of a region.
@@ -128,7 +128,7 @@ typedef struct {
 .CE
 All coordinates are relative to the window.
 .PP
-\fBTtk_MakeBox\fR is a convenience routine that contsructs
+\fBTtk_MakeBox\fR is a convenience routine that constructs
 a \fBTtk_Box\fR structure representing a region \fIwidth\fR pixels
 wide, \fIheight\fR pixels tall, at the specified \fIx, y\fR coordinates.
 .PP
@@ -173,7 +173,7 @@ typedef struct {
 } \fBTtk_Padding\fR;
 .CE
 .PP
-\fBTtk_MakePadding\fR is a convenience routine that contsructs
+\fBTtk_MakePadding\fR is a convenience routine that constructs
 a \fBTtk_Padding\fR structure with the specified left, top, right, and bottom
 components.
 .PP
@@ -184,14 +184,14 @@ with all components equal to the specified \fIborder\fR.
 and returns a combined padding containing the sum of the
 individual padding components.
 .PP
-\fBTtk_RelievePadding\fR 
+\fBTtk_RelievePadding\fR
 adds an extra 2 pixels of padding to \fIpadding\fR
 according to the specified \fIrelief\fR.
-If \fIrelief\fR is \fBTK_RELIEF_SUNKEN\fR, 
+If \fIrelief\fR is \fBTK_RELIEF_SUNKEN\fR,
 adds two pixels at the top and left
 so the inner region is shifted down and to the left.
 If it is \fBTK_RELIEF_RAISED\fR, adds two pixels
-at the bottom and right so 
+at the bottom and right so
 the inner region is shifted up and to the right.
 Otherwise, adds 1 pixel on all sides.
 This is typically used in element geometry procedures to simulate a
@@ -201,18 +201,18 @@ look for pushbuttons.
 .PP
 \fBTtk_GetPaddingFromObj\fR converts the string in \fIobjPtr\fR
 to a \fBTtk_Padding\fR structure.
-The string representation is a list of 
-up to four length specifications 
+The string representation is a list of
+up to four length specifications
 .QW "\fIleft top right bottom\fR" .
-If fewer than four elements are specified, 
+If fewer than four elements are specified,
 \fIbottom\fR defaults to \fItop\fR,
-\fIright\fR defaults to \fIleft\fR, and 
+\fIright\fR defaults to \fIleft\fR, and
 \fItop\fR defaults to \fIleft\fR.
 See \fBTk_GetPixelsFromObj(3)\fR for the syntax of length specifications.
 .PP
 \fBTtk_GetBorderFromObj\fR is the same as \fBTtk_GetPaddingFromObj\fR
-except that the lengths are specified as integers 
-(i.e., resolution-dependant values like \fI3m\fR are not allowed).
+except that the lengths are specified as integers
+(i.e., resolution-dependent values like \fI3m\fR are not allowed).
 .PP
 \fBTtk_GetStickyFromObj\fR converts the string in \fIobjPtr\fR
 to a \fIsticky\fR bitmask.  The string contains zero or more

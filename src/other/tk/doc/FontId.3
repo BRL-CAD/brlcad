@@ -3,12 +3,12 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 .TH Tk_FontId 3 8.0 Tk "Tk Library Procedures"
 .so man.macros
 .BS
 .SH NAME
-Tk_FontId, Tk_GetFontMetrics, Tk_PostscriptFontName \- accessor functions for 
+Tk_FontId, Tk_GetFontMetrics, Tk_PostscriptFontName \- accessor functions for
 fonts
 .SH SYNOPSIS
 .nf
@@ -37,7 +37,7 @@ Postscript font that corresponds to \fItkfont\fR will be appended.
 .PP
 Given a \fItkfont\fR, \fBTk_FontId\fR returns the token that should be
 selected into an XGCValues structure in order to construct a graphics
-context that can be used to draw text in the specified font.  
+context that can be used to draw text in the specified font.
 .PP
 \fBTk_GetFontMetrics\fR computes the ascent, descent, and linespace of the
 \fItkfont\fR in pixels and stores those values in the structure pointer to by
@@ -45,7 +45,7 @@ context that can be used to draw text in the specified font.
 multiple lines of text, to align the baselines of text in different
 fonts, and to vertically align text in a given region.  See the
 documentation for the \fBfont\fR command for definitions of the terms
-ascent, descent, and linespace, used in font metrics.  
+ascent, descent, and linespace, used in font metrics.
 .PP
 \fBTk_PostscriptFontName\fR maps a \fItkfont\fR to the corresponding
 Postscript font name that should be used when printing.  The return value
@@ -56,15 +56,16 @@ appended to \fIdsPtr\fR.  \fIDsPtr\fR must refer to an initialized
 Postscript printer, the
 following screen font families should print correctly:
 .IP
-\fBAvant Garde\fR, \fBArial\fR, \fBBookman\fR, \fBCourier\fR, 
+\fBAvant Garde\fR, \fBArial\fR, \fBBookman\fR, \fBCourier\fR,
 \fBCourier New\fR, \fBGeneva\fR, \fBHelvetica\fR, \fBMonaco\fR,
 \fBNew Century Schoolbook\fR, \fBNew York\fR, \fBPalatino\fR, \fBSymbol\fR,
-\fBTimes\fR, \fBTimes New Roman\fR, \fBZapf Chancery\fR, and 
+\fBTimes\fR, \fBTimes New Roman\fR, \fBZapf Chancery\fR, and
 \fBZapf Dingbats\fR.
 .PP
 Any other font families may not print correctly because the computed
 Postscript font name may be incorrect or not exist on the printer.
 .SH "DATA STRUCTURES"
+.PP
 The \fBTk_FontMetrics\fR data structure is used by \fBTk_GetFontMetrics\fR to
 return information about a font and is defined as follows:
 .CS
@@ -72,7 +73,7 @@ typedef struct Tk_FontMetrics {
     int \fIascent\fR;
     int \fIdescent\fR;
     int \fIlinespace\fR;
-} Tk_FontMetrics;
+} \fBTk_FontMetrics\fR;
 .CE
 .PP
 The \fIascent\fR field is the amount in pixels that the tallest

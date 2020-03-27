@@ -39,9 +39,11 @@ or vertically. Must be either \fBhorizontal\fR or \fBvertical\fR or an
 abbreviation of one of these.
 .OP \-to to To
 Specifies a real value corresponding to the right or bottom end of the scale.
-This value may be either less than or greater than the \fBfrom\fR option.
+This value may be either less than or greater than the \fB\-from\fR option.
 .OP \-value value Value
 Specifies the current floating-point value of the variable.
+If \fB\-variable\fR is set to an existing variable, specifying \fB\-value\fR
+has no effect (the variable value takes precedence).
 .OP \-variable variable Variable
 Specifies the name of a global variable to link to the scale. Whenever the
 value of the variable changes, the scale will update to reflect this value.
@@ -65,7 +67,7 @@ Get the current value of the \fB\-value\fR option, or the value corresponding
 to the coordinates \fIx,y\fR if they are specified. \fIX\fR and \fIy\fR are
 pixel coordinates relative to the scale widget origin.
 .TP
-\fIpathName \fBidentify\fR \fIx y\fR
+\fIpathName \fBidentify \fIx y\fR
 Returns the name of the element at position \fIx\fR, \fIy\fR.
 See \fIttk::widget(n)\fR.
 .TP
@@ -91,6 +93,35 @@ Modify or query the widget state; see \fIttk::widget(n)\fR.
 Get the coordinates corresponding to \fIvalue\fR, or the coordinates
 corresponding to the current value of the \fB\-value\fR option if \fIvalue\fR
 is omitted.
+.SH "STYLING OPTIONS"
+.PP
+The class name for a \fBttk::scale\fP is \fBTScale\fP.
+.PP
+Dynamic states: \fBactive\fP.
+.PP
+\fBTProgressbar\fP styling options configurable with \fBttk::style\fP
+are:
+.PP
+\fB\-background\fP \fIcolor\fP
+.br
+\fB\-borderwidth\fP \fIamount\fP
+.br
+\fB\-darkcolor\fP \fIcolor\fP
+.br
+\fB\-groovewidth\fP \fIamount\fP
+.br
+\fB\-lightcolor\fP \fIcolor\fP
+.br
+\fB\-sliderwidth\fP \fIamount\fP
+.br
+\fB\-troughcolor\fP \fIcolor\fP
+.br
+\fB\-troughrelief\fP \fIrelief\fP
+.PP
+Some options are only available for specific themes.
+.PP
+See the \fBttk::style\fP manual page for information on how to configure
+ttk styles.
 .SH "SEE ALSO"
 ttk::widget(n), scale(n)
 .SH KEYWORDS

@@ -19,7 +19,7 @@ proc colors {w redInc greenInc blueInc} {
 	for {set x 0} {$x < 8} {incr x} {
 	    frame $w.f$x,$y -width 40 -height 40 -bd 2 -relief raised \
 		    -bg [format #%02x%02x%02x $red $green $blue]
-	    place $w.f$x,$y -x [expr 40*$x] -y [expr 40*$y]
+	    place $w.f$x,$y -x [expr {40*$x}] -y [expr {40*$y}]
 	    incr red $redInc
 	    incr green $greenInc
 	    incr blue $blueInc

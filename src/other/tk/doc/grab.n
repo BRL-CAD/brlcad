@@ -16,7 +16,6 @@ grab \- Confine pointer and keyboard events to a window sub-tree
 .sp
 \fBgrab \fIoption \fR?\fIarg arg \fR...?
 .BE
-
 .SH DESCRIPTION
 .PP
 This command implements simple pointer and keyboard grabs for Tk.
@@ -62,6 +61,16 @@ The \fBfocus\fR command is still used to determine which window in the
 application receives the keyboard events.
 The keyboard grab is released when the grab is released.
 .PP
+On macOS a global grab affects all windows created by one Tk process.
+No window in that process other than the grab window can even be
+focused, hence no other window receives key or mouse events.  A local
+grab on macOS affects all windows created by one Tcl interpreter.  It
+is possible to focus any window belonging to the Tk process during a
+local grab but the grab window is the only window created by its
+interpreter which receives key or mouse events.  Windows belonging to the
+same process but created by different interpreters continue to receive
+key and mouse events normally.
+.PP
 Grabs apply to particular displays.  If an application has windows
 on multiple displays then it can establish a separate grab on each
 display.
@@ -102,6 +111,7 @@ Returns \fBnone\fR if no grab is currently set on \fIwindow\fR,
 \fBlocal\fR if a local grab is set on \fIwindow\fR, and
 \fBglobal\fR if a global grab is set.
 .SH WARNING
+.PP
 It is very easy to use global grabs to render a display completely
 unusable (e.g. by setting a grab on a widget which does not respond to
 events and not providing any mechanism for releasing the grab).  Take
@@ -121,6 +131,7 @@ only one of those applications can have a local grab for a given
 display at any given time.  If the applications are in different
 processes, this restriction does not exist.
 .SH EXAMPLE
+.PP
 Set a grab so that only one button may be clicked out of a group.  The
 other buttons are unresponsive to the mouse until the middle button is
 clicked.
@@ -130,6 +141,10 @@ pack [button .b2 \-text "Click me! #2" \-command {destroy .b2}]
 pack [button .b3 \-text "Click me! #3" \-command {destroy .b3}]
 \fBgrab\fR .b2
 .CE
-
+.SH "SEE ALSO"
+busy(n)
 .SH KEYWORDS
 grab, keyboard events, pointer events, window
+'\" Local Variables:
+'\" mode: nroff
+'\" End:
