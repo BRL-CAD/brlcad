@@ -15,6 +15,7 @@
 
 package require tcltest
 namespace import -force ::tcltest::*
+loadTestedCommands
 
 if [catch {package require Iwidgets 4.0}] {
   # Let's try modifying the auto_path.  Note that the IWIDGETS_LIBRARY
@@ -129,7 +130,7 @@ foreach test {
 # This happens to be for a command...
 test Menubar-3.$o {menubar menuconfiguration option} {
     llength [.mb menuconfigure .file.quit]
-} {15}
+} {16}
 
 # do menuconfigure tests also...
 foreach test {
@@ -161,7 +162,7 @@ foreach test {
 # This happens to be for a cascade...
 test Menubar-3.$o {menubar menuconfiguration option} {
     llength [.mb menuconfigure .view.more]
-} {17}
+} {18}
 
 # do menuconfigure tests also...
 foreach test {

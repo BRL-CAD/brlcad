@@ -15,6 +15,7 @@
 
 package require tcltest
 namespace import -force ::tcltest::*
+loadTestedCommands
 
 if [catch {package require Iwidgets 4.0}] {
   # Let's try modifying the auto_path.  Note that the IWIDGETS_LIBRARY
@@ -39,6 +40,11 @@ set c 1
 set o 1
 set m 1
 
+image create bitmap flagup -file $tk_library/demos/images/flagup.[expr {
+    [package vcompare [package present Tk] 8.5] < 0 ? "bmp" : "xbm"
+}]
+
+
 #
 # Initial construction test
 #
@@ -46,7 +52,6 @@ test Labeledwidget-1.$c {Labeledwidget construction} {
     iwidgets::Labeledwidget .lw
     pack [listbox [.lw childsite].lb -relief sunken] -padx 10 -pady 10
     pack .lw -fill both -expand yes -padx 10 -pady 10
-    image create bitmap flagup -file $tk_library/demos/images/flagup.bmp
     update 
 } {}
 
@@ -140,9 +145,9 @@ test Labeledwidget-1.$c {Labeledwidget destruction} {
     destroy .b
     destroy .lw
     update 
-    image delete flagup
 } {}
 
+image delete flagup
 incr c
 
 test Labeledwidget-1.$c {Labeledwidget construction} {

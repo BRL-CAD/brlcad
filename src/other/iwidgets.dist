@@ -1,10 +1,10 @@
 set(iwidgets_ignore_files
 CHANGES
-CMakeLists.txt
 ChangeLog
-Makefile.am
+Makefile.in
 README
 aclocal.m4
+configure
 configure.in
 demos/buttonbox
 demos/calendar
@@ -135,8 +135,6 @@ demos/timeentry
 demos/timefield
 demos/toolbar
 demos/watch
-doc/CMakeLists.txt
-doc/Makefile.am
 doc/buttonbox.n
 doc/calendar.n
 doc/canvasprintbox.n
@@ -197,7 +195,6 @@ doc/tk2html.perl
 doc/tk2html2.awk
 doc/toolbar.n
 doc/watch.n
-generic/Makefile.am
 generic/buttonbox.itk
 generic/calendar.itk
 generic/canvasprintbox.itk

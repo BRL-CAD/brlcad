@@ -15,6 +15,7 @@
 
 package require tcltest
 namespace import -force ::tcltest::*
+loadTestedCommands
 
 if [catch {package require Iwidgets 4.0}] {
   # Let's try modifying the auto_path.  Note that the IWIDGETS_LIBRARY
@@ -216,7 +217,7 @@ foreach test {
 #
 # Addtional test for selection/mark get
 #
-test Hierarchy-1.$m {Hierarchy selection/mark get} {
+test Hierarchy-3.$m {Hierarchy selection/mark get} {
     .h draw -now
     .h selection clear
     eval .h selection add $homelist

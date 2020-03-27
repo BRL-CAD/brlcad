@@ -81,7 +81,7 @@ itcl::class iwidgets::Timefield {
       method _toggleAmPm {}
 
       variable _cfield hour
-      variable _formatString "%r"
+      variable _formatString "%I:%M:%S %p"
       variable _fields {}
       variable _numFields 4
       variable _forward {}
@@ -269,7 +269,7 @@ itcl::configbody iwidgets::Timefield::format {
       set _forward _forwardCivilian
       set _fields $_civilianFields
       set _numFields 4
-      set _formatString "%r"
+      set _formatString "%I:%M:%S %p"
       $itk_component(time) config -width 11
     }
     military {
@@ -416,7 +416,32 @@ itcl::body iwidgets::Timefield::show {{time "now"}} {
 # ------------------------------------------------------------------
 itcl::body iwidgets::Timefield::isvalid {} {
   set _timeVar [$itk_component(time) get]
-  return [expr {([catch {::clock scan $_timeVar -gmt $itk_option(-gmt)}] == 0)}]
+
+  if {[catch {set count [scan $_timeVar {%2d:%2d:%2d %1sM} h m s p]}]} {
+    return 0
+  }
+  if {$count != 4} {
+    return 0
+  }
+  if {![string match {[AP]} $p]} {
+    return 0
+  }
+  if {$s < 0 || $s > 59} {
+    return 0
+  }
+  if {$m < 0 || $m > 59} {
+    return 0
+  }
+  if {$itk_option(-format) == "military"} {
+    if {$h < 0 || $h > 23} {
+	return 0
+    }
+  } else {
+    if {$h < 1 || $h > 12} {
+	return 0
+    }
+  }
+  return 1
 }
 
 # ------------------------------------------------------------------

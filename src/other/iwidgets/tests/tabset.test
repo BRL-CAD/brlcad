@@ -15,6 +15,7 @@
 
 package require tcltest
 namespace import -force ::tcltest::*
+loadTestedCommands
 
 if [catch {package require Iwidgets 4.0}] {
   # Let's try modifying the auto_path.  Note that the IWIDGETS_LIBRARY
@@ -291,7 +292,7 @@ foreach test {
 		{0 {.ts add} {}}
 		{0 {.ts add} {}}
 		{1 {.ts insert 2} {bad value}}
-		{1 {.ts insert -1} {bad option}}
+		{1 {.ts insert -1} {bad }}
 		{0 {.ts delete 0 end} {}}
 		{1 {.ts next} {can't goto next tab, no tabs in the tabset}}
 		{1 {.ts prev} {can't goto previous tab, no tabs in the tabset}}

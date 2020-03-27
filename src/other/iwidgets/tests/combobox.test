@@ -13,6 +13,7 @@
 
 package require tcltest
 namespace import -force ::tcltest::*
+loadTestedCommands
 
 if [catch {package require Iwidgets 4.0}] {
   # Let's try modifying the auto_path.  Note that the IWIDGETS_LIBRARY
@@ -43,7 +44,6 @@ set m 1
 test Combobox-1.$c {Combobox construction} {
     iwidgets::Combobox .cb
     pack .cb -padx 10 -pady 10 -fill x -expand yes
-    image create bitmap flagup -file $tk_library/demos/images/flagup.bmp
     update 
 } {}
 
@@ -57,6 +57,10 @@ test Combobox-2.$o {configuration option} {
 } {52}
 
 incr o
+
+image create bitmap flagup -file $tk_library/demos/images/flagup.[expr {
+    [package vcompare [package present Tk] 8.5] < 0 ? "bmp" : "xbm"
+}]
 
 foreach test {
     {-listheight 150 150}

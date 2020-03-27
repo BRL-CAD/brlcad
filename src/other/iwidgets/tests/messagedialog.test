@@ -16,6 +16,7 @@
 
 package require tcltest
 namespace import -force ::tcltest::*
+loadTestedCommands
 
 if [catch {package require Iwidgets 4.0}] {
   # Let's try modifying the auto_path.  Note that the IWIDGETS_LIBRARY
@@ -40,12 +41,15 @@ set c 1
 set o 1
 set m 1
 
+image create bitmap flagup -file $tk_library/demos/images/flagup.[expr {
+    [package vcompare [package present Tk] 8.5] < 0 ? "bmp" : "xbm"
+}]
+
 #
 # Initial construction test
 #
 test Messagedialog-1.$c {Messagedialog construction} {
     iwidgets::Messagedialog .md -text "Are you sure ?" -bitmap questhead
-    image create bitmap flagup -file $tk_library/demos/images/flagup.bmp
     .md activate
 } {}
 
@@ -56,7 +60,7 @@ incr c
 #
 test Messagedialog-2.$o {configuration option} {
     llength [.md configure]
-} {26}
+} {27}
 
 incr o
 
@@ -147,9 +151,10 @@ incr c
 
 test Messagedialog-1.$c {Messagedialog destruction} {
     destroy .md
-    image delete flagup
     update
 } {}
+
+image delete flagup
 
 incr c
 

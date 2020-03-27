@@ -15,6 +15,7 @@
 
 package require tcltest
 namespace import -force ::tcltest::*
+loadTestedCommands
 
 if [catch {package require Iwidgets 4.0}] {
   # Let's try modifying the auto_path.  Note that the IWIDGETS_LIBRARY
@@ -53,7 +54,7 @@ incr c
 #
 test Hyperhelp-2.$o {configuration option} {
     llength [.h configure]
-} {43}
+} {44}
 
 incr o
 

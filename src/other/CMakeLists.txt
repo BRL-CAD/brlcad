@@ -1397,7 +1397,48 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
       )
 
     SetTargetFolder(ITK_BLD "Third Party Libraries")
-    SetTargetFolder(tk "Third Party Libraries")
+    SetTargetFolder(itk "Third Party Libraries")
+
+    ################
+    #    IWidgets
+    ################
+
+    if (NOT MSVC)
+
+      set(IWIDGETS_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/IWIDGETS_BLD-prefix/src/IWIDGETS_BLD")
+      set(IWIDGETS_VERSION 4.1.1)
+
+      set(IWIDGETS_PATCH_FILES "${IWIDGETS_SRC_DIR}/configure" "${IWIDGETS_SRC_DIR}/tclconfig/tcl.m4")
+
+      ExternalProject_Add(IWIDGETS_BLD
+	URL "${CMAKE_CURRENT_SOURCE_DIR}/iwidgets"
+	BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
+	PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${IWIDGETS_PATCH_FILES}
+	CONFIGURE_COMMAND CPPFLAGS=-I${CMAKE_BINARY_DIR}/${INCLUDE_DIR} LDFLAGS=-L${CMAKE_BINARY_DIR}/${LIB_DIR} ${IWIDGETS_SRC_DIR}/configure --prefix=${CMAKE_BINARY_DIR} --with-tcl=${CMAKE_BINARY_DIR}/${LIB_DIR} --with-tk=${CMAKE_BINARY_DIR}/${LIB_DIR} --with-itcl=${CMAKE_BINARY_DIR}/lib/itcl${ITCL_VERSION} --with-itk=${ITK_SRC_DIR}
+	BUILD_COMMAND make -j${pcnt}
+	INSTALL_COMMAND make install
+	DEPENDS TK_BLD TCL_BLD
+	)
+    else (NOT MSVC)
+
+      ExternalProject_Add(IWIDGETS_BLD
+	SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tk"
+	BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
+	CONFIGURE_COMMAND ""
+	BINARY_DIR ${IWIDGETS_SRC_DIR}/win
+	BUILD_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc INSTALLDIR=${CMAKE_BINARY_DIR} TCLDIR=${TCL_SRC_DIR} TKDIR=${TK_SRC_DIR}
+	INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install INSTALLDIR=${CMAKE_BINARY_DIR} TCLDIR=${TCL_SRC_DIR} TKDIR=${TK_SRC_DIR}
+	DEPENDS TK_BLD TCL_BLD
+	)
+
+    endif (NOT MSVC)
+
+    ExternalProject_ByProducts(IWIDGETS_BLD ${LIB_DIR}
+      iwidgets${IWIDGETS_VERSION}/iwidgets.tcl
+      )
+
+    SetTargetFolder(IWIDGETS_BLD "Third Party Libraries")
+    SetTargetFolder(iwidgets "Third Party Libraries")
 
   else(BRLCAD_ENABLE_TK)
 
@@ -1410,29 +1451,8 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
 endif (${CMAKE_PROJECT_NAME}_TCL_BUILD)
 
 if (0)
-set(iwidgets_ALIASES ENABLE_IWIDGETS)
-set(iwidgets_DESCRIPTION "
-Option for enabling and disabling compilation of the IWidgets Tk
-widget package provided with BRL-CAD's source distribution.  Default
-is AUTO, auto-enabling if the BRLCAD_TCL option is set to BUNDLED and
-testing first for a system version if BRLCAD_TCL is set to AUTO or
-SYSTEM.  If BRLCAD_IWIDGETS is set to BUNDLED, local copy is built even if
-a system version is present.  This package will be disabled if
-BRLCAD_ENABLE_TK is OFF.
-")
-THIRD_PARTY_TCL_PACKAGE(Iwidgets iwidgets "${TCL_WISH_EXECUTABLE}" "tcl;tk;itcl;itk" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" iwidgets_ALIASES iwidgets_DESCRIPTION)
-if(BRLCAD_IWIDGETS_BUILD)
-  set(IWIDGETS_VERSION "4.0.1" CACHE STRING "IWIDGETS_VERSION" FORCE)
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/iwidgets/pkgIndex.tcl")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/Iwidgets4.0.1")
-ELSE(BRLCAD_IWIDGETS_BUILD)
-  set(IWIDGETS_VERSION "${IWIDGETS_PACKAGE_VERSION}" CACHE STRING "IWIDGETS_VERSION" FORCE)
-endif(BRLCAD_IWIDGETS_BUILD)
-CONFIG_H_APPEND(BRLCAD "#define IWIDGETS_VERSION \"${IWIDGETS_VERSION}\"\n")
-mark_as_advanced(IWIDGETS_VERSION)
-mark_as_advanced(COMPAT_SRCS)
 
-set(tkhtml_ALIASES ENABLE_TKHTML)
+  set(tkhtml_ALIASES ENABLE_TKHTML)
 set(tkhtml_DESCRIPTION "
 Option for enabling and disabling compilation of the Tkhtml HTML
 viewing package provided with BRL-CAD's source distribution.  Default
@@ -1447,21 +1467,6 @@ DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tkhtml/pkgIndex.tcl")
 DISTCLEAN("${CMAKE_BINARY_DIR}/lib/Tkhtml3.0")
 SetTargetFolder(Tkhtml "Third Party Libraries")
 SetTargetFolder(tkhtml_n_gen "Compilation Utilities")
-
-set(tkpng_ALIASES ENABLE_TKPNG)
-set(tkpng_DESCRIPTION "
-Option for enabling and disabling compilation of the tkpng PNG image
-viewing package provided with BRL-CAD's source distribution.  Default
-is AUTO, auto-enabling if the BRLCAD_TCL option is set to BUNDLED and
-testing first for a system version if BRLCAD_TCL is set to AUTO or
-SYSTEM.  If BRLCAD_TKPNG is set to BUNDLED, local copy is built even if
-a system version is present.  This package will be disabled if
-BRLCAD_ENABLE_TK is OFF.
-")
-THIRD_PARTY_TCL_PACKAGE(tkpng tkpng "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" tkpng_ALIASES tkpng_DESCRIPTION)
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tkpng/pkgIndex.tcl")
-DISTCLEAN("${CMAKE_BINARY_DIR}/lib/tkpng0.8")
-SetTargetFolder(tkpng "Third Party Libraries")
 
 set(tktable_ALIASES ENABLE_TKTABLE)
 set(tktable_DESCRIPTION "
@@ -1479,31 +1484,6 @@ DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tktable/tktable_cfg.h")
 DISTCLEAN("${CMAKE_BINARY_DIR}/lib/Tktable2.10")
 SetTargetFolder(Tktable "Third Party Libraries")
 SetTargetFolder(tktable_header_gen "Compilation Utilities")
-
-#set(tktreectrl_ALIASES ENABLE_TKTREECTRL)
-#set(tktreectrl_DESCRIPTION "
-#Option for enabling and disabling compilation of the TkTreeCtrl graphical
-#table widget package provided with BRL-CAD's source distribution.
-#Default is AUTO, auto-enabling if the BRLCAD_TCL option is set to
-#BUNDLED and testing first for a system version if BRLCAD_TCL is set to
-#AUTO or SYSTEM.  If BRLCAD_TKTREECTRL is set to BUNDLED, local copy is built
-#even if a system version is present.  This package will be disabled if
-#BRLCAD_ENABLE_TK is OFF.
-#")
-#THIRD_PARTY_TCL_PACKAGE(tktreectrl tktreectrl "${TCL_WISH_EXECUTABLE}" "tcl;tk"
-#  "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" tktreectrl_ALIASES tktreectrl_DESCRIPTION)
-#DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tktreectrl/pkgIndex.tcl")
-#DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tktreectrl/tktreectrl_cfg.h")
-#DISTCLEAN("${CMAKE_BINARY_DIR}/lib/TkTreeCtrl2.4")
-
-# GCT is a collection of algorithms for geometry processing and conversion
-#add_subdirectory(gct)
-include("${CMAKE_CURRENT_SOURCE_DIR}/gct.dist")
-CMAKEFILES_IN_DIR(gct_ignore_files gct)
-
-# linenoise is used by applications directly
-include(${CMAKE_CURRENT_SOURCE_DIR}/linenoise.dist)
-CMAKEFILES_IN_DIR(linenoise_ignore_files linenoise)
 
 endif (0)
 
@@ -1600,6 +1580,14 @@ endif(BRLCAD_OSG_BUILD)
 
 endif (0)
 
+# GCT is a collection of algorithms for geometry processing and conversion
+#add_subdirectory(gct)
+include("${CMAKE_CURRENT_SOURCE_DIR}/gct.dist")
+CMAKEFILES_IN_DIR(gct_ignore_files gct)
+
+# linenoise is used by applications directly
+include(${CMAKE_CURRENT_SOURCE_DIR}/linenoise.dist)
+CMAKEFILES_IN_DIR(linenoise_ignore_files linenoise)
 
 # Eigen is header only
 include("${CMAKE_CURRENT_SOURCE_DIR}/Eigen.dist")

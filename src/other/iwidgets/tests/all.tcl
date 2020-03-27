@@ -12,6 +12,11 @@
 package require tcltest
 namespace import -force ::tcltest::*
 
+testsDirectory [file dirname [info script]]
+cd [testsDirectory]
+runAllTests
+return
+
 # Look for the -exedir flag and find a suitable tclsh executable.
 
 if {(![info exists argv]) || ([llength $argv] < 1)} {
@@ -39,6 +44,7 @@ set ::tcltest::testsDirectory [pwd]
 cd $cwd
 
 set logfile [file join $::tcltest::temporaryDirectory Log.txt]
+	file delete $logfile
 
 puts stdout "Using interp: $shell"
 puts stdout "Running tests in working dir: $::tcltest::testsDirectory"
@@ -68,7 +74,7 @@ foreach file [lsort [::tcltest::getMatchingFiles]] {
     # variable is set correctly when we spawn the child test processes
 
     cd $::tcltest::testsDirectory
-    set cmd [concat [list | $shell $file] [split $argv] \
+    set cmd [concat [list | $shell $file] $argv \
 	    [list -outfile $logfile]]
     if {[catch {
 	set pipeFd [open $cmd "r"] 
@@ -102,6 +108,7 @@ foreach file [lsort [::tcltest::getMatchingFiles]] {
 	    }
 	}
 	close $fd
+	file delete $logfile
     } msg]} {
 	puts $::tcltest::outputChannel $msg
     }

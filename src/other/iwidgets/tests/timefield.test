@@ -15,6 +15,7 @@
 
 package require tcltest
 namespace import -force ::tcltest::*
+loadTestedCommands
 
 if [catch {package require Iwidgets 4.0}] {
   # Let's try modifying the auto_path.  Note that the IWIDGETS_LIBRARY
@@ -142,7 +143,7 @@ foreach test {
     {{.tf show now; list} {}}} {
 	set method [lindex [lindex $test 0] 1]
 	test Timefield-3.$m "object methods, $method" {
-	    list [catch {eval [lindex $test 0]} msg] $msg
+	    list [catch [lindex $test 0] msg] $msg
 	} [list 0 [lindex $test 1]]
 	update 
 	incr m
