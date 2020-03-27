@@ -159,12 +159,12 @@ fi
 
 zlib_ok=yes
 AC_CHECK_HEADER([zlib.h],[
-  AC_CHECK_TYPE([gz_header],[],[zlib_ok=no],[#include <zlib.h>])],[
+  AC_CHECK_TYPE([brl_gz_header],[],[AC_CHECK_TYPE([gz_header],[],[zlib_ok=no],[#include "zlib.h"])],[#include "zlib.h"])],[
   zlib_ok=no])
 AS_IF([test $zlib_ok = yes], [
-  AC_SEARCH_LIBS([deflateSetHeader],[z],[],[
-    zlib_ok=no
-  ])])
+  AC_SEARCH_LIBS([brl_deflateSetHeader],[z],[],[
+    AC_SEARCH_LIBS([deflateSetHeader],[z],[],[zlib_ok=no])
+    ])])
 AS_IF([test $zlib_ok = no], [
   AC_SUBST(ZLIB_OBJS,[\${ZLIB_OBJS}])
   AC_SUBST(ZLIB_SRCS,[\${ZLIB_SRCS}])
