@@ -32,7 +32,8 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
 
-file(WRITE "${WORKING_PKGFILE}" "package ifneeded ${pkgname} ${pkgversion} [list load [file join $dir \"${TF_DIR}\" ${TF_NAME}] ${pkgname}]")
+get_filename_component(TFD "${TF_DIR}" REALPATH)
+file(WRITE "${WORKING_PKGFILE}" "package ifneeded ${pkgname} ${pkgversion} [list load [file join $dir \"${TFD}\" ${TF_NAME}] ${pkgname}]")
 file(WRITE "${INSTALL_PKGFILE}" "package ifneeded ${pkgname} ${pkgversion} [list load [file join $dir .. .. \"${INST_DIR}\" ${TF_NAME}] ${pkgname}]")
 
 # Local Variables:

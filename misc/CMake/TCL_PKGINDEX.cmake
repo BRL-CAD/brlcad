@@ -46,7 +46,7 @@ function(TCL_PKGINDEX target pkgname pkgversion)
   set(INSTALL_PKGFILE ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl)
 
   add_custom_command(OUTPUT ${WORKING_PKGFILE} ${INSTALL_PKGFILE}
-    COMMAND ${CMAKE_COMMAND} -DWORKING_PKGFILE="${WORKING_PKGFILE}" -DINSTALL_PKGFILE="${INSTALL_PKGFILE}" -DTF_NAME="$<TARGET_FILE_NAME:${target}>" -DTF_DIR="$<TARGET_FILE_DIR:${target}>" -Dpkgname="${pkgname}" -Dpkgversion="${pkgversion}" -DINST_DIR="${INST_DIR}" -P ${BRLCAD_CMAKE_DIR}/tcl_mkindex.cmake
+    COMMAND ${CMAKE_COMMAND} -DWORKING_PKGFILE="${WORKING_PKGFILE}" -DINSTALL_PKGFILE="${INSTALL_PKGFILE}" -DTF_NAME="$<TARGET_FILE_NAME:${target}>" -DTF_DIR="$<TARGET_FILE_DIR:${target}>" -Dpkgname="${pkgname}" -Dpkgversion="${pkgversion}" -DINST_DIR="${INST_DIR}" -P ${BRLCAD_CMAKE_DIR}/scripts/tcl_mkindex.cmake
     )
   add_custom_target(${pkgname}_pkgIndex ALL DEPENDS ${WORKING_PKGFILE} ${INSTALL_PKGFILE})
 
