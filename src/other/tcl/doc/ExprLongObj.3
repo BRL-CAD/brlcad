@@ -29,7 +29,7 @@ int
 .AP Tcl_Interp *interp in
 Interpreter in whose context to evaluate \fIobjPtr\fR.
 .AP Tcl_Obj *objPtr in
-Pointer to an object containing the expression to evaluate.
+Pointer to a value containing the expression to evaluate.
 .AP long *longPtr out
 Pointer to location in which to store the integer value of the
 expression.
@@ -40,7 +40,7 @@ expression.
 Pointer to location in which to store the 0/1 boolean value of the
 expression.
 .AP Tcl_Obj **resultPtrPtr out
-Pointer to location in which to store a pointer to the object
+Pointer to location in which to store a pointer to the value
 that is the result of the expression.
 .BE
 
@@ -93,14 +93,14 @@ or
 or else an error occurs.
 .PP
 If \fBTcl_ExprObj\fR successfully evaluates the expression,
-it stores a pointer to the Tcl object
+it stores a pointer to the Tcl value
 containing the expression's value at \fI*resultPtrPtr\fR.
 In this case, the caller is responsible for calling
-\fBTcl_DecrRefCount\fR to decrement the object's reference count
-when it is finished with the object.
+\fBTcl_DecrRefCount\fR to decrement the value's reference count
+when it is finished with the value.
 
 .SH "SEE ALSO"
 Tcl_ExprLong, Tcl_ExprDouble, Tcl_ExprBoolean, Tcl_ExprString, Tcl_GetObjResult
 
 .SH KEYWORDS
-boolean, double, evaluate, expression, integer, object, string
+boolean, double, evaluate, expression, integer, value, string

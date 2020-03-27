@@ -1,4 +1,4 @@
-Tcl 8.5 for Windows
+Tcl 8.6 for Windows
 
 1. Introduction
 ---------------
@@ -16,7 +16,7 @@ The information in this file is maintained on the web at:
 
 In order to compile Tcl for Windows, you need the following:
 
-	Tcl 8.5 Source Distribution (plus any patches)
+	Tcl 8.6 Source Distribution (plus any patches)
 
 	and
 
@@ -79,9 +79,9 @@ Use the Makefile "install" target to install Tcl.  It will install it
 according to the prefix options you provided in the correct directory
 structure.
 
-Note that in order to run tclsh85.exe, you must ensure that tcl85.dll is
+Note that in order to run tclsh86.exe, you must ensure that tcl86.dll is
 on your path, in the system directory, or in the directory containing
-tclsh85.exe.
+tclsh86.exe.
 
 Note: Tcl no longer provides support for Win32s.
 
@@ -93,7 +93,7 @@ tests are timing dependent and will fail from time to time.  If a test is
 failing consistently, please send us a bug report with as much detail as
 you can manage to our tracker:
 
-	http://core.tcl.tk/tcl/reportlist
+	https://core.tcl-lang.org/tcl/reportlist
 
 In order to run the test suite, you build the "test" target using the
 appropriate makefile for your compiler.

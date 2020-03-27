@@ -33,10 +33,17 @@ if {[catch {package require http 1.0}]} {
     }
 }
 
+if {$::tcl_platform(os) eq "Darwin"} {
+    # Name resolution often a problem on OSX; not focus of HTTP package anyway
+    set HOST localhost
+} else {
+    set HOST [info hostname]
+}
+
 set bindata "This is binary data\x0d\x0amore\x0dmore\x0amore\x00null"
 catch {unset data}
 
-## 
+##
 ## The httpd script implement a stub http server
 ##
 source [file join [file dirname [info script]] httpd]
@@ -85,7 +92,7 @@ test httpold-3.2 {http_get} {
     set err
 } {Unsupported URL: http:junk}
 
-set url [info hostname]:$port
+set url ${::HOST}:$port
 test httpold-3.3 {http_get} {
     set token [http_get $url]
     http_data $token
@@ -95,8 +102,8 @@ test httpold-3.3 {http_get} {
 </body></html>"
 
 set tail /a/b/c
-set url [info hostname]:$port/a/b/c
-set binurl [info hostname]:$port/binary
+set url ${::HOST}:$port/a/b/c
+set binurl ${::HOST}:$port/binary
 
 test httpold-3.4 {http_get} {
     set token [http_get $url]
@@ -108,7 +115,7 @@ test httpold-3.4 {http_get} {
 
 proc selfproxy {host} {
     global port
-    return [list [info hostname] $port]
+    return [list ${::HOST} $port]
 }
 test httpold-3.5 {http_get} {
     http_config -proxyfilter selfproxy
@@ -273,7 +280,7 @@ test httpold-5.3 {http_formatQuery} {
 
 test httpold-6.1 {httpProxyRequired} {
     update
-    http_config -proxyhost [info hostname] -proxyport $port
+    http_config -proxyhost ${::HOST} -proxyport $port
     set token [http_get $url]
     http_wait $token
     http_config -proxyhost {} -proxyport {}

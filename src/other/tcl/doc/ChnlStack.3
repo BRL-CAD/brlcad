@@ -30,7 +30,7 @@ Tcl_Channel
 .AS Tcl_ChannelType clientData
 .AP Tcl_Interp *interp in
 Interpreter for error reporting.
-.AP Tcl_ChannelType *typePtr in
+.AP "const Tcl_ChannelType" *typePtr in
 The new channel I/O procedures to use for \fIchannel\fR.
 .AP ClientData clientData in
 Arbitrary one-word value to pass to channel I/O procedures.

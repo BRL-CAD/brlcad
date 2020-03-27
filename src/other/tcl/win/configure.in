@@ -11,21 +11,28 @@ AC_PREREQ(2.59)
 # /bin/sh. The bash shell seems to suffer from some strange failures.
 SHELL=/bin/sh
 
-TCL_VERSION=8.5
+TCL_VERSION=8.6
 TCL_MAJOR_VERSION=8
-TCL_MINOR_VERSION=5
-TCL_PATCH_LEVEL=".19"
+TCL_MINOR_VERSION=6
+TCL_PATCH_LEVEL=".10"
 VER=$TCL_MAJOR_VERSION$TCL_MINOR_VERSION
 
-TCL_DDE_VERSION=1.3
+TCL_DDE_VERSION=1.4
 TCL_DDE_MAJOR_VERSION=1
-TCL_DDE_MINOR_VERSION=3
+TCL_DDE_MINOR_VERSION=4
 DDEVER=$TCL_DDE_MAJOR_VERSION$TCL_DDE_MINOR_VERSION
 
-TCL_REG_VERSION=1.2
+TCL_REG_VERSION=1.3
 TCL_REG_MAJOR_VERSION=1
-TCL_REG_MINOR_VERSION=2
+TCL_REG_MINOR_VERSION=3
 REGVER=$TCL_REG_MAJOR_VERSION$TCL_REG_MINOR_VERSION
+
+PKG_CFG_ARGS=$@
+
+#------------------------------------------------------------------------
+# Empty slate for bundled packages, to avoid stale configuration
+#------------------------------------------------------------------------
+rm -Rf pkgs
 
 #------------------------------------------------------------------------
 # Handle the --prefix=... option
@@ -91,12 +98,63 @@ SC_TCL_CFG_ENCODING
 SC_ENABLE_SHARED
 
 #--------------------------------------------------------------------
+# Check whether --enable-time64bit was given.
+#--------------------------------------------------------------------
+
+AC_MSG_CHECKING([force of 64-bit time_t])
+AC_ARG_ENABLE(time64bit,
+    AC_HELP_STRING([--enable-time64bit],
+	[force 64-bit time_t for 32-bit build (default: off)]),
+    [tcl_ok=$enableval], [tcl_ok=no])
+AC_MSG_RESULT("$tcl_ok")
+if test "$tcl_ok" = "yes"; then
+    CFLAGS="${CFLAGS} -D_USE_64BIT_TIME_T"
+fi
+
+#--------------------------------------------------------------------
 # The statements below define a collection of compile flags.  This
 # macro depends on the value of SHARED_BUILD, and should be called
 # after SC_ENABLE_SHARED checks the configure switches.
 #--------------------------------------------------------------------
 
 SC_CONFIG_CFLAGS
+
+# Cross-compiling
+case ${host_alias} in
+*mingw32*)
+    TCL_EXE="tclsh"
+    ;;
+*)
+    TCL_EXE="TCL_LIBRARY=\"\${LIBRARY_DIR}\"; export TCL_LIBRARY; ./\${TCLSH}"
+    ;;
+esac
+
+#------------------------------------------------------------------------
+#	Add stuff for zlib; note that this is mostly done in the makefile now
+#	as we just assume that the platform hasn't got a usable z.lib
+#------------------------------------------------------------------------
+
+AS_IF([test "${enable_shared+set}" = "set"], [
+  enableval="$enable_shared"
+  tcl_ok=$enableval
+], [
+  tcl_ok=yes
+])
+AS_IF([test "$tcl_ok" = "yes"], [
+  AC_SUBST(ZLIB_DLL_FILE,[\${ZLIB_DLL_FILE}])
+  AS_IF([test "$do64bit" != "no"], [
+    AS_IF([test "$GCC" == "yes"],[
+      AC_SUBST(ZLIB_LIBS,[\${ZLIB_DIR_NATIVE}/win64/libz.dll.a])
+    ], [
+      AC_SUBST(ZLIB_LIBS,[\${ZLIB_DIR_NATIVE}/win64/zdll.lib])
+    ])
+  ], [
+    AC_SUBST(ZLIB_LIBS,[\${ZLIB_DIR_NATIVE}/win32/zdll.lib])
+  ])
+], [
+  AC_SUBST(ZLIB_OBJS,[\${ZLIB_OBJS}])
+])
+AC_DEFINE(HAVE_ZLIB, 1, [Is there an installed zlib?])
 
 AC_CHECK_TYPE([intptr_t], [
     AC_DEFINE([HAVE_INTPTR_T], 1, [Do we have the intptr_t type?])], [
@@ -129,9 +187,69 @@ AC_CHECK_TYPE([uintptr_t], [
 	   type wide enough to hold a pointer.])
     fi
 ])
+
 #--------------------------------------------------------------------
 # Perform additinal compiler tests.
 #--------------------------------------------------------------------
+
+# See if declarations like FINDEX_INFO_LEVELS are
+# missing from winbase.h. This is known to be
+# a problem with VC++ 5.2.
+
+AC_CACHE_CHECK(for FINDEX_INFO_LEVELS in winbase.h,
+    tcl_cv_findex_enums,
+AC_TRY_COMPILE([
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#undef WIN32_LEAN_AND_MEAN
+],
+[
+  FINDEX_INFO_LEVELS i;
+  FINDEX_SEARCH_OPS j;
+],
+        tcl_cv_findex_enums=yes,
+        tcl_cv_findex_enums=no)
+)
+if test "$tcl_cv_findex_enums" = "no"; then
+    AC_DEFINE(HAVE_NO_FINDEX_ENUMS, 1,
+            [Defined when enums are missing from winbase.h])
+fi
+
+# See if the compiler supports intrinsics.
+
+AC_CACHE_CHECK(for intrinsics support in compiler,
+    tcl_cv_intrinsics,
+AC_TRY_LINK([
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#undef WIN32_LEAN_AND_MEAN
+#include <intrin.h>
+],
+[
+  __cpuidex(0,0,0);
+],
+        tcl_cv_intrinsics=yes,
+        tcl_cv_intrinsics=no)
+)
+if test "$tcl_cv_intrinsics" = "yes"; then
+    AC_DEFINE(HAVE_INTRIN_H, 1,
+            [Defined when the compilers supports intrinsics])
+fi
+
+# See if the <wspiapi.h> header file is present
+
+AC_CACHE_CHECK(for wspiapi.h,
+    tcl_cv_wspiapi_h,
+AC_TRY_COMPILE([
+#include <wspiapi.h>
+], [],
+        tcl_cv_wspiapi_h=yes,
+        tcl_cv_wspiapi_h=no)
+)
+if test "$tcl_cv_wspiapi_h" = "yes"; then
+    AC_DEFINE(HAVE_WSPIAPI_H, 1,
+            [Defined when wspiapi.h exists])
+fi
 
 # See if declarations like FINDEX_INFO_LEVELS are
 # missing from winbase.h. This is known to be
@@ -190,18 +308,16 @@ eval "TCL_SRC_DIR=\"`cd $srcdir/..; $CYGPATH $(pwd)`\""
 
 eval "TCL_DLL_FILE=tcl${VER}${DLLSUFFIX}"
 
-eval "TCL_LIB_FILE=${LIBPREFIX}tcl$VER${LIBSUFFIX}"
-
-eval "TCL_LIB_FLAG=\"-ltcl${VER}${LIBFLAGSUFFIX}\""
-eval "TCL_BUILD_LIB_SPEC=\"-L`$CYGPATH $(pwd)` ${TCL_LIB_FLAG}\""
-eval "TCL_LIB_SPEC=\"-L${libdir} ${TCL_LIB_FLAG}\""
-
 eval "TCL_STUB_LIB_FILE=\"${LIBPREFIX}tclstub${VER}${LIBSUFFIX}\""
 eval "TCL_STUB_LIB_FLAG=\"-ltclstub${VER}${LIBFLAGSUFFIX}\""
 eval "TCL_BUILD_STUB_LIB_SPEC=\"-L`$CYGPATH $(pwd)` ${TCL_STUB_LIB_FLAG}\""
 eval "TCL_STUB_LIB_SPEC=\"-L${libdir} ${TCL_STUB_LIB_FLAG}\""
 eval "TCL_BUILD_STUB_LIB_PATH=\"`$CYGPATH $(pwd)`/${TCL_STUB_LIB_FILE}\""
 eval "TCL_STUB_LIB_PATH=\"${libdir}/${TCL_STUB_LIB_FILE}\""
+
+eval "TCL_LIB_FILE=\"${LIBPREFIX}tcl${VER}${LIBSUFFIX}\""
+eval "TCL_BUILD_LIB_SPEC=\"-L`$CYGPATH $(pwd)` -ltcl${VER}${FLAGSUFFIX}\""
+eval "TCL_LIB_SPEC=\"-L${libdir} -ltcl${VER}${FLAGSUFFIX}\""
 
 # Install time header dir can be set via --includedir
 eval "TCL_INCLUDE_SPEC=\"-I${includedir}\""
@@ -265,9 +381,15 @@ AC_SUBST(TCL_VERSION)
 AC_SUBST(TCL_MAJOR_VERSION)
 AC_SUBST(TCL_MINOR_VERSION)
 AC_SUBST(TCL_PATCH_LEVEL)
+AC_SUBST(PKG_CFG_ARGS)
+AC_SUBST(TCL_EXE)
 
 AC_SUBST(TCL_LIB_FILE)
 AC_SUBST(TCL_LIB_FLAG)
+AC_SUBST(TCL_STATIC_LIB_FILE)
+AC_SUBST(TCL_STATIC_LIB_FLAG)
+AC_SUBST(TCL_IMPORT_LIB_FILE)
+AC_SUBST(TCL_IMPORT_LIB_FLAG)
 # empty on win
 AC_SUBST(TCL_LIB_SPEC)
 AC_SUBST(TCL_STUB_LIB_FILE)
@@ -325,6 +447,7 @@ AC_SUBST(MAKE_EXE)
 
 # empty on win, but needs sub'ing
 AC_SUBST(TCL_BUILD_LIB_SPEC)
+AC_SUBST(TCL_CC_SEARCH_FLAGS)
 AC_SUBST(TCL_LD_SEARCH_FLAGS)
 AC_SUBST(TCL_NEEDS_EXP_FILE)
 AC_SUBST(TCL_BUILD_EXP_FILE)

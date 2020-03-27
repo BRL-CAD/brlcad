@@ -57,6 +57,8 @@ include(ExternalProject)
 # Note- make sure CMAKE_BINARY_DIR and CMAKE_INSTALL_PREFIX are finalized BEFORE including this file!
 include(${BRLCAD_CMAKE_DIR}/ExternalProject_Target.cmake)
 
+# External build outputs can be verbose - capture them to files instead of
+# outputting to console
 #set(LOG_OPTS
 #  LOG_DIR "${CMAKE_BINARY_DIR}/CMakeFiles/ExternalProject_logs"
 #  LOG_CONFIGURE ON LOG_BUILD ON LOG_INSTALL ON
@@ -64,6 +66,31 @@ include(${BRLCAD_CMAKE_DIR}/ExternalProject_Target.cmake)
 #  )
 
 set(LOG_OPTS)
+
+# With MSVC, some of the non-CMake subbuilds are going to need the vcvars bat
+# file to set up the environment.
+if(MSVC)
+  get_filename_component(COMPILER_DIR "${CMAKE_C_COMPILER}" DIRECTORY)
+  get_filename_component(COMPILER_ROOT "${COMPILER_DIR}" NAME)
+  set(VCVARS_BAT "${COMPILER_DIR}/vcvars${COMPILER_ROOT}.bat")
+  if(NOT EXISTS "${VCVARS_BAT}")
+    # Try the VS2017 location (https://stackoverflow.com/q/43372235)
+    set(COMPILER_ROOT "")
+    foreach(DIRS RANGE 0 5)
+      get_filename_component(COMPILER_DIR "${COMPILER_DIR}" DIRECTORY)
+    endforeach(DIRS RANGE 0 5)
+    set(COMPILER_DIR "${COMPILER_DIR}/Auxiliary/Build")
+    if(CMAKE_CL_64)
+      set(VCVARS_BAT "${COMPILER_DIR}/vcvars64.bat")
+    else(CMAKE_CL_64)
+      set(VCVARS_BAT "${COMPILER_DIR}/vcvars32.bat")
+    endif(CMAKE_CL_64)
+    if(NOT EXISTS "${VCVARS_BAT}")
+      message(FATAL_ERROR "Could not find vcvars bat file in ${COMPILER_DIR}")
+    endif(NOT EXISTS "${VCVARS_BAT}")
+  endif(NOT EXISTS "${VCVARS_BAT}")
+endif(MSVC)
+
 
 ###############################################################################
 #                               libregex
@@ -1149,32 +1176,9 @@ if (${CMAKE_PROJECT_NAME}_GDAL_BUILD)
 
 endif (${CMAKE_PROJECT_NAME}_GDAL_BUILD)
 
-if (0)
-
-# Tcl/Tk presents a number of complexities for BRL-CAD and CMake.
-# BRL-CAD requires far more knowledge of the details of a Tcl/Tk
-# installation than most programs, which unfortunately means the
-# standard FindTCL.cmake is not sufficient. We have our own FindTCL
-# routine which handles Tcl/Tk and its stubs, so trigger this using
-# the THIRD_PARTY macro for TCL.
-
-include("${BRLCAD_SOURCE_DIR}/misc/CMake/TCL_PKGINDEX.cmake")
-
-# Set Tcl/Tk requirements for BRL-CAD so FindTCL.cmake knows what to reject
-set(TCL_PATH_NOMATCH_PATTERNS "/usr/brlcad;brlcad-install;${CMAKE_INSTALL_PREFIX}" CACHE STRING "Paths to avoid when looking for tcl/tk" FORCE)
-set(TCL_MIN_VERSION "8.5" CACHE STRING "Minimum acceptable Tcl/Tk version" FORCE)
-
-if(BRLCAD_ENABLE_TK)
-  OPTION(TCL_REQUIRE_TK "Look for Tk installation, not just Tcl." ON)
-else(BRLCAD_ENABLE_TK)
-  OPTION(TCL_REQUIRE_TK "Look for Tk installation, not just Tcl." OFF)
-endif(BRLCAD_ENABLE_TK)
-
-# Turn off the man pages
-set(TCL_DISABLE_MANPAGES ON CACHE BOOL "disable Tcl man page generation" FORCE)
-mark_as_advanced(TCL_DISABLE_MANPAGES)
-set(TK_DISABLE_MANPAGES ON CACHE BOOL "disable Tk man page generation" FORCE)
-mark_as_advanced(TK_DISABLE_MANPAGES)
+###############################################################################
+#                                 Tcl
+###############################################################################
 
 set(tcl_DESCRIPTION "
 Option for enabling and disabling compilation of the Tcl library
@@ -1183,83 +1187,78 @@ the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
 version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 
-THIRD_PARTY(tcl TCL tcl tcl_DESCRIPTION ALIASES ENABLE_TCL FIND_NAME BRLCADTCL REQUIRED_VARS BRLCAD_LEVEL2)
+THIRD_PARTY(tcl TCL tcl tcl_DESCRIPTION ALIASES ENABLE_TCL REQUIRED_VARS BRLCAD_LEVEL2)
 
-if(BRLCAD_TCL_BUILD)
 
-  SetTargetFolder(tclsh "Third Party Executables")
+if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
+
+  set(TCL_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/TCL_BLD-prefix/src/TCL_BLD")
+  set(TCL_MINOR_VERSION 6)
+  set(ITCL_VERSION 4.1.2)
+
+  if (NOT MSVC)
+    include(ProcessorCount)
+    ProcessorCount(N)
+    math(EXPR pcnt "${N} / 2")
+    if (NOT pcnt)
+      set(pcnt 1)
+    endif (NOT pcnt)
+
+    set(TCL_PATCH_FILES "${TCL_SRC_DIR}/unix/configure" "${TCL_SRC_DIR}/macosx/configure" "${TCL_SRC_DIR}/unix/tcl.m4")
+
+    ExternalProject_Add(TCL_BLD
+      URL "${CMAKE_CURRENT_SOURCE_DIR}/tcl"
+      BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
+      PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${TCL_PATCH_FILES}
+      CONFIGURE_COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/tcl/unix/configure --prefix=${CMAKE_BINARY_DIR}
+      BUILD_COMMAND make -j${pcnt}
+      INSTALL_COMMAND make install
+      )
+  else (NOT MSVC)
+
+    ExternalProject_Add(TCL_BLD
+      SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tcl"
+      BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
+      CONFIGURE_COMMAND ""
+      BINARY_DIR ${TCL_SRC_DIR}/win
+      BUILD_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc INSTALLDIR=${CMAKE_BINARY_DIR}
+      INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install INSTALLDIR=${CMAKE_BINARY_DIR}
+      )
+
+  endif (NOT MSVC)
+
+  ExternalProject_Target(tcl TCL_BLD
+    OUTPUT_FILE libtcl8.${TCL_MINOR_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}
+    STATIC_OUTPUT_FILE libtclstub8.${TCL_MINOR_VERSION}${CMAKE_STATIC_LIBRARY_SUFFIX}
+    RPATH
+    )
+  ExternalProject_Target(tclsh TCL_BLD
+    OUTPUT_FILE tclsh8.${TK_MINOR_VERSION}${CMAKE_EXECUTABLE_SUFFIX}
+    RPATH EXEC
+    )
+  ExternalProject_ByProducts(TCL_BLD ${LIB_DIR} FIXPATH
+    tclConfig.sh
+    tclooConfig.sh
+    )
+  ExternalProject_ByProducts(TCL_BLD ${INCLUDE_DIR}
+    tclDecls.h
+    tcl.h
+    tclOODecls.h
+    tclOO.h
+    tclPlatDecls.h
+    tclTomMathDecls.h
+    tclTomMath.h
+    )
+
+  set(TCL_LIBRARIES tcl CACHE STRING "Building bundled tcl" FORCE)
+  set(TCL_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
+
+  SetTargetFolder(TCL_BLD "Third Party Libraries")
   SetTargetFolder(tcl "Third Party Libraries")
-  SetTargetFolder(tclstub "Third Party Libraries")
-  # Set the variables ourselves since FindTCL.cmake doesn't know about our build
-  set(TCL_SRC_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/tcl")
-  set(TCL_BIN_PREFIX "${CMAKE_BINARY_DIR}/${LIB_DIR}")
-  set(TCL_LIBRARY tcl CACHE STRING "TCL_LIBRARY" FORCE)
-  set(TCL_LIBRARIES tcl CACHE STRING "TCL_LIBRARY" FORCE)
-  set(TCL_CONF_PREFIX "NONE-CMake" CACHE STRING "TCL_CONF_PREFIX" FORCE)
-  set(TCL_STUB_LIBRARY tclstub CACHE STRING "TCL_LIBRARY" FORCE)
-  set(TCL_STUB_LIBRARIES tclstub CACHE STRING "TCL_LIBRARY" FORCE)
-  get_directory_property(TCL_INCLUDE_DIRS DIRECTORY tcl DEFINITION TCL_INCLUDE_DIRS)
-  set(TCL_INCLUDE_DIRS "${TCL_INCLUDE_DIRS}" CACHE STRING "Tcl include paths" FORCE)
-  set(TCL_INCLUDE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/tcl/generic" CACHE STRING "Tcl include path" FORCE)
-  set(TCL_TCLSH_EXECUTABLE tclsh CACHE STRING "Tcl shell" FORCE)
-  set(TCL_TCLSH tclsh CACHE STRING "Tcl shell" FORCE)
-  get_directory_property(TCL_VERSION_MAJOR DIRECTORY tcl DEFINITION TCL_VERSION_MAJOR)
-  set(TCL_VERSION_MAJOR "${TCL_VERSION_MAJOR}" CACHE STRING "Tcl MAJOR version" FORCE)
-  get_directory_property(TCL_VERSION_MINOR DIRECTORY tcl DEFINITION TCL_VERSION_MINOR)
-  set(TCL_VERSION_MINOR "${TCL_VERSION_MINOR}" CACHE STRING "Tcl MINOR version" FORCE)
-  CONFIG_H_APPEND(BRLCAD "#define HAVE_TCL_H 1\n")
-  CONFIG_H_APPEND(BRLCAD "#define TCL_SYSTEM_INITTCL_PATH \"\"\n")
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tcl/doc/Makefile")
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tcl/doc/man1")
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tcl/doc/man3")
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tcl/doc/mann")
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tcl/library/Makefile")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/tcl8")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/tcl8.5")
 
-  # manage installed headers
-  get_directory_property(tcl_headers_orig DIRECTORY tcl DEFINITION TCL_HDRS)
-  set(tcl_headers)
-  foreach(tclh ${tcl_headers_orig})
-    get_filename_component(tclhf ${tclh} NAME)
-    set(tcl_headers ${tcl_headers} tcl/generic/${tclhf})
-  endforeach(tclh ${tcl_headers_orig})
-  BRLCAD_MANAGE_FILES(tcl_headers ${INCLUDE_DIR})
+endif (${CMAKE_PROJECT_NAME}_TCL_BUILD)
 
-ELSE(BRLCAD_TCL_BUILD)
-  if(${TCL_TCLSH_EXECUTABLE})
-    BRLCAD_INCLUDE_FILE(tcl.h HAVE_TCL_H)
-    # We're going to need the path to the system init.tcl for btclsh and bwish
-    set(inittcl_script "
-set filename \"${CMAKE_BINARY_DIR}/CMakeTmp/tcl_inittcl\"
-set fileID [open $filename \"w\"]
-puts $fileID $auto_path
-close $fileID
-exit
-")
-    set(inittcl_scriptfile "${CMAKE_BINARY_DIR}/CMakeTmp/tcl_inittcl.tcl")
-    file(WRITE ${inittcl_scriptfile} ${inittcl_script})
-    EXEC_PROGRAM(${TCL_TCLSH_EXECUTABLE} ARGS ${inittcl_scriptfile} OUTPUT_VARIABLE EXECOUTPUT)
-    file(READ "${CMAKE_BINARY_DIR}/CMakeTmp/tcl_inittcl" tcl_inittcl_raw)
-    STRING(REGEX REPLACE "\n" "" tcl_inittcl_paths_1 ${tcl_inittcl_raw})
-    STRING(REGEX REPLACE " " ";" tcl_inittcl_paths ${tcl_inittcl_paths_1})
-    FIND_PATH(tcl_inittcl NAMES init.tcl PATHS ${tcl_inittcl_paths})
-    mark_as_advanced(tcl_inittcl)
-    CONFIG_H_APPEND(BRLCAD "#define TCL_SYSTEM_INITTCL_PATH \"${tcl_inittcl}\"\n")
-  endif(${TCL_TCLSH_EXECUTABLE})
-endif(BRLCAD_TCL_BUILD)
-mark_as_advanced(TCL_COMPILE_DEBUG)
-mark_as_advanced(TCL_COMPILE_STATS)
-mark_as_advanced(TCL_DEBUG)
-mark_as_advanced(TCL_ENABLE_64BIT)
-mark_as_advanced(TCL_ENABLE_DLL_UNLOADING)
-mark_as_advanced(TCL_ENABLE_LANGINFO)
-mark_as_advanced(TCL_ENABLE_LOAD)
-mark_as_advanced(TCL_OPTIMIZED)
-mark_as_advanced(TCL_THREADS)
-mark_as_advanced(TCL_TIMEZONE_DATA)
-mark_as_advanced(M_LIBRARY)
-
+if (0)
 # Depending on the Tcl/Tk results, look for packages required by BRL-CAD.  If
 # building local Tcl/Tk, go ahead and enable all the packages as well - otherwise,
 # check the found Tcl/Tk and enable what it doesn't supply.  If doing a non-graphical

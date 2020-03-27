@@ -15,11 +15,14 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
     namespace import -force ::tcltest::*
 }
 
+::tcltest::loadTestedCommands
+catch [list package require -exact Tcltest [info patchlevel]]
+
 testConstraint testset2 [llength [info commands testset2]]
 
 catch {unset x}
 catch {unset i}
-
+
 test set-1.1 {TclCompileSetCmd: missing variable name} {
     list [catch {set} msg] $msg
 } {1 {wrong # args: should be "set varName ?newValue?"}}
@@ -36,16 +39,18 @@ test set-1.4 {TclCompileSetCmd: simple variable name in quotes} {
     set i 17
     list [set "i"] $i
 } {17 17}
-test set-1.5 {TclCompileSetCmd: simple variable name in braces} {
+test set-1.5 {TclCompileSetCmd: simple variable name in braces} -setup {
     catch {unset {a simple var}}
+} -body {
     set {a simple var} 27
     list [set {a simple var}] ${a simple var}
-} {27 27}
-test set-1.6 {TclCompileSetCmd: simple array variable name} {
+} -result {27 27}
+test set-1.6 {TclCompileSetCmd: simple array variable name} -setup {
     catch {unset a}
+} -body {
     set a(foo) 37
     list [set a(foo)] $a(foo)
-} {37 37}
+} -result {37 37}
 test set-1.7 {TclCompileSetCmd: non-simple (computed) variable name} {
     set x "i"
     set i 77
@@ -146,22 +151,24 @@ test set-1.14 {TclCompileSetCmd: simple local name, >255 locals} {
     }
     260locals
 } {1234}
-test set-1.15 {TclCompileSetCmd: variable is array} {
+test set-1.15 {TclCompileSetCmd: variable is array} -setup {
     catch {unset a}
+} -body {
     set x 27
     set x [set a(foo) 11]
     catch {unset a}
     set x
-} 11
-test set-1.16 {TclCompileSetCmd: variable is array, elem substitutions} {
+} -result 11
+test set-1.16 {TclCompileSetCmd: variable is array, elem substitutions} -setup {
     catch {unset a}
+} -body {
     set i 5
     set x 789
     set a(foo5) 27
     set x [set a(foo$i)]
     catch {unset a}
     set x
-} 27
+} -result 27
 
 test set-1.17 {TclCompileSetCmd: doing assignment, simple int} {
     set i 5
@@ -208,7 +215,7 @@ test set-1.25 {TclCompileSetCmd: var is array, braced (no subs)} {
 test set-1.26 {TclCompileSetCmd: various array constructs} {
     # Test all kinds of array constructs that TclCompileSetCmd
     # may feel inclined to tamper with.
-    proc p {} {
+    apply {{} {
 	set a x
 	set be(hej) 1					; # hej
 	set be($a) 1					; # x
@@ -227,28 +234,33 @@ test set-1.26 {TclCompileSetCmd: various array constructs} {
 	set [string range bet 0 1](foo) 1		; # foo
 	set be([set be(a:$a)][set b\e($a)]) 1		; # 51
 	return [lsort [array names be]]
-    }
-    p
+    }}
 } [lsort {hej x $a x,hej x,x c(x ww a:x hej,1,hej hug {a a} {x ,ugg,hej} x,h"ej
 {b c} foo 51}]; # " just a matching end quote
 
-test set-2.1 {set command: runtime error, bad variable name} {
+test set-2.1 {set command: runtime error, bad variable name} -setup {
     unset -nocomplain {"foo}
+} -body {
     list [catch {set {"foo}} msg] $msg $::errorInfo
-} {1 {can't read ""foo": no such variable} {can't read ""foo": no such variable
+} -result {1 {can't read ""foo": no such variable} {can't read ""foo": no such variable
     while executing
 "set {"foo}"}}
-test set-2.2 {set command: runtime error, not array variable} {
-    catch {unset b}
+# Stop my editor highlighter " from being confused
+test set-2.2 {set command: runtime error, not array variable} -setup {
+    unset -nocomplain b
+} -body {
     set b 44
     list [catch {set b(123)} msg] $msg
-} {1 {can't read "b(123)": variable isn't array}}
-test set-2.3 {set command: runtime error, errors in reading variables} {
-    catch {unset a}
+} -result {1 {can't read "b(123)": variable isn't array}}
+test set-2.3 {set command: runtime error, errors in reading variables} -setup {
+    unset -nocomplain a
+} -body {
     set a(6) 44
     list [catch {set a(18)} msg] $msg
-} {1 {can't read "a(18)": no such element in array}}
-test set-2.4 {set command: runtime error, readonly variable} -body {
+} -result {1 {can't read "a(18)": no such element in array}}
+test set-2.4 {set command: runtime error, readonly variable} -setup {
+    unset -nocomplain x
+} -body {
     proc readonly args {error "variable is read-only"}
     set x 123
     trace var x w readonly
@@ -257,12 +269,18 @@ test set-2.4 {set command: runtime error, readonly variable} -body {
     while executing
 *
 "set x 1"}}
-test set-2.5 {set command: runtime error, basic array operations} {
+test set-2.5 {set command: runtime error, basic array operations} -setup {
+    unset -nocomplain a
+} -body {
+    array set a {}
     list [catch {set a(other)} msg] $msg
-} {1 {can't read "a(other)": no such element in array}}
-test set-2.6 {set command: runtime error, basic array operations} {
+} -result {1 {can't read "a(other)": no such element in array}}
+test set-2.6 {set command: runtime error, basic array operations} -setup {
+    unset -nocomplain a
+} -body {
+    array set a {}
     list [catch {set a} msg] $msg
-} {1 {can't read "a": variable is array}}
+} -result {1 {can't read "a": variable is array}}
 
 # Test the uncompiled version of set
 
@@ -476,25 +494,29 @@ test set-3.24 {uncompiled set command: too many arguments} {
     $z msg
 } {wrong # args: should be "set varName ?newValue?"}
 
-test set-4.1 {uncompiled set command: runtime error, bad variable name} {
+test set-4.1 {uncompiled set command: runtime error, bad variable name} -setup {
     unset -nocomplain {"foo}
+} -body {
     set z set
     list [catch {$z {"foo}} msg] $msg $::errorInfo
-} {1 {can't read ""foo": no such variable} {can't read ""foo": no such variable
+} -result {1 {can't read ""foo": no such variable} {can't read ""foo": no such variable
     while executing
 "$z {"foo}"}}
-test set-4.2 {uncompiled set command: runtime error, not array variable} {
-    set z set
+# Stop my editor highlighter " from being confused
+test set-4.2 {uncompiled set command: runtime error, not array variable} -setup {
     catch {unset b}
+} -body {
+    set z set
     $z b 44
     list [catch {$z b(123)} msg] $msg
-} {1 {can't read "b(123)": variable isn't array}}
-test set-4.3 {uncompiled set command: runtime error, errors in reading variables} {
-     set z set
-   catch {unset a}
+} -result {1 {can't read "b(123)": variable isn't array}}
+test set-4.3 {uncompiled set command: runtime error, errors in reading variables} -setup {
+    catch {unset a}
+} -body {
+    set z set
     $z a(6) 44
     list [catch {$z a(18)} msg] $msg
-} {1 {can't read "a(18)": no such element in array}}
+} -result {1 {can't read "a(18)": no such element in array}}
 test set-4.4 {uncompiled set command: runtime error, readonly variable} -body {
     set z set
     proc readonly args {error "variable is read-only"}
@@ -505,27 +527,33 @@ test set-4.4 {uncompiled set command: runtime error, readonly variable} -body {
     while executing
 *
 "$z x 1"}}
-test set-4.5 {uncompiled set command: runtime error, basic array operations} {
+test set-4.5 {uncompiled set command: runtime error, basic array operations} -setup {
+    unset -nocomplain a
+    array set a {}
+} -body {
     set z set
     list [catch {$z a(other)} msg] $msg
-} {1 {can't read "a(other)": no such element in array}}
-test set-4.6 {set command: runtime error, basic array operations} {
+} -result {1 {can't read "a(other)": no such element in array}}
+test set-4.6 {set command: runtime error, basic array operations} -setup {
+    unset -nocomplain a
+    array set a {}
+} -body {
     set z set
     list [catch {$z a} msg] $msg
-} {1 {can't read "a": variable is array}}
+} -result {1 {can't read "a": variable is array}}
 
-test set-5.1 {error on malformed array name} testset2 {
+test set-5.1 {error on malformed array name} -constraints testset2 -setup {
     unset -nocomplain z
+} -body {
     catch {testset2 z(a) b} msg
     catch {testset2 z(b) a} msg1
     list $msg $msg1
-} {{can't read "z(a)(b)": variable isn't array} {can't read "z(b)(a)": variable isn't array}}
-
+} -result {{can't read "z(a)(b)": variable isn't array} {can't read "z(b)(a)": variable isn't array}}
 # In a mem-debug build, this test will crash unless Bug 3602706 is fixed.
 test set-5.2 {Bug 3602706} -body {
     testset2 ::tcl_platform not-in-there
 } -returnCodes error -result * -match glob
-
+
 # cleanup
 catch {unset a}
 catch {unset b}
@@ -534,3 +562,7 @@ catch {unset x}
 catch {unset z}
 ::tcltest::cleanupTests
 return 
+
+# Local Variables:
+# mode: tcl
+# End:

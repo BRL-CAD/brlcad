@@ -67,7 +67,7 @@ if no such callback is to be performed.
 The namespace to be manipulated, or NULL (for other than
 \fBTcl_DeleteNamespace\fR) to manipulate the current namespace.
 .AP Tcl_Obj *objPtr out
-A reference to an unshared object to which the function output will be
+A reference to an unshared value to which the function output will be
 written.
 .AP "const char" *pattern in
 The glob-style pattern (see \fBTcl_StringMatch\fR) that describes the
@@ -95,7 +95,6 @@ message should be left in the interpreter if the search fails.)
 A script fragment to be installed as the unknown command handler for the
 namespace, or NULL to reset the handler to its default.
 .BE
-
 .SH DESCRIPTION
 .PP
 Namespaces are hierarchic naming contexts that can contain commands
@@ -115,11 +114,14 @@ the global namespace.)
 .PP
 \fBTcl_CreateNamespace\fR creates a new namespace.  The
 \fIdeleteProc\fR will have the following type signature:
+.PP
 .CS
-typedef void (Tcl_NamespaceDeleteProc) (ClientData clientData);
+typedef void \fBTcl_NamespaceDeleteProc\fR(
+        ClientData \fIclientData\fR);
 .CE
 .PP
-\fBTcl_DeleteNamespace\fR deletes a namespace.
+\fBTcl_DeleteNamespace\fR deletes a namespace, calling the
+\fIdeleteProc\fR defined for the namespace (if any).
 .PP
 \fBTcl_AppendExportList\fR retrieves the export patterns for a
 namespace given namespace and appends them (as list items) to
@@ -157,9 +159,7 @@ for the namespace, or NULL if none is set.
 \fBTcl_SetNamespaceUnknownHandler\fR sets the unknown command handler for
 the namespace. If \fIhandlerPtr\fR is NULL, then the handler is reset to
 its default.
-
 .SH "SEE ALSO"
-Tcl_CreateCommand, Tcl_ListObjAppendElements, Tcl_SetVar
-
+Tcl_CreateCommand(3), Tcl_ListObjAppendList(3), Tcl_SetVar(3)
 .SH KEYWORDS
 namespace, command

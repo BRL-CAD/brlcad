@@ -212,14 +212,16 @@ test foreach-6.4 {break tests} {
     set msg
 } {wrong # args: should be "break"}
 # Check for bug #406709
-test foreach-6.5 {break tests} {
+test foreach-6.5 {break tests} -body {
     proc a {} {
 	set a 1
 	foreach b b {list [concat a; break]; incr a}
 	incr a
     }
     a
-} {2}
+} -cleanup {
+    rename a {}
+} -result {2}
 
 # Test for incorrect "double evaluation" semantics
 test foreach-7.1 {delayed substitution of body} {
@@ -277,8 +279,18 @@ test foreach-10.1 {foreach: [Bug 1671087]} -setup {
     rename demo {}
 } -result {}
 
+test foreach-11.1 {error then dereference loop var (dev bug)} {
+  catch { foreach a 0 b {1 2 3} { error x } }
+  set a
+} 0
+test foreach-11.2 {error then dereference loop var (dev bug)} {
+  catch { foreach a 0 b {1 2 3} { incr a $b; error x } }
+  set a
+} 1
+
 # cleanup
 catch {unset a}
 catch {unset x}
+catch {rename foo {}}
 ::tcltest::cleanupTests
 return

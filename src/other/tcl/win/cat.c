@@ -9,26 +9,33 @@
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  */
 
+#ifdef TCL_BROKEN_MAINARGS
+/* On mingw32 and cygwin this doesn't work */
+#   undef UNICODE
+#   undef _UNICODE
+#endif
+
 #include <stdio.h>
 #include <io.h>
 #include <string.h>
+#include <tchar.h>
 
 int
-main(void)
+_tmain(void)
 {
     char buf[1024];
     int n;
     const char *err;
 
     while (1) {
-	n = read(0, buf, sizeof(buf));
+	n = _read(0, buf, sizeof(buf));
 	if (n <= 0) {
 	    break;
 	}
-        write(1, buf, n);
+	_write(1, buf, n);
     }
     err = (sizeof(int) == 2) ? "stderr16" : "stderr32";
-    write(2, err, strlen(err));
+    _write(2, err, (unsigned int)strlen(err));
 
     return 0;
 }

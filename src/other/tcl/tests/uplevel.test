@@ -1,15 +1,15 @@
 # Commands covered:  uplevel
 #
-# This file contains a collection of tests for one or more of the Tcl
-# built-in commands.  Sourcing this file into Tcl runs the tests and
-# generates output for errors.  No output means no errors were found.
+# This file contains a collection of tests for one or more of the Tcl built-in
+# commands.  Sourcing this file into Tcl runs the tests and generates output
+# for errors.  No output means no errors were found.
 #
 # Copyright (c) 1991-1993 The Regents of the University of California.
 # Copyright (c) 1994 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+# See the file "license.terms" for information on usage and redistribution of
+# this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest
@@ -24,7 +24,7 @@ proc newset {name value} {
     uplevel set $name $value
     uplevel 1 {uplevel 1 {set xyz 22}}
 }
-
+
 test uplevel-1.1 {simple operation} {
     set xyz 0
     a 22 33
@@ -83,20 +83,133 @@ test uplevel-3.4 {uplevel to same level} {
     a1
 } 55
 
-test uplevel-4.1 {error: non-existent level} {
-    list [catch c1 msg] $msg
-} {1 {bad level "#2"}}
-test uplevel-4.2 {error: non-existent level} {
-    proc c2 {} {uplevel 3 {set a b}}
-    list [catch c2 msg] $msg
-} {1 {bad level "3"}}
-test uplevel-4.3 {error: not enough args} {
-    list [catch uplevel msg] $msg
-} {1 {wrong # args: should be "uplevel ?level? command ?arg ...?"}}
-test uplevel-4.4 {error: not enough args} {
-    proc upBug {} {uplevel 1}
-    list [catch upBug msg] $msg
-} {1 {wrong # args: should be "uplevel ?level? command ?arg ...?"}}
+test uplevel-4.0.1 {error: non-existent level} -body {
+    uplevel #0 { uplevel { set y 222 } }
+} -returnCodes error -result {bad level "1"}
+test uplevel-4.0.2 {error: non-existent level} -setup {
+    interp create i
+} -body {
+    i eval { uplevel { set y 222 } }
+} -returnCodes error -result {bad level "1"} -cleanup {
+    interp delete i
+}
+test uplevel-4.1 {error: non-existent level} -returnCodes error -body {
+    apply {{} {
+	uplevel #2 {set y 222}
+    }}
+} -result {bad level "#2"}
+test uplevel-4.2 {error: non-existent level} -returnCodes error -body {
+    apply {{} {
+	uplevel 3 {set a b}
+    }}
+} -result {bad level "3"}
+test uplevel-4.3 {error: not enough args} -returnCodes error -body {
+    uplevel
+} -result {wrong # args: should be "uplevel ?level? command ?arg ...?"}
+test uplevel-4.4 {error: not enough args} -returnCodes error -body {
+    apply {{} {
+	uplevel 1
+    }}
+} -result {wrong # args: should be "uplevel ?level? command ?arg ...?"}
+test uplevel-4.5 {level parsing} {
+    apply {{} {uplevel 0 {}}}
+} {}
+test uplevel-4.6 {level parsing} {
+    apply {{} {uplevel #0 {}}}
+} {}
+test uplevel-4.7 {level parsing} {
+    apply {{} {uplevel [expr 0] {}}}
+} {}
+test uplevel-4.8 {level parsing} {
+    apply {{} {uplevel #[expr 0] {}}}
+} {}
+test uplevel-4.9 {level parsing} {
+    apply {{} {uplevel -0 {}}}
+} {}
+test uplevel-4.10 {level parsing} {
+    apply {{} {uplevel #-0 {}}}
+} {}
+test uplevel-4.11 {level parsing} {
+    apply {{} {uplevel [expr -0] {}}}
+} {}
+test uplevel-4.12 {level parsing} {
+    apply {{} {uplevel #[expr -0] {}}}
+} {}
+test uplevel-4.13 {level parsing} {
+    apply {{} {uplevel 1 {}}}
+} {}
+test uplevel-4.14 {level parsing} {
+    apply {{} {uplevel #1 {}}}
+} {}
+test uplevel-4.15 {level parsing} {
+    apply {{} {uplevel [expr 1] {}}}
+} {}
+test uplevel-4.16 {level parsing} {
+    apply {{} {uplevel #[expr 1] {}}}
+} {}
+test uplevel-4.17 {level parsing} {
+    apply {{} {uplevel -0xffffffff {}}}
+} {}
+test uplevel-4.18 {level parsing} {
+    apply {{} {uplevel #-0xffffffff {}}}
+} {}
+test uplevel-4.19 {level parsing} {
+    apply {{} {uplevel [expr -0xffffffff] {}}}
+} {}
+test uplevel-4.20 {level parsing} {
+    apply {{} {uplevel #[expr -0xffffffff] {}}}
+} {}
+test uplevel-4.21 {level parsing} -body {
+    apply {{} {uplevel -1 {}}}
+} -returnCodes error -result {invalid command name "-1"}
+test uplevel-4.22 {level parsing} -body {
+    apply {{} {uplevel #-1 {}}}
+} -returnCodes error -result {bad level "#-1"}
+test uplevel-4.23 {level parsing} -body {
+    apply {{} {uplevel [expr -1] {}}}
+} -returnCodes error -result {invalid command name "-1"}
+test uplevel-4.24 {level parsing} -body {
+    apply {{} {uplevel #[expr -1] {}}}
+} -returnCodes error -result {bad level "#-1"}
+test uplevel-4.25 {level parsing} -body {
+    apply {{} {uplevel 0xffffffff {}}}
+} -returnCodes error -result {bad level "0xffffffff"}
+test uplevel-4.26 {level parsing} -body {
+    apply {{} {uplevel #0xffffffff {}}}
+} -returnCodes error -result {bad level "#0xffffffff"}
+test uplevel-4.27 {level parsing} -body {
+    apply {{} {uplevel [expr 0xffffffff] {}}}
+} -returnCodes error -result {bad level "4294967295"}
+test uplevel-4.28 {level parsing} -body {
+    apply {{} {uplevel #[expr 0xffffffff] {}}}
+} -returnCodes error -result {bad level "#4294967295"}
+test uplevel-4.29 {level parsing} -body {
+    apply {{} {uplevel 0.2 {}}}
+} -returnCodes error -result {bad level "0.2"}
+test uplevel-4.30 {level parsing} -body {
+    apply {{} {uplevel #0.2 {}}}
+} -returnCodes error -result {bad level "#0.2"}
+test uplevel-4.31 {level parsing} -body {
+    apply {{} {uplevel [expr 0.2] {}}}
+} -returnCodes error -result {bad level "0.2"}
+test uplevel-4.32 {level parsing} -body {
+    apply {{} {uplevel #[expr 0.2] {}}}
+} -returnCodes error -result {bad level "#0.2"}
+test uplevel-4.33 {level parsing} -body {
+    apply {{} {uplevel .2 {}}}
+} -returnCodes error -result {invalid command name ".2"}
+test uplevel-4.34 {level parsing} -body {
+    apply {{} {uplevel #.2 {}}}
+} -returnCodes error -result {bad level "#.2"}
+test uplevel-4.35 {level parsing} -body {
+    apply {{} {uplevel [expr .2] {}}}
+} -returnCodes error -result {bad level "0.2"}
+test uplevel-4.36 {level parsing} -body {
+    apply {{} {uplevel #[expr .2] {}}}
+} -returnCodes error -result {bad level "#0.2"}
+
+
+
 
 proc a2 {} {
     uplevel a3
@@ -124,7 +237,79 @@ test uplevel-6.1 {uplevel and shadowed cmds} {
     lappend res [namespace eval ns1 a2]
 } {::ns1 :: ::ns1 ::}
 
+#
+# These tests verify that upleveled scripts run in the correct level and access
+# the proper variables.
+#
 
+test uplevel-7.1 {var access, no LVT in either level} -setup {
+    set x 1
+    unset -nocomplain y z
+} -body {
+    namespace eval foo {
+	set x 2 
+	set y 2
+	uplevel 1 {
+	    set x 3
+	    set y 3
+	    set z 3
+	}
+    }
+    list $x $y $z
+} -cleanup {
+    namespace delete foo
+    unset -nocomplain x y z
+} -result {3 3 3}
+
+test uplevel-7.2 {var access, no LVT in upper level} -setup {
+    set x 1
+    unset -nocomplain y z
+} -body {
+    proc foo {} {
+	set x 2 
+	set y 2
+	uplevel 1 {
+	    set x 3
+	    set y 3
+	    set z 3
+	}
+    }
+    foo
+    list $x $y $z
+} -cleanup {
+    rename foo {}
+    unset -nocomplain x y z
+} -result {3 3 3}
+
+test uplevel-7.3 {var access, LVT in upper level} -setup {
+    proc moo {} {
+	set x 1; #var in LVT
+	unset -nocomplain y z
+	foo
+	list $x $y $z
+    }
+} -body {
+    proc foo {} {
+	set x 2 
+	set y 2
+	uplevel 1 {
+	    set x 3
+	    set y 3
+	    set z 3
+	}
+    }
+    foo
+    moo
+} -cleanup {
+    rename foo {}
+    rename moo {}
+} -result {3 3 3}
+
 # cleanup
 ::tcltest::cleanupTests
 return
+
+# Local Variables:
+# mode: tcl
+# fill-column: 78
+# End:

@@ -20,7 +20,7 @@ int
 .AP Tcl_Interp *interp in
 Tcl interpreter in which to evaluate command.
 .AP Tcl_Obj *cmdPtr in
-Points to a Tcl object containing a command (or sequence of commands)
+Points to a Tcl value containing a command (or sequence of commands)
 to execute.
 .AP int flags in
 An OR'ed combination of flag bits.  \fBTCL_NO_EVAL\fR means record the
@@ -35,7 +35,7 @@ on the history list and then execute it using \fBTcl_EvalObjEx\fR
 (or \fBTcl_GlobalEvalObj\fR if the \fBTCL_EVAL_GLOBAL\fR bit is set
 in \fIflags\fR).
 It returns a completion code such as \fBTCL_OK\fR just like \fBTcl_EvalObjEx\fR,
-as well as a result object containing additional information
+as well as a result value containing additional information
 (a result value or error message)
 that can be retrieved using \fBTcl_GetObjResult\fR.
 If you do not want the command recorded on the history list then
@@ -50,4 +50,4 @@ the command is recorded without being evaluated.
 Tcl_EvalObjEx, Tcl_GetObjResult
 
 .SH KEYWORDS
-command, event, execute, history, interpreter, object, record
+command, event, execute, history, interpreter, value, record

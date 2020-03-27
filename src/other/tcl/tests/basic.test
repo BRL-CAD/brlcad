@@ -18,6 +18,9 @@
 package require tcltest 2
 namespace import ::tcltest::*
 
+::tcltest::loadTestedCommands
+catch [list package require -exact Tcltest [info patchlevel]]
+
 testConstraint testevalex [llength [info commands testevalex]]
 testConstraint testcmdtoken [llength [info commands testcmdtoken]]
 testConstraint testcreatecommand [llength [info commands testcreatecommand]]
@@ -653,8 +656,10 @@ test basic-46.5 {Tcl_AllowExceptions: exception return not allowed} -setup {
 "return -code return"
     (file "*BREAKtest" line 2)}
 
-test basic-47.1 {Tcl_EvalEx: check for missing close-bracket} -body {
-    subst {a[set b [format cd]}
+test basic-47.1 {Tcl_EvalEx: check for missing close-bracket} -constraints {
+    testevalex
+} -body {
+    testevalex {a[set b [format cd]}
 } -returnCodes error -result {missing close-bracket}
 
 # Some lists for expansion tests to work with
@@ -957,6 +962,24 @@ test basic-48.23.$noComp {expansion: handle return codes} -constraints $constrai
 	unset res t
 } -result {0 10 1 Hejsan}
 
+test basic-48.24.$noComp {expansion: empty not canonical list, regression test, bug [cc1e91552c]} -constraints $constraints -setup {
+    unset -nocomplain a
+} -body {
+    run {list [list {*}{ }] [list {*}[format %c 32]] [list {*}[set a { }]]}
+} -result [lrepeat 3 {}] -cleanup {unset -nocomplain a}
+
+test basic-48.25.$noComp {Bug cc191552c: expansion: empty non-canonical list} -constraints $constraints -setup {
+    unset -nocomplain ::CRLF
+    set ::CRLF "\r\n"
+} -body {
+    # Force variant that turned up in Bug 2c154a40be as that's externally
+    # noticeable in an important downstream project.
+    run {scan [list {*}$::CRLF]x %c%c%c}
+} -cleanup {
+    unset -nocomplain ::CRLF
+} -result {120 {} {}}
+
+
 } ;# End of noComp loop
 
 test basic-49.1 {Tcl_EvalEx: verify TCL_EVAL_GLOBAL operation} testevalex {
@@ -978,6 +1001,16 @@ test basic-49.2 {Tcl_EvalEx: verify TCL_EVAL_GLOBAL operation} testevalex {
     namespace delete ns
     set ::context
 } {global}
+
+test basic-50.1 {[586e71dce4] EvalObjv level #0 exception handling} -setup {
+    interp create slave
+    interp alias {} foo slave return
+} -body {
+    list [catch foo m] $m
+} -cleanup {
+    unset -nocomplain m
+    interp delete slave
+} -result {0 {}}
 
 # Clean up after expand tests
 unset noComp l1 l2 constraints

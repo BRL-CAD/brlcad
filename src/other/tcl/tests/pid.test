@@ -21,7 +21,7 @@ testConstraint pidDefined [llength [info commands pid]]
 test pid-1.1 {pid command} pidDefined {
     regexp {(^[0-9]+$)|(^0x[0-9a-fA-F]+$)} [pid]
 } 1
-test pid-1.2 {pid command} -constraints {unixOrPc unixExecs pidDefined} -setup {
+test pid-1.2 {pid command} -constraints {unixOrWin unixExecs pidDefined} -setup {
     set path(test1) [makeFile {} test1]
     file delete $path(test1)
 } -body {

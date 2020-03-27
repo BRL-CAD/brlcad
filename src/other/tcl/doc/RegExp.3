@@ -5,7 +5,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 .TH Tcl_RegExpMatch 3 8.1 Tcl "Tcl Library Procedures"
 .so man.macros
 .BS
@@ -45,12 +45,12 @@ void
 Tcl interpreter to use for error reporting.  The interpreter may be
 NULL if no error reporting is desired.
 .AP Tcl_Obj *textObj in/out
-Refers to the object from which to get the text to search.  The
-internal representation of the object may be converted to a form that
+Refers to the value from which to get the text to search.  The
+internal representation of the value may be converted to a form that
 can be efficiently searched.
 .AP Tcl_Obj *patObj in/out
-Refers to the object from which to get a regular expression. The
-compiled regular expression is cached in the object.
+Refers to the value from which to get a regular expression. The
+compiled regular expression is cached in the value.
 .AP char *text in
 Text to search for a match with a regular expression.
 .AP "const char" *pattern in
@@ -103,15 +103,15 @@ should be stored by \fBTcl_RegExpGetInfo\fR.
 \fBTcl_RegExpMatch\fR determines whether its \fIpattern\fR argument
 matches \fIregexp\fR, where \fIregexp\fR is interpreted
 as a regular expression using the rules in the \fBre_syntax\fR
-reference page. 
+reference page.
 If there is a match then \fBTcl_RegExpMatch\fR returns 1.
 If there is no match then \fBTcl_RegExpMatch\fR returns 0.
 If an error occurs in the matching process (e.g. \fIpattern\fR
 is not a valid regular expression) then \fBTcl_RegExpMatch\fR
 returns \-1 and leaves an error message in the interpreter result.
 \fBTcl_RegExpMatchObj\fR is similar to \fBTcl_RegExpMatch\fR except it
-operates on the Tcl objects \fItextObj\fR and \fIpatObj\fR instead of
-UTF strings. 
+operates on the Tcl values \fItextObj\fR and \fIpatObj\fR instead of
+UTF strings.
 \fBTcl_RegExpMatchObj\fR is generally more efficient than
 \fBTcl_RegExpMatch\fR, so it is the preferred interface.
 .PP
@@ -164,18 +164,18 @@ If there is no range corresponding to \fIindex\fR then NULL
 is stored in \fI*startPtr\fR and \fI*endPtr\fR.
 .PP
 \fBTcl_GetRegExpFromObj\fR, \fBTcl_RegExpExecObj\fR, and
-\fBTcl_RegExpGetInfo\fR are object interfaces that provide the most
+\fBTcl_RegExpGetInfo\fR are value interfaces that provide the most
 direct control of Henry Spencer's regular expression library.  For
 users that need to modify compilation and execution options directly,
 it is recommended that you use these interfaces instead of calling the
 internal regexp functions.  These interfaces handle the details of UTF
 to Unicode translations as well as providing improved performance
-through caching in the pattern and string objects.
+through caching in the pattern and string values.
 .PP
 \fBTcl_GetRegExpFromObj\fR attempts to return a compiled regular
-expression from the \fIpatObj\fR.  If the object does not already
+expression from the \fIpatObj\fR.  If the value does not already
 contain a compiled regular expression it will attempt to create one
-from the string in the object and assign it to the internal
+from the string in the value and assign it to the internal
 representation of the \fIpatObj\fR.  The return value of this function
 is of type \fBTcl_RegExp\fR.  The return value is a token for this
 compiled form, which can be used in subsequent calls to
@@ -201,7 +201,7 @@ Compile extended regular expressions
 .PQ ERE s .
 This mode corresponds
 to the regular expression syntax recognized by Tcl 8.0 and earlier
-versions. 
+versions.
 .TP
 \fBTCL_REG_BASIC\fR
 Compile basic regular expressions
@@ -337,10 +337,10 @@ defined as follows:
 .PP
 .CS
 typedef struct Tcl_RegExpInfo {
-        int \fInsubs\fR;
-        Tcl_RegExpIndices *\fImatches\fR;
-        long \fIextendStart\fR;
-} Tcl_RegExpInfo;
+    int \fInsubs\fR;
+    Tcl_RegExpIndices *\fImatches\fR;
+    long \fIextendStart\fR;
+} \fBTcl_RegExpInfo\fR;
 .CE
 .PP
 The \fInsubs\fR field contains a count of the number of parenthesized
@@ -355,9 +355,9 @@ follows:
 .PP
 .CS
 typedef struct Tcl_RegExpIndices {
-        long \fIstart\fR;
-        long \fIend\fR;
-} Tcl_RegExpIndices;
+    long \fIstart\fR;
+    long \fIend\fR;
+} \fBTcl_RegExpIndices\fR;
 .CE
 .PP
 The \fIstart\fR and \fIend\fR values are Unicode character indices
@@ -375,7 +375,7 @@ character in the string where a match could occur.  If a match was
 found, this will be the same as the beginning of the current match.
 If no match was found, then it indicates the earliest point at which a
 match might occur if additional text is appended to the string.  If it
-is no match is possible even with further text, this field will be set 
+is no match is possible even with further text, this field will be set
 to \-1.
 .SH "SEE ALSO"
 re_syntax(n)

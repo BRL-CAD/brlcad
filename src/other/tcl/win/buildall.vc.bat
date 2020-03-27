@@ -59,15 +59,15 @@ if "%INSTALLDIR%" == "" set INSTALLDIR=C:\Program Files\Tcl
 
 :: Build the normal stuff along with the help file.
 ::
-set OPTS=threads
-if not %SYMBOLS%.==. set OPTS=symbols,threads
-nmake -nologo -f makefile.vc release winhelp OPTS=%OPTS% %1
+set OPTS=none
+if not %SYMBOLS%.==. set OPTS=symbols
+nmake -nologo -f makefile.vc release htmlhelp OPTS=%OPTS% %1
 if errorlevel 1 goto error
 
 :: Build the static core and shell.
 ::
-set OPTS=static,msvcrt,threads
-if not %SYMBOLS%.==. set OPTS=symbols,static,msvcrt,threads
+set OPTS=static,msvcrt
+if not %SYMBOLS%.==. set OPTS=symbols,static,msvcrt
 nmake -nologo -f makefile.vc shell OPTS=%OPTS% %1
 if errorlevel 1 goto error
 

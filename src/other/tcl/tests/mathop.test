@@ -729,7 +729,7 @@ test mathop-20.2 { zero args, not allowed } {
     set exp {}
     foreach op {~ ! << >> % != ne in ni - /} {
         set res [TestOp $op]
-        if {[string match "wrong # args* NONE" $res]} {
+        if {[string match "wrong # args: should be * TCL WRONGARGS" $res]} {
             lappend exp 0
         } else {
             lappend exp $res
@@ -760,7 +760,7 @@ test mathop-20.5 { one arg, not allowed } {
     set exp {}
     foreach op {% != ne in ni << >>} {
         set res [TestOp $op 1]
-        if {[string match "wrong # args* NONE" $res]} {
+        if {[string match "wrong # args: should be * TCL WRONGARGS" $res]} {
             lappend exp 0
         } else {
             lappend exp $res
@@ -775,12 +775,14 @@ test mathop-20.6 { one arg, error } {
         # skipping - for now, knownbug...
         foreach op {+ * / & | ^ **} {
             lappend res [TestOp $op {*}$vals]
-            lappend exp "can't use non-numeric string as operand of \"$op\" ARITH DOMAIN {non-numeric string}"
+            lappend exp "can't use non-numeric string as operand of \"$op\"\
+		ARITH DOMAIN {non-numeric string}"
         }
     }
     foreach op {+ * / & | ^ **} {
 	lappend res [TestOp $op NaN 1]
-	lappend exp "can't use non-numeric floating-point value as operand of \"$op\" ARITH DOMAIN {non-numeric floating-point value}"
+	lappend exp "can't use non-numeric floating-point value as operand of \"$op\"\
+	    ARITH DOMAIN {non-numeric floating-point value}"
     }
     expr {$res eq $exp ? 0 : $res}
 } 0
@@ -863,7 +865,7 @@ test mathop-21.6 { unary ops, too many } {
     set exp {}
     foreach op {~ !} {
         set res [TestOp $op 7 8]
-        if {[string match "wrong # args* NONE" $res]} {
+        if {[string match "wrong # args: should be * TCL WRONGARGS" $res]} {
             lappend exp 0
         } else {
             lappend exp $res
@@ -1090,7 +1092,7 @@ test mathop-24.3 { binary ops, bad values } {
     }
     foreach op {in ni} {
         lappend res [TestOp $op 5 "a b \{ c"]
-        lappend exp "unmatched open brace in list NONE"
+        lappend exp "unmatched open brace in list TCL VALUE LIST BRACE"
     }
     lappend res [TestOp % 5 0]
     lappend exp "divide by zero ARITH DIVZERO {divide by zero}"
@@ -1187,7 +1189,7 @@ test mathop-24.8 { binary ops, too many } {
     set exp {}
     foreach op {<< >> % != ne in ni ~ !} {
         set res [TestOp $op 7 8 9]
-        if {[string match "wrong # args* NONE" $res]} {
+        if {[string match "wrong # args: should be * TCL WRONGARGS" $res]} {
             lappend exp 0
         } else {
             lappend exp $res
@@ -1204,6 +1206,8 @@ test mathop-25.5  { exp operator } {TestOp **   1   5} 1
 test mathop-25.6  { exp operator } {TestOp **   5   1} 5
 test mathop-25.7  { exp operator } {TestOp ** 4 3 2 1} 262144
 test mathop-25.8  { exp operator } {TestOp ** 5.5   4} 915.0625
+test mathop-25.8a { exp operator } {TestOp ** 4.0  -1} 0.25
+test mathop-25.8b { exp operator } {TestOp ** 2.0  -2} 0.25
 test mathop-25.9  { exp operator } {TestOp **  16 3.5} 16384.0
 test mathop-25.10 { exp operator } {TestOp ** 3.5   0} 1.0
 test mathop-25.11 { exp operator } {TestOp ** 378   0} 1
@@ -1217,8 +1221,32 @@ test mathop-25.18 { exp operator } {TestOp **  -1  -2} 1
 test mathop-25.19 { exp operator } {TestOp **  -1   3} -1
 test mathop-25.20 { exp operator } {TestOp **  -1   4} 1
 test mathop-25.21 { exp operator } {TestOp **   2  63} 9223372036854775808
-test mathop-25.22 { exp operator } {TestOp ** 83756485763458746358734658473567847567473 2} 7015148907444467657897585474493757781161998914521537835809623408157343003287605729
-test mathop-25.23 { exp operator errors } {
+test mathop-25.22 { exp operator } {TestOp **   2 256} 115792089237316195423570985008687907853269984665640564039457584007913129639936
+set big 83756485763458746358734658473567847567473
+test mathop-25.23 { exp operator } {TestOp ** $big  2} 7015148907444467657897585474493757781161998914521537835809623408157343003287605729
+test mathop-25.24 { exp operator } {TestOp ** $big  0} 1
+test mathop-25.25 { exp operator } {TestOp ** $big  1} $big
+test mathop-25.26 { exp operator } {TestOp ** $big -1} 0
+test mathop-25.27 { exp operator } {TestOp ** $big -2} 0
+test mathop-25.28 { exp operator } {TestOp ** $big -$big} 0
+test mathop-25.29 { exp operator } {expr {[set res [TestOp **  $big -1.0]]   >  0 && $res < 1.2e-41}} 1
+test mathop-25.30 { exp operator } {expr {[set res [TestOp **  $big -1e-18]] >  0 && $res < 1}} 1
+test mathop-25.31 { exp operator } {expr {[set res [TestOp ** -$big -1.0]]   > -1 && $res < 0}} 1
+test mathop-25.32 { exp operator } {expr {[set res [TestOp ** -$big -2.0]]   >  0 && $res < 1}} 1
+test mathop-25.33 { exp operator } {expr {[set res [TestOp ** -$big -3.0]]   > -1 && $res < 0}} 1
+test mathop-25.34 { exp operator } {TestOp ** $big -1e-30} 1.0
+test mathop-25.35 { exp operator } {TestOp ** $big -1e+30} 0.0
+test mathop-25.36 { exp operator } {TestOp **    0  $big}             0
+test mathop-25.37 { exp operator } {TestOp **    1  $big}             1
+test mathop-25.38 { exp operator } {TestOp **   -1  $big}            -1
+test mathop-25.39 { exp operator } {TestOp **   -1  [expr {$big+1}]}  1
+test mathop-25.40 { exp operator (small exponent power helper and its boundaries) } {
+    set pwr 0
+    set res 1
+    while {[incr pwr] <= 17 && [set i [TestOp ** 15 $pwr]] == [set res [expr {$res * 15}]]} {}
+    list [incr pwr -1] $res
+} {17 98526125335693359375}
+test mathop-25.41 { exp operator errors } {
     set res {}
     set exp {}
 

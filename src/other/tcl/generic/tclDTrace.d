@@ -3,7 +3,7 @@
  *
  *	Tcl DTrace provider.
  *
- * Copyright (c) 2007 Daniel A. Steffen <das@users.sourceforge.net>
+ * Copyright (c) 2007-2008 Daniel A. Steffen <das@users.sourceforge.net>
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -24,14 +24,14 @@ provider tcl {
      *		arg1: number of arguments		(int)
      *		arg2: array of proc argument objects	(Tcl_Obj**)
      */
-    probe proc__entry(char* name, int objc, struct Tcl_Obj **objv);
+    probe proc__entry(const char *name, int objc, struct Tcl_Obj **objv);
     /*
      *	tcl*:::proc-return probe
      *	    triggered immediately after proc bytecode execution
      *		arg0: proc name				(string)
      *		arg1: return code			(int)
      */
-    probe proc__return(char* name, int code);
+    probe proc__return(const char *name, int code);
     /*
      *	tcl*:::proc-result probe
      *	    triggered after proc-return probe and result processing
@@ -40,7 +40,8 @@ provider tcl {
      *		arg2: proc result			(string)
      *		arg3: proc result object		(Tcl_Obj*)
      */
-    probe proc__result(char* name, int code, char* result, struct Tcl_Obj *resultobj);
+    probe proc__result(const char *name, int code, const char *result,
+	    struct Tcl_Obj *resultobj);
     /*
      *	tcl*:::proc-args probe
      *	    triggered before proc-entry probe, gives access to string
@@ -48,9 +49,10 @@ provider tcl {
      *		arg0: proc name				(string)
      *		arg1-arg9: proc arguments or NULL	(strings)
      */
-    probe proc__args(char* name, char* arg1, char* arg2, char* arg3,
-	    char* arg4, char* arg5, char* arg6, char* arg7, char* arg8,
-	    char* arg9);
+    probe proc__args(const char *name, const char *arg1, const char *arg2,
+	    const char *arg3, const char *arg4, const char *arg5,
+	    const char *arg6, const char *arg7, const char *arg8,
+	    const char *arg9);
     /*
      *	tcl*:::proc-info probe
      *	    triggered before proc-entry probe, gives access to TIP 280
@@ -61,9 +63,12 @@ provider tcl {
      *		arg3: TIP 280 file			(string)
      *		arg4: TIP 280 line			(int)
      *		arg5: TIP 280 level			(int)
+     *		arg6: TclOO method			(string)
+     *		arg7: TclOO class/object		(string)
      */
-    probe proc__info(char* cmd, char* type, char* proc, char* file, int line,
-	    int level);
+    probe proc__info(const char *cmd, const char *type, const char *proc,
+	    const char *file, int line, int level, const char *method,
+	    const char *class);
 
     /***************************** cmd probes ******************************/
     /*
@@ -73,14 +78,14 @@ provider tcl {
      *		arg1: number of arguments		(int)
      *		arg2: array of command argument objects	(Tcl_Obj**)
      */
-    probe cmd__entry(char* name, int objc, struct Tcl_Obj **objv);
+    probe cmd__entry(const char *name, int objc, struct Tcl_Obj **objv);
     /*
      *	tcl*:::cmd-return probe
      *	    triggered immediately after commmand execution
      *		arg0: command name			(string)
      *		arg1: return code			(int)
      */
-    probe cmd__return(char* name, int code);
+    probe cmd__return(const char *name, int code);
     /*
      *	tcl*:::cmd-result probe
      *	    triggered after cmd-return probe and result processing
@@ -89,7 +94,8 @@ provider tcl {
      *		arg2: command result			(string)
      *		arg3: command result object		(Tcl_Obj*)
      */
-    probe cmd__result(char* name, int code, char* result, struct Tcl_Obj *resultobj);
+    probe cmd__result(const char *name, int code, const char *result,
+	    struct Tcl_Obj *resultobj);
     /*
      *	tcl*:::cmd-args probe
      *	    triggered before cmd-entry probe, gives access to string
@@ -97,9 +103,10 @@ provider tcl {
      *		arg0: command name			(string)
      *		arg1-arg9: command arguments or NULL	(strings)
      */
-    probe cmd__args(char* name, char* arg1, char* arg2, char* arg3,
-	    char* arg4, char* arg5, char* arg6, char* arg7, char* arg8,
-	    char* arg9);
+    probe cmd__args(const char *name, const char *arg1, const char *arg2,
+	    const char *arg3, const char *arg4, const char *arg5,
+	    const char *arg6, const char *arg7, const char *arg8,
+	    const char *arg9);
     /*
      *	tcl*:::cmd-info probe
      *	    triggered before cmd-entry probe, gives access to TIP 280
@@ -110,9 +117,12 @@ provider tcl {
      *		arg3: TIP 280 file			(string)
      *		arg4: TIP 280 line			(int)
      *		arg5: TIP 280 level			(int)
+     *		arg6: TclOO method			(string)
+     *		arg7: TclOO class/object		(string)
      */
-    probe cmd__info(char* cmd, char* type, char* proc, char* file, int line,
-	    int level);
+    probe cmd__info(const char *cmd, const char *type, const char *proc,
+	    const char *file, int line, int level, const char *method,
+	    const char *class);
 
     /***************************** inst probes *****************************/
     /*
@@ -122,7 +132,7 @@ provider tcl {
      *		arg1: depth of stack			(int)
      *		arg2: top of stack			(Tcl_Obj**)
      */
-    probe inst__start(char* name, int depth, struct Tcl_Obj **stack);
+    probe inst__start(const char *name, int depth, struct Tcl_Obj **stack);
     /*
      *	tcl*:::inst-done probe
      *	    triggered immediately after execution of a bytecode
@@ -130,7 +140,7 @@ provider tcl {
      *		arg1: depth of stack			(int)
      *		arg2: top of stack			(Tcl_Obj**)
      */
-    probe inst__done(char* name, int depth, struct Tcl_Obj **stack);
+    probe inst__done(const char *name, int depth, struct Tcl_Obj **stack);
 
     /***************************** obj probes ******************************/
     /*
@@ -152,9 +162,10 @@ provider tcl {
      *	    triggered when the ::tcl::dtrace command is called
      *		arg0-arg9: command arguments		(strings)
      */
-    probe tcl__probe(char* arg0, char* arg1, char* arg2, char* arg3,
-	    char* arg4, char* arg5, char* arg6, char* arg7, char* arg8,
-	    char* arg9);
+    probe tcl__probe(const char *arg0, const char *arg1, const char *arg2,
+	    const char *arg3, const char *arg4, const char *arg5,
+	    const char *arg6, const char *arg7, const char *arg8,
+	    const char *arg9);
 };
 
 /*
@@ -162,7 +173,7 @@ provider tcl {
  */
 
 typedef struct Tcl_ObjType {
-    char *name;
+    const char *name;
     void *freeIntRepProc;
     void *dupIntRepProc;
     void *updateStringProc;
@@ -173,7 +184,7 @@ struct Tcl_Obj {
     int refCount;
     char *bytes;
     int length;
-    Tcl_ObjType *typePtr;
+    const Tcl_ObjType *typePtr;
     union {
 	long longValue;
 	double doubleValue;

@@ -40,7 +40,7 @@ namespace eval ::tcl::clock {
 	    l li lii liii liv lv lvi lvii lviii lix
 	    lx lxi lxii lxiii lxiv lxv lxvi lxvii lxviii lxix
 	    lxx lxxi lxxii lxxiii lxxiv lxxv lxxvi lxxvii lxxviii lxxix
-	    lxxx lxxxi lxxxii lxxxiii lxxxiv lxxxv lxxxvi lxxxvii lxxxviii 
+	    lxxx lxxxi lxxxii lxxxiii lxxxiv lxxxv lxxxvi lxxxvii lxxxviii
 	    lxxxix
 	    xc xci xcii xciii xciv xcv xcvi xcvii xcviii xcix
 	    c
@@ -62,7 +62,7 @@ namespace eval ::tcl::clock {
 #
 # Parameters:
 #	startOfYearArray - Name of an array in caller's scope that will
-#	                   be initialized as 
+#	                   be initialized as
 # Results:
 #       None
 #
@@ -106,7 +106,7 @@ proc listYears { startOfYearArray } {
 	set s $s2
 	incr y
     }
-    
+
     # List years before 1970
 
     set y 1970
@@ -138,7 +138,7 @@ proc listYears { startOfYearArray } {
 
 #----------------------------------------------------------------------
 #
-# processFile - 
+# processFile -
 #
 #	Processes the 'clock.test' file, updating the test cases in it.
 #
@@ -153,7 +153,7 @@ proc listYears { startOfYearArray } {
 proc processFile {d} {
 
     # Open two files
-    
+
     set f1 [open [file join $d tests/clock.test] r]
     set f2 [open [file join $d tests/clock.new] w]
 
@@ -164,7 +164,7 @@ proc processFile {d} {
 	switch -exact -- $state {
 	    {} {
 		puts $f2 $line
-		if { [regexp "^\# BEGIN (.*)" $line -> cases] 
+		if { [regexp "^\# BEGIN (.*)" $line -> cases]
 		     && [string compare {} [info commands $cases]] } {
 		    set state inCaseSet
 		    $cases $f2
@@ -213,7 +213,7 @@ proc testcases2 { f2 } {
     listYears startOfYear
 
     # Define the roman numerals
-    
+
     set roman {
  	? i ii iii iv v vi vii viii ix
 	x xi xii xiii xiv xv xvi xvii xviii xix
@@ -235,20 +235,20 @@ proc testcases2 { f2 } {
     }
 
     # Names of the months
-    
+
     set short {{} Jan Feb Mar Apr May Jun Jul Aug Sep Oct Nov Dec}
     set long {
 	{} January February March April May June July August September
 	October November December
     }
-    
+
     # Put out a header describing the tests
-    
+
     puts $f2 ""
     puts $f2 "\# Test formatting of Gregorian year, month, day, all formats"
     puts $f2 "\# Formats tested: %b %B %c %Ec %C %EC %d %Od %e %Oe %h %j %J %m %Om %N %x %Ex %y %Oy %Y %EY"
     puts $f2 ""
-    
+
     # Generate the test cases for the first and last day of every month
     # from 1896 to 2045
 
@@ -262,7 +262,7 @@ proc testcases2 { f2 } {
 	    if { $m == 2 && ( $y%4 == 0 && $y%100 != 0 || $y%400 == 0 ) } {
 		incr hath
 	    }
-	    
+
 	    set b [lindex $short $m]
 	    set B [lindex $long $m]
 	    set C [format %02d [expr { $y / 100 }]]
@@ -271,9 +271,9 @@ proc testcases2 { f2 } {
 	    set mm [format %02d $m]
 	    set N [format %2d $m]
 	    set yy [format %02d [expr { $y % 100 }]]
-	    
+
 	    set J [expr { ( $s / 86400 ) + 2440588 }]
-	    
+
 	    set dt $y-$mm-01
 	    set result ""
 	    append result $b " " $B " " \
@@ -296,17 +296,17 @@ proc testcases2 { f2 } {
 	    puts $f2 "\t-format {%b %B %c %Ec %C %EC %d %Od %e %Oe %h %j %J %m %Om %N %x %Ex %y %Oy %Y} \\"
 	    puts $f2 "\t-gmt true -locale en_US_roman"
 	    puts $f2 "} {$result}"
-	    
+
 	    set hm1 [expr { $hath - 1 }]
 	    incr s [expr { 86400 * ( $hath - 1 ) }]
 	    incr yd $hm1
-	    
+
 	    set dd [format %02d $hath]
 	    set ee [format %2d $hath]
 	    set j [format %03d $yd]
-	    
+
 	    set J [expr { ( $s / 86400 ) + 2440588 }]
-	    
+
 	    set dt $y-$mm-$dd
 	    set result ""
 	    append result $b " " $B " " \
@@ -332,7 +332,7 @@ proc testcases2 { f2 } {
 	    puts $f2 "\t-format {%b %B %c %Ec %C %EC %d %Od %e %Oe %h %j %J %m %Om %N %x %Ex %y %Oy %Y} \\"
 	    puts $f2 "\t-gmt true -locale en_US_roman"
 	    puts $f2 "} {$result}"
-	    
+
 	    incr s 86400
 	    incr yd
 	}
@@ -451,7 +451,7 @@ proc testcases3 { f2 } {
 		    testISO $f2 $ym1 52 1 [expr { $secs - 5*86400 }]
 		    testISO $f2 $ym1 52 6 $secs
 		    testISO $f2 $ym1 52 7 [expr { $secs + 86400 }]
-		}		    
+		}
 		testISO $f2 $y 1 1 [expr { $secs + 2*86400 }]
 		testISO $f2 $y 1 6 [expr { $secs + 7*86400 }]
 		testISO $f2 $y 1 7 [expr { $secs + 8*86400 }]
@@ -466,10 +466,10 @@ proc testcases3 { f2 } {
 proc testISO { f2 G V u secs } {
 
     upvar 1 case case
-    
+
     set longdays {Sunday Monday Tuesday Wednesday Thursday Friday Saturday Sunday}
     set shortdays {Sun Mon Tue Wed Thu Fri Sat Sun}
-    
+
     puts $f2 "test clock-3.[incr case] {ISO week-based calendar [format %04d-W%02d-%d $G $V $u]} {"
     puts $f2 "    clock format $secs -format {%a %A %g %G %u %U %V %w %W} -gmt true; \# $G-W[format %02d $V]-$u"
     puts $f2 "} {[lindex $shortdays $u] [lindex $longdays $u]\
@@ -478,7 +478,7 @@ proc testISO { f2 G V u secs } {
              [clock format $secs -format %U -gmt true]\
              [format %02d $V] [expr { $u % 7 }]\
              [clock format $secs -format %W -gmt true]}"
-    
+
 }
 
 #----------------------------------------------------------------------
@@ -504,15 +504,15 @@ proc testcases4 { f2 } {
     puts $f2 "\# Test formatting of time of day"
     puts $f2 "\# Format groups tested: %H %OH %I %OI %k %Ok %l %Ol %M %OM %p %P %r %R %S %OS %T %X %EX %+"
     puts $f2 {}
-    
+
     set i 0
     set fmt "%H %OH %I %OI %k %Ok %l %Ol %M %OM %p %P %r %R %S %OS %T %X %EX %+"
-    foreach { h romanH I romanI am } { 
-	0 ? 12 xii AM 
-	1 i 1 i AM 
-	11 xi 11 xi AM 
-	12 xii 12 xii PM 
-	13 xiii 1 i PM 
+    foreach { h romanH I romanI am } {
+	0 ? 12 xii AM
+	1 i 1 i AM
+	11 xi 11 xi AM
+	12 xii 12 xii PM
+	13 xiii 1 i PM
 	23 xxiii 11 xi PM
     } {
 	set hh [format %02d $h]
@@ -547,7 +547,7 @@ proc testcases4 { f2 } {
 
     puts "testcases4: $i test cases."
 }
-    
+
 #----------------------------------------------------------------------
 #
 # testcases5 --
@@ -572,9 +572,9 @@ proc testcases5 { f2 } {
     puts $f2 {}
     puts $f2 "\# Test formatting of Daylight Saving Time"
     puts $f2 {}
-    
+
     set fmt {%H:%M:%S %z %Z}
-    
+
     set i 0
     puts $f2 "test clock-5.[incr i] {does Detroit exist} {"
     puts $f2 "    clock format 0 -format {} -timezone :America/Detroit"
@@ -587,7 +587,7 @@ proc testcases5 { f2 } {
     puts $f2 "        concat {ok}"
     puts $f2 "    }"
     puts $f2 "} ok"
-  
+
     foreach row $TZData(:America/Detroit) {
 	foreach { t offset isdst tzname } $row break
 	if { $t > -4000000000000 } {
@@ -648,12 +648,12 @@ proc testcases5 { f2 } {
 proc testcases8 { f2 } {
 
     # Put out a header describing the tests
-    
+
     puts $f2 ""
     puts $f2 "\# Test parsing of ccyymmdd"
     puts $f2 ""
-    
-    set n 0 
+
+    set n 0
     foreach year {1970 1971 2000 2001} {
 	foreach month {01 12} {
 	    foreach day {02 31} {
@@ -670,7 +670,7 @@ proc testcases8 { f2 } {
 			    puts $f2 "} $scanned"
 			}
 		    }
-		}	
+		}
 		foreach fmt {%x %D} {
 		    set string [clock format $scanned \
 				    -format $fmt \
@@ -708,11 +708,11 @@ proc testcases8 { f2 } {
 proc testcases11 { f2 } {
 
     # Put out a header describing the tests
-    
+
     puts $f2 ""
     puts $f2 "\# Test precedence among yyyymmdd and yyyyddd"
     puts $f2 ""
-    
+
     array set v {
 	Y 1970
 	m 01
@@ -771,12 +771,12 @@ proc testcases11 { f2 } {
 proc testcases12 { f2 } {
 
     # Put out a header describing the tests
-    
+
     puts $f2 ""
     puts $f2 "\# Test parsing of ccyyWwwd"
     puts $f2 ""
-    
-    set n 0 
+
+    set n 0
     foreach year {1970 1971 2000 2001} {
 	foreach month {01 12} {
 	    foreach day {02 31} {
@@ -817,12 +817,12 @@ proc testcases12 { f2 } {
 proc testcases14 { f2 } {
 
     # Put out a header describing the tests
-    
+
     puts $f2 ""
     puts $f2 "\# Test parsing of yymmdd"
     puts $f2 ""
-    
-    set n 0 
+
+    set n 0
     foreach year {1938 1970 2000 2037} {
 	foreach month {01 12} {
 	    foreach day {02 31} {
@@ -839,7 +839,7 @@ proc testcases14 { f2 } {
 			    puts $f2 "} $scanned"
 			}
 		    }
-		}	
+		}
 	    }
 	}
     }
@@ -868,12 +868,12 @@ proc testcases14 { f2 } {
 proc testcases17 { f2 } {
 
     # Put out a header describing the tests
-    
+
     puts $f2 ""
     puts $f2 "\# Test parsing of yyWwwd"
     puts $f2 ""
-    
-    set n 0 
+
+    set n 0
     foreach year {1970 1971 2000 2001} {
 	foreach month {01 12} {
 	    foreach day {02 31} {
@@ -914,12 +914,12 @@ proc testcases17 { f2 } {
 proc testcases19 { f2 } {
 
     # Put out a header describing the tests
-    
+
     puts $f2 ""
     puts $f2 "\# Test parsing of mmdd"
     puts $f2 ""
-    
-    set n 0 
+
+    set n 0
     foreach year {1938 1970 2000 2037} {
 	set base [clock scan ${year}0101 -gmt true]
 	foreach month {01 12} {
@@ -935,7 +935,7 @@ proc testcases19 { f2 } {
 			puts $f2 "    [list clock scan $string -format [list $mm $dd] -locale en_US_roman -base $base -gmt 1]"
 			puts $f2 "} $scanned"
 		    }
-		}	
+		}
 	    }
 	}
     }
@@ -964,12 +964,12 @@ proc testcases19 { f2 } {
 proc testcases22 { f2 } {
 
     # Put out a header describing the tests
-    
+
     puts $f2 ""
     puts $f2 "\# Test parsing of Wwwd"
     puts $f2 ""
-    
-    set n 0 
+
+    set n 0
     foreach year {1970 1971 2000 2001} {
 	set base [clock scan ${year}0104 -gmt true]
 	foreach month {03 10} {
@@ -1011,12 +1011,12 @@ proc testcases22 { f2 } {
 proc testcases24 { f2 } {
 
     # Put out a header describing the tests
-    
+
     puts $f2 ""
     puts $f2 "\# Test parsing of naked day-of-month"
     puts $f2 ""
-    
-    set n 0 
+
+    set n 0
     foreach year {1970 2000} {
 	foreach month {01 12} {
 	    set base [clock scan ${year}${month}01 -gmt true]
@@ -1030,7 +1030,7 @@ proc testcases24 { f2 } {
 		    puts $f2 "test clock-24.[incr n] {parse naked day of month} {"
 		    puts $f2 "    [list clock scan $string -format $dd -locale en_US_roman -base $base -gmt 1]"
 		    puts $f2 "} $scanned"
-		}	
+		}
 	    }
 	}
     }
@@ -1059,12 +1059,12 @@ proc testcases24 { f2 } {
 proc testcases26 { f2 } {
 
     # Put out a header describing the tests
-    
+
     puts $f2 ""
     puts $f2 "\# Test parsing of naked day of week"
     puts $f2 ""
-    
-    set n 0 
+
+    set n 0
     foreach year {1970 2001} {
 	foreach week {01 52} {
 	    set base [clock scan ${year}W${week}4 \
@@ -1108,7 +1108,7 @@ proc testcases26 { f2 } {
 proc testcases29 { f2 } {
 
     # Put out a header describing the tests
-    
+
     puts $f2 ""
     puts $f2 "\# Test parsing of time of day"
     puts $f2 ""
@@ -1172,7 +1172,7 @@ proc testcases29 { f2 } {
 			}
 		}
 	    }
-	    
+
 	}
     puts "testcases29: $n test cases"
 }

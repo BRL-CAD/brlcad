@@ -90,7 +90,6 @@ Arbitrary pointer-sized word used to pass some context to the
 Function to call whenever a handler is deleted.  May be NULL if the
 \fIclientData\fR requires no deletion.
 .BE
-
 .SH DESCRIPTION
 .PP
 Tcl's interpreter resource limit subsystem allows for close control
@@ -162,7 +161,7 @@ the function that will actually be called; it should have the
 following prototype:
 .PP
 .CS
-typedef void Tcl_LimitHandlerProc(
+typedef void \fBTcl_LimitHandlerProc\fR(
         ClientData \fIclientData\fR,
         Tcl_Interp *\fIinterp\fR);
 .CE
@@ -179,7 +178,7 @@ function to call to delete the \fIclientData\fR value.  It may be
 following prototype:
 .PP
 .CS
-typedef void Tcl_LimitHandlerDeleteProc(
+typedef void \fBTcl_LimitHandlerDeleteProc\fR(
         ClientData \fIclientData\fR);
 .CE
 .PP
@@ -189,6 +188,5 @@ with \fBTcl_LimitAddHandler\fR) with exactly matching \fItype\fR,
 \fIhandlerProc\fR and \fIclientData\fR arguments.  This function
 always invokes the \fIdeleteProc\fR on the \fIclientData\fR (unless
 the \fIdeleteProc\fR was NULL or \fBTCL_STATIC\fR).
-
 .SH KEYWORDS
 interpreter, resource, limit, commands, time, callback

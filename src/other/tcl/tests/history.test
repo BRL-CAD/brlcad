@@ -1,18 +1,18 @@
 # Commands covered:  history
 #
-# This file contains a collection of tests for one or more of the Tcl
-# built-in commands.  Sourcing this file into Tcl runs the tests and
-# generates output for errors.  No output means no errors were found.
+# This file contains a collection of tests for one or more of the Tcl built-in
+# commands.  Sourcing this file into Tcl runs the tests and generates output
+# for errors.  No output means no errors were found.
 #
 # Copyright (c) 1991-1993 The Regents of the University of California.
 # Copyright (c) 1994 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+# See the file "license.terms" for information on usage and redistribution of
+# this file, and for a DISCLAIMER OF ALL WARRANTIES.
   
-if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest
+if {"::tcltest" ni [namespace children]} {
+    package require tcltest 2
     namespace import -force ::tcltest::*
 }
 
@@ -33,7 +33,7 @@ if {[testConstraint history]} {
     # Dummy value, must be numeric
     set num 0
 }
-
+
 # "history event"
 
 test history-1.1 {event option} history {history event -1} \
@@ -233,6 +233,7 @@ if {[testConstraint history]} {
 test history-8.1 {clear option} history {catch {history clear junk}} 1
 test history-8.2 {clear option} history {history clear} {}
 if {[testConstraint history]} {
+    history clear
     history add "Testing"
 }
 test history-8.3 {clear option} history {history} {     1  Testing}
@@ -243,8 +244,66 @@ test history-9.1 {miscellaneous} history {catch {history gorp} msg} 1
 test history-9.2 {miscellaneous} history {
     catch {history gorp} msg
     set msg
-} {bad option "gorp": must be add, change, clear, event, info, keep, nextid, or redo}
+} {unknown or ambiguous subcommand "gorp": must be add, change, clear, event, info, keep, nextid, or redo}
 
+# History retains references; Bug 1ae12987cb
+test history-10.1 {references kept by history} -constraints history -setup {
+    interp create histtest
+    histtest eval {
+	# Trigger any autoloading that might be present
+	catch {history}
+	proc refcount {x} {
+	    set rep [::tcl::unsupported::representation $x]
+	    regexp {with a refcount of (\d+)} $rep -> rc
+	    # Ignore the references due to calling this procedure
+	    return [expr {$rc - 3}]
+	}
+    }
+} -body {
+    histtest eval {
+	# A fresh object, refcount 1 from the variable we write it to
+	set obj [expr rand()]
+	set baseline [refcount $obj]
+	lappend result [refcount $obj]
+	history add [list list $obj]
+	lappend result [refcount $obj]
+	history clear
+	lappend result [refcount $obj]
+    }
+} -cleanup {
+    interp delete histtest
+} -result {1 2 1}
+test history-10.2 {references kept by history} -constraints history -setup {
+    interp create histtest
+    histtest eval {
+	# Trigger any autoloading that might be present
+	catch {history}
+	proc refcount {x} {
+	    set rep [::tcl::unsupported::representation $x]
+	    regexp {with a refcount of (\d+)} $rep -> rc
+	    # Ignore the references due to calling this procedure
+	    return [expr {$rc - 3}]
+	}
+    }
+} -body {
+    histtest eval {
+	# A fresh object, refcount 1 from the variable we write it to
+	set obj [expr rand()]
+	set baseline [refcount $obj]
+	lappend result [refcount $obj]
+	history add [list list $obj]
+	lappend result [refcount $obj]
+	rename history {}
+	lappend result [refcount $obj]
+    }
+} -cleanup {
+    interp delete histtest
+} -result {1 2 1}
+
 # cleanup
 ::tcltest::cleanupTests
 return
+
+# Local Variables:
+# mode: tcl
+# End:

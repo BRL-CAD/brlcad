@@ -23,6 +23,7 @@ bindir			= @bindir@
 libdir			= @libdir@
 includedir		= @includedir@
 datarootdir		= @datarootdir@
+runstatedir		= @runstatedir@
 mandir			= @mandir@
 
 # The following definition can be set to non-null for special systems like AFS
@@ -81,7 +82,12 @@ CFLAGS_OPTIMIZE	= @CFLAGS_OPTIMIZE@
 #CFLAGS = 		$(CFLAGS_DEBUG)
 #CFLAGS = 		$(CFLAGS_OPTIMIZE)
 #CFLAGS = 		$(CFLAGS_DEBUG) $(CFLAGS_OPTIMIZE)
-CFLAGS = 		@CFLAGS@ @CFLAGS_DEFAULT@ -D_ATL_XP_TARGETING
+CFLAGS = 		@CFLAGS@ @CFLAGS_DEFAULT@ -D_ATL_XP_TARGETING -DMP_FIXED_CUTOFFS -DMP_NO_STDINT
+
+# To compile without backward compatibility and deprecated code uncomment the
+# following
+NO_DEPRECATED_FLAGS	=
+#NO_DEPRECATED_FLAGS	= -DTCL_NO_DEPRECATED
 
 # To enable compilation debugging reverse the comment characters on one of the
 # following lines.
@@ -89,15 +95,15 @@ COMPILE_DEBUG_FLAGS =
 #COMPILE_DEBUG_FLAGS = -DTCL_COMPILE_DEBUG
 #COMPILE_DEBUG_FLAGS = -DTCL_COMPILE_DEBUG -DTCL_COMPILE_STATS
 
-# Special compiler flags to use when building man2tcl on Windows.
-MAN2TCLFLAGS =		@MAN2TCLFLAGS@
-
 SRC_DIR			= @srcdir@
 ROOT_DIR		= @srcdir@/..
-GENERIC_DIR		= @srcdir@/../generic
-TOMMATH_DIR		= @srcdir@/../libtommath
-WIN_DIR			= @srcdir@
-COMPAT_DIR		= @srcdir@/../compat
+TOP_DIR			= $(shell cd @srcdir@/..; pwd -W 2>/dev/null || pwd -P)
+GENERIC_DIR		= $(TOP_DIR)/generic
+TOMMATH_DIR		= $(TOP_DIR)/libtommath
+WIN_DIR			= $(TOP_DIR)/win
+COMPAT_DIR		= $(TOP_DIR)/compat
+PKGS_DIR		= $(TOP_DIR)/pkgs
+ZLIB_DIR		= $(COMPAT_DIR)/zlib
 
 # Converts a POSIX path to a Windows native path.
 CYGPATH			= @CYGPATH@
@@ -111,6 +117,8 @@ GENERIC_DIR_NATIVE	= $(shell $(CYGPATH) '$(GENERIC_DIR)')
 TOMMATH_DIR_NATIVE	= $(shell $(CYGPATH) '$(TOMMATH_DIR)')
 WIN_DIR_NATIVE		= $(shell $(CYGPATH) '$(WIN_DIR)')
 ROOT_DIR_NATIVE		= $(shell $(CYGPATH) '$(ROOT_DIR)')
+ROOT_DIR_WIN_NATIVE	= $(shell cd '$(ROOT_DIR)' ; pwd -W 2>/dev/null || pwd -P)
+ZLIB_DIR_NATIVE		= $(shell $(CYGPATH) '$(ZLIB_DIR)')
 #GENERIC_DIR_NATIVE	= $(GENERIC_DIR)
 #TOMMATH_DIR_NATIVE	= $(TOMMATH_DIR)
 #WIN_DIR_NATIVE		= $(WIN_DIR)
@@ -118,7 +126,7 @@ ROOT_DIR_NATIVE		= $(shell $(CYGPATH) '$(ROOT_DIR)')
 
 # Fully qualify library path so that `make test`
 # does not depend on the current directory.
-LIBRARY_DIR1		= $(shell cd '$(ROOT_DIR_NATIVE)/library' ; pwd)
+LIBRARY_DIR1		= $(shell cd '$(ROOT_DIR_NATIVE)/library' ; pwd -P)
 LIBRARY_DIR             = $(shell $(CYGPATH) '$(LIBRARY_DIR1)')
 DLLSUFFIX		= @DLLSUFFIX@
 LIBSUFFIX		= @LIBSUFFIX@
@@ -135,37 +143,38 @@ TCL_STUB_LIB_FILE	= @TCL_STUB_LIB_FILE@
 TCL_DLL_FILE		= @TCL_DLL_FILE@
 TCL_LIB_FILE		= @TCL_LIB_FILE@
 DDE_DLL_FILE		= tcldde$(DDEVER)${DLLSUFFIX}
-DDE_LIB_FILE		= tcldde$(DDEVER)${LIBSUFFIX}
+DDE_LIB_FILE		= @LIBPREFIX@tcldde$(DDEVER)${LIBSUFFIX}
 REG_DLL_FILE		= tclreg$(REGVER)${DLLSUFFIX}
-REG_LIB_FILE		= tclreg$(REGVER)${LIBSUFFIX}
-PIPE_DLL_FILE		= tclpip$(VER)${DLLSUFFIX}
+REG_LIB_FILE		= @LIBPREFIX@tclreg$(REGVER)${LIBSUFFIX}
+TEST_DLL_FILE		= tcltest$(VER)${DLLSUFFIX}
+TEST_EXE_FILE		= tcltest${EXESUFFIX}
+TEST_LIB_FILE		= @LIBPREFIX@tcltest$(VER)${LIBSUFFIX}
+TEST_LOAD_PRMS		= package ifneeded dde 1.4.2 [list load [file normalize ${DDE_DLL_FILE}] dde];\
+			  package ifneeded registry 1.3.4 [list load [file normalize ${REG_DLL_FILE}] registry]
+TEST_LOAD_FACILITIES	= package ifneeded Tcltest ${VERSION}@TCL_PATCH_LEVEL@ [list load [file normalize ${TEST_DLL_FILE}] Tcltest];\
+			  $(TEST_LOAD_PRMS)
+ZLIB_DLL_FILE		= zlib1.dll
 
-SHARED_LIBRARIES 	= $(TCL_DLL_FILE) $(TCL_STUB_LIB_FILE) \
-			  $(DDE_DLL_FILE) $(REG_DLL_FILE) $(PIPE_DLL_FILE)
-STATIC_LIBRARIES	= $(TCL_LIB_FILE) $(REG_LIB_FILE) $(DDE_LIB_FILE)
-
-# To compile without backward compatibility and deprecated code
-# uncomment the following
-NO_DEPRECATED_FLAGS	=
-#NO_DEPRECATED_FLAGS	= -DTCL_NO_DEPRECATED
-
-# TCL_EXE is the name of a tclsh executable that is available *BEFORE* running
-# make for the first time. Certain build targets (make genstubs) need it to be
-# available on the PATH. This executable should *NOT* be required just to do a
-# normal build although it can be required to run make dist.
-TCL_EXE			= tclsh
+SHARED_LIBRARIES 	= $(TCL_DLL_FILE) @ZLIB_DLL_FILE@
+STATIC_LIBRARIES	= $(TCL_LIB_FILE)
 
 TCLSH			= tclsh$(VER)${EXESUFFIX}
-TCLTEST			= tcltest${EXEEXT}
 CAT32			= cat32$(EXEEXT)
 MAN2TCL			= man2tcl$(EXEEXT)
+
+# For cross-compiled builds, TCL_EXE is the name of a tclsh executable that is
+# available *BEFORE* running make for the first time. Certain build targets
+# (make genstubs, make install) need it to be available on the PATH. This
+# executable should *NOT* be required just to do a normal build although
+# it can be required to run make dist.
+TCL_EXE			= @TCL_EXE@
 
 @SET_MAKE@
 
 # Setting the VPATH variable to a list of paths will cause the Makefile to
 # look into these paths when resolving .c to .obj dependencies.
 
-VPATH = $(GENERIC_DIR):$(TOMMATH_DIR):$(WIN_DIR):$(COMPAT_DIR)
+VPATH = $(GENERIC_DIR):$(TOMMATH_DIR):$(WIN_DIR):$(COMPAT_DIR):$(ZLIB_DIR)
 
 AR		= @AR@
 RANLIB		= @RANLIB@
@@ -183,10 +192,10 @@ EXEEXT		= @EXEEXT@
 OBJEXT		= @OBJEXT@
 STLIB_LD	= @STLIB_LD@
 SHLIB_LD	= @SHLIB_LD@
-SHLIB_LD_LIBS	= @SHLIB_LD_LIBS@ $(LIBS)
+SHLIB_LD_LIBS	= @SHLIB_LD_LIBS@
 SHLIB_CFLAGS	= @SHLIB_CFLAGS@
 SHLIB_SUFFIX	= @SHLIB_SUFFIX@
-LIBS		= @LIBS@
+LIBS		= @LIBS@ $(shell $(CYGPATH) '@ZLIB_LIBS@')
 
 RMDIR		= rm -rf
 MKDIR		= mkdir -p
@@ -195,9 +204,9 @@ RM		= rm -f
 COPY		= cp
 
 CC_SWITCHES = ${CFLAGS} ${CFLAGS_WARNING} ${TCL_SHLIB_CFLAGS} \
--I"${GENERIC_DIR_NATIVE}" -DTCL_TOMMATH -DMP_PREC=4 -I"${TOMMATH_DIR_NATIVE}" \
--I"${WIN_DIR_NATIVE}" ${AC_FLAGS} \
-${COMPILE_DEBUG_FLAGS} ${NO_DEPRECATED_FLAGS}
+-I"${ZLIB_DIR_NATIVE}" -I"${GENERIC_DIR_NATIVE}" -DTCL_TOMMATH \
+-DMP_PREC=4 -I"${TOMMATH_DIR_NATIVE}" -I"${WIN_DIR_NATIVE}" \
+${AC_FLAGS} ${COMPILE_DEBUG_FLAGS} ${NO_DEPRECATED_FLAGS}
 
 CC_OBJNAME = @CC_OBJNAME@
 CC_EXENAME = @CC_EXENAME@
@@ -212,8 +221,7 @@ TCLTEST_OBJS = \
 	tclTestObj.$(OBJEXT) \
 	tclTestProcBodyObj.$(OBJEXT) \
 	tclThreadTest.$(OBJEXT) \
-	tclWinTest.$(OBJEXT) \
-	testMain.$(OBJEXT)
+	tclWinTest.$(OBJEXT)
 
 GENERIC_OBJS = \
 	regcomp.$(OBJEXT) \
@@ -221,6 +229,7 @@ GENERIC_OBJS = \
 	regfree.$(OBJEXT) \
 	regerror.$(OBJEXT) \
 	tclAlloc.$(OBJEXT) \
+	tclAssembly.$(OBJEXT) \
 	tclAsync.$(OBJEXT) \
 	tclBasic.$(OBJEXT) \
 	tclBinary.$(OBJEXT) \
@@ -230,12 +239,16 @@ GENERIC_OBJS = \
 	tclCmdIL.$(OBJEXT) \
 	tclCmdMZ.$(OBJEXT) \
 	tclCompCmds.$(OBJEXT) \
+	tclCompCmdsGR.$(OBJEXT) \
+	tclCompCmdsSZ.$(OBJEXT) \
 	tclCompExpr.$(OBJEXT) \
 	tclCompile.$(OBJEXT) \
 	tclConfig.$(OBJEXT) \
 	tclDate.$(OBJEXT) \
 	tclDictObj.$(OBJEXT) \
+	tclDisassemble.$(OBJEXT) \
 	tclEncoding.$(OBJEXT) \
+	tclEnsemble.$(OBJEXT) \
 	tclEnv.$(OBJEXT) \
 	tclEvent.$(OBJEXT) \
 	tclExecute.$(OBJEXT) \
@@ -250,16 +263,26 @@ GENERIC_OBJS = \
 	tclIOCmd.$(OBJEXT) \
 	tclIOGT.$(OBJEXT) \
 	tclIORChan.$(OBJEXT) \
+	tclIORTrans.$(OBJEXT) \
 	tclIOSock.$(OBJEXT) \
 	tclIOUtil.$(OBJEXT) \
 	tclLink.$(OBJEXT) \
 	tclLiteral.$(OBJEXT) \
 	tclListObj.$(OBJEXT) \
 	tclLoad.$(OBJEXT) \
+	tclMainW.$(OBJEXT) \
 	tclMain.$(OBJEXT) \
 	tclNamesp.$(OBJEXT) \
 	tclNotify.$(OBJEXT) \
+	tclOO.$(OBJEXT) \
+	tclOOBasic.$(OBJEXT) \
+	tclOOCall.$(OBJEXT) \
+	tclOODefineCmds.$(OBJEXT) \
+	tclOOInfo.$(OBJEXT) \
+	tclOOMethod.$(OBJEXT) \
+	tclOOStubInit.$(OBJEXT) \
 	tclObj.$(OBJEXT) \
+	tclOptimize.$(OBJEXT) \
 	tclPanic.$(OBJEXT) \
 	tclParse.$(OBJEXT) \
 	tclPathObj.$(OBJEXT) \
@@ -276,7 +299,6 @@ GENERIC_OBJS = \
 	tclStringObj.$(OBJEXT) \
 	tclStrToD.$(OBJEXT) \
 	tclStubInit.$(OBJEXT) \
-	tclStubLib.$(OBJEXT) \
 	tclThread.$(OBJEXT) \
 	tclThreadAlloc.$(OBJEXT) \
 	tclThreadJoin.$(OBJEXT) \
@@ -286,13 +308,10 @@ GENERIC_OBJS = \
 	tclTrace.$(OBJEXT) \
 	tclUtf.$(OBJEXT) \
 	tclUtil.$(OBJEXT) \
-	tclVar.$(OBJEXT)
+	tclVar.$(OBJEXT) \
+	tclZlib.$(OBJEXT)
 
 TOMMATH_OBJS = \
-	bncore.${OBJEXT} \
-	bn_reverse.${OBJEXT} \
-	bn_fast_s_mp_mul_digs.${OBJEXT} \
-	bn_fast_s_mp_sqr.${OBJEXT} \
 	bn_mp_add.${OBJEXT} \
 	bn_mp_add_d.${OBJEXT} \
 	bn_mp_and.${OBJEXT} \
@@ -311,16 +330,13 @@ TOMMATH_OBJS = \
 	bn_mp_div_2d.${OBJEXT} \
 	bn_mp_div_3.${OBJEXT} \
 	bn_mp_exch.${OBJEXT} \
-	bn_mp_expt_d.${OBJEXT} \
+	bn_mp_expt_u32.${OBJEXT} \
 	bn_mp_grow.${OBJEXT} \
 	bn_mp_init.${OBJEXT} \
 	bn_mp_init_copy.${OBJEXT} \
 	bn_mp_init_multi.${OBJEXT} \
 	bn_mp_init_set.${OBJEXT} \
-	bn_mp_init_set_int.${OBJEXT} \
 	bn_mp_init_size.${OBJEXT} \
-	bn_mp_karatsuba_mul.${OBJEXT} \
-	bn_mp_karatsuba_sqr.$(OBJEXT) \
 	bn_mp_lshd.${OBJEXT} \
 	bn_mp_mod.${OBJEXT} \
 	bn_mp_mod_2d.${OBJEXT} \
@@ -335,24 +351,29 @@ TOMMATH_OBJS = \
 	bn_mp_read_radix.${OBJEXT} \
 	bn_mp_rshd.${OBJEXT} \
 	bn_mp_set.${OBJEXT} \
-	bn_mp_set_int.${OBJEXT} \
 	bn_mp_shrink.${OBJEXT} \
 	bn_mp_sqr.${OBJEXT} \
 	bn_mp_sqrt.${OBJEXT} \
 	bn_mp_sub.${OBJEXT} \
 	bn_mp_sub_d.${OBJEXT} \
-	bn_mp_to_unsigned_bin.${OBJEXT} \
-	bn_mp_to_unsigned_bin_n.${OBJEXT} \
-	bn_mp_toom_mul.${OBJEXT} \
-	bn_mp_toom_sqr.${OBJEXT} \
-	bn_mp_toradix_n.${OBJEXT} \
-	bn_mp_unsigned_bin_size.${OBJEXT} \
+	bn_mp_signed_rsh.${OBJEXT} \
+	bn_mp_to_ubin.${OBJEXT} \
+	bn_mp_to_radix.${OBJEXT} \
+	bn_mp_ubin_size.${OBJEXT} \
 	bn_mp_xor.${OBJEXT} \
 	bn_mp_zero.${OBJEXT} \
 	bn_s_mp_add.${OBJEXT} \
+	bn_s_mp_balance_mul.$(OBJEXT) \
+	bn_s_mp_karatsuba_mul.${OBJEXT} \
+	bn_s_mp_karatsuba_sqr.$(OBJEXT) \
 	bn_s_mp_mul_digs.${OBJEXT} \
+	bn_s_mp_mul_digs_fast.${OBJEXT} \
+	bn_s_mp_reverse.${OBJEXT} \
+	bn_s_mp_sqr_fast.${OBJEXT} \
 	bn_s_mp_sqr.${OBJEXT} \
-	bn_s_mp_sub.${OBJEXT}
+	bn_s_mp_sub.${OBJEXT} \
+	bn_s_mp_toom_mul.${OBJEXT} \
+	bn_s_mp_toom_sqr.${OBJEXT}
 
 
 WIN_OBJS = \
@@ -371,52 +392,83 @@ WIN_OBJS = \
 	tclWinThrd.$(OBJEXT) \
 	tclWinTime.$(OBJEXT)
 
-PIPE_OBJS = stub16.$(OBJEXT)
-
 DDE_OBJS = tclWinDde.$(OBJEXT)
 
 REG_OBJS = tclWinReg.$(OBJEXT)
 
-STUB_OBJS = tclStubLib.$(OBJEXT)
+STUB_OBJS = \
+	tclStubLib.$(OBJEXT) \
+	tclTomMathStubLib.$(OBJEXT) \
+	tclOOStubLib.$(OBJEXT)
 
 TCLSH_OBJS = tclAppInit.$(OBJEXT)
 
-TCL_OBJS = ${GENERIC_OBJS} $(TOMMATH_OBJS) ${WIN_OBJS}
+ZLIB_OBJS = \
+	adler32.$(OBJEXT) \
+	compress.$(OBJEXT) \
+	crc32.$(OBJEXT) \
+	deflate.$(OBJEXT) \
+	infback.$(OBJEXT) \
+	inffast.$(OBJEXT) \
+	inflate.$(OBJEXT) \
+	inftrees.$(OBJEXT) \
+	trees.$(OBJEXT) \
+	uncompr.$(OBJEXT) \
+	zutil.$(OBJEXT)
+
+TCL_OBJS = ${GENERIC_OBJS} $(TOMMATH_OBJS) ${WIN_OBJS} @ZLIB_OBJS@
 
 TCL_DOCS = "$(ROOT_DIR_NATIVE)"/doc/*.[13n]
 
-all: binaries libraries doc
+all: binaries libraries doc packages
 
-tcltest: $(TCLTEST)
+# Test-suite helper (can be used to test Tcl from build directory with all expected modules).
+# To start from windows shell use:
+#   > tcltest.cmd -verbose bps -file fileName.test
+# or from mingw/msys shell:
+#   $ ./tcltest -verbose bps -file fileName.test
 
-binaries: @LIBRARIES@ $(TCLSH)
+tcltest.cmd: Makefile
+	@echo 'Create tcltest.cmd helpers';
+	@(\
+	  echo '@echo off'; \
+	  echo 'rem set LANG=en_US'; \
+	  echo 'set BDP=%~dp0'; \
+	  echo 'set OWD=%CD%'; \
+	  echo 'cd /d %TEMP%'; \
+	  echo 'rem "%BDP%\$(TCLSH)" "$(ROOT_DIR_WIN_NATIVE)/tests/all.tcl" %TESTFLAGS% -load "$(TEST_LOAD_FACILITIES)" %*'; \
+	  echo '"%BDP%\$(TEST_EXE_FILE)" "$(ROOT_DIR_WIN_NATIVE)/tests/all.tcl" %TESTFLAGS% -load "$(TEST_LOAD_PRMS)" %*'; \
+	  echo 'cd /d %OWD%'; \
+	) > tcltest.cmd;
+	@(\
+	  echo '#!/bin/sh'; \
+	  echo '#LANG=en_US'; \
+	  echo 'BDP=$$(dirname $$(readlink -f %0))'; \
+	  echo 'cd /tmp'; \
+	  echo '#"$$BDP/$(TCLSH)" "$(ROOT_DIR_WIN_NATIVE)/tests/all.tcl" $$TESTFLAGS -load "$(TEST_LOAD_FACILITIES)" "$$@"'; \
+	  echo '"$$BDP/$(TEST_EXE_FILE)" "$(ROOT_DIR_WIN_NATIVE)/tests/all.tcl" $$TESTFLAGS -load "$(TEST_LOAD_PRMS)" "$$@"'; \
+	) > tcltest.sh;
+
+tcltest.sh: tcltest.cmd
+
+tcltest: binaries $(TEST_EXE_FILE) $(TEST_DLL_FILE) $(CAT32) tcltest.cmd
+
+binaries: $(TCL_STUB_LIB_FILE) @LIBRARIES@ winextensions $(TCLSH)
+
+winextensions: ${DDE_DLL_FILE} ${REG_DLL_FILE}
 
 libraries:
 
 doc:
 
-winhelp: $(ROOT_DIR)/tools/man2help.tcl $(MAN2TCL)
-	TCL_LIBRARY="$(LIBRARY_DIR)"; export TCL_LIBRARY; \
-	./$(TCLSH) "$(ROOT_DIR_NATIVE)"/tools/man2help.tcl tcl "$(VER)" $(TCL_DOCS)
-	hcw /c /e tcl.hpj
-
-winextensions: ${DDE_DLL_FILE} ${REG_DLL_FILE}
-
-$(MAN2TCL): $(ROOT_DIR)/tools/man2tcl.c
-	$(CC) $(CFLAGS_OPTIMIZE) $(MAN2TCLFLAGS) -o $(MAN2TCL) "$(ROOT_DIR_NATIVE)"/tools/man2tcl.c
-
-$(TCLSH): $(TCL_LIB_FILE) $(TCL_STUB_LIB_FILE) $(TCLSH_OBJS) tclsh.$(RES)
-	$(CC) $(CFLAGS) $(TCLSH_OBJS) $(TCL_LIB_FILE) $(LIBS) \
+$(TCLSH): $(TCLSH_OBJS) @LIBRARIES@ $(TCL_STUB_LIB_FILE) tclsh.$(RES)
+	$(CC) $(CFLAGS) $(TCLSH_OBJS) $(TCL_LIB_FILE) $(TCL_STUB_LIB_FILE) $(LIBS) \
         tclsh.$(RES) $(CC_EXENAME) $(LDFLAGS_CONSOLE)
-	@VC_MANIFEST_EMBED_EXE@
-
-$(TCLTEST): $(TCL_LIB_FILE) $(TCLTEST_OBJS) $(CAT32) tclsh.$(RES)
-	$(CC) $(CFLAGS) $(TCLTEST_OBJS) $(TCL_LIB_FILE) $(LIBS) \
-        tclsh.$(RES) $(CC_EXENAME) $(LDFLAGS_CONSOLE)
+	$(COPY) tclsh.exe.manifest $(TCLSH).manifest
 	@VC_MANIFEST_EMBED_EXE@
 
 cat32.$(OBJEXT): cat.c
-	$(CC) -c $(CC_SWITCHES) @DEPARG@ $(CC_OBJNAME)
+	$(CC) -c $(CC_SWITCHES) -DUNICODE -D_UNICODE @DEPARG@ $(CC_OBJNAME)
 
 $(CAT32): cat32.$(OBJEXT)
 	$(CC) $(CFLAGS) cat32.$(OBJEXT) $(CC_EXENAME) $(LIBS) $(LDFLAGS_CONSOLE)
@@ -430,36 +482,42 @@ ${TCL_STUB_LIB_FILE}: ${STUB_OBJS}
 	@POST_MAKE_LIB@
 
 ${TCL_DLL_FILE}: ${TCL_OBJS} tcl.$(RES)
-	@$(RM) ${TCL_DLL_FILE}
+	@$(RM) ${TCL_DLL_FILE} $(TCL_LIB_FILE)
 	@MAKE_DLL@ ${TCL_OBJS} tcl.$(RES) $(SHLIB_LD_LIBS)
+	$(COPY) tclsh.exe.manifest ${TCL_DLL_FILE}.manifest
 	@VC_MANIFEST_EMBED_DLL@
 
-${TCL_LIB_FILE}: ${TCL_OBJS}
+${TCL_LIB_FILE}: ${TCL_OBJS} ${DDE_OBJS} ${REG_OBJS}
 	@$(RM) ${TCL_LIB_FILE}
-	@MAKE_LIB@ ${TCL_OBJS}
+	@MAKE_LIB@ ${TCL_OBJS} ${DDE_OBJS} ${REG_OBJS}
 	@POST_MAKE_LIB@
 
-${DDE_DLL_FILE}: ${DDE_OBJS} ${TCL_STUB_LIB_FILE}
-	@$(RM) ${DDE_DLL_FILE}
+${DDE_DLL_FILE}: ${TCL_STUB_LIB_FILE} ${DDE_OBJS}
 	@MAKE_DLL@ ${DDE_OBJS} $(TCL_STUB_LIB_FILE) $(SHLIB_LD_LIBS)
+	$(COPY) tclsh.exe.manifest ${DDE_DLL_FILE}.manifest
 
-${DDE_LIB_FILE}: ${DDE_OBJS} ${TCL_LIB_FILE}
-	@$(RM) ${DDE_LIB_FILE}
-	@MAKE_LIB@ ${DDE_OBJS} ${TCL_LIB_FILE}
-
-${REG_DLL_FILE}: ${REG_OBJS} ${TCL_STUB_LIB_FILE}
-	@$(RM) ${REG_DLL_FILE}
+${REG_DLL_FILE}: ${TCL_STUB_LIB_FILE} ${REG_OBJS}
 	@MAKE_DLL@ ${REG_OBJS} $(TCL_STUB_LIB_FILE) $(SHLIB_LD_LIBS)
+	$(COPY) tclsh.exe.manifest ${REG_DLL_FILE}.manifest
 
-${REG_LIB_FILE}: ${REG_OBJS} ${TCL_LIB_FILE}
-	@$(RM) ${REG_LIB_FILE}
-	@MAKE_LIB@ ${REG_OBJS} ${TCL_LIB_FILE}
+${TEST_DLL_FILE}: ${TCL_STUB_LIB_FILE} ${TCLTEST_OBJS}
+	@$(RM) ${TEST_DLL_FILE} ${TEST_LIB_FILE}
+	@MAKE_DLL@ ${TCLTEST_OBJS} $(TCL_STUB_LIB_FILE) $(SHLIB_LD_LIBS)
+	$(COPY) tclsh.exe.manifest ${TEST_DLL_FILE}.manifest
 
-# PIPE_DLL_FILE is actually an executable, don't build it like a DLL.
+${TEST_EXE_FILE}: ${TCL_STUB_LIB_FILE} ${TCLTEST_OBJS} tclTestMain.${OBJEXT}
+	@$(RM) ${TEST_EXE_FILE}
+	$(CC) $(CFLAGS) $(TCLTEST_OBJS) tclTestMain.$(OBJEXT) $(TCL_LIB_FILE) $(TCL_STUB_LIB_FILE) $(LIBS) \
+        tclsh.$(RES) $(CC_EXENAME) $(LDFLAGS_CONSOLE)
+	$(COPY) tclsh.exe.manifest ${TEST_EXE_FILE}.manifest
 
-${PIPE_DLL_FILE}: ${PIPE_OBJS}
-	@$(RM) ${PIPE_DLL_FILE}
-	@MAKE_EXE@ $(CFLAGS) ${PIPE_OBJS} $(LIBS) $(LDFLAGS_CONSOLE)
+# use pre-built zlib1.dll
+${ZLIB_DLL_FILE}: ${TCL_STUB_LIB_FILE}
+	@if test "@ZLIB_LIBS@set" != "${ZLIB_DIR_NATIVE}/win32/zdll.libset" ; then \
+		$(COPY) $(ZLIB_DIR)/win64/${ZLIB_DLL_FILE} ${ZLIB_DLL_FILE}; \
+	else \
+		$(COPY) $(ZLIB_DIR)/win32/${ZLIB_DLL_FILE} ${ZLIB_DLL_FILE}; \
+	fi;
 
 # Add the object extension to the implicit rules. By default .obj is not
 # automatically added.
@@ -470,35 +528,26 @@ ${PIPE_DLL_FILE}: ${PIPE_OBJS}
 
 # Special case object targets
 
+tclTestMain.${OBJEXT}: tclAppInit.c
+	$(CC) -c $(CC_SWITCHES) -DTCL_TEST -DUNICODE -D_UNICODE $(EXTFLAGS) @DEPARG@ $(CC_OBJNAME)
+
 tclWinInit.${OBJEXT}: tclWinInit.c
 	$(CC) -c $(CC_SWITCHES) -DBUILD_tcl $(EXTFLAGS) @DEPARG@ $(CC_OBJNAME)
 
 tclWinPipe.${OBJEXT}: tclWinPipe.c
-	$(CC) -c $(CC_SWITCHES) -DBUILD_tcl -DTCL_PIPE_DLL=\"$(PIPE_DLL_FILE)\" \
-	    $(EXTFLAGS) @DEPARG@ $(CC_OBJNAME)
+	$(CC) -c $(CC_SWITCHES) -DBUILD_tcl $(EXTFLAGS) @DEPARG@ $(CC_OBJNAME)
 
-testMain.${OBJEXT}: tclAppInit.c
-	$(CC) -c $(CC_SWITCHES) -DTCL_TEST @DEPARG@ $(CC_OBJNAME)
+tclWinReg.${OBJEXT}: tclWinReg.c
+	$(CC) -c $(CC_SWITCHES) $(EXTFLAGS) @DEPARG@ $(CC_OBJNAME)
 
-tclTest.${OBJEXT}: tclTest.c
-	$(CC) -c $(CC_SWITCHES) @DEPARG@ $(CC_OBJNAME)
+tclWinDde.${OBJEXT}: tclWinDde.c
+	$(CC) -c $(CC_SWITCHES) $(EXTFLAGS) @DEPARG@ $(CC_OBJNAME)
 
-tclTestObj.${OBJEXT}: tclTestObj.c
-	$(CC) -c $(CC_SWITCHES) @DEPARG@ $(CC_OBJNAME)
+tclAppInit.${OBJEXT}: tclAppInit.c
+	$(CC) -c $(CC_SWITCHES) $(EXTFLAGS) -DUNICODE -D_UNICODE @DEPARG@ $(CC_OBJNAME)
 
-tclWinTest.${OBJEXT}: tclWinTest.c
-	$(CC) -c $(CC_SWITCHES) @DEPARG@ $(CC_OBJNAME)
-
-tclAppInit.${OBJEXT} : tclAppInit.c
-	$(CC) -c $(CC_SWITCHES) @DEPARG@ $(CC_OBJNAME)
-
-# The following objects should be built using the stub interfaces
-
-tclWinReg.${OBJEXT} : tclWinReg.c
-	$(CC) -c $(CC_SWITCHES) -DUSE_TCL_STUBS @DEPARG@ $(CC_OBJNAME)
-
-tclWinDde.${OBJEXT} : tclWinDde.c
-	$(CC) -c $(CC_SWITCHES) -DUSE_TCL_STUBS @DEPARG@ $(CC_OBJNAME)
+tclMainW.${OBJEXT}: tclMain.c
+	$(CC) -c $(CC_SWITCHES) -DBUILD_tcl -DUNICODE -D_UNICODE @DEPARG@ $(CC_OBJNAME)
 
 # TIP #59, embedding of configuration information into the binary library.
 #
@@ -510,17 +559,17 @@ tclWinDde.${OBJEXT} : tclWinDde.c
 
 tclPkgConfig.${OBJEXT}: tclPkgConfig.c
 	$(CC)	-c $(CC_SWITCHES)			\
-		-DCFG_INSTALL_LIBDIR=\"$(LIB_INSTALL_DIR_NATIVE)\" \
-		-DCFG_INSTALL_BINDIR=\"$(BIN_INSTALL_DIR_NATIVE)\" \
-		-DCFG_INSTALL_SCRDIR=\"$(SCRIPT_INSTALL_DIR_NATIVE)\" \
-		-DCFG_INSTALL_INCDIR=\"$(INCLUDE_INSTALL_DIR_NATIVE)\" \
-		-DCFG_INSTALL_DOCDIR=\"$(MAN_INSTALL_DIR)\" \
+		-DCFG_INSTALL_LIBDIR="\"$(LIB_INSTALL_DIR_NATIVE)\"" \
+		-DCFG_INSTALL_BINDIR="\"$(BIN_INSTALL_DIR_NATIVE)\"" \
+		-DCFG_INSTALL_SCRDIR="\"$(SCRIPT_INSTALL_DIR_NATIVE)\"" \
+		-DCFG_INSTALL_INCDIR="\"$(INCLUDE_INSTALL_DIR_NATIVE)\"" \
+		-DCFG_INSTALL_DOCDIR="\"$(MAN_INSTALL_DIR)\"" \
 		\
-		-DCFG_RUNTIME_LIBDIR=\"$(libdir_native)\" \
-		-DCFG_RUNTIME_BINDIR=\"$(bindir_native)\" \
-		-DCFG_RUNTIME_SCRDIR=\"$(TCL_LIBRARY_NATIVE)\" \
-		-DCFG_RUNTIME_INCDIR=\"$(includedir_native)\" \
-		-DCFG_RUNTIME_DOCDIR=\"$(mandir_native)\" \
+		-DCFG_RUNTIME_LIBDIR="\"$(libdir_native)\"" \
+		-DCFG_RUNTIME_BINDIR="\"$(bindir_native)\"" \
+		-DCFG_RUNTIME_SCRDIR="\"$(TCL_LIBRARY_NATIVE)\"" \
+		-DCFG_RUNTIME_INCDIR="\"$(includedir_native)\"" \
+		-DCFG_RUNTIME_DOCDIR="\"$(mandir_native)\"" \
 		-DBUILD_tcl \
 		@DEPARG@ $(CC_OBJNAME)
 
@@ -530,6 +579,11 @@ tclPkgConfig.${OBJEXT}: tclPkgConfig.c
 tclStubLib.${OBJEXT}: tclStubLib.c
 	$(CC) -c $(CC_SWITCHES) -DSTATIC_BUILD @DEPARG@ $(CC_OBJNAME)
 
+tclTomMathStubLib.${OBJEXT}: tclTomMathStubLib.c
+	$(CC) -c $(CC_SWITCHES) -DSTATIC_BUILD @DEPARG@ $(CC_OBJNAME)
+
+tclOOStubLib.${OBJEXT}: tclOOStubLib.c
+	$(CC) -c $(CC_SWITCHES) -DSTATIC_BUILD @DEPARG@ $(CC_OBJNAME)
 
 # Implicit rule for all object files that will end up in the Tcl library
 
@@ -555,11 +609,11 @@ gendate:
 # run (and the results checked) after updating to a new release of libtommath.
 
 gentommath_h:
-	$(TCL_EXE) "$(ROOT_DIR_NATIVE)\tools\fix_tommath_h.tcl" \
-		"$(TOMMATH_DIR_NATIVE)\tommath.h" \
-		> "$(GENERIC_DIR_NATIVE)\tclTomMath.h"
+	$(TCL_EXE) "$(ROOT_DIR_NATIVE)/tools/fix_tommath_h.tcl" \
+		"$(TOMMATH_DIR_NATIVE)/tommath.h" \
+		> "$(GENERIC_DIR_NATIVE)/tclTomMath.h"
 
-install: all install-binaries install-libraries install-doc
+install: all install-binaries install-libraries install-doc install-packages
 
 install-binaries: binaries
 	@for i in "$(LIB_INSTALL_DIR)" "$(BIN_INSTALL_DIR)" ; \
@@ -571,7 +625,7 @@ install-binaries: binaries
 		else true; \
 		fi; \
 	    done;
-	@for i in dde$(DDEDOTVER) reg$(REGDOTVER); \
+	@for i in dde${DDEDOTVER} reg${REGDOTVER}; \
 	    do \
 	    if [ ! -d $(LIB_INSTALL_DIR)/$$i ] ; then \
 		echo "Making directory $(LIB_INSTALL_DIR)/$$i"; \
@@ -579,14 +633,14 @@ install-binaries: binaries
 		else true; \
 		fi; \
 	    done;
-	@for i in $(TCL_DLL_FILE) $(TCLSH) $(PIPE_DLL_FILE); \
+	@for i in $(TCL_DLL_FILE) $(ZLIB_DLL_FILE) $(TCLSH); \
 	    do \
 	    if [ -f $$i ]; then \
 		echo "Installing $$i to $(BIN_INSTALL_DIR)/"; \
 		$(COPY) $$i "$(BIN_INSTALL_DIR)"; \
 	    fi; \
 	    done
-	@for i in tclConfig.sh $(TCL_LIB_FILE) $(TCL_STUB_LIB_FILE); \
+	@for i in tclConfig.sh tclooConfig.sh $(TCL_LIB_FILE) $(TCL_STUB_LIB_FILE); \
 	    do \
 	    if [ -f $$i ]; then \
 		echo "Installing $$i to $(LIB_INSTALL_DIR)/"; \
@@ -595,27 +649,27 @@ install-binaries: binaries
 	    done
 	@if [ -f $(DDE_DLL_FILE) ]; then \
 	    echo Installing $(DDE_DLL_FILE); \
-	    $(COPY) $(DDE_DLL_FILE) $(LIB_INSTALL_DIR)/dde$(DDEDOTVER); \
+	    $(COPY) $(DDE_DLL_FILE) $(LIB_INSTALL_DIR)/dde${DDEDOTVER}; \
 	    $(COPY) $(ROOT_DIR)/library/dde/pkgIndex.tcl \
-		$(LIB_INSTALL_DIR)/dde$(DDEDOTVER); \
+		$(LIB_INSTALL_DIR)/dde${DDEDOTVER}; \
 	    fi
 	@if [ -f $(DDE_LIB_FILE) ]; then \
 	    echo Installing $(DDE_LIB_FILE); \
-	    $(COPY) $(DDE_LIB_FILE) $(LIB_INSTALL_DIR)/dde$(DDEDOTVER); \
+	    $(COPY) $(DDE_LIB_FILE) $(LIB_INSTALL_DIR)/dde${DDEDOTVER}; \
 	    fi
 	@if [ -f $(REG_DLL_FILE) ]; then \
 	    echo Installing $(REG_DLL_FILE); \
-	    $(COPY) $(REG_DLL_FILE) $(LIB_INSTALL_DIR)/reg$(REGDOTVER); \
+	    $(COPY) $(REG_DLL_FILE) $(LIB_INSTALL_DIR)/reg${REGDOTVER}; \
 	    $(COPY) $(ROOT_DIR)/library/reg/pkgIndex.tcl \
-		$(LIB_INSTALL_DIR)/reg$(REGDOTVER); \
+		$(LIB_INSTALL_DIR)/reg${REGDOTVER}; \
 	    fi
 	@if [ -f $(REG_LIB_FILE) ]; then \
 	    echo Installing $(REG_LIB_FILE); \
-	    $(COPY) $(REG_LIB_FILE) $(LIB_INSTALL_DIR)/reg$(REGDOTVER); \
+	    $(COPY) $(REG_LIB_FILE) $(LIB_INSTALL_DIR)/reg${REGDOTVER}; \
 	    fi
 
 install-libraries: libraries install-tzdata install-msgs
-	@for i in $(prefix)/lib $(INCLUDE_INSTALL_DIR) \
+	@for i in "$$($(CYGPATH) $(prefix)/lib)" "$(INCLUDE_INSTALL_DIR)" \
 		$(SCRIPT_INSTALL_DIR); \
 	    do \
 	    if [ ! -d $$i ] ; then \
@@ -624,7 +678,7 @@ install-libraries: libraries install-tzdata install-msgs
 		else true; \
 		fi; \
 	    done;
-	@for i in http1.0 opt0.4 encoding ../tcl8 ../tcl8/8.4  ../tcl8/8.4/platform ../tcl8/8.5; \
+	@for i in http1.0 opt0.4 encoding ../tcl8 ../tcl8/8.4  ../tcl8/8.4/platform ../tcl8/8.5 ../tcl8/8.6; \
 	    do \
 	    if [ ! -d $(SCRIPT_INSTALL_DIR)/$$i ] ; then \
 		echo "Making directory $(SCRIPT_INSTALL_DIR)/$$i"; \
@@ -634,6 +688,7 @@ install-libraries: libraries install-tzdata install-msgs
 	    done;
 	@echo "Installing header files";
 	@for i in "$(GENERIC_DIR)/tcl.h" "$(GENERIC_DIR)/tclDecls.h" \
+		"$(GENERIC_DIR)/tclOO.h" "$(GENERIC_DIR)/tclOODecls.h" \
 		"$(GENERIC_DIR)/tclPlatDecls.h" \
 		"$(GENERIC_DIR)/tclTomMath.h" \
 		"$(GENERIC_DIR)/tclTomMathDecls.h"; \
@@ -650,17 +705,17 @@ install-libraries: libraries install-tzdata install-msgs
 	    do \
 	    $(COPY) "$$j" "$(SCRIPT_INSTALL_DIR)/http1.0"; \
 	    done;
-	@echo "Installing package http 2.7.14 as a Tcl Module";
-	@$(COPY) $(ROOT_DIR)/library/http/http.tcl $(SCRIPT_INSTALL_DIR)/../tcl8/8.4/http-2.7.14.tm;
+	@echo "Installing package http 2.9.1 as a Tcl Module";
+	@$(COPY) $(ROOT_DIR)/library/http/http.tcl $(SCRIPT_INSTALL_DIR)/../tcl8/8.6/http-2.9.1.tm;
 	@echo "Installing library opt0.4 directory";
 	@for j in $(ROOT_DIR)/library/opt/*.tcl; \
 	    do \
 	    $(COPY) "$$j" "$(SCRIPT_INSTALL_DIR)/opt0.4"; \
 	    done;
-	@echo "Installing package msgcat 1.5.2 as a Tcl Module";
-	@$(COPY) $(ROOT_DIR)/library/msgcat/msgcat.tcl $(SCRIPT_INSTALL_DIR)/../tcl8/8.5/msgcat-1.5.2.tm;
-	@echo "Installing package tcltest 2.3.8 as a Tcl Module";
-	@$(COPY) $(ROOT_DIR)/library/tcltest/tcltest.tcl $(SCRIPT_INSTALL_DIR)/../tcl8/8.5/tcltest-2.3.8.tm;
+	@echo "Installing package msgcat 1.6.1 as a Tcl Module";
+	@$(COPY) $(ROOT_DIR)/library/msgcat/msgcat.tcl $(SCRIPT_INSTALL_DIR)/../tcl8/8.5/msgcat-1.6.1.tm;
+	@echo "Installing package tcltest 2.5.1 as a Tcl Module";
+	@$(COPY) $(ROOT_DIR)/library/tcltest/tcltest.tcl $(SCRIPT_INSTALL_DIR)/../tcl8/8.5/tcltest-2.5.1.tm;
 	@echo "Installing package platform 1.0.14 as a Tcl Module";
 	@$(COPY) $(ROOT_DIR)/library/platform/platform.tcl $(SCRIPT_INSTALL_DIR)/../tcl8/8.4/platform-1.0.14.tm;
 	@echo "Installing package platform::shell 1.1.4 as a Tcl Module";
@@ -672,14 +727,12 @@ install-libraries: libraries install-tzdata install-msgs
 
 install-tzdata:
 	@echo "Installing time zone data"
-	@TCL_LIBRARY="${LIBRARY_DIR}"; export TCL_LIBRARY; \
-	./$(TCLSH) "$(ROOT_DIR)/tools/installData.tcl" \
+	@$(TCL_EXE) "$(ROOT_DIR)/tools/installData.tcl" \
 	    "$(ROOT_DIR)/library/tzdata" "$(SCRIPT_INSTALL_DIR)/tzdata"
 
 install-msgs:
 	@echo "Installing message catalogs"
-	@TCL_LIBRARY="${LIBRARY_DIR}"; export TCL_LIBRARY; \
-	./$(TCLSH) "$(ROOT_DIR)/tools/installData.tcl" \
+	@$(TCL_EXE) "$(ROOT_DIR)/tools/installData.tcl" \
 	    "$(ROOT_DIR)/library/msgs" "$(SCRIPT_INSTALL_DIR)/msgs"
 
 install-doc: doc
@@ -697,6 +750,7 @@ install-private-headers: libraries
 	@echo "Installing private header files";
 	@for i in "$(GENERIC_DIR)/tclInt.h" "$(GENERIC_DIR)/tclIntDecls.h" \
 		"$(GENERIC_DIR)/tclIntPlatDecls.h" "$(GENERIC_DIR)/tclPort.h" \
+		"$(GENERIC_DIR)/tclOOInt.h" "$(GENERIC_DIR)/tclOOIntDecls.h" \
 		"$(WIN_DIR)/tclWinPort.h" ; \
 	    do \
 	    $(COPY) "$$i" "$(PRIVATE_INCLUDE_INSTALL_DIR)"; \
@@ -706,17 +760,17 @@ install-private-headers: libraries
 # tcltest, i.e.:
 #	% make test TESTFLAGS="-verbose bps -file fileName.test"
 
-test: binaries $(TCLTEST)
-	TCL_LIBRARY="$(LIBRARY_DIR)"; export TCL_LIBRARY; \
-	./$(TCLTEST) "$(ROOT_DIR_NATIVE)/tests/all.tcl" $(TESTFLAGS) \
-	-load "package ifneeded dde 1.3.3 [list load [file normalize ${DDE_DLL_FILE}] dde]; \
-	package ifneeded registry 1.2.2 [list load [file normalize ${REG_DLL_FILE}] registry]" | ./$(CAT32)
+test: test-tcl test-packages
 
-# Useful target to launch a built tcltest with the proper path,...
-runtest: binaries $(TCLTEST)
+test-tcl: tcltest
+	TCL_LIBRARY="$(LIBRARY_DIR)"; export TCL_LIBRARY; \
+	./$(TCLSH) "$(ROOT_DIR_NATIVE)/tests/all.tcl" $(TESTFLAGS) \
+	-load "$(TEST_LOAD_FACILITIES)"
+
+# Useful target to launch a built tclsh with the proper path,...
+runtest: tcltest
 	@TCL_LIBRARY="$(LIBRARY_DIR)"; export TCL_LIBRARY; \
-	./$(TCLTEST) $(TESTFLAGS) -load "package ifneeded dde 1.3.3 [list load [file normalize ${DDE_DLL_FILE}] dde]; \
-	package ifneeded registry 1.2.2 [list load [file normalize ${REG_DLL_FILE}] registry]" $(SCRIPT)
+	./$(TCLSH) $(TESTFLAGS) -load "$(TEST_LOAD_FACILITIES)" $(SCRIPT)
 
 # This target can be used to run tclsh from the build directory via
 # `make shell SCRIPT=foo.tcl`
@@ -738,14 +792,92 @@ Makefile: $(SRC_DIR)/Makefile.in
 cleanhelp:
 	$(RM) *.hlp *.cnt *.GID *.rtf man2tcl.exe
 
-clean: cleanhelp
+clean: cleanhelp clean-packages
 	$(RM) *.lib *.a *.exp *.dll *.$(RES) *.${OBJEXT} *~ \#* TAGS a.out
-	$(RM) $(TCLSH) $(TCLTEST) $(CAT32)
+	$(RM) $(TCLSH) $(CAT32) $(TEST_EXE_FILE) $(TEST_DLL_FILE) tcltest.cmd tcltest.sh
 	$(RM) *.pch *.ilk *.pdb
 
-distclean: clean
+distclean: distclean-packages clean
 	$(RM) Makefile config.status config.cache config.log tclConfig.sh \
 		tcl.hpj config.status.lineno
+
+#
+# Bundled package targets
+#
+
+PKG_CFG_ARGS		= @PKG_CFG_ARGS@
+PKG_DIR			= ./pkgs
+
+packages:
+	@builddir=`$(CYGPATH) $$(pwd -P)`; \
+	for i in $(PKGS_DIR)/*; do \
+	  if [ -d $$i ] ; then \
+	    if [ -x $$i/configure ] ; then \
+	      pkg=`basename $$i`; \
+	      mkdir -p $(PKG_DIR)/$$pkg; \
+	      if [ ! -f $(PKG_DIR)/$$pkg/Makefile ]; then \
+	        ( cd $(PKG_DIR)/$$pkg; \
+	          echo "Configuring package '$$i' wd = `$(CYGPATH) $$(pwd -P)`"; \
+	          $$i/configure --with-tcl=$$builddir --with-tclinclude=$(GENERIC_DIR_NATIVE) $(PKG_CFG_ARGS) --enable-shared --enable-threads; ) \
+	      fi ; \
+	      echo "Building package '$$pkg'"; \
+	      ( cd $(PKG_DIR)/$$pkg; $(MAKE); ) \
+	    fi; \
+	  fi; \
+	done; \
+	cd $$builddir
+
+install-packages: packages
+	@builddir=`pwd -P`; \
+	for i in $(PKGS_DIR)/*; do \
+	  if [ -d $$i ]; then \
+	    pkg=`basename $$i`; \
+	    if [ -f $(PKG_DIR)/$$pkg/Makefile ]; then \
+	        echo "Installing package '$$pkg'"; \
+	        ( cd $(PKG_DIR)/$$pkg; $(MAKE) install "DESTDIR=$(INSTALL_ROOT)"; ) \
+	    fi; \
+	  fi; \
+	done; \
+	cd $$builddir
+
+test-packages: tcltest packages
+	@builddir=`pwd -P`; \
+	for i in $(PKGS_DIR)/*; do \
+	  if [ -d $$i ]; then \
+	    pkg=`basename $$i`; \
+	    if [ -f $(PKG_DIR)/$$pkg/Makefile ]; then \
+	        echo "Testing package '$$pkg'"; \
+	        ( cd $(PKG_DIR)/$$pkg; $(MAKE) "LD_LIBRARY_PATH=$$builddir:${LD_LIBRARY_PATH}" "TCL_LIBRARY=${TCL_BUILDTIME_LIBRARY}" "TCLLIBPATH=$$builddir/pkgs" test "TCLSH_PROG=$$builddir/${TCLSH}"; ) \
+	    fi; \
+	  fi; \
+	done; \
+	cd $$builddir
+
+clean-packages:
+	@builddir=`pwd -P`; \
+	for i in $(PKGS_DIR)/*; do \
+	  if [ -d $$i ]; then \
+	    pkg=`basename $$i`; \
+	    if [ -f $(PKG_DIR)/$$pkg/Makefile ]; then \
+	        ( cd $(PKG_DIR)/$$pkg; $(MAKE) clean; ) \
+	    fi; \
+	  fi; \
+	done; \
+	cd $$builddir
+
+distclean-packages:
+	@builddir=`pwd -P`; \
+	for i in $(PKGS_DIR)/*; do \
+	  if [ -d $$i ]; then \
+	    pkg=`basename $$i`; \
+	    if [ -f $(PKG_DIR)/$$pkg/Makefile ]; then \
+	        ( cd $(PKG_DIR)/$$pkg; $(MAKE) distclean; ) \
+	    fi; \
+	    cd $$builddir; \
+	    rm -rf $(PKG_DIR)/$$pkg; \
+	  fi; \
+	done; \
+	rm -rf $(PKG_DIR)
 
 #
 # Regenerate the stubs files.
@@ -761,8 +893,29 @@ genstubs:
 	$(TCL_EXE) "$(ROOT_DIR_NATIVE)/tools/genStubs.tcl" \
 	    "$(GENERIC_DIR_NATIVE)" \
 	    "$(GENERIC_DIR_NATIVE)/tcl.decls" \
-            "$(GENERIC_DIR_NATIVE)/tclInt.decls" \
+	    "$(GENERIC_DIR_NATIVE)/tclInt.decls" \
 	    "$(GENERIC_DIR_NATIVE)/tclTomMath.decls"
+	$(TCL_EXE) "$(ROOT_DIR_NATIVE)/tools/genStubs.tcl" \
+	    "$(GENERIC_DIR_NATIVE)" \
+	    "$(GENERIC_DIR_NATIVE)/tclOO.decls"
+
+#
+# This target creates the HTML folder for Tcl & Tk and places it in
+# DISTDIR/html. It uses the tcltk-man2html.tcl tool from the Tcl group's tool
+# workspace. It depends on the Tcl & Tk being in directories called tcl8.* &
+# tk8.* up two directories from the TOOL_DIR.
+#
+
+TOOL_DIR=$(ROOT_DIR)/tools
+HTML_INSTALL_DIR=$(ROOT_DIR)/html
+html:
+	$(MAKE) shell SCRIPT="$(TOOL_DIR)/tcltk-man2html.tcl --htmldir=$(HTML_INSTALL_DIR) --srcdir=$(ROOT_DIR)/.. $(BUILD_HTML_FLAGS)"
+
+html-tcl: $(TCLSH)
+	$(MAKE) shell SCRIPT="$(TOOL_DIR)/tcltk-man2html.tcl --htmldir=$(HTML_INSTALL_DIR) --srcdir=$(ROOT_DIR)/.. $(BUILD_HTML_FLAGS) --tcl"
+
+html-tk: $(TCLSH)
+	$(MAKE) shell SCRIPT="$(TOOL_DIR)/tcltk-man2html.tcl --htmldir=$(HTML_INSTALL_DIR) --srcdir=$(ROOT_DIR)/.. $(BUILD_HTML_FLAGS) --tk"
 
 #
 # The list of all the targets that do not correspond to real files. This stops

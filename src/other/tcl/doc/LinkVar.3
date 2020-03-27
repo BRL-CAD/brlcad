@@ -4,7 +4,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 .TH Tcl_LinkVar 3 7.5 Tcl "Tcl Library Procedures"
 .so man.macros
 .BS
@@ -31,20 +31,14 @@ Name of global variable.
 Address of C variable that is to be linked to \fIvarName\fR.
 .AP int type in
 Type of C variable.  Must be one of \fBTCL_LINK_INT\fR,
-.VS 8.5
 \fBTCL_LINK_UINT\fR, \fBTCL_LINK_CHAR\fR, \fBTCL_LINK_UCHAR\fR,
 \fBTCL_LINK_SHORT\fR, \fBTCL_LINK_USHORT\fR, \fBTCL_LINK_LONG\fR,
-\fBTCL_LINK_ULONG\fR,
-.VE 8.5
-\fBTCL_LINK_WIDE_INT\fR,
-.VS 8.5
+\fBTCL_LINK_ULONG\fR, \fBTCL_LINK_WIDE_INT\fR,
 \fBTCL_LINK_WIDE_UINT\fR, \fBTCL_LINK_FLOAT\fR,
-.VE 8.5
 \fBTCL_LINK_DOUBLE\fR, \fBTCL_LINK_BOOLEAN\fR, or
 \fBTCL_LINK_STRING\fR, optionally OR'ed with \fBTCL_LINK_READ_ONLY\fR
 to make Tcl variable read-only.
 .BE
-
 .SH DESCRIPTION
 .PP
 \fBTcl_LinkVar\fR uses variable traces to keep the Tcl variable
@@ -67,8 +61,9 @@ The C variable is of type \fBint\fR.
 Any value written into the Tcl variable must have a proper integer
 form acceptable to \fBTcl_GetIntFromObj\fR;  attempts to write
 non-integer values into \fIvarName\fR will be rejected with
-Tcl errors.
-.VS 8.5
+Tcl errors. Incomplete integer representations (like the empty
+string, '+', '-' or the hex/octal/binary prefix) are accepted
+as if they are valid too.
 .TP
 \fBTCL_LINK_UINT\fR
 The C variable is of type \fBunsigned int\fR.
@@ -76,14 +71,18 @@ Any value written into the Tcl variable must have a proper unsigned
 integer form acceptable to \fBTcl_GetWideIntFromObj\fR and in the
 platform's defined range for the \fBunsigned int\fR type; attempts to
 write non-integer values (or values outside the range) into
-\fIvarName\fR will be rejected with Tcl errors.
+\fIvarName\fR will be rejected with Tcl errors. Incomplete integer
+representations (like the empty string, '+', '-' or the hex/octal/binary
+prefix) are accepted as if they are valid too.
 .TP
 \fBTCL_LINK_CHAR\fR
 The C variable is of type \fBchar\fR.
 Any value written into the Tcl variable must have a proper integer
 form acceptable to \fBTcl_GetIntFromObj\fR and be in the range of the
 \fBchar\fR datatype; attempts to write non-integer or out-of-range
-values into \fIvarName\fR will be rejected with Tcl errors.
+values into \fIvarName\fR will be rejected with Tcl errors. Incomplete
+integer representations (like the empty string, '+', '-' or the
+hex/octal/binary prefix) are accepted as if they are valid too.
 .TP
 \fBTCL_LINK_UCHAR\fR
 The C variable is of type \fBunsigned char\fR.
@@ -91,14 +90,18 @@ Any value written into the Tcl variable must have a proper unsigned
 integer form acceptable to \fBTcl_GetIntFromObj\fR and in the
 platform's defined range for the \fBunsigned char\fR type; attempts to
 write non-integer values (or values outside the range) into
-\fIvarName\fR will be rejected with Tcl errors.
+\fIvarName\fR will be rejected with Tcl errors. Incomplete integer
+representations (like the empty string, '+', '-' or the hex/octal/binary
+prefix) are accepted as if they are valid too.
 .TP
 \fBTCL_LINK_SHORT\fR
 The C variable is of type \fBshort\fR.
 Any value written into the Tcl variable must have a proper integer
 form acceptable to \fBTcl_GetIntFromObj\fR and be in the range of the
 \fBshort\fR datatype; attempts to write non-integer or out-of-range
-values into \fIvarName\fR will be rejected with Tcl errors.
+values into \fIvarName\fR will be rejected with Tcl errors. Incomplete
+integer representations (like the empty string, '+', '-' or the
+hex/octal/binary prefix) are accepted as if they are valid too.
 .TP
 \fBTCL_LINK_USHORT\fR
 The C variable is of type \fBunsigned short\fR.
@@ -106,14 +109,18 @@ Any value written into the Tcl variable must have a proper unsigned
 integer form acceptable to \fBTcl_GetIntFromObj\fR and in the
 platform's defined range for the \fBunsigned short\fR type; attempts to
 write non-integer values (or values outside the range) into
-\fIvarName\fR will be rejected with Tcl errors.
+\fIvarName\fR will be rejected with Tcl errors. Incomplete integer
+representations (like the empty string, '+', '-' or the hex/octal/binary
+prefix) are accepted as if they are valid too.
 .TP
 \fBTCL_LINK_LONG\fR
 The C variable is of type \fBlong\fR.
 Any value written into the Tcl variable must have a proper integer
 form acceptable to \fBTcl_GetLongFromObj\fR; attempts to write
 non-integer or out-of-range
-values into \fIvarName\fR will be rejected with Tcl errors.
+values into \fIvarName\fR will be rejected with Tcl errors. Incomplete
+integer representations (like the empty string, '+', '-' or the
+hex/octal/binary prefix) are accepted as if they are valid too.
 .TP
 \fBTCL_LINK_ULONG\fR
 The C variable is of type \fBunsigned long\fR.
@@ -121,16 +128,18 @@ Any value written into the Tcl variable must have a proper unsigned
 integer form acceptable to \fBTcl_GetWideIntFromObj\fR and in the
 platform's defined range for the \fBunsigned long\fR type; attempts to
 write non-integer values (or values outside the range) into
-\fIvarName\fR will be rejected with Tcl errors.
-.VE 8.5
+\fIvarName\fR will be rejected with Tcl errors. Incomplete integer
+representations (like the empty string, '+', '-' or the hex/octal/binary
+prefix) are accepted as if they are valid too.
 .TP
 \fBTCL_LINK_DOUBLE\fR
 The C variable is of type \fBdouble\fR.
 Any value written into the Tcl variable must have a proper real
 form acceptable to \fBTcl_GetDoubleFromObj\fR;  attempts to write
 non-real values into \fIvarName\fR will be rejected with
-Tcl errors.
-.VS 8.5
+Tcl errors. Incomplete integer or real representations (like the
+empty string, '.', '+', '-' or the hex/octal/binary prefix) are
+accepted as if they are valid too.
 .TP
 \fBTCL_LINK_FLOAT\fR
 The C variable is of type \fBfloat\fR.
@@ -138,8 +147,9 @@ Any value written into the Tcl variable must have a proper real
 form acceptable to \fBTcl_GetDoubleFromObj\fR and must be within the
 range acceptable for a \fBfloat\fR; attempts to
 write non-real values (or values outside the range) into
-\fIvarName\fR will be rejected with Tcl errors.
-.VE 8.5
+\fIvarName\fR will be rejected with Tcl errors. Incomplete integer
+or real representations (like the empty string, '.', '+', '-' or
+the hex/octal/binary prefix) are accepted as if they are valid too.
 .TP
 \fBTCL_LINK_WIDE_INT\fR
 The C variable is of type \fBTcl_WideInt\fR (which is an integer type
@@ -147,8 +157,9 @@ at least 64-bits wide on all platforms that can support it.)
 Any value written into the Tcl variable must have a proper integer
 form acceptable to \fBTcl_GetWideIntFromObj\fR;  attempts to write
 non-integer values into \fIvarName\fR will be rejected with
-Tcl errors.
-.VS 8.5
+Tcl errors. Incomplete integer representations (like the empty
+string, '+', '-' or the hex/octal/binary prefix) are accepted
+as if they are valid too.
 .TP
 \fBTCL_LINK_WIDE_UINT\fR
 The C variable is of type \fBTcl_WideUInt\fR (which is an unsigned
@@ -159,8 +170,9 @@ integer form acceptable to \fBTcl_GetWideIntFromObj\fR (it will be
 cast to unsigned);
 .\" FIXME! Use bignums instead.
 attempts to write non-integer values into \fIvarName\fR will be
-rejected with Tcl errors.
-.VE 8.5
+rejected with Tcl errors. Incomplete integer representations (like
+the empty string, '+', '-' or the hex/octal/binary prefix) are accepted
+as if they are valid too.
 .TP
 \fBTCL_LINK_BOOLEAN\fR
 The C variable is of type \fBint\fR.
@@ -204,6 +216,16 @@ Tk widget that wishes to display the value of the variable), the
 trace will not trigger when the C variable has changed.
 \fBTcl_UpdateLinkedVar\fR ensures that any traces on the Tcl
 variable are invoked.
-
+.PP
+Note that, as with any call to a Tcl interpreter, \fBTcl_UpdateLinkedVar\fR
+must be called from the same thread that created the interpreter. The safest
+mechanism is to ensure that the C variable is only ever updated from the same
+thread that created the interpreter (possibly in response to an event posted
+with \fBTcl_ThreadQueueEvent\fR), but when it is necessary to update the
+variable in a separate thread, it is advised that \fBTcl_AsyncMark\fR be used
+to indicate to the thread hosting the interpreter that it is ready to run
+\fBTcl_UpdateLinkedVar\fR.
+.SH "SEE ALSO"
+Tcl_TraceVar(3)
 .SH KEYWORDS
-boolean, integer, link, read-only, real, string, traces, variable
+boolean, integer, link, read-only, real, string, trace, variable

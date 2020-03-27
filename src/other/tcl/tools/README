@@ -23,6 +23,3 @@ Generating Windows Help Files:
     this converts the Nroff to RTF files.
 2) On Windows, convert the RTF to a Help doc, do
 	nmake helpfile
-
-Generating Windows binary distribution.
-Update and compile the WYSE tcl.wse configuration.

@@ -26,10 +26,10 @@ int
 Interpreter to use for error reporting; if NULL, then no message is
 provided on errors.
 .AP Tcl_Obj *objPtr in/out
-The string value of this object is used to search through \fItablePtr\fR.
+The string value of this value is used to search through \fItablePtr\fR.
 The internal representation is modified to hold the index of the matching
 table entry.
-.AP "const char" **tablePtr in
+.AP "const char *const" *tablePtr in
 An array of null-terminated strings.  The end of the array is marked
 by a NULL string pointer.
 Note that references to the \fItablePtr\fR may be retained in the
@@ -55,12 +55,11 @@ operation.  The only bit that is currently defined is \fBTCL_EXACT\fR.
 The index of the string in \fItablePtr\fR that matches the value of
 \fIobjPtr\fR is returned here.
 .BE
-
 .SH DESCRIPTION
 .PP
 These procedures provide an efficient way for looking up keywords,
-switch names, option names, and similar things where the value of
-an object must be one of a predefined set of values.
+switch names, option names, and similar things where the literal value of
+a Tcl value must be chosen from a predefined set.
 \fBTcl_GetIndexFromObj\fR compares \fIobjPtr\fR against each of
 the strings in \fItablePtr\fR to find a match.  A match occurs if
 \fIobjPtr\fR's string value is identical to one of the strings in
@@ -99,9 +98,7 @@ array of characters at \fItablePtr\fR+\fIoffset\fR bytes, etc.)
 This is particularly useful when processing things like
 \fBTk_ConfigurationSpec\fR, whose string keys are in the same place in
 each of several array elements.
-
 .SH "SEE ALSO"
-Tcl_WrongNumArgs
-
+prefix(n), Tcl_WrongNumArgs(3)
 .SH KEYWORDS
-index, object, table lookup
+index, option, value, table lookup

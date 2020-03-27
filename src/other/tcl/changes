@@ -7191,15 +7191,26 @@ variables without "." added to customization hooks (kupries)
 
 2008-03-30 (bug fix)[1783544] more robust TclIsNaN() (kenny,teterin)
 
+2008-04-01 (interface)[1819422] tclStubsPtr no longer in libtcl (porter)
+	*** POTENTIAL INCOMPATIBILITY ***
+
 2008-04-01 (bug fix)[1839067] FP round fix for Solaris/x86 (kupries,schlenker)
 
 2008-04-02 (bug fix)[780533,1932639] [fcopy] callbacks unreliable (ferrieux)
+
+2008-04-02 (interface)[1819422] libtclstub symbols MODULE_SCOPE (steffen)
 
 2008-04-04 (bug fix) [chan postevent] crash (kupries)
 
 2008-04-07 (bug fix) Fix broken [format {% d}] (max)
 
 2008-04-07 (bug fix)[1350564] Bi-directional [fcopy] now supported (ferrieux)
+
+2008-04-16 (bug fix)[1938497] Tcl_SetNotifier() fixes (steffen)
+
+2008-04-16 (interface)[1938497] make stubs tables 'static const' (steffen)
+
+2008-05-02 (new feature) [binary] is now a [namespace ensemble] (thoyts)
 
 2008-05-07 (bug fix) [dict append] crash (mccormack,fellows)
 
@@ -7209,9 +7220,19 @@ variables without "." added to customization hooks (kupries)
 
 2008-05-23 (bug fix)[1965787] 32-bit overflow in [tell] result (ferrieux)
 
+2008-05-31 (new feature)[TIP 257]  [oo::*] commands from TclOO (fellows)
+
+2008-06-04 (new feature)[TIP 317] [binary encode]; [binary decode] (thoyts)
+
+2008-06-06 (new feature)[TIP 230] [chan push]; [chan pop] (kupries)
+
+2008-06-08 (enhancement)[1973096] bytecompiled [uplevel] scripts (sofer)
+
 2008-06-12 (platform support) Solaris static build with DTrace (steffen)
 
 2008-06-12 (platform support) Solaris/amd64 gcc 64bit support (steffen)
+
+2008-06-13 (new feature)[TIP 285] [interp cancel]; Tcl_CancelEval() (mistachkin)
 
 2008-06-20 (bug fix)[1999035] make [interp bgerror $i] act in $i (porter)
 
@@ -7221,19 +7242,43 @@ variables without "." added to customization hooks (kupries)
 
 2008-06-25 (bug fix)[1999119] Support TM packages in Safe Base (kupries)
 
---- Released 8.5.3, June 30, 2008 --- See ChangeLog for details ---
+--- Released 8.6a1, June 25, 2008 --- See ChangeLog for details ---
+
+2008-06-29 (bug fix)[2004480] plug memory leaks (ade,porter,steffen)
+
+2008-07-01 (enhancement)[1905562] embed recursion limit in RE engine (fellows)
 
 2008-07-03 (bug fix)[1969717] fix package finding on Samba shares (jos)
 
 2008-07-03 (bug fix)[1987821] mem leak in [seek] on reflected chan (kupries)
 
+2008-07-13 (enhancement)[2017110] new Non-Recursive Evaluation implementation
+enables deep Tcl evaluation stacks without deep C stacks. (sofer)
+
 2008-07-20 (enhancement)[2008248] dict->list preserve item intreps (pasadyn)
 
+2008-07-21 (bug fix)[582506] imported cmds now fire execution traces (sofer)
+
 2008-07-21 (bug fix)[2015723] [file] bad use of inodes on Windows (thoyts)
+
+2008-07-21 (new feature)[TIP 304] [chan pipe] (ferrieux)
+
+2008-07-21 (bug fix)[2021443] more consistent "wrong # args" msgs (nijtmans)
 
 2008-07-21 (enhancement) [info frame] returns file data in more cases (kupries)
 
 2008-07-29 (bug fix)[2030670] fix rare panic in TclStackFree (pasadyn,sofer)
+
+2008-08-01 Tcl_Finalize() no longer called implicitly on DLL_PROCESS_DETACH.
+
+2008-08-05 (enhancement)[1994512] async connect logic simplified (jenglish)
+
+2008-08-06 (bug fix)[2040295] stopped supplying a workaround for bugs
+in Itcl's use of [namespace code].  Itcl now supplies its own workaround.
+	*** POTENTIAL INCOMPATIBILITY for older Itcl releases ***
+
+2008-08-06 (bug fix)[2039178] repaired guard against dispatching oo methods
+in a deleted interp. (porter)
 
 2008-08-08 tzdata updated to Olson's tzdata2008e (kenny)
 
@@ -7242,52 +7287,181 @@ variables without "." added to customization hooks (kupries)
 
 2008-08-11 (enhancement) automatic [package provide] for TMs (kupries)
 
---- Released 8.5.4, August 15, 2008 --- See ChangeLog for details ---
+2008-08-17 (bug fix)[2055782] crash involving Tcl_ConcatObj (sofer)
 
-2008-08-14 (bug fix)[2055782] fix crash in [namespace inscope] (sofer)
+2008-08-21 (new feature) CONST-ified Tcl routines passing (Tcl_ObjType *),
+(Tcl_Filesystem *), or (Tcl_Timer *) arguments (nijtmans,porter)
+	*** POTENTIAL INCOMPATIBILITY ***
 
-2008-08-21 (bug fix)[2065115] correct handling of ***= RE's (hobbs,porter)
+2008-08-21 (bug fix)[2065115] Restored ***= regexp functioning (hobbs,porter)
+
+--- Released 8.6a2, August 25, 2008 --- See ChangeLog for details ---
+
+2008-08-29 (bug fix)[2082299] Install TclOO header files (fellows)
+
+2008-09-01 oo methods called during interp deletion no longer skipped if
+they do not need the dying interp (fellows)
+
+2008-09-02 (support) Dropped support for pre-ANSI compilers.  (porter)
+
+2008-09-04 (bug fix)[2093947] var unset trace in coroutine (fellows,sofer)
 
 2008-09-10 (enhancement) efficient list->dict conversion (elby,fellows)
 
+2008-09-10 (bug fix)[2102930] faulty numLevels count (madden,sofer)
+
+2008-09-16 (bug fix)[2114165] eval failure following cancel (sofer)
+
 2008-09-17 (bug fix)[2116053] export [min] and [max] from tcl::mathfunc (sofer)
+
+2008-09-22 (new feature)[TIP 320] oo common variable declaration (fellows)
+
+2008-09-24 (new feature)[TIP 316] portable access to Tcl_StatBuf (fellows)
+
+2008-09-24 (new feature)[TIP 323] [file delete], [file mkdir] zero pathNames (porter)
+
+2008-09-25 (new feature)[TIP 315] new var: tcl_platform(pathSeparator) (vu,fellows)
+
+2008-09-25 (new feature)[TIP 323] [global], [variable] zero varNames (porter)
+
+2008-09-26 (new feature)[TIP 323] [lassign], [namespace upvar], [my variable] zero varNames (porter)
+
+2008-09-26 (new feature)[TIP 323] [tcl::tm::path add|remove] zero pathNames (porter)
+
+2008-09-26 (new feature)[TIP 323] [lrepeat] zero elements; zero repeats (porter)
 
 2008-09-27 (bug fix)[2130992] prevent overflow crash in [lrepeat] (fellows)
 
+2008-09-28 (new feature)[TIP 314] ensemble parameters before subcommand (hellström,fellows)
+
+2008-09-29 (new feature)[TIP 318] revised defaults for [string trim] (poser)
+	*** POTENTIAL INCOMPATIBILITY ***
+
+2008-09-29 (new feature)[TIP 313] [lsearch -bisect] (spjuth)
+
+2008-09-29 (new feature)[TIP 326] [lsort -stride] (elby)
+
+2008-09-29 (new feature)[TIP 323] [linsert] zero elements (porter)
+
+2008-09-29 (new feature)[TIP 323] [glob] zero patterns (porter)
+
+2008-10-02 (new feature)[TIP 330] interp->result access disabled (kenny)
+	*** POTENTIAL INCOMPATIBILITY ***
+
+2008-10-03 (new feature)[TIP 265] Tcl_ParseArgv() (bromley)
+
+2008-10-03 (new feature)[TIP 195] [tcl::prefix] (spjuth)
+
+2008-10-04 (new feature) CONST-ified Tcl routines Tcl_GetIndexFromObj,
+Tcl_RegisterConfig, Tcl_InitCustomHashTable, and routines passing
+(Tcl_ChannelType *). (nijtmans)
+	*** POTENTIAL INCOMPATIBILITY ***
+
+2008-10-04 (bug fix)[2059262] unload only libraries marked unloadable (nijtmans)
+	*** POTENTIAL INCOMPATIBILITY ***
+
+2008-10-05 (new feature)[TIP 331] [lset listVar end+1 $value] (kenny)
+
 2008-10-05 (bug fix)[2143288] correct bad isqrt() results (boffey,kenny)
+
+2008-10-05 (new feature) CONST-ified return value of the
+Tcl_FSFileAttrStringsProc prototype. (nijtmans)
+	*** POTENTIAL INCOMPATIBILITY for Tcl_Filesystems ***
+
+2008-10-07 (new feature)[TIP 327] [tailcall] (sofer)
+
+2008-10-07 (new feature)[TIP 328] [coroutine],[yield],[info coroutine] (sofer)
 
 2008-10-08 (bug fix)[2151707] fix stack trace from variable trace (porter)
 
---- Released 8.5.5, October 15, 2008 --- See ChangeLog for details ---
+2008-10-10 (bug fix)[2155658] crash in oo method export (fellows)
+
+--- Released 8.6a3, October 10, 2008 --- See ChangeLog for details ---
+
+2008-10-13 (bug fix) Fix ability to join threads on 64-bit Windows (thoyts)
+
+2008-10-23 (bug fix)[2186888] Direct-eval [for] handling of [continue] was
+broken by NRE reform (sofer,porter)
 
 2008-10-24 (bug fix) fix failure to read SHOUTcast streams (thoyts)
 => http 2.7.2
+
+2008-10-27 (enhancement) system encoding at startup is now "iso8859-1", and
+no longer "identity".  Use of identity encoding minimized (porter)
+	*** POTENTIAL INCOMPATIBILITY ***
+
+2008-10-31 (bug fix)[2200824] revised [oo::define] to include caller
+context when resolving names. (nassau,fellows)
 
 2008-11-10 (bug fix)[2255235] [platform::shell::LOCATE] update (ring,kupries)
 => platform::shell 1.1.4
 
 2008-11-13 (bug fix)[2269431] VFS [load] -> tempfile litter (ficicchia,nijtmans)
 
-2008-11-30 (bug fix)[2362156] [clock]: colon in format string (mizuno,kenny)
+2008-11-26 (bug fix)[2114900] updated tclIndex file (cassoff,kenny)
 
-2008-12-01 (bug fix)[2251175] [{*}{\{}] errors (hellström,ferrieux,porter)
+2008-11-27 (bug fix)[2251175] [{*}{\{}] errors (hellström,ferrieux,porter)
+
+2008-11-29 (new feature)[TIP 210] [file tempfile] (techentin,fellows)
+
+2008-11-30 (bug fix)[2362156] [clock]: colon in format string (mizuno,kenny)
 
 2008-12-02 (bug fix)[2270477] hang in channel finalization (ferrieux,kupries)
 
+2008-12-02 (new feature)[TIP 336] Tcl_*ErrorLine() routines.  Direct access
+to the errorLine field of the interp struct denied by default. (porter)
+	*** POTENTIAL INCOMPATIBILITY ***
+	*** Define USE_INTERP_ERRORLINE to restore access for legacy code ***
+
 2008-12-04 (bug fix)[2385549] [file normalize] failed on some paths (porter)
 
+2008-12-05 (new feature)[TIP 307] Tcl_TransferResult() (leunissen,fellows)
+
+2008-12-05 (new feature)[TIP 335] Tcl_InterpActive() (mistachkin,fellows)
+
+2008-12-09 (new feature)[TIP 337] Tcl_BackgroundException() (porter)
+
+2008-12-10 (new feature)[TIP 341] >1 [dict filter] patterns (hellström,fellows)
+
+2008-12-10 (new feature)[TIP 343] [format %b $n] [scan $s %b] (ferrieux)
+
 2008-12-10 tzdata updated to Olson's tzdata2008i (kenny)
+
+2008-12-11 (new feature)[TIP 234] [zlib] and Tcl_Zlib*() (sheffers,fellows)
 
 2008-12-11 (bug fix)[2407783] spoil ChannelState when channel name passes
 among multiple interps (kupries)
 
-2008-12-21 (bug fix) Fix ability to join threads on 64-bit Windows (thoyts)
+2008-12-12 (new feature)[TIP 322] Tcl_NR*() routines to enabled non-recursive
+evaluation in extensions (sofer,kenny)
 
-2008-12-21 (bug fix)[2114900] updated tclIndex file (cassoff,kenny)
+2008-12-09 (new feature)[TIP 338] Tcl_*StartupScript() (porter)
+	*** POTENTIAL INCOMPATIBILITY for callers of Tcl*Startup* routines ***
 
---- Released 8.5.6, December 21, 2008 --- See ChangeLog for details ---
+2008-12-16 (new feature)[TIP 329] [try] [throw] (davel,fellows)
+
+2008-12-17 (new feature)[TIP 308] package tdbc 1.0b1 (kenny)
+
+2008-12-18 (new feature)[TIP 332] [close $chan read|write] (ferrieux)
+
+2008-12-18 (bug fix)[2444274] panic in long commands from {*} (goth,porter)
+
+--- Released 8.6b1, December 19, 2008 --- See ChangeLog for details ---
+
+2008-12-27 [TIP 234] Tcl_Zlib* interface revisions (fellows)
+	*** INCOMPATIBILITY with interface of 8.6b1 ***
+
+2009-01-02 (platform support)[878333] IRIX compat for mkstemp() (fellows)
 
 2009-01-03 (bug fix)[2481670] [clock add] error message (talvo)
+
+2009-01-05 (bug fix)[2412068] NR-enable [source] (fellows)
+
+2009-01-06 (bug fix)[2489836] crash unknown method dispatch (nadkarni,fellows)
+
+2009-01-06 (bug fix)[2481109] fix context of instance name check (fellows)
+
+2009-01-08 (enhancement) more -errorcode values (fellows)
 
 2009-01-19 (new feature) CONFIG_INSTALL_DIR - where tclConfig.sh goes (cassoff)
 
@@ -7295,25 +7469,41 @@ among multiple interps (kupries)
 
 2009-01-21 (bug fix)[2458202] exit crash with [chan create]d channel (kupries)
 
+2009-01-26 (bug fix)[2446662] uniformly declare EOF on RST on sockets (ferrieux)
+
+2009-01-26 (bug fix)[1028264] delay WSACleanup() from under our feet (ferrieux)
+
 2009-01-29 (bug fix)[2519474] Tcl_FindCommand() bug exposed by oo (fellows)
 
+2009-01-29 (bug fix)[2537939] Fix Tcl_OOInitStubs() for no-stubs build (fellows)
+
 2009-02-04 (bug fix)[2561746] [string repeat] overflow crash (porter)
+
+2009-02-05 (enhancement) optimize string operations on bytearrays (fellows)
+
+2009-02-12 (bug fix) enable simpler [oo::define] extension (ferri,fellows)
+
+2009-02-15 (bug fix)[2603158] Tcl_AppendObjToObj: append to self crash (porter)
 
 2009-02-17 (platform support) MSVC and _WIN64 (hobbs)
 
 2009-02-20 (bug fix)[2571597] [file pathtype /a] wrong result (nadkarni,porter)
 
+2009-03-03 (bug fix)[2662434] [zlib crc32] result now unsigned (gavilan,fellows)
+
 2009-03-15 (platform support) translate SIGINFO where defined (BSD) (teterin)
+
+2009-03-15 (bug fix)[2687952] TSD struct memleak (mistachkin)
 
 2009-03-18 (bug fix)[2688184] memleak in [file normalize] (mistachkin)
 
 2009-03-20 (bug fix)[2597185] crash in Tcl_AppendStringToObj (porter)
 
+2009-03-20 (bug fix)[2561794,2669109,2494093,2553906] string overflow (porter)
+
+2009-03-22 (bug fix)[2502037] NR-enable [namespace unknown] (sofer)
+
 2009-03-27 (bug fix)[2710920] [file dirname|tail /foo/] errors (epler,porter)
-
-2009-03-30 (bug fix)[2603158] Tcl_AppendObjToObj: append to self crash (porter)
-
-2009-04-07 (bug fix)[2561794,2669109,2494093,2553906] string overflow (porter)
 
 2009-04-08 (bug fix)[2570363] unsafe [eval]s in tcltest (bron,porter)
 => tcltest 2.3.1
@@ -7328,15 +7518,21 @@ among multiple interps (kupries)
 
 2009-04-10 (bug fix)[1961211]  Darwin [load] back-compatibility (steffen)
 
-2009-04-14 tzdata updated to Olson's tzdata2009f (kenny)
+2009-04-09 (new feature) http chunked+gzip modes (thoyts)
+=> http 2.8.0
 
---- Released 8.5.7, April 15, 2009 --- See ChangeLog for details ---
+2009-04-11 (enhancement) clarified cmd name resolution in oo forwards (fellows)
 
-2009-04-27 (bug fix)[2446662] uniformly declare EOF on RST on sockets (ferrieux)
+20009-04-19 (bug fix)[2715421] http: excess bytes after POST (thoyts)
+=> http 2.8.1
 
-2009-04-27 (bug fix)[1028264] delay WSACleanup() from under our feet (ferrieux)
+2009-04-30 (bug fix)[2486550] coroutine in [interp invokehidden] (sofer)
 
 2009-05-07 (bug fix)[2785893] find command in deleted namespace (sofer)
+
+2009-05-08 (bug fix)[2414858] tailcall in oo constructor (fellows)
+
+2009-05-14 (new subcommand)[TIP 354] [info object namespace] (fellows)
 
 2009-05-29 (platform support) account for ia64_32 (kupries)
 => platform 1.0.5
@@ -7347,9 +7543,31 @@ among multiple interps (kupries)
 
 2009-06-13 (bug fix)[2802881] corrected compile env context (tasada,porter)
 
+2009-06-17 (redesign) reduced ambition of [exit] finalization with aim to
+avoid otherwise very tricky multi-thread finalization bugs. (staplin,ferrieux)
+	*** POTENTIAL INCOMPATIBILITY for exit handlers ***
+
+2009-06-26 (platform support) updates for Xcode 3.1 & 3.2 (steffen)
+
+2009-06-30 (platform support) clang static analyzer macros (steffen)
+
 2009-07-01 (bug fix)[2806622] Win: bad tcl_platform(user) value (thoyts)
 
+2009-07-05 (bug fix) zlib support asynch [chan copy] on chan transform (fellows)
+
+2009-07-12 (bug fix)[1895546] TclOO support for Itcl 4 method caching (fellows)
+
+2009-07-13 (bug fix)[1605269] NR-related [info frame] fixes (kupries)
+
+2009-07-14 (bug fix)[2821401] NR-enable direct eval [switch] (kenny)
+
 2009-07-16 (bug fix)[2819200] underflow settings on MIPS systems (porter)
+
+2009-07-19 (interface)[TIP 354] new routine Tcl_GetObjectName() (fellows)
+
+2009-07-20 (performance) favor [string is] success cases over empty (fellows)
+
+2009-07-22 (interface) removed TclpPanic() routine (nijtmans)
 
 2009-07-23 (bug fix)[2820349] plug event leak in notifier (mistachkin)
 
@@ -7358,6 +7576,10 @@ among multiple interps (kupries)
 2009-07-31 (bug fix)[2830354] overflow in [format] (misch,porter)
 
 2009-08-06 (bug fix)[2827000] reflected channels can signal EGAIN (kupries)
+
+2009-08-12 (new feature)[TIP 353] Tcl_NRExprObj() (porter)
+
+2009-08-20 (bug fix)[2823276] NR-enable [if], [for], [while] (fellows)
 
 2009-08-20 (bug fix)[2806250] EIAS violation in ~foo pathnames (porter)
 
@@ -7375,7 +7597,14 @@ among multiple interps (kupries)
 2009-09-11 (bug fix)[2849860] http handle "quoted" charset value (fellows)
 => http 2.7.4
 
+2009-09-11 (enhancement)[2314561] [subst] now bytecompiled, NR-enabled (porter)
+
+2009-09-24 (new feature)[TIP 356] Tcl_NRSubstObj() (porter)
+
 2009-10-04 (bug fix)[2569449] Core Foundation memory bug in Tiger (steffen)
+
+2009-10-06 (bug fix) repair intrep loss in slave interp evaluations
+introduced by first versions of the NRE conversion (nadkarni,porter)
 
 2009-10-06 (bug fix)[1941434] broken tclTomMath.h includes (porter)
 
@@ -7390,67 +7619,135 @@ among multiple interps (kupries)
 
 2009-10-21 (bug fix)[2882561] Haiku OS signal support (morrison,fellows)
 
+2009-10-22 (bug fix)[2883857] [my varname arr(index)] (boudaillier,fellows)
+
+2009-10-23 (bug fix) 0-length writes: spurious SIG_PIPE (teterin,kupries)
+
 2009-10-24 Broken DST applied EU rules to US zones (lehenbauer,kenny)
 
 2009-10-29 (bug fix)[2800740] halved bignum memory on 64-bit systems (porter)
-	*** POTENTIAL INCOMPATIBILITY ***
+        *** POTENTIAL INCOMPATIBILITY ***
 
-2009-11-03 tzdata updated to Olson's tzdata2009q (kenny)
+2009-11-05 (bug fix)[2854929] TM search path support in Safe Base (kupries)
 
-2009-11-03 (bug fix)[2854929] TM search path support in Safe Base (kupries)
+2009-11-05 (enhancement) rewrite of the Safe Base commands (kupries)
 
 2009-11-11 (bug fix)[2888099] [close] loses ENOSPC error (khomoutov,ferrieux)
 
 2009-11-11 (bug fix)[2891171] RFC 3986 compliance for ? in URL (nijtmans)
-=> http 2.7.5
+=> http 2.8.2
 
 2009-11-12 (bug fix)[2895565] [fcopy -size] miscounts when converting encodings
 (kupries)
 
---- Released 8.5.8, November 16, 2009 --- See ChangeLog for details ---
-
 2009-11-16 (bug fix)[2891556] encoding finalization crash (mistachkin,ferrieux)
 
-2009-12-09 (enhancement) rewrite of the Safe Base commands (kupries)
+2009-11-18 (bug fix)[2849797] consistent names for std chans (nijtmans,fellows)
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2009-11-19 (enhancement) [load]able Tcltest extension (nijtmans)
+
+2009-11-24 (bug fix)[2893771] [file stat] on Win locked files (thoyts)
+
+2009-11-24 (bug fix)[2903011] crash call destructor from constructor (fellows)
+
+2009-12-03 (bug fix)[2906841] Safe Base [glob ../*] fixes (fellows)
+
+2009-12-09 (bug fix)[2901998] consistent I/O buffering (ferrieux,kupries)
+
+2009-12-11 (bug fix)[2806407] NR-enabled coroutines (sofer)
 
 2009-12-16 (bug fix)[2913616] msgcat: improved safe interp support (fellows)
 => msgcat 1.4.3
+
+2009-12-22 (bug fix)[2918962] [lsort -index -stride] crash (moore,fellows)
 
 2009-12-23 (bug fix)[2913625] [info script/nameof] in safe interps (fellows)
 
 2009-12-28 (bug fix)[2891362] enable time limit in child interps (fellows)
 
-2009-12-28 (bug fix)[2895741] enable min(), max() in safe interps (fellows)
+2009-12-29 (bug fix)[2922555] [binary decode hex { }] crash (thoyts)
+
+2009-12-29 (bug fix)[2895741] enable min(), max() in safe interps (fellows)
+
+2009-12-30 (bug fix)[2824981] guard [unknown] against [set] undef (sofer)
 
 2010-01-05 (bug fix)[2918610] [file rootname] corruption (magerya,porter)
-
-2010-01-06 (enhancement) Haiku, CYGWIN support improvements (nijtmans)
 
 2010-01-18 (bug fix)[2932421] less [format %s] shimmer (ferrieux)
 
 2010-01-18 (bug fix)[2918110] [chan postevent] crash (bron,kupries)
 
+2010-01-21 (bug fix)[2910748] NR-enable epoch fallback direct eval (sofer)
+
+2010-01-30 (enhancement) [unset] now bytecompiled (fellows)
+
 2010-02-01 (bug fix)[2942697] faster match: some pathological regexp patterns
 (lane,fellows)
 
-2010-02-02 (bug fix)[2939073] [array unset] unset trace crash (ferrieux)
+2010-02-01 (bug fix)[2939073] [array unset] unset trace crash (ferrieux)
 
-2010-02-02 (bug fix)[2933089] [info frame] shared lit trouble (kupries)
+2010-02-02 (bug fix)[2944404] crash in oo destructor (fellows)
+
+2010-02-02 (new feature) [array] is now a [namespace ensemble] (fellows)
+
+2010-02-05 (enhancement) [error] now bytecompiled (fellows)
+
+2010-02-08 (bug fix)[2947783] Tcl_Zlib*flate fail on shared values (fellows)
+
+2010-02-09 (enhancement) [try] now bytecompiled (fellows)
+
+2010-02-11 (bug fix)[2826551] line-sensitive matching in regexp (dejong)
 
 2010-02-11 (bug fix)[2949740] [open |noSuch rb] crash (kovalenko,fellows)
 
-2010-02-11 (bug fix)[2954959] get sign of abs($zero) right (nijtmans)
+2010-02-15 (bug fix)[2950259] harden (delete obj ns -> delete obj) (fellows)
+
+2010-02-21 (bug fix)[2954959] get sign of abs($zero) right (nijtmans)
+
+2010-02-22 (bug fix)[2762041] zlib chan transforms read EOF too early (kupries)
+
+2010-02-27 (bug fix)[801429] Tcl_SetMainLoop() thread safety (fellows)
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2010-03-02 (enhancement) -fvisibility-hidden build support (nijtmans)
+
+2010-03-04 (bug fix)[2962664] [oo::class destroy] crash (fellows)
+
+2010-03-05 (interface) TclOO typedefs for function pointers (fellows)
+        *** POTENTIAL INCOMPATIBILITY ***
 
 2010-03-09 (bug fix)[2936225] stop [chan copy] to slow channel consuming all
 memory with buffer backup (ferrieux)
 
+2010-03-17 (bug fix)[2921116] crash in chan transfrom teardown (kupries)
+
+2010-03-19 (enhancement) [throw] now bytecompiled (fellows)
+
 2010-03-20 (enhancement) permit [fcopy] of > 2**31 bytes (fellows)
+
+2010-03-24 (new feature) [info object methodtype] (fellows)
 
 2010-03-24 (bug fix)[2383005] [return -errorcode] reject non-list (porter)
 
 2010-03-25 (bug fix)[2976504] broken fstatfs() call (reeuwijk,fellows)
 
+2010-03-30 (new feature)[TIP 362] [registry -32bit|-64bit] (courtney,fellows)
+=> registry 1.3
+
 2010-03-30 (bug fix)[2978773] refchan mem preservation (kupries)
+
+2010-04-02 (new feature)[TIP 357] Tcl_LoadFile, Tcl_FindSymbol, etc. (kenny)
+
+2010-04-05 (configure change)[TIP 364] default build: --enable-threads (fellows)
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2010-04-02 (new feature)[TIP 348] [info errorstack], [return -errorstack]
+(ferrieux)
+
+2010-04-20 (enhancement) update bundled zlib to 1.2.5 (nijtmans)
+
+2010-04-29 (enhancement)[2992970] optimize bytearray appends (fellows)
 
 2010-05-19 (bug fix)[3004007] dict/list shimmer w/o string rep loss (fellows)
 
@@ -7459,7 +7756,10 @@ memory with buffer backup (ferrieux)
 
 2010-06-16 (bug fix)[3016135] [clock format] in he_IL locale (nijtmans)
 
+2010-06-18 (bug fix)[3017997] Add .cmd to file extensions for [exec] (fellows)
+
 2010-06-28 (bug fix)[3019634] support errno.h changes in MSVC++ 2010 (nijtmans)
+        *** POTENTIAL INCOMPATIBILITY ***
 
 2010-07-02 (enhancement) -errorcode for [expr] domain errors (fellows)
 
@@ -7468,40 +7768,136 @@ memory with buffer backup (ferrieux)
 2010-08-04 (bug fix)[3034840] mem corrupt when refchan loses interp (kupries)
 
 2010-08-04 (enhancement) Win [load] use LOAD_WITH_ALTERED_SEARCH_PATH (hobbs)
-	*** POTENTIAL INCOMPATIBILITY ***
 
-2010-08-12 (bug fix)[2826551] line-sensitive matching in regexp (dejong)
+2010-08-04 (platform support) panic on detection of win9x system (hobbs)
+        *** POTENTIAL INCOMPATIBILITY ***
 
-2010-08-19 (bug fix)[3048354] buffer overflow detect in Fortify build (fellows)
+2010-08-10 (fix) Handle non-null-terminated bytearrys in glob matching (hobbs)
 
-2010-08-23 tzdata updated to Olson's tzdata2010l (kenny)
+2010-08-11 (fix) copy-paste bug in [yield] implementation (sofer, goth)
 
-2010-09-01 (bug fix)[3057639] no read traces [lappend arr(elem) ...] (hobbs)
-	*** POTENTIAL INCOMPATIBILITY ***
+2010-08-11 (platform) Drop pre-aix 4.2 support, ldAix (hobbs)
 
---- Released 8.5.9, September 8, 2010 --- See ChangeLog for details ---
+2010-08-14 (frq)[2819611] changed signatures of hash fnctions, delete-file, and get-native-path (nijtmans)
+        *** POTENTIAL INCOMPATIBILITY ***
 
-2010-09-24 (bug fix)[3056775] race condition in Win sockets (twylite,kupries)
+2010-08-15 (bug fix)[3045010] tweaked error message for wrong#args of lambda's (fellows)
 
-2010-10-23 (update)[3085863] Update Unicode data to 6.0 (nijtmans)
+2010-08-18 (bug fix)[3004191] fixed safe [glob] (fellows)
 
-2010-11-02 Safe Tcl handling of empty path lists (cassoff)
+2010-08-21 (patch)[3034251] genStubs steal features of ttkGenStubs (nijtmans)
 
-2010-11-03 (bug fix)[3098302] crash in compiled [catch] (kenny)
+2010-08-26 (bug fix)[1230554] configure, OSF-1 problems, windows manifest issues (hobbs)
+
+2010-08-30 (bug fix) [3046594,3047235,3048771] reimplemented tailcall (sofer)
+
+2010-08-31 fixed manifest handling on windows (hobbs, kupries)
+
+2010-08-31 windows makefile and stub changes (nijtmans)
+
+2010-09-01 (bug fix)[3057639] compiled lappend trace consistency (hobbs,kupries)
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2010-09-01 fixed safe glob handling of -directory (kupries)
+
+2010-09-02 fixed safe glob handling of -join (kupries)
+
+2010-09-08 (bug fix)[3059922] build with mingw on amd64 (porter, mescalinum)
+
+2010-09-15 (bug fix)[3067036] stop hang in bytearray append (fellows)
+
+2010-09-22 unified set of link libraries between mingw and vc (nijtmans)
+
+2010-09-22 (bug fix)[3072640] protect writes to ::error* variables (sofer)
+
+2010-09-23 fix leak of return options [catch $err m constant] (porter, hobbs)
+
+2010-09-24 (bugfix)[3056775] fixed race condition in windows sockets (kupries)
+
+2010-09-24 (performance) string eq/cmp (hobbs)
+
+2010-09-26 (patch)[3072080] rewritten NRE core (sofer)
+
+2010-09-28 (new feature)[TIP 162] implementation of ipv6 sockets (max)
+
+2010-10-02 (bug fix)[3079830] properly invalidate string rep of dicts (fellows)
+
+2010-10-06 (bug fix)[3081065] fix writing to freed Tcl_Obj (porter)
+
+2010-10-08 fix in ipv6 code on windows (nijtmans)
+
+2010-10-09 fixed overallocation of execution stack (sofer)
+
+2010-10-11 windows unicode changes (nijtmans)
+
+2010-10-12 (bug fix)[3084338] fixed meamleak in ipv6 code (max)
+
+2010-10-13 (bug fix)[467523,983660] alt fix allows empty literal share (porter)
+
+2010-10-15 (bugfix)[3085863] updated unicode tables (nijtmans)
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2010-10-16 refactored implementation of dict iteration (fellows)
+
+2010-10-17 (patch)[2995655] report inner contexts on error stack (ferrieux)
+
+2010-10-19 (bug fix)[3081008] fixed bytearray zlib interaction (fellows)
+
+2010-10-19 improved crc, appending to bytearray (fellows)
+
+2010-10-20 improved compilation of [dict for] (fellows)
+
+2010-10-26 Added private support to disable reverse dns (max)
+
+2010-10-26 Prevent crashes when querying socket options (fellows, max)
+
+2010-10-28 (bug fix)[3093120] prevent freeaddrinfo(NULL) (porter, virden)
+
+2010-10-29 (bug fix)[2905784] stop cycle waste in short [after] (ferrieux)
+
+2010-11-01 tzdata updated to Olson's tzdata2010o (kenny)
+
+2010-11-04 (bug fix)[3099086] Clarified docs of var substitution (fellows)
+
+2010-11-04 improved install targets (cassof)
+
+2010-11-04 improved testing of sockets (max)
+
+2010-11-05 (frq)[491789] setargv/unicode cmdline for MSVC (nijtmans)
+
+2010-11-09 (bug fix)[3105999] fixed memleak in OO var resolver (fellows)
 
 2010-11-15 (TIP 378)[3081184] improved TIP 280 performance (kupries)
 
+2010-11-16 (platform) VS 2005 SP1 MSVC compiler (nijtmans)
+
+2010-11-18 (bug fix)[3111059] leak in [namespace delete] w coroutines (sofer)
+
+2010-11-28 [3120139,3105247] Tcl_PrintDouble improvements (kenny)
+
+2010-11-29 (new cmd) [tcl::unsupported::inject] (ferrieux,sofer)
+
 2010-11-30 (enhancement) Restore TclFormatInt for performance (hobbs)
 
-2010-11-30 (enhancement) Tcl_PrintDouble performance improvements (kenny)
+2010-12-09 (new feature) [file] is now a [namespace ensemble] (fellows)
+
+2010-12-19 (bug fix) [fcopy -size 1 -command] asynchronous (ferrieux)
 
 2010-12-12 (platform) OpenBSD build improvements (cassoff)
 
 2010-12-17 (platform) Revisions to support rpm 4.4.2 (cassoff)
 
-2011-01-13 (bug fix)[3142026] GrowEvaluationStack OBOE (harder,sofer)
+2010-12-27 (bug fix) crash in [lsort] w multiple -index options (fellows)
 
-2011-01-19 (bug fix)[3072640] protect writes to ::error* variables (sofer)
+2010-12-30 (bug fix)[3142026] GrowEvaluationStack OBOE (harder,sofer)
+
+2011-01-18 (bug fix)[3001438] [info frame -1] crash (mccormack,fellows)
+
+2011-03-01 (performance)[3168398] optimize [interp cancel] (mistachkin)
+
+2011-03-05 (bug fix)[3185009] crash in OO variables (danckaert,fellows)
+
+2011-03-05 (new cmd) [tcl::unsupported::assemble] (ugurlu,kenny)
 
 2011-03-06 (bug fix)[3200987,3192636] parser buffer overruns (porter)
 
@@ -7509,12 +7905,21 @@ memory with buffer backup (ferrieux)
 
 2011-03-09 (bug fix)[3202171] repair [namespace inscope] optimizer (porter)
 
+2011-03-10 (new version) better tcltest reporting from child interps (fellows)
+=> tcltest 2.3.3
+
+2011-03-10 (new feature) [namespace] is now a [namespace ensemble] (fellows)
+
+2011-03-12 (interface) reduce casting by ckalloc(), ckfree() callers (fellows)
+
 2011-03-14 (bug fix) Fixes from libtommath 0.42.0 release (fellows)
 
 2011-03-21 (bug fix)[3216070] [load] extension from embed Tcl apps (nijtmans)
 	***POTENTIAL INCOMPATIBILITY***
 
-2011-04-12 (bug fix)[3285472] intrep corruption in [string reverse] (porter)
+2011-03-27 (performance) NRE: LIST lset foreach benchmark (twylite)
+
+2011-04-11 (bug fix)[3282869] coroutine + eval + locals crash (ferrieux,sofer)
 
 2011-04-13 (bug fix)[2662380] crash when variable append trace unsets (sofer)
 
@@ -7527,25 +7932,29 @@ memory with buffer backup (ferrieux)
 
 2011-05-10 (bug fix)[3173086] Crash parsing long lists (rogers,porter)
 
-2011-05-12 (bug fix)[2715421] surplus \n in POST (passadyn,thoyts)
-=> http 2.7.6
-
-2011-05-24 tzdata updated to Olson's tzdata2011g (iyer)
-
-2011-05-25 (enhancement) msgcat internal improvements (fellows)
+2011-05-24 (enhancement) msgcat internal improvements (fellows)
 => msgcat 1.4.4
+
+2011-05-25 (TIP 381) [info object|class call] [self call] [nextto] (fellows)
+
+2011-05-31 (bug fix)[3293874] let lists grow all the way to the limit (porter)
 
 2011-06-02 (bug fix)[3185407] cmd resolution epoch flaw (nadkarni,fellows)
 
 2011-06-13 (bug fix)[3315098] mem leak generating double string rep (neumann)
 
-2011-06-21 (new cmd) [tcltest::loadIntoSlaveInterpreter] (fellows)
-=> tcltest 2.3.3
-
 2011-06-22 (new feature) DEB_HOST_MULTIARCH support (kupries)
 => platform 1.0.10
 
---- Released 8.5.10, June 23, 2011 --- See ChangeLog for details ---
+2011-07-15 (bug fix)[3357771] Prevent circular refs in bytecode (porter)
+
+2011-07-28 tzdata updated to Olson's tzdata2011h (porter)
+
+2011-08-01 (bug fix)[3383616] memleak exposed by XOTcl (neumann,sofer)
+
+Many more Tcl built-in command errors now set an -errorcode.
+
+--- Released 8.6b2, August 8, 2011 --- See ChangeLog for details ---
 
 2011-07-02 (bug fix)[3349507] correct double(1[string repeat 0 23]) (kenny)
 
@@ -7567,20 +7976,24 @@ memory with buffer backup (ferrieux)
 like "nano()" instead of parsing as "nan o()" with missing op (duquette,porter)
 	*** POTENTIAL INCOMPATIBILITY ***
 
+2011-09-10 (bug fix)[3400658] wrong num args msg with TclOO (rsooltan,fellows)
+
 2011-09-13 (bug fix)[3390638] solaris studio cc workaround (kechel,porter)
 
 2011-09-13 (bug fix)[3405652] DTrace workaround (michelson,porter)
 
 2011-09-16 (bug fix)[3391977] -headers overrides -type (ziegenhagen,fellows)
-=> http 2.7.7
+=> http 2.8.3
 
-2011-09-16 (bug fix)[3400658] wrong num args msg with TclOO (rsooltan,fellows)
+2011-09-16 (TIP 388) New \Uhhhhhhhh syntax (nijtmans)
+
+2011-10-06 (enhancement) bytecode compile [dict with] (fellows)
 
 2011-10-11 (bug fix)[2935503] [file stat] returns bad mode (nadkarni,nijtmans)
 
-2011-10-15 tzdata updated to Olson's tzdata2011l (iyer)
+2011-10-20 (bug fix)[3418547] cmd lits and custom resolvers (soberning,fellows)
 
---- Released 8.5.11, November 4, 2011 --- See ChangeLog for details ---
+2011-10-31 (bug fix)[3414754] EIAS violation in fs paths (porter)
 
 2011-11-22 (bug fix)[3354324] Win: [file mtime] sets wrong time (nijtmans)
 
@@ -7596,45 +8009,82 @@ like "nano()" instead of parsing as "nan o()" with missing op (duquette,porter)
 2012-01-08 (bug fix)[3470928] zoneinfo trouble with Windhoek data file (kenny)
 
 2012-01-13 (bug fix)[3472316] fix retrieval of socket error (fellows)
-=> http 2.7.8
 
 2012-01-21 (bug fix)[3475667] [regexp] buffer read overflow (sebres)
 
 2012-01-22 (bug fix)[3475264] [dict exists] return 0, not error (fellows)
 
+2012-01-25 (bug fix)[3474460] [oo::copy] var resolution list (fellows)
+
 2012-01-26 (bug fix)[3475569,3479689] mem corrupt in fs path (sebres,porter)
+
+2012-01-30 (enhancement) improve bytecode compile of [catch] (fellows)
 
 2012-02-02 (bug fix)[2974459,2879351,1951574,1852572,1661378,1613456] Fix
 problems where [file *able] would return false results on Win/Samba (porter)
 
-2012-02-02 (update)[3464401] Support Unicode 6.1 (nijtmans)
-
 2012-02-06 (bug fix)[3484621] bump bytecode epoch on exec traces (kuhn,sofer)
 
-2012-02-09 (bug fix)[3484402] mem corrupt OBOE in unicode append (porter)
-
 2012-02-15 (bug fix)[3487626] crash compiling [dict for] (fellows)
+
+2012-02-15 (enhancement) bytecode compile [lrange],[lreplace] (fellows)
 
 2012-02-17 (bug fix)[2233954] compile problem on AIX & Android (nijtmans)
 
 2012-02-29 (bug fix)[3466099] BOM in Unicode (nijtmans)
 
 2012-03-07 (bug fix)[3498327] RFC 3986 compliance (kupries)
-=> http 2.7.9
+
+2012-03-26 (TIP 380) New builtin class [oo::Slot] (fellows)
+	*** POTENTIAL INCOMPATIBILITY ***
+
+2012-03-27 (TIP 397) <cloned> method to extend [oo::copy] (fellows)
+	*** POTENTIAL INCOMPATIBILITY ***
+
+2012-03-27 (TIP 395) New subcommand [string is entier] (fellows)
+
+2012-04-02 (TIP 396) New command [yieldto] (fellows)
+
+2012-04-04 (bug fix)[3514761] crash combining objects and ensembles (fellows)
+
+2012-04-09 (bug fix)[2712377] [info vars] and oo variables (fellows)
+
+2012-04-09 (bug fix)[3396896] no dups in oo var lists (fellows)
 
 2012-04-11 (bug fix)[3448512] [clock scan 1958-01-01] fail on Win (nijtmans)
 
+2012-04-15 (bug fix)[3517696] fix flush of zlib chan xform (fellows)
+
 2012-04-18 tzdata updated to Olson's tzdata2012c (kenny)
+
+2012-04-28 (TIP 398) exit non-blocking chan without flush (ferrieux)
+	*** POTENTIAL INCOMPATIBILITY ***
 
 2012-05-02 (enhancement) Better use of Intel cpuid instruction (nijtmans)
 
+2012-05-03 (bug fix)[3428753] Unbreak synchronous [socket -async] (porter)
+
+2012-05-10 (bug fix)[2812981] force consistent config of Tcl+pkgs (ferrieux)
+
 2012-05-10 (bug fix)[473946] correct send of special characters (nijtmans)
-=> dde 1.3.3
+
+2012-05-17 (bug fix)[3445787] fix [file] ensemble in Safe Base (fellows)
 
 2012-05-17 (bug fix)[2964715] fix [glob] in Safe Base (fellows)
 
 2012-05-17 (bug fix)[3106532] proper [switch -indexvar] values (fellows)
 	*** POTENTIAL INCOMPATIBILITY ***
+
+2012-05-21 (TIP 106) New -binary option to [dde execute|poke] (oehlmann)
+=> dde 1.4.0
+
+2012-05-23 (bug fix)[3525907] [zlib push decompress] & [chan event]
+(fellows,ferrieux,kupries)
+
+2012-05-28 (bug fix)[3529949] Protect ~ paths in Safe Base (fellows)
+
+2012-06-21 (bug fix)[3362446] [registry keys] failure (nijtmans)
+=> registry 1.3.0
 
 2012-06-25 (bug fix)[3537605] [encoding dirs a b] error message (fellows)
 
@@ -7642,76 +8092,107 @@ problems where [file *able] would return false results on Win/Samba (porter)
 and Tcl_FSMountsChanged(). (porter)
 
 2012-06-29 (bug fix)[3536888] fix locale guessing (oehlmann,nijtmans)
-=> msgcat 1.4.5
 
 2012-07-05 (bug fix)[1189293] make "<<" redirect binary safe (porter)
 
-2012-07-11 (bug fix)[3362446] [registry keys] failure (nijtmans)
-=> registry 1.2.2
-
-2012-07-16 (bug fix)[3544683] reentrant syscalls on BSD (cassoff,fellows)
+2012-07-08 (bug fix)[3531209] accept IPv6 URLs (max)
+=> http 2.8.4
 
 2012-07-24 (bug fix) stop mem corruption in stacked channel events (max,porter)
 
 2012-07-25 (bug fix)[3546275] [auto_execok] search match [exec] (danckaert)
 
-Many revisions to better support a Cygwin environment (nijtmans)
-
---- Released 8.5.12, July 27, 2012 --- See ChangeLog for details ---
-
 2012-07-27 (update)[3464401] Support Unicode 6.2 (nijtmans)
-
-2012-08-07 (bug fix)[3554250] fs segfault in thread exit handler (porter)
-
-2012-08-08 (update)[1536227] Cygwin network pathname support (nijtmans)
 
 2012-08-20 (bug fix)[3559678] [file normalize] EIAS failure (phao,dgp)
 
 2012-08-25 (bug fix)[3561330] Ukranian translation of "March" (teterin)
 
-2012-09-11 (bug fix)[3564735] mem corruption w/ Itcl's [variable] (porter)
-
-2012-09-25 (TIP 404) New msgcat commands [mcflset], [mcflmset] (oehlmann)
+2012-09-07 (TIP 404) New msgcat commands [mcflset], [mcflmset] (oehlmann)
 => msgcat 1.5.0
+
+Many revisions to better support a Cygwin environment (nijtmans)
+
+Dropped support for OS X versions less than 10.4 (Tiger) (fellows)
+
+--- Released 8.6b3, September 18, 2012 --- See ChangeLog for details ---
+
+2012-09-20 (enhancement) full Unicode support (nijtmans)
+=> dde 1.4.0
+
+2012-09-20 (enhancement) update bundled zlib to 1.2.7 (nijtmans)
 
 2012-10-03 (bug fix) exit panic on stacked std channel (griffin,porter)
 
 2012-10-14 (bug fix) [tcl::Bgerror] crash on non-dict options (nijtmans)
 
-2012-11-06 (bug fix)[3581754] avoid multiple callback on keep-alive (fellows)
-=> http 2.7.10
+2012-10-16 (TIP 400) New [zlib] options to set compression dict (fellows)
 
-2012-11-07 (bug fix)[3574493] hang in Windows socket finalization (fassel)
+2012-10-16 (TIP 405) New commands [lmap] and [dict map] (fellows)
+
+2012-10-24 (enhancement) [dict unset] now bytecompiled (fellows)
+
+2012-11-05 (TIP 413) Revisions to default [string trim*] trimset (nijtmans)
+	*** POTENTIAL INCOMPATIBILITY ***
+
+2012-11-05 (enhancement) Now bytecompiled: [array exists], [array set],
+[array unset], [dict create], [dict exists], [dict merge], [format],
+[info commands], [info coroutine], [info level], [info object],
+[namespace current], [namespace code], [namespace qualifiers], [namespace tail],
+[namespace which], [regsub], [self], [string first], [string last],
+[string map], [string range], [tailcall], [yield]. (fellows)
+
+2012-11-06 (bug fix)[3581754] avoid multiple callback on keep-alive (fellows)
+=> http 2.8.5
 
 2012-11-07 tzdata updated to Olson's tzdata2012i (kenny)
 
---- Released 8.5.13, November 12, 2012 --- See ChangeLog for details ---
+2012-11-13 (bug fix)[3567063] thread fp settings from master (mistachkin)
 
-2012-11-13 (enhancement)[360894] Threads inherit floating point from creator.
+2012-11-14 (bug fix)[2933003] tempfile creation in $TMPDIR (fellows)
 
-2012-11-14 (enhancement)[2933003] compile setting: TCL_TEMPORARY_FILE_DIRECTORY
+2012-11-15 (TIP 416) New [load] options -global and -lazy (nijtmans)
 
-2012-11-16 (bug fix)[3587651] [info functions] returns complete set. (porter)
+2012-11-20 (bug fix)[3033307] base64 trail whitespace (kovalenko,goth)
 
-2012-12-03 (bug fix) tcltest: Correct legacy auto-init fom $::argv (porter)
+2012-12-03 (bug fix) [configure] query broke init from argv (porter)
 => tcltest 2.3.5
 
-2012-12-06 (bug fix) Tcl_InitStubs("8.5",1) must reject 8.50. (porter)
+2012-12-13 (bug fix)[3595576] crash: [catch {} -> noSuchNs::var] (sofer,porter)
 
-2012-12-13 (bug fix)[3595576] mem flaw in [catch {} -> no-such-ns::v] (porter)
+2012-12-13 (bug fix) crash: [zlib gunzip $data -header noSuchNs::var] (porter)
+
+--- Released 8.6.0, December 20, 2012 --- See ChangeLog for details ---
+
+2012-12-22 (bug fix)[3598150] DString to Tcl_Obj memleak (afredd)
 
 2012-12-27 (bug fix)[3598580] Tcl_ListObjReplace() refcount fix (nijtmans)
+
+2013-01-04 (bug fix) memleak in [format] compiler (fellows)
 
 2013-01-08 (bug fix)[3092089,3587096] [file normalize] on junction points
 
 2013-01-09 (bug fix)[3599395] status line processing (nijtmans)
 2013-01-23 (bug fix)[2911139] repair async connection management (fellows)
-=> http 2.7.11
+=> http 2.8.6
+
+2013-01-26 (bug fix)[3601804] Darwin segfault platformCPUID (nijtmans)
+
+2013-01-28 (enhancement) improve ensemble bytecode (fellows)
+
+2013-01-30 (enhancement) selected script code improvements (fradin)
+=> tcltest 2.3.6
 
 2013-01-30 (bug fix)[3599098] update to handle glibc banner changes (kupries)
 => platform 1.0.11
 
+2013-01-31 (bug fix)[3598282] make install DESTDIR support (cassoff)
+
 2013-02-05 (bug fix)[3603434] [file normalize a:/] flaw in VFS (porter,griffin)
+
+2013-02-09 (bug fix)[3603695] $obj varname resolution rules (venable,fellows)
+
+2013-02-11 (bug fix)[3603553] zlib flushing errors (vampiera,fellows)
 
 2013-02-14 (bug fix)[3604576] msgcat use of Windows registry (oehlmann,nijtmans)
 => msgcat 1.5.1
@@ -7720,7 +8201,11 @@ Many revisions to better support a Cygwin environment (nijtmans)
 
 2013-02-21 (bug fix)[3605447] unbreak [namespace export -clear] (porter)
 
+2013-02-23 (bug fix)[3599194] fallback IPv6 routines (afredd,max)
+
 2013-02-27 (bug fix)[3606139] stop crash in [regexp] (lane)
+
+2013-03-03 (bug fix)[3606258] major serial port update (english)
 
 2013-03-06 (bug fix)[3606683] [regexp (((((a)*)*)*)*)* {}] hangs
 (grathwohl,lane,porter)
@@ -7731,40 +8216,42 @@ Many revisions to better support a Cygwin environment (nijtmans)
 
 2013-03-21 (bug fix)[2102614] [auto_mkindex] ensemble support (griffin)
 
-2013-03-22 tzdata updated to Olson's tzdata2013b (venkat)
-
---- Released 8.5.14, April 3, 2013 --- See ChangeLog for details ---
-
-2013-04-03 (bug fix)[3205320] outsmart gcc on powerpc detect stack direction
+2013-03-27 Tcl_Zlib*() routines tolerate NULL interps (porter
 
 2013-04-04 (bug fix) Support URLs with query but no path (max)
-=> http 2.7.12
+=> http 2.8.7
 
 2013-04-08 (bug fix)[3610026] regexp crash on color overflow (linnakangas)
 
-2013-04-16 (bug fix)[3610404] crash in enter traces (found with TclOO) (porter)
+2013-04-29 (enhancement) [array set] compile improvement (fellows)
 
 2013-04-30 (enhancement) broaden glibc version detection (kupries)
 => platform 1.0.12
 
-2013-05-01 (bug fix)[2901998] inconsistent I/O buffering (ferrieux)
-
 2013-05-06 (platform support) Cygwin64 (nijtmans)
+
+2013-05-15 (enhancement) Improved [list {*}...] compile (fellows)
 
 2013-05-16 (platform support) mingw-4.0 (nijtmans)
 
 2013-05-19 (platform support) FreeBSD updates (cerutti)
+
+2013-05-20 (bug fix)[3613567] access error temp file creation (keene)
+
+2013-05-20 (bug fix)[3613569] temp file open fail can crash [load] (keene)
 
 2013-05-22 (bug fix)[3613609] [lsort -nocase] failed on non-ASCII (fellows)
 
 2013-05-28 (bug fix)[3036566] Use language packs (Vista+) locale (oehlmann)
 => msgcat 1.5.2
 
+2013-05-29 (bug fix)[3614102] [apply {{} {list [if 1]}}] stack woes (porter)
+
 2013-06-03 Restored lost performance appending to long strings (elby,porter)
 
-2013-06-17 (bug fix)[a876646] [:cntrl:] includes \x00 to \x1f (nijtmans)
+2013-06-05 (bug fix)[2835313] [while 1 {foo [continue]}] crash (fellows)
 
-2013-06-17 [string is space \u180e] => 1 (nijtmans)
+2013-06-17 (bug fix)[a876646] [:cntrl:] includes \x00 to \x1f (nijtmans)
 
 2013-06-27 (bug fix)[983509] missing encodings for config values (nijtmans)
 
@@ -7774,34 +8261,59 @@ Many revisions to better support a Cygwin environment (nijtmans)
 
 2013-07-06 tzdata updated to Olson's tzdata2013d (kenny)
 
+2013-07-10 (bug fix)[86fb5e] [info frame] in compiled ensembles (porter)
+
+2013-07-18 (bug fix)[1c17fb] revisd syntax errorinfo that shows error (porter)
+
 2013-07-26 (bug fix)[6585b2] regexp {(\w).*?\1} abb (lane)
 
 2013-07-29 [string is space \u202f] => 1 (nijtmans)
 
 2013-08-01 [a0bc85] Limited support for fork with threads (for Rivet) (nijtmans)
 
+2013-08-01 (bug fix)[1905562] RE recursion limit increased to support
+reported usage of large expressions (porter)
+
+2013-08-02 (bug fix)[9d6162] superclass slot empty crash (vdgoot,fellows)
+
+2013-08-03 (enhancement)[3611643] [auto_mkindex] support TclOO (fellows)
+
 2013-08-14 (bug fix)[a16752] Missing command delete callbacks (porter)
+
+2013-08-15 (bug fix)[3610404] reresolve traced forwards (porter)
 
 2013-08-15 Errors from execution traces become errors of the command (porter)
 
-2013-09-07 (bug fix) stop crashes in tclcompiler (kupries,porter)
+2013-08-23 (bug fix)[8ff0cb9] Tcl_NR*Eval*() schedule only, as doc'd (porter)
+
+2013-08-29 (bug fix)[2486550] enable [interp invokehidden {} yield] (porter)
+
+2013-09-01 (bug fix)[b98fa55] [binary decode] fail on whitespace (reche,fellows)
 
 2013-09-07 (bug fix)[86ceb4] have tm path favor first provider (neumann,porter)
 
-2013-09-13 (bug fix)[bdd91c] crash in exec stack mem management (azazel)
+2013-09-09 (bug fix)[3609693] copied object member variable confusion (fellows)
+=> TclOO 1.0.1
 
---- Released 8.5.15, September 16, 2013 --- http://core.tcl.tk/tcl/ for details
+2013-09-17 (bug fix)[2152292] [binary encode uuencode] corrected (fellows)
 
 2013-09-19 (bug fix)[3487626] segfaults in [dict] compilers (porter)
 
-2013-09-19 (bug fix) [info frame] line OBOEs in bytecode (porter)
+2013-09-19 (bug fix)[31661d2] mem leak in [lreplace] (ade,porter)
 
-2013-09-25 (bug fix)[d614d63] namespace matching *:: deletion fail (fellows)
+Many optmizations, improvements, and tightened stack management in bytecode.
+
+--- Released 8.6.1, September 20, 2013 --- https://core.tcl-lang.org/tcl/ for details
+
+2013-09-27 (enhancement) improved ::env synchronization (fellows)
+
+2013-10-20 (bug fix)[2835313] segfault from
+[apply {{} {while 1 {a {*}[return -level 0 -code continue]}}}] (fellows)
 
 2013-10-22 (bug fix)[3556215] [scan %E%G%X] support (fellows)
 
 2013-10-25 (bug fix)[3eb2ec1] upper case scheme names in url. (nijtmans)
-=> http 2.7.13
+=> http 2.8.8
 
 2013-10-29 (bug fix)[414d103] HP-UX: restore [exec] in threaded Tcl (nijtmans)
 
@@ -7809,24 +8321,47 @@ Many revisions to better support a Cygwin environment (nijtmans)
 
 2013-11-05 (bug fix)[426679e] OpenBSD man page rendering (nijtmans)
 
+2013-11-12 (bug fix)[5425f2c] [fconfigure -error] breaks [socket -async]
+
 2013-11-20 (bug fix) Improved environment variable management (nijtmans)
 => tcltest 2.3.7
 
 2013-11-21 (platforms) Support for Windows 8.1 (nijtmans)
 
-2014-02-06 (bug fix)[a4494e2] panic in test namespace-13.2 (porter)
+2013-12-06 (RFE) improved [foreach] bytecode (fellows)
 
-2014-02-24 (bug fix)[2413550] Win: avoid serial double open (schroeter)
+2013-12-10 (RFE) improved [lmap] bytecode (sofer)
+
+2013-12-11 (RFE) improved [catch] bytecode (sofer)
+
+2013-12-18 (bug fix)[0b874c3] SEGV [coroutine X coroutine Y info frame] (porter)
+
+2013-12-20 (RFE) reduced numeric conversion in bytecode (sofer)
+
+2014-01-07 (RFE) compilers for  [concat], [linsert], [namespace origin],
+[next], [string replace], [string tolower], [string totitle], [string toupper],
+[string trim], [string trimleft], [string trimright] (fellows)
+
+2014-01-22 (RFE) compilers for [nextto], [yieldto] (fellows)
+
+2014-02-02 (RFE) compiler for [string is] (fellows)
+
+2014-02-06 (bug fix)[a4494e2] panic in test namespace-13.2 (porter)
 
 2014-03-20 (bug fix)[2f7cbd0] FreeBSD 10.0 build failure (nijtmans)
 
+2014-03-26 (RFE)[b42b208] Cygwin: [file attr -readonly -archive -hidden -system]
+(nijtmans)
+
 2014-03-27 (bug fix) segfault iocmd-23.11 (porter)
 
-2014-04-02 (bug fix)[336441e] Win: async socket connect stall (oehlmann)
+2014-04-02 (bug fix)[581937a] Win: readable event on async connect failure
 
 2014-04-04 (bug fix)[581937a,97069ea] async socket connect fail (oehlmann)
 
 2014-04-10 (bug fix)[792641f] Win: no \ in normalized path (nijtmans)
+
+2014-04-11 (bug fix)[3118489] protect NUL in filenames (nijtmans)
 
 2014-04-15 (bug fix)[88aef05] segfault iocmd-21.20 (porter)
 
@@ -7840,30 +8375,23 @@ Many revisions to better support a Cygwin environment (nijtmans)
 
 2014-04-23 (bug fix)[3493120] memleak in thread exit
 
-2014-04-30 (bug fix) segfault iocmd-21.2[34] (porter)
-
-2014-05-01 (bug fix)[0e92c40] bytearray optimization validity (nijtmans)
-
-2014-05-06 (bug fix) segfault iogt-2.5 (porter)
-
-2014-05-06 (memleaks) io-29.27 io-29.34 io-33.7 (porter)
-
-2014-05-07 (memleaks) io-53.5, cloned Tcl_ChannelTypes (porter)
-
-2014-05-08 (memleak) iocmd-21.22 (porter)
-
 2014-05-08 refactoring of core I/O functions (porter)
+
+2014-05-09 (bug fix)[3389978] Win: extended paths support (nijtmans)
 
 2014-05-09 (bug fix) segfault iocmd-32.1 (porter)
 
-2014-05-15 (bug fix)[3118489] protect NUL in filenames (nijtmans)
+2014-05-11 (bug fix)[6d2f249] nested ensemble compile failure (fellows)
 
-2014-05-16 (bug fix) Fix for failing tests *io-32.11* (porter)
-
-2014-05-20 (bug fix) Stop eof and blocked state leaking thru stacks (porter)
+2014-05-17 (RFE)[47d6625] wideint support in [lsearch -integer] [lsort -integer] (nijtmans)
 	*** POTENTIAL INCOMPATIBILITY ***
 
-2014-05-22 (platforms) work around systems that fail when a shared library
+2014-05-20 (bug fix) Stop eof and blocked state leaking thru stacks (porter)
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2014-05-20 (bug fix)[13d3af3] Win: socket -async tried only first IP address
+
+2014-05-28 (platforms) work around systems that fail when a shared library
 is deleted after it is [load]ed (kupries)
 
 2014-05-31 (bug fix) chan events on pipes must be on proper ends (porter)
@@ -7872,6 +8400,9 @@ is deleted after it is [load]ed (kupries)
 
 2014-06-05 (bug fix) io-12.6 (kupries,porter)
 
+2014-06-15 (RFE)[1b0266d] [dict replace|remove] return canonical dict (fellows)
+        *** POTENTIAL INCOMPATIBILITY ***
+
 2014-06-16 (bug fix) socket-2.13 workaround broken select() (porter)
 
 2014-06-20 (bug fix)[b47b176] iortrans.tf-11.0 (porter)
@@ -7879,23 +8410,70 @@ is deleted after it is [load]ed (kupries)
 2014-06-22 (RFE)[2f9df4c] -cleanup scripts before -out compare (nijtmans)
 
 2014-07-04 (update) Update Unicode data to 7.0 (nijtmans)
-	*** POTENTIAL INCOMPATIBILITY ***
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2014-07-08 (bug) [chan push] converts blocked writes to error (aspect,porter)
 
 2014-07-10 (bug fix)[7368d2] memleak Tcl_SetVar2(..,TCL_APPEND_VALUE) (porter)
-	*** POTENTIAL INCOMPATIBILITY ***
+        *** POTENTIAL INCOMPATIBILITY ***
 
-2014-08-01 (enhancement) use refcounts, not Tcl_Preserve to manage lifetime
+2014-07-11 (bug) leaks in SetFsPathFromAny, [info frame] (porter)
+
+2014-07-15 (bug) compress dict leak in zlib xform channel close (porter)
+
+2014-07-17 (bug fix)[9969cf8] leak trace data in coroutine deletion (porter)
+
+2014-07-18 (RFE)[b43f2b4] fix [lappend] multi performance collapse (fellows)
+
+2014-07-19 (bug fix)[75b8433] memleak managing oo instance lists (porter)
+
+2014-07-21 (bug fix)[e6477e1] memleak in AtForkChild() (porter)
+
+2014-07-22 (bug fix)[12b0997] memleak in iocmd.tf-32.0 (porter)
+
+2014-07-28 (RFE) Optimized binary [chan copy] by moving buffers (porter)
+
+2014-07-30 (enhancement) use refcounts, not Tcl_Preserve to manage lifetime
 of Tcl_Channel  (porter)
-	*** POTENTIAL INCOMPATIBILITY ***
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2014-07-31 (bug fix)[a84a720] double free in oo chain deletion (porter)
+
+2014-08-01 (bug fix)[e75faba] SEGV [apply {{} {namespace upvar a b [x]}}] (porter)
 
 2014-08-01 (update) "macosx*-i386-x86_64" "macosx-universal" no longer compatible (kupries)
 => platform 1.0.13
 
 2014-08-12 tzdata updated to Olson's tzdata2014f (kenny)
 
---- Released 8.5.16, August 25, 2014 --- http://core.tcl.tk/tcl/ for details
+2014-08-17 (bug fix)[7d52e11] [info class subclasses oo::object] should
+include ::oo::class (fellows)
+
+2014-08-25 (TIP 429) New command [string cat] (leitgeb,ferrieux)
+
+--- Released 8.6.2, August 27, 2014 --- https://core.tcl-lang.org/tcl/ for details
+
+2014-08-28 (bug)[b9e1a3] Correct Method Search Order (nadkarni,fellows)
+=> TclOO 1.0.3
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2014-09-05 (bug)[ccc2c2] Regression [lreplace {} 1 1] (bron,fellows)
+
+2014-09-08 (bug)<oo-1.18.2> Crash regression in [oo::class destroy] (porter)
+
+2014-09-09 (bug)[84af11] Regress [regsub -all {\(.*} a(b) {}] (fellows)
+
+2014-09-10 (bug)[cee90e] [try {} on ok {} - on return {} {}] panic (porter)
+
+2014-09-20 (feature) [tcl::unsupported::getbytecode] disassember (fellows)
+
+2014-09-27 (enhancement) [string cat] bytecode optimization (leitgeb,ferrieux)
+
+2014-09-27 (bug)[82521b] segfault in mangled bytecode (ogilvie,sofer)
 
 2014-10-02 (bug)[bc5b79] Hang in some [read]s of limited size (rogers,porter)
+
+2014-10-03 (bug)[bc1a96] segfault in [array set] of traced array (tab,porter)
 
 2014-10-08 (bug)[59a2e7] MSVC14 compile support (dower,nijtmans)
 
@@ -7905,32 +8483,55 @@ of Tcl_Channel  (porter)
 
 2014-10-18 (bug)[10dc6d] fix [gets] on non-blocking channels (fassel,porter)
 
---- Released 8.5.17, October 25, 2014 --- http://core.tcl.tk/tcl/ for details
-
 2014-10-26 Support for Windows 10 (nijtmans)
 
 2014-10-31 (bug)[dcc034] restore [open comX: r+] (lll,nijtmans)
 
+2014-11-05 (bug)[214cc0] Restore [lappend v] return value (sayers,porter)
+
 2014-11-06 (bug)[5adc35] Stop forcing EOF to be permanent (porter)
+
+--- Released 8.6.3, November 12, 2014 --- https://core.tcl-lang.org/tcl/ for details
+
+2014-11-21 (bug)[743338] Win: socket error encoding (ladayaroslav,nijtmans)
+
+2014-12-01 (bug) restore tbcload/tclcompiler support (kupries)
 
 2014-12-03 (bug)[0c043a] Fix compiled [set var($) val] (porter)
 
 2014-12-04 (bug)[d2ffcc] Limit $... and bareword parsing to ASCII (ladayaroslav,porter)
-	*** POTENTIAL INCOMPATIBILITY ***
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2014-12-06 (bug)[c6cd4a] Win: hang in async socket connection (shults,nadkarni)
 
 2014-12-10 tzdata updated to Olson's tzdata2014j (venkat)
+
+2014-12-13 fix header files installation on OS X (houben)
+
+2014-12-17 (TIP 427) [fconfigure $h -connecting, -peername, -sockname] (oehlmann,rmax)
+
+2014-12-18 (bug)[af08c8] Crash in full finalize encoding teardown (porter)
+
+2014-12-18 (bug)[7c187a] [chan copy] crash (io-53.17) (benno,porter)
 
 2015-01-26 (bug)[df0848] Trouble with INFINITY macro (dower,nijtmans)
 
 2015-01-29 (bug) Stop crashes when extension var resolvers misbehave (porter)
 
-2015-02-05 (bug) Plug stacked channel memleak (porter)
+2015-01-29 (bug)[088727] [read] past EOF (io-73.4) (fenugrec,porter)
 
 2015-02-11 tzdata updated to Olson's tzdata2015a (venkat)
 
---- Released 8.5.18, March 6, 2015 --- http://core.tcl.tk/tcl/ for details
+2015-02-20 (bug)[32b615] Fix compiled [lreplace] (lreplace-4.[345]) (aspect)
 
-2015-03-10 (bug)[3028676] Refinement in OS X notifier (steffen,walzer,lars_h)
+2015-03-10 (enhancement) Revise OS X notifier for better Cocoa (walzer)
+        *** POTENTIAL INCOMPATIBILITY ***
+
+--- Released 8.6.4, March 12, 2015 --- https://core.tcl-lang.org/tcl/ for details
+
+2015-03-19 (bug)[e66e44] Win: Ctrl-C/Ctrl-Break in console not EOF (nadkarni)
+
+2015-03-21 (bug)[d87cb1] Proper tailcall from compiled ensembles (sofer)
 
 2015-04-23 (bug)[19ea02] Win: shared read from linked dirs (bogdan,oehhar)
 
@@ -7938,43 +8539,409 @@ of Tcl_Channel  (porter)
 
 2015-04-29 (bug)[894da1] Hang flushing blocking channels (yorick)
 
+2015-05-14 (enhance)[b9d043] Default use of gzip transfer encoding (fellows)
+=> http 2.8.9
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2015-05-15 (bug)[9dd1bd] destructor [self] after failed constructor (calvo,fellows)
+
+2015-05-15 (bug)[0f42ff] [tailcall] combined with [next] (aspect,fellows)
+
+2015-05-18 (bug)[c11a51] http: race condition in -accept option (fellows)
+
+2015-05-19 (enhance) More pure lists from compiled [list] (porter,fellows)
+
 2015-05-27 (enhancement) Relax memdebug constraint on extensions (kupries)
+
+2015-06-03 (bug)[268b23] crash in traced [expr] (execute-11.2)(tomkinson,porter)
+
+2015-06-11 (bug)[478c44] Memleak in zlib compresion errors (mistachkin)
 
 2015-06-16 (bug)[e770d9] Higher baud on serial channels (woods,nijtmans)
 
 2015-06-18 (update) Update Unicode data to 8.0 (nijtmans)
-	*** POTENTIAL INCOMPATIBILITY ***
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2015-06-18 (bug)[a4cb3f] compiled [lreplace] handling of end (bron,aspect)
+
+2015-06-23 (enhance) Use Unicode SendMessageTimeout() (nijtmans)
+=> registry 1.3.1
+
+2015-06-25 (TIP 412) msgcat dynamic locale change and package private locale (oehlmann)
+=> msgcat 1.6.0
+
+2015-07-05 (bug)[a0ece9] crash in traced [expr] (execute-11.3) (hans,porter)
+
+2015-07-10 (TIP 436) [info object isa] favors 'false' over error (fellows)
+=> TclOO 1.0.4
 
 2015-07-15 (bug)[b1534b][9bad63] writes beyond buffer bounds (hanno,porter)
 
+2015-07-18 (bug)[a3309d] Memleak in compiled [unset a($i)] (jeff,porter)
+
+2015-07-23 (bug)[57945b] lock in forking/multi-threading (neumann,mistachkin)
+
 2015-07-29 (bug)[3e7eca] Allocation overflow in expr parsing (rickyb,porter)
 
-2015-08-12 tzdata updated to Olson's tzdata2015f (venkat)
+2015-07-30 (bug)[f00009] Win: Memleak in [file] (rp,sebres)
+
+2015-07-31 (bug) Correct problems found in Coverity audit (sofer)
 
 2015-08-19 (bug)[00189c] MSVC 14: semi-static UCRT support (dower,nijtmans)
 
 2015-08-26 (bug)[0df7a1] Tolerate getcwd() failures (cato,nijtmans)
 
-2015-09-23 (bug)[e0a7b3] Input buffer draining & file events (griffin,porter)
+2015-09-21 (bug)[1115587][a3c350][d7ea9f][0e0e15][187d7f] Many fixes and
+improvements to regexp engine from Postgres (lane,porter,fellows,seltenreich)
 
-2015-09-24 (bug)[57945b] lock in forking/multi-threading (neumann,mistachkin)
+2015-09-23 (enhance) hash lookup microoptimization (hipp)
+
+2015-09-23 (bug)[e0a7b3] Input buffer draining & file events (griffin,porter)
 
 2015-09-29 (bug)[219866] Cygwin support error (yorick,nijtmans)
 => platform 1.0.14
 
 2015-10-06 (bug)[b42a85] Win: [file normalize ~user] wrong dir (nadkarni)
 
-2015-10-21 (bug)[818a1a][a3c350][d7ea9f][8f2450][1080042] Many fixes and
-improvements to regexp engine from Postgres (lane,porter,fellows,seltenreich)
+2015-10-21 (bug)[1080042][8f2450] More regexp from Postgres (lane,porter)
+
+2015-10-23 (bug)[4a0c16] [clock] react to msgcat locale change (oehlmann)
 
 2015-11-10 (bug)[261a8a] Overflow segfault in I/O translation (brooks,porter)
 
-2015-11-20 (bug)[3293874] let lists grow all the way to the limit (porter)
-
 2015-11-20 (bug)[40f628] ListObjReplace callers fail to detect max (porter)
+
+2015-11-30 (enhance)[32c574] Improve list growth performance (brooks,porter)
 
 2015-12-11 (bug)[c9eb6b] tolerate unset ::env(TZ) (gahr, nijtmans)
 
 2016-01-29 (TIP 440) tcl_platform(engine) -- Tcl implementation (mistachkin)
 
---- Released 8.5.19, February 12, 2016 --- http://core.tcl.tk/tcl/ for details
+2016-02-03 (bug)[25842c] stream [zlib deflate] fails with 0 input (ade,fellows)
+
+2016-02-04 (bug)[3d96b7][593baa][cf74de] crashes in OO teardown (porter,fellows)
+
+2016-02-22 (bug)[9b4702] [info exists env(missing)] kills trace (nijtmans)
+
+--- Released 8.6.5, February 29, 2016 --- https://core.tcl-lang.org/tcl/ for details
+
+2016-03-01 (bug)[803042] mem leak due to reference cycle (porter)
+
+2016-03-08 (bug)[bbc304] reflected watch race condition (porter)
+
+2016-03-17 (bug)[fadc99] compile-5.3 (rodriguez,porter)
+
+2016-03-17 (enhancement)[1a25fd] compile [variable ${ns}::v] (porter)
+
+2016-03-20 (bug)[1af8de] crash in compiled [string replace] (harder,fellows)
+
+2016-03-21 (bug)[d30718] segv in notifier finalize (hirofumi,nijtmans)
+
+2016-03-23 (enhancement)[7d0db7] parallel make (yarda,nijtmans)
+
+2016-03-23 [f12535] enable test bindings customization (vogel,nijtmans)
+
+2016-04-04 (bug)[47ac84] compiled [lreplace] fixes (aspect,ferrieux,fellows)
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2016-04-08 (bug)[866368] RE \w includes 'Punctuation Connector' (nijtmans)
+
+2016-04-08 (bug)[2538f3] Win crash Tcl_OpenTcpServer() (griffin)
+
+2016-04-10 [07d13d] Restore TclBlend support lost in 8.6.1 (buratti)
+
+2016-05-13 (bug)[3154ea] Mem corruption in assembler exceptions (tkob,kenny)
+
+2016-05-13 (bug) registry package support any Unicode env (nijtmans)
+=> registry 1.3.2
+
+2016-05-21 (bug)[f7d4e] [namespace delete] performance (fellows)
+
+2016-06-02 (TIP 447) execution time verbosity option (cerutti)
+=> tcltest 2.4.0
+
+2016-06-16 (bug)[16828b] crash due to [vwait] trace undo fail (dah,porter)
+
+2016-06-16 (enhancement)[4b61af] good [info frame] from more cases (beric)
+
+2016-06-21 (bug)[c383eb] crash in [glob -path a] (oehlmann,porter)
+
+2016-06-21 (update) Update Unicode data to 9.0 (nijtmans)
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2016-06-22 (bug)[16896d] Tcl_DString tolerate append to self. (dah,porter)
+
+2016-06-23 (bug)[d55322] crash in [dict update] (yorick,fellows)
+
+2016-06-27 (bug)[dd260a] crash in [chan configure -dictionary] (madden,aspect)
+
+2016-07-02 (bug)[f961d7] usage message with parameters with spaces (porter)
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2016-07-02 (enhancement)[09fabc] Sort order of -relateddir (lanam)
+
+2016-07-07 (bug)[5d7ca0] Win: [file executable] for .cmd and .ps1 (nadkarni)
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2016-07-08 (bug)[a47641] [file normalize] & Windows junctions (nadkarni)
+
+2016-07-09 [ae61a6] [file] handling of Win hardcoded names (CON) (nadkarni)
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2016-07-09 [3613671] [file owned] (more) useful on Win (nadkarni)
+
+2016-07-09 (bug)[1493a4] [namespace upvar] use of resolvers (beric,fellows)
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2016-07-10 (bug)[da340d] integer division in clock math (nadkarni)
+
+2016-07-20 tzdata updated to Olson's tzdata2016f (venkat)
+
+--- Released 8.6.6, July 27, 2016 --- https://core.tcl-lang.org/tcl/ for details
+
+2016-09-07 (bug)[c09edf] Bad caching with  custom resolver (neumann,nijtmans)
+
+2016-09-07 (bug)[4dbdd9] Memleak in test var-8.3 (mr_calvin,porter)
+
+2016-10-03 (bug)[2bf561] Allow empty command as alias target (yorick,nijtmans)
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2016-10-04 (bug)[4d5ae7] Crash in async connects host no address (gahr,fellows)
+
+2016-10-08 (bug)[838e99] treat application/xml as text (gahr,fellows)
+=> http 2.8.10
+
+2016-10-11 (bug)[3cc1d9] Thread finalization crash in zippy (neumann)
+
+2016-10-12 (bug)[be003d] Fix [scan 0x1 %b], [scan 0x1 %o] (porter)
+
+2016-10-14 (bug)[eb6b68] Fix stringComp-14.5 (porter)
+
+2016-10-30 (bug)[b26e38] Fix zlib-7.8 (fellows)
+
+2016-10-30 (bug)[1ae129] Fix memleak in [history] destruction (fellows)
+
+2016-11-04 (feature) Provisional Tcl 9 support in msgcat and tcltest (nijtmans)
+=> msgcat 1.6.1
+=> tcltest 2.4.1
+
+2016-11-04 (bug)[824752] Crash in Tcl_ListObjReplace() (gahr,porter)
+
+2016-11-11 (bug)[79614f] invalidate VFS mounts on sytem encoding change (yorick)
+
+2016-11-14 OSX: End panic() as legacy support macro; system conflicts (nijtmans)
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2016-11-15 (bug) TclOO fix stops crash mixing Itcl and snit (fellows)
+
+2016-11-17 (update) Reconcile libtommath updates; purge unused files (nijtmans)
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2017-01-09 (bug)[b87ad7] Repair drifts in timer clock (sebres)
+
+2017-01-17 (update) => zlib 1.2.11 (nijtmans)
+
+2017-01-31 (bug)[39f630] Revise Tcl_LinkVar to tolerate some prefixes (nijtmans)
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2017-02-01 (bug)[d0f7ba] Improper NAN optimization. expr-22.1[01] (aspect)
+
+2017-02-26 (bug)[25842c] zlib stream finalization (aspect)
+
+2017-03-07 (deprecate) Remove unmaintained makefile.bc file (nijtmans)
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2017-03-14 (enhancement) [clock] and [encoding] are now ensembles (kenny)
+
+2017-03-15 (enhancement) several [clock] subcommands bytecoded (kenny)
+
+2017-03-23 tzdata updated to Olson's tzdata2017b (jima)
+
+2017-03-29 (bug)[900cb0] Fix OO unexport introspection (napier)
+
+2017-04-12 (bug)[42202b] Nesting imbalance in coro injection (nadkarni,sebres)
+
+2017-04-18 (bug)[bc4322] http package support for safe interps (nash,nijtmans)
+
+2017-04-28 (bug)[f34cf8] [file join a //b] => /b (neumann,porter)
+
+2017-05-01 (bug)[8bd13f] Windows threads and pipes (sebres,nijtmans)
+
+2017-05-01 (bug)[f9fe90] [file join //a b] EIAS violation (aspect,porter)
+
+2017-05-04 (bug) Make test filesystem-1.52 pass on Windows (nijtmans)
+
+2017-05-05 (bug)[601522] [binary] field spec overflow -> segfault (porter)
+
+2017-05-08 (bug)[6ca52a] http memleak handling keep-alive (aspect,nijtmans)
+=> http 2.8.11
+
+2017-05-29 (bug)[a3fb33] crash in [lsort] on long lists (sebres)
+
+2017-06-05 (bug)[67aa9a] Tcl_UtfToUniChar() revised handling invalid UTF-8 (nijtmans)
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2017-06-08 (bug)[2738427] Tcl_NumUtfChars() corner case utf-4.9 (nijtmans)
+
+2017-06-22 (update) Update Unicode data to 10.0 (nijtmans)
+        *** POTENTIAL INCOMPATIBILITY ***
+
+2017-06-22 (TIP 473) Let [oo::copy] specify target namespace (fellows)
+
+2017-06-26 (bug)[46f801] Repair autoloader fragility (porter)
+
+2017-07-06 (bug)[adb198] Plug memleak in TclJoinPath (sebres,porter)
+
+2017-07-17 (bug)[fb2208] Repeatable tclIndex generation (wiedemann,nijtmans)
+
+--- Released 8.6.7, August 9, 2017 --- https://core.tcl-lang.org/tcl/ for details
+
+2017-08-10 [array names -regexp] supports backrefs (goth)
+
+2017-08-10 Fix gcc build failures due to #pragma placement (cassoff,fellows)
+
+2017-08-29 (bug)[b50fb2] exec redir append stdout and stderr to file (coulter)
+
+2017-08-31 (bug)[2a9465] http state 100 continue handling broken (oehlmann)
+=> http 2.8.12
+
+2017-09-02 (bug)[0e4d88] replace command, delete trace kills namespace (porter)
+
+2017-10-19 (bug)[1a5655] [info * methods] includes mixins (fellows)
+
+2017-10-23 tzdata updated to Olson's tzdata2017c (jima)
+
+2017-10-24 (bug)[fc1409] segfault in method cloning, oo-15.15 (coulter,fellows)
+
+2017-11-03 (bug)[6f2f83] More robust [load] for ReactOS (werner)
+
+2017-11-08 (bug)[3298012] Stop crash when hash tables overflow 32 bits (porter)
+
+2017-11-14 (bug)[5d6de6] Close failing case of [package prefer stable] (kupries)
+
+2017-11-17 (bug)[fab924] Fix misleading [load] message on Windows (oehlmann)
+
+2017-12-05 (bug)[4f6a1e] Crash when ensemble map and list are same (sebres)
+
+2017-12-06 (bug)[ce3a21] file normalize failure when tail is empty (porter)
+
+2017-12-08 (new)[TIP 477] nmake build system reform (nadkarni)
+
+2017-12-19 (bug)[586e71] EvalObjv exception handling at level #0 (sebres,porter)
+
+--- Released 8.6.8, December 22, 2017 --- https://core.tcl-lang.org/tcl/ for details
+
+2018-02-11 (enhance) stop blocking conversion of object to/from class (coulter)
+
+2018-02-12 (enhance) NR-enable [package require] (coulter)
+
+2018-02-14 (bug)[9fd5c6] crash in object deletion, test oo-11.5 (coulter)
+
+2018-02-14 (bug)[3c32a3] crash deleting object with class mixed in (coulter)
+
+2018-02-15 (platform) stop using -lieee, removed from glibc-2.27 (porter)
+***POTENTIAL INCOMPATIBILITY for math programs that embed Tcl***
+
+2018-02-23 (bug)[8e6a9a] bad binary [string match], test string-11.55 (porter)
+
+2018-03-05 (bug)[1873ea] repair multi-thread std channel init (sebres)
+
+2018-03-09 (bug)[db36fa] broken bytecode for index values (porter)
+
+2018-03-13 (bug) broken compiled [string replace], test string-14.19 (porter)
+
+2018-03-14 (bug) [string trim*] engine crashed on invalid UTF (sebres)
+
+2018-04-17 (bug) missing trace in compiled [array set], test var-20.11 (porter)
+
+2018-04-22 (bug)[46a241] crash in unset array with search, var-13.[23] (goth)
+
+2018-04-30 (bug)[27b682] race made [file delete] raise "no such file" (sebres)
+
+2018-06-04 (bug)[925643] 32/64 cleanup of filesystem DIR operations (sebres)
+
+2018-06-18 (bug) leaks in TclSetEnv and env cache (coulter)
+
+2018-06-24 (bug)[3592747] [yieldto] dying namespace, tailcall-14.1 (coulter)
+
+2018-07-09 (bug)[270f78] race in [file mkdir] (sebres)
+
+2018-07-12 (bug)[3f7af0] [file delete] raised "permission denied" (sebres)
+
+2018-07-26 (bug)[d051b7] overflow crash in [format] (sebres)
+
+2018-08-29 revised quoting of [exec] args in generated command line (sebres)
+***POTENTIAL INCOMPATIBILITY***
+
+2018-09-20 HTTP Keep-Alive with pipelined requests (nash)
+=> http 2.9.0
+
+2018-09-27 (new)[TIP 505] [lreplace] accepts all out of range indices (porter)
+
+2018-10-04 (bug) Prevent crash from NULL keyName (nijtmans)
+=> registry 1.3.3
+
+2018-10-26 (enhance) advance dde version (nijtmans)
+=> dde 1.4.1
+
+2018-10-27 tzdata updated to Olson's tzdata2018g (jima)
+
+2018-10-29 Update tcltest package for Travis support (fellows)
+=> tcltest 2.5.0
+
+2018-11-09 (bug)[35a8f1] overlong string length of some lists (owens)
+
+2018-11-16 (bug)[00d04c] Repair [binary encode base64] (sebres)
+
+- Released 8.6.9, November 16, 2018 - details at http://core.tcl-lang.org/tcl/ -
+
+2018-11-22 (bug)[7a9dc5] [file normalize ~/~foo] segfault (sebres)
+
+2018-12-30 (bug)[3cf3a9] variable 'timezone' deprecated in vc2017 (nijtmans)
+
+2019-01-09 (bug)[cc1e91] [list [list {*}[set a " "]]] regression (sebres)
+
+2019-02-01 (bug)[e3f481] tests var-1.2[01] (sebres)
+
+2019-03-01 (new) Update to Unicode 12.0 (nijtmans)
+
+2019-03-05 (new)[TIP 527] New command [timerate] (sebres)
+
+2019-03-08 (bug)[39fed4] [package require] memory validity (hume,porter)
+
+2019-04-23 (new) New command tcl::unsupported::corotype (fellows)
+
+2019-05-04 (bug) memlink when namespace deletion kills linked var (porter)
+
+2019-05-28 (new) README file converted to README.md in Markdown (nijtmans)
+
+2019-06-17 (bug)[8b9854] [info level 0] regression with ensembles (porter)
+
+2019-06-20 (bug)[6bdadf] crash multi-arg write-traced [lappend] (fellows,porter)
+
+2019-06-21 (bug)[f8a33c] crash Tcl_Exit before init (brooks,sebres)
+
+2019-08-27 (bug)[fa6bf3] Bytecode fails epoch recovery at numLevel=0 (sebres)
+
+2019-08-29 (bug)[fec0c1] C stack overflow compiling bytecode (ade,sebres)
+
+2019-09-12 tzdata updated to Olson's tzdata2019c (jima)
+
+2019-09-20 (new) registry/dde no longer need -DUNICODE (nijtmans)
+=> registry 1.3.4
+=> dde 1.4.2
+
+2019-10-02 (bug)[16768d] Fix [info hostname] on NetBSD (rytaro)
+
+2019-10-23 (new) libtommath updated to release 1.2.0 (nijtmans)
+
+2019-10-25 OSX: system Tcl deprecated. End default use of its packages. (walzer)
+
+2019-10-28 (bug)[bcd100] bad fs cache when system encoding changes (coulter)
+
+2019-11-15 (bug)[135804] segfault in [next] after destroy (coulter,sebres)
+
+2019-11-18 (bug)[13657a] application/json us text, not binary (noe,nijtmans)
+=> http 2.9.1
+
+- Released 8.6.10, Nov 21, 2019 - details at http://core.tcl-lang.org/tcl/ -

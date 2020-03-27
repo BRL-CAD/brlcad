@@ -29,7 +29,6 @@ extern char *		malloc(unsigned int numBytes);
 extern void		qsort(void *base, int n, int size, int (*compar)(
 			    const void *element1, const void *element2));
 extern char *		realloc(char *ptr, unsigned int numBytes);
-extern double		strtod(const char *string, char **endPtr);
 extern long		strtol(const char *string, char **endPtr, int base);
 extern unsigned long	strtoul(const char *string, char **endPtr, int base);
 

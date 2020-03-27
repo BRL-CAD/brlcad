@@ -99,7 +99,7 @@ test macOSXFCmd-2.6 {MacOSXSetFileAttribute - hidden} {macosxFileAttr notRoot} {
 	    [catch {file attributes foo.test -hidden} msg] $msg \
 	    [file delete -force -- foo.test]
 } {0 {} 0 1 {}}
-test macOSXFCmd-2.7 {MacOSXSetFileAttribute - rsrclength} {macosxFileAttr notRoot} {
+test macOSXFCmd-2.7 {MacOSXSetFileAttribute - rsrclength} {macosxFileAttr notRoot nonPortable} {
     catch {file delete -force -- foo.test}
     close [open foo.test w]
     catch {
@@ -151,16 +151,16 @@ test macOSXFCmd-4.1 {TclMacOSXMatchType} {macosxFileAttr notRoot} {
 	file attributes dir.test -hidden 1
     }
     set res [list \
-	    [catch {glob *.test} msg] $msg \
-	    [catch {glob -types FOOT *.test} msg] $msg \
-	    [catch {glob -types {{macintosh type FOOT}} *.test} msg] $msg \
-	    [catch {glob -types FOOTT *.test} msg] $msg \
-	    [catch {glob -types {{macintosh type FOOTT}} *.test} msg] $msg \
-	    [catch {glob -types {{macintosh type {}}} *.test} msg] $msg \
-	    [catch {glob -types {{macintosh creator FOOC}} *.test} msg] $msg \
-	    [catch {glob -types {{macintosh creator FOOC} {macintosh type FOOT}} *.test} msg] $msg \
-	    [catch {glob -types hidden *.test} msg] $msg \
-	    [catch {glob -types {hidden FOOT} *.test} msg] $msg \
+	    [catch {lsort [glob *.test]} msg] $msg \
+	    [catch {lsort [glob -types FOOT *.test]} msg] $msg \
+	    [catch {lsort [glob -types {{macintosh type FOOT}} *.test]} msg] $msg \
+	    [catch {lsort [glob -types FOOTT *.test]} msg] $msg \
+	    [catch {lsort [glob -types {{macintosh type FOOTT}} *.test]} msg] $msg \
+	    [catch {lsort [glob -types {{macintosh type {}}} *.test]} msg] $msg \
+	    [catch {lsort [glob -types {{macintosh creator FOOC}} *.test]} msg] $msg \
+	    [catch {lsort [glob -types {{macintosh creator FOOC} {macintosh type FOOT}} *.test]} msg] $msg \
+	    [catch {lsort [glob -types hidden *.test]} msg] $msg \
+	    [catch {lsort [glob -types {hidden FOOT} *.test]} msg] $msg \
 	]
     cd ..
     file delete -force globtest

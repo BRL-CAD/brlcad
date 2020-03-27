@@ -3,7 +3,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 .TH Tcl_CreateSlave 3 7.6 Tcl "Tcl Library Procedures"
 .so man.macros
 .BS
@@ -78,10 +78,10 @@ Count of additional arguments to pass to the alias command.
 Vector of strings, the additional arguments to pass to the alias command.
 This storage is owned by the caller.
 .AP int objc in
-Count of additional object arguments to pass to the alias object command.
+Count of additional value arguments to pass to the aliased command.
 .AP Tcl_Obj **objv in
-Vector of Tcl_Obj structures, the additional object arguments to pass to
-the alias object command.
+Vector of Tcl_Obj structures, the additional value arguments to pass to
+the aliased command.
 This storage is owned by the caller.
 .AP Tcl_Interp **targetInterpPtr in
 Pointer to location to store the address of the interpreter where a target
@@ -97,11 +97,11 @@ Pointer to location to store a vector of strings, the additional arguments
 to pass to an alias. The location is in storage owned by the caller, the
 vector of strings is owned by the called function.
 .AP int *objcPtr out
-Pointer to location to store count of additional object arguments to be
+Pointer to location to store count of additional value arguments to be
 passed to the alias. The location is in storage owned by the caller.
 .AP Tcl_Obj ***objvPtr out
 Pointer to location to store a vector of Tcl_Obj structures, the additional
-arguments to pass to an object alias command. The location is in storage
+arguments to pass to an alias command. The location is in storage
 owned by the caller, the vector of Tcl_Obj structures is owned by the
 called function.
 .AP "const char" *cmdName in
@@ -122,8 +122,8 @@ is either \fBTCL_OK\fR or \fBTCL_ERROR\fR. If \fBTCL_ERROR\fR is returned
 then the \fBresult\fR field of the interpreter contains an error message.
 .PP
 \fBTcl_CreateSlave\fR creates a new interpreter as a slave of \fIinterp\fR.
-It also creates a slave command named \fIslaveName\fR in \fIinterp\fR which 
-allows \fIinterp\fR to manipulate the new slave. 
+It also creates a slave command named \fIslaveName\fR in \fIinterp\fR which
+allows \fIinterp\fR to manipulate the new slave.
 If \fIisSafe\fR is zero, the command creates a trusted slave in which Tcl
 code has access to all the Tcl commands.
 If it is \fB1\fR, the command creates a
@@ -165,21 +165,21 @@ of the relative path succeeds, \fBTCL_OK\fR is returned, else
 \fBTCL_ERROR\fR is returned and the \fIresult\fR field in
 \fIaskingInterp\fR contains the error message.
 .PP
-\fBTcl_CreateAlias\fR creates an object command named \fIslaveCmd\fR in
+\fBTcl_CreateAlias\fR creates a command named \fIslaveCmd\fR in
 \fIslaveInterp\fR that when invoked, will cause the command \fItargetCmd\fR
 to be invoked in \fItargetInterp\fR. The arguments specified by the strings
 contained in \fIargv\fR are always prepended to any arguments supplied in the
 invocation of \fIslaveCmd\fR and passed to \fItargetCmd\fR.
 This operation returns \fBTCL_OK\fR if it succeeds, or \fBTCL_ERROR\fR if
-it fails; in that case, an error message is left in the object result
+it fails; in that case, an error message is left in the value result
 of \fIslaveInterp\fR.
 Note that there are no restrictions on the ancestry relationship (as
 created by \fBTcl_CreateSlave\fR) between \fIslaveInterp\fR and
 \fItargetInterp\fR. Any two interpreters can be used, without any
 restrictions on how they are related.
 .PP
-\fBTcl_CreateAliasObj\fR is similar to \fBTcl_CreateAlias\fR except 
-that it takes a vector of objects to pass as additional arguments instead
+\fBTcl_CreateAliasObj\fR is similar to \fBTcl_CreateAlias\fR except
+that it takes a vector of values to pass as additional arguments instead
 of a vector of strings.
 .PP
 \fBTcl_GetAlias\fR returns information about an alias \fIaliasName\fR
@@ -196,13 +196,13 @@ strings.
 \fBTcl_ExposeCommand\fR moves the command named \fIhiddenCmdName\fR from
 the set of hidden commands to the set of exposed commands, putting
 it under the name
-\fIcmdName\fR. 
+\fIcmdName\fR.
 \fIHiddenCmdName\fR must be the name of an existing hidden
 command, or the operation will return \fBTCL_ERROR\fR and leave an error
 message in the \fIresult\fR field in \fIinterp\fR.
 If an exposed command named \fIcmdName\fR already exists,
 the operation returns \fBTCL_ERROR\fR and leaves an error message in the
-object result of \fIinterp\fR.
+value result of \fIinterp\fR.
 If the operation succeeds, it returns \fBTCL_OK\fR.
 After executing this command, attempts to use \fIcmdName\fR in a call to
 \fBTcl_Eval\fR or with the Tcl \fBeval\fR command will again succeed.
@@ -212,10 +212,10 @@ exposed commands to the set of hidden commands, under the name
 \fIhiddenCmdName\fR.
 \fICmdName\fR must be the name of an existing exposed
 command, or the operation will return \fBTCL_ERROR\fR and leave an error
-message in the object result of \fIinterp\fR.
+message in the value result of \fIinterp\fR.
 Currently both \fIcmdName\fR and \fIhiddenCmdName\fR must not contain
 namespace qualifiers, or the operation will return \fBTCL_ERROR\fR and
-leave an error message in the object result of \fIinterp\fR.
+leave an error message in the value result of \fIinterp\fR.
 The \fICmdName\fR will be looked up in the global namespace, and not
 relative to the current namespace, even if the current namespace is not the
 global one.

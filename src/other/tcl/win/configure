@@ -309,7 +309,7 @@ ac_includes_default="\
 # include <unistd.h>
 #endif"
 
-ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP AR ac_ct_AR RANLIB ac_ct_RANLIB RC ac_ct_RC SET_MAKE TCL_THREADS CYGPATH CELIB_DIR DL_LIBS CFLAGS_DEBUG CFLAGS_OPTIMIZE CFLAGS_WARNING CFLAGS_DEFAULT LDFLAGS_DEFAULT VC_MANIFEST_EMBED_DLL VC_MANIFEST_EMBED_EXE TCL_WIN_VERSION MACHINE TCL_VERSION TCL_MAJOR_VERSION TCL_MINOR_VERSION TCL_PATCH_LEVEL TCL_LIB_FILE TCL_LIB_FLAG TCL_LIB_SPEC TCL_STUB_LIB_FILE TCL_STUB_LIB_FLAG TCL_STUB_LIB_SPEC TCL_STUB_LIB_PATH TCL_INCLUDE_SPEC TCL_BUILD_STUB_LIB_SPEC TCL_BUILD_STUB_LIB_PATH TCL_DLL_FILE TCL_SRC_DIR TCL_BIN_DIR TCL_DBGX CFG_TCL_SHARED_LIB_SUFFIX CFG_TCL_UNSHARED_LIB_SUFFIX CFG_TCL_EXPORT_FILE_SUFFIX EXTRA_CFLAGS DEPARG CC_OBJNAME CC_EXENAME LDFLAGS_DEBUG LDFLAGS_OPTIMIZE LDFLAGS_CONSOLE LDFLAGS_WINDOW STLIB_LD SHLIB_LD SHLIB_LD_LIBS SHLIB_CFLAGS SHLIB_SUFFIX TCL_SHARED_BUILD LIBS_GUI DLLSUFFIX LIBPREFIX LIBSUFFIX EXESUFFIX LIBRARIES MAKE_LIB MAKE_STUB_LIB POST_MAKE_LIB MAKE_DLL MAKE_EXE TCL_BUILD_LIB_SPEC TCL_LD_SEARCH_FLAGS TCL_NEEDS_EXP_FILE TCL_BUILD_EXP_FILE TCL_EXP_FILE TCL_LIB_VERSIONS_OK TCL_PACKAGE_PATH TCL_DDE_VERSION TCL_DDE_MAJOR_VERSION TCL_DDE_MINOR_VERSION TCL_REG_VERSION TCL_REG_MAJOR_VERSION TCL_REG_MINOR_VERSION RC_OUT RC_TYPE RC_INCLUDE RC_DEFINE RC_DEFINES RES LIBOBJS LTLIBOBJS'
+ac_subst_vars='SHELL PATH_SEPARATOR PACKAGE_NAME PACKAGE_TARNAME PACKAGE_VERSION PACKAGE_STRING PACKAGE_BUGREPORT exec_prefix prefix program_transform_name bindir sbindir libexecdir datadir sysconfdir sharedstatedir localstatedir libdir includedir oldincludedir infodir mandir build_alias host_alias target_alias DEFS ECHO_C ECHO_N ECHO_T LIBS CC CFLAGS LDFLAGS CPPFLAGS ac_ct_CC EXEEXT OBJEXT CPP EGREP AR ac_ct_AR RANLIB ac_ct_RANLIB RC ac_ct_RC SET_MAKE TCL_THREADS CYGPATH CELIB_DIR DL_LIBS CFLAGS_DEBUG CFLAGS_OPTIMIZE CFLAGS_WARNING ZLIB_DLL_FILE ZLIB_LIBS ZLIB_OBJS CFLAGS_DEFAULT LDFLAGS_DEFAULT VC_MANIFEST_EMBED_DLL VC_MANIFEST_EMBED_EXE TCL_WIN_VERSION MACHINE TCL_VERSION TCL_MAJOR_VERSION TCL_MINOR_VERSION TCL_PATCH_LEVEL PKG_CFG_ARGS TCL_EXE TCL_LIB_FILE TCL_LIB_FLAG TCL_STATIC_LIB_FILE TCL_STATIC_LIB_FLAG TCL_IMPORT_LIB_FILE TCL_IMPORT_LIB_FLAG TCL_LIB_SPEC TCL_STUB_LIB_FILE TCL_STUB_LIB_FLAG TCL_STUB_LIB_SPEC TCL_STUB_LIB_PATH TCL_INCLUDE_SPEC TCL_BUILD_STUB_LIB_SPEC TCL_BUILD_STUB_LIB_PATH TCL_DLL_FILE TCL_SRC_DIR TCL_BIN_DIR TCL_DBGX CFG_TCL_SHARED_LIB_SUFFIX CFG_TCL_UNSHARED_LIB_SUFFIX CFG_TCL_EXPORT_FILE_SUFFIX EXTRA_CFLAGS DEPARG CC_OBJNAME CC_EXENAME LDFLAGS_DEBUG LDFLAGS_OPTIMIZE LDFLAGS_CONSOLE LDFLAGS_WINDOW STLIB_LD SHLIB_LD SHLIB_LD_LIBS SHLIB_CFLAGS SHLIB_SUFFIX TCL_SHARED_BUILD LIBS_GUI DLLSUFFIX LIBPREFIX LIBSUFFIX EXESUFFIX LIBRARIES MAKE_LIB MAKE_STUB_LIB POST_MAKE_LIB MAKE_DLL MAKE_EXE TCL_BUILD_LIB_SPEC TCL_CC_SEARCH_FLAGS TCL_LD_SEARCH_FLAGS TCL_NEEDS_EXP_FILE TCL_BUILD_EXP_FILE TCL_EXP_FILE TCL_LIB_VERSIONS_OK TCL_PACKAGE_PATH TCL_DDE_VERSION TCL_DDE_MAJOR_VERSION TCL_DDE_MINOR_VERSION TCL_REG_VERSION TCL_REG_MAJOR_VERSION TCL_REG_MINOR_VERSION RC_OUT RC_TYPE RC_INCLUDE RC_DEFINE RC_DEFINES RES LIBOBJS LTLIBOBJS'
 ac_subst_files=''
 
 # Initialize some variables set by options.
@@ -840,8 +840,9 @@ if test -n "$ac_init_help"; then
 Optional Features:
   --disable-FEATURE       do not include FEATURE (same as --enable-FEATURE=no)
   --enable-FEATURE[=ARG]  include FEATURE [ARG=yes]
-  --enable-threads        build with threads (default: off)
+  --enable-threads        build with threads (default: on)
   --enable-shared         build and link with shared libraries (default: on)
+  --enable-time64bit      force 64-bit time_t for 32-bit build (default: off)
   --enable-64bit          enable 64bit support (where applicable)
   --enable-wince          enable Win/CE support (where applicable)
   --enable-symbols        build with debugging symbols (default: off)
@@ -1308,21 +1309,28 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 # /bin/sh. The bash shell seems to suffer from some strange failures.
 SHELL=/bin/sh
 
-TCL_VERSION=8.5
+TCL_VERSION=8.6
 TCL_MAJOR_VERSION=8
-TCL_MINOR_VERSION=5
-TCL_PATCH_LEVEL=".19"
+TCL_MINOR_VERSION=6
+TCL_PATCH_LEVEL=".10"
 VER=$TCL_MAJOR_VERSION$TCL_MINOR_VERSION
 
-TCL_DDE_VERSION=1.3
+TCL_DDE_VERSION=1.4
 TCL_DDE_MAJOR_VERSION=1
-TCL_DDE_MINOR_VERSION=3
+TCL_DDE_MINOR_VERSION=4
 DDEVER=$TCL_DDE_MAJOR_VERSION$TCL_DDE_MINOR_VERSION
 
-TCL_REG_VERSION=1.2
+TCL_REG_VERSION=1.3
 TCL_REG_MAJOR_VERSION=1
-TCL_REG_MINOR_VERSION=2
+TCL_REG_MINOR_VERSION=3
 REGVER=$TCL_REG_MAJOR_VERSION$TCL_REG_MINOR_VERSION
+
+PKG_CFG_ARGS=$@
+
+#------------------------------------------------------------------------
+# Empty slate for bundled packages, to avoid stale configuration
+#------------------------------------------------------------------------
+rm -Rf pkgs
 
 #------------------------------------------------------------------------
 # Handle the --prefix=... option
@@ -3010,24 +3018,26 @@ fi
 
 echo "$as_me:$LINENO: checking whether ${MAKE-make} sets \$(MAKE)" >&5
 echo $ECHO_N "checking whether ${MAKE-make} sets \$(MAKE)... $ECHO_C" >&6
-set dummy ${MAKE-make}; ac_make=`echo "$2" | sed 'y,:./+-,___p_,'`
+set x ${MAKE-make}
+ac_make=`echo "" | sed 'y,:./+-,___p_,'`
 if eval "test \"\${ac_cv_prog_make_${ac_make}_set+set}\" = set"; then
   echo $ECHO_N "(cached) $ECHO_C" >&6
 else
   cat >conftest.make <<\_ACEOF
+SHELL = /bin/sh
 all:
-	@echo 'ac_maketemp="$(MAKE)"'
+	@echo '@@@%%%=$(MAKE)=@@@%%%'
 _ACEOF
-# GNU make sometimes prints "make[1]: Entering...", which would confuse us.
-eval `${MAKE-make} -f conftest.make 2>/dev/null | grep temp=`
-if test -n "$ac_maketemp"; then
-  eval ac_cv_prog_make_${ac_make}_set=yes
-else
-  eval ac_cv_prog_make_${ac_make}_set=no
-fi
+# GNU make sometimes prints "make[1]: Entering ...", which would confuse us.
+case `${MAKE-make} -f conftest.make 2>/dev/null` in
+  *@@@%%%=?*=@@@%%%*)
+    eval ac_cv_prog_make_${ac_make}_set=yes;;
+  *)
+    eval ac_cv_prog_make_${ac_make}_set=no;;
+esac
 rm -f conftest.make
 fi
-if eval "test \"`echo '$ac_cv_prog_make_'${ac_make}_set`\" = yes"; then
+if eval test \$ac_cv_prog_make_${ac_make}_set = yes; then
   echo "$as_me:$LINENO: result: yes" >&5
 echo "${ECHO_T}yes" >&6
   SET_MAKE=
@@ -3057,12 +3067,12 @@ if test "${enable_threads+set}" = set; then
   enableval="$enable_threads"
   tcl_ok=$enableval
 else
-  tcl_ok=no
+  tcl_ok=yes
 fi;
 
     if test "$tcl_ok" = "yes"; then
-	echo "$as_me:$LINENO: result: yes" >&5
-echo "${ECHO_T}yes" >&6
+	echo "$as_me:$LINENO: result: yes (default)" >&5
+echo "${ECHO_T}yes (default)" >&6
 	TCL_THREADS=1
 	cat >>confdefs.h <<\_ACEOF
 #define TCL_THREADS 1
@@ -3076,8 +3086,8 @@ _ACEOF
 
     else
 	TCL_THREADS=0
-	echo "$as_me:$LINENO: result: no (default)" >&5
-echo "${ECHO_T}no (default)" >&6
+	echo "$as_me:$LINENO: result: no" >&5
+echo "${ECHO_T}no" >&6
     fi
 
 
@@ -3146,6 +3156,25 @@ _ACEOF
 
     fi
 
+
+#--------------------------------------------------------------------
+# Check whether --enable-time64bit was given.
+#--------------------------------------------------------------------
+
+echo "$as_me:$LINENO: checking force of 64-bit time_t" >&5
+echo $ECHO_N "checking force of 64-bit time_t... $ECHO_C" >&6
+# Check whether --enable-time64bit or --disable-time64bit was given.
+if test "${enable_time64bit+set}" = set; then
+  enableval="$enable_time64bit"
+  tcl_ok=$enableval
+else
+  tcl_ok=no
+fi;
+echo "$as_me:$LINENO: result: \"$tcl_ok\"" >&5
+echo "${ECHO_T}\"$tcl_ok\"" >&6
+if test "$tcl_ok" = "yes"; then
+    CFLAGS="${CFLAGS} -D_USE_64BIT_TIME_T"
+fi
 
 #--------------------------------------------------------------------
 # The statements below define a collection of compile flags.  This
@@ -3271,6 +3300,11 @@ echo "${ECHO_T}$CELIB_DIR" >&6
     # Set some defaults (may get changed below)
     EXTRA_CFLAGS=""
 
+cat >>confdefs.h <<\_ACEOF
+#define MODULE_SCOPE extern
+_ACEOF
+
+
     # Extract the first word of "cygpath", so it can be a program name with args.
 set dummy cygpath; ac_word=$2
 echo "$as_me:$LINENO: checking for $ac_word" >&5
@@ -3328,7 +3362,7 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-	    #ifndef __WIN32__
+	    #ifndef _WIN32
 		#error cross-compiler
 	    #endif
 
@@ -3451,7 +3485,7 @@ cat confdefs.h >>conftest.$ac_ext
 cat >>conftest.$ac_ext <<_ACEOF
 /* end confdefs.h.  */
 
-		#ifdef __WIN32__
+		#ifdef _WIN32
 		    #error win32
 		#endif
 
@@ -3502,14 +3536,80 @@ echo "${ECHO_T}$ac_cv_win32" >&6
 echo "$as_me: error: ${CC} cannot produce win32 executables." >&2;}
    { (exit 1); exit 1; }; }
 	fi
+
+	hold_cflags=$CFLAGS; CFLAGS="$CFLAGS -mwindows -municode -Dmain=xxmain"
+	echo "$as_me:$LINENO: checking for working -municode linker flag" >&5
+echo $ECHO_N "checking for working -municode linker flag... $ECHO_C" >&6
+if test "${ac_cv_municode+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+	#include <windows.h>
+	int APIENTRY wWinMain(HINSTANCE a, HINSTANCE b, LPWSTR c, int d) {return 0;}
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  ac_cv_municode=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+ac_cv_municode=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+
+fi
+echo "$as_me:$LINENO: result: $ac_cv_municode" >&5
+echo "${ECHO_T}$ac_cv_municode" >&6
+	CFLAGS=$hold_cflags
+	if test "$ac_cv_municode" = "yes" ; then
+	    extra_ldflags="$extra_ldflags -municode"
+	else
+	    extra_cflags="$extra_cflags -DTCL_BROKEN_MAINARGS"
+	fi
     fi
 
     echo "$as_me:$LINENO: checking compiler flags" >&5
 echo $ECHO_N "checking compiler flags... $ECHO_C" >&6
     if test "${GCC}" = "yes" ; then
 	SHLIB_LD=""
-	SHLIB_LD_LIBS=""
-	LIBS="-lws2_32"
+	SHLIB_LD_LIBS='${LIBS}'
+	LIBS="-lnetapi32 -lkernel32 -luser32 -ladvapi32 -luserenv -lws2_32"
 	# mingw needs to link ole32 and oleaut32 for [send], but MSVC doesn't
 	LIBS_GUI="-lgdi32 -lcomdlg32 -limm32 -lcomctl32 -lshell32 -luuid -lole32 -loleaut32"
 	STLIB_LD='${AR} cr'
@@ -3529,9 +3629,6 @@ echo $ECHO_N "checking compiler flags... $ECHO_C" >&6
             echo "$as_me:$LINENO: result: using static flags" >&5
 echo "${ECHO_T}using static flags" >&6
 	    runtime=
-	    MAKE_DLL="echo "
-	    LIBSUFFIX="s\${DBGX}.a"
-	    LIBFLAGSUFFIX="s\${DBGX}"
 	    LIBRARIES="\${STATIC_LIBRARIES}"
 	    EXESUFFIX="s\${DBGX}.exe"
 	else
@@ -3549,29 +3646,29 @@ echo "$as_me: error: ${CC} does not support the -shared option.
 	    fi
 
 	    runtime=
-	    # Link with gcc since ld does not link to default libs like
-	    # -luser32 and -lmsvcrt by default.
-	    SHLIB_LD='${CC} -shared'
-	    SHLIB_LD_LIBS='${LIBS}'
 	    # Add SHLIB_LD_LIBS to the Make rule, not here.
-	    MAKE_DLL="\${SHLIB_LD} \$(LDFLAGS) -o \$@ ${extra_ldflags} \
-	        -Wl,--out-implib,\$(patsubst %.dll,lib%.a,\$@)"
 
-	    LIBSUFFIX="\${DBGX}.a"
-	    LIBFLAGSUFFIX="\${DBGX}"
 	    EXESUFFIX="\${DBGX}.exe"
 	    LIBRARIES="\${SHARED_LIBRARIES}"
 	fi
+	# Link with gcc since ld does not link to default libs like
+	# -luser32 and -lmsvcrt by default.
+	SHLIB_LD='${CC} -shared'
+	SHLIB_LD_LIBS='${LIBS}'
+	MAKE_DLL="\${SHLIB_LD} \$(LDFLAGS) -o \$@ ${extra_ldflags} \
+	    -Wl,--out-implib,\$(patsubst %.dll,lib%.a,\$@)"
 	# DLLSUFFIX is separate because it is the building block for
 	# users of tclConfig.sh that may build shared or static.
 	DLLSUFFIX="\${DBGX}.dll"
+	LIBSUFFIX="\${DBGX}.a"
+	LIBFLAGSUFFIX="\${DBGX}"
 	SHLIB_SUFFIX=.dll
 
 	EXTRA_CFLAGS="${extra_cflags}"
 
 	CFLAGS_DEBUG=-g
 	CFLAGS_OPTIMIZE="-O2 -fomit-frame-pointer"
-	CFLAGS_WARNING="-Wall"
+	CFLAGS_WARNING="-Wall -Wdeclaration-after-statement"
 	LDFLAGS_DEBUG=
 	LDFLAGS_OPTIMIZE=
 
@@ -3672,24 +3769,16 @@ echo "${ECHO_T}   Using 64-bit $MACHINE mode" >&6
             echo "$as_me:$LINENO: result: using static flags" >&5
 echo "${ECHO_T}using static flags" >&6
 	    runtime=-MT
-	    MAKE_DLL="echo "
-	    LIBSUFFIX="s\${DBGX}.lib"
-	    LIBFLAGSUFFIX="s\${DBGX}"
 	    LIBRARIES="\${STATIC_LIBRARIES}"
 	    EXESUFFIX="s\${DBGX}.exe"
-	    SHLIB_LD_LIBS=""
 	else
 	    # dynamic
             echo "$as_me:$LINENO: result: using shared flags" >&5
 echo "${ECHO_T}using shared flags" >&6
 	    runtime=-MD
 	    # Add SHLIB_LD_LIBS to the Make rule, not here.
-	    MAKE_DLL="\${SHLIB_LD} \$(LDFLAGS) -out:\$@"
-	    LIBSUFFIX="\${DBGX}.lib"
-	    LIBFLAGSUFFIX="\${DBGX}"
-	    EXESUFFIX="\${DBGX}.exe"
 	    LIBRARIES="\${SHARED_LIBRARIES}"
-	    SHLIB_LD_LIBS='${LIBS}'
+	    EXESUFFIX="\${DBGX}.exe"
 	    case "x`echo \${VisualStudioVersion}`" in
 		x1[4-9]*)
 		    lflags="${lflags} -nodefaultlib:libucrt.lib"
@@ -3698,9 +3787,12 @@ echo "${ECHO_T}using shared flags" >&6
 		    ;;
 	    esac
 	fi
+	MAKE_DLL="\${SHLIB_LD} \$(LDFLAGS) -out:\$@"
 	# DLLSUFFIX is separate because it is the building block for
 	# users of tclConfig.sh that may build shared or static.
 	DLLSUFFIX="\${DBGX}.dll"
+	LIBSUFFIX="\${DBGX}.lib"
+	LIBFLAGSUFFIX="\${DBGX}"
 
 	# This is a 2-stage check to make sure we have the 64-bit SDK
 	# We have to know where the SDK is installed.
@@ -3729,7 +3821,7 @@ echo "$as_me: WARNING: Could not find 64-bit $MACHINE SDK" >&2;}
 echo "${ECHO_T}   Using 64-bit $MACHINE mode" >&6
 	fi
 
-	LIBS="user32.lib advapi32.lib ws2_32.lib"
+	LIBS="netapi32.lib kernel32.lib user32.lib advapi32.lib userenv.lib ws2_32.lib"
 
 	case "x`echo \${VisualStudioVersion}`" in
 		x1[4-9]*)
@@ -3936,6 +4028,7 @@ _ACEOF
 	fi
 
 	SHLIB_LD="${LINKBIN} -dll -incremental:no ${lflags}"
+	SHLIB_LD_LIBS='${LIBS}'
 	# link -lib only works when -lib is the first arg
 	STLIB_LD="${LINKBIN} -lib ${lflags}"
 	RC_OUT=-fo
@@ -4271,6 +4364,72 @@ _ACEOF
 
 
 
+# Cross-compiling
+case ${host_alias} in
+*mingw32*)
+    TCL_EXE="tclsh"
+    ;;
+*)
+    TCL_EXE="TCL_LIBRARY=\"\${LIBRARY_DIR}\"; export TCL_LIBRARY; ./\${TCLSH}"
+    ;;
+esac
+
+#------------------------------------------------------------------------
+#	Add stuff for zlib; note that this is mostly done in the makefile now
+#	as we just assume that the platform hasn't got a usable z.lib
+#------------------------------------------------------------------------
+
+if test "${enable_shared+set}" = "set"; then
+
+  enableval="$enable_shared"
+  tcl_ok=$enableval
+
+else
+
+  tcl_ok=yes
+
+fi
+
+if test "$tcl_ok" = "yes"; then
+
+  ZLIB_DLL_FILE=\${ZLIB_DLL_FILE}
+
+  if test "$do64bit" != "no"; then
+
+    if test "$GCC" == "yes"; then
+
+      ZLIB_LIBS=\${ZLIB_DIR_NATIVE}/win64/libz.dll.a
+
+
+else
+
+      ZLIB_LIBS=\${ZLIB_DIR_NATIVE}/win64/zdll.lib
+
+
+fi
+
+
+else
+
+    ZLIB_LIBS=\${ZLIB_DIR_NATIVE}/win32/zdll.lib
+
+
+fi
+
+
+else
+
+  ZLIB_OBJS=\${ZLIB_OBJS}
+
+
+fi
+
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_ZLIB 1
+_ACEOF
+
+
 echo "$as_me:$LINENO: checking for intptr_t" >&5
 echo $ECHO_N "checking for intptr_t... $ECHO_C" >&6
 if test "${ac_cv_type_intptr_t+set}" = set; then
@@ -4542,9 +4701,221 @@ _ACEOF
 
 fi
 
+
 #--------------------------------------------------------------------
 # Perform additinal compiler tests.
 #--------------------------------------------------------------------
+
+# See if declarations like FINDEX_INFO_LEVELS are
+# missing from winbase.h. This is known to be
+# a problem with VC++ 5.2.
+
+echo "$as_me:$LINENO: checking for FINDEX_INFO_LEVELS in winbase.h" >&5
+echo $ECHO_N "checking for FINDEX_INFO_LEVELS in winbase.h... $ECHO_C" >&6
+if test "${tcl_cv_findex_enums+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#undef WIN32_LEAN_AND_MEAN
+
+int
+main ()
+{
+
+  FINDEX_INFO_LEVELS i;
+  FINDEX_SEARCH_OPS j;
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  tcl_cv_findex_enums=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+tcl_cv_findex_enums=no
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+
+fi
+echo "$as_me:$LINENO: result: $tcl_cv_findex_enums" >&5
+echo "${ECHO_T}$tcl_cv_findex_enums" >&6
+if test "$tcl_cv_findex_enums" = "no"; then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_NO_FINDEX_ENUMS 1
+_ACEOF
+
+fi
+
+# See if the compiler supports intrinsics.
+
+echo "$as_me:$LINENO: checking for intrinsics support in compiler" >&5
+echo $ECHO_N "checking for intrinsics support in compiler... $ECHO_C" >&6
+if test "${tcl_cv_intrinsics+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#undef WIN32_LEAN_AND_MEAN
+#include <intrin.h>
+
+int
+main ()
+{
+
+  __cpuidex(0,0,0);
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext conftest$ac_exeext
+if { (eval echo "$as_me:$LINENO: \"$ac_link\"") >&5
+  (eval $ac_link) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest$ac_exeext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  tcl_cv_intrinsics=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+tcl_cv_intrinsics=no
+fi
+rm -f conftest.err conftest.$ac_objext \
+      conftest$ac_exeext conftest.$ac_ext
+
+fi
+echo "$as_me:$LINENO: result: $tcl_cv_intrinsics" >&5
+echo "${ECHO_T}$tcl_cv_intrinsics" >&6
+if test "$tcl_cv_intrinsics" = "yes"; then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_INTRIN_H 1
+_ACEOF
+
+fi
+
+# See if the <wspiapi.h> header file is present
+
+echo "$as_me:$LINENO: checking for wspiapi.h" >&5
+echo $ECHO_N "checking for wspiapi.h... $ECHO_C" >&6
+if test "${tcl_cv_wspiapi_h+set}" = set; then
+  echo $ECHO_N "(cached) $ECHO_C" >&6
+else
+  cat >conftest.$ac_ext <<_ACEOF
+/* confdefs.h.  */
+_ACEOF
+cat confdefs.h >>conftest.$ac_ext
+cat >>conftest.$ac_ext <<_ACEOF
+/* end confdefs.h.  */
+
+#include <wspiapi.h>
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+rm -f conftest.$ac_objext
+if { (eval echo "$as_me:$LINENO: \"$ac_compile\"") >&5
+  (eval $ac_compile) 2>conftest.er1
+  ac_status=$?
+  grep -v '^ *+' conftest.er1 >conftest.err
+  rm -f conftest.er1
+  cat conftest.err >&5
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); } &&
+	 { ac_try='test -z "$ac_c_werror_flag"
+			 || test ! -s conftest.err'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; } &&
+	 { ac_try='test -s conftest.$ac_objext'
+  { (eval echo "$as_me:$LINENO: \"$ac_try\"") >&5
+  (eval $ac_try) 2>&5
+  ac_status=$?
+  echo "$as_me:$LINENO: \$? = $ac_status" >&5
+  (exit $ac_status); }; }; then
+  tcl_cv_wspiapi_h=yes
+else
+  echo "$as_me: failed program was:" >&5
+sed 's/^/| /' conftest.$ac_ext >&5
+
+tcl_cv_wspiapi_h=no
+fi
+rm -f conftest.err conftest.$ac_objext conftest.$ac_ext
+
+fi
+echo "$as_me:$LINENO: result: $tcl_cv_wspiapi_h" >&5
+echo "${ECHO_T}$tcl_cv_wspiapi_h" >&6
+if test "$tcl_cv_wspiapi_h" = "yes"; then
+
+cat >>confdefs.h <<\_ACEOF
+#define HAVE_WSPIAPI_H 1
+_ACEOF
+
+fi
 
 # See if declarations like FINDEX_INFO_LEVELS are
 # missing from winbase.h. This is known to be
@@ -4775,18 +5146,16 @@ eval "TCL_SRC_DIR=\"`cd $srcdir/..; $CYGPATH $(pwd)`\""
 
 eval "TCL_DLL_FILE=tcl${VER}${DLLSUFFIX}"
 
-eval "TCL_LIB_FILE=${LIBPREFIX}tcl$VER${LIBSUFFIX}"
-
-eval "TCL_LIB_FLAG=\"-ltcl${VER}${LIBFLAGSUFFIX}\""
-eval "TCL_BUILD_LIB_SPEC=\"-L`$CYGPATH $(pwd)` ${TCL_LIB_FLAG}\""
-eval "TCL_LIB_SPEC=\"-L${libdir} ${TCL_LIB_FLAG}\""
-
 eval "TCL_STUB_LIB_FILE=\"${LIBPREFIX}tclstub${VER}${LIBSUFFIX}\""
 eval "TCL_STUB_LIB_FLAG=\"-ltclstub${VER}${LIBFLAGSUFFIX}\""
 eval "TCL_BUILD_STUB_LIB_SPEC=\"-L`$CYGPATH $(pwd)` ${TCL_STUB_LIB_FLAG}\""
 eval "TCL_STUB_LIB_SPEC=\"-L${libdir} ${TCL_STUB_LIB_FLAG}\""
 eval "TCL_BUILD_STUB_LIB_PATH=\"`$CYGPATH $(pwd)`/${TCL_STUB_LIB_FILE}\""
 eval "TCL_STUB_LIB_PATH=\"${libdir}/${TCL_STUB_LIB_FILE}\""
+
+eval "TCL_LIB_FILE=\"${LIBPREFIX}tcl${VER}${LIBSUFFIX}\""
+eval "TCL_BUILD_LIB_SPEC=\"-L`$CYGPATH $(pwd)` -ltcl${VER}${FLAGSUFFIX}\""
+eval "TCL_LIB_SPEC=\"-L${libdir} -ltcl${VER}${FLAGSUFFIX}\""
 
 # Install time header dir can be set via --includedir
 eval "TCL_INCLUDE_SPEC=\"-I${includedir}\""
@@ -4853,6 +5222,12 @@ TCL_WIN_VERSION="$TCL_VERSION.$TCL_RELEASE_LEVEL.`echo $TCL_PATCH_LEVEL | tr -d 
 
 
 
+
+
+
+
+
+
 # empty on win
 
 
@@ -4909,6 +5284,7 @@ TCL_WIN_VERSION="$TCL_VERSION.$TCL_RELEASE_LEVEL.`echo $TCL_PATCH_LEVEL | tr -d 
 
 
 # empty on win, but needs sub'ing
+
 
 
 
@@ -5595,6 +5971,9 @@ s,@DL_LIBS@,$DL_LIBS,;t t
 s,@CFLAGS_DEBUG@,$CFLAGS_DEBUG,;t t
 s,@CFLAGS_OPTIMIZE@,$CFLAGS_OPTIMIZE,;t t
 s,@CFLAGS_WARNING@,$CFLAGS_WARNING,;t t
+s,@ZLIB_DLL_FILE@,$ZLIB_DLL_FILE,;t t
+s,@ZLIB_LIBS@,$ZLIB_LIBS,;t t
+s,@ZLIB_OBJS@,$ZLIB_OBJS,;t t
 s,@CFLAGS_DEFAULT@,$CFLAGS_DEFAULT,;t t
 s,@LDFLAGS_DEFAULT@,$LDFLAGS_DEFAULT,;t t
 s,@VC_MANIFEST_EMBED_DLL@,$VC_MANIFEST_EMBED_DLL,;t t
@@ -5605,8 +5984,14 @@ s,@TCL_VERSION@,$TCL_VERSION,;t t
 s,@TCL_MAJOR_VERSION@,$TCL_MAJOR_VERSION,;t t
 s,@TCL_MINOR_VERSION@,$TCL_MINOR_VERSION,;t t
 s,@TCL_PATCH_LEVEL@,$TCL_PATCH_LEVEL,;t t
+s,@PKG_CFG_ARGS@,$PKG_CFG_ARGS,;t t
+s,@TCL_EXE@,$TCL_EXE,;t t
 s,@TCL_LIB_FILE@,$TCL_LIB_FILE,;t t
 s,@TCL_LIB_FLAG@,$TCL_LIB_FLAG,;t t
+s,@TCL_STATIC_LIB_FILE@,$TCL_STATIC_LIB_FILE,;t t
+s,@TCL_STATIC_LIB_FLAG@,$TCL_STATIC_LIB_FLAG,;t t
+s,@TCL_IMPORT_LIB_FILE@,$TCL_IMPORT_LIB_FILE,;t t
+s,@TCL_IMPORT_LIB_FLAG@,$TCL_IMPORT_LIB_FLAG,;t t
 s,@TCL_LIB_SPEC@,$TCL_LIB_SPEC,;t t
 s,@TCL_STUB_LIB_FILE@,$TCL_STUB_LIB_FILE,;t t
 s,@TCL_STUB_LIB_FLAG@,$TCL_STUB_LIB_FLAG,;t t
@@ -5648,6 +6033,7 @@ s,@POST_MAKE_LIB@,$POST_MAKE_LIB,;t t
 s,@MAKE_DLL@,$MAKE_DLL,;t t
 s,@MAKE_EXE@,$MAKE_EXE,;t t
 s,@TCL_BUILD_LIB_SPEC@,$TCL_BUILD_LIB_SPEC,;t t
+s,@TCL_CC_SEARCH_FLAGS@,$TCL_CC_SEARCH_FLAGS,;t t
 s,@TCL_LD_SEARCH_FLAGS@,$TCL_LD_SEARCH_FLAGS,;t t
 s,@TCL_NEEDS_EXP_FILE@,$TCL_NEEDS_EXP_FILE,;t t
 s,@TCL_BUILD_EXP_FILE@,$TCL_BUILD_EXP_FILE,;t t

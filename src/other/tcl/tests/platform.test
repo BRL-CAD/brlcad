@@ -10,13 +10,19 @@
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
 package require tcltest 2
+package require tcltests
 
 namespace eval ::tcl::test::platform {
     namespace import ::tcltest::testConstraint
     namespace import ::tcltest::test
     namespace import ::tcltest::cleanupTests
 
-    variable ::tcl_platform
+    # This is not how [variable] works. See TIP 276.
+    #variable ::tcl_platform
+    namespace upvar :: tcl_platform tcl_platform
+
+::tcltest::loadTestedCommands
+catch [list package require -exact Tcltest [info patchlevel]]
 
 testConstraint testCPUID [llength [info commands testcpuid]]
 
@@ -31,7 +37,7 @@ test platform-1.1 {TclpSetVariables: tcl_platform} {
     set result [i eval {lsort [array names tcl_platform]}]
     interp delete i
     set result
-} {byteOrder engine machine os osVersion platform pointerSize user wordSize}
+} {byteOrder engine machine os osVersion pathSeparator platform pointerSize user wordSize}
 
 # Test assumes twos-complement arithmetic, which is true of virtually
 # everything these days.  Note that this does *not* use wide(), and
@@ -62,7 +68,10 @@ test platform-3.1 {CPU ID on Windows/UNIX} \
 # format of string it produces consists of two non-empty words separated by a
 # hyphen.
 package require platform
-test platform-4.1 {format of platform::identify result} -match regexp -body {
+test platform-4.1 {format of platform::identify result} -constraints notValgrind -match regexp -body {
+    # [identify] may attempt to [exec] dpkg-architecture, which may not exist,
+    # in which case fork will not be followed by exec, and valgrind will issue
+    # "still reachable" reports.
     platform::identify
 } -result {^([^-]+-)+[^-]+$}
 test platform-4.2 {format of platform::generic result} -match regexp -body {

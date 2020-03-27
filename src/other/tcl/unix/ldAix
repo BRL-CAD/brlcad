@@ -1,5 +1,5 @@
 #!/bin/sh
-# 
+#
 # ldAix ldCmd ldArg ldArg ...
 #
 # This shell script provides a wrapper for ld under AIX in order to
@@ -40,8 +40,8 @@ rm -f lib.exp
 echo "#! $outputFile" >lib.exp
 /usr/ccs/bin/nm $nmopts $ofiles | sed -e '/:$/d' -e '/ U /d' -e 's/^\.//' -e 's/[ 	|].*//' | sort | uniq >>lib.exp
 
-# If we're linking a .a file, then link all the objects together into a 
-# single file "shr.o" and then put that into the archive.  Otherwise link 
+# If we're linking a .a file, then link all the objects together into a
+# single file "shr.o" and then put that into the archive.  Otherwise link
 # the object files directly into the .a file.
 
 noDotA=`echo $outputFile | sed -e '/\.a$/d'`

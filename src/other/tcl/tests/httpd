@@ -10,6 +10,13 @@
 
 #set httpLog 1
 
+if {$::tcl_platform(os) eq "Darwin"} {
+    # Name resolution often a problem on OSX; not focus of HTTP package anyway
+    set HOST localhost
+} else {
+    set HOST [info hostname]
+}
+
 proc httpd_init {{port 8015}} {
     socket -server httpdAccept $port
 }
@@ -168,7 +175,7 @@ proc httpdRespond { sock } {
 
     switch -glob -- $data(url) {
 	*binary* {
-	    set html "$bindata[info hostname]:$port$data(url)"
+	    set html "$bindata${::HOST}:$port$data(url)"
 	    set type application/octet-stream
 	}
 	*xml* {

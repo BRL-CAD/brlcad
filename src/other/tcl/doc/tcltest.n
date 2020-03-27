@@ -7,8 +7,8 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
-.TH "tcltest" n 2.3 tcltest "Tcl Bundled Packages"
+'\"
+.TH "tcltest" n 2.5 tcltest "Tcl Bundled Packages"
 .so man.macros
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
@@ -16,52 +16,52 @@
 tcltest \- Test harness support code and utilities
 .SH SYNOPSIS
 .nf
-\fBpackage require tcltest ?2.3?\fR
-.sp
-\fBtcltest::test \fIname description ?option value ...?\fR
-\fBtcltest::test \fIname description ?constraints? body result\fR
-.sp
+\fBpackage require tcltest\fR ?\fB2.5\fR?
+
+\fBtcltest::test \fIname description\fR ?\fI\-option value ...\fR?
+\fBtcltest::test \fIname description\fR ?\fIconstraints\fR? \fIbody result\fR
+
 \fBtcltest::loadTestedCommands\fR
-\fBtcltest::makeDirectory \fIname ?directory?\fR
-\fBtcltest::removeDirectory \fIname ?directory?\fR
-\fBtcltest::makeFile \fIcontents name ?directory?\fR
-\fBtcltest::removeFile \fIname ?directory?\fR
-\fBtcltest::viewFile \fIname ?directory?\fR
-\fBtcltest::cleanupTests \fI?runningMultipleTests?\fR
+\fBtcltest::makeDirectory \fIname\fR ?\fIdirectory\fR?
+\fBtcltest::removeDirectory \fIname\fR ?\fIdirectory\fR?
+\fBtcltest::makeFile \fIcontents name\fR ?\fIdirectory\fR?
+\fBtcltest::removeFile \fIname\fR ?\fIdirectory\fR?
+\fBtcltest::viewFile \fIname\fR ?\fIdirectory\fR?
+\fBtcltest::cleanupTests \fR?\fIrunningMultipleTests\fR?
 \fBtcltest::runAllTests\fR
-.sp
+
 \fBtcltest::configure\fR
-\fBtcltest::configure \fIoption\fR
-\fBtcltest::configure \fIoption value ?option value ...?\fR
+\fBtcltest::configure \fI\-option\fR
+\fBtcltest::configure \fI\-option value\fR ?\fI\-option value ...\fR?
 \fBtcltest::customMatch \fImode command\fR
-\fBtcltest::testConstraint \fIconstraint ?value?\fR
-\fBtcltest::outputChannel \fI?channelID?\fR
-\fBtcltest::errorChannel \fI?channelID?\fR
-\fBtcltest::interpreter \fI?interp?\fR
-.sp
-\fBtcltest::debug \fI?level?\fR
-\fBtcltest::errorFile \fI?filename?\fR
-\fBtcltest::limitConstraints \fI?boolean?\fR
-\fBtcltest::loadFile \fI?filename?\fR
-\fBtcltest::loadScript \fI?script?\fR
-\fBtcltest::match \fI?patternList?\fR
-\fBtcltest::matchDirectories \fI?patternList?\fR
-\fBtcltest::matchFiles \fI?patternList?\fR
-\fBtcltest::outputFile \fI?filename?\fR
-\fBtcltest::preserveCore \fI?level?\fR
-\fBtcltest::singleProcess \fI?boolean?\fR
-\fBtcltest::skip \fI?patternList?\fR
-\fBtcltest::skipDirectories \fI?patternList?\fR
-\fBtcltest::skipFiles \fI?patternList?\fR
-\fBtcltest::temporaryDirectory \fI?directory?\fR
-\fBtcltest::testsDirectory \fI?directory?\fR
-\fBtcltest::verbose \fI?level?\fR
-.sp
+\fBtcltest::testConstraint \fIconstraint\fR ?\fIvalue\fR?
+\fBtcltest::outputChannel \fR?\fIchannelID\fR?
+\fBtcltest::errorChannel \fR?\fIchannelID\fR?
+\fBtcltest::interpreter \fR?\fIinterp\fR?
+
+\fBtcltest::debug \fR?\fIlevel\fR?
+\fBtcltest::errorFile \fR?\fIfilename\fR?
+\fBtcltest::limitConstraints \fR?\fIboolean\fR?
+\fBtcltest::loadFile \fR?\fIfilename\fR?
+\fBtcltest::loadScript \fR?\fIscript\fR?
+\fBtcltest::match \fR?\fIpatternList\fR?
+\fBtcltest::matchDirectories \fR?\fIpatternList\fR?
+\fBtcltest::matchFiles \fR?\fIpatternList\fR?
+\fBtcltest::outputFile \fR?\fIfilename\fR?
+\fBtcltest::preserveCore \fR?\fIlevel\fR?
+\fBtcltest::singleProcess \fR?\fIboolean\fR?
+\fBtcltest::skip \fR?\fIpatternList\fR?
+\fBtcltest::skipDirectories \fR?\fIpatternList\fR?
+\fBtcltest::skipFiles \fR?\fIpatternList\fR?
+\fBtcltest::temporaryDirectory \fR?\fIdirectory\fR?
+\fBtcltest::testsDirectory \fR?\fIdirectory\fR?
+\fBtcltest::verbose \fR?\fIlevel\fR?
+
 \fBtcltest::test \fIname description optionList\fR
 \fBtcltest::bytestring \fIstring\fR
 \fBtcltest::normalizeMsg \fImsg\fR
 \fBtcltest::normalizePath \fIpathVar\fR
-\fBtcltest::workingDirectory \fI?dir?\fR
+\fBtcltest::workingDirectory \fR?\fIdir\fR?
 .fi
 .BE
 .SH DESCRIPTION
@@ -90,7 +90,8 @@ of how to use the commands of \fBtcltest\fR to produce test suites
 for your Tcl-enabled code.
 .SH COMMANDS
 .TP
-\fBtest\fR \fIname description ?option value ...?\fR
+\fBtest\fR \fIname description\fR ?\fI\-option value ...\fR?
+.
 Defines and possibly runs a test with the name \fIname\fR and
 description \fIdescription\fR.  The name and description of a test
 are used in messages reported by \fBtest\fR during the
@@ -103,7 +104,8 @@ See \fBTESTS\fR below for a complete description of the valid
 options and how they define a test.  The \fBtest\fR command
 returns an empty string.
 .TP
-\fBtest\fR \fIname description ?constraints? body result\fR
+\fBtest\fR \fIname description\fR ?\fIconstraints\fR? \fIbody result\fR
+.
 This form of \fBtest\fR is provided to support test suites written
 for version 1 of the \fBtcltest\fR package, and also a simpler
 interface for a common usage.  It is the same as
@@ -115,14 +117,16 @@ all \fIoption\fRs begin with
 .QW \- .
 .TP
 \fBloadTestedCommands\fR
-Evaluates in the caller's context the script specified by 
+.
+Evaluates in the caller's context the script specified by
 \fBconfigure \-load\fR or \fBconfigure \-loadfile\fR.
 Returns the result of that script evaluation, including any error
 raised by the script.  Use this command and the related
 configuration options to provide the commands to be tested to
 the interpreter running the test suite.
 .TP
-\fBmakeFile\fR \fIcontents name ?directory?\fR
+\fBmakeFile\fR \fIcontents name\fR ?\fIdirectory\fR?
+.
 Creates a file named \fIname\fR relative to
 directory \fIdirectory\fR and write \fIcontents\fR
 to that file using the encoding \fBencoding system\fR.
@@ -137,14 +141,16 @@ of \fBcleanupTests\fR, unless it is removed by
 Returns the full path of the file created.  Use this command
 to create any text file required by a test with contents as needed.
 .TP
-\fBremoveFile\fR \fIname ?directory?\fR
+\fBremoveFile\fR \fIname\fR ?\fIdirectory\fR?
+.
 Forces the file referenced by \fIname\fR to be removed.  This file name
 should be relative to \fIdirectory\fR.   The default value of
 \fIdirectory\fR is the directory \fBconfigure \-tmpdir\fR.
 Returns an empty string.  Use this command to delete files
 created by \fBmakeFile\fR.
 .TP
-\fBmakeDirectory\fR \fIname ?directory?\fR
+\fBmakeDirectory\fR \fIname\fR ?\fIdirectory\fR?
+.
 Creates a directory named \fIname\fR relative to directory \fIdirectory\fR.
 The directory will be removed by the next evaluation of \fBcleanupTests\fR,
 unless it is removed by \fBremoveDirectory\fR first.
@@ -153,7 +159,8 @@ The default value of \fIdirectory\fR is the directory
 Returns the full path of the directory created.  Use this command
 to create any directories that are required to exist by a test.
 .TP
-\fBremoveDirectory\fR \fIname ?directory?\fR
+\fBremoveDirectory\fR \fIname\fR ?\fIdirectory\fR?
+.
 Forces the directory referenced by \fIname\fR to be removed. This
 directory should be relative to \fIdirectory\fR.
 The default value of \fIdirectory\fR is the directory
@@ -161,7 +168,8 @@ The default value of \fIdirectory\fR is the directory
 Returns an empty string.  Use this command to delete any directories
 created by \fBmakeDirectory\fR.
 .TP
-\fBviewFile\fR \fIfile ?directory?\fR
+\fBviewFile\fR \fIfile\fR ?\fIdirectory\fR?
+.
 Returns the contents of \fIfile\fR, except for any
 final newline, just as \fBread \-nonewline\fR would return.
 This file name should be relative to \fIdirectory\fR.
@@ -174,6 +182,7 @@ the system encoding, so its usefulness is limited to text
 files.
 .TP
 \fBcleanupTests\fR
+.
 Intended to clean up and summarize after several tests have been
 run.  Typically called once per test file, at the end of the file
 after all tests have been completed.  For best effectiveness, be
@@ -188,28 +197,32 @@ in the directory \fBconfigure \-tmpdir\fR created since
 the last \fBcleanupTests\fR, but not created by
 \fBmakeFile\fR or \fBmakeDirectory\fR are printed
 to \fBoutputChannel\fR.  This command also restores the original
-shell environment, as described by the \fB::env\fR
+shell environment, as described by the global \fBenv\fR
 array. Returns an empty string.
 .RE
 .TP
 \fBrunAllTests\fR
+.
 This is a master command meant to run an entire suite of tests,
 spanning multiple files and/or directories, as governed by
 the configurable options of \fBtcltest\fR.  See \fBRUNNING ALL TESTS\fR
 below for a complete description of the many variations possible
 with \fBrunAllTests\fR.
-.SH "CONFIGURATION COMMANDS"
+.SS "CONFIGURATION COMMANDS"
 .TP
 \fBconfigure\fR
+.
 Returns the list of configurable options supported by \fBtcltest\fR.
 See \fBCONFIGURABLE OPTIONS\fR below for the full list of options,
 their valid values, and their effect on \fBtcltest\fR operations.
 .TP
 \fBconfigure \fIoption\fR
+.
 Returns the current value of the supported configurable option \fIoption\fR.
 Raises an error if \fIoption\fR is not a supported configurable option.
 .TP
-\fBconfigure \fIoption value ?option value ...?\fR
+\fBconfigure \fIoption value\fR ?\fI\-option value ...\fR?
+.
 Sets the value of each configurable option \fIoption\fR to the
 corresponding value \fIvalue\fR, in order.  Raises an error if
 an \fIoption\fR is not a supported configurable option, or if
@@ -220,13 +233,14 @@ arguments are not processed.
 .RS
 .PP
 If the environment variable \fB::env(TCLTEST_OPTIONS)\fR exists when
-the \fBtcltest\fR package is loaded (by \fBpackage require tcltest\fR)
+the \fBtcltest\fR package is loaded (by \fBpackage require\fR \fBtcltest\fR)
 then its value is taken as a list of arguments to pass to \fBconfigure\fR.
 This allows the default values of the configuration options to be
 set by the environment.
 .RE
 .TP
 \fBcustomMatch \fImode script\fR
+.
 Registers \fImode\fR as a new legal value of the \fB\-match\fR option
 to \fBtest\fR.  When the \fB\-match \fImode\fR option is
 passed to \fBtest\fR, the script \fIscript\fR will be evaluated
@@ -239,81 +253,119 @@ The completed script is expected to return a boolean value indicating
 whether or not the results match.  The built-in matching modes of
 \fBtest\fR are \fBexact\fR, \fBglob\fR, and \fBregexp\fR.
 .TP
-\fBtestConstraint \fIconstraint ?boolean?\fR
+\fBtestConstraint \fIconstraint\fR ?\fIboolean\fR?
+.
 Sets or returns the boolean value associated with the named \fIconstraint\fR.
 See \fBTEST CONSTRAINTS\fR below for more information.
 .TP
-\fBinterpreter\fR \fI?executableName?\fR
+\fBinterpreter\fR ?\fIexecutableName\fR?
+.
 Sets or returns the name of the executable to be \fBexec\fRed by
 \fBrunAllTests\fR to run each test file when
 \fBconfigure \-singleproc\fR is false.
 The default value for \fBinterpreter\fR is the name of the
 currently running program as returned by \fBinfo nameofexecutable\fR.
 .TP
-\fBoutputChannel\fR \fI?channelID?\fR
-Sets or returns the output channel ID.  This defaults to stdout.
+\fBoutputChannel\fR ?\fIchannelID\fR?
+.
+Sets or returns the output channel ID.  This defaults to \fBstdout\fR.
 Any test that prints test related output should send
 that output to \fBoutputChannel\fR rather than letting
-that output default to stdout.
+that output default to \fBstdout\fR.
 .TP
-\fBerrorChannel\fR \fI?channelID?\fR
-Sets or returns the error channel ID.  This defaults to stderr.
+\fBerrorChannel\fR ?\fIchannelID\fR?
+.
+Sets or returns the error channel ID.  This defaults to \fBstderr\fR.
 Any test that prints error messages should send
 that output to \fBerrorChannel\fR rather than printing
-directly to stderr.
-.SH "SHORTCUT COMMANDS"
+directly to \fBstderr\fR.
+.SS "SHORTCUT CONFIGURATION COMMANDS"
 .TP
-\fBdebug \fI?level?\fR
-Same as \fBconfigure \-debug \fI?level?\fR.
+\fBdebug\fR ?\fIlevel\fR?
+.
+Same as
+.QW "\fBconfigure \-debug\fR ?\fIlevel\fR?" .
 .TP
-\fBerrorFile \fI?filename?\fR
-Same as \fBconfigure \-errfile \fI?filename?\fR.
+\fBerrorFile\fR ?\fIfilename\fR?
+.
+Same as
+.QW "\fBconfigure \-errfile\fR ?\fIfilename\fR?" .
 .TP
-\fBlimitConstraints \fI?boolean?\fR
-Same as \fBconfigure \-limitconstraints \fI?boolean?\fR.
+\fBlimitConstraints\fR ?\fIboolean\fR?
+.
+Same as
+.QW "\fBconfigure \-limitconstraints\fR ?\fIboolean\fR?" .
 .TP
-\fBloadFile \fI?filename?\fR
-Same as \fBconfigure \-loadfile \fI?filename?\fR.
+\fBloadFile\fR ?\fIfilename\fR?
+.
+Same as
+.QW "\fBconfigure \-loadfile\fR ?\fIfilename\fR?" .
 .TP
-\fBloadScript \fI?script?\fR
-Same as \fBconfigure \-load \fI?script?\fR.
+\fBloadScript\fR ?\fIscript\fR?
+.
+Same as
+.QW "\fBconfigure \-load\fR ?\fIscript\fR?" .
 .TP
-\fBmatch \fI?patternList?\fR
-Same as \fBconfigure \-match \fI?patternList?\fR.
+\fBmatch\fR ?\fIpatternList\fR?
+.
+Same as
+.QW "\fBconfigure \-match\fR ?\fIpatternList\fR?" .
 .TP
-\fBmatchDirectories \fI?patternList?\fR
-Same as \fBconfigure \-relateddir \fI?patternList?\fR.
+\fBmatchDirectories\fR ?\fIpatternList\fR?
+.
+Same as
+.QW "\fBconfigure \-relateddir\fR ?\fIpatternList\fR?" .
 .TP
-\fBmatchFiles \fI?patternList?\fR
-Same as \fBconfigure \-file \fI?patternList?\fR.
+\fBmatchFiles\fR ?\fIpatternList\fR?
+.
+Same as
+.QW "\fBconfigure \-file\fR ?\fIpatternList\fR?" .
 .TP
-\fBoutputFile \fI?filename?\fR
-Same as \fBconfigure \-outfile \fI?filename?\fR.
+\fBoutputFile\fR ?\fIfilename\fR?
+.
+Same as
+.QW "\fBconfigure \-outfile\fR ?\fIfilename\fR?" .
 .TP
-\fBpreserveCore \fI?level?\fR
-Same as \fBconfigure \-preservecore \fI?level?\fR.
+\fBpreserveCore\fR ?\fIlevel\fR?
+.
+Same as
+.QW "\fBconfigure \-preservecore\fR ?\fIlevel\fR?" .
 .TP
-\fBsingleProcess \fI?boolean?\fR
-Same as \fBconfigure \-singleproc \fI?boolean?\fR.
+\fBsingleProcess\fR ?\fIboolean\fR?
+.
+Same as
+.QW "\fBconfigure \-singleproc\fR ?\fIboolean\fR?" .
 .TP
-\fBskip \fI?patternList?\fR
-Same as \fBconfigure \-skip \fI?patternList?\fR.
+\fBskip\fR ?\fIpatternList\fR?
+.
+Same as
+.QW "\fBconfigure \-skip\fR ?\fIpatternList\fR?" .
 .TP
-\fBskipDirectories \fI?patternList?\fR
-Same as \fBconfigure \-asidefromdir \fI?patternList?\fR.
+\fBskipDirectories\fR ?\fIpatternList\fR?
+.
+Same as
+.QW "\fBconfigure \-asidefromdir\fR ?\fIpatternList\fR?" .
 .TP
-\fBskipFiles \fI?patternList?\fR
-Same as \fBconfigure \-notfile \fI?patternList?\fR.
+\fBskipFiles\fR ?\fIpatternList\fR?
+.
+Same as
+.QW "\fBconfigure \-notfile\fR ?\fIpatternList\fR?" .
 .TP
-\fBtemporaryDirectory \fI?directory?\fR
-Same as \fBconfigure \-tmpdir \fI?directory?\fR.
+\fBtemporaryDirectory\fR ?\fIdirectory\fR?
+.
+Same as
+.QW "\fBconfigure \-tmpdir\fR ?\fIdirectory\fR?" .
 .TP
-\fBtestsDirectory \fI?directory?\fR
-Same as \fBconfigure \-testdir \fI?directory?\fR.
+\fBtestsDirectory\fR ?\fIdirectory\fR?
+.
+Same as
+.QW "\fBconfigure \-testdir\fR ?\fIdirectory\fR?" .
 .TP
-\fBverbose \fI?level?\fR
-Same as \fBconfigure \-verbose \fI?level?\fR.
-.SH "OTHER COMMANDS"
+\fBverbose\fR ?\fIlevel\fR?
+.
+Same as
+.QW "\fBconfigure \-verbose\fR ?\fIlevel\fR?" .
+.SS "OTHER COMMANDS"
 .PP
 The remaining commands provided by \fBtcltest\fR have better
 alternatives provided by \fBtcltest\fR or \fBTcl\fR itself.  They
@@ -321,6 +373,7 @@ are retained to support existing test suites, but should be avoided
 in new code.
 .TP
 \fBtest\fR \fIname description optionList\fR
+.
 This form of \fBtest\fR was provided to enable passing many
 options spanning several lines to \fBtest\fR as a single
 argument quoted by braces, rather than needing to backslash quote
@@ -344,13 +397,15 @@ the source code of \fBtcltest\fR if you want to know the substitution
 details, or just enclose the third through last argument
 to \fBtest\fR in braces and hope for the best.
 .TP
-\fBworkingDirectory\fR \fI?directoryName?\fR
+\fBworkingDirectory\fR ?\fIdirectoryName\fR?
+.
 Sets or returns the current working directory when the test suite is
 running.  The default value for workingDirectory is the directory in
 which the test suite was launched.  The Tcl commands \fBcd\fR and
 \fBpwd\fR are sufficient replacements.
 .TP
-\fBnormalizeMsg\fR \fImsg\fR
+\fBnormalizeMsg \fImsg\fR
+.
 Returns the result of removing the
 .QW extra
 newlines from \fImsg\fR, where
@@ -360,20 +415,23 @@ processing commands to modify strings as you wish, and
 \fBcustomMatch\fR allows flexible matching of actual and expected
 results.
 .TP
-\fBnormalizePath\fR \fIpathVar\fR
+\fBnormalizePath \fIpathVar\fR
+.
 Resolves symlinks in a path, thus creating a path without internal
 redirection.  It is assumed that \fIpathVar\fR is absolute.
 \fIpathVar\fR is modified in place.  The Tcl command \fBfile normalize\fR
 is a sufficient replacement.
 .TP
-\fBbytestring\fR \fIstring\fR
+\fBbytestring \fIstring\fR
+.
 Construct a string that consists of the requested sequence of bytes,
 as opposed to a string of properly formed UTF-8 characters using the
 value supplied in \fIstring\fR.  This allows the tester to create
 denormalized or improperly formed strings to pass to C procedures that
 are supposed to accept strings with embedded NULL types and confirm
 that a string result has a certain pattern of bytes.  This is
-exactly equivalent to the Tcl command \fBencoding convertfrom identity\fR.
+exactly equivalent to the Tcl command \fBencoding convertfrom\fR
+\fBidentity\fR.
 .SH TESTS
 .PP
 The \fBtest\fR command is the heart of the \fBtcltest\fR package.
@@ -388,15 +446,16 @@ The valid options for \fBtest\fR are summarized:
 .PP
 .CS
 \fBtest\fR \fIname\fR \fIdescription\fR
-        ?-constraints \fIkeywordList|expression\fR?
-        ?-setup \fIsetupScript\fR?
-        ?-body \fItestScript\fR?
-        ?-cleanup \fIcleanupScript\fR?
-        ?-result \fIexpectedAnswer\fR?
-        ?-output \fIexpectedOutput\fR?
-        ?-errorOutput \fIexpectedError\fR?
-        ?-returnCodes \fIcodeList\fR?
-        ?-match \fImode\fR?
+        ?\fB\-constraints \fIkeywordList|expression\fR?
+        ?\fB\-setup \fIsetupScript\fR?
+        ?\fB\-body \fItestScript\fR?
+        ?\fB\-cleanup \fIcleanupScript\fR?
+        ?\fB\-result \fIexpectedAnswer\fR?
+        ?\fB\-output \fIexpectedOutput\fR?
+        ?\fB\-errorOutput \fIexpectedError\fR?
+        ?\fB\-returnCodes \fIcodeList\fR?
+        ?\fB\-errorCode \fIexpectedErrorCode\fR?
+        ?\fB\-match \fImode\fR?
 .CE
 .PP
 The \fIname\fR may be any string.  It is conventional to choose
@@ -428,11 +487,12 @@ test, typically test failure messages.  Good \fIdescription\fR values
 should briefly explain the purpose of the test to users of a test suite.
 The name of a Tcl or C function being tested should be included in the
 description for regression tests.  If the test case exists to reproduce
-a bug, include the bug ID in the description. 
+a bug, include the bug ID in the description.
 .PP
 Valid attributes and associated values are:
 .TP
-\fB\-constraints \fIkeywordList|expression\fR
+\fB\-constraints \fIkeywordList\fR|\fIexpression\fR
+.
 The optional \fB\-constraints\fR attribute can be list of one or more
 keywords or an expression.  If the \fB\-constraints\fR value is a list of
 keywords, each of these keywords should be the name of a constraint
@@ -449,29 +509,35 @@ should be accomplished by the \fB\-constraints\fR option, not by
 conditional evaluation of \fBtest\fR.  In that way, the same
 number of tests are always reported by the test suite, though
 the number skipped may change based on the testing environment.
-The default value is an empty list.  
-See \fBTEST CONSTRAINTS\fR below for a list of built-in constraints 
+The default value is an empty list.
+See \fBTEST CONSTRAINTS\fR below for a list of built-in constraints
 and information on how to add your own constraints.
 .TP
 \fB\-setup \fIscript\fR
+.
 The optional \fB\-setup\fR attribute indicates a \fIscript\fR that will be run
 before the script indicated by the \fB\-body\fR attribute.  If evaluation
 of \fIscript\fR raises an error, the test will fail.  The default value
 is an empty script.
 .TP
 \fB\-body \fIscript\fR
-The \fB\-body\fR attribute indicates the \fIscript\fR to run to carry out the 
-test.  It must return a result that can be checked for correctness.
-If evaluation of \fIscript\fR raises an error, the test will fail.
+.
+The \fB\-body\fR attribute indicates the \fIscript\fR to run to carry out the
+test, which must return a result that can be checked for correctness.
+If evaluation of \fIscript\fR raises an error, the test will fail
+(unless the \fB\-returnCodes\fR option is used to state that an error
+is expected).
 The default value is an empty script.
 .TP
 \fB\-cleanup \fIscript\fR
+.
 The optional \fB\-cleanup\fR attribute indicates a \fIscript\fR that will be
 run after the script indicated by the \fB\-body\fR attribute.
 If evaluation of \fIscript\fR raises an error, the test will fail.
 The default value is an empty script.
 .TP
 \fB\-match \fImode\fR
+.
 The \fB\-match\fR attribute determines how expected answers supplied by
 \fB\-result\fR, \fB\-output\fR, and \fB\-errorOutput\fR are compared.  Valid
 values for \fImode\fR are \fBregexp\fR, \fBglob\fR, \fBexact\fR, and
@@ -479,27 +545,31 @@ any value registered by a prior call to \fBcustomMatch\fR.  The default
 value is \fBexact\fR.
 .TP
 \fB\-result \fIexpectedValue\fR
+.
 The \fB\-result\fR attribute supplies the \fIexpectedValue\fR against which
 the return value from script will be compared. The default value is
 an empty string.
 .TP
 \fB\-output \fIexpectedValue\fR
+.
 The \fB\-output\fR attribute supplies the \fIexpectedValue\fR against which
 any output sent to \fBstdout\fR or \fBoutputChannel\fR during evaluation
 of the script(s) will be compared.  Note that only output printed using
-\fB::puts\fR is used for comparison.  If \fB\-output\fR is not specified,
-output sent to \fBstdout\fR and \fBoutputChannel\fR is not processed for
-comparison.
+the global \fBputs\fR command is used for comparison.  If \fB\-output\fR is
+not specified, output sent to \fBstdout\fR and \fBoutputChannel\fR is not
+processed for comparison.
 .TP
 \fB\-errorOutput \fIexpectedValue\fR
+.
 The \fB\-errorOutput\fR attribute supplies the \fIexpectedValue\fR against
-which any output sent to \fBstderr\fR or \fBerrorChannel\fR during 
+which any output sent to \fBstderr\fR or \fBerrorChannel\fR during
 evaluation of the script(s) will be compared. Note that only output
-printed using \fB::puts\fR is used for comparison.  If \fB\-errorOutput\fR
-is not specified, output sent to \fBstderr\fR and \fBerrorChannel\fR is
-not processed for comparison.
+printed using the global \fBputs\fR command is used for comparison.  If
+\fB\-errorOutput\fR is not specified, output sent to \fBstderr\fR and
+\fBerrorChannel\fR is not processed for comparison.
 .TP
 \fB\-returnCodes \fIexpectedCodeList\fR
+.
 The optional \fB\-returnCodes\fR attribute supplies \fIexpectedCodeList\fR,
 a list of return codes that may be accepted from evaluation of the
 \fB\-body\fR script.  If evaluation of the \fB\-body\fR script returns
@@ -507,7 +577,16 @@ a code not in the \fIexpectedCodeList\fR, the test fails.  All
 return codes known to \fBreturn\fR, in both numeric and symbolic
 form, including extended return codes, are acceptable elements in
 the \fIexpectedCodeList\fR.  Default value is
-.QW \fBok return\fR.
+.QW "\fBok return\fR" .
+.TP
+\fB\-errorCode \fIexpectedErrorCode\fR
+.
+The optional \fB\-errorCode\fR attribute supplies \fIexpectedErrorCode\fR,
+a glob pattern that should match the error code reported from evaluation of the
+\fB\-body\fR script.  If evaluation of the \fB\-body\fR script returns
+a code not matching \fIexpectedErrorCode\fR, the test fails.  Default value is
+.QW "\fB*\fR" .
+If \fB\-returnCodes\fR does not include \fBerror\fR it is set to \fBerror\fR.
 .PP
 To pass, a test must successfully evaluate its \fB\-setup\fR, \fB\-body\fR,
 and \fB\-cleanup\fR scripts.  The return code of the \fB\-body\fR script and
@@ -524,12 +603,12 @@ In default operation, a successful test produces no output.  The output
 messages produced by \fBtest\fR are controlled by the
 \fBconfigure \-verbose\fR option as described in \fBCONFIGURABLE OPTIONS\fR
 below.  Any output produced by the test scripts themselves should be
-produced using \fB::puts\fR to \fBoutputChannel\fR or
+produced using \fBputs\fR to \fBoutputChannel\fR or
 \fBerrorChannel\fR, so that users of the test suite may
 easily capture output with the \fBconfigure \-outfile\fR and
 \fBconfigure \-errfile\fR options, and so that the \fB\-output\fR
 and \fB\-errorOutput\fR attributes work properly.
-.SH "TEST CONSTRAINTS"
+.SS "TEST CONSTRAINTS"
 .PP
 Constraints are used to determine whether or not a test should be skipped.
 Each constraint has a name, which may be any string, and a boolean
@@ -557,112 +636,133 @@ The following is a list of constraints pre-defined by the
 \fBtcltest\fR package itself:
 .TP
 \fIsingleTestInterp\fR
-test can only be run if all test files are sourced into a single interpreter
+.
+This test can only be run if all test files are sourced into a single
+interpreter.
 .TP
 \fIunix\fR
-test can only be run on any Unix platform
+.
+This test can only be run on any Unix platform.
 .TP
 \fIwin\fR
-test can only be run on any Windows platform
+.
+This test can only be run on any Windows platform.
 .TP
 \fInt\fR
-test can only be run on any Windows NT platform
-.TP
-\fI95\fR
-test can only be run on any Windows 95 platform
-.TP
-\fI98\fR
-test can only be run on any Windows 98 platform
+.
+This test can only be run on any Windows NT platform.
 .TP
 \fImac\fR
-test can only be run on any Mac platform
+.
+This test can only be run on any Mac platform.
 .TP
 \fIunixOrWin\fR
-test can only be run on a Unix or Windows platform
+.
+This test can only be run on a Unix or Windows platform.
 .TP
 \fImacOrWin\fR
-test can only be run on a Mac or Windows platform
+.
+This test can only be run on a Mac or Windows platform.
 .TP
 \fImacOrUnix\fR
-test can only be run on a Mac or Unix platform
+.
+This test can only be run on a Mac or Unix platform.
 .TP
 \fItempNotWin\fR
-test can not be run on Windows.  This flag is used to temporarily
-disable a test. 
+.
+This test can not be run on Windows.  This flag is used to temporarily
+disable a test.
 .TP
 \fItempNotMac\fR
-test can not be run on a Mac.  This flag is used
+.
+This test can not be run on a Mac.  This flag is used
 to temporarily disable a test.
 .TP
 \fIunixCrash\fR
-test crashes if it is run on Unix.  This flag is used to temporarily
-disable a test. 
+.
+This test crashes if it is run on Unix.  This flag is used to temporarily
+disable a test.
 .TP
 \fIwinCrash\fR
-test crashes if it is run on Windows.  This flag is used to temporarily
-disable a test. 
+.
+This test crashes if it is run on Windows.  This flag is used to temporarily
+disable a test.
 .TP
 \fImacCrash\fR
-test crashes if it is run on a Mac.  This flag is used to temporarily
-disable a test. 
+.
+This test crashes if it is run on a Mac.  This flag is used to temporarily
+disable a test.
 .TP
 \fIemptyTest\fR
-test is empty, and so not worth running, but it remains as a
+.
+This test is empty, and so not worth running, but it remains as a
 place-holder for a test to be written in the future.  This constraint
 has value false to cause tests to be skipped unless the user specifies
 otherwise.
 .TP
 \fIknownBug\fR
-test is known to fail and the bug is not yet fixed.  This constraint
+.
+This test is known to fail and the bug is not yet fixed.  This constraint
 has value false to cause tests to be skipped unless the user specifies
 otherwise.
 .TP
 \fInonPortable\fR
-test can only be run in some known development environment.
+.
+This test can only be run in some known development environment.
 Some tests are inherently non-portable because they depend on things
 like word length, file system configuration, window manager, etc.
 This constraint has value false to cause tests to be skipped unless
-the user specifies otherwise.  
+the user specifies otherwise.
 .TP
 \fIuserInteraction\fR
-test requires interaction from the user.  This constraint has
+.
+This test requires interaction from the user.  This constraint has
 value false to causes tests to be skipped unless the user specifies
-otherwise.  
+otherwise.
 .TP
 \fIinteractive\fR
-test can only be run in if the interpreter is in interactive mode 
+.
+This test can only be run in if the interpreter is in interactive mode
 (when the global tcl_interactive variable is set to 1).
 .TP
 \fInonBlockFiles\fR
-test can only be run if platform supports setting files into
-nonblocking mode 
+.
+This test can only be run if platform supports setting files into
+nonblocking mode.
 .TP
 \fIasyncPipeClose\fR
-test can only be run if platform supports async flush and async close
-on a pipe 
+.
+This test can only be run if platform supports async flush and async close
+on a pipe.
 .TP
 \fIunixExecs\fR
-test can only be run if this machine has Unix-style commands
+.
+This test can only be run if this machine has Unix-style commands
 \fBcat\fR, \fBecho\fR, \fBsh\fR, \fBwc\fR, \fBrm\fR, \fBsleep\fR,
-\fBfgrep\fR, \fBps\fR, \fBchmod\fR, and \fBmkdir\fR available
+\fBfgrep\fR, \fBps\fR, \fBchmod\fR, and \fBmkdir\fR available.
 .TP
 \fIhasIsoLocale\fR
-test can only be run if can switch to an ISO locale
+.
+This test can only be run if can switch to an ISO locale.
 .TP
 \fIroot\fR
-test can only run if Unix user is root
+.
+This test can only run if Unix user is root.
 .TP
 \fInotRoot\fR
-test can only run if Unix user is not root
+.
+This test can only run if Unix user is not root.
 .TP
 \fIeformat\fR
-test can only run if app has a working version of sprintf with respect
+.
+This test can only run if app has a working version of sprintf with respect
 to the
 .QW e
 format of floating-point numbers.
 .TP
 \fIstdio\fR
-test can only be run if \fBinterpreter\fR can be \fBopen\fRed
+.
+This test can only be run if \fBinterpreter\fR can be \fBopen\fRed
 as a pipe.
 .PP
 The alternative mode of constraint control is enabled by setting
@@ -685,7 +785,7 @@ up a configuration with
 .PP
 to run exactly those tests that exercise known bugs, and discover
 whether any of them pass, indicating the bug had been fixed.
-.SH "RUNNING ALL TESTS"
+.SS "RUNNING ALL TESTS"
 .PP
 The single command \fBrunAllTests\fR is evaluated to run an entire
 test suite, spanning many files and directories.  The configuration
@@ -702,7 +802,7 @@ and sorted.  Then each file will be evaluated in turn.  If
 be \fBsource\fRd in the caller's context.  If it is false,
 then a copy of \fBinterpreter\fR will be \fBexec\fR'd to
 evaluate each file.  The multi-process operation is useful
-when testing can cause errors so severe that a process 
+when testing can cause errors so severe that a process
 terminates.  Although such an error may terminate a child
 process evaluating one file, the master process can continue
 with the rest of the test suite.  In multi-process operation,
@@ -748,17 +848,19 @@ The \fBconfigure\fR command is used to set and query the configurable
 options of \fBtcltest\fR.  The valid options are:
 .TP
 \fB\-singleproc \fIboolean\fR
+.
 Controls whether or not \fBrunAllTests\fR spawns a child process for
 each test file.  No spawning when \fIboolean\fR is true.  Default
 value is false.
 .TP
 \fB\-debug \fIlevel\fR
+.
 Sets the debug level to \fIlevel\fR, an integer value indicating how
-much debugging information should be printed to stdout.  Note that
-debug messages always go to stdout, independent of the value of
+much debugging information should be printed to \fBstdout\fR.  Note that
+debug messages always go to \fBstdout\fR, independent of the value of
 \fBconfigure \-outfile\fR.  Default value is 0.  Levels are defined as:
 .RS
-.IP 0
+.IP 0 4
 Do not display any debug information.
 .IP 1
 Display information regarding whether a test is skipped because it
@@ -769,41 +871,55 @@ print warnings about possible lack of cleanup or balance in test files.
 Also print warnings about any re-use of test names.
 .IP 2
 Display the flag array parsed by the command line processor, the
-contents of the ::env array, and all user-defined variables that exist
-in the current namespace as they are used.
+contents of the global \fBenv\fR array, and all user-defined variables
+that exist in the current namespace as they are used.
 .IP 3
 Display information regarding what individual procs in the test
 harness are doing.
 .RE
 .TP
 \fB\-verbose \fIlevel\fR
+.
 Sets the type of output verbosity desired to \fIlevel\fR,
 a list of zero or more of the elements \fBbody\fR, \fBpass\fR,
-\fBskip\fR, \fBstart\fR, \fBerror\fR and \fBline\fR.  Default value
-is \fB{body error}\fR.
-Levels are defined as: 
+\fBskip\fR, \fBstart\fR, \fBerror\fR, \fBline\fR, \fBmsec\fR and \fBusec\fR.
+Default value is
+.QW "\fBbody error\fR" .
+Levels are defined as:
 .RS
-.IP "body (b)"
+.IP "body (\fBb\fR)"
 Display the body of failed tests
-.IP "pass (p)"
+.IP "pass (\fBp\fR)"
 Print output when a test passes
-.IP "skip (s)"
+.IP "skip (\fBs\fR)"
 Print output when a test is skipped
-.IP "start (t)"
+.IP "start (\fBt\fR)"
 Print output whenever a test starts
-.IP "error (e)"
+.IP "error (\fBe\fR)"
 Print errorInfo and errorCode, if they exist, when a test return code
 does not match its expected return code
-.IP "line (l)"
+.IP "line (\fBl\fR)"
 Print source file line information of failed tests
-.RE
+.IP "msec (\fBm\fR)"
+Print each test's execution time in milliseconds
+.IP "usec (\fBu\fR)"
+Print each test's execution time in microseconds
+.PP
+Note that the \fBmsec\fR and \fBusec\fR verbosity levels are provided as
+indicative measures only. They do not tackle the problem of repeatibility which
+should be considered in performance tests or benchmarks. To use these verbosity
+levels to thoroughly track performance degradations, consider wrapping your
+test bodies with \fBtime\fR commands.
+.PP
 The single letter abbreviations noted above are also recognized
 so that
 .QW "\fBconfigure \-verbose pt\fR"
 is the same as
 .QW "\fBconfigure \-verbose {pass start}\fR" .
+.RE
 .TP
 \fB\-preservecore \fIlevel\fR
+.
 Sets the core preservation level to \fIlevel\fR.  This level
 determines how stringent checks for core files are.  Default
 value is 0.  Levels are defined as:
@@ -815,21 +931,24 @@ test files have been evaluated.
 .IP 1
 Also check for core files at the end of each \fBtest\fR command.
 .IP 2
-Check for core files at all times described above, and save a 
+Check for core files at all times described above, and save a
 copy of each core file produced in \fBconfigure \-tmpdir\fR.
 .RE
 .TP
 \fB\-limitconstraints \fIboolean\fR
+.
 Sets the mode by which \fBtest\fR honors constraints as described
 in \fBTESTS\fR above.  Default value is false.
 .TP
 \fB\-constraints \fIlist\fR
+.
 Sets all the constraints in \fIlist\fR to true.  Also used in
 combination with \fBconfigure \-limitconstraints true\fR to control an
 alternative constraint mode as described in \fBTESTS\fR above.
 Default value is an empty list.
 .TP
 \fB\-tmpdir \fIdirectory\fR
+.
 Sets the temporary directory to be used by \fBmakeFile\fR,
 \fBmakeDirectory\fR, \fBviewFile\fR, \fBremoveFile\fR,
 and \fBremoveDirectory\fR as the default directory where
@@ -837,55 +956,66 @@ temporary files and directories created by test files should
 be created.  Default value is \fBworkingDirectory\fR.
 .TP
 \fB\-testdir \fIdirectory\fR
+.
 Sets the directory searched by \fBrunAllTests\fR for test files
 and subdirectories.  Default value is \fBworkingDirectory\fR.
 .TP
 \fB\-file \fIpatternList\fR
+.
 Sets the list of patterns used by \fBrunAllTests\fR to determine
 what test files to evaluate.  Default value is
 .QW \fB*.test\fR .
 .TP
 \fB\-notfile \fIpatternList\fR
+.
 Sets the list of patterns used by \fBrunAllTests\fR to determine
 what test files to skip.  Default value is
 .QW \fBl.*.test\fR ,
 so that any SCCS lock files are skipped.
 .TP
 \fB\-relateddir \fIpatternList\fR
+.
 Sets the list of patterns used by \fBrunAllTests\fR to determine
 what subdirectories to search for an \fBall.tcl\fR file.  Default
 value is
 .QW \fB*\fR .
 .TP
 \fB\-asidefromdir \fIpatternList\fR
+.
 Sets the list of patterns used by \fBrunAllTests\fR to determine
 what subdirectories to skip when searching for an \fBall.tcl\fR file.
 Default value is an empty list.
 .TP
 \fB\-match \fIpatternList\fR
+.
 Set the list of patterns used by \fBtest\fR to determine whether
 a test should be run.  Default value is
 .QW \fB*\fR .
 .TP
 \fB\-skip \fIpatternList\fR
+.
 Set the list of patterns used by \fBtest\fR to determine whether
 a test should be skipped.  Default value is an empty list.
 .TP
 \fB\-load \fIscript\fR
+.
 Sets a script to be evaluated by \fBloadTestedCommands\fR.
 Default value is an empty script.
 .TP
 \fB\-loadfile \fIfilename\fR
+.
 Sets the filename from which to read a script to be evaluated
 by \fBloadTestedCommands\fR.  This is an alternative to
 \fB\-load\fR.  They cannot be used together.
 .TP
-\fB\-outfile \fIfilename\fR 
+\fB\-outfile \fIfilename\fR
+.
 Sets the file to which all output produced by tcltest should be
 written.  A file named \fIfilename\fR will be \fBopen\fRed for writing,
 and the resulting channel will be set as the value of \fBoutputChannel\fR.
 .TP
 \fB\-errfile \fIfilename\fR
+.
 Sets the file to which all error output produced by tcltest
 should be written.  A file named \fIfilename\fR will be \fBopen\fRed
 for writing, and the resulting channel will be set as the value
@@ -948,12 +1078,14 @@ Test with a constraint.
 .PP
 At the next higher layer of organization, several \fBtest\fR commands
 are gathered together into a single test file.  Test files should have
-names with the \fB.test\fR extension, because that is the default pattern
+names with the
+.QW \fB.test\fR
+extension, because that is the default pattern
 used by \fBrunAllTests\fR to find test files.  It is a good rule of
 thumb to have one test file for each source code file of your project.
 It is good practice to edit the test file and the source code file
 together, keeping tests synchronized with code changes.
-.PP 
+.PP
 Most of the code in the test file should be the \fBtest\fR commands.
 Use constraints to skip tests, rather than conditional evaluation
 of \fBtest\fR.
@@ -976,7 +1108,7 @@ guard:
 .PP
 .CS
 if $myRequirement {
-    test badConditionalTest {} {
+    \fBtest\fR badConditionalTest {} {
         #body
     } result
 }
@@ -1066,7 +1198,7 @@ to continue to support existing test suites written to the older
 interface specifications, many of those deprecated commands and
 variables still work as before.  For example, in many circumstances,
 \fBconfigure\fR will be automatically called shortly after
-\fBpackage require tcltest 2.1\fR succeeds with arguments
+\fBpackage require\fR \fBtcltest 2.1\fR succeeds with arguments
 from the variable \fB::argv\fR.  This is to support test suites
 that depend on the old behavior that \fBtcltest\fR was automatically
 configured from command line arguments.  New test files should not
@@ -1076,12 +1208,18 @@ depend on this, but should explicitly include
 eval \fB::tcltest::configure\fR $::argv
 .CE
 .PP
+or
+.PP
+.CS
+\fB::tcltest::configure\fR {*}$::argv
+.CE
+.PP
 to establish a configuration from command line arguments.
 .SH "KNOWN ISSUES"
 There are two known issues related to nested evaluations of \fBtest\fR.
 The first issue relates to the stack level in which test scripts are
 executed.  Tests nested within other tests may be executed at the same
-stack level as the outermost test.  For example, in the following code: 
+stack level as the outermost test.  For example, in the following code:
 .PP
 .CS
 \fBtest\fR level-1.1 {level 1} {
@@ -1093,7 +1231,7 @@ stack level as the outermost test.  For example, in the following code:
 .CE
 .PP
 any script executed in level-2.1 may be executed at the same stack
-level as the script defined for level-1.1.  
+level as the script defined for level-1.1.
 .PP
 In addition, while two \fBtest\fRs have been run, results will only
 be reported by \fBcleanupTests\fR for tests at the same level as
@@ -1117,12 +1255,15 @@ and
 refer to tests that were run at the same test level as test level-1.1.
 .PP
 Implementation of output and error comparison in the test command
-depends on usage of ::puts in your application code.  Output is
-intercepted by redefining the ::puts command while the defined test
+depends on usage of \fBputs\fR in your application code.  Output is
+intercepted by redefining the global \fBputs\fR command while the defined test
 script is being run.  Errors thrown by C procedures or printed
-directly from C applications will not be caught by the test command.
+directly from C applications will not be caught by the \fBtest\fR command.
 Therefore, usage of the \fB\-output\fR and \fB\-errorOutput\fR
 options to \fBtest\fR is useful only for pure Tcl applications
-that use \fB::puts\fR to produce output. 
+that use \fBputs\fR to produce output.
 .SH KEYWORDS
 test, test harness, test suite
+.\" Local Variables:
+.\" mode: nroff
+.\" End:

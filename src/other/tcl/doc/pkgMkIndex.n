@@ -3,7 +3,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 .TH pkg_mkIndex n 8.3 Tcl "Tcl Built-In Commands"
 .so man.macros
 .BS
@@ -12,7 +12,7 @@
 pkg_mkIndex \- Build an index for automatic loading of packages
 .SH SYNOPSIS
 .nf
-\fBpkg_mkIndex ?\fI\-direct\fR?  ?\fI\-lazy\fR?  ?\fI\-load pkgPat\fR? ?\fI\-verbose\fR? \fIdir\fR ?\fIpattern pattern ...\fR?
+\fBpkg_mkIndex\fR ?\fIoptions...\fR? \fIdir\fR ?\fIpattern pattern ...\fR?
 .fi
 .BE
 .SH DESCRIPTION
@@ -47,7 +47,7 @@ interpreter and seeing what packages
 and new commands appear (this is why it is essential to have
 \fBpackage provide\fR commands or \fBTcl_PkgProvide\fR calls
 in the files, as described above).
-If you have a package split among scripts and binary files, 
+If you have a package split among scripts and binary files,
 or if you have dependencies among files,
 you may have to use the \fB\-load\fR option
 or adjust the order in which \fBpkg_mkIndex\fR processes
@@ -112,7 +112,7 @@ The index process will pre-load any packages that exist in the
 current interpreter and match \fIpkgPat\fR into the slave interpreter used to
 generate the index.  The pattern match uses string match rules, but without
 making case distinctions.
-See COMPLEX CASES below.
+See \fBCOMPLEX CASES\fR below.
 .TP 15
 \fB\-verbose\fR
 Generate output during the indexing process.  Output is via
@@ -132,7 +132,7 @@ version control:  several versions of a package can be made available
 in the index files, with different applications using different
 versions based on \fBpackage require\fR commands.
 In contrast, \fBauto_mkindex\fR does not understand versions so
-it can only handle a single version of each package. 
+it can only handle a single version of each package.
 It is probably not a good idea to index a given package with both
 \fBpkg_mkIndex\fR and \fBauto_mkindex\fR.
 If you use \fBpkg_mkIndex\fR to index a package, its commands cannot
@@ -153,7 +153,7 @@ commands for each version of each available package;  these commands
 invoke \fBpackage provide\fR commands to announce the
 availability of the package, and they setup auto-loader
 information to load the files of the package.
-If the \fI\-lazy\fR flag was provided when the \fBpkgIndex.tcl\fR
+If the \fB\-lazy\fR flag was provided when the \fBpkgIndex.tcl\fR
 was generated,
 a given file of a given version of a given package is not
 actually loaded until the first time one of its commands
@@ -168,7 +168,7 @@ commands or those which require special initialization, might select
 that their package files be loaded immediately upon \fBpackage require\fR
 instead of delaying the actual loading to the first use of one of the
 package's command. This is the default mode when generating the package
-index.  It can be overridden by specifying the \fI\-lazy\fR argument.
+index.  It can be overridden by specifying the \fB\-lazy\fR argument.
 .SH "COMPLEX CASES"
 Most complex cases of dependencies among scripts
 and binary files, and packages being split among scripts and
@@ -228,3 +228,6 @@ the binary file may mask the package defined by the scripts.
 package(n)
 .SH KEYWORDS
 auto-load, index, package, version
+'\"Local Variables:
+'\"mode: nroff
+'\"End:

@@ -1,4 +1,4 @@
-'\" 
+'\"
 '\" Copyright (c) 1995-1996 Sun Microsystems, Inc.
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
@@ -39,7 +39,8 @@ The options described below are supported for all channels. In addition,
 each channel type may add options that only it supports. See the manual
 entry for the command that creates each type of channels for the options
 that that specific type of channel supports. For example, see the manual
-entry for the \fBsocket\fR command for its additional options.
+entry for the \fBsocket\fR command for additional options for sockets, and
+the \fBopen\fR command for additional options for serial devices.
 .TP
 \fB\-blocking\fR \fIboolean\fR
 The \fB\-blocking\fR option determines whether I/O operations on the
@@ -71,8 +72,8 @@ initially set to \fBline\fR, and \fBstderr\fR is set to \fBnone\fR.
 .
 \fINewvalue\fR must be an integer; its value is used to set the size of
 buffers, in bytes, subsequently allocated for this channel to store input
-or output. \fINewvalue\fR must be between ten and one million, allowing
-buffers of ten to one million bytes in size.
+or output. \fINewvalue\fR must be between one and one million, allowing
+buffers of one to one million bytes in size.
 .TP
 \fB\-encoding\fR \fIname\fR
 .
@@ -124,7 +125,7 @@ generate an error.
 .TP
 \fB\-translation\fR \fImode\fR
 .TP
-\fB\-translation\fR \fB{\fIinMode outMode\fB}\fR 
+\fB\-translation\fR \fB{\fIinMode outMode\fB}\fR
 .
 In Tcl scripts the end of a line is always represented using a single
 newline character (\en).  However, in actual files and devices the end of
@@ -162,7 +163,7 @@ Tcl chooses \fBcrlf\fR, for all Unix flavors, it chooses \fBlf\fR, and
 for the various flavors of Windows it chooses \fBcrlf\fR.  The default
 setting for \fB\-translation\fR is \fBauto\fR for both input and output.
 .TP
-\fBbinary\fR 
+\fBbinary\fR
 .
 No end-of-line translations are performed.  This is nearly identical to
 \fBlf\fR mode, except that in addition \fBbinary\fR mode also sets the
@@ -213,34 +214,38 @@ If, for example, a Tcl application is started by the \fBinet\fR
 super-server common on Unix system its Tcl standard channels will be
 sockets and thus support the socket options.
 .SH EXAMPLES
+.PP
 Instruct Tcl to always send output to \fBstdout\fR immediately,
 whether or not it is to a terminal:
+.PP
 .CS
 \fBfconfigure\fR stdout -buffering none
 .CE
 .PP
 Open a socket and read lines from it without ever blocking the
 processing of other events:
+.PP
 .CS
 set s [socket some.where.com 12345]
 \fBfconfigure\fR $s -blocking 0
 fileevent $s readable "readMe $s"
 proc readMe chan {
-   if {[gets $chan line] < 0} {
-      if {[eof $chan]} {
-         close $chan
-         return
-      }
-      # Could not read a complete line this time; Tcl's
-      # internal buffering will hold the partial line for us
-      # until some more data is available over the socket.
-   } else {
-      puts stdout $line
-   }
+    if {[gets $chan line] < 0} {
+        if {[eof $chan]} {
+            close $chan
+            return
+        }
+        # Could not read a complete line this time; Tcl's
+        # internal buffering will hold the partial line for us
+        # until some more data is available over the socket.
+    } else {
+        puts stdout $line
+    }
 }
 .CE
 .PP
 Read a PPM-format image from a file:
+.PP
 .CS
 # Open the file and put it into Unix ASCII mode
 set f [open teapot.ppm]
@@ -248,16 +253,16 @@ set f [open teapot.ppm]
 
 # Get the header
 if {[gets $f] ne "P6"} {
-   error "not a raw\-bits PPM"
+    error "not a raw\-bits PPM"
 }
 
 # Read lines until we have got non-comment lines
 # that supply us with three decimal values.
 set words {}
 while {[llength $words] < 3} {
-   gets $f line
-   if {[string match "#*" $line]} continue
-   lappend words {*}[join [scan $line %d%d%d]]
+    gets $f line
+    if {[string match "#*" $line]} continue
+    lappend words {*}[join [scan $line %d%d%d]]
 }
 
 # Those words supply the size of the image and its
@@ -272,12 +277,13 @@ set data [read $f $numDataBytes]
 
 close $f
 .CE
-
 .SH "SEE ALSO"
 close(n), flush(n), gets(n), open(n), puts(n), read(n), socket(n),
 Tcl_StandardChannels(3)
-
 .SH KEYWORDS
 blocking, buffering, carriage return, end of line, flushing, linemode,
 newline, nonblocking, platform, translation, encoding, filter, byte array,
 binary
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

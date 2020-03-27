@@ -3,7 +3,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 .TH Tcl_UtfToUpper 3 "8.1" Tcl "Tcl Library Procedures"
 .so man.macros
 .BS
@@ -33,7 +33,7 @@ int
 .SH ARGUMENTS
 .AS char *str in/out
 .AP int ch in
-The Tcl_UniChar to be converted.
+The Unicode character to be converted.
 .AP char *str in/out
 Pointer to UTF-8 string to be converted in place.
 .BE
@@ -80,9 +80,10 @@ and all following characters into their lower-case equivalents.
 
 .SH BUGS
 .PP
-At this time, the case conversions are only defined for the ISO8859-1
-characters.  Unicode characters above 0x00ff are not modified by these
-routines.
+At this time, the case conversions are only defined for the Unicode
+plane 0 characters.  The result for Unicode characters above 0xffff
+is undefined, but - actually - only the lower 16 bits of the
+character value is handled.
 
 .SH KEYWORDS
 utf, unicode, toupper, tolower, totitle, case

@@ -16,6 +16,12 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
     namespace import -force ::tcltest::*
 }
 
+::tcltest::loadTestedCommands
+catch [list package require -exact Tcltest [info patchlevel]]
+
+testConstraint testpurebytesobj [llength [info commands testpurebytesobj]]
+
+
 test lrange-1.1 {range of list elements} {
     lrange {a b c d} 1 2
 } {b c}
@@ -61,6 +67,7 @@ test lrange-1.14 {range of list elements} {
 test lrange-1.15 {range of list elements} {
     concat \"[lrange {a b \{\   	} 0 2]"
 } {"a b \{\ "}
+# emacs highlighting bug workaround --> "
 test lrange-1.16 {list element quoting} {
     lrange {[append a .b]} 0 end    
 } {{[append} a .b\]}
@@ -84,6 +91,68 @@ test lrange-2.6 {error conditions} {
     list [catch {lrange "a b c \{ d e" 1 4} msg] $msg
 } {1 {unmatched open brace in list}}
 
+test lrange-3.1 {Bug 3588366: end-offsets before start} {
+    apply {l {
+	lrange $l 0 end-5
+    }} {1 2 3 4 5}
+} {}
+
+test lrange-3.2 {compiled with static indices out of range, negative} {
+    list [lrange {a b c} -1 -2] [lrange {a b c} -2 -1] [lrange {a b c} -3 -2] [lrange {a b c} -2 -3]
+} [lrepeat 4 {}]
+test lrange-3.3 {compiled with calculated indices out of range, negative constant} {
+    list [lrange {a b c} 0-1 -1-1] [lrange {a b c} -2+0 0-1] [lrange {a b c} -2-1 -2+1] [lrange {a b c} -2+1 -2-1]
+} [lrepeat 4 {}]
+test lrange-3.4 {compiled with calculated indices out of range, after end} {
+    list [lrange {a b c} end+1 end+2] [lrange {a b c} end+2 end+1] [lrange {a b c} end+2 end+3] [lrange {a b c} end+3 end+2]
+} [lrepeat 4 {}]
+
+test lrange-3.5 {compiled with calculated indices, start out of range (negative)} {
+    list [lrange {a b c} -1 1] [lrange {a b c} -1+0 end-1] [lrange {a b c} -2 1] [lrange {a b c} -2+0 0+1]
+} [lrepeat 4 {a b}]
+test lrange-3.6 {compiled with calculated indices, end out of range (after end)} {
+    list [lrange {a b c} 1 end+1] [lrange {a b c} 1+0 2+1] [lrange {a b c} 1 end+1] [lrange {a b c} end-1 3+1]
+} [lrepeat 4 {b c}]
+
+test lrange-3.7a {compiled on empty not canonical list (with static and dynamic indices), regression test, bug [cc1e91552c]} {
+    list [lrange { } 0 1] [lrange [format %c 32] 0 1] [lrange [set a { }] 0 1] \
+	 [lrange { } 0-1 end+1] [lrange [format %c 32] 0-1 end+1] [lrange $a 0-1 end+1]
+} [lrepeat 6 {}]
+test lrange-3.7b {not compiled on empty not canonical list (with static and dynamic indices), regression test, bug [cc1e91552c]} {
+    set cmd lrange
+    list [$cmd { } 0 1] [$cmd [format %c 32] 0 1] [$cmd [set a { }] 0 1] \
+	 [$cmd { } 0-1 end+1] [$cmd [format %c 32] 0-1 end+1] [$cmd $a 0-1 end+1]
+} [lrepeat 6 {}]
+# following 4 tests could cause a segfault on empty non-lists with tclEmptyStringRep
+# (as before the fix [58c46e74b931d3a1]):
+test lrange-3.7a.2 {compiled on empty not list object, 2nd regression test, bug [cc1e91552c]} {
+    list [lrange {} 0 1] [lrange [lindex a -1] 0 1] [lrange [set a {}] 0 1] \
+	 [lrange {} 0-1 end+1] [lrange [lindex a -1] 0-1 end+1] [lrange $a 0-1 end+1]
+} [lrepeat 6 {}]
+test lrange-3.7b.2 {not compiled on empty not list object, 2nd regression test, bug [cc1e91552c]} {
+    set cmd lrange
+    list [$cmd {} 0 1] [$cmd [lindex a -1] 0 1] [$cmd [set a {}] 0 1] \
+	 [$cmd {} 0-1 end+1] [$cmd [lindex a -1] 0-1 end+1] [$cmd $a 0-1 end+1]
+} [lrepeat 6 {}]
+test lrange-3.7c.2 {compiled on empty pure bytes object, 2nd regression test, bug [cc1e91552c]} -constraints {
+    testpurebytesobj
+} -body {
+    list [lrange [testpurebytesobj] 0 1] [lrange [testpurebytesobj { }] 0 1] [lrange [set a [testpurebytesobj {}]] 0 1] \
+	 [lrange [testpurebytesobj] 0-1 end+1] [lrange [testpurebytesobj { }] 0-1 end+1] [lrange $a 0-1 end+1]
+} -result [lrepeat 6 {}]
+test lrange-3.7d.2 {not compiled on empty pure bytes object, 2nd regression test, bug [cc1e91552c]} -constraints {
+    testpurebytesobj
+} -body {
+    set cmd lrange
+    list [$cmd [testpurebytesobj] 0 1] [$cmd [testpurebytesobj { }] 0 1] [$cmd [set a [testpurebytesobj {}]] 0 1] \
+	 [$cmd [testpurebytesobj] 0-1 end+1] [$cmd [testpurebytesobj { }] 0-1 end+1] [$cmd $a 0-1 end+1]
+} -result [lrepeat 6 {}]
+
+
 # cleanup
 ::tcltest::cleanupTests
 return
+
+# Local Variables:
+# mode: tcl
+# End:

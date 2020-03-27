@@ -14,6 +14,9 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
     namespace import -force ::tcltest::*
 }
 
+::tcltest::loadTestedCommands
+catch [list package require -exact Tcltest [info patchlevel]]
+
 testConstraint testfindexecutable [llength [info commands testfindexecutable]]
 
 set oldpwd [pwd]

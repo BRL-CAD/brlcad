@@ -18,6 +18,9 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
     namespace import -force ::tcltest::*
 }
 
+::tcltest::loadTestedCommands
+catch [list package require -exact Tcltest [info patchlevel]]
+
 testConstraint testevent [llength [info commands testevent]]
 
 test notify-1.1 {Tcl_QueueEvent and delivery of a single event} \

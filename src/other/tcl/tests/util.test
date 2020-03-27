@@ -12,6 +12,11 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
     namespace import -force ::tcltest::*
 }
 
+::tcltest::loadTestedCommands
+catch [list package require -exact Tcltest [info patchlevel]]
+
+testConstraint controversialNaN 1
+testConstraint testbytestring [llength [info commands testbytestring]]
 testConstraint testdstring [llength [info commands testdstring]]
 testConstraint testconcatobj [llength [info commands testconcatobj]]
 testConstraint testdoubledigits [llength [info commands testdoubledigits]]
@@ -203,7 +208,7 @@ test util-4.6 {Tcl_ConcatObj - utf-8 sequence with "whitespace" char} {
 } \xe0
 test util-4.7 {Tcl_ConcatObj - refCount safety} testconcatobj {
     # Check for Bug #1447328 (actually, bugs in its original "fix"). One of the
-    # symptoms was Bug #2055782. 
+    # symptoms was Bug #2055782.
     testconcatobj
 } {}
 
@@ -270,10 +275,10 @@ test util-5.17 {Tcl_StringMatch: UTF-8} {
     # get 1 UTF-8 character
     Wrapper_Tcl_StringMatch "a\[a\u4e4fc]c" "a\u4e4fc"
 } 1
-test util-5.18 {Tcl_StringMatch: UTF-8} {
+test util-5.18 {Tcl_StringMatch: UTF-8} testbytestring {
     # pattern += Tcl_UtfToUniChar(pattern, &endChar);
     # proper advance: wrong answer would match on UTF trail byte of \u4e4f
-    Wrapper_Tcl_StringMatch {a[a\u4e4fc]c} [bytestring a\u008fc]
+    Wrapper_Tcl_StringMatch {a[a\u4e4fc]c} [testbytestring a\u008fc]
 } 0
 test util-5.19 {Tcl_StringMatch: UTF-8} {
     # pattern += Tcl_UtfToUniChar(pattern, &endChar);
@@ -561,7 +566,7 @@ test util-9.1.3 {TclGetIntForIndex} {
 } k
 test util-9.2.0 {TclGetIntForIndex} {
     string index abcd end
-} d 
+} d
 test util-9.2.1 {TclGetIntForIndex} -body {
     string index abcd { end}
 } -returnCodes error -match glob -result *
@@ -1143,22 +1148,26 @@ test util-11.23 {Tcl_PrintDouble - scaling} {
     expr 1.1e17
 } {1.1e+17}
 
-test util-12.1 {Tcl_DoubleDigits - Inf} {testdoubledigits ieeeFloatingPoint} {
+test util-12.1 {TclDoubleDigits - Inf} {testdoubledigits ieeeFloatingPoint} {
      testdoubledigits Inf -1 shortest
 } {Infinity 9999 +}
-test util-12.2 {Tcl_DoubleDigits - -Inf} {testdoubledigits ieeeFloatingPoint} {
+test util-12.2 {TclDoubleDigits - -Inf} {testdoubledigits ieeeFloatingPoint} {
      testdoubledigits -Inf -1 shortest
 } {Infinity 9999 -}
-test util-12.3 {Tcl_DoubleDigits - NaN} {testdoubledigits ieeeFloatingPoint} {
+test util-12.3 {TclDoubleDigits - NaN} {testdoubledigits ieeeFloatingPoint} {
      testdoubledigits $ieeeValues(NaN) -1 shortest
 } {NaN 9999 +}
-test util-12.4 {Tcl_DoubleDigits - NaN} {testdoubledigits ieeeFloatingPoint} {
-     testdoubledigits -NaN -1 shortest
-} {NaN 9999 -}
-test util-12.5 {Tcl_DoubleDigits - 0} testdoubledigits {
+test util-12.4 {TclDoubleDigits - NaN} {*}{
+     -constraints {testdoubledigits ieeeFloatingPoint controversialNaN}
+     -body {
+	 testdoubledigits -NaN -1 shortest
+     }
+    -result {NaN 9999 -}
+}
+test util-12.5 {TclDoubleDigits - 0} testdoubledigits {
      testdoubledigits 0.0 -1 shortest
 } {0 0 +}
-test util-12.6 {Tcl_DoubleDigits - -0} testdoubledigits {
+test util-12.6 {TclDoubleDigits - -0} testdoubledigits {
      testdoubledigits -0.0 -1 shortest
 } {0 0 -}
 
@@ -2007,7 +2016,7 @@ test util-13.120 {just under half ulp - 11 digits} {*}{
 }
 
 test util-14.1 {funky NaN} {*}{
-    -constraints ieeeFloatingPoint
+    -constraints {ieeeFloatingPoint controversialNaN}
     -body {
 	set ieeeValues(-NaN)
     }
@@ -2015,7 +2024,7 @@ test util-14.1 {funky NaN} {*}{
 }
 
 test util-14.2 {funky NaN} {*}{
-    -constraints ieeeFloatingPoint
+    -constraints {ieeeFloatingPoint controversialNaN}
     -body {
 	set ieeeValues(-NaN(3456789abcdef))
     }
@@ -3998,7 +4007,7 @@ test util-17.1 {bankers' rounding [Bug 3349507]} {ieeeFloatingPoint} {
     }
     set r
 } [list {*}{
-    0x43fffffffffffffc 0xc3fffffffffffffc 
+    0x43fffffffffffffc 0xc3fffffffffffffc
     0x43fffffffffffffc 0xc3fffffffffffffc
     0x43fffffffffffffd 0xc3fffffffffffffd
     0x43fffffffffffffe 0xc3fffffffffffffe
@@ -4009,6 +4018,7 @@ test util-17.1 {bankers' rounding [Bug 3349507]} {ieeeFloatingPoint} {
 }]
 
 set ::tcl_precision $saved_precision
+
 # cleanup
 ::tcltest::cleanupTests
 return

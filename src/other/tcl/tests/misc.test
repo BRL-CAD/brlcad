@@ -17,6 +17,9 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
     namespace import -force ::tcltest::*
 }
 
+::tcltest::loadTestedCommands
+catch [list package require -exact Tcltest [info patchlevel]]
+
 testConstraint testhashsystemhash [llength [info commands testhashsystemhash]]
 
 test misc-1.1 {error in variable ref. in command in array reference} {
@@ -56,12 +59,7 @@ test misc-1.2 {error in variable ref. in command in array reference} {
 missing close-brace for variable name
 missing close-brace for variable name
     while executing
-"set tst $a([winfo name $\{zz)
-	# this is a bogus comment
-	# this is a bogus comment
-	# this is a bogus comment
-	# this is a bogus comment
-	# this is a ..."
+"set tst $a([winfo name $\{"
     (procedure "tstProc" line 4)
     invoked from within
 "tstProc"}]

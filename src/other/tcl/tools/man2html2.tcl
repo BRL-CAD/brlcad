@@ -114,9 +114,9 @@ proc text string {
 
     set pos [string first "\t" $string]
     if {$pos >= 0} {
-    	text [string range $string 0 [expr $pos-1]]
+    	text [string range $string 0 [expr {$pos-1}]]
     	tab
-    	text [string range $string [expr $pos+1] end]
+    	text [string range $string [expr {$pos+1}] end]
 	return
     }
     if {$inTable} {
@@ -471,27 +471,27 @@ proc formattedText text {
 	    text $text
 	    return
 	}
-	text [string range $text 0 [expr $index-1]]
-	set c [string index $text [expr $index+1]]
+	text [string range $text 0 [expr {$index-1}]]
+	set c [string index $text [expr {$index+1}]]
 	switch -- $c {
 	    f {
-		font [string index $text [expr $index+2]]
-		set text [string range $text [expr $index+3] end]
+		font [string index $text [expr {$index+2}]]
+		set text [string range $text [expr {$index+3}] end]
 	    }
 	    e {
 		text \\
-		set text [string range $text [expr $index+2] end]
+		set text [string range $text [expr {$index+2}] end]
 	    }
 	    - {
 		dash
-		set text [string range $text [expr $index+2] end]
+		set text [string range $text [expr {$index+2}] end]
 	    }
 	    | {
-		set text [string range $text [expr $index+2] end]
+		set text [string range $text [expr {$index+2}] end]
 	    }
 	    default {
 		puts stderr "Unknown sequence: \\$c"
-		set text [string range $text [expr $index+2] end]
+		set text [string range $text [expr {$index+2}] end]
 	    }
 	}
     }
@@ -527,7 +527,7 @@ proc tab {} {
     global inPRE charCnt tabString file
 #	? charCnt
     if {$inPRE == 1} {
-	set pos [expr $charCnt % [string length $tabString] ]
+	set pos [expr {$charCnt % [string length $tabString]}]
 	set spaces [string first "1" [string range $tabString $pos end] ]
 	text [format "%*s" [incr spaces] " "]
     } else {

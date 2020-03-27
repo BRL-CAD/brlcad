@@ -1,4 +1,4 @@
-.\" -*- nroff -*-
+.\"
 .\" Copyright (c) 2006-2007 Donal K. Fellows.
 .\"
 .\" See the file "license.terms" for information on usage and redistribution
@@ -138,7 +138,7 @@ that the following command returns a true value (omitting the namespace for
 clarity):
 .PP
 .CS
-\fB==\fR [\fB*\fR [\fB/\fI x y\fR] \fIy\fR] [\fB-\fI x\fR [\fB%\fI x y\fR]]
+\fB==\fR [\fB*\fR [\fB/\fI x y\fR] \fIy\fR] [\fB\-\fI x\fR [\fB%\fI x y\fR]]
 .CE
 .RE
 .TP
@@ -151,10 +151,11 @@ is the same as
 .QW "\fB** 2 [** 3 4]\fR" .
 Each \fInumber\fR may be
 any numeric value, though the second number must not be fractional if the
-first is negative. If no arguments are given, the result will be one, and if
-only one argument is given, the result will be that argument. The
-result will have an integral value only when all arguments are
-integral values.
+first is negative.  The maximum exponent value that Tcl can handle if the
+first number is an integer > 1 is 268435455. If no arguments are given,
+the result will be one, and if only one argument is given, the result will
+be that argument. The result will have an integral value only when all
+arguments are integral values.
 .SS "COMPARISON OPERATORS"
 .PP
 The behaviors of the comparison operator commands (most of which operate
@@ -277,9 +278,11 @@ Returns whether the value \fIarg\fR is present in the list \fIlist\fR
 Returns whether the value \fIarg\fR is not present in the list \fIlist\fR
 (according to exact string comparison of elements).
 .SH EXAMPLES
+.PP
 The simplest way to use the operators is often by using \fBnamespace path\fR
 to make the commands available. This has the advantage of not affecting the
 set of commands defined by the current namespace.
+.PP
 .CS
 namespace path {\fB::tcl::mathop\fR ::tcl::mathfunc}
 
@@ -303,3 +306,6 @@ set sorted [\fB<=\fR {*}$list]
 expr(n), mathfunc(n), namespace(n)
 .SH KEYWORDS
 command, expression, operator
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

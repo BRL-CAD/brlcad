@@ -4,7 +4,7 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
+'\"
 .TH Tcl_TranslateFileName 3 8.1 Tcl "Tcl Library Procedures"
 .so man.macros
 .BS
@@ -29,20 +29,19 @@ At the time of the call it should be uninitialized or free.  The
 caller must eventually call \fBTcl_DStringFree\fR to free up
 anything stored here.
 .BE
-
 .SH DESCRIPTION
 .PP
 This utility procedure translates a file name to a platform-specific form
 which, after being converted to the appropriate encoding, is suitable for
 passing to the local operating system.  In particular, it converts
-network names into native form and does tilde substitution.  
+network names into native form and does tilde substitution.
 .PP
 However, with the advent of the newer \fBTcl_FSGetNormalizedPath\fR and
-\fBTcl_GetNativePath\fR, there is no longer any need to use this
-procedure.  In particular, \fBTcl_GetNativePath\fR performs all the
+\fBTcl_FSGetNativePath\fR, there is no longer any need to use this
+procedure.  In particular, \fBTcl_FSGetNativePath\fR performs all the
 necessary translation and encoding conversion, is virtual-filesystem
 aware, and caches the native result for faster repeated calls.
-Finally \fBTcl_GetNativePath\fR does not require you to free anything
+Finally \fBTcl_FSGetNativePath\fR does not require you to free anything
 afterwards.
 .PP
 If
@@ -66,9 +65,7 @@ frees the dynamic string itself so that the caller need not call
 .PP
 The caller is responsible for making sure that the interpreter's result
 has its default empty value when \fBTcl_TranslateFileName\fR is invoked.
-
 .SH "SEE ALSO"
-filename
-
+filename(n)
 .SH KEYWORDS
 file name, home directory, tilde, translate, user

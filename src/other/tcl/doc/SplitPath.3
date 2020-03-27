@@ -43,7 +43,7 @@ A pointer to an initialized \fBTcl_DString\fR to which the result of
 
 .SH DESCRIPTION
 .PP
-These procedures have been superceded by the objectified procedures in
+These procedures have been superseded by the Tcl-value-aware procedures in
 the \fBFileSystem\fR man page, which are more efficient.
 .PP
 These procedures may be used to disassemble and reassemble file
@@ -59,6 +59,7 @@ holds copies of all the path elements.  It is the caller's
 responsibility to free all of this storage.
 For example, suppose that you have called \fBTcl_SplitPath\fR with the
 following code:
+.PP
 .CS
 int argc;
 char *path;
@@ -66,8 +67,10 @@ char **argv;
 \&...
 Tcl_SplitPath(string, &argc, &argv);
 .CE
+.PP
 Then you should eventually free the storage with a call like the
 following:
+.PP
 .CS
 Tcl_Free((char *) argv);
 .CE
