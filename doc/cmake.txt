@@ -1,0 +1,49 @@
+Some design notes for CMake build logic:
+
+
+Generator expressions have the potential (I think) to at least conceptually
+clean up some of our mult-config aware logic.  The key is to make logic that
+can write the necessary text files (pkgindex files for Tcl, for example) at
+build time.
+
+
+The below example generates a file with file paths at build
+time based on the current configuration:
+
+add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/info.txt
+  COMMAND ${CMAKE_COMMAND}  -DOUT_DIR=${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR} -DCURR_CONFIG="$<CONFIG>" -P ${CMAKE_CURRENT_SOURCE_DIR}/info.cmake
+  )
+add_custom_target(info DEPENDS ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/info.txt)
+
+info.cmake contains:
+
+set(OUTFILE "${OUT_DIR}/info.txt")
+#get_filename_component(OUTFILE "${OUT_DIR}/info.txt" REALPATH)
+function(WRITE_INFO_FILE)
+  file(WRITE "${OUTFILE}" "Current config: ${CURR_CONFIG}")
+  message("Wrote ${OUTFILE}")
+endfunction(WRITE_INFO_FILE)
+WRITE_INFO_FILE()
+
+The "get_filename_component" call is not strictly necessary but can be used for
+path outputs that are easier to read.
+
+
+
+For outputs needing to know specific target file locations:
+
+add_custom_command(OUTPUT ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib.txt
+  COMMAND ${CMAKE_COMMAND}  -DOUT_DIR=${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR} -DLIB_FILE="$<TARGET_FILE:zlib>" -P ${CMAKE_CURRENT_SOURCE_DIR}/lib.cmake
+  )
+add_custom_target(lib DEPENDS ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/lib.txt)
+
+with lib.cmake:
+
+set(OUTFILE "${OUT_DIR}/lib.txt")
+#get_filename_component(OUTFILE "${OUT_DIR}/info.txt" REALPATH)
+function(WRITE_LIB_INFO_FILE)
+  file(WRITE "${OUTFILE}" "Current library output location: ${LIB_FILE}")
+  message("Wrote ${OUTFILE}")
+endfunction(WRITE_LIB_INFO_FILE)
+WRITE_LIB_INFO_FILE()
+
