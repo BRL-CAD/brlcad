@@ -233,7 +233,6 @@ CMAKEFILES(
   implicit_constraints.txt
   lcov.txt
   pad_file.xml.in
-  trunk_hierarchy.org
   )
 
 # Generic C/C++ examples
