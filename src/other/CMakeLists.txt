@@ -55,7 +55,7 @@ set(SUPPRESS_GENERATED_TAG TRUE)
 # Custom patch utility for external RPath preparation
 include(ExternalProject)
 # Note- make sure CMAKE_BINARY_DIR and CMAKE_INSTALL_PREFIX are finalized BEFORE including this file!
-include(${BRLCAD_CMAKE_DIR}/ExternalProject_Target.cmake)
+include(ExternalProject_Target)
 
 # External build outputs can be verbose - capture them to files instead of
 # outputting to console

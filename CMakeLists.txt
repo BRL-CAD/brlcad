@@ -37,52 +37,540 @@
 #       See the COPYING file for more details.
 #
 # ******************************************************************
-#
-# Early versions of this CMakeLists.txt file were based on the VTK
-# CMakeLists.txt file, also licensed under Modified BSD.
-
-# *******************************************************************
-# ***                 BRL-CAD's CMakeLists.txt                    ***
-# *******************************************************************
-#
-# This file defines the toplevel CMake build logic for BRL-CAD.
-# As best as is reasonably possible, proper ordering and
-# separation of tests and settings should be maintained per the
-# recommended standard layout.  The tests should be added to the
-# labeled sections below so that they are organized in stages as
-# follows:
-#
-#   Stage 0 - information on the package and toplevel CMake settings
-#   Stage 1 - define top level options
-#   Stage 2 - check programs
-#   Stage 3 - check compiler characteristics
-#   Stage 4 - check libraries
-#   Stage 5 - check headers
-#   Stage 6 - check types/structures
-#   Stage 7 - check functions
-#   Stage 8 - check system services
-#   Stage 9 - define the BRL-CAD build targets
-#
-# The output summary should report key information about the final
-# configuration of the build.  Comprehensive information is available
-# in the CMake cache file in the build directory, so just hit the
-# high points in the summary.
-#
-# After the main configure process is finished, a summary is printed
-# and various settings and configuration files that require full
-# knowledge of the main configure results are handled.
-#
-# *******************************************************************
-# ***                 Top Level Settings                          ***
-# *******************************************************************
-# This file contains the top level CMakeLists.txt logic for the
-# BRL-CAD software package.
 
 # Minimum required version of CMake
 cmake_minimum_required(VERSION 3.12)
 
 # set CMake project name
 project(BRLCAD)
+
+#---------------------------------------------------------------------
+# Let CMake know where to look for our counting file for configuration
+# passes.  It will impact whether we print certain messages
+set(BRLCAD_CNT_FILE "${BRLCAD_BINARY_DIR}/CMakeTmp/BRLCAD_BUILD_COUNT")
+if(NOT EXISTS ${BRLCAD_CNT_FILE})
+  set(BRLCAD_PRINT_MSGS 1)
+else(NOT EXISTS ${BRLCAD_CNT_FILE})
+  set(BRLCAD_PRINT_MSGS 0)
+endif(NOT EXISTS ${BRLCAD_CNT_FILE})
+
+#---------------------------------------------------------------------
+# CMake derives much of its functionality from modules, typically
+# stored in one directory - let CMake know where to find them.  If we
+# are a subbuild, let the parent's CMAKE_MODULE_PATH supply files before
+# our own, otherwise misc/CMake takes first priority.
+set(BRLCAD_CMAKE_DIR "${BRLCAD_SOURCE_DIR}/misc/CMake")
+list(APPEND CMAKE_MODULE_PATH "${BRLCAD_CMAKE_DIR}")
+
+# We will need to define a number of dependent options early on
+include(CMakeDependentOption)
+include(BRLCAD_Options)
+
+# Build shared libs by default.  Mark this as advanced - turning off
+# ALL shared library building is unlikely to result in a working build
+# and is not a typical configuration.  Note that turning this option off
+# will not disable libraries specifically added as SHARED.
+option(BUILD_SHARED_LIBS "Build shared libraries" ON)
+mark_as_advanced(BUILD_SHARED_LIBS)
+
+# Build static libs by default unless we're debugging. Note: this
+# option will not disable libraries specifically added as STATIC even
+# when OFF.  For multi-configuration options the build type determination
+# is made at build time, so just default to "ON".
+cmake_dependent_option(BUILD_STATIC_LIBS "Build static libraries" ON "CMAKE_CONFIGURATION_TYPES OR NOT \"${CMAKE_BUILD_TYPE}\" STREQUAL Debug" OFF)
+
+# Turn off the brlcad.dll build.
+# It's an expert's setting at the moment.
+option(BRLCAD_ENABLE_BRLCAD_LIBRARY "Build the brlcad.dll" OFF)
+mark_as_advanced(BRLCAD_ENABLE_BRLCAD_LIBRARY)
+
+# Global third party controls - these options enable and disable ALL
+# local copies of libraries in src/other.  Forcing all local
+# libraries off is not usually recommended unless attempting to
+# build packages for a distribution.  If both of these options are
+# on the enabling of local packages is the "senior" option and will
+# force the system libs option to off.
+set(BRLCAD_BUNDLED_LIBS_DESCRIPTION "
+Enables compilation of all 3rd party sources that are provided within a BRL-CAD
+source distribution.  If used this option sets all other 3rd party library
+build flags to ON by default.  However, that setting can be overridden by
+manually setting individual variables. Default is \"AUTO\" - 3rd party sources
+are compiled only if they are not detected as being available and functioning
+as expected.
+")
+if(MSVC)
+  set(BRLCAD_BUNDLED_LIBS_DEFAULT "BUNDLED")
+else(MSVC)
+  set(BRLCAD_BUNDLED_LIBS_DEFAULT "AUTO")
+endif(MSVC)
+BRLCAD_OPTION(BRLCAD_BUNDLED_LIBS ${BRLCAD_BUNDLED_LIBS_DEFAULT}
+  TYPE ABS
+  ALIASES ENABLE_ALL
+  DESCRIPTION BRLCAD_BUNDLED_LIBS_DESCRIPTION)
+if(NOT BRLCAD_BUNDLED_LIBS MATCHES "AUTO" AND NOT BRLCAD_BUNDLED_LIBS MATCHES "BUNDLED" AND NOT BRLCAD_BUNDLED_LIBS MATCHES "SYSTEM")
+  message(WARNING "Unknown value BRLCAD_BUNDLED_LIBS supplied for BRLCAD_BUNDLED_LIBS (${BRLCAD_BUNDLED_LIBS}) - defaulting to AUTO")
+  message(WARNING "Valid options are AUTO, BUNDLED and SYSTEM")
+  set(BRLCAD_BUNDLED_LIBS "AUTO" CACHE STRING "Build bundled libraries." FORCE)
+endif(NOT BRLCAD_BUNDLED_LIBS MATCHES "AUTO" AND NOT BRLCAD_BUNDLED_LIBS MATCHES "BUNDLED" AND NOT BRLCAD_BUNDLED_LIBS MATCHES "SYSTEM")
+
+# Enable Aqua widgets on Mac OSX.  This impacts Tcl/Tk building and OpenGL
+# building. Not currently working - needs work in at least Tk
+# CMake logic (probably more), and the display manager/framebuffer codes are known to depend
+# on either GLX or WGL specifically in their current forms.
+option(BRLCAD_ENABLE_AQUA "Use Aqua instead of X11 whenever possible on OSX." OFF)
+mark_as_advanced(BRLCAD_ENABLE_AQUA)
+
+# Single flag for disabling GUI instead of 5.
+option(BRLCAD_ENABLE_MINIMAL "Skip GUI support and docs. Faster builds." OFF)
+mark_as_advanced(BRLCAD_ENABLE_MINIMAL)
+if(BRLCAD_ENABLE_MINIMAL)
+  set(BRLCAD_ENABLE_OPENGL "OFF")
+  set(BRLCAD_ENABLE_X11 "OFF")
+  set(BRLCAD_ENABLE_TK "OFF")
+  set(BRLCAD_ENABLE_QT "OFF")
+  set(BRLCAD_ENABLE_AQUA "OFF")
+  set(BRLCAD_EXTRADOCS "OFF")
+endif(BRLCAD_ENABLE_MINIMAL)
+
+# Install example BRL-CAD Geometry Files
+option(BRLCAD_INSTALL_EXAMPLE_GEOMETRY "Install the example BRL-CAD geometry files." ON)
+
+# test for X11 on all platforms since we don't know when/where we'll find it, unless
+# we've indicated we *don't* want an X11 build
+if(NOT BRLCAD_ENABLE_AQUA AND NOT BRLCAD_ENABLE_MINIMAL)
+  include(FindX11)
+endif(NOT BRLCAD_ENABLE_AQUA AND NOT BRLCAD_ENABLE_MINIMAL)
+
+# make sure Xi is included in the list of X11 libs
+# (Xext is automatically added during FindX11)
+if(X11_Xi_FOUND)
+    set(X11_LIBRARIES ${X11_LIBRARIES} ${X11_Xi_LIB})
+endif(X11_Xi_FOUND)
+
+# Set whether X11 is enabled or disabled by default
+if(WIN32)
+  # even if there is x11, we default to native
+  option(BRLCAD_ENABLE_X11 "Use X11." OFF)
+elseif(BRLCAD_ENABLE_AQUA)
+  # aqua implies no X11
+  option(BRLCAD_ENABLE_X11 "Use X11." OFF)
+else(WIN32)
+  # make everywhere else depend on whether we found a suitable X11
+  # X11_Xext_LIB AND X11_Xi_LIB AND
+  if(X11_FOUND AND NOT BRLCAD_ENABLE_MINIMAL)
+    option(BRLCAD_ENABLE_X11 "Use X11." ON)
+  else(X11_FOUND AND NOT BRLCAD_ENABLE_MINIMAL)
+    option(BRLCAD_ENABLE_X11 "Use X11." OFF)
+  endif(X11_FOUND AND NOT BRLCAD_ENABLE_MINIMAL)
+endif(WIN32)
+mark_as_advanced(BRLCAD_ENABLE_X11)
+
+# if X11 is enabled, make sure aqua is off
+if(BRLCAD_ENABLE_X11)
+  set(BRLCAD_ENABLE_AQUA OFF CACHE STRING "Don't use Aqua if we're doing X11" FORCE)
+  set(OPENGL_USE_AQUA OFF CACHE STRING "Don't use Aqua if we're doing X11" FORCE)
+endif(BRLCAD_ENABLE_X11)
+mark_as_advanced(OPENGL_USE_AQUA)
+
+# Enable/disable features requiring the Tk toolkit - usually this should
+# be on, as a lot of functionality in BRL-CAD depends on Tk
+option(BRLCAD_ENABLE_TK "Enable features requiring the Tk toolkit" ON)
+mark_as_advanced(BRLCAD_ENABLE_TK)
+if(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
+  set(BRLCAD_ENABLE_TK OFF)
+endif(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
+if(BRLCAD_ENABLE_X11)
+  set(TK_X11_GRAPHICS ON CACHE STRING "Need X11 Tk" FORCE)
+endif(BRLCAD_ENABLE_X11)
+
+# Enable features requiring OPENGL
+# Be smart about this - if we don't have X11 or Aqua and we're
+# not on Windows, we're non-graphical and that means OpenGL is
+# a no-go.  The Windows version would have to be some sort of
+# option for the WIN32 graphics layer?  Should probably think
+# about that... for now, on Win32 don't try OpenGL if Tk is
+# off.  That'll hold until we get a non-Tk based GUI - then
+# setting non-graphical on Windows will take more thought.
+if(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
+  set(OPENGL_FOUND OFF)
+  set(BRLCAD_ENABLE_OPENGL OFF CACHE BOOL "Disabled - NOT BRLCAD_ENABLE_X11 and NOT BRLCAD_ENABLE_AQUA" FORCE)
+else(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
+  include(FindGL)
+endif(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
+
+set(BRLCAD_ENABLE_OPENGL_DESCRIPTION "
+Enable support for OpenGL based Display Managers in BRL-CAD.
+Default depends on whether OpenGL is successfully detected -
+if it is, default is to enable.
+")
+BRLCAD_OPTION(BRLCAD_ENABLE_OPENGL ${OPENGL_FOUND}
+  TYPE BOOL
+  ALIASES ENABLE_OPENGL
+  DESCRIPTION BRLCAD_ENABLE_OPENGL_DESCRIPTION)
+
+# Enable RTGL.  Requires an enabled OpenGL.
+option(BRLCAD_ENABLE_RTGL "Enable experimental RTGL code." OFF)
+mark_as_advanced(BRLCAD_ENABLE_RTGL)
+if(NOT BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_RTGL)
+  message("RTGL requested, but OpenGL is not enabled - disabling")
+  set(BRLCAD_ENABLE_RTGL OFF CACHE BOOL "Enable experimental RTGL code." FORCE)
+endif(NOT BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_RTGL)
+if(NOT BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_RTGL)
+  message("RTGL currently works only with GLX, and X11 is not enabled - disabling")
+  set(BRLCAD_ENABLE_RTGL OFF CACHE BOOL "Enable experimental RTGL code." FORCE)
+endif(NOT BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_RTGL)
+if(BRLCAD_ENABLE_AQUA)
+  set(OPENGL_USE_AQUA ON CACHE STRING "Aqua enabled - use Aqua OpenGL" FORCE)
+endif(BRLCAD_ENABLE_AQUA)
+
+# Enable features requiring Bullet Physics SDK
+option(BRLCAD_ENABLE_BULLET "Enable features requiring the Bullet Physics Library" OFF)
+if(BRLCAD_ENABLE_BULLET)
+  message("Bullet support is not currently working - disabling.")
+  set(BRLCAD_ENABLE_BULLET OFF CACHE BOOL "Currently broken" FORCE)
+endif(BRLCAD_ENABLE_BULLET)
+mark_as_advanced(BRLCAD_ENABLE_BULLET)
+
+# Enable features requiring GDAL geospatial library
+option(BRLCAD_ENABLE_GDAL "Enable features requiring the Geospatial Data Abstraction Library" ON)
+mark_as_advanced(BRLCAD_ENABLE_GDAL)
+
+# Enable features requiring Qt
+# TODO - try COMPONENTS search: https://blog.kitware.com/cmake-finding-qt5-the-right-way/
+find_package(Qt5Widgets QUIET)
+option(BRLCAD_ENABLE_QT "Enable features requiring Qt" OFF)
+mark_as_advanced(BRLCAD_ENABLE_QT)
+mark_as_advanced(Qt5Core_DIR)
+mark_as_advanced(Qt5Gui_DIR)
+if(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
+  message("QT interface requested, but QT5 is not found - disabling")
+  set(BRLCAD_ENABLE_QT OFF)
+endif(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
+mark_as_advanced(Qt5Widgets_DIR)
+
+# Enable features requiring OpenSceneGraph
+option(BRLCAD_ENABLE_OSG "Enable features requiring OpenSceneGraph" OFF)
+mark_as_advanced(BRLCAD_ENABLE_OSG)
+if(BRLCAD_ENABLE_OSG)
+  if(APPLE AND NOT BRLCAD_ENABLE_AQUA)
+    set(OSG_WINDOWING_SYSTEM "X11" CACHE STRING "Use X11" FORCE)
+  endif(APPLE AND NOT BRLCAD_ENABLE_AQUA)
+endif(BRLCAD_ENABLE_OSG)
+
+# Enable features requiring GCT
+option(BRLCAD_ENABLE_GCT "Enable features requiring GCT" ON)
+mark_as_advanced(BRLCAD_ENABLE_GCT)
+
+# Enable features requiring OpenCL
+option(BRLCAD_ENABLE_OPENCL "Enable features requiring OpenCL" OFF)
+mark_as_advanced(BRLCAD_ENABLE_OPENCL)
+if(BRLCAD_ENABLE_OPENCL)
+  find_package(OpenCL)
+  if(NOT OPENCL_FOUND)
+    message("OpenCL enablement requested, but OpenCL is not found - disabling")
+    set(BRLCAD_ENABLE_OPENCL OFF)
+  endif(NOT OPENCL_FOUND)
+endif(BRLCAD_ENABLE_OPENCL)
+
+# Enable features requiring OpenVDB
+option(BRLCAD_ENABLE_OPENVDB "Enable features requiring OpenVDB" OFF)
+mark_as_advanced(BRLCAD_ENABLE_OPENVDB)
+if(BRLCAD_ENABLE_OPENVDB)
+  find_package(OpenVDB)
+  if(NOT OpenVDB_FOUND)
+    message("OpenVDB enablement requested, but OpenVDB is not found - disabling")
+    set(BRLCAD_ENABLE_OPENVDB OFF)
+  endif(NOT OpenVDB_FOUND)
+endif(BRLCAD_ENABLE_OPENVDB)
+
+# Enable experimental support for binary attributes
+option(BRLCAD_ENABLE_BINARY_ATTRIBUTES "Enable support for binary attributes" OFF)
+mark_as_advanced(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
+
+#----------------------------------------------------------------------
+# The following are fine-grained options for enabling/disabling compiler
+# and source code definition settings.  Typically these are set to
+# various configurations by the toplevel CMAKE_BUILD_TYPE setting, but
+# can also be individually set.
+
+# Enable/disable runtime debugging - these are protections for
+# minimizing the possibility of corrupted data files.  Generally
+# speaking these should be left on.
+set(BRLCAD_ENABLE_RUNTIME_DEBUG_ALIASES
+  ENABLE_RUNTIME_DEBUG
+  ENABLE_RUN_TIME_DEBUG
+  ENABLE_RUNTIME_DEBUGGING
+  ENABLE_RUN_TIME_DEBUGGING)
+set(BRLCAD_ENABLE_RUNTIME_DEBUG_DESCRIPTION "
+Enables support for application and library debugging facilities.
+Disabling the run-time debugging facilities can provide a significant
+(10%-30%) performance boost at the expense of extensive error
+checking (that in turn help prevent corruption of your data).
+Default is \"ON\", and should only be disabled for read-only render
+work where performance is critical.
+")
+BRLCAD_OPTION(BRLCAD_ENABLE_RUNTIME_DEBUG ON
+  TYPE BOOL
+  ALIASES ${BRLCAD_ENABLE_RUNTIME_DEBUG_ALIASES}
+  DESCRIPTION BRLCAD_ENABLE_RUNTIME_DEBUG_DESCRIPTION)
+mark_as_advanced(BRLCAD_ENABLE_RUNTIME_DEBUG)
+
+# Enable debug flags during compilation - we always want to use these
+# unless explicitly told not to.
+set(BRLCAD_FLAGS_DEBUG_DESCRIPTION "
+Add compiler flags to aid in program debugging.  Defaults to ON.
+")
+BRLCAD_OPTION(BRLCAD_FLAGS_DEBUG ON
+  TYPE BOOL
+  ALIASES ENABLE_DEBUG ENABLE_FLAGS_DEBUG ENABLE_DEBUG_FLAGS
+  DESCRIPTION BRLCAD_FLAGS_DEBUG_DESCRIPTION)
+
+# Build with compiler warning flags
+set(BRLCAD_ENABLE_COMPILER_WARNINGS_DESCRIPTION "
+Use extra compiler warning flags when compiling C/C++ code.  Defaults to ON.
+")
+BRLCAD_OPTION(BRLCAD_ENABLE_COMPILER_WARNINGS ON
+  TYPE BOOL
+  ALIASES ENABLE_WARNINGS ENABLE_COMPILER_WARNINGS
+  DESCRIPTION BRLCAD_ENABLE_COMPILER_WARNINGS_DESCRIPTION)
+mark_as_advanced(BRLCAD_ENABLE_COMPILER_WARNINGS)
+
+# Enable/disable strict compiler settings - these are used for building
+# BRL-CAD by default, but not src/other code.  Always used for BRL-CAD
+# code unless the NO_STRICT option is specified when defining a target
+# with BRLCAD_ADDEXEC or BRLCAD_ADDLIB.  If only C++ files in a target
+# are not compatible with strict, the NO_STRICT_CXX option can be used.
+set(BRLCAD_ENABLE_STRICT_DESCRIPTION "
+Causes all compilation warnings for C code to be treated as errors.  This is now
+the default for BRL-CAD source code, and developers should address issues
+discovered by these flags whenever possible rather than disabling strict
+mode.
+")
+BRLCAD_OPTION(BRLCAD_ENABLE_STRICT ON
+  TYPE BOOL
+  ALIASES ENABLE_STRICT ENABLE_STRICT_COMPILE ENABLE_STRICT_COMPILE_FLAGS
+  DESCRIPTION BRLCAD_ENABLE_STRICT_DESCRIPTION)
+if(BRLCAD_ENABLE_STRICT)
+  mark_as_advanced(BRLCAD_ENABLE_STRICT)
+endif(BRLCAD_ENABLE_STRICT)
+
+# Build with compiler optimization flags.  This should normally be on for
+# release builds and off otherwise, unless the user specifically enables it.
+# For multi-config build tools, this is managed on a per-configuration basis.
+if(CMAKE_BUILD_TYPE)
+  cmake_dependent_option(BRLCAD_OPTIMIZED_BUILD "Enable optimized build flags" ON "${CMAKE_BUILD_TYPE} STREQUAL Release" OFF)
+else(CMAKE_BUILD_TYPE)
+  # Note: the cmake_dependent_option test doesn't work if CMAKE_BUILD_TYPE isn't set.
+  option(BRLCAD_OPTIMIZED_BUILD "Enable optimized build flags" OFF)
+endif(CMAKE_BUILD_TYPE)
+mark_as_advanced(BRLCAD_OPTIMIZED_BUILD)
+
+# Build with full compiler lines visible by default (won't need make
+# VERBOSE=1) on command line
+option(BRLCAD_ENABLE_VERBOSE_PROGRESS "verbose output" OFF)
+mark_as_advanced(BRLCAD_ENABLE_VERBOSE_PROGRESS)
+if(BRLCAD_ENABLE_VERBOSE_PROGRESS)
+  set(CMAKE_VERBOSE_MAKEFILE ON)
+endif(BRLCAD_ENABLE_VERBOSE_PROGRESS)
+
+# Build with profile-guided optimization support.  this requires a
+# two-pass compile, once with BRLCAD_PGO=ON on a location that did not
+# exist beforehand (specified via the PGO_PATH environment variable),
+# and again to use profiling metrics captured on "typical" operations
+# and data.  By default, path is BUILDDIR/profiling
+
+option(BRLCAD_PGO "Enable profile-guided optimization (set PGO_PATH environment variable)")
+mark_as_advanced(BRLCAD_PGO)
+
+#====== ALL CXX COMPILE ===================
+# Build all C and C++ files with a C++ compiler
+set(ENABLE_ALL_CXX_COMPILE_DESCRIPTION "
+Build all C and C++ files with a C++ compiler.  Defaults to OFF.
+
+EXPERIMENTAL!
+")
+BRLCAD_OPTION(ENABLE_ALL_CXX_COMPILE OFF
+  TYPE BOOL
+  ALIASES ENABLE_ALL_CXX
+  DESCRIPTION ENABLE_ALL_CXX_COMPILE_DESCRIPTION)
+mark_as_advanced(ENABLE_ALL_CXX_COMPILE)
+
+# Build with coverage enabled
+option(BRLCAD_ENABLE_COVERAGE "Build with coverage enabled" OFF)
+mark_as_advanced(BRLCAD_ENABLE_COVERAGE)
+
+# Build with dtrace support
+option(BRLCAD_ENABLE_DTRACE "Build with dtrace support" OFF)
+mark_as_advanced(BRLCAD_ENABLE_DTRACE)
+if(BRLCAD_ENABLE_DTRACE)
+  BRLCAD_INCLUDE_FILE(sys/sdt.h HAVE_SYS_SDT_H)
+  if(NOT HAVE_SYS_SDT_H)
+    set(BRLCAD_ENABLE_DTRACE OFF)
+  endif(NOT HAVE_SYS_SDT_H)
+endif(BRLCAD_ENABLE_DTRACE)
+
+# Take advantage of parallel processors if available - highly recommended
+option(BRLCAD_ENABLE_SMP "Enable SMP architecture parallel computation support" ON)
+mark_as_advanced(BRLCAD_ENABLE_SMP)
+
+#----------------------------------------------------------------------
+# There are extra documentation files available requiring DocBook
+# They are quite useful in graphical interfaces, but also add considerably
+# to the overall build time.  If necessary BRL-CAD provides its own
+# xsltproc (see src/other/xmltools), so the html and man page
+# outputs are always potentially available.  PDF output, on the other hand,
+# needs Apache FOP.  FOP is not a candidate for bundling with BRL-CAD for
+# a number of reasons, so we simply check to see if it is present and set
+# the options accordingly.
+
+# Do we have the environment variable set locally?
+if(NOT "$ENV{APACHE_FOP}" STREQUAL "")
+  set(APACHE_FOP "$ENV{APACHE_FOP}")
+endif(NOT "$ENV{APACHE_FOP}" STREQUAL "")
+if(NOT APACHE_FOP)
+  find_program(APACHE_FOP fop DOC "path to the exec script for Apache FOP")
+endif(NOT APACHE_FOP)
+mark_as_advanced(APACHE_FOP)
+# We care about the FOP version, unfortunately - find out what we have.
+if(APACHE_FOP)
+  execute_process(COMMAND ${APACHE_FOP} -v OUTPUT_VARIABLE APACHE_FOP_INFO ERROR_QUIET)
+  string(REGEX REPLACE "FOP Version ([0-9\\.]*)" "\\1" APACHE_FOP_VERSION_REGEX "${APACHE_FOP_INFO}")
+  if(APACHE_FOP_VERSION_REGEX)
+    string(STRIP ${APACHE_FOP_VERSION_REGEX} APACHE_FOP_VERSION_REGEX)
+  endif(APACHE_FOP_VERSION_REGEX)
+  if(NOT "${APACHE_FOP_VERSION}" STREQUAL "${APACHE_FOP_VERSION_REGEX}")
+    message("-- Found Apache FOP: version ${APACHE_FOP_VERSION_REGEX}")
+    set(APACHE_FOP_VERSION ${APACHE_FOP_VERSION_REGEX} CACHE STRING "Apache FOP version" FORCE)
+    mark_as_advanced(APACHE_FOP_VERSION)
+  endif(NOT "${APACHE_FOP_VERSION}" STREQUAL "${APACHE_FOP_VERSION_REGEX}")
+endif(APACHE_FOP)
+
+# Toplevel variable that controls all DocBook based documentation.  Key it off
+# of what target level is enabled.
+if(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
+  set(EXTRADOCS_DEFAULT "ON")
+else(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
+  set(EXTRADOCS_DEFAULT "OFF")
+endif(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
+set(BRLCAD_EXTRADOCS_DESCRIPTION "
+The core option that enables and disables building of BRL-CAD's
+DocBook based documentation (includes manuals and man pages for
+commands, among other things).  Defaults to ON, but only HTML and MAN
+formats are enabled by default - PDF must be enabled separately by use
+of this option or one of its aliases.  Note that you may set
+environment variable APACHE_FOP to point to your locally installed fop
+executable file (which on Linux is usually a shell script with 0755
+permissions).
+")
+BRLCAD_OPTION(BRLCAD_EXTRADOCS ${EXTRADOCS_DEFAULT}
+  TYPE BOOL
+  ALIASES ENABLE_DOCS ENABLE_EXTRA_DOCS ENABLE_DOCBOOK
+  DESCRIPTION BRLCAD_EXTRADOCS_DESCRIPTION)
+
+
+# The HTML output is used in the graphical help browsers in MGED and Archer,
+# as well as being the most likely candidate for external viewers. Turn this
+# on unless explicitly instructed otherwise by the user or all extra
+# documentation is disabled.
+CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_HTML "Build MAN page output from DocBook documentation" ON "BRLCAD_EXTRADOCS" OFF)
+mark_as_advanced(BRLCAD_EXTRADOCS_HTML)
+
+CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PHP "Build MAN page output from DocBook documentation" OFF "BRLCAD_EXTRADOCS" OFF)
+mark_as_advanced(BRLCAD_EXTRADOCS_PHP)
+
+CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PPT "Build MAN page output from DocBook documentation" ON "BRLCAD_EXTRADOCS" OFF)
+mark_as_advanced(BRLCAD_EXTRADOCS_PPT)
+
+# Normally, we'll turn on man page output by default, but there is
+# no point in doing man page output for a Visual Studio build - the
+# files aren't useful and it *seriously* increases the target build
+# count/build time.  Conditionalize on the CMake MSVC variable NOT
+# being set.
+CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_MAN "Build MAN page output from DocBook documentation" ON "BRLCAD_EXTRADOCS;NOT MSVC" OFF)
+mark_as_advanced(BRLCAD_EXTRADOCS_MAN)
+
+# Don't do PDF by default because it's pretty expensive, and hide the
+# option unless the tools to do it are present.
+set(BRLCAD_EXTRADOCS_PDF_DESCRIPTION "
+Option that enables building of BRL-CAD's DocBook PDF-based documentation
+(includes manuals and man pages for commands, among
+other things.) Defaults to OFF.
+Note that you may set environment variable APACHE_FOP
+to point to your locally installed fop executable file (which on Linux is
+usually a shell script with 0755 permissions).
+")
+CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PDF "Build PDF output from DocBook documentation" OFF "BRLCAD_EXTRADOCS;APACHE_FOP" OFF)
+
+# Provide an option to enable/disable XML validation as part
+# of the DocBook build - sort of a "strict flags" mode for DocBook.
+# By default, this will be enabled when extra docs are built and
+# the toplevel BRLCAD_ENABLE_STRICT setting is enabled.
+# Unfortunately, Visual Studio 2010 seems to have issues when we
+# enable validation on top of everything else... not clear why,
+# unless build target counts >1800 are beyond MSVC's practical
+# limit.  Until we either find a resolution or a way to reduce
+# the target count on MSVC, disable validation there.
+CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_VALIDATE "Perform validation for DocBook documentation" ON "BRLCAD_EXTRADOCS;BRLCAD_ENABLE_STRICT" OFF)
+mark_as_advanced(BRLCAD_EXTRADOCS_VALIDATE)
+
+
+
+# We need to build at least some third party components, and maybe a lot of
+# them depending on the options.  Now that we know what the high level options
+# are, we know what to do.
+
+# If this is the top level control loop, we're going to build everything
+# (including BRL-CAD itself) as external projects of a superbuild.  That means
+# every option above will have to be passed to the BRL-CAD subbuild (which will
+# use this same CMakeLists.txt file) along with a -DSUBBUILD=1 option to let
+# the logic know it is time to do the main build.
+
+# This is necessary to ensure the ExternalProject_Add dependencies are fully
+# positioned and ready for the main build - CMake has no practical mechanism to
+# ensure all ExternalProject_Add builds and installs are fully complete before
+# trying to build main target object files, which results in build order chaos
+# and unsuccessful compilations.
+if (NOT DEFINED SUBBUILD)
+  message("SUPERBUILD\n")
+
+  # We had to get the feature level variables from the user first, since they
+  # have an impact on whic libraries are required.  That means we'll need to
+  # pass all the BRLCAD_ variable states to the subbuild, since the user should
+  # only specify them once.  The below snippit shows how to retrieve them
+  # (https://stackoverflow.com/a/9328525) but the question of whether we can
+  # programmatically assign them to the arguments of an ExternalProejct_Add
+  # build is open/untested.  Worst case we can generate the project_add
+  # description in a file and include it.
+  get_cmake_property(VARS VARIABLES)
+  list(SORT VARS)
+  foreach(v ${VARS})
+    if ("${v}" MATCHES "^BRLCAD*" AND NOT "${v}" MATCHES "DESCRIPTION$" AND NOT "${v}" MATCHES "AVAILABLE$")
+      message("${v}: ${${v}}")
+    endif ()
+  endforeach(v ${VARS})
+
+  #add_subdirectory(src/superbuild)
+
+  #----------------------------------------------------------------------
+  # Some generators in CMake support generating folders in IDEs for
+  # organizing build targets.  We want to use them if they are there.
+  if(MSVC)
+    set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+  endif(MSVC)
+
+
+
+  # The top level superbuild is done at this point.
+  return()
+endif (NOT DEFINED SUBBUILD)
+
+#----------------------------------------------------------------------
+# Some generators in CMake support generating folders in IDEs for
+# organizing build targets.  We want to use them if they are there.
+if(MSVC)
+  set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+endif(MSVC)
+
 
 #---------------------------------------------------------------------
 # Define the current BRL-CAD version.
@@ -101,19 +589,6 @@ if(DEFINED BRLCAD_VERSION_AMEND)
 endif(DEFINED BRLCAD_VERSION_AMEND)
 
 #---------------------------------------------------------------------
-# Let CMake know where to look for our counting file for configuration
-# passes.  It will impact whether we print certain messages
-set(BRLCAD_CNT_FILE "${BRLCAD_BINARY_DIR}/CMakeTmp/BRLCAD_BUILD_COUNT")
-if(NOT EXISTS ${BRLCAD_CNT_FILE})
-  set(BRLCAD_PRINT_MSGS 1)
-else(NOT EXISTS ${BRLCAD_CNT_FILE})
-  set(BRLCAD_PRINT_MSGS 0)
-endif(NOT EXISTS ${BRLCAD_CNT_FILE})
-
-# We will need to define a number of dependent options early on
-include(CMakeDependentOption)
-
-#---------------------------------------------------------------------
 # Check whether we need to add import/export lines to libraries
 if(MSVC)
   set(CPP_DLL_DEFINES 1)
@@ -126,14 +601,6 @@ mark_as_advanced(USE_OBJECT_LIBS)
 if(USE_OBJECT_LIBS)
   set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 endif(USE_OBJECT_LIBS)
-
-#---------------------------------------------------------------------
-# CMake derives much of its functionality from modules, typically
-# stored in one directory - let CMake know where to find them.  If we
-# are a subbuild, let the parent's CMAKE_MODULE_PATH supply files before
-# our own, otherwise misc/CMake takes first priority.
-set(BRLCAD_CMAKE_DIR "${BRLCAD_SOURCE_DIR}/misc/CMake")
-list(APPEND CMAKE_MODULE_PATH "${BRLCAD_CMAKE_DIR}")
 
 
 #---------------------------------------------------------------------
@@ -669,7 +1136,6 @@ endif(NOT BRLCAD_IS_SUBBUILD)
 #---------------------------------------------------------------------
 # Load macros that will be used to define the BRL-CAD
 # build logic
-include(BRLCAD_Options)
 include(BRLCAD_Targets)
 include(CheckTypeSize)
 include(CheckCSourceCompiles)
@@ -984,6 +1450,48 @@ if(DEFINED BRLCAD_VERSION_AMEND)
   CONFIG_H_APPEND(BRLCAD "#define BRLCAD_VERSION_AMEND ${BRLCAD_VERSION_AMEND}\n")
 endif(DEFINED BRLCAD_VERSION_AMEND)
 
+# A variety of debugging messages in the code key off of the DEBUG
+# definition - set it according to whether we're using debug flags.
+if(BRLCAD_FLAGS_DEBUG)
+  CONFIG_H_APPEND(BRLCAD "#define DEBUG 1\n")
+endif(BRLCAD_FLAGS_DEBUG)
+
+if(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
+  CONFIG_H_APPEND(BRLCAD "#define USE_BINARY_ATTRIBUTES 1\n")
+endif(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
+
+if(NOT BRLCAD_ENABLE_GCT)
+  CONFIG_H_APPEND(BRLCAD "#define BRLCAD_DISABLE_GCT 1\n")
+endif(NOT BRLCAD_ENABLE_GCT)
+
+if(NOT BRLCAD_ENABLE_RUNTIME_DEBUG)
+  message("}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}")
+  message("While disabling run-time debugging should increase")
+  message("performance, it will likewise remove several")
+  message("data-protection safeguards that are in place to")
+  message("minimize the possibility of corrupted data files")
+  message("in the inevitable event of a user encountering a bug.")
+  message("You have been warned.  Proceed at your own risk.")
+  message("{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{")
+  CONFIG_H_APPEND(BRLCAD "/*Define to not do anything for macros that only bomb on a fatal error. */\n")
+  CONFIG_H_APPEND(BRLCAD "#define NO_BOMBING_MACROS 1\n")
+  CONFIG_H_APPEND(BRLCAD "/*Define to not perform magic number checking */\n")
+  CONFIG_H_APPEND(BRLCAD "#define NO_MAGIC_CHECKING 1\n")
+  CONFIG_H_APPEND(BRLCAD "/*Define to not provide run-time debug facilities via RTG.debug */\n")
+  CONFIG_H_APPEND(BRLCAD "#define NO_DEBUG_CHECKING 1\n")
+endif(NOT BRLCAD_ENABLE_RUNTIME_DEBUG)
+
+if(BRLCAD_ENABLE_SMP)
+  CONFIG_H_APPEND(BRLCAD "#define PARALLEL 1\n")
+endif(BRLCAD_ENABLE_SMP)
+
+if(BRLCAD_HEADERS_OLD_COMPAT)
+  add_definitions(-DEXPOSE_FB_HEADER)
+  add_definitions(-DEXPOSE_DM_HEADER)
+endif(BRLCAD_HEADERS_OLD_COMPAT)
+
+
+
 #----------------------------------------------------------------------
 # If we're not debugging, we want HIDDEN to be defined as static.  Set
 # the NDEBUG flag accordingly, and common.h will take it from there.
@@ -1115,539 +1623,6 @@ mark_as_advanced(PREVIOUS_CONFIGURE_TYPE)
 if("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
   set(CMAKE_SUPPRESS_REGENERATION ON)
 endif("${CMAKE_GENERATOR}" MATCHES "Visual Studio")
-
-# *******************************************************************
-if(BRLCAD_PRINT_MSGS)
-  message("***********************************************************")
-  message("*        Stage 1 of 9 - Top Level Configure Options       *")
-  message("***********************************************************")
-endif(BRLCAD_PRINT_MSGS)
-#
-# Now we define the various options for BRL-CAD - ways to enable and
-# disable features, select which parts of the system to build, etc.
-# As much as possible, sane default options are either selected or
-# detected.  Because documentation is autogenerated for BRL-CAD
-# options, be sure to initialize the file.
-set(CONFIG_OPT_STRING "CONFIGURATION OPTIONS\n---------------------\n")
-file(WRITE "${CMAKE_BINARY_DIR}/OPTIONS" "${CONFIG_OPT_STRING}")
-
-# The BRL-CAD CMake build will also generate a configure script
-# that emulates the command option style of GNU Autotool's
-# configure.  Write the pre-defined header into the build-dir template
-# to initialize the file.
-file(REMOVE "${CMAKE_BINARY_DIR}/configure.new")
-file(READ "${BRLCAD_CMAKE_DIR}/configure_prefix.sh" CONFIG_PREFIX)
-file(WRITE "${CMAKE_BINARY_DIR}/configure.new.tmp" "${CONFIG_PREFIX}")
-file(COPY "${CMAKE_BINARY_DIR}/configure.new.tmp" DESTINATION
-  "${CMAKE_BINARY_DIR}/CMakeFiles" FILE_PERMISSIONS OWNER_READ OWNER_WRITE
-  OWNER_EXECUTE GROUP_READ GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-file(REMOVE "${CMAKE_BINARY_DIR}/configure.new.tmp")
-file(RENAME "${CMAKE_BINARY_DIR}/CMakeFiles/configure.new.tmp"
-  "${CMAKE_BINARY_DIR}/configure.new")
-
-# Build shared libs by default.  Mark this as advanced - turning off
-# ALL shared library building is unlikely to result in a working build
-# and is not a typical configuration.  Note that turning this option off
-# will not disable libraries specifically added as SHARED.
-option(BUILD_SHARED_LIBS "Build shared libraries" ON)
-mark_as_advanced(BUILD_SHARED_LIBS)
-
-# Build static libs by default unless we're debugging. Note: this
-# option will not disable libraries specifically added as STATIC even
-# when OFF.  For multi-configuration options the build type determination
-# is made at build time, so just default to "ON".
-if(NOT CMAKE_BUILD_TYPE)
-  set(CBT "MULTICONFIG")
-else(NOT CMAKE_BUILD_TYPE)
-  set(CBT "${CMAKE_BUILD_TYPE}")
-endif(NOT CMAKE_BUILD_TYPE)
-cmake_dependent_option(BUILD_STATIC_LIBS "Build static libraries" ON "CMAKE_CONFIGURATION_TYPES OR NOT ${CBT} STREQUAL Debug" OFF)
-
-# On Mac OS X, it is common to have third party package managers
-# present for easy software installation (currently we're aware of
-# Fink and MacPorts).  This can seriously complicate find_* results,
-# so provide an option to specify whether or which of the third
-# party setup to use.
-include(Fink_MacPorts)
-
-# Turn off the brlcad.dll build.
-# It's an expert's setting at the moment.
-option(BRLCAD_ENABLE_BRLCAD_LIBRARY "Build the brlcad.dll" OFF)
-mark_as_advanced(BRLCAD_ENABLE_BRLCAD_LIBRARY)
-
-# Global third party controls - these options enable and disable ALL
-# local copies of libraries in src/other.  Forcing all local
-# libraries off is not usually recommended unless attempting to
-# build packages for a distribution.  If both of these options are
-# on the enabling of local packages is the "senior" option and will
-# force the system libs option to off.
-set(BRLCAD_BUNDLED_LIBS_DESCRIPTION "
-Enables compilation of all 3rd party sources that are provided within a BRL-CAD
-source distribution.  If used this option sets all other 3rd party library
-build flags to ON by default.  However, that setting can be overridden by
-manually setting individual variables. Default is \"AUTO\" - 3rd party sources
-are compiled only if they are not detected as being available and functioning
-as expected.
-")
-
-if(MSVC)
-  set(BRLCAD_BUNDLED_LIBS_DEFAULT "BUNDLED")
-else(MSVC)
-  set(BRLCAD_BUNDLED_LIBS_DEFAULT "AUTO")
-endif(MSVC)
-BRLCAD_OPTION(BRLCAD_BUNDLED_LIBS ${BRLCAD_BUNDLED_LIBS_DEFAULT}
-  TYPE ABS
-  ALIASES ENABLE_ALL
-  DESCRIPTION BRLCAD_BUNDLED_LIBS_DESCRIPTION)
-if(NOT BRLCAD_BUNDLED_LIBS MATCHES "AUTO" AND NOT BRLCAD_BUNDLED_LIBS MATCHES "BUNDLED" AND NOT BRLCAD_BUNDLED_LIBS MATCHES "SYSTEM")
-  message(WARNING "Unknown value BRLCAD_BUNDLED_LIBS supplied for BRLCAD_BUNDLED_LIBS (${BRLCAD_BUNDLED_LIBS}) - defaulting to AUTO")
-  message(WARNING "Valid options are AUTO, BUNDLED and SYSTEM")
-  set(BRLCAD_BUNDLED_LIBS "AUTO" CACHE STRING "Build bundled libraries." FORCE)
-endif(NOT BRLCAD_BUNDLED_LIBS MATCHES "AUTO" AND NOT BRLCAD_BUNDLED_LIBS MATCHES "BUNDLED" AND NOT BRLCAD_BUNDLED_LIBS MATCHES "SYSTEM")
-
-# Single flag for disabling GUI instead of 5.
-option(BRLCAD_ENABLE_MINIMAL "Skip GUI support and docs. Faster builds." OFF)
-mark_as_advanced(BRLCAD_ENABLE_MINIMAL)
-
-if(BRLCAD_ENABLE_MINIMAL)
-  set(BRLCAD_ENABLE_OPENGL "OFF")
-  set(BRLCAD_ENABLE_X11 "OFF")
-  set(BRLCAD_ENABLE_TK "OFF")
-  set(BRLCAD_ENABLE_QT "OFF")
-  set(BRLCAD_ENABLE_AQUA "OFF")
-  set(BRLCAD_EXTRADOCS "OFF")
-endif(BRLCAD_ENABLE_MINIMAL)
-
-# Enable Aqua widgets on Mac OSX.  This impacts Tcl/Tk building and OpenGL
-# building. Not currently working - needs work in at least Tk
-# CMake logic (probably more), and the display manager/framebuffer codes are known to depend
-# on either GLX or WGL specifically in their current forms.
-option(BRLCAD_ENABLE_AQUA "Use Aqua instead of X11 whenever possible on OSX." OFF)
-mark_as_advanced(BRLCAD_ENABLE_AQUA)
-
-# Install example BRL-CAD Geometry Files
-option(BRLCAD_INSTALL_EXAMPLE_GEOMETRY "Install the example BRL-CAD geometry files." ON)
-
-# test for X11 on all platforms since we don't know when/where we'll find it, unless
-# we've indicated we *don't* want an X11 build
-if(NOT BRLCAD_ENABLE_AQUA AND NOT BRLCAD_ENABLE_MINIMAL)
-  include(FindX11)
-endif(NOT BRLCAD_ENABLE_AQUA AND NOT BRLCAD_ENABLE_MINIMAL)
-
-# make sure Xi is included in the list of X11 libs
-# (Xext is automatically added during FindX11)
-if(X11_Xi_FOUND)
-    set(X11_LIBRARIES ${X11_LIBRARIES} ${X11_Xi_LIB})
-endif(X11_Xi_FOUND)
-
-# Set whether X11 is enabled or disabled by default
-if(WIN32)
-  # even if there is x11, we default to native
-  option(BRLCAD_ENABLE_X11 "Use X11." OFF)
-elseif(BRLCAD_ENABLE_AQUA)
-  # aqua implies no X11
-  option(BRLCAD_ENABLE_X11 "Use X11." OFF)
-else(WIN32)
-  # make everywhere else depend on whether we found a suitable X11
-  # X11_Xext_LIB AND X11_Xi_LIB AND
-  if(X11_FOUND AND NOT BRLCAD_ENABLE_MINIMAL)
-    option(BRLCAD_ENABLE_X11 "Use X11." ON)
-  else(X11_FOUND AND NOT BRLCAD_ENABLE_MINIMAL)
-    option(BRLCAD_ENABLE_X11 "Use X11." OFF)
-  endif(X11_FOUND AND NOT BRLCAD_ENABLE_MINIMAL)
-endif(WIN32)
-mark_as_advanced(BRLCAD_ENABLE_X11)
-
-# if X11 is enabled, make sure aqua is off
-if(BRLCAD_ENABLE_X11)
-  set(BRLCAD_ENABLE_AQUA OFF CACHE STRING "Don't use Aqua if we're doing X11" FORCE)
-  set(OPENGL_USE_AQUA OFF CACHE STRING "Don't use Aqua if we're doing X11" FORCE)
-endif(BRLCAD_ENABLE_X11)
-mark_as_advanced(OPENGL_USE_AQUA)
-
-# Enable/disable features requiring the Tk toolkit - usually this should
-# be on, as a lot of functionality in BRL-CAD depends on Tk
-option(BRLCAD_ENABLE_TK "Enable features requiring the Tk toolkit" ON)
-mark_as_advanced(BRLCAD_ENABLE_TK)
-if(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
-  set(BRLCAD_ENABLE_TK OFF)
-endif(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
-if(BRLCAD_ENABLE_X11)
-  set(TK_X11_GRAPHICS ON CACHE STRING "Need X11 Tk" FORCE)
-endif(BRLCAD_ENABLE_X11)
-
-# Enable features requiring OPENGL
-# Be smart about this - if we don't have X11 or Aqua and we're
-# not on Windows, we're non-graphical and that means OpenGL is
-# a no-go.  The Windows version would have to be some sort of
-# option for the WIN32 graphics layer?  Should probably think
-# about that... for now, on Win32 don't try OpenGL if Tk is
-# off.  That'll hold until we get a non-Tk based GUI - then
-# setting non-graphical on Windows will take more thought.
-if(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
-  set(OPENGL_FOUND OFF)
-  set(BRLCAD_ENABLE_OPENGL OFF CACHE BOOL "Disabled - NOT BRLCAD_ENABLE_X11 and NOT BRLCAD_ENABLE_AQUA" FORCE)
-else(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
-  include(FindGL)
-endif(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
-
-set(BRLCAD_ENABLE_OPENGL_DESCRIPTION "
-Enable support for OpenGL based Display Managers in BRL-CAD.
-Default depends on whether OpenGL is successfully detected -
-if it is, default is to enable.
-")
-BRLCAD_OPTION(BRLCAD_ENABLE_OPENGL ${OPENGL_FOUND}
-  TYPE BOOL
-  ALIASES ENABLE_OPENGL
-  DESCRIPTION BRLCAD_ENABLE_OPENGL_DESCRIPTION)
-
-# Enable RTGL.  Requires an enabled OpenGL.
-option(BRLCAD_ENABLE_RTGL "Enable experimental RTGL code." OFF)
-mark_as_advanced(BRLCAD_ENABLE_RTGL)
-if(NOT BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_RTGL)
-  message("RTGL requested, but OpenGL is not enabled - disabling")
-  set(BRLCAD_ENABLE_RTGL OFF CACHE BOOL "Enable experimental RTGL code." FORCE)
-endif(NOT BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_RTGL)
-if(NOT BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_RTGL)
-  message("RTGL currently works only with GLX, and X11 is not enabled - disabling")
-  set(BRLCAD_ENABLE_RTGL OFF CACHE BOOL "Enable experimental RTGL code." FORCE)
-endif(NOT BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_RTGL)
-if(BRLCAD_ENABLE_AQUA)
-  set(OPENGL_USE_AQUA ON CACHE STRING "Aqua enabled - use Aqua OpenGL" FORCE)
-endif(BRLCAD_ENABLE_AQUA)
-
-# Enable features requiring Bullet Physics SDK
-option(BRLCAD_ENABLE_BULLET "Enable features requiring the Bullet Physics Library" OFF)
-if(BRLCAD_ENABLE_BULLET)
-  message("Bullet support is not currently working - disabling.")
-  set(BRLCAD_ENABLE_BULLET OFF CACHE BOOL "Currently broken" FORCE)
-endif(BRLCAD_ENABLE_BULLET)
-mark_as_advanced(BRLCAD_ENABLE_BULLET)
-
-# Enable features requiring GDAL geospatial library
-option(BRLCAD_ENABLE_GDAL "Enable features requiring the Geospatial Data Abstraction Library" ON)
-mark_as_advanced(BRLCAD_ENABLE_GDAL)
-
-# Enable features requiring Qt
-# TODO - try COMPONENTS search: https://blog.kitware.com/cmake-finding-qt5-the-right-way/
-find_package(Qt5Widgets QUIET)
-option(BRLCAD_ENABLE_QT "Enable features requiring Qt" OFF)
-mark_as_advanced(BRLCAD_ENABLE_QT)
-mark_as_advanced(Qt5Core_DIR)
-mark_as_advanced(Qt5Gui_DIR)
-if(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
-  message("QT interface requested, but QT5 is not found - disabling")
-  set(BRLCAD_ENABLE_QT OFF)
-endif(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
-mark_as_advanced(Qt5Widgets_DIR)
-
-# Enable features requiring OpenSceneGraph
-option(BRLCAD_ENABLE_OSG "Enable features requiring OpenSceneGraph" OFF)
-mark_as_advanced(BRLCAD_ENABLE_OSG)
-if(BRLCAD_ENABLE_OSG)
-  if(APPLE AND NOT BRLCAD_ENABLE_AQUA)
-    set(OSG_WINDOWING_SYSTEM "X11" CACHE STRING "Use X11" FORCE)
-  endif(APPLE AND NOT BRLCAD_ENABLE_AQUA)
-endif(BRLCAD_ENABLE_OSG)
-
-# Enable features requiring GCT
-option(BRLCAD_ENABLE_GCT "Enable features requiring GCT" ON)
-mark_as_advanced(BRLCAD_ENABLE_GCT)
-if(NOT BRLCAD_ENABLE_GCT)
-  CONFIG_H_APPEND(BRLCAD "#define BRLCAD_DISABLE_GCT 1\n")
-endif(NOT BRLCAD_ENABLE_GCT)
-
-# Enable features requiring OpenCL
-option(BRLCAD_ENABLE_OPENCL "Enable features requiring OpenCL" OFF)
-mark_as_advanced(BRLCAD_ENABLE_OPENCL)
-if(BRLCAD_ENABLE_OPENCL)
-  find_package(OpenCL)
-  if(NOT OPENCL_FOUND)
-    message("OpenCL enablement requested, but OpenCL is not found - disabling")
-    set(BRLCAD_ENABLE_OPENCL OFF)
-  endif(NOT OPENCL_FOUND)
-endif(BRLCAD_ENABLE_OPENCL)
-
-# Enable features requiring OpenVDB
-option(BRLCAD_ENABLE_OPENVDB "Enable features requiring OpenVDB" OFF)
-mark_as_advanced(BRLCAD_ENABLE_OPENVDB)
-if(BRLCAD_ENABLE_OPENVDB)
-  find_package(OpenVDB)
-  if(NOT OpenVDB_FOUND)
-    message("OpenVDB enablement requested, but OpenVDB is not found - disabling")
-    set(BRLCAD_ENABLE_OPENVDB OFF)
-  endif(NOT OpenVDB_FOUND)
-endif(BRLCAD_ENABLE_OPENVDB)
-
-# Enable experimental support for binary attributes
-option(BRLCAD_ENABLE_BINARY_ATTRIBUTES "Enable support for binary attributes" OFF)
-mark_as_advanced(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
-if(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
-  CONFIG_H_APPEND(BRLCAD "#define USE_BINARY_ATTRIBUTES 1\n")
-endif(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
-
-#----------------------------------------------------------------------
-# The following are fine-grained options for enabling/disabling compiler
-# and source code definition settings.  Typically these are set to
-# various configurations by the toplevel CMAKE_BUILD_TYPE setting, but
-# can also be individually set.
-
-# Enable/disable runtime debugging - these are protections for
-# minimizing the possibility of corrupted data files.  Generally
-# speaking these should be left on.
-set(BRLCAD_ENABLE_RUNTIME_DEBUG_ALIASES
-  ENABLE_RUNTIME_DEBUG
-  ENABLE_RUN_TIME_DEBUG
-  ENABLE_RUNTIME_DEBUGGING
-  ENABLE_RUN_TIME_DEBUGGING)
-set(BRLCAD_ENABLE_RUNTIME_DEBUG_DESCRIPTION "
-Enables support for application and library debugging facilities.
-Disabling the run-time debugging facilities can provide a significant
-(10%-30%) performance boost at the expense of extensive error
-checking (that in turn help prevent corruption of your data).
-Default is \"ON\", and should only be disabled for read-only render
-work where performance is critical.
-")
-BRLCAD_OPTION(BRLCAD_ENABLE_RUNTIME_DEBUG ON
-  TYPE BOOL
-  ALIASES ${BRLCAD_ENABLE_RUNTIME_DEBUG_ALIASES}
-  DESCRIPTION BRLCAD_ENABLE_RUNTIME_DEBUG_DESCRIPTION)
-mark_as_advanced(BRLCAD_ENABLE_RUNTIME_DEBUG)
-if(NOT BRLCAD_ENABLE_RUNTIME_DEBUG)
-  message("}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}")
-  message("While disabling run-time debugging should increase")
-  message("performance, it will likewise remove several")
-  message("data-protection safeguards that are in place to")
-  message("minimize the possibility of corrupted data files")
-  message("in the inevitable event of a user encountering a bug.")
-  message("You have been warned.  Proceed at your own risk.")
-  message("{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{{")
-  CONFIG_H_APPEND(BRLCAD "/*Define to not do anything for macros that only bomb on a fatal error. */\n")
-  CONFIG_H_APPEND(BRLCAD "#define NO_BOMBING_MACROS 1\n")
-  CONFIG_H_APPEND(BRLCAD "/*Define to not perform magic number checking */\n")
-  CONFIG_H_APPEND(BRLCAD "#define NO_MAGIC_CHECKING 1\n")
-  CONFIG_H_APPEND(BRLCAD "/*Define to not provide run-time debug facilities via RTG.debug */\n")
-  CONFIG_H_APPEND(BRLCAD "#define NO_DEBUG_CHECKING 1\n")
-endif(NOT BRLCAD_ENABLE_RUNTIME_DEBUG)
-
-# Enable debug flags during compilation - we always want to use these
-# unless explicitly told not to.
-set(BRLCAD_FLAGS_DEBUG_DESCRIPTION "
-Add compiler flags to aid in program debugging.  Defaults to ON.
-")
-BRLCAD_OPTION(BRLCAD_FLAGS_DEBUG ON
-  TYPE BOOL
-  ALIASES ENABLE_DEBUG ENABLE_FLAGS_DEBUG ENABLE_DEBUG_FLAGS
-  DESCRIPTION BRLCAD_FLAGS_DEBUG_DESCRIPTION)
-
-# A variety of debugging messages in the code key off of the DEBUG
-# definition - set it according to whether we're using debug flags.
-if(BRLCAD_FLAGS_DEBUG)
-  CONFIG_H_APPEND(BRLCAD "#define DEBUG 1\n")
-endif(BRLCAD_FLAGS_DEBUG)
-
-# Build with compiler warning flags
-set(BRLCAD_ENABLE_COMPILER_WARNINGS_DESCRIPTION "
-Use extra compiler warning flags when compiling C/C++ code.  Defaults to ON.
-")
-BRLCAD_OPTION(BRLCAD_ENABLE_COMPILER_WARNINGS ON
-  TYPE BOOL
-  ALIASES ENABLE_WARNINGS ENABLE_COMPILER_WARNINGS
-  DESCRIPTION BRLCAD_ENABLE_COMPILER_WARNINGS_DESCRIPTION)
-mark_as_advanced(BRLCAD_ENABLE_COMPILER_WARNINGS)
-
-# Enable/disable strict compiler settings - these are used for building
-# BRL-CAD by default, but not src/other code.  Always used for BRL-CAD
-# code unless the NO_STRICT option is specified when defining a target
-# with BRLCAD_ADDEXEC or BRLCAD_ADDLIB.  If only C++ files in a target
-# are not compatible with strict, the NO_STRICT_CXX option can be used.
-set(BRLCAD_ENABLE_STRICT_DESCRIPTION "
-Causes all compilation warnings for C code to be treated as errors.  This is now
-the default for BRL-CAD source code, and developers should address issues
-discovered by these flags whenever possible rather than disabling strict
-mode.
-")
-BRLCAD_OPTION(BRLCAD_ENABLE_STRICT ON
-  TYPE BOOL
-  ALIASES ENABLE_STRICT ENABLE_STRICT_COMPILE ENABLE_STRICT_COMPILE_FLAGS
-  DESCRIPTION BRLCAD_ENABLE_STRICT_DESCRIPTION)
-if(BRLCAD_ENABLE_STRICT)
-  mark_as_advanced(BRLCAD_ENABLE_STRICT)
-endif(BRLCAD_ENABLE_STRICT)
-
-# Build with compiler optimization flags.  This should normally be on for
-# release builds and off otherwise, unless the user specifically enables it.
-# For multi-config build tools, this is managed on a per-configuration basis.
-if(CMAKE_BUILD_TYPE)
-  cmake_dependent_option(BRLCAD_OPTIMIZED_BUILD "Enable optimized build flags" ON "${CMAKE_BUILD_TYPE} STREQUAL Release" OFF)
-else(CMAKE_BUILD_TYPE)
-  # Note: the cmake_dependent_option test doesn't work if CMAKE_BUILD_TYPE isn't set.
-  option(BRLCAD_OPTIMIZED_BUILD "Enable optimized build flags" OFF)
-endif(CMAKE_BUILD_TYPE)
-mark_as_advanced(BRLCAD_OPTIMIZED_BUILD)
-
-# Build with full compiler lines visible by default (won't need make
-# VERBOSE=1) on command line
-option(BRLCAD_ENABLE_VERBOSE_PROGRESS "verbose output" OFF)
-mark_as_advanced(BRLCAD_ENABLE_VERBOSE_PROGRESS)
-if(BRLCAD_ENABLE_VERBOSE_PROGRESS)
-  set(CMAKE_VERBOSE_MAKEFILE ON)
-endif(BRLCAD_ENABLE_VERBOSE_PROGRESS)
-
-# Build with profile-guided optimization support.  this requires a
-# two-pass compile, once with BRLCAD_PGO=ON on a location that did not
-# exist beforehand (specified via the PGO_PATH environment variable),
-# and again to use profiling metrics captured on "typical" operations
-# and data.  By default, path is BUILDDIR/profiling
-
-option(BRLCAD_PGO "Enable profile-guided optimization (set PGO_PATH environment variable)")
-mark_as_advanced(BRLCAD_PGO)
-
-#====== ALL CXX COMPILE ===================
-# Build all C and C++ files with a C++ compiler
-set(ENABLE_ALL_CXX_COMPILE_DESCRIPTION "
-Build all C and C++ files with a C++ compiler.  Defaults to OFF.
-
-EXPERIMENTAL!
-")
-BRLCAD_OPTION(ENABLE_ALL_CXX_COMPILE OFF
-  TYPE BOOL
-  ALIASES ENABLE_ALL_CXX
-  DESCRIPTION ENABLE_ALL_CXX_COMPILE_DESCRIPTION)
-mark_as_advanced(ENABLE_ALL_CXX_COMPILE)
-
-# Build with coverage enabled
-option(BRLCAD_ENABLE_COVERAGE "Build with coverage enabled" OFF)
-mark_as_advanced(BRLCAD_ENABLE_COVERAGE)
-
-# Build with dtrace support
-option(BRLCAD_ENABLE_DTRACE "Build with dtrace support" OFF)
-mark_as_advanced(BRLCAD_ENABLE_DTRACE)
-if(BRLCAD_ENABLE_DTRACE)
-  BRLCAD_INCLUDE_FILE(sys/sdt.h HAVE_SYS_SDT_H)
-  if(NOT HAVE_SYS_SDT_H)
-    set(BRLCAD_ENABLE_DTRACE OFF)
-  endif(NOT HAVE_SYS_SDT_H)
-endif(BRLCAD_ENABLE_DTRACE)
-
-# Take advantage of parallel processors if available - highly recommended
-option(BRLCAD_ENABLE_SMP "Enable SMP architecture parallel computation support" ON)
-mark_as_advanced(BRLCAD_ENABLE_SMP)
-if(BRLCAD_ENABLE_SMP)
-  CONFIG_H_APPEND(BRLCAD "#define PARALLEL 1\n")
-endif(BRLCAD_ENABLE_SMP)
-
-if(BRLCAD_HEADERS_OLD_COMPAT)
-  add_definitions(-DEXPOSE_FB_HEADER)
-  add_definitions(-DEXPOSE_DM_HEADER)
-endif(BRLCAD_HEADERS_OLD_COMPAT)
-
-#----------------------------------------------------------------------
-# Some generators in CMake support generating folders in IDEs for
-# organizing build targets.  We want to use them if they are there.
-if(MSVC)
-  set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-endif(MSVC)
-
-#----------------------------------------------------------------------
-# There are extra documentation files available requiring DocBook
-# They are quite useful in graphical interfaces, but also add considerably
-# to the overall build time.  If necessary BRL-CAD provides its own
-# xsltproc (see src/other/xmltools), so the html and man page
-# outputs are always potentially available.  PDF output, on the other hand,
-# needs Apache FOP.  FOP is not a candidate for bundling with BRL-CAD for
-# a number of reasons, so we simply check to see if it is present and set
-# the options accordingly.
-
-# Do we have the environment variable set locally?
-if(NOT "$ENV{APACHE_FOP}" STREQUAL "")
-  set(APACHE_FOP "$ENV{APACHE_FOP}")
-endif(NOT "$ENV{APACHE_FOP}" STREQUAL "")
-if(NOT APACHE_FOP)
-  find_program(APACHE_FOP fop DOC "path to the exec script for Apache FOP")
-endif(NOT APACHE_FOP)
-mark_as_advanced(APACHE_FOP)
-# We care about the FOP version, unfortunately - find out what we have.
-if(APACHE_FOP)
-  execute_process(COMMAND ${APACHE_FOP} -v OUTPUT_VARIABLE APACHE_FOP_INFO ERROR_QUIET)
-  string(REGEX REPLACE "FOP Version ([0-9\\.]*)" "\\1" APACHE_FOP_VERSION_REGEX "${APACHE_FOP_INFO}")
-  if(APACHE_FOP_VERSION_REGEX)
-    string(STRIP ${APACHE_FOP_VERSION_REGEX} APACHE_FOP_VERSION_REGEX)
-  endif(APACHE_FOP_VERSION_REGEX)
-  if(NOT "${APACHE_FOP_VERSION}" STREQUAL "${APACHE_FOP_VERSION_REGEX}")
-    message("-- Found Apache FOP: version ${APACHE_FOP_VERSION_REGEX}")
-    set(APACHE_FOP_VERSION ${APACHE_FOP_VERSION_REGEX} CACHE STRING "Apache FOP version" FORCE)
-    mark_as_advanced(APACHE_FOP_VERSION)
-  endif(NOT "${APACHE_FOP_VERSION}" STREQUAL "${APACHE_FOP_VERSION_REGEX}")
-endif(APACHE_FOP)
-
-# Toplevel variable that controls all DocBook based documentation.  Key it off
-# of what target level is enabled.
-if(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
-  set(EXTRADOCS_DEFAULT "ON")
-else(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
-  set(EXTRADOCS_DEFAULT "OFF")
-endif(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
-set(BRLCAD_EXTRADOCS_DESCRIPTION "
-The core option that enables and disables building of BRL-CAD's
-DocBook based documentation (includes manuals and man pages for
-commands, among other things).  Defaults to ON, but only HTML and MAN
-formats are enabled by default - PDF must be enabled separately by use
-of this option or one of its aliases.  Note that you may set
-environment variable APACHE_FOP to point to your locally installed fop
-executable file (which on Linux is usually a shell script with 0755
-permissions).
-")
-BRLCAD_OPTION(BRLCAD_EXTRADOCS ${EXTRADOCS_DEFAULT}
-  TYPE BOOL
-  ALIASES ENABLE_DOCS ENABLE_EXTRA_DOCS ENABLE_DOCBOOK
-  DESCRIPTION BRLCAD_EXTRADOCS_DESCRIPTION)
-
-
-# The HTML output is used in the graphical help browsers in MGED and Archer,
-# as well as being the most likely candidate for external viewers. Turn this
-# on unless explicitly instructed otherwise by the user or all extra
-# documentation is disabled.
-CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_HTML "Build MAN page output from DocBook documentation" ON "BRLCAD_EXTRADOCS" OFF)
-mark_as_advanced(BRLCAD_EXTRADOCS_HTML)
-
-CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PHP "Build MAN page output from DocBook documentation" OFF "BRLCAD_EXTRADOCS" OFF)
-mark_as_advanced(BRLCAD_EXTRADOCS_PHP)
-
-CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PPT "Build MAN page output from DocBook documentation" ON "BRLCAD_EXTRADOCS" OFF)
-mark_as_advanced(BRLCAD_EXTRADOCS_PPT)
-
-# Normally, we'll turn on man page output by default, but there is
-# no point in doing man page output for a Visual Studio build - the
-# files aren't useful and it *seriously* increases the target build
-# count/build time.  Conditionalize on the CMake MSVC variable NOT
-# being set.
-CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_MAN "Build MAN page output from DocBook documentation" ON "BRLCAD_EXTRADOCS;NOT MSVC" OFF)
-mark_as_advanced(BRLCAD_EXTRADOCS_MAN)
-
-# Don't do PDF by default because it's pretty expensive, and hide the
-# option unless the tools to do it are present.
-set(BRLCAD_EXTRADOCS_PDF_DESCRIPTION "
-Option that enables building of BRL-CAD's DocBook PDF-based documentation
-(includes manuals and man pages for commands, among
-other things.) Defaults to OFF.
-Note that you may set environment variable APACHE_FOP
-to point to your locally installed fop executable file (which on Linux is
-usually a shell script with 0755 permissions).
-")
-CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PDF "Build PDF output from DocBook documentation" OFF "BRLCAD_EXTRADOCS;APACHE_FOP" OFF)
-
-# Provide an option to enable/disable XML validation as part
-# of the DocBook build - sort of a "strict flags" mode for DocBook.
-# By default, this will be enabled when extra docs are built and
-# the toplevel BRLCAD_ENABLE_STRICT setting is enabled.
-# Unfortunately, Visual Studio 2010 seems to have issues when we
-# enable validation on top of everything else... not clear why,
-# unless build target counts >1800 are beyond MSVC's practical
-# limit.  Until we either find a resolution or a way to reduce
-# the target count on MSVC, disable validation there.
-CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_VALIDATE "Perform validation for DocBook documentation" ON "BRLCAD_EXTRADOCS;BRLCAD_ENABLE_STRICT" OFF)
-mark_as_advanced(BRLCAD_EXTRADOCS_VALIDATE)
 
 
 #----------------------------------------------------------------------
