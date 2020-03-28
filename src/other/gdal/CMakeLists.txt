@@ -107,7 +107,11 @@ add_definitions(-DGNM_ENABLED)
 add_definitions(-DGNMFILE_ENABLED)
 add_definitions(-DGNMDB_ENABLED)
 add_definitions(-DUSE_ONLY_CRYPTODLL_ALG)
-add_definitions(-DINST_DATA=\"${CMAKE_INSTALL_PREFIX}/${DATA_DIR}/gdal\")
+if (NOT DEFINED GDAL_INST_DATA_DIR)
+  add_definitions(-DINST_DATA=\"${CMAKE_INSTALL_PREFIX}/${DATA_DIR}/gdal\")
+else (NOT DEFINED GDAL_INST_DATA_DIR)
+  add_definitions(-DINST_DATA=\"${GDAL_INST_DATA_DIR}/gdal\")
+endif (NOT DEFINED GDAL_INST_DATA_DIR)
 set(HAVE_IEEEFP 1) # TODO test this for real
 
 # see if we have nullptr: https://stackoverflow.com/a/14112019
