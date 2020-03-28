@@ -187,7 +187,11 @@ set(hdr_files
   )
 
 # Embed PROJ_LIB data files location
-add_definitions(-DPROJ_LIB="${CMAKE_INSTALL_PREFIX}/${DATA_DIR}/proj")
+if (NOT DEFINED PROJ_LIB_DIR)
+  add_definitions(-DPROJ_LIB="${CMAKE_INSTALL_PREFIX}/${DATA_DIR}/proj")
+else (NOT DEFINED PROJ_LIB_DIR)
+  add_definitions(-DPROJ_LIB="${PROJ_LIB_DIR}")
+endif (NOT DEFINED PROJ_LIB_DIR)
 
 #################################################
 set(all_srcs ${pj_srcs} ${core_srcs})
