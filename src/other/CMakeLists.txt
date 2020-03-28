@@ -1012,6 +1012,7 @@ if (${CMAKE_PROJECT_NAME}_PROJ4_BUILD)
     BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
                -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
+	       -DPROJ_LIB_DIR=${CMAKE_INSTALL_PREFIX}/${DATA_DIR}/proj
     )
   ExternalProject_Target(proj PROJ4_BLD
     OUTPUT_FILE libproj${CMAKE_SHARED_LIBRARY_SUFFIX}.${PROJ_VERSION}
@@ -1071,6 +1072,7 @@ if (${CMAKE_PROJECT_NAME}_GDAL_BUILD)
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
                -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
 	       -DZLIB_ROOT=${CMAKE_BINARY_DIR} -DPNG_ROOT=${CMAKE_BINARY_DIR} -DPROJ4_ROOT=${CMAKE_BINARY_DIR}
+	       -DGDAL_INST_DATA_DIR=${CMAKE_INSTALL_PREFIX}/${DATA_DIR}/gdal
     DEPENDS ${PROJ4_LIBRARIES}
     )
   ExternalProject_Target(gdal GDAL_BLD
@@ -1223,18 +1225,26 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
   set(TCL_MINOR_VERSION 6)
   set(ITCL_VERSION 4.2.0)
 
+  # We need to set internal Tcl variables to the final install paths, not the intermediate install paths that
+  # Tcl's own build will think are the final paths.  Rather than attempt build system trickery we simply
+  # hard set the values in the source files by rewriting them.
+  configure_file(${BRLCAD_CMAKE_DIR}/tcl_replace.cxx.in ${CMAKE_CURRENT_BINARY_DIR}/tcl_replace.cxx)
+  add_executable(tcl_replace ${CMAKE_CURRENT_BINARY_DIR}/tcl_replace.cxx)
+
   if (NOT MSVC)
 
     set(TCL_PATCH_FILES "${TCL_SRC_DIR}/unix/configure" "${TCL_SRC_DIR}/macosx/configure" "${TCL_SRC_DIR}/unix/tcl.m4")
+    set(TCL_REWORK_FILES "${TCL_SRC_DIR}/unix/tclUnixInit.c" "${TCL_SRC_DIR}/generic/tclPkgConfig.c")
 
     ExternalProject_Add(TCL_BLD
       URL "${CMAKE_CURRENT_SOURCE_DIR}/tcl"
       BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
       PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${TCL_PATCH_FILES}
+      COMMAND tcl_replace ${TCL_REWORK_FILES}
       CONFIGURE_COMMAND CPPFLAGS=-I${CMAKE_BINARY_DIR}/${INCLUDE_DIR} LDFLAGS=-L${CMAKE_BINARY_DIR}/${LIB_DIR} ${TCL_SRC_DIR}/unix/configure --prefix=${CMAKE_BINARY_DIR}
       BUILD_COMMAND make -j${pcnt}
       INSTALL_COMMAND make install
-      DEPENDS ${ZLIB_LIBRARIES}
+      DEPENDS ${ZLIB_LIBRARIES} tcl_replace
       )
   else (NOT MSVC)
 
@@ -1261,6 +1271,228 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
   ExternalProject_ByProducts(TCL_BLD ${LIB_DIR} FIXPATH
     tclConfig.sh
     tclooConfig.sh
+    )
+  ExternalProject_ByProducts(TCL_BLD ${LIB_DIR}/tcl8.${TCL_MINOR_VERSION}
+    auto.tcl
+    clock.tcl
+    encoding/ascii.enc
+    encoding/big5.enc
+    encoding/cp1250.enc
+    encoding/cp1251.enc
+    encoding/cp1252.enc
+    encoding/cp1253.enc
+    encoding/cp1254.enc
+    encoding/cp1255.enc
+    encoding/cp1256.enc
+    encoding/cp1257.enc
+    encoding/cp1258.enc
+    encoding/cp437.enc
+    encoding/cp737.enc
+    encoding/cp775.enc
+    encoding/cp850.enc
+    encoding/cp852.enc
+    encoding/cp855.enc
+    encoding/cp857.enc
+    encoding/cp860.enc
+    encoding/cp861.enc
+    encoding/cp862.enc
+    encoding/cp863.enc
+    encoding/cp864.enc
+    encoding/cp865.enc
+    encoding/cp866.enc
+    encoding/cp869.enc
+    encoding/cp874.enc
+    encoding/cp932.enc
+    encoding/cp936.enc
+    encoding/cp949.enc
+    encoding/cp950.enc
+    encoding/dingbats.enc
+    encoding/ebcdic.enc
+    encoding/euc-cn.enc
+    encoding/euc-jp.enc
+    encoding/euc-kr.enc
+    encoding/gb12345.enc
+    encoding/gb1988.enc
+    encoding/gb2312-raw.enc
+    encoding/gb2312.enc
+    encoding/iso2022-jp.enc
+    encoding/iso2022-kr.enc
+    encoding/iso2022.enc
+    encoding/iso8859-1.enc
+    encoding/iso8859-10.enc
+    encoding/iso8859-13.enc
+    encoding/iso8859-14.enc
+    encoding/iso8859-15.enc
+    encoding/iso8859-16.enc
+    encoding/iso8859-2.enc
+    encoding/iso8859-3.enc
+    encoding/iso8859-4.enc
+    encoding/iso8859-5.enc
+    encoding/iso8859-6.enc
+    encoding/iso8859-7.enc
+    encoding/iso8859-8.enc
+    encoding/iso8859-9.enc
+    encoding/jis0201.enc
+    encoding/jis0208.enc
+    encoding/jis0212.enc
+    encoding/koi8-r.enc
+    encoding/koi8-u.enc
+    encoding/ksc5601.enc
+    encoding/macCentEuro.enc
+    encoding/macCroatian.enc
+    encoding/macCyrillic.enc
+    encoding/macDingbats.enc
+    encoding/macGreek.enc
+    encoding/macIceland.enc
+    encoding/macJapan.enc
+    encoding/macRoman.enc
+    encoding/macRomania.enc
+    encoding/macThai.enc
+    encoding/macTurkish.enc
+    encoding/macUkraine.enc
+    encoding/shiftjis.enc
+    encoding/symbol.enc
+    encoding/tis-620.enc
+    history.tcl
+    http1.0/http.tcl
+    http1.0/pkgIndex.tcl
+    init.tcl
+    msgs/af.msg
+    msgs/af_za.msg
+    msgs/ar.msg
+    msgs/ar_in.msg
+    msgs/ar_jo.msg
+    msgs/ar_lb.msg
+    msgs/ar_sy.msg
+    msgs/be.msg
+    msgs/bg.msg
+    msgs/bn.msg
+    msgs/bn_in.msg
+    msgs/ca.msg
+    msgs/cs.msg
+    msgs/da.msg
+    msgs/de.msg
+    msgs/de_at.msg
+    msgs/de_be.msg
+    msgs/el.msg
+    msgs/en_au.msg
+    msgs/en_be.msg
+    msgs/en_bw.msg
+    msgs/en_ca.msg
+    msgs/en_gb.msg
+    msgs/en_hk.msg
+    msgs/en_ie.msg
+    msgs/en_in.msg
+    msgs/en_nz.msg
+    msgs/en_ph.msg
+    msgs/en_sg.msg
+    msgs/en_za.msg
+    msgs/en_zw.msg
+    msgs/eo.msg
+    msgs/es.msg
+    msgs/es_ar.msg
+    msgs/es_bo.msg
+    msgs/es_cl.msg
+    msgs/es_co.msg
+    msgs/es_cr.msg
+    msgs/es_do.msg
+    msgs/es_ec.msg
+    msgs/es_gt.msg
+    msgs/es_hn.msg
+    msgs/es_mx.msg
+    msgs/es_ni.msg
+    msgs/es_pa.msg
+    msgs/es_pe.msg
+    msgs/es_pr.msg
+    msgs/es_py.msg
+    msgs/es_sv.msg
+    msgs/es_uy.msg
+    msgs/es_ve.msg
+    msgs/et.msg
+    msgs/eu.msg
+    msgs/eu_es.msg
+    msgs/fa.msg
+    msgs/fa_in.msg
+    msgs/fa_ir.msg
+    msgs/fi.msg
+    msgs/fo.msg
+    msgs/fo_fo.msg
+    msgs/fr.msg
+    msgs/fr_be.msg
+    msgs/fr_ca.msg
+    msgs/fr_ch.msg
+    msgs/ga.msg
+    msgs/ga_ie.msg
+    msgs/gl.msg
+    msgs/gl_es.msg
+    msgs/gv.msg
+    msgs/gv_gb.msg
+    msgs/he.msg
+    msgs/hi.msg
+    msgs/hi_in.msg
+    msgs/hr.msg
+    msgs/hu.msg
+    msgs/id.msg
+    msgs/id_id.msg
+    msgs/is.msg
+    msgs/it.msg
+    msgs/it_ch.msg
+    msgs/ja.msg
+    msgs/kl.msg
+    msgs/kl_gl.msg
+    msgs/ko.msg
+    msgs/ko_kr.msg
+    msgs/kok.msg
+    msgs/kok_in.msg
+    msgs/kw.msg
+    msgs/kw_gb.msg
+    msgs/lt.msg
+    msgs/lv.msg
+    msgs/mk.msg
+    msgs/mr.msg
+    msgs/mr_in.msg
+    msgs/ms.msg
+    msgs/ms_my.msg
+    msgs/mt.msg
+    msgs/nb.msg
+    msgs/nl.msg
+    msgs/nl_be.msg
+    msgs/nn.msg
+    msgs/pl.msg
+    msgs/pt.msg
+    msgs/pt_br.msg
+    msgs/ro.msg
+    msgs/ru.msg
+    msgs/ru_ua.msg
+    msgs/sh.msg
+    msgs/sk.msg
+    msgs/sl.msg
+    msgs/sq.msg
+    msgs/sr.msg
+    msgs/sv.msg
+    msgs/sw.msg
+    msgs/ta.msg
+    msgs/ta_in.msg
+    msgs/te.msg
+    msgs/te_in.msg
+    msgs/th.msg
+    msgs/tr.msg
+    msgs/uk.msg
+    msgs/vi.msg
+    msgs/zh.msg
+    msgs/zh_cn.msg
+    msgs/zh_hk.msg
+    msgs/zh_sg.msg
+    msgs/zh_tw.msg
+    opt0.4/optparse.tcl
+    opt0.4/pkgIndex.tcl
+    package.tcl
+    parray.tcl
+    safe.tcl
+    tclAppInit.c
+    tclIndex
+    tm.tcl
+    word.tcl
     )
   ExternalProject_ByProducts(TCL_BLD ${INCLUDE_DIR}
     tclDecls.h
@@ -1332,6 +1564,179 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
       tkConfig.sh
       )
 
+    ExternalProject_ByProducts(TK_BLD ${LIB_DIR}/tk8.${TK_MINOR_VERSION}
+      bgerror.tcl
+      button.tcl
+      choosedir.tcl
+      clrpick.tcl
+      comdlg.tcl
+      console.tcl
+      demos/README
+      demos/anilabel.tcl
+      demos/aniwave.tcl
+      demos/arrow.tcl
+      demos/bind.tcl
+      demos/bitmap.tcl
+      demos/browse
+      demos/button.tcl
+      demos/check.tcl
+      demos/clrpick.tcl
+      demos/colors.tcl
+      demos/combo.tcl
+      demos/cscroll.tcl
+      demos/ctext.tcl
+      demos/dialog1.tcl
+      demos/dialog2.tcl
+      demos/en.msg
+      demos/entry1.tcl
+      demos/entry2.tcl
+      demos/entry3.tcl
+      demos/filebox.tcl
+      demos/floor.tcl
+      demos/fontchoose.tcl
+      demos/form.tcl
+      demos/goldberg.tcl
+      demos/hello
+      demos/hscale.tcl
+      demos/icon.tcl
+      demos/image1.tcl
+      demos/image2.tcl
+      demos/images/earth.gif
+      demos/images/earthmenu.png
+      demos/images/earthris.gif
+      demos/images/flagdown.xbm
+      demos/images/flagup.xbm
+      demos/images/gray25.xbm
+      demos/images/letters.xbm
+      demos/images/noletter.xbm
+      demos/images/ouster.png
+      demos/images/pattern.xbm
+      demos/images/tcllogo.gif
+      demos/images/teapot.ppm
+      demos/items.tcl
+      demos/ixset
+      demos/knightstour.tcl
+      demos/label.tcl
+      demos/labelframe.tcl
+      demos/license.terms
+      demos/mclist.tcl
+      demos/menu.tcl
+      demos/menubu.tcl
+      demos/msgbox.tcl
+      demos/nl.msg
+      demos/paned1.tcl
+      demos/paned2.tcl
+      demos/pendulum.tcl
+      demos/plot.tcl
+      demos/puzzle.tcl
+      demos/radio.tcl
+      demos/rmt
+      demos/rolodex
+      demos/ruler.tcl
+      demos/sayings.tcl
+      demos/search.tcl
+      demos/spin.tcl
+      demos/states.tcl
+      demos/style.tcl
+      demos/tclIndex
+      demos/tcolor
+      demos/text.tcl
+      demos/textpeer.tcl
+      demos/timer
+      demos/toolbar.tcl
+      demos/tree.tcl
+      demos/ttkbut.tcl
+      demos/ttkmenu.tcl
+      demos/ttknote.tcl
+      demos/ttkpane.tcl
+      demos/ttkprogress.tcl
+      demos/ttkscale.tcl
+      demos/twind.tcl
+      demos/unicodeout.tcl
+      demos/vscale.tcl
+      demos/widget
+      dialog.tcl
+      entry.tcl
+      focus.tcl
+      fontchooser.tcl
+      iconlist.tcl
+      icons.tcl
+      images/README
+      images/logo.eps
+      images/logo100.gif
+      images/logo64.gif
+      images/logoLarge.gif
+      images/logoMed.gif
+      images/pwrdLogo.eps
+      images/pwrdLogo100.gif
+      images/pwrdLogo150.gif
+      images/pwrdLogo175.gif
+      images/pwrdLogo200.gif
+      images/pwrdLogo75.gif
+      images/tai-ku.gif
+      listbox.tcl
+      megawidget.tcl
+      menu.tcl
+      mkpsenc.tcl
+      msgbox.tcl
+      msgs/cs.msg
+      msgs/da.msg
+      msgs/de.msg
+      msgs/el.msg
+      msgs/en.msg
+      msgs/en_gb.msg
+      msgs/eo.msg
+      msgs/es.msg
+      msgs/fr.msg
+      msgs/hu.msg
+      msgs/it.msg
+      msgs/nl.msg
+      msgs/pl.msg
+      msgs/pt.msg
+      msgs/ru.msg
+      msgs/sv.msg
+      obsolete.tcl
+      optMenu.tcl
+      palette.tcl
+      panedwindow.tcl
+      pkgIndex.tcl
+      safetk.tcl
+      scale.tcl
+      scrlbar.tcl
+      spinbox.tcl
+      tclIndex
+      tearoff.tcl
+      text.tcl
+      tk.tcl
+      tkAppInit.c
+      tkfbox.tcl
+      ttk/altTheme.tcl
+      ttk/aquaTheme.tcl
+      ttk/button.tcl
+      ttk/clamTheme.tcl
+      ttk/classicTheme.tcl
+      ttk/combobox.tcl
+      ttk/cursors.tcl
+      ttk/defaults.tcl
+      ttk/entry.tcl
+      ttk/fonts.tcl
+      ttk/menubutton.tcl
+      ttk/notebook.tcl
+      ttk/panedwindow.tcl
+      ttk/progress.tcl
+      ttk/scale.tcl
+      ttk/scrollbar.tcl
+      ttk/sizegrip.tcl
+      ttk/spinbox.tcl
+      ttk/treeview.tcl
+      ttk/ttk.tcl
+      ttk/utils.tcl
+      ttk/vistaTheme.tcl
+      ttk/winTheme.tcl
+      ttk/xpTheme.tcl
+      unsupported.tcl
+      xmfbox.tcl
+      )
     ExternalProject_ByProducts(TK_BLD ${INCLUDE_DIR}
       tkDecls.h
       tk.h
@@ -1645,12 +2050,20 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
       set(TKTABLE_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/TKTABLE_BLD-prefix/src/TKTABLE_BLD")
       set(TKTABLE_VERSION 2.10)
 
+      # We need to set internal Tcl variables to the final install paths, not the intermediate install paths that
+      # Tcl's own build will think are the final paths.  Rather than attempt build system trickery we simply
+      # hard set the values in the source files by rewriting them.
+      configure_file(${BRLCAD_CMAKE_DIR}/tcl_replace.cxx.in ${CMAKE_CURRENT_BINARY_DIR}/tktable_replace.cxx)
+      add_executable(tktable_replace ${CMAKE_CURRENT_BINARY_DIR}/tktable_replace.cxx)
+
       set(TKTABLE_PATCH_FILES "${TKTABLE_SRC_DIR}/configure" "${TKTABLE_SRC_DIR}/tclconfig/tcl.m4")
+      set(TKTABLE_REWORK_FILES "${TKTABLE_SRC_DIR}/generic/tkTableInitScript.h")
 
       ExternalProject_Add(TKTABLE_BLD
 	URL "${CMAKE_CURRENT_SOURCE_DIR}/tktable"
 	BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
 	PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${TKTABLE_PATCH_FILES}
+	COMMAND tktable_replace ${TKTABLE_REWORK_FILES}
 	CONFIGURE_COMMAND CPPFLAGS=-I${CMAKE_BINARY_DIR}/${INCLUDE_DIR} LDFLAGS=-L${CMAKE_BINARY_DIR}/${LIB_DIR} ${TKTABLE_SRC_DIR}/configure --prefix=${CMAKE_BINARY_DIR} --with-tcl=${CMAKE_BINARY_DIR}/${LIB_DIR} --with-tk=${CMAKE_BINARY_DIR}/${LIB_DIR}
 	BUILD_COMMAND make -j${pcnt}
 	INSTALL_COMMAND make install
