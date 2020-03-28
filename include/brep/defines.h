@@ -38,6 +38,20 @@
 /* @cond */
 extern "C++" {
 
+
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic push
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#endif
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic ignored "-Wclass-memaccess"
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic ignored "-Wclass-memaccess"
+#endif
+
 /* don't let opennurbs include windows.h */
 #define ON_NO_WINDOWS 1
 
@@ -50,6 +64,13 @@ extern "C++" {
 #include "opennurbs.h"
 #undef read
 #undef write
+
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#endif
 
 }
 /* @endcond */

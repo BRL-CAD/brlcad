@@ -188,7 +188,7 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 	ON_3dPoint *ctrlpt = new ON_3dPoint(p_ctrl);
 	bezpoints1.Append(*ctrlpt);
     }
-    ON_BezierCurve s1_bez3d((const ON_3dPointArray)bezpoints1);
+    ON_BezierCurve s1_bez3d(bezpoints1);
     ON_NurbsCurve* s1_beznurb3d = ON_NurbsCurve::New();
     s1_bez3d.GetNurbForm(*s1_beznurb3d);
     s1_beznurb3d->SetDomain(0.0, 1.0);
@@ -238,7 +238,7 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 	ON_3dPoint ctrlpt(p_ctrl);
 	bezpoints2.Append(ctrlpt);
     }
-    ON_BezierCurve s2_bez3d((const ON_3dPointArray)bezpoints2);
+    ON_BezierCurve s2_bez3d(bezpoints2);
     ON_NurbsCurve* s2_beznurb3d = ON_NurbsCurve::New();
     s2_bez3d.GetNurbForm(*s2_beznurb3d);
     s2_beznurb3d->SetDomain(0.0, 1.0);
@@ -289,7 +289,7 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 	ON_3dPoint ctrlpt(p_ctrl);
 	bezpoints3.Append(ctrlpt);
     }
-    ON_BezierCurve s3_bez3d((const ON_3dPointArray)bezpoints3);
+    ON_BezierCurve s3_bez3d(bezpoints3);
     ON_NurbsCurve* s3_beznurb3d = ON_NurbsCurve::New();
     s3_bez3d.GetNurbForm(*s3_beznurb3d);
     s3_beznurb3d->SetDomain(0.0, 1.0);
@@ -339,7 +339,7 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 	ON_3dPoint ctrlpt(p_ctrl);
 	bezpoints4.Append(ctrlpt);
     }
-    ON_BezierCurve s4_bez3d((const ON_3dPointArray)bezpoints4);
+    ON_BezierCurve s4_bez3d(bezpoints4);
     ON_NurbsCurve* s4_beznurb3d = ON_NurbsCurve::New();
     s4_bez3d.GetNurbForm(*s4_beznurb3d);
     s4_beznurb3d->SetDomain(0.0, 1.0);

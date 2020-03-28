@@ -429,6 +429,7 @@ if (${CMAKE_PROJECT_NAME}_OPENNURBS_BUILD)
     BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
                -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
+	       -DZLIB_ROOT=${CMAKE_BINARY_DIR}
     DEPENDS ${ZLIB_LIBRARIES}
     )
 
@@ -548,7 +549,7 @@ if (${CMAKE_PROJECT_NAME}_OPENNURBS_BUILD)
 
     )
 
-  set(OPENNURBS_LIBRARIES openNURBS CACHE STRING "openNURBS" FORCE)
+  set(OPENNURBS_LIBRARIES "openNURBS;${ZLIB_LIBRARIES}" CACHE STRING "openNURBS" FORCE)
   set(OPENNURBS_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/openNURBS;${ZLIB_INCLUDE_DIRS}" CACHE STRING "Directory containing openNURBS headers." FORCE)
 
   SetTargetFolder(OPENNURBS_BLD "Third Party Libraries")
@@ -2128,7 +2129,6 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
       -DTK_LIBRARY=${CMAKE_BINARY_DIR}/${LIB_DIR}/libtk8.${TCL_MINOR_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}
       DEPENDS TCL_BLD TK_BLD
       )
-    message("LIB_DIR: ${LIB_DIR}")
     ExternalProject_Target(tkhtml TKHTML_BLD
       SUBDIR Tkhtml${TKHTML_VERSION}
       OUTPUT_FILE libTkhtml${CMAKE_SHARED_LIBRARY_SUFFIX}.${TKHTML_VERSION}
@@ -2155,43 +2155,6 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
   mark_as_advanced(HAVE_TK)
 
 endif (${CMAKE_PROJECT_NAME}_TCL_BUILD)
-
-if (0)
-
-  set(tkhtml_ALIASES ENABLE_TKHTML)
-set(tkhtml_DESCRIPTION "
-Option for enabling and disabling compilation of the Tkhtml HTML
-viewing package provided with BRL-CAD's source distribution.  Default
-is AUTO, auto-enabling if the BRLCAD_TCL option is set to BUNDLED and
-testing first for a system version if BRLCAD_TCL is set to AUTO or
-SYSTEM.  If BRLCAD_TKHTML is set to BUNDLED, local copy is built even if
-a system version is present.  This package will be disabled if
-BRLCAD_ENABLE_TK is OFF.
-")
-THIRD_PARTY_TCL_PACKAGE(Tkhtml tkhtml "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" tkhtml_ALIASES tkhtml_DESCRIPTION)
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tkhtml/pkgIndex.tcl")
-DISTCLEAN("${CMAKE_BINARY_DIR}/lib/Tkhtml3.0")
-SetTargetFolder(Tkhtml "Third Party Libraries")
-SetTargetFolder(tkhtml_n_gen "Compilation Utilities")
-
-set(tktable_ALIASES ENABLE_TKTABLE)
-set(tktable_DESCRIPTION "
-Option for enabling and disabling compilation of the Tktable graphical
-table widget package provided with BRL-CAD's source distribution.
-Default is AUTO, auto-enabling if the BRLCAD_TCL option is set to
-BUNDLED and testing first for a system version if BRLCAD_TCL is set to
-AUTO or SYSTEM.  If BRLCAD_TKTABLE is set to BUNDLED, local copy is built
-even if a system version is present.  This package will be disabled if
-BRLCAD_ENABLE_TK is OFF.
-")
-THIRD_PARTY_TCL_PACKAGE(Tktable tktable "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" tktable_ALIASES tktable_DESCRIPTION)
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tktable/pkgIndex.tcl")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tktable/tktable_cfg.h")
-DISTCLEAN("${CMAKE_BINARY_DIR}/lib/Tktable2.10")
-SetTargetFolder(Tktable "Third Party Libraries")
-SetTargetFolder(tktable_header_gen "Compilation Utilities")
-
-endif (0)
 
 if (0)
 # FreeType Libraries
