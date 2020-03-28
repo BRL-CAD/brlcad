@@ -118,7 +118,7 @@ if (${CMAKE_PROJECT_NAME}_REGEX_BUILD)
   # Platform differences in default linker behavior make it difficult to
   # guarantee that our libregex symbols will override libc. We'll avoid the
   # issue by renaming our libregex symbols to be incompatible with libc.
-  ExternalProject_Add(REGEX_BLD
+  ExternalProject_Add(regex_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libregex"
     BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
@@ -126,7 +126,7 @@ if (${CMAKE_PROJECT_NAME}_REGEX_BUILD)
     -DREGEX_PREFIX_STR=libregex_
     )
 
-  ExternalProject_Target(regex REGEX_BLD
+  ExternalProject_Target(regex regex_BLD
     OUTPUT_FILE libregex${CMAKE_SHARED_LIBRARY_SUFFIX}.1.0.4
     STATIC_OUTPUT_FILE libregex${CMAKE_STATIC_LIBRARY_SUFFIX}
     SYMLINKS "libregex${CMAKE_SHARED_LIBRARY_SUFFIX};libregex${CMAKE_SHARED_LIBRARY_SUFFIX}.1"
@@ -134,14 +134,14 @@ if (${CMAKE_PROJECT_NAME}_REGEX_BUILD)
     STATIC_LINK_TARGET "libregex${CMAKE_STATIC_LIBRARY_SUFFIX}"
     RPATH
     )
-  ExternalProject_ByProducts(REGEX_BLD ${INCLUDE_DIR}
+  ExternalProject_ByProducts(regex_BLD ${INCLUDE_DIR}
     regex.h
     )
 
   set(REGEX_LIBRARIES regex CACHE STRING "Building bundled libregex" FORCE)
   set(REGEX_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing regex headers." FORCE)
 
-  SetTargetFolder(REGEX_BLD "Third Party Libraries")
+  SetTargetFolder(regex_BLD "Third Party Libraries")
   SetTargetFolder(regex "Third Party Libraries")
 
 endif (${CMAKE_PROJECT_NAME}_REGEX_BUILD)
@@ -163,7 +163,7 @@ if (${CMAKE_PROJECT_NAME}_ZLIB_BUILD)
 
   set(ZLIB_VERSION 1.2.11)
 
-  ExternalProject_Add(ZLIB_BLD
+  ExternalProject_Add(zlib_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libz"
     BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
@@ -171,7 +171,7 @@ if (${CMAKE_PROJECT_NAME}_ZLIB_BUILD)
 	       -DZ_PREFIX_STR=brl_
     )
   if (NOT MSVC)
-    ExternalProject_Target(zlib ZLIB_BLD
+    ExternalProject_Target(zlib zlib_BLD
       OUTPUT_FILE libz${CMAKE_SHARED_LIBRARY_SUFFIX}.${ZLIB_VERSION}
       STATIC_OUTPUT_FILE libz${CMAKE_STATIC_LIBRARY_SUFFIX}
       SYMLINKS "libz${CMAKE_SHARED_LIBRARY_SUFFIX};libz${CMAKE_SHARED_LIBRARY_SUFFIX}.1"
@@ -179,7 +179,7 @@ if (${CMAKE_PROJECT_NAME}_ZLIB_BUILD)
       RPATH
       )
   else (NOT MSVC)
-    ExternalProject_Target(zlib ZLIB_BLD
+    ExternalProject_Target(zlib zlib_BLD
       OUTPUT_FILE zlib${CMAKE_SHARED_LIBRARY_SUFFIX}
       STATIC_OUTPUT_FILE zlibstatic${CMAKE_STATIC_LIBRARY_SUFFIX}
       LINK_TARGET_DEBUG "zlibd${CMAKE_SHARED_LIBRARY_SUFFIX}"
@@ -187,7 +187,7 @@ if (${CMAKE_PROJECT_NAME}_ZLIB_BUILD)
       )
   endif (NOT MSVC)
 
-  ExternalProject_ByProducts(ZLIB_BLD ${INCLUDE_DIR}
+  ExternalProject_ByProducts(zlib_BLD ${INCLUDE_DIR}
     zconf.h
     zlib.h
     )
@@ -195,7 +195,7 @@ if (${CMAKE_PROJECT_NAME}_ZLIB_BUILD)
   set(ZLIB_LIBRARIES zlib CACHE STRING "Building bundled zlib" FORCE)
   set(ZLIB_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing zlib headers." FORCE)
 
-  SetTargetFolder(ZLIB_BLD "Third Party Libraries")
+  SetTargetFolder(zlib_BLD "Third Party Libraries")
   SetTargetFolder(zlib "Third Party Libraries")
 
 endif (${CMAKE_PROJECT_NAME}_ZLIB_BUILD)
@@ -215,19 +215,19 @@ THIRD_PARTY(lz4 LZ4 lz4 lz4_DESCRIPTION ALIASES ENABLE_LZ4 FLAGS NOSYS)
 
 if (${CMAKE_PROJECT_NAME}_LZ4_BUILD)
 
-  ExternalProject_Add(LZ4_BLD
+  ExternalProject_Add(lz4_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/lz4"
     BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
                -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
     )
-  ExternalProject_Target(lz4 LZ4_BLD
+  ExternalProject_Target(lz4 lz4_BLD
     OUTPUT_FILE liblz4${CMAKE_SHARED_LIBRARY_SUFFIX}
     STATIC_OUTPUT_FILE liblz4${CMAKE_STATIC_LIBRARY_SUFFIX}
     RPATH
     )
 
-  ExternalProject_ByProducts(LZ4_BLD ${INCLUDE_DIR}
+  ExternalProject_ByProducts(lz4_BLD ${INCLUDE_DIR}
     lz4.h
     lz4hc.h
     lz4frame.h
@@ -236,7 +236,7 @@ if (${CMAKE_PROJECT_NAME}_LZ4_BUILD)
   set(LZ4_LIBRARIES lz4 CACHE STRING "Building bundled lz4" FORCE)
   set(LZ4_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing lz4 headers." FORCE)
 
-  SetTargetFolder(LZ4_BLD "Third Party Libraries")
+  SetTargetFolder(lz4_BLD "Third Party Libraries")
   SetTargetFolder(lz4 "Third Party Libraries")
 
 endif (${CMAKE_PROJECT_NAME}_LZ4_BUILD)
@@ -255,19 +255,19 @@ THIRD_PARTY(libnetpbm NETPBM netpbm netpbm_DESCRIPTION REQUIRED_VARS BRLCAD_LEVE
 
 if (${CMAKE_PROJECT_NAME}_NETPBM_BUILD)
 
-  ExternalProject_Add(NETPBM_BLD
+  ExternalProject_Add(netpbm_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libnetpbm"
     BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
                -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
     )
-  ExternalProject_Target(netpbm NETPBM_BLD
+  ExternalProject_Target(netpbm netpbm_BLD
     OUTPUT_FILE libnetpbm${CMAKE_SHARED_LIBRARY_SUFFIX}
     STATIC_OUTPUT_FILE libnetpbm${CMAKE_STATIC_LIBRARY_SUFFIX}
     RPATH
     )
 
-  ExternalProject_ByProducts(NETPBM_BLD ${INCLUDE_DIR}
+  ExternalProject_ByProducts(netpbm_BLD ${INCLUDE_DIR}
     netpbm/bitio.h
     netpbm/colorname.h
     netpbm/pam.h
@@ -287,7 +287,7 @@ if (${CMAKE_PROJECT_NAME}_NETPBM_BUILD)
   set(NETPBM_LIBRARIES netpbm CACHE STRING "Building bundled netpbm" FORCE)
   set(NETPBM_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/netpbm" CACHE STRING "Directory containing netpbm headers." FORCE)
 
-  SetTargetFolder(NETPBM_BLD "Third Party Libraries")
+  SetTargetFolder(netpbm_BLD "Third Party Libraries")
   SetTargetFolder(netpbm "Third Party Libraries")
 
 endif (${CMAKE_PROJECT_NAME}_NETPBM_BUILD)
@@ -317,7 +317,7 @@ set(PNG_VERSION_MAJOR 16)
 set(PNG_VERSION_MINOR 37)
 
 if (${CMAKE_PROJECT_NAME}_PNG_BUILD)
-  ExternalProject_Add(PNG_BLD
+  ExternalProject_Add(png_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libpng"
     BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DCMAKE_INSTALL_LIBDIR=${LIB_DIR}
@@ -328,7 +328,7 @@ if (${CMAKE_PROJECT_NAME}_PNG_BUILD)
 
     DEPENDS ${ZLIB_LIBRARIES}
     )
-  ExternalProject_Target(png PNG_BLD
+  ExternalProject_Target(png png_BLD
     OUTPUT_FILE libpng${PNG_VERSION_MAJOR}${CMAKE_SHARED_LIBRARY_SUFFIX}.${PNG_VERSION_MAJOR}.${PNG_VERSION_MINOR}.0
     STATIC_OUTPUT_FILE libpng16${CMAKE_STATIC_LIBRARY_SUFFIX}
     SYMLINKS "libpng${CMAKE_SHARED_LIBRARY_SUFFIX};libpng${PNG_VERSION_MAJOR}${CMAKE_SHARED_LIBRARY_SUFFIX};libpng${PNG_VERSION_MAJOR}${CMAKE_SHARED_LIBRARY_SUFFIX}.${PNG_VERSION_MAJOR};libpng${CMAKE_STATIC_LIBRARY_SUFFIX}"
@@ -336,7 +336,7 @@ if (${CMAKE_PROJECT_NAME}_PNG_BUILD)
     STATIC_LINK_TARGET "libpng${CMAKE_STATIC_LIBRARY_SUFFIX}"
     RPATH
     )
-  ExternalProject_ByProducts(PNG_BLD ${INCLUDE_DIR}
+  ExternalProject_ByProducts(png_BLD ${INCLUDE_DIR}
     png.h
     pngconf.h
     pnglibconf.h
@@ -348,7 +348,7 @@ if (${CMAKE_PROJECT_NAME}_PNG_BUILD)
   set(PNG_LIBRARIES netpbm CACHE STRING "Building bundled libpng" FORCE)
   set(PNG_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing libpng headers." FORCE)
 
-  SetTargetFolder(PNG_BLD "Third Party Libraries")
+  SetTargetFolder(png_BLD "Third Party Libraries")
   SetTargetFolder(png "Third Party Libraries")
 
 endif (${CMAKE_PROJECT_NAME}_PNG_BUILD)
@@ -373,14 +373,14 @@ if (${CMAKE_PROJECT_NAME}_UTAHRLE_BUILD)
   set(UTAHRLE_PATCH_VERSION 1)
   set(UTAHRLE_VERSION ${UTAHRLE_MAJOR_VERSION}.${UTAHRLE_MINOR_VERSION}.${UTAHRLE_PATCH_VERSION})
 
-  ExternalProject_Add(UTAHRLE_BLD
+  ExternalProject_Add(utahrle_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libutahrle"
     BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
                -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
     )
 
-  ExternalProject_Target(utahrle UTAHRLE_BLD
+  ExternalProject_Target(utahrle utahrle_BLD
     OUTPUT_FILE libutahrle${CMAKE_SHARED_LIBRARY_SUFFIX}.${UTAHRLE_VERSION}
     STATIC_OUTPUT_FILE libutahrle${CMAKE_STATIC_LIBRARY_SUFFIX}
     SYMLINKS "libutahrle${CMAKE_SHARED_LIBRARY_SUFFIX};libutahrle${CMAKE_SHARED_LIBRARY_SUFFIX}.${UTAHRLE_MAJOR_VERSION}"
@@ -388,7 +388,7 @@ if (${CMAKE_PROJECT_NAME}_UTAHRLE_BUILD)
     STATIC_LINK_TARGET "libutahrle${CMAKE_STATIC_LIBRARY_SUFFIX}"
     RPATH
     )
-  ExternalProject_ByProducts(UTAHRLE_BLD ${INCLUDE_DIR}
+  ExternalProject_ByProducts(utahrle_BLD ${INCLUDE_DIR}
     rle.h
     rle_code.h
     rle_config.h
@@ -399,7 +399,7 @@ if (${CMAKE_PROJECT_NAME}_UTAHRLE_BUILD)
   set(UTAHRLE_LIBRARIES utahrle CACHE STRING "Building bundled libutahrle" FORCE)
   set(UTAHRLE_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing utahrle headers." FORCE)
 
-  SetTargetFolder(UTAHRLE_BLD "Third Party Libraries")
+  SetTargetFolder(utahrle_BLD "Third Party Libraries")
   SetTargetFolder(utahrle "Third Party Libraries")
 
 endif (${CMAKE_PROJECT_NAME}_UTAHRLE_BUILD)
@@ -424,7 +424,7 @@ if (${CMAKE_PROJECT_NAME}_OPENNURBS_BUILD)
   set(OPENNURBS_PATCH_VERSION 245)
   set(OPENNURBS_VERSION ${OPENNURBS_MAJOR_VERSION}.${OPENNURBS_MINOR_VERSION}.${OPENNURBS_PATCH_VERSION})
 
-  ExternalProject_Add(OPENNURBS_BLD
+  ExternalProject_Add(openNURBS_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/openNURBS"
     BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
@@ -433,7 +433,7 @@ if (${CMAKE_PROJECT_NAME}_OPENNURBS_BUILD)
     DEPENDS ${ZLIB_LIBRARIES}
     )
 
-  ExternalProject_Target(openNURBS OPENNURBS_BLD
+  ExternalProject_Target(openNURBS openNURBS_BLD
     OUTPUT_FILE libopenNURBS${CMAKE_SHARED_LIBRARY_SUFFIX}.${OPENNURBS_VERSION}
     STATIC_OUTPUT_FILE libopenNURBS${CMAKE_STATIC_LIBRARY_SUFFIX}
     SYMLINKS "libopenNURBS${CMAKE_SHARED_LIBRARY_SUFFIX};libopenNURBS${CMAKE_SHARED_LIBRARY_SUFFIX}.${OPENNURBS_MAJOR_VERSION}"
@@ -441,7 +441,7 @@ if (${CMAKE_PROJECT_NAME}_OPENNURBS_BUILD)
     STATIC_LINK_TARGET "libopenNURBS${CMAKE_STATIC_LIBRARY_SUFFIX}"
     RPATH
     )
-  ExternalProject_ByProducts(OPENNURBS_BLD ${INCLUDE_DIR}
+  ExternalProject_ByProducts(openNURBS_BLD ${INCLUDE_DIR}
     openNURBS/opennurbs.h
     openNURBS/opennurbs_3dm.h
     openNURBS/opennurbs_3dm_attributes.h
@@ -552,7 +552,7 @@ if (${CMAKE_PROJECT_NAME}_OPENNURBS_BUILD)
   set(OPENNURBS_LIBRARIES "openNURBS;${ZLIB_LIBRARIES}" CACHE STRING "openNURBS" FORCE)
   set(OPENNURBS_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/openNURBS;${ZLIB_INCLUDE_DIRS}" CACHE STRING "Directory containing openNURBS headers." FORCE)
 
-  SetTargetFolder(OPENNURBS_BLD "Third Party Libraries")
+  SetTargetFolder(openNURBS_BLD "Third Party Libraries")
   SetTargetFolder(openNURBS "Third Party Libraries")
 
 endif (${CMAKE_PROJECT_NAME}_OPENNURBS_BUILD)
@@ -572,19 +572,19 @@ THIRD_PARTY(libspsr SPSR libspsr spsr_DESCRIPTION ALIASES ENABLE_SPSR FLAGS NOSY
 
 if (${CMAKE_PROJECT_NAME}_SPSR_BUILD)
 
-  ExternalProject_Add(SPSR_BLD
+  ExternalProject_Add(spsr_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libspsr"
     BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
                -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
     )
-  ExternalProject_Target(spsr SPSR_BLD
+  ExternalProject_Target(spsr spsr_BLD
     OUTPUT_FILE libSPSR${CMAKE_SHARED_LIBRARY_SUFFIX}
     STATIC_OUTPUT_FILE libSPSR-static${CMAKE_STATIC_LIBRARY_SUFFIX}
     RPATH
     )
 
-  ExternalProject_ByProducts(SPSR_BLD ${INCLUDE_DIR}
+  ExternalProject_ByProducts(spsr_BLD ${INCLUDE_DIR}
     SPSR/SPSR.h
     SPSR/cvertex.h
     )
@@ -592,7 +592,7 @@ if (${CMAKE_PROJECT_NAME}_SPSR_BUILD)
   set(SPSR_LIBRARIES spsr CACHE STRING "Building bundled spsr" FORCE)
   set(SPSR_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/spsr" CACHE STRING "Directory containing spsr headers." FORCE)
 
-  SetTargetFolder(SPSR_BLD "Third Party Libraries")
+  SetTargetFolder(spsr_BLD "Third Party Libraries")
   SetTargetFolder(spsr "Third Party Libraries")
 
 endif (${CMAKE_PROJECT_NAME}_SPSR_BUILD)
@@ -619,14 +619,14 @@ if (${CMAKE_PROJECT_NAME}_BSON_BUILD)
   set(BSON_PATCH_VERSION 5)
   set(BSON_VERSION ${BSON_MAJOR_VERSION}.${BSON_MINOR_VERSION}.${BSON_PATCH_VERSION})
 
-  ExternalProject_Add(BSON_BLD
+  ExternalProject_Add(bson_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libbson"
     BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
                -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
     )
 
-  ExternalProject_Target(bson BSON_BLD
+  ExternalProject_Target(bson bson_BLD
     OUTPUT_FILE libbson-1.0${CMAKE_SHARED_LIBRARY_SUFFIX}.${BSON_VERSION}
     STATIC_OUTPUT_FILE libbson-1.0${CMAKE_STATIC_LIBRARY_SUFFIX}
     SYMLINKS "libbson-1.0${CMAKE_SHARED_LIBRARY_SUFFIX};libbson-1.0${CMAKE_SHARED_LIBRARY_SUFFIX}.${BSON_MAJOR_VERSION}"
@@ -634,7 +634,7 @@ if (${CMAKE_PROJECT_NAME}_BSON_BUILD)
     STATIC_LINK_TARGET "libbson-1.0${CMAKE_STATIC_LIBRARY_SUFFIX}"
     RPATH
     )
-  ExternalProject_ByProducts(BSON_BLD ${INCLUDE_DIR}
+  ExternalProject_ByProducts(bson_BLD ${INCLUDE_DIR}
     libbson-1.0/bson-endian.h
     libbson-1.0/bson-md5.h
     libbson-1.0/bson-value.h
@@ -666,7 +666,7 @@ if (${CMAKE_PROJECT_NAME}_BSON_BUILD)
   set(BSON_LIBRARIES utahrle CACHE STRING "Building bundled libbson" FORCE)
   set(BSON_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing bson headers." FORCE)
 
-  SetTargetFolder(BSON_BLD "Third Party Libraries")
+  SetTargetFolder(bson_BLD "Third Party Libraries")
   SetTargetFolder(utahrle "Third Party Libraries")
 
 endif (${CMAKE_PROJECT_NAME}_BSON_BUILD)
@@ -700,7 +700,7 @@ if(BRLCAD_SC_BUILD)
     set(PERPLEX_TARGET lemon)
   endif (TARGET lemon)
 
-  ExternalProject_Add(STEPCODE_BLD
+  ExternalProject_Add(stepcode_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/stepcode"
     BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
@@ -715,7 +715,7 @@ if(BRLCAD_SC_BUILD)
 
   set(STEPCODE_LIBS base express exppp stepcore stepeditor stepdai steputils)
   foreach(SCLIB ${STEPCODE_LIBS})
-    ExternalProject_Target(lib${SCLIB} STEPCODE_BLD
+    ExternalProject_Target(lib${SCLIB} stepcode_BLD
       OUTPUT_FILE lib${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX}.2.0.0
       SYMLINKS "lib${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX};lib${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX}.2"
       LINK_TARGET "lib${SCLIB}${CMAKE_SHARED_LIBRARY_SUFFIX}"
@@ -724,7 +724,7 @@ if(BRLCAD_SC_BUILD)
   endforeach(SCLIB ${STEPCODE_LIBS})
   set(STEPCODE_EXECS check-express exppp exp2cxx)
   foreach(SCEXEC ${STEPCODE_EXECS})
-    ExternalProject_Target(${SCEXEC} STEPCODE_BLD
+    ExternalProject_Target(${SCEXEC} stepcode_BLD
       OUTPUT_FILE ${SCEXEC}${CMAKE_EXECUTABLE_SUFFIX}
       RPATH EXEC
       )
@@ -735,7 +735,7 @@ if(BRLCAD_SC_BUILD)
   set(EXP2CXX_EXECUTABLE_TARGET exp2cxx CACHE STRING "Express to C++ executable target" FORCE)
   mark_as_advanced(EXP2CXX_EXECUTABLE_TARGET)
 
-  ExternalProject_ByProducts(STEPCODE_BLD ${INCLUDE_DIR}
+  ExternalProject_ByProducts(stepcode_BLD ${INCLUDE_DIR}
     stepcode/cldai/sdaiApplication_instance_set.h
     stepcode/cldai/sdaiSession_instance.h
     stepcode/cldai/sdaiObject.h
@@ -817,7 +817,7 @@ if(BRLCAD_SC_BUILD)
     stepcode/clstepcore/complexSupport.h
     )
 
-  SetTargetFolder(STEPCODE_BLD "Third Party Libraries")
+  SetTargetFolder(stepcode_BLD "Third Party Libraries")
   SetTargetFolder(stepcode "Third Party Libraries")
 
 endif(BRLCAD_SC_BUILD)
@@ -843,26 +843,26 @@ THIRD_PARTY(libvds VDS libvds libvds_DESCRIPTION ALIASES ENABLE_VDS FLAGS NOSYS)
 
 if (${CMAKE_PROJECT_NAME}_VDS_BUILD)
 
-  ExternalProject_Add(VDS_BLD
+  ExternalProject_Add(vds_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libvds"
     BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
                -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
     )
-  ExternalProject_Target(vds VDS_BLD
+  ExternalProject_Target(vds vds_BLD
     OUTPUT_FILE libvds${CMAKE_SHARED_LIBRARY_SUFFIX}
     STATIC_OUTPUT_FILE libvds${CMAKE_STATIC_LIBRARY_SUFFIX}
     RPATH
     )
 
-  ExternalProject_ByProducts(VDS_BLD ${INCLUDE_DIR}
+  ExternalProject_ByProducts(vds_BLD ${INCLUDE_DIR}
     vds.h
     )
 
   set(VDS_LIBRARIES vds CACHE STRING "Building bundled netpbm" FORCE)
   set(VDS_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing vds headers." FORCE)
 
-  SetTargetFolder(VDS_BLD "Third Party Libraries")
+  SetTargetFolder(vds_BLD "Third Party Libraries")
   SetTargetFolder(vds "Third Party Libraries")
 
 endif (${CMAKE_PROJECT_NAME}_VDS_BUILD)
@@ -882,26 +882,26 @@ THIRD_PARTY(libgdiam GDIAM libgdiam libgdiam_DESCRIPTION ALIASES ENABLE_GDIAM FL
 
 if (${CMAKE_PROJECT_NAME}_GDIAM_BUILD)
 
-  ExternalProject_Add(GDIAM_BLD
+  ExternalProject_Add(gdiam_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/libgdiam"
     BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
                -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
     )
-  ExternalProject_Target(gdiam GDIAM_BLD
+  ExternalProject_Target(gdiam gdiam_BLD
     OUTPUT_FILE libgdiam${CMAKE_SHARED_LIBRARY_SUFFIX}
     STATIC_OUTPUT_FILE libgdiam${CMAKE_STATIC_LIBRARY_SUFFIX}
     RPATH
     )
 
-  ExternalProject_ByProducts(GDIAM_BLD ${INCLUDE_DIR}
+  ExternalProject_ByProducts(gdiam_BLD ${INCLUDE_DIR}
     gdiam.hpp
     )
 
   set(GDIAM_LIBRARIES gdiam CACHE STRING "Building bundled gdiam" FORCE)
   set(GDIAM_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing gdiam headers." FORCE)
 
-  SetTargetFolder(GDIAM_BLD "Third Party Libraries")
+  SetTargetFolder(gdiam_BLD "Third Party Libraries")
   SetTargetFolder(gdiam "Third Party Libraries")
 
 endif (${CMAKE_PROJECT_NAME}_GDIAM_BUILD)
@@ -920,19 +920,19 @@ THIRD_PARTY(poly2tri POLY2TRI poly2tri poly2tri_DESCRIPTION ALIASES ENABLE_POLY2
 
 if (${CMAKE_PROJECT_NAME}_POLY2TRI_BUILD)
 
-  ExternalProject_Add(POLY2TRI_BLD
+  ExternalProject_Add(poly2tri_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/poly2tri"
     BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
                -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
     )
-  ExternalProject_Target(poly2tri POLY2TRI_BLD
+  ExternalProject_Target(poly2tri poly2tri_BLD
     OUTPUT_FILE libpoly2tri${CMAKE_SHARED_LIBRARY_SUFFIX}
     STATIC_OUTPUT_FILE libpoly2tri${CMAKE_STATIC_LIBRARY_SUFFIX}
     RPATH
     )
 
-  ExternalProject_ByProducts(POLY2TRI_BLD ${INCLUDE_DIR}
+  ExternalProject_ByProducts(poly2tri_BLD ${INCLUDE_DIR}
     poly2tri/poly2tri.h
     poly2tri/common/shapes.h
     poly2tri/sweep/cdt.h
@@ -944,7 +944,7 @@ if (${CMAKE_PROJECT_NAME}_POLY2TRI_BUILD)
   set(POLY2TRI_LIBRARIES poly2tri CACHE STRING "Building bundled poly2tri" FORCE)
   set(POLY2TRI_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing poly2tri headers." FORCE)
 
-  SetTargetFolder(POLY2TRI_BLD "Third Party Libraries")
+  SetTargetFolder(poly2tri_BLD "Third Party Libraries")
   SetTargetFolder(poly2tri "Third Party Libraries")
 
 endif (${CMAKE_PROJECT_NAME}_POLY2TRI_BUILD)
@@ -963,26 +963,26 @@ THIRD_PARTY(rply RPLY rply rply_DESCRIPTION ALIASES ENABLE_RPLY FLAGS NOSYS)
 
 if (${CMAKE_PROJECT_NAME}_RPLY_BUILD)
 
-  ExternalProject_Add(RPLY_BLD
+  ExternalProject_Add(rply_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/rply"
     BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
                -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
     )
-  ExternalProject_Target(rply RPLY_BLD
+  ExternalProject_Target(rply rply_BLD
     OUTPUT_FILE librply${CMAKE_SHARED_LIBRARY_SUFFIX}
     STATIC_OUTPUT_FILE librply${CMAKE_STATIC_LIBRARY_SUFFIX}
     RPATH
     )
 
-  ExternalProject_ByProducts(RPLY_BLD ${INCLUDE_DIR}
+  ExternalProject_ByProducts(rply_BLD ${INCLUDE_DIR}
     rply.h
     )
 
   set(RPLY_LIBRARIES rply CACHE STRING "Building bundled rply" FORCE)
   set(RPLY_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing rply headers." FORCE)
 
-  SetTargetFolder(RPLY_BLD "Third Party Libraries")
+  SetTargetFolder(rply_BLD "Third Party Libraries")
   SetTargetFolder(rply "Third Party Libraries")
 
 endif (${CMAKE_PROJECT_NAME}_RPLY_BUILD)
@@ -1008,14 +1008,14 @@ if (${CMAKE_PROJECT_NAME}_PROJ4_BUILD)
   set(PROJ_API_VERSION 12)
   set(PROJ_VERSION ${PROJ_MAJOR_VERSION}.${PROJ_MINOR_VERSION}.${PROJ_API_VERSION})
 
-  ExternalProject_Add(PROJ4_BLD
+  ExternalProject_Add(proj_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/proj-4"
     BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
                -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
 	       -DPROJ_LIB_DIR=${CMAKE_INSTALL_PREFIX}/${DATA_DIR}/proj
     )
-  ExternalProject_Target(proj PROJ4_BLD
+  ExternalProject_Target(proj proj_BLD
     OUTPUT_FILE libproj${CMAKE_SHARED_LIBRARY_SUFFIX}.${PROJ_VERSION}
     STATIC_OUTPUT_FILE libproj${CMAKE_STATIC_LIBRARY_SUFFIX}
     SYMLINKS "libproj${CMAKE_SHARED_LIBRARY_SUFFIX};libproj${CMAKE_SHARED_LIBRARY_SUFFIX}.${PROJ_API_VERSION}"
@@ -1024,7 +1024,7 @@ if (${CMAKE_PROJECT_NAME}_PROJ4_BUILD)
     RPATH
     )
 
-  ExternalProject_ByProducts(PROJ4_BLD ${DATA_DIR}
+  ExternalProject_ByProducts(proj_BLD ${DATA_DIR}
     proj/epsg
     proj/esri
     proj/world
@@ -1039,7 +1039,7 @@ if (${CMAKE_PROJECT_NAME}_PROJ4_BUILD)
     proj/CH
     )
 
-  ExternalProject_ByProducts(PROJ4_BLD ${INCLUDE_DIR}/proj
+  ExternalProject_ByProducts(proj_BLD ${INCLUDE_DIR}/proj
     projects.h
     proj_api.h
     geodesic.h
@@ -1048,7 +1048,7 @@ if (${CMAKE_PROJECT_NAME}_PROJ4_BUILD)
   set(PROJ4_LIBRARIES proj CACHE STRING "Building bundled proj" FORCE)
   set(PROJ4_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/proj" CACHE STRING "Directory containing proj headers." FORCE)
 
-  SetTargetFolder(PROJ4_BLD "Third Party Libraries")
+  SetTargetFolder(proj_BLD "Third Party Libraries")
   SetTargetFolder(proj "Third Party Libraries")
 
 endif (${CMAKE_PROJECT_NAME}_PROJ4_BUILD)
@@ -1067,7 +1067,7 @@ THIRD_PARTY(gdal GDAL gdal gdal_DESCRIPTION REQUIRED_VARS "BRLCAD_ENABLE_GDAL;BR
 
 if (${CMAKE_PROJECT_NAME}_GDAL_BUILD)
 
-  ExternalProject_Add(GDAL_BLD
+  ExternalProject_Add(gdal_BLD
     SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/gdal"
     BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
     CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
@@ -1076,7 +1076,7 @@ if (${CMAKE_PROJECT_NAME}_GDAL_BUILD)
 	       -DGDAL_INST_DATA_DIR=${CMAKE_INSTALL_PREFIX}/${DATA_DIR}/gdal
     DEPENDS ${PROJ4_LIBRARIES}
     )
-  ExternalProject_Target(gdal GDAL_BLD
+  ExternalProject_Target(gdal gdal_BLD
     OUTPUT_FILE libgdal${CMAKE_SHARED_LIBRARY_SUFFIX}
     STATIC_OUTPUT_FILE libgdal${CMAKE_STATIC_LIBRARY_SUFFIX}
     RPATH
@@ -1084,13 +1084,13 @@ if (${CMAKE_PROJECT_NAME}_GDAL_BUILD)
 
   set(GDAL_EXECUTABLES gdalinfo gdallocationinfo gdal_translate gdaltransform gdaldem gdalwarp gdalbuildvrt)
   foreach(GDALEXEC ${GDAL_EXECUTABLES})
-    ExternalProject_Target(${GDALEXEC} STEPCODE_BLD
+    ExternalProject_Target(${GDALEXEC} gdal_BLD
       OUTPUT_FILE ${GDALEXEC}${CMAKE_EXECUTABLE_SUFFIX}
       RPATH EXEC
       )
   endforeach(GDALEXEC ${GDAL_EXECUTABLES})
 
-  ExternalProject_ByProducts(GDAL_BLD ${DATA_DIR}/gdal
+  ExternalProject_ByProducts(gdal_BLD ${DATA_DIR}/gdal
     LICENSE.TXT
     GDALLogoBW.svg
     GDALLogoColor.svg
@@ -1185,7 +1185,7 @@ if (${CMAKE_PROJECT_NAME}_GDAL_BUILD)
   set(GDAL_LIBRARIES gdal CACHE STRING "Building bundled gdal" FORCE)
   set(GDAL_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/gdal" CACHE STRING "Directory containing GDAL headers." FORCE)
 
-  SetTargetFolder(GDAL_BLD "Third Party Libraries")
+  SetTargetFolder(gdal_BLD "Third Party Libraries")
   SetTargetFolder(gdal "Third Party Libraries")
 
 endif (${CMAKE_PROJECT_NAME}_GDAL_BUILD)
@@ -1222,7 +1222,7 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
   #    Tcl
   ############
 
-  set(TCL_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/TCL_BLD-prefix/src/TCL_BLD")
+  set(TCL_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/tcl_BLD-prefix/src/tcl_BLD")
   set(TCL_MINOR_VERSION 6)
   set(ITCL_VERSION 4.2.0)
 
@@ -1237,7 +1237,7 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
     set(TCL_PATCH_FILES "${TCL_SRC_DIR}/unix/configure" "${TCL_SRC_DIR}/macosx/configure" "${TCL_SRC_DIR}/unix/tcl.m4")
     set(TCL_REWORK_FILES "${TCL_SRC_DIR}/unix/tclUnixInit.c" "${TCL_SRC_DIR}/generic/tclPkgConfig.c")
 
-    ExternalProject_Add(TCL_BLD
+    ExternalProject_Add(tcl_BLD
       URL "${CMAKE_CURRENT_SOURCE_DIR}/tcl"
       BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
       PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${TCL_PATCH_FILES}
@@ -1249,7 +1249,7 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
       )
   else (NOT MSVC)
 
-    ExternalProject_Add(TCL_BLD
+    ExternalProject_Add(tcl_BLD
       SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tcl"
       BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
       CONFIGURE_COMMAND ""
@@ -1260,20 +1260,20 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
 
   endif (NOT MSVC)
 
-  ExternalProject_Target(tcl TCL_BLD
+  ExternalProject_Target(tcl tcl_BLD
     OUTPUT_FILE libtcl8.${TCL_MINOR_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}
     STATIC_OUTPUT_FILE libtclstub8.${TCL_MINOR_VERSION}${CMAKE_STATIC_LIBRARY_SUFFIX}
     RPATH
     )
-  ExternalProject_Target(tclsh TCL_BLD
+  ExternalProject_Target(tclsh tcl_BLD
     OUTPUT_FILE tclsh8.${TCL_MINOR_VERSION}${CMAKE_EXECUTABLE_SUFFIX}
     RPATH EXEC
     )
-  ExternalProject_ByProducts(TCL_BLD ${LIB_DIR} FIXPATH
+  ExternalProject_ByProducts(tcl_BLD ${LIB_DIR} FIXPATH
     tclConfig.sh
     tclooConfig.sh
     )
-  ExternalProject_ByProducts(TCL_BLD ${LIB_DIR}/tcl8.${TCL_MINOR_VERSION}
+  ExternalProject_ByProducts(tcl_BLD ${LIB_DIR}/tcl8.${TCL_MINOR_VERSION}
     auto.tcl
     clock.tcl
     encoding/ascii.enc
@@ -1495,7 +1495,7 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
     tm.tcl
     word.tcl
     )
-  ExternalProject_ByProducts(TCL_BLD ${INCLUDE_DIR}
+  ExternalProject_ByProducts(tcl_BLD ${INCLUDE_DIR}
     tclDecls.h
     tcl.h
     tclOODecls.h
@@ -1508,7 +1508,7 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
   set(TCL_LIBRARIES tcl CACHE STRING "Building bundled tcl" FORCE)
   set(TCL_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
 
-  SetTargetFolder(TCL_BLD "Third Party Libraries")
+  SetTargetFolder(tcl_BLD "Third Party Libraries")
   SetTargetFolder(tcl "Third Party Libraries")
 
   if(BRLCAD_ENABLE_TK)
@@ -1521,51 +1521,51 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
     ############
 
 
-    set(TK_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/TK_BLD-prefix/src/TK_BLD")
+    set(TK_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/tk_BLD-prefix/src/tk_BLD")
     set(TK_MINOR_VERSION 6)
 
     if (NOT MSVC)
 
       set(TK_PATCH_FILES "${TK_SRC_DIR}/unix/configure" "${TK_SRC_DIR}/macosx/configure" "${TK_SRC_DIR}/unix/tcl.m4")
 
-      ExternalProject_Add(TK_BLD
+      ExternalProject_Add(tk_BLD
 	URL "${CMAKE_CURRENT_SOURCE_DIR}/tk"
 	BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
 	PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${TK_PATCH_FILES}
 	CONFIGURE_COMMAND CPPFLAGS=-I${CMAKE_BINARY_DIR}/${INCLUDE_DIR} LDFLAGS=-L${CMAKE_BINARY_DIR}/${LIB_DIR} ${TK_SRC_DIR}/unix/configure --prefix=${CMAKE_BINARY_DIR} --with-tcl=${CMAKE_BINARY_DIR}/${LIB_DIR} --disable-xft --enable-64bit --enable-rpath
 	BUILD_COMMAND make -j${pcnt}
 	INSTALL_COMMAND make install
-	DEPENDS TCL_BLD ${PNG_LIBRARIES}
+	DEPENDS tcl_BLD ${PNG_LIBRARIES}
 	)
     else (NOT MSVC)
 
-      ExternalProject_Add(TK_BLD
+      ExternalProject_Add(tk_BLD
 	SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tk"
 	BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
 	CONFIGURE_COMMAND ""
 	BINARY_DIR ${TK_SRC_DIR}/win
 	BUILD_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc INSTALLDIR=${CMAKE_BINARY_DIR} TCLDIR=${TCL_SRC_DIR}
 	INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install INSTALLDIR=${CMAKE_BINARY_DIR} TCLDIR=${TCL_SRC_DIR}
-	DEPENDS TCL_BLD ${PNG_LIBRARIES}
+	DEPENDS tcl_BLD ${PNG_LIBRARIES}
 	)
 
     endif (NOT MSVC)
 
-    ExternalProject_Target(tk TK_BLD
+    ExternalProject_Target(tk tk_BLD
       OUTPUT_FILE libtk8.${TK_MINOR_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}
       STATIC_OUTPUT_FILE libtkstub8.${TK_MINOR_VERSION}${CMAKE_STATIC_LIBRARY_SUFFIX}
       RPATH
       )
-    ExternalProject_Target(wish TK_BLD
+    ExternalProject_Target(wish tk_BLD
       OUTPUT_FILE wish8.${TK_MINOR_VERSION}${CMAKE_EXECUTABLE_SUFFIX}
       RPATH EXEC
       )
 
-    ExternalProject_ByProducts(TK_BLD ${LIB_DIR} FIXPATH
+    ExternalProject_ByProducts(tk_BLD ${LIB_DIR} FIXPATH
       tkConfig.sh
       )
 
-    ExternalProject_ByProducts(TK_BLD ${LIB_DIR}/tk8.${TK_MINOR_VERSION}
+    ExternalProject_ByProducts(tk_BLD ${LIB_DIR}/tk8.${TK_MINOR_VERSION}
       bgerror.tcl
       button.tcl
       choosedir.tcl
@@ -1738,7 +1738,7 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
       unsupported.tcl
       xmfbox.tcl
       )
-    ExternalProject_ByProducts(TK_BLD ${INCLUDE_DIR}
+    ExternalProject_ByProducts(tk_BLD ${INCLUDE_DIR}
       tkDecls.h
       tk.h
       tkPlatDecls.h
@@ -1747,7 +1747,7 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
     set(TK_LIBRARIES tk CACHE STRING "Building bundled tk" FORCE)
     set(TK_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
 
-    SetTargetFolder(TK_BLD "Third Party Libraries")
+    SetTargetFolder(tk_BLD "Third Party Libraries")
     SetTargetFolder(tk "Third Party Libraries")
 
     ############
@@ -1756,59 +1756,59 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
 
     if (NOT MSVC)
 
-      set(ITK_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/ITK_BLD-prefix/src/ITK_BLD")
+      set(ITK_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/itk_BLD-prefix/src/itk_BLD")
       set(ITK_VERSION 4.1.0)
 
       set(ITK_PATCH_FILES "${ITK_SRC_DIR}/configure" "${ITK_SRC_DIR}/tclconfig/tcl.m4")
 
-      ExternalProject_Add(ITK_BLD
+      ExternalProject_Add(itk_BLD
 	URL "${CMAKE_CURRENT_SOURCE_DIR}/itk"
 	BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
 	PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${ITK_PATCH_FILES}
 	CONFIGURE_COMMAND CPPFLAGS=-I${CMAKE_BINARY_DIR}/${INCLUDE_DIR} LDFLAGS=-L${CMAKE_BINARY_DIR}/${LIB_DIR} ${ITK_SRC_DIR}/configure --prefix=${CMAKE_BINARY_DIR} --with-tcl=${CMAKE_BINARY_DIR}/${LIB_DIR} --with-tk=${CMAKE_BINARY_DIR}/${LIB_DIR} --with-itcl=${CMAKE_BINARY_DIR}/lib/itcl${ITCL_VERSION}
 	BUILD_COMMAND make -j${pcnt}
 	INSTALL_COMMAND make install
-	DEPENDS TK_BLD TCL_BLD
+	DEPENDS itk_BLD tcl_BLD
 	)
     else (NOT MSVC)
 
-      ExternalProject_Add(ITK_BLD
+      ExternalProject_Add(itk_BLD
 	SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tk"
 	BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
 	CONFIGURE_COMMAND ""
 	BINARY_DIR ${ITK_SRC_DIR}/win
 	BUILD_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc INSTALLDIR=${CMAKE_BINARY_DIR} TCLDIR=${TCL_SRC_DIR} TKDIR=${TK_SRC_DIR}
 	INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install INSTALLDIR=${CMAKE_BINARY_DIR} TCLDIR=${TCL_SRC_DIR} TKDIR=${TK_SRC_DIR}
-	DEPENDS TK_BLD TCL_BLD
+	DEPENDS tk_BLD tcl_BLD
 	)
 
     endif (NOT MSVC)
 
 
-    ExternalProject_Target(itk ITK_BLD
+    ExternalProject_Target(itk itk_BLD
       SUBDIR itk${ITK_VERSION}
       OUTPUT_FILE libitk${ITK_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}
       )
 
-    ExternalProject_ByProducts(ITK_BLD ${INCLUDE_DIR}
+    ExternalProject_ByProducts(itk_BLD ${INCLUDE_DIR}
       itk.h
       itkInt.h
       )
 
-    ExternalProject_ByProducts(ITK_BLD ${LIB_DIR}
+    ExternalProject_ByProducts(itk_BLD ${LIB_DIR}
       itk${ITK_VERSION}/itk.tcl
       itk${ITK_VERSION}/Widget.itk
       itk${ITK_VERSION}/Archetype.itk
       itk${ITK_VERSION}/Toplevel.itk
       itk${ITK_VERSION}/tclIndex
       )
-    ExternalProject_ByProducts(ITK_BLD ${LIB_DIR}
+    ExternalProject_ByProducts(itk_BLD ${LIB_DIR}
       itk${ITK_VERSION}/pkgIndex.tcl
       FIXPATH
       )
 
 
-    SetTargetFolder(ITK_BLD "Third Party Libraries")
+    SetTargetFolder(itk_BLD "Third Party Libraries")
     SetTargetFolder(itk "Third Party Libraries")
 
     ################
@@ -1817,35 +1817,35 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
 
     if (NOT MSVC)
 
-      set(IWIDGETS_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/IWIDGETS_BLD-prefix/src/IWIDGETS_BLD")
+      set(IWIDGETS_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/iwidgets_BLD-prefix/src/iwidgets_BLD")
       set(IWIDGETS_VERSION 4.1.1)
 
       set(IWIDGETS_PATCH_FILES "${IWIDGETS_SRC_DIR}/configure" "${IWIDGETS_SRC_DIR}/tclconfig/tcl.m4")
 
-      ExternalProject_Add(IWIDGETS_BLD
+      ExternalProject_Add(iwidgets_BLD
 	URL "${CMAKE_CURRENT_SOURCE_DIR}/iwidgets"
 	BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
 	PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${IWIDGETS_PATCH_FILES}
 	CONFIGURE_COMMAND CPPFLAGS=-I${CMAKE_BINARY_DIR}/${INCLUDE_DIR} LDFLAGS=-L${CMAKE_BINARY_DIR}/${LIB_DIR} ${IWIDGETS_SRC_DIR}/configure --prefix=${CMAKE_BINARY_DIR} --with-tcl=${CMAKE_BINARY_DIR}/${LIB_DIR} --with-tk=${CMAKE_BINARY_DIR}/${LIB_DIR} --with-itcl=${CMAKE_BINARY_DIR}/lib/itcl${ITCL_VERSION} --with-itk=${ITK_SRC_DIR}
 	BUILD_COMMAND make -j${pcnt}
 	INSTALL_COMMAND make install
-	DEPENDS TK_BLD TCL_BLD
+	DEPENDS itk_BLD itcl_BLD tk_BLD tcl_BLD
 	)
     else (NOT MSVC)
 
-      ExternalProject_Add(IWIDGETS_BLD
+      ExternalProject_Add(iwidgets_BLD
 	SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tk"
 	BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
 	CONFIGURE_COMMAND ""
 	BINARY_DIR ${IWIDGETS_SRC_DIR}/win
 	BUILD_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc INSTALLDIR=${CMAKE_BINARY_DIR} TCLDIR=${TCL_SRC_DIR} TKDIR=${TK_SRC_DIR}
 	INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install INSTALLDIR=${CMAKE_BINARY_DIR} TCLDIR=${TCL_SRC_DIR} TKDIR=${TK_SRC_DIR}
-	DEPENDS TK_BLD TCL_BLD
+	DEPENDS itk_BLD itcl_BLD tk_BLD tcl_BLD
 	)
 
     endif (NOT MSVC)
 
-    ExternalProject_ByProducts(IWIDGETS_BLD ${LIB_DIR}/iwidgets${IWIDGETS_VERSION}
+    ExternalProject_ByProducts(iwidgets_BLD ${LIB_DIR}/iwidgets${IWIDGETS_VERSION}
       demos/buttonbox
       demos/calendar
       demos/canvasprintbox
@@ -2039,7 +2039,7 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
       scripts/watch.itk
       )
 
-    SetTargetFolder(IWIDGETS_BLD "Third Party Libraries")
+    SetTargetFolder(iwidgets_BLD "Third Party Libraries")
     SetTargetFolder(iwidgets "Third Party Libraries")
 
     #############
@@ -2048,7 +2048,7 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
 
     if (NOT MSVC)
 
-      set(TKTABLE_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/TKTABLE_BLD-prefix/src/TKTABLE_BLD")
+      set(TKTABLE_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/tktable_BLD-prefix/src/tktable_BLD")
       set(TKTABLE_VERSION 2.10)
 
       # We need to set internal Tcl variables to the final install paths, not the intermediate install paths that
@@ -2060,7 +2060,7 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
       set(TKTABLE_PATCH_FILES "${TKTABLE_SRC_DIR}/configure" "${TKTABLE_SRC_DIR}/tclconfig/tcl.m4")
       set(TKTABLE_REWORK_FILES "${TKTABLE_SRC_DIR}/generic/tkTableInitScript.h")
 
-      ExternalProject_Add(TKTABLE_BLD
+      ExternalProject_Add(tktable_BLD
 	URL "${CMAKE_CURRENT_SOURCE_DIR}/tktable"
 	BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
 	PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${TKTABLE_PATCH_FILES}
@@ -2068,39 +2068,39 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
 	CONFIGURE_COMMAND CPPFLAGS=-I${CMAKE_BINARY_DIR}/${INCLUDE_DIR} LDFLAGS=-L${CMAKE_BINARY_DIR}/${LIB_DIR} ${TKTABLE_SRC_DIR}/configure --prefix=${CMAKE_BINARY_DIR} --with-tcl=${CMAKE_BINARY_DIR}/${LIB_DIR} --with-tk=${CMAKE_BINARY_DIR}/${LIB_DIR}
 	BUILD_COMMAND make -j${pcnt}
 	INSTALL_COMMAND make install
-	DEPENDS TK_BLD TCL_BLD
+	DEPENDS tk_BLD tcl_BLD
 	)
     else (NOT MSVC)
 
-      ExternalProject_Add(TKTABLE_BLD
+      ExternalProject_Add(tktable_BLD
 	SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/tk"
 	BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
 	CONFIGURE_COMMAND ""
 	BINARY_DIR ${TKTABLE_SRC_DIR}/win
 	BUILD_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc INSTALLDIR=${CMAKE_BINARY_DIR} TCLDIR=${TCL_SRC_DIR} TKDIR=${TK_SRC_DIR}
 	INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install INSTALLDIR=${CMAKE_BINARY_DIR} TCLDIR=${TCL_SRC_DIR} TKDIR=${TK_SRC_DIR}
-	DEPENDS TK_BLD TCL_BLD
+	DEPENDS tk_BLD tcl_BLD
 	)
 
     endif (NOT MSVC)
 
 
-    ExternalProject_Target(tktable TKTABLE_BLD
+    ExternalProject_Target(tktable tktable_BLD
       SUBDIR Tktable${TKTABLE_VERSION}
       OUTPUT_FILE libTktable${TKTABLE_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}
       )
-    ExternalProject_ByProducts(TKTABLE_BLD ${LIB_DIR}
+    ExternalProject_ByProducts(tktable_BLD ${LIB_DIR}
       Tktable${TKTABLE_VERSION}/README.txt
       Tktable${TKTABLE_VERSION}/html/tkTable.html
       Tktable${TKTABLE_VERSION}/tktable.py
       Tktable${TKTABLE_VERSION}/license.txt
       )
-    ExternalProject_ByProducts(TKTABLE_BLD ${LIB_DIR}
+    ExternalProject_ByProducts(tktable_BLD ${LIB_DIR}
       Tktable${TKTABLE_VERSION}/tkTable.tcl
       FIXPATH
       )
 
-    SetTargetFolder(TKTABLE_BLD "Third Party Libraries")
+    SetTargetFolder(tktable_BLD "Third Party Libraries")
     SetTargetFolder(tktable "Third Party Libraries")
 
     #############
@@ -2111,7 +2111,7 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
 
     cmake_set_rpath(SUFFIX "Tkhtml${TKHTML_VERSION}")
     message("CMAKE_BUILD_RPATH: ${CMAKE_BUILD_RPATH}")
-    ExternalProject_Add(TKHTML_BLD
+    ExternalProject_Add(tkhtml_BLD
       SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/tkhtml
       CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR}
       -DCMAKE_PREFIX_PATH=${CMAKE_BINARY_DIR}/${LIB_DIR} -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH}
@@ -2127,9 +2127,9 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
       -DTCL_WISH_EXECUTABLE=${CMAKE_BINARY_DIR}/${BIN_DIR}/wish8.${TCL_MINOR_VERSION}${CMAKE_EXECUTABLE_SUFFIX}
       -DTK_INCLUDE_PATH=${CMAKE_BINARY_DIR}/${INCLUDE_DIR}
       -DTK_LIBRARY=${CMAKE_BINARY_DIR}/${LIB_DIR}/libtk8.${TCL_MINOR_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}
-      DEPENDS TCL_BLD TK_BLD
+      DEPENDS tcl_BLD tk_BLD
       )
-    ExternalProject_Target(tkhtml TKHTML_BLD
+    ExternalProject_Target(tkhtml tkhtml_BLD
       SUBDIR Tkhtml${TKHTML_VERSION}
       OUTPUT_FILE libTkhtml${CMAKE_SHARED_LIBRARY_SUFFIX}.${TKHTML_VERSION}
       SYMLINKS "libTkhtml${CMAKE_SHARED_LIBRARY_SUFFIX}"
@@ -2138,12 +2138,12 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
       )
     cmake_set_rpath("")
 
-    ExternalProject_ByProducts(TKHTML_BLD ${LIB_DIR}/Tkhtml${TKHTML_VERSION}
+    ExternalProject_ByProducts(tkhtml_BLD ${LIB_DIR}/Tkhtml${TKHTML_VERSION}
       pkgIndex.tcl
       FIXPATH
       )
 
-    SetTargetFolder(TKHTML_BLD "Third Party Libraries")
+    SetTargetFolder(tkhtml_BLD "Third Party Libraries")
     SetTargetFolder(tkhtml "Third Party Libraries")
 
   else(BRLCAD_ENABLE_TK)
@@ -2267,6 +2267,8 @@ CMAKEFILES(CMakeLists.txt)
 
 # Done with ExternalProject_Add
 set(SUPPRESS_GENERATED_TAG FALSE)
+
+add_custom_target(OTHER_BLDS DEPENDS openNURBS_BLD)
 
 # Local Variables:
 # tab-width: 8

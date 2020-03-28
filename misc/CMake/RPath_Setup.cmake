@@ -53,7 +53,6 @@ function(SUFFIX_STRING POPATH INIT_PATH)
       set(RELDIRS "${CDIR}")
       set(FPATH "../")
     endif (NOT "${RELDIRS}" STREQUAL "")
-    message("CPATH:${CPATH}")
   endwhile()
 
   set(FPATH "${FPATH}${RELDIRS}")
@@ -110,8 +109,6 @@ if(NOT COMMAND cmake_set_rpath)
     # it should work, but the install rpath won't overwrite the extra chars with : as is - we
     # may need to do that to make sure only the correct paths are present
     set(CMAKE_BUILD_RPATH "${CMAKE_BINARY_DIR}/${LSUFFIX}")
-    message("II: ${CMAKE_INSTALL_RPATH}")
-    message("IB: ${CMAKE_BUILD_RPATH}")
     string(LENGTH "${CMAKE_INSTALL_RPATH}" INSTALL_LEN)
     string(LENGTH "${CMAKE_BUILD_RPATH}" CURR_LEN)
     while("${CURR_LEN}" LESS "${INSTALL_LEN}")
@@ -124,7 +121,6 @@ if(NOT COMMAND cmake_set_rpath)
       # to supply to external build systems so their outputs can be manipulated
       # as if they were outputs of our own build.
       set(CMAKE_BUILD_RPATH "${CMAKE_BUILD_RPATH}:")
-      message("CMAKE_BUILD_RPATH: ${CMAKE_BUILD_RPATH}") 
       string(LENGTH "${CMAKE_BUILD_RPATH}" CURR_LEN)
     endwhile("${CURR_LEN}" LESS "${INSTALL_LEN}")
 
