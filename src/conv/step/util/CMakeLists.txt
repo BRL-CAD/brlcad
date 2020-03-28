@@ -1,7 +1,10 @@
 include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
+  ${BRLCAD_BINARY_DIR}/${INCLUDE_DIR}/stepcode
   )
+
+link_directories(${CMAKE_BINARY_DIR}/${LIB_DIR})
 
 set(STEP_SCHEMA_FILE ${STEPCODE_DIR}/data/ap203/ap203.exp)
 add_definitions(-DAP203)

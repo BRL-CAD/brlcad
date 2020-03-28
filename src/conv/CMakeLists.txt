@@ -52,7 +52,7 @@ BRLCAD_ADDEXEC(k-g k-g.cpp "libwdb;librt;libbu;${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(dxf-g dxf/dxf-g.c "libwdb;librt;libnmg;libbn;libbu;${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(enf-g enf-g.c "libwdb;${TCL_LIBRARY};${M_LIBRARY}")
+BRLCAD_ADDEXEC(enf-g enf-g.c "libwdb;${TCL_LIBRARIES};${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(g-dot g-dot.c "libged;libbu")
 

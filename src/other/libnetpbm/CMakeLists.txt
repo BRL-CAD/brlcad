@@ -135,6 +135,7 @@ set(NETPBM_HEADERS
   ppm.h
   ppmcmap.h
   ppmfloyd.h
+  ${CMAKE_CURRENT_BINARY_DIR}/pm_config.h
   )
 
 if (NOT SKIP_INSTALL_HDRS)

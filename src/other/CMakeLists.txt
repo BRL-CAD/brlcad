@@ -345,7 +345,7 @@ if (${CMAKE_PROJECT_NAME}_PNG_BUILD)
     libpng${PNG_VERSION_MAJOR}/pnglibconf.h
     )
 
-  set(PNG_LIBRARIES netpbm CACHE STRING "Building bundled libpng" FORCE)
+  set(PNG_LIBRARIES png CACHE STRING "Building bundled libpng" FORCE)
   set(PNG_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing libpng headers." FORCE)
 
   SetTargetFolder(PNG_BLD "Third Party Libraries")
@@ -1225,6 +1225,7 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
   set(TCL_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/TCL_BLD-prefix/src/TCL_BLD")
   set(TCL_MINOR_VERSION 6)
   set(ITCL_VERSION 4.2.0)
+  CONFIG_H_APPEND(BRLCAD "#define ITCL_VERSION \"${ITCL_VERSION}\"\n")
 
   # We need to set internal Tcl variables to the final install paths, not the intermediate install paths that
   # Tcl's own build will think are the final paths.  Rather than attempt build system trickery we simply
@@ -1265,6 +1266,13 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
     STATIC_OUTPUT_FILE libtclstub8.${TCL_MINOR_VERSION}${CMAKE_STATIC_LIBRARY_SUFFIX}
     RPATH
     )
+  ExternalProject_Target(itcl TCL_BLD
+    SUBDIR itcl${ITCL_VERSION}
+    OUTPUT_FILE libitcl${ITCL_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}
+    STATIC_OUTPUT_FILE libitclstub${ITCL_VERSION}${CMAKE_STATIC_LIBRARY_SUFFIX}
+    RPATH
+    )
+
   ExternalProject_Target(tclsh TCL_BLD
     OUTPUT_FILE tclsh8.${TCL_MINOR_VERSION}${CMAKE_EXECUTABLE_SUFFIX}
     RPATH EXEC
@@ -1507,6 +1515,11 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
 
   set(TCL_LIBRARIES tcl CACHE STRING "Building bundled tcl" FORCE)
   set(TCL_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing tcl headers." FORCE)
+
+  set(ITCL_LIBRARIES itcl CACHE STRING "Building bundled itcl" FORCE)
+  set(ITCL_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing itcl headers." FORCE)
+
+
 
   SetTargetFolder(TCL_BLD "Third Party Libraries")
   SetTargetFolder(tcl "Third Party Libraries")
@@ -1788,6 +1801,7 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
     ExternalProject_Target(itk ITK_BLD
       SUBDIR itk${ITK_VERSION}
       OUTPUT_FILE libitk${ITK_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}
+      STATIC_OUTPUT_FILE libitkstub${ITCL_VERSION}${CMAKE_STATIC_LIBRARY_SUFFIX}
       )
 
     ExternalProject_ByProducts(ITK_BLD ${INCLUDE_DIR}
@@ -1807,6 +1821,8 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
       FIXPATH
       )
 
+    set(ITK_LIBRARIES itk CACHE STRING "Building bundled itk" FORCE)
+    set(ITK_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing itk headers." FORCE)
 
     SetTargetFolder(ITK_BLD "Third Party Libraries")
     SetTargetFolder(itk "Third Party Libraries")
@@ -1819,6 +1835,7 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
 
       set(IWIDGETS_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/IWIDGETS_BLD-prefix/src/IWIDGETS_BLD")
       set(IWIDGETS_VERSION 4.1.1)
+      CONFIG_H_APPEND(BRLCAD "#define IWIDGETS_VERSION \"${IWIDGETS_VERSION}\"\n")
 
       set(IWIDGETS_PATCH_FILES "${IWIDGETS_SRC_DIR}/configure" "${IWIDGETS_SRC_DIR}/tclconfig/tcl.m4")
 

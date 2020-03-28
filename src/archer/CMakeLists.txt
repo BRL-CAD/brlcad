@@ -9,7 +9,7 @@ BRLCAD_INCLUDE_DIRS(ARCHER_INCLUDE_DIRS)
 
 BRLCAD_ADDDATA(archer_launch.tcl tclscripts/archer)
 
-set(archer_libs libtclcad libbu ${ITCL_LIBRARY} ${ITK_LIBRARY} ${TCL_LIBRARIES})
+set(archer_libs libtclcad libbu ${ITCL_LIBRARIES} ${ITK_LIBRARIES} ${TCL_LIBRARIES})
 
 if(CPP_DLL_DEFINES)
   set(archer_libs ${archer_libs} imm32.lib comctl32.lib)
