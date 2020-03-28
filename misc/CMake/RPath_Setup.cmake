@@ -36,6 +36,32 @@
 
 include(CMakeParseArguments)
 
+# For a given path, calculate the $ORIGIN style path needed relative
+# to CMAKE_INSTALL_PREFIX
+function(SUFFIX_STRING POPATH INIT_PATH)
+
+  get_filename_component(CPATH "${INIT_PATH}" REALPATH)
+  set(RELDIRS)
+  set(FPATH)
+  while (NOT "${CPATH}" STREQUAL "${CMAKE_INSTALL_PREFIX}")
+    get_filename_component(CDIR "${CPATH}" NAME)
+    get_filename_component(CPATH "${CPATH}" DIRECTORY)
+    if (NOT "${RELDIRS}" STREQUAL "")
+      set(RELDIRS "${CDIR}/${RELDIRS}")
+      set(FPATH "../${FPATH}")
+    else (NOT "${RELDIRS}" STREQUAL "")
+      set(RELDIRS "${CDIR}")
+      set(FPATH "../")
+    endif (NOT "${RELDIRS}" STREQUAL "")
+    message("CPATH:${CPATH}")
+  endwhile()
+
+  set(FPATH "${FPATH}${RELDIRS}")
+
+  set(${POPATH} ${FPATH} PARENT_SCOPE)
+endfunction(SUFFIX_STRING)
+
+
 if(NOT COMMAND cmake_set_rpath)
 
   function(cmake_set_rpath)
@@ -55,32 +81,33 @@ if(NOT COMMAND cmake_set_rpath)
     # directories outside the build tree to the install RPATH
     set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE PARENT_SCOPE)
 
+    # Set an initial RPATH to use for length calculations
+    if(NOT R_SUFFIX)
+      set(LSUFFIX "${LIB_DIR}")
+    else(NOT R_SUFFIX)
+      set(LSUFFIX "${LIB_DIR}/${R_SUFFIX}")
+    endif(NOT R_SUFFIX)
+
+    # Calculate how many ../ offsets are needed to return from this directory
+    # to the install origin
+    set(OPATH)
+    SUFFIX_STRING(OPATH "${CMAKE_INSTALL_PREFIX}/${LSUFFIX}")
 
     # Set RPATH value to use when installing.  This should be set to always
     # prefer the version in the installed path when possible, but fall back on a
     # location relative to the loading file's path if the installed version is
     # not present.  How to do so is platform specific.
-    if(NOT R_SUFFIX)
-      if(NOT APPLE)
-	set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}:\$ORIGIN/../${LIB_DIR}")
-      else(NOT APPLE)
-	set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR};@loader_path/../${LIB_DIR}")
-      endif(NOT APPLE)
-    else(NOT R_SUFFIX)
-      if(NOT APPLE)
-	set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}/${R_SUFFIX}:\$ORIGIN/../${LIB_DIR}/${R_SUFFIX}")
-      else(NOT APPLE)
-	set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}/${R_SUFFIX};@loader_path/../${LIB_DIR}/${R_SUFFIX}")
-      endif(NOT APPLE)
-    endif(NOT R_SUFFIX)
+    if(NOT APPLE)
+      set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LSUFFIX}:\$ORIGIN/${OPATH}/${LSUFFIX}")
+    else(NOT APPLE)
+      set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LSUFFIX};@loader_path/${OPATH}/${LSUFFIX}")
+    endif(NOT APPLE)
 
     # Determine what the build time RPATH will be that is used to support
     # CMake's RPATH manipulation, so it can be used in external projects.
-    if(NOT R_SUFFIX)
-      set(CMAKE_BUILD_RPATH "${CMAKE_BINARY_DIR}/${LIB_DIR}")
-    else(NOT R_SUFFIX)
-      set(CMAKE_BUILD_RPATH "${CMAKE_BINARY_DIR}/${LIB_DIR}/${suffix}")
-    endif(NOT R_SUFFIX)
+    set(CMAKE_BUILD_RPATH "${CMAKE_BINARY_DIR}/${LSUFFIX}")
+    message("II: ${CMAKE_INSTALL_RPATH}")
+    message("IB: ${CMAKE_BUILD_RPATH}")
     string(LENGTH "${CMAKE_INSTALL_RPATH}" INSTALL_LEN)
     string(LENGTH "${CMAKE_BUILD_RPATH}" CURR_LEN)
     while("${CURR_LEN}" LESS "${INSTALL_LEN}")
@@ -93,6 +120,7 @@ if(NOT COMMAND cmake_set_rpath)
       # to supply to external build systems so their outputs can be manipulated
       # as if they were outputs of our own build.
       set(CMAKE_BUILD_RPATH "${CMAKE_BUILD_RPATH}:")
+      message("CMAKE_BUILD_RPATH: ${CMAKE_BUILD_RPATH}") 
       string(LENGTH "${CMAKE_BUILD_RPATH}" CURR_LEN)
     endwhile("${CURR_LEN}" LESS "${INSTALL_LEN}")
 

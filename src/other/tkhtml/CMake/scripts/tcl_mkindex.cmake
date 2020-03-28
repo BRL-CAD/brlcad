@@ -33,7 +33,7 @@
 #=============================================================================
 
 get_filename_component(TFD "${TF_DIR}" REALPATH)
-file(WRITE "${PKGFILE}" "package ifneeded ${pkgname} ${pkgversion} [list load [file join $dir \"${TFD}/${LIB_DIR}\" ${TF_NAME}] ${pkgname}]")
+file(WRITE "${PKGFILE}" "package ifneeded ${pkgname} ${pkgversion} [list load [file join $dir \"${TFD}/${LIB_DIR}/${pkgname}${pkgversion}\" ${TF_NAME}] ${pkgname}]")
 
 # Local Variables:
 # tab-width: 8

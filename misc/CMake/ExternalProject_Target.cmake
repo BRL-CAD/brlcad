@@ -153,25 +153,60 @@ function(ET_target_props etarg IN_IMPORT_PREFIX IN_LINK_TARGET)
 endfunction(ET_target_props)
 
 
+# For a given path, calculate the $ORIGIN style path needed relative
+# to CMAKE_INSTALL_PREFIX
+function(ET_Origin_Path POPATH INIT_PATH)
+
+  get_filename_component(CPATH "${INIT_PATH}" REALPATH)
+  set(RELDIRS)
+  set(FPATH)
+  while (NOT "${CPATH}" STREQUAL "${CMAKE_INSTALL_PREFIX}")
+    get_filename_component(CDIR "${CPATH}" NAME)
+    get_filename_component(CPATH "${CPATH}" DIRECTORY)
+    if (NOT "${RELDIRS}" STREQUAL "")
+      set(RELDIRS "${CDIR}/${RELDIRS}")
+      set(FPATH "../${FPATH}")
+    else (NOT "${RELDIRS}" STREQUAL "")
+      set(RELDIRS "${CDIR}")
+      set(FPATH "../")
+    endif (NOT "${RELDIRS}" STREQUAL "")
+  endwhile()
+
+  set(FPATH "${FPATH}${RELDIRS}")
+
+  set(${POPATH} ${FPATH} PARENT_SCOPE)
+endfunction(ET_Origin_Path)
+
 # Mimic the magic of the CMake install(TARGETS) form of the install command.
 # This is the key to treating external project build outputs as fully managed
 # CMake outputs, and requires that the external project build in such a way
 # that the rpath settings in the build outputs are compatible with this
 # mechanism.
-function(ET_RPath REL_DIR LIB_DIR E_OUTPUT_FILE)
+function(ET_RPath LIB_DIR OUTPUT_DIR SUB_DIR E_OUTPUT_FILE)
+  get_filename_component(RRPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}/${SUB_DIR}" REALPATH)
+  message("RPATH_FILE: ${RRPATH}")
+  set(OPATH)
+  ET_Origin_Path(OPATH "${RRPATH}")
+  message("OPATH: ${OPATH}")
   if (NOT APPLE)
-    set(NEW_RPATH "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/${LIB_DIR}:$ORIGIN/../${LIB_DIR}")
+    set(NEW_RPATH "$ENV{DESTDIR}${RRPATH}:$ORIGIN/${OPATH}")
   else (NOT APPLE)
-    set(NEW_RPATH "$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}/${LIB_DIR}:@loader_path/../${LIB_DIR}")
+    set(NEW_RPATH "$ENV{DESTDIR}${RRPATH}:@loader_path/${OPATH}")
   endif (NOT APPLE)
   if (NOT DEFINED CMAKE_BUILD_RPATH)
     message(FATAL_ERROR "ET_RPath run without CMAKE_BUILD_RPATH defined - run cmake_set_rpath before defining external projects.")
   endif (NOT DEFINED CMAKE_BUILD_RPATH)
+  if (NOT "${SUB_DIR}" STREQUAL "")
+    set(OFINAL "${SUB_DIR}/${E_OUTPUT_FILE}")
+  else (NOT "${SUB_DIR}" STREQUAL "")
+    set(OFINAL "${E_OUTPUT_FILE}")
+  endif (NOT "${SUB_DIR}" STREQUAL "")
+  message("OFINAL: ${OFINAL}")
   # Note - proper quoting for install(CODE) is extremely important for CPack, see
   # https://stackoverflow.com/a/48487133
   install(CODE "
   file(RPATH_CHANGE
-    FILE \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${REL_DIR}/${E_OUTPUT_FILE}\"
+    FILE \"\$ENV{DESTDIR}\${CMAKE_INSTALL_PREFIX}/${OUTPUT_DIR}/${OFINAL}\"
     OLD_RPATH \"${CMAKE_BUILD_RPATH}\"
     NEW_RPATH \"${NEW_RPATH}\")
   ")
@@ -179,7 +214,7 @@ endfunction(ET_RPath)
 
 function(ExternalProject_Target etarg extproj)
 
-  cmake_parse_arguments(E "RPATH;EXEC" "IMPORT_PREFIX;OUTPUT_FILE;LINK_TARGET;LINK_TARGET_DEBUG;STATIC_OUTPUT_FILE;STATIC_LINK_TARGET;STATIC_LINK_TARGET_DEBUG" "SYMLINKS;DEPS" ${ARGN})
+  cmake_parse_arguments(E "RPATH;EXEC" "SUBDIR;OUTPUT_FILE;LINK_TARGET;LINK_TARGET_DEBUG;STATIC_OUTPUT_FILE;STATIC_LINK_TARGET;STATIC_LINK_TARGET_DEBUG" "SYMLINKS;DEPS" ${ARGN})
 
   if(NOT TARGET ${extproj})
     message(FATAL_ERROR "${extprog} is not a target")
@@ -217,11 +252,6 @@ function(ExternalProject_Target etarg extproj)
   # and set the necessary properties.  See also
   # https://gitlab.kitware.com/cmake/community/wikis/doc/tutorials/Exporting-and-Importing-Targets
 
-  if (E_IMPORT_PREFIX)
-    set(LIB_DIR "${LIB_DIR}/${E_IMPORT_PREFIX}")
-    set(BIN_DIR "${BIN_DIR}/${E_IMPORT_PREFIX}")
-  endif (E_IMPORT_PREFIX)
-
   # Because the outputs are not properly build target outputs of the primary
   # CMake project, we need to install as either FILES or PROGRAMS
   if (NOT E_EXEC)
@@ -235,9 +265,10 @@ function(ExternalProject_Target etarg extproj)
 	ET_target_props(${etarg} "${E_IMPORT_PREFIX}" ${E_OUTPUT_FILE} LINK_TARGET_DEBUG "${LINK_TARGET_DEBUG}")
       endif (E_LINK_TARGET)
 
-      install(FILES "${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/${E_OUTPUT_FILE}" DESTINATION ${LIB_DIR})
+      message("INSTALL: ${CMAKE_BINARY_DIR}/${LIB_DIR}/${E_SUBDIR}/${E_OUTPUT_FILE}")
+      install(FILES "${CMAKE_BINARY_DIR}/${LIB_DIR}/${E_SUBDIR}/${E_OUTPUT_FILE}" DESTINATION ${LIB_DIR}/${E_SUBDIR})
       if (E_RPATH AND NOT MSVC)
-	ET_RPath(${LIB_DIR} ${LIB_DIR} ${E_OUTPUT_FILE})
+	ET_RPath("${LIB_DIR}" "${LIB_DIR}" "${E_SUBDIR}" "${E_OUTPUT_FILE}")
       endif (E_RPATH AND NOT MSVC)
     endif (E_SHARED)
 
@@ -249,16 +280,21 @@ function(ExternalProject_Target etarg extproj)
       else (E_STATIC_LINK_TARGET)
 	ET_target_props(${etarg}-static "${E_IMPORT_PREFIX}" ${E_STATIC_OUTPUT_FILE} STATIC_LINK_TARGET_DEBUG "${STATIC_LINK_TARGET_DEBUG}" STATIC)
       endif (E_STATIC_LINK_TARGET)
-      install(FILES "${CMAKE_ARCHIVE_OUTPUT_DIRECTORY}/${E_STATIC_OUTPUT_FILE}" DESTINATION ${LIB_DIR})
+      if (MSVC)
+	install(FILES "${CMAKE_BINARY_DIR}/${BIN_DIR}/${E_SUBDIR}/${E_OUTPUT_FILE}" DESTINATION ${BIN_DIR}/${E_SUBDIR})
+      else (MSVC)
+      message("INSTALL: ${CMAKE_BINARY_DIR}/${LIB_DIR}/${E_SUBDIR}/${E_OUTPUT_FILE}")
+	install(FILES "${CMAKE_BINARY_DIR}/${LIB_DIR}/${E_SUBDIR}/${E_OUTPUT_FILE}" DESTINATION ${LIB_DIR}/${E_SUBDIR})
+      endif (MSVC)
     endif (E_STATIC AND BUILD_STATIC_LIBS)
 
   else (NOT E_EXEC)
 
     add_executable(${etarg} IMPORTED GLOBAL)
     ET_target_props(${etarg} "${E_IMPORT_PREFIX}" ${E_OUTPUT_FILE} EXEC)
-    install(PROGRAMS "${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/${E_OUTPUT_FILE}" DESTINATION ${BIN_DIR})
+    install(PROGRAMS "${CMAKE_BINARY_DIR}/${BIN_DIR}/${E_SUBDIR}/${E_OUTPUT_FILE}" DESTINATION ${BIN_DIR}/${E_SUBDIR})
     if (E_RPATH AND NOT MSVC)
-      ET_RPath(${BIN_DIR} ${LIB_DIR} ${E_OUTPUT_FILE})
+      ET_RPath("${LIB_DIR}" "${BIN_DIR}" "${E_SUBDIR}" "${E_OUTPUT_FILE}")
     endif (E_RPATH AND NOT MSVC)
 
   endif (NOT E_EXEC)
@@ -269,7 +305,8 @@ function(ExternalProject_Target etarg extproj)
   # Add install rules for any symlinks the caller has listed
   if(E_SYMLINKS)
     foreach(slink ${E_SYMLINKS})
-      install(FILES "${CMAKE_BINARY_DIR}/${slink}" DESTINATION ${LIB_DIR})
+      message("SLINK: ${CMAKE_BINARY_DIR}/${LIB_DIR}/${E_SUBDIR}/${slink}")
+      install(FILES "${CMAKE_BINARY_DIR}/${LIB_DIR}/${E_SUBDIR}/${slink}" DESTINATION ${LIB_DIR}/${E_SUBDIR})
     endforeach(slink ${E_SYMLINKS})
   endif (E_SYMLINKS)
 
