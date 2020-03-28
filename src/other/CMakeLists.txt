@@ -132,6 +132,7 @@ if (${CMAKE_PROJECT_NAME}_REGEX_BUILD)
     SYMLINKS "libregex${CMAKE_SHARED_LIBRARY_SUFFIX};libregex${CMAKE_SHARED_LIBRARY_SUFFIX}.1"
     LINK_TARGET "libregex${CMAKE_SHARED_LIBRARY_SUFFIX}"
     STATIC_LINK_TARGET "libregex${CMAKE_STATIC_LIBRARY_SUFFIX}"
+    RPATH
     )
   ExternalProject_ByProducts(REGEX_BLD ${INCLUDE_DIR}
     regex.h
@@ -175,6 +176,7 @@ if (${CMAKE_PROJECT_NAME}_ZLIB_BUILD)
       STATIC_OUTPUT_FILE libz${CMAKE_STATIC_LIBRARY_SUFFIX}
       SYMLINKS "libz${CMAKE_SHARED_LIBRARY_SUFFIX};libz${CMAKE_SHARED_LIBRARY_SUFFIX}.1"
       LINK_TARGET "libz${CMAKE_SHARED_LIBRARY_SUFFIX}"
+      RPATH
       )
   else (NOT MSVC)
     ExternalProject_Target(zlib ZLIB_BLD
@@ -1378,8 +1380,8 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
 
 
     ExternalProject_Target(itk ITK_BLD
-      IMPORT_PREFIX itk${ITK_VERSION}
-      OUTPUT_FILE itk${ITK_VERSION}/libitk${ITK_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}
+      SUBDIR itk${ITK_VERSION}
+      OUTPUT_FILE libitk${ITK_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}
       )
 
     ExternalProject_ByProducts(ITK_BLD ${INCLUDE_DIR}
@@ -1389,12 +1391,16 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
 
     ExternalProject_ByProducts(ITK_BLD ${LIB_DIR}
       itk${ITK_VERSION}/itk.tcl
-      itk${ITK_VERSION}/pkgIndex.tcl
       itk${ITK_VERSION}/Widget.itk
       itk${ITK_VERSION}/Archetype.itk
       itk${ITK_VERSION}/Toplevel.itk
       itk${ITK_VERSION}/tclIndex
       )
+    ExternalProject_ByProducts(ITK_BLD ${LIB_DIR}
+      itk${ITK_VERSION}/pkgIndex.tcl
+      FIXPATH
+      )
+
 
     SetTargetFolder(ITK_BLD "Third Party Libraries")
     SetTargetFolder(itk "Third Party Libraries")
@@ -1433,8 +1439,198 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
 
     endif (NOT MSVC)
 
-    ExternalProject_ByProducts(IWIDGETS_BLD ${LIB_DIR}
-      iwidgets${IWIDGETS_VERSION}/iwidgets.tcl
+    ExternalProject_ByProducts(IWIDGETS_BLD ${LIB_DIR}/iwidgets${IWIDGETS_VERSION}
+      demos/buttonbox
+      demos/calendar
+      demos/canvasprintbox
+      demos/canvasprintdialog
+      demos/catalog
+      demos/checkbox
+      demos/combobox
+      demos/dateentry
+      demos/datefield
+      demos/demo.html
+      demos/dialog
+      demos/dialogshell
+      demos/disjointlistbox
+      demos/entryfield
+      demos/extbutton
+      demos/extfileselectionbox
+      demos/extfileselectiondialog
+      demos/feedback
+      demos/fileselectionbox
+      demos/fileselectiondialog
+      demos/finddialog
+      demos/hierarchy
+      demos/html/buttonbox.n.html
+      demos/html/calendar.n.html
+      demos/html/canvasprintbox.n.html
+      demos/html/canvasprintdialog.n.html
+      demos/html/checkbox.n.html
+      demos/html/combobox.n.html
+      demos/html/dateentry.n.html
+      demos/html/datefield.n.html
+      demos/html/dialog.n.html
+      demos/html/dialogshell.n.html
+      demos/html/disjointlistbox.n.html
+      demos/html/entryfield.n.html
+      demos/html/extbutton.n.html
+      demos/html/extfileselectionbox.n.html
+      demos/html/extfileselectiondialog.n.html
+      demos/html/feedback.n.html
+      demos/html/fileselectionbox.n.html
+      demos/html/fileselectiondialog.n.html
+      demos/html/finddialog.n.html
+      demos/html/hierarchy.n.html
+      demos/html/hyperhelp.n.html
+      demos/html/iwidgets4.0.0UserCmds.html
+      demos/html/labeledframe.n.html
+      demos/html/labeledwidget.n.html
+      demos/html/mainwindow.n.html
+      demos/html/menubar.n.html
+      demos/html/messagebox.n.html
+      demos/html/messagedialog.n.html
+      demos/html/notebook.n.html
+      demos/html/optionmenu.n.html
+      demos/html/panedwindow.n.html
+      demos/html/promptdialog.n.html
+      demos/html/pushbutton.n.html
+      demos/html/radiobox.n.html
+      demos/html/scopedobject.n.html
+      demos/html/scrolledcanvas.n.html
+      demos/html/scrolledframe.n.html
+      demos/html/scrolledhtml.n.html
+      demos/html/scrolledlistbox.n.html
+      demos/html/scrolledtext.n.html
+      demos/html/selectionbox.n.html
+      demos/html/selectiondialog.n.html
+      demos/html/shell.n.html
+      demos/html/spindate.n.html
+      demos/html/spinint.n.html
+      demos/html/spinner.n.html
+      demos/html/spintime.n.html
+      demos/html/tabnotebook.n.html
+      demos/html/tabset.n.html
+      demos/html/timeentry.n.html
+      demos/html/timefield.n.html
+      demos/html/toolbar.n.html
+      demos/html/watch.n.html
+      demos/hyperhelp
+      demos/images/box.xbm
+      demos/images/clear.gif
+      demos/images/close.gif
+      demos/images/copy.gif
+      demos/images/cut.gif
+      demos/images/exit.gif
+      demos/images/find.gif
+      demos/images/help.gif
+      demos/images/line.xbm
+      demos/images/mag.gif
+      demos/images/new.gif
+      demos/images/open.gif
+      demos/images/oval.xbm
+      demos/images/paste.gif
+      demos/images/points.xbm
+      demos/images/poly.gif
+      demos/images/print.gif
+      demos/images/ruler.gif
+      demos/images/save.gif
+      demos/images/select.gif
+      demos/images/text.xbm
+      demos/iwidgets.gif
+      demos/labeledframe
+      demos/labeledwidget
+      demos/mainwindow
+      demos/menubar
+      demos/messagebox
+      demos/messagedialog
+      demos/notebook
+      demos/optionmenu
+      demos/panedwindow
+      demos/promptdialog
+      demos/pushbutton
+      demos/radiobox
+      demos/scopedobject
+      demos/scrolledcanvas
+      demos/scrolledframe
+      demos/scrolledhtml
+      demos/scrolledlistbox
+      demos/scrolledtext
+      demos/selectionbox
+      demos/selectiondialog
+      demos/shell
+      demos/spindate
+      demos/spinint
+      demos/spinner
+      demos/spintime
+      demos/tabnotebook
+      demos/tabset
+      demos/timeentry
+      demos/timefield
+      demos/toolbar
+      demos/watch
+      iwidgets.tcl
+      license.terms
+      pkgIndex.tcl
+      scripts/buttonbox.itk
+      scripts/calendar.itk
+      scripts/canvasprintbox.itk
+      scripts/canvasprintdialog.itk
+      scripts/checkbox.itk
+      scripts/colors.itcl
+      scripts/combobox.itk
+      scripts/dateentry.itk
+      scripts/datefield.itk
+      scripts/dialog.itk
+      scripts/dialogshell.itk
+      scripts/disjointlistbox.itk
+      scripts/entryfield.itk
+      scripts/extbutton.itk
+      scripts/extfileselectionbox.itk
+      scripts/extfileselectiondialog.itk
+      scripts/feedback.itk
+      scripts/fileselectionbox.itk
+      scripts/fileselectiondialog.itk
+      scripts/finddialog.itk
+      scripts/hierarchy.itk
+      scripts/hyperhelp.itk
+      scripts/labeledframe.itk
+      scripts/labeledwidget.itk
+      scripts/mainwindow.itk
+      scripts/menubar.itk
+      scripts/messagebox.itk
+      scripts/messagedialog.itk
+      scripts/notebook.itk
+      scripts/optionmenu.itk
+      scripts/pane.itk
+      scripts/panedwindow.itk
+      scripts/promptdialog.itk
+      scripts/pushbutton.itk
+      scripts/radiobox.itk
+      scripts/regexpfield.itk
+      scripts/roman.itcl
+      scripts/scopedobject.itcl
+      scripts/scrolledcanvas.itk
+      scripts/scrolledframe.itk
+      scripts/scrolledhtml.itk
+      scripts/scrolledlistbox.itk
+      scripts/scrolledtext.itk
+      scripts/scrolledwidget.itk
+      scripts/selectionbox.itk
+      scripts/selectiondialog.itk
+      scripts/shell.itk
+      scripts/spindate.itk
+      scripts/spinint.itk
+      scripts/spinner.itk
+      scripts/spintime.itk
+      scripts/tabnotebook.itk
+      scripts/tabset.itk
+      scripts/tclIndex
+      scripts/timeentry.itk
+      scripts/timefield.itk
+      scripts/toolbar.itk
+      scripts/unknownimage.gif
+      scripts/watch.itk
       )
 
     SetTargetFolder(IWIDGETS_BLD "Third Party Libraries")
@@ -1476,17 +1672,18 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
 
 
     ExternalProject_Target(tktable TKTABLE_BLD
-      IMPORT_PREFIX Tktable${TKTABLE_VERSION}
-      OUTPUT_FILE Tktable${TKTABLE_VERSION}/libTktable${TKTABLE_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}
+      SUBDIR Tktable${TKTABLE_VERSION}
+      OUTPUT_FILE libTktable${TKTABLE_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}
       )
-
     ExternalProject_ByProducts(TKTABLE_BLD ${LIB_DIR}
-      Tktable2.10/README.txt
-      Tktable2.10/html/tkTable.html
-      Tktable2.10/pkgIndex.tcl
-      Tktable2.10/tkTable.tcl
-      Tktable2.10/tktable.py
-      Tktable2.10/license.txt
+      Tktable${TKTABLE_VERSION}/README.txt
+      Tktable${TKTABLE_VERSION}/html/tkTable.html
+      Tktable${TKTABLE_VERSION}/tktable.py
+      Tktable${TKTABLE_VERSION}/license.txt
+      )
+    ExternalProject_ByProducts(TKTABLE_BLD ${LIB_DIR}
+      Tktable${TKTABLE_VERSION}/tkTable.tcl
+      FIXPATH
       )
 
     SetTargetFolder(TKTABLE_BLD "Third Party Libraries")
@@ -1530,6 +1727,7 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
 
     ExternalProject_ByProducts(TKHTML_BLD ${LIB_DIR}/Tkhtml${TKHTML_VERSION}
       pkgIndex.tcl
+      FIXPATH
       )
 
     SetTargetFolder(TKHTML_BLD "Third Party Libraries")
