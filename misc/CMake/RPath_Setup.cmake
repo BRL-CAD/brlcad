@@ -105,6 +105,10 @@ if(NOT COMMAND cmake_set_rpath)
 
     # Determine what the build time RPATH will be that is used to support
     # CMake's RPATH manipulation, so it can be used in external projects.
+
+    # TODO - need to check behavior when the BUILD_RPATH is longer than the INSTALL_RPATH -
+    # it should work, but the install rpath won't overwrite the extra chars with : as is - we
+    # may need to do that to make sure only the correct paths are present
     set(CMAKE_BUILD_RPATH "${CMAKE_BINARY_DIR}/${LSUFFIX}")
     message("II: ${CMAKE_INSTALL_RPATH}")
     message("IB: ${CMAKE_BUILD_RPATH}")
