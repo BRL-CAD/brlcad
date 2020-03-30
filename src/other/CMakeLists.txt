@@ -1768,6 +1768,8 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
     ############
 
     if (NOT MSVC)
+      # TODO - looks like this will require a CMake build after all - the Windows build included
+      # with the vanilla tarball doesn't appear to work...
 
       set(ITK_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/ITK_BLD-prefix/src/ITK_BLD")
       set(ITK_VERSION 4.1.0)
@@ -2064,6 +2066,8 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
     #############
 
     if (NOT MSVC)
+      # TODO - looks like this will require a CMake build after all - the Windows build included
+      # with the vanilla tarball is pretty hopeless...
 
       set(TKTABLE_SRC_DIR "${CMAKE_CURRENT_BINARY_DIR}/TKTABLE_BLD-prefix/src/TKTABLE_BLD")
       set(TKTABLE_VERSION 2.10)
