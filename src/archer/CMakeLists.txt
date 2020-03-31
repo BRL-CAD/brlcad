@@ -2,14 +2,14 @@ set(ARCHER_INCLUDE_DIRS
   ${BU_INCLUDE_DIRS}
   ${TCLCAD_INCLUDE_DIRS}
   ${TCL_INCLUDE_PATH}
-  ${TK_INCLUDE_DIRS}
+  ${TK_INCLUDE_PATH}
   )
 list(REMOVE_DUPLICATES ARCHER_INCLUDE_DIRS)
 BRLCAD_INCLUDE_DIRS(ARCHER_INCLUDE_DIRS)
 
 BRLCAD_ADDDATA(archer_launch.tcl tclscripts/archer)
 
-set(archer_libs libtclcad libbu ${ITCL_LIBRARY} ${ITK_LIBRARY} ${TCL_LIBRARIES})
+set(archer_libs libtclcad libbu ${ITCL_LIBRARY} ${ITK_LIBRARY} ${TCL_LIBRARY})
 
 if(CPP_DLL_DEFINES)
   set(archer_libs ${archer_libs} imm32.lib comctl32.lib)
@@ -23,7 +23,7 @@ if(BRLCAD_ENABLE_TK)
   BRLCAD_ADDEXEC(archer archer.c "${archer_libs}" GUI)
   add_dependencies(archer archer_launch_tcl_cp)
   add_dependencies(archer rtwizard)
-  ADD_TARGET_DEPS(archer Tkhtml Tktable)
+  ADD_TARGET_DEPS(archer Tkhtml tkpng Tktable)
 
   foreach(item ${tclindex_target_list})
     add_dependencies(archer ${item})

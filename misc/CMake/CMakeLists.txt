@@ -22,7 +22,6 @@ set(cmake_ignore_files
   FindAppleseed.cmake
   FindBlosc.cmake
   FindBRLCADTCL.cmake
-  FindBRLCADZLIB.cmake
   FindBSON.cmake
   FindFontconfig.cmake
   FindGDAL.cmake

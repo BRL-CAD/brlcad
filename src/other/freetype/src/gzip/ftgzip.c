@@ -47,7 +47,7 @@
 
 #ifdef FT_CONFIG_OPTION_SYSTEM_ZLIB
 
-#include <zlib.h>
+#include "zlib.h"
 
 #else /* !FT_CONFIG_OPTION_SYSTEM_ZLIB */
 

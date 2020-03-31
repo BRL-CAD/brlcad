@@ -102,6 +102,9 @@ SetTargetFolder(regex "Third Party Libraries")
 SetTargetFolder(regex-static "Third Party Libraries")
 if(BRLCAD_REGEX_BUILD)
   BRLCAD_MANAGE_FILES(${CMAKE_CURRENT_BINARY_DIR}/libregex/regex.h ${INCLUDE_DIR})
+else(BRLCAD_REGEX_BUILD)
+  set(REGEX_LIBRARIES ${REGEX_LIBRARY} CACHE STRING "REGEX_LIBRARIES" FORCE)
+  set(REGEX_INCLUDE_DIRS "${REGEX_INCLUDE_DIR}" CACHE STRING "REGEX include directory" FORCE)
 endif(BRLCAD_REGEX_BUILD)
 
 # Same deal for zlib Library - common requirement, deal with it up front
@@ -112,7 +115,7 @@ responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
 first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 set(Z_PREFIX_STR "brl_")
-THIRD_PARTY(libz ZLIB zlib zlib_DESCRIPTION ALIASES ENABLE_ZLIB ENABLE_LIBZ FIND_NAME BRLCADZLIB)
+THIRD_PARTY(libz ZLIB zlib zlib_DESCRIPTION ALIASES ENABLE_ZLIB ENABLE_LIBZ)
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libz/CTestTestfile.cmake")
 SetTargetFolder(zlib "Third Party Libraries")
 SetTargetFolder(zlib-static "Third Party Libraries")
@@ -127,6 +130,8 @@ if(BRLCAD_ZLIB_BUILD)
 else(BRLCAD_ZLIB_BUILD)
   set(Z_PREFIX_STR "" CACHE STRING "clear prefix for zlib functions" FORCE)
   set(Z_PREFIX_STR)
+  set(ZLIB_LIBRARIES ${ZLIB_LIBRARY_RELEASE} CACHE STRING "ZLIB_LIBRARIES" FORCE)
+  set(ZLIB_INCLUDE_DIRS "${ZLIB_INCLUDE_DIR}" CACHE STRING "ZLIB include directory" FORCE)
 endif(BRLCAD_ZLIB_BUILD)
 
 # LZ4 compression/decompression library
@@ -256,8 +261,11 @@ THIRD_PARTY(libpng PNG png png_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL2 ALIASES E
 if(BRLCAD_PNG_BUILD)
 
   set(PNG_LIBRARY png CACHE STRING "PNG_LIBRARY" FORCE)
+  set(PNG_LIBRARIES png CACHE STRING "PNG_LIBRARIES" FORCE)
   set(PNG_PNG_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/libpng;${CMAKE_CURRENT_SOURCE_DIR}/libpng" CACHE STRING "PNG include directory" FORCE)
   mark_as_advanced(PNG_PNG_INCLUDE_DIR)
+  set(PNG_INCLUDE_DIR ${PNG_PNG_INCLUDE_DIR} CACHE STRING "PNG include directory" FORCE)
+  set(PNG_INCLUDE_DIRS ${PNG_INCLUDE_DIR} CACHE STRING "PNG include directory" FORCE)
 
   # On Haiku the find_library call sets this variable directly, which is not
   # how we handle things elsewhere in BRL-CAD - unset the variable in that
@@ -295,19 +303,16 @@ if(BRLCAD_PNG_BUILD)
   add_dependencies(pnglibconf_cp genfiles)
   add_dependencies(png pnglibconf_cp)
   DISTCLEAN("${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/pnglibconf.h")
-
+else(BRLCAD_PNG_BUILD)
+  set(PNG_LIBRARIES ${PNG_LIBRARY_RELEASE} CACHE STRING "PNG_LIBRARIES" FORCE)
+  set(PNG_INCLUDE_DIRS "${PNG_PNG_INCLUDE_DIR}" CACHE STRING "PNG include directory" FORCE)
 endif(BRLCAD_PNG_BUILD)
 
-set(PNG_INCLUDE_DIR ${PNG_PNG_INCLUDE_DIR} CACHE STRING "PNG include directory" FORCE)
 # Since SKIP_INSTALL_FILES doesn't have a PNG prefix, we'll unset it once we're done
 unset(SKIP_INSTALL_FILES CACHE)
 unset(SKIP_INSTALL_FILES)
 unset(SKIP_INSTALL_EXECUTABLES CACHE)
 unset(SKIP_INSTALL_EXECUTABLES)
-
-# Make sure this value is in the cache, regardless of
-# BRLCAD_PNG_BUILD, so it can be referenced unconditionally elsewhere.
-set(PNG_LIBRARY "${PNG_LIBRARY}" CACHE STRING "libpng name for targets" FORCE)
 
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libpng/CTestTestfile.cmake")
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libpng/libpng.pc")
@@ -638,8 +643,8 @@ SetTargetFolder(openNURBS "Third Party Libraries")
 SetTargetFolder(openNURBS-static "Third Party Libraries")
 SetTargetFolder(openNURBS-obj "Third Party Libraries")
 if(BRLCAD_OPENNURBS_BUILD)
-  set(OPENNURBS_INCLUDE_DIRS "${OPENNURBS_INCLUDE_DIR};${ZLIB_INCLUDE_DIR}" CACHE STRING "Require opennurbs header includes" FORCE)
-  set(OPENNURBS_LIBRARIES "${OPENNURBS_LIBRARY};${ZLIB_LIBRARY}" CACHE STRING "Require opennurbs libraries" FORCE)
+  set(OPENNURBS_INCLUDE_DIRS "${OPENNURBS_INCLUDE_DIR};${ZLIB_INCLUDE_DIRS}" CACHE STRING "Require opennurbs header includes" FORCE)
+  set(OPENNURBS_LIBRARIES "${OPENNURBS_LIBRARY};${ZLIB_LIBRARIES}" CACHE STRING "Require opennurbs libraries" FORCE)
   mark_as_advanced(OPENNURBS_INCLUDE_DIRS)
   mark_as_advanced(OPENNURBS_LIBRARIES)
   get_directory_property(openNURBS_headers_orig DIRECTORY openNURBS DEFINITION OPENNURBS_HEADERS)

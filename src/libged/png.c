@@ -28,7 +28,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include <png.h>
+#include "png.h"
 
 
 #include "bu/getopt.h"

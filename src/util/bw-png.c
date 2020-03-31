@@ -27,7 +27,7 @@
 
 #include <stdlib.h>
 #include <math.h>
-#include <png.h>
+#include "png.h"
 
 #include "vmath.h"
 #include "bu/getopt.h"

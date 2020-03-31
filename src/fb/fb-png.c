@@ -29,7 +29,7 @@
 
 #include <stdlib.h>
 #include <sys/stat.h>
-#include <png.h>
+#include "png.h"
 
 #include "bu/app.h"
 #include "bu/getopt.h"

@@ -34,7 +34,7 @@
 #include <netdb.h>
 #include <string.h>
 
-#include <zlib.h>
+#include "zlib.h"
 
 #include "bio.h"
 #include "rt/tie.h"

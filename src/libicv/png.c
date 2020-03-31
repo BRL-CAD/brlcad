@@ -21,7 +21,7 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <png.h>
+#include "png.h"
 
 #include "bio.h"
 
