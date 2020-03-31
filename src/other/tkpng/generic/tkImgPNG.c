@@ -15,8 +15,8 @@
 #include <memory.h>
 #include <limits.h>
 
-#include <zlib.h>
 #include <math.h>
+#include "zlib.h"
 #include "tcl.h"
 #include "tk.h"
 
