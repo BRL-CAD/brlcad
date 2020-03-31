@@ -833,8 +833,8 @@ THIRD_PARTY(libspsr SPSR libspsr spsr_DESCRIPTION ALIASES
 if(BRLCAD_SPSR_BUILD)
   SetTargetFolder(PoissonRecon "Third Party Executables")
   SetTargetFolder(SurfaceTrimmer "Third Party Executables")
-  SetTargetFolder(libSPSR "Third Party Libraries")
-  SetTargetFolder(libSPSR-static "Third Party Libraries")
+  SetTargetFolder(SPSR "Third Party Libraries")
+  SetTargetFolder(SPSR-static "Third Party Libraries")
 endif(BRLCAD_SPSR_BUILD)
 
 if(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
