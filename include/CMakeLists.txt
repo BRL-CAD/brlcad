@@ -26,7 +26,6 @@ set(public_hdrs
   bsocket.h
   bu.h
   common.h
-  cursor.h
   dm.h
   fb.h
   fft.h

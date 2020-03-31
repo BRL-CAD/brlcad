@@ -2575,18 +2575,6 @@ if(HAVE_LIBPROC_H)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_LIBPROC_H 1\n")
 endif(HAVE_LIBPROC_H)
 
-# Termlib related headers - these will be checked for in FindTERMLIB.cmake
-# testing logic, so at this stage just let the config header know we're
-# interested in the results
-CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_CURSES_H 1\n")
-CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_NCURSES_H 1\n")
-CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_TERMCAP_H 1\n")
-CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_TERMINFO_H 1\n")
-CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_TERMLIB_H 1\n")
-CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_TERM_H 1\n")
-CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_TINFO_H 1\n")
-
-# Termio isn't addressed by FindTERMLIB.cmake, so handle it here
 BRLCAD_INCLUDE_FILE(termios.h HAVE_TERMIOS_H)
 BRLCAD_INCLUDE_FILE(termio.h HAVE_TERMIO_H)
 

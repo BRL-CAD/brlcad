@@ -111,7 +111,7 @@ tputs(const char *cp, int affcnt, int (*outc)(int))
 	 */
 	if (i == 0)
 		return 1;
-	if (ospeed <= 0 || ospeed >= (sizeof tmspc10 / sizeof tmspc10[0]))
+	if (ospeed <= 0 || ospeed >= (short int)(sizeof tmspc10 / sizeof tmspc10[0]))
 		return 1;
 
 	/*

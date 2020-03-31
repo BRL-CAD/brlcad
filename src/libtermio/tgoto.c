@@ -97,7 +97,7 @@ toohard:
 		return ("OOPS");
 	}
 	added[0] = 0;
-	while (c = *cp++) {
+	while ((c = *cp++)) {
 		if (c != '%') {
 			*dp++ = c;
 			continue;
@@ -117,12 +117,13 @@ toohard:
 			if (which < 100)
 				goto two;
 			/* fall into... */
-
+			goto three;
 		case '3':
+three:
 			*dp++ = (which / 100) | '0';
 			which %= 100;
 			/* fall into... */
-
+			goto two;
 		case '2':
 two:
 			*dp++ = which / 10 | '0';
@@ -146,9 +147,10 @@ setwhich:
 		case '+':
 			which += *cp++;
 			/* fall into... */
+			goto casedot;
 
 		case '.':
-/* casedot: */
+casedot:
 			/*
 			 * This code is worth scratching your head at for a
 			 * while.  The idea is that various weird things can

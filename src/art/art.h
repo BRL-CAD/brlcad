@@ -1,4 +1,4 @@
-/*                     B R L C A D P L U G I N . H
+/*                             A R T . H
  * BRL-CAD
  *
  * Copyright (c) 2004-2019 United States Government as represented by
@@ -64,6 +64,40 @@
 
 #include "common.h"
 
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic push
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#endif
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic ignored "-Wfloat-equal"
+#  pragma GCC diagnostic ignored "-Wunused-parameter"
+#  pragma GCC diagnostic ignored "-Wpedantic"
+#  pragma GCC diagnostic ignored "-Wclass-memaccess"
+#  pragma GCC diagnostic ignored "-Wignored-qualifiers"
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic ignored "-Wfloat-equal"
+#  pragma clang diagnostic ignored "-Wunused-parameter"
+#  pragma clang diagnostic ignored "-Wpedantic"
+#  pragma clang diagnostic ignored "-Wclass-memaccess"
+#  pragma clang diagnostic ignored "-Wignored-qualifiers"
+#endif
+
+/* appleseed.renderer headers */
+#include "renderer/api/object.h"
+
+/* appleseed.foundation headers */
+#include "foundation/utility/containers/dictionary.h"
+
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#endif
+
 /* brlcad headers */
 
 #include <stdlib.h>
@@ -74,34 +108,44 @@
 #include "vmath.h"
 #include "raytrace.h"
 
-#include "art.h"
+namespace asf = foundation;
+namespace asr = renderer;
 
-/* A BRLCAD object from geometry database */
-const char* Model = "brlcad geometry";
+extern "C" int APPLESEED_DLL_EXPORT brlcad_hit(struct application* ap, struct partition* PartHeadp, struct seg* UNUSED(segs));
+extern "C" int APPLESEED_DLL_EXPORT brlcad_miss(struct application* UNUSED(ap));
 
-struct BRLCAD_to_ASR
-{
-    fastf_t distance;
-    asf::Vector3d normal;
-};
-
-struct BRLCAD_to_ASR brlcad_ray_info;
-
-class APPLESEED_DLL_EXPORT BrlcadObjectFactory : public asr::IObjectFactory
+class APPLESEED_DLL_EXPORT BrlcadObject : public asr::ProceduralObject
 {
 public:
+    BrlcadObject(const char* name, const asr::ParamArray& params);
+    BrlcadObject(const char* name, const asr::ParamArray& params, struct application* ap, struct resource* resources);
     void release() override;
     const char* get_model() const override;
-    asf::Dictionary get_model_metadata() const override;
-    asf::DictionaryArray get_input_metadata() const override;
+    bool on_frame_begin(const asr::Project& project, const asr::BaseGroup* parent, asr::OnFrameBeginRecorder& recorder, asf::IAbortSwitch* abort_switch) override;
+    asr::GAABB3 compute_local_bbox() const override;
+    size_t get_material_slot_count() const override;
+    const char* get_material_slot(const size_t index) const override;
+    void intersect(const asr::ShadingRay& ray, IntersectionResult& result) const override;
+    bool intersect(const asr::ShadingRay& ray) const override;
+    void refine_and_offset(
+	const asf::Ray3d& obj_inst_ray,
+	asf::Vector3d& obj_inst_front_point,
+	asf::Vector3d& obj_inst_back_point,
+	asf::Vector3d& obj_inst_geo_normal) const;
 
-    asf::auto_release_ptr<asr::Object> create(const char* name, const asr::ParamArray& params) const override;
-    bool create(
-	const char* name,
-	const asr::ParamArray& params,
-	const asf::SearchPaths& search_paths,
-	const bool omit_loading_assets,
-	asr::ObjectArray& objects) const override;
+private:
+    /* Object attributes */
+    struct application* ap;
+    struct rt_i* rtip;
+    struct resource* resources;
+
+    static int get_id();
+
+    std::string get_database() const;
+    int get_object_count() const;
+    std::vector<std::string> get_objects() const;
+
+    void configure_raytrace_application(const char* path, int objc, std::vector<std::string> objects);
 };
 
 /*

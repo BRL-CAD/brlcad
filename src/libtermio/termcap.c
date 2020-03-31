@@ -418,6 +418,3 @@ nextc:
 	return (str);
 }
 
-/*
-*/
-static const char sccssl[] = "@(#)libterm.sl	1.7 (gritter) 11/23/04";

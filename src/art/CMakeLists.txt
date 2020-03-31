@@ -27,6 +27,7 @@ if(Appleseed_FOUND)
   check_cxx_compiler_flag(-Wno-unknown-pragmas HAVE_WNO_UNKNOWN_PRAGMAS)
   if(HAVE_WNO_UNKNOWN_PRAGMAS)
     set_property(SOURCE art.cpp APPEND PROPERTY COMPILE_FLAGS "-Wno-unknown-pragmas")
+    set_property(SOURCE brlcadplugin.cpp APPEND PROPERTY COMPILE_FLAGS "-Wno-unknown-pragmas")
   endif(HAVE_WNO_UNKNOWN_PRAGMAS)
 
   # Using the binary version of appleseed on Linux, we need a couple specific additional
@@ -41,6 +42,7 @@ if(Appleseed_FOUND)
 
   set(ART_SRCS
     art.cpp
+    brlcadplugin.cpp
     ../rt/opt.c
     )
 
@@ -50,6 +52,9 @@ endif(Appleseed_FOUND)
 set(art_ignore_files
   CMakeLists.txt
   art.cpp
+  art.h
+  brlcadplugin.cpp
+  brlcadplugin.h
   )
 CMAKEFILES(${art_ignore_files})
 
