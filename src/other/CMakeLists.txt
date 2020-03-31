@@ -828,7 +828,7 @@ Surface Reconstruction library provided with BRL-CAD's source code.
 Default is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option
 and testing first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(libspsr SPSR libspsr spsr_DESCRIPTION ALIASES
+THIRD_PARTY(libspsr SPSR SPSR spsr_DESCRIPTION ALIASES
   ENABLE_SPSR FLAGS NOSYS)
 if(BRLCAD_SPSR_BUILD)
   SetTargetFolder(PoissonRecon "Third Party Executables")
@@ -1003,7 +1003,7 @@ is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
 testing first for a system version if BRLCAD_BUNDLED_LIBS is also
 AUTO.
 ")
-THIRD_PARTY(libvds VDS libvds libvds_DESCRIPTION ALIASES ENABLE_VDS FLAGS NOSYS)
+THIRD_PARTY(libvds VDS vds libvds_DESCRIPTION ALIASES ENABLE_VDS FLAGS NOSYS)
 set(LIBVDS_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libvds" CACHE STRING "Directory containing libvds headers." FORCE)
 mark_as_advanced(LIBVDS_INCLUDE_DIR)
 SetTargetFolder(libvds "Third Party Libraries")
