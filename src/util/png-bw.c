@@ -28,7 +28,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include <png.h>
+#include "png.h"
 #include "bio.h"
 
 #include "bu/log.h"

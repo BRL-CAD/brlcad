@@ -336,16 +336,15 @@ endif()
 # can use Quicktime.
 if(NOT APPLE)
   find_package(JPEG)
-if(NOT PNG_LIBRARY)
-  find_package(PNG)
-endif(NOT PNG_LIBRARY)
+  if(NOT PNG_LIBRARIES)
+    find_package(PNG)
+  endif(NOT PNG_LIBRARIES)
   find_package(TIFF)
-        # QuickTime is required for OS X, but optional for Windows.
+  # QuickTime is required for OS X, but optional for Windows.
   if(WIN32)
     find_package(QuickTime)
   endif()
-
-    ELSE()
+else()
   find_package(TIFF)
   find_package(QuickTime)
   find_package(QTKit)

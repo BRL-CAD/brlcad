@@ -147,10 +147,10 @@ if(ZLIB_LIBRARIES)
   add_definitions(-DHAVE_LIBZ)
 endif(ZLIB_LIBRARIES)
 find_package(PNG)
-if(PNG_LIBRARY)
+if(PNG_LIBRARIES)
   include_directories(${PNG_INCLUDE_DIRS})
   add_definitions(-DUSE_PNG)
-endif(PNG_LIBRARY)
+endif(PNG_LIBRARIES)
 
 
 include(CheckTypeSize)

@@ -5,7 +5,7 @@ set(FBBIN_INCLUDE_DIRS
   ${PKG_INCLUDE_DIRS}
   ${FB_INCLUDE_DIRS}
   ${UTAHRLE_INCLUDE_DIR}
-  ${PNG_INCLUDE_DIR}
+  ${PNG_INCLUDE_DIRS}
   )
 BRLCAD_INCLUDE_DIRS(FBBIN_INCLUDE_DIRS)
 
@@ -16,7 +16,7 @@ BRLCAD_ADDEXEC(bw-fb bw-fb.c libfb)
 BRLCAD_ADDEXEC(fb-bw fb-bw.c libfb)
 BRLCAD_ADDEXEC(fb-fb fb-fb.c libfb)
 BRLCAD_ADDEXEC(fb-pix "fb-pix.c;cmap-crunch.c" libfb)
-BRLCAD_ADDEXEC(fb-png "fb-png.c;cmap-crunch.c" "libfb;${PNG_LIBRARY}")
+BRLCAD_ADDEXEC(fb-png "fb-png.c;cmap-crunch.c" "libfb;${PNG_LIBRARIES}")
 BRLCAD_ADDEXEC(fbcbars fbcbars.c libfb)
 BRLCAD_ADDEXEC(fbclear fbclear.c libfb)
 BRLCAD_ADDEXEC(fbcmap fbcmap.c libfb)
@@ -44,7 +44,7 @@ BRLCAD_ADDEXEC(gif2fb gif2fb.c libfb)
 BRLCAD_ADDEXEC(pix-fb pix-fb.c libfb)
 BRLCAD_ADDEXEC(pixautosize pixautosize.c libfb)
 BRLCAD_ADDEXEC(plot3-fb plot3-fb.c libfb)
-BRLCAD_ADDEXEC(png-fb png-fb.c "libfb;${PNG_LIBRARY}")
+BRLCAD_ADDEXEC(png-fb png-fb.c "libfb;${PNG_LIBRARIES}")
 
 BRLCAD_ADDEXEC(spm-fb spm-fb.c "libfb;libbn")
 

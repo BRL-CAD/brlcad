@@ -95,7 +95,7 @@ file(GLOB COREINTERFACE_HEADERS ../../../../rt^3/include/brlcad/*.h)
 
 include_directories(
   ../../../../rt^3/include
-  ${ZLIB_INCLUDE_DIR}
+  ${ZLIB_INCLUDE_DIRS}
   ${OPENNURBS_INCLUDE_DIR}
   )
 

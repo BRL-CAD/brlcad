@@ -33,7 +33,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <png.h>
+#include "png.h"
 
 #ifdef HAVE_STRINGS_H
 # include <strings.h>

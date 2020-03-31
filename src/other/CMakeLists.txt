@@ -256,8 +256,11 @@ THIRD_PARTY(libpng PNG png png_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL2 ALIASES E
 if(BRLCAD_PNG_BUILD)
 
   set(PNG_LIBRARY png CACHE STRING "PNG_LIBRARY" FORCE)
+  set(PNG_LIBRARIES png CACHE STRING "PNG_LIBRARIES" FORCE)
   set(PNG_PNG_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/libpng;${CMAKE_CURRENT_SOURCE_DIR}/libpng" CACHE STRING "PNG include directory" FORCE)
   mark_as_advanced(PNG_PNG_INCLUDE_DIR)
+  set(PNG_INCLUDE_DIR ${PNG_PNG_INCLUDE_DIR} CACHE STRING "PNG include directory" FORCE)
+  set(PNG_INCLUDE_DIRS ${PNG_INCLUDE_DIR} CACHE STRING "PNG include directory" FORCE)
 
   # On Haiku the find_library call sets this variable directly, which is not
   # how we handle things elsewhere in BRL-CAD - unset the variable in that
@@ -298,16 +301,11 @@ if(BRLCAD_PNG_BUILD)
 
 endif(BRLCAD_PNG_BUILD)
 
-set(PNG_INCLUDE_DIR ${PNG_PNG_INCLUDE_DIR} CACHE STRING "PNG include directory" FORCE)
 # Since SKIP_INSTALL_FILES doesn't have a PNG prefix, we'll unset it once we're done
 unset(SKIP_INSTALL_FILES CACHE)
 unset(SKIP_INSTALL_FILES)
 unset(SKIP_INSTALL_EXECUTABLES CACHE)
 unset(SKIP_INSTALL_EXECUTABLES)
-
-# Make sure this value is in the cache, regardless of
-# BRLCAD_PNG_BUILD, so it can be referenced unconditionally elsewhere.
-set(PNG_LIBRARY "${PNG_LIBRARY}" CACHE STRING "libpng name for targets" FORCE)
 
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libpng/CTestTestfile.cmake")
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libpng/libpng.pc")

@@ -30,7 +30,7 @@
 #include <string.h>
 #include <math.h>
 
-#include <png.h>
+#include "png.h"
 
 #include "tcl.h"
 

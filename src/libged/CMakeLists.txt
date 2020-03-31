@@ -385,7 +385,7 @@ set(GED_INCLUDE_DIRS
 # Local include directories
 # includes from plugins
 set(GED_LOCAL_INCLUDE_DIRS
-  ${PNG_INCLUDE_DIR}
+  ${PNG_INCLUDE_DIRS}
   ${REGEX_INCLUDE_DIRS}
   ${LIBGED_CMD_INCLUDE_DIRS}
   ${CMAKE_CURRENT_SOURCE_DIR}/../libbg

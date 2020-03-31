@@ -38,7 +38,7 @@
 #include <errno.h>
 #include <assert.h>
 
-#include <png.h>
+#include "png.h"
 
 #include "tcl.h"
 
