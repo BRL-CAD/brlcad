@@ -100,7 +100,7 @@ BRLCAD_INCLUDE_FILE(regex.h HAVE_REGEX_H)
 SetTargetFolder(regex "Third Party Libraries")
 SetTargetFolder(regex-static "Third Party Libraries")
 if(BRLCAD_REGEX_BUILD)
-  BRLCAD_MANAGE_FILES(libregex/regex.h ${INCLUDE_DIR})
+  BRLCAD_MANAGE_FILES(${CMAKE_CURRENT_BINARY_DIR}/libregex/regex.h ${INCLUDE_DIR})
 endif(BRLCAD_REGEX_BUILD)
 
 CHECK_LIBRARY_EXISTS(c regcomp "" HAVE_LIBC_REGEX)
