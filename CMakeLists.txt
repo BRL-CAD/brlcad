@@ -45,476 +45,99 @@ cmake_minimum_required(VERSION 3.12)
 project(BRLCAD)
 
 #---------------------------------------------------------------------
-# Let CMake know where to look for our counting file for configuration
-# passes.  It will impact whether we print certain messages
-set(BRLCAD_CNT_FILE "${BRLCAD_BINARY_DIR}/CMakeTmp/BRLCAD_BUILD_COUNT")
-if(NOT EXISTS ${BRLCAD_CNT_FILE})
-  set(BRLCAD_PRINT_MSGS 1)
-else(NOT EXISTS ${BRLCAD_CNT_FILE})
-  set(BRLCAD_PRINT_MSGS 0)
-endif(NOT EXISTS ${BRLCAD_CNT_FILE})
-
-#---------------------------------------------------------------------
 # CMake derives much of its functionality from modules, typically
 # stored in one directory - let CMake know where to find them.  If we
 # are a subbuild, let the parent's CMAKE_MODULE_PATH supply files before
 # our own, otherwise misc/CMake takes first priority.
+#
+# Since both the superbuild and the main build use these modules, we
+# need this definition up front.
 set(BRLCAD_CMAKE_DIR "${BRLCAD_SOURCE_DIR}/misc/CMake")
 list(APPEND CMAKE_MODULE_PATH "${BRLCAD_CMAKE_DIR}")
-
-# We will need to define a number of dependent options early on
-include(CMakeDependentOption)
 include(BRLCAD_Options)
+include(BRLCAD_Util)
 
-# Build shared libs by default.  Mark this as advanced - turning off
-# ALL shared library building is unlikely to result in a working build
-# and is not a typical configuration.  Note that turning this option off
-# will not disable libraries specifically added as SHARED.
-option(BUILD_SHARED_LIBS "Build shared libraries" ON)
-mark_as_advanced(BUILD_SHARED_LIBS)
+if (NOT DEFINED SUBBUILD)
+  #---------------------------------------------------------------------
+  # Record the CMake command line arguments (more or less) in
+  # CMakeFiles/CMakeOutput.log
+  record_cmdline_args()
 
-# Build static libs by default unless we're debugging. Note: this
-# option will not disable libraries specifically added as STATIC even
-# when OFF.  For multi-configuration options the build type determination
-# is made at build time, so just default to "ON".
-cmake_dependent_option(BUILD_STATIC_LIBS "Build static libraries" ON "CMAKE_CONFIGURATION_TYPES OR NOT \"${CMAKE_BUILD_TYPE}\" STREQUAL Debug" OFF)
+  #---------------------------------------------------------------------
+  # Set up the necessary support for timing of the configuration and
+  # build processes
+  set_config_time()
+  generate_sstamp()
 
-# Turn off the brlcad.dll build.
-# It's an expert's setting at the moment.
-option(BRLCAD_ENABLE_BRLCAD_LIBRARY "Build the brlcad.dll" OFF)
-mark_as_advanced(BRLCAD_ENABLE_BRLCAD_LIBRARY)
+  #---------------------------------------------------------------------
+  # Mark the time at which the configuration process began.
 
-# Global third party controls - these options enable and disable ALL
-# local copies of libraries in src/other.  Forcing all local
-# libraries off is not usually recommended unless attempting to
-# build packages for a distribution.  If both of these options are
-# on the enabling of local packages is the "senior" option and will
-# force the system libs option to off.
-set(BRLCAD_BUNDLED_LIBS_DESCRIPTION "
-Enables compilation of all 3rd party sources that are provided within a BRL-CAD
-source distribution.  If used this option sets all other 3rd party library
-build flags to ON by default.  However, that setting can be overridden by
-manually setting individual variables. Default is \"AUTO\" - 3rd party sources
-are compiled only if they are not detected as being available and functioning
-as expected.
-")
-if(MSVC)
-  set(BRLCAD_BUNDLED_LIBS_DEFAULT "BUNDLED")
-else(MSVC)
-  set(BRLCAD_BUNDLED_LIBS_DEFAULT "AUTO")
-endif(MSVC)
-BRLCAD_OPTION(BRLCAD_BUNDLED_LIBS ${BRLCAD_BUNDLED_LIBS_DEFAULT}
-  TYPE ABS
-  ALIASES ENABLE_ALL
-  DESCRIPTION BRLCAD_BUNDLED_LIBS_DESCRIPTION)
-if(NOT BRLCAD_BUNDLED_LIBS MATCHES "AUTO" AND NOT BRLCAD_BUNDLED_LIBS MATCHES "BUNDLED" AND NOT BRLCAD_BUNDLED_LIBS MATCHES "SYSTEM")
-  message(WARNING "Unknown value BRLCAD_BUNDLED_LIBS supplied for BRLCAD_BUNDLED_LIBS (${BRLCAD_BUNDLED_LIBS}) - defaulting to AUTO")
-  message(WARNING "Valid options are AUTO, BUNDLED and SYSTEM")
-  set(BRLCAD_BUNDLED_LIBS "AUTO" CACHE STRING "Build bundled libraries." FORCE)
-endif(NOT BRLCAD_BUNDLED_LIBS MATCHES "AUTO" AND NOT BRLCAD_BUNDLED_LIBS MATCHES "BUNDLED" AND NOT BRLCAD_BUNDLED_LIBS MATCHES "SYSTEM")
+  set(CONFIG_DELTA_START "${CMAKE_BINARY_DIR}/CMakeTmp/CONFIG_DELTA_START")
+  execute_process(COMMAND "${CMAKE_BINARY_DIR}/CMakeTmp/sstamp${EXE_EXT}" "${CONFIG_DELTA_START}")
+endif (NOT DEFINED SUBBUILD)
 
-# Enable Aqua widgets on Mac OSX.  This impacts Tcl/Tk building and OpenGL
-# building. Not currently working - needs work in at least Tk
-# CMake logic (probably more), and the display manager/framebuffer codes are known to depend
-# on either GLX or WGL specifically in their current forms.
-option(BRLCAD_ENABLE_AQUA "Use Aqua instead of X11 whenever possible on OSX." OFF)
-mark_as_advanced(BRLCAD_ENABLE_AQUA)
+#---------------------------------------------------------------------
+#  Options controlling user level features.  These may impact which
+#  third party components need to be built, so they must be handled
+#  up front.
 
-# Single flag for disabling GUI instead of 5.
-option(BRLCAD_ENABLE_MINIMAL "Skip GUI support and docs. Faster builds." OFF)
-mark_as_advanced(BRLCAD_ENABLE_MINIMAL)
-if(BRLCAD_ENABLE_MINIMAL)
-  set(BRLCAD_ENABLE_OPENGL "OFF")
-  set(BRLCAD_ENABLE_X11 "OFF")
-  set(BRLCAD_ENABLE_TK "OFF")
-  set(BRLCAD_ENABLE_QT "OFF")
-  set(BRLCAD_ENABLE_AQUA "OFF")
-  set(BRLCAD_EXTRADOCS "OFF")
-endif(BRLCAD_ENABLE_MINIMAL)
+include(BRLCAD_User_Options)
 
-# Install example BRL-CAD Geometry Files
-option(BRLCAD_INSTALL_EXAMPLE_GEOMETRY "Install the example BRL-CAD geometry files." ON)
+#---------------------------------------------------------------------
+# Define relative install locations and output directories.  Don't set
+# these if they have already been set by some other means (like a
+# higher level CMakeLists.txt file including this one).
+# For output directories - where built library and executable
+# files will be placed after building but prior to install.  The
+# necessary variables change between single and multi configuration
+# build systems, so it is necessary to handle both cases on a
+# conditional basis.
 
-# test for X11 on all platforms since we don't know when/where we'll find it, unless
-# we've indicated we *don't* want an X11 build
-if(NOT BRLCAD_ENABLE_AQUA AND NOT BRLCAD_ENABLE_MINIMAL)
-  include(FindX11)
-endif(NOT BRLCAD_ENABLE_AQUA AND NOT BRLCAD_ENABLE_MINIMAL)
+include(Path_Setup)
 
-# make sure Xi is included in the list of X11 libs
-# (Xext is automatically added during FindX11)
-if(X11_Xi_FOUND)
-    set(X11_LIBRARIES ${X11_LIBRARIES} ${X11_Xi_LIB})
-endif(X11_Xi_FOUND)
+#---------------------------------------------------------------------
+# Managment of build types
+if (NOT BRLCAD_IS_SUBBUILD)
+  include(BRLCAD_Build_Types)
+endif (NOT BRLCAD_IS_SUBBUILD)
 
-# Set whether X11 is enabled or disabled by default
-if(WIN32)
-  # even if there is x11, we default to native
-  option(BRLCAD_ENABLE_X11 "Use X11." OFF)
-elseif(BRLCAD_ENABLE_AQUA)
-  # aqua implies no X11
-  option(BRLCAD_ENABLE_X11 "Use X11." OFF)
-else(WIN32)
-  # make everywhere else depend on whether we found a suitable X11
-  # X11_Xext_LIB AND X11_Xi_LIB AND
-  if(X11_FOUND AND NOT BRLCAD_ENABLE_MINIMAL)
-    option(BRLCAD_ENABLE_X11 "Use X11." ON)
-  else(X11_FOUND AND NOT BRLCAD_ENABLE_MINIMAL)
-    option(BRLCAD_ENABLE_X11 "Use X11." OFF)
-  endif(X11_FOUND AND NOT BRLCAD_ENABLE_MINIMAL)
-endif(WIN32)
-mark_as_advanced(BRLCAD_ENABLE_X11)
+#---------------------------------------------------------------------
+# Define the current BRL-CAD version.
+# See HACKING for details on how to properly update the version
 
-# if X11 is enabled, make sure aqua is off
-if(BRLCAD_ENABLE_X11)
-  set(BRLCAD_ENABLE_AQUA OFF CACHE STRING "Don't use Aqua if we're doing X11" FORCE)
-  set(OPENGL_USE_AQUA OFF CACHE STRING "Don't use Aqua if we're doing X11" FORCE)
-endif(BRLCAD_ENABLE_X11)
-mark_as_advanced(OPENGL_USE_AQUA)
+file(READ "${BRLCAD_SOURCE_DIR}/include/conf/MAJOR" BRLCAD_VERSION_MAJOR)
+string(STRIP ${BRLCAD_VERSION_MAJOR} BRLCAD_VERSION_MAJOR)
+file(READ "${BRLCAD_SOURCE_DIR}/include/conf/MINOR" BRLCAD_VERSION_MINOR)
+string(STRIP ${BRLCAD_VERSION_MINOR} BRLCAD_VERSION_MINOR)
+file(READ "${BRLCAD_SOURCE_DIR}/include/conf/PATCH" BRLCAD_VERSION_PATCH)
+string(STRIP ${BRLCAD_VERSION_PATCH} BRLCAD_VERSION_PATCH)
 
-# Enable/disable features requiring the Tk toolkit - usually this should
-# be on, as a lot of functionality in BRL-CAD depends on Tk
-option(BRLCAD_ENABLE_TK "Enable features requiring the Tk toolkit" ON)
-mark_as_advanced(BRLCAD_ENABLE_TK)
-if(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
-  set(BRLCAD_ENABLE_TK OFF)
-endif(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
-if(BRLCAD_ENABLE_X11)
-  set(TK_X11_GRAPHICS ON CACHE STRING "Need X11 Tk" FORCE)
-endif(BRLCAD_ENABLE_X11)
+set(BRLCAD_VERSION "${BRLCAD_VERSION_MAJOR}.${BRLCAD_VERSION_MINOR}.${BRLCAD_VERSION_PATCH}")
+if(DEFINED BRLCAD_VERSION_AMEND)
+  set(BRLCAD_VERSION "${BRLCAD_VERSION}-${BRLCAD_VERSION_AMEND}")
+endif(DEFINED BRLCAD_VERSION_AMEND)
 
-# Enable features requiring OPENGL
-# Be smart about this - if we don't have X11 or Aqua and we're
-# not on Windows, we're non-graphical and that means OpenGL is
-# a no-go.  The Windows version would have to be some sort of
-# option for the WIN32 graphics layer?  Should probably think
-# about that... for now, on Win32 don't try OpenGL if Tk is
-# off.  That'll hold until we get a non-Tk based GUI - then
-# setting non-graphical on Windows will take more thought.
-if(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
-  set(OPENGL_FOUND OFF)
-  set(BRLCAD_ENABLE_OPENGL OFF CACHE BOOL "Disabled - NOT BRLCAD_ENABLE_X11 and NOT BRLCAD_ENABLE_AQUA" FORCE)
-else(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
-  include(FindGL)
-endif(NOT BRLCAD_ENABLE_X11 AND NOT BRLCAD_ENABLE_AQUA AND NOT WIN32)
+#---------------------------------------------------------------------
+# Intricies involved with setting the install path mostly reolve
+# around build type dependent install directories.  Also needs the
+# current version defined.
 
-set(BRLCAD_ENABLE_OPENGL_DESCRIPTION "
-Enable support for OpenGL based Display Managers in BRL-CAD.
-Default depends on whether OpenGL is successfully detected -
-if it is, default is to enable.
-")
-BRLCAD_OPTION(BRLCAD_ENABLE_OPENGL ${OPENGL_FOUND}
-  TYPE BOOL
-  ALIASES ENABLE_OPENGL
-  DESCRIPTION BRLCAD_ENABLE_OPENGL_DESCRIPTION)
+include(BRLCAD_Install_Prefix)
 
-# Enable RTGL.  Requires an enabled OpenGL.
-option(BRLCAD_ENABLE_RTGL "Enable experimental RTGL code." OFF)
-mark_as_advanced(BRLCAD_ENABLE_RTGL)
-if(NOT BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_RTGL)
-  message("RTGL requested, but OpenGL is not enabled - disabling")
-  set(BRLCAD_ENABLE_RTGL OFF CACHE BOOL "Enable experimental RTGL code." FORCE)
-endif(NOT BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_RTGL)
-if(NOT BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_RTGL)
-  message("RTGL currently works only with GLX, and X11 is not enabled - disabling")
-  set(BRLCAD_ENABLE_RTGL OFF CACHE BOOL "Enable experimental RTGL code." FORCE)
-endif(NOT BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_RTGL)
-if(BRLCAD_ENABLE_AQUA)
-  set(OPENGL_USE_AQUA ON CACHE STRING "Aqua enabled - use Aqua OpenGL" FORCE)
-endif(BRLCAD_ENABLE_AQUA)
+#---------------------------------------------------------------------
+# The following logic is what allows binaries to run successfully in
+# the build directory AND install directory.  Thanks to plplot for
+# identifying the necessity of setting CMAKE_INSTALL_NAME_DIR on OSX.
+# Documentation of these options is available at
+# http://www.cmake.org/Wiki/CMake_RPATH_handling
 
-# Enable features requiring Bullet Physics SDK
-option(BRLCAD_ENABLE_BULLET "Enable features requiring the Bullet Physics Library" OFF)
-if(BRLCAD_ENABLE_BULLET)
-  message("Bullet support is not currently working - disabling.")
-  set(BRLCAD_ENABLE_BULLET OFF CACHE BOOL "Currently broken" FORCE)
-endif(BRLCAD_ENABLE_BULLET)
-mark_as_advanced(BRLCAD_ENABLE_BULLET)
+# TODO - once we've shifted to function invocation rather than having
+# our logic execute on load, this "include" step will probably be
+# consolidated into one large include...
+include(RPath_Setup)
+cmake_set_rpath()
 
-# Enable features requiring GDAL geospatial library
-option(BRLCAD_ENABLE_GDAL "Enable features requiring the Geospatial Data Abstraction Library" ON)
-mark_as_advanced(BRLCAD_ENABLE_GDAL)
-
-# Enable features requiring Qt
-# TODO - try COMPONENTS search: https://blog.kitware.com/cmake-finding-qt5-the-right-way/
-find_package(Qt5Widgets QUIET)
-option(BRLCAD_ENABLE_QT "Enable features requiring Qt" OFF)
-mark_as_advanced(BRLCAD_ENABLE_QT)
-mark_as_advanced(Qt5Core_DIR)
-mark_as_advanced(Qt5Gui_DIR)
-if(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
-  message("QT interface requested, but QT5 is not found - disabling")
-  set(BRLCAD_ENABLE_QT OFF)
-endif(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
-mark_as_advanced(Qt5Widgets_DIR)
-
-# Enable features requiring OpenSceneGraph
-option(BRLCAD_ENABLE_OSG "Enable features requiring OpenSceneGraph" OFF)
-mark_as_advanced(BRLCAD_ENABLE_OSG)
-if(BRLCAD_ENABLE_OSG)
-  if(APPLE AND NOT BRLCAD_ENABLE_AQUA)
-    set(OSG_WINDOWING_SYSTEM "X11" CACHE STRING "Use X11" FORCE)
-  endif(APPLE AND NOT BRLCAD_ENABLE_AQUA)
-endif(BRLCAD_ENABLE_OSG)
-
-# Enable features requiring GCT
-option(BRLCAD_ENABLE_GCT "Enable features requiring GCT" ON)
-mark_as_advanced(BRLCAD_ENABLE_GCT)
-
-# Enable features requiring OpenCL
-option(BRLCAD_ENABLE_OPENCL "Enable features requiring OpenCL" OFF)
-mark_as_advanced(BRLCAD_ENABLE_OPENCL)
-if(BRLCAD_ENABLE_OPENCL)
-  find_package(OpenCL)
-  if(NOT OPENCL_FOUND)
-    message("OpenCL enablement requested, but OpenCL is not found - disabling")
-    set(BRLCAD_ENABLE_OPENCL OFF)
-  endif(NOT OPENCL_FOUND)
-endif(BRLCAD_ENABLE_OPENCL)
-
-# Enable features requiring OpenVDB
-option(BRLCAD_ENABLE_OPENVDB "Enable features requiring OpenVDB" OFF)
-mark_as_advanced(BRLCAD_ENABLE_OPENVDB)
-if(BRLCAD_ENABLE_OPENVDB)
-  find_package(OpenVDB)
-  if(NOT OpenVDB_FOUND)
-    message("OpenVDB enablement requested, but OpenVDB is not found - disabling")
-    set(BRLCAD_ENABLE_OPENVDB OFF)
-  endif(NOT OpenVDB_FOUND)
-endif(BRLCAD_ENABLE_OPENVDB)
-
-# Enable experimental support for binary attributes
-option(BRLCAD_ENABLE_BINARY_ATTRIBUTES "Enable support for binary attributes" OFF)
-mark_as_advanced(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
-
-#----------------------------------------------------------------------
-# The following are fine-grained options for enabling/disabling compiler
-# and source code definition settings.  Typically these are set to
-# various configurations by the toplevel CMAKE_BUILD_TYPE setting, but
-# can also be individually set.
-
-# Enable/disable runtime debugging - these are protections for
-# minimizing the possibility of corrupted data files.  Generally
-# speaking these should be left on.
-set(BRLCAD_ENABLE_RUNTIME_DEBUG_ALIASES
-  ENABLE_RUNTIME_DEBUG
-  ENABLE_RUN_TIME_DEBUG
-  ENABLE_RUNTIME_DEBUGGING
-  ENABLE_RUN_TIME_DEBUGGING)
-set(BRLCAD_ENABLE_RUNTIME_DEBUG_DESCRIPTION "
-Enables support for application and library debugging facilities.
-Disabling the run-time debugging facilities can provide a significant
-(10%-30%) performance boost at the expense of extensive error
-checking (that in turn help prevent corruption of your data).
-Default is \"ON\", and should only be disabled for read-only render
-work where performance is critical.
-")
-BRLCAD_OPTION(BRLCAD_ENABLE_RUNTIME_DEBUG ON
-  TYPE BOOL
-  ALIASES ${BRLCAD_ENABLE_RUNTIME_DEBUG_ALIASES}
-  DESCRIPTION BRLCAD_ENABLE_RUNTIME_DEBUG_DESCRIPTION)
-mark_as_advanced(BRLCAD_ENABLE_RUNTIME_DEBUG)
-
-# Enable debug flags during compilation - we always want to use these
-# unless explicitly told not to.
-set(BRLCAD_FLAGS_DEBUG_DESCRIPTION "
-Add compiler flags to aid in program debugging.  Defaults to ON.
-")
-BRLCAD_OPTION(BRLCAD_FLAGS_DEBUG ON
-  TYPE BOOL
-  ALIASES ENABLE_DEBUG ENABLE_FLAGS_DEBUG ENABLE_DEBUG_FLAGS
-  DESCRIPTION BRLCAD_FLAGS_DEBUG_DESCRIPTION)
-
-# Build with compiler warning flags
-set(BRLCAD_ENABLE_COMPILER_WARNINGS_DESCRIPTION "
-Use extra compiler warning flags when compiling C/C++ code.  Defaults to ON.
-")
-BRLCAD_OPTION(BRLCAD_ENABLE_COMPILER_WARNINGS ON
-  TYPE BOOL
-  ALIASES ENABLE_WARNINGS ENABLE_COMPILER_WARNINGS
-  DESCRIPTION BRLCAD_ENABLE_COMPILER_WARNINGS_DESCRIPTION)
-mark_as_advanced(BRLCAD_ENABLE_COMPILER_WARNINGS)
-
-# Enable/disable strict compiler settings - these are used for building
-# BRL-CAD by default, but not src/other code.  Always used for BRL-CAD
-# code unless the NO_STRICT option is specified when defining a target
-# with BRLCAD_ADDEXEC or BRLCAD_ADDLIB.  If only C++ files in a target
-# are not compatible with strict, the NO_STRICT_CXX option can be used.
-set(BRLCAD_ENABLE_STRICT_DESCRIPTION "
-Causes all compilation warnings for C code to be treated as errors.  This is now
-the default for BRL-CAD source code, and developers should address issues
-discovered by these flags whenever possible rather than disabling strict
-mode.
-")
-BRLCAD_OPTION(BRLCAD_ENABLE_STRICT ON
-  TYPE BOOL
-  ALIASES ENABLE_STRICT ENABLE_STRICT_COMPILE ENABLE_STRICT_COMPILE_FLAGS
-  DESCRIPTION BRLCAD_ENABLE_STRICT_DESCRIPTION)
-if(BRLCAD_ENABLE_STRICT)
-  mark_as_advanced(BRLCAD_ENABLE_STRICT)
-endif(BRLCAD_ENABLE_STRICT)
-
-# Build with compiler optimization flags.  This should normally be on for
-# release builds and off otherwise, unless the user specifically enables it.
-# For multi-config build tools, this is managed on a per-configuration basis.
-if(CMAKE_BUILD_TYPE)
-  cmake_dependent_option(BRLCAD_OPTIMIZED_BUILD "Enable optimized build flags" ON "${CMAKE_BUILD_TYPE} STREQUAL Release" OFF)
-else(CMAKE_BUILD_TYPE)
-  # Note: the cmake_dependent_option test doesn't work if CMAKE_BUILD_TYPE isn't set.
-  option(BRLCAD_OPTIMIZED_BUILD "Enable optimized build flags" OFF)
-endif(CMAKE_BUILD_TYPE)
-mark_as_advanced(BRLCAD_OPTIMIZED_BUILD)
-
-# Build with full compiler lines visible by default (won't need make
-# VERBOSE=1) on command line
-option(BRLCAD_ENABLE_VERBOSE_PROGRESS "verbose output" OFF)
-mark_as_advanced(BRLCAD_ENABLE_VERBOSE_PROGRESS)
-if(BRLCAD_ENABLE_VERBOSE_PROGRESS)
-  set(CMAKE_VERBOSE_MAKEFILE ON)
-endif(BRLCAD_ENABLE_VERBOSE_PROGRESS)
-
-# Build with profile-guided optimization support.  this requires a
-# two-pass compile, once with BRLCAD_PGO=ON on a location that did not
-# exist beforehand (specified via the PGO_PATH environment variable),
-# and again to use profiling metrics captured on "typical" operations
-# and data.  By default, path is BUILDDIR/profiling
-
-option(BRLCAD_PGO "Enable profile-guided optimization (set PGO_PATH environment variable)")
-mark_as_advanced(BRLCAD_PGO)
-
-#====== ALL CXX COMPILE ===================
-# Build all C and C++ files with a C++ compiler
-set(ENABLE_ALL_CXX_COMPILE_DESCRIPTION "
-Build all C and C++ files with a C++ compiler.  Defaults to OFF.
-
-EXPERIMENTAL!
-")
-BRLCAD_OPTION(ENABLE_ALL_CXX_COMPILE OFF
-  TYPE BOOL
-  ALIASES ENABLE_ALL_CXX
-  DESCRIPTION ENABLE_ALL_CXX_COMPILE_DESCRIPTION)
-mark_as_advanced(ENABLE_ALL_CXX_COMPILE)
-
-# Build with coverage enabled
-option(BRLCAD_ENABLE_COVERAGE "Build with coverage enabled" OFF)
-mark_as_advanced(BRLCAD_ENABLE_COVERAGE)
-
-# Build with dtrace support
-option(BRLCAD_ENABLE_DTRACE "Build with dtrace support" OFF)
-mark_as_advanced(BRLCAD_ENABLE_DTRACE)
-if(BRLCAD_ENABLE_DTRACE)
-  BRLCAD_INCLUDE_FILE(sys/sdt.h HAVE_SYS_SDT_H)
-  if(NOT HAVE_SYS_SDT_H)
-    set(BRLCAD_ENABLE_DTRACE OFF)
-  endif(NOT HAVE_SYS_SDT_H)
-endif(BRLCAD_ENABLE_DTRACE)
-
-# Take advantage of parallel processors if available - highly recommended
-option(BRLCAD_ENABLE_SMP "Enable SMP architecture parallel computation support" ON)
-mark_as_advanced(BRLCAD_ENABLE_SMP)
-
-#----------------------------------------------------------------------
-# There are extra documentation files available requiring DocBook
-# They are quite useful in graphical interfaces, but also add considerably
-# to the overall build time.  If necessary BRL-CAD provides its own
-# xsltproc (see src/other/xmltools), so the html and man page
-# outputs are always potentially available.  PDF output, on the other hand,
-# needs Apache FOP.  FOP is not a candidate for bundling with BRL-CAD for
-# a number of reasons, so we simply check to see if it is present and set
-# the options accordingly.
-
-# Do we have the environment variable set locally?
-if(NOT "$ENV{APACHE_FOP}" STREQUAL "")
-  set(APACHE_FOP "$ENV{APACHE_FOP}")
-endif(NOT "$ENV{APACHE_FOP}" STREQUAL "")
-if(NOT APACHE_FOP)
-  find_program(APACHE_FOP fop DOC "path to the exec script for Apache FOP")
-endif(NOT APACHE_FOP)
-mark_as_advanced(APACHE_FOP)
-# We care about the FOP version, unfortunately - find out what we have.
-if(APACHE_FOP)
-  execute_process(COMMAND ${APACHE_FOP} -v OUTPUT_VARIABLE APACHE_FOP_INFO ERROR_QUIET)
-  string(REGEX REPLACE "FOP Version ([0-9\\.]*)" "\\1" APACHE_FOP_VERSION_REGEX "${APACHE_FOP_INFO}")
-  if(APACHE_FOP_VERSION_REGEX)
-    string(STRIP ${APACHE_FOP_VERSION_REGEX} APACHE_FOP_VERSION_REGEX)
-  endif(APACHE_FOP_VERSION_REGEX)
-  if(NOT "${APACHE_FOP_VERSION}" STREQUAL "${APACHE_FOP_VERSION_REGEX}")
-    message("-- Found Apache FOP: version ${APACHE_FOP_VERSION_REGEX}")
-    set(APACHE_FOP_VERSION ${APACHE_FOP_VERSION_REGEX} CACHE STRING "Apache FOP version" FORCE)
-    mark_as_advanced(APACHE_FOP_VERSION)
-  endif(NOT "${APACHE_FOP_VERSION}" STREQUAL "${APACHE_FOP_VERSION_REGEX}")
-endif(APACHE_FOP)
-
-# Toplevel variable that controls all DocBook based documentation.  Key it off
-# of what target level is enabled.
-if(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
-  set(EXTRADOCS_DEFAULT "ON")
-else(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
-  set(EXTRADOCS_DEFAULT "OFF")
-endif(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
-set(BRLCAD_EXTRADOCS_DESCRIPTION "
-The core option that enables and disables building of BRL-CAD's
-DocBook based documentation (includes manuals and man pages for
-commands, among other things).  Defaults to ON, but only HTML and MAN
-formats are enabled by default - PDF must be enabled separately by use
-of this option or one of its aliases.  Note that you may set
-environment variable APACHE_FOP to point to your locally installed fop
-executable file (which on Linux is usually a shell script with 0755
-permissions).
-")
-BRLCAD_OPTION(BRLCAD_EXTRADOCS ${EXTRADOCS_DEFAULT}
-  TYPE BOOL
-  ALIASES ENABLE_DOCS ENABLE_EXTRA_DOCS ENABLE_DOCBOOK
-  DESCRIPTION BRLCAD_EXTRADOCS_DESCRIPTION)
-
-
-# The HTML output is used in the graphical help browsers in MGED and Archer,
-# as well as being the most likely candidate for external viewers. Turn this
-# on unless explicitly instructed otherwise by the user or all extra
-# documentation is disabled.
-CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_HTML "Build MAN page output from DocBook documentation" ON "BRLCAD_EXTRADOCS" OFF)
-mark_as_advanced(BRLCAD_EXTRADOCS_HTML)
-
-CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PHP "Build MAN page output from DocBook documentation" OFF "BRLCAD_EXTRADOCS" OFF)
-mark_as_advanced(BRLCAD_EXTRADOCS_PHP)
-
-CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PPT "Build MAN page output from DocBook documentation" ON "BRLCAD_EXTRADOCS" OFF)
-mark_as_advanced(BRLCAD_EXTRADOCS_PPT)
-
-# Normally, we'll turn on man page output by default, but there is
-# no point in doing man page output for a Visual Studio build - the
-# files aren't useful and it *seriously* increases the target build
-# count/build time.  Conditionalize on the CMake MSVC variable NOT
-# being set.
-CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_MAN "Build MAN page output from DocBook documentation" ON "BRLCAD_EXTRADOCS;NOT MSVC" OFF)
-mark_as_advanced(BRLCAD_EXTRADOCS_MAN)
-
-# Don't do PDF by default because it's pretty expensive, and hide the
-# option unless the tools to do it are present.
-set(BRLCAD_EXTRADOCS_PDF_DESCRIPTION "
-Option that enables building of BRL-CAD's DocBook PDF-based documentation
-(includes manuals and man pages for commands, among
-other things.) Defaults to OFF.
-Note that you may set environment variable APACHE_FOP
-to point to your locally installed fop executable file (which on Linux is
-usually a shell script with 0755 permissions).
-")
-CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PDF "Build PDF output from DocBook documentation" OFF "BRLCAD_EXTRADOCS;APACHE_FOP" OFF)
-
-# Provide an option to enable/disable XML validation as part
-# of the DocBook build - sort of a "strict flags" mode for DocBook.
-# By default, this will be enabled when extra docs are built and
-# the toplevel BRLCAD_ENABLE_STRICT setting is enabled.
-# Unfortunately, Visual Studio 2010 seems to have issues when we
-# enable validation on top of everything else... not clear why,
-# unless build target counts >1800 are beyond MSVC's practical
-# limit.  Until we either find a resolution or a way to reduce
-# the target count on MSVC, disable validation there.
-CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_VALIDATE "Perform validation for DocBook documentation" ON "BRLCAD_EXTRADOCS;BRLCAD_ENABLE_STRICT" OFF)
-mark_as_advanced(BRLCAD_EXTRADOCS_VALIDATE)
-
-
-
+#---------------------------------------------------------------------
 # We need to build at least some third party components, and maybe a lot of
 # them depending on the options.  Now that we know what the high level options
 # are, we know what to do.
@@ -564,29 +187,22 @@ if (NOT DEFINED SUBBUILD)
   return()
 endif (NOT DEFINED SUBBUILD)
 
+#---------------------------------------------------------------------
+# Let CMake know where to look for our counting file for configuration
+# passes.  It will impact whether we print certain messages
+set(BRLCAD_CNT_FILE "${BRLCAD_BINARY_DIR}/CMakeTmp/BRLCAD_BUILD_COUNT")
+if(NOT EXISTS ${BRLCAD_CNT_FILE})
+  set(BRLCAD_PRINT_MSGS 1)
+else(NOT EXISTS ${BRLCAD_CNT_FILE})
+  set(BRLCAD_PRINT_MSGS 0)
+endif(NOT EXISTS ${BRLCAD_CNT_FILE})
+
 #----------------------------------------------------------------------
 # Some generators in CMake support generating folders in IDEs for
 # organizing build targets.  We want to use them if they are there.
 if(MSVC)
   set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 endif(MSVC)
-
-
-#---------------------------------------------------------------------
-# Define the current BRL-CAD version.
-# See HACKING for details on how to properly update the version
-
-file(READ "${BRLCAD_SOURCE_DIR}/include/conf/MAJOR" BRLCAD_VERSION_MAJOR)
-string(STRIP ${BRLCAD_VERSION_MAJOR} BRLCAD_VERSION_MAJOR)
-file(READ "${BRLCAD_SOURCE_DIR}/include/conf/MINOR" BRLCAD_VERSION_MINOR)
-string(STRIP ${BRLCAD_VERSION_MINOR} BRLCAD_VERSION_MINOR)
-file(READ "${BRLCAD_SOURCE_DIR}/include/conf/PATCH" BRLCAD_VERSION_PATCH)
-string(STRIP ${BRLCAD_VERSION_PATCH} BRLCAD_VERSION_PATCH)
-
-set(BRLCAD_VERSION "${BRLCAD_VERSION_MAJOR}.${BRLCAD_VERSION_MINOR}.${BRLCAD_VERSION_PATCH}")
-if(DEFINED BRLCAD_VERSION_AMEND)
-  set(BRLCAD_VERSION "${BRLCAD_VERSION}-${BRLCAD_VERSION_AMEND}")
-endif(DEFINED BRLCAD_VERSION_AMEND)
 
 #---------------------------------------------------------------------
 # Check whether we need to add import/export lines to libraries
@@ -602,168 +218,9 @@ if(USE_OBJECT_LIBS)
   set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 endif(USE_OBJECT_LIBS)
 
-
 #---------------------------------------------------------------------
-# Load general utility routines for BRL-CAD CMake logic
-include(BRLCAD_Util)
-
 # Find the executable extension, if there is one
-get_filename_component(EXE_EXT "${CMAKE_COMMAND}" EXT)
-
-#---------------------------------------------------------------------
-# Record the CMake command line arguments (more or less) in
-# CMakeFiles/CMakeOutput.log
-record_cmdline_args()
-
-#---------------------------------------------------------------------
-# Set up the necessary support for timing of the configuration and
-# build processes
-set_config_time()
-generate_sstamp()
-
-#---------------------------------------------------------------------
-# Mark the time at which the configuration process began.
-set(CONFIG_DELTA_START "${CMAKE_BINARY_DIR}/CMakeTmp/CONFIG_DELTA_START")
-execute_process(COMMAND "${CMAKE_BINARY_DIR}/CMakeTmp/sstamp${EXE_EXT}" "${CONFIG_DELTA_START}")
-
-#---------------------------------------------------------------------
-# Allow the BRLCAD_ROOT environment variable to set during build, but be noisy
-# about it unless we're specifically told this is intentional.  Having this
-# happen by accident is generally not a good idea.
-find_program(SLEEP_EXEC sleep)
-mark_as_advanced(SLEEP_EXEC)
-if(NOT "$ENV{BRLCAD_ROOT}" STREQUAL "" AND NOT BRLCAD_ROOT_OVERRIDE)
-  message(WARNING "\nBRLCAD_ROOT is presently set to \"$ENV{BRLCAD_ROOT}\"\nBRLCAD_ROOT should typically be used only when needed as a runtime override, not during compilation.  Building with BRLCAD_ROOT set may produce unexpected behavior during both compilation and subsequent program execution.  It is *highly* recommended that BRLCAD_ROOT be unset and not used.\n")
-  if(SLEEP_EXEC)
-    execute_process(COMMAND ${SLEEP_EXEC} 2)
-  endif(SLEEP_EXEC)
-endif(NOT "$ENV{BRLCAD_ROOT}" STREQUAL "" AND NOT BRLCAD_ROOT_OVERRIDE)
-
-# If CMAKE_INSTALL_PREFIX is "/usr", be VERY noisy about it - a make install in
-# this location is dangerous/destructive on some systems.
-if("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT BRLCAD_ALLOW_INSTALL_TO_USR)
-  message(WARNING "}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}\nIt is STRONGLY recommended that you DO NOT install BRL-CAD into /usr as BRL-CAD provides several libraries that may conflict with other libraries (e.g. librt, libbu, libbn) on certain system configurations.\nSince our libraries predate all those that we're known to conflict with and are at the very core of our geometry services and project heritage, we have no plans to change the names of our libraries at this time.\nINSTALLING INTO /usr CAN MAKE A SYSTEM COMPLETELY UNUSABLE.  If you choose to continue installing into /usr, you do so entirely at your own risk.  You have been warned.\n}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}}")
-  if(SLEEP_EXEC)
-    execute_process(COMMAND ${SLEEP_EXEC} 15)
-  endif(SLEEP_EXEC)
-  message(FATAL_ERROR "If you wish to proceed using /usr as your prefix, define BRLCAD_ALLOW_INSTALL_TO_USR=1 for CMake")
-endif("${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT BRLCAD_ALLOW_INSTALL_TO_USR)
-
-#---------------------------------------------------------------------
-# Define relative install locations and output directories.  Don't set
-# these if they have already been set by some other means (like a
-# higher level CMakeLists.txt file including this one).
-# For output directories - where built library and executable
-# files will be placed after building but prior to install.  The
-# necessary variables change between single and multi configuration
-# build systems, so it is necessary to handle both cases on a
-# conditional basis.
-
-include(Path_Setup)
-
-#---------------------------------------------------------------------
-# Searching the system for packages presents something of a dilemma -
-# in most situations it is Very Bad for a BRL-CAD build to be using
-# older versions of libraries in install directories as search results.
-# Generally, the desired behavior is to ignore whatever libraries are
-# in the install directories, and only use external library results if
-# they are something already found on the system due to non-BRL-CAD
-# installation (source compile, package managers, etc.).  Unfortunately,
-# CMake's standard behavior is to add CMAKE_INSTALL_PREFIX to the search
-# path once defined, resulting in (for us) the unexpected behavior of
-# returning old installed libraries when CMake is re-run in a directory.
-#
-# To work around this, there are two possible approaches.  One,
-# identified by Maik Beckmann, operates on CMAKE_SYSTEM_PREFIX_PATH:
-#
-# http://www.cmake.org/pipermail/cmake/2010-October/040292.html
-#
-# The other, pointed out by Michael Hertling, uses the
-# CMake_[SYSTEM_]IGNORE_PATH variables.
-#
-# http://www.cmake.org/pipermail/cmake/2011-May/044503.html
-#
-# BRL-CAD initially operated on CMAKE_SYSTEM_PREFIX_PATH, but has
-# switched to using the *_IGNORE_PATH variables.  This requires
-# CMake 2.8.3 or later.
-#
-# The complication with ignoring install paths is if we are
-# installing to a "legitimate" system search path - i.e. our
-# CMAKE_INSTALL_PREFIX value is standard enough that it is a legitimate
-# search target for find_package. In this case, we can't exclude
-# accidental hits on our libraries without also excluding legitimate
-# find_package results.  So the net results are:
-#
-# 1.  If you are planning to install to a system directory (typically
-#     a bad idea but the settings are legal) clean out the old system
-#     first or accept that the old libraries will be found and used.
-#
-# 2.  For more custom paths, the logic below will avoid the value
-#     of CMAKE_INSTALL_PREFIX in find_package searches
-#
-# (Note:  CMAKE_INSTALL_PREFIX must be checked in the case where someone
-# sets it on the command line prior to CMake being run.  BRLCAD_PREFIX
-# preserves the CMAKE_INSTALL_PREFIX setting from the previous CMake run.
-# CMAKE_INSTALL_PREFIX does not seem to be immediately set in this context
-# when CMake is re-run unless specified explicitly on the command line.
-# To ensure the previous (and internally set) CMAKE_INSTALL_PREFIX value
-# is available, BRLCAD_PREFIX is used to store the value in the cache.)
-
-if(CMAKE_INSTALL_PREFIX)
-  if(NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local")
-    get_filename_component(PATH_NORMALIZED "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}" ABSOLUTE)
-    set(CMAKE_SYSTEM_IGNORE_PATH "${PATH_NORMALIZED}")
-  endif(NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local")
-endif(CMAKE_INSTALL_PREFIX)
-if(BRLCAD_PREFIX)
-  if(NOT "${BRLCAD_PREFIX}" STREQUAL "/usr" AND NOT "${BRLCAD_PREFIX}" STREQUAL "/usr/local")
-    get_filename_component(PATH_NORMALIZED "${BRLCAD_PREFIX}/${LIB_DIR}" ABSOLUTE)
-    set(CMAKE_SYSTEM_IGNORE_PATH "${PATH_NORMALIZED}")
-  endif(NOT "${BRLCAD_PREFIX}" STREQUAL "/usr" AND NOT "${BRLCAD_PREFIX}" STREQUAL "/usr/local")
-endif(BRLCAD_PREFIX)
-mark_as_advanced(CMAKE_SYSTEM_IGNORE_PATH)
-
-#------------------------------------------------------------------------------
-# For multi-configuration builds, we frequently need to know the run-time build
-# directory.  Confusingly, we need to do different things for install commands
-# and custom command definitions.  To manage this, we define
-# CMAKE_CURRENT_BUILD_DIR_SCRIPT and CMAKE_CURRENT_BUILD_DIR_INSTALL once at
-# the top level, then use them when we need the configuration-dependent path.
-#
-# Note that neither of these will work when we need to generate a .cmake file
-# that does runtime detection of the current build configuration.  CMake
-# scripts run using "cmake -P script.cmake" style invocation are independent of
-# the "main" build system and will not know how to resolve either of the below
-# variables correctly.  In that case, the script itself must check the current
-# file in CMakeTmp/CURRENT_PATH (TODO - need to better organize and document
-# this mechanism, given how critical it is proving... possible convention will
-# be to have the string CURRENT_BUILD_DIR in any path that needs the relevant
-# logic in a script, and a standard substitution routine...) and set any
-# necessary path variables accordingly.  (TODO - make a standard function to do
-# that the right way that scripts can load and use - right now that logic is
-# scattered all over the code and if we wanted to change where those files went
-# it would be a lot of work.)
-if(CMAKE_CONFIGURATION_TYPES)
-  set(CMAKE_CURRENT_BUILD_DIR_SCRIPT "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}")
-  set(CMAKE_CURRENT_BUILD_DIR_INSTALL "${CMAKE_BINARY_DIR}/\${BUILD_TYPE}")
-else(CMAKE_CONFIGURATION_TYPES)
-  set(CMAKE_CURRENT_BUILD_DIR_SCRIPT "${CMAKE_BINARY_DIR}")
-  set(CMAKE_CURRENT_BUILD_DIR_INSTALL "${CMAKE_BINARY_DIR}")
-endif(CMAKE_CONFIGURATION_TYPES)
-
-# Mark CMAKE_CONFIGURATION_TYPES as advanced - users shouldn't be adjusting this
-# directly.
-mark_as_advanced(CMAKE_CONFIGURATION_TYPES)
-
-#---------------------------------------------------------------------
-# Set up include paths for generated header files.  For multi-config
-# builds, make sure we get build-specific dirs.
-if(CMAKE_CONFIGURATION_TYPES)
-  include_directories(${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${INCLUDE_DIR})
-  include_directories(${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${INCLUDE_DIR}/brlcad)
-else(CMAKE_CONFIGURATION_TYPES)
-  include_directories(${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/brlcad)
-endif(CMAKE_CONFIGURATION_TYPES)
+set(EXE_EXT ${CMAKE_EXECUTABLE_SUFFIX})
 
 #---------------------------------------------------------------------
 # For cleaning files as part of the distclean command, CMake needs
@@ -782,439 +239,46 @@ if("${CMAKE_GENERATOR}" MATCHES "Ninja")
 endif("${CMAKE_GENERATOR}" MATCHES "Ninja")
 
 #---------------------------------------------------------------------
-# By default (as of version 2.8.2) CMake does not provide access to
-# global lists of executable and library targets.  This is useful
-# in a number of situations related to formulating custom rules and
-# target dependency management.  To avoid the necessity of replacing
-# add_library and add_executable calls with custom macros, override
-# the function names and call the _add_* functions to access the CMake
-# functionality previously available under the add_* functions. See
-# http://www.cmake.org/pipermail/cmake/2010-September/039388.html
-
-# To allow a hypothetical parent build to disable this mechanism and
-# replace it, we wrap the whole show in an IF conditional.  To avoid
-# the distcheck setup, the parent file should define the variable
-# BRLCAD_IS_SUBBUILD to ON.  Note that this also disables the
-# liblib prefix check in add_library, making that the responsibility
-# of the parent build as well, and disables the mechanism for ensuring
-# that the timing code runs at the correct points during the build.
-
-# We also need to provide bookkeeping logic here for the distribution
-# verification or "distcheck" routines that will validate the state
-# of the source tree against that expected and accounted for in the
-# build files.  The global coverage needed for the purpose results in
-# the add_library/add_executable command override mechanism having
-# to serve two purposes at once; since we only override these functions
-# once the logic for both jobs is intertwined below.
-
+# For a variety of reasons, we often need to wrap existing CMake
+# commands to add our own logic.
 if(NOT BRLCAD_IS_SUBBUILD)
-  # Functions in CMake have local variable scope,
-  # hence the use of properties to allow access to directory-specific
-  # and global information scopes.
-  define_property(GLOBAL PROPERTY CMAKE_LIBRARY_TARGET_LIST BRIEF_DOCS "libtarget list" FULL_DOCS "Library target list")
-  define_property(GLOBAL PROPERTY CMAKE_EXEC_TARGET_LIST BRIEF_DOCS "exec target list" FULL_DOCS "Executable target list")
-  define_property(GLOBAL PROPERTY CMAKE_CUSTOM_TARGET_LIST BRIEF_DOCS "custom target list" FULL_DOCS "Custom target list")
-  define_property(GLOBAL PROPERTY CMAKE_EXTERNAL_TARGET_LIST BRIEF_DOCS "external target list" FULL_DOCS "External target list")
-  mark_as_advanced(CMAKE_LIBRARY_TARGET_LIST)
-  mark_as_advanced(CMAKE_EXEC_TARGET_LIST)
-  mark_as_advanced(CMAKE_CUSTOM_TARGET_LIST)
-  mark_as_advanced(CMAKE_EXTERNAL_TARGET_LIST)
-
-  # Override and wrap add_library.  While we're at it, avoid doubling up
-  # on the lib prefix for libraries if the target name is lib<target>
-  function(add_library name)
-    _add_library(${name} ${ARGN})
-    if(${name} MATCHES "^lib*")
-      set_target_properties(${name} PROPERTIES PREFIX "")
-    endif(${name} MATCHES "^lib*")
-
-    # TODO - the mechanism below should eventually be replaced by a proper
-    # feature in CMake, but it is as yet unimplemented:
-    # https://cmake.org/pipermail/cmake-developers/2015-July/025682.html
-    # https://cmake.org/pipermail/cmake-developers/2016-March/027985.html
-    # https://cmake.org/pipermail/cmake-developers/2016-March/027993.html
-    set(add_lib_to_list 1)
-    foreach(libarg ${ARGN})
-      if("${libarg}" STREQUAL "INTERFACE")
-	set(add_lib_to_list 0)
-      endif("${libarg}" STREQUAL "INTERFACE")
-    endforeach(libarg ${ARGN})
-    if (add_lib_to_list)
-      set_property(GLOBAL APPEND PROPERTY CMAKE_LIBRARY_TARGET_LIST ${name})
-    endif (add_lib_to_list)
-  endfunction(add_library)
-
-  # Override and wrap add_executable
-  function(add_executable name)
-    _add_executable(${name} ${ARGN})
-
-    # TODO - the mechanism below should eventually be replaced by a proper
-    # feature in CMake, but it is as yet unimplemented:
-    # https://cmake.org/pipermail/cmake-developers/2015-July/025682.html
-    # https://cmake.org/pipermail/cmake-developers/2016-March/027985.html
-    # https://cmake.org/pipermail/cmake-developers/2016-March/027993.html
-    set_property(GLOBAL APPEND PROPERTY CMAKE_EXEC_TARGET_LIST ${name})
-  endfunction(add_executable)
-
-  # Override and wrap add_custom_target
-  function(add_custom_target name)
-    _add_custom_target(${name} ${ARGN})
-
-    # TODO - the mechanism below should eventually be replaced by a proper
-    # feature in CMake, but it is as yet unimplemented:
-    # https://cmake.org/pipermail/cmake-developers/2015-July/025682.html
-    # https://cmake.org/pipermail/cmake-developers/2016-March/027985.html
-    # https://cmake.org/pipermail/cmake-developers/2016-March/027993.html
-    set_property(GLOBAL APPEND PROPERTY CMAKE_CUSTOM_TARGET_LIST ${name})
-  endfunction(add_custom_target)
-
-  # Note that at the moment we do not need to override CMake's external
-  # project mechanisms because CMake does not use them, but if that changes
-  # in the future an override will need to be added here - probably of the
-  # ExternalProject_Add functionality.
-
-  # Override and wrap configure_file.  In the case of configure_file, we'll
-  # check that the file is part of the source tree and not itself a
-  # generated file, but not reject full-path entries since there are quite a
-  # few of them. This means that, unlike CMAKEFILES's reliance on full vs.
-  # relative path comparisons, generated files supplied to configure_file
-  # need to have the GENERATED property set in order to reliably tell which
-  # files should be added to the build system's lists.  Not
-  # so critical with not-in-src-dir builds, but makes a big difference
-  # spotting files to avoid when all generated files have source directory
-  # prefixes.
-  function(configure_file file targetfile)
-    _configure_file(${file} ${targetfile} ${ARGN})
-    if (NOT SUPPRESS_GENERATED_TAG)
-      # Tag output from configure with the GENERATED tag
-      set_source_files_properties(${targetfile} PROPERTIES GENERATED TRUE)
-      # If it's a generated file, don't register it
-      get_property(IS_GENERATED SOURCE ${file} PROPERTY GENERATED)
-      if(NOT IS_GENERATED)
-	get_filename_component(item_absolute ${file} ABSOLUTE)
-	# If we're not in the source dir, we can do some extra checking.
-	if(NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
-	  IS_SUBPATH("${CMAKE_BINARY_DIR}" "${item_absolute}" SUBPATH_TEST)
-	else(NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
-	  set(SUBPATH_TEST "0")
-	endif(NOT "${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
-	if("${SUBPATH_TEST}" STREQUAL "0")
-	  IS_SUBPATH("${CMAKE_SOURCE_DIR}" "${item_absolute}" SUBPATH_TEST)
-	  if("${SUBPATH_TEST}" STREQUAL "1")
-	    set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES "${item_absolute}")
-	  endif("${SUBPATH_TEST}" STREQUAL "1")
-	else("${SUBPATH_TEST}" STREQUAL "0")
-	  message(WARNING "The generated file ${file} is passed to configure_file but does not have the GENERATED source file property set in CMake.  It is HIGHLY recommended that the GENERATED property be set for this file in \"${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt\" using a command with the following form:\nset_source_files_properties(<file> PROPERTIES GENERATED TRUE)\n(or in \"${CMAKE_SOURCE_DIR}/src/other/CMakeLists.txt\" for third party components with their own build system.)\n")
-	endif("${SUBPATH_TEST}" STREQUAL "0")
-      endif(NOT IS_GENERATED)
-      if(NOT ${targetfile} MATCHES "distclean")
-	DISTCLEAN(${targetfile})
-      endif(NOT ${targetfile} MATCHES "distclean")
-    endif (NOT SUPPRESS_GENERATED_TAG)
-  endfunction(configure_file)
-
-  # Override and wrap add_subdirectory.
-  function(add_subdirectory name)
-    _add_subdirectory(${name} ${ARGN})
-
-    # TODO - try to come up with some good way to do this bookkeeping without
-    # having to override add_subdirectory...
-    #
-    # see https://cmake.org/pipermail/cmake-developers/2015-July/025730.html
-    # for some work related to this...  the SOURCE_DIR and SOURCES properties
-    # went in in CMake 3.4.  Once we can require that as a minimum version, we
-    # can probably revisit at least part of this by getting a list of source
-    # directories for all targets at the end of the build and setting
-    # properties then.
-    DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/${name}/CMakeFiles")
-    DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/${name}/cmake_install.cmake")
-    foreach(clearpattern ${DISTCLEAN_OUTFILES})
-      DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/${name}/${clearpattern}")
-    endforeach(clearpattern ${DISTCLEAN_OUTFILES})
-  endfunction(add_subdirectory)
-
+  include(Brlcad_Command_Wrappers)
 endif(NOT BRLCAD_IS_SUBBUILD)
 
-# "make check" runs all of the tests (unit, benchmark, and regression) that are expected to work.
+#---------------------------------------------------------------------
+# CMake's default "make test" target is a bit limited - define
+# our own "unit" and "check" targets that automate more of the
+# dependency updating process.
 if(NOT BRLCAD_IS_SUBBUILD)
-  include(ProcessorCount)
-  ProcessorCount(N)
-  if(NOT N EQUAL 0)
-    math(EXPR NC "${N} / 2")
-    if(${NC} GREATER 1)
-      set(JFLAG "-j${NC}")
-    else(${NC} GREATER 1)
-      set(JFLAG)
-    endif(${NC} GREATER 1)
-  else(NOT N EQUAL 0)
-    # Huh?  No j flag if we can't get a processor count
-    set(JFLAG)
-  endif(NOT N EQUAL 0)
-
-  if(CMAKE_CONFIGURATION_TYPES)
-    set(CONFIG $<CONFIG>)
-  else(CMAKE_CONFIGURATION_TYPES)
-    if ("${CONFIG}" STREQUAL "")
-      set(CONFIG "\"\"")
-    endif ("${CONFIG}" STREQUAL "")
-  endif(CMAKE_CONFIGURATION_TYPES)
-
-  add_custom_target(check
-    COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
-    COMMAND ${CMAKE_COMMAND} -E echo "NOTE: The \\\"check\\\" a.k.a. \\\"BRL-CAD Validation Testing\\\" target runs"
-    COMMAND ${CMAKE_COMMAND} -E echo "      BRL-CAD\\'s unit, system, integration, benchmark \\(performance\\), and"
-    COMMAND ${CMAKE_COMMAND} -E echo "      regression tests.  To consider a build viable for production use,"
-    COMMAND ${CMAKE_COMMAND} -E echo "      these tests must pass.  Dependencies are compiled automatically."
-    COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
-    COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE|benchmark|slow-\" --output-on-failure ${JFLAG}
-    COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -R \"benchmark\" --output-on-failure ${JFLAG}
-    COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -L \"Regression\" --output-on-failure ${JFLAG}
-    )
-  set_target_properties(check PROPERTIES FOLDER "BRL-CAD Validation Testing")
+  include(BRLCAD_Test_Wrappers)
 endif(NOT BRLCAD_IS_SUBBUILD)
-
-
-# To support "make unit" (which will build the required targets for testing
-# in the style of GNU Autotools "make check") we define a "unit" target per
-# http://www.cmake.org/Wiki/CMakeEmulateMakeCheck and have add_test
-# automatically assemble its targets into the unit dependency list.
-if(NOT BRLCAD_IS_SUBBUILD)
-  include(ProcessorCount)
-  ProcessorCount(N)
-  if(NOT N EQUAL 0)
-    math(EXPR NC "${N} / 2")
-    if(${NC} GREATER 1)
-      set(JFLAG "-j${NC}")
-    else(${NC} GREATER 1)
-      set(JFLAG)
-    endif(${NC} GREATER 1)
-  else(NOT N EQUAL 0)
-    # Huh?  No j flag if we can't get a processor count
-    set(JFLAG)
-  endif(NOT N EQUAL 0)
-
-  if(CMAKE_CONFIGURATION_TYPES)
-    set(CONFIG $<CONFIG>)
-  else(CMAKE_CONFIGURATION_TYPES)
-    if ("${CONFIG}" STREQUAL "")
-      set(CONFIG "\"\"")
-    endif ("${CONFIG}" STREQUAL "")
-  endif(CMAKE_CONFIGURATION_TYPES)
-
-  add_custom_target(unit
-    COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
-    COMMAND ${CMAKE_COMMAND} -E echo "NOTE: The \\\"unit\\\" a.k.a. \\\"BRL-CAD Unit Testing\\\" target runs the"
-    COMMAND ${CMAKE_COMMAND} -E echo "      subset of BRL-CAD\\'s API unit tests that are expected to work \\(i.e.,"
-    COMMAND ${CMAKE_COMMAND} -E echo "      tests not currently under development\\).  All dependencies required"
-    COMMAND ${CMAKE_COMMAND} -E echo "      by the tests are compiled automatically."
-    COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
-    COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE|benchmark|slow-\" ${JFLAG}
-    )
-
-  set_target_properties(unit PROPERTIES FOLDER "BRL-CAD Validation Testing")
-
-  # we wrap the CMake add_test() function in order to automatically
-  # set up test dependencies for the 'unit' and 'check' test targets.
-  #
-  # this function extravagantly tries to work around a bug in CMake
-  # where we cannot pass an empty string through this wrapper to
-  # _add_test()/add_test().  passed as a list (e.g., via ARGN, ARGV,
-  # or manually composed), the empty string is skipped(!).  passed as
-  # a string, it is all treated as command name with no arguments.
-  #
-  # manual workaround used here involves invoking _add_test() with all
-  # args individually recreated/specified (i.e., not as a list) as
-  # this preserves empty strings.  this approach means we cannot
-  # generalize and only support a limited variety of empty string
-  # arguments, but we do test and halt if someone unknowingly tries.
-  function(add_test NAME test_name COMMAND test_prog)
-
-    # find any occurrences of empty strings
-    set(idx 0)
-    set(matches)
-    foreach (ARG IN LISTS ARGV)
-      # need 'x' to avoid older cmake seeing "COMMAND" "STREQUAL" ""
-      if ("x${ARG}" STREQUAL "x")
-	list(APPEND matches ${idx})
-      endif ("x${ARG}" STREQUAL "x")
-      math(EXPR idx "${idx} + 1")
-    endforeach()
-
-    # make sure we don't exceed current support
-    list(LENGTH matches cnt)
-    if ("${cnt}" GREATER 1)
-      message(FATAL_ERROR "ERROR: encountered ${cnt} > 1 empty string being passed to add_test(${test_name}).  Expand support in the top-level CMakeLists.txt file (grep add_test) or pass fewer empty strings.")
-    endif ("${cnt}" GREATER 1)
-
-    # if there are empty strings, we need to manually recreate their calling
-    if ("${cnt}" GREATER 0)
-
-      list(GET matches 0 empty)
-      if ("${empty}" EQUAL 4)
-	foreach (i 1)
-	  if (ARGN)
-	    list(REMOVE_AT ARGN 0)
-	  endif (ARGN)
-	endforeach ()
-	_add_test(NAME ${test_name} COMMAND ${test_prog} "" ${ARGN})
-      elseif ("${empty}" EQUAL 5)
-	foreach (i 1 2)
-	  if (ARGN)
-	    list(REMOVE_AT ARGN 0)
-	  endif (ARGN)
-	endforeach ()
-	_add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} "" ${ARGN})
-      elseif ("${empty}" EQUAL 6)
-	foreach (i 1 2 3)
-	  if (ARGN)
-	    list(REMOVE_AT ARGN 0)
-	  endif (ARGN)
-	endforeach ()
-	_add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} "" ${ARGN})
-      elseif ("${empty}" EQUAL 7)
-	foreach (i 1 2 3 4)
-	  if (ARGN)
-	    list(REMOVE_AT ARGN 0)
-	  endif (ARGN)
-	endforeach ()
-	_add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} "" ${ARGN})
-      elseif ("${empty}" EQUAL 8)
-	foreach (i 1 2 3 4 5)
-	  if (ARGN)
-	    list(REMOVE_AT ARGN 0)
-	  endif (ARGN)
-	endforeach ()
-	_add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} "" ${ARGN})
-      elseif ("${empty}" EQUAL 9)
-	foreach (i 1 2 3 4 5 6)
-	  if (ARGN)
-	    list(REMOVE_AT ARGN 0)
-	  endif (ARGN)
-	endforeach ()
-	_add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} ${ARGV8} "" ${ARGN})
-      elseif ("${empty}" EQUAL 10)
-	foreach (i 1 2 3 4 5 6)
-	  if (ARGN)
-	    list(REMOVE_AT ARGN 0)
-	  endif (ARGN)
-	endforeach ()
-	_add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} ${ARGV8} ${ARGV9} "" ${ARGN})
-      elseif ("${empty}" EQUAL 11)
-	foreach (i 1 2 3 4 5 6)
-	  if (ARGN)
-	    list(REMOVE_AT ARGN 0)
-	  endif (ARGN)
-	endforeach ()
-	_add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} ${ARGV8} ${ARGV9} ${ARGV10} "" ${ARGN})
-
-
-	# ADD_EMPTY_HERE: insert support for addition argv positions
-	# as extra elseif tests here using the preceding pattern.  be
-	# sure to update the index in the following else clause fatal
-	# error message too.
-
-      else ("${empty}" EQUAL 4)
-	message(FATAL_ERROR "ERROR: encountered an empty string passed to add_test(${test_name}) as ARGV${empty} > ARGV9.  Expand support in the top-level CMakeLists.txt file (grep ADD_EMPTY_HERE).")
-      endif ("${empty}" EQUAL 4)
-
-    else ("${cnt}" GREATER 0)
-      # no empty strings, no worries
-      _add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGN})
-    endif ("${cnt}" GREATER 0)
-
-    # add test to unit and check targets
-    if (NOT "${test_name}" MATCHES ^regress- AND NOT "${test_prog}" MATCHES ^regress- AND NOT "${test_name}" MATCHES ^slow- AND NOT "${test_name}" STREQUAL "benchmark" AND NOT "${test_name}" MATCHES ^NOTE:)
-      add_dependencies(unit ${test_prog})
-      add_dependencies(check ${test_prog})
-    endif (NOT "${test_name}" MATCHES ^regress- AND NOT "${test_prog}" MATCHES ^regress- AND NOT "${test_name}" MATCHES ^slow- AND NOT "${test_name}" STREQUAL "benchmark" AND NOT "${test_name}" MATCHES ^NOTE:)
-
-  endfunction(add_test NAME test_name COMMAND test_prog)
-endif(NOT BRLCAD_IS_SUBBUILD)
-
-
 
 #---------------------------------------------------------------------
 # Load macros that will be used to define the BRL-CAD
 # build logic
 include(BRLCAD_Targets)
+
+# Setup and checks related to system environment settings
+include(BRLCAD_Environment_Setup)
+
 include(CheckTypeSize)
 include(CheckCSourceCompiles)
 include(CheckCXXSourceCompiles)
 
 #---------------------------------------------------------------------
-# Save the current LC_ALL, LC_MESSAGES, and LANG environment variables
-# and set them to "C" so things like date output are as expected.
-set(_orig_lc_all      $ENV{LC_ALL})
-set(_orig_lc_messages $ENV{LC_MESSAGES})
-set(_orig_lang        $ENV{LANG})
-if(_orig_lc_all)
-  set(ENV{LC_ALL}      C)
-endif(_orig_lc_all)
-if(_orig_lc_messages)
-  set(ENV{LC_MESSAGES} C)
-endif(_orig_lc_messages)
-if(_orig_lang)
-  set(ENV{LANG}        C)
-endif(_orig_lang)
-
-#---------------------------------------------------------------------
-# Package creation with CMake depends on the value of umask - if permissions
-# are such that temporary files are created without permissions needed for
-# generated packages, the resulting packages may behave badly when installed.
-# In particular, RPM packages may improperly reset permissions on core
-# directories such as /usr.
-function(check_umask umask_val status_var)
-  string(REGEX REPLACE "[^x]" "" umask_x "${umask_val}")
-  string(REGEX REPLACE "[^r]" "" umask_r "${umask_val}")
-  string(LENGTH "${umask_r}" UMASK_HAVE_R)
-  set(${status_var} 0 PARENT_SCOPE)
-  if(UMASK_HAVE_R AND "${umask_x}" STREQUAL "xxx")
-    set(${status_var} 1 PARENT_SCOPE)
-  endif(UMASK_HAVE_R AND "${umask_x}" STREQUAL "xxx")
-endfunction(check_umask)
-
-# Note - umask is not always an executable, so find_program wont' necessarily
-# determine whether the umask check is appropriate.  If we don't find an
-# executable, follow up to see if we can use sh to get the info.
-find_program(UMASK_EXEC umask)
-mark_as_advanced(UMASK_EXEC)
-if(NOT UMASK_EXEC)
-  # If we don't have a umask cmd, see if sh -c "umask -S" works
-  execute_process(COMMAND sh -c "umask -S" OUTPUT_VARIABLE umask_out)
-  # Check if we've got something that looks like a umask output
-  if("${umask_out}" MATCHES "^u=.*g=.*o=.*")
-    set(UMASK_EXEC sh)
-    set(UMASK_EXEC_ARGS -c "umask -S")
-  endif("${umask_out}" MATCHES "^u=.*g=.*o=.*")
-else(NOT UMASK_EXEC)
-  set(UMASK_EXEC_ARGS -S)
-endif(NOT UMASK_EXEC)
-
-if(UMASK_EXEC)
-  execute_process(COMMAND ${UMASK_EXEC} ${UMASK_EXEC_ARGS} OUTPUT_VARIABLE umask_curr)
-  string(STRIP "${umask_curr}" umask_curr)
-  check_umask("${umask_curr}" UMASK_OK)
-  if(NOT UMASK_OK)
-    message(" ")
-    message(WARNING "umask is set to ${umask_curr} - this setting is not recommended if one of the goals of this build is to generate packages. Use 'umask 022' for improved package behavior.")
-    if(SLEEP_EXEC)
-      execute_process(COMMAND ${SLEEP_EXEC} 1)
-    endif(SLEEP_EXEC)
-  endif(NOT UMASK_OK)
-endif(UMASK_EXEC)
-
-#---------------------------------------------------------------------
 # print out the title with a pretty box computed to wrap around
 BOX_PRINT("*** Configuring BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DATE} ***" "*")
 
+
 #---------------------------------------------------------------------
-# CMake by default provides four different configurations for multi-
-# configuration build tools.  We want only two - Debug and Release.
-if(NOT ENABLE_ALL_CONFIG_TYPES)
-  if(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
-    set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Allowed BRL-CAD configuration types" FORCE)
-  endif(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
-endif(NOT ENABLE_ALL_CONFIG_TYPES)
+# Set up include paths for generated header files.  For multi-config
+# builds, make sure we get build-specific dirs.
+if(CMAKE_CONFIGURATION_TYPES)
+  include_directories(${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${INCLUDE_DIR})
+  include_directories(${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${INCLUDE_DIR}/brlcad)
+else(CMAKE_CONFIGURATION_TYPES)
+  include_directories(${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/brlcad)
+endif(CMAKE_CONFIGURATION_TYPES)
 
 #---------------------------------------------------------------------
 # We want to check /usr/local by default, so add it if it exists
@@ -1227,114 +291,6 @@ if (IS_DIRECTORY /usr/local)
 endif (IS_DIRECTORY /usr/local)
 
 #---------------------------------------------------------------------
-
-# Normalize the build type capitalization
-if(CMAKE_BUILD_TYPE)
-  string(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE_UPPER)
-  if ("${BUILD_TYPE_UPPER}" STREQUAL "RELEASE")
-    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build Type" FORCE)
-  endif ("${BUILD_TYPE_UPPER}" STREQUAL "RELEASE")
-  if ("${BUILD_TYPE_UPPER}" STREQUAL "DEBUG")
-    set(CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build Type" FORCE)
-  endif ("${BUILD_TYPE_UPPER}" STREQUAL "DEBUG")
-endif(CMAKE_BUILD_TYPE)
-# Stash the build type so we can set up a drop-down menu in the gui
-if(NOT BRLCAD_IS_SUBBUILD)
-  set(CMAKE_BUILD_TYPE "${CMAKE_BUILD_TYPE}" CACHE STRING "BRL-CAD high level build configuration")
-  set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "" Debug Release)
-endif(NOT BRLCAD_IS_SUBBUILD)
-if(CMAKE_CONFIGURATION_TYPES)
-  mark_as_advanced(CMAKE_BUILD_TYPE)
-else(CMAKE_CONFIGURATION_TYPES)
-  mark_as_advanced(CMAKE_BUILD_TYPE)
-endif(CMAKE_CONFIGURATION_TYPES)
-
-#---------------------------------------------------------------------
-# The location in which to install BRL-CAD.  Only do this if
-# CMAKE_INSTALL_PREFIX hasn't been set already, to try and allow
-# parent builds (if any) some control.
-
-# TODO - generator expressions may be a way to replace some of this logic (or
-# improve it) by letting us ditch the logic tracking whether the path is
-# initialized to default - that's used to know whether or not it is safe to
-# override CMAKE_INSTALL_PREFIX based on build type.  If we use the generator
-# expressions, we won't have to be concerned about that - problem is that
-# change will require updating all the install commands in the build target
-# functions.  Third party logic will probably need to shift over to the new
-# ExternalProject_Add approach first as well - that way unmodified install
-# commands in 3rd party CMake files will be moot.
-#
-# if (NOT CMAKE_INSTALL_PREFIX)
-# set(CMAKE_INSTALL_PREFIX "/usr/brlcad/")
-#    if (NOT MSVC)
-#       set(gen_exp $<IF:$<CONFIG:Debug>,dev-${BRLCAD_VERSION}/,$<IF:$<CONFIG:Release>,rel-${BRLCAD_VERSION}/${BRLCAD_VERSION},>>)
-#    else (NOT MSVC)
-#       set(gen_exp)
-#        if(CMAKE_CL_64)
-#          set(CMAKE_INSTALL_PREFIX "C:/Program Files/BRL-CAD ${BRLCAD_VERSION}")
-#        else(CMAKE_CL_64)
-#          set(CMAKE_INSTALL_PREFIX "C:/Program Files (x86)/BRL-CAD ${BRLCAD_VERSION}")
-#        endif(CMAKE_CL_64)
-#    endif (NOT MSVC)
-# endif (NOT CMAKE_INSTALL_PREFIX)
-# install(TARGETS mged DESTINATION ${gen_exp}${BIN_DIR})
-#
-# Another (maybe better) option instead of generators might be to use the CONFIGURATIONS
-# option in our macros and the ExternalProject_Add management:
-# https://cmake.org/cmake/help/latest/command/install.html
-#
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT CMAKE_INSTALL_PREFIX)
-  if(NOT CMAKE_CONFIGURATION_TYPES)
-    if("${CMAKE_BUILD_TYPE}" MATCHES "Release")
-      set(CMAKE_INSTALL_PREFIX "/usr/brlcad/rel-${BRLCAD_VERSION}")
-    else("${CMAKE_BUILD_TYPE}" MATCHES "Release")
-      set(CMAKE_INSTALL_PREFIX "/usr/brlcad/dev-${BRLCAD_VERSION}")
-    endif("${CMAKE_BUILD_TYPE}" MATCHES "Release")
-  else(NOT CMAKE_CONFIGURATION_TYPES)
-    if(MSVC)
-      if(CMAKE_CL_64)
-	set(CMAKE_INSTALL_PREFIX "C:/Program Files/BRL-CAD ${BRLCAD_VERSION}")
-      else(CMAKE_CL_64)
-	set(CMAKE_INSTALL_PREFIX "C:/Program Files (x86)/BRL-CAD ${BRLCAD_VERSION}")
-      endif(CMAKE_CL_64)
-    else(MSVC)
-      set(CMAKE_INSTALL_PREFIX "/usr/brlcad/dev-${BRLCAD_VERSION}")
-    endif(MSVC)
-  endif(NOT CMAKE_CONFIGURATION_TYPES)
-  set(CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX} CACHE PATH "BRL-CAD install prefix" FORCE)
-  set(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT 0)
-endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT CMAKE_INSTALL_PREFIX)
-set(BRLCAD_PREFIX "${CMAKE_INSTALL_PREFIX}" CACHE STRING "BRL-CAD install prefix")
-mark_as_advanced(BRLCAD_PREFIX)
-
-# If we've a Release build with a Debug path or vice versa, warn about
-# it.  A "make install" of a Release build into a dev install
-# directory or vice versa is going to result in an install that
-# doesn't respect BRL-CAD standard naming conventions.
-if("${CMAKE_BUILD_TYPE}" MATCHES "Release" AND "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/brlcad/dev-${BRLCAD_VERSION}")
-  message(FATAL_ERROR "\nInstallation directory (CMAKE_INSTALL_PREFIX) is set to /usr/brlcad/dev-${BRLCAD_VERSION}, but build type is set to Release!\n")
-endif("${CMAKE_BUILD_TYPE}" MATCHES "Release" AND "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/brlcad/dev-${BRLCAD_VERSION}")
-if("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/brlcad/rel-${BRLCAD_VERSION}")
-  message(FATAL_ERROR "\nInstallation directory (CMAKE_INSTALL_PREFIX) is set to /usr/brlcad/rel-${BRLCAD_VERSION}, but build type is set to Debug!\n")
-endif("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/brlcad/rel-${BRLCAD_VERSION}")
-
-#------------------------------------------------------------------------------
-# Now that we know the install prefix, generate the binary for calculating
-# and reporting time deltas
-generate_dreport()
-
-#---------------------------------------------------------------------
-# The following logic is what allows binaries to run successfully in
-# the build directory AND install directory.  Thanks to plplot for
-# identifying the necessity of setting CMAKE_INSTALL_NAME_DIR on OSX.
-# Documentation of these options is available at
-# http://www.cmake.org/Wiki/CMake_RPATH_handling
-
-# TODO - once we've shifted to function invocation rather than having
-# our logic execute on load, this "include" step will probably be
-# consolidated into one large include...
-include(RPath_Setup)
-cmake_set_rpath()
 
 #---------------------------------------------------------------------
 # We need compiler support for certain C and C++ standards when we

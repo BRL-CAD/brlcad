@@ -32,6 +32,9 @@
 # NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+# We will need to define a number of dependent options early on
+include(CMakeDependentOption)
+
 #-----------------------------------------------------------------------------
 # For "top-level" BRL-CAD options, some extra work is in order - descriptions and
 # lists of aliases are supplied, and those are automatically addressed by this
