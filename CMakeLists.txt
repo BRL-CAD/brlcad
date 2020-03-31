@@ -186,6 +186,11 @@ if (NOT DEFINED SUBBUILD)
   # BRL-CAD as an ExternalProject_Add subproject of itself.
   add_subdirectory(src/superbuild)
 
+  # TODO - if we go this route, the final make install and CPack package building
+  # is going to be the responsibility of the superbuild, not the "main" BRL-CAD
+  # build.  That may mean we'll have to manage the BRL-CAD outputs exactly the
+  # same way we're going to have to handle the src/other build outputs... urk...
+
   # The top level superbuild is done at this point.
   return()
 endif (NOT DEFINED SUBBUILD)
