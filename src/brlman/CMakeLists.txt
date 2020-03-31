@@ -1,15 +1,15 @@
 set(BRLMAN_INCLUDE_DIRS
   ${BU_INCLUDE_DIRS}
   ${TCLCAD_INCLUDE_DIRS}
-  ${TCL_INCLUDE_DIRS}
-  ${TK_INCLUDE_DIRS}
+  ${TCL_INCLUDE_PATH}
+  ${TK_INCLUDE_PATH}
   )
 list(REMOVE_DUPLICATES BRLMAN_INCLUDE_DIRS)
 BRLCAD_INCLUDE_DIRS(BRLMAN_INCLUDE_DIRS)
 
 BRLCAD_ADDDATA(brlman.tcl tclscripts/brlman)
 
-set(brlman_libs libtclcad libbu ${TCL_LIBRARIES})
+set(brlman_libs libtclcad libbu ${TCL_LIBRARY})
 
 if(TARGET Tkhtml)
   set(brlman_libs ${brlman_libs} Tkhtml)

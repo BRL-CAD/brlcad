@@ -6,7 +6,7 @@ set(FB_INCLUDE_DIRS
   ${X11_INCLUDE_DIR}
   ${OPENGL_INCLUDE_DIR_GL}
   ${OPENGL_INCLUDE_DIR_GLX}
-  ${TCL_INCLUDE_DIRS}
+  ${TCL_INCLUDE_PATH}
   ${TK_INCLUDE_PATH}
   ${OPENNURBS_INCLUDE_DIRS}
   ${Qt5Widgets_INCLUDE_DIRS}
@@ -41,7 +41,7 @@ if(WIN32)
   add_definitions(
     -DIF_WGL
     )
-  set(LINKLIBS ${LINKLIBS} opengl32.lib ${TCL_TK_LIBRARY})
+  set(LINKLIBS ${LINKLIBS} opengl32.lib ${TCL_LIBRARY} ${TK_LIBRARY})
   set(fbwgl_srcs if_wgl.c)
   set_property(SOURCE if_wgl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 endif(WIN32)

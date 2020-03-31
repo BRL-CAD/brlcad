@@ -22,7 +22,7 @@ file(WRITE ../../../../rt^3/include/brlcad/brlcadversion.h
 include_directories(
   ${BRLCAD_BINARY_DIR}/include
   ${BRLCAD_SOURCE_DIR}/include
-  ${TCL_INCLUDE_DIRS}
+  ${TCL_INCLUDE_PATH}
   )
 
 # build the BrlcadCore.dll

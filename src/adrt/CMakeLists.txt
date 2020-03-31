@@ -69,7 +69,7 @@ if(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
     )
   BRLCAD_INCLUDE_DIRS(isst_dirs)
 
-  set(isst_libs libtclcad librender libdm ${TCL_LIBRARIES} ${OPENGL_LIBRARIES})
+  set(isst_libs libtclcad librender libdm ${TCL_LIBRARY} ${OPENGL_LIBRARIES})
 
   if(CPP_DLL_DEFINES)
     set(isst_libs ${isst_libs} imm32.lib comctl32.lib opengl32.lib)

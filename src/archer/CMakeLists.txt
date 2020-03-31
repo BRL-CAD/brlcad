@@ -1,15 +1,15 @@
 set(ARCHER_INCLUDE_DIRS
   ${BU_INCLUDE_DIRS}
   ${TCLCAD_INCLUDE_DIRS}
-  ${TCL_INCLUDE_DIRS}
-  ${TK_INCLUDE_DIRS}
+  ${TCL_INCLUDE_PATH}
+  ${TK_INCLUDE_PATH}
   )
 list(REMOVE_DUPLICATES ARCHER_INCLUDE_DIRS)
 BRLCAD_INCLUDE_DIRS(ARCHER_INCLUDE_DIRS)
 
 BRLCAD_ADDDATA(archer_launch.tcl tclscripts/archer)
 
-set(archer_libs libtclcad libbu ${ITCL_LIBRARY} ${ITK_LIBRARY} ${TCL_LIBRARIES})
+set(archer_libs libtclcad libbu ${ITCL_LIBRARY} ${ITK_LIBRARY} ${TCL_LIBRARY})
 
 if(CPP_DLL_DEFINES)
   set(archer_libs ${archer_libs} imm32.lib comctl32.lib)

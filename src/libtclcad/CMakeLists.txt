@@ -8,8 +8,8 @@ set(TCLCAD_INCLUDE_DIRS
   ${GED_INCLUDE_DIRS}
   ${BN_INCLUDE_DIRS}
   ${BU_INCLUDE_DIRS}
-  ${TCL_INCLUDE_DIRS}
-  ${TK_INCLUDE_DIRS}
+  ${TCL_INCLUDE_PATH}
+  ${TK_INCLUDE_PATH}
   )
 
 # Include directories only needed by the implementation
