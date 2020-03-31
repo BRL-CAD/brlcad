@@ -137,6 +137,13 @@ include(BRLCAD_Install_Prefix)
 include(RPath_Setup)
 cmake_set_rpath()
 
+#----------------------------------------------------------------------
+# Some generators in CMake support generating folders in IDEs for
+# organizing build targets.  We want to use them if they are there.
+if(MSVC)
+  set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+endif(MSVC)
+
 #---------------------------------------------------------------------
 # We need to build at least some third party components, and maybe a lot of
 # them depending on the options.  Now that we know what the high level options
@@ -172,21 +179,36 @@ if (NOT DEFINED SUBBUILD)
     endif ()
   endforeach(v ${VARS})
 
-  #add_subdirectory(src/superbuild)
-
-  #----------------------------------------------------------------------
-  # Some generators in CMake support generating folders in IDEs for
-  # organizing build targets.  We want to use them if they are there.
-  if(MSVC)
-    set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-  endif(MSVC)
-
-
+  # The pattern here is similar to the fork-exec model - the CMakeLists.txt
+  # file without the SUBBUILD flag defined simply sets the stage and enters the
+  # superbuild directory.  In addition to executing any necessary
+  # ExternalProject_Add builds, the superbuild's final task is to build
+  # BRL-CAD as an ExternalProject_Add subproject of itself.
+  add_subdirectory(src/superbuild)
 
   # The top level superbuild is done at this point.
   return()
 endif (NOT DEFINED SUBBUILD)
 
+# If we're not a superbuild, it's time to figure out which 3rd party libs got installed
+# into the bin/lib/etc. dirs and set up the necessary logic to have them managed by
+# this build's make install.  They not only need to be bundled, but also need to have
+# the same rpath settings used as the "main" BRL-CAD libraries so everything in the
+# binary packages works together.
+
+# TODO - add superbuild subdir with different flags set?  Need to think about how
+# to manage this...
+
+# From here on out, the build logic will assume that all third party dependencies
+# of any sort have been properly found - either from system libs, or supplied
+# by the superbuild's external project builds and installs into the parent
+# CMake build directory.  One of the necessary tricks will be for the subbuild
+# to target for it's output bin/lib/etc. dirs the same directories as the
+# superbuild.
+if (DEFINED SUBBUILD)
+  message("SUBBUILD: ${SUBBUILD}!\n")
+  return()
+endif (DEFINED SUBBUILD)
 #---------------------------------------------------------------------
 # Let CMake know where to look for our counting file for configuration
 # passes.  It will impact whether we print certain messages
@@ -196,13 +218,6 @@ if(NOT EXISTS ${BRLCAD_CNT_FILE})
 else(NOT EXISTS ${BRLCAD_CNT_FILE})
   set(BRLCAD_PRINT_MSGS 0)
 endif(NOT EXISTS ${BRLCAD_CNT_FILE})
-
-#----------------------------------------------------------------------
-# Some generators in CMake support generating folders in IDEs for
-# organizing build targets.  We want to use them if they are there.
-if(MSVC)
-  set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-endif(MSVC)
 
 #---------------------------------------------------------------------
 # Check whether we need to add import/export lines to libraries
