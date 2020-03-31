@@ -175,7 +175,7 @@ function(THIRD_PARTY dir varname_root build_target description)
     set(${varname_root}_FOUND_STATUS ${${varname_root}_FOUND})
 
     # Initialize (or rather, uninitialize) variables in preparation for search
-    set(${varname_root}_FOUND "${varname_root}-NOTFOUND" CACHE STRING "${varname_root}_FOUND" FORCE)
+    set(${varname_root}_FOUND "${varname_root}-NOTFOUND")
     mark_as_advanced(${varname_root}_FOUND)
     set(${varname_root}_LIBRARY "${varname_root}-NOTFOUND" CACHE STRING "${varname_root}_LIBRARY" FORCE)
     set(${varname_root}_LIBRARIES "${varname_root}-NOTFOUND" CACHE STRING "${varname_root}_LIBRARIES" FORCE)
