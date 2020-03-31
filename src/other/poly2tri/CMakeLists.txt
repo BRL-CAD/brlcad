@@ -74,9 +74,6 @@ if (NOT DEFINED BUILD_STATIC_LIBS)
   set(BUILD_STATIC_LIBS OFF)
 endif (NOT DEFINED BUILD_STATIC_LIBS)
 
-find_package(ZLIB REQUIRED)
-include_directories(${ZLIB_INCLUDE_DIRS})
-
 include(CheckLibraryExists)
 check_library_exists(m cos "" HAVE_M_LIBRARY)
 if (HAVE_M_LIBRARY)
@@ -106,7 +103,7 @@ add_definitions("-DP2T_NO_GLFW")
 
 if (BUILD_SHARED_LIBS)
   add_library(poly2tri ${SOURCES})
-  target_link_libraries(poly2tri ${ZLIB_LIBRARIES} ${M_LIBRARY})
+  target_link_libraries(poly2tri ${M_LIBRARY})
   if (MSVC)
     set_target_properties(poly2tri PROPERTIES DEFINE_SYMBOL P2T_BUILD_DLL)
   endif (MSVC)
