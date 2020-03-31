@@ -1006,10 +1006,8 @@ AUTO.
 THIRD_PARTY(libvds VDS vds libvds_DESCRIPTION ALIASES ENABLE_VDS FLAGS NOSYS)
 set(LIBVDS_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libvds" CACHE STRING "Directory containing libvds headers." FORCE)
 mark_as_advanced(LIBVDS_INCLUDE_DIR)
-SetTargetFolder(libvds "Third Party Libraries")
-SetTargetFolder(libvds-static "Third Party Libraries")
-SetTargetFolder(stdvds "Third Party Libraries")
-SetTargetFolder(stdvds-static "Third Party Libraries")
+SetTargetFolder(vds "Third Party Libraries")
+SetTargetFolder(vds-static "Third Party Libraries")
 
 
 # OpenSceneGraph Libraries
@@ -1059,18 +1057,18 @@ else(BRLCAD_OSG_BUILD)
 endif(BRLCAD_OSG_BUILD)
 
 # gdiam
-set(libgdiam_DESCRIPTION "
+set(gdiam_DESCRIPTION "
 Option for enabling and disabling compilation of the libgdiam approximate
 tight bounding box library provided with BRL-CAD's source code.  Default
 is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
 testing first for a system version if BRLCAD_BUNDLED_LIBS is also
 AUTO.
 ")
-THIRD_PARTY(libgdiam GDIAM libgdiam libgdiam_DESCRIPTION ALIASES ENABLE_GDIAM FLAGS NOSYS)
+THIRD_PARTY(libgdiam GDIAM gdiam gdiam_DESCRIPTION ALIASES ENABLE_GDIAM FLAGS NOSYS)
 set(LIBGDIAM_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libgdiam" CACHE STRING "Directory containing libgdiam headers." FORCE)
 mark_as_advanced(LIBGDIAM_INCLUDE_DIR)
-SetTargetFolder(libgdiam "Third Party Libraries")
-SetTargetFolder(libgdiam-static "Third Party Libraries")
+SetTargetFolder(gdiam "Third Party Libraries")
+SetTargetFolder(gdiam-static "Third Party Libraries")
 
 # Adaptagrams is not yet integrated as a src/other subbuild, but there
 # is code that will make use of it if it is available.  If that code
