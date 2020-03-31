@@ -36,8 +36,6 @@
 #
 ###############################################################################
 
-if (NOT PROJ4_FOUND)
-
 # Try to use OSGeo4W installation
 if(WIN32)
     set(PROJ4_OSGEO4W_HOME "C:/OSGeo4W") 
@@ -78,5 +76,3 @@ include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(PROJ4 DEFAULT_MSG
 	PROJ4_LIBRARY
 	PROJ4_INCLUDE_DIR)
-
-endif (NOT PROJ4_FOUND)

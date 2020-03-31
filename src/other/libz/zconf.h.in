@@ -12,7 +12,10 @@
  * Even better than compiling with -DZ_PREFIX would be to use configure to set
  * this permanently in zconf.h using "./configure --zprefix".
  */
-#ifdef Z_PREFIX     /* may be set to #if 1 by ./configure */
+
+#cmakedefine Z_PREFIX 1
+#cmakedefine Z_PREFIX_STR @Z_PREFIX_STR@
+#ifdef Z_PREFIX
 
 #  define Z_PREFIX_SET
 

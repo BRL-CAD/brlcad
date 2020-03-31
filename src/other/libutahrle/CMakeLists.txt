@@ -58,6 +58,10 @@ check_include_files(unistd.h HAVE_UNISTD_H)
 if(HAVE_UNISTD_H)
   add_definitions(-DHAVE_UNISTD_H=1)
 endif(HAVE_UNISTD_H)
+check_include_files(sys/wait.h HAVE_SYS_WAIT_H)
+if(HAVE_SYS_WAIT_H)
+  add_definitions(-DHAVE_SYS_WAIT_H=1)
+endif(HAVE_SYS_WAIT_H)
 
 include_directories(
   ${${CMAKE_PROJECT_NAME}_SOURCE_DIR}/include

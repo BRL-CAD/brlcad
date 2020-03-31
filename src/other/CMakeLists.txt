@@ -95,43 +95,14 @@ Default is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option
 and testing first for a system version if BRLCAD_BUNDLED_LIBS is also
 AUTO.
 ")
+set(REGEX_PREFIX_STR "brl_")
 THIRD_PARTY(libregex REGEX regex regex_DESCRIPTION ALIASES ENABLE_REGEX)
 BRLCAD_INCLUDE_FILE(regex.h HAVE_REGEX_H)
 SetTargetFolder(regex "Third Party Libraries")
 SetTargetFolder(regex-static "Third Party Libraries")
 if(BRLCAD_REGEX_BUILD)
-  BRLCAD_MANAGE_FILES(libregex/regex.h ${INCLUDE_DIR})
+  BRLCAD_MANAGE_FILES(${CMAKE_CURRENT_BINARY_DIR}/libregex/regex.h ${INCLUDE_DIR})
 endif(BRLCAD_REGEX_BUILD)
-
-CHECK_LIBRARY_EXISTS(c regcomp "" HAVE_LIBC_REGEX)
-if(BUILD_SHARED_LIBS AND HAVE_LIBC_REGEX AND "${BRLCAD_REGEX}" MATCHES "BUNDLED")
-  # Our tests indicate that the system libc defines regex symbols, but
-  # we're still building with our local libregex.
-  #
-  # Platform differences in default linker behavior make it difficult
-  # to guarantee that our libregex symbols will override libc. We'll
-  # avoid the issue by renaming our libregex symbols to be
-  # incompatible with libc.
-
-  # First we add definitions to our config file to rename all of the
-  # regex function calls in our first-party code.
-  CONFIG_H_APPEND(BRLCAD "#define regcomp  libregex_regcomp\n")
-  CONFIG_H_APPEND(BRLCAD "#define regerror libregex_regerror\n")
-  CONFIG_H_APPEND(BRLCAD "#define regexec  libregex_regexec\n")
-  CONFIG_H_APPEND(BRLCAD "#define regfree  libregex_regfree\n")
-
-  # Second, we add the same definitions to libregex to rename the
-  # function declarations and definitions to match the calls.
-  #
-  # Note that this is necessary despite the fact that libregex/regex.h
-  # includes common.h. Our config file is intentionally omitted from
-  # common.h until after the third party dirs are processed, so the
-  # above definitions don't affect libregex.
-  set_property(DIRECTORY libregex APPEND PROPERTY COMPILE_DEFINITIONS regcomp=libregex_regcomp)
-  set_property(DIRECTORY libregex APPEND PROPERTY COMPILE_DEFINITIONS regerror=libregex_regerror)
-  set_property(DIRECTORY libregex APPEND PROPERTY COMPILE_DEFINITIONS regexec=libregex_regexec)
-  set_property(DIRECTORY libregex APPEND PROPERTY COMPILE_DEFINITIONS regfree=libregex_regfree)
-endif(BUILD_SHARED_LIBS AND HAVE_LIBC_REGEX AND "${BRLCAD_REGEX}" MATCHES "BUNDLED")
 
 # Same deal for zlib Library - common requirement, deal with it up front
 set(zlib_DESCRIPTION "
@@ -686,13 +657,13 @@ Surface Reconstruction library provided with BRL-CAD's source code.
 Default is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option
 and testing first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(libspsr SPSR libspsr spsr_DESCRIPTION ALIASES
+THIRD_PARTY(libspsr SPSR SPSR spsr_DESCRIPTION ALIASES
   ENABLE_SPSR FLAGS NOSYS)
 if(BRLCAD_SPSR_BUILD)
   SetTargetFolder(PoissonRecon "Third Party Executables")
   SetTargetFolder(SurfaceTrimmer "Third Party Executables")
-  SetTargetFolder(libSPSR "Third Party Libraries")
-  SetTargetFolder(libSPSR-static "Third Party Libraries")
+  SetTargetFolder(SPSR "Third Party Libraries")
+  SetTargetFolder(SPSR-static "Third Party Libraries")
 endif(BRLCAD_SPSR_BUILD)
 
 if(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
@@ -861,13 +832,11 @@ is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
 testing first for a system version if BRLCAD_BUNDLED_LIBS is also
 AUTO.
 ")
-THIRD_PARTY(libvds VDS libvds libvds_DESCRIPTION ALIASES ENABLE_VDS FLAGS NOSYS)
+THIRD_PARTY(libvds VDS vds libvds_DESCRIPTION ALIASES ENABLE_VDS FLAGS NOSYS)
 set(LIBVDS_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libvds" CACHE STRING "Directory containing libvds headers." FORCE)
 mark_as_advanced(LIBVDS_INCLUDE_DIR)
-SetTargetFolder(libvds "Third Party Libraries")
-SetTargetFolder(libvds-static "Third Party Libraries")
-SetTargetFolder(stdvds "Third Party Libraries")
-SetTargetFolder(stdvds-static "Third Party Libraries")
+SetTargetFolder(vds "Third Party Libraries")
+SetTargetFolder(vds-static "Third Party Libraries")
 
 
 # OpenSceneGraph Libraries
@@ -917,18 +886,18 @@ else(BRLCAD_OSG_BUILD)
 endif(BRLCAD_OSG_BUILD)
 
 # gdiam
-set(libgdiam_DESCRIPTION "
+set(gdiam_DESCRIPTION "
 Option for enabling and disabling compilation of the libgdiam approximate
 tight bounding box library provided with BRL-CAD's source code.  Default
 is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
 testing first for a system version if BRLCAD_BUNDLED_LIBS is also
 AUTO.
 ")
-THIRD_PARTY(libgdiam GDIAM libgdiam libgdiam_DESCRIPTION ALIASES ENABLE_GDIAM FLAGS NOSYS)
+THIRD_PARTY(libgdiam GDIAM gdiam gdiam_DESCRIPTION ALIASES ENABLE_GDIAM FLAGS NOSYS)
 set(LIBGDIAM_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libgdiam" CACHE STRING "Directory containing libgdiam headers." FORCE)
 mark_as_advanced(LIBGDIAM_INCLUDE_DIR)
-SetTargetFolder(libgdiam "Third Party Libraries")
-SetTargetFolder(libgdiam-static "Third Party Libraries")
+SetTargetFolder(gdiam "Third Party Libraries")
+SetTargetFolder(gdiam-static "Third Party Libraries")
 
 # Adaptagrams is not yet integrated as a src/other subbuild, but there
 # is code that will make use of it if it is available.  If that code
@@ -951,7 +920,7 @@ add_subdirectory(poly2tri)
 include("${CMAKE_CURRENT_SOURCE_DIR}/poly2tri.dist")
 CMAKEFILES_IN_DIR(poly2tri_ignore_files poly2tri)
 DISTCLEAN("${CMAKE_CURRENT_SOURCE_DIR}/poly2tri/Makefile")
-set(P2T_LIBRARY "p2t" CACHE STRING "Poly2Tri library" FORCE)
+set(P2T_LIBRARY "poly2tri" CACHE STRING "Poly2Tri library" FORCE)
 set(P2T_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/poly2tri" CACHE STRING "Directory containing poly2tri header" FORCE)
 get_directory_property(poly2tri_headers DIRECTORY poly2tri DEFINITION LIBP2T_PUBLIC_HDRS)
 foreach(phfile ${poly2tri_headers})
@@ -989,7 +958,11 @@ AUTO.
 THIRD_PARTY(proj-4 PROJ4 proj4 proj4_DESCRIPTION REQUIRED_VARS "BRLCAD_ENABLE_GDAL;BRLCAD_LEVEL2" ALIASES ENABLE_PROJ4)
 if(BRLCAD_PROJ4_BUILD)
   set(PROJ4_LIBRARY proj CACHE STRING "libproj" FORCE)
+  set(PROJ4_LIBRARIES proj CACHE STRING "libproj" FORCE)
   set(PROJ4_INCLUDE_DIR "${CMAKE_CURRENT_BINARY_DIR}/proj-4;${CMAKE_CURRENT_SOURCE_DIR}/proj-4/src" CACHE STRING "proj-4 includes" FORCE)
+  set(PROJ4_INCLUDE_DIRS "${PROJ4_INCLUDE_DIR}")
+  set(PROJ4_VERSION "4.9.3")
+  set(PROJ4_FOUND ON)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/proj-4/proj_config.h")
   SetTargetFolder(proj "Third Party Libraries/GDAL")
   # Need data files in order for PROJ-4 to work...
