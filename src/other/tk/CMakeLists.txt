@@ -583,6 +583,7 @@ SET(TK_AQUA_SRCS
 	macosx/ttkMacOSXTheme.c
   )
 
+configure_file(win/wish.exe.manifest.in ${CMAKE_CURRENT_BINARY_DIR}/wish.exe.manifest @ONLY)
 SET(TK_WIN_SRCS
   xlib/xcolors.c
   xlib/xdraw.c
