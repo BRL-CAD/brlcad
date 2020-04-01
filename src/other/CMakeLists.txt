@@ -381,7 +381,7 @@ if(BRLCAD_TCL_BUILD)
   SetTargetFolder(tclstub "Third Party Libraries")
   # Set the variables ourselves since FindTCL.cmake doesn't know about our build
   set(TCL_LIBRARY tcl CACHE STRING "TCL_LIBRARY" FORCE)
-  set(TCL_STUB_LIBRARY tcl CACHE STRING "TCL_LIBRARY" FORCE)
+  set(TCL_STUB_LIBRARY tclstub CACHE STRING "TCL_LIBRARY" FORCE)
   set(TCL_INCLUDE_PATH "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Tcl include path" FORCE)
   set(TCL_TCLSH tclsh CACHE STRING "Tcl shell" FORCE)
   set(TCL_VERSION_MAJOR "8" CACHE STRING "Tcl MAJOR version" FORCE)

@@ -766,7 +766,7 @@ IF(WIN32)
   target_link_libraries(wish tcl tk imm32.lib comctl32.lib)
 ELSE(WIN32)
   add_executable(wish ${WISH_SRCS})
-  target_link_libraries(wish ${TCL_LIBRARY} tk ${CoreFoundation_LIBRARIES}
+  target_link_libraries(wish ${TCL_LIBRARY} ${TCL_STUB_LIBRARY} tk ${CoreFoundation_LIBRARIES}
 	  ${CARBON_FRAMEWORK} ${COCOA_FRAMEWORK} ${IOKit_LIBRARIES}
 	  ${TCL_THREADS_LIB} ${M_LIBRARY} ${FREETYPE_LIBRARIES} ${PNG_LIBRARIES} ${FONTCONFIG_LIBRARIES})
   IF(TK_ENABLE_AQUA)
