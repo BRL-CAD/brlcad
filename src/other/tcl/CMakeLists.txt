@@ -1285,10 +1285,9 @@ if (MINGW)
   set(TCL_WIN_LIBS ${TCL_WIN_LIBS} ws2_32)
 endif (MINGW)
 
-if (MINGW)
+if (WIN32)
   set(TCL_WIN_LIBS ${TCL_WIN_LIBS} Netapi32)
-endif (MINGW)
-
+endif (WIN32)
 
 set(TCL_LINK_LIBS
   ${CoreFoundation_LIBRARIES}
