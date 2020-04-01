@@ -149,17 +149,25 @@ Tcl_Check_Include_File(dlfcn.h USE)
 Tcl_Check_Include_File(sys/param.h USE)
 
 set(ITCL_SRCS
+  generic/itcl2TclOO.c
+  generic/itclBase.c
+  generic/itclBuiltin.c
+  generic/itclClass.c
+  generic/itclCmd.c
+  generic/itclEnsemble.c
+  generic/itclHelpers.c
+  generic/itclInfo.c
+  generic/itclLinkage.c
+  generic/itclMethod.c
+  generic/itclMigrate2TclCore.c
+  generic/itclObject.c
+  generic/itclParse.c
+  generic/itclResolve.c
   generic/itclStubInit.c
-  generic/itcl_bicmds.c
-  generic/itcl_class.c
-  generic/itcl_cmds.c
-  generic/itcl_ensemble.c
-  generic/itcl_linkage.c
-  generic/itcl_methods.c
-  generic/itcl_migrate.c
-  generic/itcl_objects.c
-  generic/itcl_parse.c
-  generic/itcl_util.c
+  generic/itclStubs.c
+  generic/itclTclIntStubsFcn.c
+  generic/itclTestRegisterC.c
+  generic/itclUtil.c
   )
 
 if(WIN32)
