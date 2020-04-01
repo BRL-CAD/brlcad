@@ -447,7 +447,7 @@ if(BRLCAD_TK_BUILD)
   set(TK_STUB_LIBRARY tkstub CACHE STRING "TK_LIBRARY" FORCE)
   if (MSVC)
     # When building packages without X11 on Windows, we need more headers.
-    set(TK_INCLUDE_PATH "${CMAKE_BINARY_DIR}/${INCLUDE_DIR};${CMAKE_CURRENT_SOURCE_DIR}/tk/xlib;${CMAKE_CURRENT_SOURCE_DIR}/tk/generic" CACHE STRING "Tk include path" FORCE)
+    set(TK_INCLUDE_PATH "${CMAKE_BINARY_DIR}/${INCLUDE_DIR};${CMAKE_CURRENT_SOURCE_DIR}/tk/xlib;${CMAKE_CURRENT_SOURCE_DIR}/tk/win;${CMAKE_CURRENT_SOURCE_DIR}/tk/generic" CACHE STRING "Tk include path" FORCE)
   else (MSVC)
     set(TK_INCLUDE_PATH "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Tk include path" FORCE)
   endif (MSVC)
