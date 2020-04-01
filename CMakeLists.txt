@@ -163,6 +163,20 @@ endif(MSVC)
 if (NOT DEFINED SUBBUILD)
   message("SUPERBUILD\n")
 
+
+  ##########################################################################
+  # TODO - revisit this someday, after digesting
+  # https://discourse.cmake.org/t/how-to-install-an-external-project/888
+  # and related discussions for how best to do all of this.
+
+  # The most non-standard thing we're doing is undoubtedly using CMake
+  # to update rpath settings for non-CMake builds, but otherwise it looks
+  # like there is a lot of recent discussion in the CMake discorse on the
+  # use of ExternalProject_Add and superbuilds so there's some learning
+  # to be done before finalizing a design.
+  ##########################################################################
+
+
   # We had to get the feature level variables from the user first, since they
   # have an impact on whic libraries are required.  That means we'll need to
   # pass all the BRLCAD_ variable states to the subbuild, since the user should
