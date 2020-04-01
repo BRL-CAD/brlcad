@@ -4,7 +4,6 @@ generic/itclInt.decls
 generic/itclIntDecls.h
 library/itcl.tcl
 license.terms
-tcl_pkgindex.cmake
 win/dllEntryPoint.c
 win/itcl.rc
 win/toaster.bmp

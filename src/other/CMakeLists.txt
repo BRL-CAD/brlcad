@@ -371,7 +371,9 @@ provided with BRL-CAD's source code.  Default is AUTO, responsive to
 the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
 version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(tcl TCL tcl tcl_DESCRIPTION ALIASES ${tcl_ALIASES} FIND_VERSION 8.6 REQUIRED_VARS BRLCAD_LEVEL2)
+
+THIRD_PARTY(tcl TCL tcl tcl_DESCRIPTION ALIASES ENABLE_TCL FIND_NAME TCL REQUIRED_VARS BRLCAD_LEVEL2)
+
 if(BRLCAD_TCL_BUILD)
 
   SetTargetFolder(tclsh "Third Party Executables")

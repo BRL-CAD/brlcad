@@ -8,7 +8,6 @@ CMake/FindX11.cmake
 CMake/Path_Setup.cmake
 CMake/ac_std_funcs.cmake
 CMake/tcl.cmake
-CMake/tcl_pkgindex.cmake
 CMake/test_sources/alloca_header_test.c
 CMake/test_sources/alloca_test.c
 CMake/test_sources/ctypes_test.c

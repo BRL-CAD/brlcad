@@ -37,16 +37,7 @@
 # *******************************************************************
 
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 2.8)
-if(COMMAND CMAKE_POLICY)
-  cmake_policy(SET CMP0003 NEW)
-  if("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-    cmake_policy(SET CMP0026 OLD)
-  endif("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-  if("${CMAKE_VERSION}" VERSION_GREATER 3.0)
-    cmake_policy(SET CMP0048 NEW)
-  endif("${CMAKE_VERSION}" VERSION_GREATER 3.0)
-endif(COMMAND CMAKE_POLICY)
+cmake_minimum_required(VERSION 3.1.3)
 
 # set CMake project name
 project(ITK)
@@ -76,16 +67,16 @@ if(NOT TK_STUB_LIBRARY)
   find_library(TK_STUB_LIBRARY tkstub NAMES tkstub86 tkstub8.6 HINTS ${TCLSH_ROOT_DIR}/lib)
 endif(NOT TK_STUB_LIBRARY)
 if(NOT ITCL_LIBRARY)
-  find_library(ITCL_LIBRARY itcl NAMES itcl4 itcl4.0.4 HINTS ${TCLSH_ROOT_DIR}/lib)
+  find_library(ITCL_LIBRARY itcl NAMES itcl4 itcl4.2.0 HINTS ${TCLSH_ROOT_DIR}/lib)
 endif(NOT ITCL_LIBRARY)
 if(NOT ITCL_STUB_LIBRARY)
-  find_library(ITCL_STUB_LIBRARY itclstub NAMES itclstub4 itclstub4.0.5 HINTS ${TCLSH_ROOT_DIR}/lib/itcl4.0.5)
+  find_library(ITCL_STUB_LIBRARY itclstub NAMES itclstub4 itclstub4.2.0 HINTS ${TCLSH_ROOT_DIR}/lib/itcl4.2.0)
 endif(NOT ITCL_STUB_LIBRARY)
 
 # version numbers
-set(ITK_VERSION_MAJOR 3)
-set(ITK_VERSION_MINOR 4)
-set(ITK_PATCH_LEVEL 2)
+set(ITK_VERSION_MAJOR 4)
+set(ITK_VERSION_MINOR 1)
+set(ITK_PATCH_LEVEL 0)
 set(ITK_VERSION "${ITK_VERSION_MAJOR}.${ITK_VERSION_MINOR}.${ITK_PATCH_LEVEL}")
 
 #---------------------------------------------------------------------
@@ -225,8 +216,8 @@ install(TARGETS itkstub
   LIBRARY DESTINATION ${LIB_DIR}
   ARCHIVE DESTINATION ${LIB_DIR})
 
-include(tcl_pkgindex.cmake)
-tcl_pkgindex(itk Itk "${ITK_VERSION}")
+include(TCL_PKGINDEX.cmake)
+TCL_PKGINDEX(itk Itk "${ITK_VERSION}")
 
 set(ITK_LIBRARY_FILES
   library/Archetype.itk

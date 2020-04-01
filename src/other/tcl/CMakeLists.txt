@@ -37,19 +37,7 @@
 # *******************************************************************
 
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 2.8)
-if(COMMAND CMAKE_POLICY)
-  CMAKE_POLICY(SET CMP0003 NEW)
-  if("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-    CMAKE_POLICY(SET CMP0026 OLD)
-    CMAKE_POLICY(SET CMP0048 OLD)
-  endif("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-  if("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
-    CMAKE_POLICY(SET CMP0053 OLD)
-    CMAKE_POLICY(SET CMP0054 NEW)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
-endif(COMMAND CMAKE_POLICY)
-
+cmake_minimum_required(VERSION 3.1.3)
 
 # Set CMake project name
 project(TCL)
@@ -67,7 +55,7 @@ endif(NOT DEFINED BUILD_STATIC_LIBS)
 # version numbers
 set(TCL_VERSION_MAJOR 8)
 set(TCL_VERSION_MINOR 6)
-set(TCL_VERSION_PATCH 5)
+set(TCL_VERSION_PATCH 10)
 set(TCL_VERSION "${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}.${TCL_VERSION_PATCH}")
 
 # For Windows, we need the Resource Compiler language
@@ -77,31 +65,21 @@ endif(WIN32)
 
 #-----------------------------------------------------------------------------
 # Set CMake module path
-set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${TCL_SOURCE_DIR}/CMake")
-set(TCL_CMAKE_DIR "${TCL_SOURCE_DIR}/CMake")
-
-#-----------------------------------------------------------------------------
-# The following logic is what allows binaries to run successfully in the build
-# directory AND install directory. Documentation of these options is available
-# at http://www.cmake.org/Wiki/CMake_RPATH_handling
-
-if(EXISTS "${TCL_CMAKE_DIR}/RPath_Setup.cmake")
-  include("${TCL_CMAKE_DIR}/RPath_Setup.cmake")
-  if(COMMAND cmake_set_rpath)
-    cmake_set_rpath()
-  endif(COMMAND cmake_set_rpath)
-else(EXISTS "${TCL_CMAKE_DIR}/RPath_Setup.cmake")
-  if(NOT HAVE_PARENT_BUILD)
-    message(FATAL_ERROR "Not building as a subbuild, but ${TCL_CMAKE_DIR}/RPath_Setup.cmake not found.  To build as a stand-alone build, add RPath_Setup.cmake to the CMake directory.")
-  endif(NOT HAVE_PARENT_BUILD)
-endif(EXISTS "${TCL_CMAKE_DIR}/RPath_Setup.cmake")
+list(APPEND CMAKE_MODULE_PATH "${TCL_SOURCE_DIR}/CMake")
 
 #---------------------------------------------------------------------
 # Define relative install locations and output directories.  Don't set
 # these if they have already been set by some other means (like a
 # higher level CMakeLists.txt file including this one).
 
-include("${TCL_CMAKE_DIR}/Path_Setup.cmake")
+include(Path_Setup)
+
+#-----------------------------------------------------------------------------
+# The following logic is what allows binaries to run successfully in the build
+# directory AND install directory. Documentation of these options is available
+# at http://www.cmake.org/Wiki/CMake_RPATH_handling
+include(RPath_Setup)
+cmake_set_rpath()
 
 #----------------------------------------------------------------------------
 # Define some standard configuration settings passed to all Tcl build targets
@@ -538,7 +516,7 @@ if(HAVE_O2_FLAG)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2")
 endif(HAVE_O2_FLAG)
 
-#--------------------------------------------------------------------
+#-------------------------------------------------------------------- 
 #       Check endianness because we can optimize comparisons of
 #       Tcl_UniChar strings to memcmp on big-endian systems.
 #--------------------------------------------------------------------
@@ -834,22 +812,22 @@ ENDIF(NOT IS_GETTOD_DECLARED)
 #----------------------------------------------------------------------------
 SET(unsigned_char_srcs "
 int main () {
-  static int test_array [1 - 2 * !(((char) -1) < 0)];
-  test_array [0] = 0;
-  return 0;
+   static int test_array [1 - 2 * !(((char) -1) < 0)];
+   test_array [0] = 0;
+   return 0;
 }
 ")
 if(NOT DEFINED CHAR_IS_UNSIGNED)
-  CHECK_C_SOURCE_RUNS("${unsigned_char_srcs}" CHAR_IS_UNSIGNED)
+   CHECK_C_SOURCE_RUNS("${unsigned_char_srcs}" CHAR_IS_UNSIGNED)
 endif(NOT DEFINED CHAR_IS_UNSIGNED)
 IF(CHAR_IS_UNSIGNED)
   add_definitions(-D__CHAR_UNSIGNED__)
 ENDIF(CHAR_IS_UNSIGNED)
 SET(signed_char_srcs "
 int main () {
-  signed char *p;
-  p = 0;
-  return 0;
+   signed char *p;
+	p = 0;
+	return 0;
 }
 ")
 CHECK_C_SOURCE_COMPILES("${signed_char_srcs}" HAVE_SIGNED_CHAR)
@@ -867,8 +845,8 @@ ENDIF(HAVE_SIGNED_CHAR)
 SET(isnan_srcs "
 #include <math.h>
 int main () {
-isnan(0.0); /* Generates an error if isnan is missing */
-return 0;
+   isnan(0.0); /* Generates an error if isnan is missing */
+	return 0;
 }
 ")
 if(NOT DEFINED USABLE_ISNAN)
@@ -896,37 +874,37 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
     add_definitions(-DHAVE_AVAILABILITYMACROS_H=1)
 
     SET(WEAK_IMPORT_SRCS "
-    #ifdef __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__
-    #if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1020
-    #error __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1020
-    #endif
-    #elif MAC_OS_X_VERSION_MIN_REQUIRED < 1020
-    #error MAC_OS_X_VERSION_MIN_REQUIRED < 1020
-    #endif
-    int rand(void) __attribute__((weak_import));
-    int main() {
-    rand();
-    return 0;
-    }
-    ")
+#ifdef __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__
+#if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1020
+#error __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1020
+#endif
+#elif MAC_OS_X_VERSION_MIN_REQUIRED < 1020
+#error MAC_OS_X_VERSION_MIN_REQUIRED < 1020
+#endif
+int rand(void) __attribute__((weak_import));
+int main() {
+rand();
+return 0;
+}
+		")
     CHECK_C_SOURCE_COMPILES("${WEAK_IMPORT_SRCS}" WEAK_IMPORT_WORKING)
     IF(WEAK_IMPORT_WORKING)
       add_definitions(-DHAVE_WEAK_IMPORT=1)
     ENDIF(WEAK_IMPORT_WORKING)
 
     SET(SUSV3_SRCS "
-    #ifdef __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__
-    #if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1050
-    #error __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1050
-    #endif
-    #elif MAC_OS_X_VERSION_MIN_REQUIRED < 1050
-    #error MAC_OS_X_VERSION_MIN_REQUIRED < 1050
-    #endif
-    #define _DARWIN_C_SOURCE 1
-    #include <sys/cdefs.h>
+#ifdef __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__
+#if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1050
+#error __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1050
+#endif
+#elif MAC_OS_X_VERSION_MIN_REQUIRED < 1050
+#error MAC_OS_X_VERSION_MIN_REQUIRED < 1050
+#endif
+#define _DARWIN_C_SOURCE 1
+#include <sys/cdefs.h>
 
-    int main ()	{return 0;}
-    ")
+int main ()	{return 0;}
+		")
     CHECK_C_SOURCE_COMPILES("${SUSV3_SRCS}" SUSV3_WORKING)
     IF(SUSV3_WORKING)
       add_definitions(-D_DARWIN_C_SOURCE=1)
@@ -1434,15 +1412,14 @@ set(TCL_LINK_LIBS
 
 add_library(tcl ${TCL_SRCS})
 target_link_libraries(tcl ${TCL_LINK_LIBS})
-install(TARGETS tcl
-  RUNTIME DESTINATION ${BIN_DIR}
-  LIBRARY DESTINATION ${LIB_DIR}
-  ARCHIVE DESTINATION ${LIB_DIR})
-GET_TARGET_PROPERTY(TCL_INSTALL_LIBNAME tcl LOCATION)
-SET_TARGET_PROPERTIES(tcl PROPERTIES VERSION ${TCL_VERSION} SOVERSION ${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR})
+install(TARGETS tcl 
+	RUNTIME DESTINATION ${BIN_DIR}
+	LIBRARY DESTINATION ${LIB_DIR}
+	ARCHIVE DESTINATION ${LIB_DIR})
+set_target_properties(tcl PROPERTIES VERSION ${TCL_VERSION} SOVERSION ${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR})
 IF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
-  SET_TARGET_PROPERTIES(tcl PROPERTIES LINK_FLAGS "-compatibility_version ${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR} -current_version ${TCL_VERSION} -install_name \"${TCL_INSTALL_LIBNAME}\" -seg1addr 0xa000000 -sectcreate __TEXT __info_plist \"${TCL_BINARY_DIR}/Tcl-Info.plist\"")
-  SET(EXTRA_TCLSH_LIBS "-sectcreate __TEXT __info_plist \"${TCL_BINARY_DIR}/Tclsh-Info.plist\"")
+  set_target_properties(tcl PROPERTIES LINK_FLAGS "-compatibility_version ${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR} -current_version ${TCL_VERSION} -install_name \"$<TARGET_FILE>\" -seg1addr 0xa000000 -sectcreate __TEXT __info_plist \"${TCL_BINARY_DIR}/Tcl-Info.plist\"")
+  set(EXTRA_TCLSH_LIBS "-sectcreate __TEXT __info_plist \"${TCL_BINARY_DIR}/Tclsh-Info.plist\"")
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/macosx/Tcl-Info.plist.in ${TCL_BINARY_DIR}/Tcl-Info.plist)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/macosx/Tclsh-Info.plist.in ${TCL_BINARY_DIR}/Tclsh-Info.plist)
 ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
@@ -1454,9 +1431,9 @@ if(FPIC_COMPILER_FLAG)
   set_target_properties(tclstub PROPERTIES COMPILE_FLAGS "-fPIC")
 endif(FPIC_COMPILER_FLAG)
 install(TARGETS tclstub
-  RUNTIME DESTINATION ${BIN_DIR}
-  LIBRARY DESTINATION ${LIB_DIR}
-  ARCHIVE DESTINATION ${LIB_DIR})
+	RUNTIME DESTINATION ${BIN_DIR}
+	LIBRARY DESTINATION ${LIB_DIR}
+	ARCHIVE DESTINATION ${LIB_DIR})
 
 add_executable(tclsh ${TCLSH_SRCS})
 target_link_libraries(tclsh tcl ${M_LIBRARY} ${ZLIB_LIBRARY} ${TCL_THREADS_LIB} ${EXTRA_TCLSH_LIBS})

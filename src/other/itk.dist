@@ -8,7 +8,6 @@ library/Widget.itk
 library/itk.tcl
 library/tclIndex
 license.terms
-tcl_pkgindex.cmake
 win/dllEntryPoint.c
 win/nmakehlp.c
 win/rc/itk.ico

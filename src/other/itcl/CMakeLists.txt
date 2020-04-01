@@ -37,16 +37,7 @@
 # *******************************************************************
 
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 2.8)
-if(COMMAND CMAKE_POLICY)
-  cmake_policy(SET CMP0003 NEW)
-  if("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-    cmake_policy(SET CMP0026 OLD)
-  endif("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-  if("${CMAKE_VERSION}" VERSION_GREATER 3.0)
-    cmake_policy(SET CMP0048 NEW)
-  endif("${CMAKE_VERSION}" VERSION_GREATER 3.0)
-endif(COMMAND CMAKE_POLICY)
+cmake_minimum_required(VERSION 3.1.3)
 
 # set CMake project name
 project(ITCL)
@@ -71,9 +62,9 @@ if(NOT TCL_STUB_LIBRARY)
 endif(NOT TCL_STUB_LIBRARY)
 
 # version numbers
-set(ITCL_VERSION_MAJOR 3)
-set(ITCL_VERSION_MINOR 4)
-set(ITCL_PATCH_LEVEL 3)
+set(ITCL_VERSION_MAJOR 4)
+set(ITCL_VERSION_MINOR 2)
+set(ITCL_PATCH_LEVEL 0)
 
 set(ITCL_VERSION "${ITCL_VERSION_MAJOR}.${ITCL_VERSION_MINOR}.${ITCL_PATCH_LEVEL}")
 
@@ -214,8 +205,8 @@ install(TARGETS itclstub
   ARCHIVE DESTINATION ${LIB_DIR})
 set_property(TARGET itclstub APPEND PROPERTY COMPILE_DEFINITIONS USE_TCL_STUBS)
 
-include(tcl_pkgindex.cmake)
-tcl_pkgindex(itcl Itcl "${ITCL_VERSION}")
+include(TCL_PKGINDEX.cmake)
+TCL_PKGINDEX(itcl Itcl "${ITCL_VERSION}")
 
 # Put library files where they need to go, and set up install rules
 set(LIBRARY_FILES itcl.tcl)

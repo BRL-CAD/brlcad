@@ -1,5 +1,4 @@
 set(tkhtml_ignore_files
-CMake/FindTCL.cmake
 CMake/FindX11.cmake
 CMakeLists.txt
 COPYING

@@ -37,18 +37,7 @@
 # *******************************************************************
 
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 2.8)
-if(COMMAND CMAKE_POLICY)
-  CMAKE_POLICY(SET CMP0003 NEW)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-    CMAKE_POLICY(SET CMP0026 OLD)
-    CMAKE_POLICY(SET CMP0048 OLD)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
-    CMAKE_POLICY(SET CMP0053 OLD)
-    CMAKE_POLICY(SET CMP0054 NEW)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
-endif(COMMAND CMAKE_POLICY)
+cmake_minimum_required(VERSION 3.1.3)
 
 # set CMake project name
 project(TK)
@@ -66,7 +55,7 @@ endif(NOT DEFINED BUILD_STATIC_LIBS)
 # version numbers
 set(TK_VERSION_MAJOR 8)
 set(TK_VERSION_MINOR 6)
-set(TK_PATCH_LEVEL 5)
+set(TK_PATCH_LEVEL 10)
 
 set(TK_VERSION "${TK_VERSION_MAJOR}.${TK_VERSION_MINOR}.${TK_PATCH_LEVEL}")
 
@@ -77,31 +66,22 @@ endif(WIN32)
 
 #-----------------------------------------------------------------------------
 # Set CMake module path
-set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${TK_SOURCE_DIR}/CMake")
-set(TK_CMAKE_DIR "${TCL_SOURCE_DIR}/CMake")
-
-#-----------------------------------------------------------------------------
-# The following logic is what allows binaries to run successfully in the build
-# directory AND install directory. Documentation of these options is available
-# at http://www.cmake.org/Wiki/CMake_RPATH_handling
-
-if(EXISTS "${TK_CMAKE_DIR}/RPath_Setup.cmake")
-  include("${TK_CMAKE_DIR}/RPath_Setup.cmake")
-  if(COMMAND cmake_set_rpath)
-    cmake_set_rpath()
-  endif(COMMAND cmake_set_rpath)
-else(EXISTS "${TK_CMAKE_DIR}/RPath_Setup.cmake")
-  if(NOT HAVE_PARENT_BUILD)
-    message(FATAL_ERROR "Not building as a subbuild, but ${TK_CMAKE_DIR}/RPath_Setup.cmake not found.  To build as a stand-alone build, add RPath_Setup.cmake to the CMake directory.")
-  endif(NOT HAVE_PARENT_BUILD)
-endif(EXISTS "${TK_CMAKE_DIR}/RPath_Setup.cmake")
+list(APPEND CMAKE_MODULE_PATH "${TCL_SOURCE_DIR}/CMake")
 
 #---------------------------------------------------------------------
 # Define relative install locations and output directories.  Don't set
 # these if they have already been set by some other means (like a
 # higher level CMakeLists.txt file including this one).
 
-include("${TK_CMAKE_DIR}/Path_Setup.cmake")
+include(Path_Setup)
+
+#-----------------------------------------------------------------------------
+# The following logic is what allows binaries to run successfully in the build
+# directory AND install directory. Documentation of these options is available
+# at http://www.cmake.org/Wiki/CMake_RPATH_handling
+
+include(RPath_Setup)
+cmake_set_rpath()
 
 #----------------------------------------------------------------------------
 # Define some standard configuration settings passed to all Tcl build targets
@@ -349,8 +329,8 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
   TCL_CHECK_INCLUDE_FILE(copyfile.h HAVE_COPYFILE_H)
   TCL_CHECK_FUNCTION_EXISTS(copyfile HAVE_COPYFILE)
   IF(${CoreFoundation_LIBRARIES})
-    TCL_CHECK_INCLUDE_FILE(libkern/OSAtomic.h HAVE_LIBKERN_OSATOMIC_H)
-    TCL_CHECK_FUNCTION_EXISTS(OSSpinLockLock HAVE_OSSPINLOCKLOCK)
+  TCL_CHECK_INCLUDE_FILE(libkern/OSAtomic.h HAVE_LIBKERN_OSATOMIC_H)
+  TCL_CHECK_FUNCTION_EXISTS(OSSpinLockLock HAVE_OSSPINLOCKLOCK)
     TCL_CHECK_FUNCTION_EXISTS(pthread_atfork HAVE_PTHREAD_ATFORK)
   ENDIF(${CoreFoundation_LIBRARIES})
   ADD_TCL_CFLAG(USE_VFORK)
@@ -762,8 +742,8 @@ IF(TK_ENABLE_AQUA)
   SET_PROPERTY(TARGET tk APPEND PROPERTY COMPILE_FLAGS "-std=gnu99 -x objective-c -fobjc-gc")
 ENDIF(TK_ENABLE_AQUA)
 
-include(${CMAKE_CURRENT_SOURCE_DIR}/CMake/tcl_pkgindex.cmake)
-tcl_pkgindex(tk Tk ${TK_VERSION})
+include(TCL_PKGINDEX)
+TCL_PKGINDEX(tk Tk ${TK_PATCH_LEVEL})
 
 install(FILES ${TK_HDRS} DESTINATION include)
 
