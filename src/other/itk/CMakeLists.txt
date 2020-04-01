@@ -160,10 +160,13 @@ if(TK_GRAPHICS_SYSTEM STREQUAL "x11")
 endif(TK_GRAPHICS_SYSTEM STREQUAL "x11")
 
 set(ITK_SRCS
-  generic/itk_cmds.c
-  generic/itk_option.c
-  generic/itk_archetype.c
-  generic/itk_util.c
+  generic/itkArchBase.c
+  generic/itkArchetype.c
+  generic/itkBase.c
+  generic/itkCmd.c
+  generic/itkHelpers.c
+  generic/itkOption.c
+  generic/itkUtil.c
   generic/itkStubInit.c
   )
 
@@ -182,6 +185,7 @@ include_directories(
   ${ITCL_INCLUDE_PATH}
   ${ITK_INCLUDE_DIRS}
   ${TK_X11_INCLUDE_DIRS}
+  ${CMAKE_CURRENT_SOURCE_DIR}/../itcl/generic
   )
 
 # Like ITcl, Itk requires private Tcl headers, which we can't assume from a system

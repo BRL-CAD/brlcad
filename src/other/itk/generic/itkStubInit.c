@@ -9,7 +9,7 @@
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  */
 
-#include "itk.h"
+#include "itkInt.h"
 
 /*
  * Remove macros that will interfere with the definitions below.
@@ -21,13 +21,17 @@
  * below should be made in the generic/itk.decls script.
  */
 
+MODULE_SCOPE const ItkStubs itkStubs;
+
 /* !BEGIN!: Do not edit below this line. */
 
-ItkStubs itkStubs = {
+static const ItkIntStubs itkIntStubs = {
     TCL_STUB_MAGIC,
-    NULL,
-    Itk_Init, /* 0 */
-    Itk_SafeInit, /* 1 */
+    ITKINT_STUBS_EPOCH,
+    ITKINT_STUBS_REVISION,
+    0,
+    0, /* 0 */
+    0, /* 1 */
     Itk_ConfigBodyCmd, /* 2 */
     Itk_UsualCmd, /* 3 */
     Itk_ClassOptionDefineCmd, /* 4 */
@@ -35,15 +39,40 @@ ItkStubs itkStubs = {
     Itk_ConfigClassOption, /* 6 */
     Itk_CreateClassOptTable, /* 7 */
     Itk_FindClassOptTable, /* 8 */
-    NULL, /* 9 */
+    0, /* 9 */
     Itk_CreateClassOption, /* 10 */
     Itk_FindClassOption, /* 11 */
     Itk_DelClassOption, /* 12 */
-    Itk_ArchetypeInit, /* 13 */
+    0, /* 13 */
     Itk_OptListInit, /* 14 */
     Itk_OptListFree, /* 15 */
     Itk_OptListAdd, /* 16 */
     Itk_OptListRemove, /* 17 */
+};
+
+static const ItkStubHooks itkStubHooks = {
+    &itkIntStubs
+};
+
+const ItkStubs itkStubs = {
+    TCL_STUB_MAGIC,
+    ITK_STUBS_EPOCH,
+    ITK_STUBS_REVISION,
+    &itkStubHooks,
+    Itk_Init, /* 0 */
+    Itk_SafeInit, /* 1 */
+    0, /* 2 */
+    0, /* 3 */
+    0, /* 4 */
+    0, /* 5 */
+    0, /* 6 */
+    0, /* 7 */
+    0, /* 8 */
+    0, /* 9 */
+    0, /* 10 */
+    0, /* 11 */
+    0, /* 12 */
+    Itk_ArchetypeInit, /* 13 */
 };
 
 /* !END!: Do not edit above this line. */

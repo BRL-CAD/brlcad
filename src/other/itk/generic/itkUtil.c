@@ -21,7 +21,7 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  */
-#include "itk.h"
+#include "itkInt.h"
 
 
 /*
@@ -33,9 +33,9 @@
  * ------------------------------------------------------------------------
  */
 void
-Itk_OptListInit(olist, options)
-    ItkOptList *olist;       /* list to be initialized */
-    Tcl_HashTable *options;  /* table containing the real option entries */
+Itk_OptListInit(
+    ItkOptList *olist,       /* list to be initialized */
+    Tcl_HashTable *options)  /* table containing the real option entries */
 {
     olist->options = options;
     olist->len = 0;
@@ -56,8 +56,8 @@ Itk_OptListInit(olist, options)
  * ------------------------------------------------------------------------
  */
 void
-Itk_OptListFree(olist)
-    ItkOptList *olist;     /* list to be freed */
+Itk_OptListFree(
+    ItkOptList *olist)     /* list to be freed */
 {
     ckfree((char*)olist->list);
     olist->len = olist->max = 0;
@@ -74,13 +74,19 @@ Itk_OptListFree(olist)
  * ------------------------------------------------------------------------
  */
 void
-Itk_OptListAdd(olist, entry)
-    ItkOptList *olist;     /* ordered list */
-    Tcl_HashEntry *entry;  /* entry to be added to the list */
+Itk_OptListAdd(
+    ItkOptList *olist,     /* ordered list */
+    Tcl_HashEntry *entry)  /* entry to be added to the list */
 {
-    int i, first, last, cmp, pos, size;
+    int i;
+    int first;
+    int last;
+    int cmp;
+    int pos;
+    int size;
     Tcl_HashEntry** newOrder;
-    char *swname, *optname;
+    char *swname;
+    char *optname;
 
     /*
      *  Make sure that the option list is big enough.  Resize
@@ -153,13 +159,17 @@ Itk_OptListAdd(olist, entry)
  * ------------------------------------------------------------------------
  */
 void
-Itk_OptListRemove(olist, entry)
-    ItkOptList *olist;     /* ordered list */
-    Tcl_HashEntry *entry;  /* entry to be removed from the list */
+Itk_OptListRemove(
+    ItkOptList *olist,     /* ordered list */
+    Tcl_HashEntry *entry)  /* entry to be removed from the list */
 {
     int pos = 0;
-    int i, first, last, cmp;
-    char *swname, *optname;
+    int i;
+    int first;
+    int last;
+    int cmp;
+    char *swname;
+    char *optname;
 
     first = 0;
     last  = olist->len-1;
