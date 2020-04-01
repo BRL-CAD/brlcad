@@ -106,6 +106,7 @@ if (BUILD_SHARED_LIBS)
   target_link_libraries(poly2tri ${M_LIBRARY})
   if (MSVC)
     set_target_properties(poly2tri PROPERTIES DEFINE_SYMBOL P2T_BUILD_DLL)
+    set_property(TARGET poly2tri APPEND PROPERTY COMPILE_DEFINITIONS "P2T_DLL_EXPORTS")
   endif (MSVC)
   install(TARGETS poly2tri
     RUNTIME DESTINATION ${BIN_DIR}
