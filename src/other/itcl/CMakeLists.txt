@@ -198,7 +198,6 @@ endif(NOT WIN32)
 
 add_library(itcl ${ITCL_SRCS})
 target_link_libraries(itcl ${M_LIBRARY} ${TCL_STUB_LIBRARY} )
-set_target_properties(itcl PROPERTIES PREFIX "lib")
 set_target_properties(itcl PROPERTIES VERSION ${ITCL_VERSION} SOVERSION ${ITCL_VERSION_MAJOR})
 set_property(TARGET itcl APPEND PROPERTY COMPILE_DEFINITIONS USE_TCL_STUBS)
 install(TARGETS itcl
