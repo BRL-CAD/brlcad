@@ -13,7 +13,7 @@ find_package(X11)
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/src
   ${CMAKE_CURRENT_BINARY_DIR}
-  ${TCL_INCLUDE_DIRS}
+  ${TCL_INCLUDE_PATH}
   ${TK_INCLUDE_PATH}
   ${X11_INCLUDE_DIR}
   )
@@ -68,9 +68,9 @@ add_definitions(
 
 add_library(Tktable SHARED ${TKTABLE_SRCS})
 add_dependencies(Tktable tktable_header_gen)
-target_link_libraries(Tktable ${TCL_LIBRARY} ${TCL_TK_LIBRARY} ${X11_LIBRARIES})
-SET_TARGET_PROPERTIES(Tktable PROPERTIES VERSION ${TKTABLE_PKGVERSION})
-install(TARGETS Tktable 
+target_link_libraries(Tktable ${TCL_LIBRARY} ${TK_LIBRARY} ${X11_LIBRARIES})
+set_target_properties(Tktable PROPERTIES VERSION ${TKTABLE_PKGVERSION})
+install(TARGETS Tktable
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}
 	ARCHIVE DESTINATION ${LIB_DIR})
