@@ -55,7 +55,7 @@ typedef DWORD_PTR * PDWORD_PTR;
 
 #ifdef CHECK_UNICODE_CALLS
 #   define _UNICODE
-#   define UNICODE
+#   define TCL_UNICODE
 #   define __TCHAR_DEFINED
     typedef float *_TCHAR;
 #   define _TCHAR_DEFINED

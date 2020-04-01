@@ -17,7 +17,7 @@
  */
 
 /*
- * On Windows, this file needs to be compiled twice, once with UNICODE and
+ * On Windows, this file needs to be compiled twice, once with TCL_UNICODE and
  * _UNICODE defined. This way both Tcl_Main and Tcl_MainExW can be
  * implemented, sharing the same source code.
  */
@@ -31,7 +31,7 @@
 #define DEFAULT_PRIMARY_PROMPT	"% "
 
 /*
- * This file can be compiled on Windows in UNICODE mode, as well as on all
+ * This file can be compiled on Windows in TCL_UNICODE mode, as well as on all
  * other platforms using the native encoding. This is done by using the normal
  * Windows functions like _tcscmp, but on platforms which don't have <tchar.h>
  * we have to translate that to strcmp here.
@@ -49,7 +49,7 @@ NewNativeObj(
 {
     Tcl_DString ds;
 
-#ifdef UNICODE
+#ifdef TCL_UNICODE
     Tcl_WinTCharToUtf(string, -1, &ds);
 #else
     Tcl_ExternalToUtfDString(NULL, (char *) string, -1, &ds);
@@ -724,7 +724,7 @@ TclFullFinalizationRequested(void)
     return finalize;
 #endif /* PURIFY */
 }
-#endif /* UNICODE */
+#endif /* TCL_UNICODE */
 
 /*
  *----------------------------------------------------------------------
