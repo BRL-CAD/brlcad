@@ -1,5 +1,4 @@
 #                     C M A K E L I S T S . T X T
-# SCL
 #
 # Copyright (c) 2010 United States Government as represented by
 # the U.S. Army Research Laboratory.
@@ -44,12 +43,12 @@ project(TK)
 
 # build shared libs by default
 if(NOT DEFINED BUILD_SHARED_LIBS)
-	option(BUILD_SHARED_LIBS "Build shared libraries" ON)
+  option(BUILD_SHARED_LIBS "Build shared libraries" ON)
 endif(NOT DEFINED BUILD_SHARED_LIBS)
 
 # build static libs by default
 if(NOT DEFINED BUILD_STATIC_LIBS)
-	option(BUILD_STATIC_LIBS "Build shared libraries" ON)
+  option(BUILD_STATIC_LIBS "Build shared libraries" ON)
 endif(NOT DEFINED BUILD_STATIC_LIBS)
 
 # version numbers
@@ -100,7 +99,7 @@ add_definitions(-DTCL_SHLIB_EXT="${CMAKE_SHARED_LIBRARY_SUFFIX}")
 # Define some platform specific flags
 
 if(MSVC)
-	add_definitions(-DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE -Ot -Oi -fp:strict -Gs -GS -GL -MD -DSUPPORT_CONFIG_EMBEDDED -DHAVE_UXTHEME_H=1)
+  add_definitions(-DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE -Ot -Oi -fp:strict -Gs -GS -GL -MD -DSUPPORT_CONFIG_EMBEDDED -DHAVE_UXTHEME_H=1)
 endif(MSVC)
 
 if(MINGW)
@@ -137,7 +136,7 @@ endif(PIPE_COMPILER_FLAG)
 #------------------------------------------------------------------------
 find_package(Threads)
 if(NOT ${CMAKE_THREAD_LIBS_INIT} STREQUAL "")
-	add_definitions(-DTCL_THREADS=1)
+  add_definitions(-DTCL_THREADS=1)
 endif(NOT ${CMAKE_THREAD_LIBS_INIT} STREQUAL "")
 
 #-----------------------------------------------------------------------------
@@ -204,7 +203,7 @@ main ()
 
 union wait x;
 WIFEXITED(x);           /* Generates compiler error if WIFEXITED
-                         * uses an int. */
+* uses an int. */
 return 0;
 }
 ")
@@ -285,9 +284,9 @@ SET(unsigned_char_srcs "
 int
 main ()
 {
-   static int test_array [1 - 2 * !(((char) -1) < 0)];
-   test_array [0] = 0;
-   return 0;
+static int test_array [1 - 2 * !(((char) -1) < 0)];
+test_array [0] = 0;
+return 0;
 }
 ")
 if(NOT DEFINED HAVE_UNION_WAIT)
@@ -300,9 +299,9 @@ SET(signed_char_srcs "
 int
 main ()
 {
-   signed char *p;
-   p = 0;
-   return 0;
+signed char *p;
+p = 0;
+return 0;
 }
 ")
 CHECK_C_SOURCE_COMPILES("${signed_char_srcs}" HAVE_SIGNED_CHAR)
@@ -329,8 +328,8 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
   TCL_CHECK_INCLUDE_FILE(copyfile.h HAVE_COPYFILE_H)
   TCL_CHECK_FUNCTION_EXISTS(copyfile HAVE_COPYFILE)
   IF(${CoreFoundation_LIBRARIES})
-  TCL_CHECK_INCLUDE_FILE(libkern/OSAtomic.h HAVE_LIBKERN_OSATOMIC_H)
-  TCL_CHECK_FUNCTION_EXISTS(OSSpinLockLock HAVE_OSSPINLOCKLOCK)
+    TCL_CHECK_INCLUDE_FILE(libkern/OSAtomic.h HAVE_LIBKERN_OSATOMIC_H)
+    TCL_CHECK_FUNCTION_EXISTS(OSSpinLockLock HAVE_OSSPINLOCKLOCK)
     TCL_CHECK_FUNCTION_EXISTS(pthread_atfork HAVE_PTHREAD_ATFORK)
   ENDIF(${CoreFoundation_LIBRARIES})
   ADD_TCL_CFLAG(USE_VFORK)
@@ -340,36 +339,36 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
   TCL_CHECK_INCLUDE_FILE_USABILITY(AvailabilityMacros.h HAVE_AVAILABILITYMACROS_H)
   IF(HAVE_AVAILABILITYMACROS_H)
     SET(WEAK_IMPORT_SRCS "
-#ifdef __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__
-#if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1020
-#error __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1020
-#endif
-#elif MAC_OS_X_VERSION_MIN_REQUIRED < 1020
-#error MAC_OS_X_VERSION_MIN_REQUIRED < 1020
-#endif
-int rand(void) __attribute__((weak_import));
-int main() {
-rand();
-return 0;
-}
-		")
+    #ifdef __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__
+    #if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1020
+    #error __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1020
+    #endif
+    #elif MAC_OS_X_VERSION_MIN_REQUIRED < 1020
+    #error MAC_OS_X_VERSION_MIN_REQUIRED < 1020
+    #endif
+    int rand(void) __attribute__((weak_import));
+    int main() {
+    rand();
+    return 0;
+    }
+    ")
     CHECK_C_SOURCE_COMPILES("${WEAK_IMPORT_SRCS}" WEAK_IMPORT_WORKING)
     IF(WEAK_IMPORT_WORKING)
       ADD_TCL_CFLAG(HAVE_WEAK_IMPORT)
     ENDIF(WEAK_IMPORT_WORKING)
     SET(SUSV3_SRCS "
-#ifdef __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__
-#if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1050
-#error __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1050
-#endif
-#elif MAC_OS_X_VERSION_MIN_REQUIRED < 1050
-#error MAC_OS_X_VERSION_MIN_REQUIRED < 1050
-#endif
-#define _DARWIN_C_SOURCE 1
-#include <sys/cdefs.h>
+    #ifdef __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__
+    #if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1050
+    #error __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1050
+    #endif
+    #elif MAC_OS_X_VERSION_MIN_REQUIRED < 1050
+    #error MAC_OS_X_VERSION_MIN_REQUIRED < 1050
+    #endif
+    #define _DARWIN_C_SOURCE 1
+    #include <sys/cdefs.h>
 
-int main ()	{return 0;}
-		")
+    int main ()	{return 0;}
+    ")
     CHECK_C_SOURCE_COMPILES("${SUSV3_SRCS}" SUSV3_WORKING)
     IF(SUSV3_WORKING)
       ADD_TCL_CFLAG(_DARWIN_C_SOURCE)
@@ -391,7 +390,7 @@ SET(TK_GENERIC_SRCS
   generic/tkAtom.c
   generic/tkBind.c
   generic/tkBitmap.c
-	generic/tkBusy.c
+  generic/tkBusy.c
   generic/tkClipboard.c
   generic/tkCmds.c
   generic/tkColor.c
@@ -401,54 +400,54 @@ SET(TK_GENERIC_SRCS
   generic/tkEvent.c
   generic/tkFocus.c
   generic/tkFont.c
-	generic/tkGet.c
+  generic/tkGet.c
   generic/tkGC.c
   generic/tkGeometry.c
   generic/tkGrab.c
   generic/tkGrid.c
-	generic/tkConsole.c
+  generic/tkConsole.c
   generic/tkMain.c
-	generic/tkOption.c
-	generic/tkPack.c
-	generic/tkPlace.c
-	generic/tkSelect.c
-	generic/tkStyle.c
-	generic/tkUndo.c
-	generic/tkUtil.c
-	generic/tkVisual.c
-	generic/tkWindow.c
-	generic/tkButton.c
-	generic/tkObj.c
-	generic/tkEntry.c
-	generic/tkFrame.c
-	generic/tkListbox.c
+  generic/tkOption.c
+  generic/tkPack.c
+  generic/tkPlace.c
+  generic/tkSelect.c
+  generic/tkStyle.c
+  generic/tkUndo.c
+  generic/tkUtil.c
+  generic/tkVisual.c
+  generic/tkWindow.c
+  generic/tkButton.c
+  generic/tkObj.c
+  generic/tkEntry.c
+  generic/tkFrame.c
+  generic/tkListbox.c
   generic/tkMenu.c
   generic/tkMenubutton.c
-	generic/tkMenuDraw.c
+  generic/tkMenuDraw.c
   generic/tkMessage.c
   generic/tkPanedWindow.c
   generic/tkScale.c
   generic/tkScrollbar.c
   generic/tkStubInit.c
-	generic/tkCanvas.c
-	generic/tkCanvArc.c
-	generic/tkCanvBmap.c
-	generic/tkCanvImg.c
-	generic/tkCanvLine.c
-	generic/tkCanvPoly.c
-	generic/tkCanvPs.c
-	generic/tkCanvText.c
-	generic/tkCanvUtil.c
-	generic/tkCanvWind.c
-	generic/tkRectOval.c
-	generic/tkTrig.c
-	generic/tkImage.c
-	generic/tkImgBmap.c
-	generic/tkImgGIF.c
-	generic/tkImgPNG.c
-	generic/tkImgPPM.c
-	generic/tkImgPhoto.c
-	generic/tkImgPhInstance.c
+  generic/tkCanvas.c
+  generic/tkCanvArc.c
+  generic/tkCanvBmap.c
+  generic/tkCanvImg.c
+  generic/tkCanvLine.c
+  generic/tkCanvPoly.c
+  generic/tkCanvPs.c
+  generic/tkCanvText.c
+  generic/tkCanvUtil.c
+  generic/tkCanvWind.c
+  generic/tkRectOval.c
+  generic/tkTrig.c
+  generic/tkImage.c
+  generic/tkImgBmap.c
+  generic/tkImgGIF.c
+  generic/tkImgPNG.c
+  generic/tkImgPPM.c
+  generic/tkImgPhoto.c
+  generic/tkImgPhInstance.c
   generic/tkText.c
   generic/tkTextBTree.c
   generic/tkTextDisp.c
@@ -457,7 +456,7 @@ SET(TK_GENERIC_SRCS
   generic/tkTextMark.c
   generic/tkTextTag.c
   generic/tkTextWind.c
-	generic/tkOldConfig.c
+  generic/tkOldConfig.c
   )
 
 SET(TK_HDRS
@@ -580,7 +579,7 @@ SET(TK_AQUA_SRCS
   xlib/xgc.c
   xlib/ximage.c
   xlib/xutil.c
-	macosx/ttkMacOSXTheme.c
+  macosx/ttkMacOSXTheme.c
   )
 
 configure_file(win/wish.exe.manifest.in ${CMAKE_CURRENT_BINARY_DIR}/wish.exe.manifest @ONLY)
@@ -677,7 +676,7 @@ add_definitions(-DHAVE_XKBKEYCODETOKEYSYM=1)
 add_definitions(-DXKEYCODETOKEYSYM_IS_DEPRECATED=1)
 
 include_directories(
-	${TCL_INCLUDE_PATH}
+  ${TCL_INCLUDE_PATH}
   ${TK_INCLUDE_PATH}
   ${TK_X11_INCLUDE_DIRS}
   )
@@ -712,9 +711,9 @@ IF(PIC_COMPILER_FLAG)
   SET_TARGET_PROPERTIES(tkstub PROPERTIES COMPILE_FLAGS "-fPIC")
 ENDIF(PIC_COMPILER_FLAG)
 install(TARGETS tkstub 
-	RUNTIME DESTINATION ${BIN_DIR}
-	LIBRARY DESTINATION ${LIB_DIR}
-	ARCHIVE DESTINATION ${LIB_DIR})
+  RUNTIME DESTINATION ${BIN_DIR}
+  LIBRARY DESTINATION ${LIB_DIR}
+  ARCHIVE DESTINATION ${LIB_DIR})
 SET_PROPERTY(TARGET tkstub APPEND PROPERTY COMPILE_DEFINITIONS USE_TCL_STUBS)
 
 IF(MINGW)
@@ -726,14 +725,14 @@ IF(WIN32)
   target_link_libraries(tk tkstub ${TCL_STUB_LIBRARY} ${TCL_THREADS_LIB} ${X11_TK_LIBS} ${TK_MINGW_LIBS})
 ELSE(WIN32)
   target_link_libraries(tk tkstub ${TCL_STUB_LIBRARY} ${TCL_THREADS_LIB}
-	  ${X11_TK_LIBS} ${CoreFoundation_LIBRARIES} ${CARBON_FRAMEWORK}
-	  ${COCOA_FRAMEWORK} ${IOKit_LIBRARIES} ${FREETYPE_LIBRARIES}
-	  ${PNG_LIBRARIES} ${FONTCONFIG_LIBRARIES} ${M_LIBRARY})
+    ${X11_TK_LIBS} ${CoreFoundation_LIBRARIES} ${CARBON_FRAMEWORK}
+    ${COCOA_FRAMEWORK} ${IOKit_LIBRARIES} ${FREETYPE_LIBRARIES}
+    ${PNG_LIBRARIES} ${FONTCONFIG_LIBRARIES} ${M_LIBRARY})
 ENDIF(WIN32)
 install(TARGETS tk
-	RUNTIME DESTINATION ${BIN_DIR}
-	LIBRARY DESTINATION ${LIB_DIR}
-	ARCHIVE DESTINATION ${LIB_DIR})
+  RUNTIME DESTINATION ${BIN_DIR}
+  LIBRARY DESTINATION ${LIB_DIR}
+  ARCHIVE DESTINATION ${LIB_DIR})
 SET_TARGET_PROPERTIES(tk PROPERTIES VERSION ${TK_VERSION} SOVERSION ${TK_VERSION_MAJOR}.${TK_VERSION_MINOR})
 SET_PROPERTY(TARGET tk APPEND PROPERTY COMPILE_DEFINITIONS USE_TCL_STUBS)
 IF(TK_ENABLE_AQUA)
@@ -747,15 +746,15 @@ install(FILES ${TK_HDRS} DESTINATION include)
 
 # Set up build directory copies of the public headers
 foreach(hdrfile ${TK_HDRS})
-	get_filename_component(hf ${hdrfile} NAME)
-	if(NOT CMAKE_CONFIGURATION_TYPES)
-		configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${hdrfile} ${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/${hf} COPYONLY)
-	else(NOT CMAKE_CONFIGURATION_TYPES)
-		foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-			string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-			configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${hdrfile} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${INCLUDE_DIR}/${hf} COPYONLY)
-		endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-	endif(NOT CMAKE_CONFIGURATION_TYPES)
+  get_filename_component(hf ${hdrfile} NAME)
+  if(NOT CMAKE_CONFIGURATION_TYPES)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${hdrfile} ${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/${hf} COPYONLY)
+  else(NOT CMAKE_CONFIGURATION_TYPES)
+    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${hdrfile} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${INCLUDE_DIR}/${hf} COPYONLY)
+    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+  endif(NOT CMAKE_CONFIGURATION_TYPES)
 endforeach(hdrfile ${LIBRARY_FILES})
 
 
@@ -765,8 +764,8 @@ IF(WIN32)
 ELSE(WIN32)
   add_executable(wish ${WISH_SRCS})
   target_link_libraries(wish ${TCL_LIBRARY} ${TCL_STUB_LIBRARY} tk ${CoreFoundation_LIBRARIES}
-	  ${CARBON_FRAMEWORK} ${COCOA_FRAMEWORK} ${IOKit_LIBRARIES}
-	  ${TCL_THREADS_LIB} ${M_LIBRARY} ${FREETYPE_LIBRARIES} ${PNG_LIBRARIES} ${FONTCONFIG_LIBRARIES})
+    ${CARBON_FRAMEWORK} ${COCOA_FRAMEWORK} ${IOKit_LIBRARIES}
+    ${TCL_THREADS_LIB} ${M_LIBRARY} ${FREETYPE_LIBRARIES} ${PNG_LIBRARIES} ${FONTCONFIG_LIBRARIES})
   IF(TK_ENABLE_AQUA)
     SET_PROPERTY(TARGET wish APPEND PROPERTY COMPILE_FLAGS "-std=gnu99 -x objective-c -fobjc-gc")
   ENDIF(TK_ENABLE_AQUA)
@@ -775,10 +774,10 @@ SET_TARGET_PROPERTIES(wish PROPERTIES VERSION ${TK_VERSION_MAJOR}.${TK_VERSION_M
 install(TARGETS wish DESTINATION bin)
 
 IF(NOT WIN32)
-	FILE(COPY unix/tkAppInit.c DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/tk${TK_VERSION})
+  FILE(COPY unix/tkAppInit.c DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/tk${TK_VERSION})
   foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
     string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-	 FILE(COPY unix/tkAppInit.c DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}}/tk${TK_VERSION})
+    FILE(COPY unix/tkAppInit.c DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}}/tk${TK_VERSION})
   endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
   INSTALL(FILES unix/tkAppInit.c DESTINATION lib/tk${TK_VERSION})
 ENDIF(NOT WIN32)
