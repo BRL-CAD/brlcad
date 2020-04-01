@@ -1275,12 +1275,6 @@ include_directories(
   ${ZLIB_INCLUDE_DIRS}
   )
 
-IF(WIN32)
-  SET(TCLSH_SRCS win/tclAppInit.c win/tclsh.rc)
-ELSE(WIN32)
-  SET(TCLSH_SRCS unix/tclAppInit.c)
-ENDIF(WIN32)
-
 if (MINGW)
   set(TCL_WIN_LIBS ${TCL_WIN_LIBS} ws2_32)
 endif (MINGW)
@@ -1329,11 +1323,16 @@ install(TARGETS tclstub
 set(TCL_WIN_VERSION "${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}.${TCL_VERSION_PATCH}")
 set(MACHINE "${CMAKE_SYSTEM_PROCESSOR}")
 configure_file(win/tclsh.exe.manifest.in ${CMAKE_CURRENT_BINARY_DIR}/tclsh.exe.manifest @ONLY)
+IF(WIN32)
+  SET(TCLSH_SRCS win/tclAppInit.c win/tclsh.rc)
+ELSE(WIN32)
+  SET(TCLSH_SRCS unix/tclAppInit.c)
+ENDIF(WIN32)
 
 add_executable(tclsh ${TCLSH_SRCS})
 target_link_libraries(tclsh tcl ${M_LIBRARY} ${ZLIB_LIBRARIES} ${TCL_THREADS_LIB} ${EXTRA_TCLSH_LIBS})
 install(TARGETS tclsh DESTINATION bin)
-SET_TARGET_PROPERTIES(tclsh PROPERTIES VERSION ${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR})
+set_target_properties(tclsh PROPERTIES VERSION ${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR} LINK_FLAGS " /MANIFEST:NO")
 
 SET(TCL_HDRS
   generic/tcl.h
