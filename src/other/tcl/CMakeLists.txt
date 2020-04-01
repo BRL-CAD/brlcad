@@ -1320,9 +1320,6 @@ install(TARGETS tclstub
   ARCHIVE DESTINATION ${LIB_DIR})
 
 
-set(TCL_WIN_VERSION "${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}.${TCL_VERSION_PATCH}")
-set(MACHINE "${CMAKE_SYSTEM_PROCESSOR}")
-configure_file(win/tclsh.exe.manifest.in ${CMAKE_CURRENT_BINARY_DIR}/tclsh.exe.manifest @ONLY)
 IF(WIN32)
   SET(TCLSH_SRCS win/tclAppInit.c win/tclsh.rc)
 ELSE(WIN32)
@@ -1332,11 +1329,7 @@ ENDIF(WIN32)
 add_executable(tclsh ${TCLSH_SRCS})
 target_link_libraries(tclsh tcl ${M_LIBRARY} ${ZLIB_LIBRARIES} ${TCL_THREADS_LIB} ${EXTRA_TCLSH_LIBS})
 install(TARGETS tclsh DESTINATION bin)
-if (NOT MSVC)
-  set_target_properties(tclsh PROPERTIES VERSION ${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR})
-else (NOT MSVC)
-  set_target_properties(tclsh PROPERTIES VERSION ${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR} LINK_FLAGS " /MANIFEST:NO")
-endif (NOT MSVC)
+set_target_properties(tclsh PROPERTIES VERSION ${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR})
 
 SET(TCL_HDRS
   generic/tcl.h
