@@ -1285,13 +1285,18 @@ ELSE(WIN32)
   SET(TCLSH_SRCS unix/tclAppInit.c)
 ENDIF(WIN32)
 
-IF(MINGW)
-  set(TCL_MINGW_LIBS ws2_32)
-ENDIF(MINGW)
+if (MINGW)
+  set(TCL_WIN_LIBS ${TCL_WIN_LIBS} ws2_32)
+endif (MINGW)
+
+if (MINGW)
+  set(TCL_WIN_LIBS ${TCL_WIN_LIBS} Netapi32)
+endif (MINGW)
+
 
 set(TCL_LINK_LIBS
   ${CoreFoundation_LIBRARIES}
-  ${TCL_MINGW_LIBS}
+  ${TCL_WIN_LIBS}
   ${DL_LIBRARY}
   ${SOCKET_LIBRARY}
   ${GHBN_LIBRARY}
@@ -1302,7 +1307,7 @@ set(TCL_LINK_LIBS
 
 add_library(tcl ${TCL_SRCS})
 target_link_libraries(tcl ${TCL_LINK_LIBS})
-install(TARGETS tcl 
+install(TARGETS tcl
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}
 	ARCHIVE DESTINATION ${LIB_DIR})
