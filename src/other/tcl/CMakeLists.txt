@@ -1332,7 +1332,11 @@ ENDIF(WIN32)
 add_executable(tclsh ${TCLSH_SRCS})
 target_link_libraries(tclsh tcl ${M_LIBRARY} ${ZLIB_LIBRARIES} ${TCL_THREADS_LIB} ${EXTRA_TCLSH_LIBS})
 install(TARGETS tclsh DESTINATION bin)
-set_target_properties(tclsh PROPERTIES VERSION ${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR} LINK_FLAGS " /MANIFEST:NO")
+if (NOT MSVC)
+  set_target_properties(tclsh PROPERTIES VERSION ${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR})
+else (NOT MSVC)
+  set_target_properties(tclsh PROPERTIES VERSION ${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR} LINK_FLAGS " /MANIFEST:NO")
+endif (NOT MSVC)
 
 SET(TCL_HDRS
   generic/tcl.h
