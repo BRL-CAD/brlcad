@@ -117,7 +117,7 @@ static void		Prompt(Tcl_Interp *interp, InteractiveState *isPtr);
 static void		StdinProc(ClientData clientData, int mask);
 static void		FreeMainInterp(ClientData clientData);
 
-#if !defined(_WIN32) || defined(UNICODE)
+#if !defined(_WIN32) || defined(TCL_UNICODE)
 static Tcl_ThreadDataKey dataKey;
 
 /*
@@ -262,7 +262,7 @@ Tcl_SourceRCFile(
 	Tcl_DStringFree(&temp);
     }
 }
-#endif /* !UNICODE */
+#endif /* !TCL_UNICODE */
 
 /*----------------------------------------------------------------------
  *
@@ -618,7 +618,7 @@ Tcl_MainEx(
     Tcl_Exit(exitCode);
 }
 
-#if (TCL_MAJOR_VERSION == 8) && !defined(UNICODE)
+#if (TCL_MAJOR_VERSION == 8) && !defined(TCL_UNICODE)
 #undef Tcl_Main
 extern DLLEXPORT void
 Tcl_Main(
@@ -631,9 +631,9 @@ Tcl_Main(
 {
     Tcl_MainEx(argc, argv, appInitProc, Tcl_CreateInterp());
 }
-#endif /* TCL_MAJOR_VERSION == 8 && !UNICODE */
+#endif /* TCL_MAJOR_VERSION == 8 && !TCL_UNICODE */
 
-#if !defined(_WIN32) || defined(UNICODE)
+#if !defined(_WIN32) || defined(TCL_UNICODE)
 
 /*
  *---------------------------------------------------------------
