@@ -105,7 +105,7 @@ add_definitions(-DMP_NO_STDINT)
 
 # Windows specific flags
 if(MSVC)
-  add_definitions(-DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEP -Ot -Oi -fp:strict -Gs -GS -GL -MD)
+  add_definitions(-D_UNICODE -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEP -Ot -Oi -fp:strict -Gs -GS -GL -MD)
   add_definitions(-DTCL_PIPE_DLL="tclpip${TCL_VERSION_MAJOR}${TCL_VERSION_MINOR}.dll")
   add_definitions(-Dinline=__inline)
 endif(MSVC)
@@ -1218,7 +1218,7 @@ SET(TCL_WIN_SRCS
 
 set_property(SOURCE win/tclWinInit.c APPEND PROPERTY COMPILE_DEFINITIONS TCL_LIBRARY="${CMAKE_INSTALL_PREFIX}/${LIB_DIR}/${CMAKE_SHARED_LIBRARY_PREFIX}tcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}${CMAKE_SHARED_LIBRARY_SUFFIX}")
 set_property(SOURCE win/tclWinInit.c APPEND PROPERTY COMPILE_DEFINITIONS TCL_PACKAGE_PATH="${CMAKE_INSTALL_PREFIX}/lib")
-set_property(SOURCE win/tclMainUNICODE.c APPEND PROPERTY COMPILE_DEFINITIONS UNICODE=1)
+set_property(SOURCE win/tclMainUNICODE.c APPEND PROPERTY COMPILE_DEFINITIONS UNICODE)
 
 SET(TCL_UNIX_SRCS
   unix/tclAppInit.c
@@ -1323,7 +1323,8 @@ install(TARGETS tclstub
 
 
 IF(WIN32)
-  SET(TCLSH_SRCS win/tclAppInit.c win/tclsh.rc)
+  set(TCLSH_SRCS win/tclAppInit.c win/tclsh.rc)
+  set_property(SOURCE win/tclAppInit.c APPEND PROPERTY COMPILE_DEFINITIONS UNICODE)
 ELSE(WIN32)
   SET(TCLSH_SRCS unix/tclAppInit.c)
 ENDIF(WIN32)
