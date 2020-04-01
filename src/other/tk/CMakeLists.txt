@@ -625,7 +625,10 @@ SET(TK_WIN_SRCS
   win/ttkWinMonitor.c
   win/ttkWinTheme.c
   win/ttkWinXPTheme.c
+  win/tkMain.c
   )
+
+set_property(SOURCE win/tkMain.c APPEND PROPERTY COMPILE_DEFINITIONS TK_ASCII_MAIN)
 
 SET(TK_SRCS ${TK_GENERIC_SRCS} ${TTK_SRCS})
 
