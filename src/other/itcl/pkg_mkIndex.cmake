@@ -33,8 +33,17 @@
 #=============================================================================
 
 get_filename_component(TFD "${TF_DIR}" REALPATH)
-file(WRITE "${WORKING_PKGFILE}" "package ifneeded ${pkgname} ${pkgversion} [list load [file join $dir \"${TFD}\" ${TF_NAME}] ${pkgname}]")
-file(WRITE "${INSTALL_PKGFILE}" "package ifneeded ${pkgname} ${pkgversion} [list load [file join $dir .. .. \"${INST_DIR}\" ${TF_NAME}] ${pkgname}]")
+
+file(WRITE "${WORKING_PKGFILE}" "if {![package vsatisfies [package provide Tcl] 8.6]} return\n")
+file(APPEND "${WORKING_PKGFILE}" "package ifneeded itcl ${pkgversion} [list load [file join $dir \"${TFD}\" ${TF_NAME}] Itcl]\n")
+file(APPEND "${WORKING_PKGFILE}" "package ifneeded Itcl ${pkgversion} [list load [file join $dir \"${TFD}\" ${TF_NAME}] Itcl]\n")
+
+
+file(WRITE "${INSTALL_PKGFILE}" "if {![package vsatisfies [package provide Tcl] 8.6]} return\n")
+file(APPEND "${INSTALL_PKGFILE}" "package ifneeded itcl ${pkgversion} [list load [file join $dir .. .. \"${INST_DIR}\" ${TF_NAME}] Itcl]\n")
+file(APPEND "${INSTALL_PKGFILE}" "package ifneeded Itcl ${pkgversion} [list load [file join $dir .. .. \"${INST_DIR}\" ${TF_NAME}] Itcl]\n")
+
+
 
 # Local Variables:
 # tab-width: 8
