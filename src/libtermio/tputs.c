@@ -33,11 +33,7 @@
  * SUCH DAMAGE.
  */
 
-#ifndef	lint
-#ifdef	DOSCCS
-static char *sccsid = "@(#)tputs.c	1.4 (gritter) 11/23/04";
-#endif
-#endif
+#include "common.h"
 
 /* from tputs.c	5.1 (Berkeley) 6/5/85 */
 
