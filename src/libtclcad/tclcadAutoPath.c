@@ -236,55 +236,6 @@ tclcad_auto_path(Tcl_Interp *interp)
     /* are we running uninstalled? */
     srcpath = path_to_src(which_argv);
 
-    /* add search paths for source invocation */
-    if (srcpath) {
-	join_path(&auto_path, srcpath, "src", "other", "tcl", "unix", NULL);
-	join_path(&auto_path, srcpath, "src", "other", "tcl", "library", NULL);
-	join_path(&auto_path, srcpath, "src", "other", "tk", "unix", NULL);
-	join_path(&auto_path, srcpath, "src", "other", "tk", "library", NULL);
-	join_path(&auto_path, srcpath, "src", "other", "incrTcl", NULL);
-	join_path(&auto_path, srcpath, "src", "other", "incrTcl", "itcl", "library", NULL);
-	join_path(&auto_path, srcpath, "src", "other", "incrTcl", "itk", "library", NULL);
-	join_path(&auto_path, srcpath, "src", "other", "iwidgets", NULL);
-	join_path(&auto_path, srcpath, "src", "tclscripts", NULL);
-	join_path(&auto_path, srcpath, "src", "tclscripts", "lib", NULL);
-	join_path(&auto_path, srcpath, "src", "tclscripts", "util", NULL);
-	join_path(&auto_path, srcpath, "src", "tclscripts", "mged", NULL);
-	join_path(&auto_path, srcpath, "src", "tclscripts", "geometree", NULL);
-	join_path(&auto_path, srcpath, "src", "tclscripts", "graph", NULL);
-	join_path(&auto_path, srcpath, "src", "tclscripts", "rtwizard", NULL);
-	join_path(&auto_path, srcpath, "src", "tclscripts", "archer", NULL);
-	join_path(&auto_path, srcpath, "src", "tclscripts", "boteditor", NULL);
-	join_path(&auto_path, srcpath, "src", "tclscripts", "checker", NULL);
-	join_path(&auto_path, srcpath, "src", "tclscripts", "lod", NULL);
-    }
-
-    /* add search paths for dist invocation */
-    if (srcpath) {
-	snprintf(buffer, MAX_BUF, "%s%c..%csrc%cother%ctcl%cunix",
-		 srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	if (bu_file_exists(buffer, NULL)) {
-	    join_path(&auto_path, srcpath, "..", "src", "other", "tcl", "unix", NULL);
-	    join_path(&auto_path, srcpath, "..", "src", "other", "tcl", "library", NULL);
-	    join_path(&auto_path, srcpath, "..", "src", "other", "tk", "unix", NULL);
-	    join_path(&auto_path, srcpath, "..", "src", "other", "tk", "library", NULL);
-	    join_path(&auto_path, srcpath, "..", "src", "other", "incrTcl", NULL);
-	    join_path(&auto_path, srcpath, "..", "src", "other", "incrTcl", "itcl", "library", NULL);
-	    join_path(&auto_path, srcpath, "..", "src", "other", "incrTcl", "itk", "library", NULL);
-	    join_path(&auto_path, srcpath, "..", "src", "other", "iwidgets", NULL);
-	    join_path(&auto_path, srcpath, "..", "src", "tclscripts", NULL);
-	    join_path(&auto_path, srcpath, "..", "src", "tclscripts", "lib", NULL);
-	    join_path(&auto_path, srcpath, "..", "src", "tclscripts", "util", NULL);
-	    join_path(&auto_path, srcpath, "..", "src", "tclscripts", "mged", NULL);
-	    join_path(&auto_path, srcpath, "..", "src", "tclscripts", "geometree", NULL);
-	    join_path(&auto_path, srcpath, "..", "src", "tclscripts", "graph", NULL);
-	    join_path(&auto_path, srcpath, "..", "src", "tclscripts", "rtwizard", NULL);
-	    join_path(&auto_path, srcpath, "..", "src", "tclscripts", "archer", NULL);
-	    join_path(&auto_path, srcpath, "..", "src", "tclscripts", "boteditor", NULL);
-	    join_path(&auto_path, srcpath, "..", "src", "tclscripts", "checker", NULL);
-	}
-    }
-
     /* be sure to check installation paths even if we aren't running from there */
     if (!from_installed) {
 	join_path(&auto_path, root, "lib", NULL);
