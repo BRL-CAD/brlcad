@@ -500,6 +500,19 @@ mark_as_advanced(HAVE_TK)
 # issue with Archer:
 #
 # http://core.tcl.tk/itcl/tktview/61952ca33e9e58df9e0519a0b4583a144e8ec77b
+#
+# We're set up below to use either v3 or v4, depending on which of the below
+# variables are uncommented
+set(ITCL_DIR itcl3)
+set(ITCL_VER "3.4")
+#set(ITCL_DIR itcl)
+#set(ITCL_VER "4.2.0")
+
+set(ITK_DIR itk3)
+set(ITK_VER "3.4")
+#set(ITK_DIR itk)
+#set(ITK_VER "4.1.0")
+
 set(itcl_ALIASES ENABLE_ITCL)
 set(itcl_DESCRIPTION "
 Option for enabling and disabling compilation of the IncrTcl package
@@ -509,13 +522,12 @@ testing first for a system version if BRLCAD_TCL is set to AUTO or
 SYSTEM.  If BRLCAD_ITCL is set to BUNDLED, local copy is built even if
 a system version is present.
 ")
-THIRD_PARTY_TCL_PACKAGE(Itcl itcl "${TCL_TCLSH}" "tcl" "BRLCAD_LEVEL2" "" itcl_ALIASES itcl_DESCRIPTION)
+THIRD_PARTY_TCL_PACKAGE(Itcl ${ITCL_DIR} "${TCL_TCLSH}" "tcl" "BRLCAD_LEVEL2" "" itcl_ALIASES itcl_DESCRIPTION)
 if(BRLCAD_ITCL_BUILD)
   set(ITCL_LIBRARY itcl CACHE STRING "ITCL_LIBRARY" FORCE)
   set(ITCL_STUB_LIBRARY itclstub CACHE STRING "ITCL_STUB_LIBRARY" FORCE)
-  set(ITCL_VERSION "4.0" CACHE STRING "ITCL_VERSION" FORCE)
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/incrTcl/itcl/pkgIndex.tcl")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/itcl4.0")
+  set(ITCL_VERSION "${ITCL_VER}" CACHE STRING "ITCL_VERSION" FORCE)
+  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/itcl${ITCL_VER}")
   SetTargetFolder(itcl "Third Party Libraries")
   SetTargetFolder(itclstub "Third Party Libraries")
   SetTargetFolder(itcl_pkgIndex "Third Party Libraries")
@@ -540,16 +552,15 @@ AUTO or SYSTEM.  If BRLCAD_ITK is set to BUNDLED, local copy is built
 even if a system version is present.  This package will be disabled if
 BRLCAD_ENABLE_TK is OFF.
 ")
-THIRD_PARTY_TCL_PACKAGE(Itk itk "${TK_WISH}" "tcl;itcl;tk" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" itk_ALIASES itk_DESCRIPTION)
+THIRD_PARTY_TCL_PACKAGE(Itk ${ITK_DIR} "${TK_WISH}" "tcl;itcl;tk" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" itk_ALIASES itk_DESCRIPTION)
 if(BRLCAD_ITK_BUILD)
   SetTargetFolder(itk "Third Party Libraries")
   SetTargetFolder(itkstub "Third Party Libraries")
   SetTargetFolder(itk_pkgIndex "Third Party Libraries")
   # does not handle C library settings.
   set(ITK_LIBRARY itk CACHE STRING "ITK_LIBRARY" FORCE)
-  set(ITK_VERSION "4.0" CACHE STRING "ITK_VERSION" FORCE)
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/incrTcl/itk/pkgIndex.tcl")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/itk4.0")
+  set(ITK_VERSION "3.4" CACHE STRING "ITK_VERSION" FORCE)
+  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/itk${ITK_VER}")
 else(BRLCAD_ITK_BUILD)
   # We have Itcl/Itk packages AND Itcl/Itk libraries - we're good.
   set(ITK_VERSION "${ITCL_VERSION}" CACHE STRING "ITK_VERSION" FORCE)
@@ -571,11 +582,12 @@ SYSTEM.  If BRLCAD_IWIDGETS is set to BUNDLED, local copy is built even if
 a system version is present.  This package will be disabled if
 BRLCAD_ENABLE_TK is OFF.
 ")
+set(IWIDGETS_VER "4.1.1")
 THIRD_PARTY_TCL_PACKAGE(Iwidgets iwidgets "${TK_WISH}" "tcl;tk;itcl;itk" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" iwidgets_ALIASES iwidgets_DESCRIPTION)
 if(BRLCAD_IWIDGETS_BUILD)
-  set(IWIDGETS_VERSION "4.0.1" CACHE STRING "IWIDGETS_VERSION" FORCE)
+  set(IWIDGETS_VERSION "${IWIDGETS_VER}" CACHE STRING "IWIDGETS_VERSION" FORCE)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/iwidgets/pkgIndex.tcl")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/Iwidgets4.0.1")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/Iwidgets${IWIDGETS_VER}")
 ELSE(BRLCAD_IWIDGETS_BUILD)
   set(IWIDGETS_VERSION "${IWIDGETS_PACKAGE_VERSION}" CACHE STRING "IWIDGETS_VERSION" FORCE)
 endif(BRLCAD_IWIDGETS_BUILD)
