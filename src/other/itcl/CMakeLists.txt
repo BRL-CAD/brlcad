@@ -204,6 +204,9 @@ install(TARGETS itcl
   RUNTIME DESTINATION ${BIN_DIR}
   LIBRARY DESTINATION ${LIB_DIR}
   ARCHIVE DESTINATION ${LIB_DIR})
+if (TARGET tcl)
+  add_dependencies(itcl tcl)
+endif (TARGET tcl)
 
 add_library(itclstub STATIC ${ITCL_STUB_SRCS})
 install(TARGETS itclstub
@@ -212,8 +215,16 @@ install(TARGETS itclstub
   ARCHIVE DESTINATION ${LIB_DIR})
 set_property(TARGET itclstub APPEND PROPERTY COMPILE_DEFINITIONS USE_TCL_STUBS)
 
-include(TCL_PKGINDEX.cmake)
-TCL_PKGINDEX(itcl Itcl "${ITCL_VERSION}")
+# Create pkgIndex.tcl files
+include(ITCL_PKGINDEX.cmake)
+ITCL_PKGINDEX(itcl itcl ${ITCL_VERSION})
+if (TARGET tclsh)
+  add_dependencies(tclsh itcl_pkgIndex)
+endif (TARGET tclsh)
+if (TARGET wish)
+  add_dependencies(wish itcl_pkgIndex)
+endif (TARGET wish)
+
 
 # Put library files where they need to go, and set up install rules
 set(LIBRARY_FILES itcl.tcl)

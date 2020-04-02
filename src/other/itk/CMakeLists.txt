@@ -70,7 +70,7 @@ if(NOT ITCL_LIBRARY)
   find_library(ITCL_LIBRARY itcl NAMES itcl4 itcl4.2.0 HINTS ${TCLSH_ROOT_DIR}/lib)
 endif(NOT ITCL_LIBRARY)
 if(NOT ITCL_STUB_LIBRARY)
-  find_library(ITCL_STUB_LIBRARY itclstub NAMES itclstub4 itclstub4.2.0 HINTS ${TCLSH_ROOT_DIR}/lib/itcl4.2.0)
+  find_library(ITCL_STUB_LIBRARY itclstub NAMES itclstub4 itclstub4.2.0 HINTS ${TCLSH_ROOT_DIR}/lib/Itcl4.2.0)
 endif(NOT ITCL_STUB_LIBRARY)
 
 # version numbers
@@ -208,6 +208,14 @@ install(TARGETS itk
   RUNTIME DESTINATION ${BIN_DIR}
   LIBRARY DESTINATION ${LIB_DIR}
   ARCHIVE DESTINATION ${LIB_DIR})
+if (TARGET tk)
+  add_dependencies(itk tk)
+endif (TARGET tk)
+if (TARGET itcl)
+  add_dependencies(itk itcl)
+  add_dependencies(itk itcl_pkgIndex)
+endif (TARGET itcl)
+
 
 add_library(itkstub STATIC ${ITK_STUB_SRCS})
 target_link_libraries(itkstub ${ITCL_STUB_LIBRARY} ${TCL_STUB_LIBRARY})
@@ -219,8 +227,11 @@ install(TARGETS itkstub
   LIBRARY DESTINATION ${LIB_DIR}
   ARCHIVE DESTINATION ${LIB_DIR})
 
-include(TCL_PKGINDEX.cmake)
-TCL_PKGINDEX(itk Itk "${ITK_VERSION}")
+include(ITK_PKGINDEX.cmake)
+ITK_PKGINDEX(itk itk "${ITK_VERSION}")
+if (TARGET wish)
+  add_dependencies(wish itk_pkgIndex)
+endif (TARGET wish)
 
 set(ITK_LIBRARY_FILES
   library/Archetype.itk

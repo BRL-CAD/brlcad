@@ -32,31 +32,19 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
 
-#============================================================
-# TCL_PKGINDEX
-#============================================================
-function(ITCL_PKGINDEX target pkgname pkgversion)
+get_filename_component(TFD "${TF_DIR}" REALPATH)
 
-  set(INST_DIR "${LIB_DIR}")
-  if(MSVC)
-    set(INST_DIR "${BIN_DIR}")
-  endif(MSVC)
 
-  set(WORKING_PKGFILE ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${LIB_DIR}/${pkgname}${pkgversion}/pkgIndex.tcl)
-  set(INSTALL_PKGFILE ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl)
+file(WRITE "${WORKING_PKGFILE}" "if {![package vsatisfies [package provide Tcl] 8.6]} return\n")
+file(APPEND "${WORKING_PKGFILE}" "if {[string length [package provide Itcl]] && ![package vsatisfies [package provide Itcl] 4.1]} return\n")
+file(APPEND "${WORKING_PKGFILE}" "package ifneeded itk ${pkgversion} [list load [file join $dir \"${TFD}\" ${TF_NAME}] Itk]\n")
+file(APPEND "${WORKING_PKGFILE}" "package ifneeded Itk ${pkgversion} [list load [file join $dir \"${TFD}\" ${TF_NAME}] Itk]\n")
 
-  add_custom_command(OUTPUT ${WORKING_PKGFILE} ${INSTALL_PKGFILE}
-    COMMAND ${CMAKE_COMMAND} -DWORKING_PKGFILE="${WORKING_PKGFILE}" -DINSTALL_PKGFILE="${INSTALL_PKGFILE}" -DTF_NAME="$<TARGET_FILE_NAME:${target}>" -DTF_DIR="$<TARGET_FILE_DIR:${target}>" -Dpkgname="${pkgname}" -Dpkgversion="${pkgversion}" -DINST_DIR="${INST_DIR}" -P ${CMAKE_CURRENT_SOURCE_DIR}/pkg_mkIndex.cmake
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/pkg_mkIndex.cmake
-    )
-  add_custom_target(${pkgname}_pkgIndex ALL DEPENDS ${WORKING_PKGFILE} ${INSTALL_PKGFILE})
 
-  install(FILES ${INSTALL_PKGFILE} DESTINATION ${LIB_DIR}/${pkgname}${pkgversion})
-
-  DISTCLEAN("${WORKING_PKGFILE}")
-  DISTCLEAN("${INSTALL_PKGFILE}")
-
-endfunction(ITCL_PKGINDEX)
+file(WRITE "${INSTALL_PKGFILE}" "if {![package vsatisfies [package provide Tcl] 8.6]} return\n")
+file(APPEND "${INSTALL_PKGFILE}" "if {[string length [package provide Itcl]] && ![package vsatisfies [package provide Itcl] 4.1]} return\n")
+file(APPEND "${INSTALL_PKGFILE}" "package ifneeded itk ${pkgversion} [list load [file join $dir .. .. \"${INST_DIR}\" ${TF_NAME}] Itk]\n")
+file(APPEND "${INSTALL_PKGFILE}" "package ifneeded Itk ${pkgversion} [list load [file join $dir .. .. \"${INST_DIR}\" ${TF_NAME}] Itk]\n")
 
 # Local Variables:
 # tab-width: 8
