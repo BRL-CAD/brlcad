@@ -28,14 +28,14 @@
 #		bottom of the dialog box.
 
 proc ::tk_dialog {w title text bitmap default args} {
-    global tcl_platform
     variable ::tk::Priv
 
     # Check that $default was properly given
     if {[string is integer -strict $default]} {
 	if {$default >= [llength $args]} {
-	    return -code error "default button index greater than number of\
-		    buttons specified for tk_dialog"
+	    return -code error -errorcode {TK DIALOG BAD_DEFAULT} \
+		"default button index greater than number of buttons\
+		specified for tk_dialog"
 	}
     } elseif {"" eq $default} {
 	set default -1
@@ -44,11 +44,6 @@ proc ::tk_dialog {w title text bitmap default args} {
     }
 
     set windowingsystem [tk windowingsystem]
-    if {$windowingsystem eq "aqua"} {
-	option add *Dialog*background systemDialogBackgroundActive widgetDefault
-	option add *Dialog*Button.highlightBackground \
-		systemDialogBackgroundActive widgetDefault
-    }
 
     # 1. Create the top-level window and divide it into top
     # and bottom parts.
@@ -136,7 +131,7 @@ proc ::tk_dialog {w title text bitmap default args} {
 	bind $w <Return> [list $w.button$default invoke]
     }
     bind $w <<PrevWindow>> [list bind $w <Return> {[tk_focusPrev %W] invoke}]
-    bind $w <Tab> [list bind $w <Return> {[tk_focusNext %W] invoke}]
+    bind $w <<NextWindow>> [list bind $w <Return> {[tk_focusNext %W] invoke}]
 
     # 5. Create a <Destroy> binding for the window that sets the
     # button variable to -1;  this is needed in case something happens
@@ -148,7 +143,7 @@ proc ::tk_dialog {w title text bitmap default args} {
     # so we know how big it wants to be, then center the window in the
     # display (Motif style) and de-iconify it.
 
-    ::tk::PlaceWindow $w 
+    ::tk::PlaceWindow $w
     tkwait visibility $w
 
     # 7. Set a grab and claim the focus too.

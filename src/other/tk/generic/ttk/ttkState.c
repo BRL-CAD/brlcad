@@ -98,8 +98,9 @@ static int StateSpecSetFromAny(Tcl_Interp *interp, Tcl_Obj *objPtr)
 
     	if (stateNames[j] == 0) {
 	    if (interp) {
-		Tcl_ResetResult(interp);
-		Tcl_AppendResult(interp, "Invalid state name ", stateName,NULL);
+		Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+			"Invalid state name %s", stateName));
+		Tcl_SetErrorCode(interp, "TTK", "VALUE", "STATE", NULL);
 	    }
 	    return TCL_ERROR;
 	}
@@ -129,7 +130,8 @@ static void StateSpecUpdateString(Tcl_Obj *objPtr)
     unsigned int offbits = objPtr->internalRep.longValue & 0x0000FFFF;
     unsigned int mask = onbits | offbits;
     Tcl_DString result;
-    int i, len;
+    int i;
+    int len;
 
     Tcl_DStringInit(&result);
 
@@ -145,14 +147,14 @@ static void StateSpecUpdateString(Tcl_Obj *objPtr)
     len = Tcl_DStringLength(&result);
     if (len) {
 	/* 'len' includes extra trailing ' ' */
-	objPtr->bytes = Tcl_Alloc((unsigned)len);
+	objPtr->bytes = ckalloc(len);
 	objPtr->length = len-1;
-	strncpy(objPtr->bytes, Tcl_DStringValue(&result), (size_t)len-1);
+	strncpy(objPtr->bytes, Tcl_DStringValue(&result), len-1);
 	objPtr->bytes[len-1] = '\0';
     } else {
 	/* empty string */
 	objPtr->length = 0;
-	objPtr->bytes = Tcl_Alloc(1);
+	objPtr->bytes = ckalloc(1);
 	*objPtr->bytes = '\0';
     }
 
@@ -216,8 +218,8 @@ Tcl_Obj *Ttk_StateMapLookup(
 	    return specs[j+1];
     }
     if (interp) {
-	Tcl_ResetResult(interp);
-	Tcl_AppendResult(interp, "No match in state map", NULL);
+	Tcl_SetObjResult(interp, Tcl_NewStringObj("No match in state map", -1));
+	Tcl_SetErrorCode(interp, "TTK", "STATE", "UNMATCHED", NULL);
     }
     return NULL;
 }
@@ -240,10 +242,11 @@ Ttk_StateMap Ttk_GetStateMapFromObj(
 	return NULL;
 
     if (nSpecs % 2 != 0) {
-	if (interp)
-	    Tcl_SetResult(interp,
-		    "State map must have an even number of elements",
-		    TCL_STATIC);
+	if (interp) {
+	    Tcl_SetObjResult(interp, Tcl_NewStringObj(
+		    "State map must have an even number of elements", -1));
+	    Tcl_SetErrorCode(interp, "TTK", "VALUE", "STATEMAP", NULL);
+	}
 	return 0;
     }
 

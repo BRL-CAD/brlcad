@@ -13,6 +13,7 @@
 
 #include "tkInt.h"
 #include "tkText.h"
+#include "tk3d.h"
 
 /*
  * Macro that determines the size of a mark segment:
@@ -25,6 +26,7 @@
  * Forward references for functions defined in this file:
  */
 
+static Tcl_Obj *	GetMarkName(TkText *textPtr, TkTextSegment *segPtr);
 static void		InsertUndisplayProc(TkText *textPtr,
 			    TkTextDispChunk *chunkPtr);
 static int		MarkDeleteProc(TkTextSegment *segPtr,
@@ -38,9 +40,9 @@ static int		MarkLayoutProc(TkText *textPtr, TkTextIndex *indexPtr,
 			    int maxChars, int noCharsYet, TkWrapMode wrapMode,
 			    TkTextDispChunk *chunkPtr);
 static int		MarkFindNext(Tcl_Interp *interp,
-			    TkText *textPtr, const char *markName);
+			    TkText *textPtr, Tcl_Obj *markName);
 static int		MarkFindPrev(Tcl_Interp *interp,
-			    TkText *textPtr, const char *markName);
+			    TkText *textPtr, Tcl_Obj *markName);
 
 
 /*
@@ -104,7 +106,7 @@ TkTextMarkCmd(
     TkTextIndex index;
     const Tk_SegType *newTypePtr;
     int optionIndex;
-    static const char *markOptionStrings[] = {
+    static const char *const markOptionStrings[] = {
 	"gravity", "names", "next", "previous", "set", "unset", NULL
     };
     enum markOptions {
@@ -113,11 +115,11 @@ TkTextMarkCmd(
     };
 
     if (objc < 3) {
-	Tcl_WrongNumArgs(interp, 2, objv, "option ?arg arg ...?");
+	Tcl_WrongNumArgs(interp, 2, objv, "option ?arg ...?");
 	return TCL_ERROR;
     }
-    if (Tcl_GetIndexFromObj(interp, objv[2], markOptionStrings, "mark option",
-	    0, &optionIndex) != TCL_OK) {
+    if (Tcl_GetIndexFromObjStruct(interp, objv[2], markOptionStrings,
+	    sizeof(char *), "mark option", 0, &optionIndex) != TCL_OK) {
 	return TCL_ERROR;
     }
 
@@ -125,13 +127,13 @@ TkTextMarkCmd(
     case MARK_GRAVITY: {
 	char c;
 	int length;
-	char *str;
+	const char *str;
 
 	if (objc < 4 || objc > 5) {
 	    Tcl_WrongNumArgs(interp, 3, objv, "markName ?gravity?");
 	    return TCL_ERROR;
 	}
-	str = Tcl_GetStringFromObj(objv[3],&length);
+	str = Tcl_GetStringFromObj(objv[3], &length);
 	if (length == 6 && !strcmp(str, "insert")) {
 	    markPtr = textPtr->insertMarkPtr;
 	} else if (length == 7 && !strcmp(str, "current")) {
@@ -139,30 +141,36 @@ TkTextMarkCmd(
 	} else {
 	    hPtr = Tcl_FindHashEntry(&textPtr->sharedTextPtr->markTable, str);
 	    if (hPtr == NULL) {
-		Tcl_AppendResult(interp, "there is no mark named \"",
-			Tcl_GetString(objv[3]), "\"", NULL);
+		Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+			"there is no mark named \"%s\"", str));
+		Tcl_SetErrorCode(interp, "TK", "LOOKUP", "TEXT_MARK", str,
+			NULL);
 		return TCL_ERROR;
 	    }
-	    markPtr = (TkTextSegment *) Tcl_GetHashValue(hPtr);
+	    markPtr = Tcl_GetHashValue(hPtr);
 	}
 	if (objc == 4) {
+	    const char *typeStr;
+
 	    if (markPtr->typePtr == &tkTextRightMarkType) {
-		Tcl_SetResult(interp, "right", TCL_STATIC);
+		typeStr = "right";
 	    } else {
-		Tcl_SetResult(interp, "left", TCL_STATIC);
+		typeStr = "left";
 	    }
+	    Tcl_SetObjResult(interp, Tcl_NewStringObj(typeStr, -1));
 	    return TCL_OK;
 	}
 	str = Tcl_GetStringFromObj(objv[4],&length);
 	c = str[0];
-	if ((c == 'l') && (strncmp(str, "left", (unsigned)length) == 0)) {
+	if ((c == 'l') && (strncmp(str, "left", (unsigned) length) == 0)) {
 	    newTypePtr = &tkTextLeftMarkType;
 	} else if ((c == 'r') &&
-		(strncmp(str, "right", (unsigned)length) == 0)) {
+		(strncmp(str, "right", (unsigned) length) == 0)) {
 	    newTypePtr = &tkTextRightMarkType;
 	} else {
-	    Tcl_AppendResult(interp, "bad mark gravity \"", str,
-		    "\": must be left or right", NULL);
+	    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		    "bad mark gravity \"%s\": must be left or right", str));
+	    Tcl_SetErrorCode(interp, "TK", "VALUE", "MARK_GRAVITY", NULL);
 	    return TCL_ERROR;
 	}
 	TkTextMarkSegToIndex(textPtr, markPtr, &index);
@@ -171,31 +179,39 @@ TkTextMarkCmd(
 	TkBTreeLinkSegment(markPtr, &index);
 	break;
     }
-    case MARK_NAMES:
+    case MARK_NAMES: {
+	Tcl_Obj *resultObj;
+
 	if (objc != 3) {
 	    Tcl_WrongNumArgs(interp, 3, objv, NULL);
 	    return TCL_ERROR;
 	}
-	Tcl_AppendElement(interp, "insert");
-	Tcl_AppendElement(interp, "current");
+	resultObj = Tcl_NewObj();
+	Tcl_ListObjAppendElement(NULL, resultObj, Tcl_NewStringObj(
+		"insert", -1));
+	Tcl_ListObjAppendElement(NULL, resultObj, Tcl_NewStringObj(
+		"current", -1));
 	for (hPtr = Tcl_FirstHashEntry(&textPtr->sharedTextPtr->markTable,
 		&search); hPtr != NULL; hPtr = Tcl_NextHashEntry(&search)) {
-	    Tcl_AppendElement(interp,
-		    Tcl_GetHashKey(&textPtr->sharedTextPtr->markTable, hPtr));
+	    Tcl_ListObjAppendElement(NULL, resultObj, Tcl_NewStringObj(
+		    Tcl_GetHashKey(&textPtr->sharedTextPtr->markTable, hPtr),
+		    -1));
 	}
+	Tcl_SetObjResult(interp, resultObj);
 	break;
+    }
     case MARK_NEXT:
 	if (objc != 4) {
 	    Tcl_WrongNumArgs(interp, 3, objv, "index");
 	    return TCL_ERROR;
 	}
-	return MarkFindNext(interp, textPtr, Tcl_GetString(objv[3]));
+	return MarkFindNext(interp, textPtr, objv[3]);
     case MARK_PREVIOUS:
 	if (objc != 4) {
 	    Tcl_WrongNumArgs(interp, 3, objv, "index");
 	    return TCL_ERROR;
 	}
-	return MarkFindPrev(interp, textPtr, Tcl_GetString(objv[3]));
+	return MarkFindPrev(interp, textPtr, objv[3]);
     case MARK_SET:
 	if (objc != 5) {
 	    Tcl_WrongNumArgs(interp, 3, objv, "markName index");
@@ -213,7 +229,7 @@ TkTextMarkCmd(
 	    hPtr = Tcl_FindHashEntry(&textPtr->sharedTextPtr->markTable,
 		    Tcl_GetString(objv[i]));
 	    if (hPtr != NULL) {
-		markPtr = (TkTextSegment *) Tcl_GetHashValue(hPtr);
+		markPtr = Tcl_GetHashValue(hPtr);
 
 		/*
 		 * Special case not needed with peer widgets.
@@ -225,7 +241,7 @@ TkTextMarkCmd(
 		}
 		TkBTreeUnlinkSegment(markPtr, markPtr->body.mark.linePtr);
 		Tcl_DeleteHashEntry(hPtr);
-		ckfree((char *) markPtr);
+		ckfree(markPtr);
 	    }
 	}
 	break;
@@ -274,7 +290,7 @@ TkTextSetMark(
 	widgetSpecific = 0;
 	hPtr = Tcl_CreateHashEntry(&textPtr->sharedTextPtr->markTable, name,
 		&isNew);
-	markPtr = (TkTextSegment *) Tcl_GetHashValue(hPtr);
+	markPtr = Tcl_GetHashValue(hPtr);
     }
     if (!isNew) {
 	/*
@@ -288,7 +304,7 @@ TkTextSetMark(
             int nblines;
 
 	    TkTextMarkSegToIndex(textPtr, textPtr->insertMarkPtr, &index);
-	    TkTextIndexForwChars(NULL,&index, 1, &index2, COUNT_INDICES);
+	    TkTextIndexForwChars(NULL, &index, 1, &index2, COUNT_INDICES);
 
 	    /*
 	     * While we wish to redisplay, no heights have changed, so no need
@@ -314,7 +330,7 @@ TkTextSetMark(
 	}
 	TkBTreeUnlinkSegment(markPtr, markPtr->body.mark.linePtr);
     } else {
-	markPtr = (TkTextSegment *) ckalloc(MSEG_SIZE);
+	markPtr = ckalloc(MSEG_SIZE);
 	markPtr->typePtr = &tkTextRightMarkType;
 	markPtr->size = 0;
 	markPtr->body.mark.textPtr = textPtr;
@@ -338,7 +354,7 @@ TkTextSetMark(
     if (markPtr == textPtr->insertMarkPtr) {
 	TkTextIndex index2;
 
-	TkTextIndexForwChars(NULL,indexPtr, 1, &index2, COUNT_INDICES);
+	TkTextIndexForwChars(NULL, indexPtr, 1, &index2, COUNT_INDICES);
 
 	/*
 	 * While we wish to redisplay, no heights have changed, so no need to
@@ -430,12 +446,13 @@ TkTextMarkNameToIndex(
     } else if (!strcmp(name, "current")) {
 	segPtr = textPtr->currentMarkPtr;
     } else {
-	Tcl_HashEntry *hPtr;
-	hPtr = Tcl_FindHashEntry(&textPtr->sharedTextPtr->markTable, name);
+	Tcl_HashEntry *hPtr =
+		Tcl_FindHashEntry(&textPtr->sharedTextPtr->markTable, name);
+
 	if (hPtr == NULL) {
 	    return TCL_ERROR;
 	}
-	segPtr = (TkTextSegment *) Tcl_GetHashValue(hPtr);
+	segPtr = Tcl_GetHashValue(hPtr);
     }
     TkTextMarkSegToIndex(textPtr, segPtr, indexPtr);
 
@@ -578,7 +595,7 @@ MarkLayoutProc(
      */
 
     chunkPtr->breakIndex = -1;
-    chunkPtr->clientData = (ClientData) textPtr;
+    chunkPtr->clientData = textPtr;
     return 1;
 }
 
@@ -619,13 +636,13 @@ TkTextInsertDisplayProc(
      * We have no need for the clientData.
      */
 
-    /* TkText *textPtr = (TkText *) chunkPtr->clientData; */
+    /* TkText *textPtr = chunkPtr->clientData; */
     TkTextIndex index;
     int halfWidth = textPtr->insertWidth/2;
     int rightSideWidth;
     int ix = 0, iy = 0, iw = 0, ih = 0, charWidth = 0;
 
-    if(textPtr->insertCursorType) {
+    if (textPtr->insertCursorType) {
 	TkTextMarkSegToIndex(textPtr, textPtr->insertMarkPtr, &index);
 	TkTextIndexBbox(textPtr, &index, &ix, &iy, &iw, &ih, &charWidth);
 	rightSideWidth = charWidth + halfWidth;
@@ -653,14 +670,37 @@ TkTextInsertDisplayProc(
      * the cursor.
      */
 
-    if (textPtr->flags & INSERT_ON) {
+    if (textPtr->flags & GOT_FOCUS) {
+	if (textPtr->flags & INSERT_ON) {
+	    Tk_Fill3DRectangle(textPtr->tkwin, dst, textPtr->insertBorder,
+		    x - halfWidth, y, charWidth + textPtr->insertWidth,
+		    height, textPtr->insertBorderWidth, TK_RELIEF_RAISED);
+	} else if (textPtr->selBorder == textPtr->insertBorder) {
+	    Tk_Fill3DRectangle(textPtr->tkwin, dst, textPtr->border,
+		    x - halfWidth, y, charWidth + textPtr->insertWidth,
+		    height, 0, TK_RELIEF_FLAT);
+	}
+    } else if (textPtr->insertUnfocussed == TK_TEXT_INSERT_NOFOCUS_HOLLOW) {
+	if (textPtr->insertBorderWidth < 1) {
+	    /*
+	     * Hack to work around the fact that a "solid" border always
+	     * paints in black.
+	     */
+
+	    TkBorder *borderPtr = (TkBorder *) textPtr->insertBorder;
+
+	    XDrawRectangle(Tk_Display(textPtr->tkwin), dst, borderPtr->bgGC,
+		    x - halfWidth, y, charWidth + textPtr->insertWidth - 1,
+		    height - 1);
+	} else {
+	    Tk_Draw3DRectangle(textPtr->tkwin, dst, textPtr->insertBorder,
+		    x - halfWidth, y, charWidth + textPtr->insertWidth,
+		    height, textPtr->insertBorderWidth, TK_RELIEF_RAISED);
+	}
+    } else if (textPtr->insertUnfocussed == TK_TEXT_INSERT_NOFOCUS_SOLID) {
 	Tk_Fill3DRectangle(textPtr->tkwin, dst, textPtr->insertBorder,
 		x - halfWidth, y, charWidth + textPtr->insertWidth, height,
 		textPtr->insertBorderWidth, TK_RELIEF_RAISED);
-    } else if (textPtr->selBorder == textPtr->insertBorder) {
-	Tk_Fill3DRectangle(textPtr->tkwin, dst, textPtr->border,
-		x - halfWidth, y, charWidth + textPtr->insertWidth, height,
-		0, TK_RELIEF_FLAT);
     }
 }
 
@@ -765,12 +805,13 @@ static int
 MarkFindNext(
     Tcl_Interp *interp,		/* For error reporting */
     TkText *textPtr,		/* The widget */
-    const char *string)		/* The starting index or mark name */
+    Tcl_Obj *obj)			/* The starting index or mark name */
 {
     TkTextIndex index;
     Tcl_HashEntry *hPtr;
     register TkTextSegment *segPtr;
     int offset;
+    const char *string = Tcl_GetString(obj);
 
     if (!strcmp(string, "insert")) {
 	segPtr = textPtr->insertMarkPtr;
@@ -789,7 +830,7 @@ MarkFindNext(
 	     * position.
 	     */
 
-	    segPtr = (TkTextSegment *) Tcl_GetHashValue(hPtr);
+	    segPtr = Tcl_GetHashValue(hPtr);
 	    TkTextMarkSegToIndex(textPtr, segPtr, &index);
 	    segPtr = segPtr->nextPtr;
 	} else {
@@ -798,7 +839,7 @@ MarkFindNext(
 	     * right at the index.
 	     */
 
-	    if (TkTextGetIndex(interp, textPtr, string, &index) != TCL_OK) {
+	    if (TkTextGetObjIndex(interp, textPtr, obj, &index) != TCL_OK) {
 		return TCL_ERROR;
 	    }
 	    for (offset = 0, segPtr = index.linePtr->segPtr;
@@ -818,28 +859,12 @@ MarkFindNext(
 	for ( ; segPtr != NULL ; segPtr = segPtr->nextPtr) {
 	    if (segPtr->typePtr == &tkTextRightMarkType ||
 		    segPtr->typePtr == &tkTextLeftMarkType) {
-		if (segPtr == textPtr->currentMarkPtr) {
-		    Tcl_SetResult(interp, "current", TCL_STATIC);
-		} else if (segPtr == textPtr->insertMarkPtr) {
-		    Tcl_SetResult(interp, "insert", TCL_STATIC);
-		} else if (segPtr->body.mark.hPtr == NULL) {
-		    /*
-		     * Ignore widget-specific marks for the other widgets.
-                     * This is either an insert or a current mark
-                     * (markPtr->body.mark.hPtr actually receives NULL
-                     * for these marks in TkTextSetMark).
-                     * The insert and current marks for textPtr having
-                     * already been tested above, the current segment is
-                     * an insert or current mark from a peer of textPtr,
-                     * which we don't want to return.
-                     */
-		    continue;
-		} else {
-		    Tcl_SetResult(interp,
-			    Tcl_GetHashKey(&textPtr->sharedTextPtr->markTable,
-			    segPtr->body.mark.hPtr), TCL_STATIC);
+		Tcl_Obj *markName = GetMarkName(textPtr, segPtr);
+
+		if (markName != NULL) {
+		    Tcl_SetObjResult(interp, markName);
+		    return TCL_OK;
 		}
-		return TCL_OK;
 	    }
 	}
 	index.linePtr = TkBTreeNextLine(textPtr, index.linePtr);
@@ -871,12 +896,13 @@ static int
 MarkFindPrev(
     Tcl_Interp *interp,		/* For error reporting */
     TkText *textPtr,		/* The widget */
-    const char *string)		/* The starting index or mark name */
+    Tcl_Obj *obj)			/* The starting index or mark name */
 {
     TkTextIndex index;
     Tcl_HashEntry *hPtr;
     register TkTextSegment *segPtr, *seg2Ptr, *prevPtr;
     int offset;
+    const char *string = Tcl_GetString(obj);
 
     if (!strcmp(string, "insert")) {
 	segPtr = textPtr->insertMarkPtr;
@@ -893,7 +919,7 @@ MarkFindPrev(
 	     * position.
 	     */
 
-	    segPtr = (TkTextSegment *) Tcl_GetHashValue(hPtr);
+	    segPtr = Tcl_GetHashValue(hPtr);
 	    TkTextMarkSegToIndex(textPtr, segPtr, &index);
 	} else {
 	    /*
@@ -901,7 +927,7 @@ MarkFindPrev(
 	     * right at the index.
 	     */
 
-	    if (TkTextGetIndex(interp, textPtr, string, &index) != TCL_OK) {
+	    if (TkTextGetObjIndex(interp, textPtr, obj, &index) != TCL_OK) {
 		return TCL_ERROR;
 	    }
 	    for (offset = 0, segPtr = index.linePtr->segPtr;
@@ -937,28 +963,11 @@ MarkFindPrev(
 	    }
 	}
 	if (prevPtr != NULL) {
-	    if (prevPtr == textPtr->currentMarkPtr) {
-		Tcl_SetResult(interp, "current", TCL_STATIC);
-	        return TCL_OK;
-	    } else if (prevPtr == textPtr->insertMarkPtr) {
-		Tcl_SetResult(interp, "insert", TCL_STATIC);
-	        return TCL_OK;
-	    } else if (prevPtr->body.mark.hPtr == NULL) {
-		/*
-		 * Ignore widget-specific marks for the other widgets.
-                 * This is either an insert or a current mark
-                 * (markPtr->body.mark.hPtr actually receives NULL
-                 * for these marks in TkTextSetMark).
-                 * The insert and current marks for textPtr having
-                 * already been tested above, the current segment is
-                 * an insert or current mark from a peer of textPtr,
-                 * which we don't want to return.
-                 */
-	    } else {
-		Tcl_SetResult(interp,
-			Tcl_GetHashKey(&textPtr->sharedTextPtr->markTable,
-			prevPtr->body.mark.hPtr), TCL_STATIC);
-	        return TCL_OK;
+	    Tcl_Obj *markName = GetMarkName(textPtr, prevPtr);
+
+	    if (markName != NULL) {
+		Tcl_SetObjResult(interp, markName);
+		return TCL_OK;
 	    }
 	}
 	index.linePtr = TkBTreePreviousLine(textPtr, index.linePtr);
@@ -967,6 +976,46 @@ MarkFindPrev(
 	}
 	segPtr = NULL;
     }
+}
+
+/*
+ * ------------------------------------------------------------------------
+ *
+ * GetMarkName --
+ *	Returns the name of the mark that is the given text segment, or NULL
+ *	if it is unnamed (i.e., a widget-specific mark that isn't "current" or
+ *	"insert").
+ *
+ * ------------------------------------------------------------------------
+ */
+
+static Tcl_Obj *
+GetMarkName(
+    TkText *textPtr,
+    TkTextSegment *segPtr)
+{
+    const char *markName;
+
+    if (segPtr == textPtr->currentMarkPtr) {
+	markName = "current";
+    } else if (segPtr == textPtr->insertMarkPtr) {
+	markName = "insert";
+    } else if (segPtr->body.mark.hPtr == NULL) {
+	/*
+	 * Ignore widget-specific marks for the other widgets. This is either
+	 * an insert or a current mark (markPtr->body.mark.hPtr actually
+	 * receives NULL for these marks in TkTextSetMark). The insert and
+	 * current marks for textPtr having already been tested above, the
+	 * current segment is an insert or current mark from a peer of
+	 * textPtr, which we don't want to return.
+	 */
+
+	return NULL;
+    } else {
+	markName = Tcl_GetHashKey(&textPtr->sharedTextPtr->markTable,
+		segPtr->body.mark.hPtr);
+    }
+    return Tcl_NewStringObj(markName, -1);
 }
 
 /*

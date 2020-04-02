@@ -597,7 +597,8 @@ package provide Archer 1.0
 		-hscrollmode dynamic \
 		-vscrollmode dynamic \
 		-labeltext "Installed Plug-ins" \
-		-labelfont [list $SystemWindowFont 10 bold] \
+		#-labelfont [list $SystemWindowFont 10 bold] \
+
 		-labelpos n]
 
     set i 0
@@ -2527,7 +2528,7 @@ package provide Archer 1.0
 }
 
 
-proc Archer::get_html_data {helpfile} {
+proc ::get_html_data {helpfile} {
     global archer_help_data
 
     set help_fd [open $helpfile]
@@ -2629,7 +2630,7 @@ proc title_node_handler {node} {
 	set docstochtml [$docstoclist html]
 	$docstochtml configure -parsemode html
 	set help_fd [lindex [list [file join [bu_brlcad_root "share/doc/html"] toc.html]] 0]
-	get_html_data $help_fd
+	::get_html_data $help_fd
 	$docstochtml parse $archer_help_data
 
 	grid $docstoclist -sticky nsew -in $docstoc
@@ -2657,7 +2658,7 @@ proc title_node_handler {node} {
 	$htmlviewer configure -parsemode html
 	$htmlviewer configure -imagecmd Archer::mkHelpTkImage
 	set help_fd [lindex [list [file join [bu_brlcad_root "share/doc/html"] books BRL-CAD_Tutorial_Series-VolumeI.html]] 0]
-	get_html_data $help_fd
+	::get_html_data $help_fd
 	$htmlviewer parse $archer_help_data
 
 	grid $hv3htmlviewer -sticky nsew -in $sfcs
@@ -8522,7 +8523,7 @@ proc title_node_handler {node} {
     set wplugins {}
     foreach plugin $::Archer::plugins {
 	set majorType [$plugin get -majorType]
-	if {$majorType != $pluginMajorTypeWizard} {
+	if {$majorType != "Wizard"} {
 	    continue
 	}
 
@@ -9861,7 +9862,6 @@ if {$Archer::methodImpls != ""} {
 	eval $impl
     }
 }
-
 
 Archer::initArcher
 

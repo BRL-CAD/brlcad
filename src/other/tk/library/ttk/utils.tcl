@@ -300,17 +300,15 @@ proc ttk::copyBindings {from to} {
 #
 
 proc ttk::bindMouseWheel {bindtag callback} {
-    switch -- [tk windowingsystem] {
-	x11 {
-	    bind $bindtag <ButtonPress-4> "$callback -1"
-	    bind $bindtag <ButtonPress-5> "$callback +1"
-	}
-	win32 {
-	    bind $bindtag <MouseWheel> [append callback { [expr {-(%D/120)}]}]
-	}
-	aqua {
-	    bind $bindtag <MouseWheel> [append callback { [expr {-(%D)}]} ]
-	}
+    if {[tk windowingsystem] eq "x11"} {
+	bind $bindtag <ButtonPress-4> "$callback -1"
+	bind $bindtag <ButtonPress-5> "$callback +1"
+    }
+    if {[tk windowingsystem] eq "aqua"} {
+	bind $bindtag <MouseWheel> [append callback { [expr {-(%D)}]} ]
+	bind $bindtag <Option-MouseWheel> [append callback { [expr {-10 *(%D)}]} ]
+    } else {
+	bind $bindtag <MouseWheel> [append callback { [expr {-(%D / 120)}]}]
     }
 }
 
@@ -322,29 +320,26 @@ proc ttk::bindMouseWheel {bindtag callback} {
 # standard scrollbar protocol.
 #
 
-switch -- [tk windowingsystem] {
-    x11 {
-	bind TtkScrollable <ButtonPress-4>       { %W yview scroll -5 units }
-	bind TtkScrollable <ButtonPress-5>       { %W yview scroll  5 units }
-	bind TtkScrollable <Shift-ButtonPress-4> { %W xview scroll -5 units }
-	bind TtkScrollable <Shift-ButtonPress-5> { %W xview scroll  5 units }
-    }
-    win32 {
-	bind TtkScrollable <MouseWheel> \
-	    { %W yview scroll [expr {-(%D/120)}] units }
-	bind TtkScrollable <Shift-MouseWheel> \
-	    { %W xview scroll [expr {-(%D/120)}] units }
-    }
-    aqua {
-	bind TtkScrollable <MouseWheel> \
+if {[tk windowingsystem] eq "x11"} {
+    bind TtkScrollable <ButtonPress-4>       { %W yview scroll -5 units }
+    bind TtkScrollable <ButtonPress-5>       { %W yview scroll  5 units }
+    bind TtkScrollable <Shift-ButtonPress-4> { %W xview scroll -5 units }
+    bind TtkScrollable <Shift-ButtonPress-5> { %W xview scroll  5 units }
+}
+if {[tk windowingsystem] eq "aqua"} {
+    bind TtkScrollable <MouseWheel> \
 	    { %W yview scroll [expr {-(%D)}] units }
-	bind TtkScrollable <Shift-MouseWheel> \
+    bind TtkScrollable <Shift-MouseWheel> \
 	    { %W xview scroll [expr {-(%D)}] units }
-	bind TtkScrollable <Option-MouseWheel> \
-	    { %W yview scroll  [expr {-10*(%D)}] units }
-	bind TtkScrollable <Shift-Option-MouseWheel> \
-	    { %W xview scroll [expr {-10*(%D)}] units }
-    }
+    bind TtkScrollable <Option-MouseWheel> \
+	    { %W yview scroll  [expr {-10 * (%D)}] units }
+    bind TtkScrollable <Shift-Option-MouseWheel> \
+	    { %W xview scroll [expr {-10 * (%D)}] units }
+} else {
+    bind TtkScrollable <MouseWheel> \
+	    { %W yview scroll [expr {-(%D / 120)}] units }
+    bind TtkScrollable <Shift-MouseWheel> \
+	    { %W xview scroll [expr {-(%D / 120)}] units }
 }
 
 #*EOF*

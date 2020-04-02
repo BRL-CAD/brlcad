@@ -273,9 +273,9 @@ TkBTreeCreate(
      * of the tree.
      */
 
-    rootPtr = (Node *) ckalloc(sizeof(Node));
-    linePtr = (TkTextLine *) ckalloc(sizeof(TkTextLine));
-    linePtr2 = (TkTextLine *) ckalloc(sizeof(TkTextLine));
+    rootPtr = ckalloc(sizeof(Node));
+    linePtr = ckalloc(sizeof(TkTextLine));
+    linePtr2 = ckalloc(sizeof(TkTextLine));
 
     rootPtr->parentPtr = NULL;
     rootPtr->nextPtr = NULL;
@@ -296,7 +296,7 @@ TkBTreeCreate(
 
     linePtr->parentPtr = rootPtr;
     linePtr->nextPtr = linePtr2;
-    segPtr = (TkTextSegment *) ckalloc(CSEG_SIZE(1));
+    segPtr = ckalloc(CSEG_SIZE(1));
     linePtr->segPtr = segPtr;
     segPtr->typePtr = &tkTextCharType;
     segPtr->nextPtr = NULL;
@@ -306,7 +306,7 @@ TkBTreeCreate(
 
     linePtr2->parentPtr = rootPtr;
     linePtr2->nextPtr = NULL;
-    segPtr = (TkTextSegment *) ckalloc(CSEG_SIZE(1));
+    segPtr = ckalloc(CSEG_SIZE(1));
     linePtr2->segPtr = segPtr;
     segPtr->typePtr = &tkTextCharType;
     segPtr->nextPtr = NULL;
@@ -314,7 +314,7 @@ TkBTreeCreate(
     segPtr->body.chars[0] = '\n';
     segPtr->body.chars[1] = 0;
 
-    treePtr = (BTree *) ckalloc(sizeof(BTree));
+    treePtr = ckalloc(sizeof(BTree));
     treePtr->sharedTextPtr = sharedTextPtr;
     treePtr->rootPtr = rootPtr;
     treePtr->clients = 0;
@@ -478,10 +478,10 @@ TkBTreeDestroy(
 
     DestroyNode(treePtr->rootPtr);
     if (treePtr->startEnd != NULL) {
-	ckfree((char *) treePtr->startEnd);
-	ckfree((char *) treePtr->startEndRef);
+	ckfree(treePtr->startEnd);
+	ckfree(treePtr->startEndRef);
     }
-    ckfree((char *) treePtr);
+    ckfree(treePtr);
 }
 
 /*
@@ -543,7 +543,7 @@ TkBTreeRemoveClient(
 	 */
 
 	DestroyNode(treePtr->rootPtr);
-	ckfree((char *) treePtr);
+	ckfree(treePtr);
 	return;
     } else if (pixelReference == -1) {
 	/*
@@ -632,11 +632,9 @@ AdjustStartEndRefs(
 	    i++;
 	}
 	treePtr->startEndCount = count;
-	treePtr->startEnd = (TkTextLine **)
-		ckrealloc((char *) treePtr->startEnd,
+	treePtr->startEnd = ckrealloc(treePtr->startEnd,
 		sizeof(TkTextLine *) * count);
-	treePtr->startEndRef = (TkText **)
-		ckrealloc((char *) treePtr->startEndRef,
+	treePtr->startEndRef = ckrealloc(treePtr->startEndRef,
 		sizeof(TkText *) * count);
     }
     if ((action & TEXT_ADD_REFS)
@@ -652,11 +650,9 @@ AdjustStartEndRefs(
 
 	count = treePtr->startEndCount;
 
-	treePtr->startEnd = (TkTextLine **)
-		ckrealloc((char *) treePtr->startEnd,
+	treePtr->startEnd = ckrealloc(treePtr->startEnd,
 		sizeof(TkTextLine *) * count);
-	treePtr->startEndRef = (TkText **)
-		ckrealloc((char *) treePtr->startEndRef,
+	treePtr->startEndRef = ckrealloc(treePtr->startEndRef,
 		sizeof(TkText *) * count);
 
 	if (textPtr->start != NULL) {
@@ -739,7 +735,7 @@ AdjustPixelClient(
 		*counting = 0;
 	    }
 	    if (newPixelReferences != treePtr->pixelReferences) {
-		linePtr->pixels = (int *) ckrealloc((char *) linePtr->pixels,
+		linePtr->pixels = ckrealloc(linePtr->pixels,
 			sizeof(int) * 2 * newPixelReferences);
 	    }
 
@@ -756,7 +752,7 @@ AdjustPixelClient(
 	}
     }
     if (newPixelReferences != treePtr->pixelReferences) {
-	nodePtr->numPixels = (int *) ckrealloc((char *) nodePtr->numPixels,
+	nodePtr->numPixels = ckrealloc(nodePtr->numPixels,
 		sizeof(int) * newPixelReferences);
     }
     nodePtr->numPixels[useReference] = pixelCount;
@@ -803,9 +799,10 @@ RemovePixelClient(
 		nodePtr->numPixels[treePtr->pixelReferences-1];
     }
     if (treePtr->pixelReferences == 1) {
+	ckfree(nodePtr->numPixels);
 	nodePtr->numPixels = NULL;
     } else {
-	nodePtr->numPixels = (int *) ckrealloc((char *) nodePtr->numPixels,
+	nodePtr->numPixels = ckrealloc(nodePtr->numPixels,
 		sizeof(int) * (treePtr->pixelReferences - 1));
     }
     if (nodePtr->level != 0) {
@@ -826,7 +823,7 @@ RemovePixelClient(
 	    if (treePtr->pixelReferences == 1) {
 		linePtr->pixels = NULL;
 	    } else {
-		linePtr->pixels = (int *) ckrealloc((char *) linePtr->pixels,
+		linePtr->pixels = ckrealloc(linePtr->pixels,
 			sizeof(int) * 2 * (treePtr->pixelReferences-1));
 	    }
 	    linePtr = linePtr->nextPtr;
@@ -865,10 +862,10 @@ DestroyNode(
 	    while (linePtr->segPtr != NULL) {
 		segPtr = linePtr->segPtr;
 		linePtr->segPtr = segPtr->nextPtr;
-		(*segPtr->typePtr->deleteProc)(segPtr, linePtr, 1);
+		segPtr->typePtr->deleteProc(segPtr, linePtr, 1);
 	    }
-	    ckfree((char *) linePtr->pixels);
-	    ckfree((char *) linePtr);
+	    ckfree(linePtr->pixels);
+	    ckfree(linePtr);
 	}
     } else {
 	register Node *childPtr;
@@ -880,8 +877,8 @@ DestroyNode(
 	}
     }
     DeleteSummaries(nodePtr->summaryPtr);
-    ckfree((char *) nodePtr->numPixels);
-    ckfree((char *) nodePtr);
+    ckfree(nodePtr->numPixels);
+    ckfree(nodePtr);
 }
 
 /*
@@ -910,7 +907,7 @@ DeleteSummaries(
 
     while (summaryPtr != NULL) {
 	nextPtr = summaryPtr->nextPtr;
-	ckfree((char *) summaryPtr);
+	ckfree(summaryPtr);
 	summaryPtr = nextPtr;
     }
 }
@@ -1047,8 +1044,7 @@ TkBTreeInsertChars(
 
     changeToLineCount = 0;
     if (treePtr->pixelReferences > PIXEL_CLIENTS) {
-	changeToPixelCount = (int *)
-		ckalloc(sizeof(int) * treePtr->pixelReferences);
+	changeToPixelCount = ckalloc(sizeof(int) * treePtr->pixelReferences);
     } else {
 	changeToPixelCount = pixels;
     }
@@ -1064,7 +1060,7 @@ TkBTreeInsertChars(
 	    }
 	}
 	chunkSize = eol-string;
-	segPtr = (TkTextSegment *) ckalloc(CSEG_SIZE(chunkSize));
+	segPtr = ckalloc(CSEG_SIZE(chunkSize));
 	segPtr->typePtr = &tkTextCharType;
 	if (curPtr == NULL) {
 	    segPtr->nextPtr = linePtr->segPtr;
@@ -1086,8 +1082,8 @@ TkBTreeInsertChars(
 	 * the remainder of the old line to it.
 	 */
 
-	newLinePtr = (TkTextLine *) ckalloc(sizeof(TkTextLine));
-	newLinePtr->pixels = (int *)
+	newLinePtr = ckalloc(sizeof(TkTextLine));
+	newLinePtr->pixels =
 		ckalloc(sizeof(int) * 2 * treePtr->pixelReferences);
 
 	newLinePtr->parentPtr = linePtr->parentPtr;
@@ -1147,7 +1143,7 @@ TkBTreeInsertChars(
 	}
     }
     if (treePtr->pixelReferences > PIXEL_CLIENTS) {
-	ckfree((char *) changeToPixelCount);
+	ckfree(changeToPixelCount);
     }
 
     nodePtr = linePtr->parentPtr;
@@ -1205,7 +1201,7 @@ SplitSeg(
 	    if (count == 0) {
 		return prevPtr;
 	    }
-	    segPtr = (*segPtr->typePtr->splitProc)(segPtr, count);
+	    segPtr = segPtr->typePtr->splitProc(segPtr, count);
 	    if (prevPtr == NULL) {
 		indexPtr->linePtr->segPtr = segPtr;
 	    } else {
@@ -1231,8 +1227,9 @@ SplitSeg(
 		/*
 		 * Reached end of the text.
 		 */
+	    } else {
+		segPtr = linePtr->segPtr;
 	    }
-	    segPtr = linePtr->segPtr;
 	}
     }
     Tcl_Panic("SplitSeg reached end of line!");
@@ -1280,7 +1277,7 @@ CleanupLine(
 		segPtr != NULL;
 		prevPtrPtr = &(*prevPtrPtr)->nextPtr, segPtr = *prevPtrPtr) {
 	    if (segPtr->typePtr->cleanupProc != NULL) {
-		*prevPtrPtr = (*segPtr->typePtr->cleanupProc)(segPtr, linePtr);
+		*prevPtrPtr = segPtr->typePtr->cleanupProc(segPtr, linePtr);
 		if (segPtr != *prevPtrPtr) {
 		    anyChanges = 1;
 		}
@@ -1387,6 +1384,7 @@ TkBTreeDeleteIndexRange(
 		    }
 		}
 		changeToLineCount++;
+		CLANG_ASSERT(curNodePtr);
 		curNodePtr->numChildren--;
 
 		/*
@@ -1417,8 +1415,8 @@ TkBTreeDeleteIndexRange(
 			checkCount++;
 		    }
 		}
-		ckfree((char *) curLinePtr->pixels);
-		ckfree((char *) curLinePtr);
+		ckfree(curLinePtr->pixels);
+		ckfree(curLinePtr);
 	    }
 	    curLinePtr = nextLinePtr;
 	    segPtr = curLinePtr->segPtr;
@@ -1442,7 +1440,9 @@ TkBTreeDeleteIndexRange(
 		    prevNodePtr->nextPtr = curNodePtr->nextPtr;
 		}
 		parentPtr->numChildren--;
-		ckfree((char *) curNodePtr);
+		DeleteSummaries(curNodePtr->summaryPtr);
+		ckfree(curNodePtr->numPixels);
+		ckfree(curNodePtr);
 		curNodePtr = parentPtr;
 	    }
 	    curNodePtr = curLinePtr->parentPtr;
@@ -1450,7 +1450,7 @@ TkBTreeDeleteIndexRange(
 	}
 
 	nextPtr = segPtr->nextPtr;
-	if ((*segPtr->typePtr->deleteProc)(segPtr, curLinePtr, 0) != 0) {
+	if (segPtr->typePtr->deleteProc(segPtr, curLinePtr, 0) != 0) {
 	    /*
 	     * This segment refuses to die. Move it to prevPtr and advance
 	     * prevPtr if the segment has left gravity.
@@ -1481,7 +1481,7 @@ TkBTreeDeleteIndexRange(
 	for (segPtr = lastPtr; segPtr != NULL;
 		segPtr = segPtr->nextPtr) {
 	    if (segPtr->typePtr->lineChangeProc != NULL) {
-		(*segPtr->typePtr->lineChangeProc)(segPtr, index2Ptr->linePtr);
+		segPtr->typePtr->lineChangeProc(segPtr, index2Ptr->linePtr);
 	    }
 	}
 	curNodePtr = index2Ptr->linePtr->parentPtr;
@@ -1537,8 +1537,8 @@ TkBTreeDeleteIndexRange(
 		checkCount++;
 	    }
 	}
-	ckfree((char *) index2Ptr->linePtr->pixels);
-	ckfree((char *) index2Ptr->linePtr);
+	ckfree(index2Ptr->linePtr->pixels);
+	ckfree(index2Ptr->linePtr);
 
 	Rebalance((BTree *) index2Ptr->tree, curNodePtr);
     }
@@ -1991,7 +1991,7 @@ TkBTreeLinesTo(
 	}
     }
     if (textPtr != NULL) {
-        /* 
+        /*
          * The index to return must be relative to textPtr, not to the entire
          * tree. Take care to never return a negative index when linePtr
          * denotes a line before -startline, or an index larger than the
@@ -2157,7 +2157,7 @@ TkBTreeTag(
 
     oldState = TkBTreeCharTagged(index1Ptr, tagPtr);
     if ((add != 0) ^ oldState) {
-	segPtr = (TkTextSegment *) ckalloc(TSEG_SIZE);
+	segPtr = ckalloc(TSEG_SIZE);
 	segPtr->typePtr = (add) ? &tkTextToggleOnType : &tkTextToggleOffType;
 	prevPtr = SplitSeg(index1Ptr);
 	if (prevPtr == NULL) {
@@ -2202,7 +2202,7 @@ TkBTreeTag(
 	} else {
 	    changed = 0;
 	}
-	ckfree((char *) segPtr);
+	ckfree(segPtr);
 
 	/*
 	 * The code below is a bit tricky. After deleting a toggle we
@@ -2228,7 +2228,7 @@ TkBTreeTag(
 	}
     }
     if ((add != 0) ^ oldState) {
-	segPtr = (TkTextSegment *) ckalloc(TSEG_SIZE);
+	segPtr = ckalloc(TSEG_SIZE);
 	segPtr->typePtr = (add) ? &tkTextToggleOffType : &tkTextToggleOnType;
 	prevPtr = SplitSeg(index2Ptr);
 	if (prevPtr == NULL) {
@@ -2353,7 +2353,7 @@ ChangeNodeToggleCount(
 	    } else {
 		prevPtr->nextPtr = summaryPtr->nextPtr;
 	    }
-	    ckfree((char *) summaryPtr);
+	    ckfree(summaryPtr);
 	} else {
 	    /*
 	     * This tag isn't currently in the summary information list.
@@ -2372,7 +2372,7 @@ ChangeNodeToggleCount(
 
 		Node *rootNodePtr = tagPtr->tagRootPtr;
 
-		summaryPtr = (Summary *) ckalloc(sizeof(Summary));
+		summaryPtr = ckalloc(sizeof(Summary));
 		summaryPtr->tagPtr = tagPtr;
 		summaryPtr->toggleCount = tagPtr->toggleCount - delta;
 		summaryPtr->nextPtr = rootNodePtr->summaryPtr;
@@ -2381,7 +2381,7 @@ ChangeNodeToggleCount(
 		rootLevel = rootNodePtr->level;
 		tagPtr->tagRootPtr = rootNodePtr;
 	    }
-	    summaryPtr = (Summary *) ckalloc(sizeof(Summary));
+	    summaryPtr = ckalloc(sizeof(Summary));
 	    summaryPtr->tagPtr = tagPtr;
 	    summaryPtr->toggleCount = delta;
 	    summaryPtr->nextPtr = nodePtr->summaryPtr;
@@ -2438,7 +2438,7 @@ ChangeNodeToggleCount(
 	    } else {
 		prevPtr->nextPtr = summaryPtr->nextPtr;
 	    }
-	    ckfree((char *) summaryPtr);
+	    ckfree(summaryPtr);
 	    tagPtr->tagRootPtr = node2Ptr;
 	    break;
 	}
@@ -2487,7 +2487,7 @@ FindTagStart(
      * level 0 node.
      */
 
-    while (nodePtr->level > 0) {
+    while (nodePtr && nodePtr->level > 0) {
 	for (nodePtr = nodePtr->children.nodePtr ; nodePtr != NULL;
 		nodePtr = nodePtr->nextPtr) {
 	    for (summaryPtr = nodePtr->summaryPtr ; summaryPtr != NULL;
@@ -2499,6 +2499,10 @@ FindTagStart(
 	}
     gotNodeWithTag:
 	continue;
+    }
+
+    if (nodePtr == NULL) {
+	return NULL;
     }
 
     /*
@@ -2568,7 +2572,7 @@ FindTagEnd(
      * level 0 node.
      */
 
-    while (nodePtr->level > 0) {
+    while (nodePtr && nodePtr->level > 0) {
 	for (lastNodePtr = NULL, nodePtr = nodePtr->children.nodePtr ;
 		nodePtr != NULL; nodePtr = nodePtr->nextPtr) {
 	    for (summaryPtr = nodePtr->summaryPtr ; summaryPtr != NULL;
@@ -2580,6 +2584,10 @@ FindTagEnd(
 	    }
 	}
 	nodePtr = lastNodePtr;
+    }
+
+    if (nodePtr == NULL) {
+	return NULL;
     }
 
     /*
@@ -2951,7 +2959,7 @@ TkBTreeNextTag(
 		}
 		searchPtr->linesLeft -= nodePtr->numLines;
 		if (nodePtr->nextPtr == NULL) {
-		    Tcl_Panic("TkBTreeNextTag found incorrect tag summary info.");
+		    Tcl_Panic("TkBTreeNextTag found incorrect tag summary info");
 		}
 	    }
 	nextChild:
@@ -3169,7 +3177,7 @@ TkBTreePrevTag(
 		continue;
 	    }
 	    if (prevNodePtr == NULL) {
-		Tcl_Panic("TkBTreePrevTag found incorrect tag summary info.");
+		Tcl_Panic("TkBTreePrevTag found incorrect tag summary info");
 	    }
 	    searchPtr->linesLeft -= linesSkipped;
 	    nodePtr = prevNodePtr;
@@ -3349,10 +3357,8 @@ TkBTreeGetTags(
 
     tagInfo.numTags = 0;
     tagInfo.arraySize = NUM_TAG_INFOS;
-    tagInfo.tagPtrs = (TkTextTag **)
-	    ckalloc((unsigned) NUM_TAG_INFOS * sizeof(TkTextTag *));
-    tagInfo.counts = (int *)
-	    ckalloc((unsigned) NUM_TAG_INFOS * sizeof(int));
+    tagInfo.tagPtrs = ckalloc(NUM_TAG_INFOS * sizeof(TkTextTag *));
+    tagInfo.counts = ckalloc(NUM_TAG_INFOS * sizeof(int));
 
     /*
      * Record tag toggles within the line of indexPtr but preceding indexPtr.
@@ -3437,9 +3443,9 @@ TkBTreeGetTags(
 	}
     }
     *numTagsPtr = dst;
-    ckfree((char *) tagInfo.counts);
+    ckfree(tagInfo.counts);
     if (dst == 0) {
-	ckfree((char *) tagInfo.tagPtrs);
+	ckfree(tagInfo.tagPtrs);
 	return NULL;
     }
     return tagInfo.tagPtrs;
@@ -3496,8 +3502,7 @@ TkTextIsElided(
     int elide;
 
     if (elideInfo == NULL) {
-	infoPtr = (TkTextElideInfo *)
-		ckalloc((unsigned) sizeof(TkTextElideInfo));
+	infoPtr = ckalloc(sizeof(TkTextElideInfo));
     } else {
 	infoPtr = elideInfo;
     }
@@ -3512,10 +3517,8 @@ TkTextIsElided(
      */
 
     if (LOTSA_TAGS < infoPtr->numTags) {
-	infoPtr->tagCnts = (int *)
-		ckalloc((unsigned) sizeof(int) * infoPtr->numTags);
-	infoPtr->tagPtrs = (TkTextTag **)
-		ckalloc((unsigned) sizeof(TkTextTag *) * infoPtr->numTags);
+	infoPtr->tagCnts = ckalloc(sizeof(int) * infoPtr->numTags);
+	infoPtr->tagPtrs = ckalloc(sizeof(TkTextTag *) * infoPtr->numTags);
     }
 
     for (i=0; i<infoPtr->numTags; i++) {
@@ -3630,11 +3633,11 @@ TkTextIsElided(
 
     if (elideInfo == NULL) {
 	if (LOTSA_TAGS < infoPtr->numTags) {
-	    ckfree((char *) infoPtr->tagCnts);
-	    ckfree((char *) infoPtr->tagPtrs);
+	    ckfree(infoPtr->tagCnts);
+	    ckfree(infoPtr->tagPtrs);
 	}
 
-	ckfree((char *) infoPtr);
+	ckfree(infoPtr);
     }
 
     return elide;
@@ -3663,8 +3666,8 @@ TkTextFreeElideInfo(
 				 * structure. */
 {
     if (LOTSA_TAGS < elideInfo->numTags) {
-	ckfree((char *) elideInfo->tagCnts);
-	ckfree((char *) elideInfo->tagPtrs);
+	ckfree(elideInfo->tagCnts);
+	ckfree(elideInfo->tagPtrs);
     }
 }
 
@@ -3715,16 +3718,15 @@ IncCount(
 	int *newCounts, newSize;
 
 	newSize = 2 * tagInfoPtr->arraySize;
-	newTags = (TkTextTag **)
-		ckalloc((unsigned) newSize * sizeof(TkTextTag *));
+	newTags = ckalloc(newSize * sizeof(TkTextTag *));
 	memcpy(newTags, tagInfoPtr->tagPtrs,
 		tagInfoPtr->arraySize * sizeof(TkTextTag *));
-	ckfree((char *) tagInfoPtr->tagPtrs);
+	ckfree(tagInfoPtr->tagPtrs);
 	tagInfoPtr->tagPtrs = newTags;
-	newCounts = (int *) ckalloc((unsigned) newSize * sizeof(int));
+	newCounts = ckalloc(newSize * sizeof(int));
 	memcpy(newCounts, tagInfoPtr->counts,
 		tagInfoPtr->arraySize * sizeof(int));
-	ckfree((char *) tagInfoPtr->counts);
+	ckfree(tagInfoPtr->counts);
 	tagInfoPtr->counts = newCounts;
 	tagInfoPtr->arraySize = newSize;
     }
@@ -3772,7 +3774,7 @@ TkBTreeCheck(
 
     for (entryPtr=Tcl_FirstHashEntry(&treePtr->sharedTextPtr->tagTable,&search);
 	    entryPtr != NULL ; entryPtr = Tcl_NextHashEntry(&search)) {
-	tagPtr = (TkTextTag *) Tcl_GetHashValue(entryPtr);
+	tagPtr = Tcl_GetHashValue(entryPtr);
 	nodePtr = tagPtr->tagRootPtr;
 	if (nodePtr == NULL) {
 	    if (tagPtr->toggleCount != 0) {
@@ -3924,7 +3926,7 @@ CheckNodeConsistency(
     numChildren = 0;
     numLines = 0;
     if (references > PIXEL_CLIENTS) {
-	numPixels = (int *) ckalloc(sizeof(int) * references);
+	numPixels = ckalloc(sizeof(int) * references);
     } else {
 	numPixels = pixels;
     }
@@ -3944,7 +3946,7 @@ CheckNodeConsistency(
 	    for (segPtr = linePtr->segPtr; segPtr != NULL;
 		    segPtr = segPtr->nextPtr) {
 		if (segPtr->typePtr->checkProc != NULL) {
-		    (*segPtr->typePtr->checkProc)(segPtr, linePtr);
+		    segPtr->typePtr->checkProc(segPtr, linePtr);
 		}
 		if ((segPtr->size == 0) && (!segPtr->typePtr->leftGravity)
 			&& (segPtr->nextPtr != NULL)
@@ -4013,7 +4015,7 @@ CheckNodeConsistency(
 	}
     }
     if (references > PIXEL_CLIENTS) {
-	ckfree((char *) numPixels);
+	ckfree(numPixels);
     }
 
     for (summaryPtr = nodePtr->summaryPtr; summaryPtr != NULL;
@@ -4112,7 +4114,7 @@ Rebalance(
 		 */
 
 		if (nodePtr->parentPtr == NULL) {
-		    newPtr = (Node *) ckalloc(sizeof(Node));
+		    newPtr = ckalloc(sizeof(Node));
 		    newPtr->parentPtr = NULL;
 		    newPtr->nextPtr = NULL;
 		    newPtr->summaryPtr = NULL;
@@ -4120,7 +4122,7 @@ Rebalance(
 		    newPtr->children.nodePtr = nodePtr;
 		    newPtr->numChildren = 1;
 		    newPtr->numLines = nodePtr->numLines;
-		    newPtr->numPixels = (int *)
+		    newPtr->numPixels =
 			    ckalloc(sizeof(int) * treePtr->pixelReferences);
 		    for (i=0; i<treePtr->pixelReferences; i++) {
 			newPtr->numPixels[i] = nodePtr->numPixels[i];
@@ -4128,8 +4130,8 @@ Rebalance(
 		    RecomputeNodeCounts(treePtr, newPtr);
 		    treePtr->rootPtr = newPtr;
 		}
-		newPtr = (Node *) ckalloc(sizeof(Node));
-		newPtr->numPixels = (int *)
+		newPtr = ckalloc(sizeof(Node));
+		newPtr->numPixels =
 			ckalloc(sizeof(int) * treePtr->pixelReferences);
 		for (i=0; i<treePtr->pixelReferences; i++) {
 		    newPtr->numPixels[i] = 0;
@@ -4186,7 +4188,8 @@ Rebalance(
 		    treePtr->rootPtr = nodePtr->children.nodePtr;
 		    treePtr->rootPtr->parentPtr = NULL;
 		    DeleteSummaries(nodePtr->summaryPtr);
-		    ckfree((char *) nodePtr);
+		    ckfree(nodePtr->numPixels);
+		    ckfree(nodePtr);
 		}
 		return;
 	    }
@@ -4275,7 +4278,8 @@ Rebalance(
 		nodePtr->nextPtr = otherPtr->nextPtr;
 		nodePtr->parentPtr->numChildren--;
 		DeleteSummaries(otherPtr->summaryPtr);
-		ckfree((char *) otherPtr);
+		ckfree(otherPtr->numPixels);
+		ckfree(otherPtr);
 		continue;
 	    }
 
@@ -4285,9 +4289,11 @@ Rebalance(
 	     */
 
 	    if (nodePtr->level == 0) {
+		CLANG_ASSERT(halfwayLinePtr);
 		otherPtr->children.linePtr = halfwayLinePtr->nextPtr;
 		halfwayLinePtr->nextPtr = NULL;
 	    } else {
+		CLANG_ASSERT(halfwayNodePtr);
 		otherPtr->children.nodePtr = halfwayNodePtr->nextPtr;
 		halfwayNodePtr->nextPtr = NULL;
 	    }
@@ -4371,7 +4377,7 @@ RecomputeNodeCounts(
 		for (summaryPtr = nodePtr->summaryPtr; ;
 			summaryPtr = summaryPtr->nextPtr) {
 		    if (summaryPtr == NULL) {
-			summaryPtr = (Summary *) ckalloc(sizeof(Summary));
+			summaryPtr = ckalloc(sizeof(Summary));
 			summaryPtr->tagPtr = tagPtr;
 			summaryPtr->toggleCount = 1;
 			summaryPtr->nextPtr = nodePtr->summaryPtr;
@@ -4399,7 +4405,7 @@ RecomputeNodeCounts(
 		for (summaryPtr = nodePtr->summaryPtr; ;
 			summaryPtr = summaryPtr->nextPtr) {
 		    if (summaryPtr == NULL) {
-			summaryPtr = (Summary *) ckalloc(sizeof(Summary));
+			summaryPtr = ckalloc(sizeof(Summary));
 			summaryPtr->tagPtr = summaryPtr2->tagPtr;
 			summaryPtr->toggleCount = summaryPtr2->toggleCount;
 			summaryPtr->nextPtr = nodePtr->summaryPtr;
@@ -4448,11 +4454,11 @@ RecomputeNodeCounts(
 	}
 	if (summaryPtr2 != NULL) {
 	    summaryPtr2->nextPtr = summaryPtr->nextPtr;
-	    ckfree((char *) summaryPtr);
+	    ckfree(summaryPtr);
 	    summaryPtr = summaryPtr2->nextPtr;
 	} else {
 	    nodePtr->summaryPtr = summaryPtr->nextPtr;
-	    ckfree((char *) summaryPtr);
+	    ckfree(summaryPtr);
 	    summaryPtr = nodePtr->summaryPtr;
 	}
     }
@@ -4552,9 +4558,8 @@ CharSplitProc(
 {
     TkTextSegment *newPtr1, *newPtr2;
 
-    newPtr1 = (TkTextSegment *) ckalloc(CSEG_SIZE(index));
-    newPtr2 = (TkTextSegment *) ckalloc(
-	    CSEG_SIZE(segPtr->size - index));
+    newPtr1 = ckalloc(CSEG_SIZE(index));
+    newPtr2 = ckalloc(CSEG_SIZE(segPtr->size - index));
     newPtr1->typePtr = &tkTextCharType;
     newPtr1->nextPtr = newPtr2;
     newPtr1->size = index;
@@ -4565,7 +4570,7 @@ CharSplitProc(
     newPtr2->size = segPtr->size - index;
     memcpy(newPtr2->body.chars, segPtr->body.chars + index, newPtr2->size);
     newPtr2->body.chars[newPtr2->size] = 0;
-    ckfree((char *) segPtr);
+    ckfree(segPtr);
     return newPtr1;
 }
 
@@ -4600,16 +4605,15 @@ CharCleanupProc(
     if ((segPtr2 == NULL) || (segPtr2->typePtr != &tkTextCharType)) {
 	return segPtr;
     }
-    newPtr = (TkTextSegment *) ckalloc(CSEG_SIZE(
-	    segPtr->size + segPtr2->size));
+    newPtr = ckalloc(CSEG_SIZE(segPtr->size + segPtr2->size));
     newPtr->typePtr = &tkTextCharType;
     newPtr->nextPtr = segPtr2->nextPtr;
     newPtr->size = segPtr->size + segPtr2->size;
     memcpy(newPtr->body.chars, segPtr->body.chars, segPtr->size);
     memcpy(newPtr->body.chars + segPtr->size, segPtr2->body.chars, segPtr2->size);
     newPtr->body.chars[newPtr->size] = 0;
-    ckfree((char *) segPtr);
-    ckfree((char *) segPtr2);
+    ckfree(segPtr);
+    ckfree(segPtr2);
     return newPtr;
 }
 
@@ -4638,7 +4642,7 @@ CharDeleteProc(
 				 * deleted, so everything must get cleaned
 				 * up. */
 {
-    ckfree((char *) segPtr);
+    ckfree(segPtr);
     return 0;
 }
 
@@ -4714,7 +4718,7 @@ ToggleDeleteProc(
 				 * up. */
 {
     if (treeGone) {
-	ckfree((char *) segPtr);
+	ckfree(segPtr);
 	return 0;
     }
 
@@ -4788,9 +4792,9 @@ ToggleCleanupProc(
 			segPtr->body.toggle.tagPtr, -counts);
 	    }
 	    prevPtr->nextPtr = segPtr2->nextPtr;
-	    ckfree((char *) segPtr2);
+	    ckfree(segPtr2);
 	    segPtr2 = segPtr->nextPtr;
-	    ckfree((char *) segPtr);
+	    ckfree(segPtr);
 	    return segPtr2;
 	}
     }

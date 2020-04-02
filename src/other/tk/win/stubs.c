@@ -397,10 +397,78 @@ XGetWindowProperty(
     unsigned long *bytes_after_return,
     unsigned char **prop_return)
 {
-    *actual_type_return = TkNone;
+    *actual_type_return = None;
     *actual_format_return = 0;
     *nitems_return = 0;
     *bytes_after_return = 0;
     *prop_return = NULL;
     return BadValue;
+}
+
+/*
+ * The following functions were implemented as macros under Windows.
+ */
+
+int
+XFlush(
+    Display *display)
+{
+    return 0;
+}
+
+int
+XGrabServer(
+    Display *display)
+{
+    return 0;
+}
+
+int
+XUngrabServer(
+    Display *display)
+{
+    return 0;
+}
+
+int
+XFree(
+    void *data)
+{
+	if ((data) != NULL) {
+		ckfree(data);
+	}
+    return 0;
+}
+
+int
+XNoOp(
+    Display *display)
+{
+    display->request++;
+    return 0;
+}
+
+XAfterFunction
+XSynchronize(
+    Display *display,
+    Bool onoff)
+{
+    display->request++;
+    return NULL;
+}
+
+int
+XSync(
+    Display *display,
+    Bool discard)
+{
+    display->request++;
+    return 0;
+}
+
+VisualID
+XVisualIDFromVisual(
+    Visual *visual)
+{
+    return visual->visualid;
 }

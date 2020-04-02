@@ -7,20 +7,39 @@
  * Copyright (c) 1989-1994 The Regents of the University of California.
  * Copyright (c) 1994-1997 Sun Microsystems, Inc.
  * Copyright (c) 1998 by Scriptics Corporation.
+ * Copyright (c) 2018-2019 by Gregor Cramer.
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  */
 
 #include "tkInt.h"
+#include "tkDList.h"
+#include "tkArray.h"
 
-#ifdef __WIN32__
+#if defined(_WIN32)
 #include "tkWinInt.h"
 #elif defined(MAC_OSX_TK)
 #include "tkMacOSXInt.h"
-#else
+#else /* if defined(__unix__) */
 #include "tkUnixInt.h"
 #endif
+
+#ifdef NDEBUG
+# define DEBUG(expr)
+#else
+# define DEBUG(expr) expr
+#endif
+
+#ifdef _MSC_VER
+/*
+ * Earlier versions of MSVC don't know snprintf, but _snprintf is compatible.
+ * Note that sprintf is deprecated.
+ */
+# define snprintf _snprintf
+#endif
+
+#define SIZE_OF_ARRAY(arr) (sizeof(arr)/sizeof(arr[0]))
 
 /*
  * File structure:
@@ -29,13 +48,9 @@
  *
  * Init/Free this package.
  *
- * Tcl "bind" command (actually located in tkCmds.c).
- * "bind" command implementation.
- * "bind" implementation helpers.
+ * Tcl "bind" command (actually located in tkCmds.c) core implementation, plus helpers.
  *
- * Tcl "event" command.
- * "event" command implementation.
- * "event" implementation helpers.
+ * Tcl "event" command implementation, plus helpers.
  *
  * Package-specific common helpers.
  *
@@ -43,19 +58,127 @@
  */
 
 /*
+ * In old implementation (the one that used an event ring), <Double-1> and <1><1> were
+ * equivalent sequences. However it is logical to give <Double-1> higher precedence.
+ * This can be achieved by setting PREFER_MOST_SPECIALIZED_EVENT to 1.
+ */
+
+#ifndef PREFER_MOST_SPECIALIZED_EVENT
+# define PREFER_MOST_SPECIALIZED_EVENT 0
+#endif
+
+/*
+ * Traditionally motion events can be combined with buttons in this way: <B1-B2-Motion>.
+ * However it should be allowed to express this as <Motion-1-2> in addition. This can be
+ * achieved by setting SUPPORT_ADDITIONAL_MOTION_SYNTAX to 1.
+ */
+
+#ifndef SUPPORT_ADDITIONAL_MOTION_SYNTAX
+# define SUPPORT_ADDITIONAL_MOTION_SYNTAX 0 /* set to 1 if wanted */
+#endif
+
+/*
+ * The output for motion events is of the type <B1-Motion>. This can be changed to become
+ * <Motion-1> instead by setting PRINT_SHORT_MOTION_SYNTAX to 1, however this would be a
+ * backwards incompatibility.
+ */
+
+#ifndef PRINT_SHORT_MOTION_SYNTAX
+# define PRINT_SHORT_MOTION_SYNTAX 0 /* set to 1 if wanted */
+#endif
+
+#if !SUPPORT_ADDITIONAL_MOTION_SYNTAX
+# undef PRINT_SHORT_MOTION_SYNTAX
+# define PRINT_SHORT_MOTION_SYNTAX 0
+#endif
+
+/*
+ * For debugging only, normally set to zero.
+ */
+
+#ifdef SUPPORT_DEBUGGING
+# undef SUPPORT_DEBUGGING
+#endif
+#define SUPPORT_DEBUGGING 0
+
+/*
+ * Test validity of PSEntry items.
+ */
+
+# define TEST_PSENTRY(psPtr) psPtr->number != 0xdeadbeef
+# define MARK_PSENTRY(psPtr) psPtr->number = 0xdeadbeef
+
+/*
  * The following union is used to hold the detail information from an XEvent
  * (including Tk's XVirtualEvent extension).
  */
 
+typedef KeySym Info;
+
 typedef union {
-    KeySym keySym;		/* KeySym that corresponds to xkey.keycode. */
-    int button;			/* Button that was pressed (xbutton.button). */
-    Tk_Uid name;		/* Tk_Uid of virtual event. */
-    ClientData clientData;	/* Used when type of Detail is unknown, and to
-				 * ensure that all bytes of Detail are
-				 * initialized when this structure is used in
-				 * a hash key. */
+    Info info;		/* This either corresponds to xkey.keycode, or to xbutton.button,
+    			 * or is meaningless, depending on event type. */
+    Tk_Uid name;	/* Tk_Uid of virtual event. */
 } Detail;
+
+/*
+ * We need an extended event definition.
+ */
+
+typedef struct {
+    XEvent xev;		/* The original event from server. */
+    Detail detail;	/* Additional information (for hashing). */
+    unsigned countAny;	/* Count of multi-events, like multi-clicks, or repeated key pressing,
+    			 * this count does not depend on detail (keySym or button). */
+    unsigned countDetailed;
+    			/* Count of multi-events, like multi-clicks, or repeated key pressing,
+    			 * this count considers the detail (keySym or button). */
+} Event;
+
+/*
+ * We need a structure providing a list of pattern sequences.
+ */
+
+typedef unsigned EventMask;
+typedef unsigned long ModMask;
+
+struct PatSeq; /* forward declaration */
+
+/* We need this array for bookkeeping the last matching modifier mask per pattern. */
+TK_ARRAY_DEFINE(PSModMaskArr, ModMask);
+
+typedef struct PSEntry {
+    TK_DLIST_LINKS(PSEntry);	/* Makes this struct a double linked list; must be first entry. */
+    Window window;		/* Window of last match. */
+    struct PatSeq* psPtr;	/* Pointer to pattern sequence. */
+    PSModMaskArr *lastModMaskArr;
+    				/* Last matching modifier mask per pattern (except last pattern).
+    				 * Only needed if pattern sequence is not single (more than one
+				 * pattern), and if one of these patterns contains a non-zero
+				 * modifier mask. */
+    unsigned count;		/* Only promote to next level if this count has reached count of
+    				 * pattern. */
+    unsigned expired:1;		/* Whether this entry is expired, this means it has to be removed
+    				 * from promotion list. */
+    unsigned keepIt:1;		/* Whether to keep this entry, even if expired. */
+} PSEntry;
+
+/* Defining the whole PSList_* stuff (list of PSEntry items). */
+TK_DLIST_DEFINE(PSList, PSEntry);
+
+/* Don't keep larger arrays of modifier masks inside PSEntry. */
+#define MAX_MOD_MASK_ARR_SIZE 8
+
+/*
+ * Maps and lookup tables from an event to a list of patterns that match that event.
+ */
+
+typedef struct {
+    Tcl_HashTable patternTable;	/* Keys are PatternTableKey structs, values are (PatSeq *). */
+    Tcl_HashTable listTable;	/* Keys are PatternTableKey structs, values are (PSList *). */
+    PSList entryPool;		/* Contains free (unused) list items. */
+    unsigned number;		/* Needed for enumeration of pattern sequences. */
+} LookupTables;
 
 /*
  * The structure below represents a binding table. A binding table represents
@@ -68,36 +191,21 @@ typedef union {
  * application with separate event bindings for each (for example, each canvas
  * widget has a separate binding table for associating events with the items
  * in the canvas).
- *
- * Note: it is probably a bad idea to reduce EVENT_BUFFER_SIZE much below 30.
- * To see this, consider a triple mouse button click while the Shift key is
- * down (and auto-repeating). There may be as many as 3 auto-repeat events
- * after each mouse button press or release (see the first large comment block
- * within Tk_BindEvent for more on this), for a total of 20 events to cover
- * the three button presses and two intervening releases. If you reduce
- * EVENT_BUFFER_SIZE too much, shift multi-clicks will be lost.
  */
 
-#define EVENT_BUFFER_SIZE 30
-typedef struct BindingTable {
-    XEvent eventRing[EVENT_BUFFER_SIZE];
-				/* Circular queue of recent events (higher
-				 * indices are for more recent events). */
-    Detail detailRing[EVENT_BUFFER_SIZE];
-				/* "Detail" information (keySym, button,
-				 * Tk_Uid, or 0) for each entry in
-				 * eventRing. */
-    int curEvent;		/* Index in eventRing of most recent event.
-				 * Newer events have higher indices. */
-    Tcl_HashTable patternTable;	/* Used to map from an event to a list of
-				 * patterns that may match that event. Keys
-				 * are PatternTableKey structs, values are
-				 * (PatSeq *). */
-    Tcl_HashTable objectTable;	/* Used to map from an object to a list of
-				 * patterns associated with that object. Keys
-				 * are ClientData, values are (PatSeq *). */
-    Tcl_Interp *interp;		/* Interpreter in which commands are
-				 * executed. */
+/* defining the whole Promotion_* stuff (array of PSList entries) */
+TK_ARRAY_DEFINE(PromArr, PSList);
+
+typedef struct Tk_BindingTable_ {
+    Event eventInfo[TK_LASTEVENT];
+    				/* Containing the most recent event for every event type. */
+    PromArr *promArr;		/* Contains the promoted pattern sequences. */
+    Event *curEvent;		/* Pointing to most recent event. */
+    ModMask curModMask;		/* Containing the current modifier mask. */
+    LookupTables lookupTables;	/* Containing hash tables for fast lookup. */
+    Tcl_HashTable objectTable;	/* Used to map from an object to a list of patterns associated with
+    				 * that object. Keys are ClientData, values are (PatSeq *). */
+    Tcl_Interp *interp;		/* Interpreter in which commands are executed. */
 } BindingTable;
 
 /*
@@ -108,21 +216,16 @@ typedef struct BindingTable {
  *
  * A virtual event is usually never part of the event stream, but instead is
  * synthesized inline by matching low-level events. However, a virtual event
- * may be generated by platform-specific code or by Tcl scripts. In that case,
+ * may be generated by platform-specific code or by Tcl commands. In that case,
  * no lookup of the virtual event will need to be done using this table,
  * because the virtual event is actually in the event stream.
  */
 
-typedef struct VirtualEventTable {
-    Tcl_HashTable patternTable;	/* Used to map from a physical event to a list
-				 * of patterns that may match that event. Keys
-				 * are PatternTableKey structs, values are
-				 * (PatSeq *). */
-    Tcl_HashTable nameTable;	/* Used to map a virtual event name to the
-				 * array of physical events that can trigger
-				 * it. Keys are the Tk_Uid names of the
-				 * virtual events, values are PhysicalsOwned
-				 * structs. */
+typedef struct {
+    LookupTables lookupTables;	/* Providing fast lookup tables to lists of pattern sequences. */
+    Tcl_HashTable nameTable;	/* Used to map a virtual event name to the array of physical events
+    				 * that can trigger it. Keys are the Tk_Uid names of the virtual
+				 * events, values are PhysOwned structs. */
 } VirtualEventTable;
 
 /*
@@ -140,37 +243,44 @@ typedef struct VirtualEventTable {
  * tables and virtual event tables.
  */
 
-typedef struct PatternTableKey {
-    ClientData object;		/* For binding table, identifies the binding
-				 * tag of the object (or class of objects)
-				 * relative to which the event occurred. For
-				 * virtual event table, always NULL. */
-    int type;			/* Type of event (from X). */
-    Detail detail;		/* Additional information, such as keysym,
-				 * button, Tk_Uid, or 0 if nothing
-				 * additional. */
+typedef struct {
+    ClientData object;		/* For binding table, identifies the binding tag of the object
+    				 * (or class of objects) relative to which the event occurred.
+				 * For virtual event table, always NULL. */
+    unsigned type;		/* Type of event (from X). */
+    Detail detail;		/* Additional information, such as keysym, button, Tk_Uid, or zero
+    				 * if nothing additional. */
 } PatternTableKey;
 
 /*
  * The following structure defines a pattern, which is matched against X
  * events as part of the process of converting X events into Tcl commands.
+ *
+ * For technical reasons we do not use 'union Detail', although this would
+ * be possible, instead 'info' and 'name' are both included.
  */
 
-typedef struct TkPattern {
-    int eventType;		/* Type of X event, e.g. ButtonPress. */
-    int needMods;		/* Mask of modifiers that must be present (0
-				 * means no modifiers are required). */
-    Detail detail;		/* Additional information that must match
-				 * event. Normally this is 0, meaning no
-				 * additional information must match. For
-				 * KeyPress and KeyRelease events, a keySym
-				 * may be specified to select a particular
-				 * keystroke (0 means any keystrokes). For
-				 * button events, specifies a particular
-				 * button (0 means any buttons are OK). For
-				 * virtual events, specifies the Tk_Uid of the
-				 * virtual event name (never 0). */
+typedef struct {
+    unsigned eventType;		/* Type of X event, e.g. ButtonPress. */
+    unsigned count;		/* Multi-event count, e.g. double-clicks, triple-clicks, etc. */
+    ModMask modMask;		/* Mask of modifiers that must be present (zero means no modifiers
+    				 * are required). */
+    Info info;			/* Additional information that must match event. Normally this is zero,
+    				 * meaning no additional information must match. For KeyPress and
+				 * KeyRelease events, it may be specified to select a particular
+				 * keystroke (zero means any keystrokes). For button events, specifies
+				 * a particular button (zero means any buttons are OK). */
+    Tk_Uid name;		/* Specifies the Tk_Uid of the virtual event name. NULL if not a
+    				 * virtual event. */
 } TkPattern;
+
+/*
+ * The following structure keeps track of all the virtual events that are
+ * associated with a particular physical event. It is pointed to by the 'owners'
+ * field in a PatSeq in the patternTable of a virtual event table.
+ */
+
+TK_PTR_ARRAY_DEFINE(VirtOwners, Tcl_HashEntry); /* define array of hash entries */
 
 /*
  * The following structure defines a pattern sequence, which consists of one
@@ -191,153 +301,91 @@ typedef struct TkPattern {
  */
 
 typedef struct PatSeq {
-    int numPats;		/* Number of patterns in sequence (usually
-				 * 1). */
-    TkBindEvalProc *eventProc;	/* The function that will be invoked on the
-				 * clientData when this pattern sequence
-				 * matches. */
-    TkBindFreeProc *freeProc;	/* The function that will be invoked to
-				 * release the clientData when this pattern
-				 * sequence is freed. */
-    ClientData clientData;	/* Arbitray data passed to eventProc and
-				 * freeProc when sequence matches. */
-    int flags;			/* Miscellaneous flag values; see below for
-				 * definitions. */
-    int refCount;		/* Number of times that this binding is in the
-				 * midst of executing. If greater than 1, then
-				 * a recursive invocation is happening. Only
-				 * when this is zero can the binding actually
-				 * be freed. */
-    struct PatSeq *nextSeqPtr;	/* Next in list of all pattern sequences that
-				 * have the same initial pattern. NULL means
-				 * end of list. */
-    Tcl_HashEntry *hPtr;	/* Pointer to hash table entry for the initial
-				 * pattern. This is the head of the list of
-				 * which nextSeqPtr forms a part. */
-    struct VirtualOwners *voPtr;/* In a binding table, always NULL. In a
-				 * virtual event table, identifies the array
-				 * of virtual events that can be triggered by
-				 * this event. */
-    struct PatSeq *nextObjPtr;	/* In a binding table, next in list of all
-				 * pattern sequences for the same object (NULL
-				 * for end of list). Needed to implement
-				 * Tk_DeleteAllBindings. In a virtual event
-				 * table, always NULL. */
-    TkPattern pats[1];		/* Array of "numPats" patterns. Only one
-				 * element is declared here but in actuality
-				 * enough space will be allocated for
-				 * "numPats" patterns. To match, pats[0] must
-				 * match event n, pats[1] must match event
-				 * n-1, etc. */
+    unsigned numPats;		/* Number of patterns in sequence (usually 1). */
+    unsigned count;		/* Total number of repetition counts, summed over count in TkPattern. */
+    unsigned number;		/* Needed for the decision whether a binding is less recently defined
+    				 * than another, it is guaranteed that the most recently bound event
+				 * has the highest number. */
+    unsigned added:1;		/* Is this pattern sequence already added to lookup table? */
+    unsigned modMaskUsed:1;	/* Does at least one pattern contain a non-zero modifier mask? */
+    DEBUG(unsigned owned:1;)	/* For debugging purposes. */
+    char *script;		/* Binding script to evaluate when sequence matches (ckalloc()ed) */
+    Tcl_Obj* object;		/* Token for object with which binding is associated. For virtual
+    				 * event table this is NULL. */
+    struct PatSeq *nextSeqPtr;	/* Next in list of all pattern sequences that have the same initial
+    				 * pattern. NULL means end of list. */
+    Tcl_HashEntry *hPtr;	/* Pointer to hash table entry for the initial pattern. This is the
+    				 * head of the list of which nextSeqPtr forms a part. */
+    union {
+	VirtOwners *owners;	/* In a binding table it has no meaning. In a virtual event table,
+				 * identifies the array of virtual events that can be triggered
+				 * by this event. */
+	struct PatSeq *nextObj;	/* In a binding table, next in list of all pattern sequences for
+				 * the same object (NULL for end of list). Needed to implement
+				 * Tk_DeleteAllBindings. In a virtual event table it has no meaning. */
+    } ptr;
+    TkPattern pats[1];		/* Array of "numPats" patterns. Only one element is declared here
+    				 * but in actuality enough space will be allocated for "numPats"
+				 * patterns (but usually 1). */
 } PatSeq;
 
 /*
- * Flag values for PatSeq structures:
- *
- * PAT_NEARBY		1 means that all of the events matching this sequence
- *			must occur with nearby X and Y mouse coordinates and
- *			close in time. This is typically used to restrict
- *			multiple button presses.
- * MARKED_DELETED	1 means that this binding has been marked as deleted
- *			and removed from the binding table, but its memory
- *			could not be released because it was already queued
- *			for execution. When the binding is actually about to
- *			be executed, this flag will be checked and the binding
- *			skipped if set.
+ * Compute memory size of struct PatSeq with given pattern size.
+ * The caller must be sure that pattern size is greater than zero.
  */
-
-#define PAT_NEARBY		0x1
-#define MARKED_DELETED		0x2
+#define PATSEQ_MEMSIZE(numPats) (sizeof(PatSeq) + (numPats - 1)*sizeof(TkPattern))
 
 /*
  * Constants that define how close together two events must be in milliseconds
  * or pixels to meet the PAT_NEARBY constraint:
  */
 
-#define NEARBY_PIXELS		5
-#define NEARBY_MS		500
+#define NEARBY_PIXELS	5
+#define NEARBY_MS	500
 
 /*
- * The following structure keeps track of all the virtual events that are
- * associated with a particular physical event. It is pointed to by the voPtr
- * field in a PatSeq in the patternTable of a virtual event table.
+ * Needed as "no-number" constant for integers. The value of this constant is
+ * outside of integer range (type "int"). (Unfortunatly current version of
+ * Tcl/Tk does not provide C99 integer support.)
  */
 
-typedef struct VirtualOwners {
-    int numOwners;		/* Number of virtual events to trigger. */
-    Tcl_HashEntry *owners[1];	/* Array of pointers to entries in nameTable.
-				 * Enough space will actually be allocated for
-				 * numOwners hash entries. */
-} VirtualOwners;
+#define NO_NUMBER (((Tcl_WideInt) (~ (unsigned) 0)) + 1)
 
 /*
  * The following structure is used in the nameTable of a virtual event table
  * to associate a virtual event with all the physical events that can trigger
  * it.
  */
-typedef struct PhysicalsOwned {
-    int numOwned;		/* Number of physical events owned. */
-    PatSeq *patSeqs[1];		/* Array of pointers to physical event
-				 * patterns. Enough space will actually be
-				 * allocated to hold numOwned. */
-} PhysicalsOwned;
+
+TK_PTR_ARRAY_DEFINE(PhysOwned, PatSeq); /* define array of pattern seqs */
 
 /*
  * One of the following structures exists for each interpreter. This structure
  * keeps track of the current display and screen in the interpreter, so that a
- * script can be invoked whenever the display/screen changes (the script does
+ * command can be invoked whenever the display/screen changes (the command does
  * things like point tk::Priv at a display-specific structure).
  */
 
 typedef struct {
-    TkDisplay *curDispPtr;	/* Display for last binding command invoked in
-				 * this application. */
+    TkDisplay *curDispPtr;	/* Display for last binding command invoked in this application. */
     int curScreenIndex;		/* Index of screen for last binding command */
-    int bindingDepth;		/* Number of active instances of Tk_BindEvent
-				 * in this application. */
+    unsigned bindingDepth;	/* Number of active instances of Tk_BindEvent in this application. */
 } ScreenInfo;
-
-/*
- * The following structure is used to keep track of all the C bindings that
- * are awaiting invocation and whether the window they refer to has been
- * destroyed. If the window is destroyed, then all pending callbacks for that
- * window will be cancelled. The Tcl bindings will still all be invoked,
- * however.
- */
-
-typedef struct PendingBinding {
-    struct PendingBinding *nextPtr;
-				/* Next in chain of pending bindings, in case
-				 * a recursive binding evaluation is in
-				 * progress. */
-    Tk_Window tkwin;		/* The window that the following bindings
-				 * depend upon. */
-    int deleted;		/* Set to non-zero by window cleanup code if
-				 * tkwin is deleted. */
-    PatSeq *matchArray[5];	/* Array of pending C bindings. The actual
-				 * size of this depends on how many C bindings
-				 * matched the event passed to Tk_BindEvent.
-				 * THIS FIELD MUST BE THE LAST IN THE
-				 * STRUCTURE. */
-} PendingBinding;
 
 /*
  * The following structure keeps track of all the information local to the
  * binding package on a per interpreter basis.
  */
 
-typedef struct BindInfo {
+typedef struct TkBindInfo_ {
     VirtualEventTable virtualEventTable;
-				/* The virtual events that exist in this
-				 * interpreter. */
-    ScreenInfo screenInfo;	/* Keeps track of the current display and
-				 * screen, so it can be restored after a
-				 * binding has executed. */
-    PendingBinding *pendingList;/* The list of pending C bindings, kept in
-				 * case a C or Tcl binding causes the target
-				 * window to be deleted. */
-    int deleted;		/* 1 the application has been deleted but the
-				 * structure has been preserved. */
+				/* The virtual events that exist in this interpreter. */
+    ScreenInfo screenInfo;	/* Keeps track of the current display and screen, so it can be
+    				 * restored after a binding has executed. */
+    int deleted;		/* 1 if the application has been deleted but the structure has been
+    				 * preserved. */
+    Time lastEventTime;		/* Needed for time measurement. */
+    Time lastCurrentTime;	/* Needed for time measurement. */
 } BindInfo;
 
 /*
@@ -352,26 +400,18 @@ typedef struct BindInfo {
 
 #ifdef REDO_KEYSYM_LOOKUP
 typedef struct {
-    char *name;			/* Name of keysym. */
+    const char *name;		/* Name of keysym. */
     KeySym value;		/* Numeric identifier for keysym. */
 } KeySymInfo;
-static KeySymInfo keyArray[] = {
+static const KeySymInfo keyArray[] = {
 #ifndef lint
 #include "ks_names.h"
 #endif
     {NULL, 0}
 };
-static Tcl_HashTable keySymTable; /* keyArray hashed by keysym value. */
-static Tcl_HashTable nameTable;	/* keyArray hashed by keysym name. */
+static Tcl_HashTable keySymTable;	/* keyArray hashed by keysym value. */
+static Tcl_HashTable nameTable;		/* keyArray hashed by keysym name. */
 #endif /* REDO_KEYSYM_LOOKUP */
-
-/*
- * Set to non-zero when the package-wide static variables have been
- * initialized.
- */
-
-static int initialized = 0;
-TCL_DECLARE_MUTEX(bindMutex)
 
 /*
  * A hash table is kept to map from the string names of event modifiers to
@@ -381,36 +421,27 @@ TCL_DECLARE_MUTEX(bindMutex)
  */
 
 typedef struct {
-    char *name;			/* Name of modifier. */
-    int mask;			/* Button/modifier mask value, such as
-				 * Button1Mask. */
-    int flags;			/* Various flags; see below for
-				 * definitions. */
+    const char *name;	/* Name of modifier. */
+    ModMask mask;	/* Button/modifier mask value, such as Button1Mask. */
+    unsigned flags;	/* Various flags; see below for definitions. */
 } ModInfo;
 
 /*
  * Flags for ModInfo structures:
  *
- * DOUBLE -		Non-zero means duplicate this event,
- *			e.g. for double-clicks.
- * TRIPLE -		Non-zero means triplicate this event,
- *			e.g. for triple-clicks.
- * QUADRUPLE -		Non-zero means quadruple this event,
- *			e.g. for 4-fold-clicks.
+ * DOUBLE -		Non-zero means duplicate this event, e.g. for double-clicks.
+ * TRIPLE -		Non-zero means triplicate this event, e.g. for triple-clicks.
+ * QUADRUPLE -		Non-zero means quadruple this event, e.g. for 4-fold-clicks.
  * MULT_CLICKS -	Combination of all of above.
  */
 
-#define DOUBLE		1
-#define TRIPLE		2
-#define QUADRUPLE	4
-#define MULT_CLICKS	7
+#define DOUBLE		(1<<0)
+#define TRIPLE		(1<<1)
+#define QUADRUPLE	(1<<2)
+#define MULT_CLICKS	(DOUBLE|TRIPLE|QUADRUPLE)
 
-#ifndef TkControlMask
-#  define TkControlMask		(1<<2)
-#endif
-
-static ModInfo modArray[] = {
-    {"Control",		TkControlMask,	0},
+static const ModInfo modArray[] = {
+    {"Control",		ControlMask,	0},
     {"Shift",		ShiftMask,	0},
     {"Lock",		LockMask,	0},
     {"Meta",		META_MASK,	0},
@@ -454,10 +485,9 @@ static Tcl_HashTable modTable;
  */
 
 typedef struct {
-    char *name;			/* Name of event. */
-    int type;			/* Event type for X, such as ButtonPress. */
-    int eventMask;		/* Mask bits (for XSelectInput) for this event
-				 * type. */
+    const char *name;	/* Name of event. */
+    unsigned type;	/* Event type for X, such as ButtonPress. */
+    unsigned eventMask;	/* Mask bits (for XSelectInput) for this event type. */
 } EventInfo;
 
 /*
@@ -467,16 +497,14 @@ typedef struct {
  * unless you've asked about button events.
  */
 
-static EventInfo eventArray[] = {
+static const EventInfo eventArray[] = {
     {"Key",		KeyPress,		KeyPressMask},
     {"KeyPress",	KeyPress,		KeyPressMask},
     {"KeyRelease",	KeyRelease,		KeyPressMask|KeyReleaseMask},
     {"Button",		ButtonPress,		ButtonPressMask},
     {"ButtonPress",	ButtonPress,		ButtonPressMask},
-    {"ButtonRelease",	ButtonRelease,
-	    ButtonPressMask|ButtonReleaseMask},
-    {"Motion",		MotionNotify,
-	    ButtonPressMask|PointerMotionMask},
+    {"ButtonRelease",	ButtonRelease,		ButtonPressMask|ButtonReleaseMask},
+    {"Motion",		MotionNotify,		ButtonPressMask|PointerMotionMask},
     {"Enter",		EnterNotify,		EnterWindowMask},
     {"Leave",		LeaveNotify,		LeaveWindowMask},
     {"FocusIn",		FocusIn,		FocusChangeMask},
@@ -504,6 +532,8 @@ static EventInfo eventArray[] = {
 };
 static Tcl_HashTable eventTable;
 
+static int eventArrayIndex[TK_LASTEVENT];
+
 /*
  * The defines and table below are used to classify events into various
  * groups. The reason for this is that logically identical fields (e.g.
@@ -512,34 +542,34 @@ static Tcl_HashTable eventTable;
  * information from events.
  */
 
-#define KEY			0x1
-#define BUTTON			0x2
-#define MOTION			0x4
-#define CROSSING		0x8
-#define FOCUS			0x10
-#define EXPOSE			0x20
-#define VISIBILITY		0x40
-#define CREATE			0x80
-#define DESTROY			0x100
-#define UNMAP			0x200
-#define MAP			0x400
-#define REPARENT		0x800
-#define CONFIG			0x1000
-#define GRAVITY			0x2000
-#define CIRC			0x4000
-#define PROP			0x8000
-#define COLORMAP		0x10000
-#define VIRTUAL			0x20000
-#define ACTIVATE		0x40000
-#define	MAPREQ			0x80000
-#define	CONFIGREQ		0x100000
-#define	RESIZEREQ		0x200000
-#define CIRCREQ			0x400000
+#define KEY			(1<<0)
+#define BUTTON			(1<<1)
+#define MOTION			(1<<2)
+#define CROSSING		(1<<3)
+#define FOCUS			(1<<4)
+#define EXPOSE			(1<<5)
+#define VISIBILITY		(1<<6)
+#define CREATE			(1<<7)
+#define DESTROY			(1<<8)
+#define UNMAP			(1<<9)
+#define MAP			(1<<10)
+#define REPARENT		(1<<11)
+#define CONFIG			(1<<12)
+#define GRAVITY			(1<<13)
+#define CIRC			(1<<14)
+#define PROP			(1<<15)
+#define COLORMAP		(1<<16)
+#define VIRTUAL			(1<<17)
+#define ACTIVATE		(1<<18)
+#define	MAPREQ			(1<<19)
+#define	CONFIGREQ		(1<<20)
+#define	RESIZEREQ		(1<<21)
+#define CIRCREQ			(1<<22)
 
 #define KEY_BUTTON_MOTION_VIRTUAL	(KEY|BUTTON|MOTION|VIRTUAL)
 #define KEY_BUTTON_MOTION_CROSSING	(KEY|BUTTON|MOTION|VIRTUAL|CROSSING)
 
-static int flagArray[TK_LASTEVENT] = {
+static const int flagArray[TK_LASTEVENT] = {
    /* Not used */		0,
    /* Not used */		0,
    /* KeyPress */		KEY,
@@ -587,11 +617,11 @@ static int flagArray[TK_LASTEVENT] = {
  */
 
 static const TkStateMap queuePosition[] = {
-    {-1,			"now"},
-    {TCL_QUEUE_HEAD,		"head"},
-    {TCL_QUEUE_MARK,		"mark"},
-    {TCL_QUEUE_TAIL,		"tail"},
-    {-2,			NULL}
+    {-1,		"now"},
+    {TCL_QUEUE_HEAD,	"head"},
+    {TCL_QUEUE_MARK,	"mark"},
+    {TCL_QUEUE_TAIL,	"tail"},
+    {-2,		NULL}
 };
 
 /*
@@ -622,8 +652,8 @@ static const TkStateMap notifyDetail[] = {
 };
 
 static const TkStateMap circPlace[] = {
-    {PlaceOnTop,		"PlaceOnTop"},
-    {PlaceOnBottom,		"PlaceOnBottom"},
+    {PlaceOnTop,	"PlaceOnTop"},
+    {PlaceOnBottom,	"PlaceOnBottom"},
     {-1, NULL}
 };
 
@@ -635,12 +665,12 @@ static const TkStateMap visNotify[] = {
 };
 
 static const TkStateMap configureRequestDetail[] = {
-    {TkNone,		"None"},
-    {Above,		"Above"},
-    {Below,		"Below"},
-    {BottomIf,		"BottomIf"},
-    {TopIf,		"TopIf"},
-    {Opposite,		"Opposite"},
+    {None,	"None"},
+    {Above,	"Above"},
+    {Below,	"Below"},
+    {BottomIf,	"BottomIf"},
+    {TopIf,	"TopIf"},
+    {Opposite,	"Opposite"},
     {-1, NULL}
 };
 
@@ -650,57 +680,516 @@ static const TkStateMap propNotify[] = {
     {-1, NULL}
 };
 
+DEBUG(static int countTableItems = 0;)
+DEBUG(static int countEntryItems = 0;)
+DEBUG(static int countListItems = 0;)
+DEBUG(static int countBindItems = 0;)
+DEBUG(static int countSeqItems = 0;)
+
 /*
  * Prototypes for local functions defined in this file:
  */
 
-static void		ChangeScreen(Tcl_Interp *interp, char *dispName,
-			    int screenIndex);
-static int		CreateVirtualEvent(Tcl_Interp *interp,
-			    VirtualEventTable *vetPtr, char *virtString,
-			    char *eventString);
-static int		DeleteVirtualEvent(Tcl_Interp *interp,
-			    VirtualEventTable *vetPtr, char *virtString,
-			    char *eventString);
+static void		ChangeScreen(Tcl_Interp *interp, char *dispName, int screenIndex);
+static int		CreateVirtualEvent(Tcl_Interp *interp, VirtualEventTable *vetPtr,
+			    char *virtString, const char *eventString);
+static int		DeleteVirtualEvent(Tcl_Interp *interp, VirtualEventTable *vetPtr,
+			    char *virtString, const char *eventString);
 static void		DeleteVirtualEventTable(VirtualEventTable *vetPtr);
-static void		ExpandPercents(TkWindow *winPtr, const char *before,
-			    XEvent *eventPtr,KeySym keySym,
-			    unsigned int scriptCount, Tcl_DString *dsPtr);
-static void		FreeTclBinding(ClientData clientData);
-static PatSeq *		FindSequence(Tcl_Interp *interp,
-			    Tcl_HashTable *patternTablePtr, ClientData object,
-			    const char *eventString, int create,
-			    int allowVirtual, unsigned long *maskPtr);
-static void		GetAllVirtualEvents(Tcl_Interp *interp,
-			    VirtualEventTable *vetPtr);
-static char *		GetField(char *p, char *copy, int size);
-static void		GetPatternString(PatSeq *psPtr, Tcl_DString *dsPtr);
-static int		GetVirtualEvent(Tcl_Interp *interp,
-			    VirtualEventTable *vetPtr, char *virtString);
-static Tk_Uid		GetVirtualEventUid(Tcl_Interp *interp,
-			    char *virtString);
+static void		ExpandPercents(TkWindow *winPtr, const char *before, Event *eventPtr,
+			    unsigned scriptCount, Tcl_DString *dsPtr);
+static PatSeq *		FindSequence(Tcl_Interp *interp, LookupTables *lookupTables,
+			    ClientData object, const char *eventString, int create,
+			    int allowVirtual, EventMask *maskPtr);
+static void		GetAllVirtualEvents(Tcl_Interp *interp, VirtualEventTable *vetPtr);
+static const char *	GetField(const char *p, char *copy, unsigned size);
+static Tcl_Obj *	GetPatternObj(const PatSeq *psPtr);
+static int		GetVirtualEvent(Tcl_Interp *interp, VirtualEventTable *vetPtr,
+			    Tcl_Obj *virtName);
+static Tk_Uid		GetVirtualEventUid(Tcl_Interp *interp, char *virtString);
 static int		HandleEventGenerate(Tcl_Interp *interp, Tk_Window main,
 			    int objc, Tcl_Obj *const objv[]);
 static void		InitVirtualEventTable(VirtualEventTable *vetPtr);
-static PatSeq *		MatchPatterns(TkDisplay *dispPtr,
-			    BindingTable *bindPtr, PatSeq *psPtr,
-			    PatSeq *bestPtr, ClientData *objectPtr,
-			    PatSeq **sourcePtrPtr);
+static PatSeq *		MatchPatterns(TkDisplay *dispPtr, Tk_BindingTable bindPtr, PSList *psList,
+			    PSList *psSuccList, unsigned patIndex, const Event *eventPtr,
+			    ClientData object, PatSeq **physPtrPtr);
 static int		NameToWindow(Tcl_Interp *interp, Tk_Window main,
 			    Tcl_Obj *objPtr, Tk_Window *tkwinPtr);
-static int		ParseEventDescription(Tcl_Interp *interp,
-			    const char **eventStringPtr, TkPattern *patPtr,
-			    unsigned long *eventMaskPtr);
+static unsigned		ParseEventDescription(Tcl_Interp *interp, const char **eventStringPtr,
+			    TkPattern *patPtr, EventMask *eventMaskPtr);
 static void		DoWarp(ClientData clientData);
-
+static PSList *		GetLookupForEvent(LookupTables* lookupPtr, const Event *eventPtr,
+			    Tcl_Obj *object, int onlyConsiderDetailedEvents);
+static void		ClearLookupTable(LookupTables *lookupTables, ClientData object);
+static void		ClearPromotionLists(Tk_BindingTable bindPtr, ClientData object);
+static PSEntry *	MakeListEntry(PSList *pool, PatSeq *psPtr, int needModMasks);
+static void		RemovePatSeqFromLookup(LookupTables *lookupTables, PatSeq *psPtr);
+static void		RemovePatSeqFromPromotionLists(Tk_BindingTable bindPtr, PatSeq *psPtr);
+static PatSeq *		DeletePatSeq(PatSeq *psPtr);
+static void		InsertPatSeq(LookupTables *lookupTables, PatSeq *psPtr);
+#if SUPPORT_DEBUGGING
+void			TkpDumpPS(const PatSeq *psPtr);
+void			TkpDumpPSList(const PSList *psList);
+#endif
+
 /*
- * The following define is used as a short circuit for the callback function
- * to evaluate a TclBinding. The actual evaluation of the binding is handled
- * inline, because special things have to be done with a Tcl binding before
- * evaluation time.
+ * Some useful helper functions.
+ */
+#ifdef SUPPORT_DEBUGGING
+static int BindCount = 0;
+#endif
+
+static unsigned Max(unsigned a, unsigned b) { return a < b ? b : a; }
+static int Abs(int n) { return n < 0 ? -n : n; }
+static int IsOdd(int n) { return n & 1; }
+
+static int TestNearbyTime(int lhs, int rhs) { return Abs(lhs - rhs) <= NEARBY_MS; }
+static int TestNearbyCoords(int lhs, int rhs) { return Abs(lhs - rhs) <= NEARBY_PIXELS; }
+
+static int
+IsSubsetOf(
+    ModMask lhsMask,	/* this is a subset */
+    ModMask rhsMask)	/* of this bit field? */
+{
+    return (lhsMask & rhsMask) == lhsMask;
+}
+
+static const char*
+SkipSpaces(
+    const char* s)
+{
+    assert(s);
+    while (isspace(UCHAR(*s)))
+	++s;
+    return s;
+}
+
+static const char*
+SkipFieldDelims(
+    const char* s)
+{
+    assert(s);
+    while (*s == '-' || isspace(UCHAR(*s))) {
+	++s;
+    }
+    return s;
+}
+
+static unsigned
+GetButtonNumber(
+    const char *field)
+{
+    assert(field);
+    return (field[0] >= '1' && field[0] <= '5' && field[1] == '\0') ? field[0] - '0' : 0;
+}
+
+static Time
+CurrentTimeInMilliSecs()
+{
+    Tcl_Time now;
+    Tcl_GetTime(&now);
+    return ((Time) now.sec)*1000 + ((Time) now.usec)/1000;
+}
+
+static Info
+GetInfo(
+    const PatSeq *psPtr,
+    unsigned index)
+{
+    assert(psPtr);
+    assert(index < psPtr->numPats);
+
+    return psPtr->pats[index].info;
+}
+
+static unsigned
+GetCount(
+    const PatSeq *psPtr,
+    unsigned index)
+{
+    assert(psPtr);
+    assert(index < psPtr->numPats);
+
+    return psPtr->pats[index].count;
+}
+
+static int
+CountSpecialized(
+    const PatSeq *fstMatchPtr,
+    const PatSeq *sndMatchPtr)
+{
+    int fstCount = 0;
+    int sndCount = 0;
+    unsigned i;
+
+    assert(fstMatchPtr);
+    assert(sndMatchPtr);
+
+    for (i = 0; i < fstMatchPtr->numPats; ++i) {
+	if (GetInfo(fstMatchPtr, i)) { fstCount += GetCount(fstMatchPtr, i); }
+    }
+    for (i = 0; i < sndMatchPtr->numPats; ++i) {
+	if (GetInfo(sndMatchPtr, i)) { sndCount += GetCount(sndMatchPtr, i); }
+    }
+
+    return sndCount - fstCount;
+}
+
+static int
+MatchEventNearby(
+    const XEvent *lhs,	/* previous button event */
+    const XEvent *rhs)	/* current button event */
+{
+    assert(lhs);
+    assert(rhs);
+    assert(lhs->type == ButtonPress || lhs->type == ButtonRelease);
+    assert(lhs->type == rhs->type);
+
+    /* assert: lhs->xbutton.time <= rhs->xbutton.time */
+
+    return TestNearbyTime(rhs->xbutton.time, lhs->xbutton.time)
+	    && TestNearbyCoords(rhs->xbutton.x_root, lhs->xbutton.x_root)
+	    && TestNearbyCoords(rhs->xbutton.y_root, lhs->xbutton.y_root);
+}
+
+static int
+MatchEventRepeat(
+    const XEvent *lhs,	/* previous key event */
+    const XEvent *rhs)	/* current key event */
+{
+    assert(lhs);
+    assert(rhs);
+    assert(lhs->type == KeyPress || lhs->type == KeyRelease);
+    assert(lhs->type == rhs->type);
+
+    /* assert: lhs->xkey.time <= rhs->xkey.time */
+    return TestNearbyTime(rhs->xkey.time, lhs->xkey.time);
+}
+
+static void
+FreePatSeq(
+    PatSeq *psPtr)
+{
+    assert(psPtr);
+    assert(!psPtr->owned);
+    DEBUG(MARK_PSENTRY(psPtr);)
+    ckfree(psPtr->script);
+    if (!psPtr->object) {
+	VirtOwners_Free(&psPtr->ptr.owners);
+    }
+    ckfree(psPtr);
+    DEBUG(countSeqItems -= 1;)
+}
+
+static void
+RemoveListEntry(
+    PSList *pool,
+    PSEntry *psEntry)
+{
+    assert(pool);
+    assert(psEntry);
+
+    if (PSModMaskArr_Capacity(psEntry->lastModMaskArr) > MAX_MOD_MASK_ARR_SIZE) {
+	PSModMaskArr_Free(&psEntry->lastModMaskArr);
+    }
+    PSList_Remove(psEntry);
+    PSList_Append(pool, psEntry);
+}
+
+static void
+ClearList(
+    PSList *psList,
+    PSList *pool,
+    ClientData object)
+{
+    assert(psList);
+    assert(pool);
+
+    if (object) {
+	PSEntry *psEntry;
+	PSEntry *psNext;
+
+	for (psEntry = PSList_First(psList); psEntry; psEntry = psNext) {
+	    psNext = PSList_Next(psEntry);
+	    if (psEntry->psPtr->object == object) {
+		RemoveListEntry(pool, psEntry);
+	    }
+	}
+    } else {
+	PSList_Move(pool, psList);
+    }
+}
+
+static PSEntry *
+FreePatSeqEntry(
+    PSList *pool,
+    PSEntry *entry)
+{
+    PSEntry *next = PSList_Next(entry);
+    PSModMaskArr_Free(&entry->lastModMaskArr);
+    ckfree(entry);
+    return next;
+}
+
+static unsigned
+ResolveModifiers(
+    TkDisplay *dispPtr,
+    unsigned modMask)
+{
+    assert(dispPtr);
+
+    if (dispPtr->metaModMask) {
+	if (modMask & META_MASK) {
+	    modMask &= ~(ModMask)META_MASK;
+	    modMask |= dispPtr->metaModMask;
+	}
+    }
+    if (dispPtr->altModMask) {
+	if (modMask & ALT_MASK) {
+	    modMask &= ~(ModMask)ALT_MASK;
+	    modMask |= dispPtr->altModMask;
+	}
+    }
+
+    return modMask;
+}
+
+static int
+ButtonNumberFromState(
+    unsigned state)
+{
+    if (!(state & ALL_BUTTONS)) { return 0; }
+    if (state & Button1Mask) { return 1; }
+    if (state & Button2Mask) { return 2; }
+    if (state & Button3Mask) { return 3; }
+    if (state & Button4Mask) { return 4; }
+    return 5;
+}
+
+static void
+SetupPatternKey(
+    PatternTableKey *key,
+    const PatSeq *psPtr)
+{
+    const TkPattern *patPtr;
+
+    assert(key);
+    assert(psPtr);
+
+    /* otherwise on some systems the key contains uninitialized bytes */
+    memset(key, 0, sizeof(PatternTableKey));
+
+    patPtr = psPtr->pats;
+    assert(!patPtr->info || !patPtr->name);
+
+    key->object = psPtr->object;
+    key->type = patPtr->eventType;
+    if (patPtr->info) {
+	key->detail.info = patPtr->info;
+    } else {
+	key->detail.name = patPtr->name;
+    }
+}
+
+/*
+ *--------------------------------------------------------------
+ *
+ * MakeListEntry --
+ *
+ *	Makes new entry item for lookup table. We are using a
+ *	pool of items, this avoids superfluous memory allocation/
+ *	deallocation.
+ *
+ * Results:
+ *	New entry item.
+ *
+ * Side effects:
+ *	Memory allocated.
+ *
+ *--------------------------------------------------------------
  */
 
-#define EvalTclBinding	((TkBindEvalProc *) 1)
+static PSEntry *
+MakeListEntry(
+    PSList *pool,
+    PatSeq *psPtr,
+    int needModMasks)
+{
+    PSEntry *newEntry = NULL;
+
+    assert(pool);
+    assert(psPtr);
+    assert(psPtr->numPats > 0);
+    assert(TEST_PSENTRY(psPtr));
+
+    if (PSList_IsEmpty(pool)) {
+	newEntry = ckalloc(sizeof(PSEntry));
+	newEntry->lastModMaskArr = NULL;
+	DEBUG(countEntryItems += 1;)
+    } else {
+	newEntry = PSList_First(pool);
+	PSList_RemoveHead(pool);
+    }
+
+    if (!needModMasks) {
+	PSModMaskArr_SetSize(newEntry->lastModMaskArr, 0);
+    } else {
+	if (PSModMaskArr_Capacity(newEntry->lastModMaskArr) < psPtr->numPats - 1) {
+	    PSModMaskArr_Resize(&newEntry->lastModMaskArr, psPtr->numPats - 1);
+	}
+	PSModMaskArr_SetSize(newEntry->lastModMaskArr, psPtr->numPats - 1);
+    }
+
+    newEntry->psPtr = psPtr;
+    newEntry->window = None;
+    newEntry->expired = 0;
+    newEntry->keepIt = 1;
+    newEntry->count = 1;
+    DEBUG(psPtr->owned = 0;)
+
+    return newEntry;
+}
+
+/*
+ *--------------------------------------------------------------
+ *
+ * GetLookupForEvent --
+ *
+ *	Get specific pattern sequence table for given event.
+ *
+ * Results:
+ *	Specific pattern sequence table for given event.
+ *
+ * Side effects:
+ *	None.
+ *
+ *--------------------------------------------------------------
+ */
+
+static PSList *
+GetLookupForEvent(
+    LookupTables* lookupTables,
+    const Event *eventPtr,
+    Tcl_Obj *object,
+    int onlyConsiderDetailedEvents)
+{
+    PatternTableKey key;
+    Tcl_HashEntry *hPtr;
+
+    assert(lookupTables);
+    assert(eventPtr);
+
+    /* otherwise on some systems the key contains uninitialized bytes */
+    memset(&key, 0, sizeof(PatternTableKey));
+
+    if (onlyConsiderDetailedEvents) {
+	switch (eventPtr->xev.type) {
+	case ButtonPress:   /* fallthru */
+	case ButtonRelease: key.detail.info = eventPtr->xev.xbutton.button; break;
+	case MotionNotify:  key.detail.info = ButtonNumberFromState(eventPtr->xev.xmotion.state); break;
+	case KeyPress:      /* fallthru */
+	case KeyRelease:    key.detail.info = eventPtr->detail.info; break;
+	case VirtualEvent:  key.detail.name = eventPtr->detail.name; break;
+	}
+	if (!key.detail.name) {
+	    assert(!key.detail.info);
+	    return NULL;
+	}
+    }
+
+    key.object = object;
+    key.type = eventPtr->xev.type;
+    hPtr = Tcl_FindHashEntry(&lookupTables->listTable, (char *) &key);
+    return hPtr ? Tcl_GetHashValue(hPtr) : NULL;
+}
+
+/*
+ *--------------------------------------------------------------
+ *
+ * ClearLookupTable --
+ *
+ *	Clear lookup table in given binding table, but only those
+ *	bindings associated to given object. If object is NULL
+ *	then remove all entries.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	None.
+ *
+ *--------------------------------------------------------------
+ */
+static void
+ClearLookupTable(
+    LookupTables *lookupTables,
+    ClientData object)
+{
+    Tcl_HashSearch search;
+    Tcl_HashEntry *hPtr;
+    Tcl_HashEntry *nextPtr;
+    PSList *pool = &lookupTables->entryPool;
+
+    assert(lookupTables);
+
+    for (hPtr = Tcl_FirstHashEntry(&lookupTables->listTable, &search); hPtr; hPtr = nextPtr) {
+	PSList *psList;
+
+	nextPtr = Tcl_NextHashEntry(&search);
+
+	if (object) {
+	    const PatternTableKey *key = Tcl_GetHashKey(&lookupTables->listTable, hPtr);
+	    if (key->object != object) {
+		continue;
+	    }
+	    Tcl_DeleteHashEntry(hPtr);
+	}
+
+	psList = Tcl_GetHashValue(hPtr);
+	PSList_Move(pool, psList);
+	ckfree(psList);
+	DEBUG(countListItems -= 1;)
+    }
+}
+
+/*
+ *--------------------------------------------------------------
+ *
+ * ClearPromotionLists --
+ *
+ *	Clear all the lists holding the promoted pattern
+ *	sequences, which belongs to given object. If object
+ *	is NULL then remove all patterns.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	None.
+ *
+ *--------------------------------------------------------------
+ */
+
+static void
+ClearPromotionLists(
+    Tk_BindingTable bindPtr,
+    ClientData object)
+{
+    unsigned newArraySize = 0;
+    unsigned i;
+
+    assert(bindPtr);
+
+    for (i = 0; i < PromArr_Size(bindPtr->promArr); ++i) {
+	PSList *psList = PromArr_Get(bindPtr->promArr, i);
+	ClearList(psList, &bindPtr->lookupTables.entryPool, object);
+	if (!PSList_IsEmpty(psList)) {
+	    newArraySize = i + 1;
+	}
+    }
+
+    PromArr_SetSize(bindPtr->promArr, newArraySize);
+}
 
 /*
  *---------------------------------------------------------------------------
@@ -720,15 +1209,96 @@ static void		DoWarp(ClientData clientData);
  *---------------------------------------------------------------------------
  */
 
+/*
+ * Windoze compiler does not allow the definition of these static variables inside a function,
+ * otherwise this should belong to function TkBindInit().
+ */
+TCL_DECLARE_MUTEX(bindMutex);
+static int initialized = 0;
+
 void
 TkBindInit(
     TkMainInfo *mainPtr)	/* The newly created application. */
 {
     BindInfo *bindInfoPtr;
 
-    if (sizeof(XEvent) < sizeof(XVirtualEvent)) {
-	Tcl_Panic("TkBindInit: virtual events can't be supported");
-    }
+    assert(mainPtr);
+
+    /* otherwise virtual events can't be supported */
+    assert(sizeof(XEvent) >= sizeof(XVirtualEvent));
+
+    /* type of TkPattern.info is well defined? */
+    assert(sizeof(Info) >= sizeof(KeySym));
+    assert(sizeof(Info) >= sizeof(unsigned));
+
+    /* ensure that our matching algorithm is working (when testing detail) */
+    assert(sizeof(Detail) == sizeof(Tk_Uid));
+
+    /* test that constant NO_NUMBER is indeed out of integer range */
+    assert(sizeof(NO_NUMBER) > sizeof(int));
+    assert(((int) NO_NUMBER) == 0 && NO_NUMBER != 0);
+
+    /* test expected indices of Button1..Button5, otherwise our button handling is not working */
+    assert(Button1 == 1 && Button2 == 2 && Button3 == 3 && Button4 == 4 && Button5 == 5);
+    assert(Button2Mask == (Button1Mask << 1));
+    assert(Button3Mask == (Button1Mask << 2));
+    assert(Button4Mask == (Button1Mask << 3));
+    assert(Button5Mask == (Button1Mask << 4));
+
+    /* test expected values of button motion masks, otherwise our button handling is not working */
+    assert(Button1MotionMask == Button1Mask);
+    assert(Button2MotionMask == Button2Mask);
+    assert(Button3MotionMask == Button3Mask);
+    assert(Button4MotionMask == Button4Mask);
+    assert(Button5MotionMask == Button5Mask);
+
+    /* because we expect zero if keySym is empty */
+    assert(NoSymbol == 0L);
+
+    /* this must be a union, not a struct, otherwise comparison with NULL will not work */
+    assert(Tk_Offset(Detail, name) == Tk_Offset(Detail, info));
+
+    /* we use some constraints about X*Event */
+    assert(Tk_Offset(XButtonEvent, time) == Tk_Offset(XMotionEvent, time));
+    assert(Tk_Offset(XButtonEvent, x_root) == Tk_Offset(XMotionEvent, x_root));
+    assert(Tk_Offset(XButtonEvent, y_root) == Tk_Offset(XMotionEvent, y_root));
+    assert(Tk_Offset(XCreateWindowEvent, border_width) == Tk_Offset(XConfigureEvent, border_width));
+    assert(Tk_Offset(XCreateWindowEvent, width) == Tk_Offset(XConfigureEvent, width));
+    assert(Tk_Offset(XCreateWindowEvent, window) == Tk_Offset(XCirculateRequestEvent, window));
+    assert(Tk_Offset(XCreateWindowEvent, window) == Tk_Offset(XConfigureEvent, window));
+    assert(Tk_Offset(XCreateWindowEvent, window) == Tk_Offset(XGravityEvent, window));
+    assert(Tk_Offset(XCreateWindowEvent, window) == Tk_Offset(XMapEvent, window));
+    assert(Tk_Offset(XCreateWindowEvent, window) == Tk_Offset(XReparentEvent, window));
+    assert(Tk_Offset(XCreateWindowEvent, window) == Tk_Offset(XUnmapEvent, window));
+    assert(Tk_Offset(XCreateWindowEvent, x) == Tk_Offset(XConfigureEvent, x));
+    assert(Tk_Offset(XCreateWindowEvent, x) == Tk_Offset(XGravityEvent, x));
+    assert(Tk_Offset(XCreateWindowEvent, y) == Tk_Offset(XConfigureEvent, y));
+    assert(Tk_Offset(XCreateWindowEvent, y) == Tk_Offset(XGravityEvent, y));
+    assert(Tk_Offset(XCrossingEvent, time) == Tk_Offset(XEnterWindowEvent, time));
+    assert(Tk_Offset(XCrossingEvent, time) == Tk_Offset(XLeaveWindowEvent, time));
+    assert(Tk_Offset(XCrossingEvent, time) == Tk_Offset(XKeyEvent, time));
+    assert(Tk_Offset(XKeyEvent, root) == Tk_Offset(XButtonEvent, root));
+    assert(Tk_Offset(XKeyEvent, root) == Tk_Offset(XCrossingEvent, root));
+    assert(Tk_Offset(XKeyEvent, root) == Tk_Offset(XMotionEvent, root));
+    assert(Tk_Offset(XKeyEvent, state) == Tk_Offset(XButtonEvent, state));
+    assert(Tk_Offset(XKeyEvent, state) == Tk_Offset(XMotionEvent, state));
+    assert(Tk_Offset(XKeyEvent, subwindow) == Tk_Offset(XButtonEvent, subwindow));
+    assert(Tk_Offset(XKeyEvent, subwindow) == Tk_Offset(XCrossingEvent, subwindow));
+    assert(Tk_Offset(XKeyEvent, subwindow) == Tk_Offset(XMotionEvent, subwindow));
+    assert(Tk_Offset(XKeyEvent, time) == Tk_Offset(XButtonEvent, time));
+    assert(Tk_Offset(XKeyEvent, time) == Tk_Offset(XMotionEvent, time));
+    assert(Tk_Offset(XKeyEvent, x) == Tk_Offset(XButtonEvent, x));
+    assert(Tk_Offset(XKeyEvent, x) == Tk_Offset(XCrossingEvent, x));
+    assert(Tk_Offset(XKeyEvent, x) == Tk_Offset(XMotionEvent, x));
+    assert(Tk_Offset(XKeyEvent, x_root) == Tk_Offset(XButtonEvent, x_root));
+    assert(Tk_Offset(XKeyEvent, x_root) == Tk_Offset(XCrossingEvent, x_root));
+    assert(Tk_Offset(XKeyEvent, x_root) == Tk_Offset(XMotionEvent, x_root));
+    assert(Tk_Offset(XKeyEvent, y) == Tk_Offset(XButtonEvent, y));
+    assert(Tk_Offset(XKeyEvent, y) == Tk_Offset(XCrossingEvent, y));
+    assert(Tk_Offset(XKeyEvent, y) == Tk_Offset(XMotionEvent, y));
+    assert(Tk_Offset(XKeyEvent, y_root) == Tk_Offset(XButtonEvent, y_root));
+    assert(Tk_Offset(XKeyEvent, y_root) == Tk_Offset(XCrossingEvent, y_root));
+    assert(Tk_Offset(XKeyEvent, y_root) == Tk_Offset(XMotionEvent, y_root));
 
     /*
      * Initialize the static data structures used by the binding package. They
@@ -739,36 +1309,49 @@ TkBindInit(
 	Tcl_MutexLock(&bindMutex);
 	if (!initialized) {
 	    Tcl_HashEntry *hPtr;
-	    ModInfo *modPtr;
-	    EventInfo *eiPtr;
+	    const ModInfo *modPtr;
+	    const EventInfo *eiPtr;
 	    int newEntry;
+	    unsigned i;
 #ifdef REDO_KEYSYM_LOOKUP
-	    KeySymInfo *kPtr;
+	    const KeySymInfo *kPtr;
 
 	    Tcl_InitHashTable(&keySymTable, TCL_STRING_KEYS);
 	    Tcl_InitHashTable(&nameTable, TCL_ONE_WORD_KEYS);
-	    for (kPtr = keyArray; kPtr->name != NULL; kPtr++) {
+	    for (kPtr = keyArray; kPtr->name; ++kPtr) {
 		hPtr = Tcl_CreateHashEntry(&keySymTable, kPtr->name, &newEntry);
 		Tcl_SetHashValue(hPtr, kPtr->value);
-		hPtr = Tcl_CreateHashEntry(&nameTable, (char *) kPtr->value,
-			&newEntry);
+		hPtr = Tcl_CreateHashEntry(&nameTable, (char *) kPtr->value, &newEntry);
 		if (newEntry) {
 		    Tcl_SetHashValue(hPtr, kPtr->name);
 		}
 	    }
 #endif /* REDO_KEYSYM_LOOKUP */
 
+	    for (i = 0; i < SIZE_OF_ARRAY(eventArrayIndex); ++i) {
+		eventArrayIndex[i] = -1;
+	    }
+	    for (i = 0; i < SIZE_OF_ARRAY(eventArray); ++i) {
+		unsigned type = eventArray[i].type;
+		assert(type < TK_LASTEVENT);
+		assert(type > 0 || i == SIZE_OF_ARRAY(eventArray) - 1);
+		if (type > 0 && eventArrayIndex[type] == -1) {
+		    eventArrayIndex[type] = i;
+		}
+	    }
+
 	    Tcl_InitHashTable(&modTable, TCL_STRING_KEYS);
-	    for (modPtr = modArray; modPtr->name != NULL; modPtr++) {
+	    for (modPtr = modArray; modPtr->name; ++modPtr) {
 		hPtr = Tcl_CreateHashEntry(&modTable, modPtr->name, &newEntry);
 		Tcl_SetHashValue(hPtr, modPtr);
 	    }
 
 	    Tcl_InitHashTable(&eventTable, TCL_STRING_KEYS);
-	    for (eiPtr = eventArray; eiPtr->name != NULL; eiPtr++) {
+	    for (eiPtr = eventArray; eiPtr->name; ++eiPtr) {
 		hPtr = Tcl_CreateHashEntry(&eventTable, eiPtr->name, &newEntry);
 		Tcl_SetHashValue(hPtr, eiPtr);
 	    }
+
 	    initialized = 1;
 	}
 	Tcl_MutexUnlock(&bindMutex);
@@ -776,14 +1359,16 @@ TkBindInit(
 
     mainPtr->bindingTable = Tk_CreateBindingTable(mainPtr->interp);
 
-    bindInfoPtr = (BindInfo *) ckalloc(sizeof(BindInfo));
+    bindInfoPtr = ckalloc(sizeof(BindInfo));
     InitVirtualEventTable(&bindInfoPtr->virtualEventTable);
     bindInfoPtr->screenInfo.curDispPtr = NULL;
     bindInfoPtr->screenInfo.curScreenIndex = -1;
     bindInfoPtr->screenInfo.bindingDepth = 0;
-    bindInfoPtr->pendingList = NULL;
     bindInfoPtr->deleted = 0;
-    mainPtr->bindInfo = (TkBindInfo) bindInfoPtr;
+    bindInfoPtr->lastCurrentTime = CurrentTimeInMilliSecs();
+    bindInfoPtr->lastEventTime = 0;
+    mainPtr->bindInfo = bindInfoPtr;
+    DEBUG(countBindItems += 1;)
 
     TkpInitializeMenuBindings(mainPtr->interp, mainPtr->bindingTable);
 }
@@ -811,14 +1396,21 @@ TkBindFree(
 {
     BindInfo *bindInfoPtr;
 
+    assert(mainPtr);
+
     Tk_DeleteBindingTable(mainPtr->bindingTable);
     mainPtr->bindingTable = NULL;
-
-    bindInfoPtr = (BindInfo *) mainPtr->bindInfo;
+    bindInfoPtr = mainPtr->bindInfo;
     DeleteVirtualEventTable(&bindInfoPtr->virtualEventTable);
     bindInfoPtr->deleted = 1;
-    Tcl_EventuallyFree((ClientData) bindInfoPtr, TCL_DYNAMIC);
+    Tcl_EventuallyFree(bindInfoPtr, TCL_DYNAMIC);
     mainPtr->bindInfo = NULL;
+
+    DEBUG(countBindItems -= 1;)
+    assert(countBindItems > 0 || countTableItems == 0);
+    assert(countBindItems > 0 || countEntryItems == 0);
+    assert(countBindItems > 0 || countListItems == 0);
+    assert(countBindItems > 0 || countSeqItems == 0);
 }
 
 /*
@@ -840,27 +1432,31 @@ TkBindFree(
 
 Tk_BindingTable
 Tk_CreateBindingTable(
-    Tcl_Interp *interp)		/* Interpreter to associate with the binding
-				 * table: commands are executed in this
-				 * interpreter. */
+    Tcl_Interp *interp)		/* Interpreter to associate with the binding table: commands are
+    				 * executed in this interpreter. */
 {
-    BindingTable *bindPtr;
-    int i;
+    BindingTable *bindPtr = ckalloc(sizeof(BindingTable));
+    unsigned i;
+
+    assert(interp);
+    DEBUG(countTableItems += 1;)
 
     /*
      * Create and initialize a new binding table.
      */
 
-    bindPtr = (BindingTable *) ckalloc(sizeof(BindingTable));
-    for (i = 0; i < EVENT_BUFFER_SIZE; i++) {
-	bindPtr->eventRing[i].type = -1;
+    memset(bindPtr, 0, sizeof(BindingTable));
+    for (i = 0; i < SIZE_OF_ARRAY(bindPtr->eventInfo); ++i) {
+	bindPtr->eventInfo[i].xev.type = -1;
     }
-    bindPtr->curEvent = 0;
-    Tcl_InitHashTable(&bindPtr->patternTable,
-	    sizeof(PatternTableKey)/sizeof(int));
+    bindPtr->curEvent = bindPtr->eventInfo; /* do not assign NULL */
+    bindPtr->lookupTables.number = 0;
+    PromArr_ResizeAndClear(&bindPtr->promArr, 2);
+    Tcl_InitHashTable(&bindPtr->lookupTables.listTable, sizeof(PatternTableKey)/sizeof(int));
+    Tcl_InitHashTable(&bindPtr->lookupTables.patternTable, sizeof(PatternTableKey)/sizeof(int));
     Tcl_InitHashTable(&bindPtr->objectTable, TCL_ONE_WORD_KEYS);
     bindPtr->interp = interp;
-    return (Tk_BindingTable) bindPtr;
+    return bindPtr;
 }
 
 /*
@@ -882,42 +1478,102 @@ Tk_CreateBindingTable(
 
 void
 Tk_DeleteBindingTable(
-    Tk_BindingTable bindingTable)
-				/* Token for the binding table to destroy. */
+    Tk_BindingTable bindPtr)	/* Token for the binding table to destroy. */
 {
-    BindingTable *bindPtr = (BindingTable *) bindingTable;
-    PatSeq *psPtr, *nextPtr;
     Tcl_HashEntry *hPtr;
     Tcl_HashSearch search;
+
+    assert(bindPtr);
 
     /*
      * Find and delete all of the patterns associated with the binding table.
      */
 
-    for (hPtr = Tcl_FirstHashEntry(&bindPtr->patternTable, &search);
-	    hPtr != NULL; hPtr = Tcl_NextHashEntry(&search)) {
-	for (psPtr = (PatSeq *) Tcl_GetHashValue(hPtr);
-		psPtr != NULL; psPtr = nextPtr) {
+    hPtr = Tcl_FirstHashEntry(&bindPtr->lookupTables.patternTable, &search);
+    for ( ; hPtr; hPtr = Tcl_NextHashEntry(&search)) {
+	PatSeq *nextPtr;
+	PatSeq *psPtr;
+
+	for (psPtr = Tcl_GetHashValue(hPtr); psPtr; psPtr = nextPtr) {
+	    assert(TEST_PSENTRY(psPtr));
 	    nextPtr = psPtr->nextSeqPtr;
-	    psPtr->flags |= MARKED_DELETED;
-	    if (psPtr->refCount == 0) {
-		if (psPtr->freeProc != NULL) {
-		    (*psPtr->freeProc)(psPtr->clientData);
-		}
-		ckfree((char *) psPtr);
-	    }
+	    FreePatSeq(psPtr);
 	}
     }
+
+    /*
+     * Don't forget to release lookup elements.
+     */
+
+    ClearLookupTable(&bindPtr->lookupTables, NULL);
+    ClearPromotionLists(bindPtr, NULL);
+    PromArr_Free(&bindPtr->promArr);
+    DEBUG(countEntryItems -= PSList_Size(&bindPtr->lookupTables.entryPool);)
+    PSList_Traverse(&bindPtr->lookupTables.entryPool, FreePatSeqEntry);
 
     /*
      * Clean up the rest of the information associated with the binding table.
      */
 
-    Tcl_DeleteHashTable(&bindPtr->patternTable);
+    Tcl_DeleteHashTable(&bindPtr->lookupTables.patternTable);
+    Tcl_DeleteHashTable(&bindPtr->lookupTables.listTable);
     Tcl_DeleteHashTable(&bindPtr->objectTable);
-    ckfree((char *) bindPtr);
+
+    ckfree(bindPtr);
+    DEBUG(countTableItems -= 1;)
 }
 
+/*
+ *--------------------------------------------------------------
+ *
+ * InsertPatSeq --
+ *
+ *	Insert given pattern sequence into lookup table for fast
+ *	access.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	Memory allocated.
+ *
+ *--------------------------------------------------------------
+ */
+
+static void
+InsertPatSeq(
+    LookupTables *lookupTables,
+    PatSeq *psPtr)
+{
+    assert(lookupTables);
+    assert(psPtr);
+    assert(TEST_PSENTRY(psPtr));
+    assert(psPtr->numPats >= 1u);
+
+    if (!(psPtr->added)) {
+	PatternTableKey key;
+	Tcl_HashEntry *hPtr;
+	int isNew;
+	PSList *psList;
+	PSEntry *psEntry;
+
+	SetupPatternKey(&key, psPtr);
+	hPtr = Tcl_CreateHashEntry(&lookupTables->listTable, (char *) &key, &isNew);
+
+	if (isNew) {
+	    psList = ckalloc(sizeof(PSList));
+	    PSList_Init(psList);
+	    Tcl_SetHashValue(hPtr, psList);
+	    DEBUG(countListItems += 1;)
+	} else {
+	    psList = Tcl_GetHashValue(hPtr);
+	}
+
+	psEntry = MakeListEntry(&lookupTables->entryPool, psPtr, 0);
+	PSList_Append(psList, psEntry);
+	psPtr->added = 1;
+    }
+}
 /*
  *--------------------------------------------------------------
  *
@@ -945,38 +1601,51 @@ Tk_DeleteBindingTable(
 unsigned long
 Tk_CreateBinding(
     Tcl_Interp *interp,		/* Used for error reporting. */
-    Tk_BindingTable bindingTable,
-				/* Table in which to create binding. */
-    ClientData object,		/* Token for object with which binding is
-				 * associated. */
-    const char *eventString,	/* String describing event sequence that
-				 * triggers binding. */
-    const char *command,	/* Contains Tcl command to execute when
-				 * binding triggers. */
-    int append)			/* 0 means replace any existing binding for
-				 * eventString; 1 means append to that
-				 * binding. If the existing binding is for a
-				 * callback function and not a Tcl command
-				 * string, the existing binding will always be
-				 * replaced. */
+    Tk_BindingTable bindPtr,	/* Table in which to create binding. */
+    ClientData object,		/* Token for object with which binding is associated. */
+    const char *eventString,	/* String describing event sequence that triggers binding. */
+    const char *script,		/* Contains Tcl script to execute when binding triggers. */
+    int append)		/* 0 means replace any existing binding for eventString;
+    				 * 1 means append to that binding. If the existing binding is
+				 * for a callback function and not a Tcl command string, the
+				 * existing binding will always be replaced. */
 {
-    BindingTable *bindPtr = (BindingTable *) bindingTable;
     PatSeq *psPtr;
-    unsigned long eventMask;
-    char *newStr, *oldStr;
+    EventMask eventMask;
+    char *oldStr;
+    char *newStr;
 
-    if (!*command) {
+    assert(bindPtr);
+    assert(object);
+    assert(eventString);
+    assert(script);
+
+    psPtr = FindSequence(interp, &bindPtr->lookupTables, object, eventString,
+	    !!*script, 1, &eventMask);
+
+    if (!*script) {
+	assert(!psPtr || psPtr->added);
 	/* Silently ignore empty scripts -- see SF#3006842 */
-	return 1;
+	return eventMask;
     }
-    psPtr = FindSequence(interp, &bindPtr->patternTable, object, eventString,
-	    1, 1, &eventMask);
-    if (psPtr == NULL) {
+    if (!psPtr) {
 	return 0;
     }
-    if (psPtr->eventProc == NULL) {
-	int isNew;
+    assert(TEST_PSENTRY(psPtr));
+
+    if (psPtr->numPats > PromArr_Capacity(bindPtr->promArr)) {
+	/*
+	 * We have to increase the size of array containing the lists of promoted sequences.
+	 * Normally the maximal size is 1, only in very seldom cases a bigger size is needed.
+	 * Note that for technical reasons the capacity should be one higher than the expected
+	 * maximal size.
+	 */
+	PromArr_ResizeAndClear(&bindPtr->promArr, psPtr->numPats);
+    }
+
+    if (!psPtr->script) {
 	Tcl_HashEntry *hPtr;
+	int isNew;
 
 	/*
 	 * This pattern sequence was just created. Link the pattern into the
@@ -984,125 +1653,29 @@ Tk_CreateBinding(
 	 * these bindings will all automatically be deleted.
 	 */
 
-	hPtr = Tcl_CreateHashEntry(&bindPtr->objectTable, (char *) object,
-		&isNew);
-	if (isNew) {
-	    psPtr->nextObjPtr = NULL;
-	} else {
-	    psPtr->nextObjPtr = (PatSeq *) Tcl_GetHashValue(hPtr);
-	}
+	hPtr = Tcl_CreateHashEntry(&bindPtr->objectTable, (char *) object, &isNew);
+	psPtr->ptr.nextObj = isNew ? NULL : Tcl_GetHashValue(hPtr);
 	Tcl_SetHashValue(hPtr, psPtr);
-    } else if (psPtr->eventProc != EvalTclBinding) {
-	/*
-	 * Free existing procedural binding.
-	 */
-
-	if (psPtr->freeProc != NULL) {
-	    (*psPtr->freeProc)(psPtr->clientData);
-	}
-	psPtr->clientData = NULL;
-	append = 0;
+	InsertPatSeq(&bindPtr->lookupTables, psPtr);
     }
 
-    oldStr = (char *) psPtr->clientData;
-    if ((append != 0) && (oldStr != NULL)) {
-	size_t length;
+    oldStr = psPtr->script;
+    if (append && oldStr) {
+	size_t length1 = strlen(oldStr);
+	size_t length2 = strlen(script);
 
-	length = strlen(oldStr) + strlen(command) + 2;
-	newStr = (char *) ckalloc((unsigned) length);
-	sprintf(newStr, "%s\n%s", oldStr, command);
+	newStr = ckalloc(length1 + length2 + 2);
+	memcpy(newStr, oldStr, length1);
+	newStr[length1] = '\n';
+	memcpy(newStr + length1 + 1, script, length2 + 1);
     } else {
-	newStr = (char *) ckalloc((unsigned) strlen(command) + 1);
-	strcpy(newStr, command);
+	size_t length = strlen(script);
+
+	newStr = ckalloc(length + 1);
+	memcpy(newStr, script, length + 1);
     }
-    if (oldStr != NULL) {
-	ckfree(oldStr);
-    }
-    psPtr->eventProc = EvalTclBinding;
-    psPtr->freeProc = FreeTclBinding;
-    psPtr->clientData = (ClientData) newStr;
-    return eventMask;
-}
-
-/*
- *---------------------------------------------------------------------------
- *
- * TkCreateBindingProcedure --
- *
- *	Add a C binding to a binding table, so that future calls to
- *	Tk_BindEvent may callback the function in the binding.
- *
- * Results:
-
- *	The return value is 0 if an error occurred while setting up the
- *	binding. In this case, an error message will be left in the interp's
- *	result. If all went well then the return value is a mask of the event
- *	types that must be made available to Tk_BindEvent in order to properly
- *	detect when this binding triggers. This value can be used to determine
- *	what events to select for in a window, for example.
- *
- * Side effects:
- *	Any existing binding on the same event sequence will be replaced.
- *
- *---------------------------------------------------------------------------
- */
-
-unsigned long
-TkCreateBindingProcedure(
-    Tcl_Interp *interp,		/* Used for error reporting. */
-    Tk_BindingTable bindingTable,
-				/* Table in which to create binding. */
-    ClientData object,		/* Token for object with which binding is
-				 * associated. */
-    const char *eventString,	/* String describing event sequence that
-				 * triggers binding. */
-    TkBindEvalProc *eventProc,	/* Function to invoke when binding triggers.
-				 * Must not be NULL. */
-    TkBindFreeProc *freeProc,	/* Function to invoke when binding is freed.
-				 * May be NULL for no function. */
-    ClientData clientData)	/* Arbitrary ClientData to pass to eventProc
-				 * and freeProc. */
-{
-    BindingTable *bindPtr = (BindingTable *) bindingTable;
-    PatSeq *psPtr;
-    unsigned long eventMask;
-
-    psPtr = FindSequence(interp, &bindPtr->patternTable, object, eventString,
-	    1, 1, &eventMask);
-    if (psPtr == NULL) {
-	return 0;
-    }
-    if (psPtr->eventProc == NULL) {
-	int isNew;
-	Tcl_HashEntry *hPtr;
-
-	/*
-	 * This pattern sequence was just created. Link the pattern into the
-	 * list associated with the object, so that if the object goes away,
-	 * these bindings will all automatically be deleted.
-	 */
-
-	hPtr = Tcl_CreateHashEntry(&bindPtr->objectTable, (char *) object,
-		&isNew);
-	if (isNew) {
-	    psPtr->nextObjPtr = NULL;
-	} else {
-	    psPtr->nextObjPtr = (PatSeq *) Tcl_GetHashValue(hPtr);
-	}
-	Tcl_SetHashValue(hPtr, psPtr);
-    } else {
-	/*
-	 * Free existing callback.
-	 */
-
-	if (psPtr->freeProc != NULL) {
-	    (*psPtr->freeProc)(psPtr->clientData);
-	}
-    }
-
-    psPtr->eventProc = eventProc;
-    psPtr->freeProc = freeProc;
-    psPtr->clientData = clientData;
+    ckfree(oldStr);
+    psPtr->script = newStr;
     return eventMask;
 }
 
@@ -1127,74 +1700,52 @@ TkCreateBindingProcedure(
 int
 Tk_DeleteBinding(
     Tcl_Interp *interp,		/* Used for error reporting. */
-    Tk_BindingTable bindingTable,
-				/* Table in which to delete binding. */
-    ClientData object,		/* Token for object with which binding is
-				 * associated. */
-    const char *eventString)	/* String describing event sequence that
-				 * triggers binding. */
+    Tk_BindingTable bindPtr,	/* Table in which to delete binding. */
+    ClientData object,		/* Token for object with which binding is associated. */
+    const char *eventString)	/* String describing event sequence that triggers binding. */
 {
-    BindingTable *bindPtr = (BindingTable *) bindingTable;
-    PatSeq *psPtr, *prevPtr;
-    unsigned long eventMask;
-    Tcl_HashEntry *hPtr;
+    PatSeq *psPtr;
 
-    psPtr = FindSequence(interp, &bindPtr->patternTable, object, eventString,
-	    0, 1, &eventMask);
-    if (psPtr == NULL) {
+    assert(bindPtr);
+    assert(object);
+    assert(eventString);
+
+    psPtr = FindSequence(interp, &bindPtr->lookupTables, object, eventString, 0, 1, NULL);
+    if (!psPtr) {
 	Tcl_ResetResult(interp);
-	return TCL_OK;
-    }
-
-    /*
-     * Unlink the binding from the list for its object, then from the list for
-     * its pattern.
-     */
-
-    hPtr = Tcl_FindHashEntry(&bindPtr->objectTable, (char *) object);
-    if (hPtr == NULL) {
-	Tcl_Panic("Tk_DeleteBinding couldn't find object table entry");
-    }
-    prevPtr = (PatSeq *) Tcl_GetHashValue(hPtr);
-    if (prevPtr == psPtr) {
-	Tcl_SetHashValue(hPtr, psPtr->nextObjPtr);
     } else {
-	for ( ; ; prevPtr = prevPtr->nextObjPtr) {
-	    if (prevPtr == NULL) {
-		Tcl_Panic("Tk_DeleteBinding couldn't find on object list");
-	    }
-	    if (prevPtr->nextObjPtr == psPtr) {
-		prevPtr->nextObjPtr = psPtr->nextObjPtr;
-		break;
-	    }
+	Tcl_HashEntry *hPtr;
+	PatSeq *prevPtr;
+
+	assert(TEST_PSENTRY(psPtr));
+
+	/*
+	 * Unlink the binding from the list for its object.
+	 */
+
+	if (!(hPtr = Tcl_FindHashEntry(&bindPtr->objectTable, (char *) object))) {
+	    Tcl_Panic("Tk_DeleteBinding couldn't find object table entry");
 	}
-    }
-    prevPtr = (PatSeq *) Tcl_GetHashValue(psPtr->hPtr);
-    if (prevPtr == psPtr) {
-	if (psPtr->nextSeqPtr == NULL) {
-	    Tcl_DeleteHashEntry(psPtr->hPtr);
+	prevPtr = Tcl_GetHashValue(hPtr);
+	if (prevPtr == psPtr) {
+	    Tcl_SetHashValue(hPtr, psPtr->ptr.nextObj);
 	} else {
-	    Tcl_SetHashValue(psPtr->hPtr, psPtr->nextSeqPtr);
-	}
-    } else {
-	for ( ; ; prevPtr = prevPtr->nextSeqPtr) {
-	    if (prevPtr == NULL) {
-		Tcl_Panic("Tk_DeleteBinding couldn't find on hash chain");
-	    }
-	    if (prevPtr->nextSeqPtr == psPtr) {
-		prevPtr->nextSeqPtr = psPtr->nextSeqPtr;
-		break;
+	    for ( ; ; prevPtr = prevPtr->ptr.nextObj) {
+		if (!prevPtr) {
+		    Tcl_Panic("Tk_DeleteBinding couldn't find on object list");
+		}
+		if (prevPtr->ptr.nextObj == psPtr) {
+		    prevPtr->ptr.nextObj = psPtr->ptr.nextObj;
+		    break;
+		}
 	    }
 	}
+
+	RemovePatSeqFromLookup(&bindPtr->lookupTables, psPtr);
+	RemovePatSeqFromPromotionLists(bindPtr, psPtr);
+	DeletePatSeq(psPtr);
     }
 
-    psPtr->flags |= MARKED_DELETED;
-    if (psPtr->refCount == 0) {
-	if (psPtr->freeProc != NULL) {
-	    (*psPtr->freeProc)(psPtr->clientData);
-	}
-	ckfree((char *) psPtr);
-    }
     return TCL_OK;
 }
 
@@ -1203,10 +1754,10 @@ Tk_DeleteBinding(
  *
  * Tk_GetBinding --
  *
- *	Return the command associated with a given event string.
+ *	Return the script associated with a given event string.
  *
  * Results:
- *	The return value is a pointer to the command string associated with
+ *	The return value is a pointer to the script associated with
  *	eventString for object in the domain given by bindingTable. If there
  *	is no binding for eventString, or if eventString is improperly formed,
  *	then NULL is returned and an error message is left in the interp's
@@ -1222,26 +1773,19 @@ Tk_DeleteBinding(
 const char *
 Tk_GetBinding(
     Tcl_Interp *interp,		/* Interpreter for error reporting. */
-    Tk_BindingTable bindingTable,
-				/* Table in which to look for binding. */
-    ClientData object,		/* Token for object with which binding is
-				 * associated. */
-    const char *eventString)	/* String describing event sequence that
-				 * triggers binding. */
+    Tk_BindingTable bindPtr,	/* Table in which to look for binding. */
+    ClientData object,		/* Token for object with which binding is associated. */
+    const char *eventString)	/* String describing event sequence that triggers binding. */
 {
-    BindingTable *bindPtr = (BindingTable *) bindingTable;
-    PatSeq *psPtr;
-    unsigned long eventMask;
+    const PatSeq *psPtr;
 
-    psPtr = FindSequence(interp, &bindPtr->patternTable, object, eventString,
-	    0, 1, &eventMask);
-    if (psPtr == NULL) {
-	return NULL;
-    }
-    if (psPtr->eventProc == EvalTclBinding) {
-	return (const char *) psPtr->clientData;
-    }
-    return "";
+    assert(bindPtr);
+    assert(object);
+    assert(eventString);
+
+    psPtr = FindSequence(interp, &bindPtr->lookupTables, object, eventString, 0, 1, NULL);
+    assert(!psPtr || TEST_PSENTRY(psPtr));
+    return psPtr ? psPtr->script : NULL;
 }
 
 /*
@@ -1267,32 +1811,174 @@ Tk_GetBinding(
 void
 Tk_GetAllBindings(
     Tcl_Interp *interp,		/* Interpreter returning result or error. */
-    Tk_BindingTable bindingTable,
-				/* Table in which to look for bindings. */
+    Tk_BindingTable bindPtr,	/* Table in which to look for bindings. */
     ClientData object)		/* Token for object. */
 {
-    BindingTable *bindPtr = (BindingTable *) bindingTable;
-    PatSeq *psPtr;
     Tcl_HashEntry *hPtr;
-    Tcl_DString ds;
 
-    hPtr = Tcl_FindHashEntry(&bindPtr->objectTable, (char *) object);
-    if (hPtr == NULL) {
-	return;
-    }
-    Tcl_DStringInit(&ds);
-    for (psPtr = (PatSeq *) Tcl_GetHashValue(hPtr); psPtr != NULL;
-	    psPtr = psPtr->nextObjPtr) {
+    assert(bindPtr);
+    assert(object);
+
+    if ((hPtr = Tcl_FindHashEntry(&bindPtr->objectTable, (char *) object))) {
+	const PatSeq *psPtr;
+	Tcl_Obj *resultObj = Tcl_NewObj();
+
 	/*
-	 * For each binding, output information about each of the patterns in
-	 * its sequence.
+	 * For each binding, output information about each of the patterns in its sequence.
 	 */
 
-	Tcl_DStringSetLength(&ds, 0);
-	GetPatternString(psPtr, &ds);
-	Tcl_AppendElement(interp, Tcl_DStringValue(&ds));
+	for (psPtr = Tcl_GetHashValue(hPtr); psPtr; psPtr = psPtr->ptr.nextObj) {
+	    assert(TEST_PSENTRY(psPtr));
+	    Tcl_ListObjAppendElement(NULL, resultObj, GetPatternObj(psPtr));
+	}
+	Tcl_SetObjResult(interp, resultObj);
     }
-    Tcl_DStringFree(&ds);
+}
+
+/*
+ *--------------------------------------------------------------
+ *
+ * RemovePatSeqFromLookup --
+ *
+ *	Remove given pattern sequence from lookup tables. This
+ *	can be required before deleting the pattern sequence.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	None.
+ *
+ *--------------------------------------------------------------
+ */
+
+static void
+RemovePatSeqFromLookup(
+    LookupTables *lookupTables,	/* Remove from this lookup tables. */
+    PatSeq *psPtr)		/* Remove this pattern sequence. */
+{
+    PatternTableKey key;
+    Tcl_HashEntry *hPtr;
+
+    assert(lookupTables);
+    assert(psPtr);
+
+    SetupPatternKey(&key, psPtr);
+
+    if ((hPtr = Tcl_FindHashEntry(&lookupTables->listTable, (char *) &key))) {
+	PSList *psList = Tcl_GetHashValue(hPtr);
+	PSEntry *psEntry;
+
+	TK_DLIST_FOREACH(psEntry, psList) {
+	    if (psEntry->psPtr == psPtr) {
+		psPtr->added = 0;
+		RemoveListEntry(&lookupTables->entryPool, psEntry);
+		return;
+	    }
+	}
+    }
+
+    assert(!"couldn't find pattern sequence in lookup");
+}
+
+/*
+ *--------------------------------------------------------------
+ *
+ * RemovePatSeqFromPromotionLists --
+ *
+ *	Remove given pattern sequence from promotion lists. This
+ *	can be required before deleting the pattern sequence.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	None.
+ *
+ *--------------------------------------------------------------
+ */
+
+static void
+RemovePatSeqFromPromotionLists(
+    Tk_BindingTable bindPtr,	/* Table in which to look for bindings. */
+    PatSeq *psPtr)		/* Remove this pattern sequence. */
+{
+    unsigned i;
+
+    assert(bindPtr);
+    assert(psPtr);
+
+    for (i = 0; i < PromArr_Size(bindPtr->promArr); ++i) {
+	PSList *psList = PromArr_Get(bindPtr->promArr, i);
+	PSEntry *psEntry;
+
+	TK_DLIST_FOREACH(psEntry, psList) {
+	    if (psEntry->psPtr == psPtr) {
+		RemoveListEntry(&bindPtr->lookupTables.entryPool, psEntry);
+		break;
+	    }
+	}
+    }
+}
+
+/*
+ *--------------------------------------------------------------
+ *
+ * DeletePatSeq --
+ *
+ *	Delete given pattern sequence. Possibly it is required
+ *	to invoke RemovePatSeqFromLookup(), and RemovePatSeqFromPromotionLists()
+ *	before.
+ *
+ * Results:
+ *	Pointer to succeeding pattern sequence.
+ *
+ * Side effects:
+ *	Deallocation of memory.
+ *
+ *--------------------------------------------------------------
+ */
+
+static PatSeq *
+DeletePatSeq(
+    PatSeq *psPtr)		/* Delete this pattern sequence. */
+{
+    PatSeq *prevPtr;
+    PatSeq *nextPtr;
+
+    assert(psPtr);
+    assert(!psPtr->added);
+    assert(!psPtr->owned);
+
+    prevPtr = Tcl_GetHashValue(psPtr->hPtr);
+    nextPtr = psPtr->ptr.nextObj;
+
+    /*
+     * Be sure to remove each binding from its hash chain in the pattern
+     * table. If this is the last pattern in the chain, then delete the
+     * hash entry too.
+     */
+
+    if (prevPtr == psPtr) {
+	if (!psPtr->nextSeqPtr) {
+	    Tcl_DeleteHashEntry(psPtr->hPtr);
+	} else {
+	    Tcl_SetHashValue(psPtr->hPtr, psPtr->nextSeqPtr);
+	}
+    } else {
+	for ( ; ; prevPtr = prevPtr->nextSeqPtr) {
+	    if (!prevPtr) {
+		Tcl_Panic("DeletePatSeq couldn't find on hash chain");
+	    }
+	    if (prevPtr->nextSeqPtr == psPtr) {
+		prevPtr->nextSeqPtr = psPtr->nextSeqPtr;
+		break;
+	    }
+	}
+    }
+
+    FreePatSeq(psPtr);
+    return nextPtr;
 }
 
 /*
@@ -1314,56 +2000,33 @@ Tk_GetAllBindings(
 
 void
 Tk_DeleteAllBindings(
-    Tk_BindingTable bindingTable,
-				/* Table in which to delete bindings. */
+    Tk_BindingTable bindPtr,	/* Table in which to delete bindings. */
     ClientData object)		/* Token for object. */
 {
-    BindingTable *bindPtr = (BindingTable *) bindingTable;
-    PatSeq *psPtr, *prevPtr;
+    PatSeq *psPtr;
     PatSeq *nextPtr;
     Tcl_HashEntry *hPtr;
 
-    hPtr = Tcl_FindHashEntry(&bindPtr->objectTable, (char *) object);
-    if (hPtr == NULL) {
+    assert(bindPtr);
+    assert(object);
+
+    if (!(hPtr = Tcl_FindHashEntry(&bindPtr->objectTable, (char *) object))) {
 	return;
     }
-    for (psPtr = (PatSeq *) Tcl_GetHashValue(hPtr); psPtr != NULL;
-	    psPtr = nextPtr) {
-	nextPtr = psPtr->nextObjPtr;
 
-	/*
-	 * Be sure to remove each binding from its hash chain in the pattern
-	 * table. If this is the last pattern in the chain, then delete the
-	 * hash entry too.
-	 */
+    /*
+     * Don't forget to clear lookup tables.
+     */
 
-	prevPtr = (PatSeq *) Tcl_GetHashValue(psPtr->hPtr);
-	if (prevPtr == psPtr) {
-	    if (psPtr->nextSeqPtr == NULL) {
-		Tcl_DeleteHashEntry(psPtr->hPtr);
-	    } else {
-		Tcl_SetHashValue(psPtr->hPtr, psPtr->nextSeqPtr);
-	    }
-	} else {
-	    for ( ; ; prevPtr = prevPtr->nextSeqPtr) {
-		if (prevPtr == NULL) {
-		    Tcl_Panic("Tk_DeleteAllBindings couldn't find on hash chain");
-		}
-		if (prevPtr->nextSeqPtr == psPtr) {
-		    prevPtr->nextSeqPtr = psPtr->nextSeqPtr;
-		    break;
-		}
-	    }
-	}
-	psPtr->flags |= MARKED_DELETED;
+    ClearLookupTable(&bindPtr->lookupTables, object);
+    ClearPromotionLists(bindPtr, object);
 
-	if (psPtr->refCount == 0) {
-	    if (psPtr->freeProc != NULL) {
-		(*psPtr->freeProc)(psPtr->clientData);
-	    }
-	    ckfree((char *) psPtr);
-	}
+    for (psPtr = Tcl_GetHashValue(hPtr); psPtr; psPtr = nextPtr) {
+	assert(TEST_PSENTRY(psPtr));
+	DEBUG(psPtr->added = 0;)
+	nextPtr = DeletePatSeq(psPtr);
     }
+
     Tcl_DeleteHashEntry(hPtr);
 }
 
@@ -1382,62 +2045,148 @@ Tk_DeleteAllBindings(
  *	None.
  *
  * Side effects:
- *	Depends on the command associated with the matching binding.
+ *	Depends on the script associated with the matching binding.
  *
- *	All Tcl bindings scripts for each object are accumulated before the
+ *	All Tcl binding scripts for each object are accumulated before the
  *	first binding is evaluated. If the action of a Tcl binding is to
  *	change or delete a binding, or delete the window associated with the
  *	binding, all the original Tcl binding scripts will still fire.
- *	Contrast this with C binding functions. If a pending C binding (one
- *	that hasn't fired yet, but is queued to be fired for this window) is
- *	deleted, it will not be called, and if it is changed, then the new
- *	binding function will be called. If the window itself is deleted, no
- *	further C binding functions will be called for this window. When both
- *	Tcl binding scripts and C binding functions are interleaved, the above
- *	rules still apply.
  *
  *---------------------------------------------------------------------------
  */
 
+/* helper function */
+static void
+ResetCounters(
+    Event *eventInfo,
+    unsigned eventType,
+    Window window)
+{
+    Event *curEvent;
+
+    assert(eventInfo);
+    curEvent = eventInfo + eventType;
+
+    if (curEvent->xev.xany.window == window) {
+	curEvent->xev.xany.window = None;
+	eventInfo[eventType].countAny = 0;
+	eventInfo[eventType].countDetailed = 0;
+    }
+}
+
+/* helper function */
+static int
+IsBetterMatch(
+    const PatSeq *fstMatchPtr,
+    const PatSeq *sndMatchPtr)	/* this is a better match? */
+{
+    int diff;
+
+    if (!sndMatchPtr) { return 0; }
+    if (!fstMatchPtr) { return 1; }
+
+    diff = CountSpecialized(fstMatchPtr, sndMatchPtr);
+    if (diff > 0) { return 1; }
+    if (diff < 0) { return 0; }
+
+#if PREFER_MOST_SPECIALIZED_EVENT
+    {	/* local scope */
+#define M (Tcl_WideUInt)1000000
+	static const Tcl_WideUInt weight[5] = { 0, 1, M, M*M, M*M*M };
+#undef M
+	Tcl_WideUInt fstCount = 0;
+	Tcl_WideUInt sndCount = 0;
+	unsigned i;
+
+	/*
+	 * Count the most high-ordered patterns.
+	 *
+	 * (This computation assumes that a sequence does not contain more than
+	 * 1,000,000 single patterns. It can be precluded that in practice this
+	 * assumption will not be violated.)
+	 */
+
+	for (i = 0; i < fstMatchPtr->numPats; ++i) {
+	    assert(GetCount(fstMatchPtr, i) < SIZE_OF_ARRAY(weight));
+	    fstCount += weight[GetCount(fstMatchPtr, i)];
+	}
+	for (i = 0; i < sndMatchPtr->numPats; ++i) {
+	    assert(GetCount(sndMatchPtr, i) < SIZE_OF_ARRAY(weight));
+	    sndCount += weight[GetCount(sndMatchPtr, i)];
+	}
+	if (sndCount > fstCount) { return 1; }
+	if (sndCount < fstCount) { return 0; }
+    }
+#endif
+
+    return sndMatchPtr->number > fstMatchPtr->number;
+}
+
 void
 Tk_BindEvent(
-    Tk_BindingTable bindingTable,
-				/* Table in which to look for bindings. */
+    Tk_BindingTable bindPtr,	/* Table in which to look for bindings. */
     XEvent *eventPtr,		/* What actually happened. */
-    Tk_Window tkwin,		/* Window on display where event occurred
-				 * (needed in order to locate display
-				 * information). */
-    int numObjects,		/* Number of objects at *objectPtr. */
-    ClientData *objectPtr)	/* Array of one or more objects to check for a
-				 * matching binding. */
+    Tk_Window tkwin,		/* Window on display where event occurred (needed in order to
+    				 * locate display information). */
+    int numObjects,		/* Number of objects at *objArr. */
+    ClientData *objArr)		/* Array of one or more objects to check for a matching binding. */
 {
-    BindingTable *bindPtr;
-    TkDisplay *dispPtr;
-    ScreenInfo *screenPtr;
-    BindInfo *bindInfoPtr;
-    TkDisplay *oldDispPtr;
-    XEvent *ringPtr;
-    PatSeq *vMatchDetailList, *vMatchNoDetailList;
-    int flags, oldScreen, i, deferModal;
-    unsigned int matchCount, matchSpace;
-    unsigned int scriptCount;
     Tcl_Interp *interp;
-    Tcl_DString scripts, savedResult;
-    Detail detail;
-    char *p, *end;
-    PendingBinding staticPending, *pendingPtr;
+    ScreenInfo *screenPtr;
+    TkDisplay *dispPtr;
+    TkDisplay *oldDispPtr;
+    Event *curEvent;
     TkWindow *winPtr = (TkWindow *) tkwin;
-    PatternTableKey key;
-    Tk_ClassModalProc *modalProc;
+    BindInfo *bindInfoPtr;
+    Tcl_InterpState interpState;
+    LookupTables *physTables;
+    PatSeq *psPtr[2];
+    PatSeq *matchPtrBuf[32];
+    PatSeq **matchPtrArr = matchPtrBuf;
+    PSList *psl[2];
+    Tcl_DString scripts;
+    const char *p;
+    const char *end;
+    unsigned scriptCount;
+    int oldScreen;
+    unsigned flags;
+    unsigned arraySize;
+    unsigned newArraySize;
+    unsigned i, k;
+
+    assert(bindPtr);
+    assert(eventPtr);
+    assert(tkwin);
+    assert(numObjects >= 0);
 
     /*
      * Ignore events on windows that don't have names: these are windows like
      * wrapper windows that shouldn't be visible to the application.
      */
 
-    if (winPtr->pathName == NULL) {
+    if (!winPtr->pathName) {
 	return;
     }
+
+    flags = flagArray[eventPtr->type];
+
+    /*
+     * Ignore event types which are not in flagArray and all zeroes there.
+     */
+
+    if (eventPtr->type >= TK_LASTEVENT || !flags) {
+	return;
+    }
+
+    if (flags & KEY_BUTTON_MOTION_VIRTUAL) {
+	bindPtr->curModMask = eventPtr->xkey.state;
+    } else if (flags & CROSSING) {
+	bindPtr->curModMask = eventPtr->xcrossing.state;
+    }
+
+    dispPtr = ((TkWindow *) tkwin)->dispPtr;
+    bindInfoPtr = winPtr->mainPtr->bindInfo;
+    curEvent = bindPtr->eventInfo + eventPtr->type;
 
     /*
      * Ignore the event completely if it is an Enter, Leave, FocusIn, or
@@ -1446,230 +2195,339 @@ Tk_BindEvent(
      * children to visible to bindings on the parent: this would cause
      * problems for mega-widgets, since the internal structure of a
      * mega-widget isn't supposed to be visible to people watching the parent.
+     *
+     * Furthermore we have to compute current time, needed for "event generate".
      */
 
-    if ((eventPtr->type == EnterNotify) || (eventPtr->type == LeaveNotify)) {
+    switch (eventPtr->type) {
+    case EnterNotify:
+    case LeaveNotify:
+	if (eventPtr->xcrossing.time) {
+	    bindInfoPtr->lastCurrentTime = CurrentTimeInMilliSecs();
+	    bindInfoPtr->lastEventTime = eventPtr->xcrossing.time;
+	}
 	if (eventPtr->xcrossing.detail == NotifyInferior) {
 	    return;
 	}
-    }
-    if ((eventPtr->type == FocusIn) || (eventPtr->type == FocusOut)) {
+	break;
+    case FocusIn:
+    case FocusOut:
 	if (eventPtr->xfocus.detail == NotifyInferior) {
 	    return;
 	}
-    }
+	break;
+    case KeyPress:
+    case KeyRelease: {
+	int reset = 1;
 
-    bindPtr = (BindingTable *) bindingTable;
-    dispPtr = ((TkWindow *) tkwin)->dispPtr;
-    bindInfoPtr = (BindInfo *) winPtr->mainPtr->bindInfo;
-
-    /*
-     * Add the new event to the ring of saved events for the binding table.
-     * Two tricky points:
-     *
-     * 1. Combine consecutive MotionNotify events. Do this by putting the new
-     *    event *on top* of the previous event.
-     * 2. If a modifier key is held down, it auto-repeats to generate
-     *    continuous KeyPress and KeyRelease events. These can flush the event
-     *    ring so that valuable information is lost (such as repeated button
-     *    clicks). To handle this, check for the special case of a modifier
-     *    KeyPress arriving when the previous two events are a KeyRelease and
-     *    KeyPress of the same key. If this happens, mark the most recent
-     *    event (the KeyRelease) invalid and put the new event on top of the
-     *    event before that (the KeyPress).
-     */
-
-    if ((eventPtr->type == MotionNotify)
-	    && (bindPtr->eventRing[bindPtr->curEvent].type == MotionNotify)) {
-	/*
-	 * Don't advance the ring pointer.
-	 */
-    } else if (eventPtr->type == KeyPress) {
-	int i;
-
-	for (i = 0; ; i++) {
-	    if (i >= dispPtr->numModKeyCodes) {
-		goto advanceRingPointer;
-	    }
+	if (eventPtr->xkey.time) {
+	    bindInfoPtr->lastCurrentTime = CurrentTimeInMilliSecs();
+	    bindInfoPtr->lastEventTime = eventPtr->xkey.time;
+	}
+	/* modifier keys should not influence button events */
+	for (i = 0; i < (unsigned) dispPtr->numModKeyCodes; ++i) {
 	    if (dispPtr->modKeyCodes[i] == eventPtr->xkey.keycode) {
-		break;
+		reset = 0;
 	    }
 	}
-	ringPtr = &bindPtr->eventRing[bindPtr->curEvent];
-	if ((ringPtr->type != KeyRelease)
-		|| (ringPtr->xkey.keycode != eventPtr->xkey.keycode)) {
-	    goto advanceRingPointer;
+	if (reset) {
+	    /* reset repetition count for button events */
+	    bindPtr->eventInfo[ButtonPress].countAny = 0;
+	    bindPtr->eventInfo[ButtonPress].countDetailed = 0;
+	    bindPtr->eventInfo[ButtonRelease].countAny = 0;
+	    bindPtr->eventInfo[ButtonRelease].countDetailed = 0;
 	}
-	if (bindPtr->curEvent <= 0) {
-	    i = EVENT_BUFFER_SIZE - 1;
-	} else {
-	    i = bindPtr->curEvent - 1;
+	break;
+    }
+    case ButtonPress:
+    case ButtonRelease:
+	/* reset repetition count for key events */
+	bindPtr->eventInfo[KeyPress].countAny = 0;
+	bindPtr->eventInfo[KeyPress].countDetailed = 0;
+	bindPtr->eventInfo[KeyRelease].countAny = 0;
+	bindPtr->eventInfo[KeyRelease].countDetailed = 0;
+	/* fallthru */
+    case MotionNotify:
+	if (eventPtr->xmotion.time) {
+	    bindInfoPtr->lastCurrentTime = CurrentTimeInMilliSecs();
+	    bindInfoPtr->lastEventTime = eventPtr->xmotion.time;
 	}
-	ringPtr = &bindPtr->eventRing[i];
-	if ((ringPtr->type != KeyPress)
-		|| (ringPtr->xkey.keycode != eventPtr->xkey.keycode)) {
-	    goto advanceRingPointer;
+	break;
+    case PropertyNotify:
+	if (eventPtr->xproperty.time) {
+	    bindInfoPtr->lastCurrentTime = CurrentTimeInMilliSecs();
+	    bindInfoPtr->lastEventTime = eventPtr->xproperty.time;
 	}
-	bindPtr->eventRing[bindPtr->curEvent].type = -1;
-	bindPtr->curEvent = i;
+	break;
+    case DestroyNotify:
+	ResetCounters(bindPtr->eventInfo, KeyPress, eventPtr->xany.window);
+	ResetCounters(bindPtr->eventInfo, KeyRelease, eventPtr->xany.window);
+	ResetCounters(bindPtr->eventInfo, ButtonPress, eventPtr->xany.window);
+	ResetCounters(bindPtr->eventInfo, ButtonRelease, eventPtr->xany.window);
+	break;
+    }
+
+    /*
+     * Now check whether this is a repeating event (multi-click, repeated key press, and so on).
+     */
+
+    /* NOTE: if curEvent is not yet set, then the following cannot match: */
+    if (curEvent->xev.xany.window == eventPtr->xany.window) {
+	switch (eventPtr->type) {
+	case KeyPress:
+	case KeyRelease:
+	    if (MatchEventRepeat(&curEvent->xev, eventPtr)) {
+		if (curEvent->xev.xkey.keycode == eventPtr->xkey.keycode) {
+		    ++curEvent->countDetailed;
+		} else {
+		    curEvent->countDetailed = 1;
+		}
+		++curEvent->countAny;
+	    } else {
+		curEvent->countAny = curEvent->countDetailed = 1;
+	    }
+	    break;
+	case ButtonPress:
+	case ButtonRelease:
+	    if (MatchEventNearby(&curEvent->xev, eventPtr)) {
+		if (curEvent->xev.xbutton.button == eventPtr->xbutton.button) {
+		    ++curEvent->countDetailed;
+		} else {
+		    curEvent->countDetailed = 1;
+		}
+		++curEvent->countAny;
+	    } else {
+		curEvent->countAny = curEvent->countDetailed = 1;
+	    }
+	    break;
+	case EnterNotify:
+	case LeaveNotify:
+	    if (TestNearbyTime(eventPtr->xcrossing.time, curEvent->xev.xcrossing.time)) {
+		++curEvent->countAny;
+	    } else {
+		curEvent->countAny = 1;
+	    }
+	    break;
+	case PropertyNotify:
+	    if (TestNearbyTime(eventPtr->xproperty.time, curEvent->xev.xproperty.time)) {
+		++curEvent->countAny;
+	    } else {
+		curEvent->countAny = 1;
+	    }
+	    break;
+	default:
+	    ++curEvent->countAny;
+	    break;
+	}
     } else {
-
-    advanceRingPointer:
-	bindPtr->curEvent++;
-	if (bindPtr->curEvent >= EVENT_BUFFER_SIZE) {
-	    bindPtr->curEvent = 0;
-	}
+	curEvent->countAny = curEvent->countDetailed = 1;
     }
-    ringPtr = &bindPtr->eventRing[bindPtr->curEvent];
-    memcpy((void *) ringPtr, (void *) eventPtr, sizeof(XEvent));
-    detail.clientData = 0;
-    flags = flagArray[ringPtr->type];
+
+    /*
+     * Now update the details.
+     */
+
+    curEvent->xev = *eventPtr;
     if (flags & KEY) {
-	detail.keySym = TkpGetKeySym(dispPtr, ringPtr);
-	if (detail.keySym == NoSymbol) {
-	    detail.keySym = 0;
-	}
+	curEvent->detail.info = TkpGetKeySym(dispPtr, eventPtr);
     } else if (flags & BUTTON) {
-	detail.button = ringPtr->xbutton.button;
+	curEvent->detail.info = eventPtr->xbutton.button;
+    } else if (flags & MOTION) {
+	curEvent->detail.info = ButtonNumberFromState(eventPtr->xmotion.state);
     } else if (flags & VIRTUAL) {
-	detail.name = ((XVirtualEvent *) ringPtr)->name;
-    }
-    bindPtr->detailRing[bindPtr->curEvent] = detail;
-
-    /*
-     * Find out if there are any virtual events that correspond to this
-     * physical event (or sequence of physical events).
-     */
-
-    vMatchDetailList = NULL;
-    vMatchNoDetailList = NULL;
-    memset(&key, 0, sizeof(key));
-
-    if (ringPtr->type != VirtualEvent) {
-	Tcl_HashTable *veptPtr = &bindInfoPtr->virtualEventTable.patternTable;
-	Tcl_HashEntry *hPtr;
-
-	key.object = NULL;
-	key.type = ringPtr->type;
-	key.detail = detail;
-
-	hPtr = Tcl_FindHashEntry(veptPtr, (char *) &key);
-	if (hPtr != NULL) {
-	    vMatchDetailList = (PatSeq *) Tcl_GetHashValue(hPtr);
-	}
-
-	if (key.detail.clientData != 0) {
-	    key.detail.clientData = 0;
-	    hPtr = Tcl_FindHashEntry(veptPtr, (char *) &key);
-	    if (hPtr != NULL) {
-		vMatchNoDetailList = (PatSeq *) Tcl_GetHashValue(hPtr);
-	    }
-	}
+	curEvent->detail.name = ((XVirtualEvent *) eventPtr)->name;
     }
 
-    /*
-     * Loop over all the binding tags, finding the binding script or callback
-     * for each one. Append all of the binding scripts, with %-sequences
-     * expanded, to "scripts", with null characters separating the scripts for
-     * each object. Append all the callbacks to the array of pending
-     * callbacks.
-     */
-
-    pendingPtr = &staticPending;
-    matchCount = 0;
+    bindPtr->curEvent = curEvent;
+    physTables = &bindPtr->lookupTables;
     scriptCount = 0;
-    matchSpace = sizeof(staticPending.matchArray) / sizeof(PatSeq *);
+    arraySize = 0;
     Tcl_DStringInit(&scripts);
 
-    for ( ; numObjects > 0; numObjects--, objectPtr++) {
-	PatSeq *matchPtr = NULL, *sourcePtr = NULL;
-	Tcl_HashEntry *hPtr;
+    if ((size_t) numObjects > SIZE_OF_ARRAY(matchPtrBuf)) {
+	/* it's unrealistic that the buffer size is too small, but who knows? */
+	matchPtrArr = ckalloc(numObjects*sizeof(matchPtrArr[0]));
+    }
+    memset(matchPtrArr, 0, numObjects*sizeof(matchPtrArr[0]));
 
-	/*
-	 * Match the new event against those recorded in the pattern table,
-	 * saving the longest matching pattern. For events with details
-	 * (button and key events), look for a binding for the specific key or
-	 * button. First see if the event matches a physical event that the
-	 * object is interested in, then look for a virtual event.
-	 */
-
-	key.object = *objectPtr;
-	key.type = ringPtr->type;
-	key.detail = detail;
-	hPtr = Tcl_FindHashEntry(&bindPtr->patternTable, (char *) &key);
-	if (hPtr != NULL) {
-	    matchPtr = MatchPatterns(dispPtr, bindPtr,
-		    (PatSeq *) Tcl_GetHashValue(hPtr), matchPtr, NULL,
-		    &sourcePtr);
-	}
-
-	if (vMatchDetailList != NULL) {
-	    matchPtr = MatchPatterns(dispPtr, bindPtr, vMatchDetailList,
-		    matchPtr, objectPtr, &sourcePtr);
-	}
-
-	/*
-	 * If no match was found, look for a binding for all keys or buttons
-	 * (detail of 0). Again, first match on a virtual event.
-	 */
-
-	if ((detail.clientData != 0) && (matchPtr == NULL)) {
-	    key.detail.clientData = 0;
-	    hPtr = Tcl_FindHashEntry(&bindPtr->patternTable, (char *) &key);
-	    if (hPtr != NULL) {
-		matchPtr = MatchPatterns(dispPtr, bindPtr,
-			(PatSeq *) Tcl_GetHashValue(hPtr), matchPtr, NULL,
-			&sourcePtr);
-	    }
-
-	    if (vMatchNoDetailList != NULL) {
-		matchPtr = MatchPatterns(dispPtr, bindPtr, vMatchNoDetailList,
-			matchPtr, objectPtr, &sourcePtr);
-	    }
-
-	}
-
-	if (matchPtr != NULL) {
-	    if (sourcePtr->eventProc == NULL) {
-		Tcl_Panic("Tk_BindEvent: missing command");
-	    }
-	    if (sourcePtr->eventProc == EvalTclBinding) {
-		ExpandPercents(winPtr, (char *) sourcePtr->clientData,
-			eventPtr, detail.keySym, scriptCount++, &scripts);
-	    } else {
-		if (matchCount >= matchSpace) {
-		    PendingBinding *newPtr;
-		    unsigned int oldSize, newSize;
-
-		    oldSize = sizeof(staticPending)
-			    - sizeof(staticPending.matchArray)
-			    + matchSpace * sizeof(PatSeq*);
-		    matchSpace *= 2;
-		    newSize = sizeof(staticPending)
-			    - sizeof(staticPending.matchArray)
-			    + matchSpace * sizeof(PatSeq*);
-		    newPtr = (PendingBinding *) ckalloc(newSize);
-		    memcpy((void *) newPtr, (void *) pendingPtr, oldSize);
-		    if (pendingPtr != &staticPending) {
-			ckfree((char *) pendingPtr);
-		    }
-		    pendingPtr = newPtr;
-		}
-		sourcePtr->refCount++;
-		pendingPtr->matchArray[matchCount] = sourcePtr;
-		matchCount++;
-	    }
+    if (!PromArr_IsEmpty(bindPtr->promArr)) {
+	for (k = 0; k < (unsigned) numObjects; ++k) {
+	    psl[1] = PromArr_Last(bindPtr->promArr);
+	    psl[0] = psl[1] - 1;
 
 	    /*
-	     * A "" is added to the scripts string to separate the various
-	     * scripts that should be invoked.
+	     * Loop over all promoted bindings, finding the longest matching one.
+	     *
+	     * Note that we must process all lists, because all matching patterns
+	     * have to be promoted. Normally at most one list will be processed, and
+	     * usually this list only contains one or two patterns.
 	     */
 
+	    for (i = PromArr_Size(bindPtr->promArr); i > 0; --i, --psl[0], --psl[1]) {
+		psPtr[0] = MatchPatterns(dispPtr, bindPtr, psl[0], psl[1], i, curEvent, objArr[k], NULL);
+
+		if (IsBetterMatch(matchPtrArr[k], psPtr[0])) {
+		    /* we will process it later, because we still may find a pattern with better match */
+		    matchPtrArr[k] = psPtr[0];
+		}
+		if (!PSList_IsEmpty(psl[1])) {
+		    /* we have promoted sequences, adjust array size */
+		    arraySize = Max(i + 1, arraySize);
+		}
+	    }
+	}
+    }
+
+    /*
+     * 1. Look for bindings for the specific detail (button and key events).
+     * 2. Look for bindings without detail.
+     */
+
+    for (k = 0; k < (unsigned) numObjects; ++k) {
+	PSList *psSuccList = PromArr_First(bindPtr->promArr);
+	PatSeq *bestPtr;
+
+	psl[0] = GetLookupForEvent(physTables, curEvent, objArr[k], 1);
+	psl[1] = GetLookupForEvent(physTables, curEvent, objArr[k], 0);
+
+	assert(psl[0] == NULL || psl[0] != psl[1]);
+
+	psPtr[0] = MatchPatterns(dispPtr, bindPtr, psl[0], psSuccList, 0, curEvent, objArr[k], NULL);
+	psPtr[1] = MatchPatterns(dispPtr, bindPtr, psl[1], psSuccList, 0, curEvent, objArr[k], NULL);
+
+	if (!PSList_IsEmpty(psSuccList)) {
+	    /* we have promoted sequences, adjust array size */
+	    arraySize = Max(1u, arraySize);
+	}
+
+	bestPtr = psPtr[0] ? psPtr[0] : psPtr[1];
+
+	if (matchPtrArr[k]) {
+	    if (IsBetterMatch(matchPtrArr[k], bestPtr)) {
+		matchPtrArr[k] = bestPtr;
+	    } else {
+		/*
+		 * We've already found a higher level match, nevertheless it was required to
+		 * process the level zero patterns because of possible promotions.
+		 */
+	    }
+	    /*
+	     * Now we have to catch up the processing of the script.
+	     */
+	} else {
+	    /*
+	     * We have to look whether we can find a better match in virtual table, provided that we
+	     * don't have a higher level match.
+	     */
+
+	    matchPtrArr[k] = bestPtr;
+
+	    if (eventPtr->type != VirtualEvent) {
+		LookupTables *virtTables = &bindInfoPtr->virtualEventTable.lookupTables;
+		PatSeq *matchPtr = matchPtrArr[k];
+		PatSeq *mPtr;
+		PSList *psl[2];
+
+		/*
+		 * Note that virtual events cannot promote.
+		 */
+
+		psl[0] = GetLookupForEvent(virtTables, curEvent, NULL, 1);
+		psl[1] = GetLookupForEvent(virtTables, curEvent, NULL, 0);
+
+		assert(psl[0] == NULL || psl[0] != psl[1]);
+
+		mPtr = MatchPatterns(dispPtr, bindPtr, psl[0], NULL, 0, curEvent, objArr[k], &matchPtr);
+		if (mPtr) {
+		    matchPtrArr[k] = matchPtr;
+		    matchPtr = mPtr;
+		}
+		if (MatchPatterns(dispPtr, bindPtr, psl[1], NULL, 0, curEvent, objArr[k], &matchPtr)) {
+		    matchPtrArr[k] = matchPtr;
+		}
+	    }
+	}
+
+	if (matchPtrArr[k]) {
+	    ExpandPercents(winPtr, matchPtrArr[k]->script, curEvent, scriptCount++, &scripts);
+	    /* nul is added to the scripts string to separate the various scripts */
 	    Tcl_DStringAppend(&scripts, "", 1);
 	}
     }
+
+    PromArr_SetSize(bindPtr->promArr, arraySize);
+
+    /*
+     * Remove expired pattern sequences.
+     */
+
+    for (i = 0, newArraySize = 0; i < arraySize; ++i) {
+	PSList *psList = PromArr_Get(bindPtr->promArr, i);
+	PSEntry *psEntry;
+	PSEntry *psNext;
+
+	for (psEntry = PSList_First(psList); psEntry; psEntry = psNext) {
+	    const TkPattern *patPtr;
+
+	    assert(i + 1 < psEntry->psPtr->numPats);
+
+	    psNext = PSList_Next(psEntry);
+	    patPtr = &psEntry->psPtr->pats[i + 1];
+
+	    /*
+	     * We have to remove the following entries from promotion list (but
+	     * only if we don't want to keep it):
+	     * ------------------------------------------------------------------
+	     * 1) It is marked as expired (see MatchPatterns()).
+	     * 2) If we have a Key event, and current entry is matching a Button.
+	     * 3) If we have a Button event, and current entry is matching a Key.
+	     * 4) If we have a detailed event, current entry it is also detailed,
+	     *    we have matching event types, but the details are different.
+	     * 5) Current entry has been matched with a different window.
+	     */
+
+	    if (psEntry->keepIt) {
+		assert(!psEntry->expired);
+		psEntry->keepIt = 0;
+	    } else if (psEntry->expired
+		    || psEntry->window != curEvent->xev.xany.window
+		    || (patPtr->info
+			&& curEvent->detail.info
+			&& patPtr->eventType == (unsigned) curEvent->xev.type
+			&& patPtr->info != curEvent->detail.info)) {
+		RemoveListEntry(&bindPtr->lookupTables.entryPool, psEntry);
+	    } else {
+		switch (patPtr->eventType) {
+		case ButtonPress:
+		case ButtonRelease:
+		    if (curEvent->xev.type == KeyPress || curEvent->xev.type == KeyRelease) {
+			RemoveListEntry(&bindPtr->lookupTables.entryPool, psEntry);
+		    }
+		    break;
+		case KeyPress:
+		case KeyRelease:
+		    if (curEvent->xev.type == ButtonPress || curEvent->xev.type == ButtonRelease) {
+			RemoveListEntry(&bindPtr->lookupTables.entryPool, psEntry);
+		    }
+		    break;
+		}
+	    }
+	}
+
+	if (!PSList_IsEmpty(psList)) {
+	    /* we still have promoted sequences, adjust array size */
+	    newArraySize = Max(i + 1, newArraySize);
+	}
+    }
+
+    PromArr_SetSize(bindPtr->promArr, newArraySize);
+
+    if (matchPtrArr != matchPtrBuf) {
+	ckfree(matchPtrArr);
+    }
+
     if (Tcl_DStringLength(&scripts) == 0) {
-	return;
+	return; /* nothing to do */
     }
 
     /*
@@ -1690,206 +2548,69 @@ Tk_BindEvent(
      */
 
     interp = bindPtr->interp;
-    Tcl_DStringInit(&savedResult);
 
     /*
      * Save information about the current screen, then invoke a script if the
      * screen has changed.
      */
 
-    Tcl_DStringGetResult(interp, &savedResult);
+    interpState = Tcl_SaveInterpState(interp, TCL_OK);
     screenPtr = &bindInfoPtr->screenInfo;
     oldDispPtr = screenPtr->curDispPtr;
     oldScreen = screenPtr->curScreenIndex;
-    if ((dispPtr != screenPtr->curDispPtr)
-	    || (Tk_ScreenNumber(tkwin) != screenPtr->curScreenIndex)) {
+
+    if (dispPtr != screenPtr->curDispPtr || Tk_ScreenNumber(tkwin) != screenPtr->curScreenIndex) {
 	screenPtr->curDispPtr = dispPtr;
 	screenPtr->curScreenIndex = Tk_ScreenNumber(tkwin);
 	ChangeScreen(interp, dispPtr->name, screenPtr->curScreenIndex);
     }
 
-    if (matchCount > 0) {
-	/*
-	 * Remember the list of pending C binding callbacks, so we can mark
-	 * them as deleted and not call them if the act of evaluating a C or
-	 * Tcl binding deletes a C binding callback or even the whole window.
-	 */
-
-	pendingPtr->nextPtr = bindInfoPtr->pendingList;
-	pendingPtr->tkwin = tkwin;
-	pendingPtr->deleted = 0;
-	bindInfoPtr->pendingList = pendingPtr;
-    }
-
     /*
-     * Save the current value of the TK_DEFER_MODAL flag so we can restore it
-     * at the end of the loop. Clear the flag so we can detect any recursive
-     * requests for a modal loop.
-     */
-
-    flags = winPtr->flags;
-    winPtr->flags &= ~TK_DEFER_MODAL;
-
-    p = Tcl_DStringValue(&scripts);
-    end = p + Tcl_DStringLength(&scripts);
-    i = 0;
-
-    /*
-     * Be carefule when dereferencing screenPtr or bindInfoPtr. If we evaluate
+     * Be careful when dereferencing screenPtr or bindInfoPtr. If we evaluate
      * something that destroys ".", bindInfoPtr would have been freed, but we
      * can tell that by first checking to see if winPtr->mainPtr == NULL.
      */
 
-    Tcl_Preserve((ClientData) bindInfoPtr);
-    while (p < end) {
+    Tcl_Preserve(bindInfoPtr);
+
+    for (p = Tcl_DStringValue(&scripts), end = p + Tcl_DStringLength(&scripts); p < end; ) {
+	unsigned len = strlen(p);
 	int code;
 
 	if (!bindInfoPtr->deleted) {
-	    screenPtr->bindingDepth++;
+	    ++screenPtr->bindingDepth;
 	}
 	Tcl_AllowExceptions(interp);
 
-	if (*p == '\0') {
-	    PatSeq *psPtr;
-
-	    psPtr = pendingPtr->matchArray[i];
-	    i++;
-	    code = TCL_OK;
-	    if ((pendingPtr->deleted == 0)
-		    && ((psPtr->flags & MARKED_DELETED) == 0)) {
-		code = (*psPtr->eventProc)(psPtr->clientData, interp, eventPtr,
-			tkwin, detail.keySym);
-	    }
-	    psPtr->refCount--;
-	    if ((psPtr->refCount == 0) && (psPtr->flags & MARKED_DELETED)) {
-		if (psPtr->freeProc != NULL) {
-		    (*psPtr->freeProc)(psPtr->clientData);
-		}
-		ckfree((char *) psPtr);
-	    }
-	} else {
-	    int len = (int) strlen(p);
-
-	    code = Tcl_EvalEx(interp, p, len, TCL_EVAL_GLOBAL);
-	    p += len;
-	}
-	p++;
+	code = Tcl_EvalEx(interp, p, len, TCL_EVAL_GLOBAL);
+	p += len + 1;
 
 	if (!bindInfoPtr->deleted) {
-	    screenPtr->bindingDepth--;
+	    --screenPtr->bindingDepth;
 	}
-	if (code != TCL_OK) {
-	    if (code == TCL_CONTINUE) {
-		/*
-		 * Do nothing: just go on to the next command.
-		 */
-	    } else if (code == TCL_BREAK) {
-		break;
-	    } else {
+	if (code != TCL_OK && code != TCL_CONTINUE) {
+	    if (code != TCL_BREAK) {
 		Tcl_AddErrorInfo(interp, "\n    (command bound to event)");
-		Tcl_BackgroundError(interp);
-		break;
+		Tcl_BackgroundException(interp, code);
 	    }
+	    break;
 	}
     }
 
-    if (matchCount > 0 && !pendingPtr->deleted) {
-	/*
-	 * Restore the original modal flag value and invoke the modal loop if
-	 * needed.
-	 */
-
-	deferModal = winPtr->flags & TK_DEFER_MODAL;
-	winPtr->flags = (winPtr->flags & (unsigned int) ~TK_DEFER_MODAL)
-		| (flags & TK_DEFER_MODAL);
-	if (deferModal) {
-	    modalProc = Tk_GetClassProc(winPtr->classProcsPtr, modalProc);
-	    if (modalProc != NULL) {
-		(*modalProc)(tkwin, eventPtr);
-	    }
-	}
-    }
-
-    if (!bindInfoPtr->deleted && (screenPtr->bindingDepth != 0)
-	    && ((oldDispPtr != screenPtr->curDispPtr)
-		    || (oldScreen != screenPtr->curScreenIndex))) {
+    if (!bindInfoPtr->deleted
+	    && screenPtr->bindingDepth > 0
+	    && (oldDispPtr != screenPtr->curDispPtr || oldScreen != screenPtr->curScreenIndex)) {
 	/*
 	 * Some other binding script is currently executing, but its screen is
 	 * no longer current. Change the current display back again.
 	 */
-
 	screenPtr->curDispPtr = oldDispPtr;
 	screenPtr->curScreenIndex = oldScreen;
 	ChangeScreen(interp, oldDispPtr->name, oldScreen);
     }
-    Tcl_DStringResult(interp, &savedResult);
+    Tcl_RestoreInterpState(interp, interpState);
     Tcl_DStringFree(&scripts);
-
-    if (matchCount > 0) {
-	if (!bindInfoPtr->deleted) {
-	    /*
-	     * Delete the pending list from the list of pending scripts for
-	     * this window.
-	     */
-
-	    PendingBinding **curPtrPtr;
-
-	    for (curPtrPtr = &bindInfoPtr->pendingList; ; ) {
-		if (*curPtrPtr == pendingPtr) {
-		    *curPtrPtr = pendingPtr->nextPtr;
-		    break;
-		}
-		curPtrPtr = &(*curPtrPtr)->nextPtr;
-	    }
-	}
-	if (pendingPtr != &staticPending) {
-	    ckfree((char *) pendingPtr);
-	}
-    }
-    Tcl_Release((ClientData) bindInfoPtr);
-}
-
-/*
- *---------------------------------------------------------------------------
- *
- * TkBindDeadWindow --
- *
- *	This function is invoked when it is determined that a window is dead.
- *	It cleans up bind-related information about the window
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	Any pending C bindings for this window are cancelled.
- *
- *---------------------------------------------------------------------------
- */
-
-void
-TkBindDeadWindow(
-    TkWindow *winPtr)		/* The window that is being deleted. */
-{
-    BindInfo *bindInfoPtr;
-    PendingBinding *curPtr;
-
-    /*
-     * Certain special windows like those used for send and clipboard have no
-     * mainPtr.
-     */
-
-    if (winPtr->mainPtr == NULL) {
-	return;
-    }
-
-    bindInfoPtr = (BindInfo *) winPtr->mainPtr->bindInfo;
-    curPtr = bindInfoPtr->pendingList;
-    while (curPtr != NULL) {
-	if (curPtr->tkwin == (Tk_Window) winPtr) {
-	    curPtr->deleted = 1;
-	}
-	curPtr = curPtr->nextPtr;
-    }
+    Tcl_Release(bindInfoPtr);
 }
 
 /*
@@ -1897,344 +2618,269 @@ TkBindDeadWindow(
  *
  * MatchPatterns --
  *
- *	Given a list of pattern sequences and a list of recent events, return
- *	the pattern sequence that best matches the event list, if there is
+ *	Given a list of pattern sequences and the recent event, return
+ *	the pattern sequence that best matches this event, if there is
  *	one.
  *
- *	This function is used in two different ways. In the simplest use,
- *	"object" is NULL and psPtr is a list of pattern sequences, each of
- *	which corresponds to a binding. In this case, the function finds the
- *	pattern sequences that match the event list and returns the most
- *	specific of those, if there is more than one.
- *
- *	In the second case, psPtr is a list of pattern sequences, each of
- *	which corresponds to a definition for a virtual binding. In order for
- *	one of these sequences to "match", it must match the events (as above)
- *	but in addition there must be a binding for its associated virtual
- *	event on the current object. The "object" argument indicates which
- *	object the binding must be for.
- *
  * Results:
-
- *	The return value is NULL if bestPtr is NULL and no pattern matches the
- *	recent events from bindPtr. Otherwise the return value is the most
- *	specific pattern sequence among bestPtr and all those at psPtr that
- *	match the event list and object. If a pattern sequence other than
- *	bestPtr is returned, then *bestCommandPtr is filled in with a pointer
- *	to the command from the best sequence.
+ *
+ *	The return value is NULL if no match is found. Otherwise the
+ *	return value is the most specific pattern sequence among all
+ *	those that match the event table.
  *
  * Side effects:
  *	None.
  *
  *----------------------------------------------------------------------
  */
+
+/* helper function */
+static int
+VirtPatIsBound(
+    Tk_BindingTable bindPtr,	/* Table in which to look for bindings. */
+    PatSeq *psPtr,		/* Test this pattern. */
+    ClientData object,		/* Check for this binding tag. */
+    PatSeq **physPtrPtr)	/* Input: the best physical event.
+    				 * Output: the physical event associated with matching virtual event. */
+{
+    PatternTableKey key;
+    const struct VirtOwners *owners;
+    unsigned i;
+
+    assert(bindPtr);
+    assert(psPtr);
+    assert(!psPtr->object);
+    assert(physPtrPtr);
+
+    if (*physPtrPtr) {
+	const TkPattern *physPatPtr = (*physPtrPtr)->pats;
+	const TkPattern *virtPatPtr = psPtr->pats;
+
+	if (physPatPtr->info || !virtPatPtr->info) {
+	    if (IsSubsetOf(virtPatPtr->modMask, physPatPtr->modMask)) {
+		return 0; /* we cannot surpass this match */
+	    }
+	}
+    }
+
+    /* otherwise on some systems the key contains uninitialized bytes */
+    memset(&key, 0, sizeof(key));
+
+    key.object = object;
+    key.type = VirtualEvent;
+    owners = psPtr->ptr.owners;
+
+    for (i = 0; i < VirtOwners_Size(owners); ++i) {
+	Tcl_HashEntry *hPtr = VirtOwners_Get(owners, i);
+
+	key.detail.name = (Tk_Uid) Tcl_GetHashKey(hPtr->tablePtr, hPtr);
+
+	if ((hPtr = Tcl_FindHashEntry(&bindPtr->lookupTables.patternTable, (char *) &key))) {
+	    /* The physical event matches this virtual event's definition. */
+	    *physPtrPtr = (PatSeq *) Tcl_GetHashValue(hPtr);
+	    return 1;
+	}
+    }
+
+    return 0;
+}
+
+/* helper function */
+static int
+Compare(
+    const PatSeq *fstMatchPtr,
+    const PatSeq *sndMatchPtr) /* most recent match */
+{
+    int diff;
+
+    if (!fstMatchPtr) { return +1; }
+    assert(sndMatchPtr);
+    diff = CountSpecialized(fstMatchPtr, sndMatchPtr);
+    return diff ? diff : (int) sndMatchPtr->count - (int) fstMatchPtr->count;
+}
+
+/* helper function */
+static int
+CompareModMasks(
+    const PSModMaskArr *fstModMaskArr,
+    const PSModMaskArr *sndModMaskArr,
+    ModMask fstModMask,
+    ModMask sndModMask)
+{
+    int fstCount = 0;
+    int sndCount = 0;
+    int i;
+
+    if (PSModMaskArr_IsEmpty(fstModMaskArr)) {
+	if (!PSModMaskArr_IsEmpty(sndModMaskArr)) {
+	    for (i = PSModMaskArr_Size(sndModMaskArr) - 1; i >= 0; --i) {
+		if (*PSModMaskArr_Get(sndModMaskArr, i)) {
+		    ++sndCount;
+		}
+	    }
+	}
+    } else if (PSModMaskArr_IsEmpty(sndModMaskArr)) {
+	for (i = PSModMaskArr_Size(fstModMaskArr) - 1; i >= 0; --i) {
+	    if (*PSModMaskArr_Get(fstModMaskArr, i)) {
+		++fstCount;
+	    }
+	}
+    } else {
+	assert(PSModMaskArr_Size(fstModMaskArr) == PSModMaskArr_Size(sndModMaskArr));
+
+	for (i = PSModMaskArr_Size(fstModMaskArr) - 1; i >= 0; --i) {
+	    ModMask fstModMask = *PSModMaskArr_Get(fstModMaskArr, i);
+	    ModMask sndModMask = *PSModMaskArr_Get(sndModMaskArr, i);
+
+	    if (IsSubsetOf(fstModMask, sndModMask)) { ++sndCount; }
+	    if (IsSubsetOf(sndModMask, fstModMask)) { ++fstCount; }
+	}
+    }
+
+    /* Finally compare modifier masks of last pattern. */
+
+    if (IsSubsetOf(fstModMask, sndModMask)) { ++sndCount; }
+    if (IsSubsetOf(sndModMask, fstModMask)) { ++fstCount; }
+
+    return fstCount - sndCount;
+}
+
 static PatSeq *
 MatchPatterns(
     TkDisplay *dispPtr,		/* Display from which the event came. */
-    BindingTable *bindPtr,	/* Information about binding table, such as
-				 * ring of recent events. */
-    PatSeq *psPtr,		/* List of pattern sequences. */
-    PatSeq *bestPtr,		/* The best match seen so far, from a previous
-				 * call to this function. NULL means no prior
-				 * best match. */
-    ClientData *objectPtr,	/* If NULL, the sequences at psPtr correspond
-				 * to "normal" bindings. If non-NULL, the
-				 * sequences at psPtr correspond to virtual
-				 * bindings; in order to match each sequence
-				 * must correspond to a virtual binding for
-				 * which a binding exists for object in
-				 * bindPtr. */
-    PatSeq **sourcePtrPtr)	/* Filled with the pattern sequence that
-				 * contains the eventProc and clientData
-				 * associated with the best match. If this
-				 * differs from the return value, it is the
-				 * virtual event that most closely matched the
-				 * return value (a physical event). Not
-				 * modified unless a result other than bestPtr
-				 * is returned. */
+    Tk_BindingTable bindPtr,	/* Table in which to look for bindings. */
+    PSList *psList,		/* List of potentially matching patterns, can be NULL. */
+    PSList *psSuccList,		/* Add all matching higher-level pattern sequences to this list.
+    				 * Can be NULL. */
+    unsigned patIndex,		/* Match only this tag in sequence. */
+    const Event *curEvent,	/* Match this event. */
+    ClientData object,		/* Check for this binding tag. */
+    PatSeq **physPtrPtr)	/* Input: the best physical event; NULL if we test physical events.
+    				 * Output: the associated physical event for the best matching virtual
+				 * event; NULL when we match physical events. */
 {
-    PatSeq *matchPtr, *bestSourcePtr, *sourcePtr;
+    Window window;
+    PSEntry *psEntry;
+    PatSeq *bestPtr;
+    PatSeq *bestPhysPtr;
+    ModMask bestModMask;
+    const PSModMaskArr *bestModMaskArr = NULL;
 
-    bestSourcePtr = *sourcePtrPtr;
+    assert(dispPtr);
+    assert(bindPtr);
+    assert(curEvent);
 
-    /*
-     * Iterate over all the pattern sequences.
-     */
-
-    for ( ; psPtr != NULL; psPtr = psPtr->nextSeqPtr) {
-	XEvent *eventPtr = &bindPtr->eventRing[bindPtr->curEvent];
-	Detail *detailPtr = &bindPtr->detailRing[bindPtr->curEvent];
-	TkPattern *patPtr = psPtr->pats;
-	Window window = eventPtr->xany.window;
-	int patCount, ringCount, flags, state, modMask, i;
-
-	/*
-	 * Iterate over all the patterns in a sequence to be sure that they
-	 * all match.
-	 */
-
-	patCount = psPtr->numPats;
-	ringCount = EVENT_BUFFER_SIZE;
-	while (patCount > 0) {
-	    if (ringCount <= 0) {
-		goto nextSequence;
-	    }
-	    if (eventPtr->xany.type != patPtr->eventType) {
-		/*
-		 * Most of the event types are considered superfluous in that
-		 * they are ignored if they occur in the middle of a pattern
-		 * sequence and have mismatching types. The only ones that
-		 * cannot be ignored are ButtonPress and ButtonRelease events
-		 * (if the next event in the pattern is a KeyPress or
-		 * KeyRelease) and KeyPress and KeyRelease events (if the next
-		 * pattern event is a ButtonPress or ButtonRelease). Here are
-		 * some tricky cases to consider:
-		 * 1. Double-Button or Double-Key events.
-		 * 2. Double-ButtonRelease or Double-KeyRelease events.
-		 * 3. The arrival of various events like Enter and Leave and
-		 *    FocusIn and GraphicsExpose between two button presses or
-		 *    key presses.
-		 * 4. Modifier keys like Shift and Control shouldn't generate
-		 *    conflicts with button events.
-		 */
-
-		if ((patPtr->eventType == KeyPress)
-			|| (patPtr->eventType == KeyRelease)) {
-		    if ((eventPtr->xany.type == ButtonPress)
-			    || (eventPtr->xany.type == ButtonRelease)) {
-			goto nextSequence;
-		    }
-		} else if ((patPtr->eventType == ButtonPress)
-			|| (patPtr->eventType == ButtonRelease)) {
-		    if ((eventPtr->xany.type == KeyPress)
-			    || (eventPtr->xany.type == KeyRelease)) {
-			/*
-			 * Ignore key events if they are modifier keys.
-			 */
-
-			for (i = 0; i < dispPtr->numModKeyCodes; i++) {
-			    if (dispPtr->modKeyCodes[i]
-				    == eventPtr->xkey.keycode) {
-				/*
-				 * This key is a modifier key, so ignore it.
-				 */
-
-				goto nextEvent;
-			    }
-			}
-			goto nextSequence;
-		    }
-		}
-		goto nextEvent;
-	    }
-	    if (eventPtr->xany.type == CreateNotify
-		    && eventPtr->xcreatewindow.parent != window) {
-		goto nextSequence;
-	    } else if (eventPtr->xany.window != window) {
-		goto nextSequence;
-	    }
-
-	    /*
-	     * Note: it's important for the keysym check to go before the
-	     * modifier check, so we can ignore unwanted modifier keys before
-	     * choking on the modifier check.
-	     */
-
-	    if ((patPtr->detail.clientData != 0)
-		    && (patPtr->detail.clientData != detailPtr->clientData)) {
-		/*
-		 * The detail appears not to match. However, if the event is a
-		 * KeyPress for a modifier key then just ignore the event.
-		 * Otherwise event sequences like "aD" never match because the
-		 * shift key goes down between the "a" and the "D".
-		 */
-
-		if (eventPtr->xany.type == KeyPress) {
-		    for (i = 0; i < dispPtr->numModKeyCodes; i++) {
-			if (dispPtr->modKeyCodes[i] == eventPtr->xkey.keycode) {
-			    goto nextEvent;
-			}
-		    }
-		}
-		goto nextSequence;
-	    }
-	    flags = flagArray[eventPtr->type];
-	    if (flags & KEY_BUTTON_MOTION_VIRTUAL) {
-		state = eventPtr->xkey.state;
-	    } else if (flags & CROSSING) {
-		state = eventPtr->xcrossing.state;
-	    } else {
-		state = 0;
-	    }
-	    if (patPtr->needMods != 0) {
-		modMask = patPtr->needMods;
-		if ((modMask & META_MASK) && (dispPtr->metaModMask != 0)) {
-		    modMask = (modMask & ~META_MASK) | dispPtr->metaModMask;
-		}
-		if ((modMask & ALT_MASK) && (dispPtr->altModMask != 0)) {
-		    modMask = (modMask & ~ALT_MASK) | dispPtr->altModMask;
-		}
-
-		if ((state & META_MASK) && (dispPtr->metaModMask != 0)) {
-		    state = (state & ~META_MASK) | dispPtr->metaModMask;
-		}
-		if ((state & ALT_MASK) && (dispPtr->altModMask != 0)) {
-		    state = (state & ~ALT_MASK) | dispPtr->altModMask;
-		}
-
-		if ((state & modMask) != modMask) {
-		    goto nextSequence;
-		}
-	    }
-	    if (psPtr->flags & PAT_NEARBY) {
-		XEvent *firstPtr = &bindPtr->eventRing[bindPtr->curEvent];
-		int timeDiff;
-
-		timeDiff = (Time) firstPtr->xkey.time - eventPtr->xkey.time;
-		if ((firstPtr->xkey.x_root
-			    < (eventPtr->xkey.x_root - NEARBY_PIXELS))
-			|| (firstPtr->xkey.x_root
-			    > (eventPtr->xkey.x_root + NEARBY_PIXELS))
-			|| (firstPtr->xkey.y_root
-			    < (eventPtr->xkey.y_root - NEARBY_PIXELS))
-			|| (firstPtr->xkey.y_root
-			    > (eventPtr->xkey.y_root + NEARBY_PIXELS))
-			|| (timeDiff > NEARBY_MS)) {
-		    goto nextSequence;
-		}
-	    }
-	    patPtr++;
-	    patCount--;
-	nextEvent:
-	    if (eventPtr == bindPtr->eventRing) {
-		eventPtr = &bindPtr->eventRing[EVENT_BUFFER_SIZE-1];
-		detailPtr = &bindPtr->detailRing[EVENT_BUFFER_SIZE-1];
-	    } else {
-		eventPtr--;
-		detailPtr--;
-	    }
-	    ringCount--;
-	}
-
-	matchPtr = psPtr;
-	sourcePtr = psPtr;
-
-	if (objectPtr != NULL) {
-	    int iVirt;
-	    VirtualOwners *voPtr;
-	    PatternTableKey key;
-
-	    /*
-	     * The sequence matches the physical constraints. Is this object
-	     * interested in any of the virtual events that correspond to this
-	     * sequence?
-	     */
-
-	    voPtr = psPtr->voPtr;
-
-	    memset(&key, 0, sizeof(key));
-	    key.object = *objectPtr;
-	    key.type = VirtualEvent;
-	    key.detail.clientData = 0;
-
-	    for (iVirt = 0; iVirt < voPtr->numOwners; iVirt++) {
-		Tcl_HashEntry *hPtr = voPtr->owners[iVirt];
-
-		key.detail.name = (Tk_Uid) Tcl_GetHashKey(hPtr->tablePtr,
-			hPtr);
-		hPtr = Tcl_FindHashEntry(&bindPtr->patternTable,
-			(char *) &key);
-		if (hPtr != NULL) {
-		    /*
-		     * This tag is interested in this virtual event and its
-		     * corresponding physical event is a good match with the
-		     * virtual event's definition.
-		     */
-
-		    PatSeq *virtMatchPtr = (PatSeq *) Tcl_GetHashValue(hPtr);
-
-		    if ((virtMatchPtr->numPats != 1)
-			    || (virtMatchPtr->nextSeqPtr != NULL)) {
-			Tcl_Panic("MatchPattern: badly constructed virtual event");
-		    }
-		    sourcePtr = virtMatchPtr;
-		    goto match;
-		}
-	    }
-
-	    /*
-	     * The physical event matches a virtual event's definition, but
-	     * the tag isn't interested in it.
-	     */
-
-	    goto nextSequence;
-	}
-    match:
-
-	/*
-	 * This sequence matches. If we've already got another match, pick
-	 * whichever is most specific. Detail is most important, then
-	 * needMods.
-	 */
-
-	if (bestPtr != NULL) {
-	    TkPattern *patPtr2;
-
-	    if (matchPtr->numPats != bestPtr->numPats) {
-		if (bestPtr->numPats > matchPtr->numPats) {
-		    goto nextSequence;
-		} else {
-		    goto newBest;
-		}
-	    }
-	    for (i = 0, patPtr = matchPtr->pats, patPtr2 = bestPtr->pats;
-		    i < matchPtr->numPats; i++, patPtr++, patPtr2++) {
-		if (patPtr->detail.clientData != patPtr2->detail.clientData) {
-		    if (patPtr->detail.clientData == 0) {
-			goto nextSequence;
-		    } else {
-			goto newBest;
-		    }
-		}
-		if (patPtr->needMods != patPtr2->needMods) {
-		    if ((patPtr->needMods & patPtr2->needMods)
-			    == patPtr->needMods) {
-			goto nextSequence;
-		    } else if ((patPtr->needMods & patPtr2->needMods)
-			    == patPtr2->needMods) {
-			goto newBest;
-		    }
-		}
-	    }
-
-	    /*
-	     * Tie goes to current best pattern.
-	     *
-	     * (1) For virtual vs. virtual, the least recently defined virtual
-	     * wins, because virtuals are examined in order of definition.
-	     * This order is _not_ guaranteed in the documentation.
-	     *
-	     * (2) For virtual vs. physical, the physical wins because all the
-	     * physicals are examined before the virtuals. This order is
-	     * guaranteed in the documentation.
-	     *
-	     * (3) For physical vs. physical pattern, the most recently
-	     * defined physical wins, because physicals are examined in
-	     * reverse order of definition. This order is guaranteed in the
-	     * documentation.
-	     */
-
-	    goto nextSequence;
-	}
-    newBest:
-	bestPtr = matchPtr;
-	bestSourcePtr = sourcePtr;
-
-    nextSequence:
-	continue;
+    if (!psList) {
+	return NULL;
     }
 
-    *sourcePtrPtr = bestSourcePtr;
+    bestModMask = 0;
+    bestPtr = NULL;
+    bestPhysPtr = NULL;
+    window = curEvent->xev.xany.window;
+
+    for (psEntry = PSList_First(psList); psEntry; psEntry = PSList_Next(psEntry)) {
+	if (patIndex == 0 || psEntry->window == window) {
+	    PatSeq* psPtr = psEntry->psPtr;
+
+	    assert(TEST_PSENTRY(psPtr));
+	    assert((psPtr->object == NULL) == (physPtrPtr != NULL));
+	    assert(psPtr->object || patIndex == 0);
+	    assert(psPtr->numPats > patIndex);
+
+	    if (psPtr->object
+		    ? psPtr->object == object
+		    : VirtPatIsBound(bindPtr, psPtr, object, physPtrPtr)) {
+		TkPattern *patPtr = psPtr->pats + patIndex;
+
+		if (patPtr->eventType == (unsigned) curEvent->xev.type
+			&& (curEvent->xev.type != CreateNotify
+				|| curEvent->xev.xcreatewindow.parent == window)
+			&& (!patPtr->name || patPtr->name == curEvent->detail.name)
+			&& (!patPtr->info || patPtr->info == curEvent->detail.info)) {
+		    /*
+		     * Resolve the modifier mask for Alt and Mod keys. Unfortunately this
+		     * cannot be done in ParseEventDescription, otherwise this function would
+		     * be the better place.
+		     */
+		    ModMask modMask = ResolveModifiers(dispPtr, patPtr->modMask);
+		    ModMask curModMask = ResolveModifiers(dispPtr, bindPtr->curModMask);
+
+		    psEntry->expired = 1; /* remove it from promotion list */
+
+		    if ((modMask & ~curModMask) == 0) {
+			unsigned count = patPtr->info ? curEvent->countDetailed : curEvent->countAny;
+
+			if (patIndex < PSModMaskArr_Size(psEntry->lastModMaskArr)) {
+			    PSModMaskArr_Set(psEntry->lastModMaskArr, patIndex, &modMask);
+			}
+
+			/*
+			 * This pattern is finally matching.
+			 */
+
+			if (psPtr->numPats == patIndex + 1) {
+			    if (patPtr->count <= count) {
+				/*
+				 * This is also a final pattern.
+				 * We always prefer the pattern with better match.
+				 * If completely equal than prefer most recently defined pattern.
+				 */
+
+				int cmp = Compare(bestPtr, psPtr);
+
+				if (cmp == 0) {
+				    cmp = CompareModMasks(psEntry->lastModMaskArr, bestModMaskArr,
+					    modMask, bestModMask);
+				}
+
+				if (cmp > 0 || (cmp == 0 && bestPtr->number < psPtr->number)) {
+				    bestPtr = psPtr;
+				    bestModMask = modMask;
+				    bestModMaskArr = psEntry->lastModMaskArr;
+				    if (physPtrPtr) {
+					bestPhysPtr = *physPtrPtr;
+				    }
+				}
+			    } else {
+				DEBUG(psEntry->expired = 0;)
+				psEntry->keepIt = 1; /* don't remove it from promotion list */
+			    }
+			} else if (psSuccList) {
+			    /*
+			     * Not a final pattern, but matching, so promote it to next level.
+			     * But do not promote if count of current pattern is not yet reached.
+			     */
+			    if (patPtr->count == psEntry->count) {
+				PSEntry *psNewEntry;
+
+				assert(!patPtr->name);
+				psNewEntry = MakeListEntry(
+				    &bindPtr->lookupTables.entryPool, psPtr, psPtr->modMaskUsed);
+				if (!PSModMaskArr_IsEmpty(psNewEntry->lastModMaskArr)) {
+				    PSModMaskArr_Set(psNewEntry->lastModMaskArr, patIndex, &modMask);
+				}
+				assert(psNewEntry->keepIt);
+				assert(psNewEntry->count == 1u);
+				PSList_Append(psSuccList, psNewEntry);
+				psNewEntry->window = window; /* bind to current window */
+			    } else {
+				assert(psEntry->count < patPtr->count);
+				DEBUG(psEntry->expired = 0;)
+				psEntry->count += 1;
+				psEntry->keepIt = 1; /* don't remove it from promotion list */
+			    }
+			}
+		    }
+		}
+	    }
+	}
+    }
+
+    if (bestPhysPtr) {
+	assert(physPtrPtr);
+	*physPtrPtr = bestPhysPtr;
+    }
     return bestPtr;
 }
 
@@ -2258,49 +2904,43 @@ MatchPatterns(
 
 static void
 ExpandPercents(
-    TkWindow *winPtr,		/* Window where event occurred: needed to get
-				 * input context. */
-    const char *before,		/* Command containing percent expressions to
-				 * be replaced. */
-    XEvent *eventPtr,		/* X event containing information to be used
-				 * in % replacements. */
-    KeySym keySym,		/* KeySym: only relevant for KeyPress and
-				 * KeyRelease events). */
-    unsigned int scriptCount,	/* The number of script-based binding patterns
-				 * matched so far for this event. */
-    Tcl_DString *dsPtr)		/* Dynamic string in which to append new
-				 * command. */
+    TkWindow *winPtr,		/* Window where event occurred: needed to get input context. */
+    const char *before,		/* Command containing percent expressions to be replaced. */
+    Event *eventPtr,		/* Event containing information to be used in % replacements. */
+    unsigned scriptCount,	/* The number of script-based binding patterns matched so far for
+    				 * this event. */
+    Tcl_DString *dsPtr)		/* Dynamic string in which to append new command. */
 {
-    int spaceNeeded, cvtFlags;	/* Used to substitute string as proper Tcl
-				 * list element. */
-    int number, flags, length;
-#define NUM_SIZE 40
-    const char *string;
+    unsigned flags;
     Tcl_DString buf;
-    char numStorage[NUM_SIZE+1];
+    XEvent *evPtr;
+
+    assert(winPtr);
+    assert(before);
+    assert(eventPtr);
+    assert(dsPtr);
 
     Tcl_DStringInit(&buf);
-
-    if (eventPtr->type < TK_LASTEVENT) {
-	flags = flagArray[eventPtr->type];
-    } else {
-	flags = 0;
-    }
+    evPtr = &eventPtr->xev;
+    flags = (evPtr->type < TK_LASTEVENT) ? flagArray[evPtr->type] : 0;
 
     while (1) {
+	char numStorage[TCL_INTEGER_SPACE];
+	const char *string;
+	Tcl_WideInt number;
+
 	/*
 	 * Find everything up to the next % character and append it to the
 	 * result string.
 	 */
 
-	for (string = before; (*string != 0) && (*string != '%'); string++) {
-	    /* Empty loop body. */
-	}
+	for (string = before; *string && *string != '%'; ++string)
+	    ;
 	if (string != before) {
-	    Tcl_DStringAppend(dsPtr, before, (int) (string-before));
+	    Tcl_DStringAppend(dsPtr, before, string - before);
 	    before = string;
 	}
-	if (*before == 0) {
+	if (!*before) {
 	    break;
 	}
 
@@ -2308,322 +2948,277 @@ ExpandPercents(
 	 * There's a percent sequence here. Process it.
 	 */
 
-	number = 0;
+	number = NO_NUMBER;
 	string = "??";
+
 	switch (before[1]) {
 	case '#':
-	    number = eventPtr->xany.serial;
-	    goto doNumber;
+	    number = evPtr->xany.serial;
+	    break;
 	case 'a':
 	    if (flags & CONFIG) {
-		TkpPrintWindowId(numStorage, eventPtr->xconfigure.above);
+		TkpPrintWindowId(numStorage, evPtr->xconfigure.above);
 		string = numStorage;
 	    }
-	    goto doString;
+	    break;
 	case 'b':
 	    if (flags & BUTTON) {
-		number = eventPtr->xbutton.button;
-		goto doNumber;
+		number = evPtr->xbutton.button;
 	    }
-	    goto doString;
+	    break;
 	case 'c':
 	    if (flags & EXPOSE) {
-		number = eventPtr->xexpose.count;
-		goto doNumber;
+		number = evPtr->xexpose.count;
 	    }
-	    goto doString;
+	    break;
 	case 'd':
 	    if (flags & (CROSSING|FOCUS)) {
-		if (flags & FOCUS) {
-		    number = eventPtr->xfocus.detail;
-		} else {
-		    number = eventPtr->xcrossing.detail;
-		}
-		string = TkFindStateString(notifyDetail, number);
+		int detail = (flags & FOCUS) ? evPtr->xfocus.detail : evPtr->xcrossing.detail;
+		string = TkFindStateString(notifyDetail, detail);
 	    } else if (flags & CONFIGREQ) {
-		if (eventPtr->xconfigurerequest.value_mask & CWStackMode) {
-		    string = TkFindStateString(configureRequestDetail,
-			    eventPtr->xconfigurerequest.detail);
+		if (evPtr->xconfigurerequest.value_mask & CWStackMode) {
+		    string = TkFindStateString(configureRequestDetail, evPtr->xconfigurerequest.detail);
 		} else {
 		    string = "";
 		}
 	    } else if (flags & VIRTUAL) {
-		XVirtualEvent *vePtr = (XVirtualEvent *) eventPtr;
-
-		if (vePtr->user_data != NULL) {
-		    string = Tcl_GetString(vePtr->user_data);
-		} else {
-		    string = "";
-		}
+		XVirtualEvent *vePtr = (XVirtualEvent *) evPtr;
+		string = vePtr->user_data ? Tcl_GetString(vePtr->user_data) : "";
 	    }
-	    goto doString;
+	    break;
 	case 'f':
 	    if (flags & CROSSING) {
-		number = eventPtr->xcrossing.focus;
-		goto doNumber;
+		number = evPtr->xcrossing.focus;
 	    }
-	    goto doString;
+	    break;
 	case 'h':
 	    if (flags & EXPOSE) {
-		number = eventPtr->xexpose.height;
+		number = evPtr->xexpose.height;
 	    } else if (flags & CONFIG) {
-		number = eventPtr->xconfigure.height;
+		number = evPtr->xconfigure.height;
 	    } else if (flags & CREATE) {
-		number = eventPtr->xcreatewindow.height;
+		number = evPtr->xcreatewindow.height;
 	    } else if (flags & CONFIGREQ) {
-		number = eventPtr->xconfigurerequest.height;
+		number = evPtr->xconfigurerequest.height;
 	    } else if (flags & RESIZEREQ) {
-		number = eventPtr->xresizerequest.height;
-	    } else {
-		goto doString;
+		number = evPtr->xresizerequest.height;
 	    }
-	    goto doNumber;
+	    break;
 	case 'i':
 	    if (flags & CREATE) {
-		TkpPrintWindowId(numStorage, eventPtr->xcreatewindow.window);
+		TkpPrintWindowId(numStorage, evPtr->xcreatewindow.window);
 	    } else if (flags & CONFIGREQ) {
-		TkpPrintWindowId(numStorage,
-			eventPtr->xconfigurerequest.window);
+		TkpPrintWindowId(numStorage, evPtr->xconfigurerequest.window);
 	    } else if (flags & MAPREQ) {
-		TkpPrintWindowId(numStorage, eventPtr->xmaprequest.window);
+		TkpPrintWindowId(numStorage, evPtr->xmaprequest.window);
 	    } else {
-		TkpPrintWindowId(numStorage, eventPtr->xany.window);
+		TkpPrintWindowId(numStorage, evPtr->xany.window);
 	    }
 	    string = numStorage;
-	    goto doString;
+	    break;
 	case 'k':
-	    if ((flags & KEY) && (eventPtr->type != MouseWheelEvent)) {
-		number = eventPtr->xkey.keycode;
-		goto doNumber;
+	    if ((flags & KEY) && evPtr->type != MouseWheelEvent) {
+		number = evPtr->xkey.keycode;
 	    }
-	    goto doString;
+	    break;
 	case 'm':
 	    if (flags & CROSSING) {
-		number = eventPtr->xcrossing.mode;
-		string = TkFindStateString(notifyMode, number);
+		string = TkFindStateString(notifyMode, evPtr->xcrossing.mode);
 	    } else if (flags & FOCUS) {
-		number = eventPtr->xfocus.mode;
-		string = TkFindStateString(notifyMode, number);
+		string = TkFindStateString(notifyMode, evPtr->xfocus.mode);
 	    }
-	    goto doString;
+	    break;
 	case 'o':
 	    if (flags & CREATE) {
-		number = eventPtr->xcreatewindow.override_redirect;
+		number = evPtr->xcreatewindow.override_redirect;
 	    } else if (flags & MAP) {
-		number = eventPtr->xmap.override_redirect;
+		number = evPtr->xmap.override_redirect;
 	    } else if (flags & REPARENT) {
-		number = eventPtr->xreparent.override_redirect;
+		number = evPtr->xreparent.override_redirect;
 	    } else if (flags & CONFIG) {
-		number = eventPtr->xconfigure.override_redirect;
-	    } else {
-		goto doString;
+		number = evPtr->xconfigure.override_redirect;
 	    }
-	    goto doNumber;
+	    break;
 	case 'p':
 	    if (flags & CIRC) {
-		string = TkFindStateString(circPlace,
-			eventPtr->xcirculate.place);
+		string = TkFindStateString(circPlace, evPtr->xcirculate.place);
 	    } else if (flags & CIRCREQ) {
-		string = TkFindStateString(circPlace,
-			eventPtr->xcirculaterequest.place);
+		string = TkFindStateString(circPlace, evPtr->xcirculaterequest.place);
 	    }
-	    goto doString;
+	    break;
 	case 's':
 	    if (flags & KEY_BUTTON_MOTION_VIRTUAL) {
-		number = eventPtr->xkey.state;
-		goto doNumber;
+		number = evPtr->xkey.state;
 	    } else if (flags & CROSSING) {
-		number = eventPtr->xcrossing.state;
-		goto doNumber;
+		number = evPtr->xcrossing.state;
 	    } else if (flags & PROP) {
-		string = TkFindStateString(propNotify,
-			eventPtr->xproperty.state);
+		string = TkFindStateString(propNotify, evPtr->xproperty.state);
 	    } else if (flags & VISIBILITY) {
-		string = TkFindStateString(visNotify,
-			eventPtr->xvisibility.state);
+		string = TkFindStateString(visNotify, evPtr->xvisibility.state);
 	    }
-	    goto doString;
+	    break;
 	case 't':
 	    if (flags & KEY_BUTTON_MOTION_VIRTUAL) {
-		number = (int) eventPtr->xkey.time;
+		number = (int) evPtr->xkey.time;
 	    } else if (flags & CROSSING) {
-		number = (int) eventPtr->xcrossing.time;
+		number = (int) evPtr->xcrossing.time;
 	    } else if (flags & PROP) {
-		number = (int) eventPtr->xproperty.time;
-	    } else {
-		goto doString;
+		number = (int) evPtr->xproperty.time;
 	    }
-	    goto doNumber;
+	    break;
 	case 'v':
-	    number = eventPtr->xconfigurerequest.value_mask;
-	    goto doNumber;
+	    number = evPtr->xconfigurerequest.value_mask;
+	    break;
 	case 'w':
 	    if (flags & EXPOSE) {
-		number = eventPtr->xexpose.width;
+		number = evPtr->xexpose.width;
 	    } else if (flags & CONFIG) {
-		number = eventPtr->xconfigure.width;
+		number = evPtr->xconfigure.width;
 	    } else if (flags & CREATE) {
-		number = eventPtr->xcreatewindow.width;
+		number = evPtr->xcreatewindow.width;
 	    } else if (flags & CONFIGREQ) {
-		number = eventPtr->xconfigurerequest.width;
+		number = evPtr->xconfigurerequest.width;
 	    } else if (flags & RESIZEREQ) {
-		number = eventPtr->xresizerequest.width;
-	    } else {
-		goto doString;
+		number = evPtr->xresizerequest.width;
 	    }
-	    goto doNumber;
+	    break;
 	case 'x':
 	    if (flags & KEY_BUTTON_MOTION_VIRTUAL) {
-		number = eventPtr->xkey.x;
+		number = evPtr->xkey.x;
 	    } else if (flags & CROSSING) {
-		number = eventPtr->xcrossing.x;
+		number = evPtr->xcrossing.x;
 	    } else if (flags & EXPOSE) {
-		number = eventPtr->xexpose.x;
+		number = evPtr->xexpose.x;
 	    } else if (flags & (CREATE|CONFIG|GRAVITY)) {
-		number = eventPtr->xcreatewindow.x;
+		number = evPtr->xcreatewindow.x;
 	    } else if (flags & REPARENT) {
-		number = eventPtr->xreparent.x;
+		number = evPtr->xreparent.x;
 	    } else if (flags & CREATE) {
-		number = eventPtr->xcreatewindow.x;
+		number = evPtr->xcreatewindow.x;
 	    } else if (flags & CONFIGREQ) {
-		number = eventPtr->xconfigurerequest.x;
-	    } else {
-		goto doString;
+		number = evPtr->xconfigurerequest.x;
 	    }
-	    goto doNumber;
+	    break;
 	case 'y':
 	    if (flags & KEY_BUTTON_MOTION_VIRTUAL) {
-		number = eventPtr->xkey.y;
+		number = evPtr->xkey.y;
 	    } else if (flags & EXPOSE) {
-		number = eventPtr->xexpose.y;
+		number = evPtr->xexpose.y;
 	    } else if (flags & (CREATE|CONFIG|GRAVITY)) {
-		number = eventPtr->xcreatewindow.y;
+		number = evPtr->xcreatewindow.y;
 	    } else if (flags & REPARENT) {
-		number = eventPtr->xreparent.y;
+		number = evPtr->xreparent.y;
 	    } else if (flags & CROSSING) {
-		number = eventPtr->xcrossing.y;
+		number = evPtr->xcrossing.y;
 	    } else if (flags & CREATE) {
-		number = eventPtr->xcreatewindow.y;
+		number = evPtr->xcreatewindow.y;
 	    } else if (flags & CONFIGREQ) {
-		number = eventPtr->xconfigurerequest.y;
-	    } else {
-		goto doString;
+		number = evPtr->xconfigurerequest.y;
 	    }
-	    goto doNumber;
+	    break;
 	case 'A':
-	    if ((flags & KEY) && (eventPtr->type != MouseWheelEvent)) {
+	    if ((flags & KEY) && evPtr->type != MouseWheelEvent) {
 		Tcl_DStringFree(&buf);
-		string = TkpGetString(winPtr, eventPtr, &buf);
+		string = TkpGetString(winPtr, evPtr, &buf);
 	    }
-	    goto doString;
+	    break;
 	case 'B':
 	    if (flags & CREATE) {
-		number = eventPtr->xcreatewindow.border_width;
+		number = evPtr->xcreatewindow.border_width;
 	    } else if (flags & CONFIGREQ) {
-		number = eventPtr->xconfigurerequest.border_width;
+		number = evPtr->xconfigurerequest.border_width;
 	    } else if (flags & CONFIG) {
-		number = eventPtr->xconfigure.border_width;
-	    } else {
-		goto doString;
+		number = evPtr->xconfigure.border_width;
 	    }
-	    goto doNumber;
+	    break;
 	case 'D':
 	    /*
 	     * This is used only by the MouseWheel event.
 	     */
-
-	    if ((flags & KEY) && (eventPtr->type == MouseWheelEvent)) {
-		number = eventPtr->xkey.keycode;
-		goto doNumber;
+	    if ((flags & KEY) && evPtr->type == MouseWheelEvent) {
+		number = evPtr->xkey.keycode;
 	    }
-	    goto doString;
+	    break;
 	case 'E':
-	    number = (int) eventPtr->xany.send_event;
-	    goto doNumber;
+	    number = (int) evPtr->xany.send_event;
+	    break;
 	case 'K':
-	    if ((flags & KEY) && (eventPtr->type != MouseWheelEvent)) {
-		char *name = TkKeysymToString(keySym);
-
-		if (name != NULL) {
+	    if ((flags & KEY) && evPtr->type != MouseWheelEvent) {
+		const char *name = TkKeysymToString(eventPtr->detail.info);
+		if (name) {
 		    string = name;
 		}
 	    }
-	    goto doString;
+	    break;
 	case 'M':
 	    number = scriptCount;
-	    goto doNumber;
+	    break;
 	case 'N':
-	    if ((flags & KEY) && (eventPtr->type != MouseWheelEvent)) {
-		number = (int) keySym;
-		goto doNumber;
+	    if ((flags & KEY) && evPtr->type != MouseWheelEvent) {
+		number = (int) eventPtr->detail.info;
 	    }
-	    goto doString;
+	    break;
 	case 'P':
 	    if (flags & PROP) {
-		string = Tk_GetAtomName((Tk_Window) winPtr,
-			eventPtr->xproperty.atom);
+		string = Tk_GetAtomName((Tk_Window) winPtr, evPtr->xproperty.atom);
 	    }
-	    goto doString;
+	    break;
 	case 'R':
 	    if (flags & KEY_BUTTON_MOTION_CROSSING) {
-		TkpPrintWindowId(numStorage, eventPtr->xkey.root);
+		TkpPrintWindowId(numStorage, evPtr->xkey.root);
 		string = numStorage;
 	    }
-	    goto doString;
+	    break;
 	case 'S':
 	    if (flags & KEY_BUTTON_MOTION_CROSSING) {
-		TkpPrintWindowId(numStorage, eventPtr->xkey.subwindow);
+		TkpPrintWindowId(numStorage, evPtr->xkey.subwindow);
 		string = numStorage;
 	    }
-	    goto doString;
+	    break;
 	case 'T':
-	    number = eventPtr->type;
-	    goto doNumber;
+	    number = evPtr->type;
+	    break;
 	case 'W': {
-	    Tk_Window tkwin;
-
-	    tkwin = Tk_IdToWindow(eventPtr->xany.display,
-		    eventPtr->xany.window);
-	    if (tkwin != NULL) {
+	    Tk_Window tkwin = Tk_IdToWindow(evPtr->xany.display, evPtr->xany.window);
+	    if (tkwin) {
 		string = Tk_PathName(tkwin);
-	    } else {
-		string = "??";
 	    }
-	    goto doString;
+	    break;
 	}
 	case 'X':
 	    if (flags & KEY_BUTTON_MOTION_CROSSING) {
-		number = eventPtr->xkey.x_root;
-		goto doNumber;
+		number = evPtr->xkey.x_root;
 	    }
-	    goto doString;
+	    break;
 	case 'Y':
 	    if (flags & KEY_BUTTON_MOTION_CROSSING) {
-		number = eventPtr->xkey.y_root;
-		goto doNumber;
+		number = evPtr->xkey.y_root;
 	    }
-	    goto doString;
+	    break;
 	default:
 	    numStorage[0] = before[1];
 	    numStorage[1] = '\0';
 	    string = numStorage;
-	    goto doString;
+	    break;
 	}
 
-    doNumber:
-	sprintf(numStorage, "%d", number);
-	string = numStorage;
+	if (number != NO_NUMBER) {
+	    snprintf(numStorage, sizeof(numStorage), "%d", (int) number);
+	    string = numStorage;
+	}
+	{   /* local scope */
+	    int cvtFlags;
+	    unsigned spaceNeeded = Tcl_ScanElement(string, &cvtFlags);
+	    unsigned length = Tcl_DStringLength(dsPtr);
 
-    doString:
-	spaceNeeded = Tcl_ScanElement(string, &cvtFlags);
-	length = Tcl_DStringLength(dsPtr);
-	Tcl_DStringSetLength(dsPtr, length + spaceNeeded);
-	spaceNeeded = Tcl_ConvertElement(string,
-		Tcl_DStringValue(dsPtr) + length,
-		cvtFlags | TCL_DONT_USE_BRACES);
-	Tcl_DStringSetLength(dsPtr, length + spaceNeeded);
-	before += 2;
+	    Tcl_DStringSetLength(dsPtr, length + spaceNeeded);
+	    spaceNeeded = Tcl_ConvertElement(
+		    string, Tcl_DStringValue(dsPtr) + length, cvtFlags | TCL_DONT_USE_BRACES);
+	    Tcl_DStringSetLength(dsPtr, length + spaceNeeded);
+	    before += 2;
+	}
     }
+
     Tcl_DStringFree(&buf);
 }
 
@@ -2654,23 +3249,16 @@ ChangeScreen(
     char *dispName,		/* Name of new display. */
     int screenIndex)		/* Index of new screen. */
 {
-    Tcl_DString cmd;
+    Tcl_Obj *cmdObj = Tcl_ObjPrintf("::tk::ScreenChanged %s.%d", dispName, screenIndex);
     int code;
-    char screen[TCL_INTEGER_SPACE];
 
-    Tcl_DStringInit(&cmd);
-    Tcl_DStringAppend(&cmd, "tk::ScreenChanged ", 18);
-    Tcl_DStringAppend(&cmd, dispName, -1);
-    sprintf(screen, ".%d", screenIndex);
-    Tcl_DStringAppend(&cmd, screen, -1);
-    code = Tcl_EvalEx(interp, Tcl_DStringValue(&cmd), Tcl_DStringLength(&cmd),
-	    TCL_EVAL_GLOBAL);
-    Tcl_DStringFree(&cmd);
+    Tcl_IncrRefCount(cmdObj);
+    code = Tcl_EvalObjEx(interp, cmdObj, TCL_EVAL_GLOBAL);
     if (code != TCL_OK) {
-	Tcl_AddErrorInfo(interp,
-		"\n    (changing screen in event binding)");
-	Tcl_BackgroundError(interp);
+	Tcl_AddErrorInfo(interp, "\n    (changing screen in event binding)");
+	Tcl_BackgroundException(interp, code);
     }
+    Tcl_DecrRefCount(cmdObj);
 }
 
 /*
@@ -2697,74 +3285,74 @@ Tk_EventObjCmd(
     int objc,			/* Number of arguments. */
     Tcl_Obj *const objv[])	/* Argument objects. */
 {
-    int index;
+    int index, i;
+    char *name;
+    const char *event;
     Tk_Window tkwin;
-    VirtualEventTable *vetPtr;
     TkBindInfo bindInfo;
-    static const char *optionStrings[] = {
-	"add",		"delete",	"generate",	"info",
-	NULL
-    };
-    enum options {
-	EVENT_ADD,	EVENT_DELETE,	EVENT_GENERATE,	EVENT_INFO
-    };
+    VirtualEventTable *vetPtr;
 
-    tkwin = (Tk_Window) clientData;
-    bindInfo = ((TkWindow *) tkwin)->mainPtr->bindInfo;
-    vetPtr = &((BindInfo *) bindInfo)->virtualEventTable;
+    static const char *const optionStrings[] = { "add", "delete", "generate", "info", NULL };
+    enum options { EVENT_ADD, EVENT_DELETE, EVENT_GENERATE, EVENT_INFO };
+
+    assert(clientData);
 
     if (objc < 2) {
 	Tcl_WrongNumArgs(interp, 1, objv, "option ?arg?");
 	return TCL_ERROR;
     }
-    if (Tcl_GetIndexFromObj(interp, objv[1], optionStrings, "option", 0,
-	    &index) != TCL_OK) {
+    if (Tcl_GetIndexFromObjStruct(
+	    interp, objv[1], optionStrings, sizeof(char *), "option", 0, &index) != TCL_OK) {
+#ifdef SUPPORT_DEBUGGING
+    	if (strcmp(Tcl_GetString(objv[1]), "debug") == 0) {
+	    if (objc < 3) {
+		Tcl_WrongNumArgs(interp, 1, objv, "debug number");
+		return TCL_ERROR;
+	    }
+	    Tcl_GetIntFromObj(interp, objv[2], &BindCount);
+	    return TCL_OK;
+	}
+#endif
 	return TCL_ERROR;
     }
 
-    switch ((enum options) index) {
-    case EVENT_ADD: {
-	int i;
-	char *name, *event;
+    tkwin = (Tk_Window) clientData;
+    bindInfo = ((TkWindow *) tkwin)->mainPtr->bindInfo;
+    vetPtr = &bindInfo->virtualEventTable;
 
+    switch ((enum options) index) {
+    case EVENT_ADD:
 	if (objc < 4) {
-	    Tcl_WrongNumArgs(interp, 2, objv,
-		    "virtual sequence ?sequence ...?");
+	    Tcl_WrongNumArgs(interp, 2, objv, "virtual sequence ?sequence ...?");
 	    return TCL_ERROR;
 	}
 	name = Tcl_GetString(objv[2]);
-	for (i = 3; i < objc; i++) {
+	for (i = 3; i < objc; ++i) {
 	    event = Tcl_GetString(objv[i]);
-	    if (CreateVirtualEvent(interp, vetPtr, name, event) != TCL_OK) {
+	    if (!CreateVirtualEvent(interp, vetPtr, name, event)) {
 		return TCL_ERROR;
 	    }
 	}
 	break;
-    }
-    case EVENT_DELETE: {
-	int i;
-	char *name, *event;
-
+    case EVENT_DELETE:
 	if (objc < 3) {
-	    Tcl_WrongNumArgs(interp, 2, objv,
-		    "virtual ?sequence sequence ...?");
+	    Tcl_WrongNumArgs(interp, 2, objv, "virtual ?sequence ...?");
 	    return TCL_ERROR;
 	}
 	name = Tcl_GetString(objv[2]);
 	if (objc == 3) {
 	    return DeleteVirtualEvent(interp, vetPtr, name, NULL);
 	}
-	for (i = 3; i < objc; i++) {
+	for (i = 3; i < objc; ++i) {
 	    event = Tcl_GetString(objv[i]);
 	    if (DeleteVirtualEvent(interp, vetPtr, name, event) != TCL_OK) {
 		return TCL_ERROR;
 	    }
 	}
 	break;
-    }
     case EVENT_GENERATE:
 	if (objc < 4) {
-	    Tcl_WrongNumArgs(interp, 2, objv, "window event ?options?");
+	    Tcl_WrongNumArgs(interp, 2, objv, "window event ?-option value ...?");
 	    return TCL_ERROR;
 	}
 	return HandleEventGenerate(interp, tkwin, objc - 2, objv + 2);
@@ -2772,12 +3360,12 @@ Tk_EventObjCmd(
 	if (objc == 2) {
 	    GetAllVirtualEvents(interp, vetPtr);
 	    return TCL_OK;
-	} else if (objc == 3) {
-	    return GetVirtualEvent(interp, vetPtr, Tcl_GetString(objv[2]));
-	} else {
-	    Tcl_WrongNumArgs(interp, 2, objv, "?virtual?");
-	    return TCL_ERROR;
 	}
+	if (objc == 3) {
+	    return GetVirtualEvent(interp, vetPtr, objv[2]);
+	}
+	Tcl_WrongNumArgs(interp, 2, objv, "?virtual?");
+	return TCL_ERROR;
     }
     return TCL_OK;
 }
@@ -2801,12 +3389,14 @@ Tk_EventObjCmd(
 
 static void
 InitVirtualEventTable(
-    VirtualEventTable *vetPtr)	/* Pointer to virtual event table. Memory is
-				 * supplied by the caller. */
+    VirtualEventTable *vetPtr)	/* Pointer to virtual event table. Memory is supplied by the caller. */
 {
-    Tcl_InitHashTable(&vetPtr->patternTable,
-	    sizeof(PatternTableKey) / sizeof(int));
+    assert(vetPtr);
+    memset(vetPtr, 0, sizeof(*vetPtr));
+    Tcl_InitHashTable(&vetPtr->lookupTables.patternTable, sizeof(PatternTableKey)/sizeof(int));
+    Tcl_InitHashTable(&vetPtr->lookupTables.listTable, sizeof(PatternTableKey)/sizeof(int));
     Tcl_InitHashTable(&vetPtr->nameTable, TCL_ONE_WORD_KEYS);
+    PSList_Init(&vetPtr->lookupTables.entryPool);
 }
 
 /*
@@ -2832,24 +3422,33 @@ DeleteVirtualEventTable(
 {
     Tcl_HashEntry *hPtr;
     Tcl_HashSearch search;
-    PatSeq *psPtr, *nextPtr;
 
-    hPtr = Tcl_FirstHashEntry(&vetPtr->patternTable, &search);
-    for ( ; hPtr != NULL; hPtr = Tcl_NextHashEntry(&search)) {
-	psPtr = (PatSeq *) Tcl_GetHashValue(hPtr);
-	for ( ; psPtr != NULL; psPtr = nextPtr) {
+    assert(vetPtr);
+
+    hPtr = Tcl_FirstHashEntry(&vetPtr->lookupTables.patternTable, &search);
+    for ( ; hPtr; hPtr = Tcl_NextHashEntry(&search)) {
+	PatSeq *nextPtr;
+	PatSeq *psPtr;
+
+	for (psPtr = Tcl_GetHashValue(hPtr); psPtr; psPtr = nextPtr) {
+	    assert(TEST_PSENTRY(psPtr));
 	    nextPtr = psPtr->nextSeqPtr;
-	    ckfree((char *) psPtr->voPtr);
-	    ckfree((char *) psPtr);
+	    DEBUG(psPtr->owned = 0;)
+	    FreePatSeq(psPtr);
 	}
     }
-    Tcl_DeleteHashTable(&vetPtr->patternTable);
+    Tcl_DeleteHashTable(&vetPtr->lookupTables.patternTable);
 
     hPtr = Tcl_FirstHashEntry(&vetPtr->nameTable, &search);
-    for ( ; hPtr != NULL; hPtr = Tcl_NextHashEntry(&search)) {
-	ckfree((char *) Tcl_GetHashValue(hPtr));
+    for ( ; hPtr; hPtr = Tcl_NextHashEntry(&search)) {
+	ckfree(Tcl_GetHashValue(hPtr));
     }
     Tcl_DeleteHashTable(&vetPtr->nameTable);
+    Tcl_DeleteHashTable(&vetPtr->lookupTables.listTable);
+
+    ClearLookupTable(&vetPtr->lookupTables, NULL);
+    DEBUG(countEntryItems -= PSList_Size(&vetPtr->lookupTables.entryPool);)
+    PSList_Traverse(&vetPtr->lookupTables.entryPool, FreePatSeqEntry);
 }
 
 /*
@@ -2877,31 +3476,30 @@ CreateVirtualEvent(
     Tcl_Interp *interp,		/* Used for error reporting. */
     VirtualEventTable *vetPtr,	/* Table in which to augment virtual event. */
     char *virtString,		/* Name of new virtual event. */
-    char *eventString)		/* String describing physical event that
-				 * triggers virtual event. */
+    const char *eventString)	/* String describing physical event that triggers virtual event. */
 {
     PatSeq *psPtr;
     int dummy;
     Tcl_HashEntry *vhPtr;
-    unsigned long eventMask;
-    PhysicalsOwned *poPtr;
-    VirtualOwners *voPtr;
+    PhysOwned *owned;
     Tk_Uid virtUid;
 
-    virtUid = GetVirtualEventUid(interp, virtString);
-    if (virtUid == NULL) {
-	return TCL_ERROR;
+    assert(vetPtr);
+    assert(virtString);
+    assert(eventString);
+
+    if (!(virtUid = GetVirtualEventUid(interp, virtString))) {
+	return 0;
     }
 
     /*
      * Find/create physical event
      */
 
-    psPtr = FindSequence(interp, &vetPtr->patternTable, NULL, eventString,
-	    1, 0, &eventMask);
-    if (psPtr == NULL) {
-	return TCL_ERROR;
+    if (!(psPtr = FindSequence(interp, &vetPtr->lookupTables, NULL, eventString, 1, 0, NULL))) {
+	return 0;
     }
+    assert(TEST_PSENTRY(psPtr));
 
     /*
      * Find/create virtual event.
@@ -2913,48 +3511,18 @@ CreateVirtualEvent(
      * Make virtual event own the physical event.
      */
 
-    poPtr = (PhysicalsOwned *) Tcl_GetHashValue(vhPtr);
-    if (poPtr == NULL) {
-	poPtr = (PhysicalsOwned *) ckalloc(sizeof(PhysicalsOwned));
-	poPtr->numOwned = 0;
-    } else {
-	/*
-	 * See if this virtual event is already defined for this physical
-	 * event and just return if it is.
-	 */
+    owned = Tcl_GetHashValue(vhPtr);
 
-	int i;
-
-	for (i = 0; i < poPtr->numOwned; i++) {
-	    if (poPtr->patSeqs[i] == psPtr) {
-		return TCL_OK;
-	    }
-	}
-	poPtr = (PhysicalsOwned *) ckrealloc((char *) poPtr,
-		sizeof(PhysicalsOwned) + poPtr->numOwned * sizeof(PatSeq *));
+    if (!PhysOwned_Contains(owned, psPtr)) {
+	PhysOwned_Append(&owned, psPtr);
+	Tcl_SetHashValue(vhPtr, owned);
+	DEBUG(psPtr->owned = 1;)
+	InsertPatSeq(&vetPtr->lookupTables, psPtr);
+	/* Make physical event so it can trigger the virtual event. */
+	VirtOwners_Append(&psPtr->ptr.owners, vhPtr);
     }
-    Tcl_SetHashValue(vhPtr, (ClientData) poPtr);
-    poPtr->patSeqs[poPtr->numOwned] = psPtr;
-    poPtr->numOwned++;
 
-    /*
-     * Make physical event so it can trigger the virtual event.
-     */
-
-    voPtr = psPtr->voPtr;
-    if (voPtr == NULL) {
-	voPtr = (VirtualOwners *) ckalloc(sizeof(VirtualOwners));
-	voPtr->numOwners = 0;
-    } else {
-	voPtr = (VirtualOwners *) ckrealloc((char *) voPtr,
-		sizeof(VirtualOwners)
-		+ voPtr->numOwners * sizeof(Tcl_HashEntry *));
-    }
-    psPtr->voPtr = voPtr;
-    voPtr->owners[voPtr->numOwners] = vhPtr;
-    voPtr->numOwners++;
-
-    return TCL_OK;
+    return 1;
 }
 
 /*
@@ -2984,32 +3552,32 @@ static int
 DeleteVirtualEvent(
     Tcl_Interp *interp,		/* Used for error reporting. */
     VirtualEventTable *vetPtr,	/* Table in which to delete event. */
-    char *virtString,		/* String describing event sequence that
-				 * triggers binding. */
-    char *eventString)		/* The event sequence that should be deleted,
-				 * or NULL to delete all event sequences for
-				 * the entire virtual event. */
+    char *virtString,		/* String describing event sequence that triggers binding. */
+    const char *eventString)	/* The event sequence that should be deleted, or NULL to delete
+    				 * all event sequences for the entire virtual event. */
 {
     int iPhys;
     Tk_Uid virtUid;
     Tcl_HashEntry *vhPtr;
-    PhysicalsOwned *poPtr;
-    PatSeq *eventPSPtr;
+    PhysOwned *owned;
+    const PatSeq *eventPSPtr;
+    PatSeq *lastElemPtr;
 
-    virtUid = GetVirtualEventUid(interp, virtString);
-    if (virtUid == NULL) {
+    assert(vetPtr);
+    assert(virtString);
+
+    if (!(virtUid = GetVirtualEventUid(interp, virtString))) {
 	return TCL_ERROR;
     }
 
-    vhPtr = Tcl_FindHashEntry(&vetPtr->nameTable, virtUid);
-    if (vhPtr == NULL) {
+    if (!(vhPtr = Tcl_FindHashEntry(&vetPtr->nameTable, virtUid))) {
 	return TCL_OK;
     }
-    poPtr = (PhysicalsOwned *) Tcl_GetHashValue(vhPtr);
+    owned = Tcl_GetHashValue(vhPtr);
 
     eventPSPtr = NULL;
-    if (eventString != NULL) {
-	unsigned long eventMask;
+    if (eventString) {
+	LookupTables *lookupTables = &vetPtr->lookupTables;
 
 	/*
 	 * Delete only the specific physical event associated with the virtual
@@ -3017,102 +3585,75 @@ DeleteVirtualEvent(
 	 * event doesn't own that physical event, return w/o doing anything.
 	 */
 
-	eventPSPtr = FindSequence(interp, &vetPtr->patternTable, NULL,
-		eventString, 0, 0, &eventMask);
-	if (eventPSPtr == NULL) {
-	    const char *string = Tcl_GetStringResult(interp);
-
-	    return (string[0] != '\0') ? TCL_ERROR : TCL_OK;
+	eventPSPtr = FindSequence(interp, lookupTables, NULL, eventString, 0, 0, NULL);
+	if (!eventPSPtr) {
+	    const char *string = Tcl_GetString(Tcl_GetObjResult(interp));
+	    return string[0] ? TCL_ERROR : TCL_OK;
 	}
     }
 
-    for (iPhys = poPtr->numOwned; --iPhys >= 0; ) {
-	PatSeq *psPtr = poPtr->patSeqs[iPhys];
+    for (iPhys = PhysOwned_Size(owned); --iPhys >= 0; ) {
+	PatSeq *psPtr = PhysOwned_Get(owned, iPhys);
 
-	if ((eventPSPtr == NULL) || (psPtr == eventPSPtr)) {
-	    int iVirt;
-	    VirtualOwners *voPtr;
+	assert(TEST_PSENTRY(psPtr));
+
+	if (!eventPSPtr || psPtr == eventPSPtr) {
+	    VirtOwners *owners = psPtr->ptr.owners;
+	    int iVirt = VirtOwners_Find(owners, vhPtr);
+
+	    assert(iVirt != -1); /* otherwise we couldn't find owner, and this should not happen */
 
 	    /*
 	     * Remove association between this physical event and the given
 	     * virtual event that it triggers.
 	     */
 
-	    voPtr = psPtr->voPtr;
-	    for (iVirt = 0; iVirt < voPtr->numOwners; iVirt++) {
-		if (voPtr->owners[iVirt] == vhPtr) {
-		    break;
-		}
-	    }
-	    if (iVirt == voPtr->numOwners) {
-		Tcl_Panic("DeleteVirtualEvent: couldn't find owner");
-	    }
-	    voPtr->numOwners--;
-	    if (voPtr->numOwners == 0) {
-		/*
-		 * Removed last reference to this physical event, so remove it
-		 * from physical->virtual map.
-		 */
-
-		PatSeq *prevPtr = (PatSeq *) Tcl_GetHashValue(psPtr->hPtr);
-
-		if (prevPtr == psPtr) {
-		    if (psPtr->nextSeqPtr == NULL) {
-			Tcl_DeleteHashEntry(psPtr->hPtr);
-		    } else {
-			Tcl_SetHashValue(psPtr->hPtr,
-				psPtr->nextSeqPtr);
-		    }
-		} else {
-		    for ( ; ; prevPtr = prevPtr->nextSeqPtr) {
-			if (prevPtr == NULL) {
-			    Tcl_Panic("DeleteVirtualEvent couldn't find on hash chain");
-			}
-			if (prevPtr->nextSeqPtr == psPtr) {
-			    prevPtr->nextSeqPtr = psPtr->nextSeqPtr;
-			    break;
-			}
-		    }
-		}
-		ckfree((char *) psPtr->voPtr);
-		ckfree((char *) psPtr);
-	    } else {
+	    if (VirtOwners_Size(owners) > 1) {
 		/*
 		 * This physical event still triggers some other virtual
 		 * event(s). Consolidate the list of virtual owners for this
 		 * physical event so it no longer triggers the given virtual
 		 * event.
 		 */
-
-		voPtr->owners[iVirt] = voPtr->owners[voPtr->numOwners];
+		VirtOwners_Set(owners, iVirt, VirtOwners_Back(owners));
+		VirtOwners_PopBack(owners);
+	    } else {
+		/*
+		 * Removed last reference to this physical event, so remove it
+		 * from lookup table.
+		 */
+		DEBUG(psPtr->owned = 0;)
+		RemovePatSeqFromLookup(&vetPtr->lookupTables, psPtr);
+		DeletePatSeq(psPtr);
 	    }
 
 	    /*
 	     * Now delete the virtual event's reference to the physical event.
 	     */
 
-	    poPtr->numOwned--;
-	    if (eventPSPtr != NULL && poPtr->numOwned != 0) {
+	    lastElemPtr = PhysOwned_Back(owned);
+
+	    if (PhysOwned_PopBack(owned) > 0 && eventPSPtr) {
 		/*
 		 * Just deleting this one physical event. Consolidate list of
 		 * owned physical events and return.
 		 */
-
-		poPtr->patSeqs[iPhys] = poPtr->patSeqs[poPtr->numOwned];
+		if ((size_t) iPhys < PhysOwned_Size(owned)) {
+		    PhysOwned_Set(owned, iPhys, lastElemPtr);
+		}
 		return TCL_OK;
 	    }
 	}
     }
 
-    if (poPtr->numOwned == 0) {
+    if (PhysOwned_IsEmpty(owned)) {
 	/*
 	 * All the physical events for this virtual event were deleted, either
 	 * because there was only one associated physical event or because the
 	 * caller was deleting the entire virtual event. Now the virtual event
 	 * itself should be deleted.
 	 */
-
-	ckfree((char *) poPtr);
+	PhysOwned_Free(&owned);
 	Tcl_DeleteHashEntry(vhPtr);
     }
     return TCL_OK;
@@ -3144,33 +3685,31 @@ static int
 GetVirtualEvent(
     Tcl_Interp *interp,		/* Interpreter for reporting. */
     VirtualEventTable *vetPtr,	/* Table in which to look for event. */
-    char *virtString)		/* String describing virtual event. */
+    Tcl_Obj *virtName)		/* String describing virtual event. */
 {
     Tcl_HashEntry *vhPtr;
-    Tcl_DString ds;
-    int iPhys;
-    PhysicalsOwned *poPtr;
+    unsigned iPhys;
+    const PhysOwned *owned;
     Tk_Uid virtUid;
+    Tcl_Obj *resultObj;
 
-    virtUid = GetVirtualEventUid(interp, virtString);
-    if (virtUid == NULL) {
+    assert(vetPtr);
+    assert(virtName);
+
+    if (!(virtUid = GetVirtualEventUid(interp, Tcl_GetString(virtName)))) {
 	return TCL_ERROR;
     }
 
-    vhPtr = Tcl_FindHashEntry(&vetPtr->nameTable, virtUid);
-    if (vhPtr == NULL) {
+    if (!(vhPtr = Tcl_FindHashEntry(&vetPtr->nameTable, virtUid))) {
 	return TCL_OK;
     }
 
-    Tcl_DStringInit(&ds);
-
-    poPtr = (PhysicalsOwned *) Tcl_GetHashValue(vhPtr);
-    for (iPhys = 0; iPhys < poPtr->numOwned; iPhys++) {
-	Tcl_DStringSetLength(&ds, 0);
-	GetPatternString(poPtr->patSeqs[iPhys], &ds);
-	Tcl_AppendElement(interp, Tcl_DStringValue(&ds));
+    resultObj = Tcl_NewObj();
+    owned = Tcl_GetHashValue(vhPtr);
+    for (iPhys = 0; iPhys < PhysOwned_Size(owned); ++iPhys) {
+	Tcl_ListObjAppendElement(NULL, resultObj, GetPatternObj(PhysOwned_Get(owned, iPhys)));
     }
-    Tcl_DStringFree(&ds);
+    Tcl_SetObjResult(interp, resultObj);
 
     return TCL_OK;
 }
@@ -3200,20 +3739,17 @@ GetAllVirtualEvents(
 {
     Tcl_HashEntry *hPtr;
     Tcl_HashSearch search;
-    Tcl_DString ds;
+    Tcl_Obj *resultObj;
 
-    Tcl_DStringInit(&ds);
+    assert(vetPtr);
 
+    resultObj = Tcl_NewObj();
     hPtr = Tcl_FirstHashEntry(&vetPtr->nameTable, &search);
-    for ( ; hPtr != NULL; hPtr = Tcl_NextHashEntry(&search)) {
-	Tcl_DStringSetLength(&ds, 0);
-	Tcl_DStringAppend(&ds, "<<", 2);
-	Tcl_DStringAppend(&ds, Tcl_GetHashKey(hPtr->tablePtr, hPtr), -1);
-	Tcl_DStringAppend(&ds, ">>", 2);
-	Tcl_AppendElement(interp, Tcl_DStringValue(&ds));
+    for ( ; hPtr; hPtr = Tcl_NextHashEntry(&search)) {
+	Tcl_Obj* msg = Tcl_ObjPrintf("<<%s>>", (char *) Tcl_GetHashKey(hPtr->tablePtr, hPtr));
+	Tcl_ListObjAppendElement(NULL, resultObj, msg);
     }
-
-    Tcl_DStringFree(&ds);
+    Tcl_SetObjResult(interp, resultObj);
 }
 
 /*
@@ -3244,7 +3780,7 @@ GetAllVirtualEvents(
  *	Any other fields in eventPtr which are not specified by the pattern
  *	string or the optional arguments, are set to 0.
  *
- *	The event may be handled sychronously or asynchronously, depending on
+ *	The event may be handled synchronously or asynchronously, depending on
  *	the value specified by the optional "-when" option. The default
  *	setting is synchronous.
  *
@@ -3258,17 +3794,26 @@ HandleEventGenerate(
     int objc,			/* Number of arguments. */
     Tcl_Obj *const objv[])	/* Argument objects. */
 {
-    union {XEvent general; XVirtualEvent virtual;} event;
+    union { XEvent general; XVirtualEvent virtual; } event;
+
     const char *p;
-    char *name, *windowName;
-    int count, flags, synch, i, number, warp;
+    const char *name;
+    const char *windowName;
     Tcl_QueuePosition pos;
     TkPattern pat;
-    Tk_Window tkwin, tkwin2;
+    Tk_Window tkwin;
+    Tk_Window tkwin2;
     TkWindow *mainPtr;
-    unsigned long eventMask;
+    EventMask eventMask;
     Tcl_Obj *userDataObj;
-    static const char *fieldStrings[] = {
+    int synch;
+    int warp;
+    unsigned count;
+    unsigned flags;
+    int number;
+    unsigned i;
+
+    static const char *const fieldStrings[] = {
 	"-when",	"-above",	"-borderwidth",	"-button",
 	"-count",	"-data",	"-delta",	"-detail",
 	"-focus",	"-height",
@@ -3276,7 +3821,7 @@ HandleEventGenerate(
 	"-place",	"-root",	"-rootx",	"-rooty",
 	"-sendevent",	"-serial",	"-state",	"-subwindow",
 	"-time",	"-warp",	"-width",	"-window",
-	"-x",		"-y",	NULL
+	"-x",		"-y",		NULL
     };
     enum field {
 	EVENT_WHEN,	EVENT_ABOVE,	EVENT_BORDER,	EVENT_BUTTON,
@@ -3289,50 +3834,51 @@ HandleEventGenerate(
 	EVENT_X,	EVENT_Y
     };
 
+    assert(mainWin);
+
     windowName = Tcl_GetString(objv[0]);
     if (!windowName[0]) {
 	tkwin = mainWin;
-    } else if (NameToWindow(interp, mainWin, objv[0], &tkwin) != TCL_OK) {
+    } else if (!NameToWindow(interp, mainWin, objv[0], &tkwin)) {
 	return TCL_ERROR;
     }
 
     mainPtr = (TkWindow *) mainWin;
-    if ((tkwin == NULL)
-	    || (mainPtr->mainPtr != ((TkWindow *) tkwin)->mainPtr)) {
-	Tcl_AppendResult(interp, "window id \"", Tcl_GetString(objv[0]),
-		"\" doesn't exist in this application", NULL);
+    if (!tkwin || mainPtr->mainPtr != ((TkWindow *) tkwin)->mainPtr) {
+	Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		"window id \"%s\" doesn't exist in this application",
+		Tcl_GetString(objv[0])));
+	Tcl_SetErrorCode(interp, "TK", "LOOKUP", "WINDOW", Tcl_GetString(objv[0]), NULL);
 	return TCL_ERROR;
     }
 
     name = Tcl_GetString(objv[1]);
-
     p = name;
     eventMask = 0;
     userDataObj = NULL;
-    count = ParseEventDescription(interp, &p, &pat, &eventMask);
-    if (count == 0) {
+    if ((count = ParseEventDescription(interp, &p, &pat, &eventMask)) == 0) {
 	return TCL_ERROR;
     }
-    if (count != 1) {
-	Tcl_SetResult(interp, "Double or Triple modifier not allowed",
-		TCL_STATIC);
+    if (count != 1u) {
+	Tcl_SetObjResult(interp,
+		Tcl_NewStringObj("Double, Triple, or Quadruple modifier not allowed", -1));
+	Tcl_SetErrorCode(interp, "TK", "EVENT", "BAD_MODIFIER", NULL);
 	return TCL_ERROR;
     }
-    if (*p != '\0') {
-	Tcl_SetResult(interp, "only one event specification allowed",
-		TCL_STATIC);
+    if (*p) {
+	Tcl_SetObjResult(interp, Tcl_NewStringObj("only one event specification allowed", -1));
+	Tcl_SetErrorCode(interp, "TK", "EVENT", "MULTIPLE", NULL);
 	return TCL_ERROR;
     }
 
-    memset((void *) &event, 0, sizeof(event));
+    memset(&event, 0, sizeof(event));
     event.general.xany.type = pat.eventType;
     event.general.xany.serial = NextRequest(Tk_Display(tkwin));
-    event.general.xany.send_event = False;
+    event.general.xany.send_event = 0;
     if (windowName[0]) {
 	event.general.xany.window = Tk_WindowId(tkwin);
     } else {
-	event.general.xany.window =
-		RootWindow(Tk_Display(tkwin), Tk_ScreenNumber(tkwin));
+	event.general.xany.window = RootWindow(Tk_Display(tkwin), Tk_ScreenNumber(tkwin));
     }
     event.general.xany.display = Tk_Display(tkwin);
 
@@ -3341,18 +3887,17 @@ HandleEventGenerate(
 	/*
 	 * Event DestroyNotify should be generated by destroying the window.
 	 */
-
 	Tk_DestroyWindow(tkwin);
 	return TCL_OK;
     }
     if (flags & KEY_BUTTON_MOTION_VIRTUAL) {
-	event.general.xkey.state = pat.needMods;
-	if ((flags & KEY) && (event.general.xany.type != MouseWheelEvent)) {
-	    TkpSetKeycodeAndState(tkwin, pat.detail.keySym, &event.general);
+	event.general.xkey.state = pat.modMask;
+	if ((flags & KEY) && event.general.xany.type != MouseWheelEvent) {
+	    TkpSetKeycodeAndState(tkwin, pat.info, &event.general);
 	} else if (flags & BUTTON) {
-	    event.general.xbutton.button = pat.detail.button;
+	    event.general.xbutton.button = pat.info;
 	} else if (flags & VIRTUAL) {
-	    event.virtual.name = pat.detail.name;
+	    event.virtual.name = pat.name;
 	}
     }
     if (flags & (CREATE|UNMAP|MAP|REPARENT|CONFIG|GRAVITY|CIRC)) {
@@ -3364,26 +3909,31 @@ HandleEventGenerate(
 	event.general.xkey.y_root = -1;
     }
 
+    if (event.general.xany.type == FocusIn || event.general.xany.type == FocusOut) {
+	event.general.xany.send_event = GENERATED_FOCUS_EVENT_MAGIC;
+    }
+
     /*
-     * Process the remaining arguments to fill in additional fields of the
-     * event.
+     * Process the remaining arguments to fill in additional fields of the event.
      */
 
     synch = 1;
     warp = 0;
     pos = TCL_QUEUE_TAIL;
-    for (i = 2; i < objc; i += 2) {
+
+    for (i = 2; i < (unsigned) objc; i += 2) {
 	Tcl_Obj *optionPtr, *valuePtr;
+	int badOpt = 0;
 	int index;
 
 	optionPtr = objv[i];
 	valuePtr = objv[i + 1];
 
-	if (Tcl_GetIndexFromObj(interp, optionPtr, fieldStrings, "option",
-		TCL_EXACT, &index) != TCL_OK) {
+	if (Tcl_GetIndexFromObjStruct(interp, optionPtr, fieldStrings,
+		sizeof(char *), "option", TCL_EXACT, &index) != TCL_OK) {
 	    return TCL_ERROR;
 	}
-	if (objc & 1) {
+	if (IsOdd(objc)) {
 	    /*
 	     * This test occurs after Tcl_GetIndexFromObj() so that "event
 	     * generate <Button> -xyz" will return the error message that
@@ -3391,8 +3941,9 @@ HandleEventGenerate(
 	     * is missing.
 	     */
 
-	    Tcl_AppendResult(interp, "value for \"", Tcl_GetString(optionPtr),
-		    "\" missing", NULL);
+	    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		    "value for \"%s\" missing", Tcl_GetString(optionPtr)));
+	    Tcl_SetErrorCode(interp, "TK", "EVENT", "MISSING_VALUE", NULL);
 	    return TCL_ERROR;
 	}
 
@@ -3402,38 +3953,34 @@ HandleEventGenerate(
 		return TCL_ERROR;
 	    }
 	    if (!(flags & KEY_BUTTON_MOTION_VIRTUAL)) {
-		goto badopt;
+		badOpt = 1;
 	    }
 	    break;
 	case EVENT_WHEN:
-	    pos = (Tcl_QueuePosition) TkFindStateNumObj(interp, optionPtr,
-		    queuePosition, valuePtr);
+	    pos = (Tcl_QueuePosition) TkFindStateNumObj(interp, optionPtr, queuePosition, valuePtr);
 	    if ((int) pos < -1) {
 		return TCL_ERROR;
 	    }
-	    synch = 0;
-	    if ((int) pos == -1) {
-		synch = 1;
-	    }
+	    synch = ((int) pos == -1);
 	    break;
 	case EVENT_ABOVE:
-	    if (NameToWindow(interp, tkwin, valuePtr, &tkwin2) != TCL_OK) {
+	    if (!NameToWindow(interp, tkwin, valuePtr, &tkwin2)) {
 		return TCL_ERROR;
 	    }
 	    if (flags & CONFIG) {
 		event.general.xconfigure.above = Tk_WindowId(tkwin2);
 	    } else {
-		goto badopt;
+		badOpt = 1;
 	    }
 	    break;
 	case EVENT_BORDER:
-	    if (Tk_GetPixelsFromObj(interp,tkwin,valuePtr,&number) != TCL_OK) {
+	    if (Tk_GetPixelsFromObj(interp, tkwin, valuePtr, &number) != TCL_OK) {
 		return TCL_ERROR;
 	    }
 	    if (flags & (CREATE|CONFIG)) {
 		event.general.xcreatewindow.border_width = number;
 	    } else {
-		goto badopt;
+		badOpt = 1;
 	    }
 	    break;
 	case EVENT_BUTTON:
@@ -3443,7 +3990,7 @@ HandleEventGenerate(
 	    if (flags & BUTTON) {
 		event.general.xbutton.button = number;
 	    } else {
-		goto badopt;
+		badOpt = 1;
 	    }
 	    break;
 	case EVENT_COUNT:
@@ -3453,7 +4000,7 @@ HandleEventGenerate(
 	    if (flags & EXPOSE) {
 		event.general.xexpose.count = number;
 	    } else {
-		goto badopt;
+		badOpt = 1;
 	    }
 	    break;
 	case EVENT_DATA:
@@ -3463,25 +4010,23 @@ HandleEventGenerate(
 		 * completes and we know that the event generation is really
 		 * going to happen.
 		 */
-
 		userDataObj = valuePtr;
 	    } else {
-		goto badopt;
+		badOpt = 1;
 	    }
 	    break;
 	case EVENT_DELTA:
 	    if (Tcl_GetIntFromObj(interp, valuePtr, &number) != TCL_OK) {
 		return TCL_ERROR;
 	    }
-	    if ((flags & KEY) && (event.general.xkey.type == MouseWheelEvent)) {
+	    if ((flags & KEY) && event.general.xkey.type == MouseWheelEvent) {
 		event.general.xkey.keycode = number;
 	    } else {
-		goto badopt;
+		badOpt = 1;
 	    }
 	    break;
 	case EVENT_DETAIL:
-	    number = TkFindStateNumObj(interp, optionPtr, notifyDetail,
-		    valuePtr);
+	    number = TkFindStateNumObj(interp, optionPtr, notifyDetail, valuePtr);
 	    if (number < 0) {
 		return TCL_ERROR;
 	    }
@@ -3490,7 +4035,7 @@ HandleEventGenerate(
 	    } else if (flags & CROSSING) {
 		event.general.xcrossing.detail = number;
 	    } else {
-		goto badopt;
+		badOpt = 1;
 	    }
 	    break;
 	case EVENT_FOCUS:
@@ -3500,12 +4045,11 @@ HandleEventGenerate(
 	    if (flags & CROSSING) {
 		event.general.xcrossing.focus = number;
 	    } else {
-		goto badopt;
+		badOpt = 1;
 	    }
 	    break;
 	case EVENT_HEIGHT:
-	    if (Tk_GetPixelsFromObj(interp, tkwin, valuePtr,
-		    &number) != TCL_OK) {
+	    if (Tk_GetPixelsFromObj(interp, tkwin, valuePtr, &number) != TCL_OK) {
 		return TCL_ERROR;
 	    }
 	    if (flags & EXPOSE) {
@@ -3513,46 +4057,44 @@ HandleEventGenerate(
 	    } else if (flags & CONFIG) {
 		event.general.xconfigure.height = number;
 	    } else {
-		goto badopt;
+		badOpt = 1;
 	    }
 	    break;
 	case EVENT_KEYCODE:
 	    if (Tcl_GetIntFromObj(interp, valuePtr, &number) != TCL_OK) {
 		return TCL_ERROR;
 	    }
-	    if ((flags & KEY) && (event.general.xkey.type != MouseWheelEvent)) {
+	    if ((flags & KEY) && event.general.xkey.type != MouseWheelEvent) {
 		event.general.xkey.keycode = number;
 	    } else {
-		goto badopt;
+		badOpt = 1;
 	    }
 	    break;
 	case EVENT_KEYSYM: {
 	    KeySym keysym;
-	    char *value;
+	    const char *value;
 
 	    value = Tcl_GetString(valuePtr);
 	    keysym = TkStringToKeysym(value);
 	    if (keysym == NoSymbol) {
-		Tcl_AppendResult(interp, "unknown keysym \"", value, "\"",
-			NULL);
+		Tcl_SetObjResult(interp, Tcl_ObjPrintf("unknown keysym \"%s\"", value));
+		Tcl_SetErrorCode(interp, "TK", "LOOKUP", "KEYSYM", value, NULL);
 		return TCL_ERROR;
 	    }
 
 	    TkpSetKeycodeAndState(tkwin, keysym, &event.general);
 	    if (event.general.xkey.keycode == 0) {
-		Tcl_AppendResult(interp, "no keycode for keysym \"", value,
-			"\"", NULL);
+		Tcl_SetObjResult(interp, Tcl_ObjPrintf("no keycode for keysym \"%s\"", value));
+		Tcl_SetErrorCode(interp, "TK", "LOOKUP", "KEYCODE", value, NULL);
 		return TCL_ERROR;
 	    }
-	    if (!(flags & KEY)
-		    || (event.general.xkey.type == MouseWheelEvent)) {
-		goto badopt;
+	    if (!(flags & KEY) || (event.general.xkey.type == MouseWheelEvent)) {
+		badOpt = 1;
 	    }
 	    break;
 	}
 	case EVENT_MODE:
-	    number = TkFindStateNumObj(interp,optionPtr,notifyMode,valuePtr);
-	    if (number < 0) {
+	    if ((number = TkFindStateNumObj(interp, optionPtr, notifyMode, valuePtr)) < 0) {
 		return TCL_ERROR;
 	    }
 	    if (flags & CROSSING) {
@@ -3560,7 +4102,7 @@ HandleEventGenerate(
 	    } else if (flags & FOCUS) {
 		event.general.xfocus.mode = number;
 	    } else {
-		goto badopt;
+		badOpt = 1;
 	    }
 	    break;
 	case EVENT_OVERRIDE:
@@ -3576,48 +4118,47 @@ HandleEventGenerate(
 	    } else if (flags & CONFIG) {
 		event.general.xconfigure.override_redirect = number;
 	    } else {
-		goto badopt;
+		badOpt = 1;
 	    }
 	    break;
 	case EVENT_PLACE:
-	    number = TkFindStateNumObj(interp, optionPtr, circPlace, valuePtr);
-	    if (number < 0) {
+	    if ((number = TkFindStateNumObj(interp, optionPtr, circPlace, valuePtr)) < 0) {
 		return TCL_ERROR;
 	    }
 	    if (flags & CIRC) {
 		event.general.xcirculate.place = number;
 	    } else {
-		goto badopt;
+		badOpt = 1;
 	    }
 	    break;
 	case EVENT_ROOT:
-	    if (NameToWindow(interp, tkwin, valuePtr, &tkwin2) != TCL_OK) {
+	    if (!NameToWindow(interp, tkwin, valuePtr, &tkwin2)) {
 		return TCL_ERROR;
 	    }
 	    if (flags & KEY_BUTTON_MOTION_CROSSING) {
 		event.general.xkey.root = Tk_WindowId(tkwin2);
 	    } else {
-		goto badopt;
+		badOpt = 1;
 	    }
 	    break;
 	case EVENT_ROOTX:
-	    if (Tk_GetPixelsFromObj(interp,tkwin,valuePtr,&number) != TCL_OK) {
+	    if (Tk_GetPixelsFromObj(interp, tkwin, valuePtr, &number) != TCL_OK) {
 		return TCL_ERROR;
 	    }
 	    if (flags & KEY_BUTTON_MOTION_CROSSING) {
 		event.general.xkey.x_root = number;
 	    } else {
-		goto badopt;
+		badOpt = 1;
 	    }
 	    break;
 	case EVENT_ROOTY:
-	    if (Tk_GetPixelsFromObj(interp,tkwin,valuePtr,&number) != TCL_OK) {
+	    if (Tk_GetPixelsFromObj(interp, tkwin, valuePtr, &number) != TCL_OK) {
 		return TCL_ERROR;
 	    }
 	    if (flags & KEY_BUTTON_MOTION_CROSSING) {
 		event.general.xkey.y_root = number;
 	    } else {
-		goto badopt;
+		badOpt = 1;
 	    }
 	    break;
 	case EVENT_SEND: {
@@ -3629,16 +4170,21 @@ HandleEventGenerate(
 		 * Allow arbitrary integer values for the field; they are
 		 * needed by a few of the tests in the Tk test suite.
 		 */
-
 		if (Tcl_GetIntFromObj(interp, valuePtr, &number) != TCL_OK) {
 		    return TCL_ERROR;
 		}
-	    } else {
-		if (Tcl_GetBooleanFromObj(interp,valuePtr,&number) != TCL_OK) {
-		    return TCL_ERROR;
+		if (number) {
+		    /*
+		     * send_event only expects 1 or 0. We cannot allow arbitrary non-zero
+		     * values, otherwise the thing with GENERATED_FOCUS_EVENT_MAGIC will not
+		     * work.
+		     */
+		    number = 1;
 		}
+	    } else if (Tcl_GetBooleanFromObj(interp, valuePtr, &number) != TCL_OK) {
+		return TCL_ERROR;
 	    }
-	    event.general.xany.send_event = number;
+	    event.general.xany.send_event |= number;
 	    break;
 	}
 	case EVENT_SERIAL:
@@ -3658,40 +4204,43 @@ HandleEventGenerate(
 		    event.general.xcrossing.state = number;
 		}
 	    } else if (flags & VISIBILITY) {
-		number = TkFindStateNumObj(interp, optionPtr, visNotify,
-			valuePtr);
-		if (number < 0) {
+		if ((number = TkFindStateNumObj(interp, optionPtr, visNotify, valuePtr)) < 0) {
 		    return TCL_ERROR;
 		}
 		event.general.xvisibility.state = number;
 	    } else {
-		goto badopt;
+		badOpt = 1;
 	    }
 	    break;
 	case EVENT_SUBWINDOW:
-	    if (NameToWindow(interp, tkwin, valuePtr, &tkwin2) != TCL_OK) {
+	    if (!NameToWindow(interp, tkwin, valuePtr, &tkwin2)) {
 		return TCL_ERROR;
 	    }
 	    if (flags & KEY_BUTTON_MOTION_CROSSING) {
 		event.general.xkey.subwindow = Tk_WindowId(tkwin2);
 	    } else {
-		goto badopt;
+		badOpt = 1;
 	    }
 	    break;
-	case EVENT_TIME:
-	    if (Tcl_GetIntFromObj(interp, valuePtr, &number) != TCL_OK) {
+	case EVENT_TIME: {
+	    if (strcmp(Tcl_GetString(valuePtr), "current") == 0) {
+		TkDisplay *dispPtr = ((TkWindow *) tkwin)->dispPtr;
+		BindInfo *biPtr = mainPtr->mainPtr->bindInfo;
+		number = dispPtr->lastEventTime + (CurrentTimeInMilliSecs() - biPtr->lastCurrentTime);
+	    } else if (Tcl_GetIntFromObj(interp, valuePtr, &number) != TCL_OK) {
 		return TCL_ERROR;
 	    }
 	    if (flags & KEY_BUTTON_MOTION_CROSSING) {
-		event.general.xkey.time = (Time) number;
+		event.general.xkey.time = number;
 	    } else if (flags & PROP) {
-		event.general.xproperty.time = (Time) number;
+		event.general.xproperty.time = number;
 	    } else {
-		goto badopt;
+		badOpt = 1;
 	    }
 	    break;
+	}
 	case EVENT_WIDTH:
-	    if (Tk_GetPixelsFromObj(interp,tkwin,valuePtr,&number) != TCL_OK) {
+	    if (Tk_GetPixelsFromObj(interp, tkwin, valuePtr, &number) != TCL_OK) {
 		return TCL_ERROR;
 	    }
 	    if (flags & EXPOSE) {
@@ -3699,24 +4248,24 @@ HandleEventGenerate(
 	    } else if (flags & (CREATE|CONFIG)) {
 		event.general.xcreatewindow.width = number;
 	    } else {
-		goto badopt;
+		badOpt = 1;
 	    }
 	    break;
 	case EVENT_WINDOW:
-	    if (NameToWindow(interp, tkwin, valuePtr, &tkwin2) != TCL_OK) {
+	    if (!NameToWindow(interp, tkwin, valuePtr, &tkwin2)) {
 		return TCL_ERROR;
 	    }
 	    if (flags & (CREATE|UNMAP|MAP|REPARENT|CONFIG|GRAVITY|CIRC)) {
 		event.general.xcreatewindow.window = Tk_WindowId(tkwin2);
 	    } else {
-		goto badopt;
+		badOpt = 1;
 	    }
 	    break;
 	case EVENT_X:
-	    if (Tk_GetPixelsFromObj(interp,tkwin,valuePtr,&number) != TCL_OK) {
+	    if (Tk_GetPixelsFromObj(interp, tkwin, valuePtr, &number) != TCL_OK) {
 		return TCL_ERROR;
 	    }
-	    if (flags & (KEY_BUTTON_MOTION_VIRTUAL|CROSSING)) {
+	    if (flags & KEY_BUTTON_MOTION_CROSSING) {
 		event.general.xkey.x = number;
 
 		/*
@@ -3736,11 +4285,11 @@ HandleEventGenerate(
 	    } else if (flags & REPARENT) {
 		event.general.xreparent.x = number;
 	    } else {
-		goto badopt;
+		badOpt = 1;
 	    }
 	    break;
 	case EVENT_Y:
-	    if (Tk_GetPixelsFromObj(interp,tkwin,valuePtr,&number) != TCL_OK) {
+	    if (Tk_GetPixelsFromObj(interp, tkwin, valuePtr, &number) != TCL_OK) {
 		return TCL_ERROR;
 	    }
 	    if (flags & KEY_BUTTON_MOTION_CROSSING) {
@@ -3763,60 +4312,94 @@ HandleEventGenerate(
 	    } else if (flags & REPARENT) {
 		event.general.xreparent.y = number;
 	    } else {
-		goto badopt;
+		badOpt = 1;
 	    }
 	    break;
 	}
-	continue;
 
-    badopt:
-	Tcl_AppendResult(interp, name, " event doesn't accept \"",
-		Tcl_GetString(optionPtr), "\" option", NULL);
-	return TCL_ERROR;
+    	if (badOpt) {
+	    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		    "%s event doesn't accept \"%s\" option", name, Tcl_GetString(optionPtr)));
+	    Tcl_SetErrorCode(interp, "TK", "EVENT", "BAD_OPTION", NULL);
+	    return TCL_ERROR;
+	}
     }
-    if (userDataObj != NULL) {
-	XVirtualEvent *vePtr = (XVirtualEvent *) &event;
+
+    /*
+     * Don't generate events for windows that don't exist yet.
+     */
+
+    if (event.general.xany.window) {
+	if (userDataObj) {
+	    /*
+	     * Must be virtual event to set that variable to non-NULL. Now we want
+	     * to install the object into the event. Note that we must incr the
+	     * refcount before firing it into the low-level event subsystem; the
+	     * refcount will be decremented once the event has been processed.
+	     */
+	    event.virtual.user_data = userDataObj;
+	    Tcl_IncrRefCount(userDataObj);
+	}
 
 	/*
-	 * Must be virtual event to set that variable to non-NULL. Now we want
-	 * to install the object into the event. Note that we must incr the
-	 * refcount before firing it into the low-level event subsystem; the
-	 * refcount will be decremented once the event has been processed.
+	 * Now we have constructed the event, inject it into the event handling
+	 * code.
 	 */
 
-	vePtr->user_data = userDataObj;
-	Tcl_IncrRefCount(userDataObj);
-    }
-
-    /*
-     * Now we have constructed the event, inject it into the event handling
-     * code.
-     */
-
-    if (synch != 0) {
-	Tk_HandleEvent(&event.general);
-    } else {
-	Tk_QueueWindowEvent(&event.general, pos);
-    }
-
-    /*
-     * We only allow warping if the window is mapped.
-     */
-
-    if ((warp != 0) && Tk_IsMapped(tkwin)) {
-	TkDisplay *dispPtr = TkGetDisplay(event.general.xmotion.display);
-
-	if (!(dispPtr->flags & TK_DISPLAY_IN_WARP)) {
-	    Tcl_DoWhenIdle(DoWarp, (ClientData) dispPtr);
-	    dispPtr->flags |= TK_DISPLAY_IN_WARP;
+	if (synch) {
+	    Tk_HandleEvent(&event.general);
+	} else {
+	    Tk_QueueWindowEvent(&event.general, pos);
 	}
-	dispPtr->warpWindow = event.general.xany.window;
-	dispPtr->warpX = event.general.xkey.x;
-	dispPtr->warpY = event.general.xkey.y;
+
+	/*
+	 * We only allow warping if the window is mapped.
+	 */
+
+	if (warp && Tk_IsMapped(tkwin)) {
+	    TkDisplay *dispPtr = TkGetDisplay(event.general.xmotion.display);
+
+	    Tk_Window warpWindow = Tk_IdToWindow(dispPtr->display, event.general.xmotion.window);
+
+	    if (!(dispPtr->flags & TK_DISPLAY_IN_WARP)) {
+		Tcl_DoWhenIdle(DoWarp, dispPtr);
+		dispPtr->flags |= TK_DISPLAY_IN_WARP;
+	    }
+
+	    if (warpWindow != dispPtr->warpWindow) {
+		if (warpWindow) {
+		    Tcl_Preserve(warpWindow);
+		}
+		if (dispPtr->warpWindow) {
+		    Tcl_Release(dispPtr->warpWindow);
+		}
+		dispPtr->warpWindow = warpWindow;
+	    }
+	    dispPtr->warpMainwin = mainWin;
+	    dispPtr->warpX = event.general.xmotion.x;
+	    dispPtr->warpY = event.general.xmotion.y;
+	}
     }
+
     Tcl_ResetResult(interp);
     return TCL_OK;
 }
+/*
+ *---------------------------------------------------------------------------
+ *
+ * NameToWindow --
+ *
+ *	Helper function for lookup of a window given its path name. Our
+ *	version is able to handle window id's.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	None.
+ *
+ *---------------------------------------------------------------------------
+ */
 
 static int
 NameToWindow(
@@ -3825,32 +4408,43 @@ NameToWindow(
     Tcl_Obj *objPtr,		/* Contains name or id string of window. */
     Tk_Window *tkwinPtr)	/* Filled with token for window. */
 {
-    char *name;
+    const char *name;
     Tk_Window tkwin;
-    Window id;
+
+    assert(mainWin);
+    assert(objPtr);
+    assert(tkwinPtr);
 
     name = Tcl_GetString(objPtr);
+
     if (name[0] == '.') {
-	tkwin = Tk_NameToWindow(interp, name, mainWin);
-	if (tkwin == NULL) {
-	    return TCL_ERROR;
+	if (!(tkwin = Tk_NameToWindow(interp, name, mainWin))) {
+	    return 0;
 	}
-	*tkwinPtr = tkwin;
     } else {
+	Window id;
+
+	tkwin = NULL;
+
 	/*
-	 * Check for the winPtr being valid, even if it looks ok to
+	 * Check for the winPtr being valid, even if it looks okay to
 	 * TkpScanWindowId. [Bug #411307]
 	 */
 
-	if ((TkpScanWindowId(NULL, name, &id) != TCL_OK) ||
-		((*tkwinPtr = Tk_IdToWindow(Tk_Display(mainWin), id))
-			== NULL)) {
-	    Tcl_AppendResult(interp, "bad window name/identifier \"",
-		    name, "\"", NULL);
-	    return TCL_ERROR;
+	if (TkpScanWindowId(NULL, name, &id) == TCL_OK) {
+	    tkwin = Tk_IdToWindow(Tk_Display(mainWin), id);
+	}
+
+	if (!tkwin) {
+	    Tcl_SetObjResult(interp, Tcl_ObjPrintf("bad window name/identifier \"%s\"", name));
+	    Tcl_SetErrorCode(interp, "TK", "LOOKUP", "WINDOW_ID", name, NULL);
+	    return 0;
 	}
     }
-    return TCL_OK;
+
+    assert(tkwin);
+    *tkwinPtr = tkwin;
+    return 1;
 }
 
 /*
@@ -3868,15 +4462,33 @@ NameToWindow(
  *
  *-------------------------------------------------------------------------
  */
+
 static void
 DoWarp(
     ClientData clientData)
 {
-    TkDisplay *dispPtr = (TkDisplay *) clientData;
+    TkDisplay *dispPtr = clientData;
 
-    XWarpPointer(dispPtr->display, (Window) TkNone, (Window) dispPtr->warpWindow,
-	    0, 0, 0, 0, (int) dispPtr->warpX, (int) dispPtr->warpY);
-    XForceScreenSaver(dispPtr->display, ScreenSaverReset);
+    assert(clientData);
+
+    /*
+     * DoWarp was scheduled only if the window was mapped. It needs to be
+     * still mapped at the time the present idle callback is executed. Also
+     * one needs to guard against window destruction in the meantime.
+     * Finally, the case warpWindow == NULL is special in that it means
+     * the whole screen.
+     */
+
+    if (!dispPtr->warpWindow ||
+            (Tk_IsMapped(dispPtr->warpWindow) && Tk_WindowId(dispPtr->warpWindow) != None)) {
+        TkpWarpPointer(dispPtr);
+        XForceScreenSaver(dispPtr->display, ScreenSaverReset);
+    }
+
+    if (dispPtr->warpWindow) {
+	Tcl_Release(dispPtr->warpWindow);
+	dispPtr->warpWindow = NULL;
+    }
     dispPtr->flags &= ~TK_DISPLAY_IN_WARP;
 }
 
@@ -3908,12 +4520,17 @@ GetVirtualEventUid(
     Tk_Uid uid;
     size_t length;
 
+    assert(virtString);
+
     length = strlen(virtString);
 
-    if (length < 5 || virtString[0] != '<' || virtString[1] != '<' ||
-	    virtString[length - 2] != '>' || virtString[length - 1] != '>') {
-	Tcl_AppendResult(interp, "virtual event \"", virtString,
-		"\" is badly formed", NULL);
+    if (length < 5
+	    || virtString[0] != '<'
+	    || virtString[1] != '<'
+	    || virtString[length - 2] != '>'
+	    || virtString[length - 1] != '>') {
+	Tcl_SetObjResult(interp, Tcl_ObjPrintf("virtual event \"%s\" is badly formed", virtString));
+	Tcl_SetErrorCode(interp, "TK", "EVENT", "VIRTUAL", "MALFORMED", NULL);
 	return NULL;
     }
     virtString[length - 2] = '\0';
@@ -3950,113 +4567,116 @@ GetVirtualEventUid(
 static PatSeq *
 FindSequence(
     Tcl_Interp *interp,		/* Interpreter to use for error reporting. */
-    Tcl_HashTable *patternTablePtr,
-				/* Table to use for lookup. */
-    ClientData object,		/* For binding table, token for object with
-				 * which binding is associated. For virtual
-				 * event table, NULL. */
-    const char *eventString,	/* String description of pattern to match on.
-				 * See user documentation for details. */
-    int create,			/* 0 means don't create the entry if it
-				 * doesn't already exist. Non-zero means
-				 * create. */
-    int allowVirtual,		/* 0 means that virtual events are not allowed
-				 * in the sequence. Non-zero otherwise. */
-    unsigned long *maskPtr)	/* *maskPtr is filled in with the event types
-				 * on which this pattern sequence depends. */
+    LookupTables *lookupTables,	/* Tables used for lookup. */
+    ClientData object,		/* For binding table, token for object with which binding is
+    				 * associated. For virtual event table, NULL. */
+    const char *eventString,	/* String description of pattern to match on. See user
+    				 * documentation for details. */
+    int create,		/* 0 means don't create the entry if it doesn't already exist.
+    				 * 1 means create. */
+    int allowVirtual,		/* 0 means that virtual events are not allowed in the sequence.
+    				 * 1 otherwise. */
+    EventMask *maskPtr)		/* *maskPtr is filled in with the event types on which this
+    				 * pattern sequence depends. */
 {
-    TkPattern pats[EVENT_BUFFER_SIZE];
-    int numPats, virtualFound;
-    const char *p;
+    unsigned patsBufSize = 1;
+    unsigned numPats;
+    unsigned totalCount = 0;
+    int virtualFound = 0;
+    const char *p = eventString;
     TkPattern *patPtr;
     PatSeq *psPtr;
     Tcl_HashEntry *hPtr;
-    int flags, count, isNew;
-    size_t sequenceSize;
-    unsigned long eventMask;
+    int isNew;
+    unsigned count;
+    unsigned maxCount = 0;
+    EventMask eventMask = 0;
+    ModMask modMask = 0;
     PatternTableKey key;
 
+    assert(lookupTables);
+    assert(eventString);
+
+    psPtr = ckalloc(PATSEQ_MEMSIZE(patsBufSize));
+
     /*
-     *-------------------------------------------------------------
-     * Step 1: parse the pattern string to produce an array of Patterns. The
-     * array is generated backwards, so that the lowest-indexed pattern
-     * corresponds to the last event that must occur.
-     *-------------------------------------------------------------
+     *------------------------------------------------------------------
+     * Step 1: parse the pattern string to produce an array of Patterns.
+     *------------------------------------------------------------------
      */
 
-    p = eventString;
-    flags = 0;
-    eventMask = 0;
-    virtualFound = 0;
-
-    patPtr = &pats[EVENT_BUFFER_SIZE-1];
-    for (numPats = 0; numPats < EVENT_BUFFER_SIZE; numPats++, patPtr--) {
-	while (isspace(UCHAR(*p))) {
-	    p++;
-	}
-	if (*p == '\0') {
-	    break;
+    for (patPtr = psPtr->pats, numPats = 0; *(p = SkipSpaces(p)); ++patPtr, ++numPats) {
+	if (numPats >= patsBufSize) {
+	    unsigned pos = patPtr - psPtr->pats;
+	    patsBufSize += patsBufSize;
+	    psPtr = ckrealloc(psPtr, PATSEQ_MEMSIZE(patsBufSize));
+	    patPtr = psPtr->pats + pos;
 	}
 
-	count = ParseEventDescription(interp, &p, patPtr, &eventMask);
-	if (count == 0) {
+	if ((count = ParseEventDescription(interp, &p, patPtr, &eventMask)) == 0) {
+	    /* error encountered */
+	    ckfree(psPtr);
 	    return NULL;
 	}
 
 	if (eventMask & VirtualEventMask) {
-	    if (allowVirtual == 0) {
-		Tcl_SetResult(interp,
-			"virtual event not allowed in definition of another virtual event",
-			TCL_STATIC);
+	    if (!allowVirtual) {
+		Tcl_SetObjResult(interp, Tcl_NewStringObj(
+			"virtual event not allowed in definition of another virtual event", -1));
+		Tcl_SetErrorCode(interp, "TK", "EVENT", "VIRTUAL", "INNER", NULL);
+		ckfree(psPtr);
 		return NULL;
 	    }
 	    virtualFound = 1;
 	}
 
-	/*
-	 * Replicate events for DOUBLE, TRIPLE, QUADRUPLE.
-	 */
-
-	while ((count-- > 1) && (numPats < EVENT_BUFFER_SIZE-1)) {
-	    flags |= PAT_NEARBY;
-	    patPtr[-1] = patPtr[0];
-	    patPtr--;
-	    numPats++;
+	if (count > 1u) {
+	    maxCount = Max(count, maxCount);
 	}
+
+	totalCount += count;
+	modMask |= patPtr->modMask;
     }
 
     /*
-     *-------------------------------------------------------------
-     * Step 2: find the sequence in the binding table if it exists, and add a
-     * new sequence to the table if it doesn't.
-     *-------------------------------------------------------------
+     *------------------------------------------------------------------
+     * Step 2: find the sequence in the binding table if it exists, and
+     * add a new sequence to the table if it doesn't.
+     *------------------------------------------------------------------
      */
 
     if (numPats == 0) {
-	Tcl_SetResult(interp, "no events specified in binding", TCL_STATIC);
+	Tcl_SetObjResult(interp, Tcl_NewStringObj("no events specified in binding", -1));
+	Tcl_SetErrorCode(interp, "TK", "EVENT", "NO_EVENTS", NULL);
+	ckfree(psPtr);
 	return NULL;
     }
-    if ((numPats > 1) && (virtualFound != 0)) {
-	Tcl_SetResult(interp, "virtual events may not be composed",
-		TCL_STATIC);
+    if (numPats > 1u && virtualFound) {
+	Tcl_SetObjResult(interp, Tcl_NewStringObj("virtual events may not be composed", -1));
+	Tcl_SetErrorCode(interp, "TK", "EVENT", "VIRTUAL", "COMPOSITION", NULL);
+	ckfree(psPtr);
 	return NULL;
+    }
+    if (patsBufSize > numPats) {
+	psPtr = ckrealloc(psPtr, PATSEQ_MEMSIZE(numPats));
     }
 
-    patPtr = &pats[EVENT_BUFFER_SIZE-numPats];
-    memset(&key, 0, sizeof(key));
-    key.object = object;
-    key.type = patPtr->eventType;
-    key.detail = patPtr->detail;
-    hPtr = Tcl_CreateHashEntry(patternTablePtr, (char *) &key, &isNew);
-    sequenceSize = numPats*sizeof(TkPattern);
+    patPtr = psPtr->pats;
+    psPtr->object = object;
+    SetupPatternKey(&key, psPtr);
+    hPtr = Tcl_CreateHashEntry(&lookupTables->patternTable, (char *) &key, &isNew);
     if (!isNew) {
-	for (psPtr = (PatSeq *) Tcl_GetHashValue(hPtr); psPtr != NULL;
-		psPtr = psPtr->nextSeqPtr) {
-	    if ((numPats == psPtr->numPats)
-		    && ((flags & PAT_NEARBY) == (psPtr->flags & PAT_NEARBY))
-		    && (memcmp((char *) patPtr, (char *) psPtr->pats,
-		    sequenceSize) == 0)) {
-		goto done;
+	unsigned sequenceSize = numPats*sizeof(TkPattern);
+	PatSeq *psPtr2;
+
+	for (psPtr2 = Tcl_GetHashValue(hPtr); psPtr2; psPtr2 = psPtr2->nextSeqPtr) {
+	    assert(TEST_PSENTRY(psPtr2));
+	    if (numPats == psPtr2->numPats && memcmp(patPtr, psPtr2->pats, sequenceSize) == 0) {
+		ckfree(psPtr);
+		if (maskPtr) {
+		    *maskPtr = eventMask;
+		}
+		return psPtr2;
 	    }
 	}
     }
@@ -4073,26 +4693,28 @@ FindSequence(
 	 * silently ignore missing bindings.
 	 */
 
+	ckfree(psPtr);
 	return NULL;
     }
-    psPtr = (PatSeq *) ckalloc((unsigned) (sizeof(PatSeq)
-	    + (numPats-1)*sizeof(TkPattern)));
+
+    DEBUG(countSeqItems += 1;)
+
     psPtr->numPats = numPats;
-    psPtr->eventProc = NULL;
-    psPtr->freeProc = NULL;
-    psPtr->clientData = NULL;
-    psPtr->flags = flags;
-    psPtr->refCount = 0;
-    psPtr->nextSeqPtr = (PatSeq *) Tcl_GetHashValue(hPtr);
+    psPtr->count = totalCount;
+    psPtr->number = lookupTables->number++;
+    psPtr->added = 0;
+    psPtr->modMaskUsed = (modMask != 0);
+    psPtr->script = NULL;
+    psPtr->nextSeqPtr = Tcl_GetHashValue(hPtr);
     psPtr->hPtr = hPtr;
-    psPtr->voPtr = NULL;
-    psPtr->nextObjPtr = NULL;
+    psPtr->ptr.nextObj = NULL;
+    assert(psPtr->ptr.owners == NULL);
+    DEBUG(psPtr->owned = 0;)
     Tcl_SetHashValue(hPtr, psPtr);
 
-    memcpy((void *) psPtr->pats, (void *) patPtr, sequenceSize);
-
-  done:
-    *maskPtr = eventMask;
+    if (maskPtr) {
+	*maskPtr = eventMask;
+    }
     return psPtr;
 }
 
@@ -4117,33 +4739,44 @@ FindSequence(
  *---------------------------------------------------------------------------
  */
 
-static int
+/* helper function */
+static unsigned
+FinalizeParseEventDescription(
+    Tcl_Interp *interp,
+    TkPattern *patPtr,
+    unsigned count,
+    Tcl_Obj* errorObj,
+    const char* errCode)
+{
+    assert(patPtr);
+    assert(!errorObj == (count > 0));
+
+    if (errorObj) {
+	Tcl_SetObjResult(interp, errorObj);
+	Tcl_SetErrorCode(interp, "TK", "EVENT", errCode, NULL);
+    }
+    patPtr->count = count;
+    return count;
+}
+
+static unsigned
 ParseEventDescription(
     Tcl_Interp *interp,		/* For error messages. */
-    const char **eventStringPtr,/* On input, holds a pointer to start of event
-				 * string. On exit, gets pointer to rest of
-				 * string after parsed event. */
-    TkPattern *patPtr,		/* Filled with the pattern parsed from the
-				 * event string. */
-    unsigned long *eventMaskPtr)/* Filled with event mask of matched event. */
+    const char **eventStringPtr,/* On input, holds a pointer to start of event string. On exit,
+    				 * gets pointer to rest of string after parsed event. */
+    TkPattern *patPtr,		/* Filled with the pattern parsed from the event string. */
+    EventMask *eventMaskPtr)	/* Filled with event mask of matched event. */
 {
-    char *p;
-    unsigned long eventMask;
-    int count, eventFlags;
-#define FIELD_SIZE 48
-    char field[FIELD_SIZE];
-    Tcl_HashEntry *hPtr;
-    Tcl_DString copy;
+    const char *p;
+    EventMask eventMask = 0;
+    unsigned count = 1;
 
-    Tcl_DStringInit(&copy);
-    p = Tcl_DStringAppend(&copy, *eventStringPtr, -1);
+    assert(eventStringPtr);
+    assert(patPtr);
+    assert(eventMaskPtr);
 
-    patPtr->eventType = -1;
-    patPtr->needMods = 0;
-    patPtr->detail.clientData = 0;
-
-    eventMask = 0;
-    count = 1;
+    p = *eventStringPtr;
+    memset(patPtr, 0, sizeof(TkPattern)); /* otherwise memcmp doesn't work */
 
     /*
      * Handle simple ASCII characters.
@@ -4155,189 +4788,214 @@ ParseEventDescription(
 	patPtr->eventType = KeyPress;
 	eventMask = KeyPressMask;
 	string[0] = *p;
-	string[1] = 0;
-	patPtr->detail.keySym = TkStringToKeysym(string);
-	if (patPtr->detail.keySym == NoSymbol) {
-	    if (isprint(UCHAR(*p))) {
-		patPtr->detail.keySym = *p;
-	    } else {
-		char buf[64];
-
-		sprintf(buf, "bad ASCII character 0x%x", (unsigned char) *p);
-		Tcl_SetResult(interp, buf, TCL_VOLATILE);
-		count = 0;
-		goto done;
+	string[1] = '\0';
+	patPtr->info = TkStringToKeysym(string);
+	if (patPtr->info == NoSymbol) {
+	    if (!isprint(UCHAR(*p))) {
+		return FinalizeParseEventDescription(
+			interp,
+			patPtr, 0,
+			Tcl_ObjPrintf("bad ASCII character 0x%x", UCHAR(*p)), "BAD_CHAR");
 	    }
+	    patPtr->info = *p;
 	}
-	p++;
-	goto end;
-    }
-
-    /*
-     * A fancier event description. This can be either a virtual event or a
-     * physical event.
-     *
-     * A virtual event description consists of:
-     *
-     * 1. double open angle brackets.
-     * 2. virtual event name.
-     * 3. double close angle brackets.
-     *
-     * A physical event description consists of:
-     *
-     * 1. open angle bracket.
-     * 2. any number of modifiers, each followed by spaces or dashes.
-     * 3. an optional event name.
-     * 4. an option button or keysym name. Either this or item 3 *must* be
-     *	  present; if both are present then they are separated by spaces or
-     *	  dashes.
-     * 5. a close angle bracket.
-     */
-
-    p++;
-    if (*p == '<') {
+	++p;
+    } else {
 	/*
-	 * This is a virtual event: soak up all the characters up to the next
-	 * '>'.
+	 * A fancier event description. This can be either a virtual event or a physical event.
+	 *
+	 * A virtual event description consists of:
+	 *
+	 * 1. double open angle brackets.
+	 * 2. virtual event name.
+	 * 3. double close angle brackets.
+	 *
+	 * A physical event description consists of:
+	 *
+	 * 1. open angle bracket.
+	 * 2. any number of modifiers, each followed by spaces or dashes.
+	 * 3. an optional event name.
+	 * 4. an option button or keysym name. Either this or item 3 *must* be present; if both
+	 *    are present then they are separated by spaces or dashes.
+	 * 5. a close angle bracket.
 	 */
 
-	char *field = p + 1;
-
-	p = strchr(field, '>');
-	if (p == field) {
-	    Tcl_SetResult(interp, "virtual event \"<<>>\" is badly formed",
-		    TCL_STATIC);
-	    count = 0;
-	    goto done;
-	}
-	if ((p == NULL) || (p[1] != '>')) {
-	    Tcl_SetResult(interp, "missing \">\" in virtual binding",
-		    TCL_STATIC);
-	    count = 0;
-	    goto done;
-	}
-	*p = '\0';
-	patPtr->eventType = VirtualEvent;
-	eventMask = VirtualEventMask;
-	patPtr->detail.name = Tk_GetUid(field);
-	*p = '>';
-
-	p += 2;
-	goto end;
-    }
-
-    while (1) {
-	ModInfo *modPtr;
-
-	p = GetField(p, field, FIELD_SIZE);
-	if (*p == '>') {
+	++p;
+	if (*p == '<') {
 	    /*
-	     * This solves the problem of, e.g., <Control-M> being
-	     * misinterpreted as Control + Meta + missing keysym instead of
-	     * Control + KeyPress + M.
+	     * This is a virtual event: soak up all the characters up to the next '>'.
 	     */
 
-	     break;
-	}
-	hPtr = Tcl_FindHashEntry(&modTable, field);
-	if (hPtr == NULL) {
-	    break;
-	}
-	modPtr = (ModInfo *) Tcl_GetHashValue(hPtr);
-	patPtr->needMods |= modPtr->mask;
-	if (modPtr->flags & MULT_CLICKS) {
-	    int i = modPtr->flags & MULT_CLICKS;
+	    const char *field = p + 1;
+	    char buf[256];
+	    char* bufPtr = buf;
+	    unsigned size;
 
-	    count = 2;
-	    while (i >>= 1) {
-		count++;
+	    p = strchr(field, '>');
+	    if (p == field) {
+		return FinalizeParseEventDescription(
+			interp,
+			patPtr, 0,
+			Tcl_NewStringObj("virtual event \"<<>>\" is badly formed", -1), "MALFORMED");
 	    }
-	}
-	while ((*p == '-') || isspace(UCHAR(*p))) {
-	    p++;
-	}
-    }
-
-    eventFlags = 0;
-    hPtr = Tcl_FindHashEntry(&eventTable, field);
-    if (hPtr != NULL) {
-	EventInfo *eiPtr = (EventInfo *) Tcl_GetHashValue(hPtr);
-
-	patPtr->eventType = eiPtr->type;
-	eventFlags = flagArray[eiPtr->type];
-	eventMask = eiPtr->eventMask;
-	while ((*p == '-') || isspace(UCHAR(*p))) {
-	    p++;
-	}
-	p = GetField(p, field, FIELD_SIZE);
-    }
-    if (*field != '\0') {
-	if ((*field >= '1') && (*field <= '5') && (field[1] == '\0')) {
-	    if (eventFlags == 0) {
-		patPtr->eventType = ButtonPress;
-		eventMask = ButtonPressMask;
-	    } else if (eventFlags & KEY) {
-		goto getKeysym;
-	    } else if ((eventFlags & BUTTON) == 0) {
-		Tcl_AppendResult(interp, "specified button \"", field,
-			"\" for non-button event", NULL);
-		count = 0;
-		goto done;
+	    if (!p || p[1] != '>') {
+		return FinalizeParseEventDescription(
+			interp,
+			patPtr, 0,
+			Tcl_NewStringObj("missing \">\" in virtual binding", -1), "MALFORMED");
 	    }
-	    patPtr->detail.button = (*field - '0');
+
+	    size = p - field;
+	    if (size >= sizeof(buf)) {
+		bufPtr = ckalloc(size + 1);
+	    }
+	    strncpy(bufPtr, field, size);
+	    bufPtr[size] = '\0';
+	    eventMask = VirtualEventMask;
+	    patPtr->eventType = VirtualEvent;
+	    patPtr->name = Tk_GetUid(bufPtr);
+	    if (bufPtr != buf) {
+		ckfree(bufPtr);
+	    }
+	    p += 2;
 	} else {
+	    unsigned eventFlags;
+	    char field[512];
+	    Tcl_HashEntry *hPtr;
 
-	getKeysym:
-	    patPtr->detail.keySym = TkStringToKeysym(field);
-	    if (patPtr->detail.keySym == NoSymbol) {
-		Tcl_AppendResult(interp, "bad event type or keysym \"",
-			field, "\"", NULL);
-		count = 0;
-		goto done;
+	    while (1) {
+		ModInfo *modPtr;
+
+		p = GetField(p, field, sizeof(field));
+		if (*p == '>') {
+		    /*
+		     * This solves the problem of, e.g., <Control-M> being
+		     * misinterpreted as Control + Meta + missing keysym instead of
+		     * Control + KeyPress + M.
+		     */
+
+		     break;
+		}
+		if (!(hPtr = Tcl_FindHashEntry(&modTable, field))) {
+		    break;
+		}
+		modPtr = Tcl_GetHashValue(hPtr);
+		patPtr->modMask |= modPtr->mask;
+		if (modPtr->flags & MULT_CLICKS) {
+		    unsigned i = modPtr->flags & MULT_CLICKS;
+
+		    count = 2;
+		    while (i >>= 1) {
+			++count;
+		    }
+		}
+		p = SkipFieldDelims(p);
 	    }
-	    if (eventFlags == 0) {
-		patPtr->eventType = KeyPress;
-		eventMask = KeyPressMask;
-	    } else if ((eventFlags & KEY) == 0) {
-		Tcl_AppendResult(interp, "specified keysym \"", field,
-			"\" for non-key event", NULL);
-		count = 0;
-		goto done;
+
+	    eventFlags = 0;
+	    if ((hPtr = Tcl_FindHashEntry(&eventTable, field))) {
+		const EventInfo *eiPtr = Tcl_GetHashValue(hPtr);
+
+		patPtr->eventType = eiPtr->type;
+		eventFlags = flagArray[eiPtr->type];
+		eventMask = eiPtr->eventMask;
+		p = GetField(SkipFieldDelims(p), field, sizeof(field));
 	    }
+	    if (*field) {
+		unsigned button = GetButtonNumber(field);
+
+		if ((eventFlags & BUTTON)
+			|| (button && eventFlags == 0)
+			|| (SUPPORT_ADDITIONAL_MOTION_SYNTAX && (eventFlags & MOTION) && button == 0)) {
+		    /* This must be a button (or bad motion) event */
+		    if (button == 0) {
+			return FinalizeParseEventDescription(
+				interp,
+				patPtr, 0,
+				Tcl_ObjPrintf("bad button number \"%s\"", field), "BUTTON");
+		    }
+		    patPtr->info = button;
+		    if (!(eventFlags & BUTTON)) {
+			patPtr->eventType = ButtonPress;
+			eventMask = ButtonPressMask;
+		    }
+		} else if ((eventFlags & KEY) || eventFlags == 0) {
+		    /* This must be a key event */
+		    patPtr->info = TkStringToKeysym(field);
+		    if (patPtr->info == NoSymbol) {
+			return FinalizeParseEventDescription(
+				interp,
+				patPtr, 0,
+				Tcl_ObjPrintf("bad event type or keysym \"%s\"", field), "KEYSYM");
+		    }
+		    if (!(eventFlags & KEY)) {
+			patPtr->eventType = KeyPress;
+			eventMask = KeyPressMask;
+		    }
+		} else if (button) {
+		    if (!SUPPORT_ADDITIONAL_MOTION_SYNTAX || patPtr->eventType != MotionNotify) {
+			return FinalizeParseEventDescription(
+				interp,
+				patPtr, 0,
+				Tcl_ObjPrintf("specified button \"%s\" for non-button event", field),
+				"NON_BUTTON");
+		    }
+#if SUPPORT_ADDITIONAL_MOTION_SYNTAX
+		    patPtr->modMask |= TkGetButtonMask(button);
+		    p = SkipFieldDelims(p);
+		    while (*p && *p != '>') {
+			p = SkipFieldDelims(GetField(p, field, sizeof(field)));
+			if ((button = GetButtonNumber(field)) == 0) {
+			    return FinalizeParseEventDescription(
+				    interp,
+				    patPtr, 0,
+				    Tcl_ObjPrintf("bad button number \"%s\"", field), "BUTTON");
+			}
+			patPtr->modMask |= TkGetButtonMask(button);
+		    }
+		    patPtr->info = ButtonNumberFromState(patPtr->modMask);
+#endif
+		} else {
+		    return FinalizeParseEventDescription(
+			    interp,
+			    patPtr, 0,
+			    Tcl_ObjPrintf("specified keysym \"%s\" for non-key event", field),
+			    "NON_KEY");
+		}
+	    } else if (eventFlags == 0) {
+		return FinalizeParseEventDescription(
+			interp,
+			patPtr, 0,
+			Tcl_NewStringObj("no event type or button # or keysym", -1), "UNMODIFIABLE");
+	    } else if (patPtr->eventType == MotionNotify) {
+		patPtr->info = ButtonNumberFromState(patPtr->modMask);
+	    }
+
+	    p = SkipFieldDelims(p);
+
+	    if (*p != '>') {
+		while (*p) {
+		    ++p;
+		    if (*p == '>') {
+			return FinalizeParseEventDescription(
+				interp,
+				patPtr, 0,
+				Tcl_NewStringObj("extra characters after detail in binding", -1),
+				"PAST_DETAIL");
+		    }
+		}
+		return FinalizeParseEventDescription(
+			interp,
+			patPtr, 0,
+			Tcl_NewStringObj("missing \">\" in binding", -1), "MALFORMED");
+	    }
+	    ++p;
 	}
-    } else if (eventFlags == 0) {
-	Tcl_SetResult(interp, "no event type or button # or keysym",
-		TCL_STATIC);
-	count = 0;
-	goto done;
     }
 
-    while ((*p == '-') || isspace(UCHAR(*p))) {
-	p++;
-    }
-    if (*p != '>') {
-	while (*p != '\0') {
-	    p++;
-	    if (*p == '>') {
-		Tcl_SetResult(interp,
-			"extra characters after detail in binding",
-			TCL_STATIC);
-		count = 0;
-		goto done;
-	    }
-	}
-	Tcl_SetResult(interp, "missing \">\" in binding", TCL_STATIC);
-	count = 0;
-	goto done;
-    }
-    p++;
-
-  end:
-    *eventStringPtr += (p - Tcl_DStringValue(&copy));
+    *eventStringPtr = p;
     *eventMaskPtr |= eventMask;
-  done:
-    Tcl_DStringFree(&copy);
-    return count;
+    return FinalizeParseEventDescription(interp, patPtr, count, NULL, NULL);
 }
 
 /*
@@ -4361,18 +5019,17 @@ ParseEventDescription(
  *----------------------------------------------------------------------
  */
 
-static char *
+static const char *
 GetField(
-    char *p,			/* Pointer to part of pattern. */
-    char *copy,			/* Place to copy field. */
-    int size)			/* Maximum number of characters to copy. */
+    const char *p,	/* Pointer to part of pattern. */
+    char *copy,		/* Place to copy field. */
+    unsigned size)	/* Maximum number of characters to copy. */
 {
-    while ((*p != '\0') && !isspace(UCHAR(*p)) && (*p != '>')
-	    && (*p != '-') && (size > 1)) {
-	*copy = *p;
-	p++;
-	copy++;
-	size--;
+    assert(p);
+    assert(copy);
+
+    for ( ; *p && !isspace(UCHAR(*p)) && *p != '>' && *p != '-' && size > 1u; --size) {
+	*copy++ = *p++;
     }
     *copy = '\0';
     return p;
@@ -4381,155 +5038,119 @@ GetField(
 /*
  *---------------------------------------------------------------------------
  *
- * GetPatternString --
+ * GetPatternObj --
  *
  *	Produce a string version of the given event, for displaying to the
  *	user.
  *
  * Results:
- *	The string is left in dsPtr.
+ *	The string is returned as a Tcl_Obj.
  *
  * Side effects:
- *	It is the caller's responsibility to initialize the DString before and
- *	to free it after calling this function.
+ *	It is the caller's responsibility to arrange for the object to be
+ *	released; it starts with a refCount of zero.
  *
  *---------------------------------------------------------------------------
  */
 
-static void
-GetPatternString(
-    PatSeq *psPtr,
-    Tcl_DString *dsPtr)
+static Tcl_Obj *
+GetPatternObj(
+    const PatSeq *psPtr)
 {
-    TkPattern *patPtr;
-    char c, buffer[TCL_INTEGER_SPACE];
-    int patsLeft, needMods;
-    ModInfo *modPtr;
-    EventInfo *eiPtr;
+    Tcl_Obj *patternObj = Tcl_NewObj();
+    unsigned i;
 
-    /*
-     * The order of the patterns in the sequence is backwards from the order
-     * in which they must be output.
-     */
+    assert(psPtr);
 
-    for (patsLeft = psPtr->numPats, patPtr = &psPtr->pats[psPtr->numPats - 1];
-	    patsLeft > 0; patsLeft--, patPtr--) {
+    for (i = 0; i < psPtr->numPats; ++i) {
+	const TkPattern *patPtr = psPtr->pats + i;
+
 	/*
 	 * Check for simple case of an ASCII character.
 	 */
+	if (patPtr->eventType == KeyPress
+		&& patPtr->count == 1
+		&& patPtr->modMask == 0
+		&& patPtr->info < 128
+		&& isprint(UCHAR(patPtr->info))
+		&& patPtr->info != '<'
+		&& patPtr->info != ' ') {
+	    char c = (char) patPtr->info;
+	    Tcl_AppendToObj(patternObj, &c, 1);
+	} else if (patPtr->eventType == VirtualEvent) {
+	    assert(patPtr->name);
+	    Tcl_AppendPrintfToObj(patternObj, "<<%s>>", patPtr->name);
+	} else {
+	    ModMask modMask;
+	    const ModInfo *modPtr;
 
-	if ((patPtr->eventType == KeyPress)
-		&& ((psPtr->flags & PAT_NEARBY) == 0)
-		&& (patPtr->needMods == 0)
-		&& (patPtr->detail.keySym < 128)
-		&& isprint(UCHAR(patPtr->detail.keySym))
-		&& (patPtr->detail.keySym != '<')
-		&& (patPtr->detail.keySym != ' ')) {
-	    c = (char) patPtr->detail.keySym;
-	    Tcl_DStringAppend(dsPtr, &c, 1);
-	    continue;
-	}
+	    /*
+	     * It's a more general event specification. First check for "Double",
+	     * "Triple", "Quadruple", then modifiers, then event type, then keysym
+	     * or button detail.
+	     */
 
-	/*
-	 * Check for virtual event.
-	 */
+	    Tcl_AppendToObj(patternObj, "<", 1);
 
-	if (patPtr->eventType == VirtualEvent) {
-	    Tcl_DStringAppend(dsPtr, "<<", 2);
-	    Tcl_DStringAppend(dsPtr, patPtr->detail.name, -1);
-	    Tcl_DStringAppend(dsPtr, ">>", 2);
-	    continue;
-	}
+	    switch (patPtr->count) {
+	    case 2: Tcl_AppendToObj(patternObj, "Double-", 7); break;
+	    case 3: Tcl_AppendToObj(patternObj, "Triple-", 7); break;
+	    case 4: Tcl_AppendToObj(patternObj, "Quadruple-", 10); break;
+	    }
 
-	/*
-	 * It's a more general event specification. First check for "Double",
-	 * "Triple", "Quadruple", then modifiers, then event type, then keysym
-	 * or button detail.
-	 */
+	    modMask = patPtr->modMask;
+#if PRINT_SHORT_MOTION_SYNTAX
+	    if (patPtr->eventType == MotionNotify) {
+		modMask &= ~(ModMask)ALL_BUTTONS;
+	    }
+#endif
 
-	Tcl_DStringAppend(dsPtr, "<", 1);
+	    for (modPtr = modArray; modMask; ++modPtr) {
+		if (modPtr->mask & modMask) {
+		    modMask &= ~modPtr->mask;
+		    Tcl_AppendPrintfToObj(patternObj, "%s-", modPtr->name);
+		}
+	    }
 
-	if ((psPtr->flags & PAT_NEARBY) && (patsLeft > 1)
-		&& (memcmp((char *) patPtr, (char *) (patPtr-1),
-			sizeof(TkPattern)) == 0)) {
-	    patsLeft--;
-	    patPtr--;
-	    if ((patsLeft > 1) && (memcmp((char *) patPtr,
-		    (char *) (patPtr-1), sizeof(TkPattern)) == 0)) {
-		patsLeft--;
-		patPtr--;
-		    if ((patsLeft > 1) && (memcmp((char *) patPtr,
-			    (char *) (patPtr-1), sizeof(TkPattern)) == 0)) {
-			patsLeft--;
-			patPtr--;
-			Tcl_DStringAppend(dsPtr, "Quadruple-", 10);
-		    } else {
-			Tcl_DStringAppend(dsPtr, "Triple-", 7);
+	    assert(patPtr->eventType < TK_LASTEVENT);
+	    assert(((size_t) eventArrayIndex[patPtr->eventType]) < SIZE_OF_ARRAY(eventArray));
+	    Tcl_AppendToObj(patternObj, eventArray[eventArrayIndex[patPtr->eventType]].name, -1);
+
+	    if (patPtr->info) {
+		switch (patPtr->eventType) {
+		case KeyPress:
+		case KeyRelease: {
+		    const char *string = TkKeysymToString(patPtr->info);
+		    if (string) {
+			Tcl_AppendToObj(patternObj, "-", 1);
+			Tcl_AppendToObj(patternObj, string, -1);
 		    }
-	    } else {
-		Tcl_DStringAppend(dsPtr, "Double-", 7);
-	    }
-	}
-
-	for (needMods = patPtr->needMods, modPtr = modArray;
-		needMods != 0; modPtr++) {
-	    if (modPtr->mask & needMods) {
-		needMods &= ~modPtr->mask;
-		Tcl_DStringAppend(dsPtr, modPtr->name, -1);
-		Tcl_DStringAppend(dsPtr, "-", 1);
-	    }
-	}
-
-	for (eiPtr = eventArray; eiPtr->name != NULL; eiPtr++) {
-	    if (eiPtr->type == patPtr->eventType) {
-		Tcl_DStringAppend(dsPtr, eiPtr->name, -1);
-		if (patPtr->detail.clientData != 0) {
-		    Tcl_DStringAppend(dsPtr, "-", 1);
+		    break;
 		}
-		break;
-	    }
-	}
-
-	if (patPtr->detail.clientData != 0) {
-	    if ((patPtr->eventType == KeyPress)
-		    || (patPtr->eventType == KeyRelease)) {
-		char *string = TkKeysymToString(patPtr->detail.keySym);
-		if (string != NULL) {
-		    Tcl_DStringAppend(dsPtr, string, -1);
+		case ButtonPress:
+		case ButtonRelease:
+		    assert(patPtr->info <= Button5);
+		    Tcl_AppendPrintfToObj(patternObj, "-%d", (int) patPtr->info);
+		    break;
+#if PRINT_SHORT_MOTION_SYNTAX
+		case MotionNotify: {
+		    ModMask mask = patPtr->modMask;
+		    while (mask & ALL_BUTTONS) {
+			unsigned button = ButtonNumberFromState(mask);
+			Tcl_AppendPrintfToObj(patternObj, "-%u", button);
+			mask &= ~TkGetButtonMask(button);
+		    }
+		    break;
 		}
-	    } else {
-		sprintf(buffer, "%d", patPtr->detail.button);
-		Tcl_DStringAppend(dsPtr, buffer, -1);
+#endif
+		}
 	    }
-	}
 
-	Tcl_DStringAppend(dsPtr, ">", 1);
+	    Tcl_AppendToObj(patternObj, ">", 1);
+	}
     }
-}
-
-/*
- *---------------------------------------------------------------------------
- *
- * EvalTclBinding --
- *
- *	The function that is invoked by Tk_BindEvent when a Tcl binding is
- *	fired.
- *
- * Results:
- *	A standard Tcl result code, the result of globally evaluating the
- *	percent-substitued binding string.
- *
- * Side effects:
- *	Normal side effects due to eval.
- *
- *---------------------------------------------------------------------------
- */
 
-static void
-FreeTclBinding(
-    ClientData clientData)
-{
-    ckfree((char *) clientData);
+    return patternObj;
 }
 
 /*
@@ -4551,22 +5172,24 @@ FreeTclBinding(
 
 KeySym
 TkStringToKeysym(
-    char *name)			/* Name of a keysym. */
+    const char *name)		/* Name of a keysym. */
 {
 #ifdef REDO_KEYSYM_LOOKUP
     Tcl_HashEntry *hPtr = Tcl_FindHashEntry(&keySymTable, name);
 
-    if (hPtr != NULL) {
+    if (hPtr) {
 	return (KeySym) Tcl_GetHashValue(hPtr);
     }
-    if (strlen(name) == 1) {
+    assert(name);
+    if (strlen(name) == 1u) {
 	KeySym keysym = (KeySym) (unsigned char) name[0];
 
-	if (TkKeysymToString(keysym) != NULL) {
+	if (TkKeysymToString(keysym)) {
 	    return keysym;
 	}
     }
 #endif /* REDO_KEYSYM_LOOKUP */
+    assert(name);
     return XStringToKeysym(name);
 }
 
@@ -4587,54 +5210,22 @@ TkStringToKeysym(
  *----------------------------------------------------------------------
  */
 
-char *
+const char *
 TkKeysymToString(
     KeySym keysym)
 {
 #ifdef REDO_KEYSYM_LOOKUP
     Tcl_HashEntry *hPtr = Tcl_FindHashEntry(&nameTable, (char *)keysym);
 
-    if (hPtr != NULL) {
-	return (char *) Tcl_GetHashValue(hPtr);
+    if (hPtr) {
+	return Tcl_GetHashValue(hPtr);
     }
 #endif /* REDO_KEYSYM_LOOKUP */
 
+    if (keysym > (KeySym)0x1008FFFF) {
+	return NULL;
+    }
     return XKeysymToString(keysym);
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * TkCopyAndGlobalEval --
- *
- *	This function makes a copy of a script then calls Tcl_EvalEx to
- *	evaluate it. It's used in situations where the execution of a command
- *	may cause the original command string to be reallocated.
- *
- * Results:
- *	Returns the result of evaluating script, including both a standard Tcl
- *	completion code and a string in the interp's result.
- *
- * Side effects:
- *	Any; depends on script.
- *
- *----------------------------------------------------------------------
- */
-
-int
-TkCopyAndGlobalEval(
-    Tcl_Interp *interp,		/* Interpreter in which to evaluate script. */
-    char *script)		/* Script to evaluate. */
-{
-    Tcl_DString buffer;
-    int code;
-
-    Tcl_DStringInit(&buffer);
-    Tcl_DStringAppend(&buffer, script, -1);
-    code = Tcl_EvalEx(interp, Tcl_DStringValue(&buffer),
-	    Tcl_DStringLength(&buffer), TCL_EVAL_GLOBAL);
-    Tcl_DStringFree(&buffer);
-    return code;
 }
 
 /*
@@ -4660,16 +5251,117 @@ XEvent *
 TkpGetBindingXEvent(
     Tcl_Interp *interp)		/* Interpreter. */
 {
-   TkWindow *winPtr = (TkWindow *) Tk_MainWindow(interp);
-   BindingTable *bindPtr = (BindingTable *) winPtr->mainPtr->bindingTable;
+    TkWindow *winPtr = (TkWindow *) Tk_MainWindow(interp);
+    BindingTable *bindPtr = winPtr->mainPtr->bindingTable;
 
-   return &(bindPtr->eventRing[bindPtr->curEvent]);
+    return &bindPtr->curEvent->xev;
 }
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TkpCancelWarp --
+ *
+ *	This function cancels an outstanding pointer warp and
+ *	is called during tear down of the display.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+void
+TkpCancelWarp(
+    TkDisplay *dispPtr)
+{
+    assert(dispPtr);
+
+    if (dispPtr->flags & TK_DISPLAY_IN_WARP) {
+	Tcl_CancelIdleCall(DoWarp, dispPtr);
+	dispPtr->flags &= ~TK_DISPLAY_IN_WARP;
+    }
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TkpDumpPS --
+ *
+ *	Dump given pattern sequence to stdout.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+#if SUPPORT_DEBUGGING
+void
+TkpDumpPS(
+    const PatSeq *psPtr)
+{
+    if (!psPtr) {
+	fprintf(stdout, "<null>\n");
+    } else {
+	Tcl_Obj* result = GetPatternObj(psPtr);
+	Tcl_IncrRefCount(result);
+	fprintf(stdout, "%s", Tcl_GetString(result));
+	if (psPtr->object) {
+	    fprintf(stdout, " (%s)", (char *) psPtr->object);
+	}
+	fprintf(stdout, "\n");
+	Tcl_DecrRefCount(result);
+    }
+}
+#endif
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TkpDumpPSList --
+ *
+ *	Dump given pattern sequence list to stdout.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+#if SUPPORT_DEBUGGING
+void
+TkpDumpPSList(
+    const PSList *psList)
+{
+    if (!psList) {
+	fprintf(stdout, "<null>\n");
+    } else {
+	const PSEntry *psEntry;
+
+	fprintf(stdout, "Dump PSList ========================================\n");
+	TK_DLIST_FOREACH(psEntry, psList) {
+	    TkpDumpPS(psEntry->psPtr);
+	}
+	fprintf(stdout, "====================================================\n");
+    }
+}
+#endif
 
 /*
  * Local Variables:
  * mode: c
  * c-basic-offset: 4
- * fill-column: 78
+ * fill-column: 105
  * End:
+ * vi:set ts=8 sw=4:
  */

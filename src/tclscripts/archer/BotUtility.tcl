@@ -38,8 +38,8 @@ package require Itk
 
     public {
 	# Override's for the Utility class
-	common utilityMajorType $Archer::pluginMajorTypeUtility
-	common utilityMinorType $Archer::pluginMinorTypeMged
+	common utilityMajorType "Utility"
+	common utilityMinorType "Mged"
 	common utilityName "Bot Utility"
 	common utilityVersion "1.0"
 	common utilityClass BotUtility

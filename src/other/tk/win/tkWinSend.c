@@ -14,10 +14,6 @@
 #include "tkInt.h"
 #include "tkWinSendCom.h"
 
-#ifdef _MSC_VER
-#define vsnprintf _vsnprintf
-#endif
-
 /*
  * Should be defined in WTypes.h but mingw 1.0 is missing them.
  */
@@ -59,7 +55,7 @@ typedef struct {
     int initialized;
 } ThreadSpecificData;
 static Tcl_ThreadDataKey dataKey;
-#endif
+#endif /* TK_SEND_ENABLED_ON_WINDOWS */
 
 /*
  * Functions internal to this file.
@@ -70,18 +66,17 @@ static void		CmdDeleteProc(ClientData clientData);
 static void		InterpDeleteProc(ClientData clientData,
 			    Tcl_Interp *interp);
 static void		RevokeObjectRegistration(RegisteredInterp *riPtr);
-#endif
+#endif /* TK_SEND_ENABLED_ON_WINDOWS */
 static HRESULT		BuildMoniker(const char *name, LPMONIKER *pmk);
 #ifdef TK_SEND_ENABLED_ON_WINDOWS
 static HRESULT		RegisterInterp(const char *name,
 			    RegisteredInterp *riPtr);
-#endif
+#endif /* TK_SEND_ENABLED_ON_WINDOWS */
 static int		FindInterpreterObject(Tcl_Interp *interp,
 			    const char *name, LPDISPATCH *ppdisp);
 static int		Send(LPDISPATCH pdispInterp, Tcl_Interp *interp,
 			    int async, ClientData clientData, int objc,
 			    Tcl_Obj *const objv[]);
-static Tcl_Obj *	Win32ErrorObj(HRESULT hrError);
 static void		SendTrace(const char *format, ...);
 static Tcl_EventProc	SendEventProc;
 
@@ -89,7 +84,7 @@ static Tcl_EventProc	SendEventProc;
 #define TRACE SendTrace
 #else
 #define TRACE 1 ? ((void)0) : SendTrace
-#endif
+#endif /* DEBUG || _DEBUG */
 
 /*
  *--------------------------------------------------------------
@@ -140,9 +135,7 @@ Tk_SetAppName(
     HRESULT hr = S_OK;
 
     interp = winPtr->mainPtr->interp;
-
-    tsdPtr = (ThreadSpecificData *)
-	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
+    tsdPtr = Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     /*
      * Initialise the COM library for this interpreter just once.
@@ -151,12 +144,13 @@ Tk_SetAppName(
     if (tsdPtr->initialized == 0) {
 	hr = CoInitialize(0);
 	if (FAILED(hr)) {
-	    Tcl_SetResult(interp,
-		    "failed to initialize the COM library", TCL_STATIC);
+	    Tcl_SetObjResult(interp, Tcl_NewStringObj(
+		    "failed to initialize the COM library", -1));
+	    Tcl_SetErrorCode(interp, "TK", "SEND", "COM", NULL);
 	    return "";
 	}
 	tsdPtr->initialized = 1;
-	TRACE("Initialized COM library for interp 0x%08X\n", (long)interp);
+	TRACE("Initialized COM library for interp 0x%" TCL_Z_MODIFIER "x\n", (size_t)interp);
     }
 
     /*
@@ -169,7 +163,7 @@ Tk_SetAppName(
     if (riPtr == NULL) {
 	LPUNKNOWN *objPtr;
 
-	riPtr = (RegisteredInterp *) ckalloc(sizeof(RegisteredInterp));
+	riPtr = ckalloc(sizeof(RegisteredInterp));
 	memset(riPtr, 0, sizeof(RegisteredInterp));
 	riPtr->interp = interp;
 
@@ -258,8 +252,14 @@ TkGetInterpNames(
 			    LPOLESTR p = olestr + wcslen(oleszStub);
 
 			    if (*p) {
+				Tcl_DString ds;
+
+				Tcl_WinTCharToUtf((LPCTSTR)(p + 1), -1, &ds);
 				result = Tcl_ListObjAppendElement(interp,
-					objList, Tcl_NewUnicodeObj(p + 1, -1));
+					objList,
+					Tcl_NewStringObj(Tcl_DStringValue(&ds),
+						Tcl_DStringLength(&ds)));
+				Tcl_DStringFree(&ds);
 			    }
 			}
 
@@ -286,7 +286,7 @@ TkGetInterpNames(
 	if (objList != NULL) {
 	    Tcl_DecrRefCount(objList);
 	}
-	Tcl_SetObjResult(interp, Win32ErrorObj(hr));
+	Tcl_SetObjResult(interp, TkWin32ErrorObj(hr));
 	result = TCL_ERROR;
     }
 
@@ -326,7 +326,7 @@ Tk_SendObjCmd(
     enum {
 	SEND_ASYNC, SEND_DISPLAYOF, SEND_LAST
     };
-    static const char *sendOptions[] = {
+    static const char *const sendOptions[] = {
 	"-async",   "-displayof",   "--",  NULL
     };
     int result = TCL_OK;
@@ -338,8 +338,8 @@ Tk_SendObjCmd(
      */
 
     for (i = 1; i < objc; i++) {
-	if (Tcl_GetIndexFromObj(interp, objv[i], sendOptions,
-		"option", 0, &optind) != TCL_OK) {
+	if (Tcl_GetIndexFromObjStruct(interp, objv[i], sendOptions,
+		sizeof(char *), "option", 0, &optind) != TCL_OK) {
 	    break;
 	}
 	if (optind == SEND_ASYNC) {
@@ -367,9 +367,10 @@ Tk_SendObjCmd(
      */
 
     if (displayPtr) {
-	Tcl_SetStringObj(Tcl_GetObjResult(interp),
-		"option not implemented: \"displayof\" is not available "
-		"for this platform.", -1);
+	Tcl_SetObjResult(interp, Tcl_NewStringObj(
+		"option not implemented: \"displayof\" is not available"
+		" for this platform.", -1));
+	Tcl_SetErrorCode(interp, "TK", "SEND", "DISPLAYOF_WIN", NULL);
 	result = TCL_ERROR;
     }
 
@@ -379,6 +380,7 @@ Tk_SendObjCmd(
     /* FIX ME: we need to check for local interp */
     if (result == TCL_OK) {
 	LPDISPATCH pdisp;
+
 	result = FindInterpreterObject(interp, Tcl_GetString(objv[i]), &pdisp);
 	if (result == TCL_OK) {
 	    i++;
@@ -440,9 +442,10 @@ FindInterpreterObject(
 		    pUnkInterp->lpVtbl->Release(pUnkInterp);
 
 		} else {
-		    Tcl_ResetResult(interp);
-		    Tcl_AppendResult(interp,
-			    "no application named \"", name, "\"", NULL);
+		    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+			    "no application named \"%s\"", name));
+		    Tcl_SetErrorCode(interp, "TK", "LOOKUP", "APPLICATION",
+			    NULL);
 		    result = TCL_ERROR;
 		}
 
@@ -453,7 +456,7 @@ FindInterpreterObject(
 	pROT->lpVtbl->Release(pROT);
     }
     if (FAILED(hr) && result == TCL_OK) {
-	Tcl_SetObjResult(interp, Win32ErrorObj(hr));
+	Tcl_SetObjResult(interp, TkWin32ErrorObj(hr));
 	result = TCL_ERROR;
     }
     return result;
@@ -557,7 +560,7 @@ RevokeObjectRegistration(
 	riPtr->name = NULL;
     }
 }
-#endif
+#endif /* TK_SEND_ENABLED_ON_WINDOWS */
 
 /*
  * ----------------------------------------------------------------------
@@ -584,7 +587,7 @@ InterpDeleteProc(
 {
     CoUninitialize();
 }
-#endif
+#endif /* TK_SEND_ENABLED_ON_WINDOWS */
 
 /*
  * ----------------------------------------------------------------------
@@ -616,8 +619,7 @@ BuildMoniker(
 	LPMONIKER pmkItem = NULL;
 	Tcl_DString dString;
 
-	Tcl_DStringInit(&dString);
-	Tcl_UtfToUniCharDString(name, -1, &dString);
+	Tcl_WinUtfToTChar(name, -1, &dString);
 	hr = CreateFileMoniker((LPOLESTR)Tcl_DStringValue(&dString), &pmkItem);
 	Tcl_DStringFree(&dString);
 	if (SUCCEEDED(hr)) {
@@ -705,7 +707,7 @@ RegisterInterp(
     Tcl_DStringFree(&dString);
     return hr;
 }
-#endif
+#endif /* TK_SEND_ENABLED_ON_WINDOWS */
 
 /*
  * ----------------------------------------------------------------------
@@ -743,6 +745,8 @@ Send(
     HRESULT hr = S_OK, ehr = S_OK;
     Tcl_Obj *cmd = NULL;
     DISPID dispid;
+    Tcl_DString ds;
+    const char *src;
 
     cmd = Tcl_ConcatObj(objc, objv);
 
@@ -756,7 +760,10 @@ Send(
     memset(&ei, 0, sizeof(ei));
 
     vCmd.vt = VT_BSTR;
-    vCmd.bstrVal = SysAllocString(Tcl_GetUnicode(cmd));
+    src = Tcl_GetString(cmd);
+    Tcl_WinUtfToTChar(src, cmd->length, &ds);
+    vCmd.bstrVal = SysAllocString((WCHAR *) Tcl_DStringValue(&ds));
+    Tcl_DStringFree(&ds);
 
     dp.cArgs = 1;
     dp.rgvarg = &vCmd;
@@ -777,7 +784,9 @@ Send(
 
     ehr = VariantChangeType(&vResult, &vResult, 0, VT_BSTR);
     if (SUCCEEDED(ehr)) {
-	Tcl_SetObjResult(interp, Tcl_NewUnicodeObj(vResult.bstrVal, -1));
+	Tcl_WinTCharToUtf((LPCTSTR)vResult.bstrVal, SysStringLen(vResult.bstrVal) *
+		sizeof (WCHAR), &ds);
+	Tcl_DStringResult(interp, &ds);
     }
 
     /*
@@ -786,21 +795,17 @@ Send(
      * variables.
      */
 
-    if (hr == DISP_E_EXCEPTION) {
+    if (hr == DISP_E_EXCEPTION && ei.bstrSource != NULL) {
 	Tcl_Obj *opError, *opErrorCode, *opErrorInfo;
-
-	if (ei.bstrSource != NULL) {
-	    int len;
-	    char *szErrorInfo;
-
-	    opError = Tcl_NewUnicodeObj(ei.bstrSource, -1);
-	    Tcl_ListObjIndex(interp, opError, 0, &opErrorCode);
-	    Tcl_SetObjErrorCode(interp, opErrorCode);
-
-	    Tcl_ListObjIndex(interp, opError, 1, &opErrorInfo);
-	    szErrorInfo = Tcl_GetStringFromObj(opErrorInfo, &len);
-	    Tcl_AddObjErrorInfo(interp, szErrorInfo, len);
-	}
+	Tcl_WinTCharToUtf((LPCTSTR)ei.bstrSource, SysStringLen(ei.bstrSource) *
+		sizeof (WCHAR), &ds);
+	opError = Tcl_NewStringObj(Tcl_DStringValue(&ds),
+		Tcl_DStringLength(&ds));
+	Tcl_DStringFree(&ds);
+	Tcl_ListObjIndex(interp, opError, 0, &opErrorCode);
+	Tcl_SetObjErrorCode(interp, opErrorCode);
+	Tcl_ListObjIndex(interp, opError, 1, &opErrorInfo);
+	Tcl_AppendObjToErrorInfo(interp, opErrorInfo);
     }
 
     /*
@@ -818,57 +823,7 @@ Send(
 /*
  * ----------------------------------------------------------------------
  *
- * Win32ErrorObj --
- *
- *	Returns a string object containing text from a COM or Win32 error code
- *
- * Results:
- *	A Tcl_Obj containing the Win32 error message.
- *
- * Side effects:
- *	Removed the error message from the COM threads error object.
- *
- * ----------------------------------------------------------------------
- */
-
-static Tcl_Obj*
-Win32ErrorObj(
-    HRESULT hrError)
-{
-    LPTSTR lpBuffer = NULL, p = NULL;
-    TCHAR  sBuffer[30];
-    Tcl_Obj* errPtr = NULL;
-
-    FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-	    NULL, (DWORD)hrError, LANG_NEUTRAL,
-	    (LPTSTR)&lpBuffer, 0, NULL);
-
-    if (lpBuffer == NULL) {
-	lpBuffer = sBuffer;
-	wsprintf(sBuffer, TEXT("Error Code: %08lX"), hrError);
-    }
-
-    if ((p = _tcsrchr(lpBuffer, TEXT('\r'))) != NULL) {
-	*p = TEXT('\0');
-    }
-
-#ifdef _UNICODE
-    errPtr = Tcl_NewUnicodeObj(lpBuffer, (int)wcslen(lpBuffer));
-#else
-    errPtr = Tcl_NewStringObj(lpBuffer, (int)strlen(lpBuffer));
-#endif
-
-    if (lpBuffer != sBuffer) {
-	LocalFree((HLOCAL)lpBuffer);
-    }
-
-    return errPtr;
-}
-
-/*
- * ----------------------------------------------------------------------
- *
- * SetErrorInfo --
+ * TkWinSend_SetExcepInfo --
  *
  *	Convert the error information from a Tcl interpreter into a COM
  *	exception structure. This information is then registered with the COM
@@ -885,48 +840,61 @@ Win32ErrorObj(
  */
 
 void
-SetExcepInfo(
-    Tcl_Interp* interp,
+TkWinSend_SetExcepInfo(
+    Tcl_Interp *interp,
     EXCEPINFO *pExcepInfo)
 {
-    if (pExcepInfo) {
-	Tcl_Obj *opError, *opErrorInfo, *opErrorCode;
-	ICreateErrorInfo *pCEI;
-	IErrorInfo *pEI, **ppEI = &pEI;
-	HRESULT hr;
+    Tcl_Obj *opError, *opErrorInfo, *opErrorCode;
+    ICreateErrorInfo *pCEI;
+    IErrorInfo *pEI, **ppEI = &pEI;
+    HRESULT hr;
+    Tcl_DString ds;
+    const char *src;
 
-	opError = Tcl_GetObjResult(interp);
-	opErrorInfo = Tcl_GetVar2Ex(interp, "errorInfo",NULL, TCL_GLOBAL_ONLY);
-	opErrorCode = Tcl_GetVar2Ex(interp, "errorCode",NULL, TCL_GLOBAL_ONLY);
-
-	if (Tcl_IsShared(opErrorCode)) {
-	    Tcl_Obj *ec = Tcl_DuplicateObj(opErrorCode);
-
-	    Tcl_IncrRefCount(ec);
-	    Tcl_DecrRefCount(opErrorCode);
-	    opErrorCode = ec;
-	}
-	Tcl_ListObjAppendElement(interp, opErrorCode, opErrorInfo);
-
-	pExcepInfo->bstrDescription = SysAllocString(Tcl_GetUnicode(opError));
-	pExcepInfo->bstrSource = SysAllocString(Tcl_GetUnicode(opErrorCode));
-	pExcepInfo->scode = E_FAIL;
-
-	hr = CreateErrorInfo(&pCEI);
-	if (SUCCEEDED(hr)) {
-	    hr = pCEI->lpVtbl->SetGUID(pCEI, &IID_IDispatch);
-	    hr = pCEI->lpVtbl->SetDescription(pCEI,
-		    pExcepInfo->bstrDescription);
-	    hr = pCEI->lpVtbl->SetSource(pCEI, pExcepInfo->bstrSource);
-	    hr = pCEI->lpVtbl->QueryInterface(pCEI, &IID_IErrorInfo,
-		    (void**) ppEI);
-	    if (SUCCEEDED(hr)) {
-		SetErrorInfo(0, pEI);
-		pEI->lpVtbl->Release(pEI);
-	    }
-	    pCEI->lpVtbl->Release(pCEI);
-	}
+    if (!pExcepInfo) {
+	return;
     }
+
+    opError = Tcl_GetObjResult(interp);
+    opErrorInfo = Tcl_GetVar2Ex(interp, "errorInfo", NULL, TCL_GLOBAL_ONLY);
+    opErrorCode = Tcl_GetVar2Ex(interp, "errorCode", NULL, TCL_GLOBAL_ONLY);
+
+    /*
+     * Pack the trace onto the end of the Tcl exception descriptor.
+     */
+
+    opErrorCode = Tcl_DuplicateObj(opErrorCode);
+    Tcl_IncrRefCount(opErrorCode);
+    Tcl_ListObjAppendElement(interp, opErrorCode, opErrorInfo);
+    /* TODO: Handle failure to append */
+
+    src = Tcl_GetString(opError);
+    Tcl_WinUtfToTChar(src, opError->length, &ds);
+    pExcepInfo->bstrDescription =
+	    SysAllocString((WCHAR *) Tcl_DStringValue(&ds));
+    Tcl_DStringFree(&ds);
+    src = Tcl_GetString(opErrorCode);
+    Tcl_WinUtfToTChar(src, opErrorCode->length, &ds);
+    pExcepInfo->bstrSource =
+	    SysAllocString((WCHAR *) Tcl_DStringValue(&ds));
+    Tcl_DStringFree(&ds);
+    Tcl_DecrRefCount(opErrorCode);
+    pExcepInfo->scode = E_FAIL;
+
+    hr = CreateErrorInfo(&pCEI);
+    if (!SUCCEEDED(hr)) {
+	return;
+    }
+
+    hr = pCEI->lpVtbl->SetGUID(pCEI, &IID_IDispatch);
+    hr = pCEI->lpVtbl->SetDescription(pCEI, pExcepInfo->bstrDescription);
+    hr = pCEI->lpVtbl->SetSource(pCEI, pExcepInfo->bstrSource);
+    hr = pCEI->lpVtbl->QueryInterface(pCEI, &IID_IErrorInfo, (void **) ppEI);
+    if (SUCCEEDED(hr)) {
+	SetErrorInfo(0, pEI);
+	pEI->lpVtbl->Release(pEI);
+    }
+    pCEI->lpVtbl->Release(pCEI);
 }
 
 /*
@@ -955,7 +923,7 @@ TkWinSend_QueueCommand(
 
     TRACE("SendQueueCommand()\n");
 
-    evPtr = (SendEvent *)ckalloc(sizeof(SendEvent));
+    evPtr = ckalloc(sizeof(SendEvent));
     evPtr->header.proc = SendEventProc;
     evPtr->header.nextPtr = NULL;
     evPtr->interp = interp;
@@ -1035,8 +1003,8 @@ SendTrace(
     static char buffer[1024];
 
     va_start(args, format);
-    vsnprintf(buffer, 1023, format, args);
-    OutputDebugString(buffer);
+    _vsnprintf(buffer, 1023, format, args);
+    OutputDebugStringA(buffer);
     va_end(args);
 }
 

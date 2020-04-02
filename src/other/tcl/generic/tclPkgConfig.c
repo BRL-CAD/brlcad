@@ -88,7 +88,7 @@
 #  define CFG_PROFILED		"0"
 #endif
 
-static Tcl_Config cfg[] = {
+static Tcl_Config const cfg[] = {
     {"debug",			CFG_DEBUG},
     {"threaded",		CFG_THREADED},
     {"profiled",		CFG_PROFILED},
@@ -120,7 +120,7 @@ static Tcl_Config cfg[] = {
 
 void
 TclInitEmbeddedConfigurationInformation(
-    Tcl_Interp* interp)		/* Interpreter the configuration command is
+    Tcl_Interp *interp)		/* Interpreter the configuration command is
 				 * registered in. */
 {
     Tcl_RegisterConfig(interp, "tcl", cfg, TCL_CFGVAL_ENCODING);

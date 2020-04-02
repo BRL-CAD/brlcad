@@ -162,10 +162,6 @@ do
                                   shift;;
      --disable-tkhtml)                options="$options -DBRLCAD_TKHTML=SYSTEM";
                                   shift;;
-     --enable-tkpng)                options="$options -DBRLCAD_TKPNG=BUNDLED";
-                                  shift;;
-     --disable-tkpng)                options="$options -DBRLCAD_TKPNG=SYSTEM";
-                                  shift;;
      --enable-tktable)                options="$options -DBRLCAD_TKTABLE=BUNDLED";
                                   shift;;
      --disable-tktable)                options="$options -DBRLCAD_TKTABLE=SYSTEM";

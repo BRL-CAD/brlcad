@@ -4,18 +4,17 @@
  * Tk alternate theme, intended to match the MSUE and Gtk's (old) default theme
  */
 
-#include <math.h>
-#include <string.h>
-
-#include <tkInt.h>
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
+#include "tkInt.h"
 #include "ttkTheme.h"
 
-#if defined(WIN32)
+#if defined(_WIN32)
 static const int WIN32_XDRAWLINE_HACK = 1;
 #else
 static const int WIN32_XDRAWLINE_HACK = 0;
+#endif
+
+#if defined(MAC_OSX_TK)
+  #define IGNORES_VISUAL
 #endif
 
 #define BORDERWIDTH     2
@@ -209,6 +208,9 @@ void TtkFillArrow(
     ArrowPoints(b, dir, points);
     XFillPolygon(display, d, gc, points, 3, Convex, CoordModeOrigin);
     XDrawLines(display, d, gc, points, 4, CoordModeOrigin);
+
+    /* Work around bug [77527326e5] - ttk artifacts on Ubuntu */
+    XDrawPoint(display, d, gc, points[2].x, points[2].y);
 }
 
 /*public*/
@@ -218,6 +220,9 @@ void TtkDrawArrow(
     XPoint points[4];
     ArrowPoints(b, dir, points);
     XDrawLines(display, d, gc, points, 4, CoordModeOrigin);
+
+    /* Work around bug [77527326e5] - ttk artifacts on Ubuntu */
+    XDrawPoint(display, d, gc, points[2].x, points[2].y);
 }
 
 /*
@@ -504,7 +509,7 @@ static void IndicatorElementDraw(
     XGCValues gcValues;
     GC copyGC;
     unsigned long imgColors[8];
-    XImage *img;
+    XImage *img = NULL;
 
     Ttk_GetPaddingFromObj(NULL, tkwin, indicator->marginObj, &padding);
     b = Ttk_PadBox(b, padding);
@@ -544,15 +549,48 @@ static void IndicatorElementDraw(
     /*
      * Create a scratch buffer to store the image:
      */
-    img = XGetImage(display,d, 0, 0,
-	    (unsigned int)spec->width, (unsigned int)spec->height,
-	    AllPlanes, ZPixmap);
-    if (img == NULL)
-	return;
+
+#if defined(IGNORES_VISUAL)
 
     /*
-     * Create the image, painting it into an XImage one pixel at a time.
+     * Platforms which ignore the VisualInfo can use XCreateImage to get the
+     * scratch image.  This is essential on macOS, where it is not safe to call
+     * XGetImage in a display procedure.
      */
+
+    img = XCreateImage(display, NULL, 32, ZPixmap, 0, NULL,
+		       (unsigned int)spec->width, (unsigned int)spec->height,
+		       0, 0);
+#else
+
+    /*
+     * This trick allows creating the scratch XImage without having to
+     * construct a VisualInfo.
+     */
+
+    img = XGetImage(display, d, 0, 0,
+		    (unsigned int)spec->width, (unsigned int)spec->height,
+		    AllPlanes, ZPixmap);
+#endif
+
+    if (img == NULL) {
+        return;
+    }
+
+#if defined(IGNORES_VISUAL)
+
+    img->data = ckalloc(img->bytes_per_line * img->height);
+    if (img->data == NULL) {
+        XDestroyImage(img);
+	return;
+    }
+
+#endif
+
+    /*
+     * Create the image, painting it into the XImage one pixel at a time.
+     */
+
     index = Ttk_StateTableLookup(spec->map, state);
     for (iy=0 ; iy<spec->height ; iy++) {
 	for (ix=0 ; ix<spec->width ; ix++) {
@@ -562,18 +600,31 @@ static void IndicatorElementDraw(
     }
 
     /*
-     * Copy onto our target drawable surface.
+     * Copy the image onto our target drawable surface.
      */
+
     memset(&gcValues, 0, sizeof(gcValues));
     copyGC = Tk_GetGC(tkwin, 0, &gcValues);
-
     TkPutImage(NULL, 0, display, d, copyGC, img, 0, 0, b.x, b.y,
                spec->width, spec->height);
 
     /*
      * Tidy up.
      */
+
     Tk_FreeGC(display, copyGC);
+
+    /*
+     * Protect against the possibility that some future platform might
+     * not use the Tk memory manager in its implementation of XDestroyImage,
+     * even though that would be an extremely strange thing to do.
+     */
+
+#if defined(IGNORES_VISUAL)
+    ckfree(img->data);
+    img->data = NULL;
+#endif
+
     XDestroyImage(img);
 }
 
@@ -722,8 +773,8 @@ static void MenubuttonArrowElementDraw(
     int width = 0, height = 0;
 
     Tk_GetPixelsFromObj(NULL, tkwin, arrow->sizeObj, &size);
-    Tcl_GetIndexFromObj(NULL, arrow->directionObj, directionStrings,
-	   ""/*message*/, 0/*flags*/, &postDirection);
+    Tcl_GetIndexFromObjStruct(NULL, arrow->directionObj, directionStrings,
+	   sizeof(char *), ""/*message*/, 0/*flags*/, &postDirection);
 
     /* ... this might not be such a great idea ... */
     switch (postDirection) {

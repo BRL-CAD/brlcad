@@ -185,7 +185,7 @@ static const struct CursorName cursorNames[] = {
  * Declarations of static variables used in this file.
  */
 
-static TkMacOSXCursor * gCurrentCursor = NULL;
+static TkMacOSXCursor *gCurrentCursor = NULL;
 				/* A pointer to the current cursor. */
 static int gResizeOverride = false;
 				/* A boolean indicating whether we should use
@@ -194,7 +194,7 @@ static int gTkOwnsCursor = true;/* A boolean indicating whether Tk owns the
 				 * cursor. If not (for instance, in the case
 				 * where a Tk window is embedded in another
 				 * app's window, and the cursor is out of the
-				 * tk window, we will not attempt to adjust
+				 * Tk window, we will not attempt to adjust
 				 * the cursor. */
 
 /*
@@ -278,6 +278,7 @@ FindCursorByName(
 			kCGColorSpaceGenericGray);
 		CGDataProviderRef provider = CGDataProviderCreateWithData(NULL,
 			bitmap, pix*pix/8, NULL);
+
 		if (provider) {
 		    img = CGImageCreate(pix, pix, 1, 1, pix/8, colorspace,
 			    kCGBitmapByteOrderDefault, provider, decodeWB, 0,
@@ -299,14 +300,21 @@ FindCursorByName(
 			    initWithCGImage:maskedImg];
 		    CFRelease(maskedImg);
 		}
-		if (mask) { CFRelease(mask); }
-		if (img)  { CFRelease(img); }
-		if (colorspace) { CFRelease(colorspace); }
+		if (mask) {
+		    CFRelease(mask);
+		}
+		if (img) {
+		    CFRelease(img);
+		}
+		if (colorspace) {
+		    CFRelease(colorspace);
+		}
 		if (bitmapImageRep) {
 		    image = [[NSImage alloc] initWithSize:NSMakeSize(pix, pix)];
 		    [image addRepresentation:bitmapImageRep];
 		    [bitmapImageRep release];
 		}
+
 		uint16_t *hotSpotData = (uint16_t*)(bitmap + 2*pix*pix/8);
 		hotSpot.y = CFSwapInt16BigToHost(*hotSpotData++);
 		hotSpot.x = CFSwapInt16BigToHost(*hotSpotData);
@@ -381,19 +389,21 @@ TkGetCursorByName(
 
     if (Tcl_SplitList(interp, string, &argc, &argv) == TCL_OK) {
 	if (argc) {
-	    macCursorPtr = (TkMacOSXCursor *) ckalloc(sizeof(TkMacOSXCursor));
+	    macCursorPtr = ckalloc(sizeof(TkMacOSXCursor));
 	    macCursorPtr->info.cursor = (Tk_Cursor) macCursorPtr;
 	    macCursorPtr->macCursor = nil;
 	    macCursorPtr->type = 0;
 	    FindCursorByName(macCursorPtr, argv[0]);
 	}
-	ckfree((char *) argv);
+	ckfree(argv);
     }
     if (!macCursorPtr || (!macCursorPtr->macCursor &&
 	    macCursorPtr->type != NONE)) {
-	Tcl_AppendResult(interp, "bad cursor spec \"", string, "\"", NULL);
+	Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		"bad cursor spec \"%s\"", string));
+	Tcl_SetErrorCode(interp, "TK", "VALUE", "CURSOR", NULL);
 	if (macCursorPtr) {
-	    ckfree((char *)macCursorPtr);
+	    ckfree(macCursorPtr);
 	    macCursorPtr = NULL;
 	}
     }
@@ -538,7 +548,7 @@ TkpSetCursor(
 	return;
     }
 
-    if (cursor == TkNone) {
+    if (cursor == None) {
 	/*
 	 * This is a little tricky. We can't really tell whether
 	 * gCurrentCursor is NULL because it was NULL last time around or

@@ -4,32 +4,40 @@
 #	message catalog facility for Tcl programs.  It should be
 #	loaded with the command "package require msgcat".
 #
+# Copyright (c) 2010-2015 by Harald Oehlmann.
 # Copyright (c) 1998-2000 by Ajuba Solutions.
 # Copyright (c) 1998 by Mark Harrison.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-package require Tcl 8.5
+package require Tcl 8.5-
 # When the version number changes, be sure to update the pkgIndex.tcl file,
 # and the installation directory in the Makefiles.
-package provide msgcat 1.5.2
+package provide msgcat 1.6.1
 
 namespace eval msgcat {
-    namespace export mc mcload mclocale mcmax mcmset mcpreferences mcset \
-	    mcunknown mcflset mcflmset
-
-    # Records the current locale as passed to mclocale
-    variable Locale ""
+    namespace export mc mcexists mcload mclocale mcmax mcmset mcpreferences mcset\
+            mcunknown mcflset mcflmset mcloadedlocales mcforgetpackage\
+	    mcpackageconfig mcpackagelocale
 
     # Records the list of locales to search
     variable Loclist {}
 
+    # List of currently loaded locales
+    variable LoadedLocales {}
+
     # Records the locale of the currently sourced message catalogue file
     variable FileLocale
 
+    # Configuration values per Package (e.g. client namespace).
+    # The dict key is of the form "<option> <namespace>" and the value is the
+    # configuration option. A nonexisting key is an unset option.
+    variable PackageConfig [dict create mcfolder {} loadcmd {} changecmd {}\
+	    unknowncmd {} loadedlocales {} loclist {}]
+
     # Records the mapping between source strings and translated strings.  The
-    # dict key is of the form "<locale> <namespace> <src>", where locale and
+    # dict key is of the form "<namespace> <locale> <src>", where locale and
     # namespace should be themselves dict values and the value is
     # the translated string.
     variable Msgs [dict create]
@@ -173,6 +181,8 @@ namespace eval msgcat {
 #	parent namespace until the source is found.  If additional args are
 #	specified, use the format command to work them into the traslated
 #	string.
+#	If no catalog item is found, mcunknown is called in the caller frame
+#	and its result is returned.
 #
 # Arguments:
 #	src	The string to translate.
@@ -183,30 +193,86 @@ namespace eval msgcat {
 #	format command.
 
 proc msgcat::mc {src args} {
+    # this may be replaced by:
+    # return [mcget -namespace [uplevel 1 [list ::namespace current]] --\
+    #	    $src {*}$args]
+
     # Check for the src in each namespace starting from the local and
     # ending in the global.
 
     variable Msgs
     variable Loclist
-    variable Locale
 
     set ns [uplevel 1 [list ::namespace current]]
+    set loclist [PackagePreferences $ns]
 
-    while {$ns != ""} {
-	foreach loc $Loclist {
-	    if {[dict exists $Msgs $loc $ns $src]} {
-		if {[llength $args] == 0} {
-		    return [dict get $Msgs $loc $ns $src]
-		} else {
-		    return [format [dict get $Msgs $loc $ns $src] {*}$args]
-		}
+    set nscur $ns
+    while {$nscur != ""} {
+	foreach loc $loclist {
+	    if {[dict exists $Msgs $nscur $loc $src]} {
+		return [DefaultUnknown "" [dict get $Msgs $nscur $loc $src]\
+			{*}$args]
 	    }
 	}
+	set nscur [namespace parent $nscur]
+    }
+    # call package local or default unknown command
+    set args [linsert $args 0 [lindex $loclist 0] $src]
+    switch -exact -- [Invoke unknowncmd $args $ns result 1] {
+	0 { return [uplevel 1 [linsert $args 0 [namespace origin mcunknown]]] }
+	1 { return [DefaultUnknown {*}$args] }
+	default { return $result }
+    }
+}
+
+# msgcat::mcexists --
+#
+#	Check if a catalog item is set or if mc would invoke mcunknown.
+#
+# Arguments:
+#	-exactnamespace		Only check the exact namespace and no
+#				parent namespaces
+#	-exactlocale		Only check the exact locale and not all members
+#				of the preferences list
+#	src			Message catalog key
+#
+# Results:
+#	true if an adequate catalog key was found
+
+proc msgcat::mcexists {args} {
+
+    variable Msgs
+    variable Loclist
+    variable PackageConfig
+
+    set ns [uplevel 1 [list ::namespace current]]
+    set loclist [PackagePreferences $ns]
+
+    while {[llength $args] != 1} {
+	set args [lassign $args option]
+	switch -glob -- $option {
+	    -exactnamespace { set exactnamespace 1 }
+	    -exactlocale { set loclist [lrange $loclist 0 0] }
+	    -* { return -code error "unknown option \"$option\"" }
+	    default {
+		return -code error "wrong # args: should be\
+			\"[lindex [info level 0] 0] ?-exactnamespace?\
+			?-exactlocale? src\""
+	    }
+	}
+    }
+    set src [lindex $args 0]
+
+    while {$ns ne ""} {
+	foreach loc $loclist {
+	    if {[dict exists $Msgs $ns $loc $src]} {
+		return 1
+	    }
+	}
+	if {[info exists exactnamespace]} {return 0}
 	set ns [namespace parent $ns]
     }
-    # we have not found the translation
-    return [uplevel 1 [list [namespace origin mcunknown] \
-	    $Locale $src {*}$args]]
+    return 0
 }
 
 # msgcat::mclocale --
@@ -219,11 +285,11 @@ proc msgcat::mc {src args} {
 #			separated by underscores (e.g. en_US).
 #
 # Results:
-#	Returns the current locale.
+#	Returns the normalized set locale.
 
 proc msgcat::mclocale {args} {
     variable Loclist
-    variable Locale
+    variable LoadedLocales
     set len [llength $args]
 
     if {$len > 1} {
@@ -232,24 +298,49 @@ proc msgcat::mclocale {args} {
     }
 
     if {$len == 1} {
-	set newLocale [lindex $args 0]
+	set newLocale [string tolower [lindex $args 0]]
 	if {$newLocale ne [file tail $newLocale]} {
 	    return -code error "invalid newLocale value \"$newLocale\":\
 		    could be path to unsafe code."
 	}
-	set Locale [string tolower $newLocale]
-	set Loclist {}
-	set word ""
-	foreach part [split $Locale _] {
-	    set word [string trim "${word}_${part}" _]
-	    if {$word ne [lindex $Loclist 0]} {
-		set Loclist [linsert $Loclist 0 $word]
-	    }
+	if {[lindex $Loclist 0] ne $newLocale} {
+	    set Loclist [GetPreferences $newLocale]
+
+	    # locale not loaded jet
+	    LoadAll $Loclist
+	    # Invoke callback
+	    Invoke changecmd $Loclist
 	}
-	lappend Loclist {}
-	set Locale [lindex $Loclist 0]
     }
-    return $Locale
+    return [lindex $Loclist 0]
+}
+
+# msgcat::GetPreferences --
+#
+#	Get list of locales from a locale.
+#	The first element is always the lowercase locale.
+#	Other elements have one component separated by "_" less.
+#	Multiple "_" are seen as one separator: de__ch_spec de__ch de {}
+#
+# Arguments:
+#	Locale.
+#
+# Results:
+#	Locale list
+
+proc msgcat::GetPreferences {locale} {
+    set locale [string tolower $locale]
+    set loclist [list $locale]
+    while {-1 !=[set pos [string last "_" $locale]]} {
+	set locale [string range $locale 0 $pos-1]
+	if { "_" ne [string index $locale end] } {
+	    lappend loclist $locale
+	}
+    }
+    if {"" ne [lindex $loclist end]} {
+	lappend loclist {}
+    }
+    return $loclist
 }
 
 # msgcat::mcpreferences --
@@ -268,6 +359,391 @@ proc msgcat::mcpreferences {} {
     return $Loclist
 }
 
+# msgcat::mcloadedlocales --
+#
+#	Get or change the list of currently loaded default locales
+#
+#	The following subcommands are available:
+#	loaded
+#	    Get the current list of loaded locales
+#	clear
+#	    Remove all loaded locales not present in mcpreferences.
+#
+# Arguments:
+#	subcommand		One of loaded or clear
+#
+# Results:
+#	Empty string, if not stated differently for the subcommand
+
+proc msgcat::mcloadedlocales {subcommand} {
+    variable Loclist
+    variable LoadedLocales
+    variable Msgs
+    variable PackageConfig
+    switch -exact -- $subcommand {
+	clear {
+	    # Remove all locales not contained in Loclist
+	    # skip any packages with package locale
+	    set LoadedLocales $Loclist
+	    foreach ns [dict keys $Msgs] {
+		if {![dict exists $PackageConfig loclist $ns]} {
+		    foreach locale [dict keys [dict get $Msgs $ns]] {
+			if {$locale ni $Loclist} {
+			    dict unset Msgs $ns $locale
+			}
+		    }
+		}
+	    }
+	}
+	loaded { return $LoadedLocales }
+	default {
+	    return -code error "unknown subcommand \"$subcommand\": must be\
+		    clear, or loaded"
+	}
+    }
+    return
+}
+
+# msgcat::mcpackagelocale --
+#
+#	Get or change the package locale of the calling package.
+#
+#	The following subcommands are available:
+#	set
+#	    Set a package locale.
+#	    This may load message catalog files and may clear message catalog
+#	    items, if the former locale was the default locale.
+#	    Returns the normalized set locale.
+#	    The default locale is taken, if locale is not given.
+#	get
+#	    Get the locale valid for this package.
+#	isset
+#	    Returns true, if a package locale is set
+#	unset
+#	    Unset the package locale and activate the default locale.
+#	    This loads message catalog file which where missing in the package
+#	    locale.
+#	preferences
+#	    Return locale preference list valid for the package.
+#	loaded
+#	    Return loaded locale list valid for the current package.
+#	clear
+#	    If the current package has a package locale, remove all package
+#	    locales not containes in package mcpreferences.
+#	    It is an error to call this without a package locale set.
+#
+#	The subcommands get, preferences and loaded return the corresponding
+#	default data, if no package locale is set.
+#
+# Arguments:
+#	subcommand		see list above
+#	locale			package locale (only set subcommand)
+#
+# Results:
+#	Empty string, if not stated differently for the subcommand
+
+proc msgcat::mcpackagelocale {subcommand {locale ""}} {
+    # todo: implement using an ensemble
+    variable Loclist
+    variable LoadedLocales
+    variable Msgs
+    variable PackageConfig
+    # Check option
+    # check if required item is exactly provided
+    if {[llength [info level 0]] == 2} {
+	# locale not given
+	unset locale
+    } else {
+	# locale given
+	if {$subcommand in
+		{"get" "isset" "unset" "preferences" "loaded" "clear"} } {
+	    return -code error "wrong # args: should be\
+		    \"[lrange [info level 0] 0 1]\""
+	}
+        set locale [string tolower $locale]
+    }
+    set ns [uplevel 1 {::namespace current}]
+
+    switch -exact -- $subcommand {
+	get { return [lindex [PackagePreferences $ns] 0] }
+	preferences { return [PackagePreferences $ns] }
+	loaded { return [PackageLocales $ns] }
+	present { return [expr {$locale in [PackageLocales $ns]} ]}
+	isset { return [dict exists $PackageConfig loclist $ns] }
+	set { # set a package locale or add a package locale
+
+	    # Copy the default locale if no package locale set so far
+	    if {![dict exists $PackageConfig loclist $ns]} {
+		dict set PackageConfig loclist $ns $Loclist
+		dict set PackageConfig loadedlocales $ns $LoadedLocales
+	    }
+
+	    # Check if changed
+	    set loclist [dict get $PackageConfig loclist $ns]
+	    if {! [info exists locale] || $locale eq [lindex $loclist 0] } {
+		return [lindex $loclist 0]
+	    }
+
+	    # Change loclist
+	    set loclist [GetPreferences $locale]
+	    set locale [lindex $loclist 0]
+	    dict set PackageConfig loclist $ns $loclist
+
+	    # load eventual missing locales
+	    set loadedLocales [dict get $PackageConfig loadedlocales $ns]
+	    if {$locale in $loadedLocales} { return $locale }
+	    set loadLocales [ListComplement $loadedLocales $loclist]
+	    dict set PackageConfig loadedlocales $ns\
+		    [concat $loadedLocales $loadLocales]
+	    Load $ns $loadLocales
+	    return $locale
+	}
+	clear { # Remove all locales not contained in Loclist
+	    if {![dict exists $PackageConfig loclist $ns]} {
+		return -code error "clear only when package locale set"
+	    }
+	    set loclist [dict get $PackageConfig loclist $ns]
+	    dict set PackageConfig loadedlocales $ns $loclist
+	    if {[dict exists $Msgs $ns]} {
+		foreach locale [dict keys [dict get $Msgs $ns]] {
+		    if {$locale ni $loclist} {
+			dict unset Msgs $ns $locale
+		    }
+		}
+	    }
+	}
+	unset {	# unset package locale and restore default locales
+
+	    if { ![dict exists $PackageConfig loclist $ns] } { return }
+
+	    # unset package locale
+	    set loadLocales [ListComplement\
+		    [dict get $PackageConfig loadedlocales $ns] $LoadedLocales]
+	    dict unset PackageConfig loadedlocales $ns
+	    dict unset PackageConfig loclist $ns
+
+	    # unset keys not in global loaded locales
+	    if {[dict exists $Msgs $ns]} {
+		foreach locale [dict keys [dict get $Msgs $ns]] {
+		    if {$locale ni $LoadedLocales} {
+			dict unset Msgs $ns $locale
+		    }
+		}
+	    }
+
+	    # Add missing locales
+	    Load $ns $loadLocales
+	}
+	default {
+	    return -code error "unknown subcommand \"$subcommand\": must be\
+		    clear, get, isset, loaded, present, set, or unset"
+	}
+    }
+    return
+}
+
+# msgcat::mcforgetpackage --
+#
+#	Remove any data of the calling package from msgcat
+#
+
+proc msgcat::mcforgetpackage {} {
+    # todo: this may be implemented using an ensemble
+    variable PackageConfig
+    variable Msgs
+    set ns [uplevel 1 {::namespace current}]
+    # Remove MC items
+    dict unset Msgs $ns
+    # Remove config items
+    foreach key [dict keys $PackageConfig] {
+	dict unset PackageConfig $key $ns
+    }
+    return
+}
+
+# msgcat::mcpackageconfig --
+#
+#	Get or modify the per caller namespace (e.g. packages) config options.
+#
+#	Available subcommands are:
+#
+#	    get		get the current value or an error if not set.
+#	    isset	return true, if the option is set
+#	    set		set the value (see also distinct option).
+#			Returns the number of loaded message files.
+#	    unset	Clear option. return "".
+#
+#	Available options are:
+#
+#	mcfolder
+#	    The message catalog folder of the package.
+#	    This is automatically set by mcload.
+#	    If the value is changed using the set subcommand, an evntual
+#	    loadcmd is invoked and all message files of the package locale are
+#	    loaded.
+#
+#	loadcmd
+#	    The command gets executed before a message file would be
+#	    sourced for this module.
+#	    The command is invoked with the expanded locale list to load.
+#	    The command is not invoked if the registering package namespace
+#	    is not present.
+#	    This callback might also be used as an alternative to message
+#	    files.
+#	    If the value is changed using the set subcommand, the callback is
+#	    directly invoked with the current file locale list. No file load is
+#	    executed.
+#
+#	changecmd
+#	    The command is invoked, after an executed locale change.
+#	    Appended argument is expanded mcpreferences.
+#
+#	unknowncmd
+#	    Use a package locale mcunknown procedure instead the global one.
+#	    The appended arguments are identical to mcunknown.
+#	    A default unknown handler is used if set to the empty string.
+#	    This consists in returning the key if no arguments are given.
+#	    With given arguments, format is used to process the arguments.
+#
+# Arguments:
+#	subcommand		Operation on the package
+#	option			The package option to get or set.
+#	?value?			Eventual value for the subcommand
+#
+# Results:
+#	Depends on the subcommand and option and is described there
+
+proc msgcat::mcpackageconfig {subcommand option {value ""}} {
+    variable PackageConfig
+    # get namespace
+    set ns [uplevel 1 {::namespace current}]
+
+    if {$option ni {"mcfolder" "loadcmd" "changecmd" "unknowncmd"}} {
+	return -code error "bad option \"$option\": must be mcfolder, loadcmd,\
+		changecmd, or unknowncmd"
+    }
+
+    # check if value argument is exactly provided
+    if {[llength [info level 0]] == 4 } {
+	# value provided
+	if {$subcommand in {"get" "isset" "unset"}} {
+	    return -code error "wrong # args: should be\
+		    \"[lrange [info level 0] 0 2] value\""
+	}
+    } elseif {$subcommand eq "set"} {
+        return -code error\
+		"wrong # args: should be \"[lrange [info level 0] 0 2]\""
+    }
+
+    # Execute subcommands
+    switch -exact -- $subcommand {
+	get {	# Operation get return current value
+	    if {![dict exists $PackageConfig $option $ns]} {
+		return -code error "package option \"$option\" not set"
+	    }
+	    return [dict get $PackageConfig $option $ns]
+	}
+	isset {	return [dict exists $PackageConfig $option $ns] }
+	unset {	dict unset PackageConfig $option $ns }
+	set {	# Set option
+
+	    if {$option eq "mcfolder"} {
+		set value [file normalize $value]
+	    }
+	    # Check if changed
+	    if { [dict exists $PackageConfig $option $ns]
+		    && $value eq [dict get $PackageConfig $option $ns] } {
+		return 0
+	    }
+
+	    # set new value
+	    dict set PackageConfig $option $ns $value
+
+	    # Reload pending message catalogs
+	    switch -exact -- $option {
+		mcfolder { return [Load $ns [PackageLocales $ns]] }
+		loadcmd { return [Load $ns [PackageLocales $ns] 1] }
+	    }
+	    return 0
+	}
+	default {
+	    return -code error "unknown subcommand \"$subcommand\":\
+		    must be get, isset, set, or unset"
+	}
+    }
+    return
+}
+
+# msgcat::PackagePreferences --
+#
+#	Return eventual present package preferences or the default list if not
+#	present.
+#
+# Arguments:
+#	ns		Package namespace
+#
+# Results:
+#	locale list
+
+proc msgcat::PackagePreferences {ns} {
+    variable PackageConfig
+    if {[dict exists $PackageConfig loclist $ns]} {
+	return [dict get $PackageConfig loclist $ns]
+    }
+    variable Loclist
+    return $Loclist
+}
+
+# msgcat::PackageLocales --
+#
+#	Return eventual present package locales or the default list if not
+#	present.
+#
+# Arguments:
+#	ns		Package namespace
+#
+# Results:
+#	locale list
+
+proc msgcat::PackageLocales {ns} {
+    variable PackageConfig
+    if {[dict exists $PackageConfig loadedlocales $ns]} {
+	return [dict get $PackageConfig loadedlocales $ns]
+    }
+    variable LoadedLocales
+    return $LoadedLocales
+}
+
+# msgcat::ListComplement --
+#
+#	Build the complement of two lists.
+#	Return a list with all elements in list2 but not in list1.
+#	Optionally return the intersection.
+#
+# Arguments:
+#	list1		excluded list
+#	list2		included list
+#	inlistname	If not "", write in this variable the intersection list
+#
+# Results:
+#	list with all elements in list2 but not in list1
+
+proc msgcat::ListComplement {list1 list2 {inlistname ""}} {
+    if {"" ne $inlistname} {
+	upvar 1 $inlistname inlist
+    }
+    set inlist {}
+    set outlist {}
+    foreach item $list2 {
+	if {$item in $list1} {
+	    lappend inlist $item
+	} else {
+	    lappend outlist $item
+	}
+    }
+    return $outlist
+}
+
 # msgcat::mcload --
 #
 #	Attempt to load message catalogs for each locale in the
@@ -280,24 +756,88 @@ proc msgcat::mcpreferences {} {
 #	Returns the number of message catalogs that were loaded.
 
 proc msgcat::mcload {langdir} {
+    return [uplevel 1 [list\
+	    [namespace origin mcpackageconfig] set mcfolder $langdir]]
+}
+
+# msgcat::LoadAll --
+#
+#	Load a list of locales for all packages not having a package locale
+#	list.
+#
+# Arguments:
+#	langdir		The directory to search.
+#
+# Results:
+#	Returns the number of message catalogs that were loaded.
+
+proc msgcat::LoadAll {locales} {
+    variable PackageConfig
+    variable LoadedLocales
+    if {0 == [llength $locales]} { return {} }
+    # filter jet unloaded locales
+    set locales [ListComplement $LoadedLocales $locales]
+    if {0 == [llength $locales]} { return {} }
+    lappend LoadedLocales {*}$locales
+
+    set packages [lsort -unique [concat\
+	    [dict keys [dict get $PackageConfig loadcmd]]\
+	    [dict keys [dict get $PackageConfig mcfolder]]]]
+    foreach ns $packages {
+	if {! [dict exists $PackageConfig loclist $ns] } {
+	    Load $ns $locales
+	}
+    }
+    return $locales
+}
+
+# msgcat::Load --
+#
+#	Invoke message load callback and load message catalog files.
+#
+# Arguments:
+#	ns		Namespace (equal package) to load the message catalog.
+#	locales		List of locales to load.
+#	callbackonly	true if only callback should be invoked
+#
+# Results:
+#	Returns the number of message catalogs that were loaded.
+
+proc msgcat::Load {ns locales {callbackonly 0}} {
     variable FileLocale
+    variable PackageConfig
+    variable LoadedLocals
+
+    if {0 == [llength $locales]} { return 0 }
+
+    # Invoke callback
+    Invoke loadcmd $locales $ns
+
+    if {$callbackonly || ![dict exists $PackageConfig mcfolder $ns]} {
+	return 0
+    }
+
+    # Invoke file load
+    set langdir [dict get $PackageConfig mcfolder $ns]
+
     # Save the file locale if we are recursively called
     if {[info exists FileLocale]} {
 	set nestedFileLocale $FileLocale
     }
     set x 0
-    foreach p [mcpreferences] {
+    foreach p $locales {
 	if {$p eq {}} {
 	    set p ROOT
 	}
 	set langfile [file join $langdir $p.msg]
 	if {[file exists $langfile]} {
 	    incr x
-	    set FileLocale [string tolower [file tail [file rootname $langfile]]]
+	    set FileLocale [string tolower\
+		    [file tail [file rootname $langfile]]]
 	    if {"root" eq $FileLocale} {
 		set FileLocale ""
 	    }
-	    uplevel 1 [list ::source -encoding utf-8 $langfile]
+	    namespace inscope $ns [list ::source -encoding utf-8 $langfile]
 	    unset FileLocale
 	}
     }
@@ -305,6 +845,63 @@ proc msgcat::mcload {langdir} {
 	set FileLocale $nestedFileLocale
     }
     return $x
+}
+
+# msgcat::Invoke --
+#
+#	Invoke a set of registered callbacks.
+#	The callback is only invoked, if its registered namespace exists.
+#
+# Arguments:
+#	index		Index into PackageConfig to get callback command
+#	arglist		parameters to the callback invocation
+#	ns		(Optional) package to call.
+#			If not given or empty, check all registered packages.
+#	resultname	Variable to save the callback result of the last called
+#			callback to. May be set to "" to discard the result.
+#	failerror (0)	Fail on error if true. Otherwise call bgerror.
+#
+# Results:
+#	Possible values:
+#	- 0: no valid command registered
+#	- 1: registered command was the empty string
+#	- 2: registered command called, resultname is set
+#	- 3: registered command failed
+#	If multiple commands are called, the maximum of all results is returned.
+
+proc msgcat::Invoke {index arglist {ns ""} {resultname ""} {failerror 0}} {
+    variable PackageConfig
+    variable Config
+    if {"" ne $resultname} {
+	upvar 1 $resultname result
+    }
+    if {"" eq $ns} {
+	set packageList [dict keys [dict get $PackageConfig $index]]
+    } else {
+	set packageList [list $ns]
+    }
+    set ret 0
+    foreach ns $packageList {
+	if {[dict exists $PackageConfig $index $ns] && [namespace exists $ns]} {
+	    set cmd [dict get $PackageConfig $index $ns]
+	    if {"" eq $cmd} {
+		if {$ret == 0} {set ret 1}
+	    } else {
+		if {$failerror} {
+		    set result [namespace inscope $ns $cmd {*}$arglist]
+		    set ret 2
+		} elseif {1 == [catch {
+		    set result [namespace inscope $ns $cmd {*}$arglist]
+		    if {$ret < 2} {set ret 2}
+		} err derr]} {
+		    after idle [concat [::interp bgerror ""]\
+			    [list $err $derr]]
+		    set ret 3
+		}
+	    }
+	}
+    }
+    return $ret
 }
 
 # msgcat::mcset --
@@ -330,7 +927,7 @@ proc msgcat::mcset {locale src {dest ""}} {
 
     set locale [string tolower $locale]
 
-    dict set Msgs $locale $ns $src $dest
+    dict set Msgs $ns $locale $src $dest
     return $dest
 }
 
@@ -351,16 +948,10 @@ proc msgcat::mcflset {src {dest ""}} {
     variable Msgs
 
     if {![info exists FileLocale]} {
-	return -code error \
-	    "must only be used inside a message catalog loaded with ::msgcat::mcload"
+	return -code error "must only be used inside a message catalog loaded\
+		with ::msgcat::mcload"
     }
-    if {[llength [info level 0]] == 2} { ;# dest not specified
-	set dest $src
-    }
-
-    set ns [uplevel 1 [list ::namespace current]]
-    dict set Msgs $FileLocale $ns $src $dest
-    return $dest
+    return [uplevel 1 [list [namespace origin mcset] $FileLocale $src $dest]]
 }
 
 # msgcat::mcmset --
@@ -380,14 +971,14 @@ proc msgcat::mcmset {locale pairs} {
     set length [llength $pairs]
     if {$length % 2} {
 	return -code error "bad translation list:\
-		 should be \"[lindex [info level 0] 0] locale {src dest ...}\""
+		should be \"[lindex [info level 0] 0] locale {src dest ...}\""
     }
 
     set locale [string tolower $locale]
     set ns [uplevel 1 [list ::namespace current]]
 
     foreach {src dest} $pairs {
-	dict set Msgs $locale $ns $src $dest
+	dict set Msgs $ns $locale $src $dest
     }
 
     return [expr {$length / 2}]
@@ -408,26 +999,17 @@ proc msgcat::mcflmset {pairs} {
     variable Msgs
 
     if {![info exists FileLocale]} {
-	return -code error \
-	    "must only be used inside a message catalog loaded with ::msgcat::mcload"
+	return -code error "must only be used inside a message catalog loaded\
+		with ::msgcat::mcload"
     }
-    set length [llength $pairs]
-    if {$length % 2} {
-	return -code error "bad translation list:\
-		should be \"[lindex [info level 0] 0] locale {src dest ...}\""
-    }
-
-    set ns [uplevel 1 [list ::namespace current]]
-    foreach {src dest} $pairs {
-	dict set Msgs $FileLocale $ns $src $dest
-    }
-    return [expr {$length / 2}]
+    return [uplevel 1 [list [namespace origin mcmset] $FileLocale $pairs]]
 }
 
 # msgcat::mcunknown --
 #
 #	This routine is called by msgcat::mc if a translation cannot
-#	be found for a string.  This routine is intended to be replaced
+#	be found for a string and no unknowncmd is set for the current
+#	package. This routine is intended to be replaced
 #	by an application specific routine for error reporting
 #	purposes.  The default behavior is to return the source string.
 #	If additional args are specified, the format command will be used
@@ -441,7 +1023,30 @@ proc msgcat::mcflmset {pairs} {
 # Results:
 #	Returns the translated value.
 
-proc msgcat::mcunknown {locale src args} {
+proc msgcat::mcunknown {args} {
+    return [uplevel 1 [list [namespace origin DefaultUnknown] {*}$args]]
+}
+
+# msgcat::DefaultUnknown --
+#
+#	This routine is called by msgcat::mc if a translation cannot
+#	be found for a string in the following circumstances:
+#	- Default global handler, if mcunknown is not redefined.
+#	- Per package handler, if the package sets unknowncmd to the empty
+#	  string.
+#	It returna the source string if the argument list is empty.
+#	If additional args are specified, the format command will be used
+#	to work them into the traslated string.
+#
+# Arguments:
+#	locale		(unused) The current locale.
+#	src		The string to be translated.
+#	args		Args to pass to the format command
+#
+# Results:
+#	Returns the translated value.
+
+proc msgcat::DefaultUnknown {locale src args} {
     if {[llength $args]} {
 	return [format $src {*}$args]
     } else {

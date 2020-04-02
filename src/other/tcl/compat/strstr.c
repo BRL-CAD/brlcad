@@ -1,4 +1,4 @@
-/* 
+/*
  * strstr.c --
  *
  *	Source code for the "strstr" library routine.

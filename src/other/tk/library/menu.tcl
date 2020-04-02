@@ -156,20 +156,21 @@ bind Menu <Return> {
 bind Menu <Escape> {
     tk::MenuEscape %W
 }
-bind Menu <Left> {
+bind Menu <<PrevChar>> {
     tk::MenuLeftArrow %W
 }
-bind Menu <Right> {
+bind Menu <<NextChar>> {
     tk::MenuRightArrow %W
 }
-bind Menu <Up> {
+bind Menu <<PrevLine>> {
     tk::MenuUpArrow %W
 }
-bind Menu <Down> {
+bind Menu <<NextLine>> {
     tk::MenuDownArrow %W
 }
 bind Menu <KeyPress> {
     tk::TraverseWithinMenu %W %A
+    break
 }
 
 # The following bindings apply to all windows, and are used to
@@ -233,6 +234,7 @@ proc ::tk::MbLeave w {
     }
 }
 
+
 # ::tk::MbPost --
 # Given a menubutton, this procedure does all the work of posting
 # its associated menu and unposting any other menu that is currently
@@ -248,7 +250,6 @@ proc ::tk::MbLeave w {
 proc ::tk::MbPost {w {x {}} {y {}}} {
     global errorInfo
     variable ::tk::Priv
-    global tcl_platform
 
     if {[$w cget -state] eq "disabled" || $w eq $Priv(postedMb)} {
 	return
@@ -260,7 +261,8 @@ proc ::tk::MbPost {w {x {}} {y {}}} {
     set tearoff [expr {[tk windowingsystem] eq "x11" \
 	    || [$menu cget -type] eq "tearoff"}]
     if {[string first $w $menu] != 0} {
-	error "can't post $menu:  it isn't a descendant of $w (this is a new requirement in Tk versions 3.0 and later)"
+	return -code error -errorcode {TK MENUBUTTON POST_NONCHILD} \
+	    "can't post $menu: it isn't a descendant of $w"
     }
     set cur $Priv(postedMb)
     if {$cur ne ""} {
@@ -281,103 +283,17 @@ proc ::tk::MbPost {w {x {}} {y {}}} {
     set Priv(focus) [focus]
     $menu activate none
     GenerateMenuSelect $menu
-
-    # If this looks like an option menubutton then post the menu so
-    # that the current entry is on top of the mouse.  Otherwise post
-    # the menu just below the menubutton, as for a pull-down.
-
     update idletasks
-    if {[catch {
-	switch [$w cget -direction] {
-	    above {
-		set x [winfo rootx $w]
-		set y [expr {[winfo rooty $w] - [winfo reqheight $menu]}]
-		# if we go offscreen to the top, show as 'below'
-		if {$y < [winfo vrooty $w]} {
-		    set y [expr {[winfo vrooty $w] + [winfo rooty $w] + [winfo reqheight $w]}]
-		}
-		PostOverPoint $menu $x $y
-	    }
-	    below {
-		set x [winfo rootx $w]
-		set y [expr {[winfo rooty $w] + [winfo height $w]}]
-		# if we go offscreen to the bottom, show as 'above'
-		set mh [winfo reqheight $menu]
-		if {($y + $mh) > ([winfo vrooty $w] + [winfo vrootheight $w])} {
-		    set y [expr {[winfo vrooty $w] + [winfo vrootheight $w] + [winfo rooty $w] - $mh}]
-		}
-		PostOverPoint $menu $x $y
-	    }
-	    left {
-		set x [expr {[winfo rootx $w] - [winfo reqwidth $menu]}]
-		set y [expr {(2 * [winfo rooty $w] + [winfo height $w]) / 2}]
-		set entry [MenuFindName $menu [$w cget -text]]
-		if {$entry eq ""} {
-                    set entry 0
-		}
-		if {[$w cget -indicatoron]} {
-		    if {$entry == [$menu index last]} {
-			incr y [expr {-([$menu yposition $entry] \
-				+ [winfo reqheight $menu])/2}]
-		    } else {
-			incr y [expr {-([$menu yposition $entry] \
-			        + [$menu yposition [expr {$entry+1}]])/2}]
-		    }
-		}
-		PostOverPoint $menu $x $y
-		if {$entry ne "" \
-			&& [$menu entrycget $entry -state] ne "disabled"} {
-		    $menu activate $entry
-		    GenerateMenuSelect $menu
-		}
-	}
-	    right {
-		set x [expr {[winfo rootx $w] + [winfo width $w]}]
-		set y [expr {(2 * [winfo rooty $w] + [winfo height $w]) / 2}]
-		set entry [MenuFindName $menu [$w cget -text]]
-		if {$entry eq ""} {
-                    set entry 0
-		}
-		if {[$w cget -indicatoron]} {
-		    if {$entry == [$menu index last]} {
-			incr y [expr {-([$menu yposition $entry] \
-				+ [winfo reqheight $menu])/2}]
-		    } else {
-			incr y [expr {-([$menu yposition $entry] \
-			        + [$menu yposition [expr {$entry+1}]])/2}]
-		    }
-		}
-		PostOverPoint $menu $x $y
-		if {$entry ne "" \
-			&& [$menu entrycget $entry -state] ne "disabled"} {
-		    $menu activate $entry
-		    GenerateMenuSelect $menu
-		}
-	    }
-	    default {
-		if {[$w cget -indicatoron]} {
-		    if {$y eq ""} {
-			set x [expr {[winfo rootx $w] + [winfo width $w]/2}]
-			set y [expr {[winfo rooty $w] + [winfo height $w]/2}]
-		    }
-	            PostOverPoint $menu $x $y [MenuFindName $menu [$w cget -text]]
-		} else {
-		    PostOverPoint $menu [winfo rootx $w] [expr {[winfo rooty $w]+[winfo height $w]}]
-		}
-	    }
-	}
-    } msg]} {
+
+    if {[catch {PostMenubuttonMenu $w $menu} msg opt]} {
 	# Error posting menu (e.g. bogus -postcommand). Unpost it and
 	# reflect the error.
-
-	set savedInfo $errorInfo
 	MenuUnpost {}
-	error $msg $savedInfo
-
+	return -options $opt $msg
     }
 
     set Priv(tearoff) $tearoff
-    if {$tearoff != 0} {
+    if {$tearoff != 0 && [tk windowingsystem] ne "aqua"} {
 	focus $menu
 	if {[winfo viewable $w]} {
 	    SaveGrabInfo $w
@@ -403,7 +319,6 @@ proc ::tk::MbPost {w {x {}} {y {}}} {
 #			is a posted menubutton.
 
 proc ::tk::MenuUnpost menu {
-    global tcl_platform
     variable ::tk::Priv
     set mb $Priv(postedMb)
 
@@ -532,7 +447,6 @@ proc ::tk::MbMotion {w upDown rootx rooty} {
 
 proc ::tk::MbButtonUp w {
     variable ::tk::Priv
-    global tcl_platform
 
     set menu [$w cget -menu]
     set tearoff [expr {[tk windowingsystem] eq "x11" || \
@@ -579,11 +493,13 @@ proc ::tk::MenuMotion {menu x y state} {
             if {[string is false $mode]} {
                 set delay [expr {[$menu cget -type] eq "menubar" ? 0 : 50}]
                 if {[$menu type $index] eq "cascade"} {
+                    # Catch these postcascade commands since the menu could be
+                    # destroyed before they run.
                     set Priv(menuActivatedTimer) \
-                        [after $delay [list $menu postcascade active]]
+                        [after $delay "catch {$menu postcascade active}"]
                 } else {
                     set Priv(menuDeactivatedTimer) \
-                        [after $delay [list $menu postcascade none]]
+                        [after $delay "catch {$menu postcascade none}"]
                 }
             }
         }
@@ -607,9 +523,14 @@ proc ::tk::MenuMotion {menu x y state} {
 
 proc ::tk::MenuButtonDown menu {
     variable ::tk::Priv
-    global tcl_platform
 
     if {![winfo viewable $menu]} {
+        return
+    }
+    if {[$menu index active] eq "none"} {
+        if {[$menu cget -type] ne "menubar" } {
+            set Priv(window) {}
+        }
         return
     }
     $menu postcascade active
@@ -1206,10 +1127,109 @@ proc ::tk::MenuFindName {menu s} {
     return ""
 }
 
+# ::tk::PostMenubuttonMenu --
+#
+# Given a menubutton and a menu, this procedure posts the menu at the
+# appropriate location.  If the menubutton looks like an option
+# menubutton, meaning that the indicator is on and the direction is
+# neither above nor below, then the menu is posted so that the current
+# entry is vertically aligned with the menubutton.  On the Mac this
+# will expose a small amount of the blue indicator on the right hand
+# side.  On other platforms the entry is centered over the button.
+
+if {[tk windowingsystem] eq "aqua"} {
+    proc ::tk::PostMenubuttonMenu {button menu} {
+	set entry ""
+	if {[$button cget -indicatoron]} {
+	    set entry [MenuFindName $menu [$button cget -text]]
+	    if {$entry eq ""} {
+		set entry 0
+	    }
+	}
+	set x [winfo rootx $button]
+	set y [expr {2 + [winfo rooty $button]}]
+	switch [$button cget -direction] {
+	    above {
+		set entry ""
+		incr y [expr {4 - [winfo reqheight $menu]}]
+	    }
+	    below {
+		set entry ""
+		incr y [expr {2 + [winfo height $button]}]
+	    }
+	    left {
+		incr x [expr {-[winfo reqwidth $menu]}]
+	    }
+	    right {
+		incr x [winfo width $button]
+	    }
+	    default {
+		incr x [expr {[winfo width $button] - [winfo reqwidth $menu] - 5}]
+	    }
+	}
+	PostOverPoint $menu $x $y $entry
+    }
+} else {
+    proc ::tk::PostMenubuttonMenu {button menu} {
+	set entry ""
+	if {[$button cget -indicatoron]} {
+	    set entry [MenuFindName $menu [$button cget -text]]
+	    if {$entry eq ""} {
+		set entry 0
+	    }
+	}
+	set x [winfo rootx $button]
+	set y [winfo rooty $button]
+	switch [$button cget -direction] {
+	    above {
+		incr y [expr {-[winfo reqheight $menu]}]
+		# if we go offscreen to the top, show as 'below'
+		if {$y < [winfo vrooty $button]} {
+		    set y [expr {[winfo vrooty $button] + [winfo rooty $button]\
+                           + [winfo reqheight $button]}]
+		}
+		set entry {}
+	    }
+	    below {
+		incr y [winfo height $button]
+		# if we go offscreen to the bottom, show as 'above'
+		set mh [winfo reqheight $menu]
+		if {($y + $mh) > ([winfo vrooty $button] + [winfo vrootheight $button])} {
+		    set y [expr {[winfo vrooty $button] + [winfo vrootheight $button] \
+			   + [winfo rooty $button] - $mh}]
+		}
+		set entry {}
+	    }
+	    left {
+		# It is not clear why this is needed.
+		if {[tk windowingsystem] eq "win32"} {
+		    incr x [expr {-4 - [winfo reqwidth $button] / 2}]
+		}
+		incr x [expr {- [winfo reqwidth $menu]}]
+	    }
+	    right {
+		incr x [expr {[winfo width $button]}]
+	    }
+	    default {
+		if {[$button cget -indicatoron]} {
+		    incr x [expr {([winfo width $button] - \
+				   [winfo reqwidth $menu])/ 2}]
+		} else {
+		    incr y [winfo height $button]
+		}
+	    }
+	}
+	PostOverPoint $menu $x $y $entry
+    }
+}
+
 # ::tk::PostOverPoint --
-# This procedure posts a given menu such that a given entry in the
-# menu is centered over a given point in the root window.  It also
-# activates the given entry.
+#
+# This procedure posts a menu on the screen so that a given entry in
+# the menu is positioned with its upper left corner at a given point
+# in the root window.  The procedure also activates that entry.  If no
+# entry is specified the upper left corner of the entire menu is
+# placed at the point.
 #
 # Arguments:
 # menu -		Menu to post.
@@ -1218,25 +1238,28 @@ proc ::tk::MenuFindName {menu s} {
 #			If omitted or specified as {}, then the menu's
 #			upper-left corner goes at (x,y).
 
-proc ::tk::PostOverPoint {menu x y {entry {}}}  {
-    global tcl_platform
-
-    if {$entry ne ""} {
-	if {$entry == [$menu index last]} {
-	    incr y [expr {-([$menu yposition $entry] \
-		    + [winfo reqheight $menu])/2}]
+if {[tk windowingsystem] ne "win32"} {
+    proc ::tk::PostOverPoint {menu x y {entry {}}}  {
+	if {$entry ne ""} {
+	    $menu post $x $y $entry
+	    if {[$menu entrycget $entry -state] ne "disabled"} {
+		$menu activate $entry
+		GenerateMenuSelect $menu
+	    }
 	} else {
-	    incr y [expr {-([$menu yposition $entry] \
-		    + [$menu yposition [expr {$entry+1}]])/2}]
+	    $menu post $x $y
 	}
-	incr x [expr {-[winfo reqwidth $menu]/2}]
+	return
     }
-
-    if {[tk windowingsystem] eq "win32"} {
+} else {
+    proc ::tk::PostOverPoint {menu x y {entry {}}}  {
+	if {$entry ne ""} {
+	    incr y [expr {-[$menu yposition $entry]}]
+	}
 	# osVersion is not available in safe interps
 	set ver 5
-	if {[info exists tcl_platform(osVersion)]} {
-	    scan $tcl_platform(osVersion) %d ver
+	if {[info exists ::tcl_platform(osVersion)]} {
+	    scan $::tcl_platform(osVersion) %d ver
 	}
 
 	# We need to fix some problems with menu posting on Windows,
@@ -1248,7 +1271,7 @@ proc ::tk::PostOverPoint {menu x y {entry {}}}  {
 	# manager provided with Vista and Windows 7.
 	if {$ver < 6} {
 	    set yoffset [expr {[winfo screenheight $menu] \
-		    - $y - [winfo reqheight $menu] - 10}]
+				   - $y - [winfo reqheight $menu] - 10}]
 	    if {$yoffset < [winfo vrooty $menu]} {
 		# The bottom of the menu is offscreen, so adjust upwards
 		incr y [expr {$yoffset - [winfo vrooty $menu]}]
@@ -1260,11 +1283,11 @@ proc ::tk::PostOverPoint {menu x y {entry {}}}  {
 		set y [winfo vrooty $menu]
 	    }
 	}
-    }
-    $menu post $x $y
-    if {$entry ne "" && [$menu entrycget $entry -state] ne "disabled"} {
-	$menu activate $entry
-	GenerateMenuSelect $menu
+	$menu post $x $y
+	if {$entry ne "" && [$menu entrycget $entry -state] ne "disabled"} {
+	    $menu activate $entry
+	    GenerateMenuSelect $menu
+	}
     }
 }
 
@@ -1341,7 +1364,6 @@ proc ::tk::GenerateMenuSelect {menu} {
 
 proc ::tk_popup {menu x y {entry {}}} {
     variable ::tk::Priv
-    global tcl_platform
     if {$Priv(popup) ne "" || $Priv(postedMb) ne ""} {
 	tk::MenuUnpost {}
     }

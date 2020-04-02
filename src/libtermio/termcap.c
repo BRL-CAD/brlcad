@@ -33,11 +33,7 @@
  * SUCH DAMAGE.
  */
 
-#ifndef	lint
-#ifdef	DOSCCS
-static char *sccsid = "@(#)termcap.c	1.7 (gritter) 11/23/04";
-#endif
-#endif
+#include "common.h"
 
 /* from termcap.c	5.1 (Berkeley) 6/5/85 */
 
@@ -58,6 +54,8 @@ static char *sccsid = "@(#)termcap.c	1.7 (gritter) 11/23/04";
 #include <fcntl.h>
 #include <unistd.h>
 #include <stdlib.h>
+
+#include "bu/str.h"
 
 /*
  * termcap - routines for dealing with the terminal capability data base
@@ -155,7 +153,7 @@ tnchktc(void)
 		}
 		hopcount--;
 		tbuf = holdtbuf;
-		strcpy(rmbuf, &p[1]);
+		bu_strlcpy(rmbuf, &p[1], sizeof(&p[1]));
 		for (q=tcbuf; *q != ':'; q++)
 			;
 		l = holdtc - holdtbuf + strlen(rmbuf) + strlen(q);
@@ -166,7 +164,7 @@ tnchktc(void)
 		q++;
 		for (p = holdtc; *q; q++)
 			*p++ = *q;
-		strcpy(p, rmbuf);
+		bu_strlcpy(p, rmbuf, sizeof(rmbuf));
 		p = holdtc;
 	}
 	return(1);
@@ -204,7 +202,7 @@ tgetent(char *bp, const char *name)
 			c = tnamatch(name);
 			tbuf = bp;
 			if (c) {
-				strcpy(bp,cp);
+				bu_strlcpy(bp, cp, sizeof(cp));
 				return(tnchktc());
 			}
 		}

@@ -74,19 +74,20 @@ clearcvec(
 
 /*
  - addchr - add a chr to a cvec
- ^ static VOID addchr(struct cvec *, pchr);
+ ^ static void addchr(struct cvec *, pchr);
  */
 static void
 addchr(
     struct cvec *cv,		/* character vector */
     pchr c)			/* character to add */
 {
+    assert(cv->nchrs < cv->chrspace);
     cv->chrs[cv->nchrs++] = (chr)c;
 }
 
 /*
  - addrange - add a range to a cvec
- ^ static VOID addrange(struct cvec *, pchr, pchr);
+ ^ static void addrange(struct cvec *, pchr, pchr);
  */
 static void
 addrange(
@@ -128,7 +129,7 @@ getcvec(
 
 /*
  - freecvec - free a cvec
- ^ static VOID freecvec(struct cvec *);
+ ^ static void freecvec(struct cvec *);
  */
 static void
 freecvec(
