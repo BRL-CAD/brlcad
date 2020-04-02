@@ -103,6 +103,10 @@ tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog)
 
 	/* Initialize [incr Tcl] */
 	Tcl_ResetResult(interp);
+
+	/* Locate the BRL-CAD-specific Tcl scripts, set the auto_path */
+	tclcad_auto_path(interp);
+
 	/* NOTE: Calling "package require Itcl" may be a problem - there have
 	 * been reports of the Combination Editor in mged failing with an
 	 * iwidgets class already loaded error if we don't perform Itcl_Init()

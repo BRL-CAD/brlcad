@@ -117,14 +117,6 @@ join_path(struct bu_vls *path_list, ...)
  * BRLCAD_ROOT/lib/iwidgetsIWIDGETS_VERSION/iwidgets.tcl
  * BRLCAD_ROOT/share/tclscripts/pkgIndex.tcl and subdirs
  *
- ** source invocation paths
- * src/other/tcl/library/init.tcl
- * src/other/tk/library/tk.tcl
- * src/other/incrTcl/itcl/library/itcl.tcl
- * src/other/incrTcl/itk/library/itk.tcl
- * src/other/iwidgets/library/iwidgets.tcl
- * src/tclscripts/pkgIndex.tcl and subdirs
- *
  * if TCLCAD_LIBRARY_PATH is set
  *   append to search path
  * get installation directory and invocation path
