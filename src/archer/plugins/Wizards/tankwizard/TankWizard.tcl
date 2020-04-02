@@ -34,8 +34,8 @@
 
     public {
 	# Override's for the Wizard class
-	common wizardMajorType "Wizard"
-	common wizardMinorType "Mged"
+	common wizardMajorType $Archer::pluginMajorTypeWizard
+	common wizardMinorType $Archer::pluginMinorTypeMged
 	common wizardName "Tank Wizard"
 	common wizardVersion "1.0"
 	common wizardClass TankWizard
