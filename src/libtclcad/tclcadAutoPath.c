@@ -41,38 +41,6 @@
 
 #define MAX_BUF 2048
 
-/* helper routine to determine whether the full 'path' includes a
- * directory named 'src'.  this is used to determine whether a
- * particular invocation is being run from the BRL-CAD source
- * directories or from some install directory.
- *
- * returns a pointer to the subpath that contains the 'src' directory.
- * e.g. provided /some/path/to/src/dir/blah will return /some/path/to
- */
-static const char *
-path_to_src(const char *path)
-{
-    static char buffer[MAX_BUF] = {0};
-    char *match = NULL;
-
-    if (!path) {
-	return NULL;
-    }
-    if (strlen(path)+2 > MAX_BUF) {
-	/* path won't fit */
-	return NULL;
-    }
-
-    snprintf(buffer, MAX_BUF, "%s%c", path, BU_DIR_SEPARATOR);
-
-    match = strstr(buffer, "/src/");
-    if (match) {
-	*(match) = '\0';
-	return buffer;
-    }
-    return NULL;
-}
-
 /* Appends a new path to the path list, preceded by BU_PATH_SEPARATOR.
  *
  * The path is specified as a sequence of string arguments, one per
@@ -232,9 +200,6 @@ tclcad_auto_path(Tcl_Interp *interp)
 	join_path(&auto_path, data, "tclscripts", "checker", NULL);
 	join_path(&auto_path, data, "tclscripts", "lod", NULL);
     }
-
-    /* are we running uninstalled? */
-    srcpath = path_to_src(which_argv);
 
     /* be sure to check installation paths even if we aren't running from there */
     if (!from_installed) {
