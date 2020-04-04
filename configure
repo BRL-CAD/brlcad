@@ -118,6 +118,10 @@ do
                                   shift;;
      --disable-libz)                options="$options -DBRLCAD_ZLIB=SYSTEM";
                                   shift;;
+     --enable-png)                options="$options -DBRLCAD_PNG=BUNDLED";
+                                  shift;;
+     --disable-png)                options="$options -DBRLCAD_PNG=SYSTEM";
+                                  shift;;
      --enable-lz4)                options="$options -DBRLCAD_LZ4=BUNDLED";
                                   shift;;
      --disable-lz4)                options="$options -DBRLCAD_LZ4=SYSTEM";
@@ -126,13 +130,13 @@ do
                                   shift;;
      --disable-freetype)                options="$options -DBRLCAD_FREETYPE=SYSTEM";
                                   shift;;
+     --enable-fontconfig)                options="$options -DBRLCAD_Fontconfig=BUNDLED";
+                                  shift;;
+     --disable-fontconfig)                options="$options -DBRLCAD_Fontconfig=SYSTEM";
+                                  shift;;
      --enable-netpbm)                options="$options -DBRLCAD_NETPBM=BUNDLED";
                                   shift;;
      --disable-netpbm)                options="$options -DBRLCAD_NETPBM=SYSTEM";
-                                  shift;;
-     --enable-png)                options="$options -DBRLCAD_PNG=BUNDLED";
-                                  shift;;
-     --disable-png)                options="$options -DBRLCAD_PNG=SYSTEM";
                                   shift;;
      --enable-utahrle)                options="$options -DBRLCAD_UTAHRLE=BUNDLED";
                                   shift;;

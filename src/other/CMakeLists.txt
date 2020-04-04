@@ -134,89 +134,6 @@ else(BRLCAD_ZLIB_BUILD)
   set(ZLIB_INCLUDE_DIRS "${ZLIB_INCLUDE_DIR}" CACHE STRING "ZLIB include directory" FORCE)
 endif(BRLCAD_ZLIB_BUILD)
 
-# LZ4 compression/decompression library
-set(lz4_DESCRIPTION "
-Option for enabling and disabling compilation of the lz4 data
-compression library provided with BRL-CAD's source code.  Default
-is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
-testing first for a system version if BRLCAD_BUNDLED_LIBS is also
-AUTO.
-")
-THIRD_PARTY(lz4 LZ4 lz4 lz4_DESCRIPTION ALIASES ENABLE_LZ4 FLAGS NOSYS)
-if(BRLCAD_LZ4_BUILD)
-  set(LIBLZ4_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/lz4" CACHE STRING "Directory containing lz4 headers." FORCE)
-  mark_as_advanced(LIBLZ4_INCLUDE_DIR)
-  mark_as_advanced(LZ4_INCLUDE_DIRS)
-  mark_as_advanced(LZ4_LIBRARIES)
-  SetTargetFolder(lz4 "Third Party Libraries")
-  SetTargetFolder(lz4-static "Third Party Libraries")
-  BRLCAD_MANAGE_FILES(lz4/lz4.h ${INCLUDE_DIR})
-  BRLCAD_MANAGE_FILES(lz4/lz4frame.h ${INCLUDE_DIR})
-  BRLCAD_MANAGE_FILES(lz4/lz4hc.h ${INCLUDE_DIR})
-endif(BRLCAD_LZ4_BUILD)
-
-
-# FreeType Libraries
-set(freetype_DESCRIPTION "
-Option for enabling and disabling compilation of the FreeType
-libraries provided with BRL-CAD's source code.  Default is AUTO, responsive to
-the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
-version if BRLCAD_BUNDLED_LIBS is also AUTO.
-")
-# We don't want the Freetype distribution build targets
-set(FREETYPE_NO_DIST 1)
-THIRD_PARTY(freetype FREETYPE ft freetype_DESCRIPTION BRLCAD_LEVEL3 ALIASES ENABLE_FREETYPE REQUIRED_VARS "BRLCAD_ENABLE_OSG;BRLCAD_LEVEL3" FIND_NAME Freetype)
-if(BRLCAD_FREETYPE_BUILD)
-  set(FREETYPE_LIBRARY freetype CACHE STRING "libfreetype" FORCE)
-  set(FREETYPE_INCLUDE_DIR_freetype2
-    "${BRLCAD_SOURCE_DIR}/src/other/freetype/include"
-    CACHE STRING "FreeType freetype2 include dir" FORCE
-    )
-  set(FREETYPE_INCLUDE_DIR_ft2build
-    "${CMAKE_CURRENT_BINARY_DIR}/freetype/include"
-    CACHE STRING "FreeType ft2build include dir" FORCE
-    )
-  set(FREETYPE_INCLUDE_DIRS
-    "${FREETYPE_INCLUDE_DIR_freetype2};${FREETYPE_INCLUDE_DIR_ft2build}"
-    CACHE STRING "Directories containing FreeType headers." FORCE)
-  set(FREETYPE_LIBRARIES "${FREETYPE_LIBRARY}" CACHE STRING "FreeType Libraries")
-  SetTargetFolder(freetype "Third Party Libraries")
-
-  # If we enable XFT support Tk when building our own freetype, XFT often pulls
-  # in conflicting system libs anyway, which causes conflicts.  Make sure, if
-  # we do have to build Tk, that we don't try enabling XFT.
-  set(TK_DISABLE_XFT 1 CACHE STRING "Disable due to building local libpng" FORCE)
-  mark_as_advanced(TK_DISABLE_XFT)
-endif(BRLCAD_FREETYPE_BUILD)
-if(NOT "${CMAKE_CURRENT_BINARY_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftconfig.h")
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftoption.h")
-endif(NOT "${CMAKE_CURRENT_BINARY_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftconfig.h-new")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftoption.h-new")
-mark_as_advanced(FREETYPE_INCLUDE_DIRS)
-mark_as_advanced(FREETYPE_INCLUDE_DIR_freetype2)
-mark_as_advanced(FREETYPE_INCLUDE_DIR_ft2build)
-mark_as_advanced(FREETYPE_LIBRARIES)
-
-# libnetpbm Library support for pnm,ppm,pbm, etc. image files
-set(netpbm_DESCRIPTION "
-Option for enabling and disabling compilation of the netpbm library
-provided with BRL-CAD's source code.  Default is AUTO, responsive to
-the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
-version if BRLCAD_BUNDLED_LIBS is also AUTO.
-")
-THIRD_PARTY(libnetpbm NETPBM netpbm netpbm_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL2 ALIASES ENABLE_NETPBM)
-if(BRLCAD_NETPBM_BUILD)
-  mark_as_advanced(NETPBM_INCLUDE_DIRS)
-  mark_as_advanced(NETPBM_LIBRARIES)
-  SetTargetFolder(netpbm "Third Party Libraries")
-  SetTargetFolder(netpbm-static "Third Party Libraries")
-endif(BRLCAD_NETPBM_BUILD)
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libnetpbm/version.h")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libnetpbm/compile.h")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libnetpbm/pm_config.h")
-
 # libpng Library - Checks for ZLIB, so need to handle libpng AFTER
 # zlib to set the variables if using a local copy of zlib.  If not
 # using a local copy of zlib, FindZLIB results will be identical in
@@ -276,13 +193,6 @@ if(BRLCAD_PNG_BUILD)
     unset(M_LIBRARY CACHE)
   endif("${M_LIBRARY}" MATCHES "NOTFOUND")
 
-  # If we enable XFT support Tk when building our own libpng, the linking of
-  # freetype and fontconfig often pulls in the system libpng anyway, which
-  # causes conflicts.  Make sure, if we do have to build Tk, that we don't try
-  # enabling XFT.
-  set(TK_DISABLE_XFT 1 CACHE STRING "Disable due to building local libpng" FORCE)
-  mark_as_advanced(TK_DISABLE_XFT)
-
   SetTargetFolder(png "Third Party Libraries")
   SetTargetFolder(png_static "Third Party Libraries")
   SetTargetFolder(genfiles "Third Party Libraries")
@@ -331,6 +241,112 @@ mark_as_advanced(PNG_DEBUG)
 mark_as_advanced(PNG_SHARED)
 mark_as_advanced(PNG_STATIC)
 mark_as_advanced(uname_executable)
+
+
+# LZ4 compression/decompression library
+set(lz4_DESCRIPTION "
+Option for enabling and disabling compilation of the lz4 data
+compression library provided with BRL-CAD's source code.  Default
+is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
+testing first for a system version if BRLCAD_BUNDLED_LIBS is also
+AUTO.
+")
+THIRD_PARTY(lz4 LZ4 lz4 lz4_DESCRIPTION ALIASES ENABLE_LZ4 FLAGS NOSYS)
+if(BRLCAD_LZ4_BUILD)
+  set(LIBLZ4_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/lz4" CACHE STRING "Directory containing lz4 headers." FORCE)
+  mark_as_advanced(LIBLZ4_INCLUDE_DIR)
+  mark_as_advanced(LZ4_INCLUDE_DIRS)
+  mark_as_advanced(LZ4_LIBRARIES)
+  SetTargetFolder(lz4 "Third Party Libraries")
+  SetTargetFolder(lz4-static "Third Party Libraries")
+  BRLCAD_MANAGE_FILES(lz4/lz4.h ${INCLUDE_DIR})
+  BRLCAD_MANAGE_FILES(lz4/lz4frame.h ${INCLUDE_DIR})
+  BRLCAD_MANAGE_FILES(lz4/lz4hc.h ${INCLUDE_DIR})
+endif(BRLCAD_LZ4_BUILD)
+
+
+# FreeType Libraries - must come after ZLIB and PNG
+set(freetype_DESCRIPTION "
+Option for enabling and disabling compilation of the FreeType
+libraries provided with BRL-CAD's source code.  Default is AUTO, responsive to
+the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
+version if BRLCAD_BUNDLED_LIBS is also AUTO.
+")
+# We don't want the Freetype distribution build targets
+set(FREETYPE_NO_DIST 1)
+THIRD_PARTY(freetype FREETYPE ft freetype_DESCRIPTION BRLCAD_LEVEL3 ALIASES ENABLE_FREETYPE REQUIRED_VARS "TEST_FONTCONFIG;BRLCAD_LEVEL3" FIND_NAME Freetype)
+if(BRLCAD_FREETYPE_BUILD)
+  set(FREETYPE_LIBRARY freetype CACHE STRING "libfreetype" FORCE)
+  mark_as_advanced(FREETYPE_LIBRARY)
+  set(FREETYPE_LIBRARIES "${FREETYPE_LIBRARY}" CACHE STRING "FreeType Libraries")
+  mark_as_advanced(FREETYPE_LIBRARIES)
+  set(FREETYPE_INCLUDE_DIR_freetype2
+    "${BRLCAD_SOURCE_DIR}/src/other/freetype/include"
+    CACHE STRING "FreeType freetype2 include dir" FORCE
+    )
+  mark_as_advanced(FREETYPE_INCLUDE_DIR_freetype2)
+  set(FREETYPE_INCLUDE_DIR_ft2build
+    "${CMAKE_CURRENT_BINARY_DIR}/freetype/include"
+    CACHE STRING "FreeType ft2build include dir" FORCE
+    )
+  mark_as_advanced(FREETYPE_INCLUDE_DIR_ft2build)
+  set(FREETYPE_INCLUDE_DIRS
+    "${FREETYPE_INCLUDE_DIR_freetype2};${FREETYPE_INCLUDE_DIR_ft2build}"
+    CACHE STRING "Directories containing FreeType headers." FORCE)
+  mark_as_advanced(FREETYPE_INCLUDE_DIRS)
+  set(FREETYPE_VERSION_STRING "2.6.5" CACHE STRING "Freetype version" FORCE)
+  SetTargetFolder(freetype "Third Party Libraries")
+endif(BRLCAD_FREETYPE_BUILD)
+if(NOT "${CMAKE_CURRENT_BINARY_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftconfig.h")
+  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftoption.h")
+endif(NOT "${CMAKE_CURRENT_BINARY_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftconfig.h-new")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftoption.h-new")
+
+# Fontconfig library - must come after PNG and FREETYPE
+set(fontconfig_DESCRIPTION "
+Option for enabling and disabling compilation of the Fontconfig
+library provided with BRL-CAD's source code.  Default is AUTO, responsive to
+the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
+version if BRLCAD_BUNDLED_LIBS is also AUTO.
+")
+THIRD_PARTY(fontconfig Fontconfig ft fontconfig_DESCRIPTION BRLCAD_LEVEL3 ALIASES ENABLE_FONTCONFIG REQUIRED_VARS "TEST_FONTCONFIG;BRLCAD_LEVEL3" FIND_NAME Fontconfig)
+if(BRLCAD_Fontconfig_BUILD)
+  set(Fontconfig_LIBRARY fontconfig CACHE STRING "fontconfig" FORCE)
+  mark_as_advanced(Fontconfig_LIBRARY)
+  set(Fontconfig_LIBRARIES "${Fontconfig_LIBRARY}" CACHE STRING "FreeType Libraries")
+  mark_as_advanced(Fontconfig_LIBRARIES)
+  set(Fontconfig_INCLUDE_DIR
+    "${BRLCAD_BINARY_DIR}/src/other/fontconfig/include;${BRLCAD_SOURCE_DIR}/src/other/fontconfig/include"
+    CACHE STRING "fontconfig include dir" FORCE)
+  mark_as_advanced(Fontconfig_INCLUDE_DIR)
+  set(Fontconfig_INCLUDE_DIRS "${Fontconfig_INCLUDE_DIR}" CACHE STRING "Fontconfig headers." FORCE)
+  mark_as_advanced(Fontconfig_INCLUDE_DIRS)
+  set(Fontconfig_VERSION "2.13.92" CACHE STRING "Fontconfig version" FORCE)
+  set(Fontconfig_COMPILE_OPTIONS "" CACHE STRING "Fontconfig compile options" FORCE)
+  set(pkgcfg_lib_PKG_FONTCONFIG_fontconfig fontconfig)
+  set(pkgcfg_lib_PKG_FONTCONFIG_freetype ${FREETYPE_LIBRARIES})
+  SetTargetFolder(fontconfig "Third Party Libraries")
+endif(BRLCAD_Fontconfig_BUILD)
+
+# libnetpbm Library support for pnm,ppm,pbm, etc. image files
+set(netpbm_DESCRIPTION "
+Option for enabling and disabling compilation of the netpbm library
+provided with BRL-CAD's source code.  Default is AUTO, responsive to
+the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
+version if BRLCAD_BUNDLED_LIBS is also AUTO.
+")
+THIRD_PARTY(libnetpbm NETPBM netpbm netpbm_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL2 ALIASES ENABLE_NETPBM)
+if(BRLCAD_NETPBM_BUILD)
+  mark_as_advanced(NETPBM_INCLUDE_DIRS)
+  mark_as_advanced(NETPBM_LIBRARIES)
+  SetTargetFolder(netpbm "Third Party Libraries")
+  SetTargetFolder(netpbm-static "Third Party Libraries")
+endif(BRLCAD_NETPBM_BUILD)
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libnetpbm/version.h")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libnetpbm/compile.h")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libnetpbm/pm_config.h")
 
 
 # libutahrle Library - The directory to perform ADD_SUBDIRECTORY on
@@ -483,7 +499,6 @@ mark_as_advanced(TK_LIBRARY)
 mark_as_advanced(TK_STUB_LIBRARY)
 mark_as_advanced(TK_SYSTEM_GRAPHICS)
 mark_as_advanced(TK_WISH)
-mark_as_advanced(TK_ENABLE_XFT)
 
 # Now that Tcl/Tk is settled, define the HAVE_TK flag for the config.h
 # file

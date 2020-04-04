@@ -512,6 +512,17 @@ first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 Aliases:  ENABLE_ZLIB, ENABLE_LIBZ
 
 
+--- BRLCAD_PNG ---
+
+Option for enabling and disabling compilation of the Portable Network
+Graphics library provided with BRL-CAD's source distribution.  Default
+is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
+testing first for a system version if BRLCAD_BUNDLED_LIBS is also
+AUTO.
+
+Aliases:  ENABLE_PNG
+
+
 --- BRLCAD_LZ4 ---
 
 Option for enabling and disabling compilation of the lz4 data
@@ -533,6 +544,16 @@ version if BRLCAD_BUNDLED_LIBS is also AUTO.
 Aliases:  ENABLE_FREETYPE
 
 
+--- BRLCAD_Fontconfig ---
+
+Option for enabling and disabling compilation of the Fontconfig
+library provided with BRL-CAD's source code.  Default is AUTO, responsive to
+the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
+version if BRLCAD_BUNDLED_LIBS is also AUTO.
+
+Aliases:  ENABLE_FONTCONFIG
+
+
 --- BRLCAD_NETPBM ---
 
 Option for enabling and disabling compilation of the netpbm library
@@ -541,17 +562,6 @@ the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
 version if BRLCAD_BUNDLED_LIBS is also AUTO.
 
 Aliases:  ENABLE_NETPBM
-
-
---- BRLCAD_PNG ---
-
-Option for enabling and disabling compilation of the Portable Network
-Graphics library provided with BRL-CAD's source distribution.  Default
-is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
-testing first for a system version if BRLCAD_BUNDLED_LIBS is also
-AUTO.
-
-Aliases:  ENABLE_PNG
 
 
 --- BRLCAD_UTAHRLE ---
