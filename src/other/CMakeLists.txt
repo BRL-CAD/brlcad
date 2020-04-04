@@ -328,6 +328,15 @@ if(BRLCAD_Fontconfig_BUILD)
   set(pkgcfg_lib_PKG_FONTCONFIG_fontconfig fontconfig)
   set(pkgcfg_lib_PKG_FONTCONFIG_freetype ${FREETYPE_LIBRARIES})
   SetTargetFolder(fontconfig "Third Party Libraries")
+
+  # TODO - in order for this to work, we may need to change how the built copy
+  # of Tk uses fontconfig.  We want to look for our own (guaranteed) fonts
+  # rather than the system fonts for consistency, but that means building our
+  # own share/fontconfig directory with a config file and cache.  Tk then needs
+  # to call fontconfig to look there rather than the system version.  There are
+  # some test programs in the tests directory of the main fontconfig
+  # distribution which may offer some hints on what is needed for this...
+
 endif(BRLCAD_Fontconfig_BUILD)
 
 # libnetpbm Library support for pnm,ppm,pbm, etc. image files
