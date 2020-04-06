@@ -23,7 +23,10 @@ if (NOT WIN32)
   set_target_properties(libtermio PROPERTIES VERSION 20.0.1 SOVERSION 20)
 endif(NOT WIN32)
 
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  termcap.h
+  )
 
 # Local Variables:
 # tab-width: 8

@@ -533,13 +533,23 @@ mark_as_advanced(HAVE_TK)
 # variables are uncommented
 set(ITCL_DIR itcl3)
 set(ITCL_VER "3.4")
+include("${CMAKE_CURRENT_SOURCE_DIR}/itcl.dist")
+CMAKEFILES_IN_DIR(itcl_ignore_files itcl)
 #set(ITCL_DIR itcl)
 #set(ITCL_VER "4.2.0")
+include("${CMAKE_CURRENT_SOURCE_DIR}/itcl3.dist")
+CMAKEFILES_IN_DIR(itcl3_ignore_files itcl3)
+
 
 set(ITK_DIR itk3)
 set(ITK_VER "3.4")
+include("${CMAKE_CURRENT_SOURCE_DIR}/itk.dist")
+CMAKEFILES_IN_DIR(itk_ignore_files itk)
+
 #set(ITK_DIR itk)
 #set(ITK_VER "4.1.0")
+include("${CMAKE_CURRENT_SOURCE_DIR}/itk3.dist")
+CMAKEFILES_IN_DIR(itk3_ignore_files itk3)
 
 set(itcl_ALIASES ENABLE_ITCL)
 set(itcl_DESCRIPTION "
