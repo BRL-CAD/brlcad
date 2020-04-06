@@ -308,6 +308,7 @@ struct view_obj {
     void                (*vo_callback)();       /**< @brief  called in vo_update with vo_clientData and vop */
     void *              vo_clientData;          /**< @brief  passed to vo_callback */
     int                 vo_zclip;
+    void                (*vo_eval)(void *context, const char *cmd);  /**< @brief  called in vo_update */
     void		*interp;
 };
 #define VIEW_OBJ_NULL ((struct view_obj *)0)

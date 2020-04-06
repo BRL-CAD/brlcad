@@ -165,6 +165,7 @@ vo_open_cmd(const char *oname)
     vop->vo_rotate_about = 'v';
     vo_update(vop, 0);
     vop->vo_callback = (void (*)())0;
+    vop->vo_eval = (void (*)(void *, const char *))0;
 
     /* append to list of view_obj's */
     BU_LIST_APPEND(&HeadViewObj.l, &vop->l);
