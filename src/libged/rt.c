@@ -254,7 +254,7 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
 
     /* If we know how, set up hooks so the parent process knows to watch for output. */
     if (gedp->ged_create_io_handler) {
-	(*gedp->ged_create_io_handler)(&(run_rtp->chan), p, BU_PROCESS_STDERR, TCL_READABLE, (void *)drcdp, _ged_rt_output_handler);
+	(*gedp->ged_create_io_handler)(&(run_rtp->chan), p, BU_PROCESS_STDERR, gedp->io_mode, (void *)drcdp, _ged_rt_output_handler);
     }
     return GED_OK;
 }

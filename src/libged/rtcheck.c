@@ -298,13 +298,13 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     rtcp->rrtp->p = p;
     rtcp->rrtp->aborted = 0;
     if (gedp->ged_create_io_handler) {
-	(*gedp->ged_create_io_handler)(&(rtcp->rrtp->chan), p, BU_PROCESS_STDOUT, TCL_READABLE, (void *)rtcp, rtcheck_vector_handler);
+	(*gedp->ged_create_io_handler)(&(rtcp->rrtp->chan), p, BU_PROCESS_STDOUT, gedp->io_mode, (void *)rtcp, rtcheck_vector_handler);
     }
     BU_LIST_INIT(&rtcp->rrtp->l);
     BU_LIST_APPEND(&gedp->gd_headSubprocess.l, &rtcp->rrtp->l);
 
     if (gedp->ged_create_io_handler) {
-	(*gedp->ged_create_io_handler)(&(rtcp->chan), p, BU_PROCESS_STDERR, TCL_READABLE, (void *)rtcp, rtcheck_output_handler);
+	(*gedp->ged_create_io_handler)(&(rtcp->chan), p, BU_PROCESS_STDERR, gedp->io_mode, (void *)rtcp, rtcheck_output_handler);
     }
 
     bu_free(gd_rt_cmd, "free gd_rt_cmd");

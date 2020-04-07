@@ -1816,6 +1816,7 @@ Usage: go_open\n\
     /* Set the Tcl specific I/O handlers for asynchronous subprocess I/O */
     gedp->ged_create_io_handler = &tclcad_create_io_handler;
     gedp->ged_delete_io_handler = &tclcad_delete_io_handler;
+    gedp->io_mode = TCL_READABLE;
 
     /* initialize tclcad_obj */
     BU_ALLOC(top, struct tclcad_obj);
