@@ -82,13 +82,14 @@ rtcheck_handler_cleanup(struct ged_rtcheck *rtcp)
 {
     int retcode;
 
-    _ged_delete_io_handler(rtcp->gedp->ged_interp, rtcp->rrtp->chan,
-	    rtcp->rrtp->p, BU_PROCESS_STDOUT, (void *)rtcp,
-	    rtcheck_vector_handler);
-
-    _ged_delete_io_handler(rtcp->gedp->ged_interp, rtcp->chan,
-	    rtcp->p, BU_PROCESS_STDERR, (void *)rtcp,
-	    rtcheck_output_handler);
+    if (rtcp->gedp->ged_delete_io_handler) {
+	(*rtcp->gedp->ged_delete_io_handler)(rtcp->gedp->ged_interp, rtcp->rrtp->chan,
+		rtcp->rrtp->p, BU_PROCESS_STDOUT, (void *)rtcp,
+		rtcheck_vector_handler);
+	(*rtcp->gedp->ged_delete_io_handler)(rtcp->gedp->ged_interp, rtcp->chan,
+		rtcp->p, BU_PROCESS_STDERR, (void *)rtcp,
+		rtcheck_output_handler);
+    }
 
     bu_process_close(rtcp->rrtp->p, BU_PROCESS_STDOUT);
 
@@ -296,11 +297,15 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     BU_GET(rtcp->rrtp, struct ged_subprocess);
     rtcp->rrtp->p = p;
     rtcp->rrtp->aborted = 0;
-    _ged_create_io_handler(&(rtcp->rrtp->chan), p, BU_PROCESS_STDOUT, TCL_READABLE, (void *)rtcp, rtcheck_vector_handler);
+    if (gedp->ged_create_io_handler) {
+	(*gedp->ged_create_io_handler)(&(rtcp->rrtp->chan), p, BU_PROCESS_STDOUT, TCL_READABLE, (void *)rtcp, rtcheck_vector_handler);
+    }
     BU_LIST_INIT(&rtcp->rrtp->l);
     BU_LIST_APPEND(&gedp->gd_headSubprocess.l, &rtcp->rrtp->l);
 
-    _ged_create_io_handler(&(rtcp->chan), p, BU_PROCESS_STDERR, TCL_READABLE, (void *)rtcp, rtcheck_output_handler);
+    if (gedp->ged_create_io_handler) {
+	(*gedp->ged_create_io_handler)(&(rtcp->chan), p, BU_PROCESS_STDERR, TCL_READABLE, (void *)rtcp, rtcheck_output_handler);
+    }
 
     bu_free(gd_rt_cmd, "free gd_rt_cmd");
 

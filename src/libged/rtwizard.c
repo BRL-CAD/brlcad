@@ -74,7 +74,9 @@ _ged_run_rtwizard(struct ged *gedp, int cmd_len, const char **gd_rt_cmd)
     drcdp->gedp = gedp;
     drcdp->rrtp = run_rtp;
 
-    _ged_create_io_handler(&(run_rtp->chan), p, BU_PROCESS_STDERR, TCL_READABLE, (void *)drcdp, _ged_rt_output_handler);
+    if (gedp->ged_create_io_handler) {
+	(*gedp->ged_create_io_handler)(&(run_rtp->chan), p, BU_PROCESS_STDERR, TCL_READABLE, (void *)drcdp, _ged_rt_output_handler);
+    }
 
     return GED_OK;
 }
