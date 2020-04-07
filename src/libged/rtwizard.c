@@ -32,7 +32,6 @@
 #  include <sys/types.h>
 #endif
 
-#include "tcl.h"
 #include "bu/app.h"
 #include "bu/process.h"
 

@@ -33,8 +33,6 @@
 #endif
 #include "bresource.h"
 
-#include "tcl.h"
-
 #include "bu/app.h"
 #include "bu/process.h"
 
@@ -153,7 +151,7 @@ _ged_rt_set_eye_model(struct ged *gedp,
 
 
 void
-_ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
+_ged_rt_output_handler(void *clientData, int UNUSED(mask))
 {
     struct _ged_rt_client_data *drcdp = (struct _ged_rt_client_data *)clientData;
     struct ged_subprocess *run_rtp;

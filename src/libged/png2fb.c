@@ -30,6 +30,7 @@
 
 #include "bio.h"
 #include "bu/getopt.h"
+#include "fb.h"
 #include "ged.h"
 
 static int multiple_lines = 0;	/* Streamlined operation */
