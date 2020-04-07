@@ -2645,6 +2645,155 @@ dmo_cmd(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char 
 }
 
 
+/* Tk_MainWindow */
+static dm_win
+tk_window_main(dm *dmp)
+{
+    Tcl_Interp *interp = (Tcl_Interp *)dm_interp(dmp);
+    dm_win mwin = (dm_win)Tk_MainWindow(interp);
+    return mwin;
+}
+/* Tk_CreateWindowFromPath */
+static dm_win
+tk_window_create_from_path(dm *dmp, dm_win win, const char *path, const char *dname)
+{
+    Tcl_Interp *interp = (Tcl_Interp *)dm_interp(dmp);
+    dm_win mwin = (dm_win)Tk_CreateWindowFromPath(interp, (Tk_Window)win, path, dname);
+    return mwin;
+}
+
+/* Tk_NameToWindow */
+static dm_win
+tk_window_from_name(dm *dmp, const char *name, dm_win win)
+{
+    Tcl_Interp *interp = (Tcl_Interp *)dm_interp(dmp);
+    dm_win mwin = (dm_win)Tk_NameToWindow(interp, name, (Tk_Window)win);
+    return mwin;
+}
+
+/* Tk_CreateWindow */
+static dm_win
+tk_window_create_embedded(dm *dmp, dm_win win, const char *name)
+{
+    Tcl_Interp *interp = (Tcl_Interp *)dm_interp(dmp);
+    dm_win mwin = (dm_win)Tk_CreateWindow(interp, (Tk_Window)win, name, (char *)NULL);
+    return mwin;
+}
+
+/* Tk_Name */
+static const char *
+tk_window_name(dm *UNUSED(dmp), dm_win win)
+{
+    return Tk_Name((Tk_Window)win);
+}
+
+/* Tk_WindowId */
+static int
+tk_window_id(dm *UNUSED(dmp), dm_win win)
+{
+    return Tk_WindowId((Tk_Window)win);
+}
+
+/* Tk_MakeWindowExist */
+static void
+tk_window_make_exist(dm *UNUSED(dmp), dm_win win)
+{
+    Tk_MakeWindowExist((Tk_Window)win);
+}
+
+/* Tk_MapWindow */
+static void
+tk_window_map(dm *UNUSED(dmp), dm_win win)
+{
+    Tk_MapWindow((Tk_Window)win);
+}
+
+/* Tk_SetWindowVisual */
+static int
+tk_window_set_visual(dm *UNUSED(dmp), dm_win win, dm_visual_info visual, dm_cmap cmap)
+{
+    Colormap *color_map = (Colormap *)cmap;
+    XVisualInfo *xvis = (XVisualInfo *)visual;
+    return Tk_SetWindowVisual((Tk_Window)(win), xvis->visual, xvis->depth, *color_map);
+}
+
+/* Tk_DestroyWindow */
+static void
+tk_window_destroy(dm *UNUSED(dmp), dm_win win)
+{
+    Tk_DestroyWindow((Tk_Window)win);
+}
+
+/* _init_dm */
+static int
+tk_dm_init(dm *dmp, const char *iproc)
+{
+    Tcl_Interp *interp = (Tcl_Interp *)dm_interp(dmp);
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    bu_vls_printf(&str, "_init_dm %s %s\n", iproc, bu_vls_cstr(dm_get_pathname(dmp)));
+    int ret = Tcl_Eval(interp, bu_vls_cstr(&str));
+    bu_vls_free(&str);
+    return ret;
+}
+
+/* Tk_GeometryRequest */
+static void
+tk_window_geom(dm *UNUSED(dmp), dm_win win, int *width, int *height)
+{
+    Tk_GeometryRequest((Tk_Window)win, *width, *height);
+}
+
+/* Tk_Display */
+static dm_dpy
+tk_display(dm *UNUSED(dmp), dm_win win)
+{
+    return (dm_dpy)Tk_Display((Tk_Window)win);
+}
+
+struct dm_context dm_tk_context = {
+    /* Tk_MainWindow -> dm_window_main */
+    &tk_window_main,
+
+    /* dm_window_create_from_path -> Tk_CreateWindowFromPath */
+    &tk_window_create_from_path,
+
+    /* dm_window_from_name -> Tk_NameToWindow */
+    &tk_window_from_name,
+
+    /* dm_window_create_embedded -> Tk_CreateWindow */
+    &tk_window_create_embedded,
+
+    /* dm_window_name -> Tk_Name */
+    &tk_window_name,
+
+    /* dm_window_id -> Tk_WindowId */
+    &tk_window_id,
+
+    /* dm_window_make_exist -> Tk_MakeWindowExist */
+    &tk_window_make_exist,
+
+    /* dm_window_map -> Tk_MapWindow */
+    &tk_window_map,
+
+    /* dm_window_set_visual -> Tk_SetWindowVisual */
+    &tk_window_set_visual,
+
+    /* dm_window_destroy -> Tk_DestroyWindow */
+    &tk_window_destroy,
+
+    /* dm_init -> _init_dm */
+    &tk_dm_init,
+
+    /* dm_window_geom -> Tk_GeometryRequest */
+    &tk_window_geom,
+
+    /* dm_display -> Tk_Display */
+    &tk_display,
+};
+
+
+
+
 /*
  * Open/create a display manager object.
  *
@@ -2748,7 +2897,7 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
 	    av[i+newargs] = argv[i];
 	av[i+newargs] = (const char *)NULL;
 
-	if ((dmp = dm_open(interp, type, ac, av)) == DM_NULL) {
+	if ((dmp = dm_open(interp, &dm_tk_context, type, ac, av)) == DM_NULL) {
 	    if (Tcl_IsShared(obj))
 		obj = Tcl_DuplicateObj(obj);
 
@@ -2941,97 +3090,6 @@ Dm_Init(Tcl_Interp *interp)
 
     return BRLCAD_OK;
 }
-
-
-static dm_win
-tk_window_main(dm *dmp)
-{
-    Tcl_Interp *interp = (Tcl_Interp *)dm_interp(dmp);
-    void *mwin = (void *)Tk_MainWindow(interp);
-    return mwin;
-}
-
-#if 0
-/* Tk_CreateWindowFromPath */
-dm_win dm_window_create_from_path(dm *dmp, dm_win win, const char *path, const char *dname);
-
-/* Tk_NameToWindow */
-dm_win dm_window_from_name(dm *dmp, const char *name, dm_win win);
-
-/* Tk_CreateWindow */
-dm_win dm_window_create_embedded(dm *dmp, dm_win win, const char *name);
-
-/* Tk_Name */
-const char *dm_window_name(dm *dmp, dm_win win);
-
-/* Tk_WindowId */
-int dm_window_id(dm *dmp, dm_win win);
-
-/* Tk_MakeWindowExist */
-void dm_window_make_exist(dm *dmp, dm_win win);
-
-/* Tk_MapWindow */
-const char *dm_window_map(dm *dmp, dm_win win);
-
-/* Tk_SetWindowVisual */
-int dm_window_set_visual(dm *dmp, dm_win win, visual, depth, cmap);
-
-/* Tk_DestroyWindow */
-void dm_window_destroy(dm *dmp, dm_win win);
-
-
-/* _init_dm */
-int dm_init(dm *dmp);
-
-/* Tk_GeometryRequest */
-void dm_window_geom(dm *dmp, dm_win win, int *width, int *height);
-
-/* Tk_Display */
-typedef void * dm_dpy;
-dm_dpy dm_display(dm *dmp, dm_win win);
-#endif
-
-struct dm_context dm_tk_context = {
-    /* Tk_MainWindow -> dm_window_main */
-    &tk_window_main,
-
-    /* dm_window_create_from_path -> Tk_CreateWindowFromPath */
-    NULL,
-
-    /* dm_window_from_name -> Tk_NameToWindow */
-    NULL,
-
-    /* dm_window_create_embedded -> Tk_CreateWindow */
-    NULL,
-
-    /* dm_window_name -> Tk_Name */
-    NULL,
-
-    /* dm_window_id -> Tk_WindowId */
-    NULL,
-
-    /* dm_window_make_exist -> Tk_MakeWindowExist */
-    NULL,
-
-    /* dm_window_map -> Tk_MapWindow */
-    NULL,
-
-    /* dm_window_set_visual -> Tk_SetWindowVisual */
-    NULL,
-
-    /* dm_window_destroy -> Tk_DestroyWindow */
-    NULL,
-
-    /* dm_init -> _init_dm */
-    NULL,
-
-    /* dm_window_geom -> Tk_GeometryRequest */
-    NULL,
-
-    /* dm_display -> Tk_Display */
-    NULL,
-};
-
 
 
 /*

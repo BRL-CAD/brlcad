@@ -271,7 +271,7 @@ mged_dm_init(struct dm_list *o_dm_list,
     Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
 #endif
 
-    if ((DMP = dm_open(INTERP, dm_type, argc-1, argv)) == DM_NULL)
+    if ((DMP = dm_open(INTERP, &dm_tk_context, dm_type, argc-1, argv)) == DM_NULL)
 	return TCL_ERROR;
 
     /*XXXX this eventually needs to move into Ogl's private structure */

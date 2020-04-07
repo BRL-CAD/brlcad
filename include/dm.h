@@ -247,20 +247,18 @@ struct dm_context {
     /* Tk_MakeWindowExist */
     void (*dm_window_make_exist)(dm *, dm_win);
     /* Tk_MapWindow */
-    const char *(*dm_window_map)(dm *, dm_win);
+    void(*dm_window_map)(dm *, dm_win);
     /* Tk_SetWindowVisual */
     int (*dm_window_set_visual)(dm *, dm_win, dm_visual_info, dm_cmap);
     /* Tk_DestroyWindow */
     void (*dm_window_destroy)(dm *, dm_win);
     /* _init_dm */
-    int (*dm_init)(dm *);
+    int (*dm_init)(dm *, const char *);
     /* Tk_GeometryRequest */
     void (*dm_window_geom)(dm *, dm_win, int *width, int *height);
     /* Tk_Display */
     dm_dpy (*dm_display)(dm *, dm_win);
 };
-
-#define DM_OPEN(_interp, _type, _argc, _argv) dm_open(_interp, _type, _argc, _argv)
 
 __BEGIN_DECLS
 
@@ -276,6 +274,7 @@ DM_EXPORT extern dm dm_qt;
 DM_EXPORT extern dm dm_osgl;
 
 DM_EXPORT extern dm *dm_open(Tcl_Interp *interp,
+			     struct dm_context *context,
 			     int type,
 			     int argc,
 			     const char *argv[]);
@@ -485,7 +484,7 @@ DM_EXPORT extern int dm_default_type();
 #  include "../src/libdm/dm_private.h"
 #endif
 
-#define DM_OPEN(_interp, _type, _argc, _argv) dm_open(_interp, _type, _argc, _argv)
+#define DM_OPEN(_interp, _context, _type, _argc, _argv) dm_open(_interp, _context, _type, _argc, _argv)
 #define DM_CLOSE(_dmp) _dmp->dm_close(_dmp)
 #define DM_DRAW_BEGIN(_dmp) _dmp->dm_drawBegin(_dmp)
 #define DM_DRAW_END(_dmp) _dmp->dm_drawEnd(_dmp)

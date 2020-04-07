@@ -488,6 +488,8 @@ TCLCAD_EXPORT extern int Fb_Init(Tcl_Interp *interp);
 TCLCAD_EXPORT extern int Dm_Init(Tcl_Interp *interp);
 
 
+TCLCAD_EXPORT extern struct dm_context dm_tk_context;
+
 __END_DECLS
 
 #endif /* TCLCAD_H */

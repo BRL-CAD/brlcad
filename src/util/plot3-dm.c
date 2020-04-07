@@ -44,6 +44,7 @@
 #include "raytrace.h"
 #include "bn.h"
 #include "dm.h"
+#include "tclcad.h"
 
 
 struct cmdtab {
@@ -1047,7 +1048,7 @@ X_dmInit()
     av[2] = "sampler_bind_dm";
     av[3] = (char *)NULL;
 
-    if ((dmp = DM_OPEN(INTERP, DM_TYPE_X, 3, av)) == DM_NULL) {
+    if ((dmp = DM_OPEN(INTERP, &dm_tk_context, DM_TYPE_X, 3, av)) == DM_NULL) {
 	Tcl_AppendResult(INTERP, "Failed to open a display manager\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -1073,7 +1074,7 @@ Ogl_dmInit()
     av[2] = "sampler_bind_dm";
     av[3] = (char *)NULL;
 
-    if ((dmp = DM_OPEN(INTERP, DM_TYPE_OGL, 3, (const char **)av)) == DM_NULL) {
+    if ((dmp = DM_OPEN(INTERP, &dm_tk_context, DM_TYPE_OGL, 3, (const char **)av)) == DM_NULL) {
 	Tcl_AppendResult(INTERP, "Failed to open a display manager\n", (char *)NULL);
 	return TCL_ERROR;
     }

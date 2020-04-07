@@ -113,7 +113,7 @@ null_dm_open(Tcl_Interp *interp, int argc, const char *argv[])
 
 
 dm *
-dm_open(Tcl_Interp *interp, int type, int argc, const char *argv[])
+dm_open(Tcl_Interp *interp, struct dm_context *UNUSED(context), int type, int argc, const char *argv[])
 {
     switch (type) {
 	case DM_TYPE_NULL:
