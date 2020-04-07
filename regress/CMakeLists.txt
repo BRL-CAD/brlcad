@@ -140,6 +140,7 @@ CMAKEFILES(
   gqa.sh
   iges.sh
   library.sh
+  license_check.cpp
   lights.ref.pix
   lights.cmake
   lights.sh
