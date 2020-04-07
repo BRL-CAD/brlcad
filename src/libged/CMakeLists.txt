@@ -107,7 +107,7 @@ set(LIBGED_SOURCES
   comb_color.c
   comb_std.c
   combmem.c
-  concat.c
+  concat.cpp
   constraint/constraint.c
   copy.c
   copyeval.c
