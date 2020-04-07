@@ -223,6 +223,43 @@ struct dm_hook_data {
 /* Hide the dm structure behind a typedef */
 typedef struct dm_internal dm;
 
+/* To avoid (at least in principle) hardcoded assumptions about parent
+ * toolkits, we use a context container that is supplied by callers
+ * telling libdm how to get certain specific information needed to
+ * initialize and manipulate the display context */
+typedef void * dm_win;
+typedef void * dm_dpy;
+typedef void * dm_cmap;
+typedef void * dm_visual_info;
+struct dm_context {
+    /* Tk_MainWindow */
+    dm_win (*dm_window_main)(dm *);
+    /* Tk_CreateWindowFromPath */
+    dm_win (*dm_window_create_from_path)(dm *, dm_win, const char *, const char *);
+    /* Tk_NameToWindow */
+    dm_win (*dm_window_from_name)(dm *, const char *, dm_win);
+    /* Tk_CreateWindow */
+    dm_win (*dm_window_create_embedded)(dm *dmp, dm_win, const char *);
+    /* Tk_Name */
+    const char *(*dm_window_name)(dm *dmp, dm_win);
+    /* Tk_WindowId */
+    int (*dm_window_id)(dm *, dm_win);
+    /* Tk_MakeWindowExist */
+    void (*dm_window_make_exist)(dm *, dm_win);
+    /* Tk_MapWindow */
+    const char *(*dm_window_map)(dm *, dm_win);
+    /* Tk_SetWindowVisual */
+    int (*dm_window_set_visual)(dm *, dm_win, dm_visual_info, dm_cmap);
+    /* Tk_DestroyWindow */
+    void (*dm_window_destroy)(dm *, dm_win);
+    /* _init_dm */
+    int (*dm_init)(dm *);
+    /* Tk_GeometryRequest */
+    void (*dm_window_geom)(dm *, dm_win, int *width, int *height);
+    /* Tk_Display */
+    dm_dpy (*dm_display)(dm *, dm_win);
+};
+
 #define DM_OPEN(_interp, _type, _argc, _argv) dm_open(_interp, _type, _argc, _argv)
 
 __BEGIN_DECLS

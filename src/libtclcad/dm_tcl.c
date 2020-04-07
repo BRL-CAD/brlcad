@@ -2942,6 +2942,98 @@ Dm_Init(Tcl_Interp *interp)
     return BRLCAD_OK;
 }
 
+
+static dm_win
+tk_window_main(dm *dmp)
+{
+    Tcl_Interp *interp = (Tcl_Interp *)dm_interp(dmp);
+    void *mwin = (void *)Tk_MainWindow(interp);
+    return mwin;
+}
+
+#if 0
+/* Tk_CreateWindowFromPath */
+dm_win dm_window_create_from_path(dm *dmp, dm_win win, const char *path, const char *dname);
+
+/* Tk_NameToWindow */
+dm_win dm_window_from_name(dm *dmp, const char *name, dm_win win);
+
+/* Tk_CreateWindow */
+dm_win dm_window_create_embedded(dm *dmp, dm_win win, const char *name);
+
+/* Tk_Name */
+const char *dm_window_name(dm *dmp, dm_win win);
+
+/* Tk_WindowId */
+int dm_window_id(dm *dmp, dm_win win);
+
+/* Tk_MakeWindowExist */
+void dm_window_make_exist(dm *dmp, dm_win win);
+
+/* Tk_MapWindow */
+const char *dm_window_map(dm *dmp, dm_win win);
+
+/* Tk_SetWindowVisual */
+int dm_window_set_visual(dm *dmp, dm_win win, visual, depth, cmap);
+
+/* Tk_DestroyWindow */
+void dm_window_destroy(dm *dmp, dm_win win);
+
+
+/* _init_dm */
+int dm_init(dm *dmp);
+
+/* Tk_GeometryRequest */
+void dm_window_geom(dm *dmp, dm_win win, int *width, int *height);
+
+/* Tk_Display */
+typedef void * dm_dpy;
+dm_dpy dm_display(dm *dmp, dm_win win);
+#endif
+
+struct dm_context dm_tk_context = {
+    /* Tk_MainWindow -> dm_window_main */
+    &tk_window_main,
+
+    /* dm_window_create_from_path -> Tk_CreateWindowFromPath */
+    NULL,
+
+    /* dm_window_from_name -> Tk_NameToWindow */
+    NULL,
+
+    /* dm_window_create_embedded -> Tk_CreateWindow */
+    NULL,
+
+    /* dm_window_name -> Tk_Name */
+    NULL,
+
+    /* dm_window_id -> Tk_WindowId */
+    NULL,
+
+    /* dm_window_make_exist -> Tk_MakeWindowExist */
+    NULL,
+
+    /* dm_window_map -> Tk_MapWindow */
+    NULL,
+
+    /* dm_window_set_visual -> Tk_SetWindowVisual */
+    NULL,
+
+    /* dm_window_destroy -> Tk_DestroyWindow */
+    NULL,
+
+    /* dm_init -> _init_dm */
+    NULL,
+
+    /* dm_window_geom -> Tk_GeometryRequest */
+    NULL,
+
+    /* dm_display -> Tk_Display */
+    NULL,
+};
+
+
+
 /*
  * Local Variables:
  * mode: C
