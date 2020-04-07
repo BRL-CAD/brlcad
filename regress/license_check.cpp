@@ -54,6 +54,7 @@ process_file(std::string f)
 {
     std::regex copyright_regex(".*[Cc]opyright.*[12][0-9[0-9[0-9].*");
     std::regex gov_regex(".*United[ ]States[ ]Government.*");
+    std::regex pd_regex(".*[Pp]ublic[ ][Dd]omain.*");
     std::string sline;
     std::ifstream fs;
     fs.open(f);
@@ -64,6 +65,7 @@ process_file(std::string f)
     int lcnt = 0;
     bool gov_copyright = false;
     bool other_copyright = false;
+    bool public_domain = false;
 
     // Check the first 50 lines of the file for copyright statements
     while (std::getline(fs, sline) && lcnt < 50) {
@@ -73,20 +75,33 @@ process_file(std::string f)
 	    } else {
 		other_copyright = true;
 	    }
+	} else {
+	    if (std::regex_match(sline, pd_regex)) {
+		public_domain = true;
+	    }
 	}
 	lcnt++;
     }
     fs.close();
 
+    if ((gov_copyright || other_copyright) && public_domain) {
+	std::cout << f << " has copyright and public domain references\n";
+	return 0;
+    }
     if (gov_copyright && other_copyright) {
 	std::cout << f << " has gov and non-gov copyright\n";
 	return 0;
     }
     if (other_copyright) {
 	std::cout << f << " has non-gov copyright\n";
+	return 0;
     }
-    if (!gov_copyright && !other_copyright) {
-	std::cout << f << " has no copyright info\n";
+    if (public_domain) {
+	std::cout << f << " references the public domain\n";
+	return 0;
+    }
+    if (!gov_copyright && !other_copyright && !public_domain) {
+	std::cout << f << " has no info\n";
     }
     return 0;
 }
