@@ -141,12 +141,12 @@ ged_erase(struct ged *gedp, int argc, const char *argv[])
 	if (!tbl) {
 	    bu_log("Error: db_lookup_by_attr() failed!!\n");
 	    bu_vls_free(&vls);
-	    return TCL_ERROR;
+	    return GED_ERROR;
 	}
 	if (BU_PTBL_LEN(tbl) < 1) {
 	    /* nothing matched, just return */
 	    bu_vls_free(&vls);
-	    return TCL_OK;
+	    return GED_OK;
 	}
 	for (i = 0; i < BU_PTBL_LEN(tbl); i++) {
 	    struct directory *dp;

@@ -51,12 +51,12 @@ ged_pmat(struct ged *gedp, int argc, const char *argv[])
     } else if (argc == 2) {
 	/* set perspective matrix */
 	if (bn_decode_mat(pmat, argv[1]) != 16)
-	    return TCL_ERROR;
+	    return GED_ERROR;
 
 	MAT_COPY(gedp->ged_gvp->gv_pmat, pmat);
 	ged_view_update(gedp->ged_gvp);
 
-	return TCL_OK;
+	return GED_OK;
     }
 
     bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);

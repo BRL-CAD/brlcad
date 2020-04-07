@@ -214,7 +214,7 @@ ged_qray(struct ged *gedp,
 	    /* get value */
 	    bu_vls_printf(gedp->ged_result_str, "%c", gedp->ged_gdp->gd_qray_effects);
 
-	    return TCL_OK;
+	    return GED_OK;
 	} else if (argc == 3) {
 	    /* set value */
 	    if (*argv[2] != 't' && *argv[2] != 'g' && *argv[2] != 'b') {

@@ -134,7 +134,7 @@ ged_move_arb_face(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Object not an ARB");
 	rt_db_free_internal(&intern);
 
-	return TCL_OK;
+	return GED_OK;
     }
 
     if (sscanf(argv[2], "%d", &face) != 1) {

@@ -50,7 +50,7 @@ extract_mater_from_line(char *line,
 	    ++j;
 
 	if (line[j] == '\0')
-	    return TCL_ERROR;
+	    return GED_ERROR;
 
 	/* We found a double quote, so use everything between the quotes */
 	if (line[j] == '"') {
@@ -62,7 +62,7 @@ extract_mater_from_line(char *line,
 	}
 
 	if (line[j] == '\0')
-	    return TCL_ERROR;
+	    return GED_ERROR;
 
 	str[i][k] = '\0';
 	++j;
@@ -70,9 +70,9 @@ extract_mater_from_line(char *line,
 
     /* character and/or whitespace delimited numbers */
     if ((sscanf(line + j, "%d%*c%d%*c%d%*c%d%*c%d", r, g, b, override, inherit)) != 5)
-	return TCL_ERROR;
+	return GED_ERROR;
 
-    return TCL_OK;
+    return GED_OK;
 }
 
 

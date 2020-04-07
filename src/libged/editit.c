@@ -260,7 +260,7 @@ ged_editit(struct ged *gedp, int argc, const char *argv[])
      */
     if (argc != 5) {
 	bu_vls_printf(gedp->ged_result_str, "Internal Error: \"%s -e editstring -f tmpfile\" is malformed (argc == %d)", argv[0], argc);
-	return TCL_ERROR;
+	return GED_ERROR;
     } else {
 	char *edstr = bu_strdup((char *)argv[2]);
 	ret = _ged_editit(edstr, argv[4]);

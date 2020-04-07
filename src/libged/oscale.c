@@ -75,13 +75,13 @@ ged_oscale(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (argc == 3) {
-	if (_ged_get_obj_bounds2(gedp, 1, argv+1, &gtd, rpp_min, rpp_max) == TCL_ERROR)
-	    return TCL_ERROR;
+	if (_ged_get_obj_bounds2(gedp, 1, argv+1, &gtd, rpp_min, rpp_max) == GED_ERROR)
+	    return GED_ERROR;
 
 	dp = gtd.gtd_obj[gtd.gtd_objpos-1];
 	if (!(dp->d_flags & RT_DIR_SOLID)) {
-	    if (ged_get_obj_bounds(gedp, 1, argv+1, 1, rpp_min, rpp_max) == TCL_ERROR)
-		return TCL_ERROR;
+	    if (ged_get_obj_bounds(gedp, 1, argv+1, 1, rpp_min, rpp_max) == GED_ERROR)
+		return GED_ERROR;
 	}
 
 	VADD2(keypoint, rpp_min, rpp_max);

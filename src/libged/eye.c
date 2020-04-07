@@ -105,7 +105,7 @@ ged_eye(struct ged *gedp, int argc, const char *argv[])
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, new_cent);
     ged_view_update(gedp->ged_gvp);
 
-    return TCL_OK;
+    return GED_OK;
 }
 
 
