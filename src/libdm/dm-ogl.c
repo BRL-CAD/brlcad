@@ -102,7 +102,6 @@ HIDDEN XVisualInfo *ogl_choose_visual(struct dm_internal *dmp, Tk_Window tkwin);
 #define IRBOUND 4095.9	/* Max magnification in Rot matrix */
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
-struct dm_internal *ogl_open(Tcl_Interp *interp, int argc, char **argv);
 HIDDEN int ogl_close(struct dm_internal *dmp);
 HIDDEN int ogl_drawBegin(struct dm_internal *dmp);
 HIDDEN int ogl_drawEnd(struct dm_internal *dmp);
@@ -638,7 +637,7 @@ ogl_close(struct dm_internal *dmp)
  *
  */
 struct dm_internal *
-ogl_open(Tcl_Interp *interp, int argc, char **argv)
+ogl_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
 {
     static int count = 0;
     GLfloat backgnd[4];
@@ -660,15 +659,11 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     Display *tmp_dpy = (Display *)NULL;
     struct dm_internal *dmp = (struct dm_internal *)NULL;
     struct modifiable_ogl_vars *mvars = NULL;
-    Tk_Window tkwin = (Tk_Window)NULL;
+    dm_win tkwin = NULL;
     int screen_number = -1;
 
     struct dm_xvars *pubvars = NULL;
     struct ogl_vars *privvars = NULL;
-
-    if ((tkwin = Tk_MainWindow(interp)) == NULL) {
-	return DM_NULL;
-    }
 
     BU_GET(dmp, struct dm_internal);
 
@@ -679,6 +674,10 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
     dmp->dm_bytes_per_pixel = sizeof(GLuint);
     dmp->dm_bits_per_channel = 8;
     bu_vls_init(&(dmp->dm_log));
+
+    if ((tkwin = (*context->dm_window_main)(dmp)) == NULL) {
+	return DM_NULL;
+    }
 
     BU_ALLOC(dmp->dm_vars.pub_vars, struct dm_xvars);
     if (dmp->dm_vars.pub_vars == (void *)NULL) {
@@ -790,7 +789,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 	/* Make xtkwin a toplevel window */
 	pubvars->xtkwin =
 	    Tk_CreateWindowFromPath(interp,
-				    tkwin,
+				    (Tk_Window)tkwin,
 				    bu_vls_addr(&dmp->dm_pathName),
 				    bu_vls_addr(&dmp->dm_dName));
 	pubvars->top = pubvars->xtkwin;
@@ -799,14 +798,14 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 
 	cp = strrchr(bu_vls_addr(&dmp->dm_pathName), (int)'.');
 	if (cp == bu_vls_addr(&dmp->dm_pathName)) {
-	    pubvars->top = tkwin;
+	    pubvars->top = (Tk_Window)tkwin;
 	} else {
 	    struct bu_vls top_vls = BU_VLS_INIT_ZERO;
 
 	    bu_vls_strncpy(&top_vls, (const char *)bu_vls_addr(&dmp->dm_pathName), cp - bu_vls_addr(&dmp->dm_pathName));
 
 	    pubvars->top =
-		Tk_NameToWindow(interp, bu_vls_addr(&top_vls), tkwin);
+		Tk_NameToWindow(interp, bu_vls_addr(&top_vls), (Tk_Window)tkwin);
 	    bu_vls_free(&top_vls);
 	}
 

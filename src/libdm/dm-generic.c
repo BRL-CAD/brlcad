@@ -61,7 +61,7 @@ extern dm *tk_open_dm(Tcl_Interp *interp, int argc, const char **argv);
 
 #ifdef DM_OGL
 #  if defined(HAVE_TK)
-extern dm *ogl_open(Tcl_Interp *interp, int argc, const char **argv);
+extern dm *ogl_open(Tcl_Interp *interp, struct dm_context *context, int argc, const char **argv);
 extern void ogl_fogHint(dm *dmp, int fastfog);
 extern int ogl_share_dlist(dm *dmp1, dm *dmp2);
 #  endif
@@ -113,7 +113,7 @@ null_dm_open(Tcl_Interp *interp, int argc, const char *argv[])
 
 
 dm *
-dm_open(Tcl_Interp *interp, struct dm_context *UNUSED(context), int type, int argc, const char *argv[])
+dm_open(Tcl_Interp *interp, struct dm_context *context, int type, int argc, const char *argv[])
 {
     switch (type) {
 	case DM_TYPE_NULL:
@@ -137,7 +137,7 @@ dm_open(Tcl_Interp *interp, struct dm_context *UNUSED(context), int type, int ar
 #ifdef DM_OGL
 #  if defined(HAVE_TK)
 	case DM_TYPE_OGL:
-	    return ogl_open(interp, argc, argv);
+	    return ogl_open(interp, context, argc, argv);
 #  endif
 #endif
 #ifdef DM_OSG
