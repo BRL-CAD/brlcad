@@ -44,6 +44,7 @@
 #include "vmath.h"
 #include "bu/env.h"
 #include "ged.h"
+#include "tclcad.h"
 
 #include "./mged.h"
 #include "./titles.h"

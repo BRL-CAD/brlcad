@@ -96,7 +96,6 @@ set(LIBFB_SOURCES
   if_null.c
   if_remote.c
   if_stack.c
-  tcl.c
   vers.c
   )
 

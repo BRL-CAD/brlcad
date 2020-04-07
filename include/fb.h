@@ -199,11 +199,6 @@ FB_EXPORT extern int fb_scursor(fb *ifp, int mode, int x, int y);
 #define FB_DEBUG_RW 4	/* Contents of reads and writes */
 #define FB_DEBUG_BRW 8	/* Buffered IO rpixel and wpixel */
 
-/* tcl.c */
-/* The presence of Tcl_Interp as an arg prevents giving arg list */
-FB_EXPORT extern void fb_tcl_setup(void);
-FB_EXPORT extern int Fb_Init(Tcl_Interp *interp);
-
 /**
  * report version information about LIBFB
  */
