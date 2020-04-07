@@ -27,6 +27,12 @@
 
 #include <string.h>
 
+#ifdef DM_X
+#  include "dm/dm_xvars.h"
+#  include <X11/Xutil.h>
+#endif
+
+#include "png.h"
 #include "tcl.h"
 
 #include "vmath.h"
@@ -207,6 +213,26 @@ dm_share_dlist(dm *dmp1, dm *dmp2)
 	    return BRLCAD_ERROR;
     }
 }
+
+void
+dm_flush(dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return;
+#ifdef DM_X
+    XSync(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy, 0);
+#endif
+}
+
+void *
+dm_os_window(dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return NULL;
+#if defined(DM_X) || defined(DM_OGL) || defined(DM_OGL) || defined(DM_WGL)
+    return (void *)&(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
+#endif
+    return NULL;
+}
+
 
 fastf_t
 dm_Xx2Normal(dm *dmp, int x)
@@ -468,12 +494,25 @@ dm_get_clipmin(dm *dmp)
     return  &(dmp->dm_clipmin);
 }
 
+void
+dm_set_clipmin(dm *dmp, vect_t clipmin)
+{
+    if (UNLIKELY(!dmp)) return;
+    VMOVE(dmp->dm_clipmin, clipmin);
+}
 
 vect_t *
 dm_get_clipmax(dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
     return  &(dmp->dm_clipmax);
+}
+
+void
+dm_set_clipmax(dm *dmp, vect_t clipmax)
+{
+    if (UNLIKELY(!dmp)) return;
+    VMOVE(dmp->dm_clipmax, clipmax);
 }
 
 int
@@ -797,17 +836,38 @@ dm_draw_obj(dm *dmp, struct display_list *obj)
     return dmp->dm_draw_obj(dmp, obj);
 }
 int
+dm_get_depth_mask(dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return 0;
+    return dmp->dm_depthMask;
+}
+int
 dm_set_depth_mask(dm *dmp, int d_on)
 {
     if (UNLIKELY(!dmp)) return 0;
     return dmp->dm_setDepthMask(dmp, d_on);
 }
 int
+dm_get_debug(dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return 0;
+    return dmp->dm_debugLevel;
+}
+
+int
 dm_debug(dm *dmp, int lvl)
 {
     if (UNLIKELY(!dmp)) return 0;
     return dmp->dm_debug(dmp, lvl);
 }
+
+const char *
+dm_get_logfile(dm *dmp)
+{
+    if (!dmp) return NULL;
+    return bu_vls_cstr(&(dmp->dm_log));
+}
+
 int
 dm_logfile(dm *dmp, const char *filename)
 {
@@ -827,6 +887,20 @@ dm_set_vp(dm *dmp, fastf_t *vp)
 {
     if (UNLIKELY(!dmp)) return;
     dmp->dm_vp = vp;
+}
+
+int
+dm_get_clearbufferafter(dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return 0;
+    return dmp->dm_clearBufferAfter;
+}
+
+void
+dm_set_clearbufferafter(dm *dmp, int clearBufferAfter)
+{
+    if (UNLIKELY(!dmp)) return;
+    dmp->dm_clearBufferAfter = clearBufferAfter;
 }
 
 /* This is the generic "catch-all" hook that is used
@@ -1060,6 +1134,273 @@ dm_list_types(const char separator)
     bu_vls_printf(list, "null");
     return list;
 }
+
+#if defined(DM_X) || defined(DM_OGL)
+
+#ifdef DM_X
+#  include "dm/dm_xvars.h"
+#  include <X11/Xutil.h>
+#endif /* DM_X */
+
+int
+dm_png_write(dm *dmp, FILE *fp, struct bu_vls *msgs)
+{
+    png_structp png_p;
+    png_infop info_p;
+    XImage *ximage_p;
+    unsigned char **rows;
+    unsigned char *idata;
+    unsigned char *irow;
+    int bytes_per_pixel;
+    int bits_per_channel = 8;  /* bits per color channel */
+    int i, j, k;
+    unsigned char *dbyte0, *dbyte1, *dbyte2, *dbyte3;
+    int red_shift;
+    int green_shift;
+    int blue_shift;
+    int red_bits;
+    int green_bits;
+    int blue_bits;
+
+    png_p = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
+    if (!png_p) {
+	if (msgs) {
+	    bu_vls_printf(msgs, "png: could not create PNG write structure\n");
+	}
+	return BRLCAD_ERROR;
+    }
+
+    info_p = png_create_info_struct(png_p);
+    if (!info_p) {
+	if (msgs) {
+	    bu_vls_printf(msgs, "png: could not create PNG info structure\n");
+	}
+	fclose(fp);
+	return BRLCAD_ERROR;
+    }
+
+    ximage_p = XGetImage(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			 ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
+			 0, 0,
+			 dmp->dm_width,
+			 dmp->dm_height,
+			 ~0, ZPixmap);
+    if (!ximage_p) {
+	if (msgs) {
+	    bu_vls_printf(msgs, "png: could not get XImage\n");
+	}
+	return BRLCAD_ERROR;
+    }
+
+    bytes_per_pixel = ximage_p->bytes_per_line / ximage_p->width;
+
+    if (bytes_per_pixel == 4) {
+	unsigned long mask;
+	unsigned long tmask;
+
+	/* This section assumes 8 bits per channel */
+
+	mask = ximage_p->red_mask;
+	tmask = 1;
+	for (red_shift = 0; red_shift < 32; red_shift++) {
+	    if (tmask & mask)
+		break;
+	    tmask = tmask << 1;
+	}
+
+	mask = ximage_p->green_mask;
+	tmask = 1;
+	for (green_shift = 0; green_shift < 32; green_shift++) {
+	    if (tmask & mask)
+		break;
+	    tmask = tmask << 1;
+	}
+
+	mask = ximage_p->blue_mask;
+	tmask = 1;
+	for (blue_shift = 0; blue_shift < 32; blue_shift++) {
+	    if (tmask & mask)
+		break;
+	    tmask = tmask << 1;
+	}
+
+	/*
+	 * We need to reverse things if the image byte order
+	 * is different from the system's byte order.
+	 */
+	if (((bu_byteorder() == BU_BIG_ENDIAN) && (ximage_p->byte_order == LSBFirst)) ||
+	    ((bu_byteorder() == BU_LITTLE_ENDIAN) && (ximage_p->byte_order == MSBFirst))) {
+	    DM_REVERSE_COLOR_BYTE_ORDER(red_shift, ximage_p->red_mask);
+	    DM_REVERSE_COLOR_BYTE_ORDER(green_shift, ximage_p->green_mask);
+	    DM_REVERSE_COLOR_BYTE_ORDER(blue_shift, ximage_p->blue_mask);
+	}
+
+    } else if (bytes_per_pixel == 2) {
+	unsigned long mask;
+	unsigned long tmask;
+	int bpb = 8;   /* bits per byte */
+
+	/*XXX
+	 * This section probably needs logic similar
+	 * to the previous section (i.e. bytes_per_pixel == 4).
+	 * That is we may need to reverse things depending on
+	 * the image byte order and the system's byte order.
+	 */
+
+	mask = ximage_p->red_mask;
+	tmask = 1;
+	for (red_shift = 0; red_shift < 16; red_shift++) {
+	    if (tmask & mask)
+		break;
+	    tmask = tmask << 1;
+	}
+	for (red_bits = red_shift; red_bits < 16; red_bits++) {
+	    if (!(tmask & mask))
+		break;
+	    tmask = tmask << 1;
+	}
+
+	red_bits = red_bits - red_shift;
+	if (red_shift == 0)
+	    red_shift = red_bits - bpb;
+	else
+	    red_shift = red_shift - (bpb - red_bits);
+
+	mask = ximage_p->green_mask;
+	tmask = 1;
+	for (green_shift = 0; green_shift < 16; green_shift++) {
+	    if (tmask & mask)
+		break;
+	    tmask = tmask << 1;
+	}
+	for (green_bits = green_shift; green_bits < 16; green_bits++) {
+	    if (!(tmask & mask))
+		break;
+	    tmask = tmask << 1;
+	}
+
+	green_bits = green_bits - green_shift;
+	green_shift = green_shift - (bpb - green_bits);
+
+	mask = ximage_p->blue_mask;
+	tmask = 1;
+	for (blue_shift = 0; blue_shift < 16; blue_shift++) {
+	    if (tmask & mask)
+		break;
+	    tmask = tmask << 1;
+	}
+	for (blue_bits = blue_shift; blue_bits < 16; blue_bits++) {
+	    if (!(tmask & mask))
+		break;
+	    tmask = tmask << 1;
+	}
+	blue_bits = blue_bits - blue_shift;
+
+	if (blue_shift == 0)
+	    blue_shift = blue_bits - bpb;
+	else
+	    blue_shift = blue_shift - (bpb - blue_bits);
+    } else {
+	if (msgs) {
+	    bu_vls_printf(msgs, "png: %d bytes per pixel is not yet supported\n", bytes_per_pixel);
+	}
+	return BRLCAD_ERROR;
+    }
+
+    rows = (unsigned char **)bu_calloc(ximage_p->height, sizeof(unsigned char *), "rows");
+    idata = (unsigned char *)bu_calloc(ximage_p->height * ximage_p->width, 4, "png data");
+
+    /* for each scanline */
+    for (i = ximage_p->height - 1, j = 0; 0 <= i; --i, ++j) {
+	/* irow points to the current scanline in ximage_p */
+	irow = (unsigned char *)(ximage_p->data + ((ximage_p->height-i-1)*ximage_p->bytes_per_line));
+
+	if (bytes_per_pixel == 4) {
+	    unsigned int pixel;
+
+	    /* rows[j] points to the current scanline in idata */
+	    rows[j] = (unsigned char *)(idata + ((ximage_p->height-i-1)*ximage_p->bytes_per_line));
+
+	    /* for each pixel in current scanline of ximage_p */
+	    for (k = 0; k < ximage_p->bytes_per_line; k += bytes_per_pixel) {
+		pixel = *((unsigned int *)(irow + k));
+
+		dbyte0 = rows[j] + k;
+		dbyte1 = dbyte0 + 1;
+		dbyte2 = dbyte0 + 2;
+		dbyte3 = dbyte0 + 3;
+
+		*dbyte0 = (pixel & ximage_p->red_mask) >> red_shift;
+		*dbyte1 = (pixel & ximage_p->green_mask) >> green_shift;
+		*dbyte2 = (pixel & ximage_p->blue_mask) >> blue_shift;
+		*dbyte3 = 255;
+	    }
+	} else if (bytes_per_pixel == 2) {
+	    unsigned short spixel;
+	    unsigned long pixel;
+
+	    /* rows[j] points to the current scanline in idata */
+	    rows[j] = (unsigned char *)(idata + ((ximage_p->height-i-1)*ximage_p->bytes_per_line*2));
+
+	    /* for each pixel in current scanline of ximage_p */
+	    for (k = 0; k < ximage_p->bytes_per_line; k += bytes_per_pixel) {
+		spixel = *((unsigned short *)(irow + k));
+		pixel = spixel;
+
+		dbyte0 = rows[j] + k*2;
+		dbyte1 = dbyte0 + 1;
+		dbyte2 = dbyte0 + 2;
+		dbyte3 = dbyte0 + 3;
+
+		if (0 <= red_shift)
+		    *dbyte0 = (pixel & ximage_p->red_mask) >> red_shift;
+		else
+		    *dbyte0 = (pixel & ximage_p->red_mask) << -red_shift;
+
+		*dbyte1 = (pixel & ximage_p->green_mask) >> green_shift;
+
+		if (0 <= blue_shift)
+		    *dbyte2 = (pixel & ximage_p->blue_mask) >> blue_shift;
+		else
+		    *dbyte2 = (pixel & ximage_p->blue_mask) << -blue_shift;
+
+		*dbyte3 = 255;
+	    }
+	} else {
+	    bu_free(rows, "rows");
+	    bu_free(idata, "image data");
+	    fclose(fp);
+
+	    if (msgs) {
+		bu_vls_printf(msgs, "png: not supported for this platform\n");
+	    }
+	    return BRLCAD_ERROR;
+	}
+    }
+
+    png_init_io(png_p, fp);
+    png_set_filter(png_p, 0, PNG_FILTER_NONE);
+    png_set_compression_level(png_p, 9);
+    png_set_IHDR(png_p, info_p, ximage_p->width, ximage_p->height, bits_per_channel,
+		 PNG_COLOR_TYPE_RGB_ALPHA, PNG_INTERLACE_NONE,
+		 PNG_COMPRESSION_TYPE_DEFAULT, PNG_FILTER_TYPE_DEFAULT);
+    png_set_gAMA(png_p, info_p, 0.77);
+    png_write_info(png_p, info_p);
+    png_write_image(png_p, rows);
+    png_write_end(png_p, NULL);
+
+    bu_free(rows, "rows");
+    bu_free(idata, "image data");
+
+    return BRLCAD_OK;
+}
+#else
+int
+dm_png_write(dm *UNUSED(dmp), FILE *UNUSED(fp), struct bu_vls *msgs)
+{
+    bu_vls_printf("PNG output not supported\n");
+}
+#endif // defined(DM_X) || defined(DM_OGL)
 
 /*
  * Local Variables:

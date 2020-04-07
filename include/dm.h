@@ -346,7 +346,9 @@ DM_EXPORT extern int dm_set_fg(dm *dmp, unsigned char r, unsigned char g, unsign
 DM_EXPORT extern int dm_reshape(dm *dmp, int width, int height);
 DM_EXPORT extern int dm_make_current(dm *dmp);
 DM_EXPORT extern vect_t *dm_get_clipmin(dm *dmp);
+DM_EXPORT extern void dm_set_clipmin(dm *dmp, vect_t clipmin);
 DM_EXPORT extern vect_t *dm_get_clipmax(dm *dmp);
+DM_EXPORT extern void dm_set_clipmax(dm *dmp, vect_t clipmax);
 DM_EXPORT extern int dm_get_bound_flag(dm *dmp);
 DM_EXPORT extern void dm_set_bound(dm *dmp, fastf_t val);
 DM_EXPORT extern int dm_get_stereo(dm *dmp);
@@ -359,6 +361,7 @@ DM_EXPORT extern int dm_get_fontsize(dm *dmp);
 DM_EXPORT extern void dm_set_fontsize(dm *dmp, int size);
 DM_EXPORT extern int dm_get_light_flag(dm *dmp);
 DM_EXPORT extern void dm_set_light_flag(dm *dmp, int size);
+DM_EXPORT extern int dm_get_light(dm *dmp);
 DM_EXPORT extern int dm_set_light(dm *dmp, int light);
 DM_EXPORT extern void *dm_get_public_vars(dm *dmp);
 DM_EXPORT extern void *dm_get_private_vars(dm *dmp);
@@ -397,12 +400,22 @@ DM_EXPORT extern int dm_draw_point_3d(dm *dmp, point_t pt);
 DM_EXPORT extern int dm_draw_points_3d(dm *dmp, int npoints, point_t *points);
 DM_EXPORT extern int dm_draw(dm *dmp, struct bn_vlist *(*callback)(void *), void **data);
 DM_EXPORT extern int dm_draw_obj(dm *dmp, struct display_list *obj);
+DM_EXPORT extern int dm_get_depth_mask(dm *dmp);
 DM_EXPORT extern int dm_set_depth_mask(dm *dmp, int d_on);
+DM_EXPORT extern int dm_get_debug(dm *dmp);
 DM_EXPORT extern int dm_debug(dm *dmp, int lvl);
+DM_EXPORT extern const char *dm_get_logfile(dm *dmp);
 DM_EXPORT extern int dm_logfile(dm *dmp, const char *filename);
 DM_EXPORT extern fb *dm_get_fb(dm *dmp);
 DM_EXPORT extern int dm_get_fb_visible(dm *dmp);
 DM_EXPORT extern int dm_set_fb_visible(dm *dmp, int is_fb_visible);
+DM_EXPORT extern int dm_get_clearbufferafter(dm *dmp);
+DM_EXPORT extern void dm_set_clearbufferafter(dm *dmp, int clearBufferAfter);
+
+DM_EXPORT extern void dm_flush(dm *dmp);
+DM_EXPORT extern void *dm_os_window(dm *dmp);
+
+DM_EXPORT extern int dm_png_write(dm *dmp, FILE *fp, struct bu_vls *msgs);
 
 /* TODO - dm_vp is supposed to go away, but until we figure it out
  * expose it here to allow dm hiding */

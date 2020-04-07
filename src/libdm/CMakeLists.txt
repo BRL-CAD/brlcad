@@ -105,7 +105,6 @@ set(LIBDM_SRCS
   dm-generic.c
   dm-plot.c
   dm-ps.c
-  dm_obj.c
   dm_util.c
   dm-txt.c
   grid.c
