@@ -25,6 +25,10 @@
 
 #include "common.h"
 
+#include <string>
+#include <set>
+#include <unordered_map>
+
 #include <string.h>
 
 #include "bu/cmd.h"
@@ -58,23 +62,18 @@ struct ged_concat_data {
  * find a new unique name given a list of previously used names, and
  * the type of naming mode that described what type of affix to use.
  */
-static char *
+static std::string
 get_new_name(const char *name,
 		 struct db_i *dbip,
-		 Tcl_HashTable *name_tbl,
-		 Tcl_HashTable *used_names_tbl,
+		 std::unordered_map<std::string, std::string> &name_map,
+		 std::set<std::string> &used_names,
 		 struct ged_concat_data *cc_data)
 {
     struct bu_vls new_name = BU_VLS_INIT_ZERO;
-    Tcl_HashEntry *ptr = NULL;
     char *aname = NULL;
-    char *ret_name = NULL;
-    int int_new=0;
     long num=0;
 
     RT_CK_DBI(dbip);
-    BU_ASSERT(name_tbl);
-    BU_ASSERT(used_names_tbl);
     BU_ASSERT(cc_data);
 
     if (!name) {
@@ -82,10 +81,11 @@ get_new_name(const char *name,
 	name = "UNKNOWN";
     }
 
-    ptr = Tcl_CreateHashEntry(name_tbl, name, &int_new);
+    std::string nname = std::string(name);
 
-    if (!int_new) {
-	return (char *)Tcl_GetHashValue(ptr);
+    // If we already have a mapping assigned for this object name, reuse it.
+    if (name_map.find(nname) != name_map.end()) {
+	return name_map[nname];
     }
 
     do {
@@ -148,7 +148,7 @@ get_new_name(const char *name,
 	num++;
 
     } while (db_lookup(dbip, aname, LOOKUP_QUIET) != RT_DIR_NULL ||
-	     Tcl_FindHashEntry(used_names_tbl, aname) != NULL);
+	     (used_names.find(std::string(aname)) != used_names.end()));
 
     /* if they didn't get what they asked for, warn them */
     if (num > 1) {
@@ -161,24 +161,24 @@ get_new_name(const char *name,
 	}
     }
 
-    /* we should now have a unique name.  store it in the hash */
-    ret_name = bu_vls_strgrab(&new_name);
-    Tcl_SetHashValue(ptr, (ClientData)ret_name);
-    (void)Tcl_CreateHashEntry(used_names_tbl, ret_name, &int_new);
+    /* we should now have a unique name.  store it in the map and the used_names set */
+    name_map[nname] = std::string(bu_vls_cstr(&new_name));
+    used_names.insert(name_map[nname]);
     bu_vls_free(&new_name);
 
-    return ret_name;
+    return name_map[nname];
 }
 
 
 static void
 adjust_names(union tree *trp,
 		 struct db_i *dbip,
-		 Tcl_HashTable *name_tbl,
-		 Tcl_HashTable *used_names_tbl,
+		 std::unordered_map<std::string, std::string> &name_map,
+		 std::set<std::string> &used_names,
 		 struct ged_concat_data *cc_data)
 {
-    char *new_name;
+    std::string new_name;
+    std::string old_name;
 
     if (trp == NULL) {
 	return;
@@ -186,11 +186,12 @@ adjust_names(union tree *trp,
 
     switch (trp->tr_op) {
 	case OP_DB_LEAF:
+	    old_name = std::string(trp->tr_l.tl_name);
 	    new_name = get_new_name(trp->tr_l.tl_name, dbip,
-					name_tbl, used_names_tbl, cc_data);
-	    if (new_name) {
+					name_map, used_names, cc_data);
+	    if (old_name != new_name) {
 		bu_free(trp->tr_l.tl_name, "leaf name");
-		trp->tr_l.tl_name = bu_strdup(new_name);
+		trp->tr_l.tl_name = bu_strdup(new_name.c_str());
 	    }
 	    break;
 	case OP_UNION:
@@ -198,15 +199,15 @@ adjust_names(union tree *trp,
 	case OP_SUBTRACT:
 	case OP_XOR:
 	    adjust_names(trp->tr_b.tb_left, dbip,
-			     name_tbl, used_names_tbl, cc_data);
+			     name_map, used_names, cc_data);
 	    adjust_names(trp->tr_b.tb_right, dbip,
-			     name_tbl, used_names_tbl, cc_data);
+			     name_map, used_names, cc_data);
 	    break;
 	case OP_NOT:
 	case OP_GUARD:
 	case OP_XNOP:
 	    adjust_names(trp->tr_b.tb_left, dbip,
-			     name_tbl, used_names_tbl, cc_data);
+			     name_map, used_names, cc_data);
 	    break;
     }
 }
@@ -217,8 +218,8 @@ copy_object(struct ged *gedp,
 	    struct directory *input_dp,
 	    struct db_i *input_dbip,
 	    struct db_i *curr_dbip,
-	    Tcl_HashTable *name_tbl,
-	    Tcl_HashTable *used_names_tbl,
+	    std::unordered_map<std::string, std::string> &name_map,
+	    std::set<std::string> &used_names,
 	    struct ged_concat_data *cc_data)
 {
     struct rt_db_internal ip;
@@ -226,7 +227,7 @@ copy_object(struct ged *gedp,
     struct rt_dsp_internal *dsp;
     struct rt_comb_internal *comb;
     struct directory *new_dp;
-    char *new_name;
+    std::string new_name;
 
     if (rt_db_get_internal(&ip, input_dp, input_dbip, NULL, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str,
@@ -241,16 +242,16 @@ copy_object(struct ged *gedp,
 	    case DB5_MINORTYPE_BRLCAD_COMBINATION:
 		comb = (struct rt_comb_internal *)ip.idb_ptr;
 		RT_CK_COMB(comb);
-		adjust_names(comb->tree, curr_dbip, name_tbl, used_names_tbl, cc_data);
+		adjust_names(comb->tree, curr_dbip, name_map, used_names, cc_data);
 		break;
 	    case DB5_MINORTYPE_BRLCAD_EXTRUDE:
 		extr = (struct rt_extrude_internal *)ip.idb_ptr;
 		RT_EXTRUDE_CK_MAGIC(extr);
 
-		new_name = get_new_name(extr->sketch_name, curr_dbip, name_tbl, used_names_tbl, cc_data);
-		if (new_name) {
+		new_name = get_new_name(extr->sketch_name, curr_dbip, name_map, used_names, cc_data);
+		if (new_name.length()) {
 		    bu_free(extr->sketch_name, "sketch name");
-		    extr->sketch_name = bu_strdup(new_name);
+		    extr->sketch_name = bu_strdup(new_name.c_str());
 		}
 		break;
 	    case DB5_MINORTYPE_BRLCAD_DSP:
@@ -260,32 +261,32 @@ copy_object(struct ged *gedp,
 		if (dsp->dsp_datasrc == RT_DSP_SRC_OBJ) {
 		    /* This dsp references a database object, may need to change its name */
 		    new_name = get_new_name(bu_vls_addr(&dsp->dsp_name), curr_dbip,
-						name_tbl, used_names_tbl, cc_data);
-		    if (new_name) {
+						name_map, used_names, cc_data);
+		    if (new_name.length()) {
 			bu_vls_free(&dsp->dsp_name);
-			bu_vls_strcpy(&dsp->dsp_name, new_name);
+			bu_vls_strcpy(&dsp->dsp_name, new_name.c_str());
 		    }
 		}
 		break;
 	}
     }
 
-    new_name = get_new_name(input_dp->d_namep, curr_dbip, name_tbl, used_names_tbl, cc_data);
-    if (!new_name) {
-	new_name = input_dp->d_namep;
+    new_name = get_new_name(input_dp->d_namep, curr_dbip, name_map, used_names, cc_data);
+    if (!new_name.length()) {
+	new_name = std::string(input_dp->d_namep);
     }
-    if ((new_dp = db_diradd(curr_dbip, new_name, RT_DIR_PHONY_ADDR, 0, input_dp->d_flags,
+    if ((new_dp = db_diradd(curr_dbip, new_name.c_str(), RT_DIR_PHONY_ADDR, 0, input_dp->d_flags,
 			    (void *)&input_dp->d_minor_type)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str,
 		      "Failed to add new object name (%s) to directory - aborting!!\n",
-		      new_name);
+		      new_name.c_str());
 	return GED_ERROR;
     }
 
     if (rt_db_put_internal(new_dp, curr_dbip, &ip, &rt_uniresource) < 0) {
 	bu_vls_printf(gedp->ged_result_str,
 		      "Failed to write new object (%s) to database - aborting!!\n",
-		      new_name);
+		      new_name.c_str());
 	return GED_ERROR;
     }
 
@@ -298,10 +299,8 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
 {
     struct db_i *newdbp;
     struct directory *dp;
-    Tcl_HashTable name_tbl;
-    Tcl_HashTable used_names_tbl;
-    Tcl_HashEntry *ptr;
-    Tcl_HashSearch search;
+    std::unordered_map<std::string, std::string> name_map;
+    std::set<std::string> used_names;
     struct bu_attribute_value_set g_avs;
     const char *cp;
     char *colorTab;
@@ -441,9 +440,6 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
     cc_data.old_dbip = gedp->ged_wdbp->dbip;
 
     /* visit each directory pointer in the input database */
-    Tcl_InitHashTable(&name_tbl, TCL_STRING_KEYS);
-    Tcl_InitHashTable(&used_names_tbl, TCL_STRING_KEYS);
-
     if (importUnits || importTitle || importColorTable) {
 	saveGlobalAttrs = 1;
     }
@@ -457,7 +453,7 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
 	    }
 	    continue;
 	}
-	copy_object(gedp, dp, newdbp, gedp->ged_wdbp->dbip, &name_tbl, &used_names_tbl, &cc_data);
+	copy_object(gedp, dp, newdbp, gedp->ged_wdbp->dbip, name_map, used_names, &cc_data);
     } FOR_ALL_DIRECTORY_END;
 
     bu_vls_free(&cc_data.affix);
@@ -524,15 +520,6 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
 
     /* Update references. */
     db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
-
-    /* Free the Hash tables */
-    ptr = Tcl_FirstHashEntry(&name_tbl, &search);
-    while (ptr) {
-	bu_free((char *)Tcl_GetHashValue(ptr), "new name");
-	ptr = Tcl_NextHashEntry(&search);
-    }
-    Tcl_DeleteHashTable(&name_tbl);
-    Tcl_DeleteHashTable(&used_names_tbl);
 
     return GED_OK;
 }
