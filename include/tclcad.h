@@ -484,7 +484,8 @@ TCLCAD_EXPORT void
 tclcad_delete_io_handler(void *interp, void *chan, struct bu_process *p, int fd, void *data, ged_io_handler_callback_t callback);
 
 
-FB_EXPORT extern int Fb_Init(Tcl_Interp *interp);
+TCLCAD_EXPORT extern int Fb_Init(Tcl_Interp *interp);
+TCLCAD_EXPORT extern int Dm_Init(Tcl_Interp *interp);
 
 
 __END_DECLS

@@ -34,6 +34,9 @@
 #  endif
 #endif
 
+/* TODO - global var, need to eliminate */
+DM_EXPORT extern int vectorThreshold;
+
 /** @} */
 /*
  * Local Variables:

@@ -115,7 +115,6 @@ set(LIBDM_SRCS
   query.c
   rect.c
   scale.c
-  tcl.c
   vers.c
   )
 set_property(SOURCE dm_obj.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)

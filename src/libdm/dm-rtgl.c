@@ -76,7 +76,7 @@
 
 #define USE_VECTOR_THRESHOLD 0
 #if USE_VECTOR_THRESHOLD
-extern int vectorThreshold;	/* defined in libdm/tcl.c */
+extern int vectorThreshold;	/* defined in libdm/dm-generic.c */
 #endif
 
 static int rtgl_actively_drawing;

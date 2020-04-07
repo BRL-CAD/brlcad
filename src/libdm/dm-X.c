@@ -845,7 +845,7 @@ X_loadMatrix(struct dm_internal *dmp, fastf_t *mat, int which_eye)
 HIDDEN int
 X_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 {
-    extern int vectorThreshold;	/* defined in libdm/tcl.c */
+    extern int vectorThreshold;	/* defined in libdm/dm-generic.c */
 
     static vect_t spnt, lpnt, pnt;
     struct bn_vlist *tvp;

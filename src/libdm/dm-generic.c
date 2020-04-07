@@ -36,6 +36,9 @@
 #include "dm-Null.h"
 #include "rt/solid.h"
 
+/* TODO: this doesn't belong in here, move to a globals.c or eliminate */
+int vectorThreshold = 100000;
+
 extern dm *plot_open(Tcl_Interp *interp, int argc, const char *argv[]);
 extern dm *ps_open(Tcl_Interp *interp, int argc, const char *argv[]);
 extern dm *txt_open(Tcl_Interp *interp, int argc, const char **argv);

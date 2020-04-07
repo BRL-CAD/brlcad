@@ -238,7 +238,6 @@ DM_EXPORT extern dm dm_txt;
 DM_EXPORT extern dm dm_qt;
 DM_EXPORT extern dm dm_osgl;
 
-DM_EXPORT extern int Dm_Init(void *interp);
 DM_EXPORT extern dm *dm_open(Tcl_Interp *interp,
 			     int type,
 			     int argc,
