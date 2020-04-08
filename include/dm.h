@@ -397,7 +397,7 @@ DM_EXPORT extern int dm_get_bound_flag(dm *dmp);
 DM_EXPORT extern void dm_set_bound(dm *dmp, fastf_t val);
 DM_EXPORT extern int dm_get_stereo(dm *dmp);
 DM_EXPORT extern int dm_set_win_bounds(dm *dmp, fastf_t *w);
-DM_EXPORT extern int dm_configure_win(dm *dmp, int force);
+DM_EXPORT extern int dm_configure_win(dm *dmp, struct dm_context *context, int force);
 DM_EXPORT extern struct bu_vls *dm_get_pathname(dm *dmp);
 DM_EXPORT extern struct bu_vls *dm_get_dname(dm *dmp);
 DM_EXPORT extern struct bu_vls *dm_get_tkname(dm *dmp);

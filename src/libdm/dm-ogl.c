@@ -122,7 +122,7 @@ HIDDEN int ogl_setFGColor(struct dm_internal *dmp, unsigned char r, unsigned cha
 HIDDEN int ogl_setBGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsigned char b);
 HIDDEN int ogl_setLineAttr(struct dm_internal *dmp, int width, int style);
 HIDDEN int ogl_configureWin_guts(struct dm_internal *dmp, int force);
-HIDDEN int ogl_configureWin(struct dm_internal *dmp, int force);
+HIDDEN int ogl_configureWin(struct dm_internal *dmp, struct dm_context *, int force);
 HIDDEN int ogl_setLight(struct dm_internal *dmp, int lighting_on);
 HIDDEN int ogl_setTransparency(struct dm_internal *dmp, int transparency_on);
 HIDDEN int ogl_setDepthMask(struct dm_internal *dmp, int depthMask_on);
@@ -407,7 +407,7 @@ ogl_makeCurrent(struct dm_internal *dmp)
 
 
 HIDDEN int
-ogl_configureWin(struct dm_internal *dmp, int force)
+ogl_configureWin(struct dm_internal *dmp, struct dm_context *UNUSED(context), int force)
 {
     if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,

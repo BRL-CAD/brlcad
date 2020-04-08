@@ -158,7 +158,7 @@ X_reshape(struct dm_internal *dmp, int width, int height)
 
 
 HIDDEN int
-X_configureWin_guts(struct dm_internal *dmp, int force)
+X_configureWin_guts(struct dm_internal *dmp, struct dm_context *context, int force)
 {
     XWindowAttributes xwa;
     XFontStruct *newfontstruct;
@@ -183,14 +183,9 @@ X_configureWin_guts(struct dm_internal *dmp, int force)
     }
 
 #ifdef HAVE_TK
-    Tk_FreePixmap(pubvars->dpy,
-		  privars->pix);
-    privars->pix =
-	Tk_GetPixmap(pubvars->dpy,
-		     DefaultRootWindow(pubvars->dpy),
-		     dmp->dm_width,
-		     dmp->dm_height,
-		     Tk_Depth(pubvars->xtkwin));
+    (*context->dm_free_pixmap)(dmp, pubvars->dpy, privars->pix);
+    privars->pix = (Pixmap)(*context->dm_get_pixmap)(dmp, pubvars->dpy, DefaultRootWindow(pubvars->dpy),
+		     pubvars->xtkwin, dmp->dm_width, dmp->dm_height);
 #endif
 
     /* First time through, load a font or quit */
@@ -737,7 +732,7 @@ Skip_dials:
 
     privars->xmat = &(privars->mod_mat[0]);
 
-    (void)X_configureWin_guts(dmp, 1);
+    (void)X_configureWin_guts(dmp, context, 1);
 
 #ifdef HAVE_TK
     (*context->dm_window_set_bg)(dmp, pubvars->xtkwin, privars->bg);
@@ -1423,10 +1418,10 @@ X_setWinBounds(struct dm_internal *dmp, fastf_t *w)
 
 
 HIDDEN int
-X_configureWin(struct dm_internal *dmp, int force)
+X_configureWin(struct dm_internal *dmp, struct dm_context *context, int force)
 {
     /* don't force */
-    return X_configureWin_guts(dmp, force);
+    return X_configureWin_guts(dmp, context, force);
 }
 
 

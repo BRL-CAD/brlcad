@@ -1626,7 +1626,7 @@ dmo_configure_tcl(void *clientData, int argc, const char **argv)
     }
 
     /* configure the display manager window */
-    status = dm_configure_win(dmop->dmo_dmp, 0);
+    status = dm_configure_win(dmop->dmo_dmp, &dm_tk_context, 0);
 
 #ifdef USE_FBSERV
     /* configure the framebuffer window */

@@ -1991,7 +1991,7 @@ wgl_makeCurrent(dm *dmp)
 
 
 HIDDEN int
-wgl_configureWin(dm *dmp, int force)
+wgl_configureWin(dm *dmp, struct dm_context *UNUSED(context), int force)
 {
     if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
 			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {

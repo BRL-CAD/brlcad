@@ -111,7 +111,7 @@ null_setLineAttr(dm *dmp, int width, int style);
 
 
 DM_EXPORT extern int
-null_configureWin(dm *dmp, int force);
+null_configureWin(dm *dmp, struct dm_context *context, int force);
 
 
 DM_EXPORT extern int

@@ -2519,7 +2519,7 @@ to_configure(struct ged *gedp,
     }
 
     /* configure the display manager window */
-    status = dm_configure_win(gdvp->gdv_dmp, 0);
+    status = dm_configure_win(gdvp->gdv_dmp, &dm_tk_context, 0);
 
     /* configure the framebuffer window */
     if (gdvp->gdv_fbs.fbs_fbp != FB_NULL)
@@ -6446,7 +6446,7 @@ to_fontsize(struct ged *gedp,
 
     if (DM_VALID_FONT_SIZE(fontsize) || fontsize == 0) {
 	dm_set_fontsize(gdvp->gdv_dmp, fontsize);
-	(void)dm_configure_win(gdvp->gdv_dmp, 1);
+	(void)dm_configure_win(gdvp->gdv_dmp, &dm_tk_context, 1);
 	to_refresh_view(gdvp);
 	return GED_OK;
     }

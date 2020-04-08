@@ -284,7 +284,7 @@ mged_dm_init(struct dm_list *o_dm_list,
 #ifdef HAVE_TK
     Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
 #endif
-    (void)dm_configure_win(DMP, 0);
+    (void)dm_configure_win(DMP, &dm_tk_context, 0);
 
     if (dm_get_pathname(DMP)) {
 	bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(dm_get_pathname(DMP)));

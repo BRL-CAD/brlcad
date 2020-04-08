@@ -786,7 +786,7 @@ tk_configureWin_guts(struct dm_internal *dmp, int force)
 
 
 HIDDEN int
-tk_configureWin(struct dm_internal *dmp, int force)
+tk_configureWin(struct dm_internal *dmp, struct dm_context *UNUSED(context), int force)
 {
     /* don't force */
     return tk_configureWin_guts(dmp, force);

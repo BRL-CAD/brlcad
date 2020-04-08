@@ -543,10 +543,10 @@ dm_get_stereo(dm *dmp)
     return dmp->dm_stereo;
 }
 int
-dm_configure_win(dm *dmp, int force)
+dm_configure_win(dm *dmp, struct dm_context *context, int force)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_configureWin(dmp, force);
+    return dmp->dm_configureWin(dmp, context, force);
 }
 
 struct bu_vls *

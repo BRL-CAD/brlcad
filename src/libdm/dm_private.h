@@ -82,7 +82,7 @@ struct dm_internal {
     int (*dm_setFGColor)(struct dm_internal *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
     int (*dm_setBGColor)(struct dm_internal *, unsigned char, unsigned char, unsigned char);
     int (*dm_setLineAttr)(struct dm_internal *dmp, int width, int style);	/**< @brief currently - linewidth, (not-)dashed */
-    int (*dm_configureWin)(struct dm_internal *dmp, int force);
+    int (*dm_configureWin)(struct dm_internal *dmp, struct dm_context *context, int force);
     int (*dm_setWinBounds)(struct dm_internal *dmp, fastf_t *w);
     int (*dm_setLight)(struct dm_internal *dmp, int light_on);
     int (*dm_setTransparency)(struct dm_internal *dmp, int transparency_on);
