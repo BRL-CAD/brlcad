@@ -49,12 +49,6 @@ if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
   set_property(SOURCE dm-ogl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 endif(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
 
-if(BRLCAD_ENABLE_RTGL)
-  list(APPEND libdm_DEFINES DM_RTGL IF_RTGL)
-  set(dmrtgl_srcs dm-rtgl.c)
-  set_property(SOURCE dm-rtgl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
-endif(BRLCAD_ENABLE_RTGL)
-
 if(BRLCAD_ENABLE_QT)
   CHECK_CXX_FLAG(Wno-float-equal)
 
@@ -87,7 +81,6 @@ set(LIBDM_SRCS
   ${dmw32_srcs}
   ${dmogl_srcs}
   ${dmosg_srcs}
-  ${dmrtgl_srcs}
   ${dmqt_srcs}
   adc.c
   axes.c
@@ -141,8 +134,6 @@ set(libdm_ignore_files
   dm-ps.h
   dm-qt.cpp
   dm-qt.h
-  dm-rtgl.c
-  dm-rtgl.h
   dm-wgl.c
   dm-wgl.h
   dm_private.h

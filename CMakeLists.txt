@@ -1299,17 +1299,6 @@ BRLCAD_OPTION(BRLCAD_ENABLE_OPENGL ${OPENGL_FOUND}
   ALIASES ENABLE_OPENGL
   DESCRIPTION BRLCAD_ENABLE_OPENGL_DESCRIPTION)
 
-# Enable RTGL.  Requires an enabled OpenGL.
-option(BRLCAD_ENABLE_RTGL "Enable experimental RTGL code." OFF)
-mark_as_advanced(BRLCAD_ENABLE_RTGL)
-if(NOT BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_RTGL)
-  message("RTGL requested, but OpenGL is not enabled - disabling")
-  set(BRLCAD_ENABLE_RTGL OFF CACHE BOOL "Enable experimental RTGL code." FORCE)
-endif(NOT BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_RTGL)
-if(NOT BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_RTGL)
-  message("RTGL currently works only with GLX, and X11 is not enabled - disabling")
-  set(BRLCAD_ENABLE_RTGL OFF CACHE BOOL "Enable experimental RTGL code." FORCE)
-endif(NOT BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_RTGL)
 if(BRLCAD_ENABLE_AQUA)
   set(OPENGL_USE_AQUA ON CACHE STRING "Aqua enabled - use Aqua OpenGL" FORCE)
 endif(BRLCAD_ENABLE_AQUA)
