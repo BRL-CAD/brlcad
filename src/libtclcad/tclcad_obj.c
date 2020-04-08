@@ -14279,8 +14279,7 @@ to_view_win_size(struct ged *gedp,
 #if defined(DM_X) || defined(DM_TK) || defined(DM_OGL) || defined(DM_OSG) || defined(DM_OSGL) || defined(DM_WGL) || defined(DM_QT)
 #   if (defined HAVE_TK)
     if (dm_get_public_vars(gdvp->gdv_dmp)) {
-	Tk_GeometryRequest(((struct dm_xvars *)(dm_get_public_vars(gdvp->gdv_dmp)))->xtkwin,
-			   width, height);
+	(*dm_tk_context.dm_window_geom)(gdvp->gdv_dmp, ((struct dm_xvars *)(dm_get_public_vars(gdvp->gdv_dmp)))->xtkwin, &width, &height);
     }
 #   endif
 #endif
