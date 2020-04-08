@@ -137,7 +137,6 @@ set(libdm_ignore_files
   dm-ogl.h
   dm-osgl.cpp
   dm-osgl.h
-  dm-pex.h
   dm-plot.h
   dm-ps.h
   dm-qt.cpp
