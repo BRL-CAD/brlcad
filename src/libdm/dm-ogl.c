@@ -96,7 +96,7 @@
 #define YSTEREO		491	/* subfield height, in scanlines */
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
 
-HIDDEN XVisualInfo *ogl_choose_visual(struct dm_internal *dmp, Tk_Window tkwin);
+HIDDEN XVisualInfo *ogl_choose_visual(struct dm_internal *dmp, struct dm_context *, dm_win tkwin);
 
 /* Display Manager package interface */
 #define IRBOUND 4095.9	/* Max magnification in Rot matrix */
@@ -460,7 +460,7 @@ ogl_setLight(struct dm_internal *dmp, int lighting_on)
  * OpenGL
  */
 HIDDEN XVisualInfo *
-ogl_choose_visual(struct dm_internal *dmp, Tk_Window tkwin)
+ogl_choose_visual(struct dm_internal *dmp, struct dm_context *context, dm_win tkwin)
 {
     struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
     XVisualInfo *vip, vitemp, *vibase, *maxvip;
@@ -557,10 +557,7 @@ ogl_choose_visual(struct dm_internal *dmp, Tk_Window tkwin)
 				    RootWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 					       maxvip->screen), maxvip->visual, AllocNone);
 
-		if (Tk_SetWindowVisual(tkwin,
-				       maxvip->visual, maxvip->depth,
-				       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap)) {
-
+		if ((*context->dm_window_set_visual)(dmp, tkwin, maxvip, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap)) {
 		    glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 				 maxvip, GLX_DEPTH_SIZE,
 				 &mvars->depth);
@@ -816,8 +813,8 @@ ogl_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
 	return DM_NULL;
     }
 
-    bu_vls_printf(&dmp->dm_tkName, "%s",
-		  (char *)Tk_Name(pubvars->xtkwin));
+    const char *winname = (*context->dm_window_name)(dmp, pubvars->xtkwin);
+    bu_vls_printf(&dmp->dm_tkName, "%s", winname);
 
     if ((*context->dm_init)(dmp, bu_vls_cstr(&init_proc_vls)) == BRLCAD_ERROR) {
 	bu_vls_free(&init_proc_vls);
@@ -842,7 +839,7 @@ ogl_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
     (*context->dm_window_geom)(dmp, pubvars->xtkwin, &dmp->dm_width, &dmp->dm_height);
 
     /* must do this before MakeExist */
-    if ((pubvars->vip=ogl_choose_visual(dmp, pubvars->xtkwin)) == NULL) {
+    if ((pubvars->vip=ogl_choose_visual(dmp, context, pubvars->xtkwin)) == NULL) {
 	bu_log("ogl_open: Can't get an appropriate visual.\n");
 	(void)ogl_close(dmp, context);
 	return DM_NULL;
@@ -852,7 +849,7 @@ ogl_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
 
     (*context->dm_window_make_exist)(dmp, pubvars->xtkwin);
 
-    pubvars->win = Tk_WindowId(pubvars->xtkwin);
+    pubvars->win = (*context->dm_window_id)(dmp, pubvars->xtkwin);
     dmp->dm_id = pubvars->win;
 
     /* open GLX context */
