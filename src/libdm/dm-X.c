@@ -280,7 +280,7 @@ X_configureWin_guts(struct dm_internal *dmp, int force)
 
 
 HIDDEN XVisualInfo *
-X_choose_visual(struct dm_internal *dmp)
+X_choose_visual(struct dm_internal *dmp, struct dm_context *context)
 {
     XVisualInfo *vip, vitemp, *vibase, *maxvip;
     int num, i, j;
@@ -342,10 +342,7 @@ X_choose_visual(struct dm_internal *dmp)
 	    }
 
 #ifdef HAVE_TK
-	    if (Tk_SetWindowVisual(pubvars->xtkwin,
-				   maxvip->visual,
-				   maxvip->depth,
-				   pubvars->cmap)) {
+	    if ((*context->dm_window_set_visual)(dmp, pubvars->xtkwin, (dm_visual_info)maxvip, pubvars->cmap)) {
 		pubvars->depth = maxvip->depth;
 
 		bu_free(good, "dealloc good visuals");
@@ -376,7 +373,7 @@ X_choose_visual(struct dm_internal *dmp)
  * Gracefully release the display.
  */
 HIDDEN int
-X_close(struct dm_internal *dmp, struct dm_context *UNUSED(context))
+X_close(struct dm_internal *dmp, struct dm_context *context)
 {
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
@@ -399,7 +396,7 @@ X_close(struct dm_internal *dmp, struct dm_context *UNUSED(context))
 
 #ifdef HAVE_TK
 	if (pubvars->xtkwin)
-	    Tk_DestroyWindow(pubvars->xtkwin);
+	    (*context->dm_window_destroy)(dmp, pubvars->xtkwin);
 #endif
 
     }
@@ -612,7 +609,7 @@ X_open_dm(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
 #endif
 
     /* must do this before MakeExist */
-    if ((pubvars->vip = X_choose_visual(dmp)) == NULL) {
+    if ((pubvars->vip = X_choose_visual(dmp, context)) == NULL) {
 	bu_log("X_open_dm: Can't get an appropriate visual.\n");
 	(void)X_close(dmp, context);
 	return DM_NULL;
@@ -748,7 +745,7 @@ Skip_dials:
     (void)X_configureWin_guts(dmp, 1);
 
 #ifdef HAVE_TK
-    Tk_SetWindowBackground(pubvars->xtkwin,
+    Tk_SetWindowBackground((Tk_Window)pubvars->xtkwin,
 			   privars->bg);
     (*context->dm_window_map)(dmp, pubvars->xtkwin);
 #endif
