@@ -448,6 +448,9 @@ X_open_dm(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
 
 #ifdef HAVE_TK
     if ((tkwin = (*context->dm_window_main)(dmp)) == NULL) {
+	bu_free((void *)privars, "privars");
+	bu_free((void *)pubvars, "pubvars");
+	bu_free((void *)dmp, "dmp");
 	return DM_NULL;
     }
 #endif

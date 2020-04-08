@@ -82,7 +82,7 @@
 extern "C" {
     struct dm_internal *osgl_open(Tcl_Interp *interp, int argc, char **argv);
 }
-HIDDEN int osgl_close(struct dm_internal *dmp);
+HIDDEN int osgl_close(struct dm_internal *dmp, struct dm_context *context);
 HIDDEN int osgl_drawBegin(struct dm_internal *dmp);
 HIDDEN int osgl_drawEnd(struct dm_internal *dmp);
 HIDDEN int osgl_normal(struct dm_internal *dmp);
@@ -355,7 +355,7 @@ OSGEventProc(ClientData clientData, XEvent *UNUSED(eventPtr))
  * Gracefully release the display.
  */
 HIDDEN int
-osgl_close(struct dm_internal *dmp)
+osgl_close(struct dm_internal *dmp, struct dm_context *UNUSED(context))
 {
     ((struct osgl_vars *)dmp->dm_vars.priv_vars)->graphicsContext->makeCurrent();
     ((struct osgl_vars *)dmp->dm_vars.priv_vars)->graphicsContext->releaseContext();
@@ -382,7 +382,7 @@ osgl_close(struct dm_internal *dmp)
  *
  */
 extern "C" struct dm_internal *
-osgl_open(Tcl_Interp *interp, int argc, char **argv)
+osgl_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
 {
     static int count = 0;
     GLfloat backgnd[4];
@@ -394,10 +394,6 @@ osgl_open(Tcl_Interp *interp, int argc, char **argv)
 
     struct dm_xvars *pubvars = NULL;
     struct osgl_vars *privvars = NULL;
-
-    if ((tkwin = Tk_MainWindow(interp)) == NULL) {
-	return DM_NULL;
-    }
 
     BU_GET(dmp, struct dm_internal);
 
@@ -423,6 +419,13 @@ osgl_open(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
     privvars = (struct osgl_vars *)dmp->dm_vars.priv_vars;
+
+    if ((tkwin = (*context->dm_window_main)(dmp)) == NULL) {
+	bu_free((void *)privars, "privars");
+	bu_free((void *)pubvars, "pubvars");
+	bu_free((void *)dmp, "dmp");
+	return DM_NULL;
+    }
 
     dmp->dm_get_internal(dmp);
     mvars = (struct modifiable_osgl_vars *)dmp->m_vars;
@@ -471,11 +474,8 @@ osgl_open(Tcl_Interp *interp, int argc, char **argv)
 
     if (dmp->dm_top) {
 	/* Make xtkwin a toplevel window */
-	pubvars->xtkwin =
-	    Tk_CreateWindowFromPath(interp,
-				    tkwin,
-				    bu_vls_addr(&dmp->dm_pathName),
-				    bu_vls_addr(&dmp->dm_dName));
+	pubvars->xtkwin = (Tk_Window)(*context->dm_window_create_from_path)(dmp, tkwin,
+		bu_vls_cstr(&dmp->dm_pathName), bu_vls_cstr(&dmp->dm_dName));
 	pubvars->top = pubvars->xtkwin;
     } else {
 	char *cp;
@@ -488,21 +488,18 @@ osgl_open(Tcl_Interp *interp, int argc, char **argv)
 
 	    bu_vls_strncpy(&top_vls, (const char *)bu_vls_addr(&dmp->dm_pathName), cp - bu_vls_addr(&dmp->dm_pathName));
 
-	    pubvars->top =
-		Tk_NameToWindow(interp, bu_vls_addr(&top_vls), tkwin);
+	    pubvars->top = (Tk_Window)(*context->dm_window_from_name)(dmp, bu_vls_cstr(&top_vls), tkwin);
 	    bu_vls_free(&top_vls);
 	}
 
 	/* Make xtkwin an embedded window */
-	pubvars->xtkwin =
-	    Tk_CreateWindow(interp, pubvars->top,
-			    cp + 1, (char *)NULL);
+	pubvars->xtkwin = (Tk_Window)((*context->dm_window_create_embedded)(dmp, pubvars->top, cp + 1));
     }
 
     if (pubvars->xtkwin == NULL) {
 	bu_log("dm-osgl: Failed to open %s\n", bu_vls_addr(&dmp->dm_pathName));
 	bu_vls_free(&init_proc_vls);
-	(void)osgl_close(dmp);
+	(void)osgl_close(dmp, context);
 	return DM_NULL;
     }
 
@@ -519,7 +516,7 @@ osgl_open(Tcl_Interp *interp, int argc, char **argv)
 	    if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
 		bu_vls_free(&init_proc_vls);
 		bu_vls_free(&str);
-		(void)osgl_close(dmp);
+		(void)osgl_close(dmp, context);
 		return DM_NULL;
 	    } else {
 		Tcl_Obj *tclresult = Tcl_GetObjResult(interp);
@@ -532,7 +529,7 @@ osgl_open(Tcl_Interp *interp, int argc, char **argv)
 	    if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
 		bu_vls_free(&init_proc_vls);
 		bu_vls_free(&str);
-		(void)osgl_close(dmp);
+		(void)osgl_close(dmp, context);
 		return DM_NULL;
 	    } else {
 		Tcl_Obj *tclresult = Tcl_GetObjResult(interp);
@@ -550,47 +547,39 @@ osgl_open(Tcl_Interp *interp, int argc, char **argv)
 	}
     }
 
-    bu_vls_printf(&dmp->dm_tkName, "%s",
-		  (char *)Tk_Name(pubvars->xtkwin));
+    const char *winname = (*context->dm_window_name)(dmp, pubvars->xtkwin);
+    bu_vls_printf(&dmp->dm_tkName, "%s", winname);
 
-    /* Important - note that this is a bu_vls_sprintf, to clear the string */
-    bu_vls_sprintf(&str, "_init_dm %s %s\n",
-		  bu_vls_addr(&init_proc_vls),
-		  bu_vls_addr(&dmp->dm_pathName));
-
-    if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
+    if ((*context->dm_init)(dmp, bu_vls_cstr(&init_proc_vls)) == BRLCAD_ERROR) {
 	bu_vls_free(&init_proc_vls);
 	bu_vls_free(&str);
-	(void)osgl_close(dmp);
+	(void)osgl_close(dmp, context);
 	return DM_NULL;
     }
 
     bu_vls_free(&init_proc_vls);
     bu_vls_free(&str);
 
-    pubvars->dpy =
-	Tk_Display(pubvars->top);
+    pubvars->dpy = (Display *)(*context->dm_display)(dmp, pubvars->top);
 
     /* make sure there really is a display before proceeding. */
     if (!(pubvars->dpy)) {
 	bu_vls_free(&init_proc_vls);
 	bu_vls_free(&str);
-	(void)osgl_close(dmp);
+	(void)osgl_close(dmp, context);
 	return DM_NULL;
     }
 
-    Tk_GeometryRequest(pubvars->xtkwin,
-		       dmp->dm_width,
-		       dmp->dm_height);
+    (*context->dm_window_geom)(dmp, pubvars->xtkwin, &dmp->dm_width, &dmp->dm_height);
 
     pubvars->depth = mvars->depth;
 
-    Tk_MakeWindowExist(pubvars->xtkwin);
+    (*context->dm_window_make_exist)(dmp, pubvars->xtkwin);
 
-    pubvars->win = Tk_WindowId(pubvars->xtkwin);
+    pubvars->win = (*context->dm_window_id)(dmp, pubvars->xtkwin);
     dmp->dm_id = pubvars->win;
 
-    Tk_MapWindow(pubvars->xtkwin);
+    (*context->dm_window_map)(dmp, pubvars->xtkwin);
 
     // Init the Windata Variable that holds the handle for the Window to display OSG in.
     // Check the QOSGWidget.cpp example for more logic relevant to this.  Need to find
@@ -637,7 +626,7 @@ osgl_open(Tcl_Interp *interp, int argc, char **argv)
     if (privvars->fs == NULL) {
 	bu_log("dm-osgl: Failed to create font stash");
 	bu_vls_free(&init_proc_vls);
-	(void)osgl_close(dmp);
+	(void)osgl_close(dmp, context);
 	return DM_NULL;
     }
     privvars->fontNormal = FONS_INVALID;

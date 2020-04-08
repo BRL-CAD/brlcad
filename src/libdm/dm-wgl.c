@@ -241,6 +241,9 @@ wgl_open(Tcl_Interp *interp, struct dm_context *context, int argc, char *argv[])
     dmp->dm_vp = &default_viewscale;
 
     if ((tkwin = (*context->dm_window_main)(dmp)) == NULL) {
+	bu_free((void *)privvars, "privvars");
+	bu_free((void *)pubvars, "pubvars");
+	bu_free((void *)dmp, "dmp");
 	return DM_NULL;
     }
 
