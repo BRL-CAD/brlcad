@@ -230,7 +230,9 @@ typedef struct dm_internal dm;
 typedef void * dm_win;
 typedef void * dm_dpy;
 typedef long unsigned int dm_cmap;
+typedef long unsigned int dm_winid;
 typedef void * dm_visual_info;
+typedef unsigned long dm_pixmap;
 struct dm_context {
     /* Tk_MainWindow */
     dm_win (*dm_window_main)(dm *);
@@ -259,9 +261,11 @@ struct dm_context {
     /* Tk_Display */
     dm_dpy (*dm_display)(dm *, dm_win);
     /* Tk_GetPixmap */
-    // TODO
+    dm_pixmap (*dm_get_pixmap)(dm *, dm_dpy, dm_winid, dm_win, int width, int height);
+    /* Tk_FreePixmap */
+    void (*dm_free_pixmap)(dm *, dm_dpy, dm_pixmap);
     /* Tk_SetWindowBackground */
-    // TODO
+    void (*dm_window_set_bg)(dm *, dm_win, unsigned long);
 };
 
 __BEGIN_DECLS

@@ -619,12 +619,7 @@ X_open_dm(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
     (*context->dm_window_make_exist)(dmp, pubvars->xtkwin);
     pubvars->win = (*context->dm_window_id)(dmp, pubvars->xtkwin);
     dmp->dm_id = pubvars->win;
-    privars->pix =
-	Tk_GetPixmap(pubvars->dpy,
-		     pubvars->win,
-		     dmp->dm_width,
-		     dmp->dm_height,
-		     Tk_Depth(pubvars->xtkwin));
+    privars->pix = (Pixmap)(*context->dm_get_pixmap)(dmp, pubvars->dpy, pubvars->win, pubvars->xtkwin, dmp->dm_width, dmp->dm_height);
 #endif
 
     if (privars->is_trueColor) {
@@ -745,8 +740,7 @@ Skip_dials:
     (void)X_configureWin_guts(dmp, 1);
 
 #ifdef HAVE_TK
-    Tk_SetWindowBackground((Tk_Window)pubvars->xtkwin,
-			   privars->bg);
+    (*context->dm_window_set_bg)(dmp, pubvars->xtkwin, privars->bg);
     (*context->dm_window_map)(dmp, pubvars->xtkwin);
 #endif
 

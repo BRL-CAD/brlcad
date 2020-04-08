@@ -2751,6 +2751,29 @@ tk_display(dm *UNUSED(dmp), dm_win win)
     return (dm_dpy)Tk_Display((Tk_Window)win);
 }
 
+/* Tk_GetPixmap */
+static dm_pixmap
+tk_get_pixmap(dm *UNUSED(dmp), dm_dpy disp, dm_winid win_id, dm_win xtkwin, int width, int height)
+{
+    Pixmap p = Tk_GetPixmap((Display *)disp, (Window)win_id, width, height, Tk_Depth((Tk_Window)xtkwin));
+    return (dm_pixmap)p;
+}
+
+/* Tk_FreePixmap */
+static void
+tk_free_pixmap(dm *UNUSED(dmp), dm_dpy disp, dm_pixmap pmap)
+{
+    Tk_FreePixmap((Display *)disp, (Pixmap)pmap);
+}
+
+/* Tk_SetWindowBackground */
+static void
+tk_window_set_bg(dm *UNUSED(dmp), dm_win win, unsigned long bg)
+{
+    Tk_SetWindowBackground((Tk_Window)win, bg);
+}
+
+
 struct dm_context dm_tk_context = {
     /* Tk_MainWindow -> dm_window_main */
     &tk_window_main,
@@ -2790,6 +2813,15 @@ struct dm_context dm_tk_context = {
 
     /* dm_display -> Tk_Display */
     &tk_display,
+
+    /* dm_get_pixmap -> Tk_GetPixmap */
+    &tk_get_pixmap,
+
+    /* dm_free_pixmap -> Tk_FreePixmap */
+    &tk_free_pixmap,
+
+    /* dm_window_set_bg -> Tk_SetWindowBackground */
+    &tk_window_set_bg
 };
 
 
