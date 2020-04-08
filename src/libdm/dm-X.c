@@ -519,9 +519,7 @@ X_open_dm(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
 
 #ifdef HAVE_TK
 	/* Make xtkwin an embedded window */
-	pubvars->xtkwin =
-	    Tk_CreateWindow(interp, pubvars->top,
-			    cp + 1, (char *)NULL);
+	pubvars->xtkwin = (Tk_Window)((*context->dm_window_create_embedded)(dmp, pubvars->top, cp + 1));
 #endif
     }
 
@@ -610,9 +608,7 @@ X_open_dm(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
     }
 
 #ifdef HAVE_TK
-    Tk_GeometryRequest(pubvars->xtkwin,
-		       dmp->dm_width,
-		       dmp->dm_height);
+    (*context->dm_window_geom)(dmp, pubvars->xtkwin, &dmp->dm_width, &dmp->dm_height);
 #endif
 
     /* must do this before MakeExist */
@@ -623,8 +619,8 @@ X_open_dm(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
     }
 
 #ifdef HAVE_TK
-    Tk_MakeWindowExist(pubvars->xtkwin);
-    pubvars->win = Tk_WindowId(pubvars->xtkwin);
+    (*context->dm_window_make_exist)(dmp, pubvars->xtkwin);
+    pubvars->win = (*context->dm_window_id)(dmp, pubvars->xtkwin);
     dmp->dm_id = pubvars->win;
     privars->pix =
 	Tk_GetPixmap(pubvars->dpy,
@@ -754,7 +750,7 @@ Skip_dials:
 #ifdef HAVE_TK
     Tk_SetWindowBackground(pubvars->xtkwin,
 			   privars->bg);
-    Tk_MapWindow(pubvars->xtkwin);
+    (*context->dm_window_map)(dmp, pubvars->xtkwin);
 #endif
 
     return dmp;
