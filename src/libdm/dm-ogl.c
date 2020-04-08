@@ -819,11 +819,7 @@ ogl_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
     bu_vls_printf(&dmp->dm_tkName, "%s",
 		  (char *)Tk_Name(pubvars->xtkwin));
 
-    bu_vls_printf(&str, "_init_dm %s %s\n",
-		  bu_vls_addr(&init_proc_vls),
-		  bu_vls_addr(&dmp->dm_pathName));
-
-    if (Tcl_Eval(interp, bu_vls_addr(&str)) == BRLCAD_ERROR) {
+    if ((*context->dm_init)(dmp, bu_vls_cstr(&init_proc_vls)) == BRLCAD_ERROR) {
 	bu_vls_free(&init_proc_vls);
 	bu_vls_free(&str);
 	(void)ogl_close(dmp, context);
@@ -833,8 +829,7 @@ ogl_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
     bu_vls_free(&init_proc_vls);
     bu_vls_free(&str);
 
-    pubvars->dpy =
-	Tk_Display(pubvars->top);
+    pubvars->dpy = (Display *)(*context->dm_display)(dmp, pubvars->top);
 
     /* make sure there really is a display before proceeding. */
     if (!(pubvars->dpy)) {
@@ -844,9 +839,7 @@ ogl_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
 	return DM_NULL;
     }
 
-    Tk_GeometryRequest(pubvars->xtkwin,
-		       dmp->dm_width,
-		       dmp->dm_height);
+    (*context->dm_window_geom)(dmp, pubvars->xtkwin, &dmp->dm_width, &dmp->dm_height);
 
     /* must do this before MakeExist */
     if ((pubvars->vip=ogl_choose_visual(dmp, pubvars->xtkwin)) == NULL) {
@@ -857,7 +850,7 @@ ogl_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
 
     pubvars->depth = mvars->depth;
 
-    Tk_MakeWindowExist(pubvars->xtkwin);
+    (*context->dm_window_make_exist)(dmp, pubvars->xtkwin);
 
     pubvars->win = Tk_WindowId(pubvars->xtkwin);
     dmp->dm_id = pubvars->win;
@@ -931,7 +924,7 @@ Done:
 
 #endif /* HAVE_X11_EXTENSIONS_XINPUT_H */
 
-    Tk_MapWindow(pubvars->xtkwin);
+    (*context->dm_window_map)(dmp, pubvars->xtkwin);
 
     if (!glXMakeCurrent(pubvars->dpy, pubvars->win, privvars->glxc)) {
 	bu_log("ogl_open: Couldn't make context current\n");
