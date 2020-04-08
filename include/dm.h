@@ -232,6 +232,7 @@ typedef void * dm_dpy;
 typedef long unsigned int dm_cmap;
 typedef long unsigned int dm_winid;
 typedef void * dm_visual_info;
+typedef void * dm_screen;
 typedef unsigned long dm_pixmap;
 struct dm_context {
     /* Tk_MainWindow */
@@ -266,6 +267,8 @@ struct dm_context {
     void (*dm_free_pixmap)(dm *, dm_dpy, dm_pixmap);
     /* Tk_SetWindowBackground */
     void (*dm_window_set_bg)(dm *, dm_win, unsigned long);
+    /* Tk_Screen */
+    dm_screen (*dm_get_screen)(dm *, dm_win);
 };
 
 __BEGIN_DECLS

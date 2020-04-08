@@ -2773,6 +2773,13 @@ tk_window_set_bg(dm *UNUSED(dmp), dm_win win, unsigned long bg)
     Tk_SetWindowBackground((Tk_Window)win, bg);
 }
 
+/* TK_Screen */
+static dm_screen
+tk_get_screen(dm *UNUSED(dmp), dm_win win)
+{
+    return (dm_screen)Tk_Screen((Tk_Window)win);
+}
+
 
 struct dm_context dm_tk_context = {
     /* Tk_MainWindow -> dm_window_main */
@@ -2821,7 +2828,10 @@ struct dm_context dm_tk_context = {
     &tk_free_pixmap,
 
     /* dm_window_set_bg -> Tk_SetWindowBackground */
-    &tk_window_set_bg
+    &tk_window_set_bg,
+
+    /* dm_screen -> Tk_Screen */
+    &tk_get_screen
 };
 
 
