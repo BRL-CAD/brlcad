@@ -380,8 +380,7 @@ X_close(struct dm_internal *dmp, struct dm_context *context)
 
 #ifdef HAVE_TK
 	if (privars->pix)
-	    Tk_FreePixmap(pubvars->dpy,
-			  privars->pix);
+	    (*context->dm_free_pixmap)(dmp, pubvars->dpy, privars->pix);
 #endif
 
 	/*XXX Possibly need to free the colormap */
@@ -430,17 +429,11 @@ X_open_dm(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
     struct dm_internal *dmp = (struct dm_internal *)NULL;
-    Tk_Window tkwin = (Tk_Window)NULL;
+    dm_win tkwin = NULL;
     Screen *screen = (Screen *)NULL;
 
     struct dm_xvars *pubvars = NULL;
     struct x_vars *privars = NULL;
-
-#ifdef HAVE_TK
-    if ((tkwin = Tk_MainWindow(interp)) == NULL) {
-	return DM_NULL;
-    }
-#endif
 
     BU_ALLOC(dmp, struct dm_internal);
 
@@ -452,6 +445,12 @@ X_open_dm(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
 
     BU_ALLOC(dmp->dm_vars.priv_vars, struct x_vars);
     privars = (struct x_vars *)dmp->dm_vars.priv_vars;
+
+#ifdef HAVE_TK
+    if ((tkwin = (*context->dm_window_main)(dmp)) == NULL) {
+	return DM_NULL;
+    }
+#endif
 
     bu_vls_init(&dmp->dm_pathName);
     bu_vls_init(&dmp->dm_tkName);
@@ -486,9 +485,8 @@ X_open_dm(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
     if (dmp->dm_top) {
 #ifdef HAVE_TK
 	/* Make xtkwin a toplevel window */
-	pubvars->xtkwin = Tk_CreateWindowFromPath(interp, tkwin,
-						  bu_vls_addr(&dmp->dm_pathName),
-						  bu_vls_addr(&dmp->dm_dName));
+	pubvars->xtkwin = (Tk_Window)(*context->dm_window_create_from_path)(dmp, tkwin,
+		bu_vls_cstr(&dmp->dm_pathName), bu_vls_cstr(&dmp->dm_dName));
 	pubvars->top = pubvars->xtkwin;
 #endif
     } else {
@@ -496,15 +494,14 @@ X_open_dm(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
 
 	cp = strrchr(bu_vls_addr(&dmp->dm_pathName), (int)'.');
 	if (cp == bu_vls_addr(&dmp->dm_pathName)) {
-	    pubvars->top = tkwin;
+	    pubvars->top = (Tk_Window)tkwin;
 	} else {
 	    struct bu_vls top_vls = BU_VLS_INIT_ZERO;
 
 	    bu_vls_strncpy(&top_vls, (const char *)bu_vls_addr(&dmp->dm_pathName), cp - bu_vls_addr(&dmp->dm_pathName));
 
 #ifdef HAVE_TK
-	    pubvars->top =
-		Tk_NameToWindow(interp, bu_vls_addr(&top_vls), tkwin);
+	    pubvars->top = (Tk_Window)(*context->dm_window_from_name)(dmp, bu_vls_cstr(&top_vls), tkwin);
 #endif
 	    bu_vls_free(&top_vls);
 	}
@@ -522,15 +519,12 @@ X_open_dm(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
     }
 
 #ifdef HAVE_TK
-    bu_vls_printf(&dmp->dm_tkName, "%s",
-		  (char *)Tk_Name(pubvars->xtkwin));
+    const char *winname = (*context->dm_window_name)(dmp, pubvars->xtkwin);
+    bu_vls_printf(&dmp->dm_tkName, "%s", winname);
 #endif
 
-    bu_vls_printf(&str, "_init_dm %s %s\n",
-		  bu_vls_addr(&init_proc_vls),
-		  bu_vls_addr(&dmp->dm_pathName));
-
-    if (Tcl_Eval(interp, bu_vls_addr(&str)) == BRLCAD_ERROR) {
+    if ((*context->dm_init)(dmp, bu_vls_cstr(&init_proc_vls)) == BRLCAD_ERROR) {
+	bu_vls_free(&init_proc_vls);
 	bu_vls_free(&str);
 	(void)X_close(dmp, context);
 	return DM_NULL;
@@ -541,7 +535,7 @@ X_open_dm(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
 
     pubvars->dpy = NULL;
 #ifdef HAVE_TK
-    pubvars->dpy = Tk_Display(pubvars->top);
+    pubvars->dpy = (Display *)(*context->dm_display)(dmp, pubvars->top);
 #endif
 
     /* make sure there really is a display before proceeding. */
@@ -556,7 +550,7 @@ X_open_dm(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
     if (!screen) {
 #ifdef HAVE_TK
 	/* failed to get a default screen, try harder */
-	screen = Tk_Screen(pubvars->top);
+	screen = (Screen *)(*context->dm_get_screen)(dmp, pubvars->top);
 #endif
     }
 
