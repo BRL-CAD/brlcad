@@ -604,21 +604,21 @@ ogl_choose_visual(struct dm_internal *dmp, Tk_Window tkwin)
  * Gracefully release the display.
  */
 HIDDEN int
-ogl_close(struct dm_internal *dmp, struct dm_context *UNUSED(context))
+ogl_close(struct dm_internal *dmp, struct dm_context *context)
 {
-    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy) {
-	if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc) {
-	    glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy, None, NULL);
-	    glXDestroyContext(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc);
+    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
+    struct ogl_vars *privvars = (struct ogl_vars *)dmp->dm_vars.priv_vars;
+    if (pubvars->dpy) {
+	if (privvars->glxc) {
+	    glXMakeCurrent(pubvars->dpy, None, NULL);
+	    glXDestroyContext(pubvars->dpy, privvars->glxc);
 	}
 
-	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap)
-	    XFreeColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap);
+	if (pubvars->cmap)
+	    XFreeColormap(pubvars->dpy, pubvars->cmap);
 
-	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)
-	    Tk_DestroyWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
+	if (pubvars->xtkwin)
+	    (*context->dm_window_destroy)(dmp, pubvars->xtkwin);
     }
 
     bu_vls_free(&dmp->dm_pathName);
@@ -787,11 +787,8 @@ ogl_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
 
     if (dmp->dm_top) {
 	/* Make xtkwin a toplevel window */
-	pubvars->xtkwin =
-	    Tk_CreateWindowFromPath(interp,
-				    (Tk_Window)tkwin,
-				    bu_vls_addr(&dmp->dm_pathName),
-				    bu_vls_addr(&dmp->dm_dName));
+	pubvars->xtkwin = (Tk_Window)(*context->dm_window_create_from_path)(dmp, tkwin,
+	       	bu_vls_cstr(&dmp->dm_pathName), bu_vls_cstr(&dmp->dm_dName));
 	pubvars->top = pubvars->xtkwin;
     } else {
 	char *cp;
@@ -804,15 +801,12 @@ ogl_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
 
 	    bu_vls_strncpy(&top_vls, (const char *)bu_vls_addr(&dmp->dm_pathName), cp - bu_vls_addr(&dmp->dm_pathName));
 
-	    pubvars->top =
-		Tk_NameToWindow(interp, bu_vls_addr(&top_vls), (Tk_Window)tkwin);
+	    pubvars->top = (Tk_Window)(*context->dm_window_from_name)(dmp, bu_vls_cstr(&top_vls), tkwin);
 	    bu_vls_free(&top_vls);
 	}
 
 	/* Make xtkwin an embedded window */
-	pubvars->xtkwin =
-	    Tk_CreateWindow(interp, pubvars->top,
-			    cp + 1, (char *)NULL);
+	pubvars->xtkwin = (Tk_Window)(*context->dm_window_create_embedded)(dmp, pubvars->top, cp + 1);
     }
 
     if (pubvars->xtkwin == NULL) {
