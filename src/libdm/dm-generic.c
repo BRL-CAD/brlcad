@@ -55,10 +55,6 @@ extern dm *X_open_dm(Tcl_Interp *interp, struct dm_context *context, int argc, c
 #  endif
 #endif /* DM_X */
 
-#ifdef DM_TK
-extern dm *tk_open_dm(Tcl_Interp *interp, int argc, const char **argv);
-#endif /* DM_TK */
-
 #ifdef DM_OGL
 #  if defined(HAVE_TK)
 extern dm *ogl_open(Tcl_Interp *interp, struct dm_context *context, int argc, const char **argv);
@@ -129,10 +125,6 @@ dm_open(Tcl_Interp *interp, struct dm_context *context, int type, int argc, cons
 	case DM_TYPE_X:
 	    return X_open_dm(interp, context, argc, argv);
 #  endif
-#endif
-#ifdef DM_TK
-	case DM_TYPE_TK:
-	    return tk_open_dm(interp, argc, argv);
 #endif
 #ifdef DM_OGL
 #  if defined(HAVE_TK)

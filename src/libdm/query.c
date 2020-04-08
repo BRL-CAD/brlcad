@@ -98,15 +98,6 @@ dm_validXType(const char *dpy_string, const char *name)
 	return 0;
     }
 
-    if (BU_STR_EQUAL(name, "tk")) {
-#ifdef DM_TK
-	return 1;
-#else
-	bu_log("Specified display type [%s] is not available in this compilation.", name);
-#endif /* DM_TK */
-	return 0;
-    }
-
     return 0;
 }
 
@@ -163,10 +154,6 @@ dm_bestXType(const char *dpy_string)
     }
 #endif
 
-#ifdef DM_TK
-    return "tk";
-#endif
-
 #ifdef DM_RTGL
     {
 	if (dpy_string) {
@@ -214,9 +201,6 @@ dm_default_type()
     return DM_TYPE_X;
 #endif
 
-#ifdef DM_TK
-    return DM_TYPE_TK;
-#endif
     return DM_TYPE_NULL;
 }
 

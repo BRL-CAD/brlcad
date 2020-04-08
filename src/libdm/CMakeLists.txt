@@ -55,13 +55,6 @@ if(BRLCAD_ENABLE_RTGL)
   set_property(SOURCE dm-rtgl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 endif(BRLCAD_ENABLE_RTGL)
 
-if(BRLCAD_ENABLE_TK AND NOT WIN32)
-  list(APPEND libdm_DEFINES DM_TK IF_TK)
-  set(DM_TKLIB ${TCL_LIBRARY} ${TK_LIBRARY})
-  set(dmtk_srcs dm-tk.c)
-  set_property(SOURCE dm-tk.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
-endif(BRLCAD_ENABLE_TK AND NOT WIN32)
-
 if(BRLCAD_ENABLE_QT)
   CHECK_CXX_FLAG(Wno-float-equal)
 
@@ -95,7 +88,6 @@ set(LIBDM_SRCS
   ${dmogl_srcs}
   ${dmosg_srcs}
   ${dmrtgl_srcs}
-  ${dmtk_srcs}
   ${dmqt_srcs}
   adc.c
   axes.c
@@ -117,7 +109,7 @@ set(LIBDM_SRCS
   vers.c
   )
 set_property(SOURCE dm_obj.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
-BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "librt;libfb;${DM_X_LIBS};${DM_TKLIB};${DM_EXTRA_LIBS};${PNG_LIBRARIES}")
+BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "librt;libfb;${DM_X_LIBS};${DM_EXTRA_LIBS};${PNG_LIBRARIES}")
 set_target_properties(libdm PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 if(BRLCAD_ENABLE_OSG)
@@ -152,8 +144,6 @@ set(libdm_ignore_files
   dm-qt.h
   dm-rtgl.c
   dm-rtgl.h
-  dm-tk.c
-  dm-tk.h
   dm-wgl.c
   dm-wgl.h
   dm_private.h
