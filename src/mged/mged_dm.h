@@ -37,6 +37,11 @@
 #include "./menu.h" /* struct menu_item */
 #include "./scroll.h" /* struct scroll_item */
 
+#include "tcl.h"
+#ifdef HAVE_TK
+#  include "tk.h"
+#  define HAVE_X11_TYPES 1
+#endif
 
 #ifndef COMMA
 #  define COMMA ','
