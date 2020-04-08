@@ -985,7 +985,7 @@ static int
 cmd_exit(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char **UNUSED(argv))
 {
     if (dmp != DM_NULL)
-	dm_close(dmp);
+	dm_close(dmp, &dm_tk_context);
 
     bu_exit (0, NULL);
 

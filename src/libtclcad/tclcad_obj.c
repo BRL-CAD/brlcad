@@ -6090,7 +6090,7 @@ to_deleteViewProc(ClientData clientData)
     bu_vls_free(&gdvp->gdv_name);
     bu_vls_free(&gdvp->gdv_callback);
     bu_vls_free(&gdvp->gdv_edit_motion_delta_callback);
-    (void)dm_close(gdvp->gdv_dmp);
+    (void)dm_close(gdvp->gdv_dmp, &dm_tk_context);
     bu_free((void *)gdvp->gdv_view, "ged_view");
     to_close_fbs(gdvp);
     bu_free((void *)gdvp, "ged_dm_view");

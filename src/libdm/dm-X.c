@@ -376,7 +376,7 @@ X_choose_visual(struct dm_internal *dmp)
  * Gracefully release the display.
  */
 HIDDEN int
-X_close(struct dm_internal *dmp)
+X_close(struct dm_internal *dmp, struct dm_context *UNUSED(context))
 {
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
@@ -420,7 +420,7 @@ X_close(struct dm_internal *dmp)
  *
  */
 struct dm_internal *
-X_open_dm(Tcl_Interp *interp, int argc, char **argv)
+X_open_dm(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
 {
     static int count = 0;
     int make_square = -1;
@@ -527,7 +527,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 
     if (pubvars->xtkwin == NULL) {
 	bu_log("X_open_dm: Failed to open %s\n", bu_vls_addr(&dmp->dm_pathName));
-	(void)X_close(dmp);
+	(void)X_close(dmp, context);
 	return DM_NULL;
     }
 
@@ -542,7 +542,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 
     if (Tcl_Eval(interp, bu_vls_addr(&str)) == BRLCAD_ERROR) {
 	bu_vls_free(&str);
-	(void)X_close(dmp);
+	(void)X_close(dmp, context);
 	return DM_NULL;
     }
 
@@ -557,7 +557,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     /* make sure there really is a display before proceeding. */
     if (!pubvars->dpy) {
 	bu_log("ERROR: Unable to attach to display (%s)\n", bu_vls_addr(&dmp->dm_pathName));
-	(void)X_close(dmp);
+	(void)X_close(dmp, context);
 	return DM_NULL;
     }
 
@@ -573,7 +573,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     /* make sure there really is a screen before processing. */
     if (!screen) {
 	bu_log("ERROR: Unable to attach to screen (%s)\n", bu_vls_addr(&dmp->dm_pathName));
-	(void)X_close(dmp);
+	(void)X_close(dmp, context);
 	return DM_NULL;
     }
 
@@ -618,7 +618,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     /* must do this before MakeExist */
     if ((pubvars->vip = X_choose_visual(dmp)) == NULL) {
 	bu_log("X_open_dm: Can't get an appropriate visual.\n");
-	(void)X_close(dmp);
+	(void)X_close(dmp, context);
 	return DM_NULL;
     }
 

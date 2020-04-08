@@ -229,7 +229,7 @@ typedef struct dm_internal dm;
  * initialize and manipulate the display context */
 typedef void * dm_win;
 typedef void * dm_dpy;
-typedef void * dm_cmap;
+typedef long unsigned int dm_cmap;
 typedef void * dm_visual_info;
 struct dm_context {
     /* Tk_MainWindow */
@@ -258,6 +258,10 @@ struct dm_context {
     void (*dm_window_geom)(dm *, dm_win, int *width, int *height);
     /* Tk_Display */
     dm_dpy (*dm_display)(dm *, dm_win);
+    /* Tk_GetPixmap */
+    // TODO
+    /* Tk_SetWindowBackground */
+    // TODO
 };
 
 __BEGIN_DECLS
@@ -374,7 +378,7 @@ DM_EXPORT extern struct bu_vls *dm_list_types(const char separator); /* free ret
 DM_EXPORT extern unsigned long dm_get_id(dm *dmp);
 DM_EXPORT extern void dm_set_id(dm *dmp, unsigned long new_id);
 DM_EXPORT extern int dm_get_displaylist(dm *dmp);
-DM_EXPORT extern int dm_close(dm *dmp);
+DM_EXPORT extern int dm_close(dm *dmp, struct dm_context *context);
 DM_EXPORT extern unsigned char *dm_get_bg(dm *dmp);
 DM_EXPORT extern int dm_set_bg(dm *dmp, unsigned char r, unsigned char g, unsigned char b);
 DM_EXPORT extern unsigned char *dm_get_fg(dm *dmp);

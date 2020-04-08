@@ -68,7 +68,7 @@ static mat_t mod_mat;
  * Gracefully release the display.
  */
 HIDDEN int
-ps_close(dm *dmp)
+ps_close(dm *dmp, struct dm_context *UNUSED(context))
 {
     if (!((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp)
 	return BRLCAD_ERROR;
@@ -634,7 +634,7 @@ ps_open(Tcl_Interp *interp, int argc, const char *argv[])
 		    argv++;
 		    if (argv[0] == (char *)0 || argv[0][0] == '-') {
 			Tcl_AppendStringsToObj(obj, ps_usage, (char *)0);
-			(void)ps_close(dmp);
+			(void)ps_close(dmp, NULL);
 
 			Tcl_SetObjResult(interp, obj);
 			return DM_NULL;
@@ -649,7 +649,7 @@ ps_open(Tcl_Interp *interp, int argc, const char *argv[])
 		    argv++;
 		    if (argv[0] == (char *)0 || argv[0][0] == '-') {
 			Tcl_AppendStringsToObj(obj, ps_usage, (char *)0);
-			(void)ps_close(dmp);
+			(void)ps_close(dmp, NULL);
 
 			Tcl_SetObjResult(interp, obj);
 			return DM_NULL;
@@ -664,7 +664,7 @@ ps_open(Tcl_Interp *interp, int argc, const char *argv[])
 		    argv++;
 		    if (argv[0] == (char *)0 || argv[0][0] == '-') {
 			Tcl_AppendStringsToObj(obj, ps_usage, (char *)0);
-			(void)ps_close(dmp);
+			(void)ps_close(dmp, NULL);
 
 			Tcl_SetObjResult(interp, obj);
 			return DM_NULL;
@@ -682,7 +682,7 @@ ps_open(Tcl_Interp *interp, int argc, const char *argv[])
 			argv++;
 			if (argv[0] == (char *)0 || argv[0][0] == '-') {
 			    Tcl_AppendStringsToObj(obj, ps_usage, (char *)0);
-			    (void)ps_close(dmp);
+			    (void)ps_close(dmp, NULL);
 
 			    Tcl_SetObjResult(interp, obj);
 			    return DM_NULL;
@@ -700,7 +700,7 @@ ps_open(Tcl_Interp *interp, int argc, const char *argv[])
 		    argv++;
 		    if (argv[0] == (char *)0 || argv[0][0] == '-') {
 			Tcl_AppendStringsToObj(obj, ps_usage, (char *)0);
-			(void)ps_close(dmp);
+			(void)ps_close(dmp, NULL);
 
 			Tcl_SetObjResult(interp, obj);
 			return DM_NULL;
@@ -713,7 +713,7 @@ ps_open(Tcl_Interp *interp, int argc, const char *argv[])
 		break;
 	    default:
 		Tcl_AppendStringsToObj(obj, ps_usage, (char *)0);
-		(void)ps_close(dmp);
+		(void)ps_close(dmp, NULL);
 
 		Tcl_SetObjResult(interp, obj);
 		return DM_NULL;
@@ -723,7 +723,7 @@ ps_open(Tcl_Interp *interp, int argc, const char *argv[])
 
     if (argv[0] == (char *)0) {
 	Tcl_AppendStringsToObj(obj, "no filename specified\n", (char *)NULL);
-	(void)ps_close(dmp);
+	(void)ps_close(dmp, NULL);
 
 	Tcl_SetObjResult(interp, obj);
 	return DM_NULL;
@@ -736,7 +736,7 @@ ps_open(Tcl_Interp *interp, int argc, const char *argv[])
 	Tcl_AppendStringsToObj(obj, "f_ps: Error opening file - ",
 			       ((struct ps_vars *)dmp->dm_vars.priv_vars)->fname,
 			       "\n", (char *)NULL);
-	(void)ps_close(dmp);
+	(void)ps_close(dmp, NULL);
 
 	Tcl_SetObjResult(interp, obj);
 	return DM_NULL;

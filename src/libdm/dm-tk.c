@@ -80,7 +80,7 @@ extern int vectorThreshold;	/* defined in libdm/dm-generic.c */
  * Gracefully release the display.
  */
 HIDDEN int
-tk_close(struct dm_internal *dmp)
+tk_close(struct dm_internal *dmp, struct dm_context *UNUSED(context))
 {
     if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy) {
 	if (((struct x_vars *)dmp->dm_vars.priv_vars)->gc)
@@ -907,7 +907,7 @@ struct dm_internal dm_tk = {
 };
 
 
-struct dm_internal *tk_open_dm(Tcl_Interp *interp, int argc, char **argv);
+struct dm_internal *tk_open_dm(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv);
 
 /* Display Manager package interface */
 
@@ -917,7 +917,7 @@ struct dm_internal *tk_open_dm(Tcl_Interp *interp, int argc, char **argv);
  *
  */
 struct dm_internal *
-tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
+tk_open_dm(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
 {
     static int count = 0;
     int make_square = -1;
@@ -1007,7 +1007,7 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
 
     if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin == NULL) {
 	bu_log("tk_open: Failed to open %s\n", bu_vls_addr(&dmp->dm_pathName));
-	(void)tk_close(dmp);
+	(void)tk_close(dmp, context);
 	return DM_NULL;
     }
 
@@ -1020,7 +1020,7 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
 
     if (Tcl_Eval(interp, bu_vls_addr(&str)) == BRLCAD_ERROR) {
 	bu_vls_free(&str);
-	(void)tk_close(dmp);
+	(void)tk_close(dmp, context);
 
 	return DM_NULL;
     }
@@ -1034,7 +1034,7 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
 
     /* make sure there really is a display before proceeding. */
     if (!dpy) {
-	(void)tk_close(dmp);
+	(void)tk_close(dmp, context);
 	return DM_NULL;
     }
 

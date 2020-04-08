@@ -389,7 +389,7 @@ release(char *name, int need_close)
 	curr_dm_list->dml_tie->cl_tie = (struct dm_list *)NULL;
 
     if (need_close)
-	dm_close(DMP);
+	dm_close(DMP, &dm_tk_context);
 
     RT_FREE_VLIST(&curr_dm_list->dml_p_vlist);
     BU_LIST_DEQUEUE(&curr_dm_list->l);

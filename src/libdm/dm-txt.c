@@ -53,7 +53,7 @@ txt_open(Tcl_Interp *interp, int argc, const char **argv)
 
 
 HIDDEN int
-txt_close(dm *UNUSED(dmp))
+txt_close(dm *UNUSED(dmp), struct dm_context *UNUSED(context))
 {
     bu_log("close called\n");
     return 0;

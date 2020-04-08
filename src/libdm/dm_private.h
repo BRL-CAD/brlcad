@@ -63,7 +63,7 @@ struct modifiable_ogl_vars {
  * Interface to a specific Display Manager
  */
 struct dm_internal {
-    int (*dm_close)(struct dm_internal *dmp);
+    int (*dm_close)(struct dm_internal *dmp, struct dm_context *);
     int (*dm_drawBegin)(struct dm_internal *dmp);	/**< @brief formerly dmr_prolog */
     int (*dm_drawEnd)(struct dm_internal *dmp);		/**< @brief formerly dmr_epilog */
     int (*dm_normal)(struct dm_internal *dmp);

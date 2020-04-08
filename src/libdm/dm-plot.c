@@ -72,7 +72,7 @@ static mat_t mod_mat;
  * Gracefully release the display.
  */
 HIDDEN int
-plot_close(dm *dmp)
+plot_close(dm *dmp, struct dm_context *UNUSED(context))
 {
     if (!dmp)
 	return BRLCAD_ERROR;
@@ -652,7 +652,7 @@ plot_open(Tcl_Interp *interp, int argc, const char *argv[])
 		break;
 	    default:
 		Tcl_AppendStringsToObj(obj, "bad PLOT option ", argv[0], "\n", (char *)NULL);
-		(void)plot_close(dmp);
+		(void)plot_close(dmp, NULL);
 
 		Tcl_SetObjResult(interp, obj);
 		return DM_NULL;
@@ -661,7 +661,7 @@ plot_open(Tcl_Interp *interp, int argc, const char *argv[])
     }
     if (argv[0] == (char *)0) {
 	Tcl_AppendStringsToObj(obj, "no filename or filter specified\n", (char *)NULL);
-	(void)plot_close(dmp);
+	(void)plot_close(dmp, NULL);
 
 	Tcl_SetObjResult(interp, obj);
 	return DM_NULL;
@@ -683,7 +683,7 @@ plot_open(Tcl_Interp *interp, int argc, const char *argv[])
 	if ((((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp =
 	     popen(bu_vls_addr(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls), "w")) == NULL) {
 	    perror(bu_vls_addr(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls));
-	    (void)plot_close(dmp);
+	    (void)plot_close(dmp, NULL);
 	    Tcl_SetObjResult(interp, obj);
 	    return DM_NULL;
 	}
@@ -695,7 +695,7 @@ plot_open(Tcl_Interp *interp, int argc, const char *argv[])
 	if ((((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp =
 	     fopen(bu_vls_addr(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls), "wb")) == NULL) {
 	    perror(bu_vls_addr(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls));
-	    (void)plot_close(dmp);
+	    (void)plot_close(dmp, NULL);
 	    Tcl_SetObjResult(interp, obj);
 	    return DM_NULL;
 	}

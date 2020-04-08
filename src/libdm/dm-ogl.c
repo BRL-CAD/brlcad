@@ -102,7 +102,7 @@ HIDDEN XVisualInfo *ogl_choose_visual(struct dm_internal *dmp, Tk_Window tkwin);
 #define IRBOUND 4095.9	/* Max magnification in Rot matrix */
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
-HIDDEN int ogl_close(struct dm_internal *dmp);
+HIDDEN int ogl_close(struct dm_internal *dmp, struct dm_context *context);
 HIDDEN int ogl_drawBegin(struct dm_internal *dmp);
 HIDDEN int ogl_drawEnd(struct dm_internal *dmp);
 HIDDEN int ogl_normal(struct dm_internal *dmp);
@@ -604,7 +604,7 @@ ogl_choose_visual(struct dm_internal *dmp, Tk_Window tkwin)
  * Gracefully release the display.
  */
 HIDDEN int
-ogl_close(struct dm_internal *dmp)
+ogl_close(struct dm_internal *dmp, struct dm_context *UNUSED(context))
 {
     if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy) {
 	if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc) {
@@ -743,7 +743,7 @@ ogl_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
 
     if ((tmp_dpy = XOpenDisplay(bu_vls_addr(&dmp->dm_dName))) == NULL) {
 	bu_vls_free(&init_proc_vls);
-	(void)ogl_close(dmp);
+	(void)ogl_close(dmp, context);
 	return DM_NULL;
     }
 
@@ -753,7 +753,7 @@ ogl_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
 
 	if (!XQueryExtension(tmp_dpy, "GLX", &return_val, &return_val, &return_val)) {
 	    bu_vls_free(&init_proc_vls);
-	    (void)ogl_close(dmp);
+	    (void)ogl_close(dmp, context);
 	    return DM_NULL;
 	}
     }
@@ -818,7 +818,7 @@ ogl_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
     if (pubvars->xtkwin == NULL) {
 	bu_log("dm-Ogl: Failed to open %s\n", bu_vls_addr(&dmp->dm_pathName));
 	bu_vls_free(&init_proc_vls);
-	(void)ogl_close(dmp);
+	(void)ogl_close(dmp, context);
 	return DM_NULL;
     }
 
@@ -832,7 +832,7 @@ ogl_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
     if (Tcl_Eval(interp, bu_vls_addr(&str)) == BRLCAD_ERROR) {
 	bu_vls_free(&init_proc_vls);
 	bu_vls_free(&str);
-	(void)ogl_close(dmp);
+	(void)ogl_close(dmp, context);
 	return DM_NULL;
     }
 
@@ -846,7 +846,7 @@ ogl_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
     if (!(pubvars->dpy)) {
 	bu_vls_free(&init_proc_vls);
 	bu_vls_free(&str);
-	(void)ogl_close(dmp);
+	(void)ogl_close(dmp, context);
 	return DM_NULL;
     }
 
@@ -857,7 +857,7 @@ ogl_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
     /* must do this before MakeExist */
     if ((pubvars->vip=ogl_choose_visual(dmp, pubvars->xtkwin)) == NULL) {
 	bu_log("ogl_open: Can't get an appropriate visual.\n");
-	(void)ogl_close(dmp);
+	(void)ogl_close(dmp, context);
 	return DM_NULL;
     }
 
@@ -872,7 +872,7 @@ ogl_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
     if ((privvars->glxc =
 	 glXCreateContext(pubvars->dpy, pubvars->vip, (GLXContext)NULL, GL_TRUE))==NULL) {
 	bu_log("ogl_open: couldn't create glXContext.\n");
-	(void)ogl_close(dmp);
+	(void)ogl_close(dmp, context);
 	return DM_NULL;
     }
 
@@ -941,14 +941,14 @@ Done:
 
     if (!glXMakeCurrent(pubvars->dpy, pubvars->win, privvars->glxc)) {
 	bu_log("ogl_open: Couldn't make context current\n");
-	(void)ogl_close(dmp);
+	(void)ogl_close(dmp, context);
 	return DM_NULL;
     }
 
     /* display list (fontOffset + char) will display a given ASCII char */
     if ((privvars->fontOffset = glGenLists(128))==0) {
 	bu_log("dm-ogl: Can't make display lists for font.\n");
-	(void)ogl_close(dmp);
+	(void)ogl_close(dmp, context);
 	return DM_NULL;
     }
 

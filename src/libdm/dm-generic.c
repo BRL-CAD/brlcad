@@ -439,10 +439,10 @@ dm_set_light_flag(dm *dmp, int val)
 }
 
 int
-dm_close(dm *dmp)
+dm_close(dm *dmp, struct dm_context *context)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_close(dmp);
+    return dmp->dm_close(dmp, context);
 }
 
 unsigned char *

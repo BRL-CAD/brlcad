@@ -50,6 +50,7 @@
 #include "rt/geom.h"
 #include "rt/solid.h"
 #include "dm.h"
+#include "tclcad.h"
 
 #ifdef DM_X
 #  include "dm/dm_xvars.h"
@@ -2568,7 +2569,7 @@ dmo_deleteProc(ClientData clientData)
 #endif
 
     bu_vls_free(&dmop->dmo_name);
-    (void)dm_close(dmop->dmo_dmp);
+    (void)dm_close(dmop->dmo_dmp, &dm_tk_context);
     BU_LIST_DEQUEUE(&dmop->l);
     bu_free((void *)dmop, "dmo_deleteProc: dmop");
 
@@ -2712,9 +2713,9 @@ tk_window_map(dm *UNUSED(dmp), dm_win win)
 static int
 tk_window_set_visual(dm *UNUSED(dmp), dm_win win, dm_visual_info visual, dm_cmap cmap)
 {
-    Colormap *color_map = (Colormap *)cmap;
+    Colormap color_map = (Colormap )cmap;
     XVisualInfo *xvis = (XVisualInfo *)visual;
-    return Tk_SetWindowVisual((Tk_Window)(win), xvis->visual, xvis->depth, *color_map);
+    return Tk_SetWindowVisual((Tk_Window)(win), xvis->visual, xvis->depth, color_map);
 }
 
 /* Tk_DestroyWindow */

@@ -35,7 +35,7 @@
 
 
 int
-null_close(struct dm_internal *UNUSED(dmp))
+null_close(struct dm_internal *UNUSED(dmp), struct dm_context *UNUSED(context))
 {
     return 0;
 }

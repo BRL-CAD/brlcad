@@ -35,7 +35,7 @@ DM_EXPORT extern dm dm_null;
 
 
 DM_EXPORT extern int
-null_close(dm *dmp);
+null_close(dm *dmp, struct dm_context *context);
 
 
 DM_EXPORT extern int

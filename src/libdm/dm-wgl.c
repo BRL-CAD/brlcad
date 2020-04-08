@@ -207,7 +207,7 @@ WGLEventProc(ClientData clientData, XEvent *UNUSED(eventPtr))
  *
  */
 dm *
-wgl_open(Tcl_Interp *interp, int argc, char *argv[])
+wgl_open(Tcl_Interp *interp, struct dm_context *context, int argc, char *argv[])
 {
     static int count = 0;
     GLfloat backgnd[4];
@@ -344,7 +344,7 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
     if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin == NULL) {
 	bu_log("open_gl: Failed to open %s\n", bu_vls_addr(&dmp->dm_pathName));
 	bu_vls_free(&init_proc_vls);
-	(void)wgl_close(dmp);
+	(void)wgl_close(dmp, context);
 	return DM_NULL;
     }
 
@@ -359,7 +359,7 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
 	bu_log("open_wgl: _init_dm failed\n");
 	bu_vls_free(&init_proc_vls);
 	bu_vls_free(&str);
-	(void)wgl_close(dmp);
+	(void)wgl_close(dmp, context);
 	return DM_NULL;
     }
 
@@ -371,7 +371,7 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
 
     /* make sure there really is a display before proceeding. */
     if (!((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy) {
-	(void)wgl_close(dmp);
+	(void)wgl_close(dmp, context);
 	return DM_NULL;
     }
 
@@ -392,7 +392,7 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
 	gotvisual = wgl_choose_visual(dmp, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
     if (!gotvisual) {
 	bu_log("wgl_open: Can't get an appropriate visual.\n");
-	(void)wgl_close(dmp);
+	(void)wgl_close(dmp, context);
 	return DM_NULL;
     }
 
@@ -402,21 +402,21 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
     if ((((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc =
 	 wglCreateContext(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc))==NULL) {
 	bu_log("wgl_open: couldn't create glXContext.\n");
-	(void)wgl_close(dmp);
+	(void)wgl_close(dmp, context);
 	return DM_NULL;
     }
 
     if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
 			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
 	bu_log("wgl_open: couldn't make context current\n");
-	(void)wgl_close(dmp);
+	(void)wgl_close(dmp, context);
 	return DM_NULL;
     }
 
     /* display list (fontOffset + char) will display a given ASCII char */
     if ((((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset = glGenLists(128))==0) {
 	bu_log("wgl_open: couldn't make display lists for font.\n");
-	(void)wgl_close(dmp);
+	(void)wgl_close(dmp, context);
 	return DM_NULL;
     }
 
@@ -653,7 +653,7 @@ wgl_share_dlist(dm *dmp1, dm *dmp2)
  *  Gracefully release the display.
  */
 HIDDEN int
-wgl_close(dm *dmp)
+wgl_close(dm *dmp, struct dm_context *UNUSED(context))
 {
     if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy) {
 	if (((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc) {

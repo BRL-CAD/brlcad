@@ -2460,7 +2460,7 @@ mged_finish(int exitcode)
 	BU_LIST_DEQUEUE(&(p->l));
 
 	if (p && p->dml_dmp) {
-	    dm_close(p->dml_dmp);
+	    dm_close(p->dml_dmp, &dm_tk_context);
 	    RT_FREE_VLIST(&p->dml_p_vlist);
 	    mged_slider_free_vls(p);
 	    bu_free(p, "release: curr_dm_list");
