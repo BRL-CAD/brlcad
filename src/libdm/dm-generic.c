@@ -70,7 +70,7 @@ extern int osg_share_dlist(dm *dmp1, dm *dmp2);
 #endif /* DM_OSG*/
 
 #ifdef DM_OSGL
-extern dm *osgl_open(Tcl_Interp *interp, int argc, const char **argv);
+extern dm *osgl_open(Tcl_Interp *interp, struct dm_context *context, int argc, const char **argv);
 extern void osgl_fogHint(dm *dmp, int fastfog);
 extern int osgl_share_dlist(dm *dmp1, dm *dmp2);
 #endif /* DM_OSGL*/
@@ -138,7 +138,7 @@ dm_open(Tcl_Interp *interp, struct dm_context *context, int type, int argc, cons
 #endif
 #ifdef DM_OSGL
 	case DM_TYPE_OSGL:
-	    return osgl_open(interp, argc, argv);
+	    return osgl_open(interp, context, argc, argv);
 #endif
 #ifdef DM_RTGL
 	case DM_TYPE_RTGL:

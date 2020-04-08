@@ -80,7 +80,7 @@
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
 extern "C" {
-    struct dm_internal *osgl_open(Tcl_Interp *interp, int argc, char **argv);
+    struct dm_internal *osgl_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv);
 }
 HIDDEN int osgl_close(struct dm_internal *dmp, struct dm_context *context);
 HIDDEN int osgl_drawBegin(struct dm_internal *dmp);
@@ -102,7 +102,7 @@ HIDDEN int osgl_setFGColor(struct dm_internal *dmp, unsigned char r, unsigned ch
 HIDDEN int osgl_setBGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsigned char b);
 HIDDEN int osgl_setLineAttr(struct dm_internal *dmp, int width, int style);
 HIDDEN int osgl_configureWin_guts(struct dm_internal *dmp, int force);
-HIDDEN int osgl_configureWin(struct dm_internal *dmp, int force);
+HIDDEN int osgl_configureWin(struct dm_internal *dmp, struct dm_context *context, int force);
 HIDDEN int osgl_setLight(struct dm_internal *dmp, int lighting_on);
 HIDDEN int osgl_setTransparency(struct dm_internal *dmp, int transparency_on);
 HIDDEN int osgl_setDepthMask(struct dm_internal *dmp, int depthMask_on);
@@ -288,7 +288,7 @@ osgl_makeCurrent(struct dm_internal *dmp)
 
 
 HIDDEN int
-osgl_configureWin(struct dm_internal *dmp, int force)
+osgl_configureWin(struct dm_internal *dmp, struct dm_context *UNUSED(context), int force)
 {
     ((struct osgl_vars *)dmp->dm_vars.priv_vars)->graphicsContext->makeCurrent();
 
@@ -420,8 +420,8 @@ osgl_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
     }
     privvars = (struct osgl_vars *)dmp->dm_vars.priv_vars;
 
-    if ((tkwin = (*context->dm_window_main)(dmp)) == NULL) {
-	bu_free((void *)privars, "privars");
+    if ((tkwin = (Tk_Window)(*context->dm_window_main)(dmp)) == NULL) {
+	bu_free((void *)privvars, "privvars");
 	bu_free((void *)pubvars, "pubvars");
 	bu_free((void *)dmp, "dmp");
 	return DM_NULL;
