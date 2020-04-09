@@ -77,12 +77,14 @@ plot_close(dm *dmp)
     if (!dmp)
 	return BRLCAD_ERROR;
 
-    (void)fflush(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp);
+    struct plot_vars *privars = (struct plot_vars *)dmp->dm_vars.priv_vars;
 
-    if (((struct plot_vars *)dmp->dm_vars.priv_vars)->is_pipe)
-	pclose(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp); /* close pipe, eat dead children */
+    (void)fflush(privars->up_fp);
+
+    if (privars->is_pipe)
+	pclose(privars->up_fp); /* close pipe, eat dead children */
     else
-	fclose(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp);
+	fclose(privars->up_fp);
 
     bu_vls_free(&dmp->dm_pathName);
     bu_free((void *)dmp->dm_vars.priv_vars, "plot_close: plot_vars");
@@ -113,9 +115,11 @@ plot_drawEnd(dm *dmp)
     if (!dmp)
 	return BRLCAD_ERROR;
 
-    pl_flush(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp); /* BRL-specific command */
-    pl_erase(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp); /* forces drawing */
-    (void)fflush(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp);
+    struct plot_vars *privars = (struct plot_vars *)dmp->dm_vars.priv_vars;
+
+    pl_flush(privars->up_fp); /* BRL-specific command */
+    pl_erase(privars->up_fp); /* forces drawing */
+    (void)fflush(privars->up_fp);
 
     return BRLCAD_OK;
 }
@@ -133,11 +137,13 @@ plot_loadMatrix(dm *dmp, fastf_t *mat, int which_eye)
     if (!dmp)
 	return BRLCAD_ERROR;
 
+    struct plot_vars *privars = (struct plot_vars *)dmp->dm_vars.priv_vars;
+
     obj = Tcl_GetObjResult(dmp->dm_interp);
     if (Tcl_IsShared(obj))
 	obj = Tcl_DuplicateObj(obj);
 
-    if (((struct plot_vars *)dmp->dm_vars.priv_vars)->debug) {
+    if (privars->debug) {
 	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 	Tcl_AppendStringsToObj(obj, "plot_loadMatrix()\n", (char *)NULL);
@@ -179,8 +185,10 @@ plot_drawVList(dm *dmp, struct bn_vlist *vp)
     point_t tlate;
     int useful = 0;
 
-    if (((struct plot_vars *)dmp->dm_vars.priv_vars)->floating) {
-	bn_vlist_to_uplot(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp, &vp->l);
+    struct plot_vars *privars = (struct plot_vars *)dmp->dm_vars.priv_vars;
+
+    if (privars->floating) {
+	bn_vlist_to_uplot(privars->up_fp, &vp->l);
 
 	return BRLCAD_OK;
     }
@@ -296,8 +304,8 @@ plot_drawVList(dm *dmp, struct bn_vlist *vp)
 	    if (vclip(start, fin, dmp->dm_clipmin, dmp->dm_clipmax) == 0)
 		continue;
 
-	    if (((struct plot_vars *)dmp->dm_vars.priv_vars)->is_3D)
-		pl_3line(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp,
+	    if (privars->is_3D)
+		pl_3line(privars->up_fp,
 			 (int)(start[X] * 2047),
 			 (int)(start[Y] * 2047),
 			 (int)(start[Z] * 2047),
@@ -305,7 +313,7 @@ plot_drawVList(dm *dmp, struct bn_vlist *vp)
 			 (int)(fin[Y] * 2047),
 			 (int)(fin[Z] * 2047));
 	    else
-		pl_line(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp,
+		pl_line(privars->up_fp,
 			(int)(start[X] * 2047),
 			(int)(start[Y] * 2047),
 			(int)(fin[X] * 2047),
@@ -369,10 +377,12 @@ plot_drawString2D(dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int 
 	return BRLCAD_ERROR;
     }
 
+    struct plot_vars *privars = (struct plot_vars *)dmp->dm_vars.priv_vars;
+
     sx = x * 2047;
     sy = y + 2047;
-    pl_move(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp, sx, sy);
-    pl_label(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp, str);
+    pl_move(privars->up_fp, sx, sy);
+    pl_label(privars->up_fp, str);
 
     return BRLCAD_OK;
 }
@@ -384,12 +394,14 @@ plot_drawLine2D(dm *dmp, fastf_t xpos1, fastf_t ypos1, fastf_t xpos2, fastf_t yp
     int sx1, sy1;
     int sx2, sy2;
 
+    struct plot_vars *privars = (struct plot_vars *)dmp->dm_vars.priv_vars;
+
     sx1 = xpos1 * 2047;
     sx2 = xpos2 * 2047;
     sy1 = ypos1 + 2047;
     sy2 = ypos2 + 2047;
-    pl_move(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp, sx1, sy1);
-    pl_cont(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp, sx2, sy2);
+    pl_move(privars->up_fp, sx1, sy1);
+    pl_cont(privars->up_fp, sx2, sy2);
 
     return BRLCAD_OK;
 }
@@ -426,8 +438,9 @@ plot_setFGColor(dm *dmp, unsigned char r, unsigned char g, unsigned char b, int 
 	bu_log("WARNING: NULL display (r/g/b => %d/%d/%d; strict => %d; transparency => %f)\n", r, g, b, strict, transparency);
 	return BRLCAD_ERROR;
     }
+    struct plot_vars *privars = (struct plot_vars *)dmp->dm_vars.priv_vars;
 
-    pl_color(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp, (int)r, (int)g, (int)b);
+    pl_color(privars->up_fp, (int)r, (int)g, (int)b);
     return BRLCAD_OK;
 }
 HIDDEN int
@@ -448,10 +461,12 @@ plot_setLineAttr(dm *dmp, int width, int style)
     dmp->dm_lineWidth = width;
     dmp->dm_lineStyle = style;
 
+    struct plot_vars *privars = (struct plot_vars *)dmp->dm_vars.priv_vars;
+
     if (style == DM_DASHED_LINE)
-	pl_linmod(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp, "dotdashed");
+	pl_linmod(privars->up_fp, "dotdashed");
     else
-	pl_linmod(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp, "solid");
+	pl_linmod(privars->up_fp, "solid");
 
     return BRLCAD_OK;
 }
@@ -462,12 +477,14 @@ plot_debug(dm *dmp, int lvl)
 {
     Tcl_Obj *obj;
 
+    struct plot_vars *privars = (struct plot_vars *)dmp->dm_vars.priv_vars;
+
     obj = Tcl_GetObjResult(dmp->dm_interp);
     if (Tcl_IsShared(obj))
 	obj = Tcl_DuplicateObj(obj);
 
     dmp->dm_debugLevel = lvl;
-    (void)fflush(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp);
+    (void)fflush(privars->up_fp);
     Tcl_AppendStringsToObj(obj, "flushed\n", (char *)NULL);
 
     Tcl_SetObjResult(dmp->dm_interp, obj);
@@ -479,12 +496,14 @@ plot_logfile(dm *dmp, const char *filename)
 {
     Tcl_Obj *obj;
 
+    struct plot_vars *privars = (struct plot_vars *)dmp->dm_vars.priv_vars;
+
     obj = Tcl_GetObjResult(dmp->dm_interp);
     if (Tcl_IsShared(obj))
 	obj = Tcl_DuplicateObj(obj);
 
     bu_vls_sprintf(&dmp->dm_log, "%s", filename);
-    (void)fflush(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp);
+    (void)fflush(privars->up_fp);
     Tcl_AppendStringsToObj(obj, "flushed\n", (char *)NULL);
 
     Tcl_SetObjResult(dmp->dm_interp, obj);
@@ -615,11 +634,13 @@ plot_open(Tcl_Interp *interp, int argc, const char *argv[])
 
     BU_ALLOC(dmp->dm_vars.priv_vars, struct plot_vars);
 
+    struct plot_vars *privars = (struct plot_vars *)dmp->dm_vars.priv_vars;
+
     obj = Tcl_GetObjResult(interp);
     if (Tcl_IsShared(obj))
 	obj = Tcl_DuplicateObj(obj);
 
-    bu_vls_init(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls);
+    bu_vls_init(&privars->vls);
     bu_vls_init(&dmp->dm_pathName);
     bu_vls_init(&dmp->dm_tkName);
     bu_vls_printf(&dmp->dm_pathName, ".dm_plot%d", count++);
@@ -629,19 +650,19 @@ plot_open(Tcl_Interp *interp, int argc, const char *argv[])
     --argc; ++argv;
 
     /* Process any options */
-    ((struct plot_vars *)dmp->dm_vars.priv_vars)->is_3D = 1;          /* 3-D w/color, by default */
+    privars->is_3D = 1;          /* 3-D w/color, by default */
     while (argv[0] != (char *)0 && argv[0][0] == '-') {
 	switch (argv[0][1]) {
 	    case '3':
 		break;
 	    case '2':
-		((struct plot_vars *)dmp->dm_vars.priv_vars)->is_3D = 0;		/* 2-D, for portability */
+		privars->is_3D = 0;		/* 2-D, for portability */
 		break;
 	    case 'g':
-		((struct plot_vars *)dmp->dm_vars.priv_vars)->grid = 1;
+		privars->grid = 1;
 		break;
 	    case 'f':
-		((struct plot_vars *)dmp->dm_vars.priv_vars)->floating = 1;
+		privars->floating = 1;
 		break;
 	    case 'z':
 	    case 'Z':
@@ -668,51 +689,51 @@ plot_open(Tcl_Interp *interp, int argc, const char *argv[])
     }
 
     if (argv[0][0] == '|') {
-	bu_vls_strcpy(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls, &argv[0][1]);
+	bu_vls_strcpy(&privars->vls, &argv[0][1]);
 	while ((++argv)[0] != (char *)0) {
-	    bu_vls_strcat(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls, " ");
-	    bu_vls_strcat(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls, argv[0]);
+	    bu_vls_strcat(&privars->vls, " ");
+	    bu_vls_strcat(&privars->vls, argv[0]);
 	}
 
-	((struct plot_vars *)dmp->dm_vars.priv_vars)->is_pipe = 1;
+	privars->is_pipe = 1;
     } else {
-	bu_vls_strcpy(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls, argv[0]);
+	bu_vls_strcpy(&privars->vls, argv[0]);
     }
 
-    if (((struct plot_vars *)dmp->dm_vars.priv_vars)->is_pipe) {
-	if ((((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp =
-	     popen(bu_vls_addr(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls), "w")) == NULL) {
-	    perror(bu_vls_addr(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls));
+    if (privars->is_pipe) {
+	if ((privars->up_fp =
+	     popen(bu_vls_addr(&privars->vls), "w")) == NULL) {
+	    perror(bu_vls_addr(&privars->vls));
 	    (void)plot_close(dmp);
 	    Tcl_SetObjResult(interp, obj);
 	    return DM_NULL;
 	}
 
 	Tcl_AppendStringsToObj(obj, "piped to ",
-			       bu_vls_addr(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls),
+			       bu_vls_addr(&privars->vls),
 			       "\n", (char *)NULL);
     } else {
-	if ((((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp =
-	     fopen(bu_vls_addr(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls), "wb")) == NULL) {
-	    perror(bu_vls_addr(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls));
+	if ((privars->up_fp =
+	     fopen(bu_vls_addr(&privars->vls), "wb")) == NULL) {
+	    perror(bu_vls_addr(&privars->vls));
 	    (void)plot_close(dmp);
 	    Tcl_SetObjResult(interp, obj);
 	    return DM_NULL;
 	}
 
 	Tcl_AppendStringsToObj(obj, "plot stored in ",
-			       bu_vls_addr(&((struct plot_vars *)dmp->dm_vars.priv_vars)->vls),
+			       bu_vls_addr(&privars->vls),
 			       "\n", (char *)NULL);
     }
 
-    setbuf(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp,
-	   ((struct plot_vars *)dmp->dm_vars.priv_vars)->ttybuf);
+    setbuf(privars->up_fp,
+	   privars->ttybuf);
 
-    if (((struct plot_vars *)dmp->dm_vars.priv_vars)->is_3D)
-	pl_3space(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp,
+    if (privars->is_3D)
+	pl_3space(privars->up_fp,
 		  -2048, -2048, -2048, 2048, 2048, 2048);
     else
-	pl_space(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp,
+	pl_space(privars->up_fp,
 		 -2048, -2048, 2048, 2048);
 
     MAT_IDN(mod_mat);
