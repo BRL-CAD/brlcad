@@ -944,8 +944,6 @@ dm_draw_display_list(dm *dmp,
     struct solid *sp;
     fastf_t ratio;
     int ndrawn = 0;
-    int opaque = 0;
-    int opaque_only = EQUAL(transparency_threshold, 1.0);
 
     gdlp = BU_LIST_NEXT(display_list, dl);
     while (BU_LIST_NOT_HEAD(gdlp, dl)) {
@@ -958,17 +956,8 @@ dm_draw_display_list(dm *dmp,
 	    if ((sp->s_iflag == UP && !draw_edit) || (sp->s_iflag != UP && draw_edit))
 		continue;
 
-	    opaque = EQUAL(sp->s_transparency, 1.0);
-	    if (opaque_only) {
-		if (!opaque) {
-		    continue;
-		}
-	    } else {
-		/* transparent only */
-		if (opaque || !(sp->s_transparency > transparency_threshold || EQUAL(sp->s_transparency, transparency_threshold))) {
-		    continue;
-		}
-	    }
+	    if (!((sp->s_transparency > transparency_threshold) || (EQUAL(sp->s_transparency, transparency_threshold))))
+		continue;
 
 	    if (dm_get_bound_flag(dmp)) {
 		ratio = sp->s_size * inv_viewsize;
