@@ -464,6 +464,7 @@ DM_EXPORT extern void dm_set_clearbufferafter(dm *dmp, int clearBufferAfter);
 
 DM_EXPORT extern void dm_flush(dm *dmp);
 DM_EXPORT extern void *dm_os_window(dm *dmp);
+DM_EXPORT extern void *dm_device_context(dm *dmp);
 
 DM_EXPORT extern int dm_png_write(dm *dmp, FILE *fp, struct bu_vls *msgs);
 

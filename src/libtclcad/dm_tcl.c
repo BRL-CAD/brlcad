@@ -2790,10 +2790,10 @@ WGLEventProc(ClientData clientData, XEvent *UNUSED(eventPtr))
        want the out-of-date visual - for now, do two swaps.  If there's some
        way to trigger a Window re-draw without doing buffer swaps, that would
        be preferable... */
-    SwapBuffers(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc);
-    SwapBuffers(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc);
+    SwapBuffers((HDC)dm_device_context(dmp));
+    SwapBuffers((HDC)dm_device_context(dmp));
 #endif
-}  
+}
 
 /* Tk_CreateEventHandler */
 static void

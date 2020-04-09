@@ -226,6 +226,16 @@ dm_os_window(dm *dmp)
     return NULL;
 }
 
+void *
+dm_device_context(dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return NULL;
+#if defined(IF_WGL)
+    return (void *)&(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc);
+#endif
+    return NULL;
+}
+
 
 fastf_t
 dm_Xx2Normal(dm *dmp, int x)
