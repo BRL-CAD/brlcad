@@ -83,7 +83,7 @@ extern int rtgl_share_dlist(dm *dmp1, dm *dmp2);
 #endif /* DM_RTGL */
 
 #ifdef DM_WGL
-extern dm *wgl_open(Tcl_Interp *interp, int argc, const char **argv);
+extern dm *wgl_open(Tcl_Interp *interp, struct dm_context *context, int argc, const char **argv);
 extern void wgl_fogHint(dm *dmp, int fastfog);
 extern int wgl_share_dlist(dm *dmp1, dm *dmp2);
 #endif /* DM_WGL */
@@ -147,7 +147,7 @@ dm_open(Tcl_Interp *interp, struct dm_context *context, int type, int argc, cons
 #endif
 #ifdef DM_WGL
 	case DM_TYPE_WGL:
-	    return wgl_open(interp, argc, argv);
+	    return wgl_open(interp, context, argc, argv);
 #endif
 #ifdef DM_QT
 	case DM_TYPE_QT:
