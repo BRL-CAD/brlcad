@@ -62,11 +62,6 @@ extern int pclose(FILE *stream);
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
 struct plot_vars head_plot_vars;
-static mat_t plotmat;
-static mat_t disp_mat;
-static mat_t mod_mat;
-
-
 
 /**
  * Gracefully release the display.
@@ -159,8 +154,8 @@ plot_loadMatrix(dm *dmp, fastf_t *mat, int which_eye)
 	bu_vls_free(&tmp_vls);
     }
 
-    MAT_COPY(mod_mat, mat);
-    MAT_COPY(plotmat, mat);
+    MAT_COPY(privars->mod_mat, mat);
+    MAT_COPY(privars->plotmat, mat);
     Tcl_SetObjResult(dmp->dm_interp, obj);
     return BRLCAD_OK;
 }
@@ -197,7 +192,7 @@ plot_drawVList(dm *dmp, struct bn_vlist *vp)
      * slightly in front of eye plane (perspective mode only).  This
      * value is a SWAG that seems to work OK.
      */
-    delta = plotmat[15]*0.0001;
+    delta = privars->plotmat[15]*0.0001;
     if (delta < 0.0)
 	delta = -delta;
     if (delta < SQRT_SMALL_FASTF)
@@ -217,14 +212,14 @@ plot_drawVList(dm *dmp, struct bn_vlist *vp)
 		case BN_VLIST_TRI_VERTNORM:
 		    continue;
 		case BN_VLIST_MODEL_MAT:
-		    MAT_COPY(plotmat, mod_mat);
+		    MAT_COPY(privars->plotmat, privars->mod_mat);
 		    continue;
 		case BN_VLIST_DISPLAY_MAT:
-		    MAT4X3PNT(tlate, (mod_mat), *pt);
-		    disp_mat[3] = tlate[0];
-		    disp_mat[7] = tlate[1];
-		    disp_mat[11] = tlate[2];
-		    MAT_COPY(plotmat, disp_mat);
+		    MAT4X3PNT(tlate, (privars->mod_mat), *pt);
+		    privars->disp_mat[3] = tlate[0];
+		    privars->disp_mat[7] = tlate[1];
+		    privars->disp_mat[11] = tlate[2];
+		    MAT_COPY(privars->plotmat, privars->disp_mat);
 		    continue;
 		case BN_VLIST_POLY_MOVE:
 		case BN_VLIST_LINE_MOVE:
@@ -234,18 +229,18 @@ plot_drawVList(dm *dmp, struct bn_vlist *vp)
 			/* cannot apply perspective transformation to
 			 * points behind eye plane!!!!
 			 */
-			dist = VDOT(*pt, &plotmat[12]) + plotmat[15];
+			dist = VDOT(*pt, &privars->plotmat[12]) + privars->plotmat[15];
 			if (dist <= 0.0) {
 			    pt_prev = pt;
 			    dist_prev = dist;
 			    continue;
 			} else {
-			    MAT4X3PNT(last, plotmat, *pt);
+			    MAT4X3PNT(last, privars->plotmat, *pt);
 			    dist_prev = dist;
 			    pt_prev = pt;
 			}
 		    } else
-			MAT4X3PNT(last, plotmat, *pt);
+			MAT4X3PNT(last, privars->plotmat, *pt);
 		    continue;
 		case BN_VLIST_POLY_DRAW:
 		case BN_VLIST_POLY_END:
@@ -257,7 +252,7 @@ plot_drawVList(dm *dmp, struct bn_vlist *vp)
 			/* cannot apply perspective transformation to
 			 * points behind eye plane!!!!
 			 */
-			dist = VDOT(*pt, &plotmat[12]) + plotmat[15];
+			dist = VDOT(*pt, &privars->plotmat[12]) + privars->plotmat[15];
 			if (dist <= 0.0) {
 			    if (dist_prev <= 0.0) {
 				/* nothing to plot */
@@ -274,7 +269,7 @@ plot_drawVList(dm *dmp, struct bn_vlist *vp)
 				    VSUB2(diff, *pt, *pt_prev);
 				    alpha = (dist_prev - delta) / (dist_prev - dist);
 				    VJOIN1(tmp_pt, *pt_prev, alpha, diff);
-				    MAT4X3PNT(fin, plotmat, tmp_pt);
+				    MAT4X3PNT(fin, privars->plotmat, tmp_pt);
 				}
 			    }
 			} else {
@@ -288,15 +283,15 @@ plot_drawVList(dm *dmp, struct bn_vlist *vp)
 				    VSUB2(diff, *pt, *pt_prev);
 				    alpha = (-dist_prev + delta) / (dist - dist_prev);
 				    VJOIN1(tmp_pt, *pt_prev, alpha, diff);
-				    MAT4X3PNT(last, plotmat, tmp_pt);
-				    MAT4X3PNT(fin, plotmat, *pt);
+				    MAT4X3PNT(last, privars->plotmat, tmp_pt);
+				    MAT4X3PNT(fin, privars->plotmat, *pt);
 				}
 			    } else {
-				MAT4X3PNT(fin, plotmat, *pt);
+				MAT4X3PNT(fin, privars->plotmat, *pt);
 			    }
 			}
 		    } else
-			MAT4X3PNT(fin, plotmat, *pt);
+			MAT4X3PNT(fin, privars->plotmat, *pt);
 		    VMOVE(start, last);
 		    VMOVE(last, fin);
 		    break;
@@ -732,9 +727,9 @@ plot_open(Tcl_Interp *interp, int argc, const char *argv[])
     else
 	pl_space(privars->up_fp, -2048, -2048, 2048, 2048);
 
-    MAT_IDN(mod_mat);
-    MAT_IDN(disp_mat);
-    MAT_COPY(plotmat, mod_mat);
+    MAT_IDN(privars->mod_mat);
+    MAT_IDN(privars->disp_mat);
+    MAT_COPY(privars->plotmat, privars->mod_mat);
 
     Tcl_SetObjResult(interp, obj);
     return dmp;
