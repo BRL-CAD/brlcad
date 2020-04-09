@@ -29,5 +29,7 @@ include_directories(
 
 SC_ADDLIB(stepeditor "${LIBSTEPEDITOR_SRCS}" "stepcore;stepdai;steputils;base")
 
-install(FILES ${SC_CLEDITOR_HDRS}
-	DESTINATION ${INCLUDE_INSTALL_DIR}/stepcode/cleditor)
+if (NOT SKIP_INSTALL_HEADERS)
+	install(FILES ${SC_CLEDITOR_HDRS}
+		DESTINATION ${INCLUDE_INSTALL_DIR}/stepcode/cleditor)
+endif (NOT SKIP_INSTALL_HEADERS)

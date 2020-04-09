@@ -86,9 +86,11 @@ set(SWEEP_HDRS
   poly2tri/sweep/sweep.h
   poly2tri/sweep/sweep_context.h
   )
-install(FILES ${SWEEP_HDRS} DESTINATION ${INCLUDE_DIR}/poly2tri/sweep)
-install(FILES poly2tri/poly2tri.h DESTINATION ${INCLUDE_DIR}/poly2tri)
-install(FILES poly2tri/common/shapes.h DESTINATION ${INCLUDE_DIR}/poly2tri/common)
+if (NOT SKIP_INSTALL_HEADERS)
+  install(FILES ${SWEEP_HDRS} DESTINATION ${INCLUDE_DIR}/poly2tri/sweep)
+  install(FILES poly2tri/poly2tri.h DESTINATION ${INCLUDE_DIR}/poly2tri)
+  install(FILES poly2tri/common/shapes.h DESTINATION ${INCLUDE_DIR}/poly2tri/common)
+endif (NOT SKIP_INSTALL_HEADERS)
 
 set(SOURCES
   poly2tri/common/shapes.cc
