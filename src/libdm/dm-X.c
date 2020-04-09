@@ -51,10 +51,6 @@
 #  undef X_NOT_POSIX
 #endif
 
-#ifdef HAVE_TK
-#  include "tk.h"
-#endif
-
 #include "vmath.h"
 #include "bu/endian.h"
 #include "bn.h"
@@ -488,7 +484,7 @@ X_open_dm(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
     if (dmp->dm_top) {
 #ifdef HAVE_TK
 	/* Make xtkwin a toplevel window */
-	pubvars->xtkwin = (Tk_Window)(*context->dm_window_create_from_path)(dmp, tkwin,
+	pubvars->xtkwin = (*context->dm_window_create_from_path)(dmp, tkwin,
 		bu_vls_cstr(&dmp->dm_pathName), bu_vls_cstr(&dmp->dm_dName));
 	pubvars->top = pubvars->xtkwin;
 #endif
@@ -497,21 +493,21 @@ X_open_dm(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
 
 	cp = strrchr(bu_vls_addr(&dmp->dm_pathName), (int)'.');
 	if (cp == bu_vls_addr(&dmp->dm_pathName)) {
-	    pubvars->top = (Tk_Window)tkwin;
+	    pubvars->top = tkwin;
 	} else {
 	    struct bu_vls top_vls = BU_VLS_INIT_ZERO;
 
 	    bu_vls_strncpy(&top_vls, (const char *)bu_vls_addr(&dmp->dm_pathName), cp - bu_vls_addr(&dmp->dm_pathName));
 
 #ifdef HAVE_TK
-	    pubvars->top = (Tk_Window)(*context->dm_window_from_name)(dmp, bu_vls_cstr(&top_vls), tkwin);
+	    pubvars->top = (*context->dm_window_from_name)(dmp, bu_vls_cstr(&top_vls), tkwin);
 #endif
 	    bu_vls_free(&top_vls);
 	}
 
 #ifdef HAVE_TK
 	/* Make xtkwin an embedded window */
-	pubvars->xtkwin = (Tk_Window)((*context->dm_window_create_embedded)(dmp, pubvars->top, cp + 1));
+	pubvars->xtkwin = (*context->dm_window_create_embedded)(dmp, pubvars->top, cp + 1);
 #endif
     }
 

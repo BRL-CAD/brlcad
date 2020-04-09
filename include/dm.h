@@ -281,7 +281,6 @@ DM_EXPORT extern dm dm_ogl;
 DM_EXPORT extern dm dm_plot;
 DM_EXPORT extern dm dm_ps;
 DM_EXPORT extern dm dm_rtgl;
-DM_EXPORT extern dm dm_tk;
 DM_EXPORT extern dm dm_wgl;
 DM_EXPORT extern dm dm_X;
 DM_EXPORT extern dm dm_txt;

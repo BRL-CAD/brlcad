@@ -69,8 +69,6 @@
 #undef y1
 #undef j1
 
-#include "tk.h"
-
 #undef VMIN		/* is used in vmath.h, too */
 
 #include "vmath.h"
@@ -787,7 +785,7 @@ ogl_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
 
     if (dmp->dm_top) {
 	/* Make xtkwin a toplevel window */
-	pubvars->xtkwin = (Tk_Window)(*context->dm_window_create_from_path)(dmp, tkwin,
+	pubvars->xtkwin = (*context->dm_window_create_from_path)(dmp, tkwin,
 	       	bu_vls_cstr(&dmp->dm_pathName), bu_vls_cstr(&dmp->dm_dName));
 	pubvars->top = pubvars->xtkwin;
     } else {
@@ -795,18 +793,18 @@ ogl_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
 
 	cp = strrchr(bu_vls_addr(&dmp->dm_pathName), (int)'.');
 	if (cp == bu_vls_addr(&dmp->dm_pathName)) {
-	    pubvars->top = (Tk_Window)tkwin;
+	    pubvars->top = tkwin;
 	} else {
 	    struct bu_vls top_vls = BU_VLS_INIT_ZERO;
 
 	    bu_vls_strncpy(&top_vls, (const char *)bu_vls_addr(&dmp->dm_pathName), cp - bu_vls_addr(&dmp->dm_pathName));
 
-	    pubvars->top = (Tk_Window)(*context->dm_window_from_name)(dmp, bu_vls_cstr(&top_vls), tkwin);
+	    pubvars->top = (*context->dm_window_from_name)(dmp, bu_vls_cstr(&top_vls), tkwin);
 	    bu_vls_free(&top_vls);
 	}
 
 	/* Make xtkwin an embedded window */
-	pubvars->xtkwin = (Tk_Window)(*context->dm_window_create_embedded)(dmp, pubvars->top, cp + 1);
+	pubvars->xtkwin = (*context->dm_window_create_embedded)(dmp, pubvars->top, cp + 1);
     }
 
     if (pubvars->xtkwin == NULL) {

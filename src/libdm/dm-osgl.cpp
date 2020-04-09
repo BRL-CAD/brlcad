@@ -362,8 +362,8 @@ osgl_close(struct dm_internal *dmp, struct dm_context *UNUSED(context))
 
 
     if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin) {
-	Tk_DeleteEventHandler(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin, VisibilityChangeMask, OSGEventProc, (ClientData)dmp);
-	Tk_DestroyWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
+	Tk_DeleteEventHandler((Tk_Window)((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin, VisibilityChangeMask, OSGEventProc, (ClientData)dmp);
+	Tk_DestroyWindow((Tk_Window)((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
     }
 
     bu_vls_free(&dmp->dm_pathName);
@@ -676,7 +676,7 @@ osgl_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
     osgl_setLight(dmp, dmp->dm_light);
 
     //Tk_CreateEventHandler(pubvars->xtkwin, PointerMotionMask|ExposureMask|StructureNotifyMask|FocusChangeMask|VisibilityChangeMask|ButtonReleaseMask, OSGEventProc, (ClientData)dmp);
-    Tk_CreateEventHandler(pubvars->xtkwin, VisibilityChangeMask, OSGEventProc, (ClientData)dmp);
+    Tk_CreateEventHandler((Tk_Window)pubvars->xtkwin, VisibilityChangeMask, OSGEventProc, (ClientData)dmp);
 
     privvars->is_init = 0;
 
