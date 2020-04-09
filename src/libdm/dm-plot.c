@@ -266,30 +266,30 @@ plot_drawVList(dm *dmp, struct bn_vlist *vp)
 				continue;
 			    } else {
 				if (pt_prev) {
-				fastf_t alpha;
-				vect_t diff;
-				point_t tmp_pt;
+				    fastf_t alpha;
+				    vect_t diff;
+				    point_t tmp_pt;
 
-				/* clip this end */
-				VSUB2(diff, *pt, *pt_prev);
-				alpha = (dist_prev - delta) / (dist_prev - dist);
-				VJOIN1(tmp_pt, *pt_prev, alpha, diff);
-				MAT4X3PNT(fin, plotmat, tmp_pt);
+				    /* clip this end */
+				    VSUB2(diff, *pt, *pt_prev);
+				    alpha = (dist_prev - delta) / (dist_prev - dist);
+				    VJOIN1(tmp_pt, *pt_prev, alpha, diff);
+				    MAT4X3PNT(fin, plotmat, tmp_pt);
 				}
 			    }
 			} else {
 			    if (dist_prev <= 0.0) {
 				if (pt_prev) {
-				fastf_t alpha;
-				vect_t diff;
-				point_t tmp_pt;
+				    fastf_t alpha;
+				    vect_t diff;
+				    point_t tmp_pt;
 
-				/* clip other end */
-				VSUB2(diff, *pt, *pt_prev);
-				alpha = (-dist_prev + delta) / (dist - dist_prev);
-				VJOIN1(tmp_pt, *pt_prev, alpha, diff);
-				MAT4X3PNT(last, plotmat, tmp_pt);
-				MAT4X3PNT(fin, plotmat, *pt);
+				    /* clip other end */
+				    VSUB2(diff, *pt, *pt_prev);
+				    alpha = (-dist_prev + delta) / (dist - dist_prev);
+				    VJOIN1(tmp_pt, *pt_prev, alpha, diff);
+				    MAT4X3PNT(last, plotmat, tmp_pt);
+				    MAT4X3PNT(fin, plotmat, *pt);
 				}
 			    } else {
 				MAT4X3PNT(fin, plotmat, *pt);
@@ -647,7 +647,8 @@ plot_open(Tcl_Interp *interp, int argc, const char *argv[])
     bu_vls_printf(&dmp->dm_tkName, "dm_plot%d", count++);
 
     /* skip first argument */
-    --argc; ++argv;
+    --argc;
+    ++argv;
 
     /* Process any options */
     privars->is_3D = 1;          /* 3-D w/color, by default */
@@ -701,8 +702,7 @@ plot_open(Tcl_Interp *interp, int argc, const char *argv[])
     }
 
     if (privars->is_pipe) {
-	if ((privars->up_fp =
-	     popen(bu_vls_addr(&privars->vls), "w")) == NULL) {
+	if ((privars->up_fp = popen(bu_vls_addr(&privars->vls), "w")) == NULL) {
 	    perror(bu_vls_addr(&privars->vls));
 	    (void)plot_close(dmp);
 	    Tcl_SetObjResult(interp, obj);
@@ -713,8 +713,7 @@ plot_open(Tcl_Interp *interp, int argc, const char *argv[])
 			       bu_vls_addr(&privars->vls),
 			       "\n", (char *)NULL);
     } else {
-	if ((privars->up_fp =
-	     fopen(bu_vls_addr(&privars->vls), "wb")) == NULL) {
+	if ((privars->up_fp = fopen(bu_vls_addr(&privars->vls), "wb")) == NULL) {
 	    perror(bu_vls_addr(&privars->vls));
 	    (void)plot_close(dmp);
 	    Tcl_SetObjResult(interp, obj);
@@ -726,15 +725,12 @@ plot_open(Tcl_Interp *interp, int argc, const char *argv[])
 			       "\n", (char *)NULL);
     }
 
-    setbuf(privars->up_fp,
-	   privars->ttybuf);
+    setbuf(privars->up_fp, privars->ttybuf);
 
     if (privars->is_3D)
-	pl_3space(privars->up_fp,
-		  -2048, -2048, -2048, 2048, 2048, 2048);
+	pl_3space(privars->up_fp, -2048, -2048, -2048, 2048, 2048, 2048);
     else
-	pl_space(privars->up_fp,
-		 -2048, -2048, 2048, 2048);
+	pl_space(privars->up_fp, -2048, -2048, 2048, 2048);
 
     MAT_IDN(mod_mat);
     MAT_IDN(disp_mat);
