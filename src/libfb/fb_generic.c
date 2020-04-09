@@ -69,6 +69,9 @@ fb *_if_list[] = {
 #ifdef IF_X
     &X24_interface,
 #endif
+#ifdef IF_TK
+    &tk_interface,
+#endif
 #ifdef IF_QT
     &qt_interface,
 #endif

@@ -9,6 +9,8 @@ set(DM_INCLUDE_DIRS
   ${X11_INCLUDE_DIR}
   ${OPENGL_INCLUDE_DIR_GL}
   ${OPENGL_INCLUDE_DIR_GLX}
+  ${TCL_INCLUDE_PATH}
+  ${TK_INCLUDE_PATH}
   ${Qt5Widgets_INCLUDE_DIRS}
   ${OPENTHREADS_INCLUDE_DIR}
   ${OSG_INCLUDE_DIR}
@@ -47,6 +49,13 @@ if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
   set_property(SOURCE dm-ogl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 endif(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
 
+if(BRLCAD_ENABLE_TK AND NOT WIN32)
+  list(APPEND libdm_DEFINES DM_TK IF_TK)
+  set(DM_TKLIB ${TCL_LIBRARY} ${TK_LIBRARY})
+  set(dmtk_srcs dm-tk.c)
+  set_property(SOURCE dm-tk.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
+endif(BRLCAD_ENABLE_TK AND NOT WIN32)
+
 if(BRLCAD_ENABLE_QT)
   CHECK_CXX_FLAG(Wno-float-equal)
 
@@ -79,6 +88,8 @@ set(LIBDM_SRCS
   ${dmw32_srcs}
   ${dmogl_srcs}
   ${dmosg_srcs}
+  ${dmrtgl_srcs}
+  ${dmtk_srcs}
   ${dmqt_srcs}
   adc.c
   axes.c
@@ -88,6 +99,7 @@ set(LIBDM_SRCS
   dm-generic.c
   dm-plot.c
   dm-ps.c
+  dm_obj.c
   dm_util.c
   dm-txt.c
   grid.c
@@ -97,10 +109,11 @@ set(LIBDM_SRCS
   query.c
   rect.c
   scale.c
+  tcl.c
   vers.c
   )
 set_property(SOURCE dm_obj.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
-BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "librt;libfb;${DM_X_LIBS};${DM_EXTRA_LIBS};${PNG_LIBRARIES}")
+BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "librt;libfb;${DM_X_LIBS};${DM_TKLIB};${DM_EXTRA_LIBS};${PNG_LIBRARIES}")
 set_target_properties(libdm PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 if(BRLCAD_ENABLE_OSG)
@@ -110,6 +123,9 @@ if(BRLCAD_ENABLE_OSG)
   endif(CPP_DLL_DEFINES)
 endif(BRLCAD_ENABLE_OSG)
 
+if(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)
+  add_dependencies(libdm tk)
+endif(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)
 if(BRLCAD_ENABLE_OSG)
   add_dependencies(libdm profont_ProFont_ttf_cp)
 endif(BRLCAD_ENABLE_OSG)
@@ -129,6 +145,8 @@ set(libdm_ignore_files
   dm-ps.h
   dm-qt.cpp
   dm-qt.h
+  dm-tk.c
+  dm-tk.h
   dm-wgl.c
   dm-wgl.h
   dm_private.h

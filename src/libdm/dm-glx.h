@@ -28,8 +28,6 @@
 
 #include "common.h"
 
-#include "dm.h"
-
 /* Map +/-2048 GED space into -1.0..+1.0 :: x/2048*/
 #define GED2IRIS(x)	(((float)(x))*0.00048828125)
 
@@ -52,8 +50,8 @@ struct glx_vars {
     struct bu_list l;
     Display *dpy;
     Window win;
-    dm_win top;
-    dm_win xtkwin;
+    Tk_Window top;
+    Tk_Window xtkwin;
     int depth;
     int omx, omy;
     unsigned int mb_mask;

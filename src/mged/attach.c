@@ -44,7 +44,6 @@
 #include "vmath.h"
 #include "bu/env.h"
 #include "ged.h"
-#include "tclcad.h"
 
 #include "./mged.h"
 #include "./titles.h"
@@ -271,7 +270,7 @@ mged_dm_init(struct dm_list *o_dm_list,
     Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
 #endif
 
-    if ((DMP = dm_open(INTERP, &dm_tk_context, dm_type, argc-1, argv)) == DM_NULL)
+    if ((DMP = dm_open(INTERP, dm_type, argc-1, argv)) == DM_NULL)
 	return TCL_ERROR;
 
     /*XXXX this eventually needs to move into Ogl's private structure */
@@ -284,7 +283,7 @@ mged_dm_init(struct dm_list *o_dm_list,
 #ifdef HAVE_TK
     Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
 #endif
-    (void)dm_configure_win(DMP, &dm_tk_context, 0);
+    (void)dm_configure_win(DMP, 0);
 
     if (dm_get_pathname(DMP)) {
 	bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(dm_get_pathname(DMP)));
@@ -389,7 +388,7 @@ release(char *name, int need_close)
 	curr_dm_list->dml_tie->cl_tie = (struct dm_list *)NULL;
 
     if (need_close)
-	dm_close(DMP, &dm_tk_context);
+	dm_close(DMP);
 
     RT_FREE_VLIST(&curr_dm_list->dml_p_vlist);
     BU_LIST_DEQUEUE(&curr_dm_list->l);

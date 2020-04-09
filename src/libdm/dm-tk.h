@@ -1,4 +1,4 @@
-/*                     D E F I N E S . H
+/*                          D M - T K . H
  * BRL-CAD
  *
  * Copyright (c) 1993-2020 United States Government as represented by
@@ -19,20 +19,30 @@
  */
 /** @addtogroup libdm */
 /** @{ */
-/** @file dm/defines.h
+/** @file dm-tk.h
  *
  */
-#ifndef DM_EXPORT
-#  if defined(DM_DLL_EXPORTS) && defined(DM_DLL_IMPORTS)
-#    error "Only DM_DLL_EXPORTS or DM_DLL_IMPORTS can be defined, not both."
-#  elif defined(DM_DLL_EXPORTS)
-#    define DM_EXPORT __declspec(dllexport)
-#  elif defined(DM_DLL_IMPORTS)
-#    define DM_EXPORT __declspec(dllimport)
-#  else
-#    define DM_EXPORT
-#  endif
-#endif
+
+#ifndef DM_TK_H
+#define DM_TK_H
+
+#define CMAP_BASE 40
+#define CUBE_DIMENSION 6
+#define NUM_PIXELS 216    /* CUBE_DIMENSION * CUBE_DIMENSION * CUBE_DIMENSION */
+#define ColormapNull (Colormap *)NULL
+
+struct tk_vars {
+    GC gc;
+    Pixmap pix;
+    fastf_t *xmat;
+    mat_t mod_mat;		/* default model transformation matrix */
+    mat_t disp_mat;		/* display transformation matrix */
+    int is_trueColor;
+    unsigned long bd, bg, fg;   /* color of border, background, foreground */
+    unsigned long pixels[NUM_PIXELS];
+};
+
+#endif /* DM_TK_H */
 
 /** @} */
 /*

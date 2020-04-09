@@ -223,57 +223,7 @@ struct dm_hook_data {
 /* Hide the dm structure behind a typedef */
 typedef struct dm_internal dm;
 
-/* To avoid (at least in principle) hardcoded assumptions about parent
- * toolkits, we use a context container that is supplied by callers
- * telling libdm how to get certain specific information needed to
- * initialize and manipulate the display context */
-typedef void * dm_win;
-typedef void * dm_dpy;
-typedef long unsigned int dm_cmap;
-typedef long unsigned int dm_winid;
-typedef void * dm_visual_info;
-typedef void * dm_screen;
-typedef unsigned long dm_pixmap;
-struct dm_context {
-    /* Tk_MainWindow */
-    dm_win (*dm_window_main)(dm *);
-    /* Tk_CreateWindowFromPath */
-    dm_win (*dm_window_create_from_path)(dm *, dm_win, const char *, const char *);
-    /* Tk_NameToWindow */
-    dm_win (*dm_window_from_name)(dm *, const char *, dm_win);
-    /* Tk_CreateWindow */
-    dm_win (*dm_window_create_embedded)(dm *dmp, dm_win, const char *);
-    /* Tk_Name */
-    const char *(*dm_window_name)(dm *dmp, dm_win);
-    /* Tk_WindowId */
-    int (*dm_window_id)(dm *, dm_win);
-    /* Tk_MakeWindowExist */
-    void (*dm_window_make_exist)(dm *, dm_win);
-    /* Tk_MapWindow */
-    void(*dm_window_map)(dm *, dm_win);
-    /* Tk_SetWindowVisual */
-    int (*dm_window_set_visual)(dm *, dm_win, dm_visual_info, dm_cmap);
-    /* Tk_DestroyWindow */
-    void (*dm_window_destroy)(dm *, dm_win);
-    /* _init_dm */
-    int (*dm_init)(dm *, const char *);
-    /* Tk_GeometryRequest */
-    void (*dm_window_geom)(dm *, dm_win, int *width, int *height);
-    /* Tk_Display */
-    dm_dpy (*dm_display)(dm *, dm_win);
-    /* Tk_GetPixmap */
-    dm_pixmap (*dm_get_pixmap)(dm *, dm_dpy, dm_winid, dm_win, int width, int height);
-    /* Tk_FreePixmap */
-    void (*dm_free_pixmap)(dm *, dm_dpy, dm_pixmap);
-    /* Tk_SetWindowBackground */
-    void (*dm_window_set_bg)(dm *, dm_win, unsigned long);
-    /* Tk_Screen */
-    dm_screen (*dm_get_screen)(dm *, dm_win);
-    /* Tk_CreateEventHandler */
-    void (*dm_eventhandler_create)(dm *, dm_win);
-    /* Tk_DeleteEventHandler */
-    void (*dm_eventhandler_delete)(dm *, dm_win);
-};
+#define DM_OPEN(_interp, _type, _argc, _argv) dm_open(_interp, _type, _argc, _argv)
 
 __BEGIN_DECLS
 
@@ -281,14 +231,15 @@ DM_EXPORT extern dm dm_ogl;
 DM_EXPORT extern dm dm_plot;
 DM_EXPORT extern dm dm_ps;
 DM_EXPORT extern dm dm_rtgl;
+DM_EXPORT extern dm dm_tk;
 DM_EXPORT extern dm dm_wgl;
 DM_EXPORT extern dm dm_X;
 DM_EXPORT extern dm dm_txt;
 DM_EXPORT extern dm dm_qt;
 DM_EXPORT extern dm dm_osgl;
 
+DM_EXPORT extern int Dm_Init(void *interp);
 DM_EXPORT extern dm *dm_open(Tcl_Interp *interp,
-			     struct dm_context *context,
 			     int type,
 			     int argc,
 			     const char *argv[]);
@@ -354,10 +305,6 @@ DM_EXPORT extern int dm_draw_labels(dm *dmp,
 						      int *labelsColor_arg, ClientData labelsHookClientdata_arg),
 				    ClientData labelsHookClientdata);
 
-/* query.c */
-DM_EXPORT extern int dm_validXType(const char *dpy_string, const char *name);
-DM_EXPORT extern char *dm_bestXType(const char *dpy_string);
-
 /* rect.c */
 DM_EXPORT extern void dm_draw_rect(dm *dmp,
 				   struct bview_interactive_rect_state *grsp);
@@ -392,7 +339,7 @@ DM_EXPORT extern struct bu_vls *dm_list_types(const char separator); /* free ret
 DM_EXPORT extern unsigned long dm_get_id(dm *dmp);
 DM_EXPORT extern void dm_set_id(dm *dmp, unsigned long new_id);
 DM_EXPORT extern int dm_get_displaylist(dm *dmp);
-DM_EXPORT extern int dm_close(dm *dmp, struct dm_context *context);
+DM_EXPORT extern int dm_close(dm *dmp);
 DM_EXPORT extern unsigned char *dm_get_bg(dm *dmp);
 DM_EXPORT extern int dm_set_bg(dm *dmp, unsigned char r, unsigned char g, unsigned char b);
 DM_EXPORT extern unsigned char *dm_get_fg(dm *dmp);
@@ -400,14 +347,12 @@ DM_EXPORT extern int dm_set_fg(dm *dmp, unsigned char r, unsigned char g, unsign
 DM_EXPORT extern int dm_reshape(dm *dmp, int width, int height);
 DM_EXPORT extern int dm_make_current(dm *dmp);
 DM_EXPORT extern vect_t *dm_get_clipmin(dm *dmp);
-DM_EXPORT extern void dm_set_clipmin(dm *dmp, vect_t clipmin);
 DM_EXPORT extern vect_t *dm_get_clipmax(dm *dmp);
-DM_EXPORT extern void dm_set_clipmax(dm *dmp, vect_t clipmax);
 DM_EXPORT extern int dm_get_bound_flag(dm *dmp);
 DM_EXPORT extern void dm_set_bound(dm *dmp, fastf_t val);
 DM_EXPORT extern int dm_get_stereo(dm *dmp);
 DM_EXPORT extern int dm_set_win_bounds(dm *dmp, fastf_t *w);
-DM_EXPORT extern int dm_configure_win(dm *dmp, struct dm_context *context, int force);
+DM_EXPORT extern int dm_configure_win(dm *dmp, int force);
 DM_EXPORT extern struct bu_vls *dm_get_pathname(dm *dmp);
 DM_EXPORT extern struct bu_vls *dm_get_dname(dm *dmp);
 DM_EXPORT extern struct bu_vls *dm_get_tkname(dm *dmp);
@@ -415,7 +360,6 @@ DM_EXPORT extern int dm_get_fontsize(dm *dmp);
 DM_EXPORT extern void dm_set_fontsize(dm *dmp, int size);
 DM_EXPORT extern int dm_get_light_flag(dm *dmp);
 DM_EXPORT extern void dm_set_light_flag(dm *dmp, int size);
-DM_EXPORT extern int dm_get_light(dm *dmp);
 DM_EXPORT extern int dm_set_light(dm *dmp, int light);
 DM_EXPORT extern void *dm_get_public_vars(dm *dmp);
 DM_EXPORT extern void *dm_get_private_vars(dm *dmp);
@@ -454,23 +398,12 @@ DM_EXPORT extern int dm_draw_point_3d(dm *dmp, point_t pt);
 DM_EXPORT extern int dm_draw_points_3d(dm *dmp, int npoints, point_t *points);
 DM_EXPORT extern int dm_draw(dm *dmp, struct bn_vlist *(*callback)(void *), void **data);
 DM_EXPORT extern int dm_draw_obj(dm *dmp, struct display_list *obj);
-DM_EXPORT extern int dm_get_depth_mask(dm *dmp);
 DM_EXPORT extern int dm_set_depth_mask(dm *dmp, int d_on);
-DM_EXPORT extern int dm_get_debug(dm *dmp);
 DM_EXPORT extern int dm_debug(dm *dmp, int lvl);
-DM_EXPORT extern const char *dm_get_logfile(dm *dmp);
 DM_EXPORT extern int dm_logfile(dm *dmp, const char *filename);
 DM_EXPORT extern fb *dm_get_fb(dm *dmp);
 DM_EXPORT extern int dm_get_fb_visible(dm *dmp);
 DM_EXPORT extern int dm_set_fb_visible(dm *dmp, int is_fb_visible);
-DM_EXPORT extern int dm_get_clearbufferafter(dm *dmp);
-DM_EXPORT extern void dm_set_clearbufferafter(dm *dmp, int clearBufferAfter);
-
-DM_EXPORT extern void dm_flush(dm *dmp);
-DM_EXPORT extern void *dm_os_window(dm *dmp);
-DM_EXPORT extern void *dm_device_context(dm *dmp);
-
-DM_EXPORT extern int dm_png_write(dm *dmp, FILE *fp, struct bu_vls *msgs);
 
 /* TODO - dm_vp is supposed to go away, but until we figure it out
  * expose it here to allow dm hiding */
@@ -503,7 +436,7 @@ DM_EXPORT extern int dm_default_type();
 #  include "../src/libdm/dm_private.h"
 #endif
 
-#define DM_OPEN(_interp, _context, _type, _argc, _argv) dm_open(_interp, _context, _type, _argc, _argv)
+#define DM_OPEN(_interp, _type, _argc, _argv) dm_open(_interp, _type, _argc, _argv)
 #define DM_CLOSE(_dmp) _dmp->dm_close(_dmp)
 #define DM_DRAW_BEGIN(_dmp) _dmp->dm_drawBegin(_dmp)
 #define DM_DRAW_END(_dmp) _dmp->dm_drawEnd(_dmp)

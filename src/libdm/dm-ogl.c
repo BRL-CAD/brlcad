@@ -69,6 +69,8 @@
 #undef y1
 #undef j1
 
+#include "tk.h"
+
 #undef VMIN		/* is used in vmath.h, too */
 
 #include "vmath.h"
@@ -94,13 +96,14 @@
 #define YSTEREO		491	/* subfield height, in scanlines */
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
 
-HIDDEN XVisualInfo *ogl_choose_visual(struct dm_internal *dmp, struct dm_context *, dm_win tkwin);
+HIDDEN XVisualInfo *ogl_choose_visual(struct dm_internal *dmp, Tk_Window tkwin);
 
 /* Display Manager package interface */
 #define IRBOUND 4095.9	/* Max magnification in Rot matrix */
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
-HIDDEN int ogl_close(struct dm_internal *dmp, struct dm_context *context);
+struct dm_internal *ogl_open(Tcl_Interp *interp, int argc, char **argv);
+HIDDEN int ogl_close(struct dm_internal *dmp);
 HIDDEN int ogl_drawBegin(struct dm_internal *dmp);
 HIDDEN int ogl_drawEnd(struct dm_internal *dmp);
 HIDDEN int ogl_normal(struct dm_internal *dmp);
@@ -120,7 +123,7 @@ HIDDEN int ogl_setFGColor(struct dm_internal *dmp, unsigned char r, unsigned cha
 HIDDEN int ogl_setBGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsigned char b);
 HIDDEN int ogl_setLineAttr(struct dm_internal *dmp, int width, int style);
 HIDDEN int ogl_configureWin_guts(struct dm_internal *dmp, int force);
-HIDDEN int ogl_configureWin(struct dm_internal *dmp, struct dm_context *, int force);
+HIDDEN int ogl_configureWin(struct dm_internal *dmp, int force);
 HIDDEN int ogl_setLight(struct dm_internal *dmp, int lighting_on);
 HIDDEN int ogl_setTransparency(struct dm_internal *dmp, int transparency_on);
 HIDDEN int ogl_setDepthMask(struct dm_internal *dmp, int depthMask_on);
@@ -405,7 +408,7 @@ ogl_makeCurrent(struct dm_internal *dmp)
 
 
 HIDDEN int
-ogl_configureWin(struct dm_internal *dmp, struct dm_context *UNUSED(context), int force)
+ogl_configureWin(struct dm_internal *dmp, int force)
 {
     if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
@@ -458,7 +461,7 @@ ogl_setLight(struct dm_internal *dmp, int lighting_on)
  * OpenGL
  */
 HIDDEN XVisualInfo *
-ogl_choose_visual(struct dm_internal *dmp, struct dm_context *context, dm_win tkwin)
+ogl_choose_visual(struct dm_internal *dmp, Tk_Window tkwin)
 {
     struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
     XVisualInfo *vip, vitemp, *vibase, *maxvip;
@@ -555,7 +558,10 @@ ogl_choose_visual(struct dm_internal *dmp, struct dm_context *context, dm_win tk
 				    RootWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 					       maxvip->screen), maxvip->visual, AllocNone);
 
-		if ((*context->dm_window_set_visual)(dmp, tkwin, maxvip, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap)) {
+		if (Tk_SetWindowVisual(tkwin,
+				       maxvip->visual, maxvip->depth,
+				       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap)) {
+
 		    glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 				 maxvip, GLX_DEPTH_SIZE,
 				 &mvars->depth);
@@ -599,21 +605,21 @@ ogl_choose_visual(struct dm_internal *dmp, struct dm_context *context, dm_win tk
  * Gracefully release the display.
  */
 HIDDEN int
-ogl_close(struct dm_internal *dmp, struct dm_context *context)
+ogl_close(struct dm_internal *dmp)
 {
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
-    struct ogl_vars *privvars = (struct ogl_vars *)dmp->dm_vars.priv_vars;
-    if (pubvars->dpy) {
-	if (privvars->glxc) {
-	    glXMakeCurrent(pubvars->dpy, None, NULL);
-	    glXDestroyContext(pubvars->dpy, privvars->glxc);
+    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy) {
+	if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc) {
+	    glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy, None, NULL);
+	    glXDestroyContext(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc);
 	}
 
-	if (pubvars->cmap)
-	    XFreeColormap(pubvars->dpy, pubvars->cmap);
+	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap)
+	    XFreeColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap);
 
-	if (pubvars->xtkwin)
-	    (*context->dm_window_destroy)(dmp, pubvars->xtkwin);
+	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)
+	    Tk_DestroyWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
     }
 
     bu_vls_free(&dmp->dm_pathName);
@@ -632,7 +638,7 @@ ogl_close(struct dm_internal *dmp, struct dm_context *context)
  *
  */
 struct dm_internal *
-ogl_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
+ogl_open(Tcl_Interp *interp, int argc, char **argv)
 {
     static int count = 0;
     GLfloat backgnd[4];
@@ -654,11 +660,15 @@ ogl_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
     Display *tmp_dpy = (Display *)NULL;
     struct dm_internal *dmp = (struct dm_internal *)NULL;
     struct modifiable_ogl_vars *mvars = NULL;
-    dm_win tkwin = NULL;
+    Tk_Window tkwin = (Tk_Window)NULL;
     int screen_number = -1;
 
     struct dm_xvars *pubvars = NULL;
     struct ogl_vars *privvars = NULL;
+
+    if ((tkwin = Tk_MainWindow(interp)) == NULL) {
+	return DM_NULL;
+    }
 
     BU_GET(dmp, struct dm_internal);
 
@@ -669,13 +679,6 @@ ogl_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
     dmp->dm_bytes_per_pixel = sizeof(GLuint);
     dmp->dm_bits_per_channel = 8;
     bu_vls_init(&(dmp->dm_log));
-
-    if ((tkwin = (*context->dm_window_main)(dmp)) == NULL) {
-	bu_free((void *)privvars, "privvars");
-	bu_free((void *)pubvars, "pubvars");
-	bu_free((void *)dmp, "dmp");
-	return DM_NULL;
-    }
 
     BU_ALLOC(dmp->dm_vars.pub_vars, struct dm_xvars);
     if (dmp->dm_vars.pub_vars == (void *)NULL) {
@@ -741,7 +744,7 @@ ogl_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
 
     if ((tmp_dpy = XOpenDisplay(bu_vls_addr(&dmp->dm_dName))) == NULL) {
 	bu_vls_free(&init_proc_vls);
-	(void)ogl_close(dmp, context);
+	(void)ogl_close(dmp);
 	return DM_NULL;
     }
 
@@ -751,7 +754,7 @@ ogl_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
 
 	if (!XQueryExtension(tmp_dpy, "GLX", &return_val, &return_val, &return_val)) {
 	    bu_vls_free(&init_proc_vls);
-	    (void)ogl_close(dmp, context);
+	    (void)ogl_close(dmp);
 	    return DM_NULL;
 	}
     }
@@ -785,8 +788,11 @@ ogl_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
 
     if (dmp->dm_top) {
 	/* Make xtkwin a toplevel window */
-	pubvars->xtkwin = (*context->dm_window_create_from_path)(dmp, tkwin,
-	       	bu_vls_cstr(&dmp->dm_pathName), bu_vls_cstr(&dmp->dm_dName));
+	pubvars->xtkwin =
+	    Tk_CreateWindowFromPath(interp,
+				    tkwin,
+				    bu_vls_addr(&dmp->dm_pathName),
+				    bu_vls_addr(&dmp->dm_dName));
 	pubvars->top = pubvars->xtkwin;
     } else {
 	char *cp;
@@ -799,65 +805,75 @@ ogl_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
 
 	    bu_vls_strncpy(&top_vls, (const char *)bu_vls_addr(&dmp->dm_pathName), cp - bu_vls_addr(&dmp->dm_pathName));
 
-	    pubvars->top = (*context->dm_window_from_name)(dmp, bu_vls_cstr(&top_vls), tkwin);
+	    pubvars->top =
+		Tk_NameToWindow(interp, bu_vls_addr(&top_vls), tkwin);
 	    bu_vls_free(&top_vls);
 	}
 
 	/* Make xtkwin an embedded window */
-	pubvars->xtkwin = (*context->dm_window_create_embedded)(dmp, pubvars->top, cp + 1);
+	pubvars->xtkwin =
+	    Tk_CreateWindow(interp, pubvars->top,
+			    cp + 1, (char *)NULL);
     }
 
     if (pubvars->xtkwin == NULL) {
 	bu_log("dm-Ogl: Failed to open %s\n", bu_vls_addr(&dmp->dm_pathName));
 	bu_vls_free(&init_proc_vls);
-	(void)ogl_close(dmp, context);
+	(void)ogl_close(dmp);
 	return DM_NULL;
     }
 
-    const char *winname = (*context->dm_window_name)(dmp, pubvars->xtkwin);
-    bu_vls_printf(&dmp->dm_tkName, "%s", winname);
+    bu_vls_printf(&dmp->dm_tkName, "%s",
+		  (char *)Tk_Name(pubvars->xtkwin));
 
-    if ((*context->dm_init)(dmp, bu_vls_cstr(&init_proc_vls)) == BRLCAD_ERROR) {
+    bu_vls_printf(&str, "_init_dm %s %s\n",
+		  bu_vls_addr(&init_proc_vls),
+		  bu_vls_addr(&dmp->dm_pathName));
+
+    if (Tcl_Eval(interp, bu_vls_addr(&str)) == BRLCAD_ERROR) {
 	bu_vls_free(&init_proc_vls);
 	bu_vls_free(&str);
-	(void)ogl_close(dmp, context);
+	(void)ogl_close(dmp);
 	return DM_NULL;
     }
 
     bu_vls_free(&init_proc_vls);
     bu_vls_free(&str);
 
-    pubvars->dpy = (Display *)(*context->dm_display)(dmp, pubvars->top);
+    pubvars->dpy =
+	Tk_Display(pubvars->top);
 
     /* make sure there really is a display before proceeding. */
     if (!(pubvars->dpy)) {
 	bu_vls_free(&init_proc_vls);
 	bu_vls_free(&str);
-	(void)ogl_close(dmp, context);
+	(void)ogl_close(dmp);
 	return DM_NULL;
     }
 
-    (*context->dm_window_geom)(dmp, pubvars->xtkwin, &dmp->dm_width, &dmp->dm_height);
+    Tk_GeometryRequest(pubvars->xtkwin,
+		       dmp->dm_width,
+		       dmp->dm_height);
 
     /* must do this before MakeExist */
-    if ((pubvars->vip=ogl_choose_visual(dmp, context, pubvars->xtkwin)) == NULL) {
+    if ((pubvars->vip=ogl_choose_visual(dmp, pubvars->xtkwin)) == NULL) {
 	bu_log("ogl_open: Can't get an appropriate visual.\n");
-	(void)ogl_close(dmp, context);
+	(void)ogl_close(dmp);
 	return DM_NULL;
     }
 
     pubvars->depth = mvars->depth;
 
-    (*context->dm_window_make_exist)(dmp, pubvars->xtkwin);
+    Tk_MakeWindowExist(pubvars->xtkwin);
 
-    pubvars->win = (*context->dm_window_id)(dmp, pubvars->xtkwin);
+    pubvars->win = Tk_WindowId(pubvars->xtkwin);
     dmp->dm_id = pubvars->win;
 
     /* open GLX context */
     if ((privvars->glxc =
 	 glXCreateContext(pubvars->dpy, pubvars->vip, (GLXContext)NULL, GL_TRUE))==NULL) {
 	bu_log("ogl_open: couldn't create glXContext.\n");
-	(void)ogl_close(dmp, context);
+	(void)ogl_close(dmp);
 	return DM_NULL;
     }
 
@@ -922,18 +938,18 @@ Done:
 
 #endif /* HAVE_X11_EXTENSIONS_XINPUT_H */
 
-    (*context->dm_window_map)(dmp, pubvars->xtkwin);
+    Tk_MapWindow(pubvars->xtkwin);
 
     if (!glXMakeCurrent(pubvars->dpy, pubvars->win, privvars->glxc)) {
 	bu_log("ogl_open: Couldn't make context current\n");
-	(void)ogl_close(dmp, context);
+	(void)ogl_close(dmp);
 	return DM_NULL;
     }
 
     /* display list (fontOffset + char) will display a given ASCII char */
     if ((privvars->fontOffset = glGenLists(128))==0) {
 	bu_log("dm-ogl: Can't make display lists for font.\n");
-	(void)ogl_close(dmp, context);
+	(void)ogl_close(dmp);
 	return DM_NULL;
     }
 

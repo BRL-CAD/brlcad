@@ -53,7 +53,7 @@ txt_open(Tcl_Interp *interp, int argc, const char **argv)
 
 
 HIDDEN int
-txt_close(dm *UNUSED(dmp), struct dm_context *UNUSED(context))
+txt_close(dm *UNUSED(dmp))
 {
     bu_log("close called\n");
     return 0;
@@ -205,7 +205,7 @@ txt_setLineAttr(dm *UNUSED(dmp), int UNUSED(width), int UNUSED(style))
 
 
 HIDDEN int
-txt_configureWin(dm *UNUSED(dmp), struct dm_context *UNUSED(context), int UNUSED(force))
+txt_configureWin(dm *UNUSED(dmp), int UNUSED(force))
 {
     bu_log("configureWin called\n");
     return 0;

@@ -46,6 +46,9 @@ FB_EXPORT extern fb osgl_interface;
 #ifdef IF_WGL
 FB_EXPORT extern fb wgl_interface;
 #endif
+#ifdef IF_TK
+FB_EXPORT extern fb tk_interface;
+#endif
 #ifdef IF_QT
 FB_EXPORT extern fb qt_interface;
 #endif

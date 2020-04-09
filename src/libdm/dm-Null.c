@@ -35,7 +35,7 @@
 
 
 int
-null_close(struct dm_internal *UNUSED(dmp), struct dm_context *UNUSED(context))
+null_close(struct dm_internal *UNUSED(dmp))
 {
     return 0;
 }
@@ -168,7 +168,7 @@ null_setLineAttr(struct dm_internal *UNUSED(dmp), int UNUSED(width), int UNUSED(
 
 
 int
-null_configureWin(struct dm_internal *UNUSED(dmp), struct dm_context *UNUSED(context), int UNUSED(force))
+null_configureWin(struct dm_internal *UNUSED(dmp), int UNUSED(force))
 {
     return 0;
 }

@@ -49,7 +49,6 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "ged.h"
-#include "tclcad.h"
 #include "dm/dm_xvars.h"
 
 #include "./mged.h"
@@ -149,7 +148,7 @@ doEvent(ClientData clientData, XEvent *eventPtr)
     if (eventPtr->type == ConfigureNotify) {
 	XConfigureEvent *conf = (XConfigureEvent *)eventPtr;
 
-	dm_configure_win(DMP, &dm_tk_context, 0);
+	dm_configure_win(DMP, 0);
 	rect_image2view();
 	dirty = 1;
 

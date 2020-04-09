@@ -51,6 +51,10 @@
 #  undef X_NOT_POSIX
 #endif
 
+#ifdef HAVE_TK
+#  include "tk.h"
+#endif
+
 #include "vmath.h"
 #include "bu/endian.h"
 #include "bn.h"
@@ -154,7 +158,7 @@ X_reshape(struct dm_internal *dmp, int width, int height)
 
 
 HIDDEN int
-X_configureWin_guts(struct dm_internal *dmp, struct dm_context *context, int force)
+X_configureWin_guts(struct dm_internal *dmp, int force)
 {
     XWindowAttributes xwa;
     XFontStruct *newfontstruct;
@@ -179,9 +183,14 @@ X_configureWin_guts(struct dm_internal *dmp, struct dm_context *context, int for
     }
 
 #ifdef HAVE_TK
-    (*context->dm_free_pixmap)(dmp, pubvars->dpy, privars->pix);
-    privars->pix = (Pixmap)(*context->dm_get_pixmap)(dmp, pubvars->dpy, DefaultRootWindow(pubvars->dpy),
-		     pubvars->xtkwin, dmp->dm_width, dmp->dm_height);
+    Tk_FreePixmap(pubvars->dpy,
+		  privars->pix);
+    privars->pix =
+	Tk_GetPixmap(pubvars->dpy,
+		     DefaultRootWindow(pubvars->dpy),
+		     dmp->dm_width,
+		     dmp->dm_height,
+		     Tk_Depth(pubvars->xtkwin));
 #endif
 
     /* First time through, load a font or quit */
@@ -271,7 +280,7 @@ X_configureWin_guts(struct dm_internal *dmp, struct dm_context *context, int for
 
 
 HIDDEN XVisualInfo *
-X_choose_visual(struct dm_internal *dmp, struct dm_context *context)
+X_choose_visual(struct dm_internal *dmp)
 {
     XVisualInfo *vip, vitemp, *vibase, *maxvip;
     int num, i, j;
@@ -333,7 +342,10 @@ X_choose_visual(struct dm_internal *dmp, struct dm_context *context)
 	    }
 
 #ifdef HAVE_TK
-	    if ((*context->dm_window_set_visual)(dmp, pubvars->xtkwin, (dm_visual_info)maxvip, pubvars->cmap)) {
+	    if (Tk_SetWindowVisual(pubvars->xtkwin,
+				   maxvip->visual,
+				   maxvip->depth,
+				   pubvars->cmap)) {
 		pubvars->depth = maxvip->depth;
 
 		bu_free(good, "dealloc good visuals");
@@ -364,7 +376,7 @@ X_choose_visual(struct dm_internal *dmp, struct dm_context *context)
  * Gracefully release the display.
  */
 HIDDEN int
-X_close(struct dm_internal *dmp, struct dm_context *context)
+X_close(struct dm_internal *dmp)
 {
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
@@ -376,7 +388,8 @@ X_close(struct dm_internal *dmp, struct dm_context *context)
 
 #ifdef HAVE_TK
 	if (privars->pix)
-	    (*context->dm_free_pixmap)(dmp, pubvars->dpy, privars->pix);
+	    Tk_FreePixmap(pubvars->dpy,
+			  privars->pix);
 #endif
 
 	/*XXX Possibly need to free the colormap */
@@ -386,7 +399,7 @@ X_close(struct dm_internal *dmp, struct dm_context *context)
 
 #ifdef HAVE_TK
 	if (pubvars->xtkwin)
-	    (*context->dm_window_destroy)(dmp, pubvars->xtkwin);
+	    Tk_DestroyWindow(pubvars->xtkwin);
 #endif
 
     }
@@ -407,7 +420,7 @@ X_close(struct dm_internal *dmp, struct dm_context *context)
  *
  */
 struct dm_internal *
-X_open_dm(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
+X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 {
     static int count = 0;
     int make_square = -1;
@@ -425,11 +438,17 @@ X_open_dm(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
     struct dm_internal *dmp = (struct dm_internal *)NULL;
-    dm_win tkwin = NULL;
+    Tk_Window tkwin = (Tk_Window)NULL;
     Screen *screen = (Screen *)NULL;
 
     struct dm_xvars *pubvars = NULL;
     struct x_vars *privars = NULL;
+
+#ifdef HAVE_TK
+    if ((tkwin = Tk_MainWindow(interp)) == NULL) {
+	return DM_NULL;
+    }
+#endif
 
     BU_ALLOC(dmp, struct dm_internal);
 
@@ -441,15 +460,6 @@ X_open_dm(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
 
     BU_ALLOC(dmp->dm_vars.priv_vars, struct x_vars);
     privars = (struct x_vars *)dmp->dm_vars.priv_vars;
-
-#ifdef HAVE_TK
-    if ((tkwin = (*context->dm_window_main)(dmp)) == NULL) {
-	bu_free((void *)privars, "privars");
-	bu_free((void *)pubvars, "pubvars");
-	bu_free((void *)dmp, "dmp");
-	return DM_NULL;
-    }
-#endif
 
     bu_vls_init(&dmp->dm_pathName);
     bu_vls_init(&dmp->dm_tkName);
@@ -484,8 +494,9 @@ X_open_dm(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
     if (dmp->dm_top) {
 #ifdef HAVE_TK
 	/* Make xtkwin a toplevel window */
-	pubvars->xtkwin = (*context->dm_window_create_from_path)(dmp, tkwin,
-		bu_vls_cstr(&dmp->dm_pathName), bu_vls_cstr(&dmp->dm_dName));
+	pubvars->xtkwin = Tk_CreateWindowFromPath(interp, tkwin,
+						  bu_vls_addr(&dmp->dm_pathName),
+						  bu_vls_addr(&dmp->dm_dName));
 	pubvars->top = pubvars->xtkwin;
 #endif
     } else {
@@ -500,32 +511,38 @@ X_open_dm(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
 	    bu_vls_strncpy(&top_vls, (const char *)bu_vls_addr(&dmp->dm_pathName), cp - bu_vls_addr(&dmp->dm_pathName));
 
 #ifdef HAVE_TK
-	    pubvars->top = (*context->dm_window_from_name)(dmp, bu_vls_cstr(&top_vls), tkwin);
+	    pubvars->top =
+		Tk_NameToWindow(interp, bu_vls_addr(&top_vls), tkwin);
 #endif
 	    bu_vls_free(&top_vls);
 	}
 
 #ifdef HAVE_TK
 	/* Make xtkwin an embedded window */
-	pubvars->xtkwin = (*context->dm_window_create_embedded)(dmp, pubvars->top, cp + 1);
+	pubvars->xtkwin =
+	    Tk_CreateWindow(interp, pubvars->top,
+			    cp + 1, (char *)NULL);
 #endif
     }
 
     if (pubvars->xtkwin == NULL) {
 	bu_log("X_open_dm: Failed to open %s\n", bu_vls_addr(&dmp->dm_pathName));
-	(void)X_close(dmp, context);
+	(void)X_close(dmp);
 	return DM_NULL;
     }
 
 #ifdef HAVE_TK
-    const char *winname = (*context->dm_window_name)(dmp, pubvars->xtkwin);
-    bu_vls_printf(&dmp->dm_tkName, "%s", winname);
+    bu_vls_printf(&dmp->dm_tkName, "%s",
+		  (char *)Tk_Name(pubvars->xtkwin));
 #endif
 
-    if ((*context->dm_init)(dmp, bu_vls_cstr(&init_proc_vls)) == BRLCAD_ERROR) {
-	bu_vls_free(&init_proc_vls);
+    bu_vls_printf(&str, "_init_dm %s %s\n",
+		  bu_vls_addr(&init_proc_vls),
+		  bu_vls_addr(&dmp->dm_pathName));
+
+    if (Tcl_Eval(interp, bu_vls_addr(&str)) == BRLCAD_ERROR) {
 	bu_vls_free(&str);
-	(void)X_close(dmp, context);
+	(void)X_close(dmp);
 	return DM_NULL;
     }
 
@@ -534,13 +551,13 @@ X_open_dm(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
 
     pubvars->dpy = NULL;
 #ifdef HAVE_TK
-    pubvars->dpy = (Display *)(*context->dm_display)(dmp, pubvars->top);
+    pubvars->dpy = Tk_Display(pubvars->top);
 #endif
 
     /* make sure there really is a display before proceeding. */
     if (!pubvars->dpy) {
 	bu_log("ERROR: Unable to attach to display (%s)\n", bu_vls_addr(&dmp->dm_pathName));
-	(void)X_close(dmp, context);
+	(void)X_close(dmp);
 	return DM_NULL;
     }
 
@@ -549,14 +566,14 @@ X_open_dm(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
     if (!screen) {
 #ifdef HAVE_TK
 	/* failed to get a default screen, try harder */
-	screen = (Screen *)(*context->dm_get_screen)(dmp, pubvars->top);
+	screen = Tk_Screen(pubvars->top);
 #endif
     }
 
     /* make sure there really is a screen before processing. */
     if (!screen) {
 	bu_log("ERROR: Unable to attach to screen (%s)\n", bu_vls_addr(&dmp->dm_pathName));
-	(void)X_close(dmp, context);
+	(void)X_close(dmp);
 	return DM_NULL;
     }
 
@@ -593,21 +610,28 @@ X_open_dm(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
     }
 
 #ifdef HAVE_TK
-    (*context->dm_window_geom)(dmp, pubvars->xtkwin, &dmp->dm_width, &dmp->dm_height);
+    Tk_GeometryRequest(pubvars->xtkwin,
+		       dmp->dm_width,
+		       dmp->dm_height);
 #endif
 
     /* must do this before MakeExist */
-    if ((pubvars->vip = X_choose_visual(dmp, context)) == NULL) {
+    if ((pubvars->vip = X_choose_visual(dmp)) == NULL) {
 	bu_log("X_open_dm: Can't get an appropriate visual.\n");
-	(void)X_close(dmp, context);
+	(void)X_close(dmp);
 	return DM_NULL;
     }
 
 #ifdef HAVE_TK
-    (*context->dm_window_make_exist)(dmp, pubvars->xtkwin);
-    pubvars->win = (*context->dm_window_id)(dmp, pubvars->xtkwin);
+    Tk_MakeWindowExist(pubvars->xtkwin);
+    pubvars->win = Tk_WindowId(pubvars->xtkwin);
     dmp->dm_id = pubvars->win;
-    privars->pix = (Pixmap)(*context->dm_get_pixmap)(dmp, pubvars->dpy, pubvars->win, pubvars->xtkwin, dmp->dm_width, dmp->dm_height);
+    privars->pix =
+	Tk_GetPixmap(pubvars->dpy,
+		     pubvars->win,
+		     dmp->dm_width,
+		     dmp->dm_height,
+		     Tk_Depth(pubvars->xtkwin));
 #endif
 
     if (privars->is_trueColor) {
@@ -725,11 +749,12 @@ Skip_dials:
 
     privars->xmat = &(privars->mod_mat[0]);
 
-    (void)X_configureWin_guts(dmp, context, 1);
+    (void)X_configureWin_guts(dmp, 1);
 
 #ifdef HAVE_TK
-    (*context->dm_window_set_bg)(dmp, pubvars->xtkwin, privars->bg);
-    (*context->dm_window_map)(dmp, pubvars->xtkwin);
+    Tk_SetWindowBackground(pubvars->xtkwin,
+			   privars->bg);
+    Tk_MapWindow(pubvars->xtkwin);
 #endif
 
     return dmp;
@@ -820,7 +845,7 @@ X_loadMatrix(struct dm_internal *dmp, fastf_t *mat, int which_eye)
 HIDDEN int
 X_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 {
-    extern int vectorThreshold;	/* defined in libdm/dm-generic.c */
+    extern int vectorThreshold;	/* defined in libdm/tcl.c */
 
     static vect_t spnt, lpnt, pnt;
     struct bn_vlist *tvp;
@@ -1411,10 +1436,10 @@ X_setWinBounds(struct dm_internal *dmp, fastf_t *w)
 
 
 HIDDEN int
-X_configureWin(struct dm_internal *dmp, struct dm_context *context, int force)
+X_configureWin(struct dm_internal *dmp, int force)
 {
     /* don't force */
-    return X_configureWin_guts(dmp, context, force);
+    return X_configureWin_guts(dmp, force);
 }
 
 

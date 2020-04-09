@@ -61,7 +61,7 @@ qt_sendRepaintEvent(dm *dmp)
  * Release the display manager
  */
 HIDDEN int
-qt_close(dm *dmp, struct dm_context *context)
+qt_close(dm *dmp)
 {
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
@@ -77,7 +77,7 @@ qt_close(dm *dmp, struct dm_context *context)
     delete privars->parent;
 
     privars->qapp->quit();
-    (*context->dm_window_destroy)(dmp, pubvars->xtkwin);
+    Tk_DestroyWindow(pubvars->xtkwin);
 
     bu_vls_free(&dmp->dm_pathName);
     bu_vls_free(&dmp->dm_tkName);
@@ -572,15 +572,13 @@ qt_reshape(dm *dmp, int width, int height)
 
 
 HIDDEN int
-qt_configureWin(dm *dmp, struct dm_context *context, int force)
+qt_configureWin(dm *dmp, int force)
 {
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
 
-    int width = 0;
-    int height = 0;
-
-    (*context->dm_window_geom)(dmp, pubvars->xtkwin, &dmp->dm_width, &dmp->dm_height);
+    int width = Tk_Width(pubvars->xtkwin);
+    int height = Tk_Height(pubvars->xtkwin);
 
     if (!force &&
 	dmp->dm_height == height &&
@@ -776,7 +774,7 @@ __BEGIN_DECLS
  *
  */
 dm *
-qt_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
+qt_open(Tcl_Interp *interp, int argc, char **argv)
 {
     static int count = 0;
     int make_square = -1;
@@ -792,6 +790,10 @@ qt_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
 	return DM_NULL;
     }
 
+    if ((tkwin = Tk_MainWindow(interp)) == NULL) {
+	return DM_NULL;
+    }
+
     BU_ALLOC(dmp, struct dm_internal);
 
     *dmp = dm_qt; /* struct copy */
@@ -802,13 +804,6 @@ qt_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
 
     BU_ALLOC(dmp->dm_vars.priv_vars, struct qt_vars);
     privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
-
-    if ((tkwin = (Tk_Window)(*context->dm_window_main)(dmp)) == NULL) {
-	bu_free((void *)privars, "privars");
-	bu_free((void *)pubvars, "pubvars");
-	bu_free((void *)dmp, "dmp");
-	return DM_NULL;
-    }
 
     bu_vls_init(&dmp->dm_pathName);
     bu_vls_init(&dmp->dm_tkName);
@@ -842,8 +837,9 @@ qt_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
 
     if (dmp->dm_top) {
 	/* Make xtkwin a toplevel window */
-	pubvars->xtkwin = (Tk_Window)(*context->dm_window_create_from_path)(dmp, tkwin,
-		bu_vls_cstr(&dmp->dm_pathName), bu_vls_cstr(&dmp->dm_dName));
+	pubvars->xtkwin = Tk_CreateWindowFromPath(interp, tkwin,
+						  bu_vls_addr(&dmp->dm_pathName),
+						  bu_vls_addr(&dmp->dm_dName));
 	pubvars->top = pubvars->xtkwin;
     } else {
 	char *cp;
@@ -856,39 +852,43 @@ qt_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
 
 	    bu_vls_strncpy(&top_vls, (const char *)bu_vls_addr(&dmp->dm_pathName), cp - bu_vls_addr(&dmp->dm_pathName));
 
-	    pubvars->top = (Tk_Window)(*context->dm_window_from_name)(dmp, bu_vls_cstr(&top_vls), tkwin);
+	    pubvars->top = Tk_NameToWindow(interp, bu_vls_addr(&top_vls), tkwin);
 	    bu_vls_free(&top_vls);
 	}
 
 	/* Make xtkwin an embedded window */
-	pubvars->xtkwin = (Tk_Window)(*context->dm_window_create_embedded)(dmp, pubvars->top, cp + 1);
+	pubvars->xtkwin =
+	    Tk_CreateWindow(interp, pubvars->top,
+			    cp + 1, (char *)NULL);
     }
 
     if (pubvars->xtkwin == NULL) {
 	bu_log("qt_open: Failed to open %s\n", bu_vls_addr(&dmp->dm_pathName));
-	(void)qt_close(dmp, context);
+	(void)qt_close(dmp);
 	return DM_NULL;
     }
 
-    const char *winname = (*context->dm_window_name)(dmp, pubvars->xtkwin);
-    bu_vls_printf(&dmp->dm_tkName, "%s", winname);
+    bu_vls_printf(&dmp->dm_tkName, "%s", (char *)Tk_Name(pubvars->xtkwin));
 
-    if ((*context->dm_init)(dmp, bu_vls_cstr(&init_proc_vls)) == BRLCAD_ERROR) {
+    bu_vls_printf(&str, "_init_dm %s %s\n", bu_vls_addr(&init_proc_vls), bu_vls_addr(&dmp->dm_pathName));
+
+    if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
+	bu_log("qt_open: _init_dm failed\n");
 	bu_vls_free(&init_proc_vls);
 	bu_vls_free(&str);
-	(void)qt_close(dmp, context);
+	(void)qt_close(dmp);
 	return DM_NULL;
     }
 
     bu_vls_free(&init_proc_vls);
     bu_vls_free(&str);
 
-    pubvars->dpy = (Display *)(*context->dm_display)(dmp, pubvars->top);
+    pubvars->dpy = Tk_Display(pubvars->top);
 
     /* make sure there really is a display before proceeding. */
     if (!pubvars->dpy) {
 	bu_log("qt_open: Unable to attach to display (%s)\n", bu_vls_addr(&dmp->dm_pathName));
-	(void)qt_close(dmp, context);
+	(void)qt_close(dmp);
 	return DM_NULL;
     }
 
@@ -913,16 +913,14 @@ qt_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
 	    dmp->dm_height = dmp->dm_width;
     }
 
-    (*context->dm_window_geom)(dmp, pubvars->xtkwin, &dmp->dm_width, &dmp->dm_height);
+    Tk_GeometryRequest(pubvars->xtkwin, dmp->dm_width, dmp->dm_height);
 
-    (*context->dm_window_make_exist)(dmp, pubvars->xtkwin);
-
-    pubvars->win = (*context->dm_window_id)(dmp, pubvars->xtkwin);
+    Tk_MakeWindowExist(pubvars->xtkwin);
+    pubvars->win = Tk_WindowId(pubvars->xtkwin);
     dmp->dm_id = pubvars->win;
 
-    //(*context->dm_window_set_bg)(dmp, pubvars->xtkwin, privars->bg);
-    (*context->dm_window_map)(dmp, pubvars->xtkwin);
-
+    Tk_SetWindowBackground(pubvars->xtkwin, 0);
+    Tk_MapWindow(pubvars->xtkwin);
     privars->qapp = new QApplication(argc, argv);
 
     privars->parent = QWindow::fromWinId(pubvars->win);
@@ -939,7 +937,7 @@ qt_open(Tcl_Interp *interp, struct dm_context *context, int argc, char **argv)
     qt_setFGColor(dmp, 1, 0, 0, 0, 0);
     qt_setBGColor(dmp, 0, 0, 0);
 
-    qt_configureWin(dmp, context, 1);
+    qt_configureWin(dmp, 1);
 
     MAT_IDN(privars->mod_mat);
     MAT_IDN(privars->disp_mat);

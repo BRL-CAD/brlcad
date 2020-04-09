@@ -35,7 +35,7 @@ DM_EXPORT extern dm dm_null;
 
 
 DM_EXPORT extern int
-null_close(dm *dmp, struct dm_context *context);
+null_close(dm *dmp);
 
 
 DM_EXPORT extern int
@@ -111,7 +111,7 @@ null_setLineAttr(dm *dmp, int width, int style);
 
 
 DM_EXPORT extern int
-null_configureWin(dm *dmp, struct dm_context *context, int force);
+null_configureWin(dm *dmp, int force);
 
 
 DM_EXPORT extern int

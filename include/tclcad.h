@@ -471,24 +471,6 @@ TCLCAD_EXPORT extern void tclcad_set_argv(Tcl_Interp *interp, int argc, const ch
  */
 TCLCAD_EXPORT extern int tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog);
 
-/**
- * Create Tcl specific I/O handlers
- */
-TCLCAD_EXPORT void
-tclcad_create_io_handler(void **chan, struct bu_process *p, int fd, int mode, void *data, ged_io_handler_callback_t callback);
-
-/**
- * Delete Tcl specific I/O handlers
- */
-TCLCAD_EXPORT void
-tclcad_delete_io_handler(void *interp, void *chan, struct bu_process *p, int fd, void *data, ged_io_handler_callback_t callback);
-
-
-TCLCAD_EXPORT extern int Fb_Init(Tcl_Interp *interp);
-TCLCAD_EXPORT extern int Dm_Init(Tcl_Interp *interp);
-
-
-TCLCAD_EXPORT extern struct dm_context dm_tk_context;
 
 __END_DECLS
 

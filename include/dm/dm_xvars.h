@@ -27,13 +27,22 @@
 
 #include "common.h"
 
-#include "dm.h"
-
-#include "tk.h" // For X11 types on Windows (config_win.h asserts we have them...)
-
 #ifdef HAVE_X11_XLIB_H
 #  include <X11/Xlib.h>
 #  include <X11/Xutil.h>
+#endif
+
+#ifdef HAVE_TK
+#  include "tk.h"
+#  define HAVE_X11_TYPES 1
+#endif
+#ifdef IF_WGL
+#include "tkWinInt.h"
+#endif
+
+#if !defined(HAVE_TK) && !defined(TK_WINDOW_TYPEDEF)
+typedef void *Tk_Window;
+#  define TK_WINDOW_TYPEDEF 1
 #endif
 
 #if !defined(HAVE_X11_TYPES) && !defined(HAVE_X11_XLIB_H)
@@ -52,8 +61,8 @@ typedef long Colormap;
 struct dm_xvars {
     Display *dpy;
     Window win;
-    dm_win top;
-    dm_win xtkwin;
+    Tk_Window top;
+    Tk_Window xtkwin;
     int depth;
     Colormap cmap;
 #ifdef IF_WGL
@@ -64,6 +73,10 @@ struct dm_xvars {
 #if defined(DM_X) || defined (DM_OGL) || defined (DM_RTGL)
     XVisualInfo *vip;
     XFontStruct *fontstruct;
+#endif
+#ifdef DM_TK
+    int tkfontset;
+    Tk_Font tkfontstruct;
 #endif
     int devmotionnotify;
     int devbuttonpress;
