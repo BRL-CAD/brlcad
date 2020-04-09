@@ -2605,9 +2605,6 @@ tcl_list_to_fastf_array(Tcl_Interp *interp, const char *char_list, fastf_t **arr
 /* LIBFB's Tcl interface.
  */
 
-/* from libfb/fb_obj.c */
-extern int Fbo_Init(Tcl_Interp *interp);
-
 /**
  * Hook function wrapper to the fb_common_file_size Tcl command
  */
