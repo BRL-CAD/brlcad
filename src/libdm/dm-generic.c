@@ -27,8 +27,9 @@
 
 #include <string.h>
 
+#include "dm/dm_xvars.h"
+
 #ifdef DM_X
-#  include "dm/dm_xvars.h"
 #  include <X11/Xutil.h>
 #endif
 
@@ -1390,7 +1391,8 @@ dm_png_write(dm *dmp, FILE *fp, struct bu_vls *msgs)
 int
 dm_png_write(dm *UNUSED(dmp), FILE *UNUSED(fp), struct bu_vls *msgs)
 {
-    bu_vls_printf("PNG output not supported\n");
+    bu_vls_printf(msgs, "PNG output not supported\n");
+	return BRLCAD_OK;
 }
 #endif // defined(DM_X) || defined(DM_OGL)
 

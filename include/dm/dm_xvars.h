@@ -29,6 +29,8 @@
 
 #include "dm.h"
 
+#include "tk.h" // For X11 types on Windows (config_win.h asserts we have them...)
+
 #ifdef HAVE_X11_XLIB_H
 #  include <X11/Xlib.h>
 #  include <X11/Xutil.h>

@@ -645,14 +645,14 @@ wgl_close(dm *dmp, struct dm_context *context)
 
     if (pubvars->dpy) {
 	if (privvars->glxc) {
-	    wglMakeCurrent(pubvars->hdc, priv_vars->glxc);
+	    wglMakeCurrent(pubvars->hdc, privvars->glxc);
 	    wglDeleteContext(privvars->glxc);
 	}
 
 	if (pubvars->cmap)
-	    XFreeColormap(pub_vars->dpy, pub_vars->cmap);
+	    XFreeColormap(pubvars->dpy, pubvars->cmap);
 
-	if (pub_vars->xtkwin) {
+	if (pubvars->xtkwin) {
 		(*context->dm_eventhandler_delete)(dmp, pubvars->xtkwin);
 		(*context->dm_window_destroy)(dmp, pubvars->xtkwin);
 	}
