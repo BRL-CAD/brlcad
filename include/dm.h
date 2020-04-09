@@ -269,6 +269,10 @@ struct dm_context {
     void (*dm_window_set_bg)(dm *, dm_win, unsigned long);
     /* Tk_Screen */
     dm_screen (*dm_get_screen)(dm *, dm_win);
+    /* Tk_CreateEventHandler */
+    void (*dm_eventhandler_create)(dm *, dm_win);
+    /* Tk_DeleteEventHandler */
+    void (*dm_eventhandler_delete)(dm *, dm_win);
 };
 
 __BEGIN_DECLS

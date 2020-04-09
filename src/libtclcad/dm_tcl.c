@@ -2773,11 +2773,40 @@ tk_window_set_bg(dm *UNUSED(dmp), dm_win win, unsigned long bg)
     Tk_SetWindowBackground((Tk_Window)win, bg);
 }
 
-/* TK_Screen */
+/* Tk_Screen */
 static dm_screen
 tk_get_screen(dm *UNUSED(dmp), dm_win win)
 {
     return (dm_screen)Tk_Screen((Tk_Window)win);
+}
+
+static void
+WGLEventProc(ClientData clientData, XEvent *UNUSED(eventPtr))
+{
+    dm *dmp = (dm *)clientData;
+    if (!dmp) return;
+#ifdef _WIN32
+    /* Need to make things visible after a Window minimization, but don't
+       want the out-of-date visual - for now, do two swaps.  If there's some
+       way to trigger a Window re-draw without doing buffer swaps, that would
+       be preferable... */
+    SwapBuffers(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc);
+    SwapBuffers(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc);
+#endif
+}  
+
+/* Tk_CreateEventHandler */
+static void
+tk_eventhandler_create(dm *dmp, dm_win win)
+{
+    Tk_CreateEventHandler((Tk_Window)win, VisibilityChangeMask, WGLEventProc, (ClientData)dmp);
+}
+
+/* Tk_DeleteEventHandler */
+static void
+tk_eventhandler_delete(dm *dmp, dm_win win)
+{
+    Tk_DeleteEventHandler((Tk_Window)win, VisibilityChangeMask, WGLEventProc, (ClientData)dmp);
 }
 
 
@@ -2831,7 +2860,13 @@ struct dm_context dm_tk_context = {
     &tk_window_set_bg,
 
     /* dm_screen -> Tk_Screen */
-    &tk_get_screen
+    &tk_get_screen,
+
+    /* dm_eventhandler_create -> Tk_CreateEventHandler */
+    &tk_eventhandler_create,
+
+    /* dm_eventhandler_delete -> Tk_DeleteEventHandler */
+    &tk_eventhandler_delete
 };
 
 
