@@ -294,6 +294,7 @@ FB_EXPORT extern int fbs_open(struct fbserv_obj *fbsp, int port);
 FB_EXPORT extern int fbs_close(struct fbserv_obj *fbsp);
 
 
+FB_EXPORT extern int Fbo_Init(Tcl_Interp *interp);
 
 __END_DECLS
 

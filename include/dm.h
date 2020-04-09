@@ -354,6 +354,10 @@ DM_EXPORT extern int dm_draw_labels(dm *dmp,
 						      int *labelsColor_arg, ClientData labelsHookClientdata_arg),
 				    ClientData labelsHookClientdata);
 
+/* query.c */
+DM_EXPORT extern int dm_validXType(const char *dpy_string, const char *name);
+DM_EXPORT extern char *dm_bestXType(const char *dpy_string);
+
 /* rect.c */
 DM_EXPORT extern void dm_draw_rect(dm *dmp,
 				   struct bview_interactive_rect_state *grsp);
