@@ -65,7 +65,9 @@ set(PNG_PREFIX "" CACHE STRING "Prefix to add to the API function names")
 set(DFA_XTRA "" CACHE FILEPATH "File containing extra configuration settings")
 
 # SET LIBNAME
-set(PNG_LIB_NAME png${PNGLIB_MAJOR}${PNGLIB_MINOR})
+if (NOT DEFINED PNG_LIB_NAME)
+  set(PNG_LIB_NAME png${PNGLIB_MAJOR}${PNGLIB_MINOR})
+endif (NOT DEFINED PNG_LIB_NAME)
 
 # to distinguish between debug and release lib
 set(CMAKE_DEBUG_POSTFIX "d")
@@ -589,6 +591,7 @@ if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL)
 endif()
 
 if(NOT SKIP_INSTALL_HEADERS AND NOT SKIP_INSTALL_ALL)
+  message("got here?????")
   install(FILES ${libpng_public_hdrs} DESTINATION include)
   install(FILES ${libpng_public_hdrs} DESTINATION include/${PNGLIB_NAME})
 endif()

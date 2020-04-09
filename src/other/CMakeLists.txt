@@ -168,6 +168,7 @@ mark_as_advanced(PNG_FRAMEWORK)
 mark_as_advanced(DFA_XTRA)
 mark_as_advanced(AWK)
 set(CMAKE_INSTALL_LIBDIR ${LIB_DIR})
+set(PNG_LIB_NAME png_brl)
 set(png_DESCRIPTION "
 Option for enabling and disabling compilation of the Portable Network
 Graphics library provided with BRL-CAD's source distribution.  Default
