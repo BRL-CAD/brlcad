@@ -1,3 +1,26 @@
+// Copyright (c) 1995-2019 Melinda Green, Greg Douglas, Yariv Barkan, Gero Mueller
+//
+// Original code was taken from http://www.superliminal.com/sources/sources.htm
+// and is stored as git revision 0. This revision is entirely free for all uses.
+// Enjoy!
+//
+// Due to restrictions on public domain in certain jurisdictions, code contributed
+// by Yariv Barkan is released in these jurisdictions under the BSD, MIT or the
+// GPL - you may choose one or more, whichever that suits you best.
+//
+// In jurisdictions where public domain property is recognized, the user of this
+// software may choose to accept it either 1) as public domain, 2) under the
+// conditions of the BSD, MIT or GPL or 3) any combination of public domain and
+// one or more of these licenses.
+//
+// Thanks Baptiste Lepilleur for the licensing idea.
+//
+// BRL-CAD is using the version from https://github.com/DevHwan/RTree, with
+// some minor tweaks for building with BRL-CAD Also, Search was modified to
+// restore the passing of a context pointer that allows the callback to record
+// information for later use.  The terms of this file are the same as those
+// of the upstream version.
+
 #ifndef RTREE_H
 #define RTREE_H
 
@@ -46,9 +69,6 @@ class RTFileStream;  // File I/O helper class, look below for implementation and
 ///        Instead of using a callback function for returned results, I recommend and efficient pre-sized,
 ///        grow-only memory array similar to MFC CArray or STL Vector for returning search query result.
 ///
-/// This is the version from https://github.com/DevHwan/RTree, with some minor tweaks for building with BRL-CAD
-/// Also, Search was modified to restore the passing of a context pointer that allows the callback to
-/// record information for later use.
 template<class _DataType, class _ElementType, int _NumDimensions,
 	 class _ElementTypeReal = _ElementType, int _MaxNodeCount = 8, int _MinNodeCount = _MaxNodeCount / 2>
 class RTree
