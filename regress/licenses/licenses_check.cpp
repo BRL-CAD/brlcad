@@ -52,6 +52,7 @@
 int
 process_file(std::string f, std::map<std::string, std::string> &file_to_license)
 {
+    std::regex cad_regex(".*BRL-CAD.*");
     std::regex copyright_regex(".*[Cc]opyright.*[12][0-9[0-9[0-9].*");
     std::regex gov_regex(".*United[ ]States[ ]Government.*");
     std::regex pd_regex(".*[Pp]ublic[ ][Dd]omain.*");
@@ -63,12 +64,16 @@ process_file(std::string f, std::map<std::string, std::string> &file_to_license)
 	return -1;
     }
     int lcnt = 0;
+    bool brlcad_file = false;
     bool gov_copyright = false;
     bool other_copyright = false;
     bool public_domain = false;
 
     // Check the first 50 lines of the file for copyright statements
     while (std::getline(fs, sline) && lcnt < 50) {
+	if (std::regex_match(sline, cad_regex)) {
+	    brlcad_file = true;
+	}
 	if (std::regex_match(sline, copyright_regex)) {
 	    if (std::regex_match(sline, gov_regex)) {
 		gov_copyright = true;
@@ -86,30 +91,32 @@ process_file(std::string f, std::map<std::string, std::string> &file_to_license)
 
 
     if (gov_copyright && public_domain) {
-	std::cout << f << " has gov copyright and public domain references\n";
+	std::cout << "Note: " << f << " has both gov copyright and public domain references\n";
 	return 0;
     }
     if (gov_copyright && other_copyright) {
-	std::cout << f << " has gov and non-gov copyright\n";
 	if (file_to_license.find(f) == file_to_license.end()) {
-	    std::cerr << "FILE " << f << " has no associated reference in a license file!\n";
+	    std::cerr << "FILE " << f << " has no associated reference in a license file! (gov and non-gov copyright)\n";
 	}
 	return 0;
     }
     if (other_copyright) {
-	std::cout << f << " has non-gov copyright\n";
 	if (file_to_license.find(f) == file_to_license.end()) {
 	    std::cerr << "FILE " << f << " has no associated reference in a license file!\n";
 	}
 	return 0;
     }
     if (public_domain) {
-	std::cout << f << " references the public domain\n";
+	if (!brlcad_file) {
+	    if (file_to_license.find(f) == file_to_license.end()) {
+		std::cout << f << " references the public domain, is not a BRL-CAD file, but has no documenting file in doc/legal/embedded\n";
+	    }
+	}
 	return 0;
     }
     if (!gov_copyright && !other_copyright && !public_domain) {
 	if (file_to_license.find(f) == file_to_license.end()) {
-	    std::cout << f << " has no info\n";
+	    std::cout << "FILE " << f << " has no info\n";
 	} else {
 	    std::cout << f << " has no embedded info but is referenced by license file " << file_to_license[f] << "\n";
 	}
@@ -128,7 +135,9 @@ main(int argc, const char *argv[])
     std::regex f_regex("file:(.*)");
     std::regex o_regex(".*[\\/]other[\\/].*");
     std::regex t_regex(".*[\\/]misc/tools[\\/].*");
+    std::regex c_regex(".*[\\/]misc/CMake[\\/].*");
     std::regex r_regex(".*[\\/]misc/repoconv[\\/].*");
+    std::regex d_regex(".*[\\/]doc[\\/].*");
     std::regex srcfile_regex(".*[.](c|cpp|cxx|h|hpp|hxx|tcl)*$");
     std::string root_path(argv[3]);
 
@@ -166,7 +175,7 @@ main(int argc, const char *argv[])
 		continue;
 	    }
 	    lfile_s.close();
-	    std::cout << "License file reference: " << lfile_id << "\n";
+	    //std::cout << "License file reference: " << lfile_id << "\n";
 	    file_to_license[lfile_id] = lfile;
 	    valid_ref_cnt++;
 	}
@@ -185,7 +194,9 @@ main(int argc, const char *argv[])
 	std::cerr << "Unable to open source file list " << argv[2] << "\n";
     }
     while (std::getline(src_file_stream, sfile)) {
-	if (std::regex_match(sfile, o_regex) || std::regex_match(sfile, t_regex) || std::regex_match(sfile, r_regex)) {
+	if (std::regex_match(sfile, o_regex) || std::regex_match(sfile, t_regex)
+	       	|| std::regex_match(sfile, r_regex) || std::regex_match(sfile, c_regex)
+		 || std::regex_match(sfile, d_regex) ) {
 	    continue;
 	}
 	if (!std::regex_match(std::string(sfile), srcfile_regex)) {

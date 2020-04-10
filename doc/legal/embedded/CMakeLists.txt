@@ -2,7 +2,6 @@ set(embedded_licenses
   ayam_icons.txt
   bullet.txt
   chull2d.txt
-  chull3d.txt
   clipper.txt
   db_faa-info.txt
   db_nist-info.txt
@@ -21,9 +20,9 @@ set(embedded_licenses
   hv3_snit.txt
   libtermlib.txt
   msinttypes.txt
+  mt19937ar.txt
   nurbs_fit.txt
   obr.txt
-  openimageio.txt
   OpenNURBS.txt
   osg.txt
   osl.txt
@@ -33,10 +32,9 @@ set(embedded_licenses
   polygonizer.txt
   pstdint.txt
   qsort.txt
-  randmt.txt
+  QuickHull.txt
   realpath.txt
   RTree.txt
-  scriptsort.txt
   search.txt
   sh_wood.txt
   sobolseq.txt

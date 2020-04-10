@@ -92,7 +92,7 @@
 //   Include this file in whatever places need to refer to it. In ONE C/C++
 //   file, write:
 //      #define STB_TRUETYPE_IMPLEMENTATION
-//   before the #include of this file. This expands out the actual
+//   before the inclusion of this file. This expands out the actual
 //   implementation into that C/C++ file.
 //
 //   To make the implementation private to the file that generates the implementation,
@@ -103,7 +103,7 @@
 //           stbtt_GetBakedQuad()                 -- compute quad to draw for a given char
 //
 //   Improved 3D API (more shippable):
-//           #include "stb_rect_pack.h"           -- optional, but you really want it
+//           include "stb_rect_pack.h"           -- optional, but you really want it
 //           stbtt_PackBegin()
 //           stbtt_PackSetOversampling()          -- for improved quality on small fonts
 //           stbtt_PackFontRanges()               -- pack and renders
@@ -274,7 +274,7 @@
 //
 #if 0
 #define STB_TRUETYPE_IMPLEMENTATION  // force following include to generate implementation
-#include "stb_truetype.h"
+include "stb_truetype.h"
 
 unsigned char ttf_buffer[1<<20];
 unsigned char temp_bitmap[512*512];
@@ -321,9 +321,9 @@ void my_stbtt_print(float x, float y, char *text)
 // Complete program (this compiles): get a single bitmap, print as ASCII art
 //
 #if 0
-#include <stdio.h>
+include <stdio.h>
 #define STB_TRUETYPE_IMPLEMENTATION  // force following include to generate implementation
-#include "stb_truetype.h"
+include "stb_truetype.h"
 
 char ttf_buffer[1<<25];
 

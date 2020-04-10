@@ -14,3 +14,5 @@ conditions of the BSD, MIT or GPL or 3) any combination of public domain and
 one or more of these licenses.
 
 Thanks Baptiste Lepilleur for the licensing idea.
+
+file:src/libbrep/cdt/RTree.h

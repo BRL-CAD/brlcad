@@ -1,0 +1,10 @@
+QuickHull implementation from https://github.com/akuukka/quickhull by Antti Kuukka
+
+Per the README.md file:
+
+This implementation is 100% Public Domain.
+
+Feel free to use.
+
+file:src/libbg/QuickHull.cpp
+file:src/libbg/QuickHull.hpp
