@@ -42,6 +42,7 @@ set(embedded_licenses
   sobolseq.txt
   SPSR.txt
   sscanf.txt
+  stb_truetype.txt
   STIX_Font_License_2010.txt
   tcl.txt
   tinythread.txt
