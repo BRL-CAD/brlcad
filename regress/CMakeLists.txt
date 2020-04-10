@@ -53,7 +53,7 @@ add_subdirectory(rtwizard)
 add_subdirectory(mged)
 
 # License check
-#add_subdirectory(licenses)
+add_subdirectory(licenses)
 
 if(SH_EXEC)
   macro(Sh_Regression_Test testname depends_list)

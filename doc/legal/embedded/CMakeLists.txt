@@ -1,5 +1,6 @@
 set(embedded_licenses
   ayam_icons.txt
+  b64.txt
   bullet.txt
   chull2d.txt
   clipper.txt
@@ -14,6 +15,7 @@ set(embedded_licenses
   fontstash.txt
   gct.txt
   gdal_gcv_plugin.txt
+  halfedge.txt
   humanize.txt
   hv3.txt
   hv3_combobox.txt
@@ -21,6 +23,7 @@ set(embedded_licenses
   libtermlib.txt
   msinttypes.txt
   mt19937ar.txt
+  normalize.txt
   nurbs_fit.txt
   obr.txt
   OpenNURBS.txt
@@ -36,6 +39,7 @@ set(embedded_licenses
   realpath.txt
   RTree.txt
   search.txt
+  sha1.txt
   sh_wood.txt
   sobolseq.txt
   SPSR.txt
@@ -48,6 +52,7 @@ set(embedded_licenses
   tri_pt.txt
   uce_dirent.txt
   whereami.txt
+  winmmap.txt
   x24.txt
   y2038.txt
   )
