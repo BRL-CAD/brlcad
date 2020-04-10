@@ -3,7 +3,7 @@
  * argc/argv array.  Code is based off of the Tcl code that performs these functions, and
  * has the following license:
  *
- * This software is copyrighted by the Regents of the University of
+ * Copyright (c) 1994-2018 Regents of the University of
  * California, Sun Microsystems, Inc., Scriptics Corporation, ActiveState
  * Corporation and other parties.  The following terms apply to all files
  * associated with the software unless explicitly disclaimed in
