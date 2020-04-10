@@ -63,44 +63,27 @@
 #include "icv/crop.h"
 #include "fb.h"
 
-#include "dm/dm_xvars.h"
-
 #ifdef DM_X
 #  ifdef WITH_TK
 #    include "tk.h"
 #endif
 #  include <X11/Xutil.h>
-#  include "dm/dm_xvars.h"
 #endif /* DM_X */
 
 #ifdef DM_TK
 #  ifdef WITH_TK
 #    include "tk.h"
 #  endif
-#  include "dm/dm_xvars.h"
 #endif /* DM_TK */
 
 #ifdef DM_OGL
 #  include "fb/fb_ogl.h"
 #endif /* DM_OGL */
 
-#ifdef DM_OSG
-#  include "dm/dm_xvars.h"
-#endif /* DM_OSG */
-
-#ifdef DM_OSGL
-#  include "dm/dm_xvars.h"
-#endif /* DM_OSGL */
-
 #ifdef DM_WGL
 #  include <tkwinport.h>
 #  include "fb/fb_wgl.h"
-#  include "dm/dm_xvars.h"
 #endif /* DM_WGL */
-
-#ifdef DM_QT
-#  include "dm/dm_xvars.h"
-#endif /* DM_QT */
 
 /* Private headers */
 #include "tclcad_private.h"
@@ -14226,14 +14209,7 @@ to_view_win_size(struct ged *gedp,
 	}
     }
 
-#if defined(DM_X) || defined(DM_TK) || defined(DM_OGL) || defined(DM_OSG) || defined(DM_OSGL) || defined(DM_WGL) || defined(DM_QT)
-#   if (defined HAVE_TK)
-    if (dm_get_public_vars(gdvp->gdv_dmp)) {
-	Tk_GeometryRequest(((struct dm_xvars *)(dm_get_public_vars(gdvp->gdv_dmp)))->xtkwin,
-			   width, height);
-    }
-#   endif
-#endif
+    dm_geometry_request(gdvp->gdv_dmp, width, height);
 
     return GED_OK;
 }

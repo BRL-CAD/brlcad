@@ -29,7 +29,6 @@
 #include "common.h"
 
 #include "dm.h"	/* struct dm */
-#include "dm/dm_xvars.h"
 
 #include "pkg.h" /* struct pkg_conn */
 #include "ged.h"

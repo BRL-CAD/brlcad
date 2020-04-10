@@ -332,9 +332,10 @@ DM_EXPORT extern int dm_get_width(dm *dmp);
 DM_EXPORT extern int dm_get_height(dm *dmp);
 DM_EXPORT extern void dm_set_width(dm *dmp, int width);
 DM_EXPORT extern void dm_set_height(dm *dmp, int height);
+DM_EXPORT extern void dm_geometry_request(dm *dmp, int width, int height);
+DM_EXPORT extern void dm_internal_var(struct bu_vls *result, dm *dmp, const char *key); // ick
 DM_EXPORT extern fastf_t dm_get_aspect(dm *dmp);
 DM_EXPORT extern int dm_get_type(dm *dmp);
-DM_EXPORT void *dm_get_xvars(dm *dmp);
 DM_EXPORT extern struct bu_vls *dm_list_types(const char separator); /* free return list with bu_vls_free(list); BU_PUT(list, struct bu_vls); */
 DM_EXPORT extern unsigned long dm_get_id(dm *dmp);
 DM_EXPORT extern void dm_set_id(dm *dmp, unsigned long new_id);
@@ -361,8 +362,6 @@ DM_EXPORT extern void dm_set_fontsize(dm *dmp, int size);
 DM_EXPORT extern int dm_get_light_flag(dm *dmp);
 DM_EXPORT extern void dm_set_light_flag(dm *dmp, int size);
 DM_EXPORT extern int dm_set_light(dm *dmp, int light);
-DM_EXPORT extern void *dm_get_public_vars(dm *dmp);
-DM_EXPORT extern void *dm_get_private_vars(dm *dmp);
 DM_EXPORT extern int dm_get_transparency(dm *dmp);
 DM_EXPORT extern int dm_set_transparency(dm *dmp, int transparency);
 DM_EXPORT extern int dm_get_zbuffer(dm *dmp);

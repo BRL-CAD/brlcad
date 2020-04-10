@@ -28,6 +28,10 @@
 #include <string.h>
 
 #include "tcl.h"
+#ifdef HAVE_TK
+#  include "tk.h"
+#  include "dm_xvars.h"
+#endif
 
 #include "vmath.h"
 #include "dm.h"
@@ -199,6 +203,55 @@ dm_share_dlist(dm *dmp1, dm *dmp2)
     }
 }
 
+/* TODO - these aren't truly generic, which suggest they need callbacks, but
+ * put them here for now since it's better than what we were doing (exposing
+ * dm_xvars.h as public API...) */
+
+void
+#if (defined HAVE_TK)
+dm_geometry_request(dm *dmp, int width, int height)
+#else
+dm_geometry_request(dm *dmp, int UNUSED(width), int UNUSED(height))
+#endif
+{
+    if (!dmp) return;
+#if (defined HAVE_TK)
+    Tk_GeometryRequest(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin, width, height);
+#endif
+}
+
+struct bu_structparse dm_xvars_vparse[] = {
+    {"%x",      1,      "dpy",                  XVARS_MV_O(dpy),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%x",      1,      "win",                  XVARS_MV_O(win),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%x",      1,      "top",                  XVARS_MV_O(top),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%x",      1,      "tkwin",                XVARS_MV_O(xtkwin),     BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",      1,      "depth",                XVARS_MV_O(depth),      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%x",      1,      "cmap",                 XVARS_MV_O(cmap),       BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+#if defined(DM_X) || defined (DM_OGL) || defined (DM_WGL)
+    {"%x",      1,      "vip",                  XVARS_MV_O(vip),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%x",      1,      "fontstruct",           XVARS_MV_O(fontstruct), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+#endif
+    {"%d",      1,      "devmotionnotify",      XVARS_MV_O(devmotionnotify),    BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",      1,      "devbuttonpress",       XVARS_MV_O(devbuttonpress),     BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",      1,      "devbuttonrelease",     XVARS_MV_O(devbuttonrelease),   BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",        0,      (char *)0,              0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
+};
+
+void
+dm_internal_var(struct bu_vls *result, dm *dmp, const char *key)
+{
+    if (!dmp || !result) return;
+    if (!key) {
+	// Print all current vars
+	bu_vls_struct_print2(result, "dm internal X variables", dm_xvars_vparse, (const char *)dmp->dm_vars.pub_vars);
+	return;
+    }
+    // Print specific var
+    bu_vls_struct_item_named(result, dm_xvars_vparse, key, (const char *)dmp->dm_vars.pub_vars, ',');
+}
+
+/* Properly generic function */
+
 fastf_t
 dm_Xx2Normal(dm *dmp, int x)
 {
@@ -302,13 +355,6 @@ dm_get_fb(dm *dmp)
     if (dmp->fbp == FB_NULL)
 	dmp->dm_openFb(dmp);
     return dmp->fbp;
-}
-
-void *
-dm_get_xvars(dm *dmp)
-{
-    if (UNLIKELY(!dmp)) return NULL;
-    return (void *)(dmp->dm_vars.pub_vars);
 }
 
 const char *
@@ -542,20 +588,6 @@ dm_set_light(dm *dmp, int light)
 {
     if (UNLIKELY(!dmp)) return 0;
     return dmp->dm_setLight(dmp, light);
-}
-
-void *
-dm_get_public_vars(dm *dmp)
-{
-    if (UNLIKELY(!dmp)) return NULL;
-    return dmp->dm_vars.pub_vars;
-}
-
-void *
-dm_get_private_vars(dm *dmp)
-{
-    if (UNLIKELY(!dmp)) return NULL;
-    return dmp->dm_vars.priv_vars;
 }
 
 int

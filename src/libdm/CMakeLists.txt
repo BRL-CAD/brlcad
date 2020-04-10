@@ -150,6 +150,7 @@ set(libdm_ignore_files
   dm-wgl.c
   dm-wgl.h
   dm_private.h
+  dm_xvars.h
   fontstash/LICENSE.fontstash
   fontstash/README.md
   fontstash/fontstash.h

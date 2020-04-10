@@ -44,7 +44,7 @@
 #include "dm.h"
 #include "dm-Null.h"
 #include "dm-wgl.h"
-#include "dm/dm_xvars.h"
+#include "./dm_xvars.h"
 #include "fb.h"
 #include "fb/fb_wgl.h"
 #include "rt/solid.h"

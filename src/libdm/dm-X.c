@@ -61,7 +61,7 @@
 #include "dm.h"
 #include "dm-X.h"
 #include "dm-Null.h"
-#include "dm/dm_xvars.h"
+#include "./dm_xvars.h"
 #include "fb.h"
 #include "fb/fb_X.h"
 

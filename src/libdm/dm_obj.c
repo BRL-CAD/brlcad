@@ -47,24 +47,24 @@
 #include "dm_private.h"
 
 #ifdef DM_X
-#  include "dm/dm_xvars.h"
+#  include "./dm_xvars.h"
 #  include <X11/Xutil.h>
 #  include "dm-X.h"
 #endif /* DM_X */
 
 #ifdef DM_TK
-#  include "dm/dm_xvars.h"
+#  include "./dm_xvars.h"
 #  include "tk.h"
 #  include "dm-tk.h"
 #endif /* DM_TK */
 
 #ifdef DM_OGL
-#  include "dm/dm_xvars.h"
+#  include "./dm_xvars.h"
 #  include "dm-ogl.h"
 #endif /* DM_OGL */
 
 #ifdef DM_WGL
-#  include "dm/dm_xvars.h"
+#  include "./dm_xvars.h"
 #  include <tkwinport.h>
 #  include "dm-wgl.h"
 #endif /* DM_WGL */
