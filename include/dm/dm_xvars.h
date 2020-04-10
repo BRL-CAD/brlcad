@@ -74,10 +74,6 @@ struct dm_xvars {
     XVisualInfo *vip;
     XFontStruct *fontstruct;
 #endif
-#ifdef DM_TK
-    int tkfontset;
-    Tk_Font tkfontstruct;
-#endif
     int devmotionnotify;
     int devbuttonpress;
     int devbuttonrelease;

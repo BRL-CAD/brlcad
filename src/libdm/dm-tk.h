@@ -26,6 +26,8 @@
 #ifndef DM_TK_H
 #define DM_TK_H
 
+#include "tk.h"
+
 #define CMAP_BASE 40
 #define CUBE_DIMENSION 6
 #define NUM_PIXELS 216    /* CUBE_DIMENSION * CUBE_DIMENSION * CUBE_DIMENSION */
@@ -40,6 +42,8 @@ struct tk_vars {
     int is_trueColor;
     unsigned long bd, bg, fg;   /* color of border, background, foreground */
     unsigned long pixels[NUM_PIXELS];
+    int tkfontset;
+    Tk_Font tkfontstruct;
 };
 
 #endif /* DM_TK_H */
