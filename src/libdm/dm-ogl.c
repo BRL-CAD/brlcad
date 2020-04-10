@@ -102,7 +102,7 @@ HIDDEN XVisualInfo *ogl_choose_visual(struct dm_internal *dmp, Tk_Window tkwin);
 #define IRBOUND 4095.9	/* Max magnification in Rot matrix */
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
-struct dm_internal *ogl_open(Tcl_Interp *interp, int argc, char **argv);
+struct dm_internal *ogl_open(Tcl_Interp *vinterp, int argc, char **argv);
 HIDDEN int ogl_close(struct dm_internal *dmp);
 HIDDEN int ogl_drawBegin(struct dm_internal *dmp);
 HIDDEN int ogl_drawEnd(struct dm_internal *dmp);
@@ -655,11 +655,12 @@ ogl_close(struct dm_internal *dmp)
  *
  */
 struct dm_internal *
-ogl_open(Tcl_Interp *interp, int argc, char **argv)
+ogl_open(Tcl_Interp *vinterp, int argc, char **argv)
 {
     static int count = 0;
     GLfloat backgnd[4];
     int make_square = -1;
+    Tcl_Interp *interp = (Tcl_Interp *)vinterp;
 
 #ifdef HAVE_X11_EXTENSIONS_XINPUT_H
     int j, k;

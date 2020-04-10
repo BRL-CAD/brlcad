@@ -80,7 +80,7 @@
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
 extern "C" {
-    struct dm_internal *osgl_open(Tcl_Interp *interp, int argc, char **argv);
+    struct dm_internal *osgl_open(void *vinterp, int argc, char **argv);
 }
 HIDDEN int osgl_close(struct dm_internal *dmp);
 HIDDEN int osgl_drawBegin(struct dm_internal *dmp);
@@ -382,7 +382,7 @@ osgl_close(struct dm_internal *dmp)
  *
  */
 extern "C" struct dm_internal *
-osgl_open(Tcl_Interp *interp, int argc, char **argv)
+osgl_open(Tcl_Interp *vinterp, int argc, char **argv)
 {
     static int count = 0;
     GLfloat backgnd[4];
@@ -391,6 +391,7 @@ osgl_open(Tcl_Interp *interp, int argc, char **argv)
     struct dm_internal *dmp = (struct dm_internal *)NULL;
     struct modifiable_osgl_vars *mvars = NULL;
     Tk_Window tkwin = (Tk_Window)NULL;
+    Tcl_Interp *interp = (Tcl_Interp *)vinterp;
 
     struct dm_xvars *pubvars = NULL;
     struct osgl_vars *privvars = NULL;

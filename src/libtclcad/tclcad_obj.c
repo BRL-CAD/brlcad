@@ -11588,7 +11588,7 @@ to_new_view(struct ged *gedp,
 	    av[i+newargs] = argv[i];
 	av[i+newargs] = (const char *)NULL;
 
-	new_gdvp->gdv_dmp = dm_open(current_top->to_interp, type, ac, av);
+	new_gdvp->gdv_dmp = dm_open((void *)current_top->to_interp, type, ac, av);
 	if (new_gdvp->gdv_dmp == DM_NULL) {
 	    bu_free((void *)new_gdvp->gdv_view, "ged_view");
 	    bu_free((void *)new_gdvp, "ged_dm_view");

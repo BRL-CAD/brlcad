@@ -731,6 +731,7 @@ HIDDEN int
 tk_configureWin_guts(struct dm_internal *dmp, int force)
 {
     int h, w;
+    Tcl_Interp *interp = (Tcl_Interp *)dmp->dm_interp;
 
     /* nothing to do */
     h = Tk_Height(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
@@ -762,13 +763,13 @@ tk_configureWin_guts(struct dm_internal *dmp, int force)
     if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->tkfontset == 0) {
 
 	((struct dm_xvars *)dmp->dm_vars.pub_vars)->tkfontstruct =
-	    Tk_GetFont(dmp->dm_interp, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin, FONT9);
+	    Tk_GetFont(interp, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin, FONT9);
 
 	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->tkfontstruct == NULL) {
 	    /* Try hardcoded backup font */
 
 	    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->tkfontstruct =
-		Tk_GetFont(dmp->dm_interp, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin, FONTBACK);
+		Tk_GetFont(interp, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin, FONTBACK);
 
 	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->tkfontstruct == NULL) {
 		bu_log("dm-Tk: Can't open font '%s' or '%s'\n", FONT9, FONTBACK);
@@ -907,21 +908,19 @@ struct dm_internal dm_tk = {
 };
 
 
-struct dm_internal *tk_open_dm(Tcl_Interp *interp, int argc, char **argv);
-
 /* Display Manager package interface */
-
 
 /*
  * Fire up the display manager, and the display processor.
  *
  */
 struct dm_internal *
-tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
+tk_open_dm(void *vinterp, int argc, char **argv)
 {
     static int count = 0;
     int make_square = -1;
     XGCValues gcv;
+    Tcl_Interp *interp = (Tcl_Interp *)vinterp;
 
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;

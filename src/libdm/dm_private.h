@@ -141,7 +141,7 @@ struct dm_internal {
     int dm_fontsize;		/**< @brief !0 override's the auto font size */
     struct bu_structparse *vparse;    /**< @brief Table listing settable variables */
     fb *fbp;                    /**< @brief Framebuffer associated with this display instance */
-    Tcl_Interp *dm_interp;	/**< @brief Tcl interpreter */
+    void *dm_interp;		/**< @brief interpreter */
 };
 
 __BEGIN_DECLS

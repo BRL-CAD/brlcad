@@ -207,7 +207,7 @@ WGLEventProc(ClientData clientData, XEvent *UNUSED(eventPtr))
  *
  */
 dm *
-wgl_open(Tcl_Interp *interp, int argc, char *argv[])
+wgl_open(void *vinterp, int argc, char *argv[])
 {
     static int count = 0;
     GLfloat backgnd[4];
@@ -216,10 +216,11 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
     struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
     struct modifiable_ogl_vars *mvars = NULL;
     dm *dmp = (dm *)NULL;
+    Tcl_Interp *interp = (Tcl_Interp *)vinterp;
     Tk_Window tkwin;
     HWND hwnd;
     HDC hdc;
-	int gotvisual;
+    int gotvisual;
 
     if ((tkwin = Tk_MainWindow(interp)) == NULL) {
 	return DM_NULL;

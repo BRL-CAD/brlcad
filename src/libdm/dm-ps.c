@@ -127,8 +127,9 @@ HIDDEN int
 ps_loadMatrix(dm *dmp, fastf_t *mat, int which_eye)
 {
     Tcl_Obj *obj;
+    Tcl_Interp *interp = (Tcl_Interp *)dmp->dm_interp;
 
-    obj = Tcl_GetObjResult(dmp->dm_interp);
+    obj = Tcl_GetObjResult(interp);
     if (Tcl_IsShared(obj))
 	obj = Tcl_DuplicateObj(obj);
 
@@ -151,7 +152,7 @@ ps_loadMatrix(dm *dmp, fastf_t *mat, int which_eye)
     MAT_COPY(mod_mat, mat);
     MAT_COPY(psmat, mat);
 
-    Tcl_SetObjResult(dmp->dm_interp, obj);
+    Tcl_SetObjResult(interp, obj);
     return BRLCAD_OK;
 }
 
@@ -586,11 +587,12 @@ dm dm_ps = {
  *
  */
 dm *
-ps_open(Tcl_Interp *interp, int argc, const char *argv[])
+ps_open(void *vinterp, int argc, const char *argv[])
 {
     static int count = 0;
     dm *dmp;
     Tcl_Obj *obj;
+    Tcl_Interp *interp = (Tcl_Interp *)vinterp;
 
     BU_ALLOC(dmp, struct dm_internal);
 

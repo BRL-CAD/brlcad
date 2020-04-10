@@ -34,7 +34,7 @@
 
 
 dm *
-txt_open(Tcl_Interp *interp, int argc, const char **argv)
+txt_open(void *interp, int argc, const char **argv)
 {
     dm *dmp;
 
