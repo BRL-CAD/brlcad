@@ -42,10 +42,29 @@
 extern "C" {
 /* For portable text in OpenGL, use fontstash */
 #define FONTSTASH_IMPLEMENTATION
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic push
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#endif
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic ignored "-Wfloat-equal"
 #include "./fontstash/fontstash.h"
-
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic ignored "-Wfloat-equal"
+#endif
 #define GLFONTSTASH_IMPLEMENTATION
+
 #include "./fontstash/glfontstash.h"
+
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#endif
 }
 
 #define CMAP_BASE 40

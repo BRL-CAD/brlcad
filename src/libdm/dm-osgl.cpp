@@ -382,7 +382,7 @@ osgl_close(struct dm_internal *dmp)
  *
  */
 extern "C" struct dm_internal *
-osgl_open(Tcl_Interp *vinterp, int argc, char **argv)
+osgl_open(void *vinterp, int argc, char **argv)
 {
     static int count = 0;
     GLfloat backgnd[4];
