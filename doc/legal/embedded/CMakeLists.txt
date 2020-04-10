@@ -40,6 +40,7 @@ set(embedded_licenses
   RTree.txt
   search.txt
   sha1.txt
+  shapelib.txt
   sh_wood.txt
   sobolseq.txt
   SPSR.txt

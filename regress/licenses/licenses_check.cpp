@@ -91,12 +91,13 @@ process_file(std::string f, std::map<std::string, std::string> &file_to_license)
 
 
     if (gov_copyright && public_domain) {
-	std::cout << "Note: " << f << " has both gov copyright and public domain references\n";
+	if (file_to_license.find(f) == file_to_license.end()) {
+	    std::cerr << "FILE " << f << " has no associated reference in a license file! (gov copyright + public domain references)\n";
+	}
 	return 0;
     }
     if (gov_copyright && other_copyright) {
 	if (file_to_license.find(f) == file_to_license.end()) {
-	    std::cerr << "FILE " << f << " has no associated reference in a license file! (gov and non-gov copyright)\n";
 	}
 	return 0;
     }
