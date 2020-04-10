@@ -20,7 +20,7 @@ message("Identifying third party license files... done.")
 file(WRITE "${LOG_FILE}" "Running license check:\n${LICENSE_CHECK_EXEC} ${LICENSE_FILE_SET} ${FILES_LIST}\n")
 message("Processing...")
 execute_process(
-  COMMAND "${LICENSE_CHECK_EXEC}" "${LICENSE_FILE_SET}" "${FILES_LIST}" RESULT_VARIABLE license_result
+  COMMAND "${LICENSE_CHECK_EXEC}" "${LICENSE_FILE_SET}" "${FILES_LIST}" "${BRLCAD_SOURCE_DIR}" RESULT_VARIABLE license_result
   OUTPUT_VARIABLE license_log ERROR_VARIABLE license_log
   WORKING_DIRECTORY ${WORKING_DIR}
   )

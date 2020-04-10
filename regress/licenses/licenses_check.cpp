@@ -50,7 +50,7 @@
 #include <string>
 
 int
-process_file(std::string f)
+process_file(std::string f, std::map<std::string, std::string> &file_to_license)
 {
     std::regex copyright_regex(".*[Cc]opyright.*[12][0-9[0-9[0-9].*");
     std::regex gov_regex(".*United[ ]States[ ]Government.*");
@@ -84,16 +84,23 @@ process_file(std::string f)
     }
     fs.close();
 
-    if ((gov_copyright || other_copyright) && public_domain) {
-	std::cout << f << " has copyright and public domain references\n";
+
+    if (gov_copyright && public_domain) {
+	std::cout << f << " has gov copyright and public domain references\n";
 	return 0;
     }
     if (gov_copyright && other_copyright) {
 	std::cout << f << " has gov and non-gov copyright\n";
+	if (file_to_license.find(f) == file_to_license.end()) {
+	    std::cerr << "FILE " << f << " has no associated reference in a license file!\n";
+	}
 	return 0;
     }
     if (other_copyright) {
 	std::cout << f << " has non-gov copyright\n";
+	if (file_to_license.find(f) == file_to_license.end()) {
+	    std::cerr << "FILE " << f << " has no associated reference in a license file!\n";
+	}
 	return 0;
     }
     if (public_domain) {
@@ -101,7 +108,11 @@ process_file(std::string f)
 	return 0;
     }
     if (!gov_copyright && !other_copyright && !public_domain) {
-	std::cout << f << " has no info\n";
+	if (file_to_license.find(f) == file_to_license.end()) {
+	    std::cout << f << " has no info\n";
+	} else {
+	    std::cout << f << " has no embedded info but is referenced by license file " << file_to_license[f] << "\n";
+	}
     }
     return 0;
 }
@@ -109,15 +120,63 @@ process_file(std::string f)
 int
 main(int argc, const char *argv[])
 {
+    if (argc < 4) {
+	std::cerr << "Usage: license_check [-v] licenses_list file_list src_root\n";
+	return -1;
+    }
+
+    std::regex f_regex("file:(.*)");
     std::regex o_regex(".*[\\/]other[\\/].*");
     std::regex t_regex(".*[\\/]misc/tools[\\/].*");
     std::regex r_regex(".*[\\/]misc/repoconv[\\/].*");
     std::regex srcfile_regex(".*[.](c|cpp|cxx|h|hpp|hxx|tcl)*$");
+    std::string root_path(argv[3]);
 
-    if (argc < 3) {
-	std::cerr << "Usage: license_check [-v] licenses_list file_list\n";
-	return -1;
+    std::map<std::string, std::string> file_to_license;
+    std::set<std::string> unused_licenses;
+
+    std::string lfile;
+    std::ifstream license_file_stream;
+    license_file_stream.open(argv[1]);
+    if (!license_file_stream.is_open()) {
+	std::cerr << "Unable to open license file list " << argv[1] << "\n";
     }
+    while (std::getline(license_file_stream, lfile)) {
+	int valid_ref_cnt = 0;
+	std::string lline;
+	std::ifstream license_stream;
+	license_stream.open(lfile);
+	if (!license_stream.is_open()) {
+	    std::cerr << "Unable to open license file " << lfile << "\n";
+	    continue;
+	}
+	while (std::getline(license_stream, lline)) {
+	    if (!std::regex_match(std::string(lline), f_regex)) {
+		continue;
+	    }
+	    std::smatch lfile_ref;
+	    if (!std::regex_search(lline, lfile_ref, f_regex)) {
+		continue;
+	    }
+	    std::string lfile_id =  root_path + std::string("/") + std::string(lfile_ref[1]);
+	    std::ifstream lfile_s(lfile_id);
+	    if (!lfile_s.good()) {
+		std::cout << "Bad reference in license file " << lfile << ": " << lline << "\n";
+		std::cout << "    file \"" << lfile_id << "\" not found on filesystem.\n";
+		continue;
+	    }
+	    lfile_s.close();
+	    std::cout << "License file reference: " << lfile_id << "\n";
+	    file_to_license[lfile_id] = lfile;
+	    valid_ref_cnt++;
+	}
+	license_stream.close();
+	if (!valid_ref_cnt) {
+	    std::cout << "Unused license: " << lfile << "\n";
+	    unused_licenses.insert(lfile);
+	}
+    }
+    license_file_stream.close();
 
     std::string sfile;
     std::ifstream src_file_stream;
@@ -133,7 +192,7 @@ main(int argc, const char *argv[])
 	    continue;
 	}
 	//std::cout << "Checking " << sfile << "\n";
-	if (process_file(sfile)) {
+	if (process_file(sfile, file_to_license)) {
 	    src_file_stream.close();
 	    return -1;
 	}
