@@ -52,6 +52,9 @@ add_subdirectory(rtwizard)
 # MGED command tests
 add_subdirectory(mged)
 
+# License check
+#add_subdirectory(licenses)
+
 if(SH_EXEC)
   macro(Sh_Regression_Test testname depends_list)
     CMAKE_PARSE_ARGUMENTS(${testname} "EXCLUDE_FROM_REGRESS" "" "" ${ARGN})
@@ -140,7 +143,6 @@ CMAKEFILES(
   gqa.sh
   iges.sh
   library.sh
-  license_check.cpp
   lights.ref.pix
   lights.cmake
   lights.sh

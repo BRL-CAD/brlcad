@@ -114,18 +114,18 @@ main(int argc, const char *argv[])
     std::regex r_regex(".*[\\/]misc/repoconv[\\/].*");
     std::regex srcfile_regex(".*[.](c|cpp|cxx|h|hpp|hxx|tcl)*$");
 
-    if (argc < 2) {
-	std::cerr << "Usage: license_check [-v] file_list\n";
+    if (argc < 3) {
+	std::cerr << "Usage: license_check [-v] licenses_list file_list\n";
 	return -1;
     }
 
     std::string sfile;
-    std::ifstream fs;
-    fs.open(argv[1]);
-    if (!fs.is_open()) {
-	std::cerr << "Unable to open file list " << argv[1] << "\n";
+    std::ifstream src_file_stream;
+    src_file_stream.open(argv[2]);
+    if (!src_file_stream.is_open()) {
+	std::cerr << "Unable to open source file list " << argv[2] << "\n";
     }
-    while (std::getline(fs, sfile)) {
+    while (std::getline(src_file_stream, sfile)) {
 	if (std::regex_match(sfile, o_regex) || std::regex_match(sfile, t_regex) || std::regex_match(sfile, r_regex)) {
 	    continue;
 	}
@@ -134,11 +134,11 @@ main(int argc, const char *argv[])
 	}
 	//std::cout << "Checking " << sfile << "\n";
 	if (process_file(sfile)) {
-	    fs.close();
+	    src_file_stream.close();
 	    return -1;
 	}
     }
-    fs.close();
+    src_file_stream.close();
 
     return 0;
 }
