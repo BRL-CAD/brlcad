@@ -20,11 +20,22 @@
 #include <time.h>
 #include "time64_config.h"
 
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Set our custom types */
-typedef INT_64_T       Time64_T;
-typedef INT_64_T       Year;
+typedef INT_64_T        Int64;
+typedef Int64           Time64_T;
+typedef Int64           Year;
+
+#ifndef PRId64
+# if (__WORDSIZE == 64) && !defined(__APPLE__)
+#  define PRId64 "ld"
+# else
+#  define PRId64 "lld"
+# endif
+#endif
 
 /* A copy of the tm struct but with a 64 bit year */
 struct TM64 {
@@ -43,7 +54,7 @@ struct TM64 {
 #endif
 
 #ifdef HAS_TM_TM_ZONE
-        char    *tm_zone;
+        const char *tm_zone;
 #endif
 };
 
@@ -52,7 +63,7 @@ struct TM64 {
 #define TM      TM64
 #else
 #define TM      tm
-#endif
+#endif   
 
 /* Declare public functions */
 Y2038_EXPORT struct TM *gmtime64_r    (const Time64_T *, struct TM *);
@@ -86,10 +97,13 @@ Y2038_EXPORT Time64_T   timelocal64   (struct TM *);
 
 /* Use a different asctime format depending on how big the year is */
 #ifdef USE_TM64
-    #define TM64_ASCTIME_FORMAT "%.3s %.3s%3d %.2d:%.2d:%.2d %lld\n"
+    #define TM64_ASCTIME_FORMAT "%.3s %.3s%3d %.2d:%.2d:%.2d %"PRId64"\n"
 #else
     #define TM64_ASCTIME_FORMAT "%.3s %.3s%3d %.2d:%.2d:%.2d %d\n"
 #endif
 
+#ifdef __cplusplus
+  };
+#endif
 
 #endif
