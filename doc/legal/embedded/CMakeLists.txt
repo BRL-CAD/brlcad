@@ -14,6 +14,7 @@ set(embedded_licenses
   fnmatch.txt
   fontstash.txt
   gct.txt
+  gecode.txt
   gdal_gcv_plugin.txt
   halfedge.txt
   humanize.txt
