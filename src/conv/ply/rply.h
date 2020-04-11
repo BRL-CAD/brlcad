@@ -9,6 +9,8 @@
  * at the end of this file.
  * ---------------------------------------------------------------------- */
 
+#include "common.h"
+
 #ifndef RPLY_EXPORT
 #  if defined(RPLY_DLL_EXPORTS) && defined(RPLY_DLL_IMPORTS)
 #    error "Only RPLY_DLL_EXPORTS or RPLY_DLL_IMPORTS can be defined, not both."

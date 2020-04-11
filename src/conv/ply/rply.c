@@ -6,6 +6,9 @@
  * This library is distributed under the MIT License. See notice
  * at the end of this file.
  * ---------------------------------------------------------------------- */
+
+#include "common.h"
+
 #include <stdio.h>
 #include <ctype.h>
 #include <assert.h>
@@ -516,16 +519,16 @@ static t_ply_odriver ply_odriver_binary_reverse = {
 /* ----------------------------------------------------------------------
  * String functions
  * ---------------------------------------------------------------------- */
-static e_ply_type ply_find_string(const char *item, const char* const list[]);
-static e_ply_storage_mode ply_find_storage_string(const char *item, const char* const list[]);
+static e_ply_type ply_find_type_string(const char *item);
+static e_ply_storage_mode ply_find_storage_string(const char *item);
 static p_ply_element ply_find_element(p_ply ply, const char *name);
-static p_ply_property ply_find_property(p_ply_element element, 
+static p_ply_property ply_find_property(p_ply_element element,
         const char *name);
 
 /* ----------------------------------------------------------------------
  * Header parsing
  * ---------------------------------------------------------------------- */
-static int ply_read_header_magic(p_ply ply); 
+static int ply_read_header_magic(p_ply ply);
 static int ply_read_header_format(p_ply ply);
 static int ply_read_header_comment(p_ply ply);
 static int ply_read_header_obj_info(p_ply ply);
@@ -1151,8 +1154,8 @@ static int ply_read_element(p_ply ply, p_ply_element element,
     return 1;
 }
 
-static e_ply_type ply_find_string(const char *item, const char* const list[]) {
-    assert(item && list);
+static e_ply_type ply_find_type_string(const char *item) {
+    assert(item);
     if (!strcmp("int8", item)) {
 	return PLY_INT8;
     }
@@ -1207,8 +1210,8 @@ static e_ply_type ply_find_string(const char *item, const char* const list[]) {
     return PLY_INVALID_TYPE;
 }
 
-static e_ply_storage_mode ply_find_storage_string(const char *item, const char* const list[]) {
-    assert(item && list);
+static e_ply_storage_mode ply_find_storage_string(const char *item) {
+    assert(item);
     if (!strcmp("binary_big_endian", item)) {
 	return PLY_BIG_ENDIAN;
     }
@@ -1502,7 +1505,7 @@ static int ply_read_header_format(p_ply ply) {
     assert(ply && ply->fp && ply->io_mode == PLY_READ);
     if (strcmp(BWORD(ply), "format")) return 0;
     if (!ply_read_word(ply)) return 0;
-    ply->storage_mode = ply_find_storage_string(BWORD(ply), ply_storage_mode_list);
+    ply->storage_mode = ply_find_storage_string(BWORD(ply));
     if (ply->storage_mode == PLY_INVALID_STORAGE) return 0;
     if (ply->storage_mode == PLY_ASCII) ply->idriver = &ply_idriver_ascii;
     else if (ply->storage_mode == ply_arch_endian())
@@ -1542,15 +1545,15 @@ static int ply_read_header_property(p_ply ply) {
     if (!property) return 0;
     /* get property type */
     if (!ply_read_word(ply)) return 0;
-    property->type = ply_find_string(BWORD(ply), ply_type_list);
+    property->type = ply_find_type_string(BWORD(ply));
     if (property->type == (e_ply_type) (-1)) return 0;
     if (property->type == PLY_LIST) {
         /* if it's a list, we need the base types */
         if (!ply_read_word(ply)) return 0;
-        property->length_type = ply_find_string(BWORD(ply), ply_type_list);
+        property->length_type = ply_find_type_string(BWORD(ply));
         if (property->length_type == (e_ply_type) (-1)) return 0;
         if (!ply_read_word(ply)) return 0;
-        property->value_type = ply_find_string(BWORD(ply), ply_type_list);
+        property->value_type = ply_find_type_string(BWORD(ply));
         if (property->value_type == (e_ply_type) (-1)) return 0;
     }
     /* get property name */
