@@ -244,3 +244,4 @@ file:src/other/openNURBS/opennurbs_zlib.cpp
 file:src/other/openNURBS/opennurbs_zlib.h
 file:src/other/openNURBS/opennurbs_zlib_memory.cpp
 file:src/other/openNURBS/readme.txt
+file:src/librt/primitives/tor/tor_brep.cpp

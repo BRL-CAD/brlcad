@@ -1,6 +1,6 @@
 set(embedded_licenses
   apple.txt
-  ayam_icons.txt
+  ayam.txt
   b64.txt
   bullet.txt
   chull2d.txt
