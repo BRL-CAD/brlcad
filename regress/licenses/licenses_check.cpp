@@ -49,6 +49,10 @@
 #include <sstream>
 #include <string>
 
+/* For performance, we don't read the entire file looking for
+ * the copyright/license information. */
+#define MAX_LINES_CHECK 100
+
 int
 process_file(std::string f, std::map<std::string, std::string> &file_to_license)
 {
@@ -70,7 +74,7 @@ process_file(std::string f, std::map<std::string, std::string> &file_to_license)
     bool public_domain = false;
 
     // Check the first 50 lines of the file for copyright statements
-    while (std::getline(fs, sline) && lcnt < 50) {
+    while (std::getline(fs, sline) && lcnt < MAX_LINES_CHECK) {
 	if (std::regex_match(sline, cad_regex)) {
 	    brlcad_file = true;
 	}
@@ -92,7 +96,7 @@ process_file(std::string f, std::map<std::string, std::string> &file_to_license)
 
     if (gov_copyright && public_domain) {
 	if (file_to_license.find(f) == file_to_license.end()) {
-	    std::cerr << "FILE " << f << " has no associated reference in a license file! (gov copyright + public domain references)\n";
+	    std::cerr << "FILE " << f << " has no associated reference in a license file! (gov copyright + PD references)\n";
 	    return 1;
 	}
 	return 0;
@@ -114,7 +118,7 @@ process_file(std::string f, std::map<std::string, std::string> &file_to_license)
     if (public_domain) {
 	if (!brlcad_file) {
 	    if (file_to_license.find(f) == file_to_license.end()) {
-		std::cout << f << " references the public domain, is not a BRL-CAD file, but has no documenting file in doc/legal/embedded\n";
+		std::cout << f << " references the PD, is not a BRL-CAD file, but has no documenting file in doc/legal/embedded\n";
 		return 1;
 	    }
 	}
@@ -146,6 +150,7 @@ main(int argc, const char *argv[])
     std::regex c_regex(".*[\\/]misc/CMake[\\/].*");
     std::regex r_regex(".*[\\/]misc/repoconv[\\/].*");
     std::regex d_regex(".*[\\/]doc[\\/].*");
+    std::regex l_regex(".*[\\/]licenses_check.cpp");
     std::regex srcfile_regex(".*[.](c|cpp|cxx|h|hpp|hxx|tcl)*$");
     std::string root_path(argv[3]);
 
@@ -207,7 +212,7 @@ main(int argc, const char *argv[])
     while (std::getline(src_file_stream, sfile)) {
 	if (std::regex_match(sfile, o_regex) || std::regex_match(sfile, t_regex)
 	       	|| std::regex_match(sfile, r_regex) || std::regex_match(sfile, c_regex)
-		 || std::regex_match(sfile, d_regex) ) {
+		 || std::regex_match(sfile, d_regex) ||  std::regex_match(sfile, l_regex)) {
 	    continue;
 	}
 	if (!std::regex_match(std::string(sfile), srcfile_regex)) {
