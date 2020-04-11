@@ -93,17 +93,21 @@ process_file(std::string f, std::map<std::string, std::string> &file_to_license)
     if (gov_copyright && public_domain) {
 	if (file_to_license.find(f) == file_to_license.end()) {
 	    std::cerr << "FILE " << f << " has no associated reference in a license file! (gov copyright + public domain references)\n";
+	    return 1;
 	}
 	return 0;
     }
     if (gov_copyright && other_copyright) {
 	if (file_to_license.find(f) == file_to_license.end()) {
+	    std::cerr << "FILE " << f << " has gov copyright + additional copyrights, bot no documenting file in doc/legal/embedded\n";
+	    return 1;
 	}
 	return 0;
     }
     if (other_copyright) {
 	if (file_to_license.find(f) == file_to_license.end()) {
 	    std::cerr << "FILE " << f << " has no associated reference in a license file!\n";
+	    return 1;
 	}
 	return 0;
     }
@@ -111,6 +115,7 @@ process_file(std::string f, std::map<std::string, std::string> &file_to_license)
 	if (!brlcad_file) {
 	    if (file_to_license.find(f) == file_to_license.end()) {
 		std::cout << f << " references the public domain, is not a BRL-CAD file, but has no documenting file in doc/legal/embedded\n";
+		return 1;
 	    }
 	}
 	return 0;
@@ -118,8 +123,10 @@ process_file(std::string f, std::map<std::string, std::string> &file_to_license)
     if (!gov_copyright && !other_copyright && !public_domain) {
 	if (file_to_license.find(f) == file_to_license.end()) {
 	    std::cout << "FILE " << f << " has no info\n";
+	    return 1;
 	} else {
 	    std::cout << f << " has no embedded info but is referenced by license file " << file_to_license[f] << "\n";
+	    return 1;
 	}
     }
     return 0;
@@ -145,6 +152,7 @@ main(int argc, const char *argv[])
     std::map<std::string, std::string> file_to_license;
     std::set<std::string> unused_licenses;
 
+    int bad_ref_cnt = 0;
     std::string lfile;
     std::ifstream license_file_stream;
     license_file_stream.open(argv[1]);
@@ -173,6 +181,7 @@ main(int argc, const char *argv[])
 	    if (!lfile_s.good()) {
 		std::cout << "Bad reference in license file " << lfile << ": " << lline << "\n";
 		std::cout << "    file \"" << lfile_id << "\" not found on filesystem.\n";
+		bad_ref_cnt++;
 		continue;
 	    }
 	    lfile_s.close();
@@ -188,6 +197,7 @@ main(int argc, const char *argv[])
     }
     license_file_stream.close();
 
+    int process_fail_cnt = 0;
     std::string sfile;
     std::ifstream src_file_stream;
     src_file_stream.open(argv[2]);
@@ -204,12 +214,13 @@ main(int argc, const char *argv[])
 	    continue;
 	}
 	//std::cout << "Checking " << sfile << "\n";
-	if (process_file(sfile, file_to_license)) {
-	    src_file_stream.close();
-	    return -1;
-	}
+	process_fail_cnt += process_file(sfile, file_to_license);
     }
     src_file_stream.close();
+
+    if (unused_licenses.size() || bad_ref_cnt || process_fail_cnt) {
+	return -1;
+    }
 
     return 0;
 }
