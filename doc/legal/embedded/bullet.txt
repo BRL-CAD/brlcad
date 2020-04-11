@@ -369,3 +369,16 @@ file:src/libged/simulate/bullet/BulletDynamics/Featherstone/btMultiBodyJointFeed
 file:src/libged/simulate/bullet/BulletSoftBody/btSoftBodyInternals.h
 file:src/libged/simulate/bullet/LinearMath/btMatrixX.h
 file:src/libged/simulate/bullet/LinearMath/btSpatialAlgebra.h
+file:src/libged/simulate/bullet/LinearMath/btPolarDecomposition.cpp
+file:src/libged/simulate/bullet/LinearMath/btQuickprof.cpp
+file:src/libged/simulate/bullet/LinearMath/btSerializer.cpp
+file:src/libged/simulate/bullet/BulletCollision/CollisionDispatch/btInternalEdgeUtility.cpp
+file:src/libged/simulate/bullet/BulletCollision/CollisionDispatch/btInternalEdgeUtility.h
+file:src/libged/simulate/bullet/BulletDynamics/Featherstone/btMultiBodyConstraint.cpp
+file:src/libged/simulate/bullet/LinearMath/btDefaultMotionState.h
+file:src/libged/simulate/bullet/LinearMath/btPolarDecomposition.h
+file:src/libged/simulate/bullet/LinearMath/btQuickprof.h
+file:src/libged/simulate/bullet/BulletCollision/CollisionDispatch/btCollisionObjectWrapper.h
+file:src/libged/simulate/bullet/BulletCollision/Gimpact/btCompoundFromGimpact.h
+file:src/libged/simulate/bullet/LinearMath/btCpuFeatureUtility.h
+

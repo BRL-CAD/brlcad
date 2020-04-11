@@ -1,4 +1,5 @@
 set(embedded_licenses
+  apple.txt
   ayam_icons.txt
   b64.txt
   bullet.txt
@@ -25,6 +26,7 @@ set(embedded_licenses
   lseg_lseg.txt
   msinttypes.txt
   mt19937ar.txt
+  naca.txt
   normalize.txt
   nurbs_fit.txt
   obr.txt
@@ -50,6 +52,7 @@ set(embedded_licenses
   stb_truetype.txt
   STIX_Font_License_2010.txt
   tcl.txt
+  tcllib.txt
   tinythread.txt
   tkcon.txt
   tri_pt.txt

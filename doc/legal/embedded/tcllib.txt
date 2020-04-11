@@ -1,8 +1,12 @@
-This software is copyrighted by the Regents of the University of
-California, Sun Microsystems, Inc., Scriptics Corporation, ActiveState
-Corporation and other parties.  The following terms apply to all files
-associated with the software unless explicitly disclaimed in
-individual files.
+      Tcl implementations of standard UNIX utilities.
+
+Copyright (c) 1998-2000 by Ajuba Solutions.
+Copyright (c) 2002      by Phil Ehrens <phil@slug.org> (fileType)
+Copyright (c) 2005-2013 by Andreas Kupries <andreas_kupries@users.sourceforge.net>
+
+This software is copyrighted by Ajuba Solutions and other parties.
+The following terms apply to all files associated with the software unless
+explicitly disclaimed in individual files.
 
 The authors hereby grant permission to use, copy, modify, distribute,
 and license this software and its documentation for any purpose, provided
@@ -34,24 +38,11 @@ Acquisition Regulations (FARs) in Clause 52.227.19 (c) (2).  If you
 are acquiring the software on behalf of the Department of Defense, the
 software shall be classified as "Commercial Computer Software" and the
 Government shall have only "Restricted Rights" as defined in Clause
-252.227-7013 (b) (3) of DFARs.  Notwithstanding the foregoing, the
+252.227-7013 (c) (1) of DFARs.  Notwithstanding the foregoing, the
 authors grant the U.S. Government and others acting in its behalf
 permission to use and distribute the software in accordance with the
 terms specified in this license.
 
-file:src/libbu/tcllist.c
+file:src/tclscripts/tcllib/cmdline.tcl
+file:src/tclscripts/tcllib/fileutil.tcl
 
-tkImgFmtPPM.c --
-
-A photo image file handler for PPM (Portable PixMap) files.
-
-Copyright (c) 1994 The Australian National University.
-Copyright (c) 1994-1995 Sun Microsystems, Inc.
-
-Author: Paul Mackerras (paulus@cs.anu.edu.au),
-        Department of Computer Science,
-        Australian National University.
-
-file:src/libtclcad/tkImgFmtPIX.c
-file:src/tclscripts/cad_clrpick.tcl
-file:src/tclscripts/html_library.tcl
