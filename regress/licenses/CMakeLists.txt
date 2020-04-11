@@ -1,4 +1,9 @@
 add_executable(lcheck licenses_check.cpp)
+if (O3_COMPILER_FLAG)
+  # This check benefits greatly from optimization. If we have the O3 flag, use
+  # it - whether or not the standard build settings would add it.
+  target_compile_options(lcheck PRIVATE "-O3")
+endif (O3_COMPILER_FLAG)
 
 set(LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/regress-licenses.log")
 set(STAMP_FILE "${CMAKE_CURRENT_BINARY_DIR}/regress-licenses.done")
