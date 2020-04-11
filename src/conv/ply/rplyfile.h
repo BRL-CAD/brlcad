@@ -32,6 +32,8 @@
  * at the end of this file.
  * ---------------------------------------------------------------------- */
 
+#include "common.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
