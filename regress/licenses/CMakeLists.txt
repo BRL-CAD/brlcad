@@ -19,9 +19,9 @@ add_dependencies(check regress-licenses)
 
 add_test(NAME regress-licenses
   COMMAND "${CMAKE_COMMAND}"
-           -DLCHECK_EXEC="$<TARGET_FILE:lcheck>" -DBRLCAD_SOURCE_DIR="${BRLCAD_SOURCE_DIR}"
-	   -DL_FILE="${LOG_FILE}" -DS_FILE="${STAMP_FILE}" -DF_LIST="${ALL_FILES_LIST}"
-	   -DW_DIR="${CMAKE_CURRENT_BINARY_DIR}"
+           -DLCHECK_EXEC=$<TARGET_FILE:lcheck> -DBRLCAD_SOURCE_DIR=${BRLCAD_SOURCE_DIR}
+	   -DL_FILE=${LOG_FILE} -DS_FILE=${STAMP_FILE} -DF_LIST=${ALL_FILES_LIST}
+	   -DW_DIR=${CMAKE_CURRENT_BINARY_DIR}
            -P "${CMAKE_CURRENT_SOURCE_DIR}/regress-licenses.cmake"
   )
 set_tests_properties(regress-licenses PROPERTIES LABELS "Regression")
