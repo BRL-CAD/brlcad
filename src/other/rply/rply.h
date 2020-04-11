@@ -40,6 +40,7 @@ typedef struct t_ply_argument_ *p_ply_argument;
 
 /* ply format mode type */
 typedef enum e_ply_storage_mode_ {
+    PLY_INVALID_STORAGE,
     PLY_BIG_ENDIAN,
     PLY_LITTLE_ENDIAN,
     PLY_ASCII,   
@@ -48,6 +49,7 @@ typedef enum e_ply_storage_mode_ {
 
 /* ply data type */
 typedef enum e_ply_type {
+    PLY_INVALID_TYPE,
     PLY_INT8, PLY_UINT8, PLY_INT16, PLY_UINT16, 
     PLY_INT32, PLY_UIN32, PLY_FLOAT32, PLY_FLOAT64,
     PLY_CHAR, PLY_UCHAR, PLY_SHORT, PLY_USHORT,
