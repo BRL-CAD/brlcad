@@ -96,7 +96,7 @@ process_file(std::string f, std::map<std::string, std::string> &file_to_license)
 
     if (gov_copyright && public_domain) {
 	if (file_to_license.find(f) == file_to_license.end()) {
-	    std::cerr << "FILE " << f << " has no associated reference in a license file! (gov copyright + PD references)\n";
+	    std::cerr << "FILE " << f << " has no associated reference in a license file! (gov copyright + public domain references)\n";
 	    return 1;
 	}
 	return 0;
@@ -118,7 +118,7 @@ process_file(std::string f, std::map<std::string, std::string> &file_to_license)
     if (public_domain) {
 	if (!brlcad_file) {
 	    if (file_to_license.find(f) == file_to_license.end()) {
-		std::cout << f << " references the PD, is not a BRL-CAD file, but has no documenting file in doc/legal/embedded\n";
+		std::cout << f << " references the public domain, is not a BRL-CAD file, but has no documenting file in doc/legal/embedded\n";
 		return 1;
 	    }
 	}
