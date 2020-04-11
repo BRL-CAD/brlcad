@@ -16,6 +16,7 @@ endif (CPP_DLL_DEFINES)
 CMAKEFILES(
   CMakeLists.txt
   rply.h
+  rplyfile.h
   rply_license.txt
   )
 

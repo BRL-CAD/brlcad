@@ -41,6 +41,7 @@ set(embedded_licenses
   qsort.txt
   QuickHull.txt
   realpath.txt
+  rply.txt
   RTree.txt
   search.txt
   sha1.txt
