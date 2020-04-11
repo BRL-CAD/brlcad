@@ -41,6 +41,8 @@
 #include "rply.h"
 #include "rplyfile.h"
 
+#include "bu/str.h"
+
 /* pointers to tokenized word and line in buffer */
 #define BWORD(p) (p->buffer + p->buffer_token)
 #define BLINE(p) (p->buffer + p->buffer_token)
@@ -693,7 +695,7 @@ int ply_read_header(p_ply ply) {
         return 0;
     }
     /* parse elements, comments or obj_infos until the end of header */
-    while (strcmp(BWORD(ply), "end_header")) {
+    while (bu_strcmp(BWORD(ply), "end_header")) {
         if (!ply_read_header_comment(ply) &&
                 !ply_read_header_element(ply) &&
                 !ply_read_header_obj_info(ply)) {
@@ -802,7 +804,7 @@ int ply_add_element(p_ply ply, const char *name, long ninstances) {
     }
     element = ply_grow_element(ply);
     if (!element) return 0;
-    strcpy(element->name, name);
+    bu_strlcpy(element->name, name, WORDSIZE);
     element->ninstances = ninstances;
     return 1;
 }
@@ -820,7 +822,7 @@ int ply_add_scalar_property(p_ply ply, const char *name, e_ply_type type) {
     element = &ply->element[ply->nelements-1];
     property = ply_grow_property(ply, element);
     if (!property) return 0;
-    strcpy(property->name, name);
+    bu_strlcpy(property->name, name, WORDSIZE);
     property->type = type;
     return 1;
 }
@@ -844,7 +846,7 @@ int ply_add_list_property(p_ply ply, const char *name,
     element = &ply->element[ply->nelements-1];
     property = ply_grow_property(ply, element);
     if (!property) return 0;
-    strcpy(property->name, name);
+    bu_strlcpy(property->name, name, WORDSIZE);
     property->type = PLY_LIST;
     property->length_type = length_type;
     property->value_type = value_type;
@@ -869,7 +871,7 @@ int ply_add_comment(p_ply ply, const char *comment) {
     new_comment = (char *) ply_grow_array(ply, (void **) &ply->comment,
             &ply->ncomments, LINESIZE);
     if (!new_comment) return 0;
-    strcpy(new_comment, comment);
+    bu_strlcpy(new_comment, comment, WORDSIZE);
     return 1;
 }
 
@@ -883,7 +885,7 @@ int ply_add_obj_info(p_ply ply, const char *obj_info) {
     new_obj_info = (char *) ply_grow_array(ply, (void **) &ply->obj_info,
             &ply->nobj_infos, LINESIZE);
     if (!new_obj_info) return 0;
-    strcpy(new_obj_info, obj_info);
+    bu_strlcpy(new_obj_info, obj_info, WORDSIZE);
     return 1;
 }
 
@@ -1198,55 +1200,55 @@ static int ply_read_element(p_ply ply, p_ply_element element,
 
 static e_ply_type ply_find_type_string(const char *item) {
     assert(item);
-    if (!strcmp("int8", item)) {
+    if (!bu_strcmp("int8", item)) {
 	return PLY_INT8;
     }
-    if (!strcmp("uint8", item)){
+    if (!bu_strcmp("uint8", item)){
 	return PLY_UINT8;
     }
-    if (!strcmp("int16", item)){
+    if (!bu_strcmp("int16", item)){
 	return PLY_INT16;
     }
-    if (!strcmp("uint16", item)){
+    if (!bu_strcmp("uint16", item)){
 	return PLY_UINT16;
     }
-    if (!strcmp("int32", item)){
+    if (!bu_strcmp("int32", item)){
 	return PLY_INT32;
     }
-    if (!strcmp("uint32", item)){
+    if (!bu_strcmp("uint32", item)){
 	return PLY_UIN32;
     }
-    if (!strcmp("float32", item)){
+    if (!bu_strcmp("float32", item)){
 	return PLY_FLOAT32;
     }
-    if (!strcmp("float64", item)){
+    if (!bu_strcmp("float64", item)){
 	return PLY_FLOAT64;
     }
-    if (!strcmp("char", item)){
+    if (!bu_strcmp("char", item)){
 	return PLY_CHAR;
     }
-    if (!strcmp("uchar", item)){
+    if (!bu_strcmp("uchar", item)){
 	return PLY_UCHAR;
     }
-    if (!strcmp("short", item)){
+    if (!bu_strcmp("short", item)){
 	return PLY_SHORT;
     }
-    if (!strcmp("ushort", item)){
+    if (!bu_strcmp("ushort", item)){
 	return PLY_USHORT;
     }
-    if (!strcmp("int", item)){
+    if (!bu_strcmp("int", item)){
 	return PLY_INT;
     }
-    if (!strcmp("uint", item)){
+    if (!bu_strcmp("uint", item)){
 	return PLY_UINT;
     }
-    if (!strcmp("float", item)){
+    if (!bu_strcmp("float", item)){
 	return PLY_FLOAT;
     }
-    if (!strcmp("double", item)){
+    if (!bu_strcmp("double", item)){
 	return PLY_DOUBLE;
     }
-    if (!strcmp("list", item)) {
+    if (!bu_strcmp("list", item)) {
        return PLY_LIST;
     }
     return PLY_INVALID_TYPE;
@@ -1254,13 +1256,13 @@ static e_ply_type ply_find_type_string(const char *item) {
 
 static e_ply_storage_mode ply_find_storage_string(const char *item) {
     assert(item);
-    if (!strcmp("binary_big_endian", item)) {
+    if (!bu_strcmp("binary_big_endian", item)) {
 	return PLY_BIG_ENDIAN;
     }
-    if (!strcmp("binary_little_endian", item)){
+    if (!bu_strcmp("binary_little_endian", item)){
 	return PLY_LITTLE_ENDIAN;
     }
-    if (!strcmp("ascii", item)){
+    if (!bu_strcmp("ascii", item)){
 	return PLY_ASCII;
     }
     return PLY_INVALID_STORAGE;
@@ -1275,7 +1277,7 @@ static p_ply_element ply_find_element(p_ply ply, const char *name) {
     assert(element || nelements == 0);
     assert(!element || nelements > 0);
     for (i = 0; i < nelements; i++)
-        if (!strcmp(element[i].name, name)) return &element[i];
+        if (!bu_strcmp(element[i].name, name)) return &element[i];
     return NULL;
 }
 
@@ -1289,7 +1291,7 @@ static p_ply_property ply_find_property(p_ply_element element,
     assert(property || nproperties == 0);
     assert(!property || nproperties > 0);
     for (i = 0; i < nproperties; i++)
-        if (!strcmp(property[i].name, name)) return &property[i];
+        if (!bu_strcmp(property[i].name, name)) return &property[i];
     return NULL;
 }
 
@@ -1545,7 +1547,7 @@ static p_ply_property ply_grow_property(p_ply ply, p_ply_element element) {
 
 static int ply_read_header_format(p_ply ply) {
     assert(ply && ply->fp && ply->io_mode == PLY_READ);
-    if (strcmp(BWORD(ply), "format")) return 0;
+    if (bu_strcmp(BWORD(ply), "format")) return 0;
     if (!ply_read_word(ply)) return 0;
     ply->storage_mode = ply_find_storage_string(BWORD(ply));
     if (ply->storage_mode == PLY_INVALID_STORAGE) return 0;
@@ -1554,14 +1556,14 @@ static int ply_read_header_format(p_ply ply) {
         ply->idriver = &ply_idriver_binary;
     else ply->idriver = &ply_idriver_binary_reverse;
     if (!ply_read_word(ply)) return 0;
-    if (strcmp(BWORD(ply), "1.0")) return 0;
+    if (bu_strcmp(BWORD(ply), "1.0")) return 0;
     if (!ply_read_word(ply)) return 0;
     return 1;
 }
 
 static int ply_read_header_comment(p_ply ply) {
     assert(ply && ply->fp && ply->io_mode == PLY_READ);
-    if (strcmp(BWORD(ply), "comment")) return 0;
+    if (bu_strcmp(BWORD(ply), "comment")) return 0;
     if (!ply_read_line(ply)) return 0;
     if (!ply_add_comment(ply, BLINE(ply))) return 0;
     if (!ply_read_word(ply)) return 0;
@@ -1570,7 +1572,7 @@ static int ply_read_header_comment(p_ply ply) {
 
 static int ply_read_header_obj_info(p_ply ply) {
     assert(ply && ply->fp && ply->io_mode == PLY_READ);
-    if (strcmp(BWORD(ply), "obj_info")) return 0;
+    if (bu_strcmp(BWORD(ply), "obj_info")) return 0;
     if (!ply_read_line(ply)) return 0;
     if (!ply_add_obj_info(ply, BLINE(ply))) return 0;
     if (!ply_read_word(ply)) return 0;
@@ -1581,7 +1583,7 @@ static int ply_read_header_property(p_ply ply) {
     p_ply_element element = NULL;
     p_ply_property property = NULL;
     /* make sure it is a property */
-    if (strcmp(BWORD(ply), "property")) return 0;
+    if (bu_strcmp(BWORD(ply), "property")) return 0;
     element = &ply->element[ply->nelements-1];
     property = ply_grow_property(ply, element);
     if (!property) return 0;
@@ -1600,7 +1602,7 @@ static int ply_read_header_property(p_ply ply) {
     }
     /* get property name */
     if (!ply_read_word(ply)) return 0;
-    strcpy(property->name, BWORD(ply));
+    bu_strlcpy(property->name, BWORD(ply), WORDSIZE);
     if (!ply_read_word(ply)) return 0;
     return 1;
 }
@@ -1609,13 +1611,13 @@ static int ply_read_header_element(p_ply ply) {
     p_ply_element element = NULL;
     long dummy;
     assert(ply && ply->fp && ply->io_mode == PLY_READ);
-    if (strcmp(BWORD(ply), "element")) return 0;
+    if (bu_strcmp(BWORD(ply), "element")) return 0;
     /* allocate room for new element */
     element = ply_grow_element(ply);
     if (!element) return 0;
     /* get element name */
     if (!ply_read_word(ply)) return 0;
-    strcpy(element->name, BWORD(ply));
+    bu_strlcpy(element->name, BWORD(ply), WORDSIZE);
     /* get number of elements of this type */
     if (!ply_read_word(ply)) return 0;
     if (sscanf(BWORD(ply), "%ld", &dummy) != 1) {
