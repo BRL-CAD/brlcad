@@ -93,6 +93,7 @@ endforeach(ITEM ${dlists})
 # and we don't want them mixing with the system version for an external
 # code via it including our version of the header
 set(SKIP_INSTALL_HEADERS TRUE CACHE  BOOL "Don't install src/other headers" FORCE)
+mark_as_advanced(SKIP_INSTALL_HEADERS)
 
 # libregex library -  often needed by tools, so do this one first.
 set(regex_DESCRIPTION "
@@ -418,7 +419,11 @@ exit
     mark_as_advanced(tcl_inittcl)
     CONFIG_H_APPEND(BRLCAD "#define TCL_SYSTEM_INITTCL_PATH \"${tcl_inittcl}\"\n")
 endif(BRLCAD_TCL_BUILD)
+mark_as_advanced(TCL_COMPILATION_TRACING)
+mark_as_advanced(TCL_COMPILE_STATS)
+mark_as_advanced(TCL_ENABLE_64BIT)
 mark_as_advanced(TCL_TIMEZONE_DATA)
+mark_as_advanced(TCL_STUB_LIBRARY)
 mark_as_advanced(M_LIBRARY)
 
 # Depending on the Tcl/Tk results, look for packages required by BRL-CAD.  If
