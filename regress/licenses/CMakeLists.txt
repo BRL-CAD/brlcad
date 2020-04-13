@@ -4,6 +4,8 @@ if (O3_COMPILER_FLAG)
   # it - whether or not the standard build settings would add it.
   target_compile_options(lcheck PRIVATE "-O3")
 endif (O3_COMPILER_FLAG)
+set_target_properties(lcheck PROPERTIES FOLDER "BRL-CAD Regression Tests")
+
 
 set(LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/regress-licenses.log")
 set(STAMP_FILE "${CMAKE_CURRENT_BINARY_DIR}/regress-licenses.done")
