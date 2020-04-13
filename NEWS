@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 20XX-XX-XX  Release 7.XX.X                                     ---
 ----------------------------------------------------------------------
 
+* added -F option to lint cmd to test specifc solid types - Cliff Yapp
 * added support to MGED for zooming with mouse wheel - Cliff Yapp
 * repaired wireframe visualization during MGED solid edit - Cliff Yapp
 * added .r suffixes to region names in 3dm-g conversion - Cliff Yapp
