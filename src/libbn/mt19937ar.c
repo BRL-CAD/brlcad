@@ -43,6 +43,7 @@
 
 #include "common.h"
 #include <stdio.h>
+#include "bn/randmt.h"
 
 /* Period parameters */
 #define N 624
