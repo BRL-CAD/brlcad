@@ -12,16 +12,16 @@ set_target_properties(plugin_1 plugin_2
 
 add_library(libdylib SHARED dylib.c)
 if (CPP_DLL_DEFINES)
-  set_property(TARGET plugin_1 APPEND PROPERTY COMPILE_DEFINITIONS BU_DYLIB_EXPORTS)
-  set_property(TARGET plugin_2 APPEND PROPERTY COMPILE_DEFINITIONS BU_DYLIB_EXPORTS)
-  set_property(TARGET libdylib APPEND PROPERTY COMPILE_DEFINITIONS BU_DYLIB_EXPORTS)
+  set_property(TARGET plugin_1 APPEND PROPERTY COMPILE_DEFINITIONS BU_DYLIB_DLL_EXPORTS)
+  set_property(TARGET plugin_2 APPEND PROPERTY COMPILE_DEFINITIONS BU_DYLIB_DLL_EXPORTS)
+  set_property(TARGET libdylib APPEND PROPERTY COMPILE_DEFINITIONS BU_DYLIB_DLL_EXPORTS)
 endif (CPP_DLL_DEFINES)
 target_link_libraries(libdylib libbu)
 
 add_executable(bu_dylib run.c)
 target_link_libraries(bu_dylib libdylib libbu)
 if (CPP_DLL_DEFINES)
-  set_property(TARGET bu_dylib APPEND PROPERTY COMPILE_DEFINITIONS BU_DYLIB_IMPORTS)
+  set_property(TARGET bu_dylib APPEND PROPERTY COMPILE_DEFINITIONS BU_DYLIB_DLL_IMPORTS)
 endif (CPP_DLL_DEFINES)
 
 
