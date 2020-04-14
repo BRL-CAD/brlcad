@@ -1,3 +1,9 @@
+2020-04-14 14:50  starseeker
+
+	* [r75392] ., NEWS, src/tclscripts/checker/menu.tcl:
+	  Cherrypick r74991 - fix for initial dimensions of overlap checker
+	  window
+
 2020-04-14 12:03  starseeker
 
 	* [r75388] ., src/librt/primitives/brep/brep.cpp:
