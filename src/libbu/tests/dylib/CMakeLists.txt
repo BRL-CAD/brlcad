@@ -16,6 +16,7 @@ if (CPP_DLL_DEFINES)
   set_property(TARGET plugin_2 APPEND PROPERTY COMPILE_DEFINITIONS BU_DYLIB_EXPORTS)
   set_property(TARGET libdylib APPEND PROPERTY COMPILE_DEFINITIONS BU_DYLIB_EXPORTS)
 endif (CPP_DLL_DEFINES)
+target_link_libraries(libdylib libbu)
 
 add_executable(bu_dylib run.c)
 target_link_libraries(bu_dylib libdylib libbu)
