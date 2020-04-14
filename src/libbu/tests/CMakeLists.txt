@@ -742,7 +742,6 @@ add_test(NAME bu_file_realpath_2 COMMAND bu_test realpath 2)
 CMAKEFILES(
   tests_bitv.cmake
   tests_vls.cmake
-  dylib
   dylib/README.txt
   dylib/CMakeLists.txt
   dylib/plugin_1.cpp
