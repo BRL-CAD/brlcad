@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2020-04-14  Release 7.30.8                                     ---
 ----------------------------------------------------------------------
 
+* fixed startup dimensions of overlap checker window - Nick Reed
 * fixed rtedge line drawing color when using -W flag - Cliff Yapp
 * added -F option to lint cmd to test specifc solid types - Cliff Yapp
 * added support to MGED for zooming with mouse wheel - Cliff Yapp
