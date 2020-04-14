@@ -24,6 +24,8 @@ if (CPP_DLL_DEFINES)
   set_property(TARGET bu_dylib APPEND PROPERTY COMPILE_DEFINITIONS BU_DYLIB_DLL_IMPORTS)
 endif (CPP_DLL_DEFINES)
 
+# As a build convenience, make bu_dylib depend on everything
+add_dependencies(bu_dylib plugin_1 plugin_2)
 
 add_test(NAME bu_dylib COMMAND bu_dylib)
 
