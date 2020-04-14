@@ -72,6 +72,8 @@ main(int argc, char *argv[])
 
     bu_log("output: %s\n", bu_vls_addr(&name));
 
+    bu_vls_free(&name);
+
     return ret;
 }
 
