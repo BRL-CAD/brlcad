@@ -3,12 +3,30 @@ set_property(SOURCE dylib.c APPEND PROPERTY COMPILE_DEFINITIONS "DYLIB_PLUGIN_SU
 
 add_library(plugin_1 SHARED plugin_1.cpp)
 add_library(plugin_2 SHARED plugin_2.cpp)
-set_target_properties(plugin_1 plugin_2
-  PROPERTIES
-  ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/dylib"
-  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/dylib"
-  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/dylib"
-  )
+
+set(plugin_targets plugin_1 plugin_2)
+set(DIR_TYPES LIBRARY RUNTIME ARCHIVE)
+
+# Override the output directories to put the plugins in LIBEXEC_DIR
+foreach (target_name ${plugin_targets})
+  if (NOT CMAKE_CONFIGURATION_TYPES)
+    foreach(dt ${DIR_TYPES})
+      get_property(cd TARGET ${target_name} PROPERTY ${dt}_OUTPUT_DIRECTORY)
+      set_property(TARGET ${target_name} PROPERTY ${dt}_OUTPUT_DIRECTORY "${cd}/../${LIBEXEC_DIR}/dylib")
+    endforeach(dt ${DIR_TYPES})
+  else (NOT CMAKE_CONFIGURATION_TYPES)
+    foreach(ct ${CMAKE_CONFIGURATION_TYPES})
+      if(NOT "${CMAKE_CFG_INTDIR}" STREQUAL ".")
+	set(CMAKE_BINARY_DIR ${CMAKE_BINARY_DIR}/${ct})
+      endif(NOT "${CMAKE_CFG_INTDIR}" STREQUAL ".")
+      string(TOUPPER "${ct}" CTU)
+      foreach(dt ${DIR_TYPES})
+	get_property(cd TARGET ${target_name} PROPERTY ${dt}_OUTPUT_DIRECTORY_${CTU})
+	set_property(TARGET ${target_name} PROPERTY ${dt}_OUTPUT_DIRECTORY_${CTU} "${cd}/../${LIBEXEC_DIR}/dylib")
+      endforeach(dt ${DIR_TYPES})
+    endforeach(ct ${CMAKE_CONFIGURATION_TYPES})
+  endif (NOT CMAKE_CONFIGURATION_TYPES)
+endforeach (target_name${plugins})
 
 add_library(libdylib SHARED dylib.c)
 if (CPP_DLL_DEFINES)
