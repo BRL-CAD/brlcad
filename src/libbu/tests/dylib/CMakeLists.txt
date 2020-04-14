@@ -8,17 +8,27 @@ set_target_properties(plugin_1 plugin_2
   ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/dylib"
   LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/dylib"
   RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/dylib"
-)
+  )
 
 add_library(libdylib SHARED dylib.c)
 if (CPP_DLL_DEFINES)
-	set_property(TARGET plugin_1 APPEND PROPERTY COMPILE_DEFINITIONS BU_DYLIB_EXPORTS)
-	set_property(TARGET plugin_2 APPEND PROPERTY COMPILE_DEFINITIONS BU_DYLIB_EXPORTS)
-	set_property(TARGET libdylib APPEND PROPERTY COMPILE_DEFINITIONS BU_DYLIB_EXPORTS)
+  set_property(TARGET plugin_1 APPEND PROPERTY COMPILE_DEFINITIONS BU_DYLIB_EXPORTS)
+  set_property(TARGET plugin_2 APPEND PROPERTY COMPILE_DEFINITIONS BU_DYLIB_EXPORTS)
+  set_property(TARGET libdylib APPEND PROPERTY COMPILE_DEFINITIONS BU_DYLIB_EXPORTS)
 endif (CPP_DLL_DEFINES)
 
 add_executable(bu_dylib run.c)
 target_link_libraries(bu_dylib libdylib libbu)
 if (CPP_DLL_DEFINES)
-	set_property(TARGET bu_dylib APPEND PROPERTY COMPILE_DEFINITIONS BU_DYLIB_IMPORTS)
+  set_property(TARGET bu_dylib APPEND PROPERTY COMPILE_DEFINITIONS BU_DYLIB_IMPORTS)
 endif (CPP_DLL_DEFINES)
+
+
+add_test(NAME bu_dylib COMMAND bu_dylib)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

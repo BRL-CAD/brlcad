@@ -737,7 +737,7 @@ add_test(NAME bu_file_realpath_2 COMMAND bu_test realpath 2)
 #
 #  *********** bu_dlopen/bu_dlsym test ************
 #
-#add_subdirectory(dylib)
+add_subdirectory(dylib)
 
 CMAKEFILES(
   tests_bitv.cmake

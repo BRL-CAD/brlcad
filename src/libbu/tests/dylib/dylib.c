@@ -11,9 +11,8 @@
 #include "dylib.h"
 
 int
-dylib_load_plugins()
+dylib_load_plugins(struct bu_ptbl *plugins, struct bu_ptbl *dl_handles)
 {
-    static struct bu_ptbl plugins = BU_PTBL_INIT_ZERO;
     const char *ppath = bu_dir(NULL, 0, BU_DIR_LIBEXEC, "dylib", NULL);
     char **filenames;
     const char *psymbol = "dylib_plugin_info";
@@ -31,6 +30,9 @@ dylib_load_plugins()
 
 	    bu_log("Unable to dynamically load '%s' (skipping)\n", pfile);
 	    continue;
+	}
+	if (dl_handles) {
+	    bu_ptbl_ins(dl_handles, (long *)dl_handle);
 	}
 	info_val = bu_dlsym(dl_handle, psymbol);
 	const struct dylib_plugin *(*plugin_info)() = (const struct dylib_plugin *(*)())(intptr_t)info_val;
@@ -53,10 +55,23 @@ dylib_load_plugins()
 	}
 
 	const struct dylib_contents *pcontents = plugin->i;
-	bu_ptbl_ins(&plugins, (long *)pcontents);
+	bu_ptbl_ins(plugins, (long *)pcontents);
     }
 
-    return (nfiles == BU_PTBL_LEN(&plugins));
+    return BU_PTBL_LEN(plugins);
+}
+
+int
+dylib_close_plugins(struct bu_ptbl *plugins)
+{
+    int ret = 0;
+    for (size_t i = 0; i < BU_PTBL_LEN(plugins); i++) {
+	if (bu_dlclose((void *)BU_PTBL_GET(plugins, i))) {
+	    ret = 1;
+	}
+    }
+
+    return ret;
 }
 
 /*
