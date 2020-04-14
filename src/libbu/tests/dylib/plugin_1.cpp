@@ -34,10 +34,11 @@ static const struct dylib_contents pcontents = {"Plugin 1", 1.0, &calc};
 
 const struct dylib_plugin pinfo = { &pcontents };
 
-BU_DYLIB_EXPORT extern "C" const struct dylib_plugin *
-dylib_plugin_info()
-{
-    return &pinfo;
+extern "C" {
+    BU_DYLIB_EXPORT const struct dylib_plugin *dylib_plugin_info()
+    {
+	return &pinfo;
+    }
 }
 
 
