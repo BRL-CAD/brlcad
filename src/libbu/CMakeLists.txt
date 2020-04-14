@@ -128,6 +128,7 @@ set(LIBBU_SOURCES
   vfont.c
   vlb.c
   vls.c
+  vls_incr.cpp
   vls_vprintf.c
   whereami.c
   whereis.c
