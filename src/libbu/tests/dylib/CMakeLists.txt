@@ -26,6 +26,7 @@ foreach (target_name ${plugin_targets})
       endforeach(dt ${DIR_TYPES})
     endforeach(ct ${CMAKE_CONFIGURATION_TYPES})
   endif (NOT CMAKE_CONFIGURATION_TYPES)
+  set_target_properties(${target_name} PROPERTIES FOLDER "BRL-CAD Executables/Test Programs/dylib")
 endforeach (target_name${plugins})
 
 add_library(libdylib SHARED dylib.c)
@@ -35,12 +36,14 @@ if (CPP_DLL_DEFINES)
   set_property(TARGET libdylib APPEND PROPERTY COMPILE_DEFINITIONS BU_DYLIB_DLL_EXPORTS)
 endif (CPP_DLL_DEFINES)
 target_link_libraries(libdylib libbu)
+set_target_properties(libdylib PROPERTIES FOLDER "BRL-CAD Executables/Test Programs/dylib")
 
 add_executable(bu_dylib run.c)
 target_link_libraries(bu_dylib libdylib libbu)
 if (CPP_DLL_DEFINES)
   set_property(TARGET bu_dylib APPEND PROPERTY COMPILE_DEFINITIONS BU_DYLIB_DLL_IMPORTS)
 endif (CPP_DLL_DEFINES)
+set_target_properties(bu_dylib PROPERTIES FOLDER "BRL-CAD Executables/Test Programs/dylib")
 
 # As a build convenience, make bu_dylib depend on everything
 add_dependencies(bu_dylib plugin_1 plugin_2)
