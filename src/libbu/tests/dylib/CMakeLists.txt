@@ -1,0 +1,24 @@
+
+set_property(SOURCE dylib.c APPEND PROPERTY COMPILE_DEFINITIONS "DYLIB_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\"")
+
+add_library(plugin_1 SHARED plugin_1.cpp)
+add_library(plugin_2 SHARED plugin_2.cpp)
+set_target_properties(plugin_1 plugin_2
+  PROPERTIES
+  ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/dylib"
+  LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/dylib"
+  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/${LIBEXEC_DIR}/dylib"
+)
+
+add_library(libdylib SHARED dylib.c)
+if (CPP_DLL_DEFINES)
+	set_property(TARGET plugin_1 APPEND PROPERTY COMPILE_DEFINITIONS BU_DYLIB_EXPORTS)
+	set_property(TARGET plugin_2 APPEND PROPERTY COMPILE_DEFINITIONS BU_DYLIB_EXPORTS)
+	set_property(TARGET libdylib APPEND PROPERTY COMPILE_DEFINITIONS BU_DYLIB_EXPORTS)
+endif (CPP_DLL_DEFINES)
+
+add_executable(bu_dylib run.c)
+target_link_libraries(bu_dylib libdylib libbu)
+if (CPP_DLL_DEFINES)
+	set_property(TARGET bu_dylib APPEND PROPERTY COMPILE_DEFINITIONS BU_DYLIB_IMPORTS)
+endif (CPP_DLL_DEFINES)
