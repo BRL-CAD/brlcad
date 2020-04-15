@@ -392,7 +392,7 @@ struct _menu_state {
 
 struct dm_list {
     struct bu_list	l;
-    dm		*dml_dmp;
+    struct dm		*dml_dmp;
     fb			*dml_fbp;
     int			dml_netfd;			/* socket used to listen for connections */
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -611,7 +611,7 @@ extern struct w_dm which_dm[];  /* defined in attach.c */
 #define DM_PS_INDEX 1
 
 struct mged_view_hook_state {
-    dm *hs_dmp;
+    struct dm *hs_dmp;
     struct _view_state *vs;
     int *dirty_global;
 };

@@ -34,7 +34,7 @@
 #include "dm_private.h"
 
 static void
-dm_draw_ticks(dm *dmp, struct bview_adc_state *adcp, fastf_t angle)
+dm_draw_ticks(struct dm *dmp, struct bview_adc_state *adcp, fastf_t angle)
 {
     fastf_t c_tdist;
     fastf_t d1, d2;
@@ -104,7 +104,7 @@ dm_draw_ticks(dm *dmp, struct bview_adc_state *adcp, fastf_t angle)
  * Compute and display the angle/distance cursor.
  */
 void
-dm_draw_adc(dm *dmp, struct bview_adc_state *adcp, mat_t view2model, mat_t model2view)
+dm_draw_adc(struct dm *dmp, struct bview_adc_state *adcp, mat_t view2model, mat_t model2view)
 {
     fastf_t x1, Y1;	/* not "y1", due to conflict with math lib */
     fastf_t x2, y2;

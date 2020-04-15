@@ -32,7 +32,7 @@
 #include "dm_private.h"
 
 void
-dm_draw_grid(dm *dmp, struct bview_grid_state *ggsp, fastf_t scale, mat_t model2view, fastf_t base2local)
+dm_draw_grid(struct dm *dmp, struct bview_grid_state *ggsp, fastf_t scale, mat_t model2view, fastf_t base2local)
 {
     int	i, j;
     int	nh, nv;

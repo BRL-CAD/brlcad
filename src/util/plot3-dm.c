@@ -59,7 +59,7 @@ struct cmdtab {
 #define APP_SCALE 180.0 / 512.0
 
 Tcl_Interp *INTERP;
-dm *dmp;
+struct dm *dmp;
 mat_t toViewcenter;
 mat_t Viewrot;
 mat_t model2view;

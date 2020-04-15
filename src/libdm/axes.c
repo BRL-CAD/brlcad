@@ -43,7 +43,7 @@
 #endif
 
 void
-dm_draw_data_axes(dm *dmp,
+dm_draw_data_axes(struct dm *dmp,
 		  fastf_t sf,
 		  struct bview_data_axes_state *bndasp)
 {
@@ -118,7 +118,7 @@ dm_draw_data_axes(dm *dmp,
 }
 
 void
-dm_draw_axes(dm				*dmp,
+dm_draw_axes(struct dm		        *dmp,
 	     fastf_t			viewSize, /* in mm */
 	     const mat_t		rmat,       /* view rotation matrix */
 	     struct bview_axes_state 	*bnasp)

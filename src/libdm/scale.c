@@ -36,7 +36,7 @@
 #include "dm_private.h"
 
 void
-dm_draw_scale(dm *dmp,
+dm_draw_scale(struct dm *dmp,
 	      fastf_t   viewSize,
 	      int       *lineColor,
 	      int       *textColor)

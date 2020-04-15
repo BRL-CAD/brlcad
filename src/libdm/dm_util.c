@@ -33,7 +33,7 @@
 
 #if defined(DM_OGL) || defined(DM_WGL) || defined(DM_RTGL)
 int
-drawLine3D(struct dm_internal *dmp, point_t pt1, point_t pt2, const char *log_bu, float *wireColor)
+drawLine3D(struct dm *dmp, point_t pt1, point_t pt2, const char *log_bu, float *wireColor)
 {
     static float black[4] = {0.0, 0.0, 0.0, 0.0};
     GLdouble pt[3];
@@ -79,7 +79,7 @@ drawLine3D(struct dm_internal *dmp, point_t pt1, point_t pt2, const char *log_bu
 }
 
 int
-drawLines3D(struct dm_internal *dmp, int npoints, point_t *points, int lflag, const char *log_bu, float *wireColor)
+drawLines3D(struct dm *dmp, int npoints, point_t *points, int lflag, const char *log_bu, float *wireColor)
 {
     register int i;
     static float black[4] = {0.0, 0.0, 0.0, 0.0};
@@ -134,7 +134,7 @@ drawLines3D(struct dm_internal *dmp, int npoints, point_t *points, int lflag, co
 }
 
 int
-drawLine2D(struct dm_internal *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2, const char *log_bu)
+drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2, const char *log_bu)
 {
     if (dmp->dm_debugLevel)
 	bu_log("%s", log_bu);
@@ -166,7 +166,7 @@ drawLine2D(struct dm_internal *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t 
 #endif
 
 int
-draw_Line3D(struct dm_internal *dmp, point_t pt1, point_t pt2)
+draw_Line3D(struct dm *dmp, point_t pt1, point_t pt2)
 {
     if (!dmp)
 	return BRLCAD_ERROR;

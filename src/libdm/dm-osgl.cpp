@@ -80,44 +80,44 @@
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
 extern "C" {
-    struct dm_internal *osgl_open(void *vinterp, int argc, char **argv);
+    struct dm *osgl_open(void *vinterp, int argc, char **argv);
 }
-HIDDEN int osgl_close(struct dm_internal *dmp);
-HIDDEN int osgl_drawBegin(struct dm_internal *dmp);
-HIDDEN int osgl_drawEnd(struct dm_internal *dmp);
-HIDDEN int osgl_normal(struct dm_internal *dmp);
-HIDDEN int osgl_loadMatrix(struct dm_internal *dmp, fastf_t *mat, int which_eye);
-HIDDEN int osgl_loadPMatrix(struct dm_internal *dmp, fastf_t *mat);
-HIDDEN int osgl_drawString2D(struct dm_internal *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect);
-HIDDEN int osgl_drawLine2D(struct dm_internal *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2);
-HIDDEN int osgl_drawLine3D(struct dm_internal *dmp, point_t pt1, point_t pt2);
-HIDDEN int osgl_drawLines3D(struct dm_internal *dmp, int npoints, point_t *points, int sflag);
-HIDDEN int osgl_drawPoint2D(struct dm_internal *dmp, fastf_t x, fastf_t y);
-HIDDEN int osgl_drawPoint3D(struct dm_internal *dmp, point_t point);
-HIDDEN int osgl_drawPoints3D(struct dm_internal *dmp, int npoints, point_t *points);
-HIDDEN int osgl_drawVList(struct dm_internal *dmp, register struct bn_vlist *vp);
-HIDDEN int osgl_drawVListHiddenLine(struct dm_internal *dmp, register struct bn_vlist *vp);
-HIDDEN int osgl_draw(struct dm_internal *dmp, struct bn_vlist *(*callback_function)(void *), void **data);
-HIDDEN int osgl_setFGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
-HIDDEN int osgl_setBGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsigned char b);
-HIDDEN int osgl_setLineAttr(struct dm_internal *dmp, int width, int style);
-HIDDEN int osgl_configureWin_guts(struct dm_internal *dmp, int force);
-HIDDEN int osgl_configureWin(struct dm_internal *dmp, int force);
-HIDDEN int osgl_setLight(struct dm_internal *dmp, int lighting_on);
-HIDDEN int osgl_setTransparency(struct dm_internal *dmp, int transparency_on);
-HIDDEN int osgl_setDepthMask(struct dm_internal *dmp, int depthMask_on);
-HIDDEN int osgl_setZBuffer(struct dm_internal *dmp, int zbuffer_on);
-HIDDEN int osgl_setWinBounds(struct dm_internal *dmp, fastf_t *w);
-HIDDEN int osgl_debug(struct dm_internal *dmp, int vl);
-HIDDEN int osgl_logfile(struct dm_internal *dmp, const char *filename);
-HIDDEN int osgl_beginDList(struct dm_internal *dmp, unsigned int list);
-HIDDEN int osgl_endDList(struct dm_internal *dmp);
+HIDDEN int osgl_close(struct dm *dmp);
+HIDDEN int osgl_drawBegin(struct dm *dmp);
+HIDDEN int osgl_drawEnd(struct dm *dmp);
+HIDDEN int osgl_normal(struct dm *dmp);
+HIDDEN int osgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
+HIDDEN int osgl_loadPMatrix(struct dm *dmp, fastf_t *mat);
+HIDDEN int osgl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect);
+HIDDEN int osgl_drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2);
+HIDDEN int osgl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2);
+HIDDEN int osgl_drawLines3D(struct dm *dmp, int npoints, point_t *points, int sflag);
+HIDDEN int osgl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
+HIDDEN int osgl_drawPoint3D(struct dm *dmp, point_t point);
+HIDDEN int osgl_drawPoints3D(struct dm *dmp, int npoints, point_t *points);
+HIDDEN int osgl_drawVList(struct dm *dmp, register struct bn_vlist *vp);
+HIDDEN int osgl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp);
+HIDDEN int osgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data);
+HIDDEN int osgl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
+HIDDEN int osgl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
+HIDDEN int osgl_setLineAttr(struct dm *dmp, int width, int style);
+HIDDEN int osgl_configureWin_guts(struct dm *dmp, int force);
+HIDDEN int osgl_configureWin(struct dm *dmp, int force);
+HIDDEN int osgl_setLight(struct dm *dmp, int lighting_on);
+HIDDEN int osgl_setTransparency(struct dm *dmp, int transparency_on);
+HIDDEN int osgl_setDepthMask(struct dm *dmp, int depthMask_on);
+HIDDEN int osgl_setZBuffer(struct dm *dmp, int zbuffer_on);
+HIDDEN int osgl_setWinBounds(struct dm *dmp, fastf_t *w);
+HIDDEN int osgl_debug(struct dm *dmp, int vl);
+HIDDEN int osgl_logfile(struct dm *dmp, const char *filename);
+HIDDEN int osgl_beginDList(struct dm *dmp, unsigned int list);
+HIDDEN int osgl_endDList(struct dm *dmp);
 HIDDEN int osgl_drawDList(unsigned int list);
-HIDDEN int osgl_freeDLists(struct dm_internal *dmp, unsigned int list, int range);
-HIDDEN int osgl_genDLists(struct dm_internal *dmp, size_t range);
-HIDDEN int osgl_getDisplayImage(struct dm_internal *dmp, unsigned char **image);
-HIDDEN int osgl_reshape(struct dm_internal *dmp, int width, int height);
-HIDDEN int osgl_makeCurrent(struct dm_internal *dmp);
+HIDDEN int osgl_freeDLists(struct dm *dmp, unsigned int list, int range);
+HIDDEN int osgl_genDLists(struct dm *dmp, size_t range);
+HIDDEN int osgl_getDisplayImage(struct dm *dmp, unsigned char **image);
+HIDDEN int osgl_reshape(struct dm *dmp, int width, int height);
+HIDDEN int osgl_makeCurrent(struct dm *dmp);
 
 
 static fastf_t default_viewscale = 1000.0;
@@ -154,7 +154,7 @@ osgl_printglmat(struct bu_vls *tmp_vls, GLfloat *m) {
 
 extern "C" {
 void
-osgl_fogHint(struct dm_internal *dmp, int fastfog)
+osgl_fogHint(struct dm *dmp, int fastfog)
 {
     struct modifiable_osgl_vars *mvars = (struct modifiable_osgl_vars *)dmp->m_vars;
     mvars->fastfog = fastfog;
@@ -163,7 +163,7 @@ osgl_fogHint(struct dm_internal *dmp, int fastfog)
 }
 
 HIDDEN int
-osgl_setBGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsigned char b)
+osgl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
     if (dmp->dm_debugLevel == 1)
 	bu_log("osgl_setBGColor()\n");
@@ -193,7 +193,7 @@ osgl_setBGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsig
  * other initializations of the window configuration.
  */
 HIDDEN int
-osgl_configureWin_guts(struct dm_internal *dmp, int force)
+osgl_configureWin_guts(struct dm *dmp, int force)
 {
     int width = 0;
     int height = 0;
@@ -216,7 +216,7 @@ osgl_configureWin_guts(struct dm_internal *dmp, int force)
 
 
 HIDDEN int
-osgl_reshape(struct dm_internal *dmp, int width, int height)
+osgl_reshape(struct dm *dmp, int width, int height)
 {
     GLint mm;
 
@@ -276,7 +276,7 @@ osgl_reshape(struct dm_internal *dmp, int width, int height)
 
 
 HIDDEN int
-osgl_makeCurrent(struct dm_internal *dmp)
+osgl_makeCurrent(struct dm *dmp)
 {
     if (dmp->dm_debugLevel)
 	bu_log("osgl_makeCurrent()\n");
@@ -288,7 +288,7 @@ osgl_makeCurrent(struct dm_internal *dmp)
 
 
 HIDDEN int
-osgl_configureWin(struct dm_internal *dmp, int force)
+osgl_configureWin(struct dm *dmp, int force)
 {
     ((struct osgl_vars *)dmp->dm_vars.priv_vars)->graphicsContext->makeCurrent();
 
@@ -297,7 +297,7 @@ osgl_configureWin(struct dm_internal *dmp, int force)
 
 
 HIDDEN int
-osgl_setLight(struct dm_internal *dmp, int lighting_on)
+osgl_setLight(struct dm *dmp, int lighting_on)
 {
     struct modifiable_osgl_vars *mvars = (struct modifiable_osgl_vars *)dmp->m_vars;
     if (dmp->dm_debugLevel)
@@ -332,7 +332,7 @@ osgl_setLight(struct dm_internal *dmp, int lighting_on)
 
 
 HIDDEN void
-OSGUpdate(dm *dmp) {
+OSGUpdate(struct dm *dmp) {
     struct osgl_vars *privvars = (struct osgl_vars *)dmp->dm_vars.priv_vars;
     if (dmp->dm_debugLevel == 1)
 	bu_log("OSGUpdate()\n");
@@ -346,7 +346,7 @@ OSGUpdate(dm *dmp) {
 HIDDEN void
 OSGEventProc(ClientData clientData, XEvent *UNUSED(eventPtr))
 {
-    dm *dmp = (dm *)clientData;
+    struct dm *dmp = (struct dm *)clientData;
 
     OSGUpdate(dmp);
 }
@@ -355,7 +355,7 @@ OSGEventProc(ClientData clientData, XEvent *UNUSED(eventPtr))
  * Gracefully release the display.
  */
 HIDDEN int
-osgl_close(struct dm_internal *dmp)
+osgl_close(struct dm *dmp)
 {
     ((struct osgl_vars *)dmp->dm_vars.priv_vars)->graphicsContext->makeCurrent();
     ((struct osgl_vars *)dmp->dm_vars.priv_vars)->graphicsContext->releaseContext();
@@ -381,14 +381,14 @@ osgl_close(struct dm_internal *dmp)
  * Fire up the display manager, and the display processor.
  *
  */
-extern "C" struct dm_internal *
+extern "C" struct dm *
 osgl_open(void *vinterp, int argc, char **argv)
 {
     static int count = 0;
     GLfloat backgnd[4];
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
-    struct dm_internal *dmp = (struct dm_internal *)NULL;
+    struct dm *dmp = (struct dm *)NULL;
     struct modifiable_osgl_vars *mvars = NULL;
     Tk_Window tkwin = (Tk_Window)NULL;
     Tcl_Interp *interp = (Tcl_Interp *)vinterp;
@@ -400,7 +400,7 @@ osgl_open(void *vinterp, int argc, char **argv)
 	return DM_NULL;
     }
 
-    BU_GET(dmp, struct dm_internal);
+    BU_GET(dmp, struct dm);
 
     *dmp = dm_osgl; /* struct copy */
     dmp->dm_interp = interp;
@@ -709,7 +709,7 @@ osgl_open(void *vinterp, int argc, char **argv)
 
 
 int
-osgl_share_dlist(struct dm_internal *UNUSED(dmp1), struct dm_internal *UNUSED(dmp2))
+osgl_share_dlist(struct dm *UNUSED(dmp1), struct dm *UNUSED(dmp2))
 {
 #if 0
     struct modifiable_osgl_vars *mvars = (struct modifiable_osgl_vars *)dmp1->m_vars;
@@ -717,10 +717,10 @@ osgl_share_dlist(struct dm_internal *UNUSED(dmp1), struct dm_internal *UNUSED(dm
     GLfloat vf;
     GLXContext old_glxContext;
 
-    if (dmp1 == (struct dm_internal *)NULL)
+    if (dmp1 == (struct dm *)NULL)
 	return TCL_ERROR;
 
-    if (dmp2 == (struct dm_internal *)NULL) {
+    if (dmp2 == (struct dm *)NULL) {
 	/* create a new graphics context for dmp1 with private display lists */
 
 	old_glxContext = ((struct osgl_vars *)dmp1->dm_vars.priv_vars)->glxc;
@@ -878,7 +878,7 @@ osgl_share_dlist(struct dm_internal *UNUSED(dmp1), struct dm_internal *UNUSED(dm
  * There are global variables which are parameters to this routine.
  */
 HIDDEN int
-osgl_drawBegin(struct dm_internal *dmp)
+osgl_drawBegin(struct dm *dmp)
 {
     struct modifiable_osgl_vars *mvars = (struct modifiable_osgl_vars *)dmp->m_vars;
     GLfloat fogdepth;
@@ -957,7 +957,7 @@ osgl_drawBegin(struct dm_internal *dmp)
 
 
 HIDDEN int
-osgl_drawEnd(struct dm_internal *dmp)
+osgl_drawEnd(struct dm *dmp)
 {
     if (dmp->dm_debugLevel)
 	bu_log("osgl_drawEnd\n");
@@ -1032,7 +1032,7 @@ osgl_drawEnd(struct dm_internal *dmp)
  * many calls to osgl_draw().
  */
 HIDDEN int
-osgl_loadMatrix(struct dm_internal *dmp, fastf_t *mat, int which_eye)
+osgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 {
     fastf_t *mptr;
     GLfloat gtmat[16];
@@ -1165,7 +1165,7 @@ osgl_loadMatrix(struct dm_internal *dmp, fastf_t *mat, int which_eye)
  *
  */
 HIDDEN int
-osgl_loadPMatrix(struct dm_internal *dmp, fastf_t *mat)
+osgl_loadPMatrix(struct dm *dmp, fastf_t *mat)
 {
     fastf_t *mptr;
     GLfloat gtmat[16];
@@ -1249,7 +1249,7 @@ osgl_loadPMatrix(struct dm_internal *dmp, fastf_t *mat)
 
 
 HIDDEN int
-osgl_drawVListHiddenLine(struct dm_internal *dmp, register struct bn_vlist *vp)
+osgl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 {
     struct modifiable_osgl_vars *mvars = (struct modifiable_osgl_vars *)dmp->m_vars;
     register struct bn_vlist *tvp;
@@ -1422,7 +1422,7 @@ osgl_drawVListHiddenLine(struct dm_internal *dmp, register struct bn_vlist *vp)
 
 
 HIDDEN int
-osgl_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
+osgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 {
     struct bn_vlist *tvp;
     register int first;
@@ -1676,7 +1676,7 @@ osgl_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 
 
 HIDDEN int
-osgl_draw(struct dm_internal *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
+osgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
 {
     struct bn_vlist *vp;
     if (!callback_function) {
@@ -1700,7 +1700,7 @@ osgl_draw(struct dm_internal *dmp, struct bn_vlist *(*callback_function)(void *)
  * (i.e., not scaled, rotated, displaced, etc.).
  */
 HIDDEN int
-osgl_normal(struct dm_internal *dmp)
+osgl_normal(struct dm *dmp)
 {
     struct modifiable_osgl_vars *mvars = (struct modifiable_osgl_vars *)dmp->m_vars;
     if (dmp->dm_debugLevel)
@@ -1755,7 +1755,7 @@ osgl_normal(struct dm_internal *dmp)
  * The starting position of the beam is as specified.
  */
 HIDDEN int
-osgl_drawString2D(struct dm_internal *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int UNUSED(use_aspect))
+osgl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int UNUSED(use_aspect))
 {
     fastf_t font_size = dm_get_fontsize(dmp);
     struct osgl_vars *privvars = (struct osgl_vars *)dmp->dm_vars.priv_vars;
@@ -1809,28 +1809,28 @@ osgl_drawString2D(struct dm_internal *dmp, const char *str, fastf_t x, fastf_t y
 
 
 HIDDEN int
-osgl_drawLine2D(struct dm_internal *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2)
+osgl_drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2)
 {
     return drawLine2D(dmp, X1, Y1, X2, Y2, "osgl_drawLine2D()\n");
 }
 
 
 HIDDEN int
-osgl_drawLine3D(struct dm_internal *dmp, point_t pt1, point_t pt2)
+osgl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
 {
     return drawLine3D(dmp, pt1, pt2, "osgl_drawLine3D()\n", wireColor);
 }
 
 
 HIDDEN int
-osgl_drawLines3D(struct dm_internal *dmp, int npoints, point_t *points, int sflag)
+osgl_drawLines3D(struct dm *dmp, int npoints, point_t *points, int sflag)
 {
     return drawLines3D(dmp, npoints, points, sflag, "osgl_drawLine3D()\n", wireColor);
 }
 
 
 HIDDEN int
-osgl_drawPoint2D(struct dm_internal *dmp, fastf_t x, fastf_t y)
+osgl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 {
     if (dmp->dm_debugLevel) {
 	bu_log("osgl_drawPoint2D():\n");
@@ -1847,7 +1847,7 @@ osgl_drawPoint2D(struct dm_internal *dmp, fastf_t x, fastf_t y)
 
 
 HIDDEN int
-osgl_drawPoint3D(struct dm_internal *dmp, point_t point)
+osgl_drawPoint3D(struct dm *dmp, point_t point)
 {
     GLdouble dpt[3];
 
@@ -1872,7 +1872,7 @@ osgl_drawPoint3D(struct dm_internal *dmp, point_t point)
 
 
 HIDDEN int
-osgl_drawPoints3D(struct dm_internal *dmp, int npoints, point_t *points)
+osgl_drawPoints3D(struct dm *dmp, int npoints, point_t *points)
 {
     GLdouble dpt[3];
     register int i;
@@ -1898,7 +1898,7 @@ osgl_drawPoints3D(struct dm_internal *dmp, int npoints, point_t *points)
 
 
 HIDDEN int
-osgl_setFGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
+osgl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
 {
     /*if (dmp->dm_debugLevel)
 	bu_log("osgl_setFGColor()\n");*/
@@ -1958,7 +1958,7 @@ osgl_setFGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsig
 
 
 HIDDEN int
-osgl_setLineAttr(struct dm_internal *dmp, int width, int style)
+osgl_setLineAttr(struct dm *dmp, int width, int style)
 {
     /*if (dmp->dm_debugLevel)
 	bu_log("osgl_setLineAttr()\n");*/
@@ -1978,7 +1978,7 @@ osgl_setLineAttr(struct dm_internal *dmp, int width, int style)
 
 
 HIDDEN int
-osgl_debug(struct dm_internal *dmp, int lvl)
+osgl_debug(struct dm *dmp, int lvl)
 {
     dmp->dm_debugLevel = lvl;
 
@@ -1986,7 +1986,7 @@ osgl_debug(struct dm_internal *dmp, int lvl)
 }
 
 HIDDEN int
-osgl_logfile(struct dm_internal *dmp, const char *filename)
+osgl_logfile(struct dm *dmp, const char *filename)
 {
     bu_vls_sprintf(&dmp->dm_log, "%s", filename);
 
@@ -1994,7 +1994,7 @@ osgl_logfile(struct dm_internal *dmp, const char *filename)
 }
 
 HIDDEN int
-osgl_setWinBounds(struct dm_internal *dmp, fastf_t *w)
+osgl_setWinBounds(struct dm *dmp, fastf_t *w)
 {
     GLint mm;
 
@@ -2021,7 +2021,7 @@ osgl_setWinBounds(struct dm_internal *dmp, fastf_t *w)
 
 
 HIDDEN int
-osgl_setTransparency(struct dm_internal *dmp,
+osgl_setTransparency(struct dm *dmp,
 		    int transparency_on)
 {
     struct modifiable_osgl_vars *mvars = (struct modifiable_osgl_vars *)dmp->m_vars;
@@ -2045,7 +2045,7 @@ osgl_setTransparency(struct dm_internal *dmp,
 
 
 HIDDEN int
-osgl_setDepthMask(struct dm_internal *dmp,
+osgl_setDepthMask(struct dm *dmp,
 		 int enable) {
     if (dmp->dm_debugLevel)
 	bu_log("osgl_setDepthMask()\n");
@@ -2062,7 +2062,7 @@ osgl_setDepthMask(struct dm_internal *dmp,
 
 
 HIDDEN int
-osgl_setZBuffer(struct dm_internal *dmp, int zbuffer_on)
+osgl_setZBuffer(struct dm *dmp, int zbuffer_on)
 {
     struct modifiable_osgl_vars *mvars = (struct modifiable_osgl_vars *)dmp->m_vars;
     if (dmp->dm_debugLevel)
@@ -2088,7 +2088,7 @@ osgl_setZBuffer(struct dm_internal *dmp, int zbuffer_on)
 
 
 HIDDEN int
-osgl_beginDList(struct dm_internal *dmp, unsigned int list)
+osgl_beginDList(struct dm *dmp, unsigned int list)
 {
     if (dmp->dm_debugLevel)
 	bu_log("osgl_beginDList()\n");
@@ -2099,7 +2099,7 @@ osgl_beginDList(struct dm_internal *dmp, unsigned int list)
 
 
 HIDDEN int
-osgl_endDList(struct dm_internal *dmp)
+osgl_endDList(struct dm *dmp)
 {
     if (dmp->dm_debugLevel)
 	bu_log("osgl_endDList()\n");
@@ -2118,7 +2118,7 @@ osgl_drawDList(unsigned int list)
 
 
 HIDDEN int
-osgl_freeDLists(struct dm_internal *dmp, unsigned int list, int range)
+osgl_freeDLists(struct dm *dmp, unsigned int list, int range)
 {
     if (dmp->dm_debugLevel)
 	bu_log("osgl_freeDLists()\n");
@@ -2129,7 +2129,7 @@ osgl_freeDLists(struct dm_internal *dmp, unsigned int list, int range)
 
 
 HIDDEN int
-osgl_genDLists(struct dm_internal *dmp, size_t range)
+osgl_genDLists(struct dm *dmp, size_t range)
 {
     if (dmp->dm_debugLevel)
 	bu_log("osgl_freeDLists()\n");
@@ -2138,7 +2138,7 @@ osgl_genDLists(struct dm_internal *dmp, size_t range)
 }
 
 HIDDEN int
-osgl_draw_obj(struct dm_internal *dmp, struct display_list *obj)
+osgl_draw_obj(struct dm *dmp, struct display_list *obj)
 {
     struct solid *sp;
     FOR_ALL_SOLIDS(sp, &obj->dl_headSolid) {
@@ -2161,7 +2161,7 @@ osgl_draw_obj(struct dm_internal *dmp, struct display_list *obj)
 }
 
 HIDDEN int
-osgl_getDisplayImage(struct dm_internal *dmp, unsigned char **image)
+osgl_getDisplayImage(struct dm *dmp, unsigned char **image)
 {
     unsigned char *idata = NULL;
     int width = 0;
@@ -2252,7 +2252,7 @@ osgl_getDisplayImage(struct dm_internal *dmp, unsigned char **image)
 }
 
 int
-osgl_openFb(struct dm_internal *dmp)
+osgl_openFb(struct dm *dmp)
 {
     struct fb_platform_specific *fb_ps;
     struct osgl_fb_info *ofb_ps;
@@ -2273,7 +2273,7 @@ osgl_openFb(struct dm_internal *dmp)
 }
 
 int
-osgl_get_internal(struct dm_internal *dmp)
+osgl_get_internal(struct dm *dmp)
 {
     struct modifiable_osgl_vars *mvars = NULL;
     if (!dmp->m_vars) {
@@ -2286,7 +2286,7 @@ osgl_get_internal(struct dm_internal *dmp)
 }
 
 int
-osgl_put_internal(struct dm_internal *dmp)
+osgl_put_internal(struct dm *dmp)
 {
     struct modifiable_osgl_vars *mvars = NULL;
     if (dmp->m_vars) {
@@ -2322,7 +2322,7 @@ osgl_zclip_hook(const struct bu_structparse *sdp,
 	void *data)
 {
     struct modifiable_osgl_vars *mvars = (struct modifiable_osgl_vars *)base;
-    dm *dmp = mvars->this_dm;
+    struct dm *dmp = mvars->this_dm;
     fastf_t bounds[6] = { GED_MIN, GED_MAX, GED_MIN, GED_MAX, GED_MIN, GED_MAX };
 
     dmp->dm_zclip = mvars->zclipping_on;
@@ -2346,7 +2346,7 @@ osgl_debug_hook(const struct bu_structparse *sdp,
 	void *data)
 {
     struct modifiable_osgl_vars *mvars = (struct modifiable_osgl_vars *)base;
-    dm *dmp = mvars->this_dm;
+    struct dm *dmp = mvars->this_dm;
 
     dm_debug(dmp, mvars->debug);
 
@@ -2362,7 +2362,7 @@ osgl_logfile_hook(const struct bu_structparse *sdp,
 	void *data)
 {
     struct modifiable_osgl_vars *mvars = (struct modifiable_osgl_vars *)base;
-    dm *dmp = mvars->this_dm;
+    struct dm *dmp = mvars->this_dm;
 
     dm_logfile(dmp, bu_vls_addr(&mvars->log));
 
@@ -2377,7 +2377,7 @@ osgl_bound_hook(const struct bu_structparse *sdp,
 	void *data)
 {
     struct modifiable_osgl_vars *mvars = (struct modifiable_osgl_vars *)base;
-    dm *dmp = mvars->this_dm;
+    struct dm *dmp = mvars->this_dm;
 
     dmp->dm_bound = mvars->bound;
 
@@ -2392,7 +2392,7 @@ osgl_bound_flag_hook(const struct bu_structparse *sdp,
 	void *data)
 {
     struct modifiable_osgl_vars *mvars = (struct modifiable_osgl_vars *)base;
-    dm *dmp = mvars->this_dm;
+    struct dm *dmp = mvars->this_dm;
 
     dmp->dm_boundFlag = mvars->boundFlag;
 
@@ -2407,7 +2407,7 @@ osgl_zbuffer_hook(const struct bu_structparse *sdp,
 	void *data)
 {
     struct modifiable_osgl_vars *mvars = (struct modifiable_osgl_vars *)base;
-    dm *dmp = mvars->this_dm;
+    struct dm *dmp = mvars->this_dm;
 
     (void)dm_make_current(dmp);
     (void)dm_set_zbuffer(dmp, mvars->zbuffer_on);
@@ -2423,7 +2423,7 @@ osgl_lighting_hook(const struct bu_structparse *sdp,
 	void *data)
 {
     struct modifiable_osgl_vars *mvars = (struct modifiable_osgl_vars *)base;
-    dm *dmp = mvars->this_dm;
+    struct dm *dmp = mvars->this_dm;
 
     (void)dm_make_current(dmp);
     (void)dm_set_light(dmp, mvars->lighting_on);
@@ -2439,7 +2439,7 @@ osgl_transparency_hook(const struct bu_structparse *sdp,
 	void *data)
 {
     struct modifiable_osgl_vars *mvars = (struct modifiable_osgl_vars *)base;
-    dm *dmp = mvars->this_dm;
+    struct dm *dmp = mvars->this_dm;
 
     (void)dm_make_current(dmp);
     (void)dm_set_transparency(dmp, mvars->transparency_on);
@@ -2455,7 +2455,7 @@ osgl_fog_hook(const struct bu_structparse *sdp,
 	void *data)
 {
     struct modifiable_osgl_vars *mvars = (struct modifiable_osgl_vars *)base;
-    dm *dmp = mvars->this_dm;
+    struct dm *dmp = mvars->this_dm;
 
     dm_fogHint(dmp, mvars->fastfog);
 
@@ -2482,7 +2482,7 @@ struct bu_structparse Osgl_vparse[] = {
     {"",        0,  (char *)0,          0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
-struct dm_internal dm_osgl = {
+struct dm dm_osgl = {
     osgl_close,
     osgl_drawBegin,
     osgl_drawEnd,

@@ -615,7 +615,7 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
 
     /* Only need to do this once */
     if (tkwin == NULL && NEED_GUI(wp->type)) {
-	dm *tmp_dmp;
+	struct dm *tmp_dmp;
 	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 	/* look for "-d display_string" and use it if provided */
@@ -690,7 +690,7 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
  Bad:
     Tcl_AppendResult(INTERP, "attach(", argv[argc - 1], "): BAD\n", (char *)NULL);
 
-    if (DMP != (dm *)0)
+    if (DMP != (struct dm *)0)
 	release((char *)NULL, 1);  /* release() will call dm_close */
     else
 	release((char *)NULL, 0);  /* release() will not call dm_close */

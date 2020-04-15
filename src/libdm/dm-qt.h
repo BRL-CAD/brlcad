@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libdm */
+/** @addtogroup libstruct dm */
 /** @{ */
 /** @file dm-qt.h
  *

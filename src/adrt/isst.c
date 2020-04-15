@@ -49,7 +49,7 @@
 #include <string.h>
 #endif
 
-static dm *dmp;
+static struct dm *dmp;
 
 struct isst_s {
     struct tie_s *tie;

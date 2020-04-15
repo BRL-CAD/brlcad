@@ -80,13 +80,13 @@
 struct dm_obj {
     struct bu_list l;
     struct bu_vls dmo_name;		/**< @brief display manager object name/cmd */
-    dm *dmo_dmp;		/**< @brief display manager pointer */
+    struct dm *dmo_dmp;		/**< @brief display manager pointer */
 #ifdef USE_FBSERV
     struct fbserv_obj dmo_fbs;		/**< @brief fbserv object */
 #endif
     struct bu_observer_list dmo_observers;		/**< @brief fbserv observers */
     mat_t viewMat;
-    int (*dmo_drawLabelsHook)(dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData);
+    int (*dmo_drawLabelsHook)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData);
     void *dmo_drawLabelsHookClientData;
     Tcl_Interp *interp;
 };
@@ -2732,7 +2732,7 @@ dmo_getDrawLabelsHook_tcl(void *clientData, int argc, const char **argv)
 HIDDEN int
 dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
 {
-    int (*hook)(dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData);
+    int (*hook)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData);
     void *clientData;
 
     if (!dmop || !dmop->interp)
@@ -2755,7 +2755,7 @@ dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
 	Tcl_DStringAppend(&ds, ": failed to set the drawLabels hook", -1);
 	Tcl_DStringResult(dmop->interp, &ds);
 
-	dmop->dmo_drawLabelsHook = (int (*)(dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData))0;
+	dmop->dmo_drawLabelsHook = (int (*)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData))0;
 
 	return BRLCAD_ERROR;
     }
@@ -2768,7 +2768,7 @@ dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
 	Tcl_DStringAppend(&ds, ": failed to set the drawLabels hook", -1);
 	Tcl_DStringResult(dmop->interp, &ds);
 
-	dmop->dmo_drawLabelsHook = (int (*)(dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData))0;
+	dmop->dmo_drawLabelsHook = (int (*)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData))0;
 
 	return BRLCAD_ERROR;
     }
@@ -2896,7 +2896,7 @@ HIDDEN int
 dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct dm_obj *dmop;
-    dm *dmp;
+    struct dm *dmp;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     int name_index = 1;
     int type = DM_TYPE_BAD;
@@ -3016,7 +3016,7 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
     dmop->dmo_dmp = dmp;
     VSETALL(dmop->dmo_dmp->dm_clipmin, -2048.0);
     VSETALL(dmop->dmo_dmp->dm_clipmax, 2047.0);
-    dmop->dmo_drawLabelsHook = (int (*)(dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData))0;
+    dmop->dmo_drawLabelsHook = (int (*)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData))0;
 
 #ifdef USE_FBSERV
     dmop->dmo_fbs.fbs_listener.fbsl_fbsp = &dmop->dmo_fbs;

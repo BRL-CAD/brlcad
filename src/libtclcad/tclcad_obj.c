@@ -1470,7 +1470,7 @@ static struct to_cmdtab to_cmds[] = {
 
 
 static fastf_t
-screen_to_view_x(dm *dmp, fastf_t x)
+screen_to_view_x(struct dm *dmp, fastf_t x)
 {
     int width = dm_get_width(dmp);
     return x / (fastf_t)width * 2.0 - 1.0;
@@ -1478,7 +1478,7 @@ screen_to_view_x(dm *dmp, fastf_t x)
 
 
 static fastf_t
-screen_to_view_y(dm *dmp, fastf_t y)
+screen_to_view_y(struct dm *dmp, fastf_t y)
 {
     int height = dm_get_height(dmp);
     return (y / (fastf_t)height * -2.0 + 1.0) / dm_get_aspect(dmp);
@@ -15054,7 +15054,7 @@ to_close_fbs(struct ged_dm_view *gdvp)
 HIDDEN void to_dm_get_display_image(struct ged *gedp, unsigned char **idata)
 {
     if (gedp->ged_dmp) {
-	(void)dm_get_display_image(((dm *)gedp->ged_dmp), idata);
+	(void)dm_get_display_image(((struct dm *)gedp->ged_dmp), idata);
     }
 }
 
@@ -15248,10 +15248,10 @@ to_output_handler(struct ged *gedp, char *line)
 }
 
 
-HIDDEN void go_dm_draw_arrows(dm *dmp, struct bview_data_arrow_state *gdasp, fastf_t sf);
-HIDDEN void go_dm_draw_labels(dm *dmp, struct bview_data_label_state *gdlsp, matp_t m2vmat);
-HIDDEN void go_dm_draw_lines(dm *dmp, struct bview_data_line_state *gdlsp);
-HIDDEN void go_dm_draw_polys(dm *dmp, bview_data_polygon_state *gdpsp, int mode);
+HIDDEN void go_dm_draw_arrows(struct dm *dmp, struct bview_data_arrow_state *gdasp, fastf_t sf);
+HIDDEN void go_dm_draw_labels(struct dm *dmp, struct bview_data_label_state *gdlsp, matp_t m2vmat);
+HIDDEN void go_dm_draw_lines(struct dm *dmp, struct bview_data_line_state *gdlsp);
+HIDDEN void go_dm_draw_polys(struct dm *dmp, bview_data_polygon_state *gdpsp, int mode);
 
 HIDDEN void go_draw(struct ged_dm_view *gdvp);
 HIDDEN int go_draw_dlist(struct ged_dm_view *gdvp);
@@ -15260,7 +15260,7 @@ HIDDEN void go_draw_solid(struct ged_dm_view *gdvp, struct solid *sp);
 
 
 HIDDEN void
-go_dm_draw_arrows(dm *dmp, struct bview_data_arrow_state *gdasp, fastf_t sf)
+go_dm_draw_arrows(struct dm *dmp, struct bview_data_arrow_state *gdasp, fastf_t sf)
 {
     register int i;
     int saveLineWidth;
@@ -15342,7 +15342,7 @@ go_dm_draw_arrows(dm *dmp, struct bview_data_arrow_state *gdasp, fastf_t sf)
 
 
 HIDDEN void
-go_dm_draw_labels(dm *dmp, struct bview_data_label_state *gdlsp, matp_t m2vmat)
+go_dm_draw_labels(struct dm *dmp, struct bview_data_label_state *gdlsp, matp_t m2vmat)
 {
     register int i;
 
@@ -15364,7 +15364,7 @@ go_dm_draw_labels(dm *dmp, struct bview_data_label_state *gdlsp, matp_t m2vmat)
 
 
 HIDDEN void
-go_dm_draw_lines(dm *dmp, struct bview_data_line_state *gdlsp)
+go_dm_draw_lines(struct dm *dmp, struct bview_data_line_state *gdlsp)
 {
     int saveLineWidth;
     int saveLineStyle;
@@ -15432,7 +15432,7 @@ go_dm_draw_lines(dm *dmp, struct bview_data_line_state *gdlsp)
 
 
 HIDDEN void
-go_dm_draw_polys(dm *dmp, bview_data_polygon_state *gdpsp, int mode)
+go_dm_draw_polys(struct dm *dmp, bview_data_polygon_state *gdpsp, int mode)
 {
     register size_t i, last_poly;
     int saveLineWidth;
@@ -15482,7 +15482,7 @@ go_draw_dlist(struct ged_dm_view *gdvp)
     register struct display_list *next_gdlp;
     struct solid *sp;
     int line_style = -1;
-    dm *dmp = gdvp->gdv_dmp;
+    struct dm *dmp = gdvp->gdv_dmp;
     struct bu_list *hdlp = gdvp->gdv_gop->go_gedp->ged_gdp->gd_headDisplay;
 
     if (dm_get_transparency(dmp)) {
@@ -15688,7 +15688,7 @@ HIDDEN void
 go_draw_solid(struct ged_dm_view *gdvp, struct solid *sp)
 {
     struct ged_obj *gop = gdvp->gdv_gop;
-    dm *dmp = gdvp->gdv_dmp;
+    struct dm *dmp = gdvp->gdv_dmp;
     struct bu_hash_entry *entry;
     struct path_edit_params *params = NULL;
     mat_t save_mat, edit_model2view;

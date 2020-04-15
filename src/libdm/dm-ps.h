@@ -18,7 +18,7 @@
  * information.
  */
 
-/** @addtogroup libdm */
+/** @addtogroup libstruct dm */
 /** @{ */
 /** @file dm-ps.h
  *

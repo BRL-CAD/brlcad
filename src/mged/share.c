@@ -167,8 +167,8 @@ f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
 	case 'd':
 	case 'D':
 	    {
-		dm *dmp1;
-		dm *dmp2 = (dm *)NULL;
+		struct dm *dmp1;
+		struct dm *dmp2 = (struct dm *)NULL;
 
 		dmp1 = dlp1->dml_dmp;
 		if (dlp2 != (struct dm_list *)NULL)

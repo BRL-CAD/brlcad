@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libdm */
+/** @addtogroup libstruct dm */
 /** @{ */
 /** @file dm-osgl.h
  *
@@ -75,7 +75,7 @@ extern "C" {
 #define Osgl_MV_O(_m) offsetof(struct modifiable_osgl_vars, _m)
 
 struct modifiable_osgl_vars {
-    dm *this_dm;
+    struct dm *this_dm;
     int cueing_on;
     int zclipping_on;
     int zbuffer_on;
@@ -126,7 +126,7 @@ __BEGIN_DECLS
 #ifdef __cplusplus
 extern "C" {
 #endif
-void osgl_fogHint(dm *dmp, int fastfog);
+void osgl_fogHint(struct dm *dmp, int fastfog);
 #ifdef __cplusplus
 }
 #endif
