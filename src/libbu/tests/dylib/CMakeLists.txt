@@ -2,7 +2,9 @@
 set_property(SOURCE dylib.c APPEND PROPERTY COMPILE_DEFINITIONS "DYLIB_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\"")
 
 add_library(plugin_1 SHARED plugin_1.cpp)
+target_link_libraries(plugin_1 libbu)
 add_library(plugin_2 SHARED plugin_2.cpp)
+target_link_libraries(plugin_2 libbu)
 
 set(plugin_targets plugin_1 plugin_2)
 set(DIR_TYPES LIBRARY RUNTIME ARCHIVE)
