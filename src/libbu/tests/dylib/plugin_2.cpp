@@ -16,6 +16,7 @@
 #include <string>
 #include <string.h>
 
+#include "bu/str.h"
 #include "./dylib.h"
 
 extern "C" int
@@ -36,7 +37,7 @@ calc(char **result, int rlen, int input)
     }
 
     // Copy the result in to the provided buffer and null terminate
-    strncpy((*result), sout.c_str(), rlen - 1);
+    bu_strlcpy((*result), sout.c_str(), rlen - 1);
     size_t npos = ((size_t)rlen < sout.length()) ? rlen - 1 : sout.length();
     (*result)[npos] = '\0';
 
