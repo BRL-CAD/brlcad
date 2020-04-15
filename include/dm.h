@@ -35,55 +35,12 @@
 
 #include "./dm/defines.h"
 
+__BEGIN_DECLS
+
 /* Use fbserv */
 #define USE_FBSERV 1
 
 #define DM_NULL (struct dm *)NULL
-#define DM_MIN (-2048)
-#define DM_MAX (2047)
-
-#define DM_O(_m) offsetof(struct dm, _m)
-
-#define GED_MAX 2047.0
-#define GED_MIN -2048.0
-#define GED_RANGE 4095.0
-#define INV_GED 0.00048828125
-#define INV_4096 0.000244140625
-
-/*
- * Display coordinate conversion:
- * GED is using -2048..+2048,
- * X is 0..width, 0..height
- */
-#define DIVBY4096(x) (((double)(x))*INV_4096)
-#define GED_TO_Xx(_dmp, x) ((int)((DIVBY4096(x)+0.5)*_dmp->dm_width))
-#define GED_TO_Xy(_dmp, x) ((int)((0.5-DIVBY4096(x))*_dmp->dm_height))
-#define Xx_TO_GED(_dmp, x) ((int)(((x)/(double)_dmp->dm_width - 0.5) * GED_RANGE))
-#define Xy_TO_GED(_dmp, x) ((int)((0.5 - (x)/(double)_dmp->dm_height) * GED_RANGE))
-
-/* +-2048 to +-1 */
-#define GED_TO_PM1(x) (((fastf_t)(x))*INV_GED)
-
-#ifdef IR_KNOBS
-#  define NOISE 16		/* Size of dead spot on knob */
-#endif
-
-/* the font used depends on the size of the window opened */
-#define FONTBACK "-adobe-courier-medium-r-normal--10-100-75-75-m-60-iso8859-1"
-#define FONT5 "5x7"
-#define FONT6 "6x10"
-#define FONT7 "7x13"
-#define FONT8 "8x13"
-#define FONT9 "9x15"
-#define FONT10 "10x20"
-#define FONT12 "12x24"
-
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#  define DM_VALID_FONT_SIZE(_size) (14 <= (_size) && (_size) <= 29)
-#else
-#  define DM_VALID_FONT_SIZE(_size) (5 <= (_size) && (_size) <= 12 && (_size) != 11)
-#  define DM_FONT_SIZE_TO_NAME(_size) (((_size) == 5) ? FONT5 : (((_size) == 6) ? FONT6 : (((_size) == 7) ? FONT7 : (((_size) == 8) ? FONT8 : (((_size) == 9) ? FONT9 : (((_size) == 10) ? FONT10 : FONT12))))))
-#endif
 
 /* Display Manager Types */
 #define DM_TYPE_BAD     -1
@@ -102,10 +59,6 @@
 #define DM_TYPE_OSG	12
 #define DM_TYPE_OSGL	13
 
-/* Line Styles */
-#define DM_SOLID_LINE 0
-#define DM_DASHED_LINE 1
-
 #define IS_DM_TYPE_NULL(_t) ((_t) == DM_TYPE_NULL)
 #define IS_DM_TYPE_PLOT(_t) ((_t) == DM_TYPE_PLOT)
 #define IS_DM_TYPE_PS(_t) ((_t) == DM_TYPE_PS)
@@ -121,88 +74,22 @@
 #define IS_DM_TYPE_OSG(_t) ((_t) == DM_TYPE_OSG)
 #define IS_DM_TYPE_OSGL(_t) ((_t) == DM_TYPE_OSGL)
 
-#define GET_DM(p, structure, w, hp) { \
-	register struct structure *tp; \
-	for (BU_LIST_FOR(tp, structure, hp)) { \
-	    if (w == tp->win) { \
-		(p) = tp; \
-		break; \
-	    } \
-	} \
-	\
-	if (BU_LIST_IS_HEAD(tp, hp)) \
-	    p = (struct structure *)NULL; \
-    }
+/* the font used depends on the size of the window opened */
+#define FONTBACK "-adobe-courier-medium-r-normal--10-100-75-75-m-60-iso8859-1"
+#define FONT5 "5x7"
+#define FONT6 "6x10"
+#define FONT7 "7x13"
+#define FONT8 "8x13"
+#define FONT9 "9x15"
+#define FONT10 "10x20"
+#define FONT12 "12x24"
 
-
-/* Colors */
-#define DM_COLOR_HI	((short)230)
-#define DM_COLOR_LOW	((short)0)
-#define DM_BLACK_R	DM_COLOR_LOW
-#define DM_BLACK_G	DM_COLOR_LOW
-#define DM_BLACK_B	DM_COLOR_LOW
-#define DM_RED_R	DM_COLOR_HI
-#define DM_RED_G	DM_COLOR_LOW
-#define DM_RED_B	DM_COLOR_LOW
-#define DM_BLUE_R	DM_COLOR_LOW
-#define DM_BLUE_G	DM_COLOR_LOW
-#define DM_BLUE_B	DM_COLOR_HI
-#define DM_YELLOW_R	DM_COLOR_HI
-#define DM_YELLOW_G	DM_COLOR_HI
-#define DM_YELLOW_B	DM_COLOR_LOW
-#define DM_WHITE_R	DM_COLOR_HI
-#define DM_WHITE_G	DM_COLOR_HI
-#define DM_WHITE_B	DM_COLOR_HI
-#define DM_BLACK	DM_BLACK_R, DM_BLACK_G, DM_BLACK_B
-#define DM_RED		DM_RED_R, DM_RED_G, DM_RED_B
-#define DM_BLUE		DM_BLUE_R, DM_BLUE_G, DM_BLUE_B
-#define DM_YELLOW	DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B
-#define DM_WHITE	DM_WHITE_R, DM_WHITE_G, DM_WHITE_B
-#define DM_COPY_COLOR(_dr, _dg, _db, _sr, _sg, _sb) {\
-	(_dr) = (_sr);\
-	(_dg) = (_sg);\
-	(_db) = (_sb); }
-#define DM_SAME_COLOR(_dr, _dg, _db, _sr, _sg, _sb)(\
-	(_dr) == (_sr) &&\
-	(_dg) == (_sg) &&\
-	(_db) == (_sb))
-#if defined(DM_X) || defined(DM_OGL)
-#define DM_REVERSE_COLOR_BYTE_ORDER(_shift, _mask) {	\
-	_shift = 24 - _shift;				\
-	switch (_shift) {				\
-	    case 0:					\
-		_mask >>= 24;				\
-		break;					\
-	    case 8:					\
-		_mask >>= 8;				\
-		break;					\
-	    case 16:					\
-		_mask <<= 8;				\
-		break;					\
-	    case 24:					\
-		_mask <<= 24;				\
-		break;					\
-	}						\
-    }
+#if defined(_WIN32) && !defined(__CYGWIN__)
+#  define DM_VALID_FONT_SIZE(_size) (14 <= (_size) && (_size) <= 29)
 #else
-/* Do nothing */
-#define DM_REVERSE_COLOR_BYTE_ORDER(_shift, _mask)
+#  define DM_VALID_FONT_SIZE(_size) (5 <= (_size) && (_size) <= 12 && (_size) != 11)
+#  define DM_FONT_SIZE_TO_NAME(_size) (((_size) == 5) ? FONT5 : (((_size) == 6) ? FONT6 : (((_size) == 7) ? FONT7 : (((_size) == 8) ? FONT8 : (((_size) == 9) ? FONT9 : (((_size) == 10) ? FONT10 : FONT12))))))
 #endif
-
-/* Command parameter to dmr_viewchange() */
-#define DM_CHGV_REDO	0	/* Display has changed substantially */
-#define DM_CHGV_ADD	1	/* Add an object to the display */
-#define DM_CHGV_DEL	2	/* Delete an object from the display */
-#define DM_CHGV_REPL	3	/* Replace an object */
-#define DM_CHGV_ILLUM	4	/* Make new object the illuminated object */
-
-/*
- * Definitions for dealing with the buttons and lights.
- * BV are for viewing, and BE are for editing functions.
- */
-#define LIGHT_OFF	0
-#define LIGHT_ON	1
-#define LIGHT_RESET	2		/* all lights out */
 
 /* This is how a parent application can pass a generic
  * hook function in when setting dm variables.  The dm_hook_data
@@ -223,9 +110,6 @@ struct dm_hook_data {
 /* Hide the dm structure behind a typedef */
 struct dm;
 
-#define DM_OPEN(_interp, _type, _argc, _argv) dm_open(_interp, _type, _argc, _argv)
-
-__BEGIN_DECLS
 
 DM_EXPORT extern struct dm dm_ogl;
 DM_EXPORT extern struct dm dm_plot;

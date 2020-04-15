@@ -33,6 +33,96 @@
 
 #include "dm/calltable.h"
 
+#define DM_MIN (-2048)
+#define DM_MAX (2047)
+
+#define DM_O(_m) offsetof(struct dm, _m)
+
+#define GED_MAX 2047.0
+#define GED_MIN -2048.0
+#define GED_RANGE 4095.0
+#define INV_GED 0.00048828125
+#define INV_4096 0.000244140625
+
+/*
+ * Display coordinate conversion:
+ * GED is using -2048..+2048,
+ * X is 0..width, 0..height
+ */
+#define DIVBY4096(x) (((double)(x))*INV_4096)
+#define GED_TO_Xx(_dmp, x) ((int)((DIVBY4096(x)+0.5)*_dmp->dm_width))
+#define GED_TO_Xy(_dmp, x) ((int)((0.5-DIVBY4096(x))*_dmp->dm_height))
+#define Xx_TO_GED(_dmp, x) ((int)(((x)/(double)_dmp->dm_width - 0.5) * GED_RANGE))
+#define Xy_TO_GED(_dmp, x) ((int)((0.5 - (x)/(double)_dmp->dm_height) * GED_RANGE))
+
+/* +-2048 to +-1 */
+#define GED_TO_PM1(x) (((fastf_t)(x))*INV_GED)
+
+#ifdef IR_KNOBS
+#  define NOISE 16		/* Size of dead spot on knob */
+#endif
+
+/* Line Styles */
+#define DM_SOLID_LINE 0
+#define DM_DASHED_LINE 1
+
+/* Colors */
+#define DM_COLOR_HI	((short)230)
+#define DM_COLOR_LOW	((short)0)
+#define DM_BLACK_R	DM_COLOR_LOW
+#define DM_BLACK_G	DM_COLOR_LOW
+#define DM_BLACK_B	DM_COLOR_LOW
+#define DM_RED_R	DM_COLOR_HI
+#define DM_RED_G	DM_COLOR_LOW
+#define DM_RED_B	DM_COLOR_LOW
+#define DM_BLUE_R	DM_COLOR_LOW
+#define DM_BLUE_G	DM_COLOR_LOW
+#define DM_BLUE_B	DM_COLOR_HI
+#define DM_YELLOW_R	DM_COLOR_HI
+#define DM_YELLOW_G	DM_COLOR_HI
+#define DM_YELLOW_B	DM_COLOR_LOW
+#define DM_WHITE_R	DM_COLOR_HI
+#define DM_WHITE_G	DM_COLOR_HI
+#define DM_WHITE_B	DM_COLOR_HI
+#define DM_BLACK	DM_BLACK_R, DM_BLACK_G, DM_BLACK_B
+#define DM_RED		DM_RED_R, DM_RED_G, DM_RED_B
+#define DM_BLUE		DM_BLUE_R, DM_BLUE_G, DM_BLUE_B
+#define DM_YELLOW	DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B
+#define DM_WHITE	DM_WHITE_R, DM_WHITE_G, DM_WHITE_B
+
+#define DM_COPY_COLOR(_dr, _dg, _db, _sr, _sg, _sb) {\
+	(_dr) = (_sr);\
+	(_dg) = (_sg);\
+	(_db) = (_sb); }
+#define DM_SAME_COLOR(_dr, _dg, _db, _sr, _sg, _sb)(\
+	(_dr) == (_sr) &&\
+	(_dg) == (_sg) &&\
+	(_db) == (_sb))
+#if defined(DM_X) || defined(DM_OGL)
+#define DM_REVERSE_COLOR_BYTE_ORDER(_shift, _mask) {	\
+	_shift = 24 - _shift;				\
+	switch (_shift) {				\
+	    case 0:					\
+		_mask >>= 24;				\
+		break;					\
+	    case 8:					\
+		_mask >>= 8;				\
+		break;					\
+	    case 16:					\
+		_mask <<= 8;				\
+		break;					\
+	    case 24:					\
+		_mask <<= 24;				\
+		break;					\
+	}						\
+    }
+#else
+/* Do nothing */
+#define DM_REVERSE_COLOR_BYTE_ORDER(_shift, _mask)
+#endif
+
+
+
 #if defined(DM_OGL) || defined(DM_WGL)
 #define Ogl_MV_O(_m) offsetof(struct modifiable_ogl_vars, _m)
 

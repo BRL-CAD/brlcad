@@ -68,6 +68,10 @@ HIDDEN void motion_event_handler();
 HIDDEN void dials_event_handler();
 #endif
 
+#ifdef IR_KNOBS
+#  define NOISE 16              /* Size of dead spot on knob */
+#endif
+
 #ifdef IR_BUTTONS
 HIDDEN void buttons_event_handler();
 /*
