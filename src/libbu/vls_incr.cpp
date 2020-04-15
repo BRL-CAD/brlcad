@@ -21,11 +21,9 @@
 #include "common.h"
 
 #include <stdlib.h> /* for strtol */
-#include <string.h>
 
-#include <cerrno>
-
-#include "regex.h"
+#include <regex>
+#include <string>
 
 #include "bu/log.h"
 #include "bu/malloc.h"
@@ -111,104 +109,57 @@ vls_incr_next(struct bu_vls *next_incr, const char *incr_state, const char *inc_
     return ret;
 }
 
-    int
+int
 bu_vls_incr(struct bu_vls *name, const char *regex_str, const char *incr_spec, bu_vls_uniq_t ut, void *data)
 {
-    int ret = 0;
-    size_t i = 0;
-    size_t j = 0;
-    int offset = 0;
-    regmatch_t *incr_substrs;
-    regmatch_t *num_substrs;
-    struct bu_vls new_name = BU_VLS_INIT_ZERO;
-    struct bu_vls curr_incr = BU_VLS_INIT_ZERO;
-    struct bu_vls ispec = BU_VLS_INIT_ZERO;
-    const char *num_regex = "([0-9]+)";
-    const char *last_regex = "([0-9]+)[^0-9]*$";
-    const char *rs = NULL;
-    struct bu_vls num_str = BU_VLS_INIT_ZERO;
-    int success = 0;
-
     if (!name) return -1;
 
-    rs = (regex_str) ? regex_str : last_regex;
+    int ret = 0;
+    struct bu_vls new_name = BU_VLS_INIT_ZERO;
+    struct bu_vls num_str = BU_VLS_INIT_ZERO;
+    struct bu_vls ispec = BU_VLS_INIT_ZERO;
+    const char *last_regex = "([0-9]+)[^0-9]*$";
+    const char *rs = (regex_str) ? regex_str : last_regex;
+    std::regex cregex(rs, std::regex_constants::extended);
+    int success = 0;
 
     while (!success) {
+	std::string sline(bu_vls_cstr(name));
+	std::string incr_str, prefix, suffix;
 	/* Find incrementer. */
-	{
-	    regex_t compiled_regex;
-	    ret = regcomp(&compiled_regex, rs, REG_EXTENDED);
-	    if (ret != 0) {
-		regfree(&compiled_regex);
-		return -1;
-	    }
-	    incr_substrs = (regmatch_t *)bu_calloc(bu_vls_strlen(name) + 1, sizeof(regmatch_t), "regex results");
-	    ret = regexec(&compiled_regex, bu_vls_addr(name), bu_vls_strlen(name) + 1, incr_substrs, 0);
-	    if (ret == REG_NOMATCH) {
-		bu_vls_printf(name, "0");
-		bu_free(incr_substrs, "free regex results");
-		incr_substrs = (regmatch_t *)bu_calloc(bu_vls_strlen(name) + 1, sizeof(regmatch_t), "regex results");
-		ret = regexec(&compiled_regex, bu_vls_addr(name), bu_vls_strlen(name) + 1, incr_substrs, 0);
-		if (ret == REG_NOMATCH) {
-		    bu_free(incr_substrs, "free regex results");
-		    regfree(&compiled_regex);
-		    return -1;
-		}
-	    }
-	    regfree(&compiled_regex);
-	}
-	i = bu_vls_strlen(name);
-	while(incr_substrs[i].rm_so == -1 || incr_substrs[i].rm_eo == -1)
-	    i--;
-
-	if (i != 1)
-	    return -1;
-
-	/* Now we know where the incrementer is - process, find the number, and assemble the new string */
-	bu_vls_trunc(&new_name, 0);
-	bu_vls_substr(&curr_incr, name, incr_substrs[1].rm_so, incr_substrs[1].rm_eo - incr_substrs[1].rm_so);
-	bu_vls_strncpy(&new_name, bu_vls_addr(name)+offset, incr_substrs[j].rm_so - offset);
-
-	/* Find number. */
-	{
-	    regex_t compiled_regex;
-	    ret = regcomp(&compiled_regex, num_regex, REG_EXTENDED);
-	    if (ret != 0) {
-		regfree(&compiled_regex);
-		return -1;
-	    }
-	    num_substrs = (regmatch_t *)bu_calloc(bu_vls_strlen(&curr_incr) + 1, sizeof(regmatch_t), "regex results");
-	    ret = regexec(&compiled_regex, bu_vls_addr(&curr_incr), bu_vls_strlen(&curr_incr) + 1, num_substrs, 0);
-	    if (ret == REG_NOMATCH) {
-		bu_vls_free(&new_name);
-		bu_vls_free(&ispec);
-		bu_vls_free(&curr_incr);
-		bu_free(num_substrs, "free regex results");
-		regfree(&compiled_regex);
-		return -1;
-	    }
-	    bu_vls_substr(&num_str, &curr_incr, num_substrs[1].rm_so, num_substrs[1].rm_eo - num_substrs[1].rm_so);
-	    regfree(&compiled_regex);
+	std::smatch ivar;
+	if (!std::regex_search(sline, ivar, cregex)) {
+	    /* No incrementer string according to the regex - add as a suffix */
+	    bu_vls_sprintf(&num_str, "0");
+	    prefix = sline;
+	    suffix = std::string("");
+	} else {
+	    /* We have an incrementer string according to the regex */
+	    std::string incr_str_pre = ivar.str(1);
+	    prefix = sline.substr(0, ivar.position(1));
+	    suffix = sline.substr(ivar.position(1)+ivar.length(1), std::string::npos);
+	    std::regex nregex("([0-9]+)", std::regex_constants::extended);
+	    std::smatch nvar;
+	    std::regex_search(incr_str_pre, nvar, nregex);
+	    bu_vls_sprintf(&num_str, "%s", nvar.str(1).c_str());
 	}
 
 	/* Either used the supplied incrementing specification or initialize with the default */
 	if (!incr_spec) {
-	    bu_vls_sprintf(&ispec, "%lu:%d:%d:%d", strlen(bu_vls_addr(&num_str)), 0, 0, 1);
+	    bu_vls_sprintf(&ispec, "%lu:%d:%d:%d", strlen(bu_vls_cstr(&num_str)), 0, 0, 1);
 	} else {
 	    bu_vls_sprintf(&ispec, "%s", incr_spec);
 	}
 
+	bu_vls_sprintf(&new_name, "%s", prefix.c_str());
+
 	/* Do incrementation */
 	ret = vls_incr_next(&new_name, bu_vls_addr(&num_str), bu_vls_addr(&ispec));
-	bu_vls_printf(&new_name, "%s", bu_vls_addr(name)+incr_substrs[1].rm_eo);
-	bu_vls_sprintf(name, "%s", bu_vls_addr(&new_name));
+	bu_vls_printf(&new_name, "%s", suffix.c_str());
+	bu_vls_sprintf(name, "%s", bu_vls_cstr(&new_name));
 
 	if (ret < 0) {
-	    bu_vls_free(&new_name);
-	    bu_vls_free(&ispec);
-	    bu_vls_free(&curr_incr);
-	    bu_free(num_substrs, "free regex results");
-	    return ret;
+	    goto incr_cleanup;
 	}
 
 	/* If we need to, test for uniqueness */
@@ -218,14 +169,14 @@ bu_vls_incr(struct bu_vls *name, const char *regex_str, const char *incr_spec, b
 	    success = 1;
 	}
 
-	bu_free(num_substrs, "free regex results");
+	bu_vls_trunc(&num_str, 0);
+	bu_vls_trunc(&ispec, 0);
+	bu_vls_trunc(&new_name, 0);
     }
-
+incr_cleanup:
     bu_vls_free(&num_str);
-    bu_vls_free(&new_name);
     bu_vls_free(&ispec);
-    bu_vls_free(&curr_incr);
-    bu_free(incr_substrs, "free regex results");
+    bu_vls_free(&new_name);
 
     return ret;
 }
