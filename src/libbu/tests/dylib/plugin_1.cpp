@@ -31,15 +31,12 @@ calc(char **result, int rlen, int input)
     std::string sout = std::to_string(output);
 
     if (sout.length() > (size_t)(rlen - 1)) {
-	// We'll copy what we can, but we don't have enough room for
-	// everything.
+	// copy what we can, but don't have room for everything.
 	ret = 1;
     }
 
-    // Copy the result in to the provided buffer and null terminate
-    bu_strlcpy((*result), sout.c_str(), rlen - 1);
-    size_t npos = ((size_t)rlen < sout.length()) ? rlen - 1 : sout.length();
-    (*result)[npos] = '\0';
+    // Copy result into the provided buffer with guaranteed nul-termination
+    bu_strlcpy((*result), sout.c_str(), rlen);
 
     return ret;
 }
