@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libfb */
+/** @addtogroup libstruct fb */
 /** @{ */
 /** @file fbserv_obj.c
  *
@@ -43,7 +43,7 @@
 #include "fb_private.h"
 
 
-static fb *curr_fbp;		/* current framebuffer pointer */
+static struct fb *curr_fbp;		/* current framebuffer pointer */
 
 
 /*

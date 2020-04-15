@@ -50,7 +50,7 @@ int image = 0;
 static char usage[] = "\
 Usage: fbgamma [-H -o -i] [-F framebuffer] val [gval bval]\n";
 
-void mk_ramp(fb *fb_i, int r, int g, int b, int n)
+void mk_ramp(struct fb *fb_i, int r, int g, int b, int n)
 {
 
     /* grey ramp */
@@ -81,7 +81,7 @@ void mk_ramp(fb *fb_i, int r, int g, int b, int n)
 }
 
 
-void disp_image(fb *fb_i)
+void disp_image(struct fb *fb_i)
 {
 
     scr_width = fb_getwidth(fb_i);
@@ -116,7 +116,7 @@ main(int argc, char **argv)
     double gamr = 0, gamg = 0, gamb = 0;	/* gamma's */
     double f;
     ColorMap cm;
-    fb *fbp;
+    struct fb *fbp;
 
     onegamma = 0;
 

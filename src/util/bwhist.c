@@ -37,7 +37,7 @@
 
 long bin[256];
 int verbose = 0;
-fb *fbp;
+struct fb *fbp;
 
 static char *Usage = "Usage: bwhist [-v] [file.bw]\n";
 

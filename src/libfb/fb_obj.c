@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libfb */
+/** @addtogroup libstruct fb */
 /** @{ */
 /** @file fb_obj.c
  *
@@ -46,7 +46,7 @@
 #include "fb.h"
 
 /* defined in libfb/tcl.c */
-extern int fb_refresh(fb *ifp, int x, int y, int w, int h);
+extern int fb_refresh(struct fb *ifp, int x, int y, int w, int h);
 
 
 #define FBO_CONSTRAIN(_v, _a, _b)		\
@@ -69,7 +69,7 @@ static struct fb_obj_list {
 
 
 HIDDEN int
-fbo_coords_ok(fb *fbp, int x, int y)
+fbo_coords_ok(struct fb *fbp, int x, int y)
 {
     int width;
     int height;
@@ -786,7 +786,7 @@ HIDDEN int
 fbo_open_tcl(void *UNUSED(clientData), Tcl_Interp *interp, int argc, const char **argv)
 {
     struct fb_obj *fbop;
-    fb *ifp;
+    struct fb *ifp;
     int width = 512;
     int height = 512;
     register int c;

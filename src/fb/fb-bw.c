@@ -111,7 +111,7 @@ get_args(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
-    fb *fbp;
+    struct fb *fbp;
 
     int x, y;
     int xin, yin;		/* number of screen output lines */

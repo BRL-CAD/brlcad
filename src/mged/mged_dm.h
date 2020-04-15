@@ -393,7 +393,7 @@ struct _menu_state {
 struct dm_list {
     struct bu_list	l;
     struct dm		*dml_dmp;
-    fb			*dml_fbp;
+    struct fb		*dml_fbp;
     int			dml_netfd;			/* socket used to listen for connections */
 #if defined(_WIN32) && !defined(__CYGWIN__)
     Tcl_Channel		dml_netchan;

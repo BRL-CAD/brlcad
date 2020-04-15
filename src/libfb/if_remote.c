@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libfb */
+/** @addtogroup libstruct fb */
 /** @{ */
 /** @file if_remote.c
  *
@@ -206,7 +206,7 @@ rem_log(const char *msg)
  * then the devname (or NULL if default).
  */
 HIDDEN int
-rem_open(register fb *ifp, const char *file, int width, int height)
+rem_open(register struct fb *ifp, const char *file, int width, int height)
 {
     size_t i;
     struct pkg_conn *pc;
@@ -297,32 +297,32 @@ rem_put_fbps(struct fb_platform_specific *UNUSED(fbps))
 }
 
 HIDDEN int
-rem_open_existing(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct fb_platform_specific *UNUSED(fb_p))
+rem_open_existing(struct fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct fb_platform_specific *UNUSED(fb_p))
 {
         return 0;
 }
 
 HIDDEN int
-rem_close_existing(fb *UNUSED(ifp))
+rem_close_existing(struct fb *UNUSED(ifp))
 {
         return 0;
 }
 
 HIDDEN int
-rem_configure_window(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
+rem_configure_window(struct fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
 {
         return 0;
 }
 
 HIDDEN int
-rem_refresh(fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
+rem_refresh(struct fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
 {
         return 0;
 }
 
 
 HIDDEN int
-rem_close(fb *ifp)
+rem_close(struct fb *ifp)
 {
     unsigned char buf[NET_LONG_LEN+1];
 
@@ -347,7 +347,7 @@ rem_close(fb *ifp)
 
 
 HIDDEN int
-rem_free(fb *ifp)
+rem_free(struct fb *ifp)
 {
     unsigned char buf[NET_LONG_LEN+1];
 
@@ -362,7 +362,7 @@ rem_free(fb *ifp)
 
 
 HIDDEN int
-rem_clear(fb *ifp, unsigned char *bgpp)
+rem_clear(struct fb *ifp, unsigned char *bgpp)
 {
     unsigned char buf[NET_LONG_LEN+1];
 
@@ -386,7 +386,7 @@ rem_clear(fb *ifp, unsigned char *bgpp)
  * Send as longs:  x, y, num
  */
 HIDDEN ssize_t
-rem_read(register fb *ifp, int x, int y, unsigned char *pixelp, size_t num)
+rem_read(register struct fb *ifp, int x, int y, unsigned char *pixelp, size_t num)
 {
     ssize_t ret;
     unsigned char buf[3*NET_LONG_LEN+1];
@@ -415,7 +415,7 @@ rem_read(register fb *ifp, int x, int y, unsigned char *pixelp, size_t num)
  * As longs, x, y, num
  */
 HIDDEN ssize_t
-rem_write(register fb *ifp, int x, int y, const unsigned char *pixelp, size_t num)
+rem_write(register struct fb *ifp, int x, int y, const unsigned char *pixelp, size_t num)
 {
     ssize_t ret;
     unsigned char buf[3*NET_LONG_LEN+1];
@@ -439,7 +439,7 @@ rem_write(register fb *ifp, int x, int y, const unsigned char *pixelp, size_t nu
 
 
 HIDDEN int
-rem_readrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
+rem_readrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     int num;
     int ret;
@@ -469,7 +469,7 @@ rem_readrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *
 
 
 HIDDEN int
-rem_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+rem_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     int num;
     int ret;
@@ -500,7 +500,7 @@ rem_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned
  * Issue:  Determining if other end has support for this yet.
  */
 HIDDEN int
-rem_bwreadrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
+rem_bwreadrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     int num;
     int ret;
@@ -529,7 +529,7 @@ rem_bwreadrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char
 
 
 HIDDEN int
-rem_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+rem_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     int num;
     int ret;
@@ -560,7 +560,7 @@ rem_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const unsign
  * 32-bit longs: mode, x, y
  */
 HIDDEN int
-rem_cursor(fb *ifp, int mode, int x, int y)
+rem_cursor(struct fb *ifp, int mode, int x, int y)
 {
     unsigned char buf[3*NET_LONG_LEN+1];
 
@@ -577,7 +577,7 @@ rem_cursor(fb *ifp, int mode, int x, int y)
 
 
 HIDDEN int
-rem_getcursor(fb *ifp, int *mode, int *x, int *y)
+rem_getcursor(struct fb *ifp, int *mode, int *x, int *y)
 {
     unsigned char buf[4*NET_LONG_LEN+1];
 
@@ -605,7 +605,7 @@ rem_getcursor(fb *ifp, int *mode, int *x, int *y)
  * Do not confuse this routine with the old fb_scursor() call.
  */
 HIDDEN int
-rem_setcursor(fb *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
+rem_setcursor(struct fb *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
     unsigned char buf[4*NET_LONG_LEN+1];
     int ret;
@@ -634,7 +634,7 @@ rem_setcursor(fb *ifp, const unsigned char *bits, int xbits, int ybits, int xori
 
 
 HIDDEN int
-rem_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
+rem_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     unsigned char buf[4*NET_LONG_LEN+1];
 
@@ -652,7 +652,7 @@ rem_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 
 
 HIDDEN int
-rem_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
+rem_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
     unsigned char buf[5*NET_LONG_LEN+1];
 
@@ -676,7 +676,7 @@ rem_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 #define REM_CMAP_BYTES (256*3*2)
 
 HIDDEN int
-rem_rmap(register fb *ifp, register ColorMap *cmap)
+rem_rmap(register struct fb *ifp, register ColorMap *cmap)
 {
     register int i;
     unsigned char buf[NET_LONG_LEN+1];
@@ -698,7 +698,7 @@ rem_rmap(register fb *ifp, register ColorMap *cmap)
 
 
 HIDDEN int
-rem_wmap(register fb *ifp, const ColorMap *cmap)
+rem_wmap(register struct fb *ifp, const ColorMap *cmap)
 {
     register int i;
     unsigned char buf[NET_LONG_LEN+1];
@@ -728,7 +728,7 @@ rem_wmap(register fb *ifp, const ColorMap *cmap)
  * fact, we may not want to send polls at all....
  */
 HIDDEN int
-rem_poll(fb *ifp)
+rem_poll(struct fb *ifp)
 {
     /* send a poll package to remote */
     if (pkg_send(MSG_FBPOLL, (char *)0, 0, PCP(ifp)) < 0)
@@ -738,7 +738,7 @@ rem_poll(fb *ifp)
 
 
 HIDDEN int
-rem_flush(fb *ifp)
+rem_flush(struct fb *ifp)
 {
     unsigned char buf[NET_LONG_LEN+1];
 
@@ -752,7 +752,7 @@ rem_flush(fb *ifp)
 
 
 HIDDEN int
-rem_help(fb *ifp)
+rem_help(struct fb *ifp)
 {
     unsigned char buf[1*NET_LONG_LEN+1];
 
@@ -781,7 +781,7 @@ pkgerror(struct pkg_conn *UNUSED(pcpp), char *buf)
 }
 
 
-fb remote_interface = {
+struct fb remote_interface = {
     0,
     FB_REMOTE_MAGIC,
     rem_open,

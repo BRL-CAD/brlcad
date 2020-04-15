@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libfb */
+/** @addtogroup libstruct fb */
 /** @{ */
 /** @file if_debug.c
  *
@@ -38,7 +38,7 @@
 
 
 HIDDEN int
-deb_open(fb *ifp, const char *file, int width, int height)
+deb_open(struct fb *ifp, const char *file, int width, int height)
 {
     FB_CK_FB(ifp);
     if (file == (char *)NULL)
@@ -85,19 +85,19 @@ deb_put_fbps(struct fb_platform_specific *UNUSED(fbps))
 }
 
 HIDDEN int
-deb_open_existing(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct fb_platform_specific *UNUSED(fb_p))
+deb_open_existing(struct fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct fb_platform_specific *UNUSED(fb_p))
 {
         return 0;
 }
 
 HIDDEN int
-deb_close_existing(fb *UNUSED(ifp))
+deb_close_existing(struct fb *UNUSED(ifp))
 {
         return 0;
 }
 
 HIDDEN int
-deb_close(fb *ifp)
+deb_close(struct fb *ifp)
 {
     FB_CK_FB(ifp);
     fb_log("fb_close(%p)\n", (void *)ifp);
@@ -105,19 +105,19 @@ deb_close(fb *ifp)
 }
 
 HIDDEN int
-deb_configure_window(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
+deb_configure_window(struct fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
 {
     return 0;
 }
 
 HIDDEN int
-deb_refresh(fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
+deb_refresh(struct fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
 {
     return 0;
 }
 
 HIDDEN int
-deb_clear(fb *ifp, unsigned char *pp)
+deb_clear(struct fb *ifp, unsigned char *pp)
 {
     FB_CK_FB(ifp);
     if (pp == 0)
@@ -132,7 +132,7 @@ deb_clear(fb *ifp, unsigned char *pp)
 
 
 HIDDEN ssize_t
-deb_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
+deb_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     FB_CK_FB(ifp);
     fb_log("fb_read(%p, %4d, %4d, %p, %lu)\n",
@@ -143,7 +143,7 @@ deb_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 
 
 HIDDEN ssize_t
-deb_write(fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
+deb_write(struct fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     size_t i;
 
@@ -171,7 +171,7 @@ deb_write(fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 
 
 HIDDEN int
-deb_rmap(fb *ifp, ColorMap *cmp)
+deb_rmap(struct fb *ifp, ColorMap *cmp)
 {
     FB_CK_FB(ifp);
     fb_log("fb_rmap(%p, %p)\n",
@@ -181,7 +181,7 @@ deb_rmap(fb *ifp, ColorMap *cmp)
 
 
 HIDDEN int
-deb_wmap(fb *ifp, const ColorMap *cmp)
+deb_wmap(struct fb *ifp, const ColorMap *cmp)
 {
     int i;
 
@@ -208,7 +208,7 @@ deb_wmap(fb *ifp, const ColorMap *cmp)
 
 
 HIDDEN int
-deb_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
+deb_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     FB_CK_FB(ifp);
     fb_log("fb_view(%p, %4d, %4d, %4d, %4d)\n",
@@ -219,7 +219,7 @@ deb_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 
 
 HIDDEN int
-deb_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
+deb_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
     FB_CK_FB(ifp);
     fb_log("fb_getview(%p, %p, %p, %p, %p)\n",
@@ -232,7 +232,7 @@ deb_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 
 
 HIDDEN int
-deb_setcursor(fb *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
+deb_setcursor(struct fb *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
     FB_CK_FB(ifp);
     fb_log("fb_setcursor(%p, %p, %d, %d, %d, %d)\n",
@@ -242,7 +242,7 @@ deb_setcursor(fb *ifp, const unsigned char *bits, int xbits, int ybits, int xori
 
 
 HIDDEN int
-deb_cursor(fb *ifp, int mode, int x, int y)
+deb_cursor(struct fb *ifp, int mode, int x, int y)
 {
     fb_log("fb_cursor(%p, %d, %4d, %4d)\n",
 	   (void *)ifp, mode, x, y);
@@ -252,7 +252,7 @@ deb_cursor(fb *ifp, int mode, int x, int y)
 
 
 HIDDEN int
-deb_getcursor(fb *ifp, int *mode, int *x, int *y)
+deb_getcursor(struct fb *ifp, int *mode, int *x, int *y)
 {
     FB_CK_FB(ifp);
     fb_log("fb_getcursor(%p, %p, %p, %p)\n",
@@ -264,7 +264,7 @@ deb_getcursor(fb *ifp, int *mode, int *x, int *y)
 
 
 HIDDEN int
-deb_readrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
+deb_readrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     FB_CK_FB(ifp);
     fb_log("fb_readrect(%p, (%4d, %4d), %4d, %4d, %p)\n",
@@ -275,7 +275,7 @@ deb_readrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *
 
 
 HIDDEN int
-deb_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+deb_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     FB_CK_FB(ifp);
     fb_log("fb_writerect(%p, %4d, %4d, %4d, %4d, %p)\n",
@@ -286,7 +286,7 @@ deb_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned
 
 
 HIDDEN int
-deb_bwreadrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
+deb_bwreadrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     FB_CK_FB(ifp);
     fb_log("fb_bwreadrect(%p, (%4d, %4d), %4d, %4d, %p)\n",
@@ -297,7 +297,7 @@ deb_bwreadrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char
 
 
 HIDDEN int
-deb_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+deb_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     FB_CK_FB(ifp);
     fb_log("fb_bwwriterect(%p, %4d, %4d, %4d, %4d, %p)\n",
@@ -308,7 +308,7 @@ deb_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const unsign
 
 
 HIDDEN int
-deb_poll(fb *ifp)
+deb_poll(struct fb *ifp)
 {
     FB_CK_FB(ifp);
     fb_log("fb_poll(%p)\n", (void *)ifp);
@@ -317,7 +317,7 @@ deb_poll(fb *ifp)
 
 
 HIDDEN int
-deb_flush(fb *ifp)
+deb_flush(struct fb *ifp)
 {
     FB_CK_FB(ifp);
     fb_log("if_flush(%p)\n", (void *)ifp);
@@ -326,7 +326,7 @@ deb_flush(fb *ifp)
 
 
 HIDDEN int
-deb_free(fb *ifp)
+deb_free(struct fb *ifp)
 {
     FB_CK_FB(ifp);
     fb_log("fb_free(%p)\n", (void *)ifp);
@@ -336,7 +336,7 @@ deb_free(fb *ifp)
 
 /*ARGSUSED*/
 HIDDEN int
-deb_help(fb *ifp)
+deb_help(struct fb *ifp)
 {
     FB_CK_FB(ifp);
     fb_log("Description: %s\n", debug_interface.if_type);
@@ -360,7 +360,7 @@ Usage: /dev/debug[#]\n\
 
 
 /* This is the ONLY thing that we "export" */
-fb debug_interface = {
+struct fb debug_interface = {
     0,
     FB_DEBUG_MAGIC,
     deb_open,

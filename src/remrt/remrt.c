@@ -215,7 +215,7 @@ struct servers {
 } servers[MAXSERVERS];
 
 
-fb *fbp = FB_NULL;		/* Current framebuffer ptr */
+struct fb *fbp = FB_NULL;		/* Current framebuffer ptr */
 int cur_fbwidth;		/* current fb width */
 int fbwidth;			/* fb width - S command */
 int fbheight;			/* fb height - S command */

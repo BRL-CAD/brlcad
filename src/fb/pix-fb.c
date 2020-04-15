@@ -211,7 +211,7 @@ int
 main(int argc, char **argv)
 {
     int y;
-    fb *fbp;
+    struct fb *fbp;
     int xout, yout, n, m, xstart, xskip;
 
     if (!get_args(argc, argv)) {

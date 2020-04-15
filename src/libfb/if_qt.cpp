@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libfb */
+/** @addtogroup libstruct fb */
 /** @{ */
 /** @file if_qt.cpp
  *
@@ -45,7 +45,7 @@
 class QMainWindow: public QWindow {
 
 public:
-    QMainWindow(fb *ifp, QImage *image, QWindow *parent = 0);
+    QMainWindow(struct fb *ifp, QImage *image, QWindow *parent = 0);
     ~QMainWindow();
 
     virtual void render(QPainter *painter);
@@ -59,7 +59,7 @@ protected:
     void exposeEvent(QExposeEvent *event);
 
 private:
-    fb *ifp;
+    struct fb *ifp;
     QImage *image;
     QBackingStore *m_backingStore;
     bool m_update_pending;
@@ -147,7 +147,7 @@ static struct modeflags {
 
 
 HIDDEN void
-qt_updstate(fb *ifp)
+qt_updstate(struct fb *ifp)
 {
     struct qtinfo *qi = QI(ifp);
 
@@ -393,7 +393,7 @@ qt_updstate(fb *ifp)
 __BEGIN_DECLS
 
 void
-qt_configureWindow(fb *ifp, int width, int height)
+qt_configureWindow(struct fb *ifp, int width, int height)
 {
     struct qtinfo *qi = QI(ifp);
 
@@ -432,20 +432,20 @@ qt_configureWindow(fb *ifp, int width, int height)
 }
 
 HIDDEN int
-qt_configure_window(fb *ifp, int width, int height)
+qt_configure_window(struct fb *ifp, int width, int height)
 {
     qt_configureWindow(ifp, width, height);
     return 0;
 }
 
 HIDDEN int
-qt_refresh(fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
+qt_refresh(struct fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
 {
     return 0;
 }
 
 int
-qt_close_existing(fb *ifp)
+qt_close_existing(struct fb *ifp)
 {
     struct qtinfo *qi = QI(ifp);
     FB_CK_FB(ifp);
@@ -462,7 +462,7 @@ __END_DECLS
 
 
 HIDDEN void
-qt_update(fb *ifp, int x1, int y1, int w, int h)
+qt_update(struct fb *ifp, int x1, int y1, int w, int h)
 {
     struct qtinfo *qi = QI(ifp);
 
@@ -598,7 +598,7 @@ qt_update(fb *ifp, int x1, int y1, int w, int h)
 
 
 HIDDEN int
-qt_rmap(fb *ifp, ColorMap *cmp)
+qt_rmap(struct fb *ifp, ColorMap *cmp)
 {
     struct qtinfo *qi = QI(ifp);
     FB_CK_FB(ifp);
@@ -610,7 +610,7 @@ qt_rmap(fb *ifp, ColorMap *cmp)
 
 
 HIDDEN int
-qt_wmap(fb *ifp, const ColorMap *cmp)
+qt_wmap(struct fb *ifp, const ColorMap *cmp)
 {
     struct qtinfo *qi = QI(ifp);
     ColorMap *map = qi->qi_rgb_cmap;
@@ -679,7 +679,7 @@ qt_wmap(fb *ifp, const ColorMap *cmp)
 }
 
 HIDDEN int
-qt_setup(fb *ifp, int width, int height)
+qt_setup(struct fb *ifp, int width, int height)
 {
     struct qtinfo *qi = QI(ifp);
     int argc = 1;
@@ -719,7 +719,7 @@ qt_destroy(struct qtinfo *qi)
 }
 
 HIDDEN int
-qt_open(fb *ifp, const char *file, int width, int height)
+qt_open(struct fb *ifp, const char *file, int width, int height)
 {
     struct qtinfo *qi;
 
@@ -856,7 +856,7 @@ qt_put_fbps(struct fb_platform_specific *fbps)
 }
 
 int
-_qt_open_existing(fb *ifp, int width, int height, void *qapp, void *qwin, void *qpainter, void *draw, void **qimg)
+_qt_open_existing(struct fb *ifp, int width, int height, void *qapp, void *qwin, void *qpainter, void *draw, void **qimg)
 {
     struct qtinfo *qi;
 
@@ -946,7 +946,7 @@ _qt_open_existing(fb *ifp, int width, int height, void *qapp, void *qwin, void *
 }
 
 HIDDEN int
-qt_open_existing(fb *ifp, int width, int height, struct fb_platform_specific *fb_p)
+qt_open_existing(struct fb *ifp, int width, int height, struct fb_platform_specific *fb_p)
 {
     struct qt_fb_info *qt_internal = (struct qt_fb_info *)fb_p->data;
     BU_CKMAG(fb_p, FB_QT_MAGIC, "qt framebuffer");
@@ -956,7 +956,7 @@ qt_open_existing(fb *ifp, int width, int height, struct fb_platform_specific *fb
 
 
 HIDDEN int
-qt_close(fb *ifp)
+qt_close(struct fb *ifp)
 {
     struct qtinfo *qi = QI(ifp);
 
@@ -972,7 +972,7 @@ qt_close(fb *ifp)
 
 
 HIDDEN int
-qt_clear(fb *ifp, unsigned char *pp)
+qt_clear(struct fb *ifp, unsigned char *pp)
 {
     struct qtinfo *qi = QI(ifp);
 
@@ -1013,7 +1013,7 @@ qt_clear(fb *ifp, unsigned char *pp)
 
 
 HIDDEN ssize_t
-qt_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
+qt_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     struct qtinfo *qi = QI(ifp);
     size_t maxcount;
@@ -1036,7 +1036,7 @@ qt_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 
 
 HIDDEN ssize_t
-qt_write(fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
+qt_write(struct fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     struct qtinfo *qi = QI(ifp);
     size_t maxcount;
@@ -1076,7 +1076,7 @@ qt_write(fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 
 
 HIDDEN int
-qt_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
+qt_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     struct qtinfo *qi = QI(ifp);
 
@@ -1108,7 +1108,7 @@ qt_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 
 
 HIDDEN int
-qt_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
+qt_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
     FB_CK_FB(ifp);
 
@@ -1122,7 +1122,7 @@ qt_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 
 
 HIDDEN int
-qt_setcursor(fb *UNUSED(ifp), const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
+qt_setcursor(struct fb *UNUSED(ifp), const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
 {
     fb_log("qt_setcursor\n");
 
@@ -1131,7 +1131,7 @@ qt_setcursor(fb *UNUSED(ifp), const unsigned char *UNUSED(bits), int UNUSED(xbit
 
 
 HIDDEN int
-qt_cursor(fb *UNUSED(ifp), int UNUSED(mode), int UNUSED(x), int UNUSED(y))
+qt_cursor(struct fb *UNUSED(ifp), int UNUSED(mode), int UNUSED(x), int UNUSED(y))
 {
     fb_log("qt_cursor\n");
 
@@ -1140,7 +1140,7 @@ qt_cursor(fb *UNUSED(ifp), int UNUSED(mode), int UNUSED(x), int UNUSED(y))
 
 
 HIDDEN int
-qt_getcursor(fb *UNUSED(ifp), int *UNUSED(mode), int *UNUSED(x), int *UNUSED(y))
+qt_getcursor(struct fb *UNUSED(ifp), int *UNUSED(mode), int *UNUSED(x), int *UNUSED(y))
 {
     fb_log("qt_getcursor\n");
 
@@ -1149,7 +1149,7 @@ qt_getcursor(fb *UNUSED(ifp), int *UNUSED(mode), int *UNUSED(x), int *UNUSED(y))
 
 
 HIDDEN int
-qt_readrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
+qt_readrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     struct qtinfo *qi = QI(ifp);
     FB_CK_FB(ifp);
@@ -1188,7 +1188,7 @@ qt_readrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *p
 
 
 HIDDEN int
-qt_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+qt_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     struct qtinfo *qi = QI(ifp);
     FB_CK_FB(ifp);
@@ -1229,7 +1229,7 @@ qt_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned 
 
 
 HIDDEN int
-qt_help(fb *ifp)
+qt_help(struct fb *ifp)
 {
     fb_log("Description: %s\n", qt_interface.if_type);
     fb_log("Device: %s\n", ifp->if_name);
@@ -1245,7 +1245,7 @@ qt_help(fb *ifp)
 
 
 HIDDEN void
-qt_handle_event(fb *ifp, QEvent *event)
+qt_handle_event(struct fb *ifp, QEvent *event)
 {
     struct qtinfo *qi = QI(ifp);
     FB_CK_FB(ifp);
@@ -1318,7 +1318,7 @@ qt_handle_event(fb *ifp, QEvent *event)
 
 
 HIDDEN int
-qt_poll(fb *UNUSED(ifp))
+qt_poll(struct fb *UNUSED(ifp))
 {
     fb_log("qt_poll\n");
 
@@ -1327,7 +1327,7 @@ qt_poll(fb *UNUSED(ifp))
 
 
 HIDDEN int
-qt_flush(fb *ifp)
+qt_flush(struct fb *ifp)
 {
     struct qtinfo *qi = QI(ifp);
 
@@ -1338,7 +1338,7 @@ qt_flush(fb *ifp)
 
 
 HIDDEN int
-qt_free(fb *UNUSED(ifp))
+qt_free(struct fb *UNUSED(ifp))
 {
     fb_log("qt_free\n");
 
@@ -1346,7 +1346,7 @@ qt_free(fb *UNUSED(ifp))
 }
 
 
-fb qt_interface =  {
+struct fb qt_interface =  {
     0,
     FB_QT_MAGIC,
     qt_open,		/* device_open */
@@ -1408,7 +1408,7 @@ fb qt_interface =  {
  * ===================================================== Main window class ===============================================
  */
 
-QMainWindow::QMainWindow(fb *fbp, QImage *img, QWindow *win)
+QMainWindow::QMainWindow(struct fb *fbp, QImage *img, QWindow *win)
     : QWindow(win)
     , m_update_pending(false)
 {

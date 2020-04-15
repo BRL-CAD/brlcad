@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libfb */
+/** @addtogroup libstruct fb */
 /** @{ */
 /** @file fb_paged_io.c
  *
@@ -47,7 +47,7 @@
 
 
 static int
-_fb_pgout(register fb *ifp)
+_fb_pgout(register struct fb *ifp)
 {
     size_t scans, first_scan;
 
@@ -72,7 +72,7 @@ _fb_pgout(register fb *ifp)
 
 
 static int
-_fb_pgin(register fb *ifp, int pageno)
+_fb_pgin(register struct fb *ifp, int pageno)
 {
     size_t scans, first_scan;
 
@@ -99,7 +99,7 @@ _fb_pgin(register fb *ifp, int pageno)
 
 
 static int
-_fb_pgflush(register fb *ifp)
+_fb_pgflush(register struct fb *ifp)
 {
     if (ifp->if_debug & FB_DEBUG_BIO) {
 	fb_log("_fb_pgflush(%p)\n", (void *)ifp);
@@ -120,7 +120,7 @@ _fb_pgflush(register fb *ifp)
  * routines in this file are used.
  */
 int
-fb_ioinit(register fb *ifp)
+fb_ioinit(register struct fb *ifp)
 {
     if (ifp->if_debug & FB_DEBUG_BIO) {
 	fb_log("fb_ioinit(%p)\n", (void *)ifp);
@@ -146,7 +146,7 @@ fb_ioinit(register fb *ifp)
 
 
 int
-fb_seek(register fb *ifp, int x, int y)
+fb_seek(register struct fb *ifp, int x, int y)
 {
     long pixelnum;
     long pagepixel;
@@ -178,7 +178,7 @@ fb_seek(register fb *ifp, int x, int y)
 
 
 int
-fb_tell(register fb *ifp, int *xp, int *yp)
+fb_tell(register struct fb *ifp, int *xp, int *yp)
 {
     *yp = (int) (ifp->if_pixcur / ifp->if_width);
     *xp = (int) (ifp->if_pixcur % ifp->if_width);
@@ -193,7 +193,7 @@ fb_tell(register fb *ifp, int *xp, int *yp)
 
 
 int
-fb_wpixel(register fb *ifp, unsigned char *pixelp)
+fb_wpixel(register struct fb *ifp, unsigned char *pixelp)
 {
     if (ifp->if_pno == -1)
 	if (_fb_pgin(ifp, ifp->if_pixcur / ifp->if_ppixels) <= -1)
@@ -213,7 +213,7 @@ fb_wpixel(register fb *ifp, unsigned char *pixelp)
 
 
 int
-fb_rpixel(register fb *ifp, unsigned char *pixelp)
+fb_rpixel(register struct fb *ifp, unsigned char *pixelp)
 {
     if (ifp->if_pno == -1)
 	if (_fb_pgin(ifp, ifp->if_pixcur / ifp->if_ppixels) <= -1)
@@ -233,7 +233,7 @@ fb_rpixel(register fb *ifp, unsigned char *pixelp)
 
 
 int
-fb_flush(register fb *ifp)
+fb_flush(register struct fb *ifp)
 {
     _fb_pgflush(ifp);
 

@@ -62,7 +62,7 @@ Message(const char *format, ...)
 
 
 void
-Fatal(fb *fbp, const char *format, ...)
+Fatal(struct fb *fbp, const char *format, ...)
 {
     va_list ap;
 

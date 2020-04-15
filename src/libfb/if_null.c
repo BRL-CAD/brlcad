@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libfb */
+/** @addtogroup libstruct fb */
 /** @{ */
 /** @file if_null.c
  *
@@ -38,7 +38,7 @@
 
 
 HIDDEN int
-_fb_null_open(fb *ifp, const char *UNUSED(file), int width, int height)
+_fb_null_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
 {
     FB_CK_FB(ifp);
 
@@ -64,31 +64,31 @@ _fb_null_put_fbps(struct fb_platform_specific *UNUSED(fbps))
 }
 
 HIDDEN int
-_fb_null_open_existing(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct fb_platform_specific *UNUSED(fb_p))
+_fb_null_open_existing(struct fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct fb_platform_specific *UNUSED(fb_p))
 {
         return 0;
 }
 
 HIDDEN int
-_fb_null_close_existing(fb *UNUSED(ifp))
+_fb_null_close_existing(struct fb *UNUSED(ifp))
 {
         return 0;
 }
 
 HIDDEN int
-_fb_null_configure_window(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
+_fb_null_configure_window(struct fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
 {
         return 0;
 }
 
 HIDDEN int
-_fb_null_refresh(fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
+_fb_null_refresh(struct fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
 {
         return 0;
 }
 
 HIDDEN int
-_fb_null_close(fb *ifp)
+_fb_null_close(struct fb *ifp)
 {
     FB_CK_FB(ifp);
 
@@ -97,7 +97,7 @@ _fb_null_close(fb *ifp)
 
 
 HIDDEN int
-_fb_null_clear(fb *ifp, unsigned char *UNUSED(pp))
+_fb_null_clear(struct fb *ifp, unsigned char *UNUSED(pp))
 {
     FB_CK_FB(ifp);
 
@@ -106,7 +106,7 @@ _fb_null_clear(fb *ifp, unsigned char *UNUSED(pp))
 
 
 HIDDEN ssize_t
-_fb_null_read(fb *ifp, int UNUSED(x), int UNUSED(y), unsigned char *UNUSED(pixelp), size_t count)
+_fb_null_read(struct fb *ifp, int UNUSED(x), int UNUSED(y), unsigned char *UNUSED(pixelp), size_t count)
 {
     FB_CK_FB(ifp);
 
@@ -115,7 +115,7 @@ _fb_null_read(fb *ifp, int UNUSED(x), int UNUSED(y), unsigned char *UNUSED(pixel
 
 
 HIDDEN ssize_t
-_fb_null_write(fb *ifp, int UNUSED(x), int UNUSED(y), const unsigned char *UNUSED(pixelp), size_t count)
+_fb_null_write(struct fb *ifp, int UNUSED(x), int UNUSED(y), const unsigned char *UNUSED(pixelp), size_t count)
 {
     FB_CK_FB(ifp);
 
@@ -124,7 +124,7 @@ _fb_null_write(fb *ifp, int UNUSED(x), int UNUSED(y), const unsigned char *UNUSE
 
 
 HIDDEN int
-_fb_null_rmap(fb *ifp, ColorMap *UNUSED(cmp))
+_fb_null_rmap(struct fb *ifp, ColorMap *UNUSED(cmp))
 {
     FB_CK_FB(ifp);
 
@@ -133,7 +133,7 @@ _fb_null_rmap(fb *ifp, ColorMap *UNUSED(cmp))
 
 
 HIDDEN int
-_fb_null_wmap(fb *ifp, const ColorMap *UNUSED(cmp))
+_fb_null_wmap(struct fb *ifp, const ColorMap *UNUSED(cmp))
 {
     FB_CK_FB(ifp);
 
@@ -142,7 +142,7 @@ _fb_null_wmap(fb *ifp, const ColorMap *UNUSED(cmp))
 
 
 HIDDEN int
-_fb_null_view(fb *ifp, int UNUSED(xcenter), int UNUSED(ycenter), int UNUSED(xzoom), int UNUSED(yzoom))
+_fb_null_view(struct fb *ifp, int UNUSED(xcenter), int UNUSED(ycenter), int UNUSED(xzoom), int UNUSED(yzoom))
 {
     FB_CK_FB(ifp);
 
@@ -152,7 +152,7 @@ _fb_null_view(fb *ifp, int UNUSED(xcenter), int UNUSED(ycenter), int UNUSED(xzoo
 
 
 HIDDEN int
-_fb_null_getview(fb *ifp, int *UNUSED(xcenter), int *UNUSED(ycenter), int *UNUSED(xzoom), int *UNUSED(yzoom))
+_fb_null_getview(struct fb *ifp, int *UNUSED(xcenter), int *UNUSED(ycenter), int *UNUSED(xzoom), int *UNUSED(yzoom))
 {
     FB_CK_FB(ifp);
 
@@ -162,7 +162,7 @@ _fb_null_getview(fb *ifp, int *UNUSED(xcenter), int *UNUSED(ycenter), int *UNUSE
 
 
 HIDDEN int
-_fb_null_setcursor(fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
+_fb_null_setcursor(struct fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
 {
     FB_CK_FB(ifp);
 
@@ -171,7 +171,7 @@ _fb_null_setcursor(fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits)
 
 
 HIDDEN int
-_fb_null_cursor(fb *ifp, int UNUSED(mode), int UNUSED(x), int UNUSED(y))
+_fb_null_cursor(struct fb *ifp, int UNUSED(mode), int UNUSED(x), int UNUSED(y))
 {
     FB_CK_FB(ifp);
 
@@ -181,7 +181,7 @@ _fb_null_cursor(fb *ifp, int UNUSED(mode), int UNUSED(x), int UNUSED(y))
 
 
 HIDDEN int
-_fb_null_getcursor(fb *ifp, int *UNUSED(mode), int *UNUSED(x), int *UNUSED(y))
+_fb_null_getcursor(struct fb *ifp, int *UNUSED(mode), int *UNUSED(x), int *UNUSED(y))
 {
     FB_CK_FB(ifp);
 
@@ -191,7 +191,7 @@ _fb_null_getcursor(fb *ifp, int *UNUSED(mode), int *UNUSED(x), int *UNUSED(y))
 
 
 HIDDEN int
-_fb_null_readrect(fb *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int height, unsigned char *UNUSED(pp))
+_fb_null_readrect(struct fb *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int height, unsigned char *UNUSED(pp))
 {
     FB_CK_FB(ifp);
 
@@ -200,7 +200,7 @@ _fb_null_readrect(fb *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int he
 
 
 HIDDEN int
-_fb_null_writerect(fb *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int height, const unsigned char *UNUSED(pp))
+_fb_null_writerect(struct fb *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int height, const unsigned char *UNUSED(pp))
 {
     FB_CK_FB(ifp);
 
@@ -209,7 +209,7 @@ _fb_null_writerect(fb *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int h
 
 
 HIDDEN int
-_fb_null_poll(fb *ifp)
+_fb_null_poll(struct fb *ifp)
 {
     FB_CK_FB(ifp);
 
@@ -218,7 +218,7 @@ _fb_null_poll(fb *ifp)
 
 
 HIDDEN int
-_fb_null_flush(fb *ifp)
+_fb_null_flush(struct fb *ifp)
 {
     FB_CK_FB(ifp);
 
@@ -227,7 +227,7 @@ _fb_null_flush(fb *ifp)
 
 
 HIDDEN int
-_fb_null_free(fb *ifp)
+_fb_null_free(struct fb *ifp)
 {
     FB_CK_FB(ifp);
 
@@ -236,7 +236,7 @@ _fb_null_free(fb *ifp)
 
 
 HIDDEN int
-_fb_null_help(fb *ifp)
+_fb_null_help(struct fb *ifp)
 {
     FB_CK_FB(ifp);
 
@@ -254,7 +254,7 @@ _fb_null_help(fb *ifp)
 
 
 /* This is the ONLY thing that we normally "export" */
-fb fb_null_interface =  {
+struct fb fb_null_interface =  {
     0,
     FB_NULL_MAGIC,
     _fb_null_open,		/* device_open */

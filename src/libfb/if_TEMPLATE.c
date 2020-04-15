@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libfb */
+/** @addtogroup libstruct fb */
 /** @{ */
 /** @file if_TEMPLATE.c
  *
@@ -56,7 +56,7 @@
 
 
 HIDDEN int
-DEVNAME_open(fb *ifp, const char *file, int width, int height)
+DEVNAME_open(struct fb *ifp, const char *file, int width, int height)
 {
     FB_CK_fb(ifp);
     return 0;
@@ -64,119 +64,119 @@ DEVNAME_open(fb *ifp, const char *file, int width, int height)
 
 
 HIDDEN int
-DEVNAME_close(fb *ifp)
+DEVNAME_close(struct fb *ifp)
 {
     return 0;
 }
 
 
 HIDDEN int
-DEVNAME_clear(fb *ifp, unsigned char *pp)
+DEVNAME_clear(struct fb *ifp, unsigned char *pp)
 {
     return 0;
 }
 
 
 HIDDEN int
-DEVNAME_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
+DEVNAME_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     return (int)count;
 }
 
 
 HIDDEN int
-DEVNAME_write(fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
+DEVNAME_write(struct fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     return (int)count;
 }
 
 
 HIDDEN int
-DEVNAME_rmap(fb *ifp, ColorMap *cmp)
+DEVNAME_rmap(struct fb *ifp, ColorMap *cmp)
 {
     return 0;
 }
 
 
 HIDDEN int
-DEVNAME_wmap(fb *ifp, const ColorMap *cmp)
+DEVNAME_wmap(struct fb *ifp, const ColorMap *cmp)
 {
     return 0;
 }
 
 
 HIDDEN int
-DEVNAME_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
+DEVNAME_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     return 0;
 }
 
 
 HIDDEN int
-DEVNAME_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
+DEVNAME_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
     return 0;
 }
 
 
 HIDDEN int
-DEVNAME_setcursor(fb *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
+DEVNAME_setcursor(struct fb *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
     return 0;
 }
 
 
 HIDDEN int
-DEVNAME_cursor(fb *ifp, int mode, int x, int y)
+DEVNAME_cursor(struct fb *ifp, int mode, int x, int y)
 {
     return 0;
 }
 
 
 HIDDEN int
-DEVNAME_getcursor(fb *ifp, int *mode, int *x, int *y)
+DEVNAME_getcursor(struct fb *ifp, int *mode, int *x, int *y)
 {
     return 0;
 }
 
 
 HIDDEN int
-DEVNAME_readrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
+DEVNAME_readrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     return width*height;
 }
 
 
 HIDDEN int
-DEVNAME_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+DEVNAME_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     return width*height;
 }
 
 
 HIDDEN int
-DEVNAME_poll(fb *ifp)
+DEVNAME_poll(struct fb *ifp)
 {
     return 0;
 }
 
 
 HIDDEN int
-DEVNAME_flush(fb *ifp)
+DEVNAME_flush(struct fb *ifp)
 {
     return 0;
 }
 
 
 HIDDEN int
-DEVNAME_free(fb *ifp)
+DEVNAME_free(struct fb *ifp)
 {
     return 0;
 }
 
 
 HIDDEN int
-DEVNAME_help(fb *ifp)
+DEVNAME_help(struct fb *ifp)
 {
     fb_log("Description: %s\n", DEVNAME_interface.if_type);
     fb_log("Device: %s\n", ifp->if_name);
@@ -191,7 +191,7 @@ DEVNAME_help(fb *ifp)
 
 
 /* This is the ONLY thing that we normally "export" */
-fb DEVNAME_interface =  {
+struct fb DEVNAME_interface =  {
     0,			/* magic number slot */
     DEVNAME_open,		/* open device */
     DEVNAME_close,		/* close device */

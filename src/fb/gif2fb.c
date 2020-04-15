@@ -126,7 +126,7 @@ main(int argc, char **argv)
     static int lace[4] = {8, 8, 4, 2};
     static int offs[4] = {0, 4, 2, 1};
 
-    fb *fbp;
+    struct fb *fbp;
     FILE *fp;
 
     while ((code = bu_getopt(argc, argv, "HvFh?")) != -1) {

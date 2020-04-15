@@ -48,7 +48,7 @@
  * These are the only symbols intended for export to LIBFB users.
  */
 
-fb *fb_server_fbp = FB_NULL;
+struct fb *fb_server_fbp = FB_NULL;
 fd_set *fb_server_select_list;
 int *fb_server_max_fd = (int *)NULL;
 int fb_server_got_fb_free = 0;	/* !0 => we have received an fb_free */

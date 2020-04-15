@@ -316,7 +316,7 @@ public:
 
     osg::Node& _node;
 
-    fb *fbp;
+    struct fb *fbp;
 
     bool _enable, _debug;
 };

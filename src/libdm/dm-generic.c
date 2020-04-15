@@ -348,7 +348,7 @@ dm_set_null(struct dm *dmp)
     *dmp = dm_null;
 }
 
-fb *
+struct fb *
 dm_get_fb(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return NULL;

@@ -400,7 +400,7 @@ DM_EXPORT extern int dm_draw_obj(struct dm *dmp, struct display_list *obj);
 DM_EXPORT extern int dm_set_depth_mask(struct dm *dmp, int d_on);
 DM_EXPORT extern int dm_debug(struct dm *dmp, int lvl);
 DM_EXPORT extern int dm_logfile(struct dm *dmp, const char *filename);
-DM_EXPORT extern fb *dm_get_fb(struct dm *dmp);
+DM_EXPORT extern struct fb *dm_get_fb(struct dm *dmp);
 DM_EXPORT extern int dm_get_fb_visible(struct dm *dmp);
 DM_EXPORT extern int dm_set_fb_visible(struct dm *dmp, int is_fb_visible);
 

@@ -369,7 +369,7 @@ release(char *name, int need_close)
 
 	/* release framebuffer resources */
 	fb_close_existing(fbp);
-	fbp = (fb *)NULL;
+	fbp = (struct fb *)NULL;
     }
 
     /*
@@ -576,7 +576,7 @@ gui_setup(const char *dstr)
     /* Initialize libdm */
     (void)Dm_Init(INTERP);
 
-    /* Initialize libfb */
+    /* Initialize libstruct fb */
     (void)Fb_Init(INTERP);
 
 #ifdef HAVE_TK

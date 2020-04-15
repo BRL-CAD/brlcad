@@ -44,7 +44,7 @@ main(int argc, char **argv)
 {
     int c;
     int x;
-    fb *fbp;
+    struct fb *fbp;
     int xsize, ysize;
     int len;
     char *framebuffer = (char *)NULL;

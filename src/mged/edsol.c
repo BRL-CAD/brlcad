@@ -4789,7 +4789,7 @@ sedit(void)
 		    rota= es_para[0] * DEG2RAD;
 		    fb_a  = es_para[1] * DEG2RAD;
 
-		    /* calculate normal vector (length = 1) from rot, fb */
+		    /* calculate normal vector (length = 1) from rot, struct fb */
 		    es_peqn[es_menu][0] = cos(fb_a) * cos(rota);
 		    es_peqn[es_menu][1] = cos(fb_a) * sin(rota);
 		    es_peqn[es_menu][2] = sin(fb_a);

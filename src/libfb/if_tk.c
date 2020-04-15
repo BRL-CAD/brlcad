@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libfb */
+/** @addtogroup libstruct fb */
 /** @{ */
 /** @file if_tk.c
  *
@@ -79,7 +79,7 @@ char *tkwrite_buffer;
 
 
 HIDDEN int
-fb_tk_open(fb *ifp, const char *file, int width, int height)
+fb_tk_open(struct fb *ifp, const char *file, int width, int height)
 {
     int pid = -1;
     const char *cmd = "package require Tk";
@@ -293,31 +293,31 @@ tk_put_fbps(struct fb_platform_specific *UNUSED(fbps))
 }
 
 HIDDEN int
-tk_open_existing(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct fb_platform_specific *UNUSED(fb_p))
+tk_open_existing(struct fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct fb_platform_specific *UNUSED(fb_p))
 {
         return 0;
 }
 
 HIDDEN int
-tk_close_existing(fb *UNUSED(ifp))
+tk_close_existing(struct fb *UNUSED(ifp))
 {
         return 0;
 }
 
 HIDDEN int
-tk_configure_window(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
+tk_configure_window(struct fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
 {
         return 0;
 }
 
 HIDDEN int
-tk_refresh(fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
+tk_refresh(struct fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
 {
         return 0;
 }
 
 HIDDEN int
-fb_tk_close(fb *ifp)
+fb_tk_close(struct fb *ifp)
 {
     int y[2];
     int ret;
@@ -333,7 +333,7 @@ fb_tk_close(fb *ifp)
 
 
 HIDDEN int
-tk_clear(fb *ifp, unsigned char *pp)
+tk_clear(struct fb *ifp, unsigned char *pp)
 {
     FB_CK_FB(ifp);
     if (pp == 0)
@@ -348,7 +348,7 @@ tk_clear(fb *ifp, unsigned char *pp)
 
 
 HIDDEN ssize_t
-tk_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
+tk_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     FB_CK_FB(ifp);
     fb_log("fb_read(0x%lx, %4d, %4d, 0x%lx, %ld)\n",
@@ -359,7 +359,7 @@ tk_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 
 
 HIDDEN ssize_t
-tk_write(fb *ifp, int UNUSED(x), int y, const unsigned char *pixelp, size_t count)
+tk_write(struct fb *ifp, int UNUSED(x), int y, const unsigned char *pixelp, size_t count)
 {
     uint32_t line[3];
 
@@ -388,7 +388,7 @@ tk_write(fb *ifp, int UNUSED(x), int y, const unsigned char *pixelp, size_t coun
 
 
 HIDDEN int
-tk_rmap(fb *ifp, ColorMap *cmp)
+tk_rmap(struct fb *ifp, ColorMap *cmp)
 {
     FB_CK_FB(ifp);
     fb_log("fb_rmap(0x%lx, 0x%lx)\n",
@@ -398,7 +398,7 @@ tk_rmap(fb *ifp, ColorMap *cmp)
 
 
 HIDDEN int
-tk_wmap(fb *ifp, const ColorMap *cmp)
+tk_wmap(struct fb *ifp, const ColorMap *cmp)
 {
     int i;
 
@@ -425,7 +425,7 @@ tk_wmap(fb *ifp, const ColorMap *cmp)
 
 
 HIDDEN int
-tk_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
+tk_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     FB_CK_FB(ifp);
     fb_log("fb_view(%p, %4d, %4d, %4d, %4d)\n",
@@ -436,7 +436,7 @@ tk_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 
 
 HIDDEN int
-tk_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
+tk_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
     FB_CK_FB(ifp);
     fb_log("fb_getview(%p, %p, %p, %p, %p)\n",
@@ -449,7 +449,7 @@ tk_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 
 
 HIDDEN int
-tk_setcursor(fb *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
+tk_setcursor(struct fb *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
     FB_CK_FB(ifp);
     fb_log("fb_setcursor(%p, %p, %d, %d, %d, %d)\n",
@@ -459,7 +459,7 @@ tk_setcursor(fb *ifp, const unsigned char *bits, int xbits, int ybits, int xorig
 
 
 HIDDEN int
-tk_cursor(fb *ifp, int mode, int x, int y)
+tk_cursor(struct fb *ifp, int mode, int x, int y)
 {
     fb_log("fb_cursor(0x%lx, %d, %4d, %4d)\n",
 	   (unsigned long)ifp, mode, x, y);
@@ -469,7 +469,7 @@ tk_cursor(fb *ifp, int mode, int x, int y)
 
 
 HIDDEN int
-tk_getcursor(fb *ifp, int *mode, int *x, int *y)
+tk_getcursor(struct fb *ifp, int *mode, int *x, int *y)
 {
     FB_CK_FB(ifp);
     fb_log("fb_getcursor(%p, %p, %p, %p)\n",
@@ -481,7 +481,7 @@ tk_getcursor(fb *ifp, int *mode, int *x, int *y)
 
 
 HIDDEN int
-tk_readrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
+tk_readrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     FB_CK_FB(ifp);
     fb_log("fb_readrect(0x%lx, (%4d, %4d), %4d, %4d, 0x%lx)\n",
@@ -492,7 +492,7 @@ tk_readrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *p
 
 
 HIDDEN int
-tk_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+tk_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     FB_CK_FB(ifp);
     fb_log("fb_writerect(0x%lx, %4d, %4d, %4d, %4d, 0x%lx)\n",
@@ -503,7 +503,7 @@ tk_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned 
 
 
 HIDDEN int
-tk_bwreadrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
+tk_bwreadrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     FB_CK_FB(ifp);
     fb_log("fb_bwreadrect(0x%lx, (%4d, %4d), %4d, %4d, 0x%lx)\n",
@@ -514,7 +514,7 @@ tk_bwreadrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char 
 
 
 HIDDEN int
-tk_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+tk_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     FB_CK_FB(ifp);
     fb_log("fb_bwwriterect(0x%lx, %4d, %4d, %4d, %4d, 0x%lx)\n",
@@ -525,7 +525,7 @@ tk_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const unsigne
 
 
 HIDDEN int
-tk_poll(fb *ifp)
+tk_poll(struct fb *ifp)
 {
     FB_CK_FB(ifp);
     while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
@@ -535,7 +535,7 @@ tk_poll(fb *ifp)
 
 
 HIDDEN int
-tk_flush(fb *ifp)
+tk_flush(struct fb *ifp)
 {
     FB_CK_FB(ifp);
     fb_log("if_flush(0x%lx)\n", (unsigned long)ifp);
@@ -544,7 +544,7 @@ tk_flush(fb *ifp)
 
 
 HIDDEN int
-tk_free(fb *ifp)
+tk_free(struct fb *ifp)
 {
     FB_CK_FB(ifp);
     fb_log("fb_free(0x%lx)\n", (unsigned long)ifp);
@@ -554,7 +554,7 @@ tk_free(fb *ifp)
 
 /*ARGSUSED*/
 HIDDEN int
-tk_help(fb *ifp)
+tk_help(struct fb *ifp)
 {
     FB_CK_FB(ifp);
     fb_log("Description: %s\n", tk_interface.if_type);
@@ -577,7 +577,7 @@ Usage: /dev/tk[#]\n\
 }
 
 /* This is the ONLY thing that we "export" */
-fb tk_interface = {
+struct fb tk_interface = {
     0,
     FB_TK_MAGIC,
     fb_tk_open,
