@@ -202,293 +202,7 @@ WGLEventProc(ClientData clientData, XEvent *UNUSED(eventPtr))
 	SwapBuffers(((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->hdc);
 	SwapBuffers(((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->hdc);
 }
-/*
- * Fire up the display manager, and the display processor.
- *
- */
-struct dm *
-wgl_open(void *vinterp, int argc, char *argv[])
-{
-    static int count = 0;
-    GLfloat backgnd[4];
-    int make_square = -1;
-    struct bu_vls str = BU_VLS_INIT_ZERO;
-    struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
-    struct modifiable_ogl_vars *mvars = NULL;
-    struct dm *dmp = (struct dm *)NULL;
-    Tcl_Interp *interp = (Tcl_Interp *)vinterp;
-    Tk_Window tkwin;
-    HWND hwnd;
-    HDC hdc;
-    int gotvisual;
 
-    if ((tkwin = Tk_MainWindow(interp)) == NULL) {
-	return DM_NULL;
-    }
-
-    BU_ALLOC(dmp, struct dm);
-
-    *dmp = dm_wgl; /* struct copy */
-    dmp->i->dm_interp = interp;
-    dmp->i->dm_light = 1;
-
-    BU_ALLOC(dmp->i->dm_vars.pub_vars, struct dm_xvars);
-    BU_ALLOC(dmp->i->dm_vars.priv_vars, struct wgl_vars);
-
-    dmp->i->dm_get_internal(dmp);
-    mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
-
-    dmp->i->dm_vp = &default_viewscale;
-
-    bu_vls_init(&dmp->i->dm_pathName);
-    bu_vls_init(&dmp->i->dm_tkName);
-    bu_vls_init(&dmp->i->dm_dName);
-
-    dm_processOptions(dmp, &init_proc_vls, --argc, ++argv);
-
-    if (bu_vls_strlen(&dmp->i->dm_pathName) == 0)
-	bu_vls_printf(&dmp->i->dm_pathName, ".dm_wgl%d", count);
-    ++count;
-
-    if (bu_vls_strlen(&dmp->i->dm_dName) == 0) {
-	char *dp;
-
-	dp = getenv("DISPLAY");
-	if (dp)
-	    bu_vls_strcpy(&dmp->i->dm_dName, dp);
-	else
-	    bu_vls_strcpy(&dmp->i->dm_dName, ":0.0");
-    }
-    if (bu_vls_strlen(&init_proc_vls) == 0)
-	bu_vls_strcpy(&init_proc_vls, "bind_dm");
-
-    /* initialize dm specific variables */
-    ((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->devmotionnotify = LASTEvent;
-    ((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->devbuttonpress = LASTEvent;
-    ((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->devbuttonrelease = LASTEvent;
-    dmp->i->dm_aspect = 1.0;
-
-    /* initialize modifiable variables */
-    mvars->rgb = 1;
-    mvars->doublebuffer = 1;
-    mvars->fastfog = 1;
-    mvars->fogdensity = 1.0;
-    mvars->lighting_on = dmp->i->dm_light;
-    mvars->zbuffer_on = dmp->i->dm_zbuffer;
-    mvars->zclipping_on = dmp->i->dm_zclip;
-    mvars->debug = dmp->i->dm_debugLevel;
-    mvars->bound = dmp->i->dm_bound;
-    mvars->boundFlag = dmp->i->dm_boundFlag;
-
-    /* this is important so that wgl_configureWin knows to set the font */
-    ((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->fontstruct = NULL;
-
-    if (dmp->i->dm_width == 0) {
-	dmp->i->dm_width = GetSystemMetrics(SM_CXSCREEN)- 30;
-	++make_square;
-    }
-    if (dmp->i->dm_height == 0) {
-	dmp->i->dm_height = GetSystemMetrics(SM_CYSCREEN) - 30;
-	++make_square;
-    }
-
-    if (make_square > 0) {
-	/* Make window square */
-	if (dmp->i->dm_height <
-	    dmp->i->dm_width)
-	    dmp->i->dm_width =
-		dmp->i->dm_height;
-	else
-	    dmp->i->dm_height =
-		dmp->i->dm_width;
-    }
-
-    if (dmp->i->dm_top) {
-	/* Make xtkwin a toplevel window */
-	Tcl_DString ds;
-
-	Tcl_DStringInit(&ds);
-	Tcl_DStringAppend(&ds, "toplevel ", -1);
-	Tcl_DStringAppend(&ds, bu_vls_addr(&dmp->i->dm_pathName), -1);
-	Tcl_DStringAppend(&ds, "; wm deiconify ", -1);
-	Tcl_DStringAppend(&ds, bu_vls_addr(&dmp->i->dm_pathName), -1);
-	if (Tcl_Eval(interp, Tcl_DStringValue(&ds)) != BRLCAD_OK) {
-	    Tcl_DStringFree(&ds);
-	    return DM_NULL;
-	}
-	((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->xtkwin =
-	    Tk_NameToWindow(interp, bu_vls_addr(&dmp->i->dm_pathName), tkwin);
-	Tcl_DStringFree(&ds);
-	((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->top = ((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->xtkwin;
-    } else {
-	char *cp;
-
-	cp = strrchr(bu_vls_addr(&dmp->i->dm_pathName), (int)'.');
-	if (cp == bu_vls_addr(&dmp->i->dm_pathName)) {
-	    ((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->top = tkwin;
-	} else {
-	    struct bu_vls top_vls = BU_VLS_INIT_ZERO;
-
-	    bu_vls_strncpy(&top_vls, (const char *)bu_vls_addr(&dmp->i->dm_pathName), cp - bu_vls_addr(&dmp->i->dm_pathName));
-
-	    ((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->top =
-		Tk_NameToWindow(interp, bu_vls_addr(&top_vls), tkwin);
-	    bu_vls_free(&top_vls);
-	}
-
-	/* Make xtkwin an embedded window */
-	((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->xtkwin =
-	    Tk_CreateWindow(interp, ((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->top,
-			    cp + 1, (char *)NULL);
-    }
-
-    if (((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->xtkwin == NULL) {
-	bu_log("open_gl: Failed to open %s\n", bu_vls_addr(&dmp->i->dm_pathName));
-	bu_vls_free(&init_proc_vls);
-	(void)wgl_close(dmp);
-	return DM_NULL;
-    }
-
-    bu_vls_printf(&dmp->i->dm_tkName, "%s",
-		  (char *)Tk_Name(((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->xtkwin));
-
-    bu_vls_printf(&str, "_init_dm %s %s\n",
-		  bu_vls_addr(&init_proc_vls),
-		  bu_vls_addr(&dmp->i->dm_pathName));
-
-    if (Tcl_Eval(interp, bu_vls_addr(&str)) == BRLCAD_ERROR) {
-	bu_log("open_wgl: _init_dm failed\n");
-	bu_vls_free(&init_proc_vls);
-	bu_vls_free(&str);
-	(void)wgl_close(dmp);
-	return DM_NULL;
-    }
-
-    bu_vls_free(&init_proc_vls);
-    bu_vls_free(&str);
-
-    ((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->dpy =
-	Tk_Display(((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->top);
-
-    /* make sure there really is a display before proceeding. */
-    if (!((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->dpy) {
-	(void)wgl_close(dmp);
-	return DM_NULL;
-    }
-
-    Tk_GeometryRequest(((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->xtkwin,
-		       dmp->i->dm_width,
-		       dmp->i->dm_height);
-
-    Tk_MakeWindowExist(((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->xtkwin);
-
-    ((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->win =
-	Tk_WindowId(((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->xtkwin);
-    dmp->i->dm_id = ((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->win;
-
-    hwnd = TkWinGetHWND(((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->win);
-    hdc = GetDC(hwnd);
-    ((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->hdc = hdc;
-
-	gotvisual = wgl_choose_visual(dmp, ((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->xtkwin);
-    if (!gotvisual) {
-	bu_log("wgl_open: Can't get an appropriate visual.\n");
-	(void)wgl_close(dmp);
-	return DM_NULL;
-    }
-
-    ((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->depth = mvars->depth;
-
-    /* open GLX context */
-    if ((((struct wgl_vars *)dmp->i->dm_vars.priv_vars)->glxc =
-	 wglCreateContext(((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->hdc))==NULL) {
-	bu_log("wgl_open: couldn't create glXContext.\n");
-	(void)wgl_close(dmp);
-	return DM_NULL;
-    }
-
-    if (!wglMakeCurrent(((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->hdc,
-			((struct wgl_vars *)dmp->i->dm_vars.priv_vars)->glxc)) {
-	bu_log("wgl_open: couldn't make context current\n");
-	(void)wgl_close(dmp);
-	return DM_NULL;
-    }
-
-    /* display list (fontOffset + char) will display a given ASCII char */
-    if ((((struct wgl_vars *)dmp->i->dm_vars.priv_vars)->fontOffset = glGenLists(128))==0) {
-	bu_log("wgl_open: couldn't make display lists for font.\n");
-	(void)wgl_close(dmp);
-	return DM_NULL;
-    }
-
-    /* This is the applications display list offset */
-    dmp->i->dm_displaylist = ((struct wgl_vars *)dmp->i->dm_vars.priv_vars)->fontOffset + 128;
-
-    wgl_setBGColor(dmp, 0, 0, 0);
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-    if (mvars->doublebuffer)
-	glDrawBuffer(GL_BACK);
-    else
-	glDrawBuffer(GL_FRONT);
-
-    /* do viewport, ortho commands and initialize font */
-    (void)wgl_configureWin_guts(dmp, 1);
-
-    /* Lines will be solid when stippling disabled, dashed when enabled*/
-    glLineStipple(1, 0xCF33);
-    glDisable(GL_LINE_STIPPLE);
-
-    backgnd[0] = backgnd[1] = backgnd[2] = backgnd[3] = 0.0;
-    glFogi(GL_FOG_MODE, GL_LINEAR);
-    glFogf(GL_FOG_START, 0.0);
-    glFogf(GL_FOG_END, 2.0);
-    glFogfv(GL_FOG_COLOR, backgnd);
-
-    /*XXX Need to do something about VIEWFACTOR */
-    glFogf(GL_FOG_DENSITY, VIEWFACTOR);
-
-    /* Initialize matrices */
-    /* Leave it in model_view mode normally */
-    glMatrixMode(GL_PROJECTION);
-    glLoadIdentity();
-    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0);
-    glGetDoublev(GL_PROJECTION_MATRIX, ((struct wgl_vars *)dmp->i->dm_vars.priv_vars)->faceplate_mat);
-    glPushMatrix();
-    glMatrixMode(GL_MODELVIEW);
-    glLoadIdentity();
-    glPushMatrix();
-    glLoadIdentity();
-    ((struct wgl_vars *)dmp->i->dm_vars.priv_vars)->face_flag = 1;	/* faceplate matrix is on top of stack */
-
-    wgl_setZBuffer(dmp, dmp->i->dm_zbuffer);
-    wgl_setLight(dmp, dmp->i->dm_light);
-
-    if (!wglMakeCurrent((HDC)NULL, (HGLRC)NULL)) {
-	LPVOID buf;
-
-	FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
-		      FORMAT_MESSAGE_FROM_SYSTEM |
-		      FORMAT_MESSAGE_IGNORE_INSERTS,
-		      NULL,
-		      GetLastError(),
-		      MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		      (LPTSTR)&buf,
-		      0,
-		      NULL);
-	bu_log("wgl_drawBegin: Couldn't release the current context.\n");
-	bu_log("wgl_drawBegin: %s", buf);
-	LocalFree(buf);
-
-	return DM_NULL;
-    }
-
-    Tk_MapWindow(((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->xtkwin);
-
-	Tk_CreateEventHandler(((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->xtkwin, VisibilityChangeMask, WGLEventProc, (ClientData)dmp);
-
-    return dmp;
-}
 
 
 int
@@ -678,6 +392,7 @@ wgl_close(struct dm *dmp)
     bu_vls_free(&dmp->i->dm_dName);
     bu_free(dmp->i->dm_vars.priv_vars, "wgl_close: wgl_vars");
     bu_free(dmp->i->dm_vars.pub_vars, "wgl_close: dm_xvars");
+	bu_free(dmp->i, "wgl_close: dmpi");
     bu_free(dmp, "wgl_close: dmp");
 
     return BRLCAD_OK;
@@ -2497,6 +2212,299 @@ struct dm_impl dm_wgl_impl = {
 
 struct dm dm_wgl = { &dm_wgl_impl };
 
+
+/*
+ * Fire up the display manager, and the display processor.
+ *
+ */
+struct dm *
+	wgl_open(void *vinterp, int argc, char *argv[])
+{
+	static int count = 0;
+	GLfloat backgnd[4];
+	int make_square = -1;
+	struct bu_vls str = BU_VLS_INIT_ZERO;
+	struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
+	struct modifiable_ogl_vars *mvars = NULL;
+	struct dm *dmp = NULL;
+	struct dm_impl *dmpi = NULL;
+	Tcl_Interp *interp = (Tcl_Interp *)vinterp;
+	Tk_Window tkwin;
+	HWND hwnd;
+	HDC hdc;
+	int gotvisual;
+
+	if ((tkwin = Tk_MainWindow(interp)) == NULL) {
+		return DM_NULL;
+	}
+
+	BU_ALLOC(dmp, struct dm);
+	BU_ALLOC(dmpi, struct dm_impl);
+
+	(*dmpi) = dm_wgl_impl; /* struct copy */
+	dmp->i = dmpi;
+	dmp->i->dm_interp = interp;
+	dmp->i->dm_light = 1;
+
+	BU_ALLOC(dmp->i->dm_vars.pub_vars, struct dm_xvars);
+	BU_ALLOC(dmp->i->dm_vars.priv_vars, struct wgl_vars);
+
+	dmp->i->dm_get_internal(dmp);
+	mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
+
+	dmp->i->dm_vp = &default_viewscale;
+
+	bu_vls_init(&dmp->i->dm_pathName);
+	bu_vls_init(&dmp->i->dm_tkName);
+	bu_vls_init(&dmp->i->dm_dName);
+
+	dm_processOptions(dmp, &init_proc_vls, --argc, ++argv);
+
+	if (bu_vls_strlen(&dmp->i->dm_pathName) == 0)
+		bu_vls_printf(&dmp->i->dm_pathName, ".dm_wgl%d", count);
+	++count;
+
+	if (bu_vls_strlen(&dmp->i->dm_dName) == 0) {
+		char *dp;
+
+		dp = getenv("DISPLAY");
+		if (dp)
+			bu_vls_strcpy(&dmp->i->dm_dName, dp);
+		else
+			bu_vls_strcpy(&dmp->i->dm_dName, ":0.0");
+	}
+	if (bu_vls_strlen(&init_proc_vls) == 0)
+		bu_vls_strcpy(&init_proc_vls, "bind_dm");
+
+	/* initialize dm specific variables */
+	((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->devmotionnotify = LASTEvent;
+	((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->devbuttonpress = LASTEvent;
+	((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->devbuttonrelease = LASTEvent;
+	dmp->i->dm_aspect = 1.0;
+
+	/* initialize modifiable variables */
+	mvars->rgb = 1;
+	mvars->doublebuffer = 1;
+	mvars->fastfog = 1;
+	mvars->fogdensity = 1.0;
+	mvars->lighting_on = dmp->i->dm_light;
+	mvars->zbuffer_on = dmp->i->dm_zbuffer;
+	mvars->zclipping_on = dmp->i->dm_zclip;
+	mvars->debug = dmp->i->dm_debugLevel;
+	mvars->bound = dmp->i->dm_bound;
+	mvars->boundFlag = dmp->i->dm_boundFlag;
+
+	/* this is important so that wgl_configureWin knows to set the font */
+	((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->fontstruct = NULL;
+
+	if (dmp->i->dm_width == 0) {
+		dmp->i->dm_width = GetSystemMetrics(SM_CXSCREEN) - 30;
+		++make_square;
+	}
+	if (dmp->i->dm_height == 0) {
+		dmp->i->dm_height = GetSystemMetrics(SM_CYSCREEN) - 30;
+		++make_square;
+	}
+
+	if (make_square > 0) {
+		/* Make window square */
+		if (dmp->i->dm_height <
+			dmp->i->dm_width)
+			dmp->i->dm_width =
+			dmp->i->dm_height;
+		else
+			dmp->i->dm_height =
+			dmp->i->dm_width;
+	}
+
+	if (dmp->i->dm_top) {
+		/* Make xtkwin a toplevel window */
+		Tcl_DString ds;
+
+		Tcl_DStringInit(&ds);
+		Tcl_DStringAppend(&ds, "toplevel ", -1);
+		Tcl_DStringAppend(&ds, bu_vls_addr(&dmp->i->dm_pathName), -1);
+		Tcl_DStringAppend(&ds, "; wm deiconify ", -1);
+		Tcl_DStringAppend(&ds, bu_vls_addr(&dmp->i->dm_pathName), -1);
+		if (Tcl_Eval(interp, Tcl_DStringValue(&ds)) != BRLCAD_OK) {
+			Tcl_DStringFree(&ds);
+			return DM_NULL;
+		}
+		((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->xtkwin =
+			Tk_NameToWindow(interp, bu_vls_addr(&dmp->i->dm_pathName), tkwin);
+		Tcl_DStringFree(&ds);
+		((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->top = ((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->xtkwin;
+	}
+	else {
+		char *cp;
+
+		cp = strrchr(bu_vls_addr(&dmp->i->dm_pathName), (int)'.');
+		if (cp == bu_vls_addr(&dmp->i->dm_pathName)) {
+			((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->top = tkwin;
+		}
+		else {
+			struct bu_vls top_vls = BU_VLS_INIT_ZERO;
+
+			bu_vls_strncpy(&top_vls, (const char *)bu_vls_addr(&dmp->i->dm_pathName), cp - bu_vls_addr(&dmp->i->dm_pathName));
+
+			((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->top =
+				Tk_NameToWindow(interp, bu_vls_addr(&top_vls), tkwin);
+			bu_vls_free(&top_vls);
+		}
+
+		/* Make xtkwin an embedded window */
+		((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->xtkwin =
+			Tk_CreateWindow(interp, ((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->top,
+				cp + 1, (char *)NULL);
+	}
+
+	if (((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->xtkwin == NULL) {
+		bu_log("open_gl: Failed to open %s\n", bu_vls_addr(&dmp->i->dm_pathName));
+		bu_vls_free(&init_proc_vls);
+		(void)wgl_close(dmp);
+		return DM_NULL;
+	}
+
+	bu_vls_printf(&dmp->i->dm_tkName, "%s",
+		(char *)Tk_Name(((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->xtkwin));
+
+	bu_vls_printf(&str, "_init_dm %s %s\n",
+		bu_vls_addr(&init_proc_vls),
+		bu_vls_addr(&dmp->i->dm_pathName));
+
+	if (Tcl_Eval(interp, bu_vls_addr(&str)) == BRLCAD_ERROR) {
+		bu_log("open_wgl: _init_dm failed\n");
+		bu_vls_free(&init_proc_vls);
+		bu_vls_free(&str);
+		(void)wgl_close(dmp);
+		return DM_NULL;
+	}
+
+	bu_vls_free(&init_proc_vls);
+	bu_vls_free(&str);
+
+	((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->dpy =
+		Tk_Display(((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->top);
+
+	/* make sure there really is a display before proceeding. */
+	if (!((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->dpy) {
+		(void)wgl_close(dmp);
+		return DM_NULL;
+	}
+
+	Tk_GeometryRequest(((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->xtkwin,
+		dmp->i->dm_width,
+		dmp->i->dm_height);
+
+	Tk_MakeWindowExist(((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->xtkwin);
+
+	((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->win =
+		Tk_WindowId(((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->xtkwin);
+	dmp->i->dm_id = ((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->win;
+
+	hwnd = TkWinGetHWND(((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->win);
+	hdc = GetDC(hwnd);
+	((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->hdc = hdc;
+
+	gotvisual = wgl_choose_visual(dmp, ((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->xtkwin);
+	if (!gotvisual) {
+		bu_log("wgl_open: Can't get an appropriate visual.\n");
+		(void)wgl_close(dmp);
+		return DM_NULL;
+	}
+
+	((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->depth = mvars->depth;
+
+	/* open GLX context */
+	if ((((struct wgl_vars *)dmp->i->dm_vars.priv_vars)->glxc =
+		wglCreateContext(((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->hdc)) == NULL) {
+		bu_log("wgl_open: couldn't create glXContext.\n");
+		(void)wgl_close(dmp);
+		return DM_NULL;
+	}
+
+	if (!wglMakeCurrent(((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->hdc,
+		((struct wgl_vars *)dmp->i->dm_vars.priv_vars)->glxc)) {
+		bu_log("wgl_open: couldn't make context current\n");
+		(void)wgl_close(dmp);
+		return DM_NULL;
+	}
+
+	/* display list (fontOffset + char) will display a given ASCII char */
+	if ((((struct wgl_vars *)dmp->i->dm_vars.priv_vars)->fontOffset = glGenLists(128)) == 0) {
+		bu_log("wgl_open: couldn't make display lists for font.\n");
+		(void)wgl_close(dmp);
+		return DM_NULL;
+	}
+
+	/* This is the applications display list offset */
+	dmp->i->dm_displaylist = ((struct wgl_vars *)dmp->i->dm_vars.priv_vars)->fontOffset + 128;
+
+	wgl_setBGColor(dmp, 0, 0, 0);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	if (mvars->doublebuffer)
+		glDrawBuffer(GL_BACK);
+	else
+		glDrawBuffer(GL_FRONT);
+
+	/* do viewport, ortho commands and initialize font */
+	(void)wgl_configureWin_guts(dmp, 1);
+
+	/* Lines will be solid when stippling disabled, dashed when enabled*/
+	glLineStipple(1, 0xCF33);
+	glDisable(GL_LINE_STIPPLE);
+
+	backgnd[0] = backgnd[1] = backgnd[2] = backgnd[3] = 0.0;
+	glFogi(GL_FOG_MODE, GL_LINEAR);
+	glFogf(GL_FOG_START, 0.0);
+	glFogf(GL_FOG_END, 2.0);
+	glFogfv(GL_FOG_COLOR, backgnd);
+
+	/*XXX Need to do something about VIEWFACTOR */
+	glFogf(GL_FOG_DENSITY, VIEWFACTOR);
+
+	/* Initialize matrices */
+	/* Leave it in model_view mode normally */
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0);
+	glGetDoublev(GL_PROJECTION_MATRIX, ((struct wgl_vars *)dmp->i->dm_vars.priv_vars)->faceplate_mat);
+	glPushMatrix();
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glPushMatrix();
+	glLoadIdentity();
+	((struct wgl_vars *)dmp->i->dm_vars.priv_vars)->face_flag = 1;	/* faceplate matrix is on top of stack */
+
+	wgl_setZBuffer(dmp, dmp->i->dm_zbuffer);
+	wgl_setLight(dmp, dmp->i->dm_light);
+
+	if (!wglMakeCurrent((HDC)NULL, (HGLRC)NULL)) {
+		LPVOID buf;
+
+		FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
+			FORMAT_MESSAGE_FROM_SYSTEM |
+			FORMAT_MESSAGE_IGNORE_INSERTS,
+			NULL,
+			GetLastError(),
+			MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
+			(LPTSTR)&buf,
+			0,
+			NULL);
+		bu_log("wgl_drawBegin: Couldn't release the current context.\n");
+		bu_log("wgl_drawBegin: %s", buf);
+		LocalFree(buf);
+
+		return DM_NULL;
+	}
+
+	Tk_MapWindow(((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->xtkwin);
+
+	Tk_CreateEventHandler(((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->xtkwin, VisibilityChangeMask, WGLEventProc, (ClientData)dmp);
+
+	return dmp;
+}
 #endif /* DM_WGL */
 
 /*
