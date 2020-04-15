@@ -284,7 +284,7 @@ null_openFb(struct dm *UNUSED(dmp))
 }
 
 
-struct dm dm_null = {
+struct dm_impl dm_null_impl = {
     null_close,
     null_drawBegin,
     null_drawEnd,
@@ -366,6 +366,7 @@ struct dm dm_null = {
     0				/* Tcl interpreter */
 };
 
+struct dm dm_null = { &dm_null_impl };
 
 /*
  * Local Variables:

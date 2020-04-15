@@ -52,7 +52,7 @@ struct dm_vars {
  * variables behind the vparse.  The txt backend, for example, doesn't need
  * Tk information...
  */
-struct dm {
+struct dm_impl {
     int (*dm_close)(struct dm *dmp);
     int (*dm_drawBegin)(struct dm *dmp);	/**< @brief formerly dmr_prolog */
     int (*dm_drawEnd)(struct dm *dmp);		/**< @brief formerly dmr_epilog */

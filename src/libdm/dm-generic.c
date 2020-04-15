@@ -89,7 +89,7 @@ null_dm_open(void *interp, int argc, const char *argv[])
     BU_ALLOC(dmp, struct dm);
 
     *dmp = dm_null;
-    dmp->dm_interp = interp;
+    dmp->i->dm_interp = interp;
 
     return dmp;
 }
@@ -150,7 +150,7 @@ void *
 dm_interp(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return NULL;
-    return (void *)dmp->dm_interp;
+    return (void *)dmp->i->dm_interp;
 }
 
 /*
@@ -169,11 +169,11 @@ dm_share_dlist(struct dm *dmp1, struct dm *dmp2)
      * XXX - need a better way to check if using the same OGL server.
      */
     if (dmp2 != DM_NULL)
-	if (dmp1->dm_type != dmp2->dm_type ||
-	    bu_vls_strcmp(&dmp1->dm_dName, &dmp2->dm_dName))
+	if (dmp1->i->dm_type != dmp2->i->dm_type ||
+	    bu_vls_strcmp(&dmp1->i->dm_dName, &dmp2->i->dm_dName))
 	    return BRLCAD_ERROR;
 
-    switch (dmp1->dm_type) {
+    switch (dmp1->i->dm_type) {
 #ifdef DM_OGL
 #  if defined(HAVE_TK)
 	case DM_TYPE_OGL:
@@ -202,7 +202,7 @@ dm_geometry_request(struct dm *dmp, int UNUSED(width), int UNUSED(height))
 {
     if (!dmp) return;
 #if (defined HAVE_TK)
-    Tk_GeometryRequest(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin, width, height);
+    Tk_GeometryRequest(((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->xtkwin, width, height);
 #endif
 }
 
@@ -229,11 +229,11 @@ dm_internal_var(struct bu_vls *result, struct dm *dmp, const char *key)
     if (!dmp || !result) return;
     if (!key) {
 	// Print all current vars
-	bu_vls_struct_print2(result, "dm internal X variables", dm_xvars_vparse, (const char *)dmp->dm_vars.pub_vars);
+	bu_vls_struct_print2(result, "dm internal X variables", dm_xvars_vparse, (const char *)dmp->i->dm_vars.pub_vars);
 	return;
     }
     // Print specific var
-    bu_vls_struct_item_named(result, dm_xvars_vparse, key, (const char *)dmp->dm_vars.pub_vars, ',');
+    bu_vls_struct_item_named(result, dm_xvars_vparse, key, (const char *)dmp->i->dm_vars.pub_vars, ',');
 }
 
 /* Properly generic function */
@@ -242,14 +242,14 @@ fastf_t
 dm_Xx2Normal(struct dm *dmp, int x)
 {
     if (UNLIKELY(!dmp)) return 0.0;
-    return ((x / (fastf_t)dmp->dm_width - 0.5) * 2.0);
+    return ((x / (fastf_t)dmp->i->dm_width - 0.5) * 2.0);
 }
 
 int
 dm_Normal2Xx(struct dm *dmp, fastf_t f)
 {
     if (UNLIKELY(!dmp)) return 0.0;
-    return (f * 0.5 + 0.5) * dmp->dm_width;
+    return (f * 0.5 + 0.5) * dmp->i->dm_width;
 }
 
 fastf_t
@@ -257,9 +257,9 @@ dm_Xy2Normal(struct dm *dmp, int y, int use_aspect)
 {
     if (UNLIKELY(!dmp)) return 0.0;
     if (use_aspect)
-	return ((0.5 - y / (fastf_t)dmp->dm_height) / dmp->dm_aspect * 2.0);
+	return ((0.5 - y / (fastf_t)dmp->i->dm_height) / dmp->i->dm_aspect * 2.0);
     else
-	return ((0.5 - y / (fastf_t)dmp->dm_height) * 2.0);
+	return ((0.5 - y / (fastf_t)dmp->i->dm_height) * 2.0);
 }
 
 int
@@ -267,9 +267,9 @@ dm_Normal2Xy(struct dm *dmp, fastf_t f, int use_aspect)
 {
     if (UNLIKELY(!dmp)) return 0.0;
     if (use_aspect)
-	return (0.5 - f * 0.5 * dmp->dm_aspect) * dmp->dm_height;
+	return (0.5 - f * 0.5 * dmp->i->dm_aspect) * dmp->i->dm_height;
     else
-	return (0.5 - f * 0.5) * dmp->dm_height;
+	return (0.5 - f * 0.5) * dmp->i->dm_height;
 }
 
 void
@@ -280,7 +280,7 @@ dm_fogHint(struct dm *dmp, int fastfog)
 	return;
     }
 
-    switch (dmp->dm_type) {
+    switch (dmp->i->dm_type) {
 #ifdef DM_OGL
 #  if defined(HAVE_TK)
 	case DM_TYPE_OGL:
@@ -303,8 +303,9 @@ dm_get()
 {
     struct dm *new_dm = DM_NULL;
     BU_GET(new_dm, struct dm);
-    bu_vls_init(&new_dm->dm_pathName);
-    bu_vls_init(&new_dm->dm_dName);
+    BU_GET(new_dm->i, struct dm_impl);
+    bu_vls_init(&new_dm->i->dm_pathName);
+    bu_vls_init(&new_dm->i->dm_dName);
 
     return new_dm;
 }
@@ -313,11 +314,12 @@ void
 dm_put(struct dm *dmp)
 {
     if (dmp && dmp != DM_NULL) {
-	bu_vls_free(&dmp->dm_pathName);
-	bu_vls_free(&dmp->dm_dName);
-	if (dmp->fbp) fb_put(dmp->fbp);
-	if (dmp->dm_put_internal)
-	    dmp->dm_put_internal(dmp);
+	bu_vls_free(&dmp->i->dm_pathName);
+	bu_vls_free(&dmp->i->dm_dName);
+	if (dmp->i->fbp) fb_put(dmp->i->fbp);
+	if (dmp->i->dm_put_internal)
+	    dmp->i->dm_put_internal(dmp);
+	BU_PUT(dmp->i, struct dm_impl);
 	BU_PUT(dmp, struct dm);
     }
 }
@@ -333,51 +335,51 @@ struct fb *
 dm_get_fb(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return NULL;
-    if (dmp->fbp == FB_NULL)
-	dmp->dm_openFb(dmp);
-    return dmp->fbp;
+    if (dmp->i->fbp == FB_NULL)
+	dmp->i->dm_openFb(dmp);
+    return dmp->i->fbp;
 }
 
 const char *
 dm_get_dm_name(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return NULL;
-    return dmp->dm_name;
+    return dmp->i->dm_name;
 }
 
 const char *
 dm_get_dm_lname(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return NULL;
-    return dmp->dm_lname;
+    return dmp->i->dm_lname;
 }
 
 int
 dm_get_width(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_width;
+    return dmp->i->dm_width;
 }
 
 int
 dm_get_height(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_height;
+    return dmp->i->dm_height;
 }
 
 void
 dm_set_width(struct dm *dmp, int width)
 {
     if (UNLIKELY(!dmp)) return;
-    dmp->dm_width = width;
+    dmp->i->dm_width = width;
 }
 
 void
 dm_set_height(struct dm *dmp, int height)
 {
     if (UNLIKELY(!dmp)) return;
-    dmp->dm_height = height;
+    dmp->i->dm_height = height;
 }
 
 
@@ -385,105 +387,105 @@ int
 dm_get_type(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_type;
+    return dmp->i->dm_type;
 }
 
 int
 dm_get_displaylist(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_displaylist;
+    return dmp->i->dm_displaylist;
 }
 
 fastf_t
 dm_get_aspect(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_aspect;
+    return dmp->i->dm_aspect;
 }
 
 int
 dm_get_fontsize(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_fontsize;
+    return dmp->i->dm_fontsize;
 }
 
 void
 dm_set_fontsize(struct dm *dmp, int size)
 {
     if (UNLIKELY(!dmp)) return;
-    dmp->dm_fontsize = size;
+    dmp->i->dm_fontsize = size;
 }
 
 int
 dm_get_light_flag(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_light;
+    return dmp->i->dm_light;
 }
 
 void
 dm_set_light_flag(struct dm *dmp, int val)
 {
     if (UNLIKELY(!dmp)) return;
-    dmp->dm_light = val;
+    dmp->i->dm_light = val;
 }
 
 int
 dm_close(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_close(dmp);
+    return dmp->i->dm_close(dmp);
 }
 
 unsigned char *
 dm_get_bg(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return NULL;
-    return dmp->dm_bg;
+    return dmp->i->dm_bg;
 }
 
 int
 dm_set_bg(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_setBGColor(dmp, r, g, b);
+    return dmp->i->dm_setBGColor(dmp, r, g, b);
 }
 
 unsigned char *
 dm_get_fg(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return NULL;
-    return dmp->dm_fg;
+    return dmp->i->dm_fg;
 }
 
 int
 dm_set_fg(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_setFGColor(dmp, r, g, b, strict, transparency);
+    return dmp->i->dm_setFGColor(dmp, r, g, b, strict, transparency);
 }
 
 int
 dm_reshape(struct dm *dmp, int width, int height)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_reshape(dmp, width, height);
+    return dmp->i->dm_reshape(dmp, width, height);
 }
 
 int
 dm_make_current(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_makeCurrent(dmp);
+    return dmp->i->dm_makeCurrent(dmp);
 }
 
 vect_t *
 dm_get_clipmin(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return  &(dmp->dm_clipmin);
+    return  &(dmp->i->dm_clipmin);
 }
 
 
@@ -491,48 +493,48 @@ vect_t *
 dm_get_clipmax(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return  &(dmp->dm_clipmax);
+    return  &(dmp->i->dm_clipmax);
 }
 
 int
 dm_get_bound_flag(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_boundFlag;
+    return dmp->i->dm_boundFlag;
 }
 
 void
 dm_set_bound(struct dm *dmp, fastf_t val)
 {
     if (UNLIKELY(!dmp)) return;
-    dmp->dm_bound = val;
+    dmp->i->dm_bound = val;
 }
 
 int
 dm_set_win_bounds(struct dm *dmp, fastf_t *w)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_setWinBounds(dmp, w);
+    return dmp->i->dm_setWinBounds(dmp, w);
 }
 
 int
 dm_get_stereo(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_stereo;
+    return dmp->i->dm_stereo;
 }
 int
 dm_configure_win(struct dm *dmp, int force)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_configureWin(dmp, force);
+    return dmp->i->dm_configureWin(dmp, force);
 }
 
 struct bu_vls *
 dm_get_pathname(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return NULL;
-    return &(dmp->dm_pathName);
+    return &(dmp->i->dm_pathName);
 }
 
 
@@ -540,98 +542,98 @@ struct bu_vls *
 dm_get_dname(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return NULL;
-    return &(dmp->dm_dName);
+    return &(dmp->i->dm_dName);
 }
 
 struct bu_vls *
 dm_get_tkname(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return NULL;
-    return &(dmp->dm_tkName);
+    return &(dmp->i->dm_tkName);
 }
 
 unsigned long
 dm_get_id(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_id;
+    return dmp->i->dm_id;
 }
 
 void
 dm_set_id(struct dm *dmp, unsigned long new_id)
 {
     if (UNLIKELY(!dmp)) return;
-    dmp->dm_id = new_id;
+    dmp->i->dm_id = new_id;
 }
 
 int
 dm_set_light(struct dm *dmp, int light)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_setLight(dmp, light);
+    return dmp->i->dm_setLight(dmp, light);
 }
 
 int
 dm_get_transparency(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_transparency;
+    return dmp->i->dm_transparency;
 }
 
 int
 dm_set_transparency(struct dm *dmp, int transparency)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_setTransparency(dmp, transparency);
+    return dmp->i->dm_setTransparency(dmp, transparency);
 }
 
 int
 dm_get_zbuffer(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_zbuffer;
+    return dmp->i->dm_zbuffer;
 }
 
 int
 dm_set_zbuffer(struct dm *dmp, int zbuffer)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_setZBuffer(dmp, zbuffer);
+    return dmp->i->dm_setZBuffer(dmp, zbuffer);
 }
 
 int
 dm_get_linewidth(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_lineWidth;
+    return dmp->i->dm_lineWidth;
 }
 
 void
 dm_set_linewidth(struct dm *dmp, int linewidth)
 {
     if (UNLIKELY(!dmp)) return;
-    dmp->dm_lineWidth = linewidth;
+    dmp->i->dm_lineWidth = linewidth;
 }
 
 int
 dm_get_linestyle(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_lineStyle;
+    return dmp->i->dm_lineStyle;
 }
 
 void
 dm_set_linestyle(struct dm *dmp, int linestyle)
 {
     if (UNLIKELY(!dmp)) return;
-    dmp->dm_lineStyle = linestyle;
+    dmp->i->dm_lineStyle = linestyle;
 }
 
 int
 dm_set_line_attr(struct dm *dmp, int width, int style)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_setLineAttr(dmp, width, style);
+    return dmp->i->dm_setLineAttr(dmp, width, style);
 }
 
 
@@ -639,198 +641,198 @@ int
 dm_get_zclip(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_zclip;
+    return dmp->i->dm_zclip;
 }
 
 void
 dm_set_zclip(struct dm *dmp, int zclip)
 {
     if (UNLIKELY(!dmp)) return;
-    dmp->dm_zclip = zclip;
+    dmp->i->dm_zclip = zclip;
 }
 
 int
 dm_get_perspective(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_perspective;
+    return dmp->i->dm_perspective;
 }
 
 void
 dm_set_perspective(struct dm *dmp, fastf_t perspective)
 {
     if (UNLIKELY(!dmp)) return;
-    dmp->dm_perspective = perspective;
+    dmp->i->dm_perspective = perspective;
 }
 
 int
 dm_get_display_image(struct dm *dmp, unsigned char **image)
 {
     if (!dmp || !image) return 0;
-    return dmp->dm_getDisplayImage(dmp, image);
+    return dmp->i->dm_getDisplayImage(dmp, image);
 }
 
 int
 dm_gen_dlists(struct dm *dmp, size_t range)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_genDLists(dmp, range);
+    return dmp->i->dm_genDLists(dmp, range);
 }
 
 int
 dm_begin_dlist(struct dm *dmp, unsigned int list)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_beginDList(dmp, list);
+    return dmp->i->dm_beginDList(dmp, list);
 }
 int
 dm_draw_dlist(struct dm *dmp, unsigned int list)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_drawDList(list);
+    return dmp->i->dm_drawDList(list);
 }
 int
 dm_end_dlist(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_endDList(dmp);
+    return dmp->i->dm_endDList(dmp);
 }
 int
 dm_free_dlists(struct dm *dmp, unsigned int list, int range)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_freeDLists(dmp, list, range);
+    return dmp->i->dm_freeDLists(dmp, list, range);
 }
 
 int
 dm_draw_vlist(struct dm *dmp, struct bn_vlist *vp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_drawVList(dmp, vp);
+    return dmp->i->dm_drawVList(dmp, vp);
 }
 
 int
 dm_draw_vlist_hidden_line(struct dm *dmp, struct bn_vlist *vp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_drawVListHiddenLine(dmp, vp);
+    return dmp->i->dm_drawVListHiddenLine(dmp, vp);
 }
 int
 dm_draw_begin(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_drawBegin(dmp);
+    return dmp->i->dm_drawBegin(dmp);
 }
 int
 dm_draw_end(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_drawEnd(dmp);
+    return dmp->i->dm_drawEnd(dmp);
 }
 int
 dm_normal(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_normal(dmp);
+    return dmp->i->dm_normal(dmp);
 }
 int
 dm_loadmatrix(struct dm *dmp, fastf_t *mat, int eye)
 {
     if (!dmp || !mat) return 0;
-    return dmp->dm_loadMatrix(dmp, mat, eye);
+    return dmp->i->dm_loadMatrix(dmp, mat, eye);
 }
 int
 dm_loadpmatrix(struct dm *dmp, fastf_t *mat)
 {
     if (!dmp || !mat) return 0;
-    return dmp->dm_loadPMatrix(dmp, mat);
+    return dmp->i->dm_loadPMatrix(dmp, mat);
 }
 int
 dm_draw_string_2d(struct dm *dmp, const char *str, fastf_t x,  fastf_t y, int size, int use_aspect)
 {
     if (!dmp || !str) return 0;
-    return dmp->dm_drawString2D(dmp, str, x, y, size, use_aspect);
+    return dmp->i->dm_drawString2D(dmp, str, x, y, size, use_aspect);
 }
 int
 dm_draw_line_2d(struct dm *dmp, fastf_t x1, fastf_t y1_2d, fastf_t x2, fastf_t y2)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_drawLine2D(dmp, x1, y1_2d, x2, y2);
+    return dmp->i->dm_drawLine2D(dmp, x1, y1_2d, x2, y2);
 }
 int
 dm_draw_line_3d(struct dm *dmp, point_t pt1, point_t pt2)
 {
     if (UNLIKELY(!dmp)) return 0;
     if (!!pt1 || !pt2) return 0;
-    return dmp->dm_drawLine3D(dmp, pt1, pt2);
+    return dmp->i->dm_drawLine3D(dmp, pt1, pt2);
 }
 int
 dm_draw_lines_3d(struct dm *dmp, int npoints, point_t *points, int sflag)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_drawLines3D(dmp, npoints, points, sflag);
+    return dmp->i->dm_drawLines3D(dmp, npoints, points, sflag);
 }
 int
 dm_draw_point_2d(struct dm *dmp, fastf_t x, fastf_t y)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_drawPoint2D(dmp, x, y);
+    return dmp->i->dm_drawPoint2D(dmp, x, y);
 }
 int
 dm_draw_point_3d(struct dm *dmp, point_t pt)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_drawPoint3D(dmp, pt);
+    return dmp->i->dm_drawPoint3D(dmp, pt);
 }
 int
 dm_draw_points_3d(struct dm *dmp, int npoints, point_t *points)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_drawPoints3D(dmp, npoints, points);
+    return dmp->i->dm_drawPoints3D(dmp, npoints, points);
 }
 int
 dm_draw(struct dm *dmp, struct bn_vlist *(*callback)(void *), void **data)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_draw(dmp, callback, data);
+    return dmp->i->dm_draw(dmp, callback, data);
 }
 int
 dm_draw_obj(struct dm *dmp, struct display_list *obj)
 {
     if (!dmp || !obj) return 0;
-    return dmp->dm_draw_obj(dmp, obj);
+    return dmp->i->dm_draw_obj(dmp, obj);
 }
 int
 dm_set_depth_mask(struct dm *dmp, int d_on)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_setDepthMask(dmp, d_on);
+    return dmp->i->dm_setDepthMask(dmp, d_on);
 }
 int
 dm_debug(struct dm *dmp, int lvl)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->dm_debug(dmp, lvl);
+    return dmp->i->dm_debug(dmp, lvl);
 }
 int
 dm_logfile(struct dm *dmp, const char *filename)
 {
     if (!dmp || !filename) return 0;
-    return dmp->dm_logfile(dmp, filename);
+    return dmp->i->dm_logfile(dmp, filename);
 }
 
 fastf_t *
 dm_get_vp(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return NULL;
-    return dmp->dm_vp;
+    return dmp->i->dm_vp;
 }
 
 void
 dm_set_vp(struct dm *dmp, fastf_t *vp)
 {
     if (UNLIKELY(!dmp)) return;
-    dmp->dm_vp = vp;
+    dmp->i->dm_vp = vp;
 }
 
 /* This is the generic "catch-all" hook that is used
@@ -877,15 +879,15 @@ struct bu_structparse *
 dm_get_vparse(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return NULL;
-    return dmp->vparse;
+    return dmp->i->vparse;
 }
 
 void *
 dm_get_mvars(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return NULL;
-    if (!dmp->m_vars) return (void *)dmp;
-    return dmp->m_vars;
+    if (!dmp->i->m_vars) return (void *)dmp;
+    return dmp->i->m_vars;
 }
 
 
@@ -971,7 +973,7 @@ dm_draw_display_list(struct dm *dmp,
 
 		/*
 		 * Check for this object being bigger than
-		 * dmp->dm_bound * the window size, or smaller than a speck.
+		 * dmp->i->dm_bound * the window size, or smaller than a speck.
 		 */
 		if (ratio < 0.001)
 		    continue;

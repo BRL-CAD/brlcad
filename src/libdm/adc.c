@@ -61,8 +61,8 @@ dm_draw_ticks(struct dm *dmp, struct bview_adc_state *adcp, fastf_t angle)
     y2 = adcp->dv_y + d2 + t2;
     if (bn_lseg_clip(&x1, &Y1, &x2, &y2, DM_MIN, DM_MAX) == 0) {
 	dm_draw_line_2d(dmp,
-			GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->dm_aspect,
-			GED_TO_PM1(x2), GED_TO_PM1(y2) * dmp->dm_aspect);
+			GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->i->dm_aspect,
+			GED_TO_PM1(x2), GED_TO_PM1(y2) * dmp->i->dm_aspect);
     }
 
     /* Quadrant 2 */
@@ -72,8 +72,8 @@ dm_draw_ticks(struct dm *dmp, struct bview_adc_state *adcp, fastf_t angle)
     y2 = adcp->dv_y + d1 - t1;
     if (bn_lseg_clip(&x1, &Y1, &x2, &y2, DM_MIN, DM_MAX) == 0) {
 	dm_draw_line_2d(dmp,
-			GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->dm_aspect,
-			GED_TO_PM1(x2), GED_TO_PM1(y2) * dmp->dm_aspect);
+			GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->i->dm_aspect,
+			GED_TO_PM1(x2), GED_TO_PM1(y2) * dmp->i->dm_aspect);
     }
 
     /* Quadrant 3 */
@@ -83,8 +83,8 @@ dm_draw_ticks(struct dm *dmp, struct bview_adc_state *adcp, fastf_t angle)
     y2 = adcp->dv_y - d2 - t2;
     if (bn_lseg_clip(&x1, &Y1, &x2, &y2, DM_MIN, DM_MAX) == 0) {
 	dm_draw_line_2d(dmp,
-			GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->dm_aspect,
-			GED_TO_PM1(x2), GED_TO_PM1(y2) * dmp->dm_aspect);
+			GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->i->dm_aspect,
+			GED_TO_PM1(x2), GED_TO_PM1(y2) * dmp->i->dm_aspect);
     }
 
     /* Quadrant 4 */
@@ -94,8 +94,8 @@ dm_draw_ticks(struct dm *dmp, struct bview_adc_state *adcp, fastf_t angle)
     y2 = adcp->dv_y - d1 + t1;
     if (bn_lseg_clip(&x1, &Y1, &x2, &y2, DM_MIN, DM_MAX) == 0) {
 	dm_draw_line_2d(dmp,
-			GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->dm_aspect,
-			GED_TO_PM1(x2), GED_TO_PM1(y2) * dmp->dm_aspect);
+			GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->i->dm_aspect,
+			GED_TO_PM1(x2), GED_TO_PM1(y2) * dmp->i->dm_aspect);
     }
 }
 
@@ -175,8 +175,8 @@ dm_draw_adc(struct dm *dmp, struct bview_adc_state *adcp, mat_t view2model, mat_
 
     /* Horizontal */
     dm_draw_line_2d(dmp,
-		    GED_TO_PM1(GED_MIN), GED_TO_PM1(adcp->dv_y) * dmp->dm_aspect,
-		    GED_TO_PM1(GED_MAX), GED_TO_PM1(adcp->dv_y) * dmp->dm_aspect);
+		    GED_TO_PM1(GED_MIN), GED_TO_PM1(adcp->dv_y) * dmp->i->dm_aspect,
+		    GED_TO_PM1(GED_MAX), GED_TO_PM1(adcp->dv_y) * dmp->i->dm_aspect);
 
     /* Vertical */
     dm_draw_line_2d(dmp,
@@ -200,11 +200,11 @@ dm_draw_adc(struct dm *dmp, struct bview_adc_state *adcp, mat_t view2model, mat_
     y4 = adcp->dv_y + d1;
 
     dm_draw_line_2d(dmp,
-		    GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->dm_aspect,
-		    GED_TO_PM1(x2), GED_TO_PM1(y2) * dmp->dm_aspect);
+		    GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->i->dm_aspect,
+		    GED_TO_PM1(x2), GED_TO_PM1(y2) * dmp->i->dm_aspect);
     dm_draw_line_2d(dmp,
-		    GED_TO_PM1(x3), GED_TO_PM1(y3) * dmp->dm_aspect,
-		    GED_TO_PM1(x4), GED_TO_PM1(y4) * dmp->dm_aspect);
+		    GED_TO_PM1(x3), GED_TO_PM1(y3) * dmp->i->dm_aspect,
+		    GED_TO_PM1(x4), GED_TO_PM1(y4) * dmp->i->dm_aspect);
 
     d1 = cos(angle2) * 8000.0;
     d2 = sin(angle2) * 8000.0;
@@ -220,11 +220,11 @@ dm_draw_adc(struct dm *dmp, struct bview_adc_state *adcp, mat_t view2model, mat_
 
     dm_set_line_attr(dmp, adcp->line_width, 1);
     dm_draw_line_2d(dmp,
-		    GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->dm_aspect,
-		    GED_TO_PM1(x2), GED_TO_PM1(y2) * dmp->dm_aspect);
+		    GED_TO_PM1(x1), GED_TO_PM1(Y1) * dmp->i->dm_aspect,
+		    GED_TO_PM1(x2), GED_TO_PM1(y2) * dmp->i->dm_aspect);
     dm_draw_line_2d(dmp,
-		    GED_TO_PM1(x3), GED_TO_PM1(y3) * dmp->dm_aspect,
-		    GED_TO_PM1(x4), GED_TO_PM1(y4) * dmp->dm_aspect);
+		    GED_TO_PM1(x3), GED_TO_PM1(y3) * dmp->i->dm_aspect,
+		    GED_TO_PM1(x4), GED_TO_PM1(y4) * dmp->i->dm_aspect);
     dm_set_line_attr(dmp, adcp->line_width, 0);
 
     dm_set_fg(dmp,

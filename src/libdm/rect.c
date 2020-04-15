@@ -47,24 +47,24 @@ dm_draw_rect(struct dm *dmp, struct bview_interactive_rect_state *grsp)
 
     dm_draw_line_2d(dmp,
 		    grsp->x,
-		    grsp->y * dmp->dm_aspect,
+		    grsp->y * dmp->i->dm_aspect,
 		    grsp->x,
-		    (grsp->y + grsp->height) * dmp->dm_aspect);
+		    (grsp->y + grsp->height) * dmp->i->dm_aspect);
     dm_draw_line_2d(dmp,
 		    grsp->x,
-		    (grsp->y + grsp->height) * dmp->dm_aspect,
+		    (grsp->y + grsp->height) * dmp->i->dm_aspect,
 		    grsp->x + grsp->width,
-		    (grsp->y + grsp->height) * dmp->dm_aspect);
+		    (grsp->y + grsp->height) * dmp->i->dm_aspect);
     dm_draw_line_2d(dmp,
 		    grsp->x + grsp->width,
-		    (grsp->y + grsp->height) * dmp->dm_aspect,
+		    (grsp->y + grsp->height) * dmp->i->dm_aspect,
 		    grsp->x + grsp->width,
-		    grsp->y * dmp->dm_aspect);
+		    grsp->y * dmp->i->dm_aspect);
     dm_draw_line_2d(dmp,
 		    grsp->x + grsp->width,
-		    grsp->y * dmp->dm_aspect,
+		    grsp->y * dmp->i->dm_aspect,
 		    grsp->x,
-		    grsp->y * dmp->dm_aspect);
+		    grsp->y * dmp->i->dm_aspect);
 }
 
 

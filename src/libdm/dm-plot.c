@@ -72,7 +72,7 @@ plot_close(struct dm *dmp)
     if (!dmp)
 	return BRLCAD_ERROR;
 
-    struct plot_vars *privars = (struct plot_vars *)dmp->dm_vars.priv_vars;
+    struct plot_vars *privars = (struct plot_vars *)dmp->i->dm_vars.priv_vars;
 
     (void)fflush(privars->up_fp);
 
@@ -81,8 +81,8 @@ plot_close(struct dm *dmp)
     else
 	fclose(privars->up_fp);
 
-    bu_vls_free(&dmp->dm_pathName);
-    bu_free((void *)dmp->dm_vars.priv_vars, "plot_close: plot_vars");
+    bu_vls_free(&dmp->i->dm_pathName);
+    bu_free((void *)dmp->i->dm_vars.priv_vars, "plot_close: plot_vars");
     bu_free((void *)dmp, "plot_close: dmp");
 
     return BRLCAD_OK;
@@ -110,7 +110,7 @@ plot_drawEnd(struct dm *dmp)
     if (!dmp)
 	return BRLCAD_ERROR;
 
-    struct plot_vars *privars = (struct plot_vars *)dmp->dm_vars.priv_vars;
+    struct plot_vars *privars = (struct plot_vars *)dmp->i->dm_vars.priv_vars;
 
     pl_flush(privars->up_fp); /* BRL-specific command */
     pl_erase(privars->up_fp); /* forces drawing */
@@ -132,8 +132,8 @@ plot_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     if (!dmp)
 	return BRLCAD_ERROR;
 
-    Tcl_Interp *interp = (Tcl_Interp *)dmp->dm_interp;
-    struct plot_vars *privars = (struct plot_vars *)dmp->dm_vars.priv_vars;
+    Tcl_Interp *interp = (Tcl_Interp *)dmp->i->dm_interp;
+    struct plot_vars *privars = (struct plot_vars *)dmp->i->dm_vars.priv_vars;
 
     obj = Tcl_GetObjResult(interp);
     if (Tcl_IsShared(obj))
@@ -181,7 +181,7 @@ plot_drawVList(struct dm *dmp, struct bn_vlist *vp)
     point_t tlate;
     int useful = 0;
 
-    struct plot_vars *privars = (struct plot_vars *)dmp->dm_vars.priv_vars;
+    struct plot_vars *privars = (struct plot_vars *)dmp->i->dm_vars.priv_vars;
 
     if (privars->floating) {
 	bn_vlist_to_uplot(privars->up_fp, &vp->l);
@@ -226,7 +226,7 @@ plot_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		case BN_VLIST_LINE_MOVE:
 		case BN_VLIST_TRI_MOVE:
 		    /* Move, not draw */
-		    if (dmp->dm_perspective > 0) {
+		    if (dmp->i->dm_perspective > 0) {
 			/* cannot apply perspective transformation to
 			 * points behind eye plane!!!!
 			 */
@@ -249,7 +249,7 @@ plot_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		case BN_VLIST_TRI_DRAW:
 		case BN_VLIST_TRI_END:
 		    /* draw */
-		    if (dmp->dm_perspective > 0) {
+		    if (dmp->i->dm_perspective > 0) {
 			/* cannot apply perspective transformation to
 			 * points behind eye plane!!!!
 			 */
@@ -297,7 +297,7 @@ plot_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		    VMOVE(last, fin);
 		    break;
 	    }
-	    if (vclip(start, fin, dmp->dm_clipmin, dmp->dm_clipmax) == 0)
+	    if (vclip(start, fin, dmp->i->dm_clipmin, dmp->i->dm_clipmax) == 0)
 		continue;
 
 	    if (privars->is_3D)
@@ -373,7 +373,7 @@ plot_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int siz
 	return BRLCAD_ERROR;
     }
 
-    struct plot_vars *privars = (struct plot_vars *)dmp->dm_vars.priv_vars;
+    struct plot_vars *privars = (struct plot_vars *)dmp->i->dm_vars.priv_vars;
 
     sx = x * 2047;
     sy = y + 2047;
@@ -390,7 +390,7 @@ plot_drawLine2D(struct dm *dmp, fastf_t xpos1, fastf_t ypos1, fastf_t xpos2, fas
     int sx1, sy1;
     int sx2, sy2;
 
-    struct plot_vars *privars = (struct plot_vars *)dmp->dm_vars.priv_vars;
+    struct plot_vars *privars = (struct plot_vars *)dmp->i->dm_vars.priv_vars;
 
     sx1 = xpos1 * 2047;
     sx2 = xpos2 * 2047;
@@ -434,7 +434,7 @@ plot_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char 
 	bu_log("WARNING: NULL display (r/g/b => %d/%d/%d; strict => %d; transparency => %f)\n", r, g, b, strict, transparency);
 	return BRLCAD_ERROR;
     }
-    struct plot_vars *privars = (struct plot_vars *)dmp->dm_vars.priv_vars;
+    struct plot_vars *privars = (struct plot_vars *)dmp->i->dm_vars.priv_vars;
 
     pl_color(privars->up_fp, (int)r, (int)g, (int)b);
     return BRLCAD_OK;
@@ -454,10 +454,10 @@ plot_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char 
 HIDDEN int
 plot_setLineAttr(struct dm *dmp, int width, int style)
 {
-    dmp->dm_lineWidth = width;
-    dmp->dm_lineStyle = style;
+    dmp->i->dm_lineWidth = width;
+    dmp->i->dm_lineStyle = style;
 
-    struct plot_vars *privars = (struct plot_vars *)dmp->dm_vars.priv_vars;
+    struct plot_vars *privars = (struct plot_vars *)dmp->i->dm_vars.priv_vars;
 
     if (style == DM_DASHED_LINE)
 	pl_linmod(privars->up_fp, "dotdashed");
@@ -472,14 +472,14 @@ HIDDEN int
 plot_debug(struct dm *dmp, int lvl)
 {
     Tcl_Obj *obj;
-    Tcl_Interp *interp = (Tcl_Interp *)dmp->dm_interp;
-    struct plot_vars *privars = (struct plot_vars *)dmp->dm_vars.priv_vars;
+    Tcl_Interp *interp = (Tcl_Interp *)dmp->i->dm_interp;
+    struct plot_vars *privars = (struct plot_vars *)dmp->i->dm_vars.priv_vars;
 
     obj = Tcl_GetObjResult(interp);
     if (Tcl_IsShared(obj))
 	obj = Tcl_DuplicateObj(obj);
 
-    dmp->dm_debugLevel = lvl;
+    dmp->i->dm_debugLevel = lvl;
     (void)fflush(privars->up_fp);
     Tcl_AppendStringsToObj(obj, "flushed\n", (char *)NULL);
 
@@ -491,14 +491,14 @@ HIDDEN int
 plot_logfile(struct dm *dmp, const char *filename)
 {
     Tcl_Obj *obj;
-    Tcl_Interp *interp = (Tcl_Interp *)dmp->dm_interp;
-    struct plot_vars *privars = (struct plot_vars *)dmp->dm_vars.priv_vars;
+    Tcl_Interp *interp = (Tcl_Interp *)dmp->i->dm_interp;
+    struct plot_vars *privars = (struct plot_vars *)dmp->i->dm_vars.priv_vars;
 
     obj = Tcl_GetObjResult(interp);
     if (Tcl_IsShared(obj))
 	obj = Tcl_DuplicateObj(obj);
 
-    bu_vls_sprintf(&dmp->dm_log, "%s", filename);
+    bu_vls_sprintf(&dmp->i->dm_log, "%s", filename);
     (void)fflush(privars->up_fp);
     Tcl_AppendStringsToObj(obj, "flushed\n", (char *)NULL);
 
@@ -512,24 +512,24 @@ HIDDEN int
 plot_setWinBounds(struct dm *dmp, fastf_t *w)
 {
     /* Compute the clipping bounds */
-    dmp->dm_clipmin[0] = w[0] / 2048.0;
-    dmp->dm_clipmax[0] = w[1] / 2047.0;
-    dmp->dm_clipmin[1] = w[2] / 2048.0;
-    dmp->dm_clipmax[1] = w[3] / 2047.0;
+    dmp->i->dm_clipmin[0] = w[0] / 2048.0;
+    dmp->i->dm_clipmax[0] = w[1] / 2047.0;
+    dmp->i->dm_clipmin[1] = w[2] / 2048.0;
+    dmp->i->dm_clipmax[1] = w[3] / 2047.0;
 
-    if (dmp->dm_zclip) {
-	dmp->dm_clipmin[2] = w[4] / 2048.0;
-	dmp->dm_clipmax[2] = w[5] / 2047.0;
+    if (dmp->i->dm_zclip) {
+	dmp->i->dm_clipmin[2] = w[4] / 2048.0;
+	dmp->i->dm_clipmax[2] = w[5] / 2047.0;
     } else {
-	dmp->dm_clipmin[2] = -1.0e20;
-	dmp->dm_clipmax[2] = 1.0e20;
+	dmp->i->dm_clipmin[2] = -1.0e20;
+	dmp->i->dm_clipmax[2] = 1.0e20;
     }
 
     return BRLCAD_OK;
 }
 
 
-struct dm dm_plot = {
+struct dm_impl dm_plot_impl = {
     plot_close,
     plot_drawBegin,
     plot_drawEnd,
@@ -611,6 +611,7 @@ struct dm dm_plot = {
     NULL			/* Tcl interpreter */
 };
 
+struct dm dm_plot = { &dm_plot_impl };
 
 /*
  * Fire up the display manager, and the display processor.
@@ -627,21 +628,21 @@ plot_open(void *vinterp, int argc, const char *argv[])
     BU_ALLOC(dmp, struct dm);
 
     *dmp = dm_plot; /* struct copy */
-    dmp->dm_interp = interp;
+    dmp->i->dm_interp = interp;
 
-    BU_ALLOC(dmp->dm_vars.priv_vars, struct plot_vars);
+    BU_ALLOC(dmp->i->dm_vars.priv_vars, struct plot_vars);
 
-    struct plot_vars *privars = (struct plot_vars *)dmp->dm_vars.priv_vars;
+    struct plot_vars *privars = (struct plot_vars *)dmp->i->dm_vars.priv_vars;
 
     obj = Tcl_GetObjResult(interp);
     if (Tcl_IsShared(obj))
 	obj = Tcl_DuplicateObj(obj);
 
     bu_vls_init(&privars->vls);
-    bu_vls_init(&dmp->dm_pathName);
-    bu_vls_init(&dmp->dm_tkName);
-    bu_vls_printf(&dmp->dm_pathName, ".dm_plot%d", count++);
-    bu_vls_printf(&dmp->dm_tkName, "dm_plot%d", count++);
+    bu_vls_init(&dmp->i->dm_pathName);
+    bu_vls_init(&dmp->i->dm_tkName);
+    bu_vls_printf(&dmp->i->dm_pathName, ".dm_plot%d", count++);
+    bu_vls_printf(&dmp->i->dm_tkName, "dm_plot%d", count++);
 
     /* skip first argument */
     --argc;
@@ -667,7 +668,7 @@ plot_open(void *vinterp, int argc, const char *argv[])
 		/* Enable Z clipping */
 		Tcl_AppendStringsToObj(obj, "Clipped in Z to viewing cube\n", (char *)NULL);
 
-		dmp->dm_zclip = 1;
+		dmp->i->dm_zclip = 1;
 		break;
 	    default:
 		Tcl_AppendStringsToObj(obj, "bad PLOT option ", argv[0], "\n", (char *)NULL);

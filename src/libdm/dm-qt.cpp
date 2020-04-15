@@ -52,7 +52,7 @@ Tcl_TimerToken token = NULL;
 HIDDEN bool
 qt_sendRepaintEvent(struct dm *dmp)
 {
-    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+    struct qt_vars *privars = (struct qt_vars *)dmp->i->dm_vars.priv_vars;
     QEvent e(QEvent::UpdateRequest);
     return privars->qapp->sendEvent(privars->win, &e);
 }
@@ -63,10 +63,10 @@ qt_sendRepaintEvent(struct dm *dmp)
 HIDDEN int
 qt_close(struct dm *dmp)
 {
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
-    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct qt_vars *privars = (struct qt_vars *)dmp->i->dm_vars.priv_vars;
 
-    if (dmp->dm_debugLevel) {
+    if (dmp->i->dm_debugLevel) {
 	bu_log("qt_close\n");
     }
 
@@ -79,11 +79,11 @@ qt_close(struct dm *dmp)
     privars->qapp->quit();
     Tk_DestroyWindow(pubvars->xtkwin);
 
-    bu_vls_free(&dmp->dm_pathName);
-    bu_vls_free(&dmp->dm_tkName);
-    bu_vls_free(&dmp->dm_dName);
-    bu_free((void *)dmp->dm_vars.priv_vars, "qt_close: qt_vars");
-    bu_free((void *)dmp->dm_vars.pub_vars, "qt_close: dm_xvars");
+    bu_vls_free(&dmp->i->dm_pathName);
+    bu_vls_free(&dmp->i->dm_tkName);
+    bu_vls_free(&dmp->i->dm_dName);
+    bu_free((void *)dmp->i->dm_vars.priv_vars, "qt_close: qt_vars");
+    bu_free((void *)dmp->i->dm_vars.pub_vars, "qt_close: dm_xvars");
     bu_free((void *)dmp, "qt_close: dmp");
 
     return TCL_OK;
@@ -93,9 +93,9 @@ qt_close(struct dm *dmp)
 HIDDEN int
 qt_drawBegin(struct dm *dmp)
 {
-    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+    struct qt_vars *privars = (struct qt_vars *)dmp->i->dm_vars.priv_vars;
 
-    if (dmp->dm_debugLevel) {
+    if (dmp->i->dm_debugLevel) {
 	bu_log("qt_drawBegin\n");
     }
 
@@ -105,7 +105,7 @@ qt_drawBegin(struct dm *dmp)
     privars->painter->setFont(*privars->font);
 
     if (privars->img != NULL && privars->drawFb == 1) {
-	privars->painter->drawImage(0, 0, *privars->img, 0, 0, dmp->dm_width - 1, dmp->dm_height - 1);
+	privars->painter->drawImage(0, 0, *privars->img, 0, 0, dmp->i->dm_width - 1, dmp->i->dm_height - 1);
     }
 
     return TCL_OK;
@@ -115,9 +115,9 @@ qt_drawBegin(struct dm *dmp)
 HIDDEN int
 qt_drawEnd(struct dm *dmp)
 {
-    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+    struct qt_vars *privars = (struct qt_vars *)dmp->i->dm_vars.priv_vars;
 
-    if (dmp->dm_debugLevel) {
+    if (dmp->i->dm_debugLevel) {
 	bu_log("qt_drawEnd\n");
     }
     privars->qapp->processEvents();
@@ -134,7 +134,7 @@ qt_drawEnd(struct dm *dmp)
 HIDDEN int
 qt_normal(struct dm *dmp)
 {
-    if (dmp->dm_debugLevel)
+    if (dmp->i->dm_debugLevel)
 	bu_log("qt_normal()\n");
 
     return TCL_OK;
@@ -147,9 +147,9 @@ qt_normal(struct dm *dmp)
 HIDDEN int
 qt_loadMatrix(struct dm *dmp, fastf_t *mat, int UNUSED(which_eye))
 {
-    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+    struct qt_vars *privars = (struct qt_vars *)dmp->i->dm_vars.priv_vars;
 
-    if (dmp->dm_debugLevel) {
+    if (dmp->i->dm_debugLevel) {
 	bu_log("qt_loadMatrix\n");
     }
 
@@ -167,9 +167,9 @@ HIDDEN int
 qt_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
 {
     int sx, sy;
-    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+    struct qt_vars *privars = (struct qt_vars *)dmp->i->dm_vars.priv_vars;
 
-    if (dmp->dm_debugLevel) {
+    if (dmp->i->dm_debugLevel) {
 	bu_log("qt_drawString2D\n");
     }
 
@@ -188,9 +188,9 @@ HIDDEN int
 qt_drawLine2D(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2)
 {
     int sx1, sy1, sx2, sy2;
-    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+    struct qt_vars *privars = (struct qt_vars *)dmp->i->dm_vars.priv_vars;
 
-    if (dmp->dm_debugLevel) {
+    if (dmp->i->dm_debugLevel) {
 	bu_log("qt_drawLine2D\n");
     }
 
@@ -211,9 +211,9 @@ HIDDEN int
 qt_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 {
     int sx, sy;
-    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+    struct qt_vars *privars = (struct qt_vars *)dmp->i->dm_vars.priv_vars;
 
-    if (dmp->dm_debugLevel) {
+    if (dmp->i->dm_debugLevel) {
 	bu_log("qt_drawPoint2D\n");
     }
 
@@ -240,9 +240,9 @@ qt_drawVList(struct dm *dmp, struct bn_vlist *vp)
     point_t *pt_prev = NULL;
     fastf_t dist_prev=1.0;
     fastf_t pointSize = DM_QT_DEFAULT_POINT_SIZE;
-    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+    struct qt_vars *privars = (struct qt_vars *)dmp->i->dm_vars.priv_vars;
 
-    if (dmp->dm_debugLevel) {
+    if (dmp->i->dm_debugLevel) {
 	bu_log("qt_drawVList\n");
     }
 
@@ -287,7 +287,7 @@ qt_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		case BN_VLIST_LINE_MOVE:
 		case BN_VLIST_TRI_MOVE:
 		    /* Move, not draw */
-		    if (dmp->dm_perspective > 0) {
+		    if (dmp->i->dm_perspective > 0) {
 			/* cannot apply perspective transformation to
 			 * points behind eye plane!!!!
 			 */
@@ -306,7 +306,7 @@ qt_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		    }
 
 		    lpnt[0] *= 2047;
-		    lpnt[1] *= 2047 * dmp->dm_aspect;
+		    lpnt[1] *= 2047 * dmp->i->dm_aspect;
 		    lpnt[2] *= 2047;
 		    continue;
 		case BN_VLIST_POLY_DRAW:
@@ -315,7 +315,7 @@ qt_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		case BN_VLIST_TRI_DRAW:
 		case BN_VLIST_TRI_END:
 		    /* draw */
-		    if (dmp->dm_perspective > 0) {
+		    if (dmp->i->dm_perspective > 0) {
 			dist = VDOT(*pt, &privars->qmat[12]) + privars->qmat[15];
 			if (dist <= 0.0) {
 			    if (dist_prev <= 0.0) {
@@ -349,7 +349,7 @@ qt_drawVList(struct dm *dmp, struct bn_vlist *vp)
 				VJOIN1(tmp_pt, *pt_prev, alpha, diff);
 				MAT4X3PNT(lpnt, privars->qmat, tmp_pt);
 				lpnt[0] *= 2047;
-				lpnt[1] *= 2047 * dmp->dm_aspect;
+				lpnt[1] *= 2047 * dmp->i->dm_aspect;
 				lpnt[2] *= 2047;
 				MAT4X3PNT(pnt, privars->qmat, *pt);
 				}
@@ -363,17 +363,17 @@ qt_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		    }
 
 		    pnt[0] *= 2047;
-		    pnt[1] *= 2047 * dmp->dm_aspect;
+		    pnt[1] *= 2047 * dmp->i->dm_aspect;
 		    pnt[2] *= 2047;
 
 		    /* save pnt --- it might get changed by clip() */
 		    VMOVE(spnt, pnt);
 		    pt_prev = pt;
 
-		    if (dmp->dm_zclip) {
+		    if (dmp->i->dm_zclip) {
 			if (vclip(lpnt, pnt,
-				  dmp->dm_clipmin,
-				  dmp->dm_clipmax) == 0) {
+				  dmp->i->dm_clipmin,
+				  dmp->i->dm_clipmax) == 0) {
 			    VMOVE(lpnt, spnt);
 			    continue;
 			}
@@ -397,12 +397,12 @@ qt_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		    }
 		    break;
 		case BN_VLIST_POINT_DRAW:
-		    if (dmp->dm_debugLevel > 2) {
+		    if (dmp->i->dm_debugLevel > 2) {
 			bu_log("before transformation:\n");
 			bu_log("pt - %lf %lf %lf\n", V3ARGS(*pt));
 		    }
 
-		    if (dmp->dm_perspective > 0) {
+		    if (dmp->i->dm_perspective > 0) {
 			dist = VDOT(*pt, &privars->qmat[12]) + privars->qmat[15];
 
 			if (dist <= 0.0) {
@@ -414,11 +414,11 @@ qt_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		    MAT4X3PNT(pnt, privars->qmat, *pt);
 
 		    pnt[0] *= 2047;
-		    pnt[1] *= 2047 * dmp->dm_aspect;
+		    pnt[1] *= 2047 * dmp->i->dm_aspect;
 		    pnt[2] *= 2047;
 		    VMOVE(lpnt, pnt);
 
-		    if (dmp->dm_debugLevel > 2) {
+		    if (dmp->i->dm_debugLevel > 2) {
 			bu_log("after clipping:\n");
 			bu_log("pt - %lf %lf %lf\n", pnt[X], pnt[Y], pnt[Z]);
 		    }
@@ -458,7 +458,7 @@ qt_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **da
 {
     struct bn_vlist *vp;
 
-    if (dmp->dm_debugLevel) {
+    if (dmp->i->dm_debugLevel) {
 	bu_log("qt_draw\n");
     }
 
@@ -481,15 +481,15 @@ qt_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **da
 HIDDEN int
 qt_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int UNUSED(strict), fastf_t UNUSED(transparency))
 {
-    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+    struct qt_vars *privars = (struct qt_vars *)dmp->i->dm_vars.priv_vars;
 
-    if (dmp->dm_debugLevel) {
+    if (dmp->i->dm_debugLevel) {
 	bu_log("qt_setFGColor\n");
     }
 
-    dmp->dm_fg[0] = r;
-    dmp->dm_fg[1] = g;
-    dmp->dm_fg[2] = b;
+    dmp->i->dm_fg[0] = r;
+    dmp->i->dm_fg[1] = g;
+    dmp->i->dm_fg[2] = b;
 
     privars->fg.setRgb(r, g, b);
 
@@ -506,18 +506,18 @@ qt_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b,
 HIDDEN int
 qt_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
-    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+    struct qt_vars *privars = (struct qt_vars *)dmp->i->dm_vars.priv_vars;
 
-    if (dmp->dm_debugLevel) {
+    if (dmp->i->dm_debugLevel) {
 	bu_log("qt_setBGColor\n");
     }
 
 
     privars->bg.setRgb(r, g, b);
 
-    dmp->dm_bg[0] = r;
-    dmp->dm_bg[1] = g;
-    dmp->dm_bg[2] = b;
+    dmp->i->dm_bg[0] = r;
+    dmp->i->dm_bg[1] = g;
+    dmp->i->dm_bg[2] = b;
 
     if (privars->pix == NULL)
 	return TCL_ERROR;
@@ -530,14 +530,14 @@ qt_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 HIDDEN int
 qt_setLineAttr(struct dm *dmp, int width, int style)
 {
-    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+    struct qt_vars *privars = (struct qt_vars *)dmp->i->dm_vars.priv_vars;
 
-    if (dmp->dm_debugLevel) {
+    if (dmp->i->dm_debugLevel) {
 	bu_log("qt_setLineAttr\n");
     }
 
-    dmp->dm_lineWidth = width;
-    dmp->dm_lineStyle = style;
+    dmp->i->dm_lineWidth = width;
+    dmp->i->dm_lineStyle = style;
 
     if (width <= 1)
 	width = 0;
@@ -559,13 +559,13 @@ qt_setLineAttr(struct dm *dmp, int width, int style)
 HIDDEN int
 qt_reshape(struct dm *dmp, int width, int height)
 {
-    if (dmp->dm_debugLevel) {
+    if (dmp->i->dm_debugLevel) {
 	bu_log("qt_reshape\n");
     }
 
-    dmp->dm_height = height;
-    dmp->dm_width = width;
-    dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
+    dmp->i->dm_height = height;
+    dmp->i->dm_width = width;
+    dmp->i->dm_aspect = (fastf_t)dmp->i->dm_width / (fastf_t)dmp->i->dm_height;
 
     return 0;
 }
@@ -574,15 +574,15 @@ qt_reshape(struct dm *dmp, int width, int height)
 HIDDEN int
 qt_configureWin(struct dm *dmp, int force)
 {
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
-    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct qt_vars *privars = (struct qt_vars *)dmp->i->dm_vars.priv_vars;
 
     int width = Tk_Width(pubvars->xtkwin);
     int height = Tk_Height(pubvars->xtkwin);
 
     if (!force &&
-	dmp->dm_height == height &&
-	dmp->dm_width == width)
+	dmp->i->dm_height == height &&
+	dmp->i->dm_width == width)
 	return TCL_OK;
 
     qt_reshape(dmp, width, height);
@@ -592,9 +592,9 @@ qt_configureWin(struct dm *dmp, int force)
     *privars->pix = privars->pix->scaled(width, height);
     privars->painter->begin(privars->pix);
 
-    if (dmp->dm_debugLevel) {
+    if (dmp->i->dm_debugLevel) {
 	bu_log("qt_configureWin()\n");
-	bu_log("width = %d, height = %d\n", dmp->dm_width, dmp->dm_height);
+	bu_log("width = %d, height = %d\n", dmp->i->dm_width, dmp->i->dm_height);
     }
 
     /* set font according to window size */
@@ -602,19 +602,19 @@ qt_configureWin(struct dm *dmp, int force)
 	privars->font = new QFont(QString(FONTBACK));
     }
 
-    if (dmp->dm_width < 582) {
+    if (dmp->i->dm_width < 582) {
 	if (privars->font->pointSize() != 5) {
 	    privars->font->setPointSize(5);
 	}
-    } else if (dmp->dm_width < 679) {
+    } else if (dmp->i->dm_width < 679) {
 	if (privars->font->pointSize() != 6) {
 	    privars->font->setPointSize(6);
 	}
-    } else if (dmp->dm_width < 776) {
+    } else if (dmp->i->dm_width < 776) {
 	if (privars->font->pointSize() != 7) {
 	    privars->font->setPointSize(7);
 	}
-    } else if (dmp->dm_width < 874) {
+    } else if (dmp->i->dm_width < 874) {
 	if (privars->font->pointSize() != 8) {
 	    privars->font->setPointSize(8);
 	}
@@ -631,16 +631,16 @@ qt_configureWin(struct dm *dmp, int force)
 HIDDEN int
 qt_setWinBounds(struct dm *dmp, fastf_t *w)
 {
-    if (dmp->dm_debugLevel) {
+    if (dmp->i->dm_debugLevel) {
 	bu_log("qt_setWinBounds\n");
     }
 
-    dmp->dm_clipmin[0] = w[0];
-    dmp->dm_clipmin[1] = w[2];
-    dmp->dm_clipmin[2] = w[4];
-    dmp->dm_clipmax[0] = w[1];
-    dmp->dm_clipmax[1] = w[3];
-    dmp->dm_clipmax[2] = w[5];
+    dmp->i->dm_clipmin[0] = w[0];
+    dmp->i->dm_clipmin[1] = w[2];
+    dmp->i->dm_clipmin[2] = w[4];
+    dmp->i->dm_clipmax[0] = w[1];
+    dmp->i->dm_clipmax[1] = w[3];
+    dmp->i->dm_clipmax[2] = w[5];
 
     return TCL_OK;
 }
@@ -649,11 +649,11 @@ qt_setWinBounds(struct dm *dmp, fastf_t *w)
 HIDDEN int
 qt_setZBuffer(struct dm *dmp, int zbuffer_on)
 {
-    if (dmp->dm_debugLevel) {
+    if (dmp->i->dm_debugLevel) {
 	bu_log("qt_setZBuffer\n");
     }
 
-    dmp->dm_zbuffer = zbuffer_on;
+    dmp->i->dm_zbuffer = zbuffer_on;
 
     return TCL_OK;
 }
@@ -662,7 +662,7 @@ qt_setZBuffer(struct dm *dmp, int zbuffer_on)
 HIDDEN int
 qt_debug(struct dm *dmp, int lvl)
 {
-    dmp->dm_debugLevel = lvl;
+    dmp->i->dm_debugLevel = lvl;
 
     return TCL_OK;
 }
@@ -671,7 +671,7 @@ qt_debug(struct dm *dmp, int lvl)
 HIDDEN int
 qt_logfile(struct dm *dmp, const char *filename)
 {
-    bu_vls_sprintf(&dmp->dm_log, "%s", filename);
+    bu_vls_sprintf(&dmp->i->dm_log, "%s", filename);
 
     return TCL_OK;
 }
@@ -680,11 +680,11 @@ qt_logfile(struct dm *dmp, const char *filename)
 HIDDEN int
 qt_getDisplayImage(struct dm *dmp, unsigned char **image)
 {
-    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+    struct qt_vars *privars = (struct qt_vars *)dmp->i->dm_vars.priv_vars;
     int i,j;
     int height, width;
 
-    if (dmp->dm_debugLevel) {
+    if (dmp->i->dm_debugLevel) {
 	bu_log("qt_getDisplayImage\n");
     }
 
@@ -705,10 +705,10 @@ qt_getDisplayImage(struct dm *dmp, unsigned char **image)
 HIDDEN int
 qt_setLight(struct dm *dmp, int light_on)
 {
-    if (dmp->dm_debugLevel)
+    if (dmp->i->dm_debugLevel)
 	bu_log("qt_setLight:\n");
 
-    dmp->dm_light = light_on;
+    dmp->i->dm_light = light_on;
 
     return TCL_OK;
 }
@@ -717,7 +717,7 @@ qt_setLight(struct dm *dmp, int light_on)
 HIDDEN void
 qt_processEvents(struct dm *dmp)
 {
-    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+    struct qt_vars *privars = (struct qt_vars *)dmp->i->dm_vars.priv_vars;
     privars->qapp->processEvents();
 }
 
@@ -728,7 +728,7 @@ qt_openFb(struct dm *dmp)
 
     struct fb_platform_specific *fb_ps;
     struct qt_fb_info *qtfb_ps;
-    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+    struct qt_vars *privars = (struct qt_vars *)dmp->i->dm_vars.priv_vars;
 
     fb_ps = fb_get_platform_specific(FB_QT_MAGIC);
     qtfb_ps = (struct qt_fb_info *)fb_ps->data;
@@ -738,7 +738,7 @@ qt_openFb(struct dm *dmp)
     qtfb_ps->draw = &privars->drawFb;
     qtfb_ps->qimg = (void **)&privars->img;
 
-    dmp->fbp = fb_open_existing("Qt", dm_get_width(dmp), dm_get_height(dmp), fb_ps);
+    dmp->i->fbp = fb_open_existing("Qt", dm_get_width(dmp), dm_get_height(dmp), fb_ps);
     fb_put_platform_specific(fb_ps);
     return 0;
 }
@@ -797,33 +797,33 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
     BU_ALLOC(dmp, struct dm);
 
     *dmp = dm_qt; /* struct copy */
-    dmp->dm_interp = interp;
+    dmp->i->dm_interp = interp;
 
-    BU_ALLOC(dmp->dm_vars.pub_vars, struct dm_xvars);
-    pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
+    BU_ALLOC(dmp->i->dm_vars.pub_vars, struct dm_xvars);
+    pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
 
-    BU_ALLOC(dmp->dm_vars.priv_vars, struct qt_vars);
-    privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+    BU_ALLOC(dmp->i->dm_vars.priv_vars, struct qt_vars);
+    privars = (struct qt_vars *)dmp->i->dm_vars.priv_vars;
 
-    bu_vls_init(&dmp->dm_pathName);
-    bu_vls_init(&dmp->dm_tkName);
-    bu_vls_init(&dmp->dm_dName);
+    bu_vls_init(&dmp->i->dm_pathName);
+    bu_vls_init(&dmp->i->dm_tkName);
+    bu_vls_init(&dmp->i->dm_dName);
 
     dm_processOptions(dmp, &init_proc_vls, --argc, ++argv);
 
-    if (bu_vls_strlen(&dmp->dm_pathName) == 0) {
-	bu_vls_printf(&dmp->dm_pathName, ".dm_qt%d", count);
+    if (bu_vls_strlen(&dmp->i->dm_pathName) == 0) {
+	bu_vls_printf(&dmp->i->dm_pathName, ".dm_qt%d", count);
     }
     ++count;
 
-    if (bu_vls_strlen(&dmp->dm_dName) == 0) {
+    if (bu_vls_strlen(&dmp->i->dm_dName) == 0) {
 	char *dp;
 
 	dp = getenv("DISPLAY");
 	if (dp)
-	    bu_vls_strcpy(&dmp->dm_dName, dp);
+	    bu_vls_strcpy(&dmp->i->dm_dName, dp);
 	else
-	    bu_vls_strcpy(&dmp->dm_dName, ":0.0");
+	    bu_vls_strcpy(&dmp->i->dm_dName, ":0.0");
     }
     if (bu_vls_strlen(&init_proc_vls) == 0) {
 	bu_vls_strcpy(&init_proc_vls, "bind_dm");
@@ -833,24 +833,24 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
     pubvars->devmotionnotify = LASTEvent;
     pubvars->devbuttonpress = LASTEvent;
     pubvars->devbuttonrelease = LASTEvent;
-    dmp->dm_aspect = 1.0;
+    dmp->i->dm_aspect = 1.0;
 
-    if (dmp->dm_top) {
+    if (dmp->i->dm_top) {
 	/* Make xtkwin a toplevel window */
 	pubvars->xtkwin = Tk_CreateWindowFromPath(interp, tkwin,
-						  bu_vls_addr(&dmp->dm_pathName),
-						  bu_vls_addr(&dmp->dm_dName));
+						  bu_vls_addr(&dmp->i->dm_pathName),
+						  bu_vls_addr(&dmp->i->dm_dName));
 	pubvars->top = pubvars->xtkwin;
     } else {
 	char *cp;
 
-	cp = strrchr(bu_vls_addr(&dmp->dm_pathName), (int)'.');
-	if (cp == bu_vls_addr(&dmp->dm_pathName)) {
+	cp = strrchr(bu_vls_addr(&dmp->i->dm_pathName), (int)'.');
+	if (cp == bu_vls_addr(&dmp->i->dm_pathName)) {
 	    pubvars->top = tkwin;
 	} else {
 	    struct bu_vls top_vls = BU_VLS_INIT_ZERO;
 
-	    bu_vls_strncpy(&top_vls, (const char *)bu_vls_addr(&dmp->dm_pathName), cp - bu_vls_addr(&dmp->dm_pathName));
+	    bu_vls_strncpy(&top_vls, (const char *)bu_vls_addr(&dmp->i->dm_pathName), cp - bu_vls_addr(&dmp->i->dm_pathName));
 
 	    pubvars->top = Tk_NameToWindow(interp, bu_vls_addr(&top_vls), tkwin);
 	    bu_vls_free(&top_vls);
@@ -863,14 +863,14 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
     }
 
     if (pubvars->xtkwin == NULL) {
-	bu_log("qt_open: Failed to open %s\n", bu_vls_addr(&dmp->dm_pathName));
+	bu_log("qt_open: Failed to open %s\n", bu_vls_addr(&dmp->i->dm_pathName));
 	(void)qt_close(dmp);
 	return DM_NULL;
     }
 
-    bu_vls_printf(&dmp->dm_tkName, "%s", (char *)Tk_Name(pubvars->xtkwin));
+    bu_vls_printf(&dmp->i->dm_tkName, "%s", (char *)Tk_Name(pubvars->xtkwin));
 
-    bu_vls_printf(&str, "_init_dm %s %s\n", bu_vls_addr(&init_proc_vls), bu_vls_addr(&dmp->dm_pathName));
+    bu_vls_printf(&str, "_init_dm %s %s\n", bu_vls_addr(&init_proc_vls), bu_vls_addr(&dmp->i->dm_pathName));
 
     if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
 	bu_log("qt_open: _init_dm failed\n");
@@ -887,37 +887,37 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
 
     /* make sure there really is a display before proceeding. */
     if (!pubvars->dpy) {
-	bu_log("qt_open: Unable to attach to display (%s)\n", bu_vls_addr(&dmp->dm_pathName));
+	bu_log("qt_open: Unable to attach to display (%s)\n", bu_vls_addr(&dmp->i->dm_pathName));
 	(void)qt_close(dmp);
 	return DM_NULL;
     }
 
-    if (dmp->dm_width == 0) {
-	dmp->dm_width =
+    if (dmp->i->dm_width == 0) {
+	dmp->i->dm_width =
 	    WidthOfScreen(Tk_Screen(pubvars->xtkwin)) - 30;
 	++make_square;
     }
 
-    if (dmp->dm_height == 0) {
-	dmp->dm_height =
+    if (dmp->i->dm_height == 0) {
+	dmp->i->dm_height =
 	    HeightOfScreen(Tk_Screen(pubvars->xtkwin)) - 30;
 	++make_square;
     }
 
     if (make_square > 0) {
 	/* Make window square */
-	if (dmp->dm_height <
-	    dmp->dm_width)
-	    dmp->dm_width = dmp->dm_height;
+	if (dmp->i->dm_height <
+	    dmp->i->dm_width)
+	    dmp->i->dm_width = dmp->i->dm_height;
 	else
-	    dmp->dm_height = dmp->dm_width;
+	    dmp->i->dm_height = dmp->i->dm_width;
     }
 
-    Tk_GeometryRequest(pubvars->xtkwin, dmp->dm_width, dmp->dm_height);
+    Tk_GeometryRequest(pubvars->xtkwin, dmp->i->dm_width, dmp->i->dm_height);
 
     Tk_MakeWindowExist(pubvars->xtkwin);
     pubvars->win = Tk_WindowId(pubvars->xtkwin);
-    dmp->dm_id = pubvars->win;
+    dmp->i->dm_id = pubvars->win;
 
     Tk_SetWindowBackground(pubvars->xtkwin, 0);
     Tk_MapWindow(pubvars->xtkwin);
@@ -925,10 +925,10 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
 
     privars->parent = QWindow::fromWinId(pubvars->win);
 
-    privars->pix = new QPixmap(dmp->dm_width, dmp->dm_height);
+    privars->pix = new QPixmap(dmp->i->dm_width, dmp->i->dm_height);
 
     privars->win = new QTkMainWindow(privars->pix, privars->parent, dmp);
-    privars->win->resize(dmp->dm_width, dmp->dm_height);
+    privars->win->resize(dmp->i->dm_width, dmp->i->dm_height);
     privars->win->show();
 
     privars->font = NULL;
@@ -965,7 +965,7 @@ Qt_zclip_hook(const struct bu_structparse *sdp,
     struct dm *dmp = (struct dm *)base;
     fastf_t bounds[6] = { GED_MIN, GED_MAX, GED_MIN, GED_MAX, GED_MIN, GED_MAX };
 
-    if (dmp->dm_zclip) {
+    if (dmp->i->dm_zclip) {
 	bounds[4] = -1.0;
 	bounds[5] = 1.0;
     }
@@ -987,7 +987,7 @@ struct bu_structparse Qt_vparse[] = {
 
 __END_DECLS
 
-struct dm dm_qt = {
+struct dm_impl dm_qt_impl = {
     qt_close,
     qt_drawBegin,
     qt_drawEnd,
@@ -1069,6 +1069,10 @@ struct dm dm_qt = {
     0				/* Tcl interpreter */
 };
 
+
+extern "C" {
+    struct dm dm_qt = { &dm_qt_impl };
+}
 
 /**
  * ================================================== Event bindings declaration ==========================================================

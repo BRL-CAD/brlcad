@@ -107,9 +107,11 @@ struct dm_hook_data {
     void *dmh_data;
 };
 
-/* Hide the dm structure behind a typedef */
-struct dm;
-
+/* The internals of the dm structure are hidden using the PImpl pattern*/
+struct dm_impl;
+struct dm {
+    struct dm_impl *i;
+};
 
 DM_EXPORT extern struct dm dm_ogl;
 DM_EXPORT extern struct dm dm_plot;

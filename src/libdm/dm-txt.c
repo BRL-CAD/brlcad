@@ -44,7 +44,7 @@ txt_open(void *interp, int argc, const char **argv)
     BU_ALLOC(dmp, struct dm);
 
     *dmp = dm_txt;
-    dmp->dm_interp = interp;
+    dmp->i->dm_interp = interp;
 
     bu_log("open called\n");
 
@@ -340,7 +340,7 @@ txt_openFb(struct dm *UNUSED(dmp))
 }
 
 
-struct dm dm_txt = {
+struct dm_impl dm_txt_impl = {
     txt_close,
     txt_drawBegin,
     txt_drawEnd,
@@ -421,6 +421,8 @@ struct dm dm_txt = {
     FB_NULL,
     0				/* Tcl interpreter */
 };
+
+struct dm dm_txt = { &dm_txt_impl };
 
 
 /*

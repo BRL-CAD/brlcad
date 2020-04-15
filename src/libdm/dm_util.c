@@ -38,10 +38,10 @@ drawLine3D(struct dm *dmp, point_t pt1, point_t pt2, const char *log_bu, float *
     static float black[4] = {0.0, 0.0, 0.0, 0.0};
     GLdouble pt[3];
 
-    if (dmp->dm_debugLevel)
+    if (dmp->i->dm_debugLevel)
 	bu_log("%s", log_bu);
 
-    if (dmp->dm_debugLevel) {
+    if (dmp->i->dm_debugLevel) {
 	GLfloat pmat[16];
 
 	glGetFloatv(GL_PROJECTION_MATRIX, pmat);
@@ -58,13 +58,13 @@ drawLine3D(struct dm *dmp, point_t pt1, point_t pt2, const char *log_bu, float *
 	bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
     }
 
-    if (dmp->dm_light) {
+    if (dmp->i->dm_light) {
 	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, wireColor);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
 
-	if (dmp->dm_transparency)
+	if (dmp->i->dm_transparency)
 	    glDisable(GL_BLEND);
     }
 
@@ -84,10 +84,10 @@ drawLines3D(struct dm *dmp, int npoints, point_t *points, int lflag, const char 
     register int i;
     static float black[4] = {0.0, 0.0, 0.0, 0.0};
 
-    if (dmp->dm_debugLevel)
+    if (dmp->i->dm_debugLevel)
 	bu_log("%s", log_bu);
 
-    if (dmp->dm_debugLevel) {
+    if (dmp->i->dm_debugLevel) {
 	GLfloat pmat[16];
 
 	glGetFloatv(GL_PROJECTION_MATRIX, pmat);
@@ -107,13 +107,13 @@ drawLines3D(struct dm *dmp, int npoints, point_t *points, int lflag, const char 
     if (npoints < 2 || (!lflag && npoints%2))
 	return BRLCAD_OK;
 
-    if (dmp->dm_light) {
+    if (dmp->i->dm_light) {
 	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, wireColor);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
 	glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
 
-	if (dmp->dm_transparency)
+	if (dmp->i->dm_transparency)
 	    glDisable(GL_BLEND);
     }
 
@@ -136,10 +136,10 @@ drawLines3D(struct dm *dmp, int npoints, point_t *points, int lflag, const char 
 int
 drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2, const char *log_bu)
 {
-    if (dmp->dm_debugLevel)
+    if (dmp->i->dm_debugLevel)
 	bu_log("%s", log_bu);
 
-    if (dmp->dm_debugLevel) {
+    if (dmp->i->dm_debugLevel) {
 	GLfloat pmat[16];
 
 	glGetFloatv(GL_PROJECTION_MATRIX, pmat);

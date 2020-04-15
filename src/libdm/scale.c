@@ -46,11 +46,11 @@ dm_draw_scale(struct dm *dmp,
     fastf_t ypos1, ypos2;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     /* Save the line attributes */
-    int saveLineWidth = dmp->dm_lineWidth;
-    int saveLineStyle = dmp->dm_lineStyle;
+    int saveLineWidth = dmp->i->dm_lineWidth;
+    int saveLineStyle = dmp->i->dm_lineStyle;
 
     /* Draw solid lines */
-    dm_set_line_attr(dmp, dmp->dm_lineWidth, 0);  /* solid lines */
+    dm_set_line_attr(dmp, dmp->i->dm_lineWidth, 0);  /* solid lines */
 
     bu_vls_printf(&vls, "%g", viewSize*0.5);
     soffset = (int)(strlen(bu_vls_addr(&vls)) * 0.5);
