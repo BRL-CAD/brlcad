@@ -70,7 +70,7 @@ struct dm_xvars {
     HFONT fontstruct;
     HDC  hdc;      /* device context of device that OpenGL calls are to be drawn on */
 #endif
-#if defined(DM_X) || defined (DM_OGL) || defined (DM_RTGL)
+#if defined(DM_X) || defined (DM_OGL)
     XVisualInfo *vip;
     XFontStruct *fontstruct;
 #endif

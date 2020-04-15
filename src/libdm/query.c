@@ -36,7 +36,7 @@
 
 
 int
-#if !defined(DM_WGL) && !defined(DM_RTGL) && !defined(DM_OGL) && !defined(DM_X)
+#if !defined(DM_WGL) && !defined(DM_OGL) && !defined(DM_X)
 dm_validXType(const char *UNUSED(dpy_string), const char *name)
 #else
 dm_validXType(const char *dpy_string, const char *name)
@@ -50,24 +50,6 @@ dm_validXType(const char *dpy_string, const char *name)
 	return 0;
 #endif /* DM_WGL */
     }
-
-    if (BU_STR_EQUAL(name, "rtgl")) {
-#ifdef DM_RTGL
-	Display *dpy;
-	int return_val;
-	if ((dpy = XOpenDisplay(dpy_string)) != NULL) {
-	    if (XQueryExtension(dpy, "GLX", &return_val, &return_val, &return_val)) {
-		XCloseDisplay(dpy);
-		return 1;
-	    }
-	    XCloseDisplay(dpy);
-	}
-#else
-	bu_log("Specified display type [%s] is not available in this compilation.", name);
-#endif /* DM_RTGL */
-	return 0;
-    }
-
     if (BU_STR_EQUAL(name, "ogl")) {
 #ifdef DM_OGL
 	Display *dpy;
@@ -115,7 +97,7 @@ dm_validXType(const char *dpy_string, const char *name)
   */
 
 char *
-#if !defined(DM_WGL) && !defined(DM_RTGL) && !defined(DM_OGL) && !defined(DM_OSGL) && !defined(DM_X)
+#if !defined(DM_WGL) && !defined(DM_OGL) && !defined(DM_OSGL) && !defined(DM_X)
 dm_bestXType(const char *UNUSED(dpy_string))
 #else
 dm_bestXType(const char *dpy_string)
@@ -165,25 +147,6 @@ dm_bestXType(const char *dpy_string)
 
 #ifdef DM_TK
     return "tk";
-#endif
-
-#ifdef DM_RTGL
-    {
-	if (dpy_string) {
-	Display *dpy;
-	int return_val;
-
-	if ((dpy = XOpenDisplay(dpy_string)) != NULL) {
-	    if (XQueryExtension(dpy, "GLX", &return_val, &return_val, &return_val)) {
-		XCloseDisplay(dpy);
-		return "rtgl";
-	    }
-	    XCloseDisplay(dpy);
-	}
-	} else {
-	    return "rtgl";
-	}
-    }
 #endif
 
     return "nu";

@@ -88,7 +88,6 @@ set(LIBDM_SRCS
   ${dmw32_srcs}
   ${dmogl_srcs}
   ${dmosg_srcs}
-  ${dmrtgl_srcs}
   ${dmtk_srcs}
   ${dmqt_srcs}
   adc.c

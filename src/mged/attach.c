@@ -54,9 +54,7 @@
 	IS_DM_TYPE_WGL(_type) || \
 	IS_DM_TYPE_OGL(_type) || \
 	IS_DM_TYPE_OSG(_type) || \
-	IS_DM_TYPE_RTGL(_type) || \
 	IS_DM_TYPE_GLX(_type) || \
-	IS_DM_TYPE_PEX(_type) || \
 	IS_DM_TYPE_TK(_type) || \
 	IS_DM_TYPE_X(_type) || \
 	IS_DM_TYPE_TXT(_type) || \
@@ -94,17 +92,9 @@ extern int Ogl_dm_init();
 extern int Osg_dm_init();
 #endif /* DM_OSG */
 
-#ifdef DM_RTGL
-extern int Rtgl_dm_init();
-#endif /* DM_RTGL */
-
 #ifdef DM_GLX
 extern int Glx_dm_init();
 #endif /* DM_GLX */
-
-#ifdef DM_PEX
-extern int Pex_dm_init();
-#endif /* DM_PEX */
 
 #ifdef DM_QT
 extern int Qt_dm_init();
@@ -229,12 +219,6 @@ struct w_dm which_dm[] = {
     { DM_TYPE_OSGL, "osgl", osgl_doevent },
 #  endif
 #endif /* DM_OSGL */
-#ifdef DM_RTGL
-    { DM_TYPE_RTGL, "rtgl", ogl_doevent },
-#endif /* DM_RTGL */
-#ifdef DM_PEX
-    { DM_TYPE_PEX, "pex", NULL},
-#endif /* DM_PEX */
 #ifdef DM_QT
     { DM_TYPE_QT, "qt", x_doevent },
 #endif /* DM_QT */
@@ -465,10 +449,6 @@ print_valid_dm(Tcl_Interp *interpreter)
     Tcl_AppendResult(interpreter, "osgl  ", (char *)NULL);
     i++;
 #endif /* DM_OSGL*/
-#ifdef DM_RTGL
-    Tcl_AppendResult(interpreter, "rtgl  ", (char *)NULL);
-    i++;
-#endif /* DM_RTGL */
 #ifdef DM_GLX
     Tcl_AppendResult(interpreter, "glx", (char *)NULL);
     i++;
@@ -822,11 +802,6 @@ f_dm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const cha
 	    Tcl_AppendResult(interpreter, "osgl", (char *)NULL);
 	}
 #endif /* DM_OSGL*/
-#ifdef DM_RTGL
-	if (BU_STR_EQUAL(argv[argc-1], "rtgl")) {
-	    Tcl_AppendResult(interpreter, "rtgl", (char *)NULL);
-	}
-#endif /* DM_RTGL */
 #ifdef DM_GLX
 	if (BU_STR_EQUAL(argv[argc-1], "glx")) {
 	    Tcl_AppendResult(interpreter, "glx", (char *)NULL);
