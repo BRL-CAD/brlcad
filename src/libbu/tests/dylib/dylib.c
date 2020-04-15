@@ -1,3 +1,16 @@
+/*                         D Y L I B . C
+ * BRL-CAD
+ *
+ * Published in 2020 by the United States Government.
+ * This work is in the public domain.
+ *
+ */
+/** @file dylib.c
+ *
+ * Mechanics of loading the plugins.
+ *
+ */
+
 #include "common.h"
 #include <string.h>
 

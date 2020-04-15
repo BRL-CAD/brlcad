@@ -1,3 +1,16 @@
+/*                    P L U G I N _ 2 . C P P
+ * BRL-CAD
+ *
+ * Published in 2020 by the United States Government.
+ * This work is in the public domain.
+ *
+ */
+/** @file plugin_2.cpp
+ *
+ * Sample plugin
+ *
+ */
+
 #include "common.h"
 
 #include <string>

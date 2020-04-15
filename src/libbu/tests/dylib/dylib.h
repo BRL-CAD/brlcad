@@ -1,3 +1,16 @@
+/*                         D Y L I B . H
+ * BRL-CAD
+ *
+ * Published in 2020 by the United States Government.
+ * This work is in the public domain.
+ *
+ */
+/** @file dylib.h
+ *
+ * Header defining data structures and functions common to plugins, as well as
+ * the libdylib API that wraps loading and unloading them.
+ */
+
 #include "common.h"
 #include "bu/ptbl.h"
 

@@ -1,3 +1,17 @@
+/*                           R U N . C
+ * BRL-CAD
+ *
+ * Published in 2020 by the United States Government.
+ * This work is in the public domain.
+ *
+ */
+/** @file run.c
+ *
+ * Program to load libdylib plugins and test that they
+ * work correctly.
+ *
+ */
+
 #include "common.h"
 #include "bu.h"
 #include "dylib.h"
