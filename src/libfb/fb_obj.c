@@ -307,8 +307,8 @@ fbo_refresh_tcl(void *clientData, int argc, const char **argv)
     if (argc == 2) {
 	/* refresh the whole display */
 	x = y = 0;
-	w = fbop->fbo_fbs.fbs_fbp->if_width;
-	h = fbop->fbo_fbs.fbs_fbp->if_height;
+	w = fbop->fbo_fbs.fbs_fbp->i->if_width;
+	h = fbop->fbo_fbs.fbs_fbp->i->if_height;
     } else if (sscanf(argv[2], "%d %d %d %d", &x, &y, &w, &h) != 4) {
 	/* refresh rectangular area */
 	bu_log("fb_refresh: bad rectangle - %s", argv[2]);

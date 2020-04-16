@@ -132,15 +132,15 @@ struct oglinfo {
 };
 
 
-#define WIN(ptr) ((struct wininfo *)((ptr)->u1.p))
-#define WINL(ptr) ((ptr)->u1.p)	/* left hand side version */
-#define OGL(ptr) ((struct oglinfo *)((ptr)->u6.p))
-#define OGLL(ptr) ((ptr)->u6.p)	/* left hand side version */
+#define WIN(ptr) ((struct wininfo *)((ptr)->i->u1.p))
+#define WINL(ptr) ((ptr)->i->u1.p)	/* left hand side version */
+#define OGL(ptr) ((struct oglinfo *)((ptr)->i->u6.p))
+#define OGLL(ptr) ((ptr)->i->u6.p)	/* left hand side version */
 #define if_mem u2.p		/* shared memory pointer */
 #define if_cmap u3.p		/* color map in shared memory */
-#define CMR(x) ((struct fb_cmap *)((x)->if_cmap))->cmr
-#define CMG(x) ((struct fb_cmap *)((x)->if_cmap))->cmg
-#define CMB(x) ((struct fb_cmap *)((x)->if_cmap))->cmb
+#define CMR(x) ((struct fb_cmap *)((x)->i->if_cmap))->cmr
+#define CMG(x) ((struct fb_cmap *)((x)->i->if_cmap))->cmg
+#define CMB(x) ((struct fb_cmap *)((x)->i->if_cmap))->cmb
 #define if_zoomflag u4.l	/* zoom > 1 */
 #define if_mode u5.l		/* see MODE_* defines */
 
@@ -231,7 +231,7 @@ backbuffer_to_screen(register struct fb *ifp, int one_y)
 	glDrawBuffer(GL_FRONT);
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
-	glPixelZoom((float) ifp->if_xzoom, (float) ifp->if_yzoom);
+	glPixelZoom((float) ifp->i->if_xzoom, (float) ifp->i->if_yzoom);
     }
 
     clp = &(OGL(ifp)->clip);
@@ -258,7 +258,7 @@ backbuffer_to_screen(register struct fb *ifp, int one_y)
 	 * than if_width
 	 */
 	/* Blank out area right of image */
-	if (clp->xscrmax >= OGL(ifp)->vp_width) glRecti(ifp->if_width - CLIP_XTRA,
+	if (clp->xscrmax >= OGL(ifp)->vp_width) glRecti(ifp->i->if_width - CLIP_XTRA,
 							clp->yscrmin - CLIP_XTRA,
 							clp->xscrmax + CLIP_XTRA,
 							clp->yscrmax + CLIP_XTRA);
@@ -348,14 +348,14 @@ ogl_xmit_scanlines(register struct fb *ifp, int ybase, int nlines, int xbase, in
 					  CLIP_XTRA);
 
 	    /* Blank out area right of image */
-	    if (clp->xscrmax >= ifp->if_width) glRecti(ifp->if_width - CLIP_XTRA,
+	    if (clp->xscrmax >= ifp->i->if_width) glRecti(ifp->i->if_width - CLIP_XTRA,
 						       clp->yscrmin - CLIP_XTRA,
 						       clp->xscrmax + CLIP_XTRA,
 						       clp->yscrmax + CLIP_XTRA);
 
 	    /* Blank out area above image */
-	    if (clp->yscrmax >= ifp->if_height) glRecti(clp->xscrmin - CLIP_XTRA,
-							ifp->if_height- CLIP_XTRA,
+	    if (clp->yscrmax >= ifp->i->if_height) glRecti(clp->xscrmin - CLIP_XTRA,
+							ifp->i->if_height- CLIP_XTRA,
 							clp->xscrmax + CLIP_XTRA,
 							clp->yscrmax + CLIP_XTRA);
 
@@ -387,14 +387,14 @@ ogl_xmit_scanlines(register struct fb *ifp, int ybase, int nlines, int xbase, in
 	    printf("Doing sw colormap xmit\n");
 
 	/* Perform software color mapping into temp scanline */
-	scanline = (struct fb_pixel *)calloc(ifp->if_width, sizeof(struct fb_pixel));
+	scanline = (struct fb_pixel *)calloc(ifp->i->if_width, sizeof(struct fb_pixel));
 	if (scanline == NULL) {
 	    fb_log("ogl_getmem: scanline memory malloc failed\n");
 	    return;
 	}
 
 	for (n=nlines; n>0; n--, y++) {
-	    oglp = (struct fb_pixel *)&ifp->if_mem[(y*WIN(ifp)->mi_pixwidth) * sizeof(struct fb_pixel)];
+	    oglp = (struct fb_pixel *)&ifp->i->if_mem[(y*WIN(ifp)->mi_pixwidth) * sizeof(struct fb_pixel)];
 	    for (x=xbase+npix-1; x>=xbase; x--) {
 		scanline[x].red   = CMR(ifp)[oglp[x].red];
 		scanline[x].green = CMG(ifp)[oglp[x].green];
@@ -416,7 +416,7 @@ ogl_xmit_scanlines(register struct fb *ifp, int ybase, int nlines, int xbase, in
 	glPixelStorei(GL_UNPACK_SKIP_ROWS, ybase);
 
 	glRasterPos2i(xbase, ybase);
-	glDrawPixels(npix, nlines, GL_BGRA_EXT, GL_UNSIGNED_BYTE, (const GLvoid *) ifp->if_mem);
+	glDrawPixels(npix, nlines, GL_BGRA_EXT, GL_UNSIGNED_BYTE, (const GLvoid *) ifp->i->if_mem);
     }
 }
 
@@ -477,20 +477,20 @@ ogl_getmem(struct fb *ifp)
 
     errno = 0;
 
-    pixsize = ifp->if_height * ifp->if_width * sizeof(struct fb_pixel);
+    pixsize = ifp->i->if_height * ifp->i->if_width * sizeof(struct fb_pixel);
 
     /* shared memory behaves badly if we try to allocate too much, so
      * arbitrarily constrain it to our default 1000x1000 size & samller.
      */
     if (pixsize > sizeof(struct fb_pixel)*1000*1000) {
 	/* let the user know */
-	ifp->if_mode |= MODE_1MALLOC;
+	ifp->i->if_mode |= MODE_1MALLOC;
 	/* fb_log("ogl_getmem: image too big for shared memory, using private\n"); */
     }
 
-    if ((ifp->if_mode & MODE_1MASK) == MODE_1MALLOC) {
+    if ((ifp->i->if_mode & MODE_1MASK) == MODE_1MALLOC) {
 	/* In this mode, only malloc as much memory as is needed. */
-	WIN(ifp)->mi_pixwidth = ifp->if_width;
+	WIN(ifp)->mi_pixwidth = ifp->i->if_width;
 	size = pixsize + sizeof(struct fb_cmap);
 
 	sp = (char *)calloc(1, size);
@@ -503,9 +503,9 @@ ogl_getmem(struct fb *ifp)
 
     } else {
 	/* The shared memory section never changes size */
-	WIN(ifp)->mi_pixwidth = ifp->if_max_width;
+	WIN(ifp)->mi_pixwidth = ifp->i->if_max_width;
 
-	pixsize = ifp->if_max_height * ifp->if_max_width * sizeof(struct fb_pixel);
+	pixsize = ifp->i->if_max_height * ifp->i->if_max_width * sizeof(struct fb_pixel);
 	size = pixsize + sizeof(struct fb_cmap);
 
 	shm_result = bu_shmget(&(WIN(ifp)->mi_shmid), &sp, SHMEM_KEY, size);
@@ -514,7 +514,7 @@ ogl_getmem(struct fb *ifp)
 	    memset(sp, 0, size); /* match calloc */
 	    new_mem = 1;
 	} else if (shm_result == 1) {
-	    ifp->if_mode |= MODE_1MALLOC;
+	    ifp->i->if_mode |= MODE_1MALLOC;
 	    fb_log("ogl_getmem:  Unable to attach to shared memory, using private\n");
 	    if ((sp = (char *)calloc(1, size)) == NULL) {
 		fb_log("ogl_getmem:  malloc failure\n");
@@ -524,8 +524,8 @@ ogl_getmem(struct fb *ifp)
 	}
     }
 
-    ifp->if_mem = sp;
-    ifp->if_cmap = sp + pixsize; /* cmap at end of area */
+    ifp->i->if_mem = sp;
+    ifp->i->if_cmap = sp + pixsize; /* cmap at end of area */
     i = CMB(ifp)[255];		 /* try to deref last word */
     CMB(ifp)[255] = i;
 
@@ -583,17 +583,17 @@ fb_clipper(register struct fb *ifp)
 
     clp = &(OGL(ifp)->clip);
 
-    i = OGL(ifp)->vp_width/(2*ifp->if_xzoom);
-    clp->xscrmin = ifp->if_xcenter - i;
-    i = OGL(ifp)->vp_width/ifp->if_xzoom;
+    i = OGL(ifp)->vp_width/(2*ifp->i->if_xzoom);
+    clp->xscrmin = ifp->i->if_xcenter - i;
+    i = OGL(ifp)->vp_width/ifp->i->if_xzoom;
     clp->xscrmax = clp->xscrmin + i;
     pixels = (double) i;
     clp->oleft = ((double) clp->xscrmin) - 0.25*pixels/((double) OGL(ifp)->vp_width);
     clp->oright = clp->oleft + pixels;
 
-    i = OGL(ifp)->vp_height/(2*ifp->if_yzoom);
-    clp->yscrmin = ifp->if_ycenter - i;
-    i = OGL(ifp)->vp_height/ifp->if_yzoom;
+    i = OGL(ifp)->vp_height/(2*ifp->i->if_yzoom);
+    clp->yscrmin = ifp->i->if_ycenter - i;
+    i = OGL(ifp)->vp_height/ifp->i->if_yzoom;
     clp->yscrmax = clp->yscrmin + i;
     pixels = (double) i;
     clp->obottom = ((double) clp->yscrmin) - 0.25*pixels/((double) OGL(ifp)->vp_height);
@@ -624,11 +624,11 @@ fb_clipper(register struct fb *ifp)
 	    clp->ypixmax = OGL(ifp)->vp_height-1;
 	}
     } else {
-	if (clp->xpixmax > ifp->if_width-1) {
-	    clp->xpixmax = ifp->if_width-1;
+	if (clp->xpixmax > ifp->i->if_width-1) {
+	    clp->xpixmax = ifp->i->if_width-1;
 	}
-	if (clp->ypixmax > ifp->if_height-1) {
-	    clp->ypixmax = ifp->if_height-1;
+	if (clp->ypixmax > ifp->i->if_height-1) {
+	    clp->ypixmax = ifp->i->if_height-1;
 	}
     }
 
@@ -660,13 +660,13 @@ expose_callback(struct fb *ifp)
 	    glDrawBuffer(GL_FRONT);
 	}
 
-	if ((ifp->if_mode & MODE_4MASK) == MODE_4NODITH) {
+	if ((ifp->i->if_mode & MODE_4MASK) == MODE_4NODITH) {
 	    glDisable(GL_DITHER);
 	}
 
 	/* set copy mode if possible and requested */
 	if (WIN(ifp)->mi_doublebuffer &&
-	    ((ifp->if_mode & MODE_11MASK)==MODE_11COPY)) {
+	    ((ifp->i->if_mode & MODE_11MASK)==MODE_11COPY)) {
 	    /* Copy mode only works if there are two
 	     * buffers to use. It conflicts with
 	     * double buffering
@@ -691,12 +691,12 @@ expose_callback(struct fb *ifp)
 	/* Set normal viewport size to minimum of actual window
 	 * size and requested framebuffer size
 	 */
-	OGL(ifp)->vp_width = (OGL(ifp)->win_width < ifp->if_width) ?
-	    OGL(ifp)->win_width : ifp->if_width;
-	OGL(ifp)->vp_height = (OGL(ifp)->win_height < ifp->if_height) ?
-	    OGL(ifp)->win_height : ifp->if_height;
-	ifp->if_xcenter = OGL(ifp)->vp_width/2;
-	ifp->if_ycenter = OGL(ifp)->vp_height/2;
+	OGL(ifp)->vp_width = (OGL(ifp)->win_width < ifp->i->if_width) ?
+	    OGL(ifp)->win_width : ifp->i->if_width;
+	OGL(ifp)->vp_height = (OGL(ifp)->win_height < ifp->i->if_height) ?
+	    OGL(ifp)->win_height : ifp->i->if_height;
+	ifp->i->if_xcenter = OGL(ifp)->vp_width/2;
+	ifp->i->if_ycenter = OGL(ifp)->vp_height/2;
 
 	/* center viewport in window */
 	WIN(ifp)->mi_xoff=(OGL(ifp)->win_width-OGL(ifp)->vp_width)/2;
@@ -712,9 +712,9 @@ expose_callback(struct fb *ifp)
 	glLoadIdentity();
 	glOrtho(clp->oleft, clp->oright, clp->obottom, clp->otop,
 		-1.0, 1.0);
-	glPixelZoom((float) ifp->if_xzoom, (float) ifp->if_yzoom);
-    } else if ((OGL(ifp)->win_width > ifp->if_width) ||
-	       (OGL(ifp)->win_height > ifp->if_height)) {
+	glPixelZoom((float) ifp->i->if_xzoom, (float) ifp->i->if_yzoom);
+    } else if ((OGL(ifp)->win_width > ifp->i->if_width) ||
+	       (OGL(ifp)->win_height > ifp->i->if_height)) {
 	/* clear whole buffer if window larger than framebuffer */
 	if (OGL(ifp)->copy_flag && !OGL(ifp)->front_flag) {
 	    glDrawBuffer(GL_FRONT);
@@ -737,7 +737,7 @@ expose_callback(struct fb *ifp)
     }
 
     /* repaint entire image */
-    ogl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
+    ogl_xmit_scanlines(ifp, 0, ifp->i->if_height, 0, ifp->i->if_width);
     if (WIN(ifp)->mi_doublebuffer) {
 	glXSwapBuffers(OGL(ifp)->dispp, OGL(ifp)->wind);
     } else if (OGL(ifp)->copy_flag) {
@@ -770,17 +770,17 @@ ogl_configureWindow(struct fb *ifp, int width, int height)
 	height == OGL(ifp)->win_height)
 	return 1;
 
-    ifp->if_width = ifp->if_max_width = width;
-    ifp->if_height = ifp->if_max_height = height;
+    ifp->i->if_width = ifp->i->if_max_width = width;
+    ifp->i->if_height = ifp->i->if_max_height = height;
 
     OGL(ifp)->win_width = OGL(ifp)->vp_width = width;
     OGL(ifp)->win_height = OGL(ifp)->vp_height = height;
 
-    ifp->if_zoomflag = 0;
-    ifp->if_xzoom = 1;
-    ifp->if_yzoom = 1;
-    ifp->if_xcenter = width/2;
-    ifp->if_ycenter = height/2;
+    ifp->i->if_zoomflag = 0;
+    ifp->i->if_xzoom = 1;
+    ifp->i->if_yzoom = 1;
+    ifp->i->if_xcenter = width/2;
+    ifp->i->if_ycenter = height/2;
 
     ogl_getmem(ifp);
     fb_clipper(ifp);
@@ -827,14 +827,14 @@ ogl_do_event(struct fb *ifp)
 				register struct fb_pixel *oglp;
 
 				x = event.xbutton.x;
-				y = ifp->if_height - event.xbutton.y - 1;
+				y = ifp->i->if_height - event.xbutton.y - 1;
 
 				if (x < 0 || y < 0) {
 				    fb_log("No RGB (outside image viewport)\n");
 				    break;
 				}
 
-				oglp = (struct fb_pixel *)&ifp->if_mem[
+				oglp = (struct fb_pixel *)&ifp->i->if_mem[
 				    (y*WIN(ifp)->mi_pixwidth)*
 				    sizeof(struct fb_pixel) ];
 
@@ -903,8 +903,8 @@ fb_ogl_choose_visual(struct fb *ifp)
     int m_hard_cmap, m_sing_buf, m_doub_buf;
     int use, rgba, dbfr;
 
-    m_hard_cmap = ((ifp->if_mode & MODE_7MASK)==MODE_7NORMAL);
-    m_sing_buf  = ((ifp->if_mode & MODE_9MASK)==MODE_9SINGLEBUF);
+    m_hard_cmap = ((ifp->i->if_mode & MODE_7MASK)==MODE_7NORMAL);
+    m_sing_buf  = ((ifp->i->if_mode & MODE_9MASK)==MODE_9SINGLEBUF);
     m_doub_buf =  !m_sing_buf;
 
     memset((void *)&_template, 0, sizeof(XVisualInfo));
@@ -1026,7 +1026,7 @@ fb_ogl_open(struct fb *ifp, const char *file, int width, int height)
     long valuemask;
     XSetWindowAttributes swa;
 
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
 
     /*
      * First, attempt to determine operating mode for this open,
@@ -1042,7 +1042,7 @@ fb_ogl_open(struct fb *ifp, const char *file, int width, int height)
 	int alpha;
 	struct modeflags *mfp;
 
-	if (bu_strncmp(file, ifp->if_name, strlen(ifp->if_name))) {
+	if (bu_strncmp(file, ifp->i->if_name, strlen(ifp->i->if_name))) {
 	    /* How did this happen? */
 	    mode = 0;
 	} else {
@@ -1081,9 +1081,9 @@ fb_ogl_open(struct fb *ifp, const char *file, int width, int height)
 	}
     }
 #if DIRECT_COLOR_VISUAL_ALLOWED
-    ifp->if_mode = mode;
+    ifp->i->if_mode = mode;
 #else
-    ifp->if_mode = mode|MODE_7SWCMAP;
+    ifp->i->if_mode = mode|MODE_7SWCMAP;
 #endif
 
     /*
@@ -1105,17 +1105,17 @@ fb_ogl_open(struct fb *ifp, const char *file, int width, int height)
 
     /* use defaults if invalid width and height specified */
     if (width <= 0)
-	width = ifp->if_width;
+	width = ifp->i->if_width;
     if (height <= 0)
-	height = ifp->if_height;
+	height = ifp->i->if_height;
     /* use max values if width and height are greater */
-    if (width > ifp->if_max_width)
-	width = ifp->if_max_width;
-    if (height > ifp->if_max_height)
-	height = ifp->if_max_height;
+    if (width > ifp->i->if_max_width)
+	width = ifp->i->if_max_width;
+    if (height > ifp->i->if_max_height)
+	height = ifp->i->if_max_height;
 
-    ifp->if_width = width;
-    ifp->if_height = height;
+    ifp->i->if_width = width;
+    ifp->i->if_height = height;
 
     /* Attach to shared memory, potentially with a screen repaint */
     if (ogl_getmem(ifp) < 0)
@@ -1125,19 +1125,19 @@ fb_ogl_open(struct fb *ifp, const char *file, int width, int height)
 
     /* Build a descriptive window title bar */
     snprintf(title, 128, "BRL-CAD /dev/ogl %s, %s",
-	     ((ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT) ?
+	     ((ifp->i->if_mode & MODE_2MASK) == MODE_2TRANSIENT) ?
 	     "Transient Win":
 	     "Lingering Win",
-	     ((ifp->if_mode & MODE_1MASK) == MODE_1MALLOC) ?
+	     ((ifp->i->if_mode & MODE_1MASK) == MODE_1MALLOC) ?
 	     "Private Mem" :
 	     "Shared Mem");
 
     /* initialize window state variables before calling ogl_getmem */
-    ifp->if_zoomflag = 0;
-    ifp->if_xzoom = 1;	/* for zoom fakeout */
-    ifp->if_yzoom = 1;	/* for zoom fakeout */
-    ifp->if_xcenter = width/2;
-    ifp->if_ycenter = height/2;
+    ifp->i->if_zoomflag = 0;
+    ifp->i->if_xzoom = 1;	/* for zoom fakeout */
+    ifp->i->if_yzoom = 1;	/* for zoom fakeout */
+    ifp->i->if_xcenter = width/2;
+    ifp->i->if_ycenter = height/2;
 
     /* Open an X connection to the display.  Sending NULL to XOpenDisplay
        tells it to use the DISPLAY environment variable. */
@@ -1145,7 +1145,7 @@ fb_ogl_open(struct fb *ifp, const char *file, int width, int height)
 	fb_log("fb_ogl_open: Failed to open display.  Check DISPLAY environment variable.\n");
 	return -1;
     }
-    ifp->if_selfd = ConnectionNumber(OGL(ifp)->dispp);
+    ifp->i->if_selfd = ConnectionNumber(OGL(ifp)->dispp);
     if (FB_DEBUG)
 	printf("Connection opened to X display on fd %d.\n", ConnectionNumber(OGL(ifp)->dispp));
 
@@ -1249,7 +1249,7 @@ fb_ogl_open(struct fb *ifp, const char *file, int width, int height)
 	OGL(ifp)->wind = XCreateWindowDebug(OGL(ifp)->dispp,
 					    RootWindow(OGL(ifp)->dispp,
 						       OGL(ifp)->vip->screen),
-					    0, 0, ifp->if_width, ifp->if_height, 0,
+					    0, 0, ifp->i->if_width, ifp->i->if_height, 0,
 					    OGL(ifp)->vip->depth,
 					    InputOutput,
 					    OGL(ifp)->vip->visual,
@@ -1258,7 +1258,7 @@ fb_ogl_open(struct fb *ifp, const char *file, int width, int height)
 	OGL(ifp)->wind = XCreateWindow(OGL(ifp)->dispp,
 				       RootWindow(OGL(ifp)->dispp,
 						  OGL(ifp)->vip->screen),
-				       0, 0, ifp->if_width, ifp->if_height, 0,
+				       0, 0, ifp->i->if_width, ifp->i->if_height, 0,
 				       OGL(ifp)->vip->depth,
 				       InputOutput,
 				       OGL(ifp)->vip->visual,
@@ -1286,7 +1286,7 @@ static int
 open_existing(struct fb *ifp, Display *dpy, Window win, Colormap cmap, XVisualInfo *vip, int width, int height, GLXContext glxc, int double_buffer, int soft_cmap)
 {
     /*XXX for now use private memory */
-    ifp->if_mode = MODE_1MALLOC;
+    ifp->i->if_mode = MODE_1MALLOC;
 
     /*
      * Allocate extension memory sections,
@@ -1307,8 +1307,8 @@ open_existing(struct fb *ifp, Display *dpy, Window win, Colormap cmap, XVisualIn
     /* default to no shared memory */
     WIN(ifp)->mi_shmid = -1;
 
-    ifp->if_width = ifp->if_max_width = width;
-    ifp->if_height = ifp->if_max_height = height;
+    ifp->i->if_width = ifp->i->if_max_width = width;
+    ifp->i->if_height = ifp->i->if_max_height = height;
 
     OGL(ifp)->win_width = OGL(ifp)->vp_width = width;
     OGL(ifp)->win_height = OGL(ifp)->vp_height = height;
@@ -1316,18 +1316,18 @@ open_existing(struct fb *ifp, Display *dpy, Window win, Colormap cmap, XVisualIn
     WIN(ifp)->mi_curs_on = 1;
 
     /* initialize window state variables before calling ogl_getmem */
-    ifp->if_zoomflag = 0;
-    ifp->if_xzoom = 1;	/* for zoom fakeout */
-    ifp->if_yzoom = 1;	/* for zoom fakeout */
-    ifp->if_xcenter = width/2;
-    ifp->if_ycenter = height/2;
+    ifp->i->if_zoomflag = 0;
+    ifp->i->if_xzoom = 1;	/* for zoom fakeout */
+    ifp->i->if_yzoom = 1;	/* for zoom fakeout */
+    ifp->i->if_xcenter = width/2;
+    ifp->i->if_ycenter = height/2;
 
     /* Attach to shared memory, potentially with a screen repaint */
     if (ogl_getmem(ifp) < 0)
 	return -1;
 
     OGL(ifp)->dispp = dpy;
-    ifp->if_selfd = ConnectionNumber(OGL(ifp)->dispp);
+    ifp->i->if_selfd = ConnectionNumber(OGL(ifp)->dispp);
 
     OGL(ifp)->vip = vip;
     OGL(ifp)->glxc = glxc;
@@ -1398,14 +1398,14 @@ ogl_close_existing(struct fb *ifp)
 	    errno = 0;
 
 	    /* detach from shared memory */
-	    if (shmdt(ifp->if_mem) == -1) {
+	    if (shmdt(ifp->i->if_mem) == -1) {
 		fb_log("fb_ogl_close: shmdt failed, errno=%d\n", errno);
 		perror("shmdt");
 		return -1;
 	    }
 	} else {
 	    /* free private memory */
-	    (void)free(ifp->if_mem);
+	    (void)free(ifp->i->if_mem);
 	}
 
 	/* free state information */
@@ -1448,13 +1448,13 @@ ogl_flush(struct fb *ifp)
     if (FB_DEBUG)
 	printf("flushing, copy flag is %d\n", OGL(ifp)->copy_flag);
 
-    if ((ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH) {
+    if ((ifp->i->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH) {
 	if (glXMakeCurrent(OGL(ifp)->dispp, OGL(ifp)->wind, OGL(ifp)->glxc)==False) {
 	    fb_log("Warning, ogl_flush: glXMakeCurrent unsuccessful.\n");
 	}
 
 	/* Send entire in-memory buffer to the screen, all at once */
-	ogl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
+	ogl_xmit_scanlines(ifp, 0, ifp->i->if_height, 0, ifp->i->if_width);
 	if (WIN(ifp)->mi_doublebuffer) {
 	    glXSwapBuffers(OGL(ifp)->dispp, OGL(ifp)->wind);
 	} else if (OGL(ifp)->copy_flag) {
@@ -1495,7 +1495,7 @@ fb_ogl_close(struct fb *ifp)
      * call final_close if not lingering
      */
     if (ogl_nwindows > 1 ||
-	(ifp->if_mode & MODE_2MASK) == MODE_2TRANSIENT)
+	(ifp->i->if_mode & MODE_2MASK) == MODE_2TRANSIENT)
 	return ogl_final_close(ifp);
 
     if (FB_DEBUG)
@@ -1546,7 +1546,7 @@ ogl_free(struct fb *ifp)
     /* Close the framebuffer */
     ret = ogl_final_close(ifp);
 
-    if ((ifp->if_mode & MODE_1MASK) == MODE_1SHARED) {
+    if ((ifp->i->if_mode & MODE_1MASK) == MODE_1SHARED) {
 	/* If shared mem, release the shared memory segment */
 	ogl_zapmem();
     }
@@ -1579,10 +1579,10 @@ ogl_clear(struct fb *ifp, unsigned char *pp)
     }
 
     /* Flood rectangle in shared memory */
-    for (y = 0; y < ifp->if_height; y++) {
-	oglp = (struct fb_pixel *)&ifp->if_mem[
+    for (y = 0; y < ifp->i->if_height; y++) {
+	oglp = (struct fb_pixel *)&ifp->i->if_mem[
 	    (y*WIN(ifp)->mi_pixwidth)*sizeof(struct fb_pixel) ];
-	for (cnt = ifp->if_width-1; cnt >= 0; cnt--) {
+	for (cnt = ifp->i->if_width-1; cnt >= 0; cnt--) {
 	    *oglp++ = bg;	/* struct copy */
 	}
     }
@@ -1638,25 +1638,25 @@ ogl_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 
     if (xzoom < 1) xzoom = 1;
     if (yzoom < 1) yzoom = 1;
-    if (ifp->if_xcenter == xcenter && ifp->if_ycenter == ycenter
-	&& ifp->if_xzoom == xzoom && ifp->if_yzoom == yzoom)
+    if (ifp->i->if_xcenter == xcenter && ifp->i->if_ycenter == ycenter
+	&& ifp->i->if_xzoom == xzoom && ifp->i->if_yzoom == yzoom)
 	return 0;
 
-    if (xcenter < 0 || xcenter >= ifp->if_width)
+    if (xcenter < 0 || xcenter >= ifp->i->if_width)
 	return -1;
-    if (ycenter < 0 || ycenter >= ifp->if_height)
+    if (ycenter < 0 || ycenter >= ifp->i->if_height)
 	return -1;
-    if (xzoom >= ifp->if_width || yzoom >= ifp->if_height)
+    if (xzoom >= ifp->i->if_width || yzoom >= ifp->i->if_height)
 	return -1;
 
-    ifp->if_xcenter = xcenter;
-    ifp->if_ycenter = ycenter;
-    ifp->if_xzoom = xzoom;
-    ifp->if_yzoom = yzoom;
+    ifp->i->if_xcenter = xcenter;
+    ifp->i->if_ycenter = ycenter;
+    ifp->i->if_xzoom = xzoom;
+    ifp->i->if_yzoom = yzoom;
 
-    if (ifp->if_xzoom > 1 || ifp->if_yzoom > 1)
-	ifp->if_zoomflag = 1;
-    else ifp->if_zoomflag = 0;
+    if (ifp->i->if_xzoom > 1 || ifp->i->if_yzoom > 1)
+	ifp->i->if_zoomflag = 1;
+    else ifp->i->if_zoomflag = 0;
 
 
     if (OGL(ifp)->use_ext_ctrl) {
@@ -1681,12 +1681,12 @@ ogl_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 	fb_clipper(ifp);
 	clp = &(OGL(ifp)->clip);
 	glOrtho(clp->oleft, clp->oright, clp->obottom, clp->otop, -1.0, 1.0);
-	glPixelZoom((float) ifp->if_xzoom, (float) ifp->if_yzoom);
+	glPixelZoom((float) ifp->i->if_xzoom, (float) ifp->i->if_yzoom);
 
 	if (OGL(ifp)->copy_flag) {
 	    backbuffer_to_screen(ifp, -1);
 	} else {
-	    ogl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
+	    ogl_xmit_scanlines(ifp, 0, ifp->i->if_height, 0, ifp->i->if_width);
 	    if (WIN(ifp)->mi_doublebuffer) {
 		glXSwapBuffers(OGL(ifp)->dispp, OGL(ifp)->wind);
 	    }
@@ -1707,10 +1707,10 @@ ogl_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
     if (FB_DEBUG)
 	printf("entering ogl_getview\n");
 
-    *xcenter = ifp->if_xcenter;
-    *ycenter = ifp->if_ycenter;
-    *xzoom = ifp->if_xzoom;
-    *yzoom = ifp->if_yzoom;
+    *xcenter = ifp->i->if_xcenter;
+    *ycenter = ifp->i->if_ycenter;
+    *xzoom = ifp->i->if_xzoom;
+    *yzoom = ifp->i->if_yzoom;
 
     return 0;
 }
@@ -1729,23 +1729,23 @@ ogl_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
     if (FB_DEBUG)
 	printf("entering ogl_read\n");
 
-    if (x < 0 || x >= ifp->if_width ||
-	y < 0 || y >= ifp->if_height)
+    if (x < 0 || x >= ifp->i->if_width ||
+	y < 0 || y >= ifp->i->if_height)
 	return -1;
 
     ret = 0;
     cp = (unsigned char *)(pixelp);
 
     while (count) {
-	if (y >= ifp->if_height)
+	if (y >= ifp->i->if_height)
 	    break;
 
-	if (count >= (size_t)(ifp->if_width-x))
-	    scan_count = ifp->if_width-x;
+	if (count >= (size_t)(ifp->i->if_width-x))
+	    scan_count = ifp->i->if_width-x;
 	else
 	    scan_count = count;
 
-	oglp = (struct fb_pixel *)&ifp->if_mem[
+	oglp = (struct fb_pixel *)&ifp->i->if_mem[
 	    (y*WIN(ifp)->mi_pixwidth+x)*sizeof(struct fb_pixel) ];
 
 	n = scan_count;
@@ -1761,7 +1761,7 @@ ogl_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 	count -= scan_count;
 	x = 0;
 	/* Advance upwards */
-	if (++y >= ifp->if_height)
+	if (++y >= ifp->i->if_height)
 	    break;
     }
     return ret;
@@ -1791,8 +1791,8 @@ ogl_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp, s
     x = xstart;
     ybase = y = ystart;
 
-    if (x < 0 || x >= ifp->if_width ||
-	y < 0 || y >= ifp->if_height)
+    if (x < 0 || x >= ifp->i->if_width ||
+	y < 0 || y >= ifp->i->if_height)
 	return -1;
 
     ret = 0;
@@ -1802,15 +1802,15 @@ ogl_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp, s
 	size_t n;
 	register struct fb_pixel *oglp;
 
-	if (y >= ifp->if_height)
+	if (y >= ifp->i->if_height)
 	    break;
 
-	if (pix_count >= (size_t)(ifp->if_width-x))
-	    scan_count = (size_t)(ifp->if_width-x);
+	if (pix_count >= (size_t)(ifp->i->if_width-x))
+	    scan_count = (size_t)(ifp->i->if_width-x);
 	else
 	    scan_count = pix_count;
 
-	oglp = (struct fb_pixel *)&ifp->if_mem[
+	oglp = (struct fb_pixel *)&ifp->i->if_mem[
 	    (y*WIN(ifp)->mi_pixwidth+x)*sizeof(struct fb_pixel) ];
 
 	n = scan_count;
@@ -1848,11 +1848,11 @@ ogl_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp, s
 	ret += scan_count;
 	pix_count -= scan_count;
 	x = 0;
-	if (++y >= ifp->if_height)
+	if (++y >= ifp->i->if_height)
 	    break;
     }
 
-    if ((ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH)
+    if ((ifp->i->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH)
 	return ret;
 
     if (!OGL(ifp)->use_ext_ctrl) {
@@ -1861,7 +1861,7 @@ ogl_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp, s
 	    fb_log("Warning, ogl_write: glXMakeCurrent unsuccessful.\n");
 	}
 
-	if (xstart + count < (size_t)ifp->if_width) {
+	if (xstart + count < (size_t)ifp->i->if_width) {
 	    ogl_xmit_scanlines(ifp, ybase, 1, xstart, count);
 	    if (WIN(ifp)->mi_doublebuffer) {
 		glXSwapBuffers(OGL(ifp)->dispp, OGL(ifp)->wind);
@@ -1873,11 +1873,11 @@ ogl_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp, s
 	    /* Normal case -- multi-pixel write */
 	    if (WIN(ifp)->mi_doublebuffer) {
 		/* refresh whole screen */
-		ogl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
+		ogl_xmit_scanlines(ifp, 0, ifp->i->if_height, 0, ifp->i->if_width);
 		glXSwapBuffers(OGL(ifp)->dispp, OGL(ifp)->wind);
 	    } else {
 		/* just write rectangle */
-		ogl_xmit_scanlines(ifp, ybase, y-ybase, 0, ifp->if_width);
+		ogl_xmit_scanlines(ifp, ybase, y-ybase, 0, ifp->i->if_width);
 		if (OGL(ifp)->copy_flag) {
 		    backbuffer_to_screen(ifp, -1);
 		}
@@ -1913,13 +1913,13 @@ ogl_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const u
 
     if (width <= 0 || height <= 0)
 	return 0;  /* do nothing */
-    if (xmin < 0 || xmin+width > ifp->if_width ||
-	ymin < 0 || ymin+height > ifp->if_height)
+    if (xmin < 0 || xmin+width > ifp->i->if_width ||
+	ymin < 0 || ymin+height > ifp->i->if_height)
 	return -1; /* no can do */
 
     cp = (unsigned char *)(pp);
     for (y = ymin; y < ymin+height; y++) {
-	oglp = (struct fb_pixel *)&ifp->if_mem[
+	oglp = (struct fb_pixel *)&ifp->i->if_mem[
 	    (y*WIN(ifp)->mi_pixwidth+xmin)*sizeof(struct fb_pixel) ];
 	for (x = xmin; x < xmin+width; x++) {
 	    /* alpha channel is always zero */
@@ -1931,7 +1931,7 @@ ogl_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const u
 	}
     }
 
-    if ((ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH)
+    if ((ifp->i->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH)
 	return width*height;
 
     if (!OGL(ifp)->use_ext_ctrl) {
@@ -1941,7 +1941,7 @@ ogl_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const u
 
 	if (WIN(ifp)->mi_doublebuffer) {
 	    /* refresh whole screen */
-	    ogl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
+	    ogl_xmit_scanlines(ifp, 0, ifp->i->if_height, 0, ifp->i->if_width);
 	    glXSwapBuffers(OGL(ifp)->dispp, OGL(ifp)->wind);
 	} else {
 	    /* just write rectangle*/
@@ -1978,13 +1978,13 @@ ogl_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, const
 
     if (width <= 0 || height <= 0)
 	return 0;  /* do nothing */
-    if (xmin < 0 || xmin+width > ifp->if_width ||
-	ymin < 0 || ymin+height > ifp->if_height)
+    if (xmin < 0 || xmin+width > ifp->i->if_width ||
+	ymin < 0 || ymin+height > ifp->i->if_height)
 	return -1; /* no can do */
 
     cp = (unsigned char *)(pp);
     for (y = ymin; y < ymin+height; y++) {
-	oglp = (struct fb_pixel *)&ifp->if_mem[
+	oglp = (struct fb_pixel *)&ifp->i->if_mem[
 	    (y*WIN(ifp)->mi_pixwidth+xmin)*sizeof(struct fb_pixel) ];
 	for (x = xmin; x < xmin+width; x++) {
 	    register int val;
@@ -1996,7 +1996,7 @@ ogl_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, const
 	}
     }
 
-    if ((ifp->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH)
+    if ((ifp->i->if_mode & MODE_12MASK) == MODE_12DELAY_WRITES_TILL_FLUSH)
 	return width*height;
 
     if (!OGL(ifp)->use_ext_ctrl) {
@@ -2006,7 +2006,7 @@ ogl_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, const
 
 	if (WIN(ifp)->mi_doublebuffer) {
 	    /* refresh whole screen */
-	    ogl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
+	    ogl_xmit_scanlines(ifp, 0, ifp->i->if_height, 0, ifp->i->if_width);
 	    glXSwapBuffers(OGL(ifp)->dispp, OGL(ifp)->wind);
 	} else {
 	    /* just write rectangle*/
@@ -2075,7 +2075,7 @@ ogl_wmap(register struct fb *ifp, register const ColorMap *cmp)
 		fb_log("Warning, ogl_wmap: glXMakeCurrent unsuccessful.\n");
 	    }
 
-	    ogl_xmit_scanlines(ifp, 0, ifp->if_height, 0, ifp->if_width);
+	    ogl_xmit_scanlines(ifp, 0, ifp->i->if_height, 0, ifp->i->if_width);
 	    if (WIN(ifp)->mi_doublebuffer) {
 		glXSwapBuffers(OGL(ifp)->dispp, OGL(ifp)->wind);
 	    } else if (OGL(ifp)->copy_flag) {
@@ -2109,14 +2109,14 @@ ogl_help(struct fb *ifp)
     struct modeflags *mfp;
     XVisualInfo *visual = OGL(ifp)->vip;
 
-    fb_log("Description: %s\n", ifp->if_type);
-    fb_log("Device: %s\n", ifp->if_name);
+    fb_log("Description: %s\n", ifp->i->if_type);
+    fb_log("Device: %s\n", ifp->i->if_name);
     fb_log("Max width height: %d %d\n",
-	   ifp->if_max_width,
-	   ifp->if_max_height);
+	   ifp->i->if_max_width,
+	   ifp->i->if_max_height);
     fb_log("Default width height: %d %d\n",
-	   ifp->if_width,
-	   ifp->if_height);
+	   ifp->i->if_width,
+	   ifp->i->if_height);
     fb_log("Usage: /dev/ogl[option letters]\n");
     for (mfp = modeflags; mfp->c != '\0'; mfp++) {
 	fb_log("   %c   %s\n", mfp->c, mfp->help);
@@ -2170,7 +2170,7 @@ ogl_help(struct fb *ifp)
 HIDDEN int
 ogl_setcursor(struct fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
 
     return 0;
 }
@@ -2204,26 +2204,26 @@ ogl_cursor(struct fb *ifp, int mode, int x, int y)
 					     CWSaveUnder | CWColormap, &xswa);
 	}
 
-	delta = ifp->if_width/ifp->if_xzoom/2;
-	xx = x - (ifp->if_xcenter - delta);
-	xx *= ifp->if_xzoom;
-	xx += ifp->if_xzoom/2;  /* center cursor */
+	delta = ifp->i->if_width/ifp->i->if_xzoom/2;
+	xx = x - (ifp->i->if_xcenter - delta);
+	xx *= ifp->i->if_xzoom;
+	xx += ifp->i->if_xzoom/2;  /* center cursor */
 
-	delta = ifp->if_height/ifp->if_yzoom/2;
-	xy = y - (ifp->if_ycenter - delta);
-	xy *= ifp->if_yzoom;
-	xy += ifp->if_yzoom/2;  /* center cursor */
+	delta = ifp->i->if_height/ifp->i->if_yzoom/2;
+	xy = y - (ifp->i->if_ycenter - delta);
+	xy *= ifp->i->if_yzoom;
+	xy += ifp->i->if_yzoom/2;  /* center cursor */
 	xy = OGL(ifp)->win_height - xy;
 
 	/* Move cursor into place; make it visible if it isn't */
 	XMoveWindow(OGL(ifp)->dispp, OGL(ifp)->cursor, xx - 4, xy - 4);
 
 	/* if cursor window is currently not mapped, map it */
-	if (!ifp->if_cursmode)
+	if (!ifp->i->if_cursmode)
 	    XMapRaised(OGL(ifp)->dispp, OGL(ifp)->cursor);
     } else {
 	/* If we have a cursor and it's mapped, unmap it */
-	if (OGL(ifp)->cursor && ifp->if_cursmode)
+	if (OGL(ifp)->cursor && ifp->i->if_cursmode)
 	    XUnmapWindow(OGL(ifp)->dispp, OGL(ifp)->cursor);
     }
 
@@ -2231,9 +2231,9 @@ ogl_cursor(struct fb *ifp, int mode, int x, int y)
     XFlush(OGL(ifp)->dispp);
 
     /* Update position of cursor */
-    ifp->if_cursmode = mode;
-    ifp->if_xcurs = x;
-    ifp->if_ycurs = y;
+    ifp->i->if_cursmode = mode;
+    ifp->i->if_xcurs = x;
+    ifp->i->if_ycurs = y;
 
     return 0;
 }
@@ -2264,7 +2264,7 @@ ogl_refresh(struct fb *ifp, int x, int y, int w, int h)
     fb_clipper(ifp);
     clp = &(OGL(ifp)->clip);
     glOrtho(clp->oleft, clp->oright, clp->obottom, clp->otop, -1.0, 1.0);
-    glPixelZoom((float) ifp->if_xzoom, (float) ifp->if_yzoom);
+    glPixelZoom((float) ifp->i->if_xzoom, (float) ifp->i->if_yzoom);
 
     glMatrixMode(GL_MODELVIEW);
     glPushMatrix();
@@ -2287,8 +2287,7 @@ ogl_refresh(struct fb *ifp, int x, int y, int w, int h)
 
 
 /* This is the ONLY thing that we normally "export" */
-struct fb ogl_interface =
-{
+struct fb_impl ogl_interface_impl =  {
     0,			/* magic number slot */
     FB_OGL_MAGIC,
     fb_ogl_open,	/* open device */
@@ -2345,6 +2344,8 @@ struct fb ogl_interface =
     {0}  /* u6 */
 };
 
+
+struct fb ogl_interface =  { &ogl_interface_impl };
 
 /* Because class is actually used to access a struct
  * entry in this file, preserve our redefinition

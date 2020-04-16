@@ -59,8 +59,8 @@
 #define NET_LONG_LEN 4	/* # bytes to network long */
 
 #define MAX_HOSTNAME 128
-#define PCP(ptr)	((struct pkg_conn *)((ptr)->u1.p))
-#define PCPL(ptr)	((ptr)->u1.p)	/* left hand side version */
+#define PCP(ptr)	((struct pkg_conn *)((ptr)->i->u1.p))
+#define PCPL(ptr)	((ptr)->i->u1.p)	/* left hand side version */
 
 
 /* Package Handlers. */
@@ -216,7 +216,7 @@ rem_open(register struct fb *ifp, const char *file, int width, int height)
     char device[MAX_HOSTNAME] = {0};
     int port = 0;
 
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
 
     if (file == NULL || parse_file(file, hostname, &port, device, MAX_HOSTNAME) < 0) {
 	/* too wild for our tastes */
@@ -242,7 +242,7 @@ rem_open(register struct fb *ifp, const char *file, int width, int height)
 	}
     }
     PCPL(ifp) = (char *)pc;		/* stash in u1 */
-    ifp->if_fd = pc->pkc_fd;		/* unused */
+    ifp->i->if_fd = pc->pkc_fd;		/* unused */
 
 #ifdef HAVE_SYS_SOCKET_H
     {
@@ -272,10 +272,10 @@ rem_open(register struct fb *ifp, const char *file, int width, int height)
     if (pkg_waitfor (MSG_RETURN, buf, sizeof(buf), pc) < 5*NET_LONG_LEN)
 	return -6;
 
-    ifp->if_max_width = ntohl(*(uint32_t *)&buf[1*NET_LONG_LEN]);
-    ifp->if_max_height = ntohl(*(uint32_t *)&buf[2*NET_LONG_LEN]);
-    ifp->if_width = ntohl(*(uint32_t *)&buf[3*NET_LONG_LEN]);
-    ifp->if_height = ntohl(*(uint32_t *)&buf[4*NET_LONG_LEN]);
+    ifp->i->if_max_width = ntohl(*(uint32_t *)&buf[1*NET_LONG_LEN]);
+    ifp->i->if_max_height = ntohl(*(uint32_t *)&buf[2*NET_LONG_LEN]);
+    ifp->i->if_width = ntohl(*(uint32_t *)&buf[3*NET_LONG_LEN]);
+    ifp->i->if_height = ntohl(*(uint32_t *)&buf[4*NET_LONG_LEN]);
 
     if (ntohl(*(uint32_t *)&buf[0*NET_LONG_LEN]) != 0)
 	return -7;		/* fail */
@@ -781,7 +781,7 @@ pkgerror(struct pkg_conn *UNUSED(pcpp), char *buf)
 }
 
 
-struct fb remote_interface = {
+struct fb_impl remote_interface_impl = {
     0,
     FB_REMOTE_MAGIC,
     rem_open,
@@ -838,6 +838,7 @@ struct fb remote_interface = {
     {0}  /* u6 */
 };
 
+struct fb remote_interface = { &remote_interface_impl };
 
 /*
  * Local Variables:

@@ -42,12 +42,12 @@
 int
 fb_sim_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
 
-    ifp->if_xcenter = xcenter;
-    ifp->if_ycenter = ycenter;
-    ifp->if_xzoom = xzoom;
-    ifp->if_yzoom = yzoom;
+    ifp->i->if_xcenter = xcenter;
+    ifp->i->if_ycenter = ycenter;
+    ifp->i->if_xzoom = xzoom;
+    ifp->i->if_yzoom = yzoom;
 
     return 0;
 }
@@ -60,12 +60,12 @@ fb_sim_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 int
 fb_sim_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
 
-    *xcenter = ifp->if_xcenter;
-    *ycenter = ifp->if_ycenter;
-    *xzoom = ifp->if_xzoom;
-    *yzoom = ifp->if_yzoom;
+    *xcenter = ifp->i->if_xcenter;
+    *ycenter = ifp->i->if_ycenter;
+    *xzoom = ifp->i->if_xzoom;
+    *yzoom = ifp->i->if_yzoom;
 
     return 0;
 }
@@ -78,11 +78,11 @@ fb_sim_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoo
 int
 fb_sim_cursor(struct fb *ifp, int mode, int x, int y)
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
 
-    ifp->if_cursmode = mode;
-    ifp->if_xcurs = x;
-    ifp->if_ycurs = y;
+    ifp->i->if_cursmode = mode;
+    ifp->i->if_xcurs = x;
+    ifp->i->if_ycurs = y;
 
     return 0;
 }
@@ -95,11 +95,11 @@ fb_sim_cursor(struct fb *ifp, int mode, int x, int y)
 int
 fb_sim_getcursor(struct fb *ifp, int *mode, int *x, int *y)
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
 
-    *mode = ifp->if_cursmode;
-    *x = ifp->if_xcurs;
-    *y = ifp->if_ycurs;
+    *mode = ifp->i->if_cursmode;
+    *x = ifp->i->if_xcurs;
+    *y = ifp->i->if_ycurs;
 
     return 0;
 }
@@ -111,7 +111,7 @@ int
 fb_reset(struct fb *ifp)
 {
     if (ifp) {
-	FB_CK_FB(ifp);
+	FB_CK_FB(ifp->i);
     }
 
     return 0;
@@ -122,7 +122,7 @@ int
 fb_viewport(struct fb *ifp, int UNUSED(left), int UNUSED(top), int UNUSED(right), int UNUSED(bottom))
 {
     if (ifp) {
-	FB_CK_FB(ifp);
+	FB_CK_FB(ifp->i);
     }
 
     return 0;
@@ -136,7 +136,7 @@ fb_window(struct fb *ifp, int x, int y)
     int xzoom, yzoom;
 
     if (ifp) {
-      FB_CK_FB(ifp);
+      FB_CK_FB(ifp->i);
       fb_getview(ifp, &xcenter, &ycenter, &xzoom, &yzoom);
       xcenter = x;
       ycenter = y;
@@ -154,7 +154,7 @@ fb_zoom(struct fb *ifp, int x, int y)
     int xzoom, yzoom;
 
     if (ifp) {
-      FB_CK_FB(ifp);
+      FB_CK_FB(ifp->i);
 
       fb_getview(ifp, &xcenter, &ycenter, &xzoom, &yzoom);
       xzoom = x;
@@ -170,7 +170,7 @@ int
 fb_scursor(struct fb *ifp, int UNUSED(mode), int UNUSED(x), int UNUSED(y))
 {
     if (ifp) {
-	FB_CK_FB(ifp);
+	FB_CK_FB(ifp->i);
     }
 
     /* We could actually implement this but it

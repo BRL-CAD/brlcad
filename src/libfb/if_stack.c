@@ -44,8 +44,8 @@
 struct stkinfo {
     struct fb *if_list[MAXIF];
 };
-#define SI(ptr) ((struct stkinfo *)((ptr)->u1.p))
-#define SIL(ptr) ((ptr)->u1.p)		/* left hand side version */
+#define SI(ptr) ((struct stkinfo *)((ptr)->i->u1.p))
+#define SIL(ptr) ((ptr)->i->u1.p)		/* left hand side version */
 
 
 HIDDEN int
@@ -55,10 +55,10 @@ stk_open(struct fb *ifp, const char *file, int width, int height)
     const char *cp;
     char devbuf[80];
 
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
 
     /* Check for /dev/stack */
-    if (bu_strncmp(file, ifp->if_name, strlen("/dev/stack")) != 0) {
+    if (bu_strncmp(file, ifp->i->if_name, strlen("/dev/stack")) != 0) {
 	fb_log("stack_dopen: Bad device %s\n", file);
 	return -1;
     }
@@ -79,8 +79,8 @@ stk_open(struct fb *ifp, const char *file, int width, int height)
 	return -1;
     }
 
-    ifp->if_width = ifp->if_max_width;
-    ifp->if_height = ifp->if_max_height;
+    ifp->i->if_width = ifp->i->if_max_width;
+    ifp->i->if_height = ifp->i->if_max_height;
     i = 0;
     while (i < MAXIF && *cp != '\0') {
 	register char *dp;
@@ -97,14 +97,14 @@ stk_open(struct fb *ifp, const char *file, int width, int height)
 	if ((fbp = fb_open(devbuf, width, height)) != FB_NULL) {
 	    FB_CK_FB(fbp);
 	    /* Track the minimum of all the actual sizes */
-	    if (fbp->if_width < ifp->if_width)
-		ifp->if_width = fbp->if_width;
-	    if (fbp->if_height < ifp->if_height)
-		ifp->if_height = fbp->if_height;
-	    if (fbp->if_max_width < ifp->if_max_width)
-		ifp->if_max_width = fbp->if_max_width;
-	    if (fbp->if_max_height < ifp->if_max_height)
-		ifp->if_max_height = fbp->if_max_height;
+	    if (fbp->i->if_width < ifp->i->if_width)
+		ifp->i->if_width = fbp->i->if_width;
+	    if (fbp->i->if_height < ifp->i->if_height)
+		ifp->i->if_height = fbp->i->if_height;
+	    if (fbp->i->if_max_width < ifp->i->if_max_width)
+		ifp->i->if_max_width = fbp->i->if_max_width;
+	    if (fbp->i->if_max_height < ifp->i->if_max_height)
+		ifp->i->if_max_height = fbp->i->if_max_height;
 	    SI(ifp)->if_list[i++] = fbp;
 	}
     }
@@ -158,7 +158,7 @@ stk_close(struct fb *ifp)
 {
     register struct fb **ip = SI(ifp)->if_list;
 
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
     while (*ip != (struct fb *)NULL) {
 	FB_CK_FB((*ip));
 	fb_close((*ip));
@@ -434,7 +434,7 @@ stk_help(struct fb *ifp)
 
 
 /* This is the ONLY thing that we normally "export" */
-struct fb stk_interface =  {
+struct fb_impl stk_interface_impl =  {
     0,
     FB_STK_MAGIC,
     stk_open,		/* device_open */
@@ -491,6 +491,7 @@ struct fb stk_interface =  {
     {0}  /* u6 */
 };
 
+struct fb stk_interface =  { &stk_interface_impl };
 
 /*
  * Local Variables:

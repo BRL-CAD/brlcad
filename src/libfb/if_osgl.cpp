@@ -461,7 +461,7 @@ is_linear_cmap(register struct fb *ifp)
 HIDDEN int
 fb_osgl_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
 
     ifp->if_mode = MODE_2LINGERING;
 
@@ -1027,7 +1027,7 @@ osgl_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp, 
     size_t pix_count;   /* # pixels to send */
     ssize_t ret;
 
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
 
     if (FB_DEBUG)
 	printf("entering osgl_write\n");
@@ -1384,7 +1384,7 @@ osgl_help(struct fb *ifp)
 HIDDEN int
 osgl_setcursor(struct fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
 
     // If it should ever prove desirable to alter the cursor or disable it, here's how it is done:
     // dynamic_cast<osgViewer::GraphicsWindow*>(camera->getGraphicsContext()))->setCursor(osgViewer::GraphicsWindow::NoCursor);

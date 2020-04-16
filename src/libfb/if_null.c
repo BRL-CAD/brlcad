@@ -40,12 +40,12 @@
 HIDDEN int
 _fb_null_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
 
     if (width > 0)
-	ifp->if_width = width;
+	ifp->i->if_width = width;
     if (height > 0)
-	ifp->if_height = height;
+	ifp->i->if_height = height;
 
     return 0;
 }
@@ -90,7 +90,7 @@ _fb_null_refresh(struct fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSE
 HIDDEN int
 _fb_null_close(struct fb *ifp)
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
 
     return 0;
 }
@@ -99,7 +99,7 @@ _fb_null_close(struct fb *ifp)
 HIDDEN int
 _fb_null_clear(struct fb *ifp, unsigned char *UNUSED(pp))
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
 
     return 0;
 }
@@ -108,7 +108,7 @@ _fb_null_clear(struct fb *ifp, unsigned char *UNUSED(pp))
 HIDDEN ssize_t
 _fb_null_read(struct fb *ifp, int UNUSED(x), int UNUSED(y), unsigned char *UNUSED(pixelp), size_t count)
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
 
     return count;
 }
@@ -117,7 +117,7 @@ _fb_null_read(struct fb *ifp, int UNUSED(x), int UNUSED(y), unsigned char *UNUSE
 HIDDEN ssize_t
 _fb_null_write(struct fb *ifp, int UNUSED(x), int UNUSED(y), const unsigned char *UNUSED(pixelp), size_t count)
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
 
     return count;
 }
@@ -126,7 +126,7 @@ _fb_null_write(struct fb *ifp, int UNUSED(x), int UNUSED(y), const unsigned char
 HIDDEN int
 _fb_null_rmap(struct fb *ifp, ColorMap *UNUSED(cmp))
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
 
     return 0;
 }
@@ -135,7 +135,7 @@ _fb_null_rmap(struct fb *ifp, ColorMap *UNUSED(cmp))
 HIDDEN int
 _fb_null_wmap(struct fb *ifp, const ColorMap *UNUSED(cmp))
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
 
     return 0;
 }
@@ -144,7 +144,7 @@ _fb_null_wmap(struct fb *ifp, const ColorMap *UNUSED(cmp))
 HIDDEN int
 _fb_null_view(struct fb *ifp, int UNUSED(xcenter), int UNUSED(ycenter), int UNUSED(xzoom), int UNUSED(yzoom))
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
 
     /*fb_sim_view(ifp, xcenter, ycenter, xzoom, yzoom);*/
     return 0;
@@ -154,7 +154,7 @@ _fb_null_view(struct fb *ifp, int UNUSED(xcenter), int UNUSED(ycenter), int UNUS
 HIDDEN int
 _fb_null_getview(struct fb *ifp, int *UNUSED(xcenter), int *UNUSED(ycenter), int *UNUSED(xzoom), int *UNUSED(yzoom))
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
 
     /*fb_sim_getview(ifp, xcenter, ycenter, xzoom, yzoom);*/
     return 0;
@@ -164,7 +164,7 @@ _fb_null_getview(struct fb *ifp, int *UNUSED(xcenter), int *UNUSED(ycenter), int
 HIDDEN int
 _fb_null_setcursor(struct fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
 
     return 0;
 }
@@ -173,7 +173,7 @@ _fb_null_setcursor(struct fb *ifp, const unsigned char *UNUSED(bits), int UNUSED
 HIDDEN int
 _fb_null_cursor(struct fb *ifp, int UNUSED(mode), int UNUSED(x), int UNUSED(y))
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
 
     /*fb_sim_cursor(ifp, mode, x, y);*/
     return 0;
@@ -183,7 +183,7 @@ _fb_null_cursor(struct fb *ifp, int UNUSED(mode), int UNUSED(x), int UNUSED(y))
 HIDDEN int
 _fb_null_getcursor(struct fb *ifp, int *UNUSED(mode), int *UNUSED(x), int *UNUSED(y))
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
 
     /*fb_sim_getcursor(ifp, mode, x, y);*/
     return 0;
@@ -193,7 +193,7 @@ _fb_null_getcursor(struct fb *ifp, int *UNUSED(mode), int *UNUSED(x), int *UNUSE
 HIDDEN int
 _fb_null_readrect(struct fb *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int height, unsigned char *UNUSED(pp))
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
 
     return width*height;
 }
@@ -202,7 +202,7 @@ _fb_null_readrect(struct fb *ifp, int UNUSED(xmin), int UNUSED(ymin), int width,
 HIDDEN int
 _fb_null_writerect(struct fb *ifp, int UNUSED(xmin), int UNUSED(ymin), int width, int height, const unsigned char *UNUSED(pp))
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
 
     return width*height;
 }
@@ -211,7 +211,7 @@ _fb_null_writerect(struct fb *ifp, int UNUSED(xmin), int UNUSED(ymin), int width
 HIDDEN int
 _fb_null_poll(struct fb *ifp)
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
 
     return 0;
 }
@@ -220,7 +220,7 @@ _fb_null_poll(struct fb *ifp)
 HIDDEN int
 _fb_null_flush(struct fb *ifp)
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
 
     return 0;
 }
@@ -229,7 +229,7 @@ _fb_null_flush(struct fb *ifp)
 HIDDEN int
 _fb_null_free(struct fb *ifp)
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
 
     return 0;
 }
@@ -238,23 +238,23 @@ _fb_null_free(struct fb *ifp)
 HIDDEN int
 _fb_null_help(struct fb *ifp)
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
 
-    fb_log("Description: %s\n", fb_null_interface.if_type);
-    fb_log("Device: %s\n", ifp->if_name);
+    fb_log("Description: %s\n", fb_null_interface.i->if_type);
+    fb_log("Device: %s\n", ifp->i->if_name);
     fb_log("Max width/height: %d %d\n",
-	   fb_null_interface.if_max_width,
-	   fb_null_interface.if_max_height);
+	   fb_null_interface.i->if_max_width,
+	   fb_null_interface.i->if_max_height);
     fb_log("Default width/height: %d %d\n",
-	   fb_null_interface.if_width,
-	   fb_null_interface.if_height);
+	   fb_null_interface.i->if_width,
+	   fb_null_interface.i->if_height);
     fb_log("Useful for Benchmarking/Debugging\n");
     return 0;
 }
 
 
 /* This is the ONLY thing that we normally "export" */
-struct fb fb_null_interface =  {
+struct fb_impl fb_null_interface_impl =  {
     0,
     FB_NULL_MAGIC,
     _fb_null_open,		/* device_open */
@@ -311,6 +311,7 @@ struct fb fb_null_interface =  {
     {0}  /* u6 */
 };
 
+struct fb fb_null_interface =  { &fb_null_interface_impl };
 
 /*
  * Local Variables:

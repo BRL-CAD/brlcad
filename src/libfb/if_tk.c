@@ -96,7 +96,7 @@ fb_tk_open(struct fb *ifp, const char *file, int width, int height)
     char *buffer;
     char *linebuffer;
 
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
     if (file == (char *)NULL)
 	fb_log("fb_open(0x%lx, NULL, %d, %d)\n",
 	       (unsigned long)ifp, width, height);
@@ -106,23 +106,23 @@ fb_tk_open(struct fb *ifp, const char *file, int width, int height)
 
     /* check for default size */
     if (width <= 0)
-	width = ifp->if_width;
+	width = ifp->i->if_width;
     if (height <= 0)
-	height = ifp->if_height;
+	height = ifp->i->if_height;
 
     /* set debug bit vector */
     if (file != NULL) {
 	const char *cp;
 	for (cp = file; *cp != '\0' && !isdigit((unsigned char)*cp); cp++)
 	    ;
-	sscanf(cp, "%d", &ifp->if_debug);
+	sscanf(cp, "%d", &ifp->i->if_debug);
     } else {
-	ifp->if_debug = 0;
+	ifp->i->if_debug = 0;
     }
 
     /* Give the user whatever width was asked for */
-    ifp->if_width = width;
-    ifp->if_height = height;
+    ifp->i->if_width = width;
+    ifp->i->if_height = height;
 
     fbinterp = Tcl_CreateInterp();
 
@@ -200,9 +200,9 @@ fb_tk_open(struct fb *ifp, const char *file, int width, int height)
      * down into libfb proper.  in the meantime, manually call
      * malloc()/free().
      */
-    buffer = (char *)malloc(sizeof(uint32_t)*3+ifp->if_width*3);
-    linebuffer = (char *)malloc(ifp->if_width*3);
-    tkwrite_buffer = (char *)malloc(ifp->if_width*3);
+    buffer = (char *)malloc(sizeof(uint32_t)*3+ifp->i->if_width*3);
+    linebuffer = (char *)malloc(ifp->i->if_width*3);
+    tkwrite_buffer = (char *)malloc(ifp->i->if_width*3);
 
     if (pipe(p) == -1) {
 	perror("pipe failed");
@@ -234,9 +234,9 @@ fb_tk_open(struct fb *ifp, const char *file, int width, int height)
 	    }
 
 	    /* Unpack inputs from pipe */
-	    count = read(p[0], buffer, sizeof(uint32_t)*3+ifp->if_width*3);
+	    count = read(p[0], buffer, sizeof(uint32_t)*3+ifp->i->if_width*3);
 	    memcpy(lines, buffer, sizeof(uint32_t)*3);
-	    memcpy(linebuffer, buffer+sizeof(uint32_t)*3, ifp->if_width*3);
+	    memcpy(linebuffer, buffer+sizeof(uint32_t)*3, ifp->i->if_width*3);
 	    y[0] = ntohl(lines[0]);
 	    count = ntohl(lines[1]);
 
@@ -247,12 +247,12 @@ fb_tk_open(struct fb *ifp, const char *file, int width, int height)
 	    line++;
 	    block.pixelPtr = (unsigned char *)linebuffer;
 	    block.width = count;
-	    block.pitch = 3 * ifp->if_width;
+	    block.pitch = 3 * ifp->i->if_width;
 
 #if defined(TK_MAJOR_VERSION) && TK_MAJOR_VERSION >= 8 && defined(TK_MINOR_VERSION) && TK_MINOR_VERSION >= 5
-	    Tk_PhotoPutBlock(fbinterp, fbphoto, &block, 0, ifp->if_height-y[0], count, 1, TK_PHOTO_COMPOSITE_SET);
+	    Tk_PhotoPutBlock(fbinterp, fbphoto, &block, 0, ifp->i->if_height-y[0], count, 1, TK_PHOTO_COMPOSITE_SET);
 #else
-	    Tk_PhotoPutBlock(fbinterp, &block, 0, ifp->if_height-y[0], count, 1, TK_PHOTO_COMPOSITE_SET);
+	    Tk_PhotoPutBlock(fbinterp, &block, 0, ifp->i->if_height-y[0], count, 1, TK_PHOTO_COMPOSITE_SET);
 #endif
 
 	    do {
@@ -324,7 +324,7 @@ fb_tk_close(struct fb *ifp)
     y[0] = -1;
     y[1] = 0;
     printf("Entering fb_tk_close\n");
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
     ret = write(p[1], y, sizeof(y));
     close(p[1]);
     printf("Sent write (ret=%d) from fb_tk_close\n", ret);
@@ -335,7 +335,7 @@ fb_tk_close(struct fb *ifp)
 HIDDEN int
 tk_clear(struct fb *ifp, unsigned char *pp)
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
     if (pp == 0)
 	fb_log("fb_clear(0x%lx, NULL)\n", (unsigned long)ifp);
     else
@@ -350,7 +350,7 @@ tk_clear(struct fb *ifp, unsigned char *pp)
 HIDDEN ssize_t
 tk_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
     fb_log("fb_read(0x%lx, %4d, %4d, 0x%lx, %ld)\n",
 	   (unsigned long)ifp, x, y,
 	   (unsigned long)pixelp, (long)count);
@@ -363,11 +363,11 @@ tk_write(struct fb *ifp, int UNUSED(x), int y, const unsigned char *pixelp, size
 {
     uint32_t line[3];
 
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
     /* Set local values of Tk_PhotoImageBlock */
     block.pixelPtr = (unsigned char *)pixelp;
     block.width = count;
-    block.pitch = 3 * ifp->if_width;
+    block.pitch = 3 * ifp->i->if_width;
 
     /* Pack values to be sent to parent */
     line[0] = htonl(y);
@@ -375,10 +375,10 @@ tk_write(struct fb *ifp, int UNUSED(x), int y, const unsigned char *pixelp, size
     line[2] = 0;
 
     memcpy(tkwrite_buffer, line, sizeof(uint32_t)*3);
-    memcpy(tkwrite_buffer+sizeof(uint32_t)*3, block.pixelPtr, 3 * ifp->if_width);
+    memcpy(tkwrite_buffer+sizeof(uint32_t)*3, block.pixelPtr, 3 * ifp->i->if_width);
 
     /* Send values and data to parent for display */
-    if (write(p[1], tkwrite_buffer, 3 * ifp->if_width + 3*sizeof(uint32_t)) == -1) {
+    if (write(p[1], tkwrite_buffer, 3 * ifp->i->if_width + 3*sizeof(uint32_t)) == -1) {
 	perror("Unable to write to pipe");
 	bu_snooze(BU_SEC2USEC(1));
     }
@@ -390,7 +390,7 @@ tk_write(struct fb *ifp, int UNUSED(x), int y, const unsigned char *pixelp, size
 HIDDEN int
 tk_rmap(struct fb *ifp, ColorMap *cmp)
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
     fb_log("fb_rmap(0x%lx, 0x%lx)\n",
 	   (unsigned long)ifp, (unsigned long)cmp);
     return 0;
@@ -402,7 +402,7 @@ tk_wmap(struct fb *ifp, const ColorMap *cmp)
 {
     int i;
 
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
     if (cmp == NULL)
 	fb_log("fb_wmap(0x%lx, NULL)\n",
 	       (unsigned long)ifp);
@@ -410,7 +410,7 @@ tk_wmap(struct fb *ifp, const ColorMap *cmp)
 	fb_log("fb_wmap(0x%lx, 0x%lx)\n",
 	       (unsigned long)ifp, (unsigned long)cmp);
 
-    if (ifp->if_debug & FB_DEBUG_CMAP && cmp != NULL) {
+    if (ifp->i->if_debug & FB_DEBUG_CMAP && cmp != NULL) {
 	for (i = 0; i < 256; i++) {
 	    fb_log("%3d: [ 0x%4lx, 0x%4lx, 0x%4lx ]\n",
 		   i,
@@ -427,7 +427,7 @@ tk_wmap(struct fb *ifp, const ColorMap *cmp)
 HIDDEN int
 tk_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
     fb_log("fb_view(%p, %4d, %4d, %4d, %4d)\n",
 	   (void *)ifp, xcenter, ycenter, xzoom, yzoom);
     fb_sim_view(ifp, xcenter, ycenter, xzoom, yzoom);
@@ -438,7 +438,7 @@ tk_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 HIDDEN int
 tk_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
     fb_log("fb_getview(%p, %p, %p, %p, %p)\n",
 	   (void *)ifp, (void *)xcenter, (void *)ycenter, (void *)xzoom, (void *)yzoom);
     fb_sim_getview(ifp, xcenter, ycenter, xzoom, yzoom);
@@ -451,7 +451,7 @@ tk_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 HIDDEN int
 tk_setcursor(struct fb *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
     fb_log("fb_setcursor(%p, %p, %d, %d, %d, %d)\n",
 	   (void *)ifp, (void *)bits, xbits, ybits, xorig, yorig);
     return 0;
@@ -471,7 +471,7 @@ tk_cursor(struct fb *ifp, int mode, int x, int y)
 HIDDEN int
 tk_getcursor(struct fb *ifp, int *mode, int *x, int *y)
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
     fb_log("fb_getcursor(%p, %p, %p, %p)\n",
 	   (void *)ifp, (void *)mode, (void *)x, (void *)y);
     fb_sim_getcursor(ifp, mode, x, y);
@@ -483,7 +483,7 @@ tk_getcursor(struct fb *ifp, int *mode, int *x, int *y)
 HIDDEN int
 tk_readrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
     fb_log("fb_readrect(0x%lx, (%4d, %4d), %4d, %4d, 0x%lx)\n",
 	   (unsigned long)ifp, xmin, ymin, width, height,
 	   (unsigned long)pp);
@@ -494,7 +494,7 @@ tk_readrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsigned 
 HIDDEN int
 tk_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
     fb_log("fb_writerect(0x%lx, %4d, %4d, %4d, %4d, 0x%lx)\n",
 	   (unsigned long)ifp, xmin, ymin, width, height,
 	   (unsigned long)pp);
@@ -505,7 +505,7 @@ tk_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const un
 HIDDEN int
 tk_bwreadrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
     fb_log("fb_bwreadrect(0x%lx, (%4d, %4d), %4d, %4d, 0x%lx)\n",
 	   (unsigned long)ifp, xmin, ymin, width, height,
 	   (unsigned long)pp);
@@ -516,7 +516,7 @@ tk_bwreadrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsigne
 HIDDEN int
 tk_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
     fb_log("fb_bwwriterect(0x%lx, %4d, %4d, %4d, %4d, 0x%lx)\n",
 	   (unsigned long)ifp, xmin, ymin, width, height,
 	   (unsigned long)pp);
@@ -527,7 +527,7 @@ tk_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, const 
 HIDDEN int
 tk_poll(struct fb *ifp)
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
     while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
     fb_log("fb_poll(0x%lx)\n", (unsigned long)ifp);
     return 0;
@@ -537,7 +537,7 @@ tk_poll(struct fb *ifp)
 HIDDEN int
 tk_flush(struct fb *ifp)
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
     fb_log("if_flush(0x%lx)\n", (unsigned long)ifp);
     return 0;
 }
@@ -546,7 +546,7 @@ tk_flush(struct fb *ifp)
 HIDDEN int
 tk_free(struct fb *ifp)
 {
-    FB_CK_FB(ifp);
+    FB_CK_FB(ifp->i);
     fb_log("fb_free(0x%lx)\n", (unsigned long)ifp);
     return 0;
 }
@@ -556,15 +556,15 @@ tk_free(struct fb *ifp)
 HIDDEN int
 tk_help(struct fb *ifp)
 {
-    FB_CK_FB(ifp);
-    fb_log("Description: %s\n", tk_interface.if_type);
-    fb_log("Device: %s\n", ifp->if_name);
+    FB_CK_FB(ifp->i);
+    fb_log("Description: %s\n", tk_interface.i->if_type);
+    fb_log("Device: %s\n", ifp->i->if_name);
     fb_log("Max width/height: %d %d\n",
-	   tk_interface.if_max_width,
-	   tk_interface.if_max_height);
+	   tk_interface.i->if_max_width,
+	   tk_interface.i->if_max_height);
     fb_log("Default width/height: %d %d\n",
-	   tk_interface.if_width,
-	   tk_interface.if_height);
+	   tk_interface.i->if_width,
+	   tk_interface.i->if_height);
     fb_log("\
 Usage: /dev/tk[#]\n\
   where # is a optional bit vector from:\n\
@@ -577,7 +577,7 @@ Usage: /dev/tk[#]\n\
 }
 
 /* This is the ONLY thing that we "export" */
-struct fb tk_interface = {
+struct fb_impl tk_interface_impl = {
     0,
     FB_TK_MAGIC,
     fb_tk_open,
@@ -634,6 +634,8 @@ struct fb tk_interface = {
     {0}  /* u6 */
 };
 
+
+struct fb tk_interface = { &tk_interface_impl };
 
 
 #else

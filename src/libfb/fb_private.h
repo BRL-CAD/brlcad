@@ -90,7 +90,7 @@ __BEGIN_DECLS
  * calls in the fb.h API - no code external to libfb should work
  * directly with structure members.
  */
-struct fb {
+struct fb_impl {
     uint32_t if_magic;
     uint32_t type_magic;
     /* Static information: per device TYPE.     */

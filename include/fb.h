@@ -90,8 +90,11 @@ typedef struct {
 #define RGBPIXEL_NULL (unsigned char *) 0
 #define COLORMAP_NULL (ColorMap *) 0
 
-/* Use a typedef to hide the details of the framebuffer structure */
-struct fb;
+/* The internals of the framebuffer structure are hidden using the PImpl pattern */
+struct fb_impl;
+struct fb {
+    struct fb_impl *i;
+};
 #define FB_NULL (struct fb *) 0
 
 /**
