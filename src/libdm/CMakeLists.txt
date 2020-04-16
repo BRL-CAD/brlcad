@@ -195,6 +195,7 @@ set(libdm_ignore_files
   wgl/dm-wgl.c
   wgl/dm-wgl.h
   wgl/if_wgl.c
+  include/calltable.h
   )
 CMAKEFILES(${libdm_ignore_files})
 CMAKEFILES(dm_private.h)
