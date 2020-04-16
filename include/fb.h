@@ -28,17 +28,9 @@
 #ifndef FB_H
 #define FB_H
 
-#ifndef FB_EXPORT
-#  if defined(FB_DLL_EXPORTS) && defined(FB_DLL_IMPORTS)
-#    error "Only FB_DLL_EXPORTS or FB_DLL_IMPORTS can be defined, not both."
-#  elif defined(FB_DLL_EXPORTS)
-#    define FB_EXPORT __declspec(dllexport)
-#  elif defined(FB_DLL_IMPORTS)
-#    define FB_EXPORT __declspec(dllimport)
-#  else
-#    define FB_EXPORT
-#  endif
-#endif
+#include "common.h"
+
+#include "./fb/defines.h"
 
 /*
  * Needed for fd_set, avoid including sys/select.h outright since it
@@ -47,7 +39,6 @@
  * FIXME: would be nice to decouple this interface from fd_set as it's
  * only used in one place right now.
  */
-#include "common.h"
 #if defined(HAVE_SYS_TYPES_H)
 #  include <sys/types.h>
 #endif
