@@ -31,7 +31,7 @@
 #include "vmath.h"
 #include "dm.h"
 
-#include "dm/calltable.h"
+#include "./include/calltable.h"
 
 #define DM_MIN (-2048)
 #define DM_MAX (2047)

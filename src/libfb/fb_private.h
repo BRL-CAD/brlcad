@@ -32,7 +32,7 @@
 #include <stdlib.h>
 
 #include "fb.h"
-#include "fb/calltable.h"
+#include "./include/calltable.h"
 
 /* declare all the possible interfaces */
 #ifdef IF_X

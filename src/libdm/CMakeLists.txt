@@ -157,6 +157,7 @@ set(libdm_ignore_files
   fontstash/stb_truetype.h
   osg-test.cpp
   osg_bob.cpp
+  include/calltable.h
   )
 CMAKEFILES(${libdm_ignore_files})
 CMAKEFILES(dm_private.h)
