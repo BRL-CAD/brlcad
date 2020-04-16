@@ -1,8 +1,10 @@
 set(fb_headers
   defines.h
+  calltable.h
   )
 BRLCAD_MANAGE_FILES(fb_headers ${INCLUDE_DIR}/brlcad/fb)
 
+# For libdm
 set(fb_noinstall_headers
   fb_ogl.h
   fb_osgl.h
