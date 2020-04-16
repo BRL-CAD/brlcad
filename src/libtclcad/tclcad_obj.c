@@ -41,6 +41,9 @@
 #include "png.h"
 
 #include "tcl.h"
+#ifdef HAVE_TK
+#  include "tk.h"
+#endif
 
 #include "bn.h"
 #include "bu/cmd.h"
@@ -63,27 +66,14 @@
 #include "icv/crop.h"
 #include "fb.h"
 
-#ifdef DM_X
-#  ifdef WITH_TK
-#    include "tk.h"
-#endif
-#  include <X11/Xutil.h>
-#endif /* DM_X */
-
-#ifdef DM_TK
-#  ifdef WITH_TK
-#    include "tk.h"
+#if defined(DM_OGL) || defined(DM_WGL)
+#  if defined(DM_WGL)
+#    include <tkwinport.h>
 #  endif
-#endif /* DM_TK */
-
-#ifdef DM_OGL
-#  include "fb/fb_ogl.h"
-#endif /* DM_OGL */
-
-#ifdef DM_WGL
-#  include <tkwinport.h>
-#  include "fb/fb_wgl.h"
-#endif /* DM_WGL */
+#  ifdef HAVE_GL_GL_H
+#    include <GL/gl.h>
+#  endif
+#endif
 
 /* Private headers */
 #include "tclcad_private.h"
