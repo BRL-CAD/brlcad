@@ -49,24 +49,24 @@
 #ifdef DM_X
 #  include "./dm_xvars.h"
 #  include <X11/Xutil.h>
-#  include "dm-X.h"
+#  include "X/dm-X.h"
 #endif /* DM_X */
 
 #ifdef DM_TK
 #  include "./dm_xvars.h"
 #  include "tk.h"
-#  include "dm-tk.h"
+#  include "tk/dm-tk.h"
 #endif /* DM_TK */
 
 #ifdef DM_OGL
 #  include "./dm_xvars.h"
-#  include "dm-ogl.h"
+#  include "glx/dm-ogl.h"
 #endif /* DM_OGL */
 
 #ifdef DM_WGL
 #  include "./dm_xvars.h"
 #  include <tkwinport.h>
-#  include "dm-wgl.h"
+#  include "wgl/dm-wgl.h"
 #endif /* DM_WGL */
 
 #ifdef USE_FBSERV

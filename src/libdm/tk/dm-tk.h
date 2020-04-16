@@ -26,6 +26,7 @@
 #ifndef DM_TK_H
 #define DM_TK_H
 
+#include "common.h"
 #include "tk.h"
 
 #define CMAP_BASE 40
@@ -44,10 +45,11 @@ struct tk_vars {
     unsigned long pixels[NUM_PIXELS];
     int tkfontset;
     Tk_Font tkfontstruct;
+    fastf_t ppmm_x;		/* pixel per mm in x */
+    fastf_t ppmm_y;		/* pixel per mm in y */
 };
 
 #endif /* DM_TK_H */
-
 /** @} */
 /*
  * Local Variables:

@@ -17,7 +17,7 @@ set(DM_INCLUDE_DIRS
   )
 
 # local includes
-set(DM_LOCAL_INCLUDE_DIRS ${PNG_INCLUDE_DIRS})
+set(DM_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/null ${PNG_INCLUDE_DIRS})
 
 BRLCAD_LIB_INCLUDE_DIRS(dm DM_INCLUDE_DIRS DM_LOCAL_INCLUDE_DIRS)
 
@@ -29,10 +29,10 @@ get_property(libdm_DEFINES GLOBAL PROPERTY libdm_DEFINES)
 # Add the individual OS specific files and definitions
 if(WIN32 AND BRLCAD_ENABLE_OPENGL)
   list(APPEND libdm_DEFINES DM_WGL IF_WGL)
-  set(dmw32_srcs dm-wgl.c if_wgl.c)
+  set(dmw32_srcs wgl/dm-wgl.c wgl/if_wgl.c)
   set(DM_EXTRA_LIBS ${DM_EXTRA_LIBS} ${OPENGL_LIBRARIES})
-  set_property(SOURCE dm-wgl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
-  set_property(SOURCE if_wgl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
+  set_property(SOURCE wgl/dm-wgl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
+  set_property(SOURCE wgl/if_wgl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 endif(WIN32 AND BRLCAD_ENABLE_OPENGL)
 
 if(BRLCAD_ENABLE_X11)
@@ -41,35 +41,35 @@ endif(BRLCAD_ENABLE_X11)
 
 if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
   list(APPEND libdm_DEFINES DM_X IF_X)
-  set(dmx11_srcs dm-X.c if_X24.c)
+  set(dmx11_srcs X/dm-X.c X/if_X24.c)
   set(DM_EXTRA_LIBS ${DM_EXTRA_LIBS} ${X11_LIBRARIES})
-  set_property(SOURCE dm-X.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
-  set_property(SOURCE if_X24.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
+  set_property(SOURCE X/dm-X.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
+  set_property(SOURCE X/if_X24.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 endif(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
 
 if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
   list(APPEND libdm_DEFINES DM_OGL IF_OGL)
-  set(dmogl_srcs dm-ogl.c if_ogl.c)
+  set(dmogl_srcs glx/dm-ogl.c glx/if_ogl.c)
   set(DM_EXTRA_LIBS ${DM_EXTRA_LIBS} ${OPENGL_LIBRARIES})
-  set_property(SOURCE dm-ogl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
-  set_property(SOURCE if_ogl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
+  set_property(SOURCE glx/dm-ogl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
+  set_property(SOURCE glx/if_ogl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 endif(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
 
 if(BRLCAD_ENABLE_TK AND NOT WIN32)
   list(APPEND libdm_DEFINES DM_TK IF_TK)
   set(DM_EXTRA_LIBS ${DM_EXTRA_LIBS} ${TCL_LIBRARY} ${TK_LIBRARY})
-  set(dmtk_srcs dm-tk.c if_tk.c)
-  set_property(SOURCE dm-tk.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
-  set_property(SOURCE if_tk.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
+  set(dmtk_srcs tk/dm-tk.c tk/if_tk.c)
+  set_property(SOURCE tk/dm-tk.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
+  set_property(SOURCE tk/if_tk.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 endif(BRLCAD_ENABLE_TK AND NOT WIN32)
 
 if(BRLCAD_ENABLE_QT)
   CHECK_CXX_FLAG(Wno-float-equal)
 
   list(APPEND libdm_DEFINES DM_QT IF_QT)
-  set(dmqt_srcs dm-qt.cpp if_qt.cpp)
-  set_property(SOURCE dm-qt.cpp APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
-  set_property(SOURCE if_qt.cpp APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
+  set(dmqt_srcs qt/dm-qt.cpp qt/if_qt.cpp)
+  set_property(SOURCE qt/dm-qt.cpp APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
+  set_property(SOURCE qt/if_qt.cpp APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
   set(CMAKE_AUTOMOC ON)
   set(CMAKE_INCLUDE_CURRENT_DIR ON)
   add_definitions(${Qt5Widgets_DEFINITIONS})
@@ -82,9 +82,9 @@ add_definitions(
   )
 if(BRLCAD_ENABLE_OSG AND BRLCAD_ENABLE_TK)
   list(APPEND libdm_DEFINES DM_OSGL IF_OSGL)
-  set(dmosg_srcs dm-osgl.cpp if_osgl.cpp)
-  set_property(SOURCE dm-osgl.cpp APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
-  set_property(SOURCE if_osgl.cpp APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
+  set(dmosg_srcs osgl/dm-osgl.cpp osgl/if_osgl.cpp)
+  set_property(SOURCE osgl/dm-osgl.cpp APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
+  set_property(SOURCE osgl/if_osgl.cpp APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
   set(OSG_LIBRARIES
     ${OPENGL_LIBRARIES}
     ${OSG_LIBRARY}
@@ -104,26 +104,20 @@ set(LIBDM_SRCS
   ${dmosg_srcs}
   ${dmtk_srcs}
   ${dmqt_srcs}
+  null/dm-Null.c
+  null/if_null.c
+  plot/dm-plot.c
+  postscript/dm-ps.c
+  txt/dm-txt.c
+  txt/if_debug.c
   adc.c
+  asize.c
   axes.c
   clip.c
   color.c
-  dm-Null.c
   dm-generic.c
-  dm-plot.c
-  dm-ps.c
   dm_obj.c
   dm_util.c
-  dm-txt.c
-  grid.c
-  knob.c
-  labels.c
-  options.c
-  query.c
-  rect.c
-  scale.c
-
-  asize.c
   fb_generic.c
   fb_log.c
   fb_obj.c
@@ -131,13 +125,17 @@ set(LIBDM_SRCS
   fb_rect.c
   fb_util.c
   fbserv_obj.c
-  if_debug.c
+  grid.c
   if_disk.c
   if_mem.c
-  if_null.c
   if_remote.c
   if_stack.c
-
+  knob.c
+  labels.c
+  options.c
+  query.c
+  rect.c
+  scale.c
   tcl.c
   vers.c
   )
@@ -163,40 +161,40 @@ set(libdm_ignore_files
   CMakeLists.txt
   README
   TODO
-  dm-Null.h
-  dm-X.c
-  dm-X.h
-  dm-glx.h
-  dm-ogl.c
-  dm-ogl.h
-  dm-osgl.cpp
-  dm-osgl.h
-  dm-plot.h
-  dm-ps.h
-  dm-qt.cpp
-  dm-qt.h
-  dm-tk.c
-  dm-tk.h
-  dm-wgl.c
-  dm-wgl.h
+  X/dm-X.c
+  X/dm-X.h
+  X/if_X24.c
   dm_private.h
   dm_xvars.h
-  if_TEMPLATE.c
-  if_X24.c
-  if_ogl.c
-  if_osgl.cpp
-  if_qt.cpp
-  if_tk.c
-  if_wgl.c
   fb_private.h
-  osg_fb_manipulator.h
   fontstash/LICENSE.fontstash
   fontstash/README.md
   fontstash/fontstash.h
   fontstash/glfontstash.h
   fontstash/stb_truetype.h
-  osg-test.cpp
-  osg_bob.cpp
+  glx/dm-glx.h
+  glx/dm-ogl.c
+  glx/dm-ogl.h
+  glx/if_ogl.c
+  if_TEMPLATE.c
+  null/dm-Null.h
+  osgl/dm-osgl.cpp
+  osgl/dm-osgl.h
+  osgl/if_osgl.cpp
+  osgl/osg-test.cpp
+  osgl/osg_bob.cpp
+  osgl/osg_fb_manipulator.h
+  plot/dm-plot.h
+  postscript/dm-ps.h
+  qt/dm-qt.cpp
+  qt/dm-qt.h
+  qt/if_qt.cpp
+  tk/dm-tk.c
+  tk/dm-tk.h
+  tk/if_tk.c
+  wgl/dm-wgl.c
+  wgl/dm-wgl.h
+  wgl/if_wgl.c
   )
 CMAKEFILES(${libdm_ignore_files})
 CMAKEFILES(dm_private.h)

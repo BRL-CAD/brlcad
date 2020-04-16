@@ -60,9 +60,8 @@
 #include "bn.h"
 #include "dm.h"
 #include "dm-tk.h"
-#include "dm-X.h"
 #include "dm-Null.h"
-#include "./dm_xvars.h"
+#include "../dm_xvars.h"
 #include "dm_private.h"
 #include "rt/solid.h"
 
