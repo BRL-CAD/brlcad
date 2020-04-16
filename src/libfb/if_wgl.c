@@ -55,6 +55,7 @@
 #include "tkPlatDecls.h"
 #include "bu/color.h"
 #include "bu/str.h"
+#include "bu/snooze.h"
 #include "bu/parallel.h"
 #include "rt/geom.h"
 #include "raytrace.h"
@@ -125,15 +126,15 @@ struct wglinfo {
 };
 
 
-#define WIN(ptr)	((struct wininfo *)((ptr)->u1.p))
-#define WINL(ptr)	((ptr)->u1.p)		/* left hand side version */
-#define WGL(ptr)	((struct wglinfo *)((ptr)->u6.p))
-#define WGLL(ptr)	((ptr)->u6.p)		/* left hand side version */
+#define WIN(ptr)	((struct wininfo *)((ptr)->i->u1.p))
+#define WINL(ptr)	((ptr)->i->u1.p)		/* left hand side version */
+#define WGL(ptr)	((struct wglinfo *)((ptr)->i->u6.p))
+#define WGLL(ptr)	((ptr)->i->u6.p)		/* left hand side version */
 #define if_mem		u2.p			/* shared memory pointer */
 #define if_cmap		u3.p			/* color map in shared memory */
-#define CMR(x)		((struct fb_cmap *)((x)->if_cmap))->cmr
-#define CMG(x)		((struct fb_cmap *)((x)->if_cmap))->cmg
-#define CMB(x)		((struct fb_cmap *)((x)->if_cmap))->cmb
+#define CMR(x)		((struct fb_cmap *)((x)->i->if_cmap))->cmr
+#define CMG(x)		((struct fb_cmap *)((x)->i->if_cmap))->cmg
+#define CMB(x)		((struct fb_cmap *)((x)->i->if_cmap))->cmb
 #define if_zoomflag	u4.l			/* zoom > 1 */
 #define if_mode		u5.l			/* see MODE_* defines */
 
