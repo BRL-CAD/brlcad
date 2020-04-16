@@ -33,7 +33,7 @@
 #include <sys/stat.h>
 #include <string.h>
 
-#include "fb.h"
+#include "dm.h"
 
 
 /* This table does not need to include any square sizes */

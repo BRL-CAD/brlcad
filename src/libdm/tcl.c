@@ -26,14 +26,24 @@
 #include "common.h"
 
 #include <math.h>
+#include <stdlib.h>
+#include <string.h>
+#include <ctype.h>
+
+#ifdef HAVE_STRINGS_H
+# include <strings.h>
+#endif
+
+
 #include "tcl.h"
 #include "vmath.h"
 #include "dm.h"
 #include "bu/cmd.h"
-
+#include "bu/log.h"
+#include "bu/vls.h"
+#include "fb_private.h"
 /* private headers */
 #include "brlcad_version.h"
-
 
 /* from libdm/query.c */
 extern int dm_validXType(const char *dpy_string, const char *name);
@@ -41,6 +51,9 @@ extern char *dm_bestXType(const char *dpy_string);
 
 /* from libdm/dm_obj.c */
 extern int Dmo_Init(Tcl_Interp *interp);
+
+/* from lib./fb_obj.c */
+extern int Fbo_Init(Tcl_Interp *interp);
 
 /* TODO: this doesn't belong in here, move to a globals.c or eliminate */
 int vectorThreshold = 100000;
@@ -102,6 +115,38 @@ dm_bestXType_tcl(void *clientData, int argc, const char **argv)
     return BRLCAD_ERROR;
 }
 
+/**
+ * Hook function wrapper to the fb_common_file_size Tcl command
+ */
+int
+fb_cmd_common_file_size(ClientData clientData, int argc, const char **argv)
+{
+    Tcl_Interp *interp = (Tcl_Interp *)clientData;
+    size_t width, height;
+    int pixel_size = 3;
+
+    if (argc != 2 && argc != 3) {
+	bu_log("wrong #args: should be \" fileName [#bytes/pixel]\"");
+	return TCL_ERROR;
+    }
+
+    if (argc >= 3) {
+	pixel_size = atoi(argv[2]);
+    }
+
+    if (fb_common_file_size(&width, &height, argv[1], pixel_size) > 0) {
+	struct bu_vls vls = BU_VLS_INIT_ZERO;
+	bu_vls_printf(&vls, "%lu %lu", (unsigned long)width, (unsigned long)height);
+	Tcl_SetObjResult(interp,
+			 Tcl_NewStringObj(bu_vls_addr(&vls), bu_vls_strlen(&vls)));
+	bu_vls_free(&vls);
+	return TCL_OK;
+    }
+
+    /* Signal error */
+    Tcl_SetResult(interp, "0 0", TCL_STATIC);
+    return TCL_OK;
+}
 
 static int
 wrapper_func(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
@@ -110,7 +155,6 @@ wrapper_func(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
 
     return ctp->ct_func(interp, argc, argv);
 }
-
 
 static void
 register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds)
@@ -131,6 +175,7 @@ Dm_Init(void *interpreter)
     static struct bu_cmdtab cmdtab[] = {
 	{"dm_validXType", dm_validXType_tcl},
 	{"dm_bestXType", dm_bestXType_tcl},
+	{"fb_common_file_size",	 fb_cmd_common_file_size},
 	{(const char *)NULL, BU_CMD_NULL}
     };
 
@@ -147,11 +192,14 @@ Dm_Init(void *interpreter)
     /* initialize display manager object code */
     Dmo_Init(interp);
 
+    /* initialize framebuffer object code */
+    Fbo_Init(interp);
+
     Tcl_PkgProvide(interp,  "Dm", brlcad_version());
+    Tcl_PkgProvide(interp,  "Fb", brlcad_version());
 
     return BRLCAD_OK;
 }
-
 
 /*
  * Local Variables:

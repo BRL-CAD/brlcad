@@ -43,7 +43,7 @@
 
 #include "bu/app.h"
 
-#include "fb/fb_osgl.h"
+#include "./fb_osgl.h"
 extern "C" {
 #include "fb_private.h"
 }

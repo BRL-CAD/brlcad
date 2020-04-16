@@ -556,9 +556,6 @@ gui_setup(const char *dstr)
     /* Initialize libdm */
     (void)Dm_Init(INTERP);
 
-    /* Initialize libstruct fb */
-    (void)Fb_Init(INTERP);
-
 #ifdef HAVE_TK
     if ((tkwin = Tk_MainWindow(INTERP)) == NULL) {
 	return TCL_ERROR;

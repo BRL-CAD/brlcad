@@ -24,7 +24,7 @@
 
 #include <stdio.h>
 
-#include "fb.h"
+#include "dm.h"
 
 struct fb *
 fb_open( name, w, h )

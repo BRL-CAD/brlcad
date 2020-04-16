@@ -50,7 +50,7 @@
 
 #include "vmath.h"
 #include "fb_private.h"
-#include "fb.h"
+#include "dm.h"
 
 /**
  * First element of list is default device when no name given

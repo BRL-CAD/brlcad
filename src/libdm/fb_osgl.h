@@ -65,7 +65,7 @@ extern "C" {
 #include "bu/malloc.h"
 #include "bu/parallel.h"
 #include "bu/str.h"
-#include "fb.h"
+#include "dm.h"
 #ifdef __cplusplus
 }
 #endif

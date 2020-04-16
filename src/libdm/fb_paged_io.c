@@ -34,7 +34,7 @@
 #include "bu/color.h"
 #include "bu/log.h"
 #include "fb_private.h"
-#include "fb.h"
+#include "dm.h"
 
 
 #define PAGE_BYTES (63*1024L)		/* Max # of bytes/dma. */

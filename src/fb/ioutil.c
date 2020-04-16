@@ -33,7 +33,7 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/path.h"
-#include "fb.h"
+#include "dm.h"
 
 
 HIDDEN void

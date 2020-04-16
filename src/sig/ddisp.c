@@ -33,7 +33,7 @@
 #include "bu/str.h"
 #include "bu/exit.h"
 #include "bu/snooze.h"
-#include "fb.h"
+#include "dm.h"
 
 
 #define VERT 1

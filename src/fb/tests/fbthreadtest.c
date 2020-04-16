@@ -18,7 +18,7 @@
  * information.
  *
  */
-/** @file fbthreadtest.c
+/** @file dm.hreadtest.c
  *
  * Throwaway program to test ideas about Tcl/Tk threading and framebuffer
  * display.
@@ -39,7 +39,7 @@
 #endif
 
 #include "bu/getopt.h"
-#include "fb.h"
+#include "dm.h"
 
 #include <tcl.h>
 #include <tk.h>

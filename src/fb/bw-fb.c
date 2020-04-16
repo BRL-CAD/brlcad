@@ -43,7 +43,7 @@
 #include "bu/exit.h"
 #include "bu/log.h"
 #include "vmath.h"
-#include "fb.h"
+#include "dm.h"
 
 
 int skipbytes(int fd, b_off_t num);

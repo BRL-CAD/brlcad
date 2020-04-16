@@ -31,8 +31,8 @@
 #include <limits.h> /* For INT_MAX */
 #include <stdlib.h>
 
-#include "fb.h"
-#include "fb/calltable.h"
+#include "dm.h"
+#include "dm/calltable.h"
 
 /* declare all the possible interfaces */
 #ifdef IF_X

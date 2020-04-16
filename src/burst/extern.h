@@ -31,7 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "fb.h"
+#include "dm.h"
 
 #include "./burst.h"
 #include "./trie.h"

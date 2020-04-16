@@ -32,7 +32,7 @@
 #include "bu/str.h"
 #include "bu/log.h"
 #include "fb_private.h"
-#include "fb.h"
+#include "dm.h"
 
 
 #define FILE_CMAP_SIZE ((size_t)ifp->i->if_width * ifp->i->if_height * sizeof(RGBpixel))

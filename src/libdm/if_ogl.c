@@ -82,8 +82,8 @@
 #include "bu/snooze.h"
 #include "bu/str.h"
 #include "fb_private.h"
-#include "fb.h"
-#include "fb/fb_ogl.h"
+#include "dm.h"
+#include "./fb_ogl.h"
 
 
 #define DIRECT_COLOR_VISUAL_ALLOWED 0

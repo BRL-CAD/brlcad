@@ -30,7 +30,7 @@
 
 #include "bu/exit.h"
 #include "bn/spm.h"
-#include "fb.h"
+#include "dm.h"
 
 
 int

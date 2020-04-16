@@ -64,7 +64,7 @@
 #include "icv/io.h"
 #include "icv/ops.h"
 #include "icv/crop.h"
-#include "fb.h"
+#include "dm.h"
 
 #if defined(DM_OGL) || defined(DM_WGL)
 #  if defined(DM_WGL)

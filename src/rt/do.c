@@ -45,7 +45,7 @@
 #include "bu/vls.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "fb.h"
+#include "dm.h"
 #include "icv.h"
 
 #include "./rtuif.h"

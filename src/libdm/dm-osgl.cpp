@@ -54,11 +54,11 @@
 #include "dm.h"
 #include "dm-Null.h"
 #include "./dm_xvars.h"
-#include "fb.h"
+#include "dm.h"
 #include "rt/solid.h"
 #include "./dm_private.h"
 
-#include "fb/fb_osgl.h"
+#include "./fb_osgl.h"
 #include "dm-osgl.h"
 
 /* For Tk, we need to offset when thinking about screen size in

@@ -79,8 +79,8 @@
 #include "dm-ogl.h"
 #include "dm-Null.h"
 #include "./dm_xvars.h"
-#include "fb.h"
-#include "fb/fb_ogl.h"
+#include "dm.h"
+#include "./fb_ogl.h"
 #include "rt/solid.h"
 
 #include "./dm_private.h"

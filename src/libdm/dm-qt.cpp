@@ -40,7 +40,7 @@
 #include "dm_private.h"
 #include "./dm_xvars.h"
 #include "dm-Null.h"
-#include "fb/fb_qt.h"
+#include "./fb_qt.h"
 
 #define DM_QT_DEFAULT_POINT_SIZE 1.0
 

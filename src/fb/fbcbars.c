@@ -65,7 +65,7 @@
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"
-#include "fb.h"
+#include "dm.h"
 
 
 #define MAX_LINE (8*1024)	/* Max pixels/line */

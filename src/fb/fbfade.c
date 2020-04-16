@@ -61,7 +61,7 @@
 
 #include "bu/getopt.h"
 #include "vmath.h"
-#include "fb.h"			/* BRL-CAD package libfb.a interface */
+#include "dm.h"			/* BRL-CAD package libfb.a interface */
 #include "pkg.h"
 
 

@@ -37,7 +37,7 @@
 #  include <winsock.h>
 #endif
 
-#include "fb.h"
+#include "dm.h"
 #include "ged.h"
 
 

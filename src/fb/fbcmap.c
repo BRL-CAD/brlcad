@@ -33,7 +33,7 @@
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "bu/snooze.h"
-#include "fb.h"
+#include "dm.h"
 #include "pkg.h"
 
 

@@ -39,7 +39,7 @@
 #include "raytrace.h"
 #include "dm.h"
 
-#include "fb.h"
+#include "dm.h"
 #include "fb_private.h"
 
 

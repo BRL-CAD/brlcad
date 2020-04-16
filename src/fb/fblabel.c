@@ -35,7 +35,7 @@
 #include "bu/getopt.h"
 #include "bu/exit.h"
 #include "bu/vfont.h"
-#include "fb.h"
+#include "dm.h"
 #include "pkg.h"
 
 

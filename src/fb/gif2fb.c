@@ -45,7 +45,7 @@
 #include "bu/getopt.h"
 #include "bu/exit.h"
 #include "vmath.h"
-#include "fb.h"
+#include "dm.h"
 
 
 #define LSB 0 /* Least Significant Byte */

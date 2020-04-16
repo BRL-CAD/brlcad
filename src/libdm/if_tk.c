@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libstruct fb */
+/** @addtogroup libfb */
 /** @{ */
 /** @file if_tk.c
  *
@@ -44,7 +44,7 @@
 #include "bu/snooze.h"
 
 #include "fb_private.h"
-#include "fb.h"
+#include "dm.h"
 
 
 Tcl_Interp *fbinterp;

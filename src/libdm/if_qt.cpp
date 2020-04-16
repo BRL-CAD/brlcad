@@ -34,9 +34,9 @@
 #include <sys/types.h>
 #include <ctype.h>
 
-#include "fb.h"
+#include "dm.h"
 #include "fb_private.h"
-#include "fb/fb_qt.h"
+#include "./fb_qt.h"
 #include "bu/malloc.h"
 #include "bu/file.h"
 #include "bu/str.h"

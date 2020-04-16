@@ -27,7 +27,7 @@
 #define RT_EXT_H
 
 #include "optical.h"
-#include "fb.h"
+#include "dm.h"
 #include "bu/parallel.h" /* for MAX_PSW */
 #include "bu/ptbl.h"
 

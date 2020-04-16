@@ -37,7 +37,7 @@
 
 #include "bu/color.h"
 #include "bu/log.h"
-#include "fb.h"
+#include "dm.h"
 #include "vmath.h"
 #include "pkg.h"
 

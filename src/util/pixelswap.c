@@ -30,7 +30,7 @@
 
 #include "bu/getopt.h"
 #include "bu/exit.h"
-#include "fb.h"
+#include "dm.h"
 
 
 char options[] = "d:h?";

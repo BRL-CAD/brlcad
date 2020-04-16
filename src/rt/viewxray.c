@@ -42,7 +42,7 @@
 #include "vmath.h"
 #include "icv.h"
 #include "raytrace.h"
-#include "fb.h"
+#include "dm.h"
 
 #include "./rtuif.h"
 #include "./ext.h"

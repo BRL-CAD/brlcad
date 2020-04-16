@@ -26,7 +26,6 @@ set(public_hdrs
   bu.h
   common.h
   dm.h
-  fb.h
   fft.h
   gcv.h
   ged.h

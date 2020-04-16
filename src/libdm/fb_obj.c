@@ -43,7 +43,7 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "fb_private.h"
-#include "fb.h"
+#include "dm.h"
 
 /* defined in libfb/tcl.c */
 extern int fb_refresh(struct fb *ifp, int x, int y, int w, int h);

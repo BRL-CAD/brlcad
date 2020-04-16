@@ -75,7 +75,7 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "fb_private.h"
-#include "fb/fb_X.h"
+#include "./fb_X.h"
 
 
 /*

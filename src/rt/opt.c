@@ -38,7 +38,7 @@
 #include "bn/str.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "fb.h"
+#include "dm.h"
 
 #include "./rtuif.h"
 #include "./ext.h"

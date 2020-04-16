@@ -59,9 +59,9 @@
 #include "bu/parallel.h"
 #include "rt/geom.h"
 #include "raytrace.h"
-#include "fb.h"
+#include "dm.h"
 #include "fb_private.h"
-#include "fb/fb_wgl.h"
+#include "./fb_wgl.h"
 
 
 /* Internal callbacks etc.*/

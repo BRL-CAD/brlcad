@@ -53,7 +53,7 @@
 #include "bu/log.h"
 #include "pkg.h"
 #include "fb_private.h"
-#include "fb.h"
+#include "dm.h"
 
 
 #define NET_LONG_LEN 4	/* # bytes to network long */

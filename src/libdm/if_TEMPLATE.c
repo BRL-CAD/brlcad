@@ -52,7 +52,7 @@
 
 #include <stdio.h>
 
-#include "fb.h"
+#include "dm.h"
 
 
 HIDDEN int

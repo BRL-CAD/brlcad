@@ -34,6 +34,18 @@
 #  endif
 #endif
 
+#ifndef FB_EXPORT
+#  if defined(FB_DLL_EXPORTS) && defined(FB_DLL_IMPORTS)
+#    error "Only FB_DLL_EXPORTS or FB_DLL_IMPORTS can be defined, not both."
+#  elif defined(FB_DLL_EXPORTS)
+#    define FB_EXPORT __declspec(dllexport)
+#  elif defined(FB_DLL_IMPORTS)
+#    define FB_EXPORT __declspec(dllimport)
+#  else
+#    define FB_EXPORT
+#  endif
+#endif
+
 /** @} */
 /*
  * Local Variables:

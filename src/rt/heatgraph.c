@@ -39,7 +39,7 @@
 #include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "fb.h"
+#include "dm.h"
 #include "bn/plot3.h"
 #include "scanline.h"
 

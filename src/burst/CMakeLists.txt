@@ -1,5 +1,5 @@
 set(BURST_INCLUDE_DIRS
-  ${FB_INCLUDE_DIRS}
+  ${DM_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
@@ -26,7 +26,7 @@ set(burst_SOURCES
   )
 
 
-BRLCAD_ADDEXEC(burst "${burst_SOURCES}" "librt;libfb;${M_LIBRARY}")
+BRLCAD_ADDEXEC(burst "${burst_SOURCES}" "librt;libdm;${M_LIBRARY}")
 
 set(burst_noinst_HEADERS
   CMakeLists.txt

@@ -33,7 +33,7 @@
 #include "bu/malloc.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"
-#include "fb.h"
+#include "dm.h"
 #include "pkg.h"
 
 char *options = "iHoF:h?";

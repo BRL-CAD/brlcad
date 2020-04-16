@@ -29,7 +29,7 @@
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"
-#include "fb.h"
+#include "dm.h"
 
 
 static unsigned char *white_line, *grey_line, *dark_line;

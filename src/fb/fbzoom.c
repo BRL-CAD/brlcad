@@ -33,7 +33,7 @@
 #include "bu/log.h"
 #include "vmath.h"
 
-#include "fb.h"
+#include "dm.h"
 #include "libtermio.h"
 
 

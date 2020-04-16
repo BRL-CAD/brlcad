@@ -36,7 +36,7 @@
 #include "bu/str.h"
 #include "bu/log.h"
 #include "fb_private.h"
-#include "fb.h"
+#include "dm.h"
 
 
 /* List of interface struct pointers, one per dev */

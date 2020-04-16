@@ -34,7 +34,7 @@
 #include "vmath.h"
 #include "bu/getopt.h"
 #include "bn.h"
-#include "fb.h"
+#include "dm.h"
 
 
 static int bytes_per_sample = 3;

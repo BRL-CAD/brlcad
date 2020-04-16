@@ -91,7 +91,7 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "fb.h"
+#include "dm.h"
 #include "bu/parse.h"
 #include "bu/parallel.h"
 #include "bu/log.h"

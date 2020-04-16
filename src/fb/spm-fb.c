@@ -29,7 +29,7 @@
 
 #include "bu/exit.h"
 #include "bu/getopt.h"
-#include "fb.h"
+#include "dm.h"
 #include "bn/spm.h"
 
 

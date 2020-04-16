@@ -38,8 +38,6 @@
 #include "dm.h"
 #include "ged.h"
 
-#include "fb.h"
-
 __BEGIN_DECLS
 
 #ifndef TCLCAD_EXPORT

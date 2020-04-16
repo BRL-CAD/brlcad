@@ -1,5 +1,5 @@
 set(HALFTONE_INCLUDE_DIRS
-  ${FB_INCLUDE_DIRS}
+  ${DM_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
   )
 LIST(REMOVE_DUPLICATES HALFTONE_INCLUDE_DIRS)
@@ -15,7 +15,7 @@ set(halftone_SOURCES
   tonescale.c
   )
 
-BRLCAD_ADDEXEC(halftone "${halftone_SOURCES}" "librt;libfb")
+BRLCAD_ADDEXEC(halftone "${halftone_SOURCES}" "librt;libdm")
 
 CMAKEFILES(CMakeLists.txt)
 

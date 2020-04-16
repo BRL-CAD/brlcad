@@ -48,7 +48,6 @@ set(level_1_dirs
 
 set(level_2_dirs
   libpkg
-  libfb
   libgcv
   libanalyze
   liboptical

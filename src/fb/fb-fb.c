@@ -31,7 +31,7 @@
 
 #include "bu/getopt.h"
 #include "bu/log.h"
-#include "fb.h"
+#include "dm.h"
 
 
 static int verbose;

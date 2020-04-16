@@ -77,7 +77,7 @@ extern int gettimeofday(struct timeval *, void *);
 #include "bn.h"
 #include "raytrace.h"
 #include "optical.h"
-#include "fb.h"
+#include "dm.h"
 #include "pkg.h"
 
 /* private */

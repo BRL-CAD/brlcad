@@ -1,6 +1,6 @@
 set(SIG_INCLUDE_DIRS
   ${BU_INCLUDE_DIRS}
-  ${FB_INCLUDE_DIRS}
+  ${DM_INCLUDE_DIRS}
   ${FFT_INCLUDE_DIRS}
   )
 LIST(REMOVE_DUPLICATES SIG_INCLUDE_DIRS)
@@ -10,7 +10,7 @@ BRLCAD_ADDEXEC(damdf damdf.c libbu)
 BRLCAD_ADDEXEC(dauto dauto.c libbu)
 BRLCAD_ADDEXEC(dauto2 dauto2.c libbu)
 BRLCAD_ADDEXEC(dconv dconv.c "libbu;libfft")
-BRLCAD_ADDEXEC(ddisp ddisp.c libfb)
+BRLCAD_ADDEXEC(ddisp ddisp.c libdm)
 BRLCAD_ADDEXEC(dfft "dfft.c;interp.c;butter.c" "libbu;libfft")
 BRLCAD_ADDEXEC(dmod dmod.c "libbu;${M_LIBRARY}")
 BRLCAD_ADDEXEC(dpeak dpeak.c libbu)

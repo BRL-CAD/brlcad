@@ -54,7 +54,7 @@
 #include "bu/version.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "fb.h"
+#include "dm.h"
 #include "pkg.h"
 
 /* private */

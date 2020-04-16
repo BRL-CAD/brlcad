@@ -78,7 +78,7 @@
 #include "bu/str.h"
 #include "bu/exit.h"
 #include "vmath.h"
-#include "fb.h"
+#include "dm.h"
 
 
 #define USAGE "Usage: gif-fb [-F fb_file] [-c] [-i image#] [-o] [-v] [-z] [gif_file]\n       (stdin used with '<' construct if gif_file not supplied)"

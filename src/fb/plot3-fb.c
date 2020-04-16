@@ -82,7 +82,7 @@
 #include "bu/getopt.h"
 #include "bu/process.h"
 #include "bu/exit.h"
-#include "fb.h"
+#include "dm.h"
 #include "bn/plot3.h"
 
 #define COMMA ','

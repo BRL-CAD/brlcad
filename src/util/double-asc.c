@@ -37,7 +37,7 @@
 #include "bu/cv.h"
 #include "bu/snooze.h"
 #include "bn.h"
-#include "fb.h"
+#include "dm.h"
 
 
 #define OPT_STRING "acf:s:n:w:#:h?"

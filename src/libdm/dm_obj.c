@@ -70,7 +70,7 @@
 #endif /* DM_WGL */
 
 #ifdef USE_FBSERV
-#  include "fb.h"
+#  include "dm.h"
 #endif
 
 /**

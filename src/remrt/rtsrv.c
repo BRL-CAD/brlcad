@@ -56,7 +56,7 @@
 #include "raytrace.h"
 #include "optical/debug.h"
 #include "pkg.h"
-#include "fb.h"
+#include "dm.h"
 #include "icv.h"
 
 #include "../rt/rtuif.h"

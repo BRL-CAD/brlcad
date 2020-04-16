@@ -32,7 +32,7 @@
 #include "bu/color.h"
 #include "bu/log.h"
 #include "bu/str.h"
-#include "fb.h"
+#include "dm.h"
 
 
 #define IBUFSIZE 3*2048		/* Max read size in rgb pixels */

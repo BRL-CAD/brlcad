@@ -82,7 +82,7 @@
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "bu/str.h"
-#include "fb.h"			/* BRL-CAD package libfb.a interface */
+#include "dm.h"			/* BRL-CAD package libfb.a interface */
 
 
 #define USAGE1 "fbstretch [ -s size ] [ -w width ] [ -n height ]"
