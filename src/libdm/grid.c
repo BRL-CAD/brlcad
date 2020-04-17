@@ -29,7 +29,7 @@
 
 #include "vmath.h"
 #include "dm.h"
-#include "dm_private.h"
+#include "./include/private.h"
 
 void
 dm_draw_grid(struct dm *dmp, struct bview_grid_state *ggsp, fastf_t scale, mat_t model2view, fastf_t base2local)

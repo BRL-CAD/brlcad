@@ -35,7 +35,7 @@
 #include "bu/log.h"
 #include "bu/str.h"
 #include "bu/log.h"
-#include "dm_private.h"
+#include "./include/private.h"
 #include "dm.h"
 
 

@@ -42,12 +42,12 @@
 #include "raytrace.h"
 
 #include "dm.h"
-#include "dm-ps.h"
-#include "dm-Null.h"
+#include "./dm-ps.h"
+#include "../null/dm-Null.h"
 
 #include "rt/solid.h"
 
-#include "./dm_private.h"
+#include "../include/private.h"
 
 #define EPSILON 0.0001
 

@@ -29,7 +29,7 @@
 
 #include "vmath.h"
 #include "dm.h"
-#include "dm_private.h"
+#include "./include/private.h"
 
 void
 dm_draw_rect(struct dm *dmp, struct bview_interactive_rect_state *grsp)

@@ -25,7 +25,7 @@
 #include "bn.h"
 #include "dm.h"
 
-#include "./dm_private.h"
+#include "./include/private.h"
 
 #  ifdef HAVE_GL_GL_H
 #    include <GL/gl.h>

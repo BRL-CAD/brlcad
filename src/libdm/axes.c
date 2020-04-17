@@ -33,7 +33,7 @@
 #include "raytrace.h"
 #include "dm.h"
 #include "dm/bview.h"
-#include "dm_private.h"
+#include "./include/private.h"
 
 
 #if defined(IF_OGL) || defined(IF_WGL)

@@ -30,7 +30,7 @@
 #include "rt/geom.h"
 #include "rt/solid.h"
 #include "dm.h"
-#include "dm_private.h"
+#include "./include/private.h"
 
 /*
  * Put labels on the vertices of the currently edited solid.

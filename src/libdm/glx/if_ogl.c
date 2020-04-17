@@ -81,7 +81,7 @@
 #include "bu/parallel.h"
 #include "bu/snooze.h"
 #include "bu/str.h"
-#include "dm_private.h"
+#include "../include/private.h"
 #include "dm.h"
 #include "./fb_ogl.h"
 

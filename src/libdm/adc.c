@@ -31,7 +31,7 @@
 #include "vmath.h"
 #include "dm.h"
 #include "dm/bview.h"
-#include "dm_private.h"
+#include "./include/private.h"
 
 static void
 dm_draw_ticks(struct dm *dmp, struct bview_adc_state *adcp, fastf_t angle)

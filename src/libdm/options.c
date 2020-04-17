@@ -32,7 +32,7 @@
 #include "bu/getopt.h"
 #include "vmath.h"
 #include "dm.h"
-#include "dm_private.h"
+#include "./include/private.h"
 
 int
 dm_processOptions(struct dm *dmp, struct bu_vls *init_proc_vls, int argc, char **argv)

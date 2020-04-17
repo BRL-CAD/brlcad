@@ -40,7 +40,7 @@
 #include "dm.h"
 
 #include "dm.h"
-#include "dm_private.h"
+#include "./include/private.h"
 
 
 static struct fb *curr_fbp;		/* current framebuffer pointer */

@@ -59,15 +59,15 @@
 #include "bu/endian.h"
 #include "bn.h"
 #include "dm.h"
-#include "dm-X.h"
-#include "dm-Null.h"
-#include "./dm_xvars.h"
+#include "./dm-X.h"
+#include "../null/dm-Null.h"
+#include "../include/dm_xvars.h"
 #include "dm.h"
 #include "./fb_X.h"
 
 #include "rt/solid.h"
 
-#include "dm_private.h"
+#include "../include/private.h"
 
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 

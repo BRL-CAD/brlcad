@@ -41,8 +41,8 @@
 #include "bu/cmd.h"
 #include "bu/log.h"
 #include "bu/vls.h"
-#include "dm_private.h"
 /* private headers */
+#include "./include/private.h"
 #include "brlcad_version.h"
 
 /* from libdm/query.c */

@@ -75,15 +75,14 @@
 
 #include "vmath.h"
 #include "bn.h"
-#include "dm.h"
-#include "dm-ogl.h"
-#include "dm-Null.h"
-#include "./dm_xvars.h"
-#include "dm.h"
-#include "./fb_ogl.h"
 #include "rt/solid.h"
+#include "dm.h"
+#include "../null/dm-Null.h"
+#include "../include/dm_xvars.h"
+#include "./fb_ogl.h"
+#include "./dm-ogl.h"
 
-#include "./dm_private.h"
+#include "../include/private.h"
 
 #define ENABLE_POINT_SMOOTH 1
 

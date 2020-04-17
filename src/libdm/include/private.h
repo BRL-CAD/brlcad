@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dm_private.h
+/** @file private.h
  *
  * Internal header for the display manager library.
  *
@@ -34,7 +34,7 @@
 #include "vmath.h"
 #include "dm.h"
 
-#include "./include/calltable.h"
+#include "./calltable.h"
 
 #define DM_MIN (-2048)
 #define DM_MAX (2047)

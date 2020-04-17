@@ -56,7 +56,7 @@
 #include "./dm_xvars.h"
 #include "dm.h"
 #include "rt/solid.h"
-#include "./dm_private.h"
+#include "./private.h"
 
 #include "./fb_osgl.h"
 #include "dm-osgl.h"

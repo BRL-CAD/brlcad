@@ -37,7 +37,7 @@
 #include "bu/vls.h"
 #include "bu/parse.h"
 #include "dm.h"
-#include "dm_private.h"
+#include "private.h"
 #include "./dm_xvars.h"
 #include "dm-Null.h"
 #include "./fb_qt.h"

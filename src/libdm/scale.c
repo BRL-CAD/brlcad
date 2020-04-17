@@ -33,7 +33,7 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
-#include "dm_private.h"
+#include "./include/private.h"
 
 void
 dm_draw_scale(struct dm *dmp,

@@ -74,7 +74,7 @@
 #include "bu/file.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
-#include "dm_private.h"
+#include "../include/private.h"
 #include "./fb_X.h"
 
 

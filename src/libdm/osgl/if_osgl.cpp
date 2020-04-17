@@ -45,7 +45,7 @@
 
 #include "./fb_osgl.h"
 extern "C" {
-#include "dm_private.h"
+#include "private.h"
 }
 
 #define DIRECT_COLOR_VISUAL_ALLOWED 0

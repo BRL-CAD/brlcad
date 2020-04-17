@@ -34,7 +34,7 @@
 #include "vmath.h"
 
 #include "bu/malloc.h"
-#include "./dm_xvars.h"
+#include "./include/dm_xvars.h"
 
 
 /* Return the allocated pixel value that most closely represents

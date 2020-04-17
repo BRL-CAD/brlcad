@@ -59,10 +59,10 @@
 #include "vmath.h"
 #include "bn.h"
 #include "dm.h"
-#include "dm-tk.h"
-#include "dm-Null.h"
-#include "../dm_xvars.h"
-#include "dm_private.h"
+#include "./dm-tk.h"
+#include "../null/dm-Null.h"
+#include "../include/dm_xvars.h"
+#include "../include/private.h"
 #include "rt/solid.h"
 
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */

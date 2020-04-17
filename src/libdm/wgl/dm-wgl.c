@@ -42,14 +42,14 @@
 #include "vmath.h"
 #include "bn.h"
 #include "dm.h"
-#include "dm-Null.h"
-#include "dm-wgl.h"
-#include "./dm_xvars.h"
+#include "rt/solid.h"
+#include "../null/dm-Null.h"
+#include "./dm-wgl.h"
+#include "../include/dm_xvars.h"
 #include "dm.h"
 #include "./fb_wgl.h"
-#include "rt/solid.h"
 
-#include "./dm_private.h"
+#include "../include/private.h"
 
 #define ENABLE_POINT_SMOOTH 1
 

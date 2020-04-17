@@ -49,7 +49,7 @@
 #include "bu/exit.h"
 
 #include "vmath.h"
-#include "dm_private.h"
+#include "./include/private.h"
 #include "dm.h"
 
 /**

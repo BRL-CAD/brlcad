@@ -17,7 +17,7 @@ set(DM_INCLUDE_DIRS
   )
 
 # local includes
-set(DM_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/null ${PNG_INCLUDE_DIRS})
+set(DM_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} ${PNG_INCLUDE_DIRS})
 
 BRLCAD_LIB_INCLUDE_DIRS(dm DM_INCLUDE_DIRS DM_LOCAL_INCLUDE_DIRS)
 
@@ -164,8 +164,8 @@ set(libdm_ignore_files
   X/dm-X.c
   X/dm-X.h
   X/if_X24.c
-  dm_private.h
-  dm_xvars.h
+  include/dm_xvars.h
+  include/private.h
   fontstash/LICENSE.fontstash
   fontstash/README.md
   fontstash/fontstash.h
@@ -197,7 +197,6 @@ set(libdm_ignore_files
   include/calltable.h
   )
 CMAKEFILES(${libdm_ignore_files})
-CMAKEFILES(dm_private.h)
 
 # Local Variables:
 # tab-width: 8

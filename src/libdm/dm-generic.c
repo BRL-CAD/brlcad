@@ -30,15 +30,14 @@
 #include "tcl.h"
 #ifdef HAVE_TK
 #  include "tk.h"
-#  include "dm_xvars.h"
 #endif
 
 #include "vmath.h"
 #include "dm.h"
-#include "dm_private.h"
-
-#include "dm-Null.h"
 #include "rt/solid.h"
+#include "./include/private.h"
+#include "./include/dm_xvars.h"
+#include "./null/dm-Null.h"
 
 extern struct dm *plot_open(void *interp, int argc, const char *argv[]);
 extern struct dm *ps_open(void *interp, int argc, const char *argv[]);

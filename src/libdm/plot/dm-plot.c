@@ -42,13 +42,13 @@
 #include "raytrace.h"
 #include "dm.h"
 
-#include "dm-plot.h"
-#include "dm-Null.h"
+#include "./dm-plot.h"
+#include "../null/dm-Null.h"
 
 #include "rt/solid.h"
 #include "bn/plot3.h"
 
-#include "./dm_private.h"
+#include "../include/private.h"
 
 #if defined(HAVE_POPEN) && !defined(HAVE_POPEN_DECL) && !defined(popen)
 extern FILE *popen(const char *command, const char *type);

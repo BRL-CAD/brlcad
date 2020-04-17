@@ -43,8 +43,8 @@
 #include "bu/log.h"
 #include "bu/snooze.h"
 
-#include "dm_private.h"
 #include "dm.h"
+#include "../include/private.h"
 
 
 Tcl_Interp *fbinterp;

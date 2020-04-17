@@ -42,7 +42,7 @@
 #include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
-#include "dm_private.h"
+#include "./include/private.h"
 #include "dm.h"
 
 /* defined in libfb/tcl.c */

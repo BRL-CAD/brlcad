@@ -30,7 +30,7 @@
 #include "tcl.h"
 #include "vmath.h"
 #include "dm.h"
-#include "dm_private.h"
+#include "../include/private.h"
 
 
 struct dm *
