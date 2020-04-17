@@ -187,11 +187,11 @@ dm_share_dlist(struct dm *dmp1, struct dm *dmp2)
     }
 }
 
-png_structp
-dm_get_image(struct dm *dmp)
+int
+dm_write_image(struct bu_vls *msgs, FILE *fp, struct dm *dmp)
 {
-    if (!dmp || !dmp->i->dm_get_image) return NULL;
-    return dmp->i->dm_get_image(dmp);
+    if (!dmp || !dmp->i->dm_write_image) return -1;
+    return dmp->i->dm_write_image(msgs, fp, dmp);
 }
 
 /* Properly generic functions */
