@@ -407,7 +407,6 @@ fb_open(const char *file, int width, int height)
 	/* No name given, check environment variable first.	*/
 	if ((file = (const char *)getenv("FB_FILE")) == NULL || *file == '\0') {
 	    /* None set, use first device as default */
-	    *ifp = *(_if_list[0]);	/* struct copy */
 	    *ifp->i = *(_if_list[0]->i);	/* struct copy */
 	    file = ifp->i->if_name;
 	    goto found_interface;
@@ -446,13 +445,13 @@ fb_open(const char *file, int width, int height)
     if (fb_totally_numeric(file) || strchr(file, ':') != NULL) {
 	/* We have a remote file name of the form <host>:<file>
 	 * or a port number (which assumes localhost) */
-	*ifp = remote_interface;
+	*ifp->i = *remote_interface.i;
 	goto found_interface;
     }
 #endif /* IF_REMOTE */
     /* Assume it's a disk file */
     if (_fb_disk_enable) {
-	*ifp = disk_interface;
+	*ifp->i = *disk_interface.i;
     } else {
 	fb_log("fb_open: no such device \"%s\".\n", file);
 	free((void *) ifp);
