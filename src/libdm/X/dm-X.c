@@ -2072,6 +2072,7 @@ struct dm_impl dm_X_impl = {
     X_write_image,
     X_flush,
     X_sync,
+    NULL,
     0,
     0,				/* no displaylist */
     0,                            /* no stereo */

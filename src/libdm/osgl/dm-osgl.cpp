@@ -2563,6 +2563,7 @@ struct dm_impl dm_osgl_impl = {
     NULL,
     NULL,
     NULL,
+    NULL,
     0,
     1,				/* has displaylist */
     0,                          /* no stereo by default */

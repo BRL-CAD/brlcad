@@ -297,6 +297,9 @@ DM_EXPORT extern int dm_write_image(struct bu_vls *msgs, FILE *fp, struct dm *dm
 DM_EXPORT extern void dm_flush(struct dm *dmp);
 DM_EXPORT extern void dm_sync(struct dm *dmp);
 
+// Return 1 if same, 0 if different and -1 if no dmp available
+DM_EXPORT extern int dm_event_type_cmp(struct dm *dmp, int etype);
+
 /* TODO - dm_vp is supposed to go away, but until we figure it out
  * expose it here to allow dm hiding */
 DM_EXPORT extern fastf_t *dm_get_vp(struct dm *dmp);

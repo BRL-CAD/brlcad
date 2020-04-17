@@ -2929,6 +2929,7 @@ struct dm_impl dm_ogl_impl = {
     ogl_write_image,
     NULL,
     NULL,
+    NULL,
     0,
     1,				/* has displaylist */
     0,                          /* no stereo by default */

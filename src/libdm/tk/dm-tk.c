@@ -934,6 +934,7 @@ struct dm_impl dm_tk_impl = {
     NULL,
     NULL,
     NULL,
+    NULL,
     0,
     0,				/* no displaylist */
     0,				/* no stereo */
