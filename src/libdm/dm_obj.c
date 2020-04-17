@@ -46,29 +46,6 @@
 #include "dm.h"
 #include "./include/private.h"
 
-#ifdef DM_X
-#  include <X11/Xutil.h>
-#  include "X/dm-X.h"
-#endif /* DM_X */
-
-#ifdef DM_TK
-#  include "tk.h"
-#  include "tk/dm-tk.h"
-#endif /* DM_TK */
-
-#ifdef DM_OGL
-#  include "glx/dm-ogl.h"
-#endif /* DM_OGL */
-
-#ifdef DM_WGL
-#  include <tkwinport.h>
-#  include "wgl/dm-wgl.h"
-#endif /* DM_WGL */
-
-#ifdef USE_FBSERV
-#  include "dm.h"
-#endif
-
 /**
  *@brief
  * A display manager object is used for interacting with a display manager.
