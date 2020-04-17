@@ -35,7 +35,7 @@
 #include <ctype.h>
 
 #include "dm.h"
-#include "fb_private.h"
+#include "dm_private.h"
 #include "./fb_qt.h"
 #include "bu/malloc.h"
 #include "bu/file.h"

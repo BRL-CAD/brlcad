@@ -76,7 +76,7 @@
 #include "bsocket.h"
 #include "bio.h"
 
-#include "../libdm/fb_private.h" /* for _fb_disk_enable */
+#include "../libdm/dm_private.h" /* for _fb_disk_enable */
 
 #include "bu/malloc.h"
 #include "bu/getopt.h"

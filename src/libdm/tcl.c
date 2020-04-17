@@ -41,7 +41,7 @@
 #include "bu/cmd.h"
 #include "bu/log.h"
 #include "bu/vls.h"
-#include "fb_private.h"
+#include "dm_private.h"
 /* private headers */
 #include "brlcad_version.h"
 

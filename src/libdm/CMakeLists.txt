@@ -166,7 +166,6 @@ set(libdm_ignore_files
   X/if_X24.c
   dm_private.h
   dm_xvars.h
-  fb_private.h
   fontstash/LICENSE.fontstash
   fontstash/README.md
   fontstash/fontstash.h

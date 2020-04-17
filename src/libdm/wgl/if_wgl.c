@@ -60,7 +60,7 @@
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "dm.h"
-#include "fb_private.h"
+#include "dm_private.h"
 #include "./fb_wgl.h"
 
 
