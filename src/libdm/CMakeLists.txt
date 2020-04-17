@@ -132,7 +132,6 @@ set(LIBDM_SRCS
   knob.c
   labels.c
   options.c
-  query.c
   rect.c
   scale.c
   tcl.c
