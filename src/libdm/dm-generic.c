@@ -187,6 +187,84 @@ dm_share_dlist(struct dm *dmp1, struct dm *dmp2)
     }
 }
 
+struct bu_vls *
+dm_list_types(const char separator)
+{
+    struct bu_vls *list;
+    char sep = ' ';
+    if (separator) sep = separator;
+    BU_GET(list, struct bu_vls);
+    bu_vls_init(list);
+
+    bu_vls_trunc(list, 0);
+
+#ifdef DM_OSGL
+    if (strlen(bu_vls_addr(list)) > 0) bu_vls_printf(list, "%c", sep);
+    bu_vls_printf(list, "osgl");
+#endif /* DM_OSGL*/
+
+#ifdef DM_WGL
+    if (strlen(bu_vls_addr(list)) > 0) bu_vls_printf(list, "%c", sep);
+    bu_vls_printf(list, "wgl");
+#endif /* DM_WGL */
+
+#ifdef DM_OGL
+    if (strlen(bu_vls_addr(list)) > 0) bu_vls_printf(list, "%c", sep);
+    bu_vls_printf(list, "ogl");
+#endif /* DM_OGL */
+
+#ifdef DM_QT
+    if (strlen(bu_vls_addr(list)) > 0) bu_vls_printf(list, "%c", sep);
+    bu_vls_printf(list, "Qt");
+#endif /* DM_QT */
+
+#ifdef DM_X
+    if (strlen(bu_vls_addr(list)) > 0) bu_vls_printf(list, "%c", sep);
+    bu_vls_printf(list, "X");
+#endif /* DM_X */
+
+#ifdef DM_X
+    if (strlen(bu_vls_addr(list)) > 0) bu_vls_printf(list, "%c", sep);
+    bu_vls_printf(list, "tk");
+#endif /* DM_X */
+
+    if (strlen(bu_vls_addr(list)) > 0) bu_vls_printf(list, "%c", sep);
+    bu_vls_printf(list, "txt");
+    bu_vls_printf(list, "%c", sep);
+    bu_vls_printf(list, "plot");
+    bu_vls_printf(list, "%c", sep);
+    bu_vls_printf(list, "ps");
+    bu_vls_printf(list, "%c", sep);
+    bu_vls_printf(list, "null");
+    return list;
+}
+
+void
+dm_fogHint(struct dm *dmp, int fastfog)
+{
+    if (UNLIKELY(!dmp)) {
+	bu_log("WARNING: NULL display (fastfog => %d)\n", fastfog);
+	return;
+    }
+
+    switch (dmp->i->dm_type) {
+#ifdef DM_OGL
+#  if defined(HAVE_TK)
+	case DM_TYPE_OGL:
+	    ogl_fogHint(dmp, fastfog);
+	    return;
+#  endif
+#endif
+#ifdef DM_WGL
+	case DM_TYPE_WGL:
+	    wgl_fogHint(dmp, fastfog);
+	    return;
+#endif
+	default:
+	    return;
+    }
+}
+
 int
 dm_write_image(struct bu_vls *msgs, FILE *fp, struct dm *dmp)
 {
@@ -251,31 +329,6 @@ dm_Normal2Xy(struct dm *dmp, fastf_t f, int use_aspect)
 	return (0.5 - f * 0.5) * dmp->i->dm_height;
 }
 
-void
-dm_fogHint(struct dm *dmp, int fastfog)
-{
-    if (UNLIKELY(!dmp)) {
-	bu_log("WARNING: NULL display (fastfog => %d)\n", fastfog);
-	return;
-    }
-
-    switch (dmp->i->dm_type) {
-#ifdef DM_OGL
-#  if defined(HAVE_TK)
-	case DM_TYPE_OGL:
-	    ogl_fogHint(dmp, fastfog);
-	    return;
-#  endif
-#endif
-#ifdef DM_WGL
-	case DM_TYPE_WGL:
-	    wgl_fogHint(dmp, fastfog);
-	    return;
-#endif
-	default:
-	    return;
-    }
-}
 
 struct dm *
 dm_get()
@@ -983,57 +1036,6 @@ dm_draw_display_list(struct dm *dmp,
     return ndrawn;
 }
 
-struct bu_vls *
-dm_list_types(const char separator)
-{
-    struct bu_vls *list;
-    char sep = ' ';
-    if (separator) sep = separator;
-    BU_GET(list, struct bu_vls);
-    bu_vls_init(list);
-
-    bu_vls_trunc(list, 0);
-
-#ifdef DM_OSGL
-    if (strlen(bu_vls_addr(list)) > 0) bu_vls_printf(list, "%c", sep);
-    bu_vls_printf(list, "osgl");
-#endif /* DM_OSGL*/
-
-#ifdef DM_WGL
-    if (strlen(bu_vls_addr(list)) > 0) bu_vls_printf(list, "%c", sep);
-    bu_vls_printf(list, "wgl");
-#endif /* DM_WGL */
-
-#ifdef DM_OGL
-    if (strlen(bu_vls_addr(list)) > 0) bu_vls_printf(list, "%c", sep);
-    bu_vls_printf(list, "ogl");
-#endif /* DM_OGL */
-
-#ifdef DM_QT
-    if (strlen(bu_vls_addr(list)) > 0) bu_vls_printf(list, "%c", sep);
-    bu_vls_printf(list, "Qt");
-#endif /* DM_QT */
-
-#ifdef DM_X
-    if (strlen(bu_vls_addr(list)) > 0) bu_vls_printf(list, "%c", sep);
-    bu_vls_printf(list, "X");
-#endif /* DM_X */
-
-#ifdef DM_X
-    if (strlen(bu_vls_addr(list)) > 0) bu_vls_printf(list, "%c", sep);
-    bu_vls_printf(list, "tk");
-#endif /* DM_X */
-
-    if (strlen(bu_vls_addr(list)) > 0) bu_vls_printf(list, "%c", sep);
-    bu_vls_printf(list, "txt");
-    bu_vls_printf(list, "%c", sep);
-    bu_vls_printf(list, "plot");
-    bu_vls_printf(list, "%c", sep);
-    bu_vls_printf(list, "ps");
-    bu_vls_printf(list, "%c", sep);
-    bu_vls_printf(list, "null");
-    return list;
-}
 
 /*
  * Local Variables:
