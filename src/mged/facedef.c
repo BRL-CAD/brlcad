@@ -388,7 +388,7 @@ get_rotfb(fastf_t *plane, const char *argv[], const struct rt_arb_internal *arb)
     rota= atof(argv[0]) * DEG2RAD;
     fb_a  = atof(argv[1]) * DEG2RAD;
 
-    /* calculate normal vector (length=1) from rot, struct fb */
+    /* calculate normal vector (length=1) from rot, fb */
     plane[0] = cos(fb_a) * cos(rota);
     plane[1] = cos(fb_a) * sin(rota);
     plane[2] = sin(fb_a);

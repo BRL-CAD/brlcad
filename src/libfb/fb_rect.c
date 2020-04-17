@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libstruct fb */
+/** @addtogroup libfb */
 /** @{ */
 /** @file fb_rect.c
  *
@@ -42,7 +42,7 @@
  * particular display does not handle it.
  */
 int
-fb_sim_readrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
+fb_sim_readrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     register int y;
     register int tot;
@@ -75,7 +75,7 @@ fb_sim_readrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsig
  * Clipping to the screen may reduce the total if caller was sloppy.
  */
 int
-fb_sim_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+fb_sim_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     register int y;
     register int tot;
@@ -99,7 +99,7 @@ fb_sim_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, cons
 
 #define SIMBUF_SIZE (24*1024)
 int
-fb_sim_bwreadrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
+fb_sim_bwreadrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     register int y;
     register int tot;
@@ -129,7 +129,7 @@ fb_sim_bwreadrect(struct fb *ifp, int xmin, int ymin, int width, int height, uns
 
 
 int
-fb_sim_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+fb_sim_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     register int y;
     register int tot;

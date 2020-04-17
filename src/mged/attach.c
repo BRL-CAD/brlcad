@@ -54,7 +54,9 @@
 	IS_DM_TYPE_WGL(_type) || \
 	IS_DM_TYPE_OGL(_type) || \
 	IS_DM_TYPE_OSG(_type) || \
+	IS_DM_TYPE_RTGL(_type) || \
 	IS_DM_TYPE_GLX(_type) || \
+	IS_DM_TYPE_PEX(_type) || \
 	IS_DM_TYPE_TK(_type) || \
 	IS_DM_TYPE_X(_type) || \
 	IS_DM_TYPE_TXT(_type) || \
@@ -92,9 +94,17 @@ extern int Ogl_dm_init();
 extern int Osg_dm_init();
 #endif /* DM_OSG */
 
+#ifdef DM_RTGL
+extern int Rtgl_dm_init();
+#endif /* DM_RTGL */
+
 #ifdef DM_GLX
 extern int Glx_dm_init();
 #endif /* DM_GLX */
+
+#ifdef DM_PEX
+extern int Pex_dm_init();
+#endif /* DM_PEX */
 
 #ifdef DM_QT
 extern int Qt_dm_init();
@@ -219,6 +229,12 @@ struct w_dm which_dm[] = {
     { DM_TYPE_OSGL, "osgl", osgl_doevent },
 #  endif
 #endif /* DM_OSGL */
+#ifdef DM_RTGL
+    { DM_TYPE_RTGL, "rtgl", ogl_doevent },
+#endif /* DM_RTGL */
+#ifdef DM_PEX
+    { DM_TYPE_PEX, "pex", NULL},
+#endif /* DM_PEX */
 #ifdef DM_QT
     { DM_TYPE_QT, "qt", x_doevent },
 #endif /* DM_QT */
@@ -254,7 +270,7 @@ mged_dm_init(struct dm_list *o_dm_list,
     Tk_DeleteGenericHandler(doEvent, (ClientData)NULL);
 #endif
 
-    if ((DMP = dm_open((void *)INTERP, dm_type, argc-1, argv)) == DM_NULL)
+    if ((DMP = dm_open(INTERP, dm_type, argc-1, argv)) == DM_NULL)
 	return TCL_ERROR;
 
     /*XXXX this eventually needs to move into Ogl's private structure */
@@ -353,7 +369,7 @@ release(char *name, int need_close)
 
 	/* release framebuffer resources */
 	fb_close_existing(fbp);
-	fbp = (struct fb *)NULL;
+	fbp = (fb *)NULL;
     }
 
     /*
@@ -449,6 +465,10 @@ print_valid_dm(Tcl_Interp *interpreter)
     Tcl_AppendResult(interpreter, "osgl  ", (char *)NULL);
     i++;
 #endif /* DM_OSGL*/
+#ifdef DM_RTGL
+    Tcl_AppendResult(interpreter, "rtgl  ", (char *)NULL);
+    i++;
+#endif /* DM_RTGL */
 #ifdef DM_GLX
     Tcl_AppendResult(interpreter, "glx", (char *)NULL);
     i++;
@@ -556,7 +576,7 @@ gui_setup(const char *dstr)
     /* Initialize libdm */
     (void)Dm_Init(INTERP);
 
-    /* Initialize libstruct fb */
+    /* Initialize libfb */
     (void)Fb_Init(INTERP);
 
 #ifdef HAVE_TK
@@ -595,7 +615,7 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
 
     /* Only need to do this once */
     if (tkwin == NULL && NEED_GUI(wp->type)) {
-	struct dm *tmp_dmp;
+	dm *tmp_dmp;
 	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 	/* look for "-d display_string" and use it if provided */
@@ -670,7 +690,7 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
  Bad:
     Tcl_AppendResult(INTERP, "attach(", argv[argc - 1], "): BAD\n", (char *)NULL);
 
-    if (DMP != (struct dm *)0)
+    if (DMP != (dm *)0)
 	release((char *)NULL, 1);  /* release() will call dm_close */
     else
 	release((char *)NULL, 0);  /* release() will not call dm_close */
@@ -802,6 +822,11 @@ f_dm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const cha
 	    Tcl_AppendResult(interpreter, "osgl", (char *)NULL);
 	}
 #endif /* DM_OSGL*/
+#ifdef DM_RTGL
+	if (BU_STR_EQUAL(argv[argc-1], "rtgl")) {
+	    Tcl_AppendResult(interpreter, "rtgl", (char *)NULL);
+	}
+#endif /* DM_RTGL */
 #ifdef DM_GLX
 	if (BU_STR_EQUAL(argv[argc-1], "glx")) {
 	    Tcl_AppendResult(interpreter, "glx", (char *)NULL);

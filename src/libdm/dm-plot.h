@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libstruct dm */
+/** @addtogroup libdm */
 /** @{ */
 /** @file dm-plot.h
  *
@@ -25,9 +25,6 @@
 
 #ifndef DM_PLOT_H
 #define DM_PLOT_H
-
-#include "common.h"
-#include "vmath.h"
 
 /*
  * Display coordinate conversion:
@@ -50,9 +47,6 @@ struct plot_vars {
     vect_t clipmin;
     vect_t clipmax;
     struct bu_vls vls;
-    mat_t plotmat;
-    mat_t disp_mat;
-    mat_t mod_mat;
 };
 
 extern struct plot_vars head_plot_vars;

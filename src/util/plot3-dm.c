@@ -59,7 +59,7 @@ struct cmdtab {
 #define APP_SCALE 180.0 / 512.0
 
 Tcl_Interp *INTERP;
-struct dm *dmp;
+dm *dmp;
 mat_t toViewcenter;
 mat_t Viewrot;
 mat_t model2view;
@@ -1047,7 +1047,7 @@ X_dmInit()
     av[2] = "sampler_bind_dm";
     av[3] = (char *)NULL;
 
-    if ((dmp = dm_open(INTERP, DM_TYPE_X, 3, av)) == DM_NULL) {
+    if ((dmp = DM_OPEN(INTERP, DM_TYPE_X, 3, av)) == DM_NULL) {
 	Tcl_AppendResult(INTERP, "Failed to open a display manager\n", (char *)NULL);
 	return TCL_ERROR;
     }
@@ -1073,7 +1073,7 @@ Ogl_dmInit()
     av[2] = "sampler_bind_dm";
     av[3] = (char *)NULL;
 
-    if ((dmp = dm_open(INTERP, DM_TYPE_OGL, 3, (const char **)av)) == DM_NULL) {
+    if ((dmp = DM_OPEN(INTERP, DM_TYPE_OGL, 3, (const char **)av)) == DM_NULL) {
 	Tcl_AppendResult(INTERP, "Failed to open a display manager\n", (char *)NULL);
 	return TCL_ERROR;
     }

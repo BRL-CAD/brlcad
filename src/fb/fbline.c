@@ -59,7 +59,7 @@ struct stroke {
 }; /* rasterization descriptor */
 
 static char *framebuffer = NULL;
-struct fb *fbp;			/* Current framebuffer */
+fb *fbp;			/* Current framebuffer */
 
 static int screen_width = 512;	/* default input width */
 static int screen_height = 512;	/* default input height */

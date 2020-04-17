@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libstruct fb */
+/** @addtogroup libfb */
 /** @{ */
 /** @file if_osgl.cpp
  *
@@ -171,7 +171,7 @@ HIDDEN struct modeflags {
  * rectangle of the frame buffer
  */
 HIDDEN void
-osgl_xmit_scanlines(register struct fb *ifp, int ybase, int nlines, int xbase, int npix)
+osgl_xmit_scanlines(register fb *ifp, int ybase, int nlines, int xbase, int npix)
 {
     register int y;
     register int n;
@@ -285,7 +285,7 @@ osgl_xmit_scanlines(register struct fb *ifp, int ybase, int nlines, int xbase, i
 
 
 HIDDEN void
-osgl_cminit(register struct fb *ifp)
+osgl_cminit(register fb *ifp)
 {
     register int i;
 
@@ -298,7 +298,7 @@ osgl_cminit(register struct fb *ifp)
 
 
 HIDDEN int
-osgl_getmem(struct fb *ifp)
+osgl_getmem(fb *ifp)
 {
     int pixsize;
     int size;
@@ -357,7 +357,7 @@ fail:
  *		(xpixmin, xpixmax, ypixmin, ypixmax)
  */
 void
-fb_clipper(register struct fb *ifp)
+fb_clipper(register fb *ifp)
 {
     register struct fb_clip *clp;
     register int i;
@@ -403,7 +403,7 @@ fb_clipper(register struct fb *ifp)
     }
 
 int
-osgl_configureWindow(struct fb *ifp, int width, int height)
+osgl_configureWindow(fb *ifp, int width, int height)
 {
     if (width == OSGL(ifp)->win_width &&
 	height == OSGL(ifp)->win_height)
@@ -430,7 +430,7 @@ osgl_configureWindow(struct fb *ifp, int width, int height)
 
 
 HIDDEN void
-osgl_do_event(struct fb *ifp)
+osgl_do_event(fb *ifp)
 {
     if (OSGL(ifp)->firstTime) {
 	OSGL(ifp)->firstTime = 0;
@@ -445,7 +445,7 @@ osgl_do_event(struct fb *ifp)
  * linear map, 0 for non-linear map (i.e., non-identity map).
  */
 HIDDEN int
-is_linear_cmap(register struct fb *ifp)
+is_linear_cmap(register fb *ifp)
 {
     register int i;
 
@@ -459,9 +459,9 @@ is_linear_cmap(register struct fb *ifp)
 
 
 HIDDEN int
-fb_osgl_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
+fb_osgl_open(fb *ifp, const char *UNUSED(file), int width, int height)
 {
-    FB_CK_FB(ifp->i);
+    FB_CK_FB(ifp);
 
     ifp->if_mode = MODE_2LINGERING;
 
@@ -596,7 +596,7 @@ fb_osgl_open(struct fb *ifp, const char *UNUSED(file), int width, int height)
 
 
 int
-_osgl_open_existing(struct fb *ifp, int width, int height, void *glc, void *traits)
+_osgl_open_existing(fb *ifp, int width, int height, void *glc, void *traits)
 {
     /*
      * Allocate extension memory sections,
@@ -670,7 +670,7 @@ osgl_put_fbps(struct fb_platform_specific *fbps)
 }
 
 HIDDEN int
-osgl_open_existing(struct fb *ifp, int width, int height, struct fb_platform_specific *fb_p)
+osgl_open_existing(fb *ifp, int width, int height, struct fb_platform_specific *fb_p)
 {
     struct osgl_fb_info *osgl_internal = (struct osgl_fb_info *)fb_p->data;
     BU_CKMAG(fb_p, FB_OSGL_MAGIC, "osgl framebuffer");
@@ -679,7 +679,7 @@ osgl_open_existing(struct fb *ifp, int width, int height, struct fb_platform_spe
 
 
 HIDDEN int
-osgl_final_close(struct fb *ifp)
+osgl_final_close(fb *ifp)
 {
     if (FB_DEBUG)
 	printf("osgl_final_close: All done...goodbye!\n");
@@ -713,7 +713,7 @@ osgl_final_close(struct fb *ifp)
 
 
 HIDDEN int
-osgl_flush(struct fb *UNUSED(ifp))
+osgl_flush(fb *UNUSED(ifp))
 {
     glFlush();
     return 0;
@@ -721,7 +721,7 @@ osgl_flush(struct fb *UNUSED(ifp))
 
 
 HIDDEN int
-fb_osgl_close(struct fb *ifp)
+fb_osgl_close(fb *ifp)
 {
     osgl_flush(ifp);
 
@@ -769,7 +769,7 @@ fb_osgl_close(struct fb *ifp)
 
 
 int
-osgl_close_existing(struct fb *ifp)
+osgl_close_existing(fb *ifp)
 {
     if (WINL(ifp) != NULL) {
 	/* free memory */
@@ -793,7 +793,7 @@ osgl_close_existing(struct fb *ifp)
  * Handle any pending input events
  */
 HIDDEN int
-osgl_poll(struct fb *ifp)
+osgl_poll(fb *ifp)
 {
     osgl_do_event(ifp);
 
@@ -807,7 +807,7 @@ osgl_poll(struct fb *ifp)
  * Free memory resources and close.
  */
 HIDDEN int
-osgl_free(struct fb *ifp)
+osgl_free(fb *ifp)
 {
     int ret;
 
@@ -822,7 +822,7 @@ osgl_free(struct fb *ifp)
 
 
 HIDDEN int
-osgl_clear(struct fb *ifp, unsigned char *pp)
+osgl_clear(fb *ifp, unsigned char *pp)
 {
     struct fb_pixel bg;
     register struct fb_pixel *osglp;
@@ -888,7 +888,7 @@ osgl_clear(struct fb *ifp, unsigned char *pp)
 
 
 HIDDEN int
-osgl_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
+osgl_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     struct fb_clip *clp;
 
@@ -948,7 +948,7 @@ osgl_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 
 
 HIDDEN int
-osgl_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
+osgl_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
     if (FB_DEBUG)
 	printf("entering osgl_getview\n");
@@ -964,7 +964,7 @@ osgl_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 
 /* read count pixels into pixelp starting at x, y */
 HIDDEN ssize_t
-osgl_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
+osgl_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     size_t n;
     size_t scan_count;	/* # pix on this scanline */
@@ -1019,7 +1019,7 @@ osgl_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 
 /* write count pixels from pixelp starting at xstart, ystart */
 HIDDEN ssize_t
-osgl_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t count)
+osgl_write(fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t count)
 {
     register int x;
     register int y;
@@ -1027,7 +1027,7 @@ osgl_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp, 
     size_t pix_count;   /* # pixels to send */
     ssize_t ret;
 
-    FB_CK_FB(ifp->i);
+    FB_CK_FB(ifp);
 
     if (FB_DEBUG)
 	printf("entering osgl_write\n");
@@ -1185,7 +1185,7 @@ osgl_write(struct fb *ifp, int xstart, int ystart, const unsigned char *pixelp, 
  * separately.
  */
 HIDDEN int
-osgl_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+osgl_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     register int x;
     register int y;
@@ -1244,7 +1244,7 @@ osgl_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const 
  * separately.
  */
 HIDDEN int
-osgl_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+osgl_bwwriterect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     register int x;
     register int y;
@@ -1298,7 +1298,7 @@ osgl_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, cons
 
 
 HIDDEN int
-osgl_rmap(register struct fb *ifp, register ColorMap *cmp)
+osgl_rmap(register fb *ifp, register ColorMap *cmp)
 {
     register int i;
 
@@ -1316,7 +1316,7 @@ osgl_rmap(register struct fb *ifp, register ColorMap *cmp)
 
 
 HIDDEN int
-osgl_wmap(register struct fb *ifp, register const ColorMap *cmp)
+osgl_wmap(register fb *ifp, register const ColorMap *cmp)
 {
     register int i;
     int prev;	/* !0 = previous cmap was non-linear */
@@ -1362,7 +1362,7 @@ osgl_wmap(register struct fb *ifp, register const ColorMap *cmp)
 
 
 HIDDEN int
-osgl_help(struct fb *ifp)
+osgl_help(fb *ifp)
 {
     fb_log("Description: %s\n", ifp->if_type);
     fb_log("Device: %s\n", ifp->if_name);
@@ -1382,9 +1382,9 @@ osgl_help(struct fb *ifp)
 
 
 HIDDEN int
-osgl_setcursor(struct fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
+osgl_setcursor(fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
 {
-    FB_CK_FB(ifp->i);
+    FB_CK_FB(ifp);
 
     // If it should ever prove desirable to alter the cursor or disable it, here's how it is done:
     // dynamic_cast<osgViewer::GraphicsWindow*>(camera->getGraphicsContext()))->setCursor(osgViewer::GraphicsWindow::NoCursor);
@@ -1394,7 +1394,7 @@ osgl_setcursor(struct fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbi
 
 
 HIDDEN int
-osgl_cursor(struct fb *UNUSED(ifp), int UNUSED(mode), int UNUSED(x), int UNUSED(y))
+osgl_cursor(fb *UNUSED(ifp), int UNUSED(mode), int UNUSED(x), int UNUSED(y))
 {
 
     fb_log("osgl_cursor\n");
@@ -1403,7 +1403,7 @@ osgl_cursor(struct fb *UNUSED(ifp), int UNUSED(mode), int UNUSED(x), int UNUSED(
 
 
 int
-osgl_refresh(struct fb *ifp, int x, int y, int w, int h)
+osgl_refresh(fb *ifp, int x, int y, int w, int h)
 {
     int mm;
     struct fb_clip *clp;
@@ -1449,7 +1449,7 @@ osgl_refresh(struct fb *ifp, int x, int y, int w, int h)
 
 
 /* This is the ONLY thing that we normally "export" */
-struct fb osgl_interface =
+fb osgl_interface =
 {
     0,			/* magic number slot */
     FB_OSGL_MAGIC,

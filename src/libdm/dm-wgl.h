@@ -18,7 +18,7 @@
  * information.
  */
 
-/** @addtogroup libstruct dm */
+/** @addtogroup libdm */
 /** @{ */
 /** @file dm-wgl.h
  *

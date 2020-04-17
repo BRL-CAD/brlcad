@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libstruct dm */
+/** @addtogroup libdm */
 /** @{ */
 /** @file dm_xvars.h
  *
@@ -70,9 +70,13 @@ struct dm_xvars {
     HFONT fontstruct;
     HDC  hdc;      /* device context of device that OpenGL calls are to be drawn on */
 #endif
-#if defined(DM_X) || defined (DM_OGL)
+#if defined(DM_X) || defined (DM_OGL) || defined (DM_RTGL)
     XVisualInfo *vip;
     XFontStruct *fontstruct;
+#endif
+#ifdef DM_TK
+    int tkfontset;
+    Tk_Font tkfontstruct;
 #endif
     int devmotionnotify;
     int devbuttonpress;

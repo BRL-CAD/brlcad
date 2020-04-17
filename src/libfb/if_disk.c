@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libstruct fb */
+/** @addtogroup libfb */
 /** @{ */
 /** @file if_disk.c
  *
@@ -35,7 +35,7 @@
 #include "fb.h"
 
 
-#define FILE_CMAP_SIZE ((size_t)ifp->i->if_width * ifp->i->if_height * sizeof(RGBpixel))
+#define FILE_CMAP_SIZE ((size_t)ifp->if_width * ifp->if_height * sizeof(RGBpixel))
 
 /* Ensure integer number of pixels per DMA */
 #define DISK_DMA_BYTES ((size_t)16*(size_t)1024/sizeof(RGBpixel)*sizeof(RGBpixel))
@@ -45,17 +45,17 @@
 
 
 HIDDEN int
-dsk_open(struct fb *ifp, const char *file, int width, int height)
+dsk_open(fb *ifp, const char *file, int width, int height)
 {
     static char zero = 0;
 
-    FB_CK_FB(ifp->i);
+    FB_CK_FB(ifp);
 
     /* check for default size */
     if (width == 0)
-	width = ifp->i->if_width;
+	width = ifp->if_width;
     if (height == 0)
-	height = ifp->i->if_height;
+	height = ifp->if_height;
 
     if (BU_STR_EQUAL(file, "-")) {
 	/*
@@ -63,22 +63,22 @@ dsk_open(struct fb *ifp, const char *file, int width, int height)
 	 * If it does not, then this can be stacked with /dev/mem,
 	 * i.e.	/dev/mem -
 	 */
-	ifp->i->if_fd = 1;		/* fileno(stdout) */
-	ifp->i->if_width = width;
-	ifp->i->if_height = height;
-	ifp->i->if_seekpos = 0;
+	ifp->if_fd = 1;		/* fileno(stdout) */
+	ifp->if_width = width;
+	ifp->if_height = height;
+	ifp->if_seekpos = 0;
 	return 0;
     }
 
-    if ((ifp->i->if_fd = open(file, O_RDWR | O_BINARY, 0)) == -1
-	&& (ifp->i->if_fd = open(file, O_RDONLY | O_BINARY, 0)) == -1) {
-	if ((ifp->i->if_fd = open(file, O_RDWR | O_CREAT | O_BINARY, 0664)) > 0) {
+    if ((ifp->if_fd = open(file, O_RDWR | O_BINARY, 0)) == -1
+	&& (ifp->if_fd = open(file, O_RDONLY | O_BINARY, 0)) == -1) {
+	if ((ifp->if_fd = open(file, O_RDWR | O_CREAT | O_BINARY, 0664)) > 0) {
 	    /* New file, write byte at end */
-	    if (lseek(ifp->i->if_fd, (height*width*sizeof(RGBpixel)-1), 0) == -1) {
+	    if (lseek(ifp->if_fd, (height*width*sizeof(RGBpixel)-1), 0) == -1) {
 		fb_log("disk_device_open : can not seek to end of new file.\n");
 		return -1;
 	    }
-	    if (write(ifp->i->if_fd, &zero, 1) < 0) {
+	    if (write(ifp->if_fd, &zero, 1) < 0) {
 		fb_log("disk_device_open : initial write failed.\n");
 		return -1;
 	    }
@@ -86,15 +86,15 @@ dsk_open(struct fb *ifp, const char *file, int width, int height)
 	    return -1;
     }
 
-    setmode(ifp->i->if_fd, O_BINARY);
+    setmode(ifp->if_fd, O_BINARY);
 
-    ifp->i->if_width = width;
-    ifp->i->if_height = height;
-    if (lseek(ifp->i->if_fd, 0, 0) == -1) {
+    ifp->if_width = width;
+    ifp->if_height = height;
+    if (lseek(ifp->if_fd, 0, 0) == -1) {
 	fb_log("disk_device_open : can not seek to beginning.\n");
 	return -1;
     }
-    ifp->i->if_seekpos = 0;
+    ifp->if_seekpos = 0;
     return 0;
 }
 
@@ -112,41 +112,41 @@ dsk_put_fbps(struct fb_platform_specific *UNUSED(fbps))
 }
 
 HIDDEN int
-dsk_open_existing(struct fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct fb_platform_specific *UNUSED(fb_p))
+dsk_open_existing(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct fb_platform_specific *UNUSED(fb_p))
 {
         return 0;
 }
 
 HIDDEN int
-dsk_close_existing(struct fb *UNUSED(ifp))
+dsk_close_existing(fb *UNUSED(ifp))
 {
         return 0;
 }
 
 HIDDEN int
-dsk_configure_window(struct fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
+dsk_configure_window(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
 {
         return 0;
 }
 
 HIDDEN int
-dsk_refresh(struct fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
+dsk_refresh(fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
 {
         return 0;
 }
 
 HIDDEN int
-dsk_close(struct fb *ifp)
+dsk_close(fb *ifp)
 {
-    return close(ifp->i->if_fd);
+    return close(ifp->if_fd);
 }
 
 
 HIDDEN int
-dsk_free(struct fb *ifp)
+dsk_free(fb *ifp)
 {
-    close(ifp->i->if_fd);
-    if (bu_file_delete(ifp->i->if_name)) {
+    close(ifp->if_fd);
+    if (bu_file_delete(ifp->if_name)) {
 	return 0;
     } else {
 	return 1;
@@ -158,7 +158,7 @@ dsk_free(struct fb *ifp)
  * Clear the disk file to the given color.
  */
 HIDDEN int
-disk_color_clear(struct fb *ifp, register unsigned char *bpp)
+disk_color_clear(fb *ifp, register unsigned char *bpp)
 {
     static unsigned char pix_buf[DISK_DMA_BYTES] = {0};
     register unsigned char *pix_to;
@@ -173,20 +173,20 @@ disk_color_clear(struct fb *ifp, register unsigned char *bpp)
     }
 
     /* Set start of framebuffer */
-    fd = ifp->i->if_fd;
-    if (ifp->i->if_seekpos != 0 && lseek(fd, 0, 0) == -1) {
+    fd = ifp->if_fd;
+    if (ifp->if_seekpos != 0 && lseek(fd, 0, 0) == -1) {
 	fb_log("disk_color_clear : seek failed.\n");
 	return -1;
     }
 
     /* Send until frame buffer is full. */
-    pixelstodo = ifp->i->if_height * ifp->i->if_width;
+    pixelstodo = ifp->if_height * ifp->if_width;
     while (pixelstodo > 0) {
 	i = pixelstodo > DISK_DMA_PIXELS ? DISK_DMA_PIXELS : pixelstodo;
 	if (write(fd, pix_buf, i * sizeof(RGBpixel)) == -1)
 	    return -1;
 	pixelstodo -= i;
-	ifp->i->if_seekpos += i * sizeof(RGBpixel);
+	ifp->if_seekpos += i * sizeof(RGBpixel);
     }
 
     return 0;
@@ -194,7 +194,7 @@ disk_color_clear(struct fb *ifp, register unsigned char *bpp)
 
 
 HIDDEN int
-dsk_clear(struct fb *ifp, unsigned char *bgpp)
+dsk_clear(fb *ifp, unsigned char *bgpp)
 {
     static RGBpixel black = { 0, 0, 0 };
 
@@ -206,24 +206,24 @@ dsk_clear(struct fb *ifp, unsigned char *bgpp)
 
 
 HIDDEN ssize_t
-dsk_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
+dsk_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     size_t bytes = count * sizeof(RGBpixel);
     size_t todo;
     ssize_t got;
     size_t dest;
     size_t bytes_read = 0;
-    int fd = ifp->i->if_fd;
+    int fd = ifp->if_fd;
 
     /* Reads on stdout make no sense.  Take reads from stdin. */
     if (fd == 1) fd = 0;
 
-    dest = ((y * ifp->i->if_width) + x) * sizeof(RGBpixel);
-    if (ifp->i->if_seekpos != dest && lseek(fd, dest, 0) == -1) {
+    dest = ((y * ifp->if_width) + x) * sizeof(RGBpixel);
+    if (ifp->if_seekpos != dest && lseek(fd, dest, 0) == -1) {
 	fb_log("disk_buffer_read : seek to %ld failed.\n", dest);
 	return -1;
     }
-    ifp->i->if_seekpos = dest;
+    ifp->if_seekpos = dest;
     while (bytes > 0) {
 	todo = bytes;
 	if ((got = read(fd, (char *) pixelp, todo)) != (ssize_t)todo) {
@@ -246,7 +246,7 @@ dsk_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 	}
 	bytes -= got;
 	pixelp += got;
-	ifp->i->if_seekpos += got;
+	ifp->if_seekpos += got;
 	bytes_read += got;
     }
     return bytes_read/sizeof(RGBpixel);
@@ -254,45 +254,45 @@ dsk_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 
 
 HIDDEN ssize_t
-dsk_write(struct fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
+dsk_write(fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     register ssize_t bytes = count * sizeof(RGBpixel);
     ssize_t todo;
     size_t dest;
 
-    dest = (y * ifp->i->if_width + x) * sizeof(RGBpixel);
-    if (dest != ifp->i->if_seekpos) {
-	if (lseek(ifp->i->if_fd, (b_off_t)dest, 0) == -1) {
+    dest = (y * ifp->if_width + x) * sizeof(RGBpixel);
+    if (dest != ifp->if_seekpos) {
+	if (lseek(ifp->if_fd, (b_off_t)dest, 0) == -1) {
 	    fb_log("disk_buffer_write : seek to %zd failed.\n", dest);
 	    return -1;
 	}
-	ifp->i->if_seekpos = dest;
+	ifp->if_seekpos = dest;
     }
     while (bytes > 0) {
 	ssize_t ret;
 	todo = bytes;
-	ret = write(ifp->i->if_fd, (char *) pixelp, todo);
+	ret = write(ifp->if_fd, (char *) pixelp, todo);
 	if (ret != todo) {
 	    fb_log("disk_buffer_write: write failed\n");
 	    return -1;
 	}
 	bytes -= todo;
 	pixelp += todo / sizeof(RGBpixel);
-	ifp->i->if_seekpos += todo;
+	ifp->if_seekpos += todo;
     }
     return count;
 }
 
 
 HIDDEN int
-dsk_rmap(struct fb *ifp, ColorMap *cmap)
+dsk_rmap(fb *ifp, ColorMap *cmap)
 {
-    int fd = ifp->i->if_fd;
+    int fd = ifp->if_fd;
 
     /* Reads on stdout make no sense.  Take reads from stdin. */
     if (fd == 1) fd = 0;
 
-    if (ifp->i->if_seekpos != FILE_CMAP_SIZE &&
+    if (ifp->if_seekpos != FILE_CMAP_SIZE &&
 	lseek(fd, (b_off_t)FILE_CMAP_SIZE, 0) == -1) {
 	fb_log("disk_colormap_read : seek to %zd failed.\n", FILE_CMAP_SIZE);
 	return -1;
@@ -309,18 +309,18 @@ dsk_rmap(struct fb *ifp, ColorMap *cmap)
 
 
 HIDDEN int
-dsk_wmap(struct fb *ifp, const ColorMap *cmap)
+dsk_wmap(fb *ifp, const ColorMap *cmap)
 {
     if (cmap == (ColorMap *) NULL)
 	/* Do not write default map to file. */
 	return 0;
     if (fb_is_linear_cmap(cmap))
 	return 0;
-    if (lseek(ifp->i->if_fd, (b_off_t)FILE_CMAP_SIZE, 0) == -1) {
+    if (lseek(ifp->if_fd, (b_off_t)FILE_CMAP_SIZE, 0) == -1) {
 	fb_log("disk_colormap_write : seek to %zd failed.\n", FILE_CMAP_SIZE);
 	return -1;
     }
-    if (write(ifp->i->if_fd, (char *)cmap, sizeof(ColorMap))
+    if (write(ifp->if_fd, (char *)cmap, sizeof(ColorMap))
 	!= sizeof(ColorMap)) {
 	fb_log("disk_colormap_write : write failed.\n");
 	return -1;
@@ -330,28 +330,28 @@ dsk_wmap(struct fb *ifp, const ColorMap *cmap)
 
 
 HIDDEN int
-dsk_help(struct fb *ifp)
+dsk_help(fb *ifp)
 {
-    fb_log("Description: %s\n", disk_interface.i->if_type);
-    fb_log("Device: %s\n", ifp->i->if_name);
+    fb_log("Description: %s\n", disk_interface.if_type);
+    fb_log("Device: %s\n", ifp->if_name);
     fb_log("Max width/height: %d %d\n",
-	   disk_interface.i->if_max_width,
-	   disk_interface.i->if_max_height);
+	   disk_interface.if_max_width,
+	   disk_interface.if_max_height);
     fb_log("Default width/height: %d %d\n",
-	   disk_interface.i->if_width,
-	   disk_interface.i->if_height);
-    if (ifp->i->if_fd == 1) {
+	   disk_interface.if_width,
+	   disk_interface.if_height);
+    if (ifp->if_fd == 1) {
 	fb_log("File \"-\" reads from stdin, writes to stdout\n");
     } else {
 	fb_log("Note: you may have just created a disk file\n");
-	fb_log("called \"%s\" by running this.\n", ifp->i->if_name);
+	fb_log("called \"%s\" by running this.\n", ifp->if_name);
     }
 
     return 0;
 }
 
 
-struct fb_impl disk_interface_impl = {
+fb disk_interface = {
     0,
     FB_DISK_MAGIC,
     dsk_open,
@@ -408,7 +408,6 @@ struct fb_impl disk_interface_impl = {
     {0}  /* u6 */
 };
 
-struct fb disk_interface = { &disk_interface_impl };
 
 /*
  * Local Variables:

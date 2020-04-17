@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libstruct fb */
+/** @addtogroup libfb */
 /** @{ */
 /** @file fb_obj.c
  *
@@ -46,7 +46,7 @@
 #include "fb.h"
 
 /* defined in libfb/tcl.c */
-extern int fb_refresh(struct fb *ifp, int x, int y, int w, int h);
+extern int fb_refresh(fb *ifp, int x, int y, int w, int h);
 
 
 #define FBO_CONSTRAIN(_v, _a, _b)		\
@@ -69,7 +69,7 @@ static struct fb_obj_list {
 
 
 HIDDEN int
-fbo_coords_ok(struct fb *fbp, int x, int y)
+fbo_coords_ok(fb *fbp, int x, int y)
 {
     int width;
     int height;
@@ -307,8 +307,8 @@ fbo_refresh_tcl(void *clientData, int argc, const char **argv)
     if (argc == 2) {
 	/* refresh the whole display */
 	x = y = 0;
-	w = fbop->fbo_fbs.fbs_fbp->i->if_width;
-	h = fbop->fbo_fbs.fbs_fbp->i->if_height;
+	w = fbop->fbo_fbs.fbs_fbp->if_width;
+	h = fbop->fbo_fbs.fbs_fbp->if_height;
     } else if (sscanf(argv[2], "%d %d %d %d", &x, &y, &w, &h) != 4) {
 	/* refresh rectangular area */
 	bu_log("fb_refresh: bad rectangle - %s", argv[2]);
@@ -786,7 +786,7 @@ HIDDEN int
 fbo_open_tcl(void *UNUSED(clientData), Tcl_Interp *interp, int argc, const char **argv)
 {
     struct fb_obj *fbop;
-    struct fb *ifp;
+    fb *ifp;
     int width = 512;
     int height = 512;
     register int c;

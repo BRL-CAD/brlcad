@@ -652,7 +652,7 @@ main(int argc, char **argv)
     int fudge;
     ColorMap cmap;
     ColorMap *cp = &cmap;
-    struct fb *fbp;
+    fb *fbp;
 
     bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
     bu_snooze(BU_SEC2USEC(1));

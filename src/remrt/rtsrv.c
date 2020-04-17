@@ -74,7 +74,7 @@ struct pkg_queue {
 
 
 /***** Variables shared with viewing model *** */
-struct fb *fbp = FB_NULL;	/* Framebuffer handle */
+fb *fbp = FB_NULL;	/* Framebuffer handle */
 FILE *outfp = NULL;	/* optional pixel output file */
 
 mat_t view2model;

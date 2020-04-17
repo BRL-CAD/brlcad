@@ -191,8 +191,8 @@ main(int argc, char **argv)
 	bu_exit(1, NULL);
     }
 
-    struct fb *ifp;
-    ifp = (struct fb *) calloc(sizeof(struct fb), 1);
+    fb *ifp;
+    ifp = (fb *) calloc(sizeof(fb), 1);
     ifp->if_name = "/dev/tk";
     ifp->if_magic = FB_MAGIC;
     char *fbname = "/dev/tk";

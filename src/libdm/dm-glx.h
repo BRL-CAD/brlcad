@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libstruct dm */
+/** @addtogroup libdm */
 /** @{ */
 /** @file dm-glx.h
  *

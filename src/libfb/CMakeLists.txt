@@ -128,7 +128,6 @@ set(libfb_ignore_files
   if_wgl.c
   fb_private.h
   osg_fb_manipulator.h
-  include/calltable.h
   )
 CMAKEFILES(${libfb_ignore_files})
 

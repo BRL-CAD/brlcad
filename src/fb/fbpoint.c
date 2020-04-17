@@ -38,7 +38,7 @@
 #include "libtermio.h"
 
 
-struct fb *fbp;
+fb *fbp;
 
 int JumpSpeed;		/* # pixels skipped with fast commands. */
 

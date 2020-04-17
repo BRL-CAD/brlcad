@@ -172,7 +172,7 @@ enum {
     CLT_ACCUM = (1<<1)      /* TODO */
 };
 
-extern void clt_connect_fb(struct fb *fbp);
+extern void clt_connect_fb(fb *fbp);
 
 extern void clt_view_init(unsigned int mode);
 extern void clt_run(int cur_pixel, int last_pixel);

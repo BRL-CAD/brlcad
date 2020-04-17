@@ -30,7 +30,6 @@
 
 #include "vmath.h"
 #include "dm.h"
-#include "dm_private.h"
 
 /* XXX need to test more thoroughly
    #define ANGLE_EPSILON 0.0001

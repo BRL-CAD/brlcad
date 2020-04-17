@@ -47,24 +47,24 @@
 #include "dm_private.h"
 
 #ifdef DM_X
-#  include "./dm_xvars.h"
+#  include "dm/dm_xvars.h"
 #  include <X11/Xutil.h>
 #  include "dm-X.h"
 #endif /* DM_X */
 
 #ifdef DM_TK
-#  include "./dm_xvars.h"
+#  include "dm/dm_xvars.h"
 #  include "tk.h"
 #  include "dm-tk.h"
 #endif /* DM_TK */
 
 #ifdef DM_OGL
-#  include "./dm_xvars.h"
+#  include "dm/dm_xvars.h"
 #  include "dm-ogl.h"
 #endif /* DM_OGL */
 
 #ifdef DM_WGL
-#  include "./dm_xvars.h"
+#  include "dm/dm_xvars.h"
 #  include <tkwinport.h>
 #  include "dm-wgl.h"
 #endif /* DM_WGL */
@@ -80,13 +80,13 @@
 struct dm_obj {
     struct bu_list l;
     struct bu_vls dmo_name;		/**< @brief display manager object name/cmd */
-    struct dm *dmo_dmp;		/**< @brief display manager pointer */
+    dm *dmo_dmp;		/**< @brief display manager pointer */
 #ifdef USE_FBSERV
     struct fbserv_obj dmo_fbs;		/**< @brief fbserv object */
 #endif
     struct bu_observer_list dmo_observers;		/**< @brief fbserv observers */
     mat_t viewMat;
-    int (*dmo_drawLabelsHook)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData);
+    int (*dmo_drawLabelsHook)(dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData);
     void *dmo_drawLabelsHookClientData;
     Tcl_Interp *interp;
 };
@@ -254,7 +254,7 @@ dmo_refreshFb_tcl(void *clientData, int argc, const char **argv)
     }
 
     fb_refresh(dmop->dmo_fbs.fbs_fbp, 0, 0,
-	       dmop->dmo_dmp->i->dm_width, dmop->dmo_dmp->i->dm_height);
+	       dmop->dmo_dmp->dm_width, dmop->dmo_dmp->dm_height);
 
     return BRLCAD_OK;
 }
@@ -1263,7 +1263,7 @@ dmo_drawSList(struct dm_obj *dmop,
     if (!dmop)
 	return BRLCAD_ERROR;
 
-    if (dmop->dmo_dmp->i->dm_transparency) {
+    if (dmop->dmo_dmp->dm_transparency) {
 	/* First, draw opaque stuff */
 	FOR_ALL_SOLIDS(sp, hsp) {
 	    if (sp->s_transparency < 1.0)
@@ -1271,7 +1271,7 @@ dmo_drawSList(struct dm_obj *dmop,
 
 	    if (linestyle != sp->s_soldash) {
 		linestyle = sp->s_soldash;
-		dm_set_line_attr(dmop->dmo_dmp, dmop->dmo_dmp->i->dm_lineWidth, linestyle);
+		dm_set_line_attr(dmop->dmo_dmp, dmop->dmo_dmp->dm_lineWidth, linestyle);
 	    }
 
 	    dmo_drawSolid(dmop, sp);
@@ -1288,7 +1288,7 @@ dmo_drawSList(struct dm_obj *dmop,
 
 	    if (linestyle != sp->s_soldash) {
 		linestyle = sp->s_soldash;
-		dm_set_line_attr(dmop->dmo_dmp, dmop->dmo_dmp->i->dm_lineWidth, linestyle);
+		dm_set_line_attr(dmop->dmo_dmp, dmop->dmo_dmp->dm_lineWidth, linestyle);
 	    }
 
 	    dmo_drawSolid(dmop, sp);
@@ -1301,7 +1301,7 @@ dmo_drawSList(struct dm_obj *dmop,
 	FOR_ALL_SOLIDS(sp, hsp) {
 	    if (linestyle != sp->s_soldash) {
 		linestyle = sp->s_soldash;
-		dm_set_line_attr(dmop->dmo_dmp, dmop->dmo_dmp->i->dm_lineWidth, linestyle);
+		dm_set_line_attr(dmop->dmo_dmp, dmop->dmo_dmp->dm_lineWidth, linestyle);
 	    }
 
 	    dmo_drawSolid(dmop, sp);
@@ -1377,9 +1377,9 @@ dmo_fg_tcl(void *clientData, int argc, const char **argv)
     /* get foreground color */
     if (argc == 2) {
 	bu_vls_printf(&vls, "%d %d %d",
-		      dmop->dmo_dmp->i->dm_fg[0],
-		      dmop->dmo_dmp->i->dm_fg[1],
-		      dmop->dmo_dmp->i->dm_fg[2]);
+		      dmop->dmo_dmp->dm_fg[0],
+		      dmop->dmo_dmp->dm_fg[1],
+		      dmop->dmo_dmp->dm_fg[2]);
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -1446,9 +1446,9 @@ dmo_bg_tcl(void *clientData, int argc, const char **argv)
     /* get background color */
     if (argc == 2) {
 	bu_vls_printf(&vls, "%d %d %d",
-		      dmop->dmo_dmp->i->dm_bg[0],
-		      dmop->dmo_dmp->i->dm_bg[1],
-		      dmop->dmo_dmp->i->dm_bg[2]);
+		      dmop->dmo_dmp->dm_bg[0],
+		      dmop->dmo_dmp->dm_bg[1],
+		      dmop->dmo_dmp->dm_bg[2]);
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -1510,7 +1510,7 @@ dmo_lineWidth_tcl(void *clientData, int argc, const char **argv)
 
     /* get linewidth */
     if (argc == 2) {
-	bu_vls_printf(&vls, "%d", dmop->dmo_dmp->i->dm_lineWidth);
+	bu_vls_printf(&vls, "%d", dmop->dmo_dmp->dm_lineWidth);
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -1528,7 +1528,7 @@ dmo_lineWidth_tcl(void *clientData, int argc, const char **argv)
 	    goto bad_lineWidth;
 
 	bu_vls_free(&vls);
-	return dm_set_line_attr(dmop->dmo_dmp, lineWidth, dmop->dmo_dmp->i->dm_lineStyle);
+	return dm_set_line_attr(dmop->dmo_dmp, lineWidth, dmop->dmo_dmp->dm_lineStyle);
     }
 
     /* wrong number of arguments */
@@ -1570,7 +1570,7 @@ dmo_lineStyle_tcl(void *clientData, int argc, const char **argv)
 
     /* get linestyle */
     if (argc == 2) {
-	bu_vls_printf(&vls, "%d", dmop->dmo_dmp->i->dm_lineStyle);
+	bu_vls_printf(&vls, "%d", dmop->dmo_dmp->dm_lineStyle);
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -1588,7 +1588,7 @@ dmo_lineStyle_tcl(void *clientData, int argc, const char **argv)
 	    goto bad_linestyle;
 
 	bu_vls_free(&vls);
-	return dm_set_line_attr(dmop->dmo_dmp, dmop->dmo_dmp->i->dm_lineWidth, linestyle);
+	return dm_set_line_attr(dmop->dmo_dmp, dmop->dmo_dmp->dm_lineWidth, linestyle);
     }
 
     /* wrong number of arguments */
@@ -1639,8 +1639,8 @@ dmo_configure_tcl(void *clientData, int argc, const char **argv)
     /* configure the framebuffer window */
     if (dmop->dmo_fbs.fbs_fbp != FB_NULL)
 	(void)fb_configure_window(dmop->dmo_fbs.fbs_fbp,
-			   dmop->dmo_dmp->i->dm_width,
-			   dmop->dmo_dmp->i->dm_height);
+			   dmop->dmo_dmp->dm_width,
+			   dmop->dmo_dmp->dm_height);
 #endif
 
     return status;
@@ -1670,7 +1670,7 @@ dmo_zclip_tcl(void *clientData, int argc, const char **argv)
 
     /* get zclip flag */
     if (argc == 2) {
-	bu_vls_printf(&vls, "%d", dmop->dmo_dmp->i->dm_zclip);
+	bu_vls_printf(&vls, "%d", dmop->dmo_dmp->dm_zclip);
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -1687,7 +1687,7 @@ dmo_zclip_tcl(void *clientData, int argc, const char **argv)
 	    return BRLCAD_ERROR;
 	}
 
-	dmop->dmo_dmp->i->dm_zclip = zclip;
+	dmop->dmo_dmp->dm_zclip = zclip;
 	return BRLCAD_OK;
     }
 
@@ -1721,7 +1721,7 @@ dmo_zbuffer_tcl(void *clientData, int argc, const char **argv)
 
     /* get zbuffer flag */
     if (argc == 2) {
-	bu_vls_printf(&vls, "%d", dmop->dmo_dmp->i->dm_zbuffer);
+	bu_vls_printf(&vls, "%d", dmop->dmo_dmp->dm_zbuffer);
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -1772,7 +1772,7 @@ dmo_light_tcl(void *clientData, int argc, const char **argv)
 
     /* get light flag */
     if (argc == 2) {
-	bu_vls_printf(&vls, "%d", dmop->dmo_dmp->i->dm_light);
+	bu_vls_printf(&vls, "%d", dmop->dmo_dmp->dm_light);
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -1824,7 +1824,7 @@ dmo_transparency_tcl(void *clientData, int argc, const char **argv)
 
     /* get transparency flag */
     if (argc == 2) {
-	bu_vls_printf(&vls, "%d", dmop->dmo_dmp->i->dm_transparency);
+	bu_vls_printf(&vls, "%d", dmop->dmo_dmp->dm_transparency);
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -1876,7 +1876,7 @@ dmo_depthMask_tcl(void *clientData, int argc, const char **argv)
 
     /* get depthMask flag */
     if (argc == 2) {
-	bu_vls_printf(&vls, "%d", dmop->dmo_dmp->i->dm_depthMask);
+	bu_vls_printf(&vls, "%d", dmop->dmo_dmp->dm_depthMask);
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -1932,12 +1932,12 @@ dmo_bounds_tcl(void *clientData, int argc, const char **argv)
     /* get window bounds */
     if (argc == 2) {
 	bu_vls_printf(&vls, "%g %g %g %g %g %g",
-		      dmop->dmo_dmp->i->dm_clipmin[X],
-		      dmop->dmo_dmp->i->dm_clipmax[X],
-		      dmop->dmo_dmp->i->dm_clipmin[Y],
-		      dmop->dmo_dmp->i->dm_clipmax[Y],
-		      dmop->dmo_dmp->i->dm_clipmin[Z],
-		      dmop->dmo_dmp->i->dm_clipmax[Z]);
+		      dmop->dmo_dmp->dm_clipmin[X],
+		      dmop->dmo_dmp->dm_clipmax[X],
+		      dmop->dmo_dmp->dm_clipmin[Y],
+		      dmop->dmo_dmp->dm_clipmax[Y],
+		      dmop->dmo_dmp->dm_clipmin[Z],
+		      dmop->dmo_dmp->dm_clipmax[Z]);
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -1958,8 +1958,8 @@ dmo_bounds_tcl(void *clientData, int argc, const char **argv)
 	    return BRLCAD_ERROR;
 	}
 
-	VMOVE(dmop->dmo_dmp->i->dm_clipmin, clipmin);
-	VMOVE(dmop->dmo_dmp->i->dm_clipmax, clipmax);
+	VMOVE(dmop->dmo_dmp->dm_clipmin, clipmin);
+	VMOVE(dmop->dmo_dmp->dm_clipmax, clipmax);
 
 	/*
 	 * Since dm_bound doesn't appear to be used anywhere,
@@ -1967,10 +1967,10 @@ dmo_bounds_tcl(void *clientData, int argc, const char **argv)
 	 * of the zclipping plane in dm-ogl.c. dm-X.c uses
 	 * dm_clipmin and dm_clipmax.
 	 */
-	if (dmop->dmo_dmp->i->dm_clipmax[2] <= GED_MAX)
-	    dmop->dmo_dmp->i->dm_bound = 1.0;
+	if (dmop->dmo_dmp->dm_clipmax[2] <= GED_MAX)
+	    dmop->dmo_dmp->dm_bound = 1.0;
 	else
-	    dmop->dmo_dmp->i->dm_bound = GED_MAX / dmop->dmo_dmp->i->dm_clipmax[2];
+	    dmop->dmo_dmp->dm_bound = GED_MAX / dmop->dmo_dmp->dm_clipmax[2];
 
 	return BRLCAD_OK;
     }
@@ -2006,7 +2006,7 @@ dmo_perspective_tcl(void *clientData, int argc, const char **argv)
 
     /* get perspective mode */
     if (argc == 2) {
-	bu_vls_printf(&vls, "%d", dmop->dmo_dmp->i->dm_perspective);
+	bu_vls_printf(&vls, "%d", dmop->dmo_dmp->dm_perspective);
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -2025,7 +2025,7 @@ dmo_perspective_tcl(void *clientData, int argc, const char **argv)
 	    return BRLCAD_ERROR;
 	}
 
-	dmop->dmo_dmp->i->dm_perspective = perspective;
+	dmop->dmo_dmp->dm_perspective = perspective;
 	return BRLCAD_OK;
     }
 
@@ -2089,11 +2089,11 @@ dmo_png_cmd(struct dm_obj *dmop,
 	return BRLCAD_ERROR;
     }
 
-    ximage_p = XGetImage(((struct dm_xvars *)dmop->dmo_dmp->i->dm_vars.pub_vars)->dpy,
-			 ((struct dm_xvars *)dmop->dmo_dmp->i->dm_vars.pub_vars)->win,
+    ximage_p = XGetImage(((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy,
+			 ((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->win,
 			 0, 0,
-			 dmop->dmo_dmp->i->dm_width,
-			 dmop->dmo_dmp->i->dm_height,
+			 dmop->dmo_dmp->dm_width,
+			 dmop->dmo_dmp->dm_height,
 			 ~0, ZPixmap);
     if (!ximage_p) {
 	Tcl_AppendResult(dmop->interp, "png: could not get XImage\n", (char *)NULL);
@@ -2363,7 +2363,7 @@ dmo_clearBufferAfter_tcl(void *clientData, int argc, const char **argv)
 
     /* get clearBufferAfter flag */
     if (argc == 2) {
-	bu_vls_printf(&vls, "%d", dmop->dmo_dmp->i->dm_clearBufferAfter);
+	bu_vls_printf(&vls, "%d", dmop->dmo_dmp->dm_clearBufferAfter);
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -2380,7 +2380,7 @@ dmo_clearBufferAfter_tcl(void *clientData, int argc, const char **argv)
 	    return BRLCAD_ERROR;
 	}
 
-	dmop->dmo_dmp->i->dm_clearBufferAfter = clearBufferAfter;
+	dmop->dmo_dmp->dm_clearBufferAfter = clearBufferAfter;
 	return BRLCAD_OK;
     }
 
@@ -2414,7 +2414,7 @@ dmo_debug_tcl(void *clientData, int argc, const char **argv)
 
     /* get debug level */
     if (argc == 2) {
-	bu_vls_printf(&vls, "%d", dmop->dmo_dmp->i->dm_debugLevel);
+	bu_vls_printf(&vls, "%d", dmop->dmo_dmp->dm_debugLevel);
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -2463,7 +2463,7 @@ dmo_logfile_tcl(void *clientData, int argc, const char **argv)
 
     /* get log file */
     if (argc == 2) {
-	bu_vls_printf(&vls, "%s", bu_vls_addr(&(dmop->dmo_dmp->i->dm_log)));
+	bu_vls_printf(&vls, "%s", bu_vls_addr(&(dmop->dmo_dmp->dm_log)));
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -2504,7 +2504,7 @@ dmo_flush_tcl(void *UNUSED(clientData), int UNUSED(argc), const char **UNUSED(ar
     if (!dmop)
 	return BRLCAD_ERROR;
 
-    XFlush(((struct dm_xvars *)dmop->dmo_dmp->i->dm_vars.pub_vars)->dpy);
+    XFlush(((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy);
 #endif
 
     return BRLCAD_OK;
@@ -2531,7 +2531,7 @@ dmo_sync_tcl(void *UNUSED(clientData), int UNUSED(argc), const char **UNUSED(arg
     if (!dmop)
 	return BRLCAD_ERROR;
 
-    XSync(((struct dm_xvars *)dmop->dmo_dmp->i->dm_vars.pub_vars)->dpy, 0);
+    XSync(((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy, 0);
 #endif
 
     return BRLCAD_OK;
@@ -2560,7 +2560,7 @@ dmo_size_tcl(void *clientData, int argc, const char **argv)
 	obj = Tcl_DuplicateObj(obj);
 
     if (argc == 2) {
-	bu_vls_printf(&vls, "%d %d", dmop->dmo_dmp->i->dm_width, dmop->dmo_dmp->i->dm_height);
+	bu_vls_printf(&vls, "%d %d", dmop->dmo_dmp->dm_width, dmop->dmo_dmp->dm_height);
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -2589,7 +2589,7 @@ dmo_size_tcl(void *clientData, int argc, const char **argv)
 	}
 
 #if defined(DM_X) || defined(DM_OGL) || defined(DM_OGL) || defined(DM_WGL)
-	Tk_GeometryRequest(((struct dm_xvars *)dmop->dmo_dmp->i->dm_vars.pub_vars)->xtkwin,
+	Tk_GeometryRequest(((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->xtkwin,
 			   width, height);
 	return BRLCAD_OK;
 #else
@@ -2633,7 +2633,7 @@ dmo_get_aspect_tcl(void *clientData, int argc, const char **argv)
     if (Tcl_IsShared(obj))
 	obj = Tcl_DuplicateObj(obj);
 
-    bu_vls_printf(&vls, "%g", dmop->dmo_dmp->i->dm_aspect);
+    bu_vls_printf(&vls, "%g", dmop->dmo_dmp->dm_aspect);
     Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
 
@@ -2732,7 +2732,7 @@ dmo_getDrawLabelsHook_tcl(void *clientData, int argc, const char **argv)
 HIDDEN int
 dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
 {
-    int (*hook)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData);
+    int (*hook)(dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData);
     void *clientData;
 
     if (!dmop || !dmop->interp)
@@ -2755,7 +2755,7 @@ dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
 	Tcl_DStringAppend(&ds, ": failed to set the drawLabels hook", -1);
 	Tcl_DStringResult(dmop->interp, &ds);
 
-	dmop->dmo_drawLabelsHook = (int (*)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData))0;
+	dmop->dmo_drawLabelsHook = (int (*)(dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData))0;
 
 	return BRLCAD_ERROR;
     }
@@ -2768,7 +2768,7 @@ dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
 	Tcl_DStringAppend(&ds, ": failed to set the drawLabels hook", -1);
 	Tcl_DStringResult(dmop->interp, &ds);
 
-	dmop->dmo_drawLabelsHook = (int (*)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData))0;
+	dmop->dmo_drawLabelsHook = (int (*)(dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData))0;
 
 	return BRLCAD_ERROR;
     }
@@ -2896,7 +2896,7 @@ HIDDEN int
 dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct dm_obj *dmop;
-    struct dm *dmp;
+    dm *dmp;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     int name_index = 1;
     int type = DM_TYPE_BAD;
@@ -2989,7 +2989,7 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
 	    av[i+newargs] = argv[i];
 	av[i+newargs] = (const char *)NULL;
 
-	if ((dmp = dm_open((void *)interp, type, ac, av)) == DM_NULL) {
+	if ((dmp = dm_open(interp, type, ac, av)) == DM_NULL) {
 	    if (Tcl_IsShared(obj))
 		obj = Tcl_DuplicateObj(obj);
 
@@ -3014,9 +3014,9 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
     bu_vls_init(&dmop->dmo_name);
     bu_vls_strcpy(&dmop->dmo_name, argv[name_index]);
     dmop->dmo_dmp = dmp;
-    VSETALL(dmop->dmo_dmp->i->dm_clipmin, -2048.0);
-    VSETALL(dmop->dmo_dmp->i->dm_clipmax, 2047.0);
-    dmop->dmo_drawLabelsHook = (int (*)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData))0;
+    VSETALL(dmop->dmo_dmp->dm_clipmin, -2048.0);
+    VSETALL(dmop->dmo_dmp->dm_clipmax, 2047.0);
+    dmop->dmo_drawLabelsHook = (int (*)(dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData))0;
 
 #ifdef USE_FBSERV
     dmop->dmo_fbs.fbs_listener.fbsl_fbsp = &dmop->dmo_fbs;

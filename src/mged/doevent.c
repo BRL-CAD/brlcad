@@ -49,6 +49,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "ged.h"
+#include "dm/dm_xvars.h"
 
 #include "./mged.h"
 #include "./mged_dm.h"
@@ -66,10 +67,6 @@ HIDDEN void motion_event_handler();
 
 #ifdef IR_KNOBS
 HIDDEN void dials_event_handler();
-#endif
-
-#ifdef IR_KNOBS
-#  define NOISE 16              /* Size of dead spot on knob */
 #endif
 
 #ifdef IR_BUTTONS

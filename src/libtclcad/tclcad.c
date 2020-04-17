@@ -118,7 +118,7 @@ Tclcad_Init(Tcl_Interp *interp)
 	return TCL_ERROR;
     }
 
-    /* Initialize libstruct dm */
+    /* Initialize libdm */
     if (Dm_Init(interp) == TCL_ERROR) {
 	bu_log("Dm_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 	return TCL_ERROR;

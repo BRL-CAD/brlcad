@@ -88,6 +88,7 @@ set(LIBDM_SRCS
   ${dmw32_srcs}
   ${dmogl_srcs}
   ${dmosg_srcs}
+  ${dmrtgl_srcs}
   ${dmtk_srcs}
   ${dmqt_srcs}
   adc.c
@@ -149,7 +150,6 @@ set(libdm_ignore_files
   dm-wgl.c
   dm-wgl.h
   dm_private.h
-  dm_xvars.h
   fontstash/LICENSE.fontstash
   fontstash/README.md
   fontstash/fontstash.h
@@ -157,7 +157,6 @@ set(libdm_ignore_files
   fontstash/stb_truetype.h
   osg-test.cpp
   osg_bob.cpp
-  include/calltable.h
   )
 CMAKEFILES(${libdm_ignore_files})
 CMAKEFILES(dm_private.h)

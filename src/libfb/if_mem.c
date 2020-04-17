@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libstruct fb */
+/** @addtogroup libfb */
 /** @{ */
 /** @file if_mem.c
  *
@@ -43,15 +43,15 @@
 
 /* Per connection private info */
 struct mem_info {
-    struct fb *fbp;		/* attached frame buffer (if any) */
+    fb *fbp;		/* attached frame buffer (if any) */
     unsigned char *mem;	/* memory frame buffer */
     ColorMap cmap;		/* color map buffer */
     int mem_dirty;	/* !0 implies unflushed written data */
     int cmap_dirty;	/* !0 implies unflushed written cmap */
     int write_thru;	/* !0 implies pass-thru write mode */
 };
-#define MI(ptr) ((struct mem_info *)((ptr)->i->u1.p))
-#define MIL(ptr) ((ptr)->i->u1.p)		/* left hand side version */
+#define MI(ptr) ((struct mem_info *)((ptr)->u1.p))
+#define MIL(ptr) ((ptr)->u1.p)		/* left hand side version */
 
 #define MODE_1MASK	(1<<1)
 #define MODE_1BUFFERED	(0<<1)		/* output flushed only at close */
@@ -59,7 +59,7 @@ struct mem_info {
 
 #define MODE_2MASK	(1<<2)
 #define MODE_2CLEAR	(0<<2)		/* assume fb opens clear */
-#define MODE_2PREREAD	(1<<2)		/* pre-read data from struct fb */
+#define MODE_2PREREAD	(1<<2)		/* pre-read data from fb */
 
 static struct modeflags {
     char c;
@@ -76,17 +76,17 @@ static struct modeflags {
 
 
 HIDDEN int
-mem_open(struct fb *ifp, const char *file, int width, int height)
+mem_open(fb *ifp, const char *file, int width, int height)
 {
     int mode;
     const char *cp;
-    struct fb *fbp;
+    fb *fbp;
     char modebuf[80];
     char *mp;
     int alpha;
     struct modeflags *mfp;
 
-    FB_CK_FB(ifp->i);
+    FB_CK_FB(ifp);
 
     /* This function doesn't look like it will work if file
      * is NULL - stop before we start, if that's the case.*/
@@ -149,19 +149,19 @@ mem_open(struct fb *ifp, const char *file, int width, int height)
 	    return -1;
 	}
 	MI(ifp)->fbp = fbp;
-	ifp->i->if_width = fbp->i->if_width;
-	ifp->i->if_height = fbp->i->if_height;
-	ifp->i->if_selfd = fbp->i->if_selfd;
+	ifp->if_width = fbp->if_width;
+	ifp->if_height = fbp->if_height;
+	ifp->if_selfd = fbp->if_selfd;
 	if ((mode & MODE_1MASK) == MODE_1IMMEDIATE)
 	    MI(ifp)->write_thru = 1;
     } else {
 	/* no frame buffer specified */
 	if (width > 0)
-	    ifp->i->if_width = width;
+	    ifp->if_width = width;
 	if (height > 0)
-	    ifp->i->if_height = height;
+	    ifp->if_height = height;
     }
-    if ((MI(ifp)->mem = (unsigned char *)calloc(ifp->i->if_width*ifp->i->if_height, 3)) == NULL) {
+    if ((MI(ifp)->mem = (unsigned char *)calloc(ifp->if_width*ifp->if_height, 3)) == NULL) {
 	fb_log("mem_open:  memory buffer malloc failed\n");
 	(void)free(MIL(ifp));
 	return -1;
@@ -171,11 +171,11 @@ mem_open(struct fb *ifp, const char *file, int width, int height)
 	/* Pre read all of the image data and cmap */
 	int got;
 	got = fb_readrect(MI(ifp)->fbp, 0, 0,
-			  ifp->i->if_width, ifp->i->if_height,
+			  ifp->if_width, ifp->if_height,
 			  (unsigned char *)MI(ifp)->mem);
-	if (got != ifp->i->if_width * ifp->i->if_height) {
+	if (got != ifp->if_width * ifp->if_height) {
 	    fb_log("if_mem:  WARNING: pre-read of %d only got %d, your image is truncated.\n",
-		   ifp->i->if_width * ifp->i->if_height, got);
+		   ifp->if_width * ifp->if_height, got);
 	}
 	if (fb_rmap(MI(ifp)->fbp, &(MI(ifp)->cmap)) < 0)
 	    fb_make_linear_cmap(&(MI(ifp)->cmap));
@@ -201,31 +201,31 @@ mem_put_fbps(struct fb_platform_specific *UNUSED(fbps))
 }
 
 HIDDEN int
-mem_open_existing(struct fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct fb_platform_specific *UNUSED(fb_p))
+mem_open_existing(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct fb_platform_specific *UNUSED(fb_p))
 {
         return 0;
 }
 
 HIDDEN int
-mem_close_existing(struct fb *UNUSED(ifp))
+mem_close_existing(fb *UNUSED(ifp))
 {
         return 0;
 }
 
 HIDDEN int
-mem_configure_window(struct fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
+mem_configure_window(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
 {
         return 0;
 }
 
 HIDDEN int
-mem_refresh(struct fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
+mem_refresh(fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
 {
         return 0;
 }
 
 HIDDEN int
-mem_close(struct fb *ifp)
+mem_close(fb *ifp)
 {
     /*
      * Flush memory/cmap to attached frame buffer if any
@@ -236,7 +236,7 @@ mem_close(struct fb *ifp)
 	}
 	if (MI(ifp)->mem_dirty) {
 	    fb_writerect(MI(ifp)->fbp, 0, 0,
-			 ifp->i->if_width, ifp->i->if_height, (unsigned char *)MI(ifp)->mem);
+			 ifp->if_width, ifp->if_height, (unsigned char *)MI(ifp)->mem);
 	}
 	fb_close(MI(ifp)->fbp);
 	MI(ifp)->fbp = FB_NULL;
@@ -249,7 +249,7 @@ mem_close(struct fb *ifp)
 
 
 HIDDEN int
-mem_clear(struct fb *ifp, unsigned char *pp)
+mem_clear(fb *ifp, unsigned char *pp)
 {
     RGBpixel v;
     register int n;
@@ -265,13 +265,13 @@ mem_clear(struct fb *ifp, unsigned char *pp)
 
     cp = MI(ifp)->mem;
     if (v[RED] == v[GRN] && v[RED] == v[BLU]) {
-	int bytes = ifp->i->if_width*ifp->i->if_height*3;
+	int bytes = ifp->if_width*ifp->if_height*3;
 	if (v[RED] == 0)
 	    memset((char *)cp, 0, bytes);	/* all black */
 	else
 	    memset(cp, v[RED], bytes);	/* all grey */
     } else {
-	for (n = ifp->i->if_width*ifp->i->if_height; n; n--) {
+	for (n = ifp->if_width*ifp->if_height; n; n--) {
 	    *cp++ = v[RED];
 	    *cp++ = v[GRN];
 	    *cp++ = v[BLU];
@@ -287,38 +287,38 @@ mem_clear(struct fb *ifp, unsigned char *pp)
 
 
 HIDDEN ssize_t
-mem_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
+mem_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     size_t pixels_to_end;
 
-    if (x < 0 || x >= ifp->i->if_width || y < 0 || y >= ifp->i->if_height)
+    if (x < 0 || x >= ifp->if_width || y < 0 || y >= ifp->if_height)
 	return -1;
 
     /* make sure we don't run off the end of the buffer */
-    pixels_to_end = ifp->i->if_width*ifp->i->if_height - (y*ifp->i->if_width + x);
+    pixels_to_end = ifp->if_width*ifp->if_height - (y*ifp->if_width + x);
     if (pixels_to_end < count)
 	count = pixels_to_end;
 
-    memcpy((char *)pixelp, &(MI(ifp)->mem[(y*ifp->i->if_width + x)*3]), count*3);
+    memcpy((char *)pixelp, &(MI(ifp)->mem[(y*ifp->if_width + x)*3]), count*3);
 
     return count;
 }
 
 
 HIDDEN ssize_t
-mem_write(struct fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
+mem_write(fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     size_t pixels_to_end;
 
-    if (x < 0 || x >= ifp->i->if_width || y < 0 || y >= ifp->i->if_height)
+    if (x < 0 || x >= ifp->if_width || y < 0 || y >= ifp->if_height)
 	return -1;
 
     /* make sure we don't run off the end of the buffer */
-    pixels_to_end = ifp->i->if_width*ifp->i->if_height - (y*ifp->i->if_width + x);
+    pixels_to_end = ifp->if_width*ifp->if_height - (y*ifp->if_width + x);
     if (pixels_to_end < count)
 	count = pixels_to_end;
 
-    memcpy(&(MI(ifp)->mem[(y*ifp->i->if_width + x)*3]), (char *)pixelp, count*3);
+    memcpy(&(MI(ifp)->mem[(y*ifp->if_width + x)*3]), (char *)pixelp, count*3);
 
     if (MI(ifp)->write_thru) {
 	return fb_write(MI(ifp)->fbp, x, y, pixelp, count);
@@ -330,7 +330,7 @@ mem_write(struct fb *ifp, int x, int y, const unsigned char *pixelp, size_t coun
 
 
 HIDDEN int
-mem_rmap(struct fb *ifp, ColorMap *cmp)
+mem_rmap(fb *ifp, ColorMap *cmp)
 {
     *cmp = MI(ifp)->cmap;		/* struct copy */
     return 0;
@@ -338,7 +338,7 @@ mem_rmap(struct fb *ifp, ColorMap *cmp)
 
 
 HIDDEN int
-mem_wmap(struct fb *ifp, const ColorMap *cmp)
+mem_wmap(fb *ifp, const ColorMap *cmp)
 {
     if (cmp == COLORMAP_NULL) {
 	fb_make_linear_cmap(&(MI(ifp)->cmap));
@@ -356,7 +356,7 @@ mem_wmap(struct fb *ifp, const ColorMap *cmp)
 
 
 HIDDEN int
-mem_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
+mem_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     fb_sim_view(ifp, xcenter, ycenter, xzoom, yzoom);
     if (MI(ifp)->write_thru) {
@@ -368,7 +368,7 @@ mem_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 
 
 HIDDEN int
-mem_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
+mem_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
     if (MI(ifp)->write_thru) {
 	return fb_getview(MI(ifp)->fbp, xcenter, ycenter,
@@ -380,7 +380,7 @@ mem_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 
 
 HIDDEN int
-mem_setcursor(struct fb *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
+mem_setcursor(fb *ifp, const unsigned char *bits, int xbits, int ybits, int xorig, int yorig)
 {
     if (MI(ifp)->write_thru) {
 	return fb_setcursor(MI(ifp)->fbp,
@@ -391,7 +391,7 @@ mem_setcursor(struct fb *ifp, const unsigned char *bits, int xbits, int ybits, i
 
 
 HIDDEN int
-mem_cursor(struct fb *ifp, int mode, int x, int y)
+mem_cursor(fb *ifp, int mode, int x, int y)
 {
     fb_sim_cursor(ifp, mode, x, y);
     if (MI(ifp)->write_thru) {
@@ -402,7 +402,7 @@ mem_cursor(struct fb *ifp, int mode, int x, int y)
 
 
 HIDDEN int
-mem_getcursor(struct fb *ifp, int *mode, int *x, int *y)
+mem_getcursor(fb *ifp, int *mode, int *x, int *y)
 {
     if (MI(ifp)->write_thru) {
 	return fb_getcursor(MI(ifp)->fbp, mode, x, y);
@@ -413,7 +413,7 @@ mem_getcursor(struct fb *ifp, int *mode, int *x, int *y)
 
 
 HIDDEN int
-mem_poll(struct fb *ifp)
+mem_poll(fb *ifp)
 {
     if (MI(ifp)->write_thru) {
 	return fb_poll(MI(ifp)->fbp);
@@ -423,7 +423,7 @@ mem_poll(struct fb *ifp)
 
 
 HIDDEN int
-mem_flush(struct fb *ifp)
+mem_flush(fb *ifp)
 {
     /*
      * Flush memory/cmap to attached frame buffer if any
@@ -435,7 +435,7 @@ mem_flush(struct fb *ifp)
 	}
 	if (MI(ifp)->mem_dirty) {
 	    fb_writerect(MI(ifp)->fbp, 0, 0,
-			 ifp->i->if_width, ifp->i->if_height, (unsigned char *)MI(ifp)->mem);
+			 ifp->if_width, ifp->if_height, (unsigned char *)MI(ifp)->mem);
 	    MI(ifp)->mem_dirty = 0;
 	}
 	return fb_flush(MI(ifp)->fbp);
@@ -448,18 +448,18 @@ mem_flush(struct fb *ifp)
 
 
 HIDDEN int
-mem_help(struct fb *ifp)
+mem_help(fb *ifp)
 {
     struct modeflags *mfp;
 
-    fb_log("Description: %s\n", memory_interface.i->if_type);
-    fb_log("Device: %s\n", ifp->i->if_name);
+    fb_log("Description: %s\n", memory_interface.if_type);
+    fb_log("Device: %s\n", ifp->if_name);
     fb_log("Max width/height: %d %d\n",
-	   memory_interface.i->if_max_width,
-	   memory_interface.i->if_max_height);
+	   memory_interface.if_max_width,
+	   memory_interface.if_max_height);
     fb_log("Default width/height: %d %d\n",
-	   memory_interface.i->if_width,
-	   memory_interface.i->if_height);
+	   memory_interface.if_width,
+	   memory_interface.if_height);
     fb_log("Usage: /dev/mem[options] [attached_framebuffer]\n");
     for (mfp = modeflags; mfp->c != '\0'; mfp++) {
 	fb_log("   %c   %s\n", mfp->c, mfp->help);
@@ -469,7 +469,7 @@ mem_help(struct fb *ifp)
 
 
 /* This is the ONLY thing that we normally "export" */
-struct fb_impl memory_interface_impl =  {
+fb memory_interface =  {
     0,
     FB_MEMORY_MAGIC,
     mem_open,		/* device_open */
@@ -526,7 +526,6 @@ struct fb_impl memory_interface_impl =  {
     {0}  /* u6 */
 };
 
-struct fb memory_interface =  { &memory_interface_impl };
 
 /*
  * Local Variables:

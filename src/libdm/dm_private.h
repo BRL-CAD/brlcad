@@ -31,103 +31,16 @@
 #include "vmath.h"
 #include "dm.h"
 
-#include "./include/calltable.h"
-
-#define DM_MIN (-2048)
-#define DM_MAX (2047)
-
-#define DM_O(_m) offsetof(struct dm_impl, _m)
-
-#define GED_MAX 2047.0
-#define GED_MIN -2048.0
-#define GED_RANGE 4095.0
-#define INV_GED 0.00048828125
-#define INV_4096 0.000244140625
-
-/*
- * Display coordinate conversion:
- * GED is using -2048..+2048,
- * X is 0..width, 0..height
- */
-#define DIVBY4096(x) (((double)(x))*INV_4096)
-#define GED_TO_Xx(_dmp, x) ((int)((DIVBY4096(x)+0.5)*_dmp->i->dm_width))
-#define GED_TO_Xy(_dmp, x) ((int)((0.5-DIVBY4096(x))*_dmp->i->dm_height))
-#define Xx_TO_GED(_dmp, x) ((int)(((x)/(double)_dmp->i->dm_width - 0.5) * GED_RANGE))
-#define Xy_TO_GED(_dmp, x) ((int)((0.5 - (x)/(double)_dmp->i->dm_height) * GED_RANGE))
-
-/* +-2048 to +-1 */
-#define GED_TO_PM1(x) (((fastf_t)(x))*INV_GED)
-
-#ifdef IR_KNOBS
-#  define NOISE 16		/* Size of dead spot on knob */
-#endif
-
-/* Line Styles */
-#define DM_SOLID_LINE 0
-#define DM_DASHED_LINE 1
-
-/* Colors */
-#define DM_COLOR_HI	((short)230)
-#define DM_COLOR_LOW	((short)0)
-#define DM_BLACK_R	DM_COLOR_LOW
-#define DM_BLACK_G	DM_COLOR_LOW
-#define DM_BLACK_B	DM_COLOR_LOW
-#define DM_RED_R	DM_COLOR_HI
-#define DM_RED_G	DM_COLOR_LOW
-#define DM_RED_B	DM_COLOR_LOW
-#define DM_BLUE_R	DM_COLOR_LOW
-#define DM_BLUE_G	DM_COLOR_LOW
-#define DM_BLUE_B	DM_COLOR_HI
-#define DM_YELLOW_R	DM_COLOR_HI
-#define DM_YELLOW_G	DM_COLOR_HI
-#define DM_YELLOW_B	DM_COLOR_LOW
-#define DM_WHITE_R	DM_COLOR_HI
-#define DM_WHITE_G	DM_COLOR_HI
-#define DM_WHITE_B	DM_COLOR_HI
-#define DM_BLACK	DM_BLACK_R, DM_BLACK_G, DM_BLACK_B
-#define DM_RED		DM_RED_R, DM_RED_G, DM_RED_B
-#define DM_BLUE		DM_BLUE_R, DM_BLUE_G, DM_BLUE_B
-#define DM_YELLOW	DM_YELLOW_R, DM_YELLOW_G, DM_YELLOW_B
-#define DM_WHITE	DM_WHITE_R, DM_WHITE_G, DM_WHITE_B
-
-#define DM_COPY_COLOR(_dr, _dg, _db, _sr, _sg, _sb) {\
-	(_dr) = (_sr);\
-	(_dg) = (_sg);\
-	(_db) = (_sb); }
-#define DM_SAME_COLOR(_dr, _dg, _db, _sr, _sg, _sb)(\
-	(_dr) == (_sr) &&\
-	(_dg) == (_sg) &&\
-	(_db) == (_sb))
-#if defined(DM_X) || defined(DM_OGL)
-#define DM_REVERSE_COLOR_BYTE_ORDER(_shift, _mask) {	\
-	_shift = 24 - _shift;				\
-	switch (_shift) {				\
-	    case 0:					\
-		_mask >>= 24;				\
-		break;					\
-	    case 8:					\
-		_mask >>= 8;				\
-		break;					\
-	    case 16:					\
-		_mask <<= 8;				\
-		break;					\
-	    case 24:					\
-		_mask <<= 24;				\
-		break;					\
-	}						\
-    }
-#else
-/* Do nothing */
-#define DM_REVERSE_COLOR_BYTE_ORDER(_shift, _mask)
-#endif
-
-
+struct dm_vars {
+    void *pub_vars;
+    void *priv_vars;
+};
 
 #if defined(DM_OGL) || defined(DM_WGL)
 #define Ogl_MV_O(_m) offsetof(struct modifiable_ogl_vars, _m)
 
 struct modifiable_ogl_vars {
-    struct dm *this_dm;
+    dm *this_dm;
     int cueing_on;
     int zclipping_on;
     int zbuffer_on;
@@ -146,20 +59,104 @@ struct modifiable_ogl_vars {
 };
 #endif
 
+/**
+ * Interface to a specific Display Manager
+ */
+struct dm_internal {
+    int (*dm_close)(struct dm_internal *dmp);
+    int (*dm_drawBegin)(struct dm_internal *dmp);	/**< @brief formerly dmr_prolog */
+    int (*dm_drawEnd)(struct dm_internal *dmp);		/**< @brief formerly dmr_epilog */
+    int (*dm_normal)(struct dm_internal *dmp);
+    int (*dm_loadMatrix)(struct dm_internal *dmp, fastf_t *mat, int which_eye);
+    int (*dm_loadPMatrix)(struct dm_internal *dmp, fastf_t *mat);
+    int (*dm_drawString2D)(struct dm_internal *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect);	/**< @brief formerly dmr_puts */
+    int (*dm_drawLine2D)(struct dm_internal *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2);	/**< @brief formerly dmr_2d_line */
+    int (*dm_drawLine3D)(struct dm_internal *dmp, point_t pt1, point_t pt2);
+    int (*dm_drawLines3D)(struct dm_internal *dmp, int npoints, point_t *points, int sflag);
+    int (*dm_drawPoint2D)(struct dm_internal *dmp, fastf_t x, fastf_t y);
+    int (*dm_drawPoint3D)(struct dm_internal *dmp, point_t point);
+    int (*dm_drawPoints3D)(struct dm_internal *dmp, int npoints, point_t *points);
+    int (*dm_drawVList)(struct dm_internal *dmp, struct bn_vlist *vp);
+    int (*dm_drawVListHiddenLine)(struct dm_internal *dmp, register struct bn_vlist *vp);
+    int (*dm_draw)(struct dm_internal *dmp, struct bn_vlist *(*callback_function)(void *), void **data);	/**< @brief formerly dmr_object */
+    int (*dm_setFGColor)(struct dm_internal *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
+    int (*dm_setBGColor)(struct dm_internal *, unsigned char, unsigned char, unsigned char);
+    int (*dm_setLineAttr)(struct dm_internal *dmp, int width, int style);	/**< @brief currently - linewidth, (not-)dashed */
+    int (*dm_configureWin)(struct dm_internal *dmp, int force);
+    int (*dm_setWinBounds)(struct dm_internal *dmp, fastf_t *w);
+    int (*dm_setLight)(struct dm_internal *dmp, int light_on);
+    int (*dm_setTransparency)(struct dm_internal *dmp, int transparency_on);
+    int (*dm_setDepthMask)(struct dm_internal *dmp, int depthMask_on);
+    int (*dm_setZBuffer)(struct dm_internal *dmp, int zbuffer_on);
+    int (*dm_debug)(struct dm_internal *dmp, int lvl);		/**< @brief Set DM debug level */
+    int (*dm_logfile)(struct dm_internal *dmp, const char *filename); /**< @brief Set DM log file */
+    int (*dm_beginDList)(struct dm_internal *dmp, unsigned int list);
+    int (*dm_endDList)(struct dm_internal *dmp);
+    int (*dm_drawDList)(unsigned int list);
+    int (*dm_freeDLists)(struct dm_internal *dmp, unsigned int list, int range);
+    int (*dm_genDLists)(struct dm_internal *dmp, size_t range);
+    int (*dm_draw_obj)(struct dm_internal *dmp, struct display_list *obj);
+    int (*dm_getDisplayImage)(struct dm_internal *dmp, unsigned char **image);  /**< @brief (0,0) is upper left pixel */
+    int (*dm_reshape)(struct dm_internal *dmp, int width, int height);
+    int (*dm_makeCurrent)(struct dm_internal *dmp);
+    int (*dm_openFb)(struct dm_internal *dmp);
+    int (*dm_get_internal)(struct dm_internal *dmp);
+    int (*dm_put_internal)(struct dm_internal *dmp);
+    unsigned long dm_id;          /**< @brief window id */
+    int dm_displaylist;		/**< @brief !0 means device has displaylist */
+    int dm_stereo;                /**< @brief stereo flag */
+    double dm_bound;		/**< @brief zoom-in limit */
+    int dm_boundFlag;
+    const char *dm_name;		/**< @brief short name of device */
+    const char *dm_lname;		/**< @brief long name of device */
+    int dm_type;			/**< @brief display manager type */
+    int dm_top;                   /**< @brief !0 means toplevel window */
+    int dm_width;
+    int dm_height;
+    int dm_bytes_per_pixel;
+    int dm_bits_per_channel;  /* bits per color channel */
+    int dm_lineWidth;
+    int dm_lineStyle;
+    fastf_t dm_aspect;
+    fastf_t *dm_vp;		/**< @brief (FIXME: ogl still depends on this) Viewscale pointer */
+    struct dm_vars dm_vars;	/**< @brief display manager dependent variables */
+    void *m_vars;
+    void *p_vars;
+    struct bu_vls dm_pathName;	/**< @brief full Tcl/Tk name of drawing window */
+    struct bu_vls dm_tkName;	/**< @brief short Tcl/Tk name of drawing window */
+    struct bu_vls dm_dName;	/**< @brief Display name */
+    unsigned char dm_bg[3];	/**< @brief background color */
+    unsigned char dm_fg[3];	/**< @brief foreground color */
+    vect_t dm_clipmin;		/**< @brief minimum clipping vector */
+    vect_t dm_clipmax;		/**< @brief maximum clipping vector */
+    int dm_debugLevel;		/**< @brief !0 means debugging */
+    struct bu_vls dm_log;   /**< @brief !NULL && !empty means log debug output to the file */
+    int dm_perspective;		/**< @brief !0 means perspective on */
+    int dm_light;			/**< @brief !0 means lighting on */
+    int dm_transparency;		/**< @brief !0 means transparency on */
+    int dm_depthMask;		/**< @brief !0 means depth buffer is writable */
+    int dm_zbuffer;		/**< @brief !0 means zbuffer on */
+    int dm_zclip;			/**< @brief !0 means zclipping */
+    int dm_clearBufferAfter;	/**< @brief 1 means clear back buffer after drawing and swap */
+    int dm_fontsize;		/**< @brief !0 override's the auto font size */
+    struct bu_structparse *vparse;    /**< @brief Table listing settable variables */
+    fb *fbp;                    /**< @brief Framebuffer associated with this display instance */
+    Tcl_Interp *dm_interp;	/**< @brief Tcl interpreter */
+};
 
 __BEGIN_DECLS
 
 int
-drawLine3D(struct dm *dmp, point_t pt1, point_t pt2, const char *log_bu, float *wireColor);
+drawLine3D(struct dm_internal *dmp, point_t pt1, point_t pt2, const char *log_bu, float *wireColor);
 
 int
-drawLines3D(struct dm *dmp, int npoints, point_t *points, int sflag, const char *log_bu, float *wireColor);
+drawLines3D(struct dm_internal *dmp, int npoints, point_t *points, int sflag, const char *log_bu, float *wireColor);
 
 int
-drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2, const char *log_bu);
+drawLine2D(struct dm_internal *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2, const char *log_bu);
 
 int
-draw_Line3D(struct dm *dmp, point_t pt1, point_t pt2);
+draw_Line3D(struct dm_internal *dmp, point_t pt1, point_t pt2);
 
 void
 flip_display_image_vertically(unsigned char *image, size_t width, size_t height);
@@ -178,36 +175,36 @@ __END_DECLS
 /************************************************/
 
 #define HIDDEN_DM_FUNCTION_PROTOTYPES(_dmtype) \
-    HIDDEN int _dmtype##_close(struct dm *dmp); \
-    HIDDEN int _dmtype##_drawBegin(struct dm *dmp); \
-    HIDDEN int _dmtype##_drawEnd(struct dm *dmp); \
-    HIDDEN int _dmtype##_normal(struct dm *dmp); \
-    HIDDEN int _dmtype##_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye); \
-    HIDDEN int _dmtype##_drawString2D(struct dm *dmp, char *str, fastf_t x, fastf_t y, int size, int use_aspect); \
-    HIDDEN int _dmtype##_drawLine2D(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2); \
-    HIDDEN int _dmtype##_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2); \
-    HIDDEN int _dmtype##_drawLines3D(struct dm *dmp, int npoints, point_t *points, int sflag); \
-    HIDDEN int _dmtype##_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y); \
-    HIDDEN int _dmtype##_drawPoint3D(struct dm *dmp, point_t point); \
-    HIDDEN int _dmtype##_drawPoints3D(struct dm *dmp, int npoints, point_t *points); \
-    HIDDEN int _dmtype##_drawVList(struct dm *dmp, struct bn_vlist *vp); \
-    HIDDEN int _dmtype##_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data); \
-    HIDDEN int _dmtype##_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency); \
-    HIDDEN int _dmtype##_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b); \
-    HIDDEN int _dmtype##_setLineAttr(struct dm *dmp, int width, int style); \
-    HIDDEN int _dmtype##_configureWin_guts(struct dm *dmp, int force); \
-    HIDDEN int _dmtype##_configureWin(struct dm *dmp, int force);                    \
-    HIDDEN int _dmtype##_setLight(struct dm *dmp, int lighting_on); \
-    HIDDEN int _dmtype##_setTransparency(struct dm *dmp, int transparency_on); \
-    HIDDEN int _dmtype##_setDepthMask(struct dm *dmp, int depthMask_on); \
-    HIDDEN int _dmtype##_setZBuffer(struct dm *dmp, int zbuffer_on); \
-    HIDDEN int _dmtype##_setWinBounds(struct dm *dmp, fastf_t *w); \
-    HIDDEN int _dmtype##_debug(struct dm *dmp, int lvl); \
-    HIDDEN int _dmtype##_beginDList(struct dm *dmp, unsigned int list); \
-    HIDDEN int _dmtype##_endDList(struct dm *dmp); \
-    HIDDEN int _dmtype##_drawDList(struct dm *dmp, unsigned int list); \
-    HIDDEN int _dmtype##_freeDLists(struct dm *dmp, unsigned int list, int range); \
-    HIDDEN int _dmtype##_getDisplayImage(struct dm *dmp, unsigned char **image);
+    HIDDEN int _dmtype##_close(dm *dmp); \
+    HIDDEN int _dmtype##_drawBegin(dm *dmp); \
+    HIDDEN int _dmtype##_drawEnd(dm *dmp); \
+    HIDDEN int _dmtype##_normal(dm *dmp); \
+    HIDDEN int _dmtype##_loadMatrix(dm *dmp, fastf_t *mat, int which_eye); \
+    HIDDEN int _dmtype##_drawString2D(dm *dmp, char *str, fastf_t x, fastf_t y, int size, int use_aspect); \
+    HIDDEN int _dmtype##_drawLine2D(dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2); \
+    HIDDEN int _dmtype##_drawLine3D(dm *dmp, point_t pt1, point_t pt2); \
+    HIDDEN int _dmtype##_drawLines3D(dm *dmp, int npoints, point_t *points, int sflag); \
+    HIDDEN int _dmtype##_drawPoint2D(dm *dmp, fastf_t x, fastf_t y); \
+    HIDDEN int _dmtype##_drawPoint3D(dm *dmp, point_t point); \
+    HIDDEN int _dmtype##_drawPoints3D(dm *dmp, int npoints, point_t *points); \
+    HIDDEN int _dmtype##_drawVList(dm *dmp, struct bn_vlist *vp); \
+    HIDDEN int _dmtype##_draw(dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data); \
+    HIDDEN int _dmtype##_setFGColor(dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency); \
+    HIDDEN int _dmtype##_setBGColor(dm *dmp, unsigned char r, unsigned char g, unsigned char b); \
+    HIDDEN int _dmtype##_setLineAttr(dm *dmp, int width, int style); \
+    HIDDEN int _dmtype##_configureWin_guts(dm *dmp, int force); \
+    HIDDEN int _dmtype##_configureWin(dm *dmp, int force);                    \
+    HIDDEN int _dmtype##_setLight(dm *dmp, int lighting_on); \
+    HIDDEN int _dmtype##_setTransparency(dm *dmp, int transparency_on); \
+    HIDDEN int _dmtype##_setDepthMask(dm *dmp, int depthMask_on); \
+    HIDDEN int _dmtype##_setZBuffer(dm *dmp, int zbuffer_on); \
+    HIDDEN int _dmtype##_setWinBounds(dm *dmp, fastf_t *w); \
+    HIDDEN int _dmtype##_debug(dm *dmp, int lvl); \
+    HIDDEN int _dmtype##_beginDList(dm *dmp, unsigned int list); \
+    HIDDEN int _dmtype##_endDList(dm *dmp); \
+    HIDDEN int _dmtype##_drawDList(dm *dmp, unsigned int list); \
+    HIDDEN int _dmtype##_freeDLists(dm *dmp, unsigned int list, int range); \
+    HIDDEN int _dmtype##_getDisplayImage(dm *dmp, unsigned char **image);
 
 #endif /* DM_PRIVATE_H */
 

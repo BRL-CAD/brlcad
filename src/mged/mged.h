@@ -63,10 +63,6 @@
 #include <time.h>
 
 #include "tcl.h"
-#ifdef HAVE_TK
-#  include "tk.h"
-#  define HAVE_X11_TYPES 1
-#endif
 #include "bu/parallel.h"
 #include "bu/list.h"
 #include "bu/str.h"

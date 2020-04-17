@@ -87,7 +87,7 @@ int
 main(int argc, char **argv)
 {
     int y;
-    struct fb *in_fbp, *out_fbp;
+    fb *in_fbp, *out_fbp;
     int n, m;
     int height;
 

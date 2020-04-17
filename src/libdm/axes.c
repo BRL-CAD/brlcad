@@ -43,7 +43,7 @@
 #endif
 
 void
-dm_draw_data_axes(struct dm *dmp,
+dm_draw_data_axes(dm *dmp,
 		  fastf_t sf,
 		  struct bview_data_axes_state *bndasp)
 {
@@ -53,8 +53,8 @@ dm_draw_data_axes(struct dm *dmp,
     int npoints = bndasp->num_points * 6;
     point_t *points;
     /* Save the line attributes */
-    int saveLineWidth = dmp->i->dm_lineWidth;
-    int saveLineStyle = dmp->i->dm_lineStyle;
+    int saveLineWidth = dmp->dm_lineWidth;
+    int saveLineStyle = dmp->dm_lineStyle;
 
     if (npoints < 1)
 	return;
@@ -64,14 +64,14 @@ dm_draw_data_axes(struct dm *dmp,
 
 #if defined(IF_OGL) || defined(IF_WGL)
     if (bndasp->draw > 1) {
-	if (dmp->i->dm_light)
+	if (dmp->dm_light)
 	    glDisable(GL_LIGHTING);
 
 	glPointSize(bndasp->size);
 	dm_draw_points_3d(dmp, bndasp->num_points, bndasp->points);
 	glPointSize(1);
 
-	if (dmp->i->dm_light)
+	if (dmp->dm_light)
 	    glEnable(GL_LIGHTING);
 
 	return;
@@ -118,7 +118,7 @@ dm_draw_data_axes(struct dm *dmp,
 }
 
 void
-dm_draw_axes(struct dm		        *dmp,
+dm_draw_axes(dm				*dmp,
 	     fastf_t			viewSize, /* in mm */
 	     const mat_t		rmat,       /* view rotation matrix */
 	     struct bview_axes_state 	*bnasp)
@@ -134,8 +134,8 @@ dm_draw_axes(struct dm		        *dmp,
     point_t rzv1, rzv2;
     point_t o_rv2;
     /* Save the line attributes */
-    int saveLineWidth = dmp->i->dm_lineWidth;
-    int saveLineStyle = dmp->i->dm_lineStyle;
+    int saveLineWidth = dmp->dm_lineWidth;
+    int saveLineStyle = dmp->dm_lineStyle;
 
     halfAxesSize = bnasp->axes_size * 0.5;
 
@@ -170,8 +170,8 @@ dm_draw_axes(struct dm		        *dmp,
 	dm_set_fg(dmp, bnasp->axes_color[0], bnasp->axes_color[1], bnasp->axes_color[2], 1, 1.0);
 
     /* draw X axis with x/y offsets */
-    dm_draw_line_2d(dmp, rxv1[X] + bnasp->axes_pos[X], (rxv1[Y] + bnasp->axes_pos[Y]) * dmp->i->dm_aspect,
-		    rxv2[X] + bnasp->axes_pos[X], (rxv2[Y] + bnasp->axes_pos[Y]) * dmp->i->dm_aspect);
+    dm_draw_line_2d(dmp, rxv1[X] + bnasp->axes_pos[X], (rxv1[Y] + bnasp->axes_pos[Y]) * dmp->dm_aspect,
+		    rxv2[X] + bnasp->axes_pos[X], (rxv2[Y] + bnasp->axes_pos[Y]) * dmp->dm_aspect);
 
     /* build Y axis about view center */
     VSET(v2, 0.0, halfAxesSize, 0.0);
@@ -199,8 +199,8 @@ dm_draw_axes(struct dm		        *dmp,
     }
 
     /* draw Y axis with x/y offsets */
-    dm_draw_line_2d(dmp, ryv1[X] + bnasp->axes_pos[X], (ryv1[Y] + bnasp->axes_pos[Y]) * dmp->i->dm_aspect,
-		    ryv2[X] + bnasp->axes_pos[X], (ryv2[Y] + bnasp->axes_pos[Y]) * dmp->i->dm_aspect);
+    dm_draw_line_2d(dmp, ryv1[X] + bnasp->axes_pos[X], (ryv1[Y] + bnasp->axes_pos[Y]) * dmp->dm_aspect,
+		    ryv2[X] + bnasp->axes_pos[X], (ryv2[Y] + bnasp->axes_pos[Y]) * dmp->dm_aspect);
 
     /* build Z axis about view center */
     VSET(v2, 0.0, 0.0, halfAxesSize);
@@ -228,8 +228,8 @@ dm_draw_axes(struct dm		        *dmp,
     }
 
     /* draw Z axis with x/y offsets */
-    dm_draw_line_2d(dmp, rzv1[X] + bnasp->axes_pos[X], (rzv1[Y] + bnasp->axes_pos[Y]) * dmp->i->dm_aspect,
-		    rzv2[X] + bnasp->axes_pos[X], (rzv2[Y] + bnasp->axes_pos[Y]) * dmp->i->dm_aspect);
+    dm_draw_line_2d(dmp, rzv1[X] + bnasp->axes_pos[X], (rzv1[Y] + bnasp->axes_pos[Y]) * dmp->dm_aspect,
+		    rzv2[X] + bnasp->axes_pos[X], (rzv2[Y] + bnasp->axes_pos[Y]) * dmp->dm_aspect);
 
     if (!bnasp->triple_color) {
 	/* set axes string color */
@@ -260,10 +260,10 @@ dm_draw_axes(struct dm		        *dmp,
 	vect_t maj_yend1, maj_yend2;
 	vect_t maj_zend1, maj_zend2;
 
-	if (dmp->i->dm_width <= numTicks / halfAxesSize * bnasp->tick_threshold * 2) {
+	if (dmp->dm_width <= numTicks / halfAxesSize * bnasp->tick_threshold * 2) {
 	    int numMajorTicks = numTicks / bnasp->ticks_per_major;
 
-	    if (dmp->i->dm_width <= numMajorTicks / halfAxesSize * bnasp->tick_threshold * 2) {
+	    if (dmp->dm_width <= numMajorTicks / halfAxesSize * bnasp->tick_threshold * 2) {
 		/* Restore the line attributes */
 		dm_set_line_attr(dmp, saveLineWidth, saveLineStyle);
 		return;
@@ -276,10 +276,10 @@ dm_draw_axes(struct dm		        *dmp,
 	interval = bnasp->tick_interval / viewSize * 2.0;
 
 	/* convert tick length in pixels to view space */
-	tlen = bnasp->tick_length / (fastf_t)dmp->i->dm_width * 2.0;
+	tlen = bnasp->tick_length / (fastf_t)dmp->dm_width * 2.0;
 
 	/* convert major tick length in pixels to view space */
-	maj_tlen = bnasp->tick_major_length / (fastf_t)dmp->i->dm_width * 2.0;
+	maj_tlen = bnasp->tick_major_length / (fastf_t)dmp->dm_width * 2.0;
 
 	if (!doMajorOnly) {
 	    /* calculate end points for x ticks */
@@ -360,8 +360,8 @@ dm_draw_axes(struct dm		        *dmp,
 		VADD2(t1, maj_yend1, tvec);
 		VADD2(t2, maj_yend2, tvec);
 	    }
-	    dm_draw_line_2d(dmp, t1[X] + bnasp->axes_pos[X], (t1[Y] + bnasp->axes_pos[Y]) * dmp->i->dm_aspect,
-			    t2[X] + bnasp->axes_pos[X], (t2[Y] + bnasp->axes_pos[Y]) * dmp->i->dm_aspect);
+	    dm_draw_line_2d(dmp, t1[X] + bnasp->axes_pos[X], (t1[Y] + bnasp->axes_pos[Y]) * dmp->dm_aspect,
+			    t2[X] + bnasp->axes_pos[X], (t2[Y] + bnasp->axes_pos[Y]) * dmp->dm_aspect);
 
 	    /* draw tick in XZ plane */
 	    if (notMajor) {
@@ -371,8 +371,8 @@ dm_draw_axes(struct dm		        *dmp,
 		VADD2(t1, maj_zend1, tvec);
 		VADD2(t2, maj_zend2, tvec);
 	    }
-	    dm_draw_line_2d(dmp, t1[X] + bnasp->axes_pos[X], (t1[Y] + bnasp->axes_pos[Y]) * dmp->i->dm_aspect,
-			    t2[X] + bnasp->axes_pos[X], (t2[Y] + bnasp->axes_pos[Y]) * dmp->i->dm_aspect);
+	    dm_draw_line_2d(dmp, t1[X] + bnasp->axes_pos[X], (t1[Y] + bnasp->axes_pos[Y]) * dmp->dm_aspect,
+			    t2[X] + bnasp->axes_pos[X], (t2[Y] + bnasp->axes_pos[Y]) * dmp->dm_aspect);
 
 	    if (!bnasp->pos_only) {
 		/* negative X direction */
@@ -386,8 +386,8 @@ dm_draw_axes(struct dm		        *dmp,
 		    VADD2(t1, maj_yend1, tvec);
 		    VADD2(t2, maj_yend2, tvec);
 		}
-		dm_draw_line_2d(dmp, t1[X] + bnasp->axes_pos[X], (t1[Y] + bnasp->axes_pos[Y]) * dmp->i->dm_aspect,
-				t2[X] + bnasp->axes_pos[X], (t2[Y] + bnasp->axes_pos[Y]) * dmp->i->dm_aspect);
+		dm_draw_line_2d(dmp, t1[X] + bnasp->axes_pos[X], (t1[Y] + bnasp->axes_pos[Y]) * dmp->dm_aspect,
+				t2[X] + bnasp->axes_pos[X], (t2[Y] + bnasp->axes_pos[Y]) * dmp->dm_aspect);
 
 		/* draw tick in XZ plane */
 		if (notMajor) {
@@ -397,8 +397,8 @@ dm_draw_axes(struct dm		        *dmp,
 		    VADD2(t1, maj_zend1, tvec);
 		    VADD2(t2, maj_zend2, tvec);
 		}
-		dm_draw_line_2d(dmp, t1[X] + bnasp->axes_pos[X], (t1[Y] + bnasp->axes_pos[Y]) * dmp->i->dm_aspect,
-				t2[X] + bnasp->axes_pos[X], (t2[Y] + bnasp->axes_pos[Y]) * dmp->i->dm_aspect);
+		dm_draw_line_2d(dmp, t1[X] + bnasp->axes_pos[X], (t1[Y] + bnasp->axes_pos[Y]) * dmp->dm_aspect,
+				t2[X] + bnasp->axes_pos[X], (t2[Y] + bnasp->axes_pos[Y]) * dmp->dm_aspect);
 	    }
 
 	    /********* draw ticks along Y *********/
@@ -413,8 +413,8 @@ dm_draw_axes(struct dm		        *dmp,
 		VADD2(t1, maj_xend1, tvec);
 		VADD2(t2, maj_xend2, tvec);
 	    }
-	    dm_draw_line_2d(dmp, t1[X] + bnasp->axes_pos[X], (t1[Y] + bnasp->axes_pos[Y]) * dmp->i->dm_aspect,
-			    t2[X] + bnasp->axes_pos[X], (t2[Y] + bnasp->axes_pos[Y]) * dmp->i->dm_aspect);
+	    dm_draw_line_2d(dmp, t1[X] + bnasp->axes_pos[X], (t1[Y] + bnasp->axes_pos[Y]) * dmp->dm_aspect,
+			    t2[X] + bnasp->axes_pos[X], (t2[Y] + bnasp->axes_pos[Y]) * dmp->dm_aspect);
 
 	    /* draw tick in YZ plane */
 	    if (notMajor) {
@@ -424,8 +424,8 @@ dm_draw_axes(struct dm		        *dmp,
 		VADD2(t1, maj_zend1, tvec);
 		VADD2(t2, maj_zend2, tvec);
 	    }
-	    dm_draw_line_2d(dmp, t1[X] + bnasp->axes_pos[X], (t1[Y] + bnasp->axes_pos[Y]) * dmp->i->dm_aspect,
-			    t2[X] + bnasp->axes_pos[X], (t2[Y] + bnasp->axes_pos[Y]) * dmp->i->dm_aspect);
+	    dm_draw_line_2d(dmp, t1[X] + bnasp->axes_pos[X], (t1[Y] + bnasp->axes_pos[Y]) * dmp->dm_aspect,
+			    t2[X] + bnasp->axes_pos[X], (t2[Y] + bnasp->axes_pos[Y]) * dmp->dm_aspect);
 
 	    if (!bnasp->pos_only) {
 		/* negative Y direction */
@@ -439,8 +439,8 @@ dm_draw_axes(struct dm		        *dmp,
 		    VADD2(t1, maj_xend1, tvec);
 		    VADD2(t2, maj_xend2, tvec);
 		}
-		dm_draw_line_2d(dmp, t1[X] + bnasp->axes_pos[X], (t1[Y] + bnasp->axes_pos[Y]) * dmp->i->dm_aspect,
-				t2[X] + bnasp->axes_pos[X], (t2[Y] + bnasp->axes_pos[Y]) * dmp->i->dm_aspect);
+		dm_draw_line_2d(dmp, t1[X] + bnasp->axes_pos[X], (t1[Y] + bnasp->axes_pos[Y]) * dmp->dm_aspect,
+				t2[X] + bnasp->axes_pos[X], (t2[Y] + bnasp->axes_pos[Y]) * dmp->dm_aspect);
 
 		/* draw tick in XZ plane */
 		if (notMajor) {
@@ -450,8 +450,8 @@ dm_draw_axes(struct dm		        *dmp,
 		    VADD2(t1, maj_zend1, tvec);
 		    VADD2(t2, maj_zend2, tvec);
 		}
-		dm_draw_line_2d(dmp, t1[X] + bnasp->axes_pos[X], (t1[Y] + bnasp->axes_pos[Y]) * dmp->i->dm_aspect,
-				t2[X] + bnasp->axes_pos[X], (t2[Y] + bnasp->axes_pos[Y]) * dmp->i->dm_aspect);
+		dm_draw_line_2d(dmp, t1[X] + bnasp->axes_pos[X], (t1[Y] + bnasp->axes_pos[Y]) * dmp->dm_aspect,
+				t2[X] + bnasp->axes_pos[X], (t2[Y] + bnasp->axes_pos[Y]) * dmp->dm_aspect);
 	    }
 
 	    /********* draw ticks along Z *********/
@@ -466,8 +466,8 @@ dm_draw_axes(struct dm		        *dmp,
 		VADD2(t1, maj_xend1, tvec);
 		VADD2(t2, maj_xend2, tvec);
 	    }
-	    dm_draw_line_2d(dmp, t1[X] + bnasp->axes_pos[X], (t1[Y] + bnasp->axes_pos[Y]) * dmp->i->dm_aspect,
-			    t2[X] + bnasp->axes_pos[X], (t2[Y] + bnasp->axes_pos[Y]) * dmp->i->dm_aspect);
+	    dm_draw_line_2d(dmp, t1[X] + bnasp->axes_pos[X], (t1[Y] + bnasp->axes_pos[Y]) * dmp->dm_aspect,
+			    t2[X] + bnasp->axes_pos[X], (t2[Y] + bnasp->axes_pos[Y]) * dmp->dm_aspect);
 
 	    /* draw tick in ZY plane */
 	    if (notMajor) {
@@ -477,8 +477,8 @@ dm_draw_axes(struct dm		        *dmp,
 		VADD2(t1, maj_yend1, tvec);
 		VADD2(t2, maj_yend2, tvec);
 	    }
-	    dm_draw_line_2d(dmp, t1[X] + bnasp->axes_pos[X], (t1[Y] + bnasp->axes_pos[Y]) * dmp->i->dm_aspect,
-			    t2[X] + bnasp->axes_pos[X], (t2[Y] + bnasp->axes_pos[Y]) * dmp->i->dm_aspect);
+	    dm_draw_line_2d(dmp, t1[X] + bnasp->axes_pos[X], (t1[Y] + bnasp->axes_pos[Y]) * dmp->dm_aspect,
+			    t2[X] + bnasp->axes_pos[X], (t2[Y] + bnasp->axes_pos[Y]) * dmp->dm_aspect);
 
 	    if (!bnasp->pos_only) {
 		/* negative Z direction */
@@ -492,8 +492,8 @@ dm_draw_axes(struct dm		        *dmp,
 		    VADD2(t1, maj_xend1, tvec);
 		    VADD2(t2, maj_xend2, tvec);
 		}
-		dm_draw_line_2d(dmp, t1[X] + bnasp->axes_pos[X], (t1[Y] + bnasp->axes_pos[Y]) * dmp->i->dm_aspect,
-				t2[X] + bnasp->axes_pos[X], (t2[Y] + bnasp->axes_pos[Y]) * dmp->i->dm_aspect);
+		dm_draw_line_2d(dmp, t1[X] + bnasp->axes_pos[X], (t1[Y] + bnasp->axes_pos[Y]) * dmp->dm_aspect,
+				t2[X] + bnasp->axes_pos[X], (t2[Y] + bnasp->axes_pos[Y]) * dmp->dm_aspect);
 
 		/* draw tick in ZY plane */
 		if (notMajor) {
@@ -503,8 +503,8 @@ dm_draw_axes(struct dm		        *dmp,
 		    VADD2(t1, maj_yend1, tvec);
 		    VADD2(t2, maj_yend2, tvec);
 		}
-		dm_draw_line_2d(dmp, t1[X] + bnasp->axes_pos[X], (t1[Y] + bnasp->axes_pos[Y]) * dmp->i->dm_aspect,
-				t2[X] + bnasp->axes_pos[X], (t2[Y] + bnasp->axes_pos[Y]) * dmp->i->dm_aspect);
+		dm_draw_line_2d(dmp, t1[X] + bnasp->axes_pos[X], (t1[Y] + bnasp->axes_pos[Y]) * dmp->dm_aspect,
+				t2[X] + bnasp->axes_pos[X], (t2[Y] + bnasp->axes_pos[Y]) * dmp->dm_aspect);
 	    }
 	}
     }

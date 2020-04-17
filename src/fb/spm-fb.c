@@ -33,7 +33,7 @@
 #include "bn/spm.h"
 
 
-static struct fb *fbp;
+static fb *fbp;
 
 static char *framebuffer = NULL;
 static int scr_width = 0;

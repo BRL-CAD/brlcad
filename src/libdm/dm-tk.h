@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libstruct dm */
+/** @addtogroup libdm */
 /** @{ */
 /** @file dm-tk.h
  *
@@ -25,8 +25,6 @@
 
 #ifndef DM_TK_H
 #define DM_TK_H
-
-#include "tk.h"
 
 #define CMAP_BASE 40
 #define CUBE_DIMENSION 6
@@ -42,8 +40,6 @@ struct tk_vars {
     int is_trueColor;
     unsigned long bd, bg, fg;   /* color of border, background, foreground */
     unsigned long pixels[NUM_PIXELS];
-    int tkfontset;
-    Tk_Font tkfontstruct;
 };
 
 #endif /* DM_TK_H */

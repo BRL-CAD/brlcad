@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libstruct fb */
+/** @addtogroup libfb */
 /** @{ */
 /** @file fbserv_obj.c
  *
@@ -43,7 +43,7 @@
 #include "fb_private.h"
 
 
-static struct fb *curr_fbp;		/* current framebuffer pointer */
+static fb *curr_fbp;		/* current framebuffer pointer */
 
 
 /*
@@ -285,10 +285,10 @@ fbs_rfbopen(struct pkg_conn *pcp, char *buf)
 
     /* Don't really open a new framebuffer --- use existing one */
     (void)pkg_plong(&rbuf[0*NET_LONG_LEN], 0);	/* ret */
-    (void)pkg_plong(&rbuf[1*NET_LONG_LEN], curr_fbp->i->if_max_width);
-    (void)pkg_plong(&rbuf[2*NET_LONG_LEN], curr_fbp->i->if_max_height);
-    (void)pkg_plong(&rbuf[3*NET_LONG_LEN], curr_fbp->i->if_width);
-    (void)pkg_plong(&rbuf[4*NET_LONG_LEN], curr_fbp->i->if_height);
+    (void)pkg_plong(&rbuf[1*NET_LONG_LEN], curr_fbp->if_max_width);
+    (void)pkg_plong(&rbuf[2*NET_LONG_LEN], curr_fbp->if_max_height);
+    (void)pkg_plong(&rbuf[3*NET_LONG_LEN], curr_fbp->if_width);
+    (void)pkg_plong(&rbuf[4*NET_LONG_LEN], curr_fbp->if_height);
 
     want = 5*NET_LONG_LEN;
     if (pkg_send(MSG_RETURN, rbuf, want, pcp) != want)

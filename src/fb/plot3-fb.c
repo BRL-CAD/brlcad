@@ -317,7 +317,7 @@ static int sigs[] = {
 
 
 static FILE *pfin;		/* input file FIO block ptr */
-struct fb *fbp;			/* Current framebuffer */
+fb *fbp;			/* Current framebuffer */
 
 
 /*

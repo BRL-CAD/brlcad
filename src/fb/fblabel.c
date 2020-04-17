@@ -44,7 +44,7 @@
 static char *framebuffer = NULL;
 static char *font1 = NULL;
 
-struct fb *fbp;
+fb *fbp;
 
 static char usage[] = "\
 Usage: fblabel [-c -a] [-F framebuffer] [-C r/g/b]\n\

@@ -48,7 +48,7 @@ ColorMap old_map;
 ColorMap cm;
 
 static char *framebuffer = NULL;
-static struct fb *fbp;
+static fb *fbp;
 static int scr_height;
 static int scr_width;
 

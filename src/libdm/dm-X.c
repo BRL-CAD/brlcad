@@ -61,7 +61,7 @@
 #include "dm.h"
 #include "dm-X.h"
 #include "dm-Null.h"
-#include "./dm_xvars.h"
+#include "dm/dm_xvars.h"
 #include "fb.h"
 #include "fb/fb_X.h"
 
@@ -142,44 +142,44 @@ get_color(Display *dpy, Colormap cmap, XColor *color)
 
 
 HIDDEN int
-X_reshape(struct dm *dmp, int width, int height)
+X_reshape(struct dm_internal *dmp, int width, int height)
 {
-    struct x_vars *privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
+    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
-    dmp->i->dm_height = height;
-    dmp->i->dm_width = width;
-    dmp->i->dm_aspect = (fastf_t)dmp->i->dm_width / (fastf_t)dmp->i->dm_height;
+    dmp->dm_height = height;
+    dmp->dm_width = width;
+    dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
 
-    privars->disp_mat[0] = 2. * privars->ppmm_x / dmp->i->dm_width;
-    privars->disp_mat[5] = 2. * privars->ppmm_y / dmp->i->dm_width;
+    privars->disp_mat[0] = 2. * privars->ppmm_x / dmp->dm_width;
+    privars->disp_mat[5] = 2. * privars->ppmm_y / dmp->dm_width;
 
     return 0;
 }
 
 
 HIDDEN int
-X_configureWin_guts(struct dm *dmp, int force)
+X_configureWin_guts(struct dm_internal *dmp, int force)
 {
     XWindowAttributes xwa;
     XFontStruct *newfontstruct;
     XGCValues gcv;
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
-    struct x_vars *privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
+    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
+    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
     XGetWindowAttributes(pubvars->dpy,
 			 pubvars->win, &xwa);
 
     /* nothing to do */
     if (!force &&
-	dmp->i->dm_height == xwa.height &&
-	dmp->i->dm_width == xwa.width)
+	dmp->dm_height == xwa.height &&
+	dmp->dm_width == xwa.width)
 	return BRLCAD_OK;
 
     X_reshape(dmp, xwa.width, xwa.height);
 
-    if (dmp->i->dm_debugLevel) {
+    if (dmp->dm_debugLevel) {
 	bu_log("X_configureWin_guts()\n");
-	bu_log("width = %d, height = %d\n", dmp->i->dm_width, dmp->i->dm_height);
+	bu_log("width = %d, height = %d\n", dmp->dm_width, dmp->dm_height);
     }
 
 #ifdef HAVE_TK
@@ -188,8 +188,8 @@ X_configureWin_guts(struct dm *dmp, int force)
     privars->pix =
 	Tk_GetPixmap(pubvars->dpy,
 		     DefaultRootWindow(pubvars->dpy),
-		     dmp->i->dm_width,
-		     dmp->i->dm_height,
+		     dmp->dm_width,
+		     dmp->dm_height,
 		     Tk_Depth(pubvars->xtkwin));
 #endif
 
@@ -213,7 +213,7 @@ X_configureWin_guts(struct dm *dmp, int force)
     /* Always try to choose a the font that best fits the window size.
      */
 
-    if (dmp->i->dm_width < 582) {
+    if (dmp->dm_width < 582) {
 	if (pubvars->fontstruct->per_char->width != 5) {
 	    if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
 						FONT5)) != NULL) {
@@ -225,7 +225,7 @@ X_configureWin_guts(struct dm *dmp, int force)
 			  privars->gc, GCFont, &gcv);
 	    }
 	}
-    } else if (dmp->i->dm_width < 679) {
+    } else if (dmp->dm_width < 679) {
 	if (pubvars->fontstruct->per_char->width != 6) {
 	    if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
 						FONT6)) != NULL) {
@@ -237,7 +237,7 @@ X_configureWin_guts(struct dm *dmp, int force)
 			  privars->gc, GCFont, &gcv);
 	    }
 	}
-    } else if (dmp->i->dm_width < 776) {
+    } else if (dmp->dm_width < 776) {
 	if (pubvars->fontstruct->per_char->width != 7) {
 	    if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
 						FONT7)) != NULL) {
@@ -249,7 +249,7 @@ X_configureWin_guts(struct dm *dmp, int force)
 			  privars->gc, GCFont, &gcv);
 	    }
 	}
-    } else if (dmp->i->dm_width < 873) {
+    } else if (dmp->dm_width < 873) {
 	if (pubvars->fontstruct->per_char->width != 8) {
 	    if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
 						FONT8)) != NULL) {
@@ -280,7 +280,7 @@ X_configureWin_guts(struct dm *dmp, int force)
 
 
 HIDDEN XVisualInfo *
-X_choose_visual(struct dm *dmp)
+X_choose_visual(struct dm_internal *dmp)
 {
     XVisualInfo *vip, vitemp, *vibase, *maxvip;
     int num, i, j;
@@ -289,11 +289,11 @@ X_choose_visual(struct dm *dmp)
     int min_depth = 8;
     int *good = NULL;
     int screen;
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
-    struct x_vars *privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
+    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
+    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
     vibase = XGetVisualInfo(pubvars->dpy, 0, &vitemp, &num);
-    screen = DefaultScreen(((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->dpy);
+    screen = DefaultScreen(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy);
 
     good = (int *)bu_malloc(sizeof(int)*num, "alloc good visuals");
 
@@ -376,10 +376,10 @@ X_choose_visual(struct dm *dmp)
  * Gracefully release the display.
  */
 HIDDEN int
-X_close(struct dm *dmp)
+X_close(struct dm_internal *dmp)
 {
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
-    struct x_vars *privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
+    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
+    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
     if (pubvars->dpy) {
 	if (privars->gc)
@@ -404,12 +404,11 @@ X_close(struct dm *dmp)
 
     }
 
-    bu_vls_free(&dmp->i->dm_pathName);
-    bu_vls_free(&dmp->i->dm_tkName);
-    bu_vls_free(&dmp->i->dm_dName);
-    bu_free((void *)dmp->i->dm_vars.priv_vars, "X_close: x_vars");
-    bu_free((void *)dmp->i->dm_vars.pub_vars, "X_close: dm_xvars");
-    bu_free((void *)dmp->i, "X_close: dmp->i");
+    bu_vls_free(&dmp->dm_pathName);
+    bu_vls_free(&dmp->dm_tkName);
+    bu_vls_free(&dmp->dm_dName);
+    bu_free((void *)dmp->dm_vars.priv_vars, "X_close: x_vars");
+    bu_free((void *)dmp->dm_vars.pub_vars, "X_close: dm_xvars");
     bu_free((void *)dmp, "X_close: dmp");
 
     return BRLCAD_OK;
@@ -420,7 +419,7 @@ X_close(struct dm *dmp)
  * Fire up the display manager, and the display processor.
  *
  */
-struct dm *
+struct dm_internal *
 X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 {
     static int count = 0;
@@ -438,8 +437,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 #endif
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
-    struct dm *dmp = NULL;
-    struct dm_impl *dmpi = NULL;
+    struct dm_internal *dmp = (struct dm_internal *)NULL;
     Tk_Window tkwin = (Tk_Window)NULL;
     Screen *screen = (Screen *)NULL;
 
@@ -452,37 +450,35 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     }
 #endif
 
-    BU_ALLOC(dmp, struct dm);
-    BU_ALLOC(dmpi, struct dm_impl);
+    BU_ALLOC(dmp, struct dm_internal);
 
-    *dmpi = *dm_X.i; /* struct copy */
-    dmp->i = dmpi;
-    dmp->i->dm_interp = interp;
+    *dmp = dm_X; /* struct copy */
+    dmp->dm_interp = interp;
 
-    BU_ALLOC(dmp->i->dm_vars.pub_vars, struct dm_xvars);
-    pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    BU_ALLOC(dmp->dm_vars.pub_vars, struct dm_xvars);
+    pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
 
-    BU_ALLOC(dmp->i->dm_vars.priv_vars, struct x_vars);
-    privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
+    BU_ALLOC(dmp->dm_vars.priv_vars, struct x_vars);
+    privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
-    bu_vls_init(&dmp->i->dm_pathName);
-    bu_vls_init(&dmp->i->dm_tkName);
-    bu_vls_init(&dmp->i->dm_dName);
+    bu_vls_init(&dmp->dm_pathName);
+    bu_vls_init(&dmp->dm_tkName);
+    bu_vls_init(&dmp->dm_dName);
 
     dm_processOptions(dmp, &init_proc_vls, --argc, ++argv);
 
-    if (bu_vls_strlen(&dmp->i->dm_pathName) == 0)
-	bu_vls_printf(&dmp->i->dm_pathName, ".dm_X%d", count);
+    if (bu_vls_strlen(&dmp->dm_pathName) == 0)
+	bu_vls_printf(&dmp->dm_pathName, ".dm_X%d", count);
 
     ++count;
-    if (bu_vls_strlen(&dmp->i->dm_dName) == 0) {
+    if (bu_vls_strlen(&dmp->dm_dName) == 0) {
 	char *dp;
 
 	dp = getenv("DISPLAY");
 	if (dp)
-	    bu_vls_strcpy(&dmp->i->dm_dName, dp);
+	    bu_vls_strcpy(&dmp->dm_dName, dp);
 	else
-	    bu_vls_strcpy(&dmp->i->dm_dName, ":0.0");
+	    bu_vls_strcpy(&dmp->dm_dName, ":0.0");
     }
     if (bu_vls_strlen(&init_proc_vls) == 0)
 	bu_vls_strcpy(&init_proc_vls, "bind_dm");
@@ -491,28 +487,28 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     pubvars->devmotionnotify = LASTEvent;
     pubvars->devbuttonpress = LASTEvent;
     pubvars->devbuttonrelease = LASTEvent;
-    dmp->i->dm_aspect = 1.0;
+    dmp->dm_aspect = 1.0;
 
     pubvars->fontstruct = NULL;
 
-    if (dmp->i->dm_top) {
+    if (dmp->dm_top) {
 #ifdef HAVE_TK
 	/* Make xtkwin a toplevel window */
 	pubvars->xtkwin = Tk_CreateWindowFromPath(interp, tkwin,
-						  bu_vls_addr(&dmp->i->dm_pathName),
-						  bu_vls_addr(&dmp->i->dm_dName));
+						  bu_vls_addr(&dmp->dm_pathName),
+						  bu_vls_addr(&dmp->dm_dName));
 	pubvars->top = pubvars->xtkwin;
 #endif
     } else {
 	char *cp;
 
-	cp = strrchr(bu_vls_addr(&dmp->i->dm_pathName), (int)'.');
-	if (cp == bu_vls_addr(&dmp->i->dm_pathName)) {
+	cp = strrchr(bu_vls_addr(&dmp->dm_pathName), (int)'.');
+	if (cp == bu_vls_addr(&dmp->dm_pathName)) {
 	    pubvars->top = tkwin;
 	} else {
 	    struct bu_vls top_vls = BU_VLS_INIT_ZERO;
 
-	    bu_vls_strncpy(&top_vls, (const char *)bu_vls_addr(&dmp->i->dm_pathName), cp - bu_vls_addr(&dmp->i->dm_pathName));
+	    bu_vls_strncpy(&top_vls, (const char *)bu_vls_addr(&dmp->dm_pathName), cp - bu_vls_addr(&dmp->dm_pathName));
 
 #ifdef HAVE_TK
 	    pubvars->top =
@@ -530,19 +526,19 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     }
 
     if (pubvars->xtkwin == NULL) {
-	bu_log("X_open_dm: Failed to open %s\n", bu_vls_addr(&dmp->i->dm_pathName));
+	bu_log("X_open_dm: Failed to open %s\n", bu_vls_addr(&dmp->dm_pathName));
 	(void)X_close(dmp);
 	return DM_NULL;
     }
 
 #ifdef HAVE_TK
-    bu_vls_printf(&dmp->i->dm_tkName, "%s",
+    bu_vls_printf(&dmp->dm_tkName, "%s",
 		  (char *)Tk_Name(pubvars->xtkwin));
 #endif
 
     bu_vls_printf(&str, "_init_dm %s %s\n",
 		  bu_vls_addr(&init_proc_vls),
-		  bu_vls_addr(&dmp->i->dm_pathName));
+		  bu_vls_addr(&dmp->dm_pathName));
 
     if (Tcl_Eval(interp, bu_vls_addr(&str)) == BRLCAD_ERROR) {
 	bu_vls_free(&str);
@@ -560,7 +556,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 
     /* make sure there really is a display before proceeding. */
     if (!pubvars->dpy) {
-	bu_log("ERROR: Unable to attach to display (%s)\n", bu_vls_addr(&dmp->i->dm_pathName));
+	bu_log("ERROR: Unable to attach to display (%s)\n", bu_vls_addr(&dmp->dm_pathName));
 	(void)X_close(dmp);
 	return DM_NULL;
     }
@@ -576,7 +572,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 
     /* make sure there really is a screen before processing. */
     if (!screen) {
-	bu_log("ERROR: Unable to attach to screen (%s)\n", bu_vls_addr(&dmp->i->dm_pathName));
+	bu_log("ERROR: Unable to attach to screen (%s)\n", bu_vls_addr(&dmp->dm_pathName));
 	(void)X_close(dmp);
 	return DM_NULL;
     }
@@ -590,15 +586,15 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     privars->ppmm_x = screen->width / screen->mwidth;
     privars->ppmm_y = screen->height / screen->mheight;
 
-    if (dmp->i->dm_width == 0) {
-	dmp->i->dm_width =
+    if (dmp->dm_width == 0) {
+	dmp->dm_width =
 	    DisplayWidth(pubvars->dpy,
 			 DefaultScreen(pubvars->dpy)) - 30;
 	++make_square;
     }
 
-    if (dmp->i->dm_height == 0) {
-	dmp->i->dm_height =
+    if (dmp->dm_height == 0) {
+	dmp->dm_height =
 	    DisplayHeight(pubvars->dpy,
 			  DefaultScreen(pubvars->dpy)) - 30;
 	++make_square;
@@ -606,17 +602,17 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 
     if (make_square > 0) {
 	/* Make window square */
-	if (dmp->i->dm_height <
-	    dmp->i->dm_width)
-	    dmp->i->dm_width = dmp->i->dm_height;
+	if (dmp->dm_height <
+	    dmp->dm_width)
+	    dmp->dm_width = dmp->dm_height;
 	else
-	    dmp->i->dm_height = dmp->i->dm_width;
+	    dmp->dm_height = dmp->dm_width;
     }
 
 #ifdef HAVE_TK
     Tk_GeometryRequest(pubvars->xtkwin,
-		       dmp->i->dm_width,
-		       dmp->i->dm_height);
+		       dmp->dm_width,
+		       dmp->dm_height);
 #endif
 
     /* must do this before MakeExist */
@@ -629,12 +625,12 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 #ifdef HAVE_TK
     Tk_MakeWindowExist(pubvars->xtkwin);
     pubvars->win = Tk_WindowId(pubvars->xtkwin);
-    dmp->i->dm_id = pubvars->win;
+    dmp->dm_id = pubvars->win;
     privars->pix =
 	Tk_GetPixmap(pubvars->dpy,
 		     pubvars->win,
-		     dmp->i->dm_width,
-		     dmp->i->dm_height,
+		     dmp->dm_width,
+		     dmp->dm_height,
 		     Tk_Depth(pubvars->xtkwin));
 #endif
 
@@ -766,13 +762,13 @@ Skip_dials:
 
 
 HIDDEN int
-X_drawBegin(struct dm *dmp)
+X_drawBegin(struct dm_internal *dmp)
 {
     XGCValues gcv;
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
-    struct x_vars *privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
+    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
+    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
-    if (dmp->i->dm_debugLevel)
+    if (dmp->dm_debugLevel)
 	bu_log("X_drawBegin()\n");
 
     /* clear pixmap */
@@ -783,8 +779,8 @@ X_drawBegin(struct dm *dmp)
     XFillRectangle(pubvars->dpy,
 		   privars->pix,
 		   privars->gc, 0,
-		   0, dmp->i->dm_width + 1,
-		   dmp->i->dm_height + 1);
+		   0, dmp->dm_width + 1,
+		   dmp->dm_height + 1);
 
     /* reset foreground */
     gcv.foreground = privars->fg;
@@ -797,20 +793,20 @@ X_drawBegin(struct dm *dmp)
 
 
 HIDDEN int
-X_drawEnd(struct dm *dmp)
+X_drawEnd(struct dm_internal *dmp)
 {
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
-    struct x_vars *privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
+    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
+    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
-    if (dmp->i->dm_debugLevel)
+    if (dmp->dm_debugLevel)
 	bu_log("X_drawEnd()\n");
 
     XCopyArea(pubvars->dpy,
 	      privars->pix,
 	      pubvars->win,
 	      privars->gc,
-	      0, 0, dmp->i->dm_width,
-	      dmp->i->dm_height, 0, 0);
+	      0, 0, dmp->dm_width,
+	      dmp->dm_height, 0, 0);
 
     /* Prevent lag between events and updates */
     XSync(pubvars->dpy, 0);
@@ -824,11 +820,11 @@ X_drawEnd(struct dm *dmp)
  * calls to X_draw().
  */
 HIDDEN int
-X_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
+X_loadMatrix(struct dm_internal *dmp, fastf_t *mat, int which_eye)
 {
-    struct x_vars *privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
+    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
-    if (dmp->i->dm_debugLevel) {
+    if (dmp->dm_debugLevel) {
 	bu_log("X_load_Matrix()\n");
 
 	bu_log("which eye = %d\t", which_eye);
@@ -847,7 +843,7 @@ X_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 
 
 HIDDEN int
-X_drawVList(struct dm *dmp, struct bn_vlist *vp)
+X_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 {
     extern int vectorThreshold;	/* defined in libdm/tcl.c */
 
@@ -862,8 +858,8 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
     fastf_t pointSize = DM_X_DEFAULT_POINT_SIZE;
 
     static int nvectors = 0;
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
-    struct x_vars *privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
+    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
+    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
     /* delta is used in clipping to insure clipped endpoint is
      * slightly in front of eye plane (perspective mode only).  This
@@ -910,12 +906,12 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		case BN_VLIST_LINE_MOVE:
 		case BN_VLIST_TRI_MOVE:
 		    /* Move, not draw */
-		    if (dmp->i->dm_debugLevel > 2) {
+		    if (dmp->dm_debugLevel > 2) {
 			bu_log("before transformation:\n");
 			bu_log("pt - %lf %lf %lf\n", V3ARGS(*pt));
 		    }
 
-		    if (dmp->i->dm_perspective > 0) {
+		    if (dmp->dm_perspective > 0) {
 			/* cannot apply perspective transformation to
 			 * points behind eye plane!!!!
 			 */
@@ -934,7 +930,7 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		    }
 
 		    lpnt[0] *= 2047;
-		    lpnt[1] *= 2047 * dmp->i->dm_aspect;
+		    lpnt[1] *= 2047 * dmp->dm_aspect;
 		    lpnt[2] *= 2047;
 		    continue;
 		case BN_VLIST_POLY_DRAW:
@@ -943,17 +939,17 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		case BN_VLIST_TRI_DRAW:
 		case BN_VLIST_TRI_END:
 		    /* draw */
-		    if (dmp->i->dm_debugLevel > 2) {
+		    if (dmp->dm_debugLevel > 2) {
 			bu_log("before transformation:\n");
 			bu_log("pt - %lf %lf %lf\n", V3ARGS(*pt));
 		    }
 
-		    if (dmp->i->dm_perspective > 0) {
+		    if (dmp->dm_perspective > 0) {
 			/* cannot apply perspective transformation to
 			 * points behind eye plane!!!!
 			 */
 			dist = VDOT(*pt, &(privars->xmat)[12]) + privars->xmat[15];
-			if (dmp->i->dm_debugLevel > 2)
+			if (dmp->dm_debugLevel > 2)
 			    bu_log("dist=%g, dist_prev=%g\n", dist, dist_prev);
 			if (dist <= 0.0) {
 			    if (dist_prev <= 0.0) {
@@ -987,7 +983,7 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 				VJOIN1(tmp_pt, *pt_prev, alpha, diff);
 				MAT4X3PNT(lpnt, privars->xmat, tmp_pt);
 				lpnt[0] *= 2047;
-				lpnt[1] *= 2047 * dmp->i->dm_aspect;
+				lpnt[1] *= 2047 * dmp->dm_aspect;
 				lpnt[2] *= 2047;
 				MAT4X3PNT(pnt, privars->xmat, *pt);
 				}
@@ -1001,31 +997,31 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		    }
 
 		    pnt[0] *= 2047;
-		    pnt[1] *= 2047 * dmp->i->dm_aspect;
+		    pnt[1] *= 2047 * dmp->dm_aspect;
 		    pnt[2] *= 2047;
 
 		    /* save pnt --- it might get changed by clip() */
 		    VMOVE(spnt, pnt);
 		    pt_prev = pt;
 
-		    if (dmp->i->dm_debugLevel > 2) {
+		    if (dmp->dm_debugLevel > 2) {
 			bu_log("before clipping:\n");
 			bu_log("clipmin - %lf %lf %lf\n",
-			       dmp->i->dm_clipmin[X],
-			       dmp->i->dm_clipmin[Y],
-			       dmp->i->dm_clipmin[Z]);
+			       dmp->dm_clipmin[X],
+			       dmp->dm_clipmin[Y],
+			       dmp->dm_clipmin[Z]);
 			bu_log("clipmax - %lf %lf %lf\n",
-			       dmp->i->dm_clipmax[X],
-			       dmp->i->dm_clipmax[Y],
-			       dmp->i->dm_clipmax[Z]);
+			       dmp->dm_clipmax[X],
+			       dmp->dm_clipmax[Y],
+			       dmp->dm_clipmax[Z]);
 			bu_log("pt1 - %lf %lf %lf\n", lpnt[X], lpnt[Y], lpnt[Z]);
 			bu_log("pt2 - %lf %lf %lf\n", pnt[X], pnt[Y], pnt[Z]);
 		    }
 
-		    if (dmp->i->dm_zclip) {
+		    if (dmp->dm_zclip) {
 			if (vclip(lpnt, pnt,
-				  dmp->i->dm_clipmin,
-				  dmp->i->dm_clipmax) == 0) {
+				  dmp->dm_clipmin,
+				  dmp->dm_clipmax) == 0) {
 			    VMOVE(lpnt, spnt);
 			    continue;
 			}
@@ -1053,7 +1049,7 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 			}
 		    }
 
-		    if (dmp->i->dm_debugLevel > 2) {
+		    if (dmp->dm_debugLevel > 2) {
 			bu_log("after clipping:\n");
 			bu_log("pt1 - %lf %lf %lf\n", lpnt[X], lpnt[Y], lpnt[Z]);
 			bu_log("pt2 - %lf %lf %lf\n", pnt[X], pnt[Y], pnt[Z]);
@@ -1079,12 +1075,12 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		    }
 		    break;
 		case BN_VLIST_POINT_DRAW:
-		    if (dmp->i->dm_debugLevel > 2) {
+		    if (dmp->dm_debugLevel > 2) {
 			bu_log("before transformation:\n");
 			bu_log("pt - %lf %lf %lf\n", V3ARGS(*pt));
 		    }
 
-		    if (dmp->i->dm_perspective > 0) {
+		    if (dmp->dm_perspective > 0) {
 			dist = VDOT(*pt, &(privars->xmat)[12]) + privars->xmat[15];
 
 			if (dist <= 0.0) {
@@ -1096,11 +1092,11 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		    MAT4X3PNT(pnt, privars->xmat, *pt);
 
 		    pnt[0] *= 2047;
-		    pnt[1] *= 2047 * dmp->i->dm_aspect;
+		    pnt[1] *= 2047 * dmp->dm_aspect;
 		    pnt[2] *= 2047;
 		    VMOVE(lpnt, pnt);
 
-		    if (dmp->i->dm_debugLevel > 2) {
+		    if (dmp->dm_debugLevel > 2) {
 			bu_log("after clipping:\n");
 			bu_log("pt - %lf %lf %lf\n", pnt[X], pnt[Y], pnt[Z]);
 		    }
@@ -1139,7 +1135,7 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 
 	nvectors += nused;
 	if (nvectors >= vectorThreshold) {
-	    if (dmp->i->dm_debugLevel)
+	    if (dmp->dm_debugLevel)
 		bu_log("X_drawVList(): handle Tcl events\n");
 
 	    nvectors = 0;
@@ -1160,7 +1156,7 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 
 
 HIDDEN int
-X_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
+X_draw(struct dm_internal *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
 {
     struct bn_vlist *vp;
     if (!callback_function) {
@@ -1184,9 +1180,9 @@ X_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **dat
  * not scaled, rotated, displaced, etc.).
  */
 HIDDEN int
-X_normal(struct dm *dmp)
+X_normal(struct dm_internal *dmp)
 {
-    if (dmp->i->dm_debugLevel)
+    if (dmp->dm_debugLevel)
 	bu_log("X_normal()\n");
 
     return BRLCAD_OK;
@@ -1198,20 +1194,20 @@ X_normal(struct dm *dmp)
  * beam is as specified.
  */
 HIDDEN int
-X_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect)
+X_drawString2D(struct dm_internal *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect)
 {
     int sx, sy;
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
-    struct x_vars *privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
+    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
+    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
-    if (dmp->i->dm_debugLevel) {
+    if (dmp->dm_debugLevel) {
 	bu_log("X_drawString2D():\n");
 	bu_log("\tstr - %s\n", str);
 	bu_log("\tx - %g\n", x);
 	bu_log("\ty - %g\n", y);
 	bu_log("\tsize - %d\n", size);
 	if (use_aspect) {
-	    bu_log("\tuse_aspect - %d\t\taspect ratio - %g\n", use_aspect, dmp->i->dm_aspect);
+	    bu_log("\tuse_aspect - %d\t\taspect ratio - %g\n", use_aspect, dmp->dm_aspect);
 	} else
 	    bu_log("\tuse_aspect - 0");
     }
@@ -1229,18 +1225,18 @@ X_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, 
 
 
 HIDDEN int
-X_drawLine2D(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2)
+X_drawLine2D(struct dm_internal *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2)
 {
     int sx1, sy1, sx2, sy2;
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
-    struct x_vars *privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
+    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
+    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
     sx1 = dm_Normal2Xx(dmp, x_1);
     sx2 = dm_Normal2Xx(dmp, x_2);
     sy1 = dm_Normal2Xy(dmp, y_1, 0);
     sy2 = dm_Normal2Xy(dmp, y_2, 0);
 
-    if (dmp->i->dm_debugLevel) {
+    if (dmp->dm_debugLevel) {
 	bu_log("X_drawLine2D()\n");
 	bu_log("x1 = %g, y1 = %g\n", x_1, y_1);
 	bu_log("x2 = %g, y2 = %g\n", x_2, y_2);
@@ -1258,14 +1254,14 @@ X_drawLine2D(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2)
 
 
 HIDDEN int
-X_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
+X_drawLine3D(struct dm_internal *dmp, point_t pt1, point_t pt2)
 {
     return draw_Line3D(dmp, pt1, pt2);
 }
 
 
 HIDDEN int
-X_drawLines3D(struct dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
+X_drawLines3D(struct dm_internal *dmp, int npoints, point_t *points, int UNUSED(sflag))
 {
     if (!dmp || npoints < 0 || !points)
 	return BRLCAD_ERROR;
@@ -1275,16 +1271,16 @@ X_drawLines3D(struct dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
 
 
 HIDDEN int
-X_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
+X_drawPoint2D(struct dm_internal *dmp, fastf_t x, fastf_t y)
 {
     int sx, sy;
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
-    struct x_vars *privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
+    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
+    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
     sx = dm_Normal2Xx(dmp, x);
     sy = dm_Normal2Xy(dmp, y, 0);
 
-    if (dmp->i->dm_debugLevel) {
+    if (dmp->dm_debugLevel) {
 	bu_log("X_drawPoint2D()\n");
 	bu_log("x = %g, y = %g\n", x, y);
 	bu_log("sx = %d, sy = %d\n", sx, sy);
@@ -1299,18 +1295,18 @@ X_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 
 
 HIDDEN int
-X_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
+X_setFGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
 {
     XGCValues gcv;
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
-    struct x_vars *privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
+    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
+    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
-    if (dmp->i->dm_debugLevel)
+    if (dmp->dm_debugLevel)
 	bu_log("X_setFGColor() rgb=[%d, %d, %d] strict=%d transparency=%f\n", r, g, b, strict, transparency);
 
-    dmp->i->dm_fg[0] = r;
-    dmp->i->dm_fg[1] = g;
-    dmp->i->dm_fg[2] = b;
+    dmp->dm_fg[0] = r;
+    dmp->dm_fg[1] = g;
+    dmp->dm_fg[2] = b;
 
     if (privars->is_trueColor) {
 	XColor color;
@@ -1341,17 +1337,17 @@ X_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, 
 
 
 HIDDEN int
-X_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
+X_setBGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
-    struct x_vars *privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
+    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
+    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
-    if (dmp->i->dm_debugLevel)
+    if (dmp->dm_debugLevel)
 	bu_log("X_setBGColor()\n");
 
-    dmp->i->dm_bg[0] = r;
-    dmp->i->dm_bg[1] = g;
-    dmp->i->dm_bg[2] = b;
+    dmp->dm_bg[0] = r;
+    dmp->dm_bg[1] = g;
+    dmp->dm_bg[2] = b;
 
     if (privars->is_trueColor) {
 	XColor color;
@@ -1376,17 +1372,17 @@ X_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 
 
 HIDDEN int
-X_setLineAttr(struct dm *dmp, int width, int style)
+X_setLineAttr(struct dm_internal *dmp, int width, int style)
 {
     int linestyle;
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
-    struct x_vars *privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
+    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
+    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
-    if (dmp->i->dm_debugLevel)
+    if (dmp->dm_debugLevel)
 	bu_log("X_setLineAttr()\n");
 
-    dmp->i->dm_lineWidth = width;
-    dmp->i->dm_lineStyle = style;
+    dmp->dm_lineWidth = width;
+    dmp->dm_lineStyle = style;
 
     if (width <= 1)
 	width = 0;
@@ -1405,42 +1401,42 @@ X_setLineAttr(struct dm *dmp, int width, int style)
 
 
 HIDDEN int
-X_debug(struct dm *dmp, int lvl)
+X_debug(struct dm_internal *dmp, int lvl)
 {
-    dmp->i->dm_debugLevel = lvl;
+    dmp->dm_debugLevel = lvl;
 
     return BRLCAD_OK;
 }
 
 
 HIDDEN int
-X_logfile(struct dm *dmp, const char *filename)
+X_logfile(struct dm_internal *dmp, const char *filename)
 {
-    bu_vls_sprintf(&dmp->i->dm_log, "%s", filename);
+    bu_vls_sprintf(&dmp->dm_log, "%s", filename);
 
     return BRLCAD_OK;
 }
 
 
 HIDDEN int
-X_setWinBounds(struct dm *dmp, fastf_t *w)
+X_setWinBounds(struct dm_internal *dmp, fastf_t *w)
 {
-    if (dmp->i->dm_debugLevel)
+    if (dmp->dm_debugLevel)
 	bu_log("X_setWinBounds()\n");
 
-    dmp->i->dm_clipmin[0] = w[0];
-    dmp->i->dm_clipmin[1] = w[2];
-    dmp->i->dm_clipmin[2] = w[4];
-    dmp->i->dm_clipmax[0] = w[1];
-    dmp->i->dm_clipmax[1] = w[3];
-    dmp->i->dm_clipmax[2] = w[5];
+    dmp->dm_clipmin[0] = w[0];
+    dmp->dm_clipmin[1] = w[2];
+    dmp->dm_clipmin[2] = w[4];
+    dmp->dm_clipmax[0] = w[1];
+    dmp->dm_clipmax[1] = w[3];
+    dmp->dm_clipmax[2] = w[5];
 
     return BRLCAD_OK;
 }
 
 
 HIDDEN int
-X_configureWin(struct dm *dmp, int force)
+X_configureWin(struct dm_internal *dmp, int force)
 {
     /* don't force */
     return X_configureWin_guts(dmp, force);
@@ -1448,31 +1444,31 @@ X_configureWin(struct dm *dmp, int force)
 
 
 HIDDEN int
-X_setLight(struct dm *dmp, int light_on)
+X_setLight(struct dm_internal *dmp, int light_on)
 {
-    if (dmp->i->dm_debugLevel)
+    if (dmp->dm_debugLevel)
 	bu_log("X_setLight:\n");
 
-    dmp->i->dm_light = light_on;
+    dmp->dm_light = light_on;
 
     return BRLCAD_OK;
 }
 
 
 HIDDEN int
-X_setZBuffer(struct dm *dmp, int zbuffer_on)
+X_setZBuffer(struct dm_internal *dmp, int zbuffer_on)
 {
-    if (dmp->i->dm_debugLevel)
+    if (dmp->dm_debugLevel)
 	bu_log("X_setZBuffer:\n");
 
-    dmp->i->dm_zbuffer = zbuffer_on;
+    dmp->dm_zbuffer = zbuffer_on;
 
     return BRLCAD_OK;
 }
 
 
 HIDDEN int
-X_getDisplayImage(struct dm *dmp, unsigned char **image)
+X_getDisplayImage(struct dm_internal *dmp, unsigned char **image)
 {
     XImage *ximage_p;
     unsigned char **rows;
@@ -1491,11 +1487,11 @@ X_getDisplayImage(struct dm *dmp, unsigned char **image)
     int blue_bits;
 
 
-    ximage_p = XGetImage(((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->dpy,
-			 ((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->win,
+    ximage_p = XGetImage(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			 ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			 0, 0,
-			 dmp->i->dm_width,
-			 dmp->i->dm_height,
+			 dmp->dm_width,
+			 dmp->dm_height,
 			 ~0, ZPixmap);
 
     if (!ximage_p) {
@@ -1686,12 +1682,12 @@ X_getDisplayImage(struct dm *dmp, unsigned char **image)
 }
 
 int
-X_openFb(struct dm *dmp)
+X_openFb(struct dm_internal *dmp)
 {
     struct fb_platform_specific *fb_ps;
     struct X24_fb_info *xfb_ps;
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
-    struct x_vars *privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
+    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
+    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
     fb_ps = fb_get_platform_specific(FB_X24_MAGIC);
     xfb_ps = (struct X24_fb_info *)fb_ps->data;
@@ -1702,7 +1698,7 @@ X_openFb(struct dm *dmp)
     xfb_ps->vip = pubvars->vip;
     xfb_ps->gc = privars->gc;
 
-    dmp->i->fbp = fb_open_existing("X", dm_get_width(dmp), dm_get_height(dmp), fb_ps);
+    dmp->fbp = fb_open_existing("X", dm_get_width(dmp), dm_get_height(dmp), fb_ps);
     fb_put_platform_specific(fb_ps);
     return 0;
 }
@@ -1716,7 +1712,7 @@ struct bu_structparse X_vparse[] = {
 };
 
 /* Display Manager package interface */
-struct dm_impl dm_X_impl = {
+struct dm_internal dm_X = {
     X_close,
     X_drawBegin,
     X_drawEnd,
@@ -1797,8 +1793,6 @@ struct dm_impl dm_X_impl = {
     FB_NULL,
     0				/* Tcl interpreter */
 };
-
-struct dm dm_X = { &dm_X_impl };
 
 /* Because class is actually used to access a struct
  * entry in this file, preserve our redefinition

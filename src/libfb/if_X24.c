@@ -20,7 +20,7 @@
  * IS ON AN "AS IS" BASIS, AND SUN MICROSYSTEMS INC. HAS NO OBLIGATION TO
  * PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  */
-/** @addtogroup libstruct fb */
+/** @addtogroup libfb */
 /** @{*/
 /** @file if_X24.c
  *
@@ -162,8 +162,8 @@ struct xinfo {
     int xi_xtp;		/* Y-coord of topmost pixels */
     int xi_xbt;		/* Y-coord of bottommost pixels */
 };
-#define XI(ptr) ((struct xinfo *)((ptr)->i->u1.p))
-#define XI_SET(ptr, val) ((ptr)->i->u1.p) = (char *) val;
+#define XI(ptr) ((struct xinfo *)((ptr)->u1.p))
+#define XI_SET(ptr, val) ((ptr)->u1.p) = (char *) val;
 
 
 /* Flags in xi_flags */
@@ -525,7 +525,7 @@ X24_createColorTables(struct xinfo *xi)
 
 
 HIDDEN int
-x24_setup(struct fb *ifp, int width, int height)
+x24_setup(fb *ifp, int width, int height)
 {
     struct xinfo *xi = XI(ifp);
 
@@ -536,7 +536,7 @@ x24_setup(struct fb *ifp, int width, int height)
     XRectangle rect;
     char *xname;
 
-    FB_CK_FB(ifp->i);
+    FB_CK_FB(ifp);
 
     /* Save these in state structure */
 
@@ -828,10 +828,10 @@ x24_setup(struct fb *ifp, int width, int height)
      */
     xsh.flags = PPosition | PSize | PMinSize | PMaxSize;
     xsh.width = width;
-    xsh.max_width = ifp->i->if_max_width;
+    xsh.max_width = ifp->if_max_width;
     xsh.min_width = 0;
     xsh.height = height;
-    xsh.max_height = ifp->i->if_max_height;
+    xsh.max_height = ifp->if_max_height;
     xsh.min_height = 0;
     xsh.x = xsh.y = 0;
 
@@ -1006,7 +1006,7 @@ x24_setup(struct fb *ifp, int width, int height)
  * x_1, y_1->w, h describes a Rectangle of changed bits (image space coord.)
  */
 HIDDEN void
-X24_blit(struct fb *ifp, int x_1, int y_1, int w, int h, int flags /* BLIT_xxx flags */)
+X24_blit(fb *ifp, int x_1, int y_1, int w, int h, int flags /* BLIT_xxx flags */)
 {
     struct xinfo *xi = XI(ifp);
 
@@ -1037,7 +1037,7 @@ X24_blit(struct fb *ifp, int x_1, int y_1, int w, int h, int flags /* BLIT_xxx f
     unsigned int mask_blue = xi->xi_image->blue_mask << 6;
     size_t i;
 
-    FB_CK_FB(ifp->i);
+    FB_CK_FB(ifp);
 
     /*
      * Now that we know the mask, we shift a bit left, one bit at a
@@ -1102,16 +1102,16 @@ X24_blit(struct fb *ifp, int x_1, int y_1, int w, int h, int flags /* BLIT_xxx f
     /*
      * Figure out sizes of outermost image pixels
      */
-    x_1wd = (x_1 == xi->xi_ilf) ? xi->xi_ilf_w : ifp->i->if_xzoom;
-    x2wd = (x2 == xi->xi_irt) ? xi->xi_irt_w : ifp->i->if_xzoom;
-    y_1ht = (y_1 == xi->xi_ibt) ? xi->xi_ibt_h : ifp->i->if_yzoom;
-    y2ht = (y2 == xi->xi_itp) ? xi->xi_itp_h : ifp->i->if_yzoom;
+    x_1wd = (x_1 == xi->xi_ilf) ? xi->xi_ilf_w : ifp->if_xzoom;
+    x2wd = (x2 == xi->xi_irt) ? xi->xi_irt_w : ifp->if_xzoom;
+    y_1ht = (y_1 == xi->xi_ibt) ? xi->xi_ibt_h : ifp->if_yzoom;
+    y2ht = (y2 == xi->xi_itp) ? xi->xi_itp_h : ifp->if_yzoom;
 
     /* Compute ox: offset from left edge of window to left pixel */
 
     xdel = x_1 - xi->xi_ilf;
     if (xdel) {
-	ox = x_1wd + ((xdel - 1) * ifp->i->if_xzoom) + xi->xi_xlf;
+	ox = x_1wd + ((xdel - 1) * ifp->if_xzoom) + xi->xi_xlf;
     } else {
 	ox = xi->xi_xlf;
     }
@@ -1121,7 +1121,7 @@ X24_blit(struct fb *ifp, int x_1, int y_1, int w, int h, int flags /* BLIT_xxx f
 
     ydel = y_1 - xi->xi_ibt;
     if (ydel) {
-	oy = xi->xi_xbt - (y_1ht + ((ydel - 1) * ifp->i->if_yzoom));
+	oy = xi->xi_xbt - (y_1ht + ((ydel - 1) * ifp->if_yzoom));
     } else {
 	oy = xi->xi_xbt;
     }
@@ -1132,13 +1132,13 @@ X24_blit(struct fb *ifp, int x_1, int y_1, int w, int h, int flags /* BLIT_xxx f
     if (x2 == x_1) {
 	xwd = x_1wd;
     } else {
-	xwd = x_1wd + x2wd + ifp->i->if_xzoom * (x2 - x_1 - 1);
+	xwd = x_1wd + x2wd + ifp->if_xzoom * (x2 - x_1 - 1);
     }
 
     if (y2 == y_1) {
 	xht = y_1ht;
     } else {
-	xht = y_1ht + y2ht + ifp->i->if_yzoom * (y2 - y_1 - 1);
+	xht = y_1ht + y2ht + ifp->if_yzoom * (y2 - y_1 - 1);
     }
 
     /*
@@ -1195,7 +1195,7 @@ X24_blit(struct fb *ifp, int x_1, int y_1, int w, int h, int flags /* BLIT_xxx f
 			} else if (x == x2) {
 			    pxwd = x2wd;
 			} else {
-			    pxwd = ifp->i->if_xzoom;
+			    pxwd = ifp->if_xzoom;
 			}
 
 			/*
@@ -1303,7 +1303,7 @@ X24_blit(struct fb *ifp, int x_1, int y_1, int w, int h, int flags /* BLIT_xxx f
 								  xi->xi_xwidth + ox];
 
 
-		if (ifp->i->if_xzoom == 1 && ifp->i->if_yzoom == 1) {
+		if (ifp->if_xzoom == 1 && ifp->if_yzoom == 1) {
 		    /* Special case if no zooming */
 
 		    int j, k;
@@ -1367,7 +1367,7 @@ X24_blit(struct fb *ifp, int x_1, int y_1, int w, int h, int flags /* BLIT_xxx f
 			else if (y == y2)
 			    pyht = y2ht;
 			else
-			    pyht = ifp->i->if_yzoom;
+			    pyht = ifp->if_yzoom;
 
 			/* For each line, convert/copy pixels */
 
@@ -1386,7 +1386,7 @@ X24_blit(struct fb *ifp, int x_1, int y_1, int w, int h, int flags /* BLIT_xxx f
 				    else if (x == x2)
 					pxwd = x2wd;
 				    else
-					pxwd = ifp->i->if_xzoom;
+					pxwd = ifp->if_xzoom;
 
 				    r = lip[RED];
 				    g = lip[GRN];
@@ -1414,7 +1414,7 @@ X24_blit(struct fb *ifp, int x_1, int y_1, int w, int h, int flags /* BLIT_xxx f
 				    else if (x == x2)
 					pxwd = x2wd;
 				    else
-					pxwd = ifp->i->if_xzoom;
+					pxwd = ifp->if_xzoom;
 
 				    r = red[lip[RED]];
 				    g = grn[lip[GRN]];
@@ -1456,7 +1456,7 @@ X24_blit(struct fb *ifp, int x_1, int y_1, int w, int h, int flags /* BLIT_xxx f
 		unsigned char *op = (unsigned char *) &xi->xi_pix[oy *
 								  xi->xi_xwidth + ox];
 
-		if (ifp->i->if_xzoom == 1 && ifp->i->if_yzoom == 1) {
+		if (ifp->if_xzoom == 1 && ifp->if_yzoom == 1) {
 		    /* Special case if no zooming */
 
 		    int j, k;
@@ -1515,7 +1515,7 @@ X24_blit(struct fb *ifp, int x_1, int y_1, int w, int h, int flags /* BLIT_xxx f
 			else if (y == y2)
 			    pyht = y2ht;
 			else
-			    pyht = ifp->i->if_yzoom;
+			    pyht = ifp->if_yzoom;
 
 
 			/* Save pointer to start of line */
@@ -1536,7 +1536,7 @@ X24_blit(struct fb *ifp, int x_1, int y_1, int w, int h, int flags /* BLIT_xxx f
 				else if (x == x2)
 				    pxwd = x2wd;
 				else
-				    pxwd = ifp->i->if_xzoom;
+				    pxwd = ifp->if_xzoom;
 
 				/* Get/convert pixel */
 
@@ -1567,7 +1567,7 @@ X24_blit(struct fb *ifp, int x_1, int y_1, int w, int h, int flags /* BLIT_xxx f
 				else if (x == x2)
 				    pxwd = x2wd;
 				else
-				    pxwd = ifp->i->if_xzoom;
+				    pxwd = ifp->if_xzoom;
 
 				/* Get/convert pixel */
 
@@ -1622,7 +1622,7 @@ X24_blit(struct fb *ifp, int x_1, int y_1, int w, int h, int flags /* BLIT_xxx f
 								  xi->xi_image->bytes_per_line + ox / 8];
 
 
-		if (ifp->i->if_xzoom == 1 && ifp->i->if_yzoom == 1) {
+		if (ifp->if_xzoom == 1 && ifp->if_yzoom == 1) {
 		    /* Special case if no zooming */
 
 		    int j, k;
@@ -1715,7 +1715,7 @@ X24_blit(struct fb *ifp, int x_1, int y_1, int w, int h, int flags /* BLIT_xxx f
 			else if (y == y2)
 			    pyht = y2ht;
 			else
-			    pyht = ifp->i->if_yzoom;
+			    pyht = ifp->if_yzoom;
 
 			/* For each line, convert/copy pixels */
 
@@ -1735,7 +1735,7 @@ X24_blit(struct fb *ifp, int x_1, int y_1, int w, int h, int flags /* BLIT_xxx f
 				    else if (x == x2)
 					pxwd = x2wd;
 				    else
-					pxwd = ifp->i->if_xzoom;
+					pxwd = ifp->if_xzoom;
 
 				    r = lip[RED];
 				    g = lip[GRN];
@@ -1773,7 +1773,7 @@ X24_blit(struct fb *ifp, int x_1, int y_1, int w, int h, int flags /* BLIT_xxx f
 				    else if (x == x2)
 					pxwd = x2wd;
 				    else
-					pxwd = ifp->i->if_xzoom;
+					pxwd = ifp->if_xzoom;
 
 				    r = lip[RED];
 				    g = lip[GRN];
@@ -1861,10 +1861,10 @@ X24_blit(struct fb *ifp, int x_1, int y_1, int w, int h, int flags /* BLIT_xxx f
 
 
 HIDDEN int
-X24_rmap(struct fb *ifp, ColorMap *cmp)
+X24_rmap(fb *ifp, ColorMap *cmp)
 {
     struct xinfo *xi = XI(ifp);
-    FB_CK_FB(ifp->i);
+    FB_CK_FB(ifp);
 
     memcpy(cmp, xi->xi_rgb_cmap, sizeof (ColorMap));
 
@@ -1873,12 +1873,12 @@ X24_rmap(struct fb *ifp, ColorMap *cmp)
 
 
 HIDDEN int
-X24_wmap(struct fb *ifp, const ColorMap *cmp)
+X24_wmap(fb *ifp, const ColorMap *cmp)
 {
     struct xinfo *xi = XI(ifp);
     ColorMap *map = xi->xi_rgb_cmap;
     int waslincmap;
-    FB_CK_FB(ifp->i);
+    FB_CK_FB(ifp);
 
     /* Did we have a linear colormap before this call? */
 
@@ -1981,7 +1981,7 @@ X24_wmap(struct fb *ifp, const ColorMap *cmp)
  * accessed again, even though the windows are transient, per-process.
  */
 HIDDEN int
-X24_getmem(struct fb *ifp)
+X24_getmem(fb *ifp)
 {
     struct xinfo *xi = XI(ifp);
 
@@ -1990,9 +1990,9 @@ X24_getmem(struct fb *ifp)
     size_t size;
     int isnew = 0;
 
-    FB_CK_FB(ifp->i);
+    FB_CK_FB(ifp);
 
-    pixsize = ifp->i->if_max_height * ifp->i->if_max_width * sizeof(RGBpixel);
+    pixsize = ifp->if_max_height * ifp->if_max_width * sizeof(RGBpixel);
     size = pixsize + sizeof(ColorMap);
 
     /*
@@ -2079,7 +2079,7 @@ store\n  Run shell command 'limit datasize unlimited' and try again.\n", size);
 
 
 HIDDEN void
-X24_updstate(struct fb *ifp)
+X24_updstate(fb *ifp)
 {
     struct xinfo *xi = XI(ifp);
 
@@ -2091,21 +2091,21 @@ X24_updstate(struct fb *ifp)
 
     int want, avail;	/* Wanted/available image pixels */
 
-    FB_CK_FB(ifp->i);
+    FB_CK_FB(ifp);
 
     /*
      * Set ?wp to the number of whole zoomed image pixels we could display
      * in the X window.
      */
-    xwp = xi->xi_xwidth / ifp->i->if_xzoom;
-    ywp = xi->xi_xheight / ifp->i->if_yzoom;
+    xwp = xi->xi_xwidth / ifp->if_xzoom;
+    ywp = xi->xi_xheight / ifp->if_yzoom;
 
     /*
      * Set ?rp to the number of leftover X pixels we have, after displaying
      * wp whole zoomed image pixels.
      */
-    xrp = xi->xi_xwidth % ifp->i->if_xzoom;
-    yrp = xi->xi_xheight % ifp->i->if_yzoom;
+    xrp = xi->xi_xwidth % ifp->if_xzoom;
+    yrp = xi->xi_xheight % ifp->if_yzoom;
 
     /*
      * Force ?wp to be the same as the window width (mod 2).  This
@@ -2115,12 +2115,12 @@ X24_updstate(struct fb *ifp)
 
     if (xwp && (xwp ^ xi->xi_xwidth) & 1) {
 	xwp--;
-	xrp += ifp->i->if_xzoom;
+	xrp += ifp->if_xzoom;
     }
 
     if (ywp && (ywp ^ xi->xi_xheight) & 1) {
 	ywp--;
-	yrp += ifp->i->if_yzoom;
+	yrp += ifp->if_yzoom;
     }
 
     /*
@@ -2132,13 +2132,13 @@ X24_updstate(struct fb *ifp)
      */
     switch (xrp) {
 	case 0:
-	    lf_w = ifp->i->if_xzoom;
-	    rt_w = ifp->i->if_xzoom;
+	    lf_w = ifp->if_xzoom;
+	    rt_w = ifp->if_xzoom;
 	    break;
 
 	case 1:
 	    lf_w = 1;
-	    rt_w = ifp->i->if_xzoom;
+	    rt_w = ifp->if_xzoom;
 	    xwp += 1;
 	    break;
 
@@ -2151,13 +2151,13 @@ X24_updstate(struct fb *ifp)
 
     switch (yrp) {
 	case 0:
-	    tp_h = ifp->i->if_yzoom;
-	    bt_h = ifp->i->if_yzoom;
+	    tp_h = ifp->if_yzoom;
+	    bt_h = ifp->if_yzoom;
 	    break;
 
 	case 1:
 	    tp_h = 1;
-	    bt_h = ifp->i->if_yzoom;
+	    bt_h = ifp->if_yzoom;
 	    ywp += 1;
 	    break;
 
@@ -2187,7 +2187,7 @@ X24_updstate(struct fb *ifp)
      * calculate the remaining parameters as noted.
      */
 
-    want = ifp->i->if_xcenter;
+    want = ifp->if_xcenter;
     avail = xwp/2;
     if (want >= avail) {
 	/*
@@ -2216,14 +2216,14 @@ X24_updstate(struct fb *ifp)
 	 *    x coordinate.
 	 */
 
-	xi->xi_xlf = lf_w + (avail - want - 1) * ifp->i->if_xzoom;
-	xi->xi_ilf_w = ifp->i->if_xzoom;
+	xi->xi_xlf = lf_w + (avail - want - 1) * ifp->if_xzoom;
+	xi->xi_ilf_w = ifp->if_xzoom;
 	xi->xi_ilf = 0;
     }
 
     /* Calculation for bottom edge. */
 
-    want = ifp->i->if_ycenter;
+    want = ifp->if_ycenter;
     avail = ywp/2;
     if (want >= avail) {
 	/*
@@ -2254,14 +2254,14 @@ X24_updstate(struct fb *ifp)
 	 */
 
 	xi->xi_xbt = xi->xi_xheight - (bt_h + (avail - want - 1) *
-				       ifp->i->if_yzoom) - 1;
-	xi->xi_ibt_h = ifp->i->if_yzoom;
+				       ifp->if_yzoom) - 1;
+	xi->xi_ibt_h = ifp->if_yzoom;
 	xi->xi_ibt = 0;
     }
 
     /* Calculation for right edge. */
 
-    want = xi->xi_iwidth - ifp->i->if_xcenter;
+    want = xi->xi_iwidth - ifp->if_xcenter;
     avail =  xwp - xwp/2;
     if (want >= avail) {
 	/*
@@ -2278,7 +2278,7 @@ X24_updstate(struct fb *ifp)
 
 	xi->xi_xrt = xi->xi_xwidth - 1;
 	xi->xi_irt_w = rt_w;
-	xi->xi_irt = ifp->i->if_xcenter + avail - 1;
+	xi->xi_irt = ifp->if_xcenter + avail - 1;
     } else {
 	/*
 	 * Not enough image pixels to fill the area.  We'll be
@@ -2293,14 +2293,14 @@ X24_updstate(struct fb *ifp)
 	 */
 
 	xi->xi_xrt = xi->xi_xwidth - (rt_w + (avail - want - 1) *
-				      ifp->i->if_xzoom) - 1;
-	xi->xi_irt_w = ifp->i->if_xzoom;
+				      ifp->if_xzoom) - 1;
+	xi->xi_irt_w = ifp->if_xzoom;
 	xi->xi_irt = xi->xi_iwidth - 1;
     }
 
     /* Calculation for top edge. */
 
-    want = xi->xi_iheight - ifp->i->if_ycenter;
+    want = xi->xi_iheight - ifp->if_ycenter;
     avail = ywp - ywp/2;
     if (want >= avail) {
 	/*
@@ -2316,7 +2316,7 @@ X24_updstate(struct fb *ifp)
 
 	xi->xi_xtp = 0;
 	xi->xi_itp_h = tp_h;
-	xi->xi_itp = ifp->i->if_ycenter + avail - 1;
+	xi->xi_itp = ifp->if_ycenter + avail - 1;
     } else {
 	/*
 	 * Not enough image pixels to fill the area.  We'll be
@@ -2329,8 +2329,8 @@ X24_updstate(struct fb *ifp)
 	 *    coordinate equal to the height of the image minus 1.
 	 */
 
-	xi->xi_xtp = tp_h + (avail - want - 1) * ifp->i->if_yzoom;
-	xi->xi_itp_h = ifp->i->if_yzoom;
+	xi->xi_xtp = tp_h + (avail - want - 1) * ifp->if_yzoom;
+	xi->xi_itp_h = ifp->if_yzoom;
 	xi->xi_itp = xi->xi_iheight - 1;
     }
 
@@ -2414,14 +2414,14 @@ X24_destroy(struct xinfo *xi)
 
 
 HIDDEN int
-X24_open(struct fb *ifp, const char *file, int width, int height)
+X24_open(fb *ifp, const char *file, int width, int height)
 {
     struct xinfo *xi;
 
     unsigned long mode;			/* local copy */
     int getmem_stat;
 
-    FB_CK_FB(ifp->i);
+    FB_CK_FB(ifp);
 
     /*
      * First, attempt to determine operating mode for this open,
@@ -2437,7 +2437,7 @@ X24_open(struct fb *ifp, const char *file, int width, int height)
 	int alpha;
 	struct modeflags *mfp;
 
-	if (bu_strncmp(file, ifp->i->if_name, strlen(ifp->i->if_name))) {
+	if (bu_strncmp(file, ifp->if_name, strlen(ifp->if_name))) {
 	    /* How did this happen?? */
 	    mode = 0;
 	} else {
@@ -2477,21 +2477,21 @@ X24_open(struct fb *ifp, const char *file, int width, int height)
     }
 
     if (width <= 0)
-	width = ifp->i->if_width;
+	width = ifp->if_width;
     if (height <= 0)
-	height = ifp->i->if_height;
-    if (width > ifp->i->if_max_width)
-	width = ifp->i->if_max_width;
-    if (height > ifp->i->if_max_height)
-	height = ifp->i->if_max_height;
+	height = ifp->if_height;
+    if (width > ifp->if_max_width)
+	width = ifp->if_max_width;
+    if (height > ifp->if_max_height)
+	height = ifp->if_max_height;
 
-    ifp->i->if_width = width;
-    ifp->i->if_height = height;
+    ifp->if_width = width;
+    ifp->if_height = height;
 
-    ifp->i->if_xzoom = 1;
-    ifp->i->if_yzoom = 1;
-    ifp->i->if_xcenter = width/2;
-    ifp->i->if_ycenter = height/2;
+    ifp->if_xzoom = 1;
+    ifp->if_yzoom = 1;
+    ifp->if_xcenter = width/2;
+    ifp->if_ycenter = height/2;
 
     /* create a struct of state information */
     if ((xi = (struct xinfo *) calloc(1, sizeof(struct xinfo))) == NULL) {
@@ -2523,7 +2523,7 @@ X24_open(struct fb *ifp, const char *file, int width, int height)
     X24_updstate(ifp);
 
     /* Make the Display connection available for selecting on */
-    ifp->i->if_selfd = ConnectionNumber(xi->xi_dpy);
+    ifp->if_selfd = ConnectionNumber(xi->xi_dpy);
 
     /* If we already have data, display it */
 
@@ -2544,12 +2544,12 @@ X24_open(struct fb *ifp, const char *file, int width, int height)
 }
 
 int
-X24_configureWindow(struct fb *ifp, int width, int height)
+X24_configureWindow(fb *ifp, int width, int height)
 {
     struct xinfo *xi = XI(ifp);
     XRectangle rect;
 
-    FB_CK_FB(ifp->i);
+    FB_CK_FB(ifp);
 
     if (!xi) {
 	return 1;
@@ -2559,14 +2559,14 @@ X24_configureWindow(struct fb *ifp, int width, int height)
 	return 1;
     }
 
-    ifp->i->if_width = ifp->i->if_max_width = width;
-    ifp->i->if_height = ifp->i->if_max_height = height;
+    ifp->if_width = ifp->if_max_width = width;
+    ifp->if_height = ifp->if_max_height = height;
 
     xi->xi_xwidth = xi->xi_iwidth = width;
     xi->xi_xheight = xi->xi_iheight = height;
 
-    ifp->i->if_xcenter = width/2;
-    ifp->i->if_ycenter = height/2;
+    ifp->if_xcenter = width/2;
+    ifp->if_ycenter = height/2;
 
     /* redo region */
     if (xi->xi_usereg) {
@@ -2662,19 +2662,19 @@ X24_configureWindow(struct fb *ifp, int width, int height)
 
 
 int
-_X24_open_existing(struct fb *ifp, Display *dpy, Window win, Window cwinp, Colormap cmap, XVisualInfo *vip, int width, int height, GC gc)
+_X24_open_existing(fb *ifp, Display *dpy, Window win, Window cwinp, Colormap cmap, XVisualInfo *vip, int width, int height, GC gc)
 {
     struct xinfo *xi;
     int getmem_stat;
 
-    ifp->i->if_width = width;
-    ifp->i->if_height = height;
+    ifp->if_width = width;
+    ifp->if_height = height;
 
-    ifp->i->if_xzoom = 1;
-    ifp->i->if_yzoom = 1;
+    ifp->if_xzoom = 1;
+    ifp->if_yzoom = 1;
 
-    ifp->i->if_xcenter = width/2;
-    ifp->i->if_ycenter = height/2;
+    ifp->if_xcenter = width/2;
+    ifp->if_ycenter = height/2;
 
     /* create a struct of state information */
     if ((xi = (struct xinfo *)calloc(1, sizeof(struct xinfo))) == NULL) {
@@ -2806,7 +2806,7 @@ _X24_open_existing(struct fb *ifp, Display *dpy, Window win, Window cwinp, Color
     X24_updstate(ifp);
 
     /* Make the Display connection available for selecting on */
-    ifp->i->if_selfd = ConnectionNumber(xi->xi_dpy);
+    ifp->if_selfd = ConnectionNumber(xi->xi_dpy);
 
     if (getmem_stat == 0) {
 	X24_wmap(ifp, xi->xi_rgb_cmap);
@@ -2850,7 +2850,7 @@ X24_put_fbps(struct fb_platform_specific *fbps)
 }
 
 HIDDEN int
-X24_open_existing(struct fb *ifp, int width, int height, struct fb_platform_specific *fb_p)
+X24_open_existing(fb *ifp, int width, int height, struct fb_platform_specific *fb_p)
 {
     struct X24_fb_info *x24_internal = (struct X24_fb_info *)fb_p->data;
     BU_CKMAG(fb_p, FB_X24_MAGIC, "X24 framebuffer");
@@ -2863,10 +2863,10 @@ X24_open_existing(struct fb *ifp, int width, int height, struct fb_platform_spec
 static int alive = 1;
 
 HIDDEN void
-X24_handle_event(struct fb *ifp, XEvent *event)
+X24_handle_event(fb *ifp, XEvent *event)
 {
     struct xinfo *xi = XI(ifp);
-    FB_CK_FB(ifp->i);
+    FB_CK_FB(ifp);
 
     switch ((int)event->type) {
 	case Expose:
@@ -2938,12 +2938,12 @@ X24_handle_event(struct fb *ifp, XEvent *event)
 			    if (x < xi->xi_ilf_w)
 				ix = xi->xi_ilf;
 			    else
-				ix = xi->xi_ilf + (x - xi->xi_ilf_w + ifp->i->if_xzoom - 1) / ifp->i->if_xzoom;
+				ix = xi->xi_ilf + (x - xi->xi_ilf_w + ifp->if_xzoom - 1) / ifp->if_xzoom;
 
 			    if (sy < xi->xi_ibt_h)
 				isy = xi->xi_ibt;
 			    else
-				isy = xi->xi_ibt + (sy - xi->xi_ibt_h + ifp->i->if_yzoom - 1) / ifp->i->if_yzoom;
+				isy = xi->xi_ibt + (sy - xi->xi_ibt_h + ifp->if_yzoom - 1) / ifp->if_yzoom;
 
 			    if (ix >= xi->xi_iwidth || isy >= xi->xi_iheight) {
 				fb_log("No RGB (outside image) 2\n");
@@ -2988,11 +2988,11 @@ X24_handle_event(struct fb *ifp, XEvent *event)
 
 
 HIDDEN int
-x24_linger(struct fb *ifp)
+x24_linger(fb *ifp)
 {
     struct xinfo *xi = XI(ifp);
     XEvent event;
-    FB_CK_FB(ifp->i);
+    FB_CK_FB(ifp);
 
     if (fork() != 0)
 	return 1;	/* release the parent */
@@ -3006,10 +3006,10 @@ x24_linger(struct fb *ifp)
 
 
 HIDDEN int
-X24_close(struct fb *ifp)
+X24_close(fb *ifp)
 {
     struct xinfo *xi = XI(ifp);
-    FB_CK_FB(ifp->i);
+    FB_CK_FB(ifp);
 
     XFlush(xi->xi_dpy);
     if ((xi->xi_mode & MODE1_MASK) == MODE1_LINGERING) {
@@ -3024,10 +3024,10 @@ X24_close(struct fb *ifp)
 
 
 int
-X24_close_existing(struct fb *ifp)
+X24_close_existing(fb *ifp)
 {
     struct xinfo *xi = XI(ifp);
-    FB_CK_FB(ifp->i);
+    FB_CK_FB(ifp);
 
     if (xi->xi_image)
 	XDestroyImage(xi->xi_image);
@@ -3049,7 +3049,7 @@ X24_close_existing(struct fb *ifp)
 
 
 HIDDEN int
-X24_clear(struct fb *ifp, unsigned char *pp)
+X24_clear(fb *ifp, unsigned char *pp)
 {
     struct xinfo *xi = XI(ifp);
 
@@ -3058,7 +3058,7 @@ X24_clear(struct fb *ifp, unsigned char *pp)
     int n;
     unsigned char *cp;
 
-    FB_CK_FB(ifp->i);
+    FB_CK_FB(ifp);
 
     if (pp == (unsigned char *)NULL) {
 	red = grn = blu = 0;
@@ -3091,11 +3091,11 @@ X24_clear(struct fb *ifp, unsigned char *pp)
 
 
 HIDDEN ssize_t
-X24_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
+X24_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     struct xinfo *xi = XI(ifp);
     size_t maxcount;
-    FB_CK_FB(ifp->i);
+    FB_CK_FB(ifp);
 
     /* check origin bounds */
     if (x < 0 || x >= xi->xi_iwidth || y < 0 || y >= xi->xi_iheight)
@@ -3112,12 +3112,12 @@ X24_read(struct fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 
 
 HIDDEN ssize_t
-X24_write(struct fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
+X24_write(fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     struct xinfo *xi = XI(ifp);
     size_t maxcount;
 
-    FB_CK_FB(ifp->i);
+    FB_CK_FB(ifp);
 
     /* Check origin bounds */
     if (x < 0 || x >= xi->xi_iwidth || y < 0 || y >= xi->xi_iheight)
@@ -3152,14 +3152,14 @@ X24_write(struct fb *ifp, int x, int y, const unsigned char *pixelp, size_t coun
 
 
 HIDDEN int
-X24_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
+X24_view(fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 {
     struct xinfo *xi = XI(ifp);
-    FB_CK_FB(ifp->i);
+    FB_CK_FB(ifp);
 
     /* bypass if no change */
-    if (ifp->i->if_xcenter == xcenter && ifp->i->if_ycenter == ycenter
-	&& ifp->i->if_xzoom == xcenter && ifp->i->if_yzoom == ycenter)
+    if (ifp->if_xcenter == xcenter && ifp->if_ycenter == ycenter
+	&& ifp->if_xzoom == xcenter && ifp->if_yzoom == ycenter)
 	return 0;
     /* check bounds */
     if (xcenter < 0 || xcenter >= xi->xi_iwidth
@@ -3169,10 +3169,10 @@ X24_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 	|| yzoom <= 0 || yzoom >= xi->xi_iheight/2)
 	return -1;
 
-    ifp->i->if_xcenter = xcenter;
-    ifp->i->if_ycenter = ycenter;
-    ifp->i->if_xzoom = xzoom;
-    ifp->i->if_yzoom = yzoom;
+    ifp->if_xcenter = xcenter;
+    ifp->if_ycenter = ycenter;
+    ifp->if_xzoom = xzoom;
+    ifp->if_yzoom = yzoom;
 
     X24_updstate(ifp);
     X24_blit(ifp, 0, 0, xi->xi_iwidth, xi->xi_iheight,
@@ -3183,13 +3183,13 @@ X24_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom)
 
 
 HIDDEN int
-X24_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
+X24_getview(fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 {
 
-    *xcenter = ifp->i->if_xcenter;
-    *ycenter = ifp->i->if_ycenter;
-    *xzoom = ifp->i->if_xzoom;
-    *yzoom = ifp->i->if_yzoom;
+    *xcenter = ifp->if_xcenter;
+    *ycenter = ifp->if_ycenter;
+    *xzoom = ifp->if_xzoom;
+    *yzoom = ifp->if_yzoom;
 
     return 0;
 }
@@ -3197,16 +3197,16 @@ X24_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom)
 
 /*ARGSUSED*/
 HIDDEN int
-X24_setcursor(struct fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
+X24_setcursor(fb *ifp, const unsigned char *UNUSED(bits), int UNUSED(xbits), int UNUSED(ybits), int UNUSED(xorig), int UNUSED(yorig))
 {
-    FB_CK_FB(ifp->i);
+    FB_CK_FB(ifp);
 
     return 0;
 }
 
 
 HIDDEN int
-X24_cursor(struct fb *ifp, int mode, int x, int y)
+X24_cursor(fb *ifp, int mode, int x, int y)
 {
     struct xinfo *xi = XI(ifp);
 
@@ -3229,25 +3229,25 @@ X24_cursor(struct fb *ifp, int mode, int x, int y)
 					CWSaveUnder | CWColormap, &xswa);
 	}
 
-	delta = ifp->i->if_width/ifp->i->if_xzoom/2;
-	xx = x - (ifp->i->if_xcenter - delta);
-	xx *= ifp->i->if_xzoom;
-	xx += ifp->i->if_xzoom/2;  /* center cursor */
+	delta = ifp->if_width/ifp->if_xzoom/2;
+	xx = x - (ifp->if_xcenter - delta);
+	xx *= ifp->if_xzoom;
+	xx += ifp->if_xzoom/2;  /* center cursor */
 
-	delta = ifp->i->if_height/ifp->i->if_yzoom/2;
-	xy = y - (ifp->i->if_ycenter - delta);
-	xy *= ifp->i->if_yzoom;
-	xy += ifp->i->if_yzoom/2;  /* center cursor */
+	delta = ifp->if_height/ifp->if_yzoom/2;
+	xy = y - (ifp->if_ycenter - delta);
+	xy *= ifp->if_yzoom;
+	xy += ifp->if_yzoom/2;  /* center cursor */
 	xy = xi->xi_xheight - xy;
 
 	/* Move cursor into place; make it visible if it isn't */
 	XMoveWindow(xi->xi_dpy, xi->xi_cwin, xx - 4, xy - 4);
 
-	if (!ifp->i->if_cursmode)
+	if (!ifp->if_cursmode)
 	    XMapRaised(xi->xi_dpy, xi->xi_cwin);
     } else {
 	/* If we have a cursor and it's visible, hide it */
-	if (xi->xi_cwin && ifp->i->if_cursmode)
+	if (xi->xi_cwin && ifp->if_cursmode)
 	    XUnmapWindow(xi->xi_dpy, xi->xi_cwin);
     }
 
@@ -3255,16 +3255,16 @@ X24_cursor(struct fb *ifp, int mode, int x, int y)
     XFlush(xi->xi_dpy);
 
     /* Update position of cursor */
-    ifp->i->if_cursmode = mode;
-    ifp->i->if_xcurs = x;
-    ifp->i->if_ycurs = y;
+    ifp->if_cursmode = mode;
+    ifp->if_xcurs = x;
+    ifp->if_ycurs = y;
 
     return 0;
 }
 
 
 HIDDEN int
-X24_getcursor(struct fb *ifp, int *mode, int *x, int *y)
+X24_getcursor(fb *ifp, int *mode, int *x, int *y)
 {
     fb_sim_getcursor(ifp, mode, x, y);
 
@@ -3273,10 +3273,10 @@ X24_getcursor(struct fb *ifp, int *mode, int *x, int *y)
 
 
 HIDDEN int
-X24_readrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
+X24_readrect(fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp)
 {
     struct xinfo *xi = XI(ifp);
-    FB_CK_FB(ifp->i);
+    FB_CK_FB(ifp);
 
     /* Clip arguments */
 
@@ -3316,10 +3316,10 @@ X24_readrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsigned
 
 
 HIDDEN int
-X24_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
+X24_writerect(fb *ifp, int xmin, int ymin, int width, int height, const unsigned char *pp)
 {
     struct xinfo *xi = XI(ifp);
-    FB_CK_FB(ifp->i);
+    FB_CK_FB(ifp);
 
     /* Clip arguments */
 
@@ -3362,12 +3362,12 @@ X24_writerect(struct fb *ifp, int xmin, int ymin, int width, int height, const u
 
 
 HIDDEN int
-X24_poll(struct fb *ifp)
+X24_poll(fb *ifp)
 {
     struct xinfo *xi = XI(ifp);
     XEvent event;
 
-    FB_CK_FB(ifp->i);
+    FB_CK_FB(ifp);
 
     /* Check for and dispatch event */
     while (XCheckMaskEvent(xi->xi_dpy, ~NoEventMask, &event))
@@ -3378,10 +3378,10 @@ X24_poll(struct fb *ifp)
 
 
 HIDDEN int
-X24_flush(struct fb *ifp)
+X24_flush(fb *ifp)
 {
     struct xinfo *xi = XI(ifp);
-    FB_CK_FB(ifp->i);
+    FB_CK_FB(ifp);
 
     XFlush(xi->xi_dpy);
     return 0;
@@ -3389,29 +3389,29 @@ X24_flush(struct fb *ifp)
 
 
 HIDDEN int
-X24_free(struct fb *ifp)
+X24_free(fb *ifp)
 {
-    FB_CK_FB(ifp->i);
+    FB_CK_FB(ifp);
 
     return 0;
 }
 
 
 HIDDEN int
-X24_help(struct fb *ifp)
+X24_help(fb *ifp)
 {
     struct xinfo *xi = XI(ifp);
     struct modeflags *mfp;
-    FB_CK_FB(ifp->i);
+    FB_CK_FB(ifp);
 
-    fb_log("Description: %s\n", X24_interface.i->if_type);
-    fb_log("Device: %s\n", ifp->i->if_name);
+    fb_log("Description: %s\n", X24_interface.if_type);
+    fb_log("Device: %s\n", ifp->if_name);
     fb_log("Max width/height: %d %d\n",
-	   X24_interface.i->if_max_width,
-	   X24_interface.i->if_max_height);
+	   X24_interface.if_max_width,
+	   X24_interface.if_max_height);
     fb_log("Default width/height: %d %d\n",
-	   X24_interface.i->if_width,
-	   X24_interface.i->if_height);
+	   X24_interface.if_width,
+	   X24_interface.if_height);
     fb_log("Usage: /dev/X[options]\n");
     for (mfp = modeflags; mfp->c != '\0'; mfp++) {
 	fb_log("   %c   %s\n", mfp->c, mfp->help);
@@ -3466,7 +3466,7 @@ X24_help(struct fb *ifp)
 
 
 int
-X24_refresh(struct fb *ifp, int x, int y, int w, int h)
+X24_refresh(fb *ifp, int x, int y, int w, int h)
 {
     if (w < 0) {
 	w = -w;
@@ -3485,7 +3485,7 @@ X24_refresh(struct fb *ifp, int x, int y, int w, int h)
 
 
 /* This is the ONLY thing that we normally "export" */
-struct fb_impl X24_interface_impl =  {
+fb X24_interface =  {
     0,			/* magic number slot */
     FB_X24_MAGIC,
     X24_open,		/* open device */
@@ -3541,8 +3541,6 @@ struct fb_impl X24_interface_impl =  {
     {0}, /* u5 */
     {0}  /* u6 */
 };
-
-struct fb X24_interface =  { &X24_interface_impl };
 
 /* Because class is actually used to access a struct
  * entry in this file, preserve our redefinition

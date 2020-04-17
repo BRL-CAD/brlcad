@@ -78,7 +78,7 @@
 #include "dm.h"
 #include "dm-ogl.h"
 #include "dm-Null.h"
-#include "./dm_xvars.h"
+#include "dm/dm_xvars.h"
 #include "fb.h"
 #include "fb/fb_ogl.h"
 #include "rt/solid.h"
@@ -87,8 +87,8 @@
 
 #define ENABLE_POINT_SMOOTH 1
 
-#define VIEWFACTOR      (1.0/(*dmp->i->dm_vp))
-#define VIEWSIZE        (2.0*(*dmp->i->dm_vp))
+#define VIEWFACTOR      (1.0/(*dmp->dm_vp))
+#define VIEWSIZE        (2.0*(*dmp->dm_vp))
 
 /* these are from /usr/include/gl.h could be device dependent */
 #define XMAXSCREEN	1279
@@ -96,49 +96,49 @@
 #define YSTEREO		491	/* subfield height, in scanlines */
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
 
-HIDDEN XVisualInfo *ogl_choose_visual(struct dm *dmp, Tk_Window tkwin);
+HIDDEN XVisualInfo *ogl_choose_visual(struct dm_internal *dmp, Tk_Window tkwin);
 
 /* Display Manager package interface */
 #define IRBOUND 4095.9	/* Max magnification in Rot matrix */
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
-struct dm *ogl_open(Tcl_Interp *vinterp, int argc, char **argv);
-HIDDEN int ogl_close(struct dm *dmp);
-HIDDEN int ogl_drawBegin(struct dm *dmp);
-HIDDEN int ogl_drawEnd(struct dm *dmp);
-HIDDEN int ogl_normal(struct dm *dmp);
-HIDDEN int ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
-HIDDEN int ogl_loadPMatrix(struct dm *dmp, fastf_t *mat);
-HIDDEN int ogl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect);
-HIDDEN int ogl_drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2);
-HIDDEN int ogl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2);
-HIDDEN int ogl_drawLines3D(struct dm *dmp, int npoints, point_t *points, int sflag);
-HIDDEN int ogl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
-HIDDEN int ogl_drawPoint3D(struct dm *dmp, point_t point);
-HIDDEN int ogl_drawPoints3D(struct dm *dmp, int npoints, point_t *points);
-HIDDEN int ogl_drawVList(struct dm *dmp, register struct bn_vlist *vp);
-HIDDEN int ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp);
-HIDDEN int ogl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data);
-HIDDEN int ogl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
-HIDDEN int ogl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
-HIDDEN int ogl_setLineAttr(struct dm *dmp, int width, int style);
-HIDDEN int ogl_configureWin_guts(struct dm *dmp, int force);
-HIDDEN int ogl_configureWin(struct dm *dmp, int force);
-HIDDEN int ogl_setLight(struct dm *dmp, int lighting_on);
-HIDDEN int ogl_setTransparency(struct dm *dmp, int transparency_on);
-HIDDEN int ogl_setDepthMask(struct dm *dmp, int depthMask_on);
-HIDDEN int ogl_setZBuffer(struct dm *dmp, int zbuffer_on);
-HIDDEN int ogl_setWinBounds(struct dm *dmp, fastf_t *w);
-HIDDEN int ogl_debug(struct dm *dmp, int vl);
-HIDDEN int ogl_logfile(struct dm *dmp, const char *filename);
-HIDDEN int ogl_beginDList(struct dm *dmp, unsigned int list);
-HIDDEN int ogl_endDList(struct dm *dmp);
+struct dm_internal *ogl_open(Tcl_Interp *interp, int argc, char **argv);
+HIDDEN int ogl_close(struct dm_internal *dmp);
+HIDDEN int ogl_drawBegin(struct dm_internal *dmp);
+HIDDEN int ogl_drawEnd(struct dm_internal *dmp);
+HIDDEN int ogl_normal(struct dm_internal *dmp);
+HIDDEN int ogl_loadMatrix(struct dm_internal *dmp, fastf_t *mat, int which_eye);
+HIDDEN int ogl_loadPMatrix(struct dm_internal *dmp, fastf_t *mat);
+HIDDEN int ogl_drawString2D(struct dm_internal *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect);
+HIDDEN int ogl_drawLine2D(struct dm_internal *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2);
+HIDDEN int ogl_drawLine3D(struct dm_internal *dmp, point_t pt1, point_t pt2);
+HIDDEN int ogl_drawLines3D(struct dm_internal *dmp, int npoints, point_t *points, int sflag);
+HIDDEN int ogl_drawPoint2D(struct dm_internal *dmp, fastf_t x, fastf_t y);
+HIDDEN int ogl_drawPoint3D(struct dm_internal *dmp, point_t point);
+HIDDEN int ogl_drawPoints3D(struct dm_internal *dmp, int npoints, point_t *points);
+HIDDEN int ogl_drawVList(struct dm_internal *dmp, register struct bn_vlist *vp);
+HIDDEN int ogl_drawVListHiddenLine(struct dm_internal *dmp, register struct bn_vlist *vp);
+HIDDEN int ogl_draw(struct dm_internal *dmp, struct bn_vlist *(*callback_function)(void *), void **data);
+HIDDEN int ogl_setFGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
+HIDDEN int ogl_setBGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsigned char b);
+HIDDEN int ogl_setLineAttr(struct dm_internal *dmp, int width, int style);
+HIDDEN int ogl_configureWin_guts(struct dm_internal *dmp, int force);
+HIDDEN int ogl_configureWin(struct dm_internal *dmp, int force);
+HIDDEN int ogl_setLight(struct dm_internal *dmp, int lighting_on);
+HIDDEN int ogl_setTransparency(struct dm_internal *dmp, int transparency_on);
+HIDDEN int ogl_setDepthMask(struct dm_internal *dmp, int depthMask_on);
+HIDDEN int ogl_setZBuffer(struct dm_internal *dmp, int zbuffer_on);
+HIDDEN int ogl_setWinBounds(struct dm_internal *dmp, fastf_t *w);
+HIDDEN int ogl_debug(struct dm_internal *dmp, int vl);
+HIDDEN int ogl_logfile(struct dm_internal *dmp, const char *filename);
+HIDDEN int ogl_beginDList(struct dm_internal *dmp, unsigned int list);
+HIDDEN int ogl_endDList(struct dm_internal *dmp);
 HIDDEN int ogl_drawDList(unsigned int list);
-HIDDEN int ogl_freeDLists(struct dm *dmp, unsigned int list, int range);
-HIDDEN int ogl_genDLists(struct dm *dmp, size_t range);
-HIDDEN int ogl_getDisplayImage(struct dm *dmp, unsigned char **image);
-HIDDEN int ogl_reshape(struct dm *dmp, int width, int height);
-HIDDEN int ogl_makeCurrent(struct dm *dmp);
+HIDDEN int ogl_freeDLists(struct dm_internal *dmp, unsigned int list, int range);
+HIDDEN int ogl_genDLists(struct dm_internal *dmp, size_t range);
+HIDDEN int ogl_getDisplayImage(struct dm_internal *dmp, unsigned char **image);
+HIDDEN int ogl_reshape(struct dm_internal *dmp, int width, int height);
+HIDDEN int ogl_makeCurrent(struct dm_internal *dmp);
 
 
 static fastf_t default_viewscale = 1000.0;
@@ -175,37 +175,35 @@ ogl_printglmat(struct bu_vls *tmp_vls, GLfloat *m) {
 
 
 void
-ogl_fogHint(struct dm *dmp, int fastfog)
+ogl_fogHint(struct dm_internal *dmp, int fastfog)
 {
-    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
     mvars->fastfog = fastfog;
     glHint(GL_FOG_HINT, fastfog ? GL_FASTEST : GL_NICEST);
 }
 
 
 HIDDEN int
-ogl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
+ogl_setBGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
-    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
-    struct ogl_vars *privars = (struct ogl_vars *)dmp->i->dm_vars.priv_vars;
-    if (dmp->i->dm_debugLevel == 1)
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
+    if (dmp->dm_debugLevel == 1)
 	bu_log("ogl_setBGColor()\n");
 
-    dmp->i->dm_bg[0] = r;
-    dmp->i->dm_bg[1] = g;
-    dmp->i->dm_bg[2] = b;
+    dmp->dm_bg[0] = r;
+    dmp->dm_bg[1] = g;
+    dmp->dm_bg[2] = b;
 
-    privars->r = r / 255.0;
-    privars->g = g / 255.0;
-    privars->b = b / 255.0;
+    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->r = r / 255.0;
+    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->g = g / 255.0;
+    ((struct ogl_vars *)dmp->dm_vars.priv_vars)->b = b / 255.0;
 
     if (mvars->doublebuffer) {
-	glXSwapBuffers(pubvars->dpy,
-		       pubvars->win);
-	glClearColor(privars->r,
-		     privars->g,
-		     privars->b,
+	glXSwapBuffers(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win);
+	glClearColor(((struct ogl_vars *)dmp->dm_vars.priv_vars)->r,
+		     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->g,
+		     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->b,
 		     0.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
@@ -222,135 +220,132 @@ ogl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b
  * also change font size if necessary
  */
 HIDDEN int
-ogl_configureWin_guts(struct dm *dmp, int force)
+ogl_configureWin_guts(struct dm_internal *dmp, int force)
 {
     XWindowAttributes xwa;
     XFontStruct *newfontstruct;
 
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
-    struct ogl_vars *privars = (struct ogl_vars *)dmp->i->dm_vars.priv_vars;
-
-    if (dmp->i->dm_debugLevel)
+    if (dmp->dm_debugLevel)
 	bu_log("ogl_configureWin_guts()\n");
 
-    XGetWindowAttributes(pubvars->dpy,
-			 pubvars->win, &xwa);
+    XGetWindowAttributes(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			 ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win, &xwa);
 
     /* nothing to do */
     if (!force &&
-	dmp->i->dm_height == xwa.height &&
-	dmp->i->dm_width == xwa.width)
+	dmp->dm_height == xwa.height &&
+	dmp->dm_width == xwa.width)
 	return BRLCAD_OK;
 
     ogl_reshape(dmp, xwa.width, xwa.height);
 
     /* First time through, load a font or quit */
-    if (pubvars->fontstruct == NULL) {
-	if ((pubvars->fontstruct =
-	     XLoadQueryFont(pubvars->dpy,
+    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct == NULL) {
+	if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct =
+	     XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			    FONT9)) == NULL) {
 	    /* Try hardcoded backup font */
-	    if ((pubvars->fontstruct =
-		 XLoadQueryFont(pubvars->dpy,
+	    if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct =
+		 XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 				FONTBACK)) == NULL) {
 		bu_log("ogl_configureWin_guts: Can't open font '%s' or '%s'\n", FONT9, FONTBACK);
 		return BRLCAD_ERROR;
 	    }
 	}
-	glXUseXFont(pubvars->fontstruct->fid,
-		    0, 127, privars->fontOffset);
+	glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
+		    0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
     }
 
-    if (DM_VALID_FONT_SIZE(dmp->i->dm_fontsize)) {
-	if (pubvars->fontstruct->per_char->width != dmp->i->dm_fontsize) {
-	    if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
-						DM_FONT_SIZE_TO_NAME(dmp->i->dm_fontsize))) != NULL) {
-		XFreeFont(pubvars->dpy,
-			  pubvars->fontstruct);
-		pubvars->fontstruct = newfontstruct;
-		glXUseXFont(pubvars->fontstruct->fid,
-			    0, 127, privars->fontOffset);
+    if (DM_VALID_FONT_SIZE(dmp->dm_fontsize)) {
+	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != dmp->dm_fontsize) {
+	    if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+						DM_FONT_SIZE_TO_NAME(dmp->dm_fontsize))) != NULL) {
+		XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
+			    0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
 	    }
 	}
     } else {
 	/* Always try to choose a the font that best fits the window size.
 	 */
 
-	if (dmp->i->dm_width < 582) {
-	    if (pubvars->fontstruct->per_char->width != 5) {
-		if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
+	if (dmp->dm_width < 582) {
+	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 5) {
+		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 						    FONT5)) != NULL) {
-		    XFreeFont(pubvars->dpy,
-			      pubvars->fontstruct);
-		    pubvars->fontstruct = newfontstruct;
-		    glXUseXFont(pubvars->fontstruct->fid,
-				0, 127, privars->fontOffset);
+		    XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
+				0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
 		}
 	    }
-	} else if (dmp->i->dm_width < 679) {
-	    if (pubvars->fontstruct->per_char->width != 6) {
-		if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
+	} else if (dmp->dm_width < 679) {
+	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 6) {
+		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 						    FONT6)) != NULL) {
-		    XFreeFont(pubvars->dpy,
-			      pubvars->fontstruct);
-		    pubvars->fontstruct = newfontstruct;
-		    glXUseXFont(pubvars->fontstruct->fid,
-				0, 127, privars->fontOffset);
+		    XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
+				0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
 		}
 	    }
-	} else if (dmp->i->dm_width < 776) {
-	    if (pubvars->fontstruct->per_char->width != 7) {
-		if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
+	} else if (dmp->dm_width < 776) {
+	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 7) {
+		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 						    FONT7)) != NULL) {
-		    XFreeFont(pubvars->dpy,
-			      pubvars->fontstruct);
-		    pubvars->fontstruct = newfontstruct;
-		    glXUseXFont(pubvars->fontstruct->fid,
-				0, 127, privars->fontOffset);
+		    XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
+				0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
 		}
 	    }
-	} else if (dmp->i->dm_width < 873) {
-	    if (pubvars->fontstruct->per_char->width != 8) {
-		if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
+	} else if (dmp->dm_width < 873) {
+	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 8) {
+		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 						    FONT8)) != NULL) {
-		    XFreeFont(pubvars->dpy,
-			      pubvars->fontstruct);
-		    pubvars->fontstruct = newfontstruct;
-		    glXUseXFont(pubvars->fontstruct->fid,
-				0, 127, privars->fontOffset);
+		    XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
+				0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
 		}
 	    }
-	} else if (dmp->i->dm_width < 1455) {
-	    if (pubvars->fontstruct->per_char->width != 9) {
-		if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
+	} else if (dmp->dm_width < 1455) {
+	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 9) {
+		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 						    FONT9)) != NULL) {
-		    XFreeFont(pubvars->dpy,
-			      pubvars->fontstruct);
-		    pubvars->fontstruct = newfontstruct;
-		    glXUseXFont(pubvars->fontstruct->fid,
-				0, 127, privars->fontOffset);
+		    XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
+				0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
 		}
 	    }
-	} else if (dmp->i->dm_width < 2037) {
-	    if (pubvars->fontstruct->per_char->width != 10) {
-		if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
+	} else if (dmp->dm_width < 2037) {
+	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 10) {
+		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 						    FONT10)) != NULL) {
-		    XFreeFont(pubvars->dpy,
-			      pubvars->fontstruct);
-		    pubvars->fontstruct = newfontstruct;
-		    glXUseXFont(pubvars->fontstruct->fid,
-				0, 127, privars->fontOffset);
+		    XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
+				0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
 		}
 	    }
 	} else {
-	    if (pubvars->fontstruct->per_char->width != 12) {
-		if ((newfontstruct = XLoadQueryFont(pubvars->dpy,
+	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->per_char->width != 12) {
+		if ((newfontstruct = XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 						    FONT12)) != NULL) {
-		    XFreeFont(pubvars->dpy,
-			      pubvars->fontstruct);
-		    pubvars->fontstruct = newfontstruct;
-		    glXUseXFont(pubvars->fontstruct->fid,
-				0, 127, privars->fontOffset);
+		    XFreeFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			      ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
+		    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct = newfontstruct;
+		    glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
+				0, 127, ((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
 		}
 	    }
 	}
@@ -361,36 +356,34 @@ ogl_configureWin_guts(struct dm *dmp, int force)
 
 
 HIDDEN int
-ogl_reshape(struct dm *dmp, int width, int height)
+ogl_reshape(struct dm_internal *dmp, int width, int height)
 {
     GLint mm;
 
-    struct ogl_vars *privars = (struct ogl_vars *)dmp->i->dm_vars.priv_vars;
+    dmp->dm_height = height;
+    dmp->dm_width = width;
+    dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
 
-    dmp->i->dm_height = height;
-    dmp->i->dm_width = width;
-    dmp->i->dm_aspect = (fastf_t)dmp->i->dm_width / (fastf_t)dmp->i->dm_height;
-
-    if (dmp->i->dm_debugLevel) {
+    if (dmp->dm_debugLevel) {
 	GLfloat m[16];
 	bu_log("ogl_reshape()\n");
-	bu_log("width = %d, height = %d\n", dmp->i->dm_width, dmp->i->dm_height);
+	bu_log("width = %d, height = %d\n", dmp->dm_width, dmp->dm_height);
 	glGetFloatv (GL_MODELVIEW_MATRIX, m);
 	glGetFloatv (GL_PROJECTION_MATRIX, m);
     }
 
-    glViewport(0, 0, dmp->i->dm_width, dmp->i->dm_height);
+    glViewport(0, 0, dmp->dm_width, dmp->dm_height);
 
-    glClearColor(privars->r,
-		 privars->g,
-		 privars->b,
+    glClearColor(((struct ogl_vars *)dmp->dm_vars.priv_vars)->r,
+		 ((struct ogl_vars *)dmp->dm_vars.priv_vars)->g,
+		 ((struct ogl_vars *)dmp->dm_vars.priv_vars)->b,
 		 0.0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glGetIntegerv(GL_MATRIX_MODE, &mm);
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
-    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->i->dm_clipmin[2], dmp->i->dm_clipmax[2]);
+    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
     glMatrixMode(mm);
 
     return 0;
@@ -398,17 +391,14 @@ ogl_reshape(struct dm *dmp, int width, int height)
 
 
 HIDDEN int
-ogl_makeCurrent(struct dm *dmp)
+ogl_makeCurrent(struct dm_internal *dmp)
 {
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
-    struct ogl_vars *privars = (struct ogl_vars *)dmp->i->dm_vars.priv_vars;
-
-    if (dmp->i->dm_debugLevel)
+    if (dmp->dm_debugLevel)
 	bu_log("ogl_makeCurrent()\n");
 
-    if (!glXMakeCurrent(pubvars->dpy,
-			pubvars->win,
-			privars->glxc)) {
+    if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
+			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
 	bu_log("ogl_makeCurrent: Couldn't make context current\n");
 	return BRLCAD_ERROR;
     }
@@ -418,14 +408,11 @@ ogl_makeCurrent(struct dm *dmp)
 
 
 HIDDEN int
-ogl_configureWin(struct dm *dmp, int force)
+ogl_configureWin(struct dm_internal *dmp, int force)
 {
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
-    struct ogl_vars *privars = (struct ogl_vars *)dmp->i->dm_vars.priv_vars;
-
-    if (!glXMakeCurrent(pubvars->dpy,
-			pubvars->win,
-			privars->glxc)) {
+    if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
+			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
 	bu_log("ogl_configureWin: Couldn't make context current\n");
 	return BRLCAD_ERROR;
     }
@@ -435,22 +422,22 @@ ogl_configureWin(struct dm *dmp, int force)
 
 
 HIDDEN int
-ogl_setLight(struct dm *dmp, int lighting_on)
+ogl_setLight(struct dm_internal *dmp, int lighting_on)
 {
-    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
-    if (dmp->i->dm_debugLevel)
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
+    if (dmp->dm_debugLevel)
 	bu_log("ogl_setLight()\n");
 
-    dmp->i->dm_light = lighting_on;
-    mvars->lighting_on = dmp->i->dm_light;
+    dmp->dm_light = lighting_on;
+    mvars->lighting_on = dmp->dm_light;
 
-    if (!dmp->i->dm_light) {
+    if (!dmp->dm_light) {
 	/* Turn it off */
 	glDisable(GL_LIGHTING);
     } else {
 	/* Turn it on */
 
-	if (1 < dmp->i->dm_light)
+	if (1 < dmp->dm_light)
 	    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_TRUE);
 	else
 	    glLightModeli(GL_LIGHT_MODEL_TWO_SIDE, GL_FALSE);
@@ -474,10 +461,9 @@ ogl_setLight(struct dm *dmp, int lighting_on)
  * OpenGL
  */
 HIDDEN XVisualInfo *
-ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
+ogl_choose_visual(struct dm_internal *dmp, Tk_Window tkwin)
 {
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
-    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
     XVisualInfo *vip, vitemp, *vibase, *maxvip;
     int tries, baddepth;
     int num, i, j;
@@ -497,7 +483,7 @@ ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
     int m_stereo; /* m_stereo - try to get stereo */
     int stereo;
 
-    if (dmp->i->dm_stereo) {
+    if (dmp->dm_stereo) {
 	m_stereo = 1;
     } else {
 	m_stereo = 0;
@@ -507,9 +493,9 @@ ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
     /* Try to satisfy the above desires with a color visual of the
      * greatest depth */
 
-    vibase = XGetVisualInfo(pubvars->dpy,
+    vibase = XGetVisualInfo(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			    0, &vitemp, &num);
-    screen = DefaultScreen(pubvars->dpy);
+    screen = DefaultScreen(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy);
 
     good = (int *)bu_malloc(sizeof(int)*num, "alloc good visuals");
 
@@ -519,31 +505,31 @@ ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
 	    if (vip->screen != screen)
 		continue;
 
-	    fail = glXGetConfig(pubvars->dpy,
+	    fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 				vip, GLX_USE_GL, &use);
 	    if (fail || !use)
 		continue;
 
-	    fail = glXGetConfig(pubvars->dpy,
+	    fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 				vip, GLX_RGBA, &rgba);
 	    if (fail || !rgba)
 		continue;
 
-	    fail = glXGetConfig(pubvars->dpy,
+	    fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 				vip, GLX_DOUBLEBUFFER, &dbfr);
 	    if (fail || !dbfr)
 		continue;
 
 	    /* desires */
 	    if (m_zbuffer) {
-		fail = glXGetConfig(pubvars->dpy,
+		fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 				    vip, GLX_DEPTH_SIZE, &zbuffer);
 		if (fail || !zbuffer)
 		    continue;
 	    }
 
 	    if (m_stereo) {
-		fail = glXGetConfig(pubvars->dpy,
+		fail = glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 				    vip, GLX_STEREO, &stereo);
 		if (fail || !stereo) {
 		    bu_log("ogl_choose_visual: failed visual - GLX_STEREO\n");
@@ -567,16 +553,16 @@ ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
 		    }
 		}
 
-		pubvars->cmap =
-		    XCreateColormap(pubvars->dpy,
-				    RootWindow(pubvars->dpy,
+		((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap =
+		    XCreateColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+				    RootWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 					       maxvip->screen), maxvip->visual, AllocNone);
 
 		if (Tk_SetWindowVisual(tkwin,
 				       maxvip->visual, maxvip->depth,
-				       pubvars->cmap)) {
+				       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap)) {
 
-		    glXGetConfig(pubvars->dpy,
+		    glXGetConfig(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 				 maxvip, GLX_DEPTH_SIZE,
 				 &mvars->depth);
 		    if (mvars->depth > 0)
@@ -587,8 +573,8 @@ ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
 		} else {
 		    /* retry with lesser depth */
 		    baddepth = maxvip->depth;
-		    XFreeColormap(pubvars->dpy,
-				  pubvars->cmap);
+		    XFreeColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+				  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap);
 		}
 	    }
 	}
@@ -619,33 +605,29 @@ ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
  * Gracefully release the display.
  */
 HIDDEN int
-ogl_close(struct dm *dmp)
+ogl_close(struct dm_internal *dmp)
 {
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
-    struct ogl_vars *privars = (struct ogl_vars *)dmp->i->dm_vars.priv_vars;
-
-    if (pubvars->dpy) {
-	if (privars->glxc) {
-	    glXMakeCurrent(pubvars->dpy, None, NULL);
-	    glXDestroyContext(pubvars->dpy,
-			      privars->glxc);
+    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy) {
+	if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc) {
+	    glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy, None, NULL);
+	    glXDestroyContext(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc);
 	}
 
-	if (pubvars->cmap)
-	    XFreeColormap(pubvars->dpy,
-			  pubvars->cmap);
+	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap)
+	    XFreeColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap);
 
-	if (pubvars->xtkwin)
-	    Tk_DestroyWindow(pubvars->xtkwin);
+	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)
+	    Tk_DestroyWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
     }
 
-    bu_vls_free(&dmp->i->dm_pathName);
-    bu_vls_free(&dmp->i->dm_tkName);
-    bu_vls_free(&dmp->i->dm_dName);
-    bu_free(dmp->i->dm_vars.priv_vars, "ogl_close: ogl_vars");
-    bu_free(dmp->i->dm_vars.pub_vars, "ogl_close: dm_xvars");
-    BU_PUT(dmp->i, struct dm_impl);
-    BU_PUT(dmp, struct dm);
+    bu_vls_free(&dmp->dm_pathName);
+    bu_vls_free(&dmp->dm_tkName);
+    bu_vls_free(&dmp->dm_dName);
+    bu_free(dmp->dm_vars.priv_vars, "ogl_close: ogl_vars");
+    bu_free(dmp->dm_vars.pub_vars, "ogl_close: dm_xvars");
+    bu_free(dmp, "ogl_close: dmp");
 
     return BRLCAD_OK;
 }
@@ -655,13 +637,12 @@ ogl_close(struct dm *dmp)
  * Fire up the display manager, and the display processor.
  *
  */
-struct dm *
-ogl_open(Tcl_Interp *vinterp, int argc, char **argv)
+struct dm_internal *
+ogl_open(Tcl_Interp *interp, int argc, char **argv)
 {
     static int count = 0;
     GLfloat backgnd[4];
     int make_square = -1;
-    Tcl_Interp *interp = (Tcl_Interp *)vinterp;
 
 #ifdef HAVE_X11_EXTENSIONS_XINPUT_H
     int j, k;
@@ -677,8 +658,7 @@ ogl_open(Tcl_Interp *vinterp, int argc, char **argv)
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
     Display *tmp_dpy = (Display *)NULL;
-    struct dm *dmp = NULL;
-    struct dm_impl *dmpi = NULL;
+    struct dm_internal *dmp = (struct dm_internal *)NULL;
     struct modifiable_ogl_vars *mvars = NULL;
     Tk_Window tkwin = (Tk_Window)NULL;
     int screen_number = -1;
@@ -690,55 +670,53 @@ ogl_open(Tcl_Interp *vinterp, int argc, char **argv)
 	return DM_NULL;
     }
 
-    BU_GET(dmp, struct dm);
-    BU_GET(dmpi, struct dm_impl);
-    *dmpi = *dm_ogl.i; /* struct copy */
-    dmp->i = dmpi;
+    BU_GET(dmp, struct dm_internal);
 
-    dmp->i->dm_interp = interp;
-    dmp->i->dm_lineWidth = 1;
-    dmp->i->dm_light = 1;
-    dmp->i->dm_bytes_per_pixel = sizeof(GLuint);
-    dmp->i->dm_bits_per_channel = 8;
-    bu_vls_init(&(dmp->i->dm_log));
+    *dmp = dm_ogl; /* struct copy */
+    dmp->dm_interp = interp;
+    dmp->dm_lineWidth = 1;
+    dmp->dm_light = 1;
+    dmp->dm_bytes_per_pixel = sizeof(GLuint);
+    dmp->dm_bits_per_channel = 8;
+    bu_vls_init(&(dmp->dm_log));
 
-    BU_ALLOC(dmp->i->dm_vars.pub_vars, struct dm_xvars);
-    if (dmp->i->dm_vars.pub_vars == (void *)NULL) {
+    BU_ALLOC(dmp->dm_vars.pub_vars, struct dm_xvars);
+    if (dmp->dm_vars.pub_vars == (void *)NULL) {
 	bu_free(dmp, "ogl_open: dmp");
 	return DM_NULL;
     }
-    pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
 
-    BU_ALLOC(dmp->i->dm_vars.priv_vars, struct ogl_vars);
-    if (dmp->i->dm_vars.priv_vars == (void *)NULL) {
-	bu_free(dmp->i->dm_vars.pub_vars, "ogl_open: dmp->i->dm_vars.pub_vars");
+    BU_ALLOC(dmp->dm_vars.priv_vars, struct ogl_vars);
+    if (dmp->dm_vars.priv_vars == (void *)NULL) {
+	bu_free(dmp->dm_vars.pub_vars, "ogl_open: dmp->dm_vars.pub_vars");
 	bu_free(dmp, "ogl_open: dmp");
 	return DM_NULL;
     }
-    privvars = (struct ogl_vars *)dmp->i->dm_vars.priv_vars;
+    privvars = (struct ogl_vars *)dmp->dm_vars.priv_vars;
 
-    dmp->i->dm_get_internal(dmp);
-    mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
+    dmp->dm_get_internal(dmp);
+    mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
 
-    dmp->i->dm_vp = &default_viewscale;
+    dmp->dm_vp = &default_viewscale;
 
-    bu_vls_init(&dmp->i->dm_pathName);
-    bu_vls_init(&dmp->i->dm_tkName);
-    bu_vls_init(&dmp->i->dm_dName);
+    bu_vls_init(&dmp->dm_pathName);
+    bu_vls_init(&dmp->dm_tkName);
+    bu_vls_init(&dmp->dm_dName);
 
     dm_processOptions(dmp, &init_proc_vls, --argc, ++argv);
 
-    if (bu_vls_strlen(&dmp->i->dm_pathName) == 0)
-	bu_vls_printf(&dmp->i->dm_pathName, ".dm_ogl%d", count);
+    if (bu_vls_strlen(&dmp->dm_pathName) == 0)
+	bu_vls_printf(&dmp->dm_pathName, ".dm_ogl%d", count);
     ++count;
-    if (bu_vls_strlen(&dmp->i->dm_dName) == 0) {
+    if (bu_vls_strlen(&dmp->dm_dName) == 0) {
 	char *dp;
 
 	dp = getenv("DISPLAY");
 	if (dp)
-	    bu_vls_strcpy(&dmp->i->dm_dName, dp);
+	    bu_vls_strcpy(&dmp->dm_dName, dp);
 	else
-	    bu_vls_strcpy(&dmp->i->dm_dName, ":0.0");
+	    bu_vls_strcpy(&dmp->dm_dName, ":0.0");
     }
     if (bu_vls_strlen(&init_proc_vls) == 0)
 	bu_vls_strcpy(&init_proc_vls, "bind_dm");
@@ -747,24 +725,24 @@ ogl_open(Tcl_Interp *vinterp, int argc, char **argv)
     pubvars->devmotionnotify = LASTEvent;
     pubvars->devbuttonpress = LASTEvent;
     pubvars->devbuttonrelease = LASTEvent;
-    dmp->i->dm_aspect = 1.0;
+    dmp->dm_aspect = 1.0;
 
     /* initialize modifiable variables */
     mvars->rgb = 1;
     mvars->doublebuffer = 1;
     mvars->fastfog = 1;
     mvars->fogdensity = 1.0;
-    mvars->lighting_on = dmp->i->dm_light;
-    mvars->zbuffer_on = dmp->i->dm_zbuffer;
-    mvars->zclipping_on = dmp->i->dm_zclip;
-    mvars->debug = dmp->i->dm_debugLevel;
-    mvars->bound = dmp->i->dm_bound;
-    mvars->boundFlag = dmp->i->dm_boundFlag;
+    mvars->lighting_on = dmp->dm_light;
+    mvars->zbuffer_on = dmp->dm_zbuffer;
+    mvars->zclipping_on = dmp->dm_zclip;
+    mvars->debug = dmp->dm_debugLevel;
+    mvars->bound = dmp->dm_bound;
+    mvars->boundFlag = dmp->dm_boundFlag;
 
     /* this is important so that ogl_configureWin knows to set the font */
     pubvars->fontstruct = NULL;
 
-    if ((tmp_dpy = XOpenDisplay(bu_vls_addr(&dmp->i->dm_dName))) == NULL) {
+    if ((tmp_dpy = XOpenDisplay(bu_vls_addr(&dmp->dm_dName))) == NULL) {
 	bu_vls_free(&init_proc_vls);
 	(void)ogl_close(dmp);
 	return DM_NULL;
@@ -786,46 +764,46 @@ ogl_open(Tcl_Interp *vinterp, int argc, char **argv)
     if (screen_number < 0)
 	bu_log("WARNING: screen number is [%d]\n", screen_number);
 
-    if (dmp->i->dm_width == 0) {
-	dmp->i->dm_width = XDisplayWidth(tmp_dpy, screen_number) - 30;
+    if (dmp->dm_width == 0) {
+	dmp->dm_width = XDisplayWidth(tmp_dpy, screen_number) - 30;
 	++make_square;
     }
-    if (dmp->i->dm_height == 0) {
-	dmp->i->dm_height = XDisplayHeight(tmp_dpy, screen_number) - 30;
+    if (dmp->dm_height == 0) {
+	dmp->dm_height = XDisplayHeight(tmp_dpy, screen_number) - 30;
 	++make_square;
     }
 
     if (make_square > 0) {
 	/* Make window square */
-	if (dmp->i->dm_height <
-	    dmp->i->dm_width)
-	    dmp->i->dm_width =
-		dmp->i->dm_height;
+	if (dmp->dm_height <
+	    dmp->dm_width)
+	    dmp->dm_width =
+		dmp->dm_height;
 	else
-	    dmp->i->dm_height =
-		dmp->i->dm_width;
+	    dmp->dm_height =
+		dmp->dm_width;
     }
 
     XCloseDisplay(tmp_dpy);
 
-    if (dmp->i->dm_top) {
+    if (dmp->dm_top) {
 	/* Make xtkwin a toplevel window */
 	pubvars->xtkwin =
 	    Tk_CreateWindowFromPath(interp,
 				    tkwin,
-				    bu_vls_addr(&dmp->i->dm_pathName),
-				    bu_vls_addr(&dmp->i->dm_dName));
+				    bu_vls_addr(&dmp->dm_pathName),
+				    bu_vls_addr(&dmp->dm_dName));
 	pubvars->top = pubvars->xtkwin;
     } else {
 	char *cp;
 
-	cp = strrchr(bu_vls_addr(&dmp->i->dm_pathName), (int)'.');
-	if (cp == bu_vls_addr(&dmp->i->dm_pathName)) {
+	cp = strrchr(bu_vls_addr(&dmp->dm_pathName), (int)'.');
+	if (cp == bu_vls_addr(&dmp->dm_pathName)) {
 	    pubvars->top = tkwin;
 	} else {
 	    struct bu_vls top_vls = BU_VLS_INIT_ZERO;
 
-	    bu_vls_strncpy(&top_vls, (const char *)bu_vls_addr(&dmp->i->dm_pathName), cp - bu_vls_addr(&dmp->i->dm_pathName));
+	    bu_vls_strncpy(&top_vls, (const char *)bu_vls_addr(&dmp->dm_pathName), cp - bu_vls_addr(&dmp->dm_pathName));
 
 	    pubvars->top =
 		Tk_NameToWindow(interp, bu_vls_addr(&top_vls), tkwin);
@@ -839,18 +817,18 @@ ogl_open(Tcl_Interp *vinterp, int argc, char **argv)
     }
 
     if (pubvars->xtkwin == NULL) {
-	bu_log("dm-Ogl: Failed to open %s\n", bu_vls_addr(&dmp->i->dm_pathName));
+	bu_log("dm-Ogl: Failed to open %s\n", bu_vls_addr(&dmp->dm_pathName));
 	bu_vls_free(&init_proc_vls);
 	(void)ogl_close(dmp);
 	return DM_NULL;
     }
 
-    bu_vls_printf(&dmp->i->dm_tkName, "%s",
+    bu_vls_printf(&dmp->dm_tkName, "%s",
 		  (char *)Tk_Name(pubvars->xtkwin));
 
     bu_vls_printf(&str, "_init_dm %s %s\n",
 		  bu_vls_addr(&init_proc_vls),
-		  bu_vls_addr(&dmp->i->dm_pathName));
+		  bu_vls_addr(&dmp->dm_pathName));
 
     if (Tcl_Eval(interp, bu_vls_addr(&str)) == BRLCAD_ERROR) {
 	bu_vls_free(&init_proc_vls);
@@ -874,8 +852,8 @@ ogl_open(Tcl_Interp *vinterp, int argc, char **argv)
     }
 
     Tk_GeometryRequest(pubvars->xtkwin,
-		       dmp->i->dm_width,
-		       dmp->i->dm_height);
+		       dmp->dm_width,
+		       dmp->dm_height);
 
     /* must do this before MakeExist */
     if ((pubvars->vip=ogl_choose_visual(dmp, pubvars->xtkwin)) == NULL) {
@@ -889,7 +867,7 @@ ogl_open(Tcl_Interp *vinterp, int argc, char **argv)
     Tk_MakeWindowExist(pubvars->xtkwin);
 
     pubvars->win = Tk_WindowId(pubvars->xtkwin);
-    dmp->i->dm_id = pubvars->win;
+    dmp->dm_id = pubvars->win;
 
     /* open GLX context */
     if ((privvars->glxc =
@@ -976,7 +954,7 @@ Done:
     }
 
     /* This is the applications display list offset */
-    dmp->i->dm_displaylist = privvars->fontOffset + 128;
+    dmp->dm_displaylist = privvars->fontOffset + 128;
 
     ogl_setBGColor(dmp, 0, 0, 0);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1015,59 +993,58 @@ Done:
     glLoadIdentity();
     privvars->face_flag = 1;	/* faceplate matrix is on top of stack */
 
-    ogl_setZBuffer(dmp, dmp->i->dm_zbuffer);
-    ogl_setLight(dmp, dmp->i->dm_light);
+    ogl_setZBuffer(dmp, dmp->dm_zbuffer);
+    ogl_setLight(dmp, dmp->dm_light);
 
     return dmp;
 }
 
 
 int
-ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
+ogl_share_dlist(struct dm_internal *dmp1, struct dm_internal *dmp2)
 {
-    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp1->i->m_vars;
-    struct ogl_vars *privars = (struct ogl_vars *)dmp1->i->dm_vars.priv_vars;
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp1->m_vars;
     GLfloat backgnd[4];
     GLfloat vf;
     GLXContext old_glxContext;
 
-    if (dmp1 == (struct dm *)NULL)
+    if (dmp1 == (struct dm_internal *)NULL)
 	return BRLCAD_ERROR;
 
-    if (dmp2 == (struct dm *)NULL) {
+    if (dmp2 == (struct dm_internal *)NULL) {
 	/* create a new graphics context for dmp1 with private display lists */
 
-	old_glxContext = privars->glxc;
+	old_glxContext = ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->glxc;
 
-	if ((privars->glxc =
-	     glXCreateContext(((struct dm_xvars *)dmp1->i->dm_vars.pub_vars)->dpy,
-			      ((struct dm_xvars *)dmp1->i->dm_vars.pub_vars)->vip,
+	if ((((struct ogl_vars *)dmp1->dm_vars.priv_vars)->glxc =
+	     glXCreateContext(((struct dm_xvars *)dmp1->dm_vars.pub_vars)->dpy,
+			      ((struct dm_xvars *)dmp1->dm_vars.pub_vars)->vip,
 			      (GLXContext)NULL, GL_TRUE))==NULL) {
 	    bu_log("ogl_share_dlist: couldn't create glXContext.\nUsing old context\n.");
-	    privars->glxc = old_glxContext;
+	    ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->glxc = old_glxContext;
 
 	    return BRLCAD_ERROR;
 	}
 
-	if (!glXMakeCurrent(((struct dm_xvars *)dmp1->i->dm_vars.pub_vars)->dpy,
-			    ((struct dm_xvars *)dmp1->i->dm_vars.pub_vars)->win,
-			    privars->glxc)) {
+	if (!glXMakeCurrent(((struct dm_xvars *)dmp1->dm_vars.pub_vars)->dpy,
+			    ((struct dm_xvars *)dmp1->dm_vars.pub_vars)->win,
+			    ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->glxc)) {
 	    bu_log("ogl_share_dlist: Couldn't make context current\nUsing old context\n.");
-	    privars->glxc = old_glxContext;
+	    ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->glxc = old_glxContext;
 
 	    return BRLCAD_ERROR;
 	}
 
 	/* display list (fontOffset + char) will display a given ASCII char */
-	if ((privars->fontOffset = glGenLists(128))==0) {
+	if ((((struct ogl_vars *)dmp1->dm_vars.priv_vars)->fontOffset = glGenLists(128))==0) {
 	    bu_log("dm-ogl: Can't make display lists for font.\nUsing old context\n.");
-	    privars->glxc = old_glxContext;
+	    ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->glxc = old_glxContext;
 
 	    return BRLCAD_ERROR;
 	}
 
 	/* This is the applications display list offset */
-	dmp1->i->dm_displaylist = privars->fontOffset + 128;
+	dmp1->dm_displaylist = ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->fontOffset + 128;
 
 	ogl_setBGColor(dmp1, 0, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1078,7 +1055,7 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	    glDrawBuffer(GL_FRONT);
 
 	/* this is important so that ogl_configureWin knows to set the font */
-	((struct dm_xvars *)dmp1->i->dm_vars.pub_vars)->fontstruct = NULL;
+	((struct dm_xvars *)dmp1->dm_vars.pub_vars)->fontstruct = NULL;
 
 	/* do viewport, ortho commands and initialize font */
 	(void)ogl_configureWin_guts(dmp1, 1);
@@ -1094,7 +1071,7 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	glFogfv(GL_FOG_COLOR, backgnd);
 
 	/*XXX Need to do something about VIEWFACTOR */
-	vf = 1.0/(*dmp1->i->dm_vp);
+	vf = 1.0/(*dmp1->dm_vp);
 	glFogf(GL_FOG_DENSITY, vf);
 
 	/* Initialize matrices */
@@ -1102,44 +1079,44 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0);
-	glGetDoublev(GL_PROJECTION_MATRIX, privars->faceplate_mat);
+	glGetDoublev(GL_PROJECTION_MATRIX, ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->faceplate_mat);
 	glPushMatrix();
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	glPushMatrix();
 	glLoadIdentity();
-	privars->face_flag = 1; /* faceplate matrix is on top of stack */
+	((struct ogl_vars *)dmp1->dm_vars.priv_vars)->face_flag = 1; /* faceplate matrix is on top of stack */
 
 	/* destroy old context */
-	glXMakeCurrent(((struct dm_xvars *)dmp1->i->dm_vars.pub_vars)->dpy, None, NULL);
-	glXDestroyContext(((struct dm_xvars *)dmp1->i->dm_vars.pub_vars)->dpy, old_glxContext);
+	glXMakeCurrent(((struct dm_xvars *)dmp1->dm_vars.pub_vars)->dpy, None, NULL);
+	glXDestroyContext(((struct dm_xvars *)dmp1->dm_vars.pub_vars)->dpy, old_glxContext);
     } else {
 	/* dmp1 will share its display lists with dmp2 */
 
-	old_glxContext = ((struct ogl_vars *)dmp2->i->dm_vars.priv_vars)->glxc;
+	old_glxContext = ((struct ogl_vars *)dmp2->dm_vars.priv_vars)->glxc;
 
-	if ((((struct ogl_vars *)dmp2->i->dm_vars.priv_vars)->glxc =
-	     glXCreateContext(((struct dm_xvars *)dmp2->i->dm_vars.pub_vars)->dpy,
-			      ((struct dm_xvars *)dmp2->i->dm_vars.pub_vars)->vip,
-			      privars->glxc,
+	if ((((struct ogl_vars *)dmp2->dm_vars.priv_vars)->glxc =
+	     glXCreateContext(((struct dm_xvars *)dmp2->dm_vars.pub_vars)->dpy,
+			      ((struct dm_xvars *)dmp2->dm_vars.pub_vars)->vip,
+			      ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->glxc,
 			      GL_TRUE))==NULL) {
 	    bu_log("ogl_share_dlist: couldn't create glXContext.\nUsing old context\n.");
-	    ((struct ogl_vars *)dmp2->i->dm_vars.priv_vars)->glxc = old_glxContext;
+	    ((struct ogl_vars *)dmp2->dm_vars.priv_vars)->glxc = old_glxContext;
 
 	    return BRLCAD_ERROR;
 	}
 
-	if (!glXMakeCurrent(((struct dm_xvars *)dmp2->i->dm_vars.pub_vars)->dpy,
-			    ((struct dm_xvars *)dmp2->i->dm_vars.pub_vars)->win,
-			    ((struct ogl_vars *)dmp2->i->dm_vars.priv_vars)->glxc)) {
+	if (!glXMakeCurrent(((struct dm_xvars *)dmp2->dm_vars.pub_vars)->dpy,
+			    ((struct dm_xvars *)dmp2->dm_vars.pub_vars)->win,
+			    ((struct ogl_vars *)dmp2->dm_vars.priv_vars)->glxc)) {
 	    bu_log("ogl_share_dlist: Couldn't make context current\nUsing old context\n.");
-	    ((struct ogl_vars *)dmp2->i->dm_vars.priv_vars)->glxc = old_glxContext;
+	    ((struct ogl_vars *)dmp2->dm_vars.priv_vars)->glxc = old_glxContext;
 
 	    return BRLCAD_ERROR;
 	}
 
-	((struct ogl_vars *)dmp2->i->dm_vars.priv_vars)->fontOffset = privars->fontOffset;
-	dmp2->i->dm_displaylist = dmp1->i->dm_displaylist;
+	((struct ogl_vars *)dmp2->dm_vars.priv_vars)->fontOffset = ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->fontOffset;
+	dmp2->dm_displaylist = dmp1->dm_displaylist;
 
 	ogl_setBGColor(dmp2, 0, 0, 0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -1163,7 +1140,7 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	glFogfv(GL_FOG_COLOR, backgnd);
 
 	/*XXX Need to do something about VIEWFACTOR */
-	vf = 1.0/(*dmp2->i->dm_vp);
+	vf = 1.0/(*dmp2->dm_vp);
 	glFogf(GL_FOG_DENSITY, vf);
 
 	/* Initialize matrices */
@@ -1171,17 +1148,17 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, 0.0, 2.0);
-	glGetDoublev(GL_PROJECTION_MATRIX, ((struct ogl_vars *)dmp2->i->dm_vars.priv_vars)->faceplate_mat);
+	glGetDoublev(GL_PROJECTION_MATRIX, ((struct ogl_vars *)dmp2->dm_vars.priv_vars)->faceplate_mat);
 	glPushMatrix();
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	glPushMatrix();
 	glLoadIdentity();
-	((struct ogl_vars *)dmp2->i->dm_vars.priv_vars)->face_flag = 1; /* faceplate matrix is on top of stack */
+	((struct ogl_vars *)dmp2->dm_vars.priv_vars)->face_flag = 1; /* faceplate matrix is on top of stack */
 
 	/* destroy old context */
-	glXMakeCurrent(((struct dm_xvars *)dmp2->i->dm_vars.pub_vars)->dpy, None, NULL);
-	glXDestroyContext(((struct dm_xvars *)dmp2->i->dm_vars.pub_vars)->dpy, old_glxContext);
+	glXMakeCurrent(((struct dm_xvars *)dmp2->dm_vars.pub_vars)->dpy, None, NULL);
+	glXDestroyContext(((struct dm_xvars *)dmp2->dm_vars.pub_vars)->dpy, old_glxContext);
     }
 
     return BRLCAD_OK;
@@ -1192,19 +1169,16 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
  * There are global variables which are parameters to this routine.
  */
 HIDDEN int
-ogl_drawBegin(struct dm *dmp)
+ogl_drawBegin(struct dm_internal *dmp)
 {
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
-    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
-    struct ogl_vars *privars = (struct ogl_vars *)dmp->i->dm_vars.priv_vars;
-
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
     GLfloat fogdepth;
 
-    if (dmp->i->dm_debugLevel) {
+    if (dmp->dm_debugLevel) {
 	bu_log("ogl_drawBegin\n");
     }
 
-    if (dmp->i->dm_debugLevel == 3) {
+    if (dmp->dm_debugLevel == 3) {
 	GLfloat m[16];
 	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
@@ -1222,44 +1196,44 @@ ogl_drawBegin(struct dm *dmp)
 
 
 
-    if (!glXMakeCurrent(pubvars->dpy,
-			pubvars->win,
-			privars->glxc)) {
+    if (!glXMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
+			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
 	bu_log("ogl_drawBegin: Couldn't make context current\n");
 	return BRLCAD_ERROR;
     }
 
     /* clear back buffer */
-    if (!dmp->i->dm_clearBufferAfter && mvars->doublebuffer) {
-	glClearColor(privars->r,
-		     privars->g,
-		     privars->b,
+    if (!dmp->dm_clearBufferAfter && mvars->doublebuffer) {
+	glClearColor(((struct ogl_vars *)dmp->dm_vars.priv_vars)->r,
+		     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->g,
+		     ((struct ogl_vars *)dmp->dm_vars.priv_vars)->b,
 		     0.0);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
-    if (privars->face_flag) {
+    if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->face_flag) {
 	glMatrixMode(GL_PROJECTION);
 	glPopMatrix();
 	glMatrixMode(GL_MODELVIEW);
 	glPopMatrix();
-	privars->face_flag = 0;
+	((struct ogl_vars *)dmp->dm_vars.priv_vars)->face_flag = 0;
 	if (mvars->cueing_on) {
 	    glEnable(GL_FOG);
 	    /*XXX Need to do something with Viewscale */
-	    fogdepth = 2.2 * (*dmp->i->dm_vp); /* 2.2 is heuristic */
+	    fogdepth = 2.2 * (*dmp->dm_vp); /* 2.2 is heuristic */
 	    glFogf(GL_FOG_END, fogdepth);
 	    fogdepth = (GLfloat) (0.5*mvars->fogdensity/
-				  (*dmp->i->dm_vp));
+				  (*dmp->dm_vp));
 	    glFogf(GL_FOG_DENSITY, fogdepth);
-	    glFogi(GL_FOG_MODE, dmp->i->dm_perspective ? GL_EXP : GL_LINEAR);
+	    glFogi(GL_FOG_MODE, dmp->dm_perspective ? GL_EXP : GL_LINEAR);
 	}
-	if (dmp->i->dm_light) {
+	if (dmp->dm_light) {
 	    glEnable(GL_LIGHTING);
 	}
     }
 
-    if (dmp->i->dm_debugLevel == 3) {
+    if (dmp->dm_debugLevel == 3) {
 	GLfloat m[16];
 	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
@@ -1281,16 +1255,13 @@ ogl_drawBegin(struct dm *dmp)
 
 
 HIDDEN int
-ogl_drawEnd(struct dm *dmp)
+ogl_drawEnd(struct dm_internal *dmp)
 {
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
-    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
-    struct ogl_vars *privars = (struct ogl_vars *)dmp->i->dm_vars.priv_vars;
-
-    if (dmp->i->dm_debugLevel)
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
+    if (dmp->dm_debugLevel)
 	bu_log("ogl_drawEnd\n");
 
-    if (dmp->i->dm_debugLevel == 3) {
+    if (dmp->dm_debugLevel == 3) {
 	GLfloat m[16];
 	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 	bu_vls_printf(&tmp_vls, "beginning of end view matrix = \n");
@@ -1304,27 +1275,27 @@ ogl_drawEnd(struct dm *dmp)
     }
 
 
-    if (dmp->i->dm_light) {
+    if (dmp->dm_light) {
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	glLightfv(GL_LIGHT0, GL_POSITION, light0_position);
     }
 
     if (mvars->doublebuffer) {
-	glXSwapBuffers(pubvars->dpy,
-		       pubvars->win);
+	glXSwapBuffers(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+		       ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win);
 
-	if (dmp->i->dm_clearBufferAfter) {
+	if (dmp->dm_clearBufferAfter) {
 	    /* give Graphics pipe time to work */
-	    glClearColor(privars->r,
-			 privars->g,
-			 privars->b,
+	    glClearColor(((struct ogl_vars *)dmp->dm_vars.priv_vars)->r,
+			 ((struct ogl_vars *)dmp->dm_vars.priv_vars)->g,
+			 ((struct ogl_vars *)dmp->dm_vars.priv_vars)->b,
 			 0.0);
 	    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 	}
     }
 
-    if (dmp->i->dm_debugLevel) {
+    if (dmp->dm_debugLevel) {
 	int error;
 	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
@@ -1338,7 +1309,7 @@ ogl_drawEnd(struct dm *dmp)
 	bu_vls_free(&tmp_vls);
     }
 
-    if (dmp->i->dm_debugLevel == 3) {
+    if (dmp->dm_debugLevel == 3) {
 	GLfloat m[16];
 	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 	bu_vls_printf(&tmp_vls, "end of drawend view matrix = \n");
@@ -1361,15 +1332,15 @@ ogl_drawEnd(struct dm *dmp)
  * many calls to ogl_draw().
  */
 HIDDEN int
-ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
+ogl_loadMatrix(struct dm_internal *dmp, fastf_t *mat, int which_eye)
 {
     fastf_t *mptr;
     GLfloat gtmat[16];
 
-    if (dmp->i->dm_debugLevel == 1)
+    if (dmp->dm_debugLevel == 1)
 	bu_log("ogl_loadMatrix()\n");
 
-    if (dmp->i->dm_debugLevel == 3) {
+    if (dmp->dm_debugLevel == 3) {
 	GLfloat m[16];
 	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 	bu_vls_printf(&tmp_vls, "beginning of loadMatrix view matrix = \n");
@@ -1383,7 +1354,7 @@ ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     }
 
 
-    if (dmp->i->dm_debugLevel == 3) {
+    if (dmp->dm_debugLevel == 3) {
 	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 	bu_vls_printf(&tmp_vls, "transformation matrix = \n");
@@ -1419,10 +1390,10 @@ ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     gtmat[8] = *(mptr++);
     gtmat[12] = *(mptr++);
 
-    gtmat[1] = *(mptr++) * dmp->i->dm_aspect;
-    gtmat[5] = *(mptr++) * dmp->i->dm_aspect;
-    gtmat[9] = *(mptr++) * dmp->i->dm_aspect;
-    gtmat[13] = *(mptr++) * dmp->i->dm_aspect;
+    gtmat[1] = *(mptr++) * dmp->dm_aspect;
+    gtmat[5] = *(mptr++) * dmp->dm_aspect;
+    gtmat[9] = *(mptr++) * dmp->dm_aspect;
+    gtmat[13] = *(mptr++) * dmp->dm_aspect;
 
     gtmat[2] = *(mptr++);
     gtmat[6] = *(mptr++);
@@ -1438,7 +1409,7 @@ ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
     glLoadIdentity();
     glLoadMatrixf(gtmat);
 
-    if (dmp->i->dm_debugLevel == 3) {
+    if (dmp->dm_debugLevel == 3) {
 	GLfloat m[16];
 	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 	bu_vls_printf(&tmp_vls, "end of loadMatrix view matrix = \n");
@@ -1460,25 +1431,23 @@ ogl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
  *
  */
 HIDDEN int
-ogl_loadPMatrix(struct dm *dmp, fastf_t *mat)
+ogl_loadPMatrix(struct dm_internal *dmp, fastf_t *mat)
 {
     fastf_t *mptr;
     GLfloat gtmat[16];
 
-    struct ogl_vars *privars = (struct ogl_vars *)dmp->i->dm_vars.priv_vars;
-
     glMatrixMode(GL_PROJECTION);
 
     if (mat == (fastf_t *)NULL) {
-	if (privars->face_flag) {
+	if (((struct ogl_vars *)dmp->dm_vars.priv_vars)->face_flag) {
 	    glPopMatrix();
 	    glLoadIdentity();
-	    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->i->dm_clipmin[2], dmp->i->dm_clipmax[2]);
+	    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
 	    glPushMatrix();
-	    glLoadMatrixd(privars->faceplate_mat);
+	    glLoadMatrixd(((struct ogl_vars *)dmp->dm_vars.priv_vars)->faceplate_mat);
 	} else {
 	    glLoadIdentity();
-	    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->i->dm_clipmin[2], dmp->i->dm_clipmax[2]);
+	    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
 	}
 
 	return BRLCAD_OK;
@@ -1514,21 +1483,19 @@ ogl_loadPMatrix(struct dm *dmp, fastf_t *mat)
 
 
 HIDDEN int
-ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
+ogl_drawVListHiddenLine(struct dm_internal *dmp, register struct bn_vlist *vp)
 {
-    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
-    struct ogl_vars *privars = (struct ogl_vars *)dmp->i->dm_vars.priv_vars;
-
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
     register struct bn_vlist *tvp;
     register int first;
 
-    if (dmp->i->dm_debugLevel == 1)
+    if (dmp->dm_debugLevel == 1)
 	bu_log("ogl_drawVList()\n");
 
 
     /* First, draw polygons using background color. */
 
-    if (dmp->i->dm_light) {
+    if (dmp->dm_light) {
 	glDisable(GL_LIGHTING);
     }
 
@@ -1541,9 +1508,9 @@ ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
     glPolygonOffset(1.0, 1.0);
 
     /* Set color to background color for drawing polygons. */
-    glColor3f(privars->r,
-	      privars->g,
-	      privars->b);
+    glColor3f(((struct ogl_vars *)dmp->dm_vars.priv_vars)->r,
+	      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->g,
+	      ((struct ogl_vars *)dmp->dm_vars.priv_vars)->b);
 
     /* Viewing region is from -1.0 to +1.0 */
     first = 1;
@@ -1556,7 +1523,7 @@ ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 	    GLdouble dpt[3];
 	    VMOVE(dpt, *pt); /* fastf_t-to-double */
 /*
-	    if (dmp->i->dm_debugLevel > 2)
+	    if (dmp->dm_debugLevel > 2)
 		bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(dpt));*/
 
 	    switch (*cmd) {
@@ -1625,7 +1592,7 @@ ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 	    GLdouble dpt[3];
 	    VMOVE(dpt, *pt); /* fastf_t-to-double */
 /*
-	    if (dmp->i->dm_debugLevel > 2)
+	    if (dmp->dm_debugLevel > 2)
 		bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(dpt));*/
 
 	    switch (*cmd) {
@@ -1673,14 +1640,14 @@ ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
     if (first == 0)
 	glEnd();
 
-    if (dmp->i->dm_light) {
+    if (dmp->dm_light) {
 	glEnable(GL_LIGHTING);
     }
 
     if (!mvars->zbuffer_on)
 	glDisable(GL_DEPTH_TEST);
 
-    if (!dmp->i->dm_depthMask)
+    if (!dmp->dm_depthMask)
 	glDepthMask(GL_FALSE);
 
     glDisable(GL_POLYGON_OFFSET_FILL);
@@ -1690,7 +1657,7 @@ ogl_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp)
 
 
 HIDDEN int
-ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
+ogl_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 {
     struct bn_vlist *tvp;
     register int first;
@@ -1704,7 +1671,7 @@ ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
     glGetFloatv(GL_POINT_SIZE, &originalPointSize);
     glGetFloatv(GL_LINE_WIDTH, &originalLineWidth);
 
-    if (dmp->i->dm_debugLevel == 1)
+    if (dmp->dm_debugLevel == 1)
 	bu_log("ogl_drawVList()\n");
 
     /* Viewing region is from -1.0 to +1.0 */
@@ -1718,7 +1685,7 @@ ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 	    GLdouble dpt[3];
 	    VMOVE(dpt, *pt);
 /*
-	    if (dmp->i->dm_debugLevel > 2)
+	    if (dmp->dm_debugLevel > 2)
 		bu_log(" %d (%g %g %g)\n", *cmd, V3ARGS(dpt));*/
 
 	    switch (*cmd) {
@@ -1728,14 +1695,14 @@ ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 			glEnd();
 		    first = 0;
 
-		    if (dmp->i->dm_light && mflag) {
+		    if (dmp->dm_light && mflag) {
 			mflag = 0;
 			glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, wireColor);
 			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, black);
 			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, black);
 			glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, black);
 
-			if (dmp->i->dm_transparency)
+			if (dmp->dm_transparency)
 			    glDisable(GL_BLEND);
 		    }
 
@@ -1762,22 +1729,22 @@ ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		    glLoadIdentity();
 		    glTranslated(tlate[0], tlate[1], tlate[2]);
 		    /* 96 dpi = 3.78 pixel/mm hardcoded */
-		    glScaled(2. * 3.78 / dmp->i->dm_width,
-		             2. * 3.78 / dmp->i->dm_height,
+		    glScaled(2. * 3.78 / dmp->dm_width,
+		             2. * 3.78 / dmp->dm_height,
 		             1.);
 		    break;
 		case BN_VLIST_POLY_START:
 		case BN_VLIST_TRI_START:
 		    /* Start poly marker & normal */
 
-		    if (dmp->i->dm_light && mflag) {
+		    if (dmp->dm_light && mflag) {
 			mflag = 0;
 			glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, black);
 			glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambientColor);
 			glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specularColor);
 			glMaterialfv(GL_FRONT, GL_DIFFUSE, diffuseColor);
 
-			switch (dmp->i->dm_light) {
+			switch (dmp->dm_light) {
 			    case 1:
 				break;
 			    case 2:
@@ -1791,7 +1758,7 @@ ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 				break;
 			}
 
-			if (dmp->i->dm_transparency)
+			if (dmp->dm_transparency)
 			    glEnable(GL_BLEND);
 		    }
 
@@ -1859,7 +1826,7 @@ ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
     if (first == 0)
 	glEnd();
 
-    if (dmp->i->dm_light && dmp->i->dm_transparency)
+    if (dmp->dm_light && dmp->dm_transparency)
 	glDisable(GL_BLEND);
 
     glPointSize(originalPointSize);
@@ -1870,7 +1837,7 @@ ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 
 
 HIDDEN int
-ogl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
+ogl_draw(struct dm_internal *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
 {
     struct bn_vlist *vp;
     if (!callback_function) {
@@ -1894,15 +1861,13 @@ ogl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **d
  * (i.e., not scaled, rotated, displaced, etc.).
  */
 HIDDEN int
-ogl_normal(struct dm *dmp)
+ogl_normal(struct dm_internal *dmp)
 {
-    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
-    struct ogl_vars *privars = (struct ogl_vars *)dmp->i->dm_vars.priv_vars;
-
-    if (dmp->i->dm_debugLevel)
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
+    if (dmp->dm_debugLevel)
 	bu_log("ogl_normal\n");
 
-    if (dmp->i->dm_debugLevel == 3) {
+    if (dmp->dm_debugLevel == 3) {
 	GLfloat m[16];
 	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 	bu_vls_printf(&tmp_vls, "beginning of ogl_normal view matrix = \n");
@@ -1915,21 +1880,21 @@ ogl_normal(struct dm *dmp)
 	bu_vls_free(&tmp_vls);
     }
 
-    if (!privars->face_flag) {
+    if (!((struct ogl_vars *)dmp->dm_vars.priv_vars)->face_flag) {
 	glMatrixMode(GL_PROJECTION);
 	glPushMatrix();
-	glLoadMatrixd(privars->faceplate_mat);
+	glLoadMatrixd(((struct ogl_vars *)dmp->dm_vars.priv_vars)->faceplate_mat);
 	glMatrixMode(GL_MODELVIEW);
 	glPushMatrix();
 	glLoadIdentity();
-	privars->face_flag = 1;
+	((struct ogl_vars *)dmp->dm_vars.priv_vars)->face_flag = 1;
 	if (mvars->cueing_on)
 	    glDisable(GL_FOG);
-	if (dmp->i->dm_light)
+	if (dmp->dm_light)
 	    glDisable(GL_LIGHTING);
     }
 
-    if (dmp->i->dm_debugLevel == 3) {
+    if (dmp->dm_debugLevel == 3) {
 	GLfloat m[16];
 	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 	bu_vls_printf(&tmp_vls, "end of ogl_normal view matrix = \n");
@@ -1951,18 +1916,17 @@ ogl_normal(struct dm *dmp)
  * The starting position of the beam is as specified.
  */
 HIDDEN int
-ogl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
+ogl_drawString2D(struct dm_internal *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
 {
-    struct ogl_vars *privars = (struct ogl_vars *)dmp->i->dm_vars.priv_vars;
-    if (dmp->i->dm_debugLevel)
+    if (dmp->dm_debugLevel)
 	bu_log("ogl_drawString2D()\n");
 
     if (use_aspect)
-	glRasterPos2f(x, y * dmp->i->dm_aspect);
+	glRasterPos2f(x, y * dmp->dm_aspect);
     else
 	glRasterPos2f(x, y);
 
-    glListBase(privars->fontOffset);
+    glListBase(((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
     glCallLists(strlen(str), GL_UNSIGNED_BYTE,  str);
 
     return BRLCAD_OK;
@@ -1970,30 +1934,30 @@ ogl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUS
 
 
 HIDDEN int
-ogl_drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2)
+ogl_drawLine2D(struct dm_internal *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2)
 {
     return drawLine2D(dmp, X1, Y1, X2, Y2, "ogl_drawLine2D()\n");
 }
 
 
 HIDDEN int
-ogl_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
+ogl_drawLine3D(struct dm_internal *dmp, point_t pt1, point_t pt2)
 {
     return drawLine3D(dmp, pt1, pt2, "ogl_drawLine3D()\n", wireColor);
 }
 
 
 HIDDEN int
-ogl_drawLines3D(struct dm *dmp, int npoints, point_t *points, int sflag)
+ogl_drawLines3D(struct dm_internal *dmp, int npoints, point_t *points, int sflag)
 {
     return drawLines3D(dmp, npoints, points, sflag, "ogl_drawLine3D()\n", wireColor);
 }
 
 
 HIDDEN int
-ogl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
+ogl_drawPoint2D(struct dm_internal *dmp, fastf_t x, fastf_t y)
 {
-    if (dmp->i->dm_debugLevel) {
+    if (dmp->dm_debugLevel) {
 	bu_log("ogl_drawPoint2D():\n");
 	bu_log("\tdmp: %p\tx - %lf\ty - %lf\n", (void *)dmp, x, y);
     }
@@ -2010,14 +1974,14 @@ ogl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 
 
 HIDDEN int
-ogl_drawPoint3D(struct dm *dmp, point_t point)
+ogl_drawPoint3D(struct dm_internal *dmp, point_t point)
 {
     GLdouble dpt[3];
 
     if (!dmp || !point)
 	return BRLCAD_ERROR;
 
-    if (dmp->i->dm_debugLevel) {
+    if (dmp->dm_debugLevel) {
 	bu_log("ogl_drawPoint3D():\n");
 	bu_log("\tdmp: %p\tpt - %lf %lf %lf\n", (void*)dmp, V3ARGS(point));
     }
@@ -2037,7 +2001,7 @@ ogl_drawPoint3D(struct dm *dmp, point_t point)
 
 
 HIDDEN int
-ogl_drawPoints3D(struct dm *dmp, int npoints, point_t *points)
+ogl_drawPoints3D(struct dm_internal *dmp, int npoints, point_t *points)
 {
     GLdouble dpt[3];
     register int i;
@@ -2045,7 +2009,7 @@ ogl_drawPoints3D(struct dm *dmp, int npoints, point_t *points)
     if (!dmp || npoints < 0 || !points)
 	return BRLCAD_ERROR;
 
-    if (dmp->i->dm_debugLevel) {
+    if (dmp->dm_debugLevel) {
 	bu_log("ogl_drawPoint3D():\n");
     }
 
@@ -2065,14 +2029,14 @@ ogl_drawPoints3D(struct dm *dmp, int npoints, point_t *points)
 
 
 HIDDEN int
-ogl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
+ogl_setFGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
 {
-    /*if (dmp->i->dm_debugLevel)
+    /*if (dmp->dm_debugLevel)
 	bu_log("ogl_setFGColor()\n");*/
 
-    dmp->i->dm_fg[0] = r;
-    dmp->i->dm_fg[1] = g;
-    dmp->i->dm_fg[2] = b;
+    dmp->dm_fg[0] = r;
+    dmp->dm_fg[1] = g;
+    dmp->dm_fg[2] = b;
 
     /* wireColor gets the full rgb */
     wireColor[0] = r / 255.0;
@@ -2084,7 +2048,7 @@ ogl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b
 	glColor3ub((GLubyte)r, (GLubyte)g, (GLubyte)b);
     } else {
 
-	if (dmp->i->dm_light) {
+	if (dmp->dm_light) {
 	    /* Ambient = .2, Diffuse = .6, Specular = .2 */
 
 	    ambientColor[0] = wireColor[0] * 0.2;
@@ -2125,13 +2089,13 @@ ogl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b
 
 
 HIDDEN int
-ogl_setLineAttr(struct dm *dmp, int width, int style)
+ogl_setLineAttr(struct dm_internal *dmp, int width, int style)
 {
-    /*if (dmp->i->dm_debugLevel)
+    /*if (dmp->dm_debugLevel)
 	bu_log("ogl_setLineAttr()\n");*/
 
-    dmp->i->dm_lineWidth = width;
-    dmp->i->dm_lineStyle = style;
+    dmp->dm_lineWidth = width;
+    dmp->dm_lineStyle = style;
 
     glLineWidth((GLfloat) width);
 
@@ -2145,41 +2109,41 @@ ogl_setLineAttr(struct dm *dmp, int width, int style)
 
 
 HIDDEN int
-ogl_debug(struct dm *dmp, int lvl)
+ogl_debug(struct dm_internal *dmp, int lvl)
 {
-    dmp->i->dm_debugLevel = lvl;
+    dmp->dm_debugLevel = lvl;
 
     return BRLCAD_OK;
 }
 
 HIDDEN int
-ogl_logfile(struct dm *dmp, const char *filename)
+ogl_logfile(struct dm_internal *dmp, const char *filename)
 {
-    bu_vls_sprintf(&dmp->i->dm_log, "%s", filename);
+    bu_vls_sprintf(&dmp->dm_log, "%s", filename);
 
     return BRLCAD_OK;
 }
 
 HIDDEN int
-ogl_setWinBounds(struct dm *dmp, fastf_t *w)
+ogl_setWinBounds(struct dm_internal *dmp, fastf_t *w)
 {
     GLint mm;
 
-    if (dmp->i->dm_debugLevel)
+    if (dmp->dm_debugLevel)
 	bu_log("ogl_setWinBounds()\n");
 
-    dmp->i->dm_clipmin[0] = w[0];
-    dmp->i->dm_clipmin[1] = w[2];
-    dmp->i->dm_clipmin[2] = w[4];
-    dmp->i->dm_clipmax[0] = w[1];
-    dmp->i->dm_clipmax[1] = w[3];
-    dmp->i->dm_clipmax[2] = w[5];
+    dmp->dm_clipmin[0] = w[0];
+    dmp->dm_clipmin[1] = w[2];
+    dmp->dm_clipmin[2] = w[4];
+    dmp->dm_clipmax[0] = w[1];
+    dmp->dm_clipmax[1] = w[3];
+    dmp->dm_clipmax[2] = w[5];
 
     glGetIntegerv(GL_MATRIX_MODE, &mm);
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
     glLoadIdentity();
-    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->i->dm_clipmin[2], dmp->i->dm_clipmax[2]);
+    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
     glPushMatrix();
     glMatrixMode(mm);
 
@@ -2188,15 +2152,15 @@ ogl_setWinBounds(struct dm *dmp, fastf_t *w)
 
 
 HIDDEN int
-ogl_setTransparency(struct dm *dmp,
+ogl_setTransparency(struct dm_internal *dmp,
 		    int transparency_on)
 {
-    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
-    if (dmp->i->dm_debugLevel)
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
+    if (dmp->dm_debugLevel)
 	bu_log("ogl_setTransparency()\n");
 
-    dmp->i->dm_transparency = transparency_on;
-    mvars->transparency_on = dmp->i->dm_transparency;
+    dmp->dm_transparency = transparency_on;
+    mvars->transparency_on = dmp->dm_transparency;
 
     if (transparency_on) {
 	/* Turn it on */
@@ -2212,12 +2176,12 @@ ogl_setTransparency(struct dm *dmp,
 
 
 HIDDEN int
-ogl_setDepthMask(struct dm *dmp,
+ogl_setDepthMask(struct dm_internal *dmp,
 		 int enable) {
-    if (dmp->i->dm_debugLevel)
+    if (dmp->dm_debugLevel)
 	bu_log("ogl_setDepthMask()\n");
 
-    dmp->i->dm_depthMask = enable;
+    dmp->dm_depthMask = enable;
 
     if (enable)
 	glDepthMask(GL_TRUE);
@@ -2229,18 +2193,18 @@ ogl_setDepthMask(struct dm *dmp,
 
 
 HIDDEN int
-ogl_setZBuffer(struct dm *dmp, int zbuffer_on)
+ogl_setZBuffer(struct dm_internal *dmp, int zbuffer_on)
 {
-    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
-    if (dmp->i->dm_debugLevel)
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
+    if (dmp->dm_debugLevel)
 	bu_log("ogl_setZBuffer:\n");
 
-    dmp->i->dm_zbuffer = zbuffer_on;
-    mvars->zbuffer_on = dmp->i->dm_zbuffer;
+    dmp->dm_zbuffer = zbuffer_on;
+    mvars->zbuffer_on = dmp->dm_zbuffer;
 
     if (mvars->zbuf == 0) {
-	dmp->i->dm_zbuffer = 0;
-	mvars->zbuffer_on = dmp->i->dm_zbuffer;
+	dmp->dm_zbuffer = 0;
+	mvars->zbuffer_on = dmp->dm_zbuffer;
     }
 
     if (mvars->zbuffer_on) {
@@ -2255,9 +2219,9 @@ ogl_setZBuffer(struct dm *dmp, int zbuffer_on)
 
 
 HIDDEN int
-ogl_beginDList(struct dm *dmp, unsigned int list)
+ogl_beginDList(struct dm_internal *dmp, unsigned int list)
 {
-    if (dmp->i->dm_debugLevel)
+    if (dmp->dm_debugLevel)
 	bu_log("ogl_beginDList()\n");
 
     glNewList((GLuint)list, GL_COMPILE);
@@ -2266,9 +2230,9 @@ ogl_beginDList(struct dm *dmp, unsigned int list)
 
 
 HIDDEN int
-ogl_endDList(struct dm *dmp)
+ogl_endDList(struct dm_internal *dmp)
 {
-    if (dmp->i->dm_debugLevel)
+    if (dmp->dm_debugLevel)
 	bu_log("ogl_endDList()\n");
 
     glEndList();
@@ -2285,9 +2249,9 @@ ogl_drawDList(unsigned int list)
 
 
 HIDDEN int
-ogl_freeDLists(struct dm *dmp, unsigned int list, int range)
+ogl_freeDLists(struct dm_internal *dmp, unsigned int list, int range)
 {
-    if (dmp->i->dm_debugLevel)
+    if (dmp->dm_debugLevel)
 	bu_log("ogl_freeDLists()\n");
 
     glDeleteLists((GLuint)list, (GLsizei)range);
@@ -2296,16 +2260,16 @@ ogl_freeDLists(struct dm *dmp, unsigned int list, int range)
 
 
 HIDDEN int
-ogl_genDLists(struct dm *dmp, size_t range)
+ogl_genDLists(struct dm_internal *dmp, size_t range)
 {
-    if (dmp->i->dm_debugLevel)
+    if (dmp->dm_debugLevel)
 	bu_log("ogl_freeDLists()\n");
 
     return glGenLists((GLsizei)range);
 }
 
 HIDDEN int
-ogl_draw_obj(struct dm *dmp, struct display_list *obj)
+ogl_draw_obj(struct dm_internal *dmp, struct display_list *obj)
 {
     struct solid *sp;
     FOR_ALL_SOLIDS(sp, &obj->dl_headSolid) {
@@ -2328,15 +2292,15 @@ ogl_draw_obj(struct dm *dmp, struct display_list *obj)
 }
 
 HIDDEN int
-ogl_getDisplayImage(struct dm *dmp, unsigned char **image)
+ogl_getDisplayImage(struct dm_internal *dmp, unsigned char **image)
 {
-    if (dmp->i->dm_type == DM_TYPE_WGL || dmp->i->dm_type == DM_TYPE_OGL) {
+    if (dmp->dm_type == DM_TYPE_WGL || dmp->dm_type == DM_TYPE_OGL) {
 	unsigned char *idata;
 	int width;
 	int height;
 
-	width = dmp->i->dm_width;
-	height = dmp->i->dm_height;
+	width = dmp->dm_width;
+	height = dmp->dm_height;
 
 	idata = (unsigned char*)bu_calloc(height * width * 3, sizeof(unsigned char), "rgb data");
 
@@ -2354,13 +2318,13 @@ ogl_getDisplayImage(struct dm *dmp, unsigned char **image)
 }
 
 int
-ogl_openFb(struct dm *dmp)
+ogl_openFb(struct dm_internal *dmp)
 {
     struct fb_platform_specific *fb_ps;
     struct ogl_fb_info *ofb_ps;
-    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
-    struct ogl_vars *privars = (struct ogl_vars *)dmp->i->dm_vars.priv_vars;
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
+    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
+    struct ogl_vars *privars = (struct ogl_vars *)dmp->dm_vars.priv_vars;
 
     fb_ps = fb_get_platform_specific(FB_OGL_MAGIC);
     ofb_ps = (struct ogl_fb_info *)fb_ps->data;
@@ -2371,18 +2335,18 @@ ogl_openFb(struct dm *dmp)
     ofb_ps->glxc = privars->glxc;
     ofb_ps->double_buffer = mvars->doublebuffer;
     ofb_ps->soft_cmap = 0;
-    dmp->i->fbp = fb_open_existing("ogl", dm_get_width(dmp), dm_get_height(dmp), fb_ps);
+    dmp->fbp = fb_open_existing("ogl", dm_get_width(dmp), dm_get_height(dmp), fb_ps);
     fb_put_platform_specific(fb_ps);
     return 0;
 }
 
 int
-ogl_get_internal(struct dm *dmp)
+ogl_get_internal(struct dm_internal *dmp)
 {
     struct modifiable_ogl_vars *mvars = NULL;
-    if (!dmp->i->m_vars) {
-	BU_GET(dmp->i->m_vars, struct modifiable_ogl_vars);
-	mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
+    if (!dmp->m_vars) {
+	BU_GET(dmp->m_vars, struct modifiable_ogl_vars);
+	mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
 	mvars->this_dm = dmp;
 	bu_vls_init(&(mvars->log));
     }
@@ -2390,13 +2354,13 @@ ogl_get_internal(struct dm *dmp)
 }
 
 int
-ogl_put_internal(struct dm *dmp)
+ogl_put_internal(struct dm_internal *dmp)
 {
     struct modifiable_ogl_vars *mvars = NULL;
-    if (dmp->i->m_vars) {
-	mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
+    if (dmp->m_vars) {
+	mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
 	bu_vls_free(&(mvars->log));
-	BU_PUT(dmp->i->m_vars, struct modifiable_ogl_vars);
+	BU_PUT(dmp->m_vars, struct modifiable_ogl_vars);
     }
     return 0;
 }
@@ -2426,12 +2390,12 @@ ogl_zclip_hook(const struct bu_structparse *sdp,
 	void *data)
 {
     struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
-    struct dm *dmp = mvars->this_dm;
+    dm *dmp = mvars->this_dm;
     fastf_t bounds[6] = { GED_MIN, GED_MAX, GED_MIN, GED_MAX, GED_MIN, GED_MAX };
 
-    dmp->i->dm_zclip = mvars->zclipping_on;
+    dmp->dm_zclip = mvars->zclipping_on;
 
-    if (dmp->i->dm_zclip) {
+    if (dmp->dm_zclip) {
 	bounds[4] = -1.0;
 	bounds[5] = 1.0;
     }
@@ -2450,7 +2414,7 @@ ogl_debug_hook(const struct bu_structparse *sdp,
 	void *data)
 {
     struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
-    struct dm *dmp = mvars->this_dm;
+    dm *dmp = mvars->this_dm;
 
     dm_debug(dmp, mvars->debug);
 
@@ -2466,7 +2430,7 @@ ogl_logfile_hook(const struct bu_structparse *sdp,
 	void *data)
 {
     struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
-    struct dm *dmp = mvars->this_dm;
+    dm *dmp = mvars->this_dm;
 
     dm_logfile(dmp, bu_vls_addr(&mvars->log));
 
@@ -2481,9 +2445,9 @@ ogl_bound_hook(const struct bu_structparse *sdp,
 	void *data)
 {
     struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
-    struct dm *dmp = mvars->this_dm;
+    dm *dmp = mvars->this_dm;
 
-    dmp->i->dm_bound = mvars->bound;
+    dmp->dm_bound = mvars->bound;
 
     dm_generic_hook(sdp, name, base, value, data);
 }
@@ -2496,9 +2460,9 @@ ogl_bound_flag_hook(const struct bu_structparse *sdp,
 	void *data)
 {
     struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
-    struct dm *dmp = mvars->this_dm;
+    dm *dmp = mvars->this_dm;
 
-    dmp->i->dm_boundFlag = mvars->boundFlag;
+    dmp->dm_boundFlag = mvars->boundFlag;
 
     dm_generic_hook(sdp, name, base, value, data);
 }
@@ -2511,7 +2475,7 @@ ogl_zbuffer_hook(const struct bu_structparse *sdp,
 	void *data)
 {
     struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
-    struct dm *dmp = mvars->this_dm;
+    dm *dmp = mvars->this_dm;
 
     (void)dm_make_current(dmp);
     (void)dm_set_zbuffer(dmp, mvars->zbuffer_on);
@@ -2527,7 +2491,7 @@ ogl_lighting_hook(const struct bu_structparse *sdp,
 	void *data)
 {
     struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
-    struct dm *dmp = mvars->this_dm;
+    dm *dmp = mvars->this_dm;
 
     (void)dm_make_current(dmp);
     (void)dm_set_light(dmp, mvars->lighting_on);
@@ -2543,7 +2507,7 @@ ogl_transparency_hook(const struct bu_structparse *sdp,
 	void *data)
 {
     struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
-    struct dm *dmp = mvars->this_dm;
+    dm *dmp = mvars->this_dm;
 
     (void)dm_make_current(dmp);
     (void)dm_set_transparency(dmp, mvars->transparency_on);
@@ -2559,7 +2523,7 @@ ogl_fog_hook(const struct bu_structparse *sdp,
 	void *data)
 {
     struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)base;
-    struct dm *dmp = mvars->this_dm;
+    dm *dmp = mvars->this_dm;
 
     dm_fogHint(dmp, mvars->fastfog);
 
@@ -2585,7 +2549,7 @@ struct bu_structparse Ogl_vparse[] = {
     {"",        0,  (char *)0,          0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
-struct dm_impl dm_ogl_impl = {
+struct dm_internal dm_ogl = {
     ogl_close,
     ogl_drawBegin,
     ogl_drawEnd,
@@ -2667,7 +2631,6 @@ struct dm_impl dm_ogl_impl = {
     0				/* Tcl interpreter */
 };
 
-struct dm dm_ogl = { &dm_ogl_impl };
 
 #endif /* DM_OGL */
 
