@@ -2584,6 +2584,45 @@ struct bu_structparse Ogl_vparse[] = {
     {"",        0,  (char *)0,          0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
+int
+ogl_geometry_request(struct dm *dmp, int width, int height)
+{
+    if (!dmp) return -1;
+    Tk_GeometryRequest(((struct dm_glxvars *)dmp->i->dm_vars.pub_vars)->xtkwin, width, height);
+    return 0;
+}
+
+#define GLXVARS_MV_O(_m) offsetof(struct dm_glxvars, _m)
+
+struct bu_structparse dm_glxvars_vparse[] = {
+    {"%x",      1,      "dpy",                  GLXVARS_MV_O(dpy),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%x",      1,      "win",                  GLXVARS_MV_O(win),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%x",      1,      "top",                  GLXVARS_MV_O(top),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%x",      1,      "tkwin",                GLXVARS_MV_O(xtkwin),     BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",      1,      "depth",                GLXVARS_MV_O(depth),      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%x",      1,      "cmap",                 GLXVARS_MV_O(cmap),       BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%x",      1,      "vip",                  GLXVARS_MV_O(vip),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%x",      1,      "fontstruct",           GLXVARS_MV_O(fontstruct), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",      1,      "devmotionnotify",      GLXVARS_MV_O(devmotionnotify),    BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",      1,      "devbuttonpress",       GLXVARS_MV_O(devbuttonpress),     BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",      1,      "devbuttonrelease",     GLXVARS_MV_O(devbuttonrelease),   BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",        0,      (char *)0,              0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
+};
+
+int
+ogl_internal_var(struct bu_vls *result, struct dm *dmp, const char *key)
+{
+    if (!dmp || !result) return -1;
+    if (!key) {
+        // Print all current vars
+        bu_vls_struct_print2(result, "dm internal GLX variables", dm_glxvars_vparse, (const char *)dmp->i->dm_vars.pub_vars);
+        return 0;
+    }
+    // Print specific var
+    bu_vls_struct_item_named(result, dm_glxvars_vparse, key, (const char *)dmp->i->dm_vars.pub_vars, ',');
+    return 0;
+}
+
 struct dm_impl dm_ogl_impl = {
     ogl_close,
     ogl_drawBegin,
@@ -2624,8 +2663,8 @@ struct dm_impl dm_ogl_impl = {
     ogl_openFb,
     ogl_get_internal,
     ogl_put_internal,
-    NULL,
-    NULL,
+    ogl_geometry_request,
+    ogl_internal_var,
     0,
     1,				/* has displaylist */
     0,                          /* no stereo by default */

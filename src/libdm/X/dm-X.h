@@ -34,6 +34,8 @@
 #define NUM_PIXELS 216    /* CUBE_DIMENSION * CUBE_DIMENSION * CUBE_DIMENSION */
 #define ColormapNull (Colormap *)NULL
 
+#define INIT_XCOLOR(c) memset((c), 0, sizeof(XColor))
+
 struct x_vars {
     GC gc;
     Pixmap pix;

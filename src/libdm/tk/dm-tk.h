@@ -34,6 +34,8 @@
 #define NUM_PIXELS 216    /* CUBE_DIMENSION * CUBE_DIMENSION * CUBE_DIMENSION */
 #define ColormapNull (Colormap *)NULL
 
+#define INIT_XCOLOR(c) memset((c), 0, sizeof(XColor))
+
 struct tk_vars {
     GC gc;
     Pixmap pix;
@@ -47,6 +49,18 @@ struct tk_vars {
     Tk_Font tkfontstruct;
     fastf_t ppmm_x;		/* pixel per mm in x */
     fastf_t ppmm_y;		/* pixel per mm in y */
+};
+
+struct dm_tkvars {
+    Display *dpy;
+    Window win;
+    Tk_Window top;
+    Tk_Window xtkwin;
+    int depth;
+    Colormap cmap;
+    int devmotionnotify;
+    int devbuttonpress;
+    int devbuttonrelease;
 };
 
 #endif /* DM_TK_H */

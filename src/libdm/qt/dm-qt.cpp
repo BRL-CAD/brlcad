@@ -985,6 +985,46 @@ struct bu_structparse Qt_vparse[] = {
     {"",    0, (char *)0,       0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
 
+
+int
+qt_geometry_request(struct dm *dmp, int width, int height)
+{
+    if (!dmp) return -1;
+    Tk_GeometryRequest(((struct dm_qtvars *)dmp->i->dm_vars.pub_vars)->xtkwin, width, height);
+    return 0;
+}
+
+#define QTVARS_MV_O(_m) offsetof(struct dm_qtvars, _m)
+
+struct bu_structparse dm_qtvars_vparse[] = {
+    {"%x",      1,      "dpy",                  QTVARS_MV_O(dpy),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%x",      1,      "win",                  QTVARS_MV_O(win),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%x",      1,      "top",                  QTVARS_MV_O(top),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%x",      1,      "tkwin",                QTVARS_MV_O(xtkwin),     BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",      1,      "depth",                QTVARS_MV_O(depth),      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%x",      1,      "cmap",                 QTVARS_MV_O(cmap),       BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",      1,      "devmotionnotify",      QTVARS_MV_O(devmotionnotify),    BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",      1,      "devbuttonpress",       QTVARS_MV_O(devbuttonpress),     BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",      1,      "devbuttonrelease",     QTVARS_MV_O(devbuttonrelease),   BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",        0,      (char *)0,              0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
+};
+
+int
+qt_internal_var(struct bu_vls *result, struct dm *dmp, const char *key)
+{
+    if (!dmp || !result) return -1;
+    if (!key) {
+        // Print all current vars
+        bu_vls_struct_print2(result, "dm internal Qt variables", dm_qtvars_vparse, (const char *)dmp->i->dm_vars.pub_vars);
+        return;
+    }
+    // Print specific var
+    bu_vls_struct_item_named(result, dm_qtvars_vparse, key, (const char *)dmp->i->dm_vars.pub_vars, ',');
+
+    return 0;
+}
+
+
 __END_DECLS
 
 struct dm_impl dm_qt_impl = {
@@ -1027,8 +1067,8 @@ struct dm_impl dm_qt_impl = {
     qt_openFb,
     NULL,
     NULL,
-    NULL,
-    NULL,
+    qt_geometry_request,
+    qt_internal_var,
     0,
     0,				/* no displaylist */
     0,				/* no stereo */

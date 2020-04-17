@@ -121,6 +121,18 @@ struct osgl_vars {
 #endif
 };
 
+struct dm_osglvars {
+    Display *dpy;
+    Window win;
+    Tk_Window top;
+    Tk_Window xtkwin;
+    int depth;
+    Colormap cmap;
+    int devmotionnotify;
+    int devbuttonpress;
+    int devbuttonrelease;
+};
+
 __BEGIN_DECLS
 
 #ifdef __cplusplus

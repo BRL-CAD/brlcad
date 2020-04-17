@@ -2127,6 +2127,47 @@ struct bu_structparse Wgl_vparse[] = {
     {"",        0,  (char *)0,          0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
+
+int
+wgl_geometry_request(struct dm *dmp, int width, int height)
+{
+    if (!dmp) return -1;
+    Tk_GeometryRequest(((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->xtkwin, width, height);
+    return 0;
+}
+
+#define WGLVARS_MV_O(_m) offsetof(struct dm_wglvars, _m)
+
+struct bu_structparse dm_wglvars_vparse[] = {
+    {"%x",      1,      "dpy",                  WGLVARS_MV_O(dpy),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%x",      1,      "win",                  WGLVARS_MV_O(win),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%x",      1,      "top",                  WGLVARS_MV_O(top),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%x",      1,      "tkwin",                WGLVARS_MV_O(xtkwin),     BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",      1,      "depth",                WGLVARS_MV_O(depth),      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%x",      1,      "cmap",                 WGLVARS_MV_O(cmap),       BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%x",      1,      "vip",                  WGLVARS_MV_O(vip),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%x",      1,      "fontstruct",           WGLVARS_MV_O(fontstruct), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%x",      1,      "hdc",                  WGLVARS_MV_O(hdc),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",      1,      "devmotionnotify",      WGLVARS_MV_O(devmotionnotify),    BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",      1,      "devbuttonpress",       WGLVARS_MV_O(devbuttonpress),     BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",      1,      "devbuttonrelease",     WGLVARS_MV_O(devbuttonrelease),   BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",        0,      (char *)0,              0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
+};
+
+int
+wgl_internal_var(struct bu_vls *result, struct dm *dmp, const char *key)
+{
+    if (!dmp || !result) return -1;
+    if (!key) {
+        // Print all current vars
+        bu_vls_struct_print2(result, "dm internal WGL variables", dm_wglvars_vparse, (const char *)dmp->i->dm_vars.pub_vars);
+        return 0;
+    }
+    // Print specific var
+    bu_vls_struct_item_named(result, dm_wglvars_vparse, key, (const char *)dmp->i->dm_vars.pub_vars, ',');
+    return 0;
+}
+
 struct dm_impl dm_wgl_impl = {
     wgl_close,
     wgl_drawBegin,
@@ -2167,8 +2208,8 @@ struct dm_impl dm_wgl_impl = {
     wgl_openFb,
     wgl_get_internal,
     wgl_put_internal,
-    NULL,
-    NULL,
+    wgl_geometry_request,
+    wgl_internal_var,
     0,
     1,				/* has displaylist */
     0,                          /* no stereo by default */

@@ -2482,6 +2482,43 @@ struct bu_structparse Osgl_vparse[] = {
     {"",        0,  (char *)0,          0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
+int
+osgl_geometry_request(struct dm *dmp, int width, int height)
+{
+    if (!dmp) return -1;
+    Tk_GeometryRequest(((struct dm_osglvars *)dmp->i->dm_vars.pub_vars)->xtkwin, width, height);
+    return 0;
+}
+
+#define OSGLVARS_MV_O(_m) offsetof(struct dm_osglvars, _m)
+
+struct bu_structparse dm_osglvars_vparse[] = {
+    {"%x",      1,      "dpy",                  OSGLVARS_MV_O(dpy),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%x",      1,      "win",                  OSGLVARS_MV_O(win),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%x",      1,      "top",                  OSGLVARS_MV_O(top),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%x",      1,      "tkwin",                OSGLVARS_MV_O(xtkwin),     BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",      1,      "depth",                OSGLVARS_MV_O(depth),      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%x",      1,      "cmap",                 OSGLVARS_MV_O(cmap),       BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",      1,      "devmotionnotify",      OSGLVARS_MV_O(devmotionnotify),    BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",      1,      "devbuttonpress",       OSGLVARS_MV_O(devbuttonpress),     BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",      1,      "devbuttonrelease",     OSGLVARS_MV_O(devbuttonrelease),   BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",        0,      (char *)0,              0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
+};
+
+int
+osgl_internal_var(struct bu_vls *result, struct dm *dmp, const char *key)
+{
+    if (!dmp || !result) return -1;
+    if (!key) {
+        // Print all current vars
+        bu_vls_struct_print2(result, "dm internal OSGL variables", dm_osglvars_vparse, (const char *)dmp->i->dm_vars.pub_vars);
+        return 0;
+    }
+    // Print specific var
+    bu_vls_struct_item_named(result, dm_osglvars_vparse, key, (const char *)dmp->i->dm_vars.pub_vars, ',');
+    return 0;
+}
+
 struct dm_impl dm_osgl_impl = {
     osgl_close,
     osgl_drawBegin,
@@ -2522,8 +2559,8 @@ struct dm_impl dm_osgl_impl = {
     osgl_openFb,
     osgl_get_internal,
     osgl_put_internal,
-    NULL,
-    NULL,
+    osgl_geometry_request,
+    osgl_internal_var,
     0,
     1,				/* has displaylist */
     0,                          /* no stereo by default */

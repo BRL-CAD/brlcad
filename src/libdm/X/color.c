@@ -34,7 +34,7 @@
 #include "vmath.h"
 
 #include "bu/malloc.h"
-#include "../include/dm_xvars.h"
+#include "./dm-X.h"
 
 /* Return the allocated pixel value that most closely represents
    the color requested. */

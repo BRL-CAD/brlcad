@@ -852,6 +852,44 @@ struct bu_structparse Tk_vparse[] = {
     {"",    0, (char *)0,       0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
 
+int
+tk_geometry_request(struct dm *dmp, int width, int height)
+{
+    if (!dmp) return -1;
+    Tk_GeometryRequest(((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->xtkwin, width, height);
+    return 0;
+}
+
+#define TKVARS_MV_O(_m) offsetof(struct dm_tkvars, _m)
+
+struct bu_structparse dm_tkvars_vparse[] = {
+    {"%x",      1,      "dpy",                  TKVARS_MV_O(dpy),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%x",      1,      "win",                  TKVARS_MV_O(win),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%x",      1,      "top",                  TKVARS_MV_O(top),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%x",      1,      "tkwin",                TKVARS_MV_O(xtkwin),     BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",      1,      "depth",                TKVARS_MV_O(depth),      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%x",      1,      "cmap",                 TKVARS_MV_O(cmap),       BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",      1,      "devmotionnotify",      TKVARS_MV_O(devmotionnotify),    BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",      1,      "devbuttonpress",       TKVARS_MV_O(devbuttonpress),     BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%d",      1,      "devbuttonrelease",     TKVARS_MV_O(devbuttonrelease),   BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"",        0,      (char *)0,              0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
+};
+
+int
+tk_internal_var(struct bu_vls *result, struct dm *dmp, const char *key)
+{
+    if (!dmp || !result) return -1;
+    if (!key) {
+        // Print all current vars
+        bu_vls_struct_print2(result, "dm internal Tk variables", dm_tkvars_vparse, (const char *)dmp->i->dm_vars.pub_vars);
+        return 0;
+    }
+    // Print specific var
+    bu_vls_struct_item_named(result, dm_tkvars_vparse, key, (const char *)dmp->i->dm_vars.pub_vars, ',');
+    return 0;
+}
+
+
 struct dm_impl dm_tk_impl = {
     tk_close,
     tk_drawBegin,
@@ -892,8 +930,8 @@ struct dm_impl dm_tk_impl = {
     null_openFb,
     NULL,
     NULL,
-    NULL,
-    NULL,
+    tk_geometry_request,
+    tk_internal_var,
     0,
     0,				/* no displaylist */
     0,				/* no stereo */

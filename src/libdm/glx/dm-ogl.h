@@ -54,6 +54,20 @@ struct ogl_vars {
     GLclampf r, g, b;
 };
 
+struct dm_glxvars {
+    Display *dpy;
+    Window win;
+    Tk_Window top;
+    Tk_Window xtkwin;
+    int depth;
+    Colormap cmap;
+    XVisualInfo *vip;
+    XFontStruct *fontstruct;
+    int devmotionnotify;
+    int devbuttonpress;
+    int devbuttonrelease;
+};
+
 __BEGIN_DECLS
 
 extern void ogl_fogHint();
