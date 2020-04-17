@@ -2624,6 +2624,8 @@ struct dm_impl dm_ogl_impl = {
     ogl_openFb,
     ogl_get_internal,
     ogl_put_internal,
+    NULL,
+    NULL,
     0,
     1,				/* has displaylist */
     0,                          /* no stereo by default */

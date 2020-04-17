@@ -92,6 +92,8 @@ struct dm_impl {
     int (*dm_openFb)(struct dm *dmp);
     int (*dm_get_internal)(struct dm *dmp);
     int (*dm_put_internal)(struct dm *dmp);
+    int (*dm_geometry_request)(struct dm *dmp, int width, int height);
+    int (*dm_internal_var)(struct bu_vls *result, struct dm *dmp, const char *key);
     unsigned long dm_id;          /**< @brief window id */
     int dm_displaylist;		/**< @brief !0 means device has displaylist */
     int dm_stereo;                /**< @brief stereo flag */

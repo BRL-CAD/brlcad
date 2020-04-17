@@ -1756,6 +1756,8 @@ struct dm_impl dm_X_impl = {
     X_openFb,
     NULL,
     NULL,
+    NULL,
+    NULL,
     0,
     0,				/* no displaylist */
     0,                            /* no stereo */

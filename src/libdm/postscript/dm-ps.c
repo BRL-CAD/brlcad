@@ -539,6 +539,8 @@ struct dm_impl dm_ps_impl = {
     null_openFb,
     NULL,
     NULL,
+    NULL,
+    NULL,
     0,
     0,				/* no displaylist */
     0,                            /* no stereo */
