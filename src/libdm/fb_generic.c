@@ -108,6 +108,7 @@ void fb_set_interface(struct fb *ifp, const char *interface_type)
 	if (bu_strncmp(interface_type, _if_list[i]->i->if_name+5, strlen(interface_type)) == 0) {
 	    /* found it, copy its struct in */
 	    *ifp = *(_if_list[i]);
+	    *ifp->i = *(_if_list[i]->i);
 	    return;
 	} else {
 	    i++;
@@ -153,6 +154,7 @@ fb_open_existing(const char *file, int width, int height, struct fb_platform_spe
 {
     struct fb *ifp = (struct fb *)calloc(sizeof(struct fb), 1);
     if (!ifp) return NULL;
+    ifp->i = (struct fb_impl *) calloc(sizeof(struct fb_impl), 1);
     fb_set_interface(ifp, file);
     fb_set_magic(ifp, FB_MAGIC);
     if (ifp->i->if_open_existing) ifp->i->if_open_existing(ifp, width, height, fb_p);
@@ -397,11 +399,11 @@ fb_open(const char *file, int width, int height)
 	return FB_NULL;
 
     ifp = (struct fb *) calloc(sizeof(struct fb), 1);
-    ifp->i = (struct fb_impl *) calloc(sizeof(struct fb_impl), 1);
     if (ifp == FB_NULL) {
 	Malloc_Bomb(sizeof(struct fb));
 	return FB_NULL;
     }
+    ifp->i = (struct fb_impl *) calloc(sizeof(struct fb_impl), 1);
     if (file == NULL || *file == '\0') {
 	/* No name given, check environment variable first.	*/
 	if ((file = (const char *)getenv("FB_FILE")) == NULL || *file == '\0') {
@@ -502,6 +504,7 @@ fb_close(struct fb *ifp)
     if (ifp->i->if_pbase != PIXEL_NULL)
 	free((void *) ifp->i->if_pbase);
     free((void *) ifp->i->if_name);
+    free((void *) ifp->i);
     free((void *) ifp);
     return 0;
 }
