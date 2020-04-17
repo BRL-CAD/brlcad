@@ -41,7 +41,7 @@ endif(BRLCAD_ENABLE_X11)
 
 if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
   list(APPEND libdm_DEFINES DM_X IF_X)
-  set(dmx11_srcs X/dm-X.c X/if_X24.c)
+  set(dmx11_srcs X/dm-X.c X/if_X24.c X/color.c)
   set(DM_EXTRA_LIBS ${DM_EXTRA_LIBS} ${X11_LIBRARIES})
   set_property(SOURCE X/dm-X.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
   set_property(SOURCE X/if_X24.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
@@ -114,7 +114,6 @@ set(LIBDM_SRCS
   asize.c
   axes.c
   clip.c
-  color.c
   dm-generic.c
   dm_obj.c
   dm_util.c
