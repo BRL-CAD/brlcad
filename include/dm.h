@@ -28,6 +28,8 @@
 
 #include "common.h"
 
+#include "png.h"
+
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -288,6 +290,10 @@ DM_EXPORT extern int dm_logfile(struct dm *dmp, const char *filename);
 DM_EXPORT extern struct fb *dm_get_fb(struct dm *dmp);
 DM_EXPORT extern int dm_get_fb_visible(struct dm *dmp);
 DM_EXPORT extern int dm_set_fb_visible(struct dm *dmp, int is_fb_visible);
+
+// TODO - this should be using libicv rather than returning a PNG struct - right
+// now this just moving the guts of dmo_png_cmd behind the call table...
+DM_EXPORT extern png_structp dm_get_image(struct dm *dmp);
 
 /* TODO - dm_vp is supposed to go away, but until we figure it out
  * expose it here to allow dm hiding */

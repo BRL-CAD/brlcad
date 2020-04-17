@@ -1067,6 +1067,7 @@ struct dm_impl dm_qt_impl = {
     NULL,
     qt_geometry_request,
     qt_internal_var,
+    NULL,
     0,
     0,				/* no displaylist */
     0,				/* no stereo */

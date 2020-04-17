@@ -34,6 +34,8 @@
 #ifndef DM_CALLTABLE_H
 #define DM_CALLTABLE_H
 
+#include "png.h"
+
 #include "bu/parse.h"
 #include "bu/vls.h"
 #include "dm.h"
@@ -94,6 +96,7 @@ struct dm_impl {
     int (*dm_put_internal)(struct dm *dmp);
     int (*dm_geometry_request)(struct dm *dmp, int width, int height);
     int (*dm_internal_var)(struct bu_vls *result, struct dm *dmp, const char *key);
+    png_structp (*dm_get_image)(struct dm *dmp);
     unsigned long dm_id;          /**< @brief window id */
     int dm_displaylist;		/**< @brief !0 means device has displaylist */
     int dm_stereo;                /**< @brief stereo flag */

@@ -2665,6 +2665,7 @@ struct dm_impl dm_ogl_impl = {
     ogl_put_internal,
     ogl_geometry_request,
     ogl_internal_var,
+    NULL,
     0,
     1,				/* has displaylist */
     0,                          /* no stereo by default */

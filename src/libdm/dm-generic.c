@@ -36,7 +36,6 @@
 #include "dm.h"
 #include "rt/solid.h"
 #include "./include/private.h"
-#include "./include/dm_xvars.h"
 #include "./null/dm-Null.h"
 
 extern struct dm *plot_open(void *interp, int argc, const char *argv[]);
@@ -188,6 +187,15 @@ dm_share_dlist(struct dm *dmp1, struct dm *dmp2)
     }
 }
 
+png_structp
+dm_get_image(struct dm *dmp)
+{
+    if (!dmp || !dmp->i->dm_get_image) return NULL;
+    return dmp->i->dm_get_image(dmp);
+}
+
+/* Properly generic functions */
+
 void
 dm_geometry_request(struct dm *dmp, int width, int height)
 {
@@ -202,7 +210,6 @@ dm_internal_var(struct bu_vls *result, struct dm *dmp, const char *key)
     (void)dmp->i->dm_internal_var(result, dmp, key);
 }
 
-/* Properly generic function */
 
 fastf_t
 dm_Xx2Normal(struct dm *dmp, int x)

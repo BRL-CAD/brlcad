@@ -2208,6 +2208,7 @@ struct dm_impl dm_wgl_impl = {
     wgl_put_internal,
     wgl_geometry_request,
     wgl_internal_var,
+    NULL,
     0,
     1,				/* has displaylist */
     0,                          /* no stereo by default */

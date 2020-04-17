@@ -1713,6 +1713,14 @@ struct bu_structparse X_vparse[] = {
     {"",    0, (char *)0,       0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
 
+int
+X_geometry_request(struct dm *dmp, int width, int height)
+{
+    if (!dmp) return -1;
+    Tk_GeometryRequest(((struct dm_Xvars *)dmp->i->dm_vars.pub_vars)->xtkwin, width, height);
+    return 0;
+}
+
 #define XVARS_MV_O(_m) offsetof(struct dm_Xvars, _m)
 
 struct bu_structparse dm_Xvars_vparse[] = {
@@ -1785,7 +1793,8 @@ struct dm_impl dm_X_impl = {
     X_openFb,
     NULL,
     NULL,
-    NULL,
+    X_geometry_request,
+    X_internal_var,
     NULL,
     0,
     0,				/* no displaylist */
