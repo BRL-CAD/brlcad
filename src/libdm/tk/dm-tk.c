@@ -888,6 +888,25 @@ tk_internal_var(struct bu_vls *result, struct dm *dmp, const char *key)
     return 0;
 }
 
+int
+tk_event_cmp(struct dm *dmp, dm_event_t type, int event)
+{
+    struct dm_tkvars *pubvars = (struct dm_tkvars *)dmp->i->dm_vars.pub_vars;
+    switch (type) {
+	case DM_MOTION_NOTIFY:
+	    return (event == pubvars->devmotionnotify) ? 1 : 0;
+	    break;
+	case DM_BUTTON_PRESS:
+	    return (event == pubvars->devbuttonpress) ? 1 : 0;
+	    break;
+	case DM_BUTTON_RELEASE:
+	    return (event == pubvars->devbuttonrelease) ? 1 : 0;
+	    break;
+	default:
+	    return -1;
+	    break;
+    };
+}
 
 struct dm_impl dm_tk_impl = {
     tk_close,
@@ -934,7 +953,7 @@ struct dm_impl dm_tk_impl = {
     NULL,
     NULL,
     NULL,
-    NULL,
+    tk_event_cmp,
     0,
     0,				/* no displaylist */
     0,				/* no stereo */

@@ -298,7 +298,12 @@ DM_EXPORT extern void dm_flush(struct dm *dmp);
 DM_EXPORT extern void dm_sync(struct dm *dmp);
 
 // Return 1 if same, 0 if different and -1 if no dmp available
-DM_EXPORT extern int dm_event_type_cmp(struct dm *dmp, int etype);
+typedef enum {
+    DM_MOTION_NOTIFY,
+    DM_BUTTON_PRESS,
+    DM_BUTTON_RELEASE
+} dm_event_t;
+DM_EXPORT extern int dm_event_cmp(struct dm *dmp, dm_event_t type, int event);
 
 /* TODO - dm_vp is supposed to go away, but until we figure it out
  * expose it here to allow dm hiding */

@@ -210,6 +210,12 @@ dm_internal_var(struct bu_vls *result, struct dm *dmp, const char *key)
     (void)dmp->i->dm_internal_var(result, dmp, key);
 }
 
+int
+dm_event_cmp(struct dm *dmp, dm_event_t type, int event)
+{
+    if (!dmp || !dmp->i->dm_event_cmp) return -1;
+    return dmp->i->dm_event_cmp(dmp, type, event);
+}
 
 fastf_t
 dm_Xx2Normal(struct dm *dmp, int x)

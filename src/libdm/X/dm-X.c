@@ -2026,6 +2026,26 @@ X_sync(struct dm *dmp)
     XSync(pub_vars->dpy, 0);
 }
 
+int
+X_event_cmp(struct dm *dmp, dm_event_t type, int event)
+{
+    struct dm_Xvars *pubvars = (struct dm_Xvars *)dmp->i->dm_vars.pub_vars;
+    switch (type) {
+	case DM_MOTION_NOTIFY:
+	    return (event == pubvars->devmotionnotify) ? 1 : 0;
+	    break;
+	case DM_BUTTON_PRESS:
+	    return (event == pubvars->devbuttonpress) ? 1 : 0;
+	    break;
+	case DM_BUTTON_RELEASE:
+	    return (event == pubvars->devbuttonrelease) ? 1 : 0;
+	    break;
+	default:
+	    return -1;
+	    break;
+    };
+}
+
 /* Display Manager package interface */
 struct dm_impl dm_X_impl = {
     X_close,
@@ -2072,7 +2092,7 @@ struct dm_impl dm_X_impl = {
     X_write_image,
     X_flush,
     X_sync,
-    NULL,
+    X_event_cmp,
     0,
     0,				/* no displaylist */
     0,                            /* no stereo */

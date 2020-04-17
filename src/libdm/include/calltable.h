@@ -99,7 +99,7 @@ struct dm_impl {
     int (*dm_write_image)(struct bu_vls *msgs, FILE *fp, struct dm *dmp);
     void (*dm_flush)(struct dm *dmp);
     void (*dm_sync)(struct dm *dmp);
-    int (*dm_event_type_cmp)(struct dm *dmp, int etype);
+    int (*dm_event_cmp)(struct dm *dmp, dm_event_t type, int event);
     unsigned long dm_id;          /**< @brief window id */
     int dm_displaylist;		/**< @brief !0 means device has displaylist */
     int dm_stereo;                /**< @brief stereo flag */

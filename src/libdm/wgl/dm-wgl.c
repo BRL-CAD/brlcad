@@ -2166,6 +2166,26 @@ wgl_internal_var(struct bu_vls *result, struct dm *dmp, const char *key)
     return 0;
 }
 
+int
+wgl_event_cmp(struct dm *dmp, dm_event_t type, int event)
+{
+    struct dm_wglvars *pubvars = (struct dm_wglvars *)dmp->i->dm_vars.pub_vars;
+    switch (type) {
+	case DM_MOTION_NOTIFY:
+	    return (event == pubvars->devmotionnotify) ? 1 : 0;
+	    break;
+	case DM_BUTTON_PRESS:
+	    return (event == pubvars->devbuttonpress) ? 1 : 0;
+	    break;
+	case DM_BUTTON_RELEASE:
+	    return (event == pubvars->devbuttonrelease) ? 1 : 0;
+	    break;
+	default:
+	    return -1;
+	    break;
+    };
+}
+
 struct dm_impl dm_wgl_impl = {
     wgl_close,
     wgl_drawBegin,
@@ -2211,7 +2231,7 @@ struct dm_impl dm_wgl_impl = {
     NULL,
     NULL,
     NULL,
-    NULL,
+    wgl_event_cmp,
     0,
     1,				/* has displaylist */
     0,                          /* no stereo by default */
