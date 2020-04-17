@@ -2012,6 +2012,20 @@ X_write_image(struct bu_vls *msgs, FILE *fp, struct dm *dmp)
     return 0;
 }
 
+void
+X_flush(struct dm *dmp)
+{
+    struct dm_Xvars *pub_vars = (struct dm_Xvars *)dmp->i->dm_vars.pub_vars;
+    XFlush(pub_vars->dpy);
+}
+
+void
+X_sync(struct dm *dmp)
+{
+    struct dm_Xvars *pub_vars = (struct dm_Xvars *)dmp->i->dm_vars.pub_vars;
+    XSync(pub_vars->dpy, 0);
+}
+
 /* Display Manager package interface */
 struct dm_impl dm_X_impl = {
     X_close,
@@ -2056,8 +2070,8 @@ struct dm_impl dm_X_impl = {
     X_geometry_request,
     X_internal_var,
     X_write_image,
-    NULL,
-    NULL,
+    X_flush,
+    X_sync,
     0,
     0,				/* no displaylist */
     0,                            /* no stereo */

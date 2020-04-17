@@ -45,7 +45,6 @@
 #include "rt/solid.h"
 #include "dm.h"
 #include "./include/private.h"
-#include "./include/dm_xvars.h"
 
 #ifdef DM_X
 #  include <X11/Xutil.h>
@@ -2259,20 +2258,16 @@ dmo_logfile_tcl(void *clientData, int argc, const char **argv)
  *
  */
 HIDDEN int
-#ifdef DM_X
 dmo_flush_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
-#else
-dmo_flush_tcl(void *UNUSED(clientData), int UNUSED(argc), const char **UNUSED(argv))
-#endif
 {
-#ifdef DM_X
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
     if (!dmop)
 	return BRLCAD_ERROR;
 
-    XFlush(((struct dm_xvars *)dmop->dmo_dmp->i->dm_vars.pub_vars)->dpy);
-#endif
+    if (!dmop->dmo_dmp->i->dm_flush) {
+	dmop->dmo_dmp->i->dm_flush(dmop->dmo_dmp);
+    }
 
     return BRLCAD_OK;
 }
@@ -2286,20 +2281,16 @@ dmo_flush_tcl(void *UNUSED(clientData), int UNUSED(argc), const char **UNUSED(ar
  *
  */
 HIDDEN int
-#ifdef DM_X
 dmo_sync_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
-#else
-dmo_sync_tcl(void *UNUSED(clientData), int UNUSED(argc), const char **UNUSED(argv))
-#endif
 {
-#ifdef DM_X
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
     if (!dmop)
 	return BRLCAD_ERROR;
 
-    XSync(((struct dm_xvars *)dmop->dmo_dmp->i->dm_vars.pub_vars)->dpy, 0);
-#endif
+    if (!dmop->dmo_dmp->i->dm_sync) {
+	dmop->dmo_dmp->i->dm_sync(dmop->dmo_dmp);
+    }
 
     return BRLCAD_OK;
 }
@@ -2355,14 +2346,13 @@ dmo_size_tcl(void *clientData, int argc, const char **argv)
 	    }
 	}
 
-#if defined(DM_X) || defined(DM_OGL) || defined(DM_OGL) || defined(DM_WGL)
-	Tk_GeometryRequest(((struct dm_xvars *)dmop->dmo_dmp->i->dm_vars.pub_vars)->xtkwin,
-			   width, height);
-	return BRLCAD_OK;
-#else
-	bu_log("Sorry, support for 'size' command is unavailable.\n");
-	return BRLCAD_ERROR;
-#endif
+	if (dmop->dmo_dmp->i->dm_geometry_request) {
+	    dmop->dmo_dmp->i->dm_geometry_request(dmop->dmo_dmp, width, height);
+	    return BRLCAD_OK;
+	} else {
+	    bu_log("Sorry, support for 'size' command is unavailable.\n");
+	    return BRLCAD_ERROR;
+	}
     }
 
     bu_vls_printf(&vls, "helplib_alias dm_size %s", argv[1]);
