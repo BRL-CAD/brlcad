@@ -2009,8 +2009,6 @@ dmo_perspective_tcl(void *clientData, int argc, const char **argv)
 }
 
 
-#if defined(DM_X) || defined(DM_OGL)
-
 HIDDEN int
 dmo_png_cmd(struct dm_obj *dmop,
 	    int argc,
@@ -2050,10 +2048,6 @@ dmo_png_cmd(struct dm_obj *dmop,
     return (ret) ? BRLCAD_ERROR : BRLCAD_OK;
 }
 
-
-#endif /* defined(DM_X) || defined(DM_OGL) */
-
-
 /*
  * Write the pixels to a file in png format.
  *
@@ -2062,23 +2056,14 @@ dmo_png_cmd(struct dm_obj *dmop,
  *
  */
 HIDDEN int
-#if defined(DM_X) || defined(DM_OGL)
 dmo_png_tcl(void *clientData, int argc, const char **argv)
-#else
-dmo_png_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
-#endif
 {
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
     if (!dmop || !dmop->interp)
 	return BRLCAD_ERROR;
 
-#if defined(DM_X) || defined(DM_OGL)
     return dmo_png_cmd(dmop, argc-1, argv+1);
-#else
-    bu_log("Sorry, support for the 'png' command is unavailable.\n");
-    return 0;
-#endif
 }
 
 
