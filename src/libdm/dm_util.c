@@ -31,16 +31,25 @@
 #    include <GL/gl.h>
 #  endif
 
-#if defined(DM_OGL) || defined(DM_WGL)
 int
 drawLine3D(struct dm *dmp, point_t pt1, point_t pt2, const char *log_bu, float *wireColor)
 {
     static float black[4] = {0.0, 0.0, 0.0, 0.0};
-    GLdouble pt[3];
 
-    if (dmp->i->dm_debugLevel)
+    if (!dmp) {
+	return BRLCAD_ERROR;
+    }
+
+    if (dmp->i->dm_debugLevel) {
 	bu_log("%s", log_bu);
+	bu_log("drawLine3D: %f,%f,%f -> %f,%f,%f", V3ARGS(pt1), V3ARGS(pt2));
+	if (wireColor) {
+	    bu_log("drawLine3D: have wirecolor");
+	}
+    }
 
+#ifdef HAVE_GL_GL_H
+    GLdouble pt[3];
     if (dmp->i->dm_debugLevel) {
 	GLfloat pmat[16];
 
@@ -74,6 +83,7 @@ drawLine3D(struct dm *dmp, point_t pt1, point_t pt2, const char *log_bu, float *
     VMOVE(pt, pt2); /* fastf_t to GLdouble */
     glVertex3dv(pt);
     glEnd();
+#endif
 
     return BRLCAD_OK;
 }
@@ -83,10 +93,22 @@ drawLines3D(struct dm *dmp, int npoints, point_t *points, int lflag, const char 
 {
     register int i;
     static float black[4] = {0.0, 0.0, 0.0, 0.0};
+    if (!dmp) {
+	return BRLCAD_ERROR;
+    }
+    if (npoints < 2 || (!lflag && npoints%2)) {
+	return BRLCAD_OK;
+    }
 
-    if (dmp->i->dm_debugLevel)
+    if (dmp->i->dm_debugLevel) {
 	bu_log("%s", log_bu);
+	bu_log("drawLines3D %d pnts, flag %d: %f,%f,%f -> %f,%f,%f", npoints, lflag, V3ARGS(points[0]), V3ARGS(points[npoints - 1]));
+	if (wireColor) {
+	    bu_log("drawLine3D: have wirecolor");
+	}
+    }
 
+#ifdef HAVE_GL_GL_H
     if (dmp->i->dm_debugLevel) {
 	GLfloat pmat[16];
 
@@ -104,8 +126,6 @@ drawLines3D(struct dm *dmp, int npoints, point_t *points, int lflag, const char 
 	bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
     }
 
-    if (npoints < 2 || (!lflag && npoints%2))
-	return BRLCAD_OK;
 
     if (dmp->i->dm_light) {
 	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, wireColor);
@@ -129,6 +149,7 @@ drawLines3D(struct dm *dmp, int npoints, point_t *points, int lflag, const char 
     }
 
     glEnd();
+#endif
 
     return BRLCAD_OK;
 }
@@ -136,9 +157,16 @@ drawLines3D(struct dm *dmp, int npoints, point_t *points, int lflag, const char 
 int
 drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2, const char *log_bu)
 {
-    if (dmp->i->dm_debugLevel)
-	bu_log("%s", log_bu);
+    if (!dmp) {
+	return BRLCAD_ERROR;
+    }
 
+    if (dmp->i->dm_debugLevel) {
+	bu_log("%s", log_bu);
+	bu_log("drawLine2D: %f,%f -> %f,%f", X1, Y1, X2, Y2);
+    }
+
+#ifdef HAVE_GL_GL_H
     if (dmp->i->dm_debugLevel) {
 	GLfloat pmat[16];
 
@@ -160,10 +188,10 @@ drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2, const
     glVertex2f(X1, Y1);
     glVertex2f(X2, Y2);
     glEnd();
+#endif
 
     return BRLCAD_OK;
 }
-#endif
 
 int
 draw_Line3D(struct dm *dmp, point_t pt1, point_t pt2)
