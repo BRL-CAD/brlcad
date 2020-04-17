@@ -32,8 +32,8 @@
 #include "tk.h"
 #include "rt/solid.h"
 #include "dm.h"
-#include "dm_xvars.h"
-#include "dm-ogl.h"
+#include "dm-osgl.h"
+#include "../glx/dm-ogl.h"
 #include <assert.h>
 
 #if 1
@@ -343,7 +343,7 @@ dm_osgInit(struct dm *dmp)
     assert(dmp);
     assert(!dmp->dm_osgData);
 
-    win = ((struct dm_xvars *)(dmp->dm_vars.pub_vars))->win;
+    win = ((struct dm_osglvars *)(dmp->dm_vars.pub_vars))->win;
 
     //create our graphics context directly so we can pass our own window
     osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits;

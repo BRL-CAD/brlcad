@@ -540,7 +540,6 @@ common_dm(int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-#if defined(DM_X) || defined(DM_TK) || defined(DM_OGL) || defined(DM_WGL) || defined(DM_OSGL)
     if (BU_STR_EQUAL(argv[0], "getx")) {
 	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 	if (argc == 1) {
@@ -553,7 +552,6 @@ common_dm(int argc, const char *argv[])
 	bu_vls_free(&tmp_vls);
 	return TCL_OK;
     }
-#endif
 
     if (BU_STR_EQUAL(argv[0], "bg")) {
 	int r, g, b;

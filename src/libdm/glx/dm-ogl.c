@@ -78,7 +78,7 @@
 #include "rt/solid.h"
 #include "dm.h"
 #include "../null/dm-Null.h"
-#include "../include/dm_xvars.h"
+//#include "./dm-glx.h"
 #include "./fb_ogl.h"
 #include "./dm-ogl.h"
 
@@ -186,7 +186,7 @@ HIDDEN int
 ogl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
     struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_glxvars *pubvars = (struct dm_glxvars *)dmp->i->dm_vars.pub_vars;
     struct ogl_vars *privars = (struct ogl_vars *)dmp->i->dm_vars.priv_vars;
     if (dmp->i->dm_debugLevel == 1)
 	bu_log("ogl_setBGColor()\n");
@@ -226,7 +226,7 @@ ogl_configureWin_guts(struct dm *dmp, int force)
     XWindowAttributes xwa;
     XFontStruct *newfontstruct;
 
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_glxvars *pubvars = (struct dm_glxvars *)dmp->i->dm_vars.pub_vars;
     struct ogl_vars *privars = (struct ogl_vars *)dmp->i->dm_vars.priv_vars;
 
     if (dmp->i->dm_debugLevel)
@@ -399,7 +399,7 @@ ogl_reshape(struct dm *dmp, int width, int height)
 HIDDEN int
 ogl_makeCurrent(struct dm *dmp)
 {
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_glxvars *pubvars = (struct dm_glxvars *)dmp->i->dm_vars.pub_vars;
     struct ogl_vars *privars = (struct ogl_vars *)dmp->i->dm_vars.priv_vars;
 
     if (dmp->i->dm_debugLevel)
@@ -419,7 +419,7 @@ ogl_makeCurrent(struct dm *dmp)
 HIDDEN int
 ogl_configureWin(struct dm *dmp, int force)
 {
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_glxvars *pubvars = (struct dm_glxvars *)dmp->i->dm_vars.pub_vars;
     struct ogl_vars *privars = (struct ogl_vars *)dmp->i->dm_vars.priv_vars;
 
     if (!glXMakeCurrent(pubvars->dpy,
@@ -475,7 +475,7 @@ ogl_setLight(struct dm *dmp, int lighting_on)
 HIDDEN XVisualInfo *
 ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
 {
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_glxvars *pubvars = (struct dm_glxvars *)dmp->i->dm_vars.pub_vars;
     struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
     XVisualInfo *vip, vitemp, *vibase, *maxvip;
     int tries, baddepth;
@@ -620,7 +620,7 @@ ogl_choose_visual(struct dm *dmp, Tk_Window tkwin)
 HIDDEN int
 ogl_close(struct dm *dmp)
 {
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_glxvars *pubvars = (struct dm_glxvars *)dmp->i->dm_vars.pub_vars;
     struct ogl_vars *privars = (struct ogl_vars *)dmp->i->dm_vars.priv_vars;
 
     if (pubvars->dpy) {
@@ -642,7 +642,7 @@ ogl_close(struct dm *dmp)
     bu_vls_free(&dmp->i->dm_tkName);
     bu_vls_free(&dmp->i->dm_dName);
     bu_free(dmp->i->dm_vars.priv_vars, "ogl_close: ogl_vars");
-    bu_free(dmp->i->dm_vars.pub_vars, "ogl_close: dm_xvars");
+    bu_free(dmp->i->dm_vars.pub_vars, "ogl_close: dm_glxvars");
     BU_PUT(dmp->i, struct dm_impl);
     BU_PUT(dmp, struct dm);
 
@@ -682,7 +682,7 @@ ogl_open(Tcl_Interp *vinterp, int argc, char **argv)
     Tk_Window tkwin = (Tk_Window)NULL;
     int screen_number = -1;
 
-    struct dm_xvars *pubvars = NULL;
+    struct dm_glxvars *pubvars = NULL;
     struct ogl_vars *privvars = NULL;
 
     if ((tkwin = Tk_MainWindow(interp)) == NULL) {
@@ -701,12 +701,12 @@ ogl_open(Tcl_Interp *vinterp, int argc, char **argv)
     dmp->i->dm_bits_per_channel = 8;
     bu_vls_init(&(dmp->i->dm_log));
 
-    BU_ALLOC(dmp->i->dm_vars.pub_vars, struct dm_xvars);
+    BU_ALLOC(dmp->i->dm_vars.pub_vars, struct dm_glxvars);
     if (dmp->i->dm_vars.pub_vars == (void *)NULL) {
 	bu_free(dmp, "ogl_open: dmp");
 	return DM_NULL;
     }
-    pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    pubvars = (struct dm_glxvars *)dmp->i->dm_vars.pub_vars;
 
     BU_ALLOC(dmp->i->dm_vars.priv_vars, struct ogl_vars);
     if (dmp->i->dm_vars.priv_vars == (void *)NULL) {
@@ -1039,8 +1039,8 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	old_glxContext = privars->glxc;
 
 	if ((privars->glxc =
-	     glXCreateContext(((struct dm_xvars *)dmp1->i->dm_vars.pub_vars)->dpy,
-			      ((struct dm_xvars *)dmp1->i->dm_vars.pub_vars)->vip,
+	     glXCreateContext(((struct dm_glxvars *)dmp1->i->dm_vars.pub_vars)->dpy,
+			      ((struct dm_glxvars *)dmp1->i->dm_vars.pub_vars)->vip,
 			      (GLXContext)NULL, GL_TRUE))==NULL) {
 	    bu_log("ogl_share_dlist: couldn't create glXContext.\nUsing old context\n.");
 	    privars->glxc = old_glxContext;
@@ -1048,8 +1048,8 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	    return BRLCAD_ERROR;
 	}
 
-	if (!glXMakeCurrent(((struct dm_xvars *)dmp1->i->dm_vars.pub_vars)->dpy,
-			    ((struct dm_xvars *)dmp1->i->dm_vars.pub_vars)->win,
+	if (!glXMakeCurrent(((struct dm_glxvars *)dmp1->i->dm_vars.pub_vars)->dpy,
+			    ((struct dm_glxvars *)dmp1->i->dm_vars.pub_vars)->win,
 			    privars->glxc)) {
 	    bu_log("ogl_share_dlist: Couldn't make context current\nUsing old context\n.");
 	    privars->glxc = old_glxContext;
@@ -1077,7 +1077,7 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	    glDrawBuffer(GL_FRONT);
 
 	/* this is important so that ogl_configureWin knows to set the font */
-	((struct dm_xvars *)dmp1->i->dm_vars.pub_vars)->fontstruct = NULL;
+	((struct dm_glxvars *)dmp1->i->dm_vars.pub_vars)->fontstruct = NULL;
 
 	/* do viewport, ortho commands and initialize font */
 	(void)ogl_configureWin_guts(dmp1, 1);
@@ -1110,16 +1110,16 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	privars->face_flag = 1; /* faceplate matrix is on top of stack */
 
 	/* destroy old context */
-	glXMakeCurrent(((struct dm_xvars *)dmp1->i->dm_vars.pub_vars)->dpy, None, NULL);
-	glXDestroyContext(((struct dm_xvars *)dmp1->i->dm_vars.pub_vars)->dpy, old_glxContext);
+	glXMakeCurrent(((struct dm_glxvars *)dmp1->i->dm_vars.pub_vars)->dpy, None, NULL);
+	glXDestroyContext(((struct dm_glxvars *)dmp1->i->dm_vars.pub_vars)->dpy, old_glxContext);
     } else {
 	/* dmp1 will share its display lists with dmp2 */
 
 	old_glxContext = ((struct ogl_vars *)dmp2->i->dm_vars.priv_vars)->glxc;
 
 	if ((((struct ogl_vars *)dmp2->i->dm_vars.priv_vars)->glxc =
-	     glXCreateContext(((struct dm_xvars *)dmp2->i->dm_vars.pub_vars)->dpy,
-			      ((struct dm_xvars *)dmp2->i->dm_vars.pub_vars)->vip,
+	     glXCreateContext(((struct dm_glxvars *)dmp2->i->dm_vars.pub_vars)->dpy,
+			      ((struct dm_glxvars *)dmp2->i->dm_vars.pub_vars)->vip,
 			      privars->glxc,
 			      GL_TRUE))==NULL) {
 	    bu_log("ogl_share_dlist: couldn't create glXContext.\nUsing old context\n.");
@@ -1128,8 +1128,8 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	    return BRLCAD_ERROR;
 	}
 
-	if (!glXMakeCurrent(((struct dm_xvars *)dmp2->i->dm_vars.pub_vars)->dpy,
-			    ((struct dm_xvars *)dmp2->i->dm_vars.pub_vars)->win,
+	if (!glXMakeCurrent(((struct dm_glxvars *)dmp2->i->dm_vars.pub_vars)->dpy,
+			    ((struct dm_glxvars *)dmp2->i->dm_vars.pub_vars)->win,
 			    ((struct ogl_vars *)dmp2->i->dm_vars.priv_vars)->glxc)) {
 	    bu_log("ogl_share_dlist: Couldn't make context current\nUsing old context\n.");
 	    ((struct ogl_vars *)dmp2->i->dm_vars.priv_vars)->glxc = old_glxContext;
@@ -1179,8 +1179,8 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 	((struct ogl_vars *)dmp2->i->dm_vars.priv_vars)->face_flag = 1; /* faceplate matrix is on top of stack */
 
 	/* destroy old context */
-	glXMakeCurrent(((struct dm_xvars *)dmp2->i->dm_vars.pub_vars)->dpy, None, NULL);
-	glXDestroyContext(((struct dm_xvars *)dmp2->i->dm_vars.pub_vars)->dpy, old_glxContext);
+	glXMakeCurrent(((struct dm_glxvars *)dmp2->i->dm_vars.pub_vars)->dpy, None, NULL);
+	glXDestroyContext(((struct dm_glxvars *)dmp2->i->dm_vars.pub_vars)->dpy, old_glxContext);
     }
 
     return BRLCAD_OK;
@@ -1193,7 +1193,7 @@ ogl_share_dlist(struct dm *dmp1, struct dm *dmp2)
 HIDDEN int
 ogl_drawBegin(struct dm *dmp)
 {
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_glxvars *pubvars = (struct dm_glxvars *)dmp->i->dm_vars.pub_vars;
     struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
     struct ogl_vars *privars = (struct ogl_vars *)dmp->i->dm_vars.priv_vars;
 
@@ -1282,7 +1282,7 @@ ogl_drawBegin(struct dm *dmp)
 HIDDEN int
 ogl_drawEnd(struct dm *dmp)
 {
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_glxvars *pubvars = (struct dm_glxvars *)dmp->i->dm_vars.pub_vars;
     struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
     struct ogl_vars *privars = (struct ogl_vars *)dmp->i->dm_vars.priv_vars;
 
@@ -2358,7 +2358,7 @@ ogl_openFb(struct dm *dmp)
     struct fb_platform_specific *fb_ps;
     struct ogl_fb_info *ofb_ps;
     struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->i->m_vars;
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_glxvars *pubvars = (struct dm_glxvars *)dmp->i->dm_vars.pub_vars;
     struct ogl_vars *privars = (struct ogl_vars *)dmp->i->dm_vars.priv_vars;
 
     fb_ps = fb_get_platform_specific(FB_OGL_MAGIC);

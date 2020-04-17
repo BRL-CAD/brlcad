@@ -28,12 +28,18 @@
 
 #include "common.h"
 
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+
 #ifdef HAVE_GL_GLX_H
 #  include <GL/glx.h>
 #endif
 #ifdef HAVE_GL_GL_H
 #  include <GL/gl.h>
 #endif
+
+#include "tk.h"
+#define HAVE_X11_TYPES 1
 
 #include "bu/vls.h"
 

@@ -28,6 +28,11 @@
 
 #include "common.h"
 
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+
+#include "tk.h"
+#define HAVE_X11_TYPES 1
 
 #define CMAP_BASE 40
 #define CUBE_DIMENSION 6
@@ -47,6 +52,20 @@ struct x_vars {
     unsigned long pixels[NUM_PIXELS];
     fastf_t ppmm_x;		/* pixel per mm in x */
     fastf_t ppmm_y;		/* pixel per mm in y */
+};
+
+struct dm_Xvars {
+    Display *dpy;
+    Window win;
+    Tk_Window top;
+    Tk_Window xtkwin;
+    int depth;
+    Colormap cmap;
+    XVisualInfo *vip;
+    XFontStruct *fontstruct;
+    int devmotionnotify;
+    int devbuttonpress;
+    int devbuttonrelease;
 };
 
 #endif /* DM_X_H */

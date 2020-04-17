@@ -53,13 +53,12 @@
 #include "raytrace.h"
 #include "dm.h"
 #include "dm-Null.h"
-#include "./dm_xvars.h"
 #include "dm.h"
 #include "rt/solid.h"
 #include "./private.h"
 
 #include "./fb_osgl.h"
-#include "dm-osgl.h"
+#include "./dm-osgl.h"
 
 /* For Tk, we need to offset when thinking about screen size in
  * order to allow for the Mac OSX top-of-screen toolbar - Tk
@@ -197,7 +196,7 @@ osgl_configureWin_guts(struct dm *dmp, int force)
 {
     int width = 0;
     int height = 0;
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_osglvars *pubvars = (struct dm_osglvars *)dmp->i->dm_vars.pub_vars;
 #if !defined(_WIN32)
     int bl = Tk_InternalBorderLeft(Tk_Parent(pubvars->xtkwin));
     int bt = Tk_InternalBorderTop(Tk_Parent(pubvars->xtkwin));
@@ -361,16 +360,16 @@ osgl_close(struct dm *dmp)
     ((struct osgl_vars *)dmp->i->dm_vars.priv_vars)->graphicsContext->releaseContext();
 
 
-    if (((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->xtkwin) {
-	Tk_DeleteEventHandler(((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->xtkwin, VisibilityChangeMask, OSGEventProc, (ClientData)dmp);
-	Tk_DestroyWindow(((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->xtkwin);
+    if (((struct dm_osglvars *)dmp->i->dm_vars.pub_vars)->xtkwin) {
+	Tk_DeleteEventHandler(((struct dm_osglvars *)dmp->i->dm_vars.pub_vars)->xtkwin, VisibilityChangeMask, OSGEventProc, (ClientData)dmp);
+	Tk_DestroyWindow(((struct dm_osglvars *)dmp->i->dm_vars.pub_vars)->xtkwin);
     }
 
     bu_vls_free(&dmp->i->dm_pathName);
     bu_vls_free(&dmp->i->dm_tkName);
     bu_vls_free(&dmp->i->dm_dName);
     bu_free(dmp->i->dm_vars.priv_vars, "osgl_close: osgl_vars");
-    bu_free(dmp->i->dm_vars.pub_vars, "osgl_close: dm_xvars");
+    bu_free(dmp->i->dm_vars.pub_vars, "osgl_close: dm_osglvars");
     bu_free(dmp, "osgl_close: dmp");
 
     return TCL_OK;
@@ -393,7 +392,7 @@ osgl_open(void *vinterp, int argc, char **argv)
     Tk_Window tkwin = (Tk_Window)NULL;
     Tcl_Interp *interp = (Tcl_Interp *)vinterp;
 
-    struct dm_xvars *pubvars = NULL;
+    struct dm_osglvars *pubvars = NULL;
     struct osgl_vars *privvars = NULL;
 
     if ((tkwin = Tk_MainWindow(interp)) == NULL) {
@@ -410,12 +409,12 @@ osgl_open(void *vinterp, int argc, char **argv)
     dmp->i->dm_bits_per_channel = 8;
     bu_vls_init(&(dmp->i->dm_log));
 
-    BU_ALLOC(dmp->i->dm_vars.pub_vars, struct dm_xvars);
+    BU_ALLOC(dmp->i->dm_vars.pub_vars, struct dm_osglvars);
     if (dmp->i->dm_vars.pub_vars == (void *)NULL) {
 	bu_free(dmp, "osgl_open: dmp");
 	return DM_NULL;
     }
-    pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    pubvars = (struct dm_osglvars *)dmp->i->dm_vars.pub_vars;
 
     BU_ALLOC(dmp->i->dm_vars.priv_vars, struct osgl_vars);
     if (dmp->i->dm_vars.priv_vars == (void *)NULL) {
@@ -598,9 +597,9 @@ osgl_open(void *vinterp, int argc, char **argv)
     // something showing how to handle Cocoa for the Mac, if that's possible
     osg::ref_ptr<osg::GraphicsContext::Traits> traits = new osg::GraphicsContext::Traits;
 #if defined(_WIN32)
-    osg::ref_ptr<osg::Referenced> windata = new osgViewer::GraphicsWindowWin32::WindowData(Tk_GetHWND(((struct dm_xvars *)(dmp->i->dm_vars.pub_vars))->win));
+    osg::ref_ptr<osg::Referenced> windata = new osgViewer::GraphicsWindowWin32::WindowData(Tk_GetHWND(((struct dm_osglvars *)(dmp->i->dm_vars.pub_vars))->win));
 #else
-    osg::ref_ptr<osg::Referenced> windata = new osgViewer::GraphicsWindowX11::WindowData(((struct dm_xvars *)(dmp->i->dm_vars.pub_vars))->win);
+    osg::ref_ptr<osg::Referenced> windata = new osgViewer::GraphicsWindowX11::WindowData(((struct dm_osglvars *)(dmp->i->dm_vars.pub_vars))->win);
 #endif
 
     // Although we are not making direct use of osgViewer currently, we need its
@@ -726,8 +725,8 @@ osgl_share_dlist(struct dm *UNUSED(dmp1), struct dm *UNUSED(dmp2))
 	old_glxContext = ((struct osgl_vars *)dmp1->i->dm_vars.priv_vars)->glxc;
 
 	if ((((struct osgl_vars *)dmp1->i->dm_vars.priv_vars)->glxc =
-	     glXCreateContext(((struct dm_xvars *)dmp1->i->dm_vars.pub_vars)->dpy,
-			      ((struct dm_xvars *)dmp1->i->dm_vars.pub_vars)->vip,
+	     glXCreateContext(((struct dm_osglvars *)dmp1->i->dm_vars.pub_vars)->dpy,
+			      ((struct dm_osglvars *)dmp1->i->dm_vars.pub_vars)->vip,
 			      (GLXContext)NULL, GL_TRUE))==NULL) {
 	    bu_log("osgl_share_dlist: couldn't create glXContext.\nUsing old context\n.");
 	    ((struct osgl_vars *)dmp1->i->dm_vars.priv_vars)->glxc = old_glxContext;
@@ -735,8 +734,8 @@ osgl_share_dlist(struct dm *UNUSED(dmp1), struct dm *UNUSED(dmp2))
 	    return TCL_ERROR;
 	}
 
-	if (!glXMakeCurrent(((struct dm_xvars *)dmp1->i->dm_vars.pub_vars)->dpy,
-			    ((struct dm_xvars *)dmp1->i->dm_vars.pub_vars)->win,
+	if (!glXMakeCurrent(((struct dm_osglvars *)dmp1->i->dm_vars.pub_vars)->dpy,
+			    ((struct dm_osglvars *)dmp1->i->dm_vars.pub_vars)->win,
 			    ((struct osgl_vars *)dmp1->i->dm_vars.priv_vars)->glxc)) {
 	    bu_log("osgl_share_dlist: Couldn't make context current\nUsing old context\n.");
 	    ((struct osgl_vars *)dmp1->i->dm_vars.priv_vars)->glxc = old_glxContext;
@@ -764,7 +763,7 @@ osgl_share_dlist(struct dm *UNUSED(dmp1), struct dm *UNUSED(dmp2))
 	    glDrawBuffer(GL_FRONT);
 
 	/* this is important so that osgl_configureWin knows to set the font */
-	((struct dm_xvars *)dmp1->i->dm_vars.pub_vars)->fontstruct = NULL;
+	((struct dm_osglvars *)dmp1->i->dm_vars.pub_vars)->fontstruct = NULL;
 
 	/* do viewport, ortho commands and initialize font */
 	(void)osgl_configureWin_guts(dmp1, 1);
@@ -797,16 +796,16 @@ osgl_share_dlist(struct dm *UNUSED(dmp1), struct dm *UNUSED(dmp2))
 	((struct osgl_vars *)dmp1->i->dm_vars.priv_vars)->face_flag = 1; /* faceplate matrix is on top of stack */
 
 	/* destroy old context */
-	glXMakeCurrent(((struct dm_xvars *)dmp1->i->dm_vars.pub_vars)->dpy, None, NULL);
-	glXDestroyContext(((struct dm_xvars *)dmp1->i->dm_vars.pub_vars)->dpy, old_glxContext);
+	glXMakeCurrent(((struct dm_osglvars *)dmp1->i->dm_vars.pub_vars)->dpy, None, NULL);
+	glXDestroyContext(((struct dm_osglvars *)dmp1->i->dm_vars.pub_vars)->dpy, old_glxContext);
     } else {
 	/* dmp1 will share its display lists with dmp2 */
 
 	old_glxContext = ((struct osgl_vars *)dmp2->i->dm_vars.priv_vars)->glxc;
 
 	if ((((struct osgl_vars *)dmp2->i->dm_vars.priv_vars)->glxc =
-	     glXCreateContext(((struct dm_xvars *)dmp2->i->dm_vars.pub_vars)->dpy,
-			      ((struct dm_xvars *)dmp2->i->dm_vars.pub_vars)->vip,
+	     glXCreateContext(((struct dm_osglvars *)dmp2->i->dm_vars.pub_vars)->dpy,
+			      ((struct dm_osglvars *)dmp2->i->dm_vars.pub_vars)->vip,
 			      ((struct osgl_vars *)dmp1->i->dm_vars.priv_vars)->glxc,
 			      GL_TRUE))==NULL) {
 	    bu_log("osgl_share_dlist: couldn't create glXContext.\nUsing old context\n.");
@@ -815,8 +814,8 @@ osgl_share_dlist(struct dm *UNUSED(dmp1), struct dm *UNUSED(dmp2))
 	    return TCL_ERROR;
 	}
 
-	if (!glXMakeCurrent(((struct dm_xvars *)dmp2->i->dm_vars.pub_vars)->dpy,
-			    ((struct dm_xvars *)dmp2->i->dm_vars.pub_vars)->win,
+	if (!glXMakeCurrent(((struct dm_osglvars *)dmp2->i->dm_vars.pub_vars)->dpy,
+			    ((struct dm_osglvars *)dmp2->i->dm_vars.pub_vars)->win,
 			    ((struct osgl_vars *)dmp2->i->dm_vars.priv_vars)->glxc)) {
 	    bu_log("osgl_share_dlist: Couldn't make context current\nUsing old context\n.");
 	    ((struct osgl_vars *)dmp2->i->dm_vars.priv_vars)->glxc = old_glxContext;
@@ -866,8 +865,8 @@ osgl_share_dlist(struct dm *UNUSED(dmp1), struct dm *UNUSED(dmp2))
 	((struct osgl_vars *)dmp2->i->dm_vars.priv_vars)->face_flag = 1; /* faceplate matrix is on top of stack */
 
 	/* destroy old context */
-	glXMakeCurrent(((struct dm_xvars *)dmp2->i->dm_vars.pub_vars)->dpy, None, NULL);
-	glXDestroyContext(((struct dm_xvars *)dmp2->i->dm_vars.pub_vars)->dpy, old_glxContext);
+	glXMakeCurrent(((struct dm_osglvars *)dmp2->i->dm_vars.pub_vars)->dpy, None, NULL);
+	glXDestroyContext(((struct dm_osglvars *)dmp2->i->dm_vars.pub_vars)->dpy, old_glxContext);
     }
 #endif
     return TCL_OK;
@@ -2257,7 +2256,7 @@ osgl_openFb(struct dm *dmp)
     struct fb_platform_specific *fb_ps;
     struct osgl_fb_info *ofb_ps;
     struct modifiable_osgl_vars *mvars = (struct modifiable_osgl_vars *)dmp->i->m_vars;
-    /*struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;*/
+    /*struct dm_osglvars *pubvars = (struct dm_osglvars *)dmp->i->dm_vars.pub_vars;*/
     struct osgl_vars *privars = (struct osgl_vars *)dmp->i->dm_vars.priv_vars;
 
     fb_ps = fb_get_platform_specific(FB_OSGL_MAGIC);

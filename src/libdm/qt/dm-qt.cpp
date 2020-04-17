@@ -29,8 +29,6 @@
 #  include <sys/time.h>
 #endif
 
-#include "dm-qt.h"
-
 #include "tcl.h"
 #include "tk.h"
 #include "bu/log.h"
@@ -38,9 +36,9 @@
 #include "bu/parse.h"
 #include "dm.h"
 #include "private.h"
-#include "./dm_xvars.h"
 #include "dm-Null.h"
 #include "./fb_qt.h"
+#include "./dm-qt.h"
 
 #define DM_QT_DEFAULT_POINT_SIZE 1.0
 
@@ -63,7 +61,7 @@ qt_sendRepaintEvent(struct dm *dmp)
 HIDDEN int
 qt_close(struct dm *dmp)
 {
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_qtvars *pubvars = (struct dm_qtvars *)dmp->i->dm_vars.pub_vars;
     struct qt_vars *privars = (struct qt_vars *)dmp->i->dm_vars.priv_vars;
 
     if (dmp->i->dm_debugLevel) {
@@ -83,7 +81,7 @@ qt_close(struct dm *dmp)
     bu_vls_free(&dmp->i->dm_tkName);
     bu_vls_free(&dmp->i->dm_dName);
     bu_free((void *)dmp->i->dm_vars.priv_vars, "qt_close: qt_vars");
-    bu_free((void *)dmp->i->dm_vars.pub_vars, "qt_close: dm_xvars");
+    bu_free((void *)dmp->i->dm_vars.pub_vars, "qt_close: dm_qtvars");
     bu_free((void *)dmp, "qt_close: dmp");
 
     return TCL_OK;
@@ -574,7 +572,7 @@ qt_reshape(struct dm *dmp, int width, int height)
 HIDDEN int
 qt_configureWin(struct dm *dmp, int force)
 {
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_qtvars *pubvars = (struct dm_qtvars *)dmp->i->dm_vars.pub_vars;
     struct qt_vars *privars = (struct qt_vars *)dmp->i->dm_vars.priv_vars;
 
     int width = Tk_Width(pubvars->xtkwin);
@@ -783,7 +781,7 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
     struct bu_vls str = BU_VLS_INIT_ZERO;
     Tk_Window tkwin;
 
-    struct dm_xvars *pubvars = NULL;
+    struct dm_qtvars *pubvars = NULL;
     struct qt_vars *privars = NULL;
 
     if (argc < 0 || !argv) {
@@ -799,8 +797,8 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
     *dmp = dm_qt; /* struct copy */
     dmp->i->dm_interp = interp;
 
-    BU_ALLOC(dmp->i->dm_vars.pub_vars, struct dm_xvars);
-    pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    BU_ALLOC(dmp->i->dm_vars.pub_vars, struct dm_qtvars);
+    pubvars = (struct dm_qtvars *)dmp->i->dm_vars.pub_vars;
 
     BU_ALLOC(dmp->i->dm_vars.priv_vars, struct qt_vars);
     privars = (struct qt_vars *)dmp->i->dm_vars.priv_vars;

@@ -61,7 +61,6 @@
 #include "dm.h"
 #include "./dm-tk.h"
 #include "../null/dm-Null.h"
-#include "../include/dm_xvars.h"
 #include "../include/private.h"
 #include "rt/solid.h"
 
@@ -81,7 +80,7 @@ extern int vectorThreshold;	/* defined in libdm/tcl.c */
 HIDDEN int
 tk_close(struct dm *dmp)
 {
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_tkvars *pubvars = (struct dm_tkvars *)dmp->i->dm_vars.pub_vars;
     struct tk_vars *privars = (struct tk_vars *)dmp->i->dm_vars.priv_vars;
 
     if (pubvars->dpy) {
@@ -119,7 +118,7 @@ tk_close(struct dm *dmp)
 HIDDEN int
 tk_drawBegin(struct dm *dmp)
 {
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_tkvars *pubvars = (struct dm_tkvars *)dmp->i->dm_vars.pub_vars;
     struct tk_vars *privars = (struct tk_vars *)dmp->i->dm_vars.priv_vars;
 
     XGCValues gcv;
@@ -154,7 +153,7 @@ tk_drawBegin(struct dm *dmp)
 HIDDEN int
 tk_drawEnd(struct dm *dmp)
 {
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_tkvars *pubvars = (struct dm_tkvars *)dmp->i->dm_vars.pub_vars;
     struct tk_vars *privars = (struct tk_vars *)dmp->i->dm_vars.priv_vars;
 
     if (dmp->i->dm_debugLevel)
@@ -169,7 +168,7 @@ tk_drawEnd(struct dm *dmp)
 
 
     /* Prevent lag between events and updates */
-    XSync(((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->dpy, 0);
+    XSync(((struct dm_tkvars *)dmp->i->dm_vars.pub_vars)->dpy, 0);
 
     return BRLCAD_OK;
 }
@@ -223,7 +222,7 @@ tk_drawVList(struct dm *dmp, struct bn_vlist *vp)
     fastf_t dist_prev=1.0;
     static int nvectors = 0;
 
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_tkvars *pubvars = (struct dm_tkvars *)dmp->i->dm_vars.pub_vars;
     struct tk_vars *privars = (struct tk_vars *)dmp->i->dm_vars.priv_vars;
 
     if (dmp->i->dm_debugLevel) {
@@ -504,7 +503,7 @@ HIDDEN int
 tk_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect)
 {
     int sx, sy;
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_tkvars *pubvars = (struct dm_tkvars *)dmp->i->dm_vars.pub_vars;
     struct tk_vars *privars = (struct tk_vars *)dmp->i->dm_vars.priv_vars;
 
     if (dmp->i->dm_debugLevel) {
@@ -540,7 +539,7 @@ tk_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size,
 HIDDEN int
 tk_drawLine2D(struct dm *dmp, fastf_t xpos1, fastf_t ypos1, fastf_t xpos2, fastf_t ypos2)
 {
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_tkvars *pubvars = (struct dm_tkvars *)dmp->i->dm_vars.pub_vars;
     struct tk_vars *privars = (struct tk_vars *)dmp->i->dm_vars.priv_vars;
     int sx1, sy1, sx2, sy2;
 
@@ -590,7 +589,7 @@ tk_drawLines3D(struct dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
 HIDDEN int
 tk_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 {
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_tkvars *pubvars = (struct dm_tkvars *)dmp->i->dm_vars.pub_vars;
     struct tk_vars *privars = (struct tk_vars *)dmp->i->dm_vars.priv_vars;
 
     int sx, sy;
@@ -615,7 +614,7 @@ tk_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 HIDDEN int
 tk_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
 {
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_tkvars *pubvars = (struct dm_tkvars *)dmp->i->dm_vars.pub_vars;
     struct tk_vars *privars = (struct tk_vars *)dmp->i->dm_vars.priv_vars;
 
     XColor color;
@@ -661,7 +660,7 @@ tk_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 	return BRLCAD_ERROR;
     }
 
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_tkvars *pubvars = (struct dm_tkvars *)dmp->i->dm_vars.pub_vars;
     struct tk_vars *privars = (struct tk_vars *)dmp->i->dm_vars.priv_vars;
 
     if (dmp->i->dm_debugLevel)
@@ -687,7 +686,7 @@ tk_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 HIDDEN int
 tk_setLineAttr(struct dm *dmp, int width, int style)
 {
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_tkvars *pubvars = (struct dm_tkvars *)dmp->i->dm_vars.pub_vars;
     struct tk_vars *privars = (struct tk_vars *)dmp->i->dm_vars.priv_vars;
 
     int linestyle;
@@ -756,7 +755,7 @@ tk_configureWin_guts(struct dm *dmp, int force)
     int h, w;
     Tcl_Interp *interp = (Tcl_Interp *)dmp->i->dm_interp;
 
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_tkvars *pubvars = (struct dm_tkvars *)dmp->i->dm_vars.pub_vars;
     struct tk_vars *privars = (struct tk_vars *)dmp->i->dm_vars.priv_vars;
 
 
@@ -856,7 +855,7 @@ int
 tk_geometry_request(struct dm *dmp, int width, int height)
 {
     if (!dmp) return -1;
-    Tk_GeometryRequest(((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->xtkwin, width, height);
+    Tk_GeometryRequest(((struct dm_tkvars *)dmp->i->dm_vars.pub_vars)->xtkwin, width, height);
     return 0;
 }
 
@@ -1013,8 +1012,8 @@ tk_open_dm(void *vinterp, int argc, char **argv)
     dmp->i = dmp_impl;
     dmp->i->dm_interp = interp;
 
-    BU_ALLOC(dmp->i->dm_vars.pub_vars, struct dm_xvars);
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    BU_ALLOC(dmp->i->dm_vars.pub_vars, struct dm_tkvars);
+    struct dm_tkvars *pubvars = (struct dm_tkvars *)dmp->i->dm_vars.pub_vars;
     BU_ALLOC(dmp->i->dm_vars.priv_vars, struct tk_vars);
     struct tk_vars *privars = (struct tk_vars *)dmp->i->dm_vars.priv_vars;
 

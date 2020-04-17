@@ -59,11 +59,9 @@
 #include "bu/endian.h"
 #include "bn.h"
 #include "dm.h"
-#include "./dm-X.h"
 #include "../null/dm-Null.h"
-#include "../include/dm_xvars.h"
-#include "dm.h"
 #include "./fb_X.h"
+#include "./dm-X.h"
 
 #include "rt/solid.h"
 
@@ -163,7 +161,7 @@ X_configureWin_guts(struct dm *dmp, int force)
     XWindowAttributes xwa;
     XFontStruct *newfontstruct;
     XGCValues gcv;
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_Xvars *pubvars = (struct dm_Xvars *)dmp->i->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
 
     XGetWindowAttributes(pubvars->dpy,
@@ -289,11 +287,11 @@ X_choose_visual(struct dm *dmp)
     int min_depth = 8;
     int *good = NULL;
     int screen;
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_Xvars *pubvars = (struct dm_Xvars *)dmp->i->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
 
     vibase = XGetVisualInfo(pubvars->dpy, 0, &vitemp, &num);
-    screen = DefaultScreen(((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->dpy);
+    screen = DefaultScreen(((struct dm_Xvars *)dmp->i->dm_vars.pub_vars)->dpy);
 
     good = (int *)bu_malloc(sizeof(int)*num, "alloc good visuals");
 
@@ -378,7 +376,7 @@ X_choose_visual(struct dm *dmp)
 HIDDEN int
 X_close(struct dm *dmp)
 {
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_Xvars *pubvars = (struct dm_Xvars *)dmp->i->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
 
     if (pubvars->dpy) {
@@ -408,7 +406,7 @@ X_close(struct dm *dmp)
     bu_vls_free(&dmp->i->dm_tkName);
     bu_vls_free(&dmp->i->dm_dName);
     bu_free((void *)dmp->i->dm_vars.priv_vars, "X_close: x_vars");
-    bu_free((void *)dmp->i->dm_vars.pub_vars, "X_close: dm_xvars");
+    bu_free((void *)dmp->i->dm_vars.pub_vars, "X_close: dm_Xvars");
     bu_free((void *)dmp->i, "X_close: dmp->i");
     bu_free((void *)dmp, "X_close: dmp");
 
@@ -443,7 +441,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     Tk_Window tkwin = (Tk_Window)NULL;
     Screen *screen = (Screen *)NULL;
 
-    struct dm_xvars *pubvars = NULL;
+    struct dm_Xvars *pubvars = NULL;
     struct x_vars *privars = NULL;
 
 #ifdef HAVE_TK
@@ -459,8 +457,8 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     dmp->i = dmpi;
     dmp->i->dm_interp = interp;
 
-    BU_ALLOC(dmp->i->dm_vars.pub_vars, struct dm_xvars);
-    pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    BU_ALLOC(dmp->i->dm_vars.pub_vars, struct dm_Xvars);
+    pubvars = (struct dm_Xvars *)dmp->i->dm_vars.pub_vars;
 
     BU_ALLOC(dmp->i->dm_vars.priv_vars, struct x_vars);
     privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
@@ -769,7 +767,7 @@ HIDDEN int
 X_drawBegin(struct dm *dmp)
 {
     XGCValues gcv;
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_Xvars *pubvars = (struct dm_Xvars *)dmp->i->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
 
     if (dmp->i->dm_debugLevel)
@@ -799,7 +797,7 @@ X_drawBegin(struct dm *dmp)
 HIDDEN int
 X_drawEnd(struct dm *dmp)
 {
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_Xvars *pubvars = (struct dm_Xvars *)dmp->i->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
 
     if (dmp->i->dm_debugLevel)
@@ -862,7 +860,7 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
     fastf_t pointSize = DM_X_DEFAULT_POINT_SIZE;
 
     static int nvectors = 0;
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_Xvars *pubvars = (struct dm_Xvars *)dmp->i->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
 
     /* delta is used in clipping to insure clipped endpoint is
@@ -1201,7 +1199,7 @@ HIDDEN int
 X_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect)
 {
     int sx, sy;
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_Xvars *pubvars = (struct dm_Xvars *)dmp->i->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
 
     if (dmp->i->dm_debugLevel) {
@@ -1232,7 +1230,7 @@ HIDDEN int
 X_drawLine2D(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2)
 {
     int sx1, sy1, sx2, sy2;
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_Xvars *pubvars = (struct dm_Xvars *)dmp->i->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
 
     sx1 = dm_Normal2Xx(dmp, x_1);
@@ -1278,7 +1276,7 @@ HIDDEN int
 X_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 {
     int sx, sy;
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_Xvars *pubvars = (struct dm_Xvars *)dmp->i->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
 
     sx = dm_Normal2Xx(dmp, x);
@@ -1302,7 +1300,7 @@ HIDDEN int
 X_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
 {
     XGCValues gcv;
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_Xvars *pubvars = (struct dm_Xvars *)dmp->i->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
 
     if (dmp->i->dm_debugLevel)
@@ -1343,7 +1341,7 @@ X_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, 
 HIDDEN int
 X_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_Xvars *pubvars = (struct dm_Xvars *)dmp->i->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
 
     if (dmp->i->dm_debugLevel)
@@ -1379,7 +1377,7 @@ HIDDEN int
 X_setLineAttr(struct dm *dmp, int width, int style)
 {
     int linestyle;
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_Xvars *pubvars = (struct dm_Xvars *)dmp->i->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
 
     if (dmp->i->dm_debugLevel)
@@ -1491,8 +1489,8 @@ X_getDisplayImage(struct dm *dmp, unsigned char **image)
     int blue_bits;
 
 
-    ximage_p = XGetImage(((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->dpy,
-			 ((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->win,
+    ximage_p = XGetImage(((struct dm_Xvars *)dmp->i->dm_vars.pub_vars)->dpy,
+			 ((struct dm_Xvars *)dmp->i->dm_vars.pub_vars)->win,
 			 0, 0,
 			 dmp->i->dm_width,
 			 dmp->i->dm_height,
@@ -1690,7 +1688,7 @@ X_openFb(struct dm *dmp)
 {
     struct fb_platform_specific *fb_ps;
     struct X24_fb_info *xfb_ps;
-    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->i->dm_vars.pub_vars;
+    struct dm_Xvars *pubvars = (struct dm_Xvars *)dmp->i->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->i->dm_vars.priv_vars;
 
     fb_ps = fb_get_platform_specific(FB_X24_MAGIC);
@@ -1714,6 +1712,8 @@ struct bu_structparse X_vparse[] = {
     {"%d",  1, "debug",         DM_O(dm_debugLevel),    dm_generic_hook, NULL, NULL},
     {"",    0, (char *)0,       0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
 };
+
+#define XVARS_MV_O(_m) offsetof(struct dm_Xvars, _m)
 
 struct bu_structparse dm_Xvars_vparse[] = {
     {"%x",      1,      "dpy",                  XVARS_MV_O(dpy),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },

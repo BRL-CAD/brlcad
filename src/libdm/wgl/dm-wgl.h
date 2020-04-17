@@ -33,6 +33,10 @@
 #  include <GL/gl.h>
 #endif
 
+#include "tk.h"
+#define HAVE_X11_TYPES 1
+#include "tkWinInt.h"
+
 #include "bu/vls.h"
 
 __BEGIN_DECLS

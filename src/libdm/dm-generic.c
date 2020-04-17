@@ -188,51 +188,18 @@ dm_share_dlist(struct dm *dmp1, struct dm *dmp2)
     }
 }
 
-/* TODO - these aren't truly generic, which suggest they need callbacks, but
- * put them here for now since it's better than what we were doing (exposing
- * dm_xvars.h as public API...) */
-
 void
-#if (defined HAVE_TK)
 dm_geometry_request(struct dm *dmp, int width, int height)
-#else
-dm_geometry_request(struct dm *dmp, int UNUSED(width), int UNUSED(height))
-#endif
 {
-    if (!dmp) return;
-#if (defined HAVE_TK)
-    Tk_GeometryRequest(((struct dm_xvars *)dmp->i->dm_vars.pub_vars)->xtkwin, width, height);
-#endif
+    if (!dmp || !dmp->i->dm_geometry_request) return;
+    (void)dmp->i->dm_geometry_request(dmp, width, height);
 }
-
-struct bu_structparse dm_xvars_vparse[] = {
-    {"%x",      1,      "dpy",                  XVARS_MV_O(dpy),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%x",      1,      "win",                  XVARS_MV_O(win),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%x",      1,      "top",                  XVARS_MV_O(top),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%x",      1,      "tkwin",                XVARS_MV_O(xtkwin),     BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",      1,      "depth",                XVARS_MV_O(depth),      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%x",      1,      "cmap",                 XVARS_MV_O(cmap),       BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-#if defined(DM_X) || defined (DM_OGL) || defined (DM_WGL)
-    {"%x",      1,      "vip",                  XVARS_MV_O(vip),        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%x",      1,      "fontstruct",           XVARS_MV_O(fontstruct), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-#endif
-    {"%d",      1,      "devmotionnotify",      XVARS_MV_O(devmotionnotify),    BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",      1,      "devbuttonpress",       XVARS_MV_O(devbuttonpress),     BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d",      1,      "devbuttonrelease",     XVARS_MV_O(devbuttonrelease),   BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"",        0,      (char *)0,              0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
-};
 
 void
 dm_internal_var(struct bu_vls *result, struct dm *dmp, const char *key)
 {
-    if (!dmp || !result) return;
-    if (!key) {
-	// Print all current vars
-	bu_vls_struct_print2(result, "dm internal X variables", dm_xvars_vparse, (const char *)dmp->i->dm_vars.pub_vars);
-	return;
-    }
-    // Print specific var
-    bu_vls_struct_item_named(result, dm_xvars_vparse, key, (const char *)dmp->i->dm_vars.pub_vars, ',');
+    if (!dmp || !result || !dmp->i->dm_internal_var) return;
+    (void)dmp->i->dm_internal_var(result, dmp, key);
 }
 
 /* Properly generic function */
