@@ -932,6 +932,8 @@ struct dm_impl dm_tk_impl = {
     tk_geometry_request,
     tk_internal_var,
     NULL,
+    NULL,
+    NULL,
     0,
     0,				/* no displaylist */
     0,				/* no stereo */

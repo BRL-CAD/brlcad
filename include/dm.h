@@ -294,6 +294,9 @@ DM_EXPORT extern int dm_set_fb_visible(struct dm *dmp, int is_fb_visible);
 // dmo_png_cmd behind the call table, so only provides PNG...
 DM_EXPORT extern int dm_write_image(struct bu_vls *msgs, FILE *fp, struct dm *dmp);
 
+DM_EXPORT extern void dm_flush(struct dm *dmp);
+DM_EXPORT extern void dm_sync(struct dm *dmp);
+
 /* TODO - dm_vp is supposed to go away, but until we figure it out
  * expose it here to allow dm hiding */
 DM_EXPORT extern fastf_t *dm_get_vp(struct dm *dmp);

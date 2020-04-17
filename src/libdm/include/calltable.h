@@ -97,6 +97,8 @@ struct dm_impl {
     int (*dm_geometry_request)(struct dm *dmp, int width, int height);
     int (*dm_internal_var)(struct bu_vls *result, struct dm *dmp, const char *key);
     int (*dm_write_image)(struct bu_vls *msgs, FILE *fp, struct dm *dmp);
+    void (*dm_flush)(struct dm *dmp);
+    void (*dm_sync)(struct dm *dmp);
     unsigned long dm_id;          /**< @brief window id */
     int dm_displaylist;		/**< @brief !0 means device has displaylist */
     int dm_stereo;                /**< @brief stereo flag */

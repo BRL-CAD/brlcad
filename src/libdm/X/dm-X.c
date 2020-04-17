@@ -2056,6 +2056,8 @@ struct dm_impl dm_X_impl = {
     X_geometry_request,
     X_internal_var,
     X_write_image,
+    NULL,
+    NULL,
     0,
     0,				/* no displaylist */
     0,                            /* no stereo */

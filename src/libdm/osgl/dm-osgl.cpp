@@ -2561,6 +2561,8 @@ struct dm_impl dm_osgl_impl = {
     osgl_geometry_request,
     osgl_internal_var,
     NULL,
+    NULL,
+    NULL,
     0,
     1,				/* has displaylist */
     0,                          /* no stereo by default */
