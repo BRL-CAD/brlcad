@@ -107,7 +107,6 @@ void fb_set_interface(struct fb *ifp, const char *interface_type)
     while (_if_list[i] != FB_NULL) {
 	if (bu_strncmp(interface_type, _if_list[i]->i->if_name+5, strlen(interface_type)) == 0) {
 	    /* found it, copy its struct in */
-	    *ifp = *(_if_list[i]);
 	    *ifp->i = *(_if_list[i]->i);
 	    return;
 	} else {
@@ -152,8 +151,8 @@ fb_put_platform_specific(struct fb_platform_specific *fb_p)
 struct fb *
 fb_open_existing(const char *file, int width, int height, struct fb_platform_specific *fb_p)
 {
-    struct fb *ifp = (struct fb *)calloc(sizeof(struct fb), 1);
-    if (!ifp) return NULL;
+    struct fb *ifp;
+    ifp = (struct fb *)calloc(sizeof(struct fb), 1);
     ifp->i = (struct fb_impl *) calloc(sizeof(struct fb_impl), 1);
     fb_set_interface(ifp, file);
     fb_set_magic(ifp, FB_MAGIC);
@@ -409,6 +408,7 @@ fb_open(const char *file, int width, int height)
 	if ((file = (const char *)getenv("FB_FILE")) == NULL || *file == '\0') {
 	    /* None set, use first device as default */
 	    *ifp = *(_if_list[0]);	/* struct copy */
+	    *ifp->i = *(_if_list[0]->i);	/* struct copy */
 	    file = ifp->i->if_name;
 	    goto found_interface;
 	}
