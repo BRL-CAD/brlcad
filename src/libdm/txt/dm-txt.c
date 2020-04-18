@@ -393,7 +393,6 @@ struct dm_impl dm_txt_impl = {
     1,				/* bound flag */
     "txt",
     "Text Display",
-    DM_TYPE_TXT,
     0,/* top */
     0,/* width */
     0,/* height */

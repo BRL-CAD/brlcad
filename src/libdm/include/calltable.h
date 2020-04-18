@@ -107,7 +107,6 @@ struct dm_impl {
     int dm_boundFlag;
     const char *dm_name;		/**< @brief short name of device */
     const char *dm_lname;		/**< @brief long name of device */
-    int dm_type;			/**< @brief display manager type */
     int dm_top;                   /**< @brief !0 means toplevel window */
     int dm_width;
     int dm_height;

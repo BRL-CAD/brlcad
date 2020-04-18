@@ -42,23 +42,6 @@ __BEGIN_DECLS
 
 #define DM_NULL (struct dm *)NULL
 
-/* Display Manager Types */
-#define DM_TYPE_BAD     -1
-#define DM_TYPE_NULL	0
-#define DM_TYPE_PLOT	1
-#define DM_TYPE_PS	2
-#define DM_TYPE_X	3
-#define DM_TYPE_OGL	4
-#define DM_TYPE_GLX	5
-#define DM_TYPE_PEX	6
-#define DM_TYPE_WGL	7
-#define DM_TYPE_TK	8
-#define DM_TYPE_RTGL	9
-#define DM_TYPE_TXT	10
-#define DM_TYPE_QT	11
-#define DM_TYPE_OSG	12
-#define DM_TYPE_OSGL	13
-
 /* the font used depends on the size of the window opened */
 #define FONTBACK "-adobe-courier-medium-r-normal--10-100-75-75-m-60-iso8859-1"
 #define FONT5 "5x7"
@@ -206,7 +189,7 @@ DM_EXPORT extern void dm_set_height(struct dm *dmp, int height);
 DM_EXPORT extern void dm_geometry_request(struct dm *dmp, int width, int height);
 DM_EXPORT extern void dm_internal_var(struct bu_vls *result, struct dm *dmp, const char *key); // ick
 DM_EXPORT extern fastf_t dm_get_aspect(struct dm *dmp);
-DM_EXPORT extern int dm_get_type(struct dm *dmp);
+DM_EXPORT extern const char *dm_get_type(struct dm *dmp);
 DM_EXPORT extern struct bu_vls *dm_list_types(const char separator); /* free return list with bu_vls_free(list); BU_PUT(list, struct bu_vls); */
 DM_EXPORT extern unsigned long dm_get_id(struct dm *dmp);
 DM_EXPORT extern void dm_set_id(struct dm *dmp, unsigned long new_id);

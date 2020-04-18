@@ -2591,7 +2591,6 @@ struct dm_impl dm_osgl_impl = {
     1,				/* bound flag */
     "osgl",
     "OpenGL graphics via OpenSceneGraph",
-    DM_TYPE_OSGL,
     1,
     0,
     0,

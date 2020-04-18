@@ -582,7 +582,6 @@ struct dm_impl dm_plot_impl = {
     1,				/* bound flag */
     "plot",
     "Screen to UNIX-Plot",
-    DM_TYPE_PLOT,
     0,
     0,
     0,

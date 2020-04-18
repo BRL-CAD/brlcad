@@ -961,7 +961,6 @@ struct dm_impl dm_tk_impl = {
     1,				/* bound flag */
     "Tk",
     "Tk Abstraction Layer",
-    DM_TYPE_TK,
     1,
     0,
     0,

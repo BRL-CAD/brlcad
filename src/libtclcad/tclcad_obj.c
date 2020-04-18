@@ -11493,7 +11493,7 @@ to_new_view(struct ged *gedp,
     }
 
     if (BU_STR_EQUAL(argv[2], "nu"))
-	type = DM_TYPE_NULL;
+	type = argv[2];
 
     /* find display manager type */
     if (argv[2][0] == 'X' || argv[2][0] == 'x')
@@ -11882,7 +11882,7 @@ to_pix(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (dm_get_type(gdvp->gdv_dmp) != DM_TYPE_WGL && dm_get_type(gdvp->gdv_dmp) != DM_TYPE_OGL) {
+    if (!BU_STR_EQUIV(dm_get_type(gdvp->gdv_dmp), "wgl") && !BU_STR_EQUIV(dm_get_type(gdvp->gdv_dmp), "ogl")) {
 	bu_vls_printf(gedp->ged_result_str, "%s: not yet supported for this display manager (i.e. must be OpenGL based)", argv[0]);
 	return GED_OK;
     }
@@ -11972,7 +11972,7 @@ to_png(struct ged *gedp,
 	return GED_ERROR;
     }
 
-    if (dm_get_type(gdvp->gdv_dmp) != DM_TYPE_WGL && dm_get_type(gdvp->gdv_dmp) != DM_TYPE_OGL) {
+    if (!BU_STR_EQUIV(dm_get_type(gdvp->gdv_dmp), "wgl") && !BU_STR_EQUIV(dm_get_type(gdvp->gdv_dmp), "ogl")) {
 	bu_vls_printf(gedp->ged_result_str, "%s: not yet supported for this display manager (i.e. must be OpenGL based)", argv[0]);
 	return GED_OK;
     }

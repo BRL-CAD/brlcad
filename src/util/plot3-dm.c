@@ -82,7 +82,9 @@ struct plot_list{
 
 struct plot_list HeadPlot;
 
-int dm_type = DM_TYPE_X;
+static const char *Xtype = "X";
+static const char *Otype = "ogl";
+const char *dm_type = "X";
 
 
 /*
@@ -135,12 +137,12 @@ get_args(int argc, char **argv)
 		switch (*bu_optarg) {
 		    case 'o':
 		    case 'O':
-			dm_type = DM_TYPE_OGL;
+			dm_type = Otype;
 			break;
 		    case 'x':
 		    case 'X':
 		    default:
-			dm_type = DM_TYPE_X;
+			dm_type = Xtype;
 			break;
 		}
 		break;
@@ -1052,7 +1054,7 @@ X_dmInit()
 	return TCL_ERROR;
     }
 
-    Tk_CreateGenericHandler(X_doEvent, (ClientData)DM_TYPE_X);
+    Tk_CreateGenericHandler(X_doEvent, (ClientData)Xtype);
     dm_set_win_bounds(dmp, windowbounds);
 
     return TCL_OK;
@@ -1078,7 +1080,7 @@ Ogl_dmInit()
 	return TCL_ERROR;
     }
 
-    Tk_CreateGenericHandler(X_doEvent, (ClientData)DM_TYPE_OGL);
+    Tk_CreateGenericHandler(X_doEvent, (ClientData)Otype);
     dm_set_win_bounds(dmp, windowbounds);
 
     return TCL_OK;
@@ -1096,13 +1098,7 @@ appInit(Tcl_Interp *_interp)
     /* libdm uses interp */
     INTERP = _interp;
 
-    switch (dm_type) {
-	case DM_TYPE_OGL:
-	case DM_TYPE_X:
-	default:
-	    cmd_hook = X_dm;
-	    break;
-    }
+    cmd_hook = X_dm;
 
     /* Evaluates init.tcl */
     if (Tcl_Init(_interp) == TCL_ERROR)
@@ -1133,13 +1129,10 @@ appInit(Tcl_Interp *_interp)
     cmd_setup(_interp, cmdtab);
 
     /* open display manager */
-    switch (dm_type) {
-	case DM_TYPE_OGL:
-	    return Ogl_dmInit();
-	case DM_TYPE_X:
-	default:
-	    return X_dmInit();
+    if (BU_STR_EQUIV(dm_type, "ogl")) {
+	return Ogl_dmInit();
     }
+    return X_dmInit();
 }
 
 

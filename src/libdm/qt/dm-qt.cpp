@@ -1098,7 +1098,6 @@ struct dm_impl dm_qt_impl = {
     1,				/* bound flag */
     "qt",
     "Qt Display",
-    DM_TYPE_QT,
     1,
     0,/* width */
     0,/* height */

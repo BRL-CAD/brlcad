@@ -2100,7 +2100,6 @@ struct dm_impl dm_X_impl = {
     1,				/* bound flag */
     "X",
     "X Window System (X11)",
-    DM_TYPE_X,
     1,
     0,
     0,

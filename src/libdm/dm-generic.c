@@ -170,24 +170,21 @@ dm_share_dlist(struct dm *dmp1, struct dm *dmp2)
      * XXX - need a better way to check if using the same OGL server.
      */
     if (dmp2 != DM_NULL)
-	if (dmp1->i->dm_type != dmp2->i->dm_type ||
+	if (!BU_STR_EQUAL(dmp1->i->dm_name, dmp2->i->dm_name) ||
 	    bu_vls_strcmp(&dmp1->i->dm_dName, &dmp2->i->dm_dName))
 	    return BRLCAD_ERROR;
 
-    switch (dmp1->i->dm_type) {
-#ifdef DM_OGL
-#  if defined(HAVE_TK)
-	case DM_TYPE_OGL:
-	    return ogl_share_dlist(dmp1, dmp2);
-#  endif
+#if defined(DM_OGL) && defined(HAVE_TK)
+    if (BU_STR_EQUIV(dmp1->i->dm_name, "ogl")) {
+	return ogl_share_dlist(dmp1, dmp2);
+    }
 #endif
 #ifdef DM_WGL
-	case DM_TYPE_WGL:
-	    return wgl_share_dlist(dmp1, dmp2);
-#endif
-	default:
-	    return BRLCAD_ERROR;
+    if (BU_STR_EQUIV(dmp1->i->dm_name, "wgl")) {
+	return wgl_share_dlist(dmp1, dmp2);
     }
+#endif
+    return BRLCAD_ERROR;
 }
 
 struct bu_vls *
@@ -399,22 +396,18 @@ dm_fogHint(struct dm *dmp, int fastfog)
 	return;
     }
 
-    switch (dmp->i->dm_type) {
-#ifdef DM_OGL
-#  if defined(HAVE_TK)
-	case DM_TYPE_OGL:
-	    ogl_fogHint(dmp, fastfog);
-	    return;
-#  endif
+#if defined(DM_OGL) && defined(HAVE_TK)
+    if (BU_STR_EQUIV(dmp->i->dm_name, "ogl")) {
+	ogl_fogHint(dmp, fastfog);
+	return;
+    }
 #endif
 #ifdef DM_WGL
-	case DM_TYPE_WGL:
-	    wgl_fogHint(dmp, fastfog);
-	    return;
-#endif
-	default:
-	    return;
+    if (BU_STR_EQUIV(dmp->i->dm_name, "wgl")) {
+	wgl_fogHint(dmp, fastfog);
+	return;
     }
+#endif
 }
 
 int
@@ -567,11 +560,11 @@ dm_set_height(struct dm *dmp, int height)
 }
 
 
-int
+const char *
 dm_get_type(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->i->dm_type;
+    return dmp->i->dm_name;
 }
 
 int

@@ -2239,7 +2239,6 @@ struct dm_impl dm_wgl_impl = {
     1,				/* bound flag */
     "wgl",
     "Windows with OpenGL graphics",
-    DM_TYPE_WGL,
     1,
     0,
     0,

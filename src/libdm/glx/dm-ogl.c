@@ -2332,25 +2332,20 @@ ogl_draw_obj(struct dm *dmp, struct display_list *obj)
 HIDDEN int
 ogl_getDisplayImage(struct dm *dmp, unsigned char **image)
 {
-    if (dmp->i->dm_type == DM_TYPE_WGL || dmp->i->dm_type == DM_TYPE_OGL) {
-	unsigned char *idata;
-	int width;
-	int height;
+    unsigned char *idata;
+    int width;
+    int height;
 
-	width = dmp->i->dm_width;
-	height = dmp->i->dm_height;
+    width = dmp->i->dm_width;
+    height = dmp->i->dm_height;
 
-	idata = (unsigned char*)bu_calloc(height * width * 3, sizeof(unsigned char), "rgb data");
+    idata = (unsigned char*)bu_calloc(height * width * 3, sizeof(unsigned char), "rgb data");
 
-	glReadBuffer(GL_FRONT);
-	glPixelStorei(GL_PACK_ALIGNMENT, 1);
-	glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, idata);
-	*image = idata;
-	flip_display_image_vertically(*image, width, height);
-    } else {
-	bu_log("ogl_getDisplayImage: Display type not set as OGL or WGL\n");
-	return BRLCAD_ERROR;
-    }
+    glReadBuffer(GL_FRONT);
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, idata);
+    *image = idata;
+    flip_display_image_vertically(*image, width, height);
 
     return BRLCAD_OK; /* caller will need to bu_free(idata, "image data"); */
 }
@@ -2957,7 +2952,6 @@ struct dm_impl dm_ogl_impl = {
     1,				/* bound flag */
     "ogl",
     "X Windows with OpenGL graphics",
-    DM_TYPE_OGL,
     1,
     0,
     0,

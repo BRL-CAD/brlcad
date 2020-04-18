@@ -552,7 +552,6 @@ struct dm_impl dm_ps_impl = {
     1,				/* bound flag */
     "ps",
     "Screen to PostScript",
-    DM_TYPE_PS,
     0,
     0,
     0,

@@ -337,7 +337,6 @@ struct dm_impl dm_null_impl = {
     1,				/* bound flag */
     "nu",
     "Null Display",
-    DM_TYPE_NULL,
     0,/* top */
     0,/* width */
     0,/* height */
