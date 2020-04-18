@@ -118,6 +118,7 @@ set(LIBDM_SRCS
   clip.c
   dm-generic.c
   dm_obj.c
+  dm_plugins.c
   dm_util.c
   fb_generic.c
   fb_log.c
@@ -140,6 +141,7 @@ set(LIBDM_SRCS
   vers.c
   )
 set_property(SOURCE dm_obj.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
+set_property(SOURCE dm_plugins.c APPEND PROPERTY COMPILE_DEFINITIONS "DM_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\"")
 BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "librt;libbu;libpkg;${DM_EXTRA_LIBS};${PNG_LIBRARIES}")
 set_target_properties(libdm PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
@@ -156,6 +158,8 @@ endif (TARGET tk)
 if (TARGET profont_ProFont_ttf_cp)
   add_dependencies(libdm profont_ProFont_ttf_cp)
 endif (TARGET profont_ProFont_ttf_cp)
+
+add_subdirectory(tests)
 
 set(libdm_ignore_files
   CMakeLists.txt

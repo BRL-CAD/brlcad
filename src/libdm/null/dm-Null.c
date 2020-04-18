@@ -375,6 +375,13 @@ struct dm_impl dm_null_impl = {
 
 struct dm dm_null = { &dm_null_impl };
 
+const struct dm_plugin pinfo = { &dm_null };
+
+DM_EXPORT const struct dm_plugin *dm_plugin_info()
+{
+    return &pinfo;
+}
+
 /*
  * Local Variables:
  * mode: C

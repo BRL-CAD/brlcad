@@ -81,6 +81,11 @@ struct dm {
     struct dm_impl *i;
 };
 
+struct dm_plugin {
+    const struct dm * const p;
+};
+
+
 DM_EXPORT extern struct dm dm_ogl;
 DM_EXPORT extern struct dm dm_plot;
 DM_EXPORT extern struct dm dm_ps;
@@ -191,6 +196,7 @@ DM_EXPORT extern void dm_internal_var(struct bu_vls *result, struct dm *dmp, con
 DM_EXPORT extern fastf_t dm_get_aspect(struct dm *dmp);
 DM_EXPORT extern const char *dm_get_type(struct dm *dmp);
 DM_EXPORT extern struct bu_vls *dm_list_types(const char separator); /* free return list with bu_vls_free(list); BU_PUT(list, struct bu_vls); */
+DM_EXPORT extern void dm_list_backends();
 DM_EXPORT extern unsigned long dm_get_id(struct dm *dmp);
 DM_EXPORT extern void dm_set_id(struct dm *dmp, unsigned long new_id);
 DM_EXPORT extern int dm_get_displaylist(struct dm *dmp);
@@ -210,6 +216,7 @@ DM_EXPORT extern int dm_set_win_bounds(struct dm *dmp, fastf_t *w);
 DM_EXPORT extern int dm_configure_win(struct dm *dmp, int force);
 DM_EXPORT extern struct bu_vls *dm_get_pathname(struct dm *dmp);
 DM_EXPORT extern struct bu_vls *dm_get_dname(struct dm *dmp);
+DM_EXPORT extern const char *dm_get_name(const struct dm *dmp);
 DM_EXPORT extern struct bu_vls *dm_get_tkname(struct dm *dmp);
 DM_EXPORT extern int dm_get_fontsize(struct dm *dmp);
 DM_EXPORT extern void dm_set_fontsize(struct dm *dmp, int size);

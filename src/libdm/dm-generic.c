@@ -684,6 +684,12 @@ dm_get_pathname(struct dm *dmp)
     return &(dmp->i->dm_pathName);
 }
 
+const char *
+dm_get_name(const struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return NULL;
+    return dmp->i->dm_name;
+}
 
 struct bu_vls *
 dm_get_dname(struct dm *dmp)
