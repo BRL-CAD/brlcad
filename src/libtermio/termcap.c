@@ -154,7 +154,7 @@ tnchktc(void)
 		}
 		hopcount--;
 		tbuf = holdtbuf;
-		bu_strlcpy(rmbuf, &p[1], sizeof(&p[1]));
+		bu_strlcpy(rmbuf, &p[1], TCBUFSIZE);
 		for (q=tcbuf; *q != ':'; q++)
 			;
 		l = holdtc - holdtbuf + strlen(rmbuf) + strlen(q);
@@ -165,7 +165,7 @@ tnchktc(void)
 		q++;
 		for (p = holdtc; *q; q++)
 			*p++ = *q;
-		bu_strlcpy(p, rmbuf, sizeof(rmbuf));
+		bu_strlcpy(p, rmbuf, TCBUFSIZE);
 		p = holdtc;
 	}
 	return(1);
@@ -203,7 +203,7 @@ tgetent(char *bp, const char *name)
 			c = tnamatch(name);
 			tbuf = bp;
 			if (c) {
-				bu_strlcpy(bp, cp, sizeof(cp));
+				bu_strlcpy(bp, cp, TCBUFSIZE);
 				return(tnchktc());
 			}
 		}
