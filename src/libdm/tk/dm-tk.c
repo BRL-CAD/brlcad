@@ -955,6 +955,7 @@ struct dm_impl dm_tk_impl = {
     NULL,
     tk_event_cmp,
     NULL,
+    NULL,
     0,
     0,				/* no displaylist */
     0,				/* no stereo */

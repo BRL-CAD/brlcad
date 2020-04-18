@@ -293,6 +293,13 @@ wgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
     } else {
 	/* dmp1 will share its display lists with dmp2 */
 
+	if (!BU_STR_EQUAL(dmp1->i->dm_name, dmp2->i->dm_name)) {
+	    return BRLCAD_ERROR;
+	}
+	if (bu_vls_strcmp(&dmp1->i->dm_dName, &dmp2->i->dm_dName)) {
+	    return BRLCAD_ERROR;
+	}
+
 	old_glxContext = ((struct wgl_vars *)dmp2->i->dm_vars.priv_vars)->glxc;
 
 	if ((((struct wgl_vars *)dmp2->i->dm_vars.priv_vars)->glxc =
@@ -2233,6 +2240,7 @@ struct dm_impl dm_wgl_impl = {
     NULL,
     wgl_event_cmp,
     wgl_fogHint,
+    wgl_share_dlist,
     0,
     1,				/* has displaylist */
     0,                          /* no stereo by default */

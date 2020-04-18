@@ -92,7 +92,9 @@ null_dm_open(void *interp, int argc, const char *argv[])
     return dmp;
 }
 
-
+/* TODO - in a plugin system this function will be provided for all acive
+ * backends via bu_dlsym and loaded into a lookup system mapped to the dm_name
+ * string provided with the plugin. */
 struct dm *
 dm_open(void *interp, const char *type, int argc, const char *argv[])
 {
@@ -154,39 +156,8 @@ dm_interp(struct dm *dmp)
     return (void *)dmp->i->dm_interp;
 }
 
-/*
- * Provides a way to (un)share display lists. If dmp2 is
- * NULL, then dmp1 will no longer share its display lists.
- */
-int
-dm_share_dlist(struct dm *dmp1, struct dm *dmp2)
-{
-    if (UNLIKELY(!dmp1) || UNLIKELY(!dmp2)) return BRLCAD_ERROR;
-
-    /*
-     * Only display managers of the same type and using the
-     * same OGL server are allowed to share display lists.
-     *
-     * XXX - need a better way to check if using the same OGL server.
-     */
-    if (dmp2 != DM_NULL)
-	if (!BU_STR_EQUAL(dmp1->i->dm_name, dmp2->i->dm_name) ||
-	    bu_vls_strcmp(&dmp1->i->dm_dName, &dmp2->i->dm_dName))
-	    return BRLCAD_ERROR;
-
-#if defined(DM_OGL) && defined(HAVE_TK)
-    if (BU_STR_EQUIV(dmp1->i->dm_name, "ogl")) {
-	return ogl_share_dlist(dmp1, dmp2);
-    }
-#endif
-#ifdef DM_WGL
-    if (BU_STR_EQUIV(dmp1->i->dm_name, "wgl")) {
-	return wgl_share_dlist(dmp1, dmp2);
-    }
-#endif
-    return BRLCAD_ERROR;
-}
-
+/* TODO - in a plugin system, this iterates over all supplied plugins
+ * and assembles the list */
 struct bu_vls *
 dm_list_types(const char separator)
 {
@@ -239,6 +210,8 @@ dm_list_types(const char separator)
     return list;
 }
 
+/* TODO - in a plugin system, this will search available plugins to see
+ * of there is one that provides the requested name */
 int
 #if !defined(DM_WGL) && !defined(DM_OGL) && !defined(DM_X)
 dm_validXType(const char *UNUSED(dpy_string), const char *name)
@@ -359,12 +332,15 @@ dm_bestXType(const char *dpy_string)
 
 /**
  * dm_default_type suggests a display manager
+ *
+ * TODO - in a plugin system, this will check available plugins
+ * to see if an availble dm matches a preferred dm_name - if
+ * so, that name is returned.  May be able to consolidate with
+ * dm_bestXType - not sure yet.
  */
-
 const char *
 dm_default_type()
 {
-
 #ifdef DM_OSGL
     return "osgl";
 #endif
@@ -400,6 +376,23 @@ dm_fogHint(struct dm *dmp, int fastfog)
 	dmp->i->dm_fogHint(dmp, fastfog);
     }
 }
+
+/*
+ * Provides a way to (un)share display lists. If dmp2 is
+ * NULL, then dmp1 will no longer share its display lists.
+ */
+int
+dm_share_dlist(struct dm *dmp1, struct dm *dmp2)
+{
+    if (UNLIKELY(!dmp1) || UNLIKELY(!dmp2)) return BRLCAD_ERROR;
+
+    if (dmp1->i->dm_share_dlist) {
+	return dmp1->i->dm_share_dlist(dmp1, dmp2);
+    }
+
+    return BRLCAD_ERROR;
+}
+
 
 int
 dm_write_image(struct bu_vls *msgs, FILE *fp, struct dm *dmp)
