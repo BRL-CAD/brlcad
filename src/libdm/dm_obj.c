@@ -2618,7 +2618,7 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
     struct dm *dmp;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     int name_index = 1;
-    int type = DM_TYPE_BAD;
+    const char *type = NULL;
     Tcl_Obj *obj;
 
     obj = Tcl_GetObjResult(interp);
@@ -2652,27 +2652,19 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
     }
 
     /* find display manager type */
-#ifdef DM_X
     if (argv[2][0] == 'X' || argv[2][0] == 'x')
-	type = DM_TYPE_X;
-#endif /* DM_X */
+	type = argv[2];
 
-#ifdef DM_TK
     if (BU_STR_EQUAL(argv[2], "tk"))
-	type = DM_TYPE_TK;
-#endif /* DM_TK */
+	type = argv[2];
 
-#ifdef DM_OGL
     if (BU_STR_EQUAL(argv[2], "ogl"))
-	type = DM_TYPE_OGL;
-#endif /* DM_OGL */
+	type = argv[2];
 
-#ifdef DM_WGL
     if (BU_STR_EQUAL(argv[2], "wgl"))
-	type = DM_TYPE_WGL;
-#endif /* DM_WGL */
+	type = argv[2];
 
-    if (type == DM_TYPE_BAD) {
+    if (!type) {
 	Tcl_AppendStringsToObj(obj,
 			       "Unsupported display manager type - ",
 			       argv[2], "\n",

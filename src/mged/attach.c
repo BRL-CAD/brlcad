@@ -50,17 +50,14 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 
-#define NEED_GUI(_type) (\
-	IS_DM_TYPE_WGL(_type) || \
-	IS_DM_TYPE_OGL(_type) || \
-	IS_DM_TYPE_OSG(_type) || \
-	IS_DM_TYPE_GLX(_type) || \
-	IS_DM_TYPE_TK(_type) || \
-	IS_DM_TYPE_X(_type) || \
-	IS_DM_TYPE_TXT(_type) || \
-	IS_DM_TYPE_OSGL(_type) || \
-	IS_DM_TYPE_QT(_type))
-
+#define NEED_GUI(_name) (\
+	BU_STR_EQUIV(_name, "wgl") || \
+	BU_STR_EQUIV(_name, "ogl") || \
+	BU_STR_EQUIV(_name, "osgl") || \
+	BU_STR_EQUIV(_name, "tk") || \
+	BU_STR_EQUIV(_name, "X") || \
+	BU_STR_EQUIV(_name, "txt") || \
+	BU_STR_EQUIV(_name, "qt"))
 
 /* All systems can compile these! */
 extern int Plot_dm_init(struct dm_list *o_dm_list, int argc, const char *argv[]);
@@ -194,42 +191,39 @@ x_doevent(void *UNUSED(vclientData), void *veventPtr)
 typedef int (*eventfptr)();
 
 struct w_dm which_dm[] = {
-    { DM_TYPE_PLOT, "plot", NULL},  /* DM_PLOT_INDEX defined in mged_dm.h */
-    { DM_TYPE_PS, "ps", NULL},      /* DM_PS_INDEX defined in mged_dm.h */
-    { DM_TYPE_TXT, "txt", NULL},
+    { "plot", NULL},  /* DM_PLOT_INDEX defined in mged_dm.h */
+    { "ps", NULL},      /* DM_PS_INDEX defined in mged_dm.h */
+    { "txt", NULL},
 #ifdef DM_X
-    { DM_TYPE_X, "X", x_doevent },
+    { "X", x_doevent },
 #endif /* DM_X */
 #ifdef DM_TK
-    { DM_TYPE_TK, "tk", NULL},
+    { "tk", NULL},
 #endif /* DM_TK */
 #ifdef DM_WGL
-    { DM_TYPE_WGL, "wgl", wgl_doevent },
+    { "wgl", wgl_doevent },
 #endif /* DM_WGL */
 #ifdef DM_OGL
 #  if defined(HAVE_TK)
-    { DM_TYPE_OGL, "ogl", ogl_doevent },
+    { "ogl", ogl_doevent },
 #  endif
 #endif /* DM_OGL */
-#ifdef DM_OSG
-    { DM_TYPE_OSG, "osg", NULL},
-#endif /* DM_OSG */
 #ifdef DM_OSGL
 #  if defined(HAVE_TK)
-    { DM_TYPE_OSGL, "osgl", osgl_doevent },
+    { "osgl", osgl_doevent },
 #  endif
 #endif /* DM_OSGL */
 #ifdef DM_QT
-    { DM_TYPE_QT, "qt", x_doevent },
+    { "qt", x_doevent },
 #endif /* DM_QT */
-    { -1, (char *)NULL, (int (*)())NULL}
+    { (char *)NULL, (int (*)())NULL}
 };
 
 static eventfptr
-dm_doevent(int dm_type) {
+dm_doevent(const char *dm_type) {
     int i = 0;
-    while (which_dm[i].type != -1) {
-	if (dm_type == which_dm[i].type) {
+    while (which_dm[i].name != NULL) {
+	if (dm_type == which_dm[i].name) {
 	    return which_dm[i].doevent;
 	}
 	i++;
@@ -239,7 +233,7 @@ dm_doevent(int dm_type) {
 
 int
 mged_dm_init(struct dm_list *o_dm_list,
-	int dm_type,
+	const char *dm_type,
 	int argc,
 	const char *argv[])
 {
@@ -486,11 +480,11 @@ f_attach(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
     }
 
     /* Look at last argument, skipping over any options which precede it */
-    for (wp = &which_dm[2]; wp->type != -1; wp++)
+    for (wp = &which_dm[2]; wp->name != NULL; wp++)
 	if (BU_STR_EQUAL(argv[argc - 1], wp->name))
 	    break;
 
-    if (wp->type == -1) {
+    if (wp->name == NULL) {
 	Tcl_AppendResult(interpreter, "attach(", argv[argc - 1], "): BAD\n", (char *)NULL);
 	print_valid_dm(interpreter);
 	return TCL_ERROR;
@@ -591,7 +585,7 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
     predictor_init();
 
     /* Only need to do this once */
-    if (tkwin == NULL && NEED_GUI(wp->type)) {
+    if (tkwin == NULL && NEED_GUI(wp->name)) {
 	struct dm *tmp_dmp;
 	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
@@ -629,7 +623,7 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
 	return TCL_ERROR;
     }
 
-    if (mged_dm_init(o_dm_list, wp->type, argc, argv) == TCL_ERROR) {
+    if (mged_dm_init(o_dm_list, wp->name, argc, argv) == TCL_ERROR) {
 	goto Bad;
     }
 
@@ -692,7 +686,7 @@ get_attached(void)
 
 	/* print all the available display manager types, skipping plot and ps */
 	wp = &which_dm[2];
-	for (; wp->type != -1; wp++) {
+	for (; wp->name != NULL; wp++) {
 	    bu_log("|%s", wp->name);
 	}
 	bu_log(")[nu]? ");
@@ -714,13 +708,13 @@ get_attached(void)
 	/* trim whitespace before comparisons (but not before checking empty) */
 	bu_vls_trimspace(&type);
 
-	for (wp = &which_dm[2]; wp->type != -1; wp++) {
+	for (wp = &which_dm[2]; wp->name != NULL; wp++) {
 	    if (BU_STR_EQUAL(bu_vls_addr(&type), wp->name)) {
 		break;
 	    }
 	}
 
-	if (wp->type != -1) {
+	if (wp->name != NULL) {
 	    break;
 	}
 

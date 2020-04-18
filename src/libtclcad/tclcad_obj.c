@@ -11473,7 +11473,7 @@ to_new_view(struct ged *gedp,
 {
     struct ged_dm_view *new_gdvp;
     HIDDEN const int name_index = 1;
-    int type = DM_TYPE_BAD;
+    const char *type = NULL;
     struct bu_vls event_vls = BU_VLS_INIT_ZERO;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -11496,42 +11496,28 @@ to_new_view(struct ged *gedp,
 	type = DM_TYPE_NULL;
 
     /* find display manager type */
-#ifdef DM_X
     if (argv[2][0] == 'X' || argv[2][0] == 'x')
-	type = DM_TYPE_X;
-#endif /* DM_X */
+	type = argv[2];
 
-#ifdef DM_TK
     if (BU_STR_EQUAL(argv[2], "tk"))
-	type = DM_TYPE_TK;
-#endif /* DM_TK */
+	type = argv[2];
 
-#ifdef DM_OGL
     if (BU_STR_EQUAL(argv[2], "ogl"))
-	type = DM_TYPE_OGL;
-#endif /* DM_OGL */
+	type = argv[2];
 
-#ifdef DM_OSG
     if (BU_STR_EQUAL(argv[2], "osg"))
-	type = DM_TYPE_OSG;
-#endif /* DM_OSG */
+	type = argv[2];
 
-#ifdef DM_OSGL
     if (BU_STR_EQUAL(argv[2], "osgl"))
-	type = DM_TYPE_OSGL;
-#endif /* DM_OSGL */
+	type = argv[2];
 
-#ifdef DM_WGL
     if (BU_STR_EQUAL(argv[2], "wgl"))
-	type = DM_TYPE_WGL;
-#endif /* DM_WGL */
+	type = argv[2];
 
-#ifdef DM_QT
     if (BU_STR_EQUAL(argv[2], "qt"))
-	type = DM_TYPE_QT;
-#endif /* DM_QT */
+	type = argv[2];
 
-    if (type == DM_TYPE_BAD) {
+    if (!type) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR:  Requisite display manager is not available.\nBRL-CAD may need to be recompiled with support for:  %s\nRun 'fbhelp' for a list of available display managers.\n", argv[2]);
 	return GED_ERROR;
     }

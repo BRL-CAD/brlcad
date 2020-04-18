@@ -600,8 +600,7 @@ extern void cs_set_bg(const struct bu_structparse *, const char *, void *, const
 extern void mged_rtCmdNotify();
 
 struct w_dm {
-    int	type;
-    char	*name;
+    char *name;
     int	(*doevent)();
 };
 extern struct w_dm which_dm[];  /* defined in attach.c */

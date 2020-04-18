@@ -94,53 +94,56 @@ null_dm_open(void *interp, int argc, const char *argv[])
 
 
 struct dm *
-dm_open(void *interp, int type, int argc, const char *argv[])
+dm_open(void *interp, const char *type, int argc, const char *argv[])
 {
-    switch (type) {
-	case DM_TYPE_NULL:
-	    return null_dm_open(interp, argc, argv);
-	case DM_TYPE_TXT:
-	    return txt_open(interp, argc, argv);
-	case DM_TYPE_PLOT:
-	    return plot_open(interp, argc, argv);
-	case DM_TYPE_PS:
-	    return ps_open(interp, argc, argv);
-#ifdef DM_X
-#  if defined(HAVE_TK)
-	case DM_TYPE_X:
-	    return X_open_dm(interp, argc, argv);
-#  endif
-#endif
-#ifdef DM_TK
-	case DM_TYPE_TK:
-	    return tk_open_dm(interp, argc, argv);
-#endif
-#ifdef DM_OGL
-#  if defined(HAVE_TK)
-	case DM_TYPE_OGL:
-	    return ogl_open(interp, argc, argv);
-#  endif
-#endif
-#ifdef DM_OSG
-	case DM_TYPE_OSG:
-	    return osg_open(interp, argc, argv);
-#endif
-#ifdef DM_OSGL
-	case DM_TYPE_OSGL:
-	    return osgl_open(interp, argc, argv);
-#endif
-#ifdef DM_WGL
-	case DM_TYPE_WGL:
-	    return wgl_open(interp, argc, argv);
-#endif
-#ifdef DM_QT
-	case DM_TYPE_QT:
-	    return qt_open(interp, argc, argv);
-#endif
-	default:
-	    break;
+    if (BU_STR_EQUIV(type, "null")) {
+	return null_dm_open(interp, argc, argv);
     }
-
+    if (BU_STR_EQUIV(type, "txt")) {
+	return txt_open(interp, argc, argv);
+    }
+    if (BU_STR_EQUIV(type, "plot")) {
+	return plot_open(interp, argc, argv);
+    }
+    if (BU_STR_EQUIV(type, "plot")) {
+	return plot_open(interp, argc, argv);
+    }
+    if (BU_STR_EQUIV(type, "ps")) {
+	return ps_open(interp, argc, argv);
+    }
+    if (BU_STR_EQUIV(type, "plot")) {
+	return plot_open(interp, argc, argv);
+    }
+#if defined(DM_X) && defined(HAVE_TK)
+    if (BU_STR_EQUIV(type, "X")) {
+	return X_open_dm(interp, argc, argv);
+    }
+#endif
+#if defined(DM_TK)
+    if (BU_STR_EQUIV(type, "tk")) {
+	return tk_open_dm(interp, argc, argv);
+    }
+#endif
+#if defined(DM_OGL) && defined(HAVE_TK)
+    if (BU_STR_EQUIV(type, "ogl")) {
+	return ogl_open(interp, argc, argv);
+    }
+#endif
+#if defined(DM_OSGL)
+    if (BU_STR_EQUIV(type, "osgl")) {
+	return osgl_open(interp, argc, argv);
+    }
+#endif
+#if defined(DM_WGL)
+    if (BU_STR_EQUIV(type, "wgl")) {
+	return wgl_open(interp, argc, argv);
+    }
+#endif
+#if defined(DM_QT)
+    if (BU_STR_EQUIV(type, "qt")) {
+	return qt_open(interp, argc, argv);
+    }
+#endif
     return DM_NULL;
 }
 
@@ -361,30 +364,30 @@ dm_bestXType(const char *dpy_string)
  * dm_default_type suggests a display manager
  */
 
-int
+const char *
 dm_default_type()
 {
 
 #ifdef DM_OSGL
-    return DM_TYPE_OSGL;
+    return "osgl";
 #endif
 
 #ifdef DM_WGL
-    return DM_TYPE_WGL;
+    return "wgl";
 #endif
 
 #ifdef DM_OGL
-    return DM_TYPE_OGL;
+    return "ogl";
 #endif
 
 #ifdef DM_X
-    return DM_TYPE_X;
+    return "X";
 #endif
 
 #ifdef DM_TK
-    return DM_TYPE_TK;
+    return "tk";
 #endif
-    return DM_TYPE_NULL;
+    return "null";
 }
 
 

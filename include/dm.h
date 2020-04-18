@@ -59,21 +59,6 @@ __BEGIN_DECLS
 #define DM_TYPE_OSG	12
 #define DM_TYPE_OSGL	13
 
-#define IS_DM_TYPE_NULL(_t) ((_t) == DM_TYPE_NULL)
-#define IS_DM_TYPE_PLOT(_t) ((_t) == DM_TYPE_PLOT)
-#define IS_DM_TYPE_PS(_t) ((_t) == DM_TYPE_PS)
-#define IS_DM_TYPE_X(_t) ((_t) == DM_TYPE_X)
-#define IS_DM_TYPE_TK(_t) ((_t) == DM_TYPE_TK)
-#define IS_DM_TYPE_OGL(_t) ((_t) == DM_TYPE_OGL)
-#define IS_DM_TYPE_GLX(_t) ((_t) == DM_TYPE_GLX)
-#define IS_DM_TYPE_PEX(_t) ((_t) == DM_TYPE_PEX)
-#define IS_DM_TYPE_WGL(_t) ((_t) == DM_TYPE_WGL)
-#define IS_DM_TYPE_RTGL(_t) ((_t) == DM_TYPE_RTGL)
-#define IS_DM_TYPE_TXT(_t) ((_t) == DM_TYPE_TXT)
-#define IS_DM_TYPE_QT(_t) ((_t) == DM_TYPE_QT)
-#define IS_DM_TYPE_OSG(_t) ((_t) == DM_TYPE_OSG)
-#define IS_DM_TYPE_OSGL(_t) ((_t) == DM_TYPE_OSGL)
-
 /* the font used depends on the size of the window opened */
 #define FONTBACK "-adobe-courier-medium-r-normal--10-100-75-75-m-60-iso8859-1"
 #define FONT5 "5x7"
@@ -126,7 +111,7 @@ DM_EXPORT extern struct dm dm_osgl;
 
 DM_EXPORT extern int Dm_Init(void *interp);
 DM_EXPORT extern struct dm *dm_open(void *interp,
-			     int type,
+			     const char *type,
 			     int argc,
 			     const char *argv[]);
 DM_EXPORT extern void *dm_interp(struct dm *dmp);
@@ -328,7 +313,7 @@ DM_EXPORT extern int dm_draw_display_list(struct dm *dmp,
 					  int mv_dlist
 					 );
 
-DM_EXPORT extern int dm_default_type();
+DM_EXPORT extern const char *dm_default_type();
 
 /*
  * Needed for fd_set, avoid including sys/select.h outright since it
