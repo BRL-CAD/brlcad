@@ -396,18 +396,9 @@ dm_fogHint(struct dm *dmp, int fastfog)
 	return;
     }
 
-#if defined(DM_OGL) && defined(HAVE_TK)
-    if (BU_STR_EQUIV(dmp->i->dm_name, "ogl")) {
-	ogl_fogHint(dmp, fastfog);
-	return;
+    if (dmp->i->dm_fogHint) {
+	dmp->i->dm_fogHint(dmp, fastfog);
     }
-#endif
-#ifdef DM_WGL
-    if (BU_STR_EQUIV(dmp->i->dm_name, "wgl")) {
-	wgl_fogHint(dmp, fastfog);
-	return;
-    }
-#endif
 }
 
 int

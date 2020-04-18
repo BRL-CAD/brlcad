@@ -2945,6 +2945,7 @@ struct dm_impl dm_ogl_impl = {
     NULL,
     NULL,
     ogl_event_cmp,
+    ogl_fogHint,
     0,
     1,				/* has displaylist */
     0,                          /* no stereo by default */

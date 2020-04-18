@@ -2232,6 +2232,7 @@ struct dm_impl dm_wgl_impl = {
     NULL,
     NULL,
     wgl_event_cmp,
+    wgl_fogHint,
     0,
     1,				/* has displaylist */
     0,                          /* no stereo by default */

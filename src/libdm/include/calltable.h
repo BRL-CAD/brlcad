@@ -100,6 +100,7 @@ struct dm_impl {
     void (*dm_flush)(struct dm *dmp);
     void (*dm_sync)(struct dm *dmp);
     int (*dm_event_cmp)(struct dm *dmp, dm_event_t type, int event);
+    void (*dm_fogHint)(struct dm *dmp, int fastfog);
     unsigned long dm_id;          /**< @brief window id */
     int dm_displaylist;		/**< @brief !0 means device has displaylist */
     int dm_stereo;                /**< @brief stereo flag */

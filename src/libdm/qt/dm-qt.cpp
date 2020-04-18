@@ -1091,6 +1091,7 @@ struct dm_impl dm_qt_impl = {
     NULL,
     NULL,
     qt_event_cmp,
+    NULL,
     0,
     0,				/* no displaylist */
     0,				/* no stereo */

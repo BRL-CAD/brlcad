@@ -2093,6 +2093,7 @@ struct dm_impl dm_X_impl = {
     X_flush,
     X_sync,
     X_event_cmp,
+    NULL,
     0,
     0,				/* no displaylist */
     0,                            /* no stereo */
