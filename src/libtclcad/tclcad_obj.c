@@ -7168,7 +7168,7 @@ to_light(struct ged *gedp,
 
     /* get light flag */
     if (argc == 2) {
-	bu_vls_printf(gedp->ged_result_str, "%d", dm_get_light_flag(gdvp->gdv_dmp));
+	bu_vls_printf(gedp->ged_result_str, "%d", dm_get_light(gdvp->gdv_dmp));
 	return GED_OK;
     }
 

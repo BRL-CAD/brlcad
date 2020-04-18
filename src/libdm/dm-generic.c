@@ -600,20 +600,6 @@ dm_set_fontsize(struct dm *dmp, int size)
 }
 
 int
-dm_get_light_flag(struct dm *dmp)
-{
-    if (UNLIKELY(!dmp)) return 0;
-    return dmp->i->dm_light;
-}
-
-void
-dm_set_light_flag(struct dm *dmp, int val)
-{
-    if (UNLIKELY(!dmp)) return;
-    dmp->i->dm_light = val;
-}
-
-int
 dm_close(struct dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;
@@ -748,10 +734,22 @@ dm_set_id(struct dm *dmp, unsigned long new_id)
 }
 
 int
+dm_get_light(struct dm *dmp)
+{
+    if (UNLIKELY(!dmp)) return 0;
+    return dmp->i->dm_light;
+}
+
+int
 dm_set_light(struct dm *dmp, int light)
 {
     if (UNLIKELY(!dmp)) return 0;
-    return dmp->i->dm_setLight(dmp, light);
+    if (dmp->i->dm_setLight) {
+	return dmp->i->dm_setLight(dmp, light);
+    } else {
+	dmp->i->dm_light = light;
+    }
+    return dmp->i->dm_light;
 }
 
 int
