@@ -213,6 +213,6 @@ casedot:
 			goto toohard;
 		}
 	}
-	bu_strlcpy(dp, added, sizeof(added));
+	bu_strlcpy(dp, added, MAXRETURNSIZE);
 	return (result);
 }

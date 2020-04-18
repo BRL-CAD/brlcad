@@ -121,8 +121,6 @@ BRLCAD_ADDEXEC(g-x3d g-x3d.c "librt;libnmg;libbu;${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(nastran-g nastran-g.c "libwdb;librt;libnmg;libbu;${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(proe-g proe-g.c "libwdb;librt;libbu;${M_LIBRARY}")
-
 BRLCAD_ADDEXEC(shp-g "shp/shp-g.c;shp/shapelib/safileio.c;shp/shapelib/shpopen.c" "libwdb;librt;libbu")
 
 BRLCAD_ADDEXEC(g-shell-rect g-shell-rect.c "libwdb;librt;libnmg;libbu;${M_LIBRARY}")
