@@ -54,13 +54,13 @@
 #include "rt/geom.h"
 #include "wdb.h"
 #include "raytrace.h"
+#include "ged.h"
 #include "tclcad.h"
 
 #include "rt/solid.h"
 #include "dm.h"
 #include "dm/bview.h"
 
-#include "ged.h"
 #include "icv/io.h"
 #include "icv/ops.h"
 #include "icv/crop.h"
@@ -1494,7 +1494,6 @@ dm_list_tcl(ClientData UNUSED(clientData),
     return TCL_OK;
 }
 
-
 /**
  * @brief create the Tcl command for to_open
  *
@@ -1666,6 +1665,52 @@ to_create_cmd(Tcl_Interp *interp,
 }
 
 
+/* Wrappers for setting up/tearing down IO handler */
+#ifndef _WIN32
+void
+tclcad_create_io_handler(void **UNUSED(chan), struct bu_process *p, int fd, int mode, void *data, ged_io_handler_callback_t callback)
+{
+    int *fdp;
+    if (!p) return;
+    fdp = (int *)bu_process_fd(p, fd);
+    Tcl_CreateFileHandler(*fdp, mode, callback, (ClientData)data);
+}
+
+void
+tclcad_delete_io_handler(void *UNUSED(interp), void *UNUSED(chan), struct bu_process *p, int fd, void *UNUSED(data), ged_io_handler_callback_t UNUSED(callback))
+{
+    int *fdp;
+    if (!p) return;
+    fdp = (int *)bu_process_fd(p, fd);
+    Tcl_DeleteFileHandler(*fdp);
+    close(*fdp);
+}
+
+#else
+void
+tclcad_create_io_handler(void **chan, struct bu_process *p, int fd, int mode, void *data, ged_io_handler_callback_t callback)
+{
+    HANDLE *fdp;
+    if (!chan || !p) return;
+    fdp = (HANDLE *)bu_process_fd(p, fd);
+    (*chan) = (void *)Tcl_MakeFileChannel(*fdp, mode);
+    Tcl_CreateChannelHandler((Tcl_Channel)(*chan), mode, callback, (ClientData)data);
+}
+
+void
+tclcad_delete_io_handler(void *interp, void *chan, struct bu_process *p, int fd, void *data, ged_io_handler_callback_t callback)
+{
+    HANDLE *fdp;
+    Tcl_Interp *tcl_interp;
+    if (!chan || !p) return;
+    tcl_interp = (Tcl_Interp *)interp;
+    fdp = (HANDLE *)bu_process_fd(p, fd);
+    Tcl_DeleteChannelHandler((Tcl_Channel)chan, callback, (ClientData)data);
+    Tcl_Close(tcl_interp, (Tcl_Channel)chan);
+}
+#endif
+
+
 /**
  * @brief
  * A TCL interface to wdb_fopen() and wdb_dbopen().
@@ -1740,6 +1785,11 @@ Usage: go_open\n\
 	return TCL_ERROR;
     }
     gedp->ged_interp = (void *)interp;
+
+    /* Set the Tcl specific I/O handlers for asynchronous subprocess I/O */
+    gedp->ged_create_io_handler = &tclcad_create_io_handler;
+    gedp->ged_delete_io_handler = &tclcad_delete_io_handler;
+    gedp->io_mode = TCL_READABLE;
 
     /* initialize tclcad_obj */
     BU_ALLOC(top, struct tclcad_obj);
