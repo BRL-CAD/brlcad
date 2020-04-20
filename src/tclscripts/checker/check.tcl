@@ -70,6 +70,8 @@ package provide GeometryChecker 1.0
 	variable _ol_dir ""
 	variable _ol_prefix ""
 
+	variable _fullPath
+
 	variable _ck
 	variable _status
 	variable _commandText
@@ -122,6 +124,7 @@ package provide GeometryChecker 1.0
 	method changeMarkOnSelection {tag_cmd}
 	method markSelection {}
 	method unmarkSelection {}
+	method copySelection {}
 
 	method handleProgressButton {}
 	method handleCheckListSelect {}
@@ -176,6 +179,7 @@ body GeometryChecker::handleCheckListSelect {} {
     set _abort false
     set _doingSubtraction false
     set _drew {}
+    array set _fullPath {}
 
     set _subLeftCommand "puts subtract the left"
     set _subRightCommand "puts subtract the right"
@@ -301,10 +305,10 @@ body GeometryChecker::handleCheckListSelect {} {
     set _ck $itk_component(checkList)
     set _status $itk_component(headerLabelStatus)
 
-    $_ck column ID -anchor center -width 100 -minwidth 50
-    $_ck column Left -anchor w -width 200 -minwidth 100
-    $_ck column Right -anchor w -width 200 -minwidth 100
-    $_ck column Size -anchor e -width 100 -minwidth 50
+    $_ck column ID -anchor center -stretch false
+    $_ck column Left -anchor w
+    $_ck column Right -anchor w
+    $_ck column Size -anchor e -stretch false
     $_ck heading ID -image _arrowDown -anchor w -command [list $this sortBy ID 1]
     $_ck heading Left -text "Left" -image _arrowOff -anchor center -command [list $this sortBy Left 0]
     $_ck heading Right -text "Right" -image _arrowOff -anchor center -command [list $this sortBy Right 0]
@@ -314,6 +318,7 @@ body GeometryChecker::handleCheckListSelect {} {
     $itk_component(checkMenu) configure -font $font
     $itk_component(checkMenu) add command -label "Mark Selected" -command [code $this markSelection]
     $itk_component(checkMenu) add command -label "Unmark Selected" -command [code $this unmarkSelection]
+    $itk_component(checkMenu) add command -label "Copy Fullpaths" -command [code $this copySelection]
 
     pack $itk_component(headerFrame) -side top -fill both
     pack $itk_component(headerLabelStatus) -side left -anchor w
@@ -415,6 +420,7 @@ body GeometryChecker::loadOverlaps {{filename ""}} {
 	if {[regexp "$comment_or_empty" "$line"]} {
 	    continue
 	}
+	incr count
 	set left [lindex $line 0]
 	set right [lindex $line 1]
 	set size [lindex $line 2]
@@ -440,6 +446,10 @@ body GeometryChecker::loadOverlaps {{filename ""}} {
 	    set right $tmp
 	}
 
+	set _fullPath($count) [list $left $right]
+	set left [file tail $left]
+	set right [file tail $right]
+
 	set len_left [font measure $font $left]
 	set len_right [font measure $font $right]
 	set len_size [font measure $font $size]
@@ -454,7 +464,6 @@ body GeometryChecker::loadOverlaps {{filename ""}} {
 	    set width_size $len_size
 	}
 
-	incr count
 	if {$count % 2 == 0} {
 	    set tag "even"
 	} else {
@@ -760,6 +769,18 @@ body GeometryChecker::markSelection {} {
 
 body GeometryChecker::unmarkSelection {} {
     $this changeMarkOnSelection "remove"
+}
+
+body GeometryChecker::copySelection {} {
+    set paths {}
+    set sset [$_ck selection]
+    foreach item $sset {
+	set fullpaths $_fullPath([$_ck set $item "ID"])
+
+	lappend paths {*}$fullpaths
+    }
+    clipboard clear
+    clipboard append $paths
 }
 
 body GeometryChecker::subtractItemRightFromLeft {left right} {
