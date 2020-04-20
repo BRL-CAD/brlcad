@@ -262,9 +262,9 @@ public:
 			fb_log("No RGB (outside image viewport)\n");
 			break;
 		    }
-		    int r = fbp->if_mem[3*(y*fbp->if_width + x)];
-		    int g = fbp->if_mem[3*(y*fbp->if_width + x)+1];
-		    int b = fbp->if_mem[3*(y*fbp->if_width + x)+2];
+		    int r = fbp->i->if_mem[3*(y*fbp->i->if_width + x)];
+		    int g = fbp->i->if_mem[3*(y*fbp->i->if_width + x)+1];
+		    int b = fbp->i->if_mem[3*(y*fbp->i->if_width + x)+2];
 		    if (r < 0) r = 255 + r + 1;
 		    if (g < 0) g = 255 + g + 1;
 		    if (b < 0) b = 255 + b + 1;
