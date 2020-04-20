@@ -387,7 +387,7 @@ uncompress_external(const struct rt_cache *cache, const struct bu_external *exte
     buffer = (uint8_t *)bu_malloc(dest->ext_nbytes, "buffer");
 
     BU_ASSERT(dest->ext_nbytes < INT_MAX);
-    ret = LZ4_decompress_safe((const char *)(external->ext_buf + SIZEOF_NETWORK_LONG), (char *)buffer, external->ext_nbytes - SIZEOF_NETWORK_LONG, (int)dest->ext_nbytes);
+    ret = LZ4_decompress_fast((const char *)(external->ext_buf + SIZEOF_NETWORK_LONG), (char *)buffer, (int)dest->ext_nbytes);
     if (ret > 0)
 	uncompressed = 1;
 
