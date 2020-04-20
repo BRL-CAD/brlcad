@@ -431,6 +431,14 @@ struct dm_impl dm_txt_impl = {
 
 struct dm dm_txt = { &dm_txt_impl };
 
+#ifdef DM_PLUGIN
+const struct dm_plugin pinfo = { &dm_txt };
+
+DM_EXPORT const struct dm_plugin *dm_plugin_info()
+{
+    return &pinfo;
+}
+#endif
 
 /*
  * Local Variables:

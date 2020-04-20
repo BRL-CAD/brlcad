@@ -1137,6 +1137,15 @@ struct dm_impl dm_qt_impl = {
 
 extern "C" {
     struct dm dm_qt = { &dm_qt_impl };
+
+#ifdef DM_PLUGIN
+    static const struct dm_plugin pinfo = { &dm_qt };
+
+    DM_EXPORT const struct dm_plugin *dm_plugin_info()
+    {
+	return &pinfo;
+    }
+#endif
 }
 
 /**

@@ -2138,6 +2138,15 @@ struct dm_impl dm_X_impl = {
 
 struct dm dm_X = { &dm_X_impl };
 
+#ifdef DM_PLUGIN
+static const struct dm_plugin pinfo = { &dm_X };
+
+DM_EXPORT const struct dm_plugin *dm_plugin_info()
+{
+    return &pinfo;
+}
+#endif
+
 /* Because class is actually used to access a struct
  * entry in this file, preserve our redefinition
  * of class for the benefit of avoiding C++ name

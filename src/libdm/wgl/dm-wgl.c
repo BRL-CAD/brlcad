@@ -2285,6 +2285,14 @@ struct dm_impl dm_wgl_impl = {
 
 struct dm dm_wgl = { &dm_wgl_impl };
 
+#ifdef DM_PLUGIN
+static const struct dm_plugin pinfo = { &dm_wgl };
+
+DM_EXPORT const struct dm_plugin *dm_plugin_info()
+{
+    return &pinfo;
+}
+#endif
 
 /*
  * Fire up the display manager, and the display processor.

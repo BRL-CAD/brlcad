@@ -218,8 +218,6 @@ FB_EXPORT extern struct fb memory_interface, fb_null_interface;
 /* setting to 1 turns on general intrface debugging for all fb types */
 #define FB_DEBUG 0
 
-__BEGIN_DECLS
-
 /*
  * Structure of color map in shared memory region.  Has exactly the
  * same format as the SGI hardware "gammaramp" map Note that only the

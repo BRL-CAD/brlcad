@@ -1,0 +1,29 @@
+include_directories(
+  ${CMAKE_CURRENT_SOURCE_DIR}
+  ${BRLCAD_BINARY_DIR}/include
+  ${BRLCAD_SOURCE_DIR}/include
+  ${BU_INCLUDE_DIRS}
+  )
+
+set(TXT_SRCS
+  dm-txt.c
+  if_debug.c
+  )
+
+add_definitions(-DDM_PLUGIN)
+
+add_library(dm-txt SHARED ${TXT_SRCS})
+target_link_libraries(dm-txt libdm libbu)
+if (CPP_DLL_DEFINES)
+  set_property(TARGET dm-txt APPEND PROPERTY COMPILE_DEFINITIONS "DM_DLL_EXPORTS")
+endif (CPP_DLL_DEFINES)
+VALIDATE_STYLE(dm-txt "${TXT_SRCS}")
+
+PLUGIN_SETUP(dm-txt dm)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

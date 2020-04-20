@@ -1,10 +1,10 @@
 # Include directories needed by libdm users
-set(DM_NULL_INCLUDE_DIRS
+include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${BRLCAD_BINARY_DIR}/include
   ${BRLCAD_SOURCE_DIR}/include
+  ${BU_INCLUDE_DIRS}
   )
-include_directories(${DM_NULL_INCLUDE_DIRS})
 
 set(NULL_SRCS
   dm-Null.c

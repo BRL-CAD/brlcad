@@ -108,8 +108,8 @@ struct qtinfo {
     unsigned char *qi_grnmap;
 };
 
-#define QI(ptr) ((struct qtinfo *)((ptr)->u1.p))
-#define QI_SET(ptr, val) ((ptr)->u1.p) = (char *) val;
+#define QI(ptr) ((struct qtinfo *)((ptr)->i->u1.p))
+#define QI_SET(ptr, val) ((ptr)->i->u1.p) = (char *) val;
 
 /* Flags in qi_flags */
 #define FLG_LINCMAP 0x10	/* We're using a linear colormap */
