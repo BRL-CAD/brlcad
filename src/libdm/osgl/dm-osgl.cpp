@@ -52,13 +52,13 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
-#include "dm-Null.h"
-#include "dm.h"
+#include "../null/dm-Null.h"
 #include "rt/solid.h"
-#include "./private.h"
 
 #include "./fb_osgl.h"
 #include "./dm-osgl.h"
+
+#include "../include/private.h"
 
 /* For Tk, we need to offset when thinking about screen size in
  * order to allow for the Mac OSX top-of-screen toolbar - Tk
@@ -2186,66 +2186,62 @@ osgl_getDisplayImage(struct dm *dmp, unsigned char **image)
     swap_bytes = !big_endian;
 #endif
 
-    if (dmp->i->dm_type == DM_TYPE_WGL || dmp->i->dm_type == DM_TYPE_OSGL) {
-	width = dmp->i->dm_width;
-	height = dmp->i->dm_height;
+    width = dmp->i->dm_width;
+    height = dmp->i->dm_height;
 
-	pixels = (GLuint *)bu_calloc(width * height, sizeof(GLuint), "pixels");
+    pixels = (GLuint *)bu_calloc(width * height, sizeof(GLuint), "pixels");
 
-	{
-	    glReadBuffer(GL_FRONT);
+    {
+	glReadBuffer(GL_FRONT);
 #if defined(DM_WGL)
-	    /* XXX GL_UNSIGNED_INT_8_8_8_8 is currently not
-	     * available on windows.  Need to update when it
-	     * becomes available.
-	     */
-	    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
+	/* XXX GL_UNSIGNED_INT_8_8_8_8 is currently not
+	 * available on windows.  Need to update when it
+	 * becomes available.
+	 */
+	glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
 #else
-	    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, pixels);
+	glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, pixels);
 #endif
 
-	    idata = (unsigned char *)bu_calloc(height * width * bytes_per_pixel, sizeof(unsigned char), "rgb data");
-	    *image = idata;
-	    flip_display_image_vertically(*image, width, height);
+	idata = (unsigned char *)bu_calloc(height * width * bytes_per_pixel, sizeof(unsigned char), "rgb data");
+	*image = idata;
+	flip_display_image_vertically(*image, width, height);
 
-	    for (h = 0; h < height; h++) {
-		for (w = 0; w < width; w++) {
-		    int i = h*width + w;
-		    int i_h_inv = (height - h - 1)*width + w;
-		    int j = i*bytes_per_pixel;
-		    unsigned char *value = (unsigned char *)(idata + j);
+	for (h = 0; h < height; h++) {
+	    for (w = 0; w < width; w++) {
+		int i = h*width + w;
+		int i_h_inv = (height - h - 1)*width + w;
+		int j = i*bytes_per_pixel;
+		unsigned char *value = (unsigned char *)(idata + j);
 #if defined(DM_WGL)
-		    unsigned char alpha;
+		unsigned char alpha;
 #endif
 
-		    pixel = pixels[i_h_inv];
+		pixel = pixels[i_h_inv];
 
-		    value[0] = (pixel & red_mask) >> 24;
-		    value[1] = (pixel & green_mask) >> 16;
-		    value[2] = (pixel & blue_mask) >> 8;
+		value[0] = (pixel & red_mask) >> 24;
+		value[1] = (pixel & green_mask) >> 16;
+		value[2] = (pixel & blue_mask) >> 8;
 
 #if defined(DM_WGL)
-		    alpha = pixel & alpha_mask;
-		    if (swap_bytes) {
-			unsigned char tmp_byte;
+		alpha = pixel & alpha_mask;
+		if (swap_bytes) {
+		    unsigned char tmp_byte;
 
-			value[0] = alpha;
-			/* swap byte1 and byte2 */
-			tmp_byte = value[1];
-			value[1] = value[2];
-			value[2] = tmp_byte;
-		    }
-#endif
+		    value[0] = alpha;
+		    /* swap byte1 and byte2 */
+		    tmp_byte = value[1];
+		    value[1] = value[2];
+		    value[2] = tmp_byte;
 		}
-
+#endif
 	    }
 
-	    bu_free(pixels, "pixels");
 	}
-    } else {
-	bu_log("osgl_getDisplayImage: Display type not set as OSGL or WGL\n");
-	return TCL_ERROR;
+
+	bu_free(pixels, "pixels");
     }
+
 
     return TCL_OK; /* caller will need to bu_free(idata, "image data"); */
 }
@@ -2630,8 +2626,16 @@ struct dm_impl dm_osgl_impl = {
 
 extern "C" {
     struct dm dm_osgl = { &dm_osgl_impl };
-}
 
+#ifdef DM_PLUGIN
+    static const struct dm_plugin pinfo = { &dm_osgl };
+
+    DM_EXPORT const struct dm_plugin *dm_plugin_info()
+    {
+	return &pinfo;
+    }
+#endif
+}
 #endif /* DM_OSGL */
 
 /*
