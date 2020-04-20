@@ -24,162 +24,36 @@
 #include <osg/TextureCubeMap>
 #include <osg/TextureRectangle>
 #include <osg/Notify>
+#include <osg/ContextData>
 #include <osg/Timer>
 
 using namespace osg;
 
-static buffered_object< ref_ptr<FBOExtensions> > s_extensions;
 
-FBOExtensions* FBOExtensions::instance(unsigned contextID, bool createIfNotInitalized)
+GLRenderBufferManager::GLRenderBufferManager(unsigned int contextID):
+    GLObjectManager("GLRenderBufferManager",contextID)
+{}
+
+void GLRenderBufferManager::deleteGLObject(GLuint globj)
 {
-    if (!s_extensions[contextID] && createIfNotInitalized) s_extensions[contextID] = new FBOExtensions(contextID);
-    return s_extensions[contextID].get();
+    const GLExtensions* extensions = GLExtensions::Get(_contextID,true);
+    if (extensions->isGlslSupported) extensions->glDeleteRenderbuffers(1, &globj );
 }
 
-/**************************************************************************
- * FBOExtensions
- **************************************************************************/
-#if defined(OSG_GLES1_AVAILABLE) || defined(OSG_GLES2_AVAILABLE)
-    #if defined(OSG_GLES1_AVAILABLE)
-        #define LOAD_FBO_EXT(name) setGLExtensionFuncPtr(name, (#name), (std::string(#name)+std::string("OES") ).c_str() )
-    #else
-        #define LOAD_FBO_EXT(name) setGLExtensionFuncPtr(name, (#name), std::string(#name).c_str() )
-    #endif
-#else
-    #define LOAD_FBO_EXT(name) setGLExtensionFuncPtr(name, (#name), (std::string(#name)+std::string("EXT") ).c_str() )
-#endif
+GLFrameBufferObjectManager::GLFrameBufferObjectManager(unsigned int contextID):
+    GLObjectManager("GLFrameBufferObjectManager",contextID)
+{}
 
-FBOExtensions::FBOExtensions(unsigned int contextID)
-:   glBindRenderbuffer(0),
-    glGenRenderbuffers(0),
-    glDeleteRenderbuffers(0),
-    glRenderbufferStorage(0),
-    glRenderbufferStorageMultisample(0),
-    glRenderbufferStorageMultisampleCoverageNV(0),
-    glBindFramebuffer(0),
-    glDeleteFramebuffers(0),
-    glGenFramebuffers(0),
-    glCheckFramebufferStatus(0),
-    glFramebufferTexture1D(0),
-    glFramebufferTexture2D(0),
-    glFramebufferTexture3D(0),
-    glFramebufferTexture(0),
-    glFramebufferTextureLayer(0),
-    glFramebufferRenderbuffer(0),
-    glGenerateMipmap(0),
-    glBlitFramebuffer(0),
-    _supported(false),
-    _packed_depth_stencil_supported(false)
+void GLFrameBufferObjectManager::deleteGLObject(GLuint globj)
 {
-    LOAD_FBO_EXT(glBindRenderbuffer);
-    LOAD_FBO_EXT(glGenRenderbuffers);
-    LOAD_FBO_EXT(glDeleteRenderbuffers);
-    LOAD_FBO_EXT(glRenderbufferStorage);
-    LOAD_FBO_EXT(glBindFramebuffer);
-    LOAD_FBO_EXT(glDeleteFramebuffers);
-    LOAD_FBO_EXT(glGenFramebuffers);
-    LOAD_FBO_EXT(glCheckFramebufferStatus);
-    LOAD_FBO_EXT(glFramebufferTexture1D);
-    LOAD_FBO_EXT(glFramebufferTexture2D);
-    LOAD_FBO_EXT(glFramebufferTexture3D);
-    LOAD_FBO_EXT(glFramebufferTexture);
-    LOAD_FBO_EXT(glFramebufferTextureLayer);
-    LOAD_FBO_EXT(glFramebufferRenderbuffer);
-    LOAD_FBO_EXT(glGenerateMipmap);
-    LOAD_FBO_EXT(glGetRenderbufferParameteriv);
-
-    _supported =
-        glBindRenderbuffer != 0 &&
-        glDeleteRenderbuffers != 0 &&
-        glGenRenderbuffers != 0 &&
-        glRenderbufferStorage != 0 &&
-        glBindFramebuffer != 0 &&
-        glDeleteFramebuffers != 0 &&
-        glGenFramebuffers != 0 &&
-        glCheckFramebufferStatus != 0 &&
-        glFramebufferTexture2D != 0 &&
-        glFramebufferRenderbuffer != 0 &&
-        glGenerateMipmap != 0 &&
-        glGetRenderbufferParameteriv != 0;
-
-#if !defined(OSG_GLES1_AVAILABLE) && !defined(OSG_GLES2_AVAILABLE)
-    _supported = _supported &&
-        glFramebufferTexture1D != 0 &&
-        glFramebufferTexture3D != 0 &&
-        isGLExtensionOrVersionSupported(contextID, "GL_EXT_framebuffer_object",3.0f);
-#endif
-
-    LOAD_FBO_EXT(glBlitFramebuffer);
-    LOAD_FBO_EXT(glRenderbufferStorageMultisample);
-    LOAD_FBO_EXT(glRenderbufferStorageMultisampleCoverageNV);
-
-    _packed_depth_stencil_supported = OSG_GL3_FEATURES ||
-        (isGLExtensionSupported(contextID, "GL_EXT_packed_depth_stencil")) ||
-        (isGLExtensionSupported(contextID, "GL_OES_packed_depth_stencil"));
+    const GLExtensions* extensions = GLExtensions::Get(_contextID,true);
+    if (extensions->isGlslSupported) extensions->glDeleteFramebuffers(1, &globj );
 }
 
 
 /**************************************************************************
  * RenderBuffer
  **************************************************************************/
-
-///////////////////////////////////////////////////////////////////////////
-// static cache of glRenderbuffers flagged for deletion, which will actually
-// be deleted in the correct GL context.
-
-typedef std::list<GLuint> RenderBufferHandleList;
-typedef osg::buffered_object<RenderBufferHandleList> DeletedRenderBufferCache;
-
-static OpenThreads::Mutex    s_mutex_deletedRenderBufferCache;
-static DeletedRenderBufferCache s_deletedRenderBufferCache;
-
-void RenderBuffer::deleteRenderBuffer(unsigned int contextID, GLuint rb)
-{
-    if( rb )
-    {
-        OpenThreads::ScopedLock<OpenThreads::Mutex> lock(s_mutex_deletedRenderBufferCache);
-
-        // add glProgram to the cache for the appropriate context.
-        s_deletedRenderBufferCache[contextID].push_back(rb);
-    }
-}
-
-void RenderBuffer::flushDeletedRenderBuffers(unsigned int contextID,double /*currentTime*/, double& availableTime)
-{
-    // if no time available don't try to flush objects.
-    if (availableTime<=0.0) return;
-
-    const FBOExtensions* extensions = FBOExtensions::instance(contextID,true);
-    if(!extensions || !extensions->isSupported() ) return;
-
-    const osg::Timer& timer = *osg::Timer::instance();
-    osg::Timer_t start_tick = timer.tick();
-    double elapsedTime = 0.0;
-
-    {
-        OpenThreads::ScopedLock<OpenThreads::Mutex> lock(s_mutex_deletedRenderBufferCache);
-
-        RenderBufferHandleList& pList = s_deletedRenderBufferCache[contextID];
-        for(RenderBufferHandleList::iterator titr=pList.begin();
-            titr!=pList.end() && elapsedTime<availableTime;
-            )
-        {
-            extensions->glDeleteRenderbuffers(1, &(*titr) );
-            titr = pList.erase( titr );
-            elapsedTime = timer.delta_s(start_tick,timer.tick());
-        }
-    }
-
-    availableTime -= elapsedTime;
-}
-
-void RenderBuffer::discardDeletedRenderBuffers(unsigned int contextID)
-{
-    OpenThreads::ScopedLock<OpenThreads::Mutex> lock(s_mutex_deletedRenderBufferCache);
-    RenderBufferHandleList& pList = s_deletedRenderBufferCache[contextID];
-    pList.clear();
-}
-
 
 RenderBuffer::RenderBuffer()
 :    Object(),
@@ -215,17 +89,17 @@ RenderBuffer::~RenderBuffer()
 {
     for(unsigned i=0; i<_objectID.size(); ++i)
     {
-        if (_objectID[i]) deleteRenderBuffer(i, _objectID[i]);
+        if (_objectID[i]) osg::get<GLRenderBufferManager>(i)->scheduleGLObjectForDeletion(_objectID[i]);
     }
 }
 
-int RenderBuffer::getMaxSamples(unsigned int contextID, const FBOExtensions *ext)
+int RenderBuffer::getMaxSamples(unsigned int contextID, const GLExtensions* ext)
 {
     static osg::buffered_value<GLint> maxSamplesList;
 
     GLint& maxSamples = maxSamplesList[contextID];
 
-    if (!maxSamples && ext->isMultisampleSupported())
+    if (!maxSamples && ext->isMultisampleSupported)
     {
         glGetIntegerv(GL_MAX_SAMPLES_EXT, &maxSamples);
     }
@@ -233,7 +107,7 @@ int RenderBuffer::getMaxSamples(unsigned int contextID, const FBOExtensions *ext
     return maxSamples;
 }
 
-GLuint RenderBuffer::getObjectID(unsigned int contextID, const FBOExtensions *ext) const
+GLuint RenderBuffer::getObjectID(unsigned int contextID, const GLExtensions* ext) const
 {
     GLuint &objectID = _objectID[contextID];
 
@@ -261,7 +135,7 @@ GLuint RenderBuffer::getObjectID(unsigned int contextID, const FBOExtensions *ex
             const_cast<RenderBuffer*>(this)->setSamples(_colorSamples);
         }
 
-        if (_samples > 0 && ext->isMultisampleCoverageSupported())
+        if (_samples > 0 && ext->isRenderbufferMultisampleCoverageSupported())
         {
             int samples = minimum(_samples, getMaxSamples(contextID, ext));
             int colorSamples = minimum(_colorSamples, samples);
@@ -269,7 +143,7 @@ GLuint RenderBuffer::getObjectID(unsigned int contextID, const FBOExtensions *ex
             ext->glRenderbufferStorageMultisampleCoverageNV(GL_RENDERBUFFER_EXT,
                 samples, colorSamples, _internalFormat, _width, _height);
         }
-        else if (_samples > 0 && ext->isMultisampleSupported())
+        else if (_samples > 0 && ext->isRenderbufferMultisampleSupported())
         {
             int samples = minimum(_samples, getMaxSamples(contextID, ext));
 
@@ -299,7 +173,7 @@ void RenderBuffer::releaseGLObjects(osg::State* state) const
         unsigned int contextID = state->getContextID();
         if (_objectID[contextID])
         {
-            deleteRenderBuffer(contextID, _objectID[contextID]);
+            osg::get<GLRenderBufferManager>(contextID)->scheduleGLObjectForDeletion(_objectID[contextID]);
             _objectID[contextID] = 0;
         }
     }
@@ -309,7 +183,7 @@ void RenderBuffer::releaseGLObjects(osg::State* state) const
         {
             if (_objectID[i])
             {
-                deleteRenderBuffer(i, _objectID[i]);
+                osg::get<GLRenderBufferManager>(i)->scheduleGLObjectForDeletion(_objectID[i]);
                 _objectID[i] = 0;
             }
         }
@@ -540,7 +414,7 @@ bool FrameBufferAttachment::isMultisample() const
     return false;
 }
 
-void FrameBufferAttachment::createRequiredTexturesAndApplyGenerateMipMap(State &state, const FBOExtensions* ext) const
+void FrameBufferAttachment::createRequiredTexturesAndApplyGenerateMipMap(State &state, const GLExtensions* ext) const
 {
     unsigned int contextID = state.getContextID();
 
@@ -571,10 +445,17 @@ void FrameBufferAttachment::createRequiredTexturesAndApplyGenerateMipMap(State &
     }
 }
 
-void FrameBufferAttachment::attach(State &state, GLenum target, GLenum attachment_point, const FBOExtensions* ext) const
+void FrameBufferAttachment::attach(State &state, GLenum target, GLenum attachment_point, const GLExtensions* ext) const
 {
     unsigned int contextID = state.getContextID();
 
+    if (_ximpl->targetType == Pimpl::RENDERBUFFER)
+    {
+        ext->glFramebufferRenderbuffer(target, attachment_point, GL_RENDERBUFFER_EXT, _ximpl->renderbufferTarget->getObjectID(contextID, ext));
+        return;
+    }
+
+    // targetType must be a texture, make sure we have a valid texture object
     Texture::TextureObject *tobj = 0;
     if (_ximpl->textureTarget.valid())
     {
@@ -585,16 +466,14 @@ void FrameBufferAttachment::attach(State &state, GLenum target, GLenum attachmen
             tobj = _ximpl->textureTarget->getTextureObject(contextID);
 
         }
-        if (!tobj || tobj->id() == 0)
-            return;
     }
+    if (!tobj || tobj->id() == 0)
+        return;
 
     switch (_ximpl->targetType)
     {
-    default:
     case Pimpl::RENDERBUFFER:
-        ext->glFramebufferRenderbuffer(target, attachment_point, GL_RENDERBUFFER_EXT, _ximpl->renderbufferTarget->getObjectID(contextID, ext));
-        break;
+        break; // already handled above. case should never be hit, just here to quieten compiler warning.
     case Pimpl::TEXTURE1D:
         ext->glFramebufferTexture1D(target, attachment_point, GL_TEXTURE_1D, tobj->id(), _ximpl->level);
         break;
@@ -606,23 +485,13 @@ void FrameBufferAttachment::attach(State &state, GLenum target, GLenum attachmen
         break;
     case Pimpl::TEXTURE3D:
         if (_ximpl->zoffset == Camera::FACE_CONTROLLED_BY_GEOMETRY_SHADER)
-        {
-            if (ext->glFramebufferTexture)
-            {
-                ext->glFramebufferTexture(target, attachment_point, tobj->id(), _ximpl->level);
-            }
-        }
+            ext->glFramebufferTexture(target, attachment_point, tobj->id(), _ximpl->level);
         else
             ext->glFramebufferTexture3D(target, attachment_point, GL_TEXTURE_3D, tobj->id(), _ximpl->level, _ximpl->zoffset);
         break;
     case Pimpl::TEXTURE2DARRAY:
         if (_ximpl->zoffset == Camera::FACE_CONTROLLED_BY_GEOMETRY_SHADER)
-        {
-            if (ext->glFramebufferTexture)
-            {
-                ext->glFramebufferTexture(target, attachment_point, tobj->id(), _ximpl->level);
-            }
-        }
+            ext->glFramebufferTexture(target, attachment_point, tobj->id(), _ximpl->level);
         else
             ext->glFramebufferTextureLayer(target, attachment_point, tobj->id(), _ximpl->level, _ximpl->zoffset);
         break;
@@ -631,12 +500,7 @@ void FrameBufferAttachment::attach(State &state, GLenum target, GLenum attachmen
         break;
     case Pimpl::TEXTURECUBE:
         if (_ximpl->cubeMapFace == Camera::FACE_CONTROLLED_BY_GEOMETRY_SHADER)
-        {
-            if (ext->glFramebufferTexture)
-            {
-                ext->glFramebufferTexture(target, attachment_point, tobj->id(), _ximpl->level);
-            }
-        }
+            ext->glFramebufferTexture(target, attachment_point, tobj->id(), _ximpl->level);
         else
             ext->glFramebufferTexture2D(target, attachment_point, GL_TEXTURE_CUBE_MAP_POSITIVE_X + _ximpl->cubeMapFace, tobj->id(), _ximpl->level);
         break;
@@ -701,69 +565,21 @@ unsigned int FrameBufferAttachment::getTextureArrayLayer() const
     return _ximpl->zoffset;
 }
 
+void FrameBufferAttachment::resizeGLObjectBuffers(unsigned int maxSize)
+{
+    if (_ximpl->renderbufferTarget.valid()) _ximpl->renderbufferTarget->resizeGLObjectBuffers(maxSize);
+    if (_ximpl->textureTarget.valid()) _ximpl->textureTarget->resizeGLObjectBuffers(maxSize);
+}
+
+void FrameBufferAttachment::releaseGLObjects(osg::State* state) const
+{
+    if (_ximpl->renderbufferTarget.valid()) _ximpl->renderbufferTarget->releaseGLObjects(state);
+    if (_ximpl->textureTarget.valid()) _ximpl->textureTarget->releaseGLObjects(state);
+}
+
 /**************************************************************************
  * FrameBufferObject
  **************************************************************************/
-
-///////////////////////////////////////////////////////////////////////////
-// static cache of glRenderbuffers flagged for deletion, which will actually
-// be deleted in the correct GL context.
-
-typedef std::list<GLuint> FrameBufferObjectHandleList;
-typedef osg::buffered_object<FrameBufferObjectHandleList> DeletedFrameBufferObjectCache;
-
-static OpenThreads::Mutex    s_mutex_deletedFrameBufferObjectCache;
-static DeletedFrameBufferObjectCache s_deletedFrameBufferObjectCache;
-
-void FrameBufferObject::deleteFrameBufferObject(unsigned int contextID, GLuint rb)
-{
-    if( rb )
-    {
-        OpenThreads::ScopedLock<OpenThreads::Mutex> lock(s_mutex_deletedFrameBufferObjectCache);
-
-        // add glProgram to the cache for the appropriate context.
-        s_deletedFrameBufferObjectCache[contextID].push_back(rb);
-    }
-}
-
-void FrameBufferObject::flushDeletedFrameBufferObjects(unsigned int contextID,double /*currentTime*/, double& availableTime)
-{
-    // if no time available don't try to flush objects.
-    if (availableTime<=0.0) return;
-
-    const FBOExtensions* extensions = FBOExtensions::instance(contextID,true);
-    if(!extensions || !extensions->isSupported() ) return;
-
-    const osg::Timer& timer = *osg::Timer::instance();
-    osg::Timer_t start_tick = timer.tick();
-    double elapsedTime = 0.0;
-
-    {
-        OpenThreads::ScopedLock<OpenThreads::Mutex> lock(s_mutex_deletedFrameBufferObjectCache);
-
-        FrameBufferObjectHandleList& pList = s_deletedFrameBufferObjectCache[contextID];
-        for(FrameBufferObjectHandleList::iterator titr=pList.begin();
-            titr!=pList.end() && elapsedTime<availableTime;
-            )
-        {
-            extensions->glDeleteFramebuffers(1, &(*titr) );
-            titr = pList.erase( titr );
-            elapsedTime = timer.delta_s(start_tick,timer.tick());
-        }
-    }
-
-    availableTime -= elapsedTime;
-}
-
-void FrameBufferObject::discardDeletedFrameBufferObjects(unsigned int contextID)
-{
-    OpenThreads::ScopedLock<OpenThreads::Mutex> lock(s_mutex_deletedFrameBufferObjectCache);
-    FrameBufferObjectHandleList& pList = s_deletedFrameBufferObjectCache[contextID];
-
-    pList.clear();
-}
-
-
 
 FrameBufferObject::FrameBufferObject()
 :    StateAttribute()
@@ -781,7 +597,7 @@ FrameBufferObject::~FrameBufferObject()
 {
     for(unsigned i=0; i<_fboID.size(); ++i)
     {
-        if (_fboID[i]) deleteFrameBufferObject(i, _fboID[i]);
+        if (_fboID[i]) osg::get<GLFrameBufferObjectManager>(i)->scheduleGLObjectForDeletion(_fboID[i]);
     }
 }
 
@@ -790,6 +606,11 @@ void FrameBufferObject::resizeGLObjectBuffers(unsigned int maxSize)
     _fboID.resize(maxSize);
     _unsupported.resize(maxSize);
     _fboID.resize(maxSize);
+
+    for(AttachmentMap::iterator itr = _attachments.begin(); itr != _attachments.end(); ++itr)
+    {
+        itr->second.resizeGLObjectBuffers(maxSize);
+    }
 }
 
 void FrameBufferObject::releaseGLObjects(osg::State* state) const
@@ -799,7 +620,7 @@ void FrameBufferObject::releaseGLObjects(osg::State* state) const
         unsigned int contextID = state->getContextID();
         if (_fboID[contextID])
         {
-            deleteFrameBufferObject(contextID, _fboID[contextID]);
+            osg::get<GLFrameBufferObjectManager>(contextID)->scheduleGLObjectForDeletion(_fboID[contextID]);
             _fboID[contextID] = 0;
         }
     }
@@ -809,10 +630,15 @@ void FrameBufferObject::releaseGLObjects(osg::State* state) const
         {
             if (_fboID[i])
             {
-                deleteFrameBufferObject(i, _fboID[i]);
+                osg::get<GLFrameBufferObjectManager>(i)->scheduleGLObjectForDeletion(_fboID[i]);
                 _fboID[i] = 0;
             }
         }
+    }
+
+    for(AttachmentMap::const_iterator itr = _attachments.begin(); itr != _attachments.end(); ++itr)
+    {
+        itr->second.releaseGLObjects(state);
     }
 }
 
@@ -862,8 +688,8 @@ void FrameBufferObject::apply(State &state, BindTarget target) const
         return;
 
 
-    FBOExtensions* ext = FBOExtensions::instance(contextID,true);
-    if (!ext->isSupported())
+    GLExtensions* ext = state.get<GLExtensions>();
+    if (!ext->isFrameBufferObjectSupported)
     {
         _unsupported[contextID] = 1;
         OSG_WARN << "Warning: EXT_framebuffer_object is not supported" << std::endl;
@@ -918,8 +744,8 @@ void FrameBufferObject::apply(State &state, BindTarget target) const
     {
         if (_drawBuffers.size() > 0)
         {
-            GL2Extensions *gl2e = GL2Extensions::Get(state.getContextID(), true );
-            if (gl2e && gl2e->isDrawBuffersSupported())
+            GLExtensions *gl2e = state.get<GLExtensions>();
+            if (gl2e && gl2e->glDrawBuffers)
             {
                 gl2e->glDrawBuffers(_drawBuffers.size(), &(_drawBuffers[0]));
             }
@@ -938,7 +764,7 @@ void FrameBufferObject::apply(State &state, BindTarget target) const
             switch(i->first)
             {
                 case(Camera::PACKED_DEPTH_STENCIL_BUFFER):
-                    if (ext->isPackedDepthStencilSupported())
+                    if (ext->isPackedDepthStencilSupported)
                     {
                         fa.attach(state, target, GL_DEPTH_ATTACHMENT_EXT, ext);
                         fa.attach(state, target, GL_STENCIL_ATTACHMENT_EXT, ext);

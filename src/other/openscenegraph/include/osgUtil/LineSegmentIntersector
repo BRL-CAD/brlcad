@@ -25,11 +25,12 @@ class OSGUTIL_EXPORT LineSegmentIntersector : public Intersector
 {
     public:
 
-        /** Construct a LineSegmentIntersector the runs between the specified start and end points in MODEL coordinates. */
+        /** Construct a LineSegmentIntersector that runs between the specified start and end points in MODEL coordinates. */
         LineSegmentIntersector(const osg::Vec3d& start, const osg::Vec3d& end);
 
-        /** Construct a LineSegmentIntersector the runs between the specified start and end points in the specified coordinate frame. */
-        LineSegmentIntersector(CoordinateFrame cf, const osg::Vec3d& start, const osg::Vec3d& end);
+        /** Construct a LineSegmentIntersector that runs between the specified start and end points in the specified coordinate frame. */
+        LineSegmentIntersector(CoordinateFrame cf, const osg::Vec3d& start, const osg::Vec3d& end, LineSegmentIntersector* parent = NULL,
+                               osgUtil::Intersector::IntersectionLimit intersectionLimit = osgUtil::Intersector::NO_LIMIT);
 
         /** Convenience constructor for supporting picking in WINDOW, or PROJECTION coordinates
           * In WINDOW coordinates creates a start value of (x,y,0) and end value of (x,y,1).
@@ -64,10 +65,10 @@ class OSGUTIL_EXPORT LineSegmentIntersector : public Intersector
             const osg::Vec3& getLocalIntersectNormal() const { return localIntersectionNormal; }
             osg::Vec3 getWorldIntersectNormal() const { return matrix.valid() ? osg::Matrix::transform3x3(osg::Matrix::inverse(*matrix),localIntersectionNormal) : localIntersectionNormal; }
 
-            /** convinience function for mapping the intersection point to any textures assigned to the objects intersected.
+            /** Convenience function for mapping the intersection point to any textures assigned to the objects intersected.
              *  Returns the Texture pointer and texture coords of object hit when a texture is available on the object, returns NULL otherwise.*/
             osg::Texture* getTextureLookUp(osg::Vec3& tc) const;
-            
+
         };
 
         typedef std::multiset<Intersection> Intersections;
@@ -94,11 +95,19 @@ class OSGUTIL_EXPORT LineSegmentIntersector : public Intersector
 
         virtual void intersect(osgUtil::IntersectionVisitor& iv, osg::Drawable* drawable);
 
+        virtual void intersect(osgUtil::IntersectionVisitor& iv, osg::Drawable* drawable,
+                               const osg::Vec3d& s, const osg::Vec3d& e);
+
         virtual void reset();
 
         virtual bool containsIntersections() { return !getIntersections().empty(); }
 
-    protected:
+        /** Compute the matrix that transforms the local coordinate system of parent Intersector (usually
+            the current intersector) into the child coordinate system of the child Intersector.
+            cf parameter indicates the coordinate frame of parent Intersector. */
+        static osg::Matrix getTransformation(osgUtil::IntersectionVisitor& iv, CoordinateFrame cf);
+
+protected:
 
         bool intersects(const osg::BoundingSphere& bs);
         bool intersectAndClip(osg::Vec3d& s, osg::Vec3d& e,const osg::BoundingBox& bb);

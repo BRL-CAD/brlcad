@@ -30,42 +30,37 @@ MultiTouchTrackballManipulator::MultiTouchTrackballManipulator( int flags )
 
 /// Constructor.
 MultiTouchTrackballManipulator::MultiTouchTrackballManipulator( const MultiTouchTrackballManipulator& tm, const CopyOp& copyOp )
-    : osg::Object(tm, copyOp), inherited( tm, copyOp )
+    : osg::Object(tm, copyOp), osg::Callback(tm, copyOp), inherited( tm, copyOp )
 {
 }
 
 
-void MultiTouchTrackballManipulator::handleMultiTouchDrag(GUIEventAdapter::TouchData* now, GUIEventAdapter::TouchData* last, const double eventTimeDelta)
+void MultiTouchTrackballManipulator::handleMultiTouchDrag(const GUIEventAdapter* now, const GUIEventAdapter* last, const double eventTimeDelta)
 {
-    const float zoom_threshold = 1.0f;
+    const osg::Vec2 pt_1_now( now->getTouchData()->get(0).x, now->getTouchData()->get(0).y);
+    const osg::Vec2 pt_2_now( now->getTouchData()->get(1).x, now->getTouchData()->get(1).y);
+    const osg::Vec2 pt_1_last( last->getTouchData()->get(0).x, last->getTouchData()->get(0).y);
+    const osg::Vec2 pt_2_last( last->getTouchData()->get(1).x, last->getTouchData()->get(1).y);
 
-    osg::Vec2 pt_1_now(now->get(0).x,now->get(0).y);
-    osg::Vec2 pt_2_now(now->get(1).x,now->get(1).y);
-    osg::Vec2 pt_1_last(last->get(0).x,last->get(0).y);
-    osg::Vec2 pt_2_last(last->get(1).x,last->get(1).y);
-
-
-
-    float gap_now((pt_1_now - pt_2_now).length());
-    float gap_last((pt_1_last - pt_2_last).length());
+    const float gap_now((pt_1_now - pt_2_now).length());
+    const float gap_last((pt_1_last - pt_2_last).length());
 
     // osg::notify(osg::ALWAYS) << gap_now << " " << gap_last << std::endl;
 
-    if (fabs(gap_last - gap_now) >= zoom_threshold)
-    {
-        // zoom gesture
-        zoomModel( (gap_last - gap_now) * eventTimeDelta, true );
-    }
+    const float relativeChange = (gap_last - gap_now)/gap_last;
+
+
+    // zoom gesture
+    if (fabs(relativeChange) > 0.02)
+        zoomModel( relativeChange , true );
 
     // drag gesture
+    const osg::Vec2 delta = ((pt_1_last - pt_1_now) + (pt_2_last - pt_2_now)) / 2.0f;
 
-    osg::Vec2 delta = ((pt_1_last - pt_1_now) + (pt_2_last - pt_2_now)) / 2.0f;
+    const float scale = -0.3f * _distance * getThrowScale( eventTimeDelta );
+    //osg::notify(osg::ALWAYS) << "drag: " << delta << " scale: " << scale << std::endl;
 
-    float scale = 0.2f * _distance * eventTimeDelta;
-
-    // osg::notify(osg::ALWAYS) << "drag: " << delta << " scale: " << scale << std::endl;
-
-    panModel( delta.x() * scale, delta.y() * scale * (-1)); // flip y-coord because of different origins.
+    panModel( delta.x() * scale, delta.y() * scale);
 }
 
 
@@ -101,15 +96,15 @@ bool MultiTouchTrackballManipulator::handle( const GUIEventAdapter& ea, GUIActio
 
                 else if (data->getNumTouchPoints() >= 2)
                 {
-                    if ((_lastTouchData.valid()) && (_lastTouchData->getNumTouchPoints() >= 2))
+                    if ((_lastEvent.valid()) && (_lastEvent->getTouchData()->getNumTouchPoints() >= 2))
                     {
-                        handleMultiTouchDrag(data, _lastTouchData.get(), eventTimeDelta);
+                        handleMultiTouchDrag(&ea, _lastEvent.get(), eventTimeDelta);
                     }
 
                     handled = true;
                 }
 
-                _lastTouchData = data;
+                _lastEvent = new GUIEventAdapter(ea);
 
                 // check if all touches ended
                 unsigned int num_touches_ended(0);
@@ -121,7 +116,7 @@ bool MultiTouchTrackballManipulator::handle( const GUIEventAdapter& ea, GUIActio
 
                 if(num_touches_ended == data->getNumTouchPoints())
                 {
-                    _lastTouchData = NULL;
+                    _lastEvent = NULL;
                 }
 
             }

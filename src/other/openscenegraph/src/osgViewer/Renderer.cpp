@@ -25,6 +25,7 @@
 
 #include <osgDB/DatabasePager>
 #include <osgDB/ImagePager>
+#include <osgDB/Registry>
 
 #include <osg/io_utils>
 
@@ -77,7 +78,7 @@ void EXTQuerySupport::checkQuery(osg::Stats* stats, osg::State* /*state*/,
         _extensions->glGetQueryObjectiv(query, GL_QUERY_RESULT_AVAILABLE, &available);
         if (available)
         {
-            GLuint64EXT timeElapsed = 0;
+            GLuint64 timeElapsed = 0;
             _extensions->glGetQueryObjectui64v(query, GL_QUERY_RESULT, &timeElapsed);
 
             double timeElapsedSeconds = double(timeElapsed)*1e-9;
@@ -132,7 +133,7 @@ void EXTQuerySupport::endQuery(osg::State* /*state*/)
 
 void OpenGLQuerySupport::initialize(osg::State* state, osg::Timer_t /*startTick*/)
 {
-    _extensions = osg::Drawable::getExtensions(state->getContextID(),true);
+    _extensions = state->get<osg::GLExtensions>();
 }
 
 void EXTQuerySupport::initialize(osg::State* state, osg::Timer_t startTick)
@@ -214,13 +215,13 @@ void ARBQuerySupport::checkQuery(osg::Stats* stats, osg::State* state,
         if (available)
         {
             QueryPair queries = itr->queries;
-            GLuint64EXT beginTimestamp = 0;
-            GLuint64EXT endTimestamp = 0;
+            GLuint64 beginTimestamp = 0;
+            GLuint64 endTimestamp = 0;
             _extensions->glGetQueryObjectui64v(queries.first, GL_QUERY_RESULT,
                                                &beginTimestamp);
             _extensions->glGetQueryObjectui64v(queries.second, GL_QUERY_RESULT,
                                                &endTimestamp);
-            GLuint64EXT gpuTimestamp = state->getGpuTimestamp();
+            GLuint64 gpuTimestamp = state->getGpuTimestamp();
             // Have any of the timestamps wrapped around?
             int tbits = state->getTimestampBits();
             if (tbits < 64)
@@ -228,11 +229,12 @@ void ARBQuerySupport::checkQuery(osg::Stats* stats, osg::State* state,
                 // If the high bits on any of the timestamp bits are
                 // different then the counters may have wrapped.
                 const int hiShift = (tbits - 1);
-                const GLuint64EXT hiMask = 1 << hiShift;
-                const GLuint64EXT sum = (beginTimestamp >> hiShift)
+                const GLuint64 one = 1;
+                const GLuint64 hiMask = one << hiShift;
+                const GLuint64 sum = (beginTimestamp >> hiShift)
                     + (endTimestamp >> hiShift) + (gpuTimestamp >> hiShift);
                 if (sum == 1 || sum == 2) {
-                    const GLuint64EXT wrapAdd = 1 << tbits;
+                    const GLuint64 wrapAdd = one << tbits;
                     // Counter wrapped between begin and end?
                     if (beginTimestamp > endTimestamp)
                     {
@@ -251,7 +253,7 @@ void ARBQuerySupport::checkQuery(osg::Stats* stats, osg::State* state,
                     }
                 }
             }
-            GLuint64EXT timeElapsed = endTimestamp - beginTimestamp;
+            GLuint64 timeElapsed = endTimestamp - beginTimestamp;
             double timeElapsedSeconds = double(timeElapsed)*1e-9;
             double gpuTick = state->getGpuTime();
                      double beginTime = 0.0;
@@ -352,6 +354,7 @@ static OpenThreads::ReentrantMutex s_drawSerializerMutex;
 //
 //  Renderer
 Renderer::Renderer(osg::Camera* camera):
+    osg::Referenced(true),
     osg::GraphicsOperation("Renderer",true),
     _camera(camera),
     _done(false),
@@ -366,6 +369,10 @@ Renderer::Renderer(osg::Camera* camera):
 
     _sceneView[0] = new osgUtil::SceneView;
     _sceneView[1] = new osgUtil::SceneView;
+
+    // each SceneView to have their own FrameStamp to avoid thread conflicts with the Viewer's main FrameStamp
+    _sceneView[0]->setFrameStamp(new osg::FrameStamp());
+    _sceneView[1]->setFrameStamp(new osg::FrameStamp());
 
     osg::Camera* masterCamera = _camera->getView() ? _camera->getView()->getCamera() : camera;
 
@@ -413,7 +420,7 @@ Renderer::Renderer(osg::Camera* camera):
     _sceneView[0]->setDefaults(sceneViewOptions);
     _sceneView[1]->setDefaults(sceneViewOptions);
 
-    if (ds->getUseSceneViewForStereoHint())
+    if (ds && ds->getUseSceneViewForStereoHint())
     {
         _sceneView[0]->setDisplaySettings(ds);
         _sceneView[1]->setDisplaySettings(ds);
@@ -430,9 +437,10 @@ Renderer::Renderer(osg::Camera* camera):
     {
         // assign CullVisitor::Identifier so that the double buffering of SceneView doesn't interfer
         // with code that requires a consistent knowledge and which effective cull traversal to taking place
-        osg::ref_ptr<osgUtil::CullVisitor::Identifier> leftEyeIdentifier = _sceneView[0]->getCullVisitor()->getIdentifier();
+        osg::ref_ptr<osgUtil::CullVisitor::Identifier> leftEyeIdentifier = new osgUtil::CullVisitor::Identifier();
         osg::ref_ptr<osgUtil::CullVisitor::Identifier> rightEyeIdentifier = new osgUtil::CullVisitor::Identifier();
 
+        _sceneView[0]->getCullVisitor()->setIdentifier(leftEyeIdentifier.get());
         _sceneView[0]->setCullVisitorLeft(_sceneView[0]->getCullVisitor()->clone());
         _sceneView[0]->getCullVisitorLeft()->setIdentifier(leftEyeIdentifier.get());
         _sceneView[0]->setCullVisitorRight(_sceneView[0]->getCullVisitor()->clone());
@@ -463,10 +471,10 @@ void Renderer::initialize(osg::State* state)
     if (!_initialized)
     {
         _initialized = true;
-        osg::Drawable::Extensions* ext = osg::Drawable::getExtensions(state->getContextID(), true);
-        if (ext->isARBTimerQuerySupported() && state->getTimestampBits() > 0)
+        osg::GLExtensions* ext = state->get<osg::GLExtensions>();
+        if (ext->isARBTimerQuerySupported && state->getTimestampBits() > 0)
             _querySupport = new ARBQuerySupport();
-        else if (ext->isTimerQuerySupported())
+        else if (ext->isTimerQuerySupported)
             _querySupport = new EXTQuerySupport();
         if (_querySupport.valid())
             _querySupport->initialize(state, _startTick);
@@ -526,12 +534,26 @@ void Renderer::updateSceneView(osgUtil::SceneView* sceneView)
     osgDB::ImagePager* imagePager = view ? view->getImagePager() : 0;
     sceneView->getCullVisitor()->setImageRequestHandler(imagePager);
 
-    sceneView->setFrameStamp(view ? view->getFrameStamp() : state->getFrameStamp());
+
+    if (view && view->getFrameStamp())
+    {
+        (*sceneView->getFrameStamp()) = *(view->getFrameStamp());
+    }
+    else if (state->getFrameStamp())
+    {
+        (*sceneView->getFrameStamp()) = *(state->getFrameStamp());
+    }
+
+
+    if (view)
+    {
+        sceneView->setFusionDistance(view->getFusionDistanceMode(), view->getFusionDistanceValue());
+    }
 
     osg::DisplaySettings* ds = _camera->getDisplaySettings() ?  _camera->getDisplaySettings() :
                                ((view &&view->getDisplaySettings()) ?  view->getDisplaySettings() :  osg::DisplaySettings::instance().get());
 
-    if (ds->getUseSceneViewForStereoHint())
+    if (ds && ds->getUseSceneViewForStereoHint())
     {
         sceneView->setDisplaySettings(ds);
     }
@@ -541,12 +563,20 @@ void Renderer::updateSceneView(osgUtil::SceneView* sceneView)
         _startTick = view->getStartTick();
         if (state) state->setStartTick(_startTick);
     }
+    else
+    {
+        osgViewer::GraphicsWindow* gw = dynamic_cast<osgViewer::GraphicsWindow*>(context);
+        if (gw)
+        {
+            _startTick = gw->getEventQueue()->getStartTick();
+            if (state) state->setStartTick(_startTick);
+        }
+    }
 }
 
 void Renderer::compile()
 {
     DEBUG_MESSAGE<<"Renderer::compile()"<<std::endl;
-
 
     _compileOnNextDraw = false;
 
@@ -559,7 +589,29 @@ void Renderer::compile()
     {
         osgUtil::GLObjectsVisitor glov;
         glov.setState(sceneView->getState());
-        sceneView->getSceneData()->accept(glov);
+
+        // collect stats if required
+        osg::View* view = _camera.valid() ? _camera->getView() : 0;
+        osg::Stats* stats = view ? view->getStats() : 0;
+        if (stats && stats->collectStats("compile"))
+        {
+            osg::ElapsedTime elapsedTime;
+
+            glov.compile(*(sceneView->getSceneData()));
+
+            double compileTime = elapsedTime.elapsedTime();
+
+            const osg::FrameStamp* fs = sceneView->getFrameStamp();
+            unsigned int frameNumber = fs ? fs->getFrameNumber() : 0;
+
+            stats->setAttribute(frameNumber, "compile", compileTime);
+
+            OSG_NOTICE<<"Compile time "<<compileTime*1000.0<<"ms"<<std::endl;
+        }
+        else
+        {
+            glov.compile(*(sceneView->getSceneData()));
+        }
     }
 
     sceneView->getState()->checkGLErrors("After Renderer::compile");
@@ -620,13 +672,8 @@ void Renderer::cull()
 
         // OSG_NOTICE<<"Culling buffer "<<_currentCull<<std::endl;
 
-        // pass on the fusion distance settings from the View to the SceneView
-        osgViewer::View* view = dynamic_cast<osgViewer::View*>(sceneView->getCamera()->getView());
-        if (view) sceneView->setFusionDistance(view->getFusionDistanceMode(), view->getFusionDistanceValue());
-
         osg::Stats* stats = sceneView->getCamera()->getStats();
-        osg::State* state = sceneView->getState();
-        const osg::FrameStamp* fs = state->getFrameStamp();
+        const osg::FrameStamp* fs = sceneView->getFrameStamp();
         unsigned int frameNumber = fs ? fs->getFrameNumber() : 0;
 
         // do cull traversal
@@ -638,6 +685,7 @@ void Renderer::cull()
         osg::Timer_t afterCullTick = osg::Timer::instance()->tick();
 
 #if 0
+        osg::State* state = sceneView->getState();
         if (sceneView->getDynamicObjectCount()==0 && state->getDynamicObjectRenderingCompletedCallback())
         {
             // OSG_NOTICE<<"Completed in cull"<<std::endl;
@@ -797,12 +845,7 @@ void Renderer::cull_draw()
         compile();
     }
 
-    osgViewer::View* view = dynamic_cast<osgViewer::View*>(_camera->getView());
-
     // OSG_NOTICE<<"RenderingOperation"<<std::endl;
-
-    // pass on the fusion distance settings from the View to the SceneView
-    if (view) sceneView->setFusionDistance(view->getFusionDistanceMode(), view->getFusionDistanceValue());
 
     osg::Stats* stats = sceneView->getCamera()->getStats();
     osg::State* state = sceneView->getState();
@@ -894,7 +937,7 @@ void Renderer::operator () (osg::Object* object)
     osg::GraphicsContext* context = dynamic_cast<osg::GraphicsContext*>(object);
     if (context) operator()(context);
 
-    osg::Camera* camera = dynamic_cast<osg::Camera*>(object);
+    osg::Camera* camera =object->asCamera();
     if (camera) cull();
 }
 
@@ -908,6 +951,20 @@ void Renderer::operator () (osg::GraphicsContext* /*context*/)
     {
         draw();
     }
+}
+
+void Renderer::resizeGLObjectBuffers(unsigned int maxSize)
+{
+    if (_sceneView[0].valid()) _sceneView[0]->resizeGLObjectBuffers(maxSize);
+    if (_sceneView[1].valid()) _sceneView[1]->resizeGLObjectBuffers(maxSize);
+}
+
+void Renderer::releaseGLObjects(osg::State* state) const
+{
+    osgDB::Registry::instance()->releaseGLObjects(state);
+
+    if (_sceneView[0].valid()) _sceneView[0]->releaseGLObjects(state);
+    if (_sceneView[1].valid()) _sceneView[1]->releaseGLObjects(state);
 }
 
 void Renderer::release()

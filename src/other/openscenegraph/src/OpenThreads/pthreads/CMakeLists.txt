@@ -20,18 +20,26 @@ SET(TARGET_SRC
     ../common/Version.cpp
     ../common/Atomic.cpp
 )
+
+IF(CYGWIN)  # define for pthread_{yield,getconcurrency,setconcurrency}
+    ADD_DEFINITIONS(-D_GNU_SOURCE)
+ENDIF()
+
 IF(ANDROID)
       ADD_DEFINITIONS(-D_GNU_SOURCE)
       SET(CMAKE_REQUIRED_DEFINITIONS "${CMAKE_REQUIRED_DEFINITIONS} -D_GNU_SOURCE")
     SET(MODULE_USER_STATIC_OR_DYNAMIC ${OPENTHREADS_USER_DEFINED_DYNAMIC_OR_STATIC})
     #SET(CPP_EXTENSION "c++")
-    SETUP_ANDROID_LIBRARY(${LIB_NAME})
+    SETUP_LIBRARY(${LIB_NAME})
 ELSE()
 
     # should check?
     ADD_DEFINITIONS(-DHAVE_PTHREAD_TESTCANCEL)
     ADD_DEFINITIONS(-DHAVE_PTHREAD_CANCEL)
     ADD_DEFINITIONS(-DHAVE_PTHREAD_SETCANCELSTATE)
+
+    SET(CMAKE_REQUIRED_LIBRARIES_SAFE "${CMAKE_REQUIRED_LIBRARIES}")
+    SET(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
 
     CHECK_FUNCTION_EXISTS(pthread_yield HAVE_PTHREAD_YIELD)
     IF(HAVE_PTHREAD_YIELD)
@@ -43,6 +51,7 @@ ELSE()
             CHECK_LIBRARY_EXISTS(rt sched_yield "" HAVE_SCHED_YIELD)
             IF(HAVE_SCHED_YIELD)
                   SET(CMAKE_THREAD_LIBS_INIT "${CMAKE_THREAD_LIBS_INIT} -lrt")
+                  SET(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_SAFE} ${CMAKE_THREAD_LIBS_INIT})
             ENDIF()
           ENDIF()
           IF(HAVE_SCHED_YIELD)
@@ -71,8 +80,15 @@ ELSE()
           # double check that pthread_setaffinity_np is available as FreeBSD header doesn't contain required function
           CHECK_CXX_SOURCE_COMPILES("
             #include <pthread.h>
+            #ifdef __FreeBSD__
+            #include <pthread_np.h>
+            #endif
             int main() {
+            #ifdef __FreeBSD__
+            cpuset_t cpumask;
+            #else
             cpu_set_t cpumask;
+            #endif
             CPU_ZERO( &cpumask );
             CPU_SET( 0, &cpumask );
             pthread_setaffinity_np( pthread_self(), sizeof(cpumask), &cpumask);
@@ -110,12 +126,9 @@ ELSE()
           ENDIF()
     ENDIF()
 
-    SET(CMAKE_REQUIRED_LIBRARIES_SAFE "${CMAKE_REQUIRED_LIBRARIES}")
-    SET(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-
     ADD_LIBRARY(${LIB_NAME}
         ${OPENTHREADS_USER_DEFINED_DYNAMIC_OR_STATIC}
-	#${TARGET_H}
+        ${TARGET_H}
         ${TARGET_SRC}
     )
 
@@ -123,6 +136,11 @@ ELSE()
           SET_TARGET_PROPERTIES(${LIB_NAME} PROPERTIES VERSION ${OPENTHREADS_VERSION} SOVERSION ${OPENTHREADS_SOVERSION})
     ENDIF()
 
+    IF(APPLE)
+        IF(OSG_BUILD_PLATFORM_IPHONE)
+            SET_TARGET_PROPERTIES(${LIB_NAME} PROPERTIES XCODE_ATTRIBUTE_ENABLE_BITCODE ${IPHONE_ENABLE_BITCODE})
+        ENDIF()
+    ENDIF()
 
     SET(CMAKE_REQUIRED_LIBRARIES "${CMAKE_REQUIRED_LIBRARIES_SAFE}")
 
@@ -139,15 +157,16 @@ ELSE()
 
     INSTALL(
         TARGETS OpenThreads
-		  ARCHIVE DESTINATION ${LIB_DIR}
-		  LIBRARY DESTINATION ${LIB_DIR}
-		  RUNTIME DESTINATION ${BIN_DIR}
+        ARCHIVE DESTINATION lib${LIB_POSTFIX} COMPONENT libopenthreads-dev
+        LIBRARY DESTINATION lib${LIB_POSTFIX} COMPONENT libopenthreads
+        RUNTIME DESTINATION bin COMPONENT libopenthreads
     )
 
     IF(NOT OSG_COMPILE_FRAMEWORKS)
            INSTALL(
                FILES ${OpenThreads_PUBLIC_HEADERS}
                DESTINATION include/OpenThreads
+               COMPONENT libopenthreads-dev
         )
 
     ELSE()

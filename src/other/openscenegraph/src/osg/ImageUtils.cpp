@@ -15,14 +15,17 @@
 #include <string.h>
 
 #include <osg/Math>
-#include <osg/Notify>
 #include <osg/ImageUtils>
 #include <osg/Texture>
+
+#include <osg/Notify>
+#include <osg/io_utils>
+#include "dxtctool.h"
 
 namespace osg
 {
 
-struct FindRangeOperator
+struct FindRangeOperator : public CastAndScaleToFloatOperation
 {
     FindRangeOperator():
         _rmin(FLT_MAX),
@@ -168,7 +171,7 @@ void _copyRowAndScale(const unsigned char* src, GLenum srcDataType, unsigned cha
     }
 }
 
-struct RecordRowOperator
+struct RecordRowOperator : public CastAndScaleToFloatOperation
 {
     RecordRowOperator(unsigned int num):_colours(num),_pos(0) {}
 
@@ -345,7 +348,7 @@ bool clearImageToColor(osg::Image* image, const osg::Vec4& colour)
     return true;
 }
 
-/** Search through the list of Images and find the maximum number of components used amoung the images.*/
+/** Search through the list of Images and find the maximum number of components used among the images.*/
 unsigned int maximimNumOfComponents(const ImageList& imageList)
 {
     unsigned int max_components = 0;
@@ -559,13 +562,13 @@ static void fillSpotLightImage(unsigned char* ptr, const osg::Vec4& centerColour
 
     float mid = (float(size)-1.0f)*0.5f;
     float div = 2.0f/float(size);
-    for(unsigned int r=0;r<size;++r)
+    for(unsigned int row=0;row<size;++row)
     {
         //unsigned char* ptr = image->data(0,r,0);
-        for(unsigned int c=0;c<size;++c)
+        for(unsigned int col=0;col<size;++col)
         {
-            float dx = (float(c) - mid)*div;
-            float dy = (float(r) - mid)*div;
+            float dx = (float(col) - mid)*div;
+            float dy = (float(row) - mid)*div;
             float r = powf(1.0f-sqrtf(dx*dx+dy*dy),power);
             if (r<0.0f) r=0.0f;
             osg::Vec4 color = centerColour*r+backgroudColour*(1.0f-r);
@@ -700,6 +703,99 @@ osg::Image* colorSpaceConversion(ColorSpaceOperation op, osg::Image* image, cons
 }
 
 
+OSG_EXPORT osg::Image* createImageWithOrientationConversion(const osg::Image* srcImage, const osg::Vec3i& srcOrigin, const osg::Vec3i& srcRow, const osg::Vec3i& srcColumn, const osg::Vec3i& srcLayer)
+{
+    osg::ref_ptr<osg::Image> dstImage = new osg::Image;
+    int width  = osg::maximum(osg::maximum(osg::absolute(srcRow.x()), osg::absolute(srcRow.y())), osg::absolute(srcRow.z()));
+    int height = osg::maximum(osg::maximum(osg::absolute(srcColumn.x()), osg::absolute(srcColumn.y())), osg::absolute(srcColumn.z()));
+    int depth  = osg::maximum(osg::maximum(osg::absolute(srcLayer.x()), osg::absolute(srcLayer.y())), osg::absolute(srcLayer.z()));
+
+    osg::Vec3i rowDelta(osg::signOrZero(srcRow.x()), osg::signOrZero(srcRow.y()), osg::signOrZero(srcRow.z()));
+    osg::Vec3i columnDelta(osg::signOrZero(srcColumn.x()), osg::signOrZero(srcColumn.y()), osg::signOrZero(srcColumn.z()));
+    osg::Vec3i layerDelta(osg::signOrZero(srcLayer.x()), osg::signOrZero(srcLayer.y()), osg::signOrZero(srcLayer.z()));
+
+    unsigned int pixelSizeInBits =  srcImage->getPixelSizeInBits();
+    unsigned int pixelSizeInBytes = pixelSizeInBits/8;
+    unsigned int pixelSizeRemainder = pixelSizeInBits%8;
+    if (dxtc_tool::isDXTC(srcImage->getPixelFormat()))
+    {
+        unsigned int DXTblockSize = 8;
+        if ((srcImage->getPixelFormat() == GL_COMPRESSED_RGBA_S3TC_DXT3_EXT) || (srcImage->getPixelFormat() == GL_COMPRESSED_RGBA_S3TC_DXT5_EXT)) DXTblockSize = 16;
+        unsigned int DXTblocksWidht = (srcImage->s() + 3) / 4;//width in 4x4 blocks
+        unsigned int DXTblocksHeight = (srcImage->t() + 3) / 4;//height in 4x4 blocks
+        unsigned int dst_DXTblocksWidht = (width + 3) / 4;//width in 4x4 blocks
+        unsigned int dst_DXTblocksHeight = (height + 3) / 4;//height in 4x4 blocks
+
+        dstImage->allocateImage(width, height, depth, srcImage->getPixelFormat(), srcImage->getDataType());
+        // copy across the pixels from the source image to the destination image.
+        if (depth != 1)
+        {
+            OSG_NOTICE << "Warning: createImageWithOrientationConversion(..) cannot handle dxt-compressed images with depth." << std::endl;
+            return const_cast<osg::Image*>(srcImage);
+        }
+        for (int l = 0; l<depth; l+=4)
+        {
+            for (int r = 0; r<height; r+=4)
+            {
+                osg::Vec3i cp(srcOrigin.x() + columnDelta.x()*r + layerDelta.x()*l,
+                    srcOrigin.y() + columnDelta.y()*r + layerDelta.y()*l,
+                    srcOrigin.z() + columnDelta.z()*r + layerDelta.z()*l);
+                for (int c = 0; c<width; c+=4)
+                {
+                    unsigned int src_blockIndex = (cp.x() >> 2) + DXTblocksWidht * ((cp.y() >> 2) + (cp.z() >> 2) * DXTblocksHeight);
+                    const unsigned char *src_block = srcImage->data() + src_blockIndex * DXTblockSize;
+
+                    unsigned int dst_blockIndex = (c >> 2) + dst_DXTblocksWidht * ((r >> 2) + (l >> 2) * dst_DXTblocksHeight);
+                    unsigned char *dst_block = dstImage->data() + dst_blockIndex * DXTblockSize;
+
+                    memcpy((void *)dst_block, (void *)src_block, DXTblockSize);
+                    osg::Vec3i srcSubOrigin(cp.x() & 0x7, cp.y() & 0x7, cp.z() & 0x7);
+                    dxtc_tool::compressedBlockOrientationConversion(srcImage->getPixelFormat(),src_block, dst_block, srcSubOrigin, rowDelta, columnDelta);
+
+                    cp.x() += 4 * rowDelta.x();
+                    cp.y() += 4 * rowDelta.y();
+                    cp.z() += 4 * rowDelta.z();
+                }
+            }
+        }
+        return dstImage.release();
+    }
+    if (pixelSizeRemainder!=0)
+    {
+        OSG_NOTICE<<"Warning: createImageWithOrientationConversion(..) cannot handle non byte aligned pixel formats."<<std::endl;
+        return const_cast<osg::Image*>(srcImage);
+    }
+
+    dstImage->allocateImage(width, height, depth, srcImage->getPixelFormat(), srcImage->getDataType());
+
+    // copy across the pixels from the source image to the destination image.
+    for(int l=0; l<depth; l++)
+    {
+        for(int r=0; r<height; r++)
+        {
+            osg::Vec3i cp( srcOrigin.x() + columnDelta.x()*r + layerDelta.x()*l,
+                           srcOrigin.y() + columnDelta.y()*r + layerDelta.y()*l,
+                           srcOrigin.z() + columnDelta.z()*r + layerDelta.z()*l);
+
+
+            for(int c=0; c<width; c++)
+            {
+                // OSG_NOTICE<<"source cp = ("<<cp<<")  destination ("<<c<<","<<r<<","<<l<<")"<<std::endl;
+                const unsigned char* src_pixel = srcImage->data(cp.x(), cp.y(), cp.z());
+                unsigned char* dst_pixel = dstImage->data(c, r, l);
+                for(unsigned int i=0; i<pixelSizeInBytes; ++i)
+                {
+                    *(dst_pixel++) = *(src_pixel++);
+                }
+                cp.x() += rowDelta.x();
+                cp.y() += rowDelta.y();
+                cp.z() += rowDelta.z();
+            }
+        }
+    }
+
+    return dstImage.release();
+}
 
 }
 

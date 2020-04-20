@@ -24,11 +24,12 @@
 #include <osg/Material>
 #include <osg/BlendFunc>
 #include <osg/Depth>
-#include <osg/Drawable>
 #include <osg/Node>
+#include <osg/NodeVisitor>
 
 #include <osg/TexGen>
 #include <osg/Texture1D>
+#include <osg/Texture2D>
 #include <osg/TextureCubeMap>
 #include <osg/TextureRectangle>
 #include <osg/Texture2DArray>
@@ -37,6 +38,91 @@
 #include <algorithm>
 
 using namespace osg;
+
+
+#if (!defined(OSG_GLES2_AVAILABLE) && !defined(OSG_GLES3_AVAILABLE))
+    #define GLSL_VERSION_STR "330 core"
+#else
+    #define GLSL_VERSION_STR "300 es"
+#endif
+
+static const char* gl3_VertexShader = {
+    "#version " GLSL_VERSION_STR "\n"
+    "// gl3_VertexShader\n"
+    "#ifdef GL_ES\n"
+    "    precision highp float;\n"
+    "#endif\n"
+    "in vec4 osg_Vertex;\n"
+    "in vec4 osg_Color;\n"
+    "in vec4 osg_MultiTexCoord0;\n"
+    "uniform mat4 osg_ModelViewProjectionMatrix;\n"
+    "out vec2 texCoord;\n"
+    "out vec4 vertexColor;\n"
+    "void main(void)\n"
+    "{\n"
+    "    gl_Position = osg_ModelViewProjectionMatrix * osg_Vertex;\n"
+    "    texCoord = osg_MultiTexCoord0.xy;\n"
+    "    vertexColor = osg_Color; \n"
+    "}\n"
+};
+
+static const char* gl3_FragmentShader = {
+    "#version " GLSL_VERSION_STR "\n"
+    "// gl3_FragmentShader\n"
+    "#ifdef GL_ES\n"
+    "    precision highp float;\n"
+    "#endif\n"
+    "uniform sampler2D baseTexture;\n"
+    "in vec2 texCoord;\n"
+    "in vec4 vertexColor;\n"
+    "out vec4 color;\n"
+    "void main(void)\n"
+    "{\n"
+    "    color = vertexColor * texture(baseTexture, texCoord);\n"
+    "}\n"
+};
+
+
+static const char* gl2_VertexShader = {
+    "// gl2_VertexShader\n"
+    "#ifdef GL_ES\n"
+    "    precision highp float;\n"
+    "#endif\n"
+    "varying vec2 texCoord;\n"
+    "varying vec4 vertexColor;\n"
+    "void main(void)\n"
+    "{\n"
+    "    gl_Position = gl_ModelViewProjectionMatrix * gl_Vertex;\n"
+    "    texCoord = gl_MultiTexCoord0.xy;\n"
+    "    vertexColor = gl_Color; \n"
+    "}\n"
+};
+
+static const char* gl2_FragmentShader = {
+    "// gl2_FragmentShader\n"
+    "#ifdef GL_ES\n"
+    "    precision highp float;\n"
+    "#endif\n"
+    "uniform sampler2D baseTexture;\n"
+    "varying vec2 texCoord;\n"
+    "varying vec4 vertexColor;\n"
+    "void main(void)\n"
+    "{\n"
+    "    gl_FragColor = vertexColor * texture2D(baseTexture, texCoord);\n"
+    "}\n"
+};
+
+
+extern osg::Texture2D* createDefaultTexture()
+{
+    osg::ref_ptr<osg::Image> image = new osg::Image;
+    image->allocateImage(1, 1, 1, GL_RGBA, GL_UNSIGNED_BYTE);
+    image->setColor(osg::Vec4(1.0,1.0,1.0,1.0), 0, 0, 0);
+
+    osg::ref_ptr<osg::Texture2D> texture = new osg::Texture2D(image.get());
+    return texture.release();
+}
+
 
 // local class to help porting from OSG0.8.x to 0.9.x
 class TextureGLModeSet
@@ -50,10 +136,11 @@ class TextureGLModeSet
             _textureModeSet.insert(GL_TEXTURE_1D);
             _textureModeSet.insert(GL_TEXTURE_2D);
             _textureModeSet.insert(GL_TEXTURE_3D);
+            _textureModeSet.insert(GL_TEXTURE_BUFFER);
 
             _textureModeSet.insert(GL_TEXTURE_CUBE_MAP);
             _textureModeSet.insert(GL_TEXTURE_RECTANGLE_NV);
-            _textureModeSet.insert(GL_TEXTURE_2D_ARRAY_EXT);
+            _textureModeSet.insert(GL_TEXTURE_2D_ARRAY);
             _textureModeSet.insert(GL_TEXTURE_2D_MULTISAMPLE);
 
             _textureModeSet.insert(GL_TEXTURE_GEN_Q);
@@ -82,6 +169,26 @@ static TextureGLModeSet& getTextureGLModeSet()
 bool osg::isTextureMode(StateAttribute::GLMode mode)
 {
     return getTextureGLModeSet().isTextureMode(mode);
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+// StateAttributeCallback
+//
+bool StateSet::Callback::run(osg::Object* object, osg::Object* data)
+{
+    osg::StateSet* ss = object->asStateSet();
+    osg::NodeVisitor* nv = data->asNodeVisitor();
+    if (ss && nv)
+    {
+        operator()(ss, nv);
+        return true;
+    }
+    else
+    {
+        return traverse(object, data);
+    }
 }
 
 StateSet::StateSet():
@@ -156,6 +263,8 @@ StateSet::StateSet(const StateSet& rhs,const CopyOp& copyop):Object(rhs,copyop),
             uni->addParent(this);
         }
     }
+
+    _defineList = rhs._defineList;
 
     _renderingHint = rhs._renderingHint;
 
@@ -253,19 +362,19 @@ void StateSet::computeDataVariance()
 }
 
 
-void StateSet::addParent(osg::Object* object)
+void StateSet::addParent(osg::Node* node)
 {
     // OSG_DEBUG_FP<<"Adding parent"<<std::endl;
     OpenThreads::ScopedPointerLock<OpenThreads::Mutex> lock(getRefMutex());
 
-    _parents.push_back(object);
+    _parents.push_back(node);
 }
 
-void StateSet::removeParent(osg::Object* object)
+void StateSet::removeParent(osg::Node* node)
 {
     OpenThreads::ScopedPointerLock<OpenThreads::Mutex> lock(getRefMutex());
 
-    ParentList::iterator pitr = std::find(_parents.begin(),_parents.end(),object);
+    ParentList::iterator pitr = std::find(_parents.begin(),_parents.end(),node);
     if (pitr!=_parents.end()) _parents.erase(pitr);
 }
 
@@ -287,7 +396,11 @@ int StateSet::compare(const StateSet& rhs,bool compareAttributeContents) const
     if (_uniformList.size()<rhs._uniformList.size()) return -1;
     if (_uniformList.size()>rhs._uniformList.size()) return 1;
 
-     // check render bin details
+    if (_defineList.size()<rhs._defineList.size()) return -1;
+    if (_defineList.size()>rhs._defineList.size()) return 1;
+
+
+    // check render bin details
 
     if ( _binMode < rhs._binMode ) return -1;
     else if ( _binMode > rhs._binMode ) return 1;
@@ -464,6 +577,28 @@ int StateSet::compare(const StateSet& rhs,bool compareAttributeContents) const
     }
     else if (rhs_uniform_itr == rhs._uniformList.end()) return 1;
 
+
+    // check defines.
+    DefineList::const_iterator lhs_define_itr = _defineList.begin();
+    DefineList::const_iterator rhs_define_itr = rhs._defineList.begin();
+    while (lhs_define_itr!=_defineList.end() && rhs_define_itr!=rhs._defineList.end())
+    {
+        if      (lhs_define_itr->first<rhs_define_itr->first) return -1;
+        else if (rhs_define_itr->first<lhs_define_itr->first) return 1;
+        if      (lhs_define_itr->second.first<rhs_define_itr->second.first) return -1;
+        else if (rhs_define_itr->second.first<lhs_define_itr->second.first) return 1;
+        if      (lhs_define_itr->second.second<rhs_define_itr->second.second) return -1;
+        else if (rhs_define_itr->second.second<lhs_define_itr->second.second) return 1;
+        ++lhs_define_itr;
+        ++rhs_define_itr;
+    }
+    if (lhs_define_itr==_defineList.end())
+    {
+        if (rhs_define_itr!=rhs._defineList.end()) return -1;
+    }
+    else if (rhs_define_itr == rhs._defineList.end()) return 1;
+
+
     return 0;
 }
 
@@ -553,6 +688,34 @@ void StateSet::setGlobalDefaults()
         setAttributeAndModes(material,StateAttribute::ON);
 
     #endif
+
+
+    OSG_INFO<<"void StateSet::setGlobalDefaults()"<<std::endl;
+
+    osg::DisplaySettings::ShaderHint shaderHint = osg::DisplaySettings::instance()->getShaderHint();
+    if (shaderHint==osg::DisplaySettings::SHADER_GL3 || shaderHint==osg::DisplaySettings::SHADER_GLES3)
+    {
+        OSG_INFO<<"   StateSet::setGlobalDefaults() Setting up GL3 compatible shaders"<<std::endl;
+
+        osg::ref_ptr<osg::Program> program = new osg::Program;
+        program->addShader(new osg::Shader(osg::Shader::VERTEX, gl3_VertexShader));
+        program->addShader(new osg::Shader(osg::Shader::FRAGMENT, gl3_FragmentShader));
+        setAttributeAndModes(program.get());
+        setTextureAttribute(0, createDefaultTexture());
+        addUniform(new osg::Uniform("baseTexture", 0));
+    }
+    else if (shaderHint==osg::DisplaySettings::SHADER_GL2 || shaderHint==osg::DisplaySettings::SHADER_GLES2)
+    {
+
+        OSG_INFO<<"   StateSet::setGlobalDefaults() Setting up GL2 compatible shaders"<<std::endl;
+
+        osg::ref_ptr<osg::Program> program = new osg::Program;
+        program->addShader(new osg::Shader(osg::Shader::VERTEX, gl2_VertexShader));
+        program->addShader(new osg::Shader(osg::Shader::FRAGMENT, gl2_FragmentShader));
+        setAttributeAndModes(program.get());
+        setTextureAttribute(0, createDefaultTexture());
+        addUniform(new osg::Uniform("baseTexture", 0));
+    }
 }
 
 
@@ -780,6 +943,32 @@ void StateSet::merge(const StateSet& rhs)
         }
     }
 
+    // merge the defines of rhs into this,
+    // this overrides rhs if OVERRIDE defined in this.
+    for(DefineList::const_iterator rhs_mitr = rhs._defineList.begin();
+        rhs_mitr != rhs._defineList.end();
+        ++rhs_mitr)
+    {
+        DefineList::iterator lhs_mitr = _defineList.find(rhs_mitr->first);
+        if (lhs_mitr!=_defineList.end())
+        {
+            // take the rhs mode unless the lhs is override and the rhs is not protected
+            if (!(lhs_mitr->second.second & StateAttribute::OVERRIDE ) ||
+                 (rhs_mitr->second.second & StateAttribute::PROTECTED))
+            {
+                // override isn't on in rhs, so override it with incoming
+                // value.
+                lhs_mitr->second = rhs_mitr->second;
+            }
+        }
+        else
+        {
+            // entry doesn't exist so insert it.
+            _defineList.insert(*rhs_mitr);
+        }
+    }
+
+
     // Merge RenderBin state from rhs into this.
     // Only do so if this's RenderBinMode is INHERIT.
     if (getRenderBinMode() == INHERIT_RENDERBIN_DETAILS)
@@ -956,6 +1145,11 @@ const StateAttribute* StateSet::getAttribute(StateAttribute::Type type, unsigned
     return getAttribute(_attributeList,type,member);
 }
 
+StateSet::RefAttributePair* StateSet::getAttributePair(StateAttribute::Type type, unsigned int member)
+{
+    return getAttributePair(_attributeList,type,member);
+}
+
 const StateSet::RefAttributePair* StateSet::getAttributePair(StateAttribute::Type type, unsigned int member) const
 {
     return getAttributePair(_attributeList,type,member);
@@ -992,7 +1186,7 @@ void StateSet::addUniform(Uniform* uniform, StateAttribute::OverrideValue value)
         {
             if (itr->second.first==uniform)
             {
-                // chaning just override
+                // changing just override
                 itr->second.second = value&(StateAttribute::OVERRIDE|StateAttribute::PROTECTED);
             }
             else
@@ -1108,6 +1302,27 @@ const StateSet::RefUniformPair* StateSet::getUniformPair(const std::string& name
     else return 0;
 }
 
+void StateSet::setDefine(const std::string& defineName, StateAttribute::OverrideValue value)
+{
+    DefinePair& dp = _defineList[defineName];
+    dp.first = "";
+    dp.second = value;
+}
+
+void StateSet::setDefine(const std::string& defineName, const std::string& defineValue, StateAttribute::OverrideValue value)
+{
+    DefinePair& dp = _defineList[defineName];
+    dp.first = defineValue;
+    dp.second = value;
+}
+
+void StateSet::removeDefine(const std::string& defineName)
+{
+    DefineList::iterator itr = _defineList.find(defineName);
+    if (itr != _defineList.end()) _defineList.erase(itr);
+}
+
+
 void StateSet::setTextureMode(unsigned int unit,StateAttribute::GLMode mode, StateAttribute::GLModeValue value)
 {
     if (getTextureGLModeSet().isTextureMode(mode))
@@ -1159,7 +1374,7 @@ StateAttribute::GLModeValue StateSet::getTextureMode(unsigned int unit,StateAttr
     }
 }
 
-void StateSet::setTextureAttribute(unsigned int unit,StateAttribute *attribute, const StateAttribute::OverrideValue value)
+void StateSet::setTextureAttribute(unsigned int unit,StateAttribute *attribute, StateAttribute::OverrideValue value)
 {
     if (attribute)
     {
@@ -1200,13 +1415,13 @@ void StateSet::setTextureAttributeAndModes(unsigned int unit,StateAttribute *att
             OSG_NOTICE<<"Warning: non texture attribute '"<<attribute->className()<<"' passed to setTextureAttributeAndModes(unit,attr,value), "<<std::endl;
             OSG_NOTICE<<"         assuming setAttributeAndModes(attr,value) instead."<<std::endl;
             OSG_NOTICE<<"         please change calling code to use appropriate call."<<std::endl;
-            setAttribute(attribute,value);
+            setAttributeAndModes(attribute,value);
         }
     }
 }
 
 
-void StateSet::removeTextureAttribute(unsigned int unit,StateAttribute::Type type)
+void StateSet::removeTextureAttribute(unsigned int unit, StateAttribute::Type type)
 {
     if (unit>=_textureAttributeList.size()) return;
     AttributeList& attributeList = _textureAttributeList[unit];
@@ -1276,7 +1491,13 @@ const StateAttribute* StateSet::getTextureAttribute(unsigned int unit,StateAttri
 }
 
 
-const StateSet::RefAttributePair* StateSet::getTextureAttributePair(unsigned int unit,StateAttribute::Type type) const
+StateSet::RefAttributePair* StateSet::getTextureAttributePair(unsigned int unit, StateAttribute::Type type)
+{
+    if (unit>=_textureAttributeList.size()) return 0;
+    return getAttributePair(_textureAttributeList[unit],type,0);
+}
+
+const StateSet::RefAttributePair* StateSet::getTextureAttributePair(unsigned int unit, StateAttribute::Type type) const
 {
     if (unit>=_textureAttributeList.size()) return 0;
     return getAttributePair(_textureAttributeList[unit],type,0);
@@ -1336,15 +1557,14 @@ void StateSet::setThreadSafeRefUnref(bool threadSafe)
 void StateSet::compileGLObjects(State& state) const
 {
     bool checkForGLErrors = state.getCheckForGLErrors()==osg::State::ONCE_PER_ATTRIBUTE;
+    if (checkForGLErrors) state.checkGLErrors("before StateSet::compileGLObejcts()");
+
     for(AttributeList::const_iterator itr = _attributeList.begin();
         itr!=_attributeList.end();
         ++itr)
     {
         itr->second.first->compileGLObjects(state);
-        if (checkForGLErrors && state.checkGLErrors("StateSet::compileGLObejcts() compiling attribute"))
-        {
-            OSG_NOTICE<<"    GL Error when compiling "<<itr->second.first->className()<<std::endl;
-        }
+        if (checkForGLErrors) state.checkGLErrors("StateSet::compileGLObejcts() compiling ", itr->second.first->className());
     }
 
     for(TextureAttributeList::const_iterator taitr=_textureAttributeList.begin();
@@ -1356,10 +1576,7 @@ void StateSet::compileGLObjects(State& state) const
             ++itr)
         {
             itr->second.first->compileGLObjects(state);
-            if (checkForGLErrors && state.checkGLErrors("StateSet::compileGLObejcts() compiling texture attribute"))
-            {
-                OSG_NOTICE<<"    GL Error when compiling "<<itr->second.first->className()<<std::endl;
-            }
+            if (checkForGLErrors) state.checkGLErrors("StateSet::compileGLObejcts() compiling texture attribute", itr->second.first->className());
         }
     }
 }
@@ -1456,7 +1673,7 @@ void StateSet::setMode(ModeList& modeList,StateAttribute::GLMode mode, StateAttr
     else modeList[mode] = value;
 }
 
-void StateSet::setModeToInherit(ModeList& modeList,StateAttribute::GLMode mode)
+void StateSet::setModeToInherit(ModeList& modeList, StateAttribute::GLMode mode)
 {
     ModeList::iterator itr = modeList.find(mode);
     if (itr!=modeList.end())
@@ -1465,7 +1682,7 @@ void StateSet::setModeToInherit(ModeList& modeList,StateAttribute::GLMode mode)
     }
 }
 
-StateAttribute::GLModeValue StateSet::getMode(const ModeList& modeList,StateAttribute::GLMode mode) const
+StateAttribute::GLModeValue StateSet::getMode(const ModeList& modeList, StateAttribute::GLMode mode) const
 {
     ModeList::const_iterator itr = modeList.find(mode);
     if (itr!=modeList.end())
@@ -1540,19 +1757,19 @@ void StateSet::removeAssociatedModes(const StateAttribute* attribute)
     attribute->getModeUsage(helper);
 }
 
-void StateSet::setAssociatedTextureModes(unsigned int unit,const StateAttribute* attribute, StateAttribute::GLModeValue value)
+void StateSet::setAssociatedTextureModes(unsigned int unit, const StateAttribute* attribute, StateAttribute::GLModeValue value)
 {
     SetAssociateModesHelper helper(this,value,unit);
     attribute->getModeUsage(helper);
 }
 
-void StateSet::removeAssociatedTextureModes(unsigned int unit,const StateAttribute* attribute)
+void StateSet::removeAssociatedTextureModes(unsigned int unit, const StateAttribute* attribute)
 {
     RemoveAssociateModesHelper helper(this,unit);
     attribute->getModeUsage(helper);
 }
 
-void StateSet::setAttribute(AttributeList& attributeList,StateAttribute *attribute, const StateAttribute::OverrideValue value)
+void StateSet::setAttribute(AttributeList& attributeList,StateAttribute *attribute, StateAttribute::OverrideValue value)
 {
     if (attribute)
     {
@@ -1611,7 +1828,7 @@ void StateSet::setAttribute(AttributeList& attributeList,StateAttribute *attribu
 }
 
 
-StateAttribute* StateSet::getAttribute(AttributeList& attributeList,StateAttribute::Type type, unsigned int member)
+StateAttribute* StateSet::getAttribute(AttributeList& attributeList, StateAttribute::Type type, unsigned int member)
 {
     AttributeList::iterator itr = attributeList.find(StateAttribute::TypeMemberPair(type,member));
     if (itr!=attributeList.end())
@@ -1622,7 +1839,7 @@ StateAttribute* StateSet::getAttribute(AttributeList& attributeList,StateAttribu
         return NULL;
 }
 
-const StateAttribute* StateSet::getAttribute(const AttributeList& attributeList,StateAttribute::Type type, unsigned int member) const
+const StateAttribute* StateSet::getAttribute(const AttributeList& attributeList, StateAttribute::Type type, unsigned int member) const
 {
     AttributeList::const_iterator itr = attributeList.find(StateAttribute::TypeMemberPair(type,member));
     if (itr!=attributeList.end())
@@ -1633,7 +1850,18 @@ const StateAttribute* StateSet::getAttribute(const AttributeList& attributeList,
         return NULL;
 }
 
-const StateSet::RefAttributePair* StateSet::getAttributePair(const AttributeList& attributeList,StateAttribute::Type type, unsigned int member) const
+StateSet::RefAttributePair* StateSet::getAttributePair(AttributeList& attributeList, StateAttribute::Type type, unsigned int member)
+{
+    AttributeList::iterator itr = attributeList.find(StateAttribute::TypeMemberPair(type,member));
+    if (itr!=attributeList.end())
+    {
+        return &(itr->second);
+    }
+    else
+        return NULL;
+}
+
+const StateSet::RefAttributePair* StateSet::getAttributePair(const AttributeList& attributeList, StateAttribute::Type type, unsigned int member) const
 {
     AttributeList::const_iterator itr = attributeList.find(StateAttribute::TypeMemberPair(type,member));
     if (itr!=attributeList.end())
@@ -1667,21 +1895,8 @@ void StateSet::setUpdateCallback(Callback* ac)
             itr!=_parents.end();
             ++itr)
         {
-            //OSG_INFO<<"Setting StateSet parent"<<std::endl;
-
-            osg::Drawable* drawable = dynamic_cast<osg::Drawable*>(*itr);
-            if (drawable)
-            {
-                //drawable->setNumChildrenRequiringUpdateTraversal(drawable->getNumChildrenRequiringUpdateTraversal()+delta);
-            }
-            else
-            {
-                osg::Node* node = dynamic_cast<osg::Node*>(*itr);
-                if (node)
-                {
-                    node->setNumChildrenRequiringUpdateTraversal(node->getNumChildrenRequiringUpdateTraversal()+delta);
-                }
-            }
+            osg::Node* node = *itr;
+            node->setNumChildrenRequiringUpdateTraversal(node->getNumChildrenRequiringUpdateTraversal()+delta);
         }
     }
 }
@@ -1723,7 +1938,7 @@ void StateSet::runUpdateCallbacks(osg::NodeVisitor* nv)
             uitr != _uniformList.end();
             ++uitr)
         {
-            Uniform::Callback* callback = uitr->second.first->getUpdateCallback();
+            UniformCallback* callback = uitr->second.first->getUpdateCallback();
             if (callback) (*callback)(uitr->second.first.get(),nv);
         }
     }
@@ -1745,19 +1960,8 @@ void StateSet::setEventCallback(Callback* ac)
             itr!=_parents.end();
             ++itr)
         {
-            osg::Drawable* drawable = dynamic_cast<osg::Drawable*>(*itr);
-            if (drawable)
-            {
-                //drawable->setNumChildrenRequiringUpdateTraversal(drawable->getNumChildrenRequiringUpdateTraversal()+delta);
-            }
-            else
-            {
-                osg::Node* node = dynamic_cast<osg::Node*>(*itr);
-                if (node)
-                {
-                    node->setNumChildrenRequiringEventTraversal(node->getNumChildrenRequiringEventTraversal()+delta);
-                }
-            }
+            osg::Node* node = *itr;
+            node->setNumChildrenRequiringEventTraversal(node->getNumChildrenRequiringEventTraversal()+delta);
         }
     }
 }
@@ -1797,7 +2001,7 @@ void StateSet::runEventCallbacks(osg::NodeVisitor* nv)
             uitr != _uniformList.end();
             ++uitr)
         {
-            Uniform::Callback* callback = uitr->second.first->getEventCallback();
+            UniformCallback* callback = uitr->second.first->getEventCallback();
             if (callback) (*callback)(uitr->second.first.get(),nv);
         }
     }
@@ -1827,19 +2031,8 @@ void StateSet::setNumChildrenRequiringUpdateTraversal(unsigned int num)
                 itr != _parents.end();
                 ++itr)
             {
-                osg::Drawable* drawable = dynamic_cast<osg::Drawable*>(*itr);
-                if (drawable)
-                {
-                    drawable->setNumChildrenRequiringUpdateTraversal(drawable->getNumChildrenRequiringUpdateTraversal()+delta);
-                }
-                else
-                {
-                    osg::Node* node = dynamic_cast<osg::Node*>(*itr);
-                    if (node)
-                    {
-                        node->setNumChildrenRequiringUpdateTraversal(node->getNumChildrenRequiringUpdateTraversal()+delta);
-                    }
-                }
+                osg::Node* node = *itr;
+                node->setNumChildrenRequiringUpdateTraversal(node->getNumChildrenRequiringUpdateTraversal()+delta);
             }
         }
     }
@@ -1872,19 +2065,8 @@ void StateSet::setNumChildrenRequiringEventTraversal(unsigned int num)
                 itr != _parents.end();
                 ++itr)
             {
-                osg::Drawable* drawable = dynamic_cast<osg::Drawable*>(*itr);
-                if (drawable)
-                {
-                    drawable->setNumChildrenRequiringEventTraversal(drawable->getNumChildrenRequiringEventTraversal()+delta);
-                }
-                else
-                {
-                    osg::Node* node = dynamic_cast<osg::Node*>(*itr);
-                    if (node)
-                    {
-                        node->setNumChildrenRequiringEventTraversal(node->getNumChildrenRequiringEventTraversal()+delta);
-                    }
-                }
+                osg::Node* node = *itr;
+                node->setNumChildrenRequiringEventTraversal(node->getNumChildrenRequiringEventTraversal()+delta);
             }
         }
     }

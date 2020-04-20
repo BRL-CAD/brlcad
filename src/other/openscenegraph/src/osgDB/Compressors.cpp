@@ -50,7 +50,7 @@ REGISTER_COMPRESSOR( "null", NullCompressor )
 
 #ifdef USE_ZLIB
 
-#include "zlib.h"
+#include <zlib.h>
 
 #define CHUNK 32768
 

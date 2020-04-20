@@ -77,7 +77,7 @@ FrameBufferManipulator::FrameBufferManipulator( int flags )
 
 /// Constructor.
 FrameBufferManipulator::FrameBufferManipulator( const FrameBufferManipulator& om, const CopyOp& copyOp )
-   : osg::Object(om, copyOp), inherited( om, copyOp ), _center( om._center ),
+   : osg::Object(om, copyOp), osg::Callback(om, copyOp), inherited( om, copyOp ), _center( om._center ),
      _rotation( om._rotation ), _distance( om._distance ), _minimumDistance( om._minimumDistance )
 {
 }

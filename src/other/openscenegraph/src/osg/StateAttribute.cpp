@@ -12,6 +12,7 @@
 #include <osg/StateAttribute>
 #include <osg/StateSet>
 #include <osg/State>
+#include <osg/NodeVisitor>
 #include <osg/Notify>
 
 #include <algorithm>
@@ -43,7 +44,7 @@ void StateAttribute::removeParent(osg::StateSet* object)
 
 void StateAttribute::setUpdateCallback(StateAttributeCallback* uc)
 {
-    OSG_INFO<<"StateAttribute::Setting Update callbacks"<<std::endl;
+    OSG_DEBUG<<"StateAttribute::Setting Update callbacks"<<std::endl;
 
     if (_updateCallback==uc) return;
 
@@ -55,14 +56,10 @@ void StateAttribute::setUpdateCallback(StateAttributeCallback* uc)
 
     if (delta!=0)
     {
-        OSG_INFO<<"Going to set StateAttribute parents"<<std::endl;
-
         for(ParentList::iterator itr=_parents.begin();
             itr!=_parents.end();
             ++itr)
         {
-            OSG_INFO<<"   Setting StateAttribute parent"<<std::endl;
-
             (*itr)->setNumChildrenRequiringUpdateTraversal((*itr)->getNumChildrenRequiringUpdateTraversal()+delta);
         }
     }
@@ -70,7 +67,7 @@ void StateAttribute::setUpdateCallback(StateAttributeCallback* uc)
 
 void StateAttribute::setEventCallback(StateAttributeCallback* ec)
 {
-    OSG_INFO<<"StateAttribute::Setting Event callbacks"<<std::endl;
+    OSG_DEBUG<<"StateAttribute::Setting Event callbacks"<<std::endl;
 
     if (_eventCallback==ec) return;
 
@@ -88,5 +85,43 @@ void StateAttribute::setEventCallback(StateAttributeCallback* ec)
         {
             (*itr)->setNumChildrenRequiringEventTraversal((*itr)->getNumChildrenRequiringEventTraversal()+delta);
         }
+    }
+}
+
+StateAttribute::ReassignToParents::ReassignToParents(osg::StateAttribute* attr)
+{
+    if (!attr->isTextureAttribute() && !attr->getParents().empty())
+    {
+        // take a reference to this clip plane to prevent it from going out of scope
+        // when we remove it temporarily from its parents.
+        attribute = attr;
+
+        // copy the parents as they _parents list will be changed by the subsequent removeAttributes.
+        parents = attr->getParents();
+
+        // remove this attribute from its parents as its position is being changed
+        // and would no longer be valid.
+        for(ParentList::iterator itr = parents.begin();
+            itr != parents.end();
+            ++itr)
+        {
+            osg::StateSet* stateset = *itr;
+            stateset->removeAttribute(attr);
+
+            OSG_NOTICE<<"  Removed from parent "<<stateset<<std::endl;
+        }
+    }
+}
+
+StateAttribute::ReassignToParents::~ReassignToParents()
+{
+    // add attribute back into its original parents with its new position
+    for(ParentList::iterator itr = parents.begin();
+        itr != parents.end();
+        ++itr)
+    {
+        osg::StateSet* stateset = *itr;
+        stateset->setAttribute(attribute.get());
+        OSG_NOTICE<<"   Added back to parent "<<stateset<<std::endl;
     }
 }

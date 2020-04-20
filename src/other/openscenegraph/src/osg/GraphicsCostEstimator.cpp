@@ -205,15 +205,10 @@ public:
         traverse(node);
     }
 
-    virtual void apply(osg::Geode& geode)
+    virtual void apply(osg::Geometry& geom)
     {
-        apply(geode.getStateSet());
-        for(unsigned int i=0; i<geode.getNumDrawables(); ++i)
-        {
-            apply(geode.getDrawable(i)->getStateSet());
-            osg::Geometry* geometry = geode.getDrawable(i)->asGeometry();
-            if (geometry) apply(geometry);
-        }
+        apply(geom.getStateSet());
+        apply(&geom);
     }
 
     void apply(osg::StateSet* stateset)
@@ -233,9 +228,12 @@ public:
         for(unsigned int i=0; i<stateset->getNumTextureAttributeLists(); ++i)
         {
             const osg::Texture* texture = dynamic_cast<const osg::Texture*>(stateset->getTextureAttribute(i, osg::StateAttribute::TEXTURE));
-            CostPair cost = _gce->estimateCompileCost(texture);
-            _costs.first += cost.first;
-            _costs.second += cost.second;
+            if (texture)
+            {
+                CostPair cost = _gce->estimateCompileCost(texture);
+                _costs.first += cost.first;
+                _costs.second += cost.second;
+            }
         }
     }
 
@@ -279,15 +277,10 @@ public:
         traverse(node);
     }
 
-    virtual void apply(osg::Geode& geode)
+    virtual void apply(osg::Geometry& geom)
     {
-        apply(geode.getStateSet());
-        for(unsigned int i=0; i<geode.getNumDrawables(); ++i)
-        {
-            apply(geode.getDrawable(i)->getStateSet());
-            osg::Geometry* geometry = geode.getDrawable(i)->asGeometry();
-            if (geometry) apply(geometry);
-        }
+        apply(geom.getStateSet());
+        apply(&geom);
     }
 
     void apply(osg::StateSet* stateset)
