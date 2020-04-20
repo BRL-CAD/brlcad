@@ -11,6 +11,8 @@ set(NULL_SRCS
   if_null.c
   )
 
+add_definitions(-DDM_PLUGIN)
+
 add_library(dm_null SHARED ${NULL_SRCS})
 target_link_libraries(dm_null libdm libbu)
 if (CPP_DLL_DEFINES)

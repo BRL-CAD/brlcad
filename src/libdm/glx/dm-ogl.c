@@ -2997,6 +2997,15 @@ struct dm_impl dm_ogl_impl = {
 
 struct dm dm_ogl = { &dm_ogl_impl };
 
+#ifdef DM_PLUGIN
+static const struct dm_plugin pinfo = { &dm_ogl };
+
+DM_EXPORT const struct dm_plugin *dm_plugin_info()
+{
+    return &pinfo;
+}
+#endif
+
 #endif /* DM_OGL */
 
 /*

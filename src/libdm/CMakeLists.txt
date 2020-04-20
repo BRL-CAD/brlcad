@@ -22,6 +22,7 @@ set(DM_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR} ${PNG_INCLUDE_DIRS})
 BRLCAD_LIB_INCLUDE_DIRS(dm DM_INCLUDE_DIRS DM_LOCAL_INCLUDE_DIRS)
 
 add_subdirectory(null)
+add_subdirectory(glx)
 
 # Initialize libdm_DEFINES in case of reconfiguration
 set(libdm_DEFINES "")
