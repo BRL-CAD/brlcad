@@ -28,10 +28,11 @@
 #ifndef DM_PRIVATE_H
 #define DM_PRIVATE_H
 
-/* Opaque container that holds the set of available libdm
+/* Opaque containers that hold the set of available libdm
  * backend implementations.  This is initialized at startup
  * and it's contents are cleared at the end by dm_init.cpp */
 extern void *dm_backends;
+extern void *fb_backends;
 
 #include <limits.h> /* For INT_MAX */
 #include <stdlib.h>

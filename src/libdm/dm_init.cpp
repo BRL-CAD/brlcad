@@ -151,6 +151,7 @@ libdm_init(void)
     }
 
     dm_backends = (void *)&dm_map;
+    fb_backends = (void *)&fb_map;
 }
 
 

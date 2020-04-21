@@ -52,6 +52,7 @@
 #include "./include/private.h"
 #include "dm.h"
 
+#if 0
 /**
  * First element of list is default device when no name given
  */
@@ -82,6 +83,7 @@ struct fb *_if_list[] = {
     &fb_null_interface,
     (struct fb *) 0
 };
+#endif
 
 struct fb *fb_get()
 {
@@ -100,6 +102,7 @@ void fb_put(struct fb *ifp)
     }
 }
 
+#if 0
 void fb_set_interface(struct fb *ifp, const char *interface_type)
 {
     int i = 0;
@@ -147,6 +150,7 @@ fb_put_platform_specific(struct fb_platform_specific *fb_p)
     }
     return;
 }
+#endif
 
 struct fb *
 fb_open_existing(const char *file, int width, int height, struct fb_platform_specific *fb_p)
@@ -336,25 +340,6 @@ int fb_bwwriterect(struct fb *ifp, int xmin, int ymin, int width, int height, co
 	   __FILE__, __LINE__, _bytes_)
 
 /**
- * True if the non-null string s is all digits
- */
-static int
-fb_totally_numeric(const char *s)
-{
-    if (s == (char *)0 || *s == 0)
-	return 0;
-
-    while (*s) {
-	if (*s < '0' || *s > '9')
-	    return 0;
-	s++;
-    }
-
-    return 1;
-}
-
-
-/**
  * Disk interface enable flag.  Used so the remote daemon
  * can turn off the disk interface.
  */
@@ -387,7 +372,7 @@ int fb_null_setcursor(struct fb *ifp, const unsigned char *UNUSED(bits), int UNU
 }
 
 
-
+#if 0
 struct fb *
 fb_open(const char *file, int width, int height)
 {
@@ -486,7 +471,7 @@ found_interface:
     }
     return ifp;
 }
-
+#endif
 
 int
 fb_close(struct fb *ifp)
@@ -533,6 +518,7 @@ fb_close_existing(struct fb *ifp)
 }
 
 
+#if 0
 /**
  * Generic Help.
  * Print out the list of available frame buffers.
@@ -564,7 +550,7 @@ fb_genhelp(void)
 
     return 0;
 }
-
+#endif
 
 /**
  * Check for a color map being linear in the upper 8 bits of R, G, and

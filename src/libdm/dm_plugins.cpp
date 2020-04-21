@@ -148,6 +148,227 @@ dm_default_type()
     return (ret) ? ret : b;
 }
 
+
+extern "C" void
+fb_set_interface(struct fb *ifp, const char *interface_type)
+{
+    if (!ifp) return;
+    std::map<std::string, const struct fb *> *fmb = (std::map<std::string, const struct fb *> *)fb_backends;
+    std::map<std::string, const struct fb *>::iterator f_it;
+    for (f_it = fmb->begin(); f_it != fmb->end(); f_it++) {
+	const struct fb *f = f_it->second;
+        if (bu_strncmp(interface_type, f->i->if_name+5, strlen(interface_type)) == 0) {
+	    /* found it, copy its struct in */
+            *ifp->i = *(f->i);
+            return;
+        }
+    }
+}
+
+extern "C" struct fb_platform_specific *
+fb_get_platform_specific(uint32_t magic)
+{
+    std::map<std::string, const struct fb *> *fmb = (std::map<std::string, const struct fb *> *)fb_backends;
+    std::map<std::string, const struct fb *>::iterator f_it;
+    for (f_it = fmb->begin(); f_it != fmb->end(); f_it++) {
+	const struct fb *f = f_it->second;
+        if (magic == f->i->type_magic) {
+            /* found it, get its specific struct */
+            return f->i->if_existing_get(magic);
+        }
+    }
+
+    return NULL;
+}
+
+extern "C" void
+fb_put_platform_specific(struct fb_platform_specific *fb_p)
+{
+    if (!fb_p) return;
+
+    std::map<std::string, const struct fb *> *fmb = (std::map<std::string, const struct fb *> *)fb_backends;
+    std::map<std::string, const struct fb *>::iterator f_it;
+    for (f_it = fmb->begin(); f_it != fmb->end(); f_it++) {
+	const struct fb *f = f_it->second;
+	if (fb_p->magic == f->i->type_magic) {
+	    f->i->if_existing_put(fb_p);
+	    return;
+	}
+    }
+    return;
+}
+
+#define Malloc_Bomb(_bytes_)                                    \
+    fb_log("\"%s\"(%d) : allocation of %lu bytes failed.\n",    \
+           __FILE__, __LINE__, _bytes_)
+
+#ifdef IF_REMOTE
+/**
+ * True if the non-null string s is all digits
+ */
+static int
+fb_totally_numeric(const char *s)
+{
+    if (s == (char *)0 || *s == 0)
+        return 0;
+
+    while (*s) {
+        if (*s < '0' || *s > '9')
+            return 0;
+        s++;
+    }
+
+    return 1;
+}
+#endif
+
+struct fb *
+fb_open(const char *file, int width, int height)
+{
+    static const char *priority_list[] = {"osgl", "wgl", "ogl", "X", "tk", "nu"};
+    register struct fb *ifp;
+    int i;
+    const char *b;
+    std::map<std::string, const struct fb *> *fmb = (std::map<std::string, const struct fb *> *)fb_backends;
+    std::map<std::string, const struct fb *>::iterator f_it;
+
+    if (width < 0 || height < 0)
+        return FB_NULL;
+
+    ifp = (struct fb *) calloc(sizeof(struct fb), 1);
+    if (ifp == FB_NULL) {
+        Malloc_Bomb(sizeof(struct fb));
+        return FB_NULL;
+    }
+    ifp->i = (struct fb_impl *) calloc(sizeof(struct fb_impl), 1);
+    if (file == NULL || *file == '\0') {
+        /* No name given, check environment variable first.     */
+        if ((file = (const char *)getenv("FB_FILE")) == NULL || *file == '\0') {
+            /* None set, use first valid device in priority order as default */
+	    i = 0;
+	    b = priority_list[i];
+	    while (!BU_STR_EQUAL(b, "nu")) {
+		f_it = fmb->find(std::string(b));
+		if (f_it == fmb->end()) {
+		    i++;
+		    b = priority_list[i];
+		    continue;
+		}
+		const struct fb *f = f_it->second;
+		*ifp->i = *(f->i);        /* struct copy */
+		goto found_interface;
+	    }
+
+            *ifp->i = *fb_null_interface.i;        /* struct copy */
+            file = ifp->i->if_name;
+            goto found_interface;
+        }
+    }
+    /*
+     * Determine what type of hardware the device name refers to.
+     *
+     * "file" can in general look like: hostname:/pathname/devname#
+     *
+     * If we have a ':' assume the remote interface
+     * (We don't check to see if it's us. Good for debugging.)
+     * else strip out "/path/devname" and try to look it up in the
+     * device array.  If we don't find it assume it's a file.
+     */
+    f_it = fmb->find(std::string(file));
+    if (f_it != fmb->end()) {
+	const struct fb *f = f_it->second;
+	*ifp->i = *(f->i);        /* struct copy */
+	goto found_interface;
+    }
+
+
+    /* Not in list, check special interfaces or disk files */
+    /* "/dev/" protection! */
+    if (bu_strncmp(file, "/dev/", 5) == 0) {
+        fb_log("fb_open: no such device \"%s\".\n", file);
+        free((void *) ifp);
+        return FB_NULL;
+    }
+
+#ifdef IF_REMOTE
+    if (fb_totally_numeric(file) || strchr(file, ':') != NULL) {
+        /* We have a remote file name of the form <host>:<file>
+         * or a port number (which assumes localhost) */
+        *ifp->i = *remote_interface.i;
+        goto found_interface;
+    }
+#endif /* IF_REMOTE */
+
+    /* Assume it's a disk file */
+    if (_fb_disk_enable) {
+        *ifp->i = *disk_interface.i;
+    } else {
+        fb_log("fb_open: no such device \"%s\".\n", file);
+        free((void *) ifp);
+        return FB_NULL;
+    }
+
+found_interface:
+    /* Copy over the name it was opened by. */
+    ifp->i->if_name = (char*)malloc((unsigned) strlen(file) + 1);
+    if (ifp->i->if_name == (char *)NULL) {
+        Malloc_Bomb(strlen(file) + 1);
+        free((void *) ifp);
+        return FB_NULL;
+    }
+    bu_strlcpy(ifp->i->if_name, file, strlen(file)+1);
+
+    /* Mark OK by filling in magic number */
+    ifp->i->if_magic = FB_MAGIC;
+
+    i=(*ifp->i->if_open)(ifp, file, width, height);
+    if (i != 0) {
+        ifp->i->if_magic = 0;           /* sanity */
+        free((void *) ifp->i->if_name);
+        free((void *) ifp);
+
+        if (i < 0)
+            fb_log("fb_open: can't open device \"%s\", ret=%d.\n", file, i);
+        else
+            bu_exit(0, "Terminating early by request\n"); /* e.g., zap memory */
+
+        return FB_NULL;
+    }
+    return ifp;
+}
+
+
+/**
+ * Generic Help.
+ * Print out the list of available frame buffers.
+ */
+extern "C" int
+fb_genhelp(void)
+{
+    std::map<std::string, const struct fb *> *fmb = (std::map<std::string, const struct fb *> *)fb_backends;
+    std::map<std::string, const struct fb *>::iterator f_it;
+    for (f_it = fmb->begin(); f_it != fmb->end(); f_it++) {
+	const struct fb *f = f_it->second;
+	fb_log("%-12s  %s\n", f->i->if_name, f->i->if_type);
+    }
+
+    /* Print the ones not in the device list */
+#ifdef IF_REMOTE
+    fb_log("%-12s  %s\n",
+           remote_interface.i->if_name,
+           remote_interface.i->if_type);
+#endif
+    if (_fb_disk_enable) {
+        fb_log("%-12s  %s\n",
+               disk_interface.i->if_name,
+               disk_interface.i->if_type);
+    }
+
+    return 0;
+}
+
+
+
 /*
  * Local Variables:
  * tab-width: 8
