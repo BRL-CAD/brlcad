@@ -99,10 +99,6 @@ DM_EXPORT extern struct dm dm_qt;
 DM_EXPORT extern struct dm dm_osgl;
 
 DM_EXPORT extern int Dm_Init(void *interp);
-DM_EXPORT extern struct dm *dm_open(void *interp,
-			     const char *type,
-			     int argc,
-			     const char *argv[]);
 DM_EXPORT extern void *dm_interp(struct dm *dmp);
 DM_EXPORT extern int dm_share_dlist(struct dm *dmp1,
 				    struct dm *dmp2);
@@ -179,11 +175,16 @@ DM_EXPORT extern void dm_draw_scale(struct dm *dmp,
 DM_EXPORT extern const char *dm_version(void);
 
 
-/* Test plugin functions */
-DM_EXPORT extern void dm_list_backends(const char *separator);
+/* Plugin related functions */
 DM_EXPORT extern int dm_valid_type(const char *name, const char *dpy_string);
-DM_EXPORT const char * dm_recommend_type(const char *dpy_string);
 DM_EXPORT const char * dm_init_msgs();
+DM_EXPORT extern struct dm *dm_open(void *interp,
+			     const char *type,
+			     int argc,
+			     const char *argv[]);
+DM_EXPORT extern struct bu_vls *dm_list_types(const char *separator); /* free return list with bu_vls_free(list); BU_PUT(list, struct bu_vls); */
+DM_EXPORT const char *dm_bestXType(const char *dpy_string);
+
 
 /* functions to make a dm struct hideable - will need to
  * sort these out later */
@@ -201,7 +202,6 @@ DM_EXPORT extern void dm_geometry_request(struct dm *dmp, int width, int height)
 DM_EXPORT extern void dm_internal_var(struct bu_vls *result, struct dm *dmp, const char *key); // ick
 DM_EXPORT extern fastf_t dm_get_aspect(struct dm *dmp);
 DM_EXPORT extern const char *dm_get_type(struct dm *dmp);
-DM_EXPORT extern struct bu_vls *dm_list_types(const char separator); /* free return list with bu_vls_free(list); BU_PUT(list, struct bu_vls); */
 DM_EXPORT extern unsigned long dm_get_id(struct dm *dmp);
 DM_EXPORT extern void dm_set_id(struct dm *dmp, unsigned long new_id);
 DM_EXPORT extern int dm_get_displaylist(struct dm *dmp);

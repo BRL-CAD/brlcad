@@ -34,7 +34,11 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 
     bu_log("load msgs: %s\n", dm_init_msgs());
 
-    dm_list_backends(NULL);
+    struct bu_vls *blist = dm_list_types("\n	");
+    bu_log("Available types:\n	%s\n", bu_vls_cstr(blist));
+    bu_vls_free(blist);
+    BU_PUT(blist, struct bu_vls);
+
     int vtype;
     vtype = dm_valid_type("nu", NULL);
     bu_log("nu valid: %d\n", vtype);
@@ -58,7 +62,7 @@ main(int UNUSED(argc), const char **UNUSED(argv))
     bu_log("dmp name: %s\n", dm_get_name(dmp));
     dm_close(dmp);
 
-    bu_log("recommended type: %s\n", dm_recommend_type(NULL));
+    bu_log("recommended type: %s\n", dm_bestXType(NULL));
 
     return 0;
 }

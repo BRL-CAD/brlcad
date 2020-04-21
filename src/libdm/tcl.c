@@ -47,7 +47,6 @@
 
 /* from libdm/query.c */
 extern int dm_validXType(const char *dpy_string, const char *name);
-extern char *dm_bestXType(const char *dpy_string);
 
 /* from libdm/dm_obj.c */
 extern int Dmo_Init(Tcl_Interp *interp);
