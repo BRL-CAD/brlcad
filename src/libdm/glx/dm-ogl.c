@@ -1893,7 +1893,7 @@ ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
 
 int
 ogl_draw_data_axes(struct dm *dmp,
-                  fastf_t UNUSED(sf),
+                  fastf_t sf,
                   struct bview_data_axes_state *bndasp)
 {
     int npoints = bndasp->num_points * 6;
@@ -1914,7 +1914,55 @@ ogl_draw_data_axes(struct dm *dmp,
         if (dmp->i->dm_light)
             glEnable(GL_LIGHTING);
 
+	return 0;
     }
+
+    int i, j;
+    fastf_t halfAxesSize;               /* half the length of an axis */
+    point_t ptA, ptB;
+    point_t *points;
+    /* Save the line attributes */
+    int saveLineWidth = dmp->i->dm_lineWidth;
+    int saveLineStyle = dmp->i->dm_lineStyle;
+
+    points = (point_t *)bu_calloc(npoints, sizeof(point_t), "data axes points");
+    halfAxesSize = bndasp->size * 0.5 * sf;
+
+    /* set linewidth */
+    dm_set_line_attr(dmp, bndasp->line_width, 0);  /* solid lines */
+
+    for (i = 0, j = -1; i < bndasp->num_points; ++i) {
+	/* draw X axis with x/y offsets */
+	VSET(ptA, bndasp->points[i][X] - halfAxesSize, bndasp->points[i][Y], bndasp->points[i][Z]);
+	VSET(ptB, bndasp->points[i][X] + halfAxesSize, bndasp->points[i][Y], bndasp->points[i][Z]);
+	++j;
+	VMOVE(points[j], ptA);
+	++j;
+	VMOVE(points[j], ptB);
+
+	/* draw Y axis with x/y offsets */
+	VSET(ptA, bndasp->points[i][X], bndasp->points[i][Y] - halfAxesSize, bndasp->points[i][Z]);
+	VSET(ptB, bndasp->points[i][X], bndasp->points[i][Y] + halfAxesSize, bndasp->points[i][Z]);
+	++j;
+	VMOVE(points[j], ptA);
+	++j;
+	VMOVE(points[j], ptB);
+
+	/* draw Z axis with x/y offsets */
+	VSET(ptA, bndasp->points[i][X], bndasp->points[i][Y], bndasp->points[i][Z] - halfAxesSize);
+	VSET(ptB, bndasp->points[i][X], bndasp->points[i][Y], bndasp->points[i][Z] + halfAxesSize);
+	++j;
+	VMOVE(points[j], ptA);
+	++j;
+	VMOVE(points[j], ptB);
+    }
+
+    dm_draw_lines_3d(dmp, npoints, points, 0);
+    bu_free((void *)points, "data axes points");
+
+    /* Restore the line attributes */
+    dm_set_line_attr(dmp, saveLineWidth, saveLineStyle);
+
 
     return 0;
 }

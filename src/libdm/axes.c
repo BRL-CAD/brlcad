@@ -45,6 +45,12 @@ dm_draw_data_axes(struct dm *dmp,
 		  fastf_t sf,
 		  struct bview_data_axes_state *bndasp)
 {
+
+    if (dmp->i->dm_draw_data_axes) {
+	dmp->i->dm_draw_data_axes(dmp, sf, bndasp);
+	return;
+    }
+
     int i, j;
     fastf_t halfAxesSize;		/* half the length of an axis */
     point_t ptA, ptB;
@@ -59,22 +65,6 @@ dm_draw_data_axes(struct dm *dmp,
 
     /* set color */
     dm_set_fg(dmp, bndasp->color[0], bndasp->color[1], bndasp->color[2], 1, 1.0);
-
-#if defined(IF_OGL) || defined(IF_WGL)
-    if (bndasp->draw > 1) {
-	if (dmp->i->dm_light)
-	    glDisable(GL_LIGHTING);
-
-	glPointSize(bndasp->size);
-	dm_draw_points_3d(dmp, bndasp->num_points, bndasp->points);
-	glPointSize(1);
-
-	if (dmp->i->dm_light)
-	    glEnable(GL_LIGHTING);
-
-	return;
-    }
-#endif
 
     points = (point_t *)bu_calloc(npoints, sizeof(point_t), "data axes points");
     halfAxesSize = bndasp->size * 0.5 * sf;
