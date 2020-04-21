@@ -91,7 +91,6 @@ DM_EXPORT extern struct dm dm_null;
 DM_EXPORT extern struct dm dm_ogl;
 DM_EXPORT extern struct dm dm_plot;
 DM_EXPORT extern struct dm dm_ps;
-DM_EXPORT extern struct dm dm_rtgl;
 DM_EXPORT extern struct dm dm_tk;
 DM_EXPORT extern struct dm dm_wgl;
 DM_EXPORT extern struct dm dm_X;

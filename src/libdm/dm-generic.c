@@ -38,45 +38,6 @@
 #include "./include/private.h"
 #include "./null/dm-Null.h"
 
-extern struct dm *null_open(void *interp, int argc, const char *argv[]);
-extern struct dm *plot_open(void *interp, int argc, const char *argv[]);
-extern struct dm *ps_open(void *interp, int argc, const char *argv[]);
-extern struct dm *txt_open(void *interp, int argc, const char **argv);
-
-#ifdef DM_X
-#  if defined(HAVE_TK)
-extern struct dm *X_open(void *interp, int argc, const char **argv);
-#  endif
-#endif /* DM_X */
-
-#ifdef DM_TK
-extern struct dm *tk_open(void *interp, int argc, const char **argv);
-#endif /* DM_TK */
-
-#ifdef DM_OGL
-#  if defined(HAVE_TK)
-extern struct dm *ogl_open(void *interp, int argc, const char **argv);
-extern void ogl_fogHint(struct dm *dmp, int fastfog);
-extern int ogl_share_dlist(struct dm *dmp1, struct dm *dmp2);
-#  endif
-#endif /* DM_OGL */
-
-#ifdef DM_OSGL
-extern struct dm *osgl_open(void *interp, int argc, const char **argv);
-extern void osgl_fogHint(struct dm *dmp, int fastfog);
-extern int osgl_share_dlist(struct dm *dmp1, struct dm *dmp2);
-#endif /* DM_OSGL*/
-
-#ifdef DM_WGL
-extern struct dm *wgl_open(void *interp, int argc, const char **argv);
-extern void wgl_fogHint(struct dm *dmp, int fastfog);
-extern int wgl_share_dlist(struct dm *dmp1, struct dm *dmp2);
-#endif /* DM_WGL */
-
-#ifdef DM_QT
-extern struct dm *qt_open(void *interp, int argc, const char **argv);
-#endif /* DM_QT */
-
 /* TODO - in a plugin system this function will be provided for all acive
  * backends via bu_dlsym and loaded into a lookup system mapped to the dm_name
  * string provided with the plugin. */
@@ -84,50 +45,45 @@ struct dm *
 dm_open(void *interp, const char *type, int argc, const char *argv[])
 {
     if (BU_STR_EQUIV(type, "null")) {
-	return null_open(interp, argc, argv);
+	return dm_null.i->dm_open(interp, argc, argv);
     }
     if (BU_STR_EQUIV(type, "txt")) {
-	return txt_open(interp, argc, argv);
+	return dm_txt.i->dm_open(interp, argc, argv);
     }
     if (BU_STR_EQUIV(type, "plot")) {
-	return plot_open(interp, argc, argv);
-    }
-    if (BU_STR_EQUIV(type, "plot")) {
-	return plot_open(interp, argc, argv);
+	return dm_plot.i->dm_open(interp, argc, argv);
     }
     if (BU_STR_EQUIV(type, "ps")) {
-	return ps_open(interp, argc, argv);
+	return dm_ps.i->dm_open(interp, argc, argv);
     }
-    if (BU_STR_EQUIV(type, "plot")) {
-	return plot_open(interp, argc, argv);
-    }
-#if defined(DM_X) && defined(HAVE_TK)
+#if defined(DM_X)
     if (BU_STR_EQUIV(type, "X")) {
-	return X_open(interp, argc, argv);
+	return dm_X.i->dm_open(interp, argc, argv);
     }
 #endif
 #if defined(DM_TK)
     if (BU_STR_EQUIV(type, "tk")) {
-	return tk_open(interp, argc, argv);
+	return dm_tk.i->dm_open(interp, argc, argv);
     }
 #endif
-#if defined(DM_OGL) && defined(HAVE_TK)
+#if defined(DM_OGL)
     if (BU_STR_EQUIV(type, "ogl")) {
-	return ogl_open(interp, argc, argv);
+	return dm_ogl.i->dm_open(interp, argc, argv);
     }
 #endif
 #if defined(DM_OSGL)
     if (BU_STR_EQUIV(type, "osgl")) {
-	return osgl_open(interp, argc, argv);
+	return dm_osgl.i->dm_open(interp, argc, argv);
     }
 #endif
 #if defined(DM_WGL)
     if (BU_STR_EQUIV(type, "wgl")) {
-	return wgl_open(interp, argc, argv);
+	return dm_wgl.i->dm_open(interp, argc, argv);
     }
 #endif
 #if defined(DM_QT)
     if (BU_STR_EQUIV(type, "qt")) {
+	return dm_qt.i->dm_open(interp, argc, argv);
 	return qt_open(interp, argc, argv);
     }
 #endif
