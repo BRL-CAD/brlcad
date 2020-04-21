@@ -35,10 +35,6 @@
 #include "./sedit.h"
 #include "./mged_dm.h"
 
-#if defined(HAVE_NEXTAFTER) && !defined(HAVE_DECL_NEXTAFTER)
-extern double nextafter(double x, double y);
-#endif
-
 mat_t perspective_mat;
 mat_t incr_change;
 mat_t modelchanges;
@@ -182,7 +178,7 @@ dozoom(int which_eye)
 
 	/* Second, draw transparent stuff */
 
-	ndrawn = dm_draw_display_list(DMP, GEDP->ged_gdp->gd_headDisplay, nextafter(1.0, 0.0), inv_viewsize,
+	ndrawn = dm_draw_display_list(DMP, GEDP->ged_gdp->gd_headDisplay, 0.0, inv_viewsize,
 				      r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
 				      geometry_default_color, 0, mged_variables->mv_dlist);
 
@@ -191,7 +187,7 @@ dozoom(int which_eye)
 
     } else {
 
-	ndrawn = dm_draw_display_list(DMP, GEDP->ged_gdp->gd_headDisplay, 0.0, inv_viewsize,
+	ndrawn = dm_draw_display_list(DMP, GEDP->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
 				      r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
 				      geometry_default_color, 1, mged_variables->mv_dlist);
 
@@ -233,7 +229,7 @@ dozoom(int which_eye)
 		   color_scheme->cs_geo_hl[2], 1, 1.0);
 
 
-    ndrawn = dm_draw_display_list(DMP, GEDP->ged_gdp->gd_headDisplay, -1.0, inv_viewsize,
+    ndrawn = dm_draw_display_list(DMP, GEDP->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
 	    r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 1,
 	    geometry_default_color, 0, mged_variables->mv_dlist);
 
