@@ -1,3 +1,43 @@
+2020-04-21 10:58  starseeker
+
+	* [r75485] NEWS:
+	  Note overlap checker improvements in NEWS file
+
+2020-04-21 10:57  starseeker
+
+	* [r75484] ., src/tclscripts/checker/menu.tcl:
+	  Cherrypick r75477 - overlap checker layout improvements
+
+2020-04-21 10:56  starseeker
+
+	* [r75483] ., src/tclscripts/checker/check.tcl:
+	  Cherrypick r75472 - Have overlap checker display only region
+	  names, with fullpath copy to clipboard available via right-click
+	  menu
+
+2020-04-21 10:55  starseeker
+
+	* [r75482] ., src/tclscripts/checker/menu.tcl:
+	  Cherrypick r75471 - Fix truncation of overlap checker columns
+	  when path names are long.
+
+2020-04-21 10:53  starseeker
+
+	* [r75481] NEWS:
+	  Update news entry for solid wireframes
+
+2020-04-21 10:53  starseeker
+
+	* [r75480] ., src/libdm/dm-generic.c, src/mged/dozoom.c:
+	  Cherrypick r75470 - fix for transparency issue with awareness of
+	  solid editing wireframes
+
+2020-04-14 14:51  starseeker
+
+	* [r75393] ChangeLog:
+	  Update changelog
+
+
 2020-04-14 14:50  starseeker
 
 	* [r75392] ., NEWS, src/tclscripts/checker/menu.tcl:
