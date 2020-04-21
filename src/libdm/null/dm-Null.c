@@ -34,12 +34,9 @@
 #include "../include/private.h"
 
 struct dm *
-null_open(void *interp, int argc, const char *argv[])
+null_open(void *interp, int UNUSED(argc), const char **UNUSED(argv))
 {
     struct dm *dmp = DM_NULL;
-
-    if (argc < 0 || !argv)
-        return DM_NULL;
 
     BU_ALLOC(dmp, struct dm);
     BU_ALLOC(dmp->i, struct dm_impl);
@@ -51,10 +48,8 @@ null_open(void *interp, int argc, const char *argv[])
 }
 
 int
-null_close(struct dm *dmp)
+null_close(struct dm *UNUSED(dmp))
 {
-    bu_free(dmp->i, "dmp impl");
-    bu_free(dmp, "dmp");
     return 0;
 }
 
