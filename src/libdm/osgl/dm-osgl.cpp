@@ -79,7 +79,7 @@
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
 extern "C" {
-    struct dm *osgl_open(void *vinterp, int argc, char **argv);
+    struct dm *osgl_open(void *vinterp, int argc, const char **argv);
 }
 HIDDEN int osgl_close(struct dm *dmp);
 HIDDEN int osgl_drawBegin(struct dm *dmp);
@@ -382,7 +382,7 @@ osgl_close(struct dm *dmp)
  *
  */
 extern "C" struct dm *
-osgl_open(void *vinterp, int argc, char **argv)
+osgl_open(void *vinterp, int argc, const char **argv)
 {
     static int count = 0;
     GLfloat backgnd[4];
