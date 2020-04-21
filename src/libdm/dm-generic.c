@@ -38,18 +38,19 @@
 #include "./include/private.h"
 #include "./null/dm-Null.h"
 
+extern struct dm *null_open(void *interp, int argc, const char *argv[]);
 extern struct dm *plot_open(void *interp, int argc, const char *argv[]);
 extern struct dm *ps_open(void *interp, int argc, const char *argv[]);
 extern struct dm *txt_open(void *interp, int argc, const char **argv);
 
 #ifdef DM_X
 #  if defined(HAVE_TK)
-extern struct dm *X_open_dm(void *interp, int argc, const char **argv);
+extern struct dm *X_open(void *interp, int argc, const char **argv);
 #  endif
 #endif /* DM_X */
 
 #ifdef DM_TK
-extern struct dm *tk_open_dm(void *interp, int argc, const char **argv);
+extern struct dm *tk_open(void *interp, int argc, const char **argv);
 #endif /* DM_TK */
 
 #ifdef DM_OGL
@@ -76,22 +77,6 @@ extern int wgl_share_dlist(struct dm *dmp1, struct dm *dmp2);
 extern struct dm *qt_open(void *interp, int argc, const char **argv);
 #endif /* DM_QT */
 
-HIDDEN struct dm *
-null_dm_open(void *interp, int argc, const char *argv[])
-{
-    struct dm *dmp = DM_NULL;
-
-    if (argc < 0 || !argv)
-	return DM_NULL;
-
-    BU_ALLOC(dmp, struct dm);
-
-    *dmp = dm_null;
-    dmp->i->dm_interp = interp;
-
-    return dmp;
-}
-
 /* TODO - in a plugin system this function will be provided for all acive
  * backends via bu_dlsym and loaded into a lookup system mapped to the dm_name
  * string provided with the plugin. */
@@ -99,7 +84,7 @@ struct dm *
 dm_open(void *interp, const char *type, int argc, const char *argv[])
 {
     if (BU_STR_EQUIV(type, "null")) {
-	return null_dm_open(interp, argc, argv);
+	return null_open(interp, argc, argv);
     }
     if (BU_STR_EQUIV(type, "txt")) {
 	return txt_open(interp, argc, argv);
@@ -118,12 +103,12 @@ dm_open(void *interp, const char *type, int argc, const char *argv[])
     }
 #if defined(DM_X) && defined(HAVE_TK)
     if (BU_STR_EQUIV(type, "X")) {
-	return X_open_dm(interp, argc, argv);
+	return X_open(interp, argc, argv);
     }
 #endif
 #if defined(DM_TK)
     if (BU_STR_EQUIV(type, "tk")) {
-	return tk_open_dm(interp, argc, argv);
+	return tk_open(interp, argc, argv);
     }
 #endif
 #if defined(DM_OGL) && defined(HAVE_TK)

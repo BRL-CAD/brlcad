@@ -421,8 +421,9 @@ X_close(struct dm *dmp)
  *
  */
 struct dm *
-X_open_dm(Tcl_Interp *interp, int argc, char **argv)
+X_open(void *vinterp, int argc, const char **argv)
 {
+    Tcl_Interp *interp = (Tcl_Interp *)vinterp;
     static int count = 0;
     int make_square = -1;
     XGCValues gcv;
@@ -530,7 +531,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     }
 
     if (pubvars->xtkwin == NULL) {
-	bu_log("X_open_dm: Failed to open %s\n", bu_vls_addr(&dmp->i->dm_pathName));
+	bu_log("X_open: Failed to open %s\n", bu_vls_addr(&dmp->i->dm_pathName));
 	(void)X_close(dmp);
 	return DM_NULL;
     }
@@ -621,7 +622,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 
     /* must do this before MakeExist */
     if ((pubvars->vip = X_choose_visual(dmp)) == NULL) {
-	bu_log("X_open_dm: Can't get an appropriate visual.\n");
+	bu_log("X_open: Can't get an appropriate visual.\n");
 	(void)X_close(dmp);
 	return DM_NULL;
     }
@@ -708,7 +709,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	    if (BU_STR_EQUAL(list->name, "dial+buttons")) {
 		if ((dev = XOpenDevice(pubvars->dpy,
 				       list->id)) == (XDevice *)NULL) {
-		    bu_log("X_open_dm: Couldn't open the dials+buttons\n");
+		    bu_log("X_open: Couldn't open the dials+buttons\n");
 		    goto Done;
 		}
 
@@ -2048,6 +2049,7 @@ X_event_cmp(struct dm *dmp, dm_event_t type, int event)
 
 /* Display Manager package interface */
 struct dm_impl dm_X_impl = {
+    X_open,
     X_close,
     X_drawBegin,
     X_drawEnd,

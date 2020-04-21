@@ -370,6 +370,7 @@ osgl_close(struct dm *dmp)
     bu_vls_free(&dmp->i->dm_dName);
     bu_free(dmp->i->dm_vars.priv_vars, "osgl_close: osgl_vars");
     bu_free(dmp->i->dm_vars.pub_vars, "osgl_close: dm_osglvars");
+    bu_free(dmp->i, "osgl_close: dmp impl");
     bu_free(dmp, "osgl_close: dmp");
 
     return TCL_OK;
@@ -400,8 +401,9 @@ osgl_open(void *vinterp, int argc, char **argv)
     }
 
     BU_GET(dmp, struct dm);
+    BU_GET(dmp->i, struct dm_impl);
 
-    *dmp = dm_osgl; /* struct copy */
+    *dmp->i = *dm_osgl.i; /* struct copy */
     dmp->i->dm_interp = interp;
     dmp->i->dm_lineWidth = 1;
     dmp->i->dm_light = 1;
@@ -2540,6 +2542,7 @@ osgl_event_cmp(struct dm *dmp, dm_event_t type, int event)
 }
 
 struct dm_impl dm_osgl_impl = {
+    osgl_open,
     osgl_close,
     osgl_drawBegin,
     osgl_drawEnd,

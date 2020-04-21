@@ -30,18 +30,21 @@
 #include "tcl.h"
 
 #include "bu/getopt.h"
+#include "bu/str.h"
 #include "vmath.h"
 #include "dm.h"
 #include "./include/private.h"
 
 int
-dm_processOptions(struct dm *dmp, struct bu_vls *init_proc_vls, int argc, char **argv)
+dm_processOptions(struct dm *dmp, struct bu_vls *init_proc_vls, int argc, const char **argv)
 {
     int c;
 
+    char **av = bu_argv_dup(argc, argv);
+
     bu_optind = 0;	 /* re-init bu_getopt */
     bu_opterr = 0;
-    while ((c = bu_getopt(argc, argv, "N:S:W:s:d:i:n:t:")) != -1) {
+    while ((c = bu_getopt(argc, av, "N:S:W:s:d:i:n:t:")) != -1) {
 	switch (c) {
 	    case 'N':
 		dmp->i->dm_height = atoi(bu_optarg);
@@ -73,6 +76,8 @@ dm_processOptions(struct dm *dmp, struct bu_vls *init_proc_vls, int argc, char *
 		break;
 	}
     }
+
+    bu_argv_free(argc, av);
 
     return bu_optind;
 }

@@ -33,10 +33,28 @@
 #include "../null/dm-Null.h"
 #include "../include/private.h"
 
+struct dm *
+null_open(void *interp, int argc, const char *argv[])
+{
+    struct dm *dmp = DM_NULL;
+
+    if (argc < 0 || !argv)
+        return DM_NULL;
+
+    BU_ALLOC(dmp, struct dm);
+    BU_ALLOC(dmp->i, struct dm_impl);
+
+    *dmp->i = *dm_null.i;
+    dmp->i->dm_interp = interp;
+
+    return dmp;
+}
 
 int
-null_close(struct dm *UNUSED(dmp))
+null_close(struct dm *dmp)
 {
+    bu_free(dmp->i, "dmp impl");
+    bu_free(dmp, "dmp");
     return 0;
 }
 
@@ -285,6 +303,7 @@ null_openFb(struct dm *UNUSED(dmp))
 
 
 struct dm_impl dm_null_impl = {
+    null_open,
     null_close,
     null_drawBegin,
     null_drawEnd,

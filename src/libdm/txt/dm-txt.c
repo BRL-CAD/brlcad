@@ -42,8 +42,9 @@ txt_open(void *interp, int argc, const char **argv)
 	return DM_NULL;
 
     BU_ALLOC(dmp, struct dm);
+    BU_ALLOC(dmp->i, struct dm_impl);
 
-    *dmp = dm_txt;
+    *dmp->i = *dm_txt.i;
     dmp->i->dm_interp = interp;
 
     bu_log("open called\n");
@@ -53,9 +54,11 @@ txt_open(void *interp, int argc, const char **argv)
 
 
 HIDDEN int
-txt_close(struct dm *UNUSED(dmp))
+txt_close(struct dm *dmp)
 {
     bu_log("close called\n");
+    bu_free(dmp->i, "dmp impl");
+    bu_free(dmp, "dmp");
     return 0;
 }
 
@@ -341,6 +344,7 @@ txt_openFb(struct dm *UNUSED(dmp))
 
 
 struct dm_impl dm_txt_impl = {
+    txt_open,
     txt_close,
     txt_drawBegin,
     txt_drawEnd,

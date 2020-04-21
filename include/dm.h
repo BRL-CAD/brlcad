@@ -85,7 +85,9 @@ struct dm_plugin {
     const struct dm * const p;
 };
 
-
+/* TODO - after plugins are established, these should be movable to
+ * the private subheaders */
+DM_EXPORT extern struct dm dm_null;
 DM_EXPORT extern struct dm dm_ogl;
 DM_EXPORT extern struct dm dm_plot;
 DM_EXPORT extern struct dm dm_ps;
@@ -117,7 +119,7 @@ DM_EXPORT extern int dm_Normal2Xy(struct dm *dmp,
 				  int use_aspect);
 DM_EXPORT extern void dm_fogHint(struct dm *dmp,
 				 int fastfog);
-DM_EXPORT extern int dm_processOptions(struct dm *dmp, struct bu_vls *init_proc_vls, int argc, char **argv);
+DM_EXPORT extern int dm_processOptions(struct dm *dmp, struct bu_vls *init_proc_vls, int argc, const char **argv);
 DM_EXPORT extern int dm_limit(int i);
 DM_EXPORT extern int dm_unlimit(int i);
 DM_EXPORT extern fastf_t dm_wrap(fastf_t f);

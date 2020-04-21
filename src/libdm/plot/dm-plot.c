@@ -63,6 +63,134 @@ extern int pclose(FILE *stream);
 
 struct plot_vars head_plot_vars;
 
+static int plot_close(struct dm *dmp);
+
+/*
+ * Fire up the display manager, and the display processor.
+ *
+ */
+struct dm *
+plot_open(void *vinterp, int argc, const char *argv[])
+{
+    static int count = 0;
+    struct dm *dmp;
+    Tcl_Obj *obj;
+    Tcl_Interp *interp = (Tcl_Interp *)vinterp;
+
+    BU_ALLOC(dmp, struct dm);
+    BU_ALLOC(dmp->i, struct dm_impl);
+
+    *dmp->i = *dm_plot.i; /* struct copy */
+    dmp->i->dm_interp = interp;
+
+    BU_ALLOC(dmp->i->dm_vars.priv_vars, struct plot_vars);
+
+    struct plot_vars *privars = (struct plot_vars *)dmp->i->dm_vars.priv_vars;
+
+    obj = Tcl_GetObjResult(interp);
+    if (Tcl_IsShared(obj))
+	obj = Tcl_DuplicateObj(obj);
+
+    bu_vls_init(&privars->vls);
+    bu_vls_init(&dmp->i->dm_pathName);
+    bu_vls_init(&dmp->i->dm_tkName);
+    bu_vls_printf(&dmp->i->dm_pathName, ".dm_plot%d", count++);
+    bu_vls_printf(&dmp->i->dm_tkName, "dm_plot%d", count++);
+
+    /* skip first argument */
+    --argc;
+    ++argv;
+
+    /* Process any options */
+    privars->is_3D = 1;          /* 3-D w/color, by default */
+    while (argv[0] != (char *)0 && argv[0][0] == '-') {
+	switch (argv[0][1]) {
+	    case '3':
+		break;
+	    case '2':
+		privars->is_3D = 0;		/* 2-D, for portability */
+		break;
+	    case 'g':
+		privars->grid = 1;
+		break;
+	    case 'f':
+		privars->floating = 1;
+		break;
+	    case 'z':
+	    case 'Z':
+		/* Enable Z clipping */
+		Tcl_AppendStringsToObj(obj, "Clipped in Z to viewing cube\n", (char *)NULL);
+
+		dmp->i->dm_zclip = 1;
+		break;
+	    default:
+		Tcl_AppendStringsToObj(obj, "bad PLOT option ", argv[0], "\n", (char *)NULL);
+		(void)plot_close(dmp);
+
+		Tcl_SetObjResult(interp, obj);
+		return DM_NULL;
+	}
+	argv++;
+    }
+    if (argv[0] == (char *)0) {
+	Tcl_AppendStringsToObj(obj, "no filename or filter specified\n", (char *)NULL);
+	(void)plot_close(dmp);
+
+	Tcl_SetObjResult(interp, obj);
+	return DM_NULL;
+    }
+
+    if (argv[0][0] == '|') {
+	bu_vls_strcpy(&privars->vls, &argv[0][1]);
+	while ((++argv)[0] != (char *)0) {
+	    bu_vls_strcat(&privars->vls, " ");
+	    bu_vls_strcat(&privars->vls, argv[0]);
+	}
+
+	privars->is_pipe = 1;
+    } else {
+	bu_vls_strcpy(&privars->vls, argv[0]);
+    }
+
+    if (privars->is_pipe) {
+	if ((privars->up_fp = popen(bu_vls_addr(&privars->vls), "w")) == NULL) {
+	    perror(bu_vls_addr(&privars->vls));
+	    (void)plot_close(dmp);
+	    Tcl_SetObjResult(interp, obj);
+	    return DM_NULL;
+	}
+
+	Tcl_AppendStringsToObj(obj, "piped to ",
+			       bu_vls_addr(&privars->vls),
+			       "\n", (char *)NULL);
+    } else {
+	if ((privars->up_fp = fopen(bu_vls_addr(&privars->vls), "wb")) == NULL) {
+	    perror(bu_vls_addr(&privars->vls));
+	    (void)plot_close(dmp);
+	    Tcl_SetObjResult(interp, obj);
+	    return DM_NULL;
+	}
+
+	Tcl_AppendStringsToObj(obj, "plot stored in ",
+			       bu_vls_addr(&privars->vls),
+			       "\n", (char *)NULL);
+    }
+
+    setbuf(privars->up_fp, privars->ttybuf);
+
+    if (privars->is_3D)
+	pl_3space(privars->up_fp, -2048, -2048, -2048, 2048, 2048, 2048);
+    else
+	pl_space(privars->up_fp, -2048, -2048, 2048, 2048);
+
+    MAT_IDN(privars->mod_mat);
+    MAT_IDN(privars->disp_mat);
+    MAT_COPY(privars->plotmat, privars->mod_mat);
+
+    Tcl_SetObjResult(interp, obj);
+    return dmp;
+}
+
 /**
  * Gracefully release the display.
  */
@@ -83,6 +211,7 @@ plot_close(struct dm *dmp)
 
     bu_vls_free(&dmp->i->dm_pathName);
     bu_free((void *)dmp->i->dm_vars.priv_vars, "plot_close: plot_vars");
+    bu_free((void *)dmp->i, "plot_close: dmp impl");
     bu_free((void *)dmp, "plot_close: dmp");
 
     return BRLCAD_OK;
@@ -530,6 +659,7 @@ plot_setWinBounds(struct dm *dmp, fastf_t *w)
 
 
 struct dm_impl dm_plot_impl = {
+    plot_open,
     plot_close,
     plot_drawBegin,
     plot_drawEnd,
@@ -628,131 +758,6 @@ DM_EXPORT const struct dm_plugin *dm_plugin_info()
     return &pinfo;
 }
 #endif
-
-/*
- * Fire up the display manager, and the display processor.
- *
- */
-struct dm *
-plot_open(void *vinterp, int argc, const char *argv[])
-{
-    static int count = 0;
-    struct dm *dmp;
-    Tcl_Obj *obj;
-    Tcl_Interp *interp = (Tcl_Interp *)vinterp;
-
-    BU_ALLOC(dmp, struct dm);
-
-    *dmp = dm_plot; /* struct copy */
-    dmp->i->dm_interp = interp;
-
-    BU_ALLOC(dmp->i->dm_vars.priv_vars, struct plot_vars);
-
-    struct plot_vars *privars = (struct plot_vars *)dmp->i->dm_vars.priv_vars;
-
-    obj = Tcl_GetObjResult(interp);
-    if (Tcl_IsShared(obj))
-	obj = Tcl_DuplicateObj(obj);
-
-    bu_vls_init(&privars->vls);
-    bu_vls_init(&dmp->i->dm_pathName);
-    bu_vls_init(&dmp->i->dm_tkName);
-    bu_vls_printf(&dmp->i->dm_pathName, ".dm_plot%d", count++);
-    bu_vls_printf(&dmp->i->dm_tkName, "dm_plot%d", count++);
-
-    /* skip first argument */
-    --argc;
-    ++argv;
-
-    /* Process any options */
-    privars->is_3D = 1;          /* 3-D w/color, by default */
-    while (argv[0] != (char *)0 && argv[0][0] == '-') {
-	switch (argv[0][1]) {
-	    case '3':
-		break;
-	    case '2':
-		privars->is_3D = 0;		/* 2-D, for portability */
-		break;
-	    case 'g':
-		privars->grid = 1;
-		break;
-	    case 'f':
-		privars->floating = 1;
-		break;
-	    case 'z':
-	    case 'Z':
-		/* Enable Z clipping */
-		Tcl_AppendStringsToObj(obj, "Clipped in Z to viewing cube\n", (char *)NULL);
-
-		dmp->i->dm_zclip = 1;
-		break;
-	    default:
-		Tcl_AppendStringsToObj(obj, "bad PLOT option ", argv[0], "\n", (char *)NULL);
-		(void)plot_close(dmp);
-
-		Tcl_SetObjResult(interp, obj);
-		return DM_NULL;
-	}
-	argv++;
-    }
-    if (argv[0] == (char *)0) {
-	Tcl_AppendStringsToObj(obj, "no filename or filter specified\n", (char *)NULL);
-	(void)plot_close(dmp);
-
-	Tcl_SetObjResult(interp, obj);
-	return DM_NULL;
-    }
-
-    if (argv[0][0] == '|') {
-	bu_vls_strcpy(&privars->vls, &argv[0][1]);
-	while ((++argv)[0] != (char *)0) {
-	    bu_vls_strcat(&privars->vls, " ");
-	    bu_vls_strcat(&privars->vls, argv[0]);
-	}
-
-	privars->is_pipe = 1;
-    } else {
-	bu_vls_strcpy(&privars->vls, argv[0]);
-    }
-
-    if (privars->is_pipe) {
-	if ((privars->up_fp = popen(bu_vls_addr(&privars->vls), "w")) == NULL) {
-	    perror(bu_vls_addr(&privars->vls));
-	    (void)plot_close(dmp);
-	    Tcl_SetObjResult(interp, obj);
-	    return DM_NULL;
-	}
-
-	Tcl_AppendStringsToObj(obj, "piped to ",
-			       bu_vls_addr(&privars->vls),
-			       "\n", (char *)NULL);
-    } else {
-	if ((privars->up_fp = fopen(bu_vls_addr(&privars->vls), "wb")) == NULL) {
-	    perror(bu_vls_addr(&privars->vls));
-	    (void)plot_close(dmp);
-	    Tcl_SetObjResult(interp, obj);
-	    return DM_NULL;
-	}
-
-	Tcl_AppendStringsToObj(obj, "plot stored in ",
-			       bu_vls_addr(&privars->vls),
-			       "\n", (char *)NULL);
-    }
-
-    setbuf(privars->up_fp, privars->ttybuf);
-
-    if (privars->is_3D)
-	pl_3space(privars->up_fp, -2048, -2048, -2048, 2048, 2048, 2048);
-    else
-	pl_space(privars->up_fp, -2048, -2048, 2048, 2048);
-
-    MAT_IDN(privars->mod_mat);
-    MAT_IDN(privars->disp_mat);
-    MAT_COPY(privars->plotmat, privars->mod_mat);
-
-    Tcl_SetObjResult(interp, obj);
-    return dmp;
-}
 
 
 /*

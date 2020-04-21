@@ -104,7 +104,7 @@ HIDDEN XVisualInfo *ogl_choose_visual(struct dm *dmp, Tk_Window tkwin);
 #define IRBOUND 4095.9	/* Max magnification in Rot matrix */
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
-struct dm *ogl_open(Tcl_Interp *vinterp, int argc, char **argv);
+struct dm *ogl_open(void *vinterp, int argc, const char **argv);
 HIDDEN int ogl_close(struct dm *dmp);
 HIDDEN int ogl_drawBegin(struct dm *dmp);
 HIDDEN int ogl_drawEnd(struct dm *dmp);
@@ -658,7 +658,7 @@ ogl_close(struct dm *dmp)
  *
  */
 struct dm *
-ogl_open(Tcl_Interp *vinterp, int argc, char **argv)
+ogl_open(void *vinterp, int argc, const char **argv)
 {
     static int count = 0;
     GLfloat backgnd[4];
@@ -2907,6 +2907,7 @@ ogl_event_cmp(struct dm *dmp, dm_event_t type, int event)
 }
 
 struct dm_impl dm_ogl_impl = {
+    ogl_open,
     ogl_close,
     ogl_drawBegin,
     ogl_drawEnd,

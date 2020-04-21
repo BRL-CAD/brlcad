@@ -64,6 +64,232 @@ static mat_t disp_mat;
 static mat_t mod_mat;
 
 
+static int ps_close(struct dm *dmp);
+
+/*
+ * Open the output file, and output the PostScript prolog.
+ *
+ */
+struct dm *
+ps_open(void *vinterp, int argc, const char *argv[])
+{
+    static int count = 0;
+    struct dm *dmp;
+    Tcl_Obj *obj;
+    Tcl_Interp *interp = (Tcl_Interp *)vinterp;
+
+    BU_ALLOC(dmp, struct dm);
+    BU_ALLOC(dmp->i, struct dm_impl);
+
+    *dmp->i = *dm_ps.i;  /* struct copy */
+    dmp->i->dm_interp = interp;
+
+    BU_ALLOC(dmp->i->dm_vars.priv_vars, struct ps_vars);
+
+    obj = Tcl_GetObjResult(interp);
+    if (Tcl_IsShared(obj))
+	obj = Tcl_DuplicateObj(obj);
+
+    bu_vls_init(&dmp->i->dm_pathName);
+    bu_vls_init(&dmp->i->dm_tkName);
+    bu_vls_printf(&dmp->i->dm_pathName, ".dm_ps%d", count++);
+    bu_vls_printf(&dmp->i->dm_tkName, "dm_ps%d", count++);
+
+    bu_vls_init(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->fname);
+    bu_vls_init(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->font);
+    bu_vls_init(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->title);
+    bu_vls_init(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->creator);
+
+    /* set defaults */
+    bu_vls_strcpy(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->font, "Courier");
+    bu_vls_strcpy(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->title, "No Title");
+    bu_vls_strcpy(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->creator, "LIBDM dm-ps");
+    ((struct ps_vars *)dmp->i->dm_vars.priv_vars)->scale = 0.0791;
+    ((struct ps_vars *)dmp->i->dm_vars.priv_vars)->linewidth = 4;
+    ((struct ps_vars *)dmp->i->dm_vars.priv_vars)->zclip = 0;
+
+    /* skip first argument */
+    --argc; ++argv;
+
+    /* Process any options */
+    while (argv[0] != (char *)0 && argv[0][0] == '-') {
+	switch (argv[0][1]) {
+	    case 'f':               /* font */
+		if (argv[0][2] != '\0')
+		    bu_vls_strcpy(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->font, &argv[0][2]);
+		else {
+		    argv++;
+		    if (argv[0] == (char *)0 || argv[0][0] == '-') {
+			Tcl_AppendStringsToObj(obj, ps_usage, (char *)0);
+			(void)ps_close(dmp);
+
+			Tcl_SetObjResult(interp, obj);
+			return DM_NULL;
+		    } else
+			bu_vls_strcpy(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->font, &argv[0][0]);
+		}
+		break;
+	    case 't':               /* title */
+		if (argv[0][2] != '\0')
+		    bu_vls_strcpy(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->title, &argv[0][2]);
+		else {
+		    argv++;
+		    if (argv[0] == (char *)0 || argv[0][0] == '-') {
+			Tcl_AppendStringsToObj(obj, ps_usage, (char *)0);
+			(void)ps_close(dmp);
+
+			Tcl_SetObjResult(interp, obj);
+			return DM_NULL;
+		    } else
+			bu_vls_strcpy(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->title, &argv[0][0]);
+		}
+		break;
+	    case 'c':               /* creator */
+		if (argv[0][2] != '\0')
+		    bu_vls_strcpy(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->creator, &argv[0][2]);
+		else {
+		    argv++;
+		    if (argv[0] == (char *)0 || argv[0][0] == '-') {
+			Tcl_AppendStringsToObj(obj, ps_usage, (char *)0);
+			(void)ps_close(dmp);
+
+			Tcl_SetObjResult(interp, obj);
+			return DM_NULL;
+		    } else
+			bu_vls_strcpy(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->creator, &argv[0][0]);
+		}
+		break;
+	    case 's':               /* size in inches */
+		{
+		    double size;
+
+		    if (argv[0][2] != '\0')
+			sscanf(&argv[0][2], "%lf", &size);
+		    else {
+			argv++;
+			if (argv[0] == (char *)0 || argv[0][0] == '-') {
+			    Tcl_AppendStringsToObj(obj, ps_usage, (char *)0);
+			    (void)ps_close(dmp);
+
+			    Tcl_SetObjResult(interp, obj);
+			    return DM_NULL;
+			} else
+			    sscanf(&argv[0][0], "%lf", &size);
+		    }
+
+		    ((struct ps_vars *)dmp->i->dm_vars.priv_vars)->scale = size * 0.017578125;
+		}
+		break;
+	    case 'l':               /* line width */
+		if (argv[0][2] != '\0')
+		    sscanf(&argv[0][2], "%d", &((struct ps_vars *)dmp->i->dm_vars.priv_vars)->linewidth);
+		else {
+		    argv++;
+		    if (argv[0] == (char *)0 || argv[0][0] == '-') {
+			Tcl_AppendStringsToObj(obj, ps_usage, (char *)0);
+			(void)ps_close(dmp);
+
+			Tcl_SetObjResult(interp, obj);
+			return DM_NULL;
+		    } else
+			sscanf(&argv[0][0], "%d", &((struct ps_vars *)dmp->i->dm_vars.priv_vars)->linewidth);
+		}
+		break;
+	    case 'z':
+		dmp->i->dm_zclip = 1;
+		break;
+	    default:
+		Tcl_AppendStringsToObj(obj, ps_usage, (char *)0);
+		(void)ps_close(dmp);
+
+		Tcl_SetObjResult(interp, obj);
+		return DM_NULL;
+	}
+	argv++;
+    }
+
+    if (argv[0] == (char *)0) {
+	Tcl_AppendStringsToObj(obj, "no filename specified\n", (char *)NULL);
+	(void)ps_close(dmp);
+
+	Tcl_SetObjResult(interp, obj);
+	return DM_NULL;
+    }
+
+    bu_vls_strcpy(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->fname, argv[0]);
+
+    if ((((struct ps_vars *)dmp->i->dm_vars.priv_vars)->ps_fp =
+	 fopen(bu_vls_addr(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->fname), "wb")) == NULL) {
+	Tcl_AppendStringsToObj(obj, "f_ps: Error opening file - ",
+			       ((struct ps_vars *)dmp->i->dm_vars.priv_vars)->fname,
+			       "\n", (char *)NULL);
+	(void)ps_close(dmp);
+
+	Tcl_SetObjResult(interp, obj);
+	return DM_NULL;
+    }
+
+    setbuf(((struct ps_vars *)dmp->i->dm_vars.priv_vars)->ps_fp,
+	   ((struct ps_vars *)dmp->i->dm_vars.priv_vars)->ttybuf);
+    fprintf(((struct ps_vars *)dmp->i->dm_vars.priv_vars)->ps_fp, "%%!PS-Adobe-1.0\n\
+%%begin(plot)\n\
+%%%%DocumentFonts:  %s\n",
+	    bu_vls_addr(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->font));
+
+    fprintf(((struct ps_vars *)dmp->i->dm_vars.priv_vars)->ps_fp, "%%%%Title: %s\n",
+	    bu_vls_addr(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->title));
+
+    fprintf(((struct ps_vars *)dmp->i->dm_vars.priv_vars)->ps_fp, "\
+%%%%Creator: %s\n\
+%%%%BoundingBox: 0 0 324 324	%% 4.5in square, for TeX\n\
+%%%%EndComments\n\
+\n",
+	    bu_vls_addr(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->creator));
+
+    fprintf(((struct ps_vars *)dmp->i->dm_vars.priv_vars)->ps_fp, "\
+%d setlinewidth\n\
+\n\
+%% Sizes, made functions to avoid scaling if not needed\n\
+/FntH /%s findfont 80 scalefont def\n\
+/DFntL { /FntL /%s findfont 73.4 scalefont def } def\n\
+/DFntM { /FntM /%s findfont 50.2 scalefont def } def\n\
+/DFntS { /FntS /%s findfont 44 scalefont def } def\n\
+",
+	    ((struct ps_vars *)dmp->i->dm_vars.priv_vars)->linewidth,
+	    bu_vls_addr(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->font),
+	    bu_vls_addr(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->font),
+	    bu_vls_addr(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->font),
+	    bu_vls_addr(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->font));
+
+    fprintf(((struct ps_vars *)dmp->i->dm_vars.priv_vars)->ps_fp, "\
+\n\
+%% line styles\n\
+/NV { [] 0 setdash } def	%% normal vectors\n\
+/DV { [8] 0 setdash } def	%% dotted vectors\n\
+/DDV { [8 8 32 8] 0 setdash } def	%% dot-dash vectors\n\
+/SDV { [32 8] 0 setdash } def	%% short-dash vectors\n\
+/LDV { [64 8] 0 setdash } def	%% long-dash vectors\n\
+\n\
+/NEWPG {\n\
+	%f %f scale	%% 0-4096 to 324 units (4.5 inches)\n\
+} def\n\
+\n\
+FntH setfont\n\
+NEWPG\n\
+",
+	    ((struct ps_vars *)dmp->i->dm_vars.priv_vars)->scale,
+	    ((struct ps_vars *)dmp->i->dm_vars.priv_vars)->scale);
+
+    MAT_IDN(mod_mat);
+    MAT_IDN(disp_mat);
+    MAT_COPY(psmat, mod_mat);
+
+    Tcl_SetObjResult(interp, obj);
+    return dmp;
+}
+
+
+
 /*
  * Gracefully release the display.
  */
@@ -83,6 +309,7 @@ ps_close(struct dm *dmp)
     bu_vls_free(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->title);
     bu_vls_free(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->creator);
     bu_free((void *)dmp->i->dm_vars.priv_vars, "ps_close: ps_vars");
+    bu_free((void *)dmp->i, "ps_close: dmp impl");
     bu_free((void *)dmp, "ps_close: dmp");
 
     return BRLCAD_OK;
@@ -500,6 +727,7 @@ ps_setWinBounds(struct dm *dmp, fastf_t *w)
 
 
 struct dm_impl dm_ps_impl = {
+    ps_open,
     ps_close,
     ps_drawBegin,
     ps_drawEnd,
@@ -599,227 +827,6 @@ DM_EXPORT const struct dm_plugin *dm_plugin_info()
     return &pinfo;
 }
 #endif
-
-/*
- * Open the output file, and output the PostScript prolog.
- *
- */
-struct dm *
-ps_open(void *vinterp, int argc, const char *argv[])
-{
-    static int count = 0;
-    struct dm *dmp;
-    Tcl_Obj *obj;
-    Tcl_Interp *interp = (Tcl_Interp *)vinterp;
-
-    BU_ALLOC(dmp, struct dm);
-
-    *dmp = dm_ps;  /* struct copy */
-    dmp->i->dm_interp = interp;
-
-    BU_ALLOC(dmp->i->dm_vars.priv_vars, struct ps_vars);
-
-    obj = Tcl_GetObjResult(interp);
-    if (Tcl_IsShared(obj))
-	obj = Tcl_DuplicateObj(obj);
-
-    bu_vls_init(&dmp->i->dm_pathName);
-    bu_vls_init(&dmp->i->dm_tkName);
-    bu_vls_printf(&dmp->i->dm_pathName, ".dm_ps%d", count++);
-    bu_vls_printf(&dmp->i->dm_tkName, "dm_ps%d", count++);
-
-    bu_vls_init(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->fname);
-    bu_vls_init(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->font);
-    bu_vls_init(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->title);
-    bu_vls_init(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->creator);
-
-    /* set defaults */
-    bu_vls_strcpy(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->font, "Courier");
-    bu_vls_strcpy(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->title, "No Title");
-    bu_vls_strcpy(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->creator, "LIBDM dm-ps");
-    ((struct ps_vars *)dmp->i->dm_vars.priv_vars)->scale = 0.0791;
-    ((struct ps_vars *)dmp->i->dm_vars.priv_vars)->linewidth = 4;
-    ((struct ps_vars *)dmp->i->dm_vars.priv_vars)->zclip = 0;
-
-    /* skip first argument */
-    --argc; ++argv;
-
-    /* Process any options */
-    while (argv[0] != (char *)0 && argv[0][0] == '-') {
-	switch (argv[0][1]) {
-	    case 'f':               /* font */
-		if (argv[0][2] != '\0')
-		    bu_vls_strcpy(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->font, &argv[0][2]);
-		else {
-		    argv++;
-		    if (argv[0] == (char *)0 || argv[0][0] == '-') {
-			Tcl_AppendStringsToObj(obj, ps_usage, (char *)0);
-			(void)ps_close(dmp);
-
-			Tcl_SetObjResult(interp, obj);
-			return DM_NULL;
-		    } else
-			bu_vls_strcpy(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->font, &argv[0][0]);
-		}
-		break;
-	    case 't':               /* title */
-		if (argv[0][2] != '\0')
-		    bu_vls_strcpy(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->title, &argv[0][2]);
-		else {
-		    argv++;
-		    if (argv[0] == (char *)0 || argv[0][0] == '-') {
-			Tcl_AppendStringsToObj(obj, ps_usage, (char *)0);
-			(void)ps_close(dmp);
-
-			Tcl_SetObjResult(interp, obj);
-			return DM_NULL;
-		    } else
-			bu_vls_strcpy(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->title, &argv[0][0]);
-		}
-		break;
-	    case 'c':               /* creator */
-		if (argv[0][2] != '\0')
-		    bu_vls_strcpy(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->creator, &argv[0][2]);
-		else {
-		    argv++;
-		    if (argv[0] == (char *)0 || argv[0][0] == '-') {
-			Tcl_AppendStringsToObj(obj, ps_usage, (char *)0);
-			(void)ps_close(dmp);
-
-			Tcl_SetObjResult(interp, obj);
-			return DM_NULL;
-		    } else
-			bu_vls_strcpy(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->creator, &argv[0][0]);
-		}
-		break;
-	    case 's':               /* size in inches */
-		{
-		    double size;
-
-		    if (argv[0][2] != '\0')
-			sscanf(&argv[0][2], "%lf", &size);
-		    else {
-			argv++;
-			if (argv[0] == (char *)0 || argv[0][0] == '-') {
-			    Tcl_AppendStringsToObj(obj, ps_usage, (char *)0);
-			    (void)ps_close(dmp);
-
-			    Tcl_SetObjResult(interp, obj);
-			    return DM_NULL;
-			} else
-			    sscanf(&argv[0][0], "%lf", &size);
-		    }
-
-		    ((struct ps_vars *)dmp->i->dm_vars.priv_vars)->scale = size * 0.017578125;
-		}
-		break;
-	    case 'l':               /* line width */
-		if (argv[0][2] != '\0')
-		    sscanf(&argv[0][2], "%d", &((struct ps_vars *)dmp->i->dm_vars.priv_vars)->linewidth);
-		else {
-		    argv++;
-		    if (argv[0] == (char *)0 || argv[0][0] == '-') {
-			Tcl_AppendStringsToObj(obj, ps_usage, (char *)0);
-			(void)ps_close(dmp);
-
-			Tcl_SetObjResult(interp, obj);
-			return DM_NULL;
-		    } else
-			sscanf(&argv[0][0], "%d", &((struct ps_vars *)dmp->i->dm_vars.priv_vars)->linewidth);
-		}
-		break;
-	    case 'z':
-		dmp->i->dm_zclip = 1;
-		break;
-	    default:
-		Tcl_AppendStringsToObj(obj, ps_usage, (char *)0);
-		(void)ps_close(dmp);
-
-		Tcl_SetObjResult(interp, obj);
-		return DM_NULL;
-	}
-	argv++;
-    }
-
-    if (argv[0] == (char *)0) {
-	Tcl_AppendStringsToObj(obj, "no filename specified\n", (char *)NULL);
-	(void)ps_close(dmp);
-
-	Tcl_SetObjResult(interp, obj);
-	return DM_NULL;
-    }
-
-    bu_vls_strcpy(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->fname, argv[0]);
-
-    if ((((struct ps_vars *)dmp->i->dm_vars.priv_vars)->ps_fp =
-	 fopen(bu_vls_addr(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->fname), "wb")) == NULL) {
-	Tcl_AppendStringsToObj(obj, "f_ps: Error opening file - ",
-			       ((struct ps_vars *)dmp->i->dm_vars.priv_vars)->fname,
-			       "\n", (char *)NULL);
-	(void)ps_close(dmp);
-
-	Tcl_SetObjResult(interp, obj);
-	return DM_NULL;
-    }
-
-    setbuf(((struct ps_vars *)dmp->i->dm_vars.priv_vars)->ps_fp,
-	   ((struct ps_vars *)dmp->i->dm_vars.priv_vars)->ttybuf);
-    fprintf(((struct ps_vars *)dmp->i->dm_vars.priv_vars)->ps_fp, "%%!PS-Adobe-1.0\n\
-%%begin(plot)\n\
-%%%%DocumentFonts:  %s\n",
-	    bu_vls_addr(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->font));
-
-    fprintf(((struct ps_vars *)dmp->i->dm_vars.priv_vars)->ps_fp, "%%%%Title: %s\n",
-	    bu_vls_addr(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->title));
-
-    fprintf(((struct ps_vars *)dmp->i->dm_vars.priv_vars)->ps_fp, "\
-%%%%Creator: %s\n\
-%%%%BoundingBox: 0 0 324 324	%% 4.5in square, for TeX\n\
-%%%%EndComments\n\
-\n",
-	    bu_vls_addr(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->creator));
-
-    fprintf(((struct ps_vars *)dmp->i->dm_vars.priv_vars)->ps_fp, "\
-%d setlinewidth\n\
-\n\
-%% Sizes, made functions to avoid scaling if not needed\n\
-/FntH /%s findfont 80 scalefont def\n\
-/DFntL { /FntL /%s findfont 73.4 scalefont def } def\n\
-/DFntM { /FntM /%s findfont 50.2 scalefont def } def\n\
-/DFntS { /FntS /%s findfont 44 scalefont def } def\n\
-",
-	    ((struct ps_vars *)dmp->i->dm_vars.priv_vars)->linewidth,
-	    bu_vls_addr(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->font),
-	    bu_vls_addr(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->font),
-	    bu_vls_addr(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->font),
-	    bu_vls_addr(&((struct ps_vars *)dmp->i->dm_vars.priv_vars)->font));
-
-    fprintf(((struct ps_vars *)dmp->i->dm_vars.priv_vars)->ps_fp, "\
-\n\
-%% line styles\n\
-/NV { [] 0 setdash } def	%% normal vectors\n\
-/DV { [8] 0 setdash } def	%% dotted vectors\n\
-/DDV { [8 8 32 8] 0 setdash } def	%% dot-dash vectors\n\
-/SDV { [32 8] 0 setdash } def	%% short-dash vectors\n\
-/LDV { [64 8] 0 setdash } def	%% long-dash vectors\n\
-\n\
-/NEWPG {\n\
-	%f %f scale	%% 0-4096 to 324 units (4.5 inches)\n\
-} def\n\
-\n\
-FntH setfont\n\
-NEWPG\n\
-",
-	    ((struct ps_vars *)dmp->i->dm_vars.priv_vars)->scale,
-	    ((struct ps_vars *)dmp->i->dm_vars.priv_vars)->scale);
-
-    MAT_IDN(mod_mat);
-    MAT_IDN(disp_mat);
-    MAT_COPY(psmat, mod_mat);
-
-    Tcl_SetObjResult(interp, obj);
-    return dmp;
-}
 
 
 /*
