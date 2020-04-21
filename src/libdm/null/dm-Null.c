@@ -58,6 +58,11 @@ null_close(struct dm *dmp)
     return 0;
 }
 
+int
+null_viable(const char *UNUSED(dpy_string))
+{
+    return 1;
+}
 
 int
 null_drawBegin(struct dm *UNUSED(dmp))
@@ -305,6 +310,7 @@ null_openFb(struct dm *UNUSED(dmp))
 struct dm_impl dm_null_impl = {
     null_open,
     null_close,
+    null_viable,
     null_drawBegin,
     null_drawEnd,
     null_normal,

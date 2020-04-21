@@ -316,6 +316,13 @@ ps_close(struct dm *dmp)
 }
 
 
+int
+ps_viable(const char *UNUSED(dpy_string))
+{
+    return 1;
+}
+
+
 /*
  * There are global variables which are parameters to this routine.
  */
@@ -729,6 +736,7 @@ ps_setWinBounds(struct dm *dmp, fastf_t *w)
 struct dm_impl dm_ps_impl = {
     ps_open,
     ps_close,
+    ps_viable,
     ps_drawBegin,
     ps_drawEnd,
     ps_normal,

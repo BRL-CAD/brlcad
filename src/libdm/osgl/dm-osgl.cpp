@@ -376,6 +376,13 @@ osgl_close(struct dm *dmp)
     return TCL_OK;
 }
 
+// TODO - properly test this...
+int
+osgl_viable(const char *UNUSED(dpy_string))
+{
+    return 1;
+}
+
 
 /*
  * Fire up the display manager, and the display processor.
@@ -2544,6 +2551,7 @@ osgl_event_cmp(struct dm *dmp, dm_event_t type, int event)
 struct dm_impl dm_osgl_impl = {
     osgl_open,
     osgl_close,
+    osgl_viable,
     osgl_drawBegin,
     osgl_drawEnd,
     osgl_normal,

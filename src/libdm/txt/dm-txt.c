@@ -62,6 +62,12 @@ txt_close(struct dm *dmp)
     return 0;
 }
 
+int
+txt_viable(const char *UNUSED(dpy_string))
+{
+    return 1;
+}
+
 
 HIDDEN int
 txt_drawBegin(struct dm *UNUSED(dmp))
@@ -346,6 +352,7 @@ txt_openFb(struct dm *UNUSED(dmp))
 struct dm_impl dm_txt_impl = {
     txt_open,
     txt_close,
+    txt_viable,
     txt_drawBegin,
     txt_drawEnd,
     txt_normal,

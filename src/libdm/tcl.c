@@ -73,7 +73,9 @@ dm_validXType_tcl(void *clientData, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    bu_vls_printf(&vls, "%d", dm_validXType(argv[1], argv[2]));
+    int valid = dm_validXType(argv[1], argv[2]);
+
+    bu_vls_printf(&vls, "%d", (valid == 1) ? 1 : 0);
     obj = Tcl_GetObjResult(interp);
     if (Tcl_IsShared(obj))
 	obj = Tcl_DuplicateObj(obj);

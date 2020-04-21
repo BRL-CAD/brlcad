@@ -415,6 +415,16 @@ X_close(struct dm *dmp)
     return BRLCAD_OK;
 }
 
+int
+X_viable(const char *dpy_string)
+{
+    Display *dpy;
+    if ((dpy = XOpenDisplay(dpy_string)) != NULL) {
+	XCloseDisplay(dpy);
+	return 1;
+    }
+    return -1;
+}
 
 /*
  * Fire up the display manager, and the display processor.
@@ -2051,6 +2061,7 @@ X_event_cmp(struct dm *dmp, dm_event_t type, int event)
 struct dm_impl dm_X_impl = {
     X_open,
     X_close,
+    X_viable,
     X_drawBegin,
     X_drawEnd,
     X_normal,

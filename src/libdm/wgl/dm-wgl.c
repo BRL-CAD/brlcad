@@ -693,6 +693,12 @@ wgl_close(struct dm *dmp)
     return BRLCAD_OK;
 }
 
+int
+wgl_viable(const char *UNUSED(dpy_string))
+{
+    return 1;
+}
+
 
 /*
  * There are global variables which are parameters to this routine.
@@ -2486,6 +2492,7 @@ wgl_event_cmp(struct dm *dmp, dm_event_t type, int event)
 struct dm_impl dm_wgl_impl = {
     wgl_open,
     wgl_close,
+    wgl_viable,
     wgl_drawBegin,
     wgl_drawEnd,
     wgl_normal,

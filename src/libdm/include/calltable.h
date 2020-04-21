@@ -59,6 +59,7 @@ struct dm_impl {
     // TODO - dm_open currently does both new windows and existing windows - rework
     // to operate like framebuffer API and separate them.
     int (*dm_close)(struct dm *dmp);
+    int (*dm_viable)(const char *dpy_string);
     int (*dm_drawBegin)(struct dm *dmp);	/**< @brief formerly dmr_prolog */
     int (*dm_drawEnd)(struct dm *dmp);		/**< @brief formerly dmr_epilog */
     int (*dm_normal)(struct dm *dmp);

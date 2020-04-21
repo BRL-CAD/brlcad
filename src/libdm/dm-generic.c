@@ -84,7 +84,6 @@ dm_open(void *interp, const char *type, int argc, const char *argv[])
 #if defined(DM_QT)
     if (BU_STR_EQUIV(type, "qt")) {
 	return dm_qt.i->dm_open(interp, argc, argv);
-	return qt_open(interp, argc, argv);
     }
 #endif
     return DM_NULL;
@@ -154,61 +153,53 @@ dm_list_types(const char separator)
 /* TODO - in a plugin system, this will search available plugins to see
  * of there is one that provides the requested name */
 int
-#if !defined(DM_WGL) && !defined(DM_OGL) && !defined(DM_X)
-dm_validXType(const char *UNUSED(dpy_string), const char *name)
-#else
 dm_validXType(const char *dpy_string, const char *name)
-#endif
 {
-    if (BU_STR_EQUAL(name, "wgl")) {
-#ifdef DM_WGL
-	return 1;
-#else
-	bu_log("Specified display type [%s] is not available in this compilation.", name);
-	return 0;
-#endif /* DM_WGL */
+    if (BU_STR_EQUIV(name, "null")) {
+	return dm_null.i->dm_viable(dpy_string);
     }
-    if (BU_STR_EQUAL(name, "ogl")) {
-#ifdef DM_OGL
-	Display *dpy;
-	int return_val;
-	if ((dpy = XOpenDisplay(dpy_string)) != NULL) {
-	    if (XQueryExtension(dpy, "GLX", &return_val, &return_val, &return_val)) {
-		XCloseDisplay(dpy);
-		return 1;
-	    }
-	    XCloseDisplay(dpy);
-	}
-#else
-	bu_log("Specified display type [%s] is not available in this compilation.", name);
-#endif /* DM_OGL */
-	return 0;
+    if (BU_STR_EQUIV(name, "txt")) {
+	return dm_txt.i->dm_viable(dpy_string);
     }
-
-    if (BU_STR_EQUAL(name, "X")) {
-#ifdef DM_X
-	Display *dpy;
-	if ((dpy = XOpenDisplay(dpy_string)) != NULL) {
-	    XCloseDisplay(dpy);
-	    return 1;
-	}
-#else
-	bu_log("Specified display type [%s] is not available in this compilation.", name);
-#endif /* DM_X */
-	return 0;
+    if (BU_STR_EQUIV(name, "plot")) {
+	return dm_plot.i->dm_viable(dpy_string);
     }
-
-    if (BU_STR_EQUAL(name, "tk")) {
-#ifdef DM_TK
-	return 1;
-#else
-	bu_log("Specified display type [%s] is not available in this compilation.", name);
-#endif /* DM_TK */
-	return 0;
+    if (BU_STR_EQUIV(name, "ps")) {
+	return dm_ps.i->dm_viable(dpy_string);
     }
-
+#if defined(DM_X)
+    if (BU_STR_EQUIV(name, "X")) {
+	return dm_X.i->dm_viable(dpy_string);
+    }
+#endif
+#if defined(DM_TK)
+    if (BU_STR_EQUIV(name, "tk")) {
+	return dm_tk.i->dm_viable(dpy_string);
+    }
+#endif
+#if defined(DM_OGL)
+    if (BU_STR_EQUIV(name, "ogl")) {
+	return dm_ogl.i->dm_viable(dpy_string);
+    }
+#endif
+#if defined(DM_OSGL)
+    if (BU_STR_EQUIV(name, "osgl")) {
+	return dm_osgl.i->dm_viable(dpy_string);
+    }
+#endif
+#if defined(DM_WGL)
+    if (BU_STR_EQUIV(name, "wgl")) {
+	return dm_wgl.i->dm_viable(dpy_string);
+    }
+#endif
+#if defined(DM_QT)
+    if (BU_STR_EQUIV(name, "qt")) {
+	return dm_qt.i->dm_viable(dpy_string);
+    }
+#endif
     return 0;
 }
+
 
 /** dm_bestXType determines what mged will normally
   * use as the default display manager

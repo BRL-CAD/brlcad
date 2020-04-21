@@ -652,6 +652,20 @@ ogl_close(struct dm *dmp)
     return BRLCAD_OK;
 }
 
+int
+ogl_viable(const char *dpy_string)
+{
+    Display *dpy;
+    int return_val;
+    if ((dpy = XOpenDisplay(dpy_string)) != NULL) {
+	if (XQueryExtension(dpy, "GLX", &return_val, &return_val, &return_val)) {
+	    XCloseDisplay(dpy);
+	    return 1;
+	}
+	XCloseDisplay(dpy);
+    }
+    return -1;
+}
 
 /*
  * Fire up the display manager, and the display processor.
@@ -2909,6 +2923,7 @@ ogl_event_cmp(struct dm *dmp, dm_event_t type, int event)
 struct dm_impl dm_ogl_impl = {
     ogl_open,
     ogl_close,
+    ogl_viable,
     ogl_drawBegin,
     ogl_drawEnd,
     ogl_normal,

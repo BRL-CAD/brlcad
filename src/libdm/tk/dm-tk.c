@@ -307,6 +307,11 @@ tk_close(struct dm *dmp)
     return BRLCAD_OK;
 }
 
+int
+tk_viable(const char *UNUSED(dpy_string))
+{
+    return 1;
+}
 
 /**
  * @proc tk_drawBegin
@@ -1108,6 +1113,7 @@ tk_event_cmp(struct dm *dmp, dm_event_t type, int event)
 struct dm_impl dm_tk_impl = {
     tk_open,
     tk_close,
+    tk_viable,
     tk_drawBegin,
     tk_drawEnd,
     tk_normal,

@@ -535,6 +535,12 @@ qt_close(struct dm *dmp)
     return TCL_OK;
 }
 
+int
+qt_viable(const char *UNUSED(dpy_string))
+{
+    return 1;
+}
+
 
 HIDDEN int
 qt_drawBegin(struct dm *dmp)
@@ -1309,6 +1315,7 @@ __END_DECLS
 struct dm_impl dm_qt_impl = {
     qt_open,
     qt_close,
+    qt_viable,
     qt_drawBegin,
     qt_drawEnd,
     qt_normal,

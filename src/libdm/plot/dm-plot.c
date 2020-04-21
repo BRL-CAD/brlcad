@@ -217,6 +217,12 @@ plot_close(struct dm *dmp)
     return BRLCAD_OK;
 }
 
+int
+plot_viable(const char *UNUSED(dpy_string))
+{
+    return 1;
+}
+
 
 /**
  * There are global variables which are parameters to this routine.
@@ -661,6 +667,7 @@ plot_setWinBounds(struct dm *dmp, fastf_t *w)
 struct dm_impl dm_plot_impl = {
     plot_open,
     plot_close,
+    plot_viable,
     plot_drawBegin,
     plot_drawEnd,
     plot_normal,
