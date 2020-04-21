@@ -31,7 +31,7 @@
 int
 main(int UNUSED(argc), const char **UNUSED(argv))
 {
-    dm_list_backends();
+    dm_list_backends(NULL);
     return 0;
 }
 
