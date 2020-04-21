@@ -11,18 +11,17 @@
 #include "dm.h"
 #include "./include/private.h"
 
-struct dm *
-dm_popen(void *interp, const char *type, int argc, const char *argv[])
+extern "C" struct dm *
+dm_open(void *interp, const char *type, int argc, const char *argv[])
 {
-    struct dm *dmp = DM_NULL;
 
     std::map<std::string, const struct dm *> *dmb = (std::map<std::string, const struct dm *> *)dm_backends;
     std::map<std::string, const struct dm *>::iterator d_it = dmb->find(std::string(type));
     if (d_it == dmb->end()) {
-	return dmp;
+	return DM_NULL;
     }
     const struct dm *d = d_it->second;
-    dmp = d->i->dm_open(interp, argc, argv);
+    struct dm *dmp = d->i->dm_open(interp, argc, argv);
     return dmp;
 }
 

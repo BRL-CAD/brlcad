@@ -38,57 +38,6 @@
 #include "./include/private.h"
 #include "./null/dm-Null.h"
 
-/* TODO - in a plugin system this function will be provided for all acive
- * backends via bu_dlsym and loaded into a lookup system mapped to the dm_name
- * string provided with the plugin. */
-struct dm *
-dm_open(void *interp, const char *type, int argc, const char *argv[])
-{
-    if (BU_STR_EQUIV(type, "null")) {
-	return dm_null.i->dm_open(interp, argc, argv);
-    }
-    if (BU_STR_EQUIV(type, "txt")) {
-	return dm_txt.i->dm_open(interp, argc, argv);
-    }
-    if (BU_STR_EQUIV(type, "plot")) {
-	return dm_plot.i->dm_open(interp, argc, argv);
-    }
-    if (BU_STR_EQUIV(type, "ps")) {
-	return dm_ps.i->dm_open(interp, argc, argv);
-    }
-#if defined(DM_X)
-    if (BU_STR_EQUIV(type, "X")) {
-	return dm_X.i->dm_open(interp, argc, argv);
-    }
-#endif
-#if defined(DM_TK)
-    if (BU_STR_EQUIV(type, "tk")) {
-	return dm_tk.i->dm_open(interp, argc, argv);
-    }
-#endif
-#if defined(DM_OGL)
-    if (BU_STR_EQUIV(type, "ogl")) {
-	return dm_ogl.i->dm_open(interp, argc, argv);
-    }
-#endif
-#if defined(DM_OSGL)
-    if (BU_STR_EQUIV(type, "osgl")) {
-	return dm_osgl.i->dm_open(interp, argc, argv);
-    }
-#endif
-#if defined(DM_WGL)
-    if (BU_STR_EQUIV(type, "wgl")) {
-	return dm_wgl.i->dm_open(interp, argc, argv);
-    }
-#endif
-#if defined(DM_QT)
-    if (BU_STR_EQUIV(type, "qt")) {
-	return dm_qt.i->dm_open(interp, argc, argv);
-    }
-#endif
-    return DM_NULL;
-}
-
 void *
 dm_interp(struct dm *dmp)
 {
