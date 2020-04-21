@@ -46,6 +46,7 @@ package provide GeometryChecker 1.0
 
 	method loadOverlaps { args } {}
 	method sortBy { col direction } {}
+	method togglePathDisplay {} {}
 
 	method goPrev {} {}
 	method goNext {} {}
@@ -71,6 +72,7 @@ package provide GeometryChecker 1.0
 	variable _ol_prefix ""
 
 	variable _fullPath
+	variable _fullPathHidden
 
 	variable _ck
 	variable _status
@@ -227,6 +229,13 @@ body GeometryChecker::handleCheckListSelect {} {
     itk_component add headerLabelStatus {
     	ttk::label $itk_component(headerFrame).headerLabelStatus -text "Data Not Yet Loaded" -padding 2
     } {}
+    itk_component add fullPathButton {
+	ttk::checkbutton $itk_component(headerFrame).fullPathDisplayCheckButton \
+	-text "Hide Full Path" \
+	-variable [scope _fullPathHidden] \
+	-command [code $this togglePathDisplay]
+    } {}
+    set _fullPathHidden 1
 
     itk_component add checkFrame {
     	ttk::frame $itk_interior.checkFrame -padding 2 
@@ -321,7 +330,9 @@ body GeometryChecker::handleCheckListSelect {} {
     $itk_component(checkMenu) add command -label "Copy Fullpaths" -command [code $this copySelection]
 
     pack $itk_component(headerFrame) -side top -fill both
-    pack $itk_component(headerLabelStatus) -side left -anchor w
+    grid $itk_component(headerLabelStatus) $itk_component(fullPathButton) -sticky nw
+    grid configure $itk_component(fullPathButton) -sticky ne
+    grid columnconfigure $itk_component(headerFrame) 0 -weight 1
 
     pack $itk_component(checkFrame) -expand true -fill both -anchor center
     pack $itk_component(checkFrame).checkScroll -side right -fill y 
@@ -600,6 +611,28 @@ body GeometryChecker::sortBy {column direction} {
     }
 
     set _lastSort "$column $direction"
+}
+
+body GeometryChecker::togglePathDisplay {} {
+    if {$_fullPathHidden} {
+	foreach id [$_ck children {}] {
+	    set fullpaths $_fullPath([$_ck set $id "ID"])
+	    set leftPath [lindex $fullpaths 0]
+	    set rightPath [lindex $fullpaths 1]
+
+	    $_ck set $id "Left" [file tail $leftPath]
+	    $_ck set $id "Right" [file tail $rightPath]
+	}
+    } else {
+	foreach id [$_ck children {}] {
+	    set fullpaths $_fullPath([$_ck set $id "ID"])
+	    set leftPath [lindex $fullpaths 0]
+	    set rightPath [lindex $fullpaths 1]
+
+	    $_ck set $id "Left" $leftPath
+	    $_ck set $id "Right" $rightPath
+	}
+    }
 }
 
 
