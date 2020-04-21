@@ -159,7 +159,6 @@ body OverlapMenu::runCheckerTool { } {
     pack $checker -expand true -fill both
 
     # calculate default geometry
-    wm withdraw $checkerWindow
     update
 
     # ensure window isn't too narrow
