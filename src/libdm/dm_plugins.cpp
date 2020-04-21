@@ -115,14 +115,6 @@ dm_list_backends(const char *separator)
     bu_vls_init(list);
     bu_vls_trunc(list, 0);
 
-    struct bu_ptbl plugins = BU_PTBL_INIT_ZERO;
-    struct bu_ptbl handles = BU_PTBL_INIT_ZERO;
-    int dm_cnt = dm_load_backends(&plugins, &handles);
-    if (!dm_cnt) {
-	bu_log("No display manager implementations found!\n");
-	return;
-    }
-
     // We've got something, and may need a separator
     struct bu_vls sep = BU_VLS_INIT_ZERO;
     if (!separator) {
@@ -131,17 +123,14 @@ dm_list_backends(const char *separator)
 	bu_vls_sprintf(&sep, "%s", separator);
     }
 
-    for (size_t i = 0; i < BU_PTBL_LEN(&plugins); i++) {
-	const struct dm *d = (const struct dm *)BU_PTBL_GET(&plugins, i);
+    std::map<std::string, const struct dm *> *dmb = (std::map<std::string, const struct dm *> *)dm_backends;
+    std::map<std::string, const struct dm *>::iterator d_it;
+    for (d_it = dmb->begin(); d_it != dmb->end(); d_it++) {
+	std::string key = d_it->first;
+	const struct dm *d = d_it->second;
 	if (strlen(bu_vls_cstr(list)) > 0) bu_vls_printf(list, "%s", bu_vls_cstr(&sep));
-	bu_vls_printf(list, "%s", dm_get_name(d));
+	bu_vls_printf(list, "%s: %s", key.c_str(), dm_get_name(d));
     }
-    bu_ptbl_free(&plugins);
-
-    if (dm_close_backends(&handles)) {
-	bu_log("bu_dlclose failed to unload plugins.\n");
-    }
-    bu_ptbl_free(&handles);
 
     bu_log("%s\n", bu_vls_cstr(list));
     bu_vls_free(list);
