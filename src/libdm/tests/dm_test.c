@@ -55,6 +55,7 @@ main(int UNUSED(argc), const char **UNUSED(argv))
     bu_log("dmp name: %s\n", dm_get_name(dmp));
     dm_close(dmp);
 
+    bu_log("recommended type: %s\n", dm_recommend_type(NULL));
 
     return 0;
 }

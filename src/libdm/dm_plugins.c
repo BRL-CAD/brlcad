@@ -181,6 +181,51 @@ dm_valid_type(const char *name, const char *dpy_string)
     return is_valid;
 }
 
+/** dm_recommend_type determines what mged will normally
+  * use as the default display manager
+  */
+const char *
+dm_recommend_type(const char *dpy_string)
+{
+    static const char *priority_list[] = {"osgl", "wgl", "ogl", "X", "tk", "nu"};
+
+    struct bu_ptbl plugins = BU_PTBL_INIT_ZERO;
+    struct bu_ptbl handles = BU_PTBL_INIT_ZERO;
+    int dm_cnt = dm_load_backends(&plugins, &handles);
+    if (!dm_cnt) {
+	bu_log("No display manager implementations found!\n");
+	return NULL;
+    }
+
+    const char *ret = NULL;
+
+    int i = 0;
+    const char *b = priority_list[i];
+    while (!BU_STR_EQUAL(b, "nu")) {
+	for (size_t j = 0; j < BU_PTBL_LEN(&plugins); j++) {
+	    const struct dm *d = (const struct dm *)BU_PTBL_GET(&plugins, j);
+	    if (BU_STR_EQUIV(b, dm_get_name(d))) {
+		if (d->i->dm_viable(dpy_string) == 1) {
+		    ret = b;
+		    break;
+		}
+	    }
+	}
+	if (ret) {
+	    break;
+	}    
+	i++;
+	b = priority_list[i];
+    }
+
+    bu_ptbl_free(&plugins);
+    if (dm_close_backends(&handles)) {
+	bu_log("bu_dlclose failed to unload plugins.\n");
+    }
+    bu_ptbl_free(&handles);
+
+    return (ret) ? ret : b;
+} 
 
 /*
  * Local Variables:
