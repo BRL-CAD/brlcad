@@ -14,7 +14,12 @@
 extern "C" struct dm *
 dm_open(void *interp, const char *type, int argc, const char *argv[])
 {
-
+    if (BU_STR_EQUIV(type, "nu")) {
+	return dm_null.i->dm_open(interp, argc, argv);
+    }
+    if (BU_STR_EQUIV(type, "null")) {
+	return dm_null.i->dm_open(interp, argc, argv);
+    }
     std::map<std::string, const struct dm *> *dmb = (std::map<std::string, const struct dm *> *)dm_backends;
     std::map<std::string, const struct dm *>::iterator d_it = dmb->find(std::string(type));
     if (d_it == dmb->end()) {
@@ -49,6 +54,8 @@ dm_list_types(const char *separator)
 	if (strlen(bu_vls_cstr(list)) > 0) bu_vls_printf(list, "%s", bu_vls_cstr(&sep));
 	bu_vls_printf(list, "%s", dm_get_name(d));
     }
+    if (strlen(bu_vls_cstr(list)) > 0) bu_vls_printf(list, "%s", bu_vls_cstr(&sep));
+    bu_vls_printf(list, "nu");
 
     return list;
 }
@@ -56,6 +63,12 @@ dm_list_types(const char *separator)
 extern "C" int
 dm_validXType(const char *dpy_string, const char *name)
 {
+    if (BU_STR_EQUIV(name, "nu")) {
+	return 1;
+    }
+    if (BU_STR_EQUIV(name, "null")) {
+	return 1;
+    }
     std::map<std::string, const struct dm *> *dmb = (std::map<std::string, const struct dm *> *)dm_backends;
     std::map<std::string, const struct dm *>::iterator d_it = dmb->find(std::string(name));
     if (d_it == dmb->end()) {
