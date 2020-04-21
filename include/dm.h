@@ -179,6 +179,10 @@ DM_EXPORT extern void dm_draw_scale(struct dm *dmp,
 DM_EXPORT extern const char *dm_version(void);
 
 
+/* Test plugin functions */
+DM_EXPORT extern void dm_list_backends(const char *separator);
+DM_EXPORT extern int dm_valid_type(const char *name, const char *dpy_string);
+DM_EXPORT struct dm* dm_popen(void *interp, const char *type, int argc, const char *argv[]);
 
 /* functions to make a dm struct hideable - will need to
  * sort these out later */
@@ -197,7 +201,6 @@ DM_EXPORT extern void dm_internal_var(struct bu_vls *result, struct dm *dmp, con
 DM_EXPORT extern fastf_t dm_get_aspect(struct dm *dmp);
 DM_EXPORT extern const char *dm_get_type(struct dm *dmp);
 DM_EXPORT extern struct bu_vls *dm_list_types(const char separator); /* free return list with bu_vls_free(list); BU_PUT(list, struct bu_vls); */
-DM_EXPORT extern void dm_list_backends();
 DM_EXPORT extern unsigned long dm_get_id(struct dm *dmp);
 DM_EXPORT extern void dm_set_id(struct dm *dmp, unsigned long new_id);
 DM_EXPORT extern int dm_get_displaylist(struct dm *dmp);

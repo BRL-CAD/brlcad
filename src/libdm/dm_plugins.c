@@ -9,6 +9,7 @@
 #include "bu/vls.h"
 
 #include "dm.h"
+#include "./include/private.h"
 
 int
 dm_load_backends(struct bu_ptbl *plugins, struct bu_ptbl *handles)
@@ -74,6 +75,38 @@ dm_close_backends(struct bu_ptbl *handles)
     return ret;
 }
 
+
+struct dm *
+dm_popen(void *interp, const char *type, int argc, const char *argv[])
+{
+    struct dm *dmp = DM_NULL;
+
+    struct bu_ptbl plugins = BU_PTBL_INIT_ZERO;
+    struct bu_ptbl handles = BU_PTBL_INIT_ZERO;
+    int dm_cnt = dm_load_backends(&plugins, &handles);
+    if (!dm_cnt) {
+	bu_log("No display manager implementations found!\n");
+	return DM_NULL;
+    }
+
+    for (size_t i = 0; i < BU_PTBL_LEN(&plugins); i++) {
+	const struct dm *d = (const struct dm *)BU_PTBL_GET(&plugins, i);
+	if (BU_STR_EQUIV(type, dm_get_name(d))) {
+	    dmp = d->i->dm_open(interp, argc, argv);
+	    break;
+	}
+    }
+    bu_ptbl_free(&plugins);
+
+    if (dm_close_backends(&handles)) {
+	bu_log("bu_dlclose failed to unload plugins.\n");
+    }
+    bu_ptbl_free(&handles);
+
+    return dmp;
+}
+
+
 void
 dm_list_backends(const char *separator)
 {
@@ -81,7 +114,6 @@ dm_list_backends(const char *separator)
     BU_GET(list, struct bu_vls);
     bu_vls_init(list);
     bu_vls_trunc(list, 0);
-
 
     struct bu_ptbl plugins = BU_PTBL_INIT_ZERO;
     struct bu_ptbl handles = BU_PTBL_INIT_ZERO;
@@ -115,6 +147,40 @@ dm_list_backends(const char *separator)
     bu_vls_free(list);
     BU_PUT(list, struct bu_vls);
 }
+
+int
+dm_valid_type(const char *name, const char *dpy_string)
+{
+    struct bu_ptbl plugins = BU_PTBL_INIT_ZERO;
+    struct bu_ptbl handles = BU_PTBL_INIT_ZERO;
+    int dm_cnt = dm_load_backends(&plugins, &handles);
+    if (!dm_cnt) {
+	bu_log("No display manager implementations found!\n");
+	return 0;
+    }
+
+    int is_valid = 0;
+
+    for (size_t i = 0; i < BU_PTBL_LEN(&plugins); i++) {
+	const struct dm *d = (const struct dm *)BU_PTBL_GET(&plugins, i);
+	if (BU_STR_EQUIV(name, dm_get_name(d))) {
+	    if (d->i->dm_viable(dpy_string) != 1) {
+		bu_log("WARNING: found matching plugin %s, but viability test failed - skipping.\n", dm_get_name(d));
+	    } else {
+		is_valid = 1;
+		break;
+	    }
+	}
+    }
+    bu_ptbl_free(&plugins);
+    if (dm_close_backends(&handles)) {
+	bu_log("bu_dlclose failed to unload plugins.\n");
+    }
+    bu_ptbl_free(&handles);
+
+    return is_valid;
+}
+
 
 /*
  * Local Variables:

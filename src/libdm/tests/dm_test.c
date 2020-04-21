@@ -32,6 +32,30 @@ int
 main(int UNUSED(argc), const char **UNUSED(argv))
 {
     dm_list_backends(NULL);
+    int vtype;
+    vtype = dm_valid_type("nu", NULL);
+    bu_log("nu valid: %d\n", vtype);
+    vtype = dm_valid_type("plot", NULL);
+    bu_log("plot valid: %d\n", vtype);
+    vtype = dm_valid_type("X", NULL);
+    bu_log("X valid: %d\n", vtype);
+    vtype = dm_valid_type("ogl", NULL);
+    bu_log("ogl valid: %d\n", vtype);
+    vtype = dm_valid_type("osgl", NULL);
+    bu_log("osgl valid: %d\n", vtype);
+    vtype = dm_valid_type("wgl", NULL);
+    bu_log("wgl valid: %d\n", vtype);
+
+    const char *av0 = "attach";
+    struct dm *dmp;
+    dmp = dm_popen(NULL, "nu", 1, &av0);
+    bu_log("dmp name: %s\n", dm_get_name(dmp));
+    dm_close(dmp);
+    dmp = dm_popen(NULL, "txt", 1, &av0);
+    bu_log("dmp name: %s\n", dm_get_name(dmp));
+    dm_close(dmp);
+
+
     return 0;
 }
 
