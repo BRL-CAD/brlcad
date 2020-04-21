@@ -3544,6 +3544,15 @@ struct fb_impl X24_interface_impl =  {
 
 struct fb X24_interface =  { &X24_interface_impl };
 
+#ifdef DM_PLUGIN
+static const struct fb_plugin finfo = { &X24_interface };
+
+DM_EXPORT const struct fb_plugin *fb_plugin_info()
+{
+    return &finfo;
+}
+#endif
+
 /* Because class is actually used to access a struct
  * entry in this file, preserve our redefinition
  * of class for the benefit of avoiding C++ name

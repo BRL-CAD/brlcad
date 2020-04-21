@@ -28,19 +28,17 @@
 #include "common.h"
 
 #include <math.h>
+
+#ifdef HAVE_GL_GL_H
+#  include <GL/gl.h>
+#endif
+
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
 #include "dm/bview.h"
 #include "./include/private.h"
-
-
-#if defined(IF_OGL) || defined(IF_WGL)
-#  ifdef HAVE_GL_GL_H
-#    include <GL/gl.h>
-#  endif
-#endif
 
 void
 dm_draw_data_axes(struct dm *dmp,

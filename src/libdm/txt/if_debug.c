@@ -419,6 +419,15 @@ struct fb_impl debug_interface_impl = {
 
 struct fb debug_interface = { &debug_interface_impl };
 
+#ifdef DM_PLUGIN
+static const struct fb_plugin finfo = { &debug_interface };
+
+DM_EXPORT const struct fb_plugin *fb_plugin_info()
+{
+    return &finfo;
+}
+#endif
+
 /*
  * Local Variables:
  * mode: C

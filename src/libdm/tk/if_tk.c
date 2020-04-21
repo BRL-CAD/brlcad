@@ -637,6 +637,14 @@ struct fb_impl tk_interface_impl = {
 
 struct fb tk_interface = { &tk_interface_impl };
 
+#ifdef DM_PLUGIN
+static const struct fb_plugin finfo = { &tk_interface };
+
+DM_EXPORT const struct fb_plugin *fb_plugin_info()
+{
+    return &finfo;
+}
+#endif
 
 #else
 

@@ -1346,7 +1346,7 @@ qt_free(struct fb *UNUSED(ifp))
 }
 
 
-struct fb qt_interface =  {
+struct fb_impl qt_interface_impl =  {
     0,
     FB_QT_MAGIC,
     qt_open,		/* device_open */
@@ -1402,6 +1402,17 @@ struct fb qt_interface =  {
     {0}, /* u5 */
     {0}  /* u6 */
 };
+
+struct fb qt_interface =  { &qt_interface_impl };
+
+#ifdef DM_PLUGIN
+static const struct fb_plugin finfo = { &qt_interface };
+
+DM_EXPORT const struct fb_plugin *fb_plugin_info()
+{
+    return &finfo;
+}
+#endif
 
 
 /**
