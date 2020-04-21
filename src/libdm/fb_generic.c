@@ -183,7 +183,7 @@ void fb_set_name(struct fb *ifp, const char *name)
     bu_strlcpy(ifp->i->if_name, name, strlen(name)+1);
 }
 
-char *fb_get_name(struct fb *ifp)
+const char *fb_get_name(const struct fb *ifp)
 {
     if (!ifp) return NULL;
     return ifp->i->if_name;

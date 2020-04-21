@@ -366,6 +366,10 @@ struct fb {
 };
 #define FB_NULL (struct fb *) 0
 
+struct fb_plugin {
+    const struct fb * const p;
+};
+
 /**
  * assert the integrity of a framebuffer struct.
  */
@@ -431,7 +435,7 @@ FB_EXPORT extern int fb_read_png(struct fb *ifp, FILE *fp, int file_xoff, int fi
 
 FB_EXPORT extern void fb_set_interface(struct fb *ifp, const char *interface_type);
 FB_EXPORT extern void fb_set_name(struct fb *ifp, const char *name);
-FB_EXPORT extern char *fb_get_name(struct fb *ifp);
+FB_EXPORT extern const char *fb_get_name(const struct fb *ifp);
 FB_EXPORT extern void fb_set_magic(struct fb *ifp, uint32_t magic);
 FB_EXPORT extern long fb_get_pagebuffer_pixel_size(struct fb *ifp);
 
