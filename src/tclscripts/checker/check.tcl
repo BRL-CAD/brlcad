@@ -502,8 +502,12 @@ body GeometryChecker::loadOverlaps {{filename ""}} {
 	set items [$_ck children {}]
 	while {[gets $mfile line] >= 0} {
 	    foreach item $items {
-		if {[$_ck set $item "Left"] == [lindex $line 0] && \
-		    [$_ck set $item "Right"] == [lindex $line 1]} \
+		set fullpaths $_fullPath([$_ck set $item "ID"])
+		set leftPath [lindex $fullpaths 0]
+		set rightPath [lindex $fullpaths 1]
+
+		if {$leftPath == [lindex $line 0] && \
+		    $rightPath == [lindex $line 1]} \
 		{
 		    $_ck tag add "marked" $item
 		    incr _markedCount
@@ -670,7 +674,9 @@ body GeometryChecker::writeMarks {} {
     fconfigure $tmp_chan -encoding utf-8
 
     foreach item $marked_items {
-	puts $tmp_chan "[$_ck set $item "Left"] [$_ck set $item "Right"]"
+	set fullpaths $_fullPath([$_ck set $item "ID"])
+
+	puts $tmp_chan [join $fullpaths " "]
     }
     close $tmp_chan
 
@@ -679,9 +685,9 @@ body GeometryChecker::writeMarks {} {
     fconfigure $tmp_chan -encoding utf-8
 
     foreach item $marked_items {
-	if {[gets $tmp_chan line] < 0 ||\
-	    $line != "[$_ck set $item "Left"] [$_ck set $item "Right"]"} \
-	{
+	set fullpaths $_fullPath([$_ck set $item "ID"])
+
+	if {[gets $tmp_chan line] < 0 || $line != [join $fullpaths " "]} {
 	    puts "ERROR: write to mark file failed"
 	    return
 	}
@@ -819,8 +825,11 @@ body GeometryChecker::subtractSelectionRightFromLeft {{swap "false"}} {
 
     foreach item $sset {
 	foreach {id_lbl id left_lbl left right_lbl right size_lbl size} [$_ck set $item] {
+	    set fullpaths $_fullPath($id)
+	    set leftPath [lindex $fullpaths 0]
+	    set rightPath [lindex $fullpaths 1]
 
-	    if {![catch {$this $subCmd $left $right} err]} {
+	    if {![catch {$this $subCmd $leftPath $rightPath} err]} {
 		$this markOverlap $id
 	    } else {
 		puts "$err"
@@ -882,11 +891,15 @@ body GeometryChecker::display {} {
     set drawing ""
     foreach item $sset {
 	foreach {id_lbl id left_lbl left right_lbl right size_lbl size} [$_ck set $item] {
+	    set fullpaths $_fullPath($id)
+	    set leftPath [lindex $fullpaths 0]
+	    set rightPath [lindex $fullpaths 1]
+
 	    if {$_drawFirstUnion} {
-		lappend drawing [$this firstUnionedSolid $left]
-		lappend drawing [$this firstUnionedSolid $right]
+		lappend drawing [$this firstUnionedSolid $leftPath]
+		lappend drawing [$this firstUnionedSolid $rightPath]
 	    } else {
-		lappend drawing $left $right
+		lappend drawing $leftPath $rightPath
 	    }
 	}
     }
@@ -899,11 +912,15 @@ body GeometryChecker::display {} {
     set _progressButtonInvoked false
     foreach item $sset {
 	foreach {id_lbl id left_lbl left right_lbl right size_lbl size} [$_ck set $item] {
+	    set fullpaths $_fullPath($id)
+	    set leftPath [lindex $fullpaths 0]
+	    set rightPath [lindex $fullpaths 1]
+
 	    if {$_drawFirstUnion} {
-		set left [$this firstUnionedSolid $left]
-		set right [$this firstUnionedSolid $right]
+		set leftPath [$this firstUnionedSolid $leftPath]
+		set rightPath [$this firstUnionedSolid $rightPath]
 	    }
-	    set _commandText "Drawing $left"
+	    set _commandText "Drawing $leftPath"
 
 	    if {[$this updateDisplayFinished]} {
 		break
@@ -915,7 +932,7 @@ body GeometryChecker::display {} {
 		set _abort false
 		lappend _afterCommands [after 3000 \
 		    "if {! \[set \"[scope _progressButtonInvoked]\"\]} { \
-		        [code $_leftDrawCallback $left]; \
+		        [code $_leftDrawCallback $leftPath]; \
 			[code set [scope _commandText] ""] \
 		    }"]
 
@@ -932,20 +949,20 @@ body GeometryChecker::display {} {
 		    break
 		}
 	    } elseif {! $_progressButtonInvoked} {
-		$_leftDrawCallback $left
+		$_leftDrawCallback $leftPath
 	    }
 
 	    if {! $_progressButtonInvoked} {
 		incr count
 		set _progressValue [expr $count / [expr $total + 1.0] * 100]
 
-		set _commandText "Drawing $right"
+		set _commandText "Drawing $rightPath"
 
 		if {[$this updateDisplayFinished]} {
 		    break
 		}
 
-		$_rightDrawCallback $right
+		$_rightDrawCallback $rightPath
 
 		incr count
 		set _progressValue [expr $count / [expr $total + 1.0] * 100]
