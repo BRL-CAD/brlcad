@@ -17,7 +17,7 @@ changes made.  See document footer for additional details.
 * fixed rtedge line drawing color when using -W flag - Cliff Yapp
 * added -F option to lint cmd to test specifc solid types - Cliff Yapp
 * added support to MGED for zooming with mouse wheel - Cliff Yapp
-* fixed solid editing in MGED (reverts transparency change) Cliff Yapp
+* fixed solid editing wireframe drawing in MGED - Nick Reed
 * added .r suffixes to region names in 3dm-g conversion - Cliff Yapp
 
 
