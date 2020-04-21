@@ -31,6 +31,9 @@
 int
 main(int UNUSED(argc), const char **UNUSED(argv))
 {
+
+    bu_log("load msgs: %s\n", dm_init_msgs());
+
     dm_list_backends(NULL);
     int vtype;
     vtype = dm_valid_type("nu", NULL);

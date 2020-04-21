@@ -184,6 +184,7 @@ DM_EXPORT extern void dm_list_backends(const char *separator);
 DM_EXPORT extern int dm_valid_type(const char *name, const char *dpy_string);
 DM_EXPORT struct dm * dm_popen(void *interp, const char *type, int argc, const char *argv[]);
 DM_EXPORT const char * dm_recommend_type(const char *dpy_string);
+DM_EXPORT const char * dm_init_msgs();
 
 /* functions to make a dm struct hideable - will need to
  * sort these out later */

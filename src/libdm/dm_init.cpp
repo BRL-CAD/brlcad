@@ -43,12 +43,22 @@ static std::map<std::string, const struct dm *> dm_map;
 void *dm_backends;
 
 static std::set<void *> dm_handles;
-struct bu_vls dm_plugin_msgs = BU_VLS_INIT_ZERO;
+struct bu_vls *dm_init_msg_str;
+
+const char *
+dm_init_msgs()
+{
+    return bu_vls_cstr(dm_init_msg_str);
+}
 
 
 static void
 libdm_init(void)
 {
+
+    BU_GET(dm_init_msg_str, struct bu_vls);
+    bu_vls_init(dm_init_msg_str);
+
     const char *ppath = bu_dir(NULL, 0, BU_DIR_LIBEXEC, "dm", NULL);
     char **filenames;
     const char *psymbol = "dm_plugin_info";
@@ -62,9 +72,9 @@ libdm_init(void)
 	if (!(dl_handle = bu_dlopen(pfile, BU_RTLD_NOW))) {
 	    const char * const error_msg = bu_dlerror();
 	    if (error_msg)
-		bu_vls_printf(&dm_plugin_msgs, "%s\n", error_msg);
+		bu_vls_printf(dm_init_msg_str, "%s\n", error_msg);
 
-	    bu_vls_printf(&dm_plugin_msgs, "Unable to dynamically load '%s' (skipping)\n", pfile);
+	    bu_vls_printf(dm_init_msg_str, "Unable to dynamically load '%s' (skipping)\n", pfile);
 	    continue;
 	}
 	info_val = bu_dlsym(dl_handle, psymbol);
@@ -73,10 +83,10 @@ libdm_init(void)
 	    const char * const error_msg = bu_dlerror();
 
 	    if (error_msg)
-		bu_vls_printf(&dm_plugin_msgs, "%s\n", error_msg);
+		bu_vls_printf(dm_init_msg_str, "%s\n", error_msg);
 
-	    bu_vls_printf(&dm_plugin_msgs, "Unable to load symbols from '%s' (skipping)\n", pfile);
-	    bu_vls_printf(&dm_plugin_msgs, "Could not find '%s' symbol in plugin\n", psymbol);
+	    bu_vls_printf(dm_init_msg_str, "Unable to load symbols from '%s' (skipping)\n", pfile);
+	    bu_vls_printf(dm_init_msg_str, "Could not find '%s' symbol in plugin\n", psymbol);
 	    bu_dlclose(dl_handle);
 	    continue;
 	}
@@ -84,7 +94,7 @@ libdm_init(void)
 	const struct dm_plugin *plugin = plugin_info();
 
 	if (!plugin || !plugin->p) {
-	    bu_vls_printf(&dm_plugin_msgs, "Invalid plugin encountered from '%s' (skipping)\n", pfile);
+	    bu_vls_printf(dm_init_msg_str, "Invalid plugin encountered from '%s' (skipping)\n", pfile);
 	    bu_dlclose(dl_handle);
 	    continue;
 	}
@@ -93,7 +103,7 @@ libdm_init(void)
 	const char *dname = dm_get_name(d);
 	std::string key(dname);
 	if (dm_map.find(key) != dm_map.end()) {
-	    bu_vls_printf(&dm_plugin_msgs, "Warning - file '%s' provides backend '%s' but that backend has already been loaded, skipping\n", pfile, dname);
+	    bu_vls_printf(dm_init_msg_str, "Warning - file '%s' provides backend '%s' but that backend has already been loaded, skipping\n", pfile, dname);
 	    bu_dlclose(dl_handle);
 	    continue;
 	}
@@ -115,6 +125,9 @@ libdm_clear(void)
 	bu_dlclose(handle);
     }
     dm_handles.clear();
+
+    bu_vls_free(dm_init_msg_str);
+    BU_PUT(dm_init_msg_str, struct bu_vls);
 }
 
 
