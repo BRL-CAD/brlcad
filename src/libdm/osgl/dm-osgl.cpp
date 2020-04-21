@@ -608,6 +608,10 @@ osgl_open(void *vinterp, int argc, char **argv)
     osgViewer::Viewer *viewer = new osgViewer::Viewer();
     delete viewer;
 
+    // For recent Gnome 3 - see https://github.com/openscenegraph/OpenSceneGraph/issues/615
+    traits->readDISPLAY();
+    traits->setUndefinedScreenDetailsToDefaultScreen();
+
     // Setup the traits parameters
     traits->x = 0;
     traits->y = 0;
@@ -622,10 +626,6 @@ osgl_open(void *vinterp, int argc, char **argv)
     traits->inheritedWindowData = windata;
 
     // Create the Graphics Context
-
-    // For recent Gnome 3 - see https://github.com/openscenegraph/OpenSceneGraph/issues/615
-    traits->readDISPLAY();
-    traits->setUndefinedScreenDetailsToDefaultScreen();
 
     privvars->graphicsContext = osg::GraphicsContext::createGraphicsContext(traits.get());
     privvars->traits = traits;
