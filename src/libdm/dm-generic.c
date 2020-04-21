@@ -204,63 +204,61 @@ dm_validXType(const char *dpy_string, const char *name)
 /** dm_bestXType determines what mged will normally
   * use as the default display manager
   */
-
-char *
-#if !defined(DM_WGL) && !defined(DM_OGL) && !defined(DM_OSGL) && !defined(DM_X)
-dm_bestXType(const char *UNUSED(dpy_string))
-#else
+const char *
 dm_bestXType(const char *dpy_string)
-#endif
 {
+    static const char *priority_list[] = {"osgl", "wgl", "ogl", "X", "tk", "nu"};
 
+    int i = 0;
+    const char *b = priority_list[i];
+    while (!BU_STR_EQUAL(b, "nu")) {
+
+	if (BU_STR_EQUIV(b, "txt")) {
+	    if (dm_txt.i->dm_viable(dpy_string) == 1) return b;
+	}
+	if (BU_STR_EQUIV(b, "plot")) {
+	    if (dm_plot.i->dm_viable(dpy_string) == 1) return b;
+	}
+	if (BU_STR_EQUIV(b, "ps")) {
+	    if (dm_ps.i->dm_viable(dpy_string) == 1) return b;
+	}
+#if defined(DM_OGL)
+	if (BU_STR_EQUIV(b, "ogl")) {
+	    if (dm_ogl.i->dm_viable(dpy_string) == 1) return b;
+	}
+#endif
 #ifdef DM_OSGL
-    return "osgl";
-#endif
-
-#ifdef DM_WGL
-    /* should probably make sure wgl works */
-    return "wgl";
-#endif
-
-#ifdef DM_OGL
-    {
-	Display *dpy;
-	int return_val;
-	if (dpy_string) {
-	    if ((dpy = XOpenDisplay(dpy_string)) != NULL) {
-		if (XQueryExtension(dpy, "GLX", &return_val, &return_val, &return_val)) {
-		    XCloseDisplay(dpy);
-		    return "ogl";
-		}
-		XCloseDisplay(dpy);
-	    }
-	} else {
-	    return "ogl";
+	if (BU_STR_EQUAL(b, "osgl")) {
+	    if (dm_osgl.i->dm_viable(dpy_string) == 1) return b;
 	}
+#endif
+#if defined(DM_QT)
+	if (BU_STR_EQUIV(b, "qt")) {
+	    if (dm_qt.i->dm_viable(dpy_string) == 1) return b;
+	}
+#endif
+#if defined(DM_TK)
+	if (BU_STR_EQUIV(b, "tk")) {
+	    if (dm_tk.i->dm_viable(dpy_string) == 1) return b;
+	}
+#endif
+#if defined(DM_X)
+	if (BU_STR_EQUIV(b, "X")) {
+	    if (dm_X.i->dm_viable(dpy_string) == 1) return b;
+	}
+#endif
+#if defined(DM_WGL)
+	if (BU_STR_EQUIV(b, "wgl")) {
+	    if (dm_wgl.i->dm_viable(dpy_string) == 1) return b;
+	}
+#endif
+
+	i++;
+	b = priority_list[i];
     }
-#endif
 
-#ifdef DM_X
-    {
-	if (dpy_string) {
-	Display *dpy;
-	if ((dpy = XOpenDisplay(dpy_string)) != NULL) {
-	    XCloseDisplay(dpy);
-	    return "X";
-	}
-	} else {
-	    return "X";
-	}
-    }
-#endif
-
-#ifdef DM_TK
-    return "tk";
-#endif
-
-    return "nu";
+    return b;
 }
-
 
 /**
  * dm_default_type suggests a display manager
