@@ -1330,6 +1330,7 @@ struct dm_impl dm_qt_impl = {
     null_drawPoints3D,
     qt_drawVList,
     qt_drawVList,
+    NULL,
     qt_draw,
     qt_setFGColor,
     qt_setBGColor,

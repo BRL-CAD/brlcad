@@ -2566,6 +2566,7 @@ struct dm_impl dm_osgl_impl = {
     osgl_drawPoints3D,
     osgl_drawVList,
     osgl_drawVListHiddenLine,
+    NULL,
     osgl_draw,
     osgl_setFGColor,
     osgl_setBGColor,

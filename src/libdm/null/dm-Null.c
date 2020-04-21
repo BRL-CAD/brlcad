@@ -320,6 +320,7 @@ struct dm_impl dm_null_impl = {
     null_drawPoints3D,
     null_drawVList,
     null_drawVListHiddenLine,
+    NULL,
     null_draw,
     null_setFGColor,
     null_setBGColor,

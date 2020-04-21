@@ -751,6 +751,7 @@ struct dm_impl dm_ps_impl = {
     null_drawPoints3D,
     ps_drawVList,
     ps_drawVList,
+    NULL,
     ps_draw,
     ps_setFGColor,
     ps_setBGColor,

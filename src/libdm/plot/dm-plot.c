@@ -682,6 +682,7 @@ struct dm_impl dm_plot_impl = {
     null_drawPoints3D,
     plot_drawVList,
     plot_drawVList,
+    NULL,
     plot_draw,
     plot_setFGColor,
     plot_setBGColor,

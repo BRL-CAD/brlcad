@@ -1128,6 +1128,7 @@ struct dm_impl dm_tk_impl = {
     null_drawPoints3D,
     tk_drawVList,
     tk_drawVList,
+    NULL,
     tk_draw,
     tk_setFGColor,
     tk_setBGColor,

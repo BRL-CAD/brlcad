@@ -2507,6 +2507,7 @@ struct dm_impl dm_wgl_impl = {
     wgl_drawPoints3D,
     wgl_drawVList,
     wgl_drawVListHiddenLine,
+    NULL,
     wgl_draw,
     wgl_setFGColor,
     wgl_setBGColor,

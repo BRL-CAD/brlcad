@@ -1891,6 +1891,33 @@ ogl_drawVList(struct dm *dmp, struct bn_vlist *vp)
     return BRLCAD_OK;
 }
 
+int
+ogl_draw_data_axes(struct dm *dmp,
+                  fastf_t UNUSED(sf),
+                  struct bview_data_axes_state *bndasp)
+{
+    int npoints = bndasp->num_points * 6;
+    if (npoints < 1)
+        return 0;
+
+    /* set color */
+    dm_set_fg(dmp, bndasp->color[0], bndasp->color[1], bndasp->color[2], 1, 1.0);
+
+    if (bndasp->draw > 1) {
+        if (dmp->i->dm_light)
+            glDisable(GL_LIGHTING);
+
+        glPointSize(bndasp->size);
+        dm_draw_points_3d(dmp, bndasp->num_points, bndasp->points);
+        glPointSize(1);
+
+        if (dmp->i->dm_light)
+            glEnable(GL_LIGHTING);
+
+    }
+
+    return 0;
+}
 
 HIDDEN int
 ogl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
@@ -2938,6 +2965,7 @@ struct dm_impl dm_ogl_impl = {
     ogl_drawPoints3D,
     ogl_drawVList,
     ogl_drawVListHiddenLine,
+    ogl_draw_data_axes,
     ogl_draw,
     ogl_setFGColor,
     ogl_setBGColor,
