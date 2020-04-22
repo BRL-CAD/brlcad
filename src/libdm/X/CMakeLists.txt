@@ -13,6 +13,7 @@ include_directories(
 
 set(X_SRCS
   dm-X.c
+  color.c
   if_X24.c
   )
 
