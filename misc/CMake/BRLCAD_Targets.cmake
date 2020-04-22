@@ -568,7 +568,11 @@ endfunction(BRLCAD_ADDLIB libname srcslist libslist)
 function(BRLCAD_SORT_INCLUDE_DIRS DIR_LIST)
   if(${DIR_LIST})
     set(ORDERED_ELEMENTS "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}" "${BRLCAD_BINARY_DIR}/include" "${BRLCAD_SOURCE_DIR}/include")
+    set(LAST_ELEMENTS "/usr/local/include" "/usr/include")
+
     set(NEW_DIR_LIST "")
+    set(LAST_DIR_LIST "")
+
     foreach(element ${ORDERED_ELEMENTS})
       set(DEF_EXISTS "-1")
       list(FIND ${DIR_LIST} ${element} DEF_EXISTS)
@@ -596,8 +600,19 @@ function(BRLCAD_SORT_INCLUDE_DIRS DIR_LIST)
       endif("${SUBPATH_TEST}" STREQUAL "1")
     endforeach(inc_path ${${DIR_LIST}})
 
+    # Pull out include paths that are definitely system paths (and
+    # hence need to come after ours
+    foreach(element ${LAST_ELEMENTS})
+      set(DEF_EXISTS "-1")
+      list(FIND ${DIR_LIST} ${element} DEF_EXISTS)
+      if(NOT "${DEF_EXISTS}" STREQUAL "-1")
+	set(LAST_DIR_LIST ${LAST_DIR_LIST} ${element})
+	list(REMOVE_ITEM ${DIR_LIST} ${element})
+      endif(NOT "${DEF_EXISTS}" STREQUAL "-1")
+    endforeach(element ${LAST_ELEMENTS})
+
     # add anything that might be left
-    set(NEW_DIR_LIST ${NEW_DIR_LIST} ${${DIR_LIST}})
+    set(NEW_DIR_LIST ${NEW_DIR_LIST} ${${DIR_LIST}} ${LAST_DIR_LIST})
 
     # remove any duplicates
     list(REMOVE_DUPLICATES NEW_DIR_LIST)
