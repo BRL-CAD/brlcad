@@ -10,7 +10,7 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 2020-04-14  Release 7.30.8                                     ---
+--- 2020-04-22  Release 7.30.8                                     ---
 ----------------------------------------------------------------------
 
 * improved behavior of MGED overlap checker GUI - Nick Reed
