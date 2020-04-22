@@ -628,6 +628,14 @@ endfunction(BRLCAD_SORT_INCLUDE_DIRS)
 # sort function.
 function(BRLCAD_INCLUDE_DIRS DIR_LIST)
 
+  # TODO - We don't want parent directories values augmenting DIR_LIST for
+  # subsequent targets - if we're calling this, we're taking full control of
+  # all inclusions for all targets in this and subsequent directories.  We
+  # should probably use the target level INCLUDE_DIRECTORIES property and
+  # stop setting include_directories on entire directories all together
+  # for maximal precision and minimum surprises...
+  #set_property(DIRECTORY PROPERTY INCLUDE_DIRECTORIES "")
+
   set(INCLUDE_DIRS ${${DIR_LIST}})
   if(INCLUDE_DIRS)
     list(REMOVE_DUPLICATES INCLUDE_DIRS)
