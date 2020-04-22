@@ -48,6 +48,8 @@ extern "C" {
 #include "../include/private.h"
 }
 
+extern struct fb osgl_interface;
+
 #define DIRECT_COLOR_VISUAL_ALLOWED 0
 
 HIDDEN int osgl_nwindows = 0; 	/* number of open windows */

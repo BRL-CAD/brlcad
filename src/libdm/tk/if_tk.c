@@ -44,6 +44,7 @@
 #include "dm.h"
 #include "../include/private.h"
 
+extern struct fb tk_interface;
 
 Tcl_Interp *fbinterp;
 Tk_Window fbwin;

@@ -75,6 +75,7 @@ HIDDEN int is_linear_cmap(struct fb *ifp);
 
 HIDDEN int wgl_nwindows = 0; 	/* number of open windows */
 
+extern struct fb wgl_interface;
 
 struct fb *saveifp;
 int titleBarHeight = 0;

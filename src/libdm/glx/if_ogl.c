@@ -85,6 +85,7 @@
 #include "dm.h"
 #include "./fb_ogl.h"
 
+extern struct fb ogl_interface;
 
 #define DIRECT_COLOR_VISUAL_ALLOWED 0
 

@@ -41,6 +41,7 @@
 #include "bu/file.h"
 #include "bu/str.h"
 
+extern struct fb qt_interface;
 
 class QMainWindow: public QWindow {
 

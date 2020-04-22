@@ -75,6 +75,7 @@
 #include "../include/private.h"
 #include "./fb_X.h"
 
+extern struct fb X24_interface;
 
 /*
  * Per window state information.
