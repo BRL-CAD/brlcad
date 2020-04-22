@@ -350,16 +350,7 @@ typedef struct {
 #define RGBPIXEL_NULL (unsigned char *) 0
 #define COLORMAP_NULL (ColorMap *) 0
 
-/* The internals of the framebuffer structure are hidden using the PImpl pattern */
-struct fb_impl;
-struct fb {
-    struct fb_impl *i;
-};
 #define FB_NULL (struct fb *) 0
-
-struct fb_plugin {
-    const struct fb * const p;
-};
 
 /**
  * assert the integrity of a framebuffer struct.

@@ -60,6 +60,16 @@ struct dm_plugin {
     const struct dm * const p;
 };
 
+/* The internals of the framebuffer structure are hidden using the PImpl pattern */
+struct fb_impl;
+struct fb {
+    struct fb_impl *i;
+};
+
+struct fb_plugin {
+    const struct fb * const p;
+};
+
 #endif /* DM_DEFINES_H */
 
 /** @} */

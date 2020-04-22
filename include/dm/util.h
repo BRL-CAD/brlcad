@@ -35,6 +35,14 @@ DM_EXPORT int drawLine3D(struct dm *dmp, point_t pt1, point_t pt2, const char *l
 
 DM_EXPORT int draw_Line3D(struct dm *dmp, point_t pt1, point_t pt2);
 
+DM_EXPORT int fb_sim_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom);
+
+DM_EXPORT int fb_sim_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom);
+
+DM_EXPORT int fb_sim_cursor(struct fb *ifp, int mode, int x, int y);
+
+DM_EXPORT int fb_sim_getcursor(struct fb *ifp, int *mode, int *x, int *y);
+
 __END_DECLS
 
 #endif /* DM_UTIL_H */
