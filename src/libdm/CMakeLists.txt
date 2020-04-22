@@ -109,11 +109,6 @@ set(libdm_ignore_files
   X/dm-X.h
   X/if_X24.c
   include/private.h
-  fontstash/LICENSE.fontstash
-  fontstash/README.md
-  fontstash/fontstash.h
-  fontstash/glfontstash.h
-  fontstash/stb_truetype.h
   glx/dm-glx.h
   glx/dm-ogl.c
   glx/dm-ogl.h
