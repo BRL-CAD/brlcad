@@ -1,6 +1,7 @@
 #include "common.h"
 
 #include <algorithm>
+#include <cctype>
 #include <map>
 #include <string>
 

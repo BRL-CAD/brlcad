@@ -27,16 +27,17 @@
 
 #include "common.h"
 
+#include <algorithm>
+#include <cctype>
+#include <map>
+#include <set>
+#include <string>
+
 #include "bu/defines.h"
 #include "bu/app.h"
 #include "bu/dylib.h"
 #include "bu/file.h"
 #include "bu/vls.h"
-
-#include <algorithm>
-#include <map>
-#include <set>
-#include <string>
 
 #include "./include/private.h"
 
