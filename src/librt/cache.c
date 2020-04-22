@@ -35,7 +35,7 @@
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h> /* for mkdir */
 #endif
-#include <lz4.h>
+#include "lz4.h"
 
 #include "bnetwork.h"
 
