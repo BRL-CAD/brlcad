@@ -225,7 +225,7 @@ fb_totally_numeric(const char *s)
 struct fb *
 fb_open(const char *file, int width, int height)
 {
-    static const char *priority_list[] = {"osgl", "wgl", "ogl", "X", "tk", "nu"};
+    static const char *priority_list[] = {"/dev/osgl", "/dev/wgl", "/dev/ogl", "/dev/X", "/dev/tk", "nu"};
     register struct fb *ifp;
     int i;
     const char *b;
@@ -256,6 +256,7 @@ fb_open(const char *file, int width, int height)
 		}
 		const struct fb *f = f_it->second;
 		*ifp->i = *(f->i);        /* struct copy */
+		file = ifp->i->if_name;
 		goto found_interface;
 	    }
 
