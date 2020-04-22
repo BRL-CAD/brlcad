@@ -202,7 +202,6 @@ fb_put_platform_specific(struct fb_platform_specific *fb_p)
     fb_log("\"%s\"(%d) : allocation of %lu bytes failed.\n",    \
            __FILE__, __LINE__, _bytes_)
 
-#ifdef IF_REMOTE
 /**
  * True if the non-null string s is all digits
  */
@@ -220,7 +219,6 @@ fb_totally_numeric(const char *s)
 
     return 1;
 }
-#endif
 
 struct fb *
 fb_open(const char *file, int width, int height)
@@ -291,14 +289,12 @@ fb_open(const char *file, int width, int height)
         return FB_NULL;
     }
 
-#ifdef IF_REMOTE
     if (fb_totally_numeric(file) || strchr(file, ':') != NULL) {
         /* We have a remote file name of the form <host>:<file>
          * or a port number (which assumes localhost) */
         *ifp->i = *remote_interface.i;
         goto found_interface;
     }
-#endif /* IF_REMOTE */
 
     /* Assume it's a disk file */
     if (_fb_disk_enable) {
@@ -354,11 +350,10 @@ fb_genhelp(void)
     }
 
     /* Print the ones not in the device list */
-#ifdef IF_REMOTE
     fb_log("%-12s  %s\n",
            remote_interface.i->if_name,
            remote_interface.i->if_type);
-#endif
+
     if (_fb_disk_enable) {
         fb_log("%-12s  %s\n",
                disk_interface.i->if_name,

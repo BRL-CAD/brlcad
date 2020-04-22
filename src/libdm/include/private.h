@@ -199,9 +199,8 @@ FB_EXPORT extern struct fb tk_interface;
 #ifdef IF_QT
 FB_EXPORT extern struct fb qt_interface;
 #endif
-#ifdef IF_REMOTE
+
 FB_EXPORT extern struct fb remote_interface; /* not in list[] */
-#endif
 
 /* Always included */
 FB_EXPORT extern struct fb debug_interface, disk_interface, stk_interface;

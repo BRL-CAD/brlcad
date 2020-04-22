@@ -24,106 +24,38 @@ BRLCAD_LIB_INCLUDE_DIRS(dm DM_INCLUDE_DIRS DM_LOCAL_INCLUDE_DIRS)
 add_subdirectory(plot)
 add_subdirectory(txt)
 
+# We no longer use these in libdm, but MGED hasn't caught up yet...
+set(libdm_DEFINES "")
+
 if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
   add_subdirectory(glx)
+  list(APPEND libdm_DEFINES DM_OGL IF_OGL)
 endif(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
 if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
   add_subdirectory(X)
+  list(APPEND libdm_DEFINES DM_X IF_X)
 endif(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
 if(WIN32 AND BRLCAD_ENABLE_OPENGL)
   add_subdirectory(wgl)
+  list(APPEND libdm_DEFINES DM_WGL IF_WGL)
 endif(WIN32 AND BRLCAD_ENABLE_OPENGL)
 if(BRLCAD_ENABLE_TK AND NOT WIN32)
   add_subdirectory(tk)
+  list(APPEND libdm_DEFINES DM_TK IF_TK)
 endif(BRLCAD_ENABLE_TK AND NOT WIN32)
 if(BRLCAD_ENABLE_OSG AND BRLCAD_ENABLE_TK)
   add_subdirectory(osgl)
+  list(APPEND libdm_DEFINES DM_OSGL IF_OSGL)
 endif(BRLCAD_ENABLE_OSG AND BRLCAD_ENABLE_TK)
 if(BRLCAD_ENABLE_QT)
   add_subdirectory(qt)
-endif(BRLCAD_ENABLE_QT)
-
-# Initialize libdm_DEFINES in case of reconfiguration
-set(libdm_DEFINES "")
-
-# Set libdm compilation definitions
-get_property(libdm_DEFINES GLOBAL PROPERTY libdm_DEFINES)
-# Add the individual OS specific files and definitions
-if(WIN32 AND BRLCAD_ENABLE_OPENGL)
-  list(APPEND libdm_DEFINES DM_WGL IF_WGL)
-  set(dmw32_srcs wgl/if_wgl.c)
-  set(DM_EXTRA_LIBS ${DM_EXTRA_LIBS} ${OPENGL_LIBRARIES})
-  set_property(SOURCE wgl/dm-wgl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
-  set_property(SOURCE wgl/if_wgl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
-endif(WIN32 AND BRLCAD_ENABLE_OPENGL)
-
-if(BRLCAD_ENABLE_X11)
-  set(DM_X_LIBS ${X11_LIBRARIES})
-endif(BRLCAD_ENABLE_X11)
-
-if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
-  list(APPEND libdm_DEFINES DM_X IF_X)
-  set(dmx11_srcs X/if_X24.c X/color.c)
-  set(DM_EXTRA_LIBS ${DM_EXTRA_LIBS} ${X11_LIBRARIES})
-  set_property(SOURCE X/dm-X.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
-  set_property(SOURCE X/if_X24.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
-endif(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
-
-if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
-  list(APPEND libdm_DEFINES DM_OGL IF_OGL)
-  set(dmogl_srcs glx/if_ogl.c)
-  set(DM_EXTRA_LIBS ${DM_EXTRA_LIBS} ${OPENGL_LIBRARIES})
-  set_property(SOURCE glx/dm-ogl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
-  set_property(SOURCE glx/if_ogl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
-endif(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
-
-if(BRLCAD_ENABLE_TK AND NOT WIN32)
-  list(APPEND libdm_DEFINES DM_TK IF_TK)
-  set(DM_EXTRA_LIBS ${DM_EXTRA_LIBS} ${TCL_LIBRARY} ${TK_LIBRARY})
-  set(dmtk_srcs tk/if_tk.c)
-  set_property(SOURCE tk/dm-tk.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
-  set_property(SOURCE tk/if_tk.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
-endif(BRLCAD_ENABLE_TK AND NOT WIN32)
-
-if(BRLCAD_ENABLE_QT)
-  CHECK_CXX_FLAG(Wno-float-equal)
-
   list(APPEND libdm_DEFINES DM_QT IF_QT)
-  set(dmqt_srcs qt/if_qt.cpp)
-  set_property(SOURCE qt/if_qt.cpp APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
-  set(CMAKE_AUTOMOC ON)
-  set(CMAKE_INCLUDE_CURRENT_DIR ON)
-  add_definitions(${Qt5Widgets_DEFINITIONS})
-  set(DM_EXTRA_LIBS ${DM_EXTRA_LIBS} ${Qt5Widgets_LIBRARIES})
 endif(BRLCAD_ENABLE_QT)
 
-add_definitions(
-  -DIF_REMOTE
-  -DIF_AB
-  )
-if(BRLCAD_ENABLE_OSG AND BRLCAD_ENABLE_TK)
-  list(APPEND libdm_DEFINES DM_OSGL IF_OSGL)
-  set(dmosg_srcs osgl/if_osgl.cpp)
-  set_property(SOURCE osgl/if_osgl.cpp APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
-  set(OSG_LIBRARIES
-    ${OPENGL_LIBRARIES}
-    ${OSG_LIBRARY}
-    ${OSGTEXT_LIBRARY}
-    ${OSGVIEWER_LIBRARY}
-    )
-  set(DM_EXTRA_LIBS ${DM_EXTRA_LIBS} ${OSG_LIBRARIES})
-endif(BRLCAD_ENABLE_OSG AND BRLCAD_ENABLE_TK)
-
-
+# put the defines where MGED's build can find them...
 set_property(GLOBAL PROPERTY libdm_DEFINES "${libdm_DEFINES}")
 
 set(LIBDM_SRCS
-  ${dmx11_srcs}
-  ${dmw32_srcs}
-  ${dmogl_srcs}
-  ${dmosg_srcs}
-  ${dmtk_srcs}
-  ${dmqt_srcs}
   null/dm-Null.c
   null/if_null.c
   txt/if_debug.c
@@ -158,7 +90,7 @@ set(LIBDM_SRCS
   )
 set_property(SOURCE dm_obj.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 set_property(SOURCE dm_init.cpp APPEND PROPERTY COMPILE_DEFINITIONS "DM_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\"")
-BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "librt;libbu;libpkg;${DM_EXTRA_LIBS};${PNG_LIBRARIES}")
+BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "librt;libbu;libpkg;${TCL_LIBRARY};${TK_LIBRARY};${OPENGL_LIBRARIES};${PNG_LIBRARIES}")
 set_target_properties(libdm PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 if(BRLCAD_ENABLE_OSG)
