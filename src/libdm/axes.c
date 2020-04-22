@@ -28,11 +28,6 @@
 #include "common.h"
 
 #include <math.h>
-
-#ifdef HAVE_GL_GL_H
-#  include <GL/gl.h>
-#endif
-
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
