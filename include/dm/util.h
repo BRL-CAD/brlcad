@@ -43,6 +43,9 @@ DM_EXPORT int drawLines3D(struct dm *dmp, int npoints, point_t *points, int lfla
 
 DM_EXPORT void flip_display_image_vertically(unsigned char *image, size_t width, size_t height);
 
+
+DM_EXPORT extern int _fb_disk_enable;
+
 DM_EXPORT int fb_sim_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom);
 
 DM_EXPORT int fb_sim_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom);

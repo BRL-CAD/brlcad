@@ -159,26 +159,10 @@ struct modifiable_ogl_vars {
 __BEGIN_DECLS
 
 int
-drawLine3D(struct dm *dmp, point_t pt1, point_t pt2, const char *log_bu, float *wireColor);
-
-int
-drawLines3D(struct dm *dmp, int npoints, point_t *points, int sflag, const char *log_bu, float *wireColor);
-
-int
 drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2, const char *log_bu);
 
 int
 draw_Line3D(struct dm *dmp, point_t pt1, point_t pt2);
-
-void
-flip_display_image_vertically(unsigned char *image, size_t width, size_t height);
-
-void
-dm_generic_hook(const struct bu_structparse *sdp,
-	const char *name,
-	void *base,
-	const char *value,
-	void *data);
 
 /* declare all the possible interfaces */
 #ifdef IF_X
@@ -264,21 +248,8 @@ struct fb_clip {
     double obottom;
 };
 
-/*
- * Some functions and variables we couldn't hide.
- * Not for general consumption.
- */
-FB_EXPORT extern int _fb_disk_enable;
-FB_EXPORT extern int fb_sim_readrect(struct fb *ifp, int xmin, int ymin, int _width, int _height, unsigned char *pp);
-FB_EXPORT extern int fb_sim_writerect(struct fb *ifp, int xmin, int ymin, int _width, int _height, const unsigned char *pp);
-FB_EXPORT extern int fb_sim_bwreadrect(struct fb *ifp, int xmin, int ymin, int _width, int _height, unsigned char *pp);
-FB_EXPORT extern int fb_sim_bwwriterect(struct fb *ifp, int xmin, int ymin, int _width, int _height, const unsigned char *pp);
-FB_EXPORT extern int fb_sim_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom);
-FB_EXPORT extern int fb_sim_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xzoom, int *yzoom);
-FB_EXPORT extern int fb_sim_cursor(struct fb *ifp, int mode, int x, int y);
-FB_EXPORT extern int fb_sim_getcursor(struct fb *ifp, int *mode, int *x, int *y);
-
-
+DM_EXPORT extern int fb_sim_writerect(struct fb *ifp, int xmin, int ymin, int _width, int _height, const unsigned char *pp);
+DM_EXPORT extern int fb_sim_bwwriterect(struct fb *ifp, int xmin, int ymin, int _width, int _height, const unsigned char *pp);
 
 __END_DECLS
 
