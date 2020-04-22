@@ -71,7 +71,6 @@ HIDDEN void fb_clipper(struct fb *ifp);
 HIDDEN int wgl_getmem(struct fb *ifp);
 HIDDEN void backbuffer_to_screen(struct fb *ifp, int one_y);
 HIDDEN void wgl_cminit(struct fb *ifp);
-HIDDEN int wgl_choose_visual(struct fb *ifp);
 HIDDEN int is_linear_cmap(struct fb *ifp);
 
 HIDDEN int wgl_nwindows = 0; 	/* number of open windows */
@@ -460,8 +459,77 @@ MainWndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam)
     return 1;
 }
 
+/*
+ * Select an appropriate visual, and set flags.
+ *
+ * The user requires support for:
+ * -OpenGL rendering in RGBA mode
+ *
+ * The user may desire support for:
+ * -a single-buffered OpenGL context
+ * -a double-buffered OpenGL context
+ * -hardware colormapping (DirectColor)
+ *
+ * We first try to satisfy all requirements and desires. If that
+ * fails, we remove the desires one at a time until we succeed or
+ * until only requirements are left. If at any stage more than one
+ * visual meets the current criteria, the visual with the greatest
+ * depth is chosen.
+ *
+ * The following flags are set:
+ * WIN(ifp)->mi_doublebuffer
+ * WGL(ifp)->soft_cmap_flag
+ *
+ * Return 0 on failure.
+ */
+static int
+wgl_choose_visual(struct fb *ifp)
+{
+	int iPixelFormat;
+	PIXELFORMATDESCRIPTOR pfd;
+	BOOL good;
 
-HIDDEN int
+	iPixelFormat = GetPixelFormat(WGL(ifp)->hdc);
+	pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
+	pfd.nVersion = 1;
+	pfd.dwFlags = PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER | PFD_TYPE_RGBA | PFD_STEREO;
+	pfd.iPixelType = PFD_TYPE_RGBA;
+	pfd.cColorBits = 24;
+	pfd.cRedBits = 0;
+	pfd.cRedShift = 0;
+	pfd.cGreenBits = 0;
+	pfd.cGreenShift = 0;
+	pfd.cBlueBits = 0;
+	pfd.cBlueShift = 0;
+	pfd.cAlphaBits = 0;
+	pfd.cAlphaShift = 0;
+	pfd.cAccumBits = 0;
+	pfd.cAccumRedBits = 0;
+	pfd.cAccumGreenBits = 0;
+	pfd.cAccumBlueBits = 0;
+	pfd.cAccumAlphaBits = 0;
+	pfd.cDepthBits = 32;
+	pfd.cStencilBits = 0;
+	pfd.cAuxBuffers = 0;
+	pfd.iLayerType = PFD_MAIN_PLANE;
+	pfd.bReserved = 0;
+	pfd.dwLayerMask = 0;
+	pfd.dwVisibleMask = 0;
+	pfd.dwDamageMask = 0;
+
+	iPixelFormat = ChoosePixelFormat(WGL(ifp)->hdc, &pfd);
+	good = SetPixelFormat(WGL(ifp)->hdc, iPixelFormat, &pfd);
+
+	WIN(ifp)->mi_doublebuffer = 1;
+	WGL(ifp)->soft_cmap_flag = 1;
+
+	if (good)
+		return 1;
+	return 0;
+}
+
+
+static int
 wgl_open(struct fb *ifp, const char *file, int width, int height)
 {
     static char title[128];
@@ -825,7 +893,7 @@ wgl_poll(struct fb *ifp)
 }
 
 
-HIDDEN int
+static int
 wgl_close(struct fb *ifp)
 {
 
@@ -1867,74 +1935,6 @@ backbuffer_to_screen(struct fb *ifp, int one_y)
 }
 
 
-/*
- * Select an appropriate visual, and set flags.
- *
- * The user requires support for:
- * -OpenGL rendering in RGBA mode
- *
- * The user may desire support for:
- * -a single-buffered OpenGL context
- * -a double-buffered OpenGL context
- * -hardware colormapping (DirectColor)
- *
- * We first try to satisfy all requirements and desires. If that
- * fails, we remove the desires one at a time until we succeed or
- * until only requirements are left. If at any stage more than one
- * visual meets the current criteria, the visual with the greatest
- * depth is chosen.
- *
- * The following flags are set:
- * WIN(ifp)->mi_doublebuffer
- * WGL(ifp)->soft_cmap_flag
- *
- * Return 0 on failure.
- */
-HIDDEN int
-wgl_choose_visual(struct fb *ifp)
-{
-    int iPixelFormat;
-    PIXELFORMATDESCRIPTOR pfd;
-    BOOL good;
-
-    iPixelFormat  = GetPixelFormat(WGL(ifp)->hdc);
-    pfd.nSize = sizeof(PIXELFORMATDESCRIPTOR);
-    pfd.nVersion = 1;
-    pfd.dwFlags =  PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER | PFD_TYPE_RGBA | PFD_STEREO;
-    pfd.iPixelType = PFD_TYPE_RGBA;
-    pfd.cColorBits = 24;
-    pfd.cRedBits = 0;
-    pfd.cRedShift = 0;
-    pfd.cGreenBits = 0;
-    pfd.cGreenShift = 0;
-    pfd.cBlueBits = 0;
-    pfd.cBlueShift = 0;
-    pfd.cAlphaBits = 0;
-    pfd.cAlphaShift = 0;
-    pfd.cAccumBits = 0;
-    pfd.cAccumRedBits = 0;
-    pfd.cAccumGreenBits = 0;
-    pfd.cAccumBlueBits = 0;
-    pfd.cAccumAlphaBits = 0;
-    pfd.cDepthBits = 32;
-    pfd.cStencilBits = 0;
-    pfd.cAuxBuffers = 0;
-    pfd.iLayerType = PFD_MAIN_PLANE;
-    pfd.bReserved = 0;
-    pfd.dwLayerMask = 0;
-    pfd.dwVisibleMask = 0;
-    pfd.dwDamageMask = 0;
-
-    iPixelFormat = ChoosePixelFormat(WGL(ifp)->hdc, &pfd);
-    good = SetPixelFormat(WGL(ifp)->hdc, iPixelFormat, &pfd);
-
-    WIN(ifp)->mi_doublebuffer = 1;
-    WGL(ifp)->soft_cmap_flag = 1;
-
-    if (good)
-	return 1;
-    return 0;
-}
 
 
 int
