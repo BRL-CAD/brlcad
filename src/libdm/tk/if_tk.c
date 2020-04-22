@@ -28,8 +28,6 @@
 
 #include "common.h"
 
-#ifdef IF_TK
-
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
@@ -645,13 +643,6 @@ DM_EXPORT const struct fb_plugin *fb_plugin_info()
     return &finfo;
 }
 #endif
-
-#else
-
-/* quell empty-compilation unit warnings */
-static const int unused = 0;
-
-#endif /* IF_TK */
 
 /*
  * Local Variables:

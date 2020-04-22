@@ -23,8 +23,6 @@
 #include "common.h"
 #include <locale.h>
 
-#ifdef DM_QT
-
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
@@ -1420,7 +1418,6 @@ extern "C" {
 }
 
 
-#endif /* DM_QT */
 /*
  * Local Variables:
  * mode: C++

@@ -28,7 +28,6 @@
 
 #include "vmath.h"
 
-#ifdef DM_QT
 #  include <QApplication>
 #  include <QPainter>
 #  include <QWindow>
@@ -91,9 +90,6 @@ struct qt_xvars {
     int devbuttonpress;
     int devbuttonrelease;
 };
-
-
-#endif /* DM_QT */
 
 #endif /* DM_QT_H */
 

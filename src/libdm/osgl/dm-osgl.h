@@ -26,8 +26,6 @@
 #ifndef DM_OSGL_H
 #define DM_OSGL_H
 
-#ifdef DM_OSGL
-
 #include "common.h"
 
 #include "bu/vls.h"
@@ -145,7 +143,6 @@ void osgl_fogHint(struct dm *dmp, int fastfog);
 
 __END_DECLS
 
-#endif /* DM_OSGL */
 #endif /* DM_OSGL_H */
 
 /** @} */

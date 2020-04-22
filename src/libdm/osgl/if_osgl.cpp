@@ -1505,6 +1505,7 @@ struct fb_impl osgl_interface_impl =
     {0}  /* u6 */
 };
 
+extern "C" {
 struct fb osgl_interface = { &osgl_interface_impl };
 
 #ifdef DM_PLUGIN
@@ -1513,6 +1514,7 @@ static const struct fb_plugin finfo = { &osgl_interface };
 DM_EXPORT const struct fb_plugin *fb_plugin_info()
 {
     return &finfo;
+}
 }
 #endif
 

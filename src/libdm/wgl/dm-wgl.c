@@ -25,8 +25,6 @@
 
 #include "common.h"
 
-#ifdef DM_WGL
-
 #include "tk.h"
 /* needed for TkWinGetHWND() */
 #include "TkWinInt.h"
@@ -2668,9 +2666,6 @@ DM_EXPORT const struct dm_plugin *dm_plugin_info()
     return &pinfo;
 }
 #endif
-
-
-#endif /* DM_WGL */
 
 /*
  * Local Variables:

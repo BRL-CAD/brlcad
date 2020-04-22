@@ -25,8 +25,6 @@
 
 #include "common.h"
 
-#ifdef DM_OGL
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
@@ -3097,8 +3095,6 @@ DM_EXPORT const struct dm_plugin *dm_plugin_info()
     return &pinfo;
 }
 #endif
-
-#endif /* DM_OGL */
 
 /*
  * Local Variables:

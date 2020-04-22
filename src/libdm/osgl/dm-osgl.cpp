@@ -25,8 +25,6 @@
 
 #include "common.h"
 
-#ifdef DM_OSGL
-
 //#define OSG_VIEWER_TEST 1
 
 #include <string.h>
@@ -2262,7 +2260,7 @@ osgl_getDisplayImage(struct dm *dmp, unsigned char **image)
     unsigned int green_mask = 0x00ff0000;
     unsigned int blue_mask = 0x0000ff00;
     int h, w;
-#if defined(DM_WGL)
+#ifdef _WIN32
     unsigned int alpha_mask = 0x000000ff;
     int big_endian;
     int swap_bytes;
@@ -2283,7 +2281,7 @@ osgl_getDisplayImage(struct dm *dmp, unsigned char **image)
 
     {
 	glReadBuffer(GL_FRONT);
-#if defined(DM_WGL)
+#ifdef _WIN32
 	/* XXX GL_UNSIGNED_INT_8_8_8_8 is currently not
 	 * available on windows.  Need to update when it
 	 * becomes available.
@@ -2303,7 +2301,7 @@ osgl_getDisplayImage(struct dm *dmp, unsigned char **image)
 		int i_h_inv = (height - h - 1)*width + w;
 		int j = i*bytes_per_pixel;
 		unsigned char *value = (unsigned char *)(idata + j);
-#if defined(DM_WGL)
+#ifdef _WIN32
 		unsigned char alpha;
 #endif
 
@@ -2313,7 +2311,7 @@ osgl_getDisplayImage(struct dm *dmp, unsigned char **image)
 		value[1] = (pixel & green_mask) >> 16;
 		value[2] = (pixel & blue_mask) >> 8;
 
-#if defined(DM_WGL)
+#ifdef _WIN32
 		alpha = pixel & alpha_mask;
 		if (swap_bytes) {
 		    unsigned char tmp_byte;
@@ -2729,7 +2727,6 @@ extern "C" {
     }
 #endif
 }
-#endif /* DM_OSGL */
 
 /*
  * Local Variables:

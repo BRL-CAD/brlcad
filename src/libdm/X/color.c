@@ -23,8 +23,6 @@
 
 #include "common.h"
 
-#ifdef DM_X
-
 #include <stdio.h>
 #include <string.h>
 
@@ -145,9 +143,6 @@ X_allocate_color_cube(Display *dpy, Colormap cmap, long unsigned int *pixels, in
 		}
 	    }
 }
-
-
-#endif /* DM_X */
 
 /*
  * Local Variables:

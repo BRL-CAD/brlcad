@@ -25,8 +25,6 @@
 
 #include "common.h"
 
-#ifdef DM_X
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
@@ -2166,8 +2164,6 @@ DM_EXPORT const struct dm_plugin *dm_plugin_info()
  * of class for the benefit of avoiding C++ name
  * collisions until the end of this file */
 #undef class
-
-#endif /* DM_X */
 
 /*
  * Local Variables:

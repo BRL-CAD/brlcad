@@ -32,8 +32,6 @@
 
 #include "common.h"
 
-#ifdef IF_X
-
 #include <errno.h>
 #include <stdlib.h>
 #include <time.h>
@@ -3558,13 +3556,6 @@ DM_EXPORT const struct fb_plugin *fb_plugin_info()
  * of class for the benefit of avoiding C++ name
  * collisions until the end of this file */
 #undef class
-
-#else
-
-/* quell empty-compilation unit warnings */
-static const int unused = 0;
-
-#endif /* IF_X */
 
 /*
  * Local Variables:

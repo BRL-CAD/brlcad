@@ -25,8 +25,6 @@
 
 #include "common.h"
 
-#ifdef DM_TK
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <limits.h>
@@ -1212,10 +1210,6 @@ DM_EXPORT const struct dm_plugin *dm_plugin_info()
     return &pinfo;
 }
 #endif
-
-
-
-#endif /* DM_TK */
 
 /*
  * Local Variables:
