@@ -161,34 +161,11 @@ __BEGIN_DECLS
 int
 drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2, const char *log_bu);
 
-int
-draw_Line3D(struct dm *dmp, point_t pt1, point_t pt2);
-
-/* declare all the possible interfaces */
-#ifdef IF_X
-FB_EXPORT extern struct fb X24_interface;
-#endif
-#ifdef IF_OGL
-FB_EXPORT extern struct fb ogl_interface;
-#endif
-#ifdef IF_OSGL
-FB_EXPORT extern struct fb osgl_interface;
-#endif
-#ifdef IF_WGL
-FB_EXPORT extern struct fb wgl_interface;
-#endif
-#ifdef IF_TK
-FB_EXPORT extern struct fb tk_interface;
-#endif
-#ifdef IF_QT
-FB_EXPORT extern struct fb qt_interface;
-#endif
-
-FB_EXPORT extern struct fb remote_interface; /* not in list[] */
+DM_EXPORT extern struct fb remote_interface; /* not in list[] */
 
 /* Always included */
-FB_EXPORT extern struct fb debug_interface, disk_interface, stk_interface;
-FB_EXPORT extern struct fb memory_interface, fb_null_interface;
+DM_EXPORT extern struct fb debug_interface, disk_interface, stk_interface;
+DM_EXPORT extern struct fb memory_interface, fb_null_interface;
 
 
 /* Shared memory (shmget et. al.) key common to multiple framebuffers */
