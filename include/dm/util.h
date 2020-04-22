@@ -31,9 +31,13 @@
 
 __BEGIN_DECLS
 
+DM_EXPORT void dm_generic_hook(const struct bu_structparse *sdp, const char *name, void *base, const char *value, void *data);
+
 DM_EXPORT int drawLine3D(struct dm *dmp, point_t pt1, point_t pt2, const char *log_bu, float *wireColor);
 
 DM_EXPORT int draw_Line3D(struct dm *dmp, point_t pt1, point_t pt2);
+
+DM_EXPORT void flip_display_image_vertically(unsigned char *image, size_t width, size_t height);
 
 DM_EXPORT int fb_sim_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom);
 
