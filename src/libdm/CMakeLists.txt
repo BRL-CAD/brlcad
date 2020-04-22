@@ -69,7 +69,6 @@ set(LIBDM_SRCS
   dm_util.c
   fb_generic.c
   fb_log.c
-  fb_obj.c
   fb_paged_io.c
   fb_rect.c
   fb_util.c
