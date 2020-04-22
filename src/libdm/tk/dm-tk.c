@@ -1164,7 +1164,7 @@ struct dm_impl dm_tk_impl = {
     0,				/* no stereo */
     PLOTBOUND,			/* zoom-in limit */
     1,				/* bound flag */
-    "tk",
+    "Tk",
     "Tcl/Tk Abstraction Layer",
     1,
     0,

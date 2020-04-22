@@ -1,5 +1,8 @@
 #include "common.h"
-#include <string.h>
+
+#include <algorithm>
+#include <map>
+#include <string>
 
 #include "bu/app.h"
 #include "bu/dylib.h"
@@ -21,7 +24,9 @@ dm_open(void *interp, const char *type, int argc, const char *argv[])
 	return dm_null.i->dm_open(interp, argc, argv);
     }
     std::map<std::string, const struct dm *> *dmb = (std::map<std::string, const struct dm *> *)dm_backends;
-    std::map<std::string, const struct dm *>::iterator d_it = dmb->find(std::string(type));
+    std::string key(type);
+    std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c){ return std::tolower(c); });
+    std::map<std::string, const struct dm *>::iterator d_it = dmb->find(key);
     if (d_it == dmb->end()) {
 	return DM_NULL;
     }
@@ -72,7 +77,9 @@ dm_list_types(const char *separator)
     int i = 0;
     const char *b = priority_list[i];
     while (!BU_STR_EQUAL(b, "nu")) {
-	std::map<std::string, const struct dm *>::iterator d_it = dmb->find(std::string(b));
+	std::string key(b);
+	std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c){ return std::tolower(c); });
+	std::map<std::string, const struct dm *>::iterator d_it = dmb->find(key);
 	if (d_it == dmb->end()) {
 	    i++;
 	    b = priority_list[i];
@@ -98,7 +105,9 @@ dm_validXType(const char *dpy_string, const char *name)
 	return 1;
     }
     std::map<std::string, const struct dm *> *dmb = (std::map<std::string, const struct dm *> *)dm_backends;
-    std::map<std::string, const struct dm *>::iterator d_it = dmb->find(std::string(name));
+    std::string key(name);
+    std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c){ return std::tolower(c); });
+    std::map<std::string, const struct dm *>::iterator d_it = dmb->find(key);
     if (d_it == dmb->end()) {
 	return 0;
     }
@@ -130,7 +139,9 @@ dm_bestXType(const char *dpy_string)
     int i = 0;
     const char *b = priority_list[i];
     while (!BU_STR_EQUAL(b, "nu")) {
-	std::map<std::string, const struct dm *>::iterator d_it = dmb->find(std::string(b));
+	std::string key(b);
+	std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c){ return std::tolower(c); });
+	std::map<std::string, const struct dm *>::iterator d_it = dmb->find(key);
 	if (d_it == dmb->end()) {
 	    i++;
 	    b = priority_list[i];
@@ -164,7 +175,9 @@ dm_default_type()
     int i = 0;
     const char *b = priority_list[i];
     while (!BU_STR_EQUAL(b, "nu")) {
-	std::map<std::string, const struct dm *>::iterator d_it = dmb->find(std::string(b));
+	std::string key(b);
+	std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c){ return std::tolower(c); });
+	std::map<std::string, const struct dm *>::iterator d_it = dmb->find(key);
 	if (d_it == dmb->end()) {
 	    i++;
 	    b = priority_list[i];

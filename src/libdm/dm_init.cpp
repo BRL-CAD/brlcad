@@ -33,6 +33,7 @@
 #include "bu/file.h"
 #include "bu/vls.h"
 
+#include <algorithm>
 #include <map>
 #include <set>
 #include <string>
@@ -105,6 +106,7 @@ libdm_init(void)
 	    const struct dm *d = plugin->p;
 	    const char *dname = dm_get_name(d);
 	    std::string key(dname);
+	    std::transform(key.begin(), key.end(), key.begin(), [](unsigned char c){ return std::tolower(c); });
 	    if (dm_map.find(key) != dm_map.end()) {
 		bu_vls_printf(dm_init_msg_str, "Warning - file '%s' provides backend '%s' but that backend has already been loaded, skipping\n", pfile, dname);
 		bu_dlclose(dl_handle);
