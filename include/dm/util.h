@@ -37,6 +37,8 @@ DM_EXPORT int drawLine3D(struct dm *dmp, point_t pt1, point_t pt2, const char *l
 
 DM_EXPORT int draw_Line3D(struct dm *dmp, point_t pt1, point_t pt2);
 
+DM_EXPORT int drawLines3D(struct dm *dmp, int npoints, point_t *points, int lflag, const char *log_bu, float *wireColor);
+
 DM_EXPORT void flip_display_image_vertically(unsigned char *image, size_t width, size_t height);
 
 DM_EXPORT int fb_sim_view(struct fb *ifp, int xcenter, int ycenter, int xzoom, int yzoom);
@@ -46,6 +48,10 @@ DM_EXPORT int fb_sim_getview(struct fb *ifp, int *xcenter, int *ycenter, int *xz
 DM_EXPORT int fb_sim_cursor(struct fb *ifp, int mode, int x, int y);
 
 DM_EXPORT int fb_sim_getcursor(struct fb *ifp, int *mode, int *x, int *y);
+
+DM_EXPORT int fb_sim_readrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp);
+
+DM_EXPORT int fb_sim_bwreadrect(struct fb *ifp, int xmin, int ymin, int width, int height, unsigned char *pp);
 
 __END_DECLS
 
