@@ -1,3 +1,21 @@
+2020-04-22 20:01  starseeker
+
+	* [r75550] ., src/libged/draw.c, src/libged/vdraw.c,
+	  src/mged/dodraw.c:
+	  Cherrypick r75549 - fix for nirt, rtcheck, etc. vlist drawing
+	  behavior
+
+2020-04-22 15:53  starseeker
+
+	* [r75541] regress/CMakeLists.txt:
+	  Add dsp products to the regression cleaning list
+
+2020-04-22 14:25  starseeker
+
+	* [r75532] ChangeLog:
+	  update changelog
+
+
 2020-04-22 14:25  starseeker
 
 	* [r75531] NEWS:
