@@ -46,6 +46,15 @@ dm_list_types(const char *separator)
 	bu_vls_sprintf(&sep, "%s", separator);
     }
 
+    // TODO - the first method below is independent of specific backends,
+    // and preferable for that reason.  Unfortunately, Archer is calling
+    // dm_list_tcl, which calls this function, and implicitly expects the
+    // returned list to be in priority order - it takes the first one
+    // assuming it is the "best".  What should happen is that Archer should
+    // encode it's own preferences at the app level, but for the moment
+    // respect the priority ordering in the returned list to keep Archer
+    // working
+#if 0
     std::map<std::string, const struct dm *> *dmb = (std::map<std::string, const struct dm *> *)dm_backends;
     std::map<std::string, const struct dm *>::iterator d_it;
     for (d_it = dmb->begin(); d_it != dmb->end(); d_it++) {
@@ -56,7 +65,26 @@ dm_list_types(const char *separator)
     }
     if (strlen(bu_vls_cstr(list)) > 0) bu_vls_printf(list, "%s", bu_vls_cstr(&sep));
     bu_vls_printf(list, "nu");
+#else
+    static const char *priority_list[] = {"osgl", "wgl", "ogl", "X", "tk", "nu"};
+    std::map<std::string, const struct dm *> *dmb = (std::map<std::string, const struct dm *> *)dm_backends;
 
+    int i = 0;
+    const char *b = priority_list[i];
+    while (!BU_STR_EQUAL(b, "nu")) {
+	std::map<std::string, const struct dm *>::iterator d_it = dmb->find(std::string(b));
+	if (d_it == dmb->end()) {
+	    i++;
+	    b = priority_list[i];
+	    continue;
+	}
+	const struct dm *d = d_it->second;
+	if (strlen(bu_vls_cstr(list)) > 0) bu_vls_printf(list, "%s", bu_vls_cstr(&sep));
+	bu_vls_printf(list, "%s", dm_get_name(d));
+	i++;
+	b = priority_list[i];
+    }
+#endif
     return list;
 }
 
