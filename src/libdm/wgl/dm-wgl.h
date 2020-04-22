@@ -46,6 +46,21 @@ __BEGIN_DECLS
 /* Map +/-2048 GED space into -1.0..+1.0 :: x/2048*/
 #define GED2IRIS(x)	(((float)(x))*0.00048828125)
 
+struct dm_wglvars {
+    Display *dpy;
+    Window win;
+    Tk_Window top;
+    Tk_Window xtkwin;
+    int depth;
+    Colormap cmap;
+    PIXELFORMATDESCRIPTOR *vip;
+    HFONT fontstruct;
+    HDC  hdc;      /* device context of device that OpenGL calls are to be drawn on */
+    int devmotionnotify;
+    int devbuttonpress;
+    int devbuttonrelease;
+};
+
 struct wgl_vars {
     HGLRC glxc;
     GLdouble faceplate_mat[16];
