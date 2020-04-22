@@ -29,6 +29,7 @@
 #include "common.h"
 
 #include "bu/vls.h"
+#include "dm.h"
 
 #ifdef __cplusplus
 #include <iostream>
