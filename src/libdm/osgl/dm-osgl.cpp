@@ -32,6 +32,21 @@
 #include <ctype.h>
 #include <math.h>
 
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic push
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#endif
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic ignored "-Wfloat-equal"
+#  pragma GCC diagnostic ignored "-Wdeprecated-copy"
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic ignored "-Wfloat-equal"
+#  pragma clang diagnostic ignored "-Wdeprecated-copy"
+#endif
+
 #include <osg/GraphicsContext>
 #include <osgViewer/Viewer>
 
@@ -39,6 +54,13 @@
 #  include <osgViewer/api/Win32/GraphicsWindowWin32>
 #else
 #  include <osgViewer/api/X11/GraphicsWindowX11>
+#endif
+
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic pop
 #endif
 
 #include "tcl.h"

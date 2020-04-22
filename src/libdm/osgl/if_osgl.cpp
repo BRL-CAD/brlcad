@@ -48,7 +48,9 @@ extern "C" {
 #include "../include/private.h"
 }
 
+extern "C" {
 extern struct fb osgl_interface;
+}
 
 #define DIRECT_COLOR_VISUAL_ALLOWED 0
 

@@ -70,6 +70,21 @@ extern "C" {
 }
 #endif
 
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic push
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#endif
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic ignored "-Wfloat-equal"
+#  pragma GCC diagnostic ignored "-Wdeprecated-copy"
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic ignored "-Wfloat-equal"
+#  pragma clang diagnostic ignored "-Wdeprecated-copy"
+#endif
+
 #ifdef __cplusplus
 #include <osg/GraphicsContext>
 #include <osgViewer/Viewer>
@@ -91,6 +106,15 @@ extern "C" {
 
 #include <iostream>
 #endif
+
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#endif
+
+
 
 struct osgl_fb_info {
     void *glc;
