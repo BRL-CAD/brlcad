@@ -25,6 +25,19 @@
  * methods for implementing an fbserv. This code was developed
  * in large part by modifying the stand-alone version of fbserv.
  *
+ * TODO - other than the backends themselves (which are now plugins
+ * and so relatively independent) fbserv is the last piece of the
+ * libdm/libfb stack making core use of Tcl.  Unlike the dm_obj,
+ * fb_obj and tcl files the use of Tcl here is an implmeentation
+ * detail of the functional purpose of the file rather than the
+ * primary purpose of the code, and as such this belongs in
+ * libdm rather than libtclcad.  That means we need to find a way
+ * to achieve the functionality present here without relying on
+ * Tcl/Tk - either by embedding the necessary logic in libbu (as
+ * was done with Tcl list parsing) or replacing the functionality
+ * with something that achieves the same goal.  Will have to see
+ * if there are any implicit requirements for the Tcl communication
+ * in calling codes as well.
  */
 /** @} */
 
