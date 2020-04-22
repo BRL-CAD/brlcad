@@ -1,3 +1,25 @@
+2020-04-22 14:25  starseeker
+
+	* [r75531] NEWS:
+	  Update release date
+
+2020-04-21 16:59  starseeker
+
+	* [r75497] ., src/tclscripts/checker/check.tcl:
+	  Cherrypick r75495 - Add a checkbutton to the overlap checker to
+	  toggle fullpath display
+
+2020-04-21 16:58  starseeker
+
+	* [r75496] ., src/tclscripts/checker/check.tcl:
+	  Cherrypick r75492 - restore overlap checker using full paths for
+	  drawing, subtraction and marks
+
+2020-04-21 11:00  starseeker
+
+	* [r75486] ChangeLog:
+	  Update ChangeLog
+
 2020-04-21 10:58  starseeker
 
 	* [r75485] NEWS:
