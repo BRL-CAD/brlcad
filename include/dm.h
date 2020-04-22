@@ -34,6 +34,7 @@
 #include "raytrace.h"
 
 #include "./dm/defines.h"
+#include "./dm/util.h"
 
 __BEGIN_DECLS
 
@@ -73,16 +74,6 @@ __BEGIN_DECLS
 struct dm_hook_data {
     void(*dm_hook)(const struct bu_structparse *, const char *, void *, const char *, void *);
     void *dmh_data;
-};
-
-/* The internals of the dm structure are hidden using the PImpl pattern*/
-struct dm_impl;
-struct dm {
-    struct dm_impl *i;
-};
-
-struct dm_plugin {
-    const struct dm * const p;
 };
 
 /* TODO - after plugins are established, these should be movable to

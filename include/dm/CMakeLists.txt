@@ -1,6 +1,7 @@
 set(dm_headers
   bview.h
   defines.h
+  util.h
   )
 BRLCAD_MANAGE_FILES(dm_headers ${INCLUDE_DIR}/brlcad/dm)
 

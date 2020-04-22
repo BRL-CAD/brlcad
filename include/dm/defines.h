@@ -22,6 +22,10 @@
 /** @file dm/defines.h
  *
  */
+
+#ifndef DM_DEFINES_H
+#define DM_DEFINES_H
+
 #ifndef DM_EXPORT
 #  if defined(DM_DLL_EXPORTS) && defined(DM_DLL_IMPORTS)
 #    error "Only DM_DLL_EXPORTS or DM_DLL_IMPORTS can be defined, not both."
@@ -45,6 +49,18 @@
 #    define FB_EXPORT
 #  endif
 #endif
+
+/* The internals of the dm structure are hidden using the PImpl pattern*/
+struct dm_impl;
+struct dm {
+    struct dm_impl *i;
+};
+
+struct dm_plugin {
+    const struct dm * const p;
+};
+
+#endif /* DM_DEFINES_H */
 
 /** @} */
 /*
