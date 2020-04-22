@@ -24,6 +24,9 @@
  */
 
 #include "common.h"
+
+#include "vmath.h"
+
 #include "./dm/defines.h"
 
 #ifndef DM_UTIL_H
@@ -42,7 +45,6 @@ DM_EXPORT int draw_Line3D(struct dm *dmp, point_t pt1, point_t pt2);
 DM_EXPORT int drawLines3D(struct dm *dmp, int npoints, point_t *points, int lflag, const char *log_bu, float *wireColor);
 
 DM_EXPORT void flip_display_image_vertically(unsigned char *image, size_t width, size_t height);
-
 
 DM_EXPORT extern int _fb_disk_enable;
 
