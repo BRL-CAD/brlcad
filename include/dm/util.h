@@ -33,6 +33,8 @@ __BEGIN_DECLS
 
 DM_EXPORT int drawLine3D(struct dm *dmp, point_t pt1, point_t pt2, const char *log_bu, float *wireColor);
 
+DM_EXPORT int draw_Line3D(struct dm *dmp, point_t pt1, point_t pt2);
+
 __END_DECLS
 
 #endif /* DM_UTIL_H */
