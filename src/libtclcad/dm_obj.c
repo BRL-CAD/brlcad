@@ -44,7 +44,7 @@
 #include "rt/geom.h"
 #include "rt/solid.h"
 #include "dm.h"
-#include "./include/private.h"
+#include "../libdm/include/private.h"
 
 /**
  *@brief

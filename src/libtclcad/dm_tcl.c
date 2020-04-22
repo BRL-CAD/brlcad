@@ -42,7 +42,7 @@
 #include "bu/log.h"
 #include "bu/vls.h"
 /* private headers */
-#include "./include/private.h"
+#include "../libdm/include/private.h"
 #include "brlcad_version.h"
 
 /* from libdm/query.c */
