@@ -61,6 +61,7 @@ CMakeModules/cmake_uninstall.cmake.in
 LICENSE.txt
 NEWS.txt
 PlatformSpecifics/Windows/OpenSceneGraphVersionInfo.rc.in
+PlatformSpecifics/Windows/OpenThreadsVersionInfo.rc.in
 README.md
 include/OpenThreads/Affinity
 include/OpenThreads/Atomic
