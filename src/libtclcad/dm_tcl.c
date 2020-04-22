@@ -41,6 +41,7 @@
 #include "bu/cmd.h"
 #include "bu/log.h"
 #include "bu/vls.h"
+#include "tclcad.h"
 /* private headers */
 #include "../libdm/include/private.h"
 #include "brlcad_version.h"

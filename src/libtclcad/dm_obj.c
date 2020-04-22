@@ -45,6 +45,7 @@
 #include "rt/solid.h"
 #include "dm.h"
 #include "../libdm/include/private.h"
+#include "tclcad.h"
 
 /**
  *@brief
