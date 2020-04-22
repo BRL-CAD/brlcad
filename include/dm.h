@@ -556,7 +556,7 @@ struct fbserv_client {
 
 struct fbserv_obj {
     struct fb *fbs_fbp;                        /**< @brief framebuffer pointer */
-    Tcl_Interp *fbs_interp;             /**< @brief tcl interpreter */
+    void *fbs_interp;             /**< @brief tcl interpreter */
     struct fbserv_listener fbs_listener;                /**< @brief data for listening */
     struct fbserv_client fbs_clients[MAX_CLIENTS];      /**< @brief connected clients */
     void (*fbs_callback)(void *clientData);             /**< @brief callback function */

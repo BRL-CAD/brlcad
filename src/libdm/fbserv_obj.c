@@ -81,7 +81,7 @@ drop_client(struct fbserv_obj *fbsp, int sub)
 #if defined(_WIN32) && !defined(__CYGWIN__)
 	Tcl_DeleteChannelHandler(fbsp->fbs_clients[sub].fbsc_chan, fbsp->fbs_clients[sub].fbsc_handler, (ClientData)fbsp->fbs_clients[sub].fbsc_fd);
 
-	Tcl_Close(fbsp->fbs_interp, fbsp->fbs_clients[sub].fbsc_chan);
+	Tcl_Close((Tcl_Interp *)fbsp->fbs_interp, fbsp->fbs_clients[sub].fbsc_chan);
 	fbsp->fbs_clients[sub].fbsc_chan = NULL;
 #else
 	Tcl_DeleteFileHandler(fbsp->fbs_clients[sub].fbsc_fd);
@@ -1020,12 +1020,12 @@ fbs_open(struct fbserv_obj *fbsp, int port)
 	 * Hang an unending listen for PKG connections
 	 */
 #if defined(_WIN32) && !defined(__CYGWIN__)
-	fbsp->fbs_listener.fbsl_chan = Tcl_OpenTcpServer(fbsp->fbs_interp, available_port, hostname, new_client_handler, (ClientData)&fbsp->fbs_listener);
+	fbsp->fbs_listener.fbsl_chan = Tcl_OpenTcpServer((Tcl_Interp *)fbsp->fbs_interp, available_port, hostname, new_client_handler, (ClientData)&fbsp->fbs_listener);
 	if (fbsp->fbs_listener.fbsl_chan == NULL) {
 	    /* This clobbers the result string which probably has junk
 	     * related to the failed open.
 	     */
-	    Tcl_DStringResult(fbsp->fbs_interp, &ds);
+	    Tcl_DStringResult((Tcl_Interp *)fbsp->fbs_interp, &ds);
 	} else {
 	    break;
 	}
@@ -1052,7 +1052,7 @@ fbs_open(struct fbserv_obj *fbsp, int port)
 
     if (failed) {
 	bu_vls_printf(&vls, "fbs_open: failed to hang a listen on ports %d - %d\n", port, available_port);
-	Tcl_AppendResult(fbsp->fbs_interp, bu_vls_addr(&vls), (char *)NULL);
+	Tcl_AppendResult((Tcl_Interp *)fbsp->fbs_interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
 	fbsp->fbs_listener.fbsl_port = -1;
@@ -1085,7 +1085,7 @@ fbs_close(struct fbserv_obj *fbsp)
     if (fbsp->fbs_listener.fbsl_chan != NULL) {
 	Tcl_ChannelProc *callback = (Tcl_ChannelProc *)new_client_handler;
 	Tcl_DeleteChannelHandler(fbsp->fbs_listener.fbsl_chan, callback, (ClientData)fbsp->fbs_listener.fbsl_fd);
-	Tcl_Close(fbsp->fbs_interp, fbsp->fbs_listener.fbsl_chan);
+	Tcl_Close((Tcl_Interp *)fbsp->fbs_interp, fbsp->fbs_listener.fbsl_chan);
 	fbsp->fbs_listener.fbsl_chan = NULL;
     }
 #else
