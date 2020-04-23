@@ -182,7 +182,7 @@ include_directories(
   ${TK_INCLUDE_PATH}
   ${ITCL_INCLUDE_PATH}
   ${ITK_INCLUDE_DIRS}
-  ${TK_X11_INCLUDE_DIRS}
+  ${X11_INCLUDE_DIRS}
   ${CMAKE_CURRENT_SOURCE_DIR}/../itcl/generic
   )
 
