@@ -372,6 +372,12 @@ endif(BRLCAD_UTAHRLE_BUILD)
 #                Tcl/Tk and related extensions
 ####################################################################
 
+# Make sure we actually look for these...
+set(TCL_TCLSH "")
+set(TCL_LIBRARY "")
+set(TK_WISH "")
+set(TK_LIBRARY "")
+
 set(tcl_DESCRIPTION "
 Option for enabling and disabling compilation of the Tcl library
 provided with BRL-CAD's source code.  Default is AUTO, responsive to
