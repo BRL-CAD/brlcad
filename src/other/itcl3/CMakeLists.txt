@@ -42,24 +42,7 @@ cmake_minimum_required(VERSION 3.1.3)
 # set CMake project name
 project(ITCL)
 
-if(NOT TCL_LIBRARY OR NOT TCL_INCLUDE_PATH)
-  find_package(TCL)
-endif(NOT TCL_LIBRARY OR NOT TCL_INCLUDE_PATH)
-
-if(NOT TCL_STUB_LIBRARY)
-  if(TARGET tclsh)
-    message(FATAL_ERROR "We're building tclsh, but TCL_STUB_LIBRARY isn't set - this is most likely due to an error in the build system logic.")
-  endif(TARGET tclsh)
-  if(NOT TCL_TCLSH)
-    find_program(TCL_TCLSH tclsh)
-  endif(NOT TCL_TCLSH)
-  if(NOT TCL_TCLSH)
-    message(FATAL_ERROR "itcl enabled, but tclsh is not available and TCL_STUB_LIBRARY is undefined.  Either specify the location of the tcl stub library (-DTCL_STUB_LIBRARY=/path/to/libtclstub86.a) or identify the location of tclsh (-DTCL_TCLSH=/path/to/tclsh)")
-  endif(NOT TCL_TCLSH)
-  get_filename_component(TCLSH_DIR "${TCL_TCLSH}" DIRECTORY)
-  get_filename_component(TCLSH_ROOT_DIR "${TCLSH_DIR}" DIRECTORY)
-  find_library(TCL_STUB_LIBRARY tclstub NAMES tclstub86 tclstub8.6 HINTS ${TCLSH_ROOT_DIR}/lib)
-endif(NOT TCL_STUB_LIBRARY)
+find_package(TCL)
 
 # version numbers
 set(ITCL_VERSION_MAJOR 3)
