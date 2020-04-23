@@ -279,69 +279,29 @@ set(FREETYPE_NO_DIST 1)
 THIRD_PARTY(freetype FREETYPE ft freetype_DESCRIPTION BRLCAD_LEVEL3 ALIASES ENABLE_FREETYPE REQUIRED_VARS "TEST_FONTCONFIG;BRLCAD_LEVEL3" FIND_NAME Freetype)
 if(BRLCAD_FREETYPE_BUILD)
   set(FREETYPE_LIBRARY freetype CACHE STRING "libfreetype" FORCE)
-  mark_as_advanced(FREETYPE_LIBRARY)
   set(FREETYPE_LIBRARIES "${FREETYPE_LIBRARY}" CACHE STRING "FreeType Libraries")
-  mark_as_advanced(FREETYPE_LIBRARIES)
-  set(FREETYPE_INCLUDE_DIR_freetype2
-    "${BRLCAD_SOURCE_DIR}/src/other/freetype/include"
-    CACHE STRING "FreeType freetype2 include dir" FORCE
-    )
-  mark_as_advanced(FREETYPE_INCLUDE_DIR_freetype2)
-  set(FREETYPE_INCLUDE_DIR_ft2build
-    "${CMAKE_CURRENT_BINARY_DIR}/freetype/include"
-    CACHE STRING "FreeType ft2build include dir" FORCE
-    )
-  mark_as_advanced(FREETYPE_INCLUDE_DIR_ft2build)
-  set(FREETYPE_INCLUDE_DIRS
-    "${FREETYPE_INCLUDE_DIR_freetype2};${FREETYPE_INCLUDE_DIR_ft2build}"
+  set(FREETYPE_INCLUDE_DIR_freetype2 "${BRLCAD_SOURCE_DIR}/src/other/freetype/include"
+    CACHE STRING "FreeType freetype2 include dir" FORCE)
+  set(FREETYPE_INCLUDE_DIR_ft2build "${CMAKE_CURRENT_BINARY_DIR}/freetype/include"
+    CACHE STRING "FreeType ft2build include dir" FORCE)
+  set(FREETYPE_INCLUDE_DIRS "${FREETYPE_INCLUDE_DIR_freetype2};${FREETYPE_INCLUDE_DIR_ft2build}"
     CACHE STRING "Directories containing FreeType headers." FORCE)
-  mark_as_advanced(FREETYPE_INCLUDE_DIRS)
   set(FREETYPE_VERSION_STRING "2.6.5" CACHE STRING "Freetype version" FORCE)
+  set(FREETYPE_FOUND TRUE CACHE BOOL "Freetype" FORCE)
+
   SetTargetFolder(freetype "Third Party Libraries")
 endif(BRLCAD_FREETYPE_BUILD)
+mark_as_advanced(FREETYPE_INCLUDE_DIRS)
+mark_as_advanced(FREETYPE_LIBRARY)
+mark_as_advanced(FREETYPE_LIBRARIES)
+mark_as_advanced(FREETYPE_INCLUDE_DIR_ft2build)
+mark_as_advanced(FREETYPE_INCLUDE_DIR_freetype2)
 if(NOT "${CMAKE_CURRENT_BINARY_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftconfig.h")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftoption.h")
 endif(NOT "${CMAKE_CURRENT_BINARY_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftconfig.h-new")
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftoption.h-new")
-
-if(0)
-# Fontconfig library - must come after PNG and FREETYPE
-set(fontconfig_DESCRIPTION "
-Option for enabling and disabling compilation of the Fontconfig
-library provided with BRL-CAD's source code.  Default is AUTO, responsive to
-the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
-version if BRLCAD_BUNDLED_LIBS is also AUTO.
-")
-THIRD_PARTY(fontconfig Fontconfig ft fontconfig_DESCRIPTION BRLCAD_LEVEL3 ALIASES ENABLE_FONTCONFIG REQUIRED_VARS "TEST_FONTCONFIG;BRLCAD_LEVEL3" FIND_NAME Fontconfig)
-if(BRLCAD_Fontconfig_BUILD)
-  set(Fontconfig_LIBRARY fontconfig CACHE STRING "fontconfig" FORCE)
-  mark_as_advanced(Fontconfig_LIBRARY)
-  set(Fontconfig_LIBRARIES "${Fontconfig_LIBRARY}" CACHE STRING "FreeType Libraries")
-  mark_as_advanced(Fontconfig_LIBRARIES)
-  set(Fontconfig_INCLUDE_DIR
-    "${BRLCAD_BINARY_DIR}/src/other/fontconfig/include;${BRLCAD_SOURCE_DIR}/src/other/fontconfig/include"
-    CACHE STRING "fontconfig include dir" FORCE)
-  mark_as_advanced(Fontconfig_INCLUDE_DIR)
-  set(Fontconfig_INCLUDE_DIRS "${Fontconfig_INCLUDE_DIR}" CACHE STRING "Fontconfig headers." FORCE)
-  mark_as_advanced(Fontconfig_INCLUDE_DIRS)
-  set(Fontconfig_VERSION "2.13.92" CACHE STRING "Fontconfig version" FORCE)
-  set(Fontconfig_COMPILE_OPTIONS "" CACHE STRING "Fontconfig compile options" FORCE)
-  set(pkgcfg_lib_PKG_FONTCONFIG_fontconfig fontconfig)
-  set(pkgcfg_lib_PKG_FONTCONFIG_freetype ${FREETYPE_LIBRARIES})
-  SetTargetFolder(fontconfig "Third Party Libraries")
-
-  # TODO - in order for this to work, we may need to change how the built copy
-  # of Tk uses fontconfig.  We want to look for our own (guaranteed) fonts
-  # rather than the system fonts for consistency, but that means building our
-  # own share/fontconfig directory with a config file and cache.  Tk then needs
-  # to call fontconfig to look there rather than the system version.  There are
-  # some test programs in the tests directory of the main fontconfig
-  # distribution which may offer some hints on what is needed for this...
-
-endif(BRLCAD_Fontconfig_BUILD)
-endif(0)
 
 # libnetpbm Library support for pnm,ppm,pbm, etc. image files
 set(netpbm_DESCRIPTION "
