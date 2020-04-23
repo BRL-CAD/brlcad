@@ -10,6 +10,10 @@ fail occasionally.
 
 So far this has only been observed on FreeBSD.
 
+Adjustment of the bombing message code reveals that the fatal error is
+EPERM - The current thread does not own the mutex.
+
+
 
 The first failure is from a GQA run:
 
