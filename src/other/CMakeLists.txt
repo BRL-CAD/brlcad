@@ -400,24 +400,24 @@ if(BRLCAD_TCL_BUILD)
 else(BRLCAD_TCL_BUILD)
   get_filename_component(TCL_LIB_PATH "${TCL_LIBRARY}" DIRECTORY)
   find_library(TCL_STUB_LIBRARY tclstub NAMES tclstub86 tclstub8.6 PATHS ${TCL_LIB_PATH})
-    BRLCAD_INCLUDE_FILE(tcl.h HAVE_TCL_H)
-    # We're going to need the path to the system init.tcl for btclsh and bwish
-    set(inittcl_script "
-set filename \"${CMAKE_BINARY_DIR}/CMakeTmp/tcl_inittcl\"
-set fileID [open $filename \"w\"]
-puts $fileID $auto_path
-close $fileID
-exit
-")
-    set(inittcl_scriptfile "${CMAKE_BINARY_DIR}/CMakeTmp/tcl_inittcl.tcl")
-    file(WRITE ${inittcl_scriptfile} ${inittcl_script})
+  BRLCAD_INCLUDE_FILE(tcl.h HAVE_TCL_H)
+  # We're going to need the path to the system init.tcl for btclsh and bwish
+  set(inittcl_script "
+  set filename \"${CMAKE_BINARY_DIR}/CMakeTmp/tcl_inittcl\"
+  set fileID [open $filename \"w\"]
+  puts $fileID $auto_path
+  close $fileID
+  exit
+  ")
+  set(inittcl_scriptfile "${CMAKE_BINARY_DIR}/CMakeTmp/tcl_inittcl.tcl")
+  file(WRITE ${inittcl_scriptfile} ${inittcl_script})
   exec_program(${TCL_TCLSH} ARGS ${inittcl_scriptfile} OUTPUT_VARIABLE EXECOUTPUT)
-    file(READ "${CMAKE_BINARY_DIR}/CMakeTmp/tcl_inittcl" tcl_inittcl_raw)
+  file(READ "${CMAKE_BINARY_DIR}/CMakeTmp/tcl_inittcl" tcl_inittcl_raw)
   string(REGEX REPLACE "\n" "" tcl_inittcl_paths_1 ${tcl_inittcl_raw})
   string(REGEX REPLACE " " ";" tcl_inittcl_paths ${tcl_inittcl_paths_1})
   find_path(tcl_inittcl NAMES init.tcl PATHS ${tcl_inittcl_paths})
-    mark_as_advanced(tcl_inittcl)
-    CONFIG_H_APPEND(BRLCAD "#define TCL_SYSTEM_INITTCL_PATH \"${tcl_inittcl}\"\n")
+  mark_as_advanced(tcl_inittcl)
+  CONFIG_H_APPEND(BRLCAD "#define TCL_SYSTEM_INITTCL_PATH \"${tcl_inittcl}\"\n")
 endif(BRLCAD_TCL_BUILD)
 mark_as_advanced(TCL_COMPILATION_TRACING)
 mark_as_advanced(TCL_COMPILE_STATS)
@@ -513,25 +513,13 @@ mark_as_advanced(HAVE_TK)
 #
 # http://core.tcl.tk/itcl/tktview/61952ca33e9e58df9e0519a0b4583a144e8ec77b
 #
-# We're set up below to use either v3 or v4, depending on which of the below
-# variables are uncommented
+# Consequently we need to provide the older v3
 set(ITCL_DIR itcl3)
 set(ITCL_VER "3.4")
-include("${CMAKE_CURRENT_SOURCE_DIR}/itcl.dist")
-CMAKEFILES_IN_DIR(itcl_ignore_files itcl)
-#set(ITCL_DIR itcl)
-#set(ITCL_VER "4.2.0")
 include("${CMAKE_CURRENT_SOURCE_DIR}/itcl3.dist")
 CMAKEFILES_IN_DIR(itcl3_ignore_files itcl3)
-
-
 set(ITK_DIR itk3)
 set(ITK_VER "3.4")
-include("${CMAKE_CURRENT_SOURCE_DIR}/itk.dist")
-CMAKEFILES_IN_DIR(itk_ignore_files itk)
-
-#set(ITK_DIR itk)
-#set(ITK_VER "4.1.0")
 include("${CMAKE_CURRENT_SOURCE_DIR}/itk3.dist")
 CMAKEFILES_IN_DIR(itk3_ignore_files itk3)
 
