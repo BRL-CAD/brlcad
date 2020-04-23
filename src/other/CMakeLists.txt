@@ -466,6 +466,7 @@ elseif(BRLCAD_ENABLE_TK)
   endif (NOT WIN32)
   set(TK_SYSTEM_GRAPHICS "${TK_SYSTEM_GRAPHICS}" CACHE STRING "Tk system graphics type" FORCE)
 
+  if (0)
   # Now we know what the options want - confirm we actually have it.  If not, it's a fatal
   # error - the user will need to either specify a system version with the graphics system
   # desired, change their toplevel options, or enable the bundled Tcl/Tk build.
@@ -486,6 +487,7 @@ exit
   if (NOT "${TK_SYSTEM_GRAPHICS}" MATCHES "${tcl_tkwin}")
     message(FATAL_ERROR "Grahics system needed is ${TK_SYSTEM_GRAPHICS} but found Tcl/Tk reports \"${tcl_tkwin}\".  Need to either specify a Tcl/Tk system with the desired graphics behavior or specifiy different toplevel graphics options.")
   endif (NOT "${TK_SYSTEM_GRAPHICS}" MATCHES "${tcl_tkwin}")
+  endif (0)
 
 endif(BRLCAD_TK_BUILD)
 mark_as_advanced(TK_INCLUDE_PATH)
