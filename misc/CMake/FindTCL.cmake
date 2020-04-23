@@ -21,6 +21,9 @@ library is.  This code sets the following variables:
   TK_LIBRARY             = path to Tk library (tk tk80 etc)
   TK_INCLUDE_PATH        = path to where tk.h can be found
   TK_WISH                = full path to the wish executable
+  TCL_STUB_LIBRARY       = path to Tcl stub library
+  TK_STUB_LIBRARY        = path to Tk stub library
+  TTK_STUB_LIBRARY       = path to ttk stub library
 
 #]=======================================================================]
 
@@ -157,6 +160,20 @@ find_library(TCL_LIBRARY
   PATH_SUFFIXES ${TCLTK_POSSIBLE_LIB_PATH_SUFFIXES}
   )
 
+find_library(TCL_STUB_LIBRARY
+  NAMES
+  tclstub
+  tclstub${TK_LIBRARY_VERSION} tclstub${TCL_TCLSH_VERSION} tclstub${TK_WISH_VERSION}
+  tclstub87 tclstub8.7
+  tclstub86 tclstub8.6
+  tclstub85 tclstub8.5
+  tclstub84 tclstub8.4
+  tclstub83 tclstub8.3
+  tclstub82 tclstub8.2
+  tclstub80 tclstub8.0
+  PATHS ${TCLTK_POSSIBLE_LIB_PATHS}
+)
+
 find_library(TK_LIBRARY
   NAMES
   tk
@@ -171,6 +188,31 @@ find_library(TK_LIBRARY
   PATHS ${TCLTK_POSSIBLE_LIB_PATHS}
   PATH_SUFFIXES ${TCLTK_POSSIBLE_LIB_PATH_SUFFIXES}
   )
+
+find_library(TK_STUB_LIBRARY
+  NAMES
+  tkstub
+  tkstub${TCL_LIBRARY_VERSION} tkstub${TCL_TCLSH_VERSION} tkstub${TK_WISH_VERSION}
+  tkstub87 tkstub8.7
+  tkstub86 tkstub8.6
+  tkstub85 tkstub8.5
+  tkstub84 tkstub8.4
+  tkstub83 tkstub8.3
+  tkstub82 tkstub8.2
+  tkstub80 tkstub8.0
+  PATHS ${TCLTK_POSSIBLE_LIB_PATHS}
+)
+
+find_library(TTK_STUB_LIBRARY
+  NAMES
+  ttkstub
+  ttkstub${TCL_LIBRARY_VERSION} ttkstub${TCL_TCLSH_VERSION} ttkstub${TK_WISH_VERSION}
+  ttkstub88 ttkstub8.8
+  ttkstub87 ttkstub8.7
+  ttkstub86 ttkstub8.6
+  ttkstub85 ttkstub8.5
+  PATHS ${TCLTK_POSSIBLE_LIB_PATHS}
+)
 
 CMAKE_FIND_FRAMEWORKS(Tcl)
 CMAKE_FIND_FRAMEWORKS(Tk)
@@ -236,25 +278,28 @@ find_path(TK_INCLUDE_PATH
 include(FindPackageHandleStandardArgs)
 
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(TCL
-	REQUIRED_VARS TCL_LIBRARY TCL_INCLUDE_PATH TCL_TCLSH
+	REQUIRED_VARS TCL_LIBRARY TCL_STUB_LIBRARY TCL_INCLUDE_PATH TCL_TCLSH
 	VERSION_VAR TCLSH_VERSION_STRING)
 set(FPHSA_NAME_MISMATCHED 1)
 set(TCLTK_FIND_REQUIRED ${TCL_FIND_REQUIRED})
 set(TCLTK_FIND_QUIETLY  ${TCL_FIND_QUIETLY})
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(TCLTK
-	REQUIRED_VARS TCL_LIBRARY TCL_INCLUDE_PATH TK_LIBRARY TK_INCLUDE_PATH)
+	REQUIRED_VARS TCL_LIBRARY TCL_STUB_LIBRARY TCL_INCLUDE_PATH TK_LIBRARY TK_STUB_LIBRARY TK_INCLUDE_PATH)
 set(TK_FIND_REQUIRED ${TCL_FIND_REQUIRED})
 set(TK_FIND_QUIETLY  ${TCL_FIND_QUIETLY})
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(TK
-	REQUIRED_VARS TK_LIBRARY TK_INCLUDE_PATH TK_WISH)
+	REQUIRED_VARS TK_LIBRARY TK_STUB_LIBRARY TK_INCLUDE_PATH TK_WISH)
 unset(FPHSA_NAME_MISMATCHED)
 
 mark_as_advanced(
   TCL_INCLUDE_PATH
-  TK_INCLUDE_PATH
   TCL_LIBRARY
-  TK_LIBRARY
+  TCL_STUB_LIBRARY
   TCL_TCLSH
+  TK_INCLUDE_PATH
+  TK_LIBRARY
+  TK_STUB_LIBRARY
   TK_WISH
+  TTK_STUB_LIBRARY
   )
 

@@ -176,7 +176,7 @@ mark_as_advanced(ITCL_INCLUDE_PATH)
 # ITcl requires private Tcl headers, which we can't assume from a system
 # install of Tcl.  The workaround is to use our local copies and hope they
 # are workable. (Ugh.)
-if (TARGET tcl OR NOT EXISTS ${TCL_INCLUDE_PATH}/tcl-private/generic)
+if (TARGET tcl OR NOT EXISTS "${TCL_INCLUDE_PATH}/tcl-private/generic")
     set(TCL_PRIVATE_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/../tcl/generic)
   if(NOT WIN32)
     set(TCL_PRIVATE_HDRS ${TCL_PRIVATE_HDRS} ${CMAKE_CURRENT_SOURCE_DIR}/../tcl/unix)
