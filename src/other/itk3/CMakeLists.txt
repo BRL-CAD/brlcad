@@ -42,9 +42,9 @@ cmake_minimum_required(VERSION 3.1.3)
 # set CMake project name
 project(ITK)
 
-if(NOT TCL_LIBRARY OR NOT TCL_INCLUDE_PATH OR NOT TK_LIBRARY)
-  find_package(TCL)
-endif(NOT TCL_LIBRARY OR NOT TCL_INCLUDE_PATH OR NOT TK_LIBRARY)
+if(NOT TK_LIBRARY OR NOT TK_INCLUDE_PATH)
+  find_package(TK)
+endif(NOT TK_LIBRARY OR NOT TK_INCLUDE_PATH)
 
 if(NOT TCL_STUB_LIBRARY OR NOT TK_STUB_LIBRARY OR NOT ITCL_STUB_LIBRARY)
   if(TARGET tclsh)
@@ -190,6 +190,7 @@ include_directories(
 # install of Tcl.  The workaround is to use our local copies and hope they
 # are workable. (Ugh.)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../tcl/generic)
+#include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../tk/xlib)
 if(NOT WIN32)
   include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../tcl/unix)
 else(NOT WIN32)
