@@ -161,31 +161,36 @@ dozoom(int which_eye)
     }
 #endif
 
-    /* First, draw opaque stuff */
-
-    ndrawn = dm_draw_display_list(DMP, GEDP->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
-	    r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
-	    geometry_default_color, 1, mged_variables->mv_dlist);
-
-    /* The vectorThreshold stuff in libdm may turn the Tcl-crank causing curr_dm_list to change. */
-    if (curr_dm_list != save_dm_list) curr_dm_list = save_dm_list;
-
-    curr_dm_list->dml_ndrawn += ndrawn;
-
     if (dm_get_transparency(DMP)) {
+	/* First, draw opaque stuff */
+
+	ndrawn = dm_draw_display_list(DMP, GEDP->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
+				      r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
+				      geometry_default_color, 1, mged_variables->mv_dlist);
+
+	/* The vectorThreshold stuff in libdm may turn the Tcl-crank causing curr_dm_list to change. */
+	if (curr_dm_list != save_dm_list) curr_dm_list = save_dm_list;
+
+	curr_dm_list->dml_ndrawn += ndrawn;
+
 	/* disable write to depth buffer */
 	dm_set_depth_mask(DMP, 0);
-    }
 
-    /* Second, draw transparent stuff */
+	/* Second, draw transparent stuff */
 
-    ndrawn = dm_draw_display_list(DMP, GEDP->ged_gdp->gd_headDisplay, 0.0, inv_viewsize,
-	    r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
-	    geometry_default_color, 0, mged_variables->mv_dlist);
+	ndrawn = dm_draw_display_list(DMP, GEDP->ged_gdp->gd_headDisplay, 0.0, inv_viewsize,
+				      r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
+				      geometry_default_color, 0, mged_variables->mv_dlist);
 
-    if (dm_get_transparency(DMP)) {
 	/* re-enable write of depth buffer */
 	dm_set_depth_mask(DMP, 1);
+
+    } else {
+
+	ndrawn = dm_draw_display_list(DMP, GEDP->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
+				      r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
+				      geometry_default_color, 1, mged_variables->mv_dlist);
+
     }
 
     /* The vectorThreshold stuff in libdm may turn the Tcl-crank causing curr_dm_list to change. */
@@ -224,7 +229,7 @@ dozoom(int which_eye)
 		   color_scheme->cs_geo_hl[2], 1, 1.0);
 
 
-    ndrawn = dm_draw_display_list(DMP, GEDP->ged_gdp->gd_headDisplay, -1.0, inv_viewsize,
+    ndrawn = dm_draw_display_list(DMP, GEDP->ged_gdp->gd_headDisplay, 1.0, inv_viewsize,
 	    r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 1,
 	    geometry_default_color, 0, mged_variables->mv_dlist);
 

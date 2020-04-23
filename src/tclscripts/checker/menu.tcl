@@ -65,15 +65,15 @@ catch {delete class OverlapMenu} error
 	ttk::button $itk_component(newFileFrame).buttonRunOvFileGen \
 	-text "Create New Overlaps File" -padding 8 -command [ code $this runOvFileTool ]
     } {}
-    itk_component add exisitingFileFrame {
-	ttk::labelframe $itk_component(buttonsFrame).exisitingFileFrame -padding 8 -text " Exisiting File "
+    itk_component add existingFileFrame {
+	ttk::labelframe $itk_component(buttonsFrame).existingFileFrame -padding 8 -text " Exisiting File "
     } {}
     itk_component add buttonBrowse {
-	ttk::button $itk_component(exisitingFileFrame).buttonBrowse \
+	ttk::button $itk_component(existingFileFrame).buttonBrowse \
 	-text "Browse Overlaps File" -padding 8 -command [ code $this browseOverlapFile ]
     } {}
     itk_component add buttonLastFile {
-	ttk::button $itk_component(exisitingFileFrame).buttonLastFile \
+	ttk::button $itk_component(existingFileFrame).buttonLastFile \
 	-text "Use Last File" -padding 8 -state disabled -command [ code $this runCheckerTool ]
     } {}
     itk_component add hintLabel {
@@ -84,21 +84,22 @@ catch {delete class OverlapMenu} error
 
     eval itk_initialize $args
 
-    pack $itk_component(buttonsFrame)
+    grid $itk_component(buttonsFrame) -sticky ew
+    grid $itk_component(hintLabel)
+    grid columnconfigure $itk_interior 0 -weight 1
 
-    pack $itk_component(newFileFrame) -side left -padx { 8 4 }
-    pack $itk_component(buttonRunOvFileGen)
+    grid $itk_component(newFileFrame) $itk_component(existingFileFrame) -padx 4
+
+    grid $itk_component(buttonRunOvFileGen)
+
+    grid $itk_component(buttonLastFile) $itk_component(buttonBrowse) -padx 2
+
     bind $itk_component(buttonRunOvFileGen) <Enter> [code $this handleHintText "Creates a new overlaps file with specified objects and runs checker tool on the created overlaps file"]
     bind $itk_component(buttonRunOvFileGen) <Leave> [code $this handleHintText ""]
 
-    pack $itk_component(exisitingFileFrame) -side right -padx { 4 8 }
-    pack $itk_component(buttonLastFile) -side left -padx { 0 8 }
-
-    pack $itk_component(buttonBrowse) -side right
     bind $itk_component(buttonBrowse) <Enter> [code $this handleHintText "Select an overlaps file and run checker tool\n"]
     bind $itk_component(buttonBrowse) <Leave> [code $this handleHintText ""]
 
-    pack $itk_component(hintLabel) -pady { 0 4 }
     #load default hint text
     $this handleHintText ""
 
@@ -158,12 +159,18 @@ body OverlapMenu::runCheckerTool { } {
     wm title $checkerWindow "Geometry Checker"
     pack $checker -expand true -fill both
 
+    # calculate default geometry
+    update
+
     # ensure window isn't too narrow
     set geom [split [wm geometry $checkerWindow] "=x+-"]
     if {[lindex $geom 0] > [lindex $geom 1]} {
 	lreplace $geom 1 1 [lindex $geom 0]
     }
     wm geometry $checkerWindow "=[::tcl::mathfunc::round [expr 1.62 * [lindex $geom 1]]]x[lindex $geom 1]"
+
+    # raise to front
+    wm deiconify $checkerWindow
 
     destroy $parent.overlapmenu
 }

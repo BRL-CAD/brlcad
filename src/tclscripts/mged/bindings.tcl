@@ -288,6 +288,11 @@ proc default_mouse_bindings { w } {
 	bind $w <2> "winset $w; set tmpstr \[dm m %x %y\]; print_return_val \$tmpstr; break"
 	bind $w <3> "winset $w; zoom 2.0; break"
 
+	# Mouse wheel fun with Tcl/Tk - see https://wiki.tcl-lang.org/page/mousewheel
+	bind $w <MouseWheel> "winset $w; focus $w; if {%D < 0} {zoom 0.9} else {zoom 1.1}"
+	bind $w <Button-4> {event generate [focus] <MouseWheel> -delta  120}
+	bind $w <Button-5> {event generate [focus] <MouseWheel> -delta -120}
+
 	if {$::tcl_platform(os) == "Darwin"} {
 	    # Mac option-key emulates mouse 2 (doesn't work?)
 	    bind $w <Option-ButtonPress-1> "winset $w; set tmpstr \[dm m %x %y\]; print_return_val \$tmpstr; break"
@@ -298,6 +303,11 @@ proc default_mouse_bindings { w } {
 	bind $w <1> "winset $w; focus $w; zoom 0.5; break"
 	bind $w <2> "winset $w; focus $w; set tmpstr \[dm m %x %y\]; print_return_val \$tmpstr; break"
 	bind $w <3> "winset $w; focus $w; zoom 2.0; break"
+
+	# Mouse wheel fun with Tcl/Tk - see https://wiki.tcl-lang.org/page/mousewheel
+	bind $w <MouseWheel> "winset $w; focus $w; if {%D < 0} {zoom 0.9} else {zoom 1.1}; break"
+	bind $w <Button-4> {event generate [focus] <MouseWheel> -delta  120}
+	bind $w <Button-5> {event generate [focus] <MouseWheel> -delta -120}
 
 	if {$::tcl_platform(os) == "Darwin"} {
 	    # Mac command-key emulates mouse 2 (doesn't work?)

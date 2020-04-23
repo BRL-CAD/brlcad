@@ -21,6 +21,7 @@
       <arg choice="opt" rep="norepeat">-C</arg>
       <arg choice="opt" rep="norepeat">-M</arg>
       <arg choice="opt" rep="norepeat">-I</arg>
+      <arg choice="opt" rep="norepeat">-F "filters"</arg>
       <arg choice="opt" rep="norepeat"><replaceable>ObjectName</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -82,27 +83,24 @@
 	</para>
       </listitem>
     </varlistentry>
-
+    <varlistentry>
+      <term><option>-F</option>, <option>--filter</option></term>
+      <listitem>
+	<para>
+	  Apply search command style filters to the set of objects to be tested.  Allows,
+	  (for example) a user to test only brep objects and not bot objects or only objects
+	  matching a particular name pattern.  Does not impact the checks for missing or
+	  cylic geometry - the underlying search mechanism assumes inputs do not have those
+	  particular categories of problem and thus can't be reliably applied in those cases.
+	</para>
+      </listitem>
+    </varlistentry>
   </variablelist>
   </refsection>
   
   <refsection xml:id="examples"><title>EXAMPLES</title>
 
-  <example>
-    <title>Examine a single geometry object for validity</title>
-
-    <para>
-      <prompt>mged&gt; </prompt><userinput>lint -I nonsolid.bot</userinput>
-      <literallayout class="normal">
-Checking for invalid objects...
-Found invalid objects:
-  nonsolid.bot[bot] failed bot solid test
-
-      </literallayout>
-    </para>
-  </example>
-
-  <example>
+   <example>
     <title>Examine entire database for all defect categories</title>
 
     <para>
@@ -120,7 +118,41 @@ Found references to missing objects:
   invalid_extrude_missing_sketch.s/missing_sketch.s
   missingentry.c/missing.s
 Found invalid objects:
-  nonsolid.bot[bot] failed bot solid test
+  nonsolid.bot[bot] failed solidity test, but BoT type is RT_BOT_SOLID
+
+      </literallayout>
+    </para>
+  </example>
+
+  <example>
+    <title>Check the validity of a single geometry object</title>
+
+    <para>
+      <prompt>mged&gt; </prompt><userinput>lint -I nonsolid.bot</userinput>
+      <literallayout class="normal">
+Checking for invalid objects...
+Found invalid objects:
+  nonsolid.bot[bot] failed solidity test, but BoT type is RT_BOT_SOLID
+
+      </literallayout>
+    </para>
+  </example>
+
+  <example>
+    <title>Examine all non-BoT objects in the database matching the name pattern "*_1.*" for invalidity</title>
+
+    <para>
+      <prompt>mged&gt; </prompt><userinput>lint -F "! -type bot -name *_1.*"</userinput>
+      <literallayout class="normal">
+Checking for invalid objects...
+Found invalid objects:
+  Brep_1.s[brep] failed OpenNURBS validity test
+brep.m_L[27] loop is not valid.
+	end of brep.m_T[loop.m_ti[5]=147]=(0,-1.309) and start 
+	of brep.m_T[loop.m_ti[6]=148]=(0,-5.63995e-08) do not match.
+brep.m_F[25] face is not valid.
+	brep.m_L[face.m_li[0]=27] is not valid.
+ON_Brep.m_F[25] is invalid.
 
       </literallayout>
     </para>

@@ -528,10 +528,10 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
 
     ON_TextLog err(stderr);
     if (!bs->brep->IsValid(&err)) {
-	bu_log("brep is NOT valid\n");
+	//bu_log("brep is NOT valid\n");
     } else {
 	bs->is_solid = bs->brep->IsSolid();
-	bu_log("brep %s solid\n", (bs->is_solid) ? "is" : "is NOT");
+	//bu_log("brep %s solid\n", (bs->is_solid) ? "is" : "is NOT");
     }
 
     //start = bu_gettime();

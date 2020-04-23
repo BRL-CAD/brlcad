@@ -85,14 +85,14 @@ function(message)
   # optional arg, so we extract it and test.
   list(GET ARGV 0 MessageType)
 
-  if (MessageType STREQUAL FATAL_ERROR OR MessageType STREQUAL SEND_ERROR OR MessageType STREQUAL WARNING OR MessageType STREQUAL AUTHOR_WARNING OR MessageType STREQUAL STATUS)
+  if (MessageType STREQUAL FATAL_ERROR OR MessageType STREQUAL SEND_ERROR OR MessageType STREQUAL WARNING OR MessageType STREQUAL AUTHOR_WARNING OR MessageType STREQUAL STATUS OR MessageType STREQUAL CHECK_START OR MessageType STREQUAL CHECK_PASS OR MessageType STREQUAL CHECK_FAIL )
     list(REMOVE_AT ARGV 0)
     _message(${MessageType} "${ARGV}")
     file(APPEND "${BRLCAD_BINARY_DIR}/CMakeFiles/CMakeOutput.log" "${MessageType}: ${ARGV}\n")
-  else (MessageType STREQUAL FATAL_ERROR OR MessageType STREQUAL SEND_ERROR OR MessageType STREQUAL WARNING OR MessageType STREQUAL AUTHOR_WARNING OR MessageType STREQUAL STATUS)
+  else ()
     _message("${ARGV}")
     file(APPEND "${BRLCAD_BINARY_DIR}/CMakeFiles/CMakeOutput.log" "${ARGV}\n")
-  endif (MessageType STREQUAL FATAL_ERROR OR MessageType STREQUAL SEND_ERROR OR MessageType STREQUAL WARNING OR MessageType STREQUAL AUTHOR_WARNING OR MessageType STREQUAL STATUS)
+  endif ()
 
   # ~10% slower alternative that avoids adding '--' to STATUS messages
   # execute_process(COMMAND ${CMAKE_COMMAND} -E echo "${ARGV}")
