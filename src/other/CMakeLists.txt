@@ -44,6 +44,19 @@ unset(CMAKE_CXX_STANDARD_REQUIRED)
 unset(CMAKE_CXX_STANDARD)
 
 ###############################################################################
+# We never want our build products to be identified by searches here - we
+# either want system installed versions or nothing.  Set CMAKE_IGNORE_PATH
+# values accordingly.  NOTE: we must specify EXPLICITY all directories to
+# ignore as CMAKE_IGNORE_PATH does not automatically ignore subdirectories:
+# https://cmake.org/cmake/help/latest/variable/CMAKE_IGNORE_PATH.html#variable:CMAKE_IGNORE_PATH
+set(CMAKE_IGNORE_PATH
+  ${CMAKE_BINARY_DIR}/${BIN_DIR}
+  ${CMAKE_BINARY_DIR}/${LIB_DIR}
+  ${CMAKE_INSTALL_PREFIX}/${BIN_DIR}
+  ${CMAKE_INSTALL_PREFIX}/${LIB_DIR}
+  )
+
+###############################################################################
 # Unlike the misc/tools directory components built in src/other are part of
 # the distribution, not just the compilation.  Hence we need to make sure of
 # some basic compatibility between the build settings.
