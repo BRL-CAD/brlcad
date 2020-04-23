@@ -1315,17 +1315,19 @@ option(BRLCAD_ENABLE_GDAL "Enable features requiring the Geospatial Data Abstrac
 mark_as_advanced(BRLCAD_ENABLE_GDAL)
 
 # Enable features requiring Qt
-# TODO - try COMPONENTS search: https://blog.kitware.com/cmake-finding-qt5-the-right-way/
-find_package(Qt5Widgets QUIET)
 option(BRLCAD_ENABLE_QT "Enable features requiring Qt" OFF)
 mark_as_advanced(BRLCAD_ENABLE_QT)
+if (BRLCAD_ENABLE_QT)
+  # TODO - try COMPONENTS search: https://blog.kitware.com/cmake-finding-qt5-the-right-way/
+  find_package(Qt5Widgets QUIET)
+  if(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
+    message("QT interface requested, but QT5 is not found - disabling")
+    set(BRLCAD_ENABLE_QT OFF)
+  endif(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
+endif (BRLCAD_ENABLE_QT)
+mark_as_advanced(Qt5Widgets_DIR)
 mark_as_advanced(Qt5Core_DIR)
 mark_as_advanced(Qt5Gui_DIR)
-if(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
-  message("QT interface requested, but QT5 is not found - disabling")
-  set(BRLCAD_ENABLE_QT OFF)
-endif(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
-mark_as_advanced(Qt5Widgets_DIR)
 
 # Enable features requiring OpenSceneGraph
 option(BRLCAD_ENABLE_OSG "Enable features requiring OpenSceneGraph" OFF)
