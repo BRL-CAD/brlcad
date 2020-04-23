@@ -432,7 +432,7 @@ if(BRLCAD_TK_BUILD)
   set(TK_INCLUDE_PATH "${TK_INCLUDE_PATH}" CACHE STRING "Tk include path" FORCE)
 
   get_directory_property(TK_SYSTEM_GRAPHICS DIRECTORY tk DEFINITION TK_SYSTEM_GRAPHICS)
-  set(TK_SYSTEM_GRAPHICS "${TK_SYSTEM_GRAPHICS}" CACHE STRING "Tk system graphis type" FORCE)
+  set(TK_SYSTEM_GRAPHICS "${TK_SYSTEM_GRAPHICS}" CACHE STRING "Tk system graphics type" FORCE)
 
   # Let Distclean know it will have work to do both here and in
   # the lib directory
@@ -454,6 +454,18 @@ elseif(BRLCAD_TK_BUILD AND BRLCAD_ENABLE_TK)
 
   # Still need the header, even if we're using system Tcl/Tk
   BRLCAD_INCLUDE_FILE(tk.h HAVE_TK_H)
+
+  # Packages probably still need to know the system graphics package
+  if (NOT WIN32)
+    if (APPLE AND TK_ENABLE_AQUA)
+      set(TK_SYSTEM_GRAPHICS aqua)
+    else ()
+      set(TK_SYSTEM_GRAPHICS x11)
+    endif (APPLE AND TK_ENABLE_AQUA)
+  else (NOT WIN32)
+    set(TK_SYSTEM_GRAPHICS win32)
+  endif (NOT WIN32)
+  set(TK_SYSTEM_GRAPHICS "${TK_SYSTEM_GRAPHICS}" CACHE STRING "Tk system graphics type" FORCE)
 
 endif(BRLCAD_TK_BUILD)
 mark_as_advanced(TK_INCLUDE_PATH)
