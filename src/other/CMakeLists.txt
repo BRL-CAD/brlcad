@@ -265,43 +265,6 @@ if(BRLCAD_LZ4_BUILD)
   SetTargetFolder(lz4-static "Third Party Libraries")
 endif(BRLCAD_LZ4_BUILD)
 
-
-# FreeType Libraries - must come after ZLIB and PNG
-set(freetype_DESCRIPTION "
-Option for enabling and disabling compilation of the FreeType
-libraries provided with BRL-CAD's source code.  Default is AUTO, responsive to
-the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
-version if BRLCAD_BUNDLED_LIBS is also AUTO.
-")
-# We don't want the Freetype distribution build targets
-set(FREETYPE_NO_DIST 1)
-THIRD_PARTY(freetype FREETYPE ft freetype_DESCRIPTION BRLCAD_LEVEL3 ALIASES ENABLE_FREETYPE REQUIRED_VARS "TEST_FONTCONFIG;BRLCAD_LEVEL3" FIND_NAME Freetype)
-if(BRLCAD_FREETYPE_BUILD)
-  set(FREETYPE_LIBRARY freetype CACHE STRING "libfreetype" FORCE)
-  set(FREETYPE_LIBRARIES "${FREETYPE_LIBRARY}" CACHE STRING "FreeType Libraries")
-  set(FREETYPE_INCLUDE_DIR_freetype2 "${BRLCAD_SOURCE_DIR}/src/other/freetype/include"
-    CACHE STRING "FreeType freetype2 include dir" FORCE)
-  set(FREETYPE_INCLUDE_DIR_ft2build "${CMAKE_CURRENT_BINARY_DIR}/freetype/include"
-    CACHE STRING "FreeType ft2build include dir" FORCE)
-  set(FREETYPE_INCLUDE_DIRS "${FREETYPE_INCLUDE_DIR_freetype2};${FREETYPE_INCLUDE_DIR_ft2build}"
-    CACHE STRING "Directories containing FreeType headers." FORCE)
-  set(FREETYPE_VERSION_STRING "2.6.5" CACHE STRING "Freetype version" FORCE)
-  set(FREETYPE_FOUND TRUE CACHE BOOL "Freetype" FORCE)
-
-  SetTargetFolder(freetype "Third Party Libraries")
-endif(BRLCAD_FREETYPE_BUILD)
-mark_as_advanced(FREETYPE_INCLUDE_DIRS)
-mark_as_advanced(FREETYPE_LIBRARY)
-mark_as_advanced(FREETYPE_LIBRARIES)
-mark_as_advanced(FREETYPE_INCLUDE_DIR_ft2build)
-mark_as_advanced(FREETYPE_INCLUDE_DIR_freetype2)
-if(NOT "${CMAKE_CURRENT_BINARY_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftconfig.h")
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftoption.h")
-endif(NOT "${CMAKE_CURRENT_BINARY_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftconfig.h-new")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftoption.h-new")
-
 # libnetpbm Library support for pnm,ppm,pbm, etc. image files
 set(netpbm_DESCRIPTION "
 Option for enabling and disabling compilation of the netpbm library
@@ -319,7 +282,6 @@ endif(BRLCAD_NETPBM_BUILD)
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libnetpbm/version.h")
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libnetpbm/compile.h")
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libnetpbm/pm_config.h")
-
 
 # libutahrle Library - The directory to perform ADD_SUBDIRECTORY on
 # and the include directory for utahrle are different, so override the
