@@ -306,6 +306,7 @@ endif(NOT "${CMAKE_CURRENT_BINARY_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftconfig.h-new")
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftoption.h-new")
 
+if(0)
 # Fontconfig library - must come after PNG and FREETYPE
 set(fontconfig_DESCRIPTION "
 Option for enabling and disabling compilation of the Fontconfig
@@ -340,6 +341,7 @@ if(BRLCAD_Fontconfig_BUILD)
   # distribution which may offer some hints on what is needed for this...
 
 endif(BRLCAD_Fontconfig_BUILD)
+endif(0)
 
 # libnetpbm Library support for pnm,ppm,pbm, etc. image files
 set(netpbm_DESCRIPTION "
@@ -489,10 +491,6 @@ also depends on BRLCAD_ENABLE_TK being ON.
 if(BRLCAD_ENABLE_AQUA)
   set(TK_ENABLE_AQUA ON CACHE STRING "BRL-CAD setting to enable AQUA" FORCE)
 endif(BRLCAD_ENABLE_AQUA)
-if (NOT TEST_FONTCONFIG AND BRLCAD_PNG_BUILD)
-  set(TK_DISABLE_XFT 1 CACHE STRING "Disable due to building local libpng" FORCE)
-  mark_as_advanced(TK_DISABLE_XFT)
-endif (NOT TEST_FONTCONFIG AND BRLCAD_PNG_BUILD)
 
 THIRD_PARTY_TCL_PACKAGE(Tk tk "${TCL_TCLSH}" "tcl" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL2" "tk" tk_ALIASES tk_DESCRIPTION)
 

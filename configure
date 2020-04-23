@@ -130,10 +130,6 @@ do
                                   shift;;
      --disable-freetype)                options="$options -DBRLCAD_FREETYPE=SYSTEM";
                                   shift;;
-     --enable-fontconfig)                options="$options -DBRLCAD_Fontconfig=BUNDLED";
-                                  shift;;
-     --disable-fontconfig)                options="$options -DBRLCAD_Fontconfig=SYSTEM";
-                                  shift;;
      --enable-netpbm)                options="$options -DBRLCAD_NETPBM=BUNDLED";
                                   shift;;
      --disable-netpbm)                options="$options -DBRLCAD_NETPBM=SYSTEM";
