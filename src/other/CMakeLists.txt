@@ -418,11 +418,11 @@ if(BRLCAD_TCL_BUILD)
   # For the include path, use the TCL_INCLUDE_PATH set in the tcl build itself;
   # we are not installing headers, so we have to look in the source tree
   get_directory_property(TCL_INCLUDE_PATH DIRECTORY tcl DEFINITION TCL_INCLUDE_PATH)
-  set(TCL_INCLUDE_PATH "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Tcl include path" FORCE)
+  set(TCL_INCLUDE_PATH "${TCL_INCLUDE_PATH}" CACHE STRING "Tcl include path" FORCE)
 
   # Let Distclean know it will have work to do
-  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/tcl8")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/tcl8.6")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${LIB_DIR}/tcl8")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${LIB_DIR}/tcl8.6")
 
   # Group the targets in Visual Studio project files
   SetTargetFolder(tclsh "Third Party Executables")
@@ -493,43 +493,47 @@ if (NOT TEST_FONTCONFIG AND BRLCAD_PNG_BUILD)
   set(TK_DISABLE_XFT 1 CACHE STRING "Disable due to building local libpng" FORCE)
   mark_as_advanced(TK_DISABLE_XFT)
 endif (NOT TEST_FONTCONFIG AND BRLCAD_PNG_BUILD)
+
 THIRD_PARTY_TCL_PACKAGE(Tk tk "${TCL_TCLSH}" "tcl" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL2" "tk" tk_ALIASES tk_DESCRIPTION)
+
 if(BRLCAD_TK_BUILD)
-  SetTargetFolder(wish "Third Party Executables")
-  SetTargetFolder(tk "Third Party Libraries") 
-  SetTargetFolder(tkstub "Third Party Libraries") 
+
+  # Let the BRL-CAD compilation know we have Tcl
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_TK_H 1\n")
+
+  # Set the necessary variables ourselves since FindTCL.cmake doesn't know about our build
   set(TK_LIBRARY tk CACHE STRING "TK_LIBRARY" FORCE)
   set(TK_STUB_LIBRARY tkstub CACHE STRING "TK_LIBRARY" FORCE)
-  if (MSVC)
-    # When building packages without X11 on Windows, we need more headers.
-    set(TK_INCLUDE_PATH "${CMAKE_BINARY_DIR}/${INCLUDE_DIR};${CMAKE_CURRENT_SOURCE_DIR}/tk/xlib;${CMAKE_CURRENT_SOURCE_DIR}/tk/win;${CMAKE_CURRENT_SOURCE_DIR}/tk/generic" CACHE STRING "Tk include path" FORCE)
-  else (MSVC)
-    set(TK_INCLUDE_PATH "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Tk include path" FORCE)
-  endif (MSVC)
-  set(TK_WISH wish CACHE STRING "Tk shell" FORCE)
-  if(WIN32)
-    set(TK_SYSTEM_GRAPHICS "win32" CACHE STRING "Tk system graphics" FORCE)
-  elseif(APPLE)
-    if(OPENGL_USE_AQUA)
-      set(TK_SYSTEM_GRAPHICS "aqua" CACHE STRING "Tk system graphics" FORCE)
-    ELSE(OPENGL_USE_AQUA)
-      set(TK_SYSTEM_GRAPHICS "x11" CACHE STRING "Tk system graphics" FORCE)
-    endif(OPENGL_USE_AQUA)
-  elseif(UNIX)
-    set(TK_SYSTEM_GRAPHICS "x11" CACHE STRING "Tk system graphics" FORCE)
-  endif(WIN32)
-  CONFIG_H_APPEND(BRLCAD "#define HAVE_TK_H 1\n")
-  mark_as_advanced(TK-ENABLE_FREETYPE)
+
+  # For the include path, use the TK_INCLUDE_PATH set in the tk build itself;
+  # we are not installing headers, so we have to look in the source tree
+  get_directory_property(TK_INCLUDE_PATH DIRECTORY tk DEFINITION TK_INCLUDE_PATH)
+  set(TK_INCLUDE_PATH "${TK_INCLUDE_PATH}" CACHE STRING "Tk include path" FORCE)
+
+  get_directory_property(TK_SYSTEM_GRAPHICS DIRECTORY tk DEFINITION TK_SYSTEM_GRAPHICS)
+  set(TK_SYSTEM_GRAPHICS "${TK_SYSTEM_GRAPHICS}" CACHE STRING "Tk system graphis type" FORCE)
+
+  # Let Distclean know it will have work to do both here and in
+  # the lib directory
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tk/doc/Makefile")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tk/doc/man1")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tk/doc/man3")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tk/doc/mann")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tk/library/Makefile")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tk/pkgIndex.tcl")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/tk8.6")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/tk8.6.10")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${LIB_DIR}/tk8.6")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${LIB_DIR}/tk8.6.10")
+
+  # Group the targets in Visual Studio project files
+  SetTargetFolder(wish "Third Party Executables")
+  SetTargetFolder(tk "Third Party Libraries")
+  SetTargetFolder(tkstub "Third Party Libraries")
+
 elseif(BRLCAD_TK_BUILD AND BRLCAD_ENABLE_TK)
-    BRLCAD_INCLUDE_FILE(tk.h HAVE_TK_H)
+
+  # Still need the header, even if we're using system Tcl/Tk
+  BRLCAD_INCLUDE_FILE(tk.h HAVE_TK_H)
+
 endif(BRLCAD_TK_BUILD)
 mark_as_advanced(TK_INCLUDE_PATH)
 mark_as_advanced(TK_LIBRARY)
