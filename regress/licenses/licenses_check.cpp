@@ -152,6 +152,7 @@ main(int argc, const char *argv[])
     std::regex d_regex(".*[\\/]doc[\\/].*");
     std::regex l_regex(".*[\\/]licenses_check.cpp");
     std::regex srcfile_regex(".*[.](c|cpp|cxx|h|hpp|hxx|tcl)*$");
+    std::regex svn_regex(".*[\\/][.]svn[\\/].*");
     std::string root_path(argv[3]);
 
     std::map<std::string, std::string> file_to_license;
@@ -165,6 +166,10 @@ main(int argc, const char *argv[])
 	std::cerr << "Unable to open license file list " << argv[1] << "\n";
     }
     while (std::getline(license_file_stream, lfile)) {
+	if (std::regex_match(lfile, svn_regex)) {
+	    std::cerr << "Skipping .svn file " << lfile << "\n";
+	    continue;
+	}
 	int valid_ref_cnt = 0;
 	std::string lline;
 	std::ifstream license_stream;

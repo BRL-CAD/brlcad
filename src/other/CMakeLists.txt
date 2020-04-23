@@ -44,6 +44,19 @@ unset(CMAKE_CXX_STANDARD_REQUIRED)
 unset(CMAKE_CXX_STANDARD)
 
 ###############################################################################
+# We never want our build products to be identified by searches here - we
+# either want system installed versions or nothing.  Set CMAKE_IGNORE_PATH
+# values accordingly.  NOTE: we must specify EXPLICITY all directories to
+# ignore as CMAKE_IGNORE_PATH does not automatically ignore subdirectories:
+# https://cmake.org/cmake/help/latest/variable/CMAKE_IGNORE_PATH.html#variable:CMAKE_IGNORE_PATH
+set(CMAKE_IGNORE_PATH
+  ${CMAKE_BINARY_DIR}/${BIN_DIR}
+  ${CMAKE_BINARY_DIR}/${LIB_DIR}
+  ${CMAKE_INSTALL_PREFIX}/${BIN_DIR}
+  ${CMAKE_INSTALL_PREFIX}/${LIB_DIR}
+  )
+
+###############################################################################
 # Unlike the misc/tools directory components built in src/other are part of
 # the distribution, not just the compilation.  Hence we need to make sure of
 # some basic compatibility between the build settings.
@@ -228,7 +241,6 @@ mark_as_advanced(PNG_SHARED)
 mark_as_advanced(PNG_STATIC)
 mark_as_advanced(uname_executable)
 
-
 # LZ4 compression/decompression library
 set(lz4_DESCRIPTION "
 Option for enabling and disabling compilation of the lz4 data
@@ -253,81 +265,6 @@ if(BRLCAD_LZ4_BUILD)
   SetTargetFolder(lz4-static "Third Party Libraries")
 endif(BRLCAD_LZ4_BUILD)
 
-
-# FreeType Libraries - must come after ZLIB and PNG
-set(freetype_DESCRIPTION "
-Option for enabling and disabling compilation of the FreeType
-libraries provided with BRL-CAD's source code.  Default is AUTO, responsive to
-the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
-version if BRLCAD_BUNDLED_LIBS is also AUTO.
-")
-# We don't want the Freetype distribution build targets
-set(FREETYPE_NO_DIST 1)
-THIRD_PARTY(freetype FREETYPE ft freetype_DESCRIPTION BRLCAD_LEVEL3 ALIASES ENABLE_FREETYPE REQUIRED_VARS "TEST_FONTCONFIG;BRLCAD_LEVEL3" FIND_NAME Freetype)
-if(BRLCAD_FREETYPE_BUILD)
-  set(FREETYPE_LIBRARY freetype CACHE STRING "libfreetype" FORCE)
-  mark_as_advanced(FREETYPE_LIBRARY)
-  set(FREETYPE_LIBRARIES "${FREETYPE_LIBRARY}" CACHE STRING "FreeType Libraries")
-  mark_as_advanced(FREETYPE_LIBRARIES)
-  set(FREETYPE_INCLUDE_DIR_freetype2
-    "${BRLCAD_SOURCE_DIR}/src/other/freetype/include"
-    CACHE STRING "FreeType freetype2 include dir" FORCE
-    )
-  mark_as_advanced(FREETYPE_INCLUDE_DIR_freetype2)
-  set(FREETYPE_INCLUDE_DIR_ft2build
-    "${CMAKE_CURRENT_BINARY_DIR}/freetype/include"
-    CACHE STRING "FreeType ft2build include dir" FORCE
-    )
-  mark_as_advanced(FREETYPE_INCLUDE_DIR_ft2build)
-  set(FREETYPE_INCLUDE_DIRS
-    "${FREETYPE_INCLUDE_DIR_freetype2};${FREETYPE_INCLUDE_DIR_ft2build}"
-    CACHE STRING "Directories containing FreeType headers." FORCE)
-  mark_as_advanced(FREETYPE_INCLUDE_DIRS)
-  set(FREETYPE_VERSION_STRING "2.6.5" CACHE STRING "Freetype version" FORCE)
-  SetTargetFolder(freetype "Third Party Libraries")
-endif(BRLCAD_FREETYPE_BUILD)
-if(NOT "${CMAKE_CURRENT_BINARY_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftconfig.h")
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftoption.h")
-endif(NOT "${CMAKE_CURRENT_BINARY_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftconfig.h-new")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftoption.h-new")
-
-# Fontconfig library - must come after PNG and FREETYPE
-set(fontconfig_DESCRIPTION "
-Option for enabling and disabling compilation of the Fontconfig
-library provided with BRL-CAD's source code.  Default is AUTO, responsive to
-the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
-version if BRLCAD_BUNDLED_LIBS is also AUTO.
-")
-THIRD_PARTY(fontconfig Fontconfig ft fontconfig_DESCRIPTION BRLCAD_LEVEL3 ALIASES ENABLE_FONTCONFIG REQUIRED_VARS "TEST_FONTCONFIG;BRLCAD_LEVEL3" FIND_NAME Fontconfig)
-if(BRLCAD_Fontconfig_BUILD)
-  set(Fontconfig_LIBRARY fontconfig CACHE STRING "fontconfig" FORCE)
-  mark_as_advanced(Fontconfig_LIBRARY)
-  set(Fontconfig_LIBRARIES "${Fontconfig_LIBRARY}" CACHE STRING "FreeType Libraries")
-  mark_as_advanced(Fontconfig_LIBRARIES)
-  set(Fontconfig_INCLUDE_DIR
-    "${BRLCAD_BINARY_DIR}/src/other/fontconfig/include;${BRLCAD_SOURCE_DIR}/src/other/fontconfig/include"
-    CACHE STRING "fontconfig include dir" FORCE)
-  mark_as_advanced(Fontconfig_INCLUDE_DIR)
-  set(Fontconfig_INCLUDE_DIRS "${Fontconfig_INCLUDE_DIR}" CACHE STRING "Fontconfig headers." FORCE)
-  mark_as_advanced(Fontconfig_INCLUDE_DIRS)
-  set(Fontconfig_VERSION "2.13.92" CACHE STRING "Fontconfig version" FORCE)
-  set(Fontconfig_COMPILE_OPTIONS "" CACHE STRING "Fontconfig compile options" FORCE)
-  set(pkgcfg_lib_PKG_FONTCONFIG_fontconfig fontconfig)
-  set(pkgcfg_lib_PKG_FONTCONFIG_freetype ${FREETYPE_LIBRARIES})
-  SetTargetFolder(fontconfig "Third Party Libraries")
-
-  # TODO - in order for this to work, we may need to change how the built copy
-  # of Tk uses fontconfig.  We want to look for our own (guaranteed) fonts
-  # rather than the system fonts for consistency, but that means building our
-  # own share/fontconfig directory with a config file and cache.  Tk then needs
-  # to call fontconfig to look there rather than the system version.  There are
-  # some test programs in the tests directory of the main fontconfig
-  # distribution which may offer some hints on what is needed for this...
-
-endif(BRLCAD_Fontconfig_BUILD)
-
 # libnetpbm Library support for pnm,ppm,pbm, etc. image files
 set(netpbm_DESCRIPTION "
 Option for enabling and disabling compilation of the netpbm library
@@ -345,7 +282,6 @@ endif(BRLCAD_NETPBM_BUILD)
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libnetpbm/version.h")
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libnetpbm/compile.h")
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libnetpbm/pm_config.h")
-
 
 # libutahrle Library - The directory to perform ADD_SUBDIRECTORY on
 # and the include directory for utahrle are different, so override the
@@ -372,6 +308,14 @@ endif(BRLCAD_UTAHRLE_BUILD)
 #                Tcl/Tk and related extensions
 ####################################################################
 
+# Make sure we actually look for these each time...
+unset(TCL_TCLSH CACHE)
+unset(TCL_LIBRARY CACHE)
+unset(TCL_INCLUDE_PATH CACHE)
+unset(TK_WISH CACHE)
+unset(TK_LIBRARY CACHE)
+unset(TK_INCLUDE_PATH CACHE)
+
 set(tcl_DESCRIPTION "
 Option for enabling and disabling compilation of the Tcl library
 provided with BRL-CAD's source code.  Default is AUTO, responsive to
@@ -383,41 +327,62 @@ THIRD_PARTY(tcl TCL tcl tcl_DESCRIPTION ALIASES ENABLE_TCL FIND_NAME TCL REQUIRE
 
 if(BRLCAD_TCL_BUILD)
 
-  SetTargetFolder(tclsh "Third Party Executables")
-  SetTargetFolder(tcl "Third Party Libraries")
-  SetTargetFolder(tclstub "Third Party Libraries")
-  # Set the variables ourselves since FindTCL.cmake doesn't know about our build
+  # Let the BRL-CAD compilation know we have Tcl
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_TCL_H 1\n")
+
+  # There is no system init.tcl that we need to provide a path for
+  CONFIG_H_APPEND(BRLCAD "#define TCL_SYSTEM_INITTCL_PATH \"\"\n")
+
+  # Set the necessary variables ourselves since FindTCL.cmake doesn't know about our build
   set(TCL_LIBRARY tcl CACHE STRING "TCL_LIBRARY" FORCE)
   set(TCL_STUB_LIBRARY tclstub CACHE STRING "TCL_LIBRARY" FORCE)
-  set(TCL_INCLUDE_PATH "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Tcl include path" FORCE)
   set(TCL_TCLSH tclsh CACHE STRING "Tcl shell" FORCE)
   set(TCL_VERSION_MAJOR "8" CACHE STRING "Tcl MAJOR version" FORCE)
   set(TCL_VERSION_MINOR "6" CACHE STRING "Tcl MINOR version" FORCE)
-  CONFIG_H_APPEND(BRLCAD "#define HAVE_TCL_H 1\n")
-  CONFIG_H_APPEND(BRLCAD "#define TCL_SYSTEM_INITTCL_PATH \"\"\n")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/tcl8")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/tcl8.6")
+
+  # For the include path, use the TCL_INCLUDE_PATH set in the tcl build itself;
+  # we are not installing headers, so we have to look in the source tree
+  get_directory_property(TCL_INCLUDE_PATH DIRECTORY tcl DEFINITION TCL_INCLUDE_PATH)
+  set(TCL_INCLUDE_PATH "${TCL_INCLUDE_PATH}" CACHE STRING "Tcl include path" FORCE)
+
+  # Let Distclean know it will have work to do
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${LIB_DIR}/tcl8")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${LIB_DIR}/tcl8.6")
+
+  # Group the targets in Visual Studio project files
+  SetTargetFolder(tclsh "Third Party Executables")
+  SetTargetFolder(tcl "Third Party Libraries")
+  SetTargetFolder(tclstub "Third Party Libraries")
+
 else(BRLCAD_TCL_BUILD)
+
+  # We're using the system Tcl, but need some extra information.  FindTCL.cmake
+  # doesn't give us a stub library location, so we need to go find it ourselves.
   get_filename_component(TCL_LIB_PATH "${TCL_LIBRARY}" DIRECTORY)
   find_library(TCL_STUB_LIBRARY tclstub NAMES tclstub86 tclstub8.6 PATHS ${TCL_LIB_PATH})
-    BRLCAD_INCLUDE_FILE(tcl.h HAVE_TCL_H)
-    # We're going to need the path to the system init.tcl for btclsh and bwish
-    set(inittcl_script "
+
+  # Make sure we've got the header file
+  BRLCAD_INCLUDE_FILE(tcl.h HAVE_TCL_H)
+
+  # We're going to need the path to the system init.tcl for btclsh and bwish -
+  # extract it from the system Tcl
+  set(inittcl_script "
 set filename \"${CMAKE_BINARY_DIR}/CMakeTmp/tcl_inittcl\"
 set fileID [open $filename \"w\"]
 puts $fileID $auto_path
 close $fileID
 exit
-")
-    set(inittcl_scriptfile "${CMAKE_BINARY_DIR}/CMakeTmp/tcl_inittcl.tcl")
-    file(WRITE ${inittcl_scriptfile} ${inittcl_script})
+  ")
+  set(inittcl_scriptfile "${CMAKE_BINARY_DIR}/CMakeTmp/tcl_inittcl.tcl")
+  file(WRITE ${inittcl_scriptfile} ${inittcl_script})
   exec_program(${TCL_TCLSH} ARGS ${inittcl_scriptfile} OUTPUT_VARIABLE EXECOUTPUT)
-    file(READ "${CMAKE_BINARY_DIR}/CMakeTmp/tcl_inittcl" tcl_inittcl_raw)
+  file(READ "${CMAKE_BINARY_DIR}/CMakeTmp/tcl_inittcl" tcl_inittcl_raw)
   string(REGEX REPLACE "\n" "" tcl_inittcl_paths_1 ${tcl_inittcl_raw})
   string(REGEX REPLACE " " ";" tcl_inittcl_paths ${tcl_inittcl_paths_1})
   find_path(tcl_inittcl NAMES init.tcl PATHS ${tcl_inittcl_paths})
-    mark_as_advanced(tcl_inittcl)
-    CONFIG_H_APPEND(BRLCAD "#define TCL_SYSTEM_INITTCL_PATH \"${tcl_inittcl}\"\n")
+  mark_as_advanced(tcl_inittcl)
+  CONFIG_H_APPEND(BRLCAD "#define TCL_SYSTEM_INITTCL_PATH \"${tcl_inittcl}\"\n")
+
 endif(BRLCAD_TCL_BUILD)
 mark_as_advanced(TCL_COMPILATION_TRACING)
 mark_as_advanced(TCL_COMPILE_STATS)
@@ -449,47 +414,58 @@ also depends on BRLCAD_ENABLE_TK being ON.
 if(BRLCAD_ENABLE_AQUA)
   set(TK_ENABLE_AQUA ON CACHE STRING "BRL-CAD setting to enable AQUA" FORCE)
 endif(BRLCAD_ENABLE_AQUA)
-if (NOT TEST_FONTCONFIG AND BRLCAD_PNG_BUILD)
-  set(TK_DISABLE_XFT 1 CACHE STRING "Disable due to building local libpng" FORCE)
-  mark_as_advanced(TK_DISABLE_XFT)
-endif (NOT TEST_FONTCONFIG AND BRLCAD_PNG_BUILD)
+
 THIRD_PARTY_TCL_PACKAGE(Tk tk "${TCL_TCLSH}" "tcl" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL2" "tk" tk_ALIASES tk_DESCRIPTION)
+
 if(BRLCAD_TK_BUILD)
-  SetTargetFolder(wish "Third Party Executables")
-  SetTargetFolder(tk "Third Party Libraries") 
-  SetTargetFolder(tkstub "Third Party Libraries") 
+
+  # Let the BRL-CAD compilation know we have Tcl
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_TK_H 1\n")
+
+  # Set the necessary variables ourselves since FindTCL.cmake doesn't know about our build
   set(TK_LIBRARY tk CACHE STRING "TK_LIBRARY" FORCE)
   set(TK_STUB_LIBRARY tkstub CACHE STRING "TK_LIBRARY" FORCE)
-  if (MSVC)
-    # When building packages without X11 on Windows, we need more headers.
-    set(TK_INCLUDE_PATH "${CMAKE_BINARY_DIR}/${INCLUDE_DIR};${CMAKE_CURRENT_SOURCE_DIR}/tk/xlib;${CMAKE_CURRENT_SOURCE_DIR}/tk/win;${CMAKE_CURRENT_SOURCE_DIR}/tk/generic" CACHE STRING "Tk include path" FORCE)
-  else (MSVC)
-    set(TK_INCLUDE_PATH "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Tk include path" FORCE)
-  endif (MSVC)
-  set(TK_WISH wish CACHE STRING "Tk shell" FORCE)
-  if(WIN32)
-    set(TK_SYSTEM_GRAPHICS "win32" CACHE STRING "Tk system graphics" FORCE)
-  elseif(APPLE)
-    if(OPENGL_USE_AQUA)
-      set(TK_SYSTEM_GRAPHICS "aqua" CACHE STRING "Tk system graphics" FORCE)
-    ELSE(OPENGL_USE_AQUA)
-      set(TK_SYSTEM_GRAPHICS "x11" CACHE STRING "Tk system graphics" FORCE)
-    endif(OPENGL_USE_AQUA)
-  elseif(UNIX)
-    set(TK_SYSTEM_GRAPHICS "x11" CACHE STRING "Tk system graphics" FORCE)
-  endif(WIN32)
-  CONFIG_H_APPEND(BRLCAD "#define HAVE_TK_H 1\n")
-  mark_as_advanced(TK-ENABLE_FREETYPE)
+
+  # For the include path, use the TK_INCLUDE_PATH set in the tk build itself;
+  # we are not installing headers, so we have to look in the source tree
+  get_directory_property(TK_INCLUDE_PATH DIRECTORY tk DEFINITION TK_INCLUDE_PATH)
+  set(TK_INCLUDE_PATH "${TK_INCLUDE_PATH}" CACHE STRING "Tk include path" FORCE)
+
+  get_directory_property(TK_SYSTEM_GRAPHICS DIRECTORY tk DEFINITION TK_SYSTEM_GRAPHICS)
+  set(TK_SYSTEM_GRAPHICS "${TK_SYSTEM_GRAPHICS}" CACHE STRING "Tk system graphics type" FORCE)
+
+  # Let Distclean know it will have work to do both here and in
+  # the lib directory
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tk/doc/Makefile")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tk/doc/man1")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tk/doc/man3")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tk/doc/mann")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tk/library/Makefile")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tk/pkgIndex.tcl")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/tk8.6")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/tk8.6.10")
-elseif(BRLCAD_TK_BUILD AND BRLCAD_ENABLE_TK)
-    BRLCAD_INCLUDE_FILE(tk.h HAVE_TK_H)
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${LIB_DIR}/tk8.6")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/${LIB_DIR}/tk8.6.10")
+
+  # Group the targets in Visual Studio project files
+  SetTargetFolder(wish "Third Party Executables")
+  SetTargetFolder(tk "Third Party Libraries")
+  SetTargetFolder(tkstub "Third Party Libraries")
+
+elseif(BRLCAD_ENABLE_TK)
+
+  set(HAVE_TK_H 1)
+
+  # Packages probably still need to know the system graphics package
+  if (NOT WIN32)
+    if (APPLE AND TK_ENABLE_AQUA)
+      set(TK_SYSTEM_GRAPHICS aqua)
+    else ()
+      set(TK_SYSTEM_GRAPHICS x11)
+    endif (APPLE AND TK_ENABLE_AQUA)
+  else (NOT WIN32)
+    set(TK_SYSTEM_GRAPHICS win32)
+  endif (NOT WIN32)
+  set(TK_SYSTEM_GRAPHICS "${TK_SYSTEM_GRAPHICS}" CACHE STRING "Tk system graphics type" FORCE)
+
 endif(BRLCAD_TK_BUILD)
 mark_as_advanced(TK_INCLUDE_PATH)
 mark_as_advanced(TK_LIBRARY)
@@ -513,25 +489,13 @@ mark_as_advanced(HAVE_TK)
 #
 # http://core.tcl.tk/itcl/tktview/61952ca33e9e58df9e0519a0b4583a144e8ec77b
 #
-# We're set up below to use either v3 or v4, depending on which of the below
-# variables are uncommented
+# Consequently we need to provide the older v3
 set(ITCL_DIR itcl3)
 set(ITCL_VER "3.4")
-include("${CMAKE_CURRENT_SOURCE_DIR}/itcl.dist")
-CMAKEFILES_IN_DIR(itcl_ignore_files itcl)
-#set(ITCL_DIR itcl)
-#set(ITCL_VER "4.2.0")
 include("${CMAKE_CURRENT_SOURCE_DIR}/itcl3.dist")
 CMAKEFILES_IN_DIR(itcl3_ignore_files itcl3)
-
-
 set(ITK_DIR itk3)
 set(ITK_VER "3.4")
-include("${CMAKE_CURRENT_SOURCE_DIR}/itk.dist")
-CMAKEFILES_IN_DIR(itk_ignore_files itk)
-
-#set(ITK_DIR itk)
-#set(ITK_VER "4.1.0")
 include("${CMAKE_CURRENT_SOURCE_DIR}/itk3.dist")
 CMAKEFILES_IN_DIR(itk3_ignore_files itk3)
 

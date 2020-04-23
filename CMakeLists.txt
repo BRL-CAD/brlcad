@@ -754,7 +754,6 @@ if (IS_DIRECTORY /usr/local)
   set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} /usr/local)
   if (IS_DIRECTORY /usr/local/include)
     set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} /usr/local/include)
-    include_directories(AFTER SYSTEM /usr/local/include)
   endif (IS_DIRECTORY /usr/local/include)
 endif (IS_DIRECTORY /usr/local)
 
@@ -1161,13 +1160,6 @@ else(NOT CMAKE_BUILD_TYPE)
 endif(NOT CMAKE_BUILD_TYPE)
 cmake_dependent_option(BUILD_STATIC_LIBS "Build static libraries" ON "CMAKE_CONFIGURATION_TYPES OR NOT ${CBT} STREQUAL Debug" OFF)
 
-# On Mac OS X, it is common to have third party package managers
-# present for easy software installation (currently we're aware of
-# Fink and MacPorts).  This can seriously complicate find_* results,
-# so provide an option to specify whether or which of the third
-# party setup to use.
-include(Fink_MacPorts)
-
 # Turn off the brlcad.dll build.
 # It's an expert's setting at the moment.
 option(BRLCAD_ENABLE_BRLCAD_LIBRARY "Build the brlcad.dll" OFF)
@@ -1316,17 +1308,19 @@ option(BRLCAD_ENABLE_GDAL "Enable features requiring the Geospatial Data Abstrac
 mark_as_advanced(BRLCAD_ENABLE_GDAL)
 
 # Enable features requiring Qt
-# TODO - try COMPONENTS search: https://blog.kitware.com/cmake-finding-qt5-the-right-way/
-find_package(Qt5Widgets QUIET)
 option(BRLCAD_ENABLE_QT "Enable features requiring Qt" OFF)
 mark_as_advanced(BRLCAD_ENABLE_QT)
+if (BRLCAD_ENABLE_QT)
+  # TODO - try COMPONENTS search: https://blog.kitware.com/cmake-finding-qt5-the-right-way/
+  find_package(Qt5Widgets QUIET)
+  if(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
+    message("QT interface requested, but QT5 is not found - disabling")
+    set(BRLCAD_ENABLE_QT OFF)
+  endif(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
+endif (BRLCAD_ENABLE_QT)
+mark_as_advanced(Qt5Widgets_DIR)
 mark_as_advanced(Qt5Core_DIR)
 mark_as_advanced(Qt5Gui_DIR)
-if(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
-  message("QT interface requested, but QT5 is not found - disabling")
-  set(BRLCAD_ENABLE_QT OFF)
-endif(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
-mark_as_advanced(Qt5Widgets_DIR)
 
 # Enable features requiring OpenSceneGraph
 option(BRLCAD_ENABLE_OSG "Enable features requiring OpenSceneGraph" OFF)
