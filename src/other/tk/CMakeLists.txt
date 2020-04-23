@@ -678,16 +678,13 @@ add_definitions(-DHAVE_XKBKEYCODETOKEYSYM=1)
 add_definitions(-DXKEYCODETOKEYSYM_IS_DEPRECATED=1)
 
 include_directories(
+  ${TCL_INCLUDE_PATH}
+  ${TK_INCLUDE_PATH}
   ${TK_X11_INCLUDE_DIRS}
   )
 if (TK_ENABLE_XFT)
   include_directories(${FREETYPE_INCLUDE_DIRS})
 endif (TK_ENABLE_XFT)
-
-include_directories(
-  ${TCL_INCLUDE_PATH}
-  ${TK_INCLUDE_PATH}
-  )
 
 set(X11_TK_LIBS ${X11_X11_LIB} ${X11_Xext_LIB})
 if (TK_ENABLE_XSS AND X11_Xscreensaver_LIB)
