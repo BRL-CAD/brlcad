@@ -403,11 +403,11 @@ else(BRLCAD_TCL_BUILD)
   BRLCAD_INCLUDE_FILE(tcl.h HAVE_TCL_H)
   # We're going to need the path to the system init.tcl for btclsh and bwish
   set(inittcl_script "
-  set filename \"${CMAKE_BINARY_DIR}/CMakeTmp/tcl_inittcl\"
-  set fileID [open $filename \"w\"]
-  puts $fileID $auto_path
-  close $fileID
-  exit
+set filename \"${CMAKE_BINARY_DIR}/CMakeTmp/tcl_inittcl\"
+set fileID [open $filename \"w\"]
+puts $fileID $auto_path
+close $fileID
+exit
   ")
   set(inittcl_scriptfile "${CMAKE_BINARY_DIR}/CMakeTmp/tcl_inittcl.tcl")
   file(WRITE ${inittcl_scriptfile} ${inittcl_script})
