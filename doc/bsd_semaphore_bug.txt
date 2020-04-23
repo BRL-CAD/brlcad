@@ -13,6 +13,8 @@ So far this has only been observed on FreeBSD.
 Adjustment of the bombing message code reveals that the fatal error is
 EPERM - The current thread does not own the mutex.
 
+Maybe relevant (not sure if we have any code that might be using automatic variables after thread_exit(), but the symptoms sound similar...)  Only other candidate I'm seeing is memory corruption of some sort...
+https://stackoverflow.com/a/7612070
 
 
 The first failure is from a GQA run:
