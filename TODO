@@ -146,6 +146,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* audit/fix all of the src/util and src/fb utilities to ensure they
+  set binary mode (setmode O_BINARY) when writing out files.  at quick
+  glance, there are many (about 50) that still do not.
+
 * replace los references/terminology with span, len, dist, factor, etc
   accordingly since los is ambiguous and a source of user confusion.
 
