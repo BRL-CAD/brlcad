@@ -191,6 +191,15 @@ function(THIRD_PARTY dir varname_root build_target description)
       set(${varname_root}_FIND_QUIETLY TRUE)
     endif("${${varname_root}_FOUND_STATUS}" MATCHES "NOTFOUND")
 
+    # In the case of Tcl, more modern versions of CMake will first try to look for Tclsh using a
+    # different find package call.  This produces a warning about looking for one package while
+    # calling with a different name, so if we're looking for TCL do the Tclsh search ourselves
+    # up front
+    if ("${TP_FIND_NAME}" STREQUAL "TCL")
+      find_package(Tclsh NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH)
+      find_package(Wish NO_CMAKE_PATH NO_CMAKE_ENVIRONMENT_PATH)
+    endif ("${TP_FIND_NAME}" STREQUAL "TCL")
+
     # Find the package in question.  It is the toplevel CMakeLists.txt's responsibility to make
     # sure that the CMAKE_MODULE_PATH variable is set correctly if there are local versions of
     # Find*.cmake scripts that should be used.  Note that newer CMake versions will prefer a system
