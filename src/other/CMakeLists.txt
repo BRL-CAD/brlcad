@@ -389,25 +389,45 @@ THIRD_PARTY(tcl TCL tcl tcl_DESCRIPTION ALIASES ENABLE_TCL FIND_NAME TCL REQUIRE
 
 if(BRLCAD_TCL_BUILD)
 
-  SetTargetFolder(tclsh "Third Party Executables")
-  SetTargetFolder(tcl "Third Party Libraries")
-  SetTargetFolder(tclstub "Third Party Libraries")
-  # Set the variables ourselves since FindTCL.cmake doesn't know about our build
+  # Let the BRL-CAD compilation know we have Tcl
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_TCL_H 1\n")
+
+  # There is no system init.tcl that we need to provide a path for
+  CONFIG_H_APPEND(BRLCAD "#define TCL_SYSTEM_INITTCL_PATH \"\"\n")
+
+  # Set the necessary variables ourselves since FindTCL.cmake doesn't know about our build
   set(TCL_LIBRARY tcl CACHE STRING "TCL_LIBRARY" FORCE)
   set(TCL_STUB_LIBRARY tclstub CACHE STRING "TCL_LIBRARY" FORCE)
-  set(TCL_INCLUDE_PATH "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Tcl include path" FORCE)
   set(TCL_TCLSH tclsh CACHE STRING "Tcl shell" FORCE)
   set(TCL_VERSION_MAJOR "8" CACHE STRING "Tcl MAJOR version" FORCE)
   set(TCL_VERSION_MINOR "6" CACHE STRING "Tcl MINOR version" FORCE)
-  CONFIG_H_APPEND(BRLCAD "#define HAVE_TCL_H 1\n")
-  CONFIG_H_APPEND(BRLCAD "#define TCL_SYSTEM_INITTCL_PATH \"\"\n")
+
+  # For the include path, use the TCL_INCLUDE_PATH set in the tcl build itself;
+  # we are not installing headers, so we have to look in the source tree
+  get_directory_property(TCL_INCLUDE_PATH DIRECTORY tcl DEFINITION TCL_INCLUDE_PATH)
+  set(TCL_INCLUDE_PATH "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Tcl include path" FORCE)
+
+  # Let Distclean know it will have work to do
   DISTCLEAN("${CMAKE_BINARY_DIR}/lib/tcl8")
   DISTCLEAN("${CMAKE_BINARY_DIR}/lib/tcl8.6")
+
+  # Group the targets in Visual Studio project files
+  SetTargetFolder(tclsh "Third Party Executables")
+  SetTargetFolder(tcl "Third Party Libraries")
+  SetTargetFolder(tclstub "Third Party Libraries")
+
 else(BRLCAD_TCL_BUILD)
+
+  # We're using the system Tcl, but need some extra information.  FindTCL.cmake
+  # doesn't give us a stub library location, so we need to go find it ourselves.
   get_filename_component(TCL_LIB_PATH "${TCL_LIBRARY}" DIRECTORY)
   find_library(TCL_STUB_LIBRARY tclstub NAMES tclstub86 tclstub8.6 PATHS ${TCL_LIB_PATH})
+
+  # Make sure we've got the header file
   BRLCAD_INCLUDE_FILE(tcl.h HAVE_TCL_H)
-  # We're going to need the path to the system init.tcl for btclsh and bwish
+
+  # We're going to need the path to the system init.tcl for btclsh and bwish -
+  # extract it from the system Tcl
   set(inittcl_script "
 set filename \"${CMAKE_BINARY_DIR}/CMakeTmp/tcl_inittcl\"
 set fileID [open $filename \"w\"]
@@ -424,6 +444,7 @@ exit
   find_path(tcl_inittcl NAMES init.tcl PATHS ${tcl_inittcl_paths})
   mark_as_advanced(tcl_inittcl)
   CONFIG_H_APPEND(BRLCAD "#define TCL_SYSTEM_INITTCL_PATH \"${tcl_inittcl}\"\n")
+
 endif(BRLCAD_TCL_BUILD)
 mark_as_advanced(TCL_COMPILATION_TRACING)
 mark_as_advanced(TCL_COMPILE_STATS)
