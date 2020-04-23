@@ -21,62 +21,10 @@ library is.  This code sets the following variables:
   TK_LIBRARY             = path to Tk library (tk tk80 etc)
   TK_INCLUDE_PATH        = path to where tk.h can be found
   TK_WISH                = full path to the wish executable
-  TCL_TCLSH = the path to the tclsh executable
 
-
-
-In an effort to remove some clutter and clear up some issues for
-people who are not necessarily Tcl/Tk gurus/developers, some
-variables were moved or removed.  Changes compared to CMake 2.4 are:
-
-::
-
-   => they were only useful for people writing Tcl/Tk extensions.
-   => these libs are not packaged by default with Tcl/Tk distributions.
-      Even when Tcl/Tk is built from source, several flavors of debug libs
-      are created and there is no real reason to pick a single one
-      specifically (say, amongst tcl84g, tcl84gs, or tcl84sgx).
-      Let's leave that choice to the user by allowing him to assign
-      TCL_LIBRARY to any Tcl library, debug or not.
-   => this ended up being only a Win32 variable, and there is a lot of
-      confusion regarding the location of this file in an installed Tcl/Tk
-      tree anyway (see 8.5 for example). If you need the internal path at
-      this point it is safer you ask directly where the *source* tree is
-      and dig from there.
 #]=======================================================================]
 
 include(CMakeFindFrameworks)
-
-if(CYGWIN)
-  find_program(TCL_TCLSH NAMES cygtclsh83 cygtclsh80)
-  find_program(TK_WISH cygwish80 )
-endif()
-
-get_filename_component(TK_WISH_PATH "${TK_WISH}" PATH)
-get_filename_component(TK_WISH_PATH_PARENT "${TK_WISH_PATH}" PATH)
-string(REGEX REPLACE
-  "^.*wish([0-9]\\.*[0-9]).*$" "\\1" TK_WISH_VERSION "${TK_WISH}")
-
-get_filename_component(TCL_INCLUDE_PATH_PARENT "${TCL_INCLUDE_PATH}" PATH)
-get_filename_component(TK_INCLUDE_PATH_PARENT "${TK_INCLUDE_PATH}" PATH)
-
-get_filename_component(TCL_LIBRARY_PATH "${TCL_LIBRARY}" PATH)
-get_filename_component(TCL_LIBRARY_PATH_PARENT "${TCL_LIBRARY_PATH}" PATH)
-string(REGEX REPLACE
-  "^.*tcl([0-9]\\.*[0-9]).*$" "\\1" TCL_LIBRARY_VERSION "${TCL_LIBRARY}")
-
-get_filename_component(TK_LIBRARY_PATH "${TK_LIBRARY}" PATH)
-get_filename_component(TK_LIBRARY_PATH_PARENT "${TK_LIBRARY_PATH}" PATH)
-string(REGEX REPLACE
-  "^.*tk([0-9]\\.*[0-9]).*$" "\\1" TK_LIBRARY_VERSION "${TK_LIBRARY}")
-
-set(TCLTK_POSSIBLE_BIN_PATHS
-  "${TCL_INCLUDE_PATH_PARENT}/bin"
-  "${TK_INCLUDE_PATH_PARENT}/bin"
-  "${TCL_LIBRARY_PATH_PARENT}/bin"
-  "${TK_LIBRARY_PATH_PARENT}/bin"
-  "${TK_WISH_PATH_PARENT}/bin"
-  )
 
 if(WIN32)
   get_filename_component(
@@ -135,6 +83,10 @@ set(TCL_TCLSH_NAMES
   tclsh82 tclsh8.2
   tclsh80 tclsh8.0
   )
+if(CYGWIN)
+	set(TCL_TCLSH_NAMES ${TCL_TCLSH_NAMES} cygtclsh83 cygtclsh80)
+endif(CYGWIN)
+
 
 find_program(TCL_TCLSH
   NAMES ${TCL_TCLSH_NAMES}
@@ -151,6 +103,10 @@ set(TK_WISH_NAMES
   wish82 wish8.2
   wish80 wish8.0
   )
+
+if(CYGWIN)
+	set(TK_WISH_NAMES ${TK_WISH_NAMES} cygwish80 )
+endif()
 
 find_program(TK_WISH
   NAMES ${TK_WISH_NAMES}
@@ -285,12 +241,12 @@ FIND_PACKAGE_HANDLE_STANDARD_ARGS(TCL
 set(FPHSA_NAME_MISMATCHED 1)
 set(TCLTK_FIND_REQUIRED ${TCL_FIND_REQUIRED})
 set(TCLTK_FIND_QUIETLY  ${TCL_FIND_QUIETLY})
-FIND_PACKAGE_HANDLE_STANDARD_ARGS(TCLTK DEFAULT_MSG TCL_LIBRARY TCL_INCLUDE_PATH TK_LIBRARY TK_INCLUDE_PATH)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(TCLTK
+	REQUIRED_VARS TCL_LIBRARY TCL_INCLUDE_PATH TK_LIBRARY TK_INCLUDE_PATH)
 set(TK_FIND_REQUIRED ${TCL_FIND_REQUIRED})
 set(TK_FIND_QUIETLY  ${TCL_FIND_QUIETLY})
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(TK
-	REQUIRED_VARS TK_LIBRARY TK_INCLUDE_PATH TK_WISH
-	VERSION_VAR TCLSH_VERSION_STRING)
+	REQUIRED_VARS TK_LIBRARY TK_INCLUDE_PATH TK_WISH)
 unset(FPHSA_NAME_MISMATCHED)
 
 mark_as_advanced(

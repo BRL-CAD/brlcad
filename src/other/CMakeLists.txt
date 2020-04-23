@@ -241,7 +241,6 @@ mark_as_advanced(PNG_SHARED)
 mark_as_advanced(PNG_STATIC)
 mark_as_advanced(uname_executable)
 
-
 # LZ4 compression/decompression library
 set(lz4_DESCRIPTION "
 Option for enabling and disabling compilation of the lz4 data
@@ -347,11 +346,13 @@ endif(BRLCAD_UTAHRLE_BUILD)
 #                Tcl/Tk and related extensions
 ####################################################################
 
-# Make sure we actually look for these...
-set(TCL_TCLSH "")
-set(TCL_LIBRARY "")
-set(TK_WISH "")
-set(TK_LIBRARY "")
+# Make sure we actually look for these each time...
+unset(TCL_TCLSH CACHE)
+unset(TCL_LIBRARY CACHE)
+unset(TCL_INCLUDE_PATH CACHE)
+unset(TK_WISH CACHE)
+unset(TK_LIBRARY CACHE)
+unset(TK_INCLUDE_PATH CACHE)
 
 set(tcl_DESCRIPTION "
 Option for enabling and disabling compilation of the Tcl library
