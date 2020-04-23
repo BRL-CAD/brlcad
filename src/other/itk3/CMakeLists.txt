@@ -42,9 +42,9 @@ cmake_minimum_required(VERSION 3.1.3)
 # set CMake project name
 project(ITK)
 
-if(NOT TK_LIBRARY OR NOT TK_INCLUDE_PATH)
-  find_package(TK)
-endif(NOT TK_LIBRARY OR NOT TK_INCLUDE_PATH)
+if(NOT TCL_LIBRARY OR NOT TCL_INCLUDE_PATH OR NOT TK_LIBRARY)
+  find_package(TCL)
+endif(NOT TCL_LIBRARY OR NOT TCL_INCLUDE_PATH OR NOT TK_LIBRARY)
 
 if(NOT TCL_STUB_LIBRARY OR NOT TK_STUB_LIBRARY OR NOT ITCL_STUB_LIBRARY)
   if(TARGET tclsh)
@@ -177,25 +177,35 @@ set(ITK_STUB_SRCS generic/itkStubLib.c)
 set(ITK_INCLUDE_DIRS ${ITK_SOURCE_DIR}/generic ${ITK_BINARY_DIR}/include)
 mark_as_advanced(ITK_INCLUDE_DIRS)
 
+# Like ITcl, Itk requires private Tcl headers, which we can't assume from a system
+# install of Tcl.  The workaround is to use our local copies and hope they
+# are workable. (Ugh.)
+if (TARGET tk OR NOT EXISTS ${TCL_INCLUDE_PATH}/tcl-private/generic)
+    set(TCL_PRIVATE_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/../tcl/generic)
+  if(NOT WIN32)
+    set(TCL_PRIVATE_HDRS ${TCL_PRIVATE_HDRS} ${CMAKE_CURRENT_SOURCE_DIR}/../tcl/unix)
+  else(NOT WIN32)
+    set(TCL_PRIVATE_HDRS ${TCL_PRIVATE_HDRS} ${CMAKE_CURRENT_SOURCE_DIR}/../tcl/win)
+  endif(NOT WIN32)
+else()
+  set(TCL_PRIVATE_HDRS ${TCL_INCLUDE_PATH}/tcl-private/generic)
+  if(NOT WIN32)
+    set(TCL_PRIVATE_HDRS ${TCL_PRIVATE_HDRS} ${TCL_INCLUDE_PATH}/tcl-private/unix)
+  else(NOT WIN32)
+    set(TCL_PRIVATE_HDRS ${TCL_PRIVATE_HDRS} ${TCL_INCLUDE_PATH}/tcl-private/win)
+  endif(NOT WIN32)
+endif ()
+
 include_directories(
   ${TCL_INCLUDE_PATH}
   ${TK_INCLUDE_PATH}
   ${ITCL_INCLUDE_PATH}
   ${ITK_INCLUDE_DIRS}
   ${X11_INCLUDE_DIR}
+  ${TCL_PRIVATE_HDRS}
+  # We can't realistically assume Itcl3 from any system install - just reference the local copy
   ${CMAKE_CURRENT_SOURCE_DIR}/../itcl/generic
   )
-
-# Like ITcl, Itk requires private Tcl headers, which we can't assume from a system
-# install of Tcl.  The workaround is to use our local copies and hope they
-# are workable. (Ugh.)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../tcl/generic)
-#include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../tk/xlib)
-if(NOT WIN32)
-  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../tcl/unix)
-else(NOT WIN32)
-  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../tcl/win)
-endif(NOT WIN32)
 
 add_library(itk ${ITK_SRCS})
 target_link_libraries(itk ${M_LIBRARY} ${TCL_STUB_LIBRARY} ${TK_STUB_LIBRARY} ${ITCL_STUB_LIBRARY})

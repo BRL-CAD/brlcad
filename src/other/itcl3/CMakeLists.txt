@@ -172,22 +172,31 @@ set(ITCL_STUB_SRCS generic/itclStubLib.c)
 set(ITCL_INCLUDE_PATH ${ITCL_SOURCE_DIR}/generic ${ITCL_BINARY_DIR}/include)
 mark_as_advanced(ITCL_INCLUDE_PATH)
 
-include_directories(
-  ${TCL_INCLUDE_PATH}
-  ${ITCL_INCLUDE_PATH}
-  ${CMAKE_BINARY_DIR}/include
-  ${CMAKE_SOURCE_DIR}/include
-  )
 
 # ITcl requires private Tcl headers, which we can't assume from a system
 # install of Tcl.  The workaround is to use our local copies and hope they
 # are workable. (Ugh.)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../tcl/generic)
-if(NOT WIN32)
-  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../tcl/unix)
-else(NOT WIN32)
-  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../tcl/win)
-endif(NOT WIN32)
+if (TARGET tcl OR NOT EXISTS ${TCL_INCLUDE_PATH}/tcl-private/generic)
+    set(TCL_PRIVATE_HDRS ${CMAKE_CURRENT_SOURCE_DIR}/../tcl/generic)
+  if(NOT WIN32)
+    set(TCL_PRIVATE_HDRS ${TCL_PRIVATE_HDRS} ${CMAKE_CURRENT_SOURCE_DIR}/../tcl/unix)
+  else(NOT WIN32)
+    set(TCL_PRIVATE_HDRS ${TCL_PRIVATE_HDRS} ${CMAKE_CURRENT_SOURCE_DIR}/../tcl/win)
+  endif(NOT WIN32)
+else()
+  set(TCL_PRIVATE_HDRS ${TCL_INCLUDE_PATH}/tcl-private/generic)
+  if(NOT WIN32)
+    set(TCL_PRIVATE_HDRS ${TCL_PRIVATE_HDRS} ${TCL_INCLUDE_PATH}/tcl-private/unix)
+  else(NOT WIN32)
+    set(TCL_PRIVATE_HDRS ${TCL_PRIVATE_HDRS} ${TCL_INCLUDE_PATH}/tcl-private/win)
+  endif(NOT WIN32)
+endif ()
+
+include_directories(
+  ${TCL_INCLUDE_PATH}
+  ${ITCL_INCLUDE_PATH}
+  ${TCL_PRIVATE_HDRS}
+  )
 
 add_library(itcl ${ITCL_SRCS})
 target_link_libraries(itcl ${M_LIBRARY} ${TCL_STUB_LIBRARY} )
