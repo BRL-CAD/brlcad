@@ -467,6 +467,12 @@ elseif(BRLCAD_TK_BUILD AND BRLCAD_ENABLE_TK)
   endif (NOT WIN32)
   set(TK_SYSTEM_GRAPHICS "${TK_SYSTEM_GRAPHICS}" CACHE STRING "Tk system graphics type" FORCE)
 
+  # Now we know what the options want - confirm we actually have it.  If not, it's a fatal
+  # error - the user will need to either specify a system version with the graphics system
+  # desired, change their toplevel options, or enable the bundled Tcl/Tk build.
+
+  # TODO
+
 endif(BRLCAD_TK_BUILD)
 mark_as_advanced(TK_INCLUDE_PATH)
 mark_as_advanced(TK_LIBRARY)
