@@ -1160,13 +1160,6 @@ else(NOT CMAKE_BUILD_TYPE)
 endif(NOT CMAKE_BUILD_TYPE)
 cmake_dependent_option(BUILD_STATIC_LIBS "Build static libraries" ON "CMAKE_CONFIGURATION_TYPES OR NOT ${CBT} STREQUAL Debug" OFF)
 
-# On Mac OS X, it is common to have third party package managers
-# present for easy software installation (currently we're aware of
-# Fink and MacPorts).  This can seriously complicate find_* results,
-# so provide an option to specify whether or which of the third
-# party setup to use.
-include(Fink_MacPorts)
-
 # Turn off the brlcad.dll build.
 # It's an expert's setting at the moment.
 option(BRLCAD_ENABLE_BRLCAD_LIBRARY "Build the brlcad.dll" OFF)
