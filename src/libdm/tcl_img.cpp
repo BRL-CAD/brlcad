@@ -25,7 +25,6 @@
 #include "common.h"
 
 #include <random>
-#include <vector>
 #include <iostream>
 
 #include "tcl.h"
@@ -34,6 +33,8 @@
 const char *DM_PHOTO = ".dm0.photo";
 const char *DM_LABEL = ".dm0";
 
+/* Container holding image generation information - need to be able
+ * to pass these to the update command */
 struct img_data {
     std::default_random_engine *gen;
     std::uniform_int_distribution<int> *colors;
@@ -44,14 +45,22 @@ int
 image_update_data(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), char **UNUSED(argv))
 {
     struct img_data *idata = (struct img_data *)clientData;
+
+    // Look up the internals of the image - we're going to directly manipulate
+    // the values of the image to simulate a display manager or framebuffer
+    // changing the visual via rendering.
     Tk_PhotoImageBlock dm_data;
     Tk_PhotoHandle dm_img = Tk_FindPhoto(interp, DM_PHOTO);
     Tk_PhotoGetImage(dm_img, &dm_data);
 
+    // To get a little visual variation and make it easer to see changes,
+    // randomly turn on/off the individual colors for each pass.
     int r = (*idata->colors)((*idata->gen));
     int g = (*idata->colors)((*idata->gen));
     int b = (*idata->colors)((*idata->gen));
 
+    // For each pixel, get a random color value and set it in the image memory buffer.
+    // This alters the actual data, but Tcl/Tk doesn't know about it yet.
     for (int i = 0; i < (dm_data.width * dm_data.height * 4); i+=4) {
 	// Red
 	dm_data.pixelPtr[i] = (r) ? (*idata->vals)((*idata->gen)) : 0;
@@ -59,13 +68,14 @@ image_update_data(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), c
 	dm_data.pixelPtr[i+1] = (g) ? (*idata->vals)((*idata->gen)) : 0;
 	// Blue
 	dm_data.pixelPtr[i+2] = (b) ? (*idata->vals)((*idata->gen)) : 0;
-	// Alpha stays at 255
+	// Alpha stays at 255 (Don't really need to set it since it should
+	// already be set, just doing so for local clarity about what should be
+	// happening with the buffer data...)
+	dm_data.pixelPtr[i+3] = 255;
     }
 
+    // Let Tcl/Tk know the photo data has changed, so it can update the visuals accordingly
     Tk_PhotoPutBlock(interp, dm_img, &dm_data, 0, 0, dm_data.width, dm_data.height, TK_PHOTO_COMPOSITE_SET);
-
-    // Pause a second after updating
-    //std::this_thread::sleep_for (std::chrono::seconds(1));
 
     return TCL_OK;
 }
@@ -73,46 +83,49 @@ image_update_data(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), c
 int
 main(int UNUSED(argc), const char *argv[])
 {
+
+    // For now, just use a fixed 512x512 image size
+    int wsize = 512;
+
+    // Set up random image data generation so we can simulate a raytrace or
+    // raster changing the view data.  We need to use these for subsequent
+    // image updating, so pack them into a structure we can pass through Tcl's
+    // evaluations.
     std::default_random_engine gen;
     std::uniform_int_distribution<int> colors(0,1);
     std::uniform_int_distribution<int> vals(0,255);
     struct img_data idata;
+    idata.gen = &gen;
+    idata.colors = &colors;
+    idata.vals = &vals;
 
-   idata.gen = &gen;
-   idata.colors = &colors;
-   idata.vals = &vals;
-
-    std::vector<int> rgb;
-    int wsize = 512;
-
-    for (int i = 0; i < wsize; i++) {
-	for (int j = 0; j < wsize; j++) {
-	    rgb.push_back(0);
-	    rgb.push_back(vals(gen));
-	    rgb.push_back(0);
-	    rgb.push_back(255);
-	}
-    }
-
+    // Set up Tcl/Tk
     Tcl_FindExecutable(argv[0]);
     Tcl_Interp *interp = Tcl_CreateInterp();
     Tcl_Init(interp);
     Tk_Init(interp);
+
+    // Make a simple toplevel window
     Tk_Window tkwin = Tk_MainWindow(interp);
     Tk_GeometryRequest(tkwin, wsize, wsize);
     Tk_MakeWindowExist(tkwin);
     Tk_MapWindow(tkwin);
 
-    /* Note: confirmed with Tcl/Tk community that (at least as of Tcl/Tk 8.6)
-     * Tcl_Eval is the ONLY way to create an image object.  The C API just
-     * doesn't expose that ability, although it does support manipulation of
-     * the created object. */
+    // Create the (initially empty) Tcl/Tk Photo (a.k.a color image) we will
+    // use as our rendering canvas for the images.
+    //
+    // Note: confirmed with Tcl/Tk community that (at least as of Tcl/Tk 8.6)
+    // Tcl_Eval is the ONLY way to create an image object.  The C API doesn't
+    // expose that ability, although it does support manipulation of the
+    // created object.
     std::string img_cmd = std::string("image create photo ") + std::string(DM_PHOTO);
     Tcl_Eval(interp, img_cmd.c_str());
     Tk_PhotoHandle dm_img = Tk_FindPhoto(interp, DM_PHOTO);
     Tk_PhotoBlank(dm_img);
     Tk_PhotoSetSize(interp, dm_img, wsize, wsize);
 
+    // Initialize the PhotoImageBlock information for a color image of size
+    // 500x500 pixels.
     Tk_PhotoImageBlock dm_data;
     dm_data.width = wsize;
     dm_data.height = wsize;
@@ -122,17 +135,28 @@ main(int UNUSED(argc), const char *argv[])
     dm_data.offset[1] = 1;
     dm_data.offset[2] = 2;
     dm_data.offset[3] = 3;
+
+    // Actually create our memory for the image buffer.  Expects RGBA information
     dm_data.pixelPtr = (unsigned char *)Tcl_AttemptAlloc(dm_data.width * dm_data.height * 4);
     if (!dm_data.pixelPtr) {
 	std::cerr << "Tcl/Tk photo memory allocation failed!\n";
 	exit(1);
     }
-    for (int i = 0; i < (dm_data.width * dm_data.height * 4); i++) {
-	// Initialize the buffer with random values (simulates on-the-fly
-	// buffer generation from a rasterization or raytrace)
-	dm_data.pixelPtr[i] = rgb[i];
+
+    // For each pixel, get a random color value and set it in the image memory buffer.
+    // This alters the actual data, but Tcl/Tk doesn't know about it yet.
+    for (int i = 0; i < (dm_data.width * dm_data.height * 4); i+=4) {
+	// Red
+	dm_data.pixelPtr[i] = 0;
+	// Green
+	dm_data.pixelPtr[i+1] = (*idata.vals)((*idata.gen));
+	// Blue
+	dm_data.pixelPtr[i+2] = 0;
+	// Alpha at 255 - we dont' want transparency for this demo.
+	dm_data.pixelPtr[i+3] = 255;
     }
 
+    // Let Tk_Photo know we have data
     Tk_PhotoPutBlock(interp, dm_img, &dm_data, 0, 0, wsize, wsize, TK_PHOTO_COMPOSITE_SET);
 
     // TODO - examples use a label to pack and display an image - is this the
@@ -142,13 +166,15 @@ main(int UNUSED(argc), const char *argv[])
     std::string pack_cmd = std::string("pack ") + std::string(DM_LABEL);
     Tcl_Eval(interp, pack_cmd.c_str());
 
-    // Register an update command
+    // Register an update command so we can change the image contents
     (void)Tcl_CreateCommand(interp, "image_update", (Tcl_CmdProc *)image_update_data, (ClientData)&idata, (Tcl_CmdDeleteProc* )NULL);
 
-    // Establish Button-1 as the trigger for updating the image contents
+    // Establish the Button-1 event as the trigger for updating the image contents
     std::string bind_cmd = std::string("bind . <Button-1> \"image_update\"");
     Tcl_Eval(interp, bind_cmd.c_str());
 
+    // Enter the main applicatio loop - the initial image will appear, and Button-1 mouse
+    // clicks on the window should generate and display new images
     while (1) {
 	int handled = 0;
 	while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT)) {
@@ -159,7 +185,6 @@ main(int UNUSED(argc), const char *argv[])
 	    exit(0);
 	}
     }
-
 }
 
 // Local Variables:
