@@ -26,6 +26,8 @@
 
 #include <random>
 #include <iostream>
+#include <stdlib.h>
+#include <errno.h>
 
 #include "tcl.h"
 #include "tk.h"
@@ -80,9 +82,64 @@ image_update_data(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), c
     return TCL_OK;
 }
 
+// Given an X,Y coordinate in a TkPhoto image and a desired offset in
+// X and Y, return the index value into the pixelPtr array N such that
+// N is the integer value of the R color at that X,Y coordiante, N+1
+// is the G value, N+2 is the B value and N+3 is the Alpha value.
+// If either desired offset is beyond the width and height boundaries,
+// cap the return at the minimum/maximum allowed value.
+static int
+img_xy_index(int width, int height, int x, int y, int dx, int dy)
+{
+    int nx = ((x + dx) > width)  ? width  : ((x + dx) < 0) ? 0 : x + dx;
+    int ny = ((y + dy) > height) ? height : ((y + dy) < 0) ? 0 : y + dy;
+    return (ny * width * 4) + nx * 4;
+}
+
+int
+image_paint_xy(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+{
+    if (argc != 3) {
+	std::cerr << "Unexpected argc: " << argc << "\n";
+	return TCL_ERROR;
+    }
+
+    // Unpack the coordinates (TODO - check errno)
+    char *p_end;
+    long xcoor = strtol(argv[1], &p_end, 10);
+    long ycoor = strtol(argv[2], &p_end, 10);
+
+    // Look up the internals of the image - we're going to directly manipulate
+    // the values of the image to simulate a display manager or framebuffer
+    // changing the visual via rendering.
+    Tk_PhotoImageBlock dm_data;
+    Tk_PhotoHandle dm_img = Tk_FindPhoto(interp, DM_PHOTO);
+    Tk_PhotoGetImage(dm_img, &dm_data);
+
+
+    for (int i = -2; i < 3; i++) {
+	for (int j = -2; j < 3; j++) {
+	    int pindex = img_xy_index(dm_data.width, dm_data.height, xcoor, ycoor, i, j);
+	    // Set to opaque white
+	    dm_data.pixelPtr[pindex] = 255;
+	    dm_data.pixelPtr[pindex+1] = 255;
+	    dm_data.pixelPtr[pindex+2] = 255;
+	    dm_data.pixelPtr[pindex+3] = 255;
+	}
+    }
+
+    // Let Tcl/Tk know the photo data has changed, so it can update the visuals accordingly.
+    // TODO - a) is it valid and b) is there a performance reason to specify just the changed
+    // region rather than the whole data block?
+    Tk_PhotoPutBlock(interp, dm_img, &dm_data, 0, 0, dm_data.width, dm_data.height, TK_PHOTO_COMPOSITE_SET);
+
+    return TCL_OK;
+}
+
 int
 main(int UNUSED(argc), const char *argv[])
 {
+    std::string bind_cmd;
 
     // For now, just use a fixed 512x512 image size
     int wsize = 512;
@@ -166,12 +223,22 @@ main(int UNUSED(argc), const char *argv[])
     std::string pack_cmd = std::string("pack ") + std::string(DM_LABEL);
     Tcl_Eval(interp, pack_cmd.c_str());
 
+
+    // Register a paint command so we can change the image contents neary the cursor position
+    (void)Tcl_CreateCommand(interp, "image_paint", (Tcl_CmdProc *)image_paint_xy, NULL, (Tcl_CmdDeleteProc* )NULL);
+    // Establish the Button-1+Motion combination event as the trigger for drawing on the image
+    bind_cmd = std::string("bind . <B1-Motion> {image_paint %x %y}");
+    Tcl_Eval(interp, bind_cmd.c_str());
+
+
     // Register an update command so we can change the image contents
     (void)Tcl_CreateCommand(interp, "image_update", (Tcl_CmdProc *)image_update_data, (ClientData)&idata, (Tcl_CmdDeleteProc* )NULL);
-
-    // Establish the Button-1 event as the trigger for updating the image contents
-    std::string bind_cmd = std::string("bind . <Button-1> \"image_update\"");
+    // Establish the Button-2 and Button-3 event as triggers for updating the image contents
+    bind_cmd = std::string("bind . <Button-2> {image_update}");
     Tcl_Eval(interp, bind_cmd.c_str());
+    bind_cmd = std::string("bind . <Button-3> {image_update}");
+    Tcl_Eval(interp, bind_cmd.c_str());
+
 
     // Enter the main applicatio loop - the initial image will appear, and Button-1 mouse
     // clicks on the window should generate and display new images
