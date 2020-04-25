@@ -27,8 +27,6 @@
 #include <random>
 #include <vector>
 #include <iostream>
-#include <chrono>
-#include <thread>
 
 #include "tcl.h"
 #include "tk.h"
@@ -36,33 +34,54 @@
 const char *DM_PHOTO = ".dm0.photo";
 const char *DM_LABEL = ".dm0";
 
-void
-update_data(Tcl_Interp *interp, int r, int g, int b)
+struct img_data {
+    std::default_random_engine *gen;
+    std::uniform_int_distribution<int> *colors;
+    std::uniform_int_distribution<int> *vals;
+};
+
+int
+image_update_data(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), char **UNUSED(argv))
 {
+    struct img_data *idata = (struct img_data *)clientData;
     Tk_PhotoImageBlock dm_data;
     Tk_PhotoHandle dm_img = Tk_FindPhoto(interp, DM_PHOTO);
     Tk_PhotoGetImage(dm_img, &dm_data);
 
-    std::default_random_engine gen;
-    std::uniform_int_distribution<int> vals(0,255);
+    int r = (*idata->colors)((*idata->gen));
+    int g = (*idata->colors)((*idata->gen));
+    int b = (*idata->colors)((*idata->gen));
+
     for (int i = 0; i < (dm_data.width * dm_data.height * 4); i+=4) {
-	dm_data.pixelPtr[i] = (r) ? vals(gen) : 0;
-	dm_data.pixelPtr[i+1] = (g) ? vals(gen) : 0;
-	dm_data.pixelPtr[i+2] = (b) ? vals(gen) : 0;
+	// Red
+	dm_data.pixelPtr[i] = (r) ? (*idata->vals)((*idata->gen)) : 0;
+	// Green
+	dm_data.pixelPtr[i+1] = (g) ? (*idata->vals)((*idata->gen)) : 0;
+	// Blue
+	dm_data.pixelPtr[i+2] = (b) ? (*idata->vals)((*idata->gen)) : 0;
 	// Alpha stays at 255
     }
 
     Tk_PhotoPutBlock(interp, dm_img, &dm_data, 0, 0, dm_data.width, dm_data.height, TK_PHOTO_COMPOSITE_SET);
 
     // Pause a second after updating
-    std::this_thread::sleep_for (std::chrono::seconds(1));
+    //std::this_thread::sleep_for (std::chrono::seconds(1));
+
+    return TCL_OK;
 }
 
 int
 main(int UNUSED(argc), const char *argv[])
 {
     std::default_random_engine gen;
+    std::uniform_int_distribution<int> colors(0,1);
     std::uniform_int_distribution<int> vals(0,255);
+    struct img_data idata;
+
+   idata.gen = &gen;
+   idata.colors = &colors;
+   idata.vals = &vals;
+
     std::vector<int> rgb;
     int wsize = 512;
 
@@ -121,13 +140,15 @@ main(int UNUSED(argc), const char *argv[])
     std::string label_cmd = std::string("label ") + std::string(DM_LABEL) + std::string(" -image ") + std::string(DM_PHOTO);
     Tcl_Eval(interp, label_cmd.c_str());
     std::string pack_cmd = std::string("pack ") + std::string(DM_LABEL);
-
     Tcl_Eval(interp, pack_cmd.c_str());
-    std::string bind_cmd = std::string("bind . <Button-1> \"puts A\"");
-    Tcl_Eval(interp, bind_cmd.c_str());
-    Tcl_Eval(interp, "event generate . <Button-1>");
 
-    std::uniform_int_distribution<int> colors(0,1);
+    // Register an update command
+    (void)Tcl_CreateCommand(interp, "image_update", (Tcl_CmdProc *)image_update_data, (ClientData)&idata, (Tcl_CmdDeleteProc* )NULL);
+
+    // Establish Button-1 as the trigger for updating the image contents
+    std::string bind_cmd = std::string("bind . <Button-1> \"image_update\"");
+    Tcl_Eval(interp, bind_cmd.c_str());
+
     while (1) {
 	int handled = 0;
 	while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT)) {
@@ -137,9 +158,6 @@ main(int UNUSED(argc), const char *argv[])
 	    // If we've closed the window, we're done
 	    exit(0);
 	}
-
-	// Generate a new random pattern on the same image
-	update_data(interp, colors(gen), colors(gen), colors(gen));
     }
 
 }
