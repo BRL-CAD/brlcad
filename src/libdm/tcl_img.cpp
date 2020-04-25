@@ -104,10 +104,21 @@ image_paint_xy(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char
 	return TCL_ERROR;
     }
 
-    // Unpack the coordinates (TODO - check errno)
+    // Unpack the coordinates (checking errno, although it may not truly be
+    // necessary if we trust Tk to always give us valid coordinates...)
     char *p_end;
+    errno = 0;
     long xcoor = strtol(argv[1], &p_end, 10);
+    if (errno == ERANGE || (errno != 0 && xcoor == 0) || p_end == argv[1]) {
+	std::cerr << "Invalid image_paint_xy X coordinate: " << argv[1] << "\n";
+	return TCL_ERROR;
+    }
+    errno = 0;
     long ycoor = strtol(argv[2], &p_end, 10);
+    if (errno == ERANGE || (errno != 0 && xcoor == 0) || p_end == argv[1]) {
+	std::cerr << "Invalid image_paint_xy Y coordinate: " << argv[2] << "\n";
+	return TCL_ERROR;
+    }
 
     // Look up the internals of the image - we're going to directly manipulate
     // the values of the image to simulate a display manager or framebuffer
