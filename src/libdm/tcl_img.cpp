@@ -78,6 +78,7 @@ main()
     }
 
     Tcl_Interp *interp = Tcl_CreateInterp();
+    Tcl_Init(interp);
     Tk_Init(interp);
     Tk_Window tkwin = Tk_MainWindow(interp);
     Tk_GeometryRequest(tkwin, wsize, wsize);
