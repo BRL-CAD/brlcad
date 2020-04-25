@@ -33,7 +33,6 @@
 #include "tcl.h"
 #include "tk.h"
 
-#if 0
 const char *DM_PHOTO = ".dm0.photo";
 const char *DM_LABEL = ".dm0";
 
@@ -58,10 +57,9 @@ update_data(Tcl_Interp *interp, int r, int g, int b)
     // Pause a second after updating
     std::this_thread::sleep_for (std::chrono::seconds(1));
 }
-#endif
 
 int
-main()
+main(int UNUSED(argc), const char *argv[])
 {
     std::default_random_engine gen;
     std::uniform_int_distribution<int> vals(0,255);
@@ -77,6 +75,7 @@ main()
 	}
     }
 
+    Tcl_FindExecutable(argv[0]);
     Tcl_Interp *interp = Tcl_CreateInterp();
     Tcl_Init(interp);
     Tk_Init(interp);
@@ -85,7 +84,6 @@ main()
     Tk_MakeWindowExist(tkwin);
     Tk_MapWindow(tkwin);
 
-#if 0
     /* Note: confirmed with Tcl/Tk community that (at least as of Tcl/Tk 8.6)
      * Tcl_Eval is the ONLY way to create an image object.  The C API just
      * doesn't expose that ability, although it does support manipulation of
@@ -123,12 +121,13 @@ main()
     std::string label_cmd = std::string("label ") + std::string(DM_LABEL) + std::string(" -image ") + std::string(DM_PHOTO);
     Tcl_Eval(interp, label_cmd.c_str());
     std::string pack_cmd = std::string("pack ") + std::string(DM_LABEL);
-    Tcl_Eval(interp, pack_cmd.c_str());
-#endif
-    std::string bind_cmd = std::string("bind . <a> \"puts A\"");
-    Tcl_Eval(interp, bind_cmd.c_str());
 
-    //std::uniform_int_distribution<int> colors(0,1);
+    Tcl_Eval(interp, pack_cmd.c_str());
+    std::string bind_cmd = std::string("bind . <Button-1> \"puts A\"");
+    Tcl_Eval(interp, bind_cmd.c_str());
+    Tcl_Eval(interp, "event generate . <Button-1>");
+
+    std::uniform_int_distribution<int> colors(0,1);
     while (1) {
 	int handled = 0;
 	while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT)) {
@@ -140,7 +139,7 @@ main()
 	}
 
 	// Generate a new random pattern on the same image
-	//update_data(interp, colors(gen), colors(gen), colors(gen));
+	update_data(interp, colors(gen), colors(gen), colors(gen));
     }
 
 }
