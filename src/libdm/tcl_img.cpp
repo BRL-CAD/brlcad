@@ -250,6 +250,12 @@ main(int UNUSED(argc), const char *argv[])
     bind_cmd = std::string("bind . <Button-3> {image_update}");
     Tcl_Eval(interp, bind_cmd.c_str());
 
+    // Start working on figuring out resizing - wondering if we can just have one pixelPtr buffer the size
+    // of the screen and only use as much as is needed for the active size of the window, so we aren't
+    // constantly reallocating the background buffer on resize?  Might also be able to down/upsample the image
+    // during moving and do a full re-renering pass once we're stable, if the rendering pass is expensive...
+    bind_cmd = std::string("bind . <Configure> {puts \"%W: [winfo width %W]x[winfo height %W]\"}");
+    Tcl_Eval(interp, bind_cmd.c_str());
 
     // Enter the main applicatio loop - the initial image will appear, and Button-1 mouse
     // clicks on the window should generate and display new images
