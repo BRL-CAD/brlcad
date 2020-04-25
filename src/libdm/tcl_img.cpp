@@ -254,10 +254,7 @@ main(int UNUSED(argc), const char *argv[])
     // Enter the main applicatio loop - the initial image will appear, and Button-1 mouse
     // clicks on the window should generate and display new images
     while (1) {
-	int handled = 0;
-	while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT)) {
-            handled++;
-        }
+	Tcl_DoOneEvent(0);
 	if (!Tk_GetNumMainWindows()) {
 	    // If we've closed the window, we're done
 	    exit(0);
