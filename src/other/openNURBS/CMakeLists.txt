@@ -29,7 +29,7 @@
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.1.3)
 
 project(OPENNURBS)
 
@@ -325,12 +325,12 @@ endif(BRLCAD_ENABLE_OPENNURBS_EXTENSIONS)
 
 find_package(ZLIB REQUIRED)
 
-set(OPENNURBS_LINKLIBRARIES ${ZLIB_LIBRARY})
+set(OPENNURBS_LINKLIBRARIES ${ZLIB_LIBRARIES})
 
 # Ideally, we should only need ZLIB here
 include_directories(
   ${${CMAKE_PROJECT_NAME}_SOURCE_DIR}/include
-  ${ZLIB_INCLUDE_DIR}
+  ${ZLIB_INCLUDE_DIRS}
   )
 
 add_definitions(-DON_COMPILING_OPENNURBS)
@@ -377,7 +377,7 @@ if(BUILD_SHARED_LIBS)
   if(OPENNURBS_LINKLIBRARIES)
     target_link_libraries(openNURBS ${OPENNURBS_LINKLIBRARIES})
   endif(OPENNURBS_LINKLIBRARIES)
-  set_target_properties(openNURBS PROPERTIES VERSION "2012.10.245" SOVERSION 2012)
+  set_target_properties(openNURBS PROPERTIES VERSION "2012.10.245")
   install(TARGETS openNURBS
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}

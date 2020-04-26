@@ -37,7 +37,7 @@
 ###
 project(REGEX)
 
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.0.2)
 
 include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
@@ -45,26 +45,26 @@ include_directories(
   )
 
 if (NOT DEFINED BIN_DIR)
-  set (BIN_DIR bin)
+  set(BIN_DIR bin)
 endif (NOT DEFINED BIN_DIR)
 
 if (NOT DEFINED LIB_DIR)
-  set (LIB_DIR lib)
+  set(LIB_DIR lib)
 endif (NOT DEFINED LIB_DIR)
 
 if (NOT DEFINED INCLUDE_DIR)
-  set (INCLUDE_DIR include)
+  set(INCLUDE_DIR include)
 endif (NOT DEFINED INCLUDE_DIR)
 
-option (ENABLE_REGEX_PREFIX "Add regex_ prefix to all library functions." OFF)
+option(ENABLE_REGEX_PREFIX "Add regex_ prefix to all library functions." OFF)
 if (DEFINED REGEX_PREFIX_STR)
-  set (ENABLE_REGEX_PREFIX ON CACHE BOOL "Ensure prefix is set" FORCE)
+  set(ENABLE_REGEX_PREFIX ON CACHE BOOL "Ensure prefix is set" FORCE)
 endif (DEFINED REGEX_PREFIX_STR)
 if (ENABLE_REGEX_PREFIX)
   set(REGEX_PREFIX 1)
 endif (ENABLE_REGEX_PREFIX)
-mark_as_advanced (ENABLE_REGEX_PREFIX)
-mark_as_advanced (REGEX_PREFIX_STR)
+mark_as_advanced(ENABLE_REGEX_PREFIX)
+mark_as_advanced(REGEX_PREFIX_STR)
 
 configure_file(regex.h.in ${CMAKE_CURRENT_BINARY_DIR}/regex.h @ONLY)
 
@@ -79,34 +79,34 @@ set (REGEX_SOURCES
   regfree.c
   )
 
-add_library (regex SHARED ${REGEX_SOURCES})
-set_target_properties (regex PROPERTIES VERSION 1.0.4 SOVERSION 1)
+add_library(regex SHARED ${REGEX_SOURCES})
+set_target_properties(regex PROPERTIES OUTPUT_NAME regex_brl)
+set_target_properties(regex PROPERTIES VERSION 1.0.4 SOVERSION 1)
 if (MSVC)
-  set_property (TARGET regex APPEND PROPERTY COMPILE_DEFINITIONS "REGEX_EXPORT_DLL")
-  set_property (TARGET regex APPEND PROPERTY COMPILE_DEFINITIONS "BRLCAD_DLL")
+  set_property(TARGET regex APPEND PROPERTY COMPILE_DEFINITIONS "REGEX_EXPORT_DLL")
+  set_property(TARGET regex APPEND PROPERTY COMPILE_DEFINITIONS "BRLCAD_DLL")
 endif (MSVC)
-install (TARGETS regex
+install(TARGETS regex
   RUNTIME DESTINATION ${BIN_DIR}
   LIBRARY DESTINATION ${LIB_DIR}
   ARCHIVE DESTINATION ${LIB_DIR})
 
 if (BUILD_STATIC_LIBS)
-  add_library (regex-static STATIC ${REGEX_SOURCES})
+  add_library(regex-static STATIC ${REGEX_SOURCES})
+  set_target_properties(regex-static PROPERTIES OUTPUT_NAME "regex_brl")
   if (MSVC)
     # msvc does not append 'lib' - do it here to have consistent name
     set_target_properties(regex-static PROPERTIES PREFIX "lib")
-  else (MSVC)
-    set_target_properties(regex-static PROPERTIES OUTPUT_NAME "regex")
   endif (MSVC)
-  install (TARGETS regex-static
+  install(TARGETS regex-static
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}
     ARCHIVE DESTINATION ${LIB_DIR})
 endif (BUILD_STATIC_LIBS)
 
-if (NOT SKIP_INSTALL_HDRS)
-  install (FILES ${REGEX_HDRS} DESTINATION ${INCLUDE_DIR})
-endif (NOT SKIP_INSTALL_HDRS)
+if (NOT SKIP_INSTALL_HEADERS)
+  install(FILES ${REGEX_HDRS} DESTINATION ${INCLUDE_DIR})
+endif (NOT SKIP_INSTALL_HEADERS)
 
 
 # Local Variables:

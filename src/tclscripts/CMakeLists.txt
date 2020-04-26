@@ -115,7 +115,6 @@ tclIndex_BUILD(tclscripts)
 # that relies on the other tclscripts being set up.
 add_subdirectory(rtwizard)
 
-CMAKEFILES(README hv3_man_browser_test.tcl)
 CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:

@@ -13,6 +13,7 @@ if(TARGET nirt)
   add_dependencies(nirt nirt_format_files_cp)
 endif(TARGET nirt)
 
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

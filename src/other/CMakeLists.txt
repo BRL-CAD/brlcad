@@ -949,44 +949,6 @@ if (${CMAKE_PROJECT_NAME}_POLY2TRI_BUILD)
 
 endif (${CMAKE_PROJECT_NAME}_POLY2TRI_BUILD)
 
-###############################################################################
-#         RPly - support for reading and writign PLY geometry files
-###############################################################################
-
-set(rply_DESCRIPTION "
-Option for enabling and disabling compilation of the RPly library for PLY file
-input and ouput provided with BRL-CAD's source code.  Default is AUTO,
-responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a
-system version if BRLCAD_BUNDLED_LIBS is also AUTO.
-")
-THIRD_PARTY(rply RPLY rply rply_DESCRIPTION ALIASES ENABLE_RPLY FLAGS NOSYS)
-
-if (${CMAKE_PROJECT_NAME}_RPLY_BUILD)
-
-  ExternalProject_Add(RPLY_BLD
-    SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/rply"
-    BUILD_ALWAYS ${EXTERNAL_BUILD_UPDATE} ${LOG_OPTS}
-    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR}
-               -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DBUILD_STATIC_LIBS=${BUILD_STATIC_LIBS}
-    )
-  ExternalProject_Target(rply RPLY_BLD
-    OUTPUT_FILE librply${CMAKE_SHARED_LIBRARY_SUFFIX}
-    STATIC_OUTPUT_FILE librply${CMAKE_STATIC_LIBRARY_SUFFIX}
-    RPATH
-    )
-
-  ExternalProject_ByProducts(RPLY_BLD ${INCLUDE_DIR}
-    rply.h
-    )
-
-  set(RPLY_LIBRARIES rply CACHE STRING "Building bundled rply" FORCE)
-  set(RPLY_INCLUDE_DIRS "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Directory containing rply headers." FORCE)
-
-  SetTargetFolder(RPLY_BLD "Third Party Libraries")
-  SetTargetFolder(rply "Third Party Libraries")
-
-endif (${CMAKE_PROJECT_NAME}_RPLY_BUILD)
-
 
 ###############################################################################
 #               PROJ - generic coordinate transformation
@@ -2177,51 +2139,7 @@ if (${CMAKE_PROJECT_NAME}_TCL_BUILD)
 
 endif (${CMAKE_PROJECT_NAME}_TCL_BUILD)
 
-if (0)
-# FreeType Libraries
-set(freetype_DESCRIPTION "
-Option for enabling and disabling compilation of the FreeType
-libraries provided with BRL-CAD's source code.  Default is AUTO, responsive to
-the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
-version if BRLCAD_BUNDLED_LIBS is also AUTO.
-")
-# We don't want the Freetype distribution build targets
-set(FREETYPE_NO_DIST 1)
-THIRD_PARTY(freetype FREETYPE ft freetype_DESCRIPTION BRLCAD_LEVEL3 ALIASES ENABLE_FREETYPE REQUIRED_VARS "BRLCAD_ENABLE_OSG;BRLCAD_LEVEL3" FIND_NAME Freetype)
-if(BRLCAD_FREETYPE_BUILD)
-  set(FREETYPE_LIBRARY freetype CACHE STRING "libfreetype" FORCE)
-  set(FREETYPE_INCLUDE_DIR_freetype2
-    "${BRLCAD_SOURCE_DIR}/src/other/freetype/include"
-    CACHE STRING "FreeType freetype2 include dir" FORCE
-    )
-  set(FREETYPE_INCLUDE_DIR_ft2build
-    "${CMAKE_CURRENT_BINARY_DIR}/freetype/include"
-    CACHE STRING "FreeType ft2build include dir" FORCE
-    )
-  set(FREETYPE_INCLUDE_DIRS
-    "${FREETYPE_INCLUDE_DIR_freetype2};${FREETYPE_INCLUDE_DIR_ft2build}"
-    CACHE STRING "Directories containing FreeType headers." FORCE)
-  set(FREETYPE_LIBRARIES "${FREETYPE_LIBRARY}" CACHE STRING "FreeType Libraries")
-  SetTargetFolder(freetype "Third Party Libraries")
-
-  # If we enable XFT support Tk when building our own freetype, XFT often pulls
-  # in conflicting system libs anyway, which causes conflicts.  Make sure, if
-  # we do have to build Tk, that we don't try enabling XFT.
-  set(TK_DISABLE_XFT 1 CACHE STRING "Disable due to building local libpng" FORCE)
-  mark_as_advanced(TK_DISABLE_XFT)
-endif(BRLCAD_FREETYPE_BUILD)
-if(NOT "${CMAKE_CURRENT_BINARY_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftconfig.h")
-  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftoption.h")
-endif(NOT "${CMAKE_CURRENT_BINARY_DIR}" STREQUAL "${CMAKE_CURRENT_SOURCE_DIR}")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftconfig.h-new")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype/config/ftoption.h-new")
-mark_as_advanced(FREETYPE_INCLUDE_DIRS)
-mark_as_advanced(FREETYPE_INCLUDE_DIR_freetype2)
-mark_as_advanced(FREETYPE_INCLUDE_DIR_ft2build)
-mark_as_advanced(FREETYPE_LIBRARIES)
-
-
+if(0)
 # OpenSceneGraph Libraries
 set(openscenegraph_DESCRIPTION "
 Option for enabling and disabling compilation of the OpenSceneGraph

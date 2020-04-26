@@ -85,7 +85,7 @@ ged_savekey(struct ged *gedp, int argc, const char *argv[])
 
     if ((fp = fopen(argv[1], "a")) == NULL) {
 	perror(argv[1]);
-	return TCL_ERROR;
+	return GED_ERROR;
     }
     if (argc > 2) {
 	timearg = atof(argv[2]);

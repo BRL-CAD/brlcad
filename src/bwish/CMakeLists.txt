@@ -18,6 +18,10 @@ endif(TARGET libtermio)
 # Define the btclsh target
 BRLCAD_ADDEXEC(btclsh "main.c;cmd.c;input.c" "${btclsh_libs}")
 
+if (TARGET itcl_pkgIndex)
+  add_dependencies(btclsh itcl_pkgIndex)
+endif (TARGET itcl_pkgIndex)
+
 # If we have Tk enabled, we want bwish too
 if(BRLCAD_ENABLE_TK)
 
@@ -34,6 +38,13 @@ if(BRLCAD_ENABLE_TK)
   BRLCAD_ADDEXEC(bwish "main.c;cmd.c;input.c" "${bwish_libs}" GUI)
   set_target_properties(bwish PROPERTIES COMPILE_DEFINITIONS "BWISH=1")
   set_target_properties(bwish PROPERTIES FOLDER "BRL-CAD Executables")
+
+  if (TARGET itcl_pkgIndex)
+    add_dependencies(bwish itcl_pkgIndex)
+  endif (TARGET itcl_pkgIndex)
+  if (TARGET itk_pkgIndex)
+    add_dependencies(bwish itk_pkgIndex)
+  endif (TARGET itk_pkgIndex)
 
 endif(BRLCAD_ENABLE_TK)
 CMAKEFILES(CMakeLists.txt)

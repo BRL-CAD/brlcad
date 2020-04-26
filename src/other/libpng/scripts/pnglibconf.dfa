@@ -267,7 +267,7 @@ option POWERPC_VSX_CHECK disabled,
 # The TEXT values are the defaults when writing compressed text (all forms)
 
 # Include the zlib header so that the defaults below are known
-@#  include <zlib.h>
+@#  include "zlib.h"
 
 # The '@' here means to substitute the value when pnglibconf.h is built
 setting Z_DEFAULT_COMPRESSION default @Z_DEFAULT_COMPRESSION

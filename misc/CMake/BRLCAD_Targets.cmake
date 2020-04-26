@@ -568,7 +568,11 @@ endfunction(BRLCAD_ADDLIB libname srcslist libslist)
 function(BRLCAD_SORT_INCLUDE_DIRS DIR_LIST)
   if(${DIR_LIST})
     set(ORDERED_ELEMENTS "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}" "${BRLCAD_BINARY_DIR}/include" "${BRLCAD_SOURCE_DIR}/include")
+    set(LAST_ELEMENTS "/usr/local/include" "/usr/include")
+
     set(NEW_DIR_LIST "")
+    set(LAST_DIR_LIST "")
+
     foreach(element ${ORDERED_ELEMENTS})
       set(DEF_EXISTS "-1")
       list(FIND ${DIR_LIST} ${element} DEF_EXISTS)
@@ -596,8 +600,19 @@ function(BRLCAD_SORT_INCLUDE_DIRS DIR_LIST)
       endif("${SUBPATH_TEST}" STREQUAL "1")
     endforeach(inc_path ${${DIR_LIST}})
 
+    # Pull out include paths that are definitely system paths (and
+    # hence need to come after ours
+    foreach(element ${LAST_ELEMENTS})
+      set(DEF_EXISTS "-1")
+      list(FIND ${DIR_LIST} ${element} DEF_EXISTS)
+      if(NOT "${DEF_EXISTS}" STREQUAL "-1")
+	set(LAST_DIR_LIST ${LAST_DIR_LIST} ${element})
+	list(REMOVE_ITEM ${DIR_LIST} ${element})
+      endif(NOT "${DEF_EXISTS}" STREQUAL "-1")
+    endforeach(element ${LAST_ELEMENTS})
+
     # add anything that might be left
-    set(NEW_DIR_LIST ${NEW_DIR_LIST} ${${DIR_LIST}})
+    set(NEW_DIR_LIST ${NEW_DIR_LIST} ${${DIR_LIST}} ${LAST_DIR_LIST})
 
     # remove any duplicates
     list(REMOVE_DUPLICATES NEW_DIR_LIST)
@@ -612,6 +627,14 @@ endfunction(BRLCAD_SORT_INCLUDE_DIRS)
 # SYSTEM option to the include_directories command, as well as calling the
 # sort function.
 function(BRLCAD_INCLUDE_DIRS DIR_LIST)
+
+  # TODO - We don't want parent directories values augmenting DIR_LIST for
+  # subsequent targets - if we're calling this, we're taking full control of
+  # all inclusions for all targets in this and subsequent directories.  We
+  # should probably use the target level INCLUDE_DIRECTORIES property and
+  # stop setting include_directories on entire directories all together
+  # for maximal precision and minimum surprises...
+  #set_property(DIRECTORY PROPERTY INCLUDE_DIRECTORIES "")
 
   set(INCLUDE_DIRS ${${DIR_LIST}})
   if(INCLUDE_DIRS)
@@ -636,7 +659,11 @@ function(BRLCAD_INCLUDE_DIRS DIR_LIST)
 	set(CMAKE_INCLUDE_SYSTEM_FLAG_C "-isystem ")
 	set(CMAKE_INCLUDE_SYSTEM_FLAG_CXX "-isystem ")
       endif(APPLE)
-      include_directories(AFTER SYSTEM ${inc_dir})
+      if("${inc_dir}" MATCHES "other")
+	include_directories(SYSTEM ${inc_dir})
+      else("${inc_dir}" MATCHES "other")
+	include_directories(AFTER SYSTEM ${inc_dir})
+      endif("${inc_dir}" MATCHES "other")
     else("${inc_dir}" MATCHES "other" OR NOT IS_LOCAL)
       include_directories(BEFORE ${inc_dir})
     endif("${inc_dir}" MATCHES "other" OR NOT IS_LOCAL)

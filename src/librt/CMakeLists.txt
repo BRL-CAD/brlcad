@@ -241,7 +241,6 @@ endif(BRLCAD_ENABLE_GCT)
 
 set(librt_ignored_files
   cache.h
-  columnparse.c
   librt_private.h
   prcomb.c
   primitives/bot/bot_edge.h

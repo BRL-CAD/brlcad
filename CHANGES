@@ -1525,3 +1525,5 @@ s/tclcad_bn_mat_xform_about_pt/tclcad_bn_mat_xform_about_pnt/g
 s/wdb_metaballpt/wdb_metaball_pnt/g
 s/wdb_pipept/wdb_pipe_pnt/g
         renamed points from pt to pnt for consistency [7.30]
+s/proe-brl/creo-brl/g
+        replaced by newer creo plugin [7.30]

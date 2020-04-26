@@ -218,7 +218,7 @@ ged_putmat(struct ged *gedp, int argc, const char *argv[])
 		bu_vls_printf(avp, "1 0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 ");
 		break;
 	    }
-	    /* Sometimes the matrix is sent through Tcl as one long string.
+	    /* Sometimes the matrix is sent through as one long string.
 	     * Copy it so we can crack it, below.
 	     */
 	    avp = bu_vls_vlsinit();

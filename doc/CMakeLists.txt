@@ -228,6 +228,7 @@ CMAKEFILES(
   README.OSCON-2014
   STARTERS
   STRATEGY
+  bsd_semaphore_bug.txt
   cmake_vars.txt
   csv_to_comgeom.txt
   implicit_constraints.txt

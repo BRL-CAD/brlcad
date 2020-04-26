@@ -27,7 +27,7 @@ endif(MSVC)
 
 if(BRLCAD_ENABLE_TK)
   BRLCAD_ADDEXEC(bombardier bombardier.c "libtclcad;libbu;${TK_LIBRARY};${TCL_LIBRARY}")
-  BRLCAD_ADDEXEC(plot3-dm plot3-dm.c "libdm;libbu;${TK_LIBRARY};${TCL_LIBRARY};${M_LIBRARY}")
+  BRLCAD_ADDEXEC(plot3-dm plot3-dm.c "libtclcad;libdm;libbu;${TK_LIBRARY};${TCL_LIBRARY};${M_LIBRARY}")
 else(BRLCAD_ENABLE_TK)
   CMAKEFILES(
     bombardier.c

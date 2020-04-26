@@ -33,8 +33,6 @@
 #endif
 #include "bresource.h"
 
-#include "tcl.h"
-
 #include "bu/app.h"
 #include "bu/process.h"
 
@@ -153,7 +151,7 @@ _ged_rt_set_eye_model(struct ged *gedp,
 
 
 void
-_ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
+_ged_rt_output_handler(void *clientData, int UNUSED(mask))
 {
     struct _ged_rt_client_data *drcdp = (struct _ged_rt_client_data *)clientData;
     struct ged_subprocess *run_rtp;
@@ -177,12 +175,12 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
     if (read_failed) {
 	int aborted;
 
-	/* Done watching for output, undo Tcl hooks.  TODO - need to  push the
-	 * Tcl specific aspects of this up stack... */
-	_ged_delete_io_handler(drcdp->gedp->ged_interp, run_rtp->chan,
-		run_rtp->p, BU_PROCESS_STDERR, (void *)drcdp,
-		_ged_rt_output_handler);
-
+	/* Done watching for output, undo subprocess I/O hooks. */
+	if (drcdp->gedp->ged_delete_io_handler) {
+	    (*drcdp->gedp->ged_delete_io_handler)(drcdp->gedp->ged_interp, run_rtp->chan,
+		    run_rtp->p, BU_PROCESS_STDERR, (void *)drcdp,
+		    _ged_rt_output_handler);
+	}
 	/* Either EOF has been sent or there was a read error.
 	 * there is no need to block indefinitely */
 	retcode = bu_process_wait(&aborted, run_rtp->p, 120);
@@ -252,10 +250,10 @@ _ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, con
     drcdp->gedp = gedp;
     drcdp->rrtp = run_rtp;
 
-    /* Set up Tcl hooks so the parent Tcl process knows to watch for output.
-     * TODO - need to push the Tcl specific aspects of this up stack... */
-    _ged_create_io_handler(&(run_rtp->chan), p, BU_PROCESS_STDERR, TCL_READABLE, (void *)drcdp, _ged_rt_output_handler);
-
+    /* If we know how, set up hooks so the parent process knows to watch for output. */
+    if (gedp->ged_create_io_handler) {
+	(*gedp->ged_create_io_handler)(&(run_rtp->chan), p, BU_PROCESS_STDERR, gedp->io_mode, (void *)drcdp, _ged_rt_output_handler);
+    }
     return GED_OK;
 }
 

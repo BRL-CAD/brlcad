@@ -151,9 +151,11 @@ else(MINGW)
 endif(MINGW)
 
 add_library(zlib SHARED ${ZLIB_SRCS} ${ZLIB_ASMS} ${ZLIB_DLL_SRCS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
+set_target_properties(zlib PROPERTIES OUTPUT_NAME z_brl)
 
 if(BUILD_STATIC_LIBS)
   add_library(zlib-static STATIC ${ZLIB_SRCS} ${ZLIB_ASMS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
+  set_target_properties(zlib-static PROPERTIES OUTPUT_NAME z_brl)
   if(MSVC)
     # msvc does not append 'lib' - do it here to have consistent name
     set_target_properties(zlib-static PROPERTIES PREFIX "lib")
@@ -181,9 +183,6 @@ endif()
 
 if(UNIX)
   # On unix-like platforms the library is almost always called libz
-  if(BUILD_STATIC_LIBS)
-    set_target_properties(zlib zlib-static PROPERTIES OUTPUT_NAME z)
-  endif(BUILD_STATIC_LIBS)
   if(NOT APPLE AND BUILD_SHARED_LIBS)
     set_target_properties(zlib PROPERTIES LINK_FLAGS "-Wl,--version-script,\"${CMAKE_CURRENT_SOURCE_DIR}/zlib.map\"")
   endif()

@@ -33,15 +33,13 @@
  * SUCH DAMAGE.
  */
 
-#ifndef	lint
-#ifdef	DOSCCS
-static char *sccsid = "@(#)tgoto.c	1.3 (gritter) 11/23/04";
-#endif
-#endif
+#include "common.h"
 
 /* from tgoto.c	5.1 (Berkeley) 6/5/85 */
 
 #include "termcap.h"
+
+#include "bu/str.h"
 
 #define	CTRL(c)	(c & 037)
 
@@ -177,7 +175,8 @@ casedot:
 					 * to be the successor of tab.
 					 */
 					do {
-						strcat(added, oncol ? (BC ? BC : "\b") : UP);
+						const char *cstr = oncol ? (BC ? BC : "\b") : UP;
+						bu_strlcat(added, cstr, strlen(cstr));
 						which++;
 					} while (which == '\n');
 			}
@@ -214,6 +213,6 @@ casedot:
 			goto toohard;
 		}
 	}
-	strcpy(dp, added);
+	bu_strlcpy(dp, added, MAXRETURNSIZE);
 	return (result);
 }

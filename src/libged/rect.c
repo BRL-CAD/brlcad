@@ -30,7 +30,6 @@
 
 
 #include "vmath.h"
-#include "fb.h"
 
 #include "./ged_private.h"
 

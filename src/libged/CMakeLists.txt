@@ -107,7 +107,7 @@ set(LIBGED_SOURCES
   comb_color.c
   comb_std.c
   combmem.c
-  concat.c
+  concat.cpp
   constraint/constraint.c
   copy.c
   copyeval.c
@@ -349,7 +349,6 @@ set(LIBGED_SOURCES
   view2model.c
   view2model_lu.c
   view2model_vec.c
-  view_obj.c
   viewdir.c
   voxelize.c
   vrot.c

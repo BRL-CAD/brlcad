@@ -343,6 +343,9 @@ extern char _ged_tmpfil[];
 
 
 /* defined in rt.c */
+extern void
+_ged_rt_output_handler(void *clientData, int mask);
+
 extern void _ged_rt_set_eye_model(struct ged *gedp,
 				  vect_t eye_model);
 extern int _ged_run_rt(struct ged *gdp, int cmd_len, const char **gd_rt_cmd, int argc, const char **argv);
@@ -351,8 +354,6 @@ extern void _ged_rt_write(struct ged *gedp,
 			  vect_t eye_model,
 			  int argc,
 			  const char **argv);
-extern void _ged_rt_output_handler(ClientData clientData,
-				   int mask);
 
 /* defined in rtcheck.c */
 extern void _ged_wait_status(struct bu_vls *logstr,
@@ -607,15 +608,6 @@ extern int _ged_read_densities(struct analyze_densities **dens, char **den_src, 
  */
 extern int
 _ged_sort_existing_objs(struct ged *gedp, int argc, const char *argv[], struct directory **dpa);
-
-
-typedef void (*io_handler_callback_t)(void *, int);
-extern void
-_ged_create_io_handler(void **chan, struct bu_process *p, int fd, int mode, void *data, io_handler_callback_t callback);
-extern void
-_ged_delete_io_handler(void *interp, void *chan, struct bu_process *p, int fd, void *data, io_handler_callback_t callback);
-
-
 
 /* Ideally all of this could be in facetize.cpp, but the open() calls
  * used by the logging routines are problematic in C++ with Visual C++. */

@@ -13,9 +13,9 @@ set(BU_LOCAL_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}/y2038
   ${REGEX_INCLUDE_DIRS}
   )
-if (${UUID_INCLUDE_DIR})
+if (UUID_INCLUDE_DIR)
   set(BU_LOCAL_INCLUDE_DIRS ${BU_LOCAL_INCLUDE_DIRS} ${UUID_INCLUDE_DIR})
-endif (${UUID_INCLUDE_DIR})
+endif (UUID_INCLUDE_DIR)
 
 BRLCAD_LIB_INCLUDE_DIRS(bu BU_INCLUDE_DIRS BU_LOCAL_INCLUDE_DIRS)
 
@@ -128,6 +128,7 @@ set(LIBBU_SOURCES
   vfont.c
   vlb.c
   vls.c
+  vls_incr.cpp
   vls_vprintf.c
   whereami.c
   whereis.c

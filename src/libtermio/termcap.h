@@ -39,6 +39,8 @@
 #ifndef __LIBTERM_H__
 #define __LIBTERM_H__
 
+#include "common.h"
+
 /*
  * Size of the capability buffer string.
  */

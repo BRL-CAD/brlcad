@@ -22,7 +22,7 @@
  *	regc_color.c	regc_cvec.c	regc_lex.c
  *	regc_nfa.c	regcomp.c	regcustom.h
  *	rege_dfa.c	regerror.c	regerrs.h
- *	regex.h		regexec.c	regfree.c
+ *	regextcl.h	regexec.c	regfree.c
  *	regfronts.c	regguts.h
  *
  * Copyright (c) 1998 Henry Spencer.  All rights reserved.

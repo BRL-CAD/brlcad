@@ -1,6 +1,0 @@
-# Tcl package index file, version 1.0
-
-if {![package vsatisfies [package provide Tcl] 8.6]} return
-if {[string length [package provide Itcl]] && ![package vsatisfies [package provide Itcl] 4.1]} return
-package ifneeded itk @PACKAGE_VERSION@ [list load [file join $dir "@PKG_LIB_FILE@"] Itk]
-package ifneeded Itk @PACKAGE_VERSION@ [list load [file join $dir "@PKG_LIB_FILE@"] Itk]

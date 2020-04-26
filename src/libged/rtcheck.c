@@ -74,21 +74,22 @@ _ged_wait_status(struct bu_vls *logstr,
 	bu_vls_printf(logstr, ", return (exit) code = %d", ret);
 }
 
-static void rtcheck_output_handler(ClientData clientData, int mask);
-static void rtcheck_vector_handler(ClientData clientData, int mask);
+static void rtcheck_output_handler(void *clientData, int mask);
+static void rtcheck_vector_handler(void *clientData, int mask);
 
 static void
 rtcheck_handler_cleanup(struct ged_rtcheck *rtcp)
 {
     int retcode;
 
-    _ged_delete_io_handler(rtcp->gedp->ged_interp, rtcp->rrtp->chan,
-	    rtcp->rrtp->p, BU_PROCESS_STDOUT, (void *)rtcp,
-	    rtcheck_vector_handler);
-
-    _ged_delete_io_handler(rtcp->gedp->ged_interp, rtcp->chan,
-	    rtcp->p, BU_PROCESS_STDERR, (void *)rtcp,
-	    rtcheck_output_handler);
+    if (rtcp->gedp->ged_delete_io_handler) {
+	(*rtcp->gedp->ged_delete_io_handler)(rtcp->gedp->ged_interp, rtcp->rrtp->chan,
+		rtcp->rrtp->p, BU_PROCESS_STDOUT, (void *)rtcp,
+		rtcheck_vector_handler);
+	(*rtcp->gedp->ged_delete_io_handler)(rtcp->gedp->ged_interp, rtcp->chan,
+		rtcp->p, BU_PROCESS_STDERR, (void *)rtcp,
+		rtcheck_output_handler);
+    }
 
     bu_process_close(rtcp->rrtp->p, BU_PROCESS_STDOUT);
 
@@ -104,7 +105,7 @@ rtcheck_handler_cleanup(struct ged_rtcheck *rtcp)
 }
 
 static void
-rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
+rtcheck_vector_handler(void *clientData, int UNUSED(mask))
 {
     int value = 0;
     struct ged_rtcheck *rtcp = (struct ged_rtcheck *)clientData;
@@ -165,7 +166,7 @@ rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
 }
 
 static void
-rtcheck_output_handler(ClientData clientData, int UNUSED(mask))
+rtcheck_output_handler(void *clientData, int UNUSED(mask))
 {
     int count;
     char line[RT_MAXLINE] = {0};
@@ -253,10 +254,11 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 	    *vp++ = (char *)argv[i++];
 	*vp = 0;
 	vp = &gd_rt_cmd[0];
-	while (*vp)
-	    Tcl_AppendResult((Tcl_Interp *)gedp->ged_interp, *vp++, " ", (char *)NULL);
-
-	Tcl_AppendResult((Tcl_Interp *)gedp->ged_interp, "\n", (char *)NULL);
+	while (*vp) {
+	    bu_vls_printf(gedp->ged_result_str, "%s ", *vp);
+	    vp++;
+	}
+	bu_vls_printf(gedp->ged_result_str, "\n");
     }
 
 
@@ -296,11 +298,15 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     BU_GET(rtcp->rrtp, struct ged_subprocess);
     rtcp->rrtp->p = p;
     rtcp->rrtp->aborted = 0;
-    _ged_create_io_handler(&(rtcp->rrtp->chan), p, BU_PROCESS_STDOUT, TCL_READABLE, (void *)rtcp, rtcheck_vector_handler);
+    if (gedp->ged_create_io_handler) {
+	(*gedp->ged_create_io_handler)(&(rtcp->rrtp->chan), p, BU_PROCESS_STDOUT, gedp->io_mode, (void *)rtcp, rtcheck_vector_handler);
+    }
     BU_LIST_INIT(&rtcp->rrtp->l);
     BU_LIST_APPEND(&gedp->gd_headSubprocess.l, &rtcp->rrtp->l);
 
-    _ged_create_io_handler(&(rtcp->chan), p, BU_PROCESS_STDERR, TCL_READABLE, (void *)rtcp, rtcheck_output_handler);
+    if (gedp->ged_create_io_handler) {
+	(*gedp->ged_create_io_handler)(&(rtcp->chan), p, BU_PROCESS_STDERR, gedp->io_mode, (void *)rtcp, rtcheck_output_handler);
+    }
 
     bu_free(gd_rt_cmd, "free gd_rt_cmd");
 

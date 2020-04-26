@@ -19,11 +19,14 @@ if (NOT WIN32)
 
   BRLCAD_ADDDATA(termcap termio)
 
-  BRLCAD_ADDLIB(libtermio "${TERMIO_SRCS}" "")
+  BRLCAD_ADDLIB(libtermio "${TERMIO_SRCS}" "libbu")
   set_target_properties(libtermio PROPERTIES VERSION 20.0.1 SOVERSION 20)
 endif(NOT WIN32)
 
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  termcap.h
+  )
 
 # Local Variables:
 # tab-width: 8

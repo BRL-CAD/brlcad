@@ -49,12 +49,6 @@ if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
   set_property(SOURCE dm-ogl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 endif(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
 
-if(BRLCAD_ENABLE_RTGL)
-  list(APPEND libdm_DEFINES DM_RTGL IF_RTGL)
-  set(dmrtgl_srcs dm-rtgl.c)
-  set_property(SOURCE dm-rtgl.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
-endif(BRLCAD_ENABLE_RTGL)
-
 if(BRLCAD_ENABLE_TK AND NOT WIN32)
   list(APPEND libdm_DEFINES DM_TK IF_TK)
   set(DM_TKLIB ${TCL_TK_LIBRARIES})
@@ -135,6 +129,10 @@ endif(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)
 if(BRLCAD_ENABLE_OSG)
   add_dependencies(libdm profont_ProFont_ttf_cp)
 endif(BRLCAD_ENABLE_OSG)
+
+#add_executable(tcl_img tcl_img.cpp)
+#target_link_libraries(tcl_img ${TCL_LIBRARY} ${TK_LIBRARY})
+
 set(libdm_ignore_files
   CMakeLists.txt
   README
@@ -147,13 +145,10 @@ set(libdm_ignore_files
   dm-ogl.h
   dm-osgl.cpp
   dm-osgl.h
-  dm-pex.h
   dm-plot.h
   dm-ps.h
   dm-qt.cpp
   dm-qt.h
-  dm-rtgl.c
-  dm-rtgl.h
   dm-tk.c
   dm-tk.h
   dm-wgl.c
@@ -166,6 +161,7 @@ set(libdm_ignore_files
   fontstash/stb_truetype.h
   osg-test.cpp
   osg_bob.cpp
+  tcl_img.cpp
   )
 CMAKEFILES(${libdm_ignore_files})
 CMAKEFILES(dm_private.h)

@@ -836,7 +836,7 @@ dm_set_vp(dm *dmp, fastf_t *vp)
  * structure passed in here as "base" */
 void
 dm_generic_hook(const struct bu_structparse *sdp,
-	const char *name, void *base, const char *value, void *data)
+		const char *name, void *base, const char *value, void *data)
 {
     if (data) {
 	struct dm_hook_data *hook= (struct dm_hook_data *)data;
@@ -850,7 +850,7 @@ dm_generic_hook(const struct bu_structparse *sdp,
 
 int
 dm_set_hook(const struct bu_structparse_map *map,
-       	const char *key, void *data, struct dm_hook_data *hook)
+	    const char *key, void *data, struct dm_hook_data *hook)
 {
     if (UNLIKELY(!map || !key || !hook)) return -1;
     hook->dm_hook = BU_STRUCTPARSE_FUNC_NULL;
@@ -889,36 +889,36 @@ dm_get_mvars(dm *dmp)
  * and into libdm. */
 static int
 dm_drawSolid(dm *dmp,
-          struct solid *sp,
-          short r,
-          short g,
-          short b,
-	  int draw_style,
-          unsigned char *gdc)
+	     struct solid *sp,
+	     short r,
+	     short g,
+	     short b,
+	     int draw_style,
+	     unsigned char *gdc)
 {
     int ndrawn = 0;
 
     if (sp->s_cflag) {
-        if (!DM_SAME_COLOR(r, g, b, (short)gdc[0], (short)gdc[1], (short)gdc[2])) {
-            dm_set_fg(dmp, (short)gdc[0], (short)gdc[1], (short)gdc[2], 0, sp->s_transparency);
-            DM_COPY_COLOR(r, g, b, (short)gdc[0], (short)gdc[1], (short)gdc[2]);
-        }
+	if (!DM_SAME_COLOR(r, g, b, (short)gdc[0], (short)gdc[1], (short)gdc[2])) {
+	    dm_set_fg(dmp, (short)gdc[0], (short)gdc[1], (short)gdc[2], 0, sp->s_transparency);
+	    DM_COPY_COLOR(r, g, b, (short)gdc[0], (short)gdc[1], (short)gdc[2]);
+	}
     } else {
-        if (!DM_SAME_COLOR(r, g, b, (short)sp->s_color[0], (short)sp->s_color[1], (short)sp->s_color[2])) {
-            dm_set_fg(dmp, (short)sp->s_color[0], (short)sp->s_color[1], (short)sp->s_color[2], 0, sp->s_transparency);
-            DM_COPY_COLOR(r, g, b, (short)sp->s_color[0], (short)sp->s_color[1], (short)sp->s_color[2]);
-        }
+	if (!DM_SAME_COLOR(r, g, b, (short)sp->s_color[0], (short)sp->s_color[1], (short)sp->s_color[2])) {
+	    dm_set_fg(dmp, (short)sp->s_color[0], (short)sp->s_color[1], (short)sp->s_color[2], 0, sp->s_transparency);
+	    DM_COPY_COLOR(r, g, b, (short)sp->s_color[0], (short)sp->s_color[1], (short)sp->s_color[2]);
+	}
     }
 
     if (dm_get_displaylist(dmp) && draw_style) {
-        dm_draw_dlist(dmp, sp->s_dlist);
-        sp->s_flag = UP;
-        ndrawn++;
+	dm_draw_dlist(dmp, sp->s_dlist);
+	sp->s_flag = UP;
+	ndrawn++;
     } else {
-        if (dm_draw_vlist(dmp, (struct bn_vlist *)&sp->s_vlist) == BRLCAD_OK) {
-            sp->s_flag = UP;
-            ndrawn++;
-        }
+	if (dm_draw_vlist(dmp, (struct bn_vlist *)&sp->s_vlist) == BRLCAD_OK) {
+	    sp->s_flag = UP;
+	    ndrawn++;
+	}
     }
 
     return ndrawn;
@@ -927,17 +927,17 @@ dm_drawSolid(dm *dmp,
 
 int
 dm_draw_display_list(dm *dmp,
-	struct bu_list *dl,
-	fastf_t transparency_threshold,
-	fastf_t inv_viewsize,
-	short r, short g, short b,
-	int line_width,
-	int draw_style,
-	int draw_edit,
-	unsigned char *gdc,
-	int solids_down,
-	int mv_dlist
-	)
+		     struct bu_list *dl,
+		     fastf_t transparency_threshold,
+		     fastf_t inv_viewsize,
+		     short r, short g, short b,
+		     int line_width,
+		     int draw_style,
+		     int draw_edit,
+		     unsigned char *gdc,
+		     int solids_down,
+		     int mv_dlist
+		    )
 {
     struct display_list *gdlp;
     struct display_list *next_gdlp;

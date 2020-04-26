@@ -1,4 +1,11 @@
-/*
+/*               L I S T _ E L E M E N T S . C P P
+ * BRL-CAD
+ *
+ * Published in 2020 by the United States Government.
+ * This work is in the public domain.
+ *
+ */
+/** @file list_elements.cpp
  * list_elements.cpp
  *
  * List elements and their attributes based on the compiled-in schema.

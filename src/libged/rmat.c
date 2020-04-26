@@ -56,7 +56,7 @@ ged_rmat(struct ged *gedp, int argc, const char *argv[])
 	MAT_COPY(gedp->ged_gvp->gv_rotation, rotation);
 	ged_view_update(gedp->ged_gvp);
 
-	return TCL_OK;
+	return GED_OK;
     }
 
     bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);

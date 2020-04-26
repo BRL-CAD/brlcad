@@ -171,6 +171,9 @@ struct ged_drawable {
     int				gd_shaded_mode;		/**< @brief  1 - draw bots shaded by default */
 };
 
+
+typedef void (*ged_io_handler_callback_t)(void *, int);
+
 struct ged_cmd;
 
 /* struct details are private - use accessor functions to manipulate */
@@ -215,6 +218,11 @@ struct ged {
     /* FIXME -- this ugly hack needs to die.  the result string should be stored before the call. */
     int 			ged_internal_call;
 
+    /* Handler functions for I/O communication with asynchronous subprocess commands */
+    int io_mode;
+    void (*ged_create_io_handler)(void **chan, struct bu_process *p, int fd, int mode, void *data, ged_io_handler_callback_t callback);
+    void (*ged_delete_io_handler)(void *interp, void *chan, struct bu_process *p, int fd, void *data, ged_io_handler_callback_t callback);
+
     /* FOR LIBGED INTERNAL USE */
     struct ged_cmd *cmds;
     int (*add)(struct ged *gedp, const struct ged_cmd *cmd);
@@ -225,7 +233,6 @@ struct ged {
 
     void *ged_interp; /* Temporary - do not rely on when designing new functionality */
     db_search_callback_t ged_interp_eval; /* FIXME: broke the rule written on the previous line */
-
 
     /* Interface to LIBDM */
     int ged_dm_width;

@@ -364,6 +364,8 @@ unsigned char *HtmlCssEnumeratedValues(int eProp){
         }
         i = 0;
         while (enumdata[i] != CSS_PROPERTY_MAX_PROPERTY+1){
+            assert(enumdata[i] <= CSS_PROPERTY_MAX_PROPERTY);
+            assert(enumdata[i] > 0);
             aProps[enumdata[i]] = i + 1;
             while( enumdata[i] ) i++;
             i++;

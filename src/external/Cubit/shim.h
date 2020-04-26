@@ -1,4 +1,12 @@
-/*
+/*                          S H I M . H
+ * BRL-CAD
+ *
+ * Published in 2020 by the United States Government.
+ * This work is in the public domain.
+ *
+ */
+/** @file shim.h
+ *
  * This file is provided as a compilation stub to ensure ongoing build testing
  * of the g-sat converter.  The logic below is intended only for as a minimal
  * shim for build testing and will not produce a functional binary.  Nor is it

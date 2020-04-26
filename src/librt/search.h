@@ -59,7 +59,6 @@
 
 #include <sys/types.h> /* for gid_t */
 
-#include "regex.h"
 #include "bu/ptbl.h"
 #include "raytrace.h"
 

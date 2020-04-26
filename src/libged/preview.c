@@ -80,7 +80,7 @@ ged_cm_clean(const int UNUSED(argc), const char **UNUSED(argv))
     if (_ged_current_gedp->ged_wdbp->dbip == DBI_NULL)
 	return 0;
 
-    /*f_zap((ClientData)NULL, interp, 0, (char **)0);*/
+    /*f_zap(NULL, interp, 0, (char **)0);*/
 
     /* Free animation structures */
     db_free_anim(_ged_current_gedp->ged_wdbp->dbip);

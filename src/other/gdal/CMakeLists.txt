@@ -35,7 +35,7 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.1.3)
 
 # Set CMake project name
 project(GDAL)
@@ -142,15 +142,15 @@ if(MSVC)
 endif(MSVC)
 
 find_package(ZLIB)
-if(ZLIB_LIBRARY)
+if(ZLIB_LIBRARIES)
   include_directories(${ZLIB_INCLUDE_DIRS})
   add_definitions(-DHAVE_LIBZ)
-endif(ZLIB_LIBRARY)
+endif(ZLIB_LIBRARIES)
 find_package(PNG)
-if(PNG_LIBRARY)
+if(PNG_LIBRARIES)
   include_directories(${PNG_INCLUDE_DIRS})
   add_definitions(-DUSE_PNG)
-endif(PNG_LIBRARY)
+endif(PNG_LIBRARIES)
 
 
 include(CheckTypeSize)
@@ -358,8 +358,8 @@ foreach(frmt ${OGR_FORMATS})
   set_target_properties(ogr_frmt_${frmt} PROPERTIES FOLDER "Third Party Libraries/GDAL")
 endforeach(frmt ${OGR_FORMATS})
 
-set(lib_list ZLIB PNG M DL ICONV)
-set(gdal_libs ${PROJ4_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+set(gdal_libs ${PROJ4_LIBRARIES} ${PNG_LIBRARIES} ${ZLIB_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+set(lib_list M DL ICONV)
 foreach(ll ${lib_list})
   if(${ll}_LIBRARY)
     set(gdal_libs ${gdal_libs} ${${ll}_LIBRARY})

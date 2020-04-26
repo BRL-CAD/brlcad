@@ -37,7 +37,7 @@
 ###
 
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.1.3)
 
 # Set CMake project name
 project(P2T)
@@ -74,8 +74,6 @@ if (NOT DEFINED BUILD_STATIC_LIBS)
   set(BUILD_STATIC_LIBS OFF)
 endif (NOT DEFINED BUILD_STATIC_LIBS)
 
-find_package(ZLIB REQUIRED)
-
 include(CheckLibraryExists)
 check_library_exists(m cos "" HAVE_M_LIBRARY)
 if (HAVE_M_LIBRARY)
@@ -88,9 +86,11 @@ set(SWEEP_HDRS
   poly2tri/sweep/sweep.h
   poly2tri/sweep/sweep_context.h
   )
-install(FILES ${SWEEP_HDRS} DESTINATION ${INCLUDE_DIR}/poly2tri/sweep)
-install(FILES poly2tri/poly2tri.h DESTINATION ${INCLUDE_DIR}/poly2tri)
-install(FILES poly2tri/common/shapes.h DESTINATION ${INCLUDE_DIR}/poly2tri/common)
+if (NOT SKIP_INSTALL_HEADERS)
+  install(FILES ${SWEEP_HDRS} DESTINATION ${INCLUDE_DIR}/poly2tri/sweep)
+  install(FILES poly2tri/poly2tri.h DESTINATION ${INCLUDE_DIR}/poly2tri)
+  install(FILES poly2tri/common/shapes.h DESTINATION ${INCLUDE_DIR}/poly2tri/common)
+endif (NOT SKIP_INSTALL_HEADERS)
 
 set(SOURCES
   poly2tri/common/shapes.cc
@@ -105,9 +105,10 @@ add_definitions("-DP2T_NO_GLFW")
 
 if (BUILD_SHARED_LIBS)
   add_library(poly2tri ${SOURCES})
-  target_link_libraries(poly2tri ${ZLIB_LIBRARY} ${M_LIBRARY})
+  target_link_libraries(poly2tri ${M_LIBRARY})
   if (MSVC)
     set_target_properties(poly2tri PROPERTIES DEFINE_SYMBOL P2T_BUILD_DLL)
+    set_property(TARGET poly2tri APPEND PROPERTY COMPILE_DEFINITIONS "P2T_DLL_EXPORTS")
   endif (MSVC)
   install(TARGETS poly2tri
     RUNTIME DESTINATION ${BIN_DIR}

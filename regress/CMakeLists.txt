@@ -21,12 +21,11 @@ endmacro(Add_Regression_Test)
 # via a macro argument, this should collect all regression targets.
 include(ProcessorCount)
 ProcessorCount(N)
-if(NOT N EQUAL 0)
+if(NOT N EQUAL 0 AND NOT BRLCAD_SERIAL_TESTING)
   set(JFLAG "-j${N}")
-else(NOT N EQUAL 0)
-  # Huh?  No j flag if we can't get a processor count
+else()
   set(JFLAG)
-endif(NOT N EQUAL 0)
+endif()
 add_custom_target(regress COMMAND ${CMAKE_CTEST_COMMAND} -L Regression --output-on-failure --output-log "${CMAKE_BINARY_DIR}/regress_output.log" ${JFLAG})
 set_target_properties(regress PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 set_target_properties(regress PROPERTIES FOLDER "BRL-CAD Regression Tests")
@@ -51,6 +50,9 @@ add_subdirectory(rtwizard)
 
 # MGED command tests
 add_subdirectory(mged)
+
+# License check
+add_subdirectory(licenses)
 
 if(SH_EXEC)
   macro(Sh_Regression_Test testname depends_list)
@@ -236,6 +238,54 @@ set(regress_outfiles
   dsp-2-5.log
   dsp-2-5.pix
   dsp-2-5.rt.pix
+  dsp-3-1.bw
+  dsp-3-1.dsp
+  dsp-3-1.g
+  dsp-3-1.log
+  dsp-3-1.pix
+  dsp-3-1.rt.pix
+  dsp-3-2.bw
+  dsp-3-2.dsp
+  dsp-3-2.g
+  dsp-3-2.log
+  dsp-3-2.pix
+  dsp-3-2.rt.pix
+  dsp-3-3.bw
+  dsp-3-3.dsp
+  dsp-3-3.g
+  dsp-3-3.log
+  dsp-3-3.pix
+  dsp-3-3.rt.pix
+  dsp-3-4.bw
+  dsp-3-4.dsp
+  dsp-3-4.g
+  dsp-3-4.log
+  dsp-3-4.pix
+  dsp-3-4.rt.pix
+  dsp-3-5.bw
+  dsp-3-5.dsp
+  dsp-3-5.g
+  dsp-3-5.log
+  dsp-3-5.pix
+  dsp-3-5.rt.pix
+  dsp-3-6.bw
+  dsp-3-6.dsp
+  dsp-3-6.g
+  dsp-3-6.log
+  dsp-3-6.pix
+  dsp-3-6.rt.pix
+  dsp-3-7.bw
+  dsp-3-7.dsp
+  dsp-3-7.g
+  dsp-3-7.log
+  dsp-3-7.pix
+  dsp-3-7.rt.pix
+  dsp-3-8.bw
+  dsp-3-8.dsp
+  dsp-3-8.g
+  dsp-3-8.log
+  dsp-3-8.pix
+  dsp-3-8.rt.pix
   dsp.log
   gqa.adj_air.plot3
   gqa.exp_air.plot3

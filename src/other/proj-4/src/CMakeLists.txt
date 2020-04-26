@@ -230,7 +230,9 @@ if (BUILD_STATIC_LIBS)
     )
 endif (BUILD_STATIC_LIBS)
 
-install(FILES ${hdr_files} DESTINATION ${INCLUDE_DIR}/proj)
+if (NOT SKIP_INSTALL_HEADERS)
+  install(FILES ${hdr_files} DESTINATION ${INCLUDE_DIR}/proj)
+endif (NOT SKIP_INSTALL_HEADERS)
 
 
 # Local Variables:
