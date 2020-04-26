@@ -229,8 +229,11 @@ main(int UNUSED(argc), const char *argv[])
 
 
     // Define a canvas widget, pack it into the root window, and associate the image with it
-    std::string canvas_cmd = std::string("pack [canvas ") + std::string(DM_CANVAS) + std::string(" -width ") + std::to_string(wsize) + std::string(" -height ")  + std::to_string(wsize) + std::string("]") ;
+    // TODO - should the canvas be inside a frame?
+    std::string canvas_cmd = std::string("canvas ") + std::string(DM_CANVAS) + std::string(" -width ") + std::to_string(wsize) + std::string(" -height ")  + std::to_string(wsize) ;
     Tcl_Eval(interp, canvas_cmd.c_str());
+    std::string pack_cmd = std::string("pack ") + std::string(DM_CANVAS) + std::string(" -fill both -expand 1");
+    Tcl_Eval(interp, pack_cmd.c_str());
     std::string canvas_img_cmd = std::string(DM_CANVAS) + std::string(" create image 0 0 -image ") + std::string(DM_PHOTO) + std::string(" -anchor nw");
     Tcl_Eval(interp, canvas_img_cmd.c_str());
 
