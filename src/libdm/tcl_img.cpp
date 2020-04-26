@@ -33,7 +33,7 @@
 #include "tk.h"
 
 const char *DM_PHOTO = ".dm0.photo";
-const char *DM_LABEL = ".dm0";
+const char *DM_CANVAS = ".dm0";
 
 /* Container holding image generation information - need to be able
  * to pass these to the update command */
@@ -227,12 +227,12 @@ main(int UNUSED(argc), const char *argv[])
     // Let Tk_Photo know we have data
     Tk_PhotoPutBlock(interp, dm_img, &dm_data, 0, 0, wsize, wsize, TK_PHOTO_COMPOSITE_SET);
 
-    // TODO - examples use a label to pack and display an image - is this the
-    // right way for us to do it in MGED/Archer?
-    std::string label_cmd = std::string("label ") + std::string(DM_LABEL) + std::string(" -image ") + std::string(DM_PHOTO);
-    Tcl_Eval(interp, label_cmd.c_str());
-    std::string pack_cmd = std::string("pack ") + std::string(DM_LABEL);
-    Tcl_Eval(interp, pack_cmd.c_str());
+
+    // Define a canvas widget, pack it into the root window, and associate the image with it
+    std::string canvas_cmd = std::string("pack [canvas ") + std::string(DM_CANVAS) + std::string("]") ;
+    Tcl_Eval(interp, canvas_cmd.c_str());
+    std::string canvas_img_cmd = std::string(DM_CANVAS) + std::string(" create image 0 0 -image ") + std::string(DM_PHOTO) + std::string(" -anchor nw");
+    Tcl_Eval(interp, canvas_img_cmd.c_str());
 
 
     // Register a paint command so we can change the image contents neary the cursor position
