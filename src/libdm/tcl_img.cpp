@@ -115,7 +115,7 @@ image_paint_xy(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char
     }
     errno = 0;
     long ycoor = strtol(argv[2], &p_end, 10);
-    if (errno == ERANGE || (errno != 0 && xcoor == 0) || p_end == argv[1]) {
+    if (errno == ERANGE || (errno != 0 && ycoor == 0) || p_end == argv[1]) {
 	std::cerr << "Invalid image_paint_xy Y coordinate: " << argv[2] << "\n";
 	return TCL_ERROR;
     }
@@ -146,6 +146,40 @@ image_paint_xy(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char
 
     return TCL_OK;
 }
+
+int
+image_resize_view(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+{
+    if (argc != 3) {
+	std::cerr << "Unexpected argc: " << argc << "\n";
+	return TCL_ERROR;
+    }
+
+    // Unpack the coordinates (checking errno, although it may not truly be
+    // necessary if we trust Tk to always give us valid coordinates...)
+    char *p_end;
+    errno = 0;
+    long width = strtol(argv[1], &p_end, 10);
+    if (errno == ERANGE || (errno != 0 && width == 0) || p_end == argv[1]) {
+	std::cerr << "Invalid width: " << argv[1] << "\n";
+	return TCL_ERROR;
+    }
+    errno = 0;
+    long height = strtol(argv[2], &p_end, 10);
+    if (errno == ERANGE || (errno != 0 && height == 0) || p_end == argv[1]) {
+	std::cerr << "Invalid height: " << argv[2] << "\n";
+	return TCL_ERROR;
+    }
+
+    // Set the new photo size.
+    Tk_PhotoHandle dm_img = Tk_FindPhoto(interp, DM_PHOTO);
+    Tk_PhotoSetSize(interp, dm_img, width, height);
+
+    image_update_data(clientData, interp, 0, NULL);
+
+    return TCL_OK;
+}
+
 
 int
 main(int UNUSED(argc), const char *argv[])
@@ -225,12 +259,12 @@ main(int UNUSED(argc), const char *argv[])
     }
 
     // Let Tk_Photo know we have data
-    Tk_PhotoPutBlock(interp, dm_img, &dm_data, 0, 0, wsize, wsize, TK_PHOTO_COMPOSITE_SET);
+    Tk_PhotoPutBlock(interp, dm_img, &dm_data, 0, 0, dm_data.width, dm_data.height, TK_PHOTO_COMPOSITE_SET);
 
 
     // Define a canvas widget, pack it into the root window, and associate the image with it
     // TODO - should the canvas be inside a frame?
-    std::string canvas_cmd = std::string("canvas ") + std::string(DM_CANVAS) + std::string(" -width ") + std::to_string(wsize) + std::string(" -height ")  + std::to_string(wsize) ;
+    std::string canvas_cmd = std::string("canvas ") + std::string(DM_CANVAS) + std::string(" -width ") + std::to_string(wsize) + std::string(" -height ")  + std::to_string(wsize) + std::string(" -borderwidth 0");
     Tcl_Eval(interp, canvas_cmd.c_str());
     std::string pack_cmd = std::string("pack ") + std::string(DM_CANVAS) + std::string(" -fill both -expand 1");
     Tcl_Eval(interp, pack_cmd.c_str());
@@ -253,11 +287,10 @@ main(int UNUSED(argc), const char *argv[])
     bind_cmd = std::string("bind . <Button-3> {image_update}");
     Tcl_Eval(interp, bind_cmd.c_str());
 
-    // Start working on figuring out resizing - wondering if we can just have one pixelPtr buffer the size
-    // of the screen and only use as much as is needed for the active size of the window, so we aren't
-    // constantly reallocating the background buffer on resize?  Might also be able to down/upsample the image
-    // during moving and do a full re-renering pass once we're stable, if the rendering pass is expensive...
-    bind_cmd = std::string("bind . <Configure> {puts \"%W: [winfo width %W]x[winfo height %W]\"}");
+    // Register a callback to change the image size in response to a window change
+    (void)Tcl_CreateCommand(interp, "image_resize", (Tcl_CmdProc *)image_resize_view, (ClientData)&idata, (Tcl_CmdDeleteProc* )NULL);
+    // Establish the Button-1+Motion combination event as the trigger for drawing on the image
+    bind_cmd = std::string("bind ") + std::string(DM_CANVAS) + std::string(" <Configure> {image_resize [winfo width %W] [winfo height %W]\"}");
     Tcl_Eval(interp, bind_cmd.c_str());
 
     // Enter the main applicatio loop - the initial image will appear, and Button-1 mouse
