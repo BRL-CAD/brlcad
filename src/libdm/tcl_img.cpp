@@ -140,8 +140,6 @@ image_paint_xy(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char
     }
 
     // Let Tcl/Tk know the photo data has changed, so it can update the visuals accordingly.
-    // TODO - a) is it valid and b) is there a performance reason to specify just the changed
-    // region rather than the whole data block?
     Tk_PhotoPutBlock(interp, dm_img, &dm_data, 0, 0, dm_data.width, dm_data.height, TK_PHOTO_COMPOSITE_SET);
 
     return TCL_OK;
