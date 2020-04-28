@@ -37,52 +37,146 @@ const char *DM_PHOTO = ".dm0.photo";
 const char *DM_CANVAS = ".dm0";
 
 TCL_DECLARE_MUTEX(dilock)
-
+TCL_DECLARE_MUTEX(threadMutex)
 
 /* Container holding image generation information - need to be able
  * to pass these to the update command */
 struct img_data {
-    std::default_random_engine *gen;
-    std::uniform_int_distribution<int> *colors;
-    std::uniform_int_distribution<int> *vals;
-    int *dflag;
+    // These flags should be mutex guarded.
+    int render_needed;
+    int render_running;
+    int render_ready;
+
+    // Parent application sets this when it's time to shut
+    // down the dm rendering
+    int render_shutdown;
+
+    // Main thread id
+    Tcl_ThreadId parent;
+    // DO NOT USE in thread - present here to pass through event back to parent
+    Tcl_Interp *parent_interp;
+
+    // Image info
+    int width;
+    int height;
+
+    // This gets interesting - a Tcl interp can only be used by the
+    // thread that created it.  We provide the Tk_PhotoImageBlock
+    // to the thread, but the thread can't do any operations on
+    // the data that require the interp, so the update process
+    // must be partially in the thread and partially in the parent.
+    unsigned char *pixelPtr;
 };
 
-int
-image_update_data(ClientData clientData, Tcl_Interp *interp, int UNUSED(argc), char **UNUSED(argv))
-{
-    struct img_data *idata = (struct img_data *)clientData;
+struct DmEventResult {
+    Tcl_Condition done;
+    int ret;
+};
 
-    // Look up the internals of the image - we're going to directly manipulate
-    // the values of the image to simulate a display manager or framebuffer
-    // changing the visual via rendering.
+struct DmRenderEvent {
+    Tcl_Event event;            /* Must be first */
+    struct DmEventResult *result;
+    struct img_data *idata;
+};
+
+static int
+DmRenderProc(Tcl_Event *evPtr, int UNUSED(mask))
+{
+    struct DmRenderEvent *DmEventPtr = (DmRenderEvent *) evPtr;
+    Tcl_Interp *interp = DmEventPtr->idata->parent_interp;
+
+    // Let Tcl/Tk know the photo data has changed, so it can update the visuals accordingly
     Tk_PhotoImageBlock dm_data;
     Tk_PhotoHandle dm_img = Tk_FindPhoto(interp, DM_PHOTO);
     Tk_PhotoGetImage(dm_img, &dm_data);
+    Tk_PhotoPutBlock(interp, dm_img, &dm_data, 0, 0, dm_data.width, dm_data.height, TK_PHOTO_COMPOSITE_SET);
 
-    // To get a little visual variation and make it easer to see changes,
-    // randomly turn on/off the individual colors for each pass.
-    int r = (*idata->colors)((*idata->gen));
-    int g = (*idata->colors)((*idata->gen));
-    int b = (*idata->colors)((*idata->gen));
+    // Render complete
+    Tcl_MutexLock(&dilock);
+    DmEventPtr->idata->render_ready = 0;
+    Tcl_MutexUnlock(&dilock);
 
-    // For each pixel, get a random color value and set it in the image memory buffer.
-    // This alters the actual data, but Tcl/Tk doesn't know about it yet.
-    for (int i = 0; i < (dm_data.width * dm_data.height * 4); i+=4) {
-	// Red
-	dm_data.pixelPtr[i] = (r) ? (*idata->vals)((*idata->gen)) : 0;
-	// Green
-	dm_data.pixelPtr[i+1] = (g) ? (*idata->vals)((*idata->gen)) : 0;
-	// Blue
-	dm_data.pixelPtr[i+2] = (b) ? (*idata->vals)((*idata->gen)) : 0;
-	// Alpha stays at 255 (Don't really need to set it since it should
-	// already be set, just doing so for local clarity about what should be
-	// happening with the buffer data...)
-	dm_data.pixelPtr[i+3] = 255;
+    DmEventPtr->result->ret = 0;
+    Tcl_ConditionNotify(&resultPtr->done);
+
+    return 1;
+}
+
+
+
+int
+image_update_data(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
+{
+    struct img_data *idata = (struct img_data *)clientData;
+
+    if (argc == 3) {
+	// Unpack the current width and height.  If these don't match what idata has
+	// or thinks its working on, set the flag indicating we need a render.
+	// (Note: checking errno, although it may not truly be necessary if we
+	// trust Tk to always give us valid coordinates...)
+	char *p_end;
+	errno = 0;
+	long width = strtol(argv[1], &p_end, 10);
+	if (errno == ERANGE || (errno != 0 && width == 0) || p_end == argv[1]) {
+	    std::cerr << "Invalid width: " << argv[1] << "\n";
+	    return TCL_ERROR;
+	}
+	errno = 0;
+	long height = strtol(argv[2], &p_end, 10);
+	if (errno == ERANGE || (errno != 0 && height == 0) || p_end == argv[1]) {
+	    std::cerr << "Invalid height: " << argv[2] << "\n";
+	    return TCL_ERROR;
+	}
+
+	// TODO - if possible, the event generated from the render thread that
+	// prompts an actual Tk_Photo update should have enough info to differentiate
+	// it here from an app generated event that needs to reset the render_needed
+	// flag.  render_needed should be set whenever the app calls in here, not
+	// just when the dimensions change, but as the thread is likely going to
+	// need to generate a <Configure> event to make sure the GUI properly updates
+	// we'll need to find a way to distinguish in the callback.
+
+	// Even if we already have a render going or ready, we might have made a new update
+	// request to invalidate the currently-in-progress render.
+	if (idata->render_running || idata->render_ready) {
+	    if (width != idata->width || height != idata->height) {
+		Tcl_MutexLock(&dilock);
+		idata->render_needed = 1;
+		Tcl_MutexUnlock(&dilock);
+	    }
+	} else {
+	    // No render in progress, but we got an update request - set
+	    // the flag regardless of dimensions
+	    Tcl_MutexLock(&dilock);
+	    idata->render_needed = 1;
+	    Tcl_MutexUnlock(&dilock);
+	}
+    } else {
+	Tcl_MutexLock(&dilock);
+	idata->render_needed = 1;
+	Tcl_MutexUnlock(&dilock);
     }
 
-    // Let Tcl/Tk know the photo data has changed, so it can update the visuals accordingly
-    Tk_PhotoPutBlock(interp, dm_img, &dm_data, 0, 0, dm_data.width, dm_data.height, TK_PHOTO_COMPOSITE_SET);
+    if (idata->render_needed && !idata->render_running) {
+	// Look up the internals of the image - the rendering thread is going
+	// to directly manipulate the values of the image to simulate a display
+	// manager or framebuffer changing the visual via rendering.  Once this
+	// process begins, the Tk_Photo can't be manipualted until the rendering
+	// is complete.
+	Tk_PhotoImageBlock dm_data;
+	Tk_PhotoHandle dm_img = Tk_FindPhoto(interp, DM_PHOTO);
+	Tk_PhotoGetImage(dm_img, &dm_data);
+	Tcl_MutexLock(&dilock);
+	idata->render_needed = 0; // Don't let the thread start until we're ready
+	idata->width = dm_data.width;
+	idata->height = dm_data.height;
+	idata->pixelPtr = dm_data.pixelPtr;
+	idata->render_needed = 1; // Ready - thread can now render
+	Tcl_MutexUnlock(&dilock);
+
+	// We've asked for a render, that's all we can do right now.  The
+	// render thread will need to generate an event when it's done.
+    }
 
     return TCL_OK;
 }
@@ -150,72 +244,90 @@ image_paint_xy(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char
     return TCL_OK;
 }
 
-int
-image_resize_view(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
-{
-    int go_flag = 0;
-    if (argc != 3) {
-	std::cerr << "Unexpected argc: " << argc << "\n";
-	return TCL_ERROR;
-    }
-
-    struct img_data *idata = (struct img_data *)clientData;
-
-    Tcl_MutexLock(&dilock);
-    if ((*idata->dflag) > 1) {
-	std::cout << "dflag: " << (*idata->dflag) << "\n";
-	(*idata->dflag) = 0;
-	go_flag = 1;
-    }
-    Tcl_MutexUnlock(&dilock);
-
-    if (!go_flag) {
-	std::cout << "Skipping redraw\n";
-	return TCL_OK;
-    }
-
-    // Unpack the coordinates (checking errno, although it may not truly be
-    // necessary if we trust Tk to always give us valid coordinates...)
-    char *p_end;
-    errno = 0;
-    long width = strtol(argv[1], &p_end, 10);
-    if (errno == ERANGE || (errno != 0 && width == 0) || p_end == argv[1]) {
-	std::cerr << "Invalid width: " << argv[1] << "\n";
-	return TCL_ERROR;
-    }
-    errno = 0;
-    long height = strtol(argv[2], &p_end, 10);
-    if (errno == ERANGE || (errno != 0 && height == 0) || p_end == argv[1]) {
-	std::cerr << "Invalid height: " << argv[2] << "\n";
-	return TCL_ERROR;
-    }
-
-    // Set the new photo size.
-    Tk_PhotoHandle dm_img = Tk_FindPhoto(interp, DM_PHOTO);
-    Tk_PhotoSetSize(interp, dm_img, width, height);
-
-    image_update_data(clientData, interp, 0, NULL);
-
-    return TCL_OK;
-}
-
-struct draw_info {
-    int flag;                     /* Identifier for this handler. */
-};
-
-
 static Tcl_ThreadCreateType
 Dm_Draw(ClientData clientData)
 {
-    struct draw_info *di = (struct draw_info *)clientData;
+    struct img_data *idata = (struct img_data *)clientData;
+    std::default_random_engine gen;
+    std::uniform_int_distribution<int> colors(0,1);
+    std::uniform_int_distribution<int> vals(0,255);
 
-    while (di->flag >= 0) {
-	Tcl_Sleep(1000);
+    while (!idata->render_shutdown) {
+	if (!idata->render_needed) {
+	    // If we havne't been asked for an update,
+	    // sleep a bit and then check again.
+	    Tcl_Sleep(1000);
+	    continue;
+	}
+	// If we do need to render, get started
 	Tcl_MutexLock(&dilock);
-	di->flag++;
+	idata->render_needed = 0;
+	idata->render_running = 1;
+	idata->render_ready = 0;
 	Tcl_MutexUnlock(&dilock);
+
+	// If we have no image data to work on, nothing
+	// to do
+	if (!idata->pixelPtr) {
+	    Tcl_MutexLock(&dilock);
+	    idata->render_running = 0;
+	    idata->render_ready = 1;
+	    Tcl_MutexUnlock(&dilock);
+	}
+
+	// To get a little visual variation and make it easer to see changes,
+	// randomly turn on/off the individual colors for each pass.
+	int r = colors(gen);
+	int g = colors(gen);
+	int b = colors(gen);
+
+	// For each pixel, get a random color value and set it in the image memory buffer.
+	// This alters the actual data, but Tcl/Tk doesn't know about it yet.
+	for (int i = 0; i < (idata->width * idata->height * 4); i+=4) {
+	    // Red
+	    idata->pixelPtr[i] = (r) ? vals(gen) : 0;
+	    // Green
+	    idata->pixelPtr[i+1] = (g) ? vals(gen) : 0;
+	    // Blue
+	    idata->pixelPtr[i+2] = (b) ? vals(gen) : 0;
+	    // Alpha stays at 255 (Don't really need to set it since it should
+	    // already be set, just doing so for local clarity about what should be
+	    // happening with the buffer data...)
+	    idata->pixelPtr[i+3] = 255;
+	}
+
+	// Update done - let the parent structure know.  We don't set the
+	// needed flag here, since the parent window may have changed between
+	// the start and the end of this render and if it has we need to start
+	// over.
+	Tcl_MutexLock(&dilock);
+	idata->render_running = 0;
+	idata->render_ready = 1;
+	Tcl_MutexUnlock(&dilock);
+
+	// Generate an event for the parent thread to let it know its time
+	// to update the Tk_Photo holding the DM
+	Tcl_MutexLock(&threadMutex);
+	struct DmRenderEvent *threadEventPtr = (struct DmRenderEvent *)ckalloc(sizeof(DmRenderEvent));
+	struct DmEventResult *resultPtr = (struct DmEventResult *)ckalloc(sizeof(DmEventResult));
+	threadEventPtr->result = resultPtr;
+	threadEventPtr->idata = idata;
+	threadEventPtr->event.proc = DmRenderProc;
+	resultPtr->done = NULL;
+	resultPtr->ret = 1;
+	Tcl_ThreadQueueEvent(idata->parent, (Tcl_Event *) threadEventPtr, TCL_QUEUE_TAIL);
+	Tcl_ThreadAlert(idata->parent);
+	while (resultPtr->ret) {
+	    Tcl_ConditionWait(&resultPtr->done, &threadMutex, NULL);
+	}
+
+	Tcl_MutexUnlock(&threadMutex);
+
+	Tcl_ConditionFinalize(&resultPtr->done);
+	ckfree(resultPtr);
     }
 
+    // We're well and truly done - quit the thread
     Tcl_ExitThread(TCL_OK);
     TCL_THREAD_CREATE_RETURN;
 }
@@ -233,19 +345,22 @@ main(int UNUSED(argc), const char *argv[])
     // raster changing the view data.  We need to use these for subsequent
     // image updating, so pack them into a structure we can pass through Tcl's
     // evaluations.
-    std::default_random_engine gen;
-    std::uniform_int_distribution<int> colors(0,1);
-    std::uniform_int_distribution<int> vals(0,255);
     struct img_data idata;
-    idata.gen = &gen;
-    idata.colors = &colors;
-    idata.vals = &vals;
+    idata.render_needed = 1;
+    idata.render_running = 0;
+    idata.render_ready = 0;
+    idata.render_shutdown = 0;
+    idata.pixelPtr = NULL;
+    idata.parent = Tcl_GetCurrentThread();
 
     // Set up Tcl/Tk
     Tcl_FindExecutable(argv[0]);
     Tcl_Interp *interp = Tcl_CreateInterp();
     Tcl_Init(interp);
     Tk_Init(interp);
+
+    // Save a pointer so we can get at the interp later
+    idata.parent_interp = interp;
 
     // Make a simple toplevel window
     Tk_Window tkwin = Tk_MainWindow(interp);
@@ -285,13 +400,12 @@ main(int UNUSED(argc), const char *argv[])
 	exit(1);
     }
 
-    // For each pixel, get a random color value and set it in the image memory buffer.
-    // This alters the actual data, but Tcl/Tk doesn't know about it yet.
+    // Initialize. This alters the actual data, but Tcl/Tk doesn't know about it yet.
     for (int i = 0; i < (dm_data.width * dm_data.height * 4); i+=4) {
 	// Red
 	dm_data.pixelPtr[i] = 0;
 	// Green
-	dm_data.pixelPtr[i+1] = (*idata.vals)((*idata.gen));
+	dm_data.pixelPtr[i+1] = 255;
 	// Blue
 	dm_data.pixelPtr[i+2] = 0;
 	// Alpha at 255 - we dont' want transparency for this demo.
@@ -312,7 +426,7 @@ main(int UNUSED(argc), const char *argv[])
     Tcl_Eval(interp, canvas_img_cmd.c_str());
 
 
-    // Register a paint command so we can change the image contents neary the cursor position
+    // Register a paint command so we can change the image contents near the cursor position
     (void)Tcl_CreateCommand(interp, "image_paint", (Tcl_CmdProc *)image_paint_xy, NULL, (Tcl_CmdDeleteProc* )NULL);
     // Establish the Button-1+Motion combination event as the trigger for drawing on the image
     bind_cmd = std::string("bind . <B1-Motion> {image_paint %x %y}");
@@ -327,24 +441,15 @@ main(int UNUSED(argc), const char *argv[])
     bind_cmd = std::string("bind . <Button-3> {image_update}");
     Tcl_Eval(interp, bind_cmd.c_str());
 
-    // Register a callback to change the image size in response to a window change
-    (void)Tcl_CreateCommand(interp, "image_resize", (Tcl_CmdProc *)image_resize_view, (ClientData)&idata, (Tcl_CmdDeleteProc* )NULL);
-    // Establish the Button-1+Motion combination event as the trigger for drawing on the image
-    bind_cmd = std::string("bind ") + std::string(DM_CANVAS) + std::string(" <Configure> {image_resize [winfo width %W] [winfo height %W]\"}");
+    // Update the photo if the window changes
+    bind_cmd = std::string("bind ") + std::string(DM_CANVAS) + std::string(" <Configure> {image_update [winfo width %W] [winfo height %W]\"}");
     Tcl_Eval(interp, bind_cmd.c_str());
-
-
 
     // Multithreading experiment
     Tcl_ThreadId threadID;
-    struct draw_info di;
-    di.flag = 0;
-    if (Tcl_CreateThread(&threadID, Dm_Draw, (ClientData)&di, TCL_THREAD_STACK_DEFAULT, TCL_THREAD_JOINABLE) != TCL_OK) {
+    if (Tcl_CreateThread(&threadID, Dm_Draw, (ClientData)&idata, TCL_THREAD_STACK_DEFAULT, TCL_THREAD_JOINABLE) != TCL_OK) {
 	std::cerr << "can't create thread\n";
     }
-    // Let the update routines see the flag
-    idata.dflag = &di.flag;
-
 
     // Enter the main applicatio loop - the initial image will appear, and Button-1 mouse
     // clicks on the window should generate and display new images
@@ -353,7 +458,7 @@ main(int UNUSED(argc), const char *argv[])
 	if (!Tk_GetNumMainWindows()) {
 	    // If we've closed the window, we're done
 	    Tcl_MutexLock(&dilock);
-	    di.flag = -INT_MAX;
+	    idata.render_shutdown = 1;
 	    Tcl_MutexUnlock(&dilock);
 	    int tret;
 	    Tcl_JoinThread(threadID, &tret);
