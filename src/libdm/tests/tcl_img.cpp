@@ -36,12 +36,16 @@
 const char *DM_PHOTO = ".dm0.photo";
 const char *DM_CANVAS = ".dm0";
 
+TCL_DECLARE_MUTEX(dilock)
+
+
 /* Container holding image generation information - need to be able
  * to pass these to the update command */
 struct img_data {
     std::default_random_engine *gen;
     std::uniform_int_distribution<int> *colors;
     std::uniform_int_distribution<int> *vals;
+    int *dflag;
 };
 
 int
@@ -149,9 +153,25 @@ image_paint_xy(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char
 int
 image_resize_view(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
+    int go_flag = 0;
     if (argc != 3) {
 	std::cerr << "Unexpected argc: " << argc << "\n";
 	return TCL_ERROR;
+    }
+
+    struct img_data *idata = (struct img_data *)clientData;
+
+    Tcl_MutexLock(&dilock);
+    if ((*idata->dflag) > 1) {
+	std::cout << "dflag: " << (*idata->dflag) << "\n";
+	(*idata->dflag) = 0;
+	go_flag = 1;
+    }
+    Tcl_MutexUnlock(&dilock);
+
+    if (!go_flag) {
+	std::cout << "Skipping redraw\n";
+	return TCL_OK;
     }
 
     // Unpack the coordinates (checking errno, although it may not truly be
@@ -183,7 +203,6 @@ struct draw_info {
     int flag;                     /* Identifier for this handler. */
 };
 
-TCL_DECLARE_MUTEX(dilock)
 
 static Tcl_ThreadCreateType
 Dm_Draw(ClientData clientData)
@@ -191,7 +210,7 @@ Dm_Draw(ClientData clientData)
     struct draw_info *di = (struct draw_info *)clientData;
 
     while (di->flag >= 0) {
-	Tcl_Sleep(1);
+	Tcl_Sleep(1000);
 	Tcl_MutexLock(&dilock);
 	di->flag++;
 	Tcl_MutexUnlock(&dilock);
@@ -323,20 +342,14 @@ main(int UNUSED(argc), const char *argv[])
     if (Tcl_CreateThread(&threadID, Dm_Draw, (ClientData)&di, TCL_THREAD_STACK_DEFAULT, TCL_THREAD_JOINABLE) != TCL_OK) {
 	std::cerr << "can't create thread\n";
     }
+    // Let the update routines see the flag
+    idata.dflag = &di.flag;
 
 
     // Enter the main applicatio loop - the initial image will appear, and Button-1 mouse
     // clicks on the window should generate and display new images
     while (1) {
 	Tcl_DoOneEvent(0);
-	if (di.flag) {
-	    std::cout << "Flag set\n";
-	    Tcl_MutexLock(&dilock);
-	    di.flag = 0;
-	    Tcl_MutexUnlock(&dilock);
-	} else {
-	    std::cout << "Flag unset\n";
-	}
 	if (!Tk_GetNumMainWindows()) {
 	    // If we've closed the window, we're done
 	    Tcl_MutexLock(&dilock);
