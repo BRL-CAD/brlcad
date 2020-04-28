@@ -53,20 +53,23 @@ struct img_data {
     // down the dm rendering
     int render_shutdown;
 
-    // Main thread id
-    Tcl_ThreadId parent;
+    // Main thread id - used to send a rendering event back to
+    // the parent thread.
+    Tcl_ThreadId parent_id;
     // DO NOT USE in thread - present here to pass through event back to parent
     Tcl_Interp *parent_interp;
 
-    // Image info
+    // Image info.  Reflects the currently requested parent image
+    // size - the render thread may have a different size during
+    // rendering, as it "snapshots" these numbers to have a stable
+    // buffer size when actually writing pixels.
     int width;
     int height;
 
     // This gets interesting - a Tcl interp can only be used by the
-    // thread that created it.  We provide the Tk_PhotoImageBlock
-    // to the thread, but the thread can't do any operations on
-    // the data that require the interp, so the update process
-    // must be partially in the thread and partially in the parent.
+    // thread that created it, so the thread operates on its own
+    // buffer which is exposted to the parent's Tk_Photo image update
+    // via an event.
     long buff_size;
     unsigned char *pixelPtr;
 };
@@ -84,6 +87,10 @@ struct DmRenderEvent {
     int height;
 };
 
+// The actual Tk_Photo updating must be done by the creater of the
+// Tcl_Interp - which is the parent thread.  The interp below must
+// thus be the PARENT's interp, and we have passed it through the
+// various structures to be available here.
 static int
 DmRenderProc(Tcl_Event *evPtr, int UNUSED(mask))
 {
@@ -102,22 +109,22 @@ DmRenderProc(Tcl_Event *evPtr, int UNUSED(mask))
 	Tk_PhotoSetSize(interp, dm_img, width, height);
 	Tk_PhotoGetImage(dm_img, &dm_data);
     }
-    dm_data.width = width;
-    dm_data.height = height;
     // Tk_PhotoPutBlock appears to be making a copy of the data, so we should
     // be able to point to our thread's rendered data to feed it in for
     // copying.
     dm_data.pixelPtr = idata->pixelPtr;
     Tk_PhotoPutBlock(interp, dm_img, &dm_data, 0, 0, dm_data.width, dm_data.height, TK_PHOTO_COMPOSITE_SET);
 
-    // Render complete
+    // Render processed - reset the ready flag
     Tcl_MutexLock(&dilock);
     idata->render_ready = 0;
     Tcl_MutexUnlock(&dilock);
 
+    // Let the render thread know we are done.
     DmEventPtr->result->ret = 0;
     Tcl_ConditionNotify(&resultPtr->done);
 
+    // Return one to signify a successful completion of the process execution
     return 1;
 }
 
@@ -325,8 +332,8 @@ Dm_Draw(ClientData clientData)
 	threadEventPtr->event.proc = DmRenderProc;
 	resultPtr->done = NULL;
 	resultPtr->ret = 1;
-	Tcl_ThreadQueueEvent(idata->parent, (Tcl_Event *) threadEventPtr, TCL_QUEUE_TAIL);
-	Tcl_ThreadAlert(idata->parent);
+	Tcl_ThreadQueueEvent(idata->parent_id, (Tcl_Event *) threadEventPtr, TCL_QUEUE_TAIL);
+	Tcl_ThreadAlert(idata->parent_id);
 	while (resultPtr->ret) {
 	    Tcl_ConditionWait(&resultPtr->done, &threadMutex, NULL);
 	}
@@ -365,7 +372,7 @@ main(int UNUSED(argc), const char *argv[])
     idata.render_ready = 0;
     idata.render_shutdown = 0;
     idata.pixelPtr = NULL;
-    idata.parent = Tcl_GetCurrentThread();
+    idata.parent_id = Tcl_GetCurrentThread();
 
     // Set up Tcl/Tk
     Tcl_FindExecutable(argv[0]);
