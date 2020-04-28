@@ -24,6 +24,7 @@
 
 #include "common.h"
 
+#include <climits>
 #include <random>
 #include <iostream>
 #include <stdlib.h>
@@ -178,6 +179,28 @@ image_resize_view(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
     return TCL_OK;
 }
 
+struct draw_info {
+    int flag;                     /* Identifier for this handler. */
+};
+
+TCL_DECLARE_MUTEX(dilock)
+
+static Tcl_ThreadCreateType
+Dm_Draw(ClientData clientData)
+{
+    struct draw_info *di = (struct draw_info *)clientData;
+
+    while (di->flag >= 0) {
+	Tcl_Sleep(1);
+	Tcl_MutexLock(&dilock);
+	di->flag++;
+	Tcl_MutexUnlock(&dilock);
+    }
+
+    Tcl_ExitThread(TCL_OK);
+    TCL_THREAD_CREATE_RETURN;
+}
+
 
 int
 main(int UNUSED(argc), const char *argv[])
@@ -291,12 +314,41 @@ main(int UNUSED(argc), const char *argv[])
     bind_cmd = std::string("bind ") + std::string(DM_CANVAS) + std::string(" <Configure> {image_resize [winfo width %W] [winfo height %W]\"}");
     Tcl_Eval(interp, bind_cmd.c_str());
 
+
+
+    // Multithreading experiment
+    Tcl_ThreadId threadID;
+    struct draw_info di;
+    di.flag = 0;
+    if (Tcl_CreateThread(&threadID, Dm_Draw, (ClientData)&di, TCL_THREAD_STACK_DEFAULT, TCL_THREAD_JOINABLE) != TCL_OK) {
+	std::cerr << "can't create thread\n";
+    }
+
+
     // Enter the main applicatio loop - the initial image will appear, and Button-1 mouse
     // clicks on the window should generate and display new images
     while (1) {
 	Tcl_DoOneEvent(0);
+	if (di.flag) {
+	    std::cout << "Flag set\n";
+	    Tcl_MutexLock(&dilock);
+	    di.flag = 0;
+	    Tcl_MutexUnlock(&dilock);
+	} else {
+	    std::cout << "Flag unset\n";
+	}
 	if (!Tk_GetNumMainWindows()) {
 	    // If we've closed the window, we're done
+	    Tcl_MutexLock(&dilock);
+	    di.flag = -INT_MAX;
+	    Tcl_MutexUnlock(&dilock);
+	    int tret;
+	    Tcl_JoinThread(threadID, &tret);
+	    if (tret != TCL_OK) {
+		std::cerr << "Failure to shut down display thread\n";
+	    } else {
+		std::cout << "Successful display thread shutdown\n";
+	    }
 	    exit(0);
 	}
     }
