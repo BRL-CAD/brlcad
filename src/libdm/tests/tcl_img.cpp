@@ -311,10 +311,10 @@ Dm_Draw(ClientData clientData)
 	//////////////////////////////////////////////////////////////////////////////
 	//////////////////////////////////////////////////////////////////////////////
 
-	// Update done - let the parent structure know.  We don't set the
-	// needed flag here, since the parent window may have changed between
-	// the start and the end of this render and if it has we need to start
-	// over.
+	// Update done - let the parent structure know.  We don't clear the
+	// render_needed flag here, since the parent window may have changed
+	// between the start and the end of this render and if it has we need
+	// to start over.
 	Tcl_MutexLock(&dilock);
 	idata->render_running = 0;
 	idata->render_ready = 1;
