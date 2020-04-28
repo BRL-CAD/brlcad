@@ -251,7 +251,7 @@ Dm_Draw(ClientData clientData)
 	if (!idata->render_needed) {
 	    // If we havne't been asked for an update,
 	    // sleep a bit and then check again.
-	    Tcl_Sleep(1000);
+	    Tcl_Sleep(100);
 	    continue;
 	}
 
