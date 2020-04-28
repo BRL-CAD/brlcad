@@ -228,6 +228,9 @@ image_paint_xy(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char
     return TCL_OK;
 }
 
+// TODO - see if we can improve this from timing loop based to triggering a render based on an
+// event sent from the parent... the render_needed flag is basically a poor-man's subsititute
+// for a render-request event from the parent thread.
 static Tcl_ThreadCreateType
 Dm_Draw(ClientData clientData)
 {
