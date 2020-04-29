@@ -227,6 +227,12 @@ image_paint_xy(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     struct img_data *idata = (struct img_data *)clientData;
 
+    // If we're mid-render, don't draw - we're about to get superceded by
+    // another frame.
+    if (idata->render_running) {
+	return TCL_OK;
+    }
+
     // Unpack the coordinates (checking errno, although it may not truly be
     // necessary if we trust Tk to always give us valid coordinates...)
     char *p_end;
