@@ -48,8 +48,6 @@ BRLCAD_ADDEXEC(png-fb png-fb.c "libdm;${PNG_LIBRARIES}")
 
 BRLCAD_ADDEXEC(spm-fb spm-fb.c "libdm;libbn")
 
-add_subdirectory(tests)
-
 CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
