@@ -121,9 +121,11 @@ DmUpdateProc(Tcl_Event *evPtr, int UNUSED(mask))
     int width = idata->bwidth;
     int height = idata->bheight;
 
-    // If we're mid-render, don't update or report success
+    // If we're mid-render, don't update - that means another render
+    // got triggered after this proc got started, and another update
+    // event will eventually be triggered.
     if (idata->render_running) {
-	return 0;
+	return 1;
     }
 
     // Let Tcl/Tk know the photo data has changed, so it can update the visuals
