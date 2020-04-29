@@ -53,7 +53,9 @@ UpdateProc1(Tcl_Event *evPtr, int UNUSED(mask))
     struct UpdateEvent *EventPtr = (UpdateEvent *) evPtr;
     struct cdata *d = EventPtr->d;
 
+    Tcl_MutexLock(&calclock);
     d->val1 = d->val1 + 1000;
+    Tcl_MutexUnlock(&calclock);
 
     std::cout << "val1: " << d->val1 << "\n";
 
@@ -67,7 +69,9 @@ UpdateProc3(Tcl_Event *evPtr, int UNUSED(mask))
     struct UpdateEvent *EventPtr = (UpdateEvent *) evPtr;
     struct cdata *d = EventPtr->d;
 
+    Tcl_MutexLock(&calclock);
     d->val3 = d->val3 + 2000;
+    Tcl_MutexUnlock(&calclock);
 
     std::cout << "val3: " << d->val3 << "\n";
 
