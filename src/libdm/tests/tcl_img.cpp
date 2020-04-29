@@ -27,6 +27,7 @@
 #include <climits>
 #include <random>
 #include <iostream>
+#include <string>
 #include <stdlib.h>
 #include <errno.h>
 
