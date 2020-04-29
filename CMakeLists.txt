@@ -2359,7 +2359,7 @@ endif(BRLCAD_PRINT_MSGS)
 # Look for threads (doesn't check for headers)
 # The variable CMAKE_THREAD_LIBS_INIT is the one of interest
 # when writing target_link_libraries lists.
-find_package(Threads)
+find_package(Threads REQUIRED)
 
 # Check for the C++ STL library - need to link it explicitly in
 # some compilation situations
