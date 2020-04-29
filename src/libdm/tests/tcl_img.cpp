@@ -56,7 +56,14 @@ struct img_data {
     // Main thread id - used to send a rendering event back to
     // the parent thread.
     Tcl_ThreadId parent_id;
-    // DO NOT USE in thread - present here to pass through event back to parent
+
+    // Tcl interp can only be used by the thread that created it, and the
+    // Tk_Photo calls require an interpreter.  Thus we keep track of which
+    // interpreter is the parent interp in the primary data container, as this
+    // interp (and ONLY this interp) is requried to do Tk_Photo processing when
+    // triggered from thread events sent back to the parent.  Those callbacks
+    // don't by default encode knowledge about the parent's Tcl_Interp, so we
+    // store it where we know we can access it.
     Tcl_Interp *parent_interp;
 
     // Manager thread id
@@ -73,27 +80,30 @@ struct img_data {
     int bwidth;
     int bheight;
 
-    // Used for image generation
+    // Used for image generation - these are presisted across renders so the
+    // image contents will vary as expected.
     std::default_random_engine *gen;
     std::uniform_int_distribution<int> *colors;
     std::uniform_int_distribution<int> *vals;
 
-    // This gets interesting - a Tcl interp can only be used by the
-    // thread that created it, so the thread operates on its own
-    // buffer which is exposted to the parent's Tk_Photo image update
-    // via an event.
+    // The rendering memory used to actually generate the image contents.
     long buff_size;
     unsigned char *pixelPtr;
 };
 
+// Event container passed to routines triggered by events.
 struct DmRenderEvent {
     Tcl_Event event;            /* Must be first */
     struct img_data *idata;
 };
 
+// Even for events where we don't intend to actually run a proc,
+// we need to tell Tcl it successfully processed them.  For that
+// we define a no-op callback proc.
 static int
 noop_proc(Tcl_Event *UNUSED(evPtr), int UNUSED(mask))
 {
+    // Return one to signify a successful completion of the process execution
     return 1;
 }
 
@@ -124,7 +134,7 @@ DmUpdateProc(Tcl_Event *evPtr, int UNUSED(mask))
 
     // Tk_PhotoPutBlock appears to be making a copy of the data, so we should
     // be able to point to our thread's rendered data to feed it in for
-    // copying.
+    // copying without worrying that Tk might alter it.
     dm_data.pixelPtr = idata->pixelPtr;
     Tk_PhotoPutBlock(interp, dm_img, &dm_data, 0, 0, dm_data.width, dm_data.height, TK_PHOTO_COMPOSITE_SET);
 
@@ -143,7 +153,7 @@ image_update_data(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
 
     if (argc == 3) {
 	// Unpack the current width and height.  If these don't match what idata has
-	// or thinks its working on, set the flag indicating we need a render.
+	// or thinks its working on, update the image size.
 	// (Note: checking errno, although it may not truly be necessary if we
 	// trust Tk to always give us valid coordinates...)
 	char *p_end;
@@ -337,6 +347,7 @@ Dm_Render(ClientData clientData)
     Tcl_ThreadAlert(idata->manager_id);
     Tcl_MutexUnlock(&threadMutex);
 
+    // Render complete, we're done with this thread
     Tcl_ExitThread(TCL_OK);
     TCL_THREAD_CREATE_RETURN;
 }
@@ -344,7 +355,7 @@ Dm_Render(ClientData clientData)
 static Tcl_ThreadCreateType
 Dm_Update_Manager(ClientData clientData)
 {
-    // This thread needs to process events - give it its own interp
+    // This thread needs to process events - give it its own interp so it can do so.
     Tcl_Interp *interp = Tcl_CreateInterp();
     Tcl_Init(interp);
 
@@ -360,7 +371,8 @@ Dm_Update_Manager(ClientData clientData)
     idata->colors = &colors;
     idata->vals = &vals;
 
-    // Until we're shutting down, check for and process events
+    // Until we're shutting down, check for and process events - this thread will persist
+    // for the life of the application.
     while (!idata->render_shutdown) {
 
 	// Events can come from either the parent (requesting a rendering, announcing a shutdown)
@@ -551,22 +563,30 @@ main(int UNUSED(argc), const char *argv[])
     while (1) {
 	Tcl_DoOneEvent(0);
 	if (!Tk_GetNumMainWindows()) {
-	    // If we've closed the window, we're done
+
+	    // If we've closed the window, we're done - start spreading the word
 	    Tcl_MutexLock(&dilock);
 	    idata->render_shutdown = 1;
+
+	    // After setting the shutdown flag, send an event to wake up the update manager thread.
+	    // It will see the change in status and proceed to shut itself down.
 	    struct DmRenderEvent *threadEventPtr = (struct DmRenderEvent *)ckalloc(sizeof(DmRenderEvent));
 	    threadEventPtr->idata = idata;
 	    threadEventPtr->event.proc = noop_proc;
 	    Tcl_ThreadQueueEvent(idata->manager_id, (Tcl_Event *) threadEventPtr, TCL_QUEUE_TAIL);
 	    Tcl_ThreadAlert(idata->manager_id);
 	    Tcl_MutexUnlock(&dilock);
+
+	    // Wait for the thread cleanup to complete
 	    int tret;
 	    Tcl_JoinThread(threadID, &tret);
 	    if (tret != TCL_OK) {
-		std::cerr << "Failure to shut down display thread\n";
+		std::cerr << "Failed to shut down display management thread\n";
 	    } else {
-		std::cout << "Successful display thread shutdown\n";
+		std::cout << "Successful display management thread shutdown\n";
 	    }
+
+	    // Clean up memory and exit
 	    BU_PUT(idata, struct img_data);
 	    exit(0);
 	}
