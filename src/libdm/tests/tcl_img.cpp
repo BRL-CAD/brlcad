@@ -40,6 +40,7 @@ const char *DM_PHOTO = ".dm0.photo";
 const char *DM_CANVAS = ".dm0";
 
 TCL_DECLARE_MUTEX(dilock)
+TCL_DECLARE_MUTEX(fblock)
 TCL_DECLARE_MUTEX(threadMutex)
 
 /* Container holding image generation information - need to be able
@@ -104,6 +105,12 @@ struct DmRenderEvent {
     struct img_data *idata;
 };
 
+// Event container passed to routines triggered by events.
+struct FbRenderEvent {
+    Tcl_Event event;            /* Must be first */
+    struct img_data *idata;
+};
+
 // Even for events where we don't intend to actually run a proc,
 // we need to tell Tcl it successfully processed them.  For that
 // we define a no-op callback proc.
@@ -134,6 +141,9 @@ DmUpdateProc(Tcl_Event *evPtr, int UNUSED(mask))
 	return 1;
     }
 
+    Tcl_MutexLock(&dilock);
+    Tcl_MutexLock(&fblock);
+
     // Let Tcl/Tk know the photo data has changed, so it can update the visuals
     // accordingly
     Tk_PhotoImageBlock dm_data;
@@ -144,7 +154,6 @@ DmUpdateProc(Tcl_Event *evPtr, int UNUSED(mask))
 	Tk_PhotoGetImage(dm_img, &dm_data);
     }
 
-    Tcl_MutexLock(&dilock);
 
     // Tk_PhotoPutBlock appears to be making a copy of the data, so we should
     // be able to point to our thread's rendered data to feed it in for
@@ -152,9 +161,19 @@ DmUpdateProc(Tcl_Event *evPtr, int UNUSED(mask))
     dm_data.pixelPtr = idata->pixelPtr;
     Tk_PhotoPutBlock(interp, dm_img, &dm_data, 0, 0, dm_data.width, dm_data.height, TK_PHOTO_COMPOSITE_SET);
 
+
+    // Now overlay the framebuffer.  We're done with dm_data, so just reuse it for
+    // this purpose
+    dm_data.width = idata->fb_width;
+    dm_data.height = idata->fb_height;
+    dm_data.pixelPtr = idata->fbpixel;
+    Tk_PhotoPutBlock(interp, dm_img, &dm_data, 0, 0, idata->fb_width, idata->fb_height, TK_PHOTO_COMPOSITE_OVERLAY);
+
     // Render processed - reset the ready flag
     idata->render_ready = 0;
+
     Tcl_MutexUnlock(&dilock);
+    Tcl_MutexUnlock(&fblock);
 
     // Return one to signify a successful completion of the process execution
     return 1;
