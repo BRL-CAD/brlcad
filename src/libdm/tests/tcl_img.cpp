@@ -47,13 +47,13 @@ TCL_DECLARE_MUTEX(threadMutex)
  * to pass these to the update command */
 struct img_data {
     // These flags should be mutex guarded.
-    int render_needed;
-    int render_running;
-    int render_ready;
+    int dm_render_needed;
+    int dm_render_running;
+    int dm_render_ready;
 
     // Parent application sets this when it's time to shut
-    // down the dm rendering
-    int render_shutdown;
+    // down all rendering
+    int shutdown;
 
     // Main thread id - used to send a rendering event back to
     // the parent thread.
@@ -68,19 +68,19 @@ struct img_data {
     // store it where we know we can access it.
     Tcl_Interp *parent_interp;
 
-    // Manager thread id
-    Tcl_ThreadId manager_id;
+    // DM thread id
+    Tcl_ThreadId dm_id;
 
     // Image info.  Reflects the currently requested parent image
     // size - the render thread may have a different size during
     // rendering, as it "snapshots" these numbers to have a stable
     // buffer size when actually writing pixels.
-    int width;
-    int height;
+    int dm_width;
+    int dm_height;
 
     // Actual allocated sizes of image buffer
-    int bwidth;
-    int bheight;
+    int dm_bwidth;
+    int dm_bheight;
 
     // Used for image generation - these are presisted across renders so the
     // image contents will vary as expected.
@@ -89,8 +89,8 @@ struct img_data {
     std::uniform_int_distribution<int> *vals;
 
     // The rendering memory used to actually generate the DM scene contents.
-    long buff_size;
-    unsigned char *pixelPtr;
+    long dm_buff_size;
+    unsigned char *dmpixel;
 
     // The rendering memory used to actually generate the framebuffer contents.
     long fb_buff_size;
@@ -131,13 +131,13 @@ DmUpdateProc(Tcl_Event *evPtr, int UNUSED(mask))
     struct DmRenderEvent *DmEventPtr = (DmRenderEvent *) evPtr;
     struct img_data *idata = DmEventPtr->idata;
     Tcl_Interp *interp = idata->parent_interp;
-    int width = idata->bwidth;
-    int height = idata->bheight;
+    int width = idata->dm_bwidth;
+    int height = idata->dm_bheight;
 
     // If we're mid-render, don't update - that means another render
     // got triggered after this proc got started, and another update
     // event will eventually be triggered.
-    if (idata->render_running) {
+    if (idata->dm_render_running) {
 	return 1;
     }
 
@@ -158,7 +158,7 @@ DmUpdateProc(Tcl_Event *evPtr, int UNUSED(mask))
     // Tk_PhotoPutBlock appears to be making a copy of the data, so we should
     // be able to point to our thread's rendered data to feed it in for
     // copying without worrying that Tk might alter it.
-    dm_data.pixelPtr = idata->pixelPtr;
+    dm_data.pixelPtr = idata->dmpixel;
     Tk_PhotoPutBlock(interp, dm_img, &dm_data, 0, 0, dm_data.width, dm_data.height, TK_PHOTO_COMPOSITE_SET);
 
 
@@ -170,7 +170,7 @@ DmUpdateProc(Tcl_Event *evPtr, int UNUSED(mask))
     Tk_PhotoPutBlock(interp, dm_img, &dm_data, 0, 0, idata->fb_width, idata->fb_height, TK_PHOTO_COMPOSITE_OVERLAY);
 
     // Render processed - reset the ready flag
-    idata->render_ready = 0;
+    idata->dm_render_ready = 0;
 
     Tcl_MutexUnlock(&dilock);
     Tcl_MutexUnlock(&fblock);
@@ -204,15 +204,15 @@ image_update_data(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
 	}
 
 	Tcl_MutexLock(&dilock);
-	idata->width = width;
-	idata->height = height;
+	idata->dm_width = width;
+	idata->dm_height = height;
 	Tcl_MutexUnlock(&dilock);
 
 	Tk_PhotoImageBlock dm_data;
 	Tk_PhotoHandle dm_img = Tk_FindPhoto(interp, DM_PHOTO);
 	Tk_PhotoGetImage(dm_img, &dm_data);
-	if (dm_data.width != idata->width || dm_data.height != idata->height) {
-	    Tk_PhotoSetSize(interp, dm_img, idata->width, idata->height);
+	if (dm_data.width != idata->dm_width || dm_data.height != idata->dm_height) {
+	    Tk_PhotoSetSize(interp, dm_img, idata->dm_width, idata->dm_height);
 	}
     }
 
@@ -221,8 +221,8 @@ image_update_data(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
     struct DmRenderEvent *threadEventPtr = (struct DmRenderEvent *)ckalloc(sizeof(DmRenderEvent));
     threadEventPtr->idata = idata;
     threadEventPtr->event.proc = noop_proc;
-    Tcl_ThreadQueueEvent(idata->manager_id, (Tcl_Event *) threadEventPtr, TCL_QUEUE_TAIL);
-    Tcl_ThreadAlert(idata->manager_id);
+    Tcl_ThreadQueueEvent(idata->dm_id, (Tcl_Event *) threadEventPtr, TCL_QUEUE_TAIL);
+    Tcl_ThreadAlert(idata->dm_id);
     Tcl_MutexUnlock(&threadMutex);
 
     return TCL_OK;
@@ -254,7 +254,7 @@ image_paint_xy(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 
     // If we're mid-render, don't draw - we're about to get superceded by
     // another frame.
-    if (idata->render_running) {
+    if (idata->dm_render_running) {
 	return TCL_OK;
     }
 
@@ -285,7 +285,7 @@ image_paint_xy(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
     for (int i = -2; i < 3; i++) {
 	for (int j = -2; j < 3; j++) {
 	    int pindex = img_xy_index(dm_data.width, dm_data.height, xcoor, ycoor, i, j);
-	    if (pindex >= idata->buff_size - 1) {
+	    if (pindex >= idata->dm_buff_size - 1) {
 		continue;
 	    }
 	    // Set to opaque white
@@ -315,29 +315,29 @@ Dm_Render(ClientData clientData)
     // Anything before this point will be convered by this render.  (This
     // flag may get set after this render starts by additional events, but
     // to this point this rendering will handle it.)
-    idata->render_needed = 0;
+    idata->dm_render_needed = 0;
 
     // We're now in process - don't start another frame until this one
     // is complete.
-    idata->render_running = 1;
+    idata->dm_render_running = 1;
 
     // Until we're done, make sure nobody thinks we are ready
-    idata->render_ready = 0;
+    idata->dm_render_ready = 0;
 
     // Lock in this width and height - that's what we've got memory for,
     // so that's what the remainder of this rendering pass will use.
-    idata->bwidth = idata->width;
-    idata->bheight = idata->height;
+    idata->dm_bwidth = idata->dm_width;
+    idata->dm_bheight = idata->dm_height;
 
     // If we have insufficient memory, allocate or reallocate a local
     // buffer big enough for the purpose.  We use our own buffer for
     // rendering to allow Tk full control over what it wants to do behind
     // the scenes.  We need this memory to persist, so handle it from the
     // management thread.
-    long b_minsize = idata->bwidth * idata->bheight * 4;
-    if (!idata->pixelPtr || idata->buff_size < b_minsize) {
-	idata->pixelPtr = (unsigned char *)bu_realloc(idata->pixelPtr, 2*b_minsize*sizeof(char), "realloc pixbuf");
-	idata->buff_size = b_minsize * 2;
+    long b_minsize = idata->dm_bwidth * idata->dm_bheight * 4;
+    if (!idata->dmpixel || idata->dm_buff_size < b_minsize) {
+	idata->dmpixel = (unsigned char *)bu_realloc(idata->dmpixel, 2*b_minsize*sizeof(char), "realloc pixbuf");
+	idata->dm_buff_size = b_minsize * 2;
     }
 
     // Have the key values now, we can unlock and allow interactivity in
@@ -360,15 +360,15 @@ Dm_Render(ClientData clientData)
     // This alters the actual data, but Tcl/Tk doesn't know about it yet.
     for (int i = 0; i < b_minsize; i+=4) {
 	// Red
-	idata->pixelPtr[i] = (r) ? (*idata->vals)((*idata->gen)) : 0;
+	idata->dmpixel[i] = (r) ? (*idata->vals)((*idata->gen)) : 0;
 	// Green
-	idata->pixelPtr[i+1] = (g) ? (*idata->vals)((*idata->gen)) : 0;
+	idata->dmpixel[i+1] = (g) ? (*idata->vals)((*idata->gen)) : 0;
 	// Blue
-	idata->pixelPtr[i+2] = (b) ? (*idata->vals)((*idata->gen)) : 0;
+	idata->dmpixel[i+2] = (b) ? (*idata->vals)((*idata->gen)) : 0;
 	// Alpha stays at 255 (Don't really need to set it since it should
 	// already be set, just doing so for local clarity about what should be
 	// happening with the buffer data...)
-	idata->pixelPtr[i+3] = 255;
+	idata->dmpixel[i+3] = 255;
     }
     //////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////
@@ -378,8 +378,8 @@ Dm_Render(ClientData clientData)
     // between the start and the end of this render and if it has we need
     // to start over.
     Tcl_MutexLock(&dilock);
-    idata->render_running = 0;
-    idata->render_ready = 1;
+    idata->dm_render_running = 0;
+    idata->dm_render_ready = 1;
     Tcl_MutexUnlock(&dilock);
 
     // Generate an event for the manager thread to let it know we're done
@@ -387,8 +387,8 @@ Dm_Render(ClientData clientData)
     struct DmRenderEvent *threadEventPtr = (struct DmRenderEvent *)ckalloc(sizeof(DmRenderEvent));
     threadEventPtr->idata = idata;
     threadEventPtr->event.proc = noop_proc;
-    Tcl_ThreadQueueEvent(idata->manager_id, (Tcl_Event *) threadEventPtr, TCL_QUEUE_TAIL);
-    Tcl_ThreadAlert(idata->manager_id);
+    Tcl_ThreadQueueEvent(idata->dm_id, (Tcl_Event *) threadEventPtr, TCL_QUEUE_TAIL);
+    Tcl_ThreadAlert(idata->dm_id);
     Tcl_MutexUnlock(&threadMutex);
 
     // Render complete, we're done with this thread
@@ -417,7 +417,7 @@ Dm_Update_Manager(ClientData clientData)
 
     // Until we're shutting down, check for and process events - this thread will persist
     // for the life of the application.
-    while (!idata->render_shutdown) {
+    while (!idata->shutdown) {
 
 	// Events can come from either the parent (requesting a rendering, announcing a shutdown)
 	// or from the rendering thread (announcing completion of a rendering.)
@@ -425,7 +425,7 @@ Dm_Update_Manager(ClientData clientData)
 
 	// If anyone flipped the shutdown switch while we were waiting on an
 	// event, don't do any more work - there's no point.
-	if (idata->render_shutdown) {
+	if (idata->shutdown) {
 	    continue;
 	}
 
@@ -433,7 +433,7 @@ Dm_Update_Manager(ClientData clientData)
 	// go any further.  Even if a completed render is out of data, it's closer to
 	// current than what was previously displayed so the application should go ahead
 	// and show it.
-	if (idata->render_ready) {
+	if (idata->dm_render_ready) {
 
 	    // Generate an event for the parent thread - its time to update the
 	    // Tk_Photo in the GUI that's holding the image
@@ -448,15 +448,15 @@ Dm_Update_Manager(ClientData clientData)
 	    // If we don't have any work pending, go back to waiting.  If we know
 	    // we're already out of date, proceed without waiting for another event
 	    // from the parent - we've already had one.
-	    if (!idata->render_needed) {
+	    if (!idata->dm_render_needed) {
 		continue;
 	    }
 	}
 
 	// If we're already rendering and we have another rendering event, it's
 	// an update request from the parent - set the flag and continue
-	if (idata->render_running) {
-	    idata->render_needed = 1;
+	if (idata->dm_render_running) {
+	    idata->dm_render_needed = 1;
 	    continue;
 	}
 
@@ -472,8 +472,8 @@ Dm_Update_Manager(ClientData clientData)
 
     // We're well and truly done - the application is closing down - free the
     // rendering buffer and quit the thread
-    if (idata->pixelPtr) {
-	bu_free(idata->pixelPtr, "free pixbuf");
+    if (idata->dmpixel) {
+	bu_free(idata->dmpixel, "free pixbuf");
     }
     Tcl_ExitThread(TCL_OK);
     TCL_THREAD_CREATE_RETURN;
@@ -493,11 +493,12 @@ main(int UNUSED(argc), const char *argv[])
     // evaluations.
     struct img_data *idata;
     BU_GET(idata, struct img_data);
-    idata->render_needed = 1;
-    idata->render_running = 0;
-    idata->render_ready = 0;
-    idata->render_shutdown = 0;
-    idata->pixelPtr = NULL;
+    idata->dm_render_needed = 1;
+    idata->dm_render_running = 0;
+    idata->dm_render_ready = 0;
+    idata->shutdown = 0;
+    idata->dmpixel = NULL;
+    idata->fbpixel = NULL;
     idata->parent_id = Tcl_GetCurrentThread();
 
     // Set up Tcl/Tk
@@ -563,8 +564,8 @@ main(int UNUSED(argc), const char *argv[])
     Tk_PhotoPutBlock(interp, dm_img, &dm_data, 0, 0, dm_data.width, dm_data.height, TK_PHOTO_COMPOSITE_SET);
 
     // We now have a window - set the default idata size
-    idata->width = dm_data.width;
-    idata->height = dm_data.height;
+    idata->dm_width = dm_data.width;
+    idata->dm_height = dm_data.height;
 
     // Define a canvas widget, pack it into the root window, and associate the image with it
     // TODO - should the canvas be inside a frame?
@@ -600,7 +601,7 @@ main(int UNUSED(argc), const char *argv[])
     if (Tcl_CreateThread(&threadID, Dm_Update_Manager, (ClientData)idata, TCL_THREAD_STACK_DEFAULT, TCL_THREAD_JOINABLE) != TCL_OK) {
 	std::cerr << "can't create thread\n";
     }
-    idata->manager_id = threadID;
+    idata->dm_id = threadID;
 
     // Enter the main applicatio loop - the initial image will appear, and Button-1 mouse
     // clicks on the window should generate and display new images
@@ -610,15 +611,15 @@ main(int UNUSED(argc), const char *argv[])
 
 	    // If we've closed the window, we're done - start spreading the word
 	    Tcl_MutexLock(&dilock);
-	    idata->render_shutdown = 1;
+	    idata->shutdown = 1;
 
 	    // After setting the shutdown flag, send an event to wake up the update manager thread.
 	    // It will see the change in status and proceed to shut itself down.
 	    struct DmRenderEvent *threadEventPtr = (struct DmRenderEvent *)ckalloc(sizeof(DmRenderEvent));
 	    threadEventPtr->idata = idata;
 	    threadEventPtr->event.proc = noop_proc;
-	    Tcl_ThreadQueueEvent(idata->manager_id, (Tcl_Event *) threadEventPtr, TCL_QUEUE_TAIL);
-	    Tcl_ThreadAlert(idata->manager_id);
+	    Tcl_ThreadQueueEvent(idata->dm_id, (Tcl_Event *) threadEventPtr, TCL_QUEUE_TAIL);
+	    Tcl_ThreadAlert(idata->dm_id);
 	    Tcl_MutexUnlock(&dilock);
 
 	    // Wait for the thread cleanup to complete
