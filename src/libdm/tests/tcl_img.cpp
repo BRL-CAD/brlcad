@@ -211,12 +211,14 @@ img_xy_index(int width, int height, int x, int y, int dx, int dy)
 }
 
 int
-image_paint_xy(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+image_paint_xy(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
     if (argc != 3) {
 	std::cerr << "Unexpected argc: " << argc << "\n";
 	return TCL_ERROR;
     }
+
+    struct img_data *idata = (struct img_data *)clientData;
 
     // Unpack the coordinates (checking errno, although it may not truly be
     // necessary if we trust Tk to always give us valid coordinates...)
@@ -245,6 +247,9 @@ image_paint_xy(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char
     for (int i = -2; i < 3; i++) {
 	for (int j = -2; j < 3; j++) {
 	    int pindex = img_xy_index(dm_data.width, dm_data.height, xcoor, ycoor, i, j);
+	    if (pindex >= idata->buff_size - 1) {
+		continue;
+	    }
 	    // Set to opaque white
 	    dm_data.pixelPtr[pindex] = 255;
 	    dm_data.pixelPtr[pindex+1] = 255;
@@ -534,7 +539,7 @@ main(int UNUSED(argc), const char *argv[])
 
 
     // Register a paint command so we can change the image contents near the cursor position
-    (void)Tcl_CreateCommand(interp, "image_paint", (Tcl_CmdProc *)image_paint_xy, NULL, (Tcl_CmdDeleteProc* )NULL);
+    (void)Tcl_CreateCommand(interp, "image_paint", (Tcl_CmdProc *)image_paint_xy, (ClientData)idata, (Tcl_CmdDeleteProc* )NULL);
     // Establish the Button-1+Motion combination event as the trigger for drawing on the image
     bind_cmd = std::string("bind . <B1-Motion> {image_paint %x %y}");
     Tcl_Eval(interp, bind_cmd.c_str());
