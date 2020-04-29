@@ -242,6 +242,8 @@ img_xy_index(int width, int height, int x, int y, int dx, int dy)
     return (ny * width * 4) + nx * 4;
 }
 
+/* This is a test of directly manipulating the Tk_Photo data itself, without
+ * copying in a buffer.  Probably not something we want to do for real... */
 int
 image_paint_xy(ClientData clientData, Tcl_Interp *interp, int argc, char **argv)
 {
@@ -396,6 +398,77 @@ Dm_Render(ClientData clientData)
     TCL_THREAD_CREATE_RETURN;
 }
 
+
+static Tcl_ThreadCreateType
+Fb_Render(ClientData clientData)
+{
+    // Unpack the shared data object
+    struct img_data *idata = (struct img_data *)clientData;
+
+    // Lock updating of the idata values until we've gotten this run's key
+    // information - we don't want this changing mid-render.
+    Tcl_MutexLock(&fblock);
+
+    // Lock in this width and height - that's what we've got memory for,
+    // so that's what the remainder of this rendering pass will use.
+    idata->fb_width = idata->dm_width;
+    idata->fb_height = idata->dm_height;
+
+    // If we have insufficient memory, allocate or reallocate a local
+    // buffer big enough for the purpose.  We use our own buffer for
+    // rendering to allow Tk full control over what it wants to do behind
+    // the scenes.  We need this memory to persist, so handle it from the
+    // management thread.
+    long b_minsize = idata->fb_width * idata->fb_height * 4;
+    if (!idata->fbpixel || idata->fb_buff_size < b_minsize) {
+	idata->fbpixel = (unsigned char *)bu_realloc(idata->fbpixel, 2*b_minsize*sizeof(char), "realloc pixbuf");
+	idata->fb_buff_size = b_minsize * 2;
+    }
+
+    // Have the key values now, we can unlock and allow interactivity in
+    // the parent.  We'll finish this rendering pass before paying any
+    // further attention to parent settings, but the parent may now set
+    // them for future consideration.
+    Tcl_MutexUnlock(&fblock);
+
+    //////////////////////////////////////////////////////////////////////////////
+    // Rendering operation - this is where the work of a FB render pass
+    // would occur in a real application
+    //////////////////////////////////////////////////////////////////////////////
+
+    // Initialize. This alters the actual data, but Tcl/Tk doesn't know about it yet.
+    for (int i = 0; i < (idata->fb_width * idata->fb_height * 4); i+=4) {
+	// Red
+	idata->fbpixel[i] = 0;
+	// Green
+	idata->fbpixel[i+1] = 255;
+	// Blue
+	idata->fbpixel[i+2] = 0;
+	// Alpha
+	idata->fbpixel[i+3] = 100;
+    }
+
+    //////////////////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////////////////
+
+#if 0
+    // Can't do this from Fb in this form - causes a cascading event chain
+    // Generate an event for the manager thread to let it know we're done
+    Tcl_MutexLock(&threadMutex);
+    struct DmRenderEvent *threadEventPtr = (struct DmRenderEvent *)ckalloc(sizeof(DmRenderEvent));
+    threadEventPtr->idata = idata;
+    threadEventPtr->event.proc = noop_proc;
+    Tcl_ThreadQueueEvent(idata->dm_id, (Tcl_Event *) threadEventPtr, TCL_QUEUE_TAIL);
+    Tcl_ThreadAlert(idata->dm_id);
+    Tcl_MutexUnlock(&threadMutex);
+#endif
+
+    // Render complete, we're done with this thread
+    Tcl_ExitThread(TCL_OK);
+    TCL_THREAD_CREATE_RETURN;
+}
+
+
 static Tcl_ThreadCreateType
 Dm_Update_Manager(ClientData clientData)
 {
@@ -466,8 +539,15 @@ Dm_Update_Manager(ClientData clientData)
 	// Start a rendering thread.
 	Tcl_ThreadId threadID;
 	if (Tcl_CreateThread(&threadID, Dm_Render, (ClientData)idata, TCL_THREAD_STACK_DEFAULT, TCL_THREAD_NOFLAGS) != TCL_OK) {
-	    std::cerr << "can't create render thread\n";
+	    std::cerr << "can't create dm render thread\n";
 	}
+
+	// Start a framebuffer thread.
+	Tcl_ThreadId fbthreadID;
+	if (Tcl_CreateThread(&fbthreadID, Fb_Render, (ClientData)idata, TCL_THREAD_STACK_DEFAULT, TCL_THREAD_NOFLAGS) != TCL_OK) {
+	    std::cerr << "can't create fb render thread\n";
+	}
+
     }
 
     // We're well and truly done - the application is closing down - free the
