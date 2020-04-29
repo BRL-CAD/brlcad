@@ -87,9 +87,15 @@ struct img_data {
     std::uniform_int_distribution<int> *colors;
     std::uniform_int_distribution<int> *vals;
 
-    // The rendering memory used to actually generate the image contents.
+    // The rendering memory used to actually generate the DM scene contents.
     long buff_size;
     unsigned char *pixelPtr;
+
+    // The rendering memory used to actually generate the framebuffer contents.
+    long fb_buff_size;
+    int fb_width;
+    int fb_height;
+    unsigned char *fbpixel;
 };
 
 // Event container passed to routines triggered by events.
