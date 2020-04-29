@@ -121,6 +121,11 @@ DmUpdateProc(Tcl_Event *evPtr, int UNUSED(mask))
     int width = idata->bwidth;
     int height = idata->bheight;
 
+    // If we're mid-render, don't update or report success
+    if (idata->render_running) {
+	return 0;
+    }
+
     // Let Tcl/Tk know the photo data has changed, so it can update the visuals
     // accordingly
     Tk_PhotoImageBlock dm_data;
