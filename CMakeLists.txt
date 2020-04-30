@@ -1720,6 +1720,8 @@ CHECK_CXX_FLAG(fexceptions)
 # needs to be increased from the default ANSI minimum of 17.
 CHECK_CXX_FLAG(ftemplate-depth-128)
 
+# check for llvm libFuzzer support
+CHECK_CXX_FLAG(fsanitize=fuzzer)
 
 # dynamic SSE optimizations for NURBS processing
 #
