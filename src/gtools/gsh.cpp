@@ -87,7 +87,7 @@ main(int argc, const char **argv)
 	bu_exit(EXIT_FAILURE, "ERROR, could not load libged: %s\n", bu_dlerror());
     }
 
-    /* If we hope to do any drawing, for the moment we need to initialize the LIBRT global */
+    /* FIXME: To draw, we need to init this LIBRT global */
     BU_LIST_INIT(&RTG.rtg_vlfree);
 
     /* Need a view for commands that expect a view */
