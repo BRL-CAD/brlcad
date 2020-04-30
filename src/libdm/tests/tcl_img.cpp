@@ -455,17 +455,17 @@ Fb_Render(ClientData clientData)
     //////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////
 
-#if 0
-    // Can't do this from Fb in this form - causes a cascading event chain
-    // Generate an event for the manager thread to let it know we're done
-    Tcl_MutexLock(&threadMutex);
-    struct DmRenderEvent *threadEventPtr = (struct DmRenderEvent *)ckalloc(sizeof(DmRenderEvent));
-    threadEventPtr->idata = idata;
-    threadEventPtr->event.proc = noop_proc;
-    Tcl_ThreadQueueEvent(idata->dm_id, (Tcl_Event *) threadEventPtr, TCL_QUEUE_TAIL);
-    Tcl_ThreadAlert(idata->dm_id);
-    Tcl_MutexUnlock(&threadMutex);
-#endif
+    // Generate an event for the manager thread to let it know we're done, if the
+    // display manager isn't already about to generate such an event
+    if (!idata->dm_render_running) {
+	Tcl_MutexLock(&threadMutex);
+	struct DmRenderEvent *threadEventPtr = (struct DmRenderEvent *)ckalloc(sizeof(DmRenderEvent));
+	threadEventPtr->idata = idata;
+	threadEventPtr->event.proc = noop_proc;
+	Tcl_ThreadQueueEvent(idata->dm_id, (Tcl_Event *) threadEventPtr, TCL_QUEUE_TAIL);
+	Tcl_ThreadAlert(idata->dm_id);
+	Tcl_MutexUnlock(&threadMutex);
+    }
 
     // Render complete, we're done with this thread
     Tcl_ExitThread(TCL_OK);
