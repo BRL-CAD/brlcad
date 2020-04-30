@@ -51,6 +51,9 @@ struct img_data {
     int dm_render_running;
     int dm_render_ready;
 
+    int fb_render_running;
+    int fb_render_ready;
+
     // Parent application sets this when it's time to shut
     // down all rendering
     int shutdown;
@@ -70,6 +73,9 @@ struct img_data {
 
     // DM thread id
     Tcl_ThreadId dm_id;
+   
+    // FB thread_id 
+    Tcl_ThreadId fb_id;
 
     // Image info.  Reflects the currently requested parent image
     // size - the render thread may have a different size during
@@ -100,7 +106,7 @@ struct img_data {
 };
 
 // Event container passed to routines triggered by events.
-struct DmRenderEvent {
+struct RenderEvent {
     Tcl_Event event;            /* Must be first */
     struct img_data *idata;
 };
@@ -126,11 +132,15 @@ noop_proc(Tcl_Event *UNUSED(evPtr), int UNUSED(mask))
 // thus be the PARENT's interp, and we have passed it through the
 // various structures to be available here.
 static int
-DmUpdateProc(Tcl_Event *evPtr, int UNUSED(mask))
+UpdateProc(Tcl_Event *evPtr, int UNUSED(mask))
 {
-    struct DmRenderEvent *DmEventPtr = (DmRenderEvent *) evPtr;
+    struct RenderEvent *DmEventPtr = (RenderEvent *) evPtr;
     struct img_data *idata = DmEventPtr->idata;
     Tcl_Interp *interp = idata->parent_interp;
+
+    Tcl_MutexLock(&dilock);
+    Tcl_MutexLock(&fblock);
+
     int width = idata->dm_bwidth;
     int height = idata->dm_bheight;
 
@@ -138,11 +148,12 @@ DmUpdateProc(Tcl_Event *evPtr, int UNUSED(mask))
     // got triggered after this proc got started, and another update
     // event will eventually be triggered.
     if (idata->dm_render_running) {
+	Tcl_MutexUnlock(&dilock);
+	Tcl_MutexUnlock(&fblock);
 	return 1;
     }
 
-    Tcl_MutexLock(&dilock);
-    Tcl_MutexLock(&fblock);
+    std::cout << "Window updating!\n";
 
     // Let Tcl/Tk know the photo data has changed, so it can update the visuals
     // accordingly
@@ -162,12 +173,14 @@ DmUpdateProc(Tcl_Event *evPtr, int UNUSED(mask))
     Tk_PhotoPutBlock(interp, dm_img, &dm_data, 0, 0, dm_data.width, dm_data.height, TK_PHOTO_COMPOSITE_SET);
 
 
-    // Now overlay the framebuffer.  We're done with dm_data, so just reuse it for
-    // this purpose
-    dm_data.width = idata->fb_width;
-    dm_data.height = idata->fb_height;
-    dm_data.pixelPtr = idata->fbpixel;
-    Tk_PhotoPutBlock(interp, dm_img, &dm_data, 0, 0, idata->fb_width, idata->fb_height, TK_PHOTO_COMPOSITE_OVERLAY);
+    // Now overlay the framebuffer.
+    Tk_PhotoImageBlock fb_data;
+    Tk_PhotoGetImage(dm_img, &fb_data);
+    fb_data.width = idata->fb_width;
+    fb_data.height = idata->fb_height;
+    fb_data.pitch = fb_data.width * 4;
+    fb_data.pixelPtr = idata->fbpixel;
+    Tk_PhotoPutBlock(interp, dm_img, &fb_data, 0, 0, idata->fb_width, idata->fb_height, TK_PHOTO_COMPOSITE_OVERLAY);
 
     // Render processed - reset the ready flag
     idata->dm_render_ready = 0;
@@ -218,7 +231,7 @@ image_update_data(ClientData clientData, Tcl_Interp *interp, int argc, char **ar
 
     // Generate an event for the manager thread to let it know we need work
     Tcl_MutexLock(&threadMutex);
-    struct DmRenderEvent *threadEventPtr = (struct DmRenderEvent *)ckalloc(sizeof(DmRenderEvent));
+    struct RenderEvent *threadEventPtr = (struct RenderEvent *)ckalloc(sizeof(RenderEvent));
     threadEventPtr->idata = idata;
     threadEventPtr->event.proc = noop_proc;
     Tcl_ThreadQueueEvent(idata->dm_id, (Tcl_Event *) threadEventPtr, TCL_QUEUE_TAIL);
@@ -386,7 +399,7 @@ Dm_Render(ClientData clientData)
 
     // Generate an event for the manager thread to let it know we're done
     Tcl_MutexLock(&threadMutex);
-    struct DmRenderEvent *threadEventPtr = (struct DmRenderEvent *)ckalloc(sizeof(DmRenderEvent));
+    struct RenderEvent *threadEventPtr = (struct RenderEvent *)ckalloc(sizeof(RenderEvent));
     threadEventPtr->idata = idata;
     threadEventPtr->event.proc = noop_proc;
     Tcl_ThreadQueueEvent(idata->dm_id, (Tcl_Event *) threadEventPtr, TCL_QUEUE_TAIL);
@@ -408,6 +421,13 @@ Fb_Render(ClientData clientData)
     // Lock updating of the idata values until we've gotten this run's key
     // information - we don't want this changing mid-render.
     Tcl_MutexLock(&fblock);
+
+    // We're now in process - don't start another frame until this one
+    // is complete.
+    idata->fb_render_running = 1;
+
+    // Until we're done, make sure nobody thinks we are ready
+    idata->fb_render_ready = 0;
 
     // Lock in this width and height - that's what we've got memory for,
     // so that's what the remainder of this rendering pass will use.
@@ -455,17 +475,20 @@ Fb_Render(ClientData clientData)
     //////////////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////////////
 
+    Tcl_MutexLock(&fblock);
+    idata->fb_render_running = 0;
+    idata->fb_render_ready = 1;
+    Tcl_MutexUnlock(&fblock);
+
     // Generate an event for the manager thread to let it know we're done, if the
     // display manager isn't already about to generate such an event
-    if (!idata->dm_render_running) {
-	Tcl_MutexLock(&threadMutex);
-	struct DmRenderEvent *threadEventPtr = (struct DmRenderEvent *)ckalloc(sizeof(DmRenderEvent));
-	threadEventPtr->idata = idata;
-	threadEventPtr->event.proc = noop_proc;
-	Tcl_ThreadQueueEvent(idata->dm_id, (Tcl_Event *) threadEventPtr, TCL_QUEUE_TAIL);
-	Tcl_ThreadAlert(idata->dm_id);
-	Tcl_MutexUnlock(&threadMutex);
-    }
+    Tcl_MutexLock(&threadMutex);
+    struct RenderEvent *threadEventPtr = (struct RenderEvent *)ckalloc(sizeof(RenderEvent));
+    threadEventPtr->idata = idata;
+    threadEventPtr->event.proc = noop_proc;
+    Tcl_ThreadQueueEvent(idata->fb_id, (Tcl_Event *) threadEventPtr, TCL_QUEUE_TAIL);
+    Tcl_ThreadAlert(idata->fb_id);
+    Tcl_MutexUnlock(&threadMutex);
 
     // Render complete, we're done with this thread
     Tcl_ExitThread(TCL_OK);
@@ -515,9 +538,9 @@ Dm_Update_Manager(ClientData clientData)
 	    // Generate an event for the parent thread - its time to update the
 	    // Tk_Photo in the GUI that's holding the image
 	    Tcl_MutexLock(&threadMutex);
-	    struct DmRenderEvent *threadEventPtr = (struct DmRenderEvent *)ckalloc(sizeof(DmRenderEvent));
+	    struct RenderEvent *threadEventPtr = (struct RenderEvent *)ckalloc(sizeof(RenderEvent));
 	    threadEventPtr->idata = idata;
-	    threadEventPtr->event.proc = DmUpdateProc;
+	    threadEventPtr->event.proc = UpdateProc;
 	    Tcl_ThreadQueueEvent(idata->parent_id, (Tcl_Event *) threadEventPtr, TCL_QUEUE_TAIL);
 	    Tcl_ThreadAlert(idata->parent_id);
 	    Tcl_MutexUnlock(&threadMutex);
@@ -545,8 +568,69 @@ Dm_Update_Manager(ClientData clientData)
 	if (Tcl_CreateThread(&threadID, Dm_Render, (ClientData)idata, TCL_THREAD_STACK_DEFAULT, TCL_THREAD_NOFLAGS) != TCL_OK) {
 	    std::cerr << "can't create dm render thread\n";
 	}
+    }
 
+    // We're well and truly done - the application is closing down - free the
+    // rendering buffer and quit the thread
+    if (idata->dmpixel) {
+	bu_free(idata->dmpixel, "free pixbuf");
+    }
+    Tcl_ExitThread(TCL_OK);
+    TCL_THREAD_CREATE_RETURN;
+}
+
+static Tcl_ThreadCreateType
+Fb_Update_Manager(ClientData clientData)
+{
+    // This thread needs to process events - give it its own interp so it can do so.
+    Tcl_Interp *interp = Tcl_CreateInterp();
+    Tcl_Init(interp);
+
+    // Unpack the shared data object
+    struct img_data *idata = (struct img_data *)clientData;
+
+    // Until we're shutting down, check for and process events - this thread will persist
+    // for the life of the application.
+    while (!idata->shutdown) {
+
+	// Events can come from either the parent (requesting a rendering, announcing a shutdown)
+	// or from the rendering thread (announcing completion of a rendering.)
+
+	// Eventually we'll want separate events to trigger this, but for now just update it at
+	// regular intervals
+	if (!idata->fb_render_ready) {
+	    Tcl_Sleep(2000);
+	}
+	//Tcl_DoOneEvent(0);
+
+
+	// If anyone flipped the shutdown switch while we were waiting, don't
+	// do any more work - there's no point.
+	if (idata->shutdown) {
+	    continue;
+	}
+
+	// If we have a render ready, let the parent know to update the GUI.
+	if (idata->fb_render_ready) {
+
+	    // Generate an event for the parent thread - its time to update the
+	    // Tk_Photo in the GUI that's holding the image
+	    Tcl_MutexLock(&threadMutex);
+	    struct RenderEvent *threadEventPtr = (struct RenderEvent *)ckalloc(sizeof(RenderEvent));
+	    threadEventPtr->idata = idata;
+	    threadEventPtr->event.proc = UpdateProc;
+	    Tcl_ThreadQueueEvent(idata->parent_id, (Tcl_Event *) threadEventPtr, TCL_QUEUE_TAIL);
+	    Tcl_ThreadAlert(idata->parent_id);
+	    Tcl_MutexUnlock(&threadMutex);
+
+	    // Go back to waiting.
+	    idata->fb_render_ready = 0;
+	    continue;
+	}
+
+	// If we need a render and aren't already running, it's time to go to work.
 	// Start a framebuffer thread.
+	std::cout << "Framebuffer updating!\n";
 	Tcl_ThreadId fbthreadID;
 	if (Tcl_CreateThread(&fbthreadID, Fb_Render, (ClientData)idata, TCL_THREAD_STACK_DEFAULT, TCL_THREAD_NOFLAGS) != TCL_OK) {
 	    std::cerr << "can't create fb render thread\n";
@@ -556,8 +640,8 @@ Dm_Update_Manager(ClientData clientData)
 
     // We're well and truly done - the application is closing down - free the
     // rendering buffer and quit the thread
-    if (idata->dmpixel) {
-	bu_free(idata->dmpixel, "free pixbuf");
+    if (idata->fbpixel) {
+	bu_free(idata->fbpixel, "free pixbuf");
     }
     Tcl_ExitThread(TCL_OK);
     TCL_THREAD_CREATE_RETURN;
@@ -581,7 +665,9 @@ main(int UNUSED(argc), const char *argv[])
     idata->dm_render_running = 0;
     idata->dm_render_ready = 0;
     idata->shutdown = 0;
+    idata->dm_buff_size = 0;
     idata->dmpixel = NULL;
+    idata->fb_buff_size = 0;
     idata->fbpixel = NULL;
     idata->parent_id = Tcl_GetCurrentThread();
 
@@ -687,19 +773,46 @@ main(int UNUSED(argc), const char *argv[])
     }
     idata->dm_id = threadID;
 
+    Tcl_ThreadId fbthreadID;
+    if (Tcl_CreateThread(&fbthreadID, Fb_Update_Manager, (ClientData)idata, TCL_THREAD_STACK_DEFAULT, TCL_THREAD_JOINABLE) != TCL_OK) {
+	std::cerr << "can't create thread\n";
+    }
+    idata->fb_id = fbthreadID;
+
+
     // Enter the main applicatio loop - the initial image will appear, and Button-1 mouse
     // clicks on the window should generate and display new images
     while (1) {
 	Tcl_DoOneEvent(0);
 	if (!Tk_GetNumMainWindows()) {
+	    int tret;
 
 	    // If we've closed the window, we're done - start spreading the word
-	    Tcl_MutexLock(&dilock);
 	    idata->shutdown = 1;
+
+
+	    // After setting the shutdown flag, send an event to wake up the FB update manager thread.
+	    // It will see the change in status and proceed to shut itself down.
+	    Tcl_MutexLock(&fblock);
+	    struct RenderEvent *threadEventPtr = (struct RenderEvent *)ckalloc(sizeof(RenderEvent));
+	    threadEventPtr->idata = idata;
+	    threadEventPtr->event.proc = noop_proc;
+	    Tcl_ThreadQueueEvent(idata->fb_id, (Tcl_Event *) threadEventPtr, TCL_QUEUE_TAIL);
+	    Tcl_ThreadAlert(idata->fb_id);
+	    Tcl_MutexUnlock(&fblock);
+
+	    // Wait for the thread cleanup to complete
+	    Tcl_JoinThread(idata->fb_id, &tret);
+	    if (tret != TCL_OK) {
+		std::cerr << "Failed to shut down framebuffer management thread\n";
+	    } else {
+		std::cout << "Successful framebuffer management thread shutdown\n";
+	    }
 
 	    // After setting the shutdown flag, send an event to wake up the update manager thread.
 	    // It will see the change in status and proceed to shut itself down.
-	    struct DmRenderEvent *threadEventPtr = (struct DmRenderEvent *)ckalloc(sizeof(DmRenderEvent));
+	    Tcl_MutexLock(&dilock);
+	    threadEventPtr = (struct RenderEvent *)ckalloc(sizeof(RenderEvent));
 	    threadEventPtr->idata = idata;
 	    threadEventPtr->event.proc = noop_proc;
 	    Tcl_ThreadQueueEvent(idata->dm_id, (Tcl_Event *) threadEventPtr, TCL_QUEUE_TAIL);
@@ -707,13 +820,13 @@ main(int UNUSED(argc), const char *argv[])
 	    Tcl_MutexUnlock(&dilock);
 
 	    // Wait for the thread cleanup to complete
-	    int tret;
-	    Tcl_JoinThread(threadID, &tret);
+	    Tcl_JoinThread(idata->dm_id, &tret);
 	    if (tret != TCL_OK) {
 		std::cerr << "Failed to shut down display management thread\n";
 	    } else {
 		std::cout << "Successful display management thread shutdown\n";
 	    }
+
 
 	    // Clean up memory and exit
 	    BU_PUT(idata, struct img_data);
