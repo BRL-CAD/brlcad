@@ -425,6 +425,7 @@ if(BRLCAD_TK_BUILD)
   # Set the necessary variables ourselves since FindTCL.cmake doesn't know about our build
   set(TK_LIBRARY tk CACHE STRING "TK_LIBRARY" FORCE)
   set(TK_STUB_LIBRARY tkstub CACHE STRING "TK_LIBRARY" FORCE)
+  set(TK_WISH wish CACHE STRING "TK_WISH" FORCE)
 
   # For the include path, use the TK_INCLUDE_PATH set in the tk build itself;
   # we are not installing headers, so we have to look in the source tree
