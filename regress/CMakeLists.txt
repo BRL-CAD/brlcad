@@ -51,6 +51,10 @@ add_subdirectory(rtwizard)
 # MGED command tests
 add_subdirectory(mged)
 
+# Fuzz tests
+add_subdirectory(fuzz)
+
+
 # License check
 add_subdirectory(licenses)
 
