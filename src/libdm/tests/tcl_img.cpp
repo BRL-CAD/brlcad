@@ -131,6 +131,10 @@ noop_proc(Tcl_Event *UNUSED(evPtr), int UNUSED(mask))
 // Tcl_Interp - which is the parent thread.  The interp below must
 // thus be the PARENT's interp, and we have passed it through the
 // various structures to be available here.
+//
+// TODO - see if we can use the Tk_PhotoPutZoomedBlock API to keep the image in
+// sync with the window size as we're moving; even if it's not a fully crisp
+// rendering, then catch up once a properly sized rendering is done...
 static int
 UpdateProc(Tcl_Event *evPtr, int UNUSED(mask))
 {
