@@ -52,7 +52,7 @@ add_subdirectory(rtwizard)
 add_subdirectory(mged)
 
 # Fuzz tests
-add_subdirectory(fuzz)
+# add_subdirectory(fuzz)
 
 
 # License check
