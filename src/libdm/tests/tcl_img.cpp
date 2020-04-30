@@ -436,14 +436,18 @@ Fb_Render(ClientData clientData)
     // would occur in a real application
     //////////////////////////////////////////////////////////////////////////////
 
+    int r = (*idata->colors)((*idata->gen));
+    int g = (*idata->colors)((*idata->gen));
+    int b = (*idata->colors)((*idata->gen));
+
     // Initialize. This alters the actual data, but Tcl/Tk doesn't know about it yet.
     for (int i = 0; i < (idata->fb_width * idata->fb_height * 4); i+=4) {
 	// Red
-	idata->fbpixel[i] = 0;
+	idata->fbpixel[i] = (r) ? 255 : 0;
 	// Green
-	idata->fbpixel[i+1] = 255;
+	idata->fbpixel[i+1] = (g) ? 255 : 0;
 	// Blue
-	idata->fbpixel[i+2] = 0;
+	idata->fbpixel[i+2] = (b) ? 255 : 0;
 	// Alpha
 	idata->fbpixel[i+3] = 100;
     }
