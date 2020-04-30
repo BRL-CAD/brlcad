@@ -5,10 +5,11 @@
 #include <vector>
 #include <cassert>
 
+#include "bu.h"
 #include "ged.h"
 
 const size_t MAX_ARGS = 5;
-const std::string OUTPUT = "fuzz_ged.g";
+//const std::string OUTPUT = "fuzz_ged.g";
 
 
 static size_t getArgc(uint8_t byte) {
@@ -152,7 +153,7 @@ static const std::string& getArg(uint8_t byte) {
 }
 
 
-static void printCommand(std::vector<std::string> & argv) {
+static void printCommand(std::vector<const char *> & argv) {
     std::cout << "Running";
     for (size_t j = 0; j < argv.size(); j++)
 	std::cout << " " << argv[j];
@@ -171,22 +172,59 @@ extern "C" int LLVMFuzzerTestOneInput(const int8_t *data, size_t size) {
     if (i < size)
 	argc = getArgc(data[i++]);
 
-    std::vector<std::string> argv;
+    std::vector<const char *> argv;
     argv.resize(argc+1, "");
-    argv[0] = getCommand(data[i++]);
+    argv[0] = getCommand(data[i++]).c_str();
 
     for (size_t j = 1; j < argc; j++) {
 	if (i < size) {
-	    argv[j] = getArg(data[i++]);
+	    argv[j] = getArg(data[i++]).c_str();
 	} else {
 	    /* loop around if we run out of slots */
-	    argv[j] = getArg(data[i++ % size]);
+	    argv[j] = getArg(data[i++ % size]).c_str();
 	}
     }
 
     printCommand(argv);
 
-    return 0;
+    struct ged g;
+    struct rt_wdb *wdbp;
+    struct db_i *dbip;
+
+    dbip = db_create_inmem();
+    wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_INMEM);
+
+    GED_INIT(&g, wdbp);
+
+    /* FIXME: To draw, we need to init this LIBRT global */
+    BU_LIST_INIT(&RTG.rtg_vlfree);
+
+    /* Need a view for commands that expect a view */
+    struct bview *gvp;
+    BU_GET(gvp, struct bview);
+    ged_view_init(gvp);
+    g.ged_gvp = gvp;
+
+    void *libged = bu_dlopen(NULL, BU_RTLD_LAZY);
+    if (!libged) {
+	std::cout << "ERROR: unable to dynamically load" << std::endl;
+	return 1;
+    }
+
+    int (*func)(struct ged *, int, char *[]);
+    std::string funcname = std::string("ged_") + argv[0];
+
+    *(void **)(&func) = bu_dlsym(libged, funcname.c_str());
+
+    int ret = 0;
+    if (func) {
+	ret = func(&g, argc, (char **)argv.data());
+    }
+    bu_dlclose(libged);
+
+    ged_close(&g);
+
+    return ret;
 }
 
 
