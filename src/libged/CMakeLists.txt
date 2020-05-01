@@ -62,7 +62,9 @@ set(LIBGED_SOURCES
   bigE.c
   blast.c
   bo.c
-  bot.c
+  bot/bot.cpp
+  bot/check.cpp
+  bot/remesh.cpp
   bot_condense.c
   bot_decimate.c
   bot_dump.c
@@ -71,7 +73,6 @@ set(LIBGED_SOURCES
   bot_fuse.c
   bot_flip.c
   bot_merge.c
-  bot_remesh.cpp
   bot_smooth.c
   bot_split.c
   bot_sync.c
