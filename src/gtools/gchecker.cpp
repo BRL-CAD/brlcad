@@ -31,7 +31,7 @@
 #endif
 
 #ifdef HAVE_WINDOWS_H
-#  include <direct.h> \\ For chdir
+#  include <direct.h> /* For chdir */
 #endif
 
 #include <fstream>
