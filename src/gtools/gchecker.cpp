@@ -30,6 +30,10 @@
 #  include <sys/stat.h> /* for mkdir */
 #endif
 
+#ifdef HAVE_WINDOWS_H
+#  include <direct.h> \\ For chdir
+#endif
+
 #include <fstream>
 #include <iostream>
 #include <iomanip>
