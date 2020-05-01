@@ -11,7 +11,7 @@ target_compile_options(fuzz_test
             PRIVATE $<$<C_COMPILER_ID:Clang>:-g -O1 -fsanitize=fuzzer>
             )
 
-target_link_libraries(fuzz_test PUBLIC libbu librt
+target_link_libraries(fuzz_test PUBLIC libbu librt libged
             PRIVATE $<$<C_COMPILER_ID:Clang>:-fsanitize=fuzzer>
             )
 
