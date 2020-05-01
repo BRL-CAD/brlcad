@@ -24,9 +24,9 @@ set(GCHECKER "${BDIR}/gchecker${EXE}")
 
 # Clean up in case we've run before
 foreach(GCF ${GCHECKER_CF})
-  execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${CBDIR}/${GCF}")
+  execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "${CBDIR}/${GCF}")
 endforeach(GCF ${GCHECKER_CF})
-
+execute_process(COMMAND "@CMAKE_COMMAND@" -E remove_directory "${CBDIR}/gchecker_test.g.ck")
 
 file(WRITE "${CBDIR}/gchecker.log" "Running gchecker:\n${GCHECKER} ${CSDIR}/gchecker_test.g\n")
 
