@@ -54,6 +54,8 @@ add_subdirectory(mged)
 # Fuzz tests
 # add_subdirectory(fuzz)
 
+# gchecker tests
+add_subdirectory(gchecker)
 
 # License check
 add_subdirectory(licenses)
