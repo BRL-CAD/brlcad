@@ -363,14 +363,17 @@ main(int argc, const char **argv)
 	pair_avg_sizes[*p_it] = ssum/(double)scnt;
     }
 
-    std::string ofile = std::string("ck.") + std::string(bu_vls_cstr(&gbasename)) + std::string(".overlaps");
-    std::ofstream of(ofile);
-    std::map<std::pair<std::string, std::string>, double>::iterator a_it;
-    for (a_it = pair_avg_sizes.begin(); a_it != pair_avg_sizes.end(); a_it++) {
-	bu_log("%s + %s: %f\n", a_it->first.first.c_str(), a_it->first.second.c_str(), a_it->second);
-	of << a_it->first.first.c_str() << " " << a_it->first.second.c_str() << " " << std::fixed << std::setprecision(5) << a_it->second << "\n";
+    // If we have something to write out, do so
+    if (pair_avg_sizes.size()) {
+	std::string ofile = std::string("ck.") + std::string(bu_vls_cstr(&gbasename)) + std::string(".overlaps");
+	std::ofstream of(ofile);
+	std::map<std::pair<std::string, std::string>, double>::iterator a_it;
+	for (a_it = pair_avg_sizes.begin(); a_it != pair_avg_sizes.end(); a_it++) {
+	    bu_log("%s + %s: %f\n", a_it->first.first.c_str(), a_it->first.second.c_str(), a_it->second);
+	    of << a_it->first.first.c_str() << " " << a_it->first.second.c_str() << " " << std::fixed << std::setprecision(5) << a_it->second << "\n";
+	}
+	of.close();
     }
-    of.close();
 
     // Remove the copy of the .g file
     std::remove(bu_vls_cstr(&gbasename));
@@ -379,6 +382,8 @@ main(int argc, const char **argv)
     bu_vls_free(&gfile);
     bu_vls_free(&gbasename);
     bu_vls_free(&wdir);
+
+    return 0;
 }
 
 // Local Variables:
