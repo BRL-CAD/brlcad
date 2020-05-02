@@ -275,11 +275,6 @@ _bot_cmd_degen_faces(void *bs, int argc, const char **argv)
 
     struct _ged_bot_icheck *gib = (struct _ged_bot_icheck *)bs;
 
-    if (gib->gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
-        bu_vls_printf(gib->gb->gedp->ged_result_str, ": object %s is not of type bot\n", gib->gb->solid_name.c_str());
-        return GED_ERROR;
-    }
-
     struct rt_bot_internal *bot = (struct rt_bot_internal *)(gib->gb->intern.idb_ptr);
     struct bu_color *color = gib->gb->color;
     struct bn_vlblock *vbp = gib->gb->vbp;
@@ -349,11 +344,6 @@ _bot_cmd_extra_edges(void *bs, int argc, const char **argv)
     argc--;argv++;
 
     struct _ged_bot_icheck *gib = (struct _ged_bot_icheck *)bs;
-
-    if (gib->gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
-        bu_vls_printf(gib->gb->gedp->ged_result_str, ": object %s is not of type bot\n", gib->gb->solid_name.c_str());
-        return GED_ERROR;
-    }
 
     struct rt_bot_internal *bot = (struct rt_bot_internal *)(gib->gb->intern.idb_ptr);
     struct bu_color *color = gib->gb->color;
@@ -435,11 +425,6 @@ _bot_cmd_flipped_edges(void *bs, int argc, const char **argv)
 
     struct _ged_bot_icheck *gib = (struct _ged_bot_icheck *)bs;
 
-    if (gib->gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
-        bu_vls_printf(gib->gb->gedp->ged_result_str, ": object %s is not of type bot\n", gib->gb->solid_name.c_str());
-        return GED_ERROR;
-    }
-
     struct rt_bot_internal *bot = (struct rt_bot_internal *)(gib->gb->intern.idb_ptr);
     struct bu_color *color = gib->gb->color;
     struct bn_vlblock *vbp = gib->gb->vbp;
@@ -519,11 +504,6 @@ _bot_cmd_open_edges(void *bs, int argc, const char **argv)
     argc--;argv++;
 
     struct _ged_bot_icheck *gib = (struct _ged_bot_icheck *)bs;
-
-    if (gib->gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
-        bu_vls_printf(gib->gb->gedp->ged_result_str, ": object %s is not of type bot\n", gib->gb->solid_name.c_str());
-        return GED_ERROR;
-    }
 
     struct rt_bot_internal *bot = (struct rt_bot_internal *)(gib->gb->intern.idb_ptr);
     struct bu_color *color = gib->gb->color;
@@ -605,11 +585,6 @@ _bot_cmd_solid(void *bs, int argc, const char **argv)
     argc--;argv++;
 
     struct _ged_bot_icheck *gib = (struct _ged_bot_icheck *)bs;
-
-    if (gib->gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
-        bu_vls_printf(gib->gb->gedp->ged_result_str, ": object %s is not of type bot\n", gib->gb->solid_name.c_str());
-        return GED_ERROR;
-    }
 
     struct rt_bot_internal *bot = (struct rt_bot_internal *)(gib->gb->intern.idb_ptr);
     struct bn_vlblock *vbp = gib->gb->vbp;
@@ -746,6 +721,11 @@ _bot_cmd_check(void *bs, int argc, const char **argv)
 	argc--;argv++;
 	_bot_check_help(&gib, argc, argv);
 	return GED_OK;
+    }
+
+    if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
+        bu_vls_printf(gb->gedp->ged_result_str, "%s is not of type bot\n", gb->solid_name.c_str());
+        return GED_ERROR;
     }
 
     argc--; argv++;
