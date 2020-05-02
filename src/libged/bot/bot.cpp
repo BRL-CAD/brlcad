@@ -81,6 +81,32 @@ _bot_cmd_get(void *bs, int argc, const char **argv)
 	return GED_ERROR;
     }
 
+    if (argc < 2) {
+	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
+	return GED_ERROR;
+    }
+
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern.idb_ptr);
+
+    fastf_t propVal = rt_bot_propget(bot, argv[1]);
+
+    /* print result string */
+    if (!EQUAL(propVal, -1.0)) {
+
+	fastf_t tmp = (int) propVal;
+
+	if (EQUAL(propVal, tmp)) {
+	    /* int result */
+	    bu_vls_printf(gb->gedp->ged_result_str, "%d", (int) propVal);
+	} else {
+	    /* float result */
+	    bu_vls_printf(gb->gedp->ged_result_str, "%f", propVal);
+	}
+    } else {
+	bu_vls_printf(gb->gedp->ged_result_str, "%s is not a valid argument!", argv[1]);
+	return GED_ERROR;
+    }
+
     return GED_OK;
 }
 
@@ -235,6 +261,7 @@ _bot_cmd_help(void *bs, int argc, const char **argv)
 }
 
 const struct bu_cmdtab _bot_cmds[] = {
+    //{ "arb6",       _bot_cmd_arb6},
     { "get",        _bot_cmd_get},
     { "check",      _bot_cmd_check},
     { "chull",      _bot_cmd_chull},
