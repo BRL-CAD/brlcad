@@ -730,6 +730,11 @@ _bot_cmd_check(void *bs, int argc, const char **argv)
     gib.vls = gb->gedp->ged_result_str;
     gib.cmds = _bot_check_cmds;
 
+    const char *purpose_string = "Check topological integrity of mesh defined by BoT";
+    if (argc == 2 && BU_STR_EQUAL(argv[1], PURPOSEFLAG)) {
+	bu_vls_printf(gb->gedp->ged_result_str, "%s\n", purpose_string);
+	return GED_OK;
+    }
 
     if (!argc) {
 	_bot_check_help(&gib, 0, NULL);
