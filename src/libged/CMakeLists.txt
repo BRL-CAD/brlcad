@@ -419,6 +419,8 @@ set(ged_ignore_files
   CMakeLists.txt
   TODO
   pnts_util.h
+  bot/arb6.cpp
+  bot/ged_bot.h
   brep/ged_brep.h
   ged_private.h
   check/check_private.h
