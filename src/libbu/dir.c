@@ -285,7 +285,7 @@ dir_config(char *buf, size_t len)
 
 
 static void
-append(struct bu_vls *vp, const char *buf)
+path_append(struct bu_vls *vp, const char *buf)
 {
     size_t len = bu_vls_strlen(vp);
     if (len && bu_vls_addr(vp)[len-1] != BU_DIR_SEPARATOR)
@@ -527,64 +527,64 @@ vdir(char *result, size_t len, va_list args)
 	switch ((bu_dir_t)arg) {
 	    case BU_DIR_CURR:
 		bu_getcwd(buf, MAXPATHLEN);
-		append(&vls, buf);
+		path_append(&vls, buf);
 		break;
 	    case BU_DIR_INIT:
 		bu_getiwd(buf, MAXPATHLEN);
-		append(&vls, buf);
+		path_append(&vls, buf);
 		break;
 	    case BU_DIR_BIN:
 		cpath = _bu_dir_brlcad_root(BRLCAD_BIN_DIR, 1);
-		append(&vls, cpath);
+		path_append(&vls, cpath);
 		break;
 	    case BU_DIR_LIB:
 		cpath = _bu_dir_brlcad_root(BRLCAD_LIB_DIR, 1);
-		append(&vls, cpath);
+		path_append(&vls, cpath);
 		break;
 	    case BU_DIR_LIBEXEC:
 		cpath = _bu_dir_brlcad_root(BRLCAD_LIBEXEC_DIR, 1);
-		append(&vls, cpath);
+		path_append(&vls, cpath);
 		break;
 	    case BU_DIR_INCLUDE:
 		cpath = _bu_dir_brlcad_root(BRLCAD_INCLUDE_DIR, 1);
-		append(&vls, cpath);
+		path_append(&vls, cpath);
 		break;
 	    case BU_DIR_DATA:
 		cpath = _bu_dir_brlcad_root(BRLCAD_DATA_DIR, 1);
-		append(&vls, cpath);
+		path_append(&vls, cpath);
 		break;
 	    case BU_DIR_DOC:
 		cpath = _bu_dir_brlcad_root(BRLCAD_DOC_DIR, 1);
-		append(&vls, cpath);
+		path_append(&vls, cpath);
 		break;
 	    case BU_DIR_MAN:
 		cpath = _bu_dir_brlcad_root(BRLCAD_MAN_DIR, 1);
-		append(&vls, cpath);
+		path_append(&vls, cpath);
 		break;
 	    case BU_DIR_TEMP:
 		cpath = dir_temp(buf, MAXPATHLEN);
-		append(&vls, cpath);
+		path_append(&vls, cpath);
 		break;
 	    case BU_DIR_HOME:
 		cpath = dir_home(buf, MAXPATHLEN);
-		append(&vls, cpath);
+		path_append(&vls, cpath);
 		break;
 	    case BU_DIR_CACHE:
 		cpath = dir_cache(buf, MAXPATHLEN);
-		append(&vls, cpath);
+		path_append(&vls, cpath);
 		break;
 	    case BU_DIR_CONFIG:
 		cpath = dir_config(buf, MAXPATHLEN);
-		append(&vls, cpath);
+		path_append(&vls, cpath);
 		break;
 	    case BU_DIR_EXT:
-		append(&vls, EXECUTABLE_SUFFIX);
+		bu_vls_strcat(&vls, EXECUTABLE_SUFFIX);
 		break;
 	    case BU_DIR_LIBEXT:
-		append(&vls, SHARED_LIBRARY_SUFFIX);
+		bu_vls_strcat(&vls, SHARED_LIBRARY_SUFFIX);
 		break;
 	    default:
-		append(&vls, (const char *)arg);
+		path_append(&vls, (const char *)arg);
 		break;
 	}
 	arg = va_arg(args, uintptr_t);
