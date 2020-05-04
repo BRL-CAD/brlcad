@@ -36,6 +36,7 @@
 #include <cstdlib>
 
 #ifndef HAVE_DECL_FSEEKO
+#include "bio.h" /* for b_off_t */
 extern "C" int fseeko(FILE *, b_off_t, int);
 extern "C" b_off_t ftello(FILE *);
 #endif

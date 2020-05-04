@@ -35,6 +35,7 @@
 
 /* needed on mac in c90 mode */
 #ifndef HAVE_DECL_FSEEKO
+#include "bio.h"
 extern "C" int fseeko(FILE *, b_off_t, int);
 extern "C" b_off_t ftello(FILE *);
 #endif
