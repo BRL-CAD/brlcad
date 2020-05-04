@@ -177,7 +177,9 @@ main(int argc, const char **argv)
     sgfile.close();
 
     // Change working directory
-    chdir(bu_vls_cstr(&wdir));
+    if (chdir(bu_vls_cstr(&wdir))) {
+	bu_exit(1, "Failed to chdir to \"%s\" ", bu_vls_cstr(&wdir));
+    }
 
     if (verbose) {
 	bu_log("Working on a copy in %s\n", bu_vls_cstr(&wdir));
