@@ -52,6 +52,9 @@ add_subdirectory(rtwizard)
 # MGED command tests
 add_subdirectory(mged)
 
+# gchecker tests
+add_subdirectory(gchecker)
+
 if(SH_EXEC)
   macro(Sh_Regression_Test testname depends_list)
     CMAKE_PARSE_ARGUMENTS(${testname} "EXCLUDE_FROM_REGRESS" "" "" ${ARGN})

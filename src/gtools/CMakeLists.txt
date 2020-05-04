@@ -16,6 +16,7 @@ BRLCAD_ADDDATA(gtransfer.c sample_applications)
 BRLCAD_ADDEXEC(gex "gex.cpp" "libbu;librt")
 BRLCAD_ADDEXEC(glint glint.cpp "librt;${M_LIBRARY}")
 BRLCAD_ADDEXEC(gqa gqa.c "libged;librt")
+BRLCAD_ADDEXEC(gchecker gchecker.cpp "libged;librt;libbu")
 
 set(GSH_SRCS
   gsh.cpp
