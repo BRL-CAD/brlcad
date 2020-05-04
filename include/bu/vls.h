@@ -23,9 +23,10 @@
 
 #include "common.h"
 #include <stdio.h> /* For FILE */
-#include <sys/types.h> /* for off_t */
 #include <stddef.h> /* for size_t */
 #include <stdarg.h> /* For va_list */
+
+#include "bio.h" /* for off_t */
 
 #include "bu/defines.h"
 #include "bu/magic.h"
@@ -166,7 +167,7 @@ BU_EXPORT extern void bu_vls_trunc(struct bu_vls *vp,
  * un-nibbled.
  */
 BU_EXPORT extern void bu_vls_nibble(struct bu_vls *vp,
-				    off_t len);
+				    b_off_t len);
 
 /**
  * Releases the memory used for the string buffer.
