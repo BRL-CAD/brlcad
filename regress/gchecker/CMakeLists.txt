@@ -18,9 +18,9 @@ add_custom_command(
   DEPENDS ${depends_list}
   )
 add_test(NAME regress-gchecker COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/regress-gchecker.cmake")
-add_custom_target(regress-gchecker DEPENDS gchecker "${STAMP_FILE}")
+add_custom_target(regress-gchecker DEPENDS gchecker mged gqa rtcheck "${STAMP_FILE}")
 set_target_properties(regress-gchecker PROPERTIES FOLDER "BRL-CAD Regression Tests")
-Add_Regression_Test(gchecker "gchecker")
+Add_Regression_Test(gchecker "gchecker;mged;gqa;rtcheck")
 
 CMAKEFILES(
   CMakeLists.txt
