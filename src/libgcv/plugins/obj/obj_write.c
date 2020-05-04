@@ -58,8 +58,8 @@ struct conversion_state
     const struct obj_write_options *obj_write_options;
     FILE *fp;
 
-    off_t vert_offset;
-    off_t norm_offset;
+    b_off_t vert_offset;
+    b_off_t norm_offset;
     size_t regions_tried;
     size_t regions_converted;
     size_t regions_written;

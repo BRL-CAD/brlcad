@@ -50,7 +50,7 @@ unsigned char *outbuf;
 unsigned char *buffer;
 ssize_t scanlen;		/* length of infile (and buffer) scanlines */
 ssize_t buflines;		/* Number of lines held in buffer */
-off_t buf_start = -1000;	/* First line in buffer */
+b_off_t buf_start = -1000;	/* First line in buffer */
 
 ssize_t bufy;				/* y coordinate in buffer */
 FILE *buffp;
@@ -83,14 +83,14 @@ Usage: pixscale [-r] [-s squareinsize] [-w inwidth] [-n inheight]\n\
 void
 fill_buffer(int y)
 {
-    static off_t file_pos = 0;
+    static b_off_t file_pos = 0;
     size_t ret;
 
     buf_start = y - buflines/2;
     if (buf_start < 0) buf_start = 0;
 
     if (file_pos != buf_start * scanlen) {
-	if (bu_fseek(buffp, buf_start * scanlen, 0) < 0) {
+	if (fseek(buffp, buf_start * scanlen, 0) < 0) {
 	    bu_exit(3, "pixscale: Can't seek to input pixel! y=%d\n", y);
 	}
 	file_pos = buf_start * scanlen;

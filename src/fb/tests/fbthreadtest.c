@@ -93,7 +93,7 @@ static Tcl_ThreadCreateType threadprocprint(ClientData data) {
 }
 
 
-int skipbytes(int fd, off_t num);
+int skipbytes(int fd, b_off_t num);
 
 static unsigned char *scanline;		/* 1 scanline pixel buffer */
 static int scanbytes;		/* # of bytes of scanline */

@@ -5155,7 +5155,7 @@ struct dir_check_stuff {
 void
 wdb_dir_check5(struct db_i *input_dbip,
 	       const struct db5_raw_internal *rip,
-	       off_t UNUSED(addr),
+	       b_off_t UNUSED(addr),
 	       void *ptr)
 {
     char *name;
@@ -5218,7 +5218,7 @@ wdb_dir_check5(struct db_i *input_dbip,
  * Check a name against the global directory.
  */
 int
-wdb_dir_check(struct db_i *input_dbip, const char *name, off_t UNUSED(laddr), size_t UNUSED(len), int UNUSED(flags), void *ptr)
+wdb_dir_check(struct db_i *input_dbip, const char *name, b_off_t UNUSED(laddr), size_t UNUSED(len), int UNUSED(flags), void *ptr)
 {
     struct directory *dupdp;
     struct bu_vls local;

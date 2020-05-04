@@ -59,8 +59,8 @@ print_usage(const char *progname)
 }
 
 
-static off_t vert_offset=0;
-static off_t norm_offset=0;
+static b_off_t vert_offset=0;
+static b_off_t norm_offset=0;
 static int do_normals=0;
 static int NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int verbose=0;

@@ -50,7 +50,7 @@
  * -1 FAILURE
  */
 int
-db_read(const struct db_i *dbip, void *addr, size_t count, off_t offset)
+db_read(const struct db_i *dbip, void *addr, size_t count, b_off_t offset)
 /* byte count */
 /* byte offset from start of file */
 {
@@ -80,7 +80,7 @@ db_read(const struct db_i *dbip, void *addr, size_t count, off_t offset)
     }
     bu_semaphore_acquire(BU_SEM_SYSCALL);
 
-    ret = bu_fseek(dbip->dbi_fp, offset, 0);
+    ret = fseek(dbip->dbi_fp, offset, 0);
     if (ret)
 	bu_bomb("db_read: fseek error\n");
     got = (size_t)fread(addr, 1, count, dbip->dbi_fp);
@@ -134,7 +134,7 @@ db_getmrec(const struct db_i *dbip, const struct directory *dp)
 
 
 int
-db_get(const struct db_i *dbip, const struct directory *dp, union record *where, off_t offset, size_t len)
+db_get(const struct db_i *dbip, const struct directory *dp, union record *where, b_off_t offset, size_t len)
 {
 
     RT_CK_DBI(dbip);
@@ -173,7 +173,7 @@ db_get(const struct db_i *dbip, const struct directory *dp, union record *where,
 
 
 int
-db_write(struct db_i *dbip, const void *addr, size_t count, off_t offset)
+db_write(struct db_i *dbip, const void *addr, size_t count, b_off_t offset)
 {
     register size_t got;
 
@@ -198,7 +198,7 @@ db_write(struct db_i *dbip, const void *addr, size_t count, off_t offset)
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     bu_interrupt_suspend();
 
-    (void)bu_fseek(dbip->dbi_fp, offset, 0);
+    (void)fseek(dbip->dbi_fp, offset, 0);
     got = fwrite(addr, 1, count, dbip->dbi_fp);
     fflush(dbip->dbi_fp);
 
@@ -216,7 +216,7 @@ db_write(struct db_i *dbip, const void *addr, size_t count, off_t offset)
 
 
 int
-db_put(struct db_i *dbip, const struct directory *dp, union record *where, off_t offset, size_t len)
+db_put(struct db_i *dbip, const struct directory *dp, union record *where, b_off_t offset, size_t len)
 {
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);

@@ -22,6 +22,7 @@
 #define RT_DB_FULLPATH_H
 
 #include "common.h"
+#include "bio.h" /* for b_off_t */
 #include "bu/vls.h"
 #include "rt/defines.h"
 
@@ -93,7 +94,7 @@ RT_EXPORT extern void db_append_full_path(struct db_full_path *dest,
  */
 RT_EXPORT extern void db_dup_path_tail(struct db_full_path *newp,
 				       const struct db_full_path *oldp,
-				       off_t start);
+				       b_off_t start);
 
 
 /**

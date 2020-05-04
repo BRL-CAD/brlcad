@@ -25,6 +25,7 @@
 #define RT_MEM_H
 
 #include "common.h"
+#include "bio.h" /* for b_off_t */
 #include "vmath.h"
 #include "rt/defines.h"
 
@@ -37,7 +38,7 @@ __BEGIN_DECLS
 struct mem_map {
     struct mem_map *m_nxtp;     /**< @brief Linking pointer to next element */
     size_t m_size;              /**< @brief Size of this free element */
-    off_t m_addr;               /**< @brief Address of start of this element */
+    b_off_t m_addr;               /**< @brief Address of start of this element */
 };
 #define MAP_NULL        ((struct mem_map *) 0)
 
@@ -80,7 +81,7 @@ RT_EXPORT extern struct mem_map * rt_memalloc_nosplit(struct mem_map **pp,
  */
 RT_EXPORT extern void rt_memfree(struct mem_map **pp,
 				 size_t size,
-				 off_t addr);
+				 b_off_t addr);
 
 /**
  * Take everything on the current memory chain, and place it on the

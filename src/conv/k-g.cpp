@@ -30,8 +30,8 @@
 #include <algorithm>
 
 #ifndef HAVE_DECL_FSEEKO
-extern "C" int fseeko(FILE *, off_t, int);
-extern "C" off_t ftello(FILE *);
+extern "C" int fseeko(FILE *, b_off_t, int);
+extern "C" b_off_t ftello(FILE *);
 #endif
 #include <fstream>
 

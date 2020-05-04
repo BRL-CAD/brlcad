@@ -190,7 +190,7 @@ private:
 /// Template to count a vector's allocated size, in bytes.
 ///
 template<class T>
-inline off_t vectorbytes (const std::vector<T> &v)
+inline b_off_t vectorbytes (const std::vector<T> &v)
 {
     return v.capacity() * sizeof(T);
 }
@@ -798,20 +798,20 @@ private:
     double m_stat_llvm_opt_time;          ///<     llvm IR optimization time
     double m_stat_llvm_jit_time;          ///<     llvm JIT time
 
-    PeakCounter<off_t> m_stat_memory;     ///< Stat: all shading system memory
+    PeakCounter<b_off_t> m_stat_memory;     ///< Stat: all shading system memory
 
-    PeakCounter<off_t> m_stat_mem_master; ///< Stat: master-related mem
-    PeakCounter<off_t> m_stat_mem_master_ops;
-    PeakCounter<off_t> m_stat_mem_master_args;
-    PeakCounter<off_t> m_stat_mem_master_syms;
-    PeakCounter<off_t> m_stat_mem_master_defaults;
-    PeakCounter<off_t> m_stat_mem_master_consts;
-    PeakCounter<off_t> m_stat_mem_inst;   ///< Stat: instance-related mem
-    PeakCounter<off_t> m_stat_mem_inst_ops;
-    PeakCounter<off_t> m_stat_mem_inst_args;
-    PeakCounter<off_t> m_stat_mem_inst_syms;
-    PeakCounter<off_t> m_stat_mem_inst_paramvals;
-    PeakCounter<off_t> m_stat_mem_inst_connections;
+    PeakCounter<b_off_t> m_stat_mem_master; ///< Stat: master-related mem
+    PeakCounter<b_off_t> m_stat_mem_master_ops;
+    PeakCounter<b_off_t> m_stat_mem_master_args;
+    PeakCounter<b_off_t> m_stat_mem_master_syms;
+    PeakCounter<b_off_t> m_stat_mem_master_defaults;
+    PeakCounter<b_off_t> m_stat_mem_master_consts;
+    PeakCounter<b_off_t> m_stat_mem_inst;   ///< Stat: instance-related mem
+    PeakCounter<b_off_t> m_stat_mem_inst_ops;
+    PeakCounter<b_off_t> m_stat_mem_inst_args;
+    PeakCounter<b_off_t> m_stat_mem_inst_syms;
+    PeakCounter<b_off_t> m_stat_mem_inst_paramvals;
+    PeakCounter<b_off_t> m_stat_mem_inst_connections;
 
     spin_mutex m_stat_mutex;              ///< Mutex for non-atomic stats
     ClosureRegistry m_closure_registry;

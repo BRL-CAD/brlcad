@@ -131,7 +131,7 @@ db_open(const char *name, const char *mode)
 
 	BU_ALLOC(dbip, struct db_i);
 	dbip->dbi_mf = mfp;
-	dbip->dbi_eof = (off_t)mfp->buflen;
+	dbip->dbi_eof = (b_off_t)mfp->buflen;
 	dbip->dbi_inmem = mfp->buf;
 	dbip->dbi_mf->apbuf = (void *)dbip;
 
@@ -149,7 +149,7 @@ db_open(const char *name, const char *mode)
 	/* Read-write mode */
 
 	BU_ALLOC(dbip, struct db_i);
-	dbip->dbi_eof = (off_t)-1L;
+	dbip->dbi_eof = (b_off_t)-1L;
 
 	if ((dbip->dbi_fp = fopen(name, "r+b")) == NULL) {
 	    if (RT_G_DEBUG & RT_DEBUG_DB) {

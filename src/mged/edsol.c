@@ -3982,7 +3982,7 @@ sedit(void)
 		    (struct rt_dsp_internal *)es_int.idb_ptr;
 		const char *fname;
 		struct stat stat_buf;
-		off_t need_size;
+		b_off_t need_size;
 		struct bu_vls message = BU_VLS_INIT_ZERO;
 
 		RT_DSP_CK_MAGIC(dsp);
@@ -4017,7 +4017,7 @@ sedit(void)
 		struct rt_ebm_internal *ebm =
 		    (struct rt_ebm_internal *)es_int.idb_ptr;
 		struct stat stat_buf;
-		off_t need_size;
+		b_off_t need_size;
 
 		RT_EBM_CK_MAGIC(ebm);
 
@@ -4050,7 +4050,7 @@ sedit(void)
 		    (struct rt_ebm_internal *)es_int.idb_ptr;
 		const char *fname;
 		struct stat stat_buf;
-		off_t need_size;
+		b_off_t need_size;
 
 		RT_EBM_CK_MAGIC(ebm);
 
@@ -4126,7 +4126,7 @@ sedit(void)
 		struct rt_vol_internal *vol =
 		    (struct rt_vol_internal *)es_int.idb_ptr;
 		struct stat stat_buf;
-		off_t need_size;
+		b_off_t need_size;
 
 		RT_VOL_CK_MAGIC(vol);
 
@@ -4212,7 +4212,7 @@ sedit(void)
 		    (struct rt_vol_internal *)es_int.idb_ptr;
 		const char *fname;
 		struct stat stat_buf;
-		off_t need_size;
+		b_off_t need_size;
 
 		RT_VOL_CK_MAGIC(vol);
 
