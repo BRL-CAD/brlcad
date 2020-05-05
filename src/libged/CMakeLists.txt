@@ -62,9 +62,9 @@ set(LIBGED_SOURCES
   bigE.c
   blast.c
   bo.c
-  bot/arb6.cpp
   bot/bot.cpp
   bot/check.cpp
+  bot/extrude.cpp
   bot/remesh.cpp
   bot_condense.c
   bot_decimate.c
