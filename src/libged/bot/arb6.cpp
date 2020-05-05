@@ -145,7 +145,7 @@ _bot_cmd_arb6(void *bs, int argc, const char **argv)
     // in which direction.
     struct bu_vls prim_name = BU_VLS_INIT_ZERO;
     for (size_t i = 0; i < bot->num_faces; i++) {
-	fastf_t pnts[3*6];
+	point_t pnts[6];
 	point_t pf[3];
 	vect_t pv1[3], pv2[3];
 	for (int j = 0; j < 3; j++) {
@@ -155,24 +155,28 @@ _bot_cmd_arb6(void *bs, int argc, const char **argv)
 	    VSCALE(pv2[j], v2n[bot->faces[i*3+j]], -1*bot->thickness[i]);
 	}
 	for (int j = 0; j < 3; j++) {
-	    point_t npnt;
-	    VADD2(npnt, pf[j], pv1[j]);
-	    for (int k = 0; k < 3; k++) {
-		pnts[j*3+k] = npnt[k];
-	    }
+	    point_t npnt1;
+	    point_t npnt2;
+	    VADD2(npnt1, pf[j], pv1[j]);
+	    VADD2(npnt2, pf[j], pv2[j]);
+	    VMOVE(pnts[j], npnt1);
+	    VMOVE(pnts[j+3], npnt2);
 	}
-	for (int j = 3; j < 6; j++) {
-	    point_t npnt;
-	    VADD2(npnt, pf[j-3], pv2[j-3]);
-	    for (int k = 0; k < 3; k++) {
-		pnts[j*3+k] = npnt[k];
-	    }
-	}
-	for (int j = 0; j < 6; j++) {
-	    bu_log("%zd point %d: %f %f %f\n", i, j, pnts[j*3], pnts[j*3+1], pnts[j*3+2]);
-	}
+
+	// For arb6 creation, we need a specific point order
+	fastf_t pnts_array[3*6];
+	/* 1 */ pnts_array[0] = pnts[4][X]; pnts_array[1] = pnts[4][Y]; pnts_array[2] = pnts[4][Z];
+	/* 2 */ pnts_array[3] = pnts[3][X]; pnts_array[4] = pnts[3][Y]; pnts_array[5] = pnts[3][Z];
+	/* 3 */ pnts_array[6] = pnts[0][X]; pnts_array[7] = pnts[0][Y]; pnts_array[8] = pnts[0][Z];
+	/* 4 */ pnts_array[9] = pnts[1][X]; pnts_array[10] = pnts[1][Y]; pnts_array[11] = pnts[1][Z];
+	/* 5 */ pnts_array[12] = pnts[5][X]; pnts_array[13] = pnts[5][Y]; pnts_array[14] = pnts[5][Z];
+	/* 6 */ pnts_array[15] = pnts[2][X]; pnts_array[16] = pnts[2][Y]; pnts_array[17] = pnts[2][Z];
+
 	bu_vls_sprintf(&prim_name, "%s.arb6.%zd", gb->dp->d_namep, i);
-	mk_arb6(gb->gedp->ged_wdbp, bu_vls_cstr(&prim_name), pnts);
+
+	// For arb6 creation we need to move a couple points the array.
+
+	mk_arb6(gb->gedp->ged_wdbp, bu_vls_cstr(&prim_name), pnts_array);
 	(void)mk_addmember(bu_vls_cstr(&prim_name), &(wcomb.l), NULL, DB_OP_UNION);
     }
 
