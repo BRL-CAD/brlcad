@@ -1,21 +1,9 @@
 set(LICENSE_CHECK_EXEC "${LCHECK_EXEC}")
-set(LICENSES_DIR "${BRLCAD_SOURCE_DIR}/doc/legal/embedded")
 set(WORKING_DIR "${W_DIR}")
 set(FILES_LIST "${F_LIST}")
+set(LICENSE_FILE_SET "${L_LIST}")
 set(LOG_FILE "${L_FILE}")
 set(STAMP_FILE "${S_FILE}")
-
-message("Identifying third party license files...")
-file(GLOB_RECURSE LICENSE_FILES "${LICENSES_DIR}/*")
-
-set(LICENSE_FILE_SET "${WORKING_DIR}/license_files.txt")
-file(WRITE "${LICENSE_FILE_SET}" "")
-foreach(LFILE ${LICENSE_FILES})
-  if (NOT "${LFILE}" MATCHES "CMakeLists.txt")
-    file(APPEND "${LICENSE_FILE_SET}" "${LFILE}\n")
-  endif (NOT "${LFILE}" MATCHES "CMakeLists.txt")
-endforeach(LFILE ${LICENSE_FILES})
-message("Identifying third party license files... done.")
 
 file(WRITE "${LOG_FILE}" "Running license check:\n${LICENSE_CHECK_EXEC} ${LICENSE_FILE_SET} ${FILES_LIST}\n")
 message("Processing...")
