@@ -149,10 +149,16 @@ _bot_cmd_arb6(void *bs, int argc, const char **argv)
 	point_t pf[3];
 	vect_t pv1[3], pv2[3];
 	for (int j = 0; j < 3; j++) {
+	    vect_t fnorm, n;
+	    VMOVE(fnorm, v2n[bot->faces[i*3+j]]);
+	    bot_face_normal(&n, bot, i);
+	    double vdot = VDOT(fnorm, n);
+	    if (vdot < 0) {
+		VSCALE(fnorm, fnorm, -1);
+	    }
 	    VMOVE(pf[j], &bot->vertices[bot->faces[i*3+j]*3]);
-	    bu_log("Face %zd point %d: %f %f %f\n", i, j, V3ARGS(pf[j]));
-	    VSCALE(pv1[j], v2n[bot->faces[i*3+j]], bot->thickness[i]);
-	    VSCALE(pv2[j], v2n[bot->faces[i*3+j]], -1*bot->thickness[i]);
+	    VSCALE(pv1[j], fnorm, bot->thickness[i]);
+	    VSCALE(pv2[j], fnorm, -1*bot->thickness[i]);
 	}
 	for (int j = 0; j < 3; j++) {
 	    point_t npnt1;
@@ -165,28 +171,62 @@ _bot_cmd_arb6(void *bs, int argc, const char **argv)
 
 	// We are in effect creating an approximation of a twisted arb6 with this
 	// shape - that means we need 8 bot faces on the 6 points.
-	// To use an arb6 shape as a guide, assign the points in arb6 ordering:
-	fastf_t pnts_array[3*6];
-	/* 0 1 */ pnts_array[0] = pnts[4][X]; pnts_array[1] = pnts[4][Y]; pnts_array[2] = pnts[4][Z];
-	/* 1 2 */ pnts_array[3] = pnts[3][X]; pnts_array[4] = pnts[3][Y]; pnts_array[5] = pnts[3][Z];
-	/* 2 3 */ pnts_array[6] = pnts[0][X]; pnts_array[7] = pnts[0][Y]; pnts_array[8] = pnts[0][Z];
-	/* 3 4 */ pnts_array[9] = pnts[1][X]; pnts_array[10] = pnts[1][Y]; pnts_array[11] = pnts[1][Z];
-	/* 4 5 */ pnts_array[12] = pnts[5][X]; pnts_array[13] = pnts[5][Y]; pnts_array[14] = pnts[5][Z];
-	/* 5 6 */ pnts_array[15] = pnts[2][X]; pnts_array[16] = pnts[2][Y]; pnts_array[17] = pnts[2][Z];
+	// To make it easier to use an arb6 shape as a guide, assign the points in arb6 ordering:
+	fastf_t pnts_array[3*6+3*3];
+	/* 1 */ pnts_array[0] = pnts[4][X]; pnts_array[1] = pnts[4][Y]; pnts_array[2] = pnts[4][Z];
+	/* 2 */ pnts_array[3] = pnts[3][X]; pnts_array[4] = pnts[3][Y]; pnts_array[5] = pnts[3][Z];
+	/* 3 */ pnts_array[6] = pnts[0][X]; pnts_array[7] = pnts[0][Y]; pnts_array[8] = pnts[0][Z];
+	/* 4 */ pnts_array[9] = pnts[1][X]; pnts_array[10] = pnts[1][Y]; pnts_array[11] = pnts[1][Z];
+	/* 5 */ pnts_array[12] = pnts[5][X]; pnts_array[13] = pnts[5][Y]; pnts_array[14] = pnts[5][Z];
+	/* 6 */ pnts_array[15] = pnts[2][X]; pnts_array[16] = pnts[2][Y]; pnts_array[17] = pnts[2][Z];
 
-	int faces_array[3*8];
-	/* 1 */ faces_array[0] = 1; faces_array[1] = 0; faces_array[2] = 4;
-	/* 2 */ faces_array[3] = 3; faces_array[4] = 2; faces_array[5] = 5;
-	/* 3 */ faces_array[6] = 1; faces_array[7] = 2; faces_array[8] = 0;
-	/* 4 */ faces_array[9] = 2; faces_array[10] = 3; faces_array[11] = 0;
-	/* 5 */ faces_array[12] = 4; faces_array[13] = 5; faces_array[14] = 1;
-	/* 6 */ faces_array[15] = 5; faces_array[16] = 2; faces_array[17] = 1;
-	/* 7 */ faces_array[18] = 5; faces_array[19] = 4; faces_array[20] = 0;
-	/* 8 */ faces_array[21] = 3; faces_array[22] = 5; faces_array[23] = 0;
+	// Three new points are needed at the centers of what would otherwise be
+	// twisted faces, to define triangles that won't overlap.
+	// ARB6 face 1,2,3,4
+	point_t pnts_avg[3] = {VINIT_ZERO, VINIT_ZERO, VINIT_ZERO};
+	VADD2(pnts_avg[0], pnts[0], pnts_avg[0]);
+	VADD2(pnts_avg[0], pnts[1], pnts_avg[0]);
+	VADD2(pnts_avg[0], pnts[3], pnts_avg[0]);
+	VADD2(pnts_avg[0], pnts[4], pnts_avg[0]);
+	VSCALE(pnts_avg[0], pnts_avg[0], 0.25);
+	/* 7 */ pnts_array[18] = pnts_avg[0][X]; pnts_array[19] = pnts_avg[0][Y]; pnts_array[20] = pnts_avg[0][Z];
+
+	// ARB6 face 2,3,5,6
+	VADD2(pnts_avg[1], pnts[0], pnts_avg[1]);
+	VADD2(pnts_avg[1], pnts[2], pnts_avg[1]);
+	VADD2(pnts_avg[1], pnts[3], pnts_avg[1]);
+	VADD2(pnts_avg[1], pnts[5], pnts_avg[1]);
+	VSCALE(pnts_avg[1], pnts_avg[1], 0.25);
+	/* 8 */ pnts_array[21] = pnts_avg[1][X]; pnts_array[22] = pnts_avg[1][Y]; pnts_array[23] = pnts_avg[1][Z];
+
+	// ARB6 face 1,5,6,4
+	VADD2(pnts_avg[2], pnts[1], pnts_avg[2]);
+	VADD2(pnts_avg[2], pnts[2], pnts_avg[2]);
+	VADD2(pnts_avg[2], pnts[4], pnts_avg[2]);
+	VADD2(pnts_avg[2], pnts[5], pnts_avg[2]);
+	VSCALE(pnts_avg[2], pnts_avg[2], 0.25);
+	/* 9 */ pnts_array[24] = pnts_avg[2][X]; pnts_array[25] = pnts_avg[2][Y]; pnts_array[26] = pnts_avg[2][Z];
+
+	int faces_array[3*14];
+	/*  1 */ faces_array[0] = 1; faces_array[1] = 0; faces_array[2] = 4;
+	/*  2 */ faces_array[3] = 3; faces_array[4] = 2; faces_array[5] = 5;
+
+	/*  3 */ faces_array[6]  = 1; faces_array[7]  = 2; faces_array[8]  = 6;
+	/*  4 */ faces_array[9]  = 2; faces_array[10] = 3; faces_array[11] = 6;
+	/*  5 */ faces_array[12] = 3; faces_array[13] = 0; faces_array[14] = 6;
+	/*  6 */ faces_array[15] = 0; faces_array[16] = 1; faces_array[17] = 6;
+	/*  7 */ faces_array[18] = 4; faces_array[19] = 5; faces_array[20] = 7;
+	/*  8 */ faces_array[21] = 5; faces_array[22] = 2; faces_array[23] = 7;
+	/*  9 */ faces_array[24] = 2; faces_array[25] = 1; faces_array[26] = 7;
+	/* 10 */ faces_array[27] = 1; faces_array[28] = 4; faces_array[29] = 7;
+	/* 11 */ faces_array[30] = 4; faces_array[31] = 0; faces_array[32] = 8;
+	/* 12 */ faces_array[33] = 5; faces_array[34] = 4; faces_array[35] = 8;
+	/* 13 */ faces_array[36] = 3; faces_array[37] = 5; faces_array[38] = 8;
+	/* 14 */ faces_array[39] = 0; faces_array[40] = 3; faces_array[41] = 8;
 
 	bu_vls_sprintf(&prim_name, "%s.tarb6.%zd", gb->dp->d_namep, i);
 
-	mk_bot(gb->gedp->ged_wdbp, bu_vls_cstr(&prim_name), RT_BOT_SOLID, RT_BOT_CCW, 0, 6, 8, (fastf_t *)pnts_array, (int *)faces_array, NULL, NULL);
+	mk_bot(gb->gedp->ged_wdbp, bu_vls_cstr(&prim_name), RT_BOT_SOLID, RT_BOT_CCW, 0, 9, 14, (fastf_t *)pnts_array, (int *)faces_array, NULL, NULL);
 	(void)mk_addmember(bu_vls_cstr(&prim_name), &(wcomb.l), NULL, DB_OP_UNION);
     }
 
