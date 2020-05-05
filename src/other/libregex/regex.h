@@ -74,13 +74,11 @@
 #  define fseek _fseeki64
 #  define ftell _ftelli64
 #  define fstat _fstati64
-#  define lseek _lseeki64
 #  define stat  _stati64
 #elif defined (_WIN32)
 #  include <sys/stat.h>
 #  define regoff_t _off_t
 #  define fstat _fstat
-#  define lseek _lseek
 #  define stat  _stat
 #else
 #  define regoff_t off_t
