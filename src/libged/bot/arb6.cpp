@@ -150,6 +150,7 @@ _bot_cmd_arb6(void *bs, int argc, const char **argv)
 	vect_t pv1[3], pv2[3];
 	for (int j = 0; j < 3; j++) {
 	    VMOVE(pf[j], &bot->vertices[bot->faces[i*3+j]*3]);
+	    bu_log("Face %zd point %d: %f %f %f\n", i, j, V3ARGS(pf[j]));
 	    VSCALE(pv1[j], v2n[bot->faces[i*3+j]], bot->thickness[i]);
 	    VSCALE(pv2[j], v2n[bot->faces[i*3+j]], -1*bot->thickness[i]);
 	}
@@ -162,10 +163,13 @@ _bot_cmd_arb6(void *bs, int argc, const char **argv)
 	}
 	for (int j = 3; j < 6; j++) {
 	    point_t npnt;
-	    VADD2(npnt, pf[j], pv2[j]);
+	    VADD2(npnt, pf[j-3], pv2[j-3]);
 	    for (int k = 0; k < 3; k++) {
 		pnts[j*3+k] = npnt[k];
 	    }
+	}
+	for (int j = 0; j < 6; j++) {
+	    bu_log("%zd point %d: %f %f %f\n", i, j, pnts[j*3], pnts[j*3+1], pnts[j*3+2]);
 	}
 	bu_vls_sprintf(&prim_name, "%s.arb6.%zd", gb->dp->d_namep, i);
 	mk_arb6(gb->gedp->ged_wdbp, bu_vls_cstr(&prim_name), pnts);
