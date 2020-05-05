@@ -66,6 +66,8 @@ extern void _ged_cvt_vlblock_to_solids(struct ged *gedp,
 
 int _bot_cmd_msgs(void *bs, int argc, const char **argv, const char *us, const char *ps);
 
+int _bot_cmd_extrude(void *bs, int argc, const char **argv);
+
 int _bot_cmd_check(void *bs, int argc, const char **argv);
 
 int _bot_cmd_remesh(void *bs, int argc, const char **argv);

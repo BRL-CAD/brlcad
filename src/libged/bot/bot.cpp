@@ -261,7 +261,7 @@ _bot_cmd_help(void *bs, int argc, const char **argv)
 }
 
 const struct bu_cmdtab _bot_cmds[] = {
-    //{ "arb6",       _bot_cmd_arb6},
+    { "extrude",    _bot_cmd_extrude},
     { "get",        _bot_cmd_get},
     { "check",      _bot_cmd_check},
     { "chull",      _bot_cmd_chull},

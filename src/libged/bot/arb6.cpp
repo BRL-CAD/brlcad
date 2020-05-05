@@ -1,4 +1,4 @@
-/*                        A R B 6 . C P P
+/*                      E X T R U D E . C P P
  * BRL-CAD
  *
  * Copyright (c) 2020 United States Government as represented by
@@ -17,9 +17,17 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file arb6.cpp
+/** @file extrude.cpp
  *
- * Brief description
+ * Given a plate mode bot, approximate it with an extrusion of the
+ * individual triangles using the average of the normals of each
+ * vertex for a direction.
+ *
+ * This method tries to produce a region comb unioning individual BoT
+ * objects for each face, to avoid visual gaps between individual
+ * faces.  This comes at a cost in thickness accuracy, and can produce
+ * other artifacts.  It will also produce very long, thin triangles
+ * along the "sides" of plate regions.
  *
  */
 
@@ -134,7 +142,7 @@ _bot_cmd_arb6(void *bs, int argc, const char **argv)
     // Make a comb to hold the union of the new solid primitives
     struct wmember wcomb;
     struct bu_vls comb_name = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&comb_name, "%s_solid.c", gb->dp->d_namep);
+    bu_vls_sprintf(&comb_name, "%s_solid.r", gb->dp->d_namep);
     // TODO - db_lookup to make sure it doesn't already exist
     BU_LIST_INIT(&wcomb.l);
 
@@ -157,8 +165,8 @@ _bot_cmd_arb6(void *bs, int argc, const char **argv)
 		VSCALE(fnorm, fnorm, -1);
 	    }
 	    VMOVE(pf[j], &bot->vertices[bot->faces[i*3+j]*3]);
-	    VSCALE(pv1[j], fnorm, bot->thickness[i]);
-	    VSCALE(pv2[j], fnorm, -1*bot->thickness[i]);
+	    VSCALE(pv1[j], fnorm, bot->thickness[i] * ((bot->mode == RT_BOT_CW) ? -1 : 0));
+	    VSCALE(pv2[j], fnorm, -1*bot->thickness[i] * ((bot->mode == RT_BOT_CW) ? -1 : 0));
 	}
 	for (int j = 0; j < 3; j++) {
 	    point_t npnt1;
@@ -231,7 +239,7 @@ _bot_cmd_arb6(void *bs, int argc, const char **argv)
     }
 
     // Write the comb
-    mk_lcomb(gb->gedp->ged_wdbp, bu_vls_addr(&comb_name), &wcomb, 0, NULL, NULL, NULL, 0);
+    mk_lcomb(gb->gedp->ged_wdbp, bu_vls_addr(&comb_name), &wcomb, 1, NULL, NULL, NULL, 0);
 
     bu_vls_free(&comb_name);
     bu_vls_free(&prim_name);
