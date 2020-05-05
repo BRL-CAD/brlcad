@@ -80,9 +80,9 @@ bot_face_normal(vect_t *n, struct rt_bot_internal *bot, int i)
 
 
 extern "C" int
-_bot_cmd_arb6(void *bs, int argc, const char **argv)
+_bot_cmd_extrude(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "bot [options] <objname> arb6 <output_obj>";
+    const char *usage_string = "bot [options] <objname> extrude <output_obj>";
     const char *purpose_string = "generate an ARB6 representation of the specified plate mode BoT object";
     if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
