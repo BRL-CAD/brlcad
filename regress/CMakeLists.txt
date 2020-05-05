@@ -143,6 +143,10 @@ CMAKEFILES(
   dsp/run-dsp-case-set-2.sh
   dsp/run-dsp-case-set-3.sh
   flawfinder.sh
+  fuzz/CMakeLists.txt
+  fuzz/fuzz_ged.cpp
+  fuzz/fuzz_test1.cxx
+  fuzz/run.sh
   g-dot.sh
   g-nff.sh
   gqa.sh
