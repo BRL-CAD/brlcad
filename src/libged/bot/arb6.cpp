@@ -106,7 +106,7 @@ _bot_cmd_arb6(void *bs, int argc, const char **argv)
     }
 
     // Average the face normals at each vertex to get an average direction in
-    // which to move each vertex for arb6 generation.
+    // which to move each vertex for solid generation.
     vect_t *f2n = (vect_t *)bu_calloc(bot->num_faces, sizeof(vect_t), "face normals");
     vect_t *v2n = (vect_t *)bu_calloc(bot->num_vertices, sizeof(vect_t), "vert normals");
     int *v2fc = (int *)bu_calloc(bot->num_vertices, sizeof(int), "cnts");
@@ -131,10 +131,10 @@ _bot_cmd_arb6(void *bs, int argc, const char **argv)
 	VUNITIZE(v2n[i]);
     }
 
-    // Make a comb to hold the union of the arb6 primitives
+    // Make a comb to hold the union of the new solid primitives
     struct wmember wcomb;
     struct bu_vls comb_name = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&comb_name, "%s_arb6.c", gb->dp->d_namep);
+    bu_vls_sprintf(&comb_name, "%s_solid.c", gb->dp->d_namep);
     // TODO - db_lookup to make sure it doesn't already exist
     BU_LIST_INIT(&wcomb.l);
 
@@ -163,20 +163,30 @@ _bot_cmd_arb6(void *bs, int argc, const char **argv)
 	    VMOVE(pnts[j+3], npnt2);
 	}
 
-	// For arb6 creation, we need a specific point order
+	// We are in effect creating an approximation of a twisted arb6 with this
+	// shape - that means we need 8 bot faces on the 6 points.
+	// To use an arb6 shape as a guide, assign the points in arb6 ordering:
 	fastf_t pnts_array[3*6];
-	/* 1 */ pnts_array[0] = pnts[4][X]; pnts_array[1] = pnts[4][Y]; pnts_array[2] = pnts[4][Z];
-	/* 2 */ pnts_array[3] = pnts[3][X]; pnts_array[4] = pnts[3][Y]; pnts_array[5] = pnts[3][Z];
-	/* 3 */ pnts_array[6] = pnts[0][X]; pnts_array[7] = pnts[0][Y]; pnts_array[8] = pnts[0][Z];
-	/* 4 */ pnts_array[9] = pnts[1][X]; pnts_array[10] = pnts[1][Y]; pnts_array[11] = pnts[1][Z];
-	/* 5 */ pnts_array[12] = pnts[5][X]; pnts_array[13] = pnts[5][Y]; pnts_array[14] = pnts[5][Z];
-	/* 6 */ pnts_array[15] = pnts[2][X]; pnts_array[16] = pnts[2][Y]; pnts_array[17] = pnts[2][Z];
+	/* 0 1 */ pnts_array[0] = pnts[4][X]; pnts_array[1] = pnts[4][Y]; pnts_array[2] = pnts[4][Z];
+	/* 1 2 */ pnts_array[3] = pnts[3][X]; pnts_array[4] = pnts[3][Y]; pnts_array[5] = pnts[3][Z];
+	/* 2 3 */ pnts_array[6] = pnts[0][X]; pnts_array[7] = pnts[0][Y]; pnts_array[8] = pnts[0][Z];
+	/* 3 4 */ pnts_array[9] = pnts[1][X]; pnts_array[10] = pnts[1][Y]; pnts_array[11] = pnts[1][Z];
+	/* 4 5 */ pnts_array[12] = pnts[5][X]; pnts_array[13] = pnts[5][Y]; pnts_array[14] = pnts[5][Z];
+	/* 5 6 */ pnts_array[15] = pnts[2][X]; pnts_array[16] = pnts[2][Y]; pnts_array[17] = pnts[2][Z];
 
-	bu_vls_sprintf(&prim_name, "%s.arb6.%zd", gb->dp->d_namep, i);
+	int faces_array[3*8];
+	/* 1 */ faces_array[0] = 1; faces_array[1] = 0; faces_array[2] = 4;
+	/* 2 */ faces_array[3] = 3; faces_array[4] = 2; faces_array[5] = 5;
+	/* 3 */ faces_array[6] = 1; faces_array[7] = 2; faces_array[8] = 0;
+	/* 4 */ faces_array[9] = 2; faces_array[10] = 3; faces_array[11] = 0;
+	/* 5 */ faces_array[12] = 4; faces_array[13] = 5; faces_array[14] = 1;
+	/* 6 */ faces_array[15] = 5; faces_array[16] = 2; faces_array[17] = 1;
+	/* 7 */ faces_array[18] = 5; faces_array[19] = 4; faces_array[20] = 0;
+	/* 8 */ faces_array[21] = 3; faces_array[22] = 5; faces_array[23] = 0;
 
-	// For arb6 creation we need to move a couple points the array.
+	bu_vls_sprintf(&prim_name, "%s.tarb6.%zd", gb->dp->d_namep, i);
 
-	mk_arb6(gb->gedp->ged_wdbp, bu_vls_cstr(&prim_name), pnts_array);
+	mk_bot(gb->gedp->ged_wdbp, bu_vls_cstr(&prim_name), RT_BOT_SOLID, RT_BOT_CCW, 0, 6, 8, (fastf_t *)pnts_array, (int *)faces_array, NULL, NULL);
 	(void)mk_addmember(bu_vls_cstr(&prim_name), &(wcomb.l), NULL, DB_OP_UNION);
     }
 
