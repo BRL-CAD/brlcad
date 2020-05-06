@@ -897,6 +897,7 @@ if(NOT DEFINED CMAKE_CXX_FLAGS_DEFAULT)
 endif(NOT DEFINED CMAKE_CXX_FLAGS_DEFAULT)
 mark_as_advanced(CMAKE_CXX_FLAGS_DEFAULT)
 
+# TODO - OpenBSD 6.6 doesn't tolerate these flags when using #include <iostream>
 set(API_FLAGS "-D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=700")
 
 # C
