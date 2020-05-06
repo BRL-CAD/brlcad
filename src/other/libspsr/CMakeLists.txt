@@ -77,6 +77,12 @@ if(MSVC)
   add_definitions("-DSPSR_DLL_EXPORTS")
 endif(MSVC)
 
+include(CheckIncludeFiles)
+check_include_files("sys/timeb.h" HAVE_SYS_TIMEB)
+if (HAVE_SYS_TIMEB)
+  add_definitions(-DHAVE_SYS_TIMEB=1)
+endif (HAVE_SYS_TIMEB)
+
 IF(BUILD_SHARED_LIBS)
   add_library(SPSR SHARED ${libSPSR_srcs})
   install(TARGETS SPSR
