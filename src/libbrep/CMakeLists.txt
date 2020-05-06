@@ -333,7 +333,6 @@ set(OPENNURBS_HEADERS
   openNURBS/opennurbs_polyedgecurve.h
   openNURBS/opennurbs_polyline.h
   openNURBS/opennurbs_polylinecurve.h
-  openNURBS/opennurbs_qsort_template.h
   openNURBS/opennurbs_rand.h
   openNURBS/opennurbs_rendering.h
   openNURBS/opennurbs_revsurface.h

@@ -198,7 +198,6 @@ file:src/libbrep/openNURBS/opennurbs_polyline.h
 file:src/libbrep/openNURBS/opennurbs_polylinecurve.cpp
 file:src/libbrep/openNURBS/opennurbs_polylinecurve.h
 file:src/libbrep/openNURBS/opennurbs_precompiledheader.cpp
-file:src/libbrep/openNURBS/opennurbs_qsort_template.h
 file:src/libbrep/openNURBS/opennurbs_rand.cpp
 file:src/libbrep/openNURBS/opennurbs_rand.h
 file:src/libbrep/openNURBS/opennurbs_rendering.h

@@ -14,6 +14,8 @@
 ////////////////////////////////////////////////////////////////
 */
 
+#include "common.h"
+#include "bu/sort.h"
 #include "opennurbs.h"
 
 static bool IdIsNotZero(const ON_UUID* id)
@@ -216,33 +218,14 @@ void ON_SerialNumberMap::SN_BLOCK::CullBlockHelper()
   }
 }
 
-
-
-/*
-The defines and #include generates a fast sorting function
-static void ON_qsort_SN_ELEMENT( struct ON_SerialNumberMap::SN_ELEMENT* base, size_t nel );
-*/
-
-#define ON_SORT_TEMPLATE_COMPARE compare_SN_ELEMENT_sn
-#define ON_COMPILING_OPENNURBS_QSORT_FUNCTIONS
-#define ON_SORT_TEMPLATE_STATIC_FUNCTION
-#define ON_SORT_TEMPLATE_TYPE struct ON_SerialNumberMap::SN_ELEMENT
-#define ON_QSORT_FNAME ON_qsort_SN_ELEMENT
-
-static int ON_SORT_TEMPLATE_COMPARE(const struct ON_SerialNumberMap::SN_ELEMENT * a, const struct ON_SerialNumberMap::SN_ELEMENT * b)
+static int
+snm_cmp(const void *p1, const void *p2, void *UNUSED(arg))
 {
-  unsigned int asn, bsn;
-  return ( ( (asn = a->m_sn) < (bsn = b->m_sn) ) ? -1 : (asn > bsn) ? 1 : 0 );
+    const struct ON_SerialNumberMap::SN_ELEMENT *a = (const struct ON_SerialNumberMap::SN_ELEMENT *) p1;
+    const struct ON_SerialNumberMap::SN_ELEMENT *b = (const struct ON_SerialNumberMap::SN_ELEMENT *) p2;
+    unsigned int asn, bsn;
+    return ( ( (asn = a->m_sn) < (bsn = b->m_sn) ) ? -1 : (asn > bsn) ? 1 : 0 );
 }
-
-#include "opennurbs_qsort_template.h"
-
-#undef ON_COMPILING_OPENNURBS_QSORT_FUNCTIONS
-#undef ON_SORT_TEMPLATE_STATIC_FUNCTION
-#undef ON_SORT_TEMPLATE_TYPE
-#undef ON_QSORT_FNAME
-#undef ON_SORT_TEMPLATE_COMPARE
-
 
 void ON_SerialNumberMap::SN_BLOCK::SortBlockHelper()
 {
@@ -263,55 +246,8 @@ void ON_SerialNumberMap::SN_BLOCK::SortBlockHelper()
    
   if ( m_count > 1 )
   {
-#if 1
     // Quick sort
-    ON_qsort_SN_ELEMENT(m_sn, m_count);
-#else
-    // Heap sort
-    size_t i, j, k, i_end;
-    struct SN_ELEMENT e_tmp;
-    struct SN_ELEMENT* e;
-
-    e = m_sn;
-
-    k = m_count >> 1;
-    i_end = m_count-1;
-    for (;;) 
-    {
-      if (k)
-      {
-        --k;
-        e_tmp = e[k];
-      } 
-      else 
-      {
-        e_tmp = e[i_end];
-        e[i_end] = e[0];
-        if (!(--i_end)) 
-        {
-          e[0] = e_tmp;
-          break;
-        }
-      }
-
-      i = k;
-      j = (k<<1) + 1;
-      while (j <= i_end)
-      {
-        if (j < i_end && e[j].m_sn < e[j + 1].m_sn)
-          j++;
-        if (e_tmp.m_sn < e[j].m_sn)
-        {
-          e[i] = e[j];
-          i = j;
-          j = (j<<1) + 1;
-        } 
-        else 
-          j = i_end + 1;
-      }
-      e[i] = e_tmp;
-    }
-#endif
+    bu_sort(m_sn, m_count, sizeof(const struct ON_SerialNumberMap::SN_ELEMENT), snm_cmp, NULL);
     m_sn0 = m_sn[0].m_sn;
     m_sn1 = m_sn[m_count-1].m_sn;
   }
