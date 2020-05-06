@@ -30,19 +30,6 @@
 #include "nmg.h"
 #include "brep.h"
 
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic push
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic push
-#endif
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic ignored "-Wdeprecated-copy"
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic ignored "-Wdeprecated-copy"
-#endif
-
 extern "C" {
     extern void rt_sketch_brep(ON_Brep **bi, const struct rt_db_internal *ip, const struct bn_tol *tol);
 }
@@ -318,12 +305,6 @@ rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
     bu_free(tmp_internal, "free temporary rt_db_internal");
 }
 
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic pop
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic pop
-#endif
 
 // Local Variables:
 // tab-width: 8

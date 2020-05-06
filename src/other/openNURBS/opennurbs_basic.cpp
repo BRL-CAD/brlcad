@@ -13,23 +13,21 @@
 ////////////////////////////////////////////////////////////////
 */
 
-#include "common.h"
-
 #include "opennurbs.h"
 
 int ON_ArcCurve::IntersectSelf( 
-        ON_SimpleArray<ON_X_EVENT>& UNUSED(x),
-        double UNUSED(intersection_tolerance),
-        const ON_Interval* UNUSED(curve_domain)
+        ON_SimpleArray<ON_X_EVENT>& x,
+        double intersection_tolerance,
+        const ON_Interval* curve_domain
         ) const
 {
   return 0;
 }
 
 int ON_LineCurve::IntersectSelf( 
-        ON_SimpleArray<ON_X_EVENT>& UNUSED(x),
-        double UNUSED(intersection_tolerance),
-        const ON_Interval* UNUSED(curve_domain)
+        ON_SimpleArray<ON_X_EVENT>& x,
+        double intersection_tolerance,
+        const ON_Interval* curve_domain
         ) const
 {
   return 0;
@@ -43,13 +41,13 @@ int ON_LineCurve::IntersectSelf(
 //
 
 int ON_Line::IntersectSurface( 
-          const ON_Surface* UNUSED(surfaceB),
-          ON_SimpleArray<ON_X_EVENT>& UNUSED(x),
-          double UNUSED(intersection_tolerance),
-          double UNUSED(overlap_tolerance),
-          const ON_Interval* UNUSED(line_domain),
-          const ON_Interval* UNUSED(surfaceB_udomain),
-          const ON_Interval* UNUSED(surfaceB_vdomain)
+          const ON_Surface* surfaceB,
+          ON_SimpleArray<ON_X_EVENT>& x,
+          double intersection_tolerance,
+          double overlap_tolerance,
+          const ON_Interval* line_domain,
+          const ON_Interval* surfaceB_udomain,
+          const ON_Interval* surfaceB_vdomain
           ) const
 {
   // The working function is part of the Rhino SDK.
@@ -61,25 +59,25 @@ int ON_Line::IntersectSurface(
 // Basic ON_PlaneEquation functions
 //
 
-double ON_PlaneEquation::MinimumValueAt(const ON_SurfaceLeafBox& UNUSED(srfleafbox)) const
+double ON_PlaneEquation::MinimumValueAt(const ON_SurfaceLeafBox& srfleafbox) const
 {
   // The working function is part of the Rhino SDK.
   return 0.0;
 }
 
-double ON_PlaneEquation::MaximumValueAt(const ON_SurfaceLeafBox& UNUSED(srfleafbox)) const
+double ON_PlaneEquation::MaximumValueAt(const ON_SurfaceLeafBox& srfleafbox) const
 {
   // The working function is part of the Rhino SDK.
   return 0.0;
 }
 
-double ON_PlaneEquation::MinimumValueAt(const class ON_CurveLeafBox& UNUSED(crvleafbox)) const
+double ON_PlaneEquation::MinimumValueAt(const class ON_CurveLeafBox& crvleafbox) const
 {
   // The working function is part of the Rhino SDK.
   return 0.0;
 }
 
-double ON_PlaneEquation::MaximumValueAt(const class ON_CurveLeafBox& UNUSED(crvleafbox)) const
+double ON_PlaneEquation::MaximumValueAt(const class ON_CurveLeafBox& crvleafbox) const
 {
   // The working function is part of the Rhino SDK.
   return 0.0;
@@ -91,8 +89,8 @@ double ON_PlaneEquation::MaximumValueAt(const class ON_CurveLeafBox& UNUSED(crvl
 //
 
 int ON_BezierCurve::IntersectSelf( 
-        ON_SimpleArray<ON_X_EVENT>& UNUSED(x),
-        double UNUSED(intersection_tolerance)
+        ON_SimpleArray<ON_X_EVENT>& x,
+        double intersection_tolerance
         ) const
 {
   // The working function is part of the Rhino SDK.
@@ -100,12 +98,12 @@ int ON_BezierCurve::IntersectSelf(
 }
 
 int ON_BezierCurve::IntersectCurve( 
-        const ON_BezierCurve* UNUSED(bezierB),
-        ON_SimpleArray<ON_X_EVENT>& UNUSED(x),
-        double UNUSED(intersection_tolerance),
-        double UNUSED(overlap_tolerance),
-        const ON_Interval* UNUSED(bezierA_domain),
-        const ON_Interval* UNUSED(bezierB_domain)
+        const ON_BezierCurve* bezierB,
+        ON_SimpleArray<ON_X_EVENT>& x,
+        double intersection_tolerance,
+        double overlap_tolerance,
+        const ON_Interval* bezierA_domain,
+        const ON_Interval* bezierB_domain
         ) const
 {
   // The working function is part of the Rhino SDK.
@@ -113,13 +111,13 @@ int ON_BezierCurve::IntersectCurve(
 }
 
 int ON_BezierCurve::IntersectSurface( 
-          const ON_BezierSurface* UNUSED(bezsrfB),
-          ON_SimpleArray<ON_X_EVENT>& UNUSED(x),
-          double UNUSED(intersection_tolerance),
-          double UNUSED(overlap_tolerance),
-          const ON_Interval* UNUSED(bezierA_domain),
-          const ON_Interval* UNUSED(bezsrfB_udomain),
-          const ON_Interval* UNUSED(bezsrfB_vdomain)
+          const ON_BezierSurface* bezsrfB,
+          ON_SimpleArray<ON_X_EVENT>& x,
+          double intersection_tolerance,
+          double overlap_tolerance,
+          const ON_Interval* bezierA_domain,
+          const ON_Interval* bezsrfB_udomain,
+          const ON_Interval* bezsrfB_vdomain
           ) const
 {
   // The working function is part of the Rhino SDK.
@@ -127,10 +125,10 @@ int ON_BezierCurve::IntersectSurface(
 }
 
 bool ON_BezierCurve::GetLocalClosestPoint( 
-        ON_3dPoint UNUSED(P),
-        double UNUSED(seed_parameter),
-        double* UNUSED(t),
-        const ON_Interval* UNUSED(sub_domain)
+        ON_3dPoint P,
+        double seed_parameter,
+        double* t,
+        const ON_Interval* sub_domain
         ) const
 {
   // The working function is part of the Rhino SDK.
@@ -138,10 +136,10 @@ bool ON_BezierCurve::GetLocalClosestPoint(
 }
 
 bool ON_BezierCurve::GetClosestPoint( 
-        ON_3dPoint UNUSED(P),
-        double* UNUSED(t),
-        double UNUSED(maximum_distance),
-        const ON_Interval* UNUSED(sub_domain)
+        ON_3dPoint P,
+        double* t,
+        double maximum_distance,
+        const ON_Interval* sub_domain
         ) const
 {
   // The working function is part of the Rhino SDK.
@@ -149,13 +147,13 @@ bool ON_BezierCurve::GetClosestPoint(
 }
 
 bool ON_BezierCurve::GetLocalCurveIntersection( 
-        const ON_BezierCurve* UNUSED(other_bezcrv),
-        double UNUSED(this_seed_t),
-        double UNUSED(other_seed_t),
-        double* UNUSED(this_t),
-        double* UNUSED(other_t),
-        const ON_Interval* UNUSED(this_domain),
-        const ON_Interval* UNUSED(other_domain)
+        const ON_BezierCurve* other_bezcrv,
+        double this_seed_t,
+        double other_seed_t,
+        double* this_t,
+        double* other_t,
+        const ON_Interval* this_domain,
+        const ON_Interval* other_domain
         ) const
 {
   // The working function is part of the Rhino SDK.
@@ -164,16 +162,16 @@ bool ON_BezierCurve::GetLocalCurveIntersection(
 
 
 bool ON_BezierCurve::GetLocalSurfaceIntersection( 
-          const ON_BezierSurface* UNUSED(bezsrf),
-          double UNUSED(seed_t),
-          double UNUSED(seed_u),
-          double UNUSED(seed_v),
-          double* UNUSED(t),
-          double* UNUSED(u),
-          double* UNUSED(v),
-          const ON_Interval* UNUSED(tdomain),
-          const ON_Interval* UNUSED(udomain),
-          const ON_Interval* UNUSED(vdomain)
+          const ON_BezierSurface* bezsrf,
+          double seed_t,
+          double seed_u,
+          double seed_v,
+          double* t,
+          double* u,
+          double* v,
+          const ON_Interval* tdomain,
+          const ON_Interval* udomain,
+          const ON_Interval* vdomain
           ) const
 {
   // The working function is part of the Rhino SDK.
@@ -187,13 +185,13 @@ bool ON_BezierCurve::GetLocalSurfaceIntersection(
 //
 
 bool ON_BezierSurface::GetLocalClosestPoint( 
-        ON_3dPoint UNUSED(P),
-        double UNUSED(s_seed),
-        double UNUSED(t_seed),
-        double* UNUSED(s),
-        double* UNUSED(t),
-        const ON_Interval* UNUSED(sub_domain0),
-        const ON_Interval* UNUSED(sub_domain1)
+        ON_3dPoint P,
+        double s_seed,
+        double t_seed,
+        double* s,
+        double* t,
+        const ON_Interval* sub_domain0,
+        const ON_Interval* sub_domain1
         ) const
 {
   // The working function is part of the Rhino SDK.
@@ -201,12 +199,12 @@ bool ON_BezierSurface::GetLocalClosestPoint(
 }
 
 bool ON_BezierSurface::GetClosestPoint( 
-        ON_3dPoint UNUSED(P),
-        double* UNUSED(s),
-        double* UNUSED(t),
-        double UNUSED(maximum_distance),
-        const ON_Interval* UNUSED(sub_domain0),
-        const ON_Interval* UNUSED(sub_domain1)
+        ON_3dPoint P,
+        double* s,
+        double* t,
+        double maximum_distance,
+        const ON_Interval* sub_domain0,
+        const ON_Interval* sub_domain1
         ) const
 {
   // The working function is part of the Rhino SDK.
@@ -219,16 +217,16 @@ bool ON_BezierSurface::GetClosestPoint(
 // Basic ON_X_EVENT functions
 //
 
-bool ON_X_EVENT::IsValid(ON_TextLog* UNUSED(text_log),
-                          double UNUSED(intersection_tolerance),
-                          double UNUSED(overlap_tolerance),
-                          const ON_Curve* UNUSED(curveA),
-                          const ON_Interval* UNUSED(curveA_domain),
-                          const ON_Curve* UNUSED(curveB),
-                          const ON_Interval* UNUSED(curveB_domain),
-                          const ON_Surface* UNUSED(surfaceB),
-                          const ON_Interval* UNUSED(surfaceB_domain0),
-                          const ON_Interval* UNUSED(surfaceB_domain1)
+bool ON_X_EVENT::IsValid(ON_TextLog* text_log,
+                          double intersection_tolerance,
+                          double overlap_tolerance,
+                          const ON_Curve* curveA,
+                          const ON_Interval* curveA_domain,
+                          const ON_Curve* curveB,
+                          const ON_Interval* curveB_domain,
+                          const ON_Surface* surfaceB,
+                          const ON_Interval* surfaceB_domain0,
+                          const ON_Interval* surfaceB_domain1
                           ) const
 {
   // The working function is part of the Rhino SDK.
@@ -236,28 +234,28 @@ bool ON_X_EVENT::IsValid(ON_TextLog* UNUSED(text_log),
 }
 
 void ON_X_EVENT::CopyEventPart(
-      const ON_X_EVENT& UNUSED(src),
-      int UNUSED(i),
-      ON_X_EVENT& UNUSED(dst),
-      int UNUSED(j)
+      const ON_X_EVENT& src, 
+      int i,
+      ON_X_EVENT& dst, 
+      int j 
       )
 {
   // The working function is part of the Rhino SDK.
 }
 
 bool ON_X_EVENT::IsValidList(
-        int UNUSED(xevent_count),
-        const ON_X_EVENT* UNUSED(xevent),
-        ON_TextLog* UNUSED(text_log),
-        double UNUSED(intersection_tolerance),
-        double UNUSED(overlap_tolerance),
-        const class ON_Curve* UNUSED(curveA),
-        const class ON_Interval* UNUSED(curveA_domain),
-        const class ON_Curve* UNUSED(curveB),
-        const class ON_Interval* UNUSED(curveB_domain),
-        const class ON_Surface* UNUSED(surfaceB),
-        const class ON_Interval* UNUSED(surfaceB_domain0),
-        const class ON_Interval* UNUSED(surfaceB_domain1)
+        int xevent_count,
+        const ON_X_EVENT* xevent,
+        ON_TextLog* text_log,
+        double intersection_tolerance,
+        double overlap_tolerance,
+        const class ON_Curve* curveA,
+        const class ON_Interval* curveA_domain,
+        const class ON_Curve* curveB,
+        const class ON_Interval* curveB_domain,
+        const class ON_Surface* surfaceB,
+        const class ON_Interval* surfaceB_domain0,
+        const class ON_Interval* surfaceB_domain1
         )
 {
   // The working function is part of the Rhino SDK.
@@ -265,21 +263,21 @@ bool ON_X_EVENT::IsValidList(
 }
 
 int ON_X_EVENT::CleanList(
-        double UNUSED(event_tolerance),
-        double UNUSED(overlap_tolerance),
+        double event_tolerance,
+        double overlap_tolerance,
         int xevent_count,
-        ON_X_EVENT* UNUSED(xevent)
+        ON_X_EVENT* xevent
         )
 {
   // The working function is part of the Rhino SDK.
   return xevent_count;
 }
 
-bool ON_X_EVENT::IsValidCurveCurveOverlap(
+bool ON_X_EVENT::IsValidCurveCurveOverlap( 
           ON_Interval,
           int,
           double,
-          const class ON_CurveTreeNode*,
+          const class ON_CurveTreeNode*, 
           const class ON_CurveTreeNode*,
           const ON_Interval*
           )

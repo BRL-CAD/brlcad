@@ -14,8 +14,6 @@
 ////////////////////////////////////////////////////////////////
 */
 
-#include "common.h"
-
 #include "opennurbs_system.h"
 #include "opennurbs_defines.h"
 #include "opennurbs_memory.h"
@@ -42,7 +40,7 @@ ON_MEMORY_POOL* ON_WorkerMemoryPool(void)
   return 0;
 }
 
-void* onmalloc_from_pool( ON_MEMORY_POOL* UNUSED(pool), size_t sz )
+void* onmalloc_from_pool( ON_MEMORY_POOL* pool, size_t sz )
 {
   void* p;
   p = (sz > 0) ? malloc(sz) : 0;
@@ -54,7 +52,7 @@ void* onmalloc( size_t sz )
   return onmalloc_from_pool( 0, sz );
 }
 
-void* oncalloc_from_pool( ON_MEMORY_POOL* UNUSED(pool), size_t num, size_t sz )
+void* oncalloc_from_pool( ON_MEMORY_POOL* pool, size_t num, size_t sz )
 {
   void* p;
   p = (num > 0 && sz > 0) ? calloc(num,sz) : 0;

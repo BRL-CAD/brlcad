@@ -214,9 +214,10 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     librt
     libvds
     libwdb
+    openNURBS
     regex
     zlib1
-    libSPSR
+	libSPSR
     )
   set(BRLCAD_STATIC_LIBS)
   set(brlcadlibs_notinstalled)
@@ -350,7 +351,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   include_directories(
     "${CMAKE_CURRENT_BINARY_DIR}/../../../include"
     "${CMAKE_CURRENT_SOURCE_DIR}/../../../include"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/libbrep/openNURBS"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/other/openNURBS"
     "${ZLIB_INCLUDE_DIRS}"
     "${REGEX_INCLUDE_DIRS}"
     )

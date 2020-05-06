@@ -14,10 +14,6 @@
 ////////////////////////////////////////////////////////////////
 */
 
-#include "common.h"
-
-#include "bu/sort.h"
-
 #include "opennurbs.h"
 
 
@@ -10213,11 +10209,16 @@ int ON_Mesh::GetMeshFaceSideList(
   return sides_count;
 }
 
-static int
-mfs_cmp(const void *p1, const void *p2, void *UNUSED(arg))
+#define ON_COMPILING_OPENNURBS_QSORT_FUNCTIONS
+#define ON_SORT_TEMPLATE_STATIC_FUNCTION
+#define ON_SORT_TEMPLATE_TYPE struct ON_MeshFaceSide
+
+#define ON_SORT_TEMPLATE_COMPARE ON_qsort_MeshFaceSide_compare
+static int ON_SORT_TEMPLATE_COMPARE( 
+        ON_SORT_TEMPLATE_TYPE const * side1, 
+        ON_SORT_TEMPLATE_TYPE const * side2 
+        )
 {
-  const ON_MeshFaceSide *side1 = (const ON_MeshFaceSide *)p1;
-  const ON_MeshFaceSide *side2 = (const ON_MeshFaceSide *)p2;
   if ( side1->vi[0] < side2->vi[0] )
     return -1;
   if ( side1->vi[0] > side2->vi[0] )
@@ -10237,9 +10238,16 @@ mfs_cmp(const void *p1, const void *p2, void *UNUSED(arg))
   return 0;
 }
 
+#define ON_QSORT_FNAME ON_qsort_MeshFaceSide
+#include "opennurbs_qsort_template.h"
+
 void ON_SortMeshFaceSidesByVertexIndex( int sides_count, struct ON_MeshFaceSide* sides )
 {
   if ( sides_count >= 2 && 0 != sides )
-    bu_sort(sides, sides_count, sizeof(ON_MeshFaceSide), mfs_cmp, NULL);
+    ON_QSORT_FNAME( sides, sides_count );
 }
 
+#undef ON_COMPILING_OPENNURBS_QSORT_FUNCTIONS
+#undef ON_SORT_TEMPLATE_STATIC_FUNCTION
+#undef ON_SORT_TEMPLATE_TYPE
+#undef ON_QSORT_FNAME

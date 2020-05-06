@@ -4,9 +4,9 @@ set(WDB_INCLUDE_DIRS
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${BN_INCLUDE_DIRS}
-  ${BREP_INCLUDE_DIRS}
   ${NMG_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
+  ${OPENNURBS_INCLUDE_DIRS}
   )
 
 BRLCAD_LIB_INCLUDE_DIRS(wdb WDB_INCLUDE_DIRS "")
@@ -40,7 +40,7 @@ set(LIBWDB_SOURCES
   wdb.c
   )
 
-BRLCAD_ADDLIB(libwdb "${LIBWDB_SOURCES}" "librt;libbrep;libnmg;libbn;libbu")
+BRLCAD_ADDLIB(libwdb "${LIBWDB_SOURCES}" "librt;libnmg;libbn;libbu;${OPENNURBS_LIBRARIES}")
 set_target_properties(libwdb PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 CMAKEFILES(CMakeLists.txt)

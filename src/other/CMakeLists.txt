@@ -631,6 +631,31 @@ SetTargetFolder(tktable_header_gen "Compilation Utilities")
 #DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tktreectrl/tktreectrl_cfg.h")
 #DISTCLEAN("${CMAKE_BINARY_DIR}/lib/TkTreeCtrl2.4")
 
+# OpenNURBS Library
+set(opennurbs_DESCRIPTION "
+Option for enabling and disabling compilation of the openNURBS library
+provided with BRL-CAD's source code.  Default is AUTO, responsive to
+the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
+version if BRLCAD_BUNDLED_LIBS is also AUTO.
+")
+THIRD_PARTY(openNURBS OPENNURBS openNURBS opennurbs_DESCRIPTION ALIASES
+  ENABLE_OPENNURBS FLAGS NOSYS)
+SetTargetFolder(openNURBS "Third Party Libraries")
+SetTargetFolder(openNURBS-static "Third Party Libraries")
+SetTargetFolder(openNURBS-obj "Third Party Libraries")
+if(BRLCAD_OPENNURBS_BUILD)
+  set(OPENNURBS_INCLUDE_DIRS "${OPENNURBS_INCLUDE_DIR};${ZLIB_INCLUDE_DIRS}" CACHE STRING "Require opennurbs header includes" FORCE)
+  set(OPENNURBS_LIBRARIES "${OPENNURBS_LIBRARY};${ZLIB_LIBRARIES}" CACHE STRING "Require opennurbs libraries" FORCE)
+  mark_as_advanced(OPENNURBS_INCLUDE_DIRS)
+  mark_as_advanced(OPENNURBS_LIBRARIES)
+  get_directory_property(openNURBS_headers_orig DIRECTORY openNURBS DEFINITION OPENNURBS_HEADERS)
+  set(openNURBS_headers)
+  foreach(onhfile ${openNURBS_headers_orig})
+    set(openNURBS_headers ${openNURBS_headers} openNURBS/${onhfile})
+  endforeach(onhfile ${openNURBS_headers_orig})
+  BRLCAD_MANAGE_FILES(openNURBS_headers ${INCLUDE_DIR}/openNURBS)
+endif(BRLCAD_OPENNURBS_BUILD)
+
 # Screened Poisson Reconstruction Library
 set(spsr_DESCRIPTION "
 Option for enabling and disabling compilation of the Screened Poisson

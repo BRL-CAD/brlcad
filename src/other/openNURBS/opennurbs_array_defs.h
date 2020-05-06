@@ -107,25 +107,7 @@ ON_SimpleArray<T>& ON_SimpleArray<T>::operator=( const ON_SimpleArray<T>& src )
       }
       if ( m_a ) {
         m_count = src.m_count;
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic push
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic push
-#endif
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic ignored "-Wclass-memaccess"
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic ignored "-Wclass-memaccess"
-#endif
         memcpy( m_a, src.m_a, m_count*sizeof(T) );
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic pop
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic pop
-#endif
       }
     }
   }  
@@ -421,25 +403,8 @@ void ON_SimpleArray<T>::Move( int dest_i, int src_i, int ele_cnt )
       capacity = 2*m_capacity;
     SetCapacity( capacity );
   }
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic push
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic push
-#endif
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic ignored "-Wclass-memaccess"
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic ignored "-Wclass-memaccess"
-#endif 
+
   memmove( &m_a[dest_i], &m_a[src_i], ele_cnt*sizeof(T) );
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic pop
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic pop
-#endif
 }
 
 template <class T>
@@ -450,25 +415,7 @@ T& ON_SimpleArray<T>::AppendNew()
     int new_capacity = NewCapacity();
     Reserve( new_capacity );
   }
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic push
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic push
-#endif
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic ignored "-Wclass-memaccess"
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic ignored "-Wclass-memaccess"
-#endif
   memset( &m_a[m_count], 0, sizeof(T) );
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic pop
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic pop
-#endif
   return m_a[m_count++];
 }
 
@@ -544,25 +491,7 @@ void ON_SimpleArray<T>::Remove( int i )
   if ( i >= 0 && i < m_count ) {
     Move( i, i+1, m_count-1-i );
     m_count--;
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic push
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic push
-#endif
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic ignored "-Wclass-memaccess"
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic ignored "-Wclass-memaccess"
-#endif 
     memset( &m_a[m_count], 0, sizeof(T) );
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic pop
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic pop
-#endif
   }
 } 
 
@@ -570,25 +499,7 @@ template <class T>
 void ON_SimpleArray<T>::Empty()
 {
   if ( m_a )
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic push
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic push
-#endif
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic ignored "-Wclass-memaccess"
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic ignored "-Wclass-memaccess"
-#endif
     memset( m_a, 0, m_capacity*sizeof(T) );
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic pop
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic pop
-#endif
   m_count = 0;
 }
 
@@ -862,52 +773,16 @@ template <class T>
 void ON_SimpleArray<T>::Zero()
 {
   if ( m_a && m_capacity > 0 ) {
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic push
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic push
-#endif
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic ignored "-Wclass-memaccess"
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic ignored "-Wclass-memaccess"
-#endif
     memset( m_a, 0, m_capacity*sizeof(T) );
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic pop
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic pop
-#endif
-   }
+  }
 }
 
 template <class T>
 void ON_SimpleArray<T>::MemSet( unsigned char value )
 {
   if ( m_a && m_capacity > 0 ) {
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic push
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic push
-#endif
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic ignored "-Wclass-memaccess"
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic ignored "-Wclass-memaccess"
-#endif
-     memset( m_a, value, m_capacity*sizeof(T) );
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic pop
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic pop
-#endif
-   }
+    memset( m_a, value, m_capacity*sizeof(T) );
+  }
 }
 
 // memory managment ////////////////////////////////////////////////////
@@ -953,25 +828,7 @@ void ON_SimpleArray<T>::SetCapacity( int capacity )
       if ( m_a ) {
         if ( capacity > m_capacity ) {
           // zero new memory
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic push
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic push
-#endif
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic ignored "-Wclass-memaccess"
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic ignored "-Wclass-memaccess"
-#endif
           memset( m_a + m_capacity, 0, (capacity-m_capacity)*sizeof(T) );
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic pop
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic pop
-#endif
         }
         m_capacity = capacity;
       }
@@ -1572,25 +1429,7 @@ void ON_ClassArray<T>::Insert( int i, const T& x )
       Move( i+1, i, m_count-1-i );
       // This call to memset is ok even when T has a vtable
       // because in-place construction is used later.
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic push
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic push
-#endif
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic ignored "-Wclass-memaccess"
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic ignored "-Wclass-memaccess"
-#endif
-       memset( (void*)(&m_a[i]), 0, sizeof(T) );
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic pop
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic pop
-#endif
+      memset( (void*)(&m_a[i]), 0, sizeof(T) );
       ConstructDefaultElement( &m_a[i] );
     }
     else {
@@ -1614,25 +1453,7 @@ void ON_ClassArray<T>::Remove( int i )
     DestroyElement( m_a[i] );
     // This call to memset is ok even when T has a vtable
     // because in-place construction is used later.
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic push
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic push
-#endif
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic ignored "-Wclass-memaccess"
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic ignored "-Wclass-memaccess"
-#endif
     memset( (void*)(&m_a[i]), 0, sizeof(T) );
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic pop
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic pop
-#endif
     Move( i, i+1, m_count-1-i );
     // This call to memset is ok even when T has a vtable
     // because in-place construction is used later.
@@ -1650,25 +1471,7 @@ void ON_ClassArray<T>::Empty()
     DestroyElement( m_a[i] );
     // This call to memset is ok even when T has a vtable
     // because in-place construction is used later.
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic push
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic push
-#endif
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic ignored "-Wclass-memaccess"
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic ignored "-Wclass-memaccess"
-#endif
     memset( (void*)(&m_a[i]), 0, sizeof(T) );
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic pop
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic pop
-#endif
     ConstructDefaultElement( &m_a[i] );
   }
   m_count = 0;
@@ -1877,25 +1680,7 @@ void ON_ClassArray<T>::Zero()
       DestroyElement(m_a[i]);
       // This call to memset is ok even when T has a vtable
       // because in-place construction is used later.
- #if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic push
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic push
-#endif
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic ignored "-Wclass-memaccess"
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic ignored "-Wclass-memaccess"
-#endif
       memset( (void*)(&m_a[i]), 0, sizeof(T) );
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic pop
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic pop
-#endif
       ConstructDefaultElement(&m_a[i]);
     }
   }
@@ -1957,25 +1742,7 @@ void ON_ClassArray<T>::SetCapacity( int capacity )
       // this call to memset(..., 0, ...) is what I want to do
       // because in-place construction will be used when needed
       // on this memory.
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic push
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic push
-#endif
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic ignored "-Wclass-memaccess"
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic ignored "-Wclass-memaccess"
-#endif
       memset( (void*)(m_a + m_capacity), 0, (capacity-m_capacity)*sizeof(T) );
-#if defined(__GNUC__) && !defined(__clang__)
-#  pragma GCC diagnostic pop
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic pop
-#endif
       for ( i = m_capacity; i < capacity; i++ ) {
         ConstructDefaultElement(&m_a[i]);
       }

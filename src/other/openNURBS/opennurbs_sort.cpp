@@ -1,23 +1,3 @@
-/* $NoKeywords: $ */
-/*
-//
-// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
-// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
-// McNeel & Associates.
-//
-// THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
-// ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
-// MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
-// For complete openNURBS copyright information see <http://www.opennurbs.org>.
-//
-////////////////////////////////////////////////////////////////
-*/
-
-#include "common.h"
-
-#include "bu/sort.h"
-
 #include "opennurbs.h"
 
 /*
@@ -192,24 +172,18 @@ ON_hsort(void *base, size_t nel, size_t width, int (*compar)(void*,const void*,c
 
 #undef work_size  
 
+#define ON_COMPILING_OPENNURBS_QSORT_FUNCTIONS
 #define ON_COMPILING_OPENNURBS_HSORT_FUNCTIONS
 #define ON_SORT_TEMPLATE_STATIC_FUNCTION
 
 #define ON_SORT_TEMPLATE_TYPE double
+#define ON_QSORT_FNAME ON_qsort_double
 #define ON_HSORT_FNAME ON_hsort_double
+#include "opennurbs_qsort_template.h"
 #include "opennurbs_hsort_template.h"
 #undef ON_SORT_TEMPLATE_TYPE
+#undef ON_QSORT_FNAME
 #undef ON_HSORT_FNAME
-
-static int
-dbl_cmp(const void *p1, const void *p2, void *UNUSED(arg))
-{
-    double *a = (double *)p1;
-    double *b = (double *)p2;
-    if (*a > *b) return 1;
-    if (*a < *b) return -1;
-    return 0;
-}
 
 void ON_SortDoubleArray( 
         ON::sort_algorithm sort_algorithm,
@@ -220,24 +194,17 @@ void ON_SortDoubleArray(
   if ( ON::heap_sort == sort_algorithm )
     ON_hsort_double(a,nel);
   else
-    bu_sort(a,nel, sizeof(double), dbl_cmp, NULL);
+    ON_qsort_double(a,nel);
 }
 
 #define ON_SORT_TEMPLATE_TYPE float
+#define ON_QSORT_FNAME ON_qsort_float
 #define ON_HSORT_FNAME ON_hsort_float
+#include "opennurbs_qsort_template.h"
 #include "opennurbs_hsort_template.h"
 #undef ON_SORT_TEMPLATE_TYPE
+#undef ON_QSORT_FNAME
 #undef ON_HSORT_FNAME
-
-static int
-float_cmp(const void *p1, const void *p2, void *UNUSED(arg))
-{
-    float *a = (float *)p1;
-    float *b = (float *)p2;
-    if (*a > *b) return 1;
-    if (*a < *b) return -1;
-    return 0;
-}
 
 void ON_SortFloatArray( 
         ON::sort_algorithm sort_algorithm,
@@ -248,25 +215,18 @@ void ON_SortFloatArray(
   if ( ON::heap_sort == sort_algorithm )
     ON_hsort_float(a,nel);
   else
-    bu_sort(a,nel, sizeof(float), float_cmp, NULL);
+    ON_qsort_float(a,nel);
 }
 
 
 #define ON_SORT_TEMPLATE_TYPE int
+#define ON_QSORT_FNAME ON_qsort_int
 #define ON_HSORT_FNAME ON_hsort_int
+#include "opennurbs_qsort_template.h"
 #include "opennurbs_hsort_template.h"
 #undef ON_SORT_TEMPLATE_TYPE
+#undef ON_QSORT_FNAME
 #undef ON_HSORT_FNAME
-
-static int
-int_cmp(const void *p1, const void *p2, void *UNUSED(arg))
-{
-    int *a = (int *)p1;
-    int *b = (int *)b;
-    if (*a > *b) return 1;
-    if (*a < *b) return -1;
-    return 0;
-}
 
 void ON_SortIntArray(
         ON::sort_algorithm sort_algorithm,
@@ -277,25 +237,18 @@ void ON_SortIntArray(
   if ( ON::heap_sort == sort_algorithm )
     ON_hsort_int(a,nel);
   else
-    bu_sort(a,nel, sizeof(int), int_cmp, NULL);
+    ON_qsort_int(a,nel);
 }
 
 
 #define ON_SORT_TEMPLATE_TYPE unsigned int
+#define ON_QSORT_FNAME ON_qsort_uint
 #define ON_HSORT_FNAME ON_hsort_uint
+#include "opennurbs_qsort_template.h"
 #include "opennurbs_hsort_template.h"
 #undef ON_SORT_TEMPLATE_TYPE
+#undef ON_QSORT_FNAME
 #undef ON_HSORT_FNAME
-
-static int
-uint_cmp(const void *p1, const void *p2, void *UNUSED(arg))
-{
-    unsigned int *a = (unsigned int *)p1;
-    unsigned int *b = (unsigned int *)p2;
-    if (*a > *b) return 1;
-    if (*a < *b) return -1;
-    return 0;
-}
 
 void ON_SortUnsignedIntArray(
         ON::sort_algorithm sort_algorithm,
@@ -306,6 +259,6 @@ void ON_SortUnsignedIntArray(
   if ( ON::heap_sort == sort_algorithm )
     ON_hsort_uint(a,nel);
   else
-    bu_sort(a,nel, sizeof(unsigned int), uint_cmp, NULL);
+    ON_qsort_uint(a,nel);
 }
 

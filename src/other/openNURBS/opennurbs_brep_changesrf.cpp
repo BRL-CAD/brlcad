@@ -7,18 +7,16 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//
+//				
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
 */
 
-#include "common.h"
-
 #include "opennurbs.h"
 
 static
-bool ChangeEdgeVertex(
+bool ChangeEdgeVertex( 
          ON_Brep& brep,
          ON_BrepEdge& edge,
          int edge_end,
@@ -41,7 +39,7 @@ bool ChangeEdgeVertex(
     return false;
   if ( old_v )
     old_v->m_tolerance = ON_UNSET_VALUE;
-
+  
   ON_BrepVertex* new_v = brep.Vertex(new_vi);
   if ( new_vi >= 0 && 0 == new_v )
     return false;
@@ -83,7 +81,7 @@ bool ChangeEdgeVertex(
 
 
 static
-bool ChangeTrimVertex(
+bool ChangeTrimVertex( 
          ON_Brep& brep,
          ON_BrepTrim& trim,
          int trim_end,
@@ -119,11 +117,11 @@ bool ChangeTrimVertex(
     rc = ChangeEdgeVertex( brep, *edge, edge_end, old_vi, new_vi, bUpdateMates );
   }
 
-  return rc;
+  return true;
 }
 
 static
-ON_Curve* PushUpIsoTrim( ON_Brep& UNUSED(brep), ON_BrepTrim& trim )
+ON_Curve* PushUpIsoTrim( ON_Brep& brep, ON_BrepTrim& trim )
 {
   ON_Curve* c3 = 0;
   const ON_Surface* srf = trim.SurfaceOf();
@@ -136,8 +134,8 @@ ON_Curve* PushUpIsoTrim( ON_Brep& UNUSED(brep), ON_BrepTrim& trim )
     ON_2dPoint p1 = trim.PointAtEnd();
     double c, t0, t1;
     int isodir;
-    if (    trim.m_iso == ON_Surface::N_iso
-         || trim.m_iso == ON_Surface::S_iso
+    if (    trim.m_iso == ON_Surface::N_iso 
+         || trim.m_iso == ON_Surface::S_iso 
          || trim.m_iso == ON_Surface::y_iso )
     {
       isodir = 0;
@@ -145,8 +143,8 @@ ON_Curve* PushUpIsoTrim( ON_Brep& UNUSED(brep), ON_BrepTrim& trim )
       t0 = p0.x;
       t1 = p1.x;
     }
-    else if (    trim.m_iso == ON_Surface::E_iso
-              || trim.m_iso == ON_Surface::W_iso
+    else if (    trim.m_iso == ON_Surface::E_iso 
+              || trim.m_iso == ON_Surface::W_iso 
               || trim.m_iso == ON_Surface::x_iso  )
     {
       isodir = 1;
@@ -225,7 +223,7 @@ bool ChangeTrimSingToBdry( ON_Brep& brep, ON_BrepTrim& trim, ON_BrepTrim* nexttr
   if ( nexttrim && nexttrim->m_trim_index != trim.m_trim_index )
   {
     ChangeTrimVertex( brep, *nexttrim, 0, v0->m_vertex_index, v1->m_vertex_index, true, true );
-  }
+  }              
 
   // make a new edge
   int ci = brep.AddEdgeCurve(c3);
@@ -243,7 +241,7 @@ bool ChangeTrimSingToBdry( ON_Brep& brep, ON_BrepTrim& trim, ON_BrepTrim* nexttr
 }
 
 static
-bool ChangeTrimBdryToSing( ON_Brep& brep, ON_BrepTrim& trim,
+bool ChangeTrimBdryToSing( ON_Brep& brep, ON_BrepTrim& trim, 
                            ON_BrepTrim* prevtrim, ON_BrepTrim* nexttrim )
 {
   if ( trim.m_vi[0] == trim.m_vi[1] )
@@ -290,7 +288,7 @@ bool ChangeTrimBdryToSing( ON_Brep& brep, ON_BrepTrim& trim,
       {
         other_trim->m_type = ON_BrepTrim::boundary;
         int j = (trim.m_bRev3d == other_trim->m_bRev3d) ? 0 : 1;
-        if (    trim.m_vi[0] == other_trim->m_vi[j]
+        if (    trim.m_vi[0] == other_trim->m_vi[j] 
              && trim.m_vi[1] == other_trim->m_vi[1-j] )
         {
           // we need a new singular vertex
