@@ -52,7 +52,11 @@ add_subdirectory(rtwizard)
 add_subdirectory(mged)
 
 # Fuzz tests
-# add_subdirectory(fuzz)
+include(Fuzzer)
+brlcad_check_fuzzer()
+if (${HAVE_FUZZER})
+  add_subdirectory(fuzz)
+endif (${HAVE_FUZZER})
 
 # gchecker tests
 add_subdirectory(gchecker)

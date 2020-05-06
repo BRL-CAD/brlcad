@@ -7,13 +7,8 @@ include_directories(
 project(fuzz)
 
 add_executable(fuzz_test fuzz_ged.cpp)
-target_compile_options(fuzz_test
-            PRIVATE $<$<C_COMPILER_ID:Clang>:-g -O1 -fsanitize=fuzzer>
-            )
-
-target_link_libraries(fuzz_test PUBLIC libbu librt libged
-            PRIVATE $<$<C_COMPILER_ID:Clang>:-fsanitize=fuzzer>
-            )
+target_link_libraries(fuzz_test PUBLIC libbu librt libged)
+brlcad_add_fuzzer(fuzz_test)
 
 configure_file(run.sh "${CMAKE_CURRENT_BINARY_DIR}/fuzz" COPYONLY)
 install(PROGRAMS "${CMAKE_CURRENT_BINARY_DIR}/fuzz" DESTINATION ${BIN_DIR})
