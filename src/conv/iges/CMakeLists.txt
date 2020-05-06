@@ -1,6 +1,7 @@
 set(IGES_INCLUDE_DIRS
   ${BU_INCLUDE_DIRS}
   ${BN_INCLUDE_DIRS}
+  ${BREP_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
   ${WDB_INCLUDE_DIRS}
   )
@@ -17,7 +18,7 @@ include_directories(${IGES_INCLUDE_DIRS})
 #    n_iges.cpp
 #    n_main.cpp
 #)
-#target_link_libraries(iges libwdb librt libbu ${OPENNURBS_LIBRARIES} ${WIN32LIBS} ${M_LIBRARY})
+#target_link_libraries(iges libwdb librt libbrep libbu ${WIN32LIBS} ${M_LIBRARY})
 #install(TARGETS iges RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
 set(iges-g_SRCS

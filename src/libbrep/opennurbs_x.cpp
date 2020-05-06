@@ -7,20 +7,42 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete openNURBS copyright information see <http://www.opennurbs.org>.
 //
 ////////////////////////////////////////////////////////////////
 */
 
+#include "common.h"
+#include "vmath.h"
+
 #include "opennurbs.h"
 
 ON_X_EVENT::ON_X_EVENT()
 {
-  memset(this,0,sizeof(*this));
+    m_user = ON_U();
+    m_type = no_x_event;
+    for (int i = 0; i < 2; i++) {
+        m_A[i] = ON_3dPoint();
+        m_B[i] = ON_3dPoint();
+        m_a[i] = 0.0;
+        m_b[i] = 0.0;
+        m_dirA[i] = no_x_dir;
+        m_dirB[i] = no_x_dir;
+        m_cnodeA[i] = NULL;
+        m_nodeA_t[i] = 0.0;
+        m_cnodeB[i] = NULL;
+        m_snodeB[i] = NULL;
+        m_nodeB_t[i] = 0.0;
+    }
+    for (int i = 2; i < 4; i++) {
+        m_b[i] = 0.0;
+        m_nodeB_t[i] = 0.0;
+    }
+    m_x_eventsn = 0;
 }
 
-int ON_X_EVENT::Compare( const ON_X_EVENT* a, const ON_X_EVENT* b) 
+int ON_X_EVENT::Compare( const ON_X_EVENT* a, const ON_X_EVENT* b)
 {
   if ( !a )
   {
@@ -32,13 +54,13 @@ int ON_X_EVENT::Compare( const ON_X_EVENT* a, const ON_X_EVENT* b)
 
 	if( a->m_a[0] < b->m_a[0])
 		return -1;
-	
+
   if( a->m_a[0] > b->m_a[0])
 		return 1;
 
 	if( a->m_a[1] < b->m_a[1])
 		return -1;
-	
+
   if( a->m_a[1] > b->m_a[1])
 		return 1;
 
@@ -308,7 +330,14 @@ bool ON_X_EVENT::IsCSXEvent() const
 
 ON_SSX_EVENT::ON_SSX_EVENT()
 {
-  memset(this,0,sizeof(*this));
+    m_user = ON_U();
+    m_type = no_ssx_event;
+    m_curveA = NULL;
+    m_curveB = NULL;
+    m_curve3d = NULL;
+    m_pointA = ON_3dPoint();
+    m_pointB = ON_3dPoint();
+    m_point3d = ON_3dPoint();
 }
 
 ON_SSX_EVENT::~ON_SSX_EVENT()
@@ -540,8 +569,8 @@ bool ON_SSX_EVENT::IsValid(
 
   bool rc = true;
   double dist = ON_UNSET_VALUE;
-  ON_3dPoint A;
-  ON_3dPoint B ;
+  ON_3dPoint A3d;
+  ON_3dPoint B3d;
 
   if(text_log)
     text_log->SetIndentSize(6);
@@ -602,7 +631,6 @@ bool ON_SSX_EVENT::IsValid(
       bool ok = true;
       ON_wString smax_log;
       ON_wString sfirst_log;
-      ON_wString spoint_log;
 
       double t=ON_UNSET_VALUE;
       double maxerr = 0;
@@ -728,13 +756,13 @@ bool ON_SSX_EVENT::IsValid(
       rc = false;
     }
 
-    if( m_pointA.z!=0)
+    if (NEAR_ZERO(m_pointA.z, ON_ZERO_TOLERANCE))
     {
        if( text_log)
          text_log->Print("ON_SSX_EVENT::m_pointA.z != 0.0 for an ssx_tangent_point event.\n");
        rc = false;
     }
-    if( m_pointB.z!=0)
+    if (NEAR_ZERO(m_pointB.z, ON_ZERO_TOLERANCE))
     {
        if( text_log)
          text_log->Print("ON_SSX_EVENT::m_pointB.z != 0.0 for an ssx_tangent_point event.\n");
@@ -756,23 +784,23 @@ bool ON_SSX_EVENT::IsValid(
     if(!rc)
       return false;
 
-    A = surfaceA->PointAt( m_pointA.x, m_pointA.y );
-    B = surfaceA->PointAt( m_pointB.x, m_pointB.y );
-    dist = A.DistanceTo(m_point3d);
+    A3d = surfaceA->PointAt( m_pointA.x, m_pointA.y );
+    B3d = surfaceA->PointAt( m_pointB.x, m_pointB.y );
+    dist = A3d.DistanceTo(m_point3d);
     if(dist>xtol)
     {
       if(text_log)
         text_log->Print(" SurfaceA->PointAt( m_pointA).DistanceTo(m_point3d)=%g > intersection_tolerance = &g.\n", dist, xtol); 
       rc = false;
     }
-    dist = B.DistanceTo(m_point3d);
+    dist = B3d.DistanceTo(m_point3d);
     if(dist>xtol)
     {
       if(text_log)
         text_log->Print(" SurfaceB->PointAt( m_pointA).DistanceTo(m_point3d)=%g > intersection_tolerance = &g.\n", dist, xtol); 
       rc = false;
     }
-    dist = B.DistanceTo(A);
+    dist = B3d.DistanceTo(A3d);
     if(dist>xtol)
     {
       if(text_log)
@@ -789,13 +817,13 @@ bool ON_SSX_EVENT::IsValid(
       rc = false;
     }
 
-   if( m_pointA.z!=0)
+   if (NEAR_ZERO(m_pointA.z, ON_ZERO_TOLERANCE))
     {
        if( text_log)
          text_log->Print("ON_SSX_EVENT::m_pointA.z != 0.0 for an ssx_transverse_point event.\n");
        rc = false;
     }
-    if( m_pointB.z!=0)
+    if (NEAR_ZERO(m_pointB.z, ON_ZERO_TOLERANCE))
     {
        if( text_log)
          text_log->Print("ON_SSX_EVENT::m_pointB.z != 0.0 for an ssx_transverse_point event.\n");
@@ -819,23 +847,23 @@ bool ON_SSX_EVENT::IsValid(
     if(!rc)
       return false;
 
-    A = surfaceA->PointAt( m_pointA.x, m_pointA.y );
-    B = surfaceB->PointAt( m_pointB.x, m_pointB.y );
-    dist = A.DistanceTo(m_point3d);
+    A3d = surfaceA->PointAt( m_pointA.x, m_pointA.y );
+    B3d = surfaceB->PointAt( m_pointB.x, m_pointB.y );
+    dist = A3d.DistanceTo(m_point3d);
     if(dist>xtol)
     {
       if(text_log)
         text_log->Print(" SurfaceA->PointAt( m_pointA).DistanceTo(m_point3d)=%g > intersection_tolerance = &g.\n", dist, xtol); 
       rc = false;
     }
-    dist = B.DistanceTo(m_point3d);
+    dist = B3d.DistanceTo(m_point3d);
     if(dist>xtol)
     {
       if(text_log)
         text_log->Print(" SurfaceB->PointAt( m_pointA).DistanceTo(m_point3d)=%g > intersection_tolerance = &g.\n", dist, xtol); 
       rc = false;
     }
-    dist = B.DistanceTo(A);
+    dist = B3d.DistanceTo(A3d);
     if(dist>xtol)
     {
       if(text_log)

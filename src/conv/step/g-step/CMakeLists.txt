@@ -37,7 +37,6 @@ set(gstep_LIBS
   stepeditor
   stepdai
   stepcore
-  ${OPENNURBS_LIBRARIES}
   )
 list(APPEND gstep_LIBS ${gstep_LIBS})
 

@@ -29,6 +29,19 @@
 #include "rt/geom.h"
 #include "brep.h"
 
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic push
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#endif
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic ignored "-Wdeprecated-copy"
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic ignored "-Wdeprecated-copy"
+#endif
+
 void FindLoops(ON_Brep **b) {
     ON_3dPoint ptmatch, ptterminate, pstart, pend;
     int *curvearray;
@@ -234,6 +247,12 @@ rt_sketch_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol
     (*b)->Compact();
 }
 
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#endif
 
 // Local Variables:
 // tab-width: 8

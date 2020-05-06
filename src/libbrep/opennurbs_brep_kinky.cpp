@@ -34,7 +34,7 @@ bool ON_Brep::SplitKinkyFaces(
   {
     Compact();
   }
-  return true;
+  return rc;
 }
 
 
@@ -86,9 +86,9 @@ bool ON_Brep::SplitKinkyEdge(
   split_t.Reverse();
   for (int i=0; i<split_t.Count(); i++){
     //if split parameter is near start or end, just adjust domain.
-    double t0, t1;
-    m_E[edge_index].GetDomain(&t0, &t1);
-    if (t1 - t0 < 10.0*ON_ZERO_TOLERANCE) continue;
+    double lt0, lt1;
+    m_E[edge_index].GetDomain(&lt0, &lt1);
+    if (lt1 - lt0 < 10.0*ON_ZERO_TOLERANCE) continue;
 
     //6 Dec 2002 Dale Lear:
     //   I added the relative edge_split_s and trm_split_s tests to detect
@@ -97,21 +97,21 @@ bool ON_Brep::SplitKinkyEdge(
     // set to true if edge should be trimmed instead of split.
     bool bTrimEdgeEnd = false; 
 
-    double edge_split_s = ON_Interval(t0,t1).NormalizedParameterAt(split_t[i]);
+    double edge_split_s = ON_Interval(lt0,lt1).NormalizedParameterAt(split_t[i]);
     double trim_split_s = 0.5;
 
-    if (split_t[i] - t0 <= ON_ZERO_TOLERANCE || edge_split_s <= ON_SQRT_EPSILON )
+    if (split_t[i] - lt0 <= ON_ZERO_TOLERANCE || edge_split_s <= ON_SQRT_EPSILON )
     {
-      //m_E[edge_index].ON_CurveProxy::Trim(ON_Interval(split_t[i], t1));
-      if ( split_t[i] - t0 <= ON_ZERO_TOLERANCE )
+      //m_E[edge_index].ON_CurveProxy::Trim(ON_Interval(split_t[i], lt1));
+      if ( split_t[i] - lt0 <= ON_ZERO_TOLERANCE )
         edge_split_s = 0.0;  // just in case edge_split_s is too large for later test
       bTrimEdgeEnd = true;
       continue;
     }
-    else if (t1 - split_t[i] <= ON_ZERO_TOLERANCE || edge_split_s >= 1.0-ON_SQRT_EPSILON)
+    else if (lt1 - split_t[i] <= ON_ZERO_TOLERANCE || edge_split_s >= 1.0-ON_SQRT_EPSILON)
     {
-      //m_E[edge_index].ON_CurveProxy::Trim(ON_Interval(t0, split_t[i]));
-      if ( t1 - split_t[i] <= ON_ZERO_TOLERANCE )
+      //m_E[edge_index].ON_CurveProxy::Trim(ON_Interval(lt0, split_t[i]));
+      if ( lt1 - split_t[i] <= ON_ZERO_TOLERANCE )
         edge_split_s = 1.0; // just in case edge_split_s is too small for later test
       bTrimEdgeEnd = true;
       continue;
@@ -153,13 +153,13 @@ bool ON_Brep::SplitKinkyEdge(
       // the end of the edge or a trim for us to split it.
       if ( edge_split_s <= 0.01 )
       {
-        if ( t0 < split_t[i] )
-          m_E[edge_index].ON_CurveProxy::Trim(ON_Interval(split_t[i], t1));
+        if ( lt0 < split_t[i] )
+          m_E[edge_index].ON_CurveProxy::Trim(ON_Interval(split_t[i], lt1));
       }
       else if ( edge_split_s >= 0.99 )
       {
-        if ( split_t[i] < t1 )
-          m_E[edge_index].ON_CurveProxy::Trim(ON_Interval(t0, split_t[i]));
+        if ( split_t[i] < lt1 )
+          m_E[edge_index].ON_CurveProxy::Trim(ON_Interval(lt0, split_t[i]));
       }
       else
       {

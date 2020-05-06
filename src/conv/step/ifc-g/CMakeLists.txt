@@ -1,7 +1,7 @@
 set(IFC_INCLUDE_DIRS
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${OPENNURBS_INCLUDE_DIRS}
+  ${BREP_INCLUDE_DIRS}
   )
 BRLCAD_INCLUDE_DIRS(IFC_INCLUDE_DIRS)
 
@@ -24,7 +24,6 @@ set(ifcg_LIBS
   stepeditor
   stepdai
   stepcore
-  ${OPENNURBS_LIBRARIES}
   )
 list(APPEND ifcg_LIBS ${ifcg_LIBS})
 

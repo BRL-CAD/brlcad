@@ -2,7 +2,7 @@ set(PROC_DB_INCLUDE_DIRS
   ${NMG_INCLUDE_DIRS}
   ${WDB_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  ${OPENNURBS_INCLUDE_DIRS}
+  ${BREP_INCLUDE_DIRS}
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
 list(REMOVE_DUPLICATES PROC_DB_INCLUDE_DIRS)
@@ -16,20 +16,20 @@ BRLCAD_INCLUDE_DIRS(PROC_DB_INCLUDE_DIRS)
 # to an end user.  if a tool is fully developed, it should migrate to
 # src/shapes or some similar location.
 BRLCAD_ADDEXEC(bottest bottest.c libwdb NO_INSTALL)
-BRLCAD_ADDEXEC(brep_cobb brep_cobb.cpp "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL)
-BRLCAD_ADDEXEC(brep_cube "brep_cube.cpp;twistedcube.cpp" "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL)
-BRLCAD_ADDEXEC(brep_invalid "brep_invalid.cpp" "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL)
-BRLCAD_ADDEXEC(brep_simple "brep_simple.cpp;twistedcube.cpp" "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL) # NOTE: has manual page
-BRLCAD_ADDEXEC(brep_surface "brep_surface.cpp" "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL)
-BRLCAD_ADDEXEC(brep_trimmed "brep_trimmed.cpp" "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL)
-BRLCAD_ADDEXEC(brepintersect brepintersect.cpp "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL)
-BRLCAD_ADDEXEC(breplicator breplicator.cpp "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL)
+BRLCAD_ADDEXEC(brep_cobb brep_cobb.cpp "libwdb;libbrep" NO_STRICT NO_INSTALL)
+BRLCAD_ADDEXEC(brep_cube "brep_cube.cpp;twistedcube.cpp" "libwdb;libbrep" NO_STRICT NO_INSTALL)
+BRLCAD_ADDEXEC(brep_invalid "brep_invalid.cpp" "libwdb;libbrep" NO_STRICT NO_INSTALL)
+BRLCAD_ADDEXEC(brep_simple "brep_simple.cpp;twistedcube.cpp" "libwdb;libbrep" NO_STRICT NO_INSTALL) # NOTE: has manual page
+BRLCAD_ADDEXEC(brep_surface "brep_surface.cpp" "libwdb;libbrep" NO_STRICT NO_INSTALL)
+BRLCAD_ADDEXEC(brep_trimmed "brep_trimmed.cpp" "libwdb;libbrep" NO_STRICT NO_INSTALL)
+BRLCAD_ADDEXEC(brepintersect brepintersect.cpp "libwdb;libbrep" NO_STRICT NO_INSTALL)
+BRLCAD_ADDEXEC(breplicator breplicator.cpp "libwdb;libbrep" NO_STRICT NO_INSTALL)
 BRLCAD_ADDEXEC(csgbrep csgbrep.cpp "libwdb;libnmg" NO_STRICT NO_INSTALL)
 BRLCAD_ADDEXEC(gtimes gtimes.c "libged;librt;libbu" NO_INSTALL)
 BRLCAD_ADDEXEC(nmgmodel nmgmodel.c "libwdb;libnmg" NO_INSTALL)
 BRLCAD_ADDEXEC(pipetest pipetest.c libwdb NO_INSTALL)
 BRLCAD_ADDEXEC(spltest spltest.c "libwdb;libnmg" NO_INSTALL)
-BRLCAD_ADDEXEC(surfaceintersect "surfaceintersect.cpp;twistedcube.cpp" "libwdb;${OPENNURBS_LIBRARIES}" NO_STRICT NO_INSTALL)
+BRLCAD_ADDEXEC(surfaceintersect "surfaceintersect.cpp;twistedcube.cpp" "libwdb;libbrep" NO_STRICT NO_INSTALL)
 BRLCAD_ADDEXEC(tea_nmg tea_nmg.c "libwdb;libnmg" NO_INSTALL)
 BRLCAD_ADDEXEC(tube tube.c "libwdb;libnmg;${M_LIBRARY}" NO_INSTALL)
 BRLCAD_ADDEXEC(wdb_example wdb_example.c libwdb NO_INSTALL) # NOTE: has manual page

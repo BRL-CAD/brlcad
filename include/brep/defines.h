@@ -47,7 +47,29 @@ extern "C++" {
  */
 #define read on_read
 #define write on_write
+
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic push
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#endif
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic ignored "-Wclass-memaccess"
+#  pragma GCC diagnostic ignored "-Wdeprecated-copy"
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic ignored "-Wclass-memaccess"
+#  pragma clang diagnostic ignored "-Wdeprecated-copy"
+#endif
 #include "opennurbs.h"
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#endif
+
 #undef read
 #undef write
 

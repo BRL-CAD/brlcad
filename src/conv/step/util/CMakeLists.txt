@@ -1,6 +1,7 @@
 include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}
+  ${BREP_INCLUDE_DIRS}
   )
 
 set(STEP_SCHEMA_FILE ${STEPCODE_DIR}/data/ap203/ap203.exp)
@@ -14,7 +15,6 @@ set(lelem_LIBS
   stepeditor
   stepdai
   stepcore
-  ${OPENNURBS_LIBRARIES}
   )
 
 GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} list_elements)

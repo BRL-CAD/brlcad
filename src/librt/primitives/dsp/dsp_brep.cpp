@@ -32,6 +32,19 @@
 /* private header */
 #include "./dsp.h"
 
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic push
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic push
+#endif
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic ignored "-Wdeprecated-copy"
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic ignored "-Wdeprecated-copy"
+#endif
+
 #define MOVEPT(_p) MAT4X3PNT(_p, dsp_ip->dsp_stom, p_temp)
 #define MAX_CNT 256
 
@@ -467,6 +480,12 @@ rt_dsp_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     delete reducedsurf;
 }
 
+#if defined(__GNUC__) && !defined(__clang__)
+#  pragma GCC diagnostic pop
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic pop
+#endif
 
 // Local Variables:
 // tab-width: 8

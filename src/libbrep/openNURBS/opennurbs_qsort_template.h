@@ -1,3 +1,18 @@
+/* $NoKeywords: $ */
+/*
+//
+// Copyright (c) 1993-2012 Robert McNeel & Associates. All rights reserved.
+// OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
+// McNeel & Associates.
+//
+// THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
+// ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
+// MERCHANTABILITY ARE HEREBY DISCLAIMED.
+//
+// For complete openNURBS copyright information see <http://www.opennurbs.org>.
+//
+////////////////////////////////////////////////////////////////
+*/
 // NOTE: 14 April 2011 Dale Lear:
 //    Replace this code with Mikko's "quacksort", once "quacksort" is fully debugged
 //    This code is based ont the VC 2010 crt qsort.c file and must not be released

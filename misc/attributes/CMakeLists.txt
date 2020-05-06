@@ -7,7 +7,6 @@ add_definitions(
 include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   ${BRLCAD_SOURCE_DIR}/src/librt
-  ${OPENNURBS_INCLUDE_DIRS}
   ${BU_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
   )
