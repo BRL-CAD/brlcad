@@ -64,6 +64,9 @@ add_subdirectory(gchecker)
 # License check
 add_subdirectory(licenses)
 
+# Repository check
+add_subdirectory(repository)
+
 if(SH_EXEC)
   macro(Sh_Regression_Test testname depends_list)
     CMAKE_PARSE_ARGUMENTS(${testname} "EXCLUDE_FROM_REGRESS" "" "" ${ARGN})
