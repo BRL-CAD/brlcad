@@ -41,7 +41,7 @@ include(CheckCXXCompilerFlag)
 function(brlcad_check_fuzzer)
   set(CMAKE_REQUIRED_FLAGS -fsanitize=fuzzer)
   check_cxx_compiler_flag(-fsanitize=fuzzer HAVE_FUZZER)
-  set(HAVE_FUZZER 0 PARENT_SCOPE)
+  set(HAVE_FUZZER ${HAVE_FUZZER} PARENT_SCOPE)
 endfunction(brlcad_check_fuzzer)
 
 
