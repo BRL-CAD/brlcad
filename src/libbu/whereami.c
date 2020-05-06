@@ -707,7 +707,19 @@ int WAI_PREFIX(getModulePath)(char* out, int capacity, int* dirname_length)
 
 #else
 
-#error unsupported platform
+/* On OpenBSD, it apparently isn't possible to get this at all?  https://stackoverflow.com/a/38255753 */
+
+WAI_FUNCSPEC
+int WAI_PREFIX(getExecutablePath)(char* UNUSED(out), int UNUSED(capacity), int* UNUSED(dirname_length))
+{
+    return -1;
+}
+
+WAI_NOINLINE WAI_FUNCSPEC
+int WAI_PREFIX(getModulePath)(char* UNUSED(out), int UNUSED(capacity), int* UNUSED(dirname_length))
+{
+    return -1;
+}
 
 #endif
 
