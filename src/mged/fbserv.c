@@ -29,10 +29,9 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+#include "bio.h"
 #include "bnetwork.h"
-#ifndef HAVE_WINSOCK_H
-#  include <sys/socket.h> /* TODO - should this be in bsocket.h? */
-#endif
+#include "bsocket.h"
 
 #include "tcl.h"
 #include "vmath.h"

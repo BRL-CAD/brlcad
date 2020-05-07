@@ -26,11 +26,11 @@
 #include "common.h"
 
 #include <assert.h>
-#include <stdio.h>
 #include <signal.h>
-#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#include "bio.h"
 
 #include "vmath.h"
 #include "raytrace.h"

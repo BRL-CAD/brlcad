@@ -31,6 +31,8 @@
 #include <sys/stat.h>
 #include "png.h"
 
+#include "bio.h"
+
 #include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"

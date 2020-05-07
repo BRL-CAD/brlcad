@@ -29,6 +29,8 @@
 #include <stdlib.h>
 #include <sys/stat.h>
 
+#include "bio.h"
+
 #include "bu/app.h"
 #include "bu/getopt.h"
 #include "fb.h"

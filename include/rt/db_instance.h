@@ -25,7 +25,9 @@
 #define RT_DB_INSTANCE_H
 
 #include "common.h"
-#include "bio.h" /* for b_off_t */
+
+/* system headers */
+#include <stdio.h> /* for FILE */
 
 /* interface headers */
 #include "bu/magic.h"
@@ -35,9 +37,6 @@
 #include "rt/mem.h"
 #include "rt/directory.h"
 #include "rt/anim.h"
-
-/* system headers */
-#include "bio.h" /* for FILE */
 
 __BEGIN_DECLS
 

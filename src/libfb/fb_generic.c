@@ -43,6 +43,7 @@
 #include "bio.h"
 
 #include "bu/color.h"
+#include "bu/file.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "bu/log.h"
@@ -675,7 +676,7 @@ fb_skip_bytes(int fd, b_off_t num, int fileinput, int scanbytes, unsigned char *
     int n, tries;
 
     if (fileinput) {
-	(void)lseek(fd, num, 1);
+	(void)bu_lseek(fd, num, 1);
 	return 0;
     }
 

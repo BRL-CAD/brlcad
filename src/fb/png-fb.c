@@ -27,6 +27,9 @@
 #include "common.h"
 
 #include <stdlib.h>
+
+#include "bio.h"
+
 #include "png.h"
 
 #include "bu/getopt.h"

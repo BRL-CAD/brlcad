@@ -3233,7 +3233,7 @@ ph_pixels(struct pkg_conn *pc, char *buf)
     if ((fd = open(fr->fr_filename, 2)) < 0) {
 	/* open failed */
 	perror(fr->fr_filename);
-    } else if (lseek(fd, info.li_startpix*3, 0) < 0) {
+    } else if (bu_lseek(fd, info.li_startpix*3, 0) < 0) {
 	/* seek failed */
 	perror(fr->fr_filename);
 	(void)close(fd);

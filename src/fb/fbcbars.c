@@ -62,6 +62,8 @@
 
 #include <stdlib.h>
 
+#include "bio.h"
+
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"

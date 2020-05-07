@@ -67,6 +67,9 @@
 
 #include "common.h"
 
+/* system headers */
+#include <stdio.h> /* for FILE */
+
 /* interface headers */
 #include "vmath.h"
 #include "bu/list.h"
@@ -77,9 +80,6 @@
 #include "bn/tol.h"
 #include "bn/vlist.h"
 #include "vmath.h"
-
-/* system headers */
-#include "bio.h" /* for FILE */
 
 
 #ifndef NMG_EXPORT

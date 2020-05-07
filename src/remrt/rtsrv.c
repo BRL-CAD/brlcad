@@ -41,6 +41,7 @@
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
+#include "bio.h"
 #include "bresource.h"
 #include "bsocket.h"
 

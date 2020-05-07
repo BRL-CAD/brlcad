@@ -25,7 +25,6 @@
 #define RT_MEM_H
 
 #include "common.h"
-#include "bio.h" /* for b_off_t */
 #include "vmath.h"
 #include "rt/defines.h"
 
