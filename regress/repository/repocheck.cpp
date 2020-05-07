@@ -51,58 +51,6 @@
 #define MAX_LINES_CHECK 500
 
 bool
-priv_includes_public_hdrs(std::string &log, std::vector<std::string> &hdrs)
-{
-    bool have_private = false;
-    std::regex inc_regex("#[[:space:]]*include.*");
-
-    const char *private_hdr_filters[] {
-	".*\"bio.h\".*",
-	".*\"bnetwork.h\".*",
-	".*\"bsocket.h\".*",
-	NULL
-    };
-
-    std::map<std::string, std::regex> filters;
-    int cnt = 0;
-    const char *rf = private_hdr_filters[cnt];
-    while (rf) {
-	filters[std::string(rf)] = std::regex(rf);
-	cnt++;
-	rf = private_hdr_filters[cnt];
-    }
-
-    for (size_t i = 0; i < hdrs.size(); i++) {
-	std::string sline;
-	std::ifstream fs;
-	fs.open(hdrs[i]);
-	if (!fs.is_open()) {
-	    std::cerr << "Unable to open " << hdrs[i] << " for reading, skipping\n";
-	    continue;
-	}
-
-	int lcnt = 0;
-	while (std::getline(fs, sline) && lcnt < MAX_LINES_CHECK) {
-	    lcnt++;
-	    if (!std::regex_match(sline, inc_regex)) {
-		continue;
-	    }
-	    std::map<std::string, std::regex>::iterator r_it;
-	    for (r_it = filters.begin(); r_it != filters.end(); r_it++) {
-		if (std::regex_match(sline, r_it->second)) {
-		    have_private = true;
-		    std::string lstr = std::string("Public header ") + hdrs[i] + std::string(" matches private header regex ") + r_it->first + std::string(" at line ")  + std::to_string(lcnt) + std::string("\n");
-		    log.append(lstr);
-		}
-	    }
-	}
-
-    }
-
-    return have_private;
-}
-
-bool
 bio_redundant_check(std::string &log, std::vector<std::string> &srcs)
 {
     bool ret = false;
@@ -563,9 +511,6 @@ main(int argc, const char *argv[])
     int ret = 0;
 
     std::string log;
-    if (priv_includes_public_hdrs(log, inc_files)) {
-	ret = -1;
-    }
 
     if (bio_redundant_check(log, src_files)) {
 	ret = -1;
