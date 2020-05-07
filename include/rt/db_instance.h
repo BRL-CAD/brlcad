@@ -26,6 +26,9 @@
 
 #include "common.h"
 
+/* system headers */
+#include <stdio.h> /* for FILE */
+
 /* interface headers */
 #include "bu/magic.h"
 #include "bu/file.h"
@@ -34,9 +37,6 @@
 #include "rt/mem.h"
 #include "rt/directory.h"
 #include "rt/anim.h"
-
-/* system headers */
-#include "bio.h" /* for FILE */
 
 __BEGIN_DECLS
 

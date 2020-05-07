@@ -28,13 +28,13 @@
 
 #include "common.h"
 
+/* system headers */
+#include <stdio.h> /* for FILE */
+
 /* interface headers */
 #include "vmath.h"
 #include "bu/vls.h"
 #include "bn/poly.h"
-
-/* system headers */
-#include "bio.h" /* for FILE */
 
 __BEGIN_DECLS
 
