@@ -24,6 +24,7 @@
 #include <string.h>
 
 #include "bu/app.h"
+#include "bu/file.h"
 #include "bu/log.h"
 #include "bu/str.h"
 #include "bu/vls.h"
@@ -735,13 +736,13 @@ int WAI_PREFIX(getExecutablePath)(char* out, int capacity, int* dirname_length)
         }
 	bu_vls_sprintf(&epath, "%s", fullpath);
     } else {
-	bu_vls_sprintf(&epath, pname);
+	bu_vls_sprintf(&epath, "%s", pname);
     }
 
     int length = bu_vls_strlen(&epath);
     if (length <= capacity) {
 
-	memcpy(out, epath, length);
+	memcpy(out, bu_vls_cstr(&epath), length);
 
 	if (dirname_length) {
 	    int i;
