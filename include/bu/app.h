@@ -83,9 +83,6 @@ BU_EXPORT extern char *bu_getiwd(char *buf, size_t size);
  */
 BU_EXPORT extern const char *bu_getprogname(void);
 
-/* Expose this temporarily for testing - NOT public API!!! */
-BU_EXPORT extern const char *_bu_progname_raw(void);
-
 /**
  * Set the name of the running application.  This isn't strictly
  * necessary on platforms that have an intrinsic method for tracking
