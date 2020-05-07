@@ -33,7 +33,7 @@ main(int ac, char *av[])
 
     bu_setprogname(av[0]);
 
-    const char *pname = bu_argv0_full_path();
+    const char *pname = _bu_progname_raw();
 
     if (pname[0] == '.') {
 	char iwd[MAXPATHLEN];
