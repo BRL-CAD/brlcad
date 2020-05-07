@@ -6,6 +6,8 @@ set(fb_noinstall_headers
   fb_X.h
   )
 
+BRLCAD_CHECK_HDRS(fb_headers)
+
 CMAKEFILES(${fb_noinstall_headers})
 CMAKEFILES(CMakeLists.txt)
 

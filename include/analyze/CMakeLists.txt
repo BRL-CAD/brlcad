@@ -13,6 +13,9 @@ set(analyze_headers
   worker.h
   )
 BRLCAD_MANAGE_FILES(analyze_headers ${INCLUDE_DIR}/brlcad/analyze)
+
+BRLCAD_CHECK_HDRS(analyze_headers)
+
 CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:

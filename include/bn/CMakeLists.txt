@@ -30,6 +30,8 @@ set(bn_headers
   )
 BRLCAD_MANAGE_FILES(bn_headers ${INCLUDE_DIR}/brlcad/bn)
 
+BRLCAD_CHECK_HDRS(bn_headers)
+
 CMAKEFILES(numgen.h)
 CMAKEFILES(CMakeLists.txt)
 

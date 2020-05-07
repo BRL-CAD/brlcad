@@ -13,6 +13,9 @@ set(brep_headers
   util.h
   )
 BRLCAD_MANAGE_FILES(brep_headers ${INCLUDE_DIR}/brlcad/brep)
+
+BRLCAD_CHECK_HDRS(brep_headers)
+
 CMAKEFILES(CMakeLists.txt)
 CMAKEFILES(cdt2.h)
 
