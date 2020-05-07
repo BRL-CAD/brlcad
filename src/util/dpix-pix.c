@@ -97,7 +97,7 @@ main(int argc, char **argv)
 	}
     }
 
-    lseek(fd, 0, 0);		/* rewind(fp); */
+    bu_lseek(fd, 0, 0);		/* rewind(fp); */
 
     /* This section uses the maximum and the minimum values found to
      * compute the m and the b of the line as specified by the

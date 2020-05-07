@@ -884,9 +884,9 @@ int fonsAddFont(FONScontext* stash, const char* name, const char* path)
 	// Read in the font data.
 	fp = fopen(path, "rb");
 	if (fp == NULL) goto error;
-	fseek(fp,0,SEEK_END);
-	dataSize = (int)ftell(fp);
-	fseek(fp,0,SEEK_SET);
+	bu_fseek(fp,0,SEEK_END);
+	dataSize = (int)bu_ftell(fp);
+	bu_fseek(fp,0,SEEK_SET);
 	data = (unsigned char*)malloc(dataSize);
 	if (data == NULL) goto error;
 	if (!fread(data, 1, dataSize, fp)) goto error;

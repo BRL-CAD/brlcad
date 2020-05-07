@@ -490,6 +490,49 @@ bu_file_delete(const char *path)
     return 1;
 }
 
+int
+bu_fseek(FILE *stream, b_off_t offset, int origin)
+{
+    int ret;
+
+#if defined(HAVE__FSEEKI64) && defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8^M
+    ret = _fseeki64(stream, offset, origin);
+#else
+    ret = fseek(stream, offset, origin);
+#endif
+
+    return ret;
+}
+
+b_off_t
+bu_lseek(int fd, b_off_t offset, int whence)
+{
+    b_off_t ret;
+
+#if defined(HAVE__LSEEKI64) && defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8
+    ret = _lseeki64(fd, offset, whence);
+#else
+    ret = lseek(fd, offset, whence);
+#endif
+
+    return ret;
+}
+
+b_off_t
+bu_ftell(FILE *stream)
+{
+    b_off_t ret;
+
+#if defined(HAVE__FTELLI64) && defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8
+    /* windows 64bit */
+    ret = _ftelli64(stream);
+#else
+    ret = ftell(stream);
+#endif
+
+    return ret;
+}
+
 /*
  * Local Variables:
  * mode: C

@@ -692,7 +692,7 @@ clt_run(int cur_pixel, int last_pixel)
     }
     if (outfp) {
         bu_semaphore_acquire(BU_SEM_SYSCALL);
-        if (fseek(outfp, cur_pixel*clt_o[1], 0) != 0)
+        if (bu_fseek(outfp, cur_pixel*clt_o[1], 0) != 0)
             fprintf(stderr, "fseek error\n");
         if (fwrite(pixelp, size, 1, outfp) != 1)
             bu_exit(EXIT_FAILURE, "pixel fwrite error");
@@ -919,7 +919,7 @@ do_frame(int framenumber)
 	/*
 	 * This code allows the computation of a particular frame to a
 	 * disk file to be resumed automatically.  This is worthwhile
-	 * crash protection.  This use of stat() and fseek() is
+	 * crash protection.  This use of stat() and bu_fseek() is
 	 * UNIX-specific.
 	 *
 	 * It is not appropriate for the RT "top part" to assume

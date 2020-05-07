@@ -76,7 +76,7 @@ dsk_open(fb *ifp, const char *file, int width, int height)
 	&& (ifp->if_fd = open(file, O_RDONLY | O_BINARY, 0)) == -1) {
 	if ((ifp->if_fd = open(file, O_RDWR | O_CREAT | O_BINARY, 0664)) > 0) {
 	    /* New file, write byte at end */
-	    if (lseek(ifp->if_fd, (height*width*sizeof(RGBpixel)-1), 0) == -1) {
+	    if (bu_lseek(ifp->if_fd, (height*width*sizeof(RGBpixel)-1), 0) == -1) {
 		fb_log("disk_device_open : can not seek to end of new file.\n");
 		return -1;
 	    }
@@ -92,7 +92,7 @@ dsk_open(fb *ifp, const char *file, int width, int height)
 
     ifp->if_width = width;
     ifp->if_height = height;
-    if (lseek(ifp->if_fd, 0, 0) == -1) {
+    if (bu_lseek(ifp->if_fd, 0, 0) == -1) {
 	fb_log("disk_device_open : can not seek to beginning.\n");
 	return -1;
     }
@@ -176,7 +176,7 @@ disk_color_clear(fb *ifp, register unsigned char *bpp)
 
     /* Set start of framebuffer */
     fd = ifp->if_fd;
-    if (ifp->if_seekpos != 0 && lseek(fd, 0, 0) == -1) {
+    if (ifp->if_seekpos != 0 && bu_lseek(fd, 0, 0) == -1) {
 	fb_log("disk_color_clear : seek failed.\n");
 	return -1;
     }
@@ -221,7 +221,7 @@ dsk_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
     if (fd == 1) fd = 0;
 
     dest = ((y * ifp->if_width) + x) * sizeof(RGBpixel);
-    if (ifp->if_seekpos != dest && lseek(fd, dest, 0) == -1) {
+    if (ifp->if_seekpos != dest && bu_lseek(fd, dest, 0) == -1) {
 	fb_log("disk_buffer_read : seek to %ld failed.\n", dest);
 	return -1;
     }
@@ -264,7 +264,7 @@ dsk_write(fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 
     dest = (y * ifp->if_width + x) * sizeof(RGBpixel);
     if (dest != ifp->if_seekpos) {
-	if (lseek(ifp->if_fd, (b_off_t)dest, 0) == -1) {
+	if (bu_lseek(ifp->if_fd, (b_off_t)dest, 0) == -1) {
 	    fb_log("disk_buffer_write : seek to %zd failed.\n", dest);
 	    return -1;
 	}
@@ -295,7 +295,7 @@ dsk_rmap(fb *ifp, ColorMap *cmap)
     if (fd == 1) fd = 0;
 
     if (ifp->if_seekpos != FILE_CMAP_SIZE &&
-	lseek(fd, (b_off_t)FILE_CMAP_SIZE, 0) == -1) {
+	bu_lseek(fd, (b_off_t)FILE_CMAP_SIZE, 0) == -1) {
 	fb_log("disk_colormap_read : seek to %zd failed.\n", FILE_CMAP_SIZE);
 	return -1;
     }
@@ -318,7 +318,7 @@ dsk_wmap(fb *ifp, const ColorMap *cmap)
 	return 0;
     if (fb_is_linear_cmap(cmap))
 	return 0;
-    if (lseek(ifp->if_fd, (b_off_t)FILE_CMAP_SIZE, 0) == -1) {
+    if (bu_lseek(ifp->if_fd, (b_off_t)FILE_CMAP_SIZE, 0) == -1) {
 	fb_log("disk_colormap_write : seek to %zd failed.\n", FILE_CMAP_SIZE);
 	return -1;
     }

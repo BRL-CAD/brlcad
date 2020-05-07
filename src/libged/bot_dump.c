@@ -645,7 +645,7 @@ _ged_bot_dump(struct directory *dp, const struct db_full_path *pathp, struct rt_
 	    stl_write_bot_binary(bot, fd, dp->d_namep);
 
 	    /* Re-position pointer to 80th byte */
-	    lseek(fd, 80, SEEK_SET);
+	    bu_lseek(fd, 80, SEEK_SET);
 
 	    /* Write out number of triangles */
 	    *(uint32_t *)tot_buffer = htonl((unsigned long)total_faces);
@@ -1037,7 +1037,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 	    unsigned char tot_buffer[4];
 
 	    /* Re-position pointer to 80th byte */
-	    lseek(fd, 80, SEEK_SET);
+	    bu_lseek(fd, 80, SEEK_SET);
 
 	    /* Write out number of triangles */
 	    *(uint32_t *)tot_buffer = htonl((unsigned long)total_faces);
@@ -1517,7 +1517,7 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 	    unsigned char tot_buffer[4];
 
 	    /* Re-position pointer to 80th byte */
-	    lseek(fd, 80, SEEK_SET);
+	    bu_lseek(fd, 80, SEEK_SET);
 
 	    /* Write out number of triangles */
 	    *(uint32_t *)tot_buffer = htonl((unsigned long)total_faces);
