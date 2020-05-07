@@ -16,10 +16,13 @@
 #include "bu.h"
 #include "dylib.h"
 
-int main() {
+int main(int UNUSED(ac), const char *av[]) {
     int expected_plugins = 2;
     struct bu_ptbl plugins = BU_PTBL_INIT_ZERO;
     struct bu_ptbl handles = BU_PTBL_INIT_ZERO;
+
+    bu_setprogname(av[0]);
+
     int pcnt = dylib_load_plugins(&plugins, &handles);
     if (pcnt != expected_plugins) {
 	bu_log("Expected %d plugins, found %d.\n", expected_plugins, pcnt);

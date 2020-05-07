@@ -21,8 +21,16 @@
 
 #include "common.h"
 
+#include <string.h>
+
+#include "bu/app.h"
+#include "bu/file.h"
 #include "bu/log.h"
+#include "bu/str.h"
+#include "bu/vls.h"
 #include "bu/malloc.h"
+
+extern const char *_bu_progname_raw(void);
 
 #define WAI_MALLOC(size) bu_malloc(size, "WAI_MALLOC")
 #define WAI_FREE(p) bu_free(p, "WAI_FREE")
@@ -707,12 +715,51 @@ int WAI_PREFIX(getModulePath)(char* out, int capacity, int* dirname_length)
 
 #else
 
-/* On OpenBSD, it apparently isn't possible to get this at all?  https://stackoverflow.com/a/38255753 */
-
+/* LIBBU fallback implementation */
 WAI_FUNCSPEC
-int WAI_PREFIX(getExecutablePath)(char* UNUSED(out), int UNUSED(capacity), int* UNUSED(dirname_length))
+int WAI_PREFIX(getExecutablePath)(char* out, int capacity, int* dirname_length)
 {
-    return -1;
+    const char *pname = _bu_progname_raw();
+    struct bu_vls epath = BU_VLS_INIT_ZERO;
+
+    if (pname[0] == '.') {
+        char iwd[MAXPATHLEN];
+        char fullpath[MAXPATHLEN];
+        bu_getiwd(iwd, MAXPATHLEN);
+	// Use a VLS for this, since in principle there's nothing stopping the
+	// iwd and the bu_progname each individually from running right up to
+	// MAXPATHLEN, and if they do a MAXPATHLEN buffer won't hold both of
+	// them for realpath to try and digest down into something sane.
+        bu_vls_sprintf(&epath, "%s%c%s", iwd, BU_DIR_SEPARATOR, pname);
+        if (!bu_file_realpath(bu_vls_cstr(&epath), fullpath)) {
+            /* Unable to resolve initial path concatentation */
+	    bu_vls_free(&epath);
+	    return -1;
+        }
+	bu_vls_sprintf(&epath, "%s", fullpath);
+    } else {
+	bu_vls_sprintf(&epath, "%s", pname);
+    }
+
+    int length = bu_vls_strlen(&epath);
+    if (length <= capacity) {
+
+	memcpy(out, bu_vls_cstr(&epath), length);
+
+	if (dirname_length) {
+	    int i;
+	    for (i = length - 1; i >= 0; --i) {
+		if (out[i] == '/') {
+		    *dirname_length = i;
+		    break;
+		}
+	    }
+	}
+    }
+
+    bu_vls_free(&epath);
+
+    return length;
 }
 
 WAI_NOINLINE WAI_FUNCSPEC
@@ -726,3 +773,13 @@ int WAI_PREFIX(getModulePath)(char* UNUSED(out), int UNUSED(capacity), int* UNUS
 #ifdef __cplusplus
 }
 #endif
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */
