@@ -13,6 +13,8 @@ set(bg_headers
   )
 BRLCAD_MANAGE_FILES(bg_headers ${INCLUDE_DIR}/brlcad/bg)
 
+BRLCAD_CHECK_HDRS(bg_headers)
+
 CMAKEFILES(pointgen.h)
 CMAKEFILES(CMakeLists.txt)
 

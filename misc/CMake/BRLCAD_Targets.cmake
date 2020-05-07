@@ -536,28 +536,38 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
 endfunction(BRLCAD_ADDLIB libname srcslist libslist)
 
 #-----------------------------------------------------------------------------
-# Compile test for an isolated header file
-function(BRLCAD_CHECK_HDR hdrfile)
+# Compile test for isolated header files, to check that they are self contained
+add_custom_target(check-headers ALL)
+set_target_properties(check-headers PROPERTIES FOLDER "BRL-CAD Header Checks")
+function(BRLCAD_CHECK_HDRS hdrfiles)
 
   if (MSVC)
     # Don't know how to do this on Windows
     return()
   endif()
 
-  string(REPLACE "-" "_" STMPFILE "${hdrfile}")
-  string(REPLACE "." "_" STMPFILE "${STMPFILE}")
-  string(REPLACE "/" "_" STMPFILE "${STMPFILE}")
+  get_filename_component(SRCDIR "${CMAKE_CURRENT_SOURCE_DIR}" NAME)
 
-  add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${STMPFILE}.stamp
-    COMMAND ${CMAKE_CXX_COMPILER} -I${CMAKE_SOURCE_DIR}/include -I${CMAKE_SOURCE_DIR}/src/other/openNURBS
-            -I${CMAKE_SOURCE_DIR}/src/other/tcl/generic -fsyntax-only -Wall -Wextra -Wno-deprecated
-	    ${CMAKE_CURRENT_SOURCE_DIR}/${hdrfile}
-    COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/${hdrfile}.stamp
-    DEPENDS ${hdrfile}
-    )
-  add_custom_target(${STMPFILE}-check DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${STMPFILE}.stamp)
-  set_target_properties(${STMPFILE}-check PROPERTIES FOLDER "BRL-CAD Header Checks")
+  foreach(hdrfile ${${hdrfiles}})
+
+    string(REPLACE "-" "_" STMPFILE "${SRCDIR}_${hdrfile}")
+    string(REPLACE "." "_" STMPFILE "${STMPFILE}")
+    string(REPLACE "/" "_" STMPFILE "${STMPFILE}")
+
+    add_custom_command(
+      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${STMPFILE}.stamp
+      COMMAND ${CMAKE_CXX_COMPILER} -I${CMAKE_SOURCE_DIR}/include -I${CMAKE_SOURCE_DIR}/src/other/openNURBS
+      -I${CMAKE_SOURCE_DIR}/src/other/tcl/generic -fsyntax-only -Wall -Wextra -Wno-deprecated
+      ${CMAKE_CURRENT_SOURCE_DIR}/${hdrfile}
+      COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/${hdrfile}.stamp
+      DEPENDS ${hdrfile}
+      )
+    add_custom_target(${STMPFILE}-check DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${STMPFILE}.stamp)
+    set_target_properties(${STMPFILE}-check PROPERTIES FOLDER "BRL-CAD Header Checks")
+
+    add_dependencies(check-headers ${STMPFILE}-check)
+
+  endforeach(hdrfile ${${hdrfiles}})
 
 endfunction()
 

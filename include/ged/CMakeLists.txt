@@ -12,6 +12,9 @@ set(ged_headers
   view.h
   )
 BRLCAD_MANAGE_FILES(ged_headers ${INCLUDE_DIR}/brlcad/ged)
+
+BRLCAD_CHECK_HDRS(ged_headers)
+
 CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:

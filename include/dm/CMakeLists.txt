@@ -5,6 +5,8 @@ set(dm_headers
   )
 BRLCAD_MANAGE_FILES(dm_headers ${INCLUDE_DIR}/brlcad/dm)
 
+BRLCAD_CHECK_HDRS(dm_headers)
+
 CMAKEFILES(dm-design.h)
 CMAKEFILES(CMakeLists.txt)
 
