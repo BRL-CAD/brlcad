@@ -25,7 +25,6 @@
 #define RT_MATER_H
 
 #include "common.h"
-#include "bio.h" /* for b_off_t */
 #include "rt/defines.h"
 #include "bu/vls.h"
 

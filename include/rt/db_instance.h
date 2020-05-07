@@ -25,7 +25,6 @@
 #define RT_DB_INSTANCE_H
 
 #include "common.h"
-#include "bio.h" /* for b_off_t */
 
 /* interface headers */
 #include "bu/magic.h"

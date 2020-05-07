@@ -25,7 +25,7 @@
 #include <stddef.h> /* for size_t */
 #include <stdarg.h> /* For va_list */
 
-#include "bio.h" /* for FILE and off_t */
+#include "bio.h" /* for FILE */
 
 #include "bu/defines.h"
 #include "bu/magic.h"

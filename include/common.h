@@ -159,6 +159,12 @@ typedef unsigned short u_short;
 #  define HAVE_U_TYPES 1
 #endif
 
+/* We want 64 bit (large file) I/O capabilities whenever they are available.
+ * Always define this before we include sys/types.h */
+#ifndef _FILE_OFFSET_BITS
+#  define _FILE_OFFSET_BITS 64
+#endif
+
 /**
  * C99 does not provide a ssize_t even though it is provided by SUS97.
  * regardless, we use it so make sure it's declared by using the
@@ -196,6 +202,28 @@ typedef ptrdiff_t ssize_t;
 #  else
 #    include "pstdint.h"
 #  endif
+#endif
+
+/* off_t is 32 bit size even on 64 bit Windows. In the past we have tried to
+ * force off_t to be 64 bit but this is failing on newer Windows/Visual Studio
+ * verions in 2020 - therefore, we instead introduce the b_off_t define to
+ * properly substitute the correct numerical type for the correct platform.  */
+#if defined(_WIN64)
+#  include <sys/stat.h>
+#  define b_off_t __int64
+#  define fseek _fseeki64
+#  define ftell _ftelli64
+#  define fstat _fstati64
+#  define lseek _lseeki64
+#  define stat  _stati64
+#elif defined (_WIN32)
+#  include <sys/stat.h>
+#  define b_off_t _off_t
+#  define fstat _fstat
+#  define lseek _lseek
+#  define stat  _stat
+#else
+#  define b_off_t off_t
 #endif
 
 /**

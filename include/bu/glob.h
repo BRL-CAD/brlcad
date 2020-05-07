@@ -23,8 +23,6 @@
 
 #include "common.h"
 
-#include "bio.h" /* for b_off_t */
-
 #include "bu/defines.h"
 #include "bu/vls.h"
 
