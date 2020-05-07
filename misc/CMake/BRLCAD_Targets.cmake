@@ -536,6 +536,32 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
 endfunction(BRLCAD_ADDLIB libname srcslist libslist)
 
 #-----------------------------------------------------------------------------
+# Compile test for an isolated header file
+function(BRLCAD_CHECK_HDR hdrfile)
+
+  if (MSVC)
+    # Don't know how to do this on Windows
+    return()
+  endif()
+
+  string(REPLACE "-" "_" STMPFILE "${hdrfile}")
+  string(REPLACE "." "_" STMPFILE "${STMPFILE}")
+  string(REPLACE "/" "_" STMPFILE "${STMPFILE}")
+
+  add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${STMPFILE}.stamp
+    COMMAND ${CMAKE_CXX_COMPILER} -I${CMAKE_SOURCE_DIR}/include -I${CMAKE_SOURCE_DIR}/src/other/openNURBS
+            -I${CMAKE_SOURCE_DIR}/src/other/tcl/generic -fsyntax-only -Wall -Wextra -Wno-deprecated
+	    ${CMAKE_CURRENT_SOURCE_DIR}/${hdrfile}
+    COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/${hdrfile}.stamp
+    DEPENDS ${hdrfile}
+    )
+  add_custom_target(${STMPFILE}-check DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${STMPFILE}.stamp)
+  set_target_properties(${STMPFILE}-check PROPERTIES FOLDER "BRL-CAD Header Checks")
+
+endfunction()
+
+#-----------------------------------------------------------------------------
 # For situations when a local 3rd party library (say, zlib) has been chosen in
 # preference to a system version of that library, it is important to ensure
 # that the local header(s) get included before the system headers.  Normally

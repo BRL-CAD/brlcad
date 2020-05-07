@@ -48,6 +48,8 @@ set(public_hdrs
   )
 BRLCAD_MANAGE_FILES("${public_hdrs}" ${INCLUDE_DIR}/brlcad)
 
+BRLCAD_CHECK_HDR(analyze/density.h)
+
 BUILD_CFG_HDR(brlcad_ident.h.in ${INCLUDE_DIR}/brlcad)
 BUILD_CFG_HDR(brlcad_version.h.in ${INCLUDE_DIR}/brlcad)
 
