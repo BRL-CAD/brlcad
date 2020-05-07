@@ -5497,7 +5497,7 @@ main(int ac, char *av[])
     bu_log( "\t\t%d of the facetized parts were BREP models\n", parts_brep );
 
     elapsed_time = time( &end_time ) - start_time;
-    bu_log( "Elapsed time: %02ld:%02ld:%02ld\n", elapsed_time/3600, (elapsed_time%3600)/60, (elapsed_time%60) );
+    bu_log( "Elapsed time: %02lld:%02lld:%02lld\n", (long long)elapsed_time/3600, (long long)(elapsed_time%3600)/60, (long long)(elapsed_time%60) );
 
     return 0;
 
