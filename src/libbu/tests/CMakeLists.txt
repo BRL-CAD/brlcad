@@ -753,6 +753,8 @@ CMAKEFILES(
 
 CMAKEFILES(CMakeLists.txt)
 
+BRLCAD_ADDEXEC(bu_app app.c libbu TEST)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake
