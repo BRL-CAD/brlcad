@@ -32,6 +32,7 @@
 #include "common.h"
 #include "analyze/defines.h"
 
+#include "bu/opt.h"
 #include "bu/vls.h"
 #include "raytrace.h"
 

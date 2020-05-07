@@ -25,6 +25,8 @@
 #ifndef OPTICAL_PLASTIC_H
 #define OPTICAL_PLASTIC_H
 
+#include "common.h"
+
 #define PL_NULL ((struct phong_specific *)0)
 #define PL_O(m) offsetof(struct phong_specific, m)
 

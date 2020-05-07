@@ -22,6 +22,7 @@
 #define VECTOR_FPU_H
 
 #include "common.h"
+#include <ostream>
 
 /** @addtogroup bn_vectormath */
 /** @{ */

@@ -33,6 +33,7 @@
 
 #include "common.h"
 #include "vmath.h"
+#include "bn/numgen.h"
 #include "bg/defines.h"
 
 __BEGIN_DECLS

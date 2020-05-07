@@ -27,6 +27,7 @@
 #define VECTOR_X86_H
 
 #include "common.h"
+#include <ostream>
 
 #ifdef HAVE_EMMINTRIN_H
 #  include <emmintrin.h>
