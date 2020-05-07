@@ -30,6 +30,8 @@
 #include "bu/vls.h"
 #include "bu/malloc.h"
 
+extern const char *_bu_progname_raw(void);
+
 #define WAI_MALLOC(size) bu_malloc(size, "WAI_MALLOC")
 #define WAI_FREE(p) bu_free(p, "WAI_FREE")
 #define WAI_REALLOC(p, size) bu_realloc(p, size, "WAI_REALLOC")
