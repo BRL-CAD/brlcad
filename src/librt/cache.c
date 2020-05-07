@@ -37,6 +37,7 @@
 #endif
 #include "lz4.h"
 
+#include "bio.h"
 #include "bnetwork.h"
 
 /* implementation headers */

@@ -31,6 +31,7 @@
 
 #include "common.h"
 
+
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
@@ -41,6 +42,8 @@
 #include "png.h"
 
 #include "tcl.h"
+
+#include "bio.h"
 
 #include "bn.h"
 #include "bu/cmd.h"

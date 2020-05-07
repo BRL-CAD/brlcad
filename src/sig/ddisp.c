@@ -28,6 +28,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "bio.h"
+
 #include "bu/malloc.h"
 #include "bu/color.h"
 #include "bu/str.h"

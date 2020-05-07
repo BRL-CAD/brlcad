@@ -72,6 +72,8 @@
 #include <stdarg.h>
 #include <limits.h>
 
+#include "bio.h"
+
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"

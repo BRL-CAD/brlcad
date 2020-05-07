@@ -29,7 +29,25 @@
 
 #include "common.h"
 
-#include "bio.h" /* needed to include windows.h with protections */
+/* We need to include windows.h with protections,
+ * rather than having opennurbs.h do it */
+#ifdef HAVE_WINDOWS_H
+#  ifdef WIN32_LEAN_AND_MEAN
+#    undef WIN32_LEAN_AND_MEAN
+#  endif
+#  define WIN32_LEAN_AND_MEAN 434144 /* don't want winsock.h */
+
+#  ifdef NOMINMAX
+#    undef NOMINMAX
+#  endif
+#  define NOMINMAX 434144 /* don't break std::min and std::max */
+
+#  include <windows.h>
+
+#  undef WIN32_LEAN_AND_MEAN /* unset to not interfere with calling apps */
+#  undef NOMINMAX
+#endif
+
 #ifdef __cplusplus
 
 

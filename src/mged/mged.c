@@ -44,15 +44,12 @@
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
-#ifdef HAVE_SYS_SOCKET_H
-/* for recv */
-#  include <sys/socket.h>
-#endif
 
 #ifdef HAVE_POLL_H
 #  include <poll.h>
 #endif
 
+#include "bio.h"
 #include "bsocket.h"
 
 #include "tcl.h"

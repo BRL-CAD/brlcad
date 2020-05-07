@@ -36,6 +36,9 @@
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
+
+#include "bio.h"
+
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"

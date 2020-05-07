@@ -77,6 +77,8 @@
 #include <string.h>
 #include <stdarg.h>
 
+#include "bio.h"
+
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/getopt.h"

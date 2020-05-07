@@ -30,6 +30,7 @@
 #include <sys/stat.h>
 #include <string.h>
 #include <ctype.h>
+#include "bio.h"
 #include "bnetwork.h"
 
 #include "bu/cv.h"

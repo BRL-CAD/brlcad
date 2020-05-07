@@ -26,6 +26,8 @@
 
 #include "common.h"
 
+#include "bio.h"
+
 #include "bu/color.h"
 #include "bu/file.h"
 #include "bu/log.h"

@@ -37,6 +37,8 @@
 #  include <winsock.h>
 #endif
 
+#include "bio.h"
+
 #include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "bu/file.h"

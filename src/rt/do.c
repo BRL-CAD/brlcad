@@ -38,6 +38,8 @@
 #  include <sys/stat.h>
 #endif
 
+#include "bio.h"
+
 #include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/debug.h"

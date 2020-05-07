@@ -35,6 +35,8 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bio.h"
+
 #include "bu/sort.h"
 #include "bu/units.h"
 #include "./ged_private.h"
