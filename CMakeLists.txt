@@ -1106,10 +1106,10 @@ CONFIG_H_APPEND(BRLCAD "#define SIZEOF_VOID_P ${CMAKE_SIZEOF_VOID_P}\n")
 
 # OpenBSD doesn't define __WORD_SIZE
 if(${CMAKE_WORD_SIZE} MATCHES "32BIT")
-  CONFIG_H_APPEND(BRLCAD "#ifndef __WORD_SIZE\n#  define __WORD_SIZE 32\n#endif\n")
+  CONFIG_H_APPEND(BRLCAD "#ifndef __WORDSIZE\n#  define __WORDSIZE 32\n#endif\n")
 endif(${CMAKE_WORD_SIZE} MATCHES "32BIT")
 if(${CMAKE_WORD_SIZE} MATCHES "64BIT")
-  CONFIG_H_APPEND(BRLCAD "#ifndef __WORD_SIZE\n#  define __WORD_SIZE 64\n#endif\n")
+  CONFIG_H_APPEND(BRLCAD "#ifndef __WORDSIZE\n#  define __WORDSIZE 64\n#endif\n")
 endif(${CMAKE_WORD_SIZE} MATCHES "64BIT")
 
 # Based on what we are doing, we may need to constrain our search paths
