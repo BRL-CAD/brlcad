@@ -560,8 +560,9 @@ function(BRLCAD_CHECK_HDRS hdrfiles)
 
       add_custom_command(
 	OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${STMPFILE}.stamp
-	COMMAND ${CMAKE_CXX_COMPILER} -I${CMAKE_SOURCE_DIR}/include -I${CMAKE_SOURCE_DIR}/src/other/openNURBS
-	-I${CMAKE_SOURCE_DIR}/src/other/tcl/generic -fsyntax-only -Wall -Wextra -Wno-deprecated
+	COMMAND ${CMAKE_CXX_COMPILER} -I${CMAKE_SOURCE_DIR}/include -I${CMAKE_BINARY_DIR}/include
+         	-I${CMAKE_SOURCE_DIR}/src/other/openNURBS -I${CMAKE_SOURCE_DIR}/src/other/tcl/generic
+	       	-fsyntax-only -Wall -Wextra -Wno-deprecated
 	${CMAKE_CURRENT_SOURCE_DIR}/${hdrfile}
 	COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/${hdrfile}.stamp
 	DEPENDS ${hdrfile}
