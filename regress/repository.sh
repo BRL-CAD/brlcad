@@ -82,27 +82,6 @@ CMakeLists.txt"
 
 
 ###
-# TEST: make sure nobody includes private headers like bio.h in a
-# public header
-log "... running public header private header checks"
-
-for i in bio.h bnetwork.h bsocket.h ; do
-    if test ! -f "include/$i" ; then
-	log "Unable to find include/$i, aborting"
-	exit 1
-    fi
-    FOUND="`grep '[^f]${i}' $INCFILES /dev/null | grep -v 'include/${i}'`"
-
-    if test "x$FOUND" = "x" ; then
-	log "-> $i header check succeeded"
-    else
-	log "-> $i header check FAILED, see $LOGFILE"
-	FAILED="`expr $FAILED + 1`"
-    fi
-done
-
-
-###
 # TEST: make sure bio.h isn't redundant with system headers
 log "... running bio.h redundancy check"
 
