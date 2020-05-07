@@ -47,8 +47,6 @@ set(bu_headers
   )
 BRLCAD_MANAGE_FILES(bu_headers ${INCLUDE_DIR}/brlcad/bu)
 
-BRLCAD_CHECK_HDRS(bu_headers)
-
 CMAKEFILES(CMakeLists.txt)
 CMAKEFILES(column.h)
 CMAKEFILES(tbl.h)

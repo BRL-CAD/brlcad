@@ -9,8 +9,6 @@ set(icv_headers
   )
 BRLCAD_MANAGE_FILES(icv_headers ${INCLUDE_DIR}/brlcad/icv)
 
-BRLCAD_CHECK_HDRS(icv_headers)
-
 CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
