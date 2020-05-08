@@ -72,9 +72,9 @@ fi
 # get a source and header file list so we only walk the sources once
 log "... scanning source tree"
 
-SRCFILES="`find src -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.cc -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*misc/tools.*' -not -regex '.*misc/svn2git.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -not -regex '.*src/libpkg.*' -not -regex '.*/bullet/.*' -not -regex '.*/shapelib/.*'`"
+SRCFILES="`find src -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.cc -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*misc/tools.*' -not -regex '.*misc/svn2git.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -not -regex '.*src/libpkg.*' -not -regex '.*/bullet/.*' -not -regex '.*/shapelib/.*' -not -regex '.*/tcl.*' -not -regex '.*/tk.*'`"
 
-INCFILES="`find include -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.cc -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*misc/tools.*' -not -regex '.*/bullet/.*' -not -regex '.*misc/svn2git.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -not -regex '.*pkg.h'`"
+INCFILES="`find include -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.cc -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*misc/tools.*' -not -regex '.*/bullet/.*' -not -regex '.*misc/svn2git.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -not -regex '.*pkg.h' -not -regex '.*/tcl.*' -not -regex '.*/tk.*'`"
 
 BLDFILES="`find src -type f \( -name \*.cmake -o -name CMakeLists.txt \) -not -regex '.*src/other.*' -not -regex '.*misc/tools.*' -not -regex '.*/bullet/.*' -not -regex '.*misc/svn2git.*' -not -regex '.*~' -not -regex '.*cache.*' -not -regex '.*\.svn.*'`
 `find misc -type f \( -name \*.cmake -o -name CMakeLists.txt \) -not -regex '.*src/other.*' -not -regex '.*misc/CMake/Find.*' -not -regex '.*misc/tools.*' -not -regex '.*/bullet/.*' -not -regex '.*misc/svn2git.*' -not -regex '.*~' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -not -regex '.*autoheader.*'`
@@ -229,6 +229,8 @@ for func in fgets abort dirname getopt strcat strncat strlcat strcpy strdup strn
 | sed 's/.*\/str\.c:.*strncpy.*//' \
 | sed 's/.*\/tests\/dirname\.c:.*dirname.*//' \
 | sed 's/.*\/ttcp.c:.*//' \
+| sed 's/.*\/tcl.h//' \
+| sed 's/.*\/tk.h//' \
 | sed 's/.*\/vls\.c:.*strncpy.*//' \
 | sed 's/.*\/wfobj\/obj_util\.cpp:.*strncpy.*//' \
 | sed '/^$/d' \
