@@ -95,7 +95,7 @@ if (DEFINED BRLCAD_HDR_CHECK AND NOT MSVC)
 	-I${CMAKE_SOURCE_DIR}/src/other/openNURBS -I${CMAKE_SOURCE_DIR}/src/other/tcl/generic
 	-fsyntax-only -Wall -Wextra -Wno-deprecated
 	${CMAKE_CURRENT_SOURCE_DIR}/${hdrfile}
-	COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/${hdrfile}.stamp
+	COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/${STMPFILE}.stamp
 	DEPENDS ${hdrfile}
 	)
       add_custom_target(${STMPFILE}-check DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${STMPFILE}.stamp)
