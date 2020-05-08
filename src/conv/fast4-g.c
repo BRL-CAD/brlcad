@@ -2062,10 +2062,10 @@ make_bot_object(void)
 static void
 skip_section(void)
 {
-    off_t section_start;
+    b_off_t section_start;
 
     /* skip to start of next section */
-    section_start = bu_ftell(fpin);
+    section_start = ftell(fpin);
     if (section_start < 0) {
 	bu_exit(1, "Error: couldn't get input file's current file position.\n");
     }
@@ -2076,7 +2076,7 @@ skip_section(void)
 	       bu_strncmp(line, "WALL", 4) &&
 	       bu_strncmp(line, "VEHICLE", 7))
 	{
-	    section_start = bu_ftell(fpin);
+	    section_start = ftell(fpin);
 	    if (section_start < 0) {
 		bu_exit(1, "Error: couldn't get input file's current file position.\n");
 	    }
@@ -2085,7 +2085,7 @@ skip_section(void)
 	}
     }
     /* seek to start of the section */
-    bu_fseek(fpin, section_start, SEEK_SET);
+    fseek(fpin, section_start, SEEK_SET);
 }
 
 

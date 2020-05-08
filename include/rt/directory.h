@@ -25,6 +25,7 @@
 #define RT_DIRECTORY_H
 
 #include "common.h"
+#include "bio.h" /* for b_off_T */
 #include "vmath.h"
 #include "bu/list.h"
 #include "rt/anim.h"
@@ -35,7 +36,7 @@ __BEGIN_DECLS
  * One of these structures is allocated in memory to represent each
  * named object in the database.
  *
- * Note that a d_addr of RT_DIR_PHONY_ADDR ((off_t)-1) means that
+ * Note that a d_addr of RT_DIR_PHONY_ADDR ((b_off_t)-1) means that
  * database storage has not been allocated yet.
  *
  * Note that there is special handling for RT_DIR_INMEM "in memory"
@@ -60,7 +61,7 @@ struct directory {
     uint32_t d_magic;   /**< @brief Magic number */
     char * d_namep;             /**< @brief pointer to name string */
     union {
-	off_t file_offset;      /**< @brief disk address in obj file */
+	b_off_t file_offset;      /**< @brief disk address in obj file */
 	void *ptr;              /**< @brief ptr to in-memory-only obj */
     } d_un;
     struct directory * d_forw;  /**< @brief link to next dir entry */
@@ -79,7 +80,7 @@ struct directory {
 #define RT_CK_DIR(_dp) BU_CKMAG(_dp, RT_DIR_MAGIC, "(librt)directory")
 
 #define d_addr  d_un.file_offset
-#define RT_DIR_PHONY_ADDR       ((off_t)-1)     /**< @brief Special marker for d_addr field */
+#define RT_DIR_PHONY_ADDR       ((b_off_t)-1)     /**< @brief Special marker for d_addr field */
 
 /* flags for db_diradd() and friends */
 #define RT_DIR_SOLID    0x1   /**< @brief this name is a solid */

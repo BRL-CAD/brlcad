@@ -150,22 +150,6 @@ extern int snprintf(char *str, size_t size, const char *format, ...);
 #  define FMIN(a, b)	(((a)<(b))?(a):(b))
 #endif
 
-/* If we've got the wrong off_t size, do something about it (*before*
-   we include sys/types.h, which can hold the incorrect definition.)
-   Also set any other related defines that might be needed. */
-#if defined(OFF_T_SIZE_MISMATCH)
-/*#  pragma message("Fixing off_t definition")*/
-#  ifdef off_t
-#    undef off_t
-#  endif
-typedef ptrdiff_t off_t;
-#  ifdef _off_t
-#    undef _off_t
-#  endif
-typedef ptrdiff_t _off_t;
-#  define _OFF_T_DEFINED
-#endif
-
 /* make sure the old bsd types are defined for portability */
 #if !defined(HAVE_U_TYPES)
 typedef unsigned char u_char;

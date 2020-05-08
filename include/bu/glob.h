@@ -23,7 +23,7 @@
 
 #include "common.h"
 
-#include <sys/types.h> /* for off_t */
+#include "bio.h" /* for b_off_t */
 
 #include "bu/defines.h"
 #include "bu/vls.h"
@@ -58,7 +58,7 @@ struct bu_dirent {
  */
 struct bu_stat {
     struct bu_vls name;
-    off_t size;
+    b_off_t size;
     void *data;
 };
 

@@ -27,10 +27,10 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <ctype.h>		/* used by inet_addr() routine, below */
 #include <time.h>
 #include <string.h>
+
 
 #ifdef HAVE_SYS_PARAM_H
 #  include <sys/param.h>
@@ -58,15 +58,6 @@
 #  undef LITTLE_ENDIAN		/* defined in netinet/{ip.h, tcp.h} */
 #endif
 
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#else
-#  include <windows.h>
-#  include <io.h>
-#  include <fcntl.h>
-#endif
-
-
 /* Not all systems with "BSD Networking" include UNIX Domain sockets */
 #ifdef HAVE_SYS_UN_H
 #  include <sys/un.h>		/* UNIX Domain sockets */
@@ -86,6 +77,9 @@
 #endif
 
 #include <errno.h>
+
+#include "bio.h"
+
 #include "pkg.h"
 
 #if defined(HAVE_GETHOSTBYNAME) && !defined(HAVE_DECL_GETHOSTBYNAME) && !defined(_WINSOCKAPI_)

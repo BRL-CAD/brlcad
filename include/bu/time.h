@@ -23,10 +23,9 @@
 
 #include "common.h"
 
-#include <stdio.h> /* For FILE */
-#include <sys/types.h> /* for off_t */
 #include <stddef.h> /* for size_t */
 #include <stdlib.h> /* for getenv */
+#include "bio.h" /* for b_off_t */
 
 #include "bu/defines.h"
 #include "bu/vls.h"

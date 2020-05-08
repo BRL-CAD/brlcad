@@ -105,7 +105,7 @@ main(int argc, char **argv)
 	    fprintf(stderr, "result[%d] = %d\n", i, result[i]);
     }
 
-    bu_fseek(fp, 0, 0);
+    fseek(fp, 0, 0);
     while ((n = fread(buf, 1, BUFSIZE, fp)) > 0) {
 	for (i = 0; i < n; i++) {
 	    long idx = buf[i];

@@ -10,9 +10,10 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 2020-04-22  Release 7.30.8                                     ---
+--- 2020-05-08  Release 7.30.8                                     ---
 ----------------------------------------------------------------------
 
+* added gchecker tool to generate MGED overlap inputs - Cliff Yapp
 * improved behavior of MGED overlap checker GUI - Nick Reed
 * fixed startup dimensions of overlap checker window - Nick Reed
 * fixed rtedge line drawing color when using -W flag - Cliff Yapp

@@ -33,7 +33,7 @@
 #include "rt/defines.h"
 
 /* system headers */
-#include "bio.h" /* for FILE */
+#include "bio.h" /* for FILE, b_off_t */
 
 __BEGIN_DECLS
 
@@ -432,7 +432,7 @@ RT_EXPORT extern void db_wrap_v4_external(struct bu_external *op,
 RT_EXPORT extern int db_write(struct db_i	*dbip,
 			      const void *	addr,
 			      size_t		count,
-			      off_t		offset);
+			      b_off_t		offset);
 
 /**
  * Add name from dp->d_namep to external representation of solid, and
@@ -486,7 +486,7 @@ RT_EXPORT extern union record *db_getmrec(const struct db_i *,
 RT_EXPORT extern int db_get(const struct db_i *,
 			    const struct directory *dp,
 			    union record *where,
-			    off_t offset,
+			    b_off_t offset,
 			    size_t len);
 /* put several records into db */
 
@@ -501,7 +501,7 @@ RT_EXPORT extern int db_get(const struct db_i *,
 RT_EXPORT extern int db_put(struct db_i *,
 			    const struct directory *dp,
 			    union record *where,
-			    off_t offset, size_t len);
+			    b_off_t offset, size_t len);
 
 /**
  * Obtains a object from the database, leaving it in external
@@ -548,7 +548,7 @@ RT_EXPORT extern int db_put_external(struct bu_external *ep,
 RT_EXPORT extern int db_scan(struct db_i *,
 			     int (*handler)(struct db_i *,
 					    const char *name,
-					    off_t addr,
+					    b_off_t addr,
 					    size_t nrec,
 					    int flags,
 					    void *client_data),
@@ -641,7 +641,7 @@ RT_EXPORT extern int db_v4_get_units_code(const char *str);
 RT_EXPORT extern int db_dirbuild(struct db_i *dbip);
 RT_EXPORT extern struct directory *db5_diradd(struct db_i *dbip,
 					      const struct db5_raw_internal *rip,
-					      off_t laddr,
+					      b_off_t laddr,
 					      void *client_data);
 
 /**
@@ -654,7 +654,7 @@ RT_EXPORT extern struct directory *db5_diradd(struct db_i *dbip,
 RT_EXPORT extern int db5_scan(struct db_i *dbip,
 			      void (*handler)(struct db_i *,
 					      const struct db5_raw_internal *,
-					      off_t addr,
+					      b_off_t addr,
 					      void *client_data),
 			      void *client_data);
 
@@ -805,13 +805,13 @@ RT_EXPORT extern struct directory *db_lookup(const struct db_i *,
  */
 RT_EXPORT extern struct directory *db_diradd(struct db_i *,
 					     const char *name,
-					     off_t laddr,
+					     b_off_t laddr,
 					     size_t len,
 					     int flags,
 					     void *ptr);
 RT_EXPORT extern struct directory *db_diradd5(struct db_i *dbip,
 					      const char *name,
-					      off_t				laddr,
+					      b_off_t				laddr,
 					      unsigned char			major_type,
 					      unsigned char 			minor_type,
 					      unsigned char			name_hidden,
