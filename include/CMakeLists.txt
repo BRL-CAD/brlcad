@@ -83,23 +83,27 @@ if (DEFINED BRLCAD_HDR_CHECK AND NOT MSVC)
 
   foreach(hdrfile ${hdrfiles})
 
-    string(REPLACE "-" "_" STMPFILE "${hdrfile}")
-    string(REPLACE "." "_" STMPFILE "${STMPFILE}")
-    string(REPLACE "/" "_" STMPFILE "${STMPFILE}")
+    if (NOT "${hdrfile}" STREQUAL "RtServerImpl.h")
 
-    add_custom_command(
-      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${STMPFILE}.stamp
-      COMMAND ${CMAKE_CXX_COMPILER} -I${CMAKE_SOURCE_DIR}/include -I${CMAKE_BINARY_DIR}/include
-      -I${CMAKE_SOURCE_DIR}/src/other/openNURBS -I${CMAKE_SOURCE_DIR}/src/other/tcl/generic
-      -fsyntax-only -Wall -Wextra -Wno-deprecated
-      ${CMAKE_CURRENT_SOURCE_DIR}/${hdrfile}
-      COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/${hdrfile}.stamp
-      DEPENDS ${hdrfile}
-      )
-    add_custom_target(${STMPFILE}-check DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${STMPFILE}.stamp)
-    set_target_properties(${STMPFILE}-check PROPERTIES FOLDER "BRL-CAD Header Checks")
+      string(REPLACE "-" "_" STMPFILE "${hdrfile}")
+      string(REPLACE "." "_" STMPFILE "${STMPFILE}")
+      string(REPLACE "/" "_" STMPFILE "${STMPFILE}")
 
-    add_dependencies(check-headers ${STMPFILE}-check)
+      add_custom_command(
+	OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${STMPFILE}.stamp
+	COMMAND ${CMAKE_CXX_COMPILER} -I${CMAKE_SOURCE_DIR}/include -I${CMAKE_BINARY_DIR}/include
+	-I${CMAKE_SOURCE_DIR}/src/other/openNURBS -I${CMAKE_SOURCE_DIR}/src/other/tcl/generic
+	-fsyntax-only -Wall -Wextra -Wno-deprecated
+	${CMAKE_CURRENT_SOURCE_DIR}/${hdrfile}
+	COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/${hdrfile}.stamp
+	DEPENDS ${hdrfile}
+	)
+      add_custom_target(${STMPFILE}-check DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${STMPFILE}.stamp)
+      set_target_properties(${STMPFILE}-check PROPERTIES FOLDER "BRL-CAD Header Checks")
+
+      add_dependencies(check-headers ${STMPFILE}-check)
+
+    endif (NOT "${hdrfile}" STREQUAL "RtServerImpl.h")
 
   endforeach(hdrfile ${hdrfiles})
 
