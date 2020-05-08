@@ -76,7 +76,7 @@ CMAKEFILES(${include_misc})
 # Note: don't know how to do this on Windows - skip with Visual Studio
 if (DEFINED BRLCAD_HDR_CHECK AND NOT MSVC)
 
-  add_custom_target(check-headers ALL)
+  add_custom_target(check-headers)
   set_target_properties(check-headers PROPERTIES FOLDER "BRL-CAD Header Checks")
 
   file(GLOB_RECURSE hdrfiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "*.h")
