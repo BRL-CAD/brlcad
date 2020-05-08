@@ -1,14 +1,15 @@
-set(LICENSE_CHECK_EXEC "${LCHECK_EXEC}")
-set(WORKING_DIR "${W_DIR}")
-set(FILES_LIST "${F_LIST}")
-set(LICENSE_FILE_SET "${L_LIST}")
-set(LOG_FILE "${L_FILE}")
-set(STAMP_FILE "${S_FILE}")
+string(REPLACE "\\" "" LICENSE_CHECK_EXEC "${LCHECK_EXEC}")
+string(REPLACE "\\" "" WORKING_DIR "${W_DIR}")
+string(REPLACE "\\" "" FILES_LIST "${F_LIST}")
+string(REPLACE "\\" "" LICENSE_FILE_SET "${L_LIST}")
+string(REPLACE "\\" "" LOG_FILE "${L_FILE}")
+string(REPLACE "\\" "" STAMP_FILE "${S_FILE}")
+string(REPLACE "\\" "" B_SOURCE_DIR "${BRLCAD_SOURCE_DIR}")
 
 file(WRITE "${LOG_FILE}" "Running license check:\n${LICENSE_CHECK_EXEC} ${LICENSE_FILE_SET} ${FILES_LIST}\n")
 message("Processing...")
 execute_process(
-  COMMAND "${LICENSE_CHECK_EXEC}" "${LICENSE_FILE_SET}" "${FILES_LIST}" "${BRLCAD_SOURCE_DIR}" RESULT_VARIABLE license_result
+  COMMAND "${LICENSE_CHECK_EXEC}" "${LICENSE_FILE_SET}" "${FILES_LIST}" "${B_SOURCE_DIR}" RESULT_VARIABLE license_result
   OUTPUT_VARIABLE license_log ERROR_VARIABLE license_log
   WORKING_DIRECTORY ${WORKING_DIR}
   )
