@@ -34,6 +34,8 @@
 
 get_filename_component(TFD "${TF_DIR}" REALPATH)
 
+string(REPLACE "\\" "" WORKING_PKGFILE ${WORKING_PKGFILE})
+string(REPLACE "\\" "" INSTALL_PKGFILE ${INSTALL_PKGFILE})
 
 file(WRITE "${WORKING_PKGFILE}" "if {![package vsatisfies [package provide Tcl] 8.6]} return\n")
 file(APPEND "${WORKING_PKGFILE}" "if {[string length [package provide Itcl]] && ![package vsatisfies [package provide Itcl] 3.4]} return\n")

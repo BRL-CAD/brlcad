@@ -42,8 +42,8 @@ function(ITK_PKGINDEX target pkgname pkgversion)
     set(INST_DIR "${BIN_DIR}")
   endif(MSVC)
 
-  set(WORKING_PKGFILE ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${LIB_DIR}/${pkgname}${pkgversion}/pkgIndex.tcl)
-  set(INSTALL_PKGFILE ${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl)
+  set(WORKING_PKGFILE "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${LIB_DIR}/${pkgname}${pkgversion}/pkgIndex.tcl")
+  set(INSTALL_PKGFILE "${CMAKE_CURRENT_BINARY_DIR}/pkgIndex.tcl")
 
   add_custom_command(OUTPUT ${WORKING_PKGFILE} ${INSTALL_PKGFILE}
     COMMAND ${CMAKE_COMMAND} -DWORKING_PKGFILE="${WORKING_PKGFILE}" -DINSTALL_PKGFILE="${INSTALL_PKGFILE}" -DTF_NAME="$<TARGET_FILE_NAME:${target}>" -DTF_DIR="$<TARGET_FILE_DIR:${target}>" -Dpkgname="${pkgname}" -Dpkgversion="${pkgversion}" -DINST_DIR="${INST_DIR}" -P ${CMAKE_CURRENT_SOURCE_DIR}/pkg_mkIndex.cmake
