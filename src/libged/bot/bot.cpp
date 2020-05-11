@@ -287,6 +287,7 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
     gb.gedp = gedp;
     gb.cmds = _bot_cmds;
     gb.verbosity = 0;
+    gb.visualize = 0;
     struct bu_color *color = NULL;
 
     // Sanity
@@ -346,21 +347,67 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
+    if (opt_ret < 0) {
+	_bot_cmd_help(&gb, 0, NULL);
+	return GED_ERROR;
+    }
 
-    if (opt_ret != 1) {
-	bu_vls_printf(gedp->ged_result_str, ": no object specified before subcommand\n");
-	bu_vls_printf(gedp->ged_result_str, "bot [options] <objname> subcommand [args]\n");
+    // Jump the processing past any options specified
+    for (int i = cmd_pos; i < argc; i++) {
+	argv[i - cmd_pos] = argv[i];
+    }
+
+    // This will eventually need to change, as it makes it impossible to just
+    // "plug in" new bot subcommands, but for now maintain compatibility with
+    // prior bot command behavior by adjusting the positions of argv elements.
+    //
+    // We want to do the object lookup code once, up front, rather than having
+    // to duplicate it in each subcommand.
+    const char *primitive = NULL;
+
+    const char *sub = argv[0];
+    int len = strlen(sub);
+    if (bu_strncmp(sub, "get", len) == 0) {
+        primitive = argv[argc - 1];
+	argc--;
+    } else if (bu_strncmp(sub, "extrude", len) == 0) {
+        primitive = argv[1];
+	argv[1] = argv[2];
+	argc--;
+    } else if (bu_strncmp(sub, "chull", len) == 0) {
+        primitive = argv[1];
+	argv[1] = argv[2];
+	argc--;
+    } else if (bu_strncmp(sub, "isect", len) == 0) {
+        primitive = argv[1];
+        argv[1] = argv[2];
+	argc--;
+    } else if (bu_strncmp(sub, "check", len) == 0) {
+	primitive = argv[argc - 1];
+	argc--;
+    } else if (bu_strncmp(sub, "remesh", len) == 0) {
+	primitive = argv[1];
+        argv[1] = argv[2];
+	argc--;
+    } else {
+        bu_vls_printf(gedp->ged_result_str, "%s is not a known subcommand!", sub);
+        return GED_ERROR;
+    }
+
+    if (!primitive) {
+	bu_vls_printf(gedp->ged_result_str, "No primitive object specified");
 	if (color) {
 	    BU_PUT(color, struct bu_color);
 	}
 	return GED_ERROR;
     }
 
+
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
-    gb.solid_name = std::string(argv[0]);
+    gb.solid_name = std::string(primitive);
     gb.dp = db_lookup(gedp->ged_wdbp->dbip, gb.solid_name.c_str(), LOOKUP_NOISY);
     if (gb.dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, ": %s is not a solid or does not exist in database", gb.solid_name.c_str());
@@ -385,10 +432,6 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
 
     gb.vbp = rt_vlblock_init();
     gb.color = color;
-
-    // Jump the processing past any options specified
-    argc = argc - cmd_pos;
-    argv = &argv[cmd_pos];
 
     int ret;
     if (bu_cmd(_bot_cmds, argc, argv, 0, (void *)&gb, &ret) == BRLCAD_OK) {
