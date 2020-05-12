@@ -47,7 +47,7 @@ __BEGIN_DECLS
 
 struct _ged_bot_info {
     struct ged *gedp = NULL;
-    struct rt_db_internal intern;
+    struct rt_db_internal *intern = NULL;
     struct directory *dp = NULL;
     struct bn_vlblock *vbp = NULL;
     struct bu_color *color = NULL;
@@ -63,6 +63,8 @@ extern void _ged_cvt_vlblock_to_solids(struct ged *gedp,
 				       struct bn_vlblock *vbp,
 				       const char *name,
 				       int copy);
+
+int _bot_obj_setup(struct _ged_bot_info *gb, const char *name);
 
 int _bot_cmd_msgs(void *bs, int argc, const char **argv, const char *us, const char *ps);
 

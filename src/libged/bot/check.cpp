@@ -265,7 +265,7 @@ _bot_check_msgs(void *bs, int argc, const char **argv, const char *us, const cha
 extern "C" int
 _bot_cmd_degen_faces(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "bot [options] <objname1> degen_faces";
+    const char *usage_string = "bot [options] degen_faces <objname>";
     const char *purpose_string = "Check BoT for degenerate faces";
     if (_bot_check_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -275,7 +275,7 @@ _bot_cmd_degen_faces(void *bs, int argc, const char **argv)
 
     struct _ged_bot_icheck *gib = (struct _ged_bot_icheck *)bs;
 
-    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gib->gb->intern.idb_ptr);
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gib->gb->intern->idb_ptr);
     struct bu_color *color = gib->gb->color;
     struct bn_vlblock *vbp = gib->gb->vbp;
 
@@ -335,7 +335,7 @@ _bot_cmd_degen_faces(void *bs, int argc, const char **argv)
 extern "C" int
 _bot_cmd_extra_edges(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "bot [options] <objname1> extra_edges";
+    const char *usage_string = "bot [options] extra_edges <objname>";
     const char *purpose_string = "Check BoT for edges which are not part of any triangle faces";
     if (_bot_check_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -345,7 +345,7 @@ _bot_cmd_extra_edges(void *bs, int argc, const char **argv)
 
     struct _ged_bot_icheck *gib = (struct _ged_bot_icheck *)bs;
 
-    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gib->gb->intern.idb_ptr);
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gib->gb->intern->idb_ptr);
     struct bu_color *color = gib->gb->color;
     struct bn_vlblock *vbp = gib->gb->vbp;
 
@@ -415,7 +415,7 @@ _bot_cmd_extra_edges(void *bs, int argc, const char **argv)
 extern "C" int
 _bot_cmd_flipped_edges(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "bot [options] <objname1> flipped_edges";
+    const char *usage_string = "bot [options] flipped_edges <objname>";
     const char *purpose_string = "Check BoT for edges which are incorrectly oriented";
     if (_bot_check_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -425,7 +425,7 @@ _bot_cmd_flipped_edges(void *bs, int argc, const char **argv)
 
     struct _ged_bot_icheck *gib = (struct _ged_bot_icheck *)bs;
 
-    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gib->gb->intern.idb_ptr);
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gib->gb->intern->idb_ptr);
     struct bu_color *color = gib->gb->color;
     struct bn_vlblock *vbp = gib->gb->vbp;
 
@@ -495,7 +495,7 @@ _bot_cmd_flipped_edges(void *bs, int argc, const char **argv)
 extern "C" int
 _bot_cmd_open_edges(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "bot [options] <objname1> open_edges";
+    const char *usage_string = "bot [options] open_edges <objname>";
     const char *purpose_string = "Check BoT for edges which are not connected to two triangle faces";
     if (_bot_check_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -505,7 +505,7 @@ _bot_cmd_open_edges(void *bs, int argc, const char **argv)
 
     struct _ged_bot_icheck *gib = (struct _ged_bot_icheck *)bs;
 
-    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gib->gb->intern.idb_ptr);
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gib->gb->intern->idb_ptr);
     struct bu_color *color = gib->gb->color;
     struct bn_vlblock *vbp = gib->gb->vbp;
 
@@ -576,17 +576,15 @@ _bot_cmd_open_edges(void *bs, int argc, const char **argv)
 extern "C" int
 _bot_cmd_solid(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "bot [options] <objname1> solid";
+    const char *usage_string = "bot [options] check solid <objname>";
     const char *purpose_string = "Check if BoT defines a topologically closed solid";
     if (_bot_check_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
     }
 
-    argc--;argv++;
-
     struct _ged_bot_icheck *gib = (struct _ged_bot_icheck *)bs;
 
-    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gib->gb->intern.idb_ptr);
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gib->gb->intern->idb_ptr);
     struct bn_vlblock *vbp = gib->gb->vbp;
     struct bg_trimesh_solid_errors errors = BG_TRIMESH_SOLID_ERRORS_INIT_NULL;
     int not_solid;
@@ -663,7 +661,7 @@ _bot_check_help(struct _ged_bot_icheck *bs, int argc, const char **argv)
 {
     struct _ged_bot_icheck *gb = (struct _ged_bot_icheck *)bs;
     if (!argc || !argv) {
-	bu_vls_printf(gb->vls, "bot [options] <objname> check [subcommand]\n");
+	bu_vls_printf(gb->vls, "bot [options] check [subcommand] <objname>\n");
 	bu_vls_printf(gb->vls, "Available subcommands:\n");
 	const struct bu_cmdtab *ctp = NULL;
 	int ret;
@@ -723,14 +721,25 @@ _bot_cmd_check(void *bs, int argc, const char **argv)
 	return GED_OK;
     }
 
-    if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
-        bu_vls_printf(gb->gedp->ged_result_str, "%s is not of type bot\n", gb->solid_name.c_str());
-        return GED_ERROR;
+    // Skip the "check" subcommand
+    argc--;argv++;
+
+    if (!argc) {
+	_bot_check_help(&gib, 0, NULL);
+	return GED_OK;
     }
 
-    argc--; argv++;
+    if (_bot_obj_setup(gb, argv[argc-1]) == GED_ERROR) {
+	return GED_ERROR;
+    }
+    argc--;
 
-    // Must have valid subcommand to process
+    if (!argc) {
+	// No subcommand - do the solid check
+	return _bot_cmd_solid((void *)&gib, 0, NULL);
+    }
+
+    // Have subcommand - must have valid subcommand to process
     if (bu_cmd_valid(_bot_check_cmds, argv[0]) != BRLCAD_OK) {
 	bu_vls_printf(gib.vls, "invalid subcommand \"%s\" specified\n", argv[0]);
 	_bot_check_help(&gib, 0, NULL);

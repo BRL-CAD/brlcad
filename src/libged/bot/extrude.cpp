@@ -82,7 +82,7 @@ bot_face_normal(vect_t *n, struct rt_bot_internal *bot, int i)
 extern "C" int
 _bot_cmd_extrude(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "bot [options] <objname> extrude <output_obj>";
+    const char *usage_string = "bot [options] extrude <objname> [output_obj]";
     const char *purpose_string = "generate an ARB6 representation of the specified plate mode BoT object";
     if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -90,12 +90,11 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
 
-    if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
-        bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type bot\n", gb->solid_name.c_str());
-        return GED_ERROR;
+    if (_bot_obj_setup(gb, argv[0]) == GED_ERROR) {
+	return GED_ERROR;
     }
 
-    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern.idb_ptr);
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern->idb_ptr);
     if (bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS) {
         bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not a plate mode bot\n", gb->solid_name.c_str());
 	return GED_ERROR;
@@ -112,6 +111,23 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
         bu_vls_printf(gb->gedp->ged_result_str, "bot %s does not have any non-degenerate face thicknesses\n", gb->solid_name.c_str());
 	return GED_OK;
     }
+
+    // Make a comb to hold the union of the new solid primitives
+    struct wmember wcomb;
+    struct bu_vls comb_name = BU_VLS_INIT_ZERO;
+    if (argc > 1) {
+	bu_vls_sprintf(&comb_name, "%s", argv[1]);
+    } else {
+	bu_vls_sprintf(&comb_name, "%s_extrusion.r", gb->dp->d_namep);
+    }
+
+    if (db_lookup(gb->gedp->ged_wdbp->dbip, bu_vls_cstr(&comb_name), LOOKUP_NOISY) != RT_DIR_NULL) {
+	bu_vls_printf(gb->gedp->ged_result_str, "Object %s already exists!\n", bu_vls_cstr(&comb_name));
+	bu_vls_free(&comb_name);
+	return GED_ERROR;
+    }
+
+    BU_LIST_INIT(&wcomb.l);
 
     // Average the face normals at each vertex to get an average direction in
     // which to move each vertex for solid generation.
@@ -139,13 +155,6 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 	VUNITIZE(v2n[i]);
     }
 
-    // Make a comb to hold the union of the new solid primitives
-    struct wmember wcomb;
-    struct bu_vls comb_name = BU_VLS_INIT_ZERO;
-    bu_vls_sprintf(&comb_name, "%s_solid.r", gb->dp->d_namep);
-    // TODO - db_lookup to make sure it doesn't already exist
-    BU_LIST_INIT(&wcomb.l);
-
     // For each face, define an arb6 using shifted vertices.  For each face
     // vertex two new points will be constructed - an inner and outer - based
     // on the original point, the local face thickness, and the avg face dir
@@ -165,6 +174,7 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 		VSCALE(fnorm, fnorm, -1);
 	    }
 	    VMOVE(pf[j], &bot->vertices[bot->faces[i*3+j]*3]);
+	    // TODO - try trig values here for better scaling, up to some sane max...
 	    VSCALE(pv1[j], fnorm, bot->thickness[i] * ((bot->mode == RT_BOT_CW) ? -1 : 0));
 	    VSCALE(pv2[j], fnorm, -1*bot->thickness[i] * ((bot->mode == RT_BOT_CW) ? -1 : 0));
 	}
