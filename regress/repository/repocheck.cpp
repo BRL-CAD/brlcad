@@ -63,7 +63,7 @@ bio_redundant_check(std::string &log, std::vector<std::string> &srcs)
 	".*<unistd.h>.*",
 	".*<fcntl.h>.*",
 	NULL
-    };    
+    };
 
     std::map<std::string, std::regex> filters;
     int cnt = 0;
@@ -100,7 +100,7 @@ bio_redundant_check(std::string &log, std::vector<std::string> &srcs)
 	    for (f_it = filters.begin(); f_it != filters.end(); f_it++) {
 		if (std::regex_match(sline, f_it->second)) {
 		    match_line_nums[f_it->first].insert(lcnt);
-		    continue;	
+		    continue;
 		}
 	    }
 	}
@@ -135,7 +135,7 @@ bnetwork_redundant_check(std::string &log, std::vector<std::string> &srcs)
 	".*<netinet/tcp.h>.*",
 	".*<arpa/inet.h>.*",
 	NULL
-    };    
+    };
 
     std::map<std::string, std::regex> filters;
     int cnt = 0;
@@ -172,7 +172,7 @@ bnetwork_redundant_check(std::string &log, std::vector<std::string> &srcs)
 	    for (f_it = filters.begin(); f_it != filters.end(); f_it++) {
 		if (std::regex_match(sline, f_it->second)) {
 		    match_line_nums[f_it->first].insert(lcnt);
-		    continue;	
+		    continue;
 		}
 	    }
 	}
@@ -227,7 +227,7 @@ common_include_first(std::string &log, std::vector<std::string> &srcs)
 	".*/ttcp.c",
 	".*/uce-dirent.h",
 	NULL
-    };    
+    };
 
     std::vector<std::regex> filters;
     int cnt = 0;
@@ -243,13 +243,13 @@ common_include_first(std::string &log, std::vector<std::string> &srcs)
 	for (size_t j = 0; j < filters.size(); j++) {
 	    if (std::regex_match(srcs[i], filters[j])) {
 		skip = true;
-		break;	
+		break;
 	    }
 	}
 	if (skip) {
 	    continue;
 	}
-	
+
 	std::ifstream fs;
 	fs.open(srcs[i]);
 	if (!fs.is_open()) {
@@ -296,22 +296,23 @@ bool
 api_usage(std::string &log, std::vector<std::string> &srcs)
 {
     bool ret = false;
-    std::map<std::string, std::vector<std::regex>> exemptions; 
-    exemptions[std::string(".*[^a-zA-Z0-9_:]abort[(].*")].push_back(std::regex(".*/bomb[.]c$")); 
-    exemptions[std::string(".*[^a-zA-Z0-9_:]dirname[(].*")].push_back(std::regex(".*/tests/dirname[.]c$")); 
-    exemptions[std::string(".*[^a-zA-Z0-9_:]remove[(].*")].push_back(std::regex(".*/file[.]c$")); 
-    exemptions[std::string(".*[^a-zA-Z0-9_:]strcasecmp[(].*")].push_back(std::regex(".*/str[.]c$")); 
-    exemptions[std::string(".*[^a-zA-Z0-9_:]strcmp[(].*")].push_back(std::regex(".*/str[.]c$")); 
-    exemptions[std::string(".*[^a-zA-Z0-9_:]strdup[(].*")].push_back(std::regex(".*/str[.]c$")); 
-    exemptions[std::string(".*[^a-zA-Z0-9_:]strlcat[(].*")].push_back(std::regex(".*/str[.]c$")); 
-    exemptions[std::string(".*[^a-zA-Z0-9_:]strncasecmp[(].*")].push_back(std::regex(".*/str[.]c$")); 
-    exemptions[std::string(".*[^a-zA-Z0-9_:]strncat[(].*")].push_back(std::regex(".*/str[.]c$")); 
-    exemptions[std::string(".*[^a-zA-Z0-9_:]strncmp[(]*")].push_back(std::regex(".*/str[.]c$")); 
-    exemptions[std::string(".*[^a-zA-Z0-9_:]strncpy[(].*")].push_back(std::regex(".*/rt/db4[.]h$")); 
-    exemptions[std::string(".*[^a-zA-Z0-9_:]strncpy[(].*")].push_back(std::regex(".*/str[.]c$")); 
-    exemptions[std::string(".*[^a-zA-Z0-9_:]strncpy[(].*")].push_back(std::regex(".*/vls[.]c$")); 
-    exemptions[std::string(".*[^a-zA-Z0-9_:]strncpy[(].*")].push_back(std::regex(".*/wfobj/obj_util[.]cpp$")); 
-    
+    std::map<std::string, std::vector<std::regex>> exemptions;
+    exemptions[std::string(".*[^a-zA-Z0-9_:]abort[(].*")].push_back(std::regex(".*/bomb[.]c$"));
+    exemptions[std::string(".*[^a-zA-Z0-9_:]dirname[(].*")].push_back(std::regex(".*/tests/dirname[.]c$"));
+    exemptions[std::string(".*[^a-zA-Z0-9_:]remove[(].*")].push_back(std::regex(".*/file[.]c$"));
+    exemptions[std::string(".*[^a-zA-Z0-9_:]strcasecmp[(].*")].push_back(std::regex(".*/str[.]c$"));
+    exemptions[std::string(".*[^a-zA-Z0-9_:]strcmp[(].*")].push_back(std::regex(".*/str[.]c$"));
+    exemptions[std::string(".*[^a-zA-Z0-9_:]strdup[(].*")].push_back(std::regex(".*/str[.]c$"));
+    exemptions[std::string(".*[^a-zA-Z0-9_:]strlcat[(].*")].push_back(std::regex(".*/str[.]c$"));
+    exemptions[std::string(".*[^a-zA-Z0-9_:]strlcpy[(].*")].push_back(std::regex(".*/str[.]c$"));
+    exemptions[std::string(".*[^a-zA-Z0-9_:]strncasecmp[(].*")].push_back(std::regex(".*/str[.]c$"));
+    exemptions[std::string(".*[^a-zA-Z0-9_:]strncat[(].*")].push_back(std::regex(".*/str[.]c$"));
+    exemptions[std::string(".*[^a-zA-Z0-9_:]strncmp[(].*")].push_back(std::regex(".*/str[.]c$"));
+    exemptions[std::string(".*[^a-zA-Z0-9_:]strncpy[(].*")].push_back(std::regex(".*/rt/db4[.]h$"));
+    exemptions[std::string(".*[^a-zA-Z0-9_:]strncpy[(].*")].push_back(std::regex(".*/str[.]c$"));
+    exemptions[std::string(".*[^a-zA-Z0-9_:]strncpy[(].*")].push_back(std::regex(".*/vls[.]c$"));
+    exemptions[std::string(".*[^a-zA-Z0-9_:]strncpy[(].*")].push_back(std::regex(".*/wfobj/obj_util[.]cpp$"));
+
     const char *file_exemptions[] {
 	".*/CONFIG_CONTROL_DESIGN.*",
 	".*/bu/log[.]h$",
@@ -319,8 +320,9 @@ api_usage(std::string &log, std::vector<std::string> &srcs)
 	".*/bu/str[.]h$",
 	".*/cursor[.]c$",
 	".*/ttcp[.]c$",
+	".*/misc/CMake/compat/.*",
 	NULL
-    };    
+    };
 
     const char *funcs[] {
 	".*[^a-zA-Z0-9_:]abort[(].*",
@@ -370,7 +372,7 @@ api_usage(std::string &log, std::vector<std::string> &srcs)
 	for (size_t j = 0; j < file_filters.size(); j++) {
 	    if (std::regex_match(srcs[i], file_filters[j])) {
 		skip = true;
-		break;	
+		break;
 	    }
 	}
 	if (skip) {
@@ -394,7 +396,7 @@ api_usage(std::string &log, std::vector<std::string> &srcs)
 	    for (ff_it = func_filters.begin(); ff_it != func_filters.end(); ff_it++) {
 		if (std::regex_match(sline, ff_it->second)) {
 		    // If we have a it, make sure it's not an exemption
-		    std::cout << "check " << sline << "\n";	
+		    std::cout << "check " << sline << "\n";
 		    bool exempt = false;
 		    if (exemptions.find(ff_it->first) != exemptions.end()) {
 			std::vector<std::regex>::iterator e_it;
@@ -403,8 +405,8 @@ api_usage(std::string &log, std::vector<std::string> &srcs)
 				exempt = true;
 				break;
 			    }
-			} 
-		    } 
+			}
+		    }
 		    if (!exempt) {
 			instances[ff_it->first].insert(lcnt);
 			ret = true;
@@ -473,7 +475,7 @@ main(int argc, const char *argv[])
 	rf = reject_filters[cnt];
     }
 
-    
+
     // Apply filters and build up the file sets we want to introspect.
     std::regex codefile_regex(".*[.](c|cpp|cxx|cc|h|hpp|hxx|y|yy|l)([.]in)?$");
     std::regex buildfile_regex(".*([.]cmake([.]in)?|CMakeLists.txt)$");
@@ -487,7 +489,7 @@ main(int argc, const char *argv[])
 	for (size_t i = 0; i < filters.size(); i++) {
 	    if (std::regex_match(sfile, filters[i])) {
 		reject = true;
-		break;	
+		break;
 	    }
 	}
 	if (reject) {

@@ -8,7 +8,6 @@ message("Processing...")
 execute_process(
   COMMAND "${REPOSITORY_CHECK_EXEC}" "${FILES_LIST}" RESULT_VARIABLE repository_result
   OUTPUT_VARIABLE repository_log ERROR_VARIABLE repository_log
-  WORKING_DIRECTORY ${WORKING_DIR}
   )
 message("Processing... done.")
 

@@ -1,9 +1,10 @@
+#set(REPOCHECK_TEST 1)
 if (DEFINED REPOCHECK_TEST)
   add_executable(repocheck repocheck.cpp)
   if (O3_COMPILER_FLAG)
     # This check benefits greatly from optimization. If we have the O3 flag, use
     # it - whether or not the standard build settings would add it.
-    target_compile_options(lcheck PRIVATE "-O3")
+    target_compile_options(repocheck PRIVATE "-O3")
   endif (O3_COMPILER_FLAG)
   set_target_properties(repocheck PROPERTIES FOLDER "BRL-CAD Regression Tests")
 
@@ -19,7 +20,7 @@ if (DEFINED REPOCHECK_TEST)
     -DL_FILE="${LOG_FILE}" -DS_FILE="${STAMP_FILE}" -DF_LIST="${ALL_FILES_LIST}"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/regress-repository.cmake"
     )
-  add_custom_target(regress-repository DEPENDS ${STAMP_FILE} ${CMAKE_BINARY_DIR}/embedded_repository.txt)
+  add_custom_target(regress-repository DEPENDS ${STAMP_FILE} ${ALL_FILES_LIST})
   set_target_properties(regress-repository PROPERTIES FOLDER "BRL-CAD Regression Tests")
   add_dependencies(regress regress-repository)
   add_dependencies(check regress-repository)
