@@ -217,6 +217,8 @@ _bot_cmd_isect(void *bs, int argc, const char **argv)
 
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
 
+    argc--; argv++;
+
     if (argc != 2) {
         bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
         return GED_ERROR;
@@ -227,7 +229,7 @@ _bot_cmd_isect(void *bs, int argc, const char **argv)
     }
 
     struct rt_bot_internal *bot = (struct rt_bot_internal *)gb->intern->idb_ptr;
-    
+
     struct directory *bot_dp_2;
     struct rt_db_internal intern_2;
     GED_DB_LOOKUP(gb->gedp, bot_dp_2, argv[1], LOOKUP_NOISY, GED_ERROR & GED_QUIET);

@@ -169,13 +169,15 @@ bot_remesh(struct ged *gedp, struct rt_bot_internal *UNUSED(bot), double UNUSED(
 extern "C" int
 _bot_cmd_remesh(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "bot [options] remesh <objname> [output_bot]";
+    const char *usage_string = "bot [options] remesh <objname> <output_bot>";
     const char *purpose_string = "Store a remeshed version of the BoT in object <output_bot>";
     if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
     }
 
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
+
+    argc--; argv++;
 
     if (_bot_obj_setup(gb, argv[0]) == GED_ERROR) {
 	return GED_ERROR;

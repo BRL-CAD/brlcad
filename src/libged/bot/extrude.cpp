@@ -90,13 +90,15 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
 
+    argc--; argv++;
+
     if (_bot_obj_setup(gb, argv[0]) == GED_ERROR) {
 	return GED_ERROR;
     }
 
     struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern->idb_ptr);
     if (bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS) {
-        bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not a plate mode bot\n", gb->solid_name.c_str());
+        bu_vls_printf(gb->gedp->ged_result_str, "Object %s is not a plate mode bot\n", gb->solid_name.c_str());
 	return GED_ERROR;
     }
 
