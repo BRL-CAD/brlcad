@@ -155,7 +155,7 @@ _bot_cmd_chull(void *bs, int argc, const char **argv)
     argc--; argv++;
 
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
-   
+
     if (!argc) {
 	bu_vls_printf(gb->gedp->ged_result_str, "%s\n%s\n", usage_string, purpose_string);
 	return GED_ERROR;
