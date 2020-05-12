@@ -402,6 +402,7 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
     for (int i = cmd_pos; i < argc; i++) {
 	argv[i - cmd_pos] = argv[i];
     }
+    argc = argc - cmd_pos;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     if (gb.visualize) {
