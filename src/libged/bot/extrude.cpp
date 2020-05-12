@@ -161,7 +161,8 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 		VSCALE(pv1[j], n, bot->thickness[i]);
 		VSCALE(pv2[j], n, -1*bot->thickness[i]);
 	    } else {
-		/* Note - g_include_bot.c uses .51 */
+		/* Note - g_bot_include.c uses .51, so using the same value
+		 * here for consistency. */
 		VSCALE(pv1[j], n, 0.51*bot->thickness[i]);
 		VSCALE(pv2[j], n, -0.51*bot->thickness[i]);
 	    }
