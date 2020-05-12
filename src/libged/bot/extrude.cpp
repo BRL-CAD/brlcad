@@ -154,7 +154,6 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 
 	for (int j = 0; j < 3; j++) {
             VMOVE(pf[j], &bot->vertices[bot->faces[i*3+j]*3]);
-            bu_log("Face %zd point %d: %f %f %f\n", i, j, V3ARGS(pf[j]));
             VSCALE(pv1[j], n, bot->thickness[i]);
             VSCALE(pv2[j], n, -1*bot->thickness[i]);
         }
