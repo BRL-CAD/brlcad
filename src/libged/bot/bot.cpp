@@ -152,7 +152,15 @@ _bot_cmd_chull(void *bs, int argc, const char **argv)
 	return GED_OK;
     }
 
+    argc--; argv++;
+
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
+   
+    if (!argc) {
+	bu_vls_printf(gb->gedp->ged_result_str, "%s\n%s\n", usage_string, purpose_string);
+	return GED_ERROR;
+    }
+
 
     if (_bot_obj_setup(gb, argv[0]) == GED_ERROR) {
 	return GED_ERROR;
@@ -165,12 +173,6 @@ _bot_cmd_chull(void *bs, int argc, const char **argv)
     point_t *vert_array;
     int *faces;
     unsigned char err = 0;
-
-    /* must be wanting help */
-    if (argc < 2) {
-	bu_vls_printf(gb->gedp->ged_result_str, "%s\n%s\n", usage_string, purpose_string);
-	return GED_ERROR;
-    }
 
     retval = bg_3d_chull(&faces, &fc, &vert_array, &vc, (const point_t *)bot->vertices, (int)bot->num_vertices);
 
@@ -185,7 +187,7 @@ _bot_cmd_chull(void *bs, int argc, const char **argv)
         bu_vls_sprintf(&out_name, "%s.hull", gb->dp->d_namep);
     }
 
-    if (db_lookup(gb->gedp->ged_wdbp->dbip, bu_vls_cstr(&out_name), LOOKUP_NOISY) != RT_DIR_NULL) {
+    if (db_lookup(gb->gedp->ged_wdbp->dbip, bu_vls_cstr(&out_name), LOOKUP_QUIET) != RT_DIR_NULL) {
         bu_vls_printf(gb->gedp->ged_result_str, "Object %s already exists!\n", bu_vls_cstr(&out_name));
         bu_vls_free(&out_name);
         return GED_ERROR;
