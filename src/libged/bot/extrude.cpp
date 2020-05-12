@@ -142,8 +142,11 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
     // For each face, define an arb6 using shifted vertices.  For each face
     // vertex two new points will be constructed - an inner and outer - based
     // on the original point, the local face thickness, and the avg face dir
-    // and its inverse.  Check the face_mode flag to know which points to shift
-    // in which direction.
+    // and its inverse.  Check the face_mode flag to know how far to shift in
+    // each direction - if the faces aren't centered which way the thickness is
+    // applied depends on the incoming ray direction.  Here, that is
+    // interpreted as both directions of ARB6 extrusion getting the full length
+    // from the surface.
     struct bu_vls prim_name = BU_VLS_INIT_ZERO;
     for (size_t i = 0; i < bot->num_faces; i++) {
         point_t pnts[6];
@@ -154,8 +157,14 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
 
 	for (int j = 0; j < 3; j++) {
             VMOVE(pf[j], &bot->vertices[bot->faces[i*3+j]*3]);
-            VSCALE(pv1[j], n, bot->thickness[i]);
-            VSCALE(pv2[j], n, -1*bot->thickness[i]);
+	    if (BU_BITTEST(bot->face_mode, i)) {
+		VSCALE(pv1[j], n, bot->thickness[i]);
+		VSCALE(pv2[j], n, -1*bot->thickness[i]);
+	    } else {
+		/* Note - g_include_bot.c uses .51 */
+		VSCALE(pv1[j], n, 0.51*bot->thickness[i]);
+		VSCALE(pv2[j], n, -0.51*bot->thickness[i]);
+	    }
         }
         for (int j = 0; j < 3; j++) {
             point_t npnt1;
