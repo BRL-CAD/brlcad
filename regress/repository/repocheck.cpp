@@ -306,51 +306,40 @@ class repo_state_t {
 
 };
 
-bool
-bio_redundant_check(repo_state_t &l, std::vector<std::string> &srcs)
+int
+bio_redundant_check(repo_state_t &l, std::string &tfile, std::ifstream &fs)
 {
-    bool ret = false;
+    bool have_bio = false;
+    int lcnt = 0;
+    int ret = 0;
+    std::map<std::string, std::set<int>> match_line_nums;
+    std::string sline;
 
-    for (size_t i = 0; i < srcs.size(); i++) {
-	std::string sline;
-
-	std::map<std::string, std::set<int>> match_line_nums;
-
-	std::ifstream fs;
-	fs.open(srcs[i]);
-	if (!fs.is_open()) {
-	    std::cerr << "Unable to open " << srcs[i] << " for reading, skipping\n";
+    while (std::getline(fs, sline) && lcnt < MAX_LINES_CHECK) {
+	lcnt++;
+	if (std::regex_match(sline, l.bio_regex)) {
+	    have_bio = true;
 	    continue;
 	}
 
-	int lcnt = 0;
-	bool have_bio = false;
-	while (std::getline(fs, sline) && lcnt < MAX_LINES_CHECK) {
-	    lcnt++;
-	    if (std::regex_match(sline, l.bio_regex)) {
-		have_bio = true;
+	std::map<std::string, std::regex>::iterator f_it;
+	for (f_it = l.bio_redundant_filters.begin(); f_it != l.bio_redundant_filters.end(); f_it++) {
+	    if (std::regex_match(sline, f_it->second)) {
+		match_line_nums[f_it->first].insert(lcnt);
 		continue;
 	    }
-
-	    std::map<std::string, std::regex>::iterator f_it;
-	    for (f_it = l.bio_redundant_filters.begin(); f_it != l.bio_redundant_filters.end(); f_it++) {
-		if (std::regex_match(sline, f_it->second)) {
-		    match_line_nums[f_it->first].insert(lcnt);
-		    continue;
-		}
-	    }
 	}
+    }
 
-	if (have_bio) {
-	    std::map<std::string, std::set<int>>::iterator m_it;
-	    for (m_it = match_line_nums.begin(); m_it != match_line_nums.end(); m_it++) {
-		if (m_it->second.size()) {
-		    std::set<int>::iterator l_it;
-		    ret = true;
-		    for (l_it = m_it->second.begin(); l_it != m_it->second.end(); l_it++) {
-			std::string lstr = srcs[i].substr(l.path_root.length()+1) + std::string(" uses bio.h, but includes header ") + m_it->first + std::string(" on line ") + std::to_string(*l_it) + std::string("\n");
-			l.bio_log.push_back(lstr);
-		    }
+    if (have_bio) {
+	std::map<std::string, std::set<int>>::iterator m_it;
+	for (m_it = match_line_nums.begin(); m_it != match_line_nums.end(); m_it++) {
+	    if (m_it->second.size()) {
+		std::set<int>::iterator l_it;
+		ret = 1;
+		for (l_it = m_it->second.begin(); l_it != m_it->second.end(); l_it++) {
+		    std::string lstr = tfile.substr(l.path_root.length()+1) + std::string(" uses bio.h, but includes header ") + m_it->first + std::string(" on line ") + std::to_string(*l_it) + std::string("\n");
+		    l.bio_log.push_back(lstr);
 		}
 	    }
 	}
@@ -359,51 +348,40 @@ bio_redundant_check(repo_state_t &l, std::vector<std::string> &srcs)
     return ret;
 }
 
-bool
-bnetwork_redundant_check(repo_state_t &l, std::vector<std::string> &srcs)
+int
+bnetwork_redundant_check(repo_state_t &l, std::string &tfile, std::ifstream &fs)
 {
-    bool ret = false;
+    bool have_bnetwork = false;
+    int lcnt = 0;
+    int ret = 0;
+    std::map<std::string, std::set<int>> match_line_nums;
+    std::string sline;
 
-    for (size_t i = 0; i < srcs.size(); i++) {
-	std::string sline;
-
-	std::map<std::string, std::set<int>> match_line_nums;
-
-	std::ifstream fs;
-	fs.open(srcs[i]);
-	if (!fs.is_open()) {
-	    std::cerr << "Unable to open " << srcs[i] << " for reading, skipping\n";
+    while (std::getline(fs, sline) && lcnt < MAX_LINES_CHECK) {
+	lcnt++;
+	if (std::regex_match(sline, l.bnetwork_regex)) {
+	    have_bnetwork = true;
 	    continue;
 	}
 
-	int lcnt = 0;
-	bool have_bnetwork = false;
-	while (std::getline(fs, sline) && lcnt < MAX_LINES_CHECK) {
-	    lcnt++;
-	    if (std::regex_match(sline, l.bnetwork_regex)) {
-		have_bnetwork = true;
+	std::map<std::string, std::regex>::iterator f_it;
+	for (f_it = l.bnetwork_redundant_filters.begin(); f_it != l.bnetwork_redundant_filters.end(); f_it++) {
+	    if (std::regex_match(sline, f_it->second)) {
+		match_line_nums[f_it->first].insert(lcnt);
 		continue;
 	    }
-
-	    std::map<std::string, std::regex>::iterator f_it;
-	    for (f_it = l.bnetwork_redundant_filters.begin(); f_it != l.bnetwork_redundant_filters.end(); f_it++) {
-		if (std::regex_match(sline, f_it->second)) {
-		    match_line_nums[f_it->first].insert(lcnt);
-		    continue;
-		}
-	    }
 	}
+    }
 
-	if (have_bnetwork) {
-	    std::map<std::string, std::set<int>>::iterator m_it;
-	    for (m_it = match_line_nums.begin(); m_it != match_line_nums.end(); m_it++) {
-		if (m_it->second.size()) {
-		    std::set<int>::iterator l_it;
-		    ret = true;
-		    for (l_it = m_it->second.begin(); l_it != m_it->second.end(); l_it++) {
-			std::string lstr = srcs[i].substr(l.path_root.length()+1) + std::string(" uses bnetwork.h, but also includes header ") + m_it->first + std::string(" on line ") + std::to_string(*l_it) + std::string("\n");
-			l.bnet_log.push_back(lstr);
-		    }
+    if (have_bnetwork) {
+	std::map<std::string, std::set<int>>::iterator m_it;
+	for (m_it = match_line_nums.begin(); m_it != match_line_nums.end(); m_it++) {
+	    if (m_it->second.size()) {
+		std::set<int>::iterator l_it;
+		ret = 1;
+		for (l_it = m_it->second.begin(); l_it != m_it->second.end(); l_it++) {
+		    std::string lstr = tfile.substr(l.path_root.length()+1) + std::string(" uses bnetwork.h, but also includes header ") + m_it->first + std::string(" on line ") + std::to_string(*l_it) + std::string("\n");
+		    l.bnet_log.push_back(lstr);
 		}
 	    }
 	}
@@ -414,115 +392,96 @@ bnetwork_redundant_check(repo_state_t &l, std::vector<std::string> &srcs)
 
 
 
-bool
-common_include_first(repo_state_t &l, std::vector<std::string> &srcs)
+int
+common_include_first(repo_state_t &l, std::string &tfile, std::ifstream &fs)
 {
-    bool ret = false;
-    
-    for (size_t i = 0; i < srcs.size(); i++) {
-	bool skip = false;
-	for (size_t j = 0; j < l.common_exempt_filters.size(); j++) {
-	    if (std::regex_match(srcs[i], l.common_exempt_filters[j])) {
-		skip = true;
-		break;
-	    }
-	}
-	if (skip) {
-	    continue;
-	}
+    int ret = 0;
 
-	std::ifstream fs;
-	fs.open(srcs[i]);
-	if (!fs.is_open()) {
-	    std::cerr << "Unable to open " << srcs[i] << " for reading, skipping\n";
-	    continue;
-	}
-
-	int lcnt = 0;
-	int first_inc_line = -1;
-	bool have_inc = false;
-	std::string sline;
-	while (std::getline(fs, sline) && lcnt < MAX_LINES_CHECK) {
-	    lcnt++;
-	    if (std::regex_match(sline, l.common_regex)) {
-		if (have_inc) {
-		    std::string lstr = srcs[i].substr(l.path_root.length()+1) + std::string(" includes common.h on line ") + std::to_string(lcnt) + std::string(" but a prior #include statement was found at line ") + std::to_string(first_inc_line) + std::string("\n");
-		    l.common_log.push_back(lstr);
-		    ret = true;
-		}
-		break;
-	    }
-	    if (!have_inc && std::regex_match(sline, l.inc_regex)) {
-		have_inc = true;
-		first_inc_line = lcnt;
-	    }
+    bool skip = false;
+    for (size_t j = 0; j < l.common_exempt_filters.size(); j++) {
+	if (std::regex_match(tfile, l.common_exempt_filters[j])) {
+	    skip = true;
+	    break;
 	}
     }
+    if (skip) {
+	return ret;
+    }
 
+    int lcnt = 0;
+    int first_inc_line = -1;
+    bool have_inc = false;
+    std::string sline;
+    while (std::getline(fs, sline) && lcnt < MAX_LINES_CHECK) {
+	lcnt++;
+	if (std::regex_match(sline, l.common_regex)) {
+	    if (have_inc) {
+		std::string lstr = tfile.substr(l.path_root.length()+1) + std::string(" includes common.h on line ") + std::to_string(lcnt) + std::string(" but a prior #include statement was found at line ") + std::to_string(first_inc_line) + std::string("\n");
+		l.common_log.push_back(lstr);
+		ret = 1;
+	    }
+	    break;
+	}
+	if (!have_inc && std::regex_match(sline, l.inc_regex)) {
+	    have_inc = true;
+	    first_inc_line = lcnt;
+	}
+    }
 
     return ret;
 }
 
-bool
-api_usage(repo_state_t &l, std::vector<std::string> &srcs)
+int
+api_usage(repo_state_t &l, std::string &tfile, std::ifstream &fs)
 {
-    bool ret = false;
+    int ret = 0;
 
-    for (size_t i = 0; i < srcs.size(); i++) {
-	bool skip = false;
-	for (size_t j = 0; j < l.api_file_filters.size(); j++) {
-	    if (std::regex_match(srcs[i], l.api_file_filters[j])) {
-		skip = true;
-		break;
-	    }
+    bool skip = false;
+    for (size_t j = 0; j < l.api_file_filters.size(); j++) {
+	if (std::regex_match(tfile, l.api_file_filters[j])) {
+	    skip = true;
+	    break;
 	}
-	if (skip) {
-	    continue;
-	}
+    }
+    if (skip) {
+	return ret;
+    }
 
-	std::ifstream fs;
-	fs.open(srcs[i]);
-	if (!fs.is_open()) {
-	    std::cerr << "Unable to open " << srcs[i] << " for reading, skipping\n";
-	    continue;
-	}
+    std::map<std::string, std::set<int>> instances;
 
-	std::map<std::string, std::set<int>> instances;
-
-	int lcnt = 0;
-	std::string sline;
-	while (std::getline(fs, sline)) {
-	    lcnt++;
-	    std::map<std::string, std::regex>::iterator ff_it;
-	    for (ff_it = l.api_func_filters.begin(); ff_it != l.api_func_filters.end(); ff_it++) {
-		if (std::regex_match(sline, ff_it->second)) {
-		    // If we have a it, make sure it's not an exemption
-		    bool exempt = false;
-		    if (l.api_exemptions.find(ff_it->first) != l.api_exemptions.end()) {
-			std::vector<std::regex>::iterator e_it;
-			for (e_it = l.api_exemptions[ff_it->first].begin(); e_it != l.api_exemptions[ff_it->first].end(); e_it++) {
-			    if (std::regex_match(srcs[i], *e_it)) {
-				exempt = true;
-				break;
-			    }
+    int lcnt = 0;
+    std::string sline;
+    while (std::getline(fs, sline)) {
+	lcnt++;
+	std::map<std::string, std::regex>::iterator ff_it;
+	for (ff_it = l.api_func_filters.begin(); ff_it != l.api_func_filters.end(); ff_it++) {
+	    if (std::regex_match(sline, ff_it->second)) {
+		// If we have a it, make sure it's not an exemption
+		bool exempt = false;
+		if (l.api_exemptions.find(ff_it->first) != l.api_exemptions.end()) {
+		    std::vector<std::regex>::iterator e_it;
+		    for (e_it = l.api_exemptions[ff_it->first].begin(); e_it != l.api_exemptions[ff_it->first].end(); e_it++) {
+			if (std::regex_match(tfile, *e_it)) {
+			    exempt = true;
+			    break;
 			}
 		    }
-		    if (!exempt) {
-			instances[ff_it->first].insert(lcnt);
-			ret = true;
-		    }
+		}
+		if (!exempt) {
+		    instances[ff_it->first].insert(lcnt);
+		    ret = 1;
 		}
 	    }
 	}
+    }
 
-	std::map<std::string, std::set<int>>::iterator i_it;
+    std::map<std::string, std::set<int>>::iterator i_it;
 
-	for (i_it = instances.begin(); i_it != instances.end(); i_it++) {
-	    std::set<int>::iterator num_it;
-	    for (num_it = i_it->second.begin(); num_it != i_it->second.end(); num_it++) {
-	    std::string lstr = srcs[i].substr(l.path_root.length()+1) + std::string(" matches ") + i_it->first + std::string(" on line ") + std::to_string(*num_it) + std::string("\n");
+    for (i_it = instances.begin(); i_it != instances.end(); i_it++) {
+	std::set<int>::iterator num_it;
+	for (num_it = i_it->second.begin(); num_it != i_it->second.end(); num_it++) {
+	    std::string lstr = tfile.substr(l.path_root.length()+1) + std::string(" matches ") + i_it->first + std::string(" on line ") + std::to_string(*num_it) + std::string("\n");
 	    l.api_log.push_back(lstr);
-	    }
 	}
     }
 
@@ -539,46 +498,35 @@ class platform_entry {
 
 
 int
-platform_symbols(repo_state_t &l, std::vector<std::string> &log, std::vector<std::string> &srcs)
+platform_symbols(repo_state_t &l, std::vector<std::string> &log, std::string &tfile, std::ifstream &fs)
 {
     std::map<std::string, std::vector<platform_entry>> instances;
-    for (size_t i = 0; i < srcs.size(); i++) {
-	bool skip = false;
-	for (size_t j = 0; j < l.platform_file_filters.size(); j++) {
-	    if (std::regex_match(srcs[i], l.platform_file_filters[j])) {
-		skip = true;
-		break;
-	    }
+    bool skip = false;
+    for (size_t j = 0; j < l.platform_file_filters.size(); j++) {
+	if (std::regex_match(tfile, l.platform_file_filters[j])) {
+	    skip = true;
+	    break;
 	}
-	if (skip) {
-	    continue;
-	}
+    }
+    if (skip) {
+	return 0;
+    }
 
-	std::ifstream fs;
-	fs.open(srcs[i]);
-	if (!fs.is_open()) {
-	    std::cerr << "Unable to open " << srcs[i] << " for reading, skipping\n";
-	    continue;
-	}
+    int lcnt = 0;
+    std::string sline;
+    while (std::getline(fs, sline)) {
+	lcnt++;
 
-	//std::cout << "Reading " << srcs[i] << "\n";
-
-	int lcnt = 0;
-	std::string sline;
-	while (std::getline(fs, sline)) {
-	    lcnt++;
-
-	    std::map<std::string, std::regex>::iterator  p_it;
-	    for (p_it = l.platform_checks.begin(); p_it != l.platform_checks.end(); p_it++) {
-		if (std::regex_match(sline, p_it->second)) {
-		    //std::cout << "match on line: " << sline << "\n";
-		    platform_entry pe;
-		    pe.symbol = p_it->first;
-		    pe.file = srcs[i].substr(l.path_root.length()+1);
-		    pe.line_num = lcnt;
-		    pe.line = sline;
-		    instances[p_it->first].push_back(pe);
-		}
+	std::map<std::string, std::regex>::iterator  p_it;
+	for (p_it = l.platform_checks.begin(); p_it != l.platform_checks.end(); p_it++) {
+	    if (std::regex_match(sline, p_it->second)) {
+		//std::cout << "match on line: " << sline << "\n";
+		platform_entry pe;
+		pe.symbol = p_it->first;
+		pe.file = tfile.substr(l.path_root.length()+1);
+		pe.line_num = lcnt;
+		pe.line = sline;
+		instances[p_it->first].push_back(pe);
 	    }
 	}
     }
@@ -652,7 +600,7 @@ main(int argc, const char *argv[])
     std::regex hdrfile_regex(".*/include/.*");
     std::vector<std::string> src_files;
     std::vector<std::string> inc_files;
-    std::vector<std::string> build_files;
+    std::vector<std::string> bld_files;
 
     while (std::getline(src_file_stream, sfile)) {
 	bool reject = false;
@@ -675,48 +623,80 @@ main(int argc, const char *argv[])
 	    continue;
 	}
 	if (std::regex_match(sfile, buildfile_regex)) {
-	    build_files.push_back(sfile);
+	    bld_files.push_back(sfile);
 	    continue;
 	}
     }
 
     int ret = 0;
 
-    if (bio_redundant_check(repo_state, inc_files)) {
-	ret = -1;
+
+    int inc_cnt = 0;
+    for (size_t i = 0; i < inc_files.size(); i++) {
+	std::ifstream fs;
+	fs.open(inc_files[i]);
+	if (!fs.is_open()) {
+	    std::cerr << "Unable to open " << inc_files[i] << " for reading, skipping\n";
+	    continue;
+	}
+	fs.clear();
+	fs.seekg(0, std::ios::beg);
+	ret += bio_redundant_check(repo_state, inc_files[i], fs);
+	fs.clear();
+	fs.seekg(0, std::ios::beg);
+	ret += bnetwork_redundant_check(repo_state, inc_files[i], fs);
+	fs.clear();
+	fs.seekg(0, std::ios::beg);
+	inc_cnt += platform_symbols(repo_state, repo_state.symbol_inc_log, inc_files[i], fs);
+	fs.close();
     }
 
-    if (bio_redundant_check(repo_state, src_files)) {
-	ret = -1;
+    int src_cnt = 0;
+    for (size_t i = 0; i < src_files.size(); i++) {
+	std::ifstream fs;
+	fs.open(src_files[i]);
+	if (!fs.is_open()) {
+	    std::cerr << "Unable to open " << src_files[i] << " for reading, skipping\n";
+	    continue;
+	}
+	fs.clear();
+	fs.seekg(0, std::ios::beg);
+	ret += bio_redundant_check(repo_state, src_files[i], fs);
+	fs.clear();
+	fs.seekg(0, std::ios::beg);
+	ret += bnetwork_redundant_check(repo_state, src_files[i], fs);
+	fs.clear();
+	fs.seekg(0, std::ios::beg);
+	ret += common_include_first(repo_state, src_files[i], fs);
+	fs.clear();
+	fs.seekg(0, std::ios::beg);
+	ret += api_usage(repo_state, src_files[i], fs);
+	fs.clear();
+	fs.seekg(0, std::ios::beg);
+	src_cnt += platform_symbols(repo_state, repo_state.symbol_src_log, src_files[i], fs);
+	fs.close();
     }
 
-    if (bnetwork_redundant_check(repo_state, inc_files)) {
-	ret = -1;
+    int bld_cnt = 0;
+    for (size_t i = 0; i < bld_files.size(); i++) {
+	std::ifstream fs;
+	fs.open(bld_files[i]);
+	if (!fs.is_open()) {
+	    std::cerr << "Unable to open " << bld_files[i] << " for reading, skipping\n";
+	    continue;
+	}
+	fs.clear();
+	fs.seekg(0, std::ios::beg);
+	bld_cnt += platform_symbols(repo_state, repo_state.symbol_bld_log, bld_files[i], fs);
     }
 
-    if (bnetwork_redundant_check(repo_state, src_files)) {
-	ret = -1;
-    }
-
-    if (common_include_first(repo_state, src_files)) {
-	ret = -1;
-    }
-
-    if (api_usage(repo_state, src_files)) {
-	ret = -1;
-    }
-
-    int h_cnt = platform_symbols(repo_state, repo_state.symbol_inc_log, inc_files);
-    int s_cnt = platform_symbols(repo_state, repo_state.symbol_src_log, src_files);
-    int b_cnt = platform_symbols(repo_state, repo_state.symbol_bld_log, build_files);
-    int psym_cnt = h_cnt + s_cnt + b_cnt;
+    int psym_cnt = inc_cnt + src_cnt + bld_cnt;
     int expected_psym_cnt = 10;
     if (psym_cnt > expected_psym_cnt) {
-	std::cout << "FAILURE: expected " << expected_psym_cnt << " platform symbols, found " << psym_cnt << "\n";
-	ret = -1;
+	ret += 1;
     }
 
-    if (ret == -1) {
+    if (ret) {
 	std::sort(repo_state.api_log.begin(), repo_state.api_log.end());
 	std::sort(repo_state.bio_log.begin(), repo_state.bio_log.end());
 	std::sort(repo_state.bnet_log.begin(), repo_state.bnet_log.end());
@@ -749,6 +729,11 @@ main(int argc, const char *argv[])
 		std::cout << repo_state.common_log[i];
 	    }
 	}
+
+	if (psym_cnt > expected_psym_cnt) {
+	    std::cout << "\n\nFAILURE: expected " << expected_psym_cnt << " platform symbols, found " << psym_cnt << ":\n";
+	}
+
 	if (repo_state.symbol_inc_log.size()) {
 	    std::cout << "\nFound " << repo_state.symbol_inc_log.size() << " instances of platform symbol usage in header files:\n";
 	    for (size_t i = 0; i < repo_state.symbol_inc_log.size(); i++) {
