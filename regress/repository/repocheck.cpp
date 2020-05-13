@@ -441,10 +441,9 @@ class platform_entry {
 
 
 int
-platform_symbols(std::vector<std::string> &srcs)
+platform_symbols(std::vector<std::string> &srcs, std::string &proot)
 {
-    bool ret = false;
-    
+
     const char *platforms[] {
 	"aix",
 	"apple",
@@ -474,7 +473,6 @@ platform_symbols(std::vector<std::string> &srcs)
 	NULL
     };
     std::map<std::string, std::regex> platform_checks;
-    std::string pregex_str;
     int cnt = 0;
     const char *rf = platforms[cnt];
     while (rf) {
@@ -537,7 +535,7 @@ platform_symbols(std::vector<std::string> &srcs)
 		    //std::cout << "match on line: " << sline << "\n";
 		    platform_entry pe;
 		    pe.symbol = p_it->first;
-		    pe.file = srcs[i];
+		    pe.file = srcs[i].substr(proot.length()+1);
 		    pe.line_num = lcnt;
 		    pe.line = sline;
 		    instances[p_it->first].push_back(pe);
@@ -563,10 +561,12 @@ platform_symbols(std::vector<std::string> &srcs)
 int
 main(int argc, const char *argv[])
 {
-    if (argc != 2) {
-	std::cerr << "Usage: repocheck file_list.txt\n";
+    if (argc != 3) {
+	std::cerr << "Usage: repocheck file_list.txt source_dir\n";
 	return -1;
     }
+
+    std::string path_root(argv[2]);
 
     std::string sfile;
     std::ifstream src_file_stream;
@@ -663,13 +663,13 @@ main(int argc, const char *argv[])
 #endif
 
 
-    int h_cnt = platform_symbols(inc_files);
+    int h_cnt = platform_symbols(inc_files, path_root);
     std::cout << "Found " << h_cnt <<  " header instances\n";
-    int s_cnt = platform_symbols(src_files);
+    int s_cnt = platform_symbols(src_files, path_root);
     std::cout << "Found " << s_cnt <<  " src instances\n";
-    int b_cnt = platform_symbols(build_files);
+    int b_cnt = platform_symbols(build_files, path_root);
     std::cout << "Found " << b_cnt <<  " build system instances\n";
-   
+
     int psym_cnt = h_cnt + s_cnt + b_cnt;
     int expected_psym_cnt = 10;
     if (psym_cnt > expected_psym_cnt) {

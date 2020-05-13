@@ -16,8 +16,9 @@ if (DEFINED REPOCHECK_TEST)
   add_custom_command(
     OUTPUT "${STAMP_FILE}"
     COMMAND "${CMAKE_COMMAND}"
-    -DLCHECK_EXEC="$<TARGET_FILE:repocheck>"
+    -DRCHECK_EXEC="$<TARGET_FILE:repocheck>"
     -DL_FILE="${LOG_FILE}" -DS_FILE="${STAMP_FILE}" -DF_LIST="${ALL_FILES_LIST}"
+    -DB_DIR="${BRLCAD_SOURCE_DIR}"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/regress-repository.cmake"
     )
   add_custom_target(regress-repository DEPENDS ${STAMP_FILE} ${ALL_FILES_LIST})
@@ -27,9 +28,9 @@ if (DEFINED REPOCHECK_TEST)
 
   add_test(NAME regress-repository
     COMMAND "${CMAKE_COMMAND}"
-    -DLCHECK_EXEC=$<TARGET_FILE:repocheck>
+    -DRCHECK_EXEC=$<TARGET_FILE:repocheck>
     -DL_FILE=${LOG_FILE} -DS_FILE=${STAMP_FILE} -DF_LIST=${ALL_FILES_LIST}
-    -DW_DIR=${CMAKE_CURRENT_BINARY_DIR}
+    -DB_DIR="${BRLCAD_SOURCE_DIR}"
     -P "${CMAKE_CURRENT_SOURCE_DIR}/regress-repository.cmake"
     )
   set_tests_properties(regress-repository PROPERTIES LABELS "Regression")
