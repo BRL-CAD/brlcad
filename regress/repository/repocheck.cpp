@@ -52,10 +52,225 @@
 #include <string>
 #define MAX_LINES_CHECK 500
 
-class repo_log_t {
+class repo_state_t {
     public:
+
+	repo_state_t() {
+	    int cnt = 0;
+	    const char *rf;
+	    inc_regex = std::regex("#[[:space:]]*include.*");
+
+	    /* bio.h regex */
+	    {
+		bio_regex = std::regex("#[[:space:]]*include[[:space:]]*\"bio.h\".*");
+		const char *bio_redundant_filter_strs[] {
+		    "stdio.h",
+		    "windows.h",
+		    "io.h",
+		    "unistd.h",
+		    "fcntl.h",
+		    NULL
+		};
+		cnt = 0;
+		rf = bio_redundant_filter_strs[cnt];
+		while (rf) {
+		    std::string rrf = std::string(".*<") + std::string(rf) + std::string(">.*");
+		    bio_redundant_filters[std::string(rf)] = std::regex(rrf);
+		    cnt++;
+		    rf = bio_redundant_filter_strs[cnt];
+		}
+	    }
+
+
+	    /* bnetwork.h regex */
+	    {
+		bnetwork_regex = std::regex("#[[:space:]]*include[[:space:]]*\"bnetwork.h\".*");
+		const char *bnetwork_redundant_filter_strs[] {
+		    "winsock2.h",
+		    "netinet/in.h",
+		    "netinet/tcp.h",
+		    "arpa/inet.h",
+		    NULL
+		};
+		cnt = 0;
+		rf = bnetwork_redundant_filter_strs[cnt];
+		while (rf) {
+		    std::string rrf = std::string(".*<") + std::string(rf) + std::string(">.*");
+		    bnetwork_redundant_filters[std::string(rf)] = std::regex(rrf);
+		    cnt++;
+		    rf = bnetwork_redundant_filter_strs[cnt];
+		}
+	    }
+
+	    /* common.h regex */
+	    {
+		common_regex = std::regex("#[[:space:]]*include[[:space:]]*\"common.h\".*");
+		const char *common_exempt_filter_strs[] {
+		    ".*/bio.h",
+		    ".*/bnetwork.h",
+		    ".*/config_win.h",
+		    ".*/csg_parser.c",
+		    ".*/csg_scanner.h",
+		    ".*/obj_grammar.c",
+		    ".*/obj_grammar.cpp",
+		    ".*/obj_libgcv_grammar.cpp",
+		    ".*/obj_obj-g_grammar.cpp",
+		    ".*/obj_parser.h",
+		    ".*/obj_rules.cpp",
+		    ".*/obj_rules.l",
+		    ".*/obj_scanner.h",
+		    ".*/obj_util.h",
+		    ".*/optionparser.h",
+		    ".*/pinttypes.h",
+		    ".*/points_scan.c",
+		    ".*/pstdint.h",
+		    ".*/schema.h",
+		    ".*/script.c",
+		    ".*/ttcp.c",
+		    ".*/uce-dirent.h",
+		    NULL
+		};
+		cnt = 0;
+		rf = common_exempt_filter_strs[cnt];
+		while (rf) {
+		    common_exempt_filters.push_back(std::regex(rf));
+		    cnt++;
+		    rf = common_exempt_filter_strs[cnt];
+		}
+
+	    }
+
+	    /* API usage check regex */
+	    {
+		const char *api_file_exemption_strs[] {
+		    ".*/CONFIG_CONTROL_DESIGN.*",
+		    ".*/bu/log[.]h$",
+		    ".*/bu/path[.]h$",
+		    ".*/bu/str[.]h$",
+		    ".*/cursor[.]c$",
+		    ".*/ttcp[.]c$",
+		    ".*/misc/CMake/compat/.*",
+		    NULL
+		};
+		cnt = 0;
+		rf = api_file_exemption_strs[cnt];
+		while (rf) {
+		    api_file_filters.push_back(std::regex(rf));
+		    cnt++;
+		    rf = api_file_exemption_strs[cnt];
+		}
+
+		const char *api_func_strs[] {
+		    "abort",
+		    "dirname",
+		    "fgets",
+		    "getopt",
+		    "qsort",
+		    "remove",
+		    "rmdir",
+		    "strcasecmp",
+		    "strcat",
+		    "strcmp",
+		    "strcpy",
+		    "strdup",
+		    "stricmp",
+		    "strlcat",
+		    "strlcpy",
+		    "strncasecmp",
+		    "strncat",
+		    "strncmp",
+		    "strncpy",
+		    "unlink",
+		    NULL
+		};
+		cnt = 0;
+		rf = api_func_strs[cnt];
+		while (rf) {
+		    std::string rrf = std::string(".*[^a-zA-Z0-9_:]") + std::string(rf) + std::string("[(].*");
+		    api_func_filters[std::string(rf)] = std::regex(rrf);
+		    cnt++;
+		    rf = api_func_strs[cnt];
+		}
+
+		api_exemptions[std::string("abort")].push_back(std::regex(".*/bomb[.]c$"));
+		api_exemptions[std::string("dirname")].push_back(std::regex(".*/tests/dirname[.]c$"));
+		api_exemptions[std::string("remove")].push_back(std::regex(".*/file[.]c$"));
+		api_exemptions[std::string("strcasecmp")].push_back(std::regex(".*/str[.]c$"));
+		api_exemptions[std::string("strcmp")].push_back(std::regex(".*/str[.]c$"));
+		api_exemptions[std::string("strdup")].push_back(std::regex(".*/str[.]c$"));
+		api_exemptions[std::string("strlcat")].push_back(std::regex(".*/str[.]c$"));
+		api_exemptions[std::string("strlcpy")].push_back(std::regex(".*/str[.]c$"));
+		api_exemptions[std::string("strncasecmp")].push_back(std::regex(".*/str[.]c$"));
+		api_exemptions[std::string("strncat")].push_back(std::regex(".*/str[.]c$"));
+		api_exemptions[std::string("strncmp")].push_back(std::regex(".*/str[.]c$"));
+		api_exemptions[std::string("strncpy")].push_back(std::regex(".*/rt/db4[.]h$"));
+		api_exemptions[std::string("strncpy")].push_back(std::regex(".*/str[.]c$"));
+		api_exemptions[std::string("strncpy")].push_back(std::regex(".*/vls[.]c$"));
+		api_exemptions[std::string("strncpy")].push_back(std::regex(".*/wfobj/obj_util[.]cpp$"));
+	    }
+
+	    /* Platform symbol usage check regex */
+	    {
+		const char *platform_strs[] {
+		    "AIX",
+		    "APPLE",
+		    "CYGWIN",
+		    "DARWIN",
+		    "FREEBSD",
+		    "HAIKU",
+		    "HPUX",
+		    "LINUX",
+		    "MINGW",
+		    "MSDOS",
+		    "QNX",
+		    "SGI",
+		    "SOLARIS",
+		    "SUN",
+		    "SUNOS",
+		    "SVR4",
+		    "SYSV",
+		    "ULTRIX",
+		    "UNIX",
+		    "VMS",
+		    "WIN16",
+		    "WIN32",
+		    "WIN64",
+		    "WINE",
+		    "WINNT",
+		    NULL
+		};
+		cnt = 0;
+		rf = platform_strs[cnt];
+		while (rf) {
+		    std::string p_upper(rf);
+		    std::string p_lower = p_upper;
+		    std::transform(p_lower.begin(), p_lower.end(), p_lower.begin(), [](unsigned char c){ return std::tolower(c); });
+		    std::string rrf = std::string("^[[:space:]#]*(if|IF).*[[:space:](]_*(") + p_lower + std::string("|") + p_upper + std::string(")_*([[:space:]]|[)]|$).*$");
+		    platform_checks[std::string(rf)] = std::regex(rrf);
+		    cnt++;
+		    rf = platform_strs[cnt];
+		}
+
+		const char *platform_exemption_strs[] {
+		    ".*/pstdint[.]h$",
+		    ".*/pinttypes[.]h$",
+		    ".*/uce-dirent[.]h$",
+		    NULL
+		};
+		cnt = 0;
+		rf = platform_exemption_strs[cnt];
+		while (rf) {
+		    platform_file_filters.push_back(std::regex(rf));
+		    cnt++;
+		    rf = platform_exemption_strs[cnt];
+		}
+	    }
+	}
+
+	// Root of input source dir - used to trim the source dir prefix off of file paths
 	std::string path_root;
 
+	// Output logs
 	std::vector<std::string> api_log;
 	std::vector<std::string> bio_log;
 	std::vector<std::string> bnet_log;
@@ -63,32 +278,38 @@ class repo_log_t {
 	std::vector<std::string> symbol_inc_log;
 	std::vector<std::string> symbol_src_log;
 	std::vector<std::string> symbol_bld_log;
+
+	/* Standard regex patterns uses in searches */
+
+	std::regex inc_regex;
+
+	/* bio.h */
+	std::regex bio_regex;
+	std::map<std::string, std::regex> bio_redundant_filters;
+
+	/* bnetwork.h */
+	std::regex bnetwork_regex;
+	std::map<std::string, std::regex> bnetwork_redundant_filters;
+
+	/* common.h */
+	std::regex common_regex;
+	std::vector<std::regex> common_exempt_filters;
+
+	/* api usage */
+	std::vector<std::regex> api_file_filters;
+	std::map<std::string, std::vector<std::regex>> api_exemptions;
+	std::map<std::string, std::regex> api_func_filters;
+
+	/* platform symbols */
+	std::map<std::string, std::regex> platform_checks;
+	std::vector<std::regex> platform_file_filters;
+
 };
 
 bool
-bio_redundant_check(repo_log_t &l, std::vector<std::string> &srcs)
+bio_redundant_check(repo_state_t &l, std::vector<std::string> &srcs)
 {
     bool ret = false;
-    std::regex bio_regex("#[[:space:]]*include[[:space:]]*\"bio.h\".*");
-    std::regex inc_regex("#[[:space:]]*include.*");
-    const char *redundant_filters[] {
-	".*<stdio.h>.*",
-	".*<windows.h>.*",
-	".*<io.h>.*",
-	".*<unistd.h>.*",
-	".*<fcntl.h>.*",
-	NULL
-    };
-
-    std::map<std::string, std::regex> filters;
-    int cnt = 0;
-    const char *rf = redundant_filters[cnt];
-    while (rf) {
-	filters[std::string(rf)] = std::regex(rf);
-	cnt++;
-	rf = redundant_filters[cnt];
-    }
-
 
     for (size_t i = 0; i < srcs.size(); i++) {
 	std::string sline;
@@ -106,13 +327,13 @@ bio_redundant_check(repo_log_t &l, std::vector<std::string> &srcs)
 	bool have_bio = false;
 	while (std::getline(fs, sline) && lcnt < MAX_LINES_CHECK) {
 	    lcnt++;
-	    if (std::regex_match(sline, bio_regex)) {
+	    if (std::regex_match(sline, l.bio_regex)) {
 		have_bio = true;
 		continue;
 	    }
 
 	    std::map<std::string, std::regex>::iterator f_it;
-	    for (f_it = filters.begin(); f_it != filters.end(); f_it++) {
+	    for (f_it = l.bio_redundant_filters.begin(); f_it != l.bio_redundant_filters.end(); f_it++) {
 		if (std::regex_match(sline, f_it->second)) {
 		    match_line_nums[f_it->first].insert(lcnt);
 		    continue;
@@ -127,7 +348,7 @@ bio_redundant_check(repo_log_t &l, std::vector<std::string> &srcs)
 		    std::set<int>::iterator l_it;
 		    ret = true;
 		    for (l_it = m_it->second.begin(); l_it != m_it->second.end(); l_it++) {
-			std::string lstr = srcs[i].substr(l.path_root.length()+1) + std::string(" has bio.h, but also matches regex ") + m_it->first + std::string(" on line ") + std::to_string(lcnt) + std::string("\n");
+			std::string lstr = srcs[i].substr(l.path_root.length()+1) + std::string(" uses bio.h, but includes header ") + m_it->first + std::string(" on line ") + std::to_string(*l_it) + std::string("\n");
 			l.bio_log.push_back(lstr);
 		    }
 		}
@@ -139,28 +360,9 @@ bio_redundant_check(repo_log_t &l, std::vector<std::string> &srcs)
 }
 
 bool
-bnetwork_redundant_check(repo_log_t &l, std::vector<std::string> &srcs)
+bnetwork_redundant_check(repo_state_t &l, std::vector<std::string> &srcs)
 {
     bool ret = false;
-    std::regex bnetwork_regex("#[[:space:]]*include[[:space:]]*\"bnetwork.h\".*");
-    std::regex inc_regex("#[[:space:]]*include.*");
-    const char *redundant_filters[] {
-	".*<winsock2.h>.*",
-	".*<netinet/in.h>.*",
-	".*<netinet/tcp.h>.*",
-	".*<arpa/inet.h>.*",
-	NULL
-    };
-
-    std::map<std::string, std::regex> filters;
-    int cnt = 0;
-    const char *rf = redundant_filters[cnt];
-    while (rf) {
-	filters[std::string(rf)] = std::regex(rf);
-	cnt++;
-	rf = redundant_filters[cnt];
-    }
-
 
     for (size_t i = 0; i < srcs.size(); i++) {
 	std::string sline;
@@ -178,13 +380,13 @@ bnetwork_redundant_check(repo_log_t &l, std::vector<std::string> &srcs)
 	bool have_bnetwork = false;
 	while (std::getline(fs, sline) && lcnt < MAX_LINES_CHECK) {
 	    lcnt++;
-	    if (std::regex_match(sline, bnetwork_regex)) {
+	    if (std::regex_match(sline, l.bnetwork_regex)) {
 		have_bnetwork = true;
 		continue;
 	    }
 
 	    std::map<std::string, std::regex>::iterator f_it;
-	    for (f_it = filters.begin(); f_it != filters.end(); f_it++) {
+	    for (f_it = l.bnetwork_redundant_filters.begin(); f_it != l.bnetwork_redundant_filters.end(); f_it++) {
 		if (std::regex_match(sline, f_it->second)) {
 		    match_line_nums[f_it->first].insert(lcnt);
 		    continue;
@@ -199,7 +401,7 @@ bnetwork_redundant_check(repo_log_t &l, std::vector<std::string> &srcs)
 		    std::set<int>::iterator l_it;
 		    ret = true;
 		    for (l_it = m_it->second.begin(); l_it != m_it->second.end(); l_it++) {
-			std::string lstr = srcs[i].substr(l.path_root.length()+1) + std::string(" has bnetwork.h, but also matches regex ") + m_it->first + std::string(" on line ") + std::to_string(lcnt) + std::string("\n");
+			std::string lstr = srcs[i].substr(l.path_root.length()+1) + std::string(" uses bnetwork.h, but also includes header ") + m_it->first + std::string(" on line ") + std::to_string(*l_it) + std::string("\n");
 			l.bnet_log.push_back(lstr);
 		    }
 		}
@@ -213,50 +415,14 @@ bnetwork_redundant_check(repo_log_t &l, std::vector<std::string> &srcs)
 
 
 bool
-common_include_first(repo_log_t &l, std::vector<std::string> &srcs)
+common_include_first(repo_state_t &l, std::vector<std::string> &srcs)
 {
     bool ret = false;
-    std::regex inc_regex("#[[:space:]]*include.*");
-    std::regex common_regex("#[[:space:]]*include[[:space:]]*\"common.h\".*");
-    const char *exempt_filters[] {
-	".*/bio.h",
-	".*/bnetwork.h",
-	".*/config_win.h",
-	".*/csg_parser.c",
-	".*/csg_scanner.h",
-	".*/obj_grammar.c",
-	".*/obj_grammar.cpp",
-	".*/obj_libgcv_grammar.cpp",
-	".*/obj_obj-g_grammar.cpp",
-	".*/obj_parser.h",
-	".*/obj_rules.cpp",
-	".*/obj_rules.l",
-	".*/obj_scanner.h",
-	".*/obj_util.h",
-	".*/optionparser.h",
-	".*/pinttypes.h",
-	".*/points_scan.c",
-	".*/pstdint.h",
-	".*/schema.h",
-	".*/script.c",
-	".*/ttcp.c",
-	".*/uce-dirent.h",
-	NULL
-    };
-
-    std::vector<std::regex> filters;
-    int cnt = 0;
-    const char *rf = exempt_filters[cnt];
-    while (rf) {
-	filters.push_back(std::regex(rf));
-	cnt++;
-	rf = exempt_filters[cnt];
-    }
-
+    
     for (size_t i = 0; i < srcs.size(); i++) {
 	bool skip = false;
-	for (size_t j = 0; j < filters.size(); j++) {
-	    if (std::regex_match(srcs[i], filters[j])) {
+	for (size_t j = 0; j < l.common_exempt_filters.size(); j++) {
+	    if (std::regex_match(srcs[i], l.common_exempt_filters[j])) {
 		skip = true;
 		break;
 	    }
@@ -278,7 +444,7 @@ common_include_first(repo_log_t &l, std::vector<std::string> &srcs)
 	std::string sline;
 	while (std::getline(fs, sline) && lcnt < MAX_LINES_CHECK) {
 	    lcnt++;
-	    if (std::regex_match(sline, common_regex)) {
+	    if (std::regex_match(sline, l.common_regex)) {
 		if (have_inc) {
 		    std::string lstr = srcs[i].substr(l.path_root.length()+1) + std::string(" includes common.h on line ") + std::to_string(lcnt) + std::string(" but a prior #include statement was found at line ") + std::to_string(first_inc_line) + std::string("\n");
 		    l.common_log.push_back(lstr);
@@ -286,7 +452,7 @@ common_include_first(repo_log_t &l, std::vector<std::string> &srcs)
 		}
 		break;
 	    }
-	    if (!have_inc && std::regex_match(sline, inc_regex)) {
+	    if (!have_inc && std::regex_match(sline, l.inc_regex)) {
 		have_inc = true;
 		first_inc_line = lcnt;
 	    }
@@ -298,84 +464,14 @@ common_include_first(repo_log_t &l, std::vector<std::string> &srcs)
 }
 
 bool
-api_usage(repo_log_t &l, std::vector<std::string> &srcs)
+api_usage(repo_state_t &l, std::vector<std::string> &srcs)
 {
     bool ret = false;
-    std::map<std::string, std::vector<std::regex>> exemptions;
-    exemptions[std::string(".*[^a-zA-Z0-9_:]abort[(].*")].push_back(std::regex(".*/bomb[.]c$"));
-    exemptions[std::string(".*[^a-zA-Z0-9_:]dirname[(].*")].push_back(std::regex(".*/tests/dirname[.]c$"));
-    exemptions[std::string(".*[^a-zA-Z0-9_:]remove[(].*")].push_back(std::regex(".*/file[.]c$"));
-    exemptions[std::string(".*[^a-zA-Z0-9_:]strcasecmp[(].*")].push_back(std::regex(".*/str[.]c$"));
-    exemptions[std::string(".*[^a-zA-Z0-9_:]strcmp[(].*")].push_back(std::regex(".*/str[.]c$"));
-    exemptions[std::string(".*[^a-zA-Z0-9_:]strdup[(].*")].push_back(std::regex(".*/str[.]c$"));
-    exemptions[std::string(".*[^a-zA-Z0-9_:]strlcat[(].*")].push_back(std::regex(".*/str[.]c$"));
-    exemptions[std::string(".*[^a-zA-Z0-9_:]strlcpy[(].*")].push_back(std::regex(".*/str[.]c$"));
-    exemptions[std::string(".*[^a-zA-Z0-9_:]strncasecmp[(].*")].push_back(std::regex(".*/str[.]c$"));
-    exemptions[std::string(".*[^a-zA-Z0-9_:]strncat[(].*")].push_back(std::regex(".*/str[.]c$"));
-    exemptions[std::string(".*[^a-zA-Z0-9_:]strncmp[(].*")].push_back(std::regex(".*/str[.]c$"));
-    exemptions[std::string(".*[^a-zA-Z0-9_:]strncpy[(].*")].push_back(std::regex(".*/rt/db4[.]h$"));
-    exemptions[std::string(".*[^a-zA-Z0-9_:]strncpy[(].*")].push_back(std::regex(".*/str[.]c$"));
-    exemptions[std::string(".*[^a-zA-Z0-9_:]strncpy[(].*")].push_back(std::regex(".*/vls[.]c$"));
-    exemptions[std::string(".*[^a-zA-Z0-9_:]strncpy[(].*")].push_back(std::regex(".*/wfobj/obj_util[.]cpp$"));
-
-    const char *file_exemptions[] {
-	".*/CONFIG_CONTROL_DESIGN.*",
-	".*/bu/log[.]h$",
-	".*/bu/path[.]h$",
-	".*/bu/str[.]h$",
-	".*/cursor[.]c$",
-	".*/ttcp[.]c$",
-	".*/misc/CMake/compat/.*",
-	NULL
-    };
-
-    const char *funcs[] {
-	".*[^a-zA-Z0-9_:]abort[(].*",
-	".*[^a-zA-Z0-9_:]dirname[(].*",
-	".*[^a-zA-Z0-9_:]fgets[(].*",
-	".*[^a-zA-Z0-9_:]getopt[(].*",
-	".*[^a-zA-Z0-9_:]qsort[(].*",
-	".*[^a-zA-Z0-9_:]remove[(].*",
-	".*[^a-zA-Z0-9_:]rmdir[(].*",
-	".*[^a-zA-Z0-9_:]strcasecmp[(].*",
-	".*[^a-zA-Z0-9_:]strcat[(].*",
-	".*[^a-zA-Z0-9_:]strcmp[(].*",
-	".*[^a-zA-Z0-9_:]strcpy[(].*",
-	".*[^a-zA-Z0-9_:]strdup[(].*",
-	".*[^a-zA-Z0-9_:]stricmp[(].*",
-	".*[^a-zA-Z0-9_:]strlcat[(].*",
-	".*[^a-zA-Z0-9_:]strlcpy[(].*",
-	".*[^a-zA-Z0-9_:]strncasecmp[(].*",
-	".*[^a-zA-Z0-9_:]strncat[(].*",
-	".*[^a-zA-Z0-9_:]strncmp[(].*",
-	".*[^a-zA-Z0-9_:]strncpy[(].*",
-	".*[^a-zA-Z0-9_:]unlink[(].*",
-	NULL
-    };
-
-    std::vector<std::regex> file_filters;
-    int cnt = 0;
-    const char *rf = file_exemptions[cnt];
-    while (rf) {
-	file_filters.push_back(std::regex(rf));
-	cnt++;
-	rf = file_exemptions[cnt];
-    }
-
-    std::map<std::string, std::regex> func_filters;
-    cnt = 0;
-    rf = funcs[cnt];
-    while (rf) {
-	func_filters[std::string(rf)] = std::regex(rf);
-	cnt++;
-	rf = funcs[cnt];
-    }
-
 
     for (size_t i = 0; i < srcs.size(); i++) {
 	bool skip = false;
-	for (size_t j = 0; j < file_filters.size(); j++) {
-	    if (std::regex_match(srcs[i], file_filters[j])) {
+	for (size_t j = 0; j < l.api_file_filters.size(); j++) {
+	    if (std::regex_match(srcs[i], l.api_file_filters[j])) {
 		skip = true;
 		break;
 	    }
@@ -398,13 +494,13 @@ api_usage(repo_log_t &l, std::vector<std::string> &srcs)
 	while (std::getline(fs, sline)) {
 	    lcnt++;
 	    std::map<std::string, std::regex>::iterator ff_it;
-	    for (ff_it = func_filters.begin(); ff_it != func_filters.end(); ff_it++) {
+	    for (ff_it = l.api_func_filters.begin(); ff_it != l.api_func_filters.end(); ff_it++) {
 		if (std::regex_match(sline, ff_it->second)) {
 		    // If we have a it, make sure it's not an exemption
 		    bool exempt = false;
-		    if (exemptions.find(ff_it->first) != exemptions.end()) {
+		    if (l.api_exemptions.find(ff_it->first) != l.api_exemptions.end()) {
 			std::vector<std::regex>::iterator e_it;
-			for (e_it = exemptions[ff_it->first].begin(); e_it != exemptions[ff_it->first].end(); e_it++) {
+			for (e_it = l.api_exemptions[ff_it->first].begin(); e_it != l.api_exemptions[ff_it->first].end(); e_it++) {
 			    if (std::regex_match(srcs[i], *e_it)) {
 				exempt = true;
 				break;
@@ -443,72 +539,13 @@ class platform_entry {
 
 
 int
-platform_symbols(repo_log_t &l, std::vector<std::string> &log, std::vector<std::string> &srcs)
+platform_symbols(repo_state_t &l, std::vector<std::string> &log, std::vector<std::string> &srcs)
 {
-
-    const char *platforms[] {
-	"aix",
-	"apple",
-	"cygwin",
-	"darwin",
-	"freebsd",
-	"haiku",
-	"hpux",
-	"linux",
-	"mingw",
-	"msdos",
-	"qnx",
-	"sgi",
-	"solaris",
-	"sun",
-	"sunos",
-	"svr4",
-	"sysv",
-	"ultrix",
-	"unix",
-	"vms",
-	"win16",
-	"win32",
-	"win64",
-	"wine",
-	"winnt",
-	NULL
-    };
-    std::map<std::string, std::regex> platform_checks;
-    int cnt = 0;
-    const char *rf = platforms[cnt];
-    while (rf) {
-	cnt++;
-	std::string p_lower(rf);
-	std::string p_upper = p_lower;
-	std::transform(p_upper.begin(), p_upper.end(), p_upper.begin(), [](unsigned char c){ return std::toupper(c); });
-	std::string pregex_str = std::string("^[[:space:]#]*(if|IF).*[[:space:](]_*(") + p_lower + std::string("|") + p_upper + std::string(")_*([[:space:]]|[)]|$).*$");
-	platform_checks[p_lower] = std::regex(pregex_str);
-	rf = platforms[cnt];
-    }
-
-    const char *file_exemptions[] {
-	".*/pstdint[.]h$",
-	".*/pinttypes[.]h$",
-	".*/uce-dirent[.]h$",
-	NULL
-    };
-
-    std::vector<std::regex> file_filters;
-    cnt = 0;
-    rf = file_exemptions[cnt];
-    while (rf) {
-	file_filters.push_back(std::regex(rf));
-	cnt++;
-	rf = file_exemptions[cnt];
-    }
-
-
     std::map<std::string, std::vector<platform_entry>> instances;
     for (size_t i = 0; i < srcs.size(); i++) {
 	bool skip = false;
-	for (size_t j = 0; j < file_filters.size(); j++) {
-	    if (std::regex_match(srcs[i], file_filters[j])) {
+	for (size_t j = 0; j < l.platform_file_filters.size(); j++) {
+	    if (std::regex_match(srcs[i], l.platform_file_filters[j])) {
 		skip = true;
 		break;
 	    }
@@ -532,7 +569,7 @@ platform_symbols(repo_log_t &l, std::vector<std::string> &log, std::vector<std::
 	    lcnt++;
 
 	    std::map<std::string, std::regex>::iterator  p_it;
-	    for (p_it = platform_checks.begin(); p_it != platform_checks.end(); p_it++) {
+	    for (p_it = l.platform_checks.begin(); p_it != l.platform_checks.end(); p_it++) {
 		if (std::regex_match(sline, p_it->second)) {
 		    //std::cout << "match on line: " << sline << "\n";
 		    platform_entry pe;
@@ -568,8 +605,8 @@ main(int argc, const char *argv[])
 	return -1;
     }
 
-    repo_log_t repo_log;
-    repo_log.path_root = std::string(argv[2]);
+    repo_state_t repo_state;
+    repo_state.path_root = std::string(argv[2]);
 
     std::string sfile;
     std::ifstream src_file_stream;
@@ -645,25 +682,33 @@ main(int argc, const char *argv[])
 
     int ret = 0;
 
-    if (bio_redundant_check(repo_log, src_files)) {
+    if (bio_redundant_check(repo_state, inc_files)) {
 	ret = -1;
     }
 
-    if (bnetwork_redundant_check(repo_log, src_files)) {
+    if (bio_redundant_check(repo_state, src_files)) {
 	ret = -1;
     }
 
-    if (common_include_first(repo_log, src_files)) {
+    if (bnetwork_redundant_check(repo_state, inc_files)) {
 	ret = -1;
     }
 
-    if (api_usage(repo_log, src_files)) {
+    if (bnetwork_redundant_check(repo_state, src_files)) {
 	ret = -1;
     }
 
-    int h_cnt = platform_symbols(repo_log, repo_log.symbol_inc_log, inc_files);
-    int s_cnt = platform_symbols(repo_log, repo_log.symbol_src_log, src_files);
-    int b_cnt = platform_symbols(repo_log, repo_log.symbol_bld_log, build_files);
+    if (common_include_first(repo_state, src_files)) {
+	ret = -1;
+    }
+
+    if (api_usage(repo_state, src_files)) {
+	ret = -1;
+    }
+
+    int h_cnt = platform_symbols(repo_state, repo_state.symbol_inc_log, inc_files);
+    int s_cnt = platform_symbols(repo_state, repo_state.symbol_src_log, src_files);
+    int b_cnt = platform_symbols(repo_state, repo_state.symbol_bld_log, build_files);
     int psym_cnt = h_cnt + s_cnt + b_cnt;
     int expected_psym_cnt = 10;
     if (psym_cnt > expected_psym_cnt) {
@@ -672,54 +717,54 @@ main(int argc, const char *argv[])
     }
 
     if (ret == -1) {
-	std::sort(repo_log.api_log.begin(), repo_log.api_log.end());
-	std::sort(repo_log.bio_log.begin(), repo_log.bio_log.end());
-	std::sort(repo_log.bnet_log.begin(), repo_log.bnet_log.end());
-	std::sort(repo_log.common_log.begin(), repo_log.common_log.end());
-	std::sort(repo_log.symbol_inc_log.begin(), repo_log.symbol_inc_log.end());
-	std::sort(repo_log.symbol_src_log.begin(), repo_log.symbol_src_log.end());
-	std::sort(repo_log.symbol_bld_log.begin(), repo_log.symbol_bld_log.end());
+	std::sort(repo_state.api_log.begin(), repo_state.api_log.end());
+	std::sort(repo_state.bio_log.begin(), repo_state.bio_log.end());
+	std::sort(repo_state.bnet_log.begin(), repo_state.bnet_log.end());
+	std::sort(repo_state.common_log.begin(), repo_state.common_log.end());
+	std::sort(repo_state.symbol_inc_log.begin(), repo_state.symbol_inc_log.end());
+	std::sort(repo_state.symbol_src_log.begin(), repo_state.symbol_src_log.end());
+	std::sort(repo_state.symbol_bld_log.begin(), repo_state.symbol_bld_log.end());
 
-	if (repo_log.api_log.size()) {
-	    std::cout << "\nFound " << repo_log.api_log.size() << " instances of unguarded API usage:\n";
-	    for (size_t i = 0; i < repo_log.api_log.size(); i++) {
-		std::cout << repo_log.api_log[i];
+	if (repo_state.api_log.size()) {
+	    std::cout << "\nFound " << repo_state.api_log.size() << " instances of unguarded API usage:\n";
+	    for (size_t i = 0; i < repo_state.api_log.size(); i++) {
+		std::cout << repo_state.api_log[i];
 	    }
 	}
-	if (repo_log.bio_log.size()) {
-	    std::cout << "\nFound " << repo_log.bio_log.size() << " instances of redundant header inclusions in files using bio.h:\n";
-	    for (size_t i = 0; i < repo_log.bio_log.size(); i++) {
-		std::cout << repo_log.bio_log[i];
+	if (repo_state.bio_log.size()) {
+	    std::cout << "\nFound " << repo_state.bio_log.size() << " instances of redundant header inclusions in files using bio.h:\n";
+	    for (size_t i = 0; i < repo_state.bio_log.size(); i++) {
+		std::cout << repo_state.bio_log[i];
 	    }
 	}
-	if (repo_log.bnet_log.size()) {
-	    std::cout << "\nFound " << repo_log.bnet_log.size() << " instances of redundant header inclusions in files using bnetwork.h:\n";
-	    for (size_t i = 0; i < repo_log.bnet_log.size(); i++) {
-		std::cout << repo_log.bnet_log[i];
+	if (repo_state.bnet_log.size()) {
+	    std::cout << "\nFound " << repo_state.bnet_log.size() << " instances of redundant header inclusions in files using bnetwork.h:\n";
+	    for (size_t i = 0; i < repo_state.bnet_log.size(); i++) {
+		std::cout << repo_state.bnet_log[i];
 	    }
 	}
-	if (repo_log.common_log.size()) {
-	    std::cout << "\nFound " << repo_log.common_log.size() << " instances of files using common.h with out-of-order inclusions:\n";
-	    for (size_t i = 0; i < repo_log.common_log.size(); i++) {
-		std::cout << repo_log.common_log[i];
+	if (repo_state.common_log.size()) {
+	    std::cout << "\nFound " << repo_state.common_log.size() << " instances of files using common.h with out-of-order inclusions:\n";
+	    for (size_t i = 0; i < repo_state.common_log.size(); i++) {
+		std::cout << repo_state.common_log[i];
 	    }
 	}
-	if (repo_log.symbol_inc_log.size()) {
-	    std::cout << "\nFound " << repo_log.symbol_inc_log.size() << " instances of platform symbol usage in header files:\n";
-	    for (size_t i = 0; i < repo_log.symbol_inc_log.size(); i++) {
-		std::cout << repo_log.symbol_inc_log[i];
+	if (repo_state.symbol_inc_log.size()) {
+	    std::cout << "\nFound " << repo_state.symbol_inc_log.size() << " instances of platform symbol usage in header files:\n";
+	    for (size_t i = 0; i < repo_state.symbol_inc_log.size(); i++) {
+		std::cout << repo_state.symbol_inc_log[i];
 	    }
 	}
-	if (repo_log.symbol_src_log.size()) {
-	    std::cout << "\nFound " << repo_log.symbol_src_log.size() << " instances of platform symbol usage in source files:\n";
-	    for (size_t i = 0; i < repo_log.symbol_src_log.size(); i++) {
-		std::cout << repo_log.symbol_src_log[i];
+	if (repo_state.symbol_src_log.size()) {
+	    std::cout << "\nFound " << repo_state.symbol_src_log.size() << " instances of platform symbol usage in source files:\n";
+	    for (size_t i = 0; i < repo_state.symbol_src_log.size(); i++) {
+		std::cout << repo_state.symbol_src_log[i];
 	    }
 	}
-	if (repo_log.symbol_bld_log.size()) {
-	    std::cout << "\nFound " << repo_log.symbol_bld_log.size() << " instances of platform symbol usage in build files:\n";
-	    for (size_t i = 0; i < repo_log.symbol_bld_log.size(); i++) {
-		std::cout << repo_log.symbol_bld_log[i];
+	if (repo_state.symbol_bld_log.size()) {
+	    std::cout << "\nFound " << repo_state.symbol_bld_log.size() << " instances of platform symbol usage in build files:\n";
+	    for (size_t i = 0; i < repo_state.symbol_bld_log.size(); i++) {
+		std::cout << repo_state.symbol_bld_log[i];
 	    }
 	}
     }
