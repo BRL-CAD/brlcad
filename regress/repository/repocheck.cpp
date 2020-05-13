@@ -52,8 +52,21 @@
 #include <string>
 #define MAX_LINES_CHECK 500
 
+class repo_log_t {
+    public:
+	std::string path_root;
+
+	std::vector<std::string> api_log;
+	std::vector<std::string> bio_log;
+	std::vector<std::string> bnet_log;
+	std::vector<std::string> common_log;
+	std::vector<std::string> symbol_inc_log;
+	std::vector<std::string> symbol_src_log;
+	std::vector<std::string> symbol_bld_log;
+};
+
 bool
-bio_redundant_check(std::string &log, std::vector<std::string> &srcs)
+bio_redundant_check(repo_log_t &l, std::vector<std::string> &srcs)
 {
     bool ret = false;
     std::regex bio_regex("#[[:space:]]*include[[:space:]]*\"bio.h\".*");
@@ -114,8 +127,8 @@ bio_redundant_check(std::string &log, std::vector<std::string> &srcs)
 		    std::set<int>::iterator l_it;
 		    ret = true;
 		    for (l_it = m_it->second.begin(); l_it != m_it->second.end(); l_it++) {
-			std::string lstr = srcs[i] + std::string(" has bio.h, but also matches regex ") + m_it->first + std::string(" on line ") + std::to_string(lcnt) + std::string("\n");
-			log.append(lstr);
+			std::string lstr = srcs[i].substr(l.path_root.length()+1) + std::string(" has bio.h, but also matches regex ") + m_it->first + std::string(" on line ") + std::to_string(lcnt) + std::string("\n");
+			l.bio_log.push_back(lstr);
 		    }
 		}
 	    }
@@ -126,7 +139,7 @@ bio_redundant_check(std::string &log, std::vector<std::string> &srcs)
 }
 
 bool
-bnetwork_redundant_check(std::string &log, std::vector<std::string> &srcs)
+bnetwork_redundant_check(repo_log_t &l, std::vector<std::string> &srcs)
 {
     bool ret = false;
     std::regex bnetwork_regex("#[[:space:]]*include[[:space:]]*\"bnetwork.h\".*");
@@ -186,8 +199,8 @@ bnetwork_redundant_check(std::string &log, std::vector<std::string> &srcs)
 		    std::set<int>::iterator l_it;
 		    ret = true;
 		    for (l_it = m_it->second.begin(); l_it != m_it->second.end(); l_it++) {
-			std::string lstr = srcs[i] + std::string(" has bnetwork.h, but also matches regex ") + m_it->first + std::string(" on line ") + std::to_string(lcnt) + std::string("\n");
-			log.append(lstr);
+			std::string lstr = srcs[i].substr(l.path_root.length()+1) + std::string(" has bnetwork.h, but also matches regex ") + m_it->first + std::string(" on line ") + std::to_string(lcnt) + std::string("\n");
+			l.bnet_log.push_back(lstr);
 		    }
 		}
 	    }
@@ -200,7 +213,7 @@ bnetwork_redundant_check(std::string &log, std::vector<std::string> &srcs)
 
 
 bool
-common_include_first(std::string &log, std::vector<std::string> &srcs)
+common_include_first(repo_log_t &l, std::vector<std::string> &srcs)
 {
     bool ret = false;
     std::regex inc_regex("#[[:space:]]*include.*");
@@ -261,16 +274,14 @@ common_include_first(std::string &log, std::vector<std::string> &srcs)
 
 	int lcnt = 0;
 	int first_inc_line = -1;
-	//bool have_common = false;
 	bool have_inc = false;
 	std::string sline;
 	while (std::getline(fs, sline) && lcnt < MAX_LINES_CHECK) {
 	    lcnt++;
 	    if (std::regex_match(sline, common_regex)) {
-		//have_common = true;
 		if (have_inc) {
-		    std::string lstr = srcs[i] + std::string(" has common.h included on line ") + std::to_string(lcnt) + std::string(" but a prior #include statement was found at line ") + std::to_string(first_inc_line) + std::string("\n");
-		    log.append(lstr);
+		    std::string lstr = srcs[i].substr(l.path_root.length()+1) + std::string(" includes common.h on line ") + std::to_string(lcnt) + std::string(" but a prior #include statement was found at line ") + std::to_string(first_inc_line) + std::string("\n");
+		    l.common_log.push_back(lstr);
 		    ret = true;
 		}
 		break;
@@ -280,14 +291,6 @@ common_include_first(std::string &log, std::vector<std::string> &srcs)
 		first_inc_line = lcnt;
 	    }
 	}
-#if 0
-	// We don't include common.h in all source files, so we don't fail if it's not present
-	if (!have_common) {
-	    std::string lstr = srcs[i] + std::string(" does not include the common.h header\n");
-	    log.append(lstr);
-	    ret = true;
-	}
-#endif
     }
 
 
@@ -295,7 +298,7 @@ common_include_first(std::string &log, std::vector<std::string> &srcs)
 }
 
 bool
-api_usage(std::string &log, std::vector<std::string> &srcs)
+api_usage(repo_log_t &l, std::vector<std::string> &srcs)
 {
     bool ret = false;
     std::map<std::string, std::vector<std::regex>> exemptions;
@@ -398,7 +401,6 @@ api_usage(std::string &log, std::vector<std::string> &srcs)
 	    for (ff_it = func_filters.begin(); ff_it != func_filters.end(); ff_it++) {
 		if (std::regex_match(sline, ff_it->second)) {
 		    // If we have a it, make sure it's not an exemption
-		    std::cout << "check " << sline << "\n";
 		    bool exempt = false;
 		    if (exemptions.find(ff_it->first) != exemptions.end()) {
 			std::vector<std::regex>::iterator e_it;
@@ -422,8 +424,8 @@ api_usage(std::string &log, std::vector<std::string> &srcs)
 	for (i_it = instances.begin(); i_it != instances.end(); i_it++) {
 	    std::set<int>::iterator num_it;
 	    for (num_it = i_it->second.begin(); num_it != i_it->second.end(); num_it++) {
-	    std::string lstr = srcs[i] + std::string(" matches ") + i_it->first + std::string(" on line ") + std::to_string(*num_it) + std::string("\n");
-	    log.append(lstr);
+	    std::string lstr = srcs[i].substr(l.path_root.length()+1) + std::string(" matches ") + i_it->first + std::string(" on line ") + std::to_string(*num_it) + std::string("\n");
+	    l.api_log.push_back(lstr);
 	    }
 	}
     }
@@ -441,7 +443,7 @@ class platform_entry {
 
 
 int
-platform_symbols(std::vector<std::string> &srcs, std::string &proot)
+platform_symbols(repo_log_t &l, std::vector<std::string> &log, std::vector<std::string> &srcs)
 {
 
     const char *platforms[] {
@@ -535,7 +537,7 @@ platform_symbols(std::vector<std::string> &srcs, std::string &proot)
 		    //std::cout << "match on line: " << sline << "\n";
 		    platform_entry pe;
 		    pe.symbol = p_it->first;
-		    pe.file = srcs[i].substr(proot.length()+1);
+		    pe.file = srcs[i].substr(l.path_root.length()+1);
 		    pe.line_num = lcnt;
 		    pe.line = sline;
 		    instances[p_it->first].push_back(pe);
@@ -549,8 +551,8 @@ platform_symbols(std::vector<std::string> &srcs, std::string &proot)
     for (m_it = instances.begin(); m_it != instances.end(); m_it++) {
 	for (size_t i = 0; i < m_it->second.size(); i++) {
 	    platform_entry &pe = m_it->second[i];
-	    std::string lstr = pe.symbol + std::string(" (") + pe.file + std::string(",") + std::to_string(pe.line_num) + std::string("): ") + pe.line + std::string("\n");
-	    std::cout << lstr;
+	    std::string lstr = pe.file + std::string("(") + std::to_string(pe.line_num) + std::string("): ") + pe.line + std::string("\n");
+	    log.push_back(lstr);
 	    match_cnt++;
 	}
     }
@@ -566,7 +568,8 @@ main(int argc, const char *argv[])
 	return -1;
     }
 
-    std::string path_root(argv[2]);
+    repo_log_t repo_log;
+    repo_log.path_root = std::string(argv[2]);
 
     std::string sfile;
     std::ifstream src_file_stream;
@@ -642,34 +645,25 @@ main(int argc, const char *argv[])
 
     int ret = 0;
 
-    std::string log;
-
-#if 0
-    if (bio_redundant_check(log, src_files)) {
+    if (bio_redundant_check(repo_log, src_files)) {
 	ret = -1;
     }
 
-    if (bnetwork_redundant_check(log, src_files)) {
+    if (bnetwork_redundant_check(repo_log, src_files)) {
 	ret = -1;
     }
 
-    if (common_include_first(log, src_files)) {
+    if (common_include_first(repo_log, src_files)) {
 	ret = -1;
     }
 
-    if (api_usage(log, src_files)) {
+    if (api_usage(repo_log, src_files)) {
 	ret = -1;
     }
-#endif
 
-
-    int h_cnt = platform_symbols(inc_files, path_root);
-    std::cout << "Found " << h_cnt <<  " header instances\n";
-    int s_cnt = platform_symbols(src_files, path_root);
-    std::cout << "Found " << s_cnt <<  " src instances\n";
-    int b_cnt = platform_symbols(build_files, path_root);
-    std::cout << "Found " << b_cnt <<  " build system instances\n";
-
+    int h_cnt = platform_symbols(repo_log, repo_log.symbol_inc_log, inc_files);
+    int s_cnt = platform_symbols(repo_log, repo_log.symbol_src_log, src_files);
+    int b_cnt = platform_symbols(repo_log, repo_log.symbol_bld_log, build_files);
     int psym_cnt = h_cnt + s_cnt + b_cnt;
     int expected_psym_cnt = 10;
     if (psym_cnt > expected_psym_cnt) {
@@ -677,10 +671,58 @@ main(int argc, const char *argv[])
 	ret = -1;
     }
 
-    if (ret) {
-	std::cerr << log << "\n";
-    }
+    if (ret == -1) {
+	std::sort(repo_log.api_log.begin(), repo_log.api_log.end());
+	std::sort(repo_log.bio_log.begin(), repo_log.bio_log.end());
+	std::sort(repo_log.bnet_log.begin(), repo_log.bnet_log.end());
+	std::sort(repo_log.common_log.begin(), repo_log.common_log.end());
+	std::sort(repo_log.symbol_inc_log.begin(), repo_log.symbol_inc_log.end());
+	std::sort(repo_log.symbol_src_log.begin(), repo_log.symbol_src_log.end());
+	std::sort(repo_log.symbol_bld_log.begin(), repo_log.symbol_bld_log.end());
 
+	if (repo_log.api_log.size()) {
+	    std::cout << "\nFound " << repo_log.api_log.size() << " instances of unguarded API usage:\n";
+	    for (size_t i = 0; i < repo_log.api_log.size(); i++) {
+		std::cout << repo_log.api_log[i];
+	    }
+	}
+	if (repo_log.bio_log.size()) {
+	    std::cout << "\nFound " << repo_log.bio_log.size() << " instances of redundant header inclusions in files using bio.h:\n";
+	    for (size_t i = 0; i < repo_log.bio_log.size(); i++) {
+		std::cout << repo_log.bio_log[i];
+	    }
+	}
+	if (repo_log.bnet_log.size()) {
+	    std::cout << "\nFound " << repo_log.bnet_log.size() << " instances of redundant header inclusions in files using bnetwork.h:\n";
+	    for (size_t i = 0; i < repo_log.bnet_log.size(); i++) {
+		std::cout << repo_log.bnet_log[i];
+	    }
+	}
+	if (repo_log.common_log.size()) {
+	    std::cout << "\nFound " << repo_log.common_log.size() << " instances of files using common.h with out-of-order inclusions:\n";
+	    for (size_t i = 0; i < repo_log.common_log.size(); i++) {
+		std::cout << repo_log.common_log[i];
+	    }
+	}
+	if (repo_log.symbol_inc_log.size()) {
+	    std::cout << "\nFound " << repo_log.symbol_inc_log.size() << " instances of platform symbol usage in header files:\n";
+	    for (size_t i = 0; i < repo_log.symbol_inc_log.size(); i++) {
+		std::cout << repo_log.symbol_inc_log[i];
+	    }
+	}
+	if (repo_log.symbol_src_log.size()) {
+	    std::cout << "\nFound " << repo_log.symbol_src_log.size() << " instances of platform symbol usage in source files:\n";
+	    for (size_t i = 0; i < repo_log.symbol_src_log.size(); i++) {
+		std::cout << repo_log.symbol_src_log[i];
+	    }
+	}
+	if (repo_log.symbol_bld_log.size()) {
+	    std::cout << "\nFound " << repo_log.symbol_bld_log.size() << " instances of platform symbol usage in build files:\n";
+	    for (size_t i = 0; i < repo_log.symbol_bld_log.size(); i++) {
+		std::cout << repo_log.symbol_bld_log[i];
+	    }
+	}
+    }
 
     return ret;
 }
