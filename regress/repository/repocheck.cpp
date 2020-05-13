@@ -40,6 +40,8 @@
  */
 
 #include <cstdio>
+#include <algorithm>
+#include <locale>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
@@ -429,6 +431,134 @@ api_usage(std::string &log, std::vector<std::string> &srcs)
     return ret;
 }
 
+class platform_entry {
+    public:
+	std::string symbol;
+	std::string file;
+	int line_num;
+	std::string line;
+};
+
+
+int
+platform_symbols(std::vector<std::string> &srcs)
+{
+    bool ret = false;
+    
+    const char *platforms[] {
+	"aix",
+	"apple",
+	"cygwin",
+	"darwin",
+	"freebsd",
+	"haiku",
+	"hpux",
+	"linux",
+	"mingw",
+	"msdos",
+	"qnx",
+	"sgi",
+	"solaris",
+	"sun",
+	"sunos",
+	"svr4",
+	"sysv",
+	"ultrix",
+	"unix",
+	"vms",
+	"win16",
+	"win32",
+	"win64",
+	"wine",
+	"winnt",
+	NULL
+    };
+    std::map<std::string, std::regex> platform_checks;
+    std::string pregex_str;
+    int cnt = 0;
+    const char *rf = platforms[cnt];
+    while (rf) {
+	cnt++;
+	std::string p_lower(rf);
+	std::string p_upper = p_lower;
+	std::transform(p_upper.begin(), p_upper.end(), p_upper.begin(), [](unsigned char c){ return std::toupper(c); });
+	std::string pregex_str = std::string("^[[:space:]#]*(if|IF).*[[:space:](]_*(") + p_lower + std::string("|") + p_upper + std::string(")_*([[:space:]]|[)]|$).*$");
+	platform_checks[p_lower] = std::regex(pregex_str);
+	rf = platforms[cnt];
+    }
+
+    const char *file_exemptions[] {
+	".*/pstdint[.]h$",
+	".*/pinttypes[.]h$",
+	".*/uce-dirent[.]h$",
+	NULL
+    };
+
+    std::vector<std::regex> file_filters;
+    cnt = 0;
+    rf = file_exemptions[cnt];
+    while (rf) {
+	file_filters.push_back(std::regex(rf));
+	cnt++;
+	rf = file_exemptions[cnt];
+    }
+
+
+    std::map<std::string, std::vector<platform_entry>> instances;
+    for (size_t i = 0; i < srcs.size(); i++) {
+	bool skip = false;
+	for (size_t j = 0; j < file_filters.size(); j++) {
+	    if (std::regex_match(srcs[i], file_filters[j])) {
+		skip = true;
+		break;
+	    }
+	}
+	if (skip) {
+	    continue;
+	}
+
+	std::ifstream fs;
+	fs.open(srcs[i]);
+	if (!fs.is_open()) {
+	    std::cerr << "Unable to open " << srcs[i] << " for reading, skipping\n";
+	    continue;
+	}
+
+	//std::cout << "Reading " << srcs[i] << "\n";
+
+	int lcnt = 0;
+	std::string sline;
+	while (std::getline(fs, sline)) {
+	    lcnt++;
+
+	    std::map<std::string, std::regex>::iterator  p_it;
+	    for (p_it = platform_checks.begin(); p_it != platform_checks.end(); p_it++) {
+		if (std::regex_match(sline, p_it->second)) {
+		    //std::cout << "match on line: " << sline << "\n";
+		    platform_entry pe;
+		    pe.symbol = p_it->first;
+		    pe.file = srcs[i];
+		    pe.line_num = lcnt;
+		    pe.line = sline;
+		    instances[p_it->first].push_back(pe);
+		}
+	    }
+	}
+    }
+
+    std::map<std::string, std::vector<platform_entry>>::iterator m_it;
+    int match_cnt = 0;
+    for (m_it = instances.begin(); m_it != instances.end(); m_it++) {
+	for (size_t i = 0; i < m_it->second.size(); i++) {
+	    platform_entry &pe = m_it->second[i];
+	    std::string lstr = pe.symbol + std::string(" (") + pe.file + std::string(",") + std::to_string(pe.line_num) + std::string("): ") + pe.line + std::string("\n");
+	    std::cout << lstr;
+	    match_cnt++;
+	}
+    }
+
+    return match_cnt;
+}
 
 int
 main(int argc, const char *argv[])
@@ -514,6 +644,7 @@ main(int argc, const char *argv[])
 
     std::string log;
 
+#if 0
     if (bio_redundant_check(log, src_files)) {
 	ret = -1;
     }
@@ -529,10 +660,27 @@ main(int argc, const char *argv[])
     if (api_usage(log, src_files)) {
 	ret = -1;
     }
+#endif
+
+
+    int h_cnt = platform_symbols(inc_files);
+    std::cout << "Found " << h_cnt <<  " header instances\n";
+    int s_cnt = platform_symbols(src_files);
+    std::cout << "Found " << s_cnt <<  " src instances\n";
+    int b_cnt = platform_symbols(build_files);
+    std::cout << "Found " << b_cnt <<  " build system instances\n";
+   
+    int psym_cnt = h_cnt + s_cnt + b_cnt;
+    int expected_psym_cnt = 10;
+    if (psym_cnt > expected_psym_cnt) {
+	std::cout << "FAILURE: expected " << expected_psym_cnt << " platform symbols, found " << psym_cnt << "\n";
+	ret = -1;
+    }
 
     if (ret) {
 	std::cerr << log << "\n";
     }
+
 
     return ret;
 }
