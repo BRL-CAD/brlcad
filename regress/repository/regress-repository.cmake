@@ -1,12 +1,13 @@
-set(REPOSITORY_CHECK_EXEC "${LCHECK_EXEC}")
-set(FILES_LIST "${F_LIST}")
-set(LOG_FILE "${L_FILE}")
-set(STAMP_FILE "${S_FILE}")
+string(REPLACE "\\" "" REPOSITORY_CHECK_EXEC "${RCHECK_EXEC}")
+string(REPLACE "\\" "" FILES_LIST "${F_LIST}")
+string(REPLACE "\\" "" LOG_FILE "${L_FILE}")
+string(REPLACE "\\" "" STAMP_FILE "${S_FILE}")
+string(REPLACE "\\" "" B_SOURCE_DIR "${B_DIR}")
 
 file(WRITE "${LOG_FILE}" "Running repository check:\n${REPOSITORY_CHECK_EXEC} ${REPOSITORY_FILE_SET} ${FILES_LIST}\n")
 message("Processing...")
 execute_process(
-  COMMAND "${REPOSITORY_CHECK_EXEC}" "${FILES_LIST}" RESULT_VARIABLE repository_result
+  COMMAND "${REPOSITORY_CHECK_EXEC}" "${FILES_LIST}" "${B_SOURCE_DIR}" RESULT_VARIABLE repository_result
   OUTPUT_VARIABLE repository_log ERROR_VARIABLE repository_log
   )
 message("Processing... done.")
