@@ -68,13 +68,6 @@ set(embedded_licenses
 
 ADD_DOC(embedded_licenses legal/embedded)
 
-set(llist "${CMAKE_BINARY_DIR}/embedded_licenses.txt")
-file(REMOVE "${llist}")
-foreach(lfile ${embedded_licenses})
-  file(APPEND "${llist}" "${CMAKE_CURRENT_SOURCE_DIR}/${lfile}\n")
-endforeach(lfile ${embedded_licenses})
-DISTCLEAN("${llist}")
-
 CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
