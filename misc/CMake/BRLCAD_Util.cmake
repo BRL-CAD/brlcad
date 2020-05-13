@@ -222,7 +222,8 @@ function(CMFILE ITEM)
   endif(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
 
   # We're good - log it
-  set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
+  get_filename_component(item_absolute "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}" ABSOLUTE)
+  set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES "${item_absolute}")
 
 endfunction(CMFILE ITEM)
 
