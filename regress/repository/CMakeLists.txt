@@ -1,7 +1,7 @@
 #set(REPOCHECK_TEST 1)
 if (DEFINED REPOCHECK_TEST)
   add_executable(repocheck repocheck.cpp)
-  target_link_libraries(repocheck ${CMAKE_THREAD_LIBS_INIT})
+  target_link_libraries(repocheck libbu ${CMAKE_THREAD_LIBS_INIT})
   if (O3_COMPILER_FLAG)
     # This check benefits greatly from optimization. If we have the O3 flag, use
     # it - whether or not the standard build settings would add it.

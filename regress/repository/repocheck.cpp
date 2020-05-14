@@ -39,6 +39,8 @@
  *
  */
 
+#include "common.h"
+
 #include <cstdio>
 #include <algorithm>
 #include <locale>
@@ -50,6 +52,9 @@
 #include <map>
 #include <sstream>
 #include <string>
+
+#include "bu/mapped_file.h"
+
 #define MAX_LINES_CHECK 500
 #define EXPECTED_PLATFORM_SYMBOLS 205
 
@@ -162,9 +167,9 @@ regex_init(repo_info_t &r) {
     /* API usage check regex */
     {
 	const char *api_file_exemption_strs[] {
-	    "CONFIG_CONTROL_DESIGN.*", ".bu/log[.]h$", ".bu/path[.]h$",
-		".bu/str[.]h$", ".cursor[.]c$", ".ttcp[.]c$",
-		".misc/CMake/compat/.*",
+	    "CONFIG_CONTROL_DESIGN.*", "bu/log[.]h$", "bu/path[.]h$",
+		"bu/str[.]h$", "cursor[.]c$", "ttcp[.]c$",
+		"misc/CMake/compat/.*",
 		NULL
 	};
 	cnt = 0;
@@ -247,9 +252,6 @@ regex_init(repo_info_t &r) {
 
 
 
-
-
-
 int
 bio_redundant_check(repo_info_t &r, std::vector<std::string> &srcs)
 {
@@ -260,12 +262,22 @@ bio_redundant_check(repo_info_t &r, std::vector<std::string> &srcs)
 
 	std::map<std::string, std::set<int>> match_line_nums;
 
-	std::ifstream fs;
-	fs.open(srcs[i]);
-	if (!fs.is_open()) {
+
+	struct bu_mapped_file *ifile = bu_open_mapped_file(srcs[i].c_str(), "bio.h candidate file");
+	if (!ifile) {
 	    std::cerr << "Unable to open " << srcs[i] << " for reading, skipping\n";
 	    continue;
 	}
+
+	// If we have anything in the buffer that looks like it might be
+	// of interest, continue - otherwise we're done
+	if (!std::strstr((const char *)ifile->buf, "bio.h")) {
+	    bu_close_mapped_file(ifile);
+	    continue;
+	}
+
+	std::string fbuff((char *)ifile->buf);
+	std::istringstream fs(fbuff);
 
 	int lcnt = 0;
 	bool have_bio = false;
@@ -285,6 +297,8 @@ bio_redundant_check(repo_info_t &r, std::vector<std::string> &srcs)
 	    }
 	}
 
+	bu_close_mapped_file(ifile);
+
 	if (have_bio) {
 	    std::map<std::string, std::set<int>>::iterator m_it;
 	    for (m_it = match_line_nums.begin(); m_it != match_line_nums.end(); m_it++) {
@@ -303,6 +317,7 @@ bio_redundant_check(repo_info_t &r, std::vector<std::string> &srcs)
     return ret;
 }
 
+
 int
 bnetwork_redundant_check(repo_info_t &r, std::vector<std::string> &srcs)
 {
@@ -313,12 +328,21 @@ bnetwork_redundant_check(repo_info_t &r, std::vector<std::string> &srcs)
 
 	std::map<std::string, std::set<int>> match_line_nums;
 
-	std::ifstream fs;
-	fs.open(srcs[i]);
-	if (!fs.is_open()) {
+	struct bu_mapped_file *ifile = bu_open_mapped_file(srcs[i].c_str(), "bio.h candidate file");
+	if (!ifile) {
 	    std::cerr << "Unable to open " << srcs[i] << " for reading, skipping\n";
 	    continue;
 	}
+
+	// If we have anything in the buffer that looks like it might be
+	// of interest, continue - otherwise we're done
+	if (!std::strstr((const char *)ifile->buf, "bnetwork.h")) {
+	    bu_close_mapped_file(ifile);
+	    continue;
+	}
+
+	std::string fbuff((char *)ifile->buf);
+	std::istringstream fs(fbuff);
 
 	int lcnt = 0;
 	bool have_bnetwork = false;
@@ -337,6 +361,8 @@ bnetwork_redundant_check(repo_info_t &r, std::vector<std::string> &srcs)
 		}
 	    }
 	}
+
+	bu_close_mapped_file(ifile);
 
 	if (have_bnetwork) {
 	    std::map<std::string, std::set<int>>::iterator m_it;
@@ -357,7 +383,6 @@ bnetwork_redundant_check(repo_info_t &r, std::vector<std::string> &srcs)
 }
 
 
-
 int
 common_include_first(repo_info_t &r, std::vector<std::string> &srcs)
 {
@@ -375,12 +400,21 @@ common_include_first(repo_info_t &r, std::vector<std::string> &srcs)
 	    continue;
 	}
 
-	std::ifstream fs;
-	fs.open(srcs[i]);
-	if (!fs.is_open()) {
+	struct bu_mapped_file *ifile = bu_open_mapped_file(srcs[i].c_str(), "bio.h candidate file");
+	if (!ifile) {
 	    std::cerr << "Unable to open " << srcs[i] << " for reading, skipping\n";
 	    continue;
 	}
+
+	// If we have anything in the buffer that looks like it might be
+	// of interest, continue - otherwise we're done
+	if (!std::strstr((const char *)ifile->buf, "common.h")) {
+	    bu_close_mapped_file(ifile);
+	    continue;
+	}
+
+	std::string fbuff((char *)ifile->buf);
+	std::istringstream fs(fbuff);
 
 	int lcnt = 0;
 	int first_inc_line = -1;
@@ -401,6 +435,8 @@ common_include_first(repo_info_t &r, std::vector<std::string> &srcs)
 		first_inc_line = lcnt;
 	    }
 	}
+
+	bu_close_mapped_file(ifile);
     }
 
 
@@ -424,12 +460,15 @@ api_usage(repo_info_t &r, std::vector<std::string> &srcs)
 	    continue;
 	}
 
-	std::ifstream fs;
-	fs.open(srcs[i]);
-	if (!fs.is_open()) {
+	struct bu_mapped_file *ifile = bu_open_mapped_file(srcs[i].c_str(), "bio.h candidate file");
+	if (!ifile) {
 	    std::cerr << "Unable to open " << srcs[i] << " for reading, skipping\n";
 	    continue;
 	}
+
+	std::string fbuff((char *)ifile->buf);
+	std::istringstream fs(fbuff);
+
 
 	std::map<std::string, std::set<int>> instances;
 
@@ -462,6 +501,8 @@ api_usage(repo_info_t &r, std::vector<std::string> &srcs)
 		}
 	    }
 	}
+
+	bu_close_mapped_file(ifile);
 
 	std::map<std::string, std::set<int>>::iterator i_it;
 
@@ -503,12 +544,14 @@ platform_symbols(repo_info_t &r, std::vector<std::string> &log, std::vector<std:
 	    continue;
 	}
 
-	std::ifstream fs;
-	fs.open(srcs[i]);
-	if (!fs.is_open()) {
+	struct bu_mapped_file *ifile = bu_open_mapped_file(srcs[i].c_str(), "bio.h candidate file");
+	if (!ifile) {
 	    std::cerr << "Unable to open " << srcs[i] << " for reading, skipping\n";
 	    continue;
 	}
+
+	std::string fbuff((char *)ifile->buf);
+	std::istringstream fs(fbuff);
 
 	//std::cout << "Reading " << srcs[i] << "\n";
 
@@ -534,6 +577,8 @@ platform_symbols(repo_info_t &r, std::vector<std::string> &log, std::vector<std:
 		}
 	    }
 	}
+
+	bu_close_mapped_file(ifile);
     }
 
     std::map<std::string, std::vector<platform_entry>>::iterator m_it;
