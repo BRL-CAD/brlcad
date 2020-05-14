@@ -28,7 +28,7 @@ add_custom_command(
 	   -DW_DIR="${CMAKE_CURRENT_BINARY_DIR}"
            -P "${CMAKE_CURRENT_SOURCE_DIR}/regress-licenses.cmake"
   )
-add_custom_target(regress-licenses DEPENDS ${STAMP_FILE} ${CMAKE_BINARY_DIR}/embedded_licenses.txt)
+add_custom_target(regress-licenses DEPENDS ${STAMP_FILE} ${LICENSE_LIST})
 set_target_properties(regress-licenses PROPERTIES FOLDER "BRL-CAD Regression Tests")
 add_dependencies(regress regress-licenses)
 add_dependencies(check regress-licenses)
