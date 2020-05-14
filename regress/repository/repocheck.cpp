@@ -92,7 +92,7 @@ class repo_info_t {
 	// Outputs
 	std::vector<std::string> api_log;
 	std::vector<std::string> bio_log;
-	std::vector<std::string> bnet_log;
+	std::vector<std::string> bnetwork_log;
 	std::vector<std::string> common_log;
 	std::vector<std::string> symbol_inc_log;
 	std::vector<std::string> symbol_src_log;
@@ -250,7 +250,20 @@ regex_init(repo_info_t &r) {
     }
 }
 
-
+int pos_to_line_num(const char *buff, size_t pos)
+{
+    int line_cnt = 1;
+    size_t offset = 0;
+    while (offset < pos) {
+	const char *b = &buff[offset+1];
+	const char *l = strchr(b, '\n');
+        offset = (int)(l - buff);
+	if (offset < pos) {
+	    line_cnt++;
+	}
+    }
+    return line_cnt;
+}
 
 int
 bio_redundant_check(repo_info_t &r, std::vector<std::string> &srcs)
@@ -258,46 +271,40 @@ bio_redundant_check(repo_info_t &r, std::vector<std::string> &srcs)
     int ret = 0;
 
     for (size_t i = 0; i < srcs.size(); i++) {
-	std::string sline;
-
+	bool have_bio = false;
+	size_t bio_line = 0;
 	std::map<std::string, std::set<int>> match_line_nums;
-
 
 	struct bu_mapped_file *ifile = bu_open_mapped_file(srcs[i].c_str(), "bio.h candidate file");
 	if (!ifile) {
 	    std::cerr << "Unable to open " << srcs[i] << " for reading, skipping\n";
 	    continue;
 	}
+	
+	const char *cline = (const char *)ifile->buf;
 
 	// If we have anything in the buffer that looks like it might be
 	// of interest, continue - otherwise we're done
-	if (!std::strstr((const char *)ifile->buf, "bio.h")) {
-	    bu_close_mapped_file(ifile);
+	if (!std::strstr(cline, "bio.h")) {
 	    continue;
 	}
 
-	std::string fbuff((char *)ifile->buf);
-	std::istringstream fs(fbuff);
+	// Look first for bio.h, then if found for other headers
+	std::cmatch biovar;
+        if (std::regex_search(cline, biovar, r.bio_regex)) {
+	    have_bio = true;
+	    bio_line = pos_to_line_num(cline, biovar.position());
 
-	int lcnt = 0;
-	bool have_bio = false;
-	while (std::getline(fs, sline) && lcnt < MAX_LINES_CHECK) {
-	    lcnt++;
-
-	    if (!std::strstr(sline.c_str(), "include")) {
-		// If this isn't an include line, it's not of interest
-		continue;
-	    }
-
-	    if (std::strstr(sline.c_str(), "bio.h") && std::regex_match(sline, r.bio_regex)) {
-		have_bio = true;
-		continue;
-	    }
-
+	    // We have bio.h, check for things that shouldn't be there
+	    std::cmatch cvar;
 	    std::map<std::string, std::regex>::iterator f_it;
-	    for (f_it = r.bio_filters.begin(); f_it != r.bio_filters.end(); f_it++) {
-		if (std::regex_match(sline, f_it->second)) {
-		    match_line_nums[f_it->first].insert(lcnt);
+	    for (f_it = r.bnetwork_filters.begin(); f_it != r.bnetwork_filters.end(); f_it++) {
+		if (!std::strstr(cline, f_it->first.c_str())) {
+		    continue;
+		}
+		if (std::regex_search(cline, cvar, f_it->second)) {
+		    size_t inc_line = pos_to_line_num(cline, cvar.position());
+		    match_line_nums[f_it->first].insert(inc_line);
 		    continue;
 		}
 	    }
@@ -312,7 +319,7 @@ bio_redundant_check(repo_info_t &r, std::vector<std::string> &srcs)
 		    std::set<int>::iterator l_it;
 		    ret = 1;
 		    for (l_it = m_it->second.begin(); l_it != m_it->second.end(); l_it++) {
-			std::string lstr = srcs[i].substr(r.path_root.length()+1) + std::string(" has bio.h, but also includes ") + m_it->first + std::string(" on line ") + std::to_string(*l_it) + std::string("\n");
+			std::string lstr = srcs[i].substr(r.path_root.length()+1) + std::string(" includes bio.h on line ") + std::to_string(bio_line) + std::string(", but also includes ") + m_it->first + std::string(" on line ") + std::to_string(*l_it) + std::string("\n");
 			r.bio_log.push_back(lstr);
 		    }
 		}
@@ -323,52 +330,46 @@ bio_redundant_check(repo_info_t &r, std::vector<std::string> &srcs)
     return ret;
 }
 
-
 int
 bnetwork_redundant_check(repo_info_t &r, std::vector<std::string> &srcs)
 {
     int ret = 0;
 
     for (size_t i = 0; i < srcs.size(); i++) {
-	std::string sline;
-
+	bool have_bnetwork = false;
+	size_t bnetwork_line = 0;
 	std::map<std::string, std::set<int>> match_line_nums;
 
-	struct bu_mapped_file *ifile = bu_open_mapped_file(srcs[i].c_str(), "bio.h candidate file");
+	struct bu_mapped_file *ifile = bu_open_mapped_file(srcs[i].c_str(), "bnetwork.h candidate file");
 	if (!ifile) {
 	    std::cerr << "Unable to open " << srcs[i] << " for reading, skipping\n";
 	    continue;
 	}
+	
+	const char *cline = (const char *)ifile->buf;
 
 	// If we have anything in the buffer that looks like it might be
 	// of interest, continue - otherwise we're done
-	if (!std::strstr((const char *)ifile->buf, "bnetwork.h")) {
-	    bu_close_mapped_file(ifile);
+	if (!std::strstr(cline, "bnetwork.h")) {
 	    continue;
 	}
 
-	std::string fbuff((char *)ifile->buf);
-	std::istringstream fs(fbuff);
+	// Look first for bnetwork.h, then if found for other headers
+	std::cmatch bnetworkvar;
+        if (std::regex_search(cline, bnetworkvar, r.bnetwork_regex)) {
+	    have_bnetwork = true;
+	    bnetwork_line = pos_to_line_num(cline, bnetworkvar.position());
 
-	int lcnt = 0;
-	bool have_bnetwork = false;
-	while (std::getline(fs, sline) && lcnt < MAX_LINES_CHECK) {
-	    lcnt++;
-
-	    if (!std::strstr(sline.c_str(), "include")) {
-		// If this isn't an include line, it's not of interest
-		continue;
-	    }
-
-	    if (std::regex_match(sline, r.bnetwork_regex)) {
-		have_bnetwork = true;
-		continue;
-	    }
-
+	    // We have bnetwork.h, check for things that shouldn't be there
+	    std::cmatch cvar;
 	    std::map<std::string, std::regex>::iterator f_it;
 	    for (f_it = r.bnetwork_filters.begin(); f_it != r.bnetwork_filters.end(); f_it++) {
-		if (std::regex_match(sline, f_it->second)) {
-		    match_line_nums[f_it->first].insert(lcnt);
+		if (!std::strstr(cline, f_it->first.c_str())) {
+		    continue;
+		}
+		if (std::regex_search(cline, cvar, f_it->second)) {
+		    size_t inc_line = pos_to_line_num(cline, cvar.position());
+		    match_line_nums[f_it->first].insert(inc_line);
 		    continue;
 		}
 	    }
@@ -383,8 +384,8 @@ bnetwork_redundant_check(repo_info_t &r, std::vector<std::string> &srcs)
 		    std::set<int>::iterator l_it;
 		    ret = 1;
 		    for (l_it = m_it->second.begin(); l_it != m_it->second.end(); l_it++) {
-			std::string lstr = srcs[i].substr(r.path_root.length()+1) + std::string(" has bnetwork.h, but also includes ") + m_it->first + std::string(" on line ") + std::to_string(*l_it) + std::string("\n");
-			r.bnet_log.push_back(lstr);
+			std::string lstr = srcs[i].substr(r.path_root.length()+1) + std::string(" includes bnetwork.h on line ") + std::to_string(bnetwork_line) + std::string(", but also includes ") + m_it->first + std::string(" on line ") + std::to_string(*l_it) + std::string("\n");
+			r.bnetwork_log.push_back(lstr);
 		    }
 		}
 	    }
@@ -393,7 +394,6 @@ bnetwork_redundant_check(repo_info_t &r, std::vector<std::string> &srcs)
 
     return ret;
 }
-
 
 int
 common_include_first(repo_info_t &r, std::vector<std::string> &srcs)
@@ -412,45 +412,41 @@ common_include_first(repo_info_t &r, std::vector<std::string> &srcs)
 	    continue;
 	}
 
+
 	struct bu_mapped_file *ifile = bu_open_mapped_file(srcs[i].c_str(), "bio.h candidate file");
 	if (!ifile) {
 	    std::cerr << "Unable to open " << srcs[i] << " for reading, skipping\n";
 	    continue;
 	}
+	
+	const char *cline = (const char *)ifile->buf;
 
 	// If we have anything in the buffer that looks like it might be
 	// of interest, continue - otherwise we're done
-	if (!std::strstr((const char *)ifile->buf, "common.h")) {
-	    bu_close_mapped_file(ifile);
+	if (!std::strstr(cline, "common.h")) {
 	    continue;
 	}
 
-	std::string fbuff((char *)ifile->buf);
-	std::istringstream fs(fbuff);
-
-	int lcnt = 0;
-	int first_inc_line = -1;
-	bool have_inc = false;
-	std::string sline;
-	while (std::getline(fs, sline) && lcnt < MAX_LINES_CHECK) {
-	    lcnt++;
-	    if (std::regex_match(sline, r.common_regex)) {
-		if (have_inc) {
-		    std::string lstr = srcs[i].substr(r.path_root.length()+1) + std::string(" includes common.h on line ") + std::to_string(lcnt) + std::string(" but a prior #include statement was found at line ") + std::to_string(first_inc_line) + std::string("\n");
+	// Look first for common.h, then if found for other headers
+	std::cmatch commonvar;
+        if (std::regex_search(cline, commonvar, r.common_regex)) {
+	    size_t common_pos = commonvar.position();
+	    // We have common.h, check for other headers positioned before common.h
+	    std::cmatch cvar;
+	    if (std::regex_search(cline, cvar, r.inc_regex)) {
+		size_t inc_pos = cvar.position();
+		if (inc_pos < common_pos) {
+		    size_t common_line = pos_to_line_num(cline, common_pos);
+		    size_t inc_line = pos_to_line_num(cline, inc_pos);
+		    std::string lstr = srcs[i].substr(r.path_root.length()+1) + std::string(" includes common.h on line ") + std::to_string(common_line) + std::string(" but a prior #include statement was found at line ") + std::to_string(inc_line) + std::string("\n");
 		    r.common_log.push_back(lstr);
 		    ret = 1;
 		}
-		break;
-	    }
-	    if (!have_inc && std::regex_match(sline, r.inc_regex)) {
-		have_inc = true;
-		first_inc_line = lcnt;
 	    }
 	}
 
 	bu_close_mapped_file(ifile);
     }
-
 
     return ret;
 }
@@ -692,6 +688,7 @@ main(int argc, const char *argv[])
     ret += bnetwork_redundant_check(repo_info, inc_files);
     ret += bnetwork_redundant_check(repo_info, src_files);
     ret += common_include_first(repo_info, src_files);
+#if 1
     ret += api_usage(repo_info, src_files);
 
     int h_cnt = platform_symbols(repo_info, repo_info.symbol_inc_log, inc_files);
@@ -703,11 +700,12 @@ main(int argc, const char *argv[])
 	std::cout << "FAILURE: expected " << expected_psym_cnt << " platform symbols, found " << psym_cnt << "\n";
 	ret = 1;
     }
+#endif
 
     if (ret) {
 	std::sort(repo_info.api_log.begin(), repo_info.api_log.end());
 	std::sort(repo_info.bio_log.begin(), repo_info.bio_log.end());
-	std::sort(repo_info.bnet_log.begin(), repo_info.bnet_log.end());
+	std::sort(repo_info.bnetwork_log.begin(), repo_info.bnetwork_log.end());
 	std::sort(repo_info.common_log.begin(), repo_info.common_log.end());
 	std::sort(repo_info.symbol_inc_log.begin(), repo_info.symbol_inc_log.end());
 	std::sort(repo_info.symbol_src_log.begin(), repo_info.symbol_src_log.end());
@@ -725,10 +723,10 @@ main(int argc, const char *argv[])
 		std::cout << repo_info.bio_log[i];
 	    }
 	}
-	if (repo_info.bnet_log.size()) {
-	    std::cout << "\nFound " << repo_info.bnet_log.size() << " instances of redundant header inclusions in files using bnetwork.h:\n";
-	    for (size_t i = 0; i < repo_info.bnet_log.size(); i++) {
-		std::cout << repo_info.bnet_log[i];
+	if (repo_info.bnetwork_log.size()) {
+	    std::cout << "\nFound " << repo_info.bnetwork_log.size() << " instances of redundant header inclusions in files using bnetwork.h:\n";
+	    for (size_t i = 0; i < repo_info.bnetwork_log.size(); i++) {
+		std::cout << repo_info.bnetwork_log[i];
 	    }
 	}
 	if (repo_info.common_log.size()) {
