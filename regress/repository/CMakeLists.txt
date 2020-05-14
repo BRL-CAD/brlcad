@@ -1,48 +1,29 @@
-#set(REPOCHECK_TEST 1)
-if (DEFINED REPOCHECK_TEST)
-  add_executable(repocheck repocheck.cpp)
-  target_link_libraries(repocheck libbu ${CMAKE_THREAD_LIBS_INIT})
-  if (O3_COMPILER_FLAG)
-    # This check benefits greatly from optimization. If we have the O3 flag, use
-    # it - whether or not the standard build settings would add it.
-    target_compile_options(repocheck PRIVATE "-O3")
-  endif (O3_COMPILER_FLAG)
-  set_target_properties(repocheck PROPERTIES FOLDER "BRL-CAD Regression Tests")
+add_executable(repocheck repocheck.cpp)
+target_link_libraries(repocheck libbu ${CMAKE_THREAD_LIBS_INIT})
+if (O3_COMPILER_FLAG)
+  # This check benefits greatly from optimization. If we have the O3 flag, use
+  # it - whether or not the standard build settings would add it.
+  target_compile_options(repocheck PRIVATE "-O3")
+endif (O3_COMPILER_FLAG)
+set_target_properties(repocheck PROPERTIES FOLDER "BRL-CAD Regression Tests")
 
+set(ALL_FILES_LIST "${BRLCAD_BINARY_DIR}/cmakefiles.cmake")
 
-  set(LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/regress-repository.log")
-  set(STAMP_FILE "${CMAKE_CURRENT_BINARY_DIR}/regress-repository.done")
-  set(ALL_FILES_LIST "${BRLCAD_BINARY_DIR}/cmakefiles.cmake")
+add_test(NAME regress-repository
+  COMMAND "${CMAKE_COMMAND}"
+  -DRCHECK_EXEC=$<TARGET_FILE:repocheck>
+  -DL_FILE=${LOG_FILE} -DS_FILE=${STAMP_FILE} -DF_LIST=${ALL_FILES_LIST}
+  -DB_DIR=${BRLCAD_SOURCE_DIR}
+  -P "${CMAKE_CURRENT_SOURCE_DIR}/regress-repository.cmake"
+  )
+set_tests_properties(regress-repository PROPERTIES LABELS "Regression")
 
-  add_custom_command(
-    OUTPUT "${STAMP_FILE}"
-    COMMAND "${CMAKE_COMMAND}"
-    -DRCHECK_EXEC="$<TARGET_FILE:repocheck>"
-    -DL_FILE="${LOG_FILE}" -DS_FILE="${STAMP_FILE}" -DF_LIST="${ALL_FILES_LIST}"
-    -DB_DIR="${BRLCAD_SOURCE_DIR}"
-    -P "${CMAKE_CURRENT_SOURCE_DIR}/regress-repository.cmake"
-    )
-  add_custom_target(regress-repository DEPENDS ${STAMP_FILE} ${ALL_FILES_LIST})
-  set_target_properties(regress-repository PROPERTIES FOLDER "BRL-CAD Regression Tests")
-  add_dependencies(regress regress-repository)
-  add_dependencies(check regress-repository)
-
-  add_test(NAME regress-repository
-    COMMAND "${CMAKE_COMMAND}"
-    -DRCHECK_EXEC=$<TARGET_FILE:repocheck>
-    -DL_FILE=${LOG_FILE} -DS_FILE=${STAMP_FILE} -DF_LIST=${ALL_FILES_LIST}
-    -DB_DIR="${BRLCAD_SOURCE_DIR}"
-    -P "${CMAKE_CURRENT_SOURCE_DIR}/regress-repository.cmake"
-    )
-  set_tests_properties(regress-repository PROPERTIES LABELS "Regression")
-
-  DISTCLEAN(
-    ${STAMP_FILE}
-    ${LOG_FILE}
-    )
-
-  set_target_properties(regress-repository PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
-endif (DEFINED REPOCHECK_TEST)
+add_custom_target(regress-repository COMMAND ${CMAKE_CTEST_COMMAND} -R ^regress-repository --output-on-failure)
+add_dependencies(regress-repository repocheck)
+set_target_properties(regress-repository PROPERTIES FOLDER "BRL-CAD Regression Tests")
+set_target_properties(regress-repository PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
+add_dependencies(regress regress-repository)
+add_dependencies(check regress-repository)
 
 CMAKEFILES(
   CMakeLists.txt

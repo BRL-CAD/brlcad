@@ -56,7 +56,7 @@
 #include "bu/mapped_file.h"
 
 #define MAX_LINES_CHECK 500
-#define EXPECTED_PLATFORM_SYMBOLS 205
+#define EXPECTED_PLATFORM_SYMBOLS 206
 
 class repo_info_t {
     public:
@@ -699,10 +699,6 @@ main(int argc, const char *argv[])
     int b_cnt = platform_symbols(repo_info, repo_info.symbol_bld_log, build_files);
     int psym_cnt = h_cnt + s_cnt + b_cnt;
     int expected_psym_cnt = EXPECTED_PLATFORM_SYMBOLS;
-    if (psym_cnt > expected_psym_cnt) {
-	std::cout << "FAILURE: expected " << expected_psym_cnt << " platform symbols, found " << psym_cnt << "\n";
-	ret = 1;
-    }
 
     if (ret) {
 	std::sort(repo_info.api_log.begin(), repo_info.api_log.end());
@@ -714,45 +710,53 @@ main(int argc, const char *argv[])
 	std::sort(repo_info.symbol_bld_log.begin(), repo_info.symbol_bld_log.end());
 
 	if (repo_info.api_log.size()) {
-	    std::cout << "\nFound " << repo_info.api_log.size() << " instances of unguarded API usage:\n";
+	    std::cout << "\nFAILURE: found " << repo_info.api_log.size() << " instances of unguarded API usage:\n";
 	    for (size_t i = 0; i < repo_info.api_log.size(); i++) {
 		std::cout << repo_info.api_log[i];
 	    }
 	}
 	if (repo_info.bio_log.size()) {
-	    std::cout << "\nFound " << repo_info.bio_log.size() << " instances of redundant header inclusions in files using bio.h:\n";
+	    std::cout << "\nFAILURE: found " << repo_info.bio_log.size() << " instances of redundant header inclusions in files using bio.h:\n";
 	    for (size_t i = 0; i < repo_info.bio_log.size(); i++) {
 		std::cout << repo_info.bio_log[i];
 	    }
 	}
 	if (repo_info.bnet_log.size()) {
-	    std::cout << "\nFound " << repo_info.bnet_log.size() << " instances of redundant header inclusions in files using bnetwork.h:\n";
+	    std::cout << "\nFAILURE: found " << repo_info.bnet_log.size() << " instances of redundant header inclusions in files using bnetwork.h:\n";
 	    for (size_t i = 0; i < repo_info.bnet_log.size(); i++) {
 		std::cout << repo_info.bnet_log[i];
 	    }
 	}
 	if (repo_info.common_log.size()) {
-	    std::cout << "\nFound " << repo_info.common_log.size() << " instances of files using common.h with out-of-order inclusions:\n";
+	    std::cout << "\nFAILURE: found " << repo_info.common_log.size() << " instances of files using common.h with out-of-order inclusions:\n";
 	    for (size_t i = 0; i < repo_info.common_log.size(); i++) {
 		std::cout << repo_info.common_log[i];
 	    }
 	}
-	if (repo_info.symbol_inc_log.size()) {
-	    std::cout << "\nFound " << repo_info.symbol_inc_log.size() << " instances of platform symbol usage in header files:\n";
-	    for (size_t i = 0; i < repo_info.symbol_inc_log.size(); i++) {
-		std::cout << repo_info.symbol_inc_log[i];
+
+	if (psym_cnt > expected_psym_cnt) {
+	    std::cout << "\n**************************************************************************\n";
+	    std::cout << "FAILURE: expected " << expected_psym_cnt << " platform symbols, found " << psym_cnt << "\n";
+	    std::cout << "**************************************************************************\n";
+	    ret = 1;
+
+	    if (repo_info.symbol_inc_log.size()) {
+		std::cout << "\nFound " << repo_info.symbol_inc_log.size() << " instances of platform symbol usage in header files:\n";
+		for (size_t i = 0; i < repo_info.symbol_inc_log.size(); i++) {
+		    std::cout << repo_info.symbol_inc_log[i];
+		}
 	    }
-	}
-	if (repo_info.symbol_src_log.size()) {
-	    std::cout << "\nFound " << repo_info.symbol_src_log.size() << " instances of platform symbol usage in source files:\n";
-	    for (size_t i = 0; i < repo_info.symbol_src_log.size(); i++) {
-		std::cout << repo_info.symbol_src_log[i];
+	    if (repo_info.symbol_src_log.size()) {
+		std::cout << "\nFound " << repo_info.symbol_src_log.size() << " instances of platform symbol usage in source files:\n";
+		for (size_t i = 0; i < repo_info.symbol_src_log.size(); i++) {
+		    std::cout << repo_info.symbol_src_log[i];
+		}
 	    }
-	}
-	if (repo_info.symbol_bld_log.size()) {
-	    std::cout << "\nFound " << repo_info.symbol_bld_log.size() << " instances of platform symbol usage in build files:\n";
-	    for (size_t i = 0; i < repo_info.symbol_bld_log.size(); i++) {
-		std::cout << repo_info.symbol_bld_log[i];
+	    if (repo_info.symbol_bld_log.size()) {
+		std::cout << "\nFound " << repo_info.symbol_bld_log.size() << " instances of platform symbol usage in build files:\n";
+		for (size_t i = 0; i < repo_info.symbol_bld_log.size(); i++) {
+		    std::cout << repo_info.symbol_bld_log[i];
+		}
 	    }
 	}
     }
