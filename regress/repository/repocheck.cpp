@@ -283,7 +283,13 @@ bio_redundant_check(repo_info_t &r, std::vector<std::string> &srcs)
 	bool have_bio = false;
 	while (std::getline(fs, sline) && lcnt < MAX_LINES_CHECK) {
 	    lcnt++;
-	    if (std::regex_match(sline, r.bio_regex)) {
+
+	    if (!std::strstr(sline.c_str(), "include")) {
+		// If this isn't an include line, it's not of interest
+		continue;
+	    }
+
+	    if (std::strstr(sline.c_str(), "bio.h") && std::regex_match(sline, r.bio_regex)) {
 		have_bio = true;
 		continue;
 	    }
@@ -348,6 +354,12 @@ bnetwork_redundant_check(repo_info_t &r, std::vector<std::string> &srcs)
 	bool have_bnetwork = false;
 	while (std::getline(fs, sline) && lcnt < MAX_LINES_CHECK) {
 	    lcnt++;
+
+	    if (!std::strstr(sline.c_str(), "include")) {
+		// If this isn't an include line, it's not of interest
+		continue;
+	    }
+
 	    if (std::regex_match(sline, r.bnetwork_regex)) {
 		have_bnetwork = true;
 		continue;
