@@ -29,6 +29,10 @@ set_target_properties(libicv PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if(CPP_DLL_DEFINES)
   set_property(TARGET libicv APPEND PROPERTY COMPILE_DEFINITIONS "NETPBM_DLL_IMPORTS")
 endif(CPP_DLL_DEFINES)
+if (TARGET png)
+  set_source_files_properties(fileformat.c PROPERTIES OBJECT_DEPENDS ${CMAKE_BINARY_DIR}/src/other/libpng/pnglibconf.h)
+  set_source_files_properties(png.c PROPERTIES OBJECT_DEPENDS ${CMAKE_BINARY_DIR}/src/other/libpng/pnglibconf.h)
+endif (TARGET png)
 
 add_subdirectory(tests)
 
