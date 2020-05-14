@@ -107,10 +107,12 @@ if(SH_EXEC)
   # repository violates this as it spends considerable time scanning
   # the entire source tree, then scanning different sets of files for
   # properties.
-  Sh_Regression_Test(repository "")
-  if(NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
-    set_tests_properties(regress-repository PROPERTIES TIMEOUT 600)
-  endif(NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
+  if (NOT DEFINED REPOCHECK_TEST)
+    Sh_Regression_Test(repository "")
+    if(NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
+      set_tests_properties(regress-repository PROPERTIES TIMEOUT 600)
+    endif(NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
+  endif (NOT DEFINED REPOCHECK_TEST)
 
   Sh_Regression_Test(mged mged)
   Sh_Regression_Test(red mged)
