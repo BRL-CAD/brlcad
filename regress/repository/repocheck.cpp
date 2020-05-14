@@ -44,6 +44,7 @@
 #include <algorithm>
 #include <locale>
 #include <fstream>
+#include <sstream>
 #include <iomanip>
 #include <iostream>
 #include <regex>
@@ -318,7 +319,7 @@ class repo_state_t {
 };
 
 int
-bio_redundant_check(repo_state_t &l, std::string &tfile, std::ifstream &fs)
+bio_redundant_check(repo_state_t &l, std::string &tfile, std::stringstream &fs)
 {
     bool have_bio = false;
     int lcnt = 0;
@@ -360,7 +361,7 @@ bio_redundant_check(repo_state_t &l, std::string &tfile, std::ifstream &fs)
 }
 
 int
-bnetwork_redundant_check(repo_state_t &l, std::string &tfile, std::ifstream &fs)
+bnetwork_redundant_check(repo_state_t &l, std::string &tfile, std::stringstream &fs)
 {
     bool have_bnetwork = false;
     int lcnt = 0;
@@ -404,7 +405,7 @@ bnetwork_redundant_check(repo_state_t &l, std::string &tfile, std::ifstream &fs)
 
 
 int
-common_include_first(repo_state_t &l, std::string &tfile, std::ifstream &fs)
+common_include_first(repo_state_t &l, std::string &tfile, std::stringstream &fs)
 {
     int ret = 0;
 
@@ -443,7 +444,7 @@ common_include_first(repo_state_t &l, std::string &tfile, std::ifstream &fs)
 }
 
 int
-api_usage(repo_state_t &l, std::string &tfile, std::ifstream &fs)
+api_usage(repo_state_t &l, std::string &tfile, std::stringstream &fs)
 {
     int ret = 0;
 
@@ -515,7 +516,7 @@ class platform_entry {
 
 
 int
-platform_symbols(repo_state_t &l, std::vector<std::string> &log, std::string &tfile, std::ifstream &fs)
+platform_symbols(repo_state_t &l, std::vector<std::string> &log, std::string &tfile, std::stringstream &fs)
 {
     std::map<std::string, std::vector<platform_entry>> instances;
     bool skip = false;
@@ -577,16 +578,20 @@ process_inc_file(repo_state_t &r_t)
     if (!fs.is_open()) {
 	return;
     }
-    fs.clear();
-    fs.seekg(0, std::ios::beg);
-    r_t.ret += bio_redundant_check(r_t, r_t.cfile, fs);
-    fs.clear();
-    fs.seekg(0, std::ios::beg);
-    r_t.ret += bnetwork_redundant_check(r_t, r_t.cfile, fs);
-    fs.clear();
-    fs.seekg(0, std::ios::beg);
-    r_t.inc_cnt += platform_symbols(r_t, r_t.symbol_inc_log, r_t.cfile, fs);
+
+    std::stringstream fss;
+    fss << fs.rdbuf();
     fs.close();
+
+    fss.clear();
+    fss.seekg(0, std::ios::beg);
+    r_t.ret += bio_redundant_check(r_t, r_t.cfile, fss);
+    fss.clear();
+    fss.seekg(0, std::ios::beg);
+    r_t.ret += bnetwork_redundant_check(r_t, r_t.cfile, fss);
+    fss.clear();
+    fss.seekg(0, std::ios::beg);
+    r_t.inc_cnt += platform_symbols(r_t, r_t.symbol_inc_log, r_t.cfile, fss);
 }
 
 void
@@ -597,22 +602,26 @@ process_src_file(repo_state_t &r_t)
     if (!fs.is_open()) {
 	return;
     }
-    fs.clear();
-    fs.seekg(0, std::ios::beg);
-    r_t.ret += bio_redundant_check(r_t, r_t.cfile, fs);
-    fs.clear();
-    fs.seekg(0, std::ios::beg);
-    r_t.ret += bnetwork_redundant_check(r_t, r_t.cfile, fs);
-    fs.clear();
-    fs.seekg(0, std::ios::beg);
-    r_t.ret += common_include_first(r_t, r_t.cfile, fs);
-    fs.clear();
-    fs.seekg(0, std::ios::beg);
-    r_t.ret += api_usage(r_t, r_t.cfile, fs);
-    fs.clear();
-    fs.seekg(0, std::ios::beg);
-    r_t.src_cnt += platform_symbols(r_t, r_t.symbol_src_log, r_t.cfile, fs);
+
+    std::stringstream fss;
+    fss << fs.rdbuf();
     fs.close();
+
+    fss.clear();
+    fss.seekg(0, std::ios::beg);
+    r_t.ret += bio_redundant_check(r_t, r_t.cfile, fss);
+    fss.clear();
+    fss.seekg(0, std::ios::beg);
+    r_t.ret += bnetwork_redundant_check(r_t, r_t.cfile, fss);
+    fss.clear();
+    fss.seekg(0, std::ios::beg);
+    r_t.ret += common_include_first(r_t, r_t.cfile, fss);
+    fss.clear();
+    fss.seekg(0, std::ios::beg);
+    r_t.ret += api_usage(r_t, r_t.cfile, fss);
+    fss.clear();
+    fss.seekg(0, std::ios::beg);
+    r_t.src_cnt += platform_symbols(r_t, r_t.symbol_src_log, r_t.cfile, fss);
 }
 
 void
@@ -623,10 +632,14 @@ process_bld_file(repo_state_t &r_t)
     if (!fs.is_open()) {
 	return;
     }
-    fs.clear();
-    fs.seekg(0, std::ios::beg);
-    r_t.bld_cnt += platform_symbols(r_t, r_t.symbol_bld_log, r_t.cfile, fs);
+
+    std::stringstream fss;
+    fss << fs.rdbuf();
     fs.close();
+
+    fss.clear();
+    fss.seekg(0, std::ios::beg);
+    r_t.bld_cnt += platform_symbols(r_t, r_t.symbol_bld_log, r_t.cfile, fss);
 }
 
 int
