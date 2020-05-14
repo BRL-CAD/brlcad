@@ -50,11 +50,21 @@
 #include <map>
 #include <sstream>
 #include <string>
+#include <thread>
 #define MAX_LINES_CHECK 500
+#define EXPECTED_PLATFORM_SYMBOLS 206
 
 class repo_state_t {
     public:
 
+	// Thread state and result info
+	std::string cfile;
+	int ret = 0;
+	int inc_cnt = 0;
+	int src_cnt = 0;
+	int bld_cnt = 0;
+
+	// Initialize the regex info once per thread
 	repo_state_t() {
 	    int cnt = 0;
 	    const char *rf;
@@ -545,6 +555,67 @@ platform_symbols(repo_state_t &l, std::vector<std::string> &log, std::string &tf
     return match_cnt;
 }
 
+
+void
+process_inc_file(repo_state_t &r_t)
+{
+    std::ifstream fs;
+    fs.open(r_t.cfile);
+    if (!fs.is_open()) {
+	return;
+    }
+    fs.clear();
+    fs.seekg(0, std::ios::beg);
+    r_t.ret += bio_redundant_check(r_t, r_t.cfile, fs);
+    fs.clear();
+    fs.seekg(0, std::ios::beg);
+    r_t.ret += bnetwork_redundant_check(r_t, r_t.cfile, fs);
+    fs.clear();
+    fs.seekg(0, std::ios::beg);
+    r_t.inc_cnt += platform_symbols(r_t, r_t.symbol_inc_log, r_t.cfile, fs);
+    fs.close();
+}
+
+void
+process_src_file(repo_state_t &r_t)
+{
+    std::ifstream fs;
+    fs.open(r_t.cfile);
+    if (!fs.is_open()) {
+	return;
+    }
+    fs.clear();
+    fs.seekg(0, std::ios::beg);
+    r_t.ret += bio_redundant_check(r_t, r_t.cfile, fs);
+    fs.clear();
+    fs.seekg(0, std::ios::beg);
+    r_t.ret += bnetwork_redundant_check(r_t, r_t.cfile, fs);
+    fs.clear();
+    fs.seekg(0, std::ios::beg);
+    r_t.ret += common_include_first(r_t, r_t.cfile, fs);
+    fs.clear();
+    fs.seekg(0, std::ios::beg);
+    r_t.ret += api_usage(r_t, r_t.cfile, fs);
+    fs.clear();
+    fs.seekg(0, std::ios::beg);
+    r_t.src_cnt += platform_symbols(r_t, r_t.symbol_src_log, r_t.cfile, fs);
+    fs.close();
+}
+
+void
+process_bld_file(repo_state_t &r_t)
+{
+    std::ifstream fs;
+    fs.open(r_t.cfile);
+    if (!fs.is_open()) {
+	return;
+    }
+    fs.clear();
+    fs.seekg(0, std::ios::beg);
+    r_t.bld_cnt += platform_symbols(r_t, r_t.symbol_bld_log, r_t.cfile, fs);
+    fs.close();
+}
+
 int
 main(int argc, const char *argv[])
 {
@@ -552,9 +623,6 @@ main(int argc, const char *argv[])
 	std::cerr << "Usage: repocheck file_list.txt source_dir\n";
 	return -1;
     }
-
-    repo_state_t repo_state;
-    repo_state.path_root = std::string(argv[2]);
 
     std::string sfile;
     std::ifstream src_file_stream;
@@ -631,67 +699,91 @@ main(int argc, const char *argv[])
     int ret = 0;
 
 
-    int inc_cnt = 0;
-    for (size_t i = 0; i < inc_files.size(); i++) {
-	std::ifstream fs;
-	fs.open(inc_files[i]);
-	if (!fs.is_open()) {
-	    std::cerr << "Unable to open " << inc_files[i] << " for reading, skipping\n";
-	    continue;
-	}
-	fs.clear();
-	fs.seekg(0, std::ios::beg);
-	ret += bio_redundant_check(repo_state, inc_files[i], fs);
-	fs.clear();
-	fs.seekg(0, std::ios::beg);
-	ret += bnetwork_redundant_check(repo_state, inc_files[i], fs);
-	fs.clear();
-	fs.seekg(0, std::ios::beg);
-	inc_cnt += platform_symbols(repo_state, repo_state.symbol_inc_log, inc_files[i], fs);
-	fs.close();
+    // Regex testing is CPU intensive - go parallel for main checks
+    size_t fcnt = 0;
+    unsigned int hwc = std::thread::hardware_concurrency();
+    if (!hwc) {
+	hwc = 10;
+    }
+    std::vector<repo_state_t> repo_states;
+    for (unsigned int i = 0; i < hwc; i++) {
+	repo_state_t repo_state;
+	repo_state.path_root = std::string(argv[2]);
+	repo_states.push_back(repo_state);
     }
 
-    int src_cnt = 0;
-    for (size_t i = 0; i < src_files.size(); i++) {
-	std::ifstream fs;
-	fs.open(src_files[i]);
-	if (!fs.is_open()) {
-	    std::cerr << "Unable to open " << src_files[i] << " for reading, skipping\n";
-	    continue;
-	}
-	fs.clear();
-	fs.seekg(0, std::ios::beg);
-	ret += bio_redundant_check(repo_state, src_files[i], fs);
-	fs.clear();
-	fs.seekg(0, std::ios::beg);
-	ret += bnetwork_redundant_check(repo_state, src_files[i], fs);
-	fs.clear();
-	fs.seekg(0, std::ios::beg);
-	ret += common_include_first(repo_state, src_files[i], fs);
-	fs.clear();
-	fs.seekg(0, std::ios::beg);
-	ret += api_usage(repo_state, src_files[i], fs);
-	fs.clear();
-	fs.seekg(0, std::ios::beg);
-	src_cnt += platform_symbols(repo_state, repo_state.symbol_src_log, src_files[i], fs);
-	fs.close();
+    fcnt = 0;
+    while (fcnt < inc_files.size()) {
+        int athreads = 0;
+        std::vector<std::thread> t;
+        for (unsigned int i = 0; i < hwc; i++) {
+            if (fcnt + i < inc_files.size()) {
+                repo_states[i].cfile = inc_files[fcnt+i];
+                t.push_back(std::thread(process_inc_file, std::ref(repo_states[i])));
+                athreads++;
+            }
+        }
+        for (int i = 0; i < athreads; i++) {
+            t[i].join();
+        }
+        fcnt += athreads;
     }
 
-    int bld_cnt = 0;
-    for (size_t i = 0; i < bld_files.size(); i++) {
-	std::ifstream fs;
-	fs.open(bld_files[i]);
-	if (!fs.is_open()) {
-	    std::cerr << "Unable to open " << bld_files[i] << " for reading, skipping\n";
-	    continue;
-	}
-	fs.clear();
-	fs.seekg(0, std::ios::beg);
-	bld_cnt += platform_symbols(repo_state, repo_state.symbol_bld_log, bld_files[i], fs);
+    fcnt = 0;
+    while (fcnt < src_files.size()) {
+        int athreads = 0;
+        std::vector<std::thread> t;
+        for (unsigned int i = 0; i < hwc; i++) {
+            if (fcnt + i < src_files.size()) {
+                repo_states[i].cfile = src_files[fcnt+i];
+                t.push_back(std::thread(process_src_file, std::ref(repo_states[i])));
+                athreads++;
+            }
+        }
+        for (int i = 0; i < athreads; i++) {
+            t[i].join();
+        }
+        fcnt += athreads;
     }
 
-    int psym_cnt = inc_cnt + src_cnt + bld_cnt;
-    int expected_psym_cnt = 10;
+    fcnt = 0;
+    while (fcnt < bld_files.size()) {
+        int athreads = 0;
+        std::vector<std::thread> t;
+        for (unsigned int i = 0; i < hwc; i++) {
+            if (fcnt + i < bld_files.size()) {
+                repo_states[i].cfile = bld_files[fcnt+i];
+                t.push_back(std::thread(process_bld_file, std::ref(repo_states[i])));
+                athreads++;
+            }
+        }
+        for (int i = 0; i < athreads; i++) {
+            t[i].join();
+        }
+        fcnt += athreads;
+    }
+
+    repo_state_t repo_state;
+
+    // Consolidate
+    for (unsigned int i = 0; i < hwc; i++) {
+	repo_state_t &rs = repo_states[i];
+	repo_state.ret += rs.ret;
+	repo_state.inc_cnt += rs.inc_cnt;
+	repo_state.src_cnt += rs.src_cnt;
+	repo_state.bld_cnt += rs.bld_cnt;
+    
+	repo_state.api_log.insert(repo_state.api_log.end(), rs.api_log.begin(), rs.api_log.end());
+	repo_state.bio_log.insert(repo_state.bio_log.end(), rs.bio_log.begin(), rs.bio_log.end());
+	repo_state.bnet_log.insert(repo_state.bnet_log.end(), rs.bnet_log.begin(), rs.bnet_log.end());
+	repo_state.common_log.insert(repo_state.common_log.end(), rs.common_log.begin(), rs.common_log.end());
+	repo_state.symbol_inc_log.insert(repo_state.symbol_inc_log.end(), rs.symbol_inc_log.begin(), rs.symbol_inc_log.end());
+	repo_state.symbol_src_log.insert(repo_state.symbol_src_log.end(), rs.symbol_src_log.begin(), rs.symbol_src_log.end());
+	repo_state.symbol_bld_log.insert(repo_state.symbol_bld_log.end(), rs.symbol_bld_log.begin(), rs.symbol_bld_log.end());
+    }
+
+    int psym_cnt = repo_state.inc_cnt + repo_state.src_cnt + repo_state.bld_cnt;
+    int expected_psym_cnt = EXPECTED_PLATFORM_SYMBOLS ;
     if (psym_cnt > expected_psym_cnt) {
 	ret += 1;
     }
