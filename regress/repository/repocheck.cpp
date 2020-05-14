@@ -631,54 +631,48 @@ main(int argc, const char *argv[])
     // Build a set of filters that will cull out files which would otherwise
     // be matches for items of interest
     const char *reject_filters[] {
-	".*/bullet/.*",
-	".*/doc/.*",
-	".*/shapelib/.*",
-	".*[.]log",
-	".*[.]svn.*",
-	".*misc/CMake/Find.*",
-	".*misc/repoconv.*",
-	".*misc/tools.*",
-	".*misc/debian.*",
-	".*pkg.h",
-	".*src/libpkg.*",
-	".*src/other.*",
-	".*~",
+	"/bullet/",
+	"/doc/",
+	"/shapelib/",
+	".log",
+	".svn",
+	"misc/CMake/Find",
+	"misc/repoconv",
+	"misc/tools",
+	"misc/debian",
+	"pkg.h",
+	"src/libpkg",
+	"src/other/",
+	"~",
 	NULL
     };
-
-    std::vector<std::regex> filters;
-    int cnt = 0;
-    const char *rf = reject_filters[cnt];
-    while (rf) {
-	filters.push_back(std::regex(rf));
-	cnt++;
-	rf = reject_filters[cnt];
-    }
-
 
     // Apply filters and build up the file sets we want to introspect.
     std::regex codefile_regex(".*[.](c|cpp|cxx|cc|h|hpp|hxx|y|yy|l)([.]in)?$");
     std::regex buildfile_regex(".*([.]cmake([.]in)?|CMakeLists.txt)$");
-    std::regex hdrfile_regex(".*/include/.*");
     std::vector<std::string> src_files;
     std::vector<std::string> inc_files;
     std::vector<std::string> build_files;
 
     while (std::getline(src_file_stream, sfile)) {
 	bool reject = false;
-	for (size_t i = 0; i < filters.size(); i++) {
-	    if (std::regex_match(sfile, filters[i])) {
+
+	int cnt = 0;
+	const char *rf = reject_filters[cnt];
+	while (rf) {
+	    if (std::strstr(sfile.c_str(), rf)) {
 		reject = true;
 		break;
 	    }
+	    cnt++;
+	    rf = reject_filters[cnt];
 	}
 	if (reject) {
 	    continue;
 	}
 
 	if (std::regex_match(sfile, codefile_regex)) {
-	    if (std::regex_match(sfile, hdrfile_regex)) {
+	    if (std::strstr(sfile.c_str(), "include")) {
 		inc_files.push_back(sfile);
 	    } else {
 		src_files.push_back(sfile);
