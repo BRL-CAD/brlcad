@@ -3,4 +3,4 @@ mmap() replacement for Windows
 Author: Mike Frysinger <vapier@gentoo.org>
 Placed into the public domain
 
-file:src/libbu/mappedfile.c
+file:/src/libbu/mappedfile.c

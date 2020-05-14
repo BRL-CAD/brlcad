@@ -39,7 +39,7 @@ authors grant the U.S. Government and others acting in its behalf
 permission to use and distribute the software in accordance with the
 terms specified in this license.
 
-file:src/libbu/tcllist.c
+file:/src/libbu/tcllist.c
 
 tkImgFmtPPM.c --
 
@@ -52,9 +52,9 @@ Author: Paul Mackerras (paulus@cs.anu.edu.au),
         Department of Computer Science,
         Australian National University.
 
-file:src/libtclcad/tkImgFmtPIX.c
-file:src/tclscripts/cad_clrpick.tcl
-file:src/tclscripts/html_library.tcl
+file:/src/libtclcad/tkImgFmtPIX.c
+file:/src/tclscripts/cad_clrpick.tcl
+file:/src/tclscripts/html_library.tcl
 
 TODO - need to double check:
-file:src/mged/htmlLibraryUi.h
+file:/src/mged/htmlLibraryUi.h

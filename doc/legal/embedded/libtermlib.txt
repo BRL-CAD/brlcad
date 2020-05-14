@@ -31,8 +31,8 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 SUCH DAMAGE.
 
-file:src/libtermio/termcap
-file:src/libtermio/termcap.c
-file:src/libtermio/termcap.h
-file:src/libtermio/tgoto.c
-file:src/libtermio/tputs.c
+file:/src/libtermio/termcap
+file:/src/libtermio/termcap.c
+file:/src/libtermio/termcap.h
+file:/src/libtermio/tgoto.c
+file:/src/libtermio/tputs.c

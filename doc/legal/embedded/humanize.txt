@@ -30,7 +30,7 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 
-file:src/libbu/units_humanize.c
+file:/src/libbu/units_humanize.c
 
 Copyright 2012 Clifton Royston
 Copyright 2013 John-Mark Gurney
@@ -57,4 +57,4 @@ LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
 OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 SUCH DAMAGE.
 
-file:src/libbu/tests/humanize_number.c
+file:/src/libbu/tests/humanize_number.c
