@@ -39,6 +39,7 @@
 #include <string.h>
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/path.h"
 #include "bu/str.h"
@@ -247,6 +248,8 @@ int main(int ac, char *av[])
     struct user_data {
 	int stuff;
     } user_data;
+
+    bu_setprogname(av[0]);
 
     arg_count = parse_args(ac, av);
 

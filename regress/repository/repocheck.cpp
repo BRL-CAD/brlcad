@@ -77,6 +77,11 @@ class repo_info_t {
 	std::regex common_regex;
 	std::vector<std::regex> common_exempt_filters;
 
+	/* setprogname */
+	std::regex main_regex;
+	std::regex setprogname_regex;
+	std::vector<std::regex> setprogname_exempt_filters;
+
 	/* api usage */
 	std::vector<std::regex> api_file_filters;
 	std::map<std::string, std::vector<std::regex>> api_exemptions;
@@ -94,6 +99,7 @@ class repo_info_t {
 	std::vector<std::string> bio_log;
 	std::vector<std::string> bnet_log;
 	std::vector<std::string> common_log;
+	std::vector<std::string> setprogname_log;
 	std::vector<std::string> symbol_inc_log;
 	std::vector<std::string> symbol_src_log;
 	std::vector<std::string> symbol_bld_log;
@@ -163,6 +169,24 @@ regex_init(repo_info_t &r) {
 	}
 
     }
+
+    /* setprogname regex */
+    {
+	r.main_regex = std::regex("int[[:space:]]*main[[:space:]]*[(].*");
+	r.setprogname_regex = std::regex("[[:space:]]*bu_setprogname[[:space:]]*[(].*");
+  	const char *setprogname_exempt_filter_strs[] {
+	    "mt19937ar.c", "stb_truetype.h", "misc/",
+		NULL
+	};
+	cnt = 0;
+	rf = setprogname_exempt_filter_strs[cnt];
+	while (rf) {
+	    std::string rrf = std::string(".*/") + std::string(rf) + std::string(".*");
+	    r.setprogname_exempt_filters.push_back(std::regex(rrf));
+	    cnt++;
+	    rf = setprogname_exempt_filter_strs[cnt];
+	}
+    }	
 
     /* API usage check regex */
     {
@@ -530,6 +554,71 @@ api_usage(repo_info_t &r, std::vector<std::string> &srcs)
     return ret;
 }
 
+int
+setprogname(repo_info_t &r, std::vector<std::string> &srcs)
+{
+    int ret = 0;
+
+    for (size_t i = 0; i < srcs.size(); i++) {
+	bool skip = false;
+	for (size_t j = 0; j < r.setprogname_exempt_filters.size(); j++) {
+	    if (std::regex_match(srcs[i], r.setprogname_exempt_filters[j])) {
+		skip = true;
+		break;
+	    }
+	}
+	if (skip) {
+	    continue;
+	}
+
+	struct bu_mapped_file *ifile = bu_open_mapped_file(srcs[i].c_str(), "candidate file");
+	if (!ifile) {
+	    std::cerr << "Unable to open " << srcs[i] << " for reading, skipping\n";
+	    continue;
+	}
+
+	// If we have anything in the buffer that looks like it might be
+	// of interest, continue - otherwise we're done
+	if (!std::strstr((const char *)ifile->buf, "main")) {
+	    bu_close_mapped_file(ifile);
+	    continue;
+	}
+
+	std::string fbuff((char *)ifile->buf);
+	std::istringstream fs(fbuff);
+
+	int lcnt = 0;
+	bool have_main = false;
+	size_t main_line = 0;
+	bool have_setprogname = false;
+	std::string sline;
+	while (std::getline(fs, sline) && lcnt < MAX_LINES_CHECK) {
+	    lcnt++;
+	    if (std::strstr(sline.c_str(), "main") && std::regex_match(sline, r.main_regex)) {
+		have_main = true;
+		main_line = lcnt;
+	    }
+	    if (!have_main) {
+		continue;
+	    }
+	    if (std::strstr(sline.c_str(), "bu_setprogname") && std::regex_match(sline, r.setprogname_regex)) {
+		have_setprogname = true;
+		break;
+	    }
+	}
+	bu_close_mapped_file(ifile);
+   
+	if (have_main && !have_setprogname) {
+	    std::string lstr = srcs[i].substr(r.path_root.length()+1) + std::string(" defines a main() function on line ") + std::to_string(main_line) + std::string(" but does not call bu_setprogname\n");
+	    r.setprogname_log.push_back(lstr);
+	    ret = 1;
+	}	   
+    }
+
+    return ret;
+
+}
+
 class platform_entry {
     public:
 	std::string symbol;
@@ -694,6 +783,8 @@ main(int argc, const char *argv[])
     ret += common_include_first(repo_info, src_files);
     ret += api_usage(repo_info, src_files);
 
+    ret += setprogname(repo_info, src_files);
+
     int h_cnt = platform_symbols(repo_info, repo_info.symbol_inc_log, inc_files);
     int s_cnt = platform_symbols(repo_info, repo_info.symbol_src_log, src_files);
     int b_cnt = platform_symbols(repo_info, repo_info.symbol_bld_log, build_files);
@@ -731,6 +822,13 @@ main(int argc, const char *argv[])
 	    std::cout << "\nFAILURE: found " << repo_info.common_log.size() << " instances of files using common.h with out-of-order inclusions:\n";
 	    for (size_t i = 0; i < repo_info.common_log.size(); i++) {
 		std::cout << repo_info.common_log[i];
+	    }
+	}
+
+	if (repo_info.setprogname_log.size()) {
+	    std::cout << "\nFAILURE: found " << repo_info.setprogname_log.size() << " missing bu_setprogname calls:\n";
+	    for (size_t i = 0; i < repo_info.setprogname_log.size(); i++) {
+		std::cout << repo_info.setprogname_log[i];
 	    }
 	}
 

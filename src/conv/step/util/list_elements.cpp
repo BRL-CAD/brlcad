@@ -28,6 +28,8 @@
 
 #include "ap_schema.h"
 
+#include "bu/app.h"
+
 class SEarrIterator
 {
 private:
@@ -114,8 +116,10 @@ void PrintEntity(STEPentity * ent)
 }
 
 
-int main()
+int main(int UNUSED(argc), const char *argv[])
 {
+
+    bu_setprogname(argv[0]);
 
     // This has to be done before anything else.  This initializes
     // all of the registry information for the schema you are using.
