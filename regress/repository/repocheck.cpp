@@ -172,11 +172,12 @@ regex_init(repo_info_t &r) {
 
     /* setprogname regex */
     {
-	r.main_regex = std::regex("int[[:space:]]*main[[:space:]]*[(].*");
+	r.main_regex = std::regex("(int)*[[:space:]]*main[[:space:]]*[(].*");
 	r.setprogname_regex = std::regex("[[:space:]]*bu_setprogname[[:space:]]*[(].*");
   	const char *setprogname_exempt_filter_strs[] {
-	    "mt19937ar.c", "stb_truetype.h", "misc/",
-		NULL
+	    "mt19937ar.c", "stb_truetype.h", "misc/", "sha1.c",
+		"licenses_check.cpp",
+	       	NULL
 	};
 	cnt = 0;
 	rf = setprogname_exempt_filter_strs[cnt];
@@ -186,7 +187,7 @@ regex_init(repo_info_t &r) {
 	    cnt++;
 	    rf = setprogname_exempt_filter_strs[cnt];
 	}
-    }	
+    }
 
     /* API usage check regex */
     {
@@ -592,7 +593,7 @@ setprogname(repo_info_t &r, std::vector<std::string> &srcs)
 	size_t main_line = 0;
 	bool have_setprogname = false;
 	std::string sline;
-	while (std::getline(fs, sline) && lcnt < MAX_LINES_CHECK) {
+	while (std::getline(fs, sline)) {
 	    lcnt++;
 	    if (std::strstr(sline.c_str(), "main") && std::regex_match(sline, r.main_regex)) {
 		have_main = true;
@@ -607,12 +608,12 @@ setprogname(repo_info_t &r, std::vector<std::string> &srcs)
 	    }
 	}
 	bu_close_mapped_file(ifile);
-   
+
 	if (have_main && !have_setprogname) {
 	    std::string lstr = srcs[i].substr(r.path_root.length()+1) + std::string(" defines a main() function on line ") + std::to_string(main_line) + std::string(" but does not call bu_setprogname\n");
 	    r.setprogname_log.push_back(lstr);
 	    ret = 1;
-	}	   
+	}
     }
 
     return ret;
@@ -783,7 +784,7 @@ main(int argc, const char *argv[])
     ret += common_include_first(repo_info, src_files);
     ret += api_usage(repo_info, src_files);
 
-    ret += setprogname(repo_info, src_files);
+    //ret += setprogname(repo_info, src_files);
 
     int h_cnt = platform_symbols(repo_info, repo_info.symbol_inc_log, inc_files);
     int s_cnt = platform_symbols(repo_info, repo_info.symbol_src_log, src_files);
