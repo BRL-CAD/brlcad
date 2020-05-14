@@ -39,6 +39,7 @@
  *
  */
 
+#include <cstring>
 #include <cstdio>
 #include <algorithm>
 #include <locale>
@@ -465,6 +466,12 @@ api_usage(repo_state_t &l, std::string &tfile, std::ifstream &fs)
 	lcnt++;
 	std::map<std::string, std::regex>::iterator ff_it;
 	for (ff_it = l.api_func_filters.begin(); ff_it != l.api_func_filters.end(); ff_it++) {
+	    std::string p_lower = ff_it->first;
+	    std::transform(p_lower.begin(), p_lower.end(), p_lower.begin(), [](unsigned char c){ return std::tolower(c); });
+	    if (!std::strstr(sline.c_str(), ff_it->first.c_str()) && !std::strstr(sline.c_str(), p_lower.c_str())) {
+		// Only try the full regex if strstr says there is a chance
+		continue;
+	    }
 	    if (std::regex_match(sline, ff_it->second)) {
 		// If we have a it, make sure it's not an exemption
 		bool exempt = false;
@@ -529,6 +536,12 @@ platform_symbols(repo_state_t &l, std::vector<std::string> &log, std::string &tf
 
 	std::map<std::string, std::regex>::iterator  p_it;
 	for (p_it = l.platform_checks.begin(); p_it != l.platform_checks.end(); p_it++) {
+	    std::string p_lower = p_it->first;
+	    std::transform(p_lower.begin(), p_lower.end(), p_lower.begin(), [](unsigned char c){ return std::tolower(c); });
+	    if (!std::strstr(sline.c_str(), p_it->first.c_str()) && !std::strstr(sline.c_str(), p_lower.c_str())) {
+		// Only try the full regex if strstr says there is a chance
+		continue;
+	    }
 	    if (std::regex_match(sline, p_it->second)) {
 		//std::cout << "match on line: " << sline << "\n";
 		platform_entry pe;
