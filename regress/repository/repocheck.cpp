@@ -794,6 +794,11 @@ main(int argc, const char *argv[])
     int psym_cnt = h_cnt + s_cnt + b_cnt;
     int expected_psym_cnt = EXPECTED_PLATFORM_SYMBOLS;
 
+    if (psym_cnt < expected_psym_cnt) {
+	std::cout << "\n\nNote: need to update EXPECTED_PLATFORM_SYMBOLS - looking for " << expected_psym_cnt << ", but only found " << psym_cnt << "\n\n\n";
+    }
+
+
     if (ret) {
 	std::sort(repo_info.api_log.begin(), repo_info.api_log.end());
 	std::sort(repo_info.bio_log.begin(), repo_info.bio_log.end());
