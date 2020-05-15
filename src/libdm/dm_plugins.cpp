@@ -266,7 +266,7 @@ struct fb *
 fb_open(const char *file, int width, int height)
 {
     static const char *priority_list[] = {"/dev/osgl", "/dev/wgl", "/dev/ogl", "/dev/X", "/dev/tk", "nu"};
-    register struct fb *ifp;
+    struct fb *ifp;
     int i;
     const char *b;
     std::map<std::string, const struct fb *> *fmb = (std::map<std::string, const struct fb *> *)fb_backends;
