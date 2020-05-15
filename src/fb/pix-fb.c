@@ -39,6 +39,7 @@
 
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "bu/file.h"
@@ -215,6 +216,8 @@ main(int argc, char **argv)
     int y;
     fb *fbp;
     int xout, yout, n, m, xstart, xskip;
+
+    bu_setprogname(argv[0]);
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);

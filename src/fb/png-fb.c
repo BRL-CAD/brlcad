@@ -32,6 +32,7 @@
 
 #include "png.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
@@ -176,6 +177,8 @@ main(int argc, char **argv)
     double gammaval=1.0;
     int file_width, file_height;
     unsigned char *image;
+
+    bu_setprogname(argv[0]);
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);

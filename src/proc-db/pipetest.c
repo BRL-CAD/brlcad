@@ -29,6 +29,7 @@
 #include <math.h>
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -108,6 +109,8 @@ main(int argc, char **argv)
     vect_t h;
     int i;
     struct bu_list head;
+
+    bu_setprogname(argv[0]);
 
     if (argc > 0)
 	bu_log("Usage: %s\n", argv[0]);

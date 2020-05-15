@@ -31,6 +31,7 @@
 
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "vmath.h"
@@ -72,6 +73,7 @@ Usage: fbzoom [-T] [-F framebuffer]\n\
 int
 main(int argc, char **argv)
 {
+    bu_setprogname(argv[0]);
     if (! pars_Argv(argc, argv)) {
 	(void)fputs(usage, stderr);
 	bu_exit(1, NULL);

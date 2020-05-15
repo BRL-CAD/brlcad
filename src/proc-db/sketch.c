@@ -28,6 +28,7 @@
 #include <stdio.h>
 #include <math.h>
 #include "vmath.h"
+#include "bu/app.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "wdb.h"
@@ -73,6 +74,8 @@ main(int argc, char **argv)
 
     /* bezier */
     int ctrl_points[5] = {0, 0, 0, 0, 0};
+
+    bu_setprogname(argv[0]);
 
     if (argc > 1)
 	bu_exit(0, "Usage: %s\n", argv[0]);

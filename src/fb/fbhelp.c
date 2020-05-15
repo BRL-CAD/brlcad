@@ -29,6 +29,7 @@
 
 #include <stdlib.h>
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "fb.h"
 
@@ -43,6 +44,8 @@ main(int argc, char **argv)
 {
     int c;
     fb *fbp;
+
+    bu_setprogname(argv[0]);
 
     while ((c = bu_getopt(argc, argv, "F:h?")) != -1) {
 	switch (c) {

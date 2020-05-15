@@ -29,6 +29,7 @@
 
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/exit.h"
 #include "bu/getopt.h"
 #include "fb.h"
@@ -147,6 +148,8 @@ int
 main(int argc, char **argv)
 {
     bn_spm_map_t *mp;
+
+    bu_setprogname(argv[0]);
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);

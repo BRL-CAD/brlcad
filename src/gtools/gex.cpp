@@ -49,6 +49,7 @@
 #include <map>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/opt.h"
 #include "bu/str.h"
 #include "raytrace.h"
@@ -278,6 +279,8 @@ main(int argc, char** argv)
     const char *dump_obj    = NULL;
     struct bu_vls db_fname  = BU_VLS_INIT_ZERO;
     struct bu_vls db2_fname = BU_VLS_INIT_ZERO;
+
+    bu_setprogname(argv[0]);
 
     struct bu_opt_desc d[6];
     BU_OPT(d[0], "h", "help",     "",     NULL,         &has_help,     "Print help and exit");
