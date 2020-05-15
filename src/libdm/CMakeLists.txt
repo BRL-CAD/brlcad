@@ -101,9 +101,6 @@ endif (TARGET profont_ProFont_ttf_cp)
 
 add_subdirectory(tests)
 
-
-add_subdirectory(tests)
-
 set(libdm_ignore_files
   CMakeLists.txt
   README
