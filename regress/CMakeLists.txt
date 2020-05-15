@@ -159,7 +159,6 @@ CMAKEFILES(
   nirt.sh
   nirt/ovlps.g
   red.sh
-  repository.sh
   rtedge.ref.pix.gz
   rtedge.ref2.pix.gz
   rtedge.ref3.pix.gz
@@ -428,7 +427,6 @@ set(regress_outfiles
   red.virgin.out.new
   region_ids
   regions
-  repository.log
   rtedge.2.pix
   rtedge.3.pix
   rtedge.4.pix
