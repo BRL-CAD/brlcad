@@ -118,8 +118,12 @@ regex_init(repo_info_t &r) {
     {
 	r.bio_regex = std::regex("#[[:space:]]*include[[:space:]]*\"bio.h\".*");
 	const char *bio_filter_strs[] {
-	    "stdio.h", "windows.h", "io.h", "unistd.h", "fcntl.h",
-	       	NULL
+	    "fcntl.h",
+	    "io.h",
+	    "stdio.h",
+	    "unistd.h",
+	    "windows.h",
+	    NULL
 	};
 	cnt = 0;
 	rf = bio_filter_strs[cnt];
@@ -135,8 +139,11 @@ regex_init(repo_info_t &r) {
     {
 	r.bnetwork_regex = std::regex("#[[:space:]]*include[[:space:]]*\"bnetwork.h\".*");
 	const char *bnetwork_filter_strs[] {
-	    "winsock2.h", "netinet/in.h", "netinet/tcp.h", "arpa/inet.h",
-	       	NULL
+	    "winsock2.h",
+	    "netinet/in.h",
+	    "netinet/tcp.h",
+	    "arpa/inet.h",
+	    NULL
 	};
 	cnt = 0;
 	rf = bnetwork_filter_strs[cnt];
@@ -152,14 +159,29 @@ regex_init(repo_info_t &r) {
     {
 	r.common_regex = std::regex("#[[:space:]]*include[[:space:]]*\"common.h\".*");
 	const char *common_exempt_filter_strs[] {
-	    "bio.h", "bnetwork.h", "config_win.h", "csg_parser.c",
-		"csg_scanner.h", "obj_grammar.c", "obj_grammar.cpp",
-		"obj_libgcv_grammar.cpp", "obj_obj-g_grammar.cpp",
-		"obj_parser.h", "obj_rules.cpp", "obj_rules.l",
-		"obj_scanner.h", "obj_util.h", "optionparser.h", "pinttypes.h",
-		"points_scan.c", "pstdint.h", "schema.h", "script.c", "ttcp.c",
-		"uce-dirent.h",
-		NULL
+	    "bio.h",
+	    "bnetwork.h",
+	    "config_win.h",
+	    "csg_parser.c",
+	    "csg_scanner.h",
+	    "obj_grammar.c",
+	    "obj_grammar.cpp",
+	    "obj_libgcv_grammar.cpp",
+	    "obj_obj-g_grammar.cpp",
+	    "obj_parser.h",
+	    "obj_rules.cpp",
+	    "obj_rules.l",
+	    "obj_scanner.h",
+	    "obj_util.h",
+	    "optionparser.h",
+	    "pinttypes.h",
+	    "points_scan.c",
+	    "pstdint.h",
+	    "schema.h",
+	    "script.c",
+	    "ttcp.c",
+	    "uce-dirent.h",
+	    NULL
 	};
 	cnt = 0;
 	rf = common_exempt_filter_strs[cnt];
@@ -177,9 +199,16 @@ regex_init(repo_info_t &r) {
 	r.main_regex = std::regex("(int)*[[:space:]]*main[[:space:]]*[(].*");
 	r.setprogname_regex = std::regex("[[:space:]]*bu_setprogname[[:space:]]*[(].*");
   	const char *setprogname_exempt_filter_strs[] {
-	    "mt19937ar.c", "stb_truetype.h", "misc/", "sha1.c",
-		"licenses_check.cpp", "fftc.c", "ifftc.c", "fftest.c", "ttcp.c",
-	       	NULL
+	    "fftc.c",
+	    "fftest.c",
+	    "ifftc.c",
+	    "licenses_check.cpp",
+	    "misc/",
+	    "mt19937ar.c",
+	    "sha1.c",
+	    "stb_truetype.h",
+	    "ttcp.c",
+	    NULL
 	};
 	cnt = 0;
 	rf = setprogname_exempt_filter_strs[cnt];
@@ -194,10 +223,14 @@ regex_init(repo_info_t &r) {
     /* API usage check regex */
     {
 	const char *api_file_exemption_strs[] {
-	    "CONFIG_CONTROL_DESIGN.*", "bu/log[.]h$", "bu/path[.]h$",
-		"bu/str[.]h$", "cursor[.]c$", "ttcp[.]c$",
-		"misc/CMake/compat/.*",
-		NULL
+	    "CONFIG_CONTROL_DESIGN.*",
+	    "bu/log[.]h$",
+	    "bu/path[.]h$",
+	    "bu/str[.]h$",
+	    "cursor[.]c$",
+	    "misc/CMake/compat/.*",
+	    "ttcp[.]c$",
+	    NULL
 	};
 	cnt = 0;
 	rf = api_file_exemption_strs[cnt];
@@ -209,11 +242,27 @@ regex_init(repo_info_t &r) {
 	}
 
 	const char *api_func_strs[] {
-	    "abort", "dirname", "fgets", "getopt", "qsort", "remove", "rmdir",
-		"strcasecmp", "strcat", "strcmp", "strcpy", "strdup",
-		"stricmp", "strlcat", "strlcpy", "strncasecmp", "strncat",
-		"strncmp", "strncpy", "unlink",
-		NULL
+	    "abort",
+	    "dirname",
+	    "fgets",
+	    "getopt",
+	    "qsort",
+	    "remove",
+	    "rmdir",
+	    "strcasecmp",
+	    "strcat",
+	    "strcmp",
+	    "strcpy",
+	    "strdup",
+	    "stricmp",
+	    "strlcat",
+	    "strlcpy",
+	    "strncasecmp",
+	    "strncat",
+	    "strncmp",
+	    "strncpy",
+	    "unlink",
+	    NULL
 	};
 	cnt = 0;
 	rf = api_func_strs[cnt];
@@ -244,10 +293,32 @@ regex_init(repo_info_t &r) {
     /* Platform symbol usage check regex */
     {
 	const char *platform_strs[] {
-	    "AIX", "APPLE", "CYGWIN", "DARWIN", "FREEBSD", "HAIKU", "HPUX",
-		"LINUX", "MINGW", "MSDOS", "QNX", "SGI", "SOLARIS", "SUN",
-		"SUNOS", "SVR4", "SYSV", "ULTRIX", "UNIX", "VMS", "WIN16",
-		"WIN32", "WIN64", "WINE", "WINNT", NULL
+	    "AIX",
+	    "APPLE",
+	    "CYGWIN",
+	    "DARWIN",
+	    "FREEBSD",
+	    "HAIKU",
+	    "HPUX",
+	    "LINUX",
+	    "MINGW",
+	    "MSDOS",
+	    "QNX",
+	    "SGI",
+	    "SOLARIS",
+	    "SUN",
+	    "SUNOS",
+	    "SVR4",
+	    "SYSV",
+	    "ULTRIX",
+	    "UNIX",
+	    "VMS",
+	    "WIN16",
+	    "WIN32",
+	    "WIN64",
+	    "WINE",
+	    "WINNT",
+	    NULL
 	};
 	cnt = 0;
 	rf = platform_strs[cnt];
@@ -263,9 +334,9 @@ regex_init(repo_info_t &r) {
 
 	const char *platform_exemption_strs[] {
 	    ".*/pstdint[.]h$",
-		".*/pinttypes[.]h$",
-		".*/uce-dirent[.]h$",
-		NULL
+	    ".*/pinttypes[.]h$",
+	    ".*/uce-dirent[.]h$",
+	    NULL
 	};
 	cnt = 0;
 	rf = platform_exemption_strs[cnt];
