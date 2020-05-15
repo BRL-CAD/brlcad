@@ -41,6 +41,7 @@
 
 #include "common.h"
 
+#include <cctype>
 #include <cstdio>
 #include <algorithm>
 #include <locale>
