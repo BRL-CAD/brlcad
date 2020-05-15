@@ -34,6 +34,8 @@ main(int ac, char *av[])
 {
     int test_num = 0;
 
+    bu_setprogname(av[0]);
+
     if (ac < 2) {
 	bu_exit(1, "Usage: %s {test_number}\n", av[0]);
     }

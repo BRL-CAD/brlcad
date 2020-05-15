@@ -70,6 +70,8 @@ main(int argc, char *argv[])
     fastf_t v;
     int i, j;
 
+    bu_setprogname(argv[0]);
+
     if (argc > 1)
 	fprintf(stderr,"Usage: %s\n", argv[0]);
 

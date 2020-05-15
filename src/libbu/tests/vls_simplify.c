@@ -38,6 +38,8 @@ main(int argc, char *argv[])
     const char *dedup_chars = NULL;
     const char *trim_chars = NULL;
 
+    bu_setprogname(argv[0]);
+
     /* Sanity check */
     if (argc < 3)
 	bu_exit(1, "Usage: %s {start_str} {expected_str} {keep_chars} {dedup_chars} {trim_chars}\n", argv[0]);

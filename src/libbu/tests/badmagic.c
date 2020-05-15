@@ -63,6 +63,8 @@ main(int argc, char *argv[])
     char *file = "bu_badmagic.c";
     int line = 42, testnum;
 
+    bu_setprogname(argv[0]);
+
     if (argc < 2) {
 	bu_exit(1, "Usage: %s {number}\nMust specify a function number.\n", argv[0]);
     }

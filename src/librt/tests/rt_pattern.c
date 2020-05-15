@@ -21,6 +21,7 @@
 #include "common.h"
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bn/plot3.h"
 #include "raytrace.h"
 
@@ -34,6 +35,8 @@ main(int argc, char *argv[])
     struct rt_pattern_data data = RT_PATTERN_DATA_INIT_ZERO;
     vect_t *vects = (vect_t *)bu_calloc(5, sizeof(vect_t), "vects array");
     fastf_t *params = (fastf_t *)bu_calloc(5, sizeof(fastf_t), "params array");
+
+    bu_setprogname(argv[0]);
 
     data.rays = NULL;
     VSET(data.center_pt, 0, 0, 2000);

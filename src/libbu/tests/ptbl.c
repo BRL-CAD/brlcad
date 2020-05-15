@@ -209,6 +209,8 @@ main(int argc, char *argv[])
     int ret = BRLCAD_ERROR;
     size_t ptbl_size;
 
+    bu_setprogname(argv[0]);
+
     if (argc < 2) {
 	bu_exit(1, "Usage: %s (init|reset|ins|locate|rm|cat|trunc) [test_args...]\n", argv[0]);
     }

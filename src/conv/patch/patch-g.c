@@ -53,6 +53,7 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "bn.h"
@@ -3366,6 +3367,7 @@ add_to_list(struct subtract_list *slist, int outsolid, int insolid, int inmirror
 int
 main(int argc, char **argv)
 {
+    bu_setprogname(argv[0]);
 
     FILE *gfp=NULL;
     FILE *mfp=NULL;

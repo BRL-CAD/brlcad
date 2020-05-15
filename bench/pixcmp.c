@@ -36,6 +36,7 @@
 #endif
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "bu/file.h"
@@ -133,6 +134,8 @@ main(int argc, char *argv[])
     size_t f1_skip = 0;
     size_t f2_skip = 0;
     size_t bytes = 0;
+
+    bu_setprogname(argv[0]);
 
     /* process opts */
     while ((c = bu_getopt(argc, argv, "lbi:s")) != -1) {

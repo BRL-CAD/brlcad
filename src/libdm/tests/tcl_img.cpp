@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <errno.h>
 
+#include "bu/app.h"
 #include "bu/malloc.h"
 
 #include "tcl.h"
@@ -655,6 +656,8 @@ int
 main(int UNUSED(argc), const char *argv[])
 {
     std::string bind_cmd;
+
+    bu_setprogname(argv[0]);
 
     // For now, just use a fixed 512x512 image size
     int wsize = 512;

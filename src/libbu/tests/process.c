@@ -36,6 +36,9 @@ int
 main(int ac, char *av[])
 {
     struct bu_process *p = NULL;
+
+    bu_setprogname(av[0]);
+
     if (ac != 3) {
 	fprintf(stderr, "Usage: %s subprocess testname\n", av[0]);
 	return 1;

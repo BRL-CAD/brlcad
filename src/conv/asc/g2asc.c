@@ -33,6 +33,7 @@
 #include "bnetwork.h"
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/debug.h"
 #include "bu/units.h"
 #include "vmath.h"
@@ -111,6 +112,8 @@ int
 main(int argc, char **argv)
 {
     unsigned i;
+
+    bu_setprogname(argv[0]);
 
     if (argc != 3) {
 	bu_exit(1, "%s", usage);

@@ -22,6 +22,7 @@
 
 #include <string.h>
 
+#include "bu/app.h"
 #include "raytrace.h"
 #include "../analyze_private.h"
 #include "analyze.h"
@@ -41,6 +42,8 @@ main(int argc, char **argv)
     struct rt_gen_worker_vars state;
     struct rt_i *rtip;
     struct bu_ptbl results = BU_PTBL_INIT_ZERO;
+
+    bu_setprogname(argv[0]);
 
     if (argc != 3) {
 	bu_log("Error - please specify a .g file and one object\n");

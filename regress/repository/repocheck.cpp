@@ -176,7 +176,7 @@ regex_init(repo_info_t &r) {
 	r.setprogname_regex = std::regex("[[:space:]]*bu_setprogname[[:space:]]*[(].*");
   	const char *setprogname_exempt_filter_strs[] {
 	    "mt19937ar.c", "stb_truetype.h", "misc/", "sha1.c",
-		"licenses_check.cpp",
+		"licenses_check.cpp", "fftc.c", "ifftc.c", "fftest.c",
 	       	NULL
 	};
 	cnt = 0;

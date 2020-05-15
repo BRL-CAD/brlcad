@@ -22,6 +22,7 @@
 
 #include <string.h>
 
+#include "bu/app.h"
 #include "raytrace.h"
 
 int
@@ -455,6 +456,8 @@ testcase_nmg_mrsv()
 int
 main(int argc, char **argv)
 {
+    bu_setprogname(argv[0]);
+
     if (argc > 1) {
 	bu_exit(1, "Usage: %s\n", argv[0]);
     }

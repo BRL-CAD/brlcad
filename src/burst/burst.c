@@ -164,6 +164,9 @@ main(int argc, const char *argv[])
     int plot_lines = 0;
     int plot_points = 0;
     int ret_ac;
+
+    bu_setprogname(argv[0]);
+
     struct bu_opt_desc d[4];
     struct bu_vls pmsg = BU_VLS_INIT_ZERO;
 

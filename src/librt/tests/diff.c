@@ -22,6 +22,7 @@
 
 #include <string.h>
 
+#include "bu/app.h"
 #include "raytrace.h"
 #include "rt/db_diff.h"
 
@@ -76,6 +77,9 @@ main(int argc, char **argv)
     struct db_i *dbip2 = DBI_NULL;
     /*struct bu_vls diff_log = BU_VLS_INIT_ZERO;*/
     struct bn_tol *diff_tol;
+
+    bu_setprogname(argv[0]);
+
     BU_GET(diff_tol, struct bn_tol);
     diff_tol->dist = BN_TOL_DIST;
 

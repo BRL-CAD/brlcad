@@ -65,6 +65,7 @@
 #endif
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/parallel.h"
 #include "bu/sort.h"
 #include "bu/units.h"
@@ -243,6 +244,8 @@ sortFunc(const void *a, const void *b, void *UNUSED(arg))
 int
 main(int argc, char *argv[])
 {
+    bu_setprogname(argv[0]);
+
     setbuf(stdout, (char *)bu_malloc(BUFSIZ, "stdout buffer"));
     BU_LIST_INIT(&(sol_hd.l));
 

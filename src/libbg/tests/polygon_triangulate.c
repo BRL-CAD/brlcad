@@ -64,6 +64,8 @@ main(int argc, const char **argv)
 {
     int ret;
 
+    bu_setprogname(argv[0]);
+
     plot_files = 0;
     if (argc > 1 && BU_STR_EQUAL(argv[1], "--plot")) {
 	plot_files = 1;
