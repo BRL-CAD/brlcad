@@ -32,6 +32,8 @@ main(int argc, char *argv[])
 
     const char *input = NULL;
 
+    bu_setprogname(argv[0]);
+
     if (argc > 3) {
 	fprintf(stderr, "Usage: %s {test_string} [expect_true]\n", argv[0]);
 	return 1;

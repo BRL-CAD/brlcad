@@ -68,6 +68,8 @@ main(int argc, char *argv[])
     const char *control = NULL;
     int intarg = 0;
 
+    bu_setprogname(argv[0]);
+
     /* If we don't have any args at all, test NULL */
     if (argc == 1) {
 	pc_compare(NULL, NULL, BU_PATH_DIRNAME);

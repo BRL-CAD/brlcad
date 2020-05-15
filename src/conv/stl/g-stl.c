@@ -38,6 +38,7 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/cv.h"
 #include "vmath.h"
@@ -283,7 +284,7 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	    unsigned char tot_buffer[4];
 
 	    /* Re-position pointer to 80th byte */
-	    lseek(bfd, 80, SEEK_SET);
+	    bu_lseek(bfd, 80, SEEK_SET);
 
 	    /* Write out number of triangles */
 	    *(uint32_t *)tot_buffer = htonl((unsigned long)region_polys);
@@ -314,6 +315,7 @@ main(int argc, char *argv[])
     int mutex;
     int missingg;
 
+    bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
 
     tree_state = rt_initial_tree_state;	/* struct copy */
@@ -499,7 +501,7 @@ main(int argc, char *argv[])
 	    unsigned char tot_buffer[4];
 
 	    /* Re-position pointer to 80th byte */
-	    lseek(bfd, 80, SEEK_SET);
+	    bu_lseek(bfd, 80, SEEK_SET);
 
 	    /* Write out number of triangles */
 	    *(uint32_t *)tot_buffer = htonl((unsigned long)tot_polygons);

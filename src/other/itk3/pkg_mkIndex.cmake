@@ -32,13 +32,15 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
 
-get_filename_component(TFD "${TF_DIR}" REALPATH)
-
+string(REPLACE "\\" "" TF_DIR ${TF_DIR})
+string(REPLACE "\\" "" INST_DIR ${INST_DIR})
+string(REPLACE "\\" "" WORKING_PKGFILE ${WORKING_PKGFILE})
+string(REPLACE "\\" "" INSTALL_PKGFILE ${INSTALL_PKGFILE})
 
 file(WRITE "${WORKING_PKGFILE}" "if {![package vsatisfies [package provide Tcl] 8.6]} return\n")
 file(APPEND "${WORKING_PKGFILE}" "if {[string length [package provide Itcl]] && ![package vsatisfies [package provide Itcl] 3.4]} return\n")
-file(APPEND "${WORKING_PKGFILE}" "package ifneeded itk ${pkgversion} [list load [file join $dir \"${TFD}\" ${TF_NAME}] Itk]\n")
-file(APPEND "${WORKING_PKGFILE}" "package ifneeded Itk ${pkgversion} [list load [file join $dir \"${TFD}\" ${TF_NAME}] Itk]\n")
+file(APPEND "${WORKING_PKGFILE}" "package ifneeded itk ${pkgversion} [list load [file join $dir \"${TF_DIR}\" ${TF_NAME}] Itk]\n")
+file(APPEND "${WORKING_PKGFILE}" "package ifneeded Itk ${pkgversion} [list load [file join $dir \"${TF_DIR}\" ${TF_NAME}] Itk]\n")
 
 
 file(WRITE "${INSTALL_PKGFILE}" "if {![package vsatisfies [package provide Tcl] 8.6]} return\n")

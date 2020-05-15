@@ -181,14 +181,12 @@ function(check_extra_pthread_funcs)
   endif (HAVE_PTHREAD_ATFORK)
 endfunction(check_extra_pthread_funcs)
 
-find_package(Threads)
-if (NOT ${CMAKE_THREAD_LIBS_INIT} STREQUAL "")
-  add_definitions(-DTCL_THREADS=1)
-  add_definitions(-DUSE_THREAD_ALLOC=1)
-  add_definitions(-D_REENTRANT=1)
-  add_definitions(-D_THREAD_SAFE=1)
-  check_extra_pthread_funcs()
-endif (NOT ${CMAKE_THREAD_LIBS_INIT} STREQUAL "")
+find_package(Threads REQUIRED)
+add_definitions(-DTCL_THREADS=1)
+add_definitions(-DUSE_THREAD_ALLOC=1)
+add_definitions(-D_REENTRANT=1)
+add_definitions(-D_THREAD_SAFE=1)
+check_extra_pthread_funcs()
 
 #--------------------------------------------------------------------
 # Header checks.
@@ -553,7 +551,7 @@ function(tcl_5_4_arg_functest func srcs5 srcs4)
   endif (HAVE_${UPPERFUNC})
 endfunction(tcl_5_4_arg_functest)
 
-if (NOT ${CMAKE_THREAD_LIBS_INIT} STREQUAL "")
+if (NOT WIN32)
 
   #------------------------------------------------------------------
   # getpwuid_r
@@ -728,7 +726,7 @@ return 0;}
     endif (${CMAKE_SYSTEM_MAJOR_VERSION} GREATER 5)
   endif (${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
 
-endif (NOT ${CMAKE_THREAD_LIBS_INIT} STREQUAL "")
+endif (NOT WIN32)
 
 #--------------------------------------------------------------------
 include("${CMAKE_CURRENT_SOURCE_DIR}/CMake/tcl.cmake")

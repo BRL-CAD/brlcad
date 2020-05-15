@@ -359,8 +359,8 @@ public:
     bool isParameter() { return _type == 'P'; }
     bool isTerminal() { return _type == 'T'; }
     // reset the stream to the start of this record
-    void reset() { fseek(_fp, _start, SEEK_SET); }
-    long where() { return ftell(_fp); }
+    void reset() { bu_fseek(_fp, _start, SEEK_SET); }
+    long where() { return bu_ftell(_fp); }
 
     GlobalSection* createGlobalSection();
     void createDirectory(vector<DirectoryEntry*>& dir);

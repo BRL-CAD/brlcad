@@ -31,6 +31,7 @@
 
 #include "common.h"
 
+
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
@@ -44,6 +45,8 @@
 #ifdef HAVE_TK
 #  include "tk.h"
 #endif
+
+#include "bio.h"
 
 #include "bn.h"
 #include "bu/cmd.h"

@@ -26,6 +26,7 @@
 #include "common.h"
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/log.h"
 
 #include "brep.h"
@@ -76,8 +77,9 @@ test_csi(ON_Curve *c1, ON_Surface *s2)
 
 
 int
-main(int, char**)
+main(int, char**av)
 {
+    bu_setprogname(av[0]);
     ON_3dPoint origin(0.0, 0.0, 0.0);
     ON_3dVector xdir(1.0, 0.0, 0.0);
     ON_3dVector ydir(0.0, 1.0, 1.0);

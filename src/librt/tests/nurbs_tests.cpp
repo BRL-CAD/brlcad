@@ -31,6 +31,7 @@
 #include <limits>
 #include <iomanip>
 
+#include "bu/app.h"
 #include "brep.h"
 #include "raytrace.h"
 
@@ -124,6 +125,8 @@ main(int argc, char **argv)
     long int all_tests = 1;
     struct db_i *dbip;
     char *endptr;
+
+    bu_setprogname(argv[0]);
 
     /* Set up the .g file */
     if (argc > 3 || argc < 2) {

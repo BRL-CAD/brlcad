@@ -335,7 +335,8 @@ simulate_test()
 
 
 int
-main()
+main(int UNUSED(argc), const char **argv)
 {
+    bu_setprogname(argv[0]);
     return simulate_test() ? EXIT_SUCCESS : EXIT_FAILURE;
 }

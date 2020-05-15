@@ -28,7 +28,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "bio.h"
+
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "bu/file.h"
@@ -157,6 +160,8 @@ main (int argc, char **argv)
     int num;		/* number of bytes read */
     int i;
     int row, col;	/* coords within input stream */
+
+    bu_setprogname(argv[0]);
 
     bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
     bu_snooze(BU_SEC2USEC(1));

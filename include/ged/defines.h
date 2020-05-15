@@ -29,7 +29,6 @@
 #define GED_DEFINES_H
 
 #include "common.h"
-#include "bio.h"
 #include "bu/hash.h"
 #include "bu/list.h"
 #include "bu/process.h"

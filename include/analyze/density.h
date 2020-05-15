@@ -29,6 +29,7 @@
 #define ANALYZE_DENSITY_H
 
 #include "common.h"
+#include "vmath.h"
 #include "analyze/defines.h"
 
 __BEGIN_DECLS

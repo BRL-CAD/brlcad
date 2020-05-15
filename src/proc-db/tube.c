@@ -32,6 +32,7 @@
 #include <string.h>
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "nmg.h"
 #include "raytrace.h"
 #include "wdb.h"
@@ -123,6 +124,8 @@ main(int argc, char **argv)
     mat_t rot1, rot2, rot3;
     vect_t from, to;
     vect_t offset;
+
+    bu_setprogname(argv[0]);
 
     if (argc > 0) {
 	bu_log("Usage: %s\n", argv[0]);

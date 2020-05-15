@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+#include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"
@@ -229,6 +230,8 @@ int
 main(int argc, char **argv)
 {
     struct coords start, end;
+
+    bu_setprogname(argv[0]);
 
     if (!get_args(argc, argv)) {
 	fputs(usage, stderr);

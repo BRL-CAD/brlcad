@@ -68,6 +68,9 @@
 #include <ctype.h>
 #include <math.h>
 
+#include "bio.h"
+
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -262,6 +265,7 @@ main(int argc, char **argv)
     unsigned char Map[256];
     size_t ret;
 
+    bu_setprogname(argv[0]);
 /*
  *	parameter processing.
  */

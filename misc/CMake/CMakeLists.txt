@@ -22,6 +22,7 @@ set(cmake_ignore_files
   FindAppleseed.cmake
   FindBlosc.cmake
   FindBSON.cmake
+  FindFontconfig.cmake
   FindGDAL.cmake
   FindGECODE.cmake
   FindGL.cmake
@@ -50,6 +51,7 @@ set(cmake_ignore_files
   FindX11.cmake
   FindXMLLINT.cmake
   FindXSLTPROC.cmake
+  Fuzzer.cmake
   NSIS.template.in
   NSIS_silent.template.in
   OpenVDBUtils.cmake

@@ -234,7 +234,7 @@ function(THIRD_PARTY dir varname_root build_target description)
 
     foreach(stale_file ${STALE_FILES})
       execute_process(
-	COMMAND ${CMAKE_COMMAND} ARGS -E remove ${stale_file}
+	COMMAND ${CMAKE_COMMAND} -E remove ${stale_file}
 	OUTPUT_VARIABLE rm_out
 	RESULT_VARIABLE rm_retval
 	)

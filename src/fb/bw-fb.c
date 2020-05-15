@@ -36,6 +36,10 @@
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
+
+#include "bio.h"
+
+#include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
@@ -183,6 +187,8 @@ main(int argc, char **argv)
     int x, y, n;
     long xout, yout;		/* number of screen output lines */
     long xstart, xskip;
+
+    bu_setprogname(argv[0]);
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
@@ -339,7 +345,7 @@ skipbytes(int fd, b_off_t num)
     int n, tries;
 
     if (fileinput) {
-	(void)lseek(fd, num, 1);
+	(void)bu_lseek(fd, num, 1);
 	return 0;
     }
 

@@ -104,6 +104,8 @@ main(int ac, const char **av)
     int skip_out = 0;
     icv_image_t *img = NULL;
 
+    bu_setprogname(av[0]);
+
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
     struct bu_vls in_format = BU_VLS_INIT_ZERO;
     struct bu_vls in_path = BU_VLS_INIT_ZERO;

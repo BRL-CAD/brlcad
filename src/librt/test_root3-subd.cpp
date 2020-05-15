@@ -490,6 +490,8 @@ main(int argc, char *argv[])
     struct Mesh_Info *prev_mesh = NULL;
     struct Mesh_Info *mesh = NULL;
 
+    bu_setprogname(argv[0]);
+
     bu_vls_init(&name);
 
     if (argc != 3) {

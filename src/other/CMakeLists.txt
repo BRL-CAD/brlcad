@@ -425,6 +425,7 @@ if(BRLCAD_TK_BUILD)
   # Set the necessary variables ourselves since FindTCL.cmake doesn't know about our build
   set(TK_LIBRARY tk CACHE STRING "TK_LIBRARY" FORCE)
   set(TK_STUB_LIBRARY tkstub CACHE STRING "TK_LIBRARY" FORCE)
+  set(TK_WISH wish CACHE STRING "TK_WISH" FORCE)
 
   # For the include path, use the TK_INCLUDE_PATH set in the tk build itself;
   # we are not installing headers, so we have to look in the source tree
@@ -465,6 +466,17 @@ elseif(BRLCAD_ENABLE_TK)
     set(TK_SYSTEM_GRAPHICS win32)
   endif (NOT WIN32)
   set(TK_SYSTEM_GRAPHICS "${TK_SYSTEM_GRAPHICS}" CACHE STRING "Tk system graphics type" FORCE)
+
+else(BRLCAD_TK_BUILD)
+
+  # If we're not using Tk, make sure the variables are empty - CMake won't be
+  # happy if they're set to NOTFOUND and used, and FindTCL.cmake may have set
+  # them.
+  set(TK_LIBRARY "" CACHE STRING "TK_LIBRARY" FORCE)
+  set(TK_STUB_LIBRARY "" CACHE STRING "TK_LIBRARY" FORCE)
+  set(TK_WISH "" CACHE STRING "TK_WISH" FORCE)
+  set(TK_INCLUDE_PATH "" CACHE STRING "Tk include path" FORCE)
+  set(TK_SYSTEM_GRAPHICS "" CACHE STRING "Tk system graphics type" FORCE)
 
 endif(BRLCAD_TK_BUILD)
 mark_as_advanced(TK_INCLUDE_PATH)

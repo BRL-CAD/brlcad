@@ -144,7 +144,7 @@ main(int argc, const char *argv[])
 	return -1;
     }
 
-    std::regex f_regex("file:(.*)");
+    std::regex f_regex("file:/(.*)");
     std::regex o_regex(".*[\\/]other[\\/].*");
     std::regex t_regex(".*[\\/]misc/tools[\\/].*");
     std::regex c_regex(".*[\\/]misc/CMake[\\/].*");

@@ -34,6 +34,7 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "raytrace.h"
 #include "wdb.h"
@@ -161,6 +162,8 @@ main(int argc, char **argv)
     char ctitle[132];
     char *title;
     char units[16];
+
+    bu_setprogname(argv[0]);
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);

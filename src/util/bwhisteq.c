@@ -32,6 +32,7 @@
 
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/file.h"
 #include "bu/str.h"
 #include "bu/exit.h"
@@ -62,6 +63,8 @@ main(int argc, char **argv)
     unsigned char result[BINSIZE];
     int left[BINSIZE];
     int right[BINSIZE];
+
+    bu_setprogname(argv[0]);
 
     if (argc > 1 && BU_STR_EQUAL(argv[1], "-v")) {
 	verbose++;
@@ -105,7 +108,7 @@ main(int argc, char **argv)
 	    fprintf(stderr, "result[%d] = %d\n", i, result[i]);
     }
 
-    fseek(fp, 0, 0);
+    bu_fseek(fp, 0, 0);
     while ((n = fread(buf, 1, BUFSIZE, fp)) > 0) {
 	for (i = 0; i < n; i++) {
 	    long idx = buf[i];

@@ -67,6 +67,7 @@
 
 #include <osgText/Text>
 
+#include "bu/app.h"
 #include "bu/list.h"
 #include "raytrace.h"
 #include "rt/func.h"
@@ -588,6 +589,8 @@ int main( int argc, char **argv )
     std::map<const struct directory *, osg::ref_ptr<osg::Group> > osg_nodes;
     struct db_i *dbip = DBI_NULL;
     struct db_full_path path;
+
+    bu_setprogname(argv[0]);
 
     if (argc != 3 || !argv) {
 	bu_exit(1, "Error - please specify a .g file and an object\n");

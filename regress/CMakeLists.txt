@@ -51,8 +51,21 @@ add_subdirectory(rtwizard)
 # MGED command tests
 add_subdirectory(mged)
 
+# Fuzz tests
+include(Fuzzer)
+brlcad_check_fuzzer()
+if (${HAVE_FUZZER})
+  add_subdirectory(fuzz)
+endif (${HAVE_FUZZER})
+
+# gchecker tests
+add_subdirectory(gchecker)
+
 # License check
 add_subdirectory(licenses)
+
+# Repository check
+add_subdirectory(repository)
 
 if(SH_EXEC)
   macro(Sh_Regression_Test testname depends_list)
@@ -89,16 +102,6 @@ if(SH_EXEC)
   Sh_Regression_Test(bots "mged;pixdiff;rt")
   Sh_Regression_Test(usage "rt" EXCLUDE_FROM_REGRESS)
   Sh_Regression_Test(flawfinder "" EXCLUDE_FROM_REGRESS)
-
-  # TODO - keep all tests short, GOAL < 1MIN.  right now, regress
-  # repository violates this as it spends considerable time scanning
-  # the entire source tree, then scanning different sets of files for
-  # properties.
-  Sh_Regression_Test(repository "")
-  if(NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
-    set_tests_properties(regress-repository PROPERTIES TIMEOUT 600)
-  endif(NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
-
   Sh_Regression_Test(mged mged)
   Sh_Regression_Test(red mged)
   Sh_Regression_Test(nirt "mged;nirt")
@@ -137,6 +140,10 @@ CMAKEFILES(
   dsp/run-dsp-case-set-2.sh
   dsp/run-dsp-case-set-3.sh
   flawfinder.sh
+  fuzz/CMakeLists.txt
+  fuzz/fuzz_ged.cpp
+  fuzz/fuzz_test1.cxx
+  fuzz/run.sh
   g-dot.sh
   g-nff.sh
   gqa.sh
@@ -152,7 +159,6 @@ CMAKEFILES(
   nirt.sh
   nirt/ovlps.g
   red.sh
-  repository.sh
   rtedge.ref.pix.gz
   rtedge.ref2.pix.gz
   rtedge.ref3.pix.gz
@@ -421,7 +427,6 @@ set(regress_outfiles
   red.virgin.out.new
   region_ids
   regions
-  repository.log
   rtedge.2.pix
   rtedge.3.pix
   rtedge.4.pix

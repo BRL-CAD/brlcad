@@ -298,7 +298,7 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	    unsigned char tot_buffer[4];
 
 	    /* Re-position pointer to 80th byte */
-	    lseek(pstate->bfd, 80, SEEK_SET);
+	    bu_lseek(pstate->bfd, 80, SEEK_SET);
 
 	    /* Write out number of triangles */
 	    *(uint32_t *)tot_buffer = htonl((unsigned long)region_polys);
@@ -441,7 +441,7 @@ stl_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const
 	    unsigned char tot_buffer[4];
 
 	    /* Re-position pointer to 80th byte */
-	    lseek(state.bfd, 80, SEEK_SET);
+	    bu_lseek(state.bfd, 80, SEEK_SET);
 
 	    /* Write out number of triangles */
 	    *(uint32_t *)tot_buffer = htonl((unsigned long)state.tot_polygons);

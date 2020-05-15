@@ -33,6 +33,9 @@
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
+
+#include "bio.h"
+
 #include "png.h"
 
 #include "vmath.h"

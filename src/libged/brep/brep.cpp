@@ -1284,8 +1284,12 @@ _brep_cmd_help(void *bs, int argc, const char **argv)
 	int ret;
 	const char *helpflag[2];
 	helpflag[1] = PURPOSEFLAG;
+	size_t maxcmdlen = 0;
 	for (ctp = gb->cmds; ctp->ct_name != (char *)NULL; ctp++) {
-	    bu_vls_printf(gb->gedp->ged_result_str, "  %s\t\t", ctp->ct_name);
+	    maxcmdlen = (maxcmdlen > strlen(ctp->ct_name)) ? maxcmdlen : strlen(ctp->ct_name);
+	}
+	for (ctp = gb->cmds; ctp->ct_name != (char *)NULL; ctp++) {
+	    bu_vls_printf(gb->gedp->ged_result_str, "  %s%*s", ctp->ct_name, (int)(maxcmdlen - strlen(ctp->ct_name)) + 2, " ");
 	    if (!BU_STR_EQUAL(ctp->ct_name, "help")) {
 		helpflag[0] = ctp->ct_name;
 		bu_cmd(gb->cmds, 2, helpflag, 0, (void *)gb, &ret);

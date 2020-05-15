@@ -6,5 +6,5 @@ There doesn't appear to be a definitive upstream for this code. One of a number 
 
 https://github.com/clibs/sha1
 
-file:src/libbu/sha1.c
-file:src/libbu/sha1.h
+file:/src/libbu/sha1.c
+file:/src/libbu/sha1.h

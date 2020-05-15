@@ -32,6 +32,7 @@
 #  include <unistd.h>
 #endif
 
+#include "bu/app.h"
 #include "wdb.h"
 #include "ged.h"
 
@@ -44,6 +45,8 @@ int main(int ac, char *av[])
     const char *filename = NULL;
     struct ged ged;
     int ret;
+
+    bu_setprogname(av[0]);
 
     filename = DEFAULT_TIRE_FILENAME;
 

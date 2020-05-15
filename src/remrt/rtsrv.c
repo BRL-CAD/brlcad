@@ -41,6 +41,7 @@
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
+#include "bio.h"
 #include "bresource.h"
 #include "bsocket.h"
 
@@ -48,6 +49,7 @@
 #  undef VMIN
 #endif
 
+#include "bu/app.h"
 #include "bu/str.h"
 #include "bu/process.h"
 #include "bu/snooze.h"
@@ -160,6 +162,8 @@ int
 main(int argc, char **argv)
 {
     int n;
+
+    bu_setprogname(argv[0]);
 
     if (argc < 2) {
 	fprintf(stderr, "%s", srv_usage);

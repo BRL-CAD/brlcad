@@ -61,6 +61,7 @@
 
 // interface headers
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/avs.h"
 #include "bu/bitv.h"
@@ -1119,6 +1120,7 @@ main(int argc, char *argv[])
     int arg_count;
     const int MIN_NUM_OF_ARGS = 2;
 
+    bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
 
     rt_i *rtip;

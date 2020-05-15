@@ -40,6 +40,8 @@ main(int argc, char *argv[])
     const char *rs_complex = "([-_:]*[0-9]+[-_:]*)[^0-9]*$";
     const char *formatting = NULL;
 
+    bu_setprogname(argv[0]);
+
     /* Sanity check */
     if (argc < 6)
 	bu_exit(1, "Usage: %s {name} {num} {formatting} {incr_count} {expected}\n", argv[0]);

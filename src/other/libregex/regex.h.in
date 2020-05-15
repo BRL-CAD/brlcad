@@ -52,41 +52,51 @@
 #  define HAVE_SSIZE_T 1
 #endif
 
-#if defined(_WIN32) && !defined(_OFF_T_DEFINED)
-   typedef SSIZE_T off_t;
-#  define _OFF_T_DEFINED 1
-#endif
-
-/* On Windows 64bit, "off_t" is defined as a "long"
- * within "sys/types.h" which breaks "libregex". To
- * resolve this, we must define "off_t" before we
- * include "sys/types.h". Defining "off_t" as
- * "ssize_t" works for both Windows 32bit and 64bit.
- */
-
-#include <sys/types.h>
-
-#if !defined(_WIN32) && !defined(__APPLE__) && !defined(__HAIKU__) && !defined(__OpenBSD__) && !defined(__off_t_defined) && !defined(_OFF_T) && !defined(_OFF_T_DECLARED)
-   typedef ptrdiff_t off_t;
-#  define __off_t_defined 1
-#  define _OFF_T_DECLARED 1
-#endif
-
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <stdlib.h>
 
-#ifdef __cplusplus
-#  define __BEGIN_DECLS   extern "C" {
-#  define __END_DECLS     }
+/* We want 64 bit (large file) I/O capabilities whenever they are available.
+ * Always define this before we include sys/types.h */
+#ifndef _FILE_OFFSET_BITS
+#  define _FILE_OFFSET_BITS 64
+#endif
+#include <sys/types.h>
+
+/* off_t is 32 bit size even on 64 bit Windows. In the past we have tried to
+ * force off_t to be 64 bit but this is failing on newer Windows/Visual Studio
+ * verions in 2020 - therefore, we instead introduce the b_off_t define to
+ * properly substitute the correct numerical type for the correct platform.  */
+#if defined(_WIN64)
+#  include <sys/stat.h>
+#  define regoff_t __int64
+#  define fseek _fseeki64
+#  define ftell _ftelli64
+#  define fstat _fstati64
+#  define stat  _stati64
+#elif defined (_WIN32)
+#  include <sys/stat.h>
+#  define regoff_t _off_t
+#  define fstat _fstat
+#  define stat  _stat
 #else
-#  ifndef __BEGIN_DECLS
-#    define __BEGIN_DECLS
-   #endif
-#  ifndef __END_DECLS
-#    define __END_DECLS
-#  endif
+#  define regoff_t off_t
+#endif
+
+
+#ifndef __BEGIN_DECLS
+# ifdef __cplusplus
+#   define __BEGIN_DECLS   extern "C" {
+#   define __END_DECLS     }
+# else
+#   ifndef __BEGIN_DECLS
+#     define __BEGIN_DECLS
+#   endif
+#   ifndef __END_DECLS
+#     define __END_DECLS
+#   endif
+# endif
 #endif
 
 
@@ -104,7 +114,7 @@
 
 /* types */
 
-typedef off_t regoff_t;
+
 
 typedef struct {
 	int re_magic;

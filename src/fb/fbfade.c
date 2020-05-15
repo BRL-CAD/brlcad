@@ -59,6 +59,9 @@
 #include <string.h>
 #include <stdarg.h>
 
+#include "bio.h"
+
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "vmath.h"
 #include "dm.h"			/* BRL-CAD package libfb.a interface */
@@ -101,6 +104,8 @@ Sig_Catcher(int sig)
 int
 main(int argc, char **argv)
 {
+    bu_setprogname(argv[0]);
+
     /* Plant signal catcher. */
     {
 	/* signals to catch */

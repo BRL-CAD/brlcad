@@ -76,6 +76,7 @@
 #include "bsocket.h"
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/malloc.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"
@@ -385,6 +386,8 @@ init_syslog(void)
 int
 main(int argc, char **argv)
 {
+    bu_setprogname(argv[0]);
+
 #define PORTSZ 32
     char portname[PORTSZ];
 

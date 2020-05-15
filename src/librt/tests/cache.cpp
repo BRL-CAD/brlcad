@@ -538,6 +538,8 @@ main(int ac, char *av[])
     char *rp = bu_file_realpath(av[0], NULL);
     size_t maxcpus = (bu_avail_cpus() > MAX_PSW) ? MAX_PSW : bu_avail_cpus();
 
+    bu_setprogname(av[0]);
+
     ac--; av++;
 
     if (ac < 1) {

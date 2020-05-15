@@ -31,5 +31,5 @@ DEALINGS IN THE SOFTWARE.
 File Version: 3.0.2 (2019/07/30)
 https://www.geometrictools.com/GTEngine/Include/Mathematics/GteDistPointTriangle.h
 
-file:src/libbg/tri_pt.c
+file:/src/libbg/tri_pt.c
 

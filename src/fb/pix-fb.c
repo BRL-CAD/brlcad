@@ -37,6 +37,9 @@
 #  include <winsock.h>
 #endif
 
+#include "bio.h"
+
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "bu/file.h"
@@ -191,7 +194,7 @@ skipbytes(int fd, b_off_t num)
     int n, tries;
 
     if (fileinput) {
-	(void)lseek(fd, num, 1);
+	(void)bu_lseek(fd, num, 1);
 	return 0;
     }
 
@@ -213,6 +216,8 @@ main(int argc, char **argv)
     int y;
     struct fb *fbp;
     int xout, yout, n, m, xstart, xskip;
+
+    bu_setprogname(argv[0]);
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);

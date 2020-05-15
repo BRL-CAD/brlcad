@@ -34,6 +34,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "bio.h"
+
+#include "bu/app.h"
 #include "bu/color.h"
 #include "bu/str.h"
 #include "bu/exit.h"
@@ -64,6 +67,8 @@ int
 main(int argc, char **argv)
 {
     int n;
+
+    bu_setprogname(argv[0]);
 
     if (argc > 1) {
 	if ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?"))

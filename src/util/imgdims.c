@@ -33,6 +33,7 @@
 
 #include "vmath.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/file.h"
 #include "bu/malloc.h"
@@ -110,6 +111,8 @@ main (int argc, char **argv)
     size_t width;
     size_t height;
     struct stat stat_buf;
+
+    bu_setprogname(argv[0]);
 
     /*
      * Process the command line

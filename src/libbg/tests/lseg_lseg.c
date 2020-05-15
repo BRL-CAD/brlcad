@@ -30,6 +30,8 @@ main(int argc, char **argv)
 {
     int test_num = 0;
 
+    bu_setprogname(argv[0]);
+
     if (argc != 2)
 	bu_exit(1, "ERROR: [%s] input format is: test_number\n", argv[0]);
 

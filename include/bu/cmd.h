@@ -36,7 +36,6 @@
 #include <time.h>
 
 #include "bsocket.h" /* for timeval */
-#include "bio.h"
 
 #define BU_CMD_NULL (int (*)(void *, int, const char **))NULL
 

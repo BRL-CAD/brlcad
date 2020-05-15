@@ -42,6 +42,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "bio.h"
+
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"
 #include "vmath.h"
@@ -128,6 +131,8 @@ main(int argc, char **argv)
 
     struct fb *fbp;
     FILE *fp;
+
+    bu_setprogname(argv[0]);
 
     while ((code = bu_getopt(argc, argv, "HvFh?")) != -1) {
 	switch (code) {

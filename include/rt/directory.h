@@ -25,7 +25,6 @@
 #define RT_DIRECTORY_H
 
 #include "common.h"
-#include "bio.h" /* for b_off_T */
 #include "vmath.h"
 #include "bu/list.h"
 #include "rt/anim.h"

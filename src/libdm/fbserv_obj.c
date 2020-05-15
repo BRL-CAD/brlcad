@@ -47,6 +47,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <tcl.h>
+#include "bio.h"
 #include "bnetwork.h"
 
 #include "raytrace.h"

@@ -29,8 +29,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "bu/getopt.h"
 #include "vmath.h"
+#include "bu/app.h"
+#include "bu/getopt.h"
 #include "nmg.h"
 #include "raytrace.h"
 #include "wdb.h"
@@ -518,6 +519,8 @@ main(int ac, char *av[])
     struct bn_tol tol;
     FILE *fdplot;
     struct rt_wdb *fdmodel;
+
+    bu_setprogname(av[0]);
 
     parse_args(ac, av);
     if (!manifold[0] && !manifold[1] && !manifold[2] && !manifold[3])

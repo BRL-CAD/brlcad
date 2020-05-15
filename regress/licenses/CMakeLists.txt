@@ -6,6 +6,15 @@ if (O3_COMPILER_FLAG)
 endif (O3_COMPILER_FLAG)
 set_target_properties(lcheck PROPERTIES FOLDER "BRL-CAD Regression Tests")
 
+# Get the list of embedded license files from doc/legal/embedded and generate
+# an input file for the regression test
+get_directory_property(ELEGAL DIRECTORY ${CMAKE_SOURCE_DIR}/doc/legal/embedded DEFINITION embedded_licenses)
+set(LICENSE_LIST "${CMAKE_CURRENT_BINARY_DIR}/embedded_licenses.txt")
+file(REMOVE "${LICENSE_LIST}")
+foreach(lfile ${ELEGAL})
+  file(APPEND "${LICENSE_LIST}" "${CMAKE_SOURCE_DIR}/doc/legal/embedded/${lfile}\n")
+endforeach(lfile ${ELEGAL})
+DISTCLEAN("${LICENSE_LIST}")
 
 set(LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/regress-licenses.log")
 set(STAMP_FILE "${CMAKE_CURRENT_BINARY_DIR}/regress-licenses.done")
@@ -15,11 +24,11 @@ add_custom_command(
   OUTPUT "${STAMP_FILE}"
   COMMAND "${CMAKE_COMMAND}"
            -DLCHECK_EXEC="$<TARGET_FILE:lcheck>" -DBRLCAD_SOURCE_DIR="${BRLCAD_SOURCE_DIR}"
-	   -DL_FILE="${LOG_FILE}" -DS_FILE="${STAMP_FILE}" -DF_LIST="${ALL_FILES_LIST}"
+	   -DL_FILE="${LOG_FILE}" -DS_FILE="${STAMP_FILE}" -DL_LIST="${LICENSE_LIST}" -DF_LIST="${ALL_FILES_LIST}"
 	   -DW_DIR="${CMAKE_CURRENT_BINARY_DIR}"
            -P "${CMAKE_CURRENT_SOURCE_DIR}/regress-licenses.cmake"
   )
-add_custom_target(regress-licenses DEPENDS ${STAMP_FILE})
+add_custom_target(regress-licenses DEPENDS ${STAMP_FILE} ${LICENSE_LIST})
 set_target_properties(regress-licenses PROPERTIES FOLDER "BRL-CAD Regression Tests")
 add_dependencies(regress regress-licenses)
 add_dependencies(check regress-licenses)
@@ -27,7 +36,7 @@ add_dependencies(check regress-licenses)
 add_test(NAME regress-licenses
   COMMAND "${CMAKE_COMMAND}"
            -DLCHECK_EXEC=$<TARGET_FILE:lcheck> -DBRLCAD_SOURCE_DIR=${BRLCAD_SOURCE_DIR}
-	   -DL_FILE=${LOG_FILE} -DS_FILE=${STAMP_FILE} -DF_LIST=${ALL_FILES_LIST}
+	   -DL_FILE=${LOG_FILE} -DS_FILE=${STAMP_FILE} -DL_LIST=${LICENSE_LIST} -DF_LIST=${ALL_FILES_LIST}
 	   -DW_DIR=${CMAKE_CURRENT_BINARY_DIR}
            -P "${CMAKE_CURRENT_SOURCE_DIR}/regress-licenses.cmake"
   )

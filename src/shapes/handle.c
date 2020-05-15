@@ -36,6 +36,7 @@
 
 #include "rt/db4.h"
 #include "vmath.h"
+#include "bu/app.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -91,6 +92,8 @@ main(int argc, char **argv)
 
     int i, j, k;		/* Loop counters. */
     int ret;
+
+    bu_setprogname(argv[0]);
 
     /* Set up solid, region, and group names. */
     solnam[0] = 's';

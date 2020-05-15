@@ -35,7 +35,8 @@
 
 #include "common.h"
 #include "bu/defines.h"
-#include "bio.h"
+
+#include "bio.h" /* For windows.h */
 
 __BEGIN_DECLS
 
@@ -46,7 +47,6 @@ __BEGIN_DECLS
 #  include <process.h>
 #  include <sys/timeb.h>
 #endif
-
 
 #define bu_thrd_error    0 /**< The requested operation failed */
 #define bu_thrd_success  1 /**< The requested operation succeeded */

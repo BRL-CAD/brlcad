@@ -16,6 +16,8 @@
 #include "tcl.h"
 #include "tk.h"
 
+#include "bu/app.h"
+
 TCL_DECLARE_MUTEX(calclock)
 TCL_DECLARE_MUTEX(threadMutex)
 
@@ -133,6 +135,9 @@ calc_f1(ClientData clientData, Tcl_Interp *UNUSED(interp), int UNUSED(argc), cha
 int
 main(int UNUSED(argc), const char *argv[])
 {
+
+    bu_setprogname(argv[0]);
+
     struct cdata ddata;
     ddata.val1 = 0;
     ddata.val2 = 0;

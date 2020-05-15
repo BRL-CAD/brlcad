@@ -134,10 +134,8 @@ endif (PIPE_COMPILER_FLAG)
 #------------------------------------------------------------------------
 # Threads support
 #------------------------------------------------------------------------
-find_package(Threads)
-if (NOT ${CMAKE_THREAD_LIBS_INIT} STREQUAL "")
-  add_definitions(-DTCL_THREADS=1)
-endif (NOT ${CMAKE_THREAD_LIBS_INIT} STREQUAL "")
+find_package(Threads REQUIRED)
+add_definitions(-DTCL_THREADS=1)
 
 #-----------------------------------------------------------------------------
 # Tcl/Tk's normal build system uses autotools macros, referred to as the

@@ -314,9 +314,9 @@ DM_EXPORT extern const char *dm_default_type();
 #if defined(HAVE_SYS_TIME_H)
 #  include <sys/time.h>
 #endif
+#include <stdio.h> /* for FILE */
 
 #include "bsocket.h"
-#include "bio.h"
 
 #include "tcl.h"
 #include "pkg.h"

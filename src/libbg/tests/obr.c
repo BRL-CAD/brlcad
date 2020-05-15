@@ -60,6 +60,8 @@ main(int argc, const char **argv)
 
     int do_plotting = 0;
 
+    bu_setprogname(argv[0]);
+
     if (argc == 2 && BU_STR_EQUAL(argv[1], "-p")) do_plotting = 1;
 
     /* 2D input */

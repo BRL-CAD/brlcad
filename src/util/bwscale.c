@@ -37,6 +37,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "bu/log.h"
@@ -87,7 +88,7 @@ fill_buffer(int y)
     buf_start = y - buflines/2;
     if (buf_start < 0) buf_start = 0;
 
-    if (fseek(buffp, buf_start * scanlen, 0) < 0) {
+    if (bu_fseek(buffp, buf_start * scanlen, 0) < 0) {
 	fprintf(stderr, "bwscale: Can't seek to input pixel!\n");
 	/* bu_exit (3, NULL); */
     }
@@ -392,6 +393,8 @@ int
 main(int argc, char **argv)
 {
     int i;
+
+    bu_setprogname(argv[0]);
 
     if (!get_args(argc, argv) || isatty(fileno(stdout)))
 	bu_exit(1, "%s", usage);

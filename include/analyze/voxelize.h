@@ -28,6 +28,7 @@
 
 #include "common.h"
 #include "raytrace.h"
+#include "analyze/defines.h"
 
 __BEGIN_DECLS
 

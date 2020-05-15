@@ -43,6 +43,7 @@
 #include <stdlib.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"
 
@@ -225,6 +226,8 @@ main(int argc, char **argv)
     int first_x;		/* x: first pixel to be output in pix[] */
     int first_y;		/* y: first pixel to be output in pix[] */
     size_t ret;
+
+    bu_setprogname(argv[0]);
 
     if (!get_args(argc, argv) || isatty(fileno(stdout))) {
 	(void)fputs(usage, stderr);
