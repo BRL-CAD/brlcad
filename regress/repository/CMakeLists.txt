@@ -1,3 +1,8 @@
+include_directories(
+  ${BRLCAD_BINARY_DIR}/include
+  ${BRLCAD_SOURCE_DIR}/include
+  )
+
 add_executable(repocheck repocheck.cpp)
 target_link_libraries(repocheck libbu ${CMAKE_THREAD_LIBS_INIT})
 if (O3_COMPILER_FLAG)
@@ -18,7 +23,11 @@ add_test(NAME regress-repository
   )
 set_tests_properties(regress-repository PROPERTIES LABELS "Regression")
 
-add_custom_target(regress-repository COMMAND ${CMAKE_CTEST_COMMAND} -R ^regress-repository --output-on-failure)
+if (CMAKE_CONFIGURATION_TYPES)
+  add_custom_target(regress-repository COMMAND ${CMAKE_CTEST_COMMAND} -C ${CMAKE_CFG_INTDIR} -R ^regress-repository --output-on-failure)
+else (CMAKE_CONFIGURATION_TYPES)
+  add_custom_target(regress-repository COMMAND ${CMAKE_CTEST_COMMAND} -R ^regress-repository --output-on-failure)
+endif (CMAKE_CONFIGURATION_TYPES)
 add_dependencies(regress-repository repocheck)
 set_target_properties(regress-repository PROPERTIES FOLDER "BRL-CAD Regression Tests")
 set_target_properties(regress-repository PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
