@@ -38,6 +38,7 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 #include "fft.h"
@@ -79,6 +80,8 @@ main(int argc, char *argv[])
     int N, L;
     FILE *fp;
     size_t ret;
+
+    bu_setprogname(argv[0]);
 
     if (argc != 2 || isatty(fileno(stdin)) || isatty(fileno(stdout))) {
 	bu_exit(1, "Usage: dconv filterfile < doubles > doubles\n       WARNING: kernel size must be 2^i - 1\n");

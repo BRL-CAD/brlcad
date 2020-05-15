@@ -33,6 +33,7 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/malloc.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"
@@ -135,6 +136,8 @@ main(int argc, char *argv[])
     size_t ret;
 
     double buf[BU_PAGE_SIZE] = {0.0};		/* working buffer */
+
+    bu_setprogname(argv[0]);
 
     if (!get_args(argc, argv) || isatty(fileno(infp))
 	|| isatty(fileno(stdout))) {

@@ -53,6 +53,7 @@
 #include <string.h>
 #include <math.h>
 
+#include "bu/app.h"
 #include "bu/str.h"
 #include "bu/units.h"
 #include "vmath.h"
@@ -105,6 +106,8 @@ main(int argc, char **argv)
     int		intervals;		/* number of intervals */
     int		ret;			/* function return code */
     fastf_t		m_len;			/* scale length in model size */
+
+    bu_setprogname(argv[0]);
 
     MAT_IDN(view2model);			/* makes an identity matrix */
     MAT_IDN(model2view);

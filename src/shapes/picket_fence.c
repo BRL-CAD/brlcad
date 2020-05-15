@@ -29,6 +29,7 @@
 #include <string.h>
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -55,6 +56,8 @@ main(int argc, char *argv[])
     struct wmember fwm;
     struct wmember swm;
     struct wmember *nwm;
+
+    bu_setprogname(argv[0]);
 
     fastf_t first_mat[16] = MAT_INIT_ZERO;
 

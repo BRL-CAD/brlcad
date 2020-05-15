@@ -31,6 +31,7 @@
 #include <math.h>
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "rt/db4.h"
 #include "raytrace.h"
 #include "wdb.h"
@@ -74,6 +75,8 @@ main(int argc, char **argv)
     struct wmember comb;	/* Used to make regions. */
     struct wmember comb1;	/* Used to make groups. */
     int ret;
+
+    bu_setprogname(argv[0]);
 
     if (argc > 1) {
 	if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?")) {
