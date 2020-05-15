@@ -123,9 +123,9 @@ void usage(void)
 int main(int ac, char **av)
 {
     int c, isatty(int);
- 
+
     bu_setprogname(av[0]);
- 
+
     progname = *av;
 
     /* Get # of options & turn all the option flags off

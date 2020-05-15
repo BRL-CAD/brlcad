@@ -31,6 +31,7 @@
 
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/color.h"
 #include "bu/log.h"
 #include "bu/str.h"
@@ -57,6 +58,8 @@ int
 main(int argc, char **argv)
 {
     int i;
+
+    bu_setprogname(argv[0]);
 
     /* check for verbose flag */
     if (argc > 1 && BU_STR_EQUAL(argv[1], "-v")) {

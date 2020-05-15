@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include "bio.h"
+#include "bu/app.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 
@@ -63,6 +64,7 @@ main(int ac, char **av)
     int pixcnt, i;
     char *p;
 
+    bu_setprogname(av[0]);
     progname = *av;
 
     if (ac > 2 || isatty(fileno(stdin))) usage();

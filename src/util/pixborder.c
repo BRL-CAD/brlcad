@@ -32,6 +32,7 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
@@ -479,6 +480,8 @@ main (int argc, char **argv)
     ssize_t this_row;
     size_t col_nm;
     size_t row_nm;
+
+    bu_setprogname(argv[0]);
 
     VSETALL(border_rgb,     1);
     rgb_to_hsv(border_rgb, border_hsv);

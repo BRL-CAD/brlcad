@@ -49,6 +49,7 @@
 #include "bio.h"
 #include "bresource.h"
 #include "bsocket.h"
+#include "bu/app.h"
 
 /* decls for strict c90 */
 
@@ -3533,6 +3534,8 @@ main(int argc, char *argv[])
 {
     struct servers *sp;
     int i, done;
+
+    bu_setprogname(argv[0]);
 
     /* Random inits */
     our_hostname = get_our_hostname();

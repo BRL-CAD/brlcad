@@ -53,6 +53,7 @@
 #include <sstream>
 #include <string>
 
+#include "bu/app.h"
 #include "bu/mapped_file.h"
 
 #define MAX_LINES_CHECK 500
@@ -176,7 +177,7 @@ regex_init(repo_info_t &r) {
 	r.setprogname_regex = std::regex("[[:space:]]*bu_setprogname[[:space:]]*[(].*");
   	const char *setprogname_exempt_filter_strs[] {
 	    "mt19937ar.c", "stb_truetype.h", "misc/", "sha1.c",
-		"licenses_check.cpp", "fftc.c", "ifftc.c", "fftest.c",
+		"licenses_check.cpp", "fftc.c", "ifftc.c", "fftest.c", "ttcp.c",
 	       	NULL
 	};
 	cnt = 0;
@@ -705,6 +706,8 @@ main(int argc, const char *argv[])
 	return -1;
     }
 
+    bu_setprogname(argv[0]);
+
     repo_info_t repo_info;
     repo_info.path_root = std::string(argv[2]);
     regex_init(repo_info);
@@ -783,8 +786,7 @@ main(int argc, const char *argv[])
     ret += bnetwork_redundant_check(repo_info, src_files);
     ret += common_include_first(repo_info, src_files);
     ret += api_usage(repo_info, src_files);
-
-    //ret += setprogname(repo_info, src_files);
+    ret += setprogname(repo_info, src_files);
 
     int h_cnt = platform_symbols(repo_info, repo_info.symbol_inc_log, inc_files);
     int s_cnt = platform_symbols(repo_info, repo_info.symbol_src_log, src_files);

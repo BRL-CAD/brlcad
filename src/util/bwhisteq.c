@@ -32,6 +32,7 @@
 
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/file.h"
 #include "bu/str.h"
 #include "bu/exit.h"
@@ -62,6 +63,8 @@ main(int argc, char **argv)
     unsigned char result[BINSIZE];
     int left[BINSIZE];
     int right[BINSIZE];
+
+    bu_setprogname(argv[0]);
 
     if (argc > 1 && BU_STR_EQUAL(argv[1], "-v")) {
 	verbose++;

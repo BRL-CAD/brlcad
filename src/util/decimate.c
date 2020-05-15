@@ -38,6 +38,7 @@
 #include <stdio.h>
 #include <limits.h> /* for INT_MAX */
 
+#include "bu/app.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 
@@ -67,6 +68,8 @@ main(int argc, char **argv)
     size_t todo;
 
     int failure;
+
+    bu_setprogname(argv[0]);
 
     if (argc < 4) {
 	bu_exit (1, "%s", usage);

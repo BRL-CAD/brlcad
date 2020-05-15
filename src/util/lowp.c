@@ -29,6 +29,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/file.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
@@ -67,6 +68,8 @@ main(int argc, char **argv)
     int x, y;
     ssize_t ret;
     char *ifname;
+
+    bu_setprogname(argv[0]);
 
     if (argc < 2) {
 	fprintf(stderr, "%s", usage);

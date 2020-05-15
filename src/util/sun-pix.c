@@ -32,6 +32,7 @@
 
 #include "vmath.h"
 
+#include "bu/app.h"
 #include "bu/malloc.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
@@ -264,6 +265,8 @@ main(int argc, char **argv)
     int width;			/* line width in bits */
     int scanbytes;		/* bytes/line (padded to 16 bits) */
     unsigned char c, cmap_idx, buf[BU_PAGE_SIZE];
+
+    bu_setprogname(argv[0]);
 
     fp = stdin;
     if (!get_args(argc, argv) || (isatty(fileno(stdout)) && (hflag == 0))) {

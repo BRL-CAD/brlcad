@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/exit.h"
 #include "vmath.h"
 #include "bn/plot3.h"
@@ -40,6 +41,8 @@ main(int argc, char **argv)
 {
     int c;
     int r, g, b;
+
+    bu_setprogname(argv[0]);
 
     if (argc != 4 || isatty(fileno(stdout))) {
 	bu_exit(1, "%s", usage);

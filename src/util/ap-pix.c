@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "bu/app.h"
 #include "bu/file.h"
 #include "bu/str.h"
 #include "bu/exit.h"
@@ -61,6 +62,8 @@ main(int argc, char **argv)
     int line;
     const char *argv0 = argv[0];
     int verbose = 0;
+
+    bu_setprogname(argv[0]);
 
     if (argc > 1) {
 	if (BU_STR_EQUAL(argv[1], "-h") ||  BU_STR_EQUAL(argv[1], "-?"))
