@@ -52,6 +52,8 @@ uniq_test(struct bu_vls *n, void *data)
 int
 main(int argc, char **argv)
 {
+    bu_setprogname(argv[0]);
+
     int ret = 1;
     struct bu_vls name = BU_VLS_INIT_ZERO;
     std::set<const char *, StrCmp> *sset = new std::set<const char *, StrCmp>;

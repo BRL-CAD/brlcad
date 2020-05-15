@@ -16,10 +16,13 @@
 #include "bu.h"
 #include "dylib.h"
 
-int main() {
+int main(int UNUSED(ac), const char *av[]) {
     int expected_plugins = 2;
     struct bu_ptbl plugins = BU_PTBL_INIT_ZERO;
     struct bu_ptbl handles = BU_PTBL_INIT_ZERO;
+
+    bu_setprogname(av[0]);
+
     int pcnt = dylib_load_plugins(&plugins, &handles);
     if (pcnt != expected_plugins) {
 	bu_log("Expected %d plugins, found %d.\n", expected_plugins, pcnt);
@@ -27,6 +30,8 @@ int main() {
 	(void)dylib_close_plugins(&handles);
 	bu_ptbl_free(&handles);
 	return -1;
+    } else {
+	bu_log("Found %d plugins.\n", pcnt);
     }
 
     int expected_results = 1;
@@ -38,6 +43,8 @@ int main() {
 	    if (!NEAR_EQUAL(p->version, eversion, SMALL_FASTF)) {
 		bu_log("%s: expected version %f plugins, found %f.\n", p->name, eversion, p->version);
 		expected_results = 0;
+	    } else {
+		bu_log("%s: got expected plugin version: %f.\n", p->name, p->version);
 	    }
 	    int rstr_len = 10;
 	    char *cresult = (char *)bu_calloc(rstr_len, sizeof(char), "result buffer");
@@ -50,6 +57,8 @@ int main() {
 	    if (!BU_STR_EQUAL(cresult, ecalc)) {
 		bu_log("%s: expected to calculate %s, got %s.\n", p->name, ecalc, cresult);
 		expected_results = 0;
+	    } else {
+		bu_log("%s: got expected result: %s.\n", p->name, cresult);
 	    }
 	    bu_free(cresult, "result container");
 	}
@@ -71,6 +80,8 @@ int main() {
 	    if (!BU_STR_EQUAL(cresult, ecalc)) {
 		bu_log("%s: expected to calculate %s, got %s.\n", p->name, ecalc, cresult);
 		expected_results = 0;
+	    } else {
+		bu_log("%s: got expected result: %s.\n", p->name, cresult);
 	    }
 	    bu_free(cresult, "result container");
 	}

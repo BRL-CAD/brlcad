@@ -34,6 +34,7 @@
 #include <limits.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"
@@ -122,6 +123,9 @@ void usage(void)
 int main(int ac, char **av)
 {
     int c, isatty(int);
+
+    bu_setprogname(av[0]);
+
     progname = *av;
 
     /* Get # of options & turn all the option flags off

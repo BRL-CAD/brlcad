@@ -31,6 +31,7 @@
 #include <math.h>
 #include <limits.h> /* home of INT_MAX aka MAXINT */
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "bu/redblack.h"
@@ -784,6 +785,8 @@ main(int argc, char **argv)
     double azimuth = 0.0;
     double celsiz = 100.0;	/* Spatial sampling rate */
     double elevation = 0.0;
+
+    bu_setprogname(argv[0]);
 
     cbva[0] = &compare_by_vol;
     coa[0] = &compare_overlaps;

@@ -62,6 +62,9 @@
 
 #include <stdlib.h>
 
+#include "bio.h"
+
+#include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"
@@ -218,6 +221,8 @@ main(int argc, char **argv)
 {
     int x, y;
     fb *fbp;
+
+    bu_setprogname(argv[0]);
 
     if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
 	printusage();

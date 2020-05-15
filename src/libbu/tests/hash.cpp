@@ -194,6 +194,8 @@ main(int argc, const char **argv)
     long test_num;
     char *endptr = NULL;
 
+    bu_setprogname(argv[0]);
+
     /* Sanity checks */
     if (argc < 2) {
 	bu_log("Usage: %s {test_number}\n", argv[0]);

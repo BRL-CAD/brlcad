@@ -297,7 +297,7 @@ load_model(const gcv_opts &gcv_options, const std::string &path,
 	   ONX_Model &model, std::string &root_name)
 {
     if (!model.Read(path.c_str()))
-	throw InvalidRhinoModelError("ONX_Model::Read() failed");
+	throw InvalidRhinoModelError("ONX_Model::Read() failed.\n\nNote:  if this file was saved from Rhino3D, make sure it was saved using\nRhino's v5 format or lower - newer versions of the 3dm format are not\ncurrently supported by BRL-CAD.");
 
     std::size_t num_problems;
     std::size_t num_repairs = replace_invalid_uuids(model);

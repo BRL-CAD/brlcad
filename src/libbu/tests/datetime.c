@@ -28,6 +28,8 @@ main(int argc, char *argv[])
     int64_t curr_time;
     int function_num;
 
+    bu_setprogname(argv[0]);
+
     if (argc != 2) {
 	bu_log("Usage: %s {function_num}\n", argv[0]);
 	bu_exit(1, "ERROR: wrong number of parameters");

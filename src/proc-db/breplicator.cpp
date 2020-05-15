@@ -27,6 +27,7 @@
 
 #include "common.h"
 
+#include "bu/app.h"
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "wdb.h"
@@ -397,6 +398,8 @@ main(int argc, char *argv[])
     const char *name = "brep";
     ON_Brep *brep = NULL;
     int ret;
+
+    bu_setprogname(argv[0]);
 
     if ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) {
     	printusage();

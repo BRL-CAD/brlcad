@@ -30,6 +30,9 @@
 
 #include <stdlib.h>
 
+#include "bio.h"
+
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "bu/snooze.h"
@@ -653,6 +656,8 @@ main(int argc, char **argv)
     ColorMap cmap;
     ColorMap *cp = &cmap;
     fb *fbp;
+
+    bu_setprogname(argv[0]);
 
     bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
     bu_snooze(BU_SEC2USEC(1));

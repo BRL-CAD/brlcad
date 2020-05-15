@@ -22,7 +22,9 @@
 #define RT_DB_FULLPATH_H
 
 #include "common.h"
-#include "bio.h" /* for b_off_t */
+
+#include "vmath.h"
+
 #include "bu/vls.h"
 #include "rt/defines.h"
 

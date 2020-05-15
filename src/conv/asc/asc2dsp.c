@@ -43,6 +43,7 @@
 #include <ctype.h>
 
 #include "bnetwork.h"
+#include "bu/app.h"
 #include "bu/log.h"
 
 
@@ -107,6 +108,8 @@ main(int argc, char **argv)
 
     char buf[BUFSZ] = {0};
     unsigned nchars = 0;
+
+    bu_setprogname(argv[0]);
 
     if (argc != 3)
 	bu_exit(1, "%s", usage);

@@ -43,6 +43,6 @@ authors grant the U.S. Government and others acting in its behalf
 permission to use and distribute the software in accordance with the
 terms specified in this license.
 
-file:src/tclscripts/tcllib/cmdline.tcl
-file:src/tclscripts/tcllib/fileutil.tcl
+file:/src/tclscripts/tcllib/cmdline.tcl
+file:/src/tclscripts/tcllib/fileutil.tcl
 

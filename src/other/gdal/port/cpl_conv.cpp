@@ -44,6 +44,10 @@
 #define _XOPEN_SOURCE 700
 #endif
 
+#if defined(__OpenBSD__)
+#  undef _XOPEN_SOURCE
+#endif
+
 // For atoll (at least for NetBSD)
 #define _ISOC99_SOURCE
 

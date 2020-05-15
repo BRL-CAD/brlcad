@@ -21,6 +21,7 @@
 #include "common.h"
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/time.h"
 #include "bu/units.h"
 #include "raytrace.h"
@@ -38,6 +39,8 @@ main(int argc, char *argv[])
     struct db_i *dbip;
     struct directory *dp;
     char hlen[6] = { '\0' };
+
+    bu_setprogname(argv[0]);
 
     if (argc != 3) {
 	bu_exit(1, "Usage: %s file.g [object]", argv[0]);

@@ -35,6 +35,7 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/app.h"
 #include "bu/debug.h"
 #include "bu/getopt.h"
 #include "bu/list.h"
@@ -629,7 +630,7 @@ process_blocks_code(int code)
 	    } else if (!bu_strncmp(line, "BLOCK", 5)) {
 		/* start of a new block */
 		BU_ALLOC(curr_block, struct block_list);
-		curr_block->offset = ftell(dxf);
+		curr_block->offset = bu_ftell(dxf);
 		BU_LIST_INSERT(&(block_head), &(curr_block->l));
 		break;
 	    }
@@ -1109,7 +1110,7 @@ process_entities_unknown_code(int code)
 		    break;
 		}
 		bu_free((char *)tmp_state, "curr_state");
-		fseek(dxf, curr_state->file_offset, SEEK_SET);
+		bu_fseek(dxf, curr_state->file_offset, SEEK_SET);
 		curr_state->sub_state = UNKNOWN_ENTITY_STATE;
 		if (verbose) {
 		    bu_log("Popped state at end of inserted block (seeked to %jd)\n", (intmax_t)curr_state->file_offset);
@@ -1223,7 +1224,7 @@ process_insert_entities_code(int code)
 		BU_LIST_PUSH(&state_stack, &(curr_state->l));
 		curr_state = new_state;
 		new_state = NULL;
-		fseek(dxf, curr_state->curr_block->offset, SEEK_SET);
+		bu_fseek(dxf, curr_state->curr_block->offset, SEEK_SET);
 		curr_state->state = ENTITIES_SECTION;
 		curr_state->sub_state = UNKNOWN_ENTITY_STATE;
 		if (verbose) {
@@ -2504,7 +2505,7 @@ process_dimension_entities_code(int code)
 		    BU_LIST_PUSH(&state_stack, &(curr_state->l));
 		    curr_state = new_state;
 		    new_state = NULL;
-		    fseek(dxf, curr_state->curr_block->offset, SEEK_SET);
+		    bu_fseek(dxf, curr_state->curr_block->offset, SEEK_SET);
 		    curr_state->state = ENTITIES_SECTION;
 		    curr_state->sub_state = UNKNOWN_ENTITY_STATE;
 		    if (verbose) {
@@ -3083,7 +3084,7 @@ readcodes()
     size_t line_len;
     static int line_num = 0;
 
-    curr_state->file_offset = ftell(dxf);
+    curr_state->file_offset = bu_ftell(dxf);
 
     if (bu_fgets(line, MAX_LINE_SIZE, dxf) == NULL) {
 	return ERROR_FLAG;
@@ -3130,6 +3131,8 @@ main(int argc, char *argv[])
     int code;
     int c;
     int i;
+
+    bu_setprogname(argv[0]);
 
     tol_sq = tol * tol;
 

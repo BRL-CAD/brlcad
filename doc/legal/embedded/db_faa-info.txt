@@ -21,5 +21,5 @@ http://www.tc.faa.gov/its/worldpac/techrpt/AR04-16.pdf
 prior to its most recent updates, which are reflected in the
 version included in BRL-CAD.)
 
-file:db/faa/Business_Jet.fg4
-file:db/faa/Generic_Twin.fg4
+file:/db/faa/Business_Jet.fg4
+file:/db/faa/Generic_Twin.fg4

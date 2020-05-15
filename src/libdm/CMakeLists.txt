@@ -130,8 +130,7 @@ if(BRLCAD_ENABLE_OSG)
   add_dependencies(libdm profont_ProFont_ttf_cp)
 endif(BRLCAD_ENABLE_OSG)
 
-#add_executable(tcl_img tcl_img.cpp)
-#target_link_libraries(tcl_img ${TCL_LIBRARY} ${TK_LIBRARY})
+add_subdirectory(tests)
 
 set(libdm_ignore_files
   CMakeLists.txt
@@ -161,7 +160,6 @@ set(libdm_ignore_files
   fontstash/stb_truetype.h
   osg-test.cpp
   osg_bob.cpp
-  tcl_img.cpp
   )
 CMAKEFILES(${libdm_ignore_files})
 CMAKEFILES(dm_private.h)

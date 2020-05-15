@@ -43,6 +43,8 @@ main(int argc, const char *argv[])
 	return 1;
     }
 
+    bu_setprogname(argv[0]);
+
     if (BU_STR_EQUAL(argv[1], "basic")) {
 	// https://stackoverflow.com/a/11276503
 	std::this_thread::sleep_for(std::chrono::milliseconds(100));

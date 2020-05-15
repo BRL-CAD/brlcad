@@ -40,6 +40,8 @@
 #include <gecode/minimodel.hh>
 #include <gecode/float.hh>
 
+#include "bu/app.h"
+
 using namespace Gecode;
 
 /**
@@ -110,6 +112,7 @@ public:
  *  \relates CartesianHeart
  */
 int main(int argc, char* argv[]) {
+  bu_setprogname(argv[0]);
   Options opt("CartesianHeart");
   opt.parse(argc,argv);
   opt.solutions(0);

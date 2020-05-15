@@ -62,7 +62,10 @@ set(LIBGED_SOURCES
   bigE.c
   blast.c
   bo.c
-  bot.c
+  bot/bot.cpp
+  bot/check.cpp
+  bot/extrude.cpp
+  bot/remesh.cpp
   bot_condense.c
   bot_decimate.c
   bot_dump.c
@@ -71,7 +74,6 @@ set(LIBGED_SOURCES
   bot_fuse.c
   bot_flip.c
   bot_merge.c
-  bot_remesh.cpp
   bot_smooth.c
   bot_split.c
   bot_sync.c
@@ -406,7 +408,7 @@ if (BRLCAD_ENABLE_OPENVDB)
   set_property(SOURCE bot_remesh.cpp APPEND PROPERTY COMPILE_FLAGS "${OpenVDB_DEFINITIONS} -w")
 endif (BRLCAD_ENABLE_OPENVDB)
 
-BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;liboptical;librt;libbrep;libnmg;libfb;libbg;libbn;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${CADBULLET_LIBRARY};${REGEX_LIBRARY};${WINSOCK_LIB};${M_LIBRARY}")
+BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;liboptical;librt;libbrep;libnmg;libfb;libbg;libbn;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${CADBULLET_LIBRARY};${PNG_LIBRARIES};${REGEX_LIBRARIES};${WINSOCK_LIB};${M_LIBRARY}")
 SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 add_subdirectory(tests)
@@ -418,6 +420,7 @@ set(ged_ignore_files
   CMakeLists.txt
   TODO
   pnts_util.h
+  bot/ged_bot.h
   brep/ged_brep.h
   ged_private.h
   check/check_private.h

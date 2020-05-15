@@ -33,6 +33,7 @@
 
 #include "rt/db4.h"
 #include "vmath.h"
+#include "bu/app.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -77,6 +78,8 @@ main(int argc, char *argv[])
     char temp[NAME_LEN+1];		/* Temporary char string. */
     char temp1[NAME_LEN+1];		/* Temporary char string. */
     int ret;
+
+    bu_setprogname(argv[0]);
 
     bu_log(usage);
     if (argc > 1 && argv)

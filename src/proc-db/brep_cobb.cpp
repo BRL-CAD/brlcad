@@ -45,7 +45,7 @@
 #include "common.h"
 
 #include "bio.h"
-
+#include "bu/app.h"
 #include "wdb.h"
 
 
@@ -280,6 +280,8 @@ main(int argc, char** argv)
     ON_3dPoint origin(0.0,0.0,0.0);
     const char* id_name = "B-Rep Cobb Sphere";
     const char* geom_name = "cobb.s";
+
+    bu_setprogname(argv[0]);
 
     if (argc > 1 || BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?")) {
 	return 0;

@@ -29,9 +29,11 @@
 
 #include "common.h"
 
-#include "bio.h" /* needed to include windows.h with protections */
-#ifdef __cplusplus
+/* We need a guarded windows.h inclusion, so use bio.h to get it before
+ * opennurbs.h pulls it in */
+#include "bio.h"
 
+#ifdef __cplusplus
 
 /* Note - We aren't (yet) including opennurbs in our Doxygen output. Until we
  * do, use cond to hide the opennurbs header from Doxygen. */

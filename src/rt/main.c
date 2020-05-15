@@ -42,6 +42,9 @@
 #  include <mpi.h>
 #endif
 
+#include "bio.h"
+
+#include "bu/app.h"
 #include "bu/endian.h"
 #include "bu/getopt.h"
 #include "bu/bitv.h"
@@ -199,6 +202,8 @@ int main(int argc, char *argv[])
     int size;
     int rank;
 #endif
+
+    bu_setprogname(argv[0]);
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);

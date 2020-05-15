@@ -29,6 +29,9 @@
 
 #include <stdlib.h>
 
+#include "bio.h"
+
+#include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"
@@ -121,6 +124,8 @@ main(int argc, char **argv)
 	[-s squaresize] [-w width] [-n height] [file.bw]\n";
 
     height = width = 512;		/* Defaults */
+
+    bu_setprogname(argv[0]);
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);

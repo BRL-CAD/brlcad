@@ -100,6 +100,8 @@ main(int argc, char *argv[])
     unsigned long ncpu_opt;
     struct parallel_data data;
 
+    bu_setprogname(argv[0]);
+
     while ((c = bu_getopt(argc, argv, "P:!:")) != -1) {
 	switch (c) {
 	    case 'P':

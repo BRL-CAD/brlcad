@@ -19,6 +19,7 @@
  */
 
 #include "./gdiff.h"
+#include "bu/app.h"
 
 /*******************************************************************/
 /* Primary function for basic diff operation on two .g files */
@@ -248,6 +249,8 @@ main(int argc, char **argv)
     struct db_i *right_dbip = DBI_NULL;
     struct db_i *ancestor_dbip = DBI_NULL;
     const char *diff_prog_name = argv[0];
+
+    bu_setprogname(argv[0]);
 
     BU_GET(state, struct diff_state);
     diff_state_init(state);

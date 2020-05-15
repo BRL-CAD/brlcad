@@ -115,7 +115,10 @@ tclIndex_BUILD(tclscripts)
 # that relies on the other tclscripts being set up.
 add_subdirectory(rtwizard)
 
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  README
+  )
 
 # Local Variables:
 # tab-width: 8

@@ -53,24 +53,24 @@ CONTRACT, TORT, OR OTHERWISE, WHETHER OR NOT INJURY WAS SUSTAINED BY PERSONS OR
 PROPERTY OR OTHERWISE, AND WHETHER OR NOT LOSS WAS SUSTAINED FROM, OR AROSE OUT
 OF THE RESULTS OF, OR USE OF, THE SOFTWARE OR SERVICES PROVIDED HEREUNDER.
 
-file:db/nist/NIST_MBE_PMI_1.stp
-file:db/nist/NIST_MBE_PMI_11.stp
-file:db/nist/NIST_MBE_PMI_2.stp
-file:db/nist/NIST_MBE_PMI_3.stp
-file:db/nist/NIST_MBE_PMI_4.stp
-file:db/nist/NIST_MBE_PMI_5.stp
-file:db/nist/NIST_MBE_PMI_6.stp
-file:db/nist/NIST_MBE_PMI_7-10.3dm
-file:db/nist/pdf/1.pdf
-file:db/nist/pdf/10.pdf
-file:db/nist/pdf/11.pdf
-file:db/nist/pdf/2.pdf
-file:db/nist/pdf/3.pdf
-file:db/nist/pdf/4.pdf
-file:db/nist/pdf/5.pdf
-file:db/nist/pdf/6.pdf
-file:db/nist/pdf/7-10_assem.pdf
-file:db/nist/pdf/7.pdf
-file:db/nist/pdf/8.pdf
-file:db/nist/pdf/9.pdf
+file:/db/nist/NIST_MBE_PMI_1.stp
+file:/db/nist/NIST_MBE_PMI_11.stp
+file:/db/nist/NIST_MBE_PMI_2.stp
+file:/db/nist/NIST_MBE_PMI_3.stp
+file:/db/nist/NIST_MBE_PMI_4.stp
+file:/db/nist/NIST_MBE_PMI_5.stp
+file:/db/nist/NIST_MBE_PMI_6.stp
+file:/db/nist/NIST_MBE_PMI_7-10.3dm
+file:/db/nist/pdf/1.pdf
+file:/db/nist/pdf/10.pdf
+file:/db/nist/pdf/11.pdf
+file:/db/nist/pdf/2.pdf
+file:/db/nist/pdf/3.pdf
+file:/db/nist/pdf/4.pdf
+file:/db/nist/pdf/5.pdf
+file:/db/nist/pdf/6.pdf
+file:/db/nist/pdf/7-10_assem.pdf
+file:/db/nist/pdf/7.pdf
+file:/db/nist/pdf/8.pdf
+file:/db/nist/pdf/9.pdf
 

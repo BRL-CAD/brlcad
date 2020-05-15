@@ -29,6 +29,7 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
@@ -173,6 +174,7 @@ main(int argc, char **argv)
     bu_rb_cmp_t farray[1];
     farray[0] = &compare_pixels;
 
+    bu_setprogname(argv[0]);
 
     /*
      * Process the command line

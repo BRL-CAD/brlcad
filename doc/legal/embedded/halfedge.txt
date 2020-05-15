@@ -2,5 +2,5 @@ Author: Yotam Gingold <yotam (strudel) yotamgingold.com>
 License: Public Domain.  (I, Yotam Gingold, the author, release this code into the public domain.)
 GitHub: https://github.com/yig/halfedge
 
-file:src/libbrep/cdt/mesh.cpp
-file:src/libbrep/cdt/mesh.h
+file:/src/libbrep/cdt/mesh.cpp
+file:/src/libbrep/cdt/mesh.h

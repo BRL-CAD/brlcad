@@ -27,6 +27,8 @@
 
 #include <string.h>
 
+#include "bio.h"
+
 #include "bu/hook.h"
 #include "bu/vls.h"
 #include "./ged_private.h"

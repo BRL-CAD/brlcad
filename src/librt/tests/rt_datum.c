@@ -330,6 +330,8 @@ main(int UNUSED(argc), char *argv[])
     char rt_tmpfile[MAXPATHLEN];
     struct db_i *dbip = DBI_NULL;
 
+    bu_setprogname(argv[0]);
+
     /* Get a guaranteed-valid temp file */
     FILE *fp = bu_temp_file(rt_tmpfile, MAXPATHLEN);
     if (fp == NULL) {

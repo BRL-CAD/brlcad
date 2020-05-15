@@ -31,6 +31,8 @@
 #include <sys/stat.h>
 #include <png.h>
 
+#include "bio.h"
+
 #include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
@@ -137,6 +139,8 @@ Usage: fb-png [-i -c] [-# nbytes/pixel] [-F framebuffer] [-g gamma]\n\
 	[-s squaresize] [-w width] [-n height] [file.png]\n";
 
     screen_height = screen_width = 512;		/* Defaults */
+
+    bu_setprogname(argv[0]);
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);

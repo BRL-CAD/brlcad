@@ -72,6 +72,9 @@
 #include <stdarg.h>
 #include <limits.h>
 
+#include "bio.h"
+
+#include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
@@ -435,6 +438,7 @@ Rasters(void)				/* process (convert) raster data */
 int
 main(int argc, char **argv)
 {
+    bu_setprogname(argv[0]);
     {
 	/* Plant signal catcher. */
 	static int getsigs[] = {

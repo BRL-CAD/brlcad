@@ -260,6 +260,8 @@ main(int ac, char *av[])
     long int test_num = 0;
     struct bu_vls fname = BU_VLS_INIT_ZERO;
 
+    bu_setprogname(av[0]);
+
     /* bu_debug |= BU_DEBUG_MAPPED_FILE; */
 
     if (ac < 2 || ac > 3) {

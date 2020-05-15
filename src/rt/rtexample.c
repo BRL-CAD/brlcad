@@ -69,6 +69,7 @@
 #include <stdio.h>
 
 #include "vmath.h"		/* vector math macros */
+#include "bu/app.h"             /* libbu application setup */
 #include "raytrace.h"		/* librt interface definitions */
 
 
@@ -231,6 +232,10 @@ main(int argc, char **argv)
      * a title if the geometry database has one set.
      */
     char title[1024] = {0};
+
+    /* Every application using BRL-CAD libraries needs to define its program
+     * name at startup to ensure various features will work as expected */
+    bu_setprogname(argv[0]);
 
     /* Check for command-line arguments.  Make sure we have at least a
      * geometry file and one geometry object on the command line.

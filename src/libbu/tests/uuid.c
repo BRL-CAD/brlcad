@@ -35,6 +35,8 @@ main(int ac, char *av[])
 			0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
     char uuidstr[39] = {0};
 
+    bu_setprogname(av[0]);
+
     if (ac > 1 && av)
 	test = atoi(av[1]);
 

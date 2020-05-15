@@ -30,6 +30,9 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bio.h"
+
+#include "bu/app.h"
 #include "bu/str.h"
 #include "bu/exit.h"
 #include "fb.h"
@@ -53,6 +56,8 @@ main(int argc, char **argv)
     unsigned char *bp;
     unsigned char white[3*512];
     FILE *fp;
+
+    bu_setprogname(argv[0]);
 
     if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?"))
 	bu_exit(1, "%s", Usage);

@@ -57,6 +57,8 @@ main(int ac, char *av[])
     size_t iterations = 10;
     int64_t t, t2;
 
+    bu_setprogname(av[0]);
+
     if (ac < 2 || ac > 3) {
 	bu_exit(0, "Usage: %s {file.g} [iterations]\n", av[0]);
     }

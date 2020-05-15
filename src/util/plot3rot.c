@@ -31,6 +31,7 @@
 #include <math.h>
 
 #include "bio.h"   /* for isatty */
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/str.h"
 #include "bu/log.h"
@@ -322,6 +323,8 @@ main(int argc, char **argv)
    -v             Verbose\n\
    -S#            Space: takes a quoted string of six floats\n";
 
+    bu_setprogname(argv[0]);
+
     if (!get_args(argc, argv)) {
 	fputs("Usage: plot3rot [options] [file1 ... fileN] > file.plot3\n", stderr);
 
@@ -525,7 +528,7 @@ dofile(FILE *fp)
 		bu_log("plot3rot: unrecognized command '%c' (0x%x)\n",
 		       (isprint(c)) ? c : '?',
 		       c);
-		bu_log("plot3rot: ftell = %jd\n", (intmax_t)ftell(fp));
+		bu_log("plot3rot: ftell = %jd\n", (intmax_t)bu_ftell(fp));
 		putchar(c);
 		break;
 	}

@@ -39,6 +39,7 @@
 
 #include "bio.h" /* for b_off_t */
 
+#include "bu/app.h"
 #include "bu/file.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
@@ -104,7 +105,7 @@ fill_buffer(int y)
     if (buf_start < 0)
 	buf_start = 0;
 
-    fseek(ifp, buf_start * scanlen, 0);
+    bu_fseek(ifp, buf_start * scanlen, 0);
     ret = fread(buffer, scanlen, buflines, ifp);
     if (ret == 0)
 	perror("fread");
@@ -121,6 +122,8 @@ main(int argc, char **argv)
     size_t ret;
 
     int atoival;
+
+    bu_setprogname(argv[0]);
 
     if (argc < 3) {
 	bu_exit(1, "%s", usage);

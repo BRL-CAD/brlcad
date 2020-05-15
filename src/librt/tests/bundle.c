@@ -21,6 +21,7 @@
 #include "common.h"
 
 
+#include "bu/app.h"
 #include "bn.h"
 #include "vmath.h"
 #include "bn/plot3.h"
@@ -38,6 +39,8 @@ main(int ac, char *av[])
     vect_t avec, bvec;
     struct xray *rp;
     vect_t dir;
+
+    bu_setprogname(av[0]);
 
     if (ac > 1)
 	bu_exit(1, "Usage: %s\n", av[0]);

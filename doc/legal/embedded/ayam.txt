@@ -29,8 +29,8 @@ IS PROVIDED ON AN "AS IS" BASIS, AND THE AUTHOR AND DISTRIBUTORS HAVE
 NO OBLIGATION TO PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR
 MODIFICATIONS.
 
-file:src/proc-db/brep_cobb.cpp
-file:src/tclscripts/archer/images/brep.png
-file:src/tclscripts/archer/images/brep_intersect.png
-file:src/tclscripts/archer/images/brep_labeled.png
-file:src/tclscripts/archer/images/brep_subtract.png
+file:/src/proc-db/brep_cobb.cpp
+file:/src/tclscripts/archer/images/brep.png
+file:/src/tclscripts/archer/images/brep_intersect.png
+file:/src/tclscripts/archer/images/brep_labeled.png
+file:/src/tclscripts/archer/images/brep_subtract.png

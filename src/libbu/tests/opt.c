@@ -904,6 +904,8 @@ main(int argc, char *argv[])
     const char *cgy = NULL;
     char *endptr = NULL;
 
+    bu_setprogname(argv[0]);
+
     /* Sanity check */
     if (argc < 4) {
 	bu_log("Usage: %s {desc_number} {category_num} {test_num}\n", argv[0]);

@@ -35,6 +35,7 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/file.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
@@ -59,6 +60,8 @@ main(int argc, char **argv)
     char *ifname;
 
     double min, max;		/* high usage items */
+
+    bu_setprogname(argv[0]);
 
     if (argc < 2) {
 	bu_exit(1, "Usage: dpix-pix file.dpix > file.pix\n");
@@ -97,7 +100,7 @@ main(int argc, char **argv)
 	}
     }
 
-    lseek(fd, 0, 0);		/* rewind(fp); */
+    bu_lseek(fd, 0, 0);		/* rewind(fp); */
 
     /* This section uses the maximum and the minimum values found to
      * compute the m and the b of the line as specified by the

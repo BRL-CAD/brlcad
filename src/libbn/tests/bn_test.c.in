@@ -32,6 +32,8 @@
 int
 main(int ac, char *av[])
 {
+    bu_setprogname(av[0]);
+
     if (ac < 2)	bu_exit(1, "Usage: %s [test] options\n\nAvailable tests:\n@BN_TEST_LIST@", av[0]);
 
     ac--; av++;

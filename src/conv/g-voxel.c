@@ -17,6 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+#include "common.h"
+
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "analyze.h"
 
@@ -67,6 +70,8 @@ main(int argc, char **argv)
     int gottree = 0;
 
     char title[1024] = {0};
+
+    bu_setprogname(argv[0]);
 
     /* Check for command-line arguments.  Make sure we have at least a
      * geometry file and one geometry object on the command line.

@@ -356,7 +356,35 @@ if(NOT DEFINED CMAKE_CXX_FLAGS_DEFAULT)
 endif(NOT DEFINED CMAKE_CXX_FLAGS_DEFAULT)
 mark_as_advanced(CMAKE_CXX_FLAGS_DEFAULT)
 
-set(API_FLAGS "-D_POSIX_C_SOURCE=200809L -D_XOPEN_SOURCE=700")
+# OpenBSD 6.6 doesn't tolerate these flags when using #include <iostream>,
+# so we have to test
+include(CheckCXXSourceRuns)
+include(CMakePushCheckState)
+function(BRLCAD_API_FLAG AFLAG AFLAGS)
+  set(CHECK_API_FLAG_SRC "
+#include <iostream>
+int main(int ac, char *av[])
+{
+  if (ac > 0 && av)
+    std::cout << \"hello\";
+  return 0;
+}
+")
+    string(TOUPPER "${AFLAG}" UAFLAG)
+    string(REPLACE "-" "_" AFLAGVAR "${UAFLAG}")
+    string(REPLACE "=" "_" AFLAGVAR "${AFLAGVAR}")
+    cmake_push_check_state()
+    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS} ${AFLAG}")
+    check_cxx_source_runs("${CHECK_API_FLAG_SRC}" WORKING_${AFLAGVAR})
+    cmake_pop_check_state()
+    if(WORKING_${AFLAGVAR})
+      set(${AFLAGS} "${${AFLAGS}} ${AFLAG}" PARENT_SCOPE)
+    endif(WORKING_${AFLAGVAR})
+endfunction(BRLCAD_API_FLAG)
+
+set(API_FLAGS)
+BRLCAD_API_FLAG("-D_POSIX_C_SOURCE=200809L" API_FLAGS)
+BRLCAD_API_FLAG("-D_XOPEN_SOURCE=700" API_FLAGS)
 
 # C
 unset(C_STANDARD_FLAGS)
@@ -577,6 +605,14 @@ endif (APPLE)
 
 CONFIG_H_APPEND(BRLCAD "#define SIZEOF_VOID_P ${CMAKE_SIZEOF_VOID_P}\n")
 
+# OpenBSD doesn't define __WORD_SIZE
+if(${CMAKE_WORD_SIZE} MATCHES "32BIT")
+  CONFIG_H_APPEND(BRLCAD "#ifndef __WORDSIZE\n#  define __WORDSIZE 32\n#endif\n")
+endif(${CMAKE_WORD_SIZE} MATCHES "32BIT")
+if(${CMAKE_WORD_SIZE} MATCHES "64BIT")
+  CONFIG_H_APPEND(BRLCAD "#ifndef __WORDSIZE\n#  define __WORDSIZE 64\n#endif\n")
+endif(${CMAKE_WORD_SIZE} MATCHES "64BIT")
+
 # Based on what we are doing, we may need to constrain our search paths
 #
 # NOTE: Ideally we would set a matching property for 32 bit paths
@@ -704,6 +740,8 @@ CHECK_CXX_FLAG(fexceptions)
 # needs to be increased from the default ANSI minimum of 17.
 CHECK_CXX_FLAG(ftemplate-depth-128)
 
+# check for llvm libFuzzer support
+CHECK_CXX_FLAG(fsanitize=fuzzer)
 
 # dynamic SSE optimizations for NURBS processing
 #
@@ -1343,7 +1381,7 @@ endif(BRLCAD_PRINT_MSGS)
 # Look for threads (doesn't check for headers)
 # The variable CMAKE_THREAD_LIBS_INIT is the one of interest
 # when writing target_link_libraries lists.
-find_package(Threads)
+find_package(Threads REQUIRED)
 
 # Check for the C++ STL library - need to link it explicitly in
 # some compilation situations
@@ -1925,6 +1963,7 @@ if(WIN32)
   endif(NOT HAVE_NEXTAFTERL)
 
   BRLCAD_FUNCTION_EXISTS(_fseeki64)
+  BRLCAD_FUNCTION_EXISTS(_lseeki64)
   BRLCAD_FUNCTION_EXISTS(_ftelli64)
 
 endif(WIN32)

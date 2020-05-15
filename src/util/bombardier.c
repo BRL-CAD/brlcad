@@ -36,6 +36,7 @@
 #include "tcl.h"
 #include "tk.h"
 
+#include "bu/app.h"
 #include "tclcad.h"
 
 #include "./bombardier.h"
@@ -284,6 +285,8 @@ main(int argc, char *argv[])
 {
     int tkargc = 1;
     char *tkargv[2] = {NULL, NULL};
+
+    bu_setprogname(argv[0]);
 
     if (argc > 1) {
 	if (BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) {

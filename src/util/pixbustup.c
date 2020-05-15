@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/malloc.h"
 #include "bu/log.h"
 #include "bu/file.h"
@@ -56,6 +57,8 @@ main(int argc, char **argv)
     char *base_name;
     char name[128];
 
+    bu_setprogname(argv[0]);
+
     if (argc < 3) {
 	printUsage();
 	return 1;
@@ -81,7 +84,7 @@ main(int argc, char **argv)
 
     if (argc == 4) {
 	image_offset = atoi(argv[3]);
-	lseek(0, image_offset*scanbytes, 0);
+	bu_lseek(0, image_offset*scanbytes, 0);
     }
     if (argc == 5)
 	framenumber = atoi(argv[4]);

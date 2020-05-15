@@ -37,6 +37,7 @@
 #include <stdlib.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "bu/file.h"
@@ -145,6 +146,8 @@ main(int argc, char **argv)
     b_off_t outbyte, outplace;
     size_t ret;
 
+    bu_setprogname(argv[0]);
+
     if (!get_args(argc, argv) || isatty(fileno(stdout))) {
 	bu_exit(1, "%s", usage);
     }
@@ -165,7 +168,7 @@ main(int argc, char **argv)
 
     /*
      * Clear our "file pointer." We need to maintain this
-     * In order to tell if seeking is required.  ftell() always
+     * In order to tell if seeking is required.  bu_ftell() always
      * fails on pipes, so we can't use it.
      */
     outplace = 0;
@@ -190,7 +193,7 @@ main(int argc, char **argv)
 		xout = (nyin - 1) - lasty;
 		outbyte = ((yout * nyin) + xout) * pixbytes;
 		if (outplace != outbyte) {
-		    if (fseek(ofp, outbyte, 0) < 0) {
+		    if (bu_fseek(ofp, outbyte, 0) < 0) {
 			bu_exit(3, "pixrot: Can't seek on output, yet I need to!\n");
 		    }
 		    outplace = outbyte;
@@ -215,7 +218,7 @@ main(int argc, char **argv)
 		xout = yin;
 		outbyte = ((yout * nyin) + xout) * pixbytes;
 		if (outplace != outbyte) {
-		    if (fseek(ofp, outbyte, 0) < 0) {
+		    if (bu_fseek(ofp, outbyte, 0) < 0) {
 			bu_exit(3, "pixrot: Can't seek on output, yet I need to!\n");
 		    }
 		    outplace = outbyte;
@@ -232,7 +235,7 @@ main(int argc, char **argv)
 		yout = (nyin - 1) - y;
 		outbyte = yout * scanbytes;
 		if (outplace != outbyte) {
-		    if (fseek(ofp, outbyte, 0) < 0) {
+		    if (bu_fseek(ofp, outbyte, 0) < 0) {
 			bu_exit(3, "pixrot: Can't seek on output, yet I need to!\n");
 		    }
 		    outplace = outbyte;

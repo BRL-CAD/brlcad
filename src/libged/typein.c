@@ -3110,13 +3110,6 @@ static int
 script_in(struct ged *UNUSED(gedp), const char **cmd_argvs, struct rt_db_internal *intern)
 {
     struct rt_script_internal *script_ip;
-    int i=0;
-
-    /* !!! temporary debugging, print out our args */
-    while (cmd_argvs && cmd_argvs[i] != NULL) {
-	bu_log("cmd_argvs[%d] = [%s]\n", i, cmd_argvs[i]);
-	i++;
-    }
 
     intern->idb_type = ID_SCRIPT;
     intern->idb_meth = &OBJ[ID_SCRIPT];
@@ -3126,9 +3119,6 @@ script_in(struct ged *UNUSED(gedp), const char **cmd_argvs, struct rt_db_interna
 
     bu_vls_init(&script_ip->s_type);
     bu_vls_strcpy(&script_ip->s_type, cmd_argvs[3]);
-
-    /* !!! */
-    bu_log("done creating script object, next it gets exported\n");
 
     return GED_OK;
 }

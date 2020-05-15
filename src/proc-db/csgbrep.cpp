@@ -19,6 +19,7 @@
  */
 
 #include "common.h"
+#include "bu/app.h"
 #include "bu/parse.h"
 #include "bu/log.h"
 #include "opennurbs.h"
@@ -74,6 +75,8 @@ main(int argc, char** argv)
     struct rt_wdb* outfp;
     struct rt_db_internal tmp_internal;
     ON_TextLog error_log;
+
+    bu_setprogname(argv[0]);
 
     RT_DB_INTERNAL_INIT(&tmp_internal);
     tmp_internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;

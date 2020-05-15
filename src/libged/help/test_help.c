@@ -23,10 +23,13 @@
  *
  */
 
+#include "bu/app.h"
 #include "ged.h"
 
 int main(int ac, char *av[]) {
   struct ged g;
+
+  bu_setprogname(av[0]);
 
   GED_INIT(&g, NULL);
 

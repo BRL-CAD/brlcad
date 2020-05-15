@@ -26,10 +26,12 @@
 
 
 int
-main(void)
+main(int UNUSED(ac), const char **av)
 {
     int status;
     char host[MAXPATHLEN] = {0};
+
+    bu_setprogname(av[0]);
 
     status = bu_gethostname(host, MAXPATHLEN);
     if (BU_STR_EMPTY(host))

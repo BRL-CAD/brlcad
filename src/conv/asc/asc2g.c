@@ -34,6 +34,7 @@
 #include "bnetwork.h"
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/cv.h"
 #include "bu/debug.h"
 #include "bu/vls.h"
@@ -1049,7 +1050,7 @@ polyhbld(void)
     name = bu_strdup(cp);
 
     /* Count up the number of poly data lines which follow */
-    startpos = ftell(ifp);
+    startpos = bu_ftell(ifp);
     for (nlines = 0;; nlines++) {
 	if (bu_fgets(buf, BUFSIZE, ifp) == NULL) break;
 	if (buf[0] != ID_P_DATA) break;	/* 'Q' */
@@ -1065,7 +1066,7 @@ polyhbld(void)
     pg->max_npts = 0;
 
     /* Return to first 'Q' record */
-    fseek(ifp, startpos, 0);
+    bu_fseek(ifp, startpos, 0);
 
     for (nlines = 0; nlines < pg->npoly; nlines++) {
 	struct rt_pg_face_internal *fp = &pg->poly[nlines];
@@ -1516,6 +1517,8 @@ main(int argc, char *argv[])
     struct bu_vls str_put = BU_VLS_INIT_ZERO;
     struct bu_vls line = BU_VLS_INIT_ZERO;
     int isComment=1;
+
+    bu_setprogname(argv[0]);
 
     if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?"))
 	bu_exit(1, "%s", usage);

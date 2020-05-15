@@ -29,8 +29,9 @@
 #include "bg.h"
 
 int
-main(int UNUSED(argc), const char **UNUSED(argv))
+main(int UNUSED(argc), const char **argv)
 {
+    bu_setprogname(argv[0]);
 
     /* Cube */
     {

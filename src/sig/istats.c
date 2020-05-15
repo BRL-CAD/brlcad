@@ -33,6 +33,7 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "bu/file.h"
@@ -118,6 +119,8 @@ main(int ac, char *av[])
 {
     const char *progname = "istats";
     int arg_index;
+
+    bu_setprogname(av[0]);
 
     /* parse command flags
      */

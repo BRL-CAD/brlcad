@@ -353,8 +353,9 @@ int main(int ac, char *av[])
 {
     struct ged ged = {0};
 
-    GED_INIT(&ged, NULL);
+    bu_setprogname(av[0]);
 
+    GED_INIT(&ged, NULL);
     help_load(&ged);
     ged_help(&ged, ac, (const char **)av);
     help_unload(&ged);

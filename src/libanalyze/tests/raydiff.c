@@ -22,6 +22,7 @@
 
 #include <string.h>
 
+#include "bu/app.h"
 #include "raytrace.h"
 #include "analyze.h"
 
@@ -35,6 +36,8 @@ main(int argc, char **argv)
     struct directory *dp2 = RT_DIR_NULL;
     struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
     struct analyze_raydiff_results *results;
+
+    bu_setprogname(argv[0]);
 
     if (argc != 4) {
 	bu_log("Error - please specify a .g file and two objects\n");

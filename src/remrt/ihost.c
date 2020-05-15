@@ -61,7 +61,7 @@ extern struct hostent *gethostbyname(const char *);
 #endif
 
 #if defined(HAVE_GETHOSTBYADDR) && !defined(HAVE_DECL_GETHOSTBYADDR) && !defined(_WINSOCKAPI_)
-extern struct hostent *gethostbyaddr(const char *, socklen_t, int);
+extern struct hostent *gethostbyaddr(const void *, socklen_t, int);
 #endif
 
 struct bu_list	HostHead;

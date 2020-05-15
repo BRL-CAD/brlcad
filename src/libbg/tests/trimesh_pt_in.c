@@ -33,6 +33,8 @@ main(int argc, char **argv)
     if (argc != 2)
 	bu_exit(1, "ERROR: [%s] input format is: test_number\n", argv[0]);
 
+    bu_setprogname(argv[0]);
+
     sscanf(argv[1], "%d", &test_num);
 
     if (test_num == 1) {
