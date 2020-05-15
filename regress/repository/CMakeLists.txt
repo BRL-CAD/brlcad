@@ -1,3 +1,8 @@
+include_directories(
+  ${BRLCAD_BINARY_DIR}/include
+  ${BRLCAD_SOURCE_DIR}/include
+  )
+
 add_executable(repocheck repocheck.cpp)
 target_link_libraries(repocheck libbu ${CMAKE_THREAD_LIBS_INIT})
 if (O3_COMPILER_FLAG)
