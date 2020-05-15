@@ -123,7 +123,7 @@ regex_init(repo_info_t &r) {
 	cnt = 0;
 	rf = bio_filter_strs[cnt];
 	while (rf) {
-	    std::string rrf = std::string(".*<") + std::string(rf) + std::string(">.*");
+	    std::string rrf = std::string("#[[:space:]]*include[[:space:]]*<") + std::string(rf) + std::string(">.*");
 	    r.bio_filters[std::string(rf)] = std::regex(rrf);
 	    cnt++;
 	    rf = bio_filter_strs[cnt];
@@ -140,7 +140,7 @@ regex_init(repo_info_t &r) {
 	cnt = 0;
 	rf = bnetwork_filter_strs[cnt];
 	while (rf) {
-	    std::string rrf = std::string(".*<") + std::string(rf) + std::string(">.*");
+	    std::string rrf = std::string("#[[:space:]]*include[[:space:]]*<") + std::string(rf) + std::string(">.*");
 	    r.bnetwork_filters[std::string(rf)] = std::regex(rrf);
 	    cnt++;
 	    rf = bnetwork_filter_strs[cnt];
