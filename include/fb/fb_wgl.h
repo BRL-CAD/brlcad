@@ -33,20 +33,7 @@
 #ifdef IF_WGL
 #  include "common.h"
 
-#  ifdef WIN32_LEAN_AND_MEAN
-#    undef WIN32_LEAN_AND_MEAN
-#  endif
-#  define WIN32_LEAN_AND_MEAN 434144 /* don't want winsock.h */
-
-#  ifdef NOMINMAX
-#    undef NOMINMAX
-#  endif
-#  define NOMINMAX 434144 /* don't break std::min and std::max */
-
-#  include <windows.h>
-
-#  undef WIN32_LEAN_AND_MEAN /* unset to not interfere with calling apps */
-#  undef NOMINMAX
+#  include "bio.h"
 
 /* The wgl interface as currently implemented uses some
  * X11 types, supplied by Tk. */

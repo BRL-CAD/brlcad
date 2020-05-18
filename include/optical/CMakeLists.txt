@@ -8,8 +8,6 @@ set(optical_headers
   )
 BRLCAD_MANAGE_FILES(optical_headers ${INCLUDE_DIR}/brlcad/optical)
 
-BRLCAD_CHECK_HDRS(optical_headers)
-
 CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:

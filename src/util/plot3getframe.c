@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/str.h"
 #include "bu/log.h"
 
@@ -120,6 +121,8 @@ main(int argc, char **argv)
     int desired_frame = 0;
     int current_frame = 0;
     size_t ret;
+
+    bu_setprogname(argv[0]);
 
     while (argc > 1) {
 	if (BU_STR_EQUAL(argv[1], "-v")) {

@@ -32,6 +32,7 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/process.h"
 #include "bu/log.h"
@@ -59,6 +60,8 @@ main(int argc, char *argv[])
     int uniform = 0;
     int cdone = 0;
     int c;
+
+    bu_setprogname(argv[0]);
 
     while ((c = bu_getopt(argc, argv, "vugs:c:h?")) != -1) {
 	switch (c) {

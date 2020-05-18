@@ -39,6 +39,8 @@ main(int argc, char **argv)
     point_t U1 = VINIT_ZERO;
     point_t U2 = VINIT_ZERO;
 
+    bu_setprogname(argv[0]);
+
     if (argc != 8)
 	bu_exit(1, "ERROR: input format is V0x,V0y,V0z V1x,V1y,V1z V2x,V2y,V2z U0x,U0y,U0z U1x,U1y,U1z U2x,U2y,U2z expected_result [%s]\n", argv[0]);
 

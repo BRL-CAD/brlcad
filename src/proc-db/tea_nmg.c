@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <stdio.h>		/* Direct the output to stdout */
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "vmath.h"		/* BRL-CAD Vector macros */
 #include "nmg.h"
@@ -167,6 +168,8 @@ main(int argc, char **argv)
     FILE *fp;
     int i;
     struct rt_wdb *outfp;
+
+    bu_setprogname(argv[0]);
 
     tol.magic = BN_TOL_MAGIC;
     tol.dist = 0.0005;

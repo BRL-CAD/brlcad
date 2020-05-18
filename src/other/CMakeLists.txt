@@ -467,6 +467,17 @@ elseif(BRLCAD_ENABLE_TK)
   endif (NOT WIN32)
   set(TK_SYSTEM_GRAPHICS "${TK_SYSTEM_GRAPHICS}" CACHE STRING "Tk system graphics type" FORCE)
 
+else(BRLCAD_TK_BUILD)
+
+  # If we're not using Tk, make sure the variables are empty - CMake won't be
+  # happy if they're set to NOTFOUND and used, and FindTCL.cmake may have set
+  # them.
+  set(TK_LIBRARY "" CACHE STRING "TK_LIBRARY" FORCE)
+  set(TK_STUB_LIBRARY "" CACHE STRING "TK_LIBRARY" FORCE)
+  set(TK_WISH "" CACHE STRING "TK_WISH" FORCE)
+  set(TK_INCLUDE_PATH "" CACHE STRING "Tk include path" FORCE)
+  set(TK_SYSTEM_GRAPHICS "" CACHE STRING "Tk system graphics type" FORCE)
+
 endif(BRLCAD_TK_BUILD)
 mark_as_advanced(TK_INCLUDE_PATH)
 mark_as_advanced(TK_LIBRARY)

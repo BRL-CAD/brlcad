@@ -1,21 +1,39 @@
-macro(Add_Regression_Test testname depends_list)
-  CMAKE_PARSE_ARGUMENTS(${testname} "EXCLUDE_FROM_REGRESS" "" "" ${ARGN})
-  set_target_properties(regress-${testname} PROPERTIES FOLDER "BRL-CAD Regression Tests")
-  if(NOT ${testname}_EXCLUDE_FROM_REGRESS)
+function(Add_Regression_Test testname depends_list)
+
+  cmake_parse_arguments(${testname} "EXCLUDE_FROM_REGRESS" "" "" ${ARGN})
+
+  set_target_properties(regress-${testname} PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
+
+  if (NOT ${testname}_EXCLUDE_FROM_REGRESS)
+
+    # Make sure we at least get this into the regression test folder - local
+    # subdirectories may override this if they have more specific locations
+    # they want to use.
+    set_target_properties(regress-${testname} PROPERTIES FOLDER "BRL-CAD Regression Tests/regress")
+
     set_tests_properties(regress-${testname} PROPERTIES LABELS "Regression")
-  else(NOT ${testname}_EXCLUDE_FROM_REGRESS)
+
+  else (NOT ${testname}_EXCLUDE_FROM_REGRESS)
+
+    set_target_properties(regress-${testname} PROPERTIES FOLDER "BRL-CAD Regression Tests")
+
     set_tests_properties(regress-${testname} PROPERTIES LABELS "NOT_WORKING")
-  endif(NOT ${testname}_EXCLUDE_FROM_REGRESS)
-  if(NOT "${depends_list}" STREQUAL "")
+
+  endif (NOT ${testname}_EXCLUDE_FROM_REGRESS)
+
+  # Set up dependencies for both regress and check
+  if (NOT "${depends_list}" STREQUAL "")
     add_dependencies(regress ${depends_list})
-    if(TARGET check)
+    if (TARGET check)
       add_dependencies(check ${depends_list})
-    endif(TARGET check)
-  endif(NOT "${depends_list}" STREQUAL "")
-  if(NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
+    endif (TARGET check)
+  endif (NOT "${depends_list}" STREQUAL "")
+
+  if (NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
     set_tests_properties(regress-${testname} PROPERTIES TIMEOUT 300) # FIXME: want <60
-  endif(NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
-endmacro(Add_Regression_Test)
+  endif (NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
+
+endfunction(Add_Regression_Test)
 
 # Define the toplevel regression target - unless specifically excluded
 # via a macro argument, this should collect all regression targets.
@@ -41,6 +59,9 @@ add_subdirectory(gcv)
 
 # NURBS Regression Tests
 add_subdirectory(nurbs)
+
+# libpkg Regression Tests
+add_subdirectory(pkg)
 
 # Burst Regression Tests
 add_subdirectory(burst)
@@ -102,16 +123,6 @@ if(SH_EXEC)
   Sh_Regression_Test(bots "mged;pixdiff;rt")
   Sh_Regression_Test(usage "rt" EXCLUDE_FROM_REGRESS)
   Sh_Regression_Test(flawfinder "" EXCLUDE_FROM_REGRESS)
-
-  # TODO - keep all tests short, GOAL < 1MIN.  right now, regress
-  # repository violates this as it spends considerable time scanning
-  # the entire source tree, then scanning different sets of files for
-  # properties.
-  Sh_Regression_Test(repository "")
-  if(NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
-    set_tests_properties(regress-repository PROPERTIES TIMEOUT 600)
-  endif(NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
-
   Sh_Regression_Test(mged mged)
   Sh_Regression_Test(red mged)
   Sh_Regression_Test(nirt "mged;nirt")
@@ -169,7 +180,6 @@ CMAKEFILES(
   nirt.sh
   nirt/ovlps.g
   red.sh
-  repository.sh
   rtedge.ref.pix.gz
   rtedge.ref2.pix.gz
   rtedge.ref3.pix.gz
@@ -438,7 +448,6 @@ set(regress_outfiles
   red.virgin.out.new
   region_ids
   regions
-  repository.log
   rtedge.2.pix
   rtedge.3.pix
   rtedge.4.pix

@@ -21,11 +21,13 @@
 #include "common.h"
 
 #include <iostream>
+#include "bu/app.h"
 #include "brep/cdt.h"
 
 int
 main(int argc, const char **argv)
 {
+    bu_setprogname(argv[0]);
 
     if (argc != 2) {
 	std::cerr << "brep_cdt_mesh <serialization_file>\n";

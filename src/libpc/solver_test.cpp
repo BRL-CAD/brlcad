@@ -29,6 +29,7 @@
 #include <utility>                   // for std::pair
 #include <algorithm>                 // for std::for_each
 
+#include "bu/app.h"
 #include "pcVariable.h"
 #include "pcVCSet.h"
 #include "pcNetwork.h"
@@ -78,13 +79,15 @@ public:
     }
 } f4;
 
-int main()
+int main(int argc, const char *argv[])
 {
     BackTrackSolver<double> GBTS; /* Generic Backtracker */
     PCSolver<double> GPCS; /* Generic Solver */
     Solution<double> S1;
     struct pc_pc_set pcs;
     VCSet vc_set;
+
+    bu_setprogname(argv[0]);
 
     pc_init_pcset(&pcs);
     fastf_t D = 8.04;

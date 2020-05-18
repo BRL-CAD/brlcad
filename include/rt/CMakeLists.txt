@@ -61,8 +61,6 @@ set(rt_headers
   )
 BRLCAD_MANAGE_FILES(rt_headers ${INCLUDE_DIR}/brlcad/rt)
 
-BRLCAD_CHECK_HDRS(rt_headers)
-
 CMAKEFILES(CMakeLists.txt)
 CMAKEFILES(db_fp.h)
 

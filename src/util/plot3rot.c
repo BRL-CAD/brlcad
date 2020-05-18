@@ -31,6 +31,7 @@
 #include <math.h>
 
 #include "bio.h"   /* for isatty */
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/str.h"
 #include "bu/log.h"
@@ -321,6 +322,8 @@ main(int argc, char **argv)
    -m#            Takes a 4X4 matrix as an argument\n\
    -v             Verbose\n\
    -S#            Space: takes a quoted string of six floats\n";
+
+    bu_setprogname(argv[0]);
 
     if (!get_args(argc, argv)) {
 	fputs("Usage: plot3rot [options] [file1 ... fileN] > file.plot3\n", stderr);

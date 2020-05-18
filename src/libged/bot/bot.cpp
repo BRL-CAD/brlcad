@@ -51,6 +51,38 @@
 #include "./ged_bot.h"
 
 int
+_bot_obj_setup(struct _ged_bot_info *gb, const char *name)
+{
+    gb->dp = db_lookup(gb->gedp->ged_wdbp->dbip, name, LOOKUP_NOISY);
+    if (gb->dp == RT_DIR_NULL) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": %s is not a solid or does not exist in database", name);
+	return GED_ERROR;
+    } else {
+	int real_flag = (gb->dp->d_addr == RT_DIR_PHONY_ADDR) ? 0 : 1;
+	if (!real_flag) {
+	    /* solid doesn't exist */
+	    bu_vls_printf(gb->gedp->ged_result_str, ": %s is not a real solid", name);
+	    return GED_ERROR;
+	}
+    }
+
+    gb->solid_name = std::string(name);
+
+    BU_GET(gb->intern, struct rt_db_internal);
+
+    GED_DB_GET_INTERNAL(gb->gedp, gb->intern, gb->dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
+    RT_CK_DB_INTERNAL(gb->intern);
+
+    if (gb->intern->idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
+	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type bot\n", gb->solid_name.c_str());
+	return GED_ERROR;
+    }
+
+    return GED_OK;
+}
+
+
+int
 _bot_cmd_msgs(void *bs, int argc, const char **argv, const char *us, const char *ps)
 {
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
@@ -68,7 +100,7 @@ _bot_cmd_msgs(void *bs, int argc, const char **argv, const char *us, const char 
 extern "C" int
 _bot_cmd_get(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "bot [options] <objname> get <faces|minEdge|maxEdge|orientation|type|vertices>";
+    const char *usage_string = "bot get <faces|minEdge|maxEdge|orientation|type|vertices> <objname>";
     const char *purpose_string = "Report specific information about a BoT shape";
     if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -76,19 +108,20 @@ _bot_cmd_get(void *bs, int argc, const char **argv)
 
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
 
-    if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
-	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type bot\n", gb->solid_name.c_str());
-	return GED_ERROR;
-    }
+    argc--; argv++;
 
-    if (argc < 2) {
+    if (argc != 2) {
 	bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
 	return GED_ERROR;
     }
 
-    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern.idb_ptr);
+    if (_bot_obj_setup(gb, argv[1]) == GED_ERROR) {
+	return GED_ERROR;
+    }
 
-    fastf_t propVal = rt_bot_propget(bot, argv[1]);
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern->idb_ptr);
+
+    fastf_t propVal = rt_bot_propget(bot, argv[0]);
 
     /* print result string */
     if (!EQUAL(propVal, -1.0)) {
@@ -113,20 +146,27 @@ _bot_cmd_get(void *bs, int argc, const char **argv)
 extern "C" int
 _bot_cmd_chull(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "bot [options] <objname> chull output_bot";
-    const char *purpose_string = "Generate the BoT's convex hull and store it in object <output_bot>";
+    const char *usage_string = "bot [options] chull <objname> [output_bot]";
+    const char *purpose_string = "Generate the BoT's convex hull and store it in an object";
     if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
     }
 
+    argc--; argv++;
+
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
 
-    if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
-	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type bot\n", gb->solid_name.c_str());
+    if (!argc) {
+	bu_vls_printf(gb->gedp->ged_result_str, "%s\n%s\n", usage_string, purpose_string);
 	return GED_ERROR;
     }
 
-    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern.idb_ptr);
+
+    if (_bot_obj_setup(gb, argv[0]) == GED_ERROR) {
+	return GED_ERROR;
+    }
+
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gb->intern->idb_ptr);
     int retval = 0;
     int fc = 0;
     int vc = 0;
@@ -134,20 +174,28 @@ _bot_cmd_chull(void *bs, int argc, const char **argv)
     int *faces;
     unsigned char err = 0;
 
-    /* must be wanting help */
-    if (argc < 2) {
-	bu_vls_printf(gb->gedp->ged_result_str, "%s\n%s\n", usage_string, purpose_string);
-	return GED_ERROR;
-    }
-
     retval = bg_3d_chull(&faces, &fc, &vert_array, &vc, (const point_t *)bot->vertices, (int)bot->num_vertices);
 
     if (retval != 3) {
 	return GED_ERROR;
     }
 
-    retval = mk_bot(gb->gedp->ged_wdbp, argv[1], RT_BOT_SOLID, RT_BOT_CCW, err, vc, fc, (fastf_t *)vert_array, faces, NULL, NULL);
+    struct bu_vls out_name = BU_VLS_INIT_ZERO;
+    if (argc > 1) {
+        bu_vls_sprintf(&out_name, "%s", argv[1]);
+    } else {
+        bu_vls_sprintf(&out_name, "%s.hull", gb->dp->d_namep);
+    }
 
+    if (db_lookup(gb->gedp->ged_wdbp->dbip, bu_vls_cstr(&out_name), LOOKUP_QUIET) != RT_DIR_NULL) {
+        bu_vls_printf(gb->gedp->ged_result_str, "Object %s already exists!\n", bu_vls_cstr(&out_name));
+        bu_vls_free(&out_name);
+        return GED_ERROR;
+    }
+
+    retval = mk_bot(gb->gedp->ged_wdbp, bu_vls_cstr(&out_name), RT_BOT_SOLID, RT_BOT_CCW, err, vc, fc, (fastf_t *)vert_array, faces, NULL, NULL);
+
+    bu_vls_free(&out_name);
     bu_free(faces, "free faces");
     bu_free(vert_array, "free verts");
 
@@ -161,7 +209,7 @@ _bot_cmd_chull(void *bs, int argc, const char **argv)
 extern "C" int
 _bot_cmd_isect(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "bot [options] <objname> isect <objname2>";
+    const char *usage_string = "bot [options] isect <objname> <objname2>";
     const char *purpose_string = "(TODO) Test if BoT <objname> intersects with BoT <objname2>";
     if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -169,31 +217,29 @@ _bot_cmd_isect(void *bs, int argc, const char **argv)
 
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
 
-    if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
-	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type bot\n", gb->solid_name.c_str());
-	return GED_ERROR;
-    }
-
+    argc--; argv++;
 
     if (argc != 2) {
         bu_vls_printf(gb->gedp->ged_result_str, "%s", usage_string);
         return GED_ERROR;
     }
 
-    struct rt_bot_internal *bot = (struct rt_bot_internal *)gb->intern.idb_ptr;
+    if (_bot_obj_setup(gb, argv[0]) == GED_ERROR) {
+	return GED_ERROR;
+    }
+
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)gb->intern->idb_ptr;
+
     struct directory *bot_dp_2;
     struct rt_db_internal intern_2;
-    struct rt_bot_internal *bot_2;
-
-    GED_DB_LOOKUP(gb->gedp, bot_dp_2, argv[2], LOOKUP_NOISY, GED_ERROR & GED_QUIET);
+    GED_DB_LOOKUP(gb->gedp, bot_dp_2, argv[1], LOOKUP_NOISY, GED_ERROR & GED_QUIET);
     GED_DB_GET_INTERNAL(gb->gedp, &intern_2, bot_dp_2, bn_mat_identity, &rt_uniresource, GED_ERROR);
-
     if (intern_2.idb_major_type != DB5_MAJORTYPE_BRLCAD || intern_2.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
-	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type bot\n", argv[2]);
+	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type bot\n", argv[1]);
 	rt_db_free_internal(&intern_2);
 	return GED_ERROR;
     }
-    bot_2 = (struct rt_bot_internal *)intern_2.idb_ptr;
+    struct rt_bot_internal *bot_2 = (struct rt_bot_internal *)intern_2.idb_ptr;
 
     int fc_1 = (int)bot->num_faces;
     int fc_2 = (int)bot_2->num_faces;
@@ -287,6 +333,7 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
     gb.gedp = gedp;
     gb.cmds = _bot_cmds;
     gb.verbosity = 0;
+    gb.visualize = 0;
     struct bu_color *color = NULL;
 
     // Sanity
@@ -346,62 +393,45 @@ ged_bot(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-
-    if (opt_ret != 1) {
-	bu_vls_printf(gedp->ged_result_str, ": no object specified before subcommand\n");
-	bu_vls_printf(gedp->ged_result_str, "bot [options] <objname> subcommand [args]\n");
-	if (color) {
-	    BU_PUT(color, struct bu_color);
-	}
+    if (opt_ret < 0) {
+	_bot_cmd_help(&gb, 0, NULL);
 	return GED_ERROR;
     }
-
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_DRAWABLE(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
-
-    gb.solid_name = std::string(argv[0]);
-    gb.dp = db_lookup(gedp->ged_wdbp->dbip, gb.solid_name.c_str(), LOOKUP_NOISY);
-    if (gb.dp == RT_DIR_NULL) {
-	bu_vls_printf(gedp->ged_result_str, ": %s is not a solid or does not exist in database", gb.solid_name.c_str());
-	if (color) {
-	    BU_PUT(color, struct bu_color);
-	}
-	return GED_ERROR;
-    } else {
-	int real_flag = (gb.dp->d_addr == RT_DIR_PHONY_ADDR) ? 0 : 1;
-	if (!real_flag) {
-	    /* solid doesn't exist */
-	    bu_vls_printf(gedp->ged_result_str, ": %s is not a real solid", gb.solid_name.c_str());
-	    if (color) {
-		BU_PUT(color, struct bu_color);
-	    }
-	    return GED_ERROR;
-	}
-    }
-
-    GED_DB_GET_INTERNAL(gedp, &gb.intern, gb.dp, bn_mat_identity, &rt_uniresource, GED_ERROR);
-    RT_CK_DB_INTERNAL(&gb.intern);
-
-    gb.vbp = rt_vlblock_init();
-    gb.color = color;
 
     // Jump the processing past any options specified
+    for (int i = cmd_pos; i < argc; i++) {
+	argv[i - cmd_pos] = argv[i];
+    }
     argc = argc - cmd_pos;
-    argv = &argv[cmd_pos];
 
-    int ret;
+    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
+    if (gb.visualize) {
+	GED_CHECK_DRAWABLE(gedp, GED_ERROR);
+	gb.vbp = rt_vlblock_init();
+    }
+    gb.color = color;
+
+    int ret = GED_ERROR;
     if (bu_cmd(_bot_cmds, argc, argv, 0, (void *)&gb, &ret) == BRLCAD_OK) {
-	rt_db_free_internal(&gb.intern);
-	return ret;
-    } else {
-	bu_vls_printf(gedp->ged_result_str, "subcommand %s not defined", argv[0]);
+	ret = GED_OK;
+	goto bot_cleanup;
     }
 
-    bn_vlblock_free(gb.vbp);
-    gb.vbp = (struct bn_vlblock *)NULL;
-    rt_db_free_internal(&gb.intern);
-    return GED_ERROR;
+    bu_vls_printf(gedp->ged_result_str, "subcommand %s not defined", argv[0]);
+
+bot_cleanup:
+    if (gb.intern) {
+	rt_db_free_internal(gb.intern);
+	BU_PUT(gb.intern, struct rt_db_internal);
+    }
+    if (gb.visualize) {
+	bn_vlblock_free(gb.vbp);
+	gb.vbp = (struct bn_vlblock *)NULL;
+    }
+    if (color) {
+	BU_PUT(color, struct bu_color);
+    }
+    return ret;
 }
 
 // Local Variables:

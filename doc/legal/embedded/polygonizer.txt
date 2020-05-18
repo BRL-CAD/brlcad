@@ -5,5 +5,5 @@ Copyright (c) Xerox Corporation, 1991.  All rights reserved.
 Permission is granted to reproduce, use and distribute this code for
 any and all purposes, provided that this notice appears in all copies.
 
-file:src/libanalyze/polygonizer.c
+file:/src/libanalyze/polygonizer.c
 

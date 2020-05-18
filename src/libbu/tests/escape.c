@@ -45,6 +45,8 @@ main(int ac, char *av[])
     char *bufp;
     char buffer[32];
 
+    bu_setprogname(av[0]);
+
     if (ac < 3)
 	bu_exit(1, "Usage: %s {function_number} {test_number}\n", av[0]);
 

@@ -385,7 +385,6 @@ if(BUILD_SHARED_LIBS)
 endif(BUILD_SHARED_LIBS)
 
 if(BUILD_STATIC_LIBS)
-  target_link_libraries(openNURBS-static ${OPENNURBS_LINKLIBRARIES})
   if(MSVC)
     # msvc does not append 'lib' - do it here to have consistent name
     set_target_properties(openNURBS-static PROPERTIES PREFIX "lib")

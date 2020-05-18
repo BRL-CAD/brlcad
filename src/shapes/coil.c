@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include "bu/app.h"
 #include "bu/file.h"
 #include "bu/log.h"
 #include "vmath.h"
@@ -49,6 +50,8 @@ main(int ac, char *av[])
     struct rt_wdb *db_fp = NULL;
     struct ged ged;
     int flag;
+
+    bu_setprogname(av[0]);
 
     /* make sure file doesn't already exist and opens for writing */
     if (bu_file_exists(DEFAULT_COIL_FILENAME, NULL))

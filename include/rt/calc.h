@@ -35,6 +35,7 @@
 #include "vmath.h"
 #include "bu/vls.h"
 #include "bn/poly.h"
+#include "rt/defines.h"
 
 __BEGIN_DECLS
 

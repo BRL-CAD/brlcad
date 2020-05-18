@@ -40,6 +40,7 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/str.h"
 #include "bu/exit.h"
 
@@ -83,6 +84,8 @@ main(int argc, char **argv)
     long num_pixels = 0L ;
     unsigned char *bp;
     FILE *fp;
+
+    bu_setprogname(argv[0]);
 
     /* check for verbose flag */
     if (argc > 1 && BU_STR_EQUAL(argv[1], "-v")) {

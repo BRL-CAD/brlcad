@@ -136,6 +136,7 @@
 
 #include "vmath.h"	/* vector math macros */
 #include "raytrace.h"	    /* librt interface definitions */
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/vls.h"
 #include "art.h"
@@ -504,6 +505,8 @@ main(int argc, char **argv)
     //const char *title_obj = NULL;	/* name of file and first object */
     struct bu_vls str = BU_VLS_INIT_ZERO;
     //int objs_free_argv = 0;
+
+    bu_setprogname(argv[0]);
 
     /* Process command line options */
     int i = get_args(argc, (const char**)argv);

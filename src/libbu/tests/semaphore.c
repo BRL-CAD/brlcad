@@ -142,6 +142,8 @@ main(int argc, char *argv[])
     size_t ncpu = bu_avail_cpus();
     unsigned long ncpu_opt;
 
+    bu_setprogname(argv[0]);
+
     while ((c = bu_getopt(argc, argv, "n:P:")) != -1) {
 	switch (c) {
 	    case 'n':

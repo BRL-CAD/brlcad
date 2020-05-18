@@ -32,6 +32,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/file.h"
 #include "bu/malloc.h"
@@ -177,6 +178,8 @@ int main(int ac, char **av)
     int size;
     int c = 0;
     int t;
+
+    bu_setprogname(av[0]);
 
     (void)parse_args(ac, av);
     if (isatty(fileno(stdin)))

@@ -66,10 +66,12 @@
  */
 
 #include "naca.h"
+#include "bu/app.h"
 
 int
 main(int argc, const char **argv)
 {
+    bu_setprogname(argv[0]);
     if (!argc || !argv)
 	return 1;
 

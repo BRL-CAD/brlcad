@@ -91,6 +91,8 @@ main(int argc, char *argv[])
     fastf_t exp_10[5] = {-INFINITY, 0, 5, 5.2, INFINITY};
     int i, function_num;
 
+    bu_setprogname(argv[0]);
+
     if (argc != 2) {
 	bu_log("Usage: %s {function_num}\n", argv[0]);
 	bu_exit(1, "ERROR: wrong number of parameters");

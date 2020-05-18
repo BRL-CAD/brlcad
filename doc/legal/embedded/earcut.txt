@@ -19,4 +19,4 @@ THIS SOFTWARE.
 
 This version is based off of earcut.js 2.1.5
 
-file:src/libbg/earcut.hpp
+file:/src/libbg/earcut.hpp

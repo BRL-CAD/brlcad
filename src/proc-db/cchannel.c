@@ -28,6 +28,7 @@
 
 #include <math.h>
 #include <stdio.h>
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "bn.h"
@@ -199,6 +200,9 @@ main (int argc, char **argv)
     struct wmember channel;
     struct rt_wdb *db;
     struct channel parameters;
+
+    bu_setprogname(argv[0]);
+
     parameters.length = 12;
     parameters.diameter = 1;
     parameters.thickness = .125;

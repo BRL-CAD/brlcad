@@ -30,4 +30,4 @@ otherwise exploited by anyone for any purpose, commercial or non-commercial,
 and in any way, including by methods that have not yet been invented or
 conceived.
 
-file:src/libbu/b64.c
+file:/src/libbu/b64.c

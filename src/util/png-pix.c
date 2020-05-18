@@ -31,6 +31,7 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
@@ -59,6 +60,8 @@ main(int argc, char **argv)
     unsigned char *image;
     unsigned char **rows;
     size_t ret;
+
+    bu_setprogname(argv[0]);
 
     while ((c=bu_getopt(argc, argv, "v")) != -1) {
 	switch (c) {

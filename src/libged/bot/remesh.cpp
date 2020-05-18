@@ -169,7 +169,7 @@ bot_remesh(struct ged *gedp, struct rt_bot_internal *UNUSED(bot), double UNUSED(
 extern "C" int
 _bot_cmd_remesh(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "bot [options] <objname> remesh [output_bot]";
+    const char *usage_string = "bot [options] remesh <objname> <output_bot>";
     const char *purpose_string = "Store a remeshed version of the BoT in object <output_bot>";
     if (_bot_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -177,22 +177,20 @@ _bot_cmd_remesh(void *bs, int argc, const char **argv)
 
     struct _ged_bot_info *gb = (struct _ged_bot_info *)bs;
 
-    struct ged *gedp = gb->gedp;
+    argc--; argv++;
 
-    if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
-	bu_vls_printf(gb->gedp->ged_result_str, ": object %s is not of type bot\n", gb->solid_name.c_str());
+    if (_bot_obj_setup(gb, argv[0]) == GED_ERROR) {
 	return GED_ERROR;
     }
 
+    struct ged *gedp = gb->gedp;
     const char *input_bot_name = gb->dp->d_namep;
     const char *output_bot_name;
     struct directory *dp_input;
     struct directory *dp_output;
     struct rt_bot_internal *input_bot;
 
-    GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
-    GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     dp_input = dp_output = RT_DIR_NULL;
 
@@ -228,12 +226,12 @@ _bot_cmd_remesh(void *bs, int argc, const char **argv)
 	GED_CHECK_EXISTS(gedp, output_bot_name, LOOKUP_QUIET, GED_ERROR);
     }
 
-    if (gb->intern.idb_major_type != DB5_MAJORTYPE_BRLCAD || gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
+    if (gb->intern->idb_major_type != DB5_MAJORTYPE_BRLCAD || gb->intern->idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
 	bu_vls_printf(gedp->ged_result_str, "%s is not a BOT primitive\n", input_bot_name);
 	return GED_ERROR;
     }
 
-    input_bot = (struct rt_bot_internal *)gb->intern.idb_ptr;
+    input_bot = (struct rt_bot_internal *)gb->intern->idb_ptr;
     RT_BOT_CK_MAGIC(input_bot);
 
     bu_log("INPUT BoT has %zu vertices and %zu faces\n", input_bot->num_vertices, input_bot->num_faces);
@@ -250,10 +248,10 @@ _bot_cmd_remesh(void *bs, int argc, const char **argv)
     if (BU_STR_EQUAL(input_bot_name, output_bot_name)) {
 	dp_output = dp_input;
     } else {
-	GED_DB_DIRADD(gedp, dp_output, output_bot_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&gb->intern.idb_type, GED_ERROR);
+	GED_DB_DIRADD(gedp, dp_output, output_bot_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&gb->intern->idb_type, GED_ERROR);
     }
 
-    GED_DB_PUT_INTERNAL(gedp, dp_output, &gb->intern, gedp->ged_wdbp->wdb_resp, GED_ERROR);
+    GED_DB_PUT_INTERNAL(gedp, dp_output, gb->intern, gedp->ged_wdbp->wdb_resp, GED_ERROR);
 
     return GED_OK;
 }

@@ -181,6 +181,8 @@ test_bu_hook_saverestore(void)
 int
 main(int argc, char *argv[])
 {
+    bu_setprogname(argv[0]);
+
     if (argc < 2) {
 	bu_exit(1, "Usage: %s {basic|multiadd|saverestore} [args...]\n", argv[0]);
     }

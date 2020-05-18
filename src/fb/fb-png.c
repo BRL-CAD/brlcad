@@ -140,6 +140,8 @@ Usage: fb-png [-i -c] [-# nbytes/pixel] [-F framebuffer] [-g gamma]\n\
 
     screen_height = screen_width = 512;		/* Defaults */
 
+    bu_setprogname(argv[0]);
+
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
 	bu_exit(1, NULL);

@@ -21,8 +21,6 @@ set(bn_headers
   str.h
   tol.h
   vectfont.h
-  vector_fpu.h
-  vector_x86.h
   version.h
   vert_tree.h
   vlist.h

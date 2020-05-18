@@ -32,6 +32,8 @@
 
 #include "common.h"
 
+#include "vmath.h"
+
 #include "bu/vlb.h"
 
 

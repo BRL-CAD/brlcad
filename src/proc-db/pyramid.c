@@ -31,6 +31,7 @@
 #include <math.h>
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "wdb.h"
@@ -46,6 +47,8 @@ int
 main(int argc, char **argv)
 {
     int depth;
+
+    bu_setprogname(argv[0]);
 
     if (argc != 2 || BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) {
 	fprintf(stderr, "Usage: pyramid recursion\n      (the argument is of type integer)\n");

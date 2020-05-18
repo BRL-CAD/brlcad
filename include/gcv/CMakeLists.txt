@@ -5,8 +5,6 @@ set(gcv_headers
   )
 BRLCAD_MANAGE_FILES(gcv_headers ${INCLUDE_DIR}/brlcad/gcv)
 
-BRLCAD_CHECK_HDRS(gcv_headers)
-
 CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:

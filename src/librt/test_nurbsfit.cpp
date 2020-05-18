@@ -59,6 +59,7 @@ main (int argc, char *argv[])
    ON_Brep* brep = ON_Brep::New();
    char *bname;
 
+   bu_setprogname(argv[0]);
 
    if (argc != 3) {
       bu_exit(1, "Usage: %s file.g object", argv[0]);

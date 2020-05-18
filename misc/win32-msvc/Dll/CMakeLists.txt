@@ -38,20 +38,18 @@ target_link_libraries(BrlcadCore
   libbn-static
   libbrep-static
   libbu-static
-  libgcv-static
-  libgdiam-static
+  gdiam-static
   libged-static
   regex-static
   librt-static
   libbrep-static
-  libvds-static
+  vds-static
   libwdb-static
   libnmg-static
-  p2t-static
+  poly2tri-static
   zlib-static
   lz4-static
   openNURBS-static
-  tcl85
   )
 
 set_property(TARGET BrlcadCore PROPERTY LINK_INTERFACE_LIBRARIES "")
@@ -107,6 +105,7 @@ if(MSVC)
   set(COREINTERFACE_MSVC_LIBRARIES
     Ws2_32
     Psapi
+    Rpcrt4
   )
 endif(MSVC)
 
@@ -120,15 +119,15 @@ target_link_libraries(brlcad
   libbn-static
   libbrep-static
   libbu-static
-  libgdiam-static
+  gdiam-static
   libged-static
   regex-static
   librt-static
   libbrep-static
-  libvds-static
+  vds-static
   libwdb-static
   libnmg-static
-  p2t-static
+  poly2tri-static
   zlib-static
   lz4-static
   openNURBS-static

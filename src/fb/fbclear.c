@@ -29,6 +29,7 @@
 
 #include <stdlib.h>
 
+#include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"
@@ -89,6 +90,7 @@ get_args(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
+    bu_setprogname(argv[0]);
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
 	bu_exit(1, NULL);

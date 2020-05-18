@@ -1559,6 +1559,8 @@ main(int argc, char *argv[])
     struct bu_vls name;
     struct bu_vls bname;
 
+    bu_setprogname(argv[0]);
+
     FaceList::iterator f_it;
 
     Manifold_Info info;

@@ -35,8 +35,8 @@ macro(Add_RtWiz_Test testname input_file options depends_list)
 
   add_test(NAME regress-rtwizard-${testname} COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/regress-${testname}.cmake")
   add_custom_target(regress-rtwizard-${testname} DEPENDS ${dep_list} ${STAMP_FILE})
-  set_target_properties(regress-rtwizard-${testname} PROPERTIES FOLDER "BRL-CAD Regression Tests")
   Add_Regression_Test(rtwizard-${testname} "${dep_list}" EXCLUDE_FROM_REGRESS)
+  set_target_properties(regress-rtwizard-${testname} PROPERTIES FOLDER "BRL-CAD Regression Tests/rtwizard")
 
   foreach(tgt ${rtwizard_targets})
     add_dependencies(regress-rtwizard-${testname} ${tgt})

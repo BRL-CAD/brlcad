@@ -30,6 +30,7 @@
 
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/malloc.h"
 #include "bu/color.h"
 #include "bu/str.h"
@@ -148,6 +149,8 @@ main(int argc, char **argv)
     int pause_time = 0;
     int mode = 0;
     int fbsize = 512;
+
+    bu_setprogname(argv[0]);
 
     if (isatty(fileno(stdin))) {
 	bu_exit(1, "%s", usage);

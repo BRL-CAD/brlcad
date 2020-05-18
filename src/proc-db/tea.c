@@ -28,6 +28,7 @@
 
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "vmath.h"		/* BRL-CAD Vector macros */
 #include "nmg.h"		/* BRL-CAD Spline data structures */
@@ -97,6 +98,8 @@ main(int argc, char **argv)
     int i;
     struct rt_wdb *outfp;
     struct face_g_snurb **surfaces;
+
+    bu_setprogname(argv[0]);
 
     while ((i=bu_getopt(argc, argv, "h?")) != -1) {
 	switch (i) {

@@ -31,6 +31,7 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/exit.h"
 #include "vmath.h"
 
@@ -82,6 +83,8 @@ main(int argc, char **argv)
     int i, n, L;
     double last1, last2;
     int numpeaks;
+
+    bu_setprogname(argv[0]);
 
     if (isatty(fileno(stdin)) /*|| isatty(fileno(stdout))*/) {
 	bu_exit(1, "%s", usage);

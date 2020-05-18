@@ -5354,6 +5354,8 @@ main(int ac, char *av[])
     UF_ASSEM_options_t assem_options;
     time_t elapsed_time, end_time;
 
+    bu_setprogname(av[0]);
+
     time( &start_time );
 
     tol_dist_sq = tol_dist * tol_dist;

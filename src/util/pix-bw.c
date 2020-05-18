@@ -37,6 +37,7 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/str.h"
 #include "bu/log.h"
@@ -158,6 +159,8 @@ main(int argc, char **argv)
 	bu_log("%s", usage);
 	return 1;
     }
+
+    bu_setprogname(argv[0]);
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);

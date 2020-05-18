@@ -27,6 +27,7 @@
 
 #include <iostream>
 
+#include "bu/app.h"
 #include "bu/time.h"
 #include "bu/file.h"
 #include "bu/log.h"
@@ -80,6 +81,8 @@ main(int argc, const char *argv[])
 {
     int ret = 0;
     int64_t elapsedtime;
+
+    bu_setprogname(argv[0]);
 
     elapsedtime = bu_gettime();
 

@@ -27,6 +27,7 @@
 #include <string.h>
 #include <errno.h>
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "bu/parallel.h"
@@ -187,6 +188,8 @@ main(int argc, char **argv)
     int process_test_case = 0;
     int early_exit = 0;
     static int found_eof = 0; /* static due to longjmp */
+
+    bu_setprogname(argv[0]);
 
     /* set initial values in tol structure */
     tol.magic = BN_TOL_MAGIC;

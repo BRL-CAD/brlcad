@@ -56,6 +56,8 @@
 #include "bio.h"
 
 #include "vmath.h"		/* BRL-CAD Vector macros */
+
+#include "bu/app.h"
 #include "wdb.h"
 
 
@@ -242,6 +244,8 @@ main(int argc, char** argv)
     ON_TextLog error_log;
     const char* id_name = "B-Rep Example";
     const char* geom_name = "cube.s";
+
+    bu_setprogname(argv[0]);
 
     if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?")) {
     	printusage();

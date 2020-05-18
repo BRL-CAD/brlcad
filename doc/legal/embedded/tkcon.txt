@@ -30,5 +30,5 @@
 # exempt from this clause if they are below drinking age or think the author
 # has already partaken of too many drinks.
 
-file:src/tclscripts/tkcon.tcl
+file:/src/tclscripts/tkcon.tcl
 

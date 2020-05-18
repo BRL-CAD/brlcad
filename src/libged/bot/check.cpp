@@ -227,12 +227,17 @@ edges_from_bot(struct rt_bot_internal *bot)
 }
 
 static void
-draw_edges(struct bn_vlblock *vbp, struct rt_bot_internal *bot, int num_edges, int edges[], struct bu_color *color)
+draw_edges(struct ged *gedp, struct rt_bot_internal *bot, int num_edges, int edges[], struct bu_color *color, const char *draw_name)
 {
     struct bu_list *vhead;
     point_t a,b;
     unsigned char draw_color[3];
     bu_color_to_rgb_chars(color, draw_color);
+    struct bn_vlblock *vbp;
+    struct bu_list local_vlist;
+
+    BU_LIST_INIT(&local_vlist);
+    vbp = bn_vlblock_init(&local_vlist, 32);
 
     for (int curr_edge = 0; curr_edge < num_edges; curr_edge++) {
 	int p1 = edges[curr_edge*2];
@@ -243,8 +248,11 @@ draw_edges(struct bn_vlblock *vbp, struct rt_bot_internal *bot, int num_edges, i
 	BN_ADD_VLIST(vbp->free_vlist_hd, vhead, a, BN_VLIST_LINE_MOVE);
 	BN_ADD_VLIST(vbp->free_vlist_hd, vhead, b, BN_VLIST_LINE_DRAW);
     }
-}
 
+    _ged_cvt_vlblock_to_solids(gedp, vbp, draw_name, 0);
+    bn_vlist_cleanup(&local_vlist);
+    bn_vlblock_free(vbp);
+}
 
 static int
 _bot_check_msgs(void *bs, int argc, const char **argv, const char *us, const char *ps)
@@ -265,7 +273,7 @@ _bot_check_msgs(void *bs, int argc, const char **argv, const char *us, const cha
 extern "C" int
 _bot_cmd_degen_faces(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "bot [options] <objname1> degen_faces";
+    const char *usage_string = "bot [options] degen_faces <objname>";
     const char *purpose_string = "Check BoT for degenerate faces";
     if (_bot_check_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -275,9 +283,8 @@ _bot_cmd_degen_faces(void *bs, int argc, const char **argv)
 
     struct _ged_bot_icheck *gib = (struct _ged_bot_icheck *)bs;
 
-    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gib->gb->intern.idb_ptr);
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gib->gb->intern->idb_ptr);
     struct bu_color *color = gib->gb->color;
-    struct bn_vlblock *vbp = gib->gb->vbp;
 
     struct bg_trimesh_faces degenerate = BG_TRIMESH_FACES_INIT_NULL;
     struct bg_trimesh_edges *degen_edges, *all_edges, *other_edges;
@@ -302,10 +309,15 @@ _bot_cmd_degen_faces(void *bs, int argc, const char **argv)
 	    bg_free_trimesh_edges(all_edges);
 	    BU_FREE(all_edges, struct bg_trimesh_edges);
 
-	    draw_edges(vbp, bot, degen_edges->count, degen_edges->edges, color);
+	    struct bu_vls dg_name = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&dg_name, "%s_degen_faces", gib->gb->dp->d_namep);
+
+	    draw_edges(gib->gb->gedp, bot, degen_edges->count, degen_edges->edges, color, bu_vls_cstr(&dg_name));
 	    struct bu_color red = BU_COLOR_INIT_ZERO;
 	    bu_color_from_str(&red, "255/0/0");
-	    draw_edges(vbp, bot, other_edges->count, other_edges->edges, &red);
+	    draw_edges(gib->gb->gedp, bot, other_edges->count, other_edges->edges, &red, bu_vls_cstr(&dg_name));
+
+	    bu_vls_free(&dg_name);
 
 	    bg_free_trimesh_edges(degen_edges);
 	    BU_FREE(degen_edges, struct bg_trimesh_edges);
@@ -319,23 +331,13 @@ _bot_cmd_degen_faces(void *bs, int argc, const char **argv)
 
     bu_vls_printf(gib->vls, degenerate_faces ? "1" : "0");
 
-    if (gib->gb->visualize) {
-	struct bu_vls sname = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&sname, "_%s_degen_faces", gib->gb->solid_name.c_str());
-	if (db_lookup(gib->gb->gedp->ged_wdbp->dbip, bu_vls_cstr(&sname), LOOKUP_QUIET) != RT_DIR_NULL) {
-	    dl_erasePathFromDisplay(gib->gb->gedp->ged_gdp->gd_headDisplay, gib->gb->gedp->ged_wdbp->dbip, gib->gb->gedp->ged_free_vlist_callback, bu_vls_cstr(&sname), 1, gib->gb->gedp->freesolid);
-	}
-	_ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
-	bu_vls_free(&sname);
-    }
-
     return GED_OK;
 }
 
 extern "C" int
 _bot_cmd_extra_edges(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "bot [options] <objname1> extra_edges";
+    const char *usage_string = "bot [options] extra_edges <objname>";
     const char *purpose_string = "Check BoT for edges which are not part of any triangle faces";
     if (_bot_check_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -345,10 +347,8 @@ _bot_cmd_extra_edges(void *bs, int argc, const char **argv)
 
     struct _ged_bot_icheck *gib = (struct _ged_bot_icheck *)bs;
 
-    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gib->gb->intern.idb_ptr);
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gib->gb->intern->idb_ptr);
     struct bu_color *color = gib->gb->color;
-    struct bn_vlblock *vbp = gib->gb->vbp;
-
 
     int num_faces, num_edges;
     num_faces = (int)bot->num_faces;
@@ -381,10 +381,15 @@ _bot_cmd_extra_edges(void *bs, int argc, const char **argv)
 	    bg_free_trimesh_edges(all_edges);
 	    BU_FREE(all_edges, struct bg_trimesh_edges);
 
-	    draw_edges(vbp, bot, error_edges.count, error_edges.edges, color);
+	    struct bu_vls ee_name = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&ee_name, "%s_extra_edges", gib->gb->dp->d_namep);
+
+	    draw_edges(gib->gb->gedp, bot, error_edges.count, error_edges.edges, color, bu_vls_cstr(&ee_name));
 	    struct bu_color red = BU_COLOR_INIT_ZERO;
 	    bu_color_from_str(&red, "255/0/0");
-	    draw_edges(vbp, bot, other_edges->count, other_edges->edges, &red);
+	    draw_edges(gib->gb->gedp, bot, other_edges->count, other_edges->edges, &red, bu_vls_cstr(&ee_name));
+
+	    bu_vls_free(&ee_name);
 
 	    bg_free_trimesh_edges(&error_edges);
 	    bg_free_trimesh_edges(other_edges);
@@ -399,23 +404,13 @@ _bot_cmd_extra_edges(void *bs, int argc, const char **argv)
 
     bu_vls_printf(gib->vls, extra_edges ? "1" : "0");
 
-    if (gib->gb->visualize) {
-	struct bu_vls sname = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&sname, "_%s_extra_edges", gib->gb->solid_name.c_str());
-	if (db_lookup(gib->gb->gedp->ged_wdbp->dbip, bu_vls_cstr(&sname), LOOKUP_QUIET) != RT_DIR_NULL) {
-	    dl_erasePathFromDisplay(gib->gb->gedp->ged_gdp->gd_headDisplay, gib->gb->gedp->ged_wdbp->dbip, gib->gb->gedp->ged_free_vlist_callback, bu_vls_cstr(&sname), 1, gib->gb->gedp->freesolid);
-	}
-	_ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
-	bu_vls_free(&sname);
-    }
-
     return GED_OK;
 }
 
 extern "C" int
 _bot_cmd_flipped_edges(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "bot [options] <objname1> flipped_edges";
+    const char *usage_string = "bot [options] flipped_edges <objname>";
     const char *purpose_string = "Check BoT for edges which are incorrectly oriented";
     if (_bot_check_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -425,10 +420,8 @@ _bot_cmd_flipped_edges(void *bs, int argc, const char **argv)
 
     struct _ged_bot_icheck *gib = (struct _ged_bot_icheck *)bs;
 
-    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gib->gb->intern.idb_ptr);
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gib->gb->intern->idb_ptr);
     struct bu_color *color = gib->gb->color;
-    struct bn_vlblock *vbp = gib->gb->vbp;
-
 
     int num_faces, num_edges;
     num_faces = (int)bot->num_faces;
@@ -453,7 +446,7 @@ _bot_cmd_flipped_edges(void *bs, int argc, const char **argv)
 	if (flipped_edges) {
 	    /* second pass - generate error edge array and draw it */
 	    error_edges.count = 0;
-	    error_edges.edges = (int *)bu_calloc(flipped_edges * 2, sizeof(int), "error edges");
+	    error_edges.edges = (int *)bu_calloc(flipped_edges * 2, sizeof(int), "flipped edges");
 	    flipped_edges = bg_trimesh_misoriented_edges(num_edges, edge_list, bg_trimesh_edge_gather, &error_edges);
 
 	    all_edges = edges_from_half_edges(edge_list, num_edges);
@@ -461,10 +454,15 @@ _bot_cmd_flipped_edges(void *bs, int argc, const char **argv)
 	    bg_free_trimesh_edges(all_edges);
 	    BU_FREE(all_edges, struct bg_trimesh_edges);
 
-	    draw_edges(vbp, bot, error_edges.count, error_edges.edges, color);
+	    struct bu_vls ee_name = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&ee_name, "%s_flipped_edges", gib->gb->dp->d_namep);
+
+	    draw_edges(gib->gb->gedp, bot, error_edges.count, error_edges.edges, color, bu_vls_cstr(&ee_name));
 	    struct bu_color red = BU_COLOR_INIT_ZERO;
 	    bu_color_from_str(&red, "255/0/0");
-	    draw_edges(vbp, bot, other_edges->count, other_edges->edges, &red);
+	    draw_edges(gib->gb->gedp, bot, other_edges->count, other_edges->edges, &red, bu_vls_cstr(&ee_name));
+
+	    bu_vls_free(&ee_name);
 
 	    bg_free_trimesh_edges(&error_edges);
 	    bg_free_trimesh_edges(other_edges);
@@ -479,23 +477,13 @@ _bot_cmd_flipped_edges(void *bs, int argc, const char **argv)
 
     bu_vls_printf(gib->vls, flipped_edges ? "1" : "0");
 
-    if (gib->gb->visualize) {
-	struct bu_vls sname = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&sname, "_%s_flipped_edges", gib->gb->solid_name.c_str());
-	if (db_lookup(gib->gb->gedp->ged_wdbp->dbip, bu_vls_cstr(&sname), LOOKUP_QUIET) != RT_DIR_NULL) {
-	    dl_erasePathFromDisplay(gib->gb->gedp->ged_gdp->gd_headDisplay, gib->gb->gedp->ged_wdbp->dbip, gib->gb->gedp->ged_free_vlist_callback, bu_vls_cstr(&sname), 1, gib->gb->gedp->freesolid);
-	}
-	_ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
-	bu_vls_free(&sname);
-    }
-
     return GED_OK;
 }
 
 extern "C" int
 _bot_cmd_open_edges(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "bot [options] <objname1> open_edges";
+    const char *usage_string = "bot [options] open_edges <objname>";
     const char *purpose_string = "Check BoT for edges which are not connected to two triangle faces";
     if (_bot_check_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
@@ -505,10 +493,8 @@ _bot_cmd_open_edges(void *bs, int argc, const char **argv)
 
     struct _ged_bot_icheck *gib = (struct _ged_bot_icheck *)bs;
 
-    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gib->gb->intern.idb_ptr);
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gib->gb->intern->idb_ptr);
     struct bu_color *color = gib->gb->color;
-    struct bn_vlblock *vbp = gib->gb->vbp;
-
 
     int num_faces, num_edges;
     num_faces = (int)bot->num_faces;
@@ -541,10 +527,15 @@ _bot_cmd_open_edges(void *bs, int argc, const char **argv)
 	    bg_free_trimesh_edges(all_edges);
 	    BU_FREE(all_edges, struct bg_trimesh_edges);
 
-	    draw_edges(vbp, bot, error_edges.count, error_edges.edges, color);
+	    struct bu_vls ee_name = BU_VLS_INIT_ZERO;
+	    bu_vls_sprintf(&ee_name, "%s_open_edges", gib->gb->dp->d_namep);
+
+	    draw_edges(gib->gb->gedp, bot, error_edges.count, error_edges.edges, color, bu_vls_cstr(&ee_name));
 	    struct bu_color red = BU_COLOR_INIT_ZERO;
 	    bu_color_from_str(&red, "255/0/0");
-	    draw_edges(vbp, bot, other_edges->count, other_edges->edges, &red);
+	    draw_edges(gib->gb->gedp, bot, other_edges->count, other_edges->edges, &red, bu_vls_cstr(&ee_name));
+
+	    bu_vls_free(&ee_name);
 
 	    bg_free_trimesh_edges(&error_edges);
 	    bg_free_trimesh_edges(other_edges);
@@ -559,16 +550,6 @@ _bot_cmd_open_edges(void *bs, int argc, const char **argv)
 
     bu_vls_printf(gib->vls, open_edges ? "1" : "0");
 
-    if (gib->gb->visualize) {
-	struct bu_vls sname = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&sname, "_%s_open_edges", gib->gb->solid_name.c_str());
-	if (db_lookup(gib->gb->gedp->ged_wdbp->dbip, bu_vls_cstr(&sname), LOOKUP_QUIET) != RT_DIR_NULL) {
-	    dl_erasePathFromDisplay(gib->gb->gedp->ged_gdp->gd_headDisplay, gib->gb->gedp->ged_wdbp->dbip, gib->gb->gedp->ged_free_vlist_callback, bu_vls_cstr(&sname), 1, gib->gb->gedp->freesolid);
-	}
-	_ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
-	bu_vls_free(&sname);
-    }
-
     return GED_OK;
 }
 
@@ -576,18 +557,15 @@ _bot_cmd_open_edges(void *bs, int argc, const char **argv)
 extern "C" int
 _bot_cmd_solid(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "bot [options] <objname1> solid";
+    const char *usage_string = "bot [options] check solid <objname>";
     const char *purpose_string = "Check if BoT defines a topologically closed solid";
     if (_bot_check_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return GED_OK;
     }
 
-    argc--;argv++;
-
     struct _ged_bot_icheck *gib = (struct _ged_bot_icheck *)bs;
 
-    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gib->gb->intern.idb_ptr);
-    struct bn_vlblock *vbp = gib->gb->vbp;
+    struct rt_bot_internal *bot = (struct rt_bot_internal *)(gib->gb->intern->idb_ptr);
     struct bg_trimesh_solid_errors errors = BG_TRIMESH_SOLID_ERRORS_INIT_NULL;
     int not_solid;
 
@@ -629,30 +607,31 @@ _bot_cmd_solid(void *bs, int argc, const char **argv)
 	struct bu_color purple = BU_COLOR_INIT_ZERO;
 	bu_color_from_str(&purple, "255/0/255");
 
-	draw_edges(vbp, bot, other_edges->count, other_edges->edges, &red);
-	draw_edges(vbp, bot, errors.unmatched.count, errors.unmatched.edges, &yellow);
-	draw_edges(vbp, bot, errors.misoriented.count, errors.misoriented.edges, &orange);
-	draw_edges(vbp, bot, errors.excess.count, errors.excess.edges, &purple);
+	struct bu_vls ns_name = BU_VLS_INIT_ZERO;
+
+	bu_vls_sprintf(&ns_name, "%s_non_solid_ne", gib->gb->dp->d_namep);
+	draw_edges(gib->gb->gedp, bot, other_edges->count, other_edges->edges, &red, bu_vls_cstr(&ns_name));
+	bu_vls_sprintf(&ns_name, "%s_non_solid_ue", gib->gb->dp->d_namep);
+	draw_edges(gib->gb->gedp, bot, errors.unmatched.count, errors.unmatched.edges, &yellow, bu_vls_cstr(&ns_name));
+	bu_vls_sprintf(&ns_name, "%s_non_solid_me", gib->gb->dp->d_namep);
+	draw_edges(gib->gb->gedp, bot, errors.misoriented.count, errors.misoriented.edges, &orange, bu_vls_cstr(&ns_name));
+	bu_vls_sprintf(&ns_name, "%s_non_solid_ee", gib->gb->dp->d_namep);
+	draw_edges(gib->gb->gedp, bot, errors.excess.count, errors.excess.edges, &purple, bu_vls_cstr(&ns_name));
 
 	if (errors.degenerate.count > 0) {
 	    struct bu_color blue = BU_COLOR_INIT_ZERO;
 	    bu_color_from_str(&blue, "0/0/255");
-	    draw_edges(vbp, bot, degen_edges->count, degen_edges->edges, &blue);
+	    bu_vls_sprintf(&ns_name, "%s_non_solid_de", gib->gb->dp->d_namep);
+	    draw_edges(gib->gb->gedp, bot, degen_edges->count, degen_edges->edges, &blue, bu_vls_cstr(&ns_name));
 
 	    bg_free_trimesh_edges(degen_edges);
 	    BU_FREE(degen_edges, struct bg_trimesh_edges);
 	}
+	bu_vls_free(&ns_name);
 	bg_free_trimesh_edges(other_edges);
 	BU_FREE(other_edges, struct bg_trimesh_edges);
 	bg_free_trimesh_solid_errors(&errors);
 
-	struct bu_vls sname = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&sname, "_%s_not_solid", gib->gb->solid_name.c_str());
-	if (db_lookup(gib->gb->gedp->ged_wdbp->dbip, bu_vls_cstr(&sname), LOOKUP_QUIET) != RT_DIR_NULL) {
-	    dl_erasePathFromDisplay(gib->gb->gedp->ged_gdp->gd_headDisplay, gib->gb->gedp->ged_wdbp->dbip, gib->gb->gedp->ged_free_vlist_callback, bu_vls_cstr(&sname), 1, gib->gb->gedp->freesolid);
-	}
-	_ged_cvt_vlblock_to_solids(gib->gb->gedp, vbp, bu_vls_cstr(&sname), 0);
-	bu_vls_free(&sname);
     }
 
     return GED_OK;
@@ -663,7 +642,7 @@ _bot_check_help(struct _ged_bot_icheck *bs, int argc, const char **argv)
 {
     struct _ged_bot_icheck *gb = (struct _ged_bot_icheck *)bs;
     if (!argc || !argv) {
-	bu_vls_printf(gb->vls, "bot [options] <objname> check [subcommand]\n");
+	bu_vls_printf(gb->vls, "bot [options] check [subcommand] <objname>\n");
 	bu_vls_printf(gb->vls, "Available subcommands:\n");
 	const struct bu_cmdtab *ctp = NULL;
 	int ret;
@@ -723,14 +702,25 @@ _bot_cmd_check(void *bs, int argc, const char **argv)
 	return GED_OK;
     }
 
-    if (gb->intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
-        bu_vls_printf(gb->gedp->ged_result_str, "%s is not of type bot\n", gb->solid_name.c_str());
-        return GED_ERROR;
+    // Skip the "check" subcommand
+    argc--;argv++;
+
+    if (!argc) {
+	_bot_check_help(&gib, 0, NULL);
+	return GED_OK;
     }
 
-    argc--; argv++;
+    if (_bot_obj_setup(gb, argv[argc-1]) == GED_ERROR) {
+	return GED_ERROR;
+    }
+    argc--;
 
-    // Must have valid subcommand to process
+    if (!argc) {
+	// No subcommand - do the solid check
+	return _bot_cmd_solid((void *)&gib, 0, NULL);
+    }
+
+    // Have subcommand - must have valid subcommand to process
     if (bu_cmd_valid(_bot_check_cmds, argv[0]) != BRLCAD_OK) {
 	bu_vls_printf(gib.vls, "invalid subcommand \"%s\" specified\n", argv[0]);
 	_bot_check_help(&gib, 0, NULL);
