@@ -5,11 +5,11 @@ include_directories(
   ${PKG_INCLUDE_DIRS}
   )
 
-add_executable(regress_pkg_server regress_pkg_server.c)
+add_executable(regress_pkg_server regress_pkg_server.cpp)
 target_link_libraries(regress_pkg_server libbu libpkg)
 set_target_properties(regress_pkg_server PROPERTIES FOLDER "BRL-CAD Regression Tests/libpkg")
 
-add_executable(regress_pkg_client regress_pkg_client.c)
+add_executable(regress_pkg_client regress_pkg_client.cpp)
 target_link_libraries(regress_pkg_client libbu libpkg)
 set_target_properties(regress_pkg_client PROPERTIES FOLDER "BRL-CAD Regression Tests/libpkg")
 
@@ -38,9 +38,6 @@ set_target_properties(regress-pkg PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 
 CMAKEFILES(
   CMakeLists.txt
-  regress_pkg.cpp
-  regress_pkg_server.c
-  regress_pkg_client.c
   regress_pkg_protocol.h
   )
 # Local Variables:
