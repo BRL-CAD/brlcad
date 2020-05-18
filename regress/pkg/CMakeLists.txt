@@ -35,8 +35,6 @@ endif (CMAKE_CONFIGURATION_TYPES)
 add_dependencies(regress-pkg libbu libpkg)
 set_target_properties(regress-pkg PROPERTIES FOLDER "BRL-CAD Regression Tests")
 set_target_properties(regress-pkg PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
-add_dependencies(regress regress-pkg)
-add_dependencies(check regress-pkg)
 
 CMAKEFILES(
   CMakeLists.txt
