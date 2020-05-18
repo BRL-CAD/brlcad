@@ -27,13 +27,15 @@ class cmd_result {
 void
 run_server(cmd_result &r)
 {
-    r.cmd_ret = std::system(r.cmd.c_str());
+    std::string rcmd = std::string("\"") + r.cmd + std::string("\"");
+    r.cmd_ret = std::system(rcmd.c_str());
 }
 
 void
 run_client(cmd_result &r)
 {
-    r.cmd_ret = std::system(r.cmd.c_str());
+    std::string rcmd = std::string("\"") + r.cmd + std::string("\"");
+    r.cmd_ret = std::system(rcmd.c_str());
 }
 
 int
