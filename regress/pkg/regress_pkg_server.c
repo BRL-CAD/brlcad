@@ -34,6 +34,7 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/app.h"
 #include "bu/log.h"
 #include "bu/str.h"
 #include "bu/malloc.h"
@@ -74,7 +75,7 @@ server_ciao(struct pkg_conn *UNUSED(connection), char *buf)
 }
 
 int
-main() {
+main(int UNUSED(argc), const char *argv[]) {
     int port = 2000;
     struct pkg_conn *client;
     int netfd;
@@ -90,6 +91,8 @@ main() {
 	{MSG_CIAO, server_ciao, "CIAO", NULL},
 	{0, 0, (char *)0, (void*)0}
     };
+
+    bu_setprogname(argv[0]);
 
     /* ignore broken pipes, on platforms where we have SIGPIPE */
 #ifdef SIGPIPE

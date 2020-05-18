@@ -7,6 +7,7 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/app.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/getopt.h"
@@ -40,7 +41,7 @@ client_ciao(struct pkg_conn *UNUSED(connection), char *buf)
 }
 
 int
-main() {
+main(int UNUSED(argc), const char *argv[]) {
     int port = 2000;
     const char *server = "127.0.0.1";
     struct bu_vls all_msgs = BU_VLS_INIT_ZERO;
@@ -56,6 +57,8 @@ main() {
 	{MSG_CIAO, client_ciao, "CIAO", NULL},
 	{0, 0, (char *)0, (void*)0}
     };
+
+    bu_setprogname(argv[0]);
 
     /* Collect data from more than one server communication for later use */
     callbacks[1].pks_user_data = (void *)&all_msgs;

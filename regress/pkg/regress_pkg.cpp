@@ -16,6 +16,7 @@
 #include <iostream>
 #include <thread>
 #include <vector>
+#include "bu/app.h"
 
 class cmd_result {
     public:
@@ -42,6 +43,8 @@ main(int argc, const char *argv[])
 	std::cout << "Usage: regress_pkg server client\n";
 	return -1;
     }
+
+    bu_setprogname(argv[0]);
 
     // Set up the information the threads will need
     cmd_result s, c;
