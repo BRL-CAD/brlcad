@@ -7,11 +7,11 @@ include_directories(
 
 add_executable(regress_pkg_server regress_pkg_server.c)
 target_link_libraries(regress_pkg_server libbu libpkg)
-set_target_properties(regress_pkg_server PROPERTIES FOLDER "BRL-CAD Regression Tests")
+set_target_properties(regress_pkg_server PROPERTIES FOLDER "BRL-CAD Regression Tests/libpkg")
 
 add_executable(regress_pkg_client regress_pkg_client.c)
 target_link_libraries(regress_pkg_client libbu libpkg)
-set_target_properties(regress_pkg_client PROPERTIES FOLDER "BRL-CAD Regression Tests")
+set_target_properties(regress_pkg_client PROPERTIES FOLDER "BRL-CAD Regression Tests/libpkg")
 
 # CMake executes programs in series, and since the client and server need
 # to be running in parallel for this to work we have to do something else.
@@ -19,7 +19,7 @@ set_target_properties(regress_pkg_client PROPERTIES FOLDER "BRL-CAD Regression T
 # results.
 add_executable(regress_pkg regress_pkg.cpp)
 target_link_libraries(regress_pkg libbu ${CMAKE_THREAD_LIBS_INIT})
-set_target_properties(regress_pkg PROPERTIES FOLDER "BRL-CAD Regression Tests")
+set_target_properties(regress_pkg PROPERTIES FOLDER "BRL-CAD Regression Tests/libpkg")
 add_dependencies(regress_pkg regress_pkg_server regress_pkg_client)
 
 add_test(NAME regress-pkg

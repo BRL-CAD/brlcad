@@ -10,7 +10,7 @@ if (O3_COMPILER_FLAG)
   # it - whether or not the standard build settings would add it.
   target_compile_options(repocheck PRIVATE "-O3")
 endif (O3_COMPILER_FLAG)
-set_target_properties(repocheck PROPERTIES FOLDER "BRL-CAD Regression Tests")
+set_target_properties(repocheck PROPERTIES FOLDER "BRL-CAD Regression Tests/repository")
 
 set(ALL_FILES_LIST "${BRLCAD_BINARY_DIR}/cmakefiles.cmake")
 
