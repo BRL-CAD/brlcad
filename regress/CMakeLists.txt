@@ -42,6 +42,9 @@ add_subdirectory(gcv)
 # NURBS Regression Tests
 add_subdirectory(nurbs)
 
+# libpkg Regression Tests
+add_subdirectory(pkg)
+
 # Burst Regression Tests
 add_subdirectory(burst)
 
