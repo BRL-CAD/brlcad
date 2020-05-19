@@ -235,6 +235,7 @@ fb_tk_open(fb *ifp, const char *file, int width, int height)
 		fclose(stdin);
 		printf("Close Window event\n");
 		Tcl_Eval(tki->fbinterp, "destroy .");
+		Tcl_DeleteInterp(tki->fbinterp);
 		bu_exit(0, NULL);
 	    }
 
