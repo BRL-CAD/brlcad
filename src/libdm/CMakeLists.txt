@@ -7,8 +7,6 @@ set(DM_INCLUDE_DIRS
   ${RT_INCLUDE_DIRS}
   ${X11_INCLUDE_DIR}
   ${PNG_INCLUDE_DIRS}
-  ${TCL_INCLUDE_PATH}
-  ${TK_INCLUDE_PATH}
   )
 
 # local includes
@@ -67,7 +65,6 @@ set(LIBDM_SRCS
   fb_paged_io.c
   fb_rect.c
   fb_util.c
-  fbserv_obj.c
   grid.c
   if_disk.c
   if_mem.c
@@ -82,7 +79,7 @@ set(LIBDM_SRCS
   )
 set_property(SOURCE dm_obj.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 set_property(SOURCE dm_init.cpp APPEND PROPERTY COMPILE_DEFINITIONS "DM_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\"")
-BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "librt;libbu;libpkg;${TCL_LIBRARY};${TK_LIBRARY};${OPENGL_LIBRARIES};${PNG_LIBRARIES}")
+BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "librt;libbu;libpkg;${OPENGL_LIBRARIES};${PNG_LIBRARIES}")
 set_target_properties(libdm PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 #if(BRLCAD_ENABLE_OSG)
@@ -92,9 +89,6 @@ set_target_properties(libdm PROPERTIES VERSION 20.0.1 SOVERSION 20)
 #  endif(CPP_DLL_DEFINES)
 #endif(BRLCAD_ENABLE_OSG)
 
-if (TARGET tk)
-  add_dependencies(libdm tk)
-endif (TARGET tk)
 if (TARGET profont_ProFont_ttf_cp)
   add_dependencies(libdm profont_ProFont_ttf_cp)
 endif (TARGET profont_ProFont_ttf_cp)

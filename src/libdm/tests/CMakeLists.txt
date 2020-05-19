@@ -38,6 +38,10 @@
 BRLCAD_ADDEXEC(dm_test dm_test.c "libdm;libbu" TEST)
 
 if (BRLCAD_ENABLE_TK)
+  include_directories(
+    ${TCL_INCLUDE_PATH}
+    ${TK_INCLUDE_PATH}
+    )
   BRLCAD_ADDEXEC(tcl_img tcl_img.cpp "libdm;libbu;${TCL_LIBRARY};${TK_LIBRARY}" TEST_USEDATA)
   BRLCAD_ADDEXEC(tcl_tevent tcl_tevent.cpp "libdm;libbu;${TCL_LIBRARY};${TK_LIBRARY}" TEST_USEDATA)
 endif (BRLCAD_ENABLE_TK)

@@ -3,6 +3,7 @@ include_directories(
   ${BRLCAD_BINARY_DIR}/include
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
+  ${TCL_INCLUDE_PATH}
   )
 
 set(TXT_SRCS
@@ -13,7 +14,7 @@ set(TXT_SRCS
 add_definitions(-DDM_PLUGIN)
 
 add_library(dm-txt SHARED ${TXT_SRCS})
-target_link_libraries(dm-txt libdm libbu)
+target_link_libraries(dm-txt libdm libbu ${TCL_LIBRARY})
 if (CPP_DLL_DEFINES)
   set_property(TARGET dm-txt APPEND PROPERTY COMPILE_DEFINITIONS "DM_DLL_EXPORTS")
 endif (CPP_DLL_DEFINES)

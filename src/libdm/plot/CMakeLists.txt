@@ -3,6 +3,7 @@ include_directories(
   ${BRLCAD_BINARY_DIR}/include
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
+  ${TCL_INCLUDE_PATH}
   )
 
 set(PLOT_SRCS
@@ -12,7 +13,7 @@ set(PLOT_SRCS
 add_definitions(-DDM_PLUGIN)
 
 add_library(dm-plot SHARED ${PLOT_SRCS})
-target_link_libraries(dm-plot libdm libbu)
+target_link_libraries(dm-plot libdm libbu ${TCL_LIBRARY})
 if (CPP_DLL_DEFINES)
   set_property(TARGET dm-plot APPEND PROPERTY COMPILE_DEFINITIONS "DM_DLL_EXPORTS")
 endif (CPP_DLL_DEFINES)

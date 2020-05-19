@@ -27,8 +27,6 @@
 
 #include <stdlib.h>
 
-#include "tcl.h"
-
 #include "bu/getopt.h"
 #include "bu/str.h"
 #include "vmath.h"

@@ -27,11 +27,6 @@
 
 #include <string.h>
 
-#include "tcl.h"
-#ifdef HAVE_TK
-#  include "tk.h"
-#endif
-
 #include "vmath.h"
 #include "dm.h"
 #include "rt/solid.h"

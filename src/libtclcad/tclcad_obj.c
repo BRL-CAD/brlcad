@@ -1169,8 +1169,8 @@ static struct to_cmdtab to_cmds[] = {
     {"faceplate",	"center_dot|prim_labels|view_params|view_scale color|draw [val(s)]", TO_UNLIMITED, to_faceplate, GED_FUNC_PTR_NULL},
     {"facetize",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_facetize},
     {"voxelize",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_voxelize},
-    {"fb2pix",  	"[-h -i -c] [-s squaresize] [-w width] [-n height] [file.pix]", TO_UNLIMITED, to_view_func, ged_fb2pix},
-    {"fbclear",  	"[r g b]", TO_UNLIMITED, to_view_func, ged_fbclear},
+    //{"fb2pix",  	"[-h -i -c] [-s squaresize] [-w width] [-n height] [file.pix]", TO_UNLIMITED, to_view_func, ged_fb2pix},
+    //{"fbclear",  	"[r g b]", TO_UNLIMITED, to_view_func, ged_fbclear},
     {"find_arb_edge",	"arb vx vy ptol", 5, to_view_func, ged_find_arb_edge_nearest_pnt},
     {"find_bot_edge",	"bot vx vy", 5, to_view_func, ged_find_bot_edge_nearest_pnt},
     {"find_bot_pnt",	"bot vx vy", 5, to_view_func, ged_find_bot_pnt_nearest_pnt},
@@ -1315,7 +1315,7 @@ static struct to_cmdtab to_cmds[] = {
     {"pathlist",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_pathlist},
     {"paths",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_pathsum},
     {"perspective",	"[angle]", 3, to_view_func_plus, ged_perspective},
-    {"pix2fb",  	"[options] [file.pix]", TO_UNLIMITED, to_view_func, ged_pix2fb},
+    //{"pix2fb",  	"[options] [file.pix]", TO_UNLIMITED, to_view_func, ged_pix2fb},
     {"plot",	"[options] file.pl", 16, to_view_func, ged_plot},
     {"pmat",	"[mat]", 3, to_view_func, ged_pmat},
     {"pmodel2view",	"vname", 2, to_view_func, ged_pmodel2view},
@@ -1323,7 +1323,7 @@ static struct to_cmdtab to_cmds[] = {
     {"pix",	"file", TO_UNLIMITED, to_pix, GED_FUNC_PTR_NULL},
     {"png",	"file", TO_UNLIMITED, to_png, GED_FUNC_PTR_NULL},
 #endif
-    {"png2fb",  	"[options] [file.png]", TO_UNLIMITED, to_view_func, ged_png2fb},
+    //{"png2fb",  	"[options] [file.png]", TO_UNLIMITED, to_view_func, ged_png2fb},
     {"pngwf",	"[options] file.png", 16, to_view_func, ged_png},
     {"poly_circ_mode",	"x y", TO_UNLIMITED, to_poly_circ_mode, GED_FUNC_PTR_NULL},
     {"poly_cont_build",	"x y", TO_UNLIMITED, to_poly_cont_build, GED_FUNC_PTR_NULL},
@@ -14924,7 +14924,7 @@ to_view_func_common(struct ged *gedp,
 
     /* Copy argv into av while skipping argv[1] (i.e. the view name) */
     gedp->ged_gvp = gdvp->gdv_view;
-    gedp->ged_fbsp = &gdvp->gdv_fbs;
+    //gedp->ged_fbsp = &gdvp->gdv_fbs;
     gedp->ged_refresh_clientdata = (void *)gdvp;
     av[0] = (char *)argv[0];
     ac = argc-1;

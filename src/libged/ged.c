@@ -276,7 +276,6 @@ ged_init(struct ged *gedp)
 
     /* (in)sanity */
     gedp->ged_gvp = NULL;
-    gedp->ged_fbsp = NULL;
     gedp->ged_dmp = NULL;
     gedp->ged_refresh_clientdata = NULL;
     gedp->ged_refresh_handler = NULL;

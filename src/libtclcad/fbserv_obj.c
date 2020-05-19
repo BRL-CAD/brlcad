@@ -52,9 +52,8 @@
 
 #include "raytrace.h"
 #include "dm.h"
-
-#include "dm.h"
-#include "./include/private.h"
+#include "tclcad.h"
+#include "../libdm/include/private.h"
 
 
 static struct fb *curr_fbp;		/* current framebuffer pointer */

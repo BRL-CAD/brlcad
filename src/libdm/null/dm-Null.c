@@ -27,7 +27,6 @@
 #  include <sys/time.h>
 #endif
 
-#include "tcl.h"
 #include "vmath.h"
 #include "dm.h"
 #include "../null/dm-Null.h"

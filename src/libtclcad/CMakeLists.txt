@@ -34,6 +34,7 @@ set(LIBTCLCAD_SRCS
   cmdhist_obj.c
   dm_obj.c
   fb_obj.c
+  fbserv_obj.c
   dm_tcl.c
   )
 set_property(SOURCE tclcad_obj.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
