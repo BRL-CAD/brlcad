@@ -612,10 +612,10 @@ fb tk_interface = {
     tk_flush,
     tk_free,
     tk_help,
-    "Debugging Interface",
+    bu_strdup("Debugging Interface"),
     FB_XMAXSCREEN,	/* max width */
     FB_YMAXSCREEN,	/* max height */
-    "/dev/tk",
+    bu_strdup("/dev/tk"),
     512,		/* current/default width */
     512,		/* current/default height */
     -1,			/* select fd */
