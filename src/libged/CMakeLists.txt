@@ -151,8 +151,8 @@ set(LIBGED_SOURCES
   facedef.c
   facetize_log.c
   facetize.cpp
-  #fb2pix.c
-  #fbclear.c
+  fb2pix.c
+  fbclear.c
   find.c
   form.c
   fracture.c
@@ -239,12 +239,12 @@ set(LIBGED_SOURCES
   pathlist.c
   pathsum.c
   perspective.c
-  #pix2fb.c
+  pix2fb.c
   plot.c
   pmat.c
   pmodel2view.c
   png.c
-  #png2fb.c
+  png2fb.c
   pnts_util.c
   pnts.cpp
   polyclip.cpp

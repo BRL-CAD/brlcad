@@ -33,7 +33,6 @@
 
 __BEGIN_DECLS
 
-#if 0
 
 /**
  * Fb2pix writes a framebuffer image to a .pix file.
@@ -45,7 +44,6 @@ GED_EXPORT extern int ged_fb2pix(struct ged *gedp, int argc, const char *argv[])
  */
 GED_EXPORT extern int ged_fbclear(struct ged *gedp, int argc, const char *argv[]);
 
-
 /**
  * Pix2fb reads a pix file into a framebuffer.
  */
@@ -56,7 +54,6 @@ GED_EXPORT extern int ged_pix2fb(struct ged *gedp, int argc, const char *argv[])
  */
 GED_EXPORT extern int ged_png2fb(struct ged *gedp, int argc, const char *argv[]);
 
-#endif
 
 __END_DECLS
 

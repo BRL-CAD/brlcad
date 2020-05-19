@@ -176,9 +176,20 @@ ged_pix2fb(struct ged *gedp, int argc, const char *argv[])
     int ret;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
-    GED_CHECK_FBSERV(gedp, GED_ERROR);
-    GED_CHECK_FBSERV_FBP(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
+
+    if (!gedp->ged_dmp) {
+	bu_vls_printf(gedp->ged_result_str, "no display manager currently active");
+	return GED_ERROR;
+    }
+
+    struct fb *fbp = dm_get_fb((struct dm *)gedp->ged_dmp);
+
+    if (!fbp) {
+	bu_vls_printf(gedp->ged_result_str, "display manager does not have a framebuffer");
+	return GED_ERROR;
+    }
+
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
@@ -194,7 +205,7 @@ ged_pix2fb(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    ret = fb_read_fd(gedp->ged_fbsp->fbs_fbp, infd,
+    ret = fb_read_fd(fbp, infd,
 		     file_width, file_height,
 		     file_xoff, file_yoff,
 		     scr_width, scr_height,
