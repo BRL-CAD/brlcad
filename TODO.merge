@@ -1,0 +1,12 @@
+This branch contains a significant rework of the libdm/libfb libraries, merging
+them into a single libdm and converting the platform-specific display backends
+into dynamically loaded plugins.
+
+In order to successfully merge this back into the mainline BRL-CAD, correct
+functionality will need to be verified for:
+
+Any tools using the fb2pix, pix2fb, fbclear, and png2fb libged functions.
+
+Any tools displaying a libdm or libfb window, especially within their own framework (Java, Qt, etc.)
+
+
