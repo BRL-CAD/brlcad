@@ -83,16 +83,6 @@ HIDDEN int
 fb_tk_open(fb *ifp, const char *file, int width, int height)
 {
     int pid = -1;
-    const char *cmd = "package require Tk";
-    char image_create_cmd[255] = {'\0'};
-    char canvas_create_cmd[255] = {'\0'};
-    char reportcolorcmd[255] = {'\0'};
-    const char canvas_pack_cmd[255] =
-	"pack .fb_tk_canvas -fill both -expand true";
-    const char place_image_cmd[255] =
-	".fb_tk_canvas create image 0 0 -image fb_tk_photo -anchor nw";
-    const char *wmclosecmd = "wm protocol . WM_DELETE_WINDOW {set CloseWindow \"close\"}";
-    const char *bindclosecmd = "bind . <Button-3> {set CloseWindow \"close\"}";
 
     char *buffer;
     char *linebuffer;
@@ -131,7 +121,7 @@ fb_tk_open(fb *ifp, const char *file, int width, int height)
 	fb_log("Tcl_Init returned error in fb_open.");
     }
 
-    if (Tcl_Eval(fbinterp, cmd) != TCL_OK) {
+    if (Tcl_Eval(fbinterp, "package require Tk") != TCL_OK) {
 	fb_log("Error returned attempting to start tk in fb_open.");
     }
 
@@ -141,37 +131,45 @@ fb_tk_open(fb *ifp, const char *file, int width, int height)
 
     Tk_MakeWindowExist(fbwin);
 
-    sprintf(image_create_cmd,
-	    "image create photo fb_tk_photo -height %d -width %d",
-	    width, height);
-
-    if (Tcl_Eval(fbinterp, image_create_cmd) != TCL_OK) {
-	fb_log("Error returned attempting to create image in fb_open.");
+    if (Tcl_Eval(fbinterp, "wm resizable . 0 0") != TCL_OK) {
+	fb_log("Error locking window size.");
     }
 
-    if ((fbphoto = Tk_FindPhoto(fbinterp, "fb_tk_photo")) == NULL) {
-	fb_log("Image creation unsuccessful in fb_open.");
+    if (Tcl_Eval(fbinterp, "wm title . \"Frame buffer\"") != TCL_OK) {
+	fb_log("Error locking window size.");
     }
 
-    sprintf(canvas_create_cmd,
-	    "canvas .fb_tk_canvas -highlightthickness 0 -height %d -width %d", width, height);
+    char frame_create_cmd[255] = {'\0'};
+    sprintf(frame_create_cmd, "pack [frame .fb -borderwidth 0 -highlightthickness 0 -height %d -width %d]", width, height);
+    if (Tcl_Eval(fbinterp, frame_create_cmd) != TCL_OK) {
+	fb_log("Error returned attempting to create frame in fb_open.");
+    }
 
-    sprintf (reportcolorcmd,
-	     "bind . <Button-2> {puts \"At image (%%x, [expr %d - %%y]), real RGB = ([fb_tk_photo get %%x %%y])\n\"}", height);
-
+    char canvas_create_cmd[255] = {'\0'};
+    sprintf(canvas_create_cmd, "pack [canvas .fb.canvas -borderwidth 0 -highlightthickness 0 -insertborderwidth 0 -selectborderwidth 0 -height %d -width %d]", width, height);
     if (Tcl_Eval(fbinterp, canvas_create_cmd) != TCL_OK) {
 	fb_log("Error returned attempting to create canvas in fb_open.");
     }
 
-    if (Tcl_Eval(fbinterp, canvas_pack_cmd) != TCL_OK) {
-	fb_log("Error returned attempting to pack canvas in fb_open. %s",
-	       Tcl_GetStringResult(fbinterp));
+    //const char canvas_pack_cmd[255] = "pack .fb_tk_canvas -fill both -expand true";
+    char image_create_cmd[255] = {'\0'};
+    sprintf(image_create_cmd, "image create photo .fb.canvas.photo -height %d -width %d", width, height);
+    if (Tcl_Eval(fbinterp, image_create_cmd) != TCL_OK) {
+	fb_log("Error returned attempting to create image in fb_open.");
     }
 
+    if ((fbphoto = Tk_FindPhoto(fbinterp, ".fb.canvas.photo")) == NULL) {
+	fb_log("Image creation unsuccessful in fb_open.");
+    }
+
+    const char place_image_cmd[255] = ".fb.canvas create image 0 0 -image .fb.canvas.photo -anchor nw";
     if (Tcl_Eval(fbinterp, place_image_cmd) != TCL_OK) {
 	fb_log("Error returned attempting to place image in fb_open. %s",
 	       Tcl_GetStringResult(fbinterp));
     }
+
+    char reportcolorcmd[255] = {'\0'};
+    sprintf (reportcolorcmd, "bind . <Button-2> {puts \"At image (%%x, [expr %d - %%y]), real RGB = ([.fb.canvas.photo get %%x %%y])\n\"}", height);
 
     /* Set our Tcl variable pertaining to whether a
      * window closing event has been seen from the
@@ -182,9 +180,13 @@ fb_tk_open(fb *ifp, const char *file, int width, int height)
      * a "lingering" tk window.
      */
     Tcl_SetVar(fbinterp, "CloseWindow", "open", 0);
+
+    const char *wmclosecmd = "wm protocol . WM_DELETE_WINDOW {set CloseWindow \"close\"}";
     if (Tcl_Eval(fbinterp, wmclosecmd) != TCL_OK) {
 	fb_log("Error binding WM_DELETE_WINDOW.");
     }
+
+    const char *bindclosecmd = "bind . <Button-3> {set CloseWindow \"close\"}";
     if (Tcl_Eval(fbinterp, bindclosecmd) != TCL_OK) {
 	fb_log("Error binding right mouse button.");
     }
@@ -211,7 +213,7 @@ fb_tk_open(fb *ifp, const char *file, int width, int height)
 
     pid = fork();
     if (pid < 0) {
-	printf("boo, something bad\n");
+	printf("Problem forking Tk framebuffer window\n");
     } else if (pid > 0) {
 	int line = 0;
 	uint32_t lines[3];
@@ -250,11 +252,7 @@ fb_tk_open(fb *ifp, const char *file, int width, int height)
 	    block.width = count;
 	    block.pitch = 3 * ifp->if_width;
 
-#if defined(TK_MAJOR_VERSION) && TK_MAJOR_VERSION >= 8 && defined(TK_MINOR_VERSION) && TK_MINOR_VERSION >= 5
-	    Tk_PhotoPutBlock(fbinterp, fbphoto, &block, 0, ifp->if_height-y[0], count, 1, TK_PHOTO_COMPOSITE_SET);
-#else
-	    Tk_PhotoPutBlock(fbinterp, &block, 0, ifp->if_height-y[0], count, 1, TK_PHOTO_COMPOSITE_SET);
-#endif
+	    Tk_PhotoPutBlock(fbinterp, fbphoto, &block, 0, ifp->if_height-y[0]-1, count, 1, TK_PHOTO_COMPOSITE_SET);
 
 	    do {
 		i = Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT);
@@ -273,7 +271,6 @@ fb_tk_open(fb *ifp, const char *file, int width, int height)
 	bu_exit(0, NULL);
     } else {
 	/* child */
-	printf("IMA CHILD\n");
 	fflush(stdout);
     }
 
