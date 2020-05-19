@@ -39,6 +39,7 @@
 #include "bnetwork.h"
 
 #include "bu/color.h"
+#include "bu/malloc.h"
 #include "bu/str.h"
 #include "bu/exit.h"
 #include "bu/log.h"
@@ -47,37 +48,19 @@
 #include "fb_private.h"
 #include "fb.h"
 
+#define TKINFO(ptr) ((struct tk_info *)((ptr)->u6.p))
+#define TKINFOL(ptr) (ptr)->u6.p
 
-Tcl_Interp *fbinterp;
-Tk_Window fbwin;
-Tk_PhotoHandle fbphoto;
-int p[2] = {0, 0};
+struct tk_info {
+    Tcl_Interp *fbinterp;
+    Tk_Window fbwin;
+    int p[2];
 
-/* Note that Tk_PhotoPutBlock claims to have a faster
- * copy method when pixelSize is 4 and alphaOffset is
- * 3 - perhaps output could be massaged to generate this
- * type of information and speed up the process?
- *
- * Might as well use one block and set the three things
- * that actually change in tk_write
- */
-Tk_PhotoImageBlock block = {
-    NULL, /*Pointer to first pixel*/
-    0,    /*Width of block in pixels*/
-    1,    /*Height of block in pixels - always one for a scanline*/
-    0,    /*Address difference between successive lines*/
-    3,    /*Address difference between successive pixels on one scanline*/
-    {
-	RED,
-	GRN,
-	BLU,
-	0   /* alpha */
-    }
+    char *tkwrite_buffer;
+
+    Tk_PhotoHandle fbphoto;
+    Tk_PhotoImageBlock scanline;
 };
-
-
-char *tkwrite_buffer;
-
 
 HIDDEN int
 fb_tk_open(fb *ifp, const char *file, int width, int height)
@@ -115,57 +98,76 @@ fb_tk_open(fb *ifp, const char *file, int width, int height)
     ifp->if_width = width;
     ifp->if_height = height;
 
-    fbinterp = Tcl_CreateInterp();
+    /* Set up Tk specific info */
+    if ((TKINFOL(ifp) = (char *)calloc(1, sizeof(struct tk_info))) == NULL) {
+	fb_log("fb_tk_open:  tk_info malloc failed\n");
+	return -1;
+    }
 
-    if (Tcl_Init(fbinterp) == TCL_ERROR) {
+    struct tk_info *tki = TKINFO(ifp);
+    tki->p[0] = 0;
+    tki->p[1] = 0;
+    tki->scanline.pixelPtr = NULL; /*Pointer to first pixel*/
+    tki->scanline.width = 0;       /*Width of block in pixels*/
+    tki->scanline.height = 1;      /*Height of block in pixels - always one for a scanline*/
+    tki->scanline.pitch = 0;       /*Address difference between successive lines*/
+    tki->scanline.pixelSize = 3;   /*Address difference between successive pixels on one scanline*/
+    tki->scanline.offset[0] = RED;
+    tki->scanline.offset[1] = GRN;
+    tki->scanline.offset[2] = BLU;
+    tki->scanline.offset[3] = 0;  /* alpha */
+
+    tki->fbinterp = Tcl_CreateInterp();
+
+    if (Tcl_Init(tki->fbinterp) == TCL_ERROR) {
 	fb_log("Tcl_Init returned error in fb_open.");
     }
 
-    if (Tcl_Eval(fbinterp, "package require Tk") != TCL_OK) {
+    if (Tcl_Eval(tki->fbinterp, "package require Tk") != TCL_OK) {
 	fb_log("Error returned attempting to start tk in fb_open.");
     }
 
-    fbwin = Tk_MainWindow(fbinterp);
+    tki->fbwin = Tk_MainWindow(tki->fbinterp);
 
-    Tk_GeometryRequest(fbwin, width, height);
+    Tk_GeometryRequest(tki->fbwin, width, height);
 
-    Tk_MakeWindowExist(fbwin);
+    Tk_MakeWindowExist(tki->fbwin);
 
-    if (Tcl_Eval(fbinterp, "wm resizable . 0 0") != TCL_OK) {
+    if (Tcl_Eval(tki->fbinterp, "wm resizable . 0 0") != TCL_OK) {
 	fb_log("Error locking window size.");
     }
 
-    if (Tcl_Eval(fbinterp, "wm title . \"Frame buffer\"") != TCL_OK) {
+    if (Tcl_Eval(tki->fbinterp, "wm title . \"Frame buffer\"") != TCL_OK) {
 	fb_log("Error locking window size.");
     }
 
     char frame_create_cmd[255] = {'\0'};
     sprintf(frame_create_cmd, "pack [frame .fb -borderwidth 0 -highlightthickness 0 -height %d -width %d]", width, height);
-    if (Tcl_Eval(fbinterp, frame_create_cmd) != TCL_OK) {
+    if (Tcl_Eval(tki->fbinterp, frame_create_cmd) != TCL_OK) {
 	fb_log("Error returned attempting to create frame in fb_open.");
     }
 
     char canvas_create_cmd[255] = {'\0'};
     sprintf(canvas_create_cmd, "pack [canvas .fb.canvas -borderwidth 0 -highlightthickness 0 -insertborderwidth 0 -selectborderwidth 0 -height %d -width %d]", width, height);
-    if (Tcl_Eval(fbinterp, canvas_create_cmd) != TCL_OK) {
+    if (Tcl_Eval(tki->fbinterp, canvas_create_cmd) != TCL_OK) {
 	fb_log("Error returned attempting to create canvas in fb_open.");
     }
 
     //const char canvas_pack_cmd[255] = "pack .fb_tk_canvas -fill both -expand true";
     char image_create_cmd[255] = {'\0'};
     sprintf(image_create_cmd, "image create photo .fb.canvas.photo -height %d -width %d", width, height);
-    if (Tcl_Eval(fbinterp, image_create_cmd) != TCL_OK) {
+    if (Tcl_Eval(tki->fbinterp, image_create_cmd) != TCL_OK) {
 	fb_log("Error returned attempting to create image in fb_open.");
     }
 
-    if ((fbphoto = Tk_FindPhoto(fbinterp, ".fb.canvas.photo")) == NULL) {
+    if ((tki->fbphoto = Tk_FindPhoto(tki->fbinterp, ".fb.canvas.photo")) == NULL) {
 	fb_log("Image creation unsuccessful in fb_open.");
     }
 
     const char place_image_cmd[255] = ".fb.canvas create image 0 0 -image .fb.canvas.photo -anchor nw";
-    if (Tcl_Eval(fbinterp, place_image_cmd) != TCL_OK) {
+    if (Tcl_Eval(tki->fbinterp, place_image_cmd) != TCL_OK) {
 	fb_log("Error returned attempting to place image in fb_open. %s",
-	       Tcl_GetStringResult(fbinterp));
+	       Tcl_GetStringResult(tki->fbinterp));
     }
 
     char reportcolorcmd[255] = {'\0'};
@@ -179,18 +181,18 @@ fb_tk_open(fb *ifp, const char *file, int width, int height)
      * for a change to the CloseWindow variable ensures
      * a "lingering" tk window.
      */
-    Tcl_SetVar(fbinterp, "CloseWindow", "open", 0);
+    Tcl_SetVar(tki->fbinterp, "CloseWindow", "open", 0);
 
     const char *wmclosecmd = "wm protocol . WM_DELETE_WINDOW {set CloseWindow \"close\"}";
-    if (Tcl_Eval(fbinterp, wmclosecmd) != TCL_OK) {
+    if (Tcl_Eval(tki->fbinterp, wmclosecmd) != TCL_OK) {
 	fb_log("Error binding WM_DELETE_WINDOW.");
     }
 
     const char *bindclosecmd = "bind . <Button-3> {set CloseWindow \"close\"}";
-    if (Tcl_Eval(fbinterp, bindclosecmd) != TCL_OK) {
+    if (Tcl_Eval(tki->fbinterp, bindclosecmd) != TCL_OK) {
 	fb_log("Error binding right mouse button.");
     }
-    if (Tcl_Eval(fbinterp, reportcolorcmd) != TCL_OK) {
+    if (Tcl_Eval(tki->fbinterp, reportcolorcmd) != TCL_OK) {
 	fb_log("Error binding middle mouse button.");
     }
 
@@ -205,9 +207,9 @@ fb_tk_open(fb *ifp, const char *file, int width, int height)
      */
     buffer = (char *)malloc(sizeof(uint32_t)*3+ifp->if_width*3);
     linebuffer = (char *)malloc(ifp->if_width*3);
-    tkwrite_buffer = (char *)malloc(ifp->if_width*3);
+    tki->tkwrite_buffer = (char *)malloc(ifp->if_width*3);
 
-    if (pipe(p) == -1) {
+    if (pipe(tki->p) == -1) {
 	perror("pipe failed");
     }
 
@@ -226,18 +228,18 @@ fb_tk_open(fb *ifp, const char *file, int width, int height)
 	    int count;
 
 	    /* If the Tk window gets a close event, bail */
-	    if (BU_STR_EQUAL(Tcl_GetVar(fbinterp, "CloseWindow", 0), "close")) {
+	    if (BU_STR_EQUAL(Tcl_GetVar(tki->fbinterp, "CloseWindow", 0), "close")) {
 		free(buffer);
 		free(linebuffer);
-		free(tkwrite_buffer);
+		free(tki->tkwrite_buffer);
 		fclose(stdin);
 		printf("Close Window event\n");
-		Tcl_Eval(fbinterp, "destroy .");
+		Tcl_Eval(tki->fbinterp, "destroy .");
 		bu_exit(0, NULL);
 	    }
 
 	    /* Unpack inputs from pipe */
-	    count = read(p[0], buffer, sizeof(uint32_t)*3+ifp->if_width*3);
+	    count = read(tki->p[0], buffer, sizeof(uint32_t)*3+ifp->if_width*3);
 	    memcpy(lines, buffer, sizeof(uint32_t)*3);
 	    memcpy(linebuffer, buffer+sizeof(uint32_t)*3, ifp->if_width*3);
 	    y[0] = ntohl(lines[0]);
@@ -248,11 +250,11 @@ fb_tk_open(fb *ifp, const char *file, int width, int height)
 	    }
 
 	    line++;
-	    block.pixelPtr = (unsigned char *)linebuffer;
-	    block.width = count;
-	    block.pitch = 3 * ifp->if_width;
+	    tki->scanline.pixelPtr = (unsigned char *)linebuffer;
+	    tki->scanline.width = count;
+	    tki->scanline.pitch = 3 * ifp->if_width;
 
-	    Tk_PhotoPutBlock(fbinterp, fbphoto, &block, 0, ifp->if_height-y[0]-1, count, 1, TK_PHOTO_COMPOSITE_SET);
+	    Tk_PhotoPutBlock(tki->fbinterp, tki->fbphoto, &tki->scanline, 0, ifp->if_height-y[0]-1, count, 1, TK_PHOTO_COMPOSITE_SET);
 
 	    do {
 		i = Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT);
@@ -261,12 +263,12 @@ fb_tk_open(fb *ifp, const char *file, int width, int height)
 	/* very bad things will happen if the parent does not terminate here */
 	free(buffer);
 	free(linebuffer);
-	free(tkwrite_buffer);
+	free(tki->tkwrite_buffer);
 	fclose(stdin);
-	Tcl_Eval(fbinterp, "vwait CloseWindow");
-	if (BU_STR_EQUAL(Tcl_GetVar(fbinterp, "CloseWindow", 0), "close")) {
+	Tcl_Eval(tki->fbinterp, "vwait CloseWindow");
+	if (BU_STR_EQUAL(Tcl_GetVar(tki->fbinterp, "CloseWindow", 0), "close")) {
 	    printf("Close Window event\n");
-	    Tcl_Eval(fbinterp, "destroy .");
+	    Tcl_Eval(tki->fbinterp, "destroy .");
 	}
 	bu_exit(0, NULL);
     } else {
@@ -317,14 +319,16 @@ tk_refresh(fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNU
 HIDDEN int
 fb_tk_close(fb *ifp)
 {
+    struct tk_info *tki = TKINFO(ifp);
     int y[2];
     int ret;
     y[0] = -1;
     y[1] = 0;
     printf("Entering fb_tk_close\n");
     FB_CK_FB(ifp);
-    ret = write(p[1], y, sizeof(y));
-    close(p[1]);
+    ret = write(tki->p[1], y, sizeof(y));
+    close(tki->p[1]);
+    bu_free(tki, "tkinfo");
     printf("Sent write (ret=%d) from fb_tk_close\n", ret);
     return 0;
 }
@@ -362,21 +366,24 @@ tk_write(fb *ifp, int UNUSED(x), int y, const unsigned char *pixelp, size_t coun
     uint32_t line[3];
 
     FB_CK_FB(ifp);
+
+    struct tk_info *tki = TKINFO(ifp);
+
     /* Set local values of Tk_PhotoImageBlock */
-    block.pixelPtr = (unsigned char *)pixelp;
-    block.width = count;
-    block.pitch = 3 * ifp->if_width;
+    tki->scanline.pixelPtr = (unsigned char *)pixelp;
+    tki->scanline.width = count;
+    tki->scanline.pitch = 3 * ifp->if_width;
 
     /* Pack values to be sent to parent */
     line[0] = htonl(y);
     line[1] = htonl((long)count);
     line[2] = 0;
 
-    memcpy(tkwrite_buffer, line, sizeof(uint32_t)*3);
-    memcpy(tkwrite_buffer+sizeof(uint32_t)*3, block.pixelPtr, 3 * ifp->if_width);
+    memcpy(tki->tkwrite_buffer, line, sizeof(uint32_t)*3);
+    memcpy(tki->tkwrite_buffer+sizeof(uint32_t)*3, tki->scanline.pixelPtr, 3 * ifp->if_width);
 
     /* Send values and data to parent for display */
-    if (write(p[1], tkwrite_buffer, 3 * ifp->if_width + 3*sizeof(uint32_t)) == -1) {
+    if (write(tki->p[1], tki->tkwrite_buffer, 3 * ifp->if_width + 3*sizeof(uint32_t)) == -1) {
 	perror("Unable to write to pipe");
 	bu_snooze(BU_SEC2USEC(1));
     }
