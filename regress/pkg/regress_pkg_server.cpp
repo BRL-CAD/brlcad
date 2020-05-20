@@ -41,6 +41,7 @@
 #include "bu/getopt.h"
 #include "bu/vls.h"
 #include "bu/snooze.h"
+#include "bu/time.h"
 #include "pkg.h"
 #include "regress_pkg_protocol.h"
 
@@ -110,12 +111,17 @@ main(int UNUSED(argc), const char *argv[]) {
      * handshake that waits for a HELO message from the client.  if it
      * doesn't get one, the server continues to wait.
      */
+    int64_t timer = bu_gettime();
     bu_log("Listening on port %d\n", port);
     do {
-	client = pkg_getclient(netfd, callbacks, NULL, 0);
+	client = pkg_getclient(netfd, callbacks, NULL, 1);
 	if (client == PKC_NULL) {
+	    if ((bu_gettime() - timer) / 1000000.0 > 1.0) {
+		bu_log("Connection inactive for > 1 second, quitting.\n");
+		bu_exit(1, "Timeout - inactive");
+	    }
 	    bu_log("Connection seems to be busy, waiting...\n");
-	    bu_snooze(BU_SEC2USEC(10));
+	    bu_snooze(100000);
 	    continue;
 	} else if (client == PKC_ERROR) {
 	    pkg_close(client);
@@ -123,6 +129,9 @@ main(int UNUSED(argc), const char *argv[]) {
 	    bu_exit(-1, "Fatal error accepting client connection.\n");
 	    continue;
 	}
+
+	// Something happened - reset idle timer
+	timer = bu_gettime();
 
 	/* got a connection, process it */
 	msgbuffer = pkg_bwaitfor (MSG_HELO, client);

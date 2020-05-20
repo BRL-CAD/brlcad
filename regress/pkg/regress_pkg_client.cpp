@@ -33,10 +33,12 @@
 
 /* interface headers */
 #include "bu/app.h"
+#include "bu/file.h"
+#include "bu/getopt.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
-#include "bu/getopt.h"
-#include "bu/file.h"
+#include "bu/snooze.h"
+#include "bu/time.h"
 #include "bu/vls.h"
 #include "pkg.h"
 #include "regress_pkg_protocol.h"
@@ -91,10 +93,19 @@ main(int UNUSED(argc), const char *argv[]) {
     /* fire up the client */
     bu_log("Connecting to %s, port %d\n", server, port);
     snprintf(s_port, MAX_PORT_DIGITS, "%d", port);
+    int64_t timer = bu_gettime();
     connection = pkg_open(server, s_port, "tcp", NULL, NULL, NULL, NULL);
     if (connection == PKC_ERROR) {
-	bu_log("Connection to %s, port %d, failed.\n", server, port);
-	bu_exit(-1, "ERROR: Unable to open a connection to the server\n");
+
+	while ((bu_gettime() - timer) / 1000000.0 < 1.0) {
+	    bu_snooze(10000);
+	    connection = pkg_open(server, s_port, "tcp", NULL, NULL, NULL, NULL);
+	}
+
+	if (connection == PKC_ERROR) {
+	    bu_log("Connection to %s, port %d, failed.\n", server, port);
+	    bu_exit(-1, "ERROR: tried for 1 second - unable to open a connection to the server\n");
+	}
     }
     connection->pkc_switch = callbacks;
 
