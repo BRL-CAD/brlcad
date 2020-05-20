@@ -33,8 +33,11 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+
 #include <tcl.h>
 #include <tk.h>
+
+
 #include "bio.h"
 #include "bnetwork.h"
 
@@ -54,22 +57,183 @@
 struct tk_info {
     Tcl_Interp *fbinterp;
     Tk_Window fbwin;
-    int p[2];
 
-    char *tkwrite_buffer;
+    // The rendering memory used to actually assemble the framebuffer contents.
+    long fb_buff_size;
+    unsigned char *fbpixel;
 
     Tk_PhotoHandle fbphoto;
-    Tk_PhotoImageBlock scanline;
+    int draw;
+
+    Tcl_ThreadId parent_id;
+    Tcl_ThreadId fb_id;
+    int ready;
+    int shutdown;
 };
+
+TCL_DECLARE_MUTEX(drawMutex)
+
+TCL_DECLARE_MUTEX(fbthreadMutex)
+// Event container passed to routines triggered by events.
+struct FbEvent {
+    Tcl_Event event;            /* Must be first */
+    fb *ifp;
+};
+
+// Even for events where we don't intend to actually run a proc,
+// we need to tell Tcl it successfully processed them.  For that
+// we define a no-op callback proc.
+static int
+noop_proc(Tcl_Event *UNUSED(evPtr), int UNUSED(mask))
+{
+    // Return one to signify a successful completion of the process execution
+    return 1;
+}
+
+static void
+ImageUpdate(ClientData clientData)
+{
+    fb *ifp = (fb *)clientData;
+    struct tk_info *tki = TKINFO(ifp);
+
+    Tcl_MutexLock(&fbthreadMutex);
+    tki->draw = 0;
+    Tcl_MutexUnlock(&fbthreadMutex);
+
+    Tcl_MutexLock(&drawMutex);
+    Tk_PhotoImageBlock dm_data;
+    Tk_PhotoGetImage(tki->fbphoto, &dm_data);
+    dm_data.pixelPtr = tki->fbpixel;
+    Tk_PhotoPutBlock(tki->fbinterp, tki->fbphoto, &dm_data, 0, 0, dm_data.width, dm_data.height, TK_PHOTO_COMPOSITE_SET);
+    Tcl_MutexUnlock(&drawMutex);
+}
+
+static Tcl_ThreadCreateType
+fb_tk_run(ClientData clientData)
+{
+    fb *ifp = (fb *)clientData;
+    struct tk_info *tki = TKINFO(ifp);
+
+    tki->fbinterp = Tcl_CreateInterp();
+
+    if (Tcl_Init(tki->fbinterp) == TCL_ERROR) {
+	return;
+    }
+
+    if (Tcl_Eval(tki->fbinterp, "package require Tk") != TCL_OK) {
+       	return;
+    }
+
+    tki->fbwin = Tk_MainWindow(tki->fbinterp);
+
+    Tk_GeometryRequest(tki->fbwin, ifp->if_width, ifp->if_height);
+
+    Tk_MakeWindowExist(tki->fbwin);
+
+    if (Tcl_Eval(tki->fbinterp, "wm resizable . 0 0") != TCL_OK) {
+	return;
+    }
+
+    if (Tcl_Eval(tki->fbinterp, "wm title . \"Frame buffer\"") != TCL_OK) {
+	return;
+    }
+
+    char frame_create_cmd[255] = {'\0'};
+    sprintf(frame_create_cmd, "pack [frame .fb -borderwidth 0 -highlightthickness 0 -height %d -width %d]", ifp->if_width, ifp->if_height);
+    if (Tcl_Eval(tki->fbinterp, frame_create_cmd) != TCL_OK) {
+	return;
+    }
+
+    char canvas_create_cmd[255] = {'\0'};
+    sprintf(canvas_create_cmd, "pack [canvas .fb.canvas -borderwidth 0 -highlightthickness 0 -insertborderwidth 0 -selectborderwidth 0 -height %d -width %d]", ifp->if_width, ifp->if_height);
+    if (Tcl_Eval(tki->fbinterp, canvas_create_cmd) != TCL_OK) {
+	return;
+    }
+
+    //const char canvas_pack_cmd[255] = "pack .fb_tk_canvas -fill both -expand true";
+    char image_create_cmd[255] = {'\0'};
+    sprintf(image_create_cmd, "image create photo .fb.canvas.photo -height %d -width %d", ifp->if_width, ifp->if_height);
+    if (Tcl_Eval(tki->fbinterp, image_create_cmd) != TCL_OK) {
+	return;
+    }
+
+    if ((tki->fbphoto = Tk_FindPhoto(tki->fbinterp, ".fb.canvas.photo")) == NULL) {
+	return;
+    }
+
+    const char place_image_cmd[255] = ".fb.canvas create image 0 0 -image .fb.canvas.photo -anchor nw";
+    if (Tcl_Eval(tki->fbinterp, place_image_cmd) != TCL_OK) {
+	return;
+    }
+
+    char reportcolorcmd[255] = {'\0'};
+    sprintf (reportcolorcmd, "bind . <Button-2> {puts \"At image (%%x, [expr %d - %%y]), real RGB = ([.fb.canvas.photo get %%x %%y])\n\"}", ifp->if_height);
+
+    /* Set our Tcl variable pertaining to whether a
+     * window closing event has been seen from the
+     * Window manager.  WM_DELETE_WINDOW will be
+     * bound to a command setting this variable to
+     * the string "close", and a vwait watching
+     * for a change to the CloseWindow variable ensures
+     * a "lingering" tk window.
+     */
+    Tcl_SetVar(tki->fbinterp, "CloseWindow", "open", 0);
+
+    const char *wmclosecmd = "wm protocol . WM_DELETE_WINDOW {set CloseWindow \"close\"}";
+    if (Tcl_Eval(tki->fbinterp, wmclosecmd) != TCL_OK) {
+	return;
+	fb_log("Error binding WM_DELETE_WINDOW.");
+    }
+
+    const char *bindclosecmd = "bind . <Button-3> {set CloseWindow \"close\"}";
+    if (Tcl_Eval(tki->fbinterp, bindclosecmd) != TCL_OK) {
+	return;
+    }
+    if (Tcl_Eval(tki->fbinterp, reportcolorcmd) != TCL_OK) {
+	return;
+    }
+
+    // Clear out any events up to this point
+    while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
+
+    tki->ready = 1;
+
+    while (!tki->shutdown) {
+
+	Tcl_DoOneEvent(0);
+
+	/* If the Tk window gets a close event, wrap up */
+	if (BU_STR_EQUAL(Tcl_GetVar(tki->fbinterp, "CloseWindow", 0), "close")) {
+	    tki->shutdown = 1;
+	    continue;
+	}
+
+	if (tki->draw) {
+	    Tk_DoWhenIdle(ImageUpdate, (ClientData) ifp);
+	}
+    }
+
+    Tcl_Eval(tki->fbinterp, "destroy .");
+
+    // Let the parent thread know we're done
+    Tcl_MutexLock(&fbthreadMutex);
+    struct FbEvent *threadEventPtr = (struct FbEvent *)ckalloc(sizeof(FbEvent));
+    threadEventPtr->ifp = ifp;
+    threadEventPtr->event.proc = noop_proc;
+    Tcl_ThreadQueueEvent(tki->parent_id, (Tcl_Event *) threadEventPtr, TCL_QUEUE_TAIL);
+    Tcl_ThreadAlert(tki->parent_id);
+    Tcl_MutexUnlock(&fbthreadMutex);
+
+    Tcl_DeleteInterp(tki->fbinterp);
+
+    Tcl_ExitThread(TCL_OK);
+    TCL_THREAD_CREATE_RETURN;
+}
+
 
 HIDDEN int
 fb_tk_open(fb *ifp, const char *file, int width, int height)
 {
-    int pid = -1;
-
-    char *buffer;
-    char *linebuffer;
-
     FB_CK_FB(ifp);
     if (file == (char *)NULL)
 	fb_log("fb_open(0x%lx, NULL, %d, %d)\n",
@@ -105,177 +269,28 @@ fb_tk_open(fb *ifp, const char *file, int width, int height)
     }
 
     struct tk_info *tki = TKINFO(ifp);
-    tki->p[0] = 0;
-    tki->p[1] = 0;
-    tki->scanline.pixelPtr = NULL; /*Pointer to first pixel*/
-    tki->scanline.width = 0;       /*Width of block in pixels*/
-    tki->scanline.height = 1;      /*Height of block in pixels - always one for a scanline*/
-    tki->scanline.pitch = 0;       /*Address difference between successive lines*/
-    tki->scanline.pixelSize = 3;   /*Address difference between successive pixels on one scanline*/
-    tki->scanline.offset[0] = RED;
-    tki->scanline.offset[1] = GRN;
-    tki->scanline.offset[2] = BLU;
-    tki->scanline.offset[3] = 0;  /* alpha */
+    tki->shutdown = 0;
+    tki->ready = 0;
+    tki->draw = 0;
 
-    tki->fbinterp = Tcl_CreateInterp();
+    long b_size = ifp->if_width * ifp->if_height * 4;
+    tki->fbpixel = (unsigned char *)calloc(b_size+1, sizeof(char));
 
-    if (Tcl_Init(tki->fbinterp) == TCL_ERROR) {
-	fb_log("Tcl_Init returned error in fb_open.");
+    Tcl_MutexLock(&fbthreadMutex);
+    Tcl_ThreadId fbthreadID;
+    if (Tcl_CreateThread(&fbthreadID, fb_tk_run, (ClientData)ifp, TCL_THREAD_STACK_DEFAULT, TCL_THREAD_JOINABLE) != TCL_OK) {
+	fb_log("can't create fb thread\n");
+	return -1;
     }
+    tki->fb_id = fbthreadID;
+    Tcl_MutexUnlock(&fbthreadMutex);
 
-    if (Tcl_Eval(tki->fbinterp, "package require Tk") != TCL_OK) {
-	fb_log("Error returned attempting to start tk in fb_open.");
+#if 0
+    // Let the window finish setting up before open is considered done
+    while (!tki->ready) {
+	Tcl_Sleep(1);
     }
-
-    tki->fbwin = Tk_MainWindow(tki->fbinterp);
-
-    Tk_GeometryRequest(tki->fbwin, width, height);
-
-    Tk_MakeWindowExist(tki->fbwin);
-
-    if (Tcl_Eval(tki->fbinterp, "wm resizable . 0 0") != TCL_OK) {
-	fb_log("Error locking window size.");
-    }
-
-    if (Tcl_Eval(tki->fbinterp, "wm title . \"Frame buffer\"") != TCL_OK) {
-	fb_log("Error locking window size.");
-    }
-
-    char frame_create_cmd[255] = {'\0'};
-    sprintf(frame_create_cmd, "pack [frame .fb -borderwidth 0 -highlightthickness 0 -height %d -width %d]", width, height);
-    if (Tcl_Eval(tki->fbinterp, frame_create_cmd) != TCL_OK) {
-	fb_log("Error returned attempting to create frame in fb_open.");
-    }
-
-    char canvas_create_cmd[255] = {'\0'};
-    sprintf(canvas_create_cmd, "pack [canvas .fb.canvas -borderwidth 0 -highlightthickness 0 -insertborderwidth 0 -selectborderwidth 0 -height %d -width %d]", width, height);
-    if (Tcl_Eval(tki->fbinterp, canvas_create_cmd) != TCL_OK) {
-	fb_log("Error returned attempting to create canvas in fb_open.");
-    }
-
-    //const char canvas_pack_cmd[255] = "pack .fb_tk_canvas -fill both -expand true";
-    char image_create_cmd[255] = {'\0'};
-    sprintf(image_create_cmd, "image create photo .fb.canvas.photo -height %d -width %d", width, height);
-    if (Tcl_Eval(tki->fbinterp, image_create_cmd) != TCL_OK) {
-	fb_log("Error returned attempting to create image in fb_open.");
-    }
-
-    if ((tki->fbphoto = Tk_FindPhoto(tki->fbinterp, ".fb.canvas.photo")) == NULL) {
-	fb_log("Image creation unsuccessful in fb_open.");
-    }
-
-    const char place_image_cmd[255] = ".fb.canvas create image 0 0 -image .fb.canvas.photo -anchor nw";
-    if (Tcl_Eval(tki->fbinterp, place_image_cmd) != TCL_OK) {
-	fb_log("Error returned attempting to place image in fb_open. %s",
-	       Tcl_GetStringResult(tki->fbinterp));
-    }
-
-    char reportcolorcmd[255] = {'\0'};
-    sprintf (reportcolorcmd, "bind . <Button-2> {puts \"At image (%%x, [expr %d - %%y]), real RGB = ([.fb.canvas.photo get %%x %%y])\n\"}", height);
-
-    /* Set our Tcl variable pertaining to whether a
-     * window closing event has been seen from the
-     * Window manager.  WM_DELETE_WINDOW will be
-     * bound to a command setting this variable to
-     * the string "close", and a vwait watching
-     * for a change to the CloseWindow variable ensures
-     * a "lingering" tk window.
-     */
-    Tcl_SetVar(tki->fbinterp, "CloseWindow", "open", 0);
-
-    const char *wmclosecmd = "wm protocol . WM_DELETE_WINDOW {set CloseWindow \"close\"}";
-    if (Tcl_Eval(tki->fbinterp, wmclosecmd) != TCL_OK) {
-	fb_log("Error binding WM_DELETE_WINDOW.");
-    }
-
-    const char *bindclosecmd = "bind . <Button-3> {set CloseWindow \"close\"}";
-    if (Tcl_Eval(tki->fbinterp, bindclosecmd) != TCL_OK) {
-	fb_log("Error binding right mouse button.");
-    }
-    if (Tcl_Eval(tki->fbinterp, reportcolorcmd) != TCL_OK) {
-	fb_log("Error binding middle mouse button.");
-    }
-
-    while (Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT));
-
-    /* FIXME: malloc() is necessary here because there are callers
-     * that acquire a BU_SYM_SYSCALL semaphore for libfb calls.
-     * this should be investigated more closely to see if the
-     * semaphore acquires are critical or if they can be pushed
-     * down into libfb proper.  in the meantime, manually call
-     * malloc()/free().
-     */
-    buffer = (char *)malloc(sizeof(uint32_t)*3+ifp->if_width*3);
-    linebuffer = (char *)malloc(ifp->if_width*3);
-    tki->tkwrite_buffer = (char *)malloc(ifp->if_width*3);
-
-    if (pipe(tki->p) == -1) {
-	perror("pipe failed");
-    }
-
-    pid = fork();
-    if (pid < 0) {
-	printf("Problem forking Tk framebuffer window\n");
-    } else if (pid > 0) {
-	int line = 0;
-	uint32_t lines[3];
-	int i;
-	int y[2];
-	y[0] = 0;
-
-	/* parent */
-	while (y[0] >= 0) {
-	    int count;
-
-	    /* If the Tk window gets a close event, bail */
-	    if (BU_STR_EQUAL(Tcl_GetVar(tki->fbinterp, "CloseWindow", 0), "close")) {
-		free(buffer);
-		free(linebuffer);
-		free(tki->tkwrite_buffer);
-		fclose(stdin);
-		printf("Close Window event\n");
-		Tcl_Eval(tki->fbinterp, "destroy .");
-		Tcl_DeleteInterp(tki->fbinterp);
-		bu_exit(0, NULL);
-	    }
-
-	    /* Unpack inputs from pipe */
-	    count = read(tki->p[0], buffer, sizeof(uint32_t)*3+ifp->if_width*3);
-	    memcpy(lines, buffer, sizeof(uint32_t)*3);
-	    memcpy(linebuffer, buffer+sizeof(uint32_t)*3, ifp->if_width*3);
-	    y[0] = ntohl(lines[0]);
-	    count = ntohl(lines[1]);
-
-	    if (y[0] < 0) {
-		break;
-	    }
-
-	    line++;
-	    tki->scanline.pixelPtr = (unsigned char *)linebuffer;
-	    tki->scanline.width = count;
-	    tki->scanline.pitch = 3 * ifp->if_width;
-
-	    Tk_PhotoPutBlock(tki->fbinterp, tki->fbphoto, &tki->scanline, 0, ifp->if_height-y[0]-1, count, 1, TK_PHOTO_COMPOSITE_SET);
-
-	    do {
-		i = Tcl_DoOneEvent(TCL_ALL_EVENTS|TCL_DONT_WAIT);
-	    } while (i);
-	}
-	/* very bad things will happen if the parent does not terminate here */
-	free(buffer);
-	free(linebuffer);
-	free(tki->tkwrite_buffer);
-	fclose(stdin);
-	Tcl_Eval(tki->fbinterp, "vwait CloseWindow");
-	if (BU_STR_EQUAL(Tcl_GetVar(tki->fbinterp, "CloseWindow", 0), "close")) {
-	    printf("Close Window event\n");
-	    Tcl_Eval(tki->fbinterp, "destroy .");
-	}
-	bu_exit(0, NULL);
-    } else {
-	/* child */
-	fflush(stdout);
-    }
+#endif
 
     return 0;
 }
@@ -320,17 +335,44 @@ tk_refresh(fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNU
 HIDDEN int
 fb_tk_close(fb *ifp)
 {
-    struct tk_info *tki = TKINFO(ifp);
-    int y[2];
-    int ret;
-    y[0] = -1;
-    y[1] = 0;
-    printf("Entering fb_tk_close\n");
     FB_CK_FB(ifp);
-    ret = write(tki->p[1], y, sizeof(y));
-    close(tki->p[1]);
+    struct tk_info *tki = TKINFO(ifp);
+
+    // Make a local interp so we can get events from the window
+    Tcl_Interp *cinterp = Tcl_CreateInterp();
+
+    // Let the window know who to tell when it's time to shut down
+    tki->parent_id = Tcl_GetCurrentThread();
+
+    while (!tki->shutdown) {
+	Tcl_DoOneEvent(0);
+	if (tki->shutdown) {
+	    int tret;
+	    Tcl_DeleteInterp(cinterp);
+	    Tcl_JoinThread(tki->fb_id, &tret);
+	    if (tret != TCL_OK) {
+		printf("shutdown of thread failed\n");
+		return -1;
+	    }
+
+	    bu_free(tki->fbpixel, "fbpixel");
+	    bu_free(tki, "tkinfo");
+	    return 0;
+	}
+    }
+
+    // Just in case shutdown got set before fb_tk_close was ever
+    // called, be prepared to clean up outside the loop as well.
+    int tret;
+    Tcl_DeleteInterp(cinterp);
+    Tcl_JoinThread(tki->fb_id, &tret);
+    if (tret != TCL_OK) {
+	printf("shutdown of thread failed\n");
+	return -1;
+    }
+    bu_free(tki->fbpixel, "fbpixel");
     bu_free(tki, "tkinfo");
-    printf("Sent write (ret=%d) from fb_tk_close\n", ret);
+
     return 0;
 }
 
@@ -360,34 +402,65 @@ tk_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
     return (ssize_t)count;
 }
 
+// Given an X,Y coordinate in a TkPhoto image and a desired offset in
+// X and Y, return the index value into the pixelPtr array N such that
+// N is the integer value of the R color at that X,Y coordiante, N+1
+// is the G value, N+2 is the B value and N+3 is the Alpha value.
+// If either desired offset is beyond the width and height boundaries,
+// cap the return at the minimum/maximum allowed value.
+static int
+img_xy_index(int width, int height, int x, int y, int dx, int dy)
+{
+    int nx = ((x + dx) > width)  ? width  : ((x + dx) < 0) ? 0 : x + dx;
+    int ny = ((y + dy) > height) ? height : ((y + dy) < 0) ? 0 : y + dy;
+    return (ny * width * 4) + nx * 4;
+}
 
 HIDDEN ssize_t
-tk_write(fb *ifp, int UNUSED(x), int y, const unsigned char *pixelp, size_t count)
+tk_write(fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
-    uint32_t line[3];
-
     FB_CK_FB(ifp);
 
     struct tk_info *tki = TKINFO(ifp);
 
-    /* Set local values of Tk_PhotoImageBlock */
-    tki->scanline.pixelPtr = (unsigned char *)pixelp;
-    tki->scanline.width = count;
-    tki->scanline.pitch = 3 * ifp->if_width;
-
-    /* Pack values to be sent to parent */
-    line[0] = htonl(y);
-    line[1] = htonl((long)count);
-    line[2] = 0;
-
-    memcpy(tki->tkwrite_buffer, line, sizeof(uint32_t)*3);
-    memcpy(tki->tkwrite_buffer+sizeof(uint32_t)*3, tki->scanline.pixelPtr, 3 * ifp->if_width);
-
-    /* Send values and data to parent for display */
-    if (write(tki->p[1], tki->tkwrite_buffer, 3 * ifp->if_width + 3*sizeof(uint32_t)) == -1) {
-	perror("Unable to write to pipe");
-	bu_snooze(BU_SEC2USEC(1));
+#if 0
+    // If the shutdown flag got set and we're still processing, bail
+    // (TODO - is this the right thing to do?  We're rendering to a framebuffer
+    // that's not there anymore, so if we don't do this the process is arguably
+    // a zombie, but maybe it's desirable to keep going in some situations ...)
+    if (tki->shutdown) {
+	bu_exit(0, "Quitting - framebuffer shutdown flag found set during tk_write");
     }
+#endif
+
+    int pindex = img_xy_index(ifp->if_width, ifp->if_height, x, ifp->if_height-y-1, 0, 0);
+
+    // Touching the image buffer - lock drawing mutex
+    Tcl_MutexLock(&drawMutex);
+
+    // TkPhoto uses an alpha channel, but at the moment the incoming pix data doesn't.
+    // Write pixels accordingly, setting alpha to opaque (for now)
+    for (size_t i = 0; i < count; i++) {
+	tki->fbpixel[pindex+i*4] = pixelp[i*3];
+	tki->fbpixel[pindex+(i*4+1)] = pixelp[i*3+1];
+	tki->fbpixel[pindex+(i*4+2)] = pixelp[i*3+2];
+	tki->fbpixel[pindex+(i*4+3)] = 255;
+    }
+
+    // Lock the drawing thread - we have updated image data, and want to make sure
+    // the drawing thread doesn't clear anything in the middle of this block.
+    Tcl_MutexLock(&fbthreadMutex);
+    tki->draw = 1;
+
+    struct FbEvent *threadEventPtr = (struct FbEvent *)ckalloc(sizeof(FbEvent));
+    threadEventPtr->ifp = ifp;
+    threadEventPtr->event.proc = noop_proc;
+    Tcl_ThreadQueueEvent(tki->fb_id, (Tcl_Event *) threadEventPtr, TCL_QUEUE_TAIL);
+    Tcl_ThreadAlert(tki->fb_id);
+
+    // Flag set, event queued, drawing done - unlock everything
+    Tcl_MutexUnlock(&fbthreadMutex);
+    Tcl_MutexUnlock(&drawMutex);
 
     return (ssize_t)count;
 }
@@ -544,6 +617,19 @@ HIDDEN int
 tk_flush(fb *ifp)
 {
     FB_CK_FB(ifp);
+    struct tk_info *tki = TKINFO(ifp);
+
+    Tcl_MutexLock(&drawMutex);
+    tki->draw = 1;
+    Tcl_MutexLock(&fbthreadMutex);
+    struct FbEvent *threadEventPtr = (struct FbEvent *)ckalloc(sizeof(FbEvent));
+    threadEventPtr->ifp = ifp;
+    threadEventPtr->event.proc = noop_proc;
+    Tcl_ThreadQueueEvent(tki->fb_id, (Tcl_Event *) threadEventPtr, TCL_QUEUE_TAIL);
+    Tcl_ThreadAlert(tki->fb_id);
+    Tcl_MutexUnlock(&fbthreadMutex);
+    Tcl_MutexUnlock(&drawMutex);
+
     fb_log("if_flush(0x%lx)\n", (unsigned long)ifp);
     return 0;
 }
