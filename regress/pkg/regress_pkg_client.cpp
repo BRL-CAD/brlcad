@@ -105,7 +105,8 @@ main(int UNUSED(argc), const char *argv[]) {
 
     if (connection == PKC_ERROR) {
 	bu_log("Connection to %s, port %d, failed.\n", server, port);
-	bu_exit(-1, "ERROR: tried for 1 second - unable to open a connection to the server\n");
+	bu_log("ERROR: unable to connect to server after %d seconds trying\n", wait_time);
+	bu_exit(-1, "Client exiting\n");
     }
 
     connection->pkc_switch = callbacks;
