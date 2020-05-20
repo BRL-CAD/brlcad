@@ -97,7 +97,6 @@ main(int UNUSED(argc), const char *argv[]) {
     connection = pkg_open(server, s_port, "tcp", NULL, NULL, NULL, NULL);
     if (connection == PKC_ERROR) {
 
-	// Wait for up to 1 second
 	while ((bu_gettime() - timer) < BU_SEC2USEC(10.0)) {
 	    // To avoid constant polling, sleep for a short interval
 	    bu_snooze(BU_SEC2USEC(0.1));
@@ -106,7 +105,7 @@ main(int UNUSED(argc), const char *argv[]) {
 
 	if (connection == PKC_ERROR) {
 	    bu_log("Connection to %s, port %d, failed.\n", server, port);
-	    bu_exit(-1, "ERROR: tried for 1 second - unable to open a connection to the server\n");
+	    bu_exit(-1, "ERROR: unable to open a connection to the server\n");
 	}
     }
     connection->pkc_switch = callbacks;
