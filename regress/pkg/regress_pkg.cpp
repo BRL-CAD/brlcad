@@ -31,15 +31,19 @@ class cmd_result {
 void
 run_server(cmd_result &r)
 {
+    std::cout << "SERVER thread starting" << std::endl;
     std::string rcmd = std::string("\"") + r.cmd + std::string("\"");
     r.cmd_ret = std::system(rcmd.c_str());
+    std::cout << "SERVER thread ending" << std::endl;
 }
 
 void
 run_client(cmd_result &r)
 {
+    std::cout << "CLIENT thread starting" << std::endl;
     std::string rcmd = std::string("\"") + r.cmd + std::string("\"");
     r.cmd_ret = std::system(rcmd.c_str());
+    std::cout << "CLIENT thread ending" << std::endl;
 }
 
 int
