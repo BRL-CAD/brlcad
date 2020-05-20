@@ -72,7 +72,7 @@ main(int UNUSED(argc), const char *argv[]) {
     int port = 2000;
     const char *server = "127.0.0.1";
     struct bu_vls all_msgs = BU_VLS_INIT_ZERO;
-    struct pkg_conn *connection;
+    struct pkg_conn *connection = PKC_ERROR;
     char s_port[MAX_PORT_DIGITS + 1] = {0};
     long bytes = 0;
     int pkg_result = 0;
@@ -93,21 +93,21 @@ main(int UNUSED(argc), const char *argv[]) {
     /* fire up the client */
     bu_log("Connecting to %s, port %d\n", server, port);
     snprintf(s_port, MAX_PORT_DIGITS, "%d", port);
+
+    int wait_time = 5;
     int64_t timer = bu_gettime();
+
     connection = pkg_open(server, s_port, "tcp", NULL, NULL, NULL, NULL);
-    if (connection == PKC_ERROR) {
-
-	while ((bu_gettime() - timer) < BU_SEC2USEC(10.0)) {
-	    // To avoid constant polling, sleep for a short interval
-	    bu_snooze(BU_SEC2USEC(0.1));
-	    connection = pkg_open(server, s_port, "tcp", NULL, NULL, NULL, NULL);
-	}
-
-	if (connection == PKC_ERROR) {
-	    bu_log("Connection to %s, port %d, failed.\n", server, port);
-	    bu_exit(-1, "ERROR: unable to open a connection to the server\n");
-	}
+    while (connection == PKC_ERROR && (bu_gettime() - timer) < BU_SEC2USEC(wait_time)) {
+	bu_snooze(BU_SEC2USEC((double)wait_time / 10.0));
+	connection = pkg_open(server, s_port, "tcp", NULL, NULL, NULL, NULL);
     }
+
+    if (connection == PKC_ERROR) {
+	bu_log("Connection to %s, port %d, failed.\n", server, port);
+	bu_exit(-1, "ERROR: tried for 1 second - unable to open a connection to the server\n");
+    }
+
     connection->pkc_switch = callbacks;
 
     /* let the server know we're cool. */

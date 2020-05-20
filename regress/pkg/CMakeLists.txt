@@ -30,6 +30,7 @@ else (CMAKE_CONFIGURATION_TYPES)
   add_custom_target(regress-pkg COMMAND ${CMAKE_CTEST_COMMAND} -R ^regress-pkg --output-on-failure)
 endif (CMAKE_CONFIGURATION_TYPES)
 add_dependencies(regress-pkg libbu libpkg)
+
 set_target_properties(regress-pkg PROPERTIES FOLDER "BRL-CAD Regression Tests")
 set_target_properties(regress-pkg PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 
