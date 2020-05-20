@@ -116,12 +116,14 @@ main(int UNUSED(argc), const char *argv[]) {
     do {
 	client = pkg_getclient(netfd, callbacks, NULL, 1);
 	if (client == PKC_NULL) {
-	    if ((bu_gettime() - timer) / 1000000.0 > 1.0) {
-		bu_log("Connection inactive for > 1 second, quitting.\n");
+	    // If we've been trying for more than 10 seconds, something
+	    // went wrong with the test.
+	    if ((bu_gettime() - timer) > BU_SEC2USEC(10.0)) {
+		bu_log("Connection inactive for >10 seconds, quitting.\n");
 		bu_exit(1, "Timeout - inactive");
 	    }
 	    bu_log("Connection seems to be busy, waiting...\n");
-	    bu_snooze(100000);
+	    bu_snooze(BU_SEC2USEC(0.1));
 	    continue;
 	} else if (client == PKC_ERROR) {
 	    pkg_close(client);

@@ -97,8 +97,10 @@ main(int UNUSED(argc), const char *argv[]) {
     connection = pkg_open(server, s_port, "tcp", NULL, NULL, NULL, NULL);
     if (connection == PKC_ERROR) {
 
-	while ((bu_gettime() - timer) / 1000000.0 < 1.0) {
-	    bu_snooze(10000);
+	// Wait for up to 1 second
+	while ((bu_gettime() - timer) < BU_SEC2USEC(10.0)) {
+	    // To avoid constant polling, sleep for a short interval
+	    bu_snooze(BU_SEC2USEC(0.1));
 	    connection = pkg_open(server, s_port, "tcp", NULL, NULL, NULL, NULL);
 	}
 
