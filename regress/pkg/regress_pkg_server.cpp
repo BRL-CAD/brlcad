@@ -122,7 +122,7 @@ main(int UNUSED(argc), const char *argv[]) {
 		bu_log("Connection inactive for >10 seconds, quitting.\n");
 		bu_exit(1, "Timeout - inactive");
 	    }
-	    bu_log("Connection seems to be busy, waiting...\n");
+	    bu_log("No client input available, waiting...\n");
 	    bu_snooze(BU_SEC2USEC(0.1));
 	    continue;
 	} else if (client == PKC_ERROR) {
