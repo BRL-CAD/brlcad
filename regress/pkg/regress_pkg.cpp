@@ -12,11 +12,15 @@
  *
  */
 
+#include "common.h"
+
 #include <cstdlib>
 #include <iostream>
 #include <thread>
 #include <vector>
+
 #include "bu/app.h"
+
 
 class cmd_result {
     public:
@@ -54,14 +58,19 @@ main(int argc, const char *argv[])
     c.cmd = std::string(argv[2]);
 
     // Launch the client and server
-    std::vector<std::thread> t;
-    t.push_back(std::thread(run_server, std::ref(s)));
-    t.push_back(std::thread(run_client, std::ref(c)));
+    std::cout << "Launching server" << std::endl;
+    std::thread server(run_server, std::ref(s));
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
 
-    // Wait for both commands to finish up
-    for (int i = 0; i < 2; i++) {
-	t[i].join();
-    }
+    std::cout << "Launching client" << std::endl;
+    std::thread client(run_client, std::ref(c));
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+
+    // Wait for both to finish up, client first so we know it tried
+    std::cout << "Waiting for client to exit" << std::endl;
+    client.join();
+    std::cout << "Waiting for server to exit" << std::endl;
+    server.join();
 
     // If either client or server had a problem, overall test fails
     return (s.cmd_ret || c.cmd_ret) ? 1 : 0;
