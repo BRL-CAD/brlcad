@@ -426,6 +426,11 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
   endif(E_FOLDER)
   set_target_properties(${execname} PROPERTIES FOLDER "BRL-CAD Executables${SUBFOLDER}")
 
+  # If this is a test executable, set up an associated FIXTURES test
+  if (NOT TEST ${execname}_setup)
+    add_test(NAME ${execname}_setup COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --config "$<CONFIG>" --target ${execname})
+    set_tests_properties(${execname}_setup PROPERTIES FIXTURES_SETUP ${execname}_test_fixtures)
+  endif (NOT TEST ${execname}_setup)
 
 endfunction(BRLCAD_ADDEXEC execname srcslist libslist)
 
@@ -569,7 +574,7 @@ endfunction(BRLCAD_ADDLIB libname srcslist libslist)
 # this preserves empty strings.  this approach means we cannot
 # generalize and only support a limited variety of empty string
 # arguments, but we do test and halt if someone unknowingly tries.
-function(BRLCAD_ADD_TEST NAME test_name GROUP fixture_grp COMMAND test_prog)
+function(BRLCAD_ADD_TEST NAME test_name COMMAND test_prog)
 
   # find any occurrences of empty strings
   set(idx 0)
@@ -592,62 +597,62 @@ function(BRLCAD_ADD_TEST NAME test_name GROUP fixture_grp COMMAND test_prog)
   if ("${cnt}" GREATER 0)
 
     list(GET matches 0 empty)
-    if ("${empty}" EQUAL 6)
+    if ("${empty}" EQUAL 4)
       foreach (i 1)
 	if (ARGN)
 	  list(REMOVE_AT ARGN 0)
 	endif (ARGN)
       endforeach ()
       add_test(NAME ${test_name} COMMAND ${test_prog} "" ${ARGN})
-    elseif ("${empty}" EQUAL 7)
+    elseif ("${empty}" EQUAL 5)
       foreach (i 1 2)
 	if (ARGN)
 	  list(REMOVE_AT ARGN 0)
 	endif (ARGN)
       endforeach ()
-      add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV6} "" ${ARGN})
-    elseif ("${empty}" EQUAL 8)
+      add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} "" ${ARGN})
+    elseif ("${empty}" EQUAL 6)
       foreach (i 1 2 3)
 	if (ARGN)
 	  list(REMOVE_AT ARGN 0)
 	endif (ARGN)
       endforeach ()
-      add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV6} ${ARGV7} "" ${ARGN})
-    elseif ("${empty}" EQUAL 9)
+      add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} "" ${ARGN})
+    elseif ("${empty}" EQUAL 7)
       foreach (i 1 2 3 4)
 	if (ARGN)
 	  list(REMOVE_AT ARGN 0)
 	endif (ARGN)
       endforeach ()
-      add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV6} ${ARGV7} ${ARGV8} "" ${ARGN})
-    elseif ("${empty}" EQUAL 10)
+      add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} "" ${ARGN})
+    elseif ("${empty}" EQUAL 8)
       foreach (i 1 2 3 4 5)
 	if (ARGN)
 	  list(REMOVE_AT ARGN 0)
 	endif (ARGN)
       endforeach ()
-      add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV6} ${ARGV7} ${ARGV8} ${ARGV9} "" ${ARGN})
+      add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} "" ${ARGN})
+    elseif ("${empty}" EQUAL 9)
+      foreach (i 1 2 3 4 5 6)
+	if (ARGN)
+	  list(REMOVE_AT ARGN 0)
+	endif (ARGN)
+      endforeach ()
+      add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} ${ARGV8} "" ${ARGN})
+    elseif ("${empty}" EQUAL 10)
+      foreach (i 1 2 3 4 5 6)
+	if (ARGN)
+	  list(REMOVE_AT ARGN 0)
+	endif (ARGN)
+      endforeach ()
+      add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} ${ARGV8} ${ARGV9} "" ${ARGN})
     elseif ("${empty}" EQUAL 11)
       foreach (i 1 2 3 4 5 6)
 	if (ARGN)
 	  list(REMOVE_AT ARGN 0)
 	endif (ARGN)
       endforeach ()
-      add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV6} ${ARGV7} ${ARGV8} ${ARGV9} ${ARGV10} "" ${ARGN})
-    elseif ("${empty}" EQUAL 12)
-      foreach (i 1 2 3 4 5 6)
-	if (ARGN)
-	  list(REMOVE_AT ARGN 0)
-	endif (ARGN)
-      endforeach ()
-      add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV6} ${ARGV7} ${ARGV8} ${ARGV9} ${ARGV10} ${ARGV11} "" ${ARGN})
-    elseif ("${empty}" EQUAL 13)
-      foreach (i 1 2 3 4 5 6)
-	if (ARGN)
-	  list(REMOVE_AT ARGN 0)
-	endif (ARGN)
-      endforeach ()
-      add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV6} ${ARGV7} ${ARGV8} ${ARGV9} ${ARGV10} ${ARGV11} ${ARGV12} "" ${ARGN})
+      add_test(NAME ${test_name} COMMAND ${test_prog} ${ARGV4} ${ARGV5} ${ARGV6} ${ARGV7} ${ARGV8} ${ARGV9} ${ARGV10} "" ${ARGN})
 
 
       # ADD_EMPTY_HERE: insert support for addition argv positions
@@ -655,9 +660,9 @@ function(BRLCAD_ADD_TEST NAME test_name GROUP fixture_grp COMMAND test_prog)
       # sure to update the index in the following else clause fatal
       # error message too.
 
-    else ("${empty}" EQUAL 6)
+    else ("${empty}" EQUAL 4)
       message(FATAL_ERROR "ERROR: encountered an empty string passed to add_test(${test_name}) as ARGV${empty} > ARGV9.  Expand support in the top-level CMakeLists.txt file (grep ADD_EMPTY_HERE).")
-    endif ("${empty}" EQUAL 6)
+    endif ("${empty}" EQUAL 4)
 
   else ("${cnt}" GREATER 0)
     # no empty strings, no worries
@@ -670,18 +675,13 @@ function(BRLCAD_ADD_TEST NAME test_name GROUP fixture_grp COMMAND test_prog)
     add_dependencies(check ${test_prog})
   endif (NOT "${test_name}" MATCHES ^regress- AND NOT "${test_prog}" MATCHES ^regress- AND NOT "${test_name}" MATCHES ^slow- AND NOT "${test_name}" STREQUAL "benchmark" AND NOT "${test_name}" MATCHES ^NOTE:)
 
-  set_tests_properties(${test_name} PROPERTIES FIXTURES_REQUIRED ${fixture_grp}_test_fixtures)
+  # If the program to be run has an associated setup test, add this test to the FIXTURES group
+  # associated with that executable so it gets the setup requirement
+  if (TEST ${test_prog}_setup)
+    set_tests_properties(${test_name} PROPERTIES FIXTURES_REQUIRED ${test_prog}_test_fixtures)
+  endif (TEST ${test_prog}_setup)
 
 endfunction(BRLCAD_ADD_TEST)
-
-# Flag an executable as being a resource for a particular CTest fixtures group.
-# This will define a CTest target responsible for building the program itself,
-# and identify it as a setup step needed for the primary tests of the group.
-function(BRLCAD_CTEST_EXEC target fixture_grp)
-  add_test(NAME ${target}_${fixture_grp}_setup COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --config "$<CONFIG>" --target ${target})
-  set_tests_properties(${target}_${fixture_grp}_setup PROPERTIES FIXTURES_SETUP ${fixture_grp}_test_fixtures)
-endfunction(BRLCAD_CTEST_EXEC)
-
 
 #-----------------------------------------------------------------------------
 # For situations when a local 3rd party library (say, zlib) has been chosen in
