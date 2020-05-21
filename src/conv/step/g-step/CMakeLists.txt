@@ -45,7 +45,7 @@ BRLCAD_ADDEXEC(g-step "${gstep_SOURCES}" "${gstep_LIBS}" NO_STRICT)
 add_dependencies(g-step step-express-${SCHEMA_NAME}-gstep)
 set_property(TARGET g-step APPEND PROPERTY INCLUDE_DIRECTORIES "${gstep_SCHEMA_OUT_DIR}")
 
-if(MSVC)
+if (HIDE_INTERNAL_SYMBOLS)
   set(gstep_IMPORTS
     BU_DLL_IMPORTS
     BN_DLL_IMPORTS
@@ -58,7 +58,7 @@ if(MSVC)
     )
   list(APPEND gstep_IMPORTS ${gstep_IMPORTS})
   set_target_properties(g-step PROPERTIES COMPILE_DEFINITIONS "${gstep_IMPORTS}")
-endif(MSVC)
+endif (HIDE_INTERNAL_SYMBOLS)
 
 set(IGNORE_FILES
   CMakeLists.txt
