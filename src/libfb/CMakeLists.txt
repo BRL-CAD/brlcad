@@ -48,8 +48,8 @@ endif(WIN32)
 if(BRLCAD_ENABLE_TK)
   set(FBTKDEFS "-DIF_TK")
   set(LINKLIBS ${LINKLIBS} ${TK_LIBRARY})
-  set(fbtk_srcs if_tk.cpp)
-  set_property(SOURCE if_tk.cpp APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
+  set(fbtk_srcs if_tk.c)
+  set_property(SOURCE if_tk.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
 endif(BRLCAD_ENABLE_TK)
 if(BRLCAD_ENABLE_QT)
   CHECK_CXX_FLAG(Wno-float-equal)
@@ -124,7 +124,7 @@ set(libfb_ignore_files
   if_ogl.c
   if_osgl.cpp
   if_qt.cpp
-  if_tk.cpp
+  if_tk.c
   if_wgl.c
   fb_private.h
   osg_fb_manipulator.h

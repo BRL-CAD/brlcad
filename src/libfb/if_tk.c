@@ -228,7 +228,7 @@ fb_tk_run(ClientData clientData)
 
     // Let the parent thread know we're done
     Tcl_MutexLock(&fbthreadMutex);
-    struct FbEvent *threadEventPtr = (struct FbEvent *)ckalloc(sizeof(FbEvent));
+    struct FbEvent *threadEventPtr = (struct FbEvent *)ckalloc(sizeof(struct FbEvent));
     threadEventPtr->ifp = ifp;
     threadEventPtr->event.proc = noop_proc;
     Tcl_ThreadQueueEvent(tki->parent_id, (Tcl_Event *) threadEventPtr, TCL_QUEUE_TAIL);
@@ -463,7 +463,7 @@ tk_write(fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
     Tcl_MutexLock(&fbthreadMutex);
     tki->draw = 1;
 
-    struct FbEvent *threadEventPtr = (struct FbEvent *)ckalloc(sizeof(FbEvent));
+    struct FbEvent *threadEventPtr = (struct FbEvent *)ckalloc(sizeof(struct FbEvent));
     threadEventPtr->ifp = ifp;
     threadEventPtr->event.proc = noop_proc;
     Tcl_ThreadQueueEvent(tki->fb_id, (Tcl_Event *) threadEventPtr, TCL_QUEUE_TAIL);
@@ -633,7 +633,7 @@ tk_flush(fb *ifp)
     Tcl_MutexLock(&drawMutex);
     tki->draw = 1;
     Tcl_MutexLock(&fbthreadMutex);
-    struct FbEvent *threadEventPtr = (struct FbEvent *)ckalloc(sizeof(FbEvent));
+    struct FbEvent *threadEventPtr = (struct FbEvent *)ckalloc(sizeof(struct FbEvent));
     threadEventPtr->ifp = ifp;
     threadEventPtr->event.proc = noop_proc;
     Tcl_ThreadQueueEvent(tki->fb_id, (Tcl_Event *) threadEventPtr, TCL_QUEUE_TAIL);
@@ -709,10 +709,10 @@ fb tk_interface = {
     tk_flush,
     tk_free,
     tk_help,
-    bu_strdup("Debugging Interface"),
+    "Debugging Interface",
     FB_XMAXSCREEN,	/* max width */
     FB_YMAXSCREEN,	/* max height */
-    bu_strdup("/dev/tk"),
+    "/dev/tk",
     512,		/* current/default width */
     512,		/* current/default height */
     -1,			/* select fd */
