@@ -55,7 +55,9 @@
 #include <string>
 
 #include "bu/app.h"
+#include "bu/exit.h"
 #include "bu/mapped_file.h"
+#include "bu/str.h"
 
 #define MAX_LINES_CHECK 500
 #define EXPECTED_PLATFORM_SYMBOLS 254
@@ -774,12 +776,28 @@ platform_symbols(repo_info_t &r, std::vector<std::string> &log, std::vector<std:
 int
 main(int argc, const char *argv[])
 {
-    if (argc != 3) {
-	std::cerr << "Usage: repocheck file_list.txt source_dir\n";
+    int verbosity = 0;
+
+    if (argc < 3 || argc > 5) {
+	std::cerr << "Usage: repocheck [-v] file_list.txt source_dir\n";
 	return -1;
     }
 
+
     bu_setprogname(argv[0]);
+
+    if (argc == 4) {
+	if (BU_STR_EQUAL(argv[1], "-v")) {
+	    verbosity = 1;
+	    for (int i = 2; i < argc; i++) {
+		argv[i-1] = argv[i];
+	    }
+	    argc--;
+	} else {
+	    bu_exit(-1, "invalid option %s", argv[1]);
+	}
+    }
+
 
     repo_info_t repo_info;
     repo_info.path_root = std::string(argv[2]);
@@ -874,7 +892,7 @@ main(int argc, const char *argv[])
 	std::cout << "\n\nNote: need to update EXPECTED_PLATFORM_SYMBOLS - looking for " << expected_psym_cnt << ", but only found " << psym_cnt << "\n\n\n";
     }
 
-    if (ret) {
+    if (ret || verbosity) {
 	std::sort(repo_info.api_log.begin(), repo_info.api_log.end());
 	std::sort(repo_info.bio_log.begin(), repo_info.bio_log.end());
 	std::sort(repo_info.bnet_log.begin(), repo_info.bnet_log.end());
@@ -920,7 +938,9 @@ main(int argc, const char *argv[])
 	    std::cout << "FAILURE: expected " << expected_psym_cnt << " platform symbols, found " << psym_cnt << "\n";
 	    std::cout << "**************************************************************************\n";
 	    ret = 1;
+	}
 
+	if (psym_cnt > expected_psym_cnt || verbosity) {
 	    if (repo_info.symbol_inc_log.size()) {
 		std::cout << "\nFound " << repo_info.symbol_inc_log.size() << " instances of platform symbol usage in header files:\n";
 		for (size_t i = 0; i < repo_info.symbol_inc_log.size(); i++) {
