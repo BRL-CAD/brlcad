@@ -943,6 +943,7 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
 
     /* Things like width, height, name and initialization commands can be set
      * via argv entries - check */
+    struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
     dm_processOptions(dmp, &init_proc_vls, --argc, ++argv);
     if (bu_vls_strlen(&init_proc_vls) == 0) {
 	bu_vls_strcpy(&init_proc_vls, "bind_dm");
