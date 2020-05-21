@@ -9,15 +9,11 @@ BRLCAD_INCLUDE_DIRS(BRLMAN_INCLUDE_DIRS)
 
 BRLCAD_ADDDATA(brlman.tcl tclscripts/brlman)
 
-set(brlman_libs libtclcad libbu ${TCL_LIBRARY})
+set(brlman_libs libtclcad libbu ${TCL_LIBRARY} ${IMM32_LIBRARY} ${COMCTL32_LIBRARY})
 
 if(TARGET Tkhtml)
   set(brlman_libs ${brlman_libs} Tkhtml)
 endif(TARGET Tkhtml)
-
-if(MSVC)
-  set(brlman_libs ${brlman_libs} imm32.lib comctl32.lib)
-endif(MSVC)
 
 # Building "GUI" doesn't matter except on Windows, but
 # on Windows brlman works only in graphical mode - might

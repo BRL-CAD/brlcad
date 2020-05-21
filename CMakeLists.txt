@@ -114,16 +114,6 @@ endif(NOT EXISTS ${BRLCAD_CNT_FILE})
 include(CMakeDependentOption)
 
 #---------------------------------------------------------------------
-# Check whether we need to add import/export lines to libraries
-if(MSVC)
-  # TODO - this was a cheat, and now that we're looking at hiding
-  # symbols on other platforms it's not really going to work.  We
-  # will be transitioning to using HIDE_INTERNAL_SYMBOLS instead
-  # of this, which means we eventually will need to stop using it
-  # to hide platform specific bits behind.
-  set(CPP_DLL_DEFINES 1)
-endif(MSVC)
-
 # Define an option to use OBJECT libraries - when we build this
 # way, we also need position independent code.
 cmake_dependent_option(USE_OBJECT_LIBS "Use OBJECT libraries" ON "NOT MSVC" OFF)
@@ -2506,6 +2496,27 @@ if("${HAVE_TIMESETEVENT}" MATCHES "^${HAVE_TIMESETEVENT}$")
   set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_BAK})
 endif("${HAVE_TIMESETEVENT}" MATCHES "^${HAVE_TIMESETEVENT}$")
 
+# Grumble... find_library doesn't find ws2_32.  Until we come up with
+# working tests for these, set them by hand
+if(MSVC)
+  set(COMCTL32_LIBRARY comctl32.lib)
+  set(IMM32_LIBRARY imm32.lib)
+  # TODO - mged and adrt call this specific OpenGL library out - why doesn't
+  # OPENGL_LIBRARIES do the trick?
+  set(OPENGL32_LIBRARY opengl32.lib)
+  set(PSAPI_LIB psapi.lib)
+  set(RPCRT_LIB rpcrt4.lib)
+  set(WINSOCK_LIB ws2_32.lib)
+  set(WS2_32_LIBRARY ws2_32)
+else(MSVC)
+  set(COMCTL32_LIBRARY "")
+  set(IMM32_LIBRARY "")
+  set(OPENGL32_LIBRARY "")
+  set(PSAPI_LIB "")
+  set(RPCRT_LIB "")
+  set(WINSOCK_LIB "")
+  set(WS2_32_LIBRARY "")
+endif(MSVC)
 
 # *******************************************************************
 if(BRLCAD_PRINT_MSGS)
@@ -3083,12 +3094,7 @@ int main(void) {
     return 0;
 }
 ")
-# Grumble... find_library doesn't find ws2_32, so set it by hand.
-if(MSVC)
-  set(WS2_32_LIBRARY ws2_32)
-else(MSVC)
-  set(WS2_32_LIBRARY "")
-endif(MSVC)
+
 file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c" "${report_hostname_src}")
 try_run(RH_RESULT RH_COMPILED "${CMAKE_BINARY_DIR}/CMakeTmp"
   "${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c"
