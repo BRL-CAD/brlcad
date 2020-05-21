@@ -58,7 +58,7 @@
 #include "bu/mapped_file.h"
 
 #define MAX_LINES_CHECK 500
-#define EXPECTED_PLATFORM_SYMBOLS 206
+#define EXPECTED_PLATFORM_SYMBOLS 254
 
 class repo_info_t {
     public:
@@ -303,6 +303,7 @@ regex_init(repo_info_t &r) {
 	    "LINUX",
 	    "MINGW",
 	    "MSDOS",
+	    "MSVC",
 	    "QNX",
 	    "SGI",
 	    "SOLARIS",
@@ -865,11 +866,13 @@ main(int argc, const char *argv[])
     int b_cnt = platform_symbols(repo_info, repo_info.symbol_bld_log, build_files);
     int psym_cnt = h_cnt + s_cnt + b_cnt;
     int expected_psym_cnt = EXPECTED_PLATFORM_SYMBOLS;
+    if (psym_cnt > expected_psym_cnt) {
+	ret = -1;
+    }
 
     if (psym_cnt < expected_psym_cnt) {
 	std::cout << "\n\nNote: need to update EXPECTED_PLATFORM_SYMBOLS - looking for " << expected_psym_cnt << ", but only found " << psym_cnt << "\n\n\n";
     }
-
 
     if (ret) {
 	std::sort(repo_info.api_log.begin(), repo_info.api_log.end());
