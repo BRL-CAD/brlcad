@@ -2,8 +2,8 @@
 #define SC_EXPORT_H
 
 #if defined(_WIN32)
-# define COMPILER_DLLEXPORT COMPILER_DLLEXPORT
-# define COMPILER_DLLIMPORT DLLIMPORT
+# define COMPILER_DLLEXPORT __declspec(dllexport)
+# define COMPILER_DLLIMPORT __declspec(dllimport)
 #else
 # define COMPILER_DLLEXPORT __attribute__ ((visibility ("default")))
 # define COMPILER_DLLIMPORT __attribute__ ((visibility ("default")))
