@@ -1017,9 +1017,9 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
     }
     bu_vls_free(&str);
 
-    bu_vls_free(&init_proc_vls);
 #endif
 
+    bu_vls_free(&init_proc_vls);
 
     pub_vars->dpy = Tk_Display(pub_vars->top);
 
