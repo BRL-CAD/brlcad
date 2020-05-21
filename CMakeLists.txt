@@ -79,7 +79,7 @@
 # BRL-CAD software package.
 
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 3.1.3)
+cmake_minimum_required(VERSION 3.7)
 
 # set CMake project name
 project(BRLCAD)
@@ -544,6 +544,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
 
   set_target_properties(unit PROPERTIES FOLDER "BRL-CAD Validation Testing")
 
+if(0)
   # we wrap the CMake add_test() function in order to automatically
   # set up test dependencies for the 'unit' and 'check' test targets.
   #
@@ -660,6 +661,8 @@ if(NOT BRLCAD_IS_SUBBUILD)
     endif (NOT "${test_name}" MATCHES ^regress- AND NOT "${test_prog}" MATCHES ^regress- AND NOT "${test_name}" MATCHES ^slow- AND NOT "${test_name}" STREQUAL "benchmark" AND NOT "${test_name}" MATCHES ^NOTE:)
 
   endfunction(add_test NAME test_name COMMAND test_prog)
+endif(0)
+
 endif(NOT BRLCAD_IS_SUBBUILD)
 
 

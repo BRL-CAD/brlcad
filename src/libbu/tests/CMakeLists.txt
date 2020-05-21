@@ -49,10 +49,32 @@ foreach(srcfile ${bu_test_srcs})
   set(BU_TEST_LIST "${BU_TEST_LIST}\\n	${NAME_ROOT}")
 endforeach(srcfile ${bu_test_srcs})
 
+
+# Flag an executable as being a resource for a particular CTest fixtures group.
+# This will define a CTest target responsible for building the program itself,
+# and identify it as a setup step needed for the primary tests of the group.
+function(BRLCAD_CTEST_EXEC target fixture_grp)
+  add_test(NAME ${target}_${fixture_grp}_setup COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --config "$<CONFIG>" --target ${target})
+  set_tests_properties(${target}_${fixture_grp}_setup PROPERTIES FIXTURES_SETUP ${fixture_grp}_test_fixtures)
+endfunction(BRLCAD_CTEST_EXEC)
+
+# Wrapper for adding a test that is a memember of a particular CTest fixtures group,
+# which will get it dependency resolution for any executables it uses that have been
+# idenfied with brlcad_ctest_exec as being SETUP resources for this group.
+#
+# NOTE - this has to be a macro.  A function will pass ARGN to COMMAND as one
+# whole string, and that won't work - we need it to be the ARGV array.
+macro(BRLCAD_ADD_TEST NAME name GROUP fixture_grp COMMAND)
+  add_test(NAME ${name} COMMAND ${ARGN})
+  set_tests_properties(${name} PROPERTIES FIXTURES_REQUIRED ${fixture_grp}_test_fixtures)
+endmacro(BRLCAD_ADD_TEST)
+
+
 # Generate bu_test.c file and build it
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../..)
 configure_file(bu_test.c.in "${CMAKE_CURRENT_BINARY_DIR}/bu_test.c" @ONLY)
 BRLCAD_ADDEXEC(bu_test "${CMAKE_CURRENT_BINARY_DIR}/bu_test.c" libbu TEST)
+BRLCAD_CTEST_EXEC(bu_test bu)
 
 # Housekeeping for included source files
 CMAKEFILES(${bu_test_srcs})
@@ -72,28 +94,28 @@ BRLCAD_ADDEXEC(bu_gethostname gethostname.c libbu TEST)
 ####################################
 #      bu_path_basename testing    #
 ####################################
-add_test(NAME bu_path_basename_null                                   COMMAND bu_test basename) # tests NULL
-add_test(NAME bu_path_basename_empty                                  COMMAND bu_test basename "")
-add_test(NAME bu_path_basename_sl_usr_sl_dir_sl_file                  COMMAND bu_test basename "/usr/dir/file")
-add_test(NAME bu_path_basename_sl_usr_sl_dir_sl_                      COMMAND bu_test basename "/usr/dir/")
-add_test(NAME bu_path_basename_sl_usr_bsl__sl_dir                     COMMAND bu_test basename "/usr\\\\/dir")
-add_test(NAME bu_path_basename_sl_usr_sl__p_                          COMMAND bu_test basename "/usr/.")
-add_test(NAME bu_path_basename_sl_usr_sl_                             COMMAND bu_test basename "/usr/")
-add_test(NAME bu_path_basename_sl_usr                                 COMMAND bu_test basename "/usr")
-add_test(NAME bu_path_basename_usr                                    COMMAND bu_test basename "usr")
-add_test(NAME bu_path_basename_sl_usr_sl_some_sp_long_sl_file         COMMAND bu_test basename "/usr/some long/file")
-add_test(NAME bu_path_basename_sl_usr_sl_some_sp_file                 COMMAND bu_test basename "/usr/some file")
-add_test(NAME bu_path_basename_C_c__sl_usr_sl_some_bsl__sp_drivepath  COMMAND bu_test basename "C:/usr/some\\\\ drivepath")
-add_test(NAME bu_path_basename_sl_a_sp_test_sp_file                   COMMAND bu_test basename "/a test file")
-add_test(NAME bu_path_basename_another_sp_file                        COMMAND bu_test basename "another file")
-add_test(NAME bu_path_basename_C_c__bsl__Temp                         COMMAND bu_test basename "C:\\\\Temp")
-add_test(NAME bu_path_basename_C_c__sl_Temp                           COMMAND bu_test basename "C:/Temp")
-add_test(NAME bu_path_basename_sl_                                    COMMAND bu_test basename "/")
-add_test(NAME bu_path_basename_sl__sl__sl__sl__sl_                    COMMAND bu_test basename "/////")
-add_test(NAME bu_path_basename_p_                                     COMMAND bu_test basename ".")
-add_test(NAME bu_path_basename_p__p_                                  COMMAND bu_test basename "..")
-add_test(NAME bu_path_basename_p__p__p_                               COMMAND bu_test basename "...")
-add_test(NAME bu_path_basename_sp__sp__sp_                            COMMAND bu_test basename "   ")
+BRLCAD_ADD_TEST(NAME bu_path_basename_null                                   GROUP bu COMMAND bu_test basename) # tests NULL
+BRLCAD_ADD_TEST(NAME bu_path_basename_empty                                  GROUP bu COMMAND bu_test basename "")
+BRLCAD_ADD_TEST(NAME bu_path_basename_sl_usr_sl_dir_sl_file                  GROUP bu COMMAND bu_test basename "/usr/dir/file")
+BRLCAD_ADD_TEST(NAME bu_path_basename_sl_usr_sl_dir_sl_                      GROUP bu COMMAND bu_test basename "/usr/dir/")
+BRLCAD_ADD_TEST(NAME bu_path_basename_sl_usr_bsl__sl_dir                     GROUP bu COMMAND bu_test basename "/usr\\\\/dir")
+BRLCAD_ADD_TEST(NAME bu_path_basename_sl_usr_sl__p_                          GROUP bu COMMAND bu_test basename "/usr/.")
+BRLCAD_ADD_TEST(NAME bu_path_basename_sl_usr_sl_                             GROUP bu COMMAND bu_test basename "/usr/")
+BRLCAD_ADD_TEST(NAME bu_path_basename_sl_usr                                 GROUP bu COMMAND bu_test basename "/usr")
+BRLCAD_ADD_TEST(NAME bu_path_basename_usr                                    GROUP bu COMMAND bu_test basename "usr")
+BRLCAD_ADD_TEST(NAME bu_path_basename_sl_usr_sl_some_sp_long_sl_file         GROUP bu COMMAND bu_test basename "/usr/some long/file")
+BRLCAD_ADD_TEST(NAME bu_path_basename_sl_usr_sl_some_sp_file                 GROUP bu COMMAND bu_test basename "/usr/some file")
+BRLCAD_ADD_TEST(NAME bu_path_basename_C_c__sl_usr_sl_some_bsl__sp_drivepath  GROUP bu COMMAND bu_test basename "C:/usr/some\\\\ drivepath")
+BRLCAD_ADD_TEST(NAME bu_path_basename_sl_a_sp_test_sp_file                   GROUP bu COMMAND bu_test basename "/a test file")
+BRLCAD_ADD_TEST(NAME bu_path_basename_another_sp_file                        GROUP bu COMMAND bu_test basename "another file")
+BRLCAD_ADD_TEST(NAME bu_path_basename_C_c__bsl__Temp                         GROUP bu COMMAND bu_test basename "C:\\\\Temp")
+BRLCAD_ADD_TEST(NAME bu_path_basename_C_c__sl_Temp                           GROUP bu COMMAND bu_test basename "C:/Temp")
+BRLCAD_ADD_TEST(NAME bu_path_basename_sl_                                    GROUP bu COMMAND bu_test basename "/")
+BRLCAD_ADD_TEST(NAME bu_path_basename_sl__sl__sl__sl__sl_                    GROUP bu COMMAND bu_test basename "/////")
+BRLCAD_ADD_TEST(NAME bu_path_basename_p_                                     GROUP bu COMMAND bu_test basename ".")
+BRLCAD_ADD_TEST(NAME bu_path_basename_p__p_                                  GROUP bu COMMAND bu_test basename "..")
+BRLCAD_ADD_TEST(NAME bu_path_basename_p__p__p_                               GROUP bu COMMAND bu_test basename "...")
+BRLCAD_ADD_TEST(NAME bu_path_basename_sp__sp__sp_                            GROUP bu COMMAND bu_test basename "   ")
 
 
 ##########################################
