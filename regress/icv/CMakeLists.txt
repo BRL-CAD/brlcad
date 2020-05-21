@@ -27,8 +27,8 @@ macro(Add_Image_Test testname testtype depends_list)
 
   add_test(NAME regress-icv-${testname} COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/regress-${testname}.cmake")
   add_custom_target(regress-icv-${testname} DEPENDS ${deps_list} ${STAMP_FILE})
-  set_target_properties(regress-icv-${testname} PROPERTIES FOLDER "BRL-CAD Regression Tests")
   Add_Regression_Test(icv-${testname} "${deps_list}")
+  set_target_properties(regress-icv-${testname} PROPERTIES FOLDER "BRL-CAD Regression Tests/icv")
 
   add_dependencies(regress-icv regress-icv-${testname})
 

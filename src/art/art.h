@@ -111,8 +111,8 @@
 namespace asf = foundation;
 namespace asr = renderer;
 
-extern "C" int APPLESEED_DLL_EXPORT brlcad_hit(struct application* ap, struct partition* PartHeadp, struct seg* UNUSED(segs));
-extern "C" int APPLESEED_DLL_EXPORT brlcad_miss(struct application* UNUSED(ap));
+int APPLESEED_DLL_EXPORT brlcad_hit(struct application* ap, struct partition* PartHeadp, struct seg* UNUSED(segs));
+int APPLESEED_DLL_EXPORT brlcad_miss(struct application* UNUSED(ap));
 
 class APPLESEED_DLL_EXPORT BrlcadObject : public asr::ProceduralObject
 {

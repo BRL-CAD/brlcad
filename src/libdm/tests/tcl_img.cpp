@@ -146,6 +146,11 @@ UpdateProc(Tcl_Event *evPtr, int UNUSED(mask))
     Tcl_MutexLock(&dilock);
     Tcl_MutexLock(&fblock);
 
+    // Render processing now - reset the ready flag
+    Tcl_MutexLock(&threadMutex);
+    idata->dm_render_ready = 0;
+    Tcl_MutexUnlock(&threadMutex);
+
     int width = idata->dm_bwidth;
     int height = idata->dm_bheight;
 
@@ -186,9 +191,6 @@ UpdateProc(Tcl_Event *evPtr, int UNUSED(mask))
     fb_data.pitch = fb_data.width * 4;
     fb_data.pixelPtr = idata->fbpixel;
     Tk_PhotoPutBlock(interp, dm_img, &fb_data, 0, 0, idata->fb_width, idata->fb_height, TK_PHOTO_COMPOSITE_OVERLAY);
-
-    // Render processed - reset the ready flag
-    idata->dm_render_ready = 0;
 
     Tcl_MutexUnlock(&dilock);
     Tcl_MutexUnlock(&fblock);
@@ -399,7 +401,9 @@ Dm_Render(ClientData clientData)
     // to start over.
     Tcl_MutexLock(&dilock);
     idata->dm_render_running = 0;
+    Tcl_MutexLock(&threadMutex);
     idata->dm_render_ready = 1;
+    Tcl_MutexUnlock(&threadMutex);
     Tcl_MutexUnlock(&dilock);
 
     // Generate an event for the manager thread to let it know we're done
@@ -432,7 +436,9 @@ Fb_Render(ClientData clientData)
     idata->fb_render_running = 1;
 
     // Until we're done, make sure nobody thinks we are ready
+    Tcl_MutexLock(&threadMutex);
     idata->fb_render_ready = 0;
+    Tcl_MutexUnlock(&threadMutex);
 
     // Lock in this width and height - that's what we've got memory for,
     // so that's what the remainder of this rendering pass will use.
@@ -482,7 +488,9 @@ Fb_Render(ClientData clientData)
 
     Tcl_MutexLock(&fblock);
     idata->fb_render_running = 0;
+    Tcl_MutexLock(&threadMutex);
     idata->fb_render_ready = 1;
+    Tcl_MutexUnlock(&threadMutex);
     Tcl_MutexUnlock(&fblock);
 
     // Generate an event for the manager thread to let it know we're done, if the
@@ -629,7 +637,9 @@ Fb_Update_Manager(ClientData clientData)
 	    Tcl_MutexUnlock(&threadMutex);
 
 	    // Go back to waiting.
+	    Tcl_MutexLock(&threadMutex);
 	    idata->fb_render_ready = 0;
+	    Tcl_MutexUnlock(&threadMutex);
 	    continue;
 	}
 

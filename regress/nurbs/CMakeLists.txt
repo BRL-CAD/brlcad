@@ -19,8 +19,8 @@ macro(ADD_NURBS_NIRT_Test testname topts gfile targs depends_list)
     )
   add_test(NAME regress-nurbs-nirt-${testname} COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/regress-nurbs-nirt-${testname}.cmake")
   add_custom_target(regress-nurbs-nirt-${testname} DEPENDS ${depends_list} ${STAMP_FILE})
-  set_target_properties(regress-nurbs-nirt-${testname} PROPERTIES FOLDER "BRL-CAD Regression Tests")
   Add_Regression_Test(nurbs-nirt-${testname} "${depends_list}")
+  set_target_properties(regress-nurbs-nirt-${testname} PROPERTIES FOLDER "BRL-CAD Regression Tests/NURBS")
 
   add_dependencies(regress-nurbs regress-nurbs-nirt-${testname})
 
