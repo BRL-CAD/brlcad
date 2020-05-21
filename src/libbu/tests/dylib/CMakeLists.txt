@@ -49,7 +49,7 @@ set_target_properties(bu_dylib PROPERTIES FOLDER "BRL-CAD Executables/Test Progr
 # As a build convenience, make bu_dylib depend on everything
 add_dependencies(bu_dylib plugin_1 plugin_2)
 
-BRLCAD_ADD_TEST(NAME bu_dylib COMMAND bu_dylib)
+add_test(NAME bu_dylib COMMAND bu_dylib)
 
 # Local Variables:
 # tab-width: 8
