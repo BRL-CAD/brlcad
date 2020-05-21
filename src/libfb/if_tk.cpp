@@ -117,11 +117,13 @@ fb_tk_run(ClientData clientData)
     tki->fbinterp = Tcl_CreateInterp();
 
     if (Tcl_Init(tki->fbinterp) == TCL_ERROR) {
-	return;
+	Tcl_ExitThread(TCL_OK);
+	return TCL_THREAD_CREATE_RETURN;
     }
 
     if (Tcl_Eval(tki->fbinterp, "package require Tk") != TCL_OK) {
-       	return;
+	Tcl_ExitThread(TCL_OK);
+	return TCL_THREAD_CREATE_RETURN;
     }
 
     tki->fbwin = Tk_MainWindow(tki->fbinterp);
@@ -131,39 +133,46 @@ fb_tk_run(ClientData clientData)
     Tk_MakeWindowExist(tki->fbwin);
 
     if (Tcl_Eval(tki->fbinterp, "wm resizable . 0 0") != TCL_OK) {
-	return;
+	Tcl_ExitThread(TCL_OK);
+	return TCL_THREAD_CREATE_RETURN;
     }
 
     if (Tcl_Eval(tki->fbinterp, "wm title . \"Frame buffer\"") != TCL_OK) {
-	return;
+	Tcl_ExitThread(TCL_OK);
+	return TCL_THREAD_CREATE_RETURN;
     }
 
     char frame_create_cmd[255] = {'\0'};
     sprintf(frame_create_cmd, "pack [frame .fb -borderwidth 0 -highlightthickness 0 -height %d -width %d]", ifp->if_width, ifp->if_height);
     if (Tcl_Eval(tki->fbinterp, frame_create_cmd) != TCL_OK) {
-	return;
+	Tcl_ExitThread(TCL_OK);
+	return TCL_THREAD_CREATE_RETURN;
     }
 
     char canvas_create_cmd[255] = {'\0'};
     sprintf(canvas_create_cmd, "pack [canvas .fb.canvas -borderwidth 0 -highlightthickness 0 -insertborderwidth 0 -selectborderwidth 0 -height %d -width %d]", ifp->if_width, ifp->if_height);
     if (Tcl_Eval(tki->fbinterp, canvas_create_cmd) != TCL_OK) {
-	return;
+	Tcl_ExitThread(TCL_OK);
+	return TCL_THREAD_CREATE_RETURN;
     }
 
     //const char canvas_pack_cmd[255] = "pack .fb_tk_canvas -fill both -expand true";
     char image_create_cmd[255] = {'\0'};
     sprintf(image_create_cmd, "image create photo .fb.canvas.photo -height %d -width %d", ifp->if_width, ifp->if_height);
     if (Tcl_Eval(tki->fbinterp, image_create_cmd) != TCL_OK) {
-	return;
+	Tcl_ExitThread(TCL_OK);
+	return TCL_THREAD_CREATE_RETURN;
     }
 
     if ((tki->fbphoto = Tk_FindPhoto(tki->fbinterp, ".fb.canvas.photo")) == NULL) {
-	return;
+	Tcl_ExitThread(TCL_OK);
+	return TCL_THREAD_CREATE_RETURN;
     }
 
     const char place_image_cmd[255] = ".fb.canvas create image 0 0 -image .fb.canvas.photo -anchor nw";
     if (Tcl_Eval(tki->fbinterp, place_image_cmd) != TCL_OK) {
-	return;
+	Tcl_ExitThread(TCL_OK);
+	return TCL_THREAD_CREATE_RETURN;
     }
 
     char reportcolorcmd[255] = {'\0'};
@@ -181,16 +190,18 @@ fb_tk_run(ClientData clientData)
 
     const char *wmclosecmd = "wm protocol . WM_DELETE_WINDOW {set CloseWindow \"close\"}";
     if (Tcl_Eval(tki->fbinterp, wmclosecmd) != TCL_OK) {
-	return;
-	fb_log("Error binding WM_DELETE_WINDOW.");
+	Tcl_ExitThread(TCL_OK);
+	return TCL_THREAD_CREATE_RETURN;
     }
 
     const char *bindclosecmd = "bind . <Button-3> {set CloseWindow \"close\"}";
     if (Tcl_Eval(tki->fbinterp, bindclosecmd) != TCL_OK) {
-	return;
+	Tcl_ExitThread(TCL_OK);
+	return TCL_THREAD_CREATE_RETURN;
     }
     if (Tcl_Eval(tki->fbinterp, reportcolorcmd) != TCL_OK) {
-	return;
+	Tcl_ExitThread(TCL_OK);
+	return TCL_THREAD_CREATE_RETURN;
     }
 
     // Clear out any events up to this point
