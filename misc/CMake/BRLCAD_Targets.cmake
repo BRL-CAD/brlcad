@@ -464,6 +464,13 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
     add_library(${libname}-obj OBJECT ${lsrcslist})
     set(lsrcslist $<TARGET_OBJECTS:${libname}-obj>)
     set_target_properties(${libname}-obj PROPERTIES FOLDER "BRL-CAD OBJECT Libraries${SUBFOLDER}")
+
+    if(CPP_DLL_DEFINES)
+      string(REPLACE "lib" "" LOWERCORE "${libname}")
+      string(TOUPPER ${LOWERCORE} UPPER_CORE)
+      set_property(TARGET ${libname}-obj APPEND PROPERTY COMPILE_DEFINITIONS "${UPPER_CORE}_DLL_EXPORTS")
+    endif(CPP_DLL_DEFINES)
+
     if(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
       foreach(ll ${libslist})
 	if (TARGET ${ll})
@@ -471,16 +478,21 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
 	endif (TARGET ${ll})
       endforeach(ll ${libslist})
     endif(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
+
   endif(USE_OBJECT_LIBS)
 
+  # Handle the shared library
   if(L_SHARED OR (BUILD_SHARED_LIBS AND NOT L_STATIC))
+
     add_library(${libname} SHARED ${lsrcslist} ${L_SHARED_SRCS})
+
     if(CPP_DLL_DEFINES)
       string(REPLACE "lib" "" LOWERCORE "${libname}")
       string(TOUPPER ${LOWERCORE} UPPER_CORE)
       set_property(TARGET ${libname} APPEND PROPERTY COMPILE_DEFINITIONS "${UPPER_CORE}_DLL_EXPORTS")
       set_property(GLOBAL APPEND PROPERTY ${libname}_DLL_DEFINES "${UPPER_CORE}_DLL_IMPORTS")
     endif(CPP_DLL_DEFINES)
+
   endif(L_SHARED OR (BUILD_SHARED_LIBS AND NOT L_STATIC))
 
   if(L_STATIC OR (BUILD_STATIC_LIBS AND NOT L_SHARED))
