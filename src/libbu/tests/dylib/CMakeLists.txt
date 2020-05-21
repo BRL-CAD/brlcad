@@ -42,6 +42,7 @@ set_target_properties(libdylib PROPERTIES FOLDER "BRL-CAD Executables/Test Progr
 
 add_executable(bu_dylib run.c)
 target_link_libraries(bu_dylib libdylib libbu)
+BRLCAD_CTEST_EXEC(bu_dylib bu)
 if (CPP_DLL_DEFINES)
   set_property(TARGET bu_dylib APPEND PROPERTY COMPILE_DEFINITIONS BU_DYLIB_DLL_IMPORTS)
 endif (CPP_DLL_DEFINES)
@@ -50,7 +51,7 @@ set_target_properties(bu_dylib PROPERTIES FOLDER "BRL-CAD Executables/Test Progr
 # As a build convenience, make bu_dylib depend on everything
 add_dependencies(bu_dylib plugin_1 plugin_2)
 
-add_test(NAME bu_dylib COMMAND bu_dylib)
+BRLCAD_ADD_TEST(NAME bu_dylib GROUP bu COMMAND bu_dylib)
 
 # Local Variables:
 # tab-width: 8
