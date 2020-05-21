@@ -8,10 +8,10 @@ BRLCAD_INCLUDE_DIRS(PLY_INCLUDE_DIRS)
 BRLCAD_ADDEXEC(ply-g "ply-g.c;rply.c" "librt;libnmg;libbu;libwdb")
 BRLCAD_ADDEXEC(g-ply "g-ply.c;rply.c" "librt;libnmg;libbu")
 
-if (CPP_DLL_DEFINES)
+if (HIDE_INTERNAL_SYMBOLS)
   set_property(TARGET ply-g APPEND PROPERTY COMPILE_DEFINITIONS "RPLY_DLL_IMPORTS")
   set_property(TARGET g-ply APPEND PROPERTY COMPILE_DEFINITIONS "RPLY_DLL_IMPORTS")
-endif (CPP_DLL_DEFINES)
+endif (HIDE_INTERNAL_SYMBOLS)
 
 CMAKEFILES(
   CMakeLists.txt

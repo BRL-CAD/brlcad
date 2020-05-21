@@ -67,9 +67,9 @@ extern "C++" {
 #  if defined(BREP_DLL_EXPORTS) && defined(BREP_DLL_IMPORTS)
 #    error "Only BREP_DLL_EXPORTS or BREP_DLL_IMPORTS can be defined, not both."
 #  elif defined(BREP_DLL_EXPORTS)
-#    define BREP_EXPORT __declspec(dllexport)
+#    define BREP_EXPORT COMPILER_DLLEXPORT
 #  elif defined(BREP_DLL_IMPORTS)
-#    define BREP_EXPORT __declspec(dllimport)
+#    define BREP_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define BREP_EXPORT
 #  endif

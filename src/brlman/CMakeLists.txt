@@ -15,9 +15,9 @@ if(TARGET Tkhtml)
   set(brlman_libs ${brlman_libs} Tkhtml)
 endif(TARGET Tkhtml)
 
-if(CPP_DLL_DEFINES)
+if(MSVC)
   set(brlman_libs ${brlman_libs} imm32.lib comctl32.lib)
-endif(CPP_DLL_DEFINES)
+endif(MSVC)
 
 # Building "GUI" doesn't matter except on Windows, but
 # on Windows brlman works only in graphical mode - might

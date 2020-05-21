@@ -11,9 +11,9 @@ BRLCAD_ADDDATA(archer_launch.tcl tclscripts/archer)
 
 set(archer_libs libtclcad libbu ${ITCL_LIBRARY} ${ITK_LIBRARY} ${TCL_LIBRARY})
 
-if(CPP_DLL_DEFINES)
+if(MSVC)
   set(archer_libs ${archer_libs} imm32.lib comctl32.lib)
-endif(CPP_DLL_DEFINES)
+endif(MSVC)
 
 # NOTE: Building "GUI" doesn't matter except on Windows, but on Windows archer
 # currently works only in graphical mode - might as well behave "nicely" there.

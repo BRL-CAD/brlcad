@@ -31,9 +31,9 @@ if(BRLCAD_ENABLE_TK)
     set(bwish_libs ${bwish_libs} libtermio)
   endif(TARGET libtermio)
 
-  if(CPP_DLL_DEFINES)
+  if(MSVC)
     set(bwish_libs ${bwish_libs} imm32.lib comctl32.lib )
-  endif(CPP_DLL_DEFINES)
+  endif(MSVC)
 
   BRLCAD_ADDEXEC(bwish "main.c;cmd.c;input.c" "${bwish_libs}" GUI)
   set_target_properties(bwish PROPERTIES COMPILE_DEFINITIONS "BWISH=1")

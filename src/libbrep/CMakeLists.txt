@@ -82,9 +82,9 @@ set(libbrep_ignored_files
 CMAKEFILES(${libbrep_ignored_files})
 
 # Anyone who needs to import libbrep will also need to import openNURBS
-if(CPP_DLL_DEFINES)
+if(HIDE_INTERNAL_SYMBOLS)
   set_property(GLOBAL APPEND PROPERTY libbrep_DLL_DEFINES "ON_DLL_IMPORTS")
-endif(CPP_DLL_DEFINES)
+endif(HIDE_INTERNAL_SYMBOLS)
 
 BRLCAD_ADDLIB(libbrep "${LIBBREP_SOURCES}" "libbg;libbn;libbu;${OPENNURBS_LIBRARIES};${P2T_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
 

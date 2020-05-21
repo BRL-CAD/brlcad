@@ -34,9 +34,9 @@ __BEGIN_DECLS
 #  if defined(GCV_DLL_EXPORTS) && defined(GCV_DLL_IMPORTS)
 #    error "Only GCV_DLL_EXPORTS or GCV_DLL_IMPORTS can be defined, not both."
 #  elif defined(GCV_DLL_EXPORTS)
-#    define GCV_EXPORT __declspec(dllexport)
+#    define GCV_EXPORT COMPILER_DLLEXPORT
 #  elif defined(GCV_DLL_IMPORTS)
-#    define GCV_EXPORT __declspec(dllimport)
+#    define GCV_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define GCV_EXPORT
 #  endif

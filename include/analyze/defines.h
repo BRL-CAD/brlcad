@@ -35,9 +35,9 @@ __BEGIN_DECLS
 #  if defined(ANALYZE_DLL_EXPORTS) && defined(ANALYZE_DLL_IMPORTS)
 #    error "Only ANALYZE_DLL_EXPORTS or ANALYZE_DLL_IMPORTS can be defined, not both."
 #  elif defined(ANALYZE_DLL_EXPORTS)
-#    define ANALYZE_EXPORT __declspec(dllexport)
+#    define ANALYZE_EXPORT COMPILER_DLLEXPORT
 #  elif defined(ANALYZE_DLL_IMPORTS)
-#    define ANALYZE_EXPORT __declspec(dllimport)
+#    define ANALYZE_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define ANALYZE_EXPORT
 #  endif

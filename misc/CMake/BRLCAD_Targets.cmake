@@ -465,11 +465,11 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
     set(lsrcslist $<TARGET_OBJECTS:${libname}-obj>)
     set_target_properties(${libname}-obj PROPERTIES FOLDER "BRL-CAD OBJECT Libraries${SUBFOLDER}")
 
-    if(CPP_DLL_DEFINES)
+    if(HIDE_INTERNAL_SYMBOLS)
       string(REPLACE "lib" "" LOWERCORE "${libname}")
       string(TOUPPER ${LOWERCORE} UPPER_CORE)
       set_property(TARGET ${libname}-obj APPEND PROPERTY COMPILE_DEFINITIONS "${UPPER_CORE}_DLL_EXPORTS")
-    endif(CPP_DLL_DEFINES)
+    endif(HIDE_INTERNAL_SYMBOLS)
 
     if(NOT "${libslist}" STREQUAL "" AND NOT "${libslist}" STREQUAL "NONE")
       foreach(ll ${libslist})
@@ -486,12 +486,12 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
 
     add_library(${libname} SHARED ${lsrcslist} ${L_SHARED_SRCS})
 
-    if(CPP_DLL_DEFINES)
+    if(HIDE_INTERNAL_SYMBOLS)
       string(REPLACE "lib" "" LOWERCORE "${libname}")
       string(TOUPPER ${LOWERCORE} UPPER_CORE)
       set_property(TARGET ${libname} APPEND PROPERTY COMPILE_DEFINITIONS "${UPPER_CORE}_DLL_EXPORTS")
       set_property(GLOBAL APPEND PROPERTY ${libname}_DLL_DEFINES "${UPPER_CORE}_DLL_IMPORTS")
-    endif(CPP_DLL_DEFINES)
+    endif(HIDE_INTERNAL_SYMBOLS)
 
   endif(L_SHARED OR (BUILD_SHARED_LIBS AND NOT L_STATIC))
 
@@ -502,9 +502,9 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
       set(libstatic ${libname}-static)
     endif(L_STATIC)
     add_library(${libstatic} STATIC ${lsrcslist} ${L_STATIC_SRCS})
-    if(NOT CPP_DLL_DEFINES)
+    if(NOT MSVC)
       set_target_properties(${libstatic} PROPERTIES OUTPUT_NAME "${libname}")
-    endif(NOT CPP_DLL_DEFINES)
+    endif(NOT MSVC)
   endif(L_STATIC OR (BUILD_STATIC_LIBS AND NOT L_SHARED))
 
   # Make sure we don't end up with outputs named liblib...

@@ -524,6 +524,17 @@ typedef _TCHAR TCHAR;
 #  define CPP_FILELINE __FILE__ ":" CPP_XSTR(__LINE__)
 #endif
 
+/**
+ * Different platforms use different compiler syntax for
+ * exporting and importing symbols.
+ */
+#if defined(_WIN32)
+# define COMPILER_DLLEXPORT COMPILER_DLLEXPORT
+# define COMPILER_DLLIMPORT DLLIMPORT
+#else
+# define COMPILER_DLLEXPORT __attribute__ ((visibility ("default")))
+# define COMPILER_DLLIMPORT __attribute__ ((visibility ("default")))
+#endif
 
 #endif  /* COMMON_H */
 

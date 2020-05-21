@@ -44,9 +44,9 @@ __BEGIN_DECLS
 #  if defined(FFT_DLL_EXPORTS) && defined(FFT_DLL_IMPORTS)
 #    error "Only FFT_DLL_EXPORTS or FFT_DLL_IMPORTS can be defined, not both."
 #  elif defined(FFT_DLL_EXPORTS)
-#    define FFT_EXPORT __declspec(dllexport)
+#    define FFT_EXPORT COMPILER_DLLEXPORT
 #  elif defined(FFT_DLL_IMPORTS)
-#    define FFT_EXPORT __declspec(dllimport)
+#    define FFT_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define FFT_EXPORT
 #  endif

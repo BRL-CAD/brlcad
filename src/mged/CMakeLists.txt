@@ -67,9 +67,9 @@ set(mged_libs libtclcad libged libwdb libdm libnmg ${ITCL_LIBRARY} ${ITK_LIBRARY
 if(TARGET libtermio)
   set(mged_libs ${mged_libs} libtermio)
 endif(TARGET libtermio)
-if(CPP_DLL_DEFINES)
+if(MSVC)
   set(mged_libs ${mged_libs} ws2_32.lib;opengl32.lib)
-endif(CPP_DLL_DEFINES)
+endif(MSVC)
 
 # Ideally we'd build as GUI for Windows to avoid the command window popping up,
 # but I'm not sure if that would be a problem for scripting with mged.exe on

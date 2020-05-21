@@ -116,12 +116,17 @@ include(CMakeDependentOption)
 #---------------------------------------------------------------------
 # Check whether we need to add import/export lines to libraries
 if(MSVC)
+  # TODO - this was a cheat, and now that we're looking at hiding
+  # symbols on other platforms it's not really going to work.  We
+  # will be transitioning to using HIDE_INTERNAL_SYMBOLS instead
+  # of this, which means we eventually will need to stop using it
+  # to hide platform specific bits behind.
   set(CPP_DLL_DEFINES 1)
 endif(MSVC)
 
 # Define an option to use OBJECT libraries - when we build this
 # way, we also need position independent code.
-cmake_dependent_option(USE_OBJECT_LIBS "Use OBJECT libraries" ON "NOT CPP_DLL_DEFINES" OFF)
+cmake_dependent_option(USE_OBJECT_LIBS "Use OBJECT libraries" ON "NOT MSVC" OFF)
 mark_as_advanced(USE_OBJECT_LIBS)
 if(USE_OBJECT_LIBS)
   set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
@@ -1735,6 +1740,16 @@ set(CMAKE_CXX_FLAGS "${CXX_STANDARD_FLAGS}")
 CHECK_C_FLAG(pipe)
 CHECK_CXX_FLAG(pipe)
 
+# Enable visibility restrictions.  We have to deal with this on
+# Windows, so enable it wherever we can to keep the code working
+# across all platforms.
+CHECK_C_FLAG(fvisibility=hidden)
+CHECK_CXX_FLAG(fvisibility=hidden)
+# If we can, hide internal library symbols
+if(MSVC OR FVISIBILITY_HIDDEN_CXX_FLAG_FOUND)
+  set(HIDE_INTERNAL_SYMBOLS 1)
+endif(MSVC OR FVISIBILITY_HIDDEN_CXX_FLAG_FOUND)
+
 # check for -fno-strict-aliasing
 # XXX - THIS FLAG IS REQUIRED if any level of optimization is
 # enabled with GCC as we do use aliasing and type-punning.
@@ -3056,11 +3071,11 @@ int main(void) {
 }
 ")
 # Grumble... find_library doesn't find ws2_32, so set it by hand.
-if(CPP_DLL_DEFINES)
+if(MSVC)
   set(WS2_32_LIBRARY ws2_32)
-else(CPP_DLL_DEFINES)
+else(MSVC)
   set(WS2_32_LIBRARY "")
-endif(CPP_DLL_DEFINES)
+endif(MSVC)
 file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c" "${report_hostname_src}")
 try_run(RH_RESULT RH_COMPILED "${CMAKE_BINARY_DIR}/CMakeTmp"
   "${CMAKE_BINARY_DIR}/CMakeTmp/report_hostname.c"
