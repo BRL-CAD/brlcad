@@ -58,7 +58,7 @@
 #include "bu/mapped_file.h"
 
 #define MAX_LINES_CHECK 500
-#define EXPECTED_PLATFORM_SYMBOLS 206
+#define EXPECTED_PLATFORM_SYMBOLS 254
 
 class repo_info_t {
     public:
@@ -303,6 +303,7 @@ regex_init(repo_info_t &r) {
 	    "LINUX",
 	    "MINGW",
 	    "MSDOS",
+	    "MSVC",
 	    "QNX",
 	    "SGI",
 	    "SOLARIS",
