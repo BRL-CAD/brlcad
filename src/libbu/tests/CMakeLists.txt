@@ -250,6 +250,7 @@ add_test(NAME bu_heap_1 COMMAND bu_test heap)
 #      bu_progname testing    #
 ###############################
 BRLCAD_ADDEXEC(bu_progname progname.c libbu TEST)
+add_dependencies(bu_test bu_progname)
 add_test(NAME bu_progname_tests COMMAND bu_progname)
 
 #
@@ -521,6 +522,7 @@ add_test(NAME bu_vls_incr_15 COMMAND bu_test vls_incr "test"         0 "NULL"   
 add_test(NAME bu_vls_incr_16 COMMAND bu_test vls_incr "test"         0 "0:0:0:0:-"   1  "test-1")
 
 BRLCAD_ADDEXEC(bu_vls_incr_uniq vls_incr_uniq.cpp libbu TEST)
+add_dependencies(bu_test bu_vls_incr_uniq)
 add_test(NAME bu_vls_incr_uniq_1  COMMAND bu_vls_incr_uniq  "test.r1" "test.r3")
 add_test(NAME bu_vls_incr_uniq_2  COMMAND bu_vls_incr_uniq  "test.r2" "test.r3")
 
@@ -646,6 +648,7 @@ endforeach()
 #  *********** hash.c tests ************
 #
 BRLCAD_ADDEXEC(bu_hash hash.cpp libbu TEST)
+add_dependencies(bu_test bu_hash)
 add_test(NAME bu_hash_noop         COMMAND bu_hash 0)
 add_test(NAME bu_hash_one_entry    COMMAND bu_hash 1)
 add_test(NAME bu_hash_lorem_ipsum  COMMAND bu_hash 2)
@@ -704,6 +707,7 @@ add_test(NAME bu_hook_saverestore COMMAND bu_test hook saverestore)
 # dependency of bu_test to make sure it is present when
 # bu_test runs its process tests
 BRLCAD_ADDEXEC(bu_subprocess subprocess.cpp libbu TEST)
+add_dependencies(bu_test bu_subprocess)
 add_test(NAME bu_process_basic COMMAND bu_test process "$<TARGET_FILE:bu_subprocess>" basic)
 add_test(NAME bu_process_abort COMMAND bu_test process "$<TARGET_FILE:bu_subprocess>" abort)
 

@@ -79,7 +79,7 @@
 # BRL-CAD software package.
 
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 3.7)
+cmake_minimum_required(VERSION 3.1.3)
 
 # set CMake project name
 project(BRLCAD)
@@ -544,8 +544,6 @@ if(NOT BRLCAD_IS_SUBBUILD)
 
   set_target_properties(unit PROPERTIES FOLDER "BRL-CAD Validation Testing")
 
-
-  #-----------------------------------------------------------------------------
   # we wrap the CMake add_test() function in order to automatically
   # set up test dependencies for the 'unit' and 'check' test targets.
   #
@@ -656,20 +654,14 @@ if(NOT BRLCAD_IS_SUBBUILD)
     endif ("${cnt}" GREATER 0)
 
     # add test to unit and check targets
-    if (NOT "${test_name}" MATCHES ^regress- AND NOT "${test_prog}" MATCHES ^regress- AND NOT "${test_name}" MATCHES ^slow- AND NOT "${test_name}" STREQUAL "benchmark" AND NOT "${test_name}" MATCHES ^NOTE: AND NOT "${test_prog}" MATCHES cmake)
+    if (NOT "${test_name}" MATCHES ^regress- AND NOT "${test_prog}" MATCHES ^regress- AND NOT "${test_name}" MATCHES ^slow- AND NOT "${test_name}" STREQUAL "benchmark" AND NOT "${test_name}" MATCHES ^NOTE:)
       add_dependencies(unit ${test_prog})
       add_dependencies(check ${test_prog})
-    endif (NOT "${test_name}" MATCHES ^regress- AND NOT "${test_prog}" MATCHES ^regress- AND NOT "${test_name}" MATCHES ^slow- AND NOT "${test_name}" STREQUAL "benchmark" AND NOT "${test_name}" MATCHES ^NOTE: AND NOT "${test_prog}" MATCHES cmake)
+    endif (NOT "${test_name}" MATCHES ^regress- AND NOT "${test_prog}" MATCHES ^regress- AND NOT "${test_name}" MATCHES ^slow- AND NOT "${test_name}" STREQUAL "benchmark" AND NOT "${test_name}" MATCHES ^NOTE:)
 
-    # If the program to be run has an associated setup test, add this test to the FIXTURES group
-    # associated with that executable so it gets the setup requirement
-    if (TEST ${test_prog}_setup)
-      set_tests_properties(${test_name} PROPERTIES FIXTURES_REQUIRED ${test_prog}_test_fixtures)
-    endif (TEST ${test_prog}_setup)
-
-  endfunction(add_test)
-
+  endfunction(add_test NAME test_name COMMAND test_prog)
 endif(NOT BRLCAD_IS_SUBBUILD)
+
 
 
 #---------------------------------------------------------------------

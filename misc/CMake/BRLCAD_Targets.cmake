@@ -426,11 +426,6 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
   endif(E_FOLDER)
   set_target_properties(${execname} PROPERTIES FOLDER "BRL-CAD Executables${SUBFOLDER}")
 
-  # If this is a test executable, set up an associated FIXTURES test
-  if (NOT TEST ${execname}_setup)
-    add_test(NAME ${execname}_setup COMMAND "${CMAKE_COMMAND}" --build "${CMAKE_BINARY_DIR}" --config "$<CONFIG>" --target ${execname})
-    set_tests_properties(${execname}_setup PROPERTIES FIXTURES_SETUP ${execname}_test_fixtures)
-  endif (NOT TEST ${execname}_setup)
 
 endfunction(BRLCAD_ADDEXEC execname srcslist libslist)
 
