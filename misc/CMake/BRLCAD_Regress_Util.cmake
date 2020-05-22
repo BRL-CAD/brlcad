@@ -54,12 +54,25 @@ function(ensearch efile efound)
     "${CBD}/../bin"
     ../bench
     "${CBD}/../bench")
+
+  # First, check exactly what was specified
   foreach(sd ${sdirs})
     if(EXISTS ${sd}/${efile})
       set(${efound} "${sd}/${efile}" PARENT_SCOPE)
       return()
     endif(EXISTS ${sd}/${efile})
   endforeach(sd ${sdirs})
+
+  # If nothing was found and the platform defines an executable suffix, try
+  # with the suffix present as well.
+  if (CMAKE_EXECUTABLE_SUFFIX)
+    foreach(sd ${sdirs})
+      if(EXISTS ${sd}/${efile})
+	set(${efound} "${sd}/${efile}${CMAKE_EXECUTABLE_SUFFIX}" PARENT_SCOPE)
+	return()
+      endif(EXISTS ${sd}/${efile})
+    endforeach(sd ${sdirs})
+  endif (CMAKE_EXECUTABLE_SUFFIX)
 
   if(ENS_REQUIRED)
     message(FATAL_ERROR "Unable to find ${efile}, aborting")
