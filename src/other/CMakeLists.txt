@@ -313,10 +313,6 @@ endif(BRLCAD_UTAHRLE_BUILD)
 if(BRLCAD_ENABLE_AQUA)
   set(TK_ENABLE_AQUA ON CACHE STRING "BRL-CAD setting to enable AQUA" FORCE)
   set(TK_SYSTEM_GRAPHICS "aqua" CACHE STRING "Tk system graphics type" FORCE)
-else(BRLCAD_ENABLE_AQUA)
-  if (BRLCAD_ENABLE_X11)
-    set(TK_SYSTEM_GRAPHICS "x11" CACHE STRING "Tk system graphics type" FORCE)
-  endif (BRLCAD_ENABLE_X11)
 endif(BRLCAD_ENABLE_AQUA)
 
 # Make sure we actually look for these each time...
