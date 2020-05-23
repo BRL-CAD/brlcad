@@ -22,7 +22,6 @@ set(cmake_ignore_files
   FindAppleseed.cmake
   FindBlosc.cmake
   FindBSON.cmake
-  FindGDAL.cmake
   FindGECODE.cmake
   FindGL.cmake
   FindIlmBase.cmake
