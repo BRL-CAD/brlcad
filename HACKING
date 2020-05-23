@@ -831,19 +831,16 @@ it better?" and add documentation accordingly.
 
 All public library functions and most private or application functions
 should be appropriately documented using Doxygen/Javadoc style
-comments.  Without getting into the advanced details, this minimally
-means that you need to add an additional asterisk to a comment that
-precedes your functions:
+comments.  This minimally means that you need to add an additional
+asterisk to a comment that precedes your functions.  Public functions
+must be exported and imported using per-library macros that precede
+public symbol declarations (e.g., BU_EXPORT int func();).  Example:
 
 /**
  * Computes the answer to the meaning of life, the universe, and
  * everything.
  */
-int
-the_answer(void)
-{
-    return 42;
-}
+MYLIB_EXPORT int mylib_function();
 
 
 TESTING & DEBUGGING
