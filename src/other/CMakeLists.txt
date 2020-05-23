@@ -455,17 +455,43 @@ elseif(BRLCAD_ENABLE_TK)
 
   set(HAVE_TK_H 1)
 
-  # Packages probably still need to know the system graphics package
-  if (NOT WIN32)
-    if (APPLE AND TK_ENABLE_AQUA)
-      set(TK_SYSTEM_GRAPHICS aqua)
-    else ()
-      set(TK_SYSTEM_GRAPHICS x11)
-    endif (APPLE AND TK_ENABLE_AQUA)
-  else (NOT WIN32)
-    set(TK_SYSTEM_GRAPHICS win32)
-  endif (NOT WIN32)
-  set(TK_SYSTEM_GRAPHICS "${TK_SYSTEM_GRAPHICS}" CACHE STRING "Tk system graphics type" FORCE)
+  # Packages probably still need to know the system graphics package.  Unfortunately
+  # it is not possible to run tclsh or wish to use the [tk windowingsystem] command
+  # to extract this information on a system without the ability to launch a graphics
+  # window successfully - Tk initialization will fail, and thus the command fails,
+  # even though we don't actually need the window.  There is no other reliable
+  # runtime way to use tclsh or wish to identify the system graphics system.
+  #
+  # In lieu of this, we look instead in the printiable strings of the Tk library
+  # for the "win32", "aqua", or "x11" strings (or, if necessary, we will add additional
+  # string checks.)  This is not ideal, but there appears to be no other way to learn
+  # what we want to know.
+
+  try_compile(WSYS_BUILD ${CMAKE_BINARY_DIR}/CMakeTmp ${BRLCAD_CMAKE_DIR}/wsysstring.cpp
+    OUTPUT_VARIABLE WSYS_MSG
+    COPY_FILE ${CMAKE_BINARY_DIR}/CMakeTmp/wsysstring${CMAKE_EXECUTABLE_SUFFIX})
+
+  if (NOT WSYS_BUILD)
+    message(FATAL_ERROR "Could not build wyssstring checker to test Tcl/Tk windowing system: ${WSYS_MSG}")
+  endif (NOT WSYS_BUILD)
+
+  execute_process(COMMAND ${CMAKE_BINARY_DIR}/CMakeTmp/wsysstring${CMAKE_EXECUTABLE_SUFFIX}  ${TK_LIBRARY}
+    RESULT_VARIABLE WSYS_TEST
+    OUTPUT_VARIABLE WSYS_VAL
+    )
+
+  if (WSYS_TEST EQUAL -1)
+    message(FATAL_ERROR "Tcl/Tk windowing system test failed")
+  endif (WSYS_TEST EQUAL -1)
+
+  string(REPLACE "\n" "" WSYS_VAL "${WSYS_VAL}")
+  if (BRLCAD_ENABLE_AQUA AND NOT "${WSYS_VAL}" STREQUAL "aqua")
+    message(FATAL_ERROR "Aqua build requested, but Tk graphics system is \"${WSYS_VAL}\".  Please direct FindTCL.cmake to a different Tcl/Tk installation to use Aqua.")
+  endif (BRLCAD_ENABLE_AQUA AND NOT "${WSYS_VAL}" STREQUAL "aqua")
+
+  set(TK_SYSTEM_GRAPHICS "${WSYS_VAL}" CACHE STRING "Tk system graphics type" FORCE)
+
+  message("TK_SYSTEM_GRAPHICS: ${TK_SYSTEM_GRAPHICS}")
 
 else(BRLCAD_TK_BUILD)
 
