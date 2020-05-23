@@ -1,3 +1,19 @@
+/*                  W S Y S S T R I N G . C P P
+ * BRL-CAD
+ *
+ * Published in 2020 by the United States Government.
+ * This work is in the public domain.
+ *
+ */
+/** @file wsysstring.cpp
+ *
+ * This is an attempt to work around a problem with Tcl/Tk.  The public Tk C
+ * api doesn't provide a way to get at the compiled graphics subsystem choice
+ * without trying to initalize a Tk window, which won't work in headless
+ * configurations such as build farms.  So instead we introspect looking for
+ * the key printable strings that can tell us what we've got.
+ */
+
 #include <fstream>
 #include <iostream>
 #include <cstring>
