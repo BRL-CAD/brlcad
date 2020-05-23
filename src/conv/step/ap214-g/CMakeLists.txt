@@ -239,7 +239,7 @@ list(APPEND ap214g_LIBS ${ap214g_LIBS})
 BRLCAD_ADDEXEC(ap214-g "${ap214g_SOURCES}" "${ap214g_LIBS}" NO_STRICT)
 add_dependencies(ap214-g step-express-${SCHEMA_NAME}-ap214g)
 
-if(MSVC)
+if (HIDE_INTERNAL_SYMBOLS)
   set(ap214g_IMPORTS
     BU_DLL_IMPORTS
     RT_DLL_IMPORTS
@@ -251,7 +251,7 @@ if(MSVC)
     )
   list(APPEND ap214g_IMPORTS ${ap214g_IMPORTS})
   set_target_properties(step-g PROPERTIES COMPILE_DEFINITIONS "${ap214g_IMPORTS}")
-endif(MSVC)
+endif (HIDE_INTERNAL_SYMBOLS)
 
 CMAKEFILES(CMakeLists.txt)
 

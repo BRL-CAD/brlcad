@@ -131,7 +131,7 @@ server_main(int UNUSED(argc), const char *UNUSED(argv)) {
 	} else if (client == PKC_ERROR) {
 	    pkg_close(client);
 	    client = PKC_NULL;
-	    bu_log("ERROR: no clients connected to server after %d seconds waiting\n");
+	    bu_log("ERROR: client == PKC_ERROR\n");
 	    bu_exit(-1, "Server exiting\n");
 	    continue;
 	}

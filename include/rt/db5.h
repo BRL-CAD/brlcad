@@ -41,9 +41,9 @@ __BEGIN_DECLS
 #  if defined(RT_DLL_EXPORTS) && defined(RT_DLL_IMPORTS)
 #    error "Only RT_DLL_EXPORTS or RT_DLL_IMPORTS can be defined, not both."
 #  elif defined(RT_DLL_EXPORTS)
-#    define RT_EXPORT __declspec(dllexport)
+#    define RT_EXPORT COMPILER_DLLEXPORT
 #  elif defined(RT_DLL_IMPORTS)
-#    define RT_EXPORT __declspec(dllimport)
+#    define RT_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define RT_EXPORT
 #  endif

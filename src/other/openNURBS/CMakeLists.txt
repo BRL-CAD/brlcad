@@ -39,7 +39,7 @@ set(CMAKE_POSITION_INDEPENDENT_CODE TRUE)
 # If we can, use OBJECT libraries to build both shared and static
 # libraries from the same .o files, saving double compilation
 include(CMakeDependentOption)
-cmake_dependent_option(USE_OBJECT_LIBS "Use OBJECT libraries" ON "NOT CPP_DLL_DEFINES" OFF)
+cmake_dependent_option(USE_OBJECT_LIBS "Use OBJECT libraries" ON "NOT MSVC" OFF)
 
 if(BRLCAD_FLAGS_DEBUG)
   add_definitions(${DEBUG_CXX_FLAGS})
