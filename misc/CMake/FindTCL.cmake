@@ -275,6 +275,49 @@ find_path(TK_INCLUDE_PATH
   PATH_SUFFIXES ${TCLTK_POSSIBLE_INCLUDE_PATH_SUFFIXES}
   )
 
+# IFF we have TK_SYSTEM_GRAPHICS set and have a system TK_WISH, check that the
+# windowing system matches the specified type
+if (NOT "${TK_SYSTEM_GRAPHICS}" STREQUAL "" AND TK_WISH AND NOT TARGET "${TK_WISH}")
+	set(tkwin_script "
+	set filename \"${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM\"
+	set fileId [open $filename \"w\"]
+	set windowingsystem [tk windowingsystem]
+	puts $fileId $windowingsystem
+	close $fileId
+	exit
+	")
+	set(tkwin_scriptfile "${CMAKE_BINARY_DIR}/CMakeTmp/tk_windowingsystem.tcl")
+	set(WSYS "wm-NOTFOUND")
+	file(WRITE ${tkwin_scriptfile} ${tkwin_script})
+	execute_process(COMMAND ${TK_WISH} ${tkwin_scriptfile} OUTPUT_VARIABLE EXECOUTPUT)
+	if (EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM")
+		file(READ "${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM" readresultvar)
+		string(REGEX REPLACE "\n" "" WSYS "${readresultvar}")
+	endif (EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM")
+
+	# If we have no information about the windowing system or it does not match
+	# a specified system, the find_package detection has failed
+	if (NOT "${WSYS}" STREQUAL "${TK_SYSTEM_GRAPHICS}")
+		set(TCL_LIBRARY "" CACHE STRING "Graphics system mismatch" FORCE)
+		set(TCL_STUB_LIBRARY "" CACHE STRING "Graphics system mismatch" FORCE)
+		set(TK_LIBRARY "" CACHE STRING "Graphics system mismatch" FORCE)
+		set(TK_STUB_LIBRARY "" CACHE STRING "Graphics system mismatch" FORCE)
+		set(TCL_FOUND FALSE CACHE BOOL "Graphics system mismatch" FORCE)
+		set(TK_FOUND FALSE CACHE BOOL "Graphics system mismatch" FORCE)
+		set(TCLTK_FOUND FALSE CACHE BOOL "Graphics system mismatch" FORCE)
+		set(TCLSH_FOUND FALSE CACHE BOOL "Graphics system mismatch" FORCE)
+		set(TCL_LIBRARY "" CACHE STRING "Graphics system mismatch" FORCE)
+		set(TCL_INCLUDE_PATH "" CACHE STRING "Graphics system mismatch" FORCE)
+		set(TCL_TCLSH "" CACHE STRING "Graphics system mismatch" FORCE)
+		set(TK_LIBRARY "" CACHE STRING "Graphics system mismatch" FORCE)
+		set(TK_INCLUDE_PATH "" CACHE STRING "Graphics system mismatch" FORCE)
+		set(TK_WISH "" CACHE STRING "Graphics system mismatch" FORCE)
+		set(TCL_STUB_LIBRARY "" CACHE STRING "Graphics system mismatch" FORCE)
+		set(TK_STUB_LIBRARY "" CACHE STRING "Graphics system mismatch" FORCE)
+		set(TTK_STUB_LIBRARY "" CACHE STRING "Graphics system mismatch" FORCE)
+	endif (NOT "${WSYS}" STREQUAL "${TK_SYSTEM_GRAPHICS}")
+endif (NOT "${TK_SYSTEM_GRAPHICS}" STREQUAL "" AND TK_WISH AND NOT TARGET "${TK_WISH}")
+
 include(FindPackageHandleStandardArgs)
 
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(TCL
