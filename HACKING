@@ -418,9 +418,11 @@ public library APIs should expose only C function calls and data
 except in very specific cases (should be discussed with the
 development team ahead of time to get consensus on the necessity.)
 
-There is currently no C++ interface to the core BRL-CAD libraries. If
-such an interface is eventually developed, it will be done separately
-rather than mixing C++ semantics into existing APIs.
+There is a C++ interface to the core BRL-CAD libraries called MOOSE
+that is maintained in a separate repository.  It is developed with
+separation in order to avoid mixing C++ semantics into existing APIs
+and to ensure clean separation of responsibilities and modularity.
+
 
 CODING STYLE & STANDARDS
 ------------------------
