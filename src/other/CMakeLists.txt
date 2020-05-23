@@ -308,6 +308,17 @@ endif(BRLCAD_UTAHRLE_BUILD)
 #                Tcl/Tk and related extensions
 ####################################################################
 
+# Set the expected graphics system (if known) before any find_package
+# calls related to Tcl
+if(BRLCAD_ENABLE_AQUA)
+  set(TK_ENABLE_AQUA ON CACHE STRING "BRL-CAD setting to enable AQUA" FORCE)
+  set(TK_SYSTEM_GRAPHICS "aqua" CACHE STRING "Tk system graphics type" FORCE)
+else(BRLCAD_ENABLE_AQUA)
+  if (BRLCAD_ENABLE_X11)
+    set(TK_SYSTEM_GRAPHICS "x11" CACHE STRING "Tk system graphics type" FORCE)
+  endif (BRLCAD_ENABLE_X11)
+endif(BRLCAD_ENABLE_AQUA)
+
 # Make sure we actually look for these each time...
 unset(TCL_TCLSH CACHE)
 unset(TCL_LIBRARY CACHE)
@@ -411,14 +422,6 @@ BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_TK is set to BUNDLED,
 local copy is built even if a system version is present.  This option
 also depends on BRLCAD_ENABLE_TK being ON.
 ")
-if(BRLCAD_ENABLE_AQUA)
-  set(TK_ENABLE_AQUA ON CACHE STRING "BRL-CAD setting to enable AQUA" FORCE)
-  set(TK_SYSTEM_GRAPHICS "aqua" CACHE STRING "Tk system graphics type" FORCE)
-else(BRLCAD_ENABLE_AQUA)
-  if (BRLCAD_ENABLE_X11)
-    set(TK_SYSTEM_GRAPHICS "x11" CACHE STRING "Tk system graphics type" FORCE)
-  endif (BRLCAD_ENABLE_X11)
-endif(BRLCAD_ENABLE_AQUA)
 
 THIRD_PARTY_TCL_PACKAGE(Tk tk "${TCL_TCLSH}" "tcl" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL2" "tk" tk_ALIASES tk_DESCRIPTION)
 
