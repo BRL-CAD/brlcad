@@ -320,12 +320,23 @@ else(BRLCAD_ENABLE_AQUA)
 endif(BRLCAD_ENABLE_AQUA)
 
 # Make sure we actually look for these each time...
-unset(TCL_TCLSH CACHE)
+unset(TCL_LIBRARY CACHE)
+unset(TCL_STUB_LIBRARY CACHE)
+unset(TK_LIBRARY CACHE)
+unset(TK_STUB_LIBRARY CACHE)
+unset(TCL_FOUND CACHE)
+unset(TK_FOUND CACHE)
+unset(TCLTK_FOUND CACHE)
+unset(TCLSH_FOUND CACHE)
 unset(TCL_LIBRARY CACHE)
 unset(TCL_INCLUDE_PATH CACHE)
-unset(TK_WISH CACHE)
+unset(TCL_TCLSH CACHE)
 unset(TK_LIBRARY CACHE)
 unset(TK_INCLUDE_PATH CACHE)
+unset(TK_WISH CACHE)
+unset(TCL_STUB_LIBRARY CACHE)
+unset(TK_STUB_LIBRARY CACHE)
+unset(TTK_STUB_LIBRARY CACHE)
 
 set(tcl_DESCRIPTION "
 Option for enabling and disabling compilation of the Tcl library
