@@ -18,7 +18,7 @@ add_subdirectory(icv)
 add_subdirectory(ged)
 
 # Geometry Conversion Regression Tests
-#add_subdirectory(gcv)
+add_subdirectory(gcv)
 
 # NURBS Regression Tests
 #add_subdirectory(nurbs)

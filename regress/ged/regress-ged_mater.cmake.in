@@ -13,9 +13,9 @@ set(OUTPUT_FILES
 
 file(WRITE "${LOGFILE}" "Starting mater test run\n")
 
-# The executable locations aren't know at CMake configure time, so one of them
-# is passed in via the EXEC variable at runtime.  De-quote it and assign it to
-# the appropriate variable.
+# The executable locations aren't know at CMake configure time, so it is passed
+# in via the EXEC variable at runtime by a generator expression in the parent
+# build.  De-quote it and assign it to the appropriate variable.
 string(REPLACE "\\" "" MATER_EXEC "${EXEC}")
 if (NOT EXISTS "${MATER_EXEC}")
   file(WRITE "${LOGFILE}" "mater test program not found at location \"${MATER_EXEC}\" - aborting\n")
