@@ -21,7 +21,7 @@ add_subdirectory(ged)
 add_subdirectory(gcv)
 
 # NURBS Regression Tests
-#add_subdirectory(nurbs)
+add_subdirectory(nurbs)
 
 # libpkg Regression Tests
 #add_subdirectory(pkg)
