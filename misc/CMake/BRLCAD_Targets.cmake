@@ -895,6 +895,103 @@ function(ADD_MAN_PAGES num inmanlist)
   BRLCAD_MANAGE_FILES(${inmanlist} ${man_target_dir})
 endfunction(ADD_MAN_PAGES)
 
+
+
+#-----------------------------------------------------------------------------
+# The default operational mode of Regression tests is to be executed by a
+# parent CMake script, which captures the I/O from the test and stores it in an
+# individual log file named after the test.  By default, a custom command and
+# CTest add_test command are set up to run a configured script.  If TEST_SCRIPT
+# is provided specifying a particular script file that is used, otherwise the
+# convention of ${testname}.cmake.in in the current source directory is assumed
+# to specify the input test script.
+#
+# To allow for more customized test execution, the option TEST_DEFINED may be
+# passed to the function to instruct it to skip all setup for add_test and
+# custom command definitions.  It is the callers responsibility to define an
+# appropriately named test with add_test - BRLCAD_REGRESSION_TEST in this mode
+# will then perform only the specific build target definition and subsequent
+# steps for wiring the test into the higher level commands.
+#
+# Standard actions for all regression targets:
+#
+# 1.  A custom build target with the pattern regress-${testname} is defined
+#     to allow for individual execution of the regression test with
+#     "make regress-${testname}"
+#
+# 2.  A label is added identifying the test as a regression test so the top
+#     level commands "make check" and "make regress" know this particular
+#     tests is one of the tests they are supposed to execute.
+#
+# 3.  Any dependencies in ${depends_list} are added as build requirements to
+#     the regress and check targets.  This ensures that (unlike "make test"
+#     and CTest itself, when those targets are built the dependencies of the
+#     tests are built first.  (A default CTest run prior to building will
+#     result in all tests failing.)
+#
+# 4.  If the keyword "STAND_ALONE" is passed in, a regress-${testname} target
+#     is defined but no other connections are made between that target and the
+#     agglomeration targets.
+#
+# 5.  If a TIMEOUT argument is passed, a specific timeout tiem is set on the
+#     test. Otherwise, a default is assigned so no test runs indefinitely.
+
+function(BRLCAD_REGRESSION_TEST testname depends_list)
+
+  cmake_parse_arguments(${testname} "TEST_DEFINED;STAND_ALONE" "TEST_SCRIPT;TIMEOUT" "" ${ARGN})
+
+  if (NOT ${testname}_TEST_DEFINED)
+
+    # Test isn't yet defined - do the add_test setup
+    if (${testname}_TEST_SCRIPT)
+      configure_file("${${testname}_TEST_SCRIPT}" "${CMAKE_CURRENT_BINARY_DIR}/${testname}.cmake" @ONLY)
+    else (${testname}_TEST_SCRIPT)
+      configure_file("${CMAKE_CURRENT_SOURCE_DIR}/${testname}.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${testname}.cmake" @ONLY)
+    endif (${testname}_TEST_SCRIPT)
+
+    add_test(NAME ${testname} COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/${testname}.cmake")
+
+  endif (NOT ${testname}_TEST_DEFINED)
+
+
+  # Every regression test gets a build target
+  if (CMAKE_CONFIGURATION_TYPES)
+    add_custom_target(${testname} COMMAND ${CMAKE_CTEST_COMMAND} -C ${CMAKE_CFG_INTDIR} -R ^${testname} --output-on-failure)
+  else (CMAKE_CONFIGURATION_TYPES)
+    add_custom_target(${testname} COMMAND ${CMAKE_CTEST_COMMAND} -R ^${testname} --output-on-failure)
+  endif (CMAKE_CONFIGURATION_TYPES)
+
+  # Make sure we at least get this into the regression test folder - local
+  # subdirectories may override this if they have more specific locations
+  # they want to use.
+  set_target_properties(${testname} PROPERTIES FOLDER "BRL-CAD Regression Tests/regress")
+
+  # In Visual Studio, none of the regress build targets are added to the default build.
+  set_target_properties(${testname} PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
+
+  # Group any test not excluded by the STAND_ALONE flag with the other regression tests by
+  # assigning a standard label
+  if (NOT ${testname}_STAND_ALONE)
+    set_tests_properties(${testname} PROPERTIES LABELS "Regression")
+  else (NOT ${testname}_STAND_ALONE)
+    set_tests_properties(${testname} PROPERTIES LABELS "STAND_ALONE")
+  endif (NOT ${testname}_STAND_ALONE)
+
+  # Set up dependencies for both regress and check
+  if (NOT "${depends_list}" STREQUAL "")
+    add_dependencies(regress ${depends_list})
+    add_dependencies(check   ${depends_list})
+  endif (NOT "${depends_list}" STREQUAL "")
+
+  # Set either the standard timeout or a specified custom timeout
+  if (${testname}_TIMEOUT)
+    set_tests_properties(${testname} PROPERTIES TIMEOUT ${${testname}_TIMEOUT})
+  else (${testname}_TIMEOUT)
+    set_tests_properties(${testname} PROPERTIES TIMEOUT 300) # FIXME: want <60
+  endif (${testname}_TIMEOUT)
+
+endfunction(BRLCAD_REGRESSION_TEST)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

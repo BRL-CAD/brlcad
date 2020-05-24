@@ -1,40 +1,3 @@
-function(Add_Regression_Test testname depends_list)
-
-  cmake_parse_arguments(${testname} "EXCLUDE_FROM_REGRESS" "" "" ${ARGN})
-
-  set_target_properties(regress-${testname} PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
-
-  if (NOT ${testname}_EXCLUDE_FROM_REGRESS)
-
-    # Make sure we at least get this into the regression test folder - local
-    # subdirectories may override this if they have more specific locations
-    # they want to use.
-    set_target_properties(regress-${testname} PROPERTIES FOLDER "BRL-CAD Regression Tests/regress")
-
-    set_tests_properties(regress-${testname} PROPERTIES LABELS "Regression")
-
-  else (NOT ${testname}_EXCLUDE_FROM_REGRESS)
-
-    set_target_properties(regress-${testname} PROPERTIES FOLDER "BRL-CAD Regression Tests")
-
-    set_tests_properties(regress-${testname} PROPERTIES LABELS "NOT_WORKING")
-
-  endif (NOT ${testname}_EXCLUDE_FROM_REGRESS)
-
-  # Set up dependencies for both regress and check
-  if (NOT "${depends_list}" STREQUAL "")
-    add_dependencies(regress ${depends_list})
-    if (TARGET check)
-      add_dependencies(check ${depends_list})
-    endif (TARGET check)
-  endif (NOT "${depends_list}" STREQUAL "")
-
-  if (NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
-    set_tests_properties(regress-${testname} PROPERTIES TIMEOUT 300) # FIXME: want <60
-  endif (NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
-
-endfunction(Add_Regression_Test)
-
 # Define the toplevel regression target - unless specifically excluded
 # via a macro argument, this should collect all regression targets.
 include(ProcessorCount)
@@ -52,25 +15,25 @@ set_target_properties(regress PROPERTIES FOLDER "BRL-CAD Regression Tests")
 add_subdirectory(icv)
 
 # Geometry Editing Library Regression Tests
-add_subdirectory(ged)
+#add_subdirectory(ged)
 
 # Geometry Conversion Regression Tests
-add_subdirectory(gcv)
+#add_subdirectory(gcv)
 
 # NURBS Regression Tests
-add_subdirectory(nurbs)
+#add_subdirectory(nurbs)
 
 # libpkg Regression Tests
-add_subdirectory(pkg)
+#add_subdirectory(pkg)
 
 # Burst Regression Tests
-add_subdirectory(burst)
+#add_subdirectory(burst)
 
 # RtWizard Image Generation Regression Tests
-add_subdirectory(rtwizard)
+#add_subdirectory(rtwizard)
 
 # MGED command tests
-add_subdirectory(mged)
+#add_subdirectory(mged)
 
 # Fuzz tests
 include(Fuzzer)
@@ -80,55 +43,70 @@ if (${HAVE_FUZZER})
 endif (${HAVE_FUZZER})
 
 # gchecker tests
-add_subdirectory(gchecker)
+#add_subdirectory(gchecker)
 
 # License check
-add_subdirectory(licenses)
+#add_subdirectory(licenses)
 
 # Repository check
-add_subdirectory(repository)
+#add_subdirectory(repository)
 
 if(SH_EXEC)
-  macro(Sh_Regression_Test testname depends_list)
-    CMAKE_PARSE_ARGUMENTS(${testname} "EXCLUDE_FROM_REGRESS" "" "" ${ARGN})
-    add_test(NAME regress-${testname} COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/${testname}.sh" ${CMAKE_SOURCE_DIR})
-    add_custom_target(regress-${testname} COMMAND ${CMAKE_CTEST_COMMAND} -R ^regress-${testname} --output-on-failure)
-    set_target_properties(regress-${testname} PROPERTIES FOLDER "BRL-CAD Regression Tests")
-    if(NOT ${testname}_EXCLUDE_FROM_REGRESS)
-      set_tests_properties(regress-${testname} PROPERTIES LABELS "Regression")
-    else(NOT ${testname}_EXCLUDE_FROM_REGRESS)
-      set_tests_properties(regress-${testname} PROPERTIES LABELS "NOT_WORKING")
-    endif(NOT ${testname}_EXCLUDE_FROM_REGRESS)
-    if(NOT "${depends_list}" STREQUAL "")
-      add_dependencies(regress-${testname} ${depends_list})
-      add_dependencies(regress ${depends_list})
-      if(TARGET check)
-	add_dependencies(check ${depends_list})
-      endif(TARGET check)
-    endif(NOT "${depends_list}" STREQUAL "")
-    if(NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
-      set_tests_properties(regress-${testname} PROPERTIES TIMEOUT 300) # FIXME: want <60
-    endif(NOT BRLCAD_DISABLE_REGRESS_TIMEOUT)
-  endmacro(Sh_Regression_Test)
 
-  Sh_Regression_Test(moss "rt;asc2g;pixdiff;pix-png;png-pix")
-  Sh_Regression_Test(lights "rt;asc2g;pixdiff")
-  Sh_Regression_Test(solids "rt;mged;pixdiff;asc2pix;gencolor")
-  Sh_Regression_Test(shaders "rt;mged;pixdiff;gencolor")
-  Sh_Regression_Test(spdi "rt;mged;pixdiff")
-  Sh_Regression_Test(rtedge "rt;rtedge;pixdiff;asc2g")
-  Sh_Regression_Test(iges "iges-g;g-iges;mged;asc2g")
-  Sh_Regression_Test(weight "rtweight;mged")
-  Sh_Regression_Test(gqa "gqa;mged")
-  Sh_Regression_Test(bots "mged;pixdiff;rt")
-  Sh_Regression_Test(usage "rt" EXCLUDE_FROM_REGRESS)
-  Sh_Regression_Test(flawfinder "" EXCLUDE_FROM_REGRESS)
-  Sh_Regression_Test(mged mged)
-  Sh_Regression_Test(red mged)
-  Sh_Regression_Test(nirt "mged;nirt")
-  Sh_Regression_Test(comgeom "mged;asc2g;vdeck;comgeom-g")
-  Sh_Regression_Test(dsp "mged;cv;asc2pix;rt;pix-bw")
-  Sh_Regression_Test(asc2dsp "cv;asc2pix;pix-bw;asc2dsp")
+  add_test(NAME regress-moss COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/moss.sh" ${CMAKE_SOURCE_DIR})
+  BRLCAD_REGRESSION_TEST(regress-moss "rt;asc2g;pixdiff;pix-png;png-pix" TEST_DEFINED)
+
+  add_test(NAME regress-lights COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/lights.sh" ${CMAKE_SOURCE_DIR})
+  BRLCAD_REGRESSION_TEST(regress-lights "rt;asc2g;pixdiff" TEST_DEFINED)
+
+  add_test(NAME regress-solids COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/solids.sh" ${CMAKE_SOURCE_DIR})
+  BRLCAD_REGRESSION_TEST(regress-solids "rt;mged;pixdiff;asc2pix;gencolor" TEST_DEFINED)
+
+  add_test(NAME regress-shaders COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/shaders.sh" ${CMAKE_SOURCE_DIR})
+  BRLCAD_REGRESSION_TEST(regress-shaders "rt;mged;pixdiff;gencolor" TEST_DEFINED)
+
+  add_test(NAME regress-spdi COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/spdi.sh" ${CMAKE_SOURCE_DIR})
+  BRLCAD_REGRESSION_TEST(regress-spdi "rt;mged;pixdiff" TEST_DEFINED)
+
+  add_test(NAME regress-rtedge COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/rtedge.sh" ${CMAKE_SOURCE_DIR})
+  BRLCAD_REGRESSION_TEST(regress-rtedge "rt;rtedge;pixdiff;asc2g" TEST_DEFINED)
+
+  add_test(NAME regress-iges COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/iges.sh" ${CMAKE_SOURCE_DIR})
+  BRLCAD_REGRESSION_TEST(regress-iges "iges-g;g-iges;mged;asc2g" TEST_DEFINED)
+
+  add_test(NAME regress-weight COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/weight.sh" ${CMAKE_SOURCE_DIR})
+  BRLCAD_REGRESSION_TEST(regress-weight "rtweight;mged" TEST_DEFINED)
+
+  add_test(NAME regress-gqa COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/gqa.sh" ${CMAKE_SOURCE_DIR})
+  BRLCAD_REGRESSION_TEST(regress-gqa "gqa;mged" TEST_DEFINED)
+
+  add_test(NAME regress-bots COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/bots.sh" ${CMAKE_SOURCE_DIR})
+  BRLCAD_REGRESSION_TEST(regress-bots "mged;pixdiff;rt" TEST_DEFINED)
+
+  add_test(NAME regress-mged COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/mged.sh" ${CMAKE_SOURCE_DIR})
+  BRLCAD_REGRESSION_TEST(regress-mged mged TEST_DEFINED)
+
+  add_test(NAME regress-red COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/red.sh" ${CMAKE_SOURCE_DIR})
+  BRLCAD_REGRESSION_TEST(regress-red mged TEST_DEFINED)
+
+  add_test(NAME regress-nirt COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/nirt.sh" ${CMAKE_SOURCE_DIR})
+  BRLCAD_REGRESSION_TEST(regress-nirt "mged;nirt" TEST_DEFINED)
+
+  add_test(NAME regress-comgeom COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/comgeom.sh" ${CMAKE_SOURCE_DIR})
+  BRLCAD_REGRESSION_TEST(regress-comgeom "mged;asc2g;vdeck;comgeom-g" TEST_DEFINED)
+
+  add_test(NAME regress-dsp COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/dsp.sh" ${CMAKE_SOURCE_DIR})
+  BRLCAD_REGRESSION_TEST(regress-dsp "mged;cv;asc2pix;rt;pix-bw" TEST_DEFINED)
+
+  add_test(NAME regress-asc2dsp COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/asc2dsp.sh" ${CMAKE_SOURCE_DIR})
+  BRLCAD_REGRESSION_TEST(regress-asc2dsp "cv;asc2pix;pix-bw;asc2dsp" TEST_DEFINED)
+
+  add_test(NAME regress-usage COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/usage.sh" ${CMAKE_SOURCE_DIR})
+  BRLCAD_REGRESSION_TEST(regress-usage "rt" STAND_ALONE TEST_DEFINED)
+
+  # TODO - test for Python before adding this one
+  add_test(NAME regress-flawfinder COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/flawfinder.sh" ${CMAKE_SOURCE_DIR})
+  BRLCAD_REGRESSION_TEST(regress-flawfinder "" STAND_ALONE TEST_DEFINED)
 
 endif(SH_EXEC)
 
