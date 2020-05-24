@@ -24,10 +24,10 @@ add_subdirectory(gcv)
 add_subdirectory(nurbs)
 
 # libpkg Regression Tests
-#add_subdirectory(pkg)
+add_subdirectory(pkg)
 
 # Burst Regression Tests
-#add_subdirectory(burst)
+add_subdirectory(burst)
 
 # RtWizard Image Generation Regression Tests
 #add_subdirectory(rtwizard)

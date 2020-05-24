@@ -36,8 +36,6 @@ execute_process(
 
 if(nurbs_result)
   message(FATAL_ERROR "[nurbs] Failure, unexpected result running ${NHIT} @NHIT_OPTS@ @NHIT_GFILE@ @NHIT_ARGS@\n ${nurbs_log}\n")
-else(nurbs_result)
-  execute_process(COMMAND "@CMAKE_COMMAND@" -E touch "@CMAKE_CURRENT_BINARY_DIR@/@NHIT_NAME@${test_suffix}.done")
 endif(nurbs_result)
 
 # Local Variables:
