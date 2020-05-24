@@ -12,7 +12,7 @@ set_target_properties(regress_pkg PROPERTIES FOLDER "BRL-CAD Regression Tests/li
 add_test(NAME regress-pkg
   COMMAND $<TARGET_FILE:regress_pkg>
   )
-set_tests_properties(regress-pkg PROPERTIES LABELS "Regression")
+set_tests_properties(regress-pkg PROPERTIES LABELS "NOT_WORKING")
 
 if (CMAKE_CONFIGURATION_TYPES)
   add_custom_target(regress-pkg COMMAND ${CMAKE_CTEST_COMMAND} -C ${CMAKE_CFG_INTDIR} -R ^regress-pkg --output-on-failure)
