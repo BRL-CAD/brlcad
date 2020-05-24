@@ -275,9 +275,9 @@ find_path(TK_INCLUDE_PATH
   PATH_SUFFIXES ${TCLTK_POSSIBLE_INCLUDE_PATH_SUFFIXES}
   )
 
-# IFF we have TK_SYSTEM_GRAPHICS set and have a system TK_WISH, check that the
+# IFF we have TCL_TK_SYSTEM_GRAPHICS set and have a system TK_WISH, check that the
 # windowing system matches the specified type
-if (NOT "${TK_SYSTEM_GRAPHICS}" STREQUAL "" AND TK_WISH AND NOT TARGET "${TK_WISH}")
+if (NOT "${TCL_TK_SYSTEM_GRAPHICS}" STREQUAL "" AND TK_WISH AND NOT TARGET "${TK_WISH}")
 	set(tkwin_script "
 	set filename \"${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM\"
 	set fileId [open $filename \"w\"]
@@ -297,7 +297,7 @@ if (NOT "${TK_SYSTEM_GRAPHICS}" STREQUAL "" AND TK_WISH AND NOT TARGET "${TK_WIS
 
 	# If we have no information about the windowing system or it does not match
 	# a specified system, the find_package detection has failed
-	if (NOT "${WSYS}" STREQUAL "${TK_SYSTEM_GRAPHICS}")
+	if (NOT "${WSYS}" STREQUAL "${TCL_TK_SYSTEM_GRAPHICS}")
 		unset(TCL_LIBRARY CACHE)
 		unset(TCL_STUB_LIBRARY CACHE)
 		unset(TK_LIBRARY CACHE)
@@ -315,8 +315,8 @@ if (NOT "${TK_SYSTEM_GRAPHICS}" STREQUAL "" AND TK_WISH AND NOT TARGET "${TK_WIS
 		unset(TCL_STUB_LIBRARY CACHE)
 		unset(TK_STUB_LIBRARY CACHE)
 		unset(TTK_STUB_LIBRARY CACHE)
-	endif (NOT "${WSYS}" STREQUAL "${TK_SYSTEM_GRAPHICS}")
-endif (NOT "${TK_SYSTEM_GRAPHICS}" STREQUAL "" AND TK_WISH AND NOT TARGET "${TK_WISH}")
+	endif (NOT "${WSYS}" STREQUAL "${TCL_TK_SYSTEM_GRAPHICS}")
+endif (NOT "${TCL_TK_SYSTEM_GRAPHICS}" STREQUAL "" AND TK_WISH AND NOT TARGET "${TK_WISH}")
 
 include(FindPackageHandleStandardArgs)
 
