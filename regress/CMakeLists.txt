@@ -30,7 +30,7 @@ add_subdirectory(pkg)
 add_subdirectory(burst)
 
 # RtWizard Image Generation Regression Tests
-#add_subdirectory(rtwizard)
+add_subdirectory(rtwizard)
 
 # MGED command tests
 #add_subdirectory(mged)
