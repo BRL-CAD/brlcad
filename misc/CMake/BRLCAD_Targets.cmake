@@ -906,6 +906,14 @@ endfunction(ADD_MAN_PAGES)
 # convention of ${testname}.cmake.in in the current source directory is assumed
 # to specify the input test script.
 #
+# Particularly when configuration dependent builds are in play, a test
+# executable's location needs special handling to ensure the scripts run the
+# correct version of a program.  The standard mechanism is to specify the CMake
+# target name of the executable by supplying it via the EXEC option and then
+# pass the output of $<TARGET_FILE:${${testname}_EXEC}> to the running CMake
+# script. (Note that the script must in turn post-process this value to unquote
+# it in case of special characters in pathnames.)
+#
 # To allow for more customized test execution, the option TEST_DEFINED may be
 # passed to the function to instruct it to skip all setup for add_test and
 # custom command definitions.  It is the callers responsibility to define an
@@ -938,7 +946,7 @@ endfunction(ADD_MAN_PAGES)
 
 function(BRLCAD_REGRESSION_TEST testname depends_list)
 
-  cmake_parse_arguments(${testname} "TEST_DEFINED;STAND_ALONE" "TEST_SCRIPT;TIMEOUT" "" ${ARGN})
+  cmake_parse_arguments(${testname} "TEST_DEFINED;STAND_ALONE" "TEST_SCRIPT;TIMEOUT;EXEC" "" ${ARGN})
 
   if (NOT ${testname}_TEST_DEFINED)
 
@@ -949,7 +957,11 @@ function(BRLCAD_REGRESSION_TEST testname depends_list)
       configure_file("${CMAKE_CURRENT_SOURCE_DIR}/${testname}.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${testname}.cmake" @ONLY)
     endif (${testname}_TEST_SCRIPT)
 
-    add_test(NAME ${testname} COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/${testname}.cmake")
+    if (TARGET ${${testname}_EXEC})
+      add_test(NAME ${testname} COMMAND "${CMAKE_COMMAND}" -DEXEC=$<TARGET_FILE:${${testname}_EXEC}> -P "${CMAKE_CURRENT_BINARY_DIR}/${testname}.cmake")
+    else (TARGET ${${testname}_EXEC})
+      add_test(NAME ${testname} COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/${testname}.cmake")
+    endif (TARGET ${${testname}_EXEC})
 
   endif (NOT ${testname}_TEST_DEFINED)
 
@@ -960,6 +972,9 @@ function(BRLCAD_REGRESSION_TEST testname depends_list)
   else (CMAKE_CONFIGURATION_TYPES)
     add_custom_target(${testname} COMMAND ${CMAKE_CTEST_COMMAND} -R ^${testname} --output-on-failure)
   endif (CMAKE_CONFIGURATION_TYPES)
+  if (depends_list)
+    add_dependencies(${testname} ${depends_list})
+  endif (depends_list)
 
   # Make sure we at least get this into the regression test folder - local
   # subdirectories may override this if they have more specific locations

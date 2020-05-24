@@ -15,7 +15,7 @@ set_target_properties(regress PROPERTIES FOLDER "BRL-CAD Regression Tests")
 add_subdirectory(icv)
 
 # Geometry Editing Library Regression Tests
-#add_subdirectory(ged)
+add_subdirectory(ged)
 
 # Geometry Conversion Regression Tests
 #add_subdirectory(gcv)

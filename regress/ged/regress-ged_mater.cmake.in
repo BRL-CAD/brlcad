@@ -1,60 +1,51 @@
+string(REPLACE "\\" "" MATER_EXEC "${EXEC}")
+
 set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
 set(CSDIR "@CMAKE_CURRENT_SOURCE_DIR@")
 
-set(SBDIR "@CMAKE_RUNTIME_OUTPUT_DIRECTORY@")
-set(DBDIR "@CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG@")
-set(RBDIR "@CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE@")
-# Use the mechanism created to allow multiconfig builds to
-# know what the current build type is.
-if(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
-  set(BDIR "${RBDIR}")
-  set(test_suffix "-Release")
-elseif(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Debug")
-  set(BDIR "${DBDIR}")
-  set(test_suffix "-Debug")
-else(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
-  set(BDIR "${SBDIR}")
-  set(test_suffix)
-endif(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
+set(OUTPUT_FILES
+  "${CBDIR}/ged_mater_density_data.txt"
+  "${CBDIR}/ged_mater_density_export.txt"
+  "${CBDIR}/ged_mater_density_map.txt"
+  "${CBDIR}/ged_mater_density_reverse_map.txt"
+  "${CBDIR}/ged_mater_test.g"
+  )
 
-get_filename_component(EXE "@CMAKE_COMMAND@" EXT)
-set(GED_TEST_MATER "${BDIR}/regress_ged_mater${EXE}")
+# Clean up in case we've run before unsuccessfully
+foreach(of ${OUTPUT_FILES})
+  execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "${of}")
+endforeach(of ${OUTPUT_FILES})
 
-# Clean up in case we've run before
-execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${CBDIR}/ged_mater_test.g")
-execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${CBDIR}/ged_mater_density_export.txt")
-execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${CBDIR}/ged_mater_density_data.txt")
-execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${CBDIR}/ged_mater_density_map.txt")
-execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${CBDIR}/ged_mater_density_reverse_map.txt")
-
+file(WRITE "${CBDIR}/regress-ged_mater.log" "Running ${MATER_EXEC} dnull\n")
 execute_process(
-  COMMAND "${GED_TEST_MATER}" "dnull" RESULT_VARIABLE ged_mater_result
+  COMMAND "${MATER_EXEC}" "dnull" RESULT_VARIABLE ged_mater_result
   OUTPUT_VARIABLE ged_mater_log ERROR_VARIABLE ged_mater_log
   WORKING_DIRECTORY ${CBDIR}
   )
-file(APPEND "${CBDIR}/regress_ged_mater.log" "${ged_mater_log}")
+file(APPEND "${CBDIR}/regress-ged_mater.log" "${ged_mater_log}")
+if(ged_mater_result)
+  message(FATAL_ERROR "[regress-ged_mater] Failure: ${ged_mater_result}. See ${CBDIR}/regress-ged_mater.log for more info.\n")
+endif(ged_mater_result)
 
 execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${CBDIR}/ged_mater_test.g")
 
+file(APPEND "${CBDIR}/regress-ged_mater.log" "Running ${MATER_EXEC} dstd\n")
 execute_process(
-  COMMAND "${GED_TEST_MATER}" "dstd" RESULT_VARIABLE ged_mater_result
+  COMMAND "${MATER_EXEC}" "dstd" RESULT_VARIABLE ged_mater_result
   OUTPUT_VARIABLE ged_mater_log ERROR_VARIABLE ged_mater_log
   WORKING_DIRECTORY ${CBDIR}
   )
-file(APPEND "${CBDIR}/regress_ged_mater.log" "${ged_mater_log}")
-
-# Clean up
-execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${CBDIR}/ged_mater_test.g")
-execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${CBDIR}/ged_mater_density_export.txt")
-execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${CBDIR}/ged_mater_density_data.txt")
-execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${CBDIR}/ged_mater_density_map.txt")
-execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${CBDIR}/ged_mater_density_reverse_map.txt")
+file(APPEND "${CBDIR}/regress-ged_mater.log" "${ged_mater_log}")
 
 if(ged_mater_result)
-  message(FATAL_ERROR "[regress-ged-mater] Failure, see ${CBDIR}/regress_ged_mater.log for more info.\n")
-else(ged_mater_result)
-  execute_process(COMMAND "@CMAKE_COMMAND@" -E touch "@CMAKE_CURRENT_BINARY_DIR@/regress_ged_mater${test_suffix}.done")
+  message(FATAL_ERROR "[regress-ged_mater] Failure: ${ged_mater_result}. See ${CBDIR}/regress-ged_mater.log for more info.\n")
 endif(ged_mater_result)
+
+# Clean up
+foreach(of ${OUTPUT_FILES})
+  file(APPEND "${CBDIR}/regress-ged_mater.log" "Removing ${of}\n")
+  execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "${of}")
+endforeach(of ${OUTPUT_FILES})
 
 # Local Variables:
 # tab-width: 8
