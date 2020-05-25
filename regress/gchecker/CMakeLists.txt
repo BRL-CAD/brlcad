@@ -4,7 +4,7 @@ set(GCHECKER_CLEAN_FILE ${CMAKE_CURRENT_BINARY_DIR}/gchecker_test.g.ck/ck.gcheck
 BRLCAD_REGRESSION_TEST(regress-gchecker "gchecker;mged;gqa;rtcheck" EXEC gchecker)
 
 DISTCLEAN(${LOG_FILE})
-DISTCLEAN(${GCHECKER_CLEAN_FILES})
+DISTCLEAN(${GCHECKER_CLEAN_FILE})
 
 CMAKEFILES(
   CMakeLists.txt

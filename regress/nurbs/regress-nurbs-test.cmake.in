@@ -1,7 +1,7 @@
 # Values set at CMake configure time
 set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
 set(CSDIR "@CMAKE_CURRENT_SOURCE_DIR@")
-set(LOGFILE "${CBDIR}/regress-nurbs_${NHIT_NAME}.log")
+set(LOGFILE "${CBDIR}/regress-nurbs_@NHIT_NAME@.log")
 
 file(WRITE "${LOGFILE}" "Starting nurbs test run\n")
 
