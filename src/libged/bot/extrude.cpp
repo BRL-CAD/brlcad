@@ -152,7 +152,7 @@ _bot_cmd_extrude(void *bs, int argc, const char **argv)
         point_t pnts[6];
         point_t pf[3];
         vect_t pv1[3], pv2[3];
-	vect_t n;
+	vect_t n = VINIT_ZERO;
 	bot_face_normal(&n, bot, i);
 
 	for (int j = 0; j < 3; j++) {
