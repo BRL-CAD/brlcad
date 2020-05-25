@@ -7,6 +7,7 @@ DISTCLEAN(
   )
 
 CMAKEFILES(
+  CMakeLists.txt
   README
   hawaii-c.tar.bz2
   regress-dem.cmake.in
