@@ -46,7 +46,7 @@ endif (${HAVE_FUZZER})
 add_subdirectory(gchecker)
 
 # License check
-#add_subdirectory(licenses)
+add_subdirectory(licenses)
 
 # Repository check
 #add_subdirectory(repository)
