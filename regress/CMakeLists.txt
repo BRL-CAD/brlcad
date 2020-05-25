@@ -49,7 +49,7 @@ add_subdirectory(gchecker)
 add_subdirectory(licenses)
 
 # Repository check
-#add_subdirectory(repository)
+add_subdirectory(repository)
 
 if(SH_EXEC)
 

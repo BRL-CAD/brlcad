@@ -2,7 +2,7 @@
 set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
 set(CSDIR "@CMAKE_CURRENT_SOURCE_DIR@")
 set(GCHECKER_CF "@GCHECKER_CLEAN_FILE@")
-set(LOGFILE "${LOG_FILE}")
+set(LOGFILE "@LOG_FILE@")
 
 file(WRITE "${LOGFILE}" "Starting gchecker test run\n")
 
