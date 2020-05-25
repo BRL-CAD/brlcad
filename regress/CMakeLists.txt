@@ -43,7 +43,7 @@ if (${HAVE_FUZZER})
 endif (${HAVE_FUZZER})
 
 # gchecker tests
-#add_subdirectory(gchecker)
+add_subdirectory(gchecker)
 
 # License check
 #add_subdirectory(licenses)
