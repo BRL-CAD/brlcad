@@ -16,7 +16,7 @@
 # elif defined(SC_BASE_DLL_EXPORTS)
 #  define SC_BASE_EXPORT COMPILER_DLLEXPORT
 # elif defined(SC_BASE_DLL_IMPORTS)
-#  define SC_BASE_EXPORT __declspec(dllimport)
+#  define SC_BASE_EXPORT COMPILER_DLLIMPORT
 # else
 #  define SC_BASE_EXPORT
 # endif
@@ -29,7 +29,7 @@
 #  elif defined(SC_EXPRESS_DLL_EXPORTS)
 #    define SC_EXPRESS_EXPORT COMPILER_DLLEXPORT
 #  elif defined(SC_EXPRESS_DLL_IMPORTS)
-#    define SC_EXPRESS_EXPORT __declspec(dllimport)
+#    define SC_EXPRESS_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define SC_EXPRESS_EXPORT
 #  endif
@@ -42,7 +42,7 @@
 #  elif defined(SC_EXPPP_DLL_EXPORTS)
 #    define SC_EXPPP_EXPORT COMPILER_DLLEXPORT
 #  elif defined(SC_EXPPP_DLL_IMPORTS)
-#    define SC_EXPPP_EXPORT __declspec(dllimport)
+#    define SC_EXPPP_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define SC_EXPPP_EXPORT
 #  endif
