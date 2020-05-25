@@ -275,6 +275,49 @@ find_path(TK_INCLUDE_PATH
   PATH_SUFFIXES ${TCLTK_POSSIBLE_INCLUDE_PATH_SUFFIXES}
   )
 
+# IFF we have TCL_TK_SYSTEM_GRAPHICS set and have a system TK_WISH, check that the
+# windowing system matches the specified type
+if (NOT "${TCL_TK_SYSTEM_GRAPHICS}" STREQUAL "" AND TK_WISH AND NOT TARGET "${TK_WISH}")
+	set(tkwin_script "
+	set filename \"${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM\"
+	set fileId [open $filename \"w\"]
+	set windowingsystem [tk windowingsystem]
+	puts $fileId $windowingsystem
+	close $fileId
+	exit
+	")
+	set(tkwin_scriptfile "${CMAKE_BINARY_DIR}/CMakeTmp/tk_windowingsystem.tcl")
+	set(WSYS "wm-NOTFOUND")
+	file(WRITE ${tkwin_scriptfile} ${tkwin_script})
+	execute_process(COMMAND ${TK_WISH} ${tkwin_scriptfile} OUTPUT_VARIABLE EXECOUTPUT)
+	if (EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM")
+		file(READ "${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM" readresultvar)
+		string(REGEX REPLACE "\n" "" WSYS "${readresultvar}")
+	endif (EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/TK_WINDOWINGSYSTEM")
+
+	# If we have no information about the windowing system or it does not match
+	# a specified system, the find_package detection has failed
+	if (NOT "${WSYS}" STREQUAL "${TCL_TK_SYSTEM_GRAPHICS}")
+		unset(TCL_LIBRARY CACHE)
+		unset(TCL_STUB_LIBRARY CACHE)
+		unset(TK_LIBRARY CACHE)
+		unset(TK_STUB_LIBRARY CACHE)
+		unset(TCL_FOUND CACHE)
+		unset(TK_FOUND CACHE)
+		unset(TCLTK_FOUND CACHE)
+		unset(TCLSH_FOUND CACHE)
+		unset(TCL_LIBRARY CACHE)
+		unset(TCL_INCLUDE_PATH CACHE)
+		unset(TCL_TCLSH CACHE)
+		unset(TK_LIBRARY CACHE)
+		unset(TK_INCLUDE_PATH CACHE)
+		unset(TK_WISH CACHE)
+		unset(TCL_STUB_LIBRARY CACHE)
+		unset(TK_STUB_LIBRARY CACHE)
+		unset(TTK_STUB_LIBRARY CACHE)
+	endif (NOT "${WSYS}" STREQUAL "${TCL_TK_SYSTEM_GRAPHICS}")
+endif (NOT "${TCL_TK_SYSTEM_GRAPHICS}" STREQUAL "" AND TK_WISH AND NOT TARGET "${TK_WISH}")
+
 include(FindPackageHandleStandardArgs)
 
 FIND_PACKAGE_HANDLE_STANDARD_ARGS(TCL

@@ -2637,7 +2637,12 @@ rt_curve_order_segments(struct rt_curve *crv)
 {
     int i, j, k;
     int count;
-    int start1, end1, start2, end2, start3, end3;
+    int start1 = 0;
+    int start2 = 0;
+    int start3 = 0;
+    int end1 = 0;
+    int end2 = 0;
+    int end3 = 0;
 
     count = crv->count;
     if (count < 2) {
