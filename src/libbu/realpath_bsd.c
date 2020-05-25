@@ -167,7 +167,7 @@ bsd_realpath(const char *path, char *resolved)
 	}
 	slen = readlink(resolved, symlink, sizeof(symlink) - 1);
 	/* POS30-C: ensure NULL termination of readlink */
-	if (len >= 0) {
+	if (slen >= 0) {
 	    symlink[slen] = '\0';
 	}
 	if (slen < 0) {
