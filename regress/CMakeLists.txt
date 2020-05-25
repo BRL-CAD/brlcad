@@ -33,7 +33,7 @@ add_subdirectory(burst)
 add_subdirectory(rtwizard)
 
 # MGED command tests
-#add_subdirectory(mged)
+add_subdirectory(mged)
 
 # Fuzz tests
 include(Fuzzer)
