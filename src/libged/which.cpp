@@ -34,7 +34,7 @@
 #include "bu/opt.h"
 #include "bu/vls.h"
 
-#include "./alphanum.hpp"
+#include "./alphanum.h"
 #include "./ged_private.h"
 
 bool alphanum_cmp(const std::string& a, const std::string& b) {
