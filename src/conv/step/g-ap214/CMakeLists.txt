@@ -46,7 +46,7 @@ list(APPEND gap214_LIBS ${gap214_LIBS})
 BRLCAD_ADDEXEC(g-ap214 "${gap214_SOURCES}" "${gap214_LIBS}" NO_STRICT)
 add_dependencies(g-ap214 step-express-${SCHEMA_NAME}-gap214)
 
-if(MSVC)
+if (HIDE_INTERNAL_SYMBOLS)
   set(gap214_IMPORTS
     BU_DLL_IMPORTS
     BN_DLL_IMPORTS
@@ -62,7 +62,7 @@ if(MSVC)
   set_property(SOURCE
     ${CMAKE_CURRENT_BINARY_DIR}/AUTOMOTIVE_DESIGN/SdaiAUTOMOTIVE_DESIGN.cc
     APPEND PROPERTY COMPILE_FLAGS "/bigobj")
-endif(MSVC)
+endif (HIDE_INTERNAL_SYMBOLS)
 
 set(IGNORE_FILES
   CMakeLists.txt

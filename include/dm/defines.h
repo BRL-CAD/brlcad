@@ -30,9 +30,9 @@
 #  if defined(DM_DLL_EXPORTS) && defined(DM_DLL_IMPORTS)
 #    error "Only DM_DLL_EXPORTS or DM_DLL_IMPORTS can be defined, not both."
 #  elif defined(DM_DLL_EXPORTS)
-#    define DM_EXPORT __declspec(dllexport)
+#    define DM_EXPORT COMPILER_DLLEXPORT
 #  elif defined(DM_DLL_IMPORTS)
-#    define DM_EXPORT __declspec(dllimport)
+#    define DM_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define DM_EXPORT
 #  endif
@@ -42,9 +42,9 @@
 #  if defined(FB_DLL_EXPORTS) && defined(FB_DLL_IMPORTS)
 #    error "Only FB_DLL_EXPORTS or FB_DLL_IMPORTS can be defined, not both."
 #  elif defined(FB_DLL_EXPORTS)
-#    define FB_EXPORT __declspec(dllexport)
+#    define FB_EXPORT COMPILER_DLLEXPORT
 #  elif defined(FB_DLL_IMPORTS)
-#    define FB_EXPORT __declspec(dllimport)
+#    define FB_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define FB_EXPORT
 #  endif

@@ -365,7 +365,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   add_library(creo-brl ${creo_brl_srcs})
   target_link_libraries(creo-brl librt libwdb libbrep libbg libnmg libbn libbu)
   set_target_properties(creo-brl PROPERTIES FOLDER "BRL-CAD Executables/Build Only")
-  if(CPP_DLL_DEFINES)
+  if(HIDE_INTERNAL_SYMBOLS)
     set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "BU_DLL_IMPORTS")
     set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "BN_DLL_IMPORTS")
     set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "NMG_DLL_IMPORTS")
@@ -379,7 +379,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "VDS_DLL_IMPORTS")
     set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "ON_DLL_IMPORTS")
     set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "LZ4_DLL_IMPORT=1")
-  endif(CPP_DLL_DEFINES)
+  endif(HIDE_INTERNAL_SYMBOLS)
 
   # Distcheck file list
   set(creo_dist_files

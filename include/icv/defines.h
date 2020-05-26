@@ -39,9 +39,9 @@ __BEGIN_DECLS
 #  if defined(ICV_DLL_EXPORTS) && defined(ICV_DLL_IMPORTS)
 #    error "Only ICV_DLL_EXPORTS or ICV_DLL_IMPORTS can be defined, not both."
 #  elif defined(ICV_DLL_EXPORTS)
-#    define ICV_EXPORT __declspec(dllexport)
+#    define ICV_EXPORT COMPILER_DLLEXPORT
 #  elif defined(ICV_DLL_IMPORTS)
-#    define ICV_EXPORT __declspec(dllimport)
+#    define ICV_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define ICV_EXPORT
 #  endif

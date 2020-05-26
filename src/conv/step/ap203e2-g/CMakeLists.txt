@@ -238,7 +238,7 @@ list(APPEND ap203e2g_LIBS ${ap203e2g_LIBS})
 BRLCAD_ADDEXEC(ap203e2-g "${ap203e2g_SOURCES}" "${ap203e2g_LIBS}" NO_STRICT)
 add_dependencies(ap203e2-g step-express-${SCHEMA_NAME}-ap203e2g)
 
-if(MSVC)
+if (HIDE_INTERNAL_SYMBOLS)
   set(ap203e2g_IMPORTS
     BU_DLL_IMPORTS
     RT_DLL_IMPORTS
@@ -250,7 +250,7 @@ if(MSVC)
     )
   list(APPEND ap203e2g_IMPORTS ${ap203e2g_IMPORTS})
   set_target_properties(step-g PROPERTIES COMPILE_DEFINITIONS "${ap203e2g_IMPORTS}")
-endif(MSVC)
+endif (HIDE_INTERNAL_SYMBOLS)
 
 CMAKEFILES(CMakeLists.txt)
 

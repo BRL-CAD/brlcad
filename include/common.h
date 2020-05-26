@@ -524,7 +524,6 @@ typedef _TCHAR TCHAR;
 #  define CPP_FILELINE __FILE__ ":" CPP_XSTR(__LINE__)
 #endif
 
-
 #endif  /* COMMON_H */
 
 /** @} */

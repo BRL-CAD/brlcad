@@ -32,13 +32,21 @@
 #ifndef CDT_H
 #define CDT_H
 
+#if defined(_WIN32)
+# define COMPILER_DLLEXPORT __declspec(dllexport)
+# define COMPILER_DLLIMPORT __declspec(dllimport)
+#else
+# define COMPILER_DLLEXPORT __attribute__ ((visibility ("default")))
+# define COMPILER_DLLIMPORT __attribute__ ((visibility ("default")))
+#endif
+
 #ifndef P2T_EXPORT
 #  if defined(P2T_DLL_EXPORTS) && defined(P2T_DLL_IMPORTS)
 #    error "Only P2T_DLL_EXPORTS or P2T_DLL_IMPORTS can be defined, not both."
 #  elif defined(P2T_DLL_EXPORTS)
-#    define P2T_EXPORT __declspec(dllexport)
+#    define P2T_EXPORT COMPILER_DLLEXPORT
 #  elif defined(P2T_DLL_IMPORTS)
-#    define P2T_EXPORT __declspec(dllimport)
+#    define P2T_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define P2T_EXPORT
 #  endif

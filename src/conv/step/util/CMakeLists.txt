@@ -24,7 +24,7 @@ BRLCAD_ADDEXEC(list_elements "${list_elements_srcs}" "${lelem_LIBS}" NO_STRICT N
 add_dependencies(list_elements step-express-${SCHEMA_NAME}-list_elements)
 set_property(TARGET list_elements APPEND PROPERTY INCLUDE_DIRECTORIES "${list_elements_SCHEMA_OUT_DIR}")
 
-if(MSVC)
+if (HIDE_INTERNAL_SYMBOLS)
   set(list_elements_IMPORTS
     BU_DLL_IMPORTS
     BN_DLL_IMPORTS
@@ -37,7 +37,7 @@ if(MSVC)
     )
   list(APPEND list_elements_IMPORTS ${list_elements_IMPORTS})
   set_target_properties(list_elements PROPERTIES COMPILE_DEFINITIONS "${list_elements_IMPORTS}")
-endif(MSVC)
+endif (HIDE_INTERNAL_SYMBOLS)
 
 CMAKEFILES(CMakeLists.txt)
 
