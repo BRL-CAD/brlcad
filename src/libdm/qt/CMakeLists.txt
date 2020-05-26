@@ -35,9 +35,9 @@ add_definitions(-DDM_QT -DIF_QT)
 
 add_library(dm-qt SHARED ${QT_SRCS})
 target_link_libraries(dm-qt libdm libbu ${QT_LIBRARIES})
-if (CPP_DLL_DEFINES)
+if (HIDE_INTERNAL_SYMBOLS)
   set_property(TARGET dm-qt APPEND PROPERTY COMPILE_DEFINITIONS "DM_DLL_EXPORTS")
-endif (CPP_DLL_DEFINES)
+endif (HIDE_INTERNAL_SYMBOLS)
 VALIDATE_STYLE(dm-qt "${QT_SRCS}")
 
 PLUGIN_SETUP(dm-qt dm)

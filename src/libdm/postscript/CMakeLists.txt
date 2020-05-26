@@ -13,9 +13,9 @@ add_definitions(-DDM_PLUGIN)
 
 add_library(dm-ps SHARED ${PS_SRCS})
 target_link_libraries(dm-ps libdm libbu)
-if (CPP_DLL_DEFINES)
+if (HIDE_INTERNAL_SYMBOLS)
   set_property(TARGET dm-ps APPEND PROPERTY COMPILE_DEFINITIONS "DM_DLL_EXPORTS")
-endif (CPP_DLL_DEFINES)
+endif (HIDE_INTERNAL_SYMBOLS)
 VALIDATE_STYLE(dm-ps "${PS_SRCS}")
 
 PLUGIN_SETUP(dm-ps dm)

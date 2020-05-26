@@ -23,9 +23,9 @@ add_definitions(-DDM_WGL -DIF_WGL)
 
 add_library(dm-wgl SHARED ${WGL_SRCS})
 target_link_libraries(dm-wgl libdm libbu ${TCL_LIBRARY} ${TK_LIBRARY} ${OPENGL32_LIBRARY} ${OPENGL_LIBRARIES})
-if (CPP_DLL_DEFINES)
+if (HIDE_INTERNAL_SYMBOLS)
   set_property(TARGET dm-wgl APPEND PROPERTY COMPILE_DEFINITIONS "DM_DLL_EXPORTS")
-endif (CPP_DLL_DEFINES)
+endif (HIDE_INTERNAL_SYMBOLS)
 VALIDATE_STYLE(dm-wgl "${WGL_SRCS}")
 
 PLUGIN_SETUP(dm-wgl dm)

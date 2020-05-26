@@ -22,9 +22,9 @@ add_definitions(-DDM_TK -DIF_TK)
 
 add_library(dm-tk SHARED ${TK_SRCS})
 target_link_libraries(dm-tk libdm libbu ${TCL_LIBRARY} ${TK_LIBRARY})
-if (CPP_DLL_DEFINES)
+if (HIDE_INTERNAL_SYMBOLS)
   set_property(TARGET dm-tk APPEND PROPERTY COMPILE_DEFINITIONS "DM_DLL_EtkPORTS")
-endif (CPP_DLL_DEFINES)
+endif (HIDE_INTERNAL_SYMBOLS)
 VALIDATE_STYLE(dm-tk "${TK_SRCS}")
 
 PLUGIN_SETUP(dm-tk dm)

@@ -43,9 +43,9 @@ add_definitions(-DDM_OSGL -DIF_OSGL)
 
 add_library(dm-osgl SHARED ${OSGL_SRCS})
 target_link_libraries(dm-osgl libdm librt libbu ${OSGL_LIBRARIES})
-if (CPP_DLL_DEFINES)
+if (HIDE_INTERNAL_SYMBOLS)
   set_property(TARGET dm-osgl APPEND PROPERTY COMPILE_DEFINITIONS "DM_DLL_EXPORTS")
-endif (CPP_DLL_DEFINES)
+endif (HIDE_INTERNAL_SYMBOLS)
 VALIDATE_STYLE(dm-osgl "${OSGL_SRCS}")
 
 PLUGIN_SETUP(dm-osgl dm)

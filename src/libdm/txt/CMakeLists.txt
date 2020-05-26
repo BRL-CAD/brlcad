@@ -15,9 +15,9 @@ add_definitions(-DDM_PLUGIN)
 
 add_library(dm-txt SHARED ${TXT_SRCS})
 target_link_libraries(dm-txt libdm libbu ${TCL_LIBRARY})
-if (CPP_DLL_DEFINES)
+if (HIDE_INTERNAL_SYMBOLS)
   set_property(TARGET dm-txt APPEND PROPERTY COMPILE_DEFINITIONS "DM_DLL_EXPORTS")
-endif (CPP_DLL_DEFINES)
+endif (HIDE_INTERNAL_SYMBOLS)
 VALIDATE_STYLE(dm-txt "${TXT_SRCS}")
 
 PLUGIN_SETUP(dm-txt dm)

@@ -14,9 +14,9 @@ add_definitions(-DDM_PLUGIN)
 
 add_library(dm-plot SHARED ${PLOT_SRCS})
 target_link_libraries(dm-plot libdm libbu ${TCL_LIBRARY})
-if (CPP_DLL_DEFINES)
+if (HIDE_INTERNAL_SYMBOLS)
   set_property(TARGET dm-plot APPEND PROPERTY COMPILE_DEFINITIONS "DM_DLL_EXPORTS")
-endif (CPP_DLL_DEFINES)
+endif (HIDE_INTERNAL_SYMBOLS)
 VALIDATE_STYLE(dm-plot "${PLOT_SRCS}")
 
 PLUGIN_SETUP(dm-plot dm)

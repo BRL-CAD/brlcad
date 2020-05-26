@@ -27,9 +27,9 @@ add_definitions(-DDM_OGL -DIF_OGL)
 
 add_library(dm-ogl SHARED ${OGL_SRCS})
 target_link_libraries(dm-ogl libdm libbu ${X11_LIBRARIES} ${OPENGL_LIBRARIES} ${TCL_LIBRARY} ${TK_LIBRARY})
-if (CPP_DLL_DEFINES)
+if (HIDE_INTERNAL_SYMBOLS)
   set_property(TARGET dm-ogl APPEND PROPERTY COMPILE_DEFINITIONS "DM_DLL_EXPORTS")
-endif (CPP_DLL_DEFINES)
+endif (HIDE_INTERNAL_SYMBOLS)
 VALIDATE_STYLE(dm-ogl "${OGL_SRCS}")
 
 PLUGIN_SETUP(dm-ogl dm)

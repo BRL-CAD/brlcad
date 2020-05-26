@@ -25,9 +25,9 @@ add_definitions(-DDM_X -DIF_X)
 
 add_library(dm-X SHARED ${X_SRCS})
 target_link_libraries(dm-X libdm libbu ${TCL_LIBRARY} ${TK_LIBRARY} ${X11_LIBRARIES})
-if (CPP_DLL_DEFINES)
+if (HIDE_INTERNAL_SYMBOLS)
   set_property(TARGET dm-X APPEND PROPERTY COMPILE_DEFINITIONS "DM_DLL_EXPORTS")
-endif (CPP_DLL_DEFINES)
+endif (HIDE_INTERNAL_SYMBOLS)
 VALIDATE_STYLE(dm-X "${X_SRCS}")
 
 PLUGIN_SETUP(dm-X dm)
