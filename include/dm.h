@@ -86,7 +86,6 @@ DM_EXPORT extern struct dm dm_txt;
 DM_EXPORT extern struct dm dm_qt;
 DM_EXPORT extern struct dm dm_osgl;
 
-DM_EXPORT extern int Dm_Init(void *interp);
 DM_EXPORT extern void *dm_interp(struct dm *dmp);
 DM_EXPORT extern int dm_share_dlist(struct dm *dmp1,
 				    struct dm *dmp2);

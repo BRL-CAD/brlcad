@@ -533,7 +533,7 @@ tclcad_delete_io_handler(void *interp, void *chan, struct bu_process *p, int fd,
 /* The presence of Tcl_Interp as an arg prevents giving arg list */
 TCLCAD_EXPORT extern void fb_tcl_setup(void);
 TCLCAD_EXPORT extern int Fb_Init(Tcl_Interp *interp);
-
+TCLCAD_EXPORT extern int Dm_Init(void *interp);
 
 __END_DECLS
 
