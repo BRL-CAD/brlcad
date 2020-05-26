@@ -358,7 +358,7 @@ set(LIBGED_SOURCES
   wcodes.c
   wdb_importFg4Section.c
   whatid.c
-  which.c
+  which.cpp
   which_shader.c
   who.c
   wmater.c
