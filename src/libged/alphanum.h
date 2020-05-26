@@ -1,5 +1,5 @@
-#ifndef ALPHANUM__HPP
-#define ALPHANUM__HPP
+#ifndef ALPHANUM_H
+#define ALPHANUM_H
 
 /*
    The Alphanum Algorithm is an improved sorting algorithm for strings
@@ -35,17 +35,13 @@
 Source:
 https://github.com/facontidavide/PlotJuggler/blob/master/include/PlotJuggler/alphanum.hpp
 
-Simplified down to the essential sorting comparison of C strings 
+This copy has been simplified down to the essential sorting comparison of C strings
 
 */
 
 #include "common.h"
-
-#include <cassert>
-#include <functional>
-#include <string>
-#include <sstream>
-#include <cctype>
+#include <stdlib.h>
+#include <ctype.h>
 
 /**
   compare l and r with strcmp() semantics, but using
@@ -74,7 +70,7 @@ int alphanum_impl(const char *l, const char *r, void *UNUSED(arg))
 	    while((l_char=*l) && (r_char=*r))
 	    {
 		// check if this are digit characters
-		const bool l_digit=isdigit(l_char), r_digit=isdigit(r_char);
+		const int l_digit = isdigit(l_char), r_digit=isdigit(r_char);
 		// if both characters are digits, we continue in NUMBER mode
 		if(l_digit && r_digit)
 		{
@@ -86,7 +82,7 @@ int alphanum_impl(const char *l, const char *r, void *UNUSED(arg))
 		// if only the right character is a digit, we have a result
 		if(r_digit) return +1;
 		// compute the difference of both characters
-		const int diff=l_char - r_char;
+		const int diff = l_char - r_char;
 		// if they differ we have a result
 		if(diff != 0) return diff;
 		// otherwise process the next characters
@@ -120,15 +116,14 @@ int alphanum_impl(const char *l, const char *r, void *UNUSED(arg))
     return 0;
 }
 
-
 #endif
 
-
-// Local Variables:
-// tab-width: 8
-// mode: C++
-// c-basic-offset: 4
-// indent-tabs-mode: t
-// c-file-style: "stroustrup"
-// End:
-// ex: shiftwidth=4 tabstop=8
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */
