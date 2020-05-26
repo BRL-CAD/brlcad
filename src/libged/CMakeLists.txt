@@ -419,22 +419,23 @@ BRLCAD_ADDEXEC(test_help help/test_help.c libged TEST)
 set(ged_ignore_files
   CMakeLists.txt
   TODO
-  pnts_util.h
+  alphanum.h
   bot/ged_bot.h
   brep/ged_brep.h
-  ged_private.h
   check/check_private.h
+  ged_private.h
   joint.h
+  osg.cpp
+  pnts_util.h
   qray.h
+  simulate/NOTES
   simulate/rt_collision_algorithm.hpp
   simulate/rt_collision_shape.hpp
   simulate/rt_debug_draw.hpp
-  simulate/rt_motion_state.hpp
   simulate/rt_instance.hpp
+  simulate/rt_motion_state.hpp
   simulate/simulation.hpp
   simulate/utility.hpp
-  simulate/NOTES
-  osg.cpp
   )
 CMAKEFILES(${ged_ignore_files})
 

@@ -1,4 +1,4 @@
-/*                         W H I C H . C
+/*                         W H I C H . C P P
  * BRL-CAD
  *
  * Copyright (c) 2008-2020 United States Government as represented by
@@ -25,27 +25,46 @@
 
 #include "common.h"
 
-#include <string.h>
+#include <string>
+#include <set>
+#include <map>
+#include <algorithm>
 
 #include "bu/cmd.h"
+#include "bu/opt.h"
+#include "bu/vls.h"
 
+#include "./alphanum.h"
 #include "./ged_private.h"
 
+bool alphanum_cmp(const std::string& a, const std::string& b) {
+    return doj::alphanum_impl(a.c_str(), b.c_str()) < 0;
+}
 
 int
 ged_which(struct ged *gedp, int argc, const char *argv[])
 {
-    int i, j;
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
-    struct _ged_id_to_names headIdName;
-    struct _ged_id_to_names *itnp;
-    struct _ged_id_names *inp;
     int isAir;
-    int sflag;
-    static const char *usageAir = "code(s)";
-    static const char *usageIds = "region_id(s)";
+    int sflag = 0;
+    int eflag = 0;
+    int print_help = 0;
+    int unused = 0;
+    struct bu_vls root = BU_VLS_INIT_ZERO;
+    struct bu_vls usage = BU_VLS_INIT_ZERO;
+    const char *usageAir = "[options] code(s)";
+    const char *usageIds = "[options] region_id(s)";
+    std::map<int, std::set<std::string>> id2names;
+
+    struct bu_opt_desc d[6];
+    BU_OPT(d[0], "h", "help",      "",             NULL,        &print_help,   "Print help and exit");
+    BU_OPT(d[1], "s", "script",    "",             NULL,        &sflag,        "Different output formatting for scripting");
+    BU_OPT(d[2], "V", "",          "",             NULL,        &eflag,        "List all active ids, even if no associated regions are found");
+    BU_OPT(d[3], "U", "unused",    "",             NULL,        &unused,       "Report unused ids in the specified range");
+    BU_OPT(d[4], "",  "root",      "<root_name>",  &bu_opt_vls, &root,         "Search only in the tree below 'root_name'");
+    BU_OPT_NULL(d[5]);
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -53,42 +72,49 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (BU_STR_EQUAL(argv[0], "whichair"))
-	isAir = 1;
-    else
-	isAir = 0;
+    /* TODO - this isn't a great pattern to follow... whichair should call
+     * which with an option... */
+    /* Key off of the command name to set the air option */
+    isAir = (BU_STR_EQUAL(argv[0], "whichair")) ? 1 : 0;
+    bu_vls_sprintf(&usage, "Usage: %s %s", argv[0], ((BU_STR_EQUAL(argv[0], "whichair")) ? usageAir : usageIds));
 
-    /* must be wanting help */
-    if (argc == 1) {
-	if (isAir)
-	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usageAir);
-	else
-	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usageIds);
+    argc-=(argc>0); argv+=(argc>0); /* done with command name argv[0] */
+
+    if (!argc) {
+	/* must be wanting help */
+	_ged_cmd_help(gedp, bu_vls_cstr(&usage), d);
+	bu_vls_free(&usage);
+	bu_vls_free(&root);
 	return GED_HELP;
     }
 
-    if (BU_STR_EQUAL(argv[1], "-s")) {
-	--argc;
-	++argv;
+    /* parse standard options */
+    int opt_ret = bu_opt_parse(NULL, argc, argv, d);
 
-	if (argc < 2) {
-	    if (isAir)
-		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usageAir);
-	    else
-		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usageIds);
-
-	    return GED_ERROR;
-	}
-
-	sflag = 1;
-    } else {
-	sflag = 0;
+    if (print_help) {
+	_ged_cmd_help(gedp, bu_vls_cstr(&usage), d);
+	bu_vls_free(&usage);
+	bu_vls_free(&root);
+	return GED_OK;
     }
 
-    BU_LIST_INIT(&headIdName.l);
+    /* adjust argc to match the leftovers of the options parsing */
+    argc = opt_ret;
 
-    /* Build list of id_to_names */
-    for (j = 1; j < argc; j++) {
+
+    if (!argc) {
+	_ged_cmd_help(gedp, bu_vls_cstr(&usage), d);
+	bu_vls_free(&usage);
+	bu_vls_free(&root);
+	return GED_ERROR;
+    }
+
+    bu_vls_free(&usage);
+
+    std::set<int> ids;
+
+    /* Build set of ids */
+    for (int j = 0; j < argc; j++) {
 	int n;
 	int start, end;
 	int range;
@@ -97,18 +123,7 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
 	n = sscanf(argv[j], "%d%*[:-]%d", &start, &end);
 	switch (n) {
 	    case 1:
-		for (BU_LIST_FOR(itnp, _ged_id_to_names, &headIdName.l))
-		    if (itnp->id == start)
-			break;
-
-		/* id not found */
-		if (BU_LIST_IS_HEAD(itnp, &headIdName.l)) {
-		    BU_GET(itnp, struct _ged_id_to_names);
-		    itnp->id = start;
-		    BU_LIST_INSERT(&headIdName.l, &itnp->l);
-		    BU_LIST_INIT(&itnp->headName.l);
-		}
-
+		ids.insert(start);
 		break;
 	    case 2:
 		if (start < end)
@@ -116,79 +131,122 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
 		else if (end < start) {
 		    range = start - end + 1;
 		    start = end;
-		} else
-		    range = 1;
-
-		for (k = 0; k < range; ++k) {
-		    int id = start + k;
-
-		    for (BU_LIST_FOR(itnp, _ged_id_to_names, &headIdName.l))
-			if (itnp->id == id)
-			    break;
-
-		    /* id not found */
-		    if (BU_LIST_IS_HEAD(itnp, &headIdName.l)) {
-			BU_GET(itnp, struct _ged_id_to_names);
-			itnp->id = id;
-			BU_LIST_INSERT(&headIdName.l, &itnp->l);
-			BU_LIST_INIT(&itnp->headName.l);
-		    }
+		} else {
+		    ids.insert(start);
+		    break;
 		}
-
+		for (k = 0; k < range; ++k) {
+		    ids.insert(start + k);
+		}
 		break;
 	}
     }
 
-    /* Examine all COMB nodes */
-    for (i = 0; i < RT_DBNHASH; i++) {
-	for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-	    if (!(dp->d_flags & RT_DIR_REGION))
-		continue;
+    /* Examine all region nodes */
+    if (bu_vls_strlen(&root)) {
+	// Find all regions in the specified root
+	const char *sstring = "-type region";
+	struct directory *sdp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_cstr(&root), LOOKUP_QUIET);
+	if (sdp == RT_DIR_NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "Error: no object named %s in database.", bu_vls_cstr(&root));
+	    bu_vls_free(&root);
+	    return GED_ERROR;
+	}
+	struct bu_ptbl comb_objs = BU_PTBL_INIT_ZERO;
+	(void)db_search(&comb_objs, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, sstring, 1, &sdp, gedp->ged_wdbp->dbip, NULL);
+	for(size_t i = 0; i < BU_PTBL_LEN(&comb_objs); i++) {
+	    dp = (struct directory *)BU_PTBL_GET(&comb_objs, i);
 
 	    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 		bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
+		bu_vls_free(&root);
 		return GED_ERROR;
 	    }
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
 	    /* check to see if the region id or air code matches one in our list */
-	    for (BU_LIST_FOR(itnp, _ged_id_to_names, &headIdName.l)) {
-		if ((!isAir && comb->region_id == itnp->id) ||
-		    (isAir && comb->aircode == itnp->id)) {
-		    /* add region name to our name list for this region */
-		    BU_GET(inp, struct _ged_id_names);
-		    bu_vls_init(&inp->name);
-		    bu_vls_strcpy(&inp->name, dp->d_namep);
-		    BU_LIST_INSERT(&itnp->headName.l, &inp->l);
-		    break;
-		}
+	    int id = (isAir) ? comb->aircode : comb->region_id;
+	    if (ids.find(id) != ids.end()) {
+		id2names[id].insert(std::string(dp->d_namep));
 	    }
 
 	    rt_db_free_internal(&intern);
 	}
+	db_search_free(&comb_objs);
+    } else {
+	for (int i = 0; i < RT_DBNHASH; i++) {
+	    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+		if (!(dp->d_flags & RT_DIR_REGION))
+		    continue;
+
+		if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+		    bu_vls_printf(gedp->ged_result_str, "Database read error, aborting");
+		    bu_vls_free(&root);
+		    return GED_ERROR;
+		}
+		comb = (struct rt_comb_internal *)intern.idb_ptr;
+		/* check to see if the region id or air code matches one in our list */
+		int id = (isAir) ? comb->aircode : comb->region_id;
+		if (ids.find(id) != ids.end()) {
+		    id2names[id].insert(std::string(dp->d_namep));
+		}
+
+		rt_db_free_internal(&intern);
+	    }
+	}
     }
 
-    /* place data in interp and free memory */
-    while (BU_LIST_WHILE(itnp, _ged_id_to_names, &headIdName.l)) {
+    /* report results */
+    if (unused) {
+	std::set<int> unused_ids;
+	std::set<int>::iterator i_it;
+	for (i_it = ids.begin(); i_it != ids.end(); i_it++) {
+	    if (id2names.find(*i_it) != id2names.end() && id2names[*i_it].size() > 0) {
+		continue;
+	    }
+	    unused_ids.insert(*i_it);
+	}
 	if (!sflag) {
-	    bu_vls_printf(gedp->ged_result_str, "Region[s] with %s %d:\n",
-			  isAir ? "air code" : "ident", itnp->id);
+	    if (unused_ids.size()) {
+		bu_vls_printf(gedp->ged_result_str, "Unused %s:\n", isAir ? "air codes" : "idents");
+	    } else {
+		bu_vls_printf(gedp->ged_result_str, "No unused %s found\n", isAir ? "air codes" : "idents");
+		bu_vls_free(&root);
+		return GED_OK;
+	    }
 	}
-
-	while (BU_LIST_WHILE(inp, _ged_id_names, &itnp->headName.l)) {
-	    if (sflag)
-		bu_vls_printf(gedp->ged_result_str, " %s", bu_vls_addr(&inp->name));
-	    else
-		bu_vls_printf(gedp->ged_result_str, "   %s\n", bu_vls_addr(&inp->name));
-
-	    BU_LIST_DEQUEUE(&inp->l);
-	    bu_vls_free(&inp->name);
-	    BU_PUT(inp, struct _ged_id_names);
+	for (i_it = unused_ids.begin(); i_it != unused_ids.end(); i_it++) {
+	    if (sflag) {
+		bu_vls_printf(gedp->ged_result_str, "   %d", *i_it);
+	    } else {
+		bu_vls_printf(gedp->ged_result_str, "   %d\n", *i_it);
+	    }
 	}
-
-	BU_LIST_DEQUEUE(&itnp->l);
-	BU_PUT(itnp, struct _ged_id_to_names);
+	bu_vls_free(&root);
+	return GED_OK;
     }
 
+    std::set<int>::iterator i_it;
+    for (i_it = ids.begin(); i_it != ids.end(); i_it++) {
+	std::map<int, std::set<std::string>>::iterator idn_it = id2names.find(*i_it);
+	if ((eflag || (idn_it != id2names.end() && id2names[*i_it].size())) && !sflag) {
+	    bu_vls_printf(gedp->ged_result_str, "Region[s] with %s %d:\n", isAir ? "air code" : "ident", *i_it);
+	}
+	if (idn_it == id2names.end()) {
+	    continue;
+	}
+	std::vector<std::string> nsorted;
+	std::copy(idn_it->second.begin(), idn_it->second.end(), std::back_inserter(nsorted));
+	std::sort(nsorted.begin(), nsorted.end(), alphanum_cmp);
+	for (size_t i = 0; i < nsorted.size(); i++) {
+	    if (sflag) {
+		bu_vls_printf(gedp->ged_result_str, " %s", nsorted[i].c_str());
+	    } else {
+		bu_vls_printf(gedp->ged_result_str, "   %s\n", nsorted[i].c_str());
+	    }
+	}
+    }
+
+    bu_vls_free(&root);
     return GED_OK;
 }
 
