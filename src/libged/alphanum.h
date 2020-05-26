@@ -44,7 +44,7 @@ This copy has been simplified down to the essential sorting comparison of C stri
 #include <ctype.h>
 
 /**
-  compare l and r with strcmp() semantics, but using
+  compare l and r with C string comparison semantics, but using
   the "Alphanum Algorithm". This function is designed to read
   through the l and r strings only one time, for
   maximum performance. It does not allocate memory for
