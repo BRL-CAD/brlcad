@@ -1730,15 +1730,22 @@ set(CMAKE_CXX_FLAGS "${CXX_STANDARD_FLAGS}")
 CHECK_C_FLAG(pipe)
 CHECK_CXX_FLAG(pipe)
 
-# Enable visibility restrictions.  We have to deal with this on
-# Windows, so enable it wherever we can to keep the code working
-# across all platforms.
+# Enable visibility restrictions.  We have to deal with this on Windows, so
+# enable it wherever we can to keep the code working across all platforms.
 CHECK_C_FLAG(fvisibility=hidden)
 CHECK_CXX_FLAG(fvisibility=hidden)
 # If we can, hide internal library symbols
-if(MSVC OR FVISIBILITY_HIDDEN_CXX_FLAG_FOUND)
+if(FVISIBILITY_HIDDEN_CXX_FLAG_FOUND)
   set(HIDE_INTERNAL_SYMBOLS 1)
-endif(MSVC OR FVISIBILITY_HIDDEN_CXX_FLAG_FOUND)
+endif(FVISIBILITY_HIDDEN_CXX_FLAG_FOUND)
+if(MSVC)
+  # On platforms other than MSVC, the hidden symbols are a convenience and may
+  # not be supported by system lib headers.  With Visual Studio, they are a
+  # necessity - define an extra flag so we know to always set them in that
+  # case in order to properly link against the system libs.
+  set(HIDE_INTERNAL_SYMBOLS 1)
+  set(HIDE_INTERNAL_SYMBOLS_EXT 1)
+endif(MSVC)
 
 # check for -fno-strict-aliasing
 # XXX - THIS FLAG IS REQUIRED if any level of optimization is
