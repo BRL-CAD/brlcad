@@ -979,7 +979,11 @@ function(BRLCAD_REGRESSION_TEST testname depends_list)
   # Make sure we at least get this into the regression test folder - local
   # subdirectories may override this if they have more specific locations
   # they want to use.
-  set_target_properties(${testname} PROPERTIES FOLDER "BRL-CAD Regression Tests/regress")
+  if (${testname}_STAND_ALONE)
+    set_target_properties(${testname} PROPERTIES FOLDER "BRL-CAD Regression Tests")
+  else (${testname}_STAND_ALONE)
+    set_target_properties(${testname} PROPERTIES FOLDER "BRL-CAD Regression Tests/regress")
+  endif (${testname}_STAND_ALONE)
 
   # In Visual Studio, none of the regress build targets are added to the default build.
   set_target_properties(${testname} PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
