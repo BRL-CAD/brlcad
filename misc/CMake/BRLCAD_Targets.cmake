@@ -925,7 +925,7 @@ endfunction(ADD_MAN_PAGES)
 #
 # 1.  A custom build target with the pattern regress-${testname} is defined
 #     to allow for individual execution of the regression test with
-#     "make regress-${testname}"
+#     "make ${testname}"
 #
 # 2.  A label is added identifying the test as a regression test so the top
 #     level commands "make check" and "make regress" know this particular
@@ -933,16 +933,17 @@ endfunction(ADD_MAN_PAGES)
 #
 # 3.  Any dependencies in ${depends_list} are added as build requirements to
 #     the regress and check targets.  This ensures that (unlike "make test"
-#     and CTest itself, when those targets are built the dependencies of the
+#     and CTest itself) when those targets are built the dependencies of the
 #     tests are built first.  (A default CTest run prior to building will
 #     result in all tests failing.)
 #
-# 4.  If the keyword "STAND_ALONE" is passed in, a regress-${testname} target
+# 4.  If the keyword "STAND_ALONE" is passed in, a ${testname} target
 #     is defined but no other connections are made between that target and the
 #     agglomeration targets.
 #
 # 5.  If a TIMEOUT argument is passed, a specific timeout tiem is set on the
-#     test. Otherwise, a default is assigned so no test runs indefinitely.
+#     test. Otherwise, a default is assigned to ensure no test runs
+#     indefinitely.
 
 function(BRLCAD_REGRESSION_TEST testname depends_list)
 
