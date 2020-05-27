@@ -14,11 +14,15 @@ if (NOT EXISTS "${FAST4G}")
   message(FATAL_ERROR "Unable to find fast4-g, aborting.\nSee ${LOGFILE} for more details.")
 endif (NOT EXISTS "${FAST4G}")
 
+# Apparently CMAKE_EXECUTABLE_SUFFIX is not reliably defined in cmake -P - get
+# it from the executable passed in to us.
+get_filename_component(EXE_SUFFIX "${FAST4G}" EXT)
+
 # Use the path passed in from the build target generator expression
 # to ascertain the current binary directory in use, and locate any
 # other necessary programs.
 get_filename_component(BDIR "${FAST4G}" DIRECTORY)
-set(GDIFF "${BDIR}/gdiff${CMAKE_EXECUTABLE_SUFFIX}")
+set(GDIFF "${BDIR}/gdiff${EXE_SUFFIX}")
 if (NOT EXISTS "${GDIFF}")
   file(WRITE "${LOGFILE}" "gdiff not found at location \"${GDIFF}\" - aborting\n")
   message(FATAL_ERROR "Unable to find gdiff, aborting.\nSee ${LOGFILE} for more details.")
