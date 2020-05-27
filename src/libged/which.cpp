@@ -139,6 +139,10 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
 		    ids.insert(start + k);
 		}
 		break;
+	    default:
+		bu_vls_printf(gedp->ged_result_str, "Error: invalid range specification \"%s\"", argv[j]);
+		bu_vls_free(&root);
+		return GED_ERROR;
 	}
     }
 
@@ -214,12 +218,46 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
 		return GED_OK;
 	    }
 	}
-	for (i_it = unused_ids.begin(); i_it != unused_ids.end(); i_it++) {
-	    if (sflag) {
+	if (sflag) {
+	    for (i_it = unused_ids.begin(); i_it != unused_ids.end(); i_it++) {
 		bu_vls_printf(gedp->ged_result_str, "   %d", *i_it);
-	    } else {
-		bu_vls_printf(gedp->ged_result_str, "   %d\n", *i_it);
 	    }
+	} else {
+	    // To reduce verbosity, assemble and print ranges of unused numbers rather
+	    // that just dumping all of them
+	    int rstart = -1;
+	    int rend = -1;
+	    int rprev = -1;
+	    for (i_it = unused_ids.begin(); i_it != unused_ids.end(); i_it++) {
+		if (rstart == -1 || (*i_it != rprev+1)) {
+		    // Print intermediate results, if we find a sequence within
+		    // the overall results.
+		    if (rstart != -1) {
+			if (rend != -1) {
+			    bu_vls_printf(gedp->ged_result_str, "   %d-%d\n", rstart, rend);
+			} else {
+			    bu_vls_printf(gedp->ged_result_str, "   %d\n", rstart);
+			}
+			rend = -1;
+		    }
+		    rstart = *i_it;
+		    rprev = *i_it;
+		    continue;
+		}
+		rprev = *i_it;
+		rend = *i_it;
+		continue;
+	    }
+	    // Print the last results
+	    if (rstart != -1) {
+		if (rend != -1) {
+		    bu_vls_printf(gedp->ged_result_str, "   %d-%d\n", rstart, rend);
+		} else {
+		    bu_vls_printf(gedp->ged_result_str, "   %d\n", rstart);
+		}
+		rend = -1;
+	    }
+
 	}
 	bu_vls_free(&root);
 	return GED_OK;
