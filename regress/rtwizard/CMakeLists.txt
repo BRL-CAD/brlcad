@@ -12,9 +12,11 @@
 
 # Since these tests can't currently be part of the main regress target, we define
 # convenience target to run all of the rtwizard tests:
-add_custom_target(regress-rtwizard)
-set_target_properties(regress-rtwizard PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
-set_target_properties(regress-rtwizard PROPERTIES FOLDER "BRL-CAD Regression Tests")
+if (CMAKE_CONFIGURATION_TYPES)
+  add_custom_target(regress-rtwizard COMMAND ${CMAKE_CTEST_COMMAND} -C ${CMAKE_CFG_INTDIR} -L STAND_ALONE -R regres-rtwiz --output-on-failure --output-log "${CMAKE_BINARY_DIR}/regress-rtwizard_output.log")
+else (CMAKE_CONFIGURATION_TYPES)
+  add_custom_target(regress-rtwizard COMMAND ${CMAKE_CTEST_COMMAND} -L STAND_ALONE -R regres-rtwiz --output-on-failure --output-log "${CMAKE_BINARY_DIR}/regress-rtwizard_output.log")
+endif (CMAKE_CONFIGURATION_TYPES)
 
 # All rtwizard tests used the same script
 set(TSCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/regress-rtwiz.cmake.in")
