@@ -13,10 +13,11 @@
 # Since these tests can't currently be part of the main regress target, we define
 # convenience target to run all of the rtwizard tests:
 if (CMAKE_CONFIGURATION_TYPES)
-  add_custom_target(regress-rtwizard COMMAND ${CMAKE_CTEST_COMMAND} -C ${CMAKE_CFG_INTDIR} -L STAND_ALONE -R regres-rtwiz --output-on-failure --output-log "${CMAKE_BINARY_DIR}/regress-rtwizard_output.log")
+  add_custom_target(regress-rtwizard COMMAND ${CMAKE_CTEST_COMMAND} -C ${CMAKE_CFG_INTDIR} -L STAND_ALONE -R regress-rtwiz --output-on-failure --output-log "${CMAKE_BINARY_DIR}/regress-rtwizard_output.log")
 else (CMAKE_CONFIGURATION_TYPES)
-  add_custom_target(regress-rtwizard COMMAND ${CMAKE_CTEST_COMMAND} -L STAND_ALONE -R regres-rtwiz --output-on-failure --output-log "${CMAKE_BINARY_DIR}/regress-rtwizard_output.log")
+  add_custom_target(regress-rtwizard COMMAND ${CMAKE_CTEST_COMMAND} -L STAND_ALONE -R regress-rtwiz --output-on-failure --output-log "${CMAKE_BINARY_DIR}/regress-rtwizard_output.log")
 endif (CMAKE_CONFIGURATION_TYPES)
+add_dependencies(regress-rtwizard rtwizard)
 
 # All rtwizard tests used the same script
 set(TSCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/regress-rtwiz.cmake.in")
@@ -29,7 +30,6 @@ set(OPTIONS "all.g -t A --benchmark -s 512")
 BRLCAD_REGRESSION_TEST(regress-rtwiz_m35_A "rtwizard;pixcmp;m35.g" TEST_SCRIPT "${TSCRIPT}" EXEC rtwizard STAND_ALONE)
 set_target_properties(regress-rtwiz_m35_A PROPERTIES FOLDER "BRL-CAD Regression Tests/rtwizard")
 DISTCLEAN(${LOG_FILE} ${TARGET_IMAGE})
-add_dependencies(regress-rtwizard regress-rtwiz_m35_A)
 
 set(INPUT_FILE "${DATA_DIR}/db/m35.g")
 set(CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/m35_B_ref.pix")
@@ -41,7 +41,6 @@ set_target_properties(regress-rtwiz_m35_B PROPERTIES FOLDER "BRL-CAD Regression 
 DISTCLEAN(${LOG_FILE} ${TARGET_IMAGE})
 set_property(TEST regress-rtwiz_m35_B APPEND PROPERTY DEPENDS regress-rtwiz_m35_A)
 add_dependencies(regress-rtwiz_m35_B regress-rtwiz_m35_A)
-add_dependencies(regress-rtwizard regress-rtwiz_m35_B)
 
 set(INPUT_FILE "${DATA_DIR}/db/m35.g")
 set(CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/m35_C_ref.pix")
@@ -53,7 +52,6 @@ set_target_properties(regress-rtwiz_m35_C PROPERTIES FOLDER "BRL-CAD Regression 
 DISTCLEAN(${LOG_FILE} ${TARGET_IMAGE})
 set_property(TEST regress-rtwiz_m35_C APPEND PROPERTY DEPENDS regress-rtwiz_m35_B)
 add_dependencies(regress-rtwiz_m35_C regress-rtwiz_m35_B)
-add_dependencies(regress-rtwizard regress-rtwiz_m35_C)
 
 set(INPUT_FILE "${DATA_DIR}/db/m35.g")
 set(CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/m35_D_ref.pix")
@@ -65,7 +63,6 @@ set_target_properties(regress-rtwiz_m35_D PROPERTIES FOLDER "BRL-CAD Regression 
 DISTCLEAN(${LOG_FILE} ${TARGET_IMAGE})
 set_property(TEST regress-rtwiz_m35_D APPEND PROPERTY DEPENDS regress-rtwiz_m35_C)
 add_dependencies(regress-rtwiz_m35_D regress-rtwiz_m35_C)
-add_dependencies(regress-rtwizard regress-rtwiz_m35_D)
 
 set(INPUT_FILE "${DATA_DIR}/db/m35.g")
 set(CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/m35_E_ref.pix")
@@ -77,7 +74,6 @@ set_target_properties(regress-rtwiz_m35_E PROPERTIES FOLDER "BRL-CAD Regression 
 DISTCLEAN(${LOG_FILE} ${TARGET_IMAGE})
 set_property(TEST regress-rtwiz_m35_E APPEND PROPERTY DEPENDS regress-rtwiz_m35_D)
 add_dependencies(regress-rtwiz_m35_E regress-rtwiz_m35_D)
-add_dependencies(regress-rtwizard regress-rtwiz_m35_E)
 
 set(INPUT_FILE "${DATA_DIR}/db/m35.g")
 set(CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/m35_F_ref.pix")
@@ -89,7 +85,6 @@ set_target_properties(regress-rtwiz_m35_F PROPERTIES FOLDER "BRL-CAD Regression 
 DISTCLEAN(${LOG_FILE} ${TARGET_IMAGE})
 set_property(TEST regress-rtwiz_m35_F APPEND PROPERTY DEPENDS regress-rtwiz_m35_E)
 add_dependencies(regress-rtwiz_m35_F regress-rtwiz_m35_E)
-add_dependencies(regress-rtwizard regress-rtwiz_m35_F)
 
 set(INPUT_FILE "${DATA_DIR}/db/m35.g")
 set(CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/m35_edge_only_ref.pix")
@@ -101,7 +96,6 @@ set_target_properties(regress-rtwiz_m35_edge_only PROPERTIES FOLDER "BRL-CAD Reg
 DISTCLEAN(${LOG_FILE} ${TARGET_IMAGE})
 set_property(TEST regress-rtwiz_m35_edge_only APPEND PROPERTY DEPENDS regress-rtwiz_m35_F)
 add_dependencies(regress-rtwiz_m35_edge_only regress-rtwiz_m35_F)
-add_dependencies(regress-rtwizard regress-rtwiz_m35_edge_only)
 
 set(INPUT_FILE "${DATA_DIR}/db/m35.g")
 set(CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/m35_edge_only_color_ref.pix")
@@ -113,7 +107,6 @@ set_target_properties(regress-rtwiz_m35_edge_only_color PROPERTIES FOLDER "BRL-C
 DISTCLEAN(${LOG_FILE} ${TARGET_IMAGE})
 set_property(TEST regress-rtwiz_m35_edge_only_color APPEND PROPERTY DEPENDS regress-rtwiz_m35_edge_only)
 add_dependencies(regress-rtwiz_m35_edge_only_color regress-rtwiz_m35_edge_only)
-add_dependencies(regress-rtwizard regress-rtwiz_m35_edge_only_color)
 
 CMAKEFILES(
   CMakeLists.txt
