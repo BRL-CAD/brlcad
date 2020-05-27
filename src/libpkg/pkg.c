@@ -765,6 +765,7 @@ pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog)(const cha
 	    if (errno == EINTR)
 		continue;
 #ifdef HAVE_WINSOCK_H
+		errno = WSAGetLastError();
 	    if (errno == WSAEWOULDBLOCK)
 		return PKC_NULL;
 #else
@@ -772,6 +773,11 @@ pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog)(const cha
 		return PKC_NULL;
 #endif
 	    _pkg_perror(errlog, "pkg_getclient: accept");
+#ifdef HAVE_WINSOCK_H
+		char msgbuf[256] = { '\0' };
+		FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, errno, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), msgbuf, sizeof(msgbuf), NULL);
+		_pkg_perror(errlog, (char *)msgbuf);
+#endif
 	    return PKC_ERROR;
 	}
     }  while (s2 < 0);
