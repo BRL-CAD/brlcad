@@ -17,7 +17,11 @@ if (CMAKE_CONFIGURATION_TYPES)
 else (CMAKE_CONFIGURATION_TYPES)
   add_custom_target(regress-rtwizard COMMAND ${CMAKE_CTEST_COMMAND} -L STAND_ALONE -R regress-rtwiz --output-on-failure --output-log "${CMAKE_BINARY_DIR}/regress-rtwizard_output.log")
 endif (CMAKE_CONFIGURATION_TYPES)
-add_dependencies(regress-rtwizard rtwizard)
+set_target_properties(regress-rtwizard PROPERTIES FOLDER "BRL-CAD Regression Tests")
+
+# This target also acts like the check target in that it depends on the
+# necessary inputs for the CTest tests
+add_dependencies(regress-rtwizard rtwizard pixcmp m35.g)
 
 # All rtwizard tests used the same script
 set(TSCRIPT "${CMAKE_CURRENT_SOURCE_DIR}/regress-rtwiz.cmake.in")
