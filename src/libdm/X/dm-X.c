@@ -549,9 +549,7 @@ X_open(void *vinterp, int argc, const char **argv)
 		  (char *)Tk_Name(pubvars->xtkwin));
 #endif
 
-    bu_vls_printf(&str, "_init_dm %s %s\n",
-		  bu_vls_addr(&init_proc_vls),
-		  bu_vls_addr(&dmp->i->dm_pathName));
+    bu_vls_printf(&str, "%s %s\n", bu_vls_addr(&init_proc_vls), bu_vls_addr(&dmp->i->dm_pathName));
 
     if (Tcl_Eval(interp, bu_vls_addr(&str)) == BRLCAD_ERROR) {
 	bu_vls_free(&str);
