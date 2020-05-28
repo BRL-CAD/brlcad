@@ -60,15 +60,6 @@ tk_close(struct dm_internal *dmp)
 	    Tk_FreeGC(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 		      ((struct tk_vars *)dmp->dm_vars.priv_vars)->gc);
 
-	if (((struct tk_vars *)dmp->dm_vars.priv_vars)->pix)
-	    Tk_FreePixmap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			  ((struct tk_vars *)dmp->dm_vars.priv_vars)->pix);
-
-	/*XXX Possibly need to free the colormap */
-	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap)
-	    Tk_FreeColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
-			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap);
-
 	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)
 	    Tk_DestroyWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
 
@@ -1006,19 +997,15 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
 
     bu_vls_printf(&dmp->dm_tkName, "%s", (char *)Tk_Name(pub_vars->xtkwin));
 
-#if 0
     struct bu_vls str = BU_VLS_INIT_ZERO;
-    bu_vls_printf(&str, "%s %s\n", bu_vls_addr(&init_proc_vls), bu_vls_addr(&dmp->dm_pathName));
-    if (Tcl_Eval(interp, bu_vls_addr(&str)) == BRLCAD_ERROR) {
+    bu_vls_printf(&str, "%s %s\n", bu_vls_cstr(&init_proc_vls), bu_vls_cstr(&dmp->dm_pathName));
+    if (Tcl_Eval(interp, bu_vls_cstr(&str)) == BRLCAD_ERROR) {
+	bu_log("Failure initializing Tk dm with command \"%s %s\":\n%s\n", bu_vls_cstr(&init_proc_vls), bu_vls_cstr(&dmp->dm_pathName), Tcl_GetStringResult(interp));
 	bu_vls_free(&str);
 	(void)tk_close(dmp);
-
 	return DM_NULL;
     }
     bu_vls_free(&str);
-
-#endif
-
     bu_vls_free(&init_proc_vls);
 
     pub_vars->dpy = Tk_Display(pub_vars->top);
