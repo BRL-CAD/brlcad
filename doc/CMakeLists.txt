@@ -37,7 +37,6 @@ set(documentation_DATA
   ged.tr
   history.txt
   hypot.txt
-  irprep.tr
   mater.txt
   matrix.txt
   pre_BRL-CAD.bib
