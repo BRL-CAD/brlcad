@@ -249,13 +249,10 @@ ged_which(struct ged *gedp, int argc, const char *argv[])
 		continue;
 	    }
 	    // Print the last results
-	    if (rstart != -1) {
-		if (rend != -1) {
-		    bu_vls_printf(gedp->ged_result_str, "   %d-%d\n", rstart, rend);
-		} else {
-		    bu_vls_printf(gedp->ged_result_str, "   %d\n", rstart);
-		}
-		rend = -1;
+	    if (rend != -1) {
+		bu_vls_printf(gedp->ged_result_str, "   %d-%d\n", rstart, rend);
+	    } else {
+		bu_vls_printf(gedp->ged_result_str, "   %d\n", rstart);
 	    }
 
 	}
