@@ -196,7 +196,6 @@ set(documentation_mged_old_DATA
   mged/wm-leg1.ps
   mged/wm-prims.ps
   mged/wm-tube.ps
-  mk.tr
   notes/ecosystem.dot
   notes/regions.txt
   notes/rounding.txt
