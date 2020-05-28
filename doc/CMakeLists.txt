@@ -14,31 +14,31 @@ CMAKEFILES(
   )
 
 set(documentation_DATA
+  BRL-CAD.bib
   IDEAS
   PROJECTS
-  README.AIX
-  README.BSD
-  README.IRIX
-  README.Linux
-  README.MacOSX
-  README.Solaris
-  README.VAX
-  README.Windows
-  TODO.BREP
-  TODO.shaded_displays
+  README/README.AIX
+  README/README.BSD
+  README/README.IRIX
+  README/README.Linux
+  README/README.MacOSX
+  README/README.Solaris
+  README/README.VAX
+  README/README.Windows
   archer_ack.txt
-  bu_opt_design_notes.txt
-  brep.txt
-  BRL-CAD.bib
   checklist.txt
-  cvs.txt
   description.txt
-  editors.txt
   ged.tr
-  history.txt
-  hypot.txt
-  mater.txt
-  matrix.txt
+  notes/TODO.BREP
+  notes/TODO.shaded_displays
+  notes/brep.txt
+  notes/bu_opt_design_notes.txt
+  notes/cvs.txt
+  notes/editors.txt
+  notes/history.txt
+  notes/hypot.txt
+  notes/mater.txt
+  notes/matrix.txt
   pre_BRL-CAD.bib
   )
 ADD_DOC(documentation_DATA ".")
@@ -209,12 +209,12 @@ set(documentation_mged_old_DATA
   mged/wm-prims.ps
   mged/wm-tube.ps
   mk.tr
+  notes/ecosystem.dot
+  notes/regions.txt
+  notes/rounding.txt
+  notes/tool_categories.txt
   old-mged.tr
   pkg.tr
-  regions.txt
-  rounding.txt
-  tool_categories.txt
-  ecosystem.dot
   )
 ADD_DOC(documentation_mged_old_DATA mged_old)
 
@@ -223,14 +223,14 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml" DESTINATION ${DOC_DIR})
 
 CMAKEFILES(
   CMakeLists.txt
-  README.OSCON-2014
+  README/README.OSCON-2014
   STARTERS
   STRATEGY
-  bsd_semaphore_bug.txt
-  cmake_vars.txt
-  csv_to_comgeom.txt
-  implicit_constraints.txt
-  lcov.txt
+  notes/bsd_semaphore_bug.txt
+  notes/cmake_vars.txt
+  notes/csv_to_comgeom.txt
+  notes/implicit_constraints.txt
+  notes/lcov.txt
   pad_file.xml.in
   )
 
