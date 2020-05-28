@@ -210,7 +210,7 @@ install(FILES "${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml" DESTINATION ${DOC_DIR})
 
 CMAKEFILES(
   CMakeLists.txt
-  README/README.OSCON-2014
+  README.other/README.OSCON-2014
   STARTERS
   STRATEGY
   notes/bsd_semaphore_bug.txt
