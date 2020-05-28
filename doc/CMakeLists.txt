@@ -6,14 +6,14 @@ set(documentation_DATA
   BRL-CAD.bib
   IDEAS
   PROJECTS
-  README/README.AIX
-  README/README.BSD
-  README/README.IRIX
-  README/README.Linux
-  README/README.MacOSX
-  README/README.Solaris
-  README/README.VAX
-  README/README.Windows
+  README.Linux
+  README.MacOSX
+  README.Windows
+  README.other/README.AIX
+  README.other/README.BSD
+  README.other/README.IRIX
+  README.other/README.Solaris
+  README.other/README.VAX
   archer_ack.txt
   checklist.txt
   description.txt
