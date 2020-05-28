@@ -902,14 +902,6 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
     struct dm_internal *dmp = (struct dm_internal *)NULL;
     Tk_Window tkwin;
 
-#if 0
-    Display *dpy = (Display *)NULL;
-    XColor fg, bg;
-
-    INIT_XCOLOR(&fg);
-    INIT_XCOLOR(&bg);
-#endif
-
     if ((tkwin = Tk_MainWindow(interp)) == NULL) {
 	return DM_NULL;
     }
@@ -936,9 +928,6 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
      * via argv entries - check */
     struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
     dm_processOptions(dmp, &init_proc_vls, --argc, ++argv);
-    if (bu_vls_strlen(&init_proc_vls) == 0) {
-	bu_vls_strcpy(&init_proc_vls, "bind_dm");
-    }
 
     // Find an open Tk dm name
     int win_id = 0;
@@ -997,15 +986,17 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
 
     bu_vls_printf(&dmp->dm_tkName, "%s", (char *)Tk_Name(pub_vars->xtkwin));
 
-    struct bu_vls str = BU_VLS_INIT_ZERO;
-    bu_vls_printf(&str, "%s %s\n", bu_vls_cstr(&init_proc_vls), bu_vls_cstr(&dmp->dm_pathName));
-    if (Tcl_Eval(interp, bu_vls_cstr(&str)) == BRLCAD_ERROR) {
-	bu_log("Failure initializing Tk dm with command \"%s %s\":\n%s\n", bu_vls_cstr(&init_proc_vls), bu_vls_cstr(&dmp->dm_pathName), Tcl_GetStringResult(interp));
+    if (bu_vls_strlen(&init_proc_vls) > 0) {
+	struct bu_vls str = BU_VLS_INIT_ZERO;
+	bu_vls_printf(&str, "%s %s\n", bu_vls_cstr(&init_proc_vls), bu_vls_cstr(&dmp->dm_pathName));
+	if (Tcl_Eval(interp, bu_vls_cstr(&str)) == BRLCAD_ERROR) {
+	    bu_log("Failure initializing Tk dm with command \"%s %s\":\n%s\n", bu_vls_cstr(&init_proc_vls), bu_vls_cstr(&dmp->dm_pathName), Tcl_GetStringResult(interp));
+	    bu_vls_free(&str);
+	    (void)tk_close(dmp);
+	    return DM_NULL;
+	}
 	bu_vls_free(&str);
-	(void)tk_close(dmp);
-	return DM_NULL;
     }
-    bu_vls_free(&str);
     bu_vls_free(&init_proc_vls);
 
     pub_vars->dpy = Tk_Display(pub_vars->top);
@@ -1015,7 +1006,6 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	(void)tk_close(dmp);
 	return DM_NULL;
     }
-
 
     /* Finalize the dimensions of the window */
     if (dmp->dm_width == 0) {

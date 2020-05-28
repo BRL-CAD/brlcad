@@ -19,9 +19,6 @@
 #
 ###
 
-proc bind_dm { w } {
-}
-
 ## - init_dm_obj
 #
 # Called to initialize display manager objects.
