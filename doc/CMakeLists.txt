@@ -17,7 +17,6 @@ set(documentation_DATA
   archer_ack.txt
   checklist.txt
   description.txt
-  ged.tr
   notes/TODO.BREP
   notes/TODO.shaded_displays
   notes/brep.txt
