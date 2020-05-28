@@ -27,7 +27,6 @@ set(documentation_DATA
   TODO.BREP
   TODO.shaded_displays
   archer_ack.txt
-  benchmark.tr
   bu_opt_design_notes.txt
   brep.txt
   BRL-CAD.bib
