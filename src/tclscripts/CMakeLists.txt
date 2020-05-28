@@ -100,7 +100,7 @@ set(tclscripts_TCLSCRIPTS
   helplib.tcl
   hoc.tcl
   html_library.tcl
-  libdm.tcl
+  libtclcad.tcl
   man_browser.tcl
   menu_override.tcl
   mouse.tcl
