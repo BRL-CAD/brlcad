@@ -2,17 +2,6 @@ verbose_add_subdirectory(doc docbook)
 verbose_add_subdirectory(doc html)
 verbose_add_subdirectory(doc legal)
 
-CMAKEFILES(
-  parsers/bison_to_lemon.txt
-  parsers/flex_to_re2c.txt
-  parsers/templates/CMakeLists.txt
-  parsers/templates/main.c
-  parsers/templates/main.h
-  parsers/templates/parser.lemon
-  parsers/templates/scanner.perplex
-  parsers/writing_perplex_lemon_parsers.txt
-  )
-
 set(documentation_DATA
   BRL-CAD.bib
   IDEAS
@@ -236,28 +225,40 @@ CMAKEFILES(
 
 # Generic C/C++ examples
 CMAKEFILES(
-  c_cxx_patterns/01_basic_C/CMakeLists.txt
-  c_cxx_patterns/01_basic_C/main.c
-  c_cxx_patterns/01_basic_C/nlib.c
-  c_cxx_patterns/01_basic_C/nlib.h
-  c_cxx_patterns/02_hidden_C/CMakeLists.txt
-  c_cxx_patterns/02_hidden_C/main.c
-  c_cxx_patterns/02_hidden_C/nlib.c
-  c_cxx_patterns/02_hidden_C/nlib.h
-  c_cxx_patterns/03_PImpl_C/CMakeLists.txt
-  c_cxx_patterns/03_PImpl_C/main.c
-  c_cxx_patterns/03_PImpl_C/nlib.c
-  c_cxx_patterns/03_PImpl_C/nlib.h
-  c_cxx_patterns/04_hidden_CXX/CMakeLists.txt
-  c_cxx_patterns/04_hidden_CXX/main.c
-  c_cxx_patterns/04_hidden_CXX/nlib.cxx
-  c_cxx_patterns/04_hidden_CXX/nlib.h
-  c_cxx_patterns/05_PImpl_CXX/CMakeLists.txt
-  c_cxx_patterns/05_PImpl_CXX/main.c
-  c_cxx_patterns/05_PImpl_CXX/nlib.cxx
-  c_cxx_patterns/05_PImpl_CXX/nlib.h
-  c_cxx_patterns/CMakeLists.txt
-  c_cxx_patterns/README
+  notes/c_cxx_patterns/01_basic_C/CMakeLists.txt
+  notes/c_cxx_patterns/01_basic_C/main.c
+  notes/c_cxx_patterns/01_basic_C/nlib.c
+  notes/c_cxx_patterns/01_basic_C/nlib.h
+  notes/c_cxx_patterns/02_hidden_C/CMakeLists.txt
+  notes/c_cxx_patterns/02_hidden_C/main.c
+  notes/c_cxx_patterns/02_hidden_C/nlib.c
+  notes/c_cxx_patterns/02_hidden_C/nlib.h
+  notes/c_cxx_patterns/03_PImpl_C/CMakeLists.txt
+  notes/c_cxx_patterns/03_PImpl_C/main.c
+  notes/c_cxx_patterns/03_PImpl_C/nlib.c
+  notes/c_cxx_patterns/03_PImpl_C/nlib.h
+  notes/c_cxx_patterns/04_hidden_CXX/CMakeLists.txt
+  notes/c_cxx_patterns/04_hidden_CXX/main.c
+  notes/c_cxx_patterns/04_hidden_CXX/nlib.cxx
+  notes/c_cxx_patterns/04_hidden_CXX/nlib.h
+  notes/c_cxx_patterns/05_PImpl_CXX/CMakeLists.txt
+  notes/c_cxx_patterns/05_PImpl_CXX/main.c
+  notes/c_cxx_patterns/05_PImpl_CXX/nlib.cxx
+  notes/c_cxx_patterns/05_PImpl_CXX/nlib.h
+  notes/c_cxx_patterns/CMakeLists.txt
+  notes/c_cxx_patterns/README
+  )
+
+# Notes about parser generators
+CMAKEFILES(
+  notes/parsers/bison_to_lemon.txt
+  notes/parsers/flex_to_re2c.txt
+  notes/parsers/templates/CMakeLists.txt
+  notes/parsers/templates/main.c
+  notes/parsers/templates/main.h
+  notes/parsers/templates/parser.lemon
+  notes/parsers/templates/scanner.perplex
+  notes/parsers/writing_perplex_lemon_parsers.txt
   )
 
 # Local Variables:
