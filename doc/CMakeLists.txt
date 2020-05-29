@@ -201,7 +201,6 @@ set(documentation_mged_old_DATA
   notes/rounding.txt
   notes/tool_categories.txt
   old-mged.tr
-  pkg.tr
   )
 ADD_DOC(documentation_mged_old_DATA mged_old)
 
