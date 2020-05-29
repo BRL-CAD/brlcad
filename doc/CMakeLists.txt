@@ -14,7 +14,6 @@ set(documentation_DATA
   README.other/README.IRIX
   README.other/README.Solaris
   README.other/README.VAX
-  archer_ack.txt
   checklist.txt
   description.txt
   notes/TODO.BREP
