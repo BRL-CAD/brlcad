@@ -232,7 +232,7 @@ rt_poly_checkroots(register bn_poly_t *eqn, bn_complex_t *roots, register int nr
  * Deflates a polynomial by a given root.
  */
 void
-rt_poly_deflate(register bn_poly_t *oldP, register bn_complex_t *root)
+rt_poly_deflate(bn_poly_t *oldP, bn_complex_t *root)
 {
     bn_poly_t divisor = bn_Zero_poly;
     bn_poly_t rem = bn_Zero_poly;
@@ -263,8 +263,8 @@ rt_poly_deflate(register bn_poly_t *oldP, register bn_complex_t *root)
 
 
 int
-rt_poly_roots(register bn_poly_t *eqn,	/* equation to be solved */
-	      register bn_complex_t roots[], /* space to put roots found */
+rt_poly_roots(bn_poly_t *eqn,	/* equation to be solved */
+	      bn_complex_t roots[], /* space to put roots found */
 	      const char *name) /* name of the primitive being checked */
 {
     register size_t n;		/* number of roots found */
