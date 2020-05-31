@@ -1,0 +1,104 @@
+# Values set at CMake configure time
+set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
+set(CSDIR "@CMAKE_CURRENT_SOURCE_DIR@")
+set(LOGFILE "${CBDIR}/fastgen.log")
+
+file(WRITE "${LOGFILE}" "Starting fastgen conversion run\n")
+
+# The executable locations aren't know at CMake configure time, so one of them
+# is passed in via the EXEC variable at runtime.  De-quote it and assign it to
+# the appropriate variable.
+string(REPLACE "\\" "" FAST4G "${EXEC}")
+if (NOT EXISTS "${FAST4G}")
+  file(WRITE "${LOGFILE}" "fast4-g not found at location \"${FAST4G}\" - aborting\n")
+  message(FATAL_ERROR "Unable to find fast4-g, aborting.\nSee ${LOGFILE} for more details.")
+endif (NOT EXISTS "${FAST4G}")
+
+# Apparently CMAKE_EXECUTABLE_SUFFIX is not reliably defined in cmake -P - get
+# it from the executable passed in to us.
+get_filename_component(EXE_SUFFIX "${FAST4G}" EXT)
+
+# Use the path passed in from the build target generator expression
+# to ascertain the current binary directory in use, and locate any
+# other necessary programs.
+get_filename_component(BDIR "${FAST4G}" DIRECTORY)
+set(GDIFF "${BDIR}/gdiff${EXE_SUFFIX}")
+if (NOT EXISTS "${GDIFF}")
+  file(WRITE "${LOGFILE}" "gdiff not found at location \"${GDIFF}\" - aborting\n")
+  message(FATAL_ERROR "Unable to find gdiff, aborting.\nSee ${LOGFILE} for more details.")
+endif (NOT EXISTS "${GDIFF}")
+
+# Clean up in case we've run before
+set(OUTPUT_FILES
+  "${CBDIR}/fastgen_unix.g"
+  "${CBDIR}/fastgen_dos.g"
+  "${CBDIR}/fastgen.fast4"
+  )
+foreach(of ${OUTPUT_FILES})
+  execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "${of}")
+endforeach(of ${OUTPUT_FILES})
+
+# Start with the file using standard UNIX line endings
+file(APPEND "${LOGFILE}" "Converting ${CSDIR}/fastgen_box.fast4 (UNIX line endings):\n")
+# We need the titles of the .g files to be the same for gdiff comparison, so
+# copy the file into a "standard" position
+execute_process(COMMAND "@CMAKE_COMMAND@" -E copy "${CSDIR}/fastgen_box.fast4" "${CBDIR}/fastgen.fast4")
+execute_process(
+  COMMAND "${FAST4G}" "${CBDIR}/fastgen.fast4" "${CBDIR}/fastgen_unix.g"
+  RESULT_VARIABLE fastgen_result OUTPUT_VARIABLE fastgen_log ERROR_VARIABLE fastgen_log
+  )
+file(APPEND "${LOGFILE}" "${fastgen_log}")
+set(fastgen_log)
+if(EXISTS "${CBDIR}/fastgen_unix.g")
+  execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${CBDIR}/fastgen.fast4")
+else(EXISTS "${CBDIR}/fastgen_unix.g")
+  file(APPEND "${LOGFILE}" "Failure: ${fastgen_result}")
+  message(FATAL_ERROR "Unable to convert ${CSDIR}/fastgen_box.fast4 to ${CBDIR}/fastgen_unix.g with ${FAST4G}, aborting.\nSee ${LOGFILE} for more details.")
+endif(EXISTS "${CBDIR}/fastgen_unix.g")
+
+
+# Now the conversion with DOS line endings
+file(APPEND "${LOGFILE}" "\nConverting ${CSDIR}/fastgen_dos.fast4 (DOS line endings):\n")
+# We need the titles of the .g files to be the same for gdiff comparison, so
+# copy the file into a "standard" position
+execute_process(COMMAND "@CMAKE_COMMAND@" -E copy "${CSDIR}/fastgen_dos.fast4" "${CBDIR}/fastgen.fast4")
+execute_process(
+  COMMAND "${FAST4G}" "${CBDIR}/fastgen.fast4" "${CBDIR}/fastgen_dos.g"
+  OUTPUT_VARIABLE fastgen_log ERROR_VARIABLE fastgen_log
+  RESULT_VARIABLE fastgen_result OUTPUT_VARIABLE fastgen_log ERROR_VARIABLE fastgen_log
+  )
+file(APPEND "${LOGFILE}" "${fastgen_log}")
+set(fastgen_log)
+if(EXISTS "${CBDIR}/fastgen_dos.g")
+  execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${CBDIR}/fastgen.fast4")
+else(EXISTS "${CBDIR}/fastgen_dos.g")
+  file(APPEND "${LOGFILE}" "Failure: ${fastgen_result}")
+  message(FATAL_ERROR "Unable to convert ${CSDIR}/fastgen_dos.fast4 to ${CBDIR}/fastgen_dos.g with ${BDIR}/fast4-g${EXE}, aborting.\nSee ${LOGFILE} for more details.")
+endif(EXISTS "${CBDIR}/fastgen_dos.g")
+
+
+# Check for differences (should be none)
+file(APPEND "${LOGFILE}" "\nComparing conversions from sources with DOS and UNIX line endings:\n")
+execute_process(
+  COMMAND "${GDIFF}" "${CBDIR}/fastgen_unix.g" "${CBDIR}/fastgen_dos.g"
+  RESULT_VARIABLE gdiff_result OUTPUT_VARIABLE fastgen_log ERROR_VARIABLE fastgen_log
+  )
+file(APPEND "${LOGFILE}" "${fastgen_log}")
+set(fastgen_log)
+if(gdiff_result)
+  file(APPEND "${LOGFILE}" "\nFailure: ${gdiff_result}\ngdiff reports differences between ${CBDIR}/fastgen_unix.g and ${CBDIR}/fastgen_dos.g")
+  message(FATAL_ERROR "[fast4-g] Failure, see ${LOGFILE} for more info.\n")
+endif(gdiff_result)
+
+# Success - clean up
+foreach(of ${OUTPUT_FILES})
+  execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "${of}")
+endforeach(of ${OUTPUT_FILES})
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
+

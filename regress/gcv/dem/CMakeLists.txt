@@ -1,28 +1,16 @@
-
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/regress-dem.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/regress-dem.cmake" @ONLY)
-add_custom_command(
-  OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/dem.done"
-  COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/regress-dem.cmake"
-  DEPENDS gcv "${CMAKE_CURRENT_SOURCE_DIR}/hawaii-c.tar.bz2"
-  )
-
-add_test(NAME regress-gcv-dem COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/regress-dem.cmake")
-add_custom_target(regress-gcv-dem DEPENDS gcv "${CMAKE_CURRENT_BINARY_DIR}/dem.done")
-set_target_properties(regress-gcv-dem PROPERTIES FOLDER "BRL-CAD Regression Tests")
-set_target_properties(regress-gcv-dem PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
-#Add_Regression_Test(gcv-dem "gcv;libgcv_gdal")
-#add_dependencies(regress-gcv regress-gcv-dem)
+BRLCAD_REGRESSION_TEST(regress-dem "gcv;libgcv_gdal" EXEC gcv)
 
 DISTCLEAN(
-  "${CMAKE_CURRENT_BINARY_DIR}/dem.done"
   "${CMAKE_CURRENT_BINARY_DIR}/regress-dem.log"
   "${CMAKE_CURRENT_BINARY_DIR}/hawaii-c"
   "${CMAKE_CURRENT_BINARY_DIR}/hawaii-c.g"
   )
 
 CMAKEFILES(
-  hawaii-c.tar.bz2
+  CMakeLists.txt
   README
+  hawaii-c.tar.bz2
+  regress-dem.cmake.in
   )
 
 # Local Variables:

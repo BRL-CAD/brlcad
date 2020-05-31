@@ -3,7 +3,8 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   )
 
-add_executable(lcheck licenses_check.cpp)
+# Build a scanner to read license information and introspect the source tree
+BRLCAD_ADDEXEC(lcheck licenses_check.cpp "" TEST)
 if (O3_COMPILER_FLAG)
   # This check benefits greatly from optimization. If we have the O3 flag, use
   # it - whether or not the standard build settings would add it.
@@ -21,27 +22,16 @@ foreach(lfile ${ELEGAL})
 endforeach(lfile ${ELEGAL})
 DISTCLEAN("${LICENSE_LIST}")
 
+# Define the actual regression test
 set(ALL_FILES_LIST "${BRLCAD_BINARY_DIR}/cmakefiles.cmake")
-
-add_test(NAME regress-licenses
-  COMMAND "${CMAKE_COMMAND}"
-           -DLCHECK_EXEC=$<TARGET_FILE:lcheck> -DBRLCAD_SOURCE_DIR=${BRLCAD_SOURCE_DIR}
-	   -DL_LIST=${LICENSE_LIST} -DF_LIST=${ALL_FILES_LIST}
-           -P "${CMAKE_CURRENT_SOURCE_DIR}/regress-licenses.cmake"
-  )
-
-if (CMAKE_CONFIGURATION_TYPES)
-  add_custom_target(regress-licenses COMMAND ${CMAKE_CTEST_COMMAND} -C ${CMAKE_CFG_INTDIR} -R ^regress-licenses --output-on-failure)
-else (CMAKE_CONFIGURATION_TYPES)
-  add_custom_target(regress-licenses COMMAND ${CMAKE_CTEST_COMMAND} -R ^regress-licenses --output-on-failure)
-endif (CMAKE_CONFIGURATION_TYPES)
-
-Add_Regression_Test(licenses "lcheck")
+set(LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/regress-licenses.log")
+BRLCAD_REGRESSION_TEST(regress-licenses "lcheck" EXEC lcheck)
+DISTCLEAN(${LOG_FILE})
 
 CMAKEFILES(
   CMakeLists.txt
   licenses_check.cpp
-  regress-licenses.cmake
+  regress-licenses.cmake.in
   )
 
 # Local Variables:

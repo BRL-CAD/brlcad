@@ -9,20 +9,8 @@ BRLCAD_ADDEXEC(regress_pkg regress_pkg.cpp "libpkg;libbu;${CMAKE_THREAD_LIBS_INI
 target_compile_definitions(regress_pkg PUBLIC BRLCADBUILD HAVE_CONFIG_H)
 set_target_properties(regress_pkg PROPERTIES FOLDER "BRL-CAD Regression Tests/libpkg")
 
-add_test(NAME regress-pkg
-  COMMAND $<TARGET_FILE:regress_pkg>
-  )
-set_tests_properties(regress-pkg PROPERTIES LABELS "NOT_WORKING")
-
-if (CMAKE_CONFIGURATION_TYPES)
-  add_custom_target(regress-pkg COMMAND ${CMAKE_CTEST_COMMAND} -C ${CMAKE_CFG_INTDIR} -R ^regress-pkg --output-on-failure)
-else (CMAKE_CONFIGURATION_TYPES)
-  add_custom_target(regress-pkg COMMAND ${CMAKE_CTEST_COMMAND} -R ^regress-pkg --output-on-failure)
-endif (CMAKE_CONFIGURATION_TYPES)
-add_dependencies(regress-pkg regress_pkg)
-
-set_target_properties(regress-pkg PROPERTIES FOLDER "BRL-CAD Regression Tests")
-set_target_properties(regress-pkg PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
+BRLCAD_REGRESSION_TEST(regress-pkg "regress_pkg" EXEC regress_pkg STAND_ALONE)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/regress-pkg.log)
 
 CMAKEFILES(
   CMakeLists.txt
