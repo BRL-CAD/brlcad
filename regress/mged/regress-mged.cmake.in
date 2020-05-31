@@ -1,0 +1,51 @@
+# Values set at CMake configure time
+set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
+set(CSDIR "@CMAKE_CURRENT_SOURCE_DIR@")
+set(TNAME "@TARGET_NAME@")
+set(LOGFILE "@LOG_FILE@")
+
+file(WRITE "${LOGFILE}" "Starting mged test run\n")
+
+# The executable locations aren't know at CMake configure time, so it is passed
+# in via the EXEC variable at runtime by a generator expression in the parent
+# build.  De-quote it and assign it to the appropriate variable.
+string(REPLACE "\\" "" MGED_EXEC "${EXEC}")
+if (NOT EXISTS "${MGED_EXEC}")
+  file(WRITE "${LOGFILE}" "mged not found at location \"${MGED_EXEC}\" - aborting\n")
+  message(FATAL_ERROR "Unable to find mged, aborting.\nSee ${LOGFILE} for more details.")
+endif (NOT EXISTS "${MGED_EXEC}")
+
+# Create the .g file
+set(GFILE "${CBDIR}/${TNAME}.g")
+execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "${GFILE}")
+execute_process(
+  COMMAND "${MGED_EXEC}" -c "${GFILE}" ls
+  RESULT_VARIABLE mged_result OUTPUT_VARIABLE mged_log ERROR_VARIABLE mged_log
+  )
+file(APPEND "${LOGFILE}" "${mged_log}")
+set(mged_log)
+if(mged_result)
+  message(FATAL_ERROR "[mged ${TNAME}] Failure: ${mged_result}. See ${LOGFILE} for more info.\n")
+endif(mged_result)
+
+# Run the core test
+execute_process(
+  COMMAND "${MGED_EXEC}" -c "${GFILE}" < "${CBDIR}/regress_${TNAME}.mged"
+  RESULT_VARIABLE mged_result OUTPUT_VARIABLE mged_log ERROR_VARIABLE mged_log
+  )
+file(APPEND "${LOGFILE}" "${mged_log}")
+set(mged_log)
+if(mged_result)
+  message(FATAL_ERROR "[mged ${TNAME}] Failure: ${mged_result}. See ${LOGFILE} for more info.\n")
+endif(mged_result)
+
+# Clean up
+execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "${GFILE}")
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
+

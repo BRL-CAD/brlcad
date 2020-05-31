@@ -3,8 +3,10 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/include
   )
 
-add_executable(repocheck repocheck.cpp)
-target_link_libraries(repocheck libbu ${CMAKE_THREAD_LIBS_INIT})
+
+# Build a scanner to check the repository for various problems
+BRLCAD_ADDEXEC(repocheck repocheck.cpp "libbu;${CMAKE_THREAD_LIBS_INIT}" TEST)
+target_compile_definitions(repocheck PUBLIC BRLCADBUILD HAVE_CONFIG_H)
 if (O3_COMPILER_FLAG)
   # This check benefits greatly from optimization. If we have the O3 flag, use
   # it - whether or not the standard build settings would add it.
@@ -12,28 +14,16 @@ if (O3_COMPILER_FLAG)
 endif (O3_COMPILER_FLAG)
 set_target_properties(repocheck PROPERTIES FOLDER "BRL-CAD Regression Tests/repository")
 
+# Define the actual regression test
 set(ALL_FILES_LIST "${BRLCAD_BINARY_DIR}/cmakefiles.cmake")
-
-add_test(NAME regress-repository
-  COMMAND "${CMAKE_COMMAND}"
-  -DRCHECK_EXEC=$<TARGET_FILE:repocheck>
-  -DL_FILE=${LOG_FILE} -DS_FILE=${STAMP_FILE} -DF_LIST=${ALL_FILES_LIST}
-  -DB_DIR=${BRLCAD_SOURCE_DIR}
-  -P "${CMAKE_CURRENT_SOURCE_DIR}/regress-repository.cmake"
-  )
-
-if (CMAKE_CONFIGURATION_TYPES)
-  add_custom_target(regress-repository COMMAND ${CMAKE_CTEST_COMMAND} -C ${CMAKE_CFG_INTDIR} -R ^regress-repository --output-on-failure)
-else (CMAKE_CONFIGURATION_TYPES)
-  add_custom_target(regress-repository COMMAND ${CMAKE_CTEST_COMMAND} -R ^regress-repository --output-on-failure)
-endif (CMAKE_CONFIGURATION_TYPES)
-
-Add_Regression_Test(repository "repocheck")
+set(LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/regress-repository.log")
+BRLCAD_REGRESSION_TEST(regress-repository "repocheck" EXEC repocheck)
+DISTCLEAN(${LOG_FILE})
 
 CMAKEFILES(
   CMakeLists.txt
   repocheck.cpp
-  regress-repository.cmake
+  regress-repository.cmake.in
   )
 
 # Local Variables:

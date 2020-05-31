@@ -25,6 +25,7 @@
  * centered at (0, 0, 0) and the height of the handle will extend in
  * the positive z-direction.
  *
+ * Introduced in BRL-CAD release 4.4.
  */
 
 #include "common.h"

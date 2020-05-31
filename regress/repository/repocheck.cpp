@@ -91,6 +91,9 @@ class repo_info_t {
 	std::map<std::string, std::vector<std::regex>> api_exemptions;
 	std::map<std::string, std::regex> api_func_filters;
 
+	/* do-not-use functions */
+	std::map<std::string, std::regex> dnu_filters;
+
 	/* platform symbols */
 	std::map<std::pair<std::string, std::string>, std::regex> platform_checks;
 	std::vector<std::regex> platform_file_filters;
@@ -103,6 +106,7 @@ class repo_info_t {
 	std::vector<std::string> bio_log;
 	std::vector<std::string> bnet_log;
 	std::vector<std::string> common_log;
+	std::vector<std::string> dnu_log;
 	std::vector<std::string> setprogname_log;
 	std::vector<std::string> symbol_inc_log;
 	std::vector<std::string> symbol_src_log;
@@ -290,6 +294,22 @@ regex_init(repo_info_t &r) {
 	r.api_exemptions[std::string("strncpy")].push_back(std::regex(".*/str[.]c$"));
 	r.api_exemptions[std::string("strncpy")].push_back(std::regex(".*/vls[.]c$"));
 	r.api_exemptions[std::string("strncpy")].push_back(std::regex(".*/wfobj/obj_util[.]cpp$"));
+    }
+
+    /* Do-not-use function check regex */
+    {
+	const char *dnu_func_strs[] {
+	    "std::system",
+	    NULL
+	};
+	cnt = 0;
+	rf = dnu_func_strs[cnt];
+	while (rf) {
+	    std::string rrf = std::string(".*") + std::string(rf) + std::string("[(].*");
+	    r.dnu_filters[std::string(rf)] = std::regex(rrf);
+	    cnt++;
+	    rf = dnu_func_strs[cnt];
+	}
     }
 
     /* Platform symbol usage check regex */
@@ -584,6 +604,7 @@ api_usage(repo_info_t &r, std::vector<std::string> &srcs)
 
 
 	std::map<std::string, std::set<int>> instances;
+	std::map<std::string, std::set<int>> dnu_instances;
 
 	int lcnt = 0;
 	std::string sline;
@@ -613,6 +634,16 @@ api_usage(repo_info_t &r, std::vector<std::string> &srcs)
 		    }
 		}
 	    }
+	    for (ff_it = r.dnu_filters.begin(); ff_it != r.dnu_filters.end(); ff_it++) {
+		if (!std::strstr(sline.c_str(), ff_it->first.c_str())) {
+		    // Only try the full regex if strstr says there is a chance
+		    continue;
+		}
+		if (std::regex_match(sline, ff_it->second)) {
+		    dnu_instances[ff_it->first].insert(lcnt);
+		    ret = 1;
+		}
+	    }
 	}
 
 	bu_close_mapped_file(ifile);
@@ -626,6 +657,15 @@ api_usage(repo_info_t &r, std::vector<std::string> &srcs)
 	    r.api_log.push_back(lstr);
 	    }
 	}
+
+	for (i_it = dnu_instances.begin(); i_it != dnu_instances.end(); i_it++) {
+	    std::set<int>::iterator num_it;
+	    for (num_it = i_it->second.begin(); num_it != i_it->second.end(); num_it++) {
+		std::string lstr = srcs[i].substr(r.path_root.length()+1) + std::string(" uses ") + i_it->first + std::string(" on line ") + std::to_string(*num_it) + std::string("\n");
+		r.dnu_log.push_back(lstr);
+	    }
+	}
+
     }
 
     return ret;
@@ -897,6 +937,7 @@ main(int argc, const char *argv[])
 	std::sort(repo_info.bio_log.begin(), repo_info.bio_log.end());
 	std::sort(repo_info.bnet_log.begin(), repo_info.bnet_log.end());
 	std::sort(repo_info.common_log.begin(), repo_info.common_log.end());
+	std::sort(repo_info.dnu_log.begin(), repo_info.dnu_log.end());
 	std::sort(repo_info.symbol_inc_log.begin(), repo_info.symbol_inc_log.end());
 	std::sort(repo_info.symbol_src_log.begin(), repo_info.symbol_src_log.end());
 	std::sort(repo_info.symbol_bld_log.begin(), repo_info.symbol_bld_log.end());
@@ -923,6 +964,13 @@ main(int argc, const char *argv[])
 	    std::cout << "\nFAILURE: found " << repo_info.common_log.size() << " instances of files using common.h with out-of-order inclusions:\n";
 	    for (size_t i = 0; i < repo_info.common_log.size(); i++) {
 		std::cout << repo_info.common_log[i];
+	    }
+	}
+
+	if (repo_info.dnu_log.size()) {
+	    std::cout << "\nFAILURE: found " << repo_info.dnu_log.size() << " instances of proscribed function usage:\n";
+	    for (size_t i = 0; i < repo_info.dnu_log.size(); i++) {
+		std::cout << repo_info.dnu_log[i];
 	    }
 	}
 

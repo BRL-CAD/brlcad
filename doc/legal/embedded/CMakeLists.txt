@@ -1,4 +1,5 @@
 set(embedded_licenses
+  alphanum.txt
   apple.txt
   art.txt
   ayam.txt

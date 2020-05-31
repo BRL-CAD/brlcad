@@ -1,107 +1,76 @@
 # Tests for the various image format conversions supported
 # by BRL-CAD
 
-macro(Add_Image_Test testname testtype depends_list)
-  CMAKE_PARSE_ARGUMENTS(${testname} "" "INPUT_IMAGE;CONTROL_IMAGE;TARGET_IMAGE;LOG_FILE" "" ${ARGN})
-  set(TARGET_NAME ${testname})
-  if (NOT "${testtype}" STREQUAL "IMPORT" AND NOT "${testtype}" STREQUAL "EXPORT")
-    message(FATAL_ERROR "Valid image test types are IMPORT and EXPORT: got ${testtype}")
-  endif (NOT "${testtype}" STREQUAL "IMPORT" AND NOT "${testtype}" STREQUAL "EXPORT")
-  set(INPUT_IMAGE ${${testname}_INPUT_IMAGE})
-  set(CONTROL_IMAGE ${${testname}_CONTROL_IMAGE})
-  set(TARGET_IMAGE ${${testname}_TARGET_IMAGE})
-  set(LOG_FILE ${${testname}_LOG_FILE})
-  set(STAMP_FILE "${CMAKE_CURRENT_BINARY_DIR}/${testname}.done")
-  set(deps_list pixcmp icv ${depends_list})
-  if ("${testtype}" STREQUAL "IMPORT")
-    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/regress-icv_import.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/regress-${testname}.cmake" @ONLY)
-  endif ("${testtype}" STREQUAL "IMPORT")
-  if ("${testtype}" STREQUAL "EXPORT")
-    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/regress-icv_export.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/regress-${testname}.cmake" @ONLY)
-  endif ("${testtype}" STREQUAL "EXPORT")
-  add_custom_command(
-    OUTPUT ${STAMP_FILE}
-    COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/regress-${testname}.cmake"
-    DEPENDS pixcmp icv ${deps_list}
-    )
+# All image conversions with icv use one of two templates - import or export:
+set(TIMPORT "${CMAKE_CURRENT_SOURCE_DIR}/regress-icv_import.cmake.in")
+set(TEXPORT "${CMAKE_CURRENT_SOURCE_DIR}/regress-icv_export.cmake.in")
 
-  add_test(NAME regress-icv-${testname} COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/regress-${testname}.cmake")
-  add_custom_target(regress-icv-${testname} DEPENDS ${deps_list} ${STAMP_FILE})
-  Add_Regression_Test(icv-${testname} "${deps_list}")
-  set_target_properties(regress-icv-${testname} PROPERTIES FOLDER "BRL-CAD Regression Tests/icv")
+# pix-pix
+set(INPUT_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../../bench/ref/m35.pix")
+set(CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../../bench/ref/m35.pix")
+set(TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_icv.pix")
+set(LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/pix_pix.log")
+BRLCAD_REGRESSION_TEST(regress-pix_pix "pixcmp;icv" TEST_SCRIPT "${TIMPORT}" EXEC icv)
+DISTCLEAN(${LOG_FILE} ${TARGET_IMAGE})
 
-  add_dependencies(regress-icv regress-icv-${testname})
+# png-pix
+set(INPUT_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/m35.png")
+set(CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../../bench/ref/m35.pix")
+set(TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_png.pix")
+set(LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/png_pix.log")
+BRLCAD_REGRESSION_TEST(regress-png_pix "pixcmp;icv" TEST_SCRIPT "${TIMPORT}" EXEC icv)
+DISTCLEAN(${LOG_FILE} ${TARGET_IMAGE})
 
-  DISTCLEAN(
-    ${STAMP_FILE}
-    ${LOG_FILE}
-    ${TARGET_IMAGE}
-    )
-endmacro()
-
-add_custom_target(regress-icv)
-set_target_properties(regress-icv PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
-set_target_properties(regress-icv PROPERTIES FOLDER "BRL-CAD Regression Tests")
-
-
-Add_Image_Test(pix_pix IMPORT ""
-  INPUT_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../../bench/ref/m35.pix"
-  CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../../bench/ref/m35.pix"
-  TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_icv.pix"
-  LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/pix_pix.log"
-  )
-
-Add_Image_Test(png_pix IMPORT ""
-  INPUT_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/m35.png"
-  CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../../bench/ref/m35.pix"
-  TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_png.pix"
-  LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/png_pix.log"
-  )
-
-Add_Image_Test(pix_png EXPORT ""
-  INPUT_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../../bench/ref/m35.pix"
-  CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/m35.png"
-  TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_pix.png"
-  LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/pix_png.log"
-  )
+# pix-png
+set(INPUT_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../../bench/ref/m35.pix")
+set(CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/m35.png")
+set(TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_pix.png")
+set(LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/pix_png.log")
+set(TARGET_NAME pix_png)
+bRLCAD_REGRESSION_TEST(regress-pix_png "pixcmp;icv" TEST_SCRIPT "${TEXPORT}" EXEC icv)
+DISTCLEAN(${LOG_FILE} ${TARGET_IMAGE})
 
 # Unpack compressed ppm file
 execute_process(COMMAND "${CMAKE_COMMAND}" -E tar xjf "${CMAKE_CURRENT_SOURCE_DIR}/m35.ppm.tbz2" WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/m35.ppm")
 
-Add_Image_Test(ppm_pix IMPORT ""
-  INPUT_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35.ppm"
-  CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../../bench/ref/m35.pix"
-  TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_ppm.pix"
-  LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/ppm_pix.log"
-  )
+# ppm_pix
+set(INPUT_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35.ppm")
+set(CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../../bench/ref/m35.pix")
+set(TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_ppm.pix")
+set(LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/ppm_pix.log")
+BRLCAD_REGRESSION_TEST(regress-ppm_pix "pixcmp;icv" TEST_SCRIPT "${TIMPORT}" EXEC icv)
+DISTCLEAN(${LOG_FILE} ${TARGET_IMAGE})
 
-Add_Image_Test(pix_ppm EXPORT ""
-  INPUT_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../../bench/ref/m35.pix"
-  CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35.ppm"
-  TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_pix.ppm"
-  LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/pix_ppm.log"
-  )
-
+# pix_ppm
+set(INPUT_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../../bench/ref/m35.pix")
+set(CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35.ppm")
+set(TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_pix.ppm")
+set(LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/pix_ppm.log")
+set(TARGET_NAME pix_ppm)
+BRLCAD_REGRESSION_TEST(regress-pix_ppm "pixcmp;icv" TEST_SCRIPT "${TEXPORT}" EXEC icv)
+DISTCLEAN(${LOG_FILE} ${TARGET_IMAGE})
 
 # Unpack compressed dpix file
 execute_process(COMMAND "${CMAKE_COMMAND}" -E tar xjf "${CMAKE_CURRENT_SOURCE_DIR}/m35.dpix.tbz2" WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/m35.dpix")
 
-Add_Image_Test(dpix_pix IMPORT ""
-  INPUT_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35.dpix"
-  CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../../bench/ref/m35.pix"
-  TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_dpix.pix"
-  LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/dpix_pix.log"
-  )
+# dpix_pix
+set(INPUT_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35.dpix")
+set(CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../../bench/ref/m35.pix")
+set(TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_dpix.pix")
+set(LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/dpix_pix.log")
+BRLCAD_REGRESSION_TEST(regress-dpix_pix "pixcmp;icv" TEST_SCRIPT "${TIMPORT}" EXEC icv)
+DISTCLEAN(${LOG_FILE} ${TARGET_IMAGE})
 
-Add_Image_Test(pix_dpix EXPORT ""
-  INPUT_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../../bench/ref/m35.pix"
-  CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35.dpix"
-  TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_pix.dpix"
-  LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/pix_dpix.log"
-  )
-
+# pix_dpix
+set(INPUT_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../../bench/ref/m35.pix")
+set(CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35.dpix")
+set(TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_pix.dpix")
+set(LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/pix_dpix.log")
+set(TARGET_NAME pix_dpix)
+BRLCAD_REGRESSION_TEST(regress-pix_dpix "pixcmp;icv" TEST_SCRIPT "${TEXPORT}" EXEC icv)
+DISTCLEAN(${LOG_FILE} ${TARGET_IMAGE})
 
 # Unpack compressed bw file and control
 execute_process(COMMAND "${CMAKE_COMMAND}" -E tar xjf "${CMAKE_CURRENT_SOURCE_DIR}/m35.bw.tbz2" WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
@@ -109,33 +78,41 @@ execute_process(COMMAND "${CMAKE_COMMAND}" -E tar xjf "${CMAKE_CURRENT_SOURCE_DI
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/m35.bw")
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/m35_bw.pix")
 
-Add_Image_Test(bw_pix IMPORT ""
-  INPUT_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35.bw"
-  CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_bw.pix"
-  TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_bw-out.pix"
-  LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/bw_pix.log"
-  )
+# bw_pix
+set(INPUT_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35.bw")
+set(CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_bw.pix")
+set(TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_bw-out.pix")
+set(LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/bw_pix.log")
+set(TARGET_NAME bw_pix)
+BRLCAD_REGRESSION_TEST(regress-bw_pix "pixcmp;icv" TEST_SCRIPT "${TIMPORT}" EXEC icv)
+DISTCLEAN(${LOG_FILE} ${TARGET_IMAGE})
 
-Add_Image_Test(pix_bw EXPORT ""
-  INPUT_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../../bench/ref/m35.pix"
-  CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35.bw"
-  TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_pix.bw"
-  LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/pix_bw.log"
-  )
+# pix_bw
+set(INPUT_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../../bench/ref/m35.pix")
+set(CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35.bw")
+set(TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_pix.bw")
+set(LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/pix_bw.log")
+set(TARGET_NAME pix_bw)
+BRLCAD_REGRESSION_TEST(regress-pix_bw "pixcmp;icv" TEST_SCRIPT "${TEXPORT}" EXEC icv)
+DISTCLEAN(${LOG_FILE} ${TARGET_IMAGE})
 
-Add_Image_Test(bw_png EXPORT ""
-  INPUT_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35.bw"
-  CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/m35_bw.png"
-  TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_bw_png.png"
-  LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/bw_png.log"
-  )
+# bw_png
+set(INPUT_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35.bw")
+set(CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/m35_bw.png")
+set(TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_bw_png.png")
+set(LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/bw_png.log")
+set(TARGET_NAME bw_png)
+BRLCAD_REGRESSION_TEST(regress-bw_png "pixcmp;icv" TEST_SCRIPT "${TEXPORT}" EXEC icv)
+DISTCLEAN(${LOG_FILE} ${TARGET_IMAGE})
 
-Add_Image_Test(png_bw EXPORT ""
-  INPUT_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/m35_bw.png"
-  CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35.bw"
-  TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_png_bw.bw"
-  LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/png_bw.log"
-  )
+# png_bw
+set(INPUT_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/m35_bw.png")
+set(CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35.bw")
+set(TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_png_bw.bw")
+set(LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/png_bw.log")
+set(TARGET_NAME png_bw)
+BRLCAD_REGRESSION_TEST(regress-png_bw "pixcmp;icv" TEST_SCRIPT "${TEXPORT}" EXEC icv)
+DISTCLEAN(${LOG_FILE} ${TARGET_IMAGE})
 
 CMAKEFILES(
   CMakeLists.txt
