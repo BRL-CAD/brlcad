@@ -160,7 +160,6 @@ mkdir -p $TMPDIR/tmp/usr/share/applications
 cp -f $TMPDIR/archer.desktop $TMPDIR/tmp/usr/share/applications
 cp -f $TMPDIR/brlcad-db.desktop $TMPDIR/tmp/usr/share/applications
 cp -f $TMPDIR/brlcad-doc.desktop $TMPDIR/tmp/usr/share/applications
-cp -f $TMPDIR/brlcad-doc-animation.desktop $TMPDIR/tmp/usr/share/applications
 cp -f $TMPDIR/brlcad-doc-mged.desktop $TMPDIR/tmp/usr/share/applications
 cp -f $TMPDIR/mged.desktop $TMPDIR/tmp/usr/share/applications
 cp -f $TMPDIR/rtwizard.desktop $TMPDIR/tmp/usr/share/applications

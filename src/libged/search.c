@@ -37,8 +37,39 @@
 #include "bu/cmd.h"
 #include "bu/getopt.h"
 #include "bu/path.h"
+#include "bu/sort.h"
 
+#include "./alphanum.h"
 #include "./ged_private.h"
+
+static int
+dp_name_compare(const void *d1, const void *d2, void *arg)
+{
+    struct directory *dp1 = *(struct directory **)d1;
+    struct directory *dp2 = *(struct directory **)d2;
+    int ret = alphanum_impl((const char *)dp2->d_namep, (const char *)dp1->d_namep, arg);
+    return ret;
+}
+
+struct fp_cmp_vls {
+    struct bu_vls *left;
+    struct bu_vls *right;
+    struct db_i *dbip;
+    int print_verbose_info;
+};
+static int
+fp_name_compare(const void *d1, const void *d2, void *arg)
+{
+    struct db_full_path *fp1 = *(struct db_full_path **)d1;
+    struct db_full_path *fp2 = *(struct db_full_path **)d2;
+    struct fp_cmp_vls *data = (struct fp_cmp_vls *)arg;
+    bu_vls_trunc(data->left, 0);
+    bu_vls_trunc(data->right, 0);
+    db_fullpath_to_vls(data->left, fp1, data->dbip, data->print_verbose_info);
+    db_fullpath_to_vls(data->right, fp2, data->dbip, data->print_verbose_info);
+    int ret = alphanum_impl(bu_vls_cstr(data->right), bu_vls_cstr(data->left), arg);
+    return ret;
+}
 
 
 struct ged_search {
@@ -403,6 +434,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 	    }
 	}
 	/* For this return, we want a list of all unique leaf objects */
+	bu_sort((void *)BU_PTBL_BASEADDR(uniq_db_objs), BU_PTBL_LEN(uniq_db_objs), sizeof(struct directory *), dp_name_compare, NULL);
 	for (i = (int)BU_PTBL_LEN(uniq_db_objs) - 1; i >= 0; i--) {
 	    struct directory *uniq_dp = (struct directory *)BU_PTBL_GET(uniq_db_objs, i);
 	    bu_vls_printf(gedp->ged_result_str, "%s\n", uniq_dp->d_namep);
@@ -412,6 +444,16 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     } else {
 	/* Search types are either mixed or all full path, so use the standard calls and print
 	 * the full output of each search */
+
+	struct fp_cmp_vls *sdata;
+	BU_GET(sdata, struct fp_cmp_vls);
+	BU_GET(sdata->left, struct bu_vls);
+	BU_GET(sdata->right, struct bu_vls);
+	bu_vls_init(sdata->left);
+	bu_vls_init(sdata->right);
+	sdata->dbip = gedp->ged_wdbp->dbip;
+	sdata->print_verbose_info = print_verbose_info;
+
 	for (i = 0; i < (int)BU_PTBL_LEN(search_set); i++) {
 	    int path_cnt = 0;
 	    int j;
@@ -432,6 +474,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 			}
 		    }
 		    if (BU_PTBL_LEN(search_results) > 0) {
+			bu_sort((void *)BU_PTBL_BASEADDR(search_results), BU_PTBL_LEN(search_results), sizeof(struct directory *), dp_name_compare, NULL);
 			for (j = (int)BU_PTBL_LEN(search_results) - 1; j >= 0; j--) {
 			    struct directory *uniq_dp = (struct directory *)BU_PTBL_GET(search_results, j);
 			    bu_vls_printf(gedp->ged_result_str, "%s\n", uniq_dp->d_namep);
@@ -452,6 +495,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 			    case 0:
 				(void)db_search(search_results, flags, bu_vls_addr(&search_string), 1, &curr_path, gedp->ged_wdbp->dbip, ctx);
 				if (BU_PTBL_LEN(search_results) > 0) {
+				    bu_sort((void *)BU_PTBL_BASEADDR(search_results), BU_PTBL_LEN(search_results), sizeof(struct directory *), fp_name_compare, (void *)sdata);
 				    for (j = (int)BU_PTBL_LEN(search_results) - 1; j >= 0; j--) {
 					struct db_full_path *dfptr = (struct db_full_path *)BU_PTBL_GET(search_results, j);
 					bu_vls_trunc(&fullpath_string, 0);
@@ -463,6 +507,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 			    case 1:
 				flags |= DB_SEARCH_RETURN_UNIQ_DP;
 				(void)db_search(search_results, flags, bu_vls_addr(&search_string), 1, &curr_path, gedp->ged_wdbp->dbip, ctx);
+				bu_sort((void *)BU_PTBL_BASEADDR(search_results), BU_PTBL_LEN(search_results), sizeof(struct directory *), dp_name_compare, NULL);
 				for (j = (int)BU_PTBL_LEN(search_results) - 1; j >= 0; j--) {
 				    struct directory *uniq_dp = (struct directory *)BU_PTBL_GET(search_results, j);
 				    bu_vls_printf(gedp->ged_result_str, "%s\n", uniq_dp->d_namep);
@@ -481,6 +526,12 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		}
 	    }
 	}
+
+	bu_vls_free(sdata->left);
+	bu_vls_free(sdata->right);
+	BU_PUT(sdata->left, struct bu_vls);
+	BU_PUT(sdata->right, struct bu_vls);
+	BU_PUT(sdata, struct fp_cmp_vls);
     }
 
     /* Done - free memory */

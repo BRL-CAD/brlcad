@@ -168,13 +168,13 @@ bn_poly_sub(register struct bn_poly *diff, register const struct bn_poly *poly1,
 
 
 void
-bn_poly_synthetic_division(register struct bn_poly *quo, register struct bn_poly *rem, register const struct bn_poly *dvdend, register const struct bn_poly *dvsor)
+bn_poly_synthetic_division(struct bn_poly *quo, struct bn_poly *rem, const struct bn_poly *dvdend, const struct bn_poly *dvsor)
 {
     register size_t divisor;
     register size_t n;
 
-    *quo = *dvdend;
-    *rem = bn_Zero_poly;
+    *quo = *dvdend; /* struct copy */
+    *rem = bn_Zero_poly; /* struct copy */
 
     if (dvsor->dgr > dvdend->dgr) {
 	quo->dgr = -1;

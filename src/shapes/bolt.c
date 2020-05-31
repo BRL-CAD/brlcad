@@ -21,6 +21,16 @@
  *
  * Program to make a bolt using libwdb.  The objects will be in mm.
  *
+ * Introduced in BRL-CAD release 4.4.  Original notes:
+ * This program creates an mged data base of bolts.  There are four types of
+ * bolts that can be created but only one type can be in the data base at a
+ * time.  The four types of bolts that may be created are listed below:
+ *
+ *      bolt head
+ *      bolt head and washer
+ *      bolt head, washer, and bolt stem
+ *      bolt head and bolt stem
+ *
  */
 
 #include "common.h"

@@ -480,8 +480,6 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	else
 	    bu_vls_strcpy(&dmp->dm_dName, ":0.0");
     }
-    if (bu_vls_strlen(&init_proc_vls) == 0)
-	bu_vls_strcpy(&init_proc_vls, "bind_dm");
 
     /* initialize dm specific variables */
     pubvars->devmotionnotify = LASTEvent;
@@ -536,14 +534,14 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 		  (char *)Tk_Name(pubvars->xtkwin));
 #endif
 
-    bu_vls_printf(&str, "_init_dm %s %s\n",
-		  bu_vls_addr(&init_proc_vls),
-		  bu_vls_addr(&dmp->dm_pathName));
+    if (bu_vls_strlen(&init_proc_vls) > 0) {
+	bu_vls_printf(&str, "%s %s\n", bu_vls_addr(&init_proc_vls), bu_vls_addr(&dmp->dm_pathName));
 
-    if (Tcl_Eval(interp, bu_vls_addr(&str)) == BRLCAD_ERROR) {
-	bu_vls_free(&str);
-	(void)X_close(dmp);
-	return DM_NULL;
+	if (Tcl_Eval(interp, bu_vls_addr(&str)) == BRLCAD_ERROR) {
+	    bu_vls_free(&str);
+	    (void)X_close(dmp);
+	    return DM_NULL;
+	}
     }
 
     bu_vls_free(&init_proc_vls);

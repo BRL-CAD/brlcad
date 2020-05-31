@@ -206,7 +206,7 @@ comb_wrap(struct ged *gedp, struct directory *dp) {
 }
 
 /* bu_sort functions for solids */
-HIDDEN int
+static int
 name_compare(const void *d1, const void *d2, void *UNUSED(arg))
 {
     struct directory *dp1 = *(struct directory **)d1;
