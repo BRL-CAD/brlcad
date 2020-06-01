@@ -1085,6 +1085,9 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
     // Let Tk_Photo know we have data
     Tk_PhotoPutBlock(interp, privvars->img, &dm_data, 0, 0, dm_data.width, dm_data.height, TK_PHOTO_COMPOSITE_SET);
 
+    // Put block operation complete - free local allocated buffer
+    Tcl_Free((char *)dm_data.pixelPtr);
+
     bu_vls_sprintf(&photo_cmd, "%s.canvas create image 0 0 -image %s.canvas.photo -anchor nw", bu_vls_cstr(&dmp->dm_pathName), bu_vls_cstr(&dmp->dm_pathName));
     Tcl_Eval(interp, bu_vls_cstr(&photo_cmd));
 
