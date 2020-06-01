@@ -31,7 +31,13 @@
 #define NUM_PIXELS 216    /* CUBE_DIMENSION * CUBE_DIMENSION * CUBE_DIMENSION */
 #define ColormapNull (Colormap *)NULL
 
+#include "tcl.h"
+#include "tk.h"
+
 struct tk_vars {
+
+    Tk_PhotoHandle img;
+
     GC gc;
     Pixmap pix;
     fastf_t *xmat;
