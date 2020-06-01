@@ -14,6 +14,8 @@ message(BIN_DIR:  ${BIN_DIR})
 string(REGEX REPLACE "${BIN_DIR}$" "" ROOT_DIR "${EXEC_DIR}")
 message(ROOT_DIR: ${ROOT_DIR})
 
+file(WRITE ${ROOT_DIR}/doc/test_file.txt "test file")
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake
