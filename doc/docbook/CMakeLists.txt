@@ -1,3 +1,7 @@
+# Define a build target that builds a no-op executable, so we can ensure
+# a target for generator expression use regardless of other changes elsewhere
+# in the build system
+add_executable(db_dir_info db_dir_info.c)
 
 # We need various configuration files set up for DocBook processing tools
 add_subdirectory(resources)
@@ -14,19 +18,18 @@ if(BRLCAD_EXTRADOCS_PDF)
   configure_file(${CMAKE_SOURCE_DIR}/doc/docbook/fop.xconf.in ${CMAKE_BINARY_DIR}/doc/docbook/fop.xconf)
 endif(BRLCAD_EXTRADOCS_PDF)
 
+# For the html files, we need brlcad.css
+add_custom_command(
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/brlcad_css-${CMAKE_CFG_INTDIR}-done
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/css/brlcad.css $<TARGET_FILE_DIR:db_dir_info>/${RBIN_DIR}/${DOC_DIR}/html/css/brlcad.css
+  COMMAND "${CMAKE_COMMAND}" -E touch  ${CMAKE_CURRENT_BINARY_DIR}/brlcad_css-${CMAKE_CFG_INTDIR}-done
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/css/brlcad.css
+  )
+add_custom_target(brlcad_css DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/brlcad_css-${CMAKE_CFG_INTDIR}-done)
+install(FILES css/brlcad.css DESTINATION ${DOC_DIR}/html/css)
+
 # Include CMake macros for DocBook.
 include(${BRLCAD_SOURCE_DIR}/misc/CMake/DocBook.cmake)
-
-# For the html files, we need brlcad.css
-if(NOT CMAKE_CONFIGURATION_TYPES)
-  configure_file(css/brlcad.css ${CMAKE_BINARY_DIR}/${DOC_DIR}/html/css/brlcad.css)
-else(NOT CMAKE_CONFIGURATION_TYPES)
-  foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-    string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-    configure_file(css/brlcad.css ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${DOC_DIR}/html/css/brlcad.css)
-  endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-endif(NOT CMAKE_CONFIGURATION_TYPES)
-install(FILES css/brlcad.css DESTINATION ${DOC_DIR}/html/css)
 
 add_subdirectory(articles)
 add_subdirectory(books)
@@ -35,10 +38,15 @@ add_subdirectory(presentations)
 add_subdirectory(specifications)
 add_subdirectory(system)
 
-CMAKEFILES(README fop.xconf.in log4j.properties)
-CMAKEFILES(README.DB_authors_notes)
-CMAKEFILES(css/brlcad.css)
-CMAKEFILES(CMakeLists.txt)
+set(ignore_files
+  CMakeLists.txt
+  README
+  README.DB_authors_notes
+  css/brlcad.css
+  fop.xconf.in
+  log4j.properties
+  )
+CMAKEFILES(${ignore_files})
 
 # Local Variables:
 # tab-width: 8
