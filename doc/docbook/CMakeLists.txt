@@ -1,9 +1,6 @@
-# We need various configuration files set up for DocBook processing tools
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/)
 
-# First, define the commands to expand the third party components we will need to handle
-# DocBook processing from their archives into the build directory
-include(${CMAKE_CURRENT_SOURCE_DIR}/resources/other/expand.cmake)
+# We need various configuration files set up for DocBook processing tools
+add_subdirectory(resources)
 
 # Rework CMake binary and source paths for DocBook templates - if we
 # have spaces in the paths, they will cause a problem.
@@ -47,7 +44,6 @@ add_subdirectory(articles)
 add_subdirectory(books)
 add_subdirectory(lessons)
 add_subdirectory(presentations)
-add_subdirectory(resources)
 add_subdirectory(specifications)
 add_subdirectory(system)
 
