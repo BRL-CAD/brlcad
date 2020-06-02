@@ -81,6 +81,7 @@ bw_read(const char *filename, size_t width, size_t height)
 
     if (filename==NULL) {
 	fp = stdin;
+	setmode(fileno(fp), O_BINARY);
     } else if ((fp = fopen(filename, "rb")) == NULL) {
 	bu_log("bw_read: Cannot open %s for reading\n", filename);
 	return NULL;
