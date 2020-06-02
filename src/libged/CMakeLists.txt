@@ -178,6 +178,7 @@ set(LIBGED_SOURCES
   hide.c
   how.c
   human.c
+  icvfb.c
   illum.c
   importFg4Section.c
   inside.c

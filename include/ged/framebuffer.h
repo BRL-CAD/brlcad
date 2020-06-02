@@ -55,6 +55,8 @@ GED_EXPORT extern int ged_pix2fb(struct ged *gedp, int argc, const char *argv[])
 GED_EXPORT extern int ged_png2fb(struct ged *gedp, int argc, const char *argv[]);
 
 
+GED_EXPORT extern int ged_icv2fb(struct ged *gedp, int argc, const char *argv[]);
+
 __END_DECLS
 
 #endif /* GED_FRAMEBUFFER_H */
