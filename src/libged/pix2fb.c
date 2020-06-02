@@ -183,7 +183,8 @@ ged_pix2fb(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    struct fb *fbp = dm_get_fb((struct dm *)gedp->ged_dmp);
+    struct dm *dmp = (struct dm *)gedp->ged_dmp;
+    struct fb *fbp = dm_get_fb(dmp);
 
     if (!fbp) {
 	bu_vls_printf(gedp->ged_result_str, "display manager does not have a framebuffer");
@@ -219,8 +220,13 @@ ged_pix2fb(struct ged *gedp, int argc, const char *argv[])
 
     bu_snooze(BU_SEC2USEC(pause_sec));
 
-    if (ret == BRLCAD_OK)
+
+    if (ret == BRLCAD_OK) {
+	(void)dm_draw_begin(dmp);
+	fb_refresh(fbp, 0, 0, dm_get_width(dmp), dm_get_height(dmp));
+	(void)dm_draw_end(dmp);
 	return GED_OK;
+    }
 
     return GED_ERROR;
 }
