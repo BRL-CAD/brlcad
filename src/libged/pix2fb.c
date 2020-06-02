@@ -223,7 +223,7 @@ ged_pix2fb(struct ged *gedp, int argc, const char *argv[])
 
     if (ret == BRLCAD_OK) {
 	(void)dm_draw_begin(dmp);
-	fb_refresh(fbp, 0, 0, dm_get_width(dmp), dm_get_height(dmp));
+	fb_refresh(fbp, 0, 0, fb_getwidth(fbp), fb_getheight(fbp));
 	(void)dm_draw_end(dmp);
 	return GED_OK;
     }
