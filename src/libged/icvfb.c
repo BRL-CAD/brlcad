@@ -335,9 +335,7 @@ ged_fb2icv(struct ged *gedp, int argc, const char *argv[])
     }
 
     icv_write(img, file_name, type);
-
-    bu_free(img->data, "icv img data");
-    bu_free(img, "icv img");
+    icv_destroy(img);
 
     return ret;
 }

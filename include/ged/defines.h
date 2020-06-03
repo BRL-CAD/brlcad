@@ -204,7 +204,6 @@ struct ged {
     struct bview		*ged_gvp;
     struct bu_hash_tbl		*ged_selections; /**< @brief object name -> struct rt_object_selections */
 
-    void			*ged_dmp;
     void			*ged_refresh_clientdata;	/**< @brief  client data passed to refresh handler */
     void			(*ged_refresh_handler)(void *);	/**< @brief  function for handling refresh requests */
     void			(*ged_output_handler)(struct ged *, char *);	/**< @brief  function for handling output */
@@ -233,11 +232,7 @@ struct ged {
     db_search_callback_t ged_interp_eval; /* FIXME: broke the rule written on the previous line */
 
     /* Interface to LIBDM */
-    int ged_dm_width;
-    int ged_dm_height;
-    int ged_dmp_is_null;
-    void (*ged_dm_get_display_image)(struct ged *, unsigned char **);
-
+    void *ged_dmp;
 };
 
 typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);

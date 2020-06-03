@@ -1020,7 +1020,6 @@ HIDDEN int to_dm_func(struct ged *gedp,
 
 /* Utility Functions */
 HIDDEN int to_close_fbs(struct ged_dm_view *gdvp);
-HIDDEN void to_dm_get_display_image(struct ged *gedp, unsigned char **idata);
 HIDDEN void to_fbs_callback();
 HIDDEN int to_open_fbs(struct ged_dm_view *gdvp, Tcl_Interp *interp);
 
@@ -14880,13 +14879,6 @@ to_view_func(struct ged *gedp,
     return to_view_func_common(gedp, argc, argv, func, usage, maxargs, 0, 1);
 }
 
-static void
-mged_dm_get_display_image(struct ged *gedp, unsigned char **idata)
-{
-    struct dm *dmp = (struct dm *)gedp->ged_dmp;
-    dm_get_display_image(dmp, idata);
-}
-
 HIDDEN int
 to_view_func_common(struct ged *gedp,
 		    int argc,
@@ -14929,10 +14921,6 @@ to_view_func_common(struct ged *gedp,
     }
 
     gedp->ged_dmp = gdvp->gdv_dmp;
-    gedp->ged_dm_width = dm_get_width(gdvp->gdv_dmp);
-    gedp->ged_dm_height = dm_get_height(gdvp->gdv_dmp);
-    gedp->ged_dmp_is_null = (gedp->ged_dmp == NULL);
-    gedp->ged_dm_get_display_image = mged_dm_get_display_image;
 
     /* Copy argv into av while skipping argv[1] (i.e. the view name) */
     gedp->ged_gvp = gdvp->gdv_view;
@@ -15045,9 +15033,6 @@ to_dm_func(struct ged *gedp,
     /* Copy argv into av while skipping argv[1] (i.e. the view name) */
     gedp->ged_gvp = gdvp->gdv_view;
     gedp->ged_dmp = (void *)gdvp->gdv_dmp;
-    gedp->ged_dm_width = dm_get_width(gdvp->gdv_dmp);
-    gedp->ged_dm_height = dm_get_height(gdvp->gdv_dmp);
-    gedp->ged_dm_get_display_image = to_dm_get_display_image;
     gedp->ged_refresh_clientdata = (void *)gdvp;
     av[0] = (char *)argv[0];
     ac = argc-1;
@@ -15088,14 +15073,6 @@ to_close_fbs(struct ged_dm_view *gdvp)
     gdvp->gdv_fbs.fbs_fbp = FB_NULL;
 
     return TCL_OK;
-}
-
-
-HIDDEN void to_dm_get_display_image(struct ged *gedp, unsigned char **idata)
-{
-    if (gedp->ged_dmp) {
-	(void)dm_get_display_image(((struct dm *)gedp->ged_dmp), idata);
-    }
 }
 
 
