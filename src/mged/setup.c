@@ -181,6 +181,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"history", f_history, GED_FUNC_PTR_NULL},
     {"i", cmd_ged_plain_wrapper, ged_instance},
     {"icv2fb", cmd_ged_dm_wrapper, ged_icv2fb},
+    {"fb2icv", cmd_ged_dm_wrapper, ged_fb2icv},
     {"idents", cmd_ged_plain_wrapper, ged_tables},
     {"ill", f_ill, GED_FUNC_PTR_NULL},
     {"in", cmd_ged_in, ged_in},

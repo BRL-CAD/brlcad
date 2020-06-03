@@ -157,7 +157,7 @@ Usage: icv2fb [-h -H -i -c -v -z -1] [-m #lines]\n\
 	    bu_vls_printf(gedp->ged_result_str, ": reading from stdin, but no format specified");
 	    return GED_ERROR;
 	}
-	file_name = NULL; 
+	file_name = NULL;
     } else {
 
 	if (argc > 1) {
@@ -229,6 +229,119 @@ Usage: icv2fb [-h -H -i -c -v -z -1] [-m #lines]\n\
 
     return ret;
 }
+
+int
+ged_fb2icv(struct ged *gedp, int argc, const char *argv[])
+{
+    int ret = GED_OK;
+
+    const char *file_name;
+
+    int print_help = 0;
+    int scr_xoff=0;
+    int scr_yoff=0;
+    int width = 0;
+    int height = 0;
+    bu_mime_image_t type = BU_MIME_IMAGE_UNKNOWN;
+
+    static char usage[] = "Usage: fb2icv [-h] [-X scr_xoff] [-Y scr_yoff] [--format fmt] [file.img]\n";
+
+    struct bu_opt_desc d[7];
+    BU_OPT(d[0], "h", "help",           "",            NULL,      &print_help,       "Print help and exit");
+    BU_OPT(d[1], "X", "scr_xoff",       "#",    &bu_opt_int,      &scr_xoff,         "X offset in framebuffer");
+    BU_OPT(d[2], "Y", "scr_yoff",       "#",    &bu_opt_int,      &scr_yoff,         "Y offset in framebuffer");
+    BU_OPT(d[3], "w", "width",          "#",    &bu_opt_int,      &width,            "image width");
+    BU_OPT(d[4], "n", "height",         "#",    &bu_opt_int,      &height,           "image height");
+    BU_OPT(d[5], "",  "format",         "fmt",  &image_mime,      &type,             "image file format");
+    BU_OPT_NULL(d[6]);
+
+    if (!gedp->ged_dmp) {
+	bu_vls_printf(gedp->ged_result_str, ": no display manager currently active");
+	return GED_ERROR;
+    }
+
+    struct dm *dmp = (struct dm *)gedp->ged_dmp;
+    struct fb *fbp = dm_get_fb(dmp);
+
+    if (!fbp) {
+	bu_vls_printf(gedp->ged_result_str, ": display manager does not have a framebuffer");
+	return GED_ERROR;
+    }
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	_ged_cmd_help(gedp, usage, d);
+	return GED_HELP;
+    }
+
+    argc-=(argc>0); argv+=(argc>0); /* done with command name argv[0] */
+
+    int opt_ret = bu_opt_parse(NULL, argc, argv, d);
+
+    if (print_help) {
+	_ged_cmd_help(gedp, usage, d);
+	return GED_HELP;
+    }
+
+    argc = opt_ret;
+
+    if (!argc) {
+	if (isatty(fileno(stdout))) {
+	    bu_vls_printf(gedp->ged_result_str, ": no file specified, expected valid stdout");
+	    return GED_ERROR;
+	}
+	if (type == BU_MIME_IMAGE_UNKNOWN) {
+	    type = BU_MIME_IMAGE_PIX;
+	}
+	file_name = NULL;
+    } else {
+
+	if (argc > 1) {
+	    bu_log("icvfb: Warning: excess argument(s) ignored\n");
+	}
+	file_name = argv[0];
+
+	/* Find out what input file type we are dealing with */
+	if (type == BU_MIME_IMAGE_UNKNOWN) {
+	    struct bu_vls c = BU_VLS_INIT_ZERO;
+	    if (bu_path_component(&c, file_name, BU_PATH_EXT)) {
+		int itype = bu_file_mime(bu_vls_cstr(&c), BU_MIME_IMAGE);
+		type = (bu_mime_image_t)itype;
+	    } else {
+		bu_vls_printf(gedp->ged_result_str, ":  no input file image type specified - need either a specified input image type or a path that provides MIME information.\n");
+		bu_vls_free(&c);
+		return GED_ERROR;
+	    }
+	    bu_vls_free(&c);
+	}
+    }
+
+    /* If we don't have a specified width/height, get them from the framebuffer */
+    if (!width) {
+	width = fb_getwidth(fbp);
+    }
+    if (!height) {
+	height = fb_getheight(fbp);
+    }
+
+    icv_image_t *img = fb_write_icv(fbp, scr_xoff, scr_yoff, width, height);
+
+    if (!img) {
+	bu_vls_printf(gedp->ged_result_str, ":  failed to generate icv image from framebuffer.\n");
+	return GED_ERROR;
+    }
+
+    icv_write(img, file_name, type);
+
+    bu_free(img->data, "icv img data");
+    bu_free(img, "icv img");
+
+    return ret;
+}
+
 
 
 /*
