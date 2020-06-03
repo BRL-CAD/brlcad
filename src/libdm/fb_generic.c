@@ -765,6 +765,32 @@ fb_read_icv(struct fb *ifp, icv_image_t *img, int file_xoff, int file_yoff, int 
     return BRLCAD_OK;
 }
 
+icv_image_t *
+fb_write_icv(struct fb *ifp, int UNUSED(scr_xoff), int UNUSED(scr_yoff), int UNUSED(width), int UNUSED(height))
+{
+    icv_image_t *fbimg;
+    BU_ALLOC(fbimg, struct icv_image);
+    ICV_IMAGE_INIT(fbimg);
+
+    // Create a local buffer for fb_read to populate with char data, and
+    // populate it - this isolates us from any backend specific framebuffer
+    // storage details.
+    unsigned char *buffer = (unsigned char *)bu_calloc(3 * fb_getwidth(ifp) * fb_getheight(ifp), sizeof(char), "raw image");
+    unsigned char *scanline;
+    for (int y=0; y < fb_getheight(ifp); y++) {
+	scanline = &buffer[y*fb_getwidth(ifp)*3];
+	fb_read(ifp, 0, y, scanline, fb_getwidth(ifp));
+    }
+
+    fbimg->width = fb_getwidth(ifp);
+    fbimg->height = fb_getheight(ifp);
+    fbimg->data = icv_uchar2double(buffer, 3 * fbimg->width * fbimg->height);
+    fbimg->magic = ICV_IMAGE_MAGIC;
+    fbimg->channels = 3;
+    fbimg->color_space = ICV_COLOR_SPACE_RGB;
+
+    return fbimg;
+}
 
 /*
  * Local Variables:

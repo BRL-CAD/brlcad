@@ -27,9 +27,6 @@
 #include "bu/malloc.h"
 #include "icv_private.h"
 
-/* defined in encoding.c */
-extern double *uchar2double(unsigned char *data, size_t size);
-
 int
 bw_write(icv_image_t *bif, const char *filename)
 {
@@ -131,7 +128,7 @@ bw_read(const char *filename, size_t width, size_t height)
     }
 
     if (size)
-	bif->data = uchar2double(data, size);
+	bif->data = icv_uchar2double(data, size);
     else {
 	/* zero sized image */
 	bu_free(bif, "icv container");

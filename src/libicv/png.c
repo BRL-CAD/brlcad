@@ -32,9 +32,6 @@
 #include "vmath.h"
 #include "icv_private.h"
 
-/* defined in encoding.c */
-extern double *uchar2double(unsigned char *data, size_t size);
-
 int
 png_write(icv_image_t *bif, const char *filename)
 {
@@ -180,7 +177,7 @@ png_read(const char* filename)
     png_read_image(png_p, rows);
 
 
-    bif->data = uchar2double(image, 3 * bif->width * bif->height);
+    bif->data = icv_uchar2double(image, 3 * bif->width * bif->height);
     bu_free(image, "png_read : unsigned char data");
     bif->magic = ICV_IMAGE_MAGIC;
     bif->channels = 3;

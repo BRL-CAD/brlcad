@@ -29,22 +29,8 @@
 #include "bu/malloc.h"
 #include "bn.h"
 
-/**
- * converts unsigned char array to double array.
- * This function returns array of double data.
- *
- * Used to convert data from pix, bw, ppm type images for icv_image
- * struct.
- *
- * This does not free the char data.
- *
- * @param data pointer to the array to be converted.
- * @param size Size of the array.
- * @return double array.
- *
- */
 double *
-uchar2double(unsigned char *data, size_t size)
+icv_uchar2double(unsigned char *data, size_t size)
 {
     double *double_data, *double_p;
     unsigned char *char_p;

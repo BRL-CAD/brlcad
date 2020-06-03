@@ -158,6 +158,23 @@ ICV_EXPORT int icv_writepixel(icv_image_t *bif, size_t x, size_t y, double *data
  */
 ICV_EXPORT unsigned char *icv_data2uchar(const icv_image_t *bif);
 
+/**
+ * Converts unsigned char array to double array.
+ * This function returns array of double data.
+ *
+ * Used to convert data from pix, bw, ppm type images for icv_image
+ * struct.
+ *
+ * This does not free the char data.
+ *
+ * @param data pointer to the array to be converted.
+ * @param size Size of the array.
+ * @return double array.
+ *
+ */
+ICV_EXPORT double *icv_uchar2double(unsigned char *data, size_t size);
+
+
 /** @} */
 
 __END_DECLS

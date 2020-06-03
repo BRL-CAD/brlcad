@@ -410,6 +410,7 @@ DM_EXPORT extern int fb_common_name_size(size_t *widthp, size_t *heightp, const 
 DM_EXPORT extern int fb_write_fp(struct fb *ifp, FILE *fp, int req_width, int req_height, int crunch, int inverse, struct bu_vls *result);
 DM_EXPORT extern int fb_read_fd(struct fb *ifp, int fd,  int file_width, int file_height, int file_xoff, int file_yoff, int scr_width, int scr_height, int scr_xoff, int scr_yoff, int fileinput, char *file_name, int one_line_only, int multiple_lines, int autosize, int inverse, int clear, int zoom, struct bu_vls *result);
 DM_EXPORT extern int fb_read_icv(struct fb *ifp, icv_image_t *img, int file_xoff, int file_yoff, int scr_xoff, int scr_yoff, int clear, int zoom, int inverse, int one_line_only, int multiple_lines, struct bu_vls *result);
+DM_EXPORT extern icv_image_t *fb_write_icv(struct fb *ifp, int scr_xoff, int scr_yoff, int width, int height);
 
 DM_EXPORT extern void fb_set_interface(struct fb *ifp, const char *interface_type);
 DM_EXPORT extern void fb_set_name(struct fb *ifp, const char *name);
