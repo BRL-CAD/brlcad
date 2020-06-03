@@ -652,7 +652,7 @@ fb_read_icv(struct fb *ifp, icv_image_t *img, int file_xoff, int file_yoff, int 
      /* create rows array */
     scanline = (unsigned char **)bu_calloc(img->height, sizeof(unsigned char *), "scanline");
     for (unsigned int i=0; i<img->height; i++) {
-	scanline[i] = data+(i*img->width*3);
+	scanline[img->height - i - 1] = data+(i*img->width*3);
     }
 
     /* Get the screen size we were given */
