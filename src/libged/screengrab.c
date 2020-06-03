@@ -90,15 +90,15 @@ ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
     if (!gedp->ged_dmp) {
 	bu_vls_printf(gedp->ged_result_str, ": no display manager currently active");
 	return GED_ERROR;
     }
 
     dmp = (struct dm *)gedp->ged_dmp;
-
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
 
     /* must be wanting help */
     if (argc == 1) {
@@ -125,12 +125,9 @@ ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
-    /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
-
     /* must be wanting help */
     if (!argc) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	_ged_cmd_help(gedp, usage, d);
 	return GED_HELP;
     }
 
