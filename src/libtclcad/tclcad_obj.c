@@ -14880,6 +14880,12 @@ to_view_func(struct ged *gedp,
     return to_view_func_common(gedp, argc, argv, func, usage, maxargs, 0, 1);
 }
 
+static void
+mged_dm_get_display_image(struct ged *gedp, unsigned char **idata)
+{
+    struct dm *dmp = (struct dm *)gedp->ged_dmp;
+    dm_get_display_image(dmp, idata);
+}
 
 HIDDEN int
 to_view_func_common(struct ged *gedp,
@@ -14921,6 +14927,12 @@ to_view_func_common(struct ged *gedp,
 	bu_vls_printf(gedp->ged_result_str, "View not found - %s", argv[1]);
 	return GED_ERROR;
     }
+
+    gedp->ged_dmp = gdvp->gdv_dmp;
+    gedp->ged_dm_width = dm_get_width(gdvp->gdv_dmp);
+    gedp->ged_dm_height = dm_get_height(gdvp->gdv_dmp);
+    gedp->ged_dmp_is_null = (gedp->ged_dmp == NULL);
+    gedp->ged_dm_get_display_image = mged_dm_get_display_image;
 
     /* Copy argv into av while skipping argv[1] (i.e. the view name) */
     gedp->ged_gvp = gdvp->gdv_view;
