@@ -263,7 +263,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"pix2fb", cmd_ged_dm_wrapper, ged_pix2fb},
     {"plot", cmd_ged_plain_wrapper, ged_plot},
     {"png", cmd_ged_plain_wrapper, ged_png},
-    {"png2fb", cmd_ged_dm_wrapper, ged_png2fb},
+    {"icv2fb", cmd_ged_dm_wrapper, ged_icv2fb},
     {"pnts", cmd_ged_plain_wrapper, ged_pnts},
     {"prcolor", cmd_ged_plain_wrapper, ged_prcolor},
     {"prefix", cmd_ged_plain_wrapper, ged_prefix},

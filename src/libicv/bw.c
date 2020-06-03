@@ -29,7 +29,6 @@
 
 /* defined in encoding.c */
 extern double *uchar2double(unsigned char *data, size_t size);
-extern unsigned char *data2uchar(const icv_image_t *bif);
 
 int
 bw_write(icv_image_t *bif, const char *filename)
@@ -45,7 +44,7 @@ bw_write(icv_image_t *bif, const char *filename)
 	bu_log("bw_write : Color Space conflict");
 	return -1;
     }
-    data = data2uchar(bif);
+    data = icv_data2uchar(bif);
     size = bif->height*bif->width;
 
     if (filename == NULL) {

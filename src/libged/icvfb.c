@@ -157,8 +157,7 @@ Usage: icv2fb [-h -H -i -c -v -z -1] [-m #lines]\n\
 	    bu_vls_printf(gedp->ged_result_str, ": reading from stdin, but no format specified");
 	    return GED_ERROR;
 	}
-	file_name = "-";
-	setmode(fileno(stdin), O_BINARY);
+	file_name = NULL; 
     } else {
 
 	if (argc > 1) {
@@ -203,25 +202,30 @@ Usage: icv2fb [-h -H -i -c -v -z -1] [-m #lines]\n\
 		height = (int)lheight;
 	    }
 	}
-
-	icv_image_t *img = icv_read(file_name, type, width, height);
-
-	if (!img) {
-	    bu_vls_printf(gedp->ged_result_str, ":  icv_read failed to read %s.\n", file_name);
-	    return GED_ERROR;
-	}
     }
 
-#if 0
-    ret = fb_read_png(fbp, fp_in,
+    icv_image_t *img = icv_read(file_name, type, width, height);
+
+    if (!img) {
+	if (!argc) {
+	    bu_vls_printf(gedp->ged_result_str, ":  icv_read failed to read from stdin.\n");
+	} else {
+	    bu_vls_printf(gedp->ged_result_str, ":  icv_read failed to read %s.\n", file_name);
+	}
+	return GED_ERROR;
+    }
+
+    ret = fb_read_icv(fbp, img,
 		      file_xoff, file_yoff,
 		      scr_xoff, scr_yoff,
 		      clear, zoom, inverse,
 		      one_line_only, multiple_lines,
-		      verbose, header_only,
-		      def_screen_gamma,
 		      gedp->ged_result_str);
-#endif
+
+
+    (void)dm_draw_begin(dmp);
+    fb_refresh(fbp, 0, 0, fb_getwidth(fbp), fb_getheight(fbp));
+    (void)dm_draw_end(dmp);
 
     return ret;
 }

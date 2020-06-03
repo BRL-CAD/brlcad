@@ -49,11 +49,12 @@ GED_EXPORT extern int ged_fbclear(struct ged *gedp, int argc, const char *argv[]
  */
 GED_EXPORT extern int ged_pix2fb(struct ged *gedp, int argc, const char *argv[]);
 
+#if 0
 /**
  * Png2fb reads a png file into a framebuffer.
  */
 GED_EXPORT extern int ged_png2fb(struct ged *gedp, int argc, const char *argv[]);
-
+#endif
 
 GED_EXPORT extern int ged_icv2fb(struct ged *gedp, int argc, const char *argv[]);
 

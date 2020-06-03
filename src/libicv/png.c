@@ -34,7 +34,6 @@
 
 /* defined in encoding.c */
 extern double *uchar2double(unsigned char *data, size_t size);
-extern unsigned char *data2uchar(const icv_image_t *bif);
 
 int
 png_write(icv_image_t *bif, const char *filename)
@@ -61,7 +60,7 @@ png_write(icv_image_t *bif, const char *filename)
 	return 0;
     }
 
-    data = data2uchar(bif);
+    data = icv_data2uchar(bif);
 
     png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     if (UNLIKELY(png_ptr == NULL)) {

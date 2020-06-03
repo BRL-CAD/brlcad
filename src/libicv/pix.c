@@ -29,7 +29,6 @@
 
 /* defined in encoding.c */
 extern double *uchar2double(unsigned char *data, size_t size);
-extern unsigned char *data2uchar(const icv_image_t *bif);
 
 int
 pix_write(icv_image_t *bif, const char *filename)
@@ -52,7 +51,7 @@ pix_write(icv_image_t *bif, const char *filename)
 	return -1;
     }
 
-    data =  data2uchar(bif);
+    data =  icv_data2uchar(bif);
     size = (size_t) bif->width*bif->height*3;
     ret = fwrite(data, 1, size, fp);
     fclose(fp);
