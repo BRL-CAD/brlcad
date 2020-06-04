@@ -177,15 +177,8 @@ Dm_Init(void *interpreter)
 	{(const char *)NULL, BU_CMD_NULL}
     };
 
-    struct bu_vls vls = BU_VLS_INIT_ZERO;
-
     /* register commands */
     register_cmds(interp, cmdtab);
-
-    bu_vls_strcpy(&vls, "vectorThreshold");
-    Tcl_LinkVar(interp, bu_vls_addr(&vls), (char *)&vectorThreshold,
-		TCL_LINK_INT);
-    bu_vls_free(&vls);
 
     /* initialize display manager object code */
     Dmo_Init(interp);

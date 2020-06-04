@@ -228,9 +228,6 @@ struct fb_clip {
 DM_EXPORT extern int fb_sim_writerect(struct fb *ifp, int xmin, int ymin, int _width, int _height, const unsigned char *pp);
 DM_EXPORT extern int fb_sim_bwwriterect(struct fb *ifp, int xmin, int ymin, int _width, int _height, const unsigned char *pp);
 
-/* Global, defined in dm-generic.c */
-DM_EXPORT extern int vectorThreshold;
-
 __END_DECLS
 
 /************************************************/

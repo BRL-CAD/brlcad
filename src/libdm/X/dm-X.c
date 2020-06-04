@@ -71,6 +71,9 @@
 
 #define DM_X_DEFAULT_POINT_SIZE 1.0
 
+/* Vector count at which a Tcl event processing step is triggered */
+#define vectorThreshold 100000
+
 extern void X_allocate_color_cube(Display *, Colormap, long unsigned int *, int, int, int);
 extern unsigned long X_get_pixel(unsigned char, unsigned char, unsigned char, long unsigned int *, int);
 
@@ -856,8 +859,6 @@ X_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 HIDDEN int
 X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 {
-    extern int vectorThreshold;	/* defined in libdm/dm-generic.c */
-
     static vect_t spnt, lpnt, pnt;
     struct bn_vlist *tvp;
     XSegment segbuf[1024];	/* XDrawSegments list */

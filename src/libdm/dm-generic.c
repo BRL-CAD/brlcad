@@ -33,13 +33,6 @@
 #include "./include/private.h"
 #include "./null/dm-Null.h"
 
-/*
- * TODO - figure out if anything in Tcl land is actually using the libtclcad
- * DM_Init LinkVar linkage to manipulate this, or if any user features are
- * actually depending on the vectorThreshold - this needs to go.
- */
-int vectorThreshold = 100000;
-
 void *
 dm_interp(struct dm *dmp)
 {
