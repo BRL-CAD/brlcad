@@ -58,8 +58,8 @@ ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
 
     int i;
     int print_help = 0;
-    int width = 0;
-    int height = 0;
+    int scr_width = 0;
+    int scr_height = 0;
     int scr_xoff = 0;
     int scr_yoff = 0;
     int bytes_per_pixel = 0;
@@ -78,8 +78,8 @@ ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[1], "F", "fb",             "",     NULL,             &grab_fb,          "screengrab framebuffer instead of scene display");
     BU_OPT(d[2], "X", "scr_xoff",       "#",    &bu_opt_int,      &scr_xoff,         "X offset");
     BU_OPT(d[3], "Y", "scr_yoff",       "#",    &bu_opt_int,      &scr_yoff,         "Y offset");
-    BU_OPT(d[4], "W", "scr_maxwidth",   "#",    &bu_opt_int,      &width,            "width of image to grab");
-    BU_OPT(d[5], "N", "scr_maxheight",  "#",    &bu_opt_int,      &height,           "height of image to grab");
+    BU_OPT(d[4], "W", "scr_maxwidth",   "#",    &bu_opt_int,      &scr_width,        "width of image to grab");
+    BU_OPT(d[5], "N", "scr_maxheight",  "#",    &bu_opt_int,      &scr_height,       "height of image to grab");
     BU_OPT(d[6], "",  "format",         "fmt",  &image_mime,      &type,             "output image file format");
     BU_OPT_NULL(d[7]);
 
@@ -129,11 +129,11 @@ ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    bytes_per_pixel = 3;
-    bytes_per_line = width * bytes_per_pixel;
-
     /* create image file */
     if (!grab_fb) {
+
+	bytes_per_pixel = 3;
+	bytes_per_line = dm_get_width(dmp) * bytes_per_pixel;
 
 	dm_get_display_image(dmp, &idata);
 	if (!idata) {
@@ -163,10 +163,10 @@ ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Crop the image, if the settings indicate we need to */
-    if (scr_xoff || scr_yoff || width || height) {
-        width = (width) ? width : (int)bif->width - scr_xoff;
-        height = (height) ? height : (int)bif->height - scr_yoff;
-        icv_rect(bif, scr_xoff, scr_yoff, width, height);
+    if (scr_xoff || scr_yoff || scr_width || scr_height) {
+        scr_width = (scr_width) ? scr_width : (int)bif->width - scr_xoff;
+        scr_height = (scr_height) ? scr_height : (int)bif->height - scr_yoff;
+        icv_rect(bif, scr_xoff, scr_yoff, scr_width, scr_height);
     }
 
     icv_write(bif, argv[0], type);
