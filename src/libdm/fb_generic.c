@@ -706,14 +706,14 @@ fb_read_icv(struct fb *ifp, icv_image_t *img, int file_xoff, int file_yoff, int 
 	V_MIN(newzoom, scr_height/yout);
 
 	if (inverse) {
-	    fb_view(ifp,
-		    scr_xoff+xout/2, scr_height-1-(scr_yoff+yout/2),
-		    newzoom, newzoom);
+	    fb_view(ifp, scr_xoff+xout/2, scr_height-1-(scr_yoff+yout/2), newzoom, newzoom);
 	} else {
-	    fb_view(ifp,
-		    scr_xoff+xout/2, scr_yoff+yout/2,
-		    newzoom, newzoom);
+	    fb_view(ifp, scr_xoff+xout/2, scr_yoff+yout/2, newzoom, newzoom);
 	}
+    } else {
+	/* We may need to reset the view if we have previously zoomed but now
+	 * have a command that didn't pass the flag */
+	fb_view(ifp, scr_width/2, scr_height/2, 1, 1);
     }
 
     if (multiple_lines) {
