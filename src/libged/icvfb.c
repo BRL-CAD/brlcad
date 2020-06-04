@@ -82,35 +82,29 @@ ged_icv2fb(struct ged *gedp, int argc, const char *argv[])
     int square = 0; /* may need to specify for some formats (such as PIX) */
     bu_mime_image_t type = BU_MIME_IMAGE_UNKNOWN;
 
-    /* Don't add more gamma, by default. Particularly because on SGI, the
-     * system provides gamma correction, so programs don't have to. */
-    double def_screen_gamma=1.0;
-
     static char usage[] = "\
 Usage: icv2fb [-h -H -i -c -v -z -1] [-m #lines]\n\
-	[-g screen_gamma]\n\
 	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
 	[-S squarescrsize] [--format fmt] [file.img]\n";
 
-    struct bu_opt_desc d[18];
-    BU_OPT(d[0],  "h", "help",           "",            NULL,      &print_help,       "Print help and exit");
-    BU_OPT(d[1],  "H", "header-only",    "",            NULL,      &header_only,      "header only");
-    BU_OPT(d[2],  "i", "inverse",        "",            NULL,      &inverse,          "Draw upside-down");
-    BU_OPT(d[3],  "c", "clear",          "",            NULL,      &clear,            "clear");
-    BU_OPT(d[4],  "v", "verbose",        "",            NULL,      &verbose,          "verbose");
-    BU_OPT(d[5],  "z", "zoom",           "",            NULL,      &zoom,             "zoom");
-    BU_OPT(d[6],  "1", "one-line-only",  "",            NULL,      &one_line_only,    "insist on 1-line writes");
-    BU_OPT(d[7],  "m", "multiple-lines", "#",    &bu_opt_int,      &multiple_lines,   "multple lines");
-    BU_OPT(d[8],  "g", "screen_gamma",   "#",    &bu_opt_fastf_t,  &def_screen_gamma, "gamma");
-    BU_OPT(d[9],  "x", "file_xoff",      "#",    &bu_opt_int,      &file_xoff,        "X offset reading from file");
-    BU_OPT(d[10], "y", "file_yoff",      "#",    &bu_opt_int,      &file_yoff,        "Y offset reading from file");
-    BU_OPT(d[11], "X", "scr_xoff",       "#",    &bu_opt_int,      &scr_xoff,         "X drawing offset in framebuffer");
-    BU_OPT(d[12], "Y", "scr_yoff",       "#",    &bu_opt_int,      &scr_yoff,         "Y drawing offset in framebuffer");
-    BU_OPT(d[13], "w", "width",          "#",    &bu_opt_int,      &width,            "image width");
-    BU_OPT(d[14], "n", "height",         "#",    &bu_opt_int,      &height,           "image height");
-    BU_OPT(d[15], "S", "size",           "#",    &bu_opt_int,      &square,           "image width/height (for square image)");
-    BU_OPT(d[16], "",  "format",         "fmt",  &image_mime,      &type,             "image file format");
-    BU_OPT_NULL(d[17]);
+    struct bu_opt_desc d[17];
+    BU_OPT(d[0],  "h", "help",           "",            NULL,  &print_help,       "Print help and exit");
+    BU_OPT(d[1],  "H", "header-only",    "",            NULL,  &header_only,      "Print image size information");
+    BU_OPT(d[2],  "i", "inverse",        "",            NULL,  &inverse,          "Draw upside-down");
+    BU_OPT(d[3],  "c", "clear",          "",            NULL,  &clear,            "Clear framebuffer before drawing");
+    BU_OPT(d[4],  "v", "verbose",        "",            NULL,  &verbose,          "Verbose reporting");
+    BU_OPT(d[5],  "z", "zoom",           "",            NULL,  &zoom,             "Zoom image to fill screen");
+    BU_OPT(d[6],  "x", "file_xoff",      "#",    &bu_opt_int,  &file_xoff,        "X offset reading from file");
+    BU_OPT(d[7],  "y", "file_yoff",      "#",    &bu_opt_int,  &file_yoff,        "Y offset reading from file");
+    BU_OPT(d[8],  "X", "scr_xoff",       "#",    &bu_opt_int,  &scr_xoff,         "X drawing offset in framebuffer");
+    BU_OPT(d[9],  "Y", "scr_yoff",       "#",    &bu_opt_int,  &scr_yoff,         "Y drawing offset in framebuffer");
+    BU_OPT(d[10], "w", "width",          "#",    &bu_opt_int,  &width,            "image width");
+    BU_OPT(d[11], "n", "height",         "#",    &bu_opt_int,  &height,           "image height");
+    BU_OPT(d[12], "S", "size",           "#",    &bu_opt_int,  &square,           "image width/height (for square image)");
+    BU_OPT(d[13], "",  "format",         "fmt",  &image_mime,  &type,             "image file format");
+    BU_OPT(d[14], "1", "one-line-only",  "",            NULL,  &one_line_only,    "Insist on 1-line writes");
+    BU_OPT(d[15], "m", "multiple-lines", "#",    &bu_opt_int,  &multiple_lines,   "multple lines");
+    BU_OPT_NULL(d[16]);
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
