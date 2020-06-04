@@ -172,7 +172,7 @@ Usage: icv2fb [-h -H -i -c -v -z -1] [-m #lines]\n\
 		int itype = bu_file_mime(bu_vls_cstr(&c), BU_MIME_IMAGE);
 		type = (bu_mime_image_t)itype;
 	    } else {
-		bu_vls_printf(gedp->ged_result_str, ":  no input file image type specified - need either a specified input image type or a path that provides MIME information.\n");
+		bu_vls_printf(gedp->ged_result_str, "no input file image type specified - need either a specified input image type or a path that provides MIME information.\n");
 		bu_vls_free(&c);
 		return GED_ERROR;
 	    }
@@ -190,12 +190,12 @@ Usage: icv2fb [-h -H -i -c -v -z -1] [-m #lines]\n\
 	if (!width && !height && (type == BU_MIME_IMAGE_PIX || type == BU_MIME_IMAGE_BW)) {
 	    struct stat sbuf;
 	    if (stat(file_name, &sbuf) < 0) {
-		bu_vls_printf(gedp->ged_result_str, ":  unable to stat input file");
+		bu_vls_printf(gedp->ged_result_str, "unable to stat input file");
 		return GED_ERROR;
 	    }
 	    unsigned long lwidth, lheight;
 	    if (!icv_image_size(NULL, 0, (size_t)sbuf.st_size, type, &lwidth, &lheight)) {
-		bu_vls_printf(gedp->ged_result_str, ":  input image type does not have dimension information encoded, and libicv was not able to deduce a size.  Please specify image width in pixels with the \"-w\" option and image height in pixels with the \"-n\" option.\n");
+		bu_vls_printf(gedp->ged_result_str, "input image type does not have dimension information encoded, and libicv was not able to deduce a size.  Please specify image width in pixels with the \"-w\" option and image height in pixels with the \"-n\" option.\n");
 		return GED_ERROR;
 	    } else {
 		width = (int)lwidth;
@@ -208,25 +208,32 @@ Usage: icv2fb [-h -H -i -c -v -z -1] [-m #lines]\n\
 
     if (!img) {
 	if (!argc) {
-	    bu_vls_printf(gedp->ged_result_str, ":  icv_read failed to read from stdin.\n");
+	    bu_vls_printf(gedp->ged_result_str, "icv_read failed to read from stdin.\n");
 	} else {
-	    bu_vls_printf(gedp->ged_result_str, ":  icv_read failed to read %s.\n", file_name);
+	    bu_vls_printf(gedp->ged_result_str, "icv_read failed to read %s.\n", file_name);
 	}
+	icv_destroy(img);
 	return GED_ERROR;
     }
 
-    ret = fb_read_icv(fbp, img,
-		      file_xoff, file_yoff,
-		      scr_xoff, scr_yoff,
-		      clear, zoom, inverse,
-		      one_line_only, multiple_lines,
-		      gedp->ged_result_str);
+    if (!header_only) {
 
+	ret = fb_read_icv(fbp, img,
+		file_xoff, file_yoff,
+		scr_xoff, scr_yoff,
+		clear, zoom, inverse,
+		one_line_only, multiple_lines,
+		gedp->ged_result_str);
 
-    (void)dm_draw_begin(dmp);
-    fb_refresh(fbp, 0, 0, fb_getwidth(fbp), fb_getheight(fbp));
-    (void)dm_draw_end(dmp);
+	(void)dm_draw_begin(dmp);
+	fb_refresh(fbp, 0, 0, fb_getwidth(fbp), fb_getheight(fbp));
+	(void)dm_draw_end(dmp);
 
+    } else {
+	bu_vls_printf(gedp->ged_result_str, "WIDTH=%zd HEIGHT=%zd\n", img->width, img->height);
+    }
+
+    icv_destroy(img);
     return ret;
 }
 
@@ -311,7 +318,7 @@ ged_fb2icv(struct ged *gedp, int argc, const char *argv[])
 		int itype = bu_file_mime(bu_vls_cstr(&c), BU_MIME_IMAGE);
 		type = (bu_mime_image_t)itype;
 	    } else {
-		bu_vls_printf(gedp->ged_result_str, ":  no input file image type specified - need either a specified input image type or a path that provides MIME information.\n");
+		bu_vls_printf(gedp->ged_result_str, "no input file image type specified - need either a specified input image type or a path that provides MIME information.\n");
 		bu_vls_free(&c);
 		return GED_ERROR;
 	    }
@@ -330,7 +337,7 @@ ged_fb2icv(struct ged *gedp, int argc, const char *argv[])
     icv_image_t *img = fb_write_icv(fbp, scr_xoff, scr_yoff, width, height);
 
     if (!img) {
-	bu_vls_printf(gedp->ged_result_str, ":  failed to generate icv image from framebuffer.\n");
+	bu_vls_printf(gedp->ged_result_str, "failed to generate icv image from framebuffer.\n");
 	return GED_ERROR;
     }
 
