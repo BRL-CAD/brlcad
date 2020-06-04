@@ -69,6 +69,8 @@ ged_icv2fb(struct ged *gedp, int argc, const char *argv[])
     int print_help = 0;
     int file_xoff = 0;
     int file_yoff = 0;
+    int file_maxwidth = 0;
+    int file_maxheight = 0;
     int scr_xoff=0;
     int scr_yoff=0;
     int clear = 0;
@@ -83,11 +85,11 @@ ged_icv2fb(struct ged *gedp, int argc, const char *argv[])
     bu_mime_image_t type = BU_MIME_IMAGE_UNKNOWN;
 
     static char usage[] = "\
-Usage: icv2fb [-h -H -i -c -v -z -1] [-m #lines]\n\
-	[-x file_xoff] [-y file_yoff] [-X scr_xoff] [-Y scr_yoff]\n\
-	[-S squarescrsize] [--format fmt] [file.img]\n";
+Usage: icv2fb [-h -H -i -c -v -z -1] [-m #lines] [-X scr_xoff] [-Y scr_yoff]\n\
+	[-x file_xoff] [-y file_yoff] [-W file_maxwidth] [-N file_maxheight]\n\
+	[-w image_width] [-n image_height] [-S squarescrsize] [--format fmt] [file.img]\n";
 
-    struct bu_opt_desc d[17];
+    struct bu_opt_desc d[19];
     BU_OPT(d[0],  "h", "help",           "",            NULL,  &print_help,       "Print help and exit");
     BU_OPT(d[1],  "H", "header-only",    "",            NULL,  &header_only,      "Print image size information");
     BU_OPT(d[2],  "i", "inverse",        "",            NULL,  &inverse,          "Draw upside-down");
@@ -96,15 +98,17 @@ Usage: icv2fb [-h -H -i -c -v -z -1] [-m #lines]\n\
     BU_OPT(d[5],  "z", "zoom",           "",            NULL,  &zoom,             "Zoom image to fill screen");
     BU_OPT(d[6],  "x", "file_xoff",      "#",    &bu_opt_int,  &file_xoff,        "X offset reading from file");
     BU_OPT(d[7],  "y", "file_yoff",      "#",    &bu_opt_int,  &file_yoff,        "Y offset reading from file");
-    BU_OPT(d[8],  "X", "scr_xoff",       "#",    &bu_opt_int,  &scr_xoff,         "X drawing offset in framebuffer");
-    BU_OPT(d[9],  "Y", "scr_yoff",       "#",    &bu_opt_int,  &scr_yoff,         "Y drawing offset in framebuffer");
-    BU_OPT(d[10], "w", "width",          "#",    &bu_opt_int,  &width,            "image width");
-    BU_OPT(d[11], "n", "height",         "#",    &bu_opt_int,  &height,           "image height");
-    BU_OPT(d[12], "S", "size",           "#",    &bu_opt_int,  &square,           "image width/height (for square image)");
-    BU_OPT(d[13], "",  "format",         "fmt",  &image_mime,  &type,             "image file format");
-    BU_OPT(d[14], "1", "one-line-only",  "",            NULL,  &one_line_only,    "Insist on 1-line writes");
-    BU_OPT(d[15], "m", "multiple-lines", "#",    &bu_opt_int,  &multiple_lines,   "multple lines");
-    BU_OPT_NULL(d[16]);
+    BU_OPT(d[8],  "W", "file_maxwidth",  "#",    &bu_opt_int,  &file_maxwidth,    "Maximum image width to read");
+    BU_OPT(d[9],  "N", "file_maxheight", "#",    &bu_opt_int,  &file_maxheight,   "Maximum image height to read");
+    BU_OPT(d[10], "X", "scr_xoff",       "#",    &bu_opt_int,  &scr_xoff,         "X drawing offset in framebuffer");
+    BU_OPT(d[11], "Y", "scr_yoff",       "#",    &bu_opt_int,  &scr_yoff,         "Y drawing offset in framebuffer");
+    BU_OPT(d[12], "w", "width",          "#",    &bu_opt_int,  &width,            "image width");
+    BU_OPT(d[13], "n", "height",         "#",    &bu_opt_int,  &height,           "image height");
+    BU_OPT(d[14], "S", "size",           "#",    &bu_opt_int,  &square,           "image width/height (for square image)");
+    BU_OPT(d[15], "",  "format",         "fmt",  &image_mime,  &type,             "image file format");
+    BU_OPT(d[16], "1", "one-line-only",  "",            NULL,  &one_line_only,    "Insist on 1-line writes");
+    BU_OPT(d[17], "m", "multiple-lines", "#",    &bu_opt_int,  &multiple_lines,   "multple lines");
+    BU_OPT_NULL(d[18]);
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -214,6 +218,7 @@ Usage: icv2fb [-h -H -i -c -v -z -1] [-m #lines]\n\
 
 	ret = fb_read_icv(fbp, img,
 		file_xoff, file_yoff,
+		file_maxwidth, file_maxheight,
 		scr_xoff, scr_yoff,
 		clear, zoom, inverse,
 		one_line_only, multiple_lines,

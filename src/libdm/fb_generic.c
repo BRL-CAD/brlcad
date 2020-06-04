@@ -638,8 +638,13 @@ fb_read_fd(struct fb *ifp, int fd, int file_width, int file_height, int file_xof
 
 
 int
-fb_read_icv(struct fb *ifp, icv_image_t *img, int file_xoff, int file_yoff, int scr_xoff, int scr_yoff, int clear, int zoom, int inverse, int one_line_only, int multiple_lines, struct bu_vls *result)
+fb_read_icv(struct fb *ifp, icv_image_t *img_in, int file_xoff_in, int file_yoff_in, int file_maxwidth_in, int file_maxheight_in, int scr_xoff, int scr_yoff, int clear, int zoom, int inverse, int one_line_only, int multiple_lines, struct bu_vls *result)
 {
+    /* Sanity */
+    if (!ifp || !img_in) {
+	return BRLCAD_ERROR;
+    }
+
     int y;
     int xout, yout, m, xstart;
     unsigned char **scanline;	/* 1 scanline pixel buffer */
@@ -647,6 +652,27 @@ fb_read_icv(struct fb *ifp, icv_image_t *img, int file_xoff, int file_yoff, int 
     int scanpix;		/* # of pixels of scanline */
     int scr_width;
     int scr_height;
+
+    /* Make a copy so we can edit if the options require */
+    icv_image_t *img = icv_create(img_in->width, img_in->height, img_in->color_space);
+    memcpy(img->data, img_in->data, img_in->width * img_in->height * img_in->channels * sizeof(double));
+
+    int file_xoff = file_xoff_in;
+    int file_yoff = file_yoff_in;
+    int file_maxwidth = file_maxwidth_in;
+    int file_maxheight = file_maxheight_in;
+
+    /* Crop the image, if the file_ variables indicate we need to */
+    if (file_xoff || file_yoff || file_maxwidth || file_maxheight) {
+	file_maxwidth = (file_maxwidth) ? file_maxwidth : (int)img->width - file_xoff;
+	file_maxheight = (file_maxheight) ? file_maxheight : (int)img->height - file_yoff;
+	icv_rect(img, file_xoff, file_yoff, file_maxwidth, file_maxheight);
+	// After resize, file offsets are zero. TODO - simplify below logic
+	// to eliminate references to these variables, they should no longer
+	// be needed...
+	file_xoff = 0;
+	file_yoff = 0;
+    }
 
     unsigned char *data = icv_data2uchar(img);
      /* create rows array */
@@ -671,9 +697,10 @@ fb_read_icv(struct fb *ifp, icv_image_t *img, int file_xoff, int file_yoff, int 
     if (xout < 0) {
 	bu_free(data, "unsigned char image data");
 	bu_free(scanline, "scanline");
+	icv_destroy(img);
 	return BRLCAD_OK;
     }
-    V_MIN(xout, (((int)img->width)-file_xoff));
+    V_MIN(xout, (int)img->width);
     scanpix = xout;				/* # pixels on scanline */
 
     if (inverse)
@@ -683,9 +710,10 @@ fb_read_icv(struct fb *ifp, icv_image_t *img, int file_xoff, int file_yoff, int 
     if (yout < 0) {
 	bu_free(data, "unsigned char image data");
 	bu_free(scanline, "scanline");
+	icv_destroy(img);
 	return BRLCAD_OK;
     }
-    V_MIN(yout, (((int)img->height)-file_yoff));
+    V_MIN(yout, (int)img->height);
 
     /* Only in the simplest case use multi-line writes */
     if (!one_line_only && multiple_lines > 0 && !inverse && !zoom &&
@@ -762,6 +790,7 @@ fb_read_icv(struct fb *ifp, icv_image_t *img, int file_xoff, int file_yoff, int 
 
     bu_free(data, "unsigned char image data");
     bu_free(scanline, "scanline");
+    icv_destroy(img);
     return BRLCAD_OK;
 }
 
