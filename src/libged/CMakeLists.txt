@@ -178,7 +178,6 @@ set(LIBGED_SOURCES
   hide.c
   how.c
   human.c
-  icvfb.c
   illum.c
   importFg4Section.c
   inside.c
@@ -245,6 +244,7 @@ set(LIBGED_SOURCES
   pmat.c
   pmodel2view.c
   png.c
+  png2fb.c
   pnts_util.c
   pnts.cpp
   polyclip.cpp
