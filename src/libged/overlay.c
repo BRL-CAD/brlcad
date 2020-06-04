@@ -24,34 +24,80 @@
  */
 
 #include "common.h"
+#include <sys/stat.h>
 
+#include "bu/path.h"
+#include "bu/mime.h"
+#include "icv.h"
 #include "dm.h"
 
 #include "./ged_private.h"
 
+static int
+image_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)
+{
+    int type_int;
+    bu_mime_image_t type = BU_MIME_IMAGE_UNKNOWN;
+    bu_mime_image_t *set_type = (bu_mime_image_t *)set_mime;
+
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "mime format");
+
+    type_int = bu_file_mime(argv[0], BU_MIME_IMAGE);
+    type = (type_int < 0) ? BU_MIME_IMAGE_UNKNOWN : (bu_mime_image_t)type_int;
+    if (type == BU_MIME_IMAGE_UNKNOWN) {
+        if (msg) bu_vls_sprintf(msg, "Error - unknown geometry file type: %s \n", argv[0]);
+        return -1;
+    }
+    if (set_type) (*set_type) = type;
+    return 1;
+}
+
 int
 ged_overlay(struct ged *gedp, int argc, const char *argv[])
 {
-    int ret;
-    int print_help = 0;
-    int write_fb = 0;
+    bu_mime_image_t type = BU_MIME_IMAGE_UNKNOWN;
     double size = 0.0;
+    int clear = 0;
+    int file_maxheight = 0;
+    int file_maxwidth = 0;
+    int file_xoff = 0;
+    int file_yoff = 0;
+    int height = 0;  /* may need to specify for some formats (such as PIX) */
+    int inverse = 0;
+    int print_help = 0;
+    int ret = GED_OK;
+    int scr_xoff=0;
+    int scr_yoff=0;
+    int square = 0; /* may need to specify for some formats (such as PIX) */
+    int verbose = 0;
+    int width = 0; /* may need to specify for some formats (such as PIX) */
+    int write_fb = 0;
+    int zoom = 0;
     struct dm *dmp = NULL;
     struct fb *fbp = NULL;
     const char *name = "_PLOT_OVERLAY_";
 
-    static char usage[] = "Usage: overlay [-h] [-F] file\n";
+    static char usage[] = "Usage: overlay [options] file\n";
 
-    struct bu_opt_desc d[4];
-    BU_OPT(d[0], "h", "help",   "",   NULL,            &print_help,  "Print help and exit");
-    BU_OPT(d[1], "F", "fb",     "",   NULL,            &write_fb,    "Overlay image on framebuffer");
-    BU_OPT(d[2], "s", "size",   "#",  &bu_opt_fastf_t, &size,        "Character size for plot drawing");
-    BU_OPT_NULL(d[3]);
-    //BU_OPT(d[2], "X", "scr_xoff",       "#",    &bu_opt_int,      &scr_xoff,         "X offset");
-    //BU_OPT(d[3], "Y", "scr_yoff",       "#",    &bu_opt_int,      &scr_yoff,         "Y offset");
-    //BU_OPT(d[4], "w", "width",          "#",    &bu_opt_int,      &width,            "image width to grab");
-    //BU_OPT(d[5], "n", "height",         "#",    &bu_opt_int,      &height,           "image height to grab");
-    //BU_OPT_NULL(d[6]);
+    struct bu_opt_desc d[18];
+    BU_OPT(d[0],  "h", "help",           "",     NULL,            &print_help,       "Print help and exit");
+    BU_OPT(d[1],  "F", "fb",             "",     NULL,            &write_fb,         "Overlay image on framebuffer");
+    BU_OPT(d[2],  "s", "size",           "#",    &bu_opt_fastf_t, &size,             "[Plot] Character size for plot drawing");
+    BU_OPT(d[3],  "i", "inverse",        "",     NULL,            &inverse,          "[Fb]   Draw upside-down");
+    BU_OPT(d[4],  "c", "clear",          "",     NULL,            &clear,            "[Fb]   Clear framebuffer before drawing");
+    BU_OPT(d[5],  "v", "verbose",        "",     NULL,            &verbose,          "[Fb]   Verbose reporting");
+    BU_OPT(d[6],  "z", "zoom",           "",     NULL,            &zoom,             "[Fb]   Zoom image to fill screen");
+    BU_OPT(d[7],  "x", "file_xoff",      "#",    &bu_opt_int,     &file_xoff,        "[Fb]   X offset reading from file");
+    BU_OPT(d[8],  "y", "file_yoff",      "#",    &bu_opt_int,     &file_yoff,        "[Fb]   Y offset reading from file");
+    BU_OPT(d[9],  "W", "file_maxwidth",  "#",    &bu_opt_int,     &file_maxwidth,    "[Fb]   Maximum image width to read");
+    BU_OPT(d[10], "N", "file_maxheight", "#",    &bu_opt_int,     &file_maxheight,   "[Fb]   Maximum image height to read");
+    BU_OPT(d[11], "X", "scr_xoff",       "#",    &bu_opt_int,     &scr_xoff,         "[Fb]   X drawing offset in framebuffer");
+    BU_OPT(d[12], "Y", "scr_yoff",       "#",    &bu_opt_int,     &scr_yoff,         "[Fb]   Y drawing offset in framebuffer");
+    BU_OPT(d[13], "w", "width",          "#",    &bu_opt_int,     &width,            "[Fb]   image width");
+    BU_OPT(d[14], "n", "height",         "#",    &bu_opt_int,     &height,           "[Fb]   image height");
+    BU_OPT(d[15], "S", "square",         "#",    &bu_opt_int,     &square,           "[Fb]   image width/height (for square image)");
+    BU_OPT(d[16], "",  "format",         "fmt",  &image_mime,     &type,             "[Fb]   image file format");
+    BU_OPT_NULL(d[17]);
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -82,7 +128,7 @@ ged_overlay(struct ged *gedp, int argc, const char *argv[])
 	return GED_HELP;
     }
 
-    if (NEAR_ZERO(size, VUNITIZE_TOL)) {
+    if (!write_fb && NEAR_ZERO(size, VUNITIZE_TOL)) {
 	if (!gedp->ged_gvp) {
 	    bu_vls_printf(gedp->ged_result_str, ": no character size specified, and could not determine default value");
 	    return GED_ERROR;
@@ -108,7 +154,7 @@ ged_overlay(struct ged *gedp, int argc, const char *argv[])
     /* check arg cnt */
     if (argc > 2) {
 	_ged_cmd_help(gedp, usage, d);
-	return GED_ERROR;
+	return GED_HELP;
     }
 
     /* Second arg, if present, is view obj name */
@@ -166,12 +212,77 @@ ged_overlay(struct ged *gedp, int argc, const char *argv[])
 	bn_vlblock_free(vbp);
 
 	return GED_OK;
+
     } else {
-	const char *av[2];
-	const char *av0 = "overlay";
-	av[0] = av0;
-	av[1] = argv[0];
-	return ged_icv2fb(gedp, 2, (const char **)av);
+
+	const char *file_name = argv[0];
+
+	/* Find out what input file type we are dealing with */
+	if (type == BU_MIME_IMAGE_UNKNOWN) {
+	    struct bu_vls c = BU_VLS_INIT_ZERO;
+	    if (bu_path_component(&c, file_name, BU_PATH_EXT)) {
+		int itype = bu_file_mime(bu_vls_cstr(&c), BU_MIME_IMAGE);
+		type = (bu_mime_image_t)itype;
+	    } else {
+		bu_vls_printf(gedp->ged_result_str, "no input file image type specified - need either a specified input image type or a path that provides MIME information.\n");
+		bu_vls_free(&c);
+		return GED_ERROR;
+	    }
+	    bu_vls_free(&c);
+	}
+
+	// If we're square, let width and height know
+	if (square && !width && !height) {
+	    width = square;
+	    height = square;
+	}
+
+	/* If we have no width or height specified, and we have an input format that
+	 * does not encode that information, make an educated guess */
+	if (!width && !height && (type == BU_MIME_IMAGE_PIX || type == BU_MIME_IMAGE_BW)) {
+	    struct stat sbuf;
+	    if (stat(file_name, &sbuf) < 0) {
+		bu_vls_printf(gedp->ged_result_str, "unable to stat input file");
+		return GED_ERROR;
+	    }
+	    unsigned long lwidth, lheight;
+	    if (!icv_image_size(NULL, 0, (size_t)sbuf.st_size, type, &lwidth, &lheight)) {
+		bu_vls_printf(gedp->ged_result_str, "input image type does not have dimension information encoded, and libicv was not able to deduce a size.  Please specify image width in pixels with the \"-w\" option and image height in pixels with the \"-n\" option.\n");
+		return GED_ERROR;
+	    } else {
+		width = (int)lwidth;
+		height = (int)lheight;
+	    }
+	}
+
+	icv_image_t *img = icv_read(file_name, type, width, height);
+
+	if (!img) {
+	    if (!argc) {
+		bu_vls_printf(gedp->ged_result_str, "icv_read failed to read from stdin.\n");
+	    } else {
+		bu_vls_printf(gedp->ged_result_str, "icv_read failed to read %s.\n", file_name);
+	    }
+	    icv_destroy(img);
+	    return GED_ERROR;
+	}
+
+
+	ret = fb_read_icv(fbp, img,
+		file_xoff, file_yoff,
+		file_maxwidth, file_maxheight,
+		scr_xoff, scr_yoff,
+		clear, zoom, inverse,
+		0, 0,
+		gedp->ged_result_str);
+
+	(void)dm_draw_begin(dmp);
+	fb_refresh(fbp, 0, 0, fb_getwidth(fbp), fb_getheight(fbp));
+	(void)dm_draw_end(dmp);
+
+	icv_destroy(img);
+	return ret;
+
     }
 }
 

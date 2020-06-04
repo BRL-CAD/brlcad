@@ -45,16 +45,13 @@ cmd_overlay(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 
     Tcl_DStringInit(&ds);
 
-    if (argc == 1) {
-	Tcl_DStringAppend(&ds, "file.plot3 [name]", -1);
-	Tcl_DStringResult(interp, &ds);
-	return TCL_OK;
-    }
-
     GEDP->ged_dmp = (void *)curr_dm_list->dml_dmp;
     ret = ged_overlay(GEDP, argc, argv);
     Tcl_DStringAppend(&ds, bu_vls_addr(GEDP->ged_result_str), -1);
     Tcl_DStringResult(interp, &ds);
+
+    if (ret == GED_HELP)
+	return TCL_OK;
 
     if (ret != GED_OK)
 	return TCL_ERROR;
