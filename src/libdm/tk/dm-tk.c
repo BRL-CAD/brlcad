@@ -67,7 +67,7 @@
 static fastf_t min_short = (fastf_t)SHRT_MIN;
 static fastf_t max_short = (fastf_t)SHRT_MAX;
 
-extern int vectorThreshold;	/* defined in libdm/tcl.c */
+extern int vectorThreshold;	/* defined in libdm/dm-generic.c */
 
 static int tk_close(struct dm *dmp);
 static int tk_configureWin_guts(struct dm *dmp, int force);

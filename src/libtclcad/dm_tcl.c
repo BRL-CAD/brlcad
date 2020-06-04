@@ -55,10 +55,6 @@ extern int Dmo_Init(Tcl_Interp *interp);
 /* from lib./fb_obj.c */
 extern int Fbo_Init(Tcl_Interp *interp);
 
-/* TODO: this doesn't belong in here, move to a globals.c or eliminate */
-int vectorThreshold = 100000;
-
-
 HIDDEN int
 dm_validXType_tcl(void *clientData, int argc, const char **argv)
 {
