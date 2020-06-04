@@ -58,10 +58,6 @@ ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
 
     int i;
     int print_help = 0;
-    int scr_width = 0;
-    int scr_height = 0;
-    int scr_xoff = 0;
-    int scr_yoff = 0;
     int bytes_per_pixel = 0;
     int bytes_per_line = 0;
     int grab_fb = 0;
@@ -71,17 +67,13 @@ ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
     struct dm *dmp = NULL;
     struct fb *fbp = NULL;
     bu_mime_image_t type = BU_MIME_IMAGE_AUTO;
-    static char usage[] = "Usage: screengrab [-h] [-F] [-X scr_xoff] [-Y scr_yoff] [-w scr_width] [-n scr_height] [--format fmt] [file.img]\n";
+    static char usage[] = "Usage: screengrab [-h] [-F] [--format fmt] [file.img]\n";
 
-    struct bu_opt_desc d[8];
+    struct bu_opt_desc d[4];
     BU_OPT(d[0], "h", "help",           "",            NULL,      &print_help,       "Print help and exit");
     BU_OPT(d[1], "F", "fb",             "",     NULL,             &grab_fb,          "screengrab framebuffer instead of scene display");
-    BU_OPT(d[2], "X", "scr_xoff",       "#",    &bu_opt_int,      &scr_xoff,         "X offset");
-    BU_OPT(d[3], "Y", "scr_yoff",       "#",    &bu_opt_int,      &scr_yoff,         "Y offset");
-    BU_OPT(d[4], "W", "scr_maxwidth",   "#",    &bu_opt_int,      &scr_width,        "width of image to grab");
-    BU_OPT(d[5], "N", "scr_maxheight",  "#",    &bu_opt_int,      &scr_height,       "height of image to grab");
-    BU_OPT(d[6], "",  "format",         "fmt",  &image_mime,      &type,             "output image file format");
-    BU_OPT_NULL(d[7]);
+    BU_OPT(d[2], "",  "format",         "fmt",  &image_mime,      &type,             "output image file format");
+    BU_OPT_NULL(d[3]);
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_VIEW(gedp, GED_ERROR);
@@ -160,13 +152,6 @@ ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
 	    bu_vls_printf(gedp->ged_result_str, ": could not create icv_image from framebuffer.");
 	    return GED_ERROR;
 	}
-    }
-
-    /* Crop the image, if the settings indicate we need to */
-    if (scr_xoff || scr_yoff || scr_width || scr_height) {
-        scr_width = (scr_width) ? scr_width : (int)bif->width - scr_xoff;
-        scr_height = (scr_height) ? scr_height : (int)bif->height - scr_yoff;
-        icv_rect(bif, scr_xoff, scr_yoff, scr_width, scr_height);
     }
 
     icv_write(bif, argv[0], type);

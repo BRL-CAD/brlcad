@@ -58,10 +58,6 @@ ged_overlay(struct ged *gedp, int argc, const char *argv[])
     bu_mime_image_t type = BU_MIME_IMAGE_UNKNOWN;
     double size = 0.0;
     int clear = 0;
-    int file_maxheight = 0;
-    int file_maxwidth = 0;
-    int file_xoff = 0;
-    int file_yoff = 0;
     int height = 0;  /* may need to specify for some formats (such as PIX) */
     int inverse = 0;
     int print_help = 0;
@@ -79,7 +75,7 @@ ged_overlay(struct ged *gedp, int argc, const char *argv[])
 
     static char usage[] = "Usage: overlay [options] file\n";
 
-    struct bu_opt_desc d[18];
+    struct bu_opt_desc d[14];
     BU_OPT(d[0],  "h", "help",           "",     NULL,            &print_help,       "Print help and exit");
     BU_OPT(d[1],  "F", "fb",             "",     NULL,            &write_fb,         "Overlay image on framebuffer");
     BU_OPT(d[2],  "s", "size",           "#",    &bu_opt_fastf_t, &size,             "[Plot] Character size for plot drawing");
@@ -87,17 +83,13 @@ ged_overlay(struct ged *gedp, int argc, const char *argv[])
     BU_OPT(d[4],  "c", "clear",          "",     NULL,            &clear,            "[Fb]   Clear framebuffer before drawing");
     BU_OPT(d[5],  "v", "verbose",        "",     NULL,            &verbose,          "[Fb]   Verbose reporting");
     BU_OPT(d[6],  "z", "zoom",           "",     NULL,            &zoom,             "[Fb]   Zoom image to fill screen");
-    BU_OPT(d[7],  "x", "file_xoff",      "#",    &bu_opt_int,     &file_xoff,        "[Fb]   X offset reading from file");
-    BU_OPT(d[8],  "y", "file_yoff",      "#",    &bu_opt_int,     &file_yoff,        "[Fb]   Y offset reading from file");
-    BU_OPT(d[9],  "W", "file_maxwidth",  "#",    &bu_opt_int,     &file_maxwidth,    "[Fb]   Maximum image width to read");
-    BU_OPT(d[10], "N", "file_maxheight", "#",    &bu_opt_int,     &file_maxheight,   "[Fb]   Maximum image height to read");
-    BU_OPT(d[11], "X", "scr_xoff",       "#",    &bu_opt_int,     &scr_xoff,         "[Fb]   X drawing offset in framebuffer");
-    BU_OPT(d[12], "Y", "scr_yoff",       "#",    &bu_opt_int,     &scr_yoff,         "[Fb]   Y drawing offset in framebuffer");
-    BU_OPT(d[13], "w", "width",          "#",    &bu_opt_int,     &width,            "[Fb]   image width");
-    BU_OPT(d[14], "n", "height",         "#",    &bu_opt_int,     &height,           "[Fb]   image height");
-    BU_OPT(d[15], "S", "square",         "#",    &bu_opt_int,     &square,           "[Fb]   image width/height (for square image)");
-    BU_OPT(d[16], "",  "format",         "fmt",  &image_mime,     &type,             "[Fb]   image file format");
-    BU_OPT_NULL(d[17]);
+    BU_OPT(d[7],  "X", "scr_xoff",       "#",    &bu_opt_int,     &scr_xoff,         "[Fb]   X drawing offset in framebuffer");
+    BU_OPT(d[8],  "Y", "scr_yoff",       "#",    &bu_opt_int,     &scr_yoff,         "[Fb]   Y drawing offset in framebuffer");
+    BU_OPT(d[9],  "w", "width",          "#",    &bu_opt_int,     &width,            "[Fb]   image width");
+    BU_OPT(d[10], "n", "height",         "#",    &bu_opt_int,     &height,           "[Fb]   image height");
+    BU_OPT(d[11], "S", "square",         "#",    &bu_opt_int,     &square,           "[Fb]   image width/height (for square image)");
+    BU_OPT(d[12], "",  "format",         "fmt",  &image_mime,     &type,             "[Fb]   image file format");
+    BU_OPT_NULL(d[13]);
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -267,14 +259,7 @@ ged_overlay(struct ged *gedp, int argc, const char *argv[])
 	    return GED_ERROR;
 	}
 
-
-	ret = fb_read_icv(fbp, img,
-		file_xoff, file_yoff,
-		file_maxwidth, file_maxheight,
-		scr_xoff, scr_yoff,
-		clear, zoom, inverse,
-		0, 0,
-		gedp->ged_result_str);
+	ret = fb_read_icv(fbp, img, 0, 0, 0, 0,	scr_xoff, scr_yoff, clear, zoom, inverse, 0, 0, gedp->ged_result_str);
 
 	(void)dm_draw_begin(dmp);
 	fb_refresh(fbp, 0, 0, fb_getwidth(fbp), fb_getheight(fbp));
