@@ -524,6 +524,19 @@ typedef _TCHAR TCHAR;
 #  define CPP_FILELINE __FILE__ ":" CPP_XSTR(__LINE__)
 #endif
 
+/**
+ * If we've not already defined COMPILER_DLLEXPORT and COMPILER_DLLIMPORT,
+ * define them away so code including the *_EXPORT header logic won't
+ * fail.
+ */
+#ifndef COMPILER_DLLEXPORT
+#  define COMPILER_DLLEXPORT
+#endif
+
+#ifndef COMPILER_DLLIMPORT
+#  define COMPILER_DLLIMPORT
+#endif
+
 #endif  /* COMMON_H */
 
 /** @} */
