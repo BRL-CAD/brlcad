@@ -69,33 +69,20 @@ contact one of the BRL-CAD developers.
 COMPILE AND INSTALL
 -------------------
 
-See the INSTALL file for details on configuring, compiling, and
-installing BRL-CAD.  In order to compile and install BRL-CAD from a
-source distribution, the build tool CMake is required - see the website
-at http://www.cmake.org for source and binary installers.  CMake is also
-available in many Linux and *BSD distributions.
+In order to compile and install BRL-CAD from a source distribution,
+the CMake ( http://www.cmake.org ) configuration tool is requird.
 
-Once CMake is installed, the following steps may be taken for a full
-default install (starting with a source tarball):
+The following steps should result in a successful install:
 
-  tar -xvzf brlcad-X.Y.Z.tar.gz
-  mkdir brlcad-build
-  cd brlcad-build
-  cmake ../brlcad-X.Y.Z
-  make
+  tar -xvzf brlcad-VERSION.tar.gz
+  mkdir brlcad-VERSION/build
+  cd brlcad-VERSION/build
+  cmake .. -DBRLCAD_ENABLE_STRICT=OFF -DCMAKE_BUILD_TYPE=Release
+  make -j4
   make install
 
-where "X.Y.Z" is the version number of BRL-CAD.  For those who prefer
-a curses interface, substitute ccmake for cmake above. If the graphical
-interface available from CMake is installed cmake-gui may be
-substituted for cmake.  These interfaces will display the various
-configuration options available when building BRL-CAD, or the options
-may be set directly via command line -D options.
-The configure wrapper script may be substituted for cmake in the above
-steps for a more autotools-like configuration experience.
-
-Users on multiprocessor systems will be able to speed up their builds
-by passing the -j option to make (e.g. make -j4, assuming GNU make).
+See the INSTALL file for explanation of the various configuration
+options available when building BRL-CAD.
 
 Once the build completes and assuming you have proper filesystem
 permissions, you should be able to begin the installation by running

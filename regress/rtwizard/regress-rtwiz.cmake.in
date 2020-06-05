@@ -3,6 +3,7 @@ set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
 set(INPUTFILE "@INPUT_FILE@")
 set(CTRLIMG "@CONTROL_IMAGE@")
 set(TGTIMG "@TARGET_IMAGE@")
+set(BIN_DIR "@BIN_DIR@")
 set(LOGFILE "@LOG_FILE@")
 
 file(WRITE "${LOGFILE}" "Starting rtwizard run\n")
@@ -30,8 +31,9 @@ if (NOT EXISTS "${PIXCMP_EXEC}")
   message(FATAL_ERROR "Unable to find pixcmp, aborting.\nSee ${LOGFILE} for more details.")
 endif (NOT EXISTS "${PIXCMP_EXEC}")
 
-# TODO - this will break if the binary directory is more than one deep
-set(SRCFILE "${BDIR}/../${INPUTFILE}")
+# Reconstruct the tree root from the EXEC path, and identify the input file location
+string(REGEX_REPLACE "${BIN_DIR}$" "" RDIR "${BDIR}")
+set(SRCFILE "${RDIR}/${INPUTFILE}")
 
 # Clean up in case we've run before
 execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "${TGTIMG}")
