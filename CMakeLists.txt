@@ -2111,7 +2111,7 @@ if(NOT MSVC)
     # llvm-style USE
     if("${pgo_flags_found}" STREQUAL "")
       cmake_push_check_state()
-        set(flags "fprofile-use=\"${BRLCAD_PGO_PATH}\"")
+        set(flags "fprofile-use=\"${BRLCAD_PGO_PATH}\" -Wno-profile-instr-out-of-date -Wno-profile-instr-unprofiled")
         set(CMAKE_REQUIRED_FLAGS "-${flags}")
         CHECK_C_FLAG("${flags}" GROUPS OPTIMIZE_C_FLAGS VARS pgo_flags_found)
         CHECK_CXX_FLAG("${flags}" GROUPS OPTIMIZE_CXX_FLAGS)
