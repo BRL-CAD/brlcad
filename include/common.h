@@ -529,11 +529,14 @@ typedef _TCHAR TCHAR;
  * define them away so code including the *_EXPORT header logic won't
  * fail.
  */
-#ifndef COMPILER_DLLEXPORT
+#if defined(_MSC_VER)
+#  define COMPILER_DLLEXPORT __declspec(dllexport)
+#  define COMPILER_DLLIMPORT __declspec(dllimport)
+#elif defined(__GNUC__) || defined(__clang__)
+#  define COMPILER_DLLEXPORT __attribute__ ((visibility ("default")))
+#  define COMPILER_DLLIMPORT __attribute__ ((visibility ("default")))
+#else
 #  define COMPILER_DLLEXPORT
-#endif
-
-#ifndef COMPILER_DLLIMPORT
 #  define COMPILER_DLLIMPORT
 #endif
 
