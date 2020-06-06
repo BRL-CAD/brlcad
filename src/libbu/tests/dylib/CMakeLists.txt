@@ -42,6 +42,7 @@ set_target_properties(libdylib PROPERTIES FOLDER "BRL-CAD Executables/Test Progr
 
 add_executable(bu_dylib run.c)
 target_link_libraries(bu_dylib libdylib libbu)
+set_property(TARGET bu_dylib APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 if (HIDE_INTERNAL_SYMBOLS)
   set_property(TARGET bu_dylib APPEND PROPERTY COMPILE_DEFINITIONS BU_DYLIB_DLL_IMPORTS)
 endif (HIDE_INTERNAL_SYMBOLS)

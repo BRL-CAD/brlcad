@@ -56,7 +56,6 @@ set(LIBBU_SOURCES
   brlcad_path.c
   bu_init.cpp
   cmd.c
-  cmdhist.c
   color.cpp
   convert.c
   crashreport.c

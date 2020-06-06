@@ -57,7 +57,7 @@ if (HIDE_INTERNAL_SYMBOLS)
     SC_UTILS_DLL_IMPORTS
     )
   list(APPEND gstep_IMPORTS ${gstep_IMPORTS})
-  set_target_properties(g-step PROPERTIES COMPILE_DEFINITIONS "${gstep_IMPORTS}")
+  set_property(TARGET g-step APPEND PROPERTY COMPILE_DEFINITIONS "${gstep_IMPORTS}")
 endif (HIDE_INTERNAL_SYMBOLS)
 
 set(IGNORE_FILES

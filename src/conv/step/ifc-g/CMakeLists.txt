@@ -42,7 +42,7 @@ if (HIDE_INTERNAL_SYMBOLS)
     SC_UTILS_DLL_IMPORTS
     )
   list(APPEND ifcg_IMPORTS ${ifcg_IMPORTS})
-  set_target_properties(ifc-g PROPERTIES COMPILE_DEFINITIONS "${ifcg_IMPORTS}")
+  set_property(TARGET ifc-g APPEND PROPERTY COMPILE_DEFINITIONS "${ifcg_IMPORTS}")
 endif (HIDE_INTERNAL_SYMBOLS)
 
 CMAKEFILES(CMakeLists.txt)

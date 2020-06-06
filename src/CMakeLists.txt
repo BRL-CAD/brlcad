@@ -5,14 +5,6 @@ DOXYGEN_FEATURE("Solid Raytracing" DESCRIPTION "Ray/geometry intersection calcul
 
 # Minimal directories required for any BRL-CAD functionality
 
-# Define some common definitions here that are used
-# in most BRL-CAD directories
-
-add_definitions(
-  -DHAVE_CONFIG_H
-  -DBRLCADBUILD=1
-  )
-
 if(MSVC)
   add_definitions(
     -D_CRT_SECURE_NO_WARNINGS
