@@ -6,7 +6,6 @@ include_directories(
 
 # Build a scanner to check the repository for various problems
 BRLCAD_ADDEXEC(repocheck repocheck.cpp "libbu;${CMAKE_THREAD_LIBS_INIT}" TEST)
-target_compile_definitions(repocheck PUBLIC BRLCADBUILD HAVE_CONFIG_H)
 if (O3_COMPILER_FLAG)
   # This check benefits greatly from optimization. If we have the O3 flag, use
   # it - whether or not the standard build settings would add it.

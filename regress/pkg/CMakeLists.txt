@@ -6,7 +6,6 @@ include_directories(
   )
 
 BRLCAD_ADDEXEC(regress_pkg regress_pkg.cpp "libpkg;libbu;${CMAKE_THREAD_LIBS_INIT}" NO_INSTALL)
-target_compile_definitions(regress_pkg PUBLIC BRLCADBUILD HAVE_CONFIG_H)
 set_target_properties(regress_pkg PROPERTIES FOLDER "BRL-CAD Regression Tests/libpkg")
 
 BRLCAD_REGRESSION_TEST(regress-pkg "regress_pkg" EXEC regress_pkg STAND_ALONE)
