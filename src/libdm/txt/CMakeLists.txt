@@ -15,6 +15,7 @@ add_definitions(-DDM_PLUGIN)
 
 add_library(dm-txt SHARED ${TXT_SRCS})
 target_link_libraries(dm-txt libdm libbu ${TCL_LIBRARY})
+set_property(TARGET dm-txt APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 if (HIDE_INTERNAL_SYMBOLS)
   set_property(TARGET dm-txt APPEND PROPERTY COMPILE_DEFINITIONS "DM_DLL_EXPORTS")
 endif (HIDE_INTERNAL_SYMBOLS)

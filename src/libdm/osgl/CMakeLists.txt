@@ -43,6 +43,7 @@ add_definitions(-DDM_OSGL -DIF_OSGL)
 
 add_library(dm-osgl SHARED ${OSGL_SRCS})
 target_link_libraries(dm-osgl libdm librt libbu ${OSGL_LIBRARIES})
+set_property(TARGET dm-osgl APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 if (HIDE_INTERNAL_SYMBOLS)
   set_property(TARGET dm-osgl APPEND PROPERTY COMPILE_DEFINITIONS "DM_DLL_EXPORTS")
 endif (HIDE_INTERNAL_SYMBOLS)

@@ -13,6 +13,7 @@ add_definitions(-DDM_PLUGIN)
 
 add_library(dm-ps SHARED ${PS_SRCS})
 target_link_libraries(dm-ps libdm libbu)
+set_property(TARGET dm-ps APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
 if (HIDE_INTERNAL_SYMBOLS)
   set_property(TARGET dm-ps APPEND PROPERTY COMPILE_DEFINITIONS "DM_DLL_EXPORTS")
 endif (HIDE_INTERNAL_SYMBOLS)
