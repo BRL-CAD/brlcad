@@ -365,7 +365,7 @@ function(BRLCAD_ADDEXEC execname srcslist libslist)
   endif(E_GUI)
 
   # Set the standard build definitions for all BRL-CAD targets
-  target_compile_definitions(${execname} PUBLIC BRLCADBUILD HAVE_CONFIG_H)
+  target_compile_definitions(${execname} PRIVATE BRLCADBUILD HAVE_CONFIG_H)
 
   # Let CMAKEFILES know what's going on
   CMAKEFILES(${srcslist})
@@ -469,7 +469,7 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
     set_target_properties(${libname}-obj PROPERTIES FOLDER "BRL-CAD OBJECT Libraries${SUBFOLDER}")
 
     # Set the standard build definitions for all BRL-CAD targets
-    target_compile_definitions(${libname}-obj PUBLIC BRLCADBUILD HAVE_CONFIG_H)
+    target_compile_definitions(${libname}-obj PRIVATE BRLCADBUILD HAVE_CONFIG_H)
 
     if(HIDE_INTERNAL_SYMBOLS)
       string(REPLACE "lib" "" LOWERCORE "${libname}")
@@ -493,7 +493,7 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
     add_library(${libname} SHARED ${lsrcslist} ${L_SHARED_SRCS})
 
     # Set the standard build definitions for all BRL-CAD targets
-    target_compile_definitions(${libname} PUBLIC BRLCADBUILD HAVE_CONFIG_H)
+    target_compile_definitions(${libname} PRIVATE BRLCADBUILD HAVE_CONFIG_H)
 
     if(HIDE_INTERNAL_SYMBOLS)
       string(REPLACE "lib" "" LOWERCORE "${libname}")
@@ -513,7 +513,7 @@ function(BRLCAD_ADDLIB libname srcslist libslist)
     add_library(${libstatic} STATIC ${lsrcslist} ${L_STATIC_SRCS})
 
     # Set the standard build definitions for all BRL-CAD targets
-    target_compile_definitions(${libstatic} PUBLIC BRLCADBUILD HAVE_CONFIG_H)
+    target_compile_definitions(${libstatic} PRIVATE BRLCADBUILD HAVE_CONFIG_H)
 
     if(NOT MSVC)
       set_target_properties(${libstatic} PROPERTIES OUTPUT_NAME "${libname}")
