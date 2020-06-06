@@ -25,7 +25,6 @@
  */
 
 #include <common.h>
-#include <brlcad_version.h>
 #include <bu.h>
 #include <ged.h>
 

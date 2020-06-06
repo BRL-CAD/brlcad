@@ -273,6 +273,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   # DLLs in place will result in silent failure of the loading step. ***
   add_library(creo-brl SHARED ${creo_brl_srcs})
   target_link_libraries(creo-brl ${WIN_LIBS} ${CREO_PTK_DLL_LIBS} ${BRLCAD_STATIC_LIBS})
+  set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
   install(TARGETS creo-brl
     RUNTIME DESTINATION "${MDIR}/${CREO_OBJ_DIR}"
     )
