@@ -519,6 +519,26 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 	bu_exit(EXIT_FAILURE, "rtedge: occlusion mode set, but no objects were specified.\n");
     }
 
+
+    // TODO - the setting of colors below broke the -W flag - lines and
+    // background were both white.  Looks like rtedge was relying on bgcolor
+    // being black to get a black line in that mode, but it gets set to white
+    // first via -W.  Work around this by stashing the "original" bgcolor in a
+    // temporary variable, but this is just a hacky workaround to restore
+    // previous behavior.  If -W is just doing what it is supposed to do by
+    // setting a white background, and rtedge wants to set default line color
+    // that is far away from the background color automatically, we need a
+    // different solution for the general case. There is no guarantee that the
+    // initialized contents of bgcolor (currently hard-coded to 0,0,0 up on
+    // line 159) will be appropriate for all backgrounds - indeed, it is
+    // trivially NOT appropriate for all possible background colors.
+    color tmpcolor;
+    tmpcolor[RED] = bgcolor[RED];
+    tmpcolor[GRN] = bgcolor[GRN];
+    tmpcolor[BLU] = bgcolor[BLU];
+
+
+    // Set bgcolor and fgcolor from the floating point versions
     bgcolor[0] = background[0] * 255.0 + 0.5;
     bgcolor[1] = background[1] * 255.0 + 0.5;
     bgcolor[2] = background[2] * 255.0 + 0.5;
@@ -532,13 +552,13 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
     if (!default_background) {
 	int tmp;
 	tmp = fgcolor[RED];
-	fgcolor[RED] = bgcolor[RED];
+	fgcolor[RED] = tmpcolor[RED];
 	bgcolor[RED] = tmp;
 	tmp = fgcolor[GRN];
-	fgcolor[GRN] = bgcolor[GRN];
+	fgcolor[GRN] = tmpcolor[GRN];
 	bgcolor[GRN] = tmp;
 	tmp = fgcolor[BLU];
-	fgcolor[BLU] = bgcolor[BLU];
+	fgcolor[BLU] = tmpcolor[BLU];
 	bgcolor[BLU] = tmp;
     }
 
