@@ -32,7 +32,7 @@ if (NOT EXISTS "${PIXCMP_EXEC}")
 endif (NOT EXISTS "${PIXCMP_EXEC}")
 
 # Reconstruct the tree root from the EXEC path, and identify the input file location
-string(REGEX_REPLACE "${BIN_DIR}$" "" RDIR "${BDIR}")
+string(REGEX REPLACE "${BIN_DIR}$" "" RDIR "${BDIR}")
 set(SRCFILE "${RDIR}/${INPUTFILE}")
 
 # Clean up in case we've run before

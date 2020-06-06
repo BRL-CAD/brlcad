@@ -55,6 +55,9 @@ add_subdirectory(licenses)
 # Repository check
 add_subdirectory(repository)
 
+# Simulation of a 3rd party BRL-CAD library client code
+add_subdirectory(user)
+
 if(SH_EXEC)
 
   add_test(NAME regress-moss COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/moss.sh" ${CMAKE_SOURCE_DIR})

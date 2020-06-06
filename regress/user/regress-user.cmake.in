@@ -1,0 +1,40 @@
+# Values set at CMake configure time
+set(BIN_DIR "@BIN_DIR@")
+set(DATA_DIR "@DATA_DIR@")
+set(LOGFILE "@LOG_FILE@")
+
+file(WRITE "${LOGFILE}" "Starting 3rd party user simulation run\n")
+
+# The executable location isn't know at CMake configure time, so it must be
+# passed in via the EXEC variable at runtime.  De-quote it and assign it to the
+# appropriate variable.
+string(REPLACE "\\" "" USER_EXEC "${EXEC}")
+if (NOT EXISTS "${USER_EXEC}")
+  file(WRITE "${LOGFILE}" "cad_user not found at location \"${USER_EXEC}\" - aborting\n")
+  message(FATAL_ERROR "Unable to find cad_user, aborting.\nSee ${LOGFILE} for more details.")
+endif (NOT EXISTS "${USER_EXEC}")
+
+# Reconstruct the tree root from the EXEC path, and identify the input file location
+get_filename_component(BDIR "${USER_EXEC}" DIRECTORY)
+string(REGEX REPLACE "${BIN_DIR}$" "" RDIR "${BDIR}")
+set(GFILE "${RDIR}/${DATA_DIR}/db/moss.g")
+
+# Runn the command
+file(APPEND "${LOGFILE}" "Running ${USER_EXEC} ${GFILE}:\n")
+execute_process(
+  COMMAND "${USER_EXEC}" "${GFILE}"
+  RESULT_VARIABLE user_result OUTPUT_VARIABLE user_log ERROR_VARIABLE user_log
+  )
+file(APPEND "${LOGFILE}" "${user_log}")
+if(user_result)
+  file(APPEND "${LOGFILE}" "Failure: ${user_result}")
+  message(FATAL_ERROR "3rd party user simulation run failed, aborting.\nSee ${LOGFILE} for more details.")
+endif(user_result)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
+
