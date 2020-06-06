@@ -2,9 +2,9 @@
 # the internal compile-time APIs - i.e., to simulate what a BRL-CAD client code
 # might experience when trying to use the BRL-CAD libraries.
 
-# Due to the nature of this test, it should not see any of the defines used for
-# by BRL-CAD to enable compile-time API.  We first clear any inherited include
-# directories or compile definitions:
+# Due to the nature of this test, it should not see any of the defines used by
+# BRL-CAD to enable compile-time API.  We first clear any inherited include
+# directories or compile definitions as a precaution:
 set_property(DIRECTORY PROPERTY COMPILE_DEFINITIONS "")
 set_property(DIRECTORY PROPERTY INCLUDE_DIRECTORIES "")
 
@@ -15,8 +15,9 @@ set_property(DIRECTORY PROPERTY INCLUDE_DIRECTORIES "")
 # this code as well, so long as they don't also contain anything that ties this
 # code to any internal, compile time behaviors or features.
 
-# We deliberately do not use any of the BRL-CAD wrapper macros, to avoid automatic
-# addtiion of compile defintions or other magic specific to BRL-CAD's internal build.
+# We deliberately do not use any of the BRL-CAD wrapper functions such as
+# BRLCAD_ADDEXEC in order to avoid their automatic addtiion of compile
+# defintions or other magic specific to BRL-CAD's internal build.
 add_executable(cad_user cad_user.c)
 target_link_libraries(cad_user libged)
 target_include_directories(cad_user PUBLIC "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/brlcad")
