@@ -972,6 +972,12 @@ if(NOT COMMAND CONFIG_H_APPEND)
 endif(NOT COMMAND CONFIG_H_APPEND)
 
 CONFIG_H_APPEND(BRLCAD "/**** Define statements for CMake ****/\n")
+CONFIG_H_APPEND(BRLCAD "#if !defined(BRLCADBUILD)\n")
+CONFIG_H_APPEND(BRLCAD "  #  pragma message \"Warning: included brlcad_config.h (compile-time API) without BRLCADBUILD defined\"\n")
+CONFIG_H_APPEND(BRLCAD "#endif\n")
+CONFIG_H_APPEND(BRLCAD "#if !defined(HAVE_CONFIG_H)\n")
+CONFIG_H_APPEND(BRLCAD "  #  pragma message \"Warning: included brlcad_config.h (compile-time API) without HAVE_CONFIG_H defined\"\n")
+CONFIG_H_APPEND(BRLCAD "#endif\n")
 CONFIG_H_APPEND(BRLCAD "#ifndef __CONFIG_H__\n")
 CONFIG_H_APPEND(BRLCAD "#define __CONFIG_H__\n")
 
