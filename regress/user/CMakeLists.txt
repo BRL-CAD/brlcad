@@ -30,6 +30,7 @@ DISTCLEAN(${LOG_FILE})
 
 CMAKEFILES(
   CMakeLists.txt
+  cad_user.c
   regress-user.cmake.in
   )
 

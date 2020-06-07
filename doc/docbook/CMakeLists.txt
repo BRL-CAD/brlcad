@@ -43,6 +43,7 @@ set(ignore_files
   README
   README.DB_authors_notes
   css/brlcad.css
+  db_dir_info.c
   fop.xconf.in
   log4j.properties
   )
