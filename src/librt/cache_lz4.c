@@ -32,6 +32,8 @@
     - LZ4 source repository : https://github.com/lz4/lz4
 */
 
+#include "common.h"
+
 #include <stddef.h>
 #include <string.h>
 
