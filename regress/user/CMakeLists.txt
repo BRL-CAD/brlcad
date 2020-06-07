@@ -20,7 +20,15 @@ set_property(DIRECTORY PROPERTY INCLUDE_DIRECTORIES "")
 # defintions or other magic specific to BRL-CAD's internal build.
 add_executable(cad_user cad_user.c)
 target_link_libraries(cad_user libged)
-target_include_directories(cad_user PUBLIC "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/brlcad")
+
+# Include only the folder with the build-output headers (this will be a
+# superset of what will be installed, but is the best available option without
+# performing an actual install step.)
+if(NOT "${CMAKE_CFG_INTDIR}" STREQUAL ".")
+  target_include_directories(cad_user PUBLIC "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${INCLUDE_DIR}/brlcad")
+else(NOT "${CMAKE_CFG_INTDIR}" STREQUAL ".")
+  target_include_directories(cad_user PUBLIC "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/brlcad")
+endif(NOT "${CMAKE_CFG_INTDIR}" STREQUAL ".")
 
 set_target_properties(cad_user PROPERTIES FOLDER "BRL-CAD Regression Tests/user")
 
