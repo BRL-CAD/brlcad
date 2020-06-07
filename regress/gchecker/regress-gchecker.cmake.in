@@ -35,7 +35,7 @@ endif(NOT EXISTS "${CBDIR}/gchecker_test.g.ck/ck.gchecker_test.g.overlaps")
 
 if(gchecker_result)
   file(APPEND "${LOGFILE}" "\n\nError: return code ${gchecker_result}")
-  message(FATAL_ERROR "[gchecker] Failure, see ${CBDIR}/gchecker.log for more info.\n")
+  message(FATAL_ERROR "[gchecker] Failure, see ${LOGFILE} for more info.\n")
 endif(gchecker_result)
 
 # Local Variables:
