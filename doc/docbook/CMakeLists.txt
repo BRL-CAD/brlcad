@@ -2,6 +2,7 @@
 # a target for generator expression use regardless of other changes elsewhere
 # in the build system
 add_executable(db_dir_info db_dir_info.c)
+set_target_properties(db_dir_info PROPERTIES FOLDER "DocBook")
 
 # We need various configuration files set up for DocBook processing tools
 add_subdirectory(resources)
@@ -26,6 +27,7 @@ add_custom_command(
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/css/brlcad.css
   )
 add_custom_target(brlcad_css DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/brlcad_css-${CMAKE_CFG_INTDIR}-done)
+set_target_properties(brlcad_css PROPERTIES FOLDER "DocBook")
 install(FILES css/brlcad.css DESTINATION ${DOC_DIR}/html/css)
 
 # Include CMake macros for DocBook.
