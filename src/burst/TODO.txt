@@ -1,0 +1,6 @@
+The interactive mode had been removed from burst, but right now command
+processing is tied up with the menu implementation - the menu init is setting
+up the command evaluation mechanism, even for batch mode.
+
+We need to migrate to a bu_cmdtab implemenation instead so we can clear out the
+menu implementation code and generally make this easier to understand.

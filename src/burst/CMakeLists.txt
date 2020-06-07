@@ -40,6 +40,8 @@ set(burst_noinst_HEADERS
   )
 CMAKEFILES(${burst_noinst_HEADERS} burst.format)
 
+CMAKEFILES(TODO.txt)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake
