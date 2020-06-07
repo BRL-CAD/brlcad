@@ -28,7 +28,6 @@
 #include <signal.h>
 
 #include "./burst.h"
-#include "./Hm.h"
 
 int
 HmGetchar(void)

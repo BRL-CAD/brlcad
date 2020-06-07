@@ -33,7 +33,6 @@
 #include "bu/file.h"
 
 #include "./Sc.h"
-#include "./Hm.h"
 #include "./Mm.h"
 #include "./extern.h"
 
