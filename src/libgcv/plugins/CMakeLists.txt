@@ -29,10 +29,10 @@ function(LIBGCV_ADD_PLUGIN plugin_name sources libs)
 
   # We're using GCV_EXPORT for these plugins, so we need to set the DLL_EXPORTS accordingly
   if(HIDE_INTERNAL_SYMBOLS)
-    set_property(TARGET ${target_name} APPEND PROPERTY COMPILE_DEFINITIONS "GCV_DLL_IMPORTS")
+    set_property(TARGET ${target_name} APPEND PROPERTY COMPILE_DEFINITIONS "GCV_DLL_EXPORTS")
     set_property(TARGET ${target_name} APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS "GCV_DLL_EXPORTS")
     if (TARGET ${target_name}-obj)
-      set_property(TARGET ${target_name}-obj APPEND PROPERTY COMPILE_DEFINITIONS "GCV_DLL_IMPORTS")
+      set_property(TARGET ${target_name}-obj APPEND PROPERTY COMPILE_DEFINITIONS "GCV_DLL_EXPORTS")
     endif (TARGET ${target_name}-obj)
   endif(HIDE_INTERNAL_SYMBOLS)
 
