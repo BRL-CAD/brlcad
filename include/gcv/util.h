@@ -58,28 +58,6 @@ GCV_EXPORT extern int gcv_bot_is_orientable(const struct rt_bot_internal *bot);
 
 
 /**
- * write_region is a function pointer to a routine that will
- * write out the region in a given file format.
- *
- * This routine must be prepared to run in parallel.
- */
-struct gcv_region_end_data
-{
-    void (*write_region)(struct nmgregion *r, const struct db_full_path *pathp, int region_id, int material_id, float color[3], void *client_data);
-    void *client_data;
-};
-
-/**
- * Perform Boolean evaluation on a tree of tessellated leaf nodes.
- *
- * Usually specified as the db_walk_tree() region_end callback,
- * calling this routine for each positive region encountered.
- *
- * The client_data parameter is expected to point to a struct gcv_region_end_data.
- */
-GCV_EXPORT extern union tree *gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
-
-/**
  * Exact same as gcv_region_end, except using the marching cubes algorithm.
  */
 GCV_EXPORT extern union tree *gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);

@@ -31,8 +31,8 @@
 #include "gcv.h"
 
 
-union tree *
-_gcv_cleanup(int state, union tree *tp)
+static union tree *
+_rt_region_end_cleanup(int state, union tree *tp)
 {
     /* restore previous debug state */
     nmg_debug = state;
@@ -53,7 +53,7 @@ _gcv_cleanup(int state, union tree *tp)
 
 
 union tree *
-gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
+rt_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
     union tree *tp = NULL;
     union tree *ret_tree = NULL;
@@ -65,15 +65,15 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     int empty_model = 0;
     int NMG_debug_state = 0;
 
-    struct gcv_region_end_data *data = (struct gcv_region_end_data *)client_data;
+    struct rt_region_end_data *data = (struct rt_region_end_data *)client_data;
 
     if (!tsp || !curtree || !pathp || !client_data) {
-	bu_log("INTERNAL ERROR: gcv_region_end missing parameters\n");
+	bu_log("INTERNAL ERROR: rt_region_end_region_end missing parameters\n");
 	return TREE_NULL;
     }
 
     if (!data->write_region) {
-	bu_log("INTERNAL ERROR: gcv_region_end missing conversion callback function\n");
+	bu_log("INTERNAL ERROR: rt_region_end_region_end missing conversion callback function\n");
 	return TREE_NULL;
     }
 
@@ -135,7 +135,7 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 	/* Now, make a new, clean model structure for next pass. */
 	*tsp->ts_m = nmg_mm();
 
-	return _gcv_cleanup(NMG_debug_state, tp);
+	return _rt_region_end_cleanup(NMG_debug_state, tp);
     } BU_UNSETJUMP; /* Relinquish bomb protection */
 
     r = (struct nmgregion *)NULL;
@@ -143,7 +143,7 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 	r = ret_tree->tr_d.td_r;
 
     if (r == (struct nmgregion *)NULL)
-	return _gcv_cleanup(NMG_debug_state, tp);
+	return _rt_region_end_cleanup(NMG_debug_state, tp);
 
     /* Kill cracks */
     s = BU_LIST_FIRST(shell, &r->s_hd);
@@ -160,12 +160,12 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 	s = next_s;
     }
     if (empty_region)
-	return _gcv_cleanup(NMG_debug_state, tp);
+	return _rt_region_end_cleanup(NMG_debug_state, tp);
 
     /* kill zero length edgeuses */
     empty_model = nmg_kill_zero_length_edgeuses(*tsp->ts_m);
     if (empty_model)
-	return _gcv_cleanup(NMG_debug_state, tp);
+	return _rt_region_end_cleanup(NMG_debug_state, tp);
 
     if (BU_SETJUMP) {
 	/* Error, bail out */
@@ -191,7 +191,7 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 	*tsp->ts_m = nmg_mm();
 	nmg_kr(r);
 
-	return _gcv_cleanup(NMG_debug_state, tp);
+	return _rt_region_end_cleanup(NMG_debug_state, tp);
     } else {
 
 	/* Write the region out */
@@ -201,7 +201,7 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 
     nmg_kr(r);
 
-    return _gcv_cleanup(NMG_debug_state, tp);
+    return _rt_region_end_cleanup(NMG_debug_state, tp);
 }
 
 

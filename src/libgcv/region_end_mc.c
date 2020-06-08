@@ -29,11 +29,28 @@
 
 #include "bu/parallel.h"
 #include "rt/rt_instance.h"
+#include "rt/tree.h"
 #include "gcv.h"
 
+union tree *
+_gcv_cleanup(int state, union tree *tp)
+{
+    /* restore previous debug state */
+    nmg_debug = state;
 
-/* in region_end.c */
-union tree * _gcv_cleanup(int state, union tree *tp);
+    /* Dispose of original tree, so that all associated dynamic memory
+     * is released now, not at the end of all regions.  A return of
+     * TREE_NULL from this routine signals an error, and there is no
+     * point to adding _another_ message to our output, so we need to
+     * cons up an OP_NOP node to return.
+     */
+    db_free_tree(tp, &rt_uniresource); /* Does an nmg_kr() */
+
+    BU_ALLOC(tp, union tree);
+    RT_TREE_INIT(tp);
+    tp->tr_op = OP_NOP;
+    return tp;
+}
 
 union tree *
 gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
@@ -49,7 +66,7 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
     int NMG_debug_state = 0;
     int count = 0;
 
-    struct gcv_region_end_data *data = (struct gcv_region_end_data *)client_data;
+    struct rt_region_end_data *data = (struct rt_region_end_data *)client_data;
 
     if (!tsp || !pathp || !client_data) {
 	bu_log("INTERNAL ERROR: gcv_region_end_mc missing parameters\n");

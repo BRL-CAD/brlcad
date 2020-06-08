@@ -21,7 +21,6 @@ set(LIBGCV_SOURCES
   bottess.c
   facetize.c
   gcv.c
-  region_end.c
   region_end_mc.c
   tri_intersect.c
   )

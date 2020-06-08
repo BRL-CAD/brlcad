@@ -2522,8 +2522,8 @@ convert_region_end(db_tree_state *tree_state, const db_full_path *path,
     if (tree_state->ts_mater.ma_color_valid)
 	section.set_color(color_from_floats(tree_state->ts_mater.ma_color));
 
-    gcv_region_end_data gcv_data = {write_nmg_region, &data};
-    return gcv_region_end(tree_state, path, current_tree, &gcv_data);
+    rt_region_end_data gcv_data = {write_nmg_region, &data};
+    return rt_region_end(tree_state, path, current_tree, &gcv_data);
 }
 
 

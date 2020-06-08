@@ -210,7 +210,7 @@ nmg_to_raw(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 }
 
 
-static struct gcv_region_end_data gcvwriter = {nmg_to_raw, NULL};
+static struct rt_region_end_data gcvwriter = {nmg_to_raw, NULL};
 
 
 int
@@ -349,7 +349,7 @@ main(int argc, char *argv[])
 	    1,
 	    &tree_state,
 	    0,			/* take all regions */
-	    use_mc?gcv_region_end_mc:gcv_region_end,
+	    use_mc?gcv_region_end_mc:rt_region_end,
 	    use_mc?NULL:nmg_booltree_leaf_tess,
 	    (void *)&gcvwriter);
 
