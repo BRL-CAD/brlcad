@@ -122,7 +122,7 @@ struct clt_ebm_specific {
     cl_double tallness;		/**< @brief Z dimension (mm) */
     cl_uint xdim;		/**< @brief X dimension (w cells) */
     cl_uint ydim;		/**< @brief Y dimension (n cells) */
-    cl_uchar apbuf[];
+    cl_uchar apbuf[9999]; /* !!! */
 };
 
 size_t

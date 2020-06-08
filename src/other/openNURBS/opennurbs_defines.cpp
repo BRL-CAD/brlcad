@@ -1694,10 +1694,10 @@ ON::endian ON::Endian()
 ON::archive_mode ON::ArchiveMode(int i)
 {
   // convert integer to endian enum
-  archive_mode a = read;
+  archive_mode a = on_read;
   switch(i) {
-  case read:      a = read; break;
-  case write:     a = write; break;
+  case on_read:      a = on_read; break;
+  case on_write:     a = on_write; break;
   case readwrite: a = readwrite; break;
   case read3dm:   a = read3dm; break;
   case write3dm:  a = write3dm; break;

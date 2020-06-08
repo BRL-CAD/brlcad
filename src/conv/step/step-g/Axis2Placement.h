@@ -41,7 +41,7 @@ public:
     enum axis2_placement_type {
 	AXIS2_PLACEMENT_2D,
 	AXIS2_PLACEMENT_3D,
-	UNKNOWN
+	UNKNOWN_AXIS
     };
 
 protected:

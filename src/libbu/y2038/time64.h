@@ -1,30 +1,25 @@
 #ifndef TIME64_H
 #    define TIME64_H
 
-#include "common.h"
-
-#ifndef Y2038_EXPORT
-#  if defined(Y2038_DLL_EXPORTS) && defined(Y2038_DLL_IMPORTS)
-#    error "Only Y2038_DLL_EXPORTS or Y2038_DLL_IMPORTS can be defined, not both."
-#  elif defined(STATIC_BUILD)
-#    define Y2038_EXPORT
-#  elif defined(Y2038_DLL_EXPORTS)
-#    define Y2038_EXPORT __declspec(dllexport)
-#  elif defined(Y2038_DLL_IMPORTS)
-#    define Y2038_EXPORT __declspec(dllimport)
-#  else
-#    define Y2038_EXPORT
-#  endif
-#endif
-
 #include <time.h>
 #include "time64_config.h"
 
-
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Set our custom types */
-typedef INT_64_T       Time64_T;
-typedef INT_64_T       Year;
+typedef INT_64_T        Int64;
+typedef Int64           Time64_T;
+typedef Int64           Year;
+
+#ifndef PRId64
+# if (__WORDSIZE == 64) && !defined(__APPLE__)
+#  define PRId64 "ld"
+# else
+#  define PRId64 "lld"
+# endif
+#endif
 
 /* A copy of the tm struct but with a 64 bit year */
 struct TM64 {
@@ -43,32 +38,34 @@ struct TM64 {
 #endif
 
 #ifdef HAS_TM_TM_ZONE
-        char    *tm_zone;
+        const char *tm_zone;
 #endif
 };
+
 
 /* Decide which tm struct to use */
 #ifdef USE_TM64
 #define TM      TM64
 #else
 #define TM      tm
-#endif
+#endif   
+
 
 /* Declare public functions */
-Y2038_EXPORT struct TM *gmtime64_r    (const Time64_T *, struct TM *);
-Y2038_EXPORT struct TM *localtime64_r (const Time64_T *, struct TM *);
-Y2038_EXPORT struct TM *gmtime64      (const Time64_T *);
-Y2038_EXPORT struct TM *localtime64   (const Time64_T *);
+struct TM *gmtime64_r    (const Time64_T *, struct TM *);
+struct TM *localtime64_r (const Time64_T *, struct TM *);
+struct TM *gmtime64      (const Time64_T *);
+struct TM *localtime64   (const Time64_T *);
 
-Y2038_EXPORT char *asctime64          (const struct TM *);
-Y2038_EXPORT char *asctime64_r        (const struct TM *, char *);
+char *asctime64          (const struct TM *);
+char *asctime64_r        (const struct TM *, char *);
 
-Y2038_EXPORT char *ctime64            (const Time64_T*);
-Y2038_EXPORT char *ctime64_r          (const Time64_T*, char*);
+char *ctime64            (const Time64_T*);
+char *ctime64_r          (const Time64_T*, char*);
 
-Y2038_EXPORT Time64_T   timegm64      (const struct TM *);
-Y2038_EXPORT Time64_T   mktime64      (struct TM *);
-Y2038_EXPORT Time64_T   timelocal64   (struct TM *);
+Time64_T   timegm64      (const struct TM *);
+Time64_T   mktime64      (struct TM *);
+Time64_T   timelocal64   (struct TM *);
 
 
 /* Not everyone has gm/localtime_r(), provide a replacement */
@@ -86,10 +83,13 @@ Y2038_EXPORT Time64_T   timelocal64   (struct TM *);
 
 /* Use a different asctime format depending on how big the year is */
 #ifdef USE_TM64
-    #define TM64_ASCTIME_FORMAT "%.3s %.3s%3d %.2d:%.2d:%.2d %lld\n"
+    #define TM64_ASCTIME_FORMAT "%.3s %.3s%3d %.2d:%.2d:%.2d %"PRId64"\n"
 #else
     #define TM64_ASCTIME_FORMAT "%.3s %.3s%3d %.2d:%.2d:%.2d %d\n"
 #endif
 
+#ifdef __cplusplus
+  };
+#endif
 
 #endif

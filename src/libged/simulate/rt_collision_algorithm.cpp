@@ -41,7 +41,7 @@
 #include <cmath>
 
 
-namespace
+namespace rt_collision_algorithm
 {
 
 
@@ -300,13 +300,13 @@ RtCollisionAlgorithm::processCollision(const btCollisionObjectWrapper * const
 
     result->setPersistentManifold(m_manifold);
 
-    if (!use_persistent_contacts)
+    if (!rt_collision_algorithm::use_persistent_contacts)
 	m_manifold->clearManifold();
 
-    calculate_contact_points(*result, *body_a_wrap, *body_b_wrap, m_rt_instance,
+    rt_collision_algorithm::calculate_contact_points(*result, *body_a_wrap, *body_b_wrap, m_rt_instance,
 			     m_grid_radius, m_debug_draw);
 
-    if (use_persistent_contacts && m_owns_manifold)
+    if (rt_collision_algorithm::use_persistent_contacts && m_owns_manifold)
 	result->refreshContactPoints();
 }
 

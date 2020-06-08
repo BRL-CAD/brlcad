@@ -1,4 +1,4 @@
-/*
+/* 
 
 Copyright (c) 2007-2010  Michael G Schwern
 
@@ -30,7 +30,7 @@ THE SOFTWARE.
 
 Programmers who have available to them 64-bit time values as a 'long
 long' type can use localtime64_r() and gmtime64_r() which correctly
-converts the time even on 32-bit systems. Whether you have 64-bit time
+converts the time even on 32-bit systems. Whether you have 64-bit time 
 values will depend on the operating system.
 
 localtime64_r() is a 64-bit equivalent of localtime_r().
@@ -38,8 +38,6 @@ localtime64_r() is a 64-bit equivalent of localtime_r().
 gmtime64_r() is a 64-bit equivalent of gmtime_r().
 
 */
-
-#include "common.h"
 
 #include <assert.h>
 #include <stdlib.h>
@@ -50,51 +48,6 @@ gmtime64_r() is a 64-bit equivalent of gmtime_r().
 #include "time64.h"
 #include "time64_limits.h"
 
-/* Max/min for mktime() */
-/* MODIFIED: Assign to each field so as not to depend on system field
-   ordering
-*/
-static struct tm SYSTEM_MKTIME_MAX;
-static struct tm SYSTEM_MKTIME_MIN;
-
-static int mktime_maxmin_initialized = 0;
-
-void initialize_mktime_maxmin()
-{
-  SYSTEM_MKTIME_MAX.tm_sec = 7;
-  SYSTEM_MKTIME_MAX.tm_min = 14;
-  SYSTEM_MKTIME_MAX.tm_hour = 19;
-  SYSTEM_MKTIME_MAX.tm_mday = 18;
-  SYSTEM_MKTIME_MAX.tm_mon = 0;
-  SYSTEM_MKTIME_MAX.tm_year = 138;
-  SYSTEM_MKTIME_MAX.tm_wday = 1;
-  SYSTEM_MKTIME_MAX.tm_yday = 17;
-  SYSTEM_MKTIME_MAX.tm_isdst = 0;
-#ifdef HAS_TM_TM_GMTOFF
-  SYSTEM_MKTIME_MAX.tm_gmtoff = -28800;
-#endif
-#ifdef HAS_TM_TM_ZONE
-  SYSTEM_MKTIME_MAX.tm_zone = "PST";
-#endif
-
-  SYSTEM_MKTIME_MIN.tm_sec = 52;
-  SYSTEM_MKTIME_MIN.tm_min = 45;
-  SYSTEM_MKTIME_MIN.tm_hour = 12;
-  SYSTEM_MKTIME_MIN.tm_mday = 13;
-  SYSTEM_MKTIME_MIN.tm_mon = 11;
-  SYSTEM_MKTIME_MIN.tm_year = 1;
-  SYSTEM_MKTIME_MIN.tm_wday = 5;
-  SYSTEM_MKTIME_MIN.tm_yday = 346;
-  SYSTEM_MKTIME_MIN.tm_isdst = 0;
-#ifdef HAS_TM_TM_GMTOFF
-  SYSTEM_MKTIME_MIN.tm_gmtoff = 2880;
-#endif
-#ifdef HAS_TM_TM_ZONE
-  SYSTEM_MKTIME_MIN.tm_zone = "PST";
-#endif
-
-  mktime_maxmin_initialized = 1;
-}
 
 /* Spec says except for stftime() and the _r() functions, these
    all return static memory.  Stabbings! */
@@ -156,16 +109,18 @@ static const int safe_years_low[SOLAR_CYCLE_LENGTH] = {
     1992, 1993, 1994, 1995,
 };
 
-/* /\* This isn't used, but it's handy to look at *\/ */
-/* static const char dow_year_start[SOLAR_CYCLE_LENGTH] = { */
-/*     5, 0, 1, 2,     /\* 0       2016 - 2019 *\/ */
-/*     3, 5, 6, 0,     /\* 4  *\/ */
-/*     1, 3, 4, 5,     /\* 8       1996 - 1998, 1971*\/ */
-/*     6, 1, 2, 3,     /\* 12      1972 - 1975 *\/ */
-/*     4, 6, 0, 1,     /\* 16 *\/ */
-/*     2, 4, 5, 6,     /\* 20      2036, 2037, 2010, 2011 *\/ */
-/*     0, 2, 3, 4      /\* 24      2012, 2013, 2014, 2015 *\/ */
-/* }; */
+#if 0
+/* This isn't used, but it's handy to look at */
+static const char dow_year_start[SOLAR_CYCLE_LENGTH] = {
+    5, 0, 1, 2,     /* 0       2016 - 2019 */
+    3, 5, 6, 0,     /* 4  */
+    1, 3, 4, 5,     /* 8       1996 - 1998, 1971*/
+    6, 1, 2, 3,     /* 12      1972 - 1975 */
+    4, 6, 0, 1,     /* 16 */
+    2, 4, 5, 6,     /* 20      2036, 2037, 2010, 2011 */
+    0, 2, 3, 4      /* 24      2012, 2013, 2014, 2015 */
+};
+#endif
 
 /* Let's assume people are going to be looking for dates in the future.
    Let's provide some cheats so you can skip ahead.
@@ -175,8 +130,12 @@ static const int safe_years_low[SOLAR_CYCLE_LENGTH] = {
 #define CHEAT_DAYS  (1199145600 / 24 / 60 / 60)
 #define CHEAT_YEARS 108
 
-#define IS_LEAP(n)      ((!(((n) + 1900) % 400) || (!(((n) + 1900) % 4) && (((n) + 1900) % 100))) != 0)
-#define WRAP(a,b,m)     ((a) = ((a) <  0  ) ? ((b)--, (a) + (m)) : (a))
+/* IS_LEAP is used all over the place to index on arrays, so make sure it always returns 0 or 1. */
+#define IS_LEAP(n)  ( (!(((n) + 1900) % 400) || (!(((n) + 1900) % 4) && (((n) + 1900) % 100))) ? 1 : 0 )
+#define IS_LEAP_ABS(n)  (!((n) % 400) || (!((n) % 4) && ((n) % 100) && ((n) > 0)))
+
+/* Allegedly, some <termios.h> define a macro called WRAP, so use a longer name like WRAP_TIME64. */
+#define WRAP_TIME64(a,b,m)     ((a) = ((a) <  0  ) ? ((b)--, (a) + (m)) : (a))
 
 #ifdef USE_SYSTEM_LOCALTIME
 #    define SHOULD_USE_SYSTEM_LOCALTIME(a)  (       \
@@ -223,7 +182,7 @@ static int is_exception_century(Year year)
    The result is like cmp.
    Ignores things like gmtoffset and dst
 */
-int cmp_date( const struct TM* left, const struct tm* right ) {
+static int cmp_date( const struct TM* left, const struct tm* right ) {
     if( left->tm_year > right->tm_year )
         return 1;
     else if( left->tm_year < right->tm_year )
@@ -259,9 +218,9 @@ int cmp_date( const struct TM* left, const struct tm* right ) {
 
 
 /* Check if a date is safely inside a range.
-   The intention is to check if it's a few days inside.
+   The intention is to check if its a few days inside.
 */
-int date_in_safe_range( const struct TM* date, const struct tm* min, const struct tm* max ) {
+static int date_in_safe_range( const struct TM* date, const struct tm* min, const struct tm* max ) {
     if( cmp_date(date, min) == -1 )
         return 0;
 
@@ -281,19 +240,19 @@ Time64_T timegm64(const struct TM *date) {
     Time64_T seconds = 0;
     Year     year;
     Year     orig_year = (Year)date->tm_year;
-    int      cycles  = 0;
+    Year     cycles  = 0;
 
     if( orig_year > 100 ) {
         cycles = (orig_year - 100) / 400;
         orig_year -= cycles * 400;
-        days      += (Time64_T)cycles * days_in_gregorian_cycle;
+        days      += cycles * days_in_gregorian_cycle;
     }
     else if( orig_year < -300 ) {
         cycles = (orig_year - 100) / 400;
         orig_year -= cycles * 400;
-        days      += (Time64_T)cycles * days_in_gregorian_cycle;
+        days      += cycles * days_in_gregorian_cycle;
     }
-    TIME64_TRACE3("# timegm/ cycles: %d, days: %lld, orig_year: %lld\n", cycles, days, orig_year);
+    TIME64_TRACE3("# timegm/ cycles: %"PRId64", days: %"PRId64", orig_year: %"PRId64"\n", cycles, days, orig_year);
 
     if( orig_year > 70 ) {
         year = 70;
@@ -322,6 +281,43 @@ Time64_T timegm64(const struct TM *date) {
     return(seconds);
 }
 
+
+static int check_tm(struct TM *tm)
+{
+    /* Don't forget leap seconds */
+    assert(tm->tm_sec >= 0);
+
+    /* Allow for just one positive leap second, which is what the C99 standard says. */
+    /* Two leap seconds in the same minute are not allowed (the C90 range 0..61 was a defect). */
+    assert(tm->tm_sec <= 60);
+
+    assert(tm->tm_min >= 0);
+    assert(tm->tm_min <= 59);
+
+    assert(tm->tm_hour >= 0);
+    assert(tm->tm_hour <= 23);
+
+    assert(tm->tm_mday >= 1);
+    assert(tm->tm_mday <= days_in_month[IS_LEAP(tm->tm_year)][tm->tm_mon]);
+
+    assert(tm->tm_mon  >= 0);
+    assert(tm->tm_mon  <= 11);
+
+    assert(tm->tm_wday >= 0);
+    assert(tm->tm_wday <= 6);
+    
+    assert(tm->tm_yday >= 0);
+    assert(tm->tm_yday <= length_of_year[IS_LEAP(tm->tm_year)]);
+
+#ifdef HAS_TM_TM_GMTOFF
+    assert(tm->tm_gmtoff >= -24 * 60 * 60);
+    assert(tm->tm_gmtoff <=  24 * 60 * 60);
+#endif
+
+    return 1;
+}
+
+
 /* The exceptional centuries without leap years cause the cycle to
    shift by 16
 */
@@ -337,7 +333,7 @@ static Year cycle_offset(Year year)
     exceptions  = year_diff / 100;
     exceptions -= year_diff / 400;
 
-    TIME64_TRACE3("# year: %lld, exceptions: %lld, year_diff: %lld\n",
+    TIME64_TRACE3("# year: %"PRId64", exceptions: %"PRId64", year_diff: %"PRId64"\n",
           year, exceptions, year_diff);
 
     return exceptions * 16;
@@ -359,13 +355,10 @@ static Year cycle_offset(Year year)
    is for Dec 31st with a +UTC time zone.
    It doesn't need the same leap year status since we only care about
    January 1st.
-
-   MODIFIED: Compile better by renaming safe_year variable to not
-   shadow function.
 */
 static int safe_year(const Year year)
 {
-    int ret;
+    int safe_year;
     Year year_cycle;
 
     if( year >= MIN_SAFE_YEAR && year <= MAX_SAFE_YEAR ) {
@@ -387,28 +380,28 @@ static int safe_year(const Year year)
         year_cycle += 17;
 
     year_cycle %= SOLAR_CYCLE_LENGTH;
-    if( year_cycle < 0 )
+    if( year_cycle < 0 ) 
         year_cycle = SOLAR_CYCLE_LENGTH + year_cycle;
 
     assert( year_cycle >= 0 );
     assert( year_cycle < SOLAR_CYCLE_LENGTH );
     if( year < MIN_SAFE_YEAR )
-        ret = safe_years_low[year_cycle];
+        safe_year = safe_years_low[year_cycle];
     else if( year > MAX_SAFE_YEAR )
-        ret = safe_years_high[year_cycle];
+        safe_year = safe_years_high[year_cycle];
     else
         assert(0);
 
-    TIME64_TRACE3("# year: %lld, year_cycle: %lld, safe_year: %d\n",
-          year, year_cycle, ret);
+    TIME64_TRACE3("# year: %"PRId64", year_cycle: %"PRId64", safe_year: %d\n",
+          year, year_cycle, safe_year);
 
-    assert(ret <= MAX_SAFE_YEAR && ret >= MIN_SAFE_YEAR);
+    assert(safe_year <= MAX_SAFE_YEAR && safe_year >= MIN_SAFE_YEAR);
 
-    return ret;
+    return safe_year;
 }
 
 
-void copy_tm_to_TM64(const struct tm *src, struct TM *dest) {
+static void copy_tm_to_TM64(const struct tm *src, struct TM *dest) {
     if( src == NULL ) {
         memset(dest, 0, sizeof(*dest));
     }
@@ -440,7 +433,7 @@ void copy_tm_to_TM64(const struct tm *src, struct TM *dest) {
 }
 
 
-void copy_TM64_to_tm(const struct TM *src, struct tm *dest) {
+static void copy_TM64_to_tm(const struct TM *src, struct tm *dest) {
     if( src == NULL ) {
         memset(dest, 0, sizeof(*dest));
     }
@@ -473,8 +466,10 @@ void copy_TM64_to_tm(const struct TM *src, struct tm *dest) {
 
 
 /* Simulate localtime_r() to the best of our ability */
-struct tm * fake_localtime_r(const time_t *ytime, struct tm *result) {
-    const struct tm *static_result = localtime(ytime);
+#ifndef HAS_LOCALTIME_R
+
+struct tm * fake_localtime_r(const time_t *time, struct tm *result) {
+    const struct tm *static_result = localtime(time);
 
     assert(result != NULL);
 
@@ -487,11 +482,15 @@ struct tm * fake_localtime_r(const time_t *ytime, struct tm *result) {
         return result;
     }
 }
+
+#endif  /* #ifndef HAS_LOCALTIME_R */
 
 
 /* Simulate gmtime_r() to the best of our ability */
-struct tm * fake_gmtime_r(const time_t *ytime, struct tm *result) {
-    const struct tm *static_result = gmtime(ytime);
+#ifndef HAS_GMTIME_R
+
+struct tm * fake_gmtime_r(const time_t *time, struct tm *result) {
+    const struct tm *static_result = gmtime(time);
 
     assert(result != NULL);
 
@@ -504,70 +503,80 @@ struct tm * fake_gmtime_r(const time_t *ytime, struct tm *result) {
         return result;
     }
 }
+
+#endif  /* #ifndef HAS_GMTIME_R */
 
 
 static Time64_T seconds_between_years(Year left_year, Year right_year) {
     int increment = (left_year > right_year) ? 1 : -1;
     Time64_T seconds = 0;
-    int cycles;
+    Year cycles;
 
     if( left_year > 2400 ) {
+        TIME64_TRACE1("year %"PRId64" > 2400\n", left_year);
         cycles = (left_year - 2400) / 400;
         left_year -= cycles * 400;
         seconds   += cycles * seconds_in_gregorian_cycle;
     }
     else if( left_year < 1600 ) {
+        TIME64_TRACE1("year %"PRId64" < 1600\n", left_year);
         cycles = (left_year - 1600) / 400;
         left_year += cycles * 400;
         seconds   += cycles * seconds_in_gregorian_cycle;
     }
 
-    while( left_year != right_year ) {
-        seconds += length_of_year[IS_LEAP(right_year - 1900)] * 60 * 60 * 24;
-        right_year += increment;
+    if (increment > 0) {
+        TIME64_TRACE2("year %"PRId64" > safe_year %"PRId64"\n", left_year, right_year);
+        while( left_year != right_year ) {
+            seconds += length_of_year[IS_LEAP_ABS(right_year)] * 60 * 60 * 24;
+            right_year++;
+        }
+        TIME64_TRACE1("adjust by %"PRId64" days\n", seconds / (60 * 60 * 24));
+        return seconds;
+    } else {
+        TIME64_TRACE2("year %"PRId64" < safe_year %"PRId64"\n", left_year, right_year);
+        while( left_year != right_year ) {
+            seconds -= length_of_year[IS_LEAP_ABS(right_year)] * 60 * 60 * 24;
+            right_year--;
+        }
+        TIME64_TRACE1("adjust by %"PRId64" days\n", seconds / (60 * 60 * 24));
+        return seconds;
     }
-
-    return seconds * increment;
 }
 
 
 Time64_T mktime64(struct TM *input_date) {
     struct tm safe_date;
     struct TM date;
-    Time64_T  ytime;
+    Time64_T  time;
     Year      year = input_date->tm_year + 1900;
 
-    /* MODIFIED: this check added, used to make sure that the mktime()
-       max and min structures are initialized now that they are not
-       initialized through a struct literal (see above).
-    */
-    if (!mktime_maxmin_initialized)
-    {
-        initialize_mktime_maxmin();
-    }
     if( date_in_safe_range(input_date, &SYSTEM_MKTIME_MIN, &SYSTEM_MKTIME_MAX) )
     {
         copy_TM64_to_tm(input_date, &safe_date);
-        ytime = (Time64_T)mktime(&safe_date);
+        time = (Time64_T)mktime(&safe_date);
 
         /* Correct the possibly out of bound input date */
         copy_tm_to_TM64(&safe_date, input_date);
-        return ytime;
+        TIME64_TRACE2("mktime64: safe year %ld, %"PRId64" seconds\n", (long)year, time);
+        return time;
     }
 
     /* Have to make the year safe in date else it won't fit in safe_date */
     date = *input_date;
     date.tm_year = safe_year(year) - 1900;
-    copy_TM64_to_tm(&date, &safe_date);
 
-    ytime = (Time64_T)mktime(&safe_date);
+    copy_TM64_to_tm(&date, &safe_date);
+    time = (Time64_T)mktime(&safe_date);
+    TIME64_TRACE1("mktime64: %"PRId64" seconds\n", time);
 
     /* Correct the user's possibly out of bound input date */
     copy_tm_to_TM64(&safe_date, input_date);
 
-    ytime += seconds_between_years(year, (Year)(safe_date.tm_year + 1900));
+    time += seconds_between_years(year, (Year)(safe_date.tm_year + 1900));
+    TIME64_TRACE1("mktime64 => %"PRId64" seconds\n", time);
 
-    return ytime;
+    return time;
 }
 
 
@@ -583,9 +592,9 @@ struct TM *gmtime64_r (const Time64_T *in_time, struct TM *p)
     Time64_T v_tm_tday;
     int leap;
     Time64_T m;
-    Time64_T ytime = *in_time;
+    Time64_T time = *in_time;
     Year year = 70;
-    int cycles = 0;
+    Year cycles = 0;
 
     assert(p != NULL);
 
@@ -596,6 +605,7 @@ struct TM *gmtime64_r (const Time64_T *in_time, struct TM *p)
         GMTIME_R(&safe_time, &safe_date);
 
         copy_tm_to_TM64(&safe_date, p);
+        assert(check_tm(p));
 
         return p;
     }
@@ -604,22 +614,21 @@ struct TM *gmtime64_r (const Time64_T *in_time, struct TM *p)
     p->tm_gmtoff = 0;
 #endif
     p->tm_isdst  = 0;
-
 #ifdef HAS_TM_TM_ZONE
     p->tm_zone   = "UTC";
 #endif
 
-    v_tm_sec =  (int)(ytime % 60);
-    ytime /= 60;
-    v_tm_min =  (int)(ytime % 60);
-    ytime /= 60;
-    v_tm_hour = (int)(ytime % 24);
-    ytime /= 24;
-    v_tm_tday = ytime;
+    v_tm_sec =  (int)(time % 60);
+    time /= 60;
+    v_tm_min =  (int)(time % 60);
+    time /= 60;
+    v_tm_hour = (int)(time % 24);
+    time /= 24;
+    v_tm_tday = time;
 
-    WRAP (v_tm_sec, v_tm_min, 60);
-    WRAP (v_tm_min, v_tm_hour, 60);
-    WRAP (v_tm_hour, v_tm_tday, 24);
+    WRAP_TIME64 (v_tm_sec, v_tm_min, 60);
+    WRAP_TIME64 (v_tm_min, v_tm_hour, 60);
+    WRAP_TIME64 (v_tm_hour, v_tm_tday, 24);
 
     v_tm_wday = (int)((v_tm_tday + 4) % 7);
     if (v_tm_wday < 0)
@@ -633,10 +642,10 @@ struct TM *gmtime64_r (const Time64_T *in_time, struct TM *p)
 
     if (m >= 0) {
         /* Gregorian cycles, this is huge optimization for distant times */
-        cycles = (int)(m / (Time64_T) days_in_gregorian_cycle);
+        cycles = m / (Time64_T) days_in_gregorian_cycle;
         if( cycles ) {
-            m -= (cycles * (Time64_T) days_in_gregorian_cycle);
-            year += (cycles * years_in_gregorian_cycle);
+            m -= cycles * (Time64_T) days_in_gregorian_cycle;
+            year += cycles * years_in_gregorian_cycle;
         }
 
         /* Years */
@@ -657,10 +666,10 @@ struct TM *gmtime64_r (const Time64_T *in_time, struct TM *p)
         year--;
 
         /* Gregorian cycles */
-        cycles = (int)((m / (Time64_T) days_in_gregorian_cycle) + 1);
+        cycles = (m / (Time64_T) days_in_gregorian_cycle) + 1;
         if( cycles ) {
-            m -= (cycles * (Time64_T) days_in_gregorian_cycle);
-            year += (cycles * years_in_gregorian_cycle);
+            m -= cycles * (Time64_T) days_in_gregorian_cycle;
+            year += cycles * years_in_gregorian_cycle;
         }
 
         /* Years */
@@ -680,7 +689,12 @@ struct TM *gmtime64_r (const Time64_T *in_time, struct TM *p)
         m += (Time64_T) days_in_month[leap][v_tm_mon];
     }
 
-    p->tm_year = year;
+#   ifdef USE_TM64
+      p->tm_year = year;
+#   else
+      p->tm_year = (int)year;
+#   endif
+
     if( p->tm_year != year ) {
 #ifdef EOVERFLOW
         errno = EOVERFLOW;
@@ -696,12 +710,14 @@ struct TM *gmtime64_r (const Time64_T *in_time, struct TM *p)
     p->tm_hour = v_tm_hour;
     p->tm_mon  = v_tm_mon;
     p->tm_wday = v_tm_wday;
+    
+    assert(check_tm(p));
 
     return p;
 }
 
 
-struct TM *localtime64_r (const Time64_T *ytime, struct TM *local_tm)
+struct TM *localtime64_r (const Time64_T *time, struct TM *local_tm)
 {
     time_t safe_time;
     struct tm safe_date;
@@ -712,20 +728,21 @@ struct TM *localtime64_r (const Time64_T *ytime, struct TM *local_tm)
     assert(local_tm != NULL);
 
     /* Use the system localtime() if time_t is small enough */
-    if( SHOULD_USE_SYSTEM_LOCALTIME(*ytime) ) {
-        safe_time = (time_t)*ytime;
+    if( SHOULD_USE_SYSTEM_LOCALTIME(*time) ) {
+        safe_time = (time_t)*time;
 
-        TIME64_TRACE1("Using system localtime for %lld\n", *ytime);
+        TIME64_TRACE1("Using system localtime for %"PRId64"\n", *time);
 
         LOCALTIME_R(&safe_time, &safe_date);
 
         copy_tm_to_TM64(&safe_date, local_tm);
+        assert(check_tm(local_tm));
 
         return local_tm;
     }
 
-    if( gmtime64_r(ytime, &gm_tm) == NULL ) {
-        TIME64_TRACE1("gmtime64_r returned null for %lld\n", *ytime);
+    if( gmtime64_r(time, &gm_tm) == NULL ) {
+        TIME64_TRACE1("gmtime64_r returned null for %"PRId64"\n", *time);
         return NULL;
     }
 
@@ -735,7 +752,7 @@ struct TM *localtime64_r (const Time64_T *ytime, struct TM *local_tm)
         gm_tm.tm_year < (1970 - 1900)
        )
     {
-        TIME64_TRACE1("Mapping tm_year %lld to safe_year\n", (Year)gm_tm.tm_year);
+        TIME64_TRACE1("Mapping tm_year %"PRId64" to safe_year\n", (Year)gm_tm.tm_year);
         gm_tm.tm_year = safe_year((Year)(gm_tm.tm_year + 1900)) - 1900;
     }
 
@@ -747,9 +764,14 @@ struct TM *localtime64_r (const Time64_T *ytime, struct TM *local_tm)
 
     copy_tm_to_TM64(&safe_date, local_tm);
 
-    local_tm->tm_year = orig_year;
+#   ifdef USE_TM64
+      local_tm->tm_year = orig_year;
+#   else
+      local_tm->tm_year = (int)orig_year;
+#   endif
+
     if( local_tm->tm_year != orig_year ) {
-        TIME64_TRACE2("tm_year overflow: tm_year %lld, orig_year %lld\n",
+        TIME64_TRACE2("tm_year overflow: tm_year %"PRId64", orig_year %"PRId64"\n",
               (Year)local_tm->tm_year, (Year)orig_year);
 
 #ifdef EOVERFLOW
@@ -775,7 +797,7 @@ struct TM *localtime64_r (const Time64_T *ytime, struct TM *local_tm)
         local_tm->tm_year++;
     }
 
-    /* GMT is Jan 1st, xx01 year, but localtime is still Dec 31st
+    /* GMT is Jan 1st, xx01 year, but localtime is still Dec 31st 
        in a non-leap xx00.  There is one point in the cycle
        we can't account for which the safe xx00 year is a leap
        year.  So we need to correct for Dec 31st coming out as
@@ -784,18 +806,20 @@ struct TM *localtime64_r (const Time64_T *ytime, struct TM *local_tm)
     if( !IS_LEAP(local_tm->tm_year) && local_tm->tm_yday == 365 )
         local_tm->tm_yday--;
 
+    assert(check_tm(local_tm));
+    
     return local_tm;
 }
 
 
-int valid_tm_wday( const struct TM* date ) {
+static int valid_tm_wday( const struct TM* date ) {
     if( 0 <= date->tm_wday && date->tm_wday <= 6 )
         return 1;
     else
         return 0;
 }
 
-int valid_tm_mon( const struct TM* date ) {
+static int valid_tm_mon( const struct TM* date ) {
     if( 0 <= date->tm_mon && date->tm_mon <= 11 )
         return 1;
     else
@@ -820,30 +844,29 @@ char *asctime64_r( const struct TM* date, char *result ) {
 }
 
 
-char *ctime64_r( const Time64_T* ytime, char* result ) {
+char *ctime64_r( const Time64_T* time, char* result ) {
     struct TM date;
-    memset(&date, 0, sizeof(struct TM));
 
-    localtime64_r(ytime, &date );
+    localtime64_r( time, &date );
     return asctime64_r( &date, result );
 }
 
 
 /* Non-thread safe versions of the above */
-struct TM *localtime64(const Time64_T *ytime) {
+struct TM *localtime64(const Time64_T *time) {
     tzset();
-    return localtime64_r(ytime, &Static_Return_Date);
+    return localtime64_r(time, &Static_Return_Date);
 }
 
-struct TM *gmtime64(const Time64_T *ytime) {
-    return gmtime64_r(ytime, &Static_Return_Date);
+struct TM *gmtime64(const Time64_T *time) {
+    return gmtime64_r(time, &Static_Return_Date);
 }
 
 char *asctime64( const struct TM* date ) {
     return asctime64_r( date, Static_Return_String );
 }
 
-char *ctime64( const Time64_T* ytime ) {
+char *ctime64( const Time64_T* time ) {
     tzset();
-    return asctime64(localtime64(ytime));
+    return asctime64(localtime64(time));
 }

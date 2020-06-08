@@ -1,6 +1,7 @@
-/*
+/* This header file is to be considered private to time64.c, so do not include it from your code.
+
    Maximum and minimum inputs your system's respective time functions
-   can correctly handle.  time64.h will use your system functions if
+   can correctly handle.  time64 will use your system functions if
    the input falls inside these ranges and corresponding USE_SYSTEM_*
    constant is defined.
 */
@@ -16,12 +17,80 @@
 #define SYSTEM_GMTIME_MAX        2147483647
 #define SYSTEM_GMTIME_MIN       -2147483647-1
 
-/* MODIFIED: Moved max/min for mktime() to time64.c to avoid having to
-   initialize it with system-dependent field ordering.
-*/
+/* Max/min for mktime() */
+static const struct tm SYSTEM_MKTIME_MAX = {
+    7,
+    14,
+    19,
+    18,
+    0,
+    138,
+    1,
+    17,
+    0
+#ifdef HAS_TM_TM_GMTOFF
+    ,-28800
+#endif
+#ifdef HAS_TM_TM_ZONE
+    ,"PST"
+#endif
+};
 
-/* MODIFIED: Removed SYSTEM_TIMEGM_MAX/MIN since they are not used
-   anywhere
-*/
+static const struct tm SYSTEM_MKTIME_MIN = {
+    52,
+    45,
+    12,
+    13,
+    11,
+    1,
+    5,
+    346,
+    0
+#ifdef HAS_TM_TM_GMTOFF
+    ,-28800
+#endif
+#ifdef HAS_TM_TM_ZONE
+    ,"PST"
+#endif
+};
+
+/* Max/min for timegm() */
+#ifdef HAS_TIMEGM
+static const struct tm SYSTEM_TIMEGM_MAX = {
+    7,
+    14,
+    3,
+    19,
+    0,
+    138,
+    2,
+    18,
+    0
+    #ifdef HAS_TM_TM_GMTOFF
+        ,0
+    #endif
+    #ifdef HAS_TM_TM_ZONE
+        ,"UTC"
+    #endif
+};
+
+static const struct tm SYSTEM_TIMEGM_MIN = {
+    52,
+    45,
+    20,
+    13,
+    11,
+    1,
+    5,
+    346,
+    0
+    #ifdef HAS_TM_TM_GMTOFF
+        ,0
+    #endif
+    #ifdef HAS_TM_TM_ZONE
+        ,"UTC"
+    #endif
+};
+#endif /* HAS_TIMEGM */
 
 #endif /* TIME64_LIMITS_H */

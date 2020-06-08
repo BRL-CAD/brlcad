@@ -4,6 +4,8 @@
    Sensible defaults provided.
 */
 
+#include <stdint.h>   /* If your system does not have stdint.h or does not define int64_t, you can use 'long long' instead, */
+                      /* but then make sure that 'long long' is indeed a 64-bit signed integer on your platform. */
 
 #ifndef TIME64_CONFIG_H
 #    define TIME64_CONFIG_H
@@ -18,8 +20,6 @@
 /* INT_64_T
    A 64 bit integer type to use to store time and others.
    Must be defined.
-
-   MODIFIED: Use BRL-CAD's int64_t
 */
 #define INT_64_T                int64_t
 
@@ -42,27 +42,27 @@
 
    HAS_TIMEGM
    Define if your system has timegm(), a GNU extension.
-
-   MODIFIED: Reduce necessary number of CMake checks by assuming that
-   nothing nonstandard exists.
 */
-/* #define HAS_GMTIME_R */
-/* #define HAS_LOCALTIME_R */
+#define HAS_GMTIME_R
+#define HAS_LOCALTIME_R
 /* #define HAS_TIMEGM */
 
 
 /* Details of non-standard tm struct elements.
 
    HAS_TM_TM_GMTOFF
-   True if your tm struct has a "tm_gmtoff" element.
+   Defined if your tm struct has a "tm_gmtoff" element.
    A BSD extension.
 
    HAS_TM_TM_ZONE
-   True if your tm struct has a "tm_zone" element.
+   Defined if your tm struct has a "tm_zone" element.
    A BSD extension.
+
+   If you define these symbols Under Linux/glibc, you either need to define _BSD_SOURCE before including time.h,
+   or change time64's source code to use names __tm_gmtoff and __tm_zone instead of tm_gmtoff and tm_zone.
 */
-/* #define HAS_TM_TM_GMTOFF */
-/* #define HAS_TM_TM_ZONE */
+#define HAS_TM_TM_GMTOFF
+#define HAS_TM_TM_ZONE
 
 
 /* USE_SYSTEM_LOCALTIME
@@ -72,15 +72,10 @@
    Should we use the system functions if the time is inside their range?
    Your system localtime() is probably more accurate, but our gmtime() is
    fast and safe.
-
-   MODIFIED: Never use any system functions so that we don't have to
-   worry about the size of the host time_t.  DO NOT RE-ENABLE ANY OF
-   THESE: the limits of the system functions have not been hooked into
-   BRL-CAD's build system and may be incorrect on some platforms.
 */
-/* #define USE_SYSTEM_LOCALTIME */
+#define USE_SYSTEM_LOCALTIME
 /* #define USE_SYSTEM_GMTIME */
-/* #define USE_SYSTEM_MKTIME */
+#define USE_SYSTEM_MKTIME
 /* #define USE_SYSTEM_TIMEGM */
 
 #endif /* TIME64_CONFIG_H */

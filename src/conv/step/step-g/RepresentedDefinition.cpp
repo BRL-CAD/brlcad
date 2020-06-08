@@ -46,14 +46,14 @@ RepresentedDefinition::RepresentedDefinition() {
     step = NULL;
     id = 0;
     entity = NULL;
-    type = RepresentedDefinition::UNKNOWN;
+    type = RepresentedDefinition::UNKNOWN_RD;
 }
 
 RepresentedDefinition::RepresentedDefinition(STEPWrapper *sw,int step_id) {
     step = sw;
     id = step_id;
     entity = NULL;
-    type = RepresentedDefinition::UNKNOWN;
+    type = RepresentedDefinition::UNKNOWN_RD;
 }
 
 RepresentedDefinition::~RepresentedDefinition() {

@@ -40,14 +40,14 @@ CharacterizedProductDefinition::CharacterizedProductDefinition() {
     step = NULL;
     id = 0;
     definition = NULL;
-    type = CharacterizedProductDefinition::UNKNOWN;
+    type = CharacterizedProductDefinition::UNKNOWN_PRODUCT;
 }
 
 CharacterizedProductDefinition::CharacterizedProductDefinition(STEPWrapper *sw,int step_id) {
     step = sw;
     id = step_id;
     definition = NULL;
-    type = CharacterizedProductDefinition::UNKNOWN;
+    type = CharacterizedProductDefinition::UNKNOWN_PRODUCT;
 }
 
 CharacterizedProductDefinition::~CharacterizedProductDefinition() {
@@ -135,7 +135,7 @@ CharacterizedProductDefinition::Load(STEPWrapper *sw, SDAI_Application_instance 
 	    type = CharacterizedProductDefinition::PRODUCT_DEFINITION_RELATIONSHIP;
 	    definition = dynamic_cast<ProductDefinitionRelationship *>(Factory::CreateObject(sw, (SDAI_Application_instance *)pdr));
 	} else {
-	    type = CharacterizedProductDefinition::UNKNOWN;
+	    type = CharacterizedProductDefinition::UNKNOWN_PRODUCT;
 	    definition = NULL;
 	}
     }

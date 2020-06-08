@@ -572,25 +572,6 @@ chull3d_free_hull_storage(struct chull3d_data *cdata)
     chull3d_free_Tree_storage(cdata);
 }
 
-HIDDEN void
-chull3d_visit_fg_i(struct chull3d_data *cdata, void (*v_fg)(struct chull3d_data *,Tree *, int, int),
-	Tree *t, int depth, int vn, int boundary)
-{
-    int	boundaryc = boundary;
-
-    if (!t) return;
-
-    //assert(t->fgs);
-    if (t->fgs->mark!=vn) {
-	t->fgs->mark = vn;
-	if (t->key!=cdata->hull_infinity && !cdata->mo[cdata->site_num((void *)cdata, t->key)]) boundaryc = 0;
-	v_fg(cdata, t,depth, boundaryc);
-	chull3d_visit_fg_i(cdata, v_fg, t->fgs->facets,depth+1, vn, boundaryc);
-    }
-    chull3d_visit_fg_i(cdata, v_fg, t->left,depth,vn, boundary);
-    chull3d_visit_fg_i(cdata, v_fg, t->right,depth,vn,boundary);
-}
-
 #if 0
 HIDDEN void
 chull3d_visit_fg(struct chull3d_data *cdata, fg *faces_gr, void (*v_fg)(struct chull3d_data *, Tree *, int, int))
@@ -598,26 +579,6 @@ chull3d_visit_fg(struct chull3d_data *cdata, fg *faces_gr, void (*v_fg)(struct c
     chull3d_visit_fg_i(cdata, v_fg, faces_gr->facets, 0, ++(cdata->fg_vn), 1);
 }
 #endif
-
-HIDDEN int
-chull3d_visit_fg_i_far(struct chull3d_data *cdata, void (*v_fg)(struct chull3d_data *, Tree *, int),
-	Tree *t, int depth, int vn)
-{
-    int nb = 0;
-
-    if (!t) return 0;
-
-    //assert(t->fgs);
-    if (t->fgs->mark!=vn) {
-	t->fgs->mark = vn;
-	nb = (t->key==cdata->hull_infinity) || cdata->mo[cdata->site_num((void *)cdata, t->key)];
-	if (!nb && !chull3d_visit_fg_i_far(cdata, v_fg, t->fgs->facets,depth+1,vn))
-	    v_fg(cdata, t,depth);
-    }
-    nb = chull3d_visit_fg_i_far(cdata, v_fg, t->left,depth,vn) || nb;
-    nb = chull3d_visit_fg_i_far(cdata, v_fg, t->right,depth,vn) || nb;
-    return nb;
-}
 
 #if 0
 HIDDEN void

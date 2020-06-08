@@ -581,13 +581,13 @@ bool ON_BinaryArchive::BigSeekFromCurrentPosition( ON__INT64 offset )
 bool
 ON_BinaryArchive::ReadMode() const
 {
-  return (m_mode & ON::read) ? true : false;
+  return (m_mode & ON::on_read) ? true : false;
 }
 
 bool
 ON_BinaryArchive::WriteMode() const
 {
-  return (m_mode & ON::write) ? true : false;
+  return (m_mode & ON::on_write) ? true : false;
 }
 
 bool

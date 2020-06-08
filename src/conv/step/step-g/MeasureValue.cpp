@@ -63,7 +63,7 @@ MeasureValue::MeasureValue()
 {
     step = NULL;
     id = 0;
-    type = MeasureValue::UNKNOWN;
+    type = MeasureValue::UNKNOWN_MEASURE;
     ivalue = 0;
     rvalue = 0.0;
 }
@@ -72,7 +72,7 @@ MeasureValue::MeasureValue(STEPWrapper *sw, int step_id)
 {
     step = sw;
     id = step_id;
-    type = MeasureValue::UNKNOWN;
+    type = MeasureValue::UNKNOWN_MEASURE;
     ivalue = 0;
     rvalue = 0.0;
 }

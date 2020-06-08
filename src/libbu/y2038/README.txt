@@ -38,11 +38,11 @@ Limitations, Issues, etc...
 ---------------------------
 
 localtime64_r() gets its time zone and daylight savings time
-information by mapping the future year back to a similar one between
+information by mappping the future year back to a similar one between
 2010 and 2037, safe for localtime_r().  The calculations are accurate
 according to current time zone and daylight savings information, but
 may become inaccurate if a change is made that takes place after 2010.
-But it's better to be off by an hour than 137 years.
+But its better to be off by an hour than 137 years.
 
 Future versions will probe for a 64 bit safe system localtime_r() and
 gmtime_r() and use that.  You can manually set the safe range of your
@@ -59,9 +59,5 @@ Portability
 
 I would like to add some configuration detection stuff in the future, but
 for now all I can do is document the assumptions...
-
-This code assumes that long longs are 64 bit integers which is technically
-in violation of the C standard.  This can be changed in time64.h by
-changing the Time64_T and Int64 typedefs.
 
 There are a number of configuration options in time64.h.

@@ -40,14 +40,14 @@ ShapeDefinition::ShapeDefinition() {
     step = NULL;
     id = 0;
     definition = NULL;
-    type = ShapeDefinition::UNKNOWN;
+    type = ShapeDefinition::UNKNOWN_SHAPE;
 }
 
 ShapeDefinition::ShapeDefinition(STEPWrapper *sw,int step_id) {
     step = sw;
     id = step_id;
     definition = NULL;
-    type = ShapeDefinition::UNKNOWN;
+    type = ShapeDefinition::UNKNOWN_SHAPE;
 }
 
 ShapeDefinition::~ShapeDefinition() {
@@ -88,7 +88,7 @@ ShapeDefinition::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
 	    definition = dynamic_cast<ShapeAspectRelationship *>(Factory::CreateObject(sw, (SDAI_Application_instance *)sar));
 	    if (!definition) return false;
 	} else {
-	    type = ShapeDefinition::UNKNOWN;
+	    type = ShapeDefinition::UNKNOWN_SHAPE;
 	    definition = NULL;
 	}
     }

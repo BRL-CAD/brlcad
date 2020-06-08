@@ -307,3 +307,5 @@
 
 /* Define to 1 if you have the `std::isnan' function. */
 #cmakedefine HAVE_STD_IS_NAN 1
+
+#cmakedefine HAVE_XLOCALE_H 1

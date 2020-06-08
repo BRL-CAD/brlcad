@@ -40,14 +40,14 @@ CharacterizedDefinition::CharacterizedDefinition() {
     step = NULL;
     id = 0;
     definition = NULL;
-    type = CharacterizedDefinition::UNKNOWN;
+    type = CharacterizedDefinition::UNKNOWN_CHARACTERIZED;
 }
 
 CharacterizedDefinition::CharacterizedDefinition(STEPWrapper *sw,int step_id) {
     step = sw;
     id = step_id;
     definition = NULL;
-    type = CharacterizedDefinition::UNKNOWN;
+    type = CharacterizedDefinition::UNKNOWN_CHARACTERIZED;
 }
 
 CharacterizedDefinition::~CharacterizedDefinition() {
@@ -162,7 +162,7 @@ CharacterizedDefinition::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 	    definition = dynamic_cast<CharacterizedObject *>(Factory::CreateObject(sw, (SDAI_Application_instance *)pdr));
 #endif
 	} else {
-	    type = CharacterizedDefinition::UNKNOWN;
+	    type = CharacterizedDefinition::UNKNOWN_CHARACTERIZED;
 	    definition = NULL;
 	}
     }

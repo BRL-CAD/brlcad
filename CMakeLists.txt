@@ -2544,6 +2544,7 @@ if(BRLCAD_PRINT_MSGS)
   message("***********************************************************")
 endif(BRLCAD_PRINT_MSGS)
 
+include(CheckSymbolExists)
 
 # ALLOCA test - based on AC_FUNC_ALLOCA
 BRLCAD_ALLOCA()
