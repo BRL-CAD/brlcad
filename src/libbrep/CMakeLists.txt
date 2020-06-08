@@ -84,8 +84,9 @@ CMAKEFILES(${libbrep_ignored_files})
 BRLCAD_ADDLIB(libbrep "${LIBBREP_SOURCES}" "libbg;libbn;libbu;${OPENNURBS_LIBRARIES};${P2T_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
 set_target_properties(libbrep PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
-# Anyone who needs to import libbrep will also need to import openNURBS
 if(HIDE_INTERNAL_SYMBOLS)
+  set_property(TARGET libbrep APPEND PROPERTY COMPILE_DEFINITIONS "ON_DLL_IMPORTS")
+  # Anyone who needs to import libbrep will also need to import openNURBS
   set_property(TARGET libbrep APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS "ON_DLL_IMPORTS")
 endif(HIDE_INTERNAL_SYMBOLS)
 
