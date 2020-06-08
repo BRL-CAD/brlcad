@@ -44,6 +44,7 @@
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
+#include "rt/tree.h"
 #include "raytrace.h"
 #include "gcv.h"
 
