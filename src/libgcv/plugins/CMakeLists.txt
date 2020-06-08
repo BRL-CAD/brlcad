@@ -4,7 +4,7 @@ set_target_properties(libgcv_plugins PROPERTIES FOLDER "BRL-CAD Shared Libraries
 
 function(LIBGCV_ADD_PLUGIN plugin_name sources libs)
   set(target_name libgcv_${plugin_name})
-  BRLCAD_ADDLIB(${target_name} "${sources}" "libgcv;${libs}" SHARED NO_INSTALL FOLDER "LibGCV Plugins")
+  BRLCAD_ADDLIB(${target_name} "${sources}" "${libs}" SHARED NO_INSTALL FOLDER "LibGCV Plugins")
   target_include_directories(${target_name} PRIVATE "${GCV_INCLUDE_DIRS}")
 
   set(DIR_TYPES LIBRARY RUNTIME ARCHIVE)
