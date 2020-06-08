@@ -414,7 +414,7 @@ stl_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const
 			1,
 			&tree_state,
 			0,			/* take all regions */
-			(gcv_options->tessellation_algorithm == GCV_TESS_MARCHING_CUBES)?gcv_region_end_mc:rt_region_end,
+			(gcv_options->tessellation_algorithm == GCV_TESS_MARCHING_CUBES)?rt_region_end_mc:rt_region_end,
 			(gcv_options->tessellation_algorithm == GCV_TESS_MARCHING_CUBES)?NULL:nmg_booltree_leaf_tess,
 			(void *)&gcvwriter);
 

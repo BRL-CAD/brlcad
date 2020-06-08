@@ -57,12 +57,6 @@ GCV_EXPORT extern int gcv_bot_is_closed_fan(const struct rt_bot_internal *bot);
 GCV_EXPORT extern int gcv_bot_is_orientable(const struct rt_bot_internal *bot);
 
 
-/**
- * Exact same as gcv_region_end, except using the marching cubes algorithm.
- */
-GCV_EXPORT extern union tree *gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
-
-
 GCV_EXPORT extern union tree *gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
 

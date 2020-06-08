@@ -796,6 +796,11 @@ struct rt_region_end_data
  */
 RT_EXPORT extern union tree *rt_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
+/**
+ * Exact same as rt_region_end, except using the marching cubes algorithm.
+ */
+RT_EXPORT extern union tree *rt_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
+
 __END_DECLS
 
 #endif /* RT_TREE_H */
