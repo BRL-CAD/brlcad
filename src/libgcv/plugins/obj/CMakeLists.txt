@@ -12,7 +12,7 @@ include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}/wfobj
   )
 
-LIBGCV_ADD_PLUGIN(obj "obj_read.c;obj_write.c;tri_face.c" "librt;libwfobj")
+LIBGCV_ADD_PLUGIN(obj "obj_read.c;obj_write.c;tri_face.c" "libwdb;librt;libwfobj")
 
 set(obj_ignore_files
   CMakeLists.txt
