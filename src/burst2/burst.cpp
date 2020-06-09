@@ -63,7 +63,6 @@ burst_state_init(struct burst_state *s)
     s->plotfp = NULL;
     s->shotfp = NULL;
     s->shotlnfp = NULL;
-    s->tmpfp = NULL;
     //Ids airids;
     //Ids armorids;
     //Ids critids;
@@ -100,7 +99,7 @@ burst_state_init(struct burst_state *s)
     bu_vls_init(&s->gedfile);
     memset(s->gridfile, 0, LNBUFSZ);
     memset(s->histfile, 0, LNBUFSZ);
-    memset(s->objects, 0, LNBUFSZ);
+    bu_vls_init(&s->objects);
     memset(s->outfile, 0, LNBUFSZ);
     bu_vls_init(&s->plotfile);
     memset(s->scrbuf, 0, LNBUFSZ);
@@ -109,7 +108,7 @@ burst_state_init(struct burst_state *s)
     memset(s->shotlnfile, 0, LNBUFSZ);
     memset(s->title, 0, TITLE_LEN);
     memset(s->timer, 0, TIMER_LEN);
-    memset(s->tmpfname, 0, TIMER_LEN);
+    bu_vls_init(&s->cmdhist);
     s->cmdptr = NULL;
     s->bdist = DFL_BDIST;
     VSET(s->burstpoint, 0.0, 0.0, 0.0);
@@ -735,56 +734,160 @@ _burst_cmd_quit(void *bs, int argc, const char **argv)
 extern "C" int
 _burst_cmd_read_2d_shot_file(void *bs, int argc, const char **argv)
 {
+    int ret = BRLCAD_OK;
     struct burst_state *s = (struct burst_state *)bs;
 
     if (!s || !argc || !argv) return BRLCAD_ERROR;
 
-    bu_log("read-2d-shot-file\n");
-    return BRLCAD_OK;
+    if (argc != 2) {
+	printf("Usage: read-2d-shot-file file\n");
+	return BRLCAD_ERROR;
+    }
+
+    /* If we had a previous file open, close it */
+    if (s->shotfp) {
+	fclose(s->shotfp);
+	s->shotfp = NULL;
+    }
+
+    /* If we're given a NULL argument, disable the error file */
+    if (BU_STR_EQUAL(argv[1], "NULL") || BU_STR_EQUAL(argv[1], "/dev/NULL")) {
+	s->firemode = 0;
+	return ret;
+    }
+
+    s->shotfp = fopen(argv[1], "rb");
+    if (!s->shotfp) {
+    	printf("failed to open critical component file: %s\n", argv[1]);
+	ret = BRLCAD_ERROR;
+    }
+
+    s->firemode = FM_SHOT | FM_FILE;
+
+    return ret;
 }
 
 extern "C" int
 _burst_cmd_read_3d_shot_file(void *bs, int argc, const char **argv)
 {
+    int ret = BRLCAD_OK;
     struct burst_state *s = (struct burst_state *)bs;
 
     if (!s || !argc || !argv) return BRLCAD_ERROR;
 
-    bu_log("read-3d-shot-file\n");
+    if (argc != 2) {
+	printf("Usage: read-3d-shot-file file\n");
+	return BRLCAD_ERROR;
+    }
+
+    /* If we had a previous file open, close it */
+    if (s->shotfp) {
+	fclose(s->shotfp);
+	s->shotfp = NULL;
+    }
+
+    /* If we're given a NULL argument, disable the error file */
+    if (BU_STR_EQUAL(argv[1], "NULL") || BU_STR_EQUAL(argv[1], "/dev/NULL")) {
+	s->firemode = 0;
+	return ret;
+    }
+
+    s->shotfp = fopen(argv[1], "rb");
+    if (!s->shotfp) {
+    	printf("failed to open critical component file: %s\n", argv[1]);
+	ret = BRLCAD_ERROR;
+    }
+
+    s->firemode = FM_SHOT | FM_FILE | FM_3DIM;
+    
     return BRLCAD_OK;
 }
 
 extern "C" int
 _burst_cmd_burst_armor_file(void *bs, int argc, const char **argv)
 {
+    int ret = BRLCAD_OK;
     struct burst_state *s = (struct burst_state *)bs;
 
     if (!s || !argc || !argv) return BRLCAD_ERROR;
 
-    bu_log("burst-armor-file\n");
-    return BRLCAD_OK;
+    if (argc != 2) {
+	printf("Usage: burst-armor-file file\n");
+	return BRLCAD_ERROR;
+    }
+
+    FILE *armorfp = fopen(argv[1], "rb");
+    if (!armorfp) {
+    	printf("failed to open burst armor file: %s\n", argv[1]);
+	ret = BRLCAD_ERROR;
+    }
+
+    // TODO logCMd
+
+    printf("Reading burst armor idents...\n");
+
+    // TODO readIdents
+
+    printf("Reading burst armor idents... done.\n");
+    fclose(armorfp);
+
+    return ret;
 }
 
 extern "C" int
 _burst_cmd_read_burst_file(void *bs, int argc, const char **argv)
 {
+    int ret = BRLCAD_OK;
     struct burst_state *s = (struct burst_state *)bs;
 
     if (!s || !argc || !argv) return BRLCAD_ERROR;
 
-    bu_log("read-burst-file\n");
+    if (argc != 2) {
+	printf("Usage: read-burst-file file\n");
+	return BRLCAD_ERROR;
+    }
+
+    /* If we had a previous file open, close it */
+    if (s->burstfp) {
+	fclose(s->burstfp);
+	s->burstfp= NULL;
+    }
+
+    /* If we're given a NULL argument, disable the error file */
+    if (BU_STR_EQUAL(argv[1], "NULL") || BU_STR_EQUAL(argv[1], "/dev/NULL")) {
+	s->firemode = 0;
+	return ret;
+    }
+
+    s->burstfp = fopen(argv[1], "rb");
+    if (!s->burstfp) {
+    	printf("failed to open 3-D burst input file: %s\n", argv[1]);
+	ret = BRLCAD_ERROR;
+    }
+
+    s->firemode = FM_BURST | FM_3DIM | FM_FILE;
+
     return BRLCAD_OK;
 }
 
 extern "C" int
 _burst_cmd_read_input_file(void *bs, int argc, const char **argv)
 {
+    int ret = BRLCAD_OK;
     struct burst_state *s = (struct burst_state *)bs;
 
     if (!s || !argc || !argv) return BRLCAD_ERROR;
 
-    bu_log("read-input-file\n");
-    return BRLCAD_OK;
+    FILE *cmdfp = fopen(argv[1], "rb");
+    if (!cmdfp) {
+    	printf("failed to open command file: %s\n", argv[1]);
+	ret = BRLCAD_ERROR;
+    }
+
+    // TODO - use bu_cmd to process the lines in the file
+
+    fclose(cmdfp);
+    return ret;
 }
 
 extern "C" int
@@ -794,7 +897,21 @@ _burst_cmd_report_overlaps(void *bs, int argc, const char **argv)
 
     if (!s || !argc || !argv) return BRLCAD_ERROR;
 
-    bu_log("report-overlaps\n");
+    if (argc != 2) {
+	printf("Usage: report-overlaps yes|no\n");
+	return BRLCAD_ERROR;
+    }
+
+    int tval = bu_str_true(argv[1]);
+    int fval = bu_str_false(argv[1]);
+
+    if (!tval && !fval) {
+    	printf("Invalid boolean string: %s\n", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    s->reportoverlaps = (fval) ? 0 : tval;
+
     return BRLCAD_OK;
 }
 
@@ -805,19 +922,78 @@ _burst_cmd_shotline_burst(void *bs, int argc, const char **argv)
 
     if (!s || !argc || !argv) return BRLCAD_ERROR;
 
-    bu_log("shotline-burst\n");
+    if (argc < 2 || argc > 3) {
+	printf("Usage: shotline-burst no|yes no|yes\n");
+	return BRLCAD_ERROR;
+    }
+
+    int tval = bu_str_true(argv[1]);
+    int fval = bu_str_false(argv[1]);
+
+    if (!tval && !fval) {
+    	printf("Invalid boolean string: %s\n", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    s->shotburst = (fval) ? 0 : tval;
+
+    if (s->shotburst) {
+
+	if (argc != 3) {
+	    printf("Usage: shotline-burst no|yes no|yes\n");
+	    return BRLCAD_ERROR;
+	}
+
+	tval = bu_str_true(argv[2]);
+	fval = bu_str_false(argv[2]);
+
+	if (!tval && !fval) {
+	    printf("Invalid boolean string: %s\n", argv[2]);
+	    return BRLCAD_ERROR;
+	}
+
+	s->reqburstair = (fval) ? 0 : tval;
+
+	s->firemode &= ~FM_BURST; /* disable discrete burst points */
+    }
+
     return BRLCAD_OK;
 }
 
 extern "C" int
 _burst_cmd_shotline_file(void *bs, int argc, const char **argv)
 {
+    int ret = BRLCAD_OK;
     struct burst_state *s = (struct burst_state *)bs;
 
     if (!s || !argc || !argv) return BRLCAD_ERROR;
 
+    if (argc != 2) {
+	printf("Usage: shotline-file file\n");
+	return BRLCAD_ERROR;
+    }
+
+    /* If we had a previous file open, close it */
+    if (s->shotlnfp) {
+	fclose(s->shotlnfp);
+	s->shotlnfp = NULL;
+    }
+
+    /* If we're given a NULL argument, disable the shotline file */
+    if (BU_STR_EQUAL(argv[1], "NULL") || BU_STR_EQUAL(argv[1], "/dev/NULL")) {
+	return ret;
+    }
+
+    /* Try to open the file - we want to write output to the file
+     * as they are generated. */
+    s->shotlnfp = fopen(argv[1], "wb");
+    if (!s->shotlnfp) {
+    	printf("failed to open error file: %s\n", argv[1]);
+	ret = BRLCAD_ERROR;
+    }
+
     bu_log("shotline-file\n");
-    return BRLCAD_OK;
+    return ret;
 }
 
 extern "C" int
@@ -827,7 +1003,12 @@ _burst_cmd_target_file(void *bs, int argc, const char **argv)
 
     if (!s || !argc || !argv) return BRLCAD_ERROR;
 
-    bu_log("target-file\n");
+    if (argc != 2) {
+	printf("Usage: target-file file\n");
+	return BRLCAD_ERROR;
+    }
+
+    bu_vls_sprintf(&s->gedfile, "%s", argv[1]);
     return BRLCAD_OK;
 }
 
@@ -838,7 +1019,12 @@ _burst_cmd_target_objects(void *bs, int argc, const char **argv)
 
     if (!s || !argc || !argv) return BRLCAD_ERROR;
 
-    bu_log("target-objects\n");
+    if (argc != 2) {
+	printf("Usage: target-objects objects\n");
+	return BRLCAD_ERROR;
+    }
+
+    bu_vls_sprintf(&s->objects, "%s", argv[1]);
     return BRLCAD_OK;
 }
 
@@ -848,6 +1034,11 @@ _burst_cmd_units(void *bs, int argc, const char **argv)
     struct burst_state *s = (struct burst_state *)bs;
 
     if (!s || !argc || !argv) return BRLCAD_ERROR;
+
+    if (argc != 2) {
+	printf("Usage: units unit\n");
+	return BRLCAD_ERROR;
+    }
 
     s->unitconv =  bu_units_conversion(argv[1]);
     if (NEAR_ZERO(s->unitconv, SMALL_FASTF)) {
@@ -862,78 +1053,196 @@ _burst_cmd_units(void *bs, int argc, const char **argv)
 extern "C" int
 _burst_cmd_write_input_file(void *bs, int argc, const char **argv)
 {
+    int ret = BRLCAD_OK;
     struct burst_state *s = (struct burst_state *)bs;
 
     if (!s || !argc || !argv) return BRLCAD_ERROR;
 
-    bu_log("write-input-file\n");
-    return BRLCAD_OK;
+    /* Try to open the file - we want to write messages to the file
+     * as they are generated. */
+    FILE *cmdfp = fopen(argv[1], "wb");
+    if (!cmdfp) {
+    	printf("failed to open cmd file for writing: %s\n", argv[1]);
+	ret = BRLCAD_ERROR;
+    }
+
+    fprintf(cmdfp, "%s", bu_vls_cstr(&s->cmdhist));
+
+    fclose(cmdfp);
+
+    return ret;
 }
 
 extern "C" int
 _burst_cmd_burst_coordinates(void *bs, int argc, const char **argv)
 {
+    int ret = BRLCAD_OK;
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     struct burst_state *s = (struct burst_state *)bs;
 
     if (!s || !argc || !argv) return BRLCAD_ERROR;
 
-    bu_log("burst-coordinates\n");
-    return BRLCAD_OK;
+    if (argc != 4) {
+	printf("Usage: burst-coordinates X Y Z\n");
+	return BRLCAD_ERROR;
+    }
+
+    if (bu_opt_fastf_t(&msg, 1, &argv[1], (void *)&s->burstpoint[X]) < 0) {
+	printf("problem reading coordinate X value: %s\n", bu_vls_cstr(&msg));
+	ret = BRLCAD_ERROR;
+    }
+    /* convert to mm */
+    s->burstpoint[X] = s->burstpoint[X] * s->unitconv;
+
+    if (bu_opt_fastf_t(&msg, 1, &argv[1], (void *)&s->burstpoint[Y]) < 0) {
+	printf("problem reading coordinate Y value: %s\n", bu_vls_cstr(&msg));
+	ret = BRLCAD_ERROR;
+    }
+    /* convert to mm */
+    s->burstpoint[Y] = s->burstpoint[Y] * s->unitconv;
+
+    if (bu_opt_fastf_t(&msg, 1, &argv[1], (void *)&s->burstpoint[Z]) < 0) {
+	printf("problem reading coordinate Z value: %s\n", bu_vls_cstr(&msg));
+	ret = BRLCAD_ERROR;
+    }
+    /* convert to mm */
+    s->burstpoint[Z] = s->burstpoint[Z] * s->unitconv;
+
+    bu_vls_free(&msg);
+    return ret;
 }
 
 extern "C" int
 _burst_cmd_burst_distance(void *bs, int argc, const char **argv)
 {
+    int ret = BRLCAD_OK;
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     struct burst_state *s = (struct burst_state *)bs;
 
     if (!s || !argc || !argv) return BRLCAD_ERROR;
 
-    bu_log("burst-distance\n");
-    return BRLCAD_OK;
+    if (argc != 2) {
+	printf("Usage: burst-distance #\n");
+	return BRLCAD_ERROR;
+    }
+
+    if (bu_opt_fastf_t(&msg, 1, &argv[1], (void *)&s->bdist) < 0) {
+	printf("problem reading distance value: %s\n", bu_vls_cstr(&msg));
+	ret = BRLCAD_ERROR;
+    }
+    /* convert to mm */
+    s->bdist = s->bdist * s->unitconv;
+
+    return ret;
 }
 
 extern "C" int
 _burst_cmd_burst_file(void *bs, int argc, const char **argv)
 {
+    int ret = BRLCAD_OK;
     struct burst_state *s = (struct burst_state *)bs;
 
     if (!s || !argc || !argv) return BRLCAD_ERROR;
 
-    bu_log("burst-file\n");
-    return BRLCAD_OK;
+    if (argc != 2) {
+	printf("Usage: burst-file file\n");
+	return BRLCAD_ERROR;
+    }
+
+    /* If we had a previous file open, close it */
+    if (s->outfp) {
+	fclose(s->outfp);
+	s->outfp = NULL;
+    }
+
+    /* If we're given a NULL argument, disable the burst file */
+    if (BU_STR_EQUAL(argv[1], "NULL") || BU_STR_EQUAL(argv[1], "/dev/NULL")) {
+	return ret;
+    }
+
+    /* Try to open the file - we want to write output to the file
+     * as it is generated. */
+    s->outfp = fopen(argv[1], "wb");
+    if (!s->outfp) {
+    	printf("failed to open burst file: %s\n", argv[1]);
+	ret = BRLCAD_ERROR;
+    }
+
+    return ret;
 }
 
 extern "C" int
 _burst_cmd_cell_size(void *bs, int argc, const char **argv)
 {
+    int ret = BRLCAD_OK;
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     struct burst_state *s = (struct burst_state *)bs;
 
     if (!s || !argc || !argv) return BRLCAD_ERROR;
 
-    bu_log("cell-size\n");
-    return BRLCAD_OK;
+    if (argc != 2) {
+	printf("Usage: cell-size #\n");
+	return BRLCAD_ERROR;
+    }
+
+    if (bu_opt_fastf_t(&msg, 1, &argv[1], (void *)&s->cellsz) < 0) {
+	printf("problem reading cell size value: %s\n", bu_vls_cstr(&msg));
+	ret = BRLCAD_ERROR;
+    }
+    /* convert to mm */
+    s->cellsz = s->cellsz * s->unitconv;
+
+    return ret;
 }
 
 extern "C" int
 _burst_cmd_color_file(void *bs, int argc, const char **argv)
 {
+    int ret = BRLCAD_OK;
     struct burst_state *s = (struct burst_state *)bs;
 
     if (!s || !argc || !argv) return BRLCAD_ERROR;
 
-    bu_log("color-file\n");
-    return BRLCAD_OK;
+
+    FILE *colorfp = fopen(argv[1], "rb");
+    if (!colorfp) {
+    	printf("failed to open ident-to-color mapping file: %s\n", argv[1]);
+	ret = BRLCAD_ERROR;
+    }
+
+    // TODO logCMd
+
+    printf("Reading ident-to-color mappings...\n");
+
+    // TODO readColors
+
+    printf("Reading ident-to-color mappings... done.\n");
+    
+    fclose(colorfp);
+
+    return ret;
 }
 
 extern "C" int
 _burst_cmd_cone_half_angle(void *bs, int argc, const char **argv)
 {
+    int ret = BRLCAD_OK;
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     struct burst_state *s = (struct burst_state *)bs;
 
     if (!s || !argc || !argv) return BRLCAD_ERROR;
 
-    bu_log("cone-half-angle\n");
-    return BRLCAD_OK;
+    if (argc != 2) {
+	printf("Usage: cos-half-angle angle(deg)\n");
+	return BRLCAD_ERROR;
+    }
+
+    if (bu_opt_fastf_t(&msg, 1, &argv[1], (void *)&s->conehfangle) < 0) {
+	printf("problem reading cone half angle value: %s\n", bu_vls_cstr(&msg));
+	ret = BRLCAD_ERROR;
+    }
+
+    return ret;
 }
 
 const struct bu_cmdtab _burst_cmds[] = {
@@ -1077,7 +1386,13 @@ main(int argc, const char **argv)
 	    continue;
 	}
 
+	/* execute the command */
 	burst_process_line(&s, bu_vls_cstr(&iline));
+
+	/* build up a command history buffer for write-input-file */
+	bu_vls_printf(&s.cmdhist, "%s\n", bu_vls_cstr(&iline));
+
+	/* reset the line */
 	bu_vls_trunc(&iline, 0);
 
 	if (s.quit) {

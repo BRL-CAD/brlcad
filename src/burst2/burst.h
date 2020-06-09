@@ -86,7 +86,7 @@ struct burst_state {
     FILE *plotfp;              /* 3-D UNIX plot stream (debugging) */
     FILE *shotfp;              /* input stream for shot positions */
     FILE *shotlnfp;            /* shotline file output stream */
-    FILE *tmpfp;               /* temporary file output stream for logging input */
+    struct bu_vls cmdhist;     /* interactive input logging (used to generated burst cmd files)*/
     Ids airids;                /* burst air idents */
     Ids armorids;              /* burst armor idents */
     Ids critids;               /* critical component idents */
@@ -125,7 +125,7 @@ struct burst_state {
     struct bu_vls gedfile;     /* MGED data base file name */
     char gridfile[LNBUFSZ];    /* saved grid (2-d shots) file name */
     char histfile[LNBUFSZ];    /* histogram file name (statistics) */
-    char objects[LNBUFSZ];     /* list of objects from MGED file */
+    struct bu_vls objects;     /* list of objects from MGED file */
     char outfile[LNBUFSZ];     /* burst point library output file name */
     struct bu_vls plotfile;    /* 3-D UNIX plot file name (debugging) */
     char scrbuf[LNBUFSZ];      /* scratch buffer for temporary use */
