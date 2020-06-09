@@ -366,7 +366,7 @@ union tree *get_layer(struct db_tree_state *tsp, const struct db_full_path *path
 }
 
 
-static struct gcv_region_end_data gcvwriter = {nmg_to_dxf, NULL};
+static struct rt_region_end_data gcvwriter = {nmg_to_dxf, NULL};
 
 
 /**
@@ -378,7 +378,7 @@ static struct gcv_region_end_data gcvwriter = {nmg_to_dxf, NULL};
  * 4. db_walk_tree (get_layer) for layer names only
  * 5. Initialize tree_state
  * 6. Initialize model (nmg)\
- * 7. db_walk_tree (gcv_region_end)
+ * 7. db_walk_tree (rt_region_end)
  * 8. Cleanup
  */
 int
@@ -532,9 +532,9 @@ main(int argc, char *argv[])
 			1,			/* ncpu */
 			&tree_state,
 			0,			/* take all regions */
-			gcv_region_end,
+			rt_region_end,
 			nmg_booltree_leaf_tess,
-			(void *)&gcvwriter);	/* callback for gcv_region_end */
+			(void *)&gcvwriter);	/* callback for rt_region_end */
 
     percent = 0;
     if (regions_tried>0) {

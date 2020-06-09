@@ -34,8 +34,6 @@
 #include "dm.h"
 
 #include "./burst.h"
-#include "./trie.h"
-#include "./Hm.h"
 
 /* External functions from application. */
 

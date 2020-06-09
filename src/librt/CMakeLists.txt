@@ -22,7 +22,6 @@ set(RT_LOCAL_INCLUDE_DIRS
   ${REGEX_INCLUDE_DIRS}
   ${VDS_INCLUDE_DIRS}
   ${GDIAM_INCLUDE_DIRS}
-  ${LZ4_INCLUDE_DIRS}
   )
 
 BRLCAD_LIB_INCLUDE_DIRS(rt RT_INCLUDE_DIRS RT_LOCAL_INCLUDE_DIRS)
@@ -35,6 +34,7 @@ set(LIBRT_SOURCES
   bool.c
   bundle.c
   cache.c
+  cache_lz4.c
   cmd.c
   comb/comb.c
   comb/comb_brep.cpp
@@ -211,6 +211,8 @@ set(LIBRT_SOURCES
   primitives/xxx/xxx.c
   reduce.c
   reduce_db.cpp
+  region_end.c
+  region_end_mc.c
   regionfix.c
   roots.c
   search.c
@@ -361,7 +363,7 @@ if(BRLCAD_ENABLE_SPR)
   set(SPR_LIB libSPR)
 endif(BRLCAD_ENABLE_SPR)
 
-BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${OPENCL_LIBS};${GDIAM_LIBRARY};${VDS_LIBRARY};libbrep;libnmg;libbg;libbn;libbu;${OPENNURBS_LIBRARIES};${P2T_LIBRARY};${SPR_LIB};${REGEX_LIBRARIES};${LZ4_LIBRARIES};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
+BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${OPENCL_LIBS};${GDIAM_LIBRARY};${VDS_LIBRARY};libbrep;libnmg;libbg;libbn;libbu;${OPENNURBS_LIBRARIES};${P2T_LIBRARY};${SPR_LIB};${REGEX_LIBRARIES};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
 
 set_target_properties(librt PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if(HIDE_INTERNAL_SYMBOLS)
@@ -373,9 +375,6 @@ if(HIDE_INTERNAL_SYMBOLS)
   if(TARGET gdiam OR HIDE_INTERNAL_SYMBOLS_EXT)
     set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "GDIAM_DLL_IMPORTS")
   endif(TARGET gdiam OR HIDE_INTERNAL_SYMBOLS_EXT)
-  if(TARGET lz4 OR HIDE_INTERNAL_SYMBOLS_EXT)
-    set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "LZ4_DLL_IMPORT=1")
-  endif(TARGET lz4 OR HIDE_INTERNAL_SYMBOLS_EXT)
   if (TARGET librt-obj)
     set_property(TARGET librt-obj APPEND PROPERTY COMPILE_DEFINITIONS "TIE_DLL_EXPORTS")
     set_property(TARGET librt-obj APPEND PROPERTY COMPILE_DEFINITIONS "DB5_DLL_EXPORTS")
@@ -385,9 +384,6 @@ if(HIDE_INTERNAL_SYMBOLS)
     if(TARGET gdiam OR HIDE_INTERNAL_SYMBOLS_EXT)
       set_property(TARGET librt-obj APPEND PROPERTY COMPILE_DEFINITIONS "GDIAM_DLL_IMPORTS")
     endif(TARGET gdiam OR HIDE_INTERNAL_SYMBOLS_EXT)
-    if(TARGET lz4 OR HIDE_INTERNAL_SYMBOLS_EXT)
-      set_property(TARGET librt-obj APPEND PROPERTY COMPILE_DEFINITIONS "LZ4_DLL_IMPORT=1")
-    endif(TARGET lz4 OR HIDE_INTERNAL_SYMBOLS_EXT)
   endif (TARGET librt-obj)
 endif(HIDE_INTERNAL_SYMBOLS)
 
@@ -407,8 +403,10 @@ endif(HIDE_INTERNAL_SYMBOLS)
 
 add_subdirectory(tests)
 
-CMAKEFILES(CMakeLists.txt)
-CMAKEFILES(db_fp.cpp)
+CMAKEFILES(
+  CMakeLists.txt
+  db_fp.cpp
+  )
 
 # Local Variables:
 # tab-width: 8

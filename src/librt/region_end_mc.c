@@ -1,4 +1,4 @@
-/*                    R E G I O N _ E N D . C
+/*                 R E G I O N _ E N D _ M C . C
  * BRL-CAD
  *
  * Copyright (c) 2008-2020 United States Government as represented by
@@ -17,22 +17,22 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libgcv/region_end.c
+
+/** @file librt/region_end.c
  *
- * Routines to process regions during a db_walk_tree.
+ * Routines to process regions during a db_walk_tree using the marching cubes
+ * algorithm.
  *
  */
 
 #include "common.h"
 
 #include "bu/parallel.h"
-#include "rt/wdb.h"
-#include "rt/global.h"
-#include "gcv.h"
+#include "rt/rt_instance.h"
+#include "rt/tree.h"
 
-
-union tree *
-_gcv_cleanup(int state, union tree *tp)
+static union tree *
+_rt_cleanup(int state, union tree *tp)
 {
     /* restore previous debug state */
     nmg_debug = state;
@@ -51,12 +51,11 @@ _gcv_cleanup(int state, union tree *tp)
     return tp;
 }
 
-
 union tree *
-gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
+rt_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
     union tree *tp = NULL;
-    union tree *ret_tree = NULL;
+    struct model *m = NULL;
     struct nmgregion *r = NULL;
     struct shell *s = NULL;
     struct bu_list vhead;
@@ -64,16 +63,17 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     int empty_region = 0;
     int empty_model = 0;
     int NMG_debug_state = 0;
+    int count = 0;
 
-    struct gcv_region_end_data *data = (struct gcv_region_end_data *)client_data;
+    struct rt_region_end_data *data = (struct rt_region_end_data *)client_data;
 
-    if (!tsp || !curtree || !pathp || !client_data) {
-	bu_log("INTERNAL ERROR: gcv_region_end missing parameters\n");
+    if (!tsp || !pathp || !client_data) {
+	bu_log("INTERNAL ERROR: rt_region_end_mc missing parameters\n");
 	return TREE_NULL;
     }
 
     if (!data->write_region) {
-	bu_log("INTERNAL ERROR: gcv_region_end missing conversion callback function\n");
+	bu_log("INTERNAL ERROR: rt_region_end missing conversion callback function\n");
 	return TREE_NULL;
     }
 
@@ -85,8 +85,11 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 
     BU_LIST_INIT(&vhead);
 
-    if (curtree->tr_op == OP_NOP)
-	return curtree;
+    /*
+      if (curtree->tr_op == OP_NOP)
+      return 0;
+    */
+
 
     /* get a copy to play with as the parameters might get clobbered
      * by a longjmp.  FIXME: db_dup_subtree() doesn't create real copies
@@ -104,49 +107,32 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
      */
     NMG_debug_state = nmg_debug;
 
-    if (!BU_SETJUMP) {
-	/* try */
-	/* perform boolean evaluation on the NMG, presently modifies
-	 * curtree to an evaluated result and returns it if the evaluation
-	 * is successful.
-	 */
-	ret_tree = nmg_booltree_evaluate(tp, &RTG.rtg_vlfree, tsp->ts_tol, &rt_uniresource);
-    } else {
-	/* catch */
-	/* Error, bail out */
-	char *sofar;
+    m = nmg_mmr();
+    r = nmg_mrsv(m);
+    s = BU_LIST_FIRST(shell, &r->s_hd);
 
-	/* Relinquish bomb protection */
-	BU_UNSETJUMP;
+    if (tsp->ts_rtip == NULL)
+	tsp->ts_rtip = rt_new_rti(tsp->ts_dbip);
 
-	sofar = db_path_to_string(pathp);
-	bu_log("FAILED in boolean evaluation: %s\n", sofar);
-	bu_free((char *)sofar, "sofar");
+    count += nmg_mc_evaluate (s, tsp->ts_rtip, pathp, tsp->ts_ttol, tsp->ts_tol);
 
-	/* Release any intersector 2d tables */
-	nmg_isect2d_final_cleanup();
+    /* empty region? */
+    if (count == 0) {
+	char *str_path = db_path_to_string(pathp);
+	bu_log("Region %s appears to be empty.\n", str_path);
+	bu_free(str_path, "str_path");
+	return TREE_NULL;
+    }
 
-	/* Get rid of (m)any other intermediate structures */
-	if ((*tsp->ts_m)->magic == NMG_MODEL_MAGIC)
-	    nmg_km(*tsp->ts_m);
-	else
-	    bu_log("WARNING: tsp->ts_m pointer corrupted, ignoring it.\n");
+    /*
+      bu_log("Target is shot, %d triangles seen.\n", count);
 
-	/* Now, make a new, clean model structure for next pass. */
-	*tsp->ts_m = nmg_mm();
-
-	return _gcv_cleanup(NMG_debug_state, tp);
-    } BU_UNSETJUMP; /* Relinquish bomb protection */
-
-    r = (struct nmgregion *)NULL;
-    if (ret_tree)
-	r = ret_tree->tr_d.td_r;
-
-    if (r == (struct nmgregion *)NULL)
-	return _gcv_cleanup(NMG_debug_state, tp);
+      bu_log("Fusing\n"); fflush(stdout);
+      nmg_model_fuse(m, tsp->ts_tol);
+      bu_log("Done\n"); fflush(stdout);
+    */
 
     /* Kill cracks */
-    s = BU_LIST_FIRST(shell, &r->s_hd);
     while (BU_LIST_NOT_HEAD(&s->l, &r->s_hd)) {
 	struct shell *next_s;
 
@@ -157,17 +143,25 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 		break;
 	    }
 	}
+	/*
+	  nmg_shell_coplanar_face_merge(s, tsp->ts_tol, 42);
+	*/
 	s = next_s;
     }
     if (empty_region)
-	return _gcv_cleanup(NMG_debug_state, tp);
+	return _rt_cleanup(NMG_debug_state, tp);
 
     /* kill zero length edgeuses */
     empty_model = nmg_kill_zero_length_edgeuses(*tsp->ts_m);
     if (empty_model)
-	return _gcv_cleanup(NMG_debug_state, tp);
+	return _rt_cleanup(NMG_debug_state, tp);
 
-    if (BU_SETJUMP) {
+    if (!BU_SETJUMP) {
+	/* try */
+	/* Write the region out */
+	data->write_region(r, pathp, tsp->ts_regionid, tsp->ts_gmater, tsp->ts_mater.ma_color, data->client_data);
+    } else {
+	/* catch */
 	/* Error, bail out */
 	char *sofar;
 
@@ -191,17 +185,13 @@ gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 	*tsp->ts_m = nmg_mm();
 	nmg_kr(r);
 
-	return _gcv_cleanup(NMG_debug_state, tp);
-    } else {
-
-	/* Write the region out */
-	data->write_region(r, pathp, tsp->ts_regionid, tsp->ts_gmater, tsp->ts_mater.ma_color, data->client_data);
+	return _rt_cleanup(NMG_debug_state, tp);
 
     } BU_UNSETJUMP; /* Relinquish bomb protection */
 
     nmg_kr(r);
 
-    return _gcv_cleanup(NMG_debug_state, tp);
+    return _rt_cleanup(NMG_debug_state, tp);
 }
 
 

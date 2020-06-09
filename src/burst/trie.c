@@ -31,7 +31,6 @@
 #include "bu/log.h"
 
 #include "./burst.h"
-#include "./trie.h"
 #include "./extern.h"
 #include "./ascii.h"
 

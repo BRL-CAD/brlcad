@@ -1,2 +1,2 @@
-LIBGCV_ADD_PLUGIN(stl "stl_read.c;stl_write.c" "librt")
+LIBGCV_ADD_PLUGIN(stl "stl_read.c;stl_write.c" "libwdb;librt")
 CMAKEFILES(CMakeLists.txt)

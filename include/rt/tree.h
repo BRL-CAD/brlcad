@@ -774,6 +774,32 @@ RT_EXPORT extern void rt_optim_tree(union tree *tp,
 				    struct resource *resp);
 
 
+/**
+ * write_region is a function pointer to a routine that will
+ * write out the region in a given file format.
+ *
+ * This routine must be prepared to run in parallel.
+ */
+struct rt_region_end_data
+{
+    void (*write_region)(struct nmgregion *r, const struct db_full_path *pathp, int region_id, int material_id, float color[3], void *client_data);
+    void *client_data;
+};
+
+/**
+ * Perform Boolean evaluation on a tree of tessellated leaf nodes.
+ *
+ * Usually specified as the db_walk_tree() region_end callback,
+ * calling this routine for each positive region encountered.
+ *
+ * The client_data parameter is expected to point to a struct rt_region_end_data.
+ */
+RT_EXPORT extern union tree *rt_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
+
+/**
+ * Exact same as rt_region_end, except using the marching cubes algorithm.
+ */
+RT_EXPORT extern union tree *rt_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
 __END_DECLS
 

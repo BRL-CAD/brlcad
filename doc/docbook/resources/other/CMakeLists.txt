@@ -82,6 +82,7 @@ SetTargetFolder(xsl-expand "DocBook")
 # immediately so targets in other directories can see it
 set(DOCBOOK_RESOURCE_FILES schema-expand fonts-dejavu-expand fonts-stix-expand offo-2-expand svg-dtd-expand xsl-expand)
 set(DOCBOOK_RESOURCE_FILES "${DOCBOOK_RESOURCE_FILES}" CACHE STRING "DocBook target list")
+mark_as_advanced(DOCBOOK_RESOURCE_FILES)
 
 set(ignore_files
   CMakeLists.txt
