@@ -26,7 +26,6 @@ set(cmake_ignore_files
   FindGL.cmake
   FindIlmBase.cmake
   FindLEMON.cmake
-  FindLZ4.cmake
   FindNETPBM.cmake
   FindOPENNURBS.cmake
   FindOSL.cmake

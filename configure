@@ -122,10 +122,6 @@ do
                                   shift;;
      --disable-png)                options="$options -DBRLCAD_PNG=SYSTEM";
                                   shift;;
-     --enable-lz4)                options="$options -DBRLCAD_LZ4=BUNDLED";
-                                  shift;;
-     --disable-lz4)                options="$options -DBRLCAD_LZ4=SYSTEM";
-                                  shift;;
      --enable-netpbm)                options="$options -DBRLCAD_NETPBM=BUNDLED";
                                   shift;;
      --disable-netpbm)                options="$options -DBRLCAD_NETPBM=SYSTEM";

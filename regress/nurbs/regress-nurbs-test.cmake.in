@@ -1,6 +1,7 @@
 # Values set at CMake configure time
 set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
 set(CSDIR "@CMAKE_CURRENT_SOURCE_DIR@")
+set(BIN_DIR "@BIN_DIR@")
 set(LOGFILE "${CBDIR}/regress-nurbs_@NHIT_NAME@.log")
 
 file(WRITE "${LOGFILE}" "Starting nurbs test run\n")
@@ -22,10 +23,8 @@ get_filename_component(GFILE_FP "@NHIT_GFILE@" ABSOLUTE)
 if ("${GFILE_FP}" STREQUAL "@NHIT_GFILE@")
   set(NHIT_G "@NHIT_GFILE@")
 else ("${GFILE_FP}" STREQUAL "@NHIT_GFILE@")
-  # TODO - need a better answer - if BIN_DIR isn't a single directory this
-  # won't work.  Really should come in via a generator expression, but
-  # that needs to be another argument to the cmake command...
-  set(NHIT_G "${BDIR}/../@NHIT_GFILE@")
+  string(REGEX REPLACE "${BIN_DIR}$" "" RDIR "${BDIR}")
+  set(NHIT_G "${RDIR}/@NHIT_GFILE@")
 endif ("${GFILE_FP}" STREQUAL "@NHIT_GFILE@")
 
 execute_process(

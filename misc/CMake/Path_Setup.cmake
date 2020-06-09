@@ -40,6 +40,21 @@ if(NOT BIN_DIR)
   set(BIN_DIR bin)
 endif(NOT BIN_DIR)
 
+# Define a relative path that will "reset" a path back to
+# the point before BIN_DIR was appended.  This is primarily
+# useful when working with generator expressions
+unset(RBIN_DIR CACHE)
+set(LBIN_DIR "${BIN_DIR}")
+while (NOT "${LBIN_DIR}" STREQUAL "")
+  get_filename_component(LBDIR "${LBIN_DIR}" DIRECTORY)
+  set(LBIN_DIR "${LBDIR}")
+  if ("${RBIN_DIR}" STREQUAL "")
+    set(RBIN_DIR "..")
+  else ("${RBIN_DIR}" STREQUAL "")
+    set(RBIN_DIR "../${RBIN_DIR}")
+  endif ("${RBIN_DIR}" STREQUAL "")
+endwhile (NOT "${LBIN_DIR}" STREQUAL "")
+
 # The location in which to install BRL-CAD libraries.
 if(NOT LIB_DIR)
   set(LIB_DIR lib)

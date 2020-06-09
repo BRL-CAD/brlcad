@@ -58,7 +58,8 @@ if test "x`env python -V 2>&1 | awk '{print $1}'`" != "xPython" ; then
     exit 0
 fi
 
-run ${PATH_TO_THIS}/../misc/flawfinder --followdotdir --minlevel=5 --singleline --neverignore --falsepositive --quiet ${PATH_TO_THIS}/../src/[^o]*
+SRCFILES="`find src -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.cc -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -not -regex '.*src/libbu/realpath_bsd.c.*'`"
+run ${PATH_TO_THIS}/../misc/flawfinder --context --followdotdir --minlevel=5 --singleline --neverignore --falsepositive --quiet ${SRCFILES} | grep -v running
 
 NUMBER_WRONG=0
 if test "x`grep \"No hits found.\" $LOGFILE`" = "x" ; then

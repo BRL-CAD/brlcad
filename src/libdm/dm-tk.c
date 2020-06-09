@@ -919,6 +919,7 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
     bu_vls_init(&dmp->dm_dName);
 
     struct dm_xvars *pub_vars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
+    struct tk_vars *privvars = (struct tk_vars *)dmp->dm_vars.priv_vars;
 
     /* initialize dm specific variables */
     dmp->dm_aspect = 1.0;
@@ -1025,6 +1026,73 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	}
     }
 
+    // Set up a Tk_Photo
+    struct bu_vls photo_cmd = BU_VLS_INIT_ZERO;
+
+    // Create a canvas to hold the photo
+    bu_vls_sprintf(&photo_cmd, "canvas %s.canvas -width %d -height %d -borderwidth 0", bu_vls_cstr(&dmp->dm_pathName), dmp->dm_width, dmp->dm_height);
+    Tcl_Eval(interp, bu_vls_cstr(&photo_cmd));
+    bu_log("Canvas result::\n%s\n", Tcl_GetStringResult(interp));
+    bu_vls_sprintf(&photo_cmd, "pack %s.canvas -fill both -expand 1", bu_vls_cstr(&dmp->dm_pathName));
+    Tcl_Eval(interp, bu_vls_cstr(&photo_cmd));
+    bu_log("pack result::\n%s\n", Tcl_GetStringResult(interp));
+
+    // Note: confirmed with Tcl/Tk community that (at least as of Tcl/Tk 8.6)
+    // Tcl_Eval is the ONLY way to create an image object.  The C API doesn't
+    // expose that ability, although it does support manipulation of the
+    // created object.
+    bu_vls_sprintf(&photo_cmd, "image create photo %s.canvas.photo", bu_vls_cstr(&dmp->dm_pathName));
+    Tcl_Eval(interp, bu_vls_cstr(&photo_cmd));
+    bu_log("photo result::\n%s\n", Tcl_GetStringResult(interp));
+    bu_vls_sprintf(&photo_cmd, "%s.canvas.photo", bu_vls_cstr(&dmp->dm_pathName));
+    privvars->img = Tk_FindPhoto(interp, bu_vls_cstr(&photo_cmd));
+    Tk_PhotoBlank(privvars->img);
+    Tk_PhotoSetSize(interp, privvars->img, dmp->dm_width, dmp->dm_height);
+
+    // Initialize the PhotoImageBlock information for a color image of size
+    // 500x500 pixels.
+    Tk_PhotoImageBlock dm_data;
+    dm_data.width = dmp->dm_width;
+    dm_data.height = dmp->dm_height;
+    dm_data.pixelSize = 4;
+    dm_data.pitch = dmp->dm_width * 4;
+    dm_data.offset[0] = 0;
+    dm_data.offset[1] = 1;
+    dm_data.offset[2] = 2;
+    dm_data.offset[3] = 3;
+
+    // Actually create our memory for the image buffer.  Expects RGBA information
+    dm_data.pixelPtr = (unsigned char *)Tcl_AttemptAlloc(dm_data.width * dm_data.height * 4);
+    if (!dm_data.pixelPtr) {
+	bu_log("Tcl/Tk photo memory allocation failed!\n");
+	bu_vls_free(&photo_cmd);
+	(void)tk_close(dmp);
+	return DM_NULL;
+    }
+
+    // Initialize. This alters the actual data, but Tcl/Tk doesn't know about it yet.
+    for (int i = 0; i < (dm_data.width * dm_data.height * 4); i+=4) {
+        // Red
+        dm_data.pixelPtr[i] = 0;
+        // Green
+        dm_data.pixelPtr[i+1] = 255;
+        // Blue
+        dm_data.pixelPtr[i+2] = 0;
+        // Alpha at 255 - we dont' want transparency for this demo.
+        dm_data.pixelPtr[i+3] = 255;
+    }
+
+    // Let Tk_Photo know we have data
+    Tk_PhotoPutBlock(interp, privvars->img, &dm_data, 0, 0, dm_data.width, dm_data.height, TK_PHOTO_COMPOSITE_SET);
+
+    // Put block operation complete - free local allocated buffer
+    Tcl_Free((char *)dm_data.pixelPtr);
+
+    bu_vls_sprintf(&photo_cmd, "%s.canvas create image 0 0 -image %s.canvas.photo -anchor nw", bu_vls_cstr(&dmp->dm_pathName), bu_vls_cstr(&dmp->dm_pathName));
+    Tcl_Eval(interp, bu_vls_cstr(&photo_cmd));
+
+    bu_vls_free(&photo_cmd);
+
     // Actually create the Tk Window itself
     Tk_GeometryRequest(pub_vars->xtkwin, dmp->dm_width, dmp->dm_height);
     Tk_MakeWindowExist(pub_vars->xtkwin);
@@ -1033,6 +1101,7 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
     // Store some information about the window
     pub_vars->win = Tk_WindowId(pub_vars->xtkwin);
     dmp->dm_id = pub_vars->win;
+
 
     return dmp;
 }

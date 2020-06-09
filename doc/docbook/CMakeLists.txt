@@ -1,26 +1,16 @@
-# We need various configuration files set up for DocBook processing tools
-file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/)
+# Define a build target that builds a no-op executable, so we can ensure
+# a target for generator expression use regardless of other changes elsewhere
+# in the build system
+add_executable(db_dir_info db_dir_info.c)
+set_target_properties(db_dir_info PROPERTIES FOLDER "DocBook")
 
-# First, define the commands to expand the third party components we will need to handle
-# DocBook processing from their archives into the build directory
-include(${CMAKE_CURRENT_SOURCE_DIR}/resources/other/expand.cmake)
+# We need various configuration files set up for DocBook processing tools
+add_subdirectory(resources)
 
 # Rework CMake binary and source paths for DocBook templates - if we
 # have spaces in the paths, they will cause a problem.
 string(REPLACE " " "%20" DOCBOOK_BINARY_DIR "${CMAKE_BINARY_DIR}")
 string(REPLACE " " "%20" DOCBOOK_SOURCE_DIR "${CMAKE_SOURCE_DIR}")
-
-# Common stylesheets for all DocBook sources
-if(BRLCAD_EXTRADOCS_HTML OR BRLCAD_EXTRADOCS_PDF OR BRLCAD_EXTRADOCS_MAN OR BRLCAD_EXTRADOCS_PHP OR BRLCAD_EXTRADOCS_PPT)
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/brlcad-common.xsl.in
-    ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-common.xsl)
-  # Fonts definition
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/brlcad-fonts.xsl.in
-    ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/brlcad-fonts.xsl)
-  # Wordpress
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/wordpress.xsl.in
-    ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/wordpress.xsl)
-endif(BRLCAD_EXTRADOCS_HTML OR BRLCAD_EXTRADOCS_PDF OR BRLCAD_EXTRADOCS_MAN OR BRLCAD_EXTRADOCS_PHP OR BRLCAD_EXTRADOCS_PPT)
 
 # Files for PDF products
 if(BRLCAD_EXTRADOCS_PDF)
@@ -29,32 +19,38 @@ if(BRLCAD_EXTRADOCS_PDF)
   configure_file(${CMAKE_SOURCE_DIR}/doc/docbook/fop.xconf.in ${CMAKE_BINARY_DIR}/doc/docbook/fop.xconf)
 endif(BRLCAD_EXTRADOCS_PDF)
 
+# For the html files, we need brlcad.css
+add_custom_command(
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/brlcad_css-${CMAKE_CFG_INTDIR}-done
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different ${CMAKE_CURRENT_SOURCE_DIR}/css/brlcad.css $<TARGET_FILE_DIR:db_dir_info>/${RBIN_DIR}/${DOC_DIR}/html/css/brlcad.css
+  COMMAND "${CMAKE_COMMAND}" -E touch  ${CMAKE_CURRENT_BINARY_DIR}/brlcad_css-${CMAKE_CFG_INTDIR}-done
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/css/brlcad.css
+  )
+add_custom_target(brlcad_css DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/brlcad_css-${CMAKE_CFG_INTDIR}-done)
+set_target_properties(brlcad_css PROPERTIES FOLDER "DocBook")
+install(FILES css/brlcad.css DESTINATION ${DOC_DIR}/html/css)
+DISTCLEAN(${CMAKE_CFG_INTDIR}/${DOC_DIR}/html/css/brlcad.css)
+
 # Include CMake macros for DocBook.
 include(${BRLCAD_SOURCE_DIR}/misc/CMake/DocBook.cmake)
-
-# For the html files, we need brlcad.css
-if(NOT CMAKE_CONFIGURATION_TYPES)
-  configure_file(css/brlcad.css ${CMAKE_BINARY_DIR}/${DOC_DIR}/html/css/brlcad.css)
-else(NOT CMAKE_CONFIGURATION_TYPES)
-  foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-    string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-    configure_file(css/brlcad.css ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${DOC_DIR}/html/css/brlcad.css)
-  endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-endif(NOT CMAKE_CONFIGURATION_TYPES)
-install(FILES css/brlcad.css DESTINATION ${DOC_DIR}/html/css)
 
 add_subdirectory(articles)
 add_subdirectory(books)
 add_subdirectory(lessons)
 add_subdirectory(presentations)
-add_subdirectory(resources)
 add_subdirectory(specifications)
 add_subdirectory(system)
 
-CMAKEFILES(README fop.xconf.in log4j.properties)
-CMAKEFILES(README.DB_authors_notes)
-CMAKEFILES(css/brlcad.css)
-CMAKEFILES(CMakeLists.txt)
+set(ignore_files
+  CMakeLists.txt
+  README
+  README.DB_authors_notes
+  css/brlcad.css
+  db_dir_info.c
+  fop.xconf.in
+  log4j.properties
+  )
+CMAKEFILES(${ignore_files})
 
 # Local Variables:
 # tab-width: 8

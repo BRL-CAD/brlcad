@@ -32,7 +32,7 @@ if(BRLCAD_ENABLE_TK)
   endif(TARGET libtermio)
 
   BRLCAD_ADDEXEC(bwish "main.c;cmd.c;input.c" "${bwish_libs}" GUI)
-  set_target_properties(bwish PROPERTIES COMPILE_DEFINITIONS "BWISH=1")
+  set_property(TARGET bwish APPEND PROPERTY COMPILE_DEFINITIONS "BWISH=1")
   set_target_properties(bwish PROPERTIES FOLDER "BRL-CAD Executables")
 
   if (TARGET itcl_pkgIndex)

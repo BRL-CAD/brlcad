@@ -241,30 +241,6 @@ mark_as_advanced(PNG_SHARED)
 mark_as_advanced(PNG_STATIC)
 mark_as_advanced(uname_executable)
 
-# LZ4 compression/decompression library
-set(lz4_DESCRIPTION "
-Option for enabling and disabling compilation of the lz4 data
-compression library provided with BRL-CAD's source code.  Default
-is AUTO, responsive to the toplevel BRLCAD_BUNDLED_LIBS option and
-testing first for a system version if BRLCAD_BUNDLED_LIBS is also
-AUTO.
-")
-THIRD_PARTY(lz4 LZ4 lz4 lz4_DESCRIPTION ALIASES ENABLE_LZ4 FLAGS NOSYS)
-if(BRLCAD_LZ4_BUILD)
-  set(LIBLZ4_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/lz4" CACHE STRING "Directory containing lz4 headers." FORCE)
-  set(LZ4_INCLUDE_DIR "${LIBLZ4_INCLUDE_DIR}" CACHE STRING "Directory containing lz4 headers." FORCE)
-  set(LZ4_INCLUDE_DIRS "${LZ4_INCLUDE_DIR}" CACHE STRING "Directory containing lz4 headers." FORCE)
-  mark_as_advanced(LIBLZ4_INCLUDE_DIR)
-  mark_as_advanced(LZ4_INCLUDE_DIR)
-  mark_as_advanced(LZ4_INCLUDE_DIRS)
-  set(LZ4_LIBRARY lz4 CACHE STRING "lz4" FORCE)
-  set(LZ4_LIBRARIES ${LZ4_LIBRARY} CACHE STRING "lz4" FORCE)
-  mark_as_advanced(LZ4_LIBRARY)
-  mark_as_advanced(LZ4_LIBRARIES)
-  SetTargetFolder(lz4 "Third Party Libraries")
-  SetTargetFolder(lz4-static "Third Party Libraries")
-endif(BRLCAD_LZ4_BUILD)
-
 # libnetpbm Library support for pnm,ppm,pbm, etc. image files
 set(netpbm_DESCRIPTION "
 Option for enabling and disabling compilation of the netpbm library

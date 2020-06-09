@@ -2,6 +2,7 @@ set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
 set(CSDIR "@CMAKE_CURRENT_SOURCE_DIR@")
 set(BURST_CF "@BURST_CLEAN_FILES@")
 set(BURST_IF "@BURST_INPUT_FILES@")
+set(BIN_DIR "@BIN_DIR@")
 set(DDIR "@DATA_DIR@")
 set(LOGFILE "${CBDIR}/regress-burst.log")
 
@@ -28,9 +29,10 @@ if (NOT "${CSDIR}" STREQUAL "${CBDIR}")
   endforeach(BIF ${BURST_IF})
 endif (NOT "${CSDIR}" STREQUAL "${CBDIR}")
 
-# TODO - this breaks if BIN_DIR is not one deep
+# Find the root path from the executable, and from there the database path
 get_filename_component(BDIR "${BURST}" DIRECTORY)
-execute_process(COMMAND "@CMAKE_COMMAND@" -E copy "${BDIR}/../${DDIR}/db/ktank.g" "${CBDIR}/ktank.g")
+string(REGEX REPLACE "${BIN_DIR}$" "" RDIR "${BDIR}")
+execute_process(COMMAND "@CMAKE_COMMAND@" -E copy "${RDIR}/${DDIR}/db/ktank.g" "${CBDIR}/ktank.g")
 
 file(APPEND "${LOGFILE}" "Running burst on ktank.g:\n${BURST} -b ${CBDIR}/ktank.b\n")
 

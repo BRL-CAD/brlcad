@@ -972,6 +972,12 @@ if(NOT COMMAND CONFIG_H_APPEND)
 endif(NOT COMMAND CONFIG_H_APPEND)
 
 CONFIG_H_APPEND(BRLCAD "/**** Define statements for CMake ****/\n")
+CONFIG_H_APPEND(BRLCAD "#if !defined(BRLCADBUILD)\n")
+CONFIG_H_APPEND(BRLCAD "  #  pragma message \"Warning: included brlcad_config.h (compile-time API) without BRLCADBUILD defined\"\n")
+CONFIG_H_APPEND(BRLCAD "#endif\n")
+CONFIG_H_APPEND(BRLCAD "#if !defined(HAVE_CONFIG_H)\n")
+CONFIG_H_APPEND(BRLCAD "  #  pragma message \"Warning: included brlcad_config.h (compile-time API) without HAVE_CONFIG_H defined\"\n")
+CONFIG_H_APPEND(BRLCAD "#endif\n")
 CONFIG_H_APPEND(BRLCAD "#ifndef __CONFIG_H__\n")
 CONFIG_H_APPEND(BRLCAD "#define __CONFIG_H__\n")
 
@@ -1966,20 +1972,6 @@ if(HAVE_WARN_UNUSED_RESULT_ATTRIBUTE)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_WARN_UNUSED_RESULT_ATTRIBUTE 1\n")
 endif(HAVE_WARN_UNUSED_RESULT_ATTRIBUTE)
 
-# Check whether the compiler supports __attribute__((visibility ("default")))
-check_c_source_compiles(" __attribute__((visibility (\"default\"))) int *func(int *); int *func(int *v){(*v)-=1; return v;} int main(int argc, char *argv[]) {int v = 1; int *vp = func(&v); return *vp;}" HAVE_VISIBILITY_DEFAULT_ATTRIBUTE)
-if(HAVE_VISIBILITY_DEFAULT_ATTRIBUTE)
-  CONFIG_H_APPEND(BRLCAD "#define COMPILER_DLLEXPORT __attribute__ ((visibility (\"default\")))\n")
-  CONFIG_H_APPEND(BRLCAD "#define COMPILER_DLLIMPORT __attribute__ ((visibility (\"default\")))\n")
-endif(HAVE_VISIBILITY_DEFAULT_ATTRIBUTE)
-
-# Check whether the compiler supports __declspec(dllexport)
-check_c_source_compiles(" __declspec(dllexport) int *func(int *); int *func(int *v){(*v)-=1; return v;} int main(int argc, char *argv[]) {int v = 1; int *vp = func(&v); return *vp;}" HAVE_DECLSPEC_EXPORT_ATTRIBUTE)
-if(HAVE_DECLSPEC_EXPORT_ATTRIBUTE)
-  CONFIG_H_APPEND(BRLCAD "#define COMPILER_DLLEXPORT __declspec(dllexport)\n")
-  CONFIG_H_APPEND(BRLCAD "#define COMPILER_DLLIMPORT __declspec(dllimport)\n")
-endif(HAVE_DECLSPEC_EXPORT_ATTRIBUTE)
-
 # Silence check for unused arguments (used to silence clang warnings about
 # unused options on the command line). By default clang generates a lot of
 # warnings about such arguments, and we don't really care.
@@ -2111,7 +2103,7 @@ if(NOT MSVC)
     # llvm-style USE
     if("${pgo_flags_found}" STREQUAL "")
       cmake_push_check_state()
-        set(flags "fprofile-use=\"${BRLCAD_PGO_PATH}\"")
+        set(flags "fprofile-use=\"${BRLCAD_PGO_PATH}\" -Wno-profile-instr-out-of-date -Wno-profile-instr-unprofiled")
         set(CMAKE_REQUIRED_FLAGS "-${flags}")
         CHECK_C_FLAG("${flags}" GROUPS OPTIMIZE_C_FLAGS VARS pgo_flags_found)
         CHECK_CXX_FLAG("${flags}" GROUPS OPTIMIZE_CXX_FLAGS)

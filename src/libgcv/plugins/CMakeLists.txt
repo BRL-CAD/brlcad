@@ -27,14 +27,6 @@ function(LIBGCV_ADD_PLUGIN plugin_name sources libs)
     endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
   endif(NOT CMAKE_CONFIGURATION_TYPES)
 
-  # We're using GCV_EXPORT for these plugins, so we need to set the DLL_EXPORTS accordingly
-  if(HIDE_INTERNAL_SYMBOLS)
-    set_property(TARGET ${target_name} APPEND PROPERTY COMPILE_DEFINITIONS "GCV_DLL_EXPORTS")
-    if (TARGET ${target_name}-obj)
-      set_property(TARGET ${target_name}-obj APPEND PROPERTY COMPILE_DEFINITIONS "GCV_DLL_EXPORTS")
-    endif (TARGET ${target_name}-obj)
-  endif(HIDE_INTERNAL_SYMBOLS)
-
   install(TARGETS ${target_name}
     RUNTIME DESTINATION ${BIN_DIR}/${LIBGCV_PLUGINS_DIRECTORY}
     LIBRARY DESTINATION ${LIB_DIR}/${LIBGCV_PLUGINS_DIRECTORY}

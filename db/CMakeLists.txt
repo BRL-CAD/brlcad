@@ -53,21 +53,15 @@ function(ADD_G_TARGET in_model folder)
   # the sense that it uses libgcv...)
   if(${MODEL_TYPE} STREQUAL "3dm")
 
-    # Because we won't know the output directory in the script reliably until run time,
-    # we append CURRENT_BUILD_DIR as a string to the arguments - it is the script's
-    # responsibility to handle it correctly at run time.
-    set(CMD_ARGS "-o" "CURRENT_BUILD_DIR/${output_file}" "${CMAKE_CURRENT_SOURCE_DIR}/${in_model}")
-
+    set(INPUT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/${in_model}")
+    set(OUTPUT_FILE "${output_file}")
     # Use the model name for the script, since the output file is specific to this input
-    set(script_file "${CMAKE_CURRENT_BINARY_DIR}/${in_model_root}.cmake")
-
-    # We know enough - write the script
-    generate_cmd_script(3dm-g "${script_file}" OLOG "${log_file}" ELOG "${log_file}" CARGS "${CMD_ARGS}")
+    configure_file("${CMAKE_SOURCE_DIR}/db/conv_run.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${in_model_root}.cmake" @ONLY)
 
     # Define the target
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}
-      COMMAND ${CMAKE_COMMAND} -P "${script_file}"
+      COMMAND ${CMAKE_COMMAND} -DEXEC=$<TARGET_FILE:3dm-g> -P "${CMAKE_CURRENT_BINARY_DIR}/${in_model_root}.cmake"
       DEPENDS 3dm-g ${CMAKE_CURRENT_SOURCE_DIR}/${in_model}
       )
 

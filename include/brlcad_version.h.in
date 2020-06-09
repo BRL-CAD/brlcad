@@ -36,6 +36,15 @@
 
 #include "common.h"
 
+/* If the caller is not using this correctly per the above NOTE, issue a
+ * message about it but don't hault the build.  Usage without defines set isn't
+ * correct, but will probably function anyway... */
+#if !defined(BRLCADBUILD)
+#  pragma message "Warning: included brlcad_version.h (compile-time API) without BRLCADBUILD defined"
+#endif
+#if !defined(HAVE_CONFIG_H)
+#  pragma message "Warning: included brlcad_version.h (compile-time API) without HAVE_CONFIG_H defined"
+#endif
 
 /**************************************************/
 /* Compile-time version information (discouraged) */

@@ -33,10 +33,8 @@ set(burst_noinst_HEADERS
   ascii.h
   burst.h
   extern.h
-  Hm.h
   Mm.h
   Sc.h
-  trie.h
   )
 CMAKEFILES(${burst_noinst_HEADERS} burst.format)
 

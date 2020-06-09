@@ -149,51 +149,11 @@ See this link for help in installing fop 1.0 and saxon-he on Ubuntu:
 VALIDATION
 ----------
 
-It is possible to add a validation step to DocBook compilation by
-defining the CMake variable BRLCAD_EXTRADOCS_VALIDATE to ON.
+It is possible to add a validation step to DocBook compilation by defining the
+CMake variable BRLCAD_EXTRADOCS_VALIDATE to ON.  This will use xmllint to
+validate the xml files as they are built.
 
-By default, this will use xmllint to validate the xml files as
-they are built.
-
-In order to use a different validation program the user must obtain some
-external tools that are not presently part of the BRL-CAD package:
-
-  For the 'msv' validation method (a recommended method):
-
-    * msv
-	Oracle Multi-Schema XML Validator (MSV) (see http://msv.java.net/)
-
-    * Java
-	a working Java run-time environment
-
-  For the 'nvdl' validation method:
-
-    * onvdl.jar
-	a Java jar file with the oNVDL validation tool (see
-	https://sourceforge.net/projects/onvdl/
-
-    * Java
-	a working Java run-time environment
-
-  For the 'rnv' validation method:
-
-    * rnv
-	http://sourceforge.net/projects/rnv/
-
-    * expat library
-	present in most Linux/Unix distributions, see
-	http://expat.sourceforge.net/
-
-To use these tools, a <toolname>.cmake.in file must be present
-in the misc/CMake source directory.  This file tells CMake how
-to run the tool in question.  Examples for msv and rnv are already
-present - see misc/CMake/rnv.cmake.in and misc/CMake/msv.cmake.in
-
-Once the correct file is present, configure CMake with options
-similar to the following (alter for your specific tool):
-
-cmake .. -DBRLCAD_EXTRADOCS_VALIDATE=ON -DVALIDATE_EXECUTABLE=msv
-
+By default, this option is enable if the BRL-CAD strict build is enabled.
 
 OTHER CONSIDERATIONS
 --------------------

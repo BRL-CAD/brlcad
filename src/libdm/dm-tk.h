@@ -31,15 +31,23 @@
 #define NUM_PIXELS 216    /* CUBE_DIMENSION * CUBE_DIMENSION * CUBE_DIMENSION */
 #define ColormapNull (Colormap *)NULL
 
+#include "tcl.h"
+#include "tk.h"
+
 struct tk_vars {
+
+    Tk_PhotoHandle img;
+
     GC gc;
+    unsigned long bd, bg, fg;   /* color of border, background, foreground */
+#if 0
     Pixmap pix;
     fastf_t *xmat;
     mat_t mod_mat;		/* default model transformation matrix */
     mat_t disp_mat;		/* display transformation matrix */
     int is_trueColor;
-    unsigned long bd, bg, fg;   /* color of border, background, foreground */
     unsigned long pixels[NUM_PIXELS];
+#endif
 };
 
 #endif /* DM_TK_H */

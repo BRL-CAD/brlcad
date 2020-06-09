@@ -10,7 +10,7 @@ execute_process(
   )
 if(repository_result)
   file(APPEND ${LOGFILE} "${repository_log}\n")
-  message(FATAL_ERROR "[repository check] Failure: ${license_result}\n")
+  message(FATAL_ERROR "[repository check] Failure: ${repository_result} - see details in log file: ${LOGFILE}\n")
 endif(repository_result)
 
 # Local Variables:

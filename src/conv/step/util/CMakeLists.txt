@@ -36,7 +36,7 @@ if (HIDE_INTERNAL_SYMBOLS)
     SC_UTILS_DLL_IMPORTS
     )
   list(APPEND list_elements_IMPORTS ${list_elements_IMPORTS})
-  set_target_properties(list_elements PROPERTIES COMPILE_DEFINITIONS "${list_elements_IMPORTS}")
+  set_property(TARGET list_elements APPEND PROPERTY COMPILE_DEFINITIONS "${list_elements_IMPORTS}")
 endif (HIDE_INTERNAL_SYMBOLS)
 
 CMAKEFILES(CMakeLists.txt)

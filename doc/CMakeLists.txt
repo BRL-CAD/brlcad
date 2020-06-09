@@ -212,6 +212,10 @@ CMAKEFILES(
   STARTERS
   STRATEGY
   notes/bsd_semaphore_bug.txt
+  notes/cmake_paths/CMakeLists.txt
+  notes/cmake_paths/README.txt
+  notes/cmake_paths/dir_info.c
+  notes/cmake_paths/test.cmake.in
   notes/cmake_vars.txt
   notes/csv_to_comgeom.txt
   notes/implicit_constraints.txt
