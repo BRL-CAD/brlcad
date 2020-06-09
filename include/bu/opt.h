@@ -362,6 +362,9 @@ BU_EXPORT extern char *bu_opt_describe(const struct bu_opt_desc *ds, struct bu_o
  * bu_opt_data will point to the results of the string->[type]
  * translation in order to allow a calling program to use the
  * int/long/etc. without having to repeat the conversion.
+ *
+ * These functions should return -1 if there was a problem processing
+ * the value.
  */
 /** @{ */
 
