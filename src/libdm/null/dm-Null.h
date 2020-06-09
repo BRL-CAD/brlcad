@@ -29,164 +29,176 @@
 
 #include "dm.h"
 
+#ifndef DM_NULL_EXPORT
+#  if defined(DM_DLL_EXPORTS) && defined(DM_DLL_IMPORTS)
+#    error "Only DM_DLL_EXPORTS or DM_DLL_IMPORTS can be defined, not both."
+#  elif defined(DM_DLL_EXPORTS)
+#    define DM_NULL_EXPORT COMPILER_DLLEXPORT
+#  elif defined(DM_DLL_IMPORTS)
+#    define DM_NULL_EXPORT COMPILER_DLLIMPORT
+#  else
+#    define DM_NULL_EXPORT
+#  endif
+#endif
+
 __BEGIN_DECLS
 
-extern struct dm dm_null;
+DM_NULL_EXPORT extern struct dm dm_null;
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_close(struct dm *dmp);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_drawBegin(struct dm *dmp);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_drawEnd(struct dm *dmp);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_normal(struct dm *dmp);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_loadPMatrix(struct dm *dmp, fastf_t *mat);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_drawLine2D(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_drawLines3D(struct dm *dmp, int npoints, point_t *points, int sflag);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_drawPoint3D(struct dm *dmp, point_t point);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_drawPoints3D(struct dm *dmp, int npoints, point_t *points);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_drawVList(struct dm *dmp, struct bn_vlist *vp);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_drawVListHiddenLine(struct dm *dmp, struct bn_vlist *vp);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_setLineAttr(struct dm *dmp, int width, int style);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_configureWin(struct dm *dmp, int force);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_setWinBounds(struct dm *dmp, fastf_t *w);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_setLight(struct dm *dmp, int light_on);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_setTransparency(struct dm *dmp, int transparency);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_setDepthMask(struct dm *dmp, int mask);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_setZBuffer(struct dm *dmp, int zbuffer_on);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_debug(struct dm *dmp, int lvl);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_beginDList(struct dm *dmp, unsigned int list);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_endDList(struct dm *dmp);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_drawDList(unsigned int list);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_freeDLists(struct dm *dmp, unsigned int list, int range);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_genDLists(struct dm *dmp, size_t range);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_getDisplayImage(struct dm *dmp, unsigned char **image);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_fg(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_bg(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_reshape(struct dm *dmp, int width, int height);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_makeCurrent(struct dm *dmp);
 
 
-extern void
+DM_NULL_EXPORT extern void
 null_processEvents(struct dm *dmp);
 
 
-extern int
+DM_NULL_EXPORT extern int
 null_openFb(struct dm *dmp);
 
 __END_DECLS
