@@ -26,6 +26,9 @@
 #define BURST_BURST_H
 
 #include "common.h"
+#include <stdio.h> /* for FILE */
+
+#include "bu/vls.h"
 
 #define LNBUFSZ         1330    /* buffer for one-line messages */
 #define TITLE_LEN       72
@@ -111,9 +114,9 @@ struct burst_state {
     char cmdname[LNBUFSZ];     /* */
     char colorfile[LNBUFSZ];   /* ident range-to-color file name */
     char critfile[LNBUFSZ];    /* input file for critical components */
-    char errfile[LNBUFSZ];     /* errors/diagnostics log file name */
+    FILE *errfile;             /* errors/diagnostics log file */
     char fbfile[LNBUFSZ];      /* frame buffer image file name */
-    char gedfile[LNBUFSZ];     /* MGED data base file name */
+    struct bu_vls gedfile;     /* MGED data base file name */
     char gridfile[LNBUFSZ];    /* saved grid (2-d shots) file name */
     char histfile[LNBUFSZ];    /* histogram file name (statistics) */
     char objects[LNBUFSZ];     /* list of objects from MGED file */

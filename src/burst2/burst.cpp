@@ -95,9 +95,9 @@ burst_state_init(struct burst_state *s)
     memset(s->cmdname, 0, LNBUFSZ);
     memset(s->colorfile, 0, LNBUFSZ);
     memset(s->critfile, 0, LNBUFSZ);
-    memset(s->errfile, 0, LNBUFSZ);
+    s->errfile = NULL;
     memset(s->fbfile, 0, LNBUFSZ);
-    memset(s->gedfile, 0, LNBUFSZ);
+    bu_vls_init(&s->gedfile);
     memset(s->gridfile, 0, LNBUFSZ);
     memset(s->histfile, 0, LNBUFSZ);
     memset(s->objects, 0, LNBUFSZ);
@@ -292,56 +292,201 @@ _burst_cmd_enclose_target(void *bs, int UNUSED(argc), const char **UNUSED(argv))
 extern "C" int
 _burst_cmd_enclose_portion(void *bs, int argc, const char **argv)
 {
+    int ret = BRLCAD_OK;
     struct burst_state *s = (struct burst_state *)bs;
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     if (!s || !argc || !argv) return BRLCAD_ERROR;
 
-    bu_log("enclose-portion\n");
-    return BRLCAD_OK;
+    if (argc != 5) {
+	printf("Usage: enclose-portion left right bottom top\n");
+	return BRLCAD_ERROR;
+    }
+
+    if (bu_opt_fastf_t(&msg, 1, &argv[1], (void *)&s->gridlf) < 0) {
+	printf("problem reading left border of grid: %s\n", bu_vls_cstr(&msg));
+	ret = BRLCAD_ERROR;
+    }
+    /* convert to mm */
+    s->gridlf = s->gridlf * s->unitconv;
+
+    if (bu_opt_fastf_t(&msg, 1, &argv[2], (void *)&s->gridrt) < 0) {
+	printf("problem reading right border of grid: %s\n", bu_vls_cstr(&msg));
+	ret = BRLCAD_ERROR;
+    }
+    /* convert to mm */
+    s->gridrt = s->gridrt * s->unitconv;
+
+    if (bu_opt_fastf_t(&msg, 1, &argv[3], (void *)&s->griddn) < 0) {
+	printf("problem reading bottom border of grid: %s\n", bu_vls_cstr(&msg));
+	ret = BRLCAD_ERROR;
+    }
+    /* convert to mm */
+    s->griddn = s->griddn * s->unitconv;
+
+    if (bu_opt_fastf_t(&msg, 1, &argv[4], (void *)&s->gridup) < 0) {
+	printf("problem reading top border of grid: %s\n", bu_vls_cstr(&msg));
+	ret = BRLCAD_ERROR;
+    }
+    /* convert to mm */
+    s->gridup = s->gridup * s->unitconv;
+
+    bu_vls_free(&msg);
+    return ret;
 }
 
 extern "C" int
 _burst_cmd_error_file(void *bs, int argc, const char **argv)
 {
+    int ret = BRLCAD_OK;
     struct burst_state *s = (struct burst_state *)bs;
 
     if (!s || !argc || !argv) return BRLCAD_ERROR;
 
-    bu_log("error-file\n");
-    return BRLCAD_OK;
+    if (argc != 2) {
+	printf("Usage: error-file file\n");
+	return BRLCAD_ERROR;
+    }
+
+    /* If we had a previous file open, close it */
+    if (s->errfile) {
+	fclose(s->errfile);
+	s->errfile = NULL;
+    }
+
+    /* If we're given a NULL argument, disable the error file */
+    if (BU_STR_EQUAL(argv[1], "NULL") || BU_STR_EQUAL(argv[1], "/dev/NULL")) {
+	return ret;
+    }
+
+    /* Try to open the file - we want to write messages to the file
+     * as they are generated. */
+    s->errfile = fopen(argv[1], "wb");
+    if (!s->errfile) {
+    	printf("failed to open error file: %s\n", argv[1]);
+	ret = BRLCAD_ERROR;
+    }
+
+    return ret;
 }
 
 extern "C" int
-_burst_cmd_execute(void *bs, int argc, const char **argv)
+_burst_cmd_execute(void *bs, int UNUSED(argc), const char **UNUSED(argv))
 {
     struct burst_state *s = (struct burst_state *)bs;
 
-    if (!s || !argc || !argv) return BRLCAD_ERROR;
+    if (!s) return BRLCAD_ERROR;
 
-    bu_log("execute\n");
+    if (!bu_vls_strlen(&s->gedfile)) {
+    	printf("Execute failed: no target file has been specified\n");
+	return BRLCAD_ERROR;
+    }
+
+    // TODO
+    //ret = execute_run(s);
+
     return BRLCAD_OK;
 }
 
 extern "C" int
 _burst_cmd_grid_file(void *bs, int argc, const char **argv)
 {
+    int ret = BRLCAD_OK;
     struct burst_state *s = (struct burst_state *)bs;
 
     if (!s || !argc || !argv) return BRLCAD_ERROR;
 
-    bu_log("grid-file\n");
-    return BRLCAD_OK;
+    if (argc != 2) {
+	printf("Usage: grid-file file\n");
+	return BRLCAD_ERROR;
+    }
+
+    /* If we had a previous file open, close it */
+    if (s->gridfp) {
+	fclose(s->gridfp);
+	s->gridfp = NULL;
+    }
+
+    /* If we're given a NULL argument, disable the grid file */
+    if (BU_STR_EQUAL(argv[1], "NULL") || BU_STR_EQUAL(argv[1], "/dev/NULL")) {
+	return ret;
+    }
+
+    /* Try to open the file */
+    s->gridfp = fopen(argv[1], "wb");
+    if (!s->gridfp) {
+    	printf("failed to open grid file: %s\n", argv[1]);
+	ret = BRLCAD_ERROR;
+    }
+
+    return ret;
 }
 
 extern "C" int
 _burst_cmd_ground_plane(void *bs, int argc, const char **argv)
 {
+    int ret = BRLCAD_OK;
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
     struct burst_state *s = (struct burst_state *)bs;
 
     if (!s || !argc || !argv) return BRLCAD_ERROR;
 
-    bu_log("ground-plane\n");
-    return BRLCAD_OK;
+    if (argc != 2 && argc != 7) {
+	printf("Usage: ground-plane no|yes height xpos xneg ypos yneg\n");
+	return BRLCAD_ERROR;
+    }
+
+    int tval = bu_str_true(argv[1]);
+    int fval = bu_str_false(argv[1]);
+
+    if (!tval && !fval) {
+    	printf("Invalid boolean string: %s\n", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    s->groundburst = (fval) ? 0 : tval;
+
+    if (!s->groundburst) {
+	return ret; 
+    }
+
+    if (bu_opt_fastf_t(&msg, 1, &argv[2], (void *)&s->grndht) < 0) {
+	printf("problem reading distance of target origin above ground plane: %s\n", bu_vls_cstr(&msg));
+	ret = BRLCAD_ERROR;
+    }
+    /* convert to mm */
+    s->grndht = s->grndht * s->unitconv;
+
+    if (bu_opt_fastf_t(&msg, 1, &argv[2], (void *)&s->grndfr) < 0) {
+	printf("problem reading distance out positive X-axis of target to edge: %s\n", bu_vls_cstr(&msg));
+	ret = BRLCAD_ERROR;
+    }
+    /* convert to mm */
+    s->grndfr = s->grndfr * s->unitconv;
+
+    if (bu_opt_fastf_t(&msg, 1, &argv[2], (void *)&s->grndbk) < 0) {
+	printf("problem reading distance out negative X-axis of target to edge: %s\n", bu_vls_cstr(&msg));
+	ret = BRLCAD_ERROR;
+    }
+    /* convert to mm */
+    s->grndbk = s->grndbk * s->unitconv;
+
+    if (bu_opt_fastf_t(&msg, 1, &argv[2], (void *)&s->grndlf) < 0) {
+	printf("problem reading distance out positive Y-axis of target to edge: %s\n", bu_vls_cstr(&msg));
+	ret = BRLCAD_ERROR;
+    }
+    /* convert to mm */
+    s->grndlf = s->grndlf * s->unitconv;
+
+    if (bu_opt_fastf_t(&msg, 1, &argv[2], (void *)&s->grndrt) < 0) {
+	printf("problem reading distance out negative Y-axis of target to edge: %s\n", bu_vls_cstr(&msg));
+	ret = BRLCAD_ERROR;
+    }
+    /* convert to mm */
+    s->grndrt = s->grndrt * s->unitconv;
+
+    bu_vls_free(&msg);
+    return ret;
 }
 
 extern "C" int
