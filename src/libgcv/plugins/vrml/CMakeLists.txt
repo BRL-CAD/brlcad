@@ -10,7 +10,7 @@ set(LIBGCV_VRML_SOURCES
   )
 
 
-LIBGCV_ADD_PLUGIN(vrml "${LIBGCV_VRML_SOURCES}" "libwdb;librt;libbn;libbu")
+LIBGCV_ADD_PLUGIN(vrml "${LIBGCV_VRML_SOURCES}" "librt;libbn;libbu")
 
 CMAKEFILES(
   CMakeLists.txt

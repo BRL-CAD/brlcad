@@ -483,7 +483,7 @@ extern "C"
 
     static const struct gcv_filter * const filters[] = {&gcv_conv_gdal_read, NULL};
     const struct gcv_plugin gcv_plugin_info_s = { filters };
-    GCV_EXPORT const struct gcv_plugin *gcv_plugin_info(){return &gcv_plugin_info_s;}
+    COMPILER_DLLEXPORT const struct gcv_plugin *gcv_plugin_info(){return &gcv_plugin_info_s;}
 }
 
 // Local Variables:

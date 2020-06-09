@@ -21,6 +21,8 @@ set(LIBGCV_SOURCES
   bottess.c
   facetize.c
   gcv.c
+  region_end.c
+  region_end_mc.c
   tri_intersect.c
   )
 
@@ -30,9 +32,6 @@ set_target_properties(libgcv PROPERTIES VERSION 20.0.1 SOVERSION 20)
 set_property(SOURCE gcv.c APPEND PROPERTY COMPILE_DEFINITIONS "LIBGCV_PLUGINS_DIRECTORY=\"${LIBGCV_PLUGINS_DIRECTORY}\"")
 set_property(SOURCE gcv.c APPEND PROPERTY COMPILE_DEFINITIONS "LIBGCV_PLUGINS_PATH=\"${LIBGCV_PLUGINS_PATH}\"")
 set_property(SOURCE gcv.c APPEND PROPERTY COMPILE_DEFINITIONS "LIBGCV_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\"")
-
-# Make sure anyone building the library builds the plugins
-add_dependencies(libgcv libgcv_plugins)
 
 enable_testing()
 BRLCAD_ADDEXEC(test_bottess test_bottess.c libgcv NO_INSTALL)

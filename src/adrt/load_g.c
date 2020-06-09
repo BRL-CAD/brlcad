@@ -54,7 +54,7 @@ TIE_3 **tribuf;
 static void nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, int region_id, int material_id, float color[3], void *client_data);
 
 struct gcv_data {
-    struct rt_region_end_data region_end_data;
+    struct gcv_region_end_data region_end_data;
     struct adrt_mesh_s **meshes;
 };
 static struct gcv_data gcvwriter = {{nmg_to_adrt_gcvwrite, NULL}, NULL};
@@ -309,7 +309,7 @@ load_g(struct tie_s *tie, const char *db, int argc, const char **argv, struct ad
 			1,			/* ncpu */
 			&tree_state,		/* initial tree state */
 			nmg_to_adrt_regstart,	/* region start function */
-			rt_region_end,		/* region end function */
+			gcv_region_end,		/* region end function */
 			nmg_booltree_leaf_tess,	/* leaf func */
 			(void *)&gcvwriter);	/* client data */
 
