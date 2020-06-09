@@ -39,6 +39,7 @@ extern "C" {
 #include "bu/str.h"
 #include "bu/exit.h"
 #include "bu/log.h"
+#include "bu/units.h"
 #include "bu/vls.h"
 
 #include "fb.h"
@@ -170,24 +171,63 @@ burst_state_init(struct burst_state *s)
 extern "C" int
 _burst_cmd_attack_dir(void *bs, int argc, const char **argv)
 {
+    int ret = BRLCAD_OK;
     struct burst_state *s = (struct burst_state *)bs;
+    struct bu_vls msg = BU_VLS_INIT_ZERO;
 
     if (!s || !argc || !argv) return BRLCAD_ERROR;
 
-    bu_log("attack-direction\n");
-    return BRLCAD_OK;
+    if (argc != 3) {
+	printf("Usage: attack-direction az(deg) el(deg)\n");
+	return BRLCAD_ERROR;
+    }
+
+    if (bu_opt_fastf_t(&msg, 1, &argv[1], (void *)&s->viewazim) < 0) {
+	printf("problem reading azimuth: %s\n", bu_vls_cstr(&msg));
+	ret = BRLCAD_ERROR;
+    }
+
+    if (bu_opt_fastf_t(&msg, 1, &argv[2], (void *)&s->viewelev) < 0) {
+	printf("problem reading elevation: %s\n", bu_vls_cstr(&msg));
+	ret = BRLCAD_ERROR;
+    }
+
+    // TODO logCMd
+
+    bu_vls_free(&msg);
+    return ret;
 }
 
 
 extern "C" int
 _burst_cmd_critical_comp_file(void *bs, int argc, const char **argv)
 {
+    int ret = BRLCAD_OK;
     struct burst_state *s = (struct burst_state *)bs;
 
     if (!s || !argc || !argv) return BRLCAD_ERROR;
 
-    bu_log("critical-comp-file\n");
-    return BRLCAD_OK;
+    if (argc != 2) {
+	printf("Usage: critical-comp-file file\n");
+	return BRLCAD_ERROR;
+    }
+
+    FILE *critfp = fopen(argv[1], "rb");
+    if (!critfp) {
+    	printf("failed to open critical component file: %s\n", argv[1]);
+	ret = BRLCAD_ERROR;
+    }
+
+    // TODO logCMd
+
+    printf("Reading critical component idents...\n");
+
+    // TODO readIdents
+
+    printf("Reading critical component idents... done.\n");
+    fclose(critfp);
+
+    return ret;
 }
 
 
@@ -198,7 +238,21 @@ _burst_cmd_deflect_spall_cone (void *bs, int argc, const char **argv)
 
     if (!s || !argc || !argv) return BRLCAD_ERROR;
 
-    bu_log("deflect-spall-cone\n");
+    if (argc != 2) {
+	printf("Usage: deflect-spall-cone yes|no\n");
+	return BRLCAD_ERROR;
+    }
+
+    int tval = bu_str_true(argv[1]);
+    int fval = bu_str_false(argv[1]);
+
+    if (!tval && !fval) {
+    	printf("Invalid boolean string: %s\n", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    s->deflectcone = (fval) ? 0 : tval;
+
     return BRLCAD_OK;
 }
 
@@ -209,18 +263,29 @@ _burst_cmd_dither_cells(void *bs, int argc, const char **argv)
 
     if (!s || !argc || !argv) return BRLCAD_ERROR;
 
-    bu_log("dither-cells\n");
+    if (argc != 2) {
+	printf("Usage: dither-cells yes|no\n");
+	return BRLCAD_ERROR;
+    }
+
+    int tval = bu_str_true(argv[1]);
+    int fval = bu_str_false(argv[1]);
+
+    if (!tval && !fval) {
+    	printf("Invalid boolean string: %s\n", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
+    s->dithercells = (fval) ? 0 : tval;
+
     return BRLCAD_OK;
 }
 
 extern "C" int
-_burst_cmd_enclose_target(void *bs, int argc, const char **argv)
+_burst_cmd_enclose_target(void *bs, int UNUSED(argc), const char **UNUSED(argv))
 {
     struct burst_state *s = (struct burst_state *)bs;
-
-    if (!s || !argc || !argv) return BRLCAD_ERROR;
-
-    bu_log("enclose-target\n");
+    s->firemode = FM_GRID;
     return BRLCAD_OK;
 }
 
@@ -508,7 +573,13 @@ _burst_cmd_units(void *bs, int argc, const char **argv)
 
     if (!s || !argc || !argv) return BRLCAD_ERROR;
 
-    bu_log("units\n");
+    s->unitconv =  bu_units_conversion(argv[1]);
+    if (NEAR_ZERO(s->unitconv, SMALL_FASTF)) {
+	printf("Invalid unit: %s\n", argv[1]);
+	s->unitconv = 1.0;
+	return BRLCAD_ERROR;
+    }
+
     return BRLCAD_OK;
 }
 
