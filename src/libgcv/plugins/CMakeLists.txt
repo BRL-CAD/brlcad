@@ -4,7 +4,7 @@ set_target_properties(libgcv_plugins PROPERTIES FOLDER "BRL-CAD Shared Libraries
 
 function(LIBGCV_ADD_PLUGIN plugin_name sources libs)
   set(target_name libgcv_${plugin_name})
-  BRLCAD_ADDLIB(${target_name} "${sources}" "${libs}" SHARED NO_INSTALL FOLDER "LibGCV Plugins")
+  BRLCAD_ADDLIB(${target_name} "${sources}" "libgcv;${libs}" SHARED NO_INSTALL FOLDER "LibGCV Plugins")
   target_include_directories(${target_name} PRIVATE "${GCV_INCLUDE_DIRS}")
 
   set(DIR_TYPES LIBRARY RUNTIME ARCHIVE)
@@ -26,15 +26,6 @@ function(LIBGCV_ADD_PLUGIN plugin_name sources libs)
       endforeach(DIR_TYPE ${DIR_TYPES})
     endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
   endif(NOT CMAKE_CONFIGURATION_TYPES)
-
-  # We're using GCV_EXPORT for these plugins, so we need to set the DLL_EXPORTS accordingly
-  if(HIDE_INTERNAL_SYMBOLS)
-    set_property(TARGET ${target_name} APPEND PROPERTY COMPILE_DEFINITIONS "GCV_DLL_EXPORTS")
-    set_property(TARGET ${target_name} APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS "GCV_DLL_EXPORTS")
-    if (TARGET ${target_name}-obj)
-      set_property(TARGET ${target_name}-obj APPEND PROPERTY COMPILE_DEFINITIONS "GCV_DLL_EXPORTS")
-    endif (TARGET ${target_name}-obj)
-  endif(HIDE_INTERNAL_SYMBOLS)
 
   install(TARGETS ${target_name}
     RUNTIME DESTINATION ${BIN_DIR}/${LIBGCV_PLUGINS_DIRECTORY}

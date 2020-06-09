@@ -211,8 +211,6 @@ set(LIBRT_SOURCES
   primitives/xxx/xxx.c
   reduce.c
   reduce_db.cpp
-  region_end.c
-  region_end_mc.c
   regionfix.c
   roots.c
   search.c

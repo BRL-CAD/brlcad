@@ -993,7 +993,7 @@ static const gcv_filter * const filters[] = {&gcv_conv_rhino_read, NULL};
 extern "C"
 {
     extern const gcv_plugin gcv_plugin_info_s = {rhino_read::filters};
-    GCV_EXPORT const struct gcv_plugin *
+    COMPILER_DLLEXPORT const struct gcv_plugin *
     gcv_plugin_info()
     {
 	return &gcv_plugin_info_s;

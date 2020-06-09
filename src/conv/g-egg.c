@@ -38,13 +38,14 @@
 #include <string.h>
 #include "bio.h"
 
+#include "gcv.h"
+
 /* interface headers */
 #include "bu/app.h"
 #include "bu/getopt.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
-#include "rt/tree.h"
 #include "raytrace.h"
 #include "gcv.h"
 
@@ -191,7 +192,7 @@ main(int argc, char *argv[])
 
     int i, use_mc = 0, use_bottess = 0;
     struct egg_conv_data conv_data;
-    struct rt_region_end_data gcvwriter = {nmg_to_egg, NULL};
+    struct gcv_region_end_data gcvwriter = {nmg_to_egg, NULL};
 
     gcvwriter.client_data = (void *)&conv_data;
 
@@ -326,7 +327,7 @@ main(int argc, char *argv[])
 			    ncpu,		/* ncpu */
 			    &tree_state,	/* state */
 			    NULL,		/* start func */
-			    use_mc?rt_region_end_mc:use_bottess?gcv_bottess_region_end:rt_region_end,	/* end func */
+			    use_mc?gcv_region_end_mc:use_bottess?gcv_bottess_region_end:gcv_region_end,	/* end func */
 			    use_mc?NULL:nmg_booltree_leaf_tess, /* leaf func */
 			    (void *)&gcvwriter);  /* client_data */
 	fprintf(conv_data.fp, "}\n");
