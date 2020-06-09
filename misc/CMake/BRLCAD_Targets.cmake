@@ -702,6 +702,11 @@ endfunction(BRLCAD_LIB_INCLUDE_DIRS)
 
 function(BRLCAD_MANAGE_FILES inputdata targetdir)
 
+  if (NOT TARGET managed_files)
+    add_custom_target(managed_files ALL)
+    set_target_properties(managed_files PROPERTIES FOLDER "BRL-CAD File Copying")
+  endif (NOT TARGET managed_files)
+
   string(RANDOM LENGTH 10 ALPHABET 0123456789 VAR_PREFIX)
   if(${ARGC} GREATER 2)
     CMAKE_PARSE_ARGUMENTS(${VAR_PREFIX} "EXEC" "FOLDER" "" ${ARGN})
@@ -815,6 +820,10 @@ function(BRLCAD_MANAGE_FILES inputdata targetdir)
   add_custom_target(${targetname}_cp ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/${targetname}.sentinel")
   set_target_properties(${targetname}_cp PROPERTIES FOLDER "BRL-CAD File Copying")
   BRLCAD_ADD_DIR_LIST_ENTRY(DATA_TARGETS "${CMAKE_CURRENT_BINARY_DIR}" ${targetname}_cp)
+
+  # Because the target name for managed files is likely cryptic, we add a dependency to the managed_files target
+  # so this poriton of the logic can be referenced
+  add_dependencies(managed_files ${targetname}_cp)
 
   # Set the FOLDER property.  If the target has supplied a folder, use
   # that as a subfolder

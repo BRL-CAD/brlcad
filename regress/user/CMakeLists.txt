@@ -20,6 +20,7 @@ set_property(DIRECTORY PROPERTY INCLUDE_DIRECTORIES "")
 # defintions or other magic specific to BRL-CAD's internal build.
 add_executable(cad_user cad_user.c)
 target_link_libraries(cad_user libged)
+add_dependencies(cad_user managed_files)
 
 # Include only the folder with the build-output headers (this will be a
 # superset of what will be installed, but is the best available option without
