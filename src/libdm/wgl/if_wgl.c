@@ -2051,7 +2051,7 @@ struct fb wgl_interface = { &wgl_interface_impl };
 #ifdef DM_PLUGIN
 static const struct fb_plugin finfo = { &wgl_interface };
 
-DM_EXPORT const struct fb_plugin *fb_plugin_info()
+COMPILER_DLLEXPORT const struct fb_plugin *fb_plugin_info()
 {
     return &finfo;
 }

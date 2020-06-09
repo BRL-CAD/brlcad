@@ -3089,7 +3089,7 @@ struct dm dm_ogl = { &dm_ogl_impl };
 #ifdef DM_PLUGIN
 static const struct dm_plugin pinfo = { &dm_ogl };
 
-DM_EXPORT const struct dm_plugin *dm_plugin_info()
+COMPILER_DLLEXPORT const struct dm_plugin *dm_plugin_info()
 {
     return &pinfo;
 }

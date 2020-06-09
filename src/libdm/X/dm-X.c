@@ -2152,7 +2152,7 @@ struct dm dm_X = { &dm_X_impl };
 #ifdef DM_PLUGIN
 static const struct dm_plugin pinfo = { &dm_X };
 
-DM_EXPORT const struct dm_plugin *dm_plugin_info()
+COMPILER_DLLEXPORT const struct dm_plugin *dm_plugin_info()
 {
     return &pinfo;
 }

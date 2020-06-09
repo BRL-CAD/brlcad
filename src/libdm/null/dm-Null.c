@@ -398,7 +398,7 @@ struct dm dm_null = { &dm_null_impl };
 #ifdef DM_PLUGIN
 const struct dm_plugin pinfo = { &dm_null };
 
-DM_EXPORT const struct dm_plugin *dm_plugin_info()
+COMPILER_DLLEXPORT const struct dm_plugin *dm_plugin_info()
 {
     return &pinfo;
 }

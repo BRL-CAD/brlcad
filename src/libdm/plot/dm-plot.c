@@ -761,7 +761,7 @@ struct dm dm_plot = { &dm_plot_impl };
 #ifdef DM_PLUGIN
 const struct dm_plugin pinfo = { &dm_plot };
 
-DM_EXPORT const struct dm_plugin *dm_plugin_info()
+COMPILER_DLLEXPORT const struct dm_plugin *dm_plugin_info()
 {
     return &pinfo;
 }

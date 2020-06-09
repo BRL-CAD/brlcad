@@ -32,7 +32,6 @@
 #include "dm.h"
 #include "../include/private.h"
 
-
 struct dm *
 txt_open(void *interp, int argc, const char **argv)
 {
@@ -446,7 +445,7 @@ struct dm dm_txt = { &dm_txt_impl };
 #ifdef DM_PLUGIN
 const struct dm_plugin pinfo = { &dm_txt };
 
-DM_EXPORT const struct dm_plugin *dm_plugin_info()
+COMPILER_DLLEXPORT const struct dm_plugin *dm_plugin_info()
 {
     return &pinfo;
 }
