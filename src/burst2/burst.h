@@ -67,6 +67,7 @@ struct colors
 #define COLORS_NULL (Colors *) 0
 
 struct burst_state {
+    int quit;                  /* 0 = continue, 1 = quit */
     Colors colorids;           /* ident range to color mappings for plots */
     fb *fbiop;                 /* frame buffer specific access from libfb */
     FILE *burstfp;             /* input stream for burst point locations */
