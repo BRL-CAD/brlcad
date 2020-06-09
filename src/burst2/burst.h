@@ -34,6 +34,7 @@
 #define TITLE_LEN       72
 #define TIMER_LEN       72
 
+/* default parameters */
 #define DFL_AZIMUTH     0.0
 #define DFL_BARRIERS    100
 #define DFL_BDIST       0.0
@@ -46,9 +47,14 @@
 #define DFL_OVERLAPS    1
 #define DFL_RIPLEVELS   1
 
+/* firing mode bit definitions */
 #define FM_GRID  0      /* generate grid of shotlines */
 #define FM_DFLT  FM_GRID
-
+#define FM_PART  (1)    /* bit 0: ON = partial envelope, OFF = full */
+#define FM_SHOT  (1<<1) /* bit 1: ON = discrete shots, OFF = gridding */
+#define FM_FILE  (1<<2) /* bit 2: ON = file input, OFF = direct input */
+#define FM_3DIM  (1<<3) /* bit 3: ON = 3-D coords., OFF = 2-D coords */
+#define FM_BURST (1<<4) /* bit 4: ON = discrete burst points, OFF = shots */
 
 typedef struct ids Ids;
 struct ids
@@ -115,13 +121,13 @@ struct burst_state {
     char colorfile[LNBUFSZ];   /* ident range-to-color file name */
     char critfile[LNBUFSZ];    /* input file for critical components */
     FILE *errfile;             /* errors/diagnostics log file */
-    char fbfile[LNBUFSZ];      /* frame buffer image file name */
+    struct bu_vls fbfile;      /* frame buffer image file name */
     struct bu_vls gedfile;     /* MGED data base file name */
     char gridfile[LNBUFSZ];    /* saved grid (2-d shots) file name */
     char histfile[LNBUFSZ];    /* histogram file name (statistics) */
     char objects[LNBUFSZ];     /* list of objects from MGED file */
     char outfile[LNBUFSZ];     /* burst point library output file name */
-    char plotfile[LNBUFSZ];    /* 3-D UNIX plot file name (debugging) */
+    struct bu_vls plotfile;    /* 3-D UNIX plot file name (debugging) */
     char scrbuf[LNBUFSZ];      /* scratch buffer for temporary use */
     char scriptfile[LNBUFSZ];  /* shell script file name */
     char shotfile[LNBUFSZ];    /* input file of firing coordinates */
@@ -195,6 +201,9 @@ struct burst_state {
     /* signal handlers */
     void (*norml_sig)();       /* active during interactive operation */
     void (*abort_sig)();       /* active during ray tracing only */
+
+    /* command table for help printing */
+    const struct bu_cmdtab *cmds;
 };
 
 void burst_state_init(struct burst_state *s);
