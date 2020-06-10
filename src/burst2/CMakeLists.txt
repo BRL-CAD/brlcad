@@ -12,6 +12,7 @@ include_directories(${BURST_INCLUDE_DIRS})
 
 set(burst_SOURCES
   burst.cpp
+  idents.cpp
   ${LDIR}/utf8.c
   ${LDIR}/linenoise.c
   )

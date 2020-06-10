@@ -78,7 +78,7 @@ burst_state_init(struct burst_state *s)
 {
     s->quit = 0;
 
-    //Colors colorids;
+    BU_PTBL_INIT(&s->colorids);
     s->fbiop = NULL;
     s->burstfp = NULL;
     s->gridfp = NULL;
@@ -87,9 +87,9 @@ burst_state_init(struct burst_state *s)
     s->plotfp = NULL;
     s->shotfp = NULL;
     s->shotlnfp = NULL;
-    //Ids airids;
-    //Ids armorids;
-    //Ids critids;
+    BU_PTBL_INIT(&s->airids);
+    BU_PTBL_INIT(&s->armorids);
+    BU_PTBL_INIT(&s->critids);
     s->pixgrid = NULL;
     VSET(s->pixaxis, 255,   0,   0);
     VSET(s->pixbhit, 200, 255, 200);
