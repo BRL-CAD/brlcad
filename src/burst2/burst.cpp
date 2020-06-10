@@ -23,7 +23,12 @@
 
 #include "common.h"
 
-#include "bio.h"
+#include <cstdio>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -246,7 +251,7 @@ _burst_cmd_critical_comp_file(void *bs, int argc, const char **argv)
     FILE *critfp = fopen(argv[1], "rb");
     if (!critfp) {
     	printf("failed to open critical component file: %s\n", argv[1]);
-	ret = BRLCAD_ERROR;
+	return BRLCAD_ERROR;
     }
 
     // TODO logCMd
@@ -629,7 +634,7 @@ _burst_cmd_burst_air_file(void *bs, int argc, const char **argv)
     FILE *airfp = fopen(argv[1], "rb");
     if (!airfp) {
     	printf("failed to open burst air file: %s\n", argv[1]);
-	ret = BRLCAD_ERROR;
+	return BRLCAD_ERROR;
     }
 
     // TODO logCMd
@@ -995,7 +1000,7 @@ _burst_cmd_burst_armor_file(void *bs, int argc, const char **argv)
     FILE *armorfp = fopen(argv[1], "rb");
     if (!armorfp) {
     	printf("failed to open burst armor file: %s\n", argv[1]);
-	ret = BRLCAD_ERROR;
+	return BRLCAD_ERROR;
     }
 
     // TODO logCMd
@@ -1069,7 +1074,7 @@ _burst_cmd_read_input_file(void *bs, int argc, const char **argv)
     FILE *cmdfp = fopen(argv[1], "rb");
     if (!cmdfp) {
     	printf("failed to open command file: %s\n", argv[1]);
-	ret = BRLCAD_ERROR;
+	return BRLCAD_ERROR;
     }
 
     // TODO - use bu_cmd to process the lines in the file
@@ -1293,7 +1298,7 @@ _burst_cmd_write_input_file(void *bs, int argc, const char **argv)
     FILE *cmdfp = fopen(argv[1], "wb");
     if (!cmdfp) {
     	printf("failed to open cmd file for writing: %s\n", argv[1]);
-	ret = BRLCAD_ERROR;
+	return BRLCAD_ERROR;
     }
 
     fprintf(cmdfp, "%s", bu_vls_cstr(&s->cmdhist));
@@ -1467,7 +1472,7 @@ _burst_cmd_color_file(void *bs, int argc, const char **argv)
     FILE *colorfp = fopen(argv[1], "rb");
     if (!colorfp) {
     	printf("failed to open ident-to-color mapping file: %s\n", argv[1]);
-	ret = BRLCAD_ERROR;
+	return BRLCAD_ERROR;
     }
 
     // TODO logCMd
@@ -1632,10 +1637,27 @@ main(int argc, const char **argv)
     burst_state_init(&s);
     s.cmds = _burst_cmds;
 
-    /* If we have a file, batch mode it. */
-    if (argc > 1) {
-	argv++; argc--;
-	bu_exit(EXIT_SUCCESS, "Batch mode: [%s]\n", argv[0]);
+    /* If we have a batch file, process it. */
+    if (argc ) {
+	std::ifstream fs;
+	fs.open(argv[0]);
+	if (!fs.is_open()) {
+	    bu_log("Unable to open burst batch file: %s\n", argv[0]);
+	    return EXIT_FAILURE;
+	}
+	std::string bline;
+	while (std::getline(fs, bline)) {
+	    if (burst_process_line(&s, bline.c_str()) != BRLCAD_OK) {
+		bu_log("Error processing line: %s\n", bline.c_str());
+		fs.close();
+		return EXIT_FAILURE;
+	    }
+	    /* build up a command history buffer for write-input-file */
+	    bu_vls_printf(&s.cmdhist, "%s\n", bline.c_str());
+	}
+	fs.close();
+
+	return EXIT_SUCCESS;
     }
 
     /* Start the interactive loop */
