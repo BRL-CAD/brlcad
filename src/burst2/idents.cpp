@@ -98,16 +98,26 @@ readIdents(struct bu_ptbl *idlist, const char *fname)
 
     freeIdents(idlist); /* free old list if it exists */
 
+    std::regex num_regex("^\\s*([0-9]+)");
+    std::regex range_regex("\\s*([0-9]+)[-]*([0-9]+)");
     std::string iline;
     while (std::getline(fs, iline)) {
-	std::regex ident_regex("\\s+([0-9]+)-*([0-9]+).*");
-	std::smatch parsevar;
-	if (!std::regex_search(iline, parsevar, ident_regex)) {
+	if (!iline.length()) continue;
+	int lower;
+	int upper;
+	std::smatch nvar;
+	if (!std::regex_search(iline, nvar, num_regex)) {
 	    bu_log("Invalid ident line: %s\n", iline.c_str());
 	    continue;
 	}
-	int lower = std::stoi(parsevar[2]);
-	int upper = (parsevar.size() > 1) ? std::stoi(parsevar[3]) : lower;
+	std::smatch rvar;
+	if (std::regex_search(iline, rvar, range_regex)) {
+	    lower = std::stoi(rvar[1]);
+	    upper = std::stoi(rvar[2]);
+	} else {
+	    lower = std::stoi(nvar[1]);
+	    upper = lower;
+	}
 	struct ids *idp;
 	BU_GET(idp, struct ids);
 	idp->i_lower = lower;
@@ -144,8 +154,8 @@ readColors(struct bu_ptbl *idlist, const char *fname)
     freeColors(idlist); /* free old list if it exists */
 
     std::string iline;
+    std::regex color_regex("([0-9]+)\\s+([0-9]+)\\s+([0-9]+)\\s+([0-9]+)\\s+([0-9]+).*");
     while (std::getline(fs, iline)) {
-	std::regex color_regex("([0-9]+)\\s+([0-9]+)\\s+([0-9]+)\\s+([0-9]+)\\s+([0-9]+).*");
 	std::smatch parsevar;
 	if (!std::regex_search(iline, parsevar, color_regex)) {
 	    bu_log("Invalid colors line: %s\n", iline.c_str());
@@ -158,11 +168,11 @@ readColors(struct bu_ptbl *idlist, const char *fname)
 
 	struct colors *cdp;
 	BU_GET(cdp, struct colors);
-	cdp->c_lower = std::stoi(parsevar[2]);
-	cdp->c_upper = std::stoi(parsevar[3]);
-	cdp->c_rgb[0] = std::stoi(parsevar[4]);
-	cdp->c_rgb[1] = std::stoi(parsevar[5]);
-	cdp->c_rgb[2] = std::stoi(parsevar[6]);
+	cdp->c_lower = std::stoi(parsevar[1]);
+	cdp->c_upper = std::stoi(parsevar[2]);
+	cdp->c_rgb[0] = std::stoi(parsevar[3]);
+	cdp->c_rgb[1] = std::stoi(parsevar[4]);
+	cdp->c_rgb[2] = std::stoi(parsevar[5]);
 	bu_ptbl_ins(idlist, (long *)cdp);
     }
 

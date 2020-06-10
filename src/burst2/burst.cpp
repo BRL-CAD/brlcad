@@ -1109,8 +1109,8 @@ _burst_cmd_shotline_burst(void *bs, int argc, const char **argv)
 
     if (!s || !argc || !argv) return BRLCAD_ERROR;
 
-    if (argc < 2 || argc > 3) {
-	printf("Usage: shotline-burst no|yes no|yes\n");
+    if (argc != 2) {
+	printf("Usage: shotline-burst yes|no\n");
 	return BRLCAD_ERROR;
     }
 
@@ -1125,22 +1125,7 @@ _burst_cmd_shotline_burst(void *bs, int argc, const char **argv)
     s->shotburst = (fval) ? 0 : tval;
 
     if (s->shotburst) {
-
-	if (argc != 3) {
-	    printf("Usage: shotline-burst no|yes no|yes\n");
-	    return BRLCAD_ERROR;
-	}
-
-	tval = bu_str_true(argv[2]);
-	fval = bu_str_false(argv[2]);
-
-	if (!tval && !fval) {
-	    printf("Invalid boolean string: %s\n", argv[2]);
-	    return BRLCAD_ERROR;
-	}
-
-	s->reqburstair = (fval) ? 0 : tval;
-
+	s->reqburstair = s->shotburst;
 	s->firemode &= ~FM_BURST; /* disable discrete burst points */
     }
 
@@ -1185,7 +1170,6 @@ _burst_cmd_shotline_file(void *bs, int argc, const char **argv)
 	ret = BRLCAD_ERROR;
     }
 
-    bu_log("shotline-file\n");
     return ret;
 }
 
