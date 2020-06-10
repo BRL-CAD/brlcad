@@ -54,6 +54,9 @@ extern "C" {
 
 #define DEFAULT_BURST_PROMPT "burst> "
 
+/* Forward declare so we can use this function in a command
+ * called by this function */
+int burst_process_line(struct burst_state *s, const char *line);
 
 #define PURPOSEFLAG "--print-purpose"
 #define HELPFLAG "--print-help"
@@ -221,8 +224,6 @@ _burst_cmd_attack_dir(void *bs, int argc, const char **argv)
 	printf("problem reading elevation: %s\n", bu_vls_cstr(&msg));
 	ret = BRLCAD_ERROR;
     }
-
-    // TODO logCMd
 
     bu_vls_free(&msg);
     return ret;
@@ -1053,15 +1054,24 @@ _burst_cmd_read_input_file(void *bs, int argc, const char **argv)
 
     if (!s || !argc || !argv) return BRLCAD_ERROR;
 
-    FILE *cmdfp = fopen(argv[1], "rb");
-    if (!cmdfp) {
-    	printf("failed to open command file: %s\n", argv[1]);
+    std::ifstream fs;
+    fs.open(argv[1]);
+    if (!fs.is_open()) {
+	bu_log("Unable to open command file: %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
+    std::string bline;
+    while (std::getline(fs, bline)) {
+	if (burst_process_line(s, bline.c_str()) != BRLCAD_OK) {
+	    bu_log("Error processing line: %s\n", bline.c_str());
+	    fs.close();
+	    return BRLCAD_ERROR;
+	}
+	/* build up a command history buffer for write-input-file */
+	bu_vls_printf(&s->cmdhist, "%s\n", bline.c_str());
+    }
+    fs.close();
 
-    // TODO - use bu_cmd to process the lines in the file
-
-    fclose(cmdfp);
     return ret;
 }
 
