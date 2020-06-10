@@ -28,6 +28,7 @@
 #include "common.h"
 #include <stdio.h> /* for FILE */
 
+#include "bu/ptbl.h"
 #include "bu/vls.h"
 
 #define LNBUFSZ         1330    /* buffer for one-line messages */
@@ -56,28 +57,22 @@
 #define FM_3DIM  (1<<3) /* bit 3: ON = 3-D coords., OFF = 2-D coords */
 #define FM_BURST (1<<4) /* bit 4: ON = discrete burst points, OFF = shots */
 
-typedef struct ids Ids;
 struct ids
 {
     short i_lower;
     short i_upper;
-    Ids *i_next;
 };
-#define IDS_NULL (Ids *) 0
 
-typedef struct colors Colors;
 struct colors
 {
     short c_lower;
     short c_upper;
     unsigned char c_rgb[3];
-    Colors *c_next;
 };
-#define COLORS_NULL (Colors *) 0
 
 struct burst_state {
     int quit;                  /* 0 = continue, 1 = quit */
-    Colors colorids;           /* ident range to color mappings for plots */
+    struct bu_ptbl colorids;   /* ident range to color mappings for plots */
     fb *fbiop;                 /* frame buffer specific access from libfb */
     FILE *burstfp;             /* input stream for burst point locations */
     FILE *gridfp;              /* grid file output stream (2-d shots) */
@@ -87,9 +82,9 @@ struct burst_state {
     FILE *shotfp;              /* input stream for shot positions */
     FILE *shotlnfp;            /* shotline file output stream */
     struct bu_vls cmdhist;     /* interactive input logging (used to generated burst cmd files)*/
-    Ids airids;                /* burst air idents */
-    Ids armorids;              /* burst armor idents */
-    Ids critids;               /* critical component idents */
+    struct bu_ptbl airids;     /* burst air idents */
+    struct bu_ptbl armorids;   /* burst armor idents */
+    struct bu_ptbl critids;    /* critical component idents */
     unsigned char *pixgrid;    /* */
     unsigned char pixaxis[3];  /* grid axis */
     unsigned char pixbhit[3];  /* burst ray hit non-critical comps */
