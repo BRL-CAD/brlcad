@@ -204,6 +204,9 @@ struct burst_state {
 
 void burst_state_init(struct burst_state *s);
 
+int readIdents(struct bu_ptbl *idlist, const char *fname);
+int readColors(struct bu_ptbl *idlist, const char *fname);
+
 #endif  /* BURST_BURST_H */
 
 /*

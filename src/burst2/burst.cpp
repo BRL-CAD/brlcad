@@ -248,20 +248,14 @@ _burst_cmd_critical_comp_file(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    FILE *critfp = fopen(argv[1], "rb");
-    if (!critfp) {
-    	printf("failed to open critical component file: %s\n", argv[1]);
+    printf("Reading critical component idents...\n");
+
+    if (!readIdents(&s->critids, argv[1])) {
+	printf("failed to open critical component file: %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
 
-    // TODO logCMd
-
-    printf("Reading critical component idents...\n");
-
-    // TODO readIdents
-
     printf("Reading critical component idents... done.\n");
-    fclose(critfp);
 
     return ret;
 }
@@ -631,20 +625,14 @@ _burst_cmd_burst_air_file(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    FILE *airfp = fopen(argv[1], "rb");
-    if (!airfp) {
-    	printf("failed to open burst air file: %s\n", argv[1]);
+    printf("Reading burst air idents...\n");
+
+    if (!readIdents(&s->airids, argv[1])) {
+	printf("failed to open burst air idents file: %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
 
-    // TODO logCMd
-
-    printf("Reading burst air idents...\n");
-
-    // TODO readIdents
-
     printf("Reading burst air idents... done.\n");
-    fclose(airfp);
 
     return ret;
 }
@@ -997,20 +985,14 @@ _burst_cmd_burst_armor_file(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    FILE *armorfp = fopen(argv[1], "rb");
-    if (!armorfp) {
-    	printf("failed to open burst armor file: %s\n", argv[1]);
+    printf("Reading burst armor idents...\n");
+
+    if (!readIdents(&s->armorids, argv[1])) {
+	printf("failed to open burst air idents file: %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
 
-    // TODO logCMd
-
-    printf("Reading burst armor idents...\n");
-
-    // TODO readIdents
-
     printf("Reading burst armor idents... done.\n");
-    fclose(armorfp);
 
     return ret;
 }
@@ -1468,22 +1450,14 @@ _burst_cmd_color_file(void *bs, int argc, const char **argv)
 
     if (!s || !argc || !argv) return BRLCAD_ERROR;
 
+    printf("Reading ident-to-color mappings...\n");
 
-    FILE *colorfp = fopen(argv[1], "rb");
-    if (!colorfp) {
-    	printf("failed to open ident-to-color mapping file: %s\n", argv[1]);
+    if (!readColors(&s->colorids, argv[1])) {
+	printf("failed to open ident to color mappings file: %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
 
-    // TODO logCMd
-
-    printf("Reading ident-to-color mappings...\n");
-
-    // TODO readColors
-
     printf("Reading ident-to-color mappings... done.\n");
-
-    fclose(colorfp);
 
     return ret;
 }
