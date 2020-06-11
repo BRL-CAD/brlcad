@@ -276,7 +276,7 @@ _burst_cmd_critical_comp_file(void *bs, int argc, const char **argv)
     bu_vls_sprintf(&s->critfile, "%s", argv[1]);
 
     // Echo command (logCmd in original code)
-    printf("%s\t%s", argv[0], bu_vls_cstr(&s->critfile));
+    printf("%s\t%s\n", argv[0], bu_vls_cstr(&s->critfile));
 
     return ret;
 }
@@ -311,7 +311,7 @@ _burst_cmd_deflect_spall_cone(void *bs, int argc, const char **argv)
     s->deflectcone = (fval) ? 0 : tval;
 
     // Echo command (logCmd in original code)
-    printf("%s\t%s", argv[0], s->deflectcone ? "yes" : "no");
+    printf("%s\t%s\n", argv[0], s->deflectcone ? "yes" : "no");
 
     return BRLCAD_OK;
 }
@@ -345,7 +345,7 @@ _burst_cmd_dither_cells(void *bs, int argc, const char **argv)
     s->dithercells = (fval) ? 0 : tval;
 
     // Echo command (logCmd in original code)
-    printf("%s\t\t%s", argv[0], s->dithercells ? "yes" : "no");
+    printf("%s\t\t%s\n", argv[0], s->dithercells ? "yes" : "no");
 
     return BRLCAD_OK;
 }
@@ -409,7 +409,7 @@ _burst_cmd_enclose_portion(void *bs, int argc, const char **argv)
     }
 
     // Echo command (logCmd in original code)
-    printf("%s\t\t%g %g %g %g", argv[0], s->gridlf, s->gridrt, s->griddn, s->gridup);
+    printf("%s\t\t%g %g %g %g\n", argv[0], s->gridlf, s->gridrt, s->griddn, s->gridup);
 
     // After echoing, convert to mm
     s->gridlf /= s->unitconv;
@@ -460,7 +460,7 @@ _burst_cmd_error_file(void *bs, int argc, const char **argv)
     }
 
     // Echo command (logCmd in original code)
-    printf("%s\t\t%s", argv[0], argv[1]);
+    printf("%s\t\t%s\n", argv[0], argv[1]);
 
     return ret;
 }
@@ -527,7 +527,7 @@ _burst_cmd_grid_file(void *bs, int argc, const char **argv)
     bu_vls_sprintf(&s->gridfile, "%s", argv[1]);
 
     // Echo command (logCmd in original code)
-    printf("%s\t\t%s", argv[0], bu_vls_cstr(&s->gridfile));
+    printf("%s\t\t%s\n", argv[0], bu_vls_cstr(&s->gridfile));
 
     return ret;
 }
@@ -569,32 +569,32 @@ _burst_cmd_ground_plane(void *bs, int argc, const char **argv)
     }
 
     if (bu_opt_fastf_t(&msg, 1, &argv[2], (void *)&s->grndht) < 0) {
-	printf("problem reading distance of target origin above ground plane: %s\n", bu_vls_cstr(&msg));
+	brst_log(s, "problem reading distance of target origin above ground plane: %s\n", bu_vls_cstr(&msg));
 	ret = BRLCAD_ERROR;
     }
 
     if (bu_opt_fastf_t(&msg, 1, &argv[2], (void *)&s->grndfr) < 0) {
-	printf("problem reading distance out positive X-axis of target to edge: %s\n", bu_vls_cstr(&msg));
+	brst_log(s, "problem reading distance out positive X-axis of target to edge: %s\n", bu_vls_cstr(&msg));
 	ret = BRLCAD_ERROR;
     }
 
     if (bu_opt_fastf_t(&msg, 1, &argv[2], (void *)&s->grndbk) < 0) {
-	printf("problem reading distance out negative X-axis of target to edge: %s\n", bu_vls_cstr(&msg));
+	brst_log(s, "problem reading distance out negative X-axis of target to edge: %s\n", bu_vls_cstr(&msg));
 	ret = BRLCAD_ERROR;
     }
 
     if (bu_opt_fastf_t(&msg, 1, &argv[2], (void *)&s->grndlf) < 0) {
-	printf("problem reading distance out positive Y-axis of target to edge: %s\n", bu_vls_cstr(&msg));
+	brst_log(s, "problem reading distance out positive Y-axis of target to edge: %s\n", bu_vls_cstr(&msg));
 	ret = BRLCAD_ERROR;
     }
 
     if (bu_opt_fastf_t(&msg, 1, &argv[2], (void *)&s->grndrt) < 0) {
-	printf("problem reading distance out negative Y-axis of target to edge: %s\n", bu_vls_cstr(&msg));
+	brst_log(s, "problem reading distance out negative Y-axis of target to edge: %s\n", bu_vls_cstr(&msg));
 	ret = BRLCAD_ERROR;
     }
 
     // Echo command (logCmd in original code)
-    printf("%s\t\tyes %g %g %g %g %g", argv[0], s->grndht, s->grndfr, s->grndbk, s->grndlf, s->grndrt);
+    printf("%s\t\tyes %g %g %g %g %g\n", argv[0], s->grndht, s->grndfr, s->grndbk, s->grndlf, s->grndrt);
 
     /* after printing, convert to mm */
     s->grndht /= s->unitconv;
@@ -677,7 +677,7 @@ _burst_cmd_burst_air_file(void *bs, int argc, const char **argv)
     bu_vls_sprintf(&s->airfile, "%s", argv[1]);
 
     // Echo command (logCmd in original code)
-    printf("%s\t\t%s", argv[0], bu_vls_cstr(&s->airfile));
+    printf("%s\t\t%s\n", argv[0], bu_vls_cstr(&s->airfile));
 
     return ret;
 }
@@ -724,7 +724,7 @@ _burst_cmd_histogram_file(void *bs, int argc, const char **argv)
     bu_vls_sprintf(&s->histfile, "%s", argv[1]);
 
     // Echo command (logCmd in original code)
-    printf("%s\t\t%s", argv[0], bu_vls_cstr(&s->histfile));
+    printf("%s\t\t%s\n", argv[0], bu_vls_cstr(&s->histfile));
 
 
     return BRLCAD_OK;
@@ -751,7 +751,7 @@ _burst_cmd_image_file(void *bs, int argc, const char **argv)
     bu_vls_sprintf(&s->fbfile, "%s", argv[1]);
 
     // Echo command (logCmd in original code)
-    printf("%s\t\t%s", argv[0], bu_vls_cstr(&s->fbfile));
+    printf("%s\t\t%s\n", argv[0], bu_vls_cstr(&s->fbfile));
 
     return BRLCAD_OK;
 }
@@ -786,7 +786,7 @@ _burst_cmd_input_2d_shot(void *bs, int argc, const char **argv)
     }
 
     // Echo command (logCmd in original code)
-    printf("%s\t\t%g %g", argv[0], s->fire[X], s->fire[Y]);
+    printf("%s\t\t%g %g\n", argv[0], s->fire[X], s->fire[Y]);
 
     /* after printing, convert to mm */
     s->fire[X] /= s->unitconv;
@@ -833,7 +833,7 @@ _burst_cmd_input_3d_shot(void *bs, int argc, const char **argv)
     }
 
     // Echo command (logCmd in original code)
-    printf("%s\t\t%g %g %g", argv[0], s->fire[X], s->fire[Y], s->fire[Z]);
+    printf("%s\t\t%g %g %g\n", argv[0], s->fire[X], s->fire[Y], s->fire[Z]);
 
     /* after printing, convert to mm */
     s->fire[X] /= s->unitconv;
@@ -871,7 +871,7 @@ _burst_cmd_max_barriers(void *bs, int argc, const char **argv)
     }
 
     // Echo command (logCmd in original code)
-    printf("%s\t\t%d", argv[0], s->nbarriers);
+    printf("%s\t\t%d\n", argv[0], s->nbarriers);
 
     return ret;
 }
@@ -902,7 +902,7 @@ _burst_cmd_max_spall_rays(void *bs, int argc, const char **argv)
     }
 
     // Echo command (logCmd in original code)
-    printf("%s\t\t%d", argv[0], s->nspallrays);
+    printf("%s\t\t%d\n", argv[0], s->nspallrays);
 
     return ret;
 }
@@ -928,7 +928,7 @@ _burst_cmd_plot_file(void *bs, int argc, const char **argv)
     bu_vls_sprintf(&s->plotfile, "%s", argv[1]);
 
     // Echo command (logCmd in original code)
-    printf("%s\t\t%s", argv[0], bu_vls_cstr(&s->plotfile));
+    printf("%s\t\t%s\n", argv[0], bu_vls_cstr(&s->plotfile));
 
     return BRLCAD_OK;
 }
@@ -992,7 +992,7 @@ _burst_cmd_read_2d_shot_file(void *bs, int argc, const char **argv)
     bu_vls_sprintf(&s->shotfile, "%s", argv[1]);
 
     // Echo command (logCmd in original code)
-    printf("%s\t%s", argv[0], bu_vls_cstr(&s->shotfile));
+    printf("%s\t%s\n", argv[0], bu_vls_cstr(&s->shotfile));
 
     s->firemode = FM_SHOT | FM_FILE;
 
@@ -1039,7 +1039,7 @@ _burst_cmd_read_3d_shot_file(void *bs, int argc, const char **argv)
     bu_vls_sprintf(&s->shotfile, "%s", argv[1]);
 
     // Echo command (logCmd in original code)
-    printf("%s\t%s", argv[0], bu_vls_cstr(&s->shotfile));
+    printf("%s\t%s\n", argv[0], bu_vls_cstr(&s->shotfile));
 
     s->firemode = FM_SHOT | FM_FILE | FM_3DIM;
 
@@ -1065,19 +1065,19 @@ _burst_cmd_burst_armor_file(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    printf("Reading burst armor idents...\n");
+    brst_log(s, "Reading burst armor idents...\n");
 
     if (!readIdents(&s->armorids, argv[1])) {
 	printf("failed to open burst air idents file: %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
 
-    printf("Reading burst armor idents... done.\n");
+    brst_log(s, "Reading burst armor idents... done.\n");
 
     bu_vls_sprintf(&s->armorfile, "%s", argv[1]);
 
     // Echo command (logCmd in original code)
-    printf("%s\t%s", argv[0], bu_vls_cstr(&s->armorfile));
+    printf("%s\t%s\n", argv[0], bu_vls_cstr(&s->armorfile));
 
     return ret;
 }
@@ -1123,7 +1123,7 @@ _burst_cmd_read_burst_file(void *bs, int argc, const char **argv)
     bu_vls_sprintf(&s->burstfile, "%s", argv[1]);
 
     // Echo command (logCmd in original code)
-    printf("%s\t\t%s", argv[0], bu_vls_cstr(&s->burstfile));
+    printf("%s\t\t%s\n", argv[0], bu_vls_cstr(&s->burstfile));
 
     s->firemode = FM_BURST | FM_3DIM | FM_FILE;
 
@@ -1597,14 +1597,14 @@ _burst_cmd_color_file(void *bs, int argc, const char **argv)
 
     if (!s || !argc || !argv) return BRLCAD_ERROR;
 
-    printf("Reading ident-to-color mappings...\n");
+    brst_log(s, "Reading ident-to-color mappings...\n");
 
     if (!readColors(&s->colorids, argv[1])) {
 	printf("failed to open ident to color mappings file: %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
 
-    printf("Reading ident-to-color mappings... done.\n");
+    brst_log(s, "Reading ident-to-color mappings... done.\n");
 
     bu_vls_sprintf(&s->colorfile, "%s", argv[1]);
 
