@@ -73,12 +73,15 @@ static struct cvt_tab bu_units_length_tab[] = {
     {1.0e-3,		"micron"},
     {1.0,		"mm"},
     {1.0,		"millimeter"},
+    {1.0,		"millimeters"}, /* plural */
     {10.0,		"cm"},
     {10.0,		"centimeter"},
+    {10.0,		"centimeters"}, /* plural */
     {100.0,		"dm"},
     {100.0,		"decimeter"},
     {1000.0,		"m"},
     {1000.0,		"meter"},
+    {1000.0,		"meters"}, /* plural */
     {10000.0,		"Dm"},
     {10000.0,		"decameter"},
     {100000.0,		"hm"},
