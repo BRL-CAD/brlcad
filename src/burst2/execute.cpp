@@ -41,7 +41,7 @@
 
 #define WHITESPACE	" \t"
 
-void
+static void
 prntTimer(struct burst_state *s, const char *str)
 {
     (void) rt_read_timer(s->timer, TIMER_LEN-1);
@@ -99,11 +99,11 @@ execute_run(struct burst_state *s)
 	rt_prep(s->rtip);
 	prntTimer(s, "prep");
     }
-    //gridInit(s);
+    gridInit(s);
     if (s->nriplevels > 0) {
-	//spallInit(s);
+	spallInit(s);
     }
-    //gridModel(s);
+    gridModel(s);
     return;
 }
 

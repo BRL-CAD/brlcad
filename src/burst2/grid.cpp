@@ -34,6 +34,7 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "fb.h"
+#include "bu/units.h"
 #include "bn/plot3.h"
 
 #include "./burst.h"
@@ -1306,6 +1307,56 @@ f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED
 }
 
 
+/*
+  This routine must be called before bursting when doing either a
+  ground plane burst or bursting at user-specified coordinates.  The
+  purpose is to output fake PB_CELL_IDENT and PB_RAY_INTERSECT records
+  to the Burst Point Library so that the coordinates of the burst point
+  can be made available.
+
+*/
+void
+prntBurstHdr(
+	struct burst_state *s,
+	fastf_t *bpt     /* burst point in model coords */,
+       	fastf_t *shotdir /* shotline direction vector */)
+{
+    fastf_t vec[3];
+    /* Transform burst point (model coordinate system) into the shotline
+       coordinate system. */
+    vec[Y] = VDOT(s->gridhor, bpt);        /* Y' */
+    vec[Z] = VDOT(s->gridver, bpt);        /* Z' */
+    vec[X] = -VDOT(shotdir, bpt);       /* X' - shotdir is reverse of X' */
+
+    if (bu_vls_strlen(&s->outfile)
+        &&      fprintf(s->outfp,
+                        "%c % 8.3f % 8.3f\n",
+                        PB_CELL_IDENT,
+                        vec[Y]*s->unitconv,
+                        /* horizontal coordinate of burst point (Y') */
+                        vec[Z]*s->unitconv
+                        /* vertical coordinate of burst point (Z') */
+            ) < 0
+        ) {
+        bu_exit(EXIT_FAILURE, "Write failed to file (%s)!\n", bu_vls_cstr(&s->outfile));
+    }
+    if (bu_vls_strlen(&s->outfile)
+        &&      fprintf(s->outfp,
+                        "%c % 8.2f % 8.2f %5d %2d % 7.3f % 7.2f % 7.3f %c\n",
+                        PB_RAY_INTERSECT,
+                        vec[X]*s->unitconv, /* X' coordinate of burst point */
+                        0.0,            /* LOS thickness of component */
+                        9999,           /* dummy component code number */
+                        9,              /* dummy space code */
+                        0.0,            /* N/A */
+                        0.0,            /* N/A */
+                        0.0,            /* N/A */
+                        '1'             /* burst was generated */
+            ) < 0
+        ) {
+        bu_exit(EXIT_FAILURE, "Write failed to file (%s)!\n", bu_vls_cstr(&s->outfile));
+    }
+}
 
 /*
   int f_ShotMiss(struct application *ap)
@@ -1317,7 +1368,8 @@ f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED
 static int
 f_ShotMiss(struct application *ap)
 {
-    if (groundburst) {
+    struct burst_state *s = (struct burst_state *)ap->a_uptr;
+    if (s->groundburst) {
 	fastf_t dist;
 	fastf_t	hitpoint[3];
 	/* first find intersection of shot with ground plane */
@@ -1325,56 +1377,112 @@ f_ShotMiss(struct application *ap)
 	    /* Shot direction is upward, can't hit the ground
 	       from underneath. */
 	    goto	missed_ground;
-	if (ap->a_ray.r_pt[Z] <= -grndht)
+	if (ap->a_ray.r_pt[Z] <= -s->grndht)
 	    /* Must be above ground to hit it from above. */
 	    goto	missed_ground;
 	/* ground plane is grndht distance below the target origin */
-	hitpoint[Z] = -grndht;
+	hitpoint[Z] = -s->grndht;
 	/* distance along ray from ray origin to ground plane */
 	dist = (hitpoint[Z] - ap->a_ray.r_pt[Z]) / ap->a_ray.r_dir[Z];
 	/* solve for X and Y intersection coordinates */
 	hitpoint[X] = ap->a_ray.r_pt[X] + ap->a_ray.r_dir[X]*dist;
 	hitpoint[Y] = ap->a_ray.r_pt[Y] + ap->a_ray.r_dir[Y]*dist;
 	/* check for limits of ground plane */
-	if (hitpoint[X] <= grndfr && hitpoint[X] >= -grndbk
-	    &&	hitpoint[Y] <= grndlf && hitpoint[Y] >= -grndrt
+	if (hitpoint[X] <= s->grndfr && hitpoint[X] >= -s->grndbk
+	    &&	hitpoint[Y] <= s->grndlf && hitpoint[Y] >= -s->grndrt
 	    ) {
 	    /* We have a hit. */
-	    if (fbfile[0] != NUL)
-		paintCellFb(ap, pixghit,
-			    zoom == 1 ? pixblack : pixbkgr);
-	    if (bdist > 0.0) {
+	    if (bu_vls_strlen(&s->fbfile))
+		paintCellFb(ap, s->pixghit, s->zoom == 1 ? s->pixblack : s->pixbkgr);
+	    if (s->bdist > 0.0) {
 		/* simulate standoff fuzing */
-		VJOIN1(hitpoint, hitpoint, -bdist,
-		       ap->a_ray.r_dir);
+		VJOIN1(hitpoint, hitpoint, -s->bdist, ap->a_ray.r_dir);
 	    } else
-		if (bdist < 0.0) {
+		if (s->bdist < 0.0) {
 		    /* interior burst not implemented in ground */
-		    bu_log("User error: %s %s.\n",
-			     "negative burst distance can not be",
-			     "specified with ground plane bursting"
-			);
-		    fatalerror = 1;
+		    bu_log("User error: negative burst distance can not be specified with ground plane bursting.\n");
+		    s->fatalerror = 1;
 		    return	-1;
 		}
 	    /* else bdist == 0.0, no adjustment necessary */
 	    /* only burst if nspallrays greater than zero */
-	    if (nspallrays > 0) {
-		prntBurstHdr(hitpoint, viewdir);
-		return	burstPoint(ap, zaxis, hitpoint);
+	    if (s->nspallrays > 0) {
+		prntBurstHdr(s, hitpoint, viewdir);
+		return burstPoint(ap, s->zaxis, hitpoint);
 	    } else
 		return	1;
 	}
     }
 missed_ground :
-    if (fbfile[0] != NUL)
-	paintCellFb(ap, pixmiss, zoom == 1 ? pixblack : pixbkgr);
+    if (bu_vls_strlen(&s->fbfile)) {
+	paintCellFb(ap, s->pixmiss, s->zoom == 1 ? s->pixblack : s->pixbkgr);
+    }
     VSETALL(ap->a_color, 0.0); /* All misses black. */
     return	0;
 }
 
+/*
+  int readShot(fastf_t *vec)
 
-#if 0
+  This routine reads the next set of firing coordinates from the
+  input stream shotfp, using the format selected by the firemode
+  bitflag.  Returns 1 for success, 0 for a format error and EOF
+  for normal end-of-file.  If 0 is returned, fatalerror will be
+  set to 1.
+*/
+static int
+readShot(struct burst_state *s, fastf_t *vec)
+{
+    double scan[3] = VINIT_ZERO;
+
+    assert(s->shotfp != (FILE *) NULL);
+
+    if (! TSTBIT(s->firemode, FM_3DIM)) {
+	/* absence of 3D flag means 2D */
+	int items;
+
+	/* read 2D firing coordinates from input stream */
+	items = fscanf(s->shotfp, "%lf %lf", &scan[0], &scan[1]);
+	VMOVE(vec, scan);
+	if (items != 2) {
+	    if (items != EOF) {
+		bu_log("Fatal error: only %d firing coordinates read.\n", items);
+		s->fatalerror = 1;
+		return 0;
+	    } else {
+		return EOF;
+	    }
+	} else {
+	    vec[X] /= s->unitconv;
+	    vec[Y] /= s->unitconv;
+	}
+    } else
+	if (TSTBIT(s->firemode, FM_3DIM)) {
+	    /* 3D coordinates */
+	    int	items;
+
+	    /* read 3D firing coordinates from input stream */
+	    items = fscanf(s->shotfp, "%lf %lf %lf", &scan[0], &scan[1], &scan[2]);
+	    VMOVE(vec, scan); /* double to fastf_t */
+	    if (items != 3) {
+		if (items != EOF) {
+		    bu_log("Fatal error: %d firing coordinates read.\n", items);
+		    s->fatalerror = 1;
+		    return 0;
+		} else {
+		    return EOF;
+		}
+	    } else {
+		vec[X] /= s->unitconv;
+		vec[Y] /= s->unitconv;
+		vec[Z] /= s->unitconv;
+	    }
+	} else {
+	    bu_log("BUG: readShot called with bad firemode.\n");
+	    return 0;
+	}
+    return 1;
+}
 
 /*
   int getRayOrigin(struct application *ap)
@@ -1390,35 +1498,35 @@ missed_ground :
 static int
 getRayOrigin(struct burst_state *s, struct application *ap)
 {
-    fastf_t	*vec = ap->a_uvec;
-    fastf_t			gridyinc[3], gridxinc[3];
-    fastf_t			scalecx, scalecy;
-    if (TSTBIT(firemode, FM_SHOT)) {
-	if (TSTBIT(firemode, FM_FILE)) {
-	    switch (readShot(vec)) {
+    fastf_t *vec = ap->a_uvec;
+    fastf_t gridyinc[3], gridxinc[3];
+    fastf_t scalecx, scalecy;
+    if (TSTBIT(s->firemode, FM_SHOT)) {
+	if (TSTBIT(s->firemode, FM_FILE)) {
+	    switch (readShot(s, vec)) {
 		case EOF :	return	EOF;
 		case 1 :	break;
 		case 0 :	return	0;
 	    }
 	} else	/* Single shot specified. */
-	    VMOVE(vec, fire);
-	if (TSTBIT(firemode, FM_3DIM)) {
-	    fastf_t	hitpoint[3];
+	    VMOVE(vec, s->fire);
+	if (TSTBIT(s->firemode, FM_3DIM)) {
+	    fastf_t hitpoint[3];
 	    /* Project 3-d hit-point back into grid space. */
 	    VMOVE(hitpoint, vec);
-	    vec[X] = VDOT(gridhor, hitpoint);
-	    vec[Y] = VDOT(gridver, hitpoint);
+	    vec[X] = VDOT(s->gridhor, hitpoint);
+	    vec[Y] = VDOT(s->gridver, hitpoint);
 	}
-	ap->a_x = vec[X] / cellsz;
-	ap->a_y = vec[Y] / cellsz;
+	ap->a_x = vec[X] / s->cellsz;
+	ap->a_y = vec[Y] / s->cellsz;
 	scalecx = vec[X];
 	scalecy = vec[Y];
     } else {
 	fastf_t xoffset = 0.0;
 	fastf_t yoffset = 0.0;
-	ap->a_x = currshot % gridwidth + gridxorg;
-	ap->a_y = currshot / gridwidth + gridyorg;
-	if (dithercells) {
+	ap->a_x = currshot % s->gridwidth + s->gridxorg;
+	ap->a_y = currshot / s->gridwidth + s->gridyorg;
+	if (s->dithercells) {
 	    /* 2-digit random number, 1's place gives X
 	       offset, 10's place gives Y offset.
 	    */
@@ -1429,57 +1537,16 @@ getRayOrigin(struct burst_state *s, struct application *ap)
 	/* Compute magnitude of grid offsets. */
 	scalecx = (fastf_t) ap->a_x + xoffset;
 	scalecy = (fastf_t) ap->a_y + yoffset;
-	vec[X] = scalecx *= cellsz;
-	vec[Y] = scalecy *= cellsz;
+	vec[X] = scalecx *= s->cellsz;
+	vec[Y] = scalecy *= s->cellsz;
     }
     /* Compute cell horizontal and vertical	vectors relative to
        grid origin. */
-    VSCALE(gridxinc, gridhor, scalecx);
-    VSCALE(gridyinc, gridver, scalecy);
-    VADD2(ap->a_ray.r_pt, gridsoff, gridyinc);
+    VSCALE(gridxinc, s->gridhor, scalecx);
+    VSCALE(gridyinc, s->gridver, scalecy);
+    VADD2(ap->a_ray.r_pt, s->gridsoff, gridyinc);
     VADD2(ap->a_ray.r_pt, ap->a_ray.r_pt, gridxinc);
     return	1;
-}
-
-
-/*
-	Construct a direction vector out of azimuth and elevation angles
-	in radians, allocating storage for it and returning its address.
-*/
-static void
-consVector(fastf_t *vec, fastf_t azim, fastf_t elev)
-{
-    /* Store cosine of the elevation to save calculating twice. */
-    fastf_t	cosE;
-    cosE = cos(elev);
-    vec[0] = cos(azim) * cosE;
-    vec[1] = sin(azim) * cosE;
-    vec[2] = sin(elev);
-    return;
-}
-
-
-
-
-
-static void
-view_end(struct burst_state *s)
-{
-    if (gridfile[0] != NUL)
-	(void) fflush(s->gridfp);
-    if (histfile[0] != NUL)
-	(void) fflush(s->histfp);
-    if (plotfile[0] != NUL)
-	(void) fflush(s->plotfp);
-    if (outfile[0] != NUL)
-	(void) fflush(s->outfp);
-    if (shotlnfile[0] != NUL)
-	(void) fflush(s->shotlnfp);
-    prntTimer("view");
-    if (s->noverlaps > 0) {
-	bu_log("%d overlaps detected over %g mm thick.\n", s->noverlaps, OVERLAP_TOL);
-    }
-    return;
 }
 
 /*
@@ -1496,110 +1563,43 @@ readBurst(struct burst_state *s, fastf_t *vec)
     int	items;
     double scan[3];
 
-    assert(burstfp != (FILE *) NULL);
+    assert(s->burstfp != (FILE *) NULL);
     /* read 3D firing coordinates from input stream */
-    items = fscanf(burstfp, "%lf %lf %lf", &scan[0], &scan[1], &scan[2]);
+    items = fscanf(s->burstfp, "%lf %lf %lf", &scan[0], &scan[1], &scan[2]);
     VMOVE(vec, scan); /* double to fastf_t */
     if (items != 3) {
 	if (items != EOF) {
-	    bu_log("Fatal error: %d burst coordinates read.\n",
-		     items);
-	    fatalerror = 1;
-	    return	0;
+	    bu_log("Fatal error: %d burst coordinates read.\n", items);
+	    s->fatalerror = 1;
+	    return 0;
 	} else {
-	    return	EOF;
+	    return EOF;
 	}
     } else {
-	vec[X] /= unitconv;
-	vec[Y] /= unitconv;
-	vec[Z] /= unitconv;
+	vec[X] /= s->unitconv;
+	vec[Y] /= s->unitconv;
+	vec[Z] /= s->unitconv;
     }
-    return	1;
+    return 1;
 }
 
-
-/*
-  int readShot(fastf_t *vec)
-
-  This routine reads the next set of firing coordinates from the
-  input stream shotfp, using the format selected by the firemode
-  bitflag.  Returns 1 for success, 0 for a format error and EOF
-  for normal end-of-file.  If 0 is returned, fatalerror will be
-  set to 1.
-*/
-static int
-readShot(struct burst_state *s, fastf_t *vec)
+/* TODO - in the origin code this ends up being a no-op - is that correct,
+ * or did the initial disabling of the menu code introduce a bug? */
+static void
+view_pix(struct application *UNUSED(ap))
 {
-    double scan[3] = VINIT_ZERO;
-
-    assert(shotfp != (FILE *) NULL);
-
-    if (! TSTBIT(firemode, FM_3DIM)) {
-	/* absence of 3D flag means 2D */
-	int	items;
-
-	/* read 2D firing coordinates from input stream */
-	items = fscanf(shotfp, "%lf %lf", &scan[0], &scan[1]);
-	VMOVE(vec, scan);
-	if (items != 2) {
-	    if (items != EOF) {
-		bu_log("Fatal error: only %d firing coordinates read.\n", items);
-		fatalerror = 1;
-		return	0;
-	    } else {
-		return	EOF;
-	    }
-	} else {
-	    vec[X] /= unitconv;
-	    vec[Y] /= unitconv;
-	}
-    } else
-	if (TSTBIT(firemode, FM_3DIM)) {
-	    /* 3D coordinates */
-	    int	items;
-
-	    /* read 3D firing coordinates from input stream */
-	    items = fscanf(shotfp, "%lf %lf %lf", &scan[0], &scan[1], &scan[2]);
-	    VMOVE(vec, scan); /* double to fastf_t */
-	    if (items != 3) {
-		if (items != EOF) {
-		    bu_log("Fatal error: %d firing coordinates read.\n", items);
-		    fatalerror = 1;
-		    return	0;
-		} else {
-		    return	EOF;
-		}
-	    } else {
-		vec[X] /= unitconv;
-		vec[Y] /= unitconv;
-		vec[Z] /= unitconv;
-	    }
-	} else {
-	    bu_log("BUG: readShot called with bad firemode.\n");
-	    return	0;
-	}
-    return	1;
+    return;
 }
 
-
-/*
-  int roundToInt(fastf_t f)
-
-  RETURN CODES: the nearest integer to f.
-*/
-int roundToInt(fastf_t f)
+void
+plotGrid(struct burst_state *s, fastf_t *r_pt)
 {
-    int a;
-    a = f;
-    if (f - a >= 0.5)
-	return	a + 1;
-    else
-	return	a;
+    if (s->plotfp == NULL)
+        return;
+    pl_color(s->plotfp, R_GRID, G_GRID, B_GRID);
+    pl_3point(s->plotfp, (int) r_pt[X], (int) r_pt[Y], (int) r_pt[Z]);
+    return;
 }
-
-
-
-
 
 /*
   This routine gets called when explicit burst points are being
@@ -1612,29 +1612,43 @@ static int
 doBursts(struct burst_state *s)
 {
     int			status = 1;
-    noverlaps = 0;
+    s->noverlaps = 0;
     VMOVE(ag.a_ray.r_dir, viewdir);
 
-    for (; ! userinterrupt; view_pix(&ag)) {
-	if (TSTBIT(firemode, FM_FILE)
-	    &&	(!(status = readBurst(burstpoint)) || status == EOF)
-	    )
+    for (; ! s->userinterrupt; view_pix(&ag)) {
+	if (TSTBIT(s->firemode, FM_FILE) && (!(status = readBurst(s, s->burstpoint)) || status == EOF))
 	    break;
 	ag.a_level = 0;	 /* initialize recursion level */
-	plotGrid(burstpoint);
+	plotGrid(s, s->burstpoint);
 
-	prntBurstHdr(burstpoint, viewdir);
-	if (! burstPoint(&ag, zaxis, burstpoint)) {
+	prntBurstHdr(s, s->burstpoint, viewdir);
+	if (! burstPoint(&ag, s->zaxis, s->burstpoint)) {
 	    /* fatal error in application routine */
 	    bu_log("Fatal error: raytracing aborted.\n");
 	    return	0;
 	}
-	if (! TSTBIT(firemode, FM_FILE)) {
+	if (! TSTBIT(s->firemode, FM_FILE)) {
 	    view_pix(&ag);
 	    break;
 	}
     }
-    return	status == EOF ? 1 : status;
+
+    return status == EOF ? 1 : status;
+}
+
+/*
+  If the user has asked for grid coordinates to be saved, write
+  them to the output stream 'gridfp'.
+*/
+void
+prntFiringCoords(struct burst_state *s, fastf_t *vec)
+{
+    if (!bu_vls_strlen(&s->gridfile))
+        return;
+    assert(s->gridfp != (FILE *) NULL);
+    if (fprintf(s->gridfp, "%7.2f %7.2f\n", vec[X]*s->unitconv, vec[Y]*s->unitconv) < 0) {
+        bu_exit(EXIT_FAILURE, "Write failed to file (%s)!\n", bu_vls_cstr(&s->gridfile));
+    }
 }
 
 /*
@@ -1660,30 +1674,117 @@ gridShot(struct burst_state *s)
     assert(a.a_onehit == ag.a_onehit);
     a.a_user = 0;
     a.a_purpose = "shotline";
-    prntGridOffsets(gridxorg, gridyorg);
-    noverlaps = 0;
-    for (; ! userinterrupt; view_pix(&a)) {
-	if (! TSTBIT(firemode, FM_SHOT) && currshot > lastshot)
+    s->noverlaps = 0;
+    for (; ! s->userinterrupt; view_pix(&a)) {
+	if (! TSTBIT(s->firemode, FM_SHOT) && currshot > lastshot)
 	    break;
-	if (! (status = getRayOrigin(&a)) || status == EOF)
+	if (! (status = getRayOrigin(s, &a)) || status == EOF)
 	    break;
 	currshot++;
-	prntFiringCoords(a.a_uvec);
+	prntFiringCoords(s, a.a_uvec);
 	VMOVE(a.a_ray.r_dir, viewdir);
 	a.a_level = 0;	 /* initialize recursion level */
-	plotGrid(a.a_ray.r_pt);
-	if (rt_shootray(&a) == -1 && fatalerror) {
+	plotGrid(s, a.a_ray.r_pt);
+	if (rt_shootray(&a) == -1 && s->fatalerror) {
 	    /* fatal error in application routine */
 	    bu_log("Fatal error: raytracing aborted.\n");
 	    return	0;
 	}
-	if (! TSTBIT(firemode, FM_FILE) && TSTBIT(firemode, FM_SHOT)) {
+	if (!TSTBIT(s->firemode, FM_FILE) && TSTBIT(s->firemode, FM_SHOT)) {
 	    view_pix(&a);
 	    break;
 	}
     }
-    return	status == EOF ? 1 : status;
+    return status == EOF ? 1 : status;
 }
+
+static void
+prntTimer(struct burst_state *s, const char *str)
+{
+    (void) rt_read_timer(s->timer, TIMER_LEN-1);
+    bu_log("%s:\t%s\n", str == NULL ? "(null)" : str, s->timer);
+}
+
+static void
+view_end(struct burst_state *s)
+{
+    if (bu_vls_strlen(&s->gridfile))
+	(void) fflush(s->gridfp);
+    if (bu_vls_strlen(&s->histfile))
+	(void) fflush(s->histfp);
+    if (bu_vls_strlen(&s->plotfile))
+	(void) fflush(s->plotfp);
+    if (bu_vls_strlen(&s->outfile))
+	(void) fflush(s->outfp);
+    if (bu_vls_strlen(&s->shotlnfile))
+	(void) fflush(s->shotlnfp);
+    prntTimer(s, "view");
+    if (s->noverlaps > 0) {
+	bu_log("%d overlaps detected over %g mm thick.\n", s->noverlaps, OVERLAP_TOL);
+    }
+    return;
+}
+
+void
+plotInit(struct burst_state *s)
+{
+    int x_1, y_1, z_1, x_2, y_2, z_2;
+    if (s->plotfp == NULL)
+        return;
+    x_1 = (int) s->rtip->mdl_min[X] - 1;
+    y_1 = (int) s->rtip->mdl_min[Y] - 1;
+    z_1 = (int) s->rtip->mdl_min[Z] - 1;
+    x_2 = (int) s->rtip->mdl_max[X] + 1;
+    y_2 = (int) s->rtip->mdl_max[Y] + 1;
+    z_2 = (int) s->rtip->mdl_max[Z] + 1;
+    pl_3space(s->plotfp, x_1, y_1, z_1, x_2, y_2, z_2);
+    return;
+}
+
+/*
+  Burst Point Library and Shotline file: header record for each view.
+  Ref. Figure 20., Line Number 1 and Figure 19., Line Number 1 of ICD.
+*/
+void
+prntAspectInit(struct burst_state *s)
+{
+    fastf_t projarea;   /* projected area */
+    /* Convert to user units before squaring cell size. */
+    projarea = s->cellsz*s->unitconv;
+    projarea *= projarea;
+    if (bu_vls_strlen(&s->outfile)
+        &&      fprintf(s->outfp,
+                        "%c % 9.4f % 8.4f % 5.2f % 10.2f %-6s % 9.6f\n",
+                        PB_ASPECT_INIT,
+                        s->viewazim*RAD2DEG, /* attack azimuth in degrees */
+                        s->viewelev*RAD2DEG, /* attack elevation in degrees */
+                        s->bdist*s->unitconv,  /* BDIST */
+                        projarea, /* projected area associated with burst pt. */
+			bu_units_string(s->units),
+                        s->raysolidangle
+            ) < 0
+        ) {
+        bu_exit(EXIT_FAILURE, "Write failed to file (%s)!\n", bu_vls_cstr(&s->outfile));
+    }
+    if (bu_vls_strlen(&s->shotlnfile)
+        &&      fprintf(s->shotlnfp,
+                        "%c % 9.4f % 8.4f % 7.2f % 7.2f %7.2f %7.2f %7.2f %-6s\n",
+                        PS_ASPECT_INIT,
+                        s->viewazim*RAD2DEG, /* attack azimuth in degrees */
+                        s->viewelev*RAD2DEG, /* attack elevation in degrees */
+                        s->cellsz*s->unitconv, /* shotline separation */
+                        s->modlrt*s->unitconv, /* maximum Y'-coordinate of target */
+                        s->modllf*s->unitconv, /* minimum Y'-coordinate of target */
+                        s->modlup*s->unitconv, /* maximum Z'-coordinate of target */
+                        s->modldn*s->unitconv, /* minimum Z'-coordinate of target */
+			bu_units_string(s->units)
+            ) < 0
+        ) {
+        bu_exit(EXIT_FAILURE, "Write failed to file (%s)!\n", bu_vls_cstr(&s->shotlnfile));
+    }
+    return;
+}
+
 
 /*
   This routine dispatches the top-level ray tracing task.
@@ -1692,48 +1793,107 @@ void
 gridModel(struct burst_state *s)
 {
     ag.a_onehit = 0;
-    ag.a_overlap = reportoverlaps ? f_Overlap : f_HushOverlap;
+    ag.a_overlap = s->reportoverlaps ? f_Overlap : f_HushOverlap;
     ag.a_logoverlap = rt_silent_logoverlap;
-    ag.a_rt_i = rtip;
-    if (! TSTBIT(firemode, FM_BURST)) {
+    ag.a_rt_i = s->rtip;
+    ag.a_uptr = (void *)s;
+    if (! TSTBIT(s->firemode, FM_BURST)) {
 	/* set up for shotlines */
 	ag.a_hit = f_ShotHit;
 	ag.a_miss = f_ShotMiss;
     }
 
-    plotInit();	/* initialize plot file if appropriate */
+    plotInit(s); /* initialize plot file if appropriate */
 
-    if (! imageInit()) {
+    if (! imageInit(s)) {
 	/* initialize frame buffer if appropriate */
-	warning("Error: problem opening frame buffer.");
+	bu_log("Error: problem opening frame buffer.");
 	return;
     }
     /* output initial line for this aspect */
-    prntAspectInit();
+    prntAspectInit(s);
 
-    fatalerror = 0;
-    userinterrupt = 0;	/* set by interrupt handler */
+    s->fatalerror = 0;
+    s->userinterrupt = 0;	/* set by interrupt handler */
 
     rt_prep_timer();
-    notify("Raytracing", NOTIFY_ERASE);
+    bu_log("Raytracing");
 
-    if (TSTBIT(firemode, FM_BURST)) {
-	if (! doBursts())
+    if (TSTBIT(s->firemode, FM_BURST)) {
+	if (! doBursts(s))
 	    return;
 	else
-	    goto	endvu;
+	    goto endvu;
     }
 
     /* get starting and ending shot number */
     currshot = 0;
-    lastshot = gridwidth * gridheight - 1;
+    lastshot = s->gridwidth * s->gridheight - 1;
 
     /* SERIAL case -- one CPU does all the work */
-    if (! gridShot())
+    if (! gridShot(s))
 	return;
-endvu:	view_end();
+endvu:	view_end(s);
     return;
 }
+
+/*
+   Construct a direction vector out of azimuth and elevation angles
+   in radians, allocating storage for it and returning its address.
+*/
+static void
+consVector(fastf_t *vec, fastf_t azim, fastf_t elev)
+{
+    /* Store cosine of the elevation to save calculating twice. */
+    fastf_t	cosE;
+    cosE = cos(elev);
+    vec[0] = cos(azim) * cosE;
+    vec[1] = sin(azim) * cosE;
+    vec[2] = sin(elev);
+    return;
+}
+
+/*
+  Creates the unit vectors H and V which are the horizontal
+  and vertical components of the grid in target coordinates.
+  The vectors are found from the azimuth and elevation of the
+  viewing angle according to a simplification of the rotation
+  matrix from grid coordinates to target coordinates.
+  To see that the vectors are, indeed, unit vectors, recall
+  the trigonometric relation:
+
+  sin(A)^2 + cos(A)^2  =  1 .
+*/
+void
+gridRotate(fastf_t azim, fastf_t elev, fastf_t roll, fastf_t *des_H, fastf_t *des_V)
+{
+    fastf_t sn_azm = sin(azim);
+    fastf_t cs_azm = cos(azim);
+    fastf_t sn_elv = sin(elev);
+
+    des_H[0] = -sn_azm;
+    des_H[1] =  cs_azm;
+    des_H[2] =  0.0;
+    des_V[0] = -sn_elv*cs_azm;
+    des_V[1] = -sn_elv*sn_azm;
+    des_V[2] =  cos(elev);
+
+    if (!ZERO(roll)) {
+        fastf_t tmp_V[3], tmp_H[3], prime_V[3];
+        fastf_t sn_roll = sin(roll);
+        fastf_t cs_roll = cos(roll);
+
+        VSCALE(tmp_V, des_V, cs_roll);
+        VSCALE(tmp_H, des_H, sn_roll);
+        VADD2(prime_V, tmp_V, tmp_H);
+        VSCALE(tmp_V, des_V, -sn_roll);
+        VSCALE(tmp_H, des_H, cs_roll);
+        VADD2(des_H, tmp_V, tmp_H);
+        VMOVE(des_V, prime_V);
+    }
+    return;
+}
+
 
 /*
   Grid initialization routine; must be done once per view.
@@ -1741,211 +1901,169 @@ endvu:	view_end();
 void
 gridInit(struct burst_state *s)
 {
-    notify("Initializing grid", NOTIFY_APPEND);
+    bu_log("Initializing grid");
     rt_prep_timer();
 
-#if DEBUG_SHOT
-    if (TSTBIT(firemode, FM_BURST))
-	bu_log("gridInit: reading burst points.\n");
-    else	{
-	if (TSTBIT(firemode, FM_SHOT))
-	    bu_log("gridInit: shooting discrete shots.\n");
-	else
-	    bu_log("gridInit: shooting %s.\n",
-		     TSTBIT(firemode, FM_PART) ?
-		     "partial envelope" : "full envelope");
-    }
-    if (TSTBIT(firemode, FM_BURST) || TSTBIT(firemode, FM_SHOT)) {
-	bu_log("gridInit: reading %s coordinates from %s.\n",
-		 TSTBIT(firemode, FM_3DIM) ? "3-d" : "2-d",
-		 TSTBIT(firemode, FM_FILE) ? "file" : "command stream");
-
-    } else
-	if (TSTBIT(firemode, FM_FILE) || TSTBIT(firemode, FM_3DIM))
-	    bu_log("BUG: insane combination of fire mode bits:0x%x\n",
-		     firemode);
-    if (TSTBIT(firemode, FM_BURST) || shotburst)
-	s->nriplevels = 1;
-    else
-	s->nriplevels = 0;
-    if (!shotburst && groundburst) {
-	(void) snprintf(scrbuf, LNBUFSZ,
-			"Ground bursting directive ignored: %s.\n",
-			"only relevant if bursting along shotline");
-	warning(scrbuf);
-	bu_log(scrbuf);
-    }
-#endif
     /* compute grid unit vectors */
-    gridRotate(viewazim, viewelev, 0.0, gridhor, gridver);
+    gridRotate(s->viewazim, s->viewelev, 0.0, s->gridhor, s->gridver);
 
-    if (!NEAR_ZERO(yaw, VDIVIDE_TOL) || !NEAR_ZERO(pitch, VDIVIDE_TOL)) {
-	fastf_t	negsinyaw = -sin(yaw);
-	fastf_t	sinpitch = sin(pitch);
+    if (!NEAR_ZERO(s->yaw, VDIVIDE_TOL) || !NEAR_ZERO(s->pitch, VDIVIDE_TOL)) {
+	fastf_t	negsinyaw = -sin(s->yaw);
+	fastf_t	sinpitch = sin(s->pitch);
 	fastf_t	xdeltavec[3], ydeltavec[3];
-#if DEBUG_SHOT
-	bu_log("gridInit: canting warhead\n");
-#endif
 	s->cantwarhead = 1;
-	VSCALE(xdeltavec, gridhor, negsinyaw);
-	VSCALE(ydeltavec, gridver, sinpitch);
+	VSCALE(xdeltavec, s->gridhor, negsinyaw);
+	VSCALE(ydeltavec, s->gridver, sinpitch);
 	VADD2(cantdelta, xdeltavec, ydeltavec);
     }
 
     /* unit vector from origin of model toward eye */
-    consVector(viewdir, viewazim, viewelev);
+    consVector(viewdir, s->viewazim, s->viewelev);
 
     /* reposition file pointers if necessary */
-    if (TSTBIT(firemode, FM_SHOT) && TSTBIT(firemode, FM_FILE))
-	rewind(shotfp);
+    if (TSTBIT(s->firemode, FM_SHOT) && TSTBIT(s->firemode, FM_FILE))
+	rewind(s->shotfp);
     else
-	if (TSTBIT(firemode, FM_BURST) && TSTBIT(firemode, FM_FILE))
-	    rewind(burstfp);
+	if (TSTBIT(s->firemode, FM_BURST) && TSTBIT(s->firemode, FM_FILE))
+	    rewind(s->burstfp);
 
     /* Compute distances from grid origin (model origin) to each
        border of grid, and grid indices at borders of grid.
     */
-    if (! TSTBIT(firemode, FM_PART)) {
+    if (! TSTBIT(s->firemode, FM_PART)) {
 	fastf_t modelmin[3];
 	fastf_t modelmax[3];
-	if (groundburst) {
+	if (s->groundburst) {
 	    /* extend grid to include ground platform */
-	    modelmax[X] = FMAX(rtip->mdl_max[X], grndfr);
-	    modelmin[X] = FMIN(rtip->mdl_min[X], -grndbk);
-	    modelmax[Y] = FMAX(rtip->mdl_max[Y], grndlf);
-	    modelmin[Y] = FMIN(rtip->mdl_min[Y], -grndrt);
-	    modelmax[Z] = rtip->mdl_max[Z];
-	    modelmin[Z] = FMIN(rtip->mdl_min[Z], -grndht);
+	    modelmax[X] = FMAX(s->rtip->mdl_max[X], s->grndfr);
+	    modelmin[X] = FMIN(s->rtip->mdl_min[X], -s->grndbk);
+	    modelmax[Y] = FMAX(s->rtip->mdl_max[Y], s->grndlf);
+	    modelmin[Y] = FMIN(s->rtip->mdl_min[Y], -s->grndrt);
+	    modelmax[Z] = s->rtip->mdl_max[Z];
+	    modelmin[Z] = FMIN(s->rtip->mdl_min[Z], -s->grndht);
 	} else {
 	    /* size grid by model RPP */
-	    VMOVE(modelmin, rtip->mdl_min);
-	    VMOVE(modelmax, rtip->mdl_max);
+	    VMOVE(modelmin, s->rtip->mdl_min);
+	    VMOVE(modelmax, s->rtip->mdl_max);
 	}
 	/* Calculate extent of grid. */
-	gridrt = FMAX(gridhor[X] * modelmax[X],
-		      gridhor[X] * modelmin[X]
+	s->gridrt = FMAX(s->gridhor[X] * modelmax[X],
+		      s->gridhor[X] * modelmin[X]
 	    ) +
-	    FMAX(gridhor[Y] * modelmax[Y],
-		 gridhor[Y] * modelmin[Y]
+	    FMAX(s->gridhor[Y] * modelmax[Y],
+		 s->gridhor[Y] * modelmin[Y]
 		) +
-	    FMAX(gridhor[Z] * modelmax[Z],
-		 gridhor[Z] * modelmin[Z]
+	    FMAX(s->gridhor[Z] * modelmax[Z],
+		 s->gridhor[Z] * modelmin[Z]
 		);
-	gridlf = FMIN(gridhor[X] * modelmax[X],
-		      gridhor[X] * modelmin[X]
+	s->gridlf = FMIN(s->gridhor[X] * modelmax[X],
+		      s->gridhor[X] * modelmin[X]
 	    ) +
-	    FMIN(gridhor[Y] * modelmax[Y],
-		 gridhor[Y] * modelmin[Y]
+	    FMIN(s->gridhor[Y] * modelmax[Y],
+		 s->gridhor[Y] * modelmin[Y]
 		) +
-	    FMIN(gridhor[Z] * modelmax[Z],
-		 gridhor[Z] * modelmin[Z]
+	    FMIN(s->gridhor[Z] * modelmax[Z],
+		 s->gridhor[Z] * modelmin[Z]
 		);
-	gridup = FMAX(gridver[X] * modelmax[X],
-		      gridver[X] * modelmin[X]
+	s->gridup = FMAX(s->gridver[X] * modelmax[X],
+		      s->gridver[X] * modelmin[X]
 	    ) +
-	    FMAX(gridver[Y] * modelmax[Y],
-		 gridver[Y] * modelmin[Y]
+	    FMAX(s->gridver[Y] * modelmax[Y],
+		 s->gridver[Y] * modelmin[Y]
 		) +
-	    FMAX(gridver[Z] * modelmax[Z],
-		 gridver[Z] * modelmin[Z]
+	    FMAX(s->gridver[Z] * modelmax[Z],
+		 s->gridver[Z] * modelmin[Z]
 		);
-	griddn = FMIN(gridver[X] * modelmax[X],
-		      gridver[X] * modelmin[X]
+	s->griddn = FMIN(s->gridver[X] * modelmax[X],
+		      s->gridver[X] * modelmin[X]
 	    ) +
-	    FMIN(gridver[Y] * modelmax[Y],
-		 gridver[Y] * modelmin[Y]
+	    FMIN(s->gridver[Y] * modelmax[Y],
+		 s->gridver[Y] * modelmin[Y]
 		) +
-	    FMIN(gridver[Z] * modelmax[Z],
-		 gridver[Z] * modelmin[Z]
+	    FMIN(s->gridver[Z] * modelmax[Z],
+		 s->gridver[Z] * modelmin[Z]
 		);
 	/* Calculate extent of model in plane of grid. */
-	if (groundburst) {
-	    modlrt = FMAX(gridhor[X] * rtip->mdl_max[X],
-			  gridhor[X] * rtip->mdl_min[X]
+	if (s->groundburst) {
+	    s->modlrt = FMAX(s->gridhor[X] * s->rtip->mdl_max[X],
+			  s->gridhor[X] * s->rtip->mdl_min[X]
 		) +
-		FMAX(gridhor[Y] * rtip->mdl_max[Y],
-		     gridhor[Y] * rtip->mdl_min[Y]
+		FMAX(s->gridhor[Y] * s->rtip->mdl_max[Y],
+		     s->gridhor[Y] * s->rtip->mdl_min[Y]
 		    ) +
-		FMAX(gridhor[Z] * rtip->mdl_max[Z],
-		     gridhor[Z] * rtip->mdl_min[Z]
+		FMAX(s->gridhor[Z] * s->rtip->mdl_max[Z],
+		     s->gridhor[Z] * s->rtip->mdl_min[Z]
 		    );
-	    modllf = FMIN(gridhor[X] * rtip->mdl_max[X],
-			  gridhor[X] * rtip->mdl_min[X]
+	    s->modllf = FMIN(s->gridhor[X] * s->rtip->mdl_max[X],
+			  s->gridhor[X] * s->rtip->mdl_min[X]
 		) +
-		FMIN(gridhor[Y] * rtip->mdl_max[Y],
-		     gridhor[Y] * rtip->mdl_min[Y]
+		FMIN(s->gridhor[Y] * s->rtip->mdl_max[Y],
+		     s->gridhor[Y] * s->rtip->mdl_min[Y]
 		    ) +
-		FMIN(gridhor[Z] * rtip->mdl_max[Z],
-		     gridhor[Z] * rtip->mdl_min[Z]
+		FMIN(s->gridhor[Z] * s->rtip->mdl_max[Z],
+		     s->gridhor[Z] * s->rtip->mdl_min[Z]
 		    );
-	    modlup = FMAX(gridver[X] * rtip->mdl_max[X],
-			  gridver[X] * rtip->mdl_min[X]
+	    s->modlup = FMAX(s->gridver[X] * s->rtip->mdl_max[X],
+			  s->gridver[X] * s->rtip->mdl_min[X]
 		) +
-		FMAX(gridver[Y] * rtip->mdl_max[Y],
-		     gridver[Y] * rtip->mdl_min[Y]
+		FMAX(s->gridver[Y] * s->rtip->mdl_max[Y],
+		     s->gridver[Y] * s->rtip->mdl_min[Y]
 		    ) +
-		FMAX(gridver[Z] * rtip->mdl_max[Z],
-		     gridver[Z] * rtip->mdl_min[Z]
+		FMAX(s->gridver[Z] * s->rtip->mdl_max[Z],
+		     s->gridver[Z] * s->rtip->mdl_min[Z]
 		    );
-	    modldn = FMIN(gridver[X] * rtip->mdl_max[X],
-			  gridver[X] * rtip->mdl_min[X]
+	    s->modldn = FMIN(s->gridver[X] * s->rtip->mdl_max[X],
+			  s->gridver[X] * s->rtip->mdl_min[X]
 		) +
-		FMIN(gridver[Y] * rtip->mdl_max[Y],
-		     gridver[Y] * rtip->mdl_min[Y]
+		FMIN(s->gridver[Y] * s->rtip->mdl_max[Y],
+		     s->gridver[Y] * s->rtip->mdl_min[Y]
 		    ) +
-		FMIN(gridver[Z] * rtip->mdl_max[Z],
-		     gridver[Z] * rtip->mdl_min[Z]
+		FMIN(s->gridver[Z] * s->rtip->mdl_max[Z],
+		     s->gridver[Z] * s->rtip->mdl_min[Z]
 		    );
 	} else {
-	    modlrt = gridrt;
-	    modllf = gridlf;
-	    modlup = gridup;
-	    modldn = griddn;
+	    s->modlrt = s->gridrt;
+	    s->modllf = s->gridlf;
+	    s->modlup = s->gridup;
+	    s->modldn = s->griddn;
 	}
     }
-    gridxorg = gridlf / cellsz;
-    gridxfin = gridrt / cellsz;
-    gridyorg = griddn / cellsz;
-    gridyfin = gridup / cellsz;
+    s->gridxorg = s->gridlf / s->cellsz;
+    s->gridxfin = s->gridrt / s->cellsz;
+    s->gridyorg = s->griddn / s->cellsz;
+    s->gridyfin = s->gridup / s->cellsz;
 
     /* allow for randomization of cells */
-    if (dithercells) {
-	gridxorg--;
-	gridxfin++;
-	gridyorg--;
-	gridyfin++;
+    if (s->dithercells) {
+	s->gridxorg--;
+	s->gridxfin++;
+	s->gridyorg--;
+	s->gridyfin++;
     }
-#if DEBUG_SHOT
-    bu_log("gridInit: xorg, xfin, yorg, yfin=%d, %d, %d, %d\n",
-	     gridxorg, gridxfin, gridyorg, gridyfin);
-    bu_log("gridInit: left, right, down, up=%g, %g, %g, %g\n",
-	     gridlf, gridrt, griddn, gridup);
-#endif
 
     /* compute stand-off distance */
-    standoff = FMAX(viewdir[X] * rtip->mdl_max[X],
-		    viewdir[X] * rtip->mdl_min[X]
+    s->standoff = FMAX(viewdir[X] * s->rtip->mdl_max[X],
+		    viewdir[X] * s->rtip->mdl_min[X]
 	) +
-	FMAX(viewdir[Y] * rtip->mdl_max[Y],
-	     viewdir[Y] * rtip->mdl_min[Y]
+	FMAX(viewdir[Y] * s->rtip->mdl_max[Y],
+	     viewdir[Y] * s->rtip->mdl_min[Y]
 	    ) +
-	FMAX(viewdir[Z] * rtip->mdl_max[Z],
-	     viewdir[Z] * rtip->mdl_min[Z]
+	FMAX(viewdir[Z] * s->rtip->mdl_max[Z],
+	     viewdir[Z] * s->rtip->mdl_min[Z]
 	    );
 
     /* determine largest grid dimension for frame buffer display */
-    gridwidth  = gridxfin - gridxorg + 1;
-    gridheight = gridyfin - gridyorg + 1;
-    gridsz = FMAX(gridwidth, gridheight);
+    s->gridwidth  = s->gridxfin - s->gridxorg + 1;
+    s->gridheight = s->gridyfin - s->gridyorg + 1;
+    s->gridsz = FMAX(s->gridwidth, s->gridheight);
 
     /* vector to grid origin from model origin */
-    VSCALE(gridsoff, viewdir, standoff);
+    VSCALE(s->gridsoff, viewdir, s->standoff);
 
     /* direction of grid rays */
     VSCALE(viewdir, viewdir, -1.0);
 
-    prntTimer("grid");
-    notify(NULL, NOTIFY_DELETE);
+    prntTimer(s, "grid");
     return;
 }
 
@@ -1969,20 +2087,20 @@ spallInit(struct burst_state *s)
     fastf_t philast; /* guard against floating point error */
     int spallct = 0; /* actual no. of sampling rays */
     int n;
-    if (nspallrays < 1) {
+    if (s->nspallrays < 1) {
 	delta = 0.0;
 	phiinc = 0.0;
-	raysolidangle = 0.0;
+	s->raysolidangle = 0.0;
 	bu_log("%d sampling rays\n", spallct);
 	return;
     }
 
     /* Compute sampling cone of rays which are equally spaced. */
-    theta = M_2PI * (1.0 - cos(conehfangle)); /* solid angle */
-    delta = sqrt(theta/nspallrays); /* angular ray delta */
-    n = conehfangle / delta;
-    phiinc = conehfangle / n;
-    philast = conehfangle + VUNITIZE_TOL;
+    theta = M_2PI * (1.0 - cos(s->conehfangle)); /* solid angle */
+    delta = sqrt(theta/s->nspallrays); /* angular ray delta */
+    n = s->conehfangle / delta;
+    phiinc = s->conehfangle / n;
+    philast = s->conehfangle + VUNITIZE_TOL;
     /* Crank through spall cone generation once to count actual number
        generated.
     */
@@ -1997,14 +2115,12 @@ spallInit(struct burst_state *s)
 	for (gammaval = 0.0; gammaval <= gammalast; gammaval += gammainc)
 	    spallct++;
     }
-    raysolidangle = theta / spallct;
+    s->raysolidangle = theta / spallct;
     bu_log("Solid angle of sampling cone = %g\n", theta);
-    bu_log("Solid angle per sampling ray = %g\n", raysolidangle);
+    bu_log("Solid angle per sampling ray = %g\n", s->raysolidangle);
     bu_log("%d sampling rays\n", spallct);
     return;
 }
-
-#endif
 
 /*
  * Local Variables:

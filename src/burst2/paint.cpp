@@ -47,7 +47,6 @@ static int roundToInt(fastf_t f)
 			 (a)[GRN] == (b)[GRN] &&\
 			 (a)[BLU] == (b)[BLU])
 
-#define MAXDEVWID	10000	/* maximum width of frame buffer */
 static unsigned char pixbuf[MAXDEVWID][3];
 static int gridxmargin;
 static int gridymargin;

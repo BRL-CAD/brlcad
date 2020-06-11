@@ -13,6 +13,7 @@ include_directories(${BURST_INCLUDE_DIRS})
 set(burst_SOURCES
   burst.cpp
   execute.cpp
+  fb.cpp
   grid.cpp
   idents.cpp
   paint.cpp
@@ -26,7 +27,6 @@ set(burst_ignore
   CMakeLists.txt
   burst.h
   burst.format
-  grid.cpp
   )
 CMAKEFILES(${burst_ignore})
 

@@ -36,6 +36,8 @@
 #define TITLE_LEN       72
 #define TIMER_LEN       72
 
+#define MAXDEVWID	10000	/* maximum width of frame buffer */
+
 /* default parameters */
 #define DFL_AZIMUTH     0.0
 #define DFL_BARRIERS    100
@@ -216,6 +218,9 @@ void spallInit(struct burst_state *s);
 
 void paintCellFb(struct application *ap, unsigned char *pixpaint, unsigned char *pixexpendable);
 void paintSpallFb(struct application *ap);
+void paintGridFb(struct burst_state *s);
+
+int imageInit(struct burst_state *s);
 
 #endif  /* BURST_BURST_H */
 
