@@ -204,7 +204,7 @@ burst_state_init(struct burst_state *s)
 
 
 extern "C" int
-_burst_cmd_attack_dir(void *bs, int argc, const char **argv)
+_burst_cmd_attack_direction(void *bs, int argc, const char **argv)
 {
     const char *usage_string = "attack-direction azim_angle elev_angle";
     const char *purpose_string = "specify azimuth and elevation of attack relative to target";
@@ -232,6 +232,13 @@ _burst_cmd_attack_dir(void *bs, int argc, const char **argv)
 	printf("problem reading elevation: %s\n", bu_vls_cstr(&msg));
 	ret = BRLCAD_ERROR;
     }
+
+    // Echo command (logCmd in original code)*/
+    printf("%s\t%g %g\n", argv[0], s->viewazim, s->viewelev);
+
+    // After printing, convert to radians for internal use
+    s->viewazim /= RAD2DEG;
+    s->vieweelv /= RAD2DEG;
 
     bu_vls_free(&msg);
     return ret;
@@ -1284,6 +1291,9 @@ _burst_cmd_units(void *bs, int argc, const char **argv)
 
     s->unitconv = 1/s->unitconv;
 
+    // Echo command (logCmd in original code)*/
+    printf("%s\t\t\t%s\n", argv[0], argv[1]);
+
     return BRLCAD_OK;
 }
 
@@ -1521,7 +1531,7 @@ _burst_cmd_cone_half_angle(void *bs, int argc, const char **argv)
 }
 
 const struct bu_cmdtab _burst_cmds[] = {
-    { "attack-direction"  ,  _burst_cmd_attack_dir},
+    { "attack-direction"  ,  _burst_cmd_attack_direction},
     { "critical-comp-file",  _burst_cmd_critical_comp_file },
     { "deflect-spall-cone",  _burst_cmd_deflect_spall_cone },
     { "dither-cells"      ,  _burst_cmd_dither_cells },
