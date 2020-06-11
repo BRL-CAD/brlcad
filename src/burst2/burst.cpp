@@ -128,13 +128,10 @@ burst_state_init(struct burst_state *s)
     bu_vls_init(&s->objects);
     bu_vls_init(&s->outfile);
     bu_vls_init(&s->plotfile);
-    memset(s->scrbuf, 0, LNBUFSZ);
-    memset(s->scriptfile, 0, LNBUFSZ);
     bu_vls_init(&s->shotfile);
     bu_vls_init(&s->shotlnfile);
     memset(s->timer, 0, TIMER_LEN);
     bu_vls_init(&s->cmdhist);
-    s->cmdptr = NULL;
     s->bdist = DFL_BDIST;
     VSET(s->burstpoint, 0.0, 0.0, 0.0);
     s->cellsz = DFL_CELLSIZE;

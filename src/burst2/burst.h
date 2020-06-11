@@ -125,13 +125,10 @@ struct burst_state {
     struct bu_vls objects;     /* list of objects from MGED file */
     struct bu_vls outfile;     /* burst point library output file name */
     struct bu_vls plotfile;    /* 3-D UNIX plot file name (debugging) */
-    char scrbuf[LNBUFSZ];      /* scratch buffer for temporary use */
-    char scriptfile[LNBUFSZ];  /* shell script file name */
     struct bu_vls shotfile;    /* input file of firing coordinates */
     struct bu_vls shotlnfile;  /* shotline output file name */
+
     char timer[TIMER_LEN];     /* CPU usage statistics */
-    char tmpfname[TIMER_LEN];  /* temporary file for logging input */
-    char *cmdptr;              /* */
 
     fastf_t bdist;             /* fusing distance for warhead */
     fastf_t burstpoint[3];     /* explicit burst point coordinates */
