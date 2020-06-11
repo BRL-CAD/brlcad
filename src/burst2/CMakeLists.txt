@@ -12,7 +12,6 @@ include_directories(${BURST_INCLUDE_DIRS})
 
 set(burst_SOURCES
   burst.cpp
-  execute.cpp
   fb.cpp
   grid.cpp
   idents.cpp

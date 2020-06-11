@@ -24,18 +24,26 @@
 
 #include "common.h"
 
-#include <assert.h>
+#include <cassert>
+#include <cstdio>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+#include <string>
+#include <regex>
+
 #include <stdio.h>
-#include <signal.h>
-#include <fcntl.h>
 #include <math.h>
 
 #include "vmath.h"
-#include "bn.h"
+#include "bn/plot3.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/ptbl.h"
+#include "bu/units.h"
+
 #include "raytrace.h"
 #include "fb.h"
-#include "bu/units.h"
-#include "bn/plot3.h"
 
 #include "./burst.h"
 
@@ -2121,6 +2129,69 @@ spallInit(struct burst_state *s)
     bu_log("%d sampling rays\n", spallct);
     return;
 }
+
+#define WHITESPACE	" \t"
+
+void
+execute_run(struct burst_state *s)
+{
+    static int gottree = 0;
+    int loaderror = 0;
+    if (!bu_vls_strlen(&s->gedfile)) {
+	bu_log("No target file has been specified.");
+	return;
+    }
+    bu_log("Reading target data base");
+    rt_prep_timer();
+    if (s->rtip == RTI_NULL) {
+	char db_title[TITLE_LEN+1];
+	s->rtip = rt_dirbuild(bu_vls_cstr(&s->gedfile), db_title, TITLE_LEN);
+    }
+    if (s->rtip == RTI_NULL) {
+	bu_log("Ray tracer failed to read the target file.");
+	return;
+    }
+    prntTimer(s, "dir");
+    /* Add air into int trees, must be set after rt_dirbuild() and before
+     * rt_gettree(). */
+    s->rtip->useair = 1;
+    if (!gottree) {
+	char *objline = bu_strdup(bu_vls_cstr(&s->objects));
+	char **av = (char **)bu_calloc(strlen(objline) + 1, sizeof(char *), "argv array");
+	int ac = bu_argv_from_string(av, strlen(objline), objline);
+
+	rt_prep_timer();
+	for (int i = 0; i < ac; i++) {
+	    const char *obj = av[i];
+	    bu_log("Loading \"%s\"", obj);
+	    if (rt_gettree(s->rtip, obj) != 0) {
+		bu_log("Bad object \"%s\".", obj);
+		loaderror = 1;
+	    }
+	}
+	bu_free(objline, "objline copy");
+	bu_free(av, "av");
+
+	gottree = 1;
+	prntTimer(s, "load");
+    }
+    if (loaderror)
+	return;
+    if (s->rtip->needprep) {
+	bu_log("Prepping solids");
+	rt_prep_timer();
+	rt_prep(s->rtip);
+	prntTimer(s, "prep");
+    }
+    gridInit(s);
+    if (s->nriplevels > 0) {
+	spallInit(s);
+    }
+    gridModel(s);
+    return;
+}
+
+
 
 /*
  * Local Variables:
