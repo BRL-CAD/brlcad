@@ -1786,17 +1786,23 @@ gridModel(struct burst_state *s)
     ag.a_overlap = s->reportoverlaps ? f_Overlap : f_HushOverlap;
     ag.a_logoverlap = rt_silent_logoverlap;
     ag.a_rt_i = s->rtip;
-    ag.a_uptr = (void *)s;
     if (! TSTBIT(s->firemode, FM_BURST)) {
 	/* set up for shotlines */
 	ag.a_hit = f_ShotHit;
 	ag.a_miss = f_ShotMiss;
     }
 
-    plotInit(s); /* initialize plot file if appropriate */
+    /* NOTE:  this is an important assignment.  Because we are now minimizing
+     * globals, the various functions using the application pointer need
+     * another way to access information.  We use the user pointer to carry
+     * along the burst_state container pointer, and unpack it as needed. */
+    ag.a_uptr = (void *)s;
 
+    /* initialize plot file if appropriate */
+    plotInit(s);
+
+    /* initialize frame buffer if appropriate */
     if (! imageInit(s)) {
-	/* initialize frame buffer if appropriate */
 	bu_log("Error: problem opening frame buffer.");
 	return;
     }
