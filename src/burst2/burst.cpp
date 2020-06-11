@@ -236,7 +236,7 @@ _burst_cmd_attack_direction(void *bs, int argc, const char **argv)
     // Echo command (logCmd in original code)
     printf("%s\t%g %g\n", argv[0], s->viewazim, s->viewelev);
 
-    // After printing, convert to radians for internal use
+    // After echoing, convert to radians for internal use
     s->viewazim /= RAD2DEG;
     s->viewelev /= RAD2DEG;
 
@@ -392,32 +392,30 @@ _burst_cmd_enclose_portion(void *bs, int argc, const char **argv)
 	printf("problem reading left border of grid: %s\n", bu_vls_cstr(&msg));
 	ret = BRLCAD_ERROR;
     }
-    /* convert to mm */
-    s->gridlf = s->gridlf * s->unitconv;
 
     if (bu_opt_fastf_t(&msg, 1, &argv[2], (void *)&s->gridrt) < 0) {
 	printf("problem reading right border of grid: %s\n", bu_vls_cstr(&msg));
 	ret = BRLCAD_ERROR;
     }
-    /* convert to mm */
-    s->gridrt = s->gridrt * s->unitconv;
 
     if (bu_opt_fastf_t(&msg, 1, &argv[3], (void *)&s->griddn) < 0) {
 	printf("problem reading bottom border of grid: %s\n", bu_vls_cstr(&msg));
 	ret = BRLCAD_ERROR;
     }
-    /* convert to mm */
-    s->griddn = s->griddn * s->unitconv;
 
     if (bu_opt_fastf_t(&msg, 1, &argv[4], (void *)&s->gridup) < 0) {
 	printf("problem reading top border of grid: %s\n", bu_vls_cstr(&msg));
 	ret = BRLCAD_ERROR;
     }
-    /* convert to mm */
-    s->gridup = s->gridup * s->unitconv;
 
     // Echo command (logCmd in original code)
     printf("%s\t\t%g %g %g %g", argv[0], s->gridlf, s->gridrt, s->griddn, s->gridup);
+
+    // After echoing, convert to mm
+    s->gridlf /= s->unitconv;
+    s->gridrt /= s->unitconv;
+    s->griddn /= s->unitconv;
+    s->gridup /= s->unitconv;
 
     bu_vls_free(&msg);
     return ret;
@@ -574,39 +572,36 @@ _burst_cmd_ground_plane(void *bs, int argc, const char **argv)
 	printf("problem reading distance of target origin above ground plane: %s\n", bu_vls_cstr(&msg));
 	ret = BRLCAD_ERROR;
     }
-    /* convert to mm */
-    s->grndht = s->grndht * s->unitconv;
 
     if (bu_opt_fastf_t(&msg, 1, &argv[2], (void *)&s->grndfr) < 0) {
 	printf("problem reading distance out positive X-axis of target to edge: %s\n", bu_vls_cstr(&msg));
 	ret = BRLCAD_ERROR;
     }
-    /* convert to mm */
-    s->grndfr = s->grndfr * s->unitconv;
 
     if (bu_opt_fastf_t(&msg, 1, &argv[2], (void *)&s->grndbk) < 0) {
 	printf("problem reading distance out negative X-axis of target to edge: %s\n", bu_vls_cstr(&msg));
 	ret = BRLCAD_ERROR;
     }
-    /* convert to mm */
-    s->grndbk = s->grndbk * s->unitconv;
 
     if (bu_opt_fastf_t(&msg, 1, &argv[2], (void *)&s->grndlf) < 0) {
 	printf("problem reading distance out positive Y-axis of target to edge: %s\n", bu_vls_cstr(&msg));
 	ret = BRLCAD_ERROR;
     }
-    /* convert to mm */
-    s->grndlf = s->grndlf * s->unitconv;
 
     if (bu_opt_fastf_t(&msg, 1, &argv[2], (void *)&s->grndrt) < 0) {
 	printf("problem reading distance out negative Y-axis of target to edge: %s\n", bu_vls_cstr(&msg));
 	ret = BRLCAD_ERROR;
     }
-    /* convert to mm */
-    s->grndrt = s->grndrt * s->unitconv;
 
     // Echo command (logCmd in original code)
     printf("%s\t\tyes %g %g %g %g %g", argv[0], s->grndht, s->grndfr, s->grndbk, s->grndlf, s->grndrt);
+
+    /* after printing, convert to mm */
+    s->grndht /= s->unitconv;
+    s->grndfr /= s->unitconv;
+    s->grndbk /= s->unitconv;
+    s->grndlf /= s->unitconv;
+    s->grndrt /= s->unitconv;
 
     bu_vls_free(&msg);
     return ret;
@@ -754,6 +749,10 @@ _burst_cmd_image_file(void *bs, int argc, const char **argv)
     }
 
     bu_vls_sprintf(&s->fbfile, "%s", argv[1]);
+
+    // Echo command (logCmd in original code)
+    printf("%s\t\t%s", argv[0], bu_vls_cstr(&s->fbfile));
+
     return BRLCAD_OK;
 }
 
@@ -781,15 +780,17 @@ _burst_cmd_input_2d_shot(void *bs, int argc, const char **argv)
 	printf("problem reading coordinate: %s\n", bu_vls_cstr(&msg));
 	ret = BRLCAD_ERROR;
     }
-    /* convert to mm */
-    s->fire[X] = s->fire[X]* s->unitconv;
-
     if (bu_opt_fastf_t(&msg, 1, &argv[2], (void *)&s->fire[Y]) < 0) {
 	printf("problem reading coordinate: %s\n", bu_vls_cstr(&msg));
 	ret = BRLCAD_ERROR;
     }
-    /* convert to mm */
-    s->fire[Y] = s->fire[Y]* s->unitconv;
+
+    // Echo command (logCmd in original code)
+    printf("%s\t\t%g %g", argv[0], s->fire[X], s->fire[Y]);
+
+    /* after printing, convert to mm */
+    s->fire[X] /= s->unitconv;
+    s->fire[Y] /= s->unitconv;
 
     s->firemode = FM_SHOT;
 
@@ -820,22 +821,24 @@ _burst_cmd_input_3d_shot(void *bs, int argc, const char **argv)
 	printf("problem reading coordinate: %s\n", bu_vls_cstr(&msg));
 	ret = BRLCAD_ERROR;
     }
-    /* convert to mm */
-    s->fire[X] = s->fire[X]* s->unitconv;
 
     if (bu_opt_fastf_t(&msg, 1, &argv[2], (void *)&s->fire[Y]) < 0) {
 	printf("problem reading coordinate: %s\n", bu_vls_cstr(&msg));
 	ret = BRLCAD_ERROR;
     }
-    /* convert to mm */
-    s->fire[Y] = s->fire[Y]* s->unitconv;
 
     if (bu_opt_fastf_t(&msg, 1, &argv[3], (void *)&s->fire[Z]) < 0) {
 	printf("problem reading coordinate: %s\n", bu_vls_cstr(&msg));
 	ret = BRLCAD_ERROR;
     }
-    /* convert to mm */
-    s->fire[Z] = s->fire[Z]* s->unitconv;
+
+    // Echo command (logCmd in original code)
+    printf("%s\t\t%g %g %g", argv[0], s->fire[X], s->fire[Y], s->fire[Z]);
+
+    /* after printing, convert to mm */
+    s->fire[X] /= s->unitconv;
+    s->fire[Y] /= s->unitconv;
+    s->fire[Z] /= s->unitconv;
 
     s->firemode = FM_SHOT | FM_3DIM;
 
@@ -867,6 +870,9 @@ _burst_cmd_max_barriers(void *bs, int argc, const char **argv)
 	ret = BRLCAD_ERROR;
     }
 
+    // Echo command (logCmd in original code)
+    printf("%s\t\t%d", argv[0], s->nbarriers);
+
     return ret;
 }
 
@@ -895,6 +901,9 @@ _burst_cmd_max_spall_rays(void *bs, int argc, const char **argv)
 	ret = BRLCAD_ERROR;
     }
 
+    // Echo command (logCmd in original code)
+    printf("%s\t\t%d", argv[0], s->nspallrays);
+
     return ret;
 }
 
@@ -917,6 +926,9 @@ _burst_cmd_plot_file(void *bs, int argc, const char **argv)
     }
 
     bu_vls_sprintf(&s->plotfile, "%s", argv[1]);
+
+    // Echo command (logCmd in original code)
+    printf("%s\t\t%s", argv[0], bu_vls_cstr(&s->plotfile));
 
     return BRLCAD_OK;
 }
@@ -979,6 +991,9 @@ _burst_cmd_read_2d_shot_file(void *bs, int argc, const char **argv)
 
     bu_vls_sprintf(&s->shotfile, "%s", argv[1]);
 
+    // Echo command (logCmd in original code)
+    printf("%s\t%s", argv[0], bu_vls_cstr(&s->shotfile));
+
     s->firemode = FM_SHOT | FM_FILE;
 
     return ret;
@@ -1023,6 +1038,9 @@ _burst_cmd_read_3d_shot_file(void *bs, int argc, const char **argv)
     }
     bu_vls_sprintf(&s->shotfile, "%s", argv[1]);
 
+    // Echo command (logCmd in original code)
+    printf("%s\t%s", argv[0], bu_vls_cstr(&s->shotfile));
+
     s->firemode = FM_SHOT | FM_FILE | FM_3DIM;
 
     return BRLCAD_OK;
@@ -1057,6 +1075,9 @@ _burst_cmd_burst_armor_file(void *bs, int argc, const char **argv)
     printf("Reading burst armor idents... done.\n");
 
     bu_vls_sprintf(&s->armorfile, "%s", argv[1]);
+
+    // Echo command (logCmd in original code)
+    printf("%s\t%s", argv[0], bu_vls_cstr(&s->armorfile));
 
     return ret;
 }
@@ -1100,6 +1121,10 @@ _burst_cmd_read_burst_file(void *bs, int argc, const char **argv)
     }
 
     bu_vls_sprintf(&s->burstfile, "%s", argv[1]);
+
+    // Echo command (logCmd in original code)
+    printf("%s\t\t%s", argv[0], bu_vls_cstr(&s->burstfile));
+
     s->firemode = FM_BURST | FM_3DIM | FM_FILE;
 
     return BRLCAD_OK;
@@ -1168,13 +1193,16 @@ _burst_cmd_report_overlaps(void *bs, int argc, const char **argv)
 
     s->reportoverlaps = (fval) ? 0 : tval;
 
+    // Echo command (logCmd in original code)
+    printf("%s\t\t%s\n", argv[0], s->reportoverlaps ? "yes" : "no");
+
     return BRLCAD_OK;
 }
 
 extern "C" int
 _burst_cmd_shotline_burst(void *bs, int argc, const char **argv)
 {
-    const char *usage_string = "shotline-burst flag";
+    const char *usage_string = "shotline-burst flag [flag]";
     const char *purpose_string = "if yes, generate burst points along shotlines";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
 	return BRLCAD_OK;
@@ -1184,7 +1212,7 @@ _burst_cmd_shotline_burst(void *bs, int argc, const char **argv)
 
     if (!s || !argc || !argv) return BRLCAD_ERROR;
 
-    if (argc != 2) {
+    if (argc != 2 && argc != 3) {
 	printf("Usage: shotline-burst yes|no\n");
 	return BRLCAD_ERROR;
     }
@@ -1200,8 +1228,26 @@ _burst_cmd_shotline_burst(void *bs, int argc, const char **argv)
     s->shotburst = (fval) ? 0 : tval;
 
     if (s->shotburst) {
-	s->reqburstair = s->shotburst;
+	if (argc == 3) {
+	    tval = bu_str_true(argv[2]);
+	    fval = bu_str_false(argv[2]);
+
+	    if (!tval && !fval) {
+		printf("Invalid boolean string: %s\n", argv[2]);
+		return BRLCAD_ERROR;
+	    }
+	    s->reqburstair = (fval) ? 0 : tval;
+	} else {
+	    s->reqburstair = s->shotburst;
+	}
+
+	// Echo command (logCmd in original code)
+	printf("%s\t\t%s %s\n", argv[0], s->shotburst ? "yes" : "no", s->reqburstair ? "yes" : "no");
+
 	s->firemode &= ~FM_BURST; /* disable discrete burst points */
+    } else {
+	// Echo command (logCmd in original code)
+	printf("%s\t\t%s\n", argv[0], s->shotburst ? "yes" : "no");
     }
 
     return BRLCAD_OK;
@@ -1248,6 +1294,9 @@ _burst_cmd_shotline_file(void *bs, int argc, const char **argv)
 
     bu_vls_sprintf(&s->shotlnfile, "%s", argv[1]);
 
+    // Echo command (logCmd in original code)
+    printf("%s\t\t%s\n", argv[0], bu_vls_cstr(&s->shotlnfile));
+
     return ret;
 }
 
@@ -1270,6 +1319,10 @@ _burst_cmd_target_file(void *bs, int argc, const char **argv)
     }
 
     bu_vls_sprintf(&s->gedfile, "%s", argv[1]);
+
+    // Echo command (logCmd in original code)
+    printf("%s\t\t%s\n", argv[0], bu_vls_cstr(&s->gedfile));
+
     return BRLCAD_OK;
 }
 
@@ -1286,12 +1339,22 @@ _burst_cmd_target_objects(void *bs, int argc, const char **argv)
 
     if (!s || !argc || !argv) return BRLCAD_ERROR;
 
-    if (argc != 2) {
-	printf("Usage: target-objects objects\n");
+    if (argc < 2) {
+	printf("%s\n", usage_string);
 	return BRLCAD_ERROR;
     }
 
-    bu_vls_sprintf(&s->objects, "%s", argv[1]);
+    for (int i = 1; i < argc; i++) {
+	if (i == 1) {
+	    bu_vls_sprintf(&s->objects, "%s", argv[i]);
+	} else {
+	    bu_vls_printf(&s->objects, " %s", argv[i]);
+	}
+    }
+
+    // Echo command (logCmd in original code)
+    printf("%s\t\t%s\n", argv[0], bu_vls_cstr(&s->objects));
+
     return BRLCAD_OK;
 }
 
@@ -1320,10 +1383,11 @@ _burst_cmd_units(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    s->unitconv = 1/s->unitconv;
+    // echo command (logcmd in original code)*/
+    printf("%s\t\t\t%s\n", argv[0], bu_units_string(s->unitconv));
 
-    // Echo command (logCmd in original code)*/
-    printf("%s\t\t\t%s\n", argv[0], argv[1]);
+    // Inverse is used in calculations
+    s->unitconv = 1/s->unitconv;
 
     return BRLCAD_OK;
 }
@@ -1346,7 +1410,7 @@ _burst_cmd_write_input_file(void *bs, int argc, const char **argv)
      * as they are generated. */
     FILE *cmdfp = fopen(argv[1], "wb");
     if (!cmdfp) {
-	printf("failed to open cmd file for writing: %s\n", argv[1]);
+	brst_log(s, "failed to open cmd file for writing: %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
 
@@ -1378,25 +1442,28 @@ _burst_cmd_burst_coordinates(void *bs, int argc, const char **argv)
     }
 
     if (bu_opt_fastf_t(&msg, 1, &argv[1], (void *)&s->burstpoint[X]) < 0) {
-	printf("problem reading coordinate X value: %s\n", bu_vls_cstr(&msg));
+	brst_log(s, "problem reading coordinate X value: %s\n", bu_vls_cstr(&msg));
 	ret = BRLCAD_ERROR;
     }
-    /* convert to mm */
-    s->burstpoint[X] = s->burstpoint[X] * s->unitconv;
 
     if (bu_opt_fastf_t(&msg, 1, &argv[1], (void *)&s->burstpoint[Y]) < 0) {
-	printf("problem reading coordinate Y value: %s\n", bu_vls_cstr(&msg));
+	brst_log(s, "problem reading coordinate Y value: %s\n", bu_vls_cstr(&msg));
 	ret = BRLCAD_ERROR;
     }
     /* convert to mm */
-    s->burstpoint[Y] = s->burstpoint[Y] * s->unitconv;
 
     if (bu_opt_fastf_t(&msg, 1, &argv[1], (void *)&s->burstpoint[Z]) < 0) {
-	printf("problem reading coordinate Z value: %s\n", bu_vls_cstr(&msg));
+	brst_log(s, "problem reading coordinate Z value: %s\n", bu_vls_cstr(&msg));
 	ret = BRLCAD_ERROR;
     }
-    /* convert to mm */
-    s->burstpoint[Z] = s->burstpoint[Z] * s->unitconv;
+
+    // Echo command (logCmd in original code)
+    printf("%s\t%g %g %g\n", argv[0], V3ARGS(s->burstpoint));
+
+    /* After echoing, convert to mm */
+    s->burstpoint[X] /= s->burstpoint[X];
+    s->burstpoint[Y] /= s->burstpoint[Y];
+    s->burstpoint[Z] /= s->burstpoint[Z];
 
     bu_vls_free(&msg);
     return ret;
@@ -1426,8 +1493,12 @@ _burst_cmd_burst_distance(void *bs, int argc, const char **argv)
 	printf("problem reading distance value: %s\n", bu_vls_cstr(&msg));
 	ret = BRLCAD_ERROR;
     }
+
+    // Echo command (logCmd in original code)
+    printf("%s\t\t%g\n", argv[0], s->bdist);
+
     /* convert to mm */
-    s->bdist = s->bdist * s->unitconv;
+    s->bdist /= s->unitconv;
 
     return ret;
 }
@@ -1472,6 +1543,9 @@ _burst_cmd_burst_file(void *bs, int argc, const char **argv)
     }
     bu_vls_sprintf(&s->outfile, "%s", argv[1]);
 
+    // Echo command (logCmd in original code)
+    printf("%s\t\t%s\n", argv[0], bu_vls_cstr(&s->outfile));
+
     return ret;
 }
 
@@ -1499,8 +1573,12 @@ _burst_cmd_cell_size(void *bs, int argc, const char **argv)
 	printf("problem reading cell size value: %s\n", bu_vls_cstr(&msg));
 	ret = BRLCAD_ERROR;
     }
-    /* convert to mm */
-    s->cellsz = s->cellsz * s->unitconv;
+
+    // Echo command (logCmd in original code)
+    printf("%s\t\t%g\n", argv[0], s->cellsz);
+
+    /* After echoing, convert to mm */
+    s->cellsz /= s->unitconv;
 
     return ret;
 }
@@ -1530,6 +1608,9 @@ _burst_cmd_color_file(void *bs, int argc, const char **argv)
 
     bu_vls_sprintf(&s->colorfile, "%s", argv[1]);
 
+    // Echo command (logCmd in original code)
+    printf("%s\t\t%s\n", argv[0], bu_vls_cstr(&s->colorfile));
+
     return ret;
 }
 
@@ -1557,6 +1638,12 @@ _burst_cmd_cone_half_angle(void *bs, int argc, const char **argv)
 	printf("problem reading cone half angle value: %s\n", bu_vls_cstr(&msg));
 	ret = BRLCAD_ERROR;
     }
+
+    // Echo command (logCmd in original code)
+    printf("%s\t\t%g\n", argv[0], s->conehfangle);
+
+    // After echoing, convert to radians for internal use
+    s->conehfangle /= RAD2DEG;
 
     return ret;
 }
