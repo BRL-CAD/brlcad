@@ -169,7 +169,7 @@ paintSpallFb(struct application *ap)
     err = fb_write(s->fbiop, x, y, pixel, 1);
     bu_semaphore_release(BU_SEM_GENERAL);
     if (err == -1)
-	bu_log("Write failed to pixel <%d, %d> from cell <%d, %d>.\n", x, y, ap->a_x, ap->a_y);
+	brst_log(s, "Write failed to pixel <%d, %d> from cell <%d, %d>.\n", x, y, ap->a_x, ap->a_y);
     return;
 }
 
@@ -179,9 +179,9 @@ paintSpallFb(struct application *ap)
 int
 openFbDevice(struct burst_state *s, struct bu_vls *fbdev)
 {
-    bu_log("Opening frame buffer");
+    brst_log(s, "Opening frame buffer");
     if (s->zoom < 1) {
-	bu_log("Device is too small to display image.");
+	brst_log(s, "Device is too small to display image.");
 	return 1;
     }
     if (((s->fbiop != FB_NULL && fb_getwidth(s->fbiop) != s->devwid) || s->pixgrid == NULL)
