@@ -205,7 +205,7 @@ colorPartition(struct burst_state *s, struct region *regp, int type)
 	    }
 	    break;
 	default :
-	    //bu_log("colorPartition: bad type %d.\n", type);
+	    brst_log(s, "colorPartition: bad type %d.\n", type);
 	    break;
     }
     bu_semaphore_release(BU_SEM_SYSCALL);
@@ -309,8 +309,8 @@ chkEntryNorm(struct partition *pp, struct xray *rayp, fastf_t normvec[3], const 
     }
     if (f > 0.0) {
 	flipct++;
-	bu_log("Fixed flipped entry normal:\n");
-	bu_log("\tregion \"%s\" solid \"%s\" type %d \"%s\".\n",
+	brst_log(s, "Fixed flipped entry normal:\n");
+	brst_log(s, "\tregion \"%s\" solid \"%s\" type %d \"%s\".\n",
 		 pp->pt_regionp->reg_name, stp->st_name,
 		 stp->st_id, purpose);
 	VSCALE(normvec, normvec, -1.0);
@@ -331,33 +331,14 @@ chkExitNorm(struct partition *pp, struct xray *rayp, fastf_t normvec[3], const c
     /* Dot product of ray direction with normal *should* be positive. */
     f = VDOT(rayp->r_dir, normvec);
     if (ZERO(f)) {
-#ifdef DEBUG
-	bu_log("chkExitNorm: near 90 degree obliquity.\n");
-	bu_log("\tPnt %g, %g, %g\n\tDir %g, %g, %g\n\tNorm %g, %g, %g.\n",
-		 rayp->r_pt[X], rayp->r_pt[Y], rayp->r_pt[Z],
-		 rayp->r_dir[X], rayp->r_dir[Y], rayp->r_dir[Z],
-		 normvec[X], normvec[Y], normvec[Z]);
-#endif
 	ret = 0;
     }
     if (f < 0.0) {
 	flipct++;
-	bu_log("Fixed flipped exit normal:\n");
-	bu_log("\tregion \"%s\" solid \"%s\" type %d \"%s\".\n",
+	brst_log("Fixed flipped exit normal:\n");
+	brst_log("\tregion \"%s\" solid \"%s\" type %d \"%s\".\n",
 		 pp->pt_regionp->reg_name, stp->st_name,
 		 stp->st_id, purpose);
-#ifdef DEBUG
-	bu_log("\tPnt %g, %g, %g\n\tDir %g, %g, %g\n\tNorm %g, %g, %g.\n",
-		 rayp->r_pt[X], rayp->r_pt[Y], rayp->r_pt[Z],
-		 rayp->r_dir[X], rayp->r_dir[Y], rayp->r_dir[Z],
-		 normvec[X], normvec[Y], normvec[Z]);
-	bu_log("\tDist %g Hit Pnt %g, %g, %g\n",
-		 pp->pt_outhit->hit_dist,
-		 pp->pt_outhit->hit_point[X],
-		 pp->pt_outhit->hit_point[Y],
-		 pp->pt_outhit->hit_point[Z]);
-	bu_log("\t%d of %d normals flipped.\n", flipct, totalct);
-#endif
 	VSCALE(normvec, normvec, -1.0);
 	ret = 0;
     }
@@ -367,9 +348,10 @@ chkExitNorm(struct partition *pp, struct xray *rayp, fastf_t normvec[3], const c
 static int
 f_Nerror(struct application *ap)
 {
-    bu_log("Couldn't compute thickness or exit point along normal direction.\n");
-    bu_log("\tpnt\t<%12.6f, %12.6f, %12.6f>\n", V3ARGS(ap->a_ray.r_pt));
-    bu_log("\tdir\t<%12.6f, %12.6f, %12.6f>\n", V3ARGS(ap->a_ray.r_dir));
+    struct burst_state *s = (struct burst_state *)ap->a_uptr;
+    brst_log(s, "Couldn't compute thickness or exit point along normal direction.\n");
+    brst_log(s, "\tpnt\t<%12.6f, %12.6f, %12.6f>\n", V3ARGS(ap->a_ray.r_pt));
+    brst_log(s, "\tdir\t<%12.6f, %12.6f, %12.6f>\n", V3ARGS(ap->a_ray.r_dir));
     ap->a_rbeam = 0.0;
     return 0;
 }

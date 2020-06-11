@@ -199,24 +199,27 @@ struct burst_state {
     const struct bu_cmdtab *cmds;
 };
 
-void burst_state_init(struct burst_state *s);
-
-int findIdents(int ident, struct bu_ptbl *idpl);
-int readIdents(struct bu_ptbl *idlist, const char *fname);
-int readColors(struct bu_ptbl *idlist, const char *fname);
-
-struct colors *findColors(int ident, struct bu_ptbl *colp);
 
 
-void gridModel(struct burst_state *s);
-void gridInit(struct burst_state *s);
-void spallInit(struct burst_state *s);
+extern void burst_state_init(struct burst_state *s);
 
-void paintCellFb(struct application *ap, unsigned char *pixpaint, unsigned char *pixexpendable);
-void paintSpallFb(struct application *ap);
-void paintGridFb(struct burst_state *s);
+extern int findIdents(int ident, struct bu_ptbl *idpl);
+extern int readIdents(struct bu_ptbl *idlist, const char *fname);
+extern int readColors(struct bu_ptbl *idlist, const char *fname);
+extern struct colors *findColors(int ident, struct bu_ptbl *colp);
 
-int imageInit(struct burst_state *s);
+extern void gridModel(struct burst_state *s);
+extern void gridInit(struct burst_state *s);
+extern void spallInit(struct burst_state *s);
+
+extern void paintCellFb(struct application *ap, unsigned char *pixpaint, unsigned char *pixexpendable);
+extern void paintSpallFb(struct application *ap);
+extern void paintGridFb(struct burst_state *s);
+extern int imageInit(struct burst_state *s);
+
+/* as far as I can tell the original burst code didn't actually use errfile,
+ * but since it is a defined command we will set up to support it */
+extern void brst_log(struct burst_state *s, const char *, ...);
 
 #endif  /* BURST_BURST_H */
 

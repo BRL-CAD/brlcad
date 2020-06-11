@@ -54,6 +54,20 @@ extern "C" {
 
 #define DEFAULT_BURST_PROMPT "burst> "
 
+
+/* logging function that takes care of writing output to errfile if it is defined */
+void
+brst_log(struct burst_state *s, const char *fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+    if (s->errfile) {
+	vfprintf(s->errfile, fmt, ap);
+    } else {
+	vfprintf(stderr, fmt, ap);
+    }
+}
+
 /* Forward declare so we can use this function in a command
  * called by this function */
 int burst_process_line(struct burst_state *s, const char *line);
@@ -1071,13 +1085,13 @@ _burst_cmd_read_input_file(void *bs, int argc, const char **argv)
     std::ifstream fs;
     fs.open(argv[1]);
     if (!fs.is_open()) {
-	bu_log("Unable to open command file: %s\n", argv[1]);
+	brst_log(s, "Unable to open command file: %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
     std::string bline;
     while (std::getline(fs, bline)) {
 	if (burst_process_line(s, bline.c_str()) != BRLCAD_OK) {
-	    bu_log("Error processing line: %s\n", bline.c_str());
+	    brst_log(s, "Error processing line: %s\n", bline.c_str());
 	    fs.close();
 	    return BRLCAD_ERROR;
 	}
@@ -1602,12 +1616,15 @@ main(int argc, const char **argv)
     /* Let bu_brlcad_root and friends know where we are */
     bu_setprogname(argv[0]);
 
+    /* Initialize */
+    burst_state_init(&s);
+
     /* Done with program name */
     argv++; argc--;
 
     /* Parse options, fail if anything goes wrong */
     if ((argc = bu_opt_parse(&msg, argc, argv, d)) == -1) {
-	bu_log("%s", bu_vls_cstr(&msg));
+	brst_log(&s, "%s", bu_vls_cstr(&msg));
 	bu_vls_free(&msg);
 	bu_exit(EXIT_FAILURE, NULL);
     }
@@ -1617,13 +1634,12 @@ main(int argc, const char **argv)
 	const char *help = bu_opt_describe(d, NULL);
 	bu_vls_sprintf(&msg, "Usage: 'burst [options] cmd_file'\n\nOptions:\n%s\n", help);
 	bu_free((char *)help, "done with help string");
-	bu_log("%s", bu_vls_cstr(&msg));
+	brst_log(&s, "%s", bu_vls_cstr(&msg));
 	bu_vls_free(&msg);
 	bu_exit(EXIT_SUCCESS, NULL);
     }
 
     /* We're in business - initalize the burst state */
-    burst_state_init(&s);
     s.cmds = _burst_cmds;
 
     /* If we have a batch file, process it. */
@@ -1631,13 +1647,13 @@ main(int argc, const char **argv)
 	std::ifstream fs;
 	fs.open(argv[0]);
 	if (!fs.is_open()) {
-	    bu_log("Unable to open burst batch file: %s\n", argv[0]);
+	    brst_log(&s, "Unable to open burst batch file: %s\n", argv[0]);
 	    return EXIT_FAILURE;
 	}
 	std::string bline;
 	while (std::getline(fs, bline)) {
 	    if (burst_process_line(&s, bline.c_str()) != BRLCAD_OK) {
-		bu_log("Error processing line: %s\n", bline.c_str());
+		brst_log(&s, "Error processing line: %s\n", bline.c_str());
 		fs.close();
 		return EXIT_FAILURE;
 	    }
