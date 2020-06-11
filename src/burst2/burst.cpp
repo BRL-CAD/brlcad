@@ -132,7 +132,6 @@ burst_state_init(struct burst_state *s)
     memset(s->scriptfile, 0, LNBUFSZ);
     bu_vls_init(&s->shotfile);
     bu_vls_init(&s->shotlnfile);
-    memset(s->title, 0, TITLE_LEN);
     memset(s->timer, 0, TIMER_LEN);
     bu_vls_init(&s->cmdhist);
     s->cmdptr = NULL;

@@ -129,7 +129,6 @@ struct burst_state {
     char scriptfile[LNBUFSZ];  /* shell script file name */
     struct bu_vls shotfile;    /* input file of firing coordinates */
     struct bu_vls shotlnfile;  /* shotline output file name */
-    char title[TITLE_LEN];     /* title of MGED target description */
     char timer[TIMER_LEN];     /* CPU usage statistics */
     char tmpfname[TIMER_LEN];  /* temporary file for logging input */
     char *cmdptr;              /* */

@@ -61,7 +61,8 @@ execute_run(struct burst_state *s)
     bu_log("Reading target data base");
     rt_prep_timer();
     if (s->rtip == RTI_NULL) {
-	s->rtip = rt_dirbuild(bu_vls_cstr(&s->gedfile), s->title, TITLE_LEN);
+	char db_title[TITLE_LEN+1];
+	s->rtip = rt_dirbuild(bu_vls_cstr(&s->gedfile), db_title, TITLE_LEN);
     }
     if (s->rtip == RTI_NULL) {
 	bu_log("Ray tracer failed to read the target file.");
