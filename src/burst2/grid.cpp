@@ -109,8 +109,7 @@
 #define DEBUG_SHOT	1
 
 typedef struct pt_queue Pt_Queue;
-struct pt_queue
-{
+struct pt_queue {
     struct partition *q_part;
     Pt_Queue *q_next;
 };
@@ -122,8 +121,8 @@ qAdd(struct partition *pp, Pt_Queue **qpp)
     Pt_Queue *newq;
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     if ((newq = (Pt_Queue *) malloc(sizeof(Pt_Queue))) == PT_Q_NULL) {
-        bu_semaphore_release(BU_SEM_SYSCALL);
-        return 0;
+	bu_semaphore_release(BU_SEM_SYSCALL);
+	return 0;
     }
     bu_semaphore_release(BU_SEM_SYSCALL);
     newq->q_next = *qpp;
@@ -137,7 +136,7 @@ void
 qFree(Pt_Queue *qp)
 {
     if (qp == PT_Q_NULL)
-        return;
+	return;
     qFree(qp->q_next);
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     free((char *) qp);
@@ -182,7 +181,7 @@ colorPartition(struct burst_state *s, struct region *regp, int type)
 			 (int) colorp->c_rgb[0],
 			 (int) colorp->c_rgb[1],
 			 (int) colorp->c_rgb[2]
-		    );
+			);
 	    }
 	    break;
 	case C_MAIN :
@@ -198,9 +197,9 @@ colorPartition(struct burst_state *s, struct region *regp, int type)
 		}
 	    } else {
 		pl_color(s->plotfp,
-			(int) colorp->c_rgb[0],
-			(int) colorp->c_rgb[1],
-			(int) colorp->c_rgb[2]
+			 (int) colorp->c_rgb[0],
+			 (int) colorp->c_rgb[1],
+			 (int) colorp->c_rgb[2]
 			);
 	    }
 	    break;
@@ -247,32 +246,32 @@ enforceLOS(struct application *ap, struct partition *pt_headp)
 */
 void
 prntRayHeader(struct burst_state *s,
-       	fastf_t *raydir /* burst ray direction vector */,
-       	fastf_t *shotdir /* shotline direction vector */,
-      	unsigned rayno /* ray number for this burst point */)
+	      fastf_t *raydir /* burst ray direction vector */,
+	      fastf_t *shotdir /* shotline direction vector */,
+	      unsigned rayno /* ray number for this burst point */)
 {
     double cosxr;        /* cosine of angle between X' and raydir */
     double cosyr;        /* cosine of angle between Y' and raydir */
     fastf_t azim;        /* ray azim in radians */
     fastf_t sinelev; /* sine of ray elevation */
     if (!bu_vls_strlen(&s->outfile))
-        return;
+	return;
     cosxr = -VDOT(shotdir, raydir); /* shotdir is reverse of X' */
     cosyr = VDOT(s->gridhor, raydir);
     if (NEAR_ZERO(cosyr, VDIVIDE_TOL) && NEAR_ZERO(cosxr, VDIVIDE_TOL))
-        azim = 0.0;
+	azim = 0.0;
     else
-        azim = atan2(cosyr, cosxr);
+	azim = atan2(cosyr, cosxr);
     sinelev = VDOT(s->gridver, raydir);
     if (fprintf(s->outfp,
-                "%c %8.3f %8.3f %6u\n",
-                PB_RAY_HEADER,
-                azim,   /* ray azimuth angle WRT shotline (radians). */
-                sinelev, /* sine of ray elevation angle WRT shotline. */
-                rayno
-            ) < 0
-        ) {
-        bu_exit(EXIT_FAILURE, "Write failed to file (%s)!\n", bu_vls_cstr(&s->outfile));
+		"%c %8.3f %8.3f %6u\n",
+		PB_RAY_HEADER,
+		azim,   /* ray azimuth angle WRT shotline (radians). */
+		sinelev, /* sine of ray elevation angle WRT shotline. */
+		rayno
+	       ) < 0
+       ) {
+	bu_exit(EXIT_FAILURE, "Write failed to file (%s)!\n", bu_vls_cstr(&s->outfile));
     }
 }
 
@@ -369,10 +368,10 @@ f_Normal(struct application *ap, struct partition *pt_headp, struct seg *UNUSED(
     struct hit *ohitp;
 
     for (cp = pp->pt_forw;
-         cp != pt_headp && SameCmp(pp->pt_regionp, cp->pt_regionp);
-         cp = cp->pt_forw
-        )
-        ;
+	 cp != pt_headp && SameCmp(pp->pt_regionp, cp->pt_regionp);
+	 cp = cp->pt_forw
+	)
+	;
     ohitp = cp->pt_back->pt_outhit;
     ap->a_rbeam = ohitp->hit_dist - pp->pt_inhit->hit_dist;
     return 1;
@@ -390,30 +389,30 @@ getNormThickness(struct application *ap, struct partition *pp, fastf_t cosobliqu
 {
     struct burst_state *s = (struct burst_state *)ap->a_uptr;
     if (NEAR_EQUAL(cosobliquity, 1.0, COS_TOL)) {
-        /* Trajectory was normal to surface, so no need
-           to shoot another ray. */
-        fastf_t thickness = pp->pt_outhit->hit_dist -
-            pp->pt_inhit->hit_dist;
-        return thickness;
+	/* Trajectory was normal to surface, so no need
+	   to shoot another ray. */
+	fastf_t thickness = pp->pt_outhit->hit_dist -
+			    pp->pt_inhit->hit_dist;
+	return thickness;
     } else {
-        /* need to shoot ray */
-        struct application a_thick;
-        struct hit *ihitp = pp->pt_inhit;
-        struct region *regp = pp->pt_regionp;
-        a_thick = *ap;
-        a_thick.a_hit = f_Normal;
-        a_thick.a_miss = f_Nerror;
-        a_thick.a_level++;
-        a_thick.a_user = regp->reg_regionid;
-        a_thick.a_purpose = "normal thickness";
-        VMOVE(a_thick.a_ray.r_pt, ihitp->hit_point);
-        VSCALE(a_thick.a_ray.r_dir, normvec, -1.0);
-        if (rt_shootray(&a_thick) == -1 && s->fatalerror) {
-            /* Fatal error in application routine. */
-            brst_log(s, "Fatal error: raytracing aborted.\n");
-            return 0.0;
-        }
-        return a_thick.a_rbeam;
+	/* need to shoot ray */
+	struct application a_thick;
+	struct hit *ihitp = pp->pt_inhit;
+	struct region *regp = pp->pt_regionp;
+	a_thick = *ap;
+	a_thick.a_hit = f_Normal;
+	a_thick.a_miss = f_Nerror;
+	a_thick.a_level++;
+	a_thick.a_user = regp->reg_regionid;
+	a_thick.a_purpose = "normal thickness";
+	VMOVE(a_thick.a_ray.r_pt, ihitp->hit_point);
+	VSCALE(a_thick.a_ray.r_dir, normvec, -1.0);
+	if (rt_shootray(&a_thick) == -1 && s->fatalerror) {
+	    /* Fatal error in application routine. */
+	    brst_log(s, "Fatal error: raytracing aborted.\n");
+	    return 0.0;
+	}
+	return a_thick.a_rbeam;
     }
     /*NOTREACHED*/
 }
@@ -434,14 +433,14 @@ prntRegionHdr(struct application *ap, struct partition *pt_headp, struct partiti
     struct xray *rayp = &ap->a_ray;
     /* Get entry/exit normals and fill in hit points */
     getRtHitNorm(ihitp, pp->pt_inseg->seg_stp, rayp,
-                 (int) pp->pt_inflip, entrynorm);
+		 (int) pp->pt_inflip, entrynorm);
     if (! chkEntryNorm(s, pp, rayp, entrynorm,
-                       "spall ray component entry normal")) {
+		       "spall ray component entry normal")) {
     }
     getRtHitNorm(ohitp, pp->pt_outseg->seg_stp, rayp,
-                 (int) pp->pt_outflip, exitnorm);
+		 (int) pp->pt_outflip, exitnorm);
     if (! chkExitNorm(s, pp, rayp, exitnorm,
-                      "spall ray component exit normal")) {
+		      "spall ray component exit normal")) {
     }
 
 
@@ -450,26 +449,26 @@ prntRegionHdr(struct application *ap, struct partition *pt_headp, struct partiti
     cosobliquity = -cosobliquity;
 
     if (!bu_vls_strlen(&s->outfile))
-        return;
+	return;
 
 
     /* Now we must find normal thickness through component. */
     normthickness = getNormThickness(ap, pp, cosobliquity, entrynorm);
     bu_semaphore_acquire(BU_SEM_SYSCALL);               /* lock */
     if (fprintf(s->outfp,
-                "%c % 10.3f % 9.3f % 9.3f %4d %5d % 6.3f\n",
-                PB_REGION_HEADER,
-                ihitp->hit_dist*s->unitconv, /* distance from burst pt. */
-                (ohitp->hit_dist - ihitp->hit_dist)*s->unitconv, /* LOS */
-                normthickness*s->unitconv,   /* normal thickness */
-                pp->pt_forw == pt_headp ?
-                EXIT_AIR : pp->pt_forw->pt_regionp->reg_aircode,
-                regp->reg_regionid,
-                cosobliquity
-            ) < 0
-        ) {
-        bu_semaphore_release(BU_SEM_SYSCALL);   /* unlock */
-        bu_exit(EXIT_FAILURE, "Write failed to file (%s)!\n", bu_vls_cstr(&s->outfile));
+		"%c % 10.3f % 9.3f % 9.3f %4d %5d % 6.3f\n",
+		PB_REGION_HEADER,
+		ihitp->hit_dist*s->unitconv, /* distance from burst pt. */
+		(ohitp->hit_dist - ihitp->hit_dist)*s->unitconv, /* LOS */
+		normthickness*s->unitconv,   /* normal thickness */
+		pp->pt_forw == pt_headp ?
+		EXIT_AIR : pp->pt_forw->pt_regionp->reg_aircode,
+		regp->reg_regionid,
+		cosobliquity
+	       ) < 0
+       ) {
+	bu_semaphore_release(BU_SEM_SYSCALL);   /* unlock */
+	bu_exit(EXIT_FAILURE, "Write failed to file (%s)!\n", bu_vls_cstr(&s->outfile));
     }
     bu_semaphore_release(BU_SEM_SYSCALL);       /* unlock */
 }
@@ -481,9 +480,9 @@ prntShieldComp(struct application *ap, struct partition *pt_headp, Pt_Queue *qp)
     fastf_t entrynorm[3], exitnorm[3];
     struct burst_state *s = (struct burst_state *)ap->a_uptr;
     if (!bu_vls_strlen(&s->outfile))
-        return;
+	return;
     if (qp == PT_Q_NULL)
-        return;
+	return;
     prntShieldComp(ap, pt_headp, qp->q_next);
     prntRegionHdr(ap, pt_headp, qp->q_part, entrynorm, exitnorm);
 }
@@ -492,16 +491,16 @@ void
 plotPartition(struct burst_state *s, struct hit *ihitp, struct hit *ohitp)
 {
     if (s->plotfp == NULL)
-        return;
+	return;
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     pl_3line(s->plotfp,
-             (int) ihitp->hit_point[X],
-             (int) ihitp->hit_point[Y],
-             (int) ihitp->hit_point[Z],
-             (int) ohitp->hit_point[X],
-             (int) ohitp->hit_point[Y],
-             (int) ohitp->hit_point[Z]
-        );
+	     (int) ihitp->hit_point[X],
+	     (int) ihitp->hit_point[Y],
+	     (int) ihitp->hit_point[Z],
+	     (int) ohitp->hit_point[X],
+	     (int) ohitp->hit_point[Y],
+	     (int) ohitp->hit_point[Z]
+	    );
     bu_semaphore_release(BU_SEM_SYSCALL);
     return;
 }
@@ -563,7 +562,7 @@ f_BurstHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSE
     /* Find first barrier in front of the burst point. */
     for (spp = pt_headp->pt_forw;
 	 spp != pt_headp
-	     &&	spp->pt_outhit->hit_dist < 0.1;
+	 &&	spp->pt_outhit->hit_dist < 0.1;
 	 spp = spp->pt_forw
 	)
 	;
@@ -668,15 +667,15 @@ f_Overlap(struct application *ap, struct partition *pp, struct region *reg1, str
 	brst_log(s, "OVERLAP:\n");
 	brst_log(s, "reg=%s isol=%s, \n",
 		 reg1->reg_name, pp->pt_inseg->seg_stp->st_name
-	    );
+		);
 	brst_log(s, "reg=%s osol=%s, \n",
 		 reg2->reg_name, pp->pt_outseg->seg_stp->st_name
-	    );
+		);
 	brst_log(s, "depth %.2fmm at (%g, %g, %g) x%d y%d lvl%d purpose=%s\n",
 		 depth,
 		 pt[X], pt[Y], pt[Z],
 		 ap->a_x, ap->a_y, ap->a_level, ap->a_purpose
-	    );
+		);
     }
 
     return rt_defoverlap(ap, pp, reg1, reg2, pheadp);
@@ -695,13 +694,13 @@ prntCellIdent(struct application *ap)
     struct burst_state *s = (struct burst_state *)ap->a_uptr;
     if (bu_vls_strlen(&s->outfile)) {
 	int ret = fprintf(s->outfp,
-		"%c % 8.3f % 8.3f\n",
-		PB_CELL_IDENT,
-		ap->a_uvec[X]*s->unitconv,
-		/* horizontal coordinate of shotline (Y') */
-		ap->a_uvec[Y]*s->unitconv
-		/* vertical coordinate of shotline (Z') */
-		);
+			  "%c % 8.3f % 8.3f\n",
+			  PB_CELL_IDENT,
+			  ap->a_uvec[X]*s->unitconv,
+			  /* horizontal coordinate of shotline (Y') */
+			  ap->a_uvec[Y]*s->unitconv
+			  /* vertical coordinate of shotline (Z') */
+			 );
 
 	if (ret < 0) {
 	    bu_exit(EXIT_FAILURE, "Write failed to file (%s)!\n", bu_vls_cstr(&s->outfile));
@@ -709,13 +708,13 @@ prntCellIdent(struct application *ap)
     }
     if (bu_vls_strlen(&s->shotlnfile)) {
 	int ret = fprintf(s->shotlnfp,
-		"%c % 8.3f % 8.3f\n",
-		PS_CELL_IDENT,
-		ap->a_uvec[X]*s->unitconv,
-		/* horizontal coordinate of shotline (Y') */
-		ap->a_uvec[Y]*s->unitconv
-		/* vertical coordinate of shotline (Z') */
-		);
+			  "%c % 8.3f % 8.3f\n",
+			  PS_CELL_IDENT,
+			  ap->a_uvec[X]*s->unitconv,
+			  /* horizontal coordinate of shotline (Y') */
+			  ap->a_uvec[Y]*s->unitconv
+			  /* vertical coordinate of shotline (Z') */
+			 );
 	if (ret < 0) {
 	    bu_exit(EXIT_FAILURE, "Write failed to file (%s)!\n", bu_vls_cstr(&s->shotlnfile));
 	}
@@ -731,43 +730,43 @@ prntCellIdent(struct application *ap)
 */
 void
 prntPhantom(
-	struct burst_state *s,
-	struct hit *hitp /* ptr. to phantom's intersection information */,
-       	int space        /* space code behind phantom */)
+    struct burst_state *s,
+    struct hit *hitp /* ptr. to phantom's intersection information */,
+    int space        /* space code behind phantom */)
 {
     if (bu_vls_strlen(&s->outfile)) {
 	int ret = fprintf(s->outfp,
-		"%c % 8.2f % 8.2f %5d %2d % 7.3f % 7.3f % 7.3f %c\n",
-		PB_RAY_INTERSECT,
-		(s->standoff - hitp->hit_dist)*s->unitconv,
-		/* X'-coordinate of intersection */
-		0.0,    /* LOS thickness of component */
-		PHANTOM_ARMOR, /* component code number */
-		space,  /* space code */
-		0.0,    /* sine of fallback angle */
-		0.0,    /* rotation angle (degrees) */
-		0.0, /* cosine of obliquity angle at entry */
-		'0'     /* no burst from phantom armor */
-		);
-        if (ret < 0) {
+			  "%c % 8.2f % 8.2f %5d %2d % 7.3f % 7.3f % 7.3f %c\n",
+			  PB_RAY_INTERSECT,
+			  (s->standoff - hitp->hit_dist)*s->unitconv,
+			  /* X'-coordinate of intersection */
+			  0.0,    /* LOS thickness of component */
+			  PHANTOM_ARMOR, /* component code number */
+			  space,  /* space code */
+			  0.0,    /* sine of fallback angle */
+			  0.0,    /* rotation angle (degrees) */
+			  0.0, /* cosine of obliquity angle at entry */
+			  '0'     /* no burst from phantom armor */
+			 );
+	if (ret < 0) {
 	    bu_exit(EXIT_FAILURE, "Write failed to file (%s)!\n", bu_vls_cstr(&s->outfile));
 	}
     }
     if (bu_vls_strlen(&s->shotlnfile)) {
 	int ret = fprintf(s->shotlnfp,
-                        "%c % 8.2f % 7.3f % 7.3f %5d % 8.2f % 8.2f %2d % 7.2f % 7.2f\n",
-                        PS_SHOT_INTERSECT,
-                        (s->standoff - hitp->hit_dist)*s->unitconv,
-                        /* X'-coordinate of intersection */
-                        0.0,            /* sine of fallback angle */
-                        0.0,            /* rotation angle in degrees */
-                        PHANTOM_ARMOR,  /* component code number */
-                        0.0,            /* normal thickness of component */
-                        0.0,            /* LOS thickness of component */
-                        space,          /* space code */
-                        0.0,            /* entry obliquity angle in degrees */
-                        0.0             /* exit obliquity angle in degrees */
-		);
+			  "%c % 8.2f % 7.3f % 7.3f %5d % 8.2f % 8.2f %2d % 7.2f % 7.2f\n",
+			  PS_SHOT_INTERSECT,
+			  (s->standoff - hitp->hit_dist)*s->unitconv,
+			  /* X'-coordinate of intersection */
+			  0.0,            /* sine of fallback angle */
+			  0.0,            /* rotation angle in degrees */
+			  PHANTOM_ARMOR,  /* component code number */
+			  0.0,            /* normal thickness of component */
+			  0.0,            /* LOS thickness of component */
+			  space,          /* space code */
+			  0.0,            /* entry obliquity angle in degrees */
+			  0.0             /* exit obliquity angle in degrees */
+			 );
 	if (ret < 0) {
 	    bu_exit(EXIT_FAILURE, "Write failed to file (%s)!\n", bu_vls_cstr(&s->shotlnfile));
 	}
@@ -782,10 +781,10 @@ prntPhantom(
 */
 void
 prntSeg(struct application *ap,
-       	struct partition *cpp /* component partition */,
-       	int space, fastf_t entrynorm[3], fastf_t exitnorm[3],
-       	int burstflag /* Was a burst generated by this partition? */
-	)
+	struct partition *cpp /* component partition */,
+	int space, fastf_t entrynorm[3], fastf_t exitnorm[3],
+	int burstflag /* Was a burst generated by this partition? */
+       )
 {
     struct burst_state *s = (struct burst_state *)ap->a_uptr;
     fastf_t icosobliquity;      /* cosine of obliquity at entry */
@@ -818,20 +817,20 @@ prntSeg(struct application *ap,
     los = (cpp->pt_outhit->hit_dist-cpp->pt_inhit->hit_dist)*s->unitconv;
 
     if (bu_vls_strlen(&s->outfile)
-	    &&      fprintf(s->outfp,
-		"%c % 8.2f % 8.2f %5d %2d % 7.3f % 7.2f % 7.3f %c\n",
-		PB_RAY_INTERSECT,
-		(s->standoff - cpp->pt_inhit->hit_dist)*s->unitconv,
-		/* X'-coordinate of intersection */
-		los,            /* LOS thickness of component */
-		cpp->pt_regionp->reg_regionid,
-		/* component code number */
-		space,          /* space code */
-		sinfbangle,     /* sine of fallback angle at exit */
-		rotangle,       /* rotation angle in degrees at exit */
-		icosobliquity,  /* cosine of obliquity angle at entry */
-		burstflag ? '1' : '0' /* flag generation of burst */
-		) < 0
+	&&      fprintf(s->outfp,
+			"%c % 8.2f % 8.2f %5d %2d % 7.3f % 7.2f % 7.3f %c\n",
+			PB_RAY_INTERSECT,
+			(s->standoff - cpp->pt_inhit->hit_dist)*s->unitconv,
+			/* X'-coordinate of intersection */
+			los,            /* LOS thickness of component */
+			cpp->pt_regionp->reg_regionid,
+			/* component code number */
+			space,          /* space code */
+			sinfbangle,     /* sine of fallback angle at exit */
+			rotangle,       /* rotation angle in degrees at exit */
+			icosobliquity,  /* cosine of obliquity angle at entry */
+			burstflag ? '1' : '0' /* flag generation of burst */
+		       ) < 0
        ) {
 	bu_exit(EXIT_FAILURE, "Write failed to file (%s)!\n", bu_vls_cstr(&s->outfile));
     }
@@ -840,35 +839,35 @@ prntSeg(struct application *ap,
 	return;
     entryangle = NEAR_EQUAL(icosobliquity, 1.0, COS_TOL) ? 0.0 : acos(icosobliquity) * RAD2DEG;
     if ((normthickness = getNormThickness(ap, cpp, icosobliquity, entrynorm)) <= 0.0 && s->fatalerror) {
-        brst_log(s, "Couldn't compute normal thickness.\n");
-        brst_log(s, "\tshotline coordinates <%g, %g>\n",
-                 ap->a_uvec[X]*s->unitconv,
-                 ap->a_uvec[Y]*s->unitconv
-            );
-        brst_log(s, "\tregion name '%s' solid name '%s'\n",
-                 cpp->pt_regionp->reg_name,
-                 cpp->pt_inseg->seg_stp->st_name);
-        return;
+	brst_log(s, "Couldn't compute normal thickness.\n");
+	brst_log(s, "\tshotline coordinates <%g, %g>\n",
+		 ap->a_uvec[X]*s->unitconv,
+		 ap->a_uvec[Y]*s->unitconv
+		);
+	brst_log(s, "\tregion name '%s' solid name '%s'\n",
+		 cpp->pt_regionp->reg_name,
+		 cpp->pt_inseg->seg_stp->st_name);
+	return;
     }
     exitangle = NEAR_EQUAL(ocosobliquity, 1.0, COS_TOL) ? 0.0 : acos(ocosobliquity) * RAD2DEG;
     if (fprintf(s->shotlnfp,
-                "%c % 8.2f % 7.3f % 7.2f %5d % 8.2f % 8.2f %2d % 7.2f % 7.2f\n",
-                PS_SHOT_INTERSECT,
-                (s->standoff - cpp->pt_inhit->hit_dist)*s->unitconv,
-                /* X'-coordinate of intersection */
-                sinfbangle,     /* sine of fallback angle at exit */
-                rotangle,       /* rotation angle in degrees at exit */
-                cpp->pt_regionp->reg_regionid,
-                /* component code number */
-                normthickness*s->unitconv,
-                /* normal thickness of component */
-                los,            /* LOS thickness of component */
-                space,          /* space code */
-                entryangle,     /* entry obliquity angle in degrees */
-                exitangle       /* exit obliquity angle in degrees */
-            ) < 0
-        ) {
-        bu_exit(EXIT_FAILURE, "Write failed to file (%s)!\n", bu_vls_cstr(&s->shotlnfile));
+		"%c % 8.2f % 7.3f % 7.2f %5d % 8.2f % 8.2f %2d % 7.2f % 7.2f\n",
+		PS_SHOT_INTERSECT,
+		(s->standoff - cpp->pt_inhit->hit_dist)*s->unitconv,
+		/* X'-coordinate of intersection */
+		sinfbangle,     /* sine of fallback angle at exit */
+		rotangle,       /* rotation angle in degrees at exit */
+		cpp->pt_regionp->reg_regionid,
+		/* component code number */
+		normthickness*s->unitconv,
+		/* normal thickness of component */
+		los,            /* LOS thickness of component */
+		space,          /* space code */
+		entryangle,     /* entry obliquity angle in degrees */
+		exitangle       /* exit obliquity angle in degrees */
+	       ) < 0
+       ) {
+	bu_exit(EXIT_FAILURE, "Write failed to file (%s)!\n", bu_vls_cstr(&s->shotlnfile));
     }
 }
 
@@ -922,7 +921,7 @@ plotRayPoint(struct burst_state *s, struct xray *rayp)
 {
     int endpoint[3];
     if (s->plotfp == NULL)
-        return;
+	return;
     VJOIN1(endpoint, rayp->r_pt, s->cellsz, rayp->r_dir);
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -940,7 +939,7 @@ plotRayLine(struct burst_state *s, struct xray *rayp)
 {
     int endpoint[3];
     if (s->plotfp == NULL)
-        return;
+	return;
     VJOIN1(endpoint, rayp->r_pt, s->cellsz, rayp->r_dir);
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -948,13 +947,13 @@ plotRayLine(struct burst_state *s, struct xray *rayp)
 
     /* draw line */
     pl_3line(s->plotfp,
-             (int) rayp->r_pt[X],
-             (int) rayp->r_pt[Y],
-             (int) rayp->r_pt[Z],
-             endpoint[X],
-             endpoint[Y],
-             endpoint[Z]
-        );
+	     (int) rayp->r_pt[X],
+	     (int) rayp->r_pt[Y],
+	     (int) rayp->r_pt[Z],
+	     endpoint[X],
+	     endpoint[Y],
+	     endpoint[Z]
+	    );
 
     bu_semaphore_release(BU_SEM_SYSCALL);
     return;
@@ -1191,11 +1190,11 @@ f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED
 		fastf_t exitnorm[3];	/* normal at exit */
 		/* Get entry normal. */
 		getRtHitNorm(pp->pt_inhit, pp->pt_inseg->seg_stp,
-			&ap->a_ray, (int) pp->pt_inflip, entrynorm);
+			     &ap->a_ray, (int) pp->pt_inflip, entrynorm);
 		(void) chkEntryNorm(s, pp, &ap->a_ray, entrynorm, "shotline entry normal");
 		/* Get exit normal. */
 		getRtHitNorm(pp->pt_outhit, pp->pt_outseg->seg_stp,
-			&ap->a_ray, (int) pp->pt_outflip, exitnorm);
+			     &ap->a_ray, (int) pp->pt_outflip, exitnorm);
 		(void) chkExitNorm(s, pp, &ap->a_ray, exitnorm, "shotline exit normal");
 
 		/* In the case of fragmenting munitions, a hit on any
@@ -1218,7 +1217,7 @@ f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED
 		    if (np != pt_headp && Air(nregp)) {
 			/* Check for interior burst point. */
 			if (bp == PT_NULL && s->bdist <= 0.0 && findIdents(regp->reg_regionid, &s->armorids)
-				&& (!s->reqburstair || findIdents(nregp->reg_aircode, &s->airids))) {
+			    && (!s->reqburstair || findIdents(nregp->reg_aircode, &s->airids))) {
 			    bp = pp; /* interior burst */
 			    VMOVE(burstnorm, exitnorm);
 			}
@@ -1279,15 +1278,14 @@ f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED
 	       munition with contact-fuzed set-back device):
 	       location is bdist prior to entry point. */
 	    VJOIN1(burstpt, bp->pt_inhit->hit_point, -s->bdist, ap->a_ray.r_dir);
-	} else
-	    if (s->bdist < 0.0) {
-		/* Interior burst point (i.e. case-fragment
-		   munition with delayed fuzing): location is
-		   the magnitude of bdist beyond the exit
-		   point. */
-		VJOIN1(burstpt, bp->pt_outhit->hit_point, -s->bdist, ap->a_ray.r_dir);
-	    } else	  /* Interior burst point: no fuzing offset. */
-		VMOVE(burstpt, bp->pt_outhit->hit_point);
+	} else if (s->bdist < 0.0) {
+	    /* Interior burst point (i.e. case-fragment
+	       munition with delayed fuzing): location is
+	       the magnitude of bdist beyond the exit
+	       point. */
+	    VJOIN1(burstpt, bp->pt_outhit->hit_point, -s->bdist, ap->a_ray.r_dir);
+	} else	  /* Interior burst point: no fuzing offset. */
+	    VMOVE(burstpt, bp->pt_outhit->hit_point);
 
 	/* Only generate burst rays if nspallrays is greater than zero. */
 	return	(s->nspallrays < 1) ? 1 : burstPoint(ap, burstnorm, burstpt);
@@ -1306,9 +1304,9 @@ f_ShotHit(struct application *ap, struct partition *pt_headp, struct seg *UNUSED
 */
 void
 prntBurstHdr(
-	struct burst_state *s,
-	fastf_t *bpt     /* burst point in model coords */,
-       	fastf_t *shotdir /* shotline direction vector */)
+    struct burst_state *s,
+    fastf_t *bpt     /* burst point in model coords */,
+    fastf_t *shotdir /* shotline direction vector */)
 {
     fastf_t vec[3];
     /* Transform burst point (model coordinate system) into the shotline
@@ -1318,32 +1316,32 @@ prntBurstHdr(
     vec[X] = -VDOT(shotdir, bpt);       /* X' - shotdir is reverse of X' */
 
     if (bu_vls_strlen(&s->outfile)
-        &&      fprintf(s->outfp,
-                        "%c % 8.3f % 8.3f\n",
-                        PB_CELL_IDENT,
-                        vec[Y]*s->unitconv,
-                        /* horizontal coordinate of burst point (Y') */
-                        vec[Z]*s->unitconv
-                        /* vertical coordinate of burst point (Z') */
-            ) < 0
-        ) {
-        bu_exit(EXIT_FAILURE, "Write failed to file (%s)!\n", bu_vls_cstr(&s->outfile));
+	&&      fprintf(s->outfp,
+			"%c % 8.3f % 8.3f\n",
+			PB_CELL_IDENT,
+			vec[Y]*s->unitconv,
+			/* horizontal coordinate of burst point (Y') */
+			vec[Z]*s->unitconv
+			/* vertical coordinate of burst point (Z') */
+		       ) < 0
+       ) {
+	bu_exit(EXIT_FAILURE, "Write failed to file (%s)!\n", bu_vls_cstr(&s->outfile));
     }
     if (bu_vls_strlen(&s->outfile)
-        &&      fprintf(s->outfp,
-                        "%c % 8.2f % 8.2f %5d %2d % 7.3f % 7.2f % 7.3f %c\n",
-                        PB_RAY_INTERSECT,
-                        vec[X]*s->unitconv, /* X' coordinate of burst point */
-                        0.0,            /* LOS thickness of component */
-                        9999,           /* dummy component code number */
-                        9,              /* dummy space code */
-                        0.0,            /* N/A */
-                        0.0,            /* N/A */
-                        0.0,            /* N/A */
-                        '1'             /* burst was generated */
-            ) < 0
-        ) {
-        bu_exit(EXIT_FAILURE, "Write failed to file (%s)!\n", bu_vls_cstr(&s->outfile));
+	&&      fprintf(s->outfp,
+			"%c % 8.2f % 8.2f %5d %2d % 7.3f % 7.2f % 7.3f %c\n",
+			PB_RAY_INTERSECT,
+			vec[X]*s->unitconv, /* X' coordinate of burst point */
+			0.0,            /* LOS thickness of component */
+			9999,           /* dummy component code number */
+			9,              /* dummy space code */
+			0.0,            /* N/A */
+			0.0,            /* N/A */
+			0.0,            /* N/A */
+			'1'             /* burst was generated */
+		       ) < 0
+       ) {
+	bu_exit(EXIT_FAILURE, "Write failed to file (%s)!\n", bu_vls_cstr(&s->outfile));
     }
 }
 
@@ -1379,20 +1377,19 @@ f_ShotMiss(struct application *ap)
 	/* check for limits of ground plane */
 	if (hitpoint[X] <= s->grndfr && hitpoint[X] >= -s->grndbk
 	    &&	hitpoint[Y] <= s->grndlf && hitpoint[Y] >= -s->grndrt
-	    ) {
+	   ) {
 	    /* We have a hit. */
 	    if (bu_vls_strlen(&s->fbfile))
 		paintCellFb(ap, s->pixghit, s->zoom == 1 ? s->pixblack : s->pixbkgr);
 	    if (s->bdist > 0.0) {
 		/* simulate standoff fuzing */
 		VJOIN1(hitpoint, hitpoint, -s->bdist, ap->a_ray.r_dir);
-	    } else
-		if (s->bdist < 0.0) {
-		    /* interior burst not implemented in ground */
-		    brst_log(s, "User error: negative burst distance can not be specified with ground plane bursting.\n");
-		    s->fatalerror = 1;
-		    return	-1;
-		}
+	    } else if (s->bdist < 0.0) {
+		/* interior burst not implemented in ground */
+		brst_log(s, "User error: negative burst distance can not be specified with ground plane bursting.\n");
+		s->fatalerror = 1;
+		return	-1;
+	    }
 	    /* else bdist == 0.0, no adjustment necessary */
 	    /* only burst if nspallrays greater than zero */
 	    if (s->nspallrays > 0) {
@@ -1445,31 +1442,30 @@ readShot(struct burst_state *s, fastf_t *vec)
 	    vec[X] /= s->unitconv;
 	    vec[Y] /= s->unitconv;
 	}
-    } else
-	if (TSTBIT(s->firemode, FM_3DIM)) {
-	    /* 3D coordinates */
-	    int	items;
+    } else if (TSTBIT(s->firemode, FM_3DIM)) {
+	/* 3D coordinates */
+	int	items;
 
-	    /* read 3D firing coordinates from input stream */
-	    items = fscanf(s->shotfp, "%lf %lf %lf", &scan[0], &scan[1], &scan[2]);
-	    VMOVE(vec, scan); /* double to fastf_t */
-	    if (items != 3) {
-		if (items != EOF) {
-		    brst_log(s, "Fatal error: %d firing coordinates read.\n", items);
-		    s->fatalerror = 1;
-		    return 0;
-		} else {
-		    return EOF;
-		}
+	/* read 3D firing coordinates from input stream */
+	items = fscanf(s->shotfp, "%lf %lf %lf", &scan[0], &scan[1], &scan[2]);
+	VMOVE(vec, scan); /* double to fastf_t */
+	if (items != 3) {
+	    if (items != EOF) {
+		brst_log(s, "Fatal error: %d firing coordinates read.\n", items);
+		s->fatalerror = 1;
+		return 0;
 	    } else {
-		vec[X] /= s->unitconv;
-		vec[Y] /= s->unitconv;
-		vec[Z] /= s->unitconv;
+		return EOF;
 	    }
 	} else {
-	    brst_log(s, "BUG: readShot called with bad firemode.\n");
-	    return 0;
+	    vec[X] /= s->unitconv;
+	    vec[Y] /= s->unitconv;
+	    vec[Z] /= s->unitconv;
 	}
+    } else {
+	brst_log(s, "BUG: readShot called with bad firemode.\n");
+	return 0;
+    }
     return 1;
 }
 
@@ -1493,9 +1489,12 @@ getRayOrigin(struct burst_state *s, struct application *ap)
     if (TSTBIT(s->firemode, FM_SHOT)) {
 	if (TSTBIT(s->firemode, FM_FILE)) {
 	    switch (readShot(s, vec)) {
-		case EOF :	return	EOF;
-		case 1 :	break;
-		case 0 :	return	0;
+		case EOF :
+		    return	EOF;
+		case 1 :
+		    break;
+		case 0 :
+		    return	0;
 	    }
 	} else	/* Single shot specified. */
 	    VMOVE(vec, s->fire);
@@ -1584,7 +1583,7 @@ void
 plotGrid(struct burst_state *s, fastf_t *r_pt)
 {
     if (s->plotfp == NULL)
-        return;
+	return;
     pl_color(s->plotfp, R_GRID, G_GRID, B_GRID);
     pl_3point(s->plotfp, (int) r_pt[X], (int) r_pt[Y], (int) r_pt[Z]);
     return;
@@ -1633,10 +1632,10 @@ void
 prntFiringCoords(struct burst_state *s, fastf_t *vec)
 {
     if (!bu_vls_strlen(&s->gridfile))
-        return;
+	return;
     assert(s->gridfp != (FILE *) NULL);
     if (fprintf(s->gridfp, "%7.2f %7.2f\n", vec[X]*s->unitconv, vec[Y]*s->unitconv) < 0) {
-        bu_exit(EXIT_FAILURE, "Write failed to file (%s)!\n", bu_vls_cstr(&s->gridfile));
+	bu_exit(EXIT_FAILURE, "Write failed to file (%s)!\n", bu_vls_cstr(&s->gridfile));
     }
 }
 
@@ -1667,7 +1666,7 @@ gridShot(struct burst_state *s)
     for (; ! s->userinterrupt; view_pix(&a)) {
 	if (! TSTBIT(s->firemode, FM_SHOT) && currshot > lastshot)
 	    break;
-	if (! (status = getRayOrigin(s, &a)) || status == EOF)
+	if (!(status = getRayOrigin(s, &a)) || status == EOF)
 	    break;
 	currshot++;
 	prntFiringCoords(s, a.a_uvec);
@@ -1719,7 +1718,7 @@ plotInit(struct burst_state *s)
 {
     int x_1, y_1, z_1, x_2, y_2, z_2;
     if (s->plotfp == NULL)
-        return;
+	return;
     x_1 = (int) s->rtip->mdl_min[X] - 1;
     y_1 = (int) s->rtip->mdl_min[Y] - 1;
     z_1 = (int) s->rtip->mdl_min[Z] - 1;
@@ -1742,34 +1741,34 @@ prntAspectInit(struct burst_state *s)
     projarea = s->cellsz*s->unitconv;
     projarea *= projarea;
     if (bu_vls_strlen(&s->outfile)
-        &&      fprintf(s->outfp,
-                        "%c % 9.4f % 8.4f % 5.2f % 10.2f %-6s % 9.6f\n",
-                        PB_ASPECT_INIT,
-                        s->viewazim*RAD2DEG, /* attack azimuth in degrees */
-                        s->viewelev*RAD2DEG, /* attack elevation in degrees */
-                        s->bdist*s->unitconv,  /* BDIST */
-                        projarea, /* projected area associated with burst pt. */
+	&&      fprintf(s->outfp,
+			"%c % 9.4f % 8.4f % 5.2f % 10.2f %-6s % 9.6f\n",
+			PB_ASPECT_INIT,
+			s->viewazim*RAD2DEG, /* attack azimuth in degrees */
+			s->viewelev*RAD2DEG, /* attack elevation in degrees */
+			s->bdist*s->unitconv,  /* BDIST */
+			projarea, /* projected area associated with burst pt. */
 			bu_units_string(s->units),
-                        s->raysolidangle
-            ) < 0
-        ) {
-        bu_exit(EXIT_FAILURE, "Write failed to file (%s)!\n", bu_vls_cstr(&s->outfile));
+			s->raysolidangle
+		       ) < 0
+       ) {
+	bu_exit(EXIT_FAILURE, "Write failed to file (%s)!\n", bu_vls_cstr(&s->outfile));
     }
     if (bu_vls_strlen(&s->shotlnfile)
-        &&      fprintf(s->shotlnfp,
-                        "%c % 9.4f % 8.4f % 7.2f % 7.2f %7.2f %7.2f %7.2f %-6s\n",
-                        PS_ASPECT_INIT,
-                        s->viewazim*RAD2DEG, /* attack azimuth in degrees */
-                        s->viewelev*RAD2DEG, /* attack elevation in degrees */
-                        s->cellsz*s->unitconv, /* shotline separation */
-                        s->modlrt*s->unitconv, /* maximum Y'-coordinate of target */
-                        s->modllf*s->unitconv, /* minimum Y'-coordinate of target */
-                        s->modlup*s->unitconv, /* maximum Z'-coordinate of target */
-                        s->modldn*s->unitconv, /* minimum Z'-coordinate of target */
+	&&      fprintf(s->shotlnfp,
+			"%c % 9.4f % 8.4f % 7.2f % 7.2f %7.2f %7.2f %7.2f %-6s\n",
+			PS_ASPECT_INIT,
+			s->viewazim*RAD2DEG, /* attack azimuth in degrees */
+			s->viewelev*RAD2DEG, /* attack elevation in degrees */
+			s->cellsz*s->unitconv, /* shotline separation */
+			s->modlrt*s->unitconv, /* maximum Y'-coordinate of target */
+			s->modllf*s->unitconv, /* minimum Y'-coordinate of target */
+			s->modlup*s->unitconv, /* maximum Z'-coordinate of target */
+			s->modldn*s->unitconv, /* minimum Z'-coordinate of target */
 			bu_units_string(s->units)
-            ) < 0
-        ) {
-        bu_exit(EXIT_FAILURE, "Write failed to file (%s)!\n", bu_vls_cstr(&s->shotlnfile));
+		       ) < 0
+       ) {
+	bu_exit(EXIT_FAILURE, "Write failed to file (%s)!\n", bu_vls_cstr(&s->shotlnfile));
     }
     return;
 }
@@ -1828,7 +1827,8 @@ gridModel(struct burst_state *s)
     /* SERIAL case -- one CPU does all the work */
     if (! gridShot(s))
 	return;
-endvu:	view_end(s);
+endvu:
+    view_end(s);
     return;
 }
 
@@ -1874,17 +1874,17 @@ gridRotate(fastf_t azim, fastf_t elev, fastf_t roll, fastf_t *des_H, fastf_t *de
     des_V[2] =  cos(elev);
 
     if (!ZERO(roll)) {
-        fastf_t tmp_V[3], tmp_H[3], prime_V[3];
-        fastf_t sn_roll = sin(roll);
-        fastf_t cs_roll = cos(roll);
+	fastf_t tmp_V[3], tmp_H[3], prime_V[3];
+	fastf_t sn_roll = sin(roll);
+	fastf_t cs_roll = cos(roll);
 
-        VSCALE(tmp_V, des_V, cs_roll);
-        VSCALE(tmp_H, des_H, sn_roll);
-        VADD2(prime_V, tmp_V, tmp_H);
-        VSCALE(tmp_V, des_V, -sn_roll);
-        VSCALE(tmp_H, des_H, cs_roll);
-        VADD2(des_H, tmp_V, tmp_H);
-        VMOVE(des_V, prime_V);
+	VSCALE(tmp_V, des_V, cs_roll);
+	VSCALE(tmp_H, des_H, sn_roll);
+	VADD2(prime_V, tmp_V, tmp_H);
+	VSCALE(tmp_V, des_V, -sn_roll);
+	VSCALE(tmp_H, des_H, cs_roll);
+	VADD2(des_H, tmp_V, tmp_H);
+	VMOVE(des_V, prime_V);
     }
     return;
 }
@@ -1918,9 +1918,8 @@ gridInit(struct burst_state *s)
     /* reposition file pointers if necessary */
     if (TSTBIT(s->firemode, FM_SHOT) && TSTBIT(s->firemode, FM_FILE))
 	rewind(s->shotfp);
-    else
-	if (TSTBIT(s->firemode, FM_BURST) && TSTBIT(s->firemode, FM_FILE))
-	    rewind(s->burstfp);
+    else if (TSTBIT(s->firemode, FM_BURST) && TSTBIT(s->firemode, FM_FILE))
+	rewind(s->burstfp);
 
     /* Compute distances from grid origin (model origin) to each
        border of grid, and grid indices at borders of grid.
@@ -1943,79 +1942,79 @@ gridInit(struct burst_state *s)
 	}
 	/* Calculate extent of grid. */
 	s->gridrt = FMAX(s->gridhor[X] * modelmax[X],
-		      s->gridhor[X] * modelmin[X]
-	    ) +
-	    FMAX(s->gridhor[Y] * modelmax[Y],
-		 s->gridhor[Y] * modelmin[Y]
-		) +
-	    FMAX(s->gridhor[Z] * modelmax[Z],
-		 s->gridhor[Z] * modelmin[Z]
-		);
+			 s->gridhor[X] * modelmin[X]
+			) +
+		    FMAX(s->gridhor[Y] * modelmax[Y],
+			 s->gridhor[Y] * modelmin[Y]
+			) +
+		    FMAX(s->gridhor[Z] * modelmax[Z],
+			 s->gridhor[Z] * modelmin[Z]
+			);
 	s->gridlf = FMIN(s->gridhor[X] * modelmax[X],
-		      s->gridhor[X] * modelmin[X]
-	    ) +
-	    FMIN(s->gridhor[Y] * modelmax[Y],
-		 s->gridhor[Y] * modelmin[Y]
-		) +
-	    FMIN(s->gridhor[Z] * modelmax[Z],
-		 s->gridhor[Z] * modelmin[Z]
-		);
+			 s->gridhor[X] * modelmin[X]
+			) +
+		    FMIN(s->gridhor[Y] * modelmax[Y],
+			 s->gridhor[Y] * modelmin[Y]
+			) +
+		    FMIN(s->gridhor[Z] * modelmax[Z],
+			 s->gridhor[Z] * modelmin[Z]
+			);
 	s->gridup = FMAX(s->gridver[X] * modelmax[X],
-		      s->gridver[X] * modelmin[X]
-	    ) +
-	    FMAX(s->gridver[Y] * modelmax[Y],
-		 s->gridver[Y] * modelmin[Y]
-		) +
-	    FMAX(s->gridver[Z] * modelmax[Z],
-		 s->gridver[Z] * modelmin[Z]
-		);
+			 s->gridver[X] * modelmin[X]
+			) +
+		    FMAX(s->gridver[Y] * modelmax[Y],
+			 s->gridver[Y] * modelmin[Y]
+			) +
+		    FMAX(s->gridver[Z] * modelmax[Z],
+			 s->gridver[Z] * modelmin[Z]
+			);
 	s->griddn = FMIN(s->gridver[X] * modelmax[X],
-		      s->gridver[X] * modelmin[X]
-	    ) +
-	    FMIN(s->gridver[Y] * modelmax[Y],
-		 s->gridver[Y] * modelmin[Y]
-		) +
-	    FMIN(s->gridver[Z] * modelmax[Z],
-		 s->gridver[Z] * modelmin[Z]
-		);
+			 s->gridver[X] * modelmin[X]
+			) +
+		    FMIN(s->gridver[Y] * modelmax[Y],
+			 s->gridver[Y] * modelmin[Y]
+			) +
+		    FMIN(s->gridver[Z] * modelmax[Z],
+			 s->gridver[Z] * modelmin[Z]
+			);
 	/* Calculate extent of model in plane of grid. */
 	if (s->groundburst) {
 	    s->modlrt = FMAX(s->gridhor[X] * s->rtip->mdl_max[X],
-			  s->gridhor[X] * s->rtip->mdl_min[X]
-		) +
-		FMAX(s->gridhor[Y] * s->rtip->mdl_max[Y],
-		     s->gridhor[Y] * s->rtip->mdl_min[Y]
-		    ) +
-		FMAX(s->gridhor[Z] * s->rtip->mdl_max[Z],
-		     s->gridhor[Z] * s->rtip->mdl_min[Z]
-		    );
+			     s->gridhor[X] * s->rtip->mdl_min[X]
+			    ) +
+			FMAX(s->gridhor[Y] * s->rtip->mdl_max[Y],
+			     s->gridhor[Y] * s->rtip->mdl_min[Y]
+			    ) +
+			FMAX(s->gridhor[Z] * s->rtip->mdl_max[Z],
+			     s->gridhor[Z] * s->rtip->mdl_min[Z]
+			    );
 	    s->modllf = FMIN(s->gridhor[X] * s->rtip->mdl_max[X],
-			  s->gridhor[X] * s->rtip->mdl_min[X]
-		) +
-		FMIN(s->gridhor[Y] * s->rtip->mdl_max[Y],
-		     s->gridhor[Y] * s->rtip->mdl_min[Y]
-		    ) +
-		FMIN(s->gridhor[Z] * s->rtip->mdl_max[Z],
-		     s->gridhor[Z] * s->rtip->mdl_min[Z]
-		    );
+			     s->gridhor[X] * s->rtip->mdl_min[X]
+			    ) +
+			FMIN(s->gridhor[Y] * s->rtip->mdl_max[Y],
+			     s->gridhor[Y] * s->rtip->mdl_min[Y]
+			    ) +
+			FMIN(s->gridhor[Z] * s->rtip->mdl_max[Z],
+			     s->gridhor[Z] * s->rtip->mdl_min[Z]
+			    );
 	    s->modlup = FMAX(s->gridver[X] * s->rtip->mdl_max[X],
-			  s->gridver[X] * s->rtip->mdl_min[X]
-		) +
-		FMAX(s->gridver[Y] * s->rtip->mdl_max[Y],
-		     s->gridver[Y] * s->rtip->mdl_min[Y]
-		    ) +
-		FMAX(s->gridver[Z] * s->rtip->mdl_max[Z],
-		     s->gridver[Z] * s->rtip->mdl_min[Z]
-		    );
+			     s->gridver[X] * s->rtip->mdl_min[X]
+			    ) +
+			FMAX(s->gridver[Y] * s->rtip->mdl_max[Y],
+			     s->gridver[Y] * s->rtip->mdl_min[Y]
+			    ) +
+			FMAX(s->gridver[Z] * s->rtip->mdl_max[Z],
+			     s->gridver[Z] * s->rtip->mdl_min[Z]
+			    );
 	    s->modldn = FMIN(s->gridver[X] * s->rtip->mdl_max[X],
-			  s->gridver[X] * s->rtip->mdl_min[X]
-		) +
-		FMIN(s->gridver[Y] * s->rtip->mdl_max[Y],
-		     s->gridver[Y] * s->rtip->mdl_min[Y]
-		    ) +
-		FMIN(s->gridver[Z] * s->rtip->mdl_max[Z],
-		     s->gridver[Z] * s->rtip->mdl_min[Z]
-		    );
+			     s->gridver[X] * s->rtip->mdl_min[X]
+			    ) +
+			FMIN(s->gridver[Y] * s->rtip->mdl_max[Y],
+			     s->gridver[Y] * s->rtip->mdl_min[Y]
+			    ) +
+			FMIN(s->gridver[Z] * s->rtip->mdl_max[Z],
+			     s->gridver[Z] * s->rtip->mdl_min[Z]
+			    );
 	} else {
 	    s->modlrt = s->gridrt;
 	    s->modllf = s->gridlf;
@@ -2038,14 +2037,14 @@ gridInit(struct burst_state *s)
 
     /* compute stand-off distance */
     s->standoff = FMAX(viewdir[X] * s->rtip->mdl_max[X],
-		    viewdir[X] * s->rtip->mdl_min[X]
-	) +
-	FMAX(viewdir[Y] * s->rtip->mdl_max[Y],
-	     viewdir[Y] * s->rtip->mdl_min[Y]
-	    ) +
-	FMAX(viewdir[Z] * s->rtip->mdl_max[Z],
-	     viewdir[Z] * s->rtip->mdl_min[Z]
-	    );
+		       viewdir[X] * s->rtip->mdl_min[X]
+		      ) +
+		  FMAX(viewdir[Y] * s->rtip->mdl_max[Y],
+		       viewdir[Y] * s->rtip->mdl_min[Y]
+		      ) +
+		  FMAX(viewdir[Z] * s->rtip->mdl_max[Z],
+		       viewdir[Z] * s->rtip->mdl_min[Z]
+		      );
 
     /* determine largest grid dimension for frame buffer display */
     s->gridwidth  = s->gridxfin - s->gridxorg + 1;

@@ -79,12 +79,12 @@ _burst_cmd_msgs(void *UNUSED(bs), int argc, const char **argv, const char *us, c
 {
     //struct burst_state *s = (struct burst_state *)bs;
     if (argc == 2 && BU_STR_EQUAL(argv[1], HELPFLAG)) {
-        printf("Usage: %s\n%s\n", us, ps);
-        return 1;
+	printf("Usage: %s\n%s\n", us, ps);
+	return 1;
     }
     if (argc == 2 && BU_STR_EQUAL(argv[1], PURPOSEFLAG)) {
-        printf("%s\n", ps);
-        return 1;
+	printf("%s\n", ps);
+	return 1;
     }
     return 0;
 }
@@ -210,7 +210,7 @@ _burst_cmd_attack_dir(void *bs, int argc, const char **argv)
     const char *usage_string = "attack-direction azim_angle elev_angle";
     const char *purpose_string = "specify azimuth and elevation of attack relative to target";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
     int ret = BRLCAD_OK;
@@ -245,7 +245,7 @@ _burst_cmd_critical_comp_file(void *bs, int argc, const char **argv)
     const char *usage_string = "critical-comp-file file";
     const char *purpose_string = "input critical component idents from file";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
     int ret = BRLCAD_OK;
@@ -274,12 +274,12 @@ _burst_cmd_critical_comp_file(void *bs, int argc, const char **argv)
 
 
 extern "C" int
-_burst_cmd_deflect_spall_cone (void *bs, int argc, const char **argv)
+_burst_cmd_deflect_spall_cone(void *bs, int argc, const char **argv)
 {
     const char *usage_string = "deflect-spall-cone flag";
     const char *purpose_string = "deflect axis of spall cone half way towards exit normal";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
     struct burst_state *s = (struct burst_state *)bs;
@@ -295,7 +295,7 @@ _burst_cmd_deflect_spall_cone (void *bs, int argc, const char **argv)
     int fval = bu_str_false(argv[1]);
 
     if (!tval && !fval) {
-    	printf("Invalid boolean string: %s\n", argv[1]);
+	printf("Invalid boolean string: %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
 
@@ -310,7 +310,7 @@ _burst_cmd_dither_cells(void *bs, int argc, const char **argv)
     const char *usage_string = "dither-cells flag";
     const char *purpose_string = "if yes, randomly offset shotline within grid cell";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
     struct burst_state *s = (struct burst_state *)bs;
@@ -326,7 +326,7 @@ _burst_cmd_dither_cells(void *bs, int argc, const char **argv)
     int fval = bu_str_false(argv[1]);
 
     if (!tval && !fval) {
-    	printf("Invalid boolean string: %s\n", argv[1]);
+	printf("Invalid boolean string: %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
 
@@ -341,7 +341,7 @@ _burst_cmd_enclose_target(void *bs, int argc, const char **argv)
     const char *usage_string = "enclose-target";
     const char *purpose_string = "generate rectangular grid of shotlines for full target envelope";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
     struct burst_state *s = (struct burst_state *)bs;
@@ -355,7 +355,7 @@ _burst_cmd_enclose_portion(void *bs, int argc, const char **argv)
     const char *usage_string = "enclose-portion left right bottom top";
     const char *purpose_string = "generate partial envelope by specifying grid boundaries";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
     int ret = BRLCAD_OK;
@@ -407,7 +407,7 @@ _burst_cmd_error_file(void *bs, int argc, const char **argv)
     const char *usage_string = "error-file file";
     const char *purpose_string = "divert all diagnostics to file";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
     int ret = BRLCAD_OK;
@@ -435,7 +435,7 @@ _burst_cmd_error_file(void *bs, int argc, const char **argv)
      * as they are generated. */
     s->errfile = fopen(argv[1], "wb");
     if (!s->errfile) {
-    	printf("failed to open error file: %s\n", argv[1]);
+	printf("failed to open error file: %s\n", argv[1]);
 	ret = BRLCAD_ERROR;
     }
 
@@ -448,7 +448,7 @@ _burst_cmd_execute(void *bs, int argc, const char **argv)
     const char *usage_string = "execute";
     const char *purpose_string = "initiate a run (no output produced without this command)";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
     struct burst_state *s = (struct burst_state *)bs;
@@ -456,7 +456,7 @@ _burst_cmd_execute(void *bs, int argc, const char **argv)
     if (!s) return BRLCAD_ERROR;
 
     if (!bu_vls_strlen(&s->gedfile)) {
-    	printf("Execute failed: no target file has been specified\n");
+	printf("Execute failed: no target file has been specified\n");
 	return BRLCAD_ERROR;
     }
 
@@ -472,7 +472,7 @@ _burst_cmd_grid_file(void *bs, int argc, const char **argv)
     const char *usage_string = "grid-file file";
     const char *purpose_string = "save shotline locations (Y' Z') in file";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
     int ret = BRLCAD_OK;
@@ -500,7 +500,7 @@ _burst_cmd_grid_file(void *bs, int argc, const char **argv)
     /* Try to open the file */
     s->gridfp = fopen(argv[1], "wb");
     if (!s->gridfp) {
-    	printf("failed to open grid file: %s\n", argv[1]);
+	printf("failed to open grid file: %s\n", argv[1]);
 	ret = BRLCAD_ERROR;
     }
 
@@ -515,7 +515,7 @@ _burst_cmd_ground_plane(void *bs, int argc, const char **argv)
     const char *usage_string = "ground-plane flag [Z +X -X +Y -Y]";
     const char *purpose_string = "if yes, burst on ground";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
     int ret = BRLCAD_OK;
@@ -533,7 +533,7 @@ _burst_cmd_ground_plane(void *bs, int argc, const char **argv)
     int fval = bu_str_false(argv[1]);
 
     if (!tval && !fval) {
-    	printf("Invalid boolean string: %s\n", argv[1]);
+	printf("Invalid boolean string: %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
 
@@ -627,7 +627,7 @@ _burst_cmd_burst_air_file(void *bs, int argc, const char **argv)
     const char *usage_string = "burst-air-file file";
     const char *purpose_string = "input burst air idents from file";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
     int ret = BRLCAD_OK;
@@ -660,7 +660,7 @@ _burst_cmd_histogram_file(void *bs, int argc, const char **argv)
     const char *usage_string = "histogram-file file";
     const char *purpose_string = "write hit frequency histogram to file";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
     int ret = BRLCAD_OK;
@@ -689,7 +689,7 @@ _burst_cmd_histogram_file(void *bs, int argc, const char **argv)
     /* Try to open the file */
     s->histfp = fopen(argv[1], "wb");
     if (!s->histfp) {
-    	printf("failed to open histogram file: %s\n", argv[1]);
+	printf("failed to open histogram file: %s\n", argv[1]);
 	ret = BRLCAD_ERROR;
     }
 
@@ -704,7 +704,7 @@ _burst_cmd_image_file(void *bs, int argc, const char **argv)
     const char *usage_string = "image-file file";
     const char *purpose_string = "generate frame buffer image on a specified file or device";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
     struct burst_state *s = (struct burst_state *)bs;
@@ -726,7 +726,7 @@ _burst_cmd_input_2d_shot(void *bs, int argc, const char **argv)
     const char *usage_string = "input-2d-shot Y' Z'";
     const char *purpose_string = "input single shotline location as grid offsets";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
     int ret = BRLCAD_OK;
@@ -765,7 +765,7 @@ _burst_cmd_input_3d_shot(void *bs, int argc, const char **argv)
     const char *usage_string = "input-3d-shot X Y Z";
     const char *purpose_string = "input single shotline location in target coordinates";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
     int ret = BRLCAD_OK;
@@ -811,7 +811,7 @@ _burst_cmd_max_barriers(void *bs, int argc, const char **argv)
     const char *usage_string = "max-barriers count";
     const char *purpose_string = "specify the maximum number of components to report along spall ray";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
     int ret = BRLCAD_OK;
@@ -839,7 +839,7 @@ _burst_cmd_max_spall_rays(void *bs, int argc, const char **argv)
     const char *usage_string = "max-spall-rays count";
     const char *purpose_string = "specify the desired number of spall rays generated per burst point";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
     int ret = BRLCAD_OK;
@@ -867,7 +867,7 @@ _burst_cmd_plot_file(void *bs, int argc, const char **argv)
     const char *usage_string = "plot-file file";
     const char *purpose_string = "generate plot data in file";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
     struct burst_state *s = (struct burst_state *)bs;
@@ -890,7 +890,7 @@ _burst_cmd_quit(void *bs, int argc, const char **argv)
     const char *usage_string = "quit";
     const char *purpose_string = "quit the appliation";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
     struct burst_state *s = (struct burst_state *)bs;
@@ -908,7 +908,7 @@ _burst_cmd_read_2d_shot_file(void *bs, int argc, const char **argv)
     const char *usage_string = "read-2d-shot-file file";
     const char *purpose_string = "read shot locations from file as grid offsets (see input-2d-shot)";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
     int ret = BRLCAD_OK;
@@ -936,7 +936,7 @@ _burst_cmd_read_2d_shot_file(void *bs, int argc, const char **argv)
 
     s->shotfp = fopen(argv[1], "rb");
     if (!s->shotfp) {
-    	printf("failed to open critical component file: %s\n", argv[1]);
+	printf("failed to open critical component file: %s\n", argv[1]);
 	ret = BRLCAD_ERROR;
     }
 
@@ -953,7 +953,7 @@ _burst_cmd_read_3d_shot_file(void *bs, int argc, const char **argv)
     const char *usage_string = "read-3d-shot-file file";
     const char *purpose_string = "read shot locations from file in target coordinates (see input-3d-shot)";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
     int ret = BRLCAD_OK;
@@ -981,7 +981,7 @@ _burst_cmd_read_3d_shot_file(void *bs, int argc, const char **argv)
 
     s->shotfp = fopen(argv[1], "rb");
     if (!s->shotfp) {
-    	printf("failed to open critical component file: %s\n", argv[1]);
+	printf("failed to open critical component file: %s\n", argv[1]);
 	ret = BRLCAD_ERROR;
     }
     bu_vls_sprintf(&s->shotfile, "%s", argv[1]);
@@ -997,7 +997,7 @@ _burst_cmd_burst_armor_file(void *bs, int argc, const char **argv)
     const char *usage_string = "burst-armor-file file";
     const char *purpose_string = "input burst armor idents from file";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
     int ret = BRLCAD_OK;
@@ -1020,7 +1020,7 @@ _burst_cmd_burst_armor_file(void *bs, int argc, const char **argv)
     printf("Reading burst armor idents... done.\n");
 
     bu_vls_sprintf(&s->armorfile, "%s", argv[1]);
-    
+
     return ret;
 }
 
@@ -1030,7 +1030,7 @@ _burst_cmd_read_burst_file(void *bs, int argc, const char **argv)
     const char *usage_string = "read-burst-file file";
     const char *purpose_string = "read burst point locations from file (see burst-coordinates)";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
     int ret = BRLCAD_OK;
@@ -1058,7 +1058,7 @@ _burst_cmd_read_burst_file(void *bs, int argc, const char **argv)
 
     s->burstfp = fopen(argv[1], "rb");
     if (!s->burstfp) {
-    	printf("failed to open 3-D burst input file: %s\n", argv[1]);
+	printf("failed to open 3-D burst input file: %s\n", argv[1]);
 	ret = BRLCAD_ERROR;
     }
 
@@ -1074,7 +1074,7 @@ _burst_cmd_read_input_file(void *bs, int argc, const char **argv)
     const char *usage_string = "read-input-file file";
     const char *purpose_string = "read key word commands from file";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
     int ret = BRLCAD_OK;
@@ -1109,7 +1109,7 @@ _burst_cmd_report_overlaps(void *bs, int argc, const char **argv)
     const char *usage_string = "report-overlaps file";
     const char *purpose_string = "if yes, log overlap diagnostics";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
     struct burst_state *s = (struct burst_state *)bs;
@@ -1125,7 +1125,7 @@ _burst_cmd_report_overlaps(void *bs, int argc, const char **argv)
     int fval = bu_str_false(argv[1]);
 
     if (!tval && !fval) {
-    	printf("Invalid boolean string: %s\n", argv[1]);
+	printf("Invalid boolean string: %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
 
@@ -1140,7 +1140,7 @@ _burst_cmd_shotline_burst(void *bs, int argc, const char **argv)
     const char *usage_string = "shotline-burst flag";
     const char *purpose_string = "if yes, generate burst points along shotlines";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
     struct burst_state *s = (struct burst_state *)bs;
@@ -1156,7 +1156,7 @@ _burst_cmd_shotline_burst(void *bs, int argc, const char **argv)
     int fval = bu_str_false(argv[1]);
 
     if (!tval && !fval) {
-    	printf("Invalid boolean string: %s\n", argv[1]);
+	printf("Invalid boolean string: %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
 
@@ -1176,7 +1176,7 @@ _burst_cmd_shotline_file(void *bs, int argc, const char **argv)
     const char *usage_string = "shotline-file file";
     const char *purpose_string = "output shot line data to file";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
     int ret = BRLCAD_OK;
@@ -1205,7 +1205,7 @@ _burst_cmd_shotline_file(void *bs, int argc, const char **argv)
      * as they are generated. */
     s->shotlnfp = fopen(argv[1], "wb");
     if (!s->shotlnfp) {
-    	printf("failed to open error file: %s\n", argv[1]);
+	printf("failed to open error file: %s\n", argv[1]);
 	ret = BRLCAD_ERROR;
     }
 
@@ -1220,7 +1220,7 @@ _burst_cmd_target_file(void *bs, int argc, const char **argv)
     const char *usage_string = "target-file file";
     const char *purpose_string = "read BRL-CAD database from file";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
     struct burst_state *s = (struct burst_state *)bs;
@@ -1242,7 +1242,7 @@ _burst_cmd_target_objects(void *bs, int argc, const char **argv)
     const char *usage_string = "target-objects object0 [object1 object2 ...]";
     const char *purpose_string = "list objects from BRL-CAD database to interrogate";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
     struct burst_state *s = (struct burst_state *)bs;
@@ -1264,7 +1264,7 @@ _burst_cmd_units(void *bs, int argc, const char **argv)
     const char *usage_string = "units name";
     const char *purpose_string = "linear units (inches, feet, millimeters, centimeters,meters)";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
     struct burst_state *s = (struct burst_state *)bs;
@@ -1292,7 +1292,7 @@ _burst_cmd_write_input_file(void *bs, int argc, const char **argv)
     const char *usage_string = "write-input-file file";
     const char *purpose_string = "save script of commands in file";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
     int ret = BRLCAD_OK;
@@ -1304,7 +1304,7 @@ _burst_cmd_write_input_file(void *bs, int argc, const char **argv)
      * as they are generated. */
     FILE *cmdfp = fopen(argv[1], "wb");
     if (!cmdfp) {
-    	printf("failed to open cmd file for writing: %s\n", argv[1]);
+	printf("failed to open cmd file for writing: %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
 
@@ -1321,7 +1321,7 @@ _burst_cmd_burst_coordinates(void *bs, int argc, const char **argv)
     const char *usage_string = "burst-coordinates X Y Z";
     const char *purpose_string = "input single burst point location in target coordinates";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
     int ret = BRLCAD_OK;
@@ -1366,7 +1366,7 @@ _burst_cmd_burst_distance(void *bs, int argc, const char **argv)
     const char *usage_string = "burst-distance distance";
     const char *purpose_string = "offset burst point along shotline";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
     int ret = BRLCAD_OK;
@@ -1396,7 +1396,7 @@ _burst_cmd_burst_file(void *bs, int argc, const char **argv)
     const char *usage_string = "burst-file file";
     const char *purpose_string = "output burst point library to file";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
     int ret = BRLCAD_OK;
@@ -1425,7 +1425,7 @@ _burst_cmd_burst_file(void *bs, int argc, const char **argv)
      * as it is generated. */
     s->outfp = fopen(argv[1], "wb");
     if (!s->outfp) {
-    	printf("failed to open burst file: %s\n", argv[1]);
+	printf("failed to open burst file: %s\n", argv[1]);
 	ret = BRLCAD_ERROR;
     }
     bu_vls_sprintf(&s->outfile, "%s", argv[1]);
@@ -1439,7 +1439,7 @@ _burst_cmd_cell_size(void *bs, int argc, const char **argv)
     const char *usage_string = "cell-size distance";
     const char *purpose_string = "specify shotline separation (equidistant horizontal and vertical)";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
     int ret = BRLCAD_OK;
@@ -1469,10 +1469,10 @@ _burst_cmd_color_file(void *bs, int argc, const char **argv)
     const char *usage_string = "color-file file";
     const char *purpose_string = "input ident to color mapping from file (for graphics)";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
-   int ret = BRLCAD_OK;
+    int ret = BRLCAD_OK;
     struct burst_state *s = (struct burst_state *)bs;
 
     if (!s || !argc || !argv) return BRLCAD_ERROR;
@@ -1485,7 +1485,7 @@ _burst_cmd_color_file(void *bs, int argc, const char **argv)
     }
 
     printf("Reading ident-to-color mappings... done.\n");
-    
+
     bu_vls_sprintf(&s->colorfile, "%s", argv[1]);
 
     return ret;
@@ -1497,7 +1497,7 @@ _burst_cmd_cone_half_angle(void *bs, int argc, const char **argv)
     const char *usage_string = "cone-half-angle angle";
     const char *purpose_string = "specify limiting angle for spall ray generation";
     if (_burst_cmd_msgs(bs, argc, argv, usage_string, purpose_string)) {
-        return BRLCAD_OK;
+	return BRLCAD_OK;
     }
 
     int ret = BRLCAD_OK;
@@ -1620,7 +1620,8 @@ main(int argc, const char **argv)
     burst_state_init(&s);
 
     /* Done with program name */
-    argv++; argc--;
+    argv++;
+    argc--;
 
     /* Parse options, fail if anything goes wrong */
     if ((argc = bu_opt_parse(&msg, argc, argv, d)) == -1) {
@@ -1643,7 +1644,7 @@ main(int argc, const char **argv)
     s.cmds = _burst_cmds;
 
     /* If we have a batch file, process it. */
-    if (argc ) {
+    if (argc) {
 	std::ifstream fs;
 	fs.open(argv[0]);
 	if (!fs.is_open()) {

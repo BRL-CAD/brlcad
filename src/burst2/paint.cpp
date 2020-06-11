@@ -198,7 +198,7 @@ openFbDevice(struct burst_state *s, struct bu_vls *fbdev)
     } else if (fb_clear(s->fbiop, s->pixblack) == -1
 	       || (fb_zoom(s->fbiop, 1, 1) == -1)
 	       || (fb_window(s->fbiop, s->devwid/2, s->devhgt/2) == -1)
-	) {
+	      ) {
 	return 1;
     }
     return 0;
@@ -208,7 +208,7 @@ int
 imageInit(struct burst_state *s)
 {
     int needopen = 0;
-    static char lastfbfile[LNBUFSZ]={0}; /* last fbfile */
+    static char lastfbfile[LNBUFSZ]= {0}; /* last fbfile */
     s->devwid = 512;
     s->devhgt = 512;
     if (!bu_vls_strlen(&s->fbfile))
@@ -226,18 +226,16 @@ imageInit(struct burst_state *s)
     /* Determine whether it is necessary to open fbfile. */
     if (s->fbiop == FB_NULL || fb_getwidth(s->fbiop) != s->devwid)
 	needopen = 1; /* not currently open or size changed */
-    else
-	if (lastfbfile[0] != '\0' && !BU_STR_EQUAL(bu_vls_cstr(&s->fbfile), lastfbfile))
-	    needopen = 1; /* name changed */
+    else if (lastfbfile[0] != '\0' && !BU_STR_EQUAL(bu_vls_cstr(&s->fbfile), lastfbfile))
+	needopen = 1; /* name changed */
     bu_strlcpy(lastfbfile, bu_vls_cstr(&s->fbfile), LNBUFSZ);
 
     if (needopen) {
 	if (!openFbDevice(s, &s->fbfile))
 	    return 0;
 	paintGridFb(s);
-    } else
-	if (!(s->firemode & FM_SHOT) || (s->firemode & FM_FILE))
-	    paintGridFb(s);
+    } else if (!(s->firemode & FM_SHOT) || (s->firemode & FM_FILE))
+	paintGridFb(s);
     return 1;
 }
 

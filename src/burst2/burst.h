@@ -60,14 +60,12 @@
 #define FM_3DIM  (1<<3) /* bit 3: ON = 3-D coords., OFF = 2-D coords */
 #define FM_BURST (1<<4) /* bit 4: ON = discrete burst points, OFF = shots */
 
-struct ids
-{
+struct ids {
     short i_lower;
     short i_upper;
 };
 
-struct colors
-{
+struct colors {
     short c_lower;
     short c_upper;
     unsigned char c_rgb[3];
