@@ -1275,12 +1275,14 @@ _burst_cmd_units(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    s->unitconv =  bu_units_conversion(argv[1]);
+    s->unitconv = bu_units_conversion(argv[1]);
     if (NEAR_ZERO(s->unitconv, SMALL_FASTF)) {
 	printf("Invalid unit: %s\n", argv[1]);
 	s->unitconv = 1.0;
 	return BRLCAD_ERROR;
     }
+
+    s->unitconv = 1/s->unitconv;
 
     return BRLCAD_OK;
 }
