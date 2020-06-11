@@ -184,7 +184,6 @@ struct burst_state {
     int nprocessors;           /* no. of processors running concurrently */
     int nriplevels;            /* no. of levels of ripping (0 = no ripping) */
     int nspallrays;            /* no. of spall rays at each burst point */
-    double units;              /* target units (default is millimeters) */
     int zoom;                  /* magnification factor on frame buffer */
 
     struct rt_i *rtip;         /* model specific access from librt */

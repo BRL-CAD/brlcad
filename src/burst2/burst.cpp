@@ -195,7 +195,6 @@ burst_state_init(struct burst_state *s)
     s->nprocessors = 0;
     s->nriplevels = DFL_RIPLEVELS;
     s->nspallrays = DFL_NRAYS;
-    s->units = 1;
     s->zoom = 1;
     s->rtip = RTI_NULL;
     s->norml_sig = NULL; /* active during interactive operation */

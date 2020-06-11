@@ -1748,7 +1748,7 @@ prntAspectInit(struct burst_state *s)
 			s->viewelev*RAD2DEG, /* attack elevation in degrees */
 			s->bdist*s->unitconv,  /* BDIST */
 			projarea, /* projected area associated with burst pt. */
-			bu_units_string(s->units),
+			bu_units_string(s->unitconv),
 			s->raysolidangle
 		       ) < 0
        ) {
@@ -1765,7 +1765,7 @@ prntAspectInit(struct burst_state *s)
 			s->modllf*s->unitconv, /* minimum Y'-coordinate of target */
 			s->modlup*s->unitconv, /* maximum Z'-coordinate of target */
 			s->modldn*s->unitconv, /* minimum Z'-coordinate of target */
-			bu_units_string(s->units)
+			bu_units_string(s->unitconv)
 		       ) < 0
        ) {
 	bu_exit(EXIT_FAILURE, "Write failed to file (%s)!\n", bu_vls_cstr(&s->shotlnfile));
