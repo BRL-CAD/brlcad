@@ -13,8 +13,9 @@ include_directories(${BURST_INCLUDE_DIRS})
 set(burst_SOURCES
   burst.cpp
   execute.cpp
-  #grid.cpp
+  grid.cpp
   idents.cpp
+  paint.cpp
   ${LDIR}/utf8.c
   ${LDIR}/linenoise.c
   )

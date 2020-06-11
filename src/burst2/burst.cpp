@@ -113,25 +113,25 @@ burst_state_init(struct burst_state *s)
     s->reqburstair = 1;
     s->shotburst = 0;
     s->userinterrupt = 0;
-    memset(s->airfile, 0, LNBUFSZ);
-    memset(s->armorfile, 0, LNBUFSZ);
-    memset(s->burstfile, 0, LNBUFSZ);
-    memset(s->cmdbuf, 0, LNBUFSZ);
-    memset(s->cmdname, 0, LNBUFSZ);
-    memset(s->colorfile, 0, LNBUFSZ);
-    memset(s->critfile, 0, LNBUFSZ);
+    bu_vls_init(&s->airfile);
+    bu_vls_init(&s->armorfile);
+    bu_vls_init(&s->burstfile);
+    bu_vls_init(&s->cmdbuf);
+    bu_vls_init(&s->cmdname);
+    bu_vls_init(&s->colorfile);
+    bu_vls_init(&s->critfile);
     s->errfile = NULL;
     bu_vls_init(&s->fbfile);
     bu_vls_init(&s->gedfile);
-    memset(s->gridfile, 0, LNBUFSZ);
-    memset(s->histfile, 0, LNBUFSZ);
+    bu_vls_init(&s->gridfile);
+    bu_vls_init(&s->histfile);
     bu_vls_init(&s->objects);
-    memset(s->outfile, 0, LNBUFSZ);
+    bu_vls_init(&s->outfile);
     bu_vls_init(&s->plotfile);
     memset(s->scrbuf, 0, LNBUFSZ);
     memset(s->scriptfile, 0, LNBUFSZ);
-    memset(s->shotfile, 0, LNBUFSZ);
-    memset(s->shotlnfile, 0, LNBUFSZ);
+    bu_vls_init(&s->shotfile);
+    bu_vls_init(&s->shotlnfile);
     memset(s->title, 0, TITLE_LEN);
     memset(s->timer, 0, TIMER_LEN);
     bu_vls_init(&s->cmdhist);
@@ -256,6 +256,8 @@ _burst_cmd_critical_comp_file(void *bs, int argc, const char **argv)
     }
 
     printf("Reading critical component idents... done.\n");
+
+    bu_vls_sprintf(&s->critfile, "%s", argv[1]);
 
     return ret;
 }
@@ -481,6 +483,7 @@ _burst_cmd_grid_file(void *bs, int argc, const char **argv)
 
     /* If we're given a NULL argument, disable the grid file */
     if (BU_STR_EQUAL(argv[1], "NULL") || BU_STR_EQUAL(argv[1], "/dev/NULL")) {
+	bu_vls_trunc(&s->gridfile, 0);
 	return ret;
     }
 
@@ -490,6 +493,8 @@ _burst_cmd_grid_file(void *bs, int argc, const char **argv)
     	printf("failed to open grid file: %s\n", argv[1]);
 	ret = BRLCAD_ERROR;
     }
+
+    bu_vls_sprintf(&s->gridfile, "%s", argv[1]);
 
     return ret;
 }
@@ -634,6 +639,8 @@ _burst_cmd_burst_air_file(void *bs, int argc, const char **argv)
 
     printf("Reading burst air idents... done.\n");
 
+    bu_vls_sprintf(&s->airfile, "%s", argv[1]);
+
     return ret;
 }
 
@@ -665,6 +672,7 @@ _burst_cmd_histogram_file(void *bs, int argc, const char **argv)
 
     /* If we're given a NULL argument, disable the grid file */
     if (BU_STR_EQUAL(argv[1], "NULL") || BU_STR_EQUAL(argv[1], "/dev/NULL")) {
+	bu_vls_trunc(&s->histfile, 0);
 	return ret;
     }
 
@@ -674,6 +682,8 @@ _burst_cmd_histogram_file(void *bs, int argc, const char **argv)
     	printf("failed to open histogram file: %s\n", argv[1]);
 	ret = BRLCAD_ERROR;
     }
+
+    bu_vls_sprintf(&s->histfile, "%s", argv[1]);
 
     return BRLCAD_OK;
 }
@@ -910,6 +920,7 @@ _burst_cmd_read_2d_shot_file(void *bs, int argc, const char **argv)
     /* If we're given a NULL argument, disable the error file */
     if (BU_STR_EQUAL(argv[1], "NULL") || BU_STR_EQUAL(argv[1], "/dev/NULL")) {
 	s->firemode = 0;
+	bu_vls_trunc(&s->shotfile, 0);
 	return ret;
     }
 
@@ -918,6 +929,8 @@ _burst_cmd_read_2d_shot_file(void *bs, int argc, const char **argv)
     	printf("failed to open critical component file: %s\n", argv[1]);
 	ret = BRLCAD_ERROR;
     }
+
+    bu_vls_sprintf(&s->shotfile, "%s", argv[1]);
 
     s->firemode = FM_SHOT | FM_FILE;
 
@@ -952,6 +965,7 @@ _burst_cmd_read_3d_shot_file(void *bs, int argc, const char **argv)
     /* If we're given a NULL argument, disable the error file */
     if (BU_STR_EQUAL(argv[1], "NULL") || BU_STR_EQUAL(argv[1], "/dev/NULL")) {
 	s->firemode = 0;
+	bu_vls_trunc(&s->shotfile, 0);
 	return ret;
     }
 
@@ -960,6 +974,7 @@ _burst_cmd_read_3d_shot_file(void *bs, int argc, const char **argv)
     	printf("failed to open critical component file: %s\n", argv[1]);
 	ret = BRLCAD_ERROR;
     }
+    bu_vls_sprintf(&s->shotfile, "%s", argv[1]);
 
     s->firemode = FM_SHOT | FM_FILE | FM_3DIM;
 
@@ -994,6 +1009,8 @@ _burst_cmd_burst_armor_file(void *bs, int argc, const char **argv)
 
     printf("Reading burst armor idents... done.\n");
 
+    bu_vls_sprintf(&s->armorfile, "%s", argv[1]);
+    
     return ret;
 }
 
@@ -1025,6 +1042,7 @@ _burst_cmd_read_burst_file(void *bs, int argc, const char **argv)
     /* If we're given a NULL argument, disable the error file */
     if (BU_STR_EQUAL(argv[1], "NULL") || BU_STR_EQUAL(argv[1], "/dev/NULL")) {
 	s->firemode = 0;
+	bu_vls_trunc(&s->burstfile, 0);
 	return ret;
     }
 
@@ -1034,6 +1052,7 @@ _burst_cmd_read_burst_file(void *bs, int argc, const char **argv)
 	ret = BRLCAD_ERROR;
     }
 
+    bu_vls_sprintf(&s->burstfile, "%s", argv[1]);
     s->firemode = FM_BURST | FM_3DIM | FM_FILE;
 
     return BRLCAD_OK;
@@ -1168,6 +1187,7 @@ _burst_cmd_shotline_file(void *bs, int argc, const char **argv)
 
     /* If we're given a NULL argument, disable the shotline file */
     if (BU_STR_EQUAL(argv[1], "NULL") || BU_STR_EQUAL(argv[1], "/dev/NULL")) {
+	bu_vls_trunc(&s->shotlnfile, 0);
 	return ret;
     }
 
@@ -1178,6 +1198,8 @@ _burst_cmd_shotline_file(void *bs, int argc, const char **argv)
     	printf("failed to open error file: %s\n", argv[1]);
 	ret = BRLCAD_ERROR;
     }
+
+    bu_vls_sprintf(&s->shotlnfile, "%s", argv[1]);
 
     return ret;
 }
@@ -1385,6 +1407,7 @@ _burst_cmd_burst_file(void *bs, int argc, const char **argv)
 
     /* If we're given a NULL argument, disable the burst file */
     if (BU_STR_EQUAL(argv[1], "NULL") || BU_STR_EQUAL(argv[1], "/dev/NULL")) {
+	bu_vls_trunc(&s->outfile, 0);
 	return ret;
     }
 
@@ -1395,6 +1418,7 @@ _burst_cmd_burst_file(void *bs, int argc, const char **argv)
     	printf("failed to open burst file: %s\n", argv[1]);
 	ret = BRLCAD_ERROR;
     }
+    bu_vls_sprintf(&s->outfile, "%s", argv[1]);
 
     return ret;
 }
@@ -1451,6 +1475,8 @@ _burst_cmd_color_file(void *bs, int argc, const char **argv)
     }
 
     printf("Reading ident-to-color mappings... done.\n");
+    
+    bu_vls_sprintf(&s->colorfile, "%s", argv[1]);
 
     return ret;
 }

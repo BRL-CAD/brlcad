@@ -108,25 +108,25 @@ struct burst_state {
     int shotburst;    	       /* if true, burst along shotline */
     int userinterrupt;         /* has the ray trace been interrupted */
 
-    char airfile[LNBUFSZ];     /* input file name for burst air ids */
-    char armorfile[LNBUFSZ];   /* input file name for burst armor ids */
-    char burstfile[LNBUFSZ];   /* input file name for burst points */
-    char cmdbuf[LNBUFSZ];      /* */
-    char cmdname[LNBUFSZ];     /* */
-    char colorfile[LNBUFSZ];   /* ident range-to-color file name */
-    char critfile[LNBUFSZ];    /* input file for critical components */
+    struct bu_vls airfile;     /* input file name for burst air ids */
+    struct bu_vls armorfile;   /* input file name for burst armor ids */
+    struct bu_vls burstfile;   /* input file name for burst points */
+    struct bu_vls cmdbuf;      /* */
+    struct bu_vls cmdname;     /* */
+    struct bu_vls colorfile;   /* ident range-to-color file name */
+    struct bu_vls critfile;    /* input file for critical components */
     FILE *errfile;             /* errors/diagnostics log file */
     struct bu_vls fbfile;      /* frame buffer image file name */
     struct bu_vls gedfile;     /* MGED data base file name */
-    char gridfile[LNBUFSZ];    /* saved grid (2-d shots) file name */
-    char histfile[LNBUFSZ];    /* histogram file name (statistics) */
+    struct bu_vls gridfile;    /* saved grid (2-d shots) file name */
+    struct bu_vls histfile;    /* histogram file name (statistics) */
     struct bu_vls objects;     /* list of objects from MGED file */
-    char outfile[LNBUFSZ];     /* burst point library output file name */
+    struct bu_vls outfile;     /* burst point library output file name */
     struct bu_vls plotfile;    /* 3-D UNIX plot file name (debugging) */
     char scrbuf[LNBUFSZ];      /* scratch buffer for temporary use */
     char scriptfile[LNBUFSZ];  /* shell script file name */
-    char shotfile[LNBUFSZ];    /* input file of firing coordinates */
-    char shotlnfile[LNBUFSZ];  /* shotline output file name */
+    struct bu_vls shotfile;    /* input file of firing coordinates */
+    struct bu_vls shotlnfile;  /* shotline output file name */
     char title[TITLE_LEN];     /* title of MGED target description */
     char timer[TIMER_LEN];     /* CPU usage statistics */
     char tmpfname[TIMER_LEN];  /* temporary file for logging input */
@@ -213,6 +213,9 @@ struct colors *findColors(int ident, struct bu_ptbl *colp);
 void gridModel(struct burst_state *s);
 void gridInit(struct burst_state *s);
 void spallInit(struct burst_state *s);
+
+void paintCellFb(struct application *ap, unsigned char *pixpaint, unsigned char *pixexpendable);
+void paintSpallFb(struct application *ap);
 
 #endif  /* BURST_BURST_H */
 
