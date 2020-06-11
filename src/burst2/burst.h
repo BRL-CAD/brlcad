@@ -200,6 +200,8 @@ struct burst_state {
 
 extern void burst_state_init(struct burst_state *s);
 
+extern int execute_run(struct burst_state *s);
+
 extern int findIdents(int ident, struct bu_ptbl *idpl);
 extern int readIdents(struct bu_ptbl *idlist, const char *fname);
 extern int readColors(struct bu_ptbl *idlist, const char *fname);

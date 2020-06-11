@@ -2118,14 +2118,14 @@ spallInit(struct burst_state *s)
 
 #define WHITESPACE	" \t"
 
-void
+int
 execute_run(struct burst_state *s)
 {
     static int gottree = 0;
     int loaderror = 0;
     if (!bu_vls_strlen(&s->gedfile)) {
 	brst_log(s, "No target file has been specified.");
-	return;
+	return BRLCAD_ERROR;
     }
     brst_log(s, "Reading target data base");
     rt_prep_timer();
@@ -2135,7 +2135,7 @@ execute_run(struct burst_state *s)
     }
     if (s->rtip == RTI_NULL) {
 	brst_log(s, "Ray tracer failed to read the target file.");
-	return;
+	return BRLCAD_ERROR;
     }
     prntTimer(s, "dir");
     /* Add air into int trees, must be set after rt_dirbuild() and before
@@ -2162,7 +2162,7 @@ execute_run(struct burst_state *s)
 	prntTimer(s, "load");
     }
     if (loaderror)
-	return;
+	return BRLCAD_ERROR;
     if (s->rtip->needprep) {
 	brst_log(s, "Prepping solids");
 	rt_prep_timer();
@@ -2174,7 +2174,7 @@ execute_run(struct burst_state *s)
 	spallInit(s);
     }
     gridModel(s);
-    return;
+    return BRLCAD_OK;
 }
 
 
