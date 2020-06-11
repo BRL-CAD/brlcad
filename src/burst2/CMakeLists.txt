@@ -12,8 +12,9 @@ include_directories(${BURST_INCLUDE_DIRS})
 
 set(burst_SOURCES
   burst.cpp
-  idents.cpp
   execute.cpp
+  #grid.cpp
+  idents.cpp
   ${LDIR}/utf8.c
   ${LDIR}/linenoise.c
   )
@@ -24,6 +25,7 @@ set(burst_ignore
   CMakeLists.txt
   burst.h
   burst.format
+  grid.cpp
   )
 CMAKEFILES(${burst_ignore})
 

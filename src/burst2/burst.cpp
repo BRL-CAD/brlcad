@@ -112,7 +112,6 @@ burst_state_init(struct burst_state *s)
     s->reportoverlaps = DFL_OVERLAPS;
     s->reqburstair = 1;
     s->shotburst = 0;
-    s->tty = 1;
     s->userinterrupt = 0;
     memset(s->airfile, 0, LNBUFSZ);
     memset(s->armorfile, 0, LNBUFSZ);

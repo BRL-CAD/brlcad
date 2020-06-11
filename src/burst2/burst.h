@@ -106,7 +106,6 @@ struct burst_state {
     int reportoverlaps;        /* if true, overlaps are reported */
     int reqburstair;           /* if true, burst air required for shotburst */
     int shotburst;    	       /* if true, burst along shotline */
-    int tty;    	       /* if true, full screen display is used */
     int userinterrupt;         /* has the ray trace been interrupted */
 
     char airfile[LNBUFSZ];     /* input file name for burst air ids */
@@ -204,8 +203,16 @@ struct burst_state {
 
 void burst_state_init(struct burst_state *s);
 
+int findIdents(int ident, struct bu_ptbl *idpl);
 int readIdents(struct bu_ptbl *idlist, const char *fname);
 int readColors(struct bu_ptbl *idlist, const char *fname);
+
+struct colors *findColors(int ident, struct bu_ptbl *colp);
+
+
+void gridModel(struct burst_state *s);
+void gridInit(struct burst_state *s);
+void spallInit(struct burst_state *s);
 
 #endif  /* BURST_BURST_H */
 

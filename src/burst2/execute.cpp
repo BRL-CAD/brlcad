@@ -99,11 +99,11 @@ execute_run(struct burst_state *s)
 	rt_prep(s->rtip);
 	prntTimer(s, "prep");
     }
-    //gridInit();
+    //gridInit(s);
     if (s->nriplevels > 0) {
-	//spallInit();
+	//spallInit(s);
     }
-    //gridModel();
+    //gridModel(s);
     return;
 }
 
