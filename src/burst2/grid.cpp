@@ -204,7 +204,7 @@ colorPartition(struct burst_state *s, struct region *regp, int type)
 	    }
 	    break;
 	default :
-	    brst_log(s, "colorPartition: bad type %d.\n", type);
+	    brst_log(s, MSG_OUT, "colorPartition: bad type %d.\n", type);
 	    break;
     }
     bu_semaphore_release(BU_SEM_SYSCALL);
@@ -308,8 +308,8 @@ chkEntryNorm(struct burst_state *s, struct partition *pp, struct xray *rayp, fas
     }
     if (f > 0.0) {
 	flipct++;
-	brst_log(s, "Fixed flipped entry normal:\n");
-	brst_log(s, "\tregion \"%s\" solid \"%s\" type %d \"%s\".\n",
+	brst_log(s, MSG_OUT, "Fixed flipped entry normal:\n");
+	brst_log(s, MSG_OUT, "\tregion \"%s\" solid \"%s\" type %d \"%s\".\n",
 		 pp->pt_regionp->reg_name, stp->st_name,
 		 stp->st_id, purpose);
 	VSCALE(normvec, normvec, -1.0);
@@ -334,8 +334,8 @@ chkExitNorm(struct burst_state *s, struct partition *pp, struct xray *rayp, fast
     }
     if (f < 0.0) {
 	flipct++;
-	brst_log(s, "Fixed flipped exit normal:\n");
-	brst_log(s, "\tregion \"%s\" solid \"%s\" type %d \"%s\".\n",
+	brst_log(s, MSG_OUT, "Fixed flipped exit normal:\n");
+	brst_log(s, MSG_OUT, "\tregion \"%s\" solid \"%s\" type %d \"%s\".\n",
 		 pp->pt_regionp->reg_name, stp->st_name,
 		 stp->st_id, purpose);
 	VSCALE(normvec, normvec, -1.0);
@@ -348,9 +348,9 @@ static int
 f_Nerror(struct application *ap)
 {
     struct burst_state *s = (struct burst_state *)ap->a_uptr;
-    brst_log(s, "Couldn't compute thickness or exit point along normal direction.\n");
-    brst_log(s, "\tpnt\t<%12.6f, %12.6f, %12.6f>\n", V3ARGS(ap->a_ray.r_pt));
-    brst_log(s, "\tdir\t<%12.6f, %12.6f, %12.6f>\n", V3ARGS(ap->a_ray.r_dir));
+    brst_log(s, MSG_OUT, "Couldn't compute thickness or exit point along normal direction.\n");
+    brst_log(s, MSG_OUT, "\tpnt\t<%12.6f, %12.6f, %12.6f>\n", V3ARGS(ap->a_ray.r_pt));
+    brst_log(s, MSG_OUT, "\tdir\t<%12.6f, %12.6f, %12.6f>\n", V3ARGS(ap->a_ray.r_dir));
     ap->a_rbeam = 0.0;
     return 0;
 }
@@ -409,7 +409,7 @@ getNormThickness(struct application *ap, struct partition *pp, fastf_t cosobliqu
 	VSCALE(a_thick.a_ray.r_dir, normvec, -1.0);
 	if (rt_shootray(&a_thick) == -1 && s->fatalerror) {
 	    /* Fatal error in application routine. */
-	    brst_log(s, "Fatal error: raytracing aborted.\n");
+	    brst_log(s, MSG_OUT, "Fatal error: raytracing aborted.\n");
 	    return 0.0;
 	}
 	return a_thick.a_rbeam;
@@ -664,14 +664,14 @@ f_Overlap(struct application *ap, struct partition *pp, struct region *reg1, str
 
 	VJOIN1(pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist,
 	       ap->a_ray.r_dir);
-	brst_log(s, "OVERLAP:\n");
-	brst_log(s, "reg=%s isol=%s, \n",
+	brst_log(s, MSG_LOG, "OVERLAP:\n");
+	brst_log(s, MSG_LOG, "reg=%s isol=%s, \n",
 		 reg1->reg_name, pp->pt_inseg->seg_stp->st_name
 		);
-	brst_log(s, "reg=%s osol=%s, \n",
+	brst_log(s, MSG_LOG, "reg=%s osol=%s, \n",
 		 reg2->reg_name, pp->pt_outseg->seg_stp->st_name
 		);
-	brst_log(s, "depth %.2fmm at (%g, %g, %g) x%d y%d lvl%d purpose=%s\n",
+	brst_log(s, MSG_LOG, "depth %.2fmm at (%g, %g, %g) x%d y%d lvl%d purpose=%s\n",
 		 depth,
 		 pt[X], pt[Y], pt[Z],
 		 ap->a_x, ap->a_y, ap->a_level, ap->a_purpose
@@ -839,12 +839,12 @@ prntSeg(struct application *ap,
 	return;
     entryangle = NEAR_EQUAL(icosobliquity, 1.0, COS_TOL) ? 0.0 : acos(icosobliquity) * RAD2DEG;
     if ((normthickness = getNormThickness(ap, cpp, icosobliquity, entrynorm)) <= 0.0 && s->fatalerror) {
-	brst_log(s, "Couldn't compute normal thickness.\n");
-	brst_log(s, "\tshotline coordinates <%g, %g>\n",
+	brst_log(s, MSG_LOG, "Couldn't compute normal thickness.\n");
+	brst_log(s, MSG_LOG, "\tshotline coordinates <%g, %g>\n",
 		 ap->a_uvec[X]*s->unitconv,
 		 ap->a_uvec[Y]*s->unitconv
 		);
-	brst_log(s, "\tregion name '%s' solid name '%s'\n",
+	brst_log(s, MSG_LOG, "\tregion name '%s' solid name '%s'\n",
 		 cpp->pt_regionp->reg_name,
 		 cpp->pt_inseg->seg_stp->st_name);
 	return;
@@ -1002,7 +1002,7 @@ burstRay(struct burst_state *s)
 	    bu_semaphore_release(RT_SEM_WORKER);
 	    if ((ncrit = rt_shootray(&a_spall)) == -1 && s->fatalerror) {
 		/* Fatal error in application routine. */
-		brst_log(s, "Error: ray tracing aborted.\n");
+		brst_log(s, MSG_OUT, "Error: ray tracing aborted.\n");
 		return	0;
 	    }
 	    if (bu_vls_strlen(&s->fbfile) && ncrit > 0) {
@@ -1386,7 +1386,7 @@ f_ShotMiss(struct application *ap)
 		VJOIN1(hitpoint, hitpoint, -s->bdist, ap->a_ray.r_dir);
 	    } else if (s->bdist < 0.0) {
 		/* interior burst not implemented in ground */
-		brst_log(s, "User error: negative burst distance can not be specified with ground plane bursting.\n");
+		brst_log(s, MSG_OUT, "User error: negative burst distance can not be specified with ground plane bursting.\n");
 		s->fatalerror = 1;
 		return	-1;
 	    }
@@ -1432,7 +1432,7 @@ readShot(struct burst_state *s, fastf_t *vec)
 	VMOVE(vec, scan);
 	if (items != 2) {
 	    if (items != EOF) {
-		brst_log(s, "Fatal error: only %d firing coordinates read.\n", items);
+		brst_log(s, MSG_OUT, "Fatal error: only %d firing coordinates read.\n", items);
 		s->fatalerror = 1;
 		return 0;
 	    } else {
@@ -1451,7 +1451,7 @@ readShot(struct burst_state *s, fastf_t *vec)
 	VMOVE(vec, scan); /* double to fastf_t */
 	if (items != 3) {
 	    if (items != EOF) {
-		brst_log(s, "Fatal error: %d firing coordinates read.\n", items);
+		brst_log(s, MSG_OUT, "Fatal error: %d firing coordinates read.\n", items);
 		s->fatalerror = 1;
 		return 0;
 	    } else {
@@ -1463,7 +1463,7 @@ readShot(struct burst_state *s, fastf_t *vec)
 	    vec[Z] /= s->unitconv;
 	}
     } else {
-	brst_log(s, "BUG: readShot called with bad firemode.\n");
+	brst_log(s, MSG_OUT, "BUG: readShot called with bad firemode.\n");
 	return 0;
     }
     return 1;
@@ -1557,7 +1557,7 @@ readBurst(struct burst_state *s, fastf_t *vec)
     VMOVE(vec, scan); /* double to fastf_t */
     if (items != 3) {
 	if (items != EOF) {
-	    brst_log(s, "Fatal error: %d burst coordinates read.\n", items);
+	    brst_log(s, MSG_OUT, "Fatal error: %d burst coordinates read.\n", items);
 	    s->fatalerror = 1;
 	    return 0;
 	} else {
@@ -1612,7 +1612,7 @@ doBursts(struct burst_state *s)
 	prntBurstHdr(s, s->burstpoint, viewdir);
 	if (! burstPoint(&ag, s->zaxis, s->burstpoint)) {
 	    /* fatal error in application routine */
-	    brst_log(s, "Fatal error: raytracing aborted.\n");
+	    brst_log(s, MSG_OUT, "Fatal error: raytracing aborted.\n");
 	    return 0;
 	}
 	if (! TSTBIT(s->firemode, FM_FILE)) {
@@ -1675,7 +1675,7 @@ gridShot(struct burst_state *s)
 	plotGrid(s, a.a_ray.r_pt);
 	if (rt_shootray(&a) == -1 && s->fatalerror) {
 	    /* fatal error in application routine */
-	    brst_log(s, "Fatal error: raytracing aborted.\n");
+	    brst_log(s, MSG_OUT, "Fatal error: raytracing aborted.\n");
 	    return 0;
 	}
 	if (!TSTBIT(s->firemode, FM_FILE) && TSTBIT(s->firemode, FM_SHOT)) {
@@ -1690,7 +1690,7 @@ static void
 prntTimer(struct burst_state *s, const char *str)
 {
     (void) rt_read_timer(s->timer, TIMER_LEN-1);
-    brst_log(s, "%s:\t%s\n", str == NULL ? "(null)" : str, s->timer);
+    brst_log(s, MSG_OUT, "%s:\t%s\n", str == NULL ? "(null)" : str, s->timer);
 }
 
 static void
@@ -1708,7 +1708,7 @@ view_end(struct burst_state *s)
 	(void) fflush(s->shotlnfp);
     prntTimer(s, "view");
     if (s->noverlaps > 0) {
-	brst_log(s, "%d overlaps detected over %g mm thick.\n", s->noverlaps, OVERLAP_TOL);
+	brst_log(s, MSG_OUT, "%d overlaps detected over %g mm thick.\n", s->noverlaps, OVERLAP_TOL);
     }
     return;
 }
@@ -1754,6 +1754,27 @@ prntAspectInit(struct burst_state *s)
        ) {
 	bu_exit(EXIT_FAILURE, "Write failed to file (%s)!\n", bu_vls_cstr(&s->outfile));
     }
+
+    // For the original burst units, report back using the same string
+    // burst would originally have used (for compatibility).  Eventually
+    // would prefer to deprecated this...
+    const char *ustr = bu_units_string(1/s->unitconv);
+    if (BU_STR_EQUAL(ustr, "in")) {
+	ustr = "inches";
+    }
+    if (BU_STR_EQUAL(ustr, "ft")) {
+	ustr = "feet";
+    }
+    if (BU_STR_EQUAL(ustr, "mm")) {
+	ustr = "millimeters";
+    }
+    if (BU_STR_EQUAL(ustr, "cm")) {
+	ustr = "centimeters";
+    }
+    if (BU_STR_EQUAL(ustr, "m")) {
+	ustr = "meters";
+    }
+
     if (bu_vls_strlen(&s->shotlnfile)
 	&&      fprintf(s->shotlnfp,
 			"%c % 9.4f % 8.4f % 7.2f % 7.2f %7.2f %7.2f %7.2f %-6s\n",
@@ -1765,7 +1786,7 @@ prntAspectInit(struct burst_state *s)
 			s->modllf*s->unitconv, /* minimum Y'-coordinate of target */
 			s->modlup*s->unitconv, /* maximum Z'-coordinate of target */
 			s->modldn*s->unitconv, /* minimum Z'-coordinate of target */
-			bu_units_string(s->unitconv)
+			ustr
 		       ) < 0
        ) {
 	bu_exit(EXIT_FAILURE, "Write failed to file (%s)!\n", bu_vls_cstr(&s->shotlnfile));
@@ -1801,7 +1822,7 @@ gridModel(struct burst_state *s)
 
     /* initialize frame buffer if appropriate */
     if (!imageInit(s)) {
-	brst_log(s, "Error: problem opening frame buffer.");
+	brst_log(s, MSG_OUT, "Error: problem opening frame buffer.\n");
 	return;
     }
     /* output initial line for this aspect */
@@ -1811,7 +1832,7 @@ gridModel(struct burst_state *s)
     s->userinterrupt = 0;	/* set by interrupt handler */
 
     rt_prep_timer();
-    brst_log(s, "Raytracing");
+    brst_log(s, MSG_LOG, "Raytracing\n");
 
     if (TSTBIT(s->firemode, FM_BURST)) {
 	if (! doBursts(s))
@@ -1896,7 +1917,7 @@ gridRotate(fastf_t azim, fastf_t elev, fastf_t roll, fastf_t *des_H, fastf_t *de
 void
 gridInit(struct burst_state *s)
 {
-    //brst_log(s, "Initializing grid\n");
+    brst_log(s, MSG_LOG, "Initializing grid\n");
     rt_prep_timer();
 
     /* compute grid unit vectors */
@@ -2085,7 +2106,7 @@ spallInit(struct burst_state *s)
 	delta = 0.0;
 	phiinc = 0.0;
 	s->raysolidangle = 0.0;
-	brst_log(s, "%d sampling rays\n", spallct);
+	brst_log(s, MSG_OUT, "%d sampling rays\n", spallct);
 	return;
     }
 
@@ -2110,9 +2131,9 @@ spallInit(struct burst_state *s)
 	    spallct++;
     }
     s->raysolidangle = theta / spallct;
-    brst_log(s, "Solid angle of sampling cone = %g\n", theta);
-    brst_log(s, "Solid angle per sampling ray = %g\n", s->raysolidangle);
-    brst_log(s, "%d sampling rays\n", spallct);
+    brst_log(s, MSG_OUT, "Solid angle of sampling cone = %g\n", theta);
+    brst_log(s, MSG_OUT, "Solid angle per sampling ray = %g\n", s->raysolidangle);
+    brst_log(s, MSG_OUT, "%d sampling rays\n", spallct);
     return;
 }
 
@@ -2124,17 +2145,17 @@ execute_run(struct burst_state *s)
     static int gottree = 0;
     int loaderror = 0;
     if (!bu_vls_strlen(&s->gedfile)) {
-	brst_log(s, "No target file has been specified.");
+	brst_log(s, MSG_OUT, "No target file has been specified.\n");
 	return BRLCAD_ERROR;
     }
-    //brst_log(s, "Reading target data base\n");
+    brst_log(s, MSG_LOG, "Reading target data base\n");
     rt_prep_timer();
     if (s->rtip == RTI_NULL) {
 	char db_title[TITLE_LEN+1];
 	s->rtip = rt_dirbuild(bu_vls_cstr(&s->gedfile), db_title, TITLE_LEN);
     }
     if (s->rtip == RTI_NULL) {
-	brst_log(s, "Ray tracer failed to read the target file.");
+	brst_log(s, MSG_OUT, "Ray tracer failed to read the target file.");
 	return BRLCAD_ERROR;
     }
     prntTimer(s, "dir");
@@ -2149,9 +2170,9 @@ execute_run(struct burst_state *s)
 	rt_prep_timer();
 	for (int i = 0; i < ac; i++) {
 	    const char *obj = av[i];
-	    //brst_log(s, "Loading \"%s\"\n", obj);
+	    brst_log(s, MSG_LOG, "Loading \"%s\"\n", obj);
 	    if (rt_gettree(s->rtip, obj) != 0) {
-		brst_log(s, "Bad object \"%s\".", obj);
+		brst_log(s, MSG_OUT, "Bad object \"%s\"\n", obj);
 		loaderror = 1;
 	    }
 	}
@@ -2164,7 +2185,7 @@ execute_run(struct burst_state *s)
     if (loaderror)
 	return BRLCAD_ERROR;
     if (s->rtip->needprep) {
-	//brst_log(s, "Prepping solids\n");
+	brst_log(s, MSG_LOG, "Prepping solids\n");
 	rt_prep_timer();
 	rt_prep(s->rtip);
 	prntTimer(s, "prep");

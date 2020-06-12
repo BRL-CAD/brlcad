@@ -38,7 +38,7 @@
 
 #include "./burst.h"
 
-#define DEBUG_IDENTS 1
+#define DEBUG_IDENTS 0
 
 int
 findIdents(int ident, struct bu_ptbl *idpl)
@@ -161,7 +161,7 @@ readColors(struct bu_ptbl *idlist, const char *fname)
 	    bu_log("Invalid colors line: %s\n", iline.c_str());
 	    continue;
 	}
-	if (parsevar.size() != 5) {
+	if (parsevar.size() != 6) {
 	    bu_log("readColors(): only %zd items read\n", parsevar.size());
 	    continue;
 	}

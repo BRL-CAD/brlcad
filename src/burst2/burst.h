@@ -36,6 +36,9 @@
 #define TITLE_LEN       72
 #define TIMER_LEN       72
 
+#define MSG_LOG 0
+#define MSG_OUT 1
+
 #define MAXDEVWID	10000	/* maximum width of frame buffer */
 
 /* default parameters */
@@ -218,7 +221,7 @@ extern int imageInit(struct burst_state *s);
 
 /* as far as I can tell the original burst code didn't actually use errfile,
  * but since it is a defined command we will set up to support it */
-extern void brst_log(struct burst_state *s, const char *, ...);
+extern void brst_log(struct burst_state *s, int TYPE, const char *, ...);
 
 #endif  /* BURST_BURST_H */
 
