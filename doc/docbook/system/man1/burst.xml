@@ -346,7 +346,7 @@
 	coordinates, distances, or sizes are input. The units may be changed to	accommodate
 	input files of differing units, but the output from a particular run will reflect
 	whatever the units were set to when the <command>execute</command> command was
-	given. One argument is expected out of the following list snd must be spelled
+	given. One argument is expected out of the following list and must be spelled
 	correctly: millimeters, centimeters, meters, inches and feet. The default units are
 	millimeters.
       </para>
