@@ -925,6 +925,14 @@ _burst_cmd_plot_file(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
+    /* Try to open the file - we want to write output to the file
+     * as it is generated. */
+    s->plotfp = fopen(argv[1], "wb");
+    if (!s->plotfp) {
+	printf("failed to open plot file: %s\n", argv[1]);
+	return BRLCAD_ERROR;
+    }
+
     bu_vls_sprintf(&s->plotfile, "%s", argv[1]);
 
     // Echo command (logCmd in original code)
@@ -1288,7 +1296,7 @@ _burst_cmd_shotline_file(void *bs, int argc, const char **argv)
      * as they are generated. */
     s->shotlnfp = fopen(argv[1], "wb");
     if (!s->shotlnfp) {
-	printf("failed to open error file: %s\n", argv[1]);
+	printf("failed to open shotline file: %s\n", argv[1]);
 	ret = BRLCAD_ERROR;
     }
 
