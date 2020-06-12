@@ -264,14 +264,14 @@ _burst_cmd_critical_comp_file(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    brst_log(s, "Reading critical component idents...\n");
+    //brst_log(s, "Reading critical component idents...\n");
 
     if (!readIdents(&s->critids, argv[1])) {
 	printf("failed to open critical component file: %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
 
-    brst_log(s, "Reading critical component idents... done.\n");
+    //brst_log(s, "Reading critical component idents... done.\n");
 
     bu_vls_sprintf(&s->critfile, "%s", argv[1]);
 
@@ -665,14 +665,14 @@ _burst_cmd_burst_air_file(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    brst_log(s, "Reading burst air idents...\n");
+    //brst_log(s, "Reading burst air idents...\n");
 
     if (!readIdents(&s->airids, argv[1])) {
 	printf("failed to open burst air idents file: %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
 
-    brst_log(s, "Reading burst air idents... done.\n");
+    //brst_log(s, "Reading burst air idents... done.\n");
 
     bu_vls_sprintf(&s->airfile, "%s", argv[1]);
 
@@ -1065,14 +1065,14 @@ _burst_cmd_burst_armor_file(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
-    brst_log(s, "Reading burst armor idents...\n");
+    //brst_log(s, "Reading burst armor idents...\n");
 
     if (!readIdents(&s->armorids, argv[1])) {
 	printf("failed to open burst air idents file: %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
 
-    brst_log(s, "Reading burst armor idents... done.\n");
+    //brst_log(s, "Reading burst armor idents... done.\n");
 
     bu_vls_sprintf(&s->armorfile, "%s", argv[1]);
 
@@ -1318,6 +1318,11 @@ _burst_cmd_target_file(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
+    // NOTE:  previous code had a bu_file_exists check here, but at least for
+    // now we will skip it - even if it exists (or doesn't) at the time of the
+    // command that's not a guarantee it will be in the same state at the time
+    // of execution
+
     bu_vls_sprintf(&s->gedfile, "%s", argv[1]);
 
     // Echo command (logCmd in original code)
@@ -1344,6 +1349,10 @@ _burst_cmd_target_objects(void *bs, int argc, const char **argv)
 	return BRLCAD_ERROR;
     }
 
+    // NOTE: original code seems to only take one object, even if multiple space
+    // separated names are supplied...
+    bu_vls_sprintf(&s->objects, "%s", argv[1]);
+#if 0
     for (int i = 1; i < argc; i++) {
 	if (i == 1) {
 	    bu_vls_sprintf(&s->objects, "%s", argv[i]);
@@ -1351,6 +1360,7 @@ _burst_cmd_target_objects(void *bs, int argc, const char **argv)
 	    bu_vls_printf(&s->objects, " %s", argv[i]);
 	}
     }
+#endif
 
     // Echo command (logCmd in original code)
     printf("%s\t\t%s\n", argv[0], bu_vls_cstr(&s->objects));
@@ -1384,7 +1394,26 @@ _burst_cmd_units(void *bs, int argc, const char **argv)
     }
 
     // echo command (logcmd in original code)*/
-    printf("%s\t\t\t%s\n", argv[0], bu_units_string(s->unitconv));
+    const char *ustr = bu_units_string(s->unitconv);
+    // For the original burst units, report back using the same string
+    // burst would originally have used (for compatibility).  Eventually
+    // would prefer to deprecated this...
+    if (BU_STR_EQUAL(ustr, "in")) {
+	ustr = "inches";
+    }
+    if (BU_STR_EQUAL(ustr, "ft")) {
+	ustr = "feet";
+    }
+    if (BU_STR_EQUAL(ustr, "mm")) {
+	ustr = "millimeters";
+    }
+    if (BU_STR_EQUAL(ustr, "cm")) {
+	ustr = "centimeters";
+    }
+    if (BU_STR_EQUAL(ustr, "m")) {
+	ustr = "meters";
+    }
+    printf("%s\t\t\t%s\n", argv[0], ustr);
 
     // Inverse is used in calculations
     s->unitconv = 1/s->unitconv;
@@ -1597,14 +1626,14 @@ _burst_cmd_color_file(void *bs, int argc, const char **argv)
 
     if (!s || !argc || !argv) return BRLCAD_ERROR;
 
-    brst_log(s, "Reading ident-to-color mappings...\n");
+    //brst_log(s, "Reading ident-to-color mappings...\n");
 
     if (!readColors(&s->colorids, argv[1])) {
 	printf("failed to open ident to color mappings file: %s\n", argv[1]);
 	return BRLCAD_ERROR;
     }
 
-    brst_log(s, "Reading ident-to-color mappings... done.\n");
+    //brst_log(s, "Reading ident-to-color mappings... done.\n");
 
     bu_vls_sprintf(&s->colorfile, "%s", argv[1]);
 
