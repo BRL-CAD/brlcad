@@ -1800,7 +1800,7 @@ gridModel(struct burst_state *s)
     plotInit(s);
 
     /* initialize frame buffer if appropriate */
-    if (! imageInit(s)) {
+    if (!imageInit(s)) {
 	brst_log(s, "Error: problem opening frame buffer.");
 	return;
     }
@@ -1896,7 +1896,7 @@ gridRotate(fastf_t azim, fastf_t elev, fastf_t roll, fastf_t *des_H, fastf_t *de
 void
 gridInit(struct burst_state *s)
 {
-    brst_log(s, "Initializing grid");
+    //brst_log(s, "Initializing grid\n");
     rt_prep_timer();
 
     /* compute grid unit vectors */
@@ -2127,7 +2127,7 @@ execute_run(struct burst_state *s)
 	brst_log(s, "No target file has been specified.");
 	return BRLCAD_ERROR;
     }
-    brst_log(s, "Reading target data base");
+    //brst_log(s, "Reading target data base\n");
     rt_prep_timer();
     if (s->rtip == RTI_NULL) {
 	char db_title[TITLE_LEN+1];
@@ -2149,7 +2149,7 @@ execute_run(struct burst_state *s)
 	rt_prep_timer();
 	for (int i = 0; i < ac; i++) {
 	    const char *obj = av[i];
-	    brst_log(s, "Loading \"%s\"", obj);
+	    //brst_log(s, "Loading \"%s\"\n", obj);
 	    if (rt_gettree(s->rtip, obj) != 0) {
 		brst_log(s, "Bad object \"%s\".", obj);
 		loaderror = 1;
@@ -2164,7 +2164,7 @@ execute_run(struct burst_state *s)
     if (loaderror)
 	return BRLCAD_ERROR;
     if (s->rtip->needprep) {
-	brst_log(s, "Prepping solids");
+	//brst_log(s, "Prepping solids\n");
 	rt_prep_timer();
 	rt_prep(s->rtip);
 	prntTimer(s, "prep");

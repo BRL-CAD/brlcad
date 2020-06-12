@@ -179,10 +179,10 @@ paintSpallFb(struct application *ap)
 int
 openFbDevice(struct burst_state *s, struct bu_vls *fbdev)
 {
-    brst_log(s, "Opening frame buffer");
+    //brst_log(s, "Opening frame buffer\n");
     if (s->zoom < 1) {
-	brst_log(s, "Device is too small to display image.");
-	return 1;
+	brst_log(s, "Device is too small to display image.\n");
+	return 0;
     }
     if (((s->fbiop != FB_NULL && fb_getwidth(s->fbiop) != s->devwid) || s->pixgrid == NULL)
 	&& (s->pixgrid = (unsigned char *) calloc(s->devwid*3, sizeof(unsigned char))) == (unsigned char *) NULL) {
@@ -199,9 +199,10 @@ openFbDevice(struct burst_state *s, struct bu_vls *fbdev)
 	       || (fb_zoom(s->fbiop, 1, 1) == -1)
 	       || (fb_window(s->fbiop, s->devwid/2, s->devhgt/2) == -1)
 	      ) {
-	return 1;
+	return 0;
     }
-    return 0;
+
+    return 1;
 }
 
 int
