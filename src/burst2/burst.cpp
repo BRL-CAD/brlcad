@@ -1043,7 +1043,7 @@ _burst_cmd_read_3d_shot_file(void *bs, int argc, const char **argv)
 
     s->firemode = FM_SHOT | FM_FILE | FM_3DIM;
 
-    return BRLCAD_OK;
+    return ret;
 }
 
 extern "C" int
@@ -1127,7 +1127,7 @@ _burst_cmd_read_burst_file(void *bs, int argc, const char **argv)
 
     s->firemode = FM_BURST | FM_3DIM | FM_FILE;
 
-    return BRLCAD_OK;
+    return ret;
 }
 
 extern "C" int
