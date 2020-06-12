@@ -60,7 +60,6 @@ endif(NOT WIN32)
 set(level_3_dirs
   brlman
   burst
-  burst2
   bwish
   conv
   fb

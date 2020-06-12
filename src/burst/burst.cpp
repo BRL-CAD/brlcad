@@ -64,7 +64,7 @@ brst_log(struct burst_state *s, int TYPE, const char *fmt, ...)
 	vfprintf(s->errfile, fmt, ap);
     }
     if (TYPE == MSG_OUT) {
-	vfprintf(stdout, fmt, ap);
+	vfprintf(stderr, fmt, ap);
     }
 }
 
@@ -234,7 +234,7 @@ _burst_cmd_attack_direction(void *bs, int argc, const char **argv)
     }
 
     // Echo command (logCmd in original code)
-    printf("%s\t%g %g\n", argv[0], s->viewazim, s->viewelev);
+    brst_log(s, MSG_OUT, "%s\t%g %g\n", argv[0], s->viewazim, s->viewelev);
 
     // After echoing, convert to radians for internal use
     s->viewazim /= RAD2DEG;
@@ -276,7 +276,7 @@ _burst_cmd_critical_comp_file(void *bs, int argc, const char **argv)
     bu_vls_sprintf(&s->critfile, "%s", argv[1]);
 
     // Echo command (logCmd in original code)
-    printf("%s\t%s\n", argv[0], bu_vls_cstr(&s->critfile));
+    brst_log(s, MSG_OUT, "%s\t%s\n", argv[0], bu_vls_cstr(&s->critfile));
 
     return ret;
 }
@@ -482,6 +482,9 @@ _burst_cmd_execute(void *bs, int argc, const char **argv)
 	brst_log(s, MSG_OUT, "Execute failed: no target file has been specified\n");
 	return BRLCAD_ERROR;
     }
+
+    // Echo command
+    brst_log(s, MSG_OUT, "execute\n");
 
     return execute_run(s);
 }
@@ -1737,7 +1740,7 @@ burst_process_line(struct burst_state *s, const char *line)
     /* Skip a line if it is a comment */
     if (line[0] == '#') {
 	// Echo comment
-	printf("%s\n", line);
+	brst_log(s, MSG_OUT, "%s\n", line);
 	return BRLCAD_OK;
     }
 
@@ -1771,13 +1774,15 @@ main(int argc, const char **argv)
     int ret = EXIT_SUCCESS;
     char *line = NULL;
     int print_help = 0;
+    int batch_file = 0;
     struct bu_vls msg = BU_VLS_INIT_ZERO;
     struct bu_vls iline= BU_VLS_INIT_ZERO;
     const char *gpmpt = DEFAULT_BURST_PROMPT;
     struct burst_state s;
-    struct bu_opt_desc d[2];
+    struct bu_opt_desc d[3];
     BU_OPT(d[0],  "h", "help", "",       NULL,              &print_help,     "print help and exit");
-    BU_OPT_NULL(d[1]);
+    BU_OPT(d[1],  "b", "",     "",       NULL,              &batch_file,     "batch file");
+    BU_OPT_NULL(d[2]);
 
     if (argc == 0 || !argv) return -1;
 
@@ -1810,6 +1815,11 @@ main(int argc, const char **argv)
 
     /* We're in business - initalize the burst state */
     s.cmds = _burst_cmds;
+
+    if (batch_file && !argc) {
+	brst_log(&s, MSG_OUT, "batch file processing specified, but no batch file found\n");
+	return EXIT_FAILURE;
+    }
 
     /* If we have a batch file, process it. */
     if (argc) {

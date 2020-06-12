@@ -34,41 +34,6 @@ get_filename_component(BDIR "${BURST}" DIRECTORY)
 string(REGEX REPLACE "${BIN_DIR}$" "" RDIR "${BDIR}")
 execute_process(COMMAND "@CMAKE_COMMAND@" -E copy "${RDIR}/${DDIR}/db/ktank.g" "${CBDIR}/ktank.g")
 
-
-# First test is a simple "echo" test, to make sure the commands read the data that
-# is expected.  To do this, we stage a number of stub files in the working directory
-set(STUB_FILES
-  2dshot.file
-  3dshot.file
-  armor.file
-  ba.file
-  burst.file
-  ccf.file
-  color.file
-  grid.file
-  histo.file
-  input.file
-  inputs.file
-  rburst.file
-  shotline.file
-  )
-foreach(STUB_FILE ${STUB_FILES})
-  execute_process(COMMAND "@CMAKE_COMMAND@" -E touch "${CBDIR}/${STUB_FILE}")
-endforeach(STUB_FILE ${STUB_FILES})
-
-execute_process(
-  COMMAND "${BURST}" -b "${CBDIR}/echo.b"
-  RESULT_VARIABLE burst_result OUTPUT_VARIABLE burst_log ERROR_VARIABLE burst_log
-  WORKING_DIRECTORY ${CBDIR}
-  )
-
-message("Result: ${burst_result}")
-message("Output: ${burst_log}")
-
-foreach(STUB_FILE ${STUB_FILES})
-  execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${CBDIR}/${STUB_FILE}")
-endforeach(STUB_FILE ${STUB_FILES})
-
 file(APPEND "${LOGFILE}" "Running burst on ktank.g:\n${BURST} -b ${CBDIR}/ktank.b\n")
 
 execute_process(
