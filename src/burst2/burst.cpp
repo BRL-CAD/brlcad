@@ -1699,6 +1699,8 @@ burst_process_line(struct burst_state *s, const char *line)
 
     /* Skip a line if it is a comment */
     if (line[0] == '#') {
+	// Echo comment
+	printf("%s\n", line);
 	return BRLCAD_OK;
     }
 
