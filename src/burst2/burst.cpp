@@ -573,22 +573,22 @@ _burst_cmd_ground_plane(void *bs, int argc, const char **argv)
 	ret = BRLCAD_ERROR;
     }
 
-    if (bu_opt_fastf_t(&msg, 1, &argv[2], (void *)&s->grndfr) < 0) {
+    if (bu_opt_fastf_t(&msg, 1, &argv[3], (void *)&s->grndfr) < 0) {
 	brst_log(s, "problem reading distance out positive X-axis of target to edge: %s\n", bu_vls_cstr(&msg));
 	ret = BRLCAD_ERROR;
     }
 
-    if (bu_opt_fastf_t(&msg, 1, &argv[2], (void *)&s->grndbk) < 0) {
+    if (bu_opt_fastf_t(&msg, 1, &argv[4], (void *)&s->grndbk) < 0) {
 	brst_log(s, "problem reading distance out negative X-axis of target to edge: %s\n", bu_vls_cstr(&msg));
 	ret = BRLCAD_ERROR;
     }
 
-    if (bu_opt_fastf_t(&msg, 1, &argv[2], (void *)&s->grndlf) < 0) {
+    if (bu_opt_fastf_t(&msg, 1, &argv[5], (void *)&s->grndlf) < 0) {
 	brst_log(s, "problem reading distance out positive Y-axis of target to edge: %s\n", bu_vls_cstr(&msg));
 	ret = BRLCAD_ERROR;
     }
 
-    if (bu_opt_fastf_t(&msg, 1, &argv[2], (void *)&s->grndrt) < 0) {
+    if (bu_opt_fastf_t(&msg, 1, &argv[6], (void *)&s->grndrt) < 0) {
 	brst_log(s, "problem reading distance out negative Y-axis of target to edge: %s\n", bu_vls_cstr(&msg));
 	ret = BRLCAD_ERROR;
     }
@@ -1475,13 +1475,13 @@ _burst_cmd_burst_coordinates(void *bs, int argc, const char **argv)
 	ret = BRLCAD_ERROR;
     }
 
-    if (bu_opt_fastf_t(&msg, 1, &argv[1], (void *)&s->burstpoint[Y]) < 0) {
+    if (bu_opt_fastf_t(&msg, 1, &argv[2], (void *)&s->burstpoint[Y]) < 0) {
 	brst_log(s, "problem reading coordinate Y value: %s\n", bu_vls_cstr(&msg));
 	ret = BRLCAD_ERROR;
     }
     /* convert to mm */
 
-    if (bu_opt_fastf_t(&msg, 1, &argv[1], (void *)&s->burstpoint[Z]) < 0) {
+    if (bu_opt_fastf_t(&msg, 1, &argv[3], (void *)&s->burstpoint[Z]) < 0) {
 	brst_log(s, "problem reading coordinate Z value: %s\n", bu_vls_cstr(&msg));
 	ret = BRLCAD_ERROR;
     }
