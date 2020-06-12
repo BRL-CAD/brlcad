@@ -4,6 +4,7 @@ set(BURST_INPUT_FILES
   ktank_armor.ids
   ktank_crit.ids
   ktank_colors.ids
+  echo.b
   )
 
 BRLCAD_REGRESSION_TEST(regress-burst "burst;ktank.g" EXEC burst)
