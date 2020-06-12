@@ -26,6 +26,10 @@ shotline-file      shotline.file
 target-file        target.file
 target-objects     obj1 obj2 obj3
 units              inches
+units              feet
+units              millimeters
+units              centimeters
+units              meters
 write-input-file   inputs.file
 burst-coordinates  20 30 40
 burst-distance     10.0
