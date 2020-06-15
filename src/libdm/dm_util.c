@@ -34,8 +34,6 @@
 int
 drawLine3D(struct dm *dmp, point_t pt1, point_t pt2, const char *log_bu, float *wireColor)
 {
-    static float black[4] = {0.0, 0.0, 0.0, 0.0};
-
     if (!dmp) {
 	return BRLCAD_ERROR;
     }
@@ -49,6 +47,7 @@ drawLine3D(struct dm *dmp, point_t pt1, point_t pt2, const char *log_bu, float *
     }
 
 #ifdef HAVE_GL_GL_H
+    static float black[4] = {0.0, 0.0, 0.0, 0.0};
     GLdouble pt[3];
     if (dmp->i->dm_debugLevel) {
 	GLfloat pmat[16];
@@ -91,8 +90,6 @@ drawLine3D(struct dm *dmp, point_t pt1, point_t pt2, const char *log_bu, float *
 int
 drawLines3D(struct dm *dmp, int npoints, point_t *points, int lflag, const char *log_bu, float *wireColor)
 {
-    register int i;
-    static float black[4] = {0.0, 0.0, 0.0, 0.0};
     if (!dmp) {
 	return BRLCAD_ERROR;
     }
@@ -109,6 +106,8 @@ drawLines3D(struct dm *dmp, int npoints, point_t *points, int lflag, const char 
     }
 
 #ifdef HAVE_GL_GL_H
+    register int i;
+    static float black[4] = {0.0, 0.0, 0.0, 0.0};
     if (dmp->i->dm_debugLevel) {
 	GLfloat pmat[16];
 
