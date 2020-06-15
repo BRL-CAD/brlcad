@@ -53,7 +53,7 @@ to source code distributions of BRL-CAD.
 
 For the impatient or simplistic, the following steps should compile,
 test, and install an optimized BRL-CAD quickly into the
-/usr/brlcad/rel-VERSION directory if CMake is alrady installed:
+/usr/brlcad/rel-VERSION directory if CMake is already installed:
 
   tar -zxvf brlcad-VERSION.tar
   mkdir brlcad-VERSION/build
