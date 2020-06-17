@@ -1,7 +1,7 @@
 /*                      M E T A B A L L . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2019 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,8 +40,9 @@
 #  include <unistd.h>
 #endif
 
-#include "bu/getopt.h"
 #include "vmath.h"
+#include "bu/app.h"
+#include "bu/getopt.h"
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "wdb.h"
@@ -132,7 +133,7 @@ mix_balls(struct db_i *dbip, const char *name, int ac, const char *av[])
     for (i = 0; i < ac; i++) {
 	struct rt_db_internal dir;
 	struct rt_metaball_internal *mp;
-	struct wdb_metaballpt *mpt;
+	struct wdb_metaball_pnt *mpt;
 
 	/* get a handle on the existing database object */
 	bu_log("\t%s\n", av[i]);
@@ -155,7 +156,7 @@ mix_balls(struct db_i *dbip, const char *name, int ac, const char *av[])
 	/* iterate over each point in that database object and add it
 	 * to our new metaball.
 	 */
-	for (BU_LIST_FOR(mpt, wdb_metaballpt, &mp->metaball_ctrl_head)) {
+	for (BU_LIST_FOR(mpt, wdb_metaball_pnt, &mp->metaball_ctrl_head)) {
 	    bu_log("Adding point (%lf %lf %lf)\n", V3ARGS(mpt->coord));
 	    rt_metaball_add_point(newmp, (const point_t *)&mpt->coord, mpt->fldstr, mpt->sweat);
 	}
@@ -234,6 +235,8 @@ main(int argc, char *argv[])
     char outfile[MAXPATHLEN] = "metaball.g";
     int optc;
     long count = COUNTMAX;
+
+    bu_setprogname(argv[0]);
 
     while ((optc = bu_getopt(argc, argv, "o:n:h?")) != -1) {
         if (bu_optopt == '?') optc='h';

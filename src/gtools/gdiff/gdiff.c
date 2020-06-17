@@ -1,7 +1,7 @@
 /*                     G D I F F 2 . C
  * BRL-CAD
  *
- * Copyright (c) 2014-2019 United States Government as represented by
+ * Copyright (c) 2014-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,6 +19,7 @@
  */
 
 #include "./gdiff.h"
+#include "bu/app.h"
 
 /*******************************************************************/
 /* Primary function for basic diff operation on two .g files */
@@ -84,7 +85,7 @@ do_diff(struct db_i *left_dbip, struct db_i *right_dbip, struct diff_state *stat
 	struct db_i *inmem_dbip;
 	BU_PTBL_INIT(&diff3_results);
 	BU_GET(inmem_dbip, struct db_i);
-	inmem_dbip->dbi_eof = (off_t)-1L;
+	inmem_dbip->dbi_eof = (b_off_t)-1L;
 	inmem_dbip->dbi_fp = NULL;
 	inmem_dbip->dbi_mf = NULL;
 	inmem_dbip->dbi_read_only = 0;
@@ -248,6 +249,8 @@ main(int argc, char **argv)
     struct db_i *right_dbip = DBI_NULL;
     struct db_i *ancestor_dbip = DBI_NULL;
     const char *diff_prog_name = argv[0];
+
+    bu_setprogname(argv[0]);
 
     BU_GET(state, struct diff_state);
     diff_state_init(state);

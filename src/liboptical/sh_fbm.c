@@ -1,7 +1,7 @@
 /*                        S H _ F B M . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2019 United States Government as represented by
+ * Copyright (c) 1997-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -98,13 +98,13 @@ fbm_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const 
     *dpp = fbm;
 
     memcpy(fbm, &fbm_defaults, sizeof(struct fbm_specific));
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_log("fbm_setup\n");
 
     if (bu_struct_parse(matparm, fbm_parse, (char *)fbm, NULL) < 0)
 	return -1;
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_struct_print(rp->reg_name, fbm_parse, (char *)fbm);
 
     return 1;
@@ -133,7 +133,7 @@ fbm_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp), s
     vect_t v_noise;
     point_t pt;
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_struct_print("foo", fbm_parse, (char *)fbm_sp);
 
     pt[0] = swp->sw_hit.hit_point[0] * fbm_sp->scale[0];
@@ -144,7 +144,7 @@ fbm_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp), s
 
     VSCALE(v_noise, v_noise, fbm_sp->distortion);
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_log("fbm_render: point (%g %g %g) becomes (%g %g %g)\n\tv_noise (%g %g %g)\n",
 	       V3ARGS(swp->sw_hit.hit_point),
 	       V3ARGS(pt),

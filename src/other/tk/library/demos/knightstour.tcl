@@ -61,6 +61,8 @@ proc Next {square} {
                 set minimum $count
                 set nextSquare $testSquare
             } elseif {$count == $minimum} {
+                # to remove the enhancement to Warnsdorff's rule
+                # remove the next line:
                 set nextSquare [Edgemost $nextSquare $testSquare]
             }
         }
@@ -92,7 +94,7 @@ proc MovePiece {dlg last square} {
     $dlg.f.txt see end
     $dlg.f.c itemconfigure [expr {1+$last}] -state normal -outline black
     $dlg.f.c itemconfigure [expr {1+$square}] -state normal -outline red
-    $dlg.f.c coords knight [lrange [$dlg.f.c coords [expr {1+$square}]] 0 1]
+    $dlg.f.c moveto knight {*}[lrange [$dlg.f.c coords [expr {1+$square}]] 0 1]
     lappend visited $square
     set next [Next $square]
     if {$next ne -1} {
@@ -125,8 +127,8 @@ proc Tour {dlg {square {}}} {
         $dlg.f.c itemconfigure $n -state disabled -outline black
     }
     if {$square eq {}} {
-        set square [expr {[$dlg.f.c find closest \
-                               {*}[$dlg.f.c coords knight] 0 65]-1}]
+        set coords [lrange [$dlg.f.c coords knight] 0 1]
+        set square [expr {[$dlg.f.c find closest {*}$coords 0 65]-1}]
     }
     variable initial $square
     after idle [list MovePiece $dlg $initial $initial]
@@ -161,7 +163,7 @@ proc DragMotion {w x y} {
 }
 proc DragEnd {w x y} {
     set square [$w find closest $x $y 0 65]
-    $w coords selected [lrange [$w coords $square] 0 1]
+    $w moveto selected {*}[lrange [$w coords $square] 0 1]
     $w dtag selected
     variable dragging ; unset dragging
 }
@@ -173,7 +175,7 @@ proc CreateGUI {} {
     wm withdraw $dlg
     set f [ttk::frame $dlg.f]
     set c [canvas $f.c -width 240 -height 240]
-    text $f.txt -width 10 -height 1 -background white \
+    text $f.txt -width 10 -height 1 \
         -yscrollcommand [list $f.vs set] -font {Arial 8}
     ttk::scrollbar $f.vs -command [list $f.txt yview]
 
@@ -198,17 +200,28 @@ proc CreateGUI {} {
             set coords [list [expr {$col * 30 + 4}] [expr {$row * 30 + 4}] \
                             [expr {$col * 30 + 30}] [expr {$row * 30 + 30}]]
             $c create rectangle $coords -fill $fill -disabledfill $dfill \
-                -width 2 -state disabled
+                -width 2 -state disabled -outline black
         }
     }
-    catch {eval font create KnightFont -size -24}
-    $c create text 0 0 -font KnightFont -text "\u265e" \
-        -anchor nw -tags knight -fill black -activefill "#600000"
-    $c coords knight [lrange [$c coords [expr {1 + int(rand() * 64)}]] 0 1]
+    if {[tk windowingsystem] ne "x11"} {
+        catch {eval font create KnightFont -size -24}
+        $c create text 0 0 -font KnightFont -text "\u265e" \
+            -anchor nw -tags knight -fill black -activefill "#600000"
+    } else {
+        # On X11 we cannot reliably tell if the \u265e glyph is available
+        # so just use a polygon
+        set pts {
+            2 25   24 25  21 19   20 8   14 0   10 0   0 13   0 16
+            2 17    4 14   5 15    3 17   5 17   9 14  10 15  5 21
+        }
+        $c create polygon $pts -tag knight -offset 8 \
+            -fill black -activefill "#600000"
+    }
+    $c moveto knight {*}[lrange [$c coords [expr {1 + int(rand() * 64)}]] 0 1]
     $c bind knight <ButtonPress-1> [namespace code [list DragStart %W %x %y]]
     $c bind knight <Motion> [namespace code [list DragMotion %W %x %y]]
     $c bind knight <ButtonRelease-1> [namespace code [list DragEnd %W %x %y]]
-    
+
     grid $c $f.txt $f.vs  -sticky news
     grid rowconfigure    $f 0 -weight 1
     grid columnconfigure $f 1 -weight 1
@@ -231,7 +244,7 @@ proc CreateGUI {} {
     if {[info exists ::widgetDemo]} {
         grid [addSeeDismiss $dlg.buttons $dlg] - - - - - -sticky ew
     }
-    
+
     grid rowconfigure $dlg 0 -weight 1
     grid columnconfigure $dlg 0 -weight 1
 

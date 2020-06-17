@@ -1,7 +1,7 @@
 #                        M G E D . T C L
 # BRL-CAD
 #
-# Copyright (c) 1995-2019 United States Government as represented by
+# Copyright (c) 1995-2020 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -473,7 +473,11 @@ proc ia_invoke { w } {
 	    .$id.t tag add oldcmd promptEnd insert
 
 	    if {$ia_msg != ""} {
-		mged_print_tag $w $ia_msg\n result
+		if {[string index $ia_msg end] == "\n"} {
+		    mged_print_tag $w "$ia_msg" result
+		} else {
+		    mged_print_tag $w "$ia_msg\n" result
+		}
 	    }
 
 	    distribute_text $w $hcmd $ia_msg

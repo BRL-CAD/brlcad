@@ -1,4 +1,4 @@
-# Copyright (c) 2010-2019 United States Government as represented by
+# Copyright (c) 2010-2020 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -44,7 +44,18 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
 
+find_package(Threads)
+
+include(CheckCXXCompilerFlag)
+check_cxx_compiler_flag(-O3 O3_COMPILER_FLAG)
+
 add_executable(env2c env2c.cxx)
+if (O3_COMPILER_FLAG)
+  # If we have the O3 flag, use it
+  target_compile_options(env2c PRIVATE "-O3")
+endif (O3_COMPILER_FLAG)
+
+target_link_libraries(env2c ${CMAKE_THREAD_LIBS_INIT})
 
 # Local Variables:
 # tab-width: 8

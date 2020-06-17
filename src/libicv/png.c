@@ -1,7 +1,7 @@
 /*                      P N G . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2019 United States Government as represented by
+ * Copyright (c) 2007-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,7 +21,7 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <png.h>
+#include "png.h"
 
 #include "bio.h"
 
@@ -35,12 +35,6 @@
 /* defined in encoding.c */
 extern double *uchar2double(unsigned char *data, size_t size);
 extern unsigned char *data2uchar(const icv_image_t *bif);
-
-/* c99 doesn't declare these, but C++ does */
-#if (!defined(_WIN32) || defined(__CYGWIN__)) && !defined(__cplusplus)
-extern FILE *fdopen(int, const char *);
-#endif
-
 
 int
 png_write(icv_image_t *bif, const char *filename)
@@ -62,7 +56,7 @@ png_write(icv_image_t *bif, const char *filename)
 
     fh = fopen(filename, "wb");
     if (UNLIKELY(fh==NULL)) {
-	perror("fdopen");
+	perror("fopen");
 	bu_log("ERROR: png_write failed to get a FILE pointer\n");
 	return 0;
     }

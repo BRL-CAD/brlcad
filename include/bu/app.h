@@ -1,7 +1,7 @@
 /*                          A P P . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -54,9 +54,23 @@ __BEGIN_DECLS
 BU_EXPORT extern const char *bu_argv0_full_path(void);
 
 /**
- * Routine for getting the current working directory full pathname.
+ * Routine for obtaining the current working directory.
+ *
+ * Result is written into the provided buf, up to size chars, and
+ * returned.  If buf is NULL, dynamically allocated memory will be
+ * returned and must be free'd via bu_free().
  */
 BU_EXPORT extern char *bu_getcwd(char *buf, size_t size);
+
+/**
+ * Routine for obtaining the initial working directory during
+ * application startup.
+ *
+ * Result is written into the provided buf, up to size chars, and
+ * returned.  If buf is NULL, dynamically allocated memory will be
+ * returned and must be free'd via bu_free().
+ */
+BU_EXPORT extern char *bu_getiwd(char *buf, size_t size);
 
 /**
  * Get the name of the running application.  application codes should

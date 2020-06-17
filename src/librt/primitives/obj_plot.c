@@ -1,7 +1,7 @@
 /*                    O B J _ P L O T . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2019 United States Government as represented by
+ * Copyright (c) 2010-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@
 
 
 int
-rt_obj_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_obj_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     int id;
     const struct rt_functab *ft;
@@ -36,7 +36,7 @@ rt_obj_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
-    if (ttol) RT_CK_TESS_TOL(ttol);
+    if (ttol) BG_CK_TESS_TOL(ttol);
     if (tol) BN_CK_TOL(tol);
 
     id = ip->idb_minor_type;

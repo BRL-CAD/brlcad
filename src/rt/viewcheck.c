@@ -1,7 +1,7 @@
 /*                     V I E W C H E C K . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2019 United States Government as represented by
+ * Copyright (c) 1988-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -389,8 +389,8 @@ application_init (void)
     option("dummy", "-? or -h", "Display help", 1);
     option("", "-? or -h", "Display help", 1);
 
-    option(NULL, "-C", "Disabled, not implemented", 2);
-    option(NULL, "-W", "Disabled, non implemented", 2);
+    option(NULL, "-C", "Disabled, not implemented", -2);
+    option(NULL, "-W", "Disabled, non implemented", -2);
 }
 
 

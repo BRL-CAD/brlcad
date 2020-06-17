@@ -1,7 +1,7 @@
 /*                    R O O T S _ E X A M P L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@
 #include "common.h"
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bn.h"
 #include "raytrace.h"
 
@@ -37,6 +38,8 @@ main(int argc, char *argv[])
     bn_poly_t equation; /* holds our polynomial equation */
     bn_complex_t roots[BN_MAX_POLY_DEGREE]; /* stash up to four roots */
     int num_roots;
+
+    bu_setprogname(argv[0]);
 
     if (argc > 1)
 	bu_exit(1, "%s: unexpected argument(s)\n", argv[0]);

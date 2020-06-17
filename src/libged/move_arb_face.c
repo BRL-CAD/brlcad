@@ -1,7 +1,7 @@
 /*                         M O V E _ A R B _ F A C E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2019 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -134,7 +134,7 @@ ged_move_arb_face(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Object not an ARB");
 	rt_db_free_internal(&intern);
 
-	return TCL_OK;
+	return GED_OK;
     }
 
     if (sscanf(argv[2], "%d", &face) != 1) {

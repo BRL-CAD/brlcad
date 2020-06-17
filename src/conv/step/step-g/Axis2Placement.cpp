@@ -1,7 +1,7 @@
 /*                 Axis2Placement.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2019 United States Government as represented by
+ * Copyright (c) 1994-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -48,7 +48,7 @@ Axis2Placement::Axis2Placement()
     step = NULL;
     id = 0;
     value = NULL;
-    type = Axis2Placement::UNKNOWN;
+    type = Axis2Placement::AXIS2_PLACEMENT_UNKNOWN;
 }
 
 Axis2Placement::Axis2Placement(STEPWrapper *sw, int step_id)
@@ -56,7 +56,7 @@ Axis2Placement::Axis2Placement(STEPWrapper *sw, int step_id)
     step = sw;
     id = step_id;
     value = NULL;
-    type = Axis2Placement::UNKNOWN;
+    type = Axis2Placement::AXIS2_PLACEMENT_UNKNOWN;
 }
 
 Axis2Placement::~Axis2Placement()
@@ -104,7 +104,7 @@ Axis2Placement::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    type = Axis2Placement::AXIS2_PLACEMENT_3D;
 	    value = dynamic_cast<Placement *>(Factory::CreateObject(sw, (SDAI_Application_instance *)a3));
 	} else {
-	    type = Axis2Placement::UNKNOWN;
+	    type = Axis2Placement::AXIS2_PLACEMENT_UNKNOWN;
 	}
     }
 

@@ -545,12 +545,16 @@
 	  </para>
 	  <para></para>
 	  <para>
-
 	    As a convenience, the <option>-type</option> option will also recognize
 	    the pattern <emphasis remap="B">shape</emphasis>, which will match any
 	    object that is <emphasis remap="I">not</emphasis> a combination, region,
 	    annotation, constraint, grip or joint.
-
+	  </para>
+	  <para>
+	    In order to identify shapes defined as implicit solids using the "plate mode"
+	    methodology, the pattern <emphasis remap="B">plate</emphasis> will match any
+	    object whose internal definition indiciates it is of that type.  Currently
+	    such objects are possible with "bot" and "brep" objects.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -986,7 +990,7 @@
   <refsection xml:id="copyright"><title>COPYRIGHT</title>
 
     <para>
-      This software is Copyright (c) 2008-2019 United States Government as
+      This software is Copyright (c) 2008-2020 United States Government as
       represented by the U.S. Army Research Laboratory.
       Portions Copyright 1990, 1993, 1994 The Regents of the University of California,
       per copyright and license information from OpenBSD and NetBSD.  For more details

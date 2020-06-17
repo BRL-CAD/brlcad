@@ -1,7 +1,7 @@
 /*               P U L L B A C K C U R V E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2009-2019 United States Government as represented by
+ * Copyright (c) 2009-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,8 +36,10 @@
 #include <map>
 #include <string>
 
-#include "brep.h"
 #include "bu/parallel.h"
+#include "brep/defines.h"
+#include "brep/pullback.h"
+#include "brep/ray.h"
 
 /* interface header */
 #include "PullbackCurve.h"
@@ -256,7 +258,8 @@ surface_GetBoundingBox(
     int p = bu_parallel_id();
 
     if (!locals_initialized[p]) {
-	bu_semaphore_acquire(BU_SEM_MALLOC);
+	static int sem_pullback_init = bu_semaphore_register("SEM_PULLBACK_INIT");
+	bu_semaphore_acquire(sem_pullback_init);
 	rev_surface[p] = ON_RevSurface::New();
 	nurbs_surface[p] = ON_NurbsSurface::New();
 	extr_surface[p] = new ON_Extrusion();
@@ -264,7 +267,7 @@ surface_GetBoundingBox(
 	sum_surface[p] = ON_SumSurface::New();
 	proxy_surface[p] = new ON_SurfaceProxy();
 	locals_initialized[p] = true;
-	bu_semaphore_release(BU_SEM_MALLOC);
+	bu_semaphore_release(sem_pullback_init);
     }
 
     ON_Interval domSplits[2][2] = { { ON_Interval::EmptyInterval, ON_Interval::EmptyInterval }, { ON_Interval::EmptyInterval, ON_Interval::EmptyInterval }};
@@ -468,13 +471,31 @@ surface_GetOptimalNormalVSplit(const ON_Surface *surf, const ON_Interval &u_inte
 
 
 //forward for cyclic
-double surface_GetClosestPoint3dFirstOrderByRange(const ON_Surface *surf, const ON_3dPoint& p, const ON_Interval& u_range,
-						  const ON_Interval& v_range, double current_closest_dist, ON_2dPoint& p2d, ON_3dPoint& p3d, double same_point_tol, double within_distance_tol, int level);
+double
+surface_GetClosestPoint3dFirstOrderByRange(const ON_Surface *surf,
+					   const ON_3dPoint& p,
+					   const ON_Interval& u_range,
+					   const ON_Interval& v_range,
+					   double current_closest_dist,
+					   ON_2dPoint& p2d,
+					   ON_3dPoint& p3d,
+					   double same_point_tol,
+					   double within_distance_tol,
+					   int level);
 
-double surface_GetClosestPoint3dFirstOrderSubdivision(const ON_Surface *surf,
-						      const ON_3dPoint& p, const ON_Interval &u_interval, double u, const ON_Interval &v_interval, double v,
-						      double current_closest_dist, ON_2dPoint& p2d, ON_3dPoint& p3d,
-						      double same_point_tol, double within_distance_tol, int level)
+double
+surface_GetClosestPoint3dFirstOrderSubdivision(const ON_Surface *surf,
+					       const ON_3dPoint& p,
+					       const ON_Interval &u_interval,
+					       double u,
+					       const ON_Interval &v_interval,
+					       double v,
+					       double current_closest_dist,
+					       ON_2dPoint& p2d,
+					       ON_3dPoint& p3d,
+					       double same_point_tol,
+					       double within_distance_tol,
+					       int level)
 {
     double min_distance = 0;
     double max_distance = 0;

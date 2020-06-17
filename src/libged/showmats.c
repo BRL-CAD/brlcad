@@ -1,7 +1,7 @@
 /*                         S H O W M A T S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2019 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -93,7 +93,7 @@ Run_showmats(struct ged *gedp, const char *path, int aflag)
 	struct rt_comb_internal *comb;
 
 	if ((dp = db_lookup(gedp->ged_wdbp->dbip, parent, LOOKUP_NOISY)) == RT_DIR_NULL)
-	    return TCL_ERROR;
+	    return GED_ERROR;
 
 	if (!aflag)
 	    bu_vls_printf(gedp->ged_result_str, "%s\n", parent);

@@ -1,7 +1,7 @@
 /*                         B B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2019 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -271,9 +271,9 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
 
 	/* Print dim info */
 	if (print_dim == 1) {
-	    xlen = DIST_PT_PT(arb->pt[0], arb->pt[4])*gedp->ged_wdbp->dbip->dbi_base2local;
-	    ylen = DIST_PT_PT(arb->pt[0], arb->pt[1])*gedp->ged_wdbp->dbip->dbi_base2local;
-	    zlen = DIST_PT_PT(arb->pt[0], arb->pt[3])*gedp->ged_wdbp->dbip->dbi_base2local;
+	    xlen = DIST_PNT_PNT(arb->pt[0], arb->pt[4])*gedp->ged_wdbp->dbip->dbi_base2local;
+	    ylen = DIST_PNT_PNT(arb->pt[0], arb->pt[1])*gedp->ged_wdbp->dbip->dbi_base2local;
+	    zlen = DIST_PNT_PNT(arb->pt[0], arb->pt[3])*gedp->ged_wdbp->dbip->dbi_base2local;
 	    bu_vls_printf(gedp->ged_result_str, "Length: %g %s\nWidth: %g %s\nHeight: %g %s\n", xlen, str, ylen, str, zlen, str);
 	}
 

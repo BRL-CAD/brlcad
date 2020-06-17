@@ -1,7 +1,7 @@
 /*                      S U B M O D E L . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2019 United States Government as represented by
+ * Copyright (c) 2000-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -109,9 +109,6 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 	if ((sub_dbip = db_open(bu_vls_addr(&sip->file), DB_OPEN_READONLY)) == DBI_NULL)
 	    return -1;
 
-	/* Save the overhead of stat() calls on subsequent opens */
-	if (sub_dbip->dbi_mf) sub_dbip->dbi_mf->dont_restat = 1;
-
 	if (!db_is_directory_non_empty(sub_dbip)) {
 	    /* This is first open of db, build directory */
 	    if (db_dirbuild(sub_dbip) < 0) {
@@ -139,7 +136,7 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 
 	    bu_semaphore_release(RT_SEM_MODEL);
 
-	    if (RT_G_DEBUG & (DEBUG_DB|DEBUG_SOLIDS)) {
+	    if (RT_G_DEBUG & (RT_DEBUG_DB|RT_DEBUG_SOLIDS)) {
 		bu_log("rt_submodel_prep(%s): Re-used already prepped database %s, rtip=%p\n",
 		       stp->st_dp->d_namep,
 		       sub_dbip->dbi_filename,
@@ -157,7 +154,7 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 
     bu_semaphore_release(RT_SEM_MODEL);
 
-    if (RT_G_DEBUG & (DEBUG_DB|DEBUG_SOLIDS)) {
+    if (RT_G_DEBUG & (RT_DEBUG_DB|RT_DEBUG_SOLIDS)) {
 	bu_log("rt_submodel_prep(%s): Opened database %s\n",
 	       stp->st_dp->d_namep, sub_dbip->dbi_filename);
     }
@@ -233,7 +230,7 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     VSCALE(radvec, diam, 0.5);
     stp->st_aradius = stp->st_bradius = MAGNITUDE(radvec);
 
-    if (RT_G_DEBUG & (DEBUG_DB|DEBUG_SOLIDS)) {
+    if (RT_G_DEBUG & (RT_DEBUG_DB|RT_DEBUG_SOLIDS)) {
 	bu_log("rt_submodel_prep(%s): finished loading database %s\n",
 	       stp->st_dp->d_namep, sub_dbip->dbi_filename);
     }
@@ -624,7 +621,7 @@ rt_submodel_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path 
     struct goodies *gp;
     int ret;
 
-    RT_CK_TESS_TOL(tsp->ts_ttol);
+    BG_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
     RT_CK_DB_INTERNAL(ip);
     RT_CK_RESOURCE(tsp->ts_resp);
@@ -633,7 +630,7 @@ rt_submodel_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path 
     if (gp)
 	RT_CK_DBI(gp->dbip);
 
-    if (RT_G_DEBUG&DEBUG_TREEWALK) {
+    if (RT_G_DEBUG&RT_DEBUG_TREEWALK) {
 	char *sofar = db_path_to_string(pathp);
 
 	bu_log("rt_submodel_wireframe_leaf(%s) path=%s\n",
@@ -670,7 +667,7 @@ rt_submodel_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path 
  * which by definition, is all one color.
  */
 int
-rt_submodel_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *UNUSED(info))
+rt_submodel_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *UNUSED(info))
 {
     struct rt_submodel_internal *sip;
     struct db_tree_state state;
@@ -738,7 +735,7 @@ rt_submodel_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_submodel_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+rt_submodel_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_submodel_internal *sip;
 

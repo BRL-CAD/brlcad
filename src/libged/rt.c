@@ -1,7 +1,7 @@
 /*                         R T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2019 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,8 +33,6 @@
 #endif
 #include "bresource.h"
 
-#include "tcl.h"
-
 #include "bu/app.h"
 #include "bu/process.h"
 
@@ -42,7 +40,7 @@
 
 
 struct _ged_rt_client_data {
-    struct ged_run_rt *rrtp;
+    struct ged_subprocess *rrtp;
     struct ged *gedp;
 };
 
@@ -153,10 +151,10 @@ _ged_rt_set_eye_model(struct ged *gedp,
 
 
 void
-_ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
+_ged_rt_output_handler(void *clientData, int UNUSED(mask))
 {
     struct _ged_rt_client_data *drcdp = (struct _ged_rt_client_data *)clientData;
-    struct ged_run_rt *run_rtp;
+    struct ged_subprocess *run_rtp;
     int count = 0;
     int retcode = 0;
     int read_failed = 0;
@@ -164,7 +162,7 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
 
     if (drcdp == (struct _ged_rt_client_data *)NULL ||
 	drcdp->gedp == (struct ged *)NULL ||
-	drcdp->rrtp == (struct ged_run_rt *)NULL)
+	drcdp->rrtp == (struct ged_subprocess *)NULL)
 	return;
 
     run_rtp = drcdp->rrtp;
@@ -177,12 +175,12 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
     if (read_failed) {
 	int aborted;
 
-	/* Done watching for output, undo Tcl hooks.  TODO - need to  push the
-	 * Tcl specific aspects of this up stack... */
-	_ged_delete_io_handler(drcdp->gedp->ged_interp, run_rtp->chan,
-		run_rtp->p, BU_PROCESS_STDERR, (void *)drcdp,
-		_ged_rt_output_handler);
-
+	/* Done watching for output, undo subprocess I/O hooks. */
+	if (drcdp->gedp->ged_delete_io_handler) {
+	    (*drcdp->gedp->ged_delete_io_handler)(drcdp->gedp->ged_interp, run_rtp->chan,
+		    run_rtp->p, BU_PROCESS_STDERR, (void *)drcdp,
+		    _ged_rt_output_handler);
+	}
 	/* Either EOF has been sent or there was a read error.
 	 * there is no need to block indefinitely */
 	retcode = bu_process_wait(&aborted, run_rtp->p, 120);
@@ -199,7 +197,7 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
 
 	/* free run_rtp */
 	BU_LIST_DEQUEUE(&run_rtp->l);
-	BU_PUT(run_rtp, struct ged_run_rt);
+	BU_PUT(run_rtp, struct ged_subprocess);
 	BU_PUT(drcdp, struct _ged_rt_client_data);
 
 	return;
@@ -216,25 +214,34 @@ _ged_rt_output_handler(ClientData clientData, int UNUSED(mask))
 }
 
 int
-_ged_run_rt(struct ged *gedp, int argc, const char **argv)
+_ged_run_rt(struct ged *gedp, int cmd_len, const char **gd_rt_cmd, int argc, const char **argv)
 {
     FILE *fp_in;
     vect_t eye_model;
-    struct ged_run_rt *run_rtp;
+    struct ged_subprocess *run_rtp;
     struct _ged_rt_client_data *drcdp;
     struct bu_process *p = NULL;
 
-    bu_process_exec(&p, gedp->ged_gdp->gd_rt_cmd[0], gedp->ged_gdp->gd_rt_cmd_len, (const char **)gedp->ged_gdp->gd_rt_cmd, 0, 0);
+    bu_process_exec(&p, gd_rt_cmd[0], cmd_len, gd_rt_cmd, 0, 0);
     fp_in = bu_process_open(p, BU_PROCESS_STDIN);
+
+    if (bu_process_pid(p) == -1) {
+	bu_vls_printf(gedp->ged_result_str, "\nunable to successfully launch subprocess: ");
+	for (int i = 0; i < cmd_len; i++) {
+	    bu_vls_printf(gedp->ged_result_str, "%s ", gd_rt_cmd[i]);
+	}
+	bu_vls_printf(gedp->ged_result_str, "\n");
+	return GED_ERROR;
+    }
 
     _ged_rt_set_eye_model(gedp, eye_model);
     _ged_rt_write(gedp, fp_in, eye_model, argc, argv);
 
     bu_process_close(p, BU_PROCESS_STDIN);
 
-    BU_GET(run_rtp, struct ged_run_rt);
+    BU_GET(run_rtp, struct ged_subprocess);
     BU_LIST_INIT(&run_rtp->l);
-    BU_LIST_APPEND(&gedp->ged_gdp->gd_headRunRt.l, &run_rtp->l);
+    BU_LIST_APPEND(&gedp->gd_headSubprocess.l, &run_rtp->l);
 
     run_rtp->p = p;
     run_rtp->aborted = 0;
@@ -243,50 +250,11 @@ _ged_run_rt(struct ged *gedp, int argc, const char **argv)
     drcdp->gedp = gedp;
     drcdp->rrtp = run_rtp;
 
-    /* Set up Tcl hooks so the parent Tcl process knows to watch for output.
-     * TODO - need to push the Tcl specific aspects of this up stack... */
-    _ged_create_io_handler(&(run_rtp->chan), p, BU_PROCESS_STDERR, TCL_READABLE, (void *)drcdp, _ged_rt_output_handler);
-    return 0;
-}
-
-size_t
-ged_count_tops(struct ged *gedp)
-{
-    struct display_list *gdlp = NULL;
-    size_t visibleCount = 0;
-    for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
-	visibleCount++;
+    /* If we know how, set up hooks so the parent process knows to watch for output. */
+    if (gedp->ged_create_io_handler) {
+	(*gedp->ged_create_io_handler)(&(run_rtp->chan), p, BU_PROCESS_STDERR, gedp->io_mode, (void *)drcdp, _ged_rt_output_handler);
     }
-    return visibleCount;
-}
-
-
-/**
- * Build a command line vector of the tops of all objects in view.
- */
-int
-ged_build_tops(struct ged *gedp, char **start, char **end)
-{
-    struct display_list *gdlp;
-    char **vp = start;
-
-    for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
-	if (((struct directory *)gdlp->dl_dp)->d_addr == RT_DIR_PHONY_ADDR)
-	    continue;
-
-	if ((vp != NULL) && (vp < end))
-	    *vp++ = bu_strdup(bu_vls_addr(&gdlp->dl_path));
-	else {
-	    bu_vls_printf(gedp->ged_result_str, "libged: ran out of command vector space at %s\n", ((struct directory *)gdlp->dl_dp)->d_namep);
-	    break;
-	}
-    }
-
-    if ((vp != NULL) && (vp < end)) {
-	*vp = (char *) 0;
-    }
-
-    return vp-start;
+    return GED_OK;
 }
 
 
@@ -298,6 +266,9 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
     int units_supplied = 0;
     char pstring[32];
     int args;
+    char **gd_rt_cmd = NULL;
+    int gd_rt_cmd_len = 0;
+    int ret = GED_OK;
 
     const char *bin;
     char rt[256] = {0};
@@ -310,15 +281,15 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    args = argc + 7 + 2 + ged_count_tops(gedp);
-    gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
+    args = argc + 7 + 2 + ged_who_argc(gedp);
+    gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
     bin = bu_brlcad_root("bin", 1);
     if (bin) {
 	snprintf(rt, 256, "%s/%s", bin, argv[0]);
     }
 
-    vp = &gedp->ged_gdp->gd_rt_cmd[0];
+    vp = &gd_rt_cmd[0];
     *vp++ = rt;
     *vp++ = "-M";
 
@@ -346,12 +317,13 @@ ged_rt(struct ged *gedp, int argc, const char *argv[])
     }
 
     *vp++ = gedp->ged_wdbp->dbip->dbi_filename;
-    gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
-    (void)_ged_run_rt(gedp, (argc - i), &(argv[i]));
-    bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
-    gedp->ged_gdp->gd_rt_cmd = NULL;
+    gd_rt_cmd_len = vp - gd_rt_cmd;
 
-    return GED_OK;
+    ret = _ged_run_rt(gedp, gd_rt_cmd_len, (const char **)gd_rt_cmd, (argc - i), &(argv[i]));
+
+    bu_free(gd_rt_cmd, "free gd_rt_cmd");
+
+    return ret;
 }
 
 

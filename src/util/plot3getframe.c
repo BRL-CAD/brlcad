@@ -1,7 +1,7 @@
 /*                 P L O T 3 G E T F R A M E . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2019 United States Government as represented by
+ * Copyright (c) 1988-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/str.h"
 #include "bu/log.h"
 
@@ -120,6 +121,8 @@ main(int argc, char **argv)
     int desired_frame = 0;
     int current_frame = 0;
     size_t ret;
+
+    bu_setprogname(argv[0]);
 
     while (argc > 1) {
 	if (BU_STR_EQUAL(argv[1], "-v")) {

@@ -1,7 +1,5 @@
-#ADD_SUBDIRECTORY(tzdata)
-
-MACRO(TCL_SCRIPTS_BUILD files destination)
-  FOREACH(file ${${files}})
+function(TCL_SCRIPTS_BUILD files destination)
+  foreach(file ${${files}})
     get_filename_component(filename ${file} NAME)
     if(NOT CMAKE_CONFIGURATION_TYPES)
       configure_file(${file} ${CMAKE_BINARY_DIR}/${destination}/${filename} COPYONLY)
@@ -11,10 +9,10 @@ MACRO(TCL_SCRIPTS_BUILD files destination)
 	configure_file(${file} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${destination}/${filename} COPYONLY)
       endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
     endif(NOT CMAKE_CONFIGURATION_TYPES)
-  ENDFOREACH(file ${${files}})
-ENDMACRO(TCL_SCRIPTS_BUILD)
+  endforeach(file ${${files}})
+endfunction(TCL_SCRIPTS_BUILD)
 
-SET(tcl_library_toplevel
+set(tcl_library_toplevel
   auto.tcl
   clock.tcl
   history.tcl
@@ -26,7 +24,7 @@ SET(tcl_library_toplevel
   word.tcl
   tclIndex
   )
-INSTALL(FILES ${tcl_library_toplevel} DESTINATION lib/tcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR})
+install(FILES ${tcl_library_toplevel} DESTINATION lib/tcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR})
 TCL_SCRIPTS_BUILD(tcl_library_toplevel lib/tcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR})
 
 SET(tcl_library_http1
@@ -43,36 +41,42 @@ SET(tcl_library_opt04
 INSTALL(FILES ${tcl_library_opt04} DESTINATION lib/tcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}/opt0.4)
 TCL_SCRIPTS_BUILD(tcl_library_opt04 lib/tcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}/opt0.4)
 
-INSTALL(FILES http/http.tcl DESTINATION lib/tcl8/8.4 RENAME http-2.7.13.tm)
-INSTALL(FILES platform/platform.tcl DESTINATION lib/tcl8/8.4 RENAME platform-1.0.14.tm)
-INSTALL(FILES platform/shell.tcl DESTINATION lib/tcl8/8.4/platform RENAME shell-1.1.4.tm)
-INSTALL(FILES msgcat/msgcat.tcl DESTINATION lib/tcl8/8.5 RENAME msgcat-1.5.2.tm)
-INSTALL(FILES tcltest/tcltest.tcl DESTINATION lib/tcl8/8.5 RENAME tcltest-2.3.8.tm)
+set(platform_version "1.0.14")
+set(shell_version "1.1.4")
+set(msgcat_version "1.6.1")
+set(tcltest_version "2.5.1")
+set(http_version "2.9.1")
+
+install(FILES platform/platform.tcl DESTINATION lib/tcl8/8.4 RENAME platform-${platform_version}.tm)
+install(FILES platform/shell.tcl DESTINATION lib/tcl8/8.4/platform RENAME shell-${shell_version}.tm)
+install(FILES msgcat/msgcat.tcl DESTINATION lib/tcl8/8.5 RENAME msgcat-${msgcat_version}.tm)
+install(FILES tcltest/tcltest.tcl DESTINATION lib/tcl8/8.5 RENAME tcltest-${tcltest_version}.tm)
+install(FILES http/http.tcl DESTINATION lib/tcl8/8.6 RENAME http-${http_version}.tm)
 
 if(CMAKE_CONFIGURATION_TYPES)
-   foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-     string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/http/http.tcl ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/lib/tcl8/8.4/http-2.7.13.tm COPYONLY)
-     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/platform/platform.tcl ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/lib/tcl8/8.4/platform-1.0.14.tm COPYONLY)
-     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/platform/shell.tcl ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/lib/tcl8/8.4/platform/shell-1.1.4.tm COPYONLY)
-     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/msgcat/msgcat.tcl ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/lib/tcl8/8.5/msgcat-1.5.2.tm COPYONLY)
-     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tcltest/tcltest.tcl ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/lib/tcl8/8.5/tcltest-2.3.8.tm COPYONLY)
-   endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+  foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+    string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/platform/platform.tcl ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/lib/tcl8/8.4/platform-${platform_version}.tm COPYONLY)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/platform/shell.tcl ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/lib/tcl8/8.4/platform/shell-${shell_version}.tm COPYONLY)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/msgcat/msgcat.tcl ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/lib/tcl8/8.5/msgcat-${msgcat_version}.tm COPYONLY)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tcltest/tcltest.tcl ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/lib/tcl8/8.5/tcltest-${tcltest_version}.tm COPYONLY)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/http/http.tcl ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/lib/tcl8/8.6/http-${http_Version}.tm COPYONLY)
+  endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
 else(CMAKE_CONFIGURATION_TYPES)
-   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/http/http.tcl ${CMAKE_BINARY_DIR}/lib/tcl8/8.4/http-2.7.13.tm COPYONLY)
-   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/platform/platform.tcl ${CMAKE_BINARY_DIR}/lib/tcl8/8.4/platform-1.0.14.tm COPYONLY)
-   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/platform/shell.tcl ${CMAKE_BINARY_DIR}/lib/tcl8/8.4/platform/shell-1.1.4.tm COPYONLY)
-   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/msgcat/msgcat.tcl ${CMAKE_BINARY_DIR}/lib/tcl8/8.5/msgcat-1.5.2.tm COPYONLY)
-   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tcltest/tcltest.tcl ${CMAKE_BINARY_DIR}/lib/tcl8/8.5/tcltest-2.3.8.tm COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/platform/platform.tcl ${CMAKE_BINARY_DIR}/lib/tcl8/8.4/platform-${platform_version}.tm COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/platform/shell.tcl ${CMAKE_BINARY_DIR}/lib/tcl8/8.4/platform/shell-${shell_version}.tm COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/msgcat/msgcat.tcl ${CMAKE_BINARY_DIR}/lib/tcl8/8.5/msgcat-${msgcat_version}.tm COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/tcltest/tcltest.tcl ${CMAKE_BINARY_DIR}/lib/tcl8/8.5/tcltest-${tcltest_version}.tm COPYONLY)
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/http/http.tcl ${CMAKE_BINARY_DIR}/lib/tcl8/8.6/http-${http_version}.tm COPYONLY)
 endif(CMAKE_CONFIGURATION_TYPES)
-	
-IF(NOT WIN32)
-  INSTALL(FILES ../unix/tclAppInit.c DESTINATION lib/tcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR})
-ELSE(NOT WIN32)
-  INSTALL(FILES ../win/tclAppInit.c DESTINATION lib/tcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR})
-ENDIF(NOT WIN32)
 
-SET(tcl_msgs
+if (WIN32)
+  install(FILES ../win/tclAppInit.c DESTINATION lib/tcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR})
+else (WIN32)
+  install(FILES ../unix/tclAppInit.c DESTINATION lib/tcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR})
+endif (WIN32)
+
+set(tcl_msgs
   msgs/af.msg
   msgs/af_za.msg
   msgs/ar.msg
@@ -201,11 +205,10 @@ SET(tcl_msgs
   msgs/zh_sg.msg
   msgs/zh_tw.msg
   )
-
-INSTALL(FILES ${tcl_msgs} DESTINATION lib/tcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}/msgs)
+install(FILES ${tcl_msgs} DESTINATION lib/tcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}/msgs)
 TCL_SCRIPTS_BUILD(tcl_msgs lib/tcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}/msgs)
 
-SET(tcl_encoding
+set(tcl_encoding
   encoding/ascii.enc
   encoding/big5.enc
   encoding/cp1250.enc
@@ -285,5 +288,13 @@ SET(tcl_encoding
   encoding/symbol.enc
   encoding/tis-620.enc
   )
-INSTALL(FILES ${tcl_encoding} DESTINATION lib/tcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}/encoding)
+install(FILES ${tcl_encoding} DESTINATION lib/tcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}/encoding)
 TCL_SCRIPTS_BUILD(tcl_encoding lib/tcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}/encoding)
+
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

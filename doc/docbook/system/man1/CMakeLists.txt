@@ -1,32 +1,21 @@
 set(man1_EN
-  anim_script.xml
-  anim_sort.xml
-  anim_time.xml
-  anim_track.xml
-  anim_turn.xml
   ap-pix.xml
   alias-pix.xml
   asc-nmg.xml
   asc-plot3.xml
   asc2dsp.xml
   asc2g.xml
-  azel.xml
-  bary.xml
   benchmark.xml
   brlman.xml
   bot_dump.xml
-  bot_shell-vtk.xml
   brep_simple.xml
   brlcad-config.xml
   brlcad.xml
-  buffer.xml
   burst.xml
   bw-fb.xml
-  bw-imp.xml
   bw-pix.xml
   bw-png.xml
   bw-ps.xml
-  bw-rle.xml
   bwcrop.xml
   bwdiff.xml
   bwfilter.xml
@@ -42,15 +31,10 @@ set(man1_EN
   cad_boundp.xml
   cad_parea.xml
   canonize.xml
-  cell-fb.xml
-  chan_mult.xml
-  chan_permute.xml
-  cmap-fb.xml
   coil.xml
   comgeom-g.xml
   conv-vg2g.xml
   cv.xml
-  cy-g.xml
   db.xml
   dbclean.xml
   dbcp.xml
@@ -59,19 +43,14 @@ set(man1_EN
   dpix-pix.xml
   dxf-g.xml
   enf-g.xml
-  euclid-g.xml
   fast4-g.xml
   fb-bw.xml
-  fb-cmap.xml
   fb-fb.xml
   fb-pix.xml
   fb-png.xml
-  fb-rle.xml
-  fbanim.xml
   fbcbars.xml
   fbclear.xml
   fbcmap.xml
-  fbcmrot.xml
   fbcolor.xml
   fbed.xml
   fbfade.xml
@@ -83,26 +62,21 @@ set(man1_EN
   fblabel.xml
   fbline.xml
   fbpoint.xml
-  fbscanplot.xml
   fbserv.xml
   fbstretch.xml
   fbzoom.xml
-  firpass.xml
   g-acad.xml
   g-dot.xml
   g-dxf.xml
   g-egg.xml
-  g-euclid.xml
   g-iges.xml
   g-nff.xml
-  g-nmg.xml
   g-obj.xml
   g-ply.xml
   g-raw.xml
   g-shell-rect.xml
   g-step.xml
   g-stl.xml
-  g-tankill.xml
   g-var.xml
   g-voxel.xml
   g-vrml.xml
@@ -117,24 +91,19 @@ set(man1_EN
   gqa.xml
   halftone.xml
   handle.xml
-  hex.xml
   icv.xml
   iges-g.xml
   imgdims.xml
   ir-X.xml
   irdisp.xml
-  lgt.xml
   loop.xml
   mac-pix.xml
   mged.xml
   morphedit.xml
   nastran-g.xml
   nirt.xml
-  nmg-bot.xml
-  nmg-rib.xml
   obj-g.xml
   patch-g.xml
-  pictx.xml
   picket_fence.xml
   pix-alias.xml
   pix-bw.xml
@@ -142,7 +111,6 @@ set(man1_EN
   pix-png.xml
   pix-ppm.xml
   pix-ps.xml
-  pix-rle.xml
   pix-sun.xml
   pix2asc.xml
   pixautosize.xml
@@ -155,7 +123,6 @@ set(man1_EN
   pixcmp.xml
   pixcolors.xml
   pixcrop.xml
-  pixcut.xml
   pixdiff.xml
   pixfade.xml
   pixfilter.xml
@@ -176,15 +143,11 @@ set(man1_EN
   pixsubst.xml
   pixtile.xml
   pixuntile.xml
-  plot3-X.xml
   plot3-asc.xml
   plot3-fb.xml
-  plot3-hpgl.xml
   plot3-plot3.xml
   plot3-ps.xml
-  plot3-tek.xml
   plot3color.xml
-  plot3debug.xml
   plot3getframe.xml
   plot3line2.xml
   plot3rot.xml
@@ -192,51 +155,32 @@ set(man1_EN
   png-bw.xml
   png-fb.xml
   png-pix.xml
-  png_info.xml
-  polar-fb.xml
-  poly-bot.xml
   pp-fb.xml
   proe-g.xml
   random.xml
-  remapid.xml
   remrt.xml
   reshoot.xml
-  rle-fb.xml
-  rle-pix.xml
   rpatch.xml
   rt.xml
-  rt_bot_faces.xml
   rtarea.xml
   rtcheck.xml
   rtedge.xml
   rtexample.xml
   rtg3.xml
   rthide.xml
-  rtpp.xml
-  rtrange.xml
-  rtray.xml
-  rtregis.xml
   rtscale.xml
   rtshot.xml
-  rtwalk.xml
   rtweight.xml
   rtwizard.xml
   rtxray.xml
-  scriptsort.xml
-  secpass.xml
-  shapefact.xml
   showshot.xml
-  showtherm.xml
   stl-g.xml
   sun-pix.xml
-  tabinterp.xml
-  tabsub.xml
   tankill-g.xml
   terrain.xml
   tire.xml
   ug-g.xml
   vdeck.xml
-  viewpoint-g.xml
   wavelet.xml
   window.xml
   window_frame.xml
@@ -249,11 +193,9 @@ set(man1_EN
 # handling, since the CMake logic has no way to know about the
 # extra outputs without being told.
 set_source_files_properties(pix2asc.xml PROPERTIES EXTRA_MAN1_OUTPUTS "asc2pix.1")
-set_source_files_properties(chan_mult.xml PROPERTIES EXTRA_MAN1_OUTPUTS "chan_add.1")
 
 ADD_DOCBOOK("HTML;PHP;MAN1;PDF" man1_EN man1 "")
 
-CMAKEFILES(pictx.xml)
 CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:

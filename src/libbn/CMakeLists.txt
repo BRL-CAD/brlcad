@@ -4,7 +4,12 @@ set(BN_INCLUDE_DIRS
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   )
-BRLCAD_LIB_INCLUDE_DIRS(bn BN_INCLUDE_DIRS "")
+
+set(BN_LOCAL_INCLUDE_DIRS
+  ${BRLCAD_SOURCE_DIR}/src/other/Eigen
+  )
+
+BRLCAD_LIB_INCLUDE_DIRS(bn BN_INCLUDE_DIRS BN_LOCAL_INCLUDE_DIRS)
 
 set(LIBBN_SOURCES
   anim.c
@@ -17,14 +22,14 @@ set(LIBBN_SOURCES
   marker.c
   mat.c
   msr.c
+  mt19937ar.c
   multipoly.c
   noise.c
-  plane.c
+  plane.cpp
   plot3.c
   poly.c
   qmath.c
   rand.c
-  randmt.c
   randsph.c
   scale.c
   sobolseq.c

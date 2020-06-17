@@ -1,7 +1,7 @@
 /*                       W D B _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2019 United States Government as represented by
+ * Copyright (c) 2000-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -5155,7 +5155,7 @@ struct dir_check_stuff {
 void
 wdb_dir_check5(struct db_i *input_dbip,
 	       const struct db5_raw_internal *rip,
-	       off_t UNUSED(addr),
+	       b_off_t UNUSED(addr),
 	       void *ptr)
 {
     char *name;
@@ -5218,7 +5218,7 @@ wdb_dir_check5(struct db_i *input_dbip,
  * Check a name against the global directory.
  */
 int
-wdb_dir_check(struct db_i *input_dbip, const char *name, off_t UNUSED(laddr), size_t UNUSED(len), int UNUSED(flags), void *ptr)
+wdb_dir_check(struct db_i *input_dbip, const char *name, b_off_t UNUSED(laddr), size_t UNUSED(len), int UNUSED(flags), void *ptr)
 {
     struct directory *dupdp;
     struct bu_vls local;
@@ -7178,7 +7178,7 @@ wdb_pull_cmd(struct rt_wdb *wdbp,
     while ((c = bu_getopt(argc, (char * const *)argv, "d")) != -1) {
 	switch (c) {
 	   case 'd':
-		RTG.debug |= DEBUG_TREEWALK;
+		rt_debug |= RT_DEBUG_TREEWALK;
 		break;
 	  case '?':
 	  default:
@@ -7195,7 +7195,7 @@ wdb_pull_cmd(struct rt_wdb *wdbp,
      */
     db_functree(wdbp->dbip, dp, wdb_pull_comb, wdb_pull_leaf, &rt_uniresource, &mat);
 
-    RTG.debug = debug;
+    rt_debug = debug;
 
 
    return TCL_OK;
@@ -7262,13 +7262,13 @@ wdb_push_leaf(struct db_tree_state *tsp,
     struct wdb_push_id *pip;
     struct wdb_push_data *wpdp = (struct wdb_push_data *)client_data;
 
-    RT_CK_TESS_TOL(tsp->ts_ttol);
+    BG_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
     RT_CK_RESOURCE(tsp->ts_resp);
 
     dp = pathp->fp_names[pathp->fp_len-1];
 
-    if (RT_G_DEBUG&DEBUG_TREEWALK) {
+    if (RT_G_DEBUG&RT_DEBUG_TREEWALK) {
 	char *sofar = db_path_to_string(pathp);
 
 	Tcl_AppendResult(wpdp->interp, "wdb_push_leaf(",
@@ -7386,7 +7386,7 @@ wdb_push_cmd(struct rt_wdb *wdbp,
 		if (ncpu<1) ncpu = 1;
 		break;
 	    case 'd':
-		RTG.debug |= DEBUG_TREEWALK;
+		rt_debug |= RT_DEBUG_TREEWALK;
 		break;
 	    case '?':
 	    default:
@@ -7422,7 +7422,7 @@ wdb_push_cmd(struct rt_wdb *wdbp,
 	    pip->back->forw = pip->forw;
 	    bu_free((void *)pip, "Push ident");
 	}
-	RTG.debug = old_debug;
+	rt_debug = old_debug;
 	bu_free((void *)wpdp, "wdb_push_tcl: wpdp");
 	Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp,
 			 "push:\tdb_walk_tree failed or there was a solid moving\n\tin two or more directions",
@@ -7477,7 +7477,7 @@ wdb_push_cmd(struct rt_wdb *wdbp,
 	bu_free((void *)pip, "Push ident");
     }
 
-    RTG.debug = old_debug;
+    rt_debug = old_debug;
     push_error = wpdp->push_error;
     bu_free((void *)wpdp, "wdb_push_tcl: wpdp");
 
@@ -10188,6 +10188,9 @@ wdb_newcmds_tcl(void *clientData,
     struct bu_vls vls;
     int ret = GED_ERROR;
 
+    if (argc-1 <= 0)
+	return TCL_ERROR;
+
     /*XXX Eventually the clientData will be a "struct ged".
      * In the meantime ...
      */
@@ -10345,7 +10348,6 @@ wdb_cmd(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     /* look for the new libged commands before trying one of the old ones */
     GED_INIT(&ged, wdbp);
 
-    bu_hook_list_init(&save_hook_list);
     bu_log_hook_save_all(&save_hook_list);
 
     /* suppress bu_log output because we don't care if the command

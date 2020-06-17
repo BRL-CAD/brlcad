@@ -1,7 +1,7 @@
 /*                         G E T _ O B J _ B O U N D S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2019 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -118,7 +118,7 @@ ged_get_obj_bounds(struct ged *gedp,
 		if (rt_bound_tree(regp->reg_treetop, reg_min, reg_max)) {
 		    bu_vls_printf(gedp->ged_result_str, "rt_bound_tree failed for %s\n", regp->reg_name);
 		    rt_free_rti(rtip);
-		    return TCL_ERROR;
+		    return GED_ERROR;
 		}
 		VMINMAX(rpp_min, rpp_max, reg_min);
 		VMINMAX(rpp_min, rpp_max, reg_max);
@@ -143,7 +143,7 @@ ged_get_obj_bounds(struct ged *gedp,
 	    if (rt_bound_tree(regp->reg_treetop, reg_min, reg_max)) {
 		bu_vls_printf(gedp->ged_result_str, "rt_bound_tree failed for %s\n", regp->reg_name);
 		rt_free_rti(rtip);
-		return TCL_ERROR;
+		return GED_ERROR;
 	    }
 	    VMINMAX(rpp_min, rpp_max, reg_min);
 	    VMINMAX(rpp_min, rpp_max, reg_max);
@@ -154,7 +154,7 @@ ged_get_obj_bounds(struct ged *gedp,
 
     rt_free_rti(rtip);
 
-    return TCL_OK;
+    return GED_OK;
 }
 
 
@@ -239,7 +239,7 @@ _ged_get_obj_bounds2(struct ged *gedp,
     VSETALL(rpp_min, MAX_FASTF);
     VREVERSE(rpp_max, rpp_min);
 
-    if (get_objpath_mat(gedp, argc, argv, gtdp) == TCL_ERROR)
+    if (get_objpath_mat(gedp, argc, argv, gtdp) == GED_ERROR)
 	return GED_ERROR;
 
     dp = gtdp->gtd_obj[gtdp->gtd_objpos-1];

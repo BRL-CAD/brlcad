@@ -1,7 +1,7 @@
 /*                        O B R . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2019 United States Government as represented by
+ * Copyright (c) 2013-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -60,6 +60,8 @@ main(int argc, const char **argv)
 
     int do_plotting = 0;
 
+    bu_setprogname(argv[0]);
+
     if (argc == 2 && BU_STR_EQUAL(argv[1], "-p")) do_plotting = 1;
 
     /* 2D input */
@@ -101,7 +103,7 @@ main(int argc, const char **argv)
 	    bu_log("    expected[%d]: (%f, %f)\n", i, V2ARGS(expected[i]));
 	    bu_log("      actual[%d]: (%f, %f)\n", i, V2ARGS(output_pnts[i]));
 	    if (!NEAR_ZERO(output_pnts[i][0] - expected[i][0], VUNITIZE_TOL) ||
-		    !NEAR_ZERO(output_pnts[i][1] - expected[i][1], VUNITIZE_TOL)) {
+		!NEAR_ZERO(output_pnts[i][1] - expected[i][1], VUNITIZE_TOL)) {
 		retval += 1;
 	    }
 	}
@@ -156,7 +158,7 @@ main(int argc, const char **argv)
 	    bu_log("    expected[%d]: (%f, %f)\n", i, V2ARGS(expected[i]));
 	    bu_log("      actual[%d]: (%f, %f)\n", i, V2ARGS(output_pnts[i]));
 	    if (!NEAR_ZERO(output_pnts[i][0] - expected[i][0], SMALL_FASTF) ||
-		    !NEAR_ZERO(output_pnts[i][1] - expected[i][1], SMALL_FASTF)) {
+		!NEAR_ZERO(output_pnts[i][1] - expected[i][1], SMALL_FASTF)) {
 		retval += 1;
 	    }
 	}

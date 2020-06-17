@@ -1,7 +1,7 @@
 /*                          T I R E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2019 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,6 +32,7 @@
 #  include <unistd.h>
 #endif
 
+#include "bu/app.h"
 #include "wdb.h"
 #include "ged.h"
 
@@ -44,6 +45,8 @@ int main(int ac, char *av[])
     const char *filename = NULL;
     struct ged ged;
     int ret;
+
+    bu_setprogname(av[0]);
 
     filename = DEFAULT_TIRE_FILENAME;
 

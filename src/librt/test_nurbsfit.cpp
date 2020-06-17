@@ -1,7 +1,7 @@
 /*               T E S T _ N U R B S F I T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2019 United States Government as represented by
+ * Copyright (c) 2013-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -59,6 +59,7 @@ main (int argc, char *argv[])
    ON_Brep* brep = ON_Brep::New();
    char *bname;
 
+   bu_setprogname(argv[0]);
 
    if (argc != 3) {
       bu_exit(1, "Usage: %s file.g object", argv[0]);

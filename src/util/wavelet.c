@@ -1,7 +1,7 @@
 /*                       W A V E L E T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2019 United States Government as represented by
+ * Copyright (c) 1998-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -44,7 +44,10 @@
 
 #include <stdlib.h>
 
+#include "bio.h"
+
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
@@ -391,6 +394,7 @@ wlt_reconstruct_2d(void)
 int
 main(int ac, char **av)
 {
+    bu_setprogname(av[0]);
 
     /* parse command flags, and make sure there are arguments
      * left over for processing.

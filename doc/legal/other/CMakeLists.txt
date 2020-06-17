@@ -8,17 +8,14 @@ set(other_licenses
   libnetpbm.txt
   libpng.txt
   libregex.txt
-  libtermlib.txt
   libutahrle.txt
   libvds.txt
   libz.txt
   linenoise.txt
-  lz4.txt
   OpenNURBS.txt
   openscenegraph.txt
   poly2tri.txt
   proj-4.txt
-  rply.txt
   SPSR.txt
   stepcode.txt
   tcl.txt

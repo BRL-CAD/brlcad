@@ -1,7 +1,7 @@
 /*                     P I X B U S T U P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2019 United States Government as represented by
+ * Copyright (c) 1986-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/malloc.h"
 #include "bu/log.h"
 #include "bu/file.h"
@@ -51,10 +52,12 @@ printUsage(void)
 int
 main(int argc, char **argv)
 {
-    off_t image_offset;
+    b_off_t image_offset;
     size_t framenumber;
     char *base_name;
     char name[128];
+
+    bu_setprogname(argv[0]);
 
     if (argc < 3) {
 	printUsage();
@@ -81,7 +84,7 @@ main(int argc, char **argv)
 
     if (argc == 4) {
 	image_offset = atoi(argv[3]);
-	lseek(0, image_offset*scanbytes, 0);
+	bu_lseek(0, image_offset*scanbytes, 0);
     }
     if (argc == 5)
 	framenumber = atoi(argv[4]);

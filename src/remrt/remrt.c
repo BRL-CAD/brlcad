@@ -1,7 +1,7 @@
 /*                         R E M R T . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2019 United States Government as represented by
+ * Copyright (c) 1989-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -49,6 +49,7 @@
 #include "bio.h"
 #include "bresource.h"
 #include "bsocket.h"
+#include "bu/app.h"
 
 /* decls for strict c90 */
 
@@ -617,6 +618,13 @@ addclient(struct pkg_conn *pc)
 
 
 static void
+input_error(const char *str)
+{
+    bu_log("%s", str);
+}
+
+
+static void
 check_input(int waittime)
 {
     static fd_set ifdset;
@@ -652,7 +660,7 @@ check_input(int waittime)
 
     /* Third, accept any pending connections */
     if (FD_ISSET(tcp_listen_fd, &ifdset)) {
-	pc = pkg_getclient(tcp_listen_fd, pkgswitch, (void(*)())bu_log, 1);
+	pc = pkg_getclient(tcp_listen_fd, pkgswitch, input_error, 1);
 	if (pc != PKC_NULL && pc != PKC_ERROR)
 	    addclient(pc);
 	FD_CLR(tcp_listen_fd, &ifdset);
@@ -799,7 +807,7 @@ prep_frame(struct frame *fr)
 	    use_air, jitter,
 	    AmbientIntensity, lightmodel,
 	    eye_backoff,
-	    RT_G_DEBUG, R_DEBUG,
+	    RT_G_DEBUG, OPTICAL_DEBUG,
 	    rt_dist_tol, rt_perp_tol
 	);
     bu_vls_strcat(&fr->fr_cmd, buf);
@@ -838,18 +846,18 @@ read_matrix(FILE *fp, struct frame *fr)
 {
     int i;
     char number[128];
-    char cmd[128];
+    char cmd[146];
 
     CHECK_FRAME(fr);
 
     /* Visible part is from -1 to +1 in view space */
     if (fscanf(fp, "%128s", number) != 1) goto eof;
-    snprintf(cmd, 128, "viewsize %s; eye_pt ", number);
+    snprintf(cmd, sizeof(cmd), "viewsize %s; eye_pt ", number);
     bu_vls_strcat(&(fr->fr_cmd), cmd);
 
     for (i = 0; i < 3; i++) {
 	if (fscanf(fp, "%128s", number) != 1) goto out;
-	snprintf(cmd, 128, "%s ", number);
+	snprintf(cmd, sizeof(cmd), "%s ", number);
 	bu_vls_strcat(&fr->fr_cmd, cmd);
     }
 
@@ -858,7 +866,7 @@ read_matrix(FILE *fp, struct frame *fr)
 
     for (i = 0; i < 16; i++) {
 	if (fscanf(fp, "%128s", number) != 1) goto out;
-	snprintf(cmd, 128, "%s ", number);
+	snprintf(cmd, sizeof(cmd), "%s ", number);
 	bu_vls_strcat(&fr->fr_cmd, cmd);
     }
     bu_vls_strcat(&fr->fr_cmd, "; ");
@@ -3226,7 +3234,7 @@ ph_pixels(struct pkg_conn *pc, char *buf)
     if ((fd = open(fr->fr_filename, 2)) < 0) {
 	/* open failed */
 	perror(fr->fr_filename);
-    } else if (lseek(fd, info.li_startpix*3, 0) < 0) {
+    } else if (bu_lseek(fd, info.li_startpix*3, 0) < 0) {
 	/* seek failed */
 	perror(fr->fr_filename);
 	(void)close(fd);
@@ -3346,7 +3354,7 @@ static void
 host_helper(FILE *fp)
 {
     char line[512];
-    char cmd[128];
+    char cmd[553];
     char host[128];
     char loc_db[128];
     char rem_db[128];
@@ -3372,7 +3380,7 @@ host_helper(FILE *fp)
 	}
 
 	if (cnt == 3) {
-	    snprintf(cmd, 128,
+	    snprintf(cmd, sizeof(cmd),
 		     "cd %s; rtsrv %s %d",
 		     rem_dir, our_hostname, port);
 	    if (rem_debug) {
@@ -3403,7 +3411,7 @@ host_helper(FILE *fp)
 		(void)wait(0);
 	    }
 	} else {
-	    snprintf(cmd, 128,
+	    snprintf(cmd, sizeof(cmd),
 		     "g2asc<%s|%s %s \"cd %s; asc2g>%s; rtsrv %s %d\"",
 		     loc_db,
 		     RSH, host,
@@ -3526,6 +3534,8 @@ main(int argc, char *argv[])
 {
     struct servers *sp;
     int i, done;
+
+    bu_setprogname(argv[0]);
 
     /* Random inits */
     our_hostname = get_our_hostname();

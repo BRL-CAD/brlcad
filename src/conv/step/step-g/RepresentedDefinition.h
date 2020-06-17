@@ -1,7 +1,7 @@
 /*                 RepresentedDefinition.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2019 United States Government as represented by
+ * Copyright (c) 1994-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,7 +43,7 @@ public:
 	PROPERTY_DEFINITION_RELATIONSHIP,
 	SHAPE_ASPECT,
 	SHAPE_ASPECT_RELATIONSHIP,
-	UNKNOWN
+	REPRESENTED_DEFINITION_UNKNOWN
     };
 
 protected:

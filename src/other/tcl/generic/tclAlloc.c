@@ -72,7 +72,7 @@ union overhead {
 #define RMAGIC		0x5555	/* magic # on range info */
 
 #ifndef NDEBUG
-#define	RSLOP		sizeof (unsigned short)
+#define	RSLOP		sizeof(unsigned short)
 #else
 #define	RSLOP		0
 #endif
@@ -134,7 +134,6 @@ static int allocInit = 0;
  */
 
 static	unsigned int numMallocs[NBUCKETS+1];
-#include <stdio.h>
 #endif
 
 #if !defined(NDEBUG)
@@ -149,7 +148,7 @@ static	unsigned int numMallocs[NBUCKETS+1];
  * Prototypes for functions used only in this file.
  */
 
-static void 		MoreCore(int bucket);
+static void		MoreCore(int bucket);
 
 /*
  *-------------------------------------------------------------------------
@@ -458,7 +457,7 @@ TclpFree(
     }
 
     Tcl_MutexLock(allocMutexPtr);
-    overPtr = (union overhead *)((caddr_t)oldPtr - sizeof (union overhead));
+    overPtr = (union overhead *)((caddr_t)oldPtr - sizeof(union overhead));
 
     ASSERT(overPtr->overMagic0 == MAGIC);	/* make sure it was in use */
     ASSERT(overPtr->overMagic1 == MAGIC);
@@ -527,7 +526,7 @@ TclpRealloc(
 
     Tcl_MutexLock(allocMutexPtr);
 
-    overPtr = (union overhead *)((caddr_t)oldPtr - sizeof (union overhead));
+    overPtr = (union overhead *)((caddr_t)oldPtr - sizeof(union overhead));
 
     ASSERT(overPtr->overMagic0 == MAGIC);	/* make sure it was in use */
     ASSERT(overPtr->overMagic1 == MAGIC);
@@ -697,7 +696,7 @@ char *
 TclpAlloc(
     unsigned int numBytes)	/* Number of bytes to allocate. */
 {
-    return (char*) malloc(numBytes);
+    return (char *) malloc(numBytes);
 }
 
 /*
@@ -745,7 +744,7 @@ TclpRealloc(
     char *oldPtr,		/* Pointer to alloced block. */
     unsigned int numBytes)	/* New size of memory. */
 {
-    return (char*) realloc(oldPtr, numBytes);
+    return (char *) realloc(oldPtr, numBytes);
 }
 
 #endif /* !USE_TCLALLOC */

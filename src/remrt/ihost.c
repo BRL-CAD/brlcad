@@ -1,7 +1,7 @@
 /*                         I H O S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -61,7 +61,7 @@ extern struct hostent *gethostbyname(const char *);
 #endif
 
 #if defined(HAVE_GETHOSTBYADDR) && !defined(HAVE_DECL_GETHOSTBYADDR) && !defined(_WINSOCKAPI_)
-extern struct hostent *gethostbyaddr(const char *, socklen_t, int);
+extern struct hostent *gethostbyaddr(const void *, socklen_t, int);
 #endif
 
 struct bu_list	HostHead;

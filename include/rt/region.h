@@ -1,7 +1,7 @@
 /*                       R E G I O N . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2019 United States Government as represented by
+ * Copyright (c) 1993-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -111,9 +111,9 @@ RT_EXPORT extern void rt_pr_region(const struct region *rp);
  * <0 Failure
  */
 RT_EXPORT extern int db_region_mat(mat_t                m,              /* result */
-                                   struct db_i  *dbip,
-                                   const char   *name,
-                                   struct resource *resp);
+				   struct db_i  *dbip,
+				   const char   *name,
+				   struct resource *resp);
 
 
 __END_DECLS

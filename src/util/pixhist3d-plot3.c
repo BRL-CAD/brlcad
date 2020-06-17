@@ -1,7 +1,7 @@
 /*               P I X H I S T 3 D - P L O T 3 . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2019 United States Government as represented by
+ * Copyright (c) 1986-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,6 +31,7 @@
 #include <stdlib.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/exit.h"
 #include "vmath.h"
 #include "bn.h"
@@ -54,6 +55,8 @@ main(int argc, char **argv)
     int n, x;
     struct pix_element scan[512];
     unsigned char bmask;
+
+    bu_setprogname(argv[0]);
 
     if (argc > 1) {
 	if ((fp = fopen(argv[1], "r")) == NULL) {

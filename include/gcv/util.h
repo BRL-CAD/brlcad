@@ -1,7 +1,7 @@
 /*                      G C V _ U T I L . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2019 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,7 +41,7 @@ __BEGIN_DECLS
 /*
  * Tessellate the object at the specified path.
  */
-struct rt_bot_internal *gcv_facetize(struct db_i *db, const struct db_full_path *path, const struct bn_tol *tol, const struct rt_tess_tol *tess_tol);
+struct rt_bot_internal *gcv_facetize(struct db_i *db, const struct db_full_path *path, const struct bn_tol *tol, const struct bg_tess_tol *tess_tol);
 
 
 /*
@@ -88,7 +88,7 @@ GCV_EXPORT extern union tree *gcv_region_end_mc(struct db_tree_state *tsp, const
 GCV_EXPORT extern union tree *gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
 
-GCV_EXPORT extern union tree *gcv_bottess(int argc, const char **argv, struct db_i *dbip, struct rt_tess_tol *ttol);
+GCV_EXPORT extern union tree *gcv_bottess(int argc, const char **argv, struct db_i *dbip, struct bg_tess_tol *ttol);
 
 
 __END_DECLS

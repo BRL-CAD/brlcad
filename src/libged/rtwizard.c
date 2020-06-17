@@ -1,7 +1,7 @@
 /*                         R T W I Z A R D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2019 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,7 +32,6 @@
 #  include <sys/types.h>
 #endif
 
-#include "tcl.h"
 #include "bu/app.h"
 #include "bu/process.h"
 
@@ -40,23 +39,32 @@
 #include "./ged_private.h"
 
 struct _ged_rt_client_data {
-    struct ged_run_rt *rrtp;
+    struct ged_subprocess *rrtp;
     struct ged *gedp;
 };
 
 
 int
-_ged_run_rtwizard(struct ged *gedp)
+_ged_run_rtwizard(struct ged *gedp, int cmd_len, const char **gd_rt_cmd)
 {
-    struct ged_run_rt *run_rtp;
+    struct ged_subprocess *run_rtp;
     struct _ged_rt_client_data *drcdp;
     struct bu_process *p;
 
-    bu_process_exec(&p, gedp->ged_gdp->gd_rt_cmd[0], gedp->ged_gdp->gd_rt_cmd_len, (const char **)gedp->ged_gdp->gd_rt_cmd, 0, 0);
+    bu_process_exec(&p, gd_rt_cmd[0], cmd_len, (const char **)gd_rt_cmd, 0, 0);
 
-    BU_GET(run_rtp, struct ged_run_rt);
+    if (bu_process_pid(p) == -1) {
+	bu_vls_printf(gedp->ged_result_str, "\nunable to successfully launch subprocess: ");
+	for (int i = 0; i < cmd_len; i++) {
+	    bu_vls_printf(gedp->ged_result_str, "%s ", gd_rt_cmd[i]);
+	}
+	bu_vls_printf(gedp->ged_result_str, "\n");
+	return GED_ERROR;
+    }
+
+    BU_GET(run_rtp, struct ged_subprocess);
     BU_LIST_INIT(&run_rtp->l);
-    BU_LIST_APPEND(&gedp->ged_gdp->gd_headRunRt.l, &run_rtp->l);
+    BU_LIST_APPEND(&gedp->gd_headSubprocess.l, &run_rtp->l);
 
     run_rtp->p = p;
 
@@ -65,9 +73,11 @@ _ged_run_rtwizard(struct ged *gedp)
     drcdp->gedp = gedp;
     drcdp->rrtp = run_rtp;
 
-    _ged_create_io_handler(&(run_rtp->chan), p, BU_PROCESS_STDERR, TCL_READABLE, (void *)drcdp, _ged_rt_output_handler);
+    if (gedp->ged_create_io_handler) {
+	(*gedp->ged_create_io_handler)(&(run_rtp->chan), p, BU_PROCESS_STDERR, gedp->io_mode, (void *)drcdp, _ged_rt_output_handler);
+    }
 
-    return 0;
+    return GED_OK;
 }
 
 
@@ -84,6 +94,9 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls size_vls = BU_VLS_INIT_ZERO;
     struct bu_vls orient_vls = BU_VLS_INIT_ZERO;
     struct bu_vls eye_vls = BU_VLS_INIT_ZERO;
+    char **gd_rt_cmd = NULL;
+    int gd_rt_cmd_len = 0;
+    int ret = GED_OK;
 
     const char *bin;
     char rtscript[256] = {0};
@@ -97,13 +110,13 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (gedp->ged_gvp->gv_perspective > 0)
-	/* rtwizard --no_gui -perspective p -i db.g --viewsize size --orientation "A B C D} --eye_pt "X Y Z" */
+	/* rtwizard --no_gui -perspective p -i db.g --viewsize size --orientation "A B C D" --eye_pt "X Y Z" */
 	args = argc + 1 + 1 + 1 + 2 + 2 + 2 + 2 + 2;
     else
-	/* rtwizard --no_gui -i db.g --viewsize size --orientation "A B C D} --eye_pt "X Y Z" */
+	/* rtwizard --no_gui -i db.g --viewsize size --orientation "A B C D" --eye_pt "X Y Z" */
 	args = argc + 1 + 1 + 1 + 2 + 2 + 2 + 2;
 
-    gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
+    gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
     bin = bu_brlcad_root("bin", 1);
     if (bin) {
@@ -119,7 +132,7 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     bu_vls_printf(&orient_vls, "%.15e %.15e %.15e %.15e", V4ARGS(quat));
     bu_vls_printf(&eye_vls, "%.15e %.15e %.15e", V3ARGS(eye_model));
 
-    vp = &gedp->ged_gdp->gd_rt_cmd[0];
+    vp = &gd_rt_cmd[0];
     *vp++ = rtscript;
     *vp++ = "--no-gui";
     *vp++ = "--viewsize";
@@ -146,22 +159,23 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     /*
      * Accumulate the command string.
      */
-    vp = &gedp->ged_gdp->gd_rt_cmd[0];
+    vp = &gd_rt_cmd[0];
     while (*vp)
 	bu_vls_printf(gedp->ged_result_str, "%s ", *vp++);
     bu_vls_printf(gedp->ged_result_str, "\n");
 
-    gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
-    (void)_ged_run_rtwizard(gedp);
-    bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
-    gedp->ged_gdp->gd_rt_cmd = NULL;
+    gd_rt_cmd_len = vp - gd_rt_cmd;
+
+    ret = _ged_run_rtwizard(gedp, gd_rt_cmd_len, (const char **)gd_rt_cmd);
+
+    bu_free(gd_rt_cmd, "free gd_rt_cmd");
 
     bu_vls_free(&perspective_vls);
     bu_vls_free(&size_vls);
     bu_vls_free(&orient_vls);
     bu_vls_free(&eye_vls);
 
-    return GED_OK;
+    return ret;
 }
 
 

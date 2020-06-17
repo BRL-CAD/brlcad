@@ -1,7 +1,7 @@
 /*                   T E S T _ B U N D L E . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2019 United States Government as represented by
+ * Copyright (c) 2013-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,6 +21,7 @@
 #include "common.h"
 
 
+#include "bu/app.h"
 #include "bn.h"
 #include "vmath.h"
 #include "bn/plot3.h"
@@ -38,6 +39,8 @@ main(int ac, char *av[])
     vect_t avec, bvec;
     struct xray *rp;
     vect_t dir;
+
+    bu_setprogname(av[0]);
 
     if (ac > 1)
 	bu_exit(1, "Usage: %s\n", av[0]);

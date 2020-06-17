@@ -15,6 +15,8 @@ TABLE OF CONTENTS
   Project Name
   Internet Resources
   Keywords & Categories
+  Mission
+  Community Overview
   Terse Description (70 characters or less)
   Short Description (255 characters or less)
   Brief Description (512 characters or less)
@@ -113,6 +115,28 @@ Predominantly an ISO/ANSI C code heavily utilizing Tcl/Tk for the
 predominant interactive solid modeler.  Includes C++ and Java native
 interface bindings to a subset of the provided ray-trace and geometry
 representation facilities.  Includes a PHP geometry server interface.
+
+
+MISSION
+-------
+
+BRL-CAD's open source development is persistently and passionately
+obsessed with implementing a robust, powerful, flexible, and
+comprehensive solid modeling system that provides faithful
+high-performance geometric representation, efficient and intuitive
+geometry editing, conversion support for all common solid geometry
+formats, and geometric analysis tools for 3D computer-aided design
+(CAD).
+
+
+COMMUNITY OVERVIEW
+------------------
+
+BRL-CAD is developed by a collective of open source contributors all
+around the world.  Over the project's lifetime, there have been more
+than 65 direct committing contributors to BRL-CAD and many more
+indirect contributors and supporters.  BRL-CAD has been an open source
+project since 2004 expanding and accelerating development ever since.
 
 
 TERSE DESCRIPTION (70-char)

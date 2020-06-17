@@ -1,7 +1,7 @@
 /*                   D B _ F U L L P A T H . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2019 United States Government as represented by
+ * Copyright (c) 1990-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -162,7 +162,7 @@ db_append_full_path(struct db_full_path *dest, const struct db_full_path *src)
 
 
 void
-db_dup_path_tail(struct db_full_path *newp, const struct db_full_path *oldp, off_t start)
+db_dup_path_tail(struct db_full_path *newp, const struct db_full_path *oldp, b_off_t start)
 {
     RT_CK_FULL_PATH(newp);
     RT_CK_FULL_PATH(oldp);

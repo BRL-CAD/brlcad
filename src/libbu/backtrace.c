@@ -1,7 +1,7 @@
 /*                     B A C K T R A C E . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2019 United States Government as represented by
+ * Copyright (c) 2007-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -71,9 +71,8 @@ extern int fileno(FILE*);
 #endif
 
 
-/* so we don't have to worry as much about stack stomping */
-#define BT_BUFSIZE 4096
-static char buffer[BT_BUFSIZE] = {0};
+/* local buffer so we don't have to worry as much about stack stomping */
+static char buffer[BU_PAGE_SIZE] = {0};
 
 static pid_t process = (pid_t)0;
 static pid_t pid = (pid_t)0;
@@ -93,6 +92,8 @@ static char c = 0;
 static int warned;
 
 /* no stack variables in bu_backtrace() */
+static char path_gdb[MAXPATHLEN] = {0};
+static char path_lldb[MAXPATHLEN] = {0};
 static char debugger_args[3][MAXPATHLEN] = { {0}, {0}, {0} };
 static const char *locate_debugger = NULL;
 static int have_gdb = 0, have_lldb = 0;
@@ -190,8 +191,8 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
 
 	if (have_gdb) {
 	    /*    if (write(input[1], "set prompt\n", 12) != 12) {
-		perror("write [set prompt] failed");
-		} else */if (write(input[1], "set confirm off\n", 16) != 16) {
+		  perror("write [set prompt] failed");
+		  } else */if (write(input[1], "set confirm off\n", 16) != 16) {
 		perror("write [set confirm off] failed");
 	    } else if (write(input[1], "set backtrace past-main on\n", 27) != 27) {
 		perror("write [set backtrace past-main on] failed");
@@ -232,7 +233,7 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
 
     position = 0;
     processing_bt = 0;
-    memset(buffer, 0, BT_BUFSIZE);
+    memset(buffer, 0, BU_PAGE_SIZE);
 
     if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
 	bu_log("[BACKTRACE] Reading debugger output\n");
@@ -278,7 +279,7 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
 			if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
 			    bu_log("[BACKTRACE] Output: %s\n", buffer);
 			}
-			if (position+1 < BT_BUFSIZE) {
+			if (position+1 < BU_PAGE_SIZE) {
 			    buffer[position++] = c;
 			    buffer[position] = '\0';
 			} else {
@@ -300,7 +301,7 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
 				perror("error writing stack to file");
 				break;
 			    }
-			    if (position > BT_BUFSIZE) {
+			    if (position > BU_PAGE_SIZE) {
 				if (write(fd, " [TRIMMED]\n", 11) != 11) {
 				    perror("error writing trim message to file");
 				    break;
@@ -312,7 +313,7 @@ backtrace(int processid, char args[][MAXPATHLEN], int fd)
 		    default:
 			break;
 		}
-		if (position+1 < BT_BUFSIZE) {
+		if (position+1 < BU_PAGE_SIZE) {
 		    buffer[position++] = c;
 		    buffer[position] = '\0';
 		} else {
@@ -401,27 +402,30 @@ bu_backtrace(FILE *fp)
     }
     fflush(fp); /* sanity */
 
-    /* make sure the debugger exists */
+    /* check if GNU debugger (gdb) exists */
     if ((locate_debugger = bu_which("gdb"))) {
-	bu_strlcpy(debugger_args[0], locate_debugger, MAXPATHLEN);
+	bu_strlcpy(path_gdb, locate_debugger, MAXPATHLEN);
 	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
 	    bu_log("[BACKTRACE] Found gdb in USER path: %s\n", locate_debugger);
 	}
 	have_gdb = 1;
     } else if ((locate_debugger = bu_whereis("gdb"))) {
-	bu_strlcpy(debugger_args[0], locate_debugger, MAXPATHLEN);
+	bu_strlcpy(path_gdb, locate_debugger, MAXPATHLEN);
 	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
 	    bu_log("[BACKTRACE] Found gdb in SYSTEM path: %s\n", locate_debugger);
 	}
 	have_gdb = 1;
-    } else if ((locate_debugger = bu_which("lldb"))) {
-	bu_strlcpy(debugger_args[0], locate_debugger, MAXPATHLEN);
+    }
+
+    /* check if LLVM debugger (lldb) exists */
+    if ((locate_debugger = bu_which("lldb"))) {
+	bu_strlcpy(path_lldb, locate_debugger, MAXPATHLEN);
 	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
 	    bu_log("[BACKTRACE] Found lldb in USER path: %s\n", locate_debugger);
 	}
 	have_lldb = 1;
     } else if ((locate_debugger = bu_whereis("lldb"))) {
-	bu_strlcpy(debugger_args[0], locate_debugger, MAXPATHLEN);
+	bu_strlcpy(path_lldb, locate_debugger, MAXPATHLEN);
 	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {
 	    bu_log("[BACKTRACE] Found lldb in SYSTEM path: %s\n", locate_debugger);
 	}
@@ -429,11 +433,20 @@ bu_backtrace(FILE *fp)
     }
     locate_debugger = NULL; /* made a copy */
 
+#ifdef __APPLE__
+    /* gdb is defunct on Mac since the switch to clang */
+    if (have_lldb && have_gdb)
+	have_gdb = 0;
+#endif
+
     if (have_gdb) {
+	bu_strlcpy(debugger_args[0], path_gdb, MAXPATHLEN);
 	/* MUST give gdb path to binary, otherwise attach bug causes
 	 * process kill on some platforms (e.g., FreeBSD9+AMD64)
 	 */
 	bu_strlcpy(debugger_args[1], bu_argv0_full_path(), MAXPATHLEN);
+    } else if (have_lldb) {
+	bu_strlcpy(debugger_args[0], path_lldb, MAXPATHLEN);
     }
 
     /* if we don't have a debugger, don't proceed */
@@ -487,7 +500,7 @@ bu_backtrace(FILE *fp)
 		bu_log("[BACKTRACE] bu_backtrace() waiting 1 second (of %d)\n", cnt);
 	    }
 	    bu_snooze(BU_SEC2USEC(1));
-            cnt++;
+	    cnt++;
 	}
 #ifdef HAVE_KILL
 	if (UNLIKELY(bu_debug & BU_DEBUG_BACKTRACE)) {

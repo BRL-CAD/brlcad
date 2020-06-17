@@ -1,7 +1,7 @@
 /*                          U - B W . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,6 +27,7 @@
 
 #include "bio.h"
 
+#include "bu/app.h"
 
 int
 main(int ac, char *av[])
@@ -35,6 +36,8 @@ main(int ac, char *av[])
     unsigned char obuf[512];
 
     size_t num, i;
+
+    bu_setprogname(av[0]);
 
     if (isatty(fileno(stdin)) || isatty(fileno(stdout))) {
 	fprintf(stderr, "Usage: %s < u_shorts > bwfile\n",

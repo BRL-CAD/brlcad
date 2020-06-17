@@ -1,7 +1,7 @@
 /*                       P R O C E S S . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2019 United States Government as represented by
+ * Copyright (c) 2007-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,10 +33,12 @@
 #include "bu/process.h"
 #include "bu/str.h"
 #include "bu/vls.h"
+#include "./process.h"
 
 #if !defined(HAVE_DECL_WAIT) && !defined(wait) && !defined(_WINSOCKAPI_)
 extern pid_t wait(int *);
 #endif
+
 
 int
 bu_process_id()
@@ -51,6 +53,9 @@ bu_process_id()
 
 struct bu_process {
     struct bu_list l;
+    const char *cmd;
+    int argc;
+    const char **argv;
     FILE *fp_in;
     FILE *fp_out;
     FILE *fp_err;
@@ -93,6 +98,7 @@ bu_process_close(struct bu_process *pinfo, int fd)
 	return;
     }
 }
+
 
 FILE *
 bu_process_open(struct bu_process *pinfo, int fd)
@@ -146,12 +152,28 @@ bu_process_fd(struct bu_process *pinfo, int fd)
     return NULL;
 }
 
+
 int
 bu_process_pid(struct bu_process *pinfo)
 {
     if (!pinfo) return -1;
     return (int)pinfo->pid;
 }
+
+
+int
+bu_process_args(const char **cmd, const char * const **argv, struct bu_process *pinfo)
+{
+    if (!pinfo) return 0;
+    if (cmd) {
+	*cmd = pinfo->cmd;
+    }
+    if (argv) {
+	*argv = (const char * const *)(pinfo->argv);
+    }
+    return pinfo->argc;
+}
+
 
 int
 bu_process_read(char *buff, int *count, struct bu_process *pinfo, int fd, int n)
@@ -201,13 +223,17 @@ bu_process_read(char *buff, int *count, struct bu_process *pinfo, int fd, int n)
 
 
 void
+bu_process_exec(
+    struct bu_process **p, const char *cmd, int argc, const char **argv, int out_eql_err,
 #ifdef _WIN32
-bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **argv, int out_eql_err, int hide_window)
+    int hide_window
 #else
-bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **argv, int out_eql_err, int UNUSED(hide_window))
+    int UNUSED(hide_window)
 #endif
+    )
 {
     int pret = 0;
+    int ac = argc;
 #ifdef HAVE_UNISTD_H
     int pid;
     int pipe_in[2];
@@ -233,12 +259,22 @@ bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **a
 	    av[i] = argv[i-1];
 	}
 	av[argc+1] = (char *)NULL;
+	ac++;
     } else {
 	for (int i = 0; i < argc; i++) {
 	    av[i] = argv[i];
 	}
 	av[argc] = (char *)NULL;
     }
+
+    /* Make a copy of the final execvp args */
+    (*p)->cmd = bu_strdup(cmd);
+    (*p)->argc = ac;
+    (*p)->argv = (const char **)bu_calloc(ac+1, sizeof(char *), "bu_process argv cpy");
+    for (int i = 0; i < ac; i++) {
+	(*p)->argv[i] = bu_strdup(av[i]);
+    }
+    (*p)->argv[ac] = (char *)NULL;
 
     pret = pipe(pipe_in);
     if (pret < 0) {
@@ -325,6 +361,16 @@ bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **a
     (*p)->fp_out = NULL;
     (*p)->fp_err = NULL;
 
+    (*p)->cmd = bu_strdup(cmd);
+    (*p)->argc = argc;
+    (*p)->argv = (const char **)bu_calloc(argc+1, sizeof(char *), "bu_process argv cpy");
+    for (int i = 0; i < argc; i++) {
+	(*p)->argv[i] = bu_strdup(argv[i]);
+    }
+    (*p)->argv[ac] = (char *)NULL;
+
+
+
     sa.nLength = sizeof(sa);
     sa.bInheritHandle = TRUE;
     sa.lpSecurityDescriptor = NULL;
@@ -334,9 +380,9 @@ bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **a
 
     /* Create noninheritable read handle and close the inheritable read handle. */
     DuplicateHandle(GetCurrentProcess(), pipe_out[0],
-	    GetCurrentProcess(),  &pipe_outDup ,
-	    0,  FALSE,
-	    DUPLICATE_SAME_ACCESS);
+		    GetCurrentProcess(),  &pipe_outDup ,
+		    0,  FALSE,
+		    DUPLICATE_SAME_ACCESS);
     CloseHandle(pipe_out[0]);
 
     /* Create a pipe for the child process's STDERR. */
@@ -344,9 +390,9 @@ bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **a
 
     /* Create noninheritable read handle and close the inheritable read handle. */
     DuplicateHandle(GetCurrentProcess(), pipe_err[0],
-	    GetCurrentProcess(),  &pipe_errDup ,
-	    0,  FALSE,
-	    DUPLICATE_SAME_ACCESS);
+		    GetCurrentProcess(),  &pipe_errDup ,
+		    0,  FALSE,
+		    DUPLICATE_SAME_ACCESS);
     CloseHandle(pipe_err[0]);
 
     /* Create a pipe for the child process's STDIN. */
@@ -354,9 +400,9 @@ bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **a
 
     /* Duplicate the write handle to the pipe so it is not inherited. */
     DuplicateHandle(GetCurrentProcess(), pipe_in[1],
-	    GetCurrentProcess(), &pipe_inDup,
-	    0, FALSE,                  /* not inherited */
-	    DUPLICATE_SAME_ACCESS);
+		    GetCurrentProcess(), &pipe_inDup,
+		    0, FALSE,                  /* not inherited */
+		    DUPLICATE_SAME_ACCESS);
     CloseHandle(pipe_in[1]);
 
     si.cb = sizeof(STARTUPINFO);
@@ -380,8 +426,8 @@ bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **a
 
     /* Create_Process uses a string, not a char array */
     for (int i = 0; i < argc; i++) {
-	/* Quote all path names for CreateProcess */
-	if (bu_file_exists(argv[i], NULL)) {
+	/* Quote all path names or arguments with spaces for CreateProcess */
+	if (strstr(argv[i], " ") || bu_file_exists(argv[i], NULL)) {
 	    bu_vls_printf(&cp_cmd, "\"%s\" ", argv[i]);
 	} else {
 	    bu_vls_printf(&cp_cmd, "%s ", argv[i]);
@@ -389,8 +435,8 @@ bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **a
     }
 
     CreateProcess(NULL, bu_vls_addr(&cp_cmd), NULL, NULL, TRUE,
-	    DETACHED_PROCESS, NULL, NULL,
-	    &si, &pi);
+		  DETACHED_PROCESS, NULL, NULL,
+		  &si, &pi);
     bu_vls_free(&cp_cmd);
 
     CloseHandle(pipe_in[0]);
@@ -413,11 +459,14 @@ bu_process_exec(struct bu_process **p, const char *cmd, int argc, const char **a
 }
 
 int
+bu_process_wait(
+    int *aborted, struct bu_process *pinfo,
 #ifndef _WIN32
-bu_process_wait(int *aborted, struct bu_process *pinfo, int UNUSED(wtime))
+    int UNUSED(wtime)
 #else
-bu_process_wait(int *aborted, struct bu_process *pinfo, int wtime)
+    int wtime
 #endif
+    )
 {
     int rc = 0;
 #ifndef _WIN32
@@ -428,6 +477,9 @@ bu_process_wait(int *aborted, struct bu_process *pinfo, int wtime)
     close(pinfo->fd_err);
     while ((rpid = wait(&retcode)) != pinfo->pid && rpid != -1);
     rc = retcode;
+    if (rc) {
+	pinfo->aborted = 1;
+    }
 #else
     DWORD retcode = 0;
     if (!pinfo) return -1;
@@ -439,11 +491,12 @@ bu_process_wait(int *aborted, struct bu_process *pinfo, int wtime)
 	WaitForSingleObject(pinfo->hProcess, INFINITE);
     }
 
-    if (GetLastError() == ERROR_PROCESS_ABORTED) {
+    GetExitCodeProcess(pinfo->hProcess, &retcode);
+
+    if (GetLastError() == ERROR_PROCESS_ABORTED || retcode == BU_MSVC_ABORT_EXIT) {
 	pinfo->aborted = 1;
     }
 
-    GetExitCodeProcess(pinfo->hProcess, &retcode);
     /* may be useful to try pr_wait_status() here */
     rc = (int)retcode;
 #endif
@@ -454,6 +507,19 @@ bu_process_wait(int *aborted, struct bu_process *pinfo, int wtime)
     /* Clean up */
     bu_process_close(pinfo, 1);
     bu_process_close(pinfo, 2);
+
+    /* Free copy of exec args */
+    if (pinfo->cmd) {
+	bu_free((void *)pinfo->cmd, "pinfo cmd copy");
+    }
+    if (pinfo->argv) {
+	for (int i = 0; i < pinfo->argc; i++) {
+	    if (pinfo->argv[i]) {
+		bu_free((void *)pinfo->argv[i], "pinfo argv member");
+	    }
+	}
+	bu_free((void *)pinfo->argv, "pinfo argv array");
+    }
     BU_PUT(pinfo, struct bu_process);
 
     return rc;

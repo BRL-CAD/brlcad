@@ -1,7 +1,7 @@
 /*                        S K E T C H . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2019 United States Government as represented by
+ * Copyright (c) 1990-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -464,7 +464,7 @@ rt_sketch_degree(struct rt_sketch_internal *sk)
 
 
 int
-seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, fastf_t *u_vec, fastf_t *v_vec, struct rt_sketch_internal *sketch_ip, void *seg)
+seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, fastf_t *u_vec, fastf_t *v_vec, struct rt_sketch_internal *sketch_ip, void *seg)
 {
     int ret=0;
     int i;
@@ -741,9 +741,9 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 			    pt[j] /= pt[coords-1];
 		    }
 		    if (i == 0)
-			RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE)
-			    else
-				RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
+			RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
+		    else
+			RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
 		}
 		bu_free((char *)eg.ctl_points, "eg.ctl_points");
 		break;
@@ -856,7 +856,7 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 
 
 int
-curve_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, fastf_t *u_vec, fastf_t *v_vec, struct rt_sketch_internal *sketch_ip, struct rt_curve *crv)
+curve_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, fastf_t *u_vec, fastf_t *v_vec, struct rt_sketch_internal *sketch_ip, struct rt_curve *crv)
 {
     size_t seg_no;
     int ret=0;
@@ -872,7 +872,7 @@ curve_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V
 
 
 int
-rt_sketch_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_sketch_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     struct rt_sketch_internal *sketch_ip;
     int ret;
@@ -1075,7 +1075,7 @@ rt_sketch_centroid(point_t *cent, const struct rt_db_internal *ip)
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_sketch_tess(struct nmgregion **UNUSED(r), struct model *UNUSED(m), struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+rt_sketch_tess(struct nmgregion **UNUSED(r), struct model *UNUSED(m), struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
 
@@ -2637,7 +2637,12 @@ rt_curve_order_segments(struct rt_curve *crv)
 {
     int i, j, k;
     int count;
-    int start1, end1, start2, end2, start3, end3;
+    int start1 = 0;
+    int start2 = 0;
+    int start3 = 0;
+    int end1 = 0;
+    int end2 = 0;
+    int end3 = 0;
 
     count = crv->count;
     if (count < 2) {

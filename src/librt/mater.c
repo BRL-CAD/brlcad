@@ -1,7 +1,7 @@
 /*                         M A T E R . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2019 United States Government as represented by
+ * Copyright (c) 1985-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -171,7 +171,7 @@ rt_insert_color(struct mater *newp)
  * Called from db_scan() when initially scanning database.
  */
 void
-rt_color_addrec(int low, int hi, int r, int g, int b, off_t addr)
+rt_color_addrec(int low, int hi, int r, int g, int b, b_off_t addr)
 {
     register struct mater *mp;
 

@@ -1,7 +1,7 @@
 /*                        W I N D O W . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,6 +24,7 @@
  * cylinders.  The front of the window is centered at (0, 0, 0) and
  * extends in the negative x-direction the depth of the window.
  *
+ * Introduced in BRL-CAD release 4.4.
  */
 
 #include "common.h"
@@ -35,6 +36,7 @@
 
 #include "rt/db4.h"
 #include "vmath.h"
+#include "bu/app.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -69,6 +71,8 @@ main(int argc, char **argv)
 
     int i, j, k;		/* Loop counters. */
     int ret;
+
+    bu_setprogname(argv[0]);
 
     /* Set up solid, region, and group names. */
     solnam[0] = 's';

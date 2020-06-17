@@ -1,7 +1,7 @@
 /*                        F B 2 P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2019 United States Government as represented by
+ * Copyright (c) 1986-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,6 +28,8 @@
 
 #include <stdlib.h>
 #include <sys/stat.h>
+
+#include "bio.h"
 
 #include "bu/app.h"
 #include "bu/getopt.h"

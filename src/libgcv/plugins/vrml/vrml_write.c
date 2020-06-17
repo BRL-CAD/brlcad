@@ -1,7 +1,7 @@
 /*                    V R M L _ W R I T E . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2019 United States Government as represented by
+ * Copyright (c) 1995-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -987,7 +987,7 @@ do_region_end1(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 	bu_log("data->pmp->num_bots = %d data->pmp->num_nonbots = %d\n", data->pmp->num_bots, data->pmp->num_nonbots);
 	bu_bomb("region was both bot and non-bot objects\n");
     }
-    if (RT_G_DEBUG&DEBUG_TREEWALK || data->pstate->gcv_options->verbosity_level) {
+    if (RT_G_DEBUG&RT_DEBUG_TREEWALK || data->pstate->gcv_options->verbosity_level) {
 	bu_log("\nConverted %d%% so far (%d of %d)\n",
 	       data->pstate->regions_tried > 0 ? (data->pstate->regions_converted * 100) / data->pstate->regions_tried : 0,
 	       data->pstate->regions_converted, data->pstate->regions_tried);
@@ -1023,7 +1023,7 @@ do_region_end2(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
 {
     const struct region_end_data * const data = (struct region_end_data *)client_data;
 
-    if ((data->pmp->num_bots > 0) && (RT_G_DEBUG&DEBUG_TREEWALK || data->pstate->gcv_options->verbosity_level)) {
+    if ((data->pmp->num_bots > 0) && (RT_G_DEBUG&RT_DEBUG_TREEWALK || data->pstate->gcv_options->verbosity_level)) {
 	bu_log("\nConverted %d%% so far (%d of %d)\n",
 	       data->pstate->regions_tried > 0 ? (data->pstate->regions_converted * 100) / data->pstate->regions_tried : 0,
 	       data->pstate->regions_converted, data->pstate->regions_tried);
@@ -1089,13 +1089,13 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     union tree *ret_tree;
     char *name;
 
-    RT_CK_TESS_TOL(tsp->ts_ttol);
+    BG_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
     NMG_CK_MODEL(*tsp->ts_m);
 
     BU_LIST_INIT(&vhead);
 
-    if (RT_G_DEBUG&DEBUG_TREEWALK || data->pstate->gcv_options->verbosity_level) {
+    if (RT_G_DEBUG&RT_DEBUG_TREEWALK || data->pstate->gcv_options->verbosity_level) {
 	bu_log("\nConverted %d%% so far (%d of %d)\n",
 	       data->pstate->regions_tried > 0 ? (data->pstate->regions_converted * 100) / data->pstate->regions_tried : 0,
 	       data->pstate->regions_converted, data->pstate->regions_tried);
@@ -1386,7 +1386,7 @@ static const struct gcv_filter * const filters[] = {&gcv_conv_vrml_read, &gcv_co
 
 const struct gcv_plugin gcv_plugin_info_s = { filters };
 
-GCV_EXPORT const struct gcv_plugin *
+COMPILER_DLLEXPORT const struct gcv_plugin *
 gcv_plugin_info(){ return &gcv_plugin_info_s; }
 
 /*

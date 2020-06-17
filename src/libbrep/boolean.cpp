@@ -1,7 +1,7 @@
 /*                  B O O L E A N . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2019 United States Government as represented by
+ * Copyright (c) 2013-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,7 +36,12 @@
 
 #include "vmath.h"
 #include "bu/log.h"
-#include "brep.h"
+#include "brep/defines.h"
+#include "brep/boolean.h"
+#include "brep/intersect.h"
+#include "brep/pullback.h"
+#include "brep/ray.h"
+#include "brep/util.h"
 
 #include "brep_except.h"
 
@@ -1624,7 +1629,7 @@ public:
 	    double max[3] = {0.0, 0.0, 0.0};
 
 	    seg_curve->GetBBox(min, max, true);
-	    length = DIST_PT_PT(min, max);
+	    length = DIST_PNT_PNT(min, max);
 	}
 	delete seg_curve;
 	return length < INTERSECTION_TOL;

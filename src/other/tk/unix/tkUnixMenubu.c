@@ -13,17 +13,6 @@
 #include "tkInt.h"
 #include "tkMenubutton.h"
 
-/*
- * The structure below defines menubutton class behavior by means of functions
- * that can be invoked from generic window code.
- */
-
-Tk_ClassProcs tkpMenubuttonClass = {
-    sizeof(Tk_ClassProcs),	/* size */
-    TkMenuButtonWorldChanged,	/* worldChangedProc */
-    NULL,
-    NULL
-};
 
 /*
  *----------------------------------------------------------------------
@@ -45,7 +34,7 @@ TkMenuButton *
 TkpCreateMenuButton(
     Tk_Window tkwin)
 {
-    return (TkMenuButton *)ckalloc(sizeof(TkMenuButton));
+    return ckalloc(sizeof(TkMenuButton));
 }
 
 /*
@@ -103,7 +92,7 @@ TkpDisplayMenuButton(
 	border = mbPtr->normalBorder;
     }
 
-    if (mbPtr->image != None) {
+    if (mbPtr->image != NULL) {
 	Tk_SizeOfImage(mbPtr->image, &width, &height);
 	haveImage = 1;
     } else if (mbPtr->bitmap != None) {
@@ -369,7 +358,7 @@ TkpComputeMenuButtonGeometry(
     txtHeight = 0;
     avgWidth = 0;
 
-    if (mbPtr->image != None) {
+    if (mbPtr->image != NULL) {
 	Tk_SizeOfImage(mbPtr->image, &width, &height);
 	haveImage = 1;
     } else if (mbPtr->bitmap != None) {

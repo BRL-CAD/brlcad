@@ -1,7 +1,7 @@
 /*                       S H _ T E X T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2019 United States Government as represented by
+ * Copyright (c) 1998-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -59,7 +59,6 @@ struct txt_specific {
 HIDDEN void txt_transp_hook(const struct bu_structparse *, const char *, void *, const char *, void *);
 HIDDEN void txt_source_hook(const struct bu_structparse *, const char *, void *, const char *, void *);
 
-HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInstance, const long unsigned int size);
 
 
 struct bu_structparse txt_parse[] = {
@@ -241,7 +240,7 @@ txt_render(struct application *ap, const struct partition *pp, struct shadework 
 
     uvc = swp->sw_uv;
 
-    if (rdebug & RDEBUG_SHADE)
+    if (optical_debug & OPTICAL_DEBUG_SHADE)
 	bu_log("in txt_render(): du=%g, dv=%g\n",
 	       uvc.uv_du, uvc.uv_dv);
 
@@ -297,7 +296,7 @@ txt_render(struct application *ap, const struct partition *pp, struct shadework 
     if (xmax > 1) xmax = 1;
     if (ymax > 1) ymax = 1;
 
-    if (rdebug & RDEBUG_SHADE)
+    if (optical_debug & OPTICAL_DEBUG_SHADE)
 	bu_log("footprint in texture space is (%g %g) <-> (%g %g)\n",
 	       xmin * (tp->tx_w-1), ymin * (tp->tx_n-1),
 	       xmax * (tp->tx_w-1), ymax * (tp->tx_n-1));
@@ -305,7 +304,7 @@ txt_render(struct application *ap, const struct partition *pp, struct shadework 
     dx = (int)(xmax * (tp->tx_w-1)) - (int)(xmin * (tp->tx_w-1));
     dy = (int)(ymax * (tp->tx_n-1)) - (int)(ymin * (tp->tx_n-1));
 
-    if (rdebug & RDEBUG_SHADE)
+    if (optical_debug & OPTICAL_DEBUG_SHADE)
 	bu_log("\tdx = %d, dy = %d\n", dx, dy);
 
     if (dx == 0 && dy == 0) {
@@ -355,7 +354,7 @@ txt_render(struct application *ap, const struct partition *pp, struct shadework 
 
 	r = g = b = 0.0;
 
-	if (rdebug & RDEBUG_SHADE) {
+	if (optical_debug & OPTICAL_DEBUG_SHADE) {
 	    bu_log("\thit in texture space = (%g %g)\n", uvc.uv_u * (tp->tx_w-1), uvc.uv_v * (tp->tx_n-1));
 	    bu_log("\t averaging from  (%g %g) to (%g %g)\n", xstart, ystart, xstop, ystop);
 	    bu_log("\tcontributions to average:\n");
@@ -413,7 +412,7 @@ txt_render(struct application *ap, const struct partition *pp, struct shadework 
 		cell_area = line_factor * (col_upper - col_lower);
 		tot_area += cell_area;
 
-		if (rdebug & RDEBUG_SHADE)
+		if (optical_debug & OPTICAL_DEBUG_SHADE)
 		    bu_log("\t %d %d %d weight=%g (from col=%d line=%d)\n", *cp, *(cp+1), *(cp+2), cell_area, col, line);
 
 		r += (*cp++) * cell_area;
@@ -437,7 +436,7 @@ txt_render(struct application *ap, const struct partition *pp, struct shadework 
 	b /= 2;
     }
 
-    if (rdebug & RDEBUG_SHADE)
+    if (optical_debug & OPTICAL_DEBUG_SHADE)
 	bu_log(" average: %g %g %g\n", r, g, b);
 
     if (!tp->tx_trans_valid) {
@@ -642,7 +641,7 @@ txt_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const 
     }
 
 
-    if (rdebug & RDEBUG_SHADE) {
+    if (optical_debug & OPTICAL_DEBUG_SHADE) {
 	bu_log("txt_setup: texture loaded!  type=%s name=%s\n", tp->tx_datasrc==TXT_SRC_AUTO?"auto":tp->tx_datasrc==TXT_SRC_OBJECT?"object":tp->tx_datasrc==TXT_SRC_FILE?"file":"unknown", bu_vls_addr(&tp->tx_name));
 	bu_struct_print("texture", txt_parse, (char *)tp);
     }
@@ -665,7 +664,7 @@ txt_free(void *cp)
 
     bu_vls_free(&tp->tx_name);
     if (tp->tx_binunifp) rt_binunif_free(tp->tx_binunifp);
-    if (tp->tx_mp) bu_close_mapped_file(tp->tx_mp);
+    bu_close_mapped_file(tp->tx_mp);
     tp->tx_binunifp = (struct rt_binunif_internal *)NULL; /* sanity */
     tp->tx_mp = (struct bu_mapped_file *)NULL; /* sanity */
     BU_PUT(cp, struct txt_specific);
@@ -878,7 +877,7 @@ bmp_render(struct application *ap, const struct partition *pp, struct shadework 
     pertU = ((fastf_t)(*cp) - 128.0) / 128.0;
     pertV = ((fastf_t)(*(cp+2)) - 128.0) / 128.0;
 
-    if (rdebug&RDEBUG_LIGHT) {
+    if (optical_debug&OPTICAL_DEBUG_LIGHT) {
 	VPRINT("normal", swp->sw_hit.hit_normal);
 	VPRINT("u", u);
 	VPRINT("v", v);
@@ -887,7 +886,7 @@ bmp_render(struct application *ap, const struct partition *pp, struct shadework 
     }
     VJOIN2(swp->sw_hit.hit_normal, swp->sw_hit.hit_normal, pertU, u, pertV, v);
     VUNITIZE(swp->sw_hit.hit_normal);
-    if (rdebug&RDEBUG_LIGHT) {
+    if (optical_debug&OPTICAL_DEBUG_LIGHT) {
 	VPRINT("after", swp->sw_hit.hit_normal);
     }
 

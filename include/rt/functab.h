@@ -1,7 +1,7 @@
 /*                      R T _ F U N C T A B . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2019 United States Government as represented by
+ * Copyright (c) 1993-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -124,10 +124,10 @@ struct rt_functab {
 
     int (*ft_plot)(struct bu_list * /*vhead*/,
 		   struct rt_db_internal * /*ip*/,
-		   const struct rt_tess_tol * /*ttol*/,
+		   const struct bg_tess_tol * /*ttol*/,
 		   const struct bn_tol * /*tol*/,
 		   const struct rt_view_info * /*view info*/);
-#define RTFUNCTAB_FUNC_PLOT_CAST(_func) ((int (*)(struct bu_list *, struct rt_db_internal *, const struct rt_tess_tol *, const struct bn_tol *, const struct rt_view_info *))((void (*)(void))_func))
+#define RTFUNCTAB_FUNC_PLOT_CAST(_func) ((int (*)(struct bu_list *, struct rt_db_internal *, const struct bg_tess_tol *, const struct bn_tol *, const struct rt_view_info *))((void (*)(void))_func))
 
     int (*ft_adaptive_plot)(struct rt_db_internal * /*ip*/,
 			    const struct rt_view_info * /*view info*/);
@@ -143,9 +143,9 @@ struct rt_functab {
     int (*ft_tessellate)(struct nmgregion ** /*r*/,
 			 struct model * /*m*/,
 			 struct rt_db_internal * /*ip*/,
-			 const struct rt_tess_tol * /*ttol*/,
+			 const struct bg_tess_tol * /*ttol*/,
 			 const struct bn_tol * /*tol*/);
-#define RTFUNCTAB_FUNC_TESS_CAST(_func) ((int (*)(struct nmgregion **, struct model *, struct rt_db_internal *, const struct rt_tess_tol *, const struct bn_tol *))((void (*)(void))_func))
+#define RTFUNCTAB_FUNC_TESS_CAST(_func) ((int (*)(struct nmgregion **, struct model *, struct rt_db_internal *, const struct bg_tess_tol *, const struct bn_tol *))((void (*)(void))_func))
     int (*ft_tnurb)(struct nmgregion ** /*r*/,
 		    struct model * /*m*/,
 		    struct rt_db_internal * /*ip*/,

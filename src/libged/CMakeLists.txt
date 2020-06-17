@@ -23,15 +23,25 @@ if(ADAPTAGRAMS_FOUND)
   set(LIBGED_CMD_INCLUDE_DIRS ${LIBGED_CMD_INCLUDE_DIRS} ${AVOID_INCLUDE_DIR})
 endif(ADAPTAGRAMS_FOUND)
 
-set(ENV_VARS_C "${CMAKE_CURRENT_BINARY_DIR}/env_vars.c")
+set(DEBUG_CMD_CPP "${CMAKE_CURRENT_BINARY_DIR}/debug_cmd.cpp")
 
-add_custom_command(OUTPUT ${ENV_VARS_C}
-  COMMAND env2c ${CMAKE_BINARY_DIR}/cmakefiles.cmake ${ENV_VARS_C}
+add_custom_command(OUTPUT ${DEBUG_CMD_CPP}
+  COMMAND debug2c ${CMAKE_BINARY_DIR}/cmakefiles.cmake ${DEBUG_CMD_CPP}
+  DEPENDS debug2c
+  COMMENT "[DEBUG2C] Scanning for debugging variables"
+  )
+set_source_files_properties(debug.cpp PROPERTIES OBJECT_DEPENDS ${DEBUG_CMD_CPP})
+DISTCLEAN(${DEBUG_CMD_CPP})
+
+set(ENV_CMD_C "${CMAKE_CURRENT_BINARY_DIR}/env_cmd.c")
+
+add_custom_command(OUTPUT ${ENV_CMD_C}
+  COMMAND env2c ${CMAKE_BINARY_DIR}/cmakefiles.cmake ${ENV_CMD_C}
   DEPENDS env2c
   COMMENT "[ENV2C] Scanning for environment variable usage"
   )
-set_source_files_properties(env.c PROPERTIES OBJECT_DEPENDS ${ENV_VARS_C})
-DISTCLEAN(${ENV_VARS_C})
+set_source_files_properties(env.c PROPERTIES OBJECT_DEPENDS ${ENV_CMD_C})
+DISTCLEAN(${ENV_CMD_C})
 
 set(LIBGED_SOURCES
   ${LIBGED_SOURCES}
@@ -45,14 +55,17 @@ set(LIBGED_SOURCES
   arb.c
   arced.c
   arot.c
-  attr.c
+  attr.cpp
   autoview.c
   bb.c
   bev.c
   bigE.c
   blast.c
   bo.c
-  bot.c
+  bot/bot.cpp
+  bot/check.cpp
+  bot/extrude.cpp
+  bot/remesh.cpp
   bot_condense.c
   bot_decimate.c
   bot_dump.c
@@ -65,10 +78,18 @@ set(LIBGED_SOURCES
   bot_split.c
   bot_sync.c
   bot_vertex_fuse.c
-  brep.c
+  brep/brep.cpp
+  brep/conversion.cpp
+  brep/csg.cpp
+  brep/info.cpp
+  brep/intersect.cpp
+  brep/pick.cpp
+  brep/plot.cpp
+  brep/tikz.cpp
+  brep/valid.cpp
   cat.c
   cc.c
-  center.c
+  center.cpp
   check/check.c
   check/check_adj_air.c
   check/check_centroid.c
@@ -88,7 +109,7 @@ set(LIBGED_SOURCES
   comb_color.c
   comb_std.c
   combmem.c
-  concat.c
+  concat.cpp
   constraint/constraint.c
   copy.c
   copyeval.c
@@ -96,6 +117,7 @@ set(LIBGED_SOURCES
   cpi.c
   dag.cpp
   dbip.c
+  debug.cpp
   debugbu.c
   debugdir.c
   debuglib.c
@@ -127,7 +149,8 @@ set(LIBGED_SOURCES
   eye.c
   eye_pos.c
   facedef.c
-  facetize.c
+  facetize_log.c
+  facetize.cpp
   fb2pix.c
   fbclear.c
   find.c
@@ -171,6 +194,7 @@ set(LIBGED_SOURCES
   killtree.c
   label.c
   lc.c
+  libfuncs.c
   lint.cpp
   list.c
   loadview.c
@@ -183,7 +207,7 @@ set(LIBGED_SOURCES
   make.c
   make_name.c
   match.c
-  mater.c
+  mater.cpp
   mirror.c
   model2grid_lu.c
   model2view.c
@@ -227,6 +251,7 @@ set(LIBGED_SOURCES
   prcolor.c
   prefix.c
   preview.c
+  process.c
   protate.c
   ps.c
   pscale.c
@@ -288,7 +313,6 @@ set(LIBGED_SOURCES
   shaded_mode.c
   shader.c
   shells.c
-  shape_recognition.cpp
   showmats.c
   simulate/ged_command.cpp
   simulate/rt_collision_algorithm.cpp
@@ -327,7 +351,6 @@ set(LIBGED_SOURCES
   view2model.c
   view2model_lu.c
   view2model_vec.c
-  view_obj.c
   viewdir.c
   voxelize.c
   vrot.c
@@ -335,7 +358,7 @@ set(LIBGED_SOURCES
   wcodes.c
   wdb_importFg4Section.c
   whatid.c
-  which.c
+  which.cpp
   which_shader.c
   who.c
   wmater.c
@@ -357,13 +380,14 @@ set(GED_INCLUDE_DIRS
   ${NMG_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
   ${WDB_INCLUDE_DIRS}
+  ${BREP_INCLUDE_DIRS}
   )
 
 # Local include directories
 # includes from plugins
 set(GED_LOCAL_INCLUDE_DIRS
-  ${PNG_INCLUDE_DIR}
-  ${REGEX_INCLUDE_DIR}
+  ${PNG_INCLUDE_DIRS}
+  ${REGEX_INCLUDE_DIRS}
   ${LIBGED_CMD_INCLUDE_DIRS}
   ${CMAKE_CURRENT_SOURCE_DIR}/../libbg
   ${CMAKE_CURRENT_BINARY_DIR}
@@ -375,29 +399,43 @@ if(BRLCAD_ENABLE_BULLET)
   set(CADBULLET_LIBRARY cadbullet)
 endif(BRLCAD_ENABLE_BULLET)
 
-BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;librt;libnmg;libfb;libbg;libbn;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${CADBULLET_LIBRARY};${REGEX_LIBRARY};${WINSOCK_LIB};${M_LIBRARY}")
+if (BRLCAD_ENABLE_OPENVDB)
+  include_directories(${OpenVDB_INCLUDE_DIRS})
+  include_directories(${Tbb_INCLUDE_DIRS})
+  include_directories(${IlmBase_INCLUDE_DIRS})
+  set(LIBGED_CMD_LIBS_LIST ${LIBGED_CMD_LIBS_LIST} "${OpenVDB_LIBRARIES};${IlmBase_LIBRARIES};${Tbb_LIBRARIES}")
+  # disable warnings due to unquellable issues in Boost and IlmBase/half headers
+  set_property(SOURCE bot_remesh.cpp APPEND PROPERTY COMPILE_FLAGS "${OpenVDB_DEFINITIONS} -w")
+endif (BRLCAD_ENABLE_OPENVDB)
+
+BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;liboptical;librt;libbrep;libnmg;libfb;libbg;libbn;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${CADBULLET_LIBRARY};${PNG_LIBRARIES};${REGEX_LIBRARIES};${WINSOCK_LIB};${M_LIBRARY}")
 SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 add_subdirectory(tests)
 add_subdirectory(simulate/tests)
 
+BRLCAD_ADDEXEC(test_help help/test_help.c libged TEST)
+
 set(ged_ignore_files
   CMakeLists.txt
   TODO
-  pnts_util.h
-  ged_private.h
+  alphanum.h
+  bot/ged_bot.h
+  brep/ged_brep.h
   check/check_private.h
+  ged_private.h
   joint.h
+  osg.cpp
+  pnts_util.h
   qray.h
+  simulate/NOTES
   simulate/rt_collision_algorithm.hpp
   simulate/rt_collision_shape.hpp
   simulate/rt_debug_draw.hpp
-  simulate/rt_motion_state.hpp
   simulate/rt_instance.hpp
+  simulate/rt_motion_state.hpp
   simulate/simulation.hpp
   simulate/utility.hpp
-  simulate/NOTES
-  osg.cpp
   )
 CMAKEFILES(${ged_ignore_files})
 

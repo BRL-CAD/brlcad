@@ -1,7 +1,7 @@
 /*                    R A Y D I F F . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2019 United States Government as represented by
+ * Copyright (c) 2015-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,16 +22,18 @@
 
 #include <string.h>
 
+#include "bu/app.h"
 #include "raytrace.h"
 #include "../analyze_private.h"
 #include "analyze.h"
+
 
 int
 main(int argc, char **argv)
 {
     int count = 0;
     fastf_t *rays;
-    int ncpus = bu_avail_cpus();
+    size_t ncpus = bu_avail_cpus();
     struct db_i *dbip = DBI_NULL;
     struct directory *dp = RT_DIR_NULL;
     struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
@@ -40,6 +42,8 @@ main(int argc, char **argv)
     struct rt_gen_worker_vars state;
     struct rt_i *rtip;
     struct bu_ptbl results = BU_PTBL_INIT_ZERO;
+
+    bu_setprogname(argv[0]);
 
     if (argc != 3) {
 	bu_log("Error - please specify a .g file and one object\n");
@@ -62,14 +66,18 @@ main(int argc, char **argv)
 
     dp = db_lookup(dbip, argv[2], LOOKUP_QUIET);
 
-    if (dp == RT_DIR_NULL) return 1;
+    if (dp == RT_DIR_NULL)
+	return 1;
 
-    /* TODO - should get bbox without doing this - does the API allow it without libged? */
+    /* TODO: call rt_bound_internal instead of prep directly to get
+     * the bounding box.
+     */
     rtip = rt_new_rti(dbip);
     state.rtip = rtip;
     state.resp = &resp;
     rt_init_resource(state.resp, 0, rtip);
-    if (rt_gettree(rtip, argv[2]) < 0) return -1;
+    if (rt_gettree(rtip, argv[2]) < 0)
+	return -1;
     rt_prep_parallel(rtip, 1);
 
     count = analyze_get_bbox_rays(&rays, rtip->mdl_min, rtip->mdl_max, &rtol);
@@ -79,6 +87,7 @@ main(int argc, char **argv)
     db_close(dbip);
     return 0;
 }
+
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                          P L A S T I C . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2019 United States Government as represented by
+ * Copyright (c) 1993-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,6 +24,8 @@
  */
 #ifndef OPTICAL_PLASTIC_H
 #define OPTICAL_PLASTIC_H
+
+#include "common.h"
 
 #define PL_NULL ((struct phong_specific *)0)
 #define PL_O(m) offsetof(struct phong_specific, m)

@@ -1,7 +1,7 @@
 /*                           R E C . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2019 United States Government as represented by
+ * Copyright (c) 1985-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -576,15 +576,15 @@ rt_rec_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     if (nhits > 3) {
 	/* collapse just one duplicate (4->3) */
 	if (NEAR_EQUAL(hits[0].hit_dist, hits[3].hit_dist, tol_dist)) {
-	    if (RT_G_DEBUG&DEBUG_ARB8)
+	    if (RT_G_DEBUG&RT_DEBUG_ARB8)
 		bu_log("rt_rec_shot(%s): repeat hit, collapsing 0&3\n", stp->st_name);
 	    nhits--; /* discard [3] */
 	} else if (NEAR_EQUAL(hits[1].hit_dist, hits[3].hit_dist, tol_dist)) {
-	    if (RT_G_DEBUG&DEBUG_ARB8)
+	    if (RT_G_DEBUG&RT_DEBUG_ARB8)
 		bu_log("rt_rec_shot(%s): repeat hit, collapsing 1&3\n", stp->st_name);
 	    nhits--; /* discard [3] */
 	} else if (NEAR_EQUAL(hits[2].hit_dist, hits[3].hit_dist, tol_dist)) {
-	    if (RT_G_DEBUG&DEBUG_ARB8)
+	    if (RT_G_DEBUG&RT_DEBUG_ARB8)
 		bu_log("rt_rec_shot(%s): repeat hit, collapsing 2&3\n", stp->st_name);
 	    nhits--; /* discard [3] */
 	}
@@ -592,15 +592,15 @@ rt_rec_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     if (nhits > 2) {
 	/* collapse any other duplicate (3->2) */
 	if (NEAR_EQUAL(hits[0].hit_dist, hits[2].hit_dist, tol_dist)) {
-	    if (RT_G_DEBUG&DEBUG_ARB8)
+	    if (RT_G_DEBUG&RT_DEBUG_ARB8)
 		bu_log("rt_rec_shot(%s): repeat hit, collapsing 0&2\n", stp->st_name);
 	    nhits--; /* discard [2] */
 	} else if (NEAR_EQUAL(hits[1].hit_dist, hits[2].hit_dist, tol_dist)) {
-	    if (RT_G_DEBUG&DEBUG_ARB8)
+	    if (RT_G_DEBUG&RT_DEBUG_ARB8)
 		bu_log("rt_rec_shot(%s): repeat hit, collapsing 1&2\n", stp->st_name);
 	    nhits--; /* discard [2] */
 	} else if (NEAR_EQUAL(hits[0].hit_dist, hits[1].hit_dist, tol_dist)) {
-	    if (RT_G_DEBUG&DEBUG_ARB8)
+	    if (RT_G_DEBUG&RT_DEBUG_ARB8)
 		bu_log("rt_rec_shot(%s): repeat hit, collapsing 0&1\n", stp->st_name);
 	    hits[1] = hits[2];	/* struct copy */
 	    nhits--; /* moved [2] to [1], discarded [2] */

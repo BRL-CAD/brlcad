@@ -1,7 +1,7 @@
 /*                       G E T H O S T N A M E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,11 +21,7 @@
 #include "common.h"
 
 #ifdef HAVE_SYS_TYPES_H
-#  define _DARWIN_C_SOURCE /* for sysctl method on Mac */
 #  include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_SYSCTL_H
-#  include <sys/sysctl.h>
 #endif
 #ifdef HAVE_SYS_UTSNAME_H
 #  include <sys/utsname.h>
@@ -76,23 +72,14 @@ bu_gethostname(char *result, size_t hostlen)
     }
 #endif
 
-    /* METHOD 3: use sysctl() */
-#if defined(HAVE_SYSCTL) && defined(CTL_KERN) && defined(KERN_HOSTNAME)
-    if (BU_STR_EMPTY(hostname)) {
-	int mib[2] = { CTL_KERN, KERN_HOSTNAME };
-	size_t len = MAXPATHLEN;
-	sysctl(mib, 2, hostname, &len, NULL, 0);
-    }
-#endif /* HAVE_SYSCTL */
-
-    /* METHOD 4: try procfs, typically on Linux */
+    /* METHOD 3: try procfs, typically on Linux */
     if (BU_STR_EMPTY(hostname) && bu_file_exists("/proc/sys/kernel/hostname", NULL)) {
 	FILE *fp = fopen("/proc/sys/kernel/hostname", "r");
 	bu_fgets(hostname, MAXPATHLEN, fp);
 	fclose(fp);
     }
 
-    /* METHOD 5: try GetComputerName, typically on Windows.  it's not
+    /* METHOD 4: try GetComputerName, typically on Windows.  it's not
      * exactly what we're wanting, but close enough if gethostname()
      * failed for some reason.
      */

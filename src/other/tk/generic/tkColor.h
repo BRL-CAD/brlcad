@@ -12,12 +12,7 @@
 #ifndef _TKCOLOR
 #define _TKCOLOR
 
-#include <tkInt.h>
-
-#ifdef BUILD_tk
-#undef TCL_STORAGE_CLASS
-#define TCL_STORAGE_CLASS DLLEXPORT
-#endif
+#include "tkInt.h"
 
 /*
  * One of the following data structures is used to keep track of each color
@@ -37,7 +32,7 @@ typedef struct TkColor {
 				 * COLOR_MAGIC. */
     GC gc;			/* Simple gc with this color as foreground
 				 * color and all other fields defaulted. May
-				 * be None. */
+				 * be NULL. */
     Screen *screen;		/* Screen where this color is valid. Used to
 				 * delete it, and to find its display. */
     Colormap colormap;		/* Colormap from which this entry was
@@ -76,8 +71,5 @@ MODULE_SCOPE void	TkpFreeColor(TkColor *tkColPtr);
 #endif
 MODULE_SCOPE TkColor *	TkpGetColor(Tk_Window tkwin, Tk_Uid name);
 MODULE_SCOPE TkColor *	TkpGetColorByValue(Tk_Window tkwin, XColor *colorPtr);
-
-#undef TCL_STORAGE_CLASS
-#define TCL_STORAGE_CLASS DLLIMPORT
 
 #endif /* _TKCOLOR */

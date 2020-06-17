@@ -1,7 +1,7 @@
 /*                  D I R N A M E . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2019 United States Government as represented by
+ * Copyright (c) 2011-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -76,11 +76,13 @@ automatic_test(const char *input)
 int
 main(int argc, char *argv[])
 {
+    bu_setprogname(argv[0]);
+
     if (argc > 2)
-       fprintf(stderr, "Usage: %s {test_string}\n", argv[0]);
+	fprintf(stderr, "Usage: %s {test_string}\n", argv[0]);
 
     if (argc == 1)
-       return !automatic_test(NULL);
+	return !automatic_test(NULL);
 
     return !automatic_test(argv[1]);
 }

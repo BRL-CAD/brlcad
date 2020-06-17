@@ -1,7 +1,7 @@
 /*                      D B 5 _ S I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2019 United States Government as represented by
+ * Copyright (c) 2013-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,6 +21,7 @@
 #include "common.h"
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/time.h"
 #include "bu/units.h"
 #include "raytrace.h"
@@ -38,6 +39,8 @@ main(int argc, char *argv[])
     struct db_i *dbip;
     struct directory *dp;
     char hlen[6] = { '\0' };
+
+    bu_setprogname(argv[0]);
 
     if (argc != 3) {
 	bu_exit(1, "Usage: %s file.g [object]", argv[0]);

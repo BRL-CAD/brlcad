@@ -34,8 +34,17 @@
 #define _BU_TCM_H
 
 #include "common.h"
+
+#if !defined(BRLCADBUILD)
+#  error "Warning: included bu/tc.h (compile-time API) without BRLCADBUILD defined"
+#endif
+#if !defined(HAVE_CONFIG_H)
+#  error "Warning: included bu/tc.h (compile-time API) without HAVE_CONFIG_H defined"
+#endif
+
 #include "bu/defines.h"
-#include "bio.h"
+
+#include "bio.h" /* For windows.h */
 
 __BEGIN_DECLS
 
@@ -46,7 +55,6 @@ __BEGIN_DECLS
 #  include <process.h>
 #  include <sys/timeb.h>
 #endif
-
 
 #define bu_thrd_error    0 /**< The requested operation failed */
 #define bu_thrd_success  1 /**< The requested operation succeeded */
@@ -79,9 +87,9 @@ typedef pthread_mutex_t bu_mtx_t;
 /* Condition variable */
 #if defined(HAVE_WINDOWS_H)
 typedef struct {
-  HANDLE mEvents[2];                  /* Signal and broadcast event HANDLEs. */
-  unsigned int mWaitersCount;         /* Count of the number of waiters. */
-  CRITICAL_SECTION mWaitersCountLock; /* Serialize access to mWaitersCount. */
+    HANDLE mEvents[2];                  /* Signal and broadcast event HANDLEs. */
+    unsigned int mWaitersCount;         /* Count of the number of waiters. */
+    CRITICAL_SECTION mWaitersCountLock; /* Serialize access to mWaitersCount. */
 } bu_cnd_t;
 #else
 typedef pthread_cond_t bu_cnd_t;

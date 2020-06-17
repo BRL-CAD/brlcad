@@ -1,8 +1,0 @@
-set(libtermlib_ignore_files
-CMakeLists.txt
-termcap.c
-termcap.h
-termcap.src
-tgoto.c
-tputs.c
-)

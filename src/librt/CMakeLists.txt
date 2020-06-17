@@ -19,10 +19,9 @@ endif (BRLCAD_ENABLE_OPENCL)
 # locally used but not needed by users of the library
 set(RT_LOCAL_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${REGEX_INCLUDE_DIR}
-  ${VDS_INCLUDE_DIR}
-  ${GDIAM_INCLUDE_DIR}
-  ${LZ4_INCLUDE_DIR}
+  ${REGEX_INCLUDE_DIRS}
+  ${VDS_INCLUDE_DIRS}
+  ${GDIAM_INCLUDE_DIRS}
   )
 
 BRLCAD_LIB_INCLUDE_DIRS(rt RT_INCLUDE_DIRS RT_LOCAL_INCLUDE_DIRS)
@@ -35,6 +34,7 @@ set(LIBRT_SOURCES
   bool.c
   bundle.c
   cache.c
+  cache_lz4.c
   cmd.c
   comb/comb.c
   comb/comb_brep.cpp
@@ -97,7 +97,6 @@ set(LIBRT_SOURCES
   primitives/bot/btgf.c
   primitives/bot/decimate.c
   primitives/brep/brep.cpp
-  primitives/brep/brep_debug.cpp
   primitives/bspline/bspline.cpp
   primitives/bspline/bspline_brep.cpp
   primitives/bspline/bspline_mirror.c
@@ -219,6 +218,7 @@ set(LIBRT_SOURCES
   tol.c
   transform.c
   tree.c
+  uv.c
   vers.c
   vlist.c
   vshoot.c
@@ -242,7 +242,6 @@ endif(BRLCAD_ENABLE_GCT)
 
 set(librt_ignored_files
   cache.h
-  columnparse.c
   librt_private.h
   prcomb.c
   primitives/bot/bot_edge.h
@@ -297,6 +296,7 @@ set(librt_ignored_files
   subd_test_bot.asc
   test_bot2nurbs.cpp
   test_brepreport.cpp
+  test_dbio.c
   test_nurbsfit.cpp
   test_root3-subd.cpp
   timer-nt.c
@@ -361,16 +361,29 @@ if(BRLCAD_ENABLE_SPR)
   set(SPR_LIB libSPR)
 endif(BRLCAD_ENABLE_SPR)
 
-BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${OPENCL_LIBS};${GDIAM_LIBRARY};${VDS_LIBRARY};libbrep;libnmg;libbg;libbn;libbu;${OPENNURBS_LIBRARIES};${P2T_LIBRARY};${SPR_LIB};${REGEX_LIBRARY};${LZ4_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
+BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${OPENCL_LIBS};${GDIAM_LIBRARY};${VDS_LIBRARY};libbrep;libnmg;libbg;libbn;libbu;${OPENNURBS_LIBRARIES};${P2T_LIBRARY};${SPR_LIB};${REGEX_LIBRARIES};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
 
 set_target_properties(librt PROPERTIES VERSION 20.0.1 SOVERSION 20)
-if(CPP_DLL_DEFINES)
+if(HIDE_INTERNAL_SYMBOLS)
   set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "TIE_DLL_EXPORTS")
   set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "DB5_DLL_EXPORTS")
-  set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "VDS_DLL_IMPORTS")
-  set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "GDIAM_DLL_IMPORTS")
-  set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "LZ4_DLL_IMPORT=1")
-endif(CPP_DLL_DEFINES)
+  if(TARGET vds OR HIDE_INTERNAL_SYMBOLS_EXT)
+    set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "VDS_DLL_IMPORTS")
+  endif(TARGET vds OR HIDE_INTERNAL_SYMBOLS_EXT)
+  if(TARGET gdiam OR HIDE_INTERNAL_SYMBOLS_EXT)
+    set_property(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "GDIAM_DLL_IMPORTS")
+  endif(TARGET gdiam OR HIDE_INTERNAL_SYMBOLS_EXT)
+  if (TARGET librt-obj)
+    set_property(TARGET librt-obj APPEND PROPERTY COMPILE_DEFINITIONS "TIE_DLL_EXPORTS")
+    set_property(TARGET librt-obj APPEND PROPERTY COMPILE_DEFINITIONS "DB5_DLL_EXPORTS")
+    if(TARGET vds OR HIDE_INTERNAL_SYMBOLS_EXT)
+      set_property(TARGET librt-obj APPEND PROPERTY COMPILE_DEFINITIONS "VDS_DLL_IMPORTS")
+    endif(TARGET vds OR HIDE_INTERNAL_SYMBOLS_EXT)
+    if(TARGET gdiam OR HIDE_INTERNAL_SYMBOLS_EXT)
+      set_property(TARGET librt-obj APPEND PROPERTY COMPILE_DEFINITIONS "GDIAM_DLL_IMPORTS")
+    endif(TARGET gdiam OR HIDE_INTERNAL_SYMBOLS_EXT)
+  endif (TARGET librt-obj)
+endif(HIDE_INTERNAL_SYMBOLS)
 
 # The following is build code for test applications used during
 # development
@@ -388,8 +401,10 @@ endif(CPP_DLL_DEFINES)
 
 add_subdirectory(tests)
 
-CMAKEFILES(CMakeLists.txt)
-CMAKEFILES(db_fp.cxx)
+CMAKEFILES(
+  CMakeLists.txt
+  db_fp.cpp
+  )
 
 # Local Variables:
 # tab-width: 8

@@ -1,7 +1,7 @@
 /*                     S H _ R T R A N S . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2019 United States Government as represented by
+ * Copyright (c) 1998-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -101,7 +101,7 @@ rtrans_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, con
 
     BN_RANDSEED(rtrans_sp->next_rand, 3);
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_struct_print(rp->reg_name, rtrans_parse, (char *)rtrans_sp);
 
     return 1;
@@ -136,7 +136,7 @@ rtrans_render(struct application *ap, const struct partition *pp, struct shadewo
     RT_CHECK_PT(pp);
     CK_RTRANS_SP(rtrans_sp);
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_struct_print("random transparency", rtrans_parse, (char *)rtrans_sp);
 
     if (rtrans_sp->threshold >= 1.0 ||

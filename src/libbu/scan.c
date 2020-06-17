@@ -1,7 +1,7 @@
 /*                         S C A N . C
  * BRL-CAD
  *
- * Copyright (c) 2014-2019 United States Government as represented by
+ * Copyright (c) 2014-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,7 +51,7 @@ bu_scan_fastf_t(int *c, const char *src, const char *delim, size_t n, ...)
      * skip chars in a loop until none are found.
      */
 
-    delim_len = strlen(delim);
+    delim_len = (int)strlen(delim);
     /* + 3 here to make room for the two characters '%' and 'n' as
      * well as the terminating '\0'
      */

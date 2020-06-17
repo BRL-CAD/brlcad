@@ -36,6 +36,8 @@
 #
 ###############################################################################
 
+if (NOT PROJ4_FOUND)
+
 # Try to use OSGeo4W installation
 if(WIN32)
     set(PROJ4_OSGEO4W_HOME "C:/OSGeo4W") 
@@ -46,7 +48,7 @@ if(WIN32)
 endif()
 
 find_path(PROJ4_INCLUDE_DIR proj_api.h
-    PATHS ${PROJ4_OSGEO4W_HOME}/include
+	PATHS ${PROJ4_ROOT}/include/proj ${PROJ4_OSGEO4W_HOME}/include
     DOC "Path to PROJ.4 library include directory")
 
 if (PROJ4_INCLUDE_DIR)
@@ -63,7 +65,7 @@ endif()
 set(PROJ4_NAMES ${PROJ4_NAMES} proj proj_i)
 find_library(PROJ4_LIBRARY
     NAMES ${PROJ4_NAMES}
-    PATHS ${PROJ4_OSGEO4W_HOME}/lib
+    PATHS ${PROJ4_ROOT}/lib64 ${PROJ4_ROOT}/lib ${PROJ4_OSGEO4W_HOME}/lib
     DOC "Path to PROJ.4 library file")
 
 if(PROJ4_LIBRARY)
@@ -76,3 +78,5 @@ include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(PROJ4 DEFAULT_MSG
 	PROJ4_LIBRARY
 	PROJ4_INCLUDE_DIR)
+
+endif (NOT PROJ4_FOUND)

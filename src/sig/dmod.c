@@ -1,7 +1,7 @@
 /*                          D M O D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,6 +33,8 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/app.h"
+#include "bu/malloc.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"
 #include "vmath.h"
@@ -42,7 +44,6 @@
 #define MULT 2
 #define ABS 3
 #define POW 4
-#define BUFLEN 4096
 
 
 static const char usage[] = "Usage: dmod [-a add | -s sub | -m mult | -d div | -A | -e exp | -r root] [doubles]\n";
@@ -134,14 +135,16 @@ main(int argc, char *argv[])
     int j;
     size_t ret;
 
-    double buf[BUFLEN] = {0.0};		/* working buffer */
+    double buf[BU_PAGE_SIZE] = {0.0};		/* working buffer */
+
+    bu_setprogname(argv[0]);
 
     if (!get_args(argc, argv) || isatty(fileno(infp))
 	|| isatty(fileno(stdout))) {
 	bu_exit(1, "%s", usage);
     }
 
-    while ((n = fread(buf, sizeof(*buf), BUFLEN, infp)) > 0) {
+    while ((n = fread(buf, sizeof(*buf), BU_PAGE_SIZE, infp)) > 0) {
 	for (i = 0; i < numop; i++) {
 	    arg = val[ i ];
 	    switch (op[i]) {

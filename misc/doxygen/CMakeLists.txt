@@ -46,7 +46,6 @@ set(DOX_LIBS
   libtclcad
   libpkg
   libtermio
-  libcursor
   )
 
 foreach(libname ${DOX_LIBS})
@@ -183,7 +182,6 @@ set(doxygen_ignore_files
   libbn.dox
   libbrep.dox
   libbu.dox
-  libcursor.dox
   libdm.dox
   libfb.dox
   libfft.dox

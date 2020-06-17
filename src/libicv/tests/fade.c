@@ -1,7 +1,7 @@
 /*                      I C V _ F A D E . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2019 United States Government as represented by
+ * Copyright (c) 2013-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@
 #include <stdlib.h>
 
 #include "bio.h"
+#include "bu/app.h"
 #include "bu/log.h"
 #include "bu/mime.h"
 #include "bu/getopt.h"
@@ -57,6 +58,9 @@ int main(int argc, char* argv[])
     icv_image_t *bif;
     bu_mime_image_t format = BU_MIME_IMAGE_AUTO;
     double multiplier=0.2;
+
+    bu_setprogname(argv[0]);
+
     if (argc<2) {
 	usage();
 	return 1;

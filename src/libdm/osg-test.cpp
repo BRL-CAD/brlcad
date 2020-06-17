@@ -1,7 +1,7 @@
 /*                    O S G - T E S T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2019 United States Government as represented by
+ * Copyright (c) 2014-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -67,6 +67,7 @@
 
 #include <osgText/Text>
 
+#include "bu/app.h"
 #include "bu/list.h"
 #include "raytrace.h"
 #include "rt/func.h"
@@ -78,7 +79,7 @@ obj_vlist(const struct directory *dp, const struct db_i *dbip, mat_t mat)
     struct bu_list *plot_segments;
     struct rt_db_internal intern;
     const struct bn_tol tol = {BN_TOL_MAGIC, 0.0005, 0.0005 * 0.0005, 1e-6, 1 - 1e-6};
-    const struct rt_tess_tol rttol = {RT_TESS_TOL_MAGIC, 0.0, 0.01, 0};
+    const struct bg_tess_tol rttol = {BG_TESS_TOL_MAGIC, 0.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     RT_DB_INTERNAL_INIT(&intern);
     if (rt_db_get_internal(&intern, dp, dbip, mat, &rt_uniresource) < 0) {
 	bu_exit(1, "ERROR: Unable to get internal representation of %s\n", dp->d_namep);
@@ -588,6 +589,8 @@ int main( int argc, char **argv )
     std::map<const struct directory *, osg::ref_ptr<osg::Group> > osg_nodes;
     struct db_i *dbip = DBI_NULL;
     struct db_full_path path;
+
+    bu_setprogname(argv[0]);
 
     if (argc != 3 || !argv) {
 	bu_exit(1, "Error - please specify a .g file and an object\n");

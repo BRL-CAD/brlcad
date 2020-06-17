@@ -1,7 +1,7 @@
 /*                     D B _ L O O K U P . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2019 United States Government as represented by
+ * Copyright (c) 1988-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -162,7 +162,7 @@ db_lookup(const struct db_i *dbip, const char *name, int noisy)
 
     /* No string, no lookup */
     if (UNLIKELY(!name || name[0] == '\0')) {
-	if (UNLIKELY(noisy || RT_G_DEBUG&DEBUG_DB)) {
+	if (UNLIKELY(noisy || RT_G_DEBUG&RT_DEBUG_DB)) {
 	    bu_log("db_lookup received NULL or empty name\n");
 	}
 	return RT_DIR_NULL;
@@ -212,14 +212,14 @@ db_lookup(const struct db_i *dbip, const char *name, int noisy)
 
 	    /* first two checks are for speed */
 	    if ((n0 == *(this_obj=dp->d_namep)) && (n1 == this_obj[1]) && (BU_STR_EQUAL(name, this_obj))) {
-		if (UNLIKELY(RT_G_DEBUG&DEBUG_DB)) {
+		if (UNLIKELY(RT_G_DEBUG&RT_DEBUG_DB)) {
 		    bu_log("db_lookup(%s) %p\n", name, (void *)dp);
 		}
 		return dp;
 	    }
 	}
 
-	if (noisy || RT_G_DEBUG&DEBUG_DB) {
+	if (noisy || RT_G_DEBUG&RT_DEBUG_DB) {
 	    bu_log("db_lookup(%s) failed: %s does not exist\n", name, name);
 	}
 
@@ -230,7 +230,7 @@ db_lookup(const struct db_i *dbip, const char *name, int noisy)
 
 
 struct directory *
-db_diradd(struct db_i *dbip, const char *name, off_t laddr, size_t len, int flags, void *ptr)
+db_diradd(struct db_i *dbip, const char *name, b_off_t laddr, size_t len, int flags, void *ptr)
 {
     struct directory **headp;
     struct directory *dp;
@@ -239,7 +239,7 @@ db_diradd(struct db_i *dbip, const char *name, off_t laddr, size_t len, int flag
 
     RT_CK_DBI(dbip);
 
-    if (RT_G_DEBUG&DEBUG_DB) {
+    if (RT_G_DEBUG&RT_DEBUG_DB) {
 	bu_log("db_diradd(dbip=%p, name='%s', addr=%jd, len=%zu, flags=0x%x, ptr=%p)\n",
 	       (void *)dbip, name, (intmax_t)laddr, len, flags, ptr);
     }

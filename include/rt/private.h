@@ -1,7 +1,7 @@
 /*                       P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2019 United States Government as represented by
+ * Copyright (c) 1993-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,9 +39,9 @@ __BEGIN_DECLS
  * Used by rpc.c, ehy.c, epa.c, eto.c and rhc.c to contain
  * forward-linked lists of points.
  */
-struct rt_pt_node {
+struct rt_pnt_node {
     point_t p;                  /**< @brief  a point */
-    struct rt_pt_node *next;    /**< @brief  ptr to next pt */
+    struct rt_pnt_node *next;    /**< @brief  ptr to next pt */
 };
 
 

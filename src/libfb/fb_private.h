@@ -1,7 +1,7 @@
 /*                   F B _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2019 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -64,9 +64,15 @@ FB_EXPORT extern fb memory_interface, fb_null_interface;
 /* Shared memory (shmget et. al.) key common to multiple framebuffers */
 #define SHMEM_KEY 42
 
-/* XXX - arbitrary upper bound */
-#define FB_XMAXSCREEN 32*1024
-#define FB_YMAXSCREEN 32*1024
+/* Maximum memory buffer allocation.
+ *
+ * Care must be taken as this can result in a large default memory
+ * allocation that can have an impact on performance or minimum system
+ * requirements.  For example, 20*1024 results in a 20480x20480 buffer
+ * and a 1.6GB allocation.  Using 32*1024 results in a 4GB allocation.
+ */
+#define FB_XMAXSCREEN 20*1024 /* 1.6GB */
+#define FB_YMAXSCREEN 20*1024 /* 1.6GB */
 
 /* setting to 1 turns on general intrface debugging for all fb types */
 #define FB_DEBUG 0

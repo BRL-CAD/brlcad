@@ -1,7 +1,7 @@
 /*                 Representation.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2019 United States Government as represented by
+ * Copyright (c) 1994-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -64,6 +64,10 @@ public:
     string GetRepresentationContextName();
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual void Print(int level);
+
+    string Name();
+
+    LIST_OF_REPRESENTATION_ITEMS *items_();
 
     //static methods
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);

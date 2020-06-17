@@ -1,4 +1,4 @@
-# Copyright (c) 2016 United States Government as represented by
+# Copyright (c) 2016-2020 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -64,7 +64,29 @@ include(ExternalProject)
 # Note- make sure CMAKE_BINARY_DIR and CMAKE_INSTALL_PREFIX are set before including this file
 include(${CMAKE_SOURCE_DIR}/CMake/ExternalProject_Target.cmake)
 
-
+# With MSVC, some of the subbuilds are going to need the vcvars bat file
+# to set up the environment.
+if(MSVC)
+  get_filename_component(COMPILER_DIR "${CMAKE_C_COMPILER}" DIRECTORY)
+  get_filename_component(COMPILER_ROOT "${COMPILER_DIR}" NAME)
+  set(VCVARS_BAT "${COMPILER_DIR}/vcvars${COMPILER_ROOT}.bat")
+  if(NOT EXISTS "${VCVARS_BAT}")
+    # Try the VS2017 location (https://stackoverflow.com/q/43372235)
+    set(COMPILER_ROOT "")
+    foreach(DIRS RANGE 0 5)
+      get_filename_component(COMPILER_DIR "${COMPILER_DIR}" DIRECTORY)
+    endforeach(DIRS RANGE 0 5)
+    set(COMPILER_DIR "${COMPILER_DIR}/Auxiliary/Build")
+    if(CMAKE_CL_64)
+      set(VCVARS_BAT "${COMPILER_DIR}/vcvars64.bat")
+    else(CMAKE_CL_64)
+      set(VCVARS_BAT "${COMPILER_DIR}/vcvars32.bat")
+    endif(CMAKE_CL_64)
+    if(NOT EXISTS "${VCVARS_BAT}")
+      message(FATAL_ERROR "Could not find vcvars bat file in ${COMPILER_DIR}")
+    endif(NOT EXISTS "${VCVARS_BAT}")
+  endif(NOT EXISTS "${VCVARS_BAT}")
+endif(MSVC)
 
 ###############################################################################
 #                                 Zlib
@@ -74,12 +96,21 @@ ExternalProject_Add(ZLIB_BLD
   URL_HASH MD5=1c9f62f0778697a09d36121ead88e08e
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}
   )
-ExternalProject_Target(zlib ZLIB_BLD
-  OUTPUT_FILE libz${CMAKE_SHARED_LIBRARY_SUFFIX}.1.2.11
-  STATIC_OUTPUT_FILE libz${CMAKE_STATIC_LIBRARY_SUFFIX}
-  SYMLINKS "libz${CMAKE_SHARED_LIBRARY_SUFFIX};libz${CMAKE_SHARED_LIBRARY_SUFFIX}.1"
-  LINK_TARGET "libz${CMAKE_SHARED_LIBRARY_SUFFIX}"
-  )
+if(NOT MSVC)
+  ExternalProject_Target(zlib ZLIB_BLD
+    OUTPUT_FILE libz${CMAKE_SHARED_LIBRARY_SUFFIX}.1.2.11
+    STATIC_OUTPUT_FILE libz${CMAKE_STATIC_LIBRARY_SUFFIX}
+    SYMLINKS "libz${CMAKE_SHARED_LIBRARY_SUFFIX};libz${CMAKE_SHARED_LIBRARY_SUFFIX}.1"
+    LINK_TARGET "libz${CMAKE_SHARED_LIBRARY_SUFFIX}"
+    )
+else(NOT MSVC)
+  ExternalProject_Target(zlib ZLIB_BLD
+    OUTPUT_FILE zlib${CMAKE_SHARED_LIBRARY_SUFFIX}
+    STATIC_OUTPUT_FILE zlibstatic${CMAKE_STATIC_LIBRARY_SUFFIX}
+    LINK_TARGET_DEBUG "zlibd${CMAKE_SHARED_LIBRARY_SUFFIX}"
+    STATIC_LINK_TARGET_DEBUG "zlibstaticd${CMAKE_STATIC_LIBRARY_SUFFIX}"
+    )
+endif(NOT MSVC)
 ExternalProject_ByProducts(ZLIB_BLD ${INCLUDE_DIR}
   zconf.h
   zlib.h
@@ -91,7 +122,7 @@ ExternalProject_ByProducts(ZLIB_BLD ${INCLUDE_DIR}
 # itself is not a build target, but has to require that the ZLIB_BLD target
 # execute before anything that needs it is built.
 set(ZLIB_LIBRARY zlib)
-
+set(ZLIB_INCLUDE_DIR ${CMAKE_BINARY_DIR}/${INCLUDE_DIR})
 
 ###############################################################################
 #                                 libpng 
@@ -244,8 +275,8 @@ if(NOT MSVC)
       URL_HASH MD5=872f757ec180e8c51918ff39705c40de
       PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${FONTCONFIG_PATCH_FILES}
       CONFIGURE_COMMAND ${CMAKE_COMMAND} -E remove ${FONTCONFIG_SRC_DIR}/src/fcobjshash.gperf
-                COMMAND ${CMAKE_COMMAND} -E remove ${FONTCONFIG_SRC_DIR}/src/fcobjshash.h
-		COMMAND ${CMAKE_COMMAND} -E env GPERF=${CMAKE_BINARY_DIR}/${BIN_DIR}/gperf${CMAKE_EXECUTABLE_SUFFIX} PKG_CONFIG_PATH=${CMAKE_BINARY_DIR}/${LIB_DIR}/pkgconfig FREETYPE_LIBS=${CMAKE_BINARY_DIR}/${LIB_DIR}/libfreetype${CMAKE_SHARED_LIBRARY_SUFFIX} FREETYPE_LIBS=${CMAKE_BINARY_DIR}/${LIB_DIR}/libfreetype${CMAKE_SHARED_LIBRARY_SUFFIX} FREETYPE_CFLAGS=-I${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/freetype2 LDFLAGS=-lfreetype ${FONTCONFIG_SRC_DIR}/configure --prefix=${CMAKE_BINARY_DIR}
+      COMMAND ${CMAKE_COMMAND} -E remove ${FONTCONFIG_SRC_DIR}/src/fcobjshash.h
+      COMMAND ${CMAKE_COMMAND} -E env GPERF=${CMAKE_BINARY_DIR}/${BIN_DIR}/gperf${CMAKE_EXECUTABLE_SUFFIX} PKG_CONFIG_PATH=${CMAKE_BINARY_DIR}/${LIB_DIR}/pkgconfig FREETYPE_LIBS=${CMAKE_BINARY_DIR}/${LIB_DIR}/libfreetype${CMAKE_SHARED_LIBRARY_SUFFIX} FREETYPE_LIBS=${CMAKE_BINARY_DIR}/${LIB_DIR}/libfreetype${CMAKE_SHARED_LIBRARY_SUFFIX} FREETYPE_CFLAGS=-I${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/freetype2 LDFLAGS=-lfreetype ${FONTCONFIG_SRC_DIR}/configure --prefix=${CMAKE_BINARY_DIR}
       BUILD_COMMAND make -j9
       BUILD_IN_SOURCE 1
       INSTALL_COMMAND make install
@@ -265,22 +296,37 @@ endif(NOT MSVC)
 #                                 Tcl
 ###############################################################################
 set(TCL_SRC_DIR "${CMAKE_BINARY_DIR}/TCL_BLD-prefix/src/TCL_BLD")
-set(TCL_PATCH_FILES "${TCL_SRC_DIR}/unix/configure" "${TCL_SRC_DIR}/macosx/configure" "${TCL_SRC_DIR}/unix/tcl.m4")
-ExternalProject_Add(TCL_BLD
-  URL ${CMAKE_SOURCE_DIR}/external/tcl8.7a1-src.tar.gz
-  URL_HASH MD5=27efa8d3d37efa3f06fc92f122f58f6f
-  PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${TCL_PATCH_FILES}
-  CONFIGURE_COMMAND ${TCL_SRC_DIR}/unix/configure --prefix=${CMAKE_BINARY_DIR}
-  BUILD_COMMAND make -j9
-  INSTALL_COMMAND make install
-  )
+set(TCL_SRC "${CMAKE_SOURCE_DIR}/external/tcl8.6.9-src.tar.gz")
+set(TCL_MD5 "aa0a121d95a0e7b73a036f26028538d4")
+set(TCL_MINOR_VERSION 6)
+set(ITCL_VERSION 4.1.2)
+if(NOT MSVC)
+  set(TCL_PATCH_FILES "${TCL_SRC_DIR}/unix/configure" "${TCL_SRC_DIR}/macosx/configure" "${TCL_SRC_DIR}/unix/tcl.m4")
+  ExternalProject_Add(TCL_BLD
+    URL ${TCL_SRC}
+    URL_HASH MD5=${TCL_MD5}
+    PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${TCL_PATCH_FILES}
+    CONFIGURE_COMMAND ${TCL_SRC_DIR}/unix/configure --prefix=${CMAKE_BINARY_DIR}
+    BUILD_COMMAND make -j9
+    INSTALL_COMMAND make install
+    )
+else(NOT MSVC)
+  ExternalProject_Add(TCL_BLD
+    URL ${TCL_SRC}
+    URL_HASH MD5=${TCL_MD5}
+    CONFIGURE_COMMAND ""
+    BINARY_DIR ${TCL_SRC_DIR}/win
+    BUILD_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc INSTALLDIR=${CMAKE_BINARY_DIR}
+    INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install INSTALLDIR=${CMAKE_BINARY_DIR}
+    )
+endif(NOT MSVC)
 ExternalProject_Target(tcl TCL_BLD
-  OUTPUT_FILE libtcl8.7${CMAKE_SHARED_LIBRARY_SUFFIX}
-  STATIC_OUTPUT_FILE libtclstub8.7${CMAKE_STATIC_LIBRARY_SUFFIX}
+  OUTPUT_FILE libtcl8.${TCL_MINOR_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}
+  STATIC_OUTPUT_FILE libtclstub8.${TCL_MINOR_VERSION}${CMAKE_STATIC_LIBRARY_SUFFIX}
   RPATH
   )
 ExternalProject_Target(tclsh TCL_BLD
-  OUTPUT_FILE tclsh8.7${CMAKE_EXECUTABLE_SUFFIX}
+  OUTPUT_FILE tclsh8.${TK_MINOR_VERSION}${CMAKE_EXECUTABLE_SUFFIX}
   RPATH EXEC
   )
 ExternalProject_ByProducts(TCL_BLD ${LIB_DIR} FIXPATH
@@ -305,24 +351,38 @@ ExternalProject_ByProducts(TCL_BLD ${LIB_DIR} ${TCL_LIB_BYPRODUCTS})
 #                                 Tk
 ###############################################################################
 set(TK_SRC_DIR "${CMAKE_BINARY_DIR}/TK_BLD-prefix/src/TK_BLD")
-set(TK_PATCH_FILES "${TK_SRC_DIR}/unix/configure" "${TK_SRC_DIR}/macosx/configure" "${TK_SRC_DIR}/unix/tcl.m4")
-
-ExternalProject_Add(TK_BLD
-  URL ${CMAKE_SOURCE_DIR}/external/tk8.7a1-src.tar.gz
-  URL_HASH MD5=099eb5571f4789194fa53d5590e7e623
-  PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${TK_PATCH_FILES}
-  CONFIGURE_COMMAND ${TK_SRC_DIR}/unix/configure --prefix=${CMAKE_BINARY_DIR} --with-tcl=${CMAKE_BINARY_DIR}/${LIB_DIR}
-  BUILD_COMMAND make -j9
-  INSTALL_COMMAND make install
-  DEPENDS TCL_BLD ${FONTCONFIG_LIBRARY}
-  )
+set(TK_SRC "${CMAKE_SOURCE_DIR}/external/tk8.6.9.1-src.tar.gz")
+set(TK_MD5 "9efe3976468352dc894dae0c4e785a8e")
+set(TK_MINOR_VERSION 6)
+if(NOT MSVC)
+  set(TK_PATCH_FILES "${TK_SRC_DIR}/unix/configure" "${TK_SRC_DIR}/macosx/configure" "${TK_SRC_DIR}/unix/tcl.m4")
+  ExternalProject_Add(TK_BLD
+    URL ${TK_SRC}
+    URL_HASH MD5=${TK_MD5}
+    PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${TK_PATCH_FILES}
+    CONFIGURE_COMMAND ${TK_SRC_DIR}/unix/configure --prefix=${CMAKE_BINARY_DIR} --with-tcl=${CMAKE_BINARY_DIR}/${LIB_DIR}
+    BUILD_COMMAND make -j9
+    INSTALL_COMMAND make install
+    DEPENDS TCL_BLD ${FONTCONFIG_LIBRARY}
+    )
+else(NOT MSVC)
+  ExternalProject_Add(TK_BLD
+    URL ${TK_SRC}
+    URL_HASH MD5=${TK_MD5}
+    CONFIGURE_COMMAND ""
+    BINARY_DIR ${TK_SRC_DIR}/win
+    BUILD_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc INSTALLDIR=${CMAKE_BINARY_DIR} TCLDIR=${TCL_SRC_DIR}
+    INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install INSTALLDIR=${CMAKE_BINARY_DIR} TCLDIR=${TCL_SRC_DIR}
+    DEPENDS TCL_BLD
+    )
+endif(NOT MSVC)
 ExternalProject_Target(tk TK_BLD
-  OUTPUT_FILE libtk8.7${CMAKE_SHARED_LIBRARY_SUFFIX}
-  STATIC_OUTPUT_FILE libtkstub8.7${CMAKE_STATIC_LIBRARY_SUFFIX}
+  OUTPUT_FILE libtk8.${TK_MINOR_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX}
+  STATIC_OUTPUT_FILE libtkstub8.${TK_MINOR_VERSION}${CMAKE_STATIC_LIBRARY_SUFFIX}
   RPATH
   )
 ExternalProject_Target(wish TK_BLD
-  OUTPUT_FILE wish8.7${CMAKE_EXECUTABLE_SUFFIX}
+  OUTPUT_FILE wish8.${TK_MINOR_VERSION}${CMAKE_EXECUTABLE_SUFFIX}
   RPATH EXEC
   )
 
@@ -340,60 +400,33 @@ include(${CMAKE_SOURCE_DIR}/external/tk_lib_byproducts.cmake)
 ExternalProject_ByProducts(TK_BLD ${LIB_DIR} ${TK_LIB_BYPRODUCTS})
 
 ###############################################################################
-#                                 Itcl
-###############################################################################
-set(ITCL_SRC_DIR "${CMAKE_BINARY_DIR}/ITCL_BLD-prefix/src/ITCL_BLD")
-set(ITCL_PATCH_FILES "${ITCL_SRC_DIR}/configure" "${ITCL_SRC_DIR}/tclconfig/tcl.m4")
-ExternalProject_Add(ITCL_BLD
-  URL ${CMAKE_SOURCE_DIR}/external/itcl4.1.1.tar.gz
-  URL_HASH MD5=198c9adb83550ffe87dbffaa5676ef54
-  PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${ITCL_PATCH_FILES}
-  CONFIGURE_COMMAND ${ITCL_SRC_DIR}/configure --prefix=${CMAKE_BINARY_DIR} --with-tcl=${CMAKE_BINARY_DIR}/lib
-  BUILD_COMMAND make -j9
-  INSTALL_COMMAND make install
-  DEPENDS TCL_BLD
-  )
-ExternalProject_Target(itcl ITCL_BLD
-  IMPORT_PREFIX itcl4.1.1
-  OUTPUT_FILE libitcl4.1.1${CMAKE_SHARED_LIBRARY_SUFFIX}
-  STATIC_OUTPUT_FILE libitclstub4.1.1${CMAKE_STATIC_LIBRARY_SUFFIX}
-  )
-
-ExternalProject_ByProducts(ITCL_BLD ${INCLUDE_DIR}
-  itcl2TclOO.h
-  itclDecls.h
-  itcl.h
-  itclIntDecls.h
-  itclInt.h
-  itclMigrate2TclCore.h
-  itclTclIntStubsFcn.h
-  )
-
-ExternalProject_ByProducts(ITCL_BLD ${LIB_DIR} FIXPATH
-  itcl4.1.1/itclConfig.sh
-  )
-
-ExternalProject_ByProducts(ITCL_BLD ${LIB_DIR}
-  itcl4.1.1/itclHullCmds.tcl
-  itcl4.1.1/pkgIndex.tcl
-  itcl4.1.1/itclWidget.tcl
-  itcl4.1.1/itcl.tcl
-  )
-
-###############################################################################
 #                                 Itk
 ###############################################################################
 set(ITK_SRC_DIR "${CMAKE_BINARY_DIR}/ITK_BLD-prefix/src/ITK_BLD")
-set(ITK_PATCH_FILES "${ITK_SRC_DIR}/configure" "${ITK_SRC_DIR}/tclconfig/tcl.m4")
-ExternalProject_Add(ITK_BLD
-  URL ${CMAKE_SOURCE_DIR}/external/itk4.1.0.tar.gz
-  URL_HASH MD5=600df0a12868507c52d46fd59d4e1c16
-  PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${ITK_PATCH_FILES}
-  CONFIGURE_COMMAND ${ITK_SRC_DIR}/configure --prefix=${CMAKE_BINARY_DIR} --with-tcl=${CMAKE_BINARY_DIR}/lib --with-tk=${CMAKE_BINARY_DIR}/lib --with-itcl=${CMAKE_BINARY_DIR}/lib/itcl4.1.1
-  BUILD_COMMAND make -j9
-  INSTALL_COMMAND make install
-  DEPENDS TCL_BLD TK_BLD ITCL_BLD
-  )
+set(ITK_SRC "${CMAKE_SOURCE_DIR}/external/itk4.1.0.tar.gz")
+set(ITK_MD5 "600df0a12868507c52d46fd59d4e1c16")
+if(NOT MSVC)
+  set(ITK_PATCH_FILES "${ITK_SRC_DIR}/configure" "${ITK_SRC_DIR}/tclconfig/tcl.m4")
+  ExternalProject_Add(ITK_BLD
+    URL ${ITK_SRC}
+    URL_HASH MD5=${ITK_MD5}
+    PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${ITK_PATCH_FILES}
+    CONFIGURE_COMMAND ${ITK_SRC_DIR}/configure --prefix=${CMAKE_BINARY_DIR} --with-tcl=${CMAKE_BINARY_DIR}/lib --with-tk=${CMAKE_BINARY_DIR}/lib --with-itcl=${CMAKE_BINARY_DIR}/lib/itcl${ITCL_VERSION}
+    BUILD_COMMAND make -j9
+    INSTALL_COMMAND make install
+    DEPENDS TCL_BLD TK_BLD
+    )
+else(NOT MSVC)
+  ExternalProject_Add(ITK_BLD
+    URL ${ITK_SRC}
+    URL_HASH MD5=${ITK_MD5}
+    CONFIGURE_COMMAND ""
+    BINARY_DIR ${ITK_SRC_DIR}/win
+    BUILD_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc INSTALLDIR=${CMAKE_BINARY_DIR} TCLDIR=${TCL_SRC_DIR} TKDIR=${TK_SRC_DIR}
+    INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install INSTALLDIR=${CMAKE_BINARY_DIR} TCLDIR=${TCL_SRC_DIR} TKDIR=${TK_SRC_DIR}
+    DEPENDS TCL_BLD TK_BLD
+    )
+endif(NOT MSVC)
 ExternalProject_Target(itk ITK_BLD
   IMPORT_PREFIX itk4.1.0
   OUTPUT_FILE libitk4.1.0${CMAKE_SHARED_LIBRARY_SUFFIX}
@@ -417,16 +450,30 @@ ExternalProject_ByProducts(ITK_BLD ${LIB_DIR}
 #                                 IWidgets
 ###############################################################################
 set(IWIDGETS_SRC_DIR "${CMAKE_BINARY_DIR}/IWIDGETS_BLD-prefix/src/IWIDGETS_BLD")
-set(IWIDGETS_PATCH_FILES "${IWIDGETS_SRC_DIR}/configure" "${IWIDGETS_SRC_DIR}/tclconfig/tcl.m4")
-ExternalProject_Add(IWIDGETS_BLD
-  URL ${CMAKE_SOURCE_DIR}/external/iwidgets-4.1.1.tar.gz
-  URL_HASH MD5=cca62e022b0d561a2bba19bd56ecc667
-  PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${IWIDGETS_PATCH_FILES}
-  CONFIGURE_COMMAND ${IWIDGETS_SRC_DIR}/configure --prefix=${CMAKE_BINARY_DIR} --with-tcl=${CMAKE_BINARY_DIR}/lib --with-tk=${CMAKE_BINARY_DIR}/lib --with-itcl=${CMAKE_BINARY_DIR}/lib/itcl4.1.1 --with-itk=${ITK_SRC_DIR}
-  BUILD_COMMAND make -j9
-  INSTALL_COMMAND make install
-  DEPENDS TCL_BLD TK_BLD ITCL_BLD ITK_BLD
-  )
+set(IWIDGETS_SRC "${CMAKE_SOURCE_DIR}/external/iwidgets-4.1.1.tar.gz")
+set(IWIDGETS_MD5 "cca62e022b0d561a2bba19bd56ecc667")
+if(NOT MSVC)
+  set(IWIDGETS_PATCH_FILES "${IWIDGETS_SRC_DIR}/configure" "${IWIDGETS_SRC_DIR}/tclconfig/tcl.m4")
+  ExternalProject_Add(IWIDGETS_BLD
+    URL ${IWIDGETS_SRC}
+    URL_HASH MD5=${IWIDGETS_MD5}
+    PATCH_COMMAND rpath_replace "${CMAKE_BUILD_RPATH}" ${IWIDGETS_PATCH_FILES}
+    CONFIGURE_COMMAND ${IWIDGETS_SRC_DIR}/configure --prefix=${CMAKE_BINARY_DIR} --with-tcl=${CMAKE_BINARY_DIR}/lib --with-tk=${CMAKE_BINARY_DIR}/lib --with-itcl=${CMAKE_BINARY_DIR}/lib/itcl${ITCL_VERSION} --with-itk=${ITK_SRC_DIR}
+    BUILD_COMMAND make -j9
+    INSTALL_COMMAND make install
+    DEPENDS TCL_BLD TK_BLD ITK_BLD
+    )
+else(NOT MSVC)
+  ExternalProject_Add(IWIDGETS_BLD
+    URL ${IWIDGETS_SRC}
+    URL_HASH MD5=${IWIDGETS_MD5}
+    CONFIGURE_COMMAND ""
+    BINARY_DIR ${IWIDGETS_SRC_DIR}/win
+    BUILD_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc INSTALLDIR=${CMAKE_BINARY_DIR}
+    INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install INSTALLDIR=${CMAKE_BINARY_DIR}
+    DEPENDS TCL_BLD TK_BLD
+    )
+endif(NOT MSVC)
 
 include(${CMAKE_SOURCE_DIR}/external/iwidgets_lib_byproducts.cmake)
 ExternalProject_ByProducts(IWIDGETS_BLD ${LIB_DIR} ${IWIDGETS_LIB_BYPRODUCTS})
@@ -466,7 +513,7 @@ cmake_set_rpath(SUFFIX "Tkhtml3.0.1")
 ExternalProject_Add(TKHTML_BLD
   URL ${CMAKE_SOURCE_DIR}/external/tkhtml-3.0.1.tar.gz
   URL_HASH MD5=9abfe32b386558178f4d9cb8fb67a78c
-  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DCMAKE_PREFIX_PATH=${CMAKE_BINARY_DIR}/${LIB_DIR} -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DTCL_STUB_LIBRARY=${CMAKE_BINARY_DIR}/${LIB_DIR}/libtclstub8.7${CMAKE_STATIC_LIBRARY_SUFFIX} -DTK_STUB_LIBRARY=${CMAKE_BINARY_DIR}/${LIB_DIR}/libtkstub8.7${CMAKE_STATIC_LIBRARY_SUFFIX} -DTK_LIBRARY=${CMAKE_BINARY_DIR}/${LIB_DIR}/libtk8.7${CMAKE_SHARED_LIBRARY_SUFFIX} -DTCL_TCLSH=${CMAKE_BINARY_DIR}/${BIN_DIR}/tclsh8.7${CMAKE_EXECUTABLE_SUFFIX} -DTCL_INCLUDE_DIRS=${CMAKE_BINARY_DIR}/include
+  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DCMAKE_PREFIX_PATH=${CMAKE_BINARY_DIR}/${LIB_DIR} -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH} -DTCL_STUB_LIBRARY=${CMAKE_BINARY_DIR}/${LIB_DIR}/libtclstub8.${TCL_MINOR_VERSION}${CMAKE_STATIC_LIBRARY_SUFFIX} -DTK_STUB_LIBRARY=${CMAKE_BINARY_DIR}/${LIB_DIR}/libtkstub8.${TCL_MINOR_VERSION}${CMAKE_STATIC_LIBRARY_SUFFIX} -DTK_LIBRARY=${CMAKE_BINARY_DIR}/${LIB_DIR}/libtk8.${TCL_MINOR_VERSION}${CMAKE_SHARED_LIBRARY_SUFFIX} -DTCL_TCLSH=${CMAKE_BINARY_DIR}/${BIN_DIR}/tclsh8.${TCL_MINOR_VERSION}${CMAKE_EXECUTABLE_SUFFIX} -DTCL_INCLUDE_DIRS=${CMAKE_BINARY_DIR}/include
   DEPENDS TCL_BLD TK_BLD
   )
 ExternalProject_Target(tkhtml TKHTML_BLD
@@ -547,17 +594,19 @@ ExternalProject_Target(spsr SPSR_BLD
 ###############################################################################
 #                                 libtermlib
 ###############################################################################
-ExternalProject_Add(TERMLIB_BLD
-  URL ${CMAKE_SOURCE_DIR}/external/libtermlib.tar.gz
-  URL_HASH MD5=00b6ff29ddba4a75ede48618cb7cacc5
-  CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR} -DCMAKE_PREFIX_PATH=${CMAKE_BINARY_DIR}/${LIB_DIR} -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH}
-  )
-ExternalProject_Target(termlib TERMLIB_BLD
-  OUTPUT_FILE libtermlib${CMAKE_SHARED_LIBRARY_SUFFIX}.1.7.1
-  SYMLINKS "libtermlib${CMAKE_SHARED_LIBRARY_SUFFIX};libtermlib${CMAKE_SHARED_LIBRARY_SUFFIX}.1"
-  LINK_TARGET "libtermlib${CMAKE_SHARED_LIBRARY_SUFFIX}"
-  RPATH
-  )
+if(NOT MSVC)
+  ExternalProject_Add(TERMLIB_BLD
+    URL ${CMAKE_SOURCE_DIR}/external/libtermlib.tar.gz
+    URL_HASH MD5=00b6ff29ddba4a75ede48618cb7cacc5
+    CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR} -DCMAKE_PREFIX_PATH=${CMAKE_BINARY_DIR}/${LIB_DIR} -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH}
+    )
+  ExternalProject_Target(termlib TERMLIB_BLD
+    OUTPUT_FILE libtermlib${CMAKE_SHARED_LIBRARY_SUFFIX}.1.7.1
+    SYMLINKS "libtermlib${CMAKE_SHARED_LIBRARY_SUFFIX};libtermlib${CMAKE_SHARED_LIBRARY_SUFFIX}.1"
+    LINK_TARGET "libtermlib${CMAKE_SHARED_LIBRARY_SUFFIX}"
+    RPATH
+    )
+endif(NOT MSVC)
 
 # TODO - update termlib build to install headers
 
@@ -625,8 +674,9 @@ ExternalProject_ByProducts(LZ4_BLD ${INCLUDE_DIR}
 ###############################################################################
 ExternalProject_Add(OPENNURBS_BLD
   URL ${CMAKE_SOURCE_DIR}/external/openNURBS.tar.gz
-  URL_HASH MD5=9e839833037a98a26d41d79f56e290a5
+  URL_HASH MD5=c55cae1c39e263dc990773434d8c978c
   CMAKE_ARGS -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR} -DLIB_DIR=${LIB_DIR} -DBIN_DIR=${BIN_DIR} -DCMAKE_PREFIX_PATH=${CMAKE_BINARY_DIR}/${LIB_DIR} -DCMAKE_INSTALL_RPATH=${CMAKE_BUILD_RPATH}
+  DEPENDS ${ZLIB_LIBRARY}
   )
 ExternalProject_Target(openNURBS OPENNURBS_BLD
   OUTPUT_FILE libopenNURBS${CMAKE_SHARED_LIBRARY_SUFFIX}.2012.10.245
@@ -822,6 +872,7 @@ ExternalProject_Target(rply RPLY_BLD
 #  )
 #
 #set(GDAL_SRC_DIR "${CMAKE_BINARY_DIR}/GDAL_BLD-prefix/src/GDAL_BLD")
+#if(NOT MSVC)
 #ExternalProject_Add(GDAL_BLD
 #  URL ${CMAKE_SOURCE_DIR}/external/gdal-2.3.2.tar.gz
 #  URL_HASH MD5=221e4bfe3e8e9443fd33f8fe46f8bf60
@@ -831,6 +882,17 @@ ExternalProject_Target(rply RPLY_BLD
 #  INSTALL_COMMAND make install
 #  DEPENDS PROJ4_BLD ${PNG_LIBRARY} ${ZLIB_LIBRARY} JPEG_BLD XML2_BLD
 #  )
+#else(NOT MSVC)
+#ExternalProject_Add(GDAL_BLD
+#  URL ${CMAKE_SOURCE_DIR}/external/gdal-2.3.2.tar.gz
+#  URL_HASH MD5=221e4bfe3e8e9443fd33f8fe46f8bf60
+#  CONFIGURE_COMMAND "" 
+#  BUILD_IN_SOURCE 1
+#  BUILD_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc GDAL_HOME=${CMAKE_BINARY_DIR} WIN64=1
+#  INSTALL_COMMAND ${VCVARS_BAT} && nmake -f makefile.vc install GDAL_HOME=${CMAKE_BINARY_DIR} WIN64=1
+#  DEPENDS PROJ4_BLD
+#  )
+#endif(NOT MSVC)
 #ExternalProject_Target(gdal GDAL_BLD
 #  OUTPUT_FILE libgdal${CMAKE_SHARED_LIBRARY_SUFFIX}.2.3.2
 #  SYMLINKS "libgdal${CMAKE_SHARED_LIBRARY_SUFFIX};libgdal${CMAKE_SHARED_LIBRARY_SUFFIX}.2"
@@ -915,10 +977,10 @@ foreach(SCLIB ${STEPCODE_LIBS})
 endforeach(SCLIB ${STEPCODE_LIBS})
 set(STEPCODE_EXECS check-express exppp exp2cxx exp2python)
 foreach(SCEXEC ${STEPCODE_EXECS})
-ExternalProject_Target(${SCEXEC} STEPCODE_BLD
-  OUTPUT_FILE ${SCEXEC}${CMAKE_EXECUTABLE_SUFFIX}
-  RPATH EXEC
-  )
+  ExternalProject_Target(${SCEXEC} STEPCODE_BLD
+    OUTPUT_FILE ${SCEXEC}${CMAKE_EXECUTABLE_SUFFIX}
+    RPATH EXEC
+    )
 endforeach(SCEXEC ${STEPCODE_EXECS})
 ExternalProject_ByProducts(STEPCODE_BLD ${INCLUDE_DIR}
   stepcode/cldai/sdaiApplication_instance_set.h
@@ -1004,9 +1066,9 @@ ExternalProject_ByProducts(STEPCODE_BLD ${INCLUDE_DIR}
 
 # Simple "parent" build that tests the use of the imported library defined by ExternalProject_Target
 include_directories(${CMAKE_BINARY_DIR}/include)
-add_executable(gzjoin gzjoin.c)
-target_link_libraries(gzjoin ${ZLIB_LIBRARY})
-install(TARGETS gzjoin
+add_executable(zpipe zpipe.c)
+target_link_libraries(zpipe ${ZLIB_LIBRARY})
+install(TARGETS zpipe
   RUNTIME DESTINATION ${BIN_DIR}
   LIBRARY DESTINATION ${LIB_DIR}
   ARCHIVE DESTINATION ${LIB_DIR})

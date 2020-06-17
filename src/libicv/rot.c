@@ -1,7 +1,7 @@
 /*                           R O T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2019 United States Government as represented by
+ * Copyright (c) 1986-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -291,7 +291,7 @@ icv_rot(size_t argc, const char *argv[])
     ssize_t x, y;
     size_t j;
     int ret = 0;
-    off_t outbyte, outplace;
+    b_off_t outbyte, outplace;
     FILE *ifp, *ofp;
     unsigned char *obuf;
     unsigned char *buffer;
@@ -326,7 +326,7 @@ icv_rot(size_t argc, const char *argv[])
 
     /*
      * Clear our "file pointer."  We need to maintain this
-     * In order to tell if seeking is required.  ftell() always
+     * In order to tell if seeking is required.  bu_ftell() always
      * fails on pipes, so we can't use it.
      */
     outplace = 0;

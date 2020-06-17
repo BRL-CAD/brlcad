@@ -1,7 +1,7 @@
 /*                       V E X T E R N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -80,7 +80,7 @@ extern int	ndir, nns, nnr;
 
 extern int			delsol, delreg;
 extern char			buff[];
-extern off_t			savsol;
+extern b_off_t			savsol;
 
 extern jmp_buf		env;
 #define EPSILON		0.0001

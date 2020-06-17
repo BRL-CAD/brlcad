@@ -1,7 +1,7 @@
 /*                  S H _ B I L L B O A R D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -184,7 +184,7 @@ bbd_setup(struct region *rp, struct bu_vls *matparm, void **dpp, const struct mf
     RT_CK_REGION(rp);
 
 
-    if (rdebug&RDEBUG_SHADE) bu_log("bbd_setup(%s)\n", rp->reg_name);
+    if (optical_debug&OPTICAL_DEBUG_SHADE) bu_log("bbd_setup(%s)\n", rp->reg_name);
 
     RT_CK_TREE(rp->reg_treetop);
 
@@ -266,7 +266,7 @@ bbd_setup(struct region *rp, struct bu_vls *matparm, void **dpp, const struct mf
 	VUNITIZE(bi->img_y);
 	bi->img_ylen = MAGNITUDE(tgc->h);
 
-	if (rdebug&RDEBUG_SHADE) {
+	if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	    HPRINT("\nimg_plane", bi->img_plane);
 	    VPRINT("vtmp", vtmp);
 	    VPRINT("img_origin", bi->img_origin);
@@ -281,7 +281,7 @@ bbd_setup(struct region *rp, struct bu_vls *matparm, void **dpp, const struct mf
 
     rt_db_free_internal(&intern);
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	bu_struct_print(" Parameters:", bbd_print_tab, (char *)bbd_sp);
     }
 
@@ -375,7 +375,7 @@ do_ray_image(struct application *ap,
     int color_count;
     double t, opacity;
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	bu_log("do_ray_image\n");
 	plot_ray_img(ap, pp, dist, bi);
     }
@@ -387,7 +387,7 @@ do_ray_image(struct application *ap,
 
     if (x < 0.0 || x > bi->img_xlen ||
 	y < 0.0 || y > bi->img_ylen) {
-	if (rdebug&RDEBUG_SHADE) {
+	if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	    bu_log("hit outside bounds, leaving color %g %g %g\n",
 		   V3ARGS(swp->sw_color));
 	}
@@ -429,7 +429,7 @@ do_ray_image(struct application *ap,
 
     pixels = (unsigned char*)bi->img_mf->buf;
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	bu_log("u:%d..%d  v:%d..%d\n", ulo, uhi, vlo, vhi);
     }
 
@@ -442,18 +442,18 @@ do_ray_image(struct application *ap,
 	    if (val > bbd_sp->img_threshold) {
 		color_count++;
 		VJOIN1(cum_color, cum_color, rgb255, color);
-		if (rdebug&RDEBUG_SHADE) {
+		if (optical_debug&OPTICAL_DEBUG_SHADE) {
 		    bu_log("%d %d %d\n", V3ARGS(color));
 		    VPRINT("cum_color", cum_color);
 		}
 	    }
 	}
     }
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_log("tot:%d color_count: %d\n", tot, color_count);
 
     if (color_count == 0) {
-	if (rdebug&RDEBUG_SHADE)
+	if (optical_debug&OPTICAL_DEBUG_SHADE)
 	    bu_log("no color contribution, leaving color as %g %g %g\n",
 		   V3ARGS(swp->sw_color));
 	return;
@@ -461,7 +461,7 @@ do_ray_image(struct application *ap,
     /* get average color: scale color by the # of contributions */
     t = 1.0 / (double)color_count;
     VSCALE(cum_color, cum_color, t);
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	int c[3];
 
 	VSCALE(c, cum_color, 256);
@@ -517,7 +517,7 @@ bbd_render(struct application *ap, const struct partition *pp, struct shadework 
     RT_CHECK_PT(pp);
     CK_bbd_SP(bbd_sp);
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	bu_struct_print("bbd_render Parameters:",
 			bbd_print_tab, (char *)bbd_sp);
 	bu_log("pixel %d %d\n", ap->a_x, ap->a_y);
@@ -551,7 +551,7 @@ bbd_render(struct application *ap, const struct partition *pp, struct shadework 
     for (i = 0; i < bbd_sp->img_count && swp->sw_transmit > 0.0; i++) {
 	if (id[i].status > 0) do_ray_image(ap, pp, swp, bbd_sp, id[i].bi, id[i].dist);
     }
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	bu_log("color %g %g %g\n", V3ARGS(swp->sw_color));
     }
     /* shader must perform transmission/reflection calculations
@@ -565,7 +565,7 @@ bbd_render(struct application *ap, const struct partition *pp, struct shadework 
 	(void)rr_render(ap, pp, swp);
 	ap->a_level = level;
     }
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	bu_log("color %g %g %g\n", V3ARGS(swp->sw_color));
     }
     return 1;

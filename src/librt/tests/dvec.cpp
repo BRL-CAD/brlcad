@@ -1,7 +1,7 @@
 /*                   T E S T _ D V E C . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2019 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,8 +25,9 @@
 #include <iostream>
 
 #include "vmath.h"
-#include "brep.h"
+#include "bu/app.h"
 #include "bn/dvec.h"
+#include "brep.h"
 
 
 const int COUNT = 1000000;
@@ -34,6 +35,7 @@ const int COUNT = 1000000;
 int
 main(int argc, char** argv)
 {
+    bu_setprogname(argv[0]);
     if (argc > 1)
 	fprintf(stderr,"Usage: %s\n", argv[0]);
 

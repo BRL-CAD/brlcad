@@ -1,7 +1,7 @@
 /*                    M A P P E D _ F I L E . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,6 +27,8 @@
 #include <stddef.h> /* for size_t */
 
 #include "bu/defines.h"
+#include "bu/list.h"
+
 
 __BEGIN_DECLS
 
@@ -86,7 +88,7 @@ struct bu_mapped_file {
     size_t apbuflen;	/**< opt: application-specific buflen */
     time_t modtime;	/**< date stamp, in case file is modified */
     int uses;		/**< # ptrs to this struct handed out */
-    int dont_restat;	/**< 1=on subsequent opens, don't re-stat()  */
+    void *handle;       /**< PRIVATE - for internal file-specific implementation data */
 };
 typedef struct bu_mapped_file bu_mapped_file_t;
 #define BU_MAPPED_FILE_NULL ((struct bu_mapped_file *)0)
@@ -95,7 +97,7 @@ typedef struct bu_mapped_file bu_mapped_file_t;
  * macro suitable for declaration statement initialization of a
  * bu_mapped_file struct.  does not allocate memory.
  */
-#define BU_MAPPED_FILE_INIT_ZERO { {BU_LIST_NULL, BU_LIST_NULL}, NULL, NULL, 0, 0, NULL, NULL, 0, 0, 0, 0 }
+#define BU_MAPPED_FILE_INIT_ZERO { NULL, NULL, 0, 0, NULL, NULL, 0, 0, 0, NULL }
 
 /**
  * Provides a standardized interface for acquiring the entire contents
@@ -131,11 +133,14 @@ BU_EXPORT extern void bu_pr_mapped_file(const char *title,
 					const struct bu_mapped_file *mp);
 
 /**
- * Release storage being used by mapped files with no remaining users.
- * This entire routine runs inside a critical section, for parallel
- * protection.  Only call this routine if you're SURE that ALL these
- * files will never again need to be mapped by this process.  Such as
- * when running multi-frame animations.
+ * Release storage being used by mapped files with no remaining users.  This
+ * will slow subsequent re-opening of those files (since files with no users
+ * will be unmapped as part of the freeing process, they will have to be
+ * re-mapped on a subsequent reopen.) Use cases where there is a possibility of
+ * reopening such files in the future will generally want to postpone calling
+ * this routine unless they need to free up memory.
+ *
+ * This entire routine runs inside a critical section, for parallel protection.
  */
 BU_EXPORT extern void bu_free_mapped_files(int verbose);
 

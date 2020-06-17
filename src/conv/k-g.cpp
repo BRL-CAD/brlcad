@@ -1,7 +1,7 @@
 /*                       K - G . C P P
  * BRL-CAD
  *
- * Copyright (c) 2010-2019 United States Government as represented by
+ * Copyright (c) 2010-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,8 +30,9 @@
 #include <algorithm>
 
 #ifndef HAVE_DECL_FSEEKO
-extern "C" int fseeko(FILE *, off_t, int);
-extern "C" off_t ftello(FILE *);
+#include "bio.h" /* for b_off_t */
+extern "C" int fseeko(FILE *, b_off_t, int);
+extern "C" b_off_t ftello(FILE *);
 #endif
 #include <fstream>
 
@@ -40,6 +41,7 @@ extern "C" off_t ftello(FILE *);
 #include <set>
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/malloc.h"
 #include "bu/opt.h"
 #include "bu/ptbl.h"
@@ -587,6 +589,8 @@ main(int argc, char **argv)
     int need_help = 0;
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
     int uac = 0;
+
+    bu_setprogname(argv[0]);
 
     struct bu_opt_desc d[3];
     BU_OPT(d[0], "h", "help",             "",   NULL, &need_help,    "Print help and exit");

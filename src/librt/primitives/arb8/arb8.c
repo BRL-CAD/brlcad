@@ -1,7 +1,7 @@
 /*                          A R B 8 . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2019 United States Government as represented by
+ * Copyright (c) 1985-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -424,7 +424,7 @@ rt_arb_centroid(point_t *cent, const struct rt_db_internal *ip)
  * -1 point was rejected
  */
 HIDDEN int
-rt_arb_add_pt(register pointp_t point, const char *title, struct prep_arb *pap, int ptno, const char *name)
+rt_arb_add_pnt(register pointp_t point, const char *title, struct prep_arb *pap, int ptno, const char *name)
 
 
 /* current point # on face */
@@ -576,7 +576,7 @@ rt_arb_mk_planes(register struct prep_arb *pap, struct rt_arb_internal *aip, con
     /*
      * Determine a point which is guaranteed to be within the solid.
      * This is done by averaging all the vertices.  This center is
-     * needed for rt_arb_add_pt, which demands a point inside the
+     * needed for rt_arb_add_pnt, which demands a point inside the
      * solid.  The center of the enclosing RPP strategy used for the
      * bounding sphere can be tricked by thin plates which are
      * non-axis aligned, so this dual-strategy is required.  (What a
@@ -610,7 +610,7 @@ rt_arb_mk_planes(register struct prep_arb *pap, struct rt_arb_internal *aip, con
 	equiv_pts[i] = i;
     next_point: ;
     }
-    if (RT_G_DEBUG & DEBUG_ARB8) {
+    if (RT_G_DEBUG & RT_DEBUG_ARB8) {
 	bu_log("arb(%s) equiv_pts[] = %d %d %d %d %d %d %d %d\n",
 	       name,
 	       equiv_pts[0], equiv_pts[1], equiv_pts[2], equiv_pts[3],
@@ -626,7 +626,7 @@ rt_arb_mk_planes(register struct prep_arb *pap, struct rt_arb_internal *aip, con
 	    int pt_index;
 
 	    pt_index = rt_arb_info[i].ai_sub[j];
-	    if (RT_G_DEBUG & DEBUG_ARB8) {
+	    if (RT_G_DEBUG & RT_DEBUG_ARB8) {
 		bu_log("face %d, j=%d, npts=%d, orig_vert=%d, vert=%d\n",
 		       i, j, npts,
 		       pt_index, equiv_pts[pt_index]);
@@ -642,7 +642,7 @@ rt_arb_mk_planes(register struct prep_arb *pap, struct rt_arb_internal *aip, con
 		    goto skip_pt;
 		}
 	    }
-	    if (rt_arb_add_pt(aip->pt[pt_index],
+	    if (rt_arb_add_pnt(aip->pt[pt_index],
 			      rt_arb_info[i].ai_title, pap, npts, name) == 0) {
 		/* Point was accepted */
 		pap->pa_pindex[npts][pap->pa_faces] = pt_index;
@@ -865,7 +865,7 @@ rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     out = INFINITY;
     iplane = oplane = -1;
 
-    if (RT_G_DEBUG & DEBUG_ARB8) {
+    if (RT_G_DEBUG & RT_DEBUG_ARB8) {
 	bu_log("\n\n------------\n arb: ray point %g %g %g -> %g %g %g\n",
 	       V3ARGS(rp->r_pt),
 	       V3ARGS(rp->r_dir));
@@ -882,7 +882,7 @@ rt_arb_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	dxbdn = VDOT(afp->peqn, rp->r_pt) - afp->peqn[W];
 	dn = -VDOT(afp->peqn, rp->r_dir);
 
-	if (RT_G_DEBUG & DEBUG_ARB8) {
+	if (RT_G_DEBUG & RT_DEBUG_ARB8) {
 	    HPRINT("arb: Plane Equation", afp->peqn);
 	    bu_log("arb: dn=%g dxbdn=%g s=%g\n", dn, dxbdn, dxbdn/dn);
 	}
@@ -1108,7 +1108,7 @@ rt_arb_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 		   stp->st_specific, (void *)arbp->arb_opt);
 	    return;
 	}
-	if (RT_G_DEBUG&DEBUG_SOLIDS)
+	if (RT_G_DEBUG&RT_DEBUG_SOLIDS)
 	    rt_pr_soltab(stp);
     }
 
@@ -1171,7 +1171,7 @@ rt_arb_free(register struct soltab *stp)
  * be.
  */
 int
-rt_arb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_arb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     point_t *pts;
     struct rt_arb_internal *aip;
@@ -1497,7 +1497,7 @@ rt_arb_ifree(struct rt_db_internal *ip)
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
+rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
     struct rt_arb_internal *aip;
     struct shell *s;
@@ -1542,7 +1542,7 @@ rt_arb_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    *vertpp++ = &verts[pa.pa_pindex[1][i]];
 	    *vertpp++ = &verts[pa.pa_pindex[0][i]];
 	}
-	if (RT_G_DEBUG & DEBUG_ARB8) {
+	if (RT_G_DEBUG & RT_DEBUG_ARB8) {
 	    bu_log("face %d, npts=%d, verts %d %d %d %d\n",
 		   i, pa.pa_npts[i],
 		   pa.pa_pindex[0][i], pa.pa_pindex[1][i],
@@ -1649,7 +1649,7 @@ rt_arb_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 	    *vertpp++ = &verts[pa.pa_pindex[1][i]];
 	    *vertpp++ = &verts[pa.pa_pindex[0][i]];
 	}
-	if (RT_G_DEBUG & DEBUG_ARB8) {
+	if (RT_G_DEBUG & RT_DEBUG_ARB8) {
 	    bu_log("face %d, npts=%d, verts %d %d %d %d\n",
 		   i, pa.pa_npts[i],
 		   pa.pa_pindex[0][i], pa.pa_pindex[1][i],
@@ -1877,7 +1877,7 @@ rt_arb_3face_intersect(
     i2 = rt_arb_planes[j][loc+1];
     i3 = rt_arb_planes[j][loc+2];
 
-    return bn_mkpoint_3planes(point, planes[i1], planes[i2], planes[i3]);
+    return bn_make_pnt_3planes(point, planes[i1], planes[i2], planes[i3]);
 }
 
 
@@ -1914,7 +1914,7 @@ rt_arb_calc_planes(struct bu_vls *error_msg_ret,
 	p2 = arb_faces[type][i*4+1];
 	p3 = arb_faces[type][i*4+2];
 
-	if (bn_mk_plane_3pts(planes[i],
+	if (bn_make_plane_3pnts(planes[i],
 			     arb->pt[p1],
 			     arb->pt[p2],
 			     arb->pt[p3],
@@ -2152,7 +2152,7 @@ rt_arb_edit(struct bu_vls *error_msg_ret,
 	    p2 = *edptr++;
 	    p3 = *edptr++;
 
-	    if (bn_mk_plane_3pts(planes[newp], arb->pt[p1], arb->pt[p2],
+	    if (bn_make_plane_3pnts(planes[newp], arb->pt[p1], arb->pt[p2],
 				 arb->pt[p3], tol))
 		goto err;
 
@@ -2174,7 +2174,7 @@ rt_arb_edit(struct bu_vls *error_msg_ret,
 	    p2 = *iptr++;
 	    p3 = *iptr++;
 
-	    if (bn_mk_plane_3pts(planes[newp], arb->pt[p1], arb->pt[p2],
+	    if (bn_make_plane_3pnts(planes[newp], arb->pt[p1], arb->pt[p2],
 				 arb->pt[p3], tol))
 		goto err;
 	}
@@ -2200,7 +2200,7 @@ rt_arb_edit(struct bu_vls *error_msg_ret,
      * recalculate plane 2 = 456
      */
     if (arb_type == ARB7 && edit_class == RT_ARB_EDIT_POINT) {
-	if (bn_mk_plane_3pts(planes[2], arb->pt[4], arb->pt[5], arb->pt[6], tol))
+	if (bn_make_plane_3pnts(planes[2], arb->pt[4], arb->pt[5], arb->pt[6], tol))
 	    goto err;
     }
 
@@ -2271,7 +2271,7 @@ rt_arb_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 
     type = rt_arb_std_type(ip, &tol) - 4;
 
-    /* tol struct needed for bn_mk_plane_3pts,
+    /* tol struct needed for bn_make_plane_3pnts,
      * can't be passed to the function since it
      * must fit into the rt_functab interface */
     tmp_tol.magic = BN_TOL_MAGIC;
@@ -2288,7 +2288,7 @@ rt_arb_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	c = arb_faces[type][i*4+2];
 
 	/* create a plane from a, b, c */
-	if (bn_mk_plane_3pts(plane, aip->pt[a], aip->pt[b], aip->pt[c], &tmp_tol) < 0) {
+	if (bn_make_plane_3pnts(plane, aip->pt[a], aip->pt[b], aip->pt[c], &tmp_tol) < 0) {
 	    continue;
 	}
 
@@ -2317,7 +2317,7 @@ rt_arb_volume(fastf_t *vol, const struct rt_db_internal *ip)
     struct rt_arb_internal *aip = (struct rt_arb_internal *)ip->idb_ptr;
     RT_ARB_CK_MAGIC(aip);
 
-    /* tol struct needed for bn_mk_plane_3pts,
+    /* tol struct needed for bn_make_plane_3pnts,
      * can't be passed to the function since it
      * must fit into the rt_functab interface */
     tmp_tol.magic = BN_TOL_MAGIC;
@@ -2333,13 +2333,13 @@ rt_arb_volume(fastf_t *vol, const struct rt_db_internal *ip)
 	d = farb4[i][3];
 
 	/* create a plane from a, b, c */
-	if (bn_mk_plane_3pts(plane, aip->pt[a], aip->pt[b], aip->pt[c], &tmp_tol) < 0) {
+	if (bn_make_plane_3pnts(plane, aip->pt[a], aip->pt[b], aip->pt[c], &tmp_tol) < 0) {
 	    continue;
 	}
 
 	/* height of arb4 is distance from the plane created using the
 	 * points of the base, and the top point 'd' */
-	arb4_height = fabs(DIST_PT_PLANE(aip->pt[d], plane));
+	arb4_height = fabs(DIST_PNT_PLANE(aip->pt[d], plane));
 
 	/* calculate area of arb4 base */
 	VSUB2(b_a, aip->pt[b], aip->pt[a]);
@@ -2450,7 +2450,7 @@ rt_arb_find_e_nearest_pt2(int *edge,
 	p1[Z] = 0.0;
 
 	if (edge_list[i][0] == edge_list[i][1]) {
-	    tmp_dist = bn_dist_pt3_pt3(pt2, p1);
+	    tmp_dist = bn_dist_pnt3_pnt3(pt2, p1);
 
 	    if (tmp_dist < ptol) {
 		*vert1 = edge_list[i][0] + 1;
@@ -2464,7 +2464,7 @@ rt_arb_find_e_nearest_pt2(int *edge,
 	} else {
 	    MAT4X3PNT(p2, mat, aip->pt[edge_list[i][1]]);
 	    p2[Z] = 0.0;
-	    ret = bn_dist_pt2_lseg2(&tmp_dist, pca, p1, p2, pt2, &tol);
+	    ret = bn_dist_pnt2_lseg2(&tmp_dist, pca, p1, p2, pt2, &tol);
 	}
 
 	if (ret < 3 || tmp_dist < dist) {

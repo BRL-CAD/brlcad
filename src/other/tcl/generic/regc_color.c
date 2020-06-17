@@ -37,7 +37,7 @@
 
 /*
  - initcm - set up new colormap
- ^ static VOID initcm(struct vars *, struct colormap *);
+ ^ static void initcm(struct vars *, struct colormap *);
  */
 static void
 initcm(
@@ -88,7 +88,7 @@ initcm(
 
 /*
  - freecm - free dynamically-allocated things in a colormap
- ^ static VOID freecm(struct colormap *);
+ ^ static void freecm(struct colormap *);
  */
 static void
 freecm(
@@ -116,7 +116,7 @@ freecm(
 
 /*
  - cmtreefree - free a non-terminal part of a colormap tree
- ^ static VOID cmtreefree(struct colormap *, union tree *, int);
+ ^ static void cmtreefree(struct colormap *, union tree *, int);
  */
 static void
 cmtreefree(
@@ -294,7 +294,7 @@ newcolor(
 
 /*
  - freecolor - free a color (must have no arcs or subcolor)
- ^ static VOID freecolor(struct colormap *, pcolor);
+ ^ static void freecolor(struct colormap *, pcolor);
  */
 static void
 freecolor(
@@ -327,7 +327,7 @@ freecolor(
 	    cm->free = cm->cd[cm->free].sub;
 	}
 	if (cm->free > 0) {
-	    assert(cm->free < cm->max);
+	    assert((size_t)cm->free < cm->max);
 	    pco = cm->free;
 	    nco = cm->cd[pco].sub;
 	    while (nco > 0) {
@@ -339,7 +339,7 @@ freecolor(
 		    nco = cm->cd[nco].sub;
 		    cm->cd[pco].sub = nco;
 		} else {
-		    assert(nco < cm->max);
+		    assert((size_t)nco < cm->max);
 		    pco = nco;
 		    nco = cm->cd[pco].sub;
 		}
@@ -429,7 +429,7 @@ newsub(
 
 /*
  - subrange - allocate new subcolors to this range of chrs, fill in arcs
- ^ static VOID subrange(struct vars *, pchr, pchr, struct state *,
+ ^ static void subrange(struct vars *, pchr, pchr, struct state *,
  ^ 	struct state *);
  */
 static void
@@ -477,7 +477,7 @@ subrange(
 
 /*
  - subblock - allocate new subcolors for one tree block of chrs, fill in arcs
- ^ static VOID subblock(struct vars *, pchr, struct state *, struct state *);
+ ^ static void subblock(struct vars *, pchr, struct state *, struct state *);
  */
 static void
 subblock(
@@ -582,7 +582,7 @@ subblock(
 
 /*
  - okcolors - promote subcolors to full colors
- ^ static VOID okcolors(struct nfa *, struct colormap *);
+ ^ static void okcolors(struct nfa *, struct colormap *);
  */
 static void
 okcolors(
@@ -643,7 +643,7 @@ okcolors(
 
 /*
  - colorchain - add this arc to the color chain of its color
- ^ static VOID colorchain(struct colormap *, struct arc *);
+ ^ static void colorchain(struct colormap *, struct arc *);
  */
 static void
 colorchain(
@@ -662,7 +662,7 @@ colorchain(
 
 /*
  - uncolorchain - delete this arc from the color chain of its color
- ^ static VOID uncolorchain(struct colormap *, struct arc *);
+ ^ static void uncolorchain(struct colormap *, struct arc *);
  */
 static void
 uncolorchain(
@@ -688,7 +688,7 @@ uncolorchain(
 
 /*
  - rainbow - add arcs of all full colors (but one) between specified states
- ^ static VOID rainbow(struct nfa *, struct colormap *, int, pcolor,
+ ^ static void rainbow(struct nfa *, struct colormap *, int, pcolor,
  ^ 	struct state *, struct state *);
  */
 static void
@@ -715,7 +715,7 @@ rainbow(
 /*
  - colorcomplement - add arcs of complementary colors
  * The calling sequence ought to be reconciled with cloneouts().
- ^ static VOID colorcomplement(struct nfa *, struct colormap *, int,
+ ^ static void colorcomplement(struct nfa *, struct colormap *, int,
  ^ 	struct state *, struct state *, struct state *);
  */
 static void
@@ -748,7 +748,7 @@ colorcomplement(
 
 /*
  - dumpcolors - debugging output
- ^ static VOID dumpcolors(struct colormap *, FILE *);
+ ^ static void dumpcolors(struct colormap *, FILE *);
  */
 static void
 dumpcolors(
@@ -777,17 +777,18 @@ dumpcolors(
 	    }
 
 	    /*
-	     * It's hard to do this more efficiently.
+	     * Unfortunately, it's hard to do this next bit more efficiently.
+	     *
+	     * Spencer's original coding has the loop iterating from CHR_MIN
+	     * to CHR_MAX, but that's utterly unusable for 32-bit chr, or
+	     * even 16-bit.  For debugging purposes it seems fine to print
+	     * only chr codes up to 1000 or so.
 	     */
 
-	    for (c=CHR_MIN ; c<CHR_MAX ; c++) {
+	    for (c=CHR_MIN ; c<1000 ; c++) {
 		if (GETCOLOR(cm, c) == co) {
 		    dumpchr(c, f);
 		}
-	    }
-	    assert(c == CHR_MAX);
-	    if (GETCOLOR(cm, c) == co) {
-		dumpchr(c, f);
 	    }
 	    fprintf(f, "\n");
 	}
@@ -796,7 +797,7 @@ dumpcolors(
 
 /*
  - fillcheck - check proper filling of a tree
- ^ static VOID fillcheck(struct colormap *, union tree *, int, FILE *);
+ ^ static void fillcheck(struct colormap *, union tree *, int, FILE *);
  */
 static void
 fillcheck(
@@ -825,7 +826,7 @@ fillcheck(
 /*
  - dumpchr - print a chr
  * Kind of char-centric but works well enough for debug use.
- ^ static VOID dumpchr(pchr, FILE *);
+ ^ static void dumpchr(pchr, FILE *);
  */
 static void
 dumpchr(

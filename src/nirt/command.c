@@ -1,7 +1,7 @@
 /*                       C O M M A N D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -357,7 +357,7 @@ shoot(char *UNUSED(buffer), com_table *UNUSED(ctp), struct rt_i *rtip)
 	 */
 	VADD2SCALE(center_bsphere, rtip->mdl_max, rtip->mdl_min, 0.5);
 
-	dist_to_target = DIST_PT_PT(center_bsphere, ray_point);
+	dist_to_target = DIST_PNT_PNT(center_bsphere, ray_point);
 
 	VSUB2(dvec, ray_point, center_bsphere);
 	VUNITIZE(dvec);
@@ -590,14 +590,14 @@ cm_libdebug(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 
     if (*cp == '\0') {
 	/* display current value */
-	bu_printb("libdebug ", RT_G_DEBUG, RT_DEBUG_FMT);
+	bu_printb("libdebug ", RT_G_DEBUG, RT_DEBUG_FORMAT);
 	bu_log("\n");
 	return;
     }
 
     /* Set a new value */
-    if (sscanf(cp, "%x", (unsigned int *)&RTG.debug) == 1) {
-	bu_printb("libdebug ", RT_G_DEBUG, RT_DEBUG_FMT);
+    if (sscanf(cp, "%x", (unsigned int *)&rt_debug) == 1) {
+	bu_printb("libdebug ", RT_G_DEBUG, RT_DEBUG_FORMAT);
 	bu_log("\n");
     } else {
 	com_usage(ctp);

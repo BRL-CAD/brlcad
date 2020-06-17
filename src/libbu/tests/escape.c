@@ -1,7 +1,7 @@
 /*                   E S C A P E . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2019 United States Government as represented by
+ * Copyright (c) 2011-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,6 +44,8 @@ main(int ac, char *av[])
     int test_num = 0;
     char *bufp;
     char buffer[32];
+
+    bu_setprogname(av[0]);
 
     if (ac < 3)
 	bu_exit(1, "Usage: %s {function_number} {test_number}\n", av[0]);

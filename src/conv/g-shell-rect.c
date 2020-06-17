@@ -1,7 +1,7 @@
 /*                  G - S H E L L - R E C T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -1096,7 +1096,7 @@ refine_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
     VJOIN1(hit_pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
 
     for (BU_LIST_FOR(rpp, refine_rpp, &add_rpp_head)) {
-	if (V3PT_IN_RPP(hit_pt, rpp->min, rpp->max)) {
+	if (V3PNT_IN_RPP(hit_pt, rpp->min, rpp->max)) {
 	    V_MIN(use_tolerance, rpp->tolerance);
 	}
     }

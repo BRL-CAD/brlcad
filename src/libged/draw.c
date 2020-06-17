@@ -1,7 +1,7 @@
 /*                         D R A W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2019 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -304,7 +304,7 @@ draw_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *path
     struct bu_list vhead;
     struct _ged_client_data *dgcdp = (struct _ged_client_data *)client_data;
 
-    if (RT_G_DEBUG&DEBUG_TREEWALK) {
+    if (RT_G_DEBUG&RT_DEBUG_TREEWALK) {
 	char *sofar = db_path_to_string(pathp);
 	bu_vls_printf(dgcdp->gedp->ged_result_str, "nmg_region_start(%s)\n", sofar);
 	bu_free((void *)sofar, "path string");
@@ -353,7 +353,7 @@ draw_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *path
     switch (intern.idb_type) {
 	case ID_POLY:
 	    {
-		if (RT_G_DEBUG&DEBUG_TREEWALK) {
+		if (RT_G_DEBUG&RT_DEBUG_TREEWALK) {
 		    bu_log("fastpath draw ID_POLY %s\n", dp->d_namep);
 		}
 		if (dgcdp->draw_wireframes) {
@@ -365,7 +365,7 @@ draw_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *path
 	    goto out;
 	case ID_BOT:
 	    {
-		if (RT_G_DEBUG&DEBUG_TREEWALK) {
+		if (RT_G_DEBUG&RT_DEBUG_TREEWALK) {
 		    bu_log("fastpath draw ID_BOT %s\n", dp->d_namep);
 		}
 		if (dgcdp->draw_wireframes) {
@@ -377,7 +377,7 @@ draw_nmg_region_start(struct db_tree_state *tsp, const struct db_full_path *path
 	    goto out;
 	case ID_BREP:
 	    {
-		if (RT_G_DEBUG&DEBUG_TREEWALK) {
+		if (RT_G_DEBUG&RT_DEBUG_TREEWALK) {
 		    bu_log("fastpath draw ID_BREP %s\n", dp->d_namep);
 		}
 		if (dgcdp->draw_wireframes) {
@@ -475,14 +475,14 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
     int failed;
     struct _ged_client_data *dgcdp = (struct _ged_client_data *)client_data;
 
-    RT_CK_TESS_TOL(tsp->ts_ttol);
+    BG_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
     NMG_CK_MODEL(*tsp->ts_m);
     RT_CK_RESOURCE(tsp->ts_resp);
 
     BU_LIST_INIT(&vhead);
 
-    if (RT_G_DEBUG&DEBUG_TREEWALK) {
+    if (RT_G_DEBUG&RT_DEBUG_TREEWALK) {
 	char *sofar = db_path_to_string(pathp);
 
 	bu_vls_printf(dgcdp->gedp->ged_result_str, "nmg_region_end() path='%s'\n", sofar);
@@ -577,7 +577,7 @@ _ged_cvt_vlblock_to_solids(struct ged *gedp, struct bn_vlblock *vbp, const char 
 	if (BU_LIST_IS_EMPTY(&(vbp->head[i])))
 	    continue;
 	snprintf(namebuf, 64, "%s%lx", shortname, vbp->rgb[i]);
-	invent_solid(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_create_vlist_solid_callback, gedp->ged_free_vlist_callback, namebuf, &vbp->head[i], vbp->rgb[i], copy, 0.0, 0, gedp->freesolid, 0);
+	invent_solid(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_create_vlist_solid_callback, gedp->ged_free_vlist_callback, namebuf, &vbp->head[i], vbp->rgb[i], copy, 1.0, 0, gedp->freesolid, 0);
     }
 }
 
@@ -1138,12 +1138,12 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	if (!tbl) {
 	    bu_log("Error: db_lookup_by_attr() failed!!\n");
 	    bu_vls_free(&vls);
-	    return TCL_ERROR;
+	    return GED_ERROR;
 	}
 	if (BU_PTBL_LEN(tbl) < 1) {
 	    /* nothing matched, just return */
 	    bu_vls_free(&vls);
-	    return TCL_OK;
+	    return GED_OK;
 	}
 	for (i = 0; i < BU_PTBL_LEN(tbl); i++) {
 	    struct directory *dp;

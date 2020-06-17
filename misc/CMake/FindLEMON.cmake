@@ -10,7 +10,7 @@
 #
 # Originally based off of FindBISON.cmake from Kitware's CMake distribution
 #
-# Copyright (c) 2010-2019 United States Government as represented by
+# Copyright (c) 2010-2020 United States Government as represented by
 #                the U.S. Army Research Laboratory.
 # Copyright 2009 Kitware, Inc.
 # Copyright 2006 Tristan Carel
@@ -160,7 +160,7 @@ if(NOT COMMAND LEMON_TARGET)
     add_custom_command(
       OUTPUT ${LEMON_GEN_OUT} ${LEMON_GEN_SOURCE} ${LEMON_GEN_HEADER}
       COMMAND ${CMAKE_COMMAND} -E copy ${lemon_in_file} ${${LVAR_PREFIX}_WORKING_DIR}/${INPUT_NAME}
-      COMMAND ${LEMON_EXECUTABLE} -T${LEMON_TEMPLATE} ${${LVAR_PREFIX}_WORKING_DIR}/${INPUT_NAME} ${${LVAR_PREFIX}__EXTRA_ARGS}
+      COMMAND ${LEMON_EXECUTABLE} -l -T${LEMON_TEMPLATE} ${${LVAR_PREFIX}_WORKING_DIR}/${INPUT_NAME} ${${LVAR_PREFIX}__EXTRA_ARGS}
       DEPENDS ${Input} ${LEMON_TEMPLATE} ${LEMON_EXECUTABLE_TARGET}
       WORKING_DIRECTORY ${${LVAR_PREFIX}_WORKING_DIR}
       COMMENT "[LEMON][${Name}] Building parser with ${LEMON_EXECUTABLE}"

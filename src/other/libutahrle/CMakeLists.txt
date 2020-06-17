@@ -58,6 +58,10 @@ check_include_files(unistd.h HAVE_UNISTD_H)
 if(HAVE_UNISTD_H)
   add_definitions(-DHAVE_UNISTD_H=1)
 endif(HAVE_UNISTD_H)
+check_include_files(sys/wait.h HAVE_SYS_WAIT_H)
+if(HAVE_SYS_WAIT_H)
+  add_definitions(-DHAVE_SYS_WAIT_H=1)
+endif(HAVE_SYS_WAIT_H)
 
 include_directories(
   ${${CMAKE_PROJECT_NAME}_SOURCE_DIR}/include
@@ -154,9 +158,9 @@ if(BUILD_STATIC_LIBS)
     ARCHIVE DESTINATION ${LIB_DIR})
 endif(BUILD_STATIC_LIBS)
 
-if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL )
+if(NOT SKIP_INSTALL_HEADERS AND NOT SKIP_INSTALL_ALL )
   install(FILES ${LIBUTAHRLE_PUBLIC_HDRS} DESTINATION include)
-endif(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL )
+endif(NOT SKIP_INSTALL_HEADERS AND NOT SKIP_INSTALL_ALL )
 
 # Local Variables:
 # tab-width: 8

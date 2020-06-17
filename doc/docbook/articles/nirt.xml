@@ -2433,9 +2433,8 @@ center_cube.r        (   1.0000,   0.0000,   0.0000)   2.0000   0.0000
 
     <para>
       In cases where problems are being encountered, it is possible to use
-      debugging options to print additional information related to the raytracing
-      process.  <application>NIRT</application> exposes two levels of debugging:
-      the core raytracing library and <application>NIRT</application> itself.
+      debugging options to print additional information from the supporting
+      BRL-CAD libraries.
     </para>
     <section xml:id="librt_Debugging_Information"><info><title>librt Debugging Information</title></info>
 

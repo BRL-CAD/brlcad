@@ -1,7 +1,7 @@
 /*          P A R A L L E L _ C P P 1 1 T H R E A D . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2019 United States Government as represented by
+ * Copyright (c) 2013-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@ parallel_cpp11thread(void (*func)(int, void *), size_t ncpu, void *arg)
 	 * Revert to single threading.
 	 */
 	if (!ncpu)
-	    return func(ncpu, arg);
+	    return func((int)ncpu, arg);
     }
 
     /* Create and run threads. */

@@ -1,7 +1,7 @@
 /*                C H E C K _ U N C O N F _ A I R . C
  * BRL-CAD
  *
- * Copyright (c) 2018-2019 United States Government as represented by
+ * Copyright (c) 2018-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,14 +51,14 @@ unconf_air(const struct xray *ray,
 	return;
     }
 
-    bu_semaphore_acquire(GED_SEM_WORKER);
+    bu_semaphore_acquire(BU_SEM_GENERAL);
     
     add_to_list(context->unconfAirList,
 		ipart->pt_regionp->reg_name,
 		opart->pt_regionp->reg_name,
 		depth,
 		ihit);
-    bu_semaphore_release(GED_SEM_WORKER);
+    bu_semaphore_release(BU_SEM_GENERAL);
 
     if (context->plot_unconf_air) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);

@@ -1,7 +1,7 @@
 /*                         B G . H
  * BRL-CAD
  *
- * Copyright (c) 2015-2019 United States Government as represented by
+ * Copyright (c) 2015-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,8 +51,10 @@
 
 #include "bg/defines.h"
 #include "bg/chull.h"
+#include "bg/lseg.h"
 #include "bg/obr.h"
 #include "bg/polygon.h"
+#include "bg/tri_pt.h"
 #include "bg/tri_ray.h"
 #include "bg/tri_tri.h"
 #include "bg/trimesh.h"

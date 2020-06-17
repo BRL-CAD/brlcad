@@ -1,7 +1,7 @@
 /*                        C O M M O N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,8 +47,9 @@
 
 #  if defined(_WIN32) && !defined(__CYGWIN__) && !defined(__MINGW32__)
 #    include "brlcad_config.h"
-#    /* Put this after brlcad_config.h, since some of the tests
-       	in here require defines from brlcad_config.h */
+    /* Put Windows config after brlcad_config.h, since some of the
+     * tests in it require defines from brlcad_config.h
+     */
 #    include "config_win.h"
 #  else
 #    include "brlcad_config.h"
@@ -66,46 +67,40 @@
 extern double drand48(void);
 #  endif
 
-#if !defined(__cplusplus) || defined(HAVE_SHARED_RINT_TEST)
+# if !defined(__cplusplus) || defined(HAVE_SHARED_RINT_TEST)
 /* make sure lrint() is provided */
-#  if !defined(lrint)
-#    if !defined(HAVE_LRINT)
-#      define lrint(_x) (((_x) < 0.0) ? (long int)ceil((_x)-0.5) : (long int)floor((_x)+0.5))
-#    elif !defined(HAVE_WINDOWS_H) && !defined(HAVE_DECL_LRINT)
+#   if !defined(lrint)
+#     if !defined(HAVE_LRINT)
+#       define lrint(_x) (((_x) < 0.0) ? (long int)ceil((_x)-0.5) : (long int)floor((_x)+0.5))
+#     elif !defined(HAVE_WINDOWS_H) && !defined(HAVE_DECL_LRINT)
 long int lrint(double x);
-#      define HAVE_DECL_LRINT 1
-#    endif
-#  endif
+#       define HAVE_DECL_LRINT 1
+#     endif
+#   endif
 
-#  if !defined(HAVE_LRINT)
-#    define HAVE_LRINT 1
-#  endif
+#   if !defined(HAVE_LRINT)
+#     define HAVE_LRINT 1
+#   endif
 
 /* make sure rint() is provided */
-#  if !defined(rint)
-#    if !defined(HAVE_RINT)
-#      define rint(_x) (((_x) < 0.0) ? ceil((_x)-0.5) : floor((_x)+0.5))
-#    elif !defined(HAVE_WINDOWS_H) && !defined(HAVE_DECL_RINT)
+#   if !defined(rint)
+#     if !defined(HAVE_RINT)
+#       define rint(_x) (((_x) < 0.0) ? ceil((_x)-0.5) : floor((_x)+0.5))
+#     elif !defined(HAVE_WINDOWS_H) && !defined(HAVE_DECL_RINT)
 double rint(double x);
-#      define HAVE_DECL_RINT 1
-#    endif
-#  endif
+#       define HAVE_DECL_RINT 1
+#     endif
+#   endif
 
-#  if !defined(HAVE_RINT)
-#    define HAVE_RINT 1
-#  endif
-#endif
+#   if !defined(HAVE_RINT)
+#     define HAVE_RINT 1
+#   endif
+# endif
 
 /* strict c89 doesn't declare snprintf() */
 # if defined(HAVE_SNPRINTF) && !defined(HAVE_DECL_SNPRINTF) && !defined(snprintf) && !defined(__cplusplus)
 # include <stddef.h> /* for size_t */
 extern int snprintf(char *str, size_t size, const char *format, ...);
-# endif
-
-/* strict c89 doesn't declare fileno() */
-# if defined(HAVE_FILENO) && !defined(HAVE_DECL_FILENO) && !defined(fileno) && !defined(__cplusplus)
-# include <stdio.h> /* for FILE */
-extern int fileno(FILE *stream);
 # endif
 
 #endif  /* BRLCADBUILD & HAVE_CONFIG_H */
@@ -155,29 +150,21 @@ extern int fileno(FILE *stream);
 #  define FMIN(a, b)	(((a)<(b))?(a):(b))
 #endif
 
-/* If we've got the wrong off_t size, do something about it (*before*
-   we include sys/types.h, which can hold the incorrect definition.)
-   Also set any other related defines that might be needed. */
-#if defined(OFF_T_SIZE_MISMATCH)
-/*#  pragma message("Fixing off_t definition")*/
-#  ifdef off_t
-#    undef off_t
-#  endif
-typedef ptrdiff_t off_t;
-#  ifdef _off_t
-#    undef _off_t
-#  endif
-typedef ptrdiff_t _off_t;
-#  define _OFF_T_DEFINED
-#endif
-
 /* make sure the old bsd types are defined for portability */
-#if !defined(HAVE_U_TYPES)
+#if defined(BRLCADBUILD) && defined(HAVE_CONFIG_H)
+# if !defined(HAVE_U_TYPES)
 typedef unsigned char u_char;
 typedef unsigned int u_int;
 typedef unsigned long u_long;
 typedef unsigned short u_short;
-#  define HAVE_U_TYPES 1
+#   define HAVE_U_TYPES 1
+# endif
+#endif
+
+/* We want 64 bit (large file) I/O capabilities whenever they are available.
+ * Always define this before we include sys/types.h */
+#ifndef _FILE_OFFSET_BITS
+#  define _FILE_OFFSET_BITS 64
 #endif
 
 /**
@@ -185,16 +172,18 @@ typedef unsigned short u_short;
  * regardless, we use it so make sure it's declared by using the
  * similar POSIX ptrdiff_t type.
  */
-#ifndef HAVE_SSIZE_T
-#  ifdef HAVE_SYS_TYPES_H
-#    include <sys/types.h>
-#  endif
-#  include <limits.h>
-#  include <stddef.h>
-#  ifndef SSIZE_MAX
+#if defined(BRLCADBUILD) && defined(HAVE_CONFIG_H)
+# ifndef HAVE_SSIZE_T
+#   ifdef HAVE_SYS_TYPES_H
+#     include <sys/types.h>
+#   endif
+#   include <limits.h>
+#   include <stddef.h>
+#   ifndef SSIZE_MAX
 typedef ptrdiff_t ssize_t;
-#    define HAVE_SSIZE_T 1
-#  endif
+#     define HAVE_SSIZE_T 1
+#   endif
+# endif
 #endif
 
 /* make sure most of the C99 stdint types are provided including the
@@ -202,9 +191,9 @@ typedef ptrdiff_t ssize_t;
  */
 #if !defined(INT8_MAX) || !defined(INT16_MAX) || !defined(INT32_MAX) || !defined(INT64_MAX)
 #  if (defined _MSC_VER && (_MSC_VER <= 1500))
-     /* Older Versions of Visual C++ seem to need pstdint.h
-      * but still pass the tests below, so force it based on
-      * version (ugh.) */
+    /* Older Versions of Visual C++ seem to need pstdint.h but still
+     * pass the tests below, so force it based on version (ugh.)
+     */
 #    include "pstdint.h"
 #  elif defined(__STDC__) || defined(__STRICT_ANSI__) || defined(__SIZE_TYPE__) || defined(HAVE_STDINT_H)
 #    if !defined(__STDC_LIMIT_MACROS)
@@ -217,6 +206,24 @@ typedef ptrdiff_t ssize_t;
 #  else
 #    include "pstdint.h"
 #  endif
+#endif
+
+/* off_t is 32 bit size even on 64 bit Windows. In the past we have tried to
+ * force off_t to be 64 bit but this is failing on newer Windows/Visual Studio
+ * verions in 2020 - therefore, we instead introduce the b_off_t define to
+ * properly substitute the correct numerical type for the correct platform.  */
+#if defined(_WIN64)
+#  include <sys/stat.h>
+#  define b_off_t __int64
+#  define fstat _fstati64
+#  define stat  _stati64
+#elif defined (_WIN32)
+#  include <sys/stat.h>
+#  define b_off_t _off_t
+#  define fstat _fstat
+#  define stat  _stat
+#else
+#  define b_off_t off_t
 #endif
 
 /**
@@ -307,13 +314,13 @@ typedef ptrdiff_t ssize_t;
 #  undef UNUSED
 #endif
 #if GCC_PREREQ(2, 5)
-   /* GCC-style compilers have an attribute */
+/* GCC-style compilers have an attribute */
 #  define UNUSED(parameter) UNUSED_ ## parameter __attribute__((unused))
 #elif defined(__cplusplus)
-   /* C++ allows the name to go away */
+/* C++ allows the name to go away */
 #  define UNUSED(parameter) /* parameter */
 #else
-   /* some are asserted when !NDEBUG */
+/* some are asserted when !NDEBUG */
 #  define UNUSED(parameter) (parameter)
 #endif
 
@@ -380,13 +387,14 @@ typedef ptrdiff_t ssize_t;
 #  define DEPRECATED /* deprecated */
 #endif
 
+
 /* ActiveState Tcl doesn't include this catch in tclPlatDecls.h, so we
  * have to add it for them
  */
 #if defined(_MSC_VER) && defined(__STDC__)
 #  include <tchar.h>
-   /* MSVC++ misses this. */
-   typedef _TCHAR TCHAR;
+/* MSVC++ misses this. */
+typedef _TCHAR TCHAR;
 #endif
 
 /* Avoid -Wundef warnings for system headers that use __STDC_VERSION__ without
@@ -450,9 +458,9 @@ typedef ptrdiff_t ssize_t;
  *   extern const int var = 10;
  */
 #if defined(__cplusplus)
-  #define EXTERNVARINIT extern
+#  define EXTERNVARINIT extern
 #else
-  #define EXTERNVARINIT
+#  define EXTERNVARINIT
 #endif
 
 /**
@@ -520,6 +528,21 @@ typedef ptrdiff_t ssize_t;
 #  define CPP_FILELINE __FILE__ ":" CPP_XSTR(__LINE__)
 #endif
 
+/**
+ * If we've not already defined COMPILER_DLLEXPORT and COMPILER_DLLIMPORT,
+ * define them away so code including the *_EXPORT header logic won't
+ * fail.
+ */
+#if defined(_MSC_VER)
+#  define COMPILER_DLLEXPORT __declspec(dllexport)
+#  define COMPILER_DLLIMPORT __declspec(dllimport)
+#elif defined(__GNUC__) || defined(__clang__)
+#  define COMPILER_DLLEXPORT __attribute__ ((visibility ("default")))
+#  define COMPILER_DLLIMPORT __attribute__ ((visibility ("default")))
+#else
+#  define COMPILER_DLLEXPORT
+#  define COMPILER_DLLIMPORT
+#endif
 
 #endif  /* COMMON_H */
 

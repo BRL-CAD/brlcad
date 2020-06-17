@@ -1,7 +1,7 @@
 /*                       T A B L E . C P P
  * BRL-CAD
  *
- * Copyright (c) 1989-2019 United States Government as represented by
+ * Copyright (c) 1989-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -52,10 +52,10 @@ extern "C" {
     extern void rt_##name##_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp); \
     extern int rt_##name##_class(const struct soltab *, const vect_t *, const vect_t *, const struct bn_tol *); \
     extern void rt_##name##_free(struct soltab *stp); \
-    extern int rt_##name##_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *info); \
+    extern int rt_##name##_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *info); \
     extern int rt_##name##_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info); \
     extern void rt_##name##_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap); \
-    extern int rt_##name##_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol); \
+    extern int rt_##name##_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol); \
     extern int rt_##name##_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol); \
     extern void rt_##name##_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol); \
     extern int rt_##name##_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip); \
@@ -2162,8 +2162,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* brep */
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_annot_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_annot_export5),
-	RTFUNCTAB_FUNC_IMPORT4_CAST(rt_annot_import4),
-	RTFUNCTAB_FUNC_EXPORT4_CAST(rt_annot_export4),
+	NULL, /* import4 */
+	NULL, /* export4 */
 	RTFUNCTAB_FUNC_IFREE_CAST(rt_annot_ifree),
 	RTFUNCTAB_FUNC_DESCRIBE_CAST(rt_annot_describe),
 	RTFUNCTAB_FUNC_XFORM_CAST(rt_generic_xform),

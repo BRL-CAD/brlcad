@@ -1,7 +1,7 @@
 /*                     I F C - G . C P P
  * BRL-CAD
  *
- * Copyright (c) 1994-2019 United States Government as represented by
+ * Copyright (c) 1994-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,6 +27,7 @@
 
 #include <iostream>
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/time.h"
 #include "bu/file.h"
@@ -54,6 +55,8 @@ main(int argc, char *argv[])
 {
     int ret = 0;
     int64_t elapsedtime;
+
+    bu_setprogname(argv[0]);
 
     elapsedtime = bu_gettime();
 

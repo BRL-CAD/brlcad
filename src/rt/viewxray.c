@@ -1,7 +1,7 @@
 /*                      V I E W X R A Y . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2019 United States Government as represented by
+ * Copyright (c) 1990-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -219,8 +219,8 @@ xrayhit(register struct application *ap, struct partition *PartHeadp, struct seg
 	return 0;
     }
 
-    if (R_DEBUG&RDEBUG_HITS)  {
-	rt_pr_pt( ap->a_rt_i, pp );
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_HITS)  {
+	rt_pr_partition(ap->a_rt_i, pp );
     }
 
     hitp = pp->pt_inhit;
@@ -233,7 +233,7 @@ xrayhit(register struct application *ap, struct partition *PartHeadp, struct seg
 	/* XXX */
 	bu_log("xrayhit:  Eye inside solid (%g)\n", hitp->hit_dist );
 	for ( pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw )
-	    rt_pr_pt( ap->a_rt_i, pp );
+	    rt_pr_partition( ap->a_rt_i, pp );
 	return 0;
     }
 
@@ -323,8 +323,8 @@ application_init (void)
     option("Raytrace", "-i", "Enable incremental (progressive-style) rendering", 1);
     option("Raytrace", "-t", "Render from top to bottom (default: from bottom up)", 1);
 
-    option(NULL, "-C", "Disabled, not implemented", 2);
-    option(NULL, "-W", "Disabled, non implemented", 2);
+    option(NULL, "-C", "Disabled, not implemented", -2);
+    option(NULL, "-W", "Disabled, non implemented", -2);
 }
 
 /*

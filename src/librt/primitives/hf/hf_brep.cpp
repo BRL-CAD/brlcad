@@ -1,7 +1,7 @@
 /*                      H F _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2012-2019 United States Government as represented by
+ * Copyright (c) 2012-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@
 
 extern "C" {
     extern int rt_hf_to_dsp(struct rt_db_internal *db_intern);
-    extern void rt_dsp_brep(ON_Brep **bi, struct rt_db_internal *ip, const struct bn_tol *tol);
+    extern void rt_dsp_brep(ON_Brep **bi, const struct rt_db_internal *ip, const struct bn_tol *tol);
 }
 
 extern "C" void

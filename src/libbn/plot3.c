@@ -1,7 +1,7 @@
 /*                         P L O T 3 . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,24 +42,24 @@
  * letters.
  *
  * @code
-		2d	3d	2df	3df
-space		s	S	w	W
-move		m	M	o	O
-cont		n	N	q	Q
-point		p	P	x	X
-line		l	L	v	V
-circle		c		i
-arc		a		r
-linmod		f
-label		t
-erase		e
-color		C
-flush		F
+ 2d	3d	2df	3df
+ space		s	S	w	W
+ move		m	M	o	O
+ cont		n	N	q	Q
+ point		p	P	x	X
+ line		l	L	v	V
+ circle		c		i
+ arc		a		r
+ linmod		f
+ label		t
+ erase		e
+ color		C
+ flush		F
 
  bd gh jk  uyz
-ABDEGHIJKRTUYZ
+ ABDEGHIJKRTUYZ
 
-@endcode
+ @endcode
  *
  */
 
@@ -334,6 +334,15 @@ pl_color(register FILE *plotfp, int r, int g, int b)
 }
 
 void
+pl_color_buc(register FILE *plotfp, struct bu_color *c)
+{
+    int r = 0;
+    int g = 0;
+    int b = 0;
+    (void)bu_color_to_rgb_ints(c, &r, &g, &b);
+    pl_color(plotfp, r, g, b);
+}
+void
 pl_flush(register FILE *plotfp)
 {
     if (pl_outputMode == PL_OUTPUT_MODE_BINARY) {
@@ -429,7 +438,7 @@ pl_3box(register FILE *plotfp, int px1, int py1, int pz1, int px2, int py2, int 
 void
 pd_point(register FILE *plotfp, double x, double y)
 {
-	pd( plotfp, x, y, 'x'); /* calling common function pd */
+    pd( plotfp, x, y, 'x'); /* calling common function pd */
 }
 
 void
@@ -622,7 +631,7 @@ pdv_3move(register FILE *plotfp, const fastf_t *pt)
 void
 pd_3move(register FILE *plotfp, double x, double y, double z)
 {
-   pd_3(plotfp, x, y, z, 'O'); /* calling common function pd_3 */
+    pd_3(plotfp, x, y, z, 'O'); /* calling common function pd_3 */
 }
 
 void

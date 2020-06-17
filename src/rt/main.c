@@ -1,7 +1,7 @@
 /*                          M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2019 United States Government as represented by
+ * Copyright (c) 1985-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,6 +38,13 @@
 #include <signal.h>
 #include <math.h>
 
+#ifdef MPI_ENABLED
+#  include <mpi.h>
+#endif
+
+#include "bio.h"
+
+#include "bu/app.h"
 #include "bu/endian.h"
 #include "bu/getopt.h"
 #include "bu/bitv.h"
@@ -134,15 +141,69 @@ memory_summary(void)
     n_realloc = bu_n_realloc;
 }
 
-int main(int argc, const char **argv)
+int fb_setup() {
+    /* Framebuffer is desired */
+    size_t xx, yy;
+    int	zoom;
+
+    /* Ask for a fb big enough to hold the image, at least 512. */
+    /* This is so MGED-invoked "postage stamps" get zoomed up big enough to see */
+    xx = yy = 512;
+    if (width > xx || height > yy) {
+	xx = width;
+	yy = height;
+    }
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
+    fbp = fb_open(framebuffer, xx, yy);
+    bu_semaphore_release(BU_SEM_SYSCALL);
+    if (fbp == FB_NULL) {
+	fprintf(stderr, "rt:  can't open frame buffer\n");
+	return 12;
+    }
+
+    bu_semaphore_acquire(BU_SEM_SYSCALL);
+    /* If fb came out smaller than requested, do less work */
+    if ((size_t)fb_getwidth(fbp) < width)
+	width = fb_getwidth(fbp);
+    if ((size_t)fb_getheight(fbp) < height)
+	height = fb_getheight(fbp);
+
+    /* If the fb is lots bigger (>= 2X), zoom up & center */
+    if (width > 0 && height > 0) {
+	zoom = fb_getwidth(fbp)/width;
+	if ((size_t)fb_getheight(fbp)/height < (size_t)zoom)
+	    zoom = fb_getheight(fbp)/height;
+    } else {
+	zoom = 1;
+    }
+    (void)fb_view(fbp, width/2, height/2,
+	    zoom, zoom);
+    bu_semaphore_release(BU_SEM_SYSCALL);
+
+#ifdef USE_OPENCL
+    clt_connect_fb(fbp);
+#endif
+    return 0;
+}
+
+
+int main(int argc, char *argv[])
 {
     int ret = 0;
+    int need_fb = 0;
     struct rt_i *rtip = NULL;
     const char *title_file = NULL, *title_obj = NULL;	/* name of file and first object */
     char idbuf[2048] = {0};			/* First ID record info */
     struct bu_vls times = BU_VLS_INIT_ZERO;
     int i;
     int objs_free_argv = 0;
+
+#ifdef MPI_ENABLED
+    int size;
+    int rank;
+#endif
+
+    bu_setprogname(argv[0]);
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
@@ -166,14 +227,27 @@ int main(int argc, const char **argv)
     RT_APPLICATION_INIT( &APP );
     application_init();
 
+#ifdef MPI_ENABLED
+    MPI_Init(&argc, &argv);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    fprintf(stderr, "MPI Rank: %d of %d\n", rank+1, size);
+#endif
+
     /* Process command line options */
-    i = get_args(argc, argv);
+    i = get_args(argc, (const char **)argv);
     if (i < 0)  {
 	usage(argv[0], 0);
+#ifdef MPI_ENABLED
+	MPI_Finalize();
+#endif
 	return 1;
     } else if (i == 0) {
 	/* asking for help is ok */
-	usage(argv[0], 1);
+	usage(argv[0], 100);
+#ifdef MPI_ENABLED
+	MPI_Finalize();
+#endif
 	return 0;
     }
 
@@ -203,6 +277,9 @@ int main(int argc, const char **argv)
     if (bu_optind >= argc) {
 	fprintf(stderr, "%s:  BRL-CAD geometry database not specified\n", argv[0]);
 	usage(argv[0], 0);
+#ifdef MPI_ENABLED
+	MPI_Finalize();
+#endif
 	return 1;
     }
 
@@ -231,6 +308,9 @@ int main(int argc, const char **argv)
 		     sub_xmin, sub_ymin, sub_xmax, sub_ymax);
 	    fprintf(stderr, "\tFor a %lu X %lu image, the subgrid must be within 0, 0,%lu,%lu\n",
 		     (unsigned long)width, (unsigned long)height, (unsigned long)width-1, (unsigned long)height-1 );
+#ifdef MPI_ENABLED
+	    MPI_Finalize();
+#endif
 	    return 1;
 	}
     }
@@ -288,11 +368,11 @@ int main(int argc, const char **argv)
     }
 
     if (RT_G_DEBUG) {
-	bu_printb("librt RTG.debug", RTG.debug, DEBUG_FORMAT);
+	bu_printb("librt rt_debug", rt_debug, RT_DEBUG_FORMAT);
 	bu_log("\n");
     }
-    if (rdebug) {
-	bu_printb("rt rdebug", rdebug, RDEBUG_FORMAT);
+    if (optical_debug) {
+	bu_printb("rt optical_debug", optical_debug, OPTICAL_DEBUG_FORMAT);
 	bu_log("\n");
     }
 
@@ -358,6 +438,9 @@ int main(int argc, const char **argv)
     rt_prep_timer();
     if ((rtip = rt_dirbuild(title_file, idbuf, sizeof(idbuf))) == RTI_NULL) {
 	bu_log("rt:  rt_dirbuild(%s) failure\n", title_file);
+#ifdef MPI_ENABLED
+	MPI_Finalize();
+#endif
 	return 2;
     }
     APP.a_rt_i = rtip;
@@ -393,55 +476,16 @@ int main(int argc, const char **argv)
      *  Note that width & height may not have been set yet,
      *  since they may change from frame to frame.
      */
-    if (view_init(&APP, (char *)title_file, (char *)title_obj, outputfile != (char *)0, framebuffer != (char *)0) != 0)  {
-	/* Framebuffer is desired */
-	size_t xx, yy;
-	int	zoom;
-
-	/* Ask for a fb big enough to hold the image, at least 512. */
-	/* This is so MGED-invoked "postage stamps" get zoomed up big enough to see */
-	xx = yy = 512;
-	if (width > xx || height > yy) {
-	    xx = width;
-	    yy = height;
-	}
-	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	fbp = fb_open(framebuffer, xx, yy);
-	bu_semaphore_release(BU_SEM_SYSCALL);
-	if (fbp == FB_NULL) {
-	    fprintf(stderr, "rt:  can't open frame buffer\n");
-	    return 12;
-	}
-
-	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	/* If fb came out smaller than requested, do less work */
-	if ((size_t)fb_getwidth(fbp) < width)
-	    width = fb_getwidth(fbp);
-	if ((size_t)fb_getheight(fbp) < height)
-	    height = fb_getheight(fbp);
-
-	/* If the fb is lots bigger (>= 2X), zoom up & center */
-	if (width > 0 && height > 0) {
-	    zoom = fb_getwidth(fbp)/width;
-	    if ((size_t)fb_getheight(fbp)/height < (size_t)zoom)
-		zoom = fb_getheight(fbp)/height;
-	} else {
-	    zoom = 1;
-	}
-	(void)fb_view(fbp, width/2, height/2,
-		      zoom, zoom);
-	bu_semaphore_release(BU_SEM_SYSCALL);
-
-#ifdef USE_OPENCL
-	clt_connect_fb(fbp);
-#endif
-    }
-    if ((outputfile == (char *)0) && (fbp == FB_NULL)) {
+    need_fb = view_init(&APP, (char *)title_file, (char *)title_obj, outputfile != (char *)0, framebuffer != (char *)0);
+    if ((outputfile == (char *)0) && !need_fb) {
 	/* If not going to framebuffer, or to a file, then use stdout */
 	if (outfp == NULL) outfp = stdout;
 	/* output_is_binary is changed by view_init, as appropriate */
 	if (output_is_binary && isatty(fileno(outfp))) {
 	    fprintf(stderr, "rt:  attempting to send binary output to terminal, aborting\n");
+#ifdef MPI_ENABLED
+	    MPI_Finalize();
+#endif
 	    return 14;
 	}
     }
@@ -469,7 +513,7 @@ int main(int argc, const char **argv)
 	if (oret < 0) {
 	    bu_log("%s: no objects specified -- raytrace aborted\n", argv[0]);
 	    usage(argv[0], 0);
-	    ret = 1;	
+	    ret = 1;
 	}
 	/* If oret, old way either worked or failed.  Either way, we're done. */
 	if (oret) {
@@ -479,6 +523,16 @@ int main(int argc, const char **argv)
 
     if (objv && !matflag) {
 	int frame_retval;
+
+	if (need_fb != 0 && !fbp)  {
+	    int fb_status = fb_setup();
+	    if (fb_status) {
+#ifdef MPI_ENABLED
+		MPI_Finalize();
+#endif
+		return fb_status;
+	    }
+	}
 
 	def_tree(rtip);		/* Load the default trees */
 	/* orientation command has not been used */
@@ -510,8 +564,30 @@ int main(int argc, const char **argv)
 	}
 
 	while ((buf = rt_read_cmd( stdin )) != (char *)0) {
-	    if (R_DEBUG&RDEBUG_PARSE)
+	    if (OPTICAL_DEBUG&OPTICAL_DEBUG_PARSE) {
 		fprintf(stderr, "cmd: %s\n", buf);
+	    }
+
+	    /* Right now, the framebuffer setup blocks processing of stdin.
+	     * Consequently when rt is being run as a subprocess by libged the
+	     * stdin pipe can get full on some platforms, which in turn results
+	     * in everything hanging while the calling program waits for rt to
+	     * process stdin before continuing to write down the pipe and rt
+	     * waits for fbserv info along the libpkg channel before getting to
+	     * the logic for processing stdin.  Postpone fb setup until we're
+	     * ready to render something to avoid backing up stdin's pipe. */
+	    if (!bu_strncmp(buf, "end", 3) || !bu_strncmp(buf, "multiview", 8)) {
+		if (need_fb != 0 && !fbp)  {
+		    int fb_status = fb_setup();
+		    if (fb_status) {
+#ifdef MPI_ENABLED
+			MPI_Finalize();
+#endif
+			return fb_status;
+		    }
+		}
+	    }
+
 	    nret = rt_do_cmd( rtip, buf, rt_cmdtab);
 	    bu_free( buf, "rt_read_cmd command buffer");
 	    if (nret < 0)
@@ -550,6 +626,10 @@ rt_cleanup:
     /* Release the ray-tracer instance */
     rt_free_rti(rtip);
     rtip = NULL;
+
+#ifdef MPI_ENABLED
+    MPI_Finalize();
+#endif
 
     return ret;
 }

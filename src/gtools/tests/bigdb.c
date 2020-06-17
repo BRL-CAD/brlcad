@@ -1,7 +1,7 @@
 /*                         B I G D B . C
  * BRL-CAD
  *
- * Copyright (c) 2018-2019 United States Government as represented by
+ * Copyright (c) 2018-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -68,6 +68,8 @@ main(int ac, char *av[])
     vect_t center = VINIT_ZERO;
     int failures = 0;
 
+    bu_setprogname(av[0]);
+
     if (ac == 1 || ac > 2) {
 	bu_log("Usage: %s {gigabytes}\n\n", av[0]);
 	bu_log("This program creates a .g geometry database at least {gigabytes} in\n"
@@ -85,6 +87,9 @@ main(int ac, char *av[])
 
     /* bu_log("using %s temp file\n", filename); */
 
+    title = (char *)bu_malloc(sz * 2, "test allocation");
+    bu_free(title, "test allocation");
+    
     title = (char *)bu_malloc(sz, "title");
     memset(title, ' ', sz);
     title[0] = '3';

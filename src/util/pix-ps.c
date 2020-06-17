@@ -1,7 +1,7 @@
 /*                        P I X - P S . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2019 United States Government as represented by
+ * Copyright (c) 1986-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@
 #include <math.h>
 #include <time.h> /* for ctime() */
 #include "bio.h"
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"
 
@@ -213,6 +214,8 @@ main(int argc, char **argv)
     size_t num = 0;
     size_t scans_per_patch, bytes_per_patch;
     size_t y;
+
+    bu_setprogname(argv[0]);
 
     if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)) )
 	printusage();

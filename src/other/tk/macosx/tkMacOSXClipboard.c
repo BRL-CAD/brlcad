@@ -12,6 +12,7 @@
  */
 
 #include "tkMacOSXPrivate.h"
+#include "tkMacOSXConstants.h"
 #include "tkSelect.h"
 
 static NSInteger changeCount = -1;
@@ -20,8 +21,10 @@ static Tk_Window clipboardOwner = NULL;
 #pragma mark TKApplication(TKClipboard)
 
 @implementation TKApplication(TKClipboard)
-- (void)tkProvidePasteboard:(TkDisplay *)dispPtr
-	pasteboard:(NSPasteboard *)sender provideDataForType:(NSString *)type {
+- (void) tkProvidePasteboard: (TkDisplay *) dispPtr
+	pasteboard: (NSPasteboard *) sender
+	provideDataForType: (NSString *) type
+{
     NSMutableString *string = [NSMutableString new];
 
     if (dispPtr && dispPtr->clipboardActive &&
@@ -32,9 +35,7 @@ static Tk_Window clipboardOwner = NULL;
 		    targetPtr->type == dispPtr->utf8Atom) {
 		for (TkClipboardBuffer *cbPtr = targetPtr->firstBufferPtr;
 			cbPtr; cbPtr = cbPtr->nextPtr) {
-		    NSString *s = [[NSString alloc] initWithBytesNoCopy:
-			    cbPtr->buffer length:cbPtr->length
-			    encoding:NSUTF8StringEncoding freeWhenDone:NO];
+		    NSString *s = TclUniToNSString(cbPtr->buffer, cbPtr->length);
 		    [string appendString:s];
 		    [s release];
 		}
@@ -45,25 +46,30 @@ static Tk_Window clipboardOwner = NULL;
     [sender setString:string forType:type];
     [string release];
 }
-- (void)tkProvidePasteboard:(TkDisplay *)dispPtr {
+
+- (void) tkProvidePasteboard: (TkDisplay *) dispPtr
+{
     if (dispPtr && dispPtr->clipboardActive) {
 	[self tkProvidePasteboard:dispPtr
 		pasteboard:[NSPasteboard generalPasteboard]
 		provideDataForType:NSStringPboardType];
     }
 }
-- (void)pasteboard:(NSPasteboard *)sender provideDataForType:(NSString *)type {
+
+- (void) pasteboard: (NSPasteboard *) sender
+	provideDataForType: (NSString *) type
+{
     [self tkProvidePasteboard:TkGetDisplayList() pasteboard:sender
 	    provideDataForType:type];
 }
-- (void)tkCheckPasteboard {
+
+- (void) tkCheckPasteboard
+{
     if (clipboardOwner && [[NSPasteboard generalPasteboard] changeCount] !=
 	    changeCount) {
 	TkDisplay *dispPtr = TkGetDisplayList();
-
 	if (dispPtr) {
 	    XEvent event;
-
 	    event.xany.type = SelectionClear;
 	    event.xany.serial = NextRequest(Tk_Display(clipboardOwner));
 	    event.xany.send_event = False;
@@ -114,9 +120,12 @@ TkSelGetSelection(
 {
     int result = TCL_ERROR;
     TkDisplay *dispPtr = ((TkWindow *) tkwin)->dispPtr;
+    int haveExternalClip =
+	    ([[NSPasteboard generalPasteboard] changeCount] != changeCount);
 
-    if (dispPtr && selection == dispPtr->clipboardAtom && (target == XA_STRING
-	    || target == dispPtr->utf8Atom)) {
+    if (dispPtr && (haveExternalClip || dispPtr->clipboardActive)
+	        && selection == dispPtr->clipboardAtom
+	        && (target == XA_STRING || target == dispPtr->utf8Atom)) {
 	NSString *string = nil;
 	NSPasteboard *pb = [NSPasteboard generalPasteboard];
 	NSString *type = [pb availableTypeFromArray:[NSArray arrayWithObject:
@@ -125,12 +134,28 @@ TkSelGetSelection(
 	if (type) {
 	    string = [pb stringForType:type];
 	}
-	result = proc(clientData, interp, string ? (char*)[string UTF8String]
-		: "");
+	if (string) {
+
+	    /*
+	     * Encode the string using the encoding which is used in Tcl
+	     * when TCL_UTF_MAX = 3.  This replaces each UTF-16 surrogate with
+	     * a 3-byte sequence generated using the UTF-8 algorithm. (Even
+	     * though UTF-8 does not allow encoding surrogates, the algorithm
+	     * does produce a 3-byte sequence.)
+	     */
+
+	    char *bytes = NSStringToTclUni(string, NULL);
+	    result = proc(clientData, interp, bytes);
+	    if (bytes) {
+		ckfree(bytes);
+	    }
+	}
     } else {
-	Tcl_AppendResult(interp, Tk_GetAtomName(tkwin, selection),
-		" selection doesn't exist or form \"",
-		Tk_GetAtomName(tkwin, target), "\" not defined", NULL);
+	Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		"%s selection doesn't exist or form \"%s\" not defined",
+		Tk_GetAtomName(tkwin, selection),
+		Tk_GetAtomName(tkwin, target)));
+	Tcl_SetErrorCode(interp, "TK", "SELECTION", "EXISTS", NULL);
     }
     return result;
 }
@@ -165,6 +190,7 @@ XSetSelectionOwner(
 	clipboardOwner = owner ? Tk_IdToWindow(display, owner) : NULL;
 	if (!dispPtr->clipboardActive) {
 	    NSPasteboard *pb = [NSPasteboard generalPasteboard];
+
 	    changeCount = [pb declareTypes:[NSArray array] owner:NSApp];
 	}
     }
@@ -176,8 +202,8 @@ XSetSelectionOwner(
  *
  * TkMacOSXSelDeadWindow --
  *
- *	This function is invoked just before a TkWindow is deleted. It
- *	performs selection-related cleanup.
+ *	This function is invoked just before a TkWindow is deleted. It performs
+ *	selection-related cleanup.
  *
  * Results:
  *	None.
@@ -221,6 +247,7 @@ TkSelUpdateClipboard(
 				/* Info about the content. */
 {
     NSPasteboard *pb = [NSPasteboard generalPasteboard];
+
     changeCount = [pb addTypes:[NSArray arrayWithObject:NSStringPboardType]
 	    owner:NSApp];
 }
@@ -274,28 +301,6 @@ void
 TkSelPropProc(
     register XEvent *eventPtr)	/* X PropertyChange event. */
 {
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * TkSuspendClipboard --
- *
- *	Handle clipboard conversion as required by the suppend event.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	The local scrap is moved to the global scrap.
- *
- *----------------------------------------------------------------------
- */
-
-void
-TkSuspendClipboard(void)
-{
-    changeCount = [[NSPasteboard generalPasteboard] changeCount];
 }
 
 /*

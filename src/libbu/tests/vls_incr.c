@@ -1,7 +1,7 @@
 /*                     V L S _ I N C R . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2019 United States Government as represented by
+ * Copyright (c) 2015-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,6 +40,8 @@ main(int argc, char *argv[])
     const char *rs_complex = "([-_:]*[0-9]+[-_:]*)[^0-9]*$";
     const char *formatting = NULL;
 
+    bu_setprogname(argv[0]);
+
     /* Sanity check */
     if (argc < 6)
 	bu_exit(1, "Usage: %s {name} {num} {formatting} {incr_count} {expected}\n", argv[0]);
@@ -71,6 +73,8 @@ main(int argc, char *argv[])
     if (BU_STR_EQUAL(bu_vls_addr(&name), argv[5])) ret = 0;
 
     bu_log("output: %s\n", bu_vls_addr(&name));
+
+    bu_vls_free(&name);
 
     return ret;
 }

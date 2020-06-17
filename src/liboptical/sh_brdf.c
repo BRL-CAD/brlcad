@@ -1,7 +1,7 @@
 /*                       S H _ B R D F . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2019 United States Government as represented by
+ * Copyright (c) 1996-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -198,7 +198,7 @@ brdf_render(register struct application *ap, const struct partition *pp, struct 
 
     if (ps->magic != BRDF_MAGIC) bu_log("brdf_render: bad magic\n");
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_struct_print("brdf_render", brdf_parse, (char *)ps);
 
     swp->sw_transmit = ps->transmit;

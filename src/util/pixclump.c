@@ -1,7 +1,7 @@
 /*                      P I X C L U M P . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2019 United States Government as represented by
+ * Copyright (c) 1997-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,6 +32,7 @@
 
 #include "vmath.h"
 
+#include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
@@ -173,6 +174,8 @@ main (int argc, char **argv)
     int best_color;	/* index of best match to pixbuf */
     int best_diff;	/* error in best match */
     int this_diff;	/* pixel-color_tbl difference */
+
+    bu_setprogname(argv[0]);
 
     /*
      * Initialize the color table

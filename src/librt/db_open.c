@@ -1,7 +1,7 @@
 /*                       D B _ O P E N . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2019 United States Government as represented by
+ * Copyright (c) 1988-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -58,13 +58,40 @@
 struct db_i *
 db_open(const char *name, const char *mode)
 {
+    static int sem_uses = 0;
+    extern int RT_SEM_WORKER;
+    extern int RT_SEM_RESULTS;
+    extern int RT_SEM_MODEL;
+    extern int RT_SEM_TREE0;
+    extern int RT_SEM_TREE1;
+    extern int RT_SEM_TREE2;
+    extern int RT_SEM_TREE3;
     register struct db_i *dbip = DBI_NULL;
     register int i;
     char **argv;
 
-    if (name == NULL) return DBI_NULL;
+    if (!sem_uses)
+	sem_uses = bu_semaphore_register("LIBRT_SEM_USES");
 
-    if (RT_G_DEBUG & DEBUG_DB) {
+    if (!RT_SEM_WORKER)
+	RT_SEM_WORKER = bu_semaphore_register("RT_SEM_WORKER");
+    if (!RT_SEM_RESULTS)
+	RT_SEM_RESULTS = bu_semaphore_register("RT_SEM_RESULTS");
+    if (!RT_SEM_MODEL)
+	RT_SEM_MODEL = bu_semaphore_register("RT_SEM_MODEL");
+    if (!RT_SEM_TREE0)
+	RT_SEM_TREE0 = bu_semaphore_register("RT_SEM_TREE0");
+    if (!RT_SEM_TREE1)
+	RT_SEM_TREE1 = bu_semaphore_register("RT_SEM_TREE1");
+    if (!RT_SEM_TREE2)
+	RT_SEM_TREE2 = bu_semaphore_register("RT_SEM_TREE2");
+    if (!RT_SEM_TREE3)
+	RT_SEM_TREE3 = bu_semaphore_register("RT_SEM_TREE3");
+
+    if (name == NULL)
+	return DBI_NULL;
+
+    if (RT_G_DEBUG & RT_DEBUG_DB) {
 	bu_log("db_open(%s, %s)\n", name, mode);
     }
 
@@ -75,7 +102,7 @@ db_open(const char *name, const char *mode)
 
 	mfp = bu_open_mapped_file(name, "db_i");
 	if (mfp == NULL) {
-	    if (RT_G_DEBUG & DEBUG_DB) {
+	    if (RT_G_DEBUG & RT_DEBUG_DB) {
 		bu_log("db_open(%s) FAILED, unable to open as a mapped file\n", name);
 	    }
 	    return DBI_NULL;
@@ -85,7 +112,9 @@ db_open(const char *name, const char *mode)
 	if (mfp->apbuf) {
 	    dbip = (struct db_i *)mfp->apbuf;
 	    RT_CK_DBI(dbip);
+	    bu_semaphore_acquire(sem_uses);
 	    dbip->dbi_uses++;
+	    bu_semaphore_release(sem_uses);
 
 	    /*
 	     * decrement the mapped file reference counter by 1,
@@ -93,7 +122,7 @@ db_open(const char *name, const char *mode)
 	     */
 	    bu_close_mapped_file(mfp);
 
-	    if (RT_G_DEBUG & DEBUG_DB) {
+	    if (RT_G_DEBUG & RT_DEBUG_DB) {
 		bu_log("db_open(%s) dbip=%p: reused previously mapped file\n", name, (void *)dbip);
 	    }
 
@@ -102,13 +131,13 @@ db_open(const char *name, const char *mode)
 
 	BU_ALLOC(dbip, struct db_i);
 	dbip->dbi_mf = mfp;
-	dbip->dbi_eof = (off_t)mfp->buflen;
+	dbip->dbi_eof = (b_off_t)mfp->buflen;
 	dbip->dbi_inmem = mfp->buf;
 	dbip->dbi_mf->apbuf = (void *)dbip;
 
 	/* Do this too, so we can seek around on the file */
 	if ((dbip->dbi_fp = fopen(name, "rb")) == NULL) {
-	    if (RT_G_DEBUG & DEBUG_DB) {
+	    if (RT_G_DEBUG & RT_DEBUG_DB) {
 		bu_log("db_open(%s) FAILED, unable to open file for reading\n", name);
 	    }
 	    bu_free((char *)dbip, "struct db_i");
@@ -120,10 +149,10 @@ db_open(const char *name, const char *mode)
 	/* Read-write mode */
 
 	BU_ALLOC(dbip, struct db_i);
-	dbip->dbi_eof = (off_t)-1L;
+	dbip->dbi_eof = (b_off_t)-1L;
 
 	if ((dbip->dbi_fp = fopen(name, "r+b")) == NULL) {
-	    if (RT_G_DEBUG & DEBUG_DB) {
+	    if (RT_G_DEBUG & RT_DEBUG_DB) {
 		bu_log("db_open(%s) FAILED, unable to open file for reading/writing\n", name);
 	    }
 	    bu_free((char *)dbip, "struct db_i");
@@ -167,11 +196,9 @@ db_open(const char *name, const char *mode)
 	/* Something went wrong and we didn't get the CWD. So,
 	 * free up any memory allocated here and return DBI_NULL */
 	if (argv[1] == NULL) {
-	    if (dbip->dbi_mf) {
-		bu_close_mapped_file(dbip->dbi_mf);
-		bu_free_mapped_files(0);
-		dbip->dbi_mf = (struct bu_mapped_file *)NULL;
-	    }
+	    bu_close_mapped_file(dbip->dbi_mf);
+	    bu_free_mapped_files(0);
+	    dbip->dbi_mf = (struct bu_mapped_file *)NULL;
 
 	    if (dbip->dbi_fp) {
 		fclose(dbip->dbi_fp);
@@ -213,7 +240,7 @@ db_open(const char *name, const char *mode)
 	}
     }
 
-    if (RT_G_DEBUG & DEBUG_DB) {
+    if (RT_G_DEBUG & RT_DEBUG_DB) {
 	bu_log("db_open(%s) dbip=%p version=%d\n", dbip->dbi_filename, (void *)dbip, dbip->dbi_version);
     }
 
@@ -230,7 +257,7 @@ db_create(const char *name, int version)
 
     if (name == NULL) return DBI_NULL;
 
-    if (RT_G_DEBUG & DEBUG_DB)
+    if (RT_G_DEBUG & RT_DEBUG_DB)
 	bu_log("db_create(%s, %d)\n", name, version);
 
     fp = fopen(name, "w+b");
@@ -286,37 +313,31 @@ db_close(register struct db_i *dbip)
 {
     register int i;
     register struct directory *dp, *nextdp;
+    static int sem_uses = 0;
+    if (!sem_uses)
+	sem_uses = bu_semaphore_register("LIBRT_SEM_USES");
 
     if (!dbip)
 	return;
 
     RT_CK_DBI(dbip);
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_close(%s) %p uses=%d\n",
+    if (RT_G_DEBUG&RT_DEBUG_DB) bu_log("db_close(%s) %p uses=%d\n",
 				    dbip->dbi_filename, (void *)dbip, dbip->dbi_uses);
 
-    bu_semaphore_acquire(BU_SEM_LISTS);
+    bu_semaphore_acquire(sem_uses);
     if ((--dbip->dbi_uses) > 0) {
-	bu_semaphore_release(BU_SEM_LISTS);
+	bu_semaphore_release(sem_uses);
 	/* others are still using this database */
 	return;
     }
-    bu_semaphore_release(BU_SEM_LISTS);
+    bu_semaphore_release(sem_uses);
 
     /* ready to free the database -- use count is now zero */
 
     /* free up any mapped files */
-    if (dbip->dbi_mf) {
-
-	/* Clear dbi_mf->apbuf - db_open is storing the dbip here, and the dbip
-	 * will be cleared by free at the end of db_close.  If this file is
-	 * opened again and apbuf isn't NULL, db_open will try to reuse it and
-	 * RT_CK_DBI will fail. */
-	dbip->dbi_mf->apbuf = NULL;
-
-	bu_close_mapped_file(dbip->dbi_mf);
-	bu_free_mapped_files(0);
-	dbip->dbi_mf = (struct bu_mapped_file *)NULL;
-    }
+    bu_close_mapped_file(dbip->dbi_mf);
+    bu_free_mapped_files(0);
+    dbip->dbi_mf = (struct bu_mapped_file *)NULL;
 
     /* try to ensure/encourage that the file is written out */
     db_sync(dbip);
@@ -374,6 +395,7 @@ db_close(register struct db_i *dbip)
 	dbip->dbi_filepath = NULL; /* sanity */
     }
 
+    dbip->dbi_magic = (uint32_t)0x10101010;
     bu_free((char *)dbip, "struct db_i");
 }
 
@@ -418,9 +440,15 @@ db_dump(struct rt_wdb *wdbp, struct db_i *dbip)
 struct db_i *
 db_clone_dbi(struct db_i *dbip, long int *client)
 {
+    static int sem_uses = 0;
+    if (!sem_uses)
+	sem_uses = bu_semaphore_register("LIBRT_SEM_USES");
+
     RT_CK_DBI(dbip);
 
+    bu_semaphore_acquire(sem_uses);
     dbip->dbi_uses++;
+    bu_semaphore_release(sem_uses);
     if (client) {
 	bu_ptbl_ins_unique(&dbip->dbi_clients, client);
     }

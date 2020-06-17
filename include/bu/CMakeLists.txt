@@ -46,8 +46,10 @@ set(bu_headers
   vls.h
   )
 BRLCAD_MANAGE_FILES(bu_headers ${INCLUDE_DIR}/brlcad/bu)
+
 CMAKEFILES(CMakeLists.txt)
 CMAKEFILES(column.h)
+CMAKEFILES(tbl.h)
 
 # Local Variables:
 # tab-width: 8

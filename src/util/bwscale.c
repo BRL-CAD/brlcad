@@ -1,7 +1,7 @@
 /*                       B W S C A L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2019 United States Government as represented by
+ * Copyright (c) 1986-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,19 +37,20 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "bu/log.h"
 #include "bu/file.h"
 
 
-#define MAXBUFBYTES 4096*4096	/* max bytes to malloc in buffer space */
+#define MAXBUFBYTES BU_PAGE_SIZE*BU_PAGE_SIZE	/* max bytes to malloc in buffer space */
 
 unsigned char *outbuf;
 unsigned char *buffer;
 ssize_t scanlen;		/* length of infile (and buffer) scanlines */
 ssize_t buflines;		/* Number of lines held in buffer */
-off_t buf_start = -1000;	/* First line in buffer */
+b_off_t buf_start = -1000;	/* First line in buffer */
 
 ssize_t bufy;				/* y coordinate in buffer */
 FILE *buffp;
@@ -300,11 +301,11 @@ init_buffer()
     max = MAXBUFBYTES / scanlen;
 
     /*
-     * XXX We really should see how big
-     * the input file is to decide if we should buffer
-     * less than our max.
+     * TODO: We really should see how big the input file is to decide
+     * if we should buffer less than our max.
      */
-    if (max > 4096) max = 4096;
+    if (max > BU_PAGE_SIZE)
+	max = BU_PAGE_SIZE;
 
     if (max < iny)
 	buflines = max;
@@ -392,6 +393,8 @@ int
 main(int argc, char **argv)
 {
     int i;
+
+    bu_setprogname(argv[0]);
 
     if (!get_args(argc, argv) || isatty(fileno(stdout)))
 	bu_exit(1, "%s", usage);

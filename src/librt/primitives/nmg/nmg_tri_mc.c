@@ -1,7 +1,7 @@
 /*                     N M G _ T R I _ M C . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2019 United States Government as represented by
+ * Copyright (c) 1994-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -417,8 +417,8 @@ nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_tol
 	    return -1;
 	}
 
-	if (!bn_3pts_distinct(edges[vi[0]], edges[vi[1]], edges[vi[2]], tol) ||
-	    bn_3pts_collinear(edges[vi[0]], edges[vi[1]], edges[vi[2]], tol)) {
+	if (!bn_3pnts_distinct(edges[vi[0]], edges[vi[1]], edges[vi[2]], tol) ||
+	    bn_3pnts_collinear(edges[vi[0]], edges[vi[1]], edges[vi[2]], tol)) {
 	    vi+=3;
 	    continue;
 	}
@@ -445,9 +445,9 @@ nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_tol
 	if (nmg_fu_planeeqn(fu, tol))
 	    bu_log("Tiny triangle! <%g %g %g> <%g %g %g> <%g %g %g> (%g %g %g)\n",
 		   V3ARGS(edges[vi[0]]), V3ARGS(edges[vi[1]]), V3ARGS(edges[vi[2]]),
-		   DIST_PT_PT(edges[vi[0]], edges[vi[1]]),
-		   DIST_PT_PT(edges[vi[0]], edges[vi[2]]),
-		   DIST_PT_PT(edges[vi[1]], edges[vi[2]]));
+		   DIST_PNT_PNT(edges[vi[0]], edges[vi[1]]),
+		   DIST_PNT_PNT(edges[vi[0]], edges[vi[2]]),
+		   DIST_PNT_PNT(edges[vi[1]], edges[vi[2]]));
 	/* UNLOCK */
 	bu_semaphore_release(RT_SEM_WORKER);
 
@@ -538,7 +538,7 @@ rt_nmg_mc_crosspew(struct application *a, int edge, point_t *p, point_t *edges, 
 	if (puh->in < 1)
 	    bu_log("puhh?\n");
     }
-    dist = DIST_PT_PT(a->a_ray.r_pt, puh->hit);
+    dist = DIST_PNT_PNT(a->a_ray.r_pt, puh->hit);
     if (dist > (step + 2.5*tol->dist)) {
 	bu_log("spooky action on edge:%d. (in:%d) (%g %g %g -> %g %g %g) step:%g dist:%g\n", edge, puh->in, V3ARGS(a->a_ray.r_pt), V3ARGS(a->a_ray.r_dir), step, dist);
 	VJOIN1(edges[edge], a->a_ray.r_pt, 0.5*step+tol->dist, a->a_ray.r_dir);
@@ -734,7 +734,7 @@ fire_row(int cpu, void * ptr)
 
 /* rtip needs to be valid, s is where the results are stashed */
 int
-nmg_mc_evaluate(struct shell *s, struct rt_i *rtip, const struct db_full_path *pathp, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+nmg_mc_evaluate(struct shell *s, struct rt_i *rtip, const struct db_full_path *pathp, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     struct mci_s m;
     int i;
@@ -771,10 +771,10 @@ nmg_triangulate_model_mc(struct model *m, const struct bn_tol *tol)
     NMG_CK_MODEL(m);
     nmg_vmodel(m);
 
-    if (nmg_debug & DEBUG_TRI)
+    if (nmg_debug & NMG_DEBUG_TRI)
 	bu_log("Triangulating NMG\n");
 
-    if (nmg_debug & DEBUG_TRI)
+    if (nmg_debug & NMG_DEBUG_TRI)
 	bu_log("Triangulation completed\n");
 }
 

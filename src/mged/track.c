@@ -1,7 +1,7 @@
 /*                         T R A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2019 United States Government as represented by
+ * Copyright (c) 1994-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -58,7 +58,7 @@ void trcurve(fastf_t *wh, fastf_t *t);
 void bottom(fastf_t *vec1, fastf_t *vec2, fastf_t *t);
 void top(fastf_t *vec1, fastf_t *vec2, fastf_t *t);
 void crregion(char *region, char *op, int *members, int number, char *solidname, int maxlen);
-void itoa(int n, char *s, int w);
+static void track_itoa(int n, char *s, int w);
 
 
 /*
@@ -307,8 +307,8 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     for (i=0; i<11; i++) {
 	crname(solname, i, sizeof(solname));
 	crname(regname, i, sizeof(regname));
-	if ((db_lookup(dbip, solname, LOOKUP_QUIET) != RT_DIR_NULL)	||
-	    (db_lookup(dbip, regname, LOOKUP_QUIET) != RT_DIR_NULL)) {
+	if ((db_lookup(DBIP, solname, LOOKUP_QUIET) != RT_DIR_NULL)	||
+	    (db_lookup(DBIP, regname, LOOKUP_QUIET) != RT_DIR_NULL)) {
 	    /* name already exists */
 	    solname[8] = regname[8] = '\0';
 	    if ((Trackpos += 10) > 500) {
@@ -495,14 +495,14 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     j = 1;
     if ((i = Trackpos / 10 + 1) > 9)
 	j = 2;
-    itoa(i, temp, j);
+    track_itoa(i, temp, j);
     bu_strlcat(grpname, temp, sizeof(grpname));
     for (i=1; i<11; i++) {
 	if (i == 3 || i ==4 || i == 7 || i == 8)
 	    continue;
 	regname[8] = '\0';
 	crname(regname, i, sizeof(regname));
-	if (db_lookup(dbip, regname, LOOKUP_QUIET) == RT_DIR_NULL) {
+	if (db_lookup(DBIP, regname, LOOKUP_QUIET) == RT_DIR_NULL) {
 	    Tcl_AppendResult(interp, "group: ", grpname, " will skip member: ",
 			     regname, "\n", (char *)NULL);
 	    continue;
@@ -511,7 +511,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
     }
 
     /* Add them all at once */
-    if (mk_comb(wdbp, grpname, &head,
+    if (mk_comb(WDBP, grpname, &head,
 		0, NULL, NULL, NULL,
 		0, 0, 0, 0,
 		0, 1, 1) < 0)
@@ -556,7 +556,7 @@ crname(char *name, int pos, int maxlen)
 	j = 2;
     if (i > 99)
 	j = 3;
-    itoa(i, temp, j);
+    track_itoa(i, temp, j);
     bu_strlcat(name, temp, maxlen);
     return;
 }
@@ -569,10 +569,10 @@ wrobj(char name[], int flags)
     struct rt_db_internal intern;
     int i;
 
-    if (dbip == DBI_NULL)
+    if (DBIP == DBI_NULL)
 	return 0;
 
-    if (db_lookup(dbip, name, LOOKUP_QUIET) != RT_DIR_NULL) {
+    if (db_lookup(DBIP, name, LOOKUP_QUIET) != RT_DIR_NULL) {
 	Tcl_AppendResult(INTERP, "track naming error: ", name,
 			 " already exists\n", (char *)NULL);
 	return -1;
@@ -629,13 +629,13 @@ wrobj(char name[], int flags)
 	    return -1;
     }
 
-    if ((tdp = db_diradd(dbip, name, -1L, 0, flags, (void *)&intern.idb_type)) == RT_DIR_NULL) {
+    if ((tdp = db_diradd(DBIP, name, -1L, 0, flags, (void *)&intern.idb_type)) == RT_DIR_NULL) {
 	rt_db_free_internal(&intern);
 	Tcl_AppendResult(INTERP, "Cannot add '", name, "' to directory, aborting\n", (char *)NULL);
 	return -1;
     }
 
-    if (rt_db_put_internal(tdp, dbip, &intern, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(tdp, DBIP, &intern, &rt_uniresource) < 0) {
 	rt_db_free_internal(&intern);
 	Tcl_AppendResult(INTERP, "wrobj(", name, "):  write error\n", (char *)NULL);
 	TCL_ERROR_RECOVERY_SUGGESTION;
@@ -872,7 +872,7 @@ crregion(char *region, char *op, int *members, int number, char *solidname, int 
     int i;
     struct bu_list head;
 
-    if (dbip == DBI_NULL)
+    if (DBIP == DBI_NULL)
 	return;
 
     BU_LIST_INIT(&head);
@@ -880,14 +880,14 @@ crregion(char *region, char *op, int *members, int number, char *solidname, int 
     for (i=0; i<number; i++) {
 	solidname[8] = '\0';
 	crname(solidname, members[i], maxlen);
-	if (db_lookup(dbip, solidname, LOOKUP_QUIET) == RT_DIR_NULL) {
+	if (db_lookup(DBIP, solidname, LOOKUP_QUIET) == RT_DIR_NULL) {
 	    Tcl_AppendResult(INTERP, "region: ", region, " will skip member: ",
 			     solidname, "\n", (char *)NULL);
 	    continue;
 	}
 	mk_addmember(solidname, &head, NULL, op[i]);
     }
-    (void)mk_comb(wdbp, region, &head,
+    (void)mk_comb(WDBP, region, &head,
 		  1, NULL, NULL, NULL,
 		  500+Trackpos+i, 0, mat_default, los_default,
 		  0, 1, 1);
@@ -897,8 +897,8 @@ crregion(char *region, char *op, int *members, int number, char *solidname, int 
 /*
  * convert integer to ascii wd format
  */
-void
-itoa(int n, char *s, int w)
+static void
+track_itoa(int n, char *s, int w)
 {
     int c, i, j, sign;
 
@@ -911,7 +911,7 @@ itoa(int n, char *s, int w)
      */
     for (j = i; j < w; j++) s[j] = ' ';
     if (i > w)
-	Tcl_AppendResult(INTERP, "itoa: field length too small\n", (char *)NULL);
+	Tcl_AppendResult(INTERP, "track_itoa: field length too small\n", (char *)NULL);
     s[w] = '\0';
     /* reverse the array
      */

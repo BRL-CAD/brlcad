@@ -1,7 +1,7 @@
 /*                      D E F I N E S . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,6 +29,37 @@
 
 #include "common.h"
 
+/* We need a guarded windows.h inclusion, so use bio.h to get it before
+ * opennurbs.h pulls it in */
+#include "bio.h"
+
+#ifdef __cplusplus
+
+/* Note - We aren't (yet) including opennurbs in our Doxygen output. Until we
+ * do, use cond to hide the opennurbs header from Doxygen. */
+/* @cond */
+extern "C++" {
+
+/* don't let opennurbs include windows.h */
+#define ON_NO_WINDOWS 1
+
+/* NOTE: we re-define read/write due to the archive_mode enum that
+ * shadows the system symbols.  we undefine when done to not interfere
+ * with app code.
+ */
+#define read on_read
+#define write on_write
+#include "opennurbs.h"
+#undef read
+#undef write
+
+}
+/* @endcond */
+
+#endif
+
+#include "vmath.h"
+
 /** @{ */
 /** @file brep/defines.h */
 
@@ -36,9 +67,9 @@
 #  if defined(BREP_DLL_EXPORTS) && defined(BREP_DLL_IMPORTS)
 #    error "Only BREP_DLL_EXPORTS or BREP_DLL_IMPORTS can be defined, not both."
 #  elif defined(BREP_DLL_EXPORTS)
-#    define BREP_EXPORT __declspec(dllexport)
+#    define BREP_EXPORT COMPILER_DLLEXPORT
 #  elif defined(BREP_DLL_IMPORTS)
-#    define BREP_EXPORT __declspec(dllimport)
+#    define BREP_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define BREP_EXPORT
 #  endif
@@ -50,7 +81,7 @@
  * compiling with a C compiler
  */
 typedef struct _on_brep_placeholder {
-        int dummy; /* MS Visual C hack which can be removed if the struct contains something meaningful */
+    int dummy; /* MS Visual C hack which can be removed if the struct contains something meaningful */
 } ON_Brep;
 #endif
 
@@ -102,19 +133,11 @@ typedef struct _on_brep_placeholder {
  * The EDGE_MISS_TOLERANCE setting is critical in a couple of ways -
  * too small and the allowed uncertainty region near edges will be
  * smaller than the actual uncertainty needed for accurate solid
- * raytracing, too large and trimming will not be adequate. In order
- * to adapt this to UV space, the ratio of the Brep surface's
- * diagonal length and the tolerance is used to solve for a
- * corresponding UV space tolerance, given the 2D UV space diagonal
- * length of the surface in question.  Hence, the latter value
- * is not a constant but is adjusted to fit the given surface's UV space.
- *
- *   surface 3D diagonal length      surface 2D diagonal length
- *   ---------------------------  =  --------------------------
- *   BREP_3D_EDGE_MISS_TOLERANCE         uv_edge_miss_tol
- *
-  */
-#define BREP_3D_EDGE_BOUNDARY_TOLERANCE 0.1
+ * raytracing, too large and trimming will not be adequate.  May need
+ * to adapt this to the scale of the model, perhaps using bounding box
+ * size to key off of.
+ */
+/* #define BREP_EDGE_MISS_TOLERANCE 5e-2 */
 #define BREP_EDGE_MISS_TOLERANCE 5e-3
 
 #define BREP_SAME_POINT_TOLERANCE 1e-6
@@ -140,10 +163,19 @@ typedef struct _on_brep_placeholder {
 extern "C++" {
 struct BrepTrimPoint
 {
-    ON_2dPoint p2d; /* 2d surface parameter space point */
-    ON_3dPoint *p3d; /* 3d edge/trim point depending on whether we're using the 3d edge to generate points or the trims */
-    double t;     /* corresponding trim curve parameter (ON_UNSET_VALUE if unknown or not pulled back) */
+    int edge_ind;
     double e;     /* corresponding edge curve parameter (ON_UNSET_VALUE if using trim not edge) */
+    ON_3dPoint *p3d; /* 3d edge/trim point depending on whether we're using the 3d edge to generate points or the trims */
+    ON_3dPoint *n3d; /* normal on edge, average of the normals from the two surfaces at this point, or of all surface points associated with a vertex if this is a vertex point. */
+    ON_3dVector tangent; /* Tangent from the curve, or from the surfaces if the curve wasn't usable at this point. */
+
+    int trim_ind;
+    double t;     /* corresponding trim curve parameter (ON_UNSET_VALUE if unknown or not pulled back) */
+    ON_2dPoint p2d; /* 2d surface parameter space point */
+    ON_3dVector normal; /* normal as calculated by this trim */
+
+    BrepTrimPoint *other_face_trim_pnt;
+    int from_singular;
 };}
 #endif
 

@@ -1,7 +1,7 @@
 /*                        V I E W . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2019 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -64,7 +64,7 @@ __BEGIN_DECLS
 GED_EXPORT void dl_set_iflag(struct bu_list *hdlp, int iflag);
 GED_EXPORT extern void dl_color_soltab(struct bu_list *hdlp);
 GED_EXPORT extern void dl_erasePathFromDisplay(struct bu_list *hdlp,
-	                                       struct db_i *dbip,
+					       struct db_i *dbip,
 					       void (*callback)(unsigned int, int),
 					       const char *path,
 					       int allow_split,

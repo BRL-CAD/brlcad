@@ -1,7 +1,7 @@
 #                       L I B D M . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2019 United States Government as represented by
+# Copyright (c) 2004-2020 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -18,13 +18,6 @@
 # information.
 #
 ###
-proc _init_dm { func w } {
-    $func $w
-    catch { init_dm $w }
-}
-
-proc bind_dm { w } {
-}
 
 ## - init_dm_obj
 #

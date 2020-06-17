@@ -1,7 +1,7 @@
 /*                           L O G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,7 +33,9 @@
 /**
  * list of callbacks to call during bu_log.
  *
- * NOT published in a public header.
+ * FIXME: this would be better returned to the caller as a logging
+ * context instead of as a library-stateful set of callback functions
+ * that is woefully thread-unsafe.
  */
 static struct bu_hook_list log_hook_list = BU_HOOK_LIST_INIT_ZERO;
 
@@ -69,6 +71,7 @@ bu_log_delete_hook(bu_hook_t func, void *clientdata)
 {
     bu_hook_delete(&log_hook_list, func, clientdata);
 }
+
 
 HIDDEN void
 log_call_hooks(void *buf)
@@ -164,15 +167,16 @@ bu_putchar(int c)
 }
 
 
-void
+int
 bu_log(const char *fmt, ...)
 {
+    size_t len;
     va_list ap;
     struct bu_vls output = BU_VLS_INIT_ZERO;
 
     if (UNLIKELY(!fmt || strlen(fmt) == 0)) {
 	bu_vls_free(&output);
-	return;
+	return 0;
     }
 
     va_start(ap, fmt);
@@ -187,19 +191,19 @@ bu_log(const char *fmt, ...)
     }
     va_end(ap);
 
+    len = bu_vls_strlen(&output);
+
     if (log_hook_list.size == 0 || log_hooks_called) {
 	size_t ret = 0;
-	size_t len;
 
 	if (UNLIKELY(log_first_time)) {
 	    bu_setlinebuf(stderr);
 	    log_first_time = 0;
 	}
 
-	len = bu_vls_strlen(&output);
 	if (UNLIKELY(len <= 0)) {
 	    bu_vls_free(&output);
-	    return;
+	    return len;
 	}
 
 	if (LIKELY(stderr != NULL)) {
@@ -229,12 +233,15 @@ bu_log(const char *fmt, ...)
     }
 
     bu_vls_free(&output);
+
+    return (int)len;
 }
 
 
-void
+int
 bu_flog(FILE *fp, const char *fmt, ...)
 {
+    size_t len;
     va_list ap;
 
     struct bu_vls output = BU_VLS_INIT_ZERO;
@@ -251,11 +258,11 @@ bu_flog(FILE *fp, const char *fmt, ...)
     }
     va_end(ap);
 
+    len = bu_vls_strlen(&output);
+
     if (log_hook_list.size == 0 || log_hooks_called) {
 	size_t ret;
-	size_t len;
 
-	len = bu_vls_strlen(&output);
 	if (LIKELY(len)) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    ret = fwrite(bu_vls_addr(&output), len, 1, fp);
@@ -270,6 +277,8 @@ bu_flog(FILE *fp, const char *fmt, ...)
     }
 
     bu_vls_free(&output);
+
+    return (int)len;
 }
 
 

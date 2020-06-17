@@ -1,7 +1,7 @@
 /*                        R T S H O T . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2019 United States Government as represented by
+ * Copyright (c) 1987-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,6 +36,7 @@
 #include <ctype.h>
 #include <math.h>
 
+#include "bu/app.h"
 #include "bu/debug.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -105,6 +106,8 @@ main(int argc, char **argv)
     const char *argv0 = argv[0];
     int atoival;
     struct resource res = RT_RESOURCE_INIT_ZERO;
+
+    bu_setprogname(argv[0]);
 
     if (argc < 3) {
 	usage(argv0);
@@ -224,14 +227,14 @@ main(int argc, char **argv)
 		argv += 2;
 		break;
 	    case 'x':
-		sscanf(argv[1], "%x", (unsigned int *)&RTG.debug);
-		fprintf(stderr, "librt RTG.debug=x%x\n", RTG.debug);
+		sscanf(argv[1], "%x", (unsigned int *)&rt_debug);
+		fprintf(stderr, "librt rt_debug=x%x\n", rt_debug);
 		argc -= 2;
 		argv += 2;
 		break;
 	    case 'X':
-		sscanf(argv[1], "%x", (unsigned int *)&rdebug);
-		fprintf(stderr, "rdebug=x%x\n", rdebug);
+		sscanf(argv[1], "%x", (unsigned int *)&optical_debug);
+		fprintf(stderr, "optical_debug=x%x\n", optical_debug);
 		argc -= 2;
 		argv += 2;
 		break;
@@ -347,7 +350,7 @@ main(int argc, char **argv)
 
     rt_prep(rtip);
 
-    if (R_DEBUG&RDEBUG_RAYPLOT) {
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_RAYPLOT) {
 	if ((plotfp = fopen("rtshot.plot3", "w")) == NULL) {
 	    perror("rtshot.plot3");
 	    bu_exit(1, NULL);
@@ -477,7 +480,7 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 	rt_rebuild_overlaps(PartHeadp, ap, 0);
 
     /* First, plot ray start to inhit */
-    if (R_DEBUG&RDEBUG_RAYPLOT) {
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_RAYPLOT) {
 	if (pp->pt_inhit->hit_dist > 0.0001) {
 	    VJOIN1(inpt, ap->a_ray.r_pt,
 		   pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
@@ -552,7 +555,7 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 	}
 
 	/* Plot inhit to outhit */
-	if (R_DEBUG&RDEBUG_RAYPLOT) {
+	if (OPTICAL_DEBUG&OPTICAL_DEBUG_RAYPLOT) {
 	    if ((out = pp->pt_outhit->hit_dist) >= INFINITY)
 		out = 10000;	/* to imply the direction */
 
@@ -590,7 +593,7 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 int miss(register struct application *ap)
 {
     bu_log("missed\n");
-    if (R_DEBUG&RDEBUG_RAYPLOT) {
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_RAYPLOT) {
 	vect_t out;
 
 	VJOIN1(out, ap->a_ray.r_pt,
@@ -615,7 +618,7 @@ int bundle_hit(register struct application_bundle *bundle, struct partition_bund
     bu_log("------------------- bundle hit -------------------\n");
 
     /* First, plot bundle's application ray */
-    if (R_DEBUG & RDEBUG_RAYPLOT) {
+    if (OPTICAL_DEBUG & OPTICAL_DEBUG_RAYPLOT) {
 	vect_t vout;
 
 	VJOIN1(vout, bundle->b_ap.a_ray.r_pt, 10000, bundle->b_ap.a_ray.r_dir); /* to imply direction */
@@ -627,7 +630,7 @@ int bundle_hit(register struct application_bundle *bundle, struct partition_bund
 	bu_log("------------------- partition %d -------------------\n", raycnt++);
 	/* First, plot ray start to inhit */
 	pp = pl->PartHeadp.pt_forw;
-	if (R_DEBUG & RDEBUG_RAYPLOT) {
+	if (OPTICAL_DEBUG & OPTICAL_DEBUG_RAYPLOT) {
 	    if (pp->pt_inhit->hit_dist > 0.0001) {
 		VJOIN1(inpt, pl->ap->a_ray.r_pt, pp->pt_inhit->hit_dist,
 		       pl->ap->a_ray.r_dir);
@@ -709,7 +712,7 @@ int bundle_hit(register struct application_bundle *bundle, struct partition_bund
 	    }
 
 	    /* Plot inhit to outhit */
-	    if (R_DEBUG & RDEBUG_RAYPLOT) {
+	    if (OPTICAL_DEBUG & OPTICAL_DEBUG_RAYPLOT) {
 		if ((out = pp->pt_outhit->hit_dist) >= INFINITY)
 		    out = 10000; /* to imply the direction */
 
@@ -743,7 +746,7 @@ int bundle_hit(register struct application_bundle *bundle, struct partition_bund
 }
 int bundle_miss(register struct application_bundle *bundle) {
     bu_log("bundle missed\n");
-    if (R_DEBUG & RDEBUG_RAYPLOT) {
+    if (OPTICAL_DEBUG & OPTICAL_DEBUG_RAYPLOT) {
 	vect_t out;
 
 	VJOIN1(out, bundle->b_ap.a_ray.r_pt, 10000, bundle->b_ap.a_ray.r_dir); /* to imply direction */

@@ -1,7 +1,7 @@
 /*            G E C O D E _ L I B R T _ T E S T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2019 United States Government as represented by
+ * Copyright (c) 2014-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,6 +28,8 @@
 #include <gecode/int.hh>
 #include <gecode/minimodel.hh>
 #include <gecode/search.hh>
+
+#include "bu/app.h"
 
 class GeometrySolve : public Gecode::Space {
     public:
@@ -86,7 +88,9 @@ add_constraint_pnt_on_line_segment(GeometrySolve *s, int tol, int p, int s1, int
 
 }
 
-int main() {
+int main(int argc, const char *argv[]) {
+
+    bu_setprogname(argv[0]);
 
     /* Perpendicular constraint test */
     {

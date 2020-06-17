@@ -1,7 +1,7 @@
 /*                       C S G . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2019 United States Government as represented by
+ * Copyright (c) 2013-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,6 +40,8 @@ main(int argc, char *argv[])
     perplex_t scanner;
     token_t *tokenData;
     app_data_t appData;
+
+    bu_setprogname(argv[0]);
 
     if (argc != 3) {
 	fprintf(stderr, "Usage: %s input output", argv[0]);

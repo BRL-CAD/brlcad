@@ -102,9 +102,9 @@ charclassmatch(const char *pattern, char test, size_t *s)
 	resultholder = (size_t)-1;
     } else {
 	/*
-	 c = *pattern;
-	 bu_log("classname: %s, test char = %c, (class->checkfun)=%d\n", bu_vls_addr(&classname), test, (ctclass->checkfun)(test));
-	 */
+	  c = *pattern;
+	  bu_log("classname: %s, test char = %c, (class->checkfun)=%d\n", bu_vls_addr(&classname), test, (ctclass->checkfun)(test));
+	*/
 	if ((ctclass->checkfun)(test) != 0) {
 	    resultholder = counter;
 	} else {

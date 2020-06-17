@@ -1,7 +1,7 @@
 /*                        N M G _ C K . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2019 United States Government as represented by
+ * Copyright (c) 1993-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1238,7 +1238,7 @@ nmg_check_radial(const struct edgeuse *eu, const struct bn_tol *tol)
 #ifndef NEW_DANGLING_FACE_CHECKING_METHOD
     return 0;
 #else
-    if (nmg_debug & DEBUG_BASIC) {
+    if (nmg_debug & NMG_DEBUG_BASIC) {
 	bu_log("nmg_check_radial(eu=x%x, tol)\n", eu);
     }
 
@@ -1299,7 +1299,7 @@ nmg_check_radial(const struct edgeuse *eu, const struct bn_tol *tol)
 		   nmg_orientation(curr_orient));
 
 	    /* Plot the edge in yellow, & the loops */
-	    nmg_debug |= DEBUG_PLOTEM;
+	    nmg_debug |= NMG_DEBUG_PLOTEM;
 	    nmg_face_lu_plot(eu1->up.lu_p, eu1->vu_p,
 			     eu1->eumate_p->vu_p);
 	    nmg_face_lu_plot(eur->up.lu_p, eur->vu_p,
@@ -1437,7 +1437,7 @@ nmg_eu_2s_orient_bad(const struct edgeuse *eu, const struct shell *s1, const str
     } while (eur != eurstart);
     /* All is well, the whole way 'round */
 out:
-    if (nmg_debug & DEBUG_BASIC) {
+    if (nmg_debug & NMG_DEBUG_BASIC) {
 	bu_log("nmg_eu_2s_orient_bad(eu=%p, s1=%p, s2=%p) ret=%d\n",
 	       (void *)eu_orig, (void *)s1, (void *)s2, ret);
     }
@@ -1563,8 +1563,8 @@ nmg_ck_v_in_2fus(const struct vertex *vp, const struct faceuse *fu1, const struc
     /* geometry check */
     NMG_GET_FU_PLANE(n1, fu1);
     NMG_GET_FU_PLANE(n2, fu2);
-    dist1 = DIST_PT_PLANE(vp->vg_p->coord, n1);
-    dist2 = DIST_PT_PLANE(vp->vg_p->coord, n2);
+    dist1 = DIST_PNT_PLANE(vp->vg_p->coord, n1);
+    dist2 = DIST_PNT_PLANE(vp->vg_p->coord, n2);
 
     if (!NEAR_ZERO(dist1, tol->dist) || !NEAR_ZERO(dist2, tol->dist)) {
 	bu_vls_printf(&str, "nmg_ck_v_in_2fus: vertex %p (%g %g %g) not in plane of" ,
@@ -1617,7 +1617,7 @@ nmg_ck_v_in_fus(uint32_t *vp, void *state, int UNUSED(unused))
 		    bu_log("ERROR - nmg_ck_vs_in_region: fu (%p) has no geometry\n", (void *)fu);
 		else if (*fu->f_p->g.magic_p == NMG_FACE_G_PLANE_MAGIC) {
 		    NMG_GET_FU_PLANE(n, fu);
-		    dist = DIST_PT_PLANE(v->vg_p->coord, n);
+		    dist = DIST_PNT_PLANE(v->vg_p->coord, n);
 		    if (!NEAR_ZERO(dist, sp->tol->dist)) {
 			bu_log("ERROR - nmg_ck_vs_in_region: vertex %p (%g %g %g) is %g from faceuse %p\n" ,
 			       (void *)v, V3ARGS(v->vg_p->coord), dist, (void *)fu);

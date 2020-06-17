@@ -1,7 +1,7 @@
 /*                     T E S T _ T O P S . C
  * BRL-CAD
  *
- * Copyright (c) 2018-2019 United States Government as represented by
+ * Copyright (c) 2018-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,6 +33,8 @@ int
 main(int ac, char *av[]) {
     struct ged *dbp;
     const char *tops[3] = {"tops", "-n", NULL};
+
+    bu_setprogname(av[0]);
 
     if (ac != 2) {
 	printf("Usage: %s file.g\n", av[0]);

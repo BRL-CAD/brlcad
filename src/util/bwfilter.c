@@ -1,7 +1,7 @@
 /*                      B W F I L T E R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2019 United States Government as represented by
+ * Copyright (c) 1986-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,6 +31,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "bu/mime.h"
@@ -185,6 +186,9 @@ main(int argc, char **argv)
     double *max_d = NULL, *min_d = NULL; /* return values from min and max */
     int max, min;
     int x;
+
+    bu_setprogname(argv[0]);
+
     /* Select Default Filter (low pass) */
     select_filter("low");
 

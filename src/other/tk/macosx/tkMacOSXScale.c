@@ -51,10 +51,10 @@ static ControlActionUPP scaleActionProc = NULL; /* Pointer to func. */
  * Forward declarations for procedures defined later in this file:
  */
 
-static void MacScaleEventProc(ClientData clientData, XEvent *eventPtr);
-static pascal void ScaleActionProc(ControlRef theControl,
-	ControlPartCode partCode);
-
+static void		MacScaleEventProc(ClientData clientData,
+			    XEvent *eventPtr);
+static pascal void	ScaleActionProc(ControlRef theControl,
+			    ControlPartCode partCode);
 
 /*
  *----------------------------------------------------------------------
@@ -76,7 +76,7 @@ TkScale *
 TkpCreateScale(
     Tk_Window tkwin)
 {
-    MacScale *macScalePtr = (MacScale *) ckalloc(sizeof(MacScale));
+    MacScale *macScalePtr = ckalloc(sizeof(MacScale));
 
     macScalePtr->scaleHandle = NULL;
     if (scaleActionProc == NULL) {
@@ -84,7 +84,7 @@ TkpCreateScale(
     }
 
     Tk_CreateEventHandler(tkwin, ButtonPressMask,
-	    MacScaleEventProc, (ClientData) macScalePtr);
+	    MacScaleEventProc, macScalePtr);
 
     return (TkScale *) macScalePtr;
 }
@@ -125,8 +125,8 @@ TkpDestroyScale(
  *
  * TkpDisplayScale --
  *
- *	This procedure is invoked as an idle handler to redisplay
- *	the contents of a scale widget.
+ *	This procedure is invoked as an idle handler to redisplay the contents
+ *	of a scale widget.
  *
  * Results:
  *	None.
@@ -141,12 +141,12 @@ void
 TkpDisplayScale(
     ClientData clientData)	/* Widget record for scale. */
 {
-    TkScale *scalePtr = (TkScale *) clientData;
+    TkScale *scalePtr = clientData;
     Tk_Window tkwin = scalePtr->tkwin;
     Tcl_Interp *interp = scalePtr->interp;
     int result;
     char string[TCL_DOUBLE_SPACE];
-    MacScale *macScalePtr = (MacScale *) clientData;
+    MacScale *macScalePtr = clientData;
     Rect r;
     WindowRef windowRef;
     CGrafPtr destPort, savePort;
@@ -154,6 +154,7 @@ TkpDisplayScale(
     MacDrawable *macDraw;
     SInt32 initialValue, minValue, maxValue;
     UInt16 numTicks;
+    Tcl_DString buf;
 
 #ifdef TK_MAC_DEBUG_SCALE
     TkMacOSXDbgMsg("TkpDisplayScale");
@@ -167,28 +168,35 @@ TkpDisplayScale(
      * Invoke the scale's command if needed.
      */
 
-    Tcl_Preserve((ClientData) scalePtr);
+    Tcl_Preserve(scalePtr);
     if ((scalePtr->flags & INVOKE_COMMAND) && (scalePtr->command != NULL)) {
-	Tcl_Preserve((ClientData) interp);
-	sprintf(string, scalePtr->format, scalePtr->value);
-	result = Tcl_VarEval(interp, scalePtr->command, " ", string, NULL);
+	Tcl_Preserve(interp);
+        if (snprintf(string, TCL_DOUBLE_SPACE, scalePtr->format,
+                scalePtr->value) < 0) {
+            string[TCL_DOUBLE_SPACE - 1] = '\0';
+        }
+	Tcl_DStringInit(&buf);
+	Tcl_DStringAppend(&buf, scalePtr->command, -1);
+	Tcl_DStringAppend(&buf, " ", -1);
+	Tcl_DStringAppend(&buf, string, -1);
+	result = Tcl_EvalEx(interp, Tcl_DStringValue(&buf), -1, 0);
+	Tcl_DStringFree(&buf);
 	if (result != TCL_OK) {
 	    Tcl_AddErrorInfo(interp, "\n    (command executed by scale)");
-	    Tcl_BackgroundError(interp);
+	    Tcl_BackgroundException(interp, result);
 	}
-	Tcl_Release((ClientData) interp);
+	Tcl_Release(interp);
     }
     scalePtr->flags &= ~INVOKE_COMMAND;
     if (scalePtr->flags & SCALE_DELETED) {
-	Tcl_Release((ClientData) scalePtr);
+	Tcl_Release(scalePtr);
 	return;
     }
-    Tcl_Release((ClientData) scalePtr);
+    Tcl_Release(scalePtr);
 
     /*
-     * Now handle the part of redisplay that is the same for
-     * horizontal and vertical scales: border and traversal
-     * highlight.
+     * Now handle the part of redisplay that is the same for horizontal and
+     * vertical scales: border and traversal highlight.
      */
 
     if (scalePtr->highlightWidth != 0) {
@@ -220,7 +228,7 @@ TkpDisplayScale(
 #define MAC_OSX_SCROLL_WIDTH 10
 
     if (scalePtr->orient == ORIENT_HORIZONTAL) {
-	int offset = (Tk_Height(tkwin) - MAC_OSX_SCROLL_WIDTH)/2;
+	int offset = (Tk_Height(tkwin) - MAC_OSX_SCROLL_WIDTH) / 2;
 
 	if (offset < 0) {
 	    offset = 0;
@@ -231,7 +239,7 @@ TkpDisplayScale(
 	r.right = macDraw->xOff+Tk_Width(tkwin) - scalePtr->inset;
 	r.bottom = macDraw->yOff + offset + MAC_OSX_SCROLL_WIDTH/2;
     } else {
-	int offset = (Tk_Width(tkwin) - MAC_OSX_SCROLL_WIDTH)/2;
+	int offset = (Tk_Width(tkwin) - MAC_OSX_SCROLL_WIDTH) / 2;
 
 	if (offset < 0) {
 	    offset = 0;
@@ -240,7 +248,7 @@ TkpDisplayScale(
 	r.left = macDraw->xOff + offset;
 	r.top = macDraw->yOff + scalePtr->inset;
 	r.right = macDraw->xOff + offset + MAC_OSX_SCROLL_WIDTH/2;
-	r.bottom = macDraw->yOff+Tk_Height(tkwin) - scalePtr->inset;
+	r.bottom = macDraw->yOff + Tk_Height(tkwin) - scalePtr->inset;
     }
 
     if (macScalePtr->scaleHandle == NULL) {
@@ -264,7 +272,7 @@ TkpDisplayScale(
 
 	CreateSliderControl(windowRef, &r, initialValue, minValue, maxValue,
 		kControlSliderPointsDownOrRight, numTicks, 1, scaleActionProc,
-		&(macScalePtr->scaleHandle));
+		&macScalePtr->scaleHandle);
 	SetControlReference(macScalePtr->scaleHandle, (UInt32) scalePtr);
 
 	if (IsWindowActive(windowRef)) {
@@ -281,8 +289,8 @@ TkpDisplayScale(
      * Finally draw the control.
      */
 
-    SetControlVisibility(macScalePtr->scaleHandle,true,true);
-    HiliteControl(macScalePtr->scaleHandle,0);
+    SetControlVisibility(macScalePtr->scaleHandle, true, true);
+    HiliteControl(macScalePtr->scaleHandle, 0);
     Draw1Control(macScalePtr->scaleHandle);
 
     if (portChanged) {
@@ -297,13 +305,12 @@ done:
  *
  * TkpScaleElement --
  *
- *	Determine which part of a scale widget lies under a given
- *	point.
+ *	Determine which part of a scale widget lies under a given point.
  *
  * Results:
- *	The return value is either TROUGH1, SLIDER, TROUGH2, or
- *	OTHER, depending on which of the scale's active elements
- *	(if any) is under the point at (x,y).
+ *	The return value is either TROUGH1, SLIDER, TROUGH2, or OTHER,
+ *	depending on which of the scale's active elements (if any) is under the
+ *	point at (x,y).
  *
  * Side effects:
  *	None.
@@ -348,22 +355,22 @@ TkpScaleElement(
 #endif
 
     switch (part) {
-	case inSlider:
-	    return SLIDER;
-	case inInc:
-	    if (scalePtr->orient == ORIENT_VERTICAL) {
-		return TROUGH1;
-	    } else {
-		return TROUGH2;
-	    }
-	case inDecr:
-	    if (scalePtr->orient == ORIENT_VERTICAL) {
-		return TROUGH2;
-	    } else {
-		return TROUGH1;
-	    }
-	default:
-	    return OTHER;
+    case inSlider:
+	return SLIDER;
+    case inInc:
+	if (scalePtr->orient == ORIENT_VERTICAL) {
+	    return TROUGH1;
+	} else {
+	    return TROUGH2;
+	}
+    case inDecr:
+	if (scalePtr->orient == ORIENT_VERTICAL) {
+	    return TROUGH2;
+	} else {
+	    return TROUGH1;
+	}
+    default:
+	return OTHER;
     }
 }
 
@@ -372,15 +379,15 @@ TkpScaleElement(
  *
  * MacScaleEventProc --
  *
- *	This procedure is invoked by the Tk dispatcher for
- *	ButtonPress events on scales.
+ *	This procedure is invoked by the Tk dispatcher for ButtonPress events
+ *	on scales.
  *
  * Results:
  *	None.
  *
  * Side effects:
- *	When the window gets deleted, internal structures get
- *	cleaned up. When it gets exposed, it is redisplayed.
+ *	When the window gets deleted, internal structures get cleaned up. When
+ *	it gets exposed, it is redisplayed.
  *
  *--------------------------------------------------------------
  */
@@ -402,9 +409,9 @@ MacScaleEventProc(
 #endif
 
     /*
-     * To call Macintosh control routines we must have the port
-     * set to the window containing the control. We will then test
-     * which part of the control was hit and act accordingly.
+     * To call Macintosh control routines we must have the port set to the
+     * window containing the control. We will then test which part of the
+     * control was hit and act accordingly.
      */
 
     destPort = TkMacOSXGetDrawablePort(Tk_WindowId(macScalePtr->info.tkwin));
@@ -452,8 +459,8 @@ MacScaleEventProc(
  * ScaleActionProc --
  *
  *	Callback procedure used by the Macintosh toolbox call
- *	HandleControlClick. This call will update the display
- *	while the scrollbar is being manipulated by the user.
+ *	HandleControlClick. This call will update the display while the
+ *	scrollbar is being manipulated by the user.
  *
  * Results:
  *	None.
@@ -477,9 +484,9 @@ ScaleActionProc(
 #endif
     value = GetControlValue(theControl);
     TkScaleSetValue(scalePtr, value, 1, 1);
-    Tcl_Preserve((ClientData) scalePtr);
+    Tcl_Preserve(scalePtr);
     TkMacOSXRunTclEventLoop();
-    Tcl_Release((ClientData) scalePtr);
+    Tcl_Release(scalePtr);
 }
 #endif
 

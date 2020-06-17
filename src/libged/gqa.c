@@ -1,7 +1,7 @@
 /*                         G Q A . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2019 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,6 +50,8 @@
 
 #include "./ged_private.h"
 
+struct analyze_densities *_gd_densities;
+char *_gd_densities_source;
 
 /* bu_getopt() options */
 char *options = "A:a:de:f:g:Gn:N:p:P:qrS:s:t:U:u:vV:W:h?";
@@ -131,10 +133,15 @@ struct cstate {
     int v_axis;    /* is being used for the U, V, or invariant vector direction */
     int i_axis;
 
-    /* GED_SEM_WORKER protects this */
+    int sem_lists;
+    int sem_worker;
+
+    /* sem_worker protects this */
     int v;         /* indicates how many "grid_size" steps in the v direction have been taken */
 
-    /* GED_SEM_STATS protects this */
+    int sem_stats;
+
+    /* sem_stats protects this */
     double *m_lenDensity;
     double *m_len;
     double *m_volume;
@@ -162,10 +169,6 @@ struct ged_gqa_plot {
     struct bu_list *vhead;
 } ged_gqa_plot;
 
-/* the entries in the density table */
-struct density_entry *densities = NULL;
-static int num_densities;
-
 /* summary data structure for objects specified on command line */
 static struct per_obj_data {
     char *o_name;
@@ -192,7 +195,7 @@ static struct per_region_data {
 
 
 /* Access to these lists should be in sections
- * of code protected by GED_SEM_LIST
+ * of code protected by state->sem_lists
  */
 
 /**
@@ -743,98 +746,6 @@ parse_args(int ac, char *av[])
     return bu_optind;
 }
 
-
-/**
- * Returns
- * 0 on success
- * !0 on failure
- */
-int
-get_densities_from_file(char *name)
-{
-    struct stat sb;
-
-    FILE *fp = (FILE *)NULL;
-    char *buf = NULL;
-    int ret = 0;
-    size_t sret = 0;
-
-    fp = fopen(name, "rb");
-    if (fp == (FILE *)NULL) {
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "Could not open file - %s\n", name);
-	return GED_ERROR;
-    }
-
-    if (stat(name, &sb)) {
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "Could not read file - %s\n", name);
-	fclose(fp);
-	return GED_ERROR;
-    }
-
-    densities = (struct density_entry *)bu_calloc(128, sizeof(struct density_entry), "density entries");
-    num_densities = 128;
-
-    /* a mapped file would make more sense here */
-    buf = (char *)bu_malloc(sb.st_size+1, "density buffer");
-    sret = fread(buf, sb.st_size, 1, fp);
-    if (sret != 1)
-	perror("fread");
-    ret = parse_densities_buffer(buf, (unsigned long)sb.st_size, densities, _ged_current_gedp->ged_result_str, &num_densities);
-    bu_free(buf, "density buffer");
-    fclose(fp);
-
-    return ret;
-}
-
-
-/**
- * Returns
- * 0 on success
- * !0 on failure
- */
-int
-get_densities_from_database(struct rt_i *rtip)
-{
-    struct directory *dp;
-    struct rt_db_internal intern;
-    struct rt_binunif_internal *bu;
-    int ret;
-    char *buf;
-
-    dp = db_lookup(rtip->rti_dbip, "_DENSITIES", LOOKUP_QUIET);
-    if (dp == (struct directory *)NULL) {
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "No \"_DENSITIES\" density table object in database.");
-	bu_vls_printf(_ged_current_gedp->ged_result_str, " If you do not have density data you can still get adjacent air, bounding box, exposed air, gaps, volume or overlaps by using the -Aa, -Ab, -Ae, -Ag, -Av, or -Ao options respectively.\n");
-	return GED_ERROR;
-    }
-
-    if (rt_db_get_internal(&intern, dp, rtip->rti_dbip, NULL, &rt_uniresource) < 0) {
-	bu_vls_printf(_ged_current_gedp->ged_result_str, "could not import %s\n", dp->d_namep);
-	return GED_ERROR;
-    }
-
-    if ((intern.idb_major_type & DB5_MAJORTYPE_BINARY_MASK) == 0)
-	return GED_ERROR;
-
-    bu = (struct rt_binunif_internal *)intern.idb_ptr;
-
-    RT_CHECK_BINUNIF (bu);
-
-    densities = (struct density_entry *)bu_calloc(128, sizeof(struct density_entry), "density entries");
-    num_densities = 128;
-
-    /* Acquire one extra byte to accommodate parse_densities_buffer()
-     * (i.e. it wants to write an EOS in buf[bu->count]).
-     */
-    buf = (char *)bu_malloc(bu->count+1, "density buffer");
-    memcpy(buf, bu->u.int8, bu->count);
-    ret = parse_densities_buffer(buf, bu->count, densities, _ged_current_gedp->ged_result_str, &num_densities);
-    bu_free((void *)buf, "density buffer");
-
-    return ret;
-}
-
-
 /**
  * Write end points of partition to the standard output.  If this
  * routine return !0, this partition will be dropped from the boolean
@@ -854,7 +765,7 @@ _gqa_overlap(struct application *ap,
 	struct region *reg2,
 	struct partition *hp)
 {
-
+    struct cstate *state = (struct cstate *)ap->A_STATE;
     struct xray *rp = &ap->a_ray;
     struct hit *ihitp = pp->pt_inhit;
     struct hit *ohitp = pp->pt_outhit;
@@ -881,34 +792,30 @@ _gqa_overlap(struct application *ap,
     VJOIN1(ohit, rp->r_pt, ohitp->hit_dist, rp->r_dir);
 
     if (plot_overlaps) {
-	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	pl_color(plot_overlaps, V3ARGS(overlap_color));
 	pdv_3line(plot_overlaps, ihit, ohit);
-	bu_semaphore_release(BU_SEM_SYSCALL);
     }
 
     if (analysis_flags & ANALYSIS_PLOT_OVERLAPS) {
-	bu_semaphore_acquire(GED_SEM_WORKER);
+	bu_semaphore_acquire(state->sem_worker);
 	BN_ADD_VLIST(ged_gqa_plot.vbp->free_vlist_hd, ged_gqa_plot.vhead, ihit, BN_VLIST_LINE_MOVE);
 	BN_ADD_VLIST(ged_gqa_plot.vbp->free_vlist_hd, ged_gqa_plot.vhead, ohit, BN_VLIST_LINE_DRAW);
-	bu_semaphore_release(GED_SEM_WORKER);
+	bu_semaphore_release(state->sem_worker);
     }
 
     if (analysis_flags & ANALYSIS_OVERLAPS) {
-	bu_semaphore_acquire(GED_SEM_LIST);
+	bu_semaphore_acquire(state->sem_lists);
 	add_unique_pair(&overlapList, reg1, reg2, depth, ihit);
-	bu_semaphore_release(GED_SEM_LIST);
+	bu_semaphore_release(state->sem_lists);
 
 	if (plot_overlaps) {
-	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    pl_color(plot_overlaps, V3ARGS(overlap_color));
 	    pdv_3line(plot_overlaps, ihit, ohit);
-	    bu_semaphore_release(BU_SEM_SYSCALL);
 	}
     } else {
-	bu_semaphore_acquire(GED_SEM_WORKER);
+	bu_semaphore_acquire(state->sem_worker);
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "overlap %s %s\n", reg1->reg_name, reg2->reg_name);
-	bu_semaphore_release(GED_SEM_WORKER);
+	bu_semaphore_release(state->sem_worker);
     }
 
     /* XXX We should somehow flag the volume/weight calculations as invalid */
@@ -939,26 +846,27 @@ logoverlap(struct application *ap,
 }
 
 
-void _gqa_exposed_air(struct partition *pp,
-		 point_t last_out_point,
-		 point_t pt,
-		 point_t opt)
+void _gqa_exposed_air(struct application *ap,
+		      struct partition *pp,
+		      point_t last_out_point,
+		      point_t pt,
+		      point_t opt)
 {
+    struct cstate *state = (struct cstate *)ap->A_STATE;
+
     /* this shouldn't be air */
 
-    bu_semaphore_acquire(GED_SEM_LIST);
+    bu_semaphore_acquire(state->sem_lists);
     add_unique_pair(&exposedAirList,
 	    pp->pt_regionp,
 	    (struct region *)NULL,
 	    pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist, /* thickness */
 	    last_out_point); /* location */
-    bu_semaphore_release(GED_SEM_LIST);
+    bu_semaphore_release(state->sem_lists);
 
     if (plot_expair) {
-	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	pl_color(plot_expair, V3ARGS(expAir_color));
 	pdv_3line(plot_expair, pt, opt);
-	bu_semaphore_release(BU_SEM_SYSCALL);
     }
 }
 
@@ -993,7 +901,9 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 
     /* examine each partition until we get back to the head */
     for (pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
-	struct density_entry *de;
+
+	long int material_id = pp->pt_regionp->reg_gmater;
+	fastf_t grams_per_cu_mm = analyze_densities_density(_gd_densities, material_id);
 
 	/* inhit info */
 	dist = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
@@ -1001,10 +911,10 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 	VJOIN1(opt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
 
 	if (debug) {
-	    bu_semaphore_acquire(GED_SEM_WORKER);
+	    bu_semaphore_acquire(state->sem_worker);
 	    bu_vls_printf(_ged_current_gedp->ged_result_str, "%s %g->%g\n", pp->pt_regionp->reg_name,
 			  pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist);
-	    bu_semaphore_release(GED_SEM_WORKER);
+	    bu_semaphore_release(state->sem_worker);
 	}
 
 	/* checking for air sticking out of the model.  This is done
@@ -1020,7 +930,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 	     */
 	    if (pp->pt_regionp->reg_aircode &&
 		(air_first || gap_dist > overlap_tolerance)) {
-		_gqa_exposed_air(pp, last_out_point, pt, opt);
+		_gqa_exposed_air(ap, pp, last_out_point, pt, opt);
 	    } else {
 		air_first = 0;
 	    }
@@ -1037,23 +947,21 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 		if (gap_dist > overlap_tolerance) {
 
 		    /* like overlaps, we only want to report unique pairs */
-		    bu_semaphore_acquire(GED_SEM_LIST);
+		    bu_semaphore_acquire(state->sem_lists);
 		    add_unique_pair(&gapList,
 			    pp->pt_regionp,
 			    pp->pt_back->pt_regionp,
 			    gap_dist,
 			    pt);
-		    bu_semaphore_release(GED_SEM_LIST);
+		    bu_semaphore_release(state->sem_lists);
 
 		    /* like overlaps, let's plot */
 		    if (plot_gaps) {
 			vect_t gapEnd;
 			VJOIN1(gapEnd, pt, -gap_dist, ap->a_ray.r_dir);
 
-			bu_semaphore_acquire(BU_SEM_SYSCALL);
 			pl_color(plot_gaps, V3ARGS(gap_color));
 			pdv_3line(plot_gaps, pt, gapEnd);
-			bu_semaphore_release(BU_SEM_SYSCALL);
 		    }
 		}
 	    }
@@ -1062,141 +970,127 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 	/* computing the weight of the objects */
 	if (analysis_flags & ANALYSIS_WEIGHTS) {
 	    if (debug) {
-		bu_semaphore_acquire(GED_SEM_WORKER);
+		bu_semaphore_acquire(state->sem_worker);
 		bu_vls_printf(_ged_current_gedp->ged_result_str, "Hit %s doing weight\n", pp->pt_regionp->reg_name);
-		bu_semaphore_release(GED_SEM_WORKER);
+		bu_semaphore_release(state->sem_worker);
 	    }
 
 	    /* make sure mater index is within range of densities */
-	    if (pp->pt_regionp->reg_gmater >= num_densities) {
-		bu_semaphore_acquire(GED_SEM_WORKER);
-		bu_vls_printf(_ged_current_gedp->ged_result_str, "density index %d on region %s is outside of range of table [1..%d]\nSet GIFTmater on region or add entry to density table\n",
+	    if (pp->pt_regionp->reg_gmater < 0) {
+		bu_semaphore_acquire(state->sem_worker);
+		bu_vls_printf(_ged_current_gedp->ged_result_str, "density index %d on region %s is outside of range\nSet GIFTmater on region or add entry to density table\n",
 			      pp->pt_regionp->reg_gmater,
-			      pp->pt_regionp->reg_name,
-			      num_densities); /* XXX this should do something else */
-		bu_semaphore_release(GED_SEM_WORKER);
+			      pp->pt_regionp->reg_name);
+		bu_semaphore_release(state->sem_worker);
 		return GED_ERROR;
 	    } else {
 
-		/* make sure the density index has been set */
-		de = &densities[pp->pt_regionp->reg_gmater];
-		if (de->magic == DENSITY_MAGIC) {
-		    struct per_region_data *prd;
-		    vect_t cmass;
-		    vect_t lenTorque;
-		    fastf_t Lx = state->span[0]/state->steps[0];
-		    fastf_t Ly = state->span[1]/state->steps[1];
-		    fastf_t Lz = state->span[2]/state->steps[2];
-		    fastf_t Lx_sq;
-		    fastf_t Ly_sq;
-		    fastf_t Lz_sq;
-		    fastf_t cell_area;
-		    int los;
+		struct per_region_data *prd;
+		vect_t cmass;
+		vect_t lenTorque;
+		fastf_t Lx = state->span[0]/state->steps[0];
+		fastf_t Ly = state->span[1]/state->steps[1];
+		fastf_t Lz = state->span[2]/state->steps[2];
+		fastf_t Lx_sq;
+		fastf_t Ly_sq;
+		fastf_t Lz_sq;
+		fastf_t cell_area;
+		int los;
 
-		    switch (state->i_axis) {
-			case 0:
-			    Lx_sq = dist*pp->pt_regionp->reg_los*0.01;
-			    Lx_sq *= Lx_sq;
-			    Ly_sq = Ly*Ly;
-			    Lz_sq = Lz*Lz;
-			    cell_area = Ly_sq;
-			    break;
-			case 1:
-			    Lx_sq = Lx*Lx;
-			    Ly_sq = dist*pp->pt_regionp->reg_los*0.01;
-			    Ly_sq *= Ly_sq;
-			    Lz_sq = Lz*Lz;
-			    cell_area = Lx_sq;
-			    break;
-			case 2:
-			default:
-			    Lx_sq = Lx*Lx;
-			    Ly_sq = Ly*Ly;
-			    Lz_sq = dist*pp->pt_regionp->reg_los*0.01;
-			    Lz_sq *= Lz_sq;
-			    cell_area = Lx_sq;
-			    break;
-		    }
-
-		    /* factor in the density of this object weight
-		     * computation, factoring in the LOS percentage
-		     * material of the object
-		     */
-		    los = pp->pt_regionp->reg_los;
-
-		    if (los < 1) {
-			bu_semaphore_acquire(GED_SEM_WORKER);
-			bu_vls_printf(_ged_current_gedp->ged_result_str, "bad LOS (%d) on %s\n", los, pp->pt_regionp->reg_name);
-			bu_semaphore_release(GED_SEM_WORKER);
-		    }
-
-		    /* accumulate the total weight values */
-		    val = de->grams_per_cu_mm * dist * (pp->pt_regionp->reg_los * 0.01);
-		    ap->A_LENDEN += val;
-
-		    prd = ((struct per_region_data *)pp->pt_regionp->reg_udata);
-		    /* accumulate the per-region per-view weight values */
-		    bu_semaphore_acquire(GED_SEM_STATS);
-		    prd->r_lenDensity[state->i_axis] += val;
-
-		    /* accumulate the per-object per-view weight values */
-		    prd->optr->o_lenDensity[state->i_axis] += val;
-
-		    if (analysis_flags & ANALYSIS_CENTROIDS) {
-			/* calculate the center of mass for this partition */
-			VJOIN1(cmass, pt, dist*0.5, ap->a_ray.r_dir);
-
-			/* calculate the lenTorque for this partition (i.e. centerOfMass * lenDensity) */
-			VSCALE(lenTorque, cmass, val);
-
-			/* accumulate per-object per-view torque values */
-			VADD2(&prd->optr->o_lenTorque[state->i_axis*3], &prd->optr->o_lenTorque[state->i_axis*3], lenTorque);
-
-			/* accumulate the total lenTorque */
-			VADD2(&state->m_lenTorque[state->i_axis*3], &state->m_lenTorque[state->i_axis*3], lenTorque);
-
-			if (analysis_flags & ANALYSIS_MOMENTS) {
-			    vectp_t moi;
-			    vectp_t poi = &state->m_poi[state->i_axis*3];
-			    fastf_t dx_sq = cmass[X]*cmass[X];
-			    fastf_t dy_sq = cmass[Y]*cmass[Y];
-			    fastf_t dz_sq = cmass[Z]*cmass[Z];
-			    fastf_t mass = val * cell_area;
-			    static const fastf_t ONE_TWELFTH = 1.0 / 12.0;
-
-			    /* Collect moments and products of inertia for the current object */
-			    moi = &prd->optr->o_moi[state->i_axis*3];
-			    moi[X] += ONE_TWELFTH*mass*(Ly_sq + Lz_sq) + mass*(dy_sq + dz_sq);
-			    moi[Y] += ONE_TWELFTH*mass*(Lx_sq + Lz_sq) + mass*(dx_sq + dz_sq);
-			    moi[Z] += ONE_TWELFTH*mass*(Lx_sq + Ly_sq) + mass*(dx_sq + dy_sq);
-			    poi = &prd->optr->o_poi[state->i_axis*3];
-			    poi[X] -= mass*cmass[X]*cmass[Y];
-			    poi[Y] -= mass*cmass[X]*cmass[Z];
-			    poi[Z] -= mass*cmass[Y]*cmass[Z];
-
-			    /* Collect moments and products of inertia for all objects */
-			    moi = &state->m_moi[state->i_axis*3];
-			    moi[X] += ONE_TWELFTH*mass*(Ly_sq + Lz_sq) + mass*(dy_sq + dz_sq);
-			    moi[Y] += ONE_TWELFTH*mass*(Lx_sq + Lz_sq) + mass*(dx_sq + dz_sq);
-			    moi[Z] += ONE_TWELFTH*mass*(Lx_sq + Ly_sq) + mass*(dx_sq + dy_sq);
-			    poi = &state->m_poi[state->i_axis*3];
-			    poi[X] -= mass*cmass[X]*cmass[Y];
-			    poi[Y] -= mass*cmass[X]*cmass[Z];
-			    poi[Z] -= mass*cmass[Y]*cmass[Z];
-			}
-		    }
-
-		    bu_semaphore_release(GED_SEM_STATS);
-
-		} else {
-		    bu_semaphore_acquire(GED_SEM_WORKER);
-		    bu_vls_printf(_ged_current_gedp->ged_result_str, "density index %d from region %s is not set.\nAdd entry to density table\n",
-				  pp->pt_regionp->reg_gmater, pp->pt_regionp->reg_name);
-		    bu_semaphore_release(GED_SEM_WORKER);
-
-		    aborted = 1;
-		    return GED_ERROR;
+		switch (state->i_axis) {
+		    case 0:
+			Lx_sq = dist*pp->pt_regionp->reg_los*0.01;
+			Lx_sq *= Lx_sq;
+			Ly_sq = Ly*Ly;
+			Lz_sq = Lz*Lz;
+			cell_area = Ly_sq;
+			break;
+		    case 1:
+			Lx_sq = Lx*Lx;
+			Ly_sq = dist*pp->pt_regionp->reg_los*0.01;
+			Ly_sq *= Ly_sq;
+			Lz_sq = Lz*Lz;
+			cell_area = Lx_sq;
+			break;
+		    case 2:
+		    default:
+			Lx_sq = Lx*Lx;
+			Ly_sq = Ly*Ly;
+			Lz_sq = dist*pp->pt_regionp->reg_los*0.01;
+			Lz_sq *= Lz_sq;
+			cell_area = Lx_sq;
+			break;
 		}
+
+		/* factor in the density of this object weight
+		 * computation, factoring in the LOS percentage
+		 * material of the object
+		 */
+		los = pp->pt_regionp->reg_los;
+
+		if (los < 1) {
+		    bu_semaphore_acquire(state->sem_worker);
+		    bu_vls_printf(_ged_current_gedp->ged_result_str, "bad LOS (%d) on %s\n", los, pp->pt_regionp->reg_name);
+		    bu_semaphore_release(state->sem_worker);
+		}
+
+		/* accumulate the total weight values */
+		val = grams_per_cu_mm * dist * (pp->pt_regionp->reg_los * 0.01);
+		ap->A_LENDEN += val;
+
+		prd = ((struct per_region_data *)pp->pt_regionp->reg_udata);
+		/* accumulate the per-region per-view weight values */
+		bu_semaphore_acquire(state->sem_stats);
+		prd->r_lenDensity[state->i_axis] += val;
+
+		/* accumulate the per-object per-view weight values */
+		prd->optr->o_lenDensity[state->i_axis] += val;
+
+		if (analysis_flags & ANALYSIS_CENTROIDS) {
+		    /* calculate the center of mass for this partition */
+		    VJOIN1(cmass, pt, dist*0.5, ap->a_ray.r_dir);
+
+		    /* calculate the lenTorque for this partition (i.e. centerOfMass * lenDensity) */
+		    VSCALE(lenTorque, cmass, val);
+
+		    /* accumulate per-object per-view torque values */
+		    VADD2(&prd->optr->o_lenTorque[state->i_axis*3], &prd->optr->o_lenTorque[state->i_axis*3], lenTorque);
+
+		    /* accumulate the total lenTorque */
+		    VADD2(&state->m_lenTorque[state->i_axis*3], &state->m_lenTorque[state->i_axis*3], lenTorque);
+
+		    if (analysis_flags & ANALYSIS_MOMENTS) {
+			vectp_t moi;
+			vectp_t poi = &state->m_poi[state->i_axis*3];
+			fastf_t dx_sq = cmass[X]*cmass[X];
+			fastf_t dy_sq = cmass[Y]*cmass[Y];
+			fastf_t dz_sq = cmass[Z]*cmass[Z];
+			fastf_t mass = val * cell_area;
+			static const fastf_t ONE_TWELFTH = 1.0 / 12.0;
+
+			/* Collect moments and products of inertia for the current object */
+			moi = &prd->optr->o_moi[state->i_axis*3];
+			moi[X] += ONE_TWELFTH*mass*(Ly_sq + Lz_sq) + mass*(dy_sq + dz_sq);
+			moi[Y] += ONE_TWELFTH*mass*(Lx_sq + Lz_sq) + mass*(dx_sq + dz_sq);
+			moi[Z] += ONE_TWELFTH*mass*(Lx_sq + Ly_sq) + mass*(dx_sq + dy_sq);
+			poi = &prd->optr->o_poi[state->i_axis*3];
+			poi[X] -= mass*cmass[X]*cmass[Y];
+			poi[Y] -= mass*cmass[X]*cmass[Z];
+			poi[Z] -= mass*cmass[Y]*cmass[Z];
+
+			/* Collect moments and products of inertia for all objects */
+			moi = &state->m_moi[state->i_axis*3];
+			moi[X] += ONE_TWELFTH*mass*(Ly_sq + Lz_sq) + mass*(dy_sq + dz_sq);
+			moi[Y] += ONE_TWELFTH*mass*(Lx_sq + Lz_sq) + mass*(dx_sq + dz_sq);
+			moi[Z] += ONE_TWELFTH*mass*(Lx_sq + Ly_sq) + mass*(dx_sq + dy_sq);
+			poi = &state->m_poi[state->i_axis*3];
+			poi[X] -= mass*cmass[X]*cmass[Y];
+			poi[Y] -= mass*cmass[X]*cmass[Z];
+			poi[Z] -= mass*cmass[Y]*cmass[Z];
+		    }
+		}
+
+		bu_semaphore_release(state->sem_stats);
 	    }
 	}
 
@@ -1205,7 +1099,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 	    struct per_region_data *prd = ((struct per_region_data *)pp->pt_regionp->reg_udata);
 	    ap->A_LEN += dist; /* add to total volume */
 	    {
-		bu_semaphore_acquire(GED_SEM_STATS);
+		bu_semaphore_acquire(state->sem_stats);
 
 		/* add to region volume */
 		prd->r_len[state->curr_view] += dist;
@@ -1213,19 +1107,18 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 		/* add to object volume */
 		prd->optr->o_len[state->curr_view] += dist;
 
-		bu_semaphore_release(GED_SEM_STATS);
+		bu_semaphore_release(state->sem_stats);
 	    }
 	    if (debug) {
-		bu_semaphore_acquire(GED_SEM_WORKER);
+		bu_semaphore_acquire(state->sem_worker);
 		bu_vls_printf(_ged_current_gedp->ged_result_str, "\t\tvol hit %s oDist:%g objVol:%g %s\n",
 			      pp->pt_regionp->reg_name, dist, prd->optr->o_len[state->curr_view], prd->optr->o_name);
-		bu_semaphore_release(GED_SEM_WORKER);
+		bu_semaphore_release(state->sem_worker);
 	    }
 
 	    if (plot_volume) {
 		VJOIN1(opt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
 
-		bu_semaphore_acquire(BU_SEM_SYSCALL);
 		if (ap->a_user & 1) {
 		    pl_color(plot_volume, V3ARGS(gap_color));
 		} else {
@@ -1233,7 +1126,6 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 		}
 
 		pdv_3line(plot_volume, pt, opt);
-		bu_semaphore_release(BU_SEM_SYSCALL);
 	    }
 	}
 
@@ -1246,19 +1138,16 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 		double d = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
 		point_t aapt;
 
-		bu_semaphore_acquire(GED_SEM_LIST);
+		bu_semaphore_acquire(state->sem_lists);
 		add_unique_pair(&adjAirList, pp->pt_back->pt_regionp, pp->pt_regionp, 0.0, pt);
-		bu_semaphore_release(GED_SEM_LIST);
+		bu_semaphore_release(state->sem_lists);
 
 
 		d *= 0.25;
 		VJOIN1(aapt, pt, d, ap->a_ray.r_dir);
 
-		bu_semaphore_acquire(BU_SEM_SYSCALL);
 		pl_color(plot_adjair, V3ARGS(adjAir_color));
 		pdv_3line(plot_adjair, pt, aapt);
-		bu_semaphore_release(BU_SEM_SYSCALL);
-
 	    }
 	}
 
@@ -1275,7 +1164,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 	/* the last thing we hit was air.  Make a note of that */
 	pp = PartHeadp->pt_back;
 
-	_gqa_exposed_air(pp, last_out_point, pt, opt);
+	_gqa_exposed_air(ap, pp, last_out_point, pt, opt);
     }
 
 
@@ -1308,14 +1197,14 @@ get_next_row(struct cstate *state)
 {
     int v;
     /* look for more work */
-    bu_semaphore_acquire(GED_SEM_WORKER);
+    bu_semaphore_acquire(state->sem_worker);
 
     if (state->v < state->steps[state->v_axis])
 	v = state->v++;	/* get a row to work on */
     else
 	v = 0; /* signal end of work */
 
-    bu_semaphore_release(GED_SEM_WORKER);
+    bu_semaphore_release(state->sem_worker);
 
     return v;
 }
@@ -1361,9 +1250,9 @@ plane_worker(int cpu, void *ptr)
 
 	v_coord = v * gridSpacing;
 	if (debug) {
-	    bu_semaphore_acquire(GED_SEM_WORKER);
+	    bu_semaphore_acquire(state->sem_worker);
 	    bu_vls_printf(_ged_current_gedp->ged_result_str, "  v = %d v_coord=%g\n", v, v_coord);
-	    bu_semaphore_release(GED_SEM_WORKER);
+	    bu_semaphore_release(state->sem_worker);
 	}
 
 	if ((v&1) || state->first) {
@@ -1377,10 +1266,10 @@ plane_worker(int cpu, void *ptr)
 		ap.a_ray.r_pt[state->i_axis] = ap.a_rt_i->mdl_min[state->i_axis];
 
 		if (debug) {
-		    bu_semaphore_acquire(GED_SEM_WORKER);
+		    bu_semaphore_acquire(state->sem_worker);
 		    bu_vls_printf(_ged_current_gedp->ged_result_str, "%5g %5g %5g -> %g %g %g\n", V3ARGS(ap.a_ray.r_pt),
 				  V3ARGS(ap.a_ray.r_dir));
-		    bu_semaphore_release(GED_SEM_WORKER);
+		    bu_semaphore_release(state->sem_worker);
 		}
 		ap.a_user = v;
 		(void)rt_shootray(&ap);
@@ -1400,10 +1289,10 @@ plane_worker(int cpu, void *ptr)
 		ap.a_ray.r_pt[state->i_axis] = ap.a_rt_i->mdl_min[state->i_axis];
 
 		if (debug) {
-		    bu_semaphore_acquire(GED_SEM_WORKER);
+		    bu_semaphore_acquire(state->sem_worker);
 		    bu_vls_printf(_ged_current_gedp->ged_result_str, "%5g %5g %5g -> %g %g %g\n", V3ARGS(ap.a_ray.r_pt),
 				  V3ARGS(ap.a_ray.r_dir));
-		    bu_semaphore_release(GED_SEM_WORKER);
+		    bu_semaphore_release(state->sem_worker);
 		}
 		ap.a_user = v;
 		(void)rt_shootray(&ap);
@@ -1413,12 +1302,13 @@ plane_worker(int cpu, void *ptr)
 
 		shot_cnt++;
 
-		if (debug)
+		if (debug) {
 		    if (u+1 < state->steps[state->u_axis]) {
-			bu_semaphore_acquire(GED_SEM_WORKER);
+			bu_semaphore_acquire(state->sem_worker);
 			bu_vls_printf(_ged_current_gedp->ged_result_str, "  ---\n");
-			bu_semaphore_release(GED_SEM_WORKER);
+			bu_semaphore_release(state->sem_worker);
 		    }
+		}
 	    }
 	}
 
@@ -1427,9 +1317,9 @@ plane_worker(int cpu, void *ptr)
     }
 
     if (debug && (u == -1)) {
-	bu_semaphore_acquire(GED_SEM_WORKER);
+	bu_semaphore_acquire(state->sem_worker);
 	bu_vls_printf(_ged_current_gedp->ged_result_str, "didn't shoot any rays\n");
-	bu_semaphore_release(GED_SEM_WORKER);
+	bu_semaphore_release(state->sem_worker);
     }
 
     /* There's nothing else left to work on in this view.  It's time
@@ -1437,11 +1327,11 @@ plane_worker(int cpu, void *ptr)
      * view and return.  When all threads have been through here,
      * we'll have returned to serial computation.
      */
-    bu_semaphore_acquire(GED_SEM_STATS);
+    bu_semaphore_acquire(state->sem_stats);
     state->shots[state->curr_view] += shot_cnt;
     state->m_lenDensity[state->curr_view] += ap.A_LENDEN; /* add our length*density value */
     state->m_len[state->curr_view] += ap.A_LEN; /* add our volume value */
-    bu_semaphore_release(GED_SEM_STATS);
+    bu_semaphore_release(state->sem_stats);
 }
 
 
@@ -1593,7 +1483,7 @@ list_report(struct region_pair *list)
  * !0 error encountered, terminate processing
  */
 int
-options_prep(struct rt_i *rtip, vect_t span)
+options_prep(struct rt_i *UNUSED(rtip), vect_t span)
 {
     double newGridSpacing = gridSpacing;
     int axis;
@@ -1604,12 +1494,12 @@ options_prep(struct rt_i *rtip, vect_t span)
     if (analysis_flags & ANALYSIS_WEIGHTS) {
 	if (densityFileName) {
 	    DLOG(_ged_current_gedp->ged_result_str, "density from file\n");
-	    if (get_densities_from_file(densityFileName) != GED_OK) {
+	    if (_ged_read_densities(&_gd_densities, &_gd_densities_source, _ged_current_gedp, densityFileName, 0) != GED_OK) {
 		return GED_ERROR;
 	    }
 	} else {
 	    DLOG(_ged_current_gedp->ged_result_str, "density from db\n");
-	    if (get_densities_from_database(rtip) != GED_OK) {
+	    if (_ged_read_densities(&_gd_densities, &_gd_densities_source, _ged_current_gedp, NULL, 0) != GED_OK) {
 		return GED_ERROR;
 	    }
 	}
@@ -1658,10 +1548,10 @@ options_prep(struct rt_i *rtip, vect_t span)
     if (analysis_flags & ANALYSIS_WEIGHTS) {
 	if (weight_tolerance < 0.0) {
 	    double max_den = 0.0;
-	    int i;
-	    for (i = 0; i < num_densities; i++) {
-		if (densities[i].grams_per_cu_mm > max_den)
-		    max_den = densities[i].grams_per_cu_mm;
+	    long int curr_id = -1;
+	    while ((curr_id = analyze_densities_next(_gd_densities, curr_id)) != -1) {
+		if (analyze_densities_density(_gd_densities, curr_id) > max_den)
+		    max_den = analyze_densities_density(_gd_densities, curr_id);
 	    }
 	    weight_tolerance = span[X] * span[Y] * span[Z] * 0.1 * max_den;
 	    bu_vls_printf(_ged_current_gedp->ged_result_str, "setting weight tolerance to %g %s\n",
@@ -2511,6 +2401,8 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
     if (options_prep(rtip, state.span) != GED_OK) return GED_ERROR;
 
     /* initialize some stuff */
+    state.sem_worker = bu_semaphore_register("gqa_sem_worker");
+    state.sem_stats = bu_semaphore_register("gqa_sem_stats");
     state.rtip = rtip;
     state.first = 1;
     allocate_per_region_data(&state, start_objs, argc, argv);
@@ -2637,9 +2529,14 @@ aborted:
     bu_free(reg_tbl, "object table");
     reg_tbl = NULL;
 
-    if (densities != NULL) {
-	bu_free(densities, "densities");
-	densities = NULL;
+    if (_gd_densities) {
+	analyze_densities_destroy(_gd_densities);
+	_gd_densities = NULL;
+    }
+
+    if (_gd_densities_source) {
+	bu_free(_gd_densities_source, "free densities source string");
+	_gd_densities_source = NULL;
     }
 
     rt_free_rti(rtip);

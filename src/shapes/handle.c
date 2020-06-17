@@ -1,7 +1,7 @@
 /*                        H A N D L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@
  * centered at (0, 0, 0) and the height of the handle will extend in
  * the positive z-direction.
  *
+ * Introduced in BRL-CAD release 4.4.
  */
 
 #include "common.h"
@@ -36,6 +37,7 @@
 
 #include "rt/db4.h"
 #include "vmath.h"
+#include "bu/app.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -91,6 +93,8 @@ main(int argc, char **argv)
 
     int i, j, k;		/* Loop counters. */
     int ret;
+
+    bu_setprogname(argv[0]);
 
     /* Set up solid, region, and group names. */
     solnam[0] = 's';

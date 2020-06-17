@@ -1,7 +1,7 @@
 /*                         D B _ I O . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2019 United States Government as represented by
+ * Copyright (c) 1988-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@
  * -1 FAILURE
  */
 int
-db_read(const struct db_i *dbip, void *addr, size_t count, off_t offset)
+db_read(const struct db_i *dbip, void *addr, size_t count, b_off_t offset)
 /* byte count */
 /* byte offset from start of file */
 {
@@ -59,7 +59,7 @@ db_read(const struct db_i *dbip, void *addr, size_t count, off_t offset)
 
     RT_CK_DBI(dbip);
 
-    if (RT_G_DEBUG&DEBUG_DB) {
+    if (RT_G_DEBUG&RT_DEBUG_DB) {
 	bu_log("db_read(dbip=%p, addr=%p, count=%zu., offset=%jd)\n",
 	       (void *)dbip, addr, count, (intmax_t)offset);
     }
@@ -109,7 +109,7 @@ db_getmrec(const struct db_i *dbip, const struct directory *dp)
 	return (union record *)NULL;
     }
 
-    if (RT_G_DEBUG&DEBUG_DB)
+    if (RT_G_DEBUG&RT_DEBUG_DB)
 	bu_log("db_getmrec(%s) %p, %p\n", dp->d_namep, (void *)dbip, (void *)dp);
 
     if (dp->d_addr == RT_DIR_PHONY_ADDR)
@@ -134,13 +134,13 @@ db_getmrec(const struct db_i *dbip, const struct directory *dp)
 
 
 int
-db_get(const struct db_i *dbip, const struct directory *dp, union record *where, off_t offset, size_t len)
+db_get(const struct db_i *dbip, const struct directory *dp, union record *where, b_off_t offset, size_t len)
 {
 
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
 
-    if (RT_G_DEBUG&DEBUG_DB) {
+    if (RT_G_DEBUG&RT_DEBUG_DB) {
 	bu_log("db_get(%s) %p, %p %p off=%jd len=%zu\n",
 	       dp->d_namep, (void *)dbip, (void *)dp, (void *)where, (intmax_t)offset, len);
     }
@@ -173,13 +173,13 @@ db_get(const struct db_i *dbip, const struct directory *dp, union record *where,
 
 
 int
-db_write(struct db_i *dbip, const void *addr, size_t count, off_t offset)
+db_write(struct db_i *dbip, const void *addr, size_t count, b_off_t offset)
 {
     register size_t got;
 
     RT_CK_DBI(dbip);
 
-    if (RT_G_DEBUG&DEBUG_DB) {
+    if (RT_G_DEBUG&RT_DEBUG_DB) {
 	bu_log("db_write(dbip=%p, addr=%p, count=%zu., offset=%jd)\n",
 	       (void *)dbip, addr, count, (intmax_t)offset);
     }
@@ -216,12 +216,12 @@ db_write(struct db_i *dbip, const void *addr, size_t count, off_t offset)
 
 
 int
-db_put(struct db_i *dbip, const struct directory *dp, union record *where, off_t offset, size_t len)
+db_put(struct db_i *dbip, const struct directory *dp, union record *where, b_off_t offset, size_t len)
 {
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
 
-    if (RT_G_DEBUG&DEBUG_DB)
+    if (RT_G_DEBUG&RT_DEBUG_DB)
 	bu_log("db_put(%s) %p, %p %p off=%jd len=%zu\n",
 	       dp->d_namep, (void *)dbip, (void *)dp, (void *)where, (intmax_t)offset, len);
 
@@ -257,7 +257,7 @@ db_get_external(register struct bu_external *ep, const struct directory *dp, con
 {
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_get_external(%s) ep=%p, dbip=%p, dp=%p\n",
+    if (RT_G_DEBUG&RT_DEBUG_DB) bu_log("db_get_external(%s) ep=%p, dbip=%p, dp=%p\n",
 				    dp->d_namep, (void *)ep, (void *)dbip, (void *)dp);
 
     if ((dp->d_flags & RT_DIR_INMEM) == 0 && dp->d_addr == RT_DIR_PHONY_ADDR)
@@ -292,7 +292,7 @@ db_put_external(struct bu_external *ep, struct directory *dp, struct db_i *dbip)
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
     BU_CK_EXTERNAL(ep);
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_put_external(%s) ep=%p, dbip=%p, dp=%p\n",
+    if (RT_G_DEBUG&RT_DEBUG_DB) bu_log("db_put_external(%s) ep=%p, dbip=%p, dp=%p\n",
 				    dp->d_namep, (void *)ep, (void *)dbip, (void *)dp);
 
 
@@ -345,7 +345,7 @@ int
 db_fwrite_external(FILE *fp, const char *name, struct bu_external *ep)
 {
 
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_fwrite_external(%s) ep=%p\n", name, (void *)ep);
+    if (RT_G_DEBUG&RT_DEBUG_DB) bu_log("db_fwrite_external(%s) ep=%p\n", name, (void *)ep);
 
     BU_CK_EXTERNAL(ep);
 

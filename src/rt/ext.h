@@ -1,7 +1,7 @@
 /*                           E X T . H
  * BRL-CAD
  *
- * Copyright (c) 1989-2019 United States Government as represented by
+ * Copyright (c) 1989-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -74,7 +74,7 @@ extern int Query_one_pixel;
 extern int benchmark;
 extern int lightmodel;			/* Select lighting model */
 extern int query_debug;
-extern int query_rdebug;
+extern int query_optical_debug;
 extern int query_x;
 extern int query_y;
 extern int rpt_overlap;			/* Warn about overlaps? */
@@ -84,7 +84,7 @@ extern int sub_xmax;			/* upper right of sub rectangle */
 extern int sub_xmin;			/* lower left of sub rectangle */
 extern int sub_ymax;
 extern int sub_ymin;
-extern int transpose_grid;		/* reverse the order of grid traversal */
+extern int top_down;			/* reverse the order of grid traversal */
 extern int use_air;			/* Handling of air in librt */
 extern int random_mode;                 /* Mode to shoot rays at random directions */
 extern int opencl_mode;			/* enable/disable OpenCL */

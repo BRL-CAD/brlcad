@@ -527,6 +527,19 @@
     </variablelist>
     <variablelist>
       <cmdsynopsis>
+        <command>flip</command>
+      </cmdsynopsis>
+      <varlistentry>
+        <term></term>
+        <listitem>
+          <para>
+            Flip all faces in the BREP (turns it 'inside out'). 
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <variablelist>
+      <cmdsynopsis>
         <command>translate</command>
         <arg choice="req" rep="norepeat"><replaceable>SCV</replaceable></arg>
         <arg choice="req" rep="norepeat"><replaceable>index</replaceable></arg>

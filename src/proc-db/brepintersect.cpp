@@ -1,7 +1,7 @@
 /*                 B R E P I N T E R S E C T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2019 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,6 +33,7 @@
 /* implementation system header */
 #include <assert.h>
 
+#include "bu/app.h"
 
 int PolylineBBox(
     const ON_Polyline& pline,
@@ -961,8 +962,10 @@ int MeshMeshIntersect(
 }
 
 
-int main()
+int main(int UNUSED(argc), const char **argv)
 {
+    bu_setprogname(argv[0]);
+
     /* create the points */
     ON_3fPoint a1 = ON_3fPoint(1.0, 1.0, -1.0);
     ON_3fPoint b1 = ON_3fPoint(1.0, 1.0, 1.0);

@@ -1,7 +1,7 @@
 /*                    F B S E R V _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,6 +34,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <tcl.h>
+#include "bio.h"
 #include "bnetwork.h"
 
 #include "raytrace.h"

@@ -235,7 +235,7 @@ typedef struct {
      * Miscellaneous information:
      */
 
-    Tk_Cursor cursor;		/* Value of -cursor option: if not None,
+    Tk_Cursor cursor;		/* Value of -cursor option: if not NULL,
 				 * specifies current cursor for window. */
     Tcl_Obj *takeFocusPtr;	/* Value of -takefocus option; not used in the
 				 * C code, but used by keyboard traversal
@@ -292,7 +292,7 @@ typedef struct {
  * and button/label defaults, for use in optionSpecs.
  */
 
-MODULE_SCOPE Tk_ClassProcs tkpButtonProcs;
+MODULE_SCOPE const Tk_ClassProcs tkpButtonProcs;
 MODULE_SCOPE char tkDefButtonHighlightWidth[TCL_INTEGER_SPACE];
 MODULE_SCOPE char tkDefButtonPadx[TCL_INTEGER_SPACE];
 MODULE_SCOPE char tkDefButtonPady[TCL_INTEGER_SPACE];

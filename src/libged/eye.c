@@ -1,7 +1,7 @@
 /*                         E Y E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2019 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -105,7 +105,7 @@ ged_eye(struct ged *gedp, int argc, const char *argv[])
     MAT_DELTAS_VEC_NEG(gedp->ged_gvp->gv_center, new_cent);
     ged_view_update(gedp->ged_gvp);
 
-    return TCL_OK;
+    return GED_OK;
 }
 
 

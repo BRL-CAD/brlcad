@@ -1,7 +1,7 @@
 /*                   P I X S A T U R A T E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,6 +36,7 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/str.h"
 #include "bu/exit.h"
 
@@ -63,6 +64,8 @@ main(int argc, char **argv)
     size_t nby;
     unsigned char *cp;
     size_t ret;
+
+    bu_setprogname(argv[0]);
 
     if (argc != 2)
 	printusage ();

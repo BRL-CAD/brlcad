@@ -1,7 +1,7 @@
 /*                           G C V . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2019 United States Government as represented by
+ * Copyright (c) 2015-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,6 +40,7 @@
 #include "rt/db5.h"
 #include "rt/db_instance.h"
 #include "rt/db_io.h"
+#include "rt/debug.h"
 #include "rt/wdb.h"
 #include "rt/search.h"
 #include "rt/global.h"
@@ -266,7 +267,7 @@ _gcv_opts_check(const struct gcv_opts *gcv_options)
 	bu_bomb("null gcv_options");
 
     BN_CK_TOL(&gcv_options->calculational_tolerance);
-    RT_CK_TESS_TOL(&gcv_options->tessellation_tolerance);
+    BG_CK_TESS_TOL(&gcv_options->tessellation_tolerance);
 
     if (gcv_options->debug_mode != 0 && gcv_options->debug_mode != 1)
 	bu_bomb("invalid gcv_opts.debug_mode");
@@ -434,8 +435,8 @@ gcv_list_filters(void)
 void
 gcv_opts_default(struct gcv_opts *gcv_options)
 {
-    const struct rt_tess_tol default_tessellation_tolerance =
-    {RT_TESS_TOL_MAGIC, 0.0, 1.0e-2, 0.0};
+    const struct bg_tess_tol default_tessellation_tolerance =
+    {BG_TESS_TOL_MAGIC, 0.0, 1.0e-2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
     memset(gcv_options, 0, sizeof(*gcv_options));
 
@@ -454,7 +455,7 @@ gcv_execute(struct gcv_context *context, const struct gcv_filter *filter,
 	    const char *target)
 {
     const int bu_debug_orig = bu_debug;
-    const uint32_t rt_debug_orig = RTG.debug;
+    const uint32_t rt_debug_orig = rt_debug;
     const uint32_t nmg_debug_orig = nmg_debug;
     int dbi_read_only_orig;
 
@@ -496,7 +497,7 @@ gcv_execute(struct gcv_context *context, const struct gcv_filter *filter,
 	return 0;
 
     bu_debug |= gcv_options->bu_debug_flag;
-    RTG.debug |= gcv_options->rt_debug_flag;
+    rt_debug |= gcv_options->rt_debug_flag;
     nmg_debug |= gcv_options->nmg_debug_flag;
 
     dbi_read_only_orig = context->dbip->dbi_read_only;
@@ -526,7 +527,7 @@ gcv_execute(struct gcv_context *context, const struct gcv_filter *filter,
 	result = filter->filter_fn(context, gcv_options, options_data, target);
 
     bu_debug = bu_debug_orig;
-    RTG.debug = rt_debug_orig;
+    rt_debug = rt_debug_orig;
     nmg_debug = nmg_debug_orig;
     context->dbip->dbi_read_only = dbi_read_only_orig;
 

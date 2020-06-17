@@ -1,7 +1,6 @@
 set(mged_TCLSCRIPTS
   accel.tcl
   adc.tcl
-  anim.tcl
   apply.tcl
   asc2g.tcl
   attr_edit.tcl

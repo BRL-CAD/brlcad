@@ -1,7 +1,7 @@
 /*                    M K B U I L D I N G . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2019 United States Government as represented by
+ * Copyright (c) 2009-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,6 +24,7 @@
  */
 
 #include "mkbuilding.h"
+#include "bu/app.h"
 
 void mkbdlg_usage(void)
 {
@@ -37,6 +38,8 @@ main(int ac, char *av[])
 {
     struct rt_wdb *db_filepointer;
     point_t p1, p2;
+
+    bu_setprogname(av[0]);
 
     if (ac < 2) {
 	mkbdlg_usage();

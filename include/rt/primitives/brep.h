@@ -1,7 +1,7 @@
 /*                        B R E P . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2019 United States Government as represented by
+ * Copyright (c) 1993-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,16 +35,16 @@ __BEGIN_DECLS
 
 /* BREP drawing routines */
 RT_EXPORT extern int rt_brep_plot(struct bu_list                *vhead,
-                                 struct rt_db_internal          *ip,
-                                 const struct rt_tess_tol       *ttol,
-                                 const struct bn_tol            *tol,
-                                 const struct rt_view_info *info);
+				  struct rt_db_internal          *ip,
+				  const struct bg_tess_tol       *ttol,
+				  const struct bn_tol            *tol,
+				  const struct rt_view_info *info);
 RT_EXPORT extern int rt_brep_plot_poly(struct bu_list           *vhead,
-                                          const struct db_full_path *pathp,
-                                      struct rt_db_internal     *ip,
-                                      const struct rt_tess_tol  *ttol,
-                                      const struct bn_tol       *tol,
-                                      const struct rt_view_info *info);
+				       const struct db_full_path *pathp,
+				       struct rt_db_internal     *ip,
+				       const struct bg_tess_tol  *ttol,
+				       const struct bn_tol       *tol,
+				       const struct rt_view_info *info);
 /* BREP validity test */
 #define RT_BREP_OPENNURBS    0x1    /**< @brief OpenNURBS tests (default)*/
 #define RT_BREP_UV_PARAM     0x2    /**< @brief sanity checks for UV parameterization bounds */
@@ -55,6 +55,16 @@ RT_EXPORT extern int rt_brep_valid(struct bu_vls *log, struct rt_db_internal *ip
  * from either 0 to their 3D length or from 0 to pmax (if pmax is nonzero.)
  */
 RT_EXPORT extern int rt_brep_normalize(struct rt_db_internal *ip, double pmax);
+
+
+/* Report if the brep is a plate mode object: returns 1 if plate mode, otherwise 0.
+ * (Invalid openNURBS objects are not considered plate mode) */
+RT_EXPORT extern int rt_brep_plate_mode(const struct rt_db_internal *ip);
+
+/* Get plate mode settings if  brep is a plate mode object. Note: default
+ * returns are 0 regardless of the object type - use rt_brep_plate_mode to test
+ * if an object is or isn't plate mode*/
+RT_EXPORT extern void rt_brep_plate_mode_getvals(double *pthickness, int *nocos, const struct rt_db_internal *ip);
 
 /** @} */
 

@@ -1,7 +1,7 @@
 /*                     P I X B O R D E R . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2019 United States Government as represented by
+ * Copyright (c) 1996-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,7 +29,10 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include "bio.h"
+
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
@@ -477,6 +480,8 @@ main (int argc, char **argv)
     ssize_t this_row;
     size_t col_nm;
     size_t row_nm;
+
+    bu_setprogname(argv[0]);
 
     VSETALL(border_rgb,     1);
     rgb_to_hsv(border_rgb, border_hsv);

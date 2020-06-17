@@ -1,7 +1,7 @@
 #            B R L C A D _ S U M M A R Y . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2012-2019 United States Government as represented by
+# Copyright (c) 2012-2020 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -252,7 +252,6 @@ function(BRLCAD_Summary)
   set(BRLCAD_PNG_BUILD_LABEL "Compile libpng ")
   set(BRLCAD_REGEX_BUILD_LABEL "Compile libregex ")
   set(BRLCAD_ZLIB_BUILD_LABEL "Compile zlib ")
-  set(BRLCAD_TERMLIB_BUILD_LABEL "Compile termlib ")
   set(BRLCAD_UTAHRLE_BUILD_LABEL "Compile Utah Raster Toolkit ")
   set(BRLCAD_OPENNURBS_BUILD_LABEL "Compile openNURBS ")
   set(BRLCAD_SC_BUILD_LABEL "Compile STEPcode")
@@ -277,8 +276,8 @@ function(BRLCAD_Summary)
 
   # Make sets to use for iteration over all report items
   set(BUILD_REPORT_ITEMS
-    TCL TK INCRTCL IWIDGETS TKHTML TKPNG TKTABLE PNG REGEX ZLIB
-    TERMLIB UTAHRLE OPENNURBS SC)
+    TCL TK INCRTCL IWIDGETS TKHTML TKTABLE PNG REGEX ZLIB
+    UTAHRLE OPENNURBS SC)
 
   set(FEATURE_REPORT_ITEMS
     BRLCAD_ENABLE_OPENGL

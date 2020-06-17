@@ -1,7 +1,7 @@
 /*                         P U L L . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2019 United States Government as represented by
+ * Copyright (c) 2013-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -248,7 +248,7 @@ ged_pull(struct ged *gedp, int argc, const char *argv[])
     while ((c = bu_getopt(argc, (char * const *)argv, "d")) != -1) {
 	switch (c) {
 	   case 'd':
-		RTG.debug |= DEBUG_TREEWALK;
+		rt_debug |= RT_DEBUG_TREEWALK;
 		break;
 	  case '?':
 	  default:

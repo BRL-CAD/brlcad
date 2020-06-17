@@ -1,7 +1,7 @@
 /*                        P O L Y . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,6 +31,9 @@
 #define BN_POLY_H
 
 #include "common.h"
+
+#include "vmath.h"
+
 #include "bu/magic.h"
 #include "bn/defines.h"
 #include "bn/complex.h"

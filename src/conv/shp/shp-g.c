@@ -1,7 +1,7 @@
 /*                         S H P - G . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2019 United States Government as represented by
+ * Copyright (c) 2009-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
@@ -153,6 +154,8 @@ main(int argc, char *argv[])
     point2d_t *verts = NULL;
     size_t num_verts = 0;
 
+    bu_setprogname(argv[0]);
+
     if (argc < 2) {
 	usage(argv0);
 	bu_exit(1, NULL);
@@ -164,8 +167,8 @@ main(int argc, char *argv[])
 		opt_debug = 1;
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *) &RTG.debug);
-		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT);
+		sscanf(bu_optarg, "%x", (unsigned int *) &rt_debug);
+		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, RT_DEBUG_FORMAT);
 		bu_log("\n");
 		break;
 	    case 'v':

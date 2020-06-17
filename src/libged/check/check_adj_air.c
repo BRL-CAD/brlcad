@@ -1,7 +1,7 @@
 /*                C H E C K _ A D J _ A I R . C
  * BRL-CAD
  *
- * Copyright (c) 2018-2019 United States Government as represented by
+ * Copyright (c) 2018-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,10 +39,10 @@ HIDDEN void
 adj_air(const struct xray* ray, const struct partition *pp, point_t pt, void* callback_data)
 {
     struct adj_air_context *context = (struct adj_air_context*) callback_data;
-    bu_semaphore_acquire(GED_SEM_LIST);
+    bu_semaphore_acquire(BU_SEM_GENERAL);
     add_to_list(context->adjAirList, pp->pt_back->pt_regionp->reg_name, pp->pt_regionp->reg_name, 0.0, pt);
-    bu_semaphore_release(GED_SEM_LIST);
-	
+    bu_semaphore_release(BU_SEM_GENERAL);
+
     if (context->plot_adjair) {
 	double d = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
 	point_t aapt;

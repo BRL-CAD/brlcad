@@ -29,7 +29,8 @@
 #endif
 
 
-#if defined(ON_DLL_EXPORTS)
+#if defined(ON_COMPILER_MSC)
+#  if defined(ON_DLL_EXPORTS)
 
 ////////////////////////////////////////////////////////////////////////////////
 //
@@ -203,6 +204,7 @@ void ONX_Model::operator delete(void*, void*)
   return;
 }
 
+#  endif
 #endif
 
 //

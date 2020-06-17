@@ -76,13 +76,21 @@
 extern "C" {
 #endif
 
+#if defined(_WIN32)
+# define COMPILER_DLLEXPORT __declspec(dllexport)
+# define COMPILER_DLLIMPORT __declspec(dllimport)
+#else
+# define COMPILER_DLLEXPORT __attribute__ ((visibility ("default")))
+# define COMPILER_DLLIMPORT __attribute__ ((visibility ("default")))
+#endif
+
 #ifndef VDS_EXPORT
 #  if defined(VDS_DLL_EXPORTS) && defined(VDS_DLL_IMPORTS)
 #    error "Only VDS_DLL_EXPORTS or VDS_DLL_IMPORTS can be defined, not both."
 #  elif defined(VDS_DLL_EXPORTS)
-#    define VDS_EXPORT __declspec(dllexport)
+#    define VDS_EXPORT COMPILER_DLLEXPORT
 #  elif defined(VDS_DLL_IMPORTS)
-#    define VDS_EXPORT __declspec(dllimport)
+#    define VDS_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define VDS_EXPORT
 #  endif

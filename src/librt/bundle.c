@@ -1,7 +1,7 @@
 /*                        B U N D L E . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2019 United States Government as represented by
+ * Copyright (c) 1985-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -87,7 +87,7 @@ rt_shootray_bundle(struct application *ap, struct xray *rays, int nrays)
     register const union cutter *cutp;
     struct resource *resp;
     struct rt_i *rtip;
-    const int debug_shoot = RT_G_DEBUG & DEBUG_SHOOT;
+    const int debug_shoot = RT_G_DEBUG & RT_DEBUG_SHOOT;
 
     memset(&ss, 0, sizeof(struct rt_shootray_status));
 
@@ -113,7 +113,7 @@ rt_shootray_bundle(struct application *ap, struct xray *rays, int nrays)
     RT_CK_RESOURCE(resp);
     ss.resp = resp;
 
-    if (RT_G_DEBUG&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION|DEBUG_ALLHITS)) {
+    if (RT_G_DEBUG&(RT_DEBUG_ALLRAYS|RT_DEBUG_SHOOT|RT_DEBUG_PARTITION|RT_DEBUG_ALLHITS)) {
 	bu_log_indent_delta(2);
 	bu_log("\n**********shootray_bundle cpu=%d  %d, %d lvl=%d (%s)\n",
 	       resp->re_cpu,
@@ -362,7 +362,7 @@ rt_shootray_bundle(struct application *ap, struct xray *rays, int nrays)
 		break;			/* HIT */
 	    }
 	}
-	if (RT_G_DEBUG & DEBUG_ADVANCE)
+	if (RT_G_DEBUG & RT_DEBUG_ADVANCE)
 	    rt_plot_cell(cutp, &ss, &(waiting_segs.l), rtip);
 
 	/*
@@ -412,7 +412,7 @@ rt_shootray_bundle(struct application *ap, struct xray *rays, int nrays)
      * segments into the partition list.
      */
 weave:
-    if (RT_G_DEBUG&DEBUG_ADVANCE)
+    if (RT_G_DEBUG&RT_DEBUG_ADVANCE)
 	bu_log("rt_shootray_bundle: ray has left known space\n");
 
     if (BU_LIST_NON_EMPTY(&(waiting_segs.l))) {
@@ -474,7 +474,7 @@ hitit:
      * finished_segs is only used by special hit routines which don't
      * follow the traditional solid modeling paradigm.
      */
-    if (RT_G_DEBUG&DEBUG_ALLHITS) rt_pr_partitions(rtip, &FinalPart, "Partition list passed to a_hit() routine");
+    if (RT_G_DEBUG&RT_DEBUG_ALLHITS) rt_pr_partitions(rtip, &FinalPart, "Partition list passed to a_hit() routine");
     if (ap->a_hit)
 	ap->a_return = ap->a_hit(ap, &FinalPart, &finished_segs);
     else
@@ -500,7 +500,7 @@ out:
     resp->re_nshootray++;
 
     /* Terminate any logging */
-    if (RT_G_DEBUG&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION|DEBUG_ALLHITS)) {
+    if (RT_G_DEBUG&(RT_DEBUG_ALLRAYS|RT_DEBUG_SHOOT|RT_DEBUG_PARTITION|RT_DEBUG_ALLHITS)) {
 	bu_log_indent_delta(-2);
 	bu_log("----------shootray_bundle cpu=%d  %d, %d lvl=%d (%s) %s ret=%d\n",
 	       resp->re_cpu,
@@ -571,8 +571,8 @@ bundle_miss(register struct application *ap)
     return 0;
 }
 
-
-void
+#ifdef SHOOTRAYS_IN_PARALLEL
+static void
 shootrays_in_parallel(int UNUSED(cpu), void *data)
 {
     size_t i;
@@ -598,7 +598,7 @@ shootrays_in_parallel(int UNUSED(cpu), void *data)
 
     return;
 }
-
+#endif
 
 int
 rt_shootrays(struct application_bundle *bundle)

@@ -1,7 +1,7 @@
 /*                      P R O C E S S . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,6 +37,12 @@ __BEGIN_DECLS
  */
 BU_EXPORT extern int bu_process_id(void);
 
+/**
+ * @brief terminate a given process and any children.
+ *
+ * returns truthfully whether the process could be killed.
+ */
+BU_EXPORT extern int bu_terminate(int process);
 
 
 /* Wrappers for using subprocess execution */
@@ -46,34 +52,106 @@ struct bu_process;
 #define BU_PROCESS_STDOUT 1
 #define BU_PROCESS_STDERR 2
 
-/* Open and return FILE pointer associated with process input (0), output (1),
- * or error (2) fd.  Caller should not close these FILE pointers directly -
- * call bu_process_input_close instead. Input will be opened write, output
- * and error will be opened read. */
+
+/**
+ * Open and return a FILE pointer associated with the specified file
+ * descriptor for input (0), output (1), or error (2) respectively.
+ *
+ * Input will be opened write, output and error will be opened
+ * read.
+ *
+ * Caller should not close these FILE pointers directly.  Call
+ * bu_process_close() instead.
+ *
+ * FIXME: misnomer, this does not open a process.  Probably doesn't
+ * need to exist; just call fdopen().
+ */
 BU_EXPORT extern FILE *bu_process_open(struct bu_process *pinfo, int fd);
 
-/* Close input FILE pointer and manage internal state */
+
+/**
+ * Close any FILE pointers internally opened via bu_process_open().
+ *
+ * FIXME: misnomer, this does not close a process.  Probably doesn't
+ * need to exist; just call fclose().
+ */
 BU_EXPORT extern void bu_process_close(struct bu_process *pinfo, int fd);
 
-/* Retrieve the pointer to the input (0), output (1), or error (2) file
+
+/**
+ * Retrieve the pointer to the input (0), output (1), or error (2) file
  * descriptor associated with the process.  To use this in calling code, the
  * caller must cast the supplied pointer to the file handle type of the
  * calling code's specific platform.
+ *
+ * FIXME: void pointer casting is bad.  this function probably
+ * shouldn't exist.
  */
 BU_EXPORT void *bu_process_fd(struct bu_process *pinfo, int fd);
 
-/* Return the pid of the subprocess. */
+
+/**
+ * Return the pid of the subprocess.
+ *
+ * FIXME: seemingly redundant or combinable with bu_process_id()
+ * (perhaps make NULL be equivalent to the current process).
+ */
 BU_EXPORT int bu_process_pid(struct bu_process *pinfo);
 
-/* Read n bytes from specified output channel associated with process (fd == 1 for output, fd == 2 for err). */
+
+/**
+ * Reports one or both of the command string and the argv array
+ * used to execute the process.
+ *
+ * The bu_process container owns all strings for both cmd and argv -
+ * for the caller they are read-only.
+ *
+ * If either cmd or argv are NULL they will be skipped - if the
+ * caller only wants one of these outputs the other argument can
+ * be set to NULL.
+ *
+ * @param[out] cmd - pointer to the cmd string used to launch pinfo
+ * @param[out] argv - pointer to the argv array used to launch pinfo
+ * @param[in] pinfo - the bu_process structure of interest
+ *
+ * @return
+ * the corresponding argc count for pinfo's argv array.
+ */
+BU_EXPORT int bu_process_args(const char **cmd, const char * const **argv, struct bu_process *pinfo);
+
+
+/**
+ * Read up to n bytes into buff from a process's specified output
+ * channel (fd == 1 for output, fd == 2 for err).
+ *
+ * FIXME: arg ordering and input/output grouping is wrong.  partially
+ * redundant with bu_process_fd() and/or bu_process_open().
+ */
 BU_EXPORT extern int bu_process_read(char *buff, int *count, struct bu_process *pinfo, int fd, int n);
 
-/** @brief Wrapper for executing a sub-process (execvp and CreateProcess) */
+
+/**
+ * @brief Wrapper for executing a sub-process
+ *
+ * FIXME: eliminate the last two options so all callers are not
+ * exposed to parameters not relevant to them.
+ */
 BU_EXPORT extern void bu_process_exec(struct bu_process **info, const char *cmd, int argc, const char **argv, int out_eql_err, int hide_window);
 
-/** @brief Wrapper for waiting on a sub-process to complete (wait or WaitForSingleObject) and
- * cleaning up pinfo.  After this call completes, pinfo will be freed. */
-BU_EXPORT extern int bu_process_wait(int *aborted, struct bu_process *pinfo, int wtime);
+
+/**
+ * @brief wait for a sub-process to complete, release all process
+ * allocations, and release the process itself.
+ *
+ * FIXME: 'aborted' argument may be unnecessary (could make function
+ * provide return value of the process waited for).  wtime
+ * undocumented.
+ *
+ * FIXME: this doesn't actually release all the file descriptors that
+ * were opened after exec.  observed open file exhausture after a
+ * couple hundred calls.
+ */
+ BU_EXPORT extern int bu_process_wait(int *aborted, struct bu_process *pinfo, int wtime);
 
 /** @} */
 

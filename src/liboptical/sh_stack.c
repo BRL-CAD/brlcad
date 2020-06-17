@@ -1,7 +1,7 @@
 /*                      S H _ S T A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2019 United States Government as represented by
+ * Copyright (c) 1986-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -89,7 +89,7 @@ ext_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const 
     bu_vls_strncpy(&parameter_data, (char *)parameter_file->buf,
 		   parameter_file->buflen);
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	bu_log("ext_setup(%s): {%s}\n",
 	       filename, bu_vls_addr(&parameter_data));
     }
@@ -123,7 +123,7 @@ sh_stk_dosetup(char *cp, struct region *rp, void **dpp, struct mfuncs **mpp, str
 
     RT_CK_RTI(rtip);
 
-    if (rdebug&RDEBUG_MATERIAL)
+    if (optical_debug&OPTICAL_DEBUG_MATERIAL)
 	bu_log("...starting \"%s\"\n", cp);
 
     /* skip leading white space */
@@ -174,7 +174,7 @@ found:
     *dpp = (char *)0;
     if (*cp != '\0')
 	bu_vls_strcat(&arg, ++cp);
-    if (rdebug&RDEBUG_MATERIAL)
+    if (optical_debug&OPTICAL_DEBUG_MATERIAL)
 	bu_log("calling %s with %s\n", mfp->mf_name, bu_vls_addr(&arg));
     if (!mfp || !mfp->mf_setup || mfp->mf_setup(rp, &arg, dpp, mfp, rtip) < 0) {
 	/* Setup has failed */
@@ -185,7 +185,7 @@ found:
     bu_vls_free(&arg);
     ret = 0;			/* OK */
 out:
-    if (rdebug&RDEBUG_MATERIAL)
+    if (optical_debug&OPTICAL_DEBUG_MATERIAL)
 	bu_log("...finished \"%s\", ret=%d\n", matname, ret);
     return ret;
 }
@@ -216,7 +216,7 @@ sh_stk_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, con
 
     /*bu_struct_parse(matparm, sh_stk_parse, (char *)sp);*/
 
-    if (rdebug&RDEBUG_MATERIAL || rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_MATERIAL || optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_log("sh_stk_setup called with \"%s\"\n", bu_vls_addr(matparm));
 
     i = 0;
@@ -286,7 +286,7 @@ sh_stk_render(struct application *ap, const struct partition *pp, struct shadewo
     }
 
     for (i = 0; i < 16 && sp->mfuncs[i] != NULL; i++) {
-	if (rdebug&RDEBUG_SHADE) {
+	if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	    snprintf(tmp, 128, "before stacked \"%s\" shader", sp->mfuncs[i]->mf_name);
 
 	    pr_shadework(tmp, swp);

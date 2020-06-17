@@ -1,7 +1,7 @@
 /*                       F I T N E S S . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2019 United States Government as represented by
+ * Copyright (c) 2007-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,11 +37,6 @@
 #define STATUS_MP 2
 #define STATUS_EMPTY 0
 
-#define SEM_WORK RT_SEM_LAST
-#define SEM_DIFF RT_SEM_LAST+1
-#define SEM_SAME RT_SEM_LAST+2
-#define TOTAL_SEMAPHORES SEM_SAME+1
-
 
 struct part {
     struct bu_list  l;
@@ -54,6 +49,10 @@ struct fitness_state {
     struct part **ray; /* internal representation of raytraced source */
     struct rt_i *rtip; /* current objects to be raytraced */
 
+    /* semaphores for parallel */
+    int sem_work;
+    int sem_diff;
+    int sem_same;
     struct resource resource[MAX_PSW]; /* memory resource for multi-cpu processing */
     int ncpu;
     int max_cpus;

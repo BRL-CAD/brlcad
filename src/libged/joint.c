@@ -1,7 +1,7 @@
 /*                      J O I N T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -258,7 +258,7 @@ joint_mesh(struct ged *gedp, int argc, const char *argv[])
 	name = argv[2];
     }
 
-    topc = ged_build_tops(gedp, topv, topv+2000);
+    topc = ged_who_argv(gedp, topv, (const char **)(topv+2000));
     dl_set_iflag(gedp->ged_gdp->gd_headDisplay, DOWN);
 
     i = db_walk_tree(gedp->ged_wdbp->dbip, topc, (const char **)topv,
@@ -611,7 +611,7 @@ hold_eval(struct ged *gedp, struct hold *hp)
 	}
 	return 0.0;
     }
-    value = hp->weight * DIST_PT_PT(e_loc, o_loc);
+    value = hp->weight * DIST_PNT_PNT(e_loc, o_loc);
     if (J_DEBUG & DEBUG_J_EVAL) {
 	bu_vls_printf(gedp->ged_result_str, "hold_eval: PT->PT of %s is %g\n", hp->name, value);
     }

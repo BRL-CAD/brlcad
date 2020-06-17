@@ -1,7 +1,7 @@
 /*                           M G E D . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2019 United States Government as represented by
+ * Copyright (c) 1985-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -83,17 +83,19 @@
 #define MGED_INMEM_NAME ".inmem"
 
 
+/* global state */
+extern struct ged *GEDP;    /* defined in mged.c */
+extern struct db_i *DBIP;   /* defined in mged.c */
+extern struct rt_wdb *WDBP; /* defined in mged.c */
+
+
 /*
  * All GED files are stored in a fixed base unit (MM).  These factors
  * convert database unit to local (or working) units.
  */
-extern struct ged *gedp;		/* defined in mged.c */
-extern struct db_i *dbip;		/* defined in mged.c */
-extern int dbih;		/* defined in mged.c */
-extern struct rt_wdb *wdbp;		/* defined in mged.c */
-#define base2local (dbip->dbi_base2local)
-#define local2base (dbip->dbi_local2base)
-#define cur_title (dbip->dbi_title)      /* current model title */
+#define base2local (DBIP->dbi_base2local)
+#define local2base (DBIP->dbi_local2base)
+#define cur_title (DBIP->dbi_title)      /* current model title */
 
 
 /* Some useful constants, if they haven't been defined elsewhere. */
@@ -112,7 +114,7 @@ extern double mged_rel_tol; /* rel surface tolerance */
 extern double mged_nrm_tol; /* surface normal tolerance */
 
 extern struct bn_tol mged_tol;  /* calculation tolerance */
-extern struct rt_tess_tol mged_ttol; /* XXX needs to replace mged_abs_tol, et al. */
+extern struct bg_tess_tol mged_ttol; /* XXX needs to replace mged_abs_tol, et al. */
 
 
 /* default region codes defined in mover.c */
@@ -373,14 +375,14 @@ you should exit MGED now, and resolve the I/O problem, before continuing.\n")
 
 /* Check if database pointer is NULL */
 #define CHECK_DBI_NULL \
-    if (dbip == DBI_NULL) { \
+    if (DBIP == DBI_NULL) { \
 	Tcl_AppendResult(INTERP, "A database is not open!\n", (char *)NULL); \
 	return TCL_ERROR; \
     }
 
 /* Check if the database is read only, and if so return TCL_ERROR */
 #define CHECK_READ_ONLY	\
-    if (dbip->dbi_read_only) { \
+    if (DBIP->dbi_read_only) { \
 	Tcl_AppendResult(INTERP, "Sorry, this database is READ-ONLY\n", (char *)NULL); \
 	return TCL_ERROR; \
     }
@@ -525,9 +527,9 @@ extern int newedge;	/* new edge for arb editing */
 
 /* edars.c */
 #if defined(SEEN_RTGEOM_H)
-void find_nearest_ars_pt(int *crv, int *col, struct rt_ars_internal *ars, point_t pick_pt, vect_t dir);
+void find_ars_nearest_pnt(int *crv, int *col, struct rt_ars_internal *ars, point_t pick_pt, vect_t dir);
 #else
-void find_nearest_ars_pt();
+void find_ars_nearest_pnt();
 #endif
 
 /* mged.c */
@@ -635,15 +637,15 @@ int scroll_display(int y_top);
 /* edpipe.c */
 void pipe_scale_od(struct rt_db_internal *, fastf_t);
 void pipe_scale_id(struct rt_db_internal *, fastf_t);
-void pipe_seg_scale_od(struct wdb_pipept *, fastf_t);
-void pipe_seg_scale_id(struct wdb_pipept *, fastf_t);
-void pipe_seg_scale_radius(struct wdb_pipept *, fastf_t);
+void pipe_seg_scale_od(struct wdb_pipe_pnt *, fastf_t);
+void pipe_seg_scale_id(struct wdb_pipe_pnt *, fastf_t);
+void pipe_seg_scale_radius(struct wdb_pipe_pnt *, fastf_t);
 void pipe_scale_radius(struct rt_db_internal *, fastf_t);
-struct wdb_pipept *find_pipept_nearest_pt(const struct bu_list *, const point_t);
-struct wdb_pipept *add_pipept(struct rt_pipe_internal *, struct wdb_pipept *, const point_t);
-void ins_pipept(struct rt_pipe_internal *, struct wdb_pipept *, const point_t);
-struct wdb_pipept *del_pipept(struct wdb_pipept *);
-void move_pipept(struct rt_pipe_internal *, struct wdb_pipept *, const point_t);
+struct wdb_pipe_pnt *find_pipe_pnt_nearest_pnt(const struct bu_list *, const point_t);
+struct wdb_pipe_pnt *pipe_add_pnt(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t);
+void pipe_ins_pnt(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t);
+struct wdb_pipe_pnt *pipe_del_pnt(struct wdb_pipe_pnt *);
+void pipe_move_pnt(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t);
 
 /* vparse.c */
 extern void mged_vls_struct_parse(struct bu_vls *vls, const char *title, struct bu_structparse *how_to_parse, const char *structp, int argc, const char *argv[]); /* defined in vparse.c */

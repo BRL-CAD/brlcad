@@ -1,7 +1,7 @@
 /*                            D O . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2019 United States Government as represented by
+ * Copyright (c) 1987-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,6 +37,8 @@
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
+
+#include "bio.h"
 
 #include "bu/app.h"
 #include "bu/getopt.h"
@@ -459,7 +461,7 @@ int cm_clean(const int UNUSED(argc), const char **UNUSED(argv))
 
     rt_clean(APP.a_rt_i);
 
-    if (R_DEBUG&RDEBUG_RTMEM_END)
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_RTMEM_END)
 	bu_prmem("After cm_clean");
     return 0;
 }
@@ -799,9 +801,9 @@ do_frame(int framenumber)
 	bu_log("Tree: %zu solids in %zu regions\n", rtip->nsolids, rtip->nregions);
 
     if (Query_one_pixel) {
-	query_rdebug = R_DEBUG;
+	query_optical_debug = OPTICAL_DEBUG;
 	query_debug = RT_G_DEBUG;
-	RTG.debug = rdebug = 0;
+	rt_debug = optical_debug = 0;
     }
 
     if (rtip->nsolids <= 0)
@@ -917,7 +919,7 @@ do_frame(int framenumber)
 	/*
 	 * This code allows the computation of a particular frame to a
 	 * disk file to be resumed automatically.  This is worthwhile
-	 * crash protection.  This use of stat() and fseek() is
+	 * crash protection.  This use of stat() and bu_fseek() is
 	 * UNIX-specific.
 	 *
 	 * It is not appropriate for the RT "top part" to assume
@@ -1077,10 +1079,6 @@ do_frame(int framenumber)
      */
     view_end(&APP);
 
-    /* Stop memory debug printing until next frame, leave full checking on */
-    if (R_DEBUG&RDEBUG_RTMEM)
-	bu_debug &= ~BU_DEBUG_MEM_LOG;
-
     /* These results need to be normalized.  Otherwise, all we would
      * know is that a given workload takes about the same amount of
      * CPU time, regardless of the number of CPUs.
@@ -1143,15 +1141,11 @@ do_frame(int framenumber)
     }
 
     if (outfp != NULL) {
-	/* Protect finished product */
-	if (outputfile != (char *)0)
-	    (void)bu_fchmod(fileno(outfp), 0444);
-
 	(void)fclose(outfp);
 	outfp = NULL;
     }
 
-    if (R_DEBUG&RDEBUG_STATS) {
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_STATS) {
 	/* Print additional statistics */
 	res_pr();
     }

@@ -1,7 +1,7 @@
 /*                     P I X S H R I N K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "bu/file.h"
@@ -241,6 +242,8 @@ parse_args(int ac, char **av)
 int main(int ac, char **av)
 {
     UCHAR *buffer = (UCHAR *)NULL;
+
+    bu_setprogname(av[0]);
 
     (void)parse_args(ac, av);
     if (isatty(fileno(stdin)))

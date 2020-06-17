@@ -1,7 +1,7 @@
 /*                     S T E P - G . C P P
  * BRL-CAD
  *
- * Copyright (c) 1994-2019 United States Government as represented by
+ * Copyright (c) 1994-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,6 +27,7 @@
 
 #include <iostream>
 
+#include "bu/app.h"
 #include "bu/time.h"
 #include "bu/file.h"
 #include "bu/log.h"
@@ -59,7 +60,7 @@ struct OutputFile {
 };
 
 static int
-parse_opt_O(struct bu_vls *error_msg, int argc, const char **argv, void *set_var)
+parse_opt_O(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
 {
     int ret;
     OutputFile *ofile = (OutputFile *)set_var;
@@ -80,6 +81,8 @@ main(int argc, const char *argv[])
 {
     int ret = 0;
     int64_t elapsedtime;
+
+    bu_setprogname(argv[0]);
 
     elapsedtime = bu_gettime();
 

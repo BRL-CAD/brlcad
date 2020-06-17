@@ -1,4 +1,4 @@
-SET(express_HDRS
+set(express_HDRS
   express/alg.h
   express/basic.h
   express/caseitem.h
@@ -21,20 +21,24 @@ SET(express_HDRS
   express/type.h
   express/variable.h
 )
-install(FILES ${express_HDRS}
-	DESTINATION ${INCLUDE_INSTALL_DIR}/stepcode/express)
-
-SET(exppp_HDRS
+set(exppp_HDRS
   exppp/exppp.h
 )
-install(FILES ${exppp_HDRS}
-	DESTINATION ${INCLUDE_INSTALL_DIR}/stepcode/exppp)
 
-install(FILES ordered_attrs.h
-              sc_export.h
-              sc_stdbool.h
-	DESTINATION ${INCLUDE_INSTALL_DIR}/stepcode)
+if (NOT SKIP_INSTALL_HEADERS)
+	install(FILES ${express_HDRS}
+		DESTINATION ${INCLUDE_INSTALL_DIR}/stepcode/express)
 
-install(FILES ${SC_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_cf.h
-	${SC_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h
-	DESTINATION ${INCLUDE_INSTALL_DIR}/stepcode)
+	install(FILES ${exppp_HDRS}
+		DESTINATION ${INCLUDE_INSTALL_DIR}/stepcode/exppp)
+
+	install(FILES ordered_attrs.h
+		sc_export.h
+		sc_stdbool.h
+		DESTINATION ${INCLUDE_INSTALL_DIR}/stepcode)
+
+	install(FILES ${SC_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_cf.h
+		${SC_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h
+		DESTINATION ${INCLUDE_INSTALL_DIR}/stepcode)
+endif (NOT SKIP_INSTALL_HEADERS)
+

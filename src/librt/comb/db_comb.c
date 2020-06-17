@@ -1,7 +1,7 @@
 /*                       D B _ C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2019 United States Government as represented by
+ * Copyright (c) 1996-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -981,7 +981,7 @@ db_mkbool_tree(
 
     if (first_tlp->tl_op != OP_UNION) {
 	first_tlp->tl_op = OP_UNION;	/* Fix it */
-	if (RT_G_DEBUG & DEBUG_TREEWALK) {
+	if (RT_G_DEBUG & RT_DEBUG_TREEWALK) {
 	    bu_log("db_mkbool_tree() WARNING: non-union (%c) first operation ignored\n",
 		   first_tlp->tl_op);
 	}
@@ -1050,7 +1050,7 @@ db_mkgift_tree(struct rt_tree_array *trees, size_t subtreecount, struct resource
 	tstart->tl_op = OP_UNION;
 	tstart->tl_tree = curtree;
 
-	if (RT_G_DEBUG&DEBUG_TREEWALK) {
+	if (RT_G_DEBUG&RT_DEBUG_TREEWALK) {
 	    bu_log("db_mkgift_tree() intermediate term:\n");
 	    rt_pr_tree(tstart->tl_tree, 0);
 	}
@@ -1060,7 +1060,7 @@ db_mkgift_tree(struct rt_tree_array *trees, size_t subtreecount, struct resource
     }
 
     curtree = db_mkbool_tree(trees, subtreecount, resp);
-    if (RT_G_DEBUG&DEBUG_TREEWALK) {
+    if (RT_G_DEBUG&RT_DEBUG_TREEWALK) {
 	bu_log("db_mkgift_tree() returns:\n");
 	rt_pr_tree(curtree, 0);
     }

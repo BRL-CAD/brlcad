@@ -40,6 +40,18 @@ cmake_minimum_required(VERSION 3.1.3)
 # (Screened Poisson Surface Reconstruction - SPSR)
 project(SPSR)
 
+if (NOT DEFINED INCLUDE_DIR)
+  set(INCLUDE_DIR include)
+endif (NOT DEFINED INCLUDE_DIR)
+
+if (NOT DEFINED BUILD_SHARED_LIBS)
+  set(BUILD_SHARED_LIBS ON)
+endif (NOT DEFINED BUILD_SHARED_LIBS)
+
+if (NOT DEFINED BUILD_STATIC_LIBS)
+  set(BUILD_STATIC_LIBS OFF)
+endif (NOT DEFINED BUILD_STATIC_LIBS)
+
 if(SPSR_ENABLE_OPENMP)
   find_package(OpenMP)
   set(CMAKE_C_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_C_FLAGS}")
@@ -53,24 +65,35 @@ set(libSPSR_srcs
   Src/SPSR.cpp
   )
 
+set(SPSR_HDRS
+  Src/SPSR.h
+  Src/cvertex.h
+  )
+if (NOT SKIP_INSTALL_HEADERS)
+  install (FILES ${SPSR_HDRS} DESTINATION ${INCLUDE_DIR}/SPSR)
+endif (NOT SKIP_INSTALL_HEADERS)
+
 if(MSVC)
   add_definitions("-DSPSR_DLL_EXPORTS")
 endif(MSVC)
 
+include(CheckIncludeFiles)
+check_include_files("sys/timeb.h" HAVE_SYS_TIMEB)
+if (HAVE_SYS_TIMEB)
+  add_definitions(-DHAVE_SYS_TIMEB=1)
+endif (HAVE_SYS_TIMEB)
+
 IF(BUILD_SHARED_LIBS)
-  add_library(libSPSR SHARED ${libSPSR_srcs})
-  install(TARGETS libSPSR
+  add_library(SPSR SHARED ${libSPSR_srcs})
+  install(TARGETS SPSR
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}
     ARCHIVE DESTINATION ${LIB_DIR})
 ENDIF(BUILD_SHARED_LIBS)
 
 IF(BUILD_STATIC_LIBS)
-  add_library(libSPSR-static STATIC ${libSPSR_srcs})
-  IF(NOT WIN32)
-    SET_TARGET_PROPERTIES(libSPSR-static PROPERTIES OUTPUT_NAME "libSPSR")
-  ENDIF(NOT WIN32)
-  install(TARGETS libSPSR-static
+  add_library(SPSR-static STATIC ${libSPSR_srcs})
+  install(TARGETS SPSR-static
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}
     ARCHIVE DESTINATION ${LIB_DIR})

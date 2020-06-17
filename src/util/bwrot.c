@@ -1,7 +1,7 @@
 /*                         B W R O T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2019 United States Government as represented by
+ * Copyright (c) 1986-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -331,7 +331,7 @@ main(int argc, char **argv)
 
     /*
      * Clear our "file pointer."  We need to maintain this
-     * In order to tell if seeking is required.  ftell() always
+     * In order to tell if seeking is required.  bu_ftell() always
      * fails on pipes, so we can't use it.
      */
     outplace = 0;

@@ -1,7 +1,7 @@
 /*                      N M G _ J U N K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -90,7 +90,7 @@ nmg_polytonmg(FILE *fp, struct nmgregion *r, const struct bn_tol *tol)
     if (fscanf(fp, "%d %d", &num_pts, &num_facets) != 2)
 	bu_bomb("polytonmg() Error in first line of poly file\n");
     else
-	if (nmg_debug & DEBUG_POLYTO)
+	if (nmg_debug & NMG_DEBUG_POLYTO)
 	    bu_log("points: %d facets: %d\n",
 		   num_pts, num_facets);
 
@@ -109,7 +109,7 @@ nmg_polytonmg(FILE *fp, struct nmgregion *r, const struct bn_tol *tol)
 	if (fscanf(fp, "%lg %lg %lg", &p[0], &p[1], &p[2]) != 3)
 	    bu_bomb("polytonmg() Error reading point");
 	else
-	    if (nmg_debug & DEBUG_POLYTO)
+	    if (nmg_debug & NMG_DEBUG_POLYTO)
 		bu_log("read vertex #%d (%g %g %g)\n",
 		       i, p[0], p[1], p[2]);
 
@@ -123,7 +123,7 @@ nmg_polytonmg(FILE *fp, struct nmgregion *r, const struct bn_tol *tol)
 	if (fscanf(fp, "%d", &pts_this_face) != 1)
 	    bu_bomb("polytonmg() error getting pt count for this face");
 
-	if (nmg_debug & DEBUG_POLYTO)
+	if (nmg_debug & NMG_DEBUG_POLYTO)
 	    bu_log("facet %d pts in face %d\n",
 		   facet, pts_this_face);
 
@@ -145,7 +145,7 @@ nmg_polytonmg(FILE *fp, struct nmgregion *r, const struct bn_tol *tol)
 	/* XXX should check for vertex-loop */
 	eu = BU_LIST_FIRST(edgeuse, &lu->down_hd);
 	NMG_CK_EDGEUSE(eu);
-	if (bn_mk_plane_3pts(plane, eu->vu_p->v_p->vg_p->coord,
+	if (bn_make_plane_3pnts(plane, eu->vu_p->v_p->vg_p->coord,
 			     BU_LIST_PNEXT(edgeuse, eu)->vu_p->v_p->vg_p->coord,
 			     BU_LIST_PLAST(edgeuse, eu)->vu_p->v_p->vg_p->coord,
 			     tol)) {
@@ -189,7 +189,7 @@ nmg_isect_face3p_shell_int(struct nmg_inter_struct *is, struct faceuse *fu1, str
     s1 = fu1->s_p;
     NMG_CK_SHELL(s1);
 
-    if (nmg_debug & DEBUG_POLYSECT)
+    if (nmg_debug & NMG_DEBUG_POLYSECT)
 	bu_log("nmg_isect_face3p_shell_int(, fu1=x%x, s2=x%x) START\n", fu1, s2);
 
     for (BU_LIST_FOR (lu1, loopuse, &fu1->lu_hd)) {
@@ -217,7 +217,7 @@ nmg_isect_face3p_shell_int(struct nmg_inter_struct *is, struct faceuse *fu1, str
 	}
     }
 
-    if (nmg_debug & DEBUG_POLYSECT)
+    if (nmg_debug & NMG_DEBUG_POLYSECT)
 	bu_log("nmg_isect_face3p_shell_int(, fu1=x%x, s2=x%x) END\n", fu1, s2);
 }
 

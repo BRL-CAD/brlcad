@@ -1,7 +1,7 @@
 /*                   D B _ I N S T A N C E . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2019 United States Government as represented by
+ * Copyright (c) 1993-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,6 +26,9 @@
 
 #include "common.h"
 
+/* system headers */
+#include <stdio.h> /* for FILE */
+
 /* interface headers */
 #include "bu/magic.h"
 #include "bu/file.h"
@@ -34,9 +37,6 @@
 #include "rt/mem.h"
 #include "rt/directory.h"
 #include "rt/anim.h"
-
-/* system headers */
-#include "bio.h" /* for FILE */
 
 __BEGIN_DECLS
 
@@ -76,7 +76,7 @@ struct db_i {
 
     struct directory * dbi_Head[RT_DBNHASH]; /** @brief PRIVATE: object hash table */
     FILE * dbi_fp;                      /**< @brief PRIVATE: standard file pointer */
-    off_t dbi_eof;                      /**< @brief PRIVATE: End+1 pos after db_scan() */
+    b_off_t dbi_eof;                      /**< @brief PRIVATE: End+1 pos after db_scan() */
     size_t dbi_nrec;                    /**< @brief PRIVATE: # records after db_scan() */
     int dbi_uses;                       /**< @brief PRIVATE: # of uses of this struct */
     struct mem_map * dbi_freep;         /**< @brief PRIVATE: map of free granules */

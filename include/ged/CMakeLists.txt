@@ -2,6 +2,7 @@ add_subdirectory(view)
 
 set(ged_headers
   analyze.h
+  commands.h
   database.h
   debug.h
   defines.h
@@ -11,6 +12,7 @@ set(ged_headers
   view.h
   )
 BRLCAD_MANAGE_FILES(ged_headers ${INCLUDE_DIR}/brlcad/ged)
+
 CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:

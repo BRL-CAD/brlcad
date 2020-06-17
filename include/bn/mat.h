@@ -1,7 +1,7 @@
 /*                        M A T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -68,9 +68,9 @@ BN_EXPORT extern double bn_atan2(double x, double y);
 	bu_log("%s:%d bn_mat_zero() is deprecated, use MAT_ZERO()\n", \
 	       __FILE__, __LINE__); \
 	(_m)[0] = (_m)[1] = (_m)[2] = (_m)[3] = \
-	    (_m)[4] = (_m)[5] = (_m)[6] = (_m)[7] = \
-	    (_m)[8] = (_m)[9] = (_m)[10] = (_m)[11] = \
-	    (_m)[12] = (_m)[13] = (_m)[14] = (_m)[15] = 0.0; }
+	(_m)[4] = (_m)[5] = (_m)[6] = (_m)[7] = \
+	(_m)[8] = (_m)[9] = (_m)[10] = (_m)[11] = \
+	(_m)[12] = (_m)[13] = (_m)[14] = (_m)[15] = 0.0; }
 /*
   #define bn_mat_zero(_m)	(void)memset((void *)_m, 0, sizeof(mat_t))
 */
@@ -78,8 +78,8 @@ BN_EXPORT extern double bn_atan2(double x, double y);
 	bu_log("%s:%d bn_mat_idn() is deprecated, use MAT_IDN()\n", \
 	       __FILE__, __LINE__); \
 	(_m)[1] = (_m)[2] = (_m)[3] = (_m)[4] = \
-	    (_m)[6] = (_m)[7] = (_m)[8] = (_m)[9] = \
-	    (_m)[11] = (_m)[12] = (_m)[13] = (_m)[14] = 0.0; \
+	(_m)[6] = (_m)[7] = (_m)[8] = (_m)[9] = \
+	(_m)[11] = (_m)[12] = (_m)[13] = (_m)[14] = 0.0; \
 	(_m)[0] = (_m)[5] = (_m)[10] = (_m)[15] = 1.0; }
 /*
   #define bn_mat_idn(_m)	(void)memcpy((void *)_m, (const void *)bn_mat_identity, sizeof(mat_t))
@@ -385,17 +385,17 @@ BN_EXPORT extern void bn_vec_ortho(vect_t out,
  *
  * FIXME: make tolerance configurable
  */
-BN_EXPORT extern int bn_mat_scale_about_pt(mat_t mat,
-					   const point_t pt,
-					   const double scale);
+BN_EXPORT extern int bn_mat_scale_about_pnt(mat_t mat,
+					    const point_t pnt,
+					    const double scale);
 
 /**
  * Build a matrix to apply arbitrary 4x4 transformation around a given
  * point.
  */
-BN_EXPORT extern void bn_mat_xform_about_pt(mat_t mat,
+BN_EXPORT extern void bn_mat_xform_about_pnt(mat_t mat,
 					    const mat_t xform,
-					    const point_t pt);
+					    const point_t pnt);
 
 /**
  * @return 0 When matrices are not equal

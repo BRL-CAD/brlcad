@@ -1,7 +1,7 @@
 /*                       B R E P . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2019 United States Government as represented by
+ * Copyright (c) 2007-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,20 +29,6 @@
 
 #include "common.h"
 
-#include "bio.h" /* needed to include windows.h with protections */
-#ifdef __cplusplus
-extern "C++" {
-#define ON_NO_WINDOWS 1 /* don't let opennurbs include windows.h */
-/* Note - We aren't (yet) including opennurbs in our Doxygen output. Until we
- * do, use cond to hide the opennurbs header from Doxygen. */
-/* @cond */
-#include "opennurbs.h"
-/* @endcond */
-}
-#endif
-
-#include "vmath.h"
-
 __BEGIN_DECLS
 
 #include "brep/defines.h"
@@ -55,6 +41,7 @@ __BEGIN_DECLS
 #include "brep/pullback.h"
 #include "brep/intersect.h"
 #include "brep/boolean.h"
+#include "brep/cdt.h"
 #include "brep/csg.h"
 
 __END_DECLS

@@ -1,7 +1,7 @@
 /*                          Q R A Y . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2019 United States Government as represented by
+ * Copyright (c) 1998-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -214,7 +214,7 @@ ged_qray(struct ged *gedp,
 	    /* get value */
 	    bu_vls_printf(gedp->ged_result_str, "%c", gedp->ged_gdp->gd_qray_effects);
 
-	    return TCL_OK;
+	    return GED_OK;
 	} else if (argc == 3) {
 	    /* set value */
 	    if (*argv[2] != 't' && *argv[2] != 'g' && *argv[2] != 'b') {

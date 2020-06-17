@@ -1,7 +1,7 @@
 /*                          L O W P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/file.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
@@ -67,6 +68,8 @@ main(int argc, char **argv)
     int x, y;
     ssize_t ret;
     char *ifname;
+
+    bu_setprogname(argv[0]);
 
     if (argc < 2) {
 	fprintf(stderr, "%s", usage);

@@ -1,7 +1,7 @@
 /*                       P O I N T G E N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,6 +33,7 @@
 
 #include "common.h"
 #include "vmath.h"
+#include "bn/numgen.h"
 #include "bg/defines.h"
 
 __BEGIN_DECLS

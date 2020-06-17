@@ -1,7 +1,7 @@
 /*                        P R C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2019 United States Government as represented by
+ * Copyright (c) 1996-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -60,6 +60,8 @@ main(int argc, char *argv[])
     struct rt_comb_internal *comb;
     mat_t identity_mat;
     int i;
+
+    bu_setprogname(argv[0]);
 
     if (argc < 3) {
 	fprintf(stderr, "Usage:\n\t%s db_file object1 object2 ...\n", argv[0]);

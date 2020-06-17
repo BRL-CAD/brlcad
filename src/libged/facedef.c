@@ -1,7 +1,7 @@
 /*                       F A C E D E F . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2019 United States Government as represented by
+ * Copyright (c) 1986-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -104,7 +104,7 @@ get_3pts(struct ged *gedp, fastf_t *plane, const char *argv[], const struct bn_t
     for (i=0; i<3; i++)
 	c[i] = atof(argv[6+i]) * gedp->ged_wdbp->dbip->dbi_local2base;
 
-    if (bn_mk_plane_3pts(plane, a, b, c, tol) < 0) {
+    if (bn_make_plane_3pnts(plane, a, b, c, tol) < 0) {
 	bu_vls_printf(gedp->ged_result_str, "facedef: not a plane\n");
 	return -1;		/* failure */
     }

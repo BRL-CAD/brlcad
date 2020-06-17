@@ -1,7 +1,7 @@
 /*                        T G C . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2019 United States Government as represented by
+ * Copyright (c) 1993-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,8 +31,8 @@
 __BEGIN_DECLS
 
 /* TODO - should this be in libbn? */
-RT_EXPORT extern void rt_pt_sort(fastf_t t[],
-                                 int npts);
+RT_EXPORT extern void rt_pnt_sort(fastf_t t[],
+				 int npts);
 
 
 __END_DECLS

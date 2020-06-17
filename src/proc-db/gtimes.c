@@ -1,7 +1,7 @@
 /*                         G T I M E S . C
  * BRL-CAD
  *
- * Copyright (c) 2016-2019 United States Government as represented by
+ * Copyright (c) 2016-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,6 +40,8 @@ main(int ac, char *av[])
   const char *USAGE = "Usage: %s [-i iterations] file.g\n";
 
   struct db_i *dbip;
+
+  bu_setprogname(av[0]);
 
   if (ac < 2) {
     printf(USAGE, av[0]);

@@ -1,7 +1,7 @@
 /*                       G E D _ U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2019 United States Government as represented by
+ * Copyright (c) 2000-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,8 +31,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "bu/app.h"
+#include "bu/path.h"
 #include "bu/sort.h"
 #include "bu/str.h"
+#include "bu/vls.h"
 
 #include "ged.h"
 #include "./ged_private.h"
@@ -276,7 +279,7 @@ _ged_cmd_help(struct ged *gedp, const char *usage, struct bu_opt_desc *d)
 }
 
 int
-_ged_vopt(struct bu_vls *UNUSED(msg), int UNUSED(argc), const char **UNUSED(argv), void *set_var)
+_ged_vopt(struct bu_vls *UNUSED(msg), size_t UNUSED(argc), const char **UNUSED(argv), void *set_var)
 {
     int *v_set = (int *)set_var;
     if (v_set) {
@@ -321,50 +324,185 @@ _ged_sort_existing_objs(struct ged *gedp, int argc, const char *argv[], struct d
     return nonexist_cnt;
 }
 
-/* Wrappers for setting up/tearing down IO handler */
-#ifndef _WIN32
-void
-_ged_create_io_handler(void **UNUSED(chan), struct bu_process *p, int fd, int mode, void *data, io_handler_callback_t callback)
+
+
+/**
+ * Returns
+ * 0 on success
+ * !0 on failure
+ */
+static int
+_ged_densities_from_file(struct analyze_densities **dens, char **den_src, struct ged *gedp, const char *name, int fault_tolerant)
 {
-    int *fdp;
-    if (!p) return;
-    fdp = (int *)bu_process_fd(p, fd);
-    Tcl_CreateFileHandler(*fdp, mode, callback, (ClientData)data);
+    struct analyze_densities *densities;
+    struct bu_mapped_file *dfile = NULL;
+    struct bu_vls msgs = BU_VLS_INIT_ZERO;
+    char *buf = NULL;
+    int ret = 0;
+    int ecnt = 0;
+
+    if (gedp == GED_NULL || gedp->ged_wdbp == RT_WDB_NULL || !dens) {
+	return GED_ERROR;
+    }
+
+    if (!bu_file_exists(name, NULL)) {
+	bu_vls_printf(gedp->ged_result_str, "Could not find density file - %s\n", name);
+	return GED_ERROR;
+    }
+
+    dfile = bu_open_mapped_file(name, "densities file");
+    if (!dfile) {
+	bu_vls_printf(gedp->ged_result_str, "Could not open density file - %s\n", name);
+	return GED_ERROR;
+    }
+
+    buf = (char *)(dfile->buf);
+
+    (void)analyze_densities_create(&densities);
+
+    ret = analyze_densities_load(densities, buf, &msgs, &ecnt);
+
+    if (!fault_tolerant && ecnt > 0) {
+	bu_vls_printf(gedp->ged_result_str, "Problem reading densities file %s:\n%s\n", name, bu_vls_cstr(&msgs));
+	if (densities) {
+	    analyze_densities_destroy(densities);
+	}
+	bu_vls_free(&msgs);
+	bu_close_mapped_file(dfile);
+	return GED_ERROR;
+    }
+
+    bu_vls_free(&msgs);
+    bu_close_mapped_file(dfile);
+
+    (*dens) = densities;
+    if (ret > 0) {
+	if (den_src) {
+	    (*den_src) = bu_strdup(name);
+	}
+    } else {
+	if (ret == 0 && densities) {
+	    analyze_densities_destroy(densities);
+	}
+    }
+
+    return (ret == 0) ? GED_ERROR : GED_OK;
 }
 
-void
-_ged_delete_io_handler(void *UNUSED(interp), void *UNUSED(chan), struct bu_process *p, int fd, void *UNUSED(data), io_handler_callback_t UNUSED(callback))
+/**
+ * Load density information.
+ *
+ * Returns
+ * 0 on success
+ * !0 on failure
+ */
+int
+_ged_read_densities(struct analyze_densities **dens, char **den_src, struct ged *gedp, const char *filename, int fault_tolerant)
 {
-    int *fdp;
-    if (!p) return;
-    fdp = (int *)bu_process_fd(p, fd);
-    Tcl_DeleteFileHandler(*fdp);
-    close(*fdp);
+    struct bu_vls d_path_dir = BU_VLS_INIT_ZERO;
+
+    if (gedp == GED_NULL || gedp->ged_wdbp == RT_WDB_NULL || !dens) {
+	return GED_ERROR;
+    }
+
+    /* If we've explicitly been given a file, read that */
+    if (filename) {
+	return _ged_densities_from_file(dens, den_src, gedp, filename, fault_tolerant);
+    }
+
+    /* If we don't have an explicitly specified file, see if we have definitions in
+     * the database itself. */
+    if (gedp->ged_wdbp->dbip != DBI_NULL) {
+	int ret = 0;
+	int ecnt = 0;
+	struct bu_vls msgs = BU_VLS_INIT_ZERO;
+	struct directory *dp;
+	struct rt_db_internal intern;
+	struct rt_binunif_internal *bip;
+	struct analyze_densities *densities;
+	char *buf;
+
+	dp = db_lookup(gedp->ged_wdbp->dbip, GED_DB_DENSITY_OBJECT, LOOKUP_QUIET);
+
+	if (dp != (struct directory *)NULL) {
+
+	    if (rt_db_get_internal(&intern, dp, gedp->ged_wdbp->dbip, NULL, &rt_uniresource) < 0) {
+		bu_vls_printf(_ged_current_gedp->ged_result_str, "could not import %s\n", dp->d_namep);
+		return GED_ERROR;
+	    }
+
+	    if ((intern.idb_major_type & DB5_MAJORTYPE_BINARY_MASK) == 0)
+		return GED_ERROR;
+
+	    bip = (struct rt_binunif_internal *)intern.idb_ptr;
+
+	    RT_CHECK_BINUNIF (bip);
+
+	    (void)analyze_densities_create(&densities);
+
+	    buf = (char *)bu_calloc(bip->count+1, sizeof(char), "density buffer");
+	    memcpy(buf, bip->u.int8, bip->count);
+	    rt_db_free_internal(&intern);
+
+	    ret = analyze_densities_load(densities, buf, &msgs, &ecnt);
+
+	    bu_free((void *)buf, "density buffer");
+
+	    if (!fault_tolerant && ecnt > 0) {
+		bu_vls_printf(gedp->ged_result_str, "Problem reading densities from .g file:\n%s\n", bu_vls_cstr(&msgs));
+		bu_vls_free(&msgs);
+		if (densities) {
+		    analyze_densities_destroy(densities);
+		}
+		return GED_ERROR;
+	    }
+
+	    bu_vls_free(&msgs);
+
+	    (*dens) = densities;
+	    if (ret > 0) {
+		if (den_src) {
+		   (*den_src) = bu_strdup(gedp->ged_wdbp->dbip->dbi_filename);
+		}
+	    } else {
+		if (ret == 0 && densities) {
+		    analyze_densities_destroy(densities);
+		}
+	    }
+	    return (ret == 0) ? GED_ERROR : GED_OK;
+	}
+    }
+
+    /* If we don't have an explicitly specified file and the database doesn't have any information, see if we
+     * have .density files in either the current database directory or HOME. */
+
+    /* Try .g path first */
+    if (bu_path_component(&d_path_dir, gedp->ged_wdbp->dbip->dbi_filename, BU_PATH_DIRNAME)) {
+
+	bu_vls_printf(&d_path_dir, "/.density");
+
+	if (bu_file_exists(bu_vls_cstr(&d_path_dir), NULL)) {
+	    int ret = _ged_densities_from_file(dens, den_src, gedp, bu_vls_cstr(&d_path_dir), fault_tolerant);
+	    bu_vls_free(&d_path_dir);
+	    return ret;
+	}
+    }
+
+    /* Try HOME */
+    if (bu_dir(NULL, 0, BU_DIR_HOME, NULL)) {
+
+	bu_vls_sprintf(&d_path_dir, "%s/.density", bu_dir(NULL, 0, BU_DIR_HOME, NULL));
+
+	if (bu_file_exists(bu_vls_cstr(&d_path_dir), NULL)) {
+	    int ret = _ged_densities_from_file(dens, den_src, gedp, bu_vls_cstr(&d_path_dir), fault_tolerant);
+	    bu_vls_free(&d_path_dir);
+	    return ret;
+	}
+    }
+
+    return GED_ERROR;
 }
 
-#else
-void
-_ged_create_io_handler(void **chan, struct bu_process *p, int fd, int mode, void *data, io_handler_callback_t callback)
-{
-    HANDLE *fdp;
-    if (!chan || !p) return;
-    fdp = (HANDLE *)bu_process_fd(p, fd);
-    (*chan) = (void *)Tcl_MakeFileChannel(*fdp, mode);
-    Tcl_CreateChannelHandler((Tcl_Channel)(*chan), mode, callback, (ClientData)data);
-}
-
-void
-_ged_delete_io_handler(void *interp, void *chan, struct bu_process *p, int fd, void *data, io_handler_callback_t callback)
-{
-    HANDLE *fdp;
-    Tcl_Interp *tcl_interp;
-    if (!chan || !p) return;
-    tcl_interp = (Tcl_Interp *)interp;
-    fdp = (HANDLE *)bu_process_fd(p, fd);
-    Tcl_DeleteChannelHandler((Tcl_Channel)chan, callback, (ClientData)data);
-    Tcl_Close(tcl_interp, (Tcl_Channel)chan);
-}
-#endif
 
 /*
  * Local Variables:

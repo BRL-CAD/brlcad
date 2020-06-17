@@ -1,7 +1,7 @@
 /*                         D X F - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,6 +35,7 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/app.h"
 #include "bu/debug.h"
 #include "bu/getopt.h"
 #include "bu/list.h"
@@ -62,7 +63,7 @@ struct insert_data {
 struct state_data {
     struct bu_list l;
     struct block_list *curr_block;
-    off_t file_offset;
+    b_off_t file_offset;
     int state;
     int sub_state;
     mat_t xform;
@@ -107,7 +108,7 @@ struct layer {
 struct block_list {
     struct bu_list l;
     char *block_name;
-    off_t offset;
+    b_off_t offset;
     char handle[17];
     point_t base;
 };
@@ -3130,6 +3131,8 @@ main(int argc, char *argv[])
     int code;
     int c;
     int i;
+
+    bu_setprogname(argv[0]);
 
     tol_sq = tol * tol;
 

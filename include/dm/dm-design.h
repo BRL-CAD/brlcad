@@ -1,7 +1,7 @@
 /*                     D M - D E S I G N . H
  * BRL-CAD
  *
- * Copyright (c) 2016-2019 United States Government as represented by
+ * Copyright (c) 2016-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,6 +28,11 @@
 #ifndef DM_DM_DESIGN_H
 #define DM_DM_DESIGN_H
 
+#include "common.h"
+#include "vmath.h"
+#include "icv.h"
+#include "dm/defines.h"
+
 /* Display Manager Types */
 #define DM_TYPE_BAD     -1
 #define DM_TYPE_NULL	0
@@ -53,7 +58,7 @@ struct dm_db_obj {
 struct dm_view_obj {
     int              draw_type;   	/**< @brief obj type - framebuffer, 2D lines, 3D lines, triangles, text, grouping object, etc. */
     struct bn_vlist *vlist;  		/**< @brief If the object defines specific linear or triangular geometry for drawing
-					            (text may but is not required to, and a framebuffer uses image data) it is here. */
+					   (text may but is not required to, and a framebuffer uses image data) it is here. */
     struct bu_ptbl  *obj_set;		/**< @brief A grouping object may define a union of other objects (view and/or db) on which actions will be performed */
     void 	    *image_data;
     mat_t 	     matrix;
@@ -115,7 +120,7 @@ const char *dm_common_reserved_settings[] = {
     "width"          "Width of display window."
     "height"         "Height of display window."
     "\0"
-}
+};
 
 const char *dm_obj_common_reserved_settings[] = {
     "local_mat"      "Local positioning matrix, used (for example) during object editing manipulations."
@@ -126,10 +131,10 @@ const char *dm_obj_common_reserved_settings[] = {
     "visible"        "Flag telling the display manager that the object is (or isn't) supposed to be visible in the view."
     "highlight"      "Flag telling the display manager to highlight this object."
     "\0"
-}
+};
 
 /* Structure of dm will (hopefully) be internal to libdm, so use a typedef for the functions */
-typdef struct dm dm_s;
+typedef struct dm dm_s;
 
 /* Generic functions for all display managers */
 DM_EXPORT extern void		dm_set_handle(dm_s *dmp, const char *handle);

@@ -26,7 +26,6 @@ set(XSL_FO_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-ar
 set(articles_EN
   TEMPLATE.xml
   about.xml
-  animation_tutorial.xml
   build_pattern.xml
   build_region.xml
   camo_shader.xml
@@ -46,7 +45,6 @@ set(articles_EN
 
 set(articles_EN_IMAGES
   images/Lee_tux.gif
-  images/animtbl.gif
   images/build_pattern_fig01.png
   images/build_pattern_fig02.png
   images/build_pattern_fig03.png
@@ -58,25 +56,15 @@ set(articles_EN_IMAGES
   images/build_region_fig02.png
   images/build_region_fig03.png
   images/build_region_fig04.png
-  images/dagtbl.gif
   images/ebm_primitive_fig01.png
   images/ebm_primitive_fig02.png
   images/ebm_primitive_fig03.png
-  images/ell.mpg
-  images/ell_sm.gif
-  images/ell_ssm.gif
-  images/equation.gif
-  images/film.gif
-  images/fn.gif
   images/gcv_architecture.png
   images/gcv_unsupported_tessellation.png
   images/gcv_using_gdiff.png
-  images/matrix.gif
   images/mgedrc_fig01.png
   images/mgedrc_fig02.png
   images/mgedrc_fig03.png
-  images/moss.mpg
-  images/moss_sm.gif
   images/moss_ssm.gif
   images/nirt_fig01.png
   images/nirt_fig02.png
@@ -152,17 +140,7 @@ set(articles_EN_IMAGES
   images/tire_fig12.png
   images/tire_fig13.png
   images/tire_fig14.png
-  images/trans.gif
-  images/transboth.gif
-  images/transboth_sm.gif
-  images/v_eqn1.gif
-  images/v_eqn2.gif
-  images/azel.jpg
-  images/az_el.gif
-  images/az_el.jpg
-  images/az_el_sm.gif
   images/base.gif
-  images/base.jpg
   images/bool.gif
   images/coord-axes.gif
   images/cup_and_mug.gif

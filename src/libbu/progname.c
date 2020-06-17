@@ -1,7 +1,7 @@
 /*                      P R O G N A M E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,9 +22,6 @@
 
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_SYSCTL_H
-#  include <sys/sysctl.h> /* for sysctl */
 #endif
 #ifdef HAVE_SYS_PARAM_H /* for MAXPATHLEN */
 #  include <sys/param.h>
@@ -68,6 +65,11 @@ extern pid_t wait(int *);
 static char bu_progname[MAXPATHLEN] = {0};
 const char *DEFAULT_PROGNAME = "(" PACKAGE_NAME ")";
 
+const char *
+_bu_progname_raw()
+{
+    return (const char *)bu_progname;
+}
 
 const char *
 bu_argv0_full_path(void)
@@ -88,7 +90,10 @@ bu_argv0_full_path(void)
     if (argv0[0] == '\0') {
 	TCHAR exeFileName[MAXPATHLEN] = {0};
 	GetModuleFileName(NULL, exeFileName, MAXPATHLEN);
-	wcstombs(tbuf, exeFileName, sizeof(tbuf));
+	if (sizeof(TCHAR) == sizeof(char))
+	    bu_strlcpy(tbuf, exeFileName, MAXPATHLEN);
+	else
+	    wcstombs(tbuf, exeFileName, wcslen(tbuf)+1);
 	argv0 = tbuf;
     }
 #endif
@@ -97,20 +102,6 @@ bu_argv0_full_path(void)
     if (argv0[0] == '\0') {
 	int pid = getpid();
 	(void)proc_pidpath(pid, tbuf, sizeof(tbuf));
-	argv0 = tbuf;
-    }
-#endif
-
-    /* both BSD and Mac OS X have KERN_PROC */
-#if defined(HAVE_SYS_SYSCTL_H) && defined(KERN_PROC)
-    if (argv0[0] == '\0') {
-	size_t tbuflen = sizeof(tbuf);
-#  ifdef KERN_PROC_PATHNAME /* BSD */
-	int mib[] = {CTL_KERN, KERN_PROC, KERN_PROC_PATHNAME, -1};
-#  else /* Mac OS X and older BSD */
-	int mib[] = {CTL_KERN, KERN_PROCNAME};
-#  endif
-	sysctl(mib, sizeof(mib)/sizeof(mib[0]), tbuf, &tbuflen, NULL, 0);
 	argv0 = tbuf;
     }
 #endif

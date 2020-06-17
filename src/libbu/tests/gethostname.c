@@ -1,7 +1,7 @@
 /*                 T E S T _ G E T H O S T N A M E . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2019 United States Government as represented by
+ * Copyright (c) 2011-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,10 +26,12 @@
 
 
 int
-main(void)
+main(int UNUSED(ac), const char **av)
 {
     int status;
     char host[MAXPATHLEN] = {0};
+
+    bu_setprogname(av[0]);
 
     status = bu_gethostname(host, MAXPATHLEN);
     if (BU_STR_EMPTY(host))

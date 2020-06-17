@@ -1,7 +1,7 @@
 /*                      M O L E C U L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,6 +31,7 @@
 #include <string.h>
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -73,6 +74,7 @@ struct rt_wdb *outfp;
 int
 main(int argc, char **argv)
 {
+    bu_setprogname(argv[0]);
 
     if (argc != 2 || (argc == 2 && (BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")))) {
 	fputs(usage, stderr);

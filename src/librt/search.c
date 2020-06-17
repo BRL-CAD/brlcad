@@ -1,7 +1,7 @@
 /*                        S E A R C H . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2019 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1033,6 +1033,7 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
 {
     struct rt_db_internal intern;
     struct directory *dp;
+    struct rt_bot_internal *bot_ip;
     int type_match = 0;
     int type;
     const struct bn_tol arb_tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
@@ -1110,6 +1111,24 @@ f_type(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, str
 	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_JOINT
 	) {
 	type_match = 1;
+    }
+
+    if (!bu_path_match(plan->p_un._type_data, "plate", 0)) {
+	switch (intern.idb_minor_type) {
+	    case DB5_MINORTYPE_BRLCAD_BOT:
+		bot_ip = (struct rt_bot_internal *)intern.idb_ptr;
+		if (bot_ip->mode == RT_BOT_PLATE || bot_ip->mode == RT_BOT_PLATE_NOCOS) {
+		    type_match = 1;
+		}
+		break;
+	    case DB5_MINORTYPE_BRLCAD_BREP:
+		if (rt_brep_plate_mode(&intern)) {
+		    type_match = 1;
+		}
+		break;
+	    default:
+		break;
+	}
     }
 
     rt_db_free_internal(&intern);
@@ -2326,74 +2345,6 @@ db_search_free_plan(struct db_plan_t *splan)
     }
 }
 
-
-/*********** DEPRECATED search functionality ******************/
-int
-db_full_path_list_add(const char *path, int local, struct db_i *dbip, struct db_full_path_list *path_list)
-{
-    struct db_full_path dfp;
-    struct db_full_path_list *new_entry;
-    db_full_path_init(&dfp);
-    /* Turn string path into a full path structure */
-    if (db_string_to_path(&dfp, dbip, path) == -1) {
-	db_free_full_path(&dfp);
-	return 1;
-    }
-    /* Make a search list and add the entry from the directory name full path */
-    BU_ALLOC(new_entry, struct db_full_path_list);
-    BU_ALLOC(new_entry->path, struct db_full_path);
-    db_full_path_init(new_entry->path);
-    db_dup_full_path(new_entry->path, (const struct db_full_path *)&dfp);
-    new_entry->local = local;
-    BU_LIST_PUSH(&(path_list->l), &(new_entry->l));
-    db_free_full_path(&dfp);
-    return 0;
-}
-
-
-/* Internal version of deprecated function */
-void
-_db_free_full_path_list(struct db_full_path_list *path_list)
-{
-    struct db_full_path_list *currentpath;
-
-    if (!path_list)
-	return;
-
-    if (!BU_LIST_IS_EMPTY(&(path_list->l))) {
-	while (BU_LIST_WHILE(currentpath, db_full_path_list, &(path_list->l))) {
-	    db_free_full_path(currentpath->path);
-	    BU_LIST_DEQUEUE((struct bu_list *)currentpath);
-	    bu_free(currentpath->path, "free db_full_path_list path entry");
-	    bu_free(currentpath, "free db_full_path_list entry");
-	}
-    }
-
-    bu_free(path_list, "free path_list");
-}
-
-
-void
-db_free_full_path_list(struct db_full_path_list *path_list)
-{
-    _db_free_full_path_list(path_list);
-}
-
-
-void
-db_search_freeplan(void **vplan) {
-    struct db_plan_t *p;
-    struct db_plan_t *plan = (struct db_plan_t *)*vplan;
-    for (p = plan; p;) {
-	plan = p->next;
-	BU_PUT(p, struct db_plan_t);
-	p = plan;
-    }
-    /* sanity */
-    *vplan = NULL;
-}
-
-
 void
 db_search_free(struct bu_ptbl *search_results)
 {
@@ -2412,131 +2363,6 @@ db_search_free(struct bu_ptbl *search_results)
 }
 
 
-/* Internal version of deprecated function */
-struct db_full_path_list *
-_db_search_full_paths(void *searchplan,
-		      struct db_full_path_list *pathnames,
-		      struct db_i *dbip)
-{
-    int i;
-    struct directory *dp;
-    struct db_full_path dfp;
-    struct db_full_path *dfptr;
-    struct db_full_path_list *new_entry = NULL;
-    struct db_full_path_list *currentpath = NULL;
-    struct db_full_path_list *searchresults_list = NULL;
-    struct bu_ptbl *searchresults = NULL;
-
-    BU_ALLOC(searchresults_list, struct db_full_path_list);
-    BU_LIST_INIT(&(searchresults_list->l));
-    BU_ALLOC(searchresults, struct bu_ptbl);
-    bu_ptbl_init(searchresults, 8, "initialize searchresults table");
-
-    /* If nothing is passed in, try to get the list of toplevel objects */
-    if (BU_LIST_IS_EMPTY(&(pathnames->l))) {
-	db_full_path_init(&dfp);
-	for (i = 0; i < RT_DBNHASH; i++) {
-	    for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-		if (dp->d_nref == 0 && (dp->d_addr != RT_DIR_PHONY_ADDR)) {
-		    if (db_string_to_path(&dfp, dbip, dp->d_namep) < 0)
-			continue; /* skip */
-
-		    BU_ALLOC(new_entry, struct db_full_path_list);
-		    BU_ALLOC(new_entry->path, struct db_full_path);
-
-		    db_full_path_init(new_entry->path);
-		    db_dup_full_path(new_entry->path, (const struct db_full_path *)&dfp);
-		    BU_LIST_PUSH(&(pathnames->l), &(new_entry->l));
-		}
-	    }
-	}
-	db_free_full_path(&dfp);
-    }
-
-    for (BU_LIST_FOR(currentpath, db_full_path_list, &(pathnames->l))) {
-	struct bu_ptbl *full_paths = NULL;
-	struct db_full_path *start_path = NULL;
-	struct db_node_t curr_node;
-	struct list_client_data_t lcd;
-
-	BU_ALLOC(full_paths, struct bu_ptbl);
-	BU_PTBL_INIT(full_paths);
-	BU_ALLOC(start_path, struct db_full_path);
-	db_dup_full_path(start_path, currentpath->path);
-	curr_node.path = start_path;
-	/* by convention, a top level node is "unioned" into the global database */
-	DB_FULL_PATH_SET_CUR_BOOL(curr_node.path, 2);
-	bu_ptbl_ins(full_paths, (long *)start_path);
-	lcd.dbip = dbip;
-	lcd.full_paths = full_paths;
-	db_fullpath_list(start_path, (void **)&lcd);
-
-	for (i = 0; i < (int)BU_PTBL_LEN(full_paths); i++) {
-	    curr_node.path = (struct db_full_path *)BU_PTBL_GET(full_paths, i);
-	    curr_node.flags = 0;
-	    curr_node.full_paths = full_paths;
-	    find_execute_plans(dbip, searchresults, &curr_node, (struct db_plan_t *)searchplan);
-	}
-	db_search_free(full_paths);
-	bu_free(full_paths, "free search container");
-
-    }
-    for (i = 0; i < (int)BU_PTBL_LEN(searchresults); i++) {
-	BU_ALLOC(new_entry, struct db_full_path_list);
-	BU_ALLOC(new_entry->path, struct db_full_path);
-	dfptr = (struct db_full_path *)BU_PTBL_GET(searchresults, i);
-	db_full_path_init(new_entry->path);
-	db_dup_full_path(new_entry->path, dfptr);
-	BU_LIST_PUSH(&(searchresults_list->l), &(new_entry->l));
-    }
-    for (i = (int)BU_PTBL_LEN(searchresults) - 1; i >= 0; i--) {
-	dfptr = (struct db_full_path *)BU_PTBL_GET(searchresults, i);
-	db_free_full_path(dfptr);
-    }
-    bu_ptbl_free(searchresults);
-    return searchresults_list;
-}
-
-
-struct db_full_path_list *
-db_search_full_paths(void *searchplan,
-		     struct db_full_path_list *pathnames,
-		     struct db_i *dbip)
-{
-    return _db_search_full_paths(searchplan, pathnames, dbip);
-}
-
-
-struct bu_ptbl *
-db_search_unique_objects(void *searchplan,
-			 struct db_full_path_list *pathnames,
-			 struct db_i *dbip)
-{
-    struct bu_ptbl *uniq_db_objs = NULL;
-    struct db_full_path_list *entry = NULL;
-    struct db_full_path_list *search_results = NULL;
-
-    BU_ALLOC(uniq_db_objs, struct bu_ptbl);
-
-    search_results = _db_search_full_paths(searchplan, pathnames, dbip);
-    bu_ptbl_init(uniq_db_objs, 8, "initialize ptr table");
-    for (BU_LIST_FOR(entry, db_full_path_list, &(search_results->l))) {
-	bu_ptbl_ins_unique(uniq_db_objs, (long *)entry->path->fp_names[entry->path->fp_len - 1]);
-    }
-    _db_free_full_path_list(search_results);
-
-    return uniq_db_objs;
-}
-
-
-void *
-db_search_formplan(char **argv, struct db_i *UNUSED(dbip), struct db_search_context *ctx)
-{
-    return (void *)db_search_form_plan(argv, 0, NULL, ctx);
-}
-
-
-/*********** New search functionality ******************/
 struct db_search_context *
 db_search_context_create(void)
 {

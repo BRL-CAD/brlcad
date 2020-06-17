@@ -1,7 +1,7 @@
 /*                        B S P L I N E . C P P
  * BRL-CAD
  *
- * Copyright (c) 1991-2019 United States Government as represented by
+ * Copyright (c) 1991-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -82,7 +82,7 @@ struct nurb_hit {
 
 
 #ifdef CONVERT_TO_BREP
-    extern void rt_nurb_brep(ON_Brep **b, struct rt_db_internal *ip, const struct bn_tol *tol);
+    extern void rt_nurb_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol);
 
     extern int rt_brep_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip);
     extern void rt_brep_print(const struct soltab *stp);
@@ -91,7 +91,7 @@ struct nurb_hit {
     extern void rt_brep_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp);
     extern void rt_brep_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp);
     extern void rt_brep_free(struct soltab *stp);
-    extern int rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *UNUSED(info));
+    extern int rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *UNUSED(info));
 
 #endif /* CONVERT_TO_BREP */
 
@@ -335,8 +335,8 @@ rt_nurb_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
     /* Note: the equation of the plane in BRL-CAD is
      * Ax + By + Cz = D represented by [A B C D]
      */
-    bn_mk_plane_3pts(plane1, p1, p3, p2, tol);
-    bn_mk_plane_3pts(plane2, p1, p2, p4, tol);
+    bn_make_plane_3pnts(plane1, p1, p3, p2, tol);
+    bn_make_plane_3pnts(plane2, p1, p2, p4, tol);
 
     /* make sure that the hit_list is zero */
 
@@ -363,7 +363,7 @@ rt_nurb_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 	    while (hp != (struct nmg_nurb_uv_hit *)0) {
 		struct nmg_nurb_uv_hit * o;
 
-		if (RT_G_DEBUG & DEBUG_SPLINE)
+		if (RT_G_DEBUG & RT_DEBUG_SPLINE)
 		    bu_log("hit at %d %d sub = %d u = %f v = %f\n",
 			   ap->a_x, ap->a_y, hp->sub, hp->u, hp->v);
 
@@ -556,7 +556,7 @@ rt_nurb_free(struct soltab *stp)
 
 
 int
-rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *UNUSED(info))
+rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *UNUSED(info))
 {
     struct rt_nurb_internal *sip;
 
@@ -685,7 +685,7 @@ rt_nurb_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 
 
 int
-rt_nurb_tess(struct nmgregion **, struct model *, struct rt_db_internal *, const struct rt_tess_tol *, const struct bn_tol *)
+rt_nurb_tess(struct nmgregion **, struct model *, struct rt_db_internal *, const struct bg_tess_tol *, const struct bn_tol *)
 {
     return -1;
 }

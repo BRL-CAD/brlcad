@@ -1,7 +1,7 @@
 /*                        I N S I D E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2019 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -191,7 +191,7 @@ arbin(struct ged *gedp,
 	fastf_t dist0, dist1;
 
 	/* calculate the four possible intersect points */
-	if (bn_mkpoint_3planes(pt[0], planes[1], planes[2], planes[3])) {
+	if (bn_make_pnt_3planes(pt[0], planes[1], planes[2], planes[3])) {
 	    bu_vls_printf(gedp->ged_result_str, "Cannot find inside arb5\n");
 	    bu_vls_printf(gedp->ged_result_str, "Cannot find intersection of three planes for point 0:\n");
 	    bu_vls_printf(gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[1]));
@@ -199,7 +199,7 @@ arbin(struct ged *gedp,
 	    bu_vls_printf(gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[3]));
 	    return GED_ERROR;
 	}
-	if (bn_mkpoint_3planes(pt[1], planes[2], planes[3], planes[4])) {
+	if (bn_make_pnt_3planes(pt[1], planes[2], planes[3], planes[4])) {
 	    bu_vls_printf(gedp->ged_result_str, "Cannot find inside arb5\n");
 	    bu_vls_printf(gedp->ged_result_str, "Cannot find intersection of three planes for point 1:\n");
 	    bu_vls_printf(gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[2]));
@@ -207,7 +207,7 @@ arbin(struct ged *gedp,
 	    bu_vls_printf(gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[4]));
 	    return GED_ERROR;
 	}
-	if (bn_mkpoint_3planes(pt[2], planes[3], planes[4], planes[1])) {
+	if (bn_make_pnt_3planes(pt[2], planes[3], planes[4], planes[1])) {
 	    bu_vls_printf(gedp->ged_result_str, "Cannot find inside arb5\n");
 	    bu_vls_printf(gedp->ged_result_str, "Cannot find intersection of three planes for point 2:\n");
 	    bu_vls_printf(gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[3]));
@@ -215,7 +215,7 @@ arbin(struct ged *gedp,
 	    bu_vls_printf(gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[1]));
 	    return GED_ERROR;
 	}
-	if (bn_mkpoint_3planes(pt[3], planes[4], planes[1], planes[2])) {
+	if (bn_make_pnt_3planes(pt[3], planes[4], planes[1], planes[2])) {
 	    bu_vls_printf(gedp->ged_result_str, "Cannot find inside arb5\n");
 	    bu_vls_printf(gedp->ged_result_str, "Cannot find intersection of three planes for point 3:\n");
 	    bu_vls_printf(gedp->ged_result_str, "\t%f %f %f %f\n", V4ARGS(planes[4]));
@@ -224,7 +224,7 @@ arbin(struct ged *gedp,
 	    return GED_ERROR;
 	}
 
-	if (bn_pt3_pt3_equal(pt[0], pt[1], &gedp->ged_wdbp->wdb_tol)) {
+	if (bn_pnt3_pnt3_equal(pt[0], pt[1], &gedp->ged_wdbp->wdb_tol)) {
 	    /* if any two of the calculates intersection points are equal,
 	     * then all four must be equal
 	     */
@@ -242,11 +242,11 @@ arbin(struct ged *gedp,
 	 * one we want
 	 */
 
-	dist0 = DIST_PT_PLANE(pt[0], planes[0]);
+	dist0 = DIST_PNT_PLANE(pt[0], planes[0]);
 	if (dist0 < 0.0)
 	    dist0 = (-dist0);
 
-	dist1 = DIST_PT_PLANE(pt[1], planes[0]);
+	dist1 = DIST_PNT_PLANE(pt[1], planes[0]);
 	if (dist1 < 0.0)
 	    dist1 = (-dist1);
 
@@ -266,11 +266,11 @@ arbin(struct ged *gedp,
 	struct nmgregion *r;
 	struct shell *s = NULL;
 	struct faceuse *fu;
-	struct rt_tess_tol ttol;
+	struct bg_tess_tol ttol;
 	struct bu_ptbl vert_tab;
 	struct rt_bot_internal *bot;
 
-	ttol.magic = RT_TESS_TOL_MAGIC;
+	ttol.magic = BG_TESS_TOL_MAGIC;
 	ttol.abs = gedp->ged_wdbp->wdb_ttol.abs;
 	ttol.rel = gedp->ged_wdbp->wdb_ttol.rel;
 	ttol.norm = gedp->ged_wdbp->wdb_ttol.norm;

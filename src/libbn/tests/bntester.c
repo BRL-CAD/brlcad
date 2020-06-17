@@ -1,7 +1,7 @@
 /*                       B N T E S T E R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,6 +27,7 @@
 #include <string.h>
 #include <errno.h>
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "bu/parallel.h"
@@ -134,7 +135,7 @@ parse_case(char *buf_p, int *i, long *l, fastf_t *d, unsigned long *u, char *fmt
 		break;
 	    default:
 		fprintf(stream, "INTERNAL ERROR: Unknown data type '%c' for function %lu test case on line %lu, skipping test case.\n",
-			      fmt_str[idx], u[0], line_num);
+			fmt_str[idx], u[0], line_num);
 		return EXIT_FAILURE;
 		break;
 	} /* End of data format switch */
@@ -187,6 +188,8 @@ main(int argc, char **argv)
     int process_test_case = 0;
     int early_exit = 0;
     static int found_eof = 0; /* static due to longjmp */
+
+    bu_setprogname(argv[0]);
 
     /* set initial values in tol structure */
     tol.magic = BN_TOL_MAGIC;
@@ -365,7 +368,7 @@ main(int argc, char **argv)
 		u[0] = strtoul(buf_p, &endp, 10);
 		if (errno) {
 		    fprintf(stream, "Read function number failed, line %lu error msg: '%s' string '%s'\n",
-				  line_num, strerror(errno), buf_p);
+			    line_num, strerror(errno), buf_p);
 		    valid_function_number = 0;
 		} else if ((*endp != '\0') || (buf_p == endp) || (strchr(buf_p, '-') != NULL)) {
 		    fprintf(stream, "Read function number failed, line %lu string '%s'\n", line_num, buf_p);
@@ -389,7 +392,7 @@ main(int argc, char **argv)
 		     * function to be tested.
 		     */
 		    switch (u[0]) {
-			case 1: /* function 'bn_distsq_line3_pt3' */
+			case 1: /* function 'bn_distsq_line3_pnt3' */
 			    bu_strlcpy(dt_fmt, "dddddddddd", sizeof(dt_fmt)); /* defines parameter data types */
 			    if (parse_case(buf_p, i, l, d, u, dt_fmt, line_num, stream)) {
 				/* Parse failed, skipping test case */
@@ -398,12 +401,12 @@ main(int argc, char **argv)
 				double result;
 				if (!BU_SETJUMP) {
 				    /* try */
-				    result = bn_distsq_line3_pt3(&d[0], &d[3], &d[6]);
+				    result = bn_distsq_line3_pnt3(&d[0], &d[3], &d[6]);
 				    if (!NEAR_EQUAL(result, d[9], VUNITIZE_TOL)) {
 					ret = 1;
 					failed_cnt++;
 					fprintf(stream, "Failed function %lu test case on line %lu expected = %.15f result = %.15f\n",
-						      u[0], line_num, d[9], result);
+						u[0], line_num, d[9], result);
 				    } else {
 					success_cnt++;
 				    }
@@ -435,7 +438,7 @@ main(int argc, char **argv)
 					ret = 1;
 					failed_cnt++;
 					fprintf(stream, "Failed function %lu test case on line %lu expected = %d result = %d\n",
-						      u[0], line_num, i[0], result);
+						u[0], line_num, i[0], result);
 				    } else {
 					success_cnt++;
 				    }
@@ -472,13 +475,13 @@ main(int argc, char **argv)
 					ret = 1;
 					failed_cnt++;
 					fprintf(stream, "Failed function %lu test case on line %lu expected = %d result = %d\n",
-						      u[0], line_num, i[0], result);
+						u[0], line_num, i[0], result);
 				    } else if (result == 0) {
 					if (!NEAR_EQUAL(t_out, d[0], tol.dist)) {
 					    ret = 1;
 					    failed_cnt++;
 					    fprintf(stream, "Failed function %lu test case on line %lu result = %d expected t = %.15f result t = %.15f\n",
-							  u[0], line_num, result, d[0], t_out);
+						    u[0], line_num, result, d[0], t_out);
 					} else {
 					    success_cnt++;
 					}
@@ -487,11 +490,11 @@ main(int argc, char **argv)
 					u_fail = !NEAR_EQUAL(u_out, d[1], tol.dist);
 					if (t_fail) {
 					    fprintf(stream, "Failed function %lu test case on line %lu result = %d expected t = %.15f result t = %.15f\n",
-							  u[0], line_num, result, d[0], t_out);
+						    u[0], line_num, result, d[0], t_out);
 					}
 					if (u_fail) {
 					    fprintf(stream, "Failed function %lu test case on line %lu result = %d expected u = %.15f result u = %.15f\n",
-							  u[0], line_num, result, d[1], u_out);
+						    u[0], line_num, result, d[1], u_out);
 					}
 					if (t_fail || u_fail) {
 					    ret = 1;
@@ -537,17 +540,17 @@ main(int argc, char **argv)
 					ret = 1;
 					failed_cnt++;
 					fprintf(stream, "Failed function %lu test case on line %lu expected = %d result = %d\n",
-						      u[0], line_num, i[0], result);
+						u[0], line_num, i[0], result);
 				    } else if (result == 0 || result == 1) {
 					d0_fail = !NEAR_EQUAL(dist[0], d[0], VUNITIZE_TOL);
 					d1_fail = !NEAR_EQUAL(dist[1], d[1], VUNITIZE_TOL);
 					if (d0_fail) {
 					    fprintf(stream, "Failed function %lu test case on line %lu result = %d expected dist[0] = %.15f result dist[0] = %.15f\n",
-							  u[0], line_num, result, d[0], dist[0]);
+						    u[0], line_num, result, d[0], dist[0]);
 					}
 					if (d1_fail) {
 					    fprintf(stream, "Failed function %lu test case on line %lu result = %d expected dist[1] = %.15f result dist[1] = %.15f\n",
-							  u[0], line_num, result, d[1], dist[1]);
+						    u[0], line_num, result, d[1], dist[1]);
 					}
 					if (d0_fail || d1_fail) {
 					    ret = 1;

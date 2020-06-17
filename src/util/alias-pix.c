@@ -1,7 +1,7 @@
 /*                     A L I A S - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include "bio.h"
+#include "bu/app.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 
@@ -63,6 +64,7 @@ main(int ac, char **av)
     int pixcnt, i;
     char *p;
 
+    bu_setprogname(av[0]);
     progname = *av;
 
     if (ac > 2 || isatty(fileno(stdin))) usage();

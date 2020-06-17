@@ -1,7 +1,7 @@
 #                       O P E N W . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2019 United States Government as represented by
+# Copyright (c) 1998-2020 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -1899,12 +1899,6 @@ hoc_register_menu_data "Create" "$ptype..." "Make a $ptype" $ksl
     hoc_register_menu_data "Tools" "ADC Control Panel" "ADC Control Panel"\
 	{ { summary "Tool for controlling the angle distance cursor." }
 	    { see_also "adc" } }
-
-    .$id.menubar.tools add command -label "AnimMate Control Panel" -underline 1\
-	-command "animmate $id .$id"
-    hoc_register_menu_data "Tools" "AnimMate Control Panel" "AnimMate Control Panel"\
-	{ { summary "Tool for building animation scripts." }
-	    { see_also animmate } }
 
     .$id.menubar.tools add command -label "Grid Control Panel" -underline 0\
 	-command "init_grid_control $id"

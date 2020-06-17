@@ -1,7 +1,7 @@
 /*                        S E A R C H . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2019 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -59,7 +59,6 @@
 
 #include <sys/types.h> /* for gid_t */
 
-#include "regex.h"
 #include "bu/ptbl.h"
 #include "raytrace.h"
 

@@ -1,7 +1,7 @@
 /*                    T C L D U M M I E S . C
  * BRL-CAD
  *
- * Copyright (c) 2002-2019 United States Government as represented by
+ * Copyright (c) 2002-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,8 +50,8 @@ int                  Tcl_GetInt(Tcl_Interp *UNUSED(interp), CONST char *UNUSED(s
 int                  Tcl_GetDouble(Tcl_Interp *UNUSED(interp), CONST char *UNUSED(src), double *UNUSED(doublePtr)) {return 0;}
 int                  Tcl_GetBoolean(Tcl_Interp *UNUSED(interp), CONST char *UNUSED(src), int *UNUSED(boolPtr)) {return 0;}
 int                  Tcl_LinkVar(Tcl_Interp *UNUSED(interp), CONST char *UNUSED(varName), char *UNUSED(addr), int UNUSED(type)) {return 0;}
-CONST84_RETURN char *Tcl_SetVar(Tcl_Interp *UNUSED(interp), CONST char *UNUSED(varName), CONST char *UNUSED(newValue), int UNUSED(flags)) {return 0;}
-int                  Tcl_PkgProvide(Tcl_Interp *UNUSED(interp), CONST char *UNUSED(name), CONST char *UNUSED(version)) {return 0;}
+CONST84_RETURN char *Tcl_SetVar2(Tcl_Interp *UNUSED(interp), CONST char *UNUSED(part1), CONST char *UNUSED(part2), CONST char *UNUSED(newValue), int UNUSED(flags)) {return 0;}
+int                  Tcl_PkgProvideEx(Tcl_Interp *UNUSED(interp), CONST char *UNUSED(name), CONST char *UNUSED(version), ClientData UNUSED(clientData)) {return 0;}
 CONST84_RETURN char *Tcl_GetStringResult(Tcl_Interp *UNUSED(interp)) {return 0;}
 int                  Tcl_Eval(Tcl_Interp *UNUSED(interp), CONST char *UNUSED(script)) {return 0;}
 char                *Tcl_GetStringFromObj(Tcl_Obj *UNUSED(objPtr), int *UNUSED(lengthPtr)) {return 0;}
@@ -87,7 +87,7 @@ int                  Tcl_VarEval(Tcl_Interp *UNUSED(interp), ...) {return 0;}
 Tcl_Obj             *Tcl_GetVar2Ex(Tcl_Interp *UNUSED(interp), CONST char *UNUSED(part1), CONST char *UNUSED(part2), int UNUSED(flags)) {return 0;}
 int                  Tcl_DoOneEvent(int UNUSED(flags)) {return 0;}
 int                  Tcl_GetCharLength(Tcl_Obj *UNUSED(objPtr)) {return 0;}
-CONST84_RETURN char *Tcl_GetVar(Tcl_Interp *UNUSED(interp), CONST char *UNUSED(varName), int UNUSED(flags)) {return 0;}
+CONST84_RETURN char *Tcl_GetVar2(Tcl_Interp *UNUSED(interp), CONST char *UNUSED(part1), CONST char *UNUSED(part2), int UNUSED(flags)) {return 0;}
 int                  Tcl_Init(Tcl_Interp *UNUSED(interp)) {return 0;}
 int                  Tcl_Close(Tcl_Interp *UNUSED(interp), Tcl_Channel UNUSED(chan)) {return 0;}
 void                 Tcl_DeleteChannelHandler(Tcl_Channel UNUSED(chan), Tcl_ChannelProc *UNUSED(proc), ClientData UNUSED(clientData)) {}

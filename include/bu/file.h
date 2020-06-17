@@ -1,7 +1,7 @@
 /*                         F I L E . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,7 +24,6 @@
 #include "common.h"
 
 #include <stdio.h> /* for FILE */
-#include <sys/types.h> /* for off_t */
 #include <stddef.h> /* for size_t */
 #include <stdlib.h> /* for getenv */
 
@@ -58,6 +57,15 @@ __BEGIN_DECLS
  * @return 0 The given filename does not exist.
  */
 BU_EXPORT extern int bu_file_exists(const char *path, int *fd);
+
+/**
+ * Returns the size of the given file, or -1 if the size cannot
+ * be determined.
+ *
+ * @return >=0 The given filename exists.
+ * @return -1 The given filename does not exist or there was an error.
+ */
+BU_EXPORT extern int bu_file_size(const char *path);
 
 /**
  * Returns truthfully as to whether the two provided filenames are the
@@ -125,19 +133,19 @@ BU_EXPORT extern int bu_file_delete(const char *path);
  *
 
  * If '*files' is NULL, the caller is expected to free the matches
- * array with bu_argv_free().  If '*files' is non-NULL (i.e., string
- * array is already allocated or on the stack), the caller is expected
- * to ensure adequate entries are preallocated and to free all strings
- * with bu_free_array() or as otherwise necessary.
+ * array with bu_argv_free().  If '*files' is non-NULL (i.e., array of
+ * string pointers is already allocated or on the stack), the caller
+ * is expected to ensure adequate entries are preallocated and to free
+ * all strings with bu_argv_free() or as otherwise necessary.
  *
  * Example:
  @code
-   // This allocates an array for storing matches, filling in the
-   // array with all directory paths starting with 'a' through 'e' and
-   // ending with a '.c' in the src/libbu directory.
+ // This allocates an array for storing matches, filling in the
+ // array with all directory paths starting with 'a' through 'e' and
+ // ending with a '.c' in the src/libbu directory.
 
-   char **my_matches = NULL;
-   size_t count = bu_file_list("src/libbu", "[a-e]*.c", &my_matches);
+ char **my_matches = NULL;
+ size_t count = bu_file_list("src/libbu", "[a-e]*.c", &my_matches);
  @endcode
  *
  * @return the number of directory entries matching the provided
@@ -156,22 +164,15 @@ BU_EXPORT extern size_t bu_file_list(const char *path, const char *pattern, char
  */
 BU_EXPORT extern char *bu_file_realpath(const char *path, char *resolved_path);
 
-
 /**
- * This wrapper appears to be necessary (at least on Visual Studio) to handle
- * situations where 32 and 64 bit versions of this function have different
- * function signatures (a simple define of the 32 bit version to the 64 bit
- * version will produce compile errors.)
+ * Windows corecrt_io.h defines an lseek and an _lseeki64, with different function
+ * signatures, that cause trouble when we try to simply #define lseek _lseeki64.
+ *
+ * Similarly, _ftelli64 has a problematic signature.
  */
-BU_EXPORT extern int bu_fseek(FILE *stream, off_t offset, int origin);
-
-/**
- * This wrapper appears to be necessary (at least on Visual Studio) to handle
- * situations where 32 and 64 bit versions of this function have different
- * function signatures (a simple define of the 32 bit version to the 64 bit
- * version will produce compile errors.)
- */
-BU_EXPORT extern off_t bu_ftell(FILE *stream);
+BU_EXPORT int bu_fseek(FILE *stream, b_off_t offset, int origin);
+BU_EXPORT b_off_t bu_lseek(int fd, b_off_t offset, int whence);
+BU_EXPORT b_off_t bu_ftell(FILE *stream);
 
 /** @} */
 

@@ -1,7 +1,7 @@
 /*                        B U T T E R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <math.h>
 
+#include "bu/app.h"
 #include "fft.h"
 
 #if defined(HAVE_HYPOT) && !defined(HAVE_DECL_HYPOT)
@@ -104,10 +105,12 @@ cbweights(double *filter, int window, int points)
 #ifdef TEST
 #define N 512.0
 int
-main()
+main(int UNUSED(argc), const char **argv)
 {
     int offset;
     double wr, mag, step;
+
+    bu_setprogname(argv[0]);
 
     step = pow(N, 1.0/(N-1));
 

@@ -1,7 +1,7 @@
 /*                        D S P . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2019 United States Government as represented by
+ * Copyright (c) 1993-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,8 +32,8 @@
 __BEGIN_DECLS
 
 RT_EXPORT extern int dsp_pos(point_t out,
-                             struct soltab *stp,
-                             point_t p);
+			     struct soltab *stp,
+			     point_t p);
 
 
 __END_DECLS

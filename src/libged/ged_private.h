@@ -1,7 +1,7 @@
 /*                   G E D _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2019 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,7 +30,10 @@
 
 #include <time.h>
 
+#include "bu/avs.h"
 #include "bu/opt.h"
+#include "bg/spsr.h"
+#include "bg/trimesh.h"
 #include "rt/db4.h"
 #include "raytrace.h"
 #include "rt/geom.h"
@@ -226,7 +229,7 @@ enum otype {
     OTYPE_SAT,
     OTYPE_STL
 };
-void _ged_bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, const char *file_ext, const char *db_name);
+void _ged_bot_dump(struct directory *dp, const struct db_full_path *pathp, struct rt_bot_internal *bot, FILE *fp, int fd, const char *file_ext, const char *db_name);
 void dl_botdump(struct bu_list *hdlp, struct db_i *dbip, FILE *fp, int fd, char *file_ext, int output_type, int *red, int *green, int *blue, fastf_t *alpha);
 
 
@@ -292,6 +295,13 @@ extern int _ged_get_solid_keypoint(struct ged *const gedp,
 				   const struct rt_db_internal *const ip,
 				   const fastf_t *const mat);
 
+/*  defined in gqa.c (TODO - this is in lieu of putting these in struct ged.
+ *  gqa is using globals, which may explain some bug reports we've gotten -
+ *  this and the _ged_current_gedp both need to be scrubbed down to local gqa
+ *  vars. */
+extern struct analyze_densities *_gd_densities;
+extern char *_gd_densities_source;
+
 /* defined in how.c */
 extern struct directory **_ged_build_dpp(struct ged *gedp,
 					 const char *path);
@@ -333,16 +343,17 @@ extern char _ged_tmpfil[];
 
 
 /* defined in rt.c */
+extern void
+_ged_rt_output_handler(void *clientData, int mask);
+
 extern void _ged_rt_set_eye_model(struct ged *gedp,
 				  vect_t eye_model);
-extern int _ged_run_rt(struct ged *gdp, int argc, const char **argv);
+extern int _ged_run_rt(struct ged *gdp, int cmd_len, const char **gd_rt_cmd, int argc, const char **argv);
 extern void _ged_rt_write(struct ged *gedp,
 			  FILE *fp,
 			  vect_t eye_model,
 			  int argc,
 			  const char **argv);
-extern void _ged_rt_output_handler(ClientData clientData,
-				   int mask);
 
 /* defined in rtcheck.c */
 extern void _ged_wait_status(struct bu_vls *logstr,
@@ -528,10 +539,6 @@ extern int _ged_results_init(struct ged_results *results);
  */
 extern int _ged_results_add(struct ged_results *results, const char *result_string);
 
-extern int _ged_brep_to_csg(struct ged *gedp, const char *obj_name, int verify);
-extern int _ged_brep_tikz(struct ged *gedp, const char *obj_name, const char *outfile);
-
-
 /* defined in ged_util.c */
 
 /**
@@ -573,7 +580,24 @@ extern struct directory ** _ged_getspace(struct db_i *dbip,
 extern void _ged_cmd_help(struct ged *gedp, const char *usage, struct bu_opt_desc *d);
 
 /* Option for verbosity variable setting */
-extern int _ged_vopt(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+extern int _ged_vopt(struct bu_vls *msg, size_t argc, const char **argv, void *set_var);
+
+/* Function to read in density information, either from a file or from the
+ * database itself. Implements the following priority order:
+ *
+ * 1. filename explicitly supplied to function.
+ * 2. Density information stored in the .g database.
+ * 3. A .density file in the same directory as the .g file
+ * 4. A .density file in the user's HOME directory
+ *
+ * Note that this function does *not* store the density information in the
+ * current .g once read.  To store density information in a .g file, use
+ * the "mater -d load" command.
+ *
+ */
+extern int _ged_read_densities(struct analyze_densities **dens, char **den_src, struct ged *gedp, const char *filename, int fault_tolerant);
+
+#define GED_DB_DENSITY_OBJECT "_DENSITIES" 
 
 /**
  * Routine for checking argc/argv list for existing objects and sorting anything
@@ -585,12 +609,60 @@ extern int _ged_vopt(struct bu_vls *msg, int argc, const char **argv, void *set_
 extern int
 _ged_sort_existing_objs(struct ged *gedp, int argc, const char *argv[], struct directory **dpa);
 
+/* Ideally all of this could be in facetize.cpp, but the open() calls
+ * used by the logging routines are problematic in C++ with Visual C++. */
+struct _ged_facetize_opts {
+    int quiet;
+    int verbosity;
+    int regions;
+    int resume;
+    int retry;
+    int in_place;
+    fastf_t feature_size;
+    fastf_t feature_scale;
+    fastf_t d_feature_size;
+    int max_time;
+    struct bg_tess_tol *tol;
+    struct bu_vls *faceted_suffix;
 
-typedef void (*io_handler_callback_t)(void *, int);
-extern void
-_ged_create_io_handler(void **chan, struct bu_process *p, int fd, int mode, void *data, io_handler_callback_t callback);
-extern void
-_ged_delete_io_handler(void *interp, void *chan, struct bu_process *p, int fd, void *data, io_handler_callback_t callback);
+    /* NMG specific options */
+    int triangulate;
+    int make_nmg;
+    int nmgbool;
+    int screened_poisson;
+    int continuation;
+    int method_flags;
+    int nmg_use_tnurbs;
+
+    /* Poisson specific options */
+    int max_pnts;
+    struct bg_3d_spsr_opts s_opts;
+
+    /* Brep specific options */
+    double nonovlp_threshold;
+
+    /* internal */
+    struct bu_attribute_value_set *c_map;
+    struct bu_attribute_value_set *s_map;
+    struct bu_hook_list *saved_bomb_hooks;
+    struct bu_hook_list *saved_log_hooks;
+    struct bu_vls *nmg_log;
+    struct bu_vls *nmg_log_header;
+    int nmg_log_print_header;
+    int stderr_stashed;
+    int serr;
+    int fnull;
+
+    struct bu_vls *froot;
+    struct bu_vls *nmg_comb;
+    struct bu_vls *continuation_comb;
+    struct bu_vls *spsr_comb;
+};
+
+void
+_ged_facetize_log_nmg(struct _ged_facetize_opts *o);
+void
+_ged_facetize_log_default(struct _ged_facetize_opts *o);
 
 __END_DECLS
 

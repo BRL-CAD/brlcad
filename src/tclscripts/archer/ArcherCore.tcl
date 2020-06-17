@@ -1,7 +1,7 @@
 #                      A R C H E R C O R E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2019 United States Government as represented by
+# Copyright (c) 2002-2020 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -2197,6 +2197,10 @@ namespace eval ArcherCore {
 
     switch -- [file extension $target] {
 	".g"   {
+	    $itk_component(ged) open $target
+	}
+	"" {
+	    set target $target.g
 	    $itk_component(ged) open $target
 	}
 	default {

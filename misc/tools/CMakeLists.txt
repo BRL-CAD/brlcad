@@ -145,6 +145,10 @@ DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/astyle/Makefile)
 include(${CMAKE_CURRENT_SOURCE_DIR}/dom2dox.dist)
 CMAKEFILES_IN_DIR(dom2dox_ignore_files dom2dox)
 
+# svn2cl - Make a GNU-style ChangeLog from Subversion logs
+include(${CMAKE_CURRENT_SOURCE_DIR}/svn2cl.dist)
+CMAKEFILES_IN_DIR(svn2cl_ignore_files svn2cl)
+
 # libxml and libxslt tools for DocBook processing.  We build just
 # enough library support to get these two tools working.
 set(xsltproc_DESCRIPTION "
@@ -181,6 +185,12 @@ SetTargetFolder(exslt "Third Party Libraries")
 THIRD_PARTY_EXECUTABLE(env2c ENV2C env2c REQUIRED "BRLCAD_LEVEL2" NOSYS)
 SetTargetFolder(env2c "Compilation Utilities")
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/env2c/Makefile)
+
+# debug2c - Scanner to generate a list of debug variables used by
+# source code
+THIRD_PARTY_EXECUTABLE(debug2c DEBUG2C debug2c REQUIRED "BRLCAD_LEVEL2" NOSYS)
+SetTargetFolder(debug2c "Compilation Utilities")
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/debug2c/Makefile)
 
 CMAKEFILES(README)
 CMAKEFILES(CMakeLists.txt)

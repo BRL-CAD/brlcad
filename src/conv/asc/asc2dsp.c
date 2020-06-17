@@ -1,7 +1,7 @@
 /*                       A S C 2 D S P . C
  * BRL-CAD
  *
- * Copyright (c) 2012-2019 United States Government as represented by
+ * Copyright (c) 2012-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,6 +43,7 @@
 #include <ctype.h>
 
 #include "bnetwork.h"
+#include "bu/app.h"
 #include "bu/log.h"
 
 
@@ -107,6 +108,8 @@ main(int argc, char **argv)
 
     char buf[BUFSZ] = {0};
     unsigned nchars = 0;
+
+    bu_setprogname(argv[0]);
 
     if (argc != 3)
 	bu_exit(1, "%s", usage);

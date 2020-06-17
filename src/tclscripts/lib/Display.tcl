@@ -1,7 +1,7 @@
 #                     D I S P L A Y . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2019 United States Government as represented by
+# Copyright (c) 1998-2020 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -750,7 +750,7 @@
 	}
 
 	if {$itk_option(-scaleEnable)} {
-	    Dm::drawScale [View::size] $itk_option(-scaleColor)
+	    Dm::drawScale [View::size] [View::units] $itk_option(-scaleColor)
 	}
 
 	if {$itk_option(-primitiveLabels) != {}} {

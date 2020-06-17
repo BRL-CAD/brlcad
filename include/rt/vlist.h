@@ -1,7 +1,7 @@
 /*                      V L I S T . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2019 United States Government as represented by
+ * Copyright (c) 1993-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,13 +26,13 @@
 
 #include "common.h"
 
+/* system headers */
+#include <stdio.h> /* for FILE */
+
 /* interface headers */
 #include "vmath.h"
 #include "bu/vls.h"
-
-/* system headers */
-#include "bio.h" /* for FILE */
-
+#include "rt/defines.h"
 
 __BEGIN_DECLS
 
@@ -41,11 +41,11 @@ __BEGIN_DECLS
  * passing &RTG.rtg_vlfree
  */
 RT_EXPORT extern void rt_vlist_copy(struct bu_list *dest,
-                                    const struct bu_list *src);
+				    const struct bu_list *src);
 RT_EXPORT extern void rt_vlist_cleanup(void);
 RT_EXPORT extern void rt_vlist_import(struct bu_list *hp,
-                                      struct bu_vls *namevls,
-                                      const unsigned char *buf);
+				      struct bu_vls *namevls,
+				      const unsigned char *buf);
 RT_EXPORT extern struct bn_vlblock *    rt_vlblock_init(void);
 
 
@@ -57,11 +57,11 @@ RT_EXPORT extern struct bn_vlblock *    rt_vlblock_init(void);
  ************************************************************************/
 
 RT_EXPORT extern int rt_process_uplot_value(struct bu_list **vhead,
-                                            struct bn_vlblock *vbp,
-                                            FILE *fp,
-                                            int c,
-                                            double char_size,
-                                            int mode);
+					    struct bn_vlblock *vbp,
+					    FILE *fp,
+					    int c,
+					    double char_size,
+					    int mode);
 
 
 /**
@@ -70,28 +70,28 @@ RT_EXPORT extern int rt_process_uplot_value(struct bu_list **vhead,
  * more naturally located in mged/plot.c
  */
 RT_EXPORT extern int rt_uplot_to_vlist(struct bn_vlblock *vbp,
-                                       FILE *fp,
-                                       double char_size,
-                                       int mode);
+				       FILE *fp,
+				       double char_size,
+				       int mode);
 
 
 /**
  * Used by MGED's "labelvert" command.
  */
 RT_EXPORT extern void rt_label_vlist_verts(struct bn_vlblock *vbp,
-                                           struct bu_list *src,
-                                           mat_t mat,
-                                           double sz,
-                                           double mm2local);
+					   struct bu_list *src,
+					   mat_t mat,
+					   double sz,
+					   double mm2local);
 
 /**
  * Used by MGED's "labelface" command.
  */
 RT_EXPORT extern void rt_label_vlist_faces(struct bn_vlblock *vbp,
-                                           struct bu_list* f_list,
-                                           mat_t mat,
-                                           double sz,
-                                           double mm2local);
+					   struct bu_list* f_list,
+					   mat_t mat,
+					   double sz,
+					   double mm2local);
 
 
 __END_DECLS

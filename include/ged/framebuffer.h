@@ -1,7 +1,7 @@
 /*                  F R A M E B U F F E R . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2019 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,13 +29,14 @@
 #define GED_FRAMEBUFFER_H
 
 #include "common.h"
-#include "fb.h"
 #include "ged/defines.h"
 
 __BEGIN_DECLS
 
+
+
 #define GED_CHECK_FBSERV(_gedp, _flags) \
-    if (_gedp->ged_fbsp == FBSERV_OBJ_NULL) { \
+    if (_gedp->ged_fbsp == NULL) { \
 	int ged_check_view_quiet = (_flags) & GED_QUIET; \
 	if (!ged_check_view_quiet) { \
 	    bu_vls_trunc((_gedp)->ged_result_str, 0); \
@@ -45,7 +46,7 @@ __BEGIN_DECLS
     }
 
 #define GED_CHECK_FBSERV_FBP(_gedp, _flags) \
-    if (_gedp->ged_fbsp->fbs_fbp == FB_NULL) { \
+    if (_gedp->ged_fbsp->fbs_fbp == NULL) { \
 	int ged_check_view_quiet = (_flags) & GED_QUIET; \
 	if (!ged_check_view_quiet) { \
 	    bu_vls_trunc((_gedp)->ged_result_str, 0); \

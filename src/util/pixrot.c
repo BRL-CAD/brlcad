@@ -1,7 +1,7 @@
 /*                        P I X R O T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2019 United States Government as represented by
+ * Copyright (c) 1986-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,6 +37,7 @@
 #include <stdlib.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "bu/file.h"
@@ -142,8 +143,10 @@ int
 main(int argc, char **argv)
 {
     int x, y, j;
-    off_t outbyte, outplace;
+    b_off_t outbyte, outplace;
     size_t ret;
+
+    bu_setprogname(argv[0]);
 
     if (!get_args(argc, argv) || isatty(fileno(stdout))) {
 	bu_exit(1, "%s", usage);
@@ -165,7 +168,7 @@ main(int argc, char **argv)
 
     /*
      * Clear our "file pointer." We need to maintain this
-     * In order to tell if seeking is required.  ftell() always
+     * In order to tell if seeking is required.  bu_ftell() always
      * fails on pipes, so we can't use it.
      */
     outplace = 0;

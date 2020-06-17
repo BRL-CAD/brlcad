@@ -1,9 +1,0 @@
-Author -
-   Christopher T. Johnson
-   Geometric Solutions, Inc.
-   100 Custis St., Suite 2
-   Aberdeen, MD, 21001
-
-Copyright Notice -
-   This software is Copyright (C) 1994 Geometric Solutions, Inc.
-   Contributed to the US Army for unlimited distribution.

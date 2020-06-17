@@ -1,7 +1,7 @@
 /*                     O B J _ W R I T E . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2019 United States Government as represented by
+ * Copyright (c) 1996-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -58,8 +58,8 @@ struct conversion_state
     const struct obj_write_options *obj_write_options;
     FILE *fp;
 
-    off_t vert_offset;
-    off_t norm_offset;
+    b_off_t vert_offset;
+    b_off_t norm_offset;
     size_t regions_tried;
     size_t regions_converted;
     size_t regions_written;
@@ -384,13 +384,13 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 
     RT_CK_FULL_PATH(pathp);
     RT_CK_TREE(curtree);
-    RT_CK_TESS_TOL(tsp->ts_ttol);
+    BG_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
     NMG_CK_MODEL(*tsp->ts_m);
 
     BU_LIST_INIT(&vhead);
 
-    if (RT_G_DEBUG&DEBUG_TREEWALK || pstate->gcv_options->verbosity_level) {
+    if (RT_G_DEBUG&RT_DEBUG_TREEWALK || pstate->gcv_options->verbosity_level) {
 	char *sofar = db_path_to_string(pathp);
 	bu_log("\ndo_region_end(%zu %zu%%) %s\n",
 	       pstate->regions_tried,

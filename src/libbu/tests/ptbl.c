@@ -1,7 +1,7 @@
 /*                       P T B L . C
  * BRL-CAD
  *
- * Copyright (c) 2018-2019 United States Government as represented by
+ * Copyright (c) 2018-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -208,6 +208,8 @@ main(int argc, char *argv[])
 {
     int ret = BRLCAD_ERROR;
     size_t ptbl_size;
+
+    bu_setprogname(argv[0]);
 
     if (argc < 2) {
 	bu_exit(1, "Usage: %s (init|reset|ins|locate|rm|cat|trunc) [test_args...]\n", argv[0]);

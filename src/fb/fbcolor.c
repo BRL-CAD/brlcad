@@ -1,7 +1,7 @@
 /*                       F B C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2019 United States Government as represented by
+ * Copyright (c) 1986-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,6 +30,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "bio.h"
+
+#include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"
@@ -70,6 +73,8 @@ int
 main(int argc, char **argv)
 {
     int i;
+
+    bu_setprogname(argv[0]);
 
     if (! pars_Argv(argc, argv)) {
     	printusage();

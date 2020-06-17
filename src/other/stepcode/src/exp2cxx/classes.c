@@ -2616,11 +2616,11 @@ void TYPEenum_inc_print( const Type type, FILE * inc ) {
     fprintf( inc, "\n//////////  ENUMERATION TYPE %s\n",
              TYPEget_name( type ) );
 
-    /*  print c++ enumerated values for class   */
+    /* print c++ enumerated values for class   */
     fprintf( inc, "enum %s {\n", EnumName( TYPEget_name( type ) ) );
 
     LISTdo_links( TYPEget_body( type )->list, link )
-    /*  print the elements of the c++ enum type  */
+    /* print the elements of the c++ enum type  */
     expr = ( Expression )link->data;
     if( cnt != 0 ) {
         fprintf( inc, ",\n" );
@@ -2632,13 +2632,13 @@ void TYPEenum_inc_print( const Type type, FILE * inc ) {
 
     fprintf( inc, ",\n        %s_unset\n};\n", EnumName( TYPEget_name( type ) ) );
 
-    /*  print class for enumeration */
+    /* print class for enumeration */
     n = TYPEget_ctype( type );
     fprintf( inc, "\nclass %s  :  public SDAI_Enum  {\n", n );
 
     fprintf( inc, "  protected:\n        EnumTypeDescriptor *type;\n\n" );
 
-    /*  constructors    */
+    /* constructors */
     strncpy( tdnm, TYPEtd_name( type ), BUFSIZ );
     tdnm[BUFSIZ-1] = '\0';
     fprintf( inc, "  public:\n        %s (const char * n =0, Enum"
@@ -2647,37 +2647,42 @@ void TYPEenum_inc_print( const Type type, FILE * inc ) {
              "                : type(et) {  set_value (e);  }\n",
              n, EnumName( TYPEget_name( type ) ), tdnm );
 
-    /*  destructor  */
+    /* destructor */
     fprintf( inc, "        ~%s () { }\n", n );
 
-    /*      operator =      */
+    /* copy constructor */
+    fprintf( inc, "        %s(const %s& e)\n",
+             n, TYPEget_ctype( type ) );
+    fprintf( inc, "                {  set_value (e); }\n" );
+
+    /* operator = */
     fprintf( inc, "        %s& operator= (const %s& e)\n",
              n, TYPEget_ctype( type ) );
     fprintf( inc, "                {  set_value (e);  return *this;  }\n" );
 
-    /*      operator to cast to an enumerated type  */
+    /* operator to cast to an enumerated type */
     fprintf( inc, "        operator %s () const;\n",
              EnumName( TYPEget_name( type ) ) );
 
-    /*      others          */
+    /* others */
     fprintf( inc, "\n        inline virtual const char * Name () const\n" );
     fprintf( inc, "                {  return type->Name();  }\n" );
     fprintf( inc, "        inline virtual int no_elements () const"
              "  {  return %d;  }\n", cnt );
     fprintf( inc, "        virtual const char * element_at (int n) const;\n" );
 
-    /*  end class definition  */
+    /* end class definition */
     fprintf( inc, "};\n" );
 
     fprintf( inc, "\ntypedef %s * %s_ptr;\n", n, n );
 
 
-    /*  Print ObjectStore Access Hook function  */
+    /* Print ObjectStore Access Hook function */
     printEnumCreateHdr( inc, type );
 
     /* DAS brandnew above */
 
-    /*  print things for aggregate class  */
+    /* print things for aggregate class */
     sprintf( enumAggrNm, "%s_agg", n );
 
     fprintf( inc, "\nclass %s_agg  :  public EnumAggregate  {\n", n );

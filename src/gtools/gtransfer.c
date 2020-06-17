@@ -1,7 +1,7 @@
 /*                     G _ T R A N S F E R . C
  * BRL-CAD
  *
- * Copyright (c) 2006-2019 United States Government as represented by
+ * Copyright (c) 2006-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,6 +40,7 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/units.h"
 #include "bu/snooze.h"
@@ -500,6 +501,8 @@ main(int argc, char *argv[]) {
     const char ** geometry = NULL;
     int ngeometry = 0;
     struct db_i *dbip = NULL;
+
+    bu_setprogname(argv[0]);
 
     if (argc < 2) {
 	usage(NULL, argv[0]);

@@ -1,7 +1,7 @@
 /*                 C O N V _ D R A W I N G S . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2019 United States Government as represented by
+ * Copyright (c) 1994-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -45,11 +45,11 @@ Getstrg(char **str, char *id)
     int i = (-1), length = 0, done = 0, lencard;
     char num[80];
 
-    if (card[counter] == eof) {
+    if (card[counter] == eofd) {
 	/* This is an empty field */
 	counter++;
 	return;
-    } else if (card[counter] == eor) /* Up against the end of record */
+    } else if (card[counter] == eord) /* Up against the end of record */
 	return;
 
     if (card[72] == 'P')
@@ -90,14 +90,14 @@ Getstrg(char **str, char *id)
     if (*id != '\0')
 	bu_log("%c", '\n');
 
-    while (card[counter] != eof && card[counter] != eor) {
+    while (card[counter] != eofd && card[counter] != eord) {
 	if (counter < lencard)
 	    counter++;
 	else
 	    Readrec(++currec);
     }
 
-    if (card[counter] == eof) {
+    if (card[counter] == eofd) {
 	counter++;
 	if (counter > lencard)
 	    Readrec(++ currec);

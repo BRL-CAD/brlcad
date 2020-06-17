@@ -1,7 +1,7 @@
 /*                  S H _ T R E E T H E R M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -248,7 +248,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, cons
     BU_CK_VLS(matparm);
     RT_CK_REGION(rp);
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_log("tthrm_setup(Region:\"%s\", tthrm(%s))\n",
 	       rp->reg_name, bu_vls_addr(matparm));
 
@@ -260,7 +260,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, cons
     tthrm_sp->tt_name[0] = '\0';
     tthrm_sp->tt_min_temp = tthrm_sp->tt_max_temp = 0.0;
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_log("Parsing: (%s)\n", bu_vls_addr(matparm));
 
     if (bu_struct_parse(matparm, tthrm_parse, (char *)tthrm_sp, NULL) < 0) {
@@ -280,7 +280,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, cons
     tt_data = (char *)tt_file->buf;
 
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_log("tthrm_setup() data: %p total\n",
 	       (void *)tt_data);
 
@@ -330,7 +330,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, cons
 	    break;
     }
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_log("cyl_tot = %ld\n", cyl_tot);
 
     tthrm_sp->tt_segs = (struct thrm_seg *)
@@ -356,7 +356,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, cons
 	     */
 	    memcpy(fv, fp, sizeof(float)*4);
 
-	    if (rdebug&RDEBUG_SHADE)
+	    if (optical_debug&OPTICAL_DEBUG_SHADE)
 		bu_log("tthrm_setup() node %d (%g %g %g) %g\n",
 		       node, fv[0], fv[1], fv[2], fv[3]);
 
@@ -384,7 +384,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, cons
 	VSCALE(center, center, 1000.0);
 	VSCALE(tthrm_sp->tt_segs[tseg].pt, center, inv_nodes);
 
-	if (rdebug&RDEBUG_SHADE) {
+	if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	    bu_log("Center: (%g %g %g) (now in mm, not m)\n",
 		   V3ARGS(tthrm_sp->tt_segs[tseg].pt));
 	}
@@ -441,7 +441,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, cons
      */
     db_region_mat(tthrm_sp->tthrm_m_to_sh, rtip->rti_dbip, rp->reg_name, &rt_uniresource);
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	bu_log("min_temp: %17.14e  max_temp %17.14e temp_scale: %17.14e\n",
 	       tthrm_sp->tt_min_temp,
 	       tthrm_sp->tt_max_temp,
@@ -559,7 +559,7 @@ tthrm_render(struct application *ap, const struct partition *pp, struct shadewor
      */
     MAT4X3PNT(pt, tthrm_sp->tthrm_m_to_sh, swp->sw_hit.hit_point);
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_log("tthrm_render(%s, %g %g %g)\n", tthrm_sp->tt_name,
 	       V3ARGS(pt));
 
@@ -604,7 +604,7 @@ too large.  Probable mis-match between geometry and thermal data\n",
     }
 
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	vect_t unit_H;
 	VMOVE(unit_H, part_p->part_H);
 	VUNITIZE(unit_H);
@@ -672,7 +672,7 @@ too large.  Probable mis-match between geometry and thermal data\n",
 	VSET(swp->sw_color, best_val, best_val, best_val);
     }
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	bu_log("closest point is: (%g %g %g) temp: %17.14e\n",
 	       V3ARGS(thrm_seg->node[best_idx]),
 	       thrm_seg->temperature[best_idx]);
@@ -686,7 +686,7 @@ too large.  Probable mis-match between geometry and thermal data\n",
     }
 
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	bu_log("tthrm_render()\n\t  model:(%g %g %g)\n\t shader:(%g %g %g)\n",
 	       V3ARGS(swp->sw_hit.hit_point),
 	       V3ARGS(pt));

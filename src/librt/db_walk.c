@@ -1,7 +1,7 @@
 /*                       D B _ W A L K . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2019 United States Government as represented by
+ * Copyright (c) 1988-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -96,7 +96,7 @@ db_preorder_traverse(struct directory *dp,
 	RT_CK_RESOURCE(dtp->resp);
     }
 
-    if (RT_G_DEBUG & DEBUG_DB)
+    if (RT_G_DEBUG & RT_DEBUG_DB)
 	bu_log("db_preorder_traverse(%s) %p, %p, comb_enter=%lx, comb_exit=%lx, leaf=%lx, client_data=%p\n",
 	       dp->d_namep,
 	       (void *)dtp->dbip, (void *)dp,
@@ -214,7 +214,7 @@ db_functree(struct db_i *dbip,
 	return; /* nothing to do */
     }
 
-    if (RT_G_DEBUG&DEBUG_DB) {
+    if (RT_G_DEBUG&RT_DEBUG_DB) {
 	bu_log("db_functree(%s) %p, %p, comb=%lx, leaf=%lx, client_data=%p\n",
 	       dp->d_namep, (void *)dbip, (void *)dp,
 	       (long unsigned int)comb_func, (long unsigned int)leaf_func,

@@ -1,4 +1,4 @@
-# Copyright (c) 2015-2019 United States Government as represented by
+# Copyright (c) 2015-2020 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -52,7 +52,7 @@ include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
   ${BRLCAD_SOURCE_DIR}/include
   ${BRLCAD_BINARY_DIR}/include
-  ${TCL_INCLUDE_DIRS}
+  ${TCL_INCLUDE_PATH}
   )
 
 PERPLEX_TARGET(dom2dox_scanner dom2dox_scanner.perplex)

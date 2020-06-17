@@ -1,7 +1,7 @@
 /*                       F B C L E A R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2019 United States Government as represented by
+ * Copyright (c) 1986-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@
 
 #include <stdlib.h>
 
+#include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"
@@ -89,6 +90,7 @@ get_args(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
+    bu_setprogname(argv[0]);
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
 	bu_exit(1, NULL);

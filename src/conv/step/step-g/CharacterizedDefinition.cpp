@@ -1,7 +1,7 @@
 /*                 CharacterizedDefinition.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2019 United States Government as represented by
+ * Copyright (c) 1994-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,14 +40,14 @@ CharacterizedDefinition::CharacterizedDefinition() {
     step = NULL;
     id = 0;
     definition = NULL;
-    type = CharacterizedDefinition::UNKNOWN;
+    type = CharacterizedDefinition::CHARACTERIZED_DEFINITION_UNKNOWN;
 }
 
 CharacterizedDefinition::CharacterizedDefinition(STEPWrapper *sw,int step_id) {
     step = sw;
     id = step_id;
     definition = NULL;
-    type = CharacterizedDefinition::UNKNOWN;
+    type = CharacterizedDefinition::CHARACTERIZED_DEFINITION_UNKNOWN;
 }
 
 CharacterizedDefinition::~CharacterizedDefinition() {
@@ -162,7 +162,7 @@ CharacterizedDefinition::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
 	    definition = dynamic_cast<CharacterizedObject *>(Factory::CreateObject(sw, (SDAI_Application_instance *)pdr));
 #endif
 	} else {
-	    type = CharacterizedDefinition::UNKNOWN;
+	    type = CharacterizedDefinition::CHARACTERIZED_DEFINITION_UNKNOWN;
 	    definition = NULL;
 	}
     }
@@ -206,7 +206,7 @@ CharacterizedDefinition::Print(int level) {
 	}
 #endif
     } else {
-	std::cout << "UNKNOWN" << std::endl;
+	std::cout << "CHARACTERIZED_DEFINITION_UNKNOWN" << std::endl;
     }
 }
 

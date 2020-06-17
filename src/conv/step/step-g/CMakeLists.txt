@@ -111,6 +111,7 @@ set(stepg_SOURCES
   LuminousIntensitySiUnit.cpp
   LuminousIntensityUnit.cpp
   ManifoldSolidBrep.cpp
+  ManifoldSurfaceShapeRepresentation.cpp
   MassContextDependentUnit.cpp
   MassConversionBasedUnit.cpp
   MassSiUnit.cpp
@@ -124,6 +125,7 @@ set(stepg_SOURCES
   OffsetCurve3D.cpp
   OffsetSurface.cpp
   OpenNurbsInterfaces.cpp
+  OpenShell.cpp
   OrientedClosedShell.cpp
   OrientedEdge.cpp
   OrientedFace.cpp
@@ -189,6 +191,7 @@ set(stepg_SOURCES
   ShapeDefinitionRepresentation.cpp
   ShapeRepresentation.cpp
   ShapeRepresentationRelationship.cpp
+  ShellBasedSurfaceModel.cpp
   SiUnit.cpp
   SolidAngleContextDependentUnit.cpp
   SolidAngleConversionBasedUnit.cpp
@@ -327,6 +330,7 @@ set(stepg_HDRS
   LuminousIntensitySiUnit.h
   LuminousIntensityUnit.h
   ManifoldSolidBrep.h
+  ManifoldSurfaceShapeRepresentation.h
   MassContextDependentUnit.h
   MassConversionBasedUnit.h
   MassSiUnit.h
@@ -339,6 +343,7 @@ set(stepg_HDRS
   OffsetCurve2D.h
   OffsetCurve3D.h
   OffsetSurface.h
+  OpenShell.h
   OrientedClosedShell.h
   OrientedEdge.h
   OrientedFace.h
@@ -404,6 +409,7 @@ set(stepg_HDRS
   ShapeDefinitionRepresentation.h
   ShapeRepresentation.h
   ShapeRepresentationRelationship.h
+  ShellBasedSurfaceModel.h
   SiUnit.h
   SolidAngleContextDependentUnit.h
   SolidAngleConversionBasedUnit.h
@@ -463,12 +469,12 @@ BRLCAD_ADDEXEC(step-g "${stepg_SOURCES}" "${stepg_LIBS}" NO_STRICT)
 add_dependencies(step-g step-express-${SCHEMA_NAME}-stepg)
 set_property(TARGET step-g APPEND PROPERTY INCLUDE_DIRECTORIES "${stepg_SCHEMA_OUT_DIR}")
 
-if(CPP_DLL_DEFINES)
-  set(SCIMPORTS SC_CORE_DLL_IMPORTS SC_DAI_DLL_IMPORTS SC_EDITOR_DLL_IMPORTS SC_UTILS_DLL_IMPORTS)
+if(HIDE_INTERNAL_SYMBOLS)
+  set(SCIMPORTS SC_CORE_DLL_IMPORTS SC_DAI_DLL_IMPORTS SC_EDITOR_DLL_IMPORTS SC_UTILS_DLL_IMPORTS ON_DLL_IMPORTS)
   foreach(scp ${SCIMPORTS})
     set_property(TARGET step-g APPEND PROPERTY COMPILE_DEFINITIONS "${scp}")
   endforeach(scp ${SCIMPORTS})
-endif(CPP_DLL_DEFINES)
+endif(HIDE_INTERNAL_SYMBOLS)
 
 CMAKEFILES(CMakeLists.txt)
 

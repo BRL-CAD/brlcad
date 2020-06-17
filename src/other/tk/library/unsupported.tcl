@@ -16,7 +16,7 @@ namespace eval ::tk::unsupported {
     # Map from the old global names of Tk private commands to their
     # new namespace-encapsulated names.
 
-    variable PrivateCommands 
+    variable PrivateCommands
     array set PrivateCommands {
 	tkButtonAutoInvoke		::tk::ButtonAutoInvoke
 	tkButtonDown			::tk::ButtonDown
@@ -86,34 +86,6 @@ namespace eval ::tk::unsupported {
 	tkFocusOK			::tk::FocusOK
 	tkGenerateMenuSelect		::tk::GenerateMenuSelect
 	tkIconList			::tk::IconList
-	tkIconList_Add			::tk::IconList_Add
-	tkIconList_Arrange		::tk::IconList_Arrange
-	tkIconList_AutoScan		::tk::IconList_AutoScan
-	tkIconList_Btn1			::tk::IconList_Btn1
-	tkIconList_Config		::tk::IconList_Config
-	tkIconList_Create		::tk::IconList_Create
-	tkIconList_CtrlBtn1		::tk::IconList_CtrlBtn1
-	tkIconList_Curselection		::tk::IconList_CurSelection
-	tkIconList_DeleteAll		::tk::IconList_DeleteAll
-	tkIconList_Double1		::tk::IconList_Double1
-	tkIconList_DrawSelection	::tk::IconList_DrawSelection
-	tkIconList_FocusIn		::tk::IconList_FocusIn
-	tkIconList_FocusOut		::tk::IconList_FocusOut
-	tkIconList_Get			::tk::IconList_Get
-	tkIconList_Goto			::tk::IconList_Goto
-	tkIconList_Index		::tk::IconList_Index
-	tkIconList_Invoke		::tk::IconList_Invoke
-	tkIconList_KeyPress		::tk::IconList_KeyPress
-	tkIconList_Leave1		::tk::IconList_Leave1
-	tkIconList_LeftRight		::tk::IconList_LeftRight
-	tkIconList_Motion1		::tk::IconList_Motion1
-	tkIconList_Reset		::tk::IconList_Reset
-	tkIconList_ReturnKey		::tk::IconList_ReturnKey
-	tkIconList_See			::tk::IconList_See
-	tkIconList_Select		::tk::IconList_Select
-	tkIconList_Selection		::tk::IconList_Selection
-	tkIconList_ShiftBtn1		::tk::IconList_ShiftBtn1
-	tkIconList_UpDown		::tk::IconList_UpDown
 	tkListbox			::tk::Listbox
 	tkListboxAutoScan		::tk::ListboxAutoScan
 	tkListboxBeginExtend		::tk::ListboxBeginExtend
@@ -259,7 +231,8 @@ proc ::tk::unsupported::ExposePrivateCommand {cmd} {
     variable PrivateCommands
     set cmds [array get PrivateCommands $cmd]
     if {[llength $cmds] == 0} {
-	return -code error "No compatibility support for \[$cmd]"
+	return -code error -errorcode {TK EXPOSE_PRIVATE_COMMAND} \
+	    "No compatibility support for \[$cmd]"
     }
     foreach {old new} $cmds {
 	namespace eval :: [list interp alias {} $old {}] $new
@@ -286,7 +259,8 @@ proc ::tk::unsupported::ExposePrivateVariable {var} {
     variable PrivateVariables
     set vars [array get PrivateVariables $var]
     if {[llength $vars] == 0} {
-	return -code error "No compatibility support for \$$var"
+	return -code error -errorcode {TK EXPOSE_PRIVATE_VARIABLE} \
+	    "No compatibility support for \$$var"
     }
     namespace eval ::tk::mac {}
     foreach {old new} $vars {

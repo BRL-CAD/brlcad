@@ -1,7 +1,7 @@
 /*                        S H _ P R J . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -335,7 +335,7 @@ orient_hook(const struct bu_structparse *UNUSED(sdp),
     MAT4X3VEC(img_new->i_plane, xform, v_tmp);
     VUNITIZE(img_new->i_plane);
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	point_t pt;
 
 	prj_sp = (struct prj_specific *)
@@ -458,7 +458,7 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const 
     BU_CK_VLS(matparm);
     RT_CK_REGION(rp);
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_log("prj_setup(%s) matparm:\"%s\"\n",
 	       rp->reg_name, bu_vls_addr(matparm));
 
@@ -470,7 +470,7 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const 
     memcpy(&prj_sp->prj_images, &IMG_INIT, sizeof(struct img_specific));
     BU_LIST_INIT(&prj_sp->prj_images.l);
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	if ((prj_sp->prj_plfd=fopen("prj.plot3", "wb")) == (FILE *)NULL) {
 	    bu_log("ERROR creating plot3 file prj.plot3");
 	}
@@ -497,7 +497,7 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const 
 	bu_vls_strncpy(&parameter_data, (char *)parameter_file->buf,
 		       parameter_file->buflen);
 
-	if (rdebug&RDEBUG_SHADE) {
+	if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	    bu_log("parsing: %s\n", bu_vls_addr(&parameter_data));
 	}
 
@@ -545,7 +545,7 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const 
      */
     for (BU_LIST_FOR(img_sp, img_specific, &prj_sp->prj_images.l)) {
 	if (img_sp->i_antialias != '0') {
-	    if (rdebug&RDEBUG_SHADE)
+	    if (optical_debug&OPTICAL_DEBUG_SHADE)
 		bu_log("prj_setup(%s) setting prismtrace 1\n", rp->reg_name);
 	    rtip->rti_prismtrace = 1;
 	    break;
@@ -565,7 +565,7 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const 
     db_region_mat(prj_sp->prj_m_to_sh, rtip->rti_dbip, rp->reg_name, &rt_uniresource);
 
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 
 	prj_print(rp, (char *)prj_sp);
     }
@@ -596,7 +596,7 @@ prj_free(void *cp)
     while (BU_LIST_WHILE(img_sp, img_specific, &prj_sp->prj_images.l)) {
 
 	img_sp->i_img = (unsigned char *)0;
-	if (img_sp->i_data) bu_close_mapped_file(img_sp->i_data);
+	bu_close_mapped_file(img_sp->i_data);
 	img_sp->i_data = (struct bu_mapped_file *)NULL; /* sanity */
 	if (img_sp->i_binunifp) rt_binunif_free(img_sp->i_binunifp);
 	img_sp->i_binunifp = (struct rt_binunif_internal *)NULL; /* sanity */
@@ -629,7 +629,7 @@ project_point(point_t sh_color, struct img_specific *img_sp, struct prj_specific
     MAT4X3PNT(sh_pt, img_sp->i_sh_to_img, r_pt);
     VADD2(sh_pt, sh_pt, delta);
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	VPRINT("sh_pt", sh_pt);
     }
 
@@ -669,7 +669,7 @@ project_point(point_t sh_color, struct img_specific *img_sp, struct prj_specific
 	return 1;
     }
 
-    if (rdebug&RDEBUG_SHADE && prj_sp->prj_plfd) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE && prj_sp->prj_plfd) {
 	/* plot projection direction */
 	pl_color(prj_sp->prj_plfd, V3ARGS(pixel));
 	pdv_3move(prj_sp->prj_plfd, r_pt);
@@ -714,7 +714,7 @@ prj_render(struct application *ap, const struct partition *pp, struct shadework 
     RT_CHECK_PT(pp);
     CK_prj_SP(prj_sp);
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	bu_log("shading with prj\n");
 	prj_print(pp->pt_regionp, dp);
     }
@@ -726,7 +726,7 @@ prj_render(struct application *ap, const struct partition *pp, struct shadework 
     MAT4X3VEC(r_N, prj_sp->prj_m_to_sh, swp->sw_hit.hit_normal);
 
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	bu_log("prj_render() model:(%g %g %g) shader:(%g %g %g)\n",
 	       V3ARGS(swp->sw_hit.hit_point),
 	       V3ARGS(r_pt));
@@ -771,7 +771,7 @@ prj_render(struct application *ap, const struct partition *pp, struct shadework 
 		r_N,
 		&(ap->a_rt_i->rti_tol));
 
-	    if (rdebug&RDEBUG_SHADE) {
+	    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 		/* status will be <= 0 when the image was not loaded */
 		if (status <= 0) {
 		    /* XXX What to do if we don't
@@ -794,7 +794,7 @@ prj_render(struct application *ap, const struct partition *pp, struct shadework 
 	if (img_sp->i_through == '0' && VDOT(r_N, img_sp->i_plane) < 0.0) {
 	    /* normal and projection dir don't match, skip on */
 
-	    if (rdebug&RDEBUG_SHADE && prj_sp->prj_plfd) {
+	    if (optical_debug&OPTICAL_DEBUG_SHADE && prj_sp->prj_plfd) {
 		/* plot hit normal */
 		pl_color(prj_sp->prj_plfd, 255, 255, 255);
 		pdv_3move(prj_sp->prj_plfd, r_pt);

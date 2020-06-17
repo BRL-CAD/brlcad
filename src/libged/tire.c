@@ -1,7 +1,7 @@
 /*                          T I R E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2019 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1782,7 +1782,7 @@ MakeAirRegion(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t zhub, 
 }
 
 HIDDEN int
-_opt_tire_iso(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+_opt_tire_iso(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
     int d1, d2, d3;
     char s1, s2;

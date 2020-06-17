@@ -1,7 +1,7 @@
 /*                        V I E W G 3 . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2019 United States Government as represented by
+ * Copyright (c) 1989-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -139,7 +139,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o, i
 
     output_is_binary = 0;		/* output is printable ascii */
 
-    if (R_DEBUG & RDEBUG_RAYPLOT) {
+    if (OPTICAL_DEBUG & OPTICAL_DEBUG_RAYPLOT) {
 	plotfp = fopen("rtg3.plot3", "w");
 	if (npsw > 1) {
 	    bu_log("Note: writing rtg3.plot3 file can only be done using only 1 processor\n");
@@ -400,7 +400,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
      * The easy way to activate this is with the harmless -!1 option
      * when running RTG3.
      */
-    if (R_DEBUG || bu_debug || RT_G_DEBUG) {
+    if (OPTICAL_DEBUG || bu_debug || RT_G_DEBUG) {
 	bu_vls_printf(&str, "   -b%d, %d -p %26.20e %26.20e %26.20e -d %26.20e %26.20e %26.20e\n",
 		      ap->a_x, ap->a_y,
 		      V3ARGS(ap->a_ray.r_pt),
@@ -493,7 +493,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 		air_thickness = 0.0;
 	    if (!NEAR_ZERO(air_thickness, 0.1)) {
 		air_id = 1;	/* air gap */
-		if (R_DEBUG & RDEBUG_HITS)
+		if (OPTICAL_DEBUG & OPTICAL_DEBUG_HITS)
 		    bu_log("air gap added\n");
 	    } else {
 		air_thickness = 0.0;
@@ -588,7 +588,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 	 * always be done single CPU, to prevent output garbling.
 	 * (See view_init).
 	 */
-	if (R_DEBUG & RDEBUG_RAYPLOT) {
+	if (OPTICAL_DEBUG & OPTICAL_DEBUG_RAYPLOT) {
 	    vect_t inpt;
 	    vect_t outpt;
 	    VJOIN1(inpt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist,
@@ -794,8 +794,8 @@ application_init (void)
     option("dummy", "-? or -h", "Display help", 1);
     option("", "-? or -h", "Display help", 1);
 
-    option(NULL, "-C", "Disabled, not implemented", 2);
-    option(NULL, "-W", "Disabled, non implemented", 2);
+    option(NULL, "-C", "Disabled, not implemented", -2);
+    option(NULL, "-W", "Disabled, non implemented", -2);
 }
 
 /*

@@ -1,7 +1,7 @@
 /*                        F B F A D E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -59,6 +59,9 @@
 #include <string.h>
 #include <stdarg.h>
 
+#include "bio.h"
+
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "vmath.h"
 #include "fb.h"			/* BRL-CAD package libfb.a interface */
@@ -101,6 +104,8 @@ Sig_Catcher(int sig)
 int
 main(int argc, char **argv)
 {
+    bu_setprogname(argv[0]);
+
     /* Plant signal catcher. */
     {
 	/* signals to catch */

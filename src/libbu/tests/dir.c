@@ -1,7 +1,7 @@
 /*                          D I R . C
  * BRL-CAD
  *
- * Copyright (c) 2018-2019 United States Government as represented by
+ * Copyright (c) 2018-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,6 +23,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include "bio.h"
+
+#ifdef HAVE_WINDOWS_H
+#  include <direct.h>
+#endif
 
 #include "bu.h"
 
@@ -118,6 +122,8 @@ main(int argc, char *argv[])
     const char *initp;
     const char *currp;
     char path[MAXPATHLEN] = {0};
+
+    bu_setprogname(argv[0]);
 
     /* explicit init to proof against enum reordering */
     enum2str[BU_DIR_CURR] = CPP_STR(BU_DIR_CURR);

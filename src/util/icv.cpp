@@ -1,7 +1,7 @@
 /*                           I C V . C P P
  * BRL-CAD
  *
- * Copyright (c) 2015-2019 United States Government as represented by
+ * Copyright (c) 2015-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@
 #include "icv.h"
 
 int
-file_stat(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+file_stat(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
     char **file_set = (char **)set_var;
 
@@ -50,7 +50,7 @@ file_stat(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 }
 
 int
-file_null(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+file_null(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
     char **file_set = (char **)set_var;
 
@@ -67,7 +67,7 @@ file_null(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 }
 
 int
-image_mime(struct bu_vls *msg, int argc, const char **argv, void *set_mime)
+image_mime(struct bu_vls *msg, size_t argc, const char **argv, void *set_mime)
 {
     int type_int;
     bu_mime_image_t type = BU_MIME_IMAGE_UNKNOWN;
@@ -103,6 +103,8 @@ main(int ac, const char **av)
     int skip_in = 0;
     int skip_out = 0;
     icv_image_t *img = NULL;
+
+    bu_setprogname(av[0]);
 
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
     struct bu_vls in_format = BU_VLS_INIT_ZERO;

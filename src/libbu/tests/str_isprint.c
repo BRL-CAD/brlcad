@@ -1,7 +1,7 @@
 /*                     S T R _ I S P R I N T . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2019 United States Government as represented by
+ * Copyright (c) 2007-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,9 +51,11 @@ main(int argc, char *argv[])
 {
     int test_num = 0;
 
+    bu_setprogname(argv[0]);
+
     if (argc < 2) {
-       fprintf(stderr, "Usage: %s {test_num}\n", argv[0]);
-       return 1;
+	fprintf(stderr, "Usage: %s {test_num}\n", argv[0]);
+	return 1;
     }
 
     sscanf(argv[1], "%d", &test_num);

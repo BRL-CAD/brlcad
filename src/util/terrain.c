@@ -1,7 +1,7 @@
 /*                       T E R R A I N . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2019 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,6 +43,7 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/cv.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
@@ -675,11 +676,13 @@ main(int ac, char *av[])
     int arg_count;
     unsigned short *buf;
     int in_cookie, out_cookie;
-    int count;
+    size_t count;
     size_t ret;
 
     /* function to call to generate the terrain.  Default noise pattern is fbm */
     void (*terrain_func)(unsigned short *);
+
+    bu_setprogname(av[0]);
 
     terrain_func = NULL;
     arg_count = parse_args(ac, av, &terrain_func);

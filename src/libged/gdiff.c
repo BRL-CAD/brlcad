@@ -1,7 +1,7 @@
 /*                         G D I F F . C
  * BRL-CAD
  *
- * Copyright (c) 2014-2019 United States Government as represented by
+ * Copyright (c) 2014-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -144,7 +144,7 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
 	    ged_get_obj_bounds(gedp, 1, (const char **)&right_obj, 0, obj_min, obj_max);
 	    VMINMAX(rpp_min, rpp_max, (double *)obj_min);
 	    VMINMAX(rpp_min, rpp_max, (double *)obj_max);
-	    len_tol = DIST_PT_PT(rpp_max, rpp_min) * 0.01;
+	    len_tol = DIST_PNT_PNT(rpp_max, rpp_min) * 0.01;
 	}
 	tol.dist = len_tol;
 

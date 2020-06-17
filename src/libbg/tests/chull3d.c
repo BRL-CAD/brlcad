@@ -1,7 +1,7 @@
 /*                      B N _ C H U L L . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2019 United States Government as represented by
+ * Copyright (c) 2013-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,8 +29,9 @@
 #include "bg.h"
 
 int
-main(int UNUSED(argc), const char **UNUSED(argv))
+main(int UNUSED(argc), const char **argv)
 {
+    bu_setprogname(argv[0]);
 
     /* Cube */
     {

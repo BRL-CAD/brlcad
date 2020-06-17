@@ -1,7 +1,7 @@
 /*                        R T _ D A T U M . C
  * BRL-CAD
  *
- * Copyright (c) 2018-2019 United States Government as represented by
+ * Copyright (c) 2018-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -330,6 +330,8 @@ main(int UNUSED(argc), char *argv[])
     char rt_tmpfile[MAXPATHLEN];
     struct db_i *dbip = DBI_NULL;
 
+    bu_setprogname(argv[0]);
+
     /* Get a guaranteed-valid temp file */
     FILE *fp = bu_temp_file(rt_tmpfile, MAXPATHLEN);
     if (fp == NULL) {
@@ -454,7 +456,7 @@ main(int UNUSED(argc), char *argv[])
 
     bu_log("\n\nOperation 05: scale a comb about -30, 40, 10 by 5x\n\n");
     VSET(p, -30, 40, 10);
-    bn_mat_scale_about_pt(mat, p, 5);
+    bn_mat_scale_about_pnt(mat, p, 5);
     apply_mat_obj(dbip, "comb_1.c", mat);
 
     /* Report */
@@ -471,7 +473,7 @@ main(int UNUSED(argc), char *argv[])
 
     bu_log("\n\nOperation 06: scale the solids about 10, 30, -40 by 5x\n\n");
     VSET(p, 10, 30, -40);
-    bn_mat_scale_about_pt(mat, p, 5);
+    bn_mat_scale_about_pnt(mat, p, 5);
     apply_mat_obj(dbip, "rcc_1.s", mat);
     apply_mat_obj(dbip, "datum_plane.s", mat);
 

@@ -1,7 +1,7 @@
 /*                         R T C H E C K . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2019 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,29 +37,18 @@
 
 #include "./ged_private.h"
 
-#if defined(HAVE_FDOPEN) && !defined(HAVE_DECL_FDOPEN)
-extern FILE *fdopen(int fd, const char *mode);
-#endif
-
-
 struct ged_rtcheck {
-    void *chan;
+    struct ged_subprocess *rrtp;
+    struct ged *gedp;
     FILE *fp;
-    struct bu_process *p;
     struct bn_vlblock *vbp;
     struct bu_list *vhead;
     double csize;
-    struct ged *gedp;
-    Tcl_Interp *interp;
-};
-
-struct rtcheck_output {
     void *chan;
-    struct ged *gedp;
     struct bu_process *p;
-    Tcl_Interp *interp;
+    int read_failed;
+    int draw_read_failed;
 };
-
 
 void
 _ged_wait_status(struct bu_vls *logstr,
@@ -85,79 +74,123 @@ _ged_wait_status(struct bu_vls *logstr,
 	bu_vls_printf(logstr, ", return (exit) code = %d", ret);
 }
 
+static void rtcheck_output_handler(void *clientData, int mask);
+static void rtcheck_vector_handler(void *clientData, int mask);
 
 static void
-rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
+rtcheck_handler_cleanup(struct ged_rtcheck *rtcp)
 {
     int retcode;
-    int value;
-    struct ged_rtcheck *rtcp = (struct ged_rtcheck *)clientData;
 
-    /* Get vector output from rtcheck */
-    if (feof(rtcp->fp) || (value = getc(rtcp->fp)) == EOF) {
-
-	_ged_delete_io_handler((void *)rtcp->interp, rtcp->chan,
-		rtcp->p, BU_PROCESS_STDOUT, (void *)rtcp,
+    if (rtcp->gedp->ged_delete_io_handler) {
+	(*rtcp->gedp->ged_delete_io_handler)(rtcp->gedp->ged_interp, rtcp->rrtp->chan,
+		rtcp->rrtp->p, BU_PROCESS_STDOUT, (void *)rtcp,
 		rtcheck_vector_handler);
-
-	bu_process_close(rtcp->p, BU_PROCESS_STDOUT);
-
-	dl_set_flag(rtcp->gedp->ged_gdp->gd_headDisplay, DOWN);
-
-	/* Add overlay */
-	_ged_cvt_vlblock_to_solids(rtcp->gedp, rtcp->vbp, "OVERLAPS", 0);
-	bn_vlblock_free(rtcp->vbp);
-
-	/* wait for the forked process */
-	retcode = bu_process_wait(NULL, rtcp->p, 0);
-	if (retcode != 0) {
-	    _ged_wait_status(rtcp->gedp->ged_result_str, retcode);
-	}
-
-	BU_PUT(rtcp, struct ged_rtcheck);
-
-	return;
+	(*rtcp->gedp->ged_delete_io_handler)(rtcp->gedp->ged_interp, rtcp->chan,
+		rtcp->p, BU_PROCESS_STDERR, (void *)rtcp,
+		rtcheck_output_handler);
     }
 
-    (void)rt_process_uplot_value(&rtcp->vhead,
-				 rtcp->vbp,
-				 rtcp->fp,
-				 value,
-				 rtcp->csize,
-				 rtcp->gedp->ged_gdp->gd_uplotOutputMode);
+    bu_process_close(rtcp->rrtp->p, BU_PROCESS_STDOUT);
+
+    /* wait for the forked process */
+    retcode = bu_process_wait(NULL, rtcp->rrtp->p, 0);
+    if (retcode != 0) {
+	_ged_wait_status(rtcp->gedp->ged_result_str, retcode);
+    }
+
+    BU_LIST_DEQUEUE(&rtcp->rrtp->l);
+    BU_PUT(rtcp->rrtp, struct ged_subprocess);
+    BU_PUT(rtcp, struct ged_rtcheck);
 }
 
 static void
-rtcheck_output_handler(ClientData clientData, int UNUSED(mask))
+rtcheck_vector_handler(void *clientData, int UNUSED(mask))
 {
-    int count;
-    int read_failed = 0;
-    char line[RT_MAXLINE] = {0};
-    struct rtcheck_output *rtcop = (struct rtcheck_output *)clientData;
+    int value = 0;
+    struct ged_rtcheck *rtcp = (struct ged_rtcheck *)clientData;
 
-    /* Get textual output from rtcheck */
-    if (bu_process_read((char *)line, &count, rtcop->p, BU_PROCESS_STDERR, RT_MAXLINE) <= 0) {
-	read_failed = 1;
+    /* Get vector output from rtcheck */
+    if (!rtcp->draw_read_failed && (feof(rtcp->fp) || (value = getc(rtcp->fp)) == EOF)) {
+	size_t i;
+	int have_visual = 0;
+	const char *sname = "OVERLAPS";
+
+	rtcp->draw_read_failed = 1;
+
+	dl_set_flag(rtcp->gedp->ged_gdp->gd_headDisplay, DOWN);
+
+	/* Add overlay (or, if nothing to draw, clear any stale overlay) */
+	if (rtcp->vbp) {
+	    for (i = 0; i < rtcp->vbp->nused; i++) {
+		if (!BU_LIST_IS_EMPTY(&(rtcp->vbp->head[i]))) {
+		    have_visual = 1;
+		    break;
+		}
+	    }
+	}
+
+	if (have_visual) {
+	    _ged_cvt_vlblock_to_solids(rtcp->gedp, rtcp->vbp, sname, 0);
+	    bn_vlblock_free(rtcp->vbp);
+	} else {
+	    /* TODO - yuck.  This name is a product of the internals of the
+	     * "_ged_cvt_vlblock_to_solids" routine.  We should have a way to kill
+	     * command-specific display related objects cleanly...  hard-coding
+	     * this name ties proper stale drawing cleanup to the internals of the
+	     * current phony object drawing system.*/
+	    const char *sname_obj = "OVERLAPSffff00";
+	    struct directory *dp;
+	    if ((dp = db_lookup(rtcp->gedp->ged_wdbp->dbip, sname_obj, LOOKUP_QUIET)) != RT_DIR_NULL) {
+		dl_erasePathFromDisplay(rtcp->gedp->ged_gdp->gd_headDisplay, rtcp->gedp->ged_wdbp->dbip,
+			rtcp->gedp->ged_free_vlist_callback, sname_obj, 0, rtcp->gedp->freesolid);
+	    }
+	}
+
+	rtcp->vbp = NULL;
     }
 
-    if (read_failed) {
-	_ged_delete_io_handler((void *)rtcop->interp, rtcop->chan,
-		rtcop->p, BU_PROCESS_STDERR, (void *)rtcop,
-		rtcheck_output_handler);
+    if (rtcp->read_failed && rtcp->draw_read_failed) {
+	rtcheck_handler_cleanup(rtcp);
+	return;
+    }
 
-	if (rtcop->gedp->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
-	    rtcop->gedp->ged_gdp->gd_rtCmdNotify(0);
+    if (!rtcp->draw_read_failed) {
+	(void)rt_process_uplot_value(&rtcp->vhead,
+		rtcp->vbp,
+		rtcp->fp,
+		value,
+		rtcp->csize,
+		rtcp->gedp->ged_gdp->gd_uplotOutputMode);
+    }
+}
 
-	BU_PUT(rtcop, struct rtcheck_output);
+static void
+rtcheck_output_handler(void *clientData, int UNUSED(mask))
+{
+    int count;
+    char line[RT_MAXLINE] = {0};
+    struct ged_rtcheck *rtcp = (struct ged_rtcheck *)clientData;
 
+    /* Get textual output from rtcheck */
+    if (bu_process_read((char *)line, &count, rtcp->p, BU_PROCESS_STDERR, RT_MAXLINE) <= 0) {
+	rtcp->read_failed = 1;
+	if (rtcp->gedp->ged_gdp->gd_rtCmdNotify != (void (*)(int))0)
+	    rtcp->gedp->ged_gdp->gd_rtCmdNotify(0);
+    }
+
+
+    if (rtcp->read_failed && rtcp->draw_read_failed) {
+	rtcheck_handler_cleanup(rtcp);
 	return;
     }
 
     line[count] = '\0';
-    if (rtcop->gedp->ged_output_handler != (void (*)(struct ged *, char *))0)
-	rtcop->gedp->ged_output_handler(rtcop->gedp, line);
-    else
-	bu_vls_printf(rtcop->gedp->ged_result_str, "%s", line);
+    if (rtcp->gedp->ged_output_handler != (void (*)(struct ged *, char *))0) {
+	rtcp->gedp->ged_output_handler(rtcp->gedp, line);
+    }	else {
+	bu_vls_printf(rtcp->gedp->ged_result_str, "%s", line);
+    }
 }
 
 /*
@@ -174,8 +207,9 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
     int i;
     FILE *fp;
     struct ged_rtcheck *rtcp;
-    struct rtcheck_output *rtcop;
     struct bu_process *p = NULL;
+    char ** gd_rt_cmd = NULL;
+    int gd_rt_cmd_len = 0;
 
     vect_t eye_model;
 
@@ -196,10 +230,10 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 	snprintf(rtcheck, 256, "%s/%s", bin, argv[0]);
     }
 
-    args = argc + 7 + 2 + ged_count_tops(gedp);
-    gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
+    args = argc + 7 + 2 + ged_who_argc(gedp);
+    gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
-    vp = &gedp->ged_gdp->gd_rt_cmd[0];
+    vp = &gd_rt_cmd[0];
     *vp++ = rtcheck;
     *vp++ = "-M";
     for (i = 1; i < argc; i++)
@@ -213,21 +247,32 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
      * Otherwise, simply append the remaining args.
      */
     if (i == argc) {
-	gedp->ged_gdp->gd_rt_cmd_len = vp - gedp->ged_gdp->gd_rt_cmd;
-	gedp->ged_gdp->gd_rt_cmd_len += ged_build_tops(gedp, vp, &gedp->ged_gdp->gd_rt_cmd[args]);
+	gd_rt_cmd_len = vp - gd_rt_cmd;
+	gd_rt_cmd_len += ged_who_argv(gedp, vp, (const char **)&gd_rt_cmd[args]);
     } else {
 	while (i < argc)
 	    *vp++ = (char *)argv[i++];
 	*vp = 0;
-	vp = &gedp->ged_gdp->gd_rt_cmd[0];
-	while (*vp)
-	    Tcl_AppendResult((Tcl_Interp *)gedp->ged_interp, *vp++, " ", (char *)NULL);
-
-	Tcl_AppendResult((Tcl_Interp *)gedp->ged_interp, "\n", (char *)NULL);
+	vp = &gd_rt_cmd[0];
+	while (*vp) {
+	    bu_vls_printf(gedp->ged_result_str, "%s ", *vp);
+	    vp++;
+	}
+	bu_vls_printf(gedp->ged_result_str, "\n");
     }
 
 
-    bu_process_exec(&p, gedp->ged_gdp->gd_rt_cmd[0], gedp->ged_gdp->gd_rt_cmd_len, (const char **)gedp->ged_gdp->gd_rt_cmd, 0, 0);
+    bu_process_exec(&p, gd_rt_cmd[0], gd_rt_cmd_len, (const char **)gd_rt_cmd, 0, 0);
+
+    if (bu_process_pid(p) == -1) {
+	bu_vls_printf(gedp->ged_result_str, "\nunable to successfully launch subprocess: ");
+	for (int pi = 0; pi < gd_rt_cmd_len; pi++) {
+	    bu_vls_printf(gedp->ged_result_str, "%s ", gd_rt_cmd[pi]);
+	}
+	bu_vls_printf(gedp->ged_result_str, "\n");
+	bu_free(gd_rt_cmd, "free gd_rt_cmd");
+	return GED_ERROR;
+    }
 
     fp = bu_process_open(p, BU_PROCESS_STDIN);
 
@@ -236,29 +281,34 @@ ged_rtcheck(struct ged *gedp, int argc, const char *argv[])
 
     bu_process_close(p, BU_PROCESS_STDIN);
 
-    /* initialize the rtcheck structs */
+    /* create the rtcheck struct */
     BU_GET(rtcp, struct ged_rtcheck);
-    rtcp->p = p;
+    rtcp->gedp = gedp;
     rtcp->fp = bu_process_open(p, BU_PROCESS_STDOUT);
     /* Needed on Windows for successful rtcheck drawing data communication */
-    setmode(_fileno(rtcp->fp), O_BINARY);
+    setmode(fileno(rtcp->fp), O_BINARY);
     rtcp->vbp = rt_vlblock_init();
     rtcp->vhead = bn_vlblock_find(rtcp->vbp, 0xFF, 0xFF, 0x00);
     rtcp->csize = gedp->ged_gvp->gv_scale * 0.01;
-    rtcp->gedp = gedp;
-    rtcp->interp = (Tcl_Interp *)gedp->ged_interp;
+    rtcp->p = p;
+    rtcp->read_failed = 0;
+    rtcp->draw_read_failed = 0;
 
-    BU_GET(rtcop, struct rtcheck_output);
-    rtcop->p = p;
-    rtcop->gedp = gedp;
-    rtcop->interp = (Tcl_Interp *)gedp->ged_interp;
+    /* create the ged_subprocess container */
+    BU_GET(rtcp->rrtp, struct ged_subprocess);
+    rtcp->rrtp->p = p;
+    rtcp->rrtp->aborted = 0;
+    if (gedp->ged_create_io_handler) {
+	(*gedp->ged_create_io_handler)(&(rtcp->rrtp->chan), p, BU_PROCESS_STDOUT, gedp->io_mode, (void *)rtcp, rtcheck_vector_handler);
+    }
+    BU_LIST_INIT(&rtcp->rrtp->l);
+    BU_LIST_APPEND(&gedp->gd_headSubprocess.l, &rtcp->rrtp->l);
 
-    /* file handlers */
-    _ged_create_io_handler(&(rtcp->chan), p, BU_PROCESS_STDOUT, TCL_READABLE, (void *)rtcp, rtcheck_vector_handler);
-    _ged_create_io_handler(&(rtcop->chan), p, BU_PROCESS_STDERR, TCL_READABLE, (void *)rtcop, rtcheck_output_handler);
+    if (gedp->ged_create_io_handler) {
+	(*gedp->ged_create_io_handler)(&(rtcp->chan), p, BU_PROCESS_STDERR, gedp->io_mode, (void *)rtcp, rtcheck_output_handler);
+    }
 
-    bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
-    gedp->ged_gdp->gd_rt_cmd = NULL;
+    bu_free(gd_rt_cmd, "free gd_rt_cmd");
 
     return GED_OK;
 }
