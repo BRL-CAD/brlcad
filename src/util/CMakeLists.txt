@@ -67,7 +67,7 @@ BRLCAD_ADDEXEC(decimate decimate.c libbu)
 BRLCAD_ADDEXEC(double-asc double-asc.c "libdm;libbu")
 BRLCAD_ADDEXEC(dpix-pix dpix-pix.c libbu)
 BRLCAD_ADDEXEC(gencolor gencolor.c libbu)
-BRLCAD_ADDEXEC(halftone2 halftone.c "librt;libdm;libbu")
+BRLCAD_ADDEXEC(halftone halftone.c "librt;libdm;libbu")
 
 # This is intended to replace all of the img-img utils eventually
 BRLCAD_ADDEXEC(icv icv.cpp "libicv;libbu")
