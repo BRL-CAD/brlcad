@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------------
-                    [incr Widgets] - version 4.0.2
+                    [incr Widgets] - version 4.1.1
 ------------------------------------------------------------------------------
 Please send general comments, suggestions, and questions to chad_smith@adc.com
 or itclguy@yahoo.com.  Much of this file was written by Mark Ulferts, the
@@ -85,7 +85,7 @@ released.  Chad has assumed responsibilities for updates and maintenance.
 ------------------------------------------------------------------------------
  The [incr Widgets] distribution may be downloaded at SourceForge:
  www.sourceforge.net/projects/incrtcl.  The current distribution is
- version 4.0.2.
+ version 4.1.1.
 
 
  Web site
@@ -127,7 +127,7 @@ released.  Chad has assumed responsibilities for updates and maintenance.
   and install it first.  Once you have downloaded and installed [incr Tcl]
   and [incr Tk], you can proceed with [incr Widgets] installation as follows:
 
-  1)  Copy the iwidgets4.0.2.tar.gz file to your toplevel [incr Tcl]
+  1)  Copy the iwidgets4.1.1.tar.gz file to your toplevel [incr Tcl]
       directory.  For example, if you have the itcl3.2.1 distribution in
       a directory named /usr/local/tcl/itcl3.2.1, then you should copy
       the iwidgets file to this directory.
@@ -138,11 +138,11 @@ released.  Chad has assumed responsibilities for updates and maintenance.
 
   2)  Untar/unzip the archive:
 
-	gunzip -c iwidgets4.0.2.tar.gz |tar xvf -
+	gunzip -c iwidgets4.1.1.tar.gz |tar xvf -
 
   3)  Run the configuration script:
 
-        cd iwidgets4.0.0
+        cd iwidgets4.1.1
         ./configure
 
       By default, the configuration script will set things up to be

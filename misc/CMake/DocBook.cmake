@@ -1,7 +1,7 @@
 #                   D O C B O O K . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2018 United States Government as represented by
+# Copyright (c) 2011-2020 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -148,6 +148,9 @@ endif(CMAKE_CONFIGURATION_TYPES)
 # Convenience target to launch all DocBook builds
 add_custom_target(docbook ALL)
 set_target_properties(docbook PROPERTIES FOLDER "DocBook")
+if (TARGET brlcad_css)
+  add_dependencies(docbook brlcad_css)
+endif (TARGET brlcad_css)
 
 macro(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
 
@@ -256,6 +259,9 @@ macro(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
 	# the docbook targets are built.
 	#add_custom_target(docbook-${fname_root}-${path_md5} DEPENDS ${outputs})
 	#set_target_properties(docbook-${fname_root}-${path_md5} PROPERTIES FOLDER "DocBook")
+	#if (TARGET brlcad_css)
+	#  add_dependencies(docbook-${fname_root}-${path_md5} brlcad_css)
+	#endif (TARGET brlcad_css)
       endif(NOT "${outputs}" STREQUAL "")
 
     endforeach(fname ${xml_files})

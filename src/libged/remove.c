@@ -1,7 +1,7 @@
 /*                         R E M O V E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -80,7 +80,7 @@ ged_remove(struct ged *gedp, int argc, const char *argv[])
 
     /* Process each argument */
     num_deleted = 0;
-    ret = TCL_OK;
+    ret = GED_OK;
     for (i = 2; i < argc; i++) {
 	if (db_tree_del_dbleaf(&(comb->tree), argv[i], &rt_uniresource, 0) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "ERROR: Failure deleting %s/%s\n", dp->d_namep, argv[i]);

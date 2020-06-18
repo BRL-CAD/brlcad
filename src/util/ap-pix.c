@@ -1,7 +1,7 @@
 /*                        A P - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2018 United States Government as represented by
+ * Copyright (c) 1986-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "bu/app.h"
 #include "bu/file.h"
 #include "bu/str.h"
 #include "bu/exit.h"
@@ -62,6 +63,8 @@ main(int argc, char **argv)
     const char *argv0 = argv[0];
     int verbose = 0;
 
+    bu_setprogname(argv[0]);
+
     if (argc > 1) {
 	if (BU_STR_EQUAL(argv[1], "-h") ||  BU_STR_EQUAL(argv[1], "-?"))
 	    usage(argv0);
@@ -80,9 +83,9 @@ main(int argc, char **argv)
 	bu_exit(2, "%s: can't open \"%s\"\n", argv0, argv[1]);
     }
     yelfp = fopen(argv[1], "r");
-    fseek(yelfp, 50*sizeof(yelline), 0);
+    bu_fseek(yelfp, 50*sizeof(yelline), 0);
     cyafp = fopen(argv[1], "r");
-    fseek(cyafp, 100*sizeof(cyaline), 0);
+    bu_fseek(cyafp, 100*sizeof(cyaline), 0);
 
     line = 0;
     while ((int)fread(&cyaline, sizeof(cyaline), 1, cyafp) > 0) {

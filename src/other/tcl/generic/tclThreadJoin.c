@@ -14,7 +14,7 @@
 
 #include "tclInt.h"
 
-#ifdef WIN32
+#ifdef _WIN32
 
 /*
  * The information about each joinable thread is remembered in a structure as
@@ -52,7 +52,7 @@ typedef struct JoinableThread {
 
 TCL_DECLARE_MUTEX(joinMutex)
 
-static JoinableThread* firstThreadPtr;
+static JoinableThread *firstThreadPtr;
 
 /*
  *----------------------------------------------------------------------
@@ -201,7 +201,7 @@ TclJoinThread(
 
     Tcl_ConditionFinalize(&threadPtr->cond);
     Tcl_MutexFinalize(&threadPtr->threadMutex);
-    ckfree((char *) threadPtr);
+    ckfree(threadPtr);
 
     return TCL_OK;
 }
@@ -230,7 +230,7 @@ TclRememberJoinableThread(
 {
     JoinableThread *threadPtr;
 
-    threadPtr = (JoinableThread *) ckalloc(sizeof(JoinableThread));
+    threadPtr = ckalloc(sizeof(JoinableThread));
     threadPtr->id = id;
     threadPtr->done = 0;
     threadPtr->waitedUpon = 0;
@@ -305,7 +305,7 @@ TclSignalExitThread(
 
     Tcl_MutexUnlock(&threadPtr->threadMutex);
 }
-#endif /* WIN32 */
+#endif /* _WIN32 */
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                            E B M . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2018 United States Government as represented by
+ * Copyright (c) 1994-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,7 +46,7 @@ mk_ebm(struct rt_wdb *fp, const char *name, const char *file, size_t xdim, size_
 
     BU_ALLOC(ebm, struct rt_ebm_internal);
     ebm->magic = RT_EBM_INTERNAL_MAGIC;
-    bu_strlcpy(ebm->file, file, RT_EBM_NAME_LEN);
+    bu_strlcpy(ebm->name, file, RT_EBM_NAME_LEN);
     ebm->xdim = xdim;
     ebm->ydim = ydim;
     ebm->tallness = tallness;

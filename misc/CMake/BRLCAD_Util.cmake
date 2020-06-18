@@ -1,7 +1,7 @@
 #               B R L C A D _ U T I L . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2018 United States Government as represented by
+# Copyright (c) 2011-2020 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -85,14 +85,14 @@ function(message)
   # optional arg, so we extract it and test.
   list(GET ARGV 0 MessageType)
 
-  if (MessageType STREQUAL FATAL_ERROR OR MessageType STREQUAL SEND_ERROR OR MessageType STREQUAL WARNING OR MessageType STREQUAL AUTHOR_WARNING OR MessageType STREQUAL STATUS)
+  if (MessageType STREQUAL FATAL_ERROR OR MessageType STREQUAL SEND_ERROR OR MessageType STREQUAL WARNING OR MessageType STREQUAL AUTHOR_WARNING OR MessageType STREQUAL STATUS OR MessageType STREQUAL CHECK_START OR MessageType STREQUAL CHECK_PASS OR MessageType STREQUAL CHECK_FAIL )
     list(REMOVE_AT ARGV 0)
     _message(${MessageType} "${ARGV}")
     file(APPEND "${BRLCAD_BINARY_DIR}/CMakeFiles/CMakeOutput.log" "${MessageType}: ${ARGV}\n")
-  else (MessageType STREQUAL FATAL_ERROR OR MessageType STREQUAL SEND_ERROR OR MessageType STREQUAL WARNING OR MessageType STREQUAL AUTHOR_WARNING OR MessageType STREQUAL STATUS)
+  else ()
     _message("${ARGV}")
     file(APPEND "${BRLCAD_BINARY_DIR}/CMakeFiles/CMakeOutput.log" "${ARGV}\n")
-  endif (MessageType STREQUAL FATAL_ERROR OR MessageType STREQUAL SEND_ERROR OR MessageType STREQUAL WARNING OR MessageType STREQUAL AUTHOR_WARNING OR MessageType STREQUAL STATUS)
+  endif ()
 
   # ~10% slower alternative that avoids adding '--' to STATUS messages
   # execute_process(COMMAND ${CMAKE_COMMAND} -E echo "${ARGV}")
@@ -222,7 +222,8 @@ function(CMFILE ITEM)
   endif(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
 
   # We're good - log it
-  set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
+  get_filename_component(item_absolute "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}" ABSOLUTE)
+  set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES "${item_absolute}")
 
 endfunction(CMFILE ITEM)
 
@@ -437,63 +438,6 @@ function(ADD_TARGET_DEPS tname)
 endfunction(ADD_TARGET_DEPS tname)
 
 #---------------------------------------------------------------------------
-# Write out an execution script to run commands with the necessary
-# variables set to allow execution in the build directory, even if
-# there are installed libraries present in the final installation
-# directory.
-function(generate_cmd_script cmd_exe script_file)
-
-  cmake_parse_arguments(GCS "" "OLOG;ELOG" "CARGS" ${ARGN})
-
-  # Initialize file 
-  file(WRITE "${script_file}" "# Script to run ${cmd_exe}\n")
-
-  # Handle multiconfig (must be run-time determination for Visual Studio and XCode)
-  # TODO - logic writing this trick needs to become some sort of standard routine...
-  file(APPEND "${script_file}" "if(EXISTS \"${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/Release\")\n")
-  file(APPEND "${script_file}" "  set(CBDIR \"${CMAKE_BINARY_DIR}/Release\")\n")
-  file(APPEND "${script_file}" "elseif(EXISTS \"${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/Debug\")\n")
-  file(APPEND "${script_file}" "  set(CBDIR \"${CMAKE_BINARY_DIR}/Debug\")\n")
-  file(APPEND "${script_file}" "else(EXISTS \"${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/Release\")\n")
-  file(APPEND "${script_file}" "  set(CBDIR \"${CMAKE_BINARY_DIR}\")\n")
-  file(APPEND "${script_file}" "endif(EXISTS \"${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/Release\")\n")
-
-  # BRLCAD_ROOT is the hammer that makes certain we are running
-  # things found in the build directory
-  file(APPEND "${script_file}" "set(ENV{BRLCAD_ROOT} \"\${CBDIR}\")\n")
-
-  # Substitute in the correct binary path anywhere it is needed in the args
-  file(APPEND "${script_file}" "string(REPLACE \"CURRENT_BUILD_DIR\" \"\${CBDIR}\" FIXED_CMD_ARGS \"${GCS_CARGS}\")\n")
-
-  # Use the CMake executable to figure out if we need an extension
-  get_filename_component(EXE_EXT "${CMAKE_COMMAND}" EXT)
-
-  # Write the actual cmake command to run the process
-  file(APPEND "${script_file}" "execute_process(COMMAND \"\${CBDIR}/${BIN_DIR}/${cmd_exe}${EXE_EXT}\" \${FIXED_CMD_ARGS} RESULT_VARIABLE CR OUTPUT_VARIABLE CO ERROR_VARIABLE CE)\n")
-
-  # Log the outputs, if we are supposed to do that
-  if(GCS_OLOG)
-    file(APPEND "${script_file}" "file(APPEND \"${GCS_OLOG}\" \"\${CO}\")\n")
-  endif(GCS_OLOG)
-  if(GCS_ELOG)
-    file(APPEND "${script_file}" "file(APPEND \"${GCS_ELOG}\" \"\${CE}\")\n")
-  endif(GCS_ELOG)
-
-  # Fail the command if the result was non-zero
-  file(APPEND "${script_file}" "if(CR)\n")
-  file(APPEND "${script_file}" "  message(FATAL_ERROR \"\${CBDIR}/${BIN_DIR}/${cmd_exe}${EXE_EXT} failure: \${CR}\\n\${CO}\\n\${CE}\")\n")
-  file(APPEND "${script_file}" "endif(CR)\n")
-
-  # If we are doing distclean, let CMake know to remove the script and log files
-  if(COMMAND distclean)
-    set(distclean_files "${script_file}" "${GCS_OLOG}" "${GCS_ELOG}")
-    list(REMOVE_DUPLICATES distclean_files)
-    distclean(${distclean_files})
-  endif(COMMAND distclean)
-
-endfunction(generate_cmd_script)
-
-#---------------------------------------------------------------------------
 # Set variables reporting time of configuration.  Sets CONFIG_DATE and
 # CONFIG_DATESTAMP in parent scope.
 #
@@ -571,7 +515,7 @@ endfunction(set_config_time)
 # Code for timing configuration and building of BRL-CAD.  These executables
 # are used to define build targets for cross-platform reporting.  Run after
 # set_config_time.
-function(generate_timer_exes)
+function(generate_sstamp)
 
   #########################################################################
   # Print a basic time stamp
@@ -635,6 +579,11 @@ int main(int argc, const char **argv) {
   if(COMMAND distclean)
     distclean("${CMAKE_BINARY_DIR}/CMakeTmp/sstamp")
   endif(COMMAND distclean)
+
+endfunction(generate_sstamp)
+
+
+function(generate_dreport)
 
   #########################################################################
   # To report at the end what the actual deltas are, we need to read in the
@@ -716,7 +665,7 @@ int main(int argc, const char **argv) {
     distclean("${CMAKE_BINARY_DIR}/CMakeTmp/dreport")
   endif(COMMAND distclean)
 
-endfunction(generate_timer_exes)
+endfunction(generate_dreport)
 
 # Local Variables:
 # tab-width: 8

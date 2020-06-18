@@ -1,7 +1,7 @@
 /*                   B U _ O B S E R V E R . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -64,7 +64,7 @@ struct bu_observer_list {
  * initializes a bu_observer struct without allocating any memory.
  */
 #define BU_OBSERVER_INIT(_op) { \
-    (_op)->magic = BU_OBSERVER_MAGIC; \
+	(_op)->magic = BU_OBSERVER_MAGIC; \
 	BU_VLS_INIT(&(_op)->observer); \
 	BU_VLS_INIT(&(_op)->cmd); \
     }

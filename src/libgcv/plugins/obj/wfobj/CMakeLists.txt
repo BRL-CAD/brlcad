@@ -1,6 +1,6 @@
 #               C M A K E L I S T S . T X T
 #
-# This file is Copyright (c) 2010-2018 United States Government as
+# This file is Copyright (c) 2010-2020 United States Government as
 # represented by the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -109,10 +109,11 @@ set(WFOBJ_SRCS
 add_library(libwfobj SHARED ${WFOBJ_SRCS})
 set_target_properties(libwfobj PROPERTIES PREFIX "")
 set_target_properties(libwfobj PROPERTIES VERSION 20.0.1 SOVERSION 20)
-if(MSVC)
+if(HIDE_INTERNAL_SYMBOLS)
   set_property(TARGET libwfobj APPEND PROPERTY COMPILE_DEFINITIONS "WFOBJ_DLL_EXPORTS")
-endif(MSVC)
+endif(HIDE_INTERNAL_SYMBOLS)
 set_property(TARGET libwfobj APPEND PROPERTY INCLUDE_DIRECTORIES "${GENERATED_INCLUDES}")
+
 install(TARGETS libwfobj 
   RUNTIME DESTINATION ${BIN_DIR}
   LIBRARY DESTINATION ${LIB_DIR}

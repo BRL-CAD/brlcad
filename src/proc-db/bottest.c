@@ -1,7 +1,7 @@
 /*                       B O T T E S T . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2018 United States Government as represented by
+ * Copyright (c) 1999-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@
 #include <math.h>
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "raytrace.h"
 #include "wdb.h"
 #include "rt/geom.h"
@@ -49,6 +50,8 @@ main(int argc, char **argv)
     struct rt_wdb *outfp = NULL;
     struct bu_bitv *face_mode = NULL;
     static const char *filename = "bot-test.g";
+
+    bu_setprogname(argv[0]);
 
     if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?")) {
 	printusage();

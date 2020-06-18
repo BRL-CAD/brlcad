@@ -1,8 +1,8 @@
 /*
  * tkMacOSXFont.c --
  *
- *	Contains the Macintosh implementation of the platform-independant
- *	font package interface.
+ *	Contains the Macintosh implementation of the platform-independent font
+ *	package interface.
  *
  * Copyright 2002-2004 Benjamin Riefenstahl, Benjamin.Riefenstahl@epost.de
  * Copyright (c) 2006-2009 Daniel A. Steffen <das@users.sourceforge.net>
@@ -14,19 +14,11 @@
 
 #include "tkMacOSXPrivate.h"
 #include "tkMacOSXFont.h"
+#include "tkMacOSXConstants.h"
 
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 1080
 #define defaultOrientation kCTFontDefaultOrientation
 #define verticalOrientation kCTFontVerticalOrientation
-#else
-#define defaultOrientation kCTFontOrientationDefault
-#define verticalOrientation kCTFontOrientationVertical
-#endif
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 101100
 #define fixedPitch kCTFontUserFixedPitchFontType
-#else
-#define fixedPitch kCTFontUIFontUserFixedPitch
-#endif
 
 /*
 #ifdef TK_MAC_DEBUG
@@ -40,9 +32,8 @@
  */
 
 typedef struct {
-    TkFont font;		/* Stuff used by generic font package. Must
-				 * be first in structure. */
-
+    TkFont font;		/* Stuff used by generic font package. Must be
+				 * first in structure. */
     NSFont *nsFont;
     NSDictionary *nsAttributes;
 } MacFont;
@@ -91,27 +82,167 @@ static int antialiasedTextEnabled = -1;
 static NSCharacterSet *whitespaceCharacterSet = nil;
 static NSCharacterSet *lineendingCharacterSet = nil;
 
-static void GetTkFontAttributesForNSFont(NSFont *nsFont,
-	TkFontAttributes *faPtr);
-static NSFont *FindNSFont(const char *familyName, NSFontTraitMask traits,
-	NSInteger weight, CGFloat size, int fallbackToDefault);
-static void InitFont(NSFont *nsFont, const TkFontAttributes *reqFaPtr,
-	MacFont * fontPtr);
-static int CreateNamedSystemFont(Tcl_Interp *interp, Tk_Window tkwin,
-	const char* name, TkFontAttributes *faPtr);
-static void DrawCharsInContext(Display *display, Drawable drawable, GC gc,
-	Tk_Font tkfont, const char *source, int numBytes, int rangeStart,
-	int rangeLength, int x, int y, double angle);
-
-@interface NSFont(TKFont)
-- (NSFont *)bestMatchingFontForCharacters:(const UTF16Char *)characters
-	length:(NSUInteger)length attributes:(NSDictionary *)attributes
-	actualCoveredLength:(NSUInteger *)coveredLength;
-@end
+static void		GetTkFontAttributesForNSFont(NSFont *nsFont,
+			    TkFontAttributes *faPtr);
+static NSFont *		FindNSFont(const char *familyName,
+			    NSFontTraitMask traits, NSInteger weight,
+			    CGFloat size, int fallbackToDefault);
+static void		InitFont(NSFont *nsFont,
+			    const TkFontAttributes *reqFaPtr,
+			    MacFont *fontPtr);
+static int		CreateNamedSystemFont(Tcl_Interp *interp,
+			    Tk_Window tkwin, const char *name,
+			    TkFontAttributes *faPtr);
+static void		DrawCharsInContext(Display *display, Drawable drawable,
+			    GC gc, Tk_Font tkfont, const char *source,
+			    int numBytes, int rangeStart, int rangeLength,
+			    int x, int y, double angle);
 
 #pragma mark -
 #pragma mark Font Helpers:
 
+/*
+ *---------------------------------------------------------------------------
+ *
+ * TclUniToNSString --
+ *
+ * When Tcl is compiled with TCL_UTF_MAX = 3 (the default for 8.6) it cannot
+ * deal directly with UTF-8 encoded non-BMP characters, since their UTF-8
+ * encoding requires 4 bytes.
+ *
+ * As a workaround, these versions of Tcl encode non-BMP characters as a string
+ * of length 6 in which the high and low UTF-16 surrogates have been encoded
+ * using the UTF-8 algorithm.  The UTF-8 encoding does not allow encoding
+ * surrogates, so these 6-byte strings are not valid UTF-8, and hence Apple's
+ * NString class will refuse to instantiate an NSString from the 6-byte
+ * encoding.  This function allows creating an NSString from a C-string which
+ * has been encoded using this scheme.
+ *
+ * Results:
+ *	An NSString, which may be nil.
+ *
+ * Side effects:
+ *	None.
+ *---------------------------------------------------------------------------
+ */
+
+MODULE_SCOPE NSString*
+TclUniToNSString(
+   const char *source,
+   int numBytes)
+{
+    NSString *string = [[NSString alloc] initWithBytesNoCopy:(void *)source
+						      length:numBytes
+						    encoding:NSUTF8StringEncoding
+						freeWhenDone:NO];
+    if (!string) {
+	const unichar *characters = ckalloc(numBytes*sizeof(unichar));
+	const char *in = source;
+	unichar *out = (unichar *) characters;
+	while (in < source + numBytes) {
+	    in += Tcl_UtfToUniChar(in, out++);
+	}
+	string = [[NSString alloc] initWithCharacters:characters
+		     length:(out - characters)];
+	ckfree(characters);
+    }
+    return string;
+}
+
+/*
+ *---------------------------------------------------------------------------
+ *
+ * TclUniAtIndex --
+ *
+ *  Write a sequence of bytes up to length 6 which is an encoding of a UTF-16
+ *  character in an NSString.  Also record the unicode code point of the character.
+ *  this may be a non-BMP character constructed by reading two surrogates from
+ *  the NSString.
+ *
+ * Results:
+ *	Returns the number of bytes written.
+ *
+ * Side effects:
+ *	Bytes are written to the char array referenced by the pointer uni and
+ *      the unicode code point is written to the integer referenced by the
+ *      pointer code.
+ *
+ */
+
+MODULE_SCOPE int
+TclUniAtIndex(
+    NSString *string,
+    int index,
+    char *uni,
+    unsigned int *code)
+{
+    char *ptr = uni;
+    UniChar uniChar = [string characterAtIndex: index];
+    if (CFStringIsSurrogateHighCharacter(uniChar)) {
+	UniChar lowChar = [string characterAtIndex: ++index];
+	*code = CFStringGetLongCharacterForSurrogatePair(
+	    uniChar, lowChar);
+	ptr += Tcl_UniCharToUtf(uniChar, ptr);
+        ptr += Tcl_UniCharToUtf(lowChar, ptr);
+	return ptr - uni;
+    } else {
+	*code = (int) uniChar;
+	[[string substringWithRange: NSMakeRange(index, 1)]
+     	        getCString: uni
+		 maxLength: XMaxTransChars
+		  encoding: NSUTF8StringEncoding];
+	return strlen(uni);
+    }
+}
+
+/*
+ *---------------------------------------------------------------------------
+ *
+ * NSStringToTclUni --
+ *
+ * Encodes the unicode string represented by an NSString object with the
+ * internal encoding that Tcl uses when TCL_UTF_MAX = 3.  This encoding
+ * is similar to UTF-8 except that non-BMP characters are encoded as two
+ * successive 3-byte sequences which are constructed from UTF-16 surrogates
+ * by applying the UTF-8 algorithm.  Even though the UTF-8 encoding does not
+ * allow encoding surrogates, the algorithm does produce a well-defined
+ * 3-byte sequence.
+ *
+ * Results:
+ *	Returns a pointer to a null-terminated byte array which encodes the
+ *	NSString.
+ *
+ * Side effects:
+ *      Memory is allocated to hold the byte array, which must be freed with
+ *      ckalloc.  If the pointer numBytes is not NULL the number of non-null
+ *      bytes written to the array is stored in the integer it references.
+ */
+
+MODULE_SCOPE char*
+NSStringToTclUni(
+   NSString *string,
+   int *numBytes)
+{
+    unsigned int code;
+    int i;
+    char *ptr, *bytes = ckalloc(6*[string length] + 1);
+
+    ptr = bytes;
+    if (ptr) {
+	for (i = 0; i < [string length]; i++) {
+	    ptr += TclUniAtIndex(string, i, ptr, &code);
+	    if (code > 0xffff){
+		i++;
+	    }
+	}
+	*ptr = '\0';
+    }
+    if (numBytes) {
+	*numBytes = ptr - bytes;
+    }
+    return bytes;
+}
+
 #define GetNSFontTraitsFromTkFontAttributes(faPtr) \
 	((faPtr)->weight == TK_FW_BOLD ? NSBoldFontMask : NSUnboldFontMask) | \
 	((faPtr)->slant == TK_FS_ITALIC ? NSItalicFontMask : NSUnitalicFontMask)
@@ -139,11 +270,11 @@ GetTkFontAttributesForNSFont(
 {
     NSFontTraitMask traits = [[NSFontManager sharedFontManager]
 	    traitsOfFont:nsFont];
-
     faPtr->family = Tk_GetUid([[nsFont familyName] UTF8String]);
     faPtr->size = [nsFont pointSize];
     faPtr->weight = (traits & NSBoldFontMask ? TK_FW_BOLD : TK_FW_NORMAL);
     faPtr->slant = (traits & NSItalicFontMask ? TK_FS_ITALIC : TK_FS_ROMAN);
+
 }
 
 /*
@@ -187,6 +318,18 @@ FindNSFont(
 	size = [defaultFont pointSize];
     }
     nsFont = [fm fontWithFamily:family traits:traits weight:weight size:size];
+
+    /*
+     * A second bug in NSFontManager that Apple created for the Catalina OS
+     * causes requests as above to sometimes return fonts with additional
+     * traits that were not requested, even though fonts without those unwanted
+     * traits exist on the system.  See bug [90d555e088].  As a workaround
+     * we ask the font manager to remove any unrequested traits.
+     */
+
+    if (nsFont) {
+	nsFont = [fm convertFont:nsFont toNotHaveTrait:~traits];
+    }
     if (!nsFont) {
 	NSArray *availableFamilies = [fm availableFontFamilies];
 	NSString *caseFamily = nil;
@@ -246,7 +389,7 @@ InitFont(
     int ascent, descent/*, dontAA*/;
     static const UniChar ch[] = {'.', 'W', ' ', 0xc4, 0xc1, 0xc2, 0xc3, 0xc7};
 			/* ., W, Space, Auml, Aacute, Acirc, Atilde, Ccedilla */
-    #define nCh (sizeof(ch) / sizeof(UniChar))
+#define nCh	(sizeof(ch) / sizeof(UniChar))
     CGGlyph glyphs[nCh];
     CGRect boundingRects[nCh];
 
@@ -258,8 +401,12 @@ InitFont(
 	TkInitFontAttributes(faPtr);
     }
     fontPtr->nsFont = nsFont;
-    // some don't like antialiasing on fixed-width even if bigger than limit
-//    dontAA = [nsFont isFixedPitch] && fontPtr->font.fa.size <= 10;
+
+    /*
+     * Some don't like antialiasing on fixed-width even if bigger than limit
+     */
+
+    // dontAA = [nsFont isFixedPitch] && fontPtr->font.fa.size <= 10;
     if (antialiasedTextEnabled >= 0/* || dontAA*/) {
 	renderingMode = (antialiasedTextEnabled == 0/* || dontAA*/) ?
 		NSFontIntegerAdvancementsRenderingMode :
@@ -308,7 +455,7 @@ InitFont(
 		NSLigatureAttributeName,
 	    [NSNumber numberWithDouble:kern], NSKernAttributeName, nil];
     fontPtr->nsAttributes = [nsAttributes retain];
-    #undef nCh
+#undef nCh
 }
 
 /*
@@ -350,7 +497,7 @@ CreateNamedSystemFont(
  *
  *	This procedure is called when an application is created. It
  *	initializes all the structures that are used by the
- *	platform-dependant code on a per application basis.
+ *	platform-dependent code on a per application basis.
  *	Note that this is called before TkpInit() !
  *
  * Results:
@@ -372,10 +519,14 @@ TkpFontPkgInit(
     NSFont *nsFont;
     TkFontAttributes fa;
     NSMutableCharacterSet *cs;
-    /* Since we called before TkpInit, we need our own autorelease pool. */
+    /*
+     * Since we called before TkpInit, we need our own autorelease pool.
+     */
     NSAutoreleasePool *pool = [NSAutoreleasePool new];
 
-    /* force this for now */
+    /*
+     * Force this for now.
+     */
     if (!mainPtr->winPtr->mainPtr) {
 	mainPtr->winPtr->mainPtr = mainPtr;
     }
@@ -397,10 +548,25 @@ TkpFontPkgInit(
 	systemFont++;
     }
     TkInitFontAttributes(&fa);
+#if 0
+
+    /*
+     * In macOS 10.15.1 Apple introduced a bug in NSFontManager which caused
+     * it to not recognize the familyName ".SF NSMono" which is the familyName
+     * of the default fixed pitch system fault on that system.  See bug [855049e799].
+     * As a workaround we call [NSFont userFixedPitchFontOfSize:11] instead.
+     * This returns a user font in the "Menlo" family.
+     */
+
     nsFont = (NSFont*) CTFontCreateUIFontForLanguage(fixedPitch, 11, NULL);
+#else
+    nsFont = [NSFont userFixedPitchFontOfSize:11];
+#endif
     if (nsFont) {
 	GetTkFontAttributesForNSFont(nsFont, &fa);
+#if 0
 	CFRelease(nsFont);
+#endif
     } else {
 	fa.family = Tk_GetUid("Monaco");
 	fa.size = 11;
@@ -427,17 +593,17 @@ TkpFontPkgInit(
  *	Map a platform-specific native font name to a TkFont.
  *
  * Results:
- *	The return value is a pointer to a TkFont that represents the
- *	native font. If a native font by the given name could not be
- *	found, the return value is NULL.
+ *	The return value is a pointer to a TkFont that represents the native
+ *	font. If a native font by the given name could not be found, the return
+ *	value is NULL.
  *
- *	Every call to this procedure returns a new TkFont structure, even
- *	if the name has already been seen before. The caller should call
+ *	Every call to this procedure returns a new TkFont structure, even if
+ *	the name has already been seen before. The caller should call
  *	TkpDeleteFont() when the font is no longer needed.
  *
- *	The caller is responsible for initializing the memory associated
- *	with the generic TkFont when this function returns and releasing
- *	the contents of the generics TkFont before calling TkpDeleteFont().
+ *	The caller is responsible for initializing the memory associated with
+ *	the generic TkFont when this function returns and releasing the
+ *	contents of the generics TkFont before calling TkpDeleteFont().
  *
  * Side effects:
  *	None.
@@ -463,10 +629,10 @@ TkpGetNativeFont(
     } else {
 	return NULL;
     }
-    ctFont = CTFontCreateUIFontForLanguage(HIThemeGetUIFontType(
-	    themeFontId), 0, NULL);
+    ctFont = CTFontCreateUIFontForLanguage(
+	    HIThemeGetUIFontType(themeFontId), 0, NULL);
     if (ctFont) {
-	fontPtr = (MacFont *) ckalloc(sizeof(MacFont));
+	fontPtr = ckalloc(sizeof(MacFont));
 	InitFont((NSFont*) ctFont, NULL, fontPtr);
     }
 
@@ -482,19 +648,18 @@ TkpGetNativeFont(
  *	closest matching attributes.
  *
  * Results:
- *	The return value is a pointer to a TkFont that represents the font
- *	with the desired attributes. If a font with the desired attributes
- *	could not be constructed, some other font will be substituted
- *	automatically.
+ *	The return value is a pointer to a TkFont that represents the font with
+ *	the desired attributes. If a font with the desired attributes could not
+ *	be constructed, some other font will be substituted automatically.
  *
- *	Every call to this procedure returns a new TkFont structure, even
- *	if the specified attributes have already been seen before. The
- *	caller should call TkpDeleteFont() to free the platform- specific
- *	data when the font is no longer needed.
+ *	Every call to this procedure returns a new TkFont structure, even if
+ *	the specified attributes have already been seen before. The caller
+ *	should call TkpDeleteFont() to free the platform- specific data when
+ *	the font is no longer needed.
  *
- *	The caller is responsible for initializing the memory associated
- *	with the generic TkFont when this function returns and releasing
- *	the contents of the generic TkFont before calling TkpDeleteFont().
+ *	The caller is responsible for initializing the memory associated with
+ *	the generic TkFont when this function returns and releasing the
+ *	contents of the generic TkFont before calling TkpDeleteFont().
  *
  * Side effects:
  *	None.
@@ -506,23 +671,23 @@ TkFont *
 TkpGetFontFromAttributes(
     TkFont *tkFontPtr,		/* If non-NULL, store the information in this
 				 * existing TkFont structure, rather than
-				 * allocating a new structure to hold the
-				 * font; the existing contents of the font
-				 * will be released. If NULL, a new TkFont
-				 * structure is allocated. */
+				 * allocating a new structure to hold the font;
+				 * the existing contents of the font will be
+				 * released. If NULL, a new TkFont structure is
+				 * allocated. */
     Tk_Window tkwin,		/* For display where font will be used. */
     const TkFontAttributes *faPtr)
 				/* Set of attributes to match. */
 {
     MacFont *fontPtr;
-    int points = TkFontGetPoints(tkwin, faPtr->size);
+    int points = (int) (TkFontGetPoints(tkwin, faPtr->size) + 0.5);
     NSFontTraitMask traits = GetNSFontTraitsFromTkFontAttributes(faPtr);
     NSInteger weight = (faPtr->weight == TK_FW_BOLD ? 9 : 5);
     NSFont *nsFont;
 
     nsFont = FindNSFont(faPtr->family, traits, weight, points, 0);
     if (!nsFont) {
-	char *const *aliases = TkFontGetAliasList(faPtr->family);
+	const char *const *aliases = TkFontGetAliasList(faPtr->family);
 
 	while (aliases && !nsFont) {
 	    nsFont = FindNSFont(*aliases++, traits, weight, points, 0);
@@ -535,7 +700,7 @@ TkpGetFontFromAttributes(
 	Tcl_Panic("Could not determine NSFont from TkFontAttributes");
     }
     if (tkFontPtr == NULL) {
-	fontPtr = (MacFont *) ckalloc(sizeof(MacFont));
+	fontPtr = ckalloc(sizeof(MacFont));
     } else {
 	fontPtr = (MacFont *) tkFontPtr;
 	TkpDeleteFont(tkFontPtr);
@@ -552,9 +717,9 @@ TkpGetFontFromAttributes(
  * TkpDeleteFont --
  *
  *	Called to release a font allocated by TkpGetNativeFont() or
- *	TkpGetFontFromAttributes(). The caller should have already
- *	released the fields of the TkFont that are used exclusively by the
- *	generic TkFont code.
+ *	TkpGetFontFromAttributes(). The caller should have already released the
+ *	fields of the TkFont that are used exclusively by the generic TkFont
+ *	code.
  *
  * Results:
  *	TkFont is deallocated.
@@ -581,8 +746,8 @@ TkpDeleteFont(
  *
  * TkpGetFontFamilies --
  *
- *	Return information about the font families that are available on
- *	the display of the given window.
+ *	Return information about the font families that are available on the
+ *	display of the given window.
  *
  * Results:
  *	Modifies interp's result object to hold a list of all the available
@@ -614,12 +779,12 @@ TkpGetFontFamilies(
  *
  * TkpGetSubFonts --
  *
- *	A function used by the testing package for querying the actual
- *	screen fonts that make up a font object.
+ *	A function used by the testing package for querying the actual screen
+ *	fonts that make up a font object.
  *
  * Results:
- *	Modifies interp's result object to hold a list containing the names
- *	of the screen fonts that make up the given font object.
+ *	Modifies interp's result object to hold a list containing the names of
+ *	the screen fonts that make up the given font object.
  *
  * Side effects:
  *	None.
@@ -656,8 +821,8 @@ TkpGetSubFonts(
  *
  * TkpGetFontAttrsForChar --
  *
- *	Retrieve the font attributes of the actual font used to render a
- *	given character.
+ *	Retrieve the font attributes of the actual font used to render a given
+ *	character.
  *
  * Results:
  *	None.
@@ -672,14 +837,14 @@ void
 TkpGetFontAttrsForChar(
     Tk_Window tkwin,		/* Window on the font's display */
     Tk_Font tkfont,		/* Font to query */
-    Tcl_UniChar c,		/* Character of interest */
+    int c,         		/* Character of interest */
     TkFontAttributes* faPtr)	/* Output: Font attributes */
 {
     MacFont *fontPtr = (MacFont *) tkfont;
     NSFont *nsFont = fontPtr->nsFont;
     *faPtr = fontPtr->font.fa;
     if (nsFont && ![[nsFont coveredCharacterSet] characterIsMember:c]) {
-	UTF16Char ch = c;
+	UTF16Char ch = (UTF16Char) c;
 
 	nsFont = [nsFont bestMatchingFontForCharacters:&ch
 		length:1 attributes:nil actualCoveredLength:NULL];
@@ -759,10 +924,9 @@ Tk_MeasureChars(
  *	all the characters on the line for context.
  *
  * Results:
- *	The return value is the number of bytes from source that
- *	fit into the span that extends from 0 to maxLength. *lengthPtr is
- *	filled with the x-coordinate of the right edge of the last
- *	character that did fit.
+ *	The return value is the number of bytes from source that fit into the
+ *	span that extends from 0 to maxLength. *lengthPtr is filled with the
+ *	x-coordinate of the right edge of the last character that did fit.
  *
  * Side effects:
  *	None.
@@ -788,11 +952,11 @@ TkpMeasureCharsInContext(
 				 * TK_PARTIAL_OK means include the last char
 				 * which only partially fits on this line.
 				 * TK_WHOLE_WORDS means stop on a word
-				 * boundary, if possible. TK_AT_LEAST_ONE
-				 * means return at least one character even
-				 * if no characters fit.  If TK_WHOLE_WORDS
-				 * and TK_AT_LEAST_ONE are set and the first
-				 * word doesn't fit, we return at least one
+				 * boundary, if possible. TK_AT_LEAST_ONE means
+				 * return at least one character even if no
+				 * characters fit.  If TK_WHOLE_WORDS and
+				 * TK_AT_LEAST_ONE are set and the first word
+				 * doesn't fit, we return at least one
 				 * character or whatever characters fit into
 				 * maxLength.  TK_ISOLATE_END means that the
 				 * last character should not be considered in
@@ -819,20 +983,10 @@ TkpMeasureCharsInContext(
 	*lengthPtr = 0;
 	return 0;
     }
-#if 0
-    /* Back-compatibility with ATSUI renderer, appears not to be needed */
-    if (rangeStart == 0 && maxLength == 1 && (flags & TK_ISOLATE_END) &&
-	    !(flags & TK_AT_LEAST_ONE)) {
-	length = 0;
-	fit = 0;
-	goto done;
-    }
-#endif
     if (maxLength > 32767) {
 	maxLength = 32767;
     }
-    string = [[NSString alloc] initWithBytesNoCopy:(void*)source
-		length:numBytes encoding:NSUTF8StringEncoding freeWhenDone:NO];
+    string = TclUniToNSString((const char *)source, numBytes);
     if (!string) {
 	length = 0;
 	fit = rangeLength;
@@ -860,6 +1014,10 @@ TkpMeasureCharsInContext(
 	double maxWidth = maxLength + offset;
 	NSCharacterSet *cs;
 
+        /*
+         * Get a line breakpoint in the source string.
+         */
+
 	index = start;
 	if (flags & TK_WHOLE_WORDS) {
 	    index = CTTypesetterSuggestLineBreak(typesetter, start, maxWidth);
@@ -870,15 +1028,42 @@ TkpMeasureCharsInContext(
 	if (index <= start && !(flags & TK_WHOLE_WORDS)) {
 	    index = CTTypesetterSuggestClusterBreak(typesetter, start, maxWidth);
 	}
-	cs = (index < len || (flags & TK_WHOLE_WORDS)) ?
+
+        /*
+         * Trim right whitespace/lineending characters.
+         */
+
+	cs = (index <= len && (flags & TK_WHOLE_WORDS)) ?
 		whitespaceCharacterSet : lineendingCharacterSet;
 	while (index > start &&
 		[cs characterIsMember:[string characterAtIndex:(index - 1)]]) {
 	    index--;
 	}
+
+        /*
+         * If there is no line breakpoint in the source string between its
+         * start and the index position that fits in maxWidth, then
+         * CTTypesetterSuggestLineBreak() returns that very last index.
+         * However if the TK_WHOLE_WORDS flag is set, we want to break at a
+         * word boundary. In this situation, unless TK_AT_LEAST_ONE is set, we
+         * must report that zero chars actually fit (in other words the
+         * smallest word of the source string is still larger than maxWidth).
+         */
+
+        if ((index >= start) && (index < len) &&
+                (flags & TK_WHOLE_WORDS) && !(flags & TK_AT_LEAST_ONE) &&
+                ![cs characterIsMember:[string characterAtIndex:index]]) {
+            index = start;
+        }
+
 	if (index <= start && (flags & TK_AT_LEAST_ONE)) {
 	    index = start + 1;
 	}
+
+        /*
+         * Now measure the string width in pixels.
+         */
+
 	if (index > 0) {
 	    range.length = index;
 	    line = CTTypesetterCreateLine(typesetter, range);
@@ -894,10 +1079,14 @@ TkpMeasureCharsInContext(
 	    CFRelease(line);
 	}
 
-        /* The call to CTTypesetterSuggestClusterBreak above will always
-           return at least one character regardless of whether it exceeded
-           it or not.  Clean that up now. */
-	  while (width > maxWidth && !(flags & TK_PARTIAL_OK) && index > start+(flags & TK_AT_LEAST_ONE)) {
+        /*
+	 * The call to CTTypesetterSuggestClusterBreak above will always return
+	 * at least one character regardless of whether it exceeded it or not.
+	 * Clean that up now.
+	 */
+
+	while (width > maxWidth && !(flags & TK_PARTIAL_OK)
+		&& index > start+(flags & TK_AT_LEAST_ONE)) {
 	    range.length = --index;
 	    line = CTTypesetterCreateLine(typesetter, range);
 	    width = CTLineGetTypographicBounds(line, NULL, NULL, NULL);
@@ -920,7 +1109,6 @@ done:
 	    flags & TK_AT_LEAST_ONE ? "atLeastOne " : "",
 	    flags & TK_ISOLATE_END  ? "isolateEnd " : "",
 	    length, fit);
-//if (!(rangeLength==1 && rangeStart == 0)) fprintf(stderr, "   measure len=%d (max=%d, w=%.0f) from %d (nb=%d): source=\"%s\": index=%d return %d\n",rangeLength,maxLength,width,rangeStart,numBytes, source+rangeStart, index, fit);
 #endif
     *lengthPtr = length;
     return fit;
@@ -937,7 +1125,7 @@ done:
  *	actual implementation in TkpDrawCharsInContext().
  *
  * Results:
-  *	None.
+ *	None.
  *
  * Side effects:
  *	Information gets drawn on the screen.
@@ -955,8 +1143,8 @@ Tk_DrawChars(
     const char *source,		/* UTF-8 string to be displayed. Need not be
 				 * '\0' terminated. All Tk meta-characters
 				 * (tabs, control characters, and newlines)
-				 * should be stripped out of the string that
-				 * is passed to this function. If they are not
+				 * should be stripped out of the string that is
+				 * passed to this function. If they are not
 				 * stripped out, they will be displayed as
 				 * regular printing characters. */
     int numBytes,		/* Number of bytes in string. */
@@ -965,6 +1153,29 @@ Tk_DrawChars(
 {
     DrawCharsInContext(display, drawable, gc, tkfont, source, numBytes,
 	    0, numBytes, x, y, 0.0);
+}
+
+void
+TkDrawAngledChars(
+    Display *display,		/* Display on which to draw. */
+    Drawable drawable,		/* Window or pixmap in which to draw. */
+    GC gc,			/* Graphics context for drawing characters. */
+    Tk_Font tkfont,		/* Font in which characters will be drawn;
+				 * must be the same as font used in GC. */
+    const char *source,		/* UTF-8 string to be displayed. Need not be
+				 * '\0' terminated. All Tk meta-characters
+				 * (tabs, control characters, and newlines)
+				 * should be stripped out of the string that is
+				 * passed to this function. If they are not
+				 * stripped out, they will be displayed as
+				 * regular printing characters. */
+    int numBytes,		/* Number of bytes in string. */
+    double x, double y,		/* Coordinates at which to place origin of
+				 * string when drawing. */
+    double angle)		/* What angle to put text at, in degrees. */
+{
+    DrawCharsInContext(display, drawable, gc, tkfont, source, numBytes,
+	    0, numBytes, x, y, angle);
 }
 
 /*
@@ -997,8 +1208,8 @@ TkpDrawCharsInContext(
     const char * source,	/* UTF-8 string to be displayed. Need not be
 				 * '\0' terminated. All Tk meta-characters
 				 * (tabs, control characters, and newlines)
-				 * should be stripped out of the string that
-				 * is passed to this function. If they are not
+				 * should be stripped out of the string that is
+				 * passed to this function. If they are not
 				 * stripped out, they will be displayed as
 				 * regular printing characters. */
     int numBytes,		/* Number of bytes in string. */
@@ -1022,8 +1233,8 @@ DrawCharsInContext(
     const char * source,	/* UTF-8 string to be displayed. Need not be
 				 * '\0' terminated. All Tk meta-characters
 				 * (tabs, control characters, and newlines)
-				 * should be stripped out of the string that
-				 * is passed to this function. If they are not
+				 * should be stripped out of the string that is
+				 * passed to this function. If they are not
 				 * stripped out, they will be displayed as
 				 * regular printing characters. */
     int numBytes,		/* Number of bytes in string. */
@@ -1054,8 +1265,7 @@ DrawCharsInContext(
 	    !TkMacOSXSetupDrawingContext(drawable, gc, 1, &drawingContext)) {
 	return;
     }
-    string = [[NSString alloc] initWithBytesNoCopy:(void*)source
-		length:numBytes encoding:NSUTF8StringEncoding freeWhenDone:NO];
+    string = TclUniToNSString((const char *)source, numBytes);
     if (!string) {
 	return;
     }
@@ -1079,7 +1289,7 @@ DrawCharsInContext(
     t = CGAffineTransformMake(1.0, 0.0, 0.0, -1.0, 0.0, h);
     if (angle != 0.0) {
 	t = CGAffineTransformTranslate(CGAffineTransformRotate(
-		CGAffineTransformTranslate(t, x, y), angle*M_PI/180.0), -x, -y);
+		CGAffineTransformTranslate(t, x, y), angle*PI/180.0), -x, -y);
     }
     CGContextConcatCTM(context, t);
     CGContextSetTextPosition(context, x, y);
@@ -1087,6 +1297,7 @@ DrawCharsInContext(
     len = Tcl_NumUtfChars(source, rangeStart + rangeLength);
     if (start > 0) {
 	CGRect clipRect = CGRectInfinite, startBounds;
+
 	line = CTTypesetterCreateLine(typesetter, CFRangeMake(0, start));
 	startBounds = CTLineGetImageBounds(line, context);
 	CFRelease(line);
@@ -1180,11 +1391,65 @@ TkMacOSXIsCharacterMissing(
 /*
  *----------------------------------------------------------------------
  *
+ * TkMacOSXFontDescriptionForNSFontAndNSFontAttributes --
+ *
+ *	Get text description of a font specified by NSFont and attributes.
+ *
+ * Results:
+ *	List object or NULL.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+MODULE_SCOPE Tcl_Obj *
+TkMacOSXFontDescriptionForNSFontAndNSFontAttributes(
+    NSFont *nsFont,
+    NSDictionary *nsAttributes)
+{
+    Tcl_Obj *objv[6];
+    int i = 0;
+    const char *familyName = [[nsFont familyName] UTF8String];
+
+    if (nsFont && familyName) {
+	NSFontTraitMask traits = [[NSFontManager sharedFontManager]
+		traitsOfFont:nsFont];
+	id underline = [nsAttributes objectForKey:
+		NSUnderlineStyleAttributeName];
+	id strikethrough = [nsAttributes objectForKey:
+		NSStrikethroughStyleAttributeName];
+
+	objv[i++] = Tcl_NewStringObj(familyName, -1);
+	objv[i++] = Tcl_NewIntObj([nsFont pointSize]);
+#define S(s)    Tcl_NewStringObj(STRINGIFY(s),(int)(sizeof(STRINGIFY(s))-1))
+	objv[i++] = (traits & NSBoldFontMask)	? S(bold)   : S(normal);
+	objv[i++] = (traits & NSItalicFontMask)	? S(italic) : S(roman);
+	if ([underline respondsToSelector:@selector(intValue)] &&
+		([underline intValue] & (NSUnderlineStyleSingle |
+		NSUnderlineStyleThick | NSUnderlineStyleDouble))) {
+	    objv[i++] = S(underline);
+	}
+	if ([strikethrough respondsToSelector:@selector(intValue)] &&
+		([strikethrough intValue] & (NSUnderlineStyleSingle |
+		NSUnderlineStyleThick | NSUnderlineStyleDouble))) {
+	    objv[i++] = S(overstrike);
+	}
+#undef S
+    }
+    return i ? Tcl_NewListObj(i, objv) : NULL;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
  * TkMacOSXUseAntialiasedText --
  *
  *	Enables or disables application-wide use of antialiased text (where
- *	available). Sets up a linked Tcl global variable to allow
- *	disabling of antialiased text from tcl.
+ *	available). Sets up a linked Tcl global variable to allow disabling of
+ *	antialiased text from Tcl.
+ *
  *	The possible values for this variable are:
  *
  *	-1 - Use system default as configurable in "System Prefs" -> "General".

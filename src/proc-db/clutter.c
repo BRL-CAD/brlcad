@@ -1,7 +1,7 @@
 /*                       C L U T T E R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,6 +31,7 @@
 #include <math.h>
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/debug.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -88,6 +89,8 @@ main(int argc, char **argv)
     int n;
     double height, maxheight, minheight;
     struct wmember head;
+
+    bu_setprogname(argv[0]);
 
     bu_debug = BU_DEBUG_COREDUMP;
     rbuf = bn_unif_init(0, 0);

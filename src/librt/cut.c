@@ -1,7 +1,7 @@
 /*                           C U T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2018 United States Government as represented by
+ * Copyright (c) 1990-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -77,7 +77,7 @@ rt_cut_optimize_parallel(int cpu, void *arg)
     union cutter *cp;
     int i;
 
-    if (!arg && RT_G_DEBUG&DEBUG_CUT)
+    if (!arg && RT_G_DEBUG&RT_DEBUG_CUT)
 	bu_log("rt_cut_optimized_parallel(%d): NULL rtip\n", cpu);
 
     RT_CK_RTI(rtip);
@@ -253,7 +253,7 @@ rt_cut_it(register struct rt_i *rtip, int ncpu)
     if (rtip->rti_cutlen < 3) rtip->rti_cutlen = 3;
     if (rtip->rti_cutdepth < 12) rtip->rti_cutdepth = 12;
     if (rtip->rti_cutdepth > 24) rtip->rti_cutdepth = 24;     /* !! */
-    if (RT_G_DEBUG&DEBUG_CUT)
+    if (RT_G_DEBUG&RT_DEBUG_CUT)
 	bu_log("Before Space Partitioning: Max Tree Depth=%zu, Cutoff primitive count=%zu\n",
 	       rtip->rti_cutdepth, rtip->rti_cutlen);
 
@@ -272,7 +272,7 @@ rt_cut_it(register struct rt_i *rtip, int ncpu)
 	    /* one more pass to find cells that are mostly empty */
 	    num_splits = rt_split_mostly_empty_cells(rtip,  &rtip->rti_CutHead);
 
-	    if (RT_G_DEBUG&DEBUG_CUT) {
+	    if (RT_G_DEBUG&RT_DEBUG_CUT) {
 		bu_log("rt_split_mostly_empty_cells(): split %d cells\n", num_splits);
 	    }
 
@@ -291,16 +291,16 @@ rt_cut_it(register struct rt_i *rtip, int ncpu)
 		 (fastf_t)rtip->rti_cutdepth+1, rtip->rti_cutdepth+1);
     memset(rtip->rti_ncut_by_type, 0, sizeof(rtip->rti_ncut_by_type));
     rt_ct_measure(rtip, &rtip->rti_CutHead, 0);
-    if (RT_G_DEBUG&DEBUG_CUT) {
+    if (RT_G_DEBUG&RT_DEBUG_CUT) {
 	rt_pr_cut_info(rtip, "Cut");
     }
 
-    if (RT_G_DEBUG&DEBUG_CUTDETAIL) {
+    if (RT_G_DEBUG&RT_DEBUG_CUTDETAIL) {
 	/* Produce a voluminous listing of the cut tree */
 	rt_pr_cut(&rtip->rti_CutHead, 0);
     }
 
-    if (RT_G_DEBUG&DEBUG_PL_BOX) {
+    if (RT_G_DEBUG&RT_DEBUG_PL_BOX) {
 	/* Debugging code to plot cuts */
 	if ((plotfp=fopen("rtcut.plot3", "wb"))!=NULL) {
 	    pdv_3space(plotfp, rtip->rti_pmin, rtip->rti_pmax);
@@ -320,7 +320,7 @@ rt_cut_extend(register union cutter *cutp, struct soltab *stp, const struct rt_i
 
     BU_ASSERT(cutp->cut_type == CUT_BOXNODE);
 
-    if (RT_G_DEBUG&DEBUG_CUTDETAIL) {
+    if (RT_G_DEBUG&RT_DEBUG_CUTDETAIL) {
 	bu_log("rt_cut_extend(cutp=%p) %s npieces=%ld\n",
 	       (void *)cutp, stp->st_name, stp->st_npieces);
     }
@@ -505,7 +505,7 @@ rt_ct_box(struct rt_i *rtip, register union cutter *cutp, register int axis, dou
     int success = 0;
 
     RT_CK_RTI(rtip);
-    if (RT_G_DEBUG&DEBUG_CUTDETAIL) {
+    if (RT_G_DEBUG&RT_DEBUG_CUTDETAIL) {
 	bu_log("rt_ct_box(%p, %c) %g .. %g .. %g\n",
 	       (void *)cutp, "XYZ345"[axis],
 	       cutp->bn.bn_min[axis],
@@ -537,7 +537,7 @@ rt_ct_box(struct rt_i *rtip, register union cutter *cutp, register int axis, dou
 	 * This cut operation did no good, release storage,
 	 * and let caller attempt something else.
 	 */
-	if (RT_G_DEBUG&DEBUG_CUTDETAIL) {
+	if (RT_G_DEBUG&RT_DEBUG_CUTDETAIL) {
 	    static char axis_str[] = "XYZw";
 	    bu_log("rt_ct_box:  no luck, len=%zu, axis=%c\n",
 		   cutp->bn.bn_len, axis_str[axis]);
@@ -575,7 +575,7 @@ rt_ck_overlap(register const fastf_t *min, register const fastf_t *max, register
 {
     RT_CHECK_SOLTAB(stp);
 
-    if (RT_G_DEBUG&DEBUG_BOXING) {
+    if (RT_G_DEBUG&RT_DEBUG_BOXING) {
 	bu_log("rt_ck_overlap(%s)\n", stp->st_name);
 	VPRINT(" box min", min);
 	VPRINT(" sol min", stp->st_min);
@@ -651,7 +651,7 @@ rt_ct_optim(struct rt_i *rtip, register union cutter *cutp, size_t depth)
     }
 
     oldlen = rt_ct_piececount(cutp);	/* save before rt_ct_box() */
-    if (RT_G_DEBUG&DEBUG_CUTDETAIL)
+    if (RT_G_DEBUG&RT_DEBUG_CUTDETAIL)
 	bu_log("rt_ct_optim(cutp=%p, depth=%zu) piececount=%zu\n", (void *)cutp, depth, oldlen);
 
     /*
@@ -704,7 +704,7 @@ rt_ct_optim(struct rt_i *rtip, register union cutter *cutp, size_t depth)
 	}
 	if (rt_ct_piececount(cutp->cn.cn_l) >= oldlen &&
 	    rt_ct_piececount(cutp->cn.cn_r) >= oldlen) {
-	    if (RT_G_DEBUG&DEBUG_CUTDETAIL)
+	    if (RT_G_DEBUG&RT_DEBUG_CUTDETAIL)
 		bu_log("rt_ct_optim(cutp=%p, depth=%zu) oldlen=%zu, lhs=%zu, rhs=%zu, hopeless\n",
 		       (void *)cutp, depth, oldlen,
 		       rt_ct_piececount(cutp->cn.cn_l),
@@ -739,7 +739,7 @@ rt_ct_old_assess(register union cutter *cutp, register int axis, double *where_p
     long il;
     register double left, right;
 
-    if (RT_G_DEBUG&DEBUG_CUTDETAIL)
+    if (RT_G_DEBUG&RT_DEBUG_CUTDETAIL)
 	bu_log("rt_ct_old_assess(%p, %c)\n", (void *)cutp, "XYZ345"[axis]);
 
     /* In absolute terms, each box must be at least 1mm wide after cut. */
@@ -810,7 +810,7 @@ rt_ct_old_assess(register union cutter *cutp, register int axis, double *where_p
 	}
     }
 
-    if (RT_G_DEBUG&DEBUG_CUTDETAIL)bu_log("rt_ct_old_assess() left=%g, where=%g, right=%g, offcenter=%g\n",
+    if (RT_G_DEBUG&RT_DEBUG_CUTDETAIL)bu_log("rt_ct_old_assess() left=%g, where=%g, right=%g, offcenter=%g\n",
 
 					  left, where, right, offcenter);
 

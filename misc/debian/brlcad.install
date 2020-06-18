@@ -83,7 +83,6 @@ debian/brlcad-doc.directory usr/share/desktop-directories
 
 debian/archer.desktop usr/share/applications
 debian/brlcad-db.desktop usr/share/applications
-debian/brlcad-doc-animation.desktop usr/share/applications
 debian/brlcad-doc.desktop usr/share/applications
 debian/brlcad-doc-mged.desktop usr/share/applications
 debian/mged.desktop usr/share/applications

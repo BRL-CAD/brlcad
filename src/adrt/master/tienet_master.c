@@ -1,7 +1,7 @@
 /*                 T I E N E T _ M A S T E R . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2018 United States Government as represented by
+ * Copyright (c) 2002-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,7 +41,7 @@
 #ifdef HAVE_NETDB_H
 #  include <netdb.h>
 #endif
-#include <zlib.h>
+#include "zlib.h"
 
 #include "rt/tie.h"
 #include "bu/str.h"

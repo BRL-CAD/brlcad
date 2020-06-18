@@ -157,7 +157,9 @@ static int ConfigurePane(
     /* Sanity-check:
      */
     if (pane->weight < 0) {
-	Tcl_AppendResult(interp, "-weight must be nonnegative", NULL);
+	Tcl_SetObjResult(interp, Tcl_NewStringObj(
+		"-weight must be nonnegative", -1));
+	Tcl_SetErrorCode(interp, "TTK", "PANE", "WEIGHT", NULL);
 	goto error;
     }
 
@@ -419,9 +421,9 @@ static int AddPane(
 	return TCL_ERROR;
     }
     if (Ttk_SlaveIndex(pw->paned.mgr, slaveWindow) >= 0) {
-	Tcl_AppendResult(interp,
-	    Tk_PathName(slaveWindow), " already added",
-	    NULL);
+	Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		"%s already added", Tk_PathName(slaveWindow)));
+	Tcl_SetErrorCode(interp, "TTK", "PANE", "PRESENT", NULL);
 	return TCL_ERROR;
     }
 
@@ -729,9 +731,8 @@ static int PanedIdentifyCommand(
 
     if (   Tcl_GetIntFromObj(interp, objv[objc-2], &x) != TCL_OK
 	|| Tcl_GetIntFromObj(interp, objv[objc-1], &y) != TCL_OK
-	|| (objc == 5 &&
-	    Tcl_GetIndexFromObj(interp, objv[2], whatTable, "option", 0, &what)
-		!= TCL_OK)
+	|| (objc == 5 && Tcl_GetIndexFromObjStruct(interp, objv[2], whatTable,
+	    sizeof(char *), "option", 0, &what) != TCL_OK)
     ) {
 	return TCL_ERROR;
     }
@@ -844,9 +845,9 @@ static int PanedSashposCommand(
 	return TCL_ERROR;
     }
     if (sashIndex < 0 || sashIndex >= Ttk_NumberSlaves(pw->paned.mgr) - 1) {
-	Tcl_AppendResult(interp,
-	    "sash index ", Tcl_GetString(objv[2]), " out of range",
-	    NULL);
+	Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+	    "sash index %d out of range", sashIndex));
+	Tcl_SetErrorCode(interp, "TTK", "PANE", "SASH_INDEX", NULL);
 	return TCL_ERROR;
     }
 

@@ -1,3 +1,28 @@
+/*               B O T _ W I R E F R A M E . C P P
+ * BRL-CAD
+ *
+ * Copyright (c) 2013-2020 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file bot_wireframe.cpp
+ *
+ * Brief description
+ *
+ */
+
 #include "common.h"
 
 #include <map>
@@ -82,9 +107,9 @@ face_area(struct rt_bot_internal *bot, size_t face_num)
     VMOVE(ptA, &bot->vertices[bot->faces[face_num*3+0]*3]);
     VMOVE(ptB, &bot->vertices[bot->faces[face_num*3+1]*3]);
     VMOVE(ptC, &bot->vertices[bot->faces[face_num*3+2]*3]);
-    a = DIST_PT_PT(ptA, ptB);
-    b = DIST_PT_PT(ptB, ptC);
-    c = DIST_PT_PT(ptC, ptA);
+    a = DIST_PNT_PNT(ptA, ptB);
+    b = DIST_PNT_PNT(ptB, ptC);
+    c = DIST_PNT_PNT(ptC, ptA);
     p = (a + b + c)/2;
     area = sqrt(p*(p-a)*(p-b)*(p-c));
     return area;

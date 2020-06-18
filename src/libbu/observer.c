@@ -1,7 +1,7 @@
 /*                      O B S E R V E R . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2018 United States Government as represented by
+ * Copyright (c) 1997-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -73,7 +73,7 @@ observer_attach(void *clientData, int argc, const char **argv)
 
 	    return BRLCAD_OK;
 	}
-	}
+    }
 
     /* acquire bu_observer struct */
     bu_observer_list_init(observers);
@@ -123,7 +123,7 @@ observer_detach(void *clientData, int argc, const char **argv)
 
 	    return BRLCAD_OK;
 	}
-	}
+    }
 
     bu_log("detach: %s not found", argv[1]);
     return BRLCAD_ERROR;

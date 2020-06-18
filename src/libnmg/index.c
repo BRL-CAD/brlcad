@@ -1,7 +1,7 @@
 /*                     N M G _ I N D E X . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2018 United States Government as represented by
+ * Copyright (c) 1990-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -452,7 +452,7 @@ nmg_m_reindex(struct model *m, register long int newindex)
     }
 #undef ASSIGN_VU
 
-    if (nmg_debug & DEBUG_BASIC) {
+    if (nmg_debug & NMG_DEBUG_BASIC) {
 	bu_log("nmg_m_reindex() oldmax=%ld, new%ld=>%ld\n",
 	       m->maxindex, m->index, newindex);
     }

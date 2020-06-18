@@ -1,7 +1,7 @@
 /*                     N A S T R A N - G . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2018 United States Government as represented by
+ * Copyright (c) 1997-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -108,7 +108,7 @@ static struct rt_wdb *fpout;		/* brlcad output file */
 static FILE *fpin;			/* NASTRAN input file */
 static FILE *fptmp;			/* temporary version of NASTRAN input */
 static char *usage = "[-xX lvl] [-t tol.dist] [-n] [-m] [-i NASTRAN_file] -o BRL-CAD_file\n";
-static off_t start_off;
+static b_off_t start_off;
 static char *delims=", \t";
 static struct coord_sys coord_head;	/* head of linked list of coordinate systems */
 static struct pbar pbar_head;		/* head of linked list of PBAR's */
@@ -132,7 +132,7 @@ static struct bn_tol tol;		/* tolerance for NMG's */
 static int polysolids=1;		/* flag for outputting NMG's rather than BOT's */
 
 HIDDEN int get_next_record(FILE *fp, int call_input, int write_flag);
-HIDDEN int convert_pt(const point_t pt, struct coord_sys *cs, point_t out_pt);
+HIDDEN int convert_pnt(const point_t pt, struct coord_sys *cs, point_t out_pt);
 
 #define INPUT_OK 0
 #define INPUT_NULL 1
@@ -161,7 +161,7 @@ reset_input(void)
     for (i=0; i < 20; i++)
 	prev_rec[i][0] = '\0';
 
-    fseek(fpin, start_off, SEEK_SET);
+    bu_fseek(fpin, start_off, SEEK_SET);
     line_count = bulk_data_start_line;
 
     tmp = bu_fgets(next_line, MAX_LINE_SIZE, fpin);
@@ -551,13 +551,13 @@ convert_cs(struct coord_sys *cs)
 	bu_exit(1, "A coordinate system is defined in terms of a non-existent coordinate system!!!\n");
     }
 
-    if (convert_pt(cs->origin, cs2, tmp_orig))
+    if (convert_pnt(cs->origin, cs2, tmp_orig))
 	return 1;
 
-    if (convert_pt(cs->v1, cs2, tmp_pt1))
+    if (convert_pnt(cs->v1, cs2, tmp_pt1))
 	return 1;
 
-    if (convert_pt(cs->v2, cs2, tmp_pt2))
+    if (convert_pnt(cs->v2, cs2, tmp_pt2))
 	return 1;
 
     VMOVE(cs->origin, tmp_orig);
@@ -573,7 +573,7 @@ convert_cs(struct coord_sys *cs)
 
 
 HIDDEN int
-convert_pt(const point_t pt, struct coord_sys *cs, point_t out_pt)
+convert_pnt(const point_t pt, struct coord_sys *cs, point_t out_pt)
 {
     point_t tmp_pt;
     fastf_t c1, c2, c3, c4;
@@ -639,7 +639,7 @@ convert_grid(int idx)
 	bu_exit(1, "No coordinate system defined for grid point #%d!\n", g_pts[idx].gid);
     }
 
-    if (convert_pt(g_pts[idx].pt, cs, tmp_pt))
+    if (convert_pnt(g_pts[idx].pt, cs, tmp_pt))
 	return 1;
 
     VMOVE(g_pts[idx].pt, tmp_pt);
@@ -1130,8 +1130,8 @@ main(int argc, char **argv)
     while ((c=bu_getopt(argc, argv, "x:X:t:ni:o:mh?")) != -1) {
 	switch (c) {
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
-		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT);
+		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
+		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, RT_DEBUG_FORMAT);
 		bu_log("\n");
 		break;
 	    case 'X':
@@ -1193,7 +1193,7 @@ main(int argc, char **argv)
 	if (bu_strncmp(line, "BEGIN BULK", 10))
 	    continue;
 
-	start_off = ftell(fpin);
+	start_off = bu_ftell(fpin);
 	break;
     }
 
@@ -1219,7 +1219,7 @@ main(int argc, char **argv)
     nmg_model = (struct model *)NULL;
 
     /* count grid points */
-    fseek(fptmp, 0, SEEK_SET);
+    bu_fseek(fptmp, 0, SEEK_SET);
     while (bu_fgets(line, MAX_LINE_SIZE, fptmp)) {
 	if (!bu_strncmp(line, "GRID", 4))
 	    grid_count++;
@@ -1229,7 +1229,7 @@ main(int argc, char **argv)
     }
 
     /* get default values and properties */
-    fseek(fptmp, 0, SEEK_SET);
+    bu_fseek(fptmp, 0, SEEK_SET);
     while (get_next_record(fptmp, 1, 0)) {
 	if (!bu_strncmp(curr_rec[0], "BAROR", 5)) {
 	    /* get BAR defaults */
@@ -1262,7 +1262,7 @@ main(int argc, char **argv)
     g_pts = (struct grid_point *)bu_calloc(grid_count, sizeof(struct grid_point), "grid points");
 
     /* get all grid points */
-    fseek(fptmp, 0, SEEK_SET);
+    bu_fseek(fptmp, 0, SEEK_SET);
     while (get_next_record(fptmp, 1, 0)) {
 	int gid;
 	int cid;
@@ -1287,7 +1287,7 @@ main(int argc, char **argv)
 
 
     /* find coordinate systems */
-    fseek(fptmp, 0, SEEK_SET);
+    bu_fseek(fptmp, 0, SEEK_SET);
     while (get_next_record(fptmp, 1, 0)) {
 	if (bu_strncmp(curr_rec[0], "CORD", 4))
 	    continue;
@@ -1306,7 +1306,7 @@ main(int argc, char **argv)
     mk_id(fpout, nastran_file);
 
     /* get elements */
-    fseek(fptmp, 0, SEEK_SET);
+    bu_fseek(fptmp, 0, SEEK_SET);
     while (get_next_record(fptmp, 1, 0)) {
 	if (!bu_strncmp(curr_rec[0], "CBAR", 4))
 	    get_cbar();

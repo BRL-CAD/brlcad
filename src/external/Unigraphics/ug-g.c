@@ -1,7 +1,7 @@
 /*                          U G - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -588,7 +588,7 @@ make_curve_particles( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam,
 	while ( BU_LIST_NOT_HEAD( &next->l, &pt_head.l ) ) {
 
 	    /* check for collinearity */
-	    if ( bn_3pts_collinear( prev->pt, pt->pt, next->pt, &tol ) ) {
+	    if ( bn_3pnts_collinear( prev->pt, pt->pt, next->pt, &tol ) ) {
 		/* remove middle point */
 		BU_LIST_DEQUEUE( &pt->l );
 		bu_free( (char *)pt, "pt_list" );
@@ -620,7 +620,7 @@ make_curve_particles( tag_t guide_curve, fastf_t outer_diam, fastf_t inner_diam,
 	    VSCALE( tmp_pt, tmp_pt, units_conv );
 	    MAT4X3PNT( this_pt, curr_xform, tmp_pt );
 
-	    if ( bn_3pts_collinear( cur->pt, this_pt, next->pt, &tol ) ) {
+	    if ( bn_3pnts_collinear( cur->pt, this_pt, next->pt, &tol ) ) {
 		continue;
 	    }
 
@@ -5354,6 +5354,8 @@ main(int ac, char *av[])
     UF_ASSEM_options_t assem_options;
     time_t elapsed_time, end_time;
 
+    bu_setprogname(av[0]);
+
     time( &start_time );
 
     tol_dist_sq = tol_dist * tol_dist;
@@ -5497,7 +5499,7 @@ main(int ac, char *av[])
     bu_log( "\t\t%d of the facetized parts were BREP models\n", parts_brep );
 
     elapsed_time = time( &end_time ) - start_time;
-    bu_log( "Elapsed time: %02ld:%02ld:%02ld\n", elapsed_time/3600, (elapsed_time%3600)/60, (elapsed_time%60) );
+    bu_log( "Elapsed time: %02lld:%02lld:%02lld\n", (long long)elapsed_time/3600, (long long)(elapsed_time%3600)/60, (long long)(elapsed_time%60) );
 
     return 0;
 

@@ -1,7 +1,7 @@
 /*                          N I R T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -73,7 +73,6 @@
 #define DEBUG_BACKOUT	0x008
 #define DEBUG_HITS	0x010
 
-#define RT_DEBUG_FMT	DEBUG_FORMAT
 #define DEBUG_FMT	"\020\5HITS\4BACKOUT\3MAT\2SCRIPTS\1INTERACT"
 
 /** STRING FOR USE WITH GETOPT(3) */

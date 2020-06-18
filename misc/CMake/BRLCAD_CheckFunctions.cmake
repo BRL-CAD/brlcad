@@ -1,7 +1,7 @@
 #     B R L C A D _ C H E C K F U N C T I O N S . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2018 United States Government as represented by
+# Copyright (c) 2011-2020 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -45,6 +45,8 @@ include(CheckTypeSize)
 include(CheckLibraryExists)
 include(CheckStructHasMember)
 include(CheckCInline)
+include(CheckCSourceRuns)
+include(CheckCXXSourceRuns)
 
 set(standard_header_template
 "
@@ -53,6 +55,9 @@ set(standard_header_template
 #include <string.h>
 #include <math.h>
 #include <ctype.h>
+#ifdef HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
 #ifdef HAVE_GETOPT_H
 # include <getopt.h>
 #endif
@@ -72,16 +77,14 @@ set(standard_header_template
 # include <sys/stat.h>
 #endif
 #ifdef HAVE_SYS_SYSCTL_H
-# if defined(_XOPEN_SOURCE) && _XOPEN_SOURCE < 500
 typedef unsigned char u_char;
 typedef unsigned int u_int;
 typedef unsigned long u_long;
 typedef unsigned short u_short;
-# endif
 # include <sys/sysctl.h>
 #endif
-#ifdef HAVE_SYS_TYPES_H
-# include <sys/types.h>
+#ifdef HAVE_SYS_WAIT_H
+# include <sys/wait.h>
 #endif
 #ifdef HAVE_SYS_TIME_H
 # include <sys/time.h>
@@ -173,9 +176,17 @@ macro(BRLCAD_FUNCTION_EXISTS function)
       if(NOT DEFINED HAVE_DECL_${var})
 	if(NOT MSVC)
 	  if(NOT "${${var}_DECL_TEST_SRCS}" STREQUAL "")
-	    check_c_source_compiles("${${${var}_DECL_TEST_SRCS}}" HAVE_DECL_${var})
+	    if(ENABLE_ALL_CXX_COMPILE)
+	      check_cxx_source_compiles("${${${var}_DECL_TEST_SRCS}}" HAVE_DECL_${var})
+	    else(ENABLE_ALL_CXX_COMPILE)
+	      check_c_source_compiles("${${${var}_DECL_TEST_SRCS}}" HAVE_DECL_${var})
+	    endif(ENABLE_ALL_CXX_COMPILE)
 	  else(NOT "${${var}_DECL_TEST_SRCS}" STREQUAL "")
-	    check_c_source_compiles("${standard_header_template}\nint main() {(void)${function}; return 0;}" HAVE_DECL_${var})
+	    if(ENABLE_ALL_CXX_COMPILE)
+	      check_cxx_source_compiles("${standard_header_template}\nint main() {(void)${function}; return 0;}" HAVE_DECL_${var})
+	    else(ENABLE_ALL_CXX_COMPILE)
+	      check_c_source_compiles("${standard_header_template}\nint main() {(void)${function}; return 0;}" HAVE_DECL_${var})
+	    endif(ENABLE_ALL_CXX_COMPILE)
 	  endif(NOT "${${var}_DECL_TEST_SRCS}" STREQUAL "")
 	else()
 	  # Note - config_win.h (and probably other issues) make the decl tests
@@ -192,7 +203,11 @@ macro(BRLCAD_FUNCTION_EXISTS function)
 	if(NOT DEFINED HAVE_WORKING_${var})
 	  set(HAVE_WORKING_${var} 1)
 	  foreach(test_src ${${var}_COMPILE_TEST_SRCS})
-	    check_c_source_compiles("${${test_src}}" ${var}_${test_src}_COMPILE)
+	    if(ENABLE_ALL_CXX_COMPILE)
+	      check_cxx_source_compiles("${${test_src}}" ${var}_${test_src}_COMPILE)
+	    else(ENABLE_ALL_CXX_COMPILE)
+	      check_c_source_compiles("${${test_src}}" ${var}_${test_src}_COMPILE)
+	    endif(ENABLE_ALL_CXX_COMPILE)
 	    if(NOT ${var}_${test_src}_COMPILE)
 	      set(HAVE_WORKING_${var} 0)
 	    endif(NOT ${var}_${test_src}_COMPILE)
@@ -235,7 +250,7 @@ macro(BRLCAD_INCLUDE_FILE filelist var)
   if(NOT "${ARGV2}" STREQUAL "")
     set(CMAKE_REQUIRED_INCLUDES ${ARGV2} ${CMAKE_REQUIRED_INCLUDES})
   endif(NOT "${ARGV2}" STREQUAL "")
-  check_include_files("${filelist}" ${var})
+  check_include_files("${filelist}" "${var}")
   cmake_pop_check_state()
 
   if(CONFIG_H_FILE AND ${var})
@@ -362,7 +377,11 @@ return 0;
   if(NOT DEFINED HAVE_BASENAME)
     cmake_push_check_state()
     set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
-    CHECK_C_SOURCE_RUNS("${BASENAME_SRC}" HAVE_BASENAME)
+    if(ENABLE_ALL_CXX_COMPILE)
+      check_cxx_source_runs("${BASENAME_SRC}" HAVE_BASENAME)
+    else(ENABLE_ALL_CXX_COMPILE)
+      check_c_source_runs("${BASENAME_SRC}" HAVE_BASENAME)
+    endif(ENABLE_ALL_CXX_COMPILE)
     cmake_pop_check_state()
   endif(NOT DEFINED HAVE_BASENAME)
   if(HAVE_BASENAME)
@@ -385,7 +404,11 @@ return 0;
   if(NOT DEFINED HAVE_DIRNAME)
     cmake_push_check_state()
     set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
-    CHECK_C_SOURCE_RUNS("${DIRNAME_SRC}" HAVE_DIRNAME)
+    if(ENABLE_ALL_CXX_COMPILE)
+      check_cxx_source_runs("${DIRNAME_SRC}" HAVE_DIRNAME)
+    else(ENABLE_ALL_CXX_COMPILE)
+      check_c_source_runs("${DIRNAME_SRC}" HAVE_DIRNAME)
+    endif(ENABLE_ALL_CXX_COMPILE)
     cmake_pop_check_state()
   endif(NOT DEFINED HAVE_DIRNAME)
   if(HAVE_DIRNAME)
@@ -416,7 +439,11 @@ int main() {
   if(NOT DEFINED WORKING_SYS_WAIT)
     cmake_push_check_state()
     set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
-    CHECK_C_SOURCE_RUNS("${SYS_WAIT_SRC}" WORKING_SYS_WAIT)
+    if(ENABLE_ALL_CXX_COMPILE)
+      check_cxx_source_runs("${SYS_WAIT_SRC}" WORKING_SYS_WAIT)
+    else(ENABLE_ALL_CXX_COMPILE)
+      check_c_source_runs("${SYS_WAIT_SRC}" WORKING_SYS_WAIT)
+    endif(ENABLE_ALL_CXX_COMPILE)
     cmake_pop_check_state()
   endif(NOT DEFINED WORKING_SYS_WAIT)
   if(WORKING_SYS_WAIT)
@@ -468,7 +495,11 @@ int main() {
   if(WORKING_ALLOC_H STREQUAL "")
     cmake_push_check_state()
     set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
-    CHECK_C_SOURCE_RUNS("${ALLOCA_HEADER_SRC}" WORKING_ALLOCA_H)
+    if(ENABLE_ALL_CXX_COMPILE)
+      check_cxx_source_runs("${ALLOCA_HEADER_SRC}" WORKING_ALLOCA_H)
+    else(ENABLE_ALL_CXX_COMPILE)
+      check_c_source_runs("${ALLOCA_HEADER_SRC}" WORKING_ALLOCA_H)
+    endif(ENABLE_ALL_CXX_COMPILE)
     cmake_pop_check_state()
     set(WORKING_ALLOCA_H ${WORKING_ALLOCA_H} CACHE INTERNAL "alloca_h test")
   endif(WORKING_ALLOC_H STREQUAL "")
@@ -479,7 +510,11 @@ int main() {
   if(NOT DEFINED WORKING_ALLOCA)
     cmake_push_check_state()
     set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
-    CHECK_C_SOURCE_RUNS("${ALLOCA_TEST_SRC}" WORKING_ALLOCA)
+    if(ENABLE_ALL_CXX_COMPILE)
+      check_cxx_source_runs("${ALLOCA_TEST_SRC}" WORKING_ALLOCA)
+    else(ENABLE_ALL_CXX_COMPILE)
+      check_c_source_runs("${ALLOCA_TEST_SRC}" WORKING_ALLOCA)
+    endif(ENABLE_ALL_CXX_COMPILE)
     cmake_pop_check_state()
   endif(NOT DEFINED WORKING_ALLOCA)
   if(WORKING_ALLOCA)
@@ -503,7 +538,7 @@ function(BRLCAD_CHECK_PERCENT_Z)
 int main(int ac, char *av[])
 {
   char buf[64] = {0};
-  if (sprintf(buf, \"%zu\", (size_t)1) != 1 || buf[0] != 1 || buf[1] != 0)
+  if (sprintf(buf, \"%zu\", (size_t)1) != 1 || buf[0] != '1' || buf[1] != 0)
     return 1;
   return (ac < 0) ? (int)av[0][0] : 0;
 }
@@ -515,7 +550,11 @@ int main(int ac, char *av[])
     if(HAVE_STDINT_H)
       set(CMAKE_REQUIRED_DEFINITIONS "-DHAVE_STDINT_H=1")
     endif(HAVE_STDINT_H)
-    check_c_source_runs("${CHECK_PERCENT_Z_SRC}" HAVE_PERCENT_Z)
+    if(ENABLE_ALL_CXX_COMPILE)
+      check_cxx_source_runs("${CHECK_PERCENT_Z_SRC}" HAVE_PERCENT_Z)
+    else(ENABLE_ALL_CXX_COMPILE)
+      check_c_source_runs("${CHECK_PERCENT_Z_SRC}" HAVE_PERCENT_Z)
+    endif(ENABLE_ALL_CXX_COMPILE)
     cmake_pop_check_state()
   endif(NOT DEFINED HAVE_PERCENT_Z)
 
@@ -547,7 +586,11 @@ int main(int ac, char *av[])
   if(NOT DEFINED HAVE_STATIC_ARRAYS)
     cmake_push_check_state()
     set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${C_STANDARD_FLAGS}")
-    CHECK_C_SOURCE_RUNS("${CHECK_STATIC_ARRAYS_SRC}" HAVE_STATIC_ARRAYS)
+    if(ENABLE_ALL_CXX_COMPILE)
+      check_cxx_source_runs("${CHECK_STATIC_ARRAYS_SRC}" HAVE_STATIC_ARRAYS)
+    else(ENABLE_ALL_CXX_COMPILE)
+      check_c_source_runs("${CHECK_STATIC_ARRAYS_SRC}" HAVE_STATIC_ARRAYS)
+    endif(ENABLE_ALL_CXX_COMPILE)
     cmake_pop_check_state()
   endif(NOT DEFINED HAVE_STATIC_ARRAYS)
   if(HAVE_STATIC_ARRAYS)

@@ -1,7 +1,7 @@
 /*                      P I X M O R P H . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2018 United States Government as represented by
+ * Copyright (c) 1996-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,7 +42,10 @@
 #include <sys/stat.h>
 #include <math.h>
 
+#include "bio.h"
+
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
@@ -411,6 +414,8 @@ main(int argc, char **argv)
     struct lineseg *lines;
     long int i;
     long int autosize;
+
+    bu_setprogname(argv[0]);
 
     autosize = 1L;
     pa_width = pa_height = 0;

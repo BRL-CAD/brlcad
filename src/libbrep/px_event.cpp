@@ -1,7 +1,7 @@
 /*                  P X _ E V E N T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2018 United States Government as represented by
+ * Copyright (c) 2013-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,11 +24,11 @@
  */
 
 #include "common.h"
-#include "brep.h"
+#include "brep/defines.h"
+#include "brep/intersect.h"
 
-ON_PX_EVENT::ON_PX_EVENT()
+ON_PX_EVENT::ON_PX_EVENT() :m_type(no_px_event), m_A(ON_3dVector::ZeroVector), m_B(ON_3dVector::ZeroVector), m_b(ON_2dVector::ZeroVector), m_Mid(ON_3dVector::ZeroVector), m_radius(0.0)
 {
-    memset(this, 0, sizeof(*this));
 }
 
 

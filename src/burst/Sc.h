@@ -1,7 +1,7 @@
 /*                            S C . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,17 +26,6 @@
    <Sc.h> -- MUVES "Sc" (Screen manager) package definitions
 **/
 
-/**
-
-The Sc package provides an interface to the termcap library
-(termlib(3)) for doing cursor movement, character attribute,
-and other low-level screen management operations.  It is
-intended for use in building terminal-independent full-screen
-user interfaces.  Do to its use of the tgoto() termlib(3)
-routine, programs that use this package should turn off TAB3
-in the terminal handler.
-
-**/
 #ifndef BURST_SC_H
 #define BURST_SC_H
 #include "./burst.h"

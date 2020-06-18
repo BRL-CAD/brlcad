@@ -1,7 +1,7 @@
 /*                           A P I . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2018 United States Government as represented by
+ * Copyright (c) 2015-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -82,12 +82,25 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
     if (!segs) /* unexpected */
 	return 0;
 
-    if (PartHeadp->pt_forw == PartHeadp) return 1;
+    if (PartHeadp->pt_forw == PartHeadp)
+	return 1;
 
 
     /* examine each partition until we get back to the head */
     for (pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw) {
-	struct density_entry *de;
+
+	fastf_t grams_per_cu_mm;
+	long int material_id = pp->pt_regionp->reg_gmater;
+
+	if (state->default_den) {
+	    /* Aluminium 7xxx series as default material */
+	    fastf_t default_density = 2.74; /* Aluminium, 7079-T6 */
+	    material_id = -1;
+	    grams_per_cu_mm = default_density;
+	} else {
+	    grams_per_cu_mm = analyze_densities_density(state->densities, material_id);
+	}
+
 
 	/* inhit info */
 	dist = pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist;
@@ -95,10 +108,10 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	VJOIN1(opt, ap->a_ray.r_pt, pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
 
 	if (state->debug) {
-	    bu_semaphore_acquire(ANALYZE_SEM_WORKER);
+	    bu_semaphore_acquire(BU_SEM_GENERAL);
 	    bu_vls_printf(state->debug_str, "%s %g->%g\n", pp->pt_regionp->reg_name,
 			  pp->pt_inhit->hit_dist, pp->pt_outhit->hit_dist);
-	    bu_semaphore_release(ANALYZE_SEM_WORKER);
+	    bu_semaphore_release(BU_SEM_GENERAL);
 	}
 
 	if (state->analysis_flags & ANALYSIS_EXP_AIR) {
@@ -133,36 +146,22 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	/* computing the mass of the objects */
 	if (state->analysis_flags & ANALYSIS_MASS) {
 	    if (state->debug) {
-		bu_semaphore_acquire(ANALYZE_SEM_WORKER);
+		bu_semaphore_acquire(BU_SEM_GENERAL);
 		bu_vls_printf(state->debug_str, "Hit %s doing mass\n", pp->pt_regionp->reg_name);
-		bu_semaphore_release(ANALYZE_SEM_WORKER);
+		bu_semaphore_release(BU_SEM_GENERAL);
 	    }
 
 	    /* make sure mater index is within range of densities */
-	    if (pp->pt_regionp->reg_gmater >= state->num_densities) {
-		if(state->default_den == 0) {
-		    bu_semaphore_acquire(ANALYZE_SEM_WORKER);
-		    bu_vls_printf(state->log_str, "Density index %d on region %s is outside of range of table [1..%d]\nSet GIFTmater on region or add entry to density table\n",
-				  pp->pt_regionp->reg_gmater,
-				  pp->pt_regionp->reg_name,
-				  state->num_densities); /* XXX this should do something else */
-		    bu_semaphore_release(ANALYZE_SEM_WORKER);
-		    return ANALYZE_ERROR;
-		}
+	    if (material_id < 0 && state->default_den == 0) {
+		bu_semaphore_acquire(BU_SEM_GENERAL);
+		bu_vls_printf(state->log_str, "Density index %d on region %s is not in density table.\nSet GIFTmater on region or add entry to density table\n",
+			pp->pt_regionp->reg_gmater,
+			pp->pt_regionp->reg_name); /* XXX this should do something else */
+		bu_semaphore_release(BU_SEM_GENERAL);
+		return ANALYZE_ERROR;
 	    }
 
-	    /* make sure the density index has been set */
-	    bu_semaphore_acquire(ANALYZE_SEM_WORKER);
-	    if(state->default_den || state->densities[pp->pt_regionp->reg_gmater].magic != DENSITY_MAGIC) {
-		BU_GET(de, struct density_entry);		/* Aluminium 7xxx series as default material */
-		de->magic = DENSITY_MAGIC;
-		de->grams_per_cu_mm = 2.74;
-		de->name = "Aluminium, 7079-T6";
-	    } else {
-		de = state->densities + pp->pt_regionp->reg_gmater;
-	    }
-	    bu_semaphore_release(ANALYZE_SEM_WORKER);
-	    if (de->magic == DENSITY_MAGIC) {
+	    {
 		struct per_region_data *prd;
 		vect_t cmass;
 		vect_t lenTorque;
@@ -207,18 +206,18 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 		los = pp->pt_regionp->reg_los;
 
 		if (los < 1) {
-		    bu_semaphore_acquire(ANALYZE_SEM_WORKER);
+		    bu_semaphore_acquire(BU_SEM_GENERAL);
 		    bu_vls_printf(state->log_str, "bad LOS (%d) on %s\n", los, pp->pt_regionp->reg_name);
-		    bu_semaphore_release(ANALYZE_SEM_WORKER);
+		    bu_semaphore_release(BU_SEM_GENERAL);
 		}
 
 		/* accumulate the total mass values */
-		val = de->grams_per_cu_mm * dist * (pp->pt_regionp->reg_los * 0.01);
+		val = grams_per_cu_mm * dist * (pp->pt_regionp->reg_los * 0.01);
 		ap->A_LENDEN += val;
 
 		prd = ((struct per_region_data *)pp->pt_regionp->reg_udata);
 		/* accumulate the per-region per-view mass values */
-		bu_semaphore_acquire(ANALYZE_SEM_STATS);
+		bu_semaphore_acquire(state->sem_stats);
 		prd->r_lenDensity[state->i_axis] += val;
 
 		/* accumulate the per-object per-view mass values */
@@ -267,16 +266,8 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 			poi[Z] -= mass*cmass[Y]*cmass[Z];
 		    }
 		}
-		bu_semaphore_release(ANALYZE_SEM_STATS);
+		bu_semaphore_release(state->sem_stats);
 
-	    } else {
-		bu_semaphore_acquire(ANALYZE_SEM_WORKER);
-		bu_vls_printf(state->log_str, "Density index %d from region %s is not set.\nAdd entry to density table\n",
-			      pp->pt_regionp->reg_gmater, pp->pt_regionp->reg_name);
-		bu_semaphore_release(ANALYZE_SEM_WORKER);
-
-		state->aborted = 1;
-		return ANALYZE_ERROR;
 	    }
 	}
 
@@ -303,7 +294,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	    }
 
 	    {
-		bu_semaphore_acquire(ANALYZE_SEM_STATS);
+		bu_semaphore_acquire(state->sem_worker);
 		/* factor in the normal vector to find how 'skew' the surface is */
 		RT_HIT_NORMAL(inormal, pp->pt_inhit, pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip);
 		VREVERSE(inormal, inormal);
@@ -321,7 +312,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 		prd->optr->o_area[state->curr_view] += (cell_area/icos);
 		prd->optr->o_area[state->curr_view] += (cell_area/ocos);
 
-		bu_semaphore_release(ANALYZE_SEM_STATS);
+		bu_semaphore_release(state->sem_worker);
 	    }
 	}
 
@@ -330,7 +321,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	    struct per_region_data *prd = ((struct per_region_data *)pp->pt_regionp->reg_udata);
 	    ap->A_LEN += dist; /* add to total volume */
 	    {
-		bu_semaphore_acquire(ANALYZE_SEM_STATS);
+		bu_semaphore_acquire(state->sem_worker);
 
 		/* add to region volume */
 		prd->r_len[state->curr_view] += dist;
@@ -338,16 +329,15 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 		/* add to object volume */
 		prd->optr->o_len[state->curr_view] += dist;
 
-		bu_semaphore_release(ANALYZE_SEM_STATS);
+		bu_semaphore_release(state->sem_worker);
 	    }
 	    if (state->debug) {
-		bu_semaphore_acquire(ANALYZE_SEM_WORKER);
+		bu_semaphore_acquire(BU_SEM_GENERAL);
 		bu_vls_printf(state->debug_str, "\t\tvol hit %s oDist:%g objVol:%g %s\n",
 			      pp->pt_regionp->reg_name, dist, prd->optr->o_len[state->curr_view], prd->optr->o_name);
-		bu_semaphore_release(ANALYZE_SEM_WORKER);
+		bu_semaphore_release(BU_SEM_GENERAL);
 	    }
 	    if (state->plot_volume) {
-		bu_semaphore_acquire(BU_SEM_SYSCALL);
 		if (ap->a_user & 1) {
 		    pl_color(state->plot_volume, 128, 255, 192);  /* pale green */
 		} else {
@@ -355,7 +345,6 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 		}
 
 		pdv_3line(state->plot_volume, pt, opt);
-		bu_semaphore_release(BU_SEM_SYSCALL);
 	    }
 	}
 
@@ -368,7 +357,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	}
 
 	if (pp->pt_regionp->reg_aircode) {
-	    /* look for air first on shotlines */	
+	    /* look for air first on shotlines */
 	    if (pp->pt_back == PartHeadp) {
 		if (state->analysis_flags & ANALYSIS_FIRST_AIR)
 		    state->first_air_callback(&ap->a_ray, pp, state->first_air_callback_data);
@@ -470,14 +459,14 @@ analyze_overlap(struct application *ap,
     VJOIN1(ihit, rp->r_pt, ihitp->hit_dist, rp->r_dir);
 
     if (state->analysis_flags & ANALYSIS_OVERLAPS) {
-	bu_semaphore_acquire(ANALYZE_SEM_LIST);
+	bu_semaphore_acquire(state->sem_worker);
 	add_unique_pair(state->overlapList, reg1, reg2, depth, ihit);
-	bu_semaphore_release(ANALYZE_SEM_LIST);
+	bu_semaphore_release(state->sem_worker);
 	state->overlaps_callback(&ap->a_ray, pp, reg1, reg2, depth, state->overlaps_callback_data);
     }  else {
-	bu_semaphore_acquire(ANALYZE_SEM_WORKER);
+	bu_semaphore_acquire(state->sem_worker);
 	bu_vls_printf(state->log_str, "overlap %s %s\n", reg1->reg_name, reg2->reg_name);
-	bu_semaphore_release(ANALYZE_SEM_WORKER);
+	bu_semaphore_release(state->sem_worker);
     }
 
     /* XXX We should somehow flag the volume/mass calculations as invalid */
@@ -495,38 +484,37 @@ analyze_overlap(struct application *ap,
 HIDDEN int
 densities_from_file(struct current_state *state, char *name)
 {
-    struct stat sb;
-
-    FILE *fp = (FILE *)NULL;
+    struct bu_vls msgs = BU_VLS_INIT_ZERO;
+    struct bu_mapped_file *dfile = NULL;
     char *buf = NULL;
     int ret = 0;
-    size_t sret = 0;
+    int ecnt = 0;
 
-    fp = fopen(name, "rb");
-    if (fp == (FILE *)NULL) {
-	bu_log("Could not open file - %s\n", name);
+    if (!bu_file_exists(name, NULL)) {
+	bu_log("Could not find density file - %s\n", name);
 	return ANALYZE_ERROR;
     }
 
-    if (stat(name, &sb)) {
-	bu_log("Could not read file - %s\n", name);
-	fclose(fp);
+    dfile = bu_open_mapped_file(name, "densities file");
+    if (!dfile) {
+	bu_log("Could not open density file - %s\n", name);
 	return ANALYZE_ERROR;
     }
 
-    state->densities = (struct density_entry *)bu_calloc(128, sizeof(struct density_entry), "density entries");
-    state->num_densities = 128;
+    buf = (char *)(dfile->buf);
 
-    /* a mapped file would make more sense here */
-    buf = (char *)bu_malloc(sb.st_size+1, "density buffer");
-    sret = fread(buf, sb.st_size, 1, fp);
-    if (sret != 1)
-	perror("fread");
-    ret = parse_densities_buffer(buf, (unsigned long)sb.st_size, state->densities, NULL, &state->num_densities);
-    bu_free(buf, "density buffer");
-    fclose(fp);
+    (void)analyze_densities_create(&(state->densities));
 
-    return ret;
+    ret = analyze_densities_load(state->densities, buf, &msgs, &ecnt);
+
+    if (ecnt && bu_vls_strlen(&msgs)) {
+	bu_log("Problem reading densities file:\n%s\n", bu_vls_cstr(&msgs));
+    }
+    bu_vls_free(&msgs);
+
+    bu_close_mapped_file(dfile);
+
+    return (ret <= 0) ? -1 : 0;
 }
 
 
@@ -538,10 +526,12 @@ densities_from_file(struct current_state *state, char *name)
 HIDDEN int
 densities_from_database(struct current_state *state, struct rt_i *rtip)
 {
+    struct bu_vls msgs = BU_VLS_INIT_ZERO;
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_binunif_internal *bu;
     int ret;
+    int ecnt = 0;
     char *buf;
 
     dp = db_lookup(rtip->rti_dbip, "_DENSITIES", LOOKUP_QUIET);
@@ -562,15 +552,18 @@ densities_from_database(struct current_state *state, struct rt_i *rtip)
 
     RT_CHECK_BINUNIF (bu);
 
-    state->densities = (struct density_entry *)bu_calloc(128, sizeof(struct density_entry), "density entries");
-    state->num_densities = 128;
+    (void)analyze_densities_create(&(state->densities));
 
-    /* Acquire one extra byte to accommodate parse_densities_buffer()
-     * (i.e. it wants to write an EOS in buf[bu->count]).
-     */
-    buf = (char *)bu_malloc(bu->count+1, "density buffer");
+    buf = (char *)bu_calloc(bu->count+1, sizeof(char), "density buffer");
     memcpy(buf, bu->u.int8, bu->count);
-    ret = parse_densities_buffer(buf, bu->count, state->densities, NULL, &state->num_densities);
+
+    ret = analyze_densities_load(state->densities, buf, &msgs, &ecnt);
+
+    if (ecnt && bu_vls_strlen(&msgs)) {
+	bu_log("Problem reading densities file:\n%s\n", bu_vls_cstr(&msgs));
+    }
+    bu_vls_free(&msgs);
+
     bu_free((void *)buf, "density buffer");
 
     return ret;
@@ -807,13 +800,13 @@ analyze_worker(int cpu, void *ptr)
 
     shot_cnt = 0;
     while (1) {
-	bu_semaphore_acquire(ANALYZE_SEM_WORKER);
+	bu_semaphore_acquire(state->sem_worker);
 	if (rectangular_grid_generator(&ap.a_ray, state->grid) == 1){
-	    bu_semaphore_release(ANALYZE_SEM_WORKER);
+	    bu_semaphore_release(state->sem_worker);
 	    break;
 	}
 	ap.a_user = (int)(state->grid->current_point / (state->grid->x_points));
-	bu_semaphore_release(ANALYZE_SEM_WORKER);
+	bu_semaphore_release(state->sem_worker);
 	(void)rt_shootray(&ap);
 	if (state->aborted)
 	    return;
@@ -825,11 +818,11 @@ analyze_worker(int cpu, void *ptr)
      * view and return.  When all threads have been through here,
      * we'll have returned to serial computation.
      */
-    bu_semaphore_acquire(ANALYZE_SEM_STATS);
+    bu_semaphore_acquire(state->sem_stats);
     state->shots[state->curr_view] += shot_cnt;
     state->m_lenDensity[state->curr_view] += ap.A_LENDEN; /* add our length*density value */
     state->m_len[state->curr_view] += ap.A_LEN; /* add our volume value */
-    bu_semaphore_release(ANALYZE_SEM_STATS);
+    bu_semaphore_release(state->sem_stats);
 }
 
 /**
@@ -908,10 +901,10 @@ options_set(struct current_state *state)
     if (state->analysis_flags & ANALYSIS_MASS) {
 	if (state->mass_tolerance < 0.0) {
 	    double max_den = 0.0;
-	    int i;
-	    for (i = 0; i < state->num_densities; i++) {
-		if (state->densities[i].grams_per_cu_mm > max_den)
-		    max_den = state->densities[i].grams_per_cu_mm;
+	    long int curr_id = -1;
+	    while ((curr_id = analyze_densities_next(state->densities, curr_id)) != -1) {
+		if (analyze_densities_density(state->densities, curr_id) > max_den)
+		    max_den = analyze_densities_density(state->densities, curr_id);
 	    }
 	    state->mass_tolerance = state->span[X] * state->span[Y] * state->span[Z] * 0.1 * max_den;
 	    bu_log("Setting mass tolerance to %g gram\n", state->mass_tolerance);
@@ -931,7 +924,7 @@ options_set(struct current_state *state)
 
     if ((state->analysis_flags & (ANALYSIS_ADJ_AIR|ANALYSIS_EXP_AIR|ANALYSIS_FIRST_AIR|ANALYSIS_LAST_AIR|ANALYSIS_UNCONF_AIR)) && ! state->use_air) {
 	bu_log("\nError:  Air regions discarded but air analysis requested!\nSet use_air non-zero or eliminate air analysis\n");
-	return GED_ERROR;
+	return ANALYZE_ERROR;
     }
 
     if (state->analysis_flags & ANALYSIS_EXP_AIR) {
@@ -1407,6 +1400,8 @@ perform_raytracing(struct current_state *state, struct db_i *dbip, char *names[]
     }
 
     /* initialize some stuff */
+    state->sem_worker = bu_semaphore_register("analyze_sem_worker");
+    state->sem_stats = bu_semaphore_register("analyze_sem_stats");
     allocate_region_data(state, names);
     grid.refine_flag = 0;
     shoot_rays(state);

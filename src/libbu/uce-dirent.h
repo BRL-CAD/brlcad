@@ -1,6 +1,9 @@
 /*
  * uce-dirent.h - operating system independent dirent implementation
  *
+ * TODO - see if https://github.com/tronkko/dirent has any logic for
+ * newer Windows systems we should be using here...
+ *
  * Copyright (C) 1998-2002  Toni Ronkko
  *
  * Permission is hereby granted, free of charge, to any person obtaining

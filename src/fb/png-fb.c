@@ -1,7 +1,7 @@
 /*                        P N G - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2018 United States Government as represented by
+ * Copyright (c) 1998-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,8 +27,12 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <png.h>
 
+#include "bio.h"
+
+#include "png.h"
+
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
@@ -173,6 +177,8 @@ main(int argc, char **argv)
     double gammaval=1.0;
     int file_width, file_height;
     unsigned char *image;
+
+    bu_setprogname(argv[0]);
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);

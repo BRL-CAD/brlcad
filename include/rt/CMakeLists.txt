@@ -12,7 +12,6 @@ set(rt_headers
   db4.h
   db5.h
   db_attr.h
-  db_attr.h
   db_diff.h
   db_fullpath.h
   db_instance.h
@@ -53,6 +52,7 @@ set(rt_headers
   timer.h
   tol.h
   tree.h
+  uv.h
   version.h
   view.h
   vlist.h
@@ -60,6 +60,7 @@ set(rt_headers
   xray.h
   )
 BRLCAD_MANAGE_FILES(rt_headers ${INCLUDE_DIR}/brlcad/rt)
+
 CMAKEFILES(CMakeLists.txt)
 CMAKEFILES(db_fp.h)
 

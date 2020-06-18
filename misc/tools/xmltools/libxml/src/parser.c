@@ -77,7 +77,7 @@
 #include <unistd.h>
 #endif
 #ifdef HAVE_ZLIB_H
-#include <zlib.h>
+#include "zlib.h"
 #endif
 
 static void

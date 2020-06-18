@@ -1,7 +1,7 @@
 /*                  I N T E R S E C T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2018 United States Government as represented by
+ * Copyright (c) 2013-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,7 +35,9 @@
 #include "bio.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
-#include "brep.h"
+#include "brep/defines.h"
+#include "brep/intersect.h"
+#include "brep/util.h"
 #include "brep_except.h"
 
 

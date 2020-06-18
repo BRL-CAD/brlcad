@@ -1,7 +1,7 @@
 /*                            H F . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2018 United States Government as represented by
+ * Copyright (c) 1994-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -136,7 +136,7 @@ rt_hf_to_dsp(struct rt_db_internal *db_intern)
     dsp->dsp_ycnt = hip->n;
     dsp->dsp_smooth = 0;
     dsp->dsp_cuttype = DSP_CUT_DIR_ADAPT;
-    if (RT_G_DEBUG & DEBUG_HF) {
+    if (RT_G_DEBUG & RT_DEBUG_HF) {
 	bu_log("Converting from cut-style lower-left/upper-right to adaptive\n");
     }
     dsp->dsp_datasrc = RT_DSP_SRC_FILE;
@@ -449,7 +449,7 @@ hf_cell_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 
     if (ap) RT_CK_APPLICATION(ap);
 
-    if (RT_G_DEBUG & DEBUG_HF) {
+    if (RT_G_DEBUG & RT_DEBUG_HF) {
 	bu_log("hf_cell_shot(%s): %d, %d\n", stp->st_name,
 	       xCell, yCell);
     }
@@ -611,7 +611,7 @@ hf_cell_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
  leave:
     if (!fnd1 && !fnd2) return 0;
 
-    if (RT_G_DEBUG & DEBUG_HF) {
+    if (RT_G_DEBUG & RT_DEBUG_HF) {
 	bu_log("hf_cell_shot: hit(%d).\n", fnd1+fnd2);
     }
 
@@ -863,7 +863,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 
 	dxbdn = VDOT(peqn, rp->r_pt) - pdist;
 	dn = -VDOT(peqn, rp->r_dir);
-	if (RT_G_DEBUG & DEBUG_HF) {
+	if (RT_G_DEBUG & RT_DEBUG_HF) {
 	    VPRINT("hf: Plane Equation", peqn);
 	    bu_log("hf: dn=%g, dxbdn=%g, ", dn, dxbdn);
 	}
@@ -875,7 +875,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 		out = s;
 		oplane = j;
 	    }
-	    if (RT_G_DEBUG & DEBUG_HF) {
+	    if (RT_G_DEBUG & RT_DEBUG_HF) {
 		bu_log("s=%g out=%g\n", s, out);
 	    }
 	} else if (dn > SQRT_SMALL_FASTF) {
@@ -885,7 +885,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 		in = s;
 		iplane = j;
 	    }
-	    if (RT_G_DEBUG & DEBUG_HF) {
+	    if (RT_G_DEBUG & RT_DEBUG_HF) {
 		bu_log("s=%g in=%g\n", s, in);
 	    }
 	} else {
@@ -893,7 +893,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	     * if the ray is outside the solid, then this
 	     * is a miss.
 	     */
-	    if (RT_G_DEBUG & DEBUG_HF) {
+	    if (RT_G_DEBUG & RT_DEBUG_HF) {
 		bu_log("s=DIVIDE_BY_ZERO\n");
 	    }
 	    if (dxbdn > SQRT_SMALL_FASTF) {
@@ -902,7 +902,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	    allDist[allIndex] = INFINITY;
 	}
 	if (in > out) {
-	    if (RT_G_DEBUG & DEBUG_HF) {
+	    if (RT_G_DEBUG & RT_DEBUG_HF) {
 		bu_log("rt_hf_shoot(%s): in(%g) > out(%g)\n",
 		       stp->st_name, in, out);
 	    }
@@ -917,7 +917,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
     }
 
     if (fabs(in-out) <= SMALL_FASTF  || out >= INFINITY) {
-	if (RT_G_DEBUG & DEBUG_HF) {
+	if (RT_G_DEBUG & RT_DEBUG_HF) {
 	    bu_log("rt_hf_shoot(%s): in(%g) >= out(%g) || out >= INFINITY\n",
 		   stp->st_name, in, out);
 	}
@@ -933,7 +933,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
     xWidth = hf->hf_Xlen/((double)(hf->hf_w-1));
     yWidth = hf->hf_Ylen/((double)(hf->hf_n-1));
 
-    if (RT_G_DEBUG & DEBUG_HF) {
+    if (RT_G_DEBUG & RT_DEBUG_HF) {
 	bu_log("hf: xWidth=%g, yWidth=%g, in=%g, out=%g\n", xWidth,
 	       yWidth, in, out);
     }
@@ -970,7 +970,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	/* near enough to Z */
 	vect_t tmp;
 	int xCell, yCell, r;
-	if (RT_G_DEBUG & DEBUG_HF) {
+	if (RT_G_DEBUG & RT_DEBUG_HF) {
 	    bu_log("hf: Vertical shoot\n");
 	}
 	VSUB2(tmp, rp->r_pt, hf->hf_V);
@@ -1029,7 +1029,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	signX = (aray[X] < 0.0) ? -1 : 1;
 	signY = (aray[Y] < 0.0) ? -1 : 1;
 
-	if (RT_G_DEBUG & DEBUG_HF) {
+	if (RT_G_DEBUG & RT_DEBUG_HF) {
 	    bu_log("hf: curloc=(%g, %g, %g) aray=(%g, %g, %g)\n", curloc[X], curloc[Y],
 		   curloc[Z], aray[X], aray[Y], aray[Z]);
 	    bu_log("hf: from=(%g, %g) to=(%g, %g)\n",
@@ -1058,7 +1058,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	    xCell+=signX;
 	    error += delta;
 	}
-	if (RT_G_DEBUG & DEBUG_HF) {
+	if (RT_G_DEBUG & RT_DEBUG_HF) {
 	    bu_log("hf: delta=%g, error=%g, %d, %d\n",
 		   delta, error, xCell, yCell);
 	}
@@ -1069,7 +1069,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	    farZ = curloc[Z] + aray[Z];
 	    maxZ = (curloc[Z] > farZ) ? curloc[Z] : farZ;
 	    minZ = (curloc[Z] < farZ) ? curloc[Z] : farZ;
-	    if (RT_G_DEBUG & DEBUG_HF) {
+	    if (RT_G_DEBUG & RT_DEBUG_HF) {
 		bu_log("hf: cell %d, %d [%g -- %g]",
 		       xCell, yCell, minZ, maxZ);
 	    }
@@ -1137,7 +1137,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 		highest *= hf->hf_file2mm;
 	    }
 
-	    if (RT_G_DEBUG & DEBUG_HF) {
+	    if (RT_G_DEBUG & RT_DEBUG_HF) {
 		bu_log("lowest=%g, highest=%g\n",
 		       lowest, highest);
 	    }
@@ -1161,7 +1161,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	skip_first:
 	    if (error > SQRT_SMALL_FASTF) {
 		yCell += signY;
-		if (RT_G_DEBUG & DEBUG_HF) {
+		if (RT_G_DEBUG & RT_DEBUG_HF) {
 		    bu_log("hf: cell %d, %d ", xCell, yCell);
 		}
 		if ((yCell < 0) || yCell > hf->hf_n-2) {
@@ -1230,7 +1230,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	    error += delta;
 	    VADD2(curloc, curloc, aray);
 	} while (xCell >= 0 && xCell < hf->hf_w-1);
-	if (RT_G_DEBUG & DEBUG_HF) {
+	if (RT_G_DEBUG & RT_DEBUG_HF) {
 	    bu_log("htf: leaving loop, %d, %d, %g vs. 0--%d, 0--%d, 0.0--%g\n",
 		   xCell, yCell, curloc[Z], hf->hf_w-1, hf->hf_n-1, hf->hf_max);
 	}
@@ -1284,7 +1284,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	signX = (aray[X] < 0.0) ? -1 : 1;
 	signY = (aray[Y] < 0.0) ? -1 : 1;
 
-	if (RT_G_DEBUG & DEBUG_HF) {
+	if (RT_G_DEBUG & RT_DEBUG_HF) {
 	    bu_log("hf: curloc=(%g, %g, %g) aray=(%g, %g, %g)\n", curloc[X], curloc[Y],
 		   curloc[Z], aray[X], aray[Y], aray[Z]);
 	    bu_log("hf: from=(%g, %g) to=(%g, %g)\n",
@@ -1314,7 +1314,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	    yCell+=signY;
 	    error += delta;
 	}
-	if (RT_G_DEBUG & DEBUG_HF) {
+	if (RT_G_DEBUG & RT_DEBUG_HF) {
 	    bu_log("hf: delta=%g, error=%g, %d, %d\n",
 		   delta, error, xCell, yCell);
 	}
@@ -1324,7 +1324,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	    farZ = curloc[Z] + aray[Z];
 	    maxZ = (curloc[Z] > farZ) ? curloc[Z] : farZ;
 	    minZ = (curloc[Z] < farZ) ? curloc[Z] : farZ;
-	    if (RT_G_DEBUG & DEBUG_HF) {
+	    if (RT_G_DEBUG & RT_DEBUG_HF) {
 		bu_log("hf: cell %d, %d [%g -- %g] ",
 		       xCell, yCell, minZ, maxZ);
 	    }
@@ -1382,7 +1382,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	    }
 
 
-	    if (RT_G_DEBUG & DEBUG_HF) {
+	    if (RT_G_DEBUG & RT_DEBUG_HF) {
 		bu_log("lowest=%g, highest=%g\n",
 		       lowest, highest);
 	    }
@@ -1406,7 +1406,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	skip_2nd:
 	    if (error > SQRT_SMALL_FASTF) {
 		xCell += signX;
-		if (RT_G_DEBUG & DEBUG_HF) {
+		if (RT_G_DEBUG & RT_DEBUG_HF) {
 		    bu_log("hf: cell %d, %d\n", xCell, yCell);
 		}
 		if ((xCell < 0) || xCell > hf->hf_w-2) {
@@ -1475,7 +1475,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	    error += delta;
 	    VADD2(curloc, curloc, aray);
 	} while (yCell >= 0 && yCell < hf->hf_n-1);
-	if (RT_G_DEBUG & DEBUG_HF) {
+	if (RT_G_DEBUG & RT_DEBUG_HF) {
 	    bu_log("htf: leaving loop, %d, %d, %g vs. 0--%d, 0--%d, 0.0--%g\n",
 		   xCell, yCell, curloc[Z], hf->hf_w-1, hf->hf_n-1, hf->hf_max);
 	}
@@ -1633,16 +1633,15 @@ rt_hf_free(struct soltab *stp)
     struct hf_specific *hf =
 	(struct hf_specific *)stp->st_specific;
 
-    if (hf->hf_mp) {
-	bu_close_mapped_file(hf->hf_mp);
-	hf->hf_mp = (struct bu_mapped_file *)0;
-    }
+    bu_close_mapped_file(hf->hf_mp);
+    hf->hf_mp = (struct bu_mapped_file *)0;
+
     BU_PUT(hf, struct hf_specific);
 }
 
 
 int
-rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     struct rt_hf_internal *xip;
     unsigned short *sp = (unsigned short *)NULL;
@@ -1895,7 +1894,7 @@ rt_hf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tes
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_hf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+rt_hf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_hf_internal *xip;
 
@@ -2195,9 +2194,7 @@ rt_hf_ifree(struct rt_db_internal *ip)
     RT_HF_CK_MAGIC(xip);
     xip->magic = 0;			/* sanity */
 
-    if (xip->mp) {
-	bu_close_mapped_file(xip->mp);
-    }
+    bu_close_mapped_file(xip->mp);
 
     bu_free((char *)xip, "hf ifree");
     ip->idb_ptr = ((void *)0);	/* sanity */

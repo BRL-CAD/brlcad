@@ -1,7 +1,7 @@
 /*                          G _ Q A . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2018 United States Government as represented by
+ * Copyright (c) 2005-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,6 +30,7 @@
 
 #include "common.h"
 
+#include "bu/app.h"
 #include "bu/cmd.h"
 #include "bu/getopt.h"
 #include "ged.h"
@@ -44,6 +45,8 @@ main(int argc, char *argv[])
     int c;
     const char **av;
     struct ged *gedp;
+
+    bu_setprogname(argv[0]);
 
     bu_opterr = 0;
     bu_optind = 1;

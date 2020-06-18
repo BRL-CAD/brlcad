@@ -1,7 +1,7 @@
 /*                    V E G E T A T I O N . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2018 United States Government as represented by
+ * Copyright (c) 1998-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,6 +33,7 @@
  */
 
 #include "./vegetation.h"
+#include "bu/app.h"
 
 static void
 ageStructure(structure_t *structure)
@@ -895,6 +896,8 @@ main(int argc, char *argv[])
     double height = 30000.0;  /* about how tall is it */
     double branchingRate = 0.1;  /* 0->1 probability to branch per iteration */
     long seed;
+
+    bu_setprogname(argv[0]);
 
     printf("Vegetation generator\n");
     printf("====================\n");

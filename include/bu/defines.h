@@ -1,7 +1,7 @@
 /*                      D E F I N E S . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,9 +38,9 @@
 #  if defined(BU_DLL_EXPORTS) && defined(BU_DLL_IMPORTS)
 #    error "Only BU_DLL_EXPORTS or BU_DLL_IMPORTS can be defined, not both."
 #  elif defined(BU_DLL_EXPORTS)
-#    define BU_EXPORT __declspec(dllexport)
+#    define BU_EXPORT COMPILER_DLLEXPORT
 #  elif defined(BU_DLL_IMPORTS)
-#    define BU_EXPORT __declspec(dllimport)
+#    define BU_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define BU_EXPORT
 #  endif
@@ -144,6 +144,64 @@
 #  define _BU_ATTR_ALWAYS_INLINE __attribute__((always_inline))
 #else
 #  define _BU_ATTR_ALWAYS_INLINE
+#endif
+
+/**
+ * shorthand declaration of a function that will return the exact same
+ * value for the exact same arguments.  this implies it's a function
+ * that doesn't examine into any pointer values, doesn't call any
+ * non-cost functions, doesn't read globals, and has no effects except
+ * the return value.
+ */
+#ifdef HAVE_CONST_ATTRIBUTE
+#  define _BU_ATTR_CONST __attribute__((const))
+#else
+#  define _BU_ATTR_CONST
+#endif
+
+/**
+ * shorthand declaration of a function that depends only on its
+ * parameters and/or global variables.  this implies it's a function
+ * that has no effects except the return value and, as such, can be
+ * subject to common subexpression elimination and loop optimization
+ * just as an arithmetic operator would be.
+ */
+#ifdef HAVE_PURE_ATTRIBUTE
+#  define _BU_ATTR_PURE __attribute__((pure))
+#else
+#  define _BU_ATTR_PURE
+#endif
+
+/**
+ * shorthand declaration of a function that is not likely to be
+ * called.  this is typically for debug logging and error routines.
+ */
+#ifdef HAVE_COLD_ATTRIBUTE
+#  define _BU_ATTR_COLD __attribute__((cold))
+#else
+#  define _BU_ATTR_COLD
+#endif
+
+/**
+ * shorthand declaration of a function that doesn't accept NULL
+ * pointer arugments.  if a null pointer is detected during
+ * compilation, a warning/error can be emitted.
+ */
+#ifdef HAVE_NONNULL_ATTRIBUTE
+#  define _BU_ATTR_NONNULL __attribute__((nonnull))
+#else
+#  define _BU_ATTR_NONNULL
+#endif
+
+/**
+ * shorthand declaration of a function whose return value should not
+ * be ignored.  a warning / error will be emitted if the caller does
+ * not use the return value.
+ */
+#ifdef HAVE_WARN_UNUSED_RESULT_ATTRIBUTE
+#  define _BU_ATTR_WARN_UNUSED_RESULT __attribute__((warn_unused_result))
+#else
+#  define _BU_ATTR_WARN_UNUSED_RESULT
 #endif
 
 

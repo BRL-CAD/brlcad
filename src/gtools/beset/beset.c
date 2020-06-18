@@ -1,7 +1,7 @@
 /*                         B E S E T . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2018 United States Government as represented by
+ * Copyright (c) 2007-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -68,7 +68,6 @@ parse_args (int ac, char *av[], struct beset_options *opts)
 {
     int c;
 
-    bu_setprogname(av[0]);
     /* handle options */
     bu_opterr = 0;
     bu_optind = 0;
@@ -83,7 +82,7 @@ parse_args (int ac, char *av[], struct beset_options *opts)
 		opts->cross_rate = atoi(bu_optarg);
 		continue;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug );
+		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug );
 		continue;
 	    case 'p':
 		opts->pop_size = atoi(bu_optarg);
@@ -124,6 +123,7 @@ int main(int argc, char *argv[]) {
     int  ac;
     struct db_i *source_db;
 
+    bu_setprogname(argv[0]);
 
     ac = parse_args(argc, argv, &opts);
     if (argc - ac != 3)

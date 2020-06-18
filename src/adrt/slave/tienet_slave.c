@@ -1,7 +1,7 @@
 /*                  T I E N E T _ S L A V E . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2018 United States Government as represented by
+ * Copyright (c) 2002-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
 #include <netdb.h>
 #include <string.h>
 
-#include <zlib.h>
+#include "zlib.h"
 
 #include "bio.h"
 #include "rt/tie.h"

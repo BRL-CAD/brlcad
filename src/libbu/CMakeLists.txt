@@ -10,13 +10,12 @@ endif(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
 
 # locally used but not needed by users of the library
 set(BU_LOCAL_INCLUDE_DIRS
-  ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/y2038
-  ${REGEX_INCLUDE_DIR}
+  ${REGEX_INCLUDE_DIRS}
   )
-if (${UUID_INCLUDE_DIR})
+if (UUID_INCLUDE_DIR)
   set(BU_LOCAL_INCLUDE_DIRS ${BU_LOCAL_INCLUDE_DIRS} ${UUID_INCLUDE_DIR})
-endif (${UUID_INCLUDE_DIR})
+endif (UUID_INCLUDE_DIR)
 
 BRLCAD_LIB_INCLUDE_DIRS(bu BU_INCLUDE_DIRS BU_LOCAL_INCLUDE_DIRS)
 
@@ -43,12 +42,6 @@ if(HAVE_FPIC)
   set_property(SOURCE y2038/time64.c APPEND PROPERTY COMPILE_FLAGS "-fPIC")
 endif(HAVE_FPIC)
 
-if(Foundation_FRAMEWORKS)
-  set(DIR_MACOSX_M dir_macosx.m)
-else(Foundation_FRAMEWORKS)
-  CMAKEFILES(dir_macosx.m)
-endif(Foundation_FRAMEWORKS)
-
 set(LIBBU_SOURCES
   y2038/time64.c
   affinity.c
@@ -61,14 +54,13 @@ set(LIBBU_SOURCES
   bomb.c
   booleanize.c
   brlcad_path.c
+  bu_init.cpp
   cmd.c
-  cmdhist.c
-  color.c
+  color.cpp
   convert.c
   crashreport.c
   ctype.c
   dir.c
-  ${DIR_MACOSX_M}
   dirent.c
   datetime.c
   dylib.c
@@ -101,6 +93,7 @@ set(LIBBU_SOURCES
   mappedfile.c
   ${BU_MIME_C_FILE}
   mread.c
+  num.c
   observer.c
   opt.c
   parallel.c
@@ -114,6 +107,7 @@ set(LIBBU_SOURCES
   redblack.c
   realpath.c
   semaphore.c
+  semaphore_register.cpp
   sha1.c
   simd.c
   sort.c
@@ -133,7 +127,9 @@ set(LIBBU_SOURCES
   vfont.c
   vlb.c
   vls.c
+  vls_incr.cpp
   vls_vprintf.c
+  whereami.c
   whereis.c
   which.c
   xdr.c
@@ -145,8 +141,27 @@ else(NOT CMAKE_CXX_STANDARD EQUAL 98)
   CMAKEFILES(parallel_cpp11thread.cpp)
 endif(NOT CMAKE_CXX_STANDARD EQUAL 98)
 
-BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${Foundation_LIBRARIES};${CMAKE_THREAD_LIBS_INIT};${DL_LIBRARY};${WINSOCK_LIB};${PSAPI_LIB};${BSON_LIBRARIES};${UUID_LIBRARIES};${REGEX_LIBRARY};${M_LIBRARY}")
+BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${Foundation_LIBRARIES};${CMAKE_THREAD_LIBS_INIT};${DL_LIBRARY};${WINSOCK_LIB};${PSAPI_LIB};${BSON_LIBRARIES};${UUID_LIBRARIES};${REGEX_LIBRARIES};${M_LIBRARY}")
 set_target_properties(libbu PROPERTIES VERSION 20.0.1 SOVERSION 20)
+
+# Define a pre-build test for libbu to check the semaphores in BRL-CAD's headers for
+# ordering issues
+#set(BCAD_HDRS_FILE "${CMAKE_CURRENT_BINARY_DIR}/brlcad_headers.txt")
+#file(REMOVE "${BCAD_HDRS_FILE}")
+#file(GLOB_RECURSE BCAD_HDRS "${CMAKE_SOURCE_DIR}/include/*.h*")
+#foreach(HDRF ${BCAD_HDRS})
+#  if (NOT "${HDRF}" MATCHES ".*.svn.*")
+#    file(APPEND "${BCAD_HDRS_FILE}" "${HDRF}\n")
+#  endif (NOT "${HDRF}" MATCHES ".*.svn.*")
+#endforeach(HDRF ${BCAD_HDRS})
+#DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/brlcad_headers.txt")
+#BRLCAD_ADDEXEC(semchk "tests/semchk.cpp" "" NO_INSTALL)
+#add_custom_command(
+#  TARGET libbu PRE_BUILD
+#  COMMAND $<TARGET_FILE:semchk> "${BCAD_HDRS_FILE}"
+#  COMMENT "Validating BRL-CAD library semaphore definitions"
+#  DEPENDS semchk
+#  )
 
 BRLCAD_ADDDATA(fix.6r vfont)
 BRLCAD_ADDDATA(nonie.r.12 vfont)
@@ -159,11 +174,15 @@ set(bu_ignore_files
   charclass.h
   mime.cmake
   parallel.h
+  process.h
+  realpath_bsd.c
+  tests/semchk.cpp
   sha1.h
   vfont.h
   vls_vprintf.h
   TODO.binary_attributes
   uce-dirent.h
+  whereami.h
   y2038/LICENSE
   y2038/README.txt
   y2038/time64.h

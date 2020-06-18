@@ -1,7 +1,7 @@
 /*                        V M _ T E S T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,6 +30,7 @@
 #include <iostream>
 #include <cmath>
 
+#include "bu/app.h"
 
 typedef boost::shared_ptr<MathFunction> ct;
 
@@ -134,8 +135,9 @@ void eval()
 }
 
 
-int main()
+int main(int argc, const char *argv[])
 {
+    bu_setprogname(argv[0]);
     eval();
     return 0;
 }

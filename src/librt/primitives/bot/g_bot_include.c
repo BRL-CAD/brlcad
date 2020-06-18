@@ -1,7 +1,7 @@
 /*                   G _ B O T _ I N C L U D E . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2018 United States Government as represented by
+ * Copyright (c) 1999-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,14 +40,14 @@
  * Returns # pts (3) if a valid plane resulted.
  */
 int
-CPP_XGLUE(rt_botface_w_normals_, TRI_TYPE)(struct soltab *stp,
-				       struct bot_specific *bot,
-				       fastf_t *ap,
-				       fastf_t *bp,
-				       fastf_t *cp,
-				       fastf_t *vertex_normals, /* array of nine values (three unit normals vectors) */
-				       size_t face_no,
-				       const struct bn_tol *tol)
+CPP_XGLUE(bot_face_w_normals_, TRI_TYPE)(struct soltab *stp,
+					 struct bot_specific *bot,
+					 fastf_t *ap,
+					 fastf_t *bp,
+					 fastf_t *cp,
+					 fastf_t *vertex_normals, /* array of nine values (three unit normals vectors) */
+					 size_t face_no,
+					 const struct bn_tol *tol)
 {
     register CPP_XGLUE(tri_specific_, TRI_TYPE) *trip;
     vect_t work;
@@ -74,7 +74,7 @@ CPP_XGLUE(rt_botface_w_normals_, TRI_TYPE)(struct soltab *stp,
     {
 	BU_PUT(trip, CPP_XGLUE(tri_specific_, TRI_TYPE));
 
-	if (RT_G_DEBUG & DEBUG_SHOOT) {
+	if (RT_G_DEBUG & RT_DEBUG_SHOOT) {
 	    bu_log("%s: degenerate facet #%zu\n",
 		   stp->st_name, face_no);
 	    bu_log("\t(%g %g %g) (%g %g %g) (%g %g %g)\n",
@@ -116,10 +116,10 @@ CPP_XGLUE(rt_botface_w_normals_, TRI_TYPE)(struct soltab *stp,
  * Do the prep to support pieces for a BOT/ARS
  */
 void
-CPP_XGLUE(rt_bot_prep_pieces_, TRI_TYPE)(struct bot_specific *bot,
-				     struct soltab *stp,
-				     size_t ntri,
-				     const struct bn_tol *tol)
+CPP_XGLUE(bot_prep_pieces_, TRI_TYPE)(struct bot_specific *bot,
+				      struct soltab *stp,
+				      size_t ntri,
+				      const struct bn_tol *tol)
 {
     struct bound_rpp *minmax = (struct bound_rpp *)NULL;
     CPP_XGLUE(tri_specific_, TRI_TYPE) **fap;
@@ -231,7 +231,7 @@ CPP_XGLUE(rt_bot_prep_pieces_, TRI_TYPE)(struct bot_specific *bot,
  * stp->st_specific for use by bot_shot().
  */
 int
-CPP_XGLUE(rt_bot_prep_, TRI_TYPE)(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt_i *rtip)
+CPP_XGLUE(bot_prep_, TRI_TYPE)(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt_i *rtip)
 {
     register struct bot_specific *bot;
     const struct bn_tol *tol = &rtip->rti_tol;
@@ -362,13 +362,13 @@ CPP_XGLUE(rt_bot_prep_, TRI_TYPE)(struct soltab *stp, struct rt_bot_internal *bo
 
 
 static int
-CPP_XGLUE(rt_bot_plate_segs_, TRI_TYPE)(struct hit *hits,
-				    size_t nhits,
-				    struct soltab *stp,
-				    struct xray *rp,
-				    struct application *ap,
-				    struct seg *seghead,
-				    struct bot_specific *bot)
+CPP_XGLUE(bot_plate_segs_, TRI_TYPE)(struct hit *hits,
+				     size_t nhits,
+				     struct soltab *stp,
+				     struct xray *rp,
+				     struct application *ap,
+				     struct seg *seghead,
+				     struct bot_specific *bot)
 {
     register struct seg *segp;
     register size_t i;
@@ -444,12 +444,12 @@ CPP_XGLUE(rt_bot_plate_segs_, TRI_TYPE)(struct hit *hits,
 
 
 static int
-CPP_XGLUE(rt_bot_unoriented_segs_, TRI_TYPE)(struct hit *hits,
-					 size_t nhits,
-					 struct soltab *stp,
-					 struct xray *rp,
-					 struct application *ap,
-					 struct seg *seghead)
+CPP_XGLUE(bot_unoriented_segs_, TRI_TYPE)(struct hit *hits,
+					  size_t nhits,
+					  struct soltab *stp,
+					  struct xray *rp,
+					  struct application *ap,
+					  struct seg *seghead)
 {
     register struct seg *segp;
     register size_t i, j;
@@ -535,7 +535,7 @@ CPP_XGLUE(rt_bot_unoriented_segs_, TRI_TYPE)(struct hit *hits,
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
     }
     if (nhits&1) {
-	if (RT_G_DEBUG & DEBUG_SHOOT) {
+	if (RT_G_DEBUG & RT_DEBUG_SHOOT) {
 	    bu_log("rt_bot_unoriented_segs(%s): WARNING: odd number of hits (%zu), last hit ignored\n",
 		   stp->st_name, nhits);
 	    bu_log("\tray = -p %g %g %g -d %g %g %g\n",
@@ -552,9 +552,9 @@ CPP_XGLUE(rt_bot_unoriented_segs_, TRI_TYPE)(struct hit *hits,
  * this is to be done depends on the mode of the BoT.
  */
 HIDDEN int
-CPP_XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab *stp,
-				  struct xray *rp, struct application *ap,
-				  struct seg *seghead, struct rt_piecestate *psp)
+CPP_XGLUE(bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab *stp,
+				   struct xray *rp, struct application *ap,
+				   struct seg *seghead, struct rt_piecestate *psp)
 {
     struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
     register struct seg *segp;
@@ -1003,16 +1003,16 @@ CPP_XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct sol
  * Intersect a ray with a bot.  If an intersection occurs, a struct
  * seg will be acquired and filled in.
  *
- * Notes for rt_bot_norm(): hit_private contains pointer to the
- * tri_specific structure.  hit_vpriv[X] contains dot product of ray
- * direction and unit normal from tri_specific.
+ * Notes for rt_bot_norm() and rt_bot_uv(): hit_private contains
+ * pointer to the tri_specific structure.  hit_vpriv[X] contains dot
+ * product of ray direction and unit normal from tri_specific.
  *
  * Returns -
  * 0 MISS
  * >0 HIT
  */
 int
-CPP_XGLUE(rt_bot_shot_, TRI_TYPE)(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
+CPP_XGLUE(bot_shot_, TRI_TYPE)(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
     register CPP_XGLUE(tri_specific_, TRI_TYPE) *trip = (CPP_XGLUE(tri_specific_, TRI_TYPE) *)bot->bot_facelist;
@@ -1112,8 +1112,8 @@ CPP_XGLUE(rt_bot_shot_, TRI_TYPE)(struct soltab *stp, struct xray *rp, struct ap
  * Generally the hits are stashed between invocations in psp.
  */
 int
-CPP_XGLUE(rt_bot_piece_shot_, TRI_TYPE)(struct rt_piecestate *psp, struct rt_piecelist *plp,
-				    double dist_corr, struct xray *rp, struct application *ap, struct seg *seghead)
+CPP_XGLUE(bot_piece_shot_, TRI_TYPE)(struct rt_piecestate *psp, struct rt_piecelist *plp,
+				     double dist_corr, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     struct resource *resp;
     long *sol_piece_subscr_p;
@@ -1121,7 +1121,7 @@ CPP_XGLUE(rt_bot_piece_shot_, TRI_TYPE)(struct rt_piecestate *psp, struct rt_pie
     long piecenum;
     register struct hit *hp;
     struct bot_specific *bot;
-    const int debug_shoot = RT_G_DEBUG & DEBUG_SHOOT;
+    const int debug_shoot = RT_G_DEBUG & RT_DEBUG_SHOOT;
     int starting_hits;
     fastf_t toldist, dn_plus_tol;
     size_t trinum;
@@ -1264,12 +1264,10 @@ CPP_XGLUE(rt_bot_piece_shot_, TRI_TYPE)(struct rt_piecestate *psp, struct rt_pie
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-CPP_XGLUE(rt_bot_norm_, TRI_TYPE)(struct bot_specific *bot, struct hit *hitp, struct soltab *stp, struct xray *rp)
+CPP_XGLUE(bot_norm_, TRI_TYPE)(struct bot_specific *bot, struct hit *hitp, struct xray *rp)
 {
     vect_t old_norm;
     CPP_XGLUE(tri_specific_, TRI_TYPE) *trip=(CPP_XGLUE(tri_specific_, TRI_TYPE) *)hitp->hit_private;
-
-    if (stp) RT_CK_SOLTAB(stp);
 
     VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
     VMOVE(old_norm, hitp->hit_normal);
@@ -1325,7 +1323,22 @@ CPP_XGLUE(rt_bot_norm_, TRI_TYPE)(struct bot_specific *bot, struct hit *hitp, st
 
 
 void
-CPP_XGLUE(rt_bot_free_, TRI_TYPE)(struct bot_specific *bot)
+CPP_XGLUE(bot_uv_, TRI_TYPE)(struct bot_specific *bot, struct hit *hitp, struct uvcoord *uvp)
+{
+    size_t i;
+    CPP_XGLUE(tri_specific_, TRI_TYPE) *trip = (CPP_XGLUE(tri_specific_, TRI_TYPE) *)hitp->hit_private;
+    if (!trip || !uvp) return;
+
+    if ((bot->bot_flags & RT_BOT_HAS_TEXTURE_UVS) /* && trip->tri_uvs */) {
+	for (i = X; i <= Z; i++) {
+	    /* TODO: do stuff */
+	}
+    }
+}
+
+
+void
+CPP_XGLUE(bot_free_, TRI_TYPE)(struct bot_specific *bot)
 {
     register CPP_XGLUE(tri_specific_, TRI_TYPE) *tri, *ptr;
 

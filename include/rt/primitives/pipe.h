@@ -1,7 +1,7 @@
 /*                        P I P E . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2018 United States Government as represented by
+ * Copyright (c) 1993-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,11 +32,11 @@
 
 __BEGIN_DECLS
 
-RT_EXPORT extern void rt_vls_pipept(struct bu_vls *vp,
-                                    int seg_no,
-                                    const struct rt_db_internal *ip,
-                                    double mm2local);
-RT_EXPORT extern void rt_pipept_print(const struct wdb_pipept *pipept, double mm2local);
+RT_EXPORT extern void rt_vls_pipe_pnt(struct bu_vls *vp,
+				    int seg_no,
+				    const struct rt_db_internal *ip,
+				    double mm2local);
+RT_EXPORT extern void rt_pipe_pnt_print(const struct wdb_pipe_pnt *pipe_pnt, double mm2local);
 RT_EXPORT extern int rt_pipe_ck(const struct bu_list *headp);
 
 /** @} */

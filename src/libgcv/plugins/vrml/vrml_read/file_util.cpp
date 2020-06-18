@@ -1,7 +1,7 @@
 /*			 F I L E _ U T I L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2015-2018 United States Government as represented by
+ * Copyright (c) 2015-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,9 +33,9 @@
 #include <iostream>
 
 #ifndef HAVE_DECL_FSEEKO
-#include <sys/types.h> /* for off_t */
-extern "C" int fseeko(FILE *, off_t, int);
-extern "C" off_t ftello(FILE *);
+#include "bio.h" /* for b_off_t */
+extern "C" int fseeko(FILE *, b_off_t, int);
+extern "C" b_off_t ftello(FILE *);
 #endif
 #include <fstream>
 

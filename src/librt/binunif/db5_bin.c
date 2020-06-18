@@ -1,7 +1,7 @@
 /*                       D B 5 _ B I N . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2018 United States Government as represented by
+ * Copyright (c) 2000-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -390,7 +390,7 @@ rt_retrieve_binunif(struct rt_db_internal *intern,
     if (db5_type_descrip_from_codes(&tmp, raw.major_type, raw.minor_type))
 	tmp = 0;
 
-    if (RT_G_DEBUG & DEBUG_VOL)
+    if (RT_G_DEBUG & RT_DEBUG_VOL)
 	bu_log("get_body() sees type (%d, %d)='%s'\n",
 	       raw.major_type, raw.minor_type, tmp);
 
@@ -399,46 +399,46 @@ rt_retrieve_binunif(struct rt_db_internal *intern,
 
     bip = (struct rt_binunif_internal *)intern->idb_ptr;
     RT_CK_BINUNIF(bip);
-    if (RT_G_DEBUG & DEBUG_HF)
+    if (RT_G_DEBUG & RT_DEBUG_HF)
 	rt_binunif_dump(bip);
 
-    if (RT_G_DEBUG & DEBUG_VOL)
+    if (RT_G_DEBUG & RT_DEBUG_VOL)
 	bu_log("rt_retrieve_binunif thinks bip->count=%zu\n",
 	       bip->count);
 
     switch (bip->type) {
 	case DB5_MINORTYPE_BINU_FLOAT:
-	    if (RT_G_DEBUG & DEBUG_VOL)
+	    if (RT_G_DEBUG & RT_DEBUG_VOL)
 		bu_log("bip->type switch... float");
 	    break;
 	case DB5_MINORTYPE_BINU_DOUBLE:
-	    if (RT_G_DEBUG & DEBUG_VOL)
+	    if (RT_G_DEBUG & RT_DEBUG_VOL)
 		bu_log("bip->type switch... double");
 	    break;
 	case DB5_MINORTYPE_BINU_8BITINT:
-	    if (RT_G_DEBUG & DEBUG_VOL)
+	    if (RT_G_DEBUG & RT_DEBUG_VOL)
 		bu_log("bip->type switch... 8bitint");
 	    break;
 	case DB5_MINORTYPE_BINU_8BITINT_U:
-	    if (RT_G_DEBUG & DEBUG_VOL)
+	    if (RT_G_DEBUG & RT_DEBUG_VOL)
 		bu_log("bip->type switch... 8bituint");
 	    break;
 	case DB5_MINORTYPE_BINU_16BITINT:
-	    if (RT_G_DEBUG & DEBUG_VOL)
+	    if (RT_G_DEBUG & RT_DEBUG_VOL)
 		bu_log("bip->type switch... 16bituint");
 	    break;
 	case DB5_MINORTYPE_BINU_16BITINT_U:
-	    if (RT_G_DEBUG & DEBUG_VOL)
+	    if (RT_G_DEBUG & RT_DEBUG_VOL)
 		bu_log("bip->type switch... 16bitint");
 	    break;
 	case DB5_MINORTYPE_BINU_32BITINT:
 	case DB5_MINORTYPE_BINU_32BITINT_U:
-	    if (RT_G_DEBUG & DEBUG_VOL)
+	    if (RT_G_DEBUG & RT_DEBUG_VOL)
 		bu_log("bip->type switch... 32bitint");
 	    break;
 	case DB5_MINORTYPE_BINU_64BITINT:
 	case DB5_MINORTYPE_BINU_64BITINT_U:
-	    if (RT_G_DEBUG & DEBUG_VOL)
+	    if (RT_G_DEBUG & RT_DEBUG_VOL)
 		bu_log("bip->type switch... 64bitint");
 	    break;
 	default:

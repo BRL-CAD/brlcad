@@ -1,7 +1,7 @@
 /*                          P R E P . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2018 United States Government as represented by
+ * Copyright (c) 1990-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,6 +50,15 @@ extern void rt_ck(struct rt_i *rtip);
 HIDDEN void rt_solid_bitfinder(register union tree *treep, struct region *regp, struct resource *resp);
 
 
+int RT_SEM_WORKER = 0;
+int RT_SEM_RESULTS = 0;
+int RT_SEM_MODEL = 0;
+int RT_SEM_TREE0 = 0;
+int RT_SEM_TREE1 = 0;
+int RT_SEM_TREE2 = 0;
+int RT_SEM_TREE3 = 0;
+
+
 /* XXX Need rt_init_rtg(), rt_clean_rtg() */
 
 /**
@@ -70,10 +79,10 @@ rt_new_rti(struct db_i *dbip)
 	char *debug_flags;
 	debug_flags = getenv("LIBRT_DEBUG");
 	if (debug_flags) {
-	    if (RTG.debug) {
+	    if (rt_debug) {
 		bu_log("WARNING: discarding LIBRT_DEBUG value in favor of application-specified flags\n");
 	    } else {
-		RTG.debug = strtol(debug_flags, NULL, 0x10);
+		rt_debug = strtol(debug_flags, NULL, 0x10);
 	    }
 	}
 
@@ -112,7 +121,7 @@ rt_new_rti(struct db_i *dbip)
     rtip->rti_tol.perp = 1e-6;
     rtip->rti_tol.para = 1 - rtip->rti_tol.perp;
 
-    rtip->rti_ttol.magic = RT_TESS_TOL_MAGIC;
+    rtip->rti_ttol.magic = BG_TESS_TOL_MAGIC;
     rtip->rti_ttol.abs = 0.0;
     rtip->rti_ttol.rel = 0.01;
     rtip->rti_ttol.norm = 0;
@@ -209,7 +218,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 
     RT_CK_RTI(rtip);
 
-    if (RT_G_DEBUG&DEBUG_REGIONS) bu_log("rt_prep_parallel(%s, %d, ncpu=%d) START\n",
+    if (RT_G_DEBUG&RT_DEBUG_REGIONS) bu_log("rt_prep_parallel(%s, %d, ncpu=%d) START\n",
 					 rtip->rti_dbip->dbi_filename,
 					 rtip->rti_dbip->dbi_uses, ncpu);
 
@@ -280,7 +289,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
      */
     rtip->Regions = (struct region **)bu_calloc(rtip->nregions, sizeof(struct region *), "rtip->Regions[]");
 
-    if (RT_G_DEBUG&DEBUG_REGIONS)
+    if (RT_G_DEBUG&RT_DEBUG_REGIONS)
 	bu_log("rt_prep_parallel(%s, %d) about to optimize regions\n",
 	       rtip->rti_dbip->dbi_filename,
 	       rtip->rti_dbip->dbi_uses);
@@ -292,13 +301,13 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 	rt_optim_tree(regp->reg_treetop, resp);
 	rt_solid_bitfinder(regp->reg_treetop, regp, resp);
 
-	if (RT_G_DEBUG&DEBUG_REGIONS) {
+	if (RT_G_DEBUG&RT_DEBUG_REGIONS) {
 	    db_ck_tree(regp->reg_treetop);
 	    rt_pr_region(regp);
 	}
     }
 
-    if (RT_G_DEBUG&DEBUG_REGIONS) {
+    if (RT_G_DEBUG&RT_DEBUG_REGIONS) {
 	bu_log("rt_prep_parallel() printing primitives' region pointers\n");
 	RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
 	    bu_log("solid %s ", stp->st_name);
@@ -354,7 +363,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 	id = stp->st_id;
 	rtip->rti_sol_by_type[id][rtip->rti_nsol_by_type[id]++] = stp;
     } RT_VISIT_ALL_SOLTABS_END;
-    if (RT_G_DEBUG & (DEBUG_DB|DEBUG_SOLIDS)) {
+    if (RT_G_DEBUG & (RT_DEBUG_DB|RT_DEBUG_SOLIDS)) {
 	bu_log("rt_prep_parallel(%s, %d) printing number of primitives by type\n",
 	       rtip->rti_dbip->dbi_filename,
 	       rtip->rti_dbip->dbi_uses);
@@ -410,7 +419,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
     } RT_VISIT_ALL_SOLTABS_END;
 
     /* Plot bounding RPPs */
-    if ((RT_G_DEBUG&DEBUG_PL_BOX)) {
+    if ((RT_G_DEBUG&RT_DEBUG_PL_BOX)) {
 	FILE *plotfp;
 
 	plotfp = fopen("rtrpp.plot3", "wb");
@@ -423,7 +432,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
     }
 
     /* Plot solid outlines */
-    if ((RT_G_DEBUG&DEBUG_PL_SOLIDS)) {
+    if ((RT_G_DEBUG&RT_DEBUG_PL_SOLIDS)) {
 	FILE *plotfp;
 
 	plotfp = fopen("rtsolids.plot3", "wb");
@@ -435,7 +444,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
     rtip->needprep = 0;		/* prep is done */
     bu_semaphore_release(RT_SEM_RESULTS);	/* end critical section */
 
-    if (RT_G_DEBUG&DEBUG_REGIONS) {
+    if (RT_G_DEBUG&RT_DEBUG_REGIONS) {
 	bu_log("rt_prep_parallel(%s, %d, ncpu=%d) FINISH\n",
 	       rtip->rti_dbip->dbi_filename,
 	       rtip->rti_dbip->dbi_uses, ncpu);
@@ -824,6 +833,21 @@ rt_init_resource(struct resource *resp, int cpu_num, struct rt_i *rtip)
 
     BU_ASSERT(cpu_num >= 0);
     BU_ASSERT(cpu_num < MAX_PSW);
+
+    if (!RT_SEM_WORKER)
+	RT_SEM_WORKER = bu_semaphore_register("RT_SEM_WORKER");
+    if (!RT_SEM_RESULTS)
+	RT_SEM_RESULTS = bu_semaphore_register("RT_SEM_RESULTS");
+    if (!RT_SEM_MODEL)
+	RT_SEM_MODEL = bu_semaphore_register("RT_SEM_MODEL");
+    if (!RT_SEM_TREE0)
+	RT_SEM_TREE0 = bu_semaphore_register("RT_SEM_TREE0");
+    if (!RT_SEM_TREE1)
+	RT_SEM_TREE1 = bu_semaphore_register("RT_SEM_TREE1");
+    if (!RT_SEM_TREE2)
+	RT_SEM_TREE2 = bu_semaphore_register("RT_SEM_TREE2");
+    if (!RT_SEM_TREE3)
+	RT_SEM_TREE3 = bu_semaphore_register("RT_SEM_TREE3");
 
     if (rtip)
 	RT_CK_RTI(rtip);
@@ -1280,7 +1304,7 @@ rt_del_regtree(struct rt_i *rtip, register struct region *delregp, struct resour
     RT_CK_RESOURCE(resp);
     RT_CK_REGION(delregp);
 
-    if (RT_G_DEBUG & DEBUG_REGIONS)
+    if (RT_G_DEBUG & RT_DEBUG_REGIONS)
 	bu_log("rt_del_regtree(%s): region deleted\n", delregp->reg_name);
 
     BU_LIST_DEQUEUE(&(delregp->l));

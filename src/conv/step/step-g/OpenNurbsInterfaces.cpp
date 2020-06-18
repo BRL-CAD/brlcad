@@ -1,7 +1,7 @@
 /*                 OpenNurbsInterfaces.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2018 United States Government as represented by
+ * Copyright (c) 1994-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -75,6 +75,7 @@ class SDAI_Application_instance;
 #include "Loop.h"
 #include "VertexLoop.h"
 #include "Face.h"
+#include "OpenShell.h"
 #include "OrientedFace.h"
 #include "FaceBound.h"
 #include "FaceOuterBound.h"
@@ -93,6 +94,7 @@ class SDAI_Application_instance;
 #include "UniformSurface.h"
 
 #include "AdvancedBrepShapeRepresentation.h"
+#include "ShellBasedSurfaceModel.h"
 #include "PullbackCurve.h"
 
 #include "brep.h"
@@ -142,6 +144,42 @@ AdvancedBrepShapeRepresentation::LoadONBrep(ON_Brep *brep)
     return true;
 }
 
+ON_Brep *
+ShellBasedSurfaceModel::GetONBrep()
+{
+    ON_Brep *brep = ON_Brep::New();
+
+    if (!brep) {
+	std::cerr << "ERROR: INTERNAL MEMORY ALLOCATION FAILURE in " << __FILE__ << ":" << __LINE__ << std::endl;
+	return NULL;
+    }
+
+    if (!LoadONBrep(brep)) {
+	std::cerr << "Error: " << entityname << "::GetONBrep() - Error loading openNURBS brep." << std::endl;
+	//still return brep may contain something useful to diagnose
+	return brep;
+    }
+
+    return brep;
+}
+
+
+bool
+ShellBasedSurfaceModel::LoadONBrep(ON_Brep *brep)
+{
+    if (!brep) {
+	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
+	return false;
+    }
+    LIST_OF_OPEN_SHELLS::iterator i;
+    for (i = sbsm_boundary.begin(); i != sbsm_boundary.end(); ++i) {
+	if (!(*i)->LoadONBrep(brep)) {
+	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
+	    return false;
+	}
+    }
+    return true;
+}
 
 //
 // Curve handlers

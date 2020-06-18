@@ -1,7 +1,7 @@
 /*                    E N C O D E . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2018 United States Government as represented by
+ * Copyright (c) 2011-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -61,7 +61,7 @@ test_encode(const char *str)
 	printf("{%*s}%*s -> {%*s}%*s [PASS]\n",
 	       (int)len_s, str, (int)(f_wid - len_s), " ",
 	       (int)len_d, bu_vls_addr(&decoded), (int)(f_wid - len_d), " "
-	       );
+	    );
     } else {
 	/* a hack for str showing '(null)' in printf if zero length */
 	if (len_s == 0)
@@ -70,7 +70,7 @@ test_encode(const char *str)
 	       (int)len_s, str, (int)(f_wid - len_s), " ",
 	       (int)len_d, bu_vls_addr(&decoded), (int)(f_wid - len_d), " ",
 	       str
-	       );
+	    );
 	status = 1;
     }
 
@@ -85,6 +85,8 @@ int
 main(int ac, char *av[])
 {
     int test_num = 0;
+
+    bu_setprogname(av[0]);
 
     if (ac != 2)
 	bu_exit(1, "Usage: %s {test_number}\n", av[0]);

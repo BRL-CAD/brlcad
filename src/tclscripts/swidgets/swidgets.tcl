@@ -1,7 +1,7 @@
 #                    S W I D G E T S . T C L
 # BRL-CAD
 #
-# Copyright (c) 2006-2018 United States Government as represented by
+# Copyright (c) 2006-2020 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -22,8 +22,8 @@
 
 package require Tcl 8.0
 package require Tk 8.0
-package require Itcl 3.2
-package require Itk 3.2
+package require Itcl
+package require Itk
 package require Iwidgets
 
 namespace eval ::swidgets {

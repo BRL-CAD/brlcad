@@ -2,7 +2,7 @@
  *
  * BRL-CAD
  *
- * Copyright (c) 2015-2018 United States Government as represented by
+ * Copyright (c) 2015-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,14 +42,42 @@
 
 /* TODO - need some more stressful tests, particularly for hole removal */
 
+static int plot_files;
+
+static void
+_tess_report(int *faces, int num_faces, const point2d_t *points, int test_num, int method_num)
+{
+    bu_log("Test %d, method %d: generated %d faces: \n", test_num, method_num, num_faces);
+    for (int i = 0; i < num_faces; i++) {
+	bu_log("%d: %d -> %d -> %d\n", i, faces[3*i], faces[3*i+1], faces[3*i+2]);
+    }
+    if (plot_files) {
+	struct bu_vls tfile = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&tfile, "test_%d-%d_triangles.plot3", test_num, method_num);
+	bg_tri_plot_2d(bu_vls_cstr(&tfile), faces, num_faces, points, 0, 255, 0);
+	bu_vls_free(&tfile);
+    }
+}
+
 int
-main(int UNUSED(argc), const char **UNUSED(argv))
+main(int argc, const char **argv)
 {
     int ret;
+
+    bu_setprogname(argv[0]);
+
+    plot_files = 0;
+    if (argc > 1 && BU_STR_EQUAL(argv[1], "--plot")) {
+	plot_files = 1;
+    }
+
     {
 	size_t num_points = 0;
 	int num_faces = 0;
 	int *faces = NULL;
+	int num_faces2 = 0;
+	int *faces2 = NULL;
+
 
 	/* 44 point polygon derived from NIST MBE PMI sample 1 shape */
 	point2d_t points[44] = {{0}};
@@ -99,10 +127,27 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	V2SET(points[43], 2807.83, 2372.83);
 
 	num_points = sizeof(points) / sizeof(point2d_t);
-	ret = bg_polygon_triangulate(&faces, &num_faces, NULL, NULL, (const point2d_t *)points, num_points, EAR_CLIPPING);
-	if (ret) {
-	    return 1;
+	if (plot_files) {
+	    bg_polygon_plot_2d("test_1_polygon.plot3", (const point2d_t *)points, num_points, 255, 0, 0);
 	}
+	ret = bg_polygon_triangulate(&faces, &num_faces, NULL, NULL, NULL, 0, (const point2d_t *)points, num_points, TRI_EAR_CLIPPING);
+	if (ret) {
+	    bu_log("test 1 ear clipping failure!\n");
+	    return 1;
+	} else {
+	    _tess_report(faces, num_faces, (const point2d_t *)points, 1, 1);
+	}
+
+	ret = bg_polygon_triangulate(&faces2, &num_faces2, NULL, NULL, NULL, 0, (const point2d_t *)points, num_points, TRI_CONSTRAINED_DELAUNAY);
+	if (ret) {
+	    bu_log("test 1 constrained delaunay failure!\n");
+	    return 1;
+	} else {
+	    _tess_report(faces2, num_faces2, (const point2d_t *)points, 1, 2);
+	}
+
+
+
     }
     {
 	size_t num_points = 0;
@@ -127,9 +172,15 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	V2SET(points[13], 814.092008, 761.624528);
 
 	num_points = sizeof(points) / sizeof(point2d_t);
-	ret = bg_polygon_triangulate(&faces, &num_faces, NULL, NULL, (const point2d_t *)points, num_points, EAR_CLIPPING);
+	if (plot_files) {
+	    bg_polygon_plot_2d("test_2_polygon.plot3", (const point2d_t *)points, num_points, 255, 0, 0);
+	}
+	ret = bg_polygon_triangulate(&faces, &num_faces, NULL, NULL, NULL, 0, (const point2d_t *)points, num_points, TRI_EAR_CLIPPING);
 	if (ret) {
+	    bu_log("test 2 failure!\n");
 	    return 1;
+	} else {
+	    _tess_report(faces, num_faces, (const point2d_t *)points, 2, 1);
 	}
     }
 
@@ -138,7 +189,7 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 	int num_faces;
 	int *faces;
 	int poly[12] = {11,10,9,8,7,6,5,4,3,2,1,0};
-	int hole[4] = {12,13,14,15};
+	int hole[4] = {15,14,13,12};
 	int **hole_array = (int **)bu_calloc(1, sizeof(int *), "hole_array");
 	size_t hole_cnt = 4;
 
@@ -162,17 +213,24 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 
 	hole_array[0] = (int *)hole;
 
+	if (plot_files) {
+	    bg_polygon_plot_2d("test_3_polygon.plot3", (const point2d_t *)points, 12, 255, 0, 0);
+	    bg_polygon_plot_2d("test_3_polygon_hole.plot3", (const point2d_t *)(points+12), 4, 0, 0, 255);
+	}
+
 	ret = bg_nested_polygon_triangulate(&faces, &num_faces, NULL, NULL,
-	       	(const int *)poly, 12, (const int **)hole_array, (const size_t *)&hole_cnt, 1,
-	       	(const point2d_t *)points, 16, EAR_CLIPPING);
+					    (const int *)poly, 12, (const int **)hole_array, (const size_t *)&hole_cnt, 1, NULL, 0,
+					    (const point2d_t *)points, 16, TRI_EAR_CLIPPING);
 	bu_free(hole_array, "free hole array");
 	if (ret) {
 	    bu_log("Nested clipping 1 fail\n");
 	    return 1;
+	} else {
+	    _tess_report(faces, num_faces, (const point2d_t *)points, 3, 1);
 	}
     }
 
-   /* Nested test case 2 */
+    /* Nested test case 2 */
     {
 	int num_faces;
 	int *faces;
@@ -197,15 +255,50 @@ main(int UNUSED(argc), const char **UNUSED(argv))
 
 	hole_array[0] = (int *)hole;
 
+	if (plot_files) {
+	    bg_polygon_plot_2d("test_4_polygon.plot3", (const point2d_t *)points, 8, 255, 0, 0);
+	    bg_polygon_plot_2d("test_4_polygon_hole.plot3", (const point2d_t *)(points+8), 4, 0, 0, 255);
+	}
+
 	ret = bg_nested_polygon_triangulate(&faces, &num_faces, NULL, NULL,
-	       	(const int *)poly, 8, (const int **)hole_array, (const size_t *)&hole_cnt, 1,
-	       	(const point2d_t *)points, 12, EAR_CLIPPING);
+					    (const int *)poly, 8, (const int **)hole_array, (const size_t *)&hole_cnt, 1, NULL, 0,
+					    (const point2d_t *)points, 12, TRI_EAR_CLIPPING);
 	bu_free(hole_array, "free hole array");
 	if (ret) {
 	    bu_log("Nested clipping 2 fail\n");
 	    return 1;
+	} else {
+	    _tess_report(faces, num_faces, (const point2d_t *)points, 4, 1);
 	}
     }
+
+    /* Four point triangle */
+    {
+	size_t num_points = 0;
+	int num_faces = 0;
+	int *faces = NULL;
+
+	/* 44 point polygon derived from NIST MBE PMI sample 1 shape */
+	point2d_t points[4] = {{0}};
+	V2SET(points[0], 2.08348167919269223, -0.69232852214032814);
+	V2SET(points[1], 1.60267821476360961, -0.00000000000000006);
+	V2SET(points[2], 1.20200866111591842, 1.15388087023390984);
+	V2SET(points[3], 0.80133910746824888, 2.30776174046776017);
+
+	if (plot_files) {
+	    bg_polygon_plot_2d("test_5_polygon.plot3", (const point2d_t *)points, 4, 255, 0, 0);
+	}
+
+	num_points = sizeof(points) / sizeof(point2d_t);
+	ret = bg_polygon_triangulate(&faces, &num_faces, NULL, NULL, NULL, 0, (const point2d_t *)points, num_points, TRI_EAR_CLIPPING);
+	if (ret) {
+	    bu_log("4 point triangle failure!\n");
+	    return 1;
+	} else {
+	    _tess_report(faces, num_faces, (const point2d_t *)points, 5, 1);
+	}
+    }
+
 
     return 0;
 }

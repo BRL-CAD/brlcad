@@ -1,7 +1,7 @@
 /*                         S T R . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -191,16 +191,18 @@ BU_EXPORT extern int bu_strncasecmp(const char *string1, const char *string2, si
  * string, bu_bomb() is called.
  *
  * Example:
- *   char *result;
- *   char buf[128];
- *   result = bu_str_escape("my fair lady", " ", buf, 128);
- *   :: result == buf == "my\ fair\ lady"
- *   result = bu_str_escape(buf, "\", NULL, 0);
- *   :: result == "my\\ fair\\ lady"
- *   :: buf == "my\ fair\ lady"
- *   bu_free(result, "bu_str_escape");
- *   result = bu_str_escape(buf, "a-zA-Z", buf, 128);
- *   :: result == buf == "\m\y\ \f\a\i\r\ \l\a\d\y"
+ @code
+    char *result;
+    char buf[128];
+    result = bu_str_escape("my fair lady", " ", buf, 128);
+    :: result == buf == "my\ fair\ lady"
+    result = bu_str_escape(buf, "\", NULL, 0);
+    :: result == "my\\ fair\\ lady"
+    :: buf == "my\ fair\ lady"
+    bu_free(result, "bu_str_escape");
+    result = bu_str_escape(buf, "a-zA-Z", buf, 128);
+    :: result == buf == "\m\y\ \f\a\i\r\ \l\a\d\y"
+ @endcode
  *
  * This function should be thread safe and re-entrant if the
  * input/output buffers are not shared (and strlen() is threadsafe).
@@ -223,14 +225,16 @@ BU_EXPORT extern char *bu_str_escape(const char *input, const char *expression, 
  * string, bu_bomb() is called.
  *
  * Example:
- *   char *result;
- *   char buf[128];
- *   result = bu_str_unescape("\m\y\\ \f\a\i\r\\ \l\a\d\y", buf, 128);
- *   :: result == buf == "my\ fair\ lady"
- *   result = bu_str_unescape(buf, NULL, 0);
- *   :: result == "my fair lady"
- *   :: buf == "my\ fair\ lady"
- *   bu_free(result, "bu_str_unescape");
+ @code
+    char *result;
+    char buf[128];
+    result = bu_str_unescape("\m\y\\ \f\a\i\r\\ \l\a\d\y", buf, 128);
+    :: result == buf == "my\ fair\ lady"
+    result = bu_str_unescape(buf, NULL, 0);
+    :: result == "my fair lady"
+    :: buf == "my\ fair\ lady"
+    bu_free(result, "bu_str_unescape");
+ @endcode
  *
  * This function should be thread safe and re-entrant if the
  * input/output buffers are not shared (and strlen() is threadsafe).
@@ -294,8 +298,8 @@ BU_EXPORT extern int bu_str_false(const char *str);
  * argc number of words of input, now in argv[]
  */
 BU_EXPORT extern size_t bu_argv_from_string(char *argv[],
-                                            size_t lim,
-                                            char *lp);
+					    size_t lim,
+					    char *lp);
 
 
 /**
@@ -303,8 +307,8 @@ BU_EXPORT extern size_t bu_argv_from_string(char *argv[],
  * (Note: function signature duplicates that of Tcl_SplitList)
  */
 BU_EXPORT extern int bu_argv_from_tcl_list(const char *list_str,
-                                           int *argc,
-                                           const char ***argv);
+					   int *argc,
+					   const char ***argv);
 
 /**
  * Deallocate all strings in a given argv array and the array itself

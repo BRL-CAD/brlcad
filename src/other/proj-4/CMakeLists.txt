@@ -24,7 +24,7 @@ if(WIN32)
   set(PROJ_ABI_VERSION "${PROJ_VERSION_MAJOR}_${PROJ_VERSION_MINOR}")
 endif(WIN32)
 set(PROJ_API_VERSION "12")
-set(PROJ_BUILD_VERSION "12.0.0")
+set(PROJ_BUILD_VERSION "${PROJ_VERSION_MAJOR}.${PROJ_VERSION_MINOR}.${PROJ_API_VERSION}")
 
 #################################################################################
 if(NOT BIN_DIR)
@@ -44,6 +44,14 @@ if(NOT INCLUDE_DIR)
   set(INCLUDE_DIR include)
 endif(NOT INCLUDE_DIR)
 
+if (NOT DEFINED BUILD_SHARED_LIBS)
+  set(BUILD_SHARED_LIBS ON)
+endif (NOT DEFINED BUILD_SHARED_LIBS)
+
+if (NOT DEFINED BUILD_STATIC_LIBS)
+  set(BUILD_STATIC_LIBS OFF)
+endif (NOT DEFINED BUILD_STATIC_LIBS)
+
 #################################################################################
 # From SociConfig.cmake - CMake build configuration of SOCI library
 # Copyright (C) 2010 Mateusz Loskot <mateusz@loskot.net>
@@ -53,7 +61,7 @@ endif(NOT INCLUDE_DIR)
 # http://www.boost.org/LICENSE_1_0.txt)
 
 include (CheckIncludeFiles)
-include (CheckLibraryExists) 
+include (CheckLibraryExists)
 include (CheckFunctionExists)
 
 # check needed include file
@@ -71,7 +79,7 @@ set(STDC_HEADERS 1)
 check_function_exists(localeconv HAVE_LOCALECONV)
 
 # check libm need on unix
-check_library_exists(m ceil "" HAVE_LIBM) 
+check_library_exists(m ceil "" HAVE_LIBM)
 if(HAVE_LIBM)
   set(M_LIBRARY m)
 endif(HAVE_LIBM)

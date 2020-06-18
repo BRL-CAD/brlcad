@@ -1,7 +1,7 @@
 /*                        B W C R O P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2018 United States Government as represented by
+ * Copyright (c) 1986-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,22 +34,24 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <limits.h> /* for INT_MAX */
 #include "vmath.h"
 
+#include "bio.h" /* for b_off_t */
+
+#include "bu/app.h"
 #include "bu/file.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 
 
 #define round(x) ((int)(x+0.5))
-#define MAXBUFBYTES 4096*4096	/* max bytes to malloc in buffer space */
+#define MAXBUFBYTES BU_PAGE_SIZE*BU_PAGE_SIZE	/* max bytes to malloc in buffer space */
 
 unsigned char *buffer;
 ssize_t scanlen;			/* length of infile scanlines */
 ssize_t buflines;		/* Number of lines held in buffer */
-off_t buf_start = -1000;	/* First line in buffer */
+b_off_t buf_start = -1000;	/* First line in buffer */
 
 unsigned long xnum, ynum;	/* Number of pixels in new file */
 float ulx, uly, urx, ury, lrx, lry, llx, lly;	/* Corners of original file */
@@ -75,11 +77,11 @@ init_buffer()
     max = MAXBUFBYTES / scanlen;
 
     /*
-     * Do a max of 4096.  We really should see how big
-     * the input file is to decide if we should buffer
-     * less than our max.
+     * Do a max of page size.  We really should see how big the input
+     * file is to decide if we should buffer less than our max.
      */
-    if (max > 4096) max = 4096;
+    if (max > BU_PAGE_SIZE)
+	max = BU_PAGE_SIZE;
 
     if (max < scanlen)
 	buflines = max;
@@ -103,7 +105,7 @@ fill_buffer(int y)
     if (buf_start < 0)
 	buf_start = 0;
 
-    fseek(ifp, buf_start * scanlen, 0);
+    bu_fseek(ifp, buf_start * scanlen, 0);
     ret = fread(buffer, scanlen, buflines, ifp);
     if (ret == 0)
 	perror("fread");
@@ -120,6 +122,8 @@ main(int argc, char **argv)
     size_t ret;
 
     int atoival;
+
+    bu_setprogname(argv[0]);
 
     if (argc < 3) {
 	bu_exit(1, "%s", usage);

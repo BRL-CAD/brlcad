@@ -1,7 +1,7 @@
 /*                     C O N V - V G 2 G . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2018 United States Government as represented by
+ * Copyright (c) 1985-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -107,7 +107,7 @@ main(int argc, char **argv)
 	    bu_strlcpy(rec.i.i_version, ID_VERSION, sizeof(rec.i.i_version));
 	}
     } else {
-	lseek(ifd, 0, 0);
+	bu_lseek(ifd, 0, 0);
 	/* have an old vged file to convert */
 
 	/* units are important now because:
@@ -206,7 +206,7 @@ top:
 	    case ID_ARS_A:
 		if (rec.a.a_name[0] == '\0') {
 		    /* Skip deleted junk */
-		    lseek(ifd, (off_t)(rec.a.a_totlen * sizeof(rec)), 1);
+		    bu_lseek(ifd, (b_off_t)(rec.a.a_totlen * sizeof(rec)), 1);
 		    goto top;
 		}
 		rec.a.a_xmin *= factor;

@@ -86,6 +86,7 @@ add_subdirectory(lod)
 add_subdirectory(mged)
 add_subdirectory(plot3-dm)
 add_subdirectory(sdialogs)
+add_subdirectory(shotvis)
 add_subdirectory(swidgets)
 add_subdirectory(tcllib)
 add_subdirectory(util)
@@ -114,8 +115,10 @@ tclIndex_BUILD(tclscripts)
 # that relies on the other tclscripts being set up.
 add_subdirectory(rtwizard)
 
-CMAKEFILES(README hv3_man_browser_test.tcl)
-CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(
+  CMakeLists.txt
+  README
+  )
 
 # Local Variables:
 # tab-width: 8

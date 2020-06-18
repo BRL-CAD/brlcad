@@ -1,7 +1,7 @@
 /*                       S H _ F L A T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -207,7 +207,7 @@ flat_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const
     BU_CK_VLS(matparm);
     RT_CK_REGION(rp);
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_log("flat_setup(%s)\n", rp->reg_name);
 
     /* Get memory for the shader parameters and shader-specific data */
@@ -233,7 +233,7 @@ flat_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const
     if (bu_struct_parse(matparm, flat_parse_tab, (char *)flat_sp, NULL) < 0)
 	return -1;
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	bu_struct_print(" Parameters:", flat_parse_tab, (char *)flat_sp);
     }
 
@@ -265,7 +265,7 @@ flat_render(struct application *ap, const struct partition *pp, struct shadework
     RT_CHECK_PT(pp);
     CK_FLAT_SP(flat_sp);
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_struct_print("flat_render Parameters:", flat_parse_tab, (char *)flat_sp);
 
     /* do the actual flat color shading for the flat object. if the object is

@@ -1,7 +1,7 @@
 /*                       S U N - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2018 United States Government as represented by
+ * Copyright (c) 1986-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,6 +32,8 @@
 
 #include "vmath.h"
 
+#include "bu/app.h"
+#include "bu/malloc.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
 
@@ -262,7 +264,9 @@ main(int argc, char **argv)
     int on = 255;
     int width;			/* line width in bits */
     int scanbytes;		/* bytes/line (padded to 16 bits) */
-    unsigned char c, cmap_idx, buf[4096];
+    unsigned char c, cmap_idx, buf[BU_PAGE_SIZE];
+
+    bu_setprogname(argv[0]);
 
     fp = stdin;
     if (!get_args(argc, argv) || (isatty(fileno(stdout)) && (hflag == 0))) {

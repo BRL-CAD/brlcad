@@ -1,7 +1,7 @@
 /*                         S H A D E . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2018 United States Government as represented by
+ * Copyright (c) 1989-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -127,33 +127,26 @@ shade_inputs(struct application *ap, const struct partition *pp, struct shadewor
 	    /* Get surface normal for hit point */
 	    RT_HIT_NORMAL(swp->sw_hit.hit_normal, &(swp->sw_hit), pp->pt_inseg->seg_stp, &(ap->a_ray), pp->pt_inflip);
 
-#ifdef never
-	    if (swp->sw_hit.hit_normal[X] < -1.01 || swp->sw_hit.hit_normal[X] > 1.01 ||
-		swp->sw_hit.hit_normal[Y] < -1.01 || swp->sw_hit.hit_normal[Y] > 1.01 ||
-		swp->sw_hit.hit_normal[Z] < -1.01 || swp->sw_hit.hit_normal[Z] > 1.01) {
-		VPRINT("shade_inputs: N", swp->sw_hit.hit_normal);
-		VSET(swp->sw_color, 9, 9, 0);	/* Yellow */
-		return;
-	    }
-#endif
 	    /* Check to make sure normals are OK */
 	    f = VDOT(ap->a_ray.r_dir, swp->sw_hit.hit_normal);
 	    if (f > RT_DOT_TOL &&
 		!BN_VECT_ARE_PERP(f, &(ap->a_rt_i->rti_tol))) {
 		static int reported = 0;
 
-		if (reported < 100 || (R_DEBUG&RDEBUG_SHADE)) {
+		if (reported < 100 || (OPTICAL_DEBUG&OPTICAL_DEBUG_SHADE)) {
 		    bu_log("shade_inputs(%s) flip N xy=%d, %d %s surf=%d dot=%g\n",
 			   pp->pt_inseg->seg_stp->st_name,
 			   ap->a_x, ap->a_y,
 			   OBJ[pp->pt_inseg->seg_stp->st_id].ft_name,
 			   swp->sw_hit.hit_surfno, f);
+		    bu_log("center: %0.17g %0.17g %0.17g\n", V3ARGS(ap->a_ray.r_pt));
+		    bu_log("dir: %0.17g %0.17g %0.17g\n", V3ARGS(ap->a_ray.r_dir));
 		} else if (reported == 100) {
 		    bu_log("Too many flipped normals.  Suppressing further reporting.\n");
 		}
 		reported++;
 
-		if (R_DEBUG&RDEBUG_SHADE) {
+		if (OPTICAL_DEBUG&OPTICAL_DEBUG_SHADE) {
 		    VPRINT("Dir ", ap->a_ray.r_dir);
 		    VPRINT("Norm", swp->sw_hit.hit_normal);
 		}
@@ -161,14 +154,14 @@ shade_inputs(struct application *ap, const struct partition *pp, struct shadewor
 		VREVERSE(swp->sw_hit.hit_normal, swp->sw_hit.hit_normal);
 	    }
 	}
-	if (R_DEBUG&(RDEBUG_RAYPLOT|RDEBUG_SHADE)) {
+	if (OPTICAL_DEBUG&(OPTICAL_DEBUG_RAYPLOT|OPTICAL_DEBUG_SHADE)) {
 	    point_t endpt;
 	    fastf_t f;
 	    /* Plot the surface normal -- green/blue */
 	    f = ap->a_rt_i->rti_radius * 0.02;
 	    VJOIN1(endpt, swp->sw_hit.hit_point,
 		   f, swp->sw_hit.hit_normal);
-	    if (R_DEBUG&RDEBUG_RAYPLOT) {
+	    if (OPTICAL_DEBUG&OPTICAL_DEBUG_RAYPLOT) {
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
 		pl_color(stdout, 0, 255, 255);
 		pdv_3line(stdout, swp->sw_hit.hit_point, endpt);
@@ -251,7 +244,7 @@ viewshade(struct application *ap, const struct partition *pp, struct shadework *
     RT_CK_MF(mfp);
 
     if (!swp || !mfp) {
-	if (R_DEBUG&RDEBUG_SHADE) {
+	if (OPTICAL_DEBUG&OPTICAL_DEBUG_SHADE) {
 	    bu_log("ERROR: NULL shadework or mfuncs structure encountered\n");
 	}
 	return 0;
@@ -259,7 +252,7 @@ viewshade(struct application *ap, const struct partition *pp, struct shadework *
 
     want = mfp->mf_inputs;
 
-    if (R_DEBUG&RDEBUG_SHADE) {
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_SHADE) {
 	bu_log("viewshade(%s)\n Using \"%s\" shader, ",
 	       rp->reg_name, mfp->mf_name);
 	bu_printb("mfp_inputs", want, MFI_FORMAT);
@@ -314,7 +307,7 @@ viewshade(struct application *ap, const struct partition *pp, struct shadework *
 	}
     }
 
-    if (R_DEBUG&RDEBUG_SHADE) {
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_SHADE) {
 	pr_shadework("before mf_render", swp);
     }
 
@@ -323,7 +316,7 @@ viewshade(struct application *ap, const struct partition *pp, struct shadework *
     if (mfp && mfp->mf_render)
 	(void)mfp->mf_render(ap, pp, swp, rp->reg_udata);
 
-    if (R_DEBUG&RDEBUG_SHADE) {
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_SHADE) {
 	pr_shadework("after mf_render", swp);
 	bu_log("\n");
     }

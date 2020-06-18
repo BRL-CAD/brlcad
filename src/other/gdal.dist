@@ -1,4 +1,6 @@
 set(gdal_ignore_files
+CMake/FindPROJ4.cmake
+CMake/FindSSE.cmake
 CMakeLists.txt
 LICENSE.TXT
 alg/CMakeLists.txt

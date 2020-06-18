@@ -1,7 +1,7 @@
 /*                          W A V Y . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2018 United States Government as represented by
+ * Copyright (c) 1991-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,6 +30,7 @@
 #include "bio.h"
 
 #include "vmath.h"		/* BRL-CAD Vector macros */
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "nmg.h"		/* BRL-CAD Vector macros */
 #include "raytrace.h"
@@ -76,13 +77,12 @@ main(int argc, char **argv)
     fastf_t grid[10][10][3];
     struct face_g_snurb **surfaces;
 
+    bu_setprogname(argv[0]);
+
     hscale = 2.5;
 
-    while ((i=bu_getopt(argc, argv, "dH:h?")) != -1) {
+    while ((i=bu_getopt(argc, argv, "H:h?")) != -1) {
 	switch (i) {
-	    case 'd':
-		RTG.debug |= DEBUG_MEM;
-		break;
 	    case 'H':
 		hscale = atof(bu_optarg);
 		break;

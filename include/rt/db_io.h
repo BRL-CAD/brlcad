@@ -1,7 +1,7 @@
 /*                      D B _ I O . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2018 United States Government as represented by
+ * Copyright (c) 1993-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,14 +26,14 @@
 
 #include "common.h"
 
+/* system headers */
+#include <stdio.h> /* for FILE */
+
 /* interface headers */
 #include "vmath.h"
 #include "bu/avs.h"
 #include "rt/db5.h"
 #include "rt/defines.h"
-
-/* system headers */
-#include "bio.h" /* for FILE */
 
 __BEGIN_DECLS
 
@@ -334,8 +334,33 @@ RT_EXPORT extern int db5_select_length_encoding(size_t len);
 
 RT_EXPORT extern void db5_import_color_table(char *cp);
 
+/**
+ * Given a value and a variable-width format spec, store it in network
+ * order.
+ *
+ * Returns -
+ * pointer to next available byte.
+ */
+RT_EXPORT extern unsigned char *db5_encode_length(unsigned char *cp,
+						  size_t val,
+						  int format);
 
 /**
+ * Given a pointer to the memory for a serialized database object, get
+ * a raw internal representation.
+ *
+ * Returns -
+ * on success, pointer to next unused byte in 'ip' after object got;
+ * NULL, on error.
+ */
+RT_EXPORT extern const unsigned char *db5_get_raw_internal_ptr(struct db5_raw_internal *rip,
+							       const unsigned char *ip);
+
+
+/**
+ * Given a file pointer to an open geometry database positioned on a
+ * serialized object, get a raw internal representation.
+ *
  * Returns -
  * 0 on success
  * -1 on EOF
@@ -343,6 +368,7 @@ RT_EXPORT extern void db5_import_color_table(char *cp);
  */
 RT_EXPORT extern int db5_get_raw_internal_fp(struct db5_raw_internal	*rip,
 					     FILE			*fp);
+
 
 /**
  * Verify that this is a valid header for a BRL-CAD v5 database.
@@ -353,6 +379,15 @@ RT_EXPORT extern int db5_get_raw_internal_fp(struct db5_raw_internal	*rip,
  */
 RT_EXPORT extern int db5_header_is_valid(const unsigned char *hp);
 
+
+/**
+ * write an ident header (title and units) to the provided file
+ * pointer.
+ *
+ * Returns -
+ * 0 Success
+ * -1 Error
+ */
 RT_EXPORT extern int db5_fwrite_ident(FILE *,
 				      const char *,
 				      double);
@@ -397,7 +432,7 @@ RT_EXPORT extern void db_wrap_v4_external(struct bu_external *op,
 RT_EXPORT extern int db_write(struct db_i	*dbip,
 			      const void *	addr,
 			      size_t		count,
-			      off_t		offset);
+			      b_off_t		offset);
 
 /**
  * Add name from dp->d_namep to external representation of solid, and
@@ -451,7 +486,7 @@ RT_EXPORT extern union record *db_getmrec(const struct db_i *,
 RT_EXPORT extern int db_get(const struct db_i *,
 			    const struct directory *dp,
 			    union record *where,
-			    off_t offset,
+			    b_off_t offset,
 			    size_t len);
 /* put several records into db */
 
@@ -466,7 +501,7 @@ RT_EXPORT extern int db_get(const struct db_i *,
 RT_EXPORT extern int db_put(struct db_i *,
 			    const struct directory *dp,
 			    union record *where,
-			    off_t offset, size_t len);
+			    b_off_t offset, size_t len);
 
 /**
  * Obtains a object from the database, leaving it in external
@@ -513,7 +548,7 @@ RT_EXPORT extern int db_put_external(struct bu_external *ep,
 RT_EXPORT extern int db_scan(struct db_i *,
 			     int (*handler)(struct db_i *,
 					    const char *name,
-					    off_t addr,
+					    b_off_t addr,
 					    size_t nrec,
 					    int flags,
 					    void *client_data),
@@ -606,7 +641,7 @@ RT_EXPORT extern int db_v4_get_units_code(const char *str);
 RT_EXPORT extern int db_dirbuild(struct db_i *dbip);
 RT_EXPORT extern struct directory *db5_diradd(struct db_i *dbip,
 					      const struct db5_raw_internal *rip,
-					      off_t laddr,
+					      b_off_t laddr,
 					      void *client_data);
 
 /**
@@ -619,7 +654,7 @@ RT_EXPORT extern struct directory *db5_diradd(struct db_i *dbip,
 RT_EXPORT extern int db5_scan(struct db_i *dbip,
 			      void (*handler)(struct db_i *,
 					      const struct db5_raw_internal *,
-					      off_t addr,
+					      b_off_t addr,
 					      void *client_data),
 			      void *client_data);
 
@@ -746,40 +781,6 @@ RT_EXPORT extern struct directory *db_lookup(const struct db_i *,
 					     const char *name,
 					     int noisy);
 
-/**
- * @brief
- * Unique, legal database object name generation.
- *
- * When automatically creating names for objects in a database, the most common
- * constraints are:
- *
- * 1) the name must not use any characters that are invalid or problematic for
- * database processing
- *
- * 2) the name must not collide with any existing object in the database
- *
- * 3) in the event of a collision, return instead the "next" name in some
- * logical sequence given a pre-existing name as input.
- *
- * The responsibility for actual name incrementing lies with the libbu
- * bu_vls_incr function - see documentation for bu_vls_incr to understand the
- * format of the incr_spec argument.
- *
- * Note: db_get_name does not "reserve" a name in the database once it is
- * generated.  If the caller's intent is to pre-generate a series of names,
- * they need to set the force_incr parameter to 1.  Otherwise, the decision for
- * whether to increment the string will be based on whether the "cleaned up"
- * version of the supplied string conflicts with an existing object name.
- * Remember that names generated with force_incr set will still be checked
- * against the database for potential conflicts.
- *
- * Note that an empty vls string supplied to name will not generate any new
- * strings - there will be no content on which the routine can act, and an
- * error will be returned.
- */
-RT_EXPORT extern int db_get_name(struct bu_vls *name, struct db_i *dbip, int force_incr, const char *regex_str, const char *incr_spec);
-
-
 /* add entry to directory */
 
 /**
@@ -804,13 +805,13 @@ RT_EXPORT extern int db_get_name(struct bu_vls *name, struct db_i *dbip, int for
  */
 RT_EXPORT extern struct directory *db_diradd(struct db_i *,
 					     const char *name,
-					     off_t laddr,
+					     b_off_t laddr,
 					     size_t len,
 					     int flags,
 					     void *ptr);
 RT_EXPORT extern struct directory *db_diradd5(struct db_i *dbip,
 					      const char *name,
-					      off_t				laddr,
+					      b_off_t				laddr,
 					      unsigned char			major_type,
 					      unsigned char 			minor_type,
 					      unsigned char			name_hidden,

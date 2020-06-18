@@ -1,7 +1,7 @@
 /*                       P A T C H - G . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2018 United States Government as represented by
+ * Copyright (c) 1989-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -53,6 +53,7 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "bn.h"
@@ -398,7 +399,7 @@ nmg_patch_coplanar_face_merge(struct shell *s, size_t *face_count, struct patch_
     bu_free((char *)flags1, "nmg_shell_coplanar_face_merge flags1[]");
     bu_free((char *)flags2, "nmg_shell_coplanar_face_merge flags2[]");
 
-    if (nmg_debug & DEBUG_BASIC) {
+    if (nmg_debug & NMG_DEBUG_BASIC) {
 	bu_log("nmg_shell_coplanar_face_merge(s=%p, tol=%p, simplify=%d)\n",
 	       (void *)s, (void *)tol, simplify);
     }
@@ -451,10 +452,10 @@ Build_solid(size_t l, char *name, char *mirror_name, int plate_mode, fastf_t *ce
 	BU_LIST_INIT(&mir_head.l);
 
 	for (k=1; k<l-3; k++) {
-	    if (!bn_3pts_distinct (verts[k].coord, verts[k+1].coord, verts[k+2].coord, tol)) {
+	    if (!bn_3pnts_distinct (verts[k].coord, verts[k+1].coord, verts[k+2].coord, tol)) {
 		;	/* do nothing */
 		/* bu_log("Repeated Vertex, no face made\n"); */
-	    } else if (bn_3pts_collinear(verts[k].coord, verts[k+1].coord, verts[k+2].coord, tol)) {
+	    } else if (bn_3pnts_collinear(verts[k].coord, verts[k+1].coord, verts[k+2].coord, tol)) {
 		;	/* do nothing */
 		/* bu_log("%s: collinear points, face not made.\n", name); */
 	    } else {
@@ -516,10 +517,10 @@ Build_solid(size_t l, char *name, char *mirror_name, int plate_mode, fastf_t *ce
 	if (plate_mode && !EQUAL(thk[k+2], thickness))
 	    continue;
 
-	if (!bn_3pts_distinct (verts[k].coord, verts[k+1].coord, verts[k+2].coord, tol)) {
+	if (!bn_3pnts_distinct (verts[k].coord, verts[k+1].coord, verts[k+2].coord, tol)) {
 	    ;	/* do nothing */
 	    /* bu_log("Repeated Vertex, no face made\n"); */
-	} else if (bn_3pts_collinear(verts[k].coord, verts[k+1].coord, verts[k+2].coord, tol)) {
+	} else if (bn_3pnts_collinear(verts[k].coord, verts[k+1].coord, verts[k+2].coord, tol)) {
 	    ;	/* do nothing */
 	    /* bu_log("%s: collinear points, face not made.\n", name); */
 	} else {
@@ -538,7 +539,7 @@ Build_solid(size_t l, char *name, char *mirror_name, int plate_mode, fastf_t *ce
 		for (BU_LIST_FOR (eu, edgeuse, &lu->down_hd)) {
 		    NMG_CK_EDGEUSE(eu);
 		    for (j=0; j<3; j++)
-			if (bn_pt3_pt3_equal(eu->vu_p->v_p->vg_p->coord,
+			if (bn_pnt3_pnt3_equal(eu->vu_p->v_p->vg_p->coord,
 					     verts[k+j].coord, tol))
 			    found_verts++;
 		}
@@ -1043,6 +1044,7 @@ void
 proc_region(char *name1)
 {
     char tmpname[NAMESIZE*2];
+    char tmpname2[NAMESIZE - 3];
     int chkroot;
     size_t i;
     int cc;
@@ -1069,12 +1071,15 @@ proc_region(char *name1)
 	mir_count = 0;
     }
 
+    /* explicitely shorten tmpname to quell the gcc 8.2 snprintf string length warning/error */
+    bu_strlcpy(tmpname2, tmpname, sizeof(tmpname2));
+
     if (cc != in[0].cc) {
 	mir_count++;
-	snprintf(cname, NAMESIZE+1, "%s.r%.2d", tmpname, mir_count);
+	snprintf(cname, NAMESIZE+1, "%s.r%.2d", tmpname2, mir_count);
     } else {
 	reg_count++;
-	snprintf(cname, NAMESIZE+1, "%s.r%.2d", tmpname, reg_count);
+	snprintf(cname, NAMESIZE+1, "%s.r%.2d", tmpname2, reg_count);
     }
 
 
@@ -1598,23 +1603,23 @@ proc_wedge(size_t cnt)
 	    VSETALL(interior, 0.0);
 	    for (i=0; i<8; i++)
 		VJOIN1(interior, interior, join_scale,  pt8[i]);
-	    ret = bn_mk_plane_3pts(planes[0], pt8[0], pt8[3], pt8[2], tols);
+	    ret = bn_make_plane_3pnts(planes[0], pt8[0], pt8[3], pt8[2], tols);
 	    VSUB2(diff, interior, pt8[0]);
 	    if (VDOT(diff, planes[0]) < 0.0)
 		HREVERSE(planes[0], planes[0]);
-	    ret = ret | bn_mk_plane_3pts(planes[1], pt8[2], pt8[3], pt8[6], tols);
+	    ret = ret | bn_make_plane_3pnts(planes[1], pt8[2], pt8[3], pt8[6], tols);
 	    VSUB2(diff, interior, pt8[2]);
 	    if (VDOT(diff, planes[1]) < 0.0)
 		HREVERSE(planes[1], planes[1]);
-	    ret = ret | bn_mk_plane_3pts(planes[2], pt8[6], pt8[3], pt8[0], tols);
+	    ret = ret | bn_make_plane_3pnts(planes[2], pt8[6], pt8[3], pt8[0], tols);
 	    VSUB2(diff, interior, pt8[6]);
 	    if (VDOT(diff, planes[2]) < 0.0)
 		HREVERSE(planes[2], planes[2]);
-	    ret = ret | bn_mk_plane_3pts(planes[3], pt8[4], pt8[0], pt8[1], tols);
+	    ret = ret | bn_make_plane_3pnts(planes[3], pt8[4], pt8[0], pt8[1], tols);
 	    VSUB2(diff, interior, pt8[4]);
 	    if (VDOT(diff, planes[3]) < 0.0)
 		HREVERSE(planes[3], planes[3]);
-	    ret = ret | bn_mk_plane_3pts(planes[4], pt8[1], pt8[2], pt8[6], tols);
+	    ret = ret | bn_make_plane_3pnts(planes[4], pt8[1], pt8[2], pt8[6], tols);
 	    VSUB2(diff, interior, pt8[1]);
 	    if (VDOT(diff, planes[4]) < 0.0)
 		HREVERSE(planes[4], planes[4]);
@@ -1635,12 +1640,12 @@ proc_wedge(size_t cnt)
 	     * intersection of 3 planes subroutine.
 	     */
 
-	    ret = ret | bn_mkpoint_3planes(inpt8[0], planes[0], planes[3], planes[2]);
-	    ret = ret | bn_mkpoint_3planes(inpt8[1], planes[0], planes[3], planes[4]);
-	    ret = ret | bn_mkpoint_3planes(inpt8[2], planes[0], planes[1], planes[4]);
-	    ret = ret | bn_mkpoint_3planes(inpt8[3], planes[0], planes[1], planes[2]);
-	    ret = ret | bn_mkpoint_3planes(inpt8[4], planes[2], planes[3], planes[4]);
-	    ret = ret | bn_mkpoint_3planes(inpt8[6], planes[1], planes[2], planes[4]);
+	    ret = ret | bn_make_pnt_3planes(inpt8[0], planes[0], planes[3], planes[2]);
+	    ret = ret | bn_make_pnt_3planes(inpt8[1], planes[0], planes[3], planes[4]);
+	    ret = ret | bn_make_pnt_3planes(inpt8[2], planes[0], planes[1], planes[4]);
+	    ret = ret | bn_make_pnt_3planes(inpt8[3], planes[0], planes[1], planes[2]);
+	    ret = ret | bn_make_pnt_3planes(inpt8[4], planes[2], planes[3], planes[4]);
+	    ret = ret | bn_make_pnt_3planes(inpt8[6], planes[1], planes[2], planes[4]);
 
 	    VMOVE(inpt8[7], inpt8[6]);
 	    VMOVE(inpt8[5], inpt8[4]);
@@ -1711,23 +1716,23 @@ proc_wedge(size_t cnt)
 	    VSETALL(interior, 0.0);
 	    for (i=0; i<8; i++)
 		VJOIN1(interior, interior, join_scale,  pt8[i]);
-	    ret = bn_mk_plane_3pts(planes[0], pt8[0], pt8[3], pt8[2], tols);
+	    ret = bn_make_plane_3pnts(planes[0], pt8[0], pt8[3], pt8[2], tols);
 	    VSUB2(diff, interior, pt8[0]);
 	    if (VDOT(diff, planes[0]) < 0.0)
 		HREVERSE(planes[0], planes[0]);
-	    ret = ret | bn_mk_plane_3pts(planes[1], pt8[2], pt8[3], pt8[6], tols);
+	    ret = ret | bn_make_plane_3pnts(planes[1], pt8[2], pt8[3], pt8[6], tols);
 	    VSUB2(diff, interior, pt8[2]);
 	    if (VDOT(diff, planes[1]) < 0.0)
 		HREVERSE(planes[1], planes[1]);
-	    ret = ret | bn_mk_plane_3pts(planes[2], pt8[6], pt8[3], pt8[0], tols);
+	    ret = ret | bn_make_plane_3pnts(planes[2], pt8[6], pt8[3], pt8[0], tols);
 	    VSUB2(diff, interior, pt8[6]);
 	    if (VDOT(diff, planes[2]) < 0.0)
 		HREVERSE(planes[2], planes[2]);
-	    ret = ret | bn_mk_plane_3pts(planes[3], pt8[4], pt8[0], pt8[1], tols);
+	    ret = ret | bn_make_plane_3pnts(planes[3], pt8[4], pt8[0], pt8[1], tols);
 	    VSUB2(diff, interior, pt8[4]);
 	    if (VDOT(diff, planes[3]) < 0.0)
 		HREVERSE(planes[3], planes[3]);
-	    ret = ret | bn_mk_plane_3pts(planes[4], pt8[1], pt8[2], pt8[6], tols);
+	    ret = ret | bn_make_plane_3pnts(planes[4], pt8[1], pt8[2], pt8[6], tols);
 	    VSUB2(diff, interior, pt8[1]);
 	    if (VDOT(diff, planes[4]) < 0.0)
 		HREVERSE(planes[4], planes[4]);
@@ -1748,12 +1753,12 @@ proc_wedge(size_t cnt)
 	     * of 3 planes subroutine.
 	     */
 
-	    ret = ret | bn_mkpoint_3planes(inpt8[0], planes[0], planes[3], planes[2]);
-	    ret = ret | bn_mkpoint_3planes(inpt8[1], planes[0], planes[3], planes[4]);
-	    ret = ret | bn_mkpoint_3planes(inpt8[2], planes[0], planes[1], planes[4]);
-	    ret = ret | bn_mkpoint_3planes(inpt8[3], planes[0], planes[1], planes[2]);
-	    ret = ret | bn_mkpoint_3planes(inpt8[4], planes[2], planes[3], planes[4]);
-	    ret = ret | bn_mkpoint_3planes(inpt8[6], planes[1], planes[2], planes[4]);
+	    ret = ret | bn_make_pnt_3planes(inpt8[0], planes[0], planes[3], planes[2]);
+	    ret = ret | bn_make_pnt_3planes(inpt8[1], planes[0], planes[3], planes[4]);
+	    ret = ret | bn_make_pnt_3planes(inpt8[2], planes[0], planes[1], planes[4]);
+	    ret = ret | bn_make_pnt_3planes(inpt8[3], planes[0], planes[1], planes[2]);
+	    ret = ret | bn_make_pnt_3planes(inpt8[4], planes[2], planes[3], planes[4]);
+	    ret = ret | bn_make_pnt_3planes(inpt8[6], planes[1], planes[2], planes[4]);
 
 	    VMOVE(inpt8[7], inpt8[6]);
 	    VMOVE(inpt8[5], inpt8[4]);
@@ -3362,6 +3367,7 @@ add_to_list(struct subtract_list *slist, int outsolid, int insolid, int inmirror
 int
 main(int argc, char **argv)
 {
+    bu_setprogname(argv[0]);
 
     FILE *gfp=NULL;
     FILE *mfp=NULL;
@@ -3453,7 +3459,7 @@ main(int argc, char **argv)
 
 	    case 'x':  /* librt debug flags */
 
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
 		break;
 
 	    case 'X':  /* librt NMG debug flags */
@@ -3544,7 +3550,7 @@ main(int argc, char **argv)
 	bu_log("debug level = %d\n", debug);
 
     if (RT_G_DEBUG) {
-	bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT);
+	bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, RT_DEBUG_FORMAT);
 	bu_log("\n");
     }
 

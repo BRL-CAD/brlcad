@@ -1,7 +1,7 @@
 /*                   V L S _ S I M P L I F Y . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2018 United States Government as represented by
+ * Copyright (c) 2015-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,6 +37,8 @@ main(int argc, char *argv[])
     const char *keep_chars = NULL;
     const char *dedup_chars = NULL;
     const char *trim_chars = NULL;
+
+    bu_setprogname(argv[0]);
 
     /* Sanity check */
     if (argc < 3)

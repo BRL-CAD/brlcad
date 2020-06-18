@@ -1,7 +1,7 @@
 /*                      D B _ A L L O C . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2018 United States Government as represented by
+ * Copyright (c) 1988-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@ db_alloc(register struct db_i *dbip, register struct directory *dp, size_t count
 
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_alloc(%s) %p, %p, count=%zu\n",
+    if (RT_G_DEBUG&RT_DEBUG_DB) bu_log("db_alloc(%s) %p, %p, count=%zu\n",
 				    dp->d_namep, (void *)dbip, (void *)dp, count);
     if (count <= 0) {
 	bu_log("db_alloc(0)\n");
@@ -81,11 +81,11 @@ db_alloc(register struct db_i *dbip, register struct directory *dp, size_t count
 		return -1;
 	    }
 	    dp->d_len = count;
-	    dbip->dbi_eof += (off_t)(count * sizeof(union record));
+	    dbip->dbi_eof += (b_off_t)(count * sizeof(union record));
 	    dbip->dbi_nrec += count;
 	    break;
 	}
-	dp->d_addr = (off_t)(len * sizeof(union record));
+	dp->d_addr = (b_off_t)(len * sizeof(union record));
 	dp->d_len = count;
 	if (db_get(dbip, dp, &rec, 0, 1) < 0)
 	    return -1;
@@ -111,7 +111,7 @@ db_delrec(struct db_i *dbip, register struct directory *dp, int recnum)
 
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_delrec(%s) %p, %p, recnum=%d\n",
+    if (RT_G_DEBUG&RT_DEBUG_DB) bu_log("db_delrec(%s) %p, %p, recnum=%d\n",
 				    dp->d_namep, (void *)dbip, (void *)dp, recnum);
 
     bu_log("ERROR db_delrec() is no longer supported.  Use combination import/export routines.\n");
@@ -135,7 +135,7 @@ db_delete(struct db_i *dbip, struct directory *dp)
 
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_delete(%s) %p, %p\n",
+    if (RT_G_DEBUG&RT_DEBUG_DB) bu_log("db_delete(%s) %p, %p\n",
 				    dp->d_namep, (void *)dbip, (void *)dp);
 
     if (dp->d_flags & RT_DIR_INMEM) {
@@ -180,7 +180,7 @@ db_zapper(struct db_i *dbip, struct directory *dp, size_t start)
 
     RT_CK_DBI(dbip);
     RT_CK_DIR(dp);
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_zapper(%s) %p, %p, start=%zu\n",
+    if (RT_G_DEBUG&RT_DEBUG_DB) bu_log("db_zapper(%s) %p, %p, start=%zu\n",
 				    dp->d_namep, (void *)dbip, (void *)dp, start);
 
     if (dp->d_flags & RT_DIR_INMEM) bu_bomb("db_zapper() called on RT_DIR_INMEM object\n");
@@ -201,7 +201,7 @@ db_zapper(struct db_i *dbip, struct directory *dp, size_t start)
 
     for (i=0; i < todo; i++)
 	rp[i].u_id = ID_FREE;
-    ret = db_put(dbip, dp, rp, (off_t)start, todo);
+    ret = db_put(dbip, dp, rp, (b_off_t)start, todo);
     bu_free((char *)rp, "db_zapper buf");
     return ret;
 }

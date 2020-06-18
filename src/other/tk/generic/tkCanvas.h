@@ -206,7 +206,7 @@ typedef struct TkCanvas {
      * Miscellaneous information:
      */
 
-    Tk_Cursor cursor;		/* Current cursor for window, or None. */
+    Tk_Cursor cursor;		/* Current cursor for window, or NULL. */
     char *takeFocus;		/* Value of -takefocus option; not used in the
 				 * C code, but used by keyboard traversal
 				 * scripts. Malloc'ed, but may be NULL. */
@@ -291,7 +291,7 @@ typedef struct TkCanvas {
  */
 
 MODULE_SCOPE int	TkCanvPostscriptCmd(TkCanvas *canvasPtr,
-			    Tcl_Interp *interp, int argc, CONST char **argv);
+			    Tcl_Interp *interp, int argc, const char **argv);
 MODULE_SCOPE int 	TkCanvTranslatePath(TkCanvas *canvPtr,
 			    int numVertex, double *coordPtr, int closed,
 			    XPoint *outPtr);
@@ -302,5 +302,11 @@ MODULE_SCOPE int 	TkCanvTranslatePath(TkCanvas *canvPtr,
 MODULE_SCOPE Tk_ItemType tkArcType, tkBitmapType, tkImageType, tkLineType;
 MODULE_SCOPE Tk_ItemType tkOvalType, tkPolygonType;
 MODULE_SCOPE Tk_ItemType tkRectangleType, tkTextType, tkWindowType;
+
+/*
+ * Convenience macro.
+ */
+
+#define Canvas(canvas) ((TkCanvas *) (canvas))
 
 #endif /* _TKCANVAS */

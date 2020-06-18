@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 United States Government as represented by
+ * Copyright (c) 2014-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -15,6 +15,10 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+/* TODO - for this type of problem, Simbody might also be work a look:
+ * https://github.com/simbody/simbody
+ * /
 
 /** @file Bullet_Box_Chain_Demo.cpp
  *

@@ -1,7 +1,7 @@
 /*                         V M A T H . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -584,20 +584,20 @@ typedef enum vmath_matrix_component_ {
 
 
 /** @brief Compute distance from a point to a plane. */
-#define DIST_PT_PLANE(_pt, _pl) (VDOT(_pt, _pl) - (_pl)[W])
+#define DIST_PNT_PLANE(_pt, _pl) (VDOT(_pt, _pl) - (_pl)[W])
 
 /** @brief Compute distance between two points. */
-#define DIST_PT_PT_SQ(_a, _b) \
+#define DIST_PNT_PNT_SQ(_a, _b) \
 	((_a)[X]-(_b)[X])*((_a)[X]-(_b)[X]) + \
 	((_a)[Y]-(_b)[Y])*((_a)[Y]-(_b)[Y]) + \
 	((_a)[Z]-(_b)[Z])*((_a)[Z]-(_b)[Z])
-#define DIST_PT_PT(_a, _b) sqrt(DIST_PT_PT_SQ(_a, _b))
+#define DIST_PNT_PNT(_a, _b) sqrt(DIST_PNT_PNT_SQ(_a, _b))
 
 /** @brief Compute distance between two 2D points. */
-#define DIST_PT2_PT2_SQ(_a, _b) \
+#define DIST_PNT2_PNT2_SQ(_a, _b) \
 	((_a)[X]-(_b)[X])*((_a)[X]-(_b)[X]) + \
 	((_a)[Y]-(_b)[Y])*((_a)[Y]-(_b)[Y])
-#define DIST_PT2_PT2(_a, _b) sqrt(DIST_PT2_PT2_SQ(_a, _b))
+#define DIST_PNT2_PNT2(_a, _b) sqrt(DIST_PNT2_PNT2_SQ(_a, _b))
 
 /** @brief set translation values of 4x4 matrix with x, y, z values. */
 #define MAT_DELTAS(_m, _x, _y, _z) do { \
@@ -1607,14 +1607,6 @@ typedef enum vmath_matrix_component_ {
 #define HINTCLAMPPRINT(a, b)	\
 	fprintf(stderr, "%s (%g, %g, %g, %g)\n", a, V4INTCLAMPARGS(b));
 
-#ifdef __cplusplus
-#define CPP_V3PRINT(_os, _title, _p)	(_os) << (_title) << "=(" << \
-	(_p)[X] << ", " << (_p)[Y] << ")\n";
-#define CPP_VPRINT(_os, _title, _p)	(_os) << (_title) << "=(" << \
-	(_p)[X] << ", " << (_p)[Y] << ", " << (_p)[Z] << ")\n";
-#define CPP_HPRINT(_os, _title, _p)	(_os) << (_title) << "=(" << \
-	(_p)[X] << ", " << (_p)[Y] << ", " << (_p)[Z] << ", " << (_p)[W]<< ")\n";
-#endif
 
 /** @brief Vector element multiplication.  Really: diagonal matrix X vect. */
 #define VELMUL(o, a, b) do { \
@@ -2038,7 +2030,7 @@ typedef enum vmath_matrix_component_ {
  *
  * FIXME: should not be using >= <=, '=' case is unreliable
  */
-#define V3PT_IN_RPP(_pt, _lo, _hi)	(\
+#define V3PNT_IN_RPP(_pt, _lo, _hi)	(\
 	(_pt)[X] >= (_lo)[X] && (_pt)[X] <= (_hi)[X] && \
 	(_pt)[Y] >= (_lo)[Y] && (_pt)[Y] <= (_hi)[Y] && \
 	(_pt)[Z] >= (_lo)[Z] && (_pt)[Z] <= (_hi)[Z])
@@ -2048,7 +2040,7 @@ typedef enum vmath_matrix_component_ {
  *
  * FIXME: should not be using >= <=, '=' case is unreliable
  */
-#define V3PT_IN_RPP_TOL(_pt, _lo, _hi, _t)	(\
+#define V3PNT_IN_RPP_TOL(_pt, _lo, _hi, _t)	(\
 	(_pt)[X] >= (_lo)[X]-(_t) && (_pt)[X] <= (_hi)[X]+(_t) && \
 	(_pt)[Y] >= (_lo)[Y]-(_t) && (_pt)[Y] <= (_hi)[Y]+(_t) && \
 	(_pt)[Z] >= (_lo)[Z]-(_t) && (_pt)[Z] <= (_hi)[Z]+(_t))
@@ -2057,7 +2049,7 @@ typedef enum vmath_matrix_component_ {
  * @brief Is the point outside the RPP by at least the distance tolerance?
  * This will not return true if the point is on the RPP.
  */
-#define V3PT_OUT_RPP_TOL(_pt, _lo, _hi, _t)      (\
+#define V3PNT_OUT_RPP_TOL(_pt, _lo, _hi, _t)      (\
 	(_pt)[X] < (_lo)[X]-(_t) || (_pt)[X] > (_hi)[X]+(_t) || \
 	(_pt)[Y] < (_lo)[Y]-(_t) || (_pt)[Y] > (_hi)[Y]+(_t) || \
 	(_pt)[Z] < (_lo)[Z]-(_t) || (_pt)[Z] > (_hi)[Z]+(_t))

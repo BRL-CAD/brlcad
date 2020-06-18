@@ -1,7 +1,7 @@
 /*                         D A T E T I M E . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2018 United States Government as represented by
+ * Copyright (c) 2013-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,6 +46,8 @@
 #ifndef HAVE_DECL_GETTIMEOFDAY
 extern int gettimeofday(struct timeval *, void *);
 #endif
+
+int BU_SEM_DATETIME;
 
 
 void
@@ -97,15 +99,9 @@ bu_utctime(struct bu_vls *vls_gmtime, const int64_t time_val)
 
 
 
-/* FIXME: this implementation of bu_gettime() doesn't work with
- * bu_utctime() on Windows, which expects the return result to be a
- * time offset (which we would get if we use
- * GetSystemTimePreciseAsFileTime() instead).  The performance counter
- * gives a number of ticks since application start, independent of any
- * external time clock.  Need to document whether this function should
- * be returning wallclock or cpu time too.
+/* FIXME: Need to document whether this function should
+ * be returning wallclock or cpu time.
  */
-
 int64_t
 bu_gettime(void)
 {
@@ -120,21 +116,15 @@ bu_gettime(void)
 #else /* HAVE_SYS_TIME_H */
 #  ifdef HAVE_WINDOWS_H
 
-    LARGE_INTEGER count;
-	static LARGE_INTEGER freq = {0};
-
-    if (freq.QuadPart == 0)
-	if (QueryPerformanceFrequency(&freq) == 0) {
-	    bu_log("QueryPerformanceFrequency failed\n");
-	    return -1;
-	}
-
-    if (QueryPerformanceCounter(&count) == 0) {
-	bu_log("QueryPerformanceCounter failed\n");
-	return -1;
-    }
-
-    return 1e6*count.QuadPart/freq.QuadPart;
+    FILETIME ft;
+    ULARGE_INTEGER ut;
+    long long nowTime;
+    GetSystemTimePreciseAsFileTime(&ft);
+    ut.LowPart = ft.dwLowDateTime;
+    ut.HighPart = ft.dwHighDateTime;
+    /* https://support.microsoft.com/en-us/help/167296/how-to-convert-a-unix-time-t-to-a-win32-filetime-or-systemtime */
+    nowTime = (ut.QuadPart - 116444736000000000)/10;
+    return nowTime;
 
 #  else /* HAVE_WINDOWS_H */
 #    warning "bu_gettime() implementation missing for this machine type"

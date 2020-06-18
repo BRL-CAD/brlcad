@@ -1,7 +1,7 @@
 /*                        M E N G E R . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2018 United States Government as represented by
+ * Copyright (c) 2011-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <math.h>
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "bn.h"
@@ -348,6 +349,8 @@ main(int ac, char *av[])
     point_t origin = VINIT_ZERO;
     struct rt_wdb *fp = NULL;
     struct bu_vls *boxes = NULL;
+
+    bu_setprogname(av[0]);
 
     bu_optind = 1;
 

@@ -1,7 +1,7 @@
 /*                           T E A . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@
 
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "vmath.h"		/* BRL-CAD Vector macros */
 #include "nmg.h"		/* BRL-CAD Spline data structures */
@@ -98,13 +99,12 @@ main(int argc, char **argv)
     struct rt_wdb *outfp;
     struct face_g_snurb **surfaces;
 
-    while ((i=bu_getopt(argc, argv, "dh?")) != -1) {
+    bu_setprogname(argv[0]);
+
+    while ((i=bu_getopt(argc, argv, "h?")) != -1) {
 	switch (i) {
-	    case 'd':
-		RTG.debug |= DEBUG_MEM;
-		break;
 	    default:
-		bu_log("Usage: %s [-d]\n", *argv);
+		bu_log("Usage: %s\n", *argv);
 		bu_exit(-1, NULL);
 	}
     }

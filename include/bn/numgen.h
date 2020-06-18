@@ -1,7 +1,7 @@
 /*                      N U M G E N . H
  * BRL-CAD
  *
- * Copyright (c) 2016-2018 United States Government as represented by
+ * Copyright (c) 2016-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,11 +34,13 @@
 #define BN_NUMGEN_H
 
 #include "common.h"
+
+#include "vmath.h"
+
 #include "bn/defines.h"
 
 __BEGIN_DECLS
 /* Most of the following are API design possibilities only - not yet active */
-#if 0
 /**
  * The following container holds all state associated with a particular
  * number generator.  The details of that state are specific to the
@@ -48,6 +50,7 @@ __BEGIN_DECLS
  */
 typedef struct bn_num_s *bn_numgen;
 
+#if 0
 /**
  * The available number generators in libbn.
  */

@@ -6,11 +6,11 @@ versions of Tk. This directory also contains source files for Tk that are
 specific to UNIX.
 
 The information in this file is maintained at:
-	http://www.tcl.tk/doc/howto/compile.html
+	https://www.tcl-lang.org//doc/howto/compile.html
 
 For information on platforms where Tcl/Tk is known to compile, along with any
 porting notes for getting it to work on those platforms, see:
-	http://www.tcl.tk/software/tcltk/platforms.html
+	https://www.tcl-lang.org//software/tcltk/platforms.html
 
 The rest of this file contains instructions on how to do this. The release
 should compile and run either "out of the box" or with trivial changes on any

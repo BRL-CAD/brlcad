@@ -2,7 +2,7 @@
 #                      L I B R A R Y . S H
 # BRL-CAD
 #
-# Copyright (c) 2010-2018 United States Government as represented by
+# Copyright (c) 2010-2020 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -92,7 +92,7 @@ log ( ) {
 # the return status.  reads LOGFILE global, increments STATUS global.
 run ( ) {
     log "... running $@"
-    "$@" >> $LOGFILE 2>&1
+    "$@" >> "$LOGFILE" 2>&1
     ret=$?
     case "x$STATUS" in
 	'x'|*[!0-9]*)
@@ -108,6 +108,102 @@ run ( ) {
 
 
 ###
+# files_differ file1 file2 [diff args]
+#
+# comparison function returns success (zero) if the two specified
+# files differ or either doesn't exist, returns error otherwise.
+# Increments STATUS global.
+files_differ ( ) {
+    if test $# -lt 2 ; then
+	log "INTERNAL ERROR: files_differ has wrong arg count ($# < 2)"
+	exit 1
+    fi
+    if test "x$2" = "x" ; then
+	log "INTERNAL ERROR: files_differ is missing filename #2"
+	exit 1
+    fi
+    if test "x$1" = "x" ; then
+	log "INTERNAL ERROR: files_differ is missing filename #1"
+	exit 1
+    fi
+
+    ret=0
+    if test ! -f "$2" ; then
+	log "ERROR: $2 does not exist"
+	ret=1
+    elif test ! -f "$1" ; then
+	log "ERROR: $1 does not exist"
+	ret=1
+    else
+	file1="$1"
+	file2="$2"
+	shift 2
+	log "... running diff $* $file1 $file2"
+	if test "x`diff $* $file1 $file2`" = "x" ; then
+	    log "ERROR: comparison failed  ($file1 and $file2 are identical, expected change)"
+	    ret=1
+	fi
+    fi
+
+    if test $ret -ne 0 ; then
+	STATUS="`expr $STATUS + 1`"
+	export STATUS
+    fi
+    return $ret
+}
+
+
+###
+# files_match file1 file2 [diff args]
+#
+# comparison function returns success (zero) if two specified files
+# both exist and have the same contents, returns failure otherwise.
+# Increments STATUS global.
+files_match ( ) {
+    if test $# -lt 2 ; then
+	log "INTERNAL ERROR: files_match has wrong arg count ($# < 2)"
+	exit 1
+    fi
+    if test "x$2" = "x" ; then
+	log "INTERNAL ERROR: files_match is missing filename #2"
+	exit 1
+    fi
+    if test "x$1" = "x" ; then
+	log "INTERNAL ERROR: files_match is missing filename #1"
+	exit 1
+    fi
+
+    ret=0
+    if test ! -f "$2" ; then
+	log "ERROR: $2 does not exist"
+	ret=1
+    elif test ! -f "$1" ; then
+	log "ERROR: $1 does not exist"
+	ret=1
+    else
+	file1="$1"
+	file2="$2"
+	shift 2
+	log "... running diff $* $file1 $file2"
+	if test "x`diff $* $file1 $file2`" != "x" ; then
+	    log "ERROR: comparison failed  ($file1 and $file2 are different, expected no change)"
+	    # display diff in the log
+	    log "BEGIN logging differences:"
+	    run diff -u $* $file1 $file2
+	    log "DONE logging differences."
+	    ret=1
+	fi
+    fi
+
+    if test $ret -ne 0 ; then
+	STATUS="`expr $STATUS + 1`"
+	export STATUS
+    fi
+    return $ret
+}
+
+
+###
 # ensearch {command_to_find}
 #
 # prints the path to a given application binary or script, typically
@@ -115,7 +211,7 @@ run ( ) {
 # script's location
 ensearch ( ) {
     ensearch_file="$1"
-    ensearch_dirs="$ARG1/bin ../bin \"$PATH_TO_THIS/../bin\" ../bench \"$PATH_TO_THIS/../bench\" "
+    ensearch_dirs="$ARG1/bin ../bin ./bin \"$PATH_TO_THIS/../bin\" ../bench \"$PATH_TO_THIS/../bench\" "
 
     if test "x$ensearch_file" = "x" ; then
 	# nothing to do

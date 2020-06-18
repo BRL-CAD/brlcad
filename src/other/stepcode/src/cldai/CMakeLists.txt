@@ -36,5 +36,7 @@ include_directories(
 
 SC_ADDLIB(stepdai "${LIBSTEPDAI_SRCS}" "steputils;base")
 
-install(FILES ${SC_CLDAI_HDRS}
-	DESTINATION ${INCLUDE_INSTALL_DIR}/stepcode/cldai)
+if (NOT SKIP_INSTALL_HEADERS)
+	install(FILES ${SC_CLDAI_HDRS}
+		DESTINATION ${INCLUDE_INSTALL_DIR}/stepcode/cldai)
+endif (NOT SKIP_INSTALL_HEADERS)

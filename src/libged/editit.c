@@ -1,7 +1,7 @@
 /*                        E D I T I T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,6 +32,7 @@
 #  include <sys/types.h>
 #endif
 
+#include "bio.h"
 #include "bresource.h"
 
 #include "bu/app.h"
@@ -260,7 +261,7 @@ ged_editit(struct ged *gedp, int argc, const char *argv[])
      */
     if (argc != 5) {
 	bu_vls_printf(gedp->ged_result_str, "Internal Error: \"%s -e editstring -f tmpfile\" is malformed (argc == %d)", argv[0], argc);
-	return TCL_ERROR;
+	return GED_ERROR;
     } else {
 	char *edstr = bu_strdup((char *)argv[2]);
 	ret = _ged_editit(edstr, argv[4]);

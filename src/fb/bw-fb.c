@@ -1,7 +1,7 @@
 /*                         B W - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2018 United States Government as represented by
+ * Copyright (c) 1986-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,6 +36,10 @@
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
+
+#include "bio.h"
+
+#include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
@@ -46,7 +50,7 @@
 #include "fb.h"
 
 
-int skipbytes(int fd, off_t num);
+int skipbytes(int fd, b_off_t num);
 
 #define MAX_LINE (16*1024)	/* Largest output scan line length */
 
@@ -183,6 +187,8 @@ main(int argc, char **argv)
     int x, y, n;
     long xout, yout;		/* number of screen output lines */
     long xstart, xskip;
+
+    bu_setprogname(argv[0]);
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
@@ -334,12 +340,12 @@ general:
  * Throw bytes away.  Use reads into ibuf buffer if a pipe, else seek.
  */
 int
-skipbytes(int fd, off_t num)
+skipbytes(int fd, b_off_t num)
 {
     int n, tries;
 
     if (fileinput) {
-	(void)lseek(fd, num, 1);
+	(void)bu_lseek(fd, num, 1);
 	return 0;
     }
 

@@ -1,7 +1,7 @@
 /*               U V P O I N T S . C P P
  * BRL-CAD
  *
- * Copyright (c) 2010-2018 United States Government as represented by
+ * Copyright (c) 2010-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,6 +33,8 @@
 #include <list>
 #include <math.h>
 #include <time.h>
+
+#include "bu/app.h"
 
 #define POOL_SIZE 1024
 
@@ -461,6 +463,9 @@ int main(int argc, char **argv)
     } else {
 	MAX_TREE_DEPTH = atoi(argv[1]);
     }
+
+    bu_setprogname(argv[0]);
+
     t0 = time(NULL);
     t1 = time(NULL);
     matsize = pow(2, MAX_TREE_DEPTH + 1) + 1;

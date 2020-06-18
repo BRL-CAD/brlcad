@@ -22,7 +22,7 @@ file(WRITE ../../../../rt^3/include/brlcad/brlcadversion.h
 include_directories(
   ${BRLCAD_BINARY_DIR}/include
   ${BRLCAD_SOURCE_DIR}/include
-  ${TCL_INCLUDE_DIRS}
+  ${TCL_INCLUDE_PATH}
   )
 
 # build the BrlcadCore.dll
@@ -38,20 +38,18 @@ target_link_libraries(BrlcadCore
   libbn-static
   libbrep-static
   libbu-static
-  libgcv-static
-  libgdiam-static
+  gdiam-static
   libged-static
   regex-static
   librt-static
   libbrep-static
-  libvds-static
+  vds-static
   libwdb-static
   libnmg-static
-  p2t-static
+  poly2tri-static
   zlib-static
   lz4-static
   openNURBS-static
-  tcl85
   )
 
 set_property(TARGET BrlcadCore PROPERTY LINK_INTERFACE_LIBRARIES "")
@@ -66,10 +64,10 @@ set(BRLCAD_SOURCES
 
 set(COREINTERFACE_SOURCES
   ../../../../rt^3/src/coreInterface/Arb8.cpp
+  ../../../../rt^3/src/coreInterface/BagOfTriangles.cpp
   ../../../../rt^3/src/coreInterface/Combination.cpp
   ../../../../rt^3/src/coreInterface/Cone.cpp
   ../../../../rt^3/src/coreInterface/ConstDatabase.cpp
-  ../../../../rt^3/src/coreInterface/BagOfTriangles.cpp
   ../../../../rt^3/src/coreInterface/Database.cpp
   ../../../../rt^3/src/coreInterface/Ellipsoid.cpp
   ../../../../rt^3/src/coreInterface/EllipticalTorus.cpp
@@ -83,9 +81,12 @@ set(COREINTERFACE_SOURCES
   ../../../../rt^3/src/coreInterface/ParabolicCylinder.cpp
   ../../../../rt^3/src/coreInterface/Paraboloid.cpp
   ../../../../rt^3/src/coreInterface/Particle.cpp
+  ../../../../rt^3/src/coreInterface/Pipe.cpp
+  ../../../../rt^3/src/coreInterface/Sketch.cpp
   ../../../../rt^3/src/coreInterface/Sphere.cpp
   ../../../../rt^3/src/coreInterface/Torus.cpp
   ../../../../rt^3/src/coreInterface/Unknown.cpp
+  ../../../../rt^3/src/coreInterface/VectorList.cpp
   ../../../../rt^3/src/coreInterface/globals.cpp
   )
 
@@ -93,7 +94,7 @@ file(GLOB COREINTERFACE_HEADERS ../../../../rt^3/include/brlcad/*.h)
 
 include_directories(
   ../../../../rt^3/include
-  ${ZLIB_INCLUDE_DIR}
+  ${ZLIB_INCLUDE_DIRS}
   ${OPENNURBS_INCLUDE_DIR}
   )
 
@@ -105,6 +106,7 @@ if(MSVC)
   set(COREINTERFACE_MSVC_LIBRARIES
     Ws2_32
     Psapi
+    Rpcrt4
   )
 endif(MSVC)
 
@@ -118,15 +120,15 @@ target_link_libraries(brlcad
   libbn-static
   libbrep-static
   libbu-static
-  libgdiam-static
+  gdiam-static
   libged-static
   regex-static
   librt-static
   libbrep-static
-  libvds-static
+  vds-static
   libwdb-static
   libnmg-static
-  p2t-static
+  poly2tri-static
   zlib-static
   lz4-static
   openNURBS-static

@@ -1,7 +1,7 @@
 /*                   B O O L E A N I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 2012-2018 United States Government as represented by
+ * Copyright (c) 2012-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,6 +31,8 @@ main(int argc, char *argv[])
     int expect_true = 0;
 
     const char *input = NULL;
+
+    bu_setprogname(argv[0]);
 
     if (argc > 3) {
 	fprintf(stderr, "Usage: %s {test_string} [expect_true]\n", argv[0]);

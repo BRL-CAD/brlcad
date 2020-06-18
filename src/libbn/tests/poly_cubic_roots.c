@@ -1,7 +1,7 @@
 /*             P O L Y _ C U B I C _ R O O T S. C
  * BRL-CAD
  *
- * Copyright (c) 2013-2018 United States Government as represented by
+ * Copyright (c) 2013-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -131,9 +131,12 @@ test_bn_poly_cubic_rts(void)
 
 
 int
-main(int UNUSED(ac), char **UNUSED(av))
+main(int UNUSED(ac), char **av)
 {
     int ret;
+
+    bu_setprogname(av[0]);
+
     poly_init();
     ret = test_bn_poly_cubic_rts();
 

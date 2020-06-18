@@ -1,7 +1,7 @@
 /*                         L I N T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2018 United States Government as represented by
+ * Copyright (c) 2014-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,6 +40,7 @@ struct _ged_lint_opts {
     int cyclic_check;
     int missing_check;
     int invalid_shape_check;
+    struct bu_vls filter;
 };
 
 struct _ged_lint_opts *
@@ -51,6 +52,7 @@ _ged_lint_opts_create()
     o->cyclic_check = 0;
     o->missing_check = 0;
     o->invalid_shape_check = 0;
+    o->filter = BU_VLS_INIT_ZERO;
     return o;
 }
 
@@ -396,18 +398,18 @@ _ged_invalid_prim_check(struct _ged_invalid_data *idata, struct ged *gedp, struc
 	case DB5_MINORTYPE_BRLCAD_BOT:
 	    bot = (struct rt_bot_internal *)intern.idb_ptr;
 	    RT_BOT_CK_MAGIC(bot);
-	    if (bot->mode != RT_BOT_PLATE && bot->mode != RT_BOT_PLATE_NOCOS) {
+	    if (bot->mode == RT_BOT_SOLID) {
 		not_valid = bg_trimesh_solid2((int)bot->num_vertices, (int)bot->num_faces, bot->vertices, bot->faces, NULL);
 		if (not_valid) {
 		    obj.name = std::string(dp->d_namep);
 		    obj.type= std::string("bot");
-		    obj.error = std::string("failed bot solid test");
+		    obj.error = std::string("failed solidity test, but BoT type is RT_BOT_SOLID");
 		}
 	    }
 	    rt_db_free_internal(&intern);
 	    break;
 	case DB5_MINORTYPE_BRLCAD_BREP:
-	    not_valid = !rt_brep_valid(&intern, &vlog);
+	    not_valid = !rt_brep_valid(&vlog, &intern, 0);
 	    if (not_valid) {
 		obj.name = std::string(dp->d_namep);
 		obj.type= std::string("brep");
@@ -444,33 +446,25 @@ _ged_invalid_shape_check(struct _ged_invalid_data *idata, struct ged *gedp, int 
 {
     int ret = GED_OK;
     struct directory *dp;
-    if (argc) {
-	unsigned int i;
-	struct bu_ptbl *pc = NULL;
-	const char *osearch = "! -type comb";
-	if (!dpa) return GED_ERROR;
-	BU_ALLOC(pc, struct bu_ptbl);
-	if (db_search(pc, DB_SEARCH_RETURN_UNIQ_DP, osearch, argc, dpa, gedp->ged_wdbp->dbip, NULL) < 0) {
-	    ret = GED_ERROR;
-	    bu_ptbl_free(pc);
-	    bu_free(pc, "pc table");
-	} else {
-	    for (i = 0; i < BU_PTBL_LEN(pc); i++) {
-		dp = (struct directory *)BU_PTBL_GET(pc, i);
-		_ged_invalid_prim_check(idata, gedp, dp);
-	    }
-	    bu_ptbl_free(pc);
-	    bu_free(pc, "pc table");
-	}
+    struct _ged_lint_opts *opts = (struct _ged_lint_opts *)idata->o;
+    unsigned int i;
+    struct bu_ptbl *pc = NULL;
+    struct bu_vls sopts = BU_VLS_INIT_ZERO;
+    bu_vls_sprintf(&sopts, "! -type comb %s", bu_vls_cstr(&opts->filter));
+    BU_ALLOC(pc, struct bu_ptbl);
+    if (db_search(pc, DB_SEARCH_RETURN_UNIQ_DP, bu_vls_cstr(&sopts), argc, dpa, gedp->ged_wdbp->dbip, NULL) < 0) {
+	ret = GED_ERROR;
+	bu_ptbl_free(pc);
+	bu_free(pc, "pc table");
     } else {
-	int i;
-	for (i = 0; i < RT_DBNHASH; i++) {
-	    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-		_ged_invalid_prim_check(idata, gedp, dp);
-	    }
+	for (i = 0; i < BU_PTBL_LEN(pc); i++) {
+	    dp = (struct directory *)BU_PTBL_GET(pc, i);
+	    _ged_invalid_prim_check(idata, gedp, dp);
 	}
+	bu_ptbl_free(pc);
+	bu_free(pc, "pc table");
     }
-
+    bu_vls_free(&sopts);
     return ret;
 }
 
@@ -482,7 +476,6 @@ ged_lint(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "Usage: lint [ -CMS ] [obj1] [obj2] [...]\n";
     int print_help = 0;
     struct _ged_lint_opts *opts;
-    struct bu_opt_desc d[6];
     struct directory **dpa = NULL;
     int nonexist_obj_cnt = 0;
     struct _ged_cyclic_data *cdata = NULL;
@@ -494,12 +487,14 @@ ged_lint(struct ged *gedp, int argc, const char *argv[])
 
     opts = _ged_lint_opts_create();
 
+    struct bu_opt_desc d[7];
     BU_OPT(d[0],  "h", "help",          "",  NULL,  &print_help,               "Print help and exit");
     BU_OPT(d[1],  "v", "verbose",       "",  &_ged_vopt,  &(opts->verbosity),  "Verbose output (multiple flags increase verbosity)");
     BU_OPT(d[2],  "C", "cyclic",        "",  NULL,  &(opts->cyclic_check),     "Check for cyclic paths (combs whose children reference their parents - potential for infinite looping)");
     BU_OPT(d[3],  "M", "missing",       "",  NULL,  &(opts->missing_check),    "Check for objects reference by combs that are not in the database");
     BU_OPT(d[4],  "I", "invalid-shape", "",  NULL,  &(opts->invalid_shape_check),  "Check for objects that are intended to be valid shapes but do not satisfy that criteria (examples include non-solid BoTs and twisted arbs)");
-    BU_OPT_NULL(d[5]);
+    BU_OPT(d[5],  "F", "filter",        "",  &bu_opt_vls,  &(opts->filter),  "For checks on existing geometry objects, apply search-style filters to check only the subset of objects that satisfy the filters. In particular these filters do NOT impact cyclic and missing geometry checks.");
+    BU_OPT_NULL(d[6]);
 
     /* skip command name argv[0] */
     argc-=(argc>0); argv+=(argc>0);

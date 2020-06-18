@@ -1,7 +1,7 @@
 /*                    A T T R I B U T E S . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2018 United States Government as represented by
+ * Copyright (c) 2010-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -231,7 +231,7 @@ db5_replace_attributes(struct directory *dp, struct bu_attribute_value_set *avsp
     BU_CK_AVS(avsp);
     RT_CK_DBI(dbip);
 
-    if (RT_G_DEBUG&DEBUG_DB) {
+    if (RT_G_DEBUG&RT_DEBUG_DB) {
 	bu_log("db5_replace_attributes(%s) dbip=%p\n",
 	       dp->d_namep, (void *)dbip);
 	bu_avs_print(avsp, "new attributes");
@@ -294,7 +294,7 @@ db5_update_attributes(struct directory *dp, struct bu_attribute_value_set *avsp,
     BU_CK_AVS(avsp);
     RT_CK_DBI(dbip);
 
-    if (RT_G_DEBUG&DEBUG_DB) {
+    if (RT_G_DEBUG&RT_DEBUG_DB) {
 	bu_log("db5_update_attributes(%s) dbip=%p\n",
 	       dp->d_namep, (void *)dbip);
 	bu_avs_print(avsp, "new attributes");

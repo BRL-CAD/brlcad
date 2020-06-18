@@ -1,7 +1,7 @@
 /*                     V L S _ I N C R . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2018 United States Government as represented by
+ * Copyright (c) 2015-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -52,6 +52,8 @@ uniq_test(struct bu_vls *n, void *data)
 int
 main(int argc, char **argv)
 {
+    bu_setprogname(argv[0]);
+
     int ret = 1;
     struct bu_vls name = BU_VLS_INIT_ZERO;
     std::set<const char *, StrCmp> *sset = new std::set<const char *, StrCmp>;

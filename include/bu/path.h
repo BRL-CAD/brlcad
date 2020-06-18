@@ -1,7 +1,7 @@
 /*                         P A T H . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,10 +26,6 @@
 #include <stddef.h> /* for size_t */
 #include <stdlib.h> /* for getenv */
 #include <limits.h> /* for NAME_MAX */
-
-#ifdef HAVE_DLFCN_H
-#  include <dlfcn.h>   /* for RTLD_* */
-#endif
 
 #include "bu/defines.h"
 #include "bu/magic.h"
@@ -115,7 +111,7 @@ BU_EXPORT extern char *bu_path_dirname(const char *path);
  * It is the caller's responsibility to provide a basename buffer with
  * enough memory for a string with length at least strlen(path) + 1
  * (for terminating nul) characters as that is the maximum possible
- * basename size.  If the basename output argument is NULL, then a
+ * basename size.  If the basename output argument is NULL, then
  * dynamic memory will be returned and the caller is responsible for
  * releasing memory (via bu_free()), otherwise the caller-provided
  * basename pointer is returned and managed by the caller accordingly.
@@ -148,7 +144,7 @@ BU_EXPORT extern char *bu_path_basename(const char *path, char *basename);
  * A STATIC buffer is returned.  It is the caller's responsibility to
  * call bu_strdup() or make other provisions to save the returned
  * string, before calling again.
-  */
+ */
 BU_EXPORT extern const char *bu_path_normalize(const char *path);
 
 

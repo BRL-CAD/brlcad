@@ -1,7 +1,7 @@
 /*                        O P T . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2018 United States Government as represented by
+ * Copyright (c) 2015-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,13 +37,14 @@
 #include "bu/str.h"
 #include "bu/vls.h"
 
+
 HIDDEN void
-wrap_help(struct bu_vls *help, int indent, int offset, int len)
+wrap_help(struct bu_vls *help, size_t indent, size_t offset, size_t len)
 {
-    int i = 0;
+    size_t i = 0;
     char *input = NULL;
     char **argv = NULL;
-    int argc = 0;
+    size_t argc = 0;
     struct bu_vls new_help = BU_VLS_INIT_ZERO;
     struct bu_vls working = BU_VLS_INIT_ZERO;
     bu_vls_trunc(&working, 0);
@@ -54,9 +55,9 @@ wrap_help(struct bu_vls *help, int indent, int offset, int len)
     argc = bu_argv_from_string(argv, strlen(input), input);
 
     for (i = 0; i < argc; i++) {
-	int avl = strlen(argv[i]);
-	if ((int)bu_vls_strlen(&working) + avl + 1 > len) {
-	    bu_vls_printf(&new_help, "%s\n%*s", bu_vls_addr(&working), offset+indent, " ");
+	size_t avl = strlen(argv[i]);
+	if (bu_vls_strlen(&working) + avl + 1 > len) {
+	    bu_vls_printf(&new_help, "%s\n%*s", bu_vls_addr(&working), (int)(offset+indent), " ");
 	    bu_vls_trunc(&working, 0);
 	}
 	bu_vls_printf(&working, "%s ", argv[i]);
@@ -96,9 +97,9 @@ opt_desc_is_null(const struct bu_opt_desc *ds)
 
 
 HIDDEN int
-opt_is_filtered(struct bu_opt_desc *d, int f_ac, char **f_av, int accept)
+opt_is_filtered(const struct bu_opt_desc *d, size_t f_ac, char **f_av, int accept)
 {
-    int i = 0;
+    size_t i = 0;
     if (!d || !f_av || f_ac == 0)
 	return accept;
     for (i = 0; i < f_ac; i++) {
@@ -118,18 +119,18 @@ opt_is_filtered(struct bu_opt_desc *d, int f_ac, char **f_av, int accept)
 
 
 HIDDEN char *
-bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
+opt_describe_internal_ascii(const struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
 {
     size_t i = 0;
     size_t j = 0;
     size_t opt_cnt = 0;
     struct bu_opt_desc_opts dsettings = BU_OPT_DESC_OPTS_INIT_ZERO;
-    int offset = dsettings.offset;
-    int opt_cols = dsettings.option_columns;
-    int desc_cols = dsettings.description_columns;
+    size_t offset = dsettings.offset;
+    size_t opt_cols = dsettings.option_columns;
+    size_t desc_cols = dsettings.description_columns;
     char *input = NULL;
     char **filtered_argv = NULL;
-    int filtered_argc = 0;
+    size_t filtered_argc = 0;
     int accept = 0;
 
     /*
@@ -150,7 +151,7 @@ bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, struct bu_opt_desc_opts *
 	if (settings->description_columns >= 0)
 	    desc_cols = settings->description_columns;
 	if (settings->reject && settings->accept) {
-	    bu_log("Error - bu_opt_describe_internal_ascii passed both an accept and a reject list for option filtering\n");
+	    bu_log("Error - opt_describe_internal_ascii passed both an accept and a reject list for option filtering\n");
 	    return NULL;
 	}
 	if (settings->reject || settings->accept) {
@@ -169,8 +170,8 @@ bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, struct bu_opt_desc_opts *
     status = (int *)bu_calloc(opt_cnt, sizeof(int), "opt status");
     i = 0;
     while (i < opt_cnt) {
-	struct bu_opt_desc *curr;
-	struct bu_opt_desc *d;
+	const struct bu_opt_desc *curr;
+	const struct bu_opt_desc *d;
 	curr = &(ds[i]);
 
 	if (!opt_is_filtered(curr, filtered_argc, filtered_argv, accept)) {
@@ -203,7 +204,7 @@ bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, struct bu_opt_desc_opts *
 			    if (!opt_is_filtered(d, filtered_argc, filtered_argv, accept)) {
 				if (d->shortopt && strlen(d->shortopt) > 0) {
 				    struct bu_vls tmp_arg = BU_VLS_INIT_ZERO;
-				    int new_len = strlen(d->arg_helpstr);
+				    size_t new_len = strlen(d->arg_helpstr);
 				    if (!new_len) {
 					bu_vls_sprintf(&tmp_arg, "-%s", d->shortopt);
 					new_len = 2;
@@ -211,8 +212,8 @@ bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, struct bu_opt_desc_opts *
 					bu_vls_sprintf(&tmp_arg, "-%s %s", d->shortopt, d->arg_helpstr);
 					new_len = new_len + 4;
 				    }
-				    if ((int)bu_vls_strlen(&opts) + new_len + offset + 2 > opt_cols + desc_cols) {
-					bu_vls_printf(&description, "%*s%s\n", offset, " ", bu_vls_addr(&opts));
+				    if (bu_vls_strlen(&opts) + new_len + offset + 2 > opt_cols + desc_cols) {
+					bu_vls_printf(&description, "%*s%s\n", (int)offset, " ", bu_vls_addr(&opts));
 					bu_vls_sprintf(&opts, "%s, ", bu_vls_addr(&tmp_arg));
 				    } else {
 					bu_vls_printf(&opts, "%s, ", bu_vls_addr(&tmp_arg));
@@ -239,7 +240,7 @@ bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, struct bu_opt_desc_opts *
 			    if (!opt_is_filtered(d, filtered_argc, filtered_argv, accept)) {
 				if (d->longopt && strlen(d->longopt) > 0) {
 				    struct bu_vls tmp_arg = BU_VLS_INIT_ZERO;
-				    int new_len = strlen(d->arg_helpstr);
+				    size_t new_len = strlen(d->arg_helpstr);
 				    if (!new_len) {
 					bu_vls_sprintf(&tmp_arg, "--%s", d->longopt);
 					new_len = strlen(d->longopt) + 2;
@@ -247,8 +248,8 @@ bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, struct bu_opt_desc_opts *
 					bu_vls_sprintf(&tmp_arg, "--%s %s", d->longopt, d->arg_helpstr);
 					new_len = strlen(d->longopt) + new_len + 3;
 				    }
-				    if ((int)bu_vls_strlen(&opts) + new_len + offset + 2 > opt_cols + desc_cols) {
-					bu_vls_printf(&description, "%*s%s\n", offset, " ", bu_vls_addr(&opts));
+				    if (bu_vls_strlen(&opts) + new_len + offset + 2 > opt_cols + desc_cols) {
+					bu_vls_printf(&description, "%*s%s\n", (int)offset, " ", bu_vls_addr(&opts));
 					bu_vls_sprintf(&opts, "%s, ", bu_vls_addr(&tmp_arg));
 				    } else {
 					bu_vls_printf(&opts, "%s, ", bu_vls_addr(&tmp_arg));
@@ -262,16 +263,16 @@ bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, struct bu_opt_desc_opts *
 		}
 
 		bu_vls_trunc(&opts, -2);
-		bu_vls_printf(&description, "%*s%s", offset, " ", bu_vls_addr(&opts));
-		if ((int)bu_vls_strlen(&opts) > opt_cols) {
-		    bu_vls_printf(&description, "\n%*s", opt_cols + offset, " ");
+		bu_vls_printf(&description, "%*s%s", (int)offset, " ", bu_vls_addr(&opts));
+		if (bu_vls_strlen(&opts) > opt_cols) {
+		    bu_vls_printf(&description, "\n%*s", (int)(opt_cols + offset), " ");
 		} else {
-		    bu_vls_printf(&description, "%*s", opt_cols - (int)bu_vls_strlen(&opts), " ");
+		    bu_vls_printf(&description, "%*s", (int)opt_cols - (int)bu_vls_strlen(&opts), " ");
 		}
-		if ((int)bu_vls_strlen(&help_str) > desc_cols) {
+		if (bu_vls_strlen(&help_str) > desc_cols) {
 		    wrap_help(&help_str, offset, opt_cols+offset, desc_cols);
 		}
-		bu_vls_printf(&description, "%*s%s\n", offset, " ", bu_vls_addr(&help_str));
+		bu_vls_printf(&description, "%*s%s\n", (int)offset, " ", bu_vls_addr(&help_str));
 		bu_vls_free(&help_str);
 		bu_vls_free(&opts);
 		status[i] = 1;
@@ -293,13 +294,13 @@ bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, struct bu_opt_desc_opts *
 #define OPT_REPEAT   0x10
 
 HIDDEN int
-docbook_get_opt_type(struct bu_opt_desc *d, struct bu_opt_desc_opts *settings)
+docbook_get_opt_type(const struct bu_opt_desc *d, struct bu_opt_desc_opts *settings)
 {
-    struct bu_opt_desc *curr = NULL;
+    const struct bu_opt_desc *curr = NULL;
     int flags = OPT_PLAIN;
-    struct bu_opt_desc *required = NULL;
-    struct bu_opt_desc *repeated = NULL;
-    struct bu_opt_desc *optional = NULL;
+    const struct bu_opt_desc *required = NULL;
+    const struct bu_opt_desc *repeated = NULL;
+    const struct bu_opt_desc *optional = NULL;
 
     if (settings) {
 	required = settings->required;
@@ -355,11 +356,11 @@ docbook_get_opt_type(struct bu_opt_desc *d, struct bu_opt_desc_opts *settings)
 
 
 HIDDEN void
-docbook_print_short_opt(struct bu_vls *desc, struct bu_opt_desc *d, int opt_type, int offset)
+docbook_print_short_opt(struct bu_vls *desc, const struct bu_opt_desc *d, int opt_type, size_t offset)
 {
     if (!desc || !d)
 	return;
-    bu_vls_printf(desc, "%*s<arg", offset, " ");
+    bu_vls_printf(desc, "%*s<arg", (int)offset, " ");
     if (opt_type & OPT_PLAIN) {
 	bu_vls_printf(desc, " choice='plain'");
     }
@@ -381,11 +382,11 @@ docbook_print_short_opt(struct bu_vls *desc, struct bu_opt_desc *d, int opt_type
 
 
 HIDDEN void
-docbook_print_long_opt(struct bu_vls *desc, struct bu_opt_desc *d, int opt_type, int offset)
+docbook_print_long_opt(struct bu_vls *desc, const struct bu_opt_desc *d, int opt_type, size_t offset)
 {
     if (!desc || !d)
 	return;
-    bu_vls_printf(desc, "%*s<arg", offset, " ");
+    bu_vls_printf(desc, "%*s<arg", (int)offset, " ");
     if (opt_type & OPT_PLAIN) {
 	bu_vls_printf(desc, " choice='plain'");
     }
@@ -407,10 +408,11 @@ docbook_print_long_opt(struct bu_vls *desc, struct bu_opt_desc *d, int opt_type,
 
 
 HIDDEN char *
-bu_opt_describe_internal_docbook(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
+opt_describe_internal_docbook(const struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
 {
-    int opt_cnt, j;
+    int opt_cnt;
     int i = 0;
+    int j;
     int show_all_longopts = 0;
     char *finalized;
     struct bu_vls description = BU_VLS_INIT_ZERO;
@@ -430,8 +432,8 @@ bu_opt_describe_internal_docbook(struct bu_opt_desc *ds, struct bu_opt_desc_opts
     status = (int *)bu_calloc(opt_cnt, sizeof(int), "opt status");
     i = 0;
     while (i < opt_cnt) {
-	struct bu_opt_desc *curr = NULL;
-	struct bu_opt_desc *d = NULL;
+	const struct bu_opt_desc *curr = NULL;
+	const struct bu_opt_desc *d = NULL;
 	curr = &(ds[i]);
 	if (!status[i]) {
 	    int opt_alias_cnt = 0;
@@ -505,18 +507,18 @@ bu_opt_describe_internal_docbook(struct bu_opt_desc *ds, struct bu_opt_desc_opts
 
 
 char *
-bu_opt_describe(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
+bu_opt_describe(const struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
 {
     if (!ds)
 	return NULL;
     if (!settings)
-	return bu_opt_describe_internal_ascii(ds, NULL);
+	return opt_describe_internal_ascii(ds, NULL);
     switch (settings->format) {
 	case BU_OPT_ASCII:
-	    return bu_opt_describe_internal_ascii(ds, settings);
+	    return opt_describe_internal_ascii(ds, settings);
 	    break;
 	case BU_OPT_DOCBOOK:
-	    return bu_opt_describe_internal_docbook(ds, settings);
+	    return opt_describe_internal_docbook(ds, settings);
 	    break;
 	default:
 	    break;
@@ -543,9 +545,10 @@ opt_is_flag(const char *opt, const struct bu_opt_desc *ds, const char *arg)
 	desc = &(ds[desc_ind]);
     }
 
-    /* If there is an arg_process, it's up to the function - if
-     * an option without args is valid, and the potential arg after
-     * the option isn't a valid arg for this opt, opt can be a flag */
+    /* If there is an arg_process, it's up to the function - if an
+     * option without args is valid, and the potential arg after the
+     * option isn't a valid arg for this opt, opt can be a flag
+     */
     if (desc && desc->arg_process) {
 	if (arg) {
 	    arg_offset = (*desc->arg_process)(NULL, 1, &arg, NULL);
@@ -567,7 +570,7 @@ opt_is_flag(const char *opt, const struct bu_opt_desc *ds, const char *arg)
 HIDDEN int
 opt_process(struct bu_ptbl *opts, const char **eq_arg, const char *opt_candidate, const struct bu_opt_desc *ds)
 {
-    int offset = 1;
+    size_t offset = 1;
     const char *opt;
     char *optcpy;
     const char *equal_pos;
@@ -586,11 +589,13 @@ opt_process(struct bu_ptbl *opts, const char **eq_arg, const char *opt_candidate
 	    bu_ptbl_ins(opts, (long *)optcpy);
 	    return 1;
 	} else {
-	    /* single letter opt, but the string is longer. If and only if
-	     * this single letter opt is a flag, check for more flags. Anything
-	     * that needs an argument in this context is considered an error, and
-	     * with a flag option anything in the same argv with it that is not
-	     * also a flag constitutes an error. */
+	    /* single letter opt, but the string is longer. If and
+	     * only if this single letter opt is a flag, check for
+	     * more flags. Anything that needs an argument in this
+	     * context is considered an error, and with a flag option
+	     * anything in the same argv with it that is not also a
+	     * flag constitutes an error.
+	     */
 	    opt = opt_candidate+offset;
 	    if (opt_is_flag(opt, ds, opt_candidate+offset+1)) {
 		optcpy = (char *)bu_calloc(2, sizeof(char), "option");
@@ -609,22 +614,25 @@ opt_process(struct bu_ptbl *opts, const char **eq_arg, const char *opt_candidate
 		    opt++;
 		}
 	    } else {
-		/* the interpretation in this context is everything after the
-		 * first letter is arg.*/
+		/* the interpretation in this context is everything
+		 * after the first letter is arg.
+		 */
 		struct bu_vls vopt = BU_VLS_INIT_ZERO;
 		const char *varg = opt_candidate;
 		bu_vls_strncat(&vopt, opt_candidate+1, 1);
 
 		varg = opt_candidate + 2;
 
-		/* A exception is an equals sign, e.g. -s=1024 - in that
-		 * instance, the expectation might be that = would be interpreted
-		 * as an assignment.  This means that to get the literal =1024 as
-		 * an option, you would need a space after the s, e.g.:  -s =1024
+		/* A exception is an equals sign, e.g. -s=1024 - in
+		 * that instance, the expectation might be that =
+		 * would be interpreted as an assignment.  This means
+		 * that to get the literal =1024 as an option, you
+		 * would need a space after the s, e.g.: -s =1024
 		 *
-		 * For now, commented out to favor consistent behavior over what
-		 * "looks right" - may be worth revisiting or even an option at
-		 * some point...*/
+		 * For now, commented out to favor consistent behavior
+		 * over what "looks right" - may be worth revisiting
+		 * or even an option at some point...
+		 */
 
 		if (equal_pos)
 		    varg++;
@@ -667,7 +675,8 @@ opt_process(struct bu_ptbl *opts, const char **eq_arg, const char *opt_candidate
  * 2.  Must not have white space characters present in the string.
  */
 HIDDEN int
-can_be_opt(const char *opt) {
+can_be_opt(const char *opt)
+{
     size_t i = 0;
     if (!opt)
 	return 0;
@@ -684,18 +693,19 @@ can_be_opt(const char *opt) {
 
 
 int
-bu_opt_parse(struct bu_vls *msgs, int argc, const char **argv, const struct bu_opt_desc *ds)
+bu_opt_parse(struct bu_vls *msgs, size_t argc, const char **argv, const struct bu_opt_desc *ds)
 {
-    int i = 0;
-    int j = 0;
+    size_t i = 0;
+    size_t j = 0;
     int ret_argc = 0;
     struct bu_ptbl known_args = BU_PTBL_INIT_ZERO;
     struct bu_ptbl unknown_args = BU_PTBL_INIT_ZERO;
+
     if (!argv || !ds)
 	return -1;
 
     /* Now identify opt/arg pairs.*/
-    while (i < argc) {
+    while (i < (size_t)argc) {
 	int desc_found = 0;
 	int desc_ind = 0;
 	int opt_cnt = 0;
@@ -704,8 +714,9 @@ bu_opt_parse(struct bu_vls *msgs, int argc, const char **argv, const struct bu_o
 	struct bu_ptbl opts = BU_PTBL_INIT_ZERO;
 
 	/* If argv[i] isn't an option, stick the argv entry (and any
-	 * immediately following non-option entries) into the
-	 * unknown args table */
+	 * immediately following non-option entries) into the unknown
+	 * args table
+	 */
 	if (!can_be_opt(argv[i])) {
 	    bu_ptbl_ins(&unknown_args, (long *)argv[i]);
 	    i++;
@@ -717,18 +728,21 @@ bu_opt_parse(struct bu_vls *msgs, int argc, const char **argv, const struct bu_o
 	}
 
 	/* Now we're past the easy case, and whether something is an
-	 * option or an argument depends on context. argv[i] is at least
-	 * a possibility for a valid option, so the first order of business
-	 * is to determine if it is one. */
+	 * option or an argument depends on context. argv[i] is at
+	 * least a possibility for a valid option, so the first order
+	 * of business is to determine if it is one.
+	 */
 
-	/* It may be that an = has been used instead of a space.  Handle that, and
-	 * strip leading '-' characters.  Short-opt options may be grouped onto
-	 * one shared dash (e.g. rm -rf), so opt_process can return more than one
-	 * option. Also, short-opt options may not have a
-	 * space between their option and the argument. That is also handled here */
+	/* It may be that an = has been used instead of a space.
+	 * Handle that, and strip leading '-' characters.  Short-opt
+	 * options may be grouped onto one shared dash (e.g. rm -rf),
+	 * so opt_process can return more than one option. Also
+	 * handled here, short-opt options may not have a space
+	 * between their option and the argument.
+	 */
 	opt_cnt = opt_process(&opts, &eq_arg, argv[i], ds);
 	if (opt_cnt == -1) {
-	    for(j = 0; j < (int)BU_PTBL_LEN(&opts); j++) {
+	    for(j = 0; j < BU_PTBL_LEN(&opts); j++) {
 		char *o = (char *)BU_PTBL_GET(&opts, j);
 		bu_free(o, "free arg cpy");
 	    }
@@ -736,12 +750,13 @@ bu_opt_parse(struct bu_vls *msgs, int argc, const char **argv, const struct bu_o
 	    return -1;
 	}
 	if (opt_cnt > 1) {
-	    for (j = 0; j < opt_cnt; j++) {
+	    for (j = 0; j < (size_t)opt_cnt; j++) {
 		int *flag_var;
 		char *opt = (char *)BU_PTBL_GET(&opts, j);
-		/* Find the corresponding desc - if we're in a multiple flag
-		 * processing situation, we've already verified that each entry
-		 * has a desc. */
+		/* Find the corresponding desc - if we're in a
+		 * multiple flag processing situation, we've already
+		 * verified that each entry has a desc.
+		 */
 		desc_ind = 0;
 		desc = &(ds[0]);
 		while (desc && !opt_desc_is_null(desc)) {
@@ -751,7 +766,9 @@ bu_opt_parse(struct bu_vls *msgs, int argc, const char **argv, const struct bu_o
 		    desc_ind++;
 		    desc = &(ds[desc_ind]);
 		}
-		/* this is a flag - if we don't have an arg processing function, try to set an int */
+		/* this is a flag - if we don't have an arg processing
+		 * function, try to set an int
+		 */
 		if (desc->arg_process) {
 		    (void)(*desc->arg_process)(msgs, 0, NULL, desc->set_var);
 		} else {
@@ -782,38 +799,44 @@ bu_opt_parse(struct bu_vls *msgs, int argc, const char **argv, const struct bu_o
 
 	    /* If we don't know what we're dealing with, keep going */
 	    if (!desc_found) {
-		/* Since the equals sign is regarded as forcing an argument
-		 * to map to a particular option (and is an error if that
-		 * option isn't supposed to have arguments) we pass along
-		 * the original option intact. */
+		/* Since the equals sign is regarded as forcing an
+		 * argument to map to a particular option (and is an
+		 * error if that option isn't supposed to have
+		 * arguments) we pass along the original option
+		 * intact. */
 		bu_ptbl_ins(&unknown_args, (long *)argv[i]);
 		i++;
 		continue;
 	    }
 
-	    /* record the option in known args - any remaining processing is on args, if any*/
+	    /* record the option in known args - any remaining
+	     * processing is on args, if any
+	     */
 	    bu_ptbl_ins(&known_args, (long *)argv[i]);
 
 	    /* any remaining processing is on trailing args, if any */
 	    i = i + 1;
 
 	    /* If we might have args and we have a validator function,
-	     * construct the greediest possible interpretation of the option
-	     * description and run the validator to determine the number of
-	     * argv entries associated with this option (can_be_opt is not
-	     * enough if the option is number based, since -9 may be both a
-	     * valid option and a valid argument - the validator must make the
-	     * decision.  If we do not have a validator, the best we can do
-	     * is the can_be_opt test as a terminating trigger. */
+	     * construct the greediest possible interpretation of the
+	     * option description and run the validator to determine
+	     * the number of argv entries associated with this option
+	     * (can_be_opt is not enough if the option is number
+	     * based, since -9 may be both a valid option and a valid
+	     * argument - the validator must make the decision.  If we
+	     * do not have a validator, the best we can do is the
+	     * can_be_opt test as a terminating trigger.
+	     */
 	    if (desc->arg_process) {
 		/* Construct the greedy interpretation of the option argv */
 		int k = 0;
 		int arg_offset = 0;
-		int g_argc = argc - i;
+		size_t g_argc = argc - i;
 		const char *prev_opt = argv[i-1];
 		const char **g_argv = argv + i;
-		/* If we have an arg hiding in the previous option, temporarily
-		 * rework the argv array for this purpose */
+		/* If we have an arg hiding in the previous option,
+		 * temporarily rework the argv array for this purpose
+		 */
 		if (eq_arg) {
 		    g_argv--;
 		    g_argv[0] = eq_arg;
@@ -823,21 +846,27 @@ bu_opt_parse(struct bu_vls *msgs, int argc, const char **argv, const struct bu_o
 		if (arg_offset == -1) {
 		    /* This isn't just an unknown option to be passed
 		     * through for possible later processing.  If the
-		     * arg_process callback returns -1, something has gone
-		     * seriously awry and a known-to-be-invalid arg was
-		     * seen.  Fail early and hard. */
+		     * arg_process callback returns -1, something has
+		     * gone seriously awry and a known-to-be-invalid
+		     * arg was seen.  Fail early and hard.
+		     */
 		    if (msgs) {
 			bu_vls_printf(msgs, "Invalid argument supplied to %s: %s - halting.\n", argv[i-1], argv[i]);
 		    }
 		    return -1;
 		}
-		/* Put the original opt back and adjust the arg_offset, if we substituted
-		 * the eq_arg pointer into the argv array */
+		/* Put the original opt back and adjust the
+		 * arg_offset, if we substituted the eq_arg pointer
+		 * into the argv array
+		 */
 		if (eq_arg) {
-		    /* If the arg_process callback did nothing with the arg, but the arg was
-		     * sent to this option with an = assignment, something is wrong - the
-		     * most likely scenario is an = assignment forced an argument to be
-		     * sent to an option that doesn't take arguments */
+		    /* If the arg_process callback did nothing with
+		     * the arg, but the arg was sent to this option
+		     * with an = assignment, something is wrong - the
+		     * most likely scenario is an = assignment forced
+		     * an argument to be sent to an option that
+		     * doesn't take arguments.
+		     */
 		    if (!arg_offset) {
 			if (msgs) {
 			    bu_vls_printf(msgs, "Option %s did not successfully use the supplied argument %s - halting.\n", argv[i-1], eq_arg);
@@ -850,8 +879,8 @@ bu_opt_parse(struct bu_vls *msgs, int argc, const char **argv, const struct bu_o
 			arg_offset--;
 		    }
 		}
-		/* If we used any of the argv entries, accumulate them for later reordering
-		 * and increment i */
+		/* If we used any of the argv entries, accumulate them
+		 * for later reordering and increment i */
 		for (k = (int)i; k < (int)(i + arg_offset); k++) {
 		    bu_ptbl_ins(&known_args, (long *)argv[k]);
 		}
@@ -862,8 +891,10 @@ bu_opt_parse(struct bu_vls *msgs, int argc, const char **argv, const struct bu_o
 		if (flag_var)
 		    *flag_var = 1;
 
-		/* If we already got an arg from the equals mechanism and we aren't
-		 * supposed to have one, we're invalid - halt. */
+		/* If we already got an arg from the equals mechanism
+		 * and we aren't supposed to have one, we're invalid -
+		 * halt.
+		 */
 		if (eq_arg) {
 		    if (msgs) {
 			bu_vls_printf(msgs, "Option %s does not take an argument, but %s was supplied - halting.\n", argv[i-1], eq_arg);
@@ -872,23 +903,27 @@ bu_opt_parse(struct bu_vls *msgs, int argc, const char **argv, const struct bu_o
 		}
 	    }
 	}
-	for(j = 0; j < (int)BU_PTBL_LEN(&opts); j++) {
+	for(j = 0; j < BU_PTBL_LEN(&opts); j++) {
 	    char *o = (char *)BU_PTBL_GET(&opts, j);
 	    bu_free(o, "free arg cpy");
 	}
 	bu_ptbl_free(&opts);
     }
 
-    /* Rearrange argv so the unused options are ordered at the front of the array. */
+    /* Rearrange argv so the unused options are ordered at the front
+     * of the array.
+     */
     ret_argc = BU_PTBL_LEN(&unknown_args);
     if (ret_argc > 0) {
-	int avc = 0;
-	int akc = BU_PTBL_LEN(&known_args);
-	for (avc = 0; avc < ret_argc; avc++) {
+	size_t avc = 0;
+	size_t akc = BU_PTBL_LEN(&known_args);
+	for (avc = 0; avc < (size_t)ret_argc; avc++) {
 	    argv[avc] = (const char *)BU_PTBL_GET(&unknown_args, avc);
 	}
-	/* Put the known option argv pointers at the end of the array, in case they
-	 * are still needed for memory freeing by the caller */
+	/* Put the known option argv pointers at the end of the array,
+	 * in case they are still needed for memory freeing by the
+	 * caller
+	 */
 	for (avc = 0; avc < akc; avc++) {
 	    argv[avc+ret_argc] = (const char *)BU_PTBL_GET(&known_args, avc);
 	}
@@ -896,13 +931,12 @@ bu_opt_parse(struct bu_vls *msgs, int argc, const char **argv, const struct bu_o
     bu_ptbl_free(&unknown_args);
     bu_ptbl_free(&known_args);
 
-
-    return ret_argc;
+    return (int)ret_argc;
 }
 
 
 int
-bu_opt_int(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+bu_opt_int(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
     long int l;
     int i;
@@ -944,7 +978,7 @@ bu_opt_int(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 
 
 int
-bu_opt_long(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+bu_opt_long(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
     long int l;
     char *endptr = NULL;
@@ -975,7 +1009,7 @@ bu_opt_long(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 
 
 int
-bu_opt_long_hex(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+bu_opt_long_hex(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
     long int l;
     char *endptr = NULL;
@@ -1007,7 +1041,7 @@ bu_opt_long_hex(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 
 
 int
-bu_opt_fastf_t(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+bu_opt_fastf_t(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
     double d;
     fastf_t f;
@@ -1050,7 +1084,7 @@ bu_opt_fastf_t(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 
 
 int
-bu_opt_str(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+bu_opt_str(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
     const char **s_set = (const char **)set_var;
 
@@ -1063,7 +1097,7 @@ bu_opt_str(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 
 
 int
-bu_opt_vls(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+bu_opt_vls(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
     struct bu_vls *s_set = (struct bu_vls *)set_var;
 
@@ -1081,7 +1115,7 @@ bu_opt_vls(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 
 
 int
-bu_opt_bool(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+bu_opt_bool(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
     int *b_set = (int *)set_var;
     int bool_val;
@@ -1103,7 +1137,7 @@ bu_opt_bool(struct bu_vls *msg, int argc, const char **argv, void *set_var)
 
 
 int
-bu_opt_color(struct bu_vls *msg, int argc, const char **argv, void *set_c)
+bu_opt_color(struct bu_vls *msg, size_t argc, const char **argv, void *set_c)
 {
     struct bu_color *set_color = (struct bu_color *)set_c;
     unsigned int rgb[3];
@@ -1130,8 +1164,10 @@ bu_opt_color(struct bu_vls *msg, int argc, const char **argv, void *set_c)
 		return 3;
 	    }
 	} else {
-	    /* Not valid with 1 and don't have 3 - we require at least one, so
-	     * claim one argv as belonging to this option regardless. */
+	    /* Not valid with 1 and don't have 3 - we require at least
+	     * one, so claim one argv as belonging to this option
+	     * regardless.
+	     */
 	    if (msg)
 		bu_vls_sprintf(msg, "No valid color found: %s\n", argv[0]);
 	    return -1;
@@ -1148,17 +1184,19 @@ bu_opt_color(struct bu_vls *msg, int argc, const char **argv, void *set_c)
 
 
 int
-bu_opt_vect_t(struct bu_vls *msg, int argc, const char **argv, void *vec)
+bu_opt_vect_t(struct bu_vls *msg, size_t argc, const char **argv, void *vec)
 {
-    int i = 0;
-    int acnum = 0;
+    size_t i = 0;
+    size_t acnum = 0;
     char *str1 = NULL;
     char *avnum[4] = {NULL, NULL, NULL, NULL};
     vect_t *v= (vect_t *)vec;
 
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_vect_t");
 
-    /* First, see if the first string converts to a vect_t (should this be a func?)*/
+    /* First, see if the first string converts to a vect_t (should
+     * this be a func?)
+     */
     str1 = bu_strdup(argv[0]);
     while (str1[i]) {
 	/* If we have a separator, replace with a space */
@@ -1236,8 +1274,10 @@ bu_opt_vect_t(struct bu_vls *msg, int argc, const char **argv, void *vec)
 	}
 	return 3;
     } else {
-	/* Not valid with 1 and don't have 3 - we require at least one, so
-	 * claim one argv as belonging to this option regardless. */
+	/* Not valid with 1 and don't have 3 - we require at least
+	 * one, so claim one argv as belonging to this option
+	 * regardless.
+	 */
 	if (msg) {
 	    bu_vls_sprintf(msg, "No valid vector found: %s\n", argv[0]);
 	}

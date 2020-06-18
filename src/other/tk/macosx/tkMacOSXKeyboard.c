@@ -13,7 +13,7 @@
 
 #include "tkMacOSXPrivate.h"
 #include "tkMacOSXEvent.h"
-
+#include "tkMacOSXConstants.h"
 /*
  * A couple of simple definitions to make code a bit more self-explaining.
  *
@@ -96,6 +96,24 @@ static KeyInfo virtualkeyArray[] = {
     {0,		0}
 };
 
+#define NUM_MOD_KEYCODES 14
+static KeyCode modKeyArray[NUM_MOD_KEYCODES] = {
+    XK_Shift_L,
+    XK_Shift_R,
+    XK_Control_L,
+    XK_Control_R,
+    XK_Caps_Lock,
+    XK_Shift_Lock,
+    XK_Meta_L,
+    XK_Meta_R,
+    XK_Alt_L,
+    XK_Alt_R,
+    XK_Super_L,
+    XK_Super_R,
+    XK_Hyper_L,
+    XK_Hyper_R,
+};
+
 static int initialized = 0;
 static Tcl_HashTable keycodeTable;	/* keyArray hashed by keycode value. */
 static Tcl_HashTable vkeyTable;		/* virtualkeyArray hashed by virtual
@@ -162,13 +180,13 @@ InitKeyMaps(void)
     for (kPtr = keyArray; kPtr->keycode != 0; kPtr++) {
 	hPtr = Tcl_CreateHashEntry(&keycodeTable, INT2PTR(kPtr->keycode),
 		&dummy);
-	Tcl_SetHashValue(hPtr, kPtr->keysym);
+	Tcl_SetHashValue(hPtr, INT2PTR(kPtr->keysym));
     }
     Tcl_InitHashTable(&vkeyTable, TCL_ONE_WORD_KEYS);
     for (kPtr = virtualkeyArray; kPtr->keycode != 0; kPtr++) {
 	hPtr = Tcl_CreateHashEntry(&vkeyTable, INT2PTR(kPtr->keycode),
 		&dummy);
-	Tcl_SetHashValue(hPtr, kPtr->keysym);
+	Tcl_SetHashValue(hPtr, INT2PTR(kPtr->keysym));
     }
     initialized = 1;
 }
@@ -416,7 +434,7 @@ XKeycodeToKeysym(
  *----------------------------------------------------------------------
  */
 
-char *
+const char *
 TkpGetString(
     TkWindow *winPtr,		/* Window where event occurred: Needed to get
 				 * input context. */
@@ -425,8 +443,11 @@ TkpGetString(
 				 * result. */
 {
     (void) winPtr; /*unused*/
+    int ch;
+
     Tcl_DStringInit(dsPtr);
-    return Tcl_DStringAppend(dsPtr, eventPtr->xkey.trans_chars, -1);
+    return Tcl_DStringAppend(dsPtr, eventPtr->xkey.trans_chars,
+	    TkUtfToUniChar(eventPtr->xkey.trans_chars, &ch));
 }
 
 /*
@@ -457,8 +478,7 @@ XGetModifierMapping(
      * MacOSX doesn't use the key codes for the modifiers for anything, and we
      * don't generate them either. So there is no modifier map.
      */
-
-    modmap = (XModifierKeymap *) ckalloc(sizeof(XModifierKeymap));
+    modmap = ckalloc(sizeof(XModifierKeymap));
     modmap->max_keypermod = 0;
     modmap->modifiermap = NULL;
     return modmap;
@@ -485,9 +505,9 @@ XFreeModifiermap(
     XModifierKeymap *modmap)
 {
     if (modmap->modifiermap != NULL) {
-	ckfree((char *) modmap->modifiermap);
+	ckfree(modmap->modifiermap);
     }
-    ckfree((char *) modmap);
+    ckfree(modmap);
     return Success;
 }
 
@@ -548,7 +568,6 @@ XKeysymToMacKeycode(
     KeySym keysym)
 {
     KeyInfo *kPtr;
-
     if (keysym <= LATIN1_MAX) {
 	/*
 	 * Handle keysyms in the Latin-1 range where keysym and Unicode
@@ -576,6 +595,17 @@ XKeysymToMacKeycode(
     for (kPtr = virtualkeyArray; kPtr->keycode != 0; kPtr++) {
 	if (kPtr->keysym == keysym) {
 	    return kPtr->keycode;
+	}
+    }
+
+    /*
+     * Modifier keycodes only come from generated events.  No translation
+     * is needed.
+     */
+
+    for (int i=0; i < NUM_MOD_KEYCODES; i++) {
+	if (keysym == modKeyArray[i]) {
+	    return keysym;
 	}
     }
 
@@ -661,6 +691,13 @@ TkpSetKeycodeAndState(
 {
     if (keysym == NoSymbol) {
 	eventPtr->xkey.keycode = 0;
+    } else if ( modKeyArray[0] <= keysym &&
+		keysym <= modKeyArray[NUM_MOD_KEYCODES - 1]) {
+	/*
+	 * Keysyms for pure modifiers only arise in generated events.
+	 * We should just copy them to the keycode.
+	 */
+	eventPtr->xkey.keycode = keysym;
     } else {
 	Display *display = Tk_Display(tkwin);
 	int macKeycode = XKeysymToMacKeycode(display, keysym);
@@ -668,7 +705,6 @@ TkpSetKeycodeAndState(
 	/*
 	 * See also XKeysymToKeycode.
 	 */
-
 	if ((keysym >= XK_F1) && (keysym <= XK_F35)) {
 	    eventPtr->xkey.keycode = 0x0010;
 	} else {
@@ -684,7 +720,7 @@ TkpSetKeycodeAndState(
 	}
 
 	if (keysym <= LATIN1_MAX) {
-	    int done = Tcl_UniCharToUtf(keysym, eventPtr->xkey.trans_chars);
+	    int done = TkUniCharToUtf(keysym, eventPtr->xkey.trans_chars);
 
 	    eventPtr->xkey.trans_chars[done] = 0;
 	} else {
@@ -770,7 +806,7 @@ TkpGetKeySym(
     /* If nbytes has been set, it's not a function key, but a regular key that
        has been translated in tkMacOSXKeyEvent.c; just use that. */
     if (eventPtr->xkey.nbytes) {
-      return eventPtr->xkey.keycode & 0xFFFF;
+      return eventPtr->xkey.keycode;
     }
 
     /*
@@ -890,18 +926,20 @@ TkpInitKeymapInfo(
 #endif
 
     /*
-     * MacOSX doesn't use the keycodes for the modifiers for anything, and we
-     * don't generate them either (the keycodes actually given in the simulated
-     * modifier events are bogus). So there is no modifier map. If we ever want
-     * to simulate real modifier keycodes, the list will be constant in the
-     * Carbon implementation.
+     * MacOSX doesn't create a key event when a modifier key is pressed or
+     * released.  However, it is possible to generate key events for
+     * modifier keys, and this is done in the tests.  So we construct an array
+     * containing the keycodes of the standard modifier keys from static data.
      */
 
     if (dispPtr->modKeyCodes != NULL) {
-	ckfree((char *) dispPtr->modKeyCodes);
+	ckfree(dispPtr->modKeyCodes);
     }
-    dispPtr->numModKeyCodes = 0;
-    dispPtr->modKeyCodes = NULL;
+    dispPtr->numModKeyCodes = NUM_MOD_KEYCODES;
+    dispPtr->modKeyCodes = (KeyCode *)ckalloc(NUM_MOD_KEYCODES * sizeof(KeyCode));
+    for (int i = 0; i < NUM_MOD_KEYCODES; i++) {
+	dispPtr->modKeyCodes[i] = modKeyArray[i];
+    }
 }
 
 /*

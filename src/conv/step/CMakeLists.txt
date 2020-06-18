@@ -119,6 +119,8 @@ if(BRLCAD_ENABLE_IFC)
   add_subdirectory(ifc-g)
 endif(BRLCAD_ENABLE_IFC)
 
+add_subdirectory(util)
+
 CMAKEFILES(
   AP_Common.h
   BRLCADWrapper.h

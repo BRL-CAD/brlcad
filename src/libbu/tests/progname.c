@@ -1,7 +1,7 @@
 /*                 P R O G N A M E . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2018 United States Government as represented by
+ * Copyright (c) 2011-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,6 +35,8 @@ main(int ac, char *av[])
     const char *ans;
     const char *res;
     char *tbasename;
+
+    bu_setprogname(av[0]);
 
     if (ac > 1) {
 	fprintf(stderr, "Usage: %s\n", av[0]);

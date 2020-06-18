@@ -1,7 +1,7 @@
 /*                    R E A D G L O B A L . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2018 United States Government as represented by
+ * Copyright (c) 1990-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -65,29 +65,29 @@ Readglobal(int file_count)
 	    bu_exit(1, "^\n");
 	}
 	counter++;
-	eof = card[++counter];
-	while (card[++counter] != eof);
+	eofd = card[++counter];
+	while (card[++counter] != eofd);
     } else
-	eof = COMMA;
+	eofd = COMMA;
 
 
     /* Get End-of-record delimiter */
-    if (card[++counter] != eof) {
+    if (card[++counter] != eofd) {
 	counter--;
 	while (card[++counter] == ' ');
 	if (card[counter] != '1' || card[counter+1] != 'H')
 	    bu_exit(1, "Error in new record delimiter\n");
 	counter++;
-	eor = card[++counter];
-	while (card[++counter] != eof);
+	eord = card[++counter];
+	while (card[++counter] != eofd);
     } else
-	eor = ';';
+	eord = ';';
 
 
     /* Read all the fields in the Global Section */
     counter++;
     while (field < 23) {
-	if (card[counter-1] == eor) {
+	if (card[counter-1] == eord) {
 	    Readrec(++currec);
 	    break;
 	}

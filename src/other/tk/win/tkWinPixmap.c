@@ -42,7 +42,7 @@ Tk_GetPixmap(
 
     display->request++;
 
-    newTwdPtr = (TkWinDrawable*) ckalloc(sizeof(TkWinDrawable));
+    newTwdPtr = ckalloc(sizeof(TkWinDrawable));
     newTwdPtr->type = TWD_BITMAP;
     newTwdPtr->bitmap.depth = depth;
     twdPtr = (TkWinDrawable *) d;
@@ -100,13 +100,13 @@ Tk_GetPixmap(
 	    LPVOID lpMsgBuf;
 
 	    repeatError = 1;
-	    if (FormatMessage(FORMAT_MESSAGE_ALLOCATE_BUFFER |
+	    if (FormatMessageW(FORMAT_MESSAGE_ALLOCATE_BUFFER |
 		    FORMAT_MESSAGE_FROM_SYSTEM|FORMAT_MESSAGE_IGNORE_INSERTS,
 		    NULL, GetLastError(),
 		    MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
-		    (LPTSTR) &lpMsgBuf, 0, NULL)) {
-		MessageBox(NULL, (LPCTSTR) lpMsgBuf,
-			"Tk_GetPixmap: Error from CreateDIBSection",
+		    (LPWSTR)&lpMsgBuf, 0, NULL)) {
+		MessageBoxW(NULL, (LPWSTR) lpMsgBuf,
+			L"Tk_GetPixmap: Error from CreateDIBSection",
 			MB_OK | MB_ICONINFORMATION);
 		LocalFree(lpMsgBuf);
 	    }
@@ -114,7 +114,7 @@ Tk_GetPixmap(
     }
 
     if (newTwdPtr->bitmap.handle == NULL) {
-	ckfree((char *) newTwdPtr);
+	ckfree(newTwdPtr);
 	return None;
     }
 
@@ -147,7 +147,7 @@ Tk_FreePixmap(
     display->request++;
     if (twdPtr != NULL) {
 	DeleteObject(twdPtr->bitmap.handle);
-	ckfree((char *) twdPtr);
+	ckfree(twdPtr);
     }
 }
 

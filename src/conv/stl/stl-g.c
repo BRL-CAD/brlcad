@@ -1,7 +1,7 @@
 /*                         S T L - G . C
  * BRL-CAD
  *
- * Copyright (c) 2002-2018 United States Government as represented by
+ * Copyright (c) 2002-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,6 +37,7 @@
 #include "bnetwork.h"
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/cv.h"
 #include "bu/getopt.h"
 #include "bu/units.h"
@@ -533,6 +534,8 @@ main(int argc, char *argv[])
 {
     int c;
 
+    bu_setprogname(argv[0]);
+
     tol.magic = BN_TOL_MAGIC;
 
     /* this value selected as a reasonable compromise between eliminating
@@ -601,8 +604,8 @@ main(int argc, char *argv[])
 		debug = 1;
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
-		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT);
+		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
+		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, RT_DEBUG_FORMAT);
 		bu_log("\n");
 		break;
 	    default:

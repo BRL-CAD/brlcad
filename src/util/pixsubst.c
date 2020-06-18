@@ -1,7 +1,7 @@
 /*                      P I X S U B S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <errno.h>
 
+#include "bu/app.h"
 #include "bu/log.h"
 
 
@@ -37,6 +38,8 @@ main(int argc, char **argv)
     unsigned char pix[3], pixin[3], pixout[3];
     int npixels;
     size_t ret;
+
+    bu_setprogname(argv[0]);
 
     if (argc != 4 && argc != 7) {
 	bu_log("Usage: %s [R_in G_in B_in] R_out G_out B_out < pix_in > pix_out\n", argv[0]);

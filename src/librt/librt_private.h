@@ -1,7 +1,7 @@
 /*                 L I B R T _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2018 United States Government as represented by
+ * Copyright (c) 2011-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -133,7 +133,7 @@ extern int cyclic_path(const struct db_full_path *fp, const char *test_name, lon
 extern int tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *avs, int offset);
 
 /* db_io.c */
-extern int db_read(const struct db_i *dbip, void *addr, size_t count, off_t offset);
+extern int db_read(const struct db_i *dbip, void *addr, size_t count, b_off_t offset);
 
 /* db5_io.c */
 #define DB_SIZE_OBJ 0x1
@@ -169,7 +169,7 @@ extern int rt_binunif_import5_minor_type(struct rt_db_internal *, const struct b
 extern void primitive_hitsort(struct hit h[], int nh);
 
 extern fastf_t primitive_get_absolute_tolerance(
-	const struct rt_tess_tol *ttol,
+	const struct bg_tess_tol *ttol,
 	fastf_t rel_to_abs);
 
 extern fastf_t primitive_diagonal_samples(
@@ -177,7 +177,7 @@ extern fastf_t primitive_diagonal_samples(
 	const struct rt_view_info *info);
 
 extern int approximate_parabolic_curve(
-	struct rt_pt_node *pts,
+	struct rt_pnt_node *pts,
 	fastf_t p,
 	int num_new_points);
 
@@ -186,7 +186,7 @@ extern fastf_t primitive_curve_count(
 	const struct rt_view_info *info);
 
 extern int approximate_hyperbolic_curve(
-	struct rt_pt_node *pts,
+	struct rt_pnt_node *pts,
 	fastf_t a,
 	fastf_t b,
 	int num_new_points);

@@ -1,7 +1,7 @@
 /*                           E T O . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2018 United States Government as represented by
+ * Copyright (c) 1992-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -543,7 +543,7 @@ rt_eto_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 	    short n;
 	    short lim;
 
-	    /* Inline rt_pt_sort().  Sorts k[] into descending order. */
+	    /* Inline rt_pnt_sort().  Sorts k[] into descending order. */
 	    for (lim = i-1; lim > 0; lim--) {
 		for (n = 0; n < lim; n++) {
 		    fastf_t u;
@@ -764,15 +764,23 @@ rt_eto_free(struct soltab *stp)
  * distance and normal error tolerances.  The two resulting segments
  * are passed recursively to this routine until each segment is within
  * tolerance.
+ *
+ * FIXME: this is recursive and subject to a stack overflow if it
+ * recurses thousands of times.  also troublesome is that there's
+ * almost certainly a bug in here as extensive recursion has been
+ * observed when normal tol is set to 1 or 2.
  */
 HIDDEN int
-make_ellipse4(struct rt_pt_node *pts, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
+make_ellipse4(struct rt_pnt_node *pts, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol, size_t recursions)
 {
     fastf_t dist, intr, m, theta0, theta1;
     int n;
     point_t mpt, p0, p1;
     vect_t norm_line, norm_ell;
-    struct rt_pt_node *newpt;
+    struct rt_pnt_node *newpt;
+
+    /* arbitrary limit */
+    static const size_t MAX_RECURSIONS = 2048;
 
     /* endpoints of segment approximating ellipse */
     VMOVE(p0, pts->p);
@@ -796,18 +804,18 @@ make_ellipse4(struct rt_pt_node *pts, fastf_t a, fastf_t b, fastf_t dtol, fastf_
     VUNITIZE(norm_ell);
     theta1 = fabs(acos(VDOT(norm_line, norm_ell)));
     /* split segment at widest point if not within error tolerances */
-    if (dist > dtol || theta0 > ntol || theta1 > ntol) {
+    if ((dist > dtol || theta0 > ntol || theta1 > ntol) && recursions++ < MAX_RECURSIONS) {
 	/* split segment */
-	BU_ALLOC(newpt, struct rt_pt_node);
+	BU_ALLOC(newpt, struct rt_pnt_node);
 	VMOVE(newpt->p, mpt);
 	newpt->next = pts->next;
 	pts->next = newpt;
 	/* keep track of number of pts added */
 	n = 1;
 	/* recurse on first new segment */
-	n += make_ellipse4(pts, a, b, dtol, ntol);
+	n += make_ellipse4(pts, a, b, dtol, ntol, recursions);
 	/* recurse on second new segment */
-	n += make_ellipse4(newpt, a, b, dtol, ntol);
+	n += make_ellipse4(newpt, a, b, dtol, ntol, recursions);
     } else
 	n  = 0;
     return n;
@@ -824,16 +832,16 @@ make_ellipse(int *n, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
 {
     int i;
     point_t *ell;
-    struct rt_pt_node *ell_quad, *oldpos, *pos;
+    struct rt_pnt_node *ell_quad, *oldpos, *pos;
 
-    BU_ALLOC(ell_quad, struct rt_pt_node);
+    BU_ALLOC(ell_quad, struct rt_pnt_node);
     VSET(ell_quad->p, b, 0., 0.);
 
-    BU_ALLOC(ell_quad->next, struct rt_pt_node);
+    BU_ALLOC(ell_quad->next, struct rt_pnt_node);
     VSET(ell_quad->next->p, 0., a, 0.);
     ell_quad->next->next = NULL;
 
-    *n = make_ellipse4(ell_quad, a, b, dtol, ntol);
+    *n = make_ellipse4(ell_quad, a, b, dtol, ntol, 0);
     ell = (point_t *)bu_malloc(4*(*n+1)*sizeof(point_t), "make_ellipse pts");
 
     /* put 1st quad of ellipse into an array */
@@ -842,7 +850,7 @@ make_ellipse(int *n, fastf_t a, fastf_t b, fastf_t dtol, fastf_t ntol)
 	VMOVE(ell[i], pos->p);
 	oldpos = pos;
 	pos = pos->next;
-	bu_free((char *)oldpos, "rt_pt_node");
+	bu_free((char *)oldpos, "rt_pnt_node");
     }
     /* mirror 1st quad to make 2nd */
     for (i = (*n+1)+1; i < 2*(*n+1); i++) {
@@ -1037,7 +1045,7 @@ rt_eto_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
  * eto_rd Semiminor axis length (scalar) of eto cross section
  */
 int
-rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     fastf_t a, b;	/* axis lengths of ellipse */
     fastf_t ang, ch, cv, dh, dv, ntol, dtol, phi, theta;
@@ -1146,7 +1154,7 @@ rt_eto_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
 
 int
-rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_eto_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     fastf_t a, b;	/* axis lengths of ellipse */
     fastf_t ang, ch, cv, dh, dv, ntol, dtol, phi, theta;

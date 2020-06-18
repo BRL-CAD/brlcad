@@ -1596,7 +1596,7 @@ SHPReadObject( SHPHandle psSHP, int hEntity )
 	 */
 	char str[128];
 	sprintf( str,
-		 "Error in fseek() reading object from .shp file at offset %u",
+		 "Error in bu_fseek() reading object from .shp file at offset %u",
 		 psSHP->panRecOffset[hEntity]);
 
 	psSHP->sHooks.Error( str );

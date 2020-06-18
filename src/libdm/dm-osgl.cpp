@@ -1,7 +1,7 @@
 /*                     D M - O S G L . C P P
  * BRL-CAD
  *
- * Copyright (c) 1988-2018 United States Government as represented by
+ * Copyright (c) 1988-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -447,8 +447,6 @@ osgl_open(Tcl_Interp *interp, int argc, char **argv)
 	else
 	    bu_vls_strcpy(&dmp->dm_dName, ":0.0");
     }
-    if (bu_vls_strlen(&init_proc_vls) == 0)
-	bu_vls_strcpy(&init_proc_vls, "bind_dm");
 
     /* initialize dm specific variables */
     pubvars->devmotionnotify = LASTEvent;
@@ -553,16 +551,16 @@ osgl_open(Tcl_Interp *interp, int argc, char **argv)
     bu_vls_printf(&dmp->dm_tkName, "%s",
 		  (char *)Tk_Name(pubvars->xtkwin));
 
-    /* Important - note that this is a bu_vls_sprintf, to clear the string */
-    bu_vls_sprintf(&str, "_init_dm %s %s\n",
-		  bu_vls_addr(&init_proc_vls),
-		  bu_vls_addr(&dmp->dm_pathName));
+    if (bu_vls_strlen(&init_proc_vls) > 0) {
+	/* Important - note that this is a bu_vls_sprintf, to clear the string */
+	bu_vls_sprintf(&str, "%s %s\n", bu_vls_addr(&init_proc_vls), bu_vls_addr(&dmp->dm_pathName));
 
-    if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
-	bu_vls_free(&init_proc_vls);
-	bu_vls_free(&str);
-	(void)osgl_close(dmp);
-	return DM_NULL;
+	if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
+	    bu_vls_free(&init_proc_vls);
+	    bu_vls_free(&str);
+	    (void)osgl_close(dmp);
+	    return DM_NULL;
+	}
     }
 
     bu_vls_free(&init_proc_vls);
@@ -1322,11 +1320,10 @@ osgl_drawVListHiddenLine(struct dm_internal *dmp, register struct bn_vlist *vp)
 		    glNormal3dv(dpt);
 		    break;
 		case BN_VLIST_TRI_START:
-		    if (first)
+		    if (first == 1) {
 			glBegin(GL_TRIANGLES);
-
 			first = 0;
-
+		    }
 		    /* Set surface normal (vl_pnt points outward) */
 		    glNormal3dv(dpt);
 

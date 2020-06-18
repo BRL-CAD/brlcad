@@ -1,7 +1,7 @@
 #                  E D I T _ S O L I D . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2018 United States Government as represented by
+# Copyright (c) 2004-2020 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -273,7 +273,8 @@ proc esol_build_form { id w type vals do_gui do_cmd do_entries } {
 	frame $sform
     }
 
-    set form [db form $type]
+#    set form [db form $type]
+    set form [form $type]
     set len [llength $form]
 
     for { set i 0; set row 0 } { $i < $len } { incr i; incr row } {

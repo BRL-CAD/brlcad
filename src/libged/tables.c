@@ -1,7 +1,7 @@
 /*                         T A B L E S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,6 +34,8 @@
 #endif
 #include <ctype.h>
 #include <string.h>
+
+#include "bio.h"
 
 #include "bu/sort.h"
 #include "bu/units.h"
@@ -101,7 +103,7 @@ tables_check(char *a, char *b)
 HIDDEN size_t
 tables_sol_number(const matp_t matrix, char *name, size_t *old, size_t *numsol)
 {
-    off_t i;
+    b_off_t i;
     struct identt idbuf1, idbuf2;
     static struct identt identt = {0, {0}, MAT_INIT_ZERO};
     ssize_t readval;
@@ -111,7 +113,7 @@ tables_sol_number(const matp_t matrix, char *name, size_t *old, size_t *numsol)
     MAT_COPY(idbuf1.i_mat, matrix);
 
     for (i = 0; i < (ssize_t)*numsol; i++) {
-	(void)lseek(rd_idfd, i*sizeof(identt), 0);
+	(void)bu_lseek(rd_idfd, i*sizeof(identt), 0);
 	readval = read(rd_idfd, &idbuf2, sizeof identt);
 
 	if (readval < 0) {
@@ -128,7 +130,7 @@ tables_sol_number(const matp_t matrix, char *name, size_t *old, size_t *numsol)
     (*numsol)++;
     idbuf1.i_index = *numsol;
 
-    (void)lseek(idfd, 0, 2);
+    (void)bu_lseek(idfd, 0, 2);
     i = write(idfd, &idbuf1, sizeof identt);
     if (i < 0)
 	perror("write");

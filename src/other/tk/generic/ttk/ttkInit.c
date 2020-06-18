@@ -21,8 +21,8 @@ int Ttk_GetButtonDefaultStateFromObj(
     Tcl_Interp *interp, Tcl_Obj *objPtr, int *statePtr)
 {
     *statePtr = TTK_BUTTON_DEFAULT_DISABLED;
-    return Tcl_GetIndexFromObj(interp, objPtr,
-	    ttkDefaultStrings, "default state", 0, statePtr);
+    return Tcl_GetIndexFromObjStruct(interp, objPtr, ttkDefaultStrings,
+	    sizeof(char *), "default state", 0, statePtr);
 }
 
 /*
@@ -38,8 +38,8 @@ int Ttk_GetCompoundFromObj(
     Tcl_Interp *interp, Tcl_Obj *objPtr, int *statePtr)
 {
     *statePtr = TTK_COMPOUND_NONE;
-    return Tcl_GetIndexFromObj(interp, objPtr,
-	    ttkCompoundStrings, "compound layout", 0, statePtr);
+    return Tcl_GetIndexFromObjStruct(interp, objPtr, ttkCompoundStrings,
+	    sizeof(char *), "compound layout", 0, statePtr);
 }
 
 /*
@@ -54,8 +54,8 @@ int Ttk_GetOrientFromObj(
     Tcl_Interp *interp, Tcl_Obj *objPtr, int *resultPtr)
 {
     *resultPtr = TTK_ORIENT_HORIZONTAL;
-    return Tcl_GetIndexFromObj(interp, objPtr,
-	    ttkOrientStrings, "orientation", 0, resultPtr);
+    return Tcl_GetIndexFromObjStruct(interp, objPtr, ttkOrientStrings,
+	    sizeof(char *), "orientation", 0, resultPtr);
 }
 
 /*
@@ -65,18 +65,18 @@ int Ttk_GetOrientFromObj(
 static const char *ttkStateStrings[] = {
     "normal", "readonly", "disabled", "active", NULL
 };
-enum { 
+enum {
     TTK_COMPAT_STATE_NORMAL,
     TTK_COMPAT_STATE_READONLY,
     TTK_COMPAT_STATE_DISABLED,
     TTK_COMPAT_STATE_ACTIVE
 };
 
-/* TtkCheckStateOption -- 
+/* TtkCheckStateOption --
  * 	Handle -state compatibility option.
  *
- *	NOTE: setting -state disabled / -state enabled affects the 
- *	widget state, but the internal widget state does *not* affect 
+ *	NOTE: setting -state disabled / -state enabled affects the
+ *	widget state, but the internal widget state does *not* affect
  *	the value of the -state option.
  *	This option is present for compatibility only.
  */
@@ -86,7 +86,8 @@ void TtkCheckStateOption(WidgetCore *corePtr, Tcl_Obj *objPtr)
     unsigned all = TTK_STATE_DISABLED|TTK_STATE_READONLY|TTK_STATE_ACTIVE;
 #   define SETFLAGS(f) TtkWidgetChangeState(corePtr, f, all^f)
 
-    (void)Tcl_GetIndexFromObj(NULL,objPtr,ttkStateStrings,"",0,&stateOption);
+    (void)Tcl_GetIndexFromObjStruct(NULL, objPtr, ttkStateStrings,
+	    sizeof(char *), "", 0, &stateOption);
     switch (stateOption) {
 	case TTK_COMPAT_STATE_NORMAL:
 	default:
@@ -174,7 +175,7 @@ int TtkGetOptionValue(
  * type name dbName dbClass default objOffset intOffset flags clientData mask
  */
 
-/* public */ 
+/* public */
 Tk_OptionSpec ttkCoreOptionSpecs[] =
 {
     {TK_OPTION_CURSOR, "-cursor", "cursor", "Cursor", NULL,

@@ -126,7 +126,7 @@ itcl::body iwidgets::Scopedobject::constructor {args} {
   set depth [llength [$this info heritage]]
   set _level "#[uplevel $depth info level]"
   uplevel $_level set _localVar($this) $this
-  uplevel $_level trace variable _localVar($this) u \"[itcl::code $this _traceCommand]\"
+  uplevel $_level [list ::trace variable _localVar($this) u [itcl::code $this _traceCommand]]
 
   eval configure $args
 
@@ -140,7 +140,7 @@ itcl::body iwidgets::Scopedobject::constructor {args} {
 #--------------------------------------------------------------------------------
 itcl::body iwidgets::Scopedobject::destructor {} {
 
-  uplevel $_level trace vdelete _localVar($this) u \"[itcl::code $this _traceCommand]\"
+  uplevel $_level [list ::trace vdelete _localVar($this) u [itcl::code $this _traceCommand]]
 
   if {$exitscopecommand != {}} {
     eval $exitscopecommand

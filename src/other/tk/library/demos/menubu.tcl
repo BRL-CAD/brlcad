@@ -21,7 +21,7 @@ pack $w.body -expand 1 -fill both
 if {[tk windowingsystem] eq "aqua"} {catch {set origUseCustomMDEF $::tk::mac::useCustomMDEF; set ::tk::mac::useCustomMDEF 1}}
 
 menubutton $w.body.below -text "Below" -underline 0 -direction below -menu $w.body.below.m -relief raised
-menu $w.body.below.m -tearoff 0 
+menu $w.body.below.m -tearoff 0
 $w.body.below.m add command -label "Below menu: first item" -command "puts \"You have selected the first item from the Below menu.\""
 $w.body.below.m add command -label "Below menu: second item" -command "puts \"You have selected the second item from the Below menu.\""
 grid $w.body.below -row 0 -column 1 -sticky n

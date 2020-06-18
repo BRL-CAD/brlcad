@@ -12,7 +12,7 @@
 #
 #	(1): Find out how many free colors are left in the colormap and
 #	     don't allocate too many colors.
-#	(2): Implement HSV color selection. 
+#	(2): Implement HSV color selection.
 #
 
 # Make sure namespaces exist
@@ -54,11 +54,11 @@ proc ::tk::dialog::color:: {args} {
     set data(BARS_WIDTH) 160
 
     # PLGN_WIDTH is the number of pixels wide of the triangular selection
-    # polygon. This also results in the definition of the padding on the 
+    # polygon. This also results in the definition of the padding on the
     # left and right sides which is half of PLGN_WIDTH. Make this number even.
     set data(PLGN_HEIGHT) 10
 
-    # PLGN_HEIGHT is the height of the selection polygon and the height of the 
+    # PLGN_HEIGHT is the height of the selection polygon and the height of the
     # selection rectangle at the bottom of the color bar. No restrictions.
     set data(PLGN_WIDTH) 10
 
@@ -190,11 +190,13 @@ proc ::tk::dialog::color::Config {dataName argList} {
 	set data(-title) " "
     }
     if {[catch {winfo rgb . $data(-initialcolor)} err]} {
-	error $err
+	return -code error -errorcode [list TK LOOKUP COLOR $data(-initialcolor)] \
+	    $err
     }
 
     if {![winfo exists $data(-parent)]} {
-	error "bad window path name \"$data(-parent)\""
+	return -code error -errorcode [list TK LOOKUP WINDOW $data(-parent)] \
+	    "bad window path name \"$data(-parent)\""
     }
 }
 
@@ -326,7 +328,7 @@ proc ::tk::dialog::color::BuildDialog {w} {
 #	Sets the current selection of the dialog box
 #
 proc ::tk::dialog::color::SetRGBValue {w color} {
-    upvar ::tk::dialog::color::[winfo name $w] data 
+    upvar ::tk::dialog::color::[winfo name $w] data
 
     set data(red,intensity)   [lindex $color 0]
     set data(green,intensity) [lindex $color 1]
@@ -366,7 +368,7 @@ proc ::tk::dialog::color::RgbToX {w color} {
 }
 
 # ::tk::dialog::color::DrawColorScale --
-# 
+#
 #	Draw color scale is called whenever the size of one of the color
 #	scale canvases is changed.
 #
@@ -505,7 +507,7 @@ proc ::tk::dialog::color::RedrawColorBars {w colorChanged} {
     upvar ::tk::dialog::color::[winfo name $w] data
 
     switch $colorChanged {
-	red { 
+	red {
 	    DrawColorScale $w green
 	    DrawColorScale $w blue
 	}
@@ -535,7 +537,7 @@ proc ::tk::dialog::color::RedrawColorBars {w colorChanged} {
 #	Handles a mousedown button event over the selector polygon.
 #	Adds the bindings for moving the mouse while the button is
 #	pressed.  Sets the binding for the button-release event.
-# 
+#
 # Params: sel is the selector canvas window, color is the color of the strip.
 #
 proc ::tk::dialog::color::StartMove {w sel color x delta {dontMove 0}} {
@@ -547,7 +549,7 @@ proc ::tk::dialog::color::StartMove {w sel color x delta {dontMove 0}} {
 }
 
 # ::tk::dialog::color::MoveSelector --
-# 
+#
 # Moves the polygon selector so that its middle point has the same
 # x value as the specified x. If x is outside the bounds [0,255],
 # the selector is set to the closest endpoint.
@@ -581,7 +583,7 @@ proc ::tk::dialog::color::MoveSelector {w sel color x delta} {
 #         x is the x-coord of the mouse.
 #
 proc ::tk::dialog::color::ReleaseMouse {w sel color x delta} {
-    upvar ::tk::dialog::color::[winfo name $w] data 
+    upvar ::tk::dialog::color::[winfo name $w] data
 
     set x [MoveSelector $w $sel $color $x $delta]
 
@@ -600,7 +602,7 @@ proc ::tk::dialog::color::ResizeColorBars {w} {
     upvar ::tk::dialog::color::[winfo name $w] data
 
     if {
-	($data(BARS_WIDTH) < $data(NUM_COLORBARS)) || 
+	($data(BARS_WIDTH) < $data(NUM_COLORBARS)) ||
 	(($data(BARS_WIDTH) % $data(NUM_COLORBARS)) != 0)
     } then {
 	set data(BARS_WIDTH) $data(NUM_COLORBARS)
@@ -658,7 +660,7 @@ proc ::tk::dialog::color::HandleRGBEntry {w} {
 
     SetRGBValue $w "$data(red,intensity) \
 	$data(green,intensity) $data(blue,intensity)"
-}    
+}
 
 # mouse cursor enters a color bar
 #

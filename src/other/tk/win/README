@@ -1,4 +1,4 @@
-Tk 8.5 for Windows
+Tk 8.6 for Windows
 
 Originally by Scott Stanton while at Sun Microsystems Labs
 
@@ -18,4 +18,4 @@ locate the necessary Tcl files.  Otherwise you may need to
 edit makefile.vc and adjust the path to Tcl accordingly.
 
 Information about compiling for windows is maintained at:
-    http://www.tcl.tk/doc/howto/compile.html
+    https://www.tcl-lang.org/doc/howto/compile.html

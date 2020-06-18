@@ -1,7 +1,7 @@
 /*              I M P O R T F G 4 S E C T I O N . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2018 United States Government as represented by
+ * Copyright (c) 1994-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -480,7 +480,7 @@ wdb_importFg4Section_cmd(void *data,
 
     if (argc != 3) {
 	bu_log("ERROR: expecting three arguments\n");
-	return TCL_ERROR;
+	return GED_ERROR;
     }
 
     grid_size = GRID_BLOCK;
@@ -539,7 +539,7 @@ wdb_importFg4Section_cmd(void *data,
     THICKNESS = NULL;
     facemode = NULL;
 
-    return TCL_OK;
+    return GED_OK;
 }
 /** @} */
 

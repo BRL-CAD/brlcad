@@ -1,7 +1,7 @@
 /*                 F A S T G E N 4 _ R E A D . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2018 United States Government as represented by
+ * Copyright (c) 1994-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -464,7 +464,7 @@ Check_names(struct conversion_state *pstate)
 
 
 HIDDEN struct name_tree *
-Search_names(struct name_tree *root, char *name, int *found)
+Search_names(struct name_tree *root, const char *name, int *found)
 {
     struct name_tree *ptr;
 
@@ -573,7 +573,7 @@ List_names(struct conversion_state *pstate)
 
 
 HIDDEN void
-Insert_region_name(struct conversion_state *pstate, char *name, int reg_id)
+Insert_region_name(struct conversion_state *pstate, const char *name, int reg_id)
 {
     struct name_tree *nptr_model, *rptr_model;
     struct name_tree *new_ptr;
@@ -673,25 +673,28 @@ find_region_name(const struct conversion_state *pstate, int g_id, int c_id)
 }
 
 
-HIDDEN char *
-make_unique_name(const struct conversion_state *pstate, char *name)
+static void
+make_unique_name(struct bu_vls *name, const struct conversion_state *pstate)
 {
+    int name_cnt = 0;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     int found;
 
-    /* make a unique name from what we got off the $NAME card */
-
-    (void)Search_names(pstate->name_root, name, &found);
+    /* If we're already unique, we're good */
+    (void)Search_names(pstate->name_root, bu_vls_cstr(name), &found);
     if (!found)
-	return bu_strdup(name);
+	return;
 
+    /* Not unique - make a unique name from what we got off the $NAME card */
     while (found) {
 	bu_vls_trunc(&vls, 0);
-	bu_vls_printf(&vls, "%s_%d", name, pstate->name_count);
+	bu_vls_printf(&vls, "%s_%d", bu_vls_cstr(name), name_cnt);
 	(void)Search_names(pstate->name_root, bu_vls_addr(&vls), &found);
+	name_cnt++;
     }
 
-    return bu_vls_strgrab(&vls);
+    bu_vls_sprintf(name, "%s", bu_vls_cstr(&vls));
+    bu_vls_free(&vls);
 }
 
 
@@ -700,7 +703,7 @@ make_region_name(struct conversion_state *pstate, int g_id, int c_id)
 {
     int r_id;
     const char *tmp_name;
-    char *name;
+    struct bu_vls name = BU_VLS_INIT_ZERO;
 
     r_id = g_id * 1000 + c_id;
 
@@ -712,12 +715,12 @@ make_region_name(struct conversion_state *pstate, int g_id, int c_id)
 	return;
 
     /* create a new name */
-    name = (char *)bu_malloc(MAX_LINE_SIZE, "make_region_name");
-    snprintf(name, MAX_LINE_SIZE, "comp_%04d.r", r_id);
+    bu_vls_sprintf(&name, "comp_%04d.r", r_id);
 
-    make_unique_name(pstate, name);
+    make_unique_name(&name, pstate);
 
-    Insert_region_name(pstate, name, r_id);
+    Insert_region_name(pstate, bu_vls_cstr(&name), r_id);
+    bu_vls_free(&name);
 }
 
 
@@ -955,11 +958,10 @@ f4_do_groups(struct conversion_state *pstate)
 HIDDEN void
 f4_do_name(struct conversion_state *pstate)
 {
-    int i, j;
+    int foundr = 0;
     int g_id;
     int c_id;
-    char comp_name[MAX_LINE_SIZE] = {0}; /* should only use 25 chars */
-    char tmp_name[MAX_LINE_SIZE] = {0}; /* should only use 25 chars */
+    struct bu_vls comp_name = BU_VLS_INIT_ZERO;
 
     if (pstate->pass)
 	return;
@@ -985,41 +987,31 @@ f4_do_name(struct conversion_state *pstate)
 	return;
     }
 
-    /* skip leading blanks */
-    i = 56;
-    while ((size_t)i < sizeof(comp_name) && isspace((int)pstate->line[i]))
-	i++;
-
-    if (i == sizeof(comp_name))
+    /* Eliminate leading and trailing blanks.  Note - the 56 offset is based on the
+     * fastgen file format definition - the name will be after that point. */
+    bu_vls_sprintf(&comp_name, "%s", &pstate->line[56]);
+    bu_vls_trimspace(&comp_name);
+    if (!bu_vls_strlen(&comp_name)) {
+	bu_vls_free(&comp_name);
 	return;
-
-    bu_strlcpy(comp_name, &pstate->line[i], sizeof(comp_name) - i);
-
-    /* eliminate trailing blanks */
-    i = sizeof(comp_name) - i;
-    while (--i >= 0 && isspace((int)comp_name[i]))
-	comp_name[i] = '\0';
-
-    /* copy comp_name to tmp_name while replacing white space with "_" */
-    i = (-1);
-    j = (-1);
-
-    /* copy */
-    while (comp_name[++i] != '\0') {
-	if (isspace((int)comp_name[i]) || comp_name[i] == '/') {
-	    if (j == (-1) || tmp_name[j] != '_')
-		tmp_name[++j] = '_';
-	} else {
-	    tmp_name[++j] = comp_name[i];
-	}
     }
-    tmp_name[++j] = '\0';
 
-    /* reserve this name for group name */
-    make_unique_name(pstate, tmp_name);
-    Insert_region_name(pstate, tmp_name, pstate->region_id);
+    /* Simplify */
+    bu_vls_simplify(&comp_name, NULL, NULL, NULL);
+
+    /* Reserve this name for group name. If we've already seen this region_id before,
+     * go with the existing name rather than making a new unique name. */
+    Search_ident(pstate->name_root, pstate->region_id, &foundr);
+    if (!foundr) {
+	make_unique_name(&comp_name, pstate);
+    } else {
+	bu_log("Already encountered region id %d - reusing name\n", pstate->region_id);
+    }
+    Insert_region_name(pstate, bu_vls_cstr(&comp_name), pstate->region_id);
 
     pstate->name_count = 0;
+
+    bu_vls_free(&comp_name);
 }
 
 
@@ -2166,10 +2158,10 @@ make_bot_object(struct conversion_state *pstate)
 HIDDEN void
 skip_section(struct conversion_state *pstate)
 {
-    off_t section_start;
+    b_off_t section_start;
 
     /* skip to start of next section */
-    section_start = ftell(pstate->fpin);
+    section_start = bu_ftell(pstate->fpin);
     if (section_start < 0) {
 	bu_bomb("Error: couldn't get input file's current file position.");
     }
@@ -2180,7 +2172,7 @@ skip_section(struct conversion_state *pstate)
 	       bu_strncmp(pstate->line, "WALL", 4) &&
 	       bu_strncmp(pstate->line, "vehicle", 7))
 	{
-	    section_start = ftell(pstate->fpin);
+	    section_start = bu_ftell(pstate->fpin);
 	    if (section_start < 0) {
 		bu_bomb("Error: couldn't get input file's current file position.");
 	    }
@@ -2189,7 +2181,7 @@ skip_section(struct conversion_state *pstate)
 	}
     }
     /* seek to start of the section */
-    fseek(pstate->fpin, section_start, SEEK_SET);
+    bu_fseek(pstate->fpin, section_start, SEEK_SET);
 }
 
 
@@ -2927,7 +2919,7 @@ fastgen4_read(struct gcv_context *context, const struct gcv_opts *gcv_options, c
     }
 
     if (bu_debug) {
-	bu_printb("librtbu_debug", bu_debug, DEBUG_FORMAT);
+	bu_printb("librtbu_debug", bu_debug, RT_DEBUG_FORMAT);
 	bu_log("\n");
     }
     if (nmg_debug) {
@@ -2996,7 +2988,7 @@ static const struct gcv_filter * const filters[] = {&gcv_conv_fastgen4_read, &gc
 
 const struct gcv_plugin gcv_plugin_info_s = { filters };
 
-GCV_EXPORT const struct gcv_plugin *
+COMPILER_DLLEXPORT const struct gcv_plugin *
 gcv_plugin_info(){ return &gcv_plugin_info_s; }
 
 /*

@@ -31,7 +31,7 @@ ttk::separator $w.sep
 ttk::frame $t.tearoff -cursor fleur
 ttk::separator $t.tearoff.to -orient vertical
 ttk::separator $t.tearoff.to2 -orient vertical
-pack $t.tearoff.to -fill y -expand 1 -padx 2 -side left
+pack $t.tearoff.to -fill y -expand 1 -padx 4 -side left
 pack $t.tearoff.to2 -fill y -expand 1 -side left
 ttk::frame $t.contents
 grid $t.tearoff $t.contents -sticky nsew
@@ -79,7 +79,7 @@ text $w.txt -width 40 -height 10
 interp alias {} doInsert {} $w.txt insert end	;# Make bindings easy to write
 
 ## Arrange contents
-grid $t.button $t.check $t.menu $t.combo -in $t.contents -padx 2 -sticky ns
+grid $t.button $t.check $t.menu $t.combo -in $t.contents -padx 2 -pady 4 -sticky ns
 grid $t -sticky ew
 grid $w.sep -sticky ew
 grid $w.msg -sticky ew

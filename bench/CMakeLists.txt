@@ -2,13 +2,16 @@ add_subdirectory(ref)
 
 include_directories(${BU_INCLUDE_DIRS})
 
-add_definitions(
-  -DHAVE_CONFIG_H
-  -DBRLCADBUILD
-  -DCONSOLE
-  )
+add_definitions(-DCONSOLE)
 
 BRLCAD_ADDEXEC(pixcmp pixcmp.c libbu)
+set(BARK_SOURCES
+  benchmark.c
+  compute.c
+  run.c
+  clean.c
+)
+BRLCAD_ADDEXEC(bark "${BARK_SOURCES}" libbu NO_STRICT NO_INSTALL)
 
 configure_file(run.sh "${CMAKE_CURRENT_BINARY_DIR}/benchmark" COPYONLY)
 install(PROGRAMS "${CMAKE_CURRENT_BINARY_DIR}/benchmark" DESTINATION ${BIN_DIR})

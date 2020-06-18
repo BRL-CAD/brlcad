@@ -1,7 +1,7 @@
 /*                     D E F I N E S . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2018 United States Government as represented by
+ * Copyright (c) 2011-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,9 +39,9 @@ __BEGIN_DECLS
 #  if defined(ICV_DLL_EXPORTS) && defined(ICV_DLL_IMPORTS)
 #    error "Only ICV_DLL_EXPORTS or ICV_DLL_IMPORTS can be defined, not both."
 #  elif defined(ICV_DLL_EXPORTS)
-#    define ICV_EXPORT __declspec(dllexport)
+#    define ICV_EXPORT COMPILER_DLLEXPORT
 #  elif defined(ICV_DLL_IMPORTS)
-#    define ICV_EXPORT __declspec(dllimport)
+#    define ICV_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define ICV_EXPORT
 #  endif
@@ -86,10 +86,10 @@ typedef struct icv_image icv_image_t;
  * initializes a icv_image_file struct without allocating any memory.
  */
 #define ICV_IMAGE_INIT(_i) { \
-	    (_i)->magic = ICV_IMAGE_MAGIC; \
-	    (_i)->width = (_i)->height = (_i)->channels = (_i)->alpha_channel = 0; \
-	    (_i)->gamma_corr = 0.0; \
-	    (_i)->data = NULL; \
+	(_i)->magic = ICV_IMAGE_MAGIC; \
+	(_i)->width = (_i)->height = (_i)->channels = (_i)->alpha_channel = 0; \
+	(_i)->gamma_corr = 0.0; \
+	(_i)->data = NULL; \
     }
 
 /**

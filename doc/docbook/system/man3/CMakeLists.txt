@@ -1,7 +1,7 @@
 set(man3_EN
-  libcursor.xml
   libfb.xml
   libplot3.xml
+  libpkg.xml
   librt.xml
   libwdb.xml
   redblack.xml

@@ -1,7 +1,7 @@
 /*                T C L C A D A U T O P A T H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,44 +40,6 @@
 #include "tclcad.h"
 
 #define MAX_BUF 2048
-
-/* FIXME: we utilize this Tcl internal in here */
-#if !defined(_WIN32) || defined(__CYGWIN__)
-extern Tcl_Obj *TclGetLibraryPath (void);
-#endif
-
-
-/* helper routine to determine whether the full 'path' includes a
- * directory named 'src'.  this is used to determine whether a
- * particular invocation is being run from the BRL-CAD source
- * directories or from some install directory.
- *
- * returns a pointer to the subpath that contains the 'src' directory.
- * e.g. provided /some/path/to/src/dir/blah will return /some/path/to
- */
-static const char *
-path_to_src(const char *path)
-{
-    static char buffer[MAX_BUF] = {0};
-    char *match = NULL;
-
-    if (!path) {
-	return NULL;
-    }
-    if (strlen(path)+2 > MAX_BUF) {
-	/* path won't fit */
-	return NULL;
-    }
-
-    snprintf(buffer, MAX_BUF, "%s%c", path, BU_DIR_SEPARATOR);
-
-    match = strstr(buffer, "/src/");
-    if (match) {
-	*(match) = '\0';
-	return buffer;
-    }
-    return NULL;
-}
 
 /* Appends a new path to the path list, preceded by BU_PATH_SEPARATOR.
  *
@@ -123,14 +85,6 @@ join_path(struct bu_vls *path_list, ...)
  * BRLCAD_ROOT/lib/iwidgetsIWIDGETS_VERSION/iwidgets.tcl
  * BRLCAD_ROOT/share/tclscripts/pkgIndex.tcl and subdirs
  *
- ** source invocation paths
- * src/other/tcl/library/init.tcl
- * src/other/tk/library/tk.tcl
- * src/other/incrTcl/itcl/library/itcl.tcl
- * src/other/incrTcl/itk/library/itk.tcl
- * src/other/iwidgets/library/iwidgets.tcl
- * src/tclscripts/pkgIndex.tcl and subdirs
- *
  * if TCLCAD_LIBRARY_PATH is set
  *   append to search path
  * get installation directory and invocation path
@@ -163,6 +117,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 
     char pathsep[2] = { BU_PATH_SEPARATOR, '\0' };
 
+    struct bu_vls initpath = BU_VLS_INIT_ZERO;
     struct bu_vls tcl = BU_VLS_INIT_ZERO;
     struct bu_vls itcl = BU_VLS_INIT_ZERO;
 #ifdef HAVE_TK
@@ -175,6 +130,16 @@ tclcad_auto_path(Tcl_Interp *interp)
 	/* nothing to do */
 	return;
     }
+
+    /* If we are using an external Tcl, we need the
+     * location of its init file */
+    bu_vls_trunc(&initpath, 0);
+#ifdef TCL_SYSTEM_INITTCL_PATH
+    bu_vls_printf(&initpath, "set tcl_library {%s}", TCL_SYSTEM_INITTCL_PATH);
+    if (Tcl_Eval(interp, bu_vls_addr(&initpath))) {
+	bu_log("Problem initializaing tcl_library to system init.tcl path: Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
+    }
+#endif
 
     bu_vls_printf(&tcl, "tcl%s", TCL_VERSION);
     bu_vls_printf(&itcl, "itcl%s", ITCL_VERSION);
@@ -234,58 +199,6 @@ tclcad_auto_path(Tcl_Interp *interp)
 	join_path(&auto_path, data, "tclscripts", "boteditor", NULL);
 	join_path(&auto_path, data, "tclscripts", "checker", NULL);
 	join_path(&auto_path, data, "tclscripts", "lod", NULL);
-    }
-
-    /* are we running uninstalled? */
-    srcpath = path_to_src(which_argv);
-
-    /* add search paths for source invocation */
-    if (srcpath) {
-	join_path(&auto_path, srcpath, "src", "other", "tcl", "unix", NULL);
-	join_path(&auto_path, srcpath, "src", "other", "tcl", "library", NULL);
-	join_path(&auto_path, srcpath, "src", "other", "tk", "unix", NULL);
-	join_path(&auto_path, srcpath, "src", "other", "tk", "library", NULL);
-	join_path(&auto_path, srcpath, "src", "other", "incrTcl", NULL);
-	join_path(&auto_path, srcpath, "src", "other", "incrTcl", "itcl", "library", NULL);
-	join_path(&auto_path, srcpath, "src", "other", "incrTcl", "itk", "library", NULL);
-	join_path(&auto_path, srcpath, "src", "other", "iwidgets", NULL);
-	join_path(&auto_path, srcpath, "src", "tclscripts", NULL);
-	join_path(&auto_path, srcpath, "src", "tclscripts", "lib", NULL);
-	join_path(&auto_path, srcpath, "src", "tclscripts", "util", NULL);
-	join_path(&auto_path, srcpath, "src", "tclscripts", "mged", NULL);
-	join_path(&auto_path, srcpath, "src", "tclscripts", "geometree", NULL);
-	join_path(&auto_path, srcpath, "src", "tclscripts", "graph", NULL);
-	join_path(&auto_path, srcpath, "src", "tclscripts", "rtwizard", NULL);
-	join_path(&auto_path, srcpath, "src", "tclscripts", "archer", NULL);
-	join_path(&auto_path, srcpath, "src", "tclscripts", "boteditor", NULL);
-	join_path(&auto_path, srcpath, "src", "tclscripts", "checker", NULL);
-	join_path(&auto_path, srcpath, "src", "tclscripts", "lod", NULL);
-    }
-
-    /* add search paths for dist invocation */
-    if (srcpath) {
-	snprintf(buffer, MAX_BUF, "%s%c..%csrc%cother%ctcl%cunix",
-		 srcpath, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR, BU_DIR_SEPARATOR);
-	if (bu_file_exists(buffer, NULL)) {
-	    join_path(&auto_path, srcpath, "..", "src", "other", "tcl", "unix", NULL);
-	    join_path(&auto_path, srcpath, "..", "src", "other", "tcl", "library", NULL);
-	    join_path(&auto_path, srcpath, "..", "src", "other", "tk", "unix", NULL);
-	    join_path(&auto_path, srcpath, "..", "src", "other", "tk", "library", NULL);
-	    join_path(&auto_path, srcpath, "..", "src", "other", "incrTcl", NULL);
-	    join_path(&auto_path, srcpath, "..", "src", "other", "incrTcl", "itcl", "library", NULL);
-	    join_path(&auto_path, srcpath, "..", "src", "other", "incrTcl", "itk", "library", NULL);
-	    join_path(&auto_path, srcpath, "..", "src", "other", "iwidgets", NULL);
-	    join_path(&auto_path, srcpath, "..", "src", "tclscripts", NULL);
-	    join_path(&auto_path, srcpath, "..", "src", "tclscripts", "lib", NULL);
-	    join_path(&auto_path, srcpath, "..", "src", "tclscripts", "util", NULL);
-	    join_path(&auto_path, srcpath, "..", "src", "tclscripts", "mged", NULL);
-	    join_path(&auto_path, srcpath, "..", "src", "tclscripts", "geometree", NULL);
-	    join_path(&auto_path, srcpath, "..", "src", "tclscripts", "graph", NULL);
-	    join_path(&auto_path, srcpath, "..", "src", "tclscripts", "rtwizard", NULL);
-	    join_path(&auto_path, srcpath, "..", "src", "tclscripts", "archer", NULL);
-	    join_path(&auto_path, srcpath, "..", "src", "tclscripts", "boteditor", NULL);
-	    join_path(&auto_path, srcpath, "..", "src", "tclscripts", "checker", NULL);
-	}
     }
 
     /* be sure to check installation paths even if we aren't running from there */

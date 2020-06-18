@@ -1,7 +1,7 @@
 #                M E T A B A L L E D I T F R A M E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2018 United States Government as represented by
+# Copyright (c) 2002-2020 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -147,8 +147,8 @@
 #
 ::itcl::body MetaballEditFrame::initGeometry {gdata} {
     set mInitGeometry 1
-    set mMethod [lindex $gdata 0]
-    set mThreshold [format "%.6f" [lindex $gdata 1]]
+    set mMethod [lindex $gdata 1]
+    set mThreshold [format "%.6f" [lindex $gdata 3]]
 
     unset mDetail
     set mDetail(active) ""
@@ -160,7 +160,7 @@
     }
 
     set row 1
-    foreach item [lindex $gdata 2] {
+    foreach item [lindex $gdata 5] {
 	set mDetail($row,$SELECT_COL) ""
 
 	set mDetail($row,$X_COL) [format "%.6f" [lindex $item 0]]
@@ -206,7 +206,7 @@
 	incr row
     }
 
-    $itk_option(-mged) adjust $itk_option(-geometryObject) $mMethod $mThreshold $pdata
+    $itk_option(-mged) adjust $itk_option(-geometryObject) method $mMethod thresh $mThreshold PL $pdata
 
     GeometryEditFrame::updateGeometry
 }
@@ -233,19 +233,19 @@
 	return
     }
 
-    $itk_option(-mged) put $obj metaball 1 1 {{-1 0 0 1 1} {1 0 0 1 1}}
+    $itk_option(-mged) put $obj metaball method 1 thresh 1 PL {{-1 0 0 1 1} {1 0 0 1 1}}
 }
 
 
 ::itcl::body MetaballEditFrame::moveElement {_dm _obj _vx _vy _ocenter} {
     set mb_i [expr {$mCurrentPoint - 1}]
-    set pdata [lindex [$itk_option(-mged) get $itk_option(-geometryObjectPath)] 3]
+    set pdata [lindex [$itk_option(-mged) get $itk_option(-geometryObjectPath)] 6]
     set pt [lrange [lindex $pdata $mb_i] 0 2]
 
     set vpt [$itk_option(-mged) pane_m2v_point $_dm $pt]
     set vz [lindex $vpt 2]
     set mpt [$itk_option(-mged) pane_v2m_point $_dm [list $_vx $_vy $vz]]
-    $itk_option(-mged) move_metaballpt $_obj $mb_i $mpt
+    $itk_option(-mged) metaball_move_pnt $_obj $mb_i $mpt
 }
 
 
@@ -429,7 +429,7 @@
 	    $::ArcherCore::application initFindMetaballPoint $itk_option(-geometryObjectPath) 1 [::itcl::code $this metaballPointSelectCallback] 1
 	} \
 	$movePoint {
-	    set mEditCommand move_metaballpt
+	    set mEditCommand metaball_move_pnt
 	    set mEditClass $EDIT_CLASS_TRANS
 	    set mEditLastTransMode $::ArcherCore::OBJECT_TRANSLATE_MODE
 	    set mEditParam1 ""
@@ -439,7 +439,7 @@
 	    set mEditClass ""
 	    set mEditParam1 ""
 	    $::ArcherCore::application initAddMetaballPoint $itk_option(-geometryObjectPath) 1 [::itcl::code $this metaballPointAddCallback]
-	    set pdata [lindex [$itk_option(-mged) get $itk_option(-geometryObject)] 3]
+	    set pdata [lindex [$itk_option(-mged) get $itk_option(-geometryObject)] 6]
 	    metaballPointSelectCallback [expr {[llength $pdata] - 1}]
 	} \
 	$deletePoint {
@@ -511,7 +511,7 @@
     $itk_option(-mged) refresh_on
 
     set mb_i [expr {$mCurrentPoint - 1}]
-    set pdata [lindex [$itk_option(-mged) get $itk_option(-geometryObjectPath)] 3]
+    set pdata [lindex [$itk_option(-mged) get $itk_option(-geometryObjectPath)] 6]
     set pt [lrange [lindex $pdata $mb_i] 0 2]
 
     $itk_option(-mged) data_axes points [list $pt]
@@ -523,7 +523,7 @@
     initGeometry $odata
     $::ArcherCore::application setSave
 
-    set pdata [lindex $odata 2]
+    set pdata [lindex $odata 5]
     metaballPointSelectCallback [expr {[llength $pdata] - 1}]
 }
 
@@ -535,11 +535,11 @@
 
     set odata [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
 
-    eval $itk_option(-mged) delete_metaballpt $itk_option(-geometryObject) $_pindex
+    eval $itk_option(-mged) metaball_delete_pnt $itk_option(-geometryObject) $_pindex
     eval $itk_option(-mged) redraw $itk_option(-geometryObjectPath)
     set odata [lrange [$itk_option(-mged) get $itk_option(-geometryObject)] 1 end]
 
-    set pdata [lindex $odata 2]
+    set pdata [lindex $odata 5]
     set plen [llength $pdata]
 
     if {$plen && ($mCurrentPoint < 1 || $mCurrentPoint > $plen)} {
@@ -565,7 +565,7 @@
 
     set last_mouse [$itk_option(-mged) get_prev_ged_mouse]
     set pt_i [expr {$mCurrentPoint - 1}]
-    eval $itk_option(-mged) move_metaballpt_mode $itk_option(-geometryObject) $pt_i $last_mouse
+    eval $itk_option(-mged) metaball_move_pnt_mode $itk_option(-geometryObject) $pt_i $last_mouse
 }
 
 

@@ -10,10 +10,136 @@ descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
 ----------------------------------------------------------------------
---- 201X-XX-XX  Release 7.30.0                                     ---
+--- 20XX-XX-XX  Release 7.3X.X                                     ---
 ----------------------------------------------------------------------
 
-* fixed dbconcat behavior for binary database objects - Cliff Yapp
+* added units label to the Archer in-scene scale graphic - Cliff Yapp
+* improved output path sorting of search command - Cliff Yapp
+* added 3dm-g failure message about supported versions - Cliff Yapp
+* fixed bw-png writing corrupted png files on Windows - Sean Morrison
+
+
+----------------------------------------------------------------------
+--- 2020-05-08  Release 7.30.8                                     ---
+----------------------------------------------------------------------
+
+* added gchecker tool to generate MGED overlap inputs - Cliff Yapp
+* improved behavior of MGED overlap checker GUI - Nick Reed
+* fixed startup dimensions of overlap checker window - Nick Reed
+* fixed rtedge line drawing color when using -W flag - Cliff Yapp
+* added -F option to lint cmd to test specifc solid types - Cliff Yapp
+* added support to MGED for zooming with mouse wheel - Cliff Yapp
+* fixed solid editing wireframe drawing in MGED - Nick Reed
+* added .r suffixes to region names in 3dm-g conversion - Cliff Yapp
+
+
+----------------------------------------------------------------------
+--- 2020-03-19  Release 7.30.6                                     ---
+----------------------------------------------------------------------
+
+* fixed transparent drawing in MGED - Nick Reed
+* fixed solid NURBS brep intersection testing - Cliff Yapp
+* removed extra blank line after commands in MGED GUI - Sean Morrison
+* added "plate" object type filter to search command - Cliff Yapp
+* fixed latent logging bug during facetize on Windows - Bob Parker
+* fixed bug closing rt framebuffer windows on Windows - Sean Morrison
+
+
+----------------------------------------------------------------------
+--- 2019-12-05  Release 7.30.4                                     ---
+----------------------------------------------------------------------
+
+* enhanced attr list command to support reporting values - Cliff Yapp
+* updated FAA Generic Twin example FASTGEN model - Cliff Yapp
+* fixed handling of duplicate FASTGEN object names - Cliff Yapp
+* update gqa/rtweight man pages to reference mater -d - Cliff Yapp
+* overlay command accepts file patterns (e.g., *.plot) - Cliff Yapp
+* changed mged escape key binding to reset mouse mode - Sean Morrison
+* removed default xXyYzZ0 rate rotation key bindings - Sean Morrison
+* improved tessellation of nearly coplanar surfaces - John Anderson
+* fixed display of annotations on Windows - Daniel Roßberg
+* fixed rtedge and rtwizard occlusion object edge bug - Sean Morrison
+* rt* tools no longer force outputs to be read-only - Sean Morrison
+* fixed 'burst' crash when run without options - Sean Morrison
+* changed rtweight to not truncate long pathnames - Sean Morrison
+* added new ball bearing example geometry model - Sean Morrison
+* added new manual page for the clone command - Sean Morrison
+
+
+----------------------------------------------------------------------
+--- 2019-04-03  Release 7.30.2                                     ---
+----------------------------------------------------------------------
+
+* fixed memory leak during obj-g and gcv import - Bojian Wu
+* added new manual page for the clone command - Sean Morrison
+* fixed crash calculating dsp bounding boxes - Sean Morrison
+* fixed Windows temporary file removal for MGED commands (red, etc.)
+	- Cliff Yapp
+* fixed librt NURBS cache issues under high load conditions
+	- Sean Morrison, Cliff Yapp
+* added a copy subcommand to MGED's attr command - Cliff Yapp
+* fixed a locking condition in MGED's rtcheck command - Cliff Yapp
+* added support for >=< prefixes for mater -d get options Cliff Yapp
+* fixed brlman lookup location of html manual pages - Cliff Yapp
+* fixed rt -t top-to-bottom parallel rendering option  Sean Morrison
+* added a 'flip' normals command to MGED's brep command - Cliff Yapp
+* added rtweight support for in-.g density information - Cliff Yapp
+* improved usability of vol primitives w/ missing data - Sean Morrison
+
+
+----------------------------------------------------------------------
+--- 2019-02-25  Release 7.30.0                                     ---
+----------------------------------------------------------------------
+
+This major release of BRL-CAD is the first release requiring
+compiler support for the C++11 language standard when building.
+(This change is not user visible, but will be significant to those
+using BRL-CAD in their own software development efforts.)
+
+This release introduces a new "-d" option to the mater command,
+supporting direct embedding of .density file information in a
+.g database for use by commands such as gqa and rtweight.
+
+Also present in this release are a fix for commands that work with
+multiple .g files and support for raytracing MGED scenes with large
+numbers of active objects.
+
+A number of commands and tools previously listed as deprecated are
+removed in this release, including in particular MGED commands
+specific to MUVES.
+
+* added rtweight -d option for specifying density file - Cliff Yapp
+* added material density management to "mater" command - Cliff Yapp
+* use full paths for OBJ objects in "bot dump" command - Cliff Yapp
+* added -v high precision option to MGED 'center' command - Cliff Yapp
+* fixed crash when using dbconcat and dup together in MGED
+        - Cliff Yapp, Sean Morrison
+* renamed MGED "ps" command to "postscript" - Cliff Yapp
+* removed MGED commands em, e_muves, l_muves, lm, read_muves, t_muves
+	- Cliff Yapp
+* removed deprecated irprep tools - Cliff Yapp
+* removed deprecated fbed and pp-fb framebuffer tools - Cliff Yapp
+* fixed rt support for specifying large object lists - Cliff Yapp
+* new 'gex' tool for low-level .g file exploration - Tom Browder
+* added support for command-line editing of metaballs - Sean Morrison
+* added manual page for the 'get' command - Cliff Yapp
+* improved speed of "bot chull" convex hull generation - Cliff Yapp
+
+
+----------------------------------------------------------------------
+--- 2018-11-30  Release 7.28.2                                     ---
+----------------------------------------------------------------------
+
+This is a patch release, applying several logic fixes and build system
+corrections.
+
+* fixed incorrect handling of NURBS near-miss points near edges
+	- Cliff Yapp, Keith Bowman
+* fixed support for large files on 64-bit Windows - Cliff Yapp
+* fixed analyze command calculation of BoT volume - Keith Bowman
+* fixed problem merging .g files containing dsp data - Cliff Yapp
+* fixed infinite loop in OverlapTools GUI - Cliff Yapp
+
 
 ----------------------------------------------------------------------
 --- 2018-10-01  Release 7.28.0                                     ---
