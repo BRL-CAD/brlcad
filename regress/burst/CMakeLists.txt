@@ -3,6 +3,7 @@ set(BURST_INPUT_FILES
   ktank_air.ids
   ktank_armor.ids
   ktank_crit.ids
+  ktank_colors.ids
   )
 
 BRLCAD_REGRESSION_TEST(regress-burst "burst;ktank.g" EXEC burst)
@@ -29,6 +30,7 @@ endif(NOT "${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_BINARY_DIR}")
 
 CMAKEFILES(
   CMakeLists.txt
+  echo.b
   ${BURST_INPUT_FILES}
   )
 
