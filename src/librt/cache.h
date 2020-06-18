@@ -1,7 +1,7 @@
 /*                         C A C H E . H
  * BRL-CAD
  *
- * Copyright (c) 2016 United States Government as represented by
+ * Copyright (c) 2016-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,15 +36,57 @@
 
 __BEGIN_DECLS
 
+/*
+ * TODO:
+ *
+ * - put an rt_cache in dbip or rtip so you can have cached and
+ *   uncached databases open at the same time, instead of as tree
+ *   walker data
+ *
+ * - make rt_cache_prep an implementation detail in prep
+ *
+ * - rt_cache_open(dir) instead of relying on LIBRT_CACHE global
+ *
+ * - move LIBRT_CACHE environment variable access into caller
+ *   locations instead of from within rt_cache_open
+ *
+ * - use sem_open/sem_wait/sem_post for cross-application coordination
+ *   of cache writing
+ *
+ */
 
+/**
+ * cache handle, opaque type
+ */
 struct rt_cache;
 
+/**
+ * opens and returns a cache handle if the cache is not disabled.
+ *
+ * cache may be disabled by setting LIBRT_CACHE to a non-empty false
+ * value (e.g., LIBRT_CACHE="off").
+ */
 struct rt_cache *rt_cache_open(void);
+
+/**
+ * closes a cache handle if valid and open.
+ */
 void rt_cache_close(struct rt_cache *cache);
 
-/* rt_cache_prep() is thread-safe */
-int rt_cache_prep(struct rt_cache *cache, struct soltab *stp,
-		  struct rt_db_internal *ip);
+/**
+ * ensures a solid is prepared, generating or reading prep data from
+ * cache when available.
+ *
+ * if a cache is provided, the particular solid is looked up (and
+ * cached) based on its matrix and export data.  if prep cache data
+ * exists, it is read and used.  if prep cache data does not exist for
+ * that object, rt_obj_prep() is run.
+ *
+ * typically, this means an object will prep via rt_obj_prep() the
+ * first time it is encountered, and read from cache on subsequnt
+ * calls.
+ */
+int rt_cache_prep(struct rt_cache *cache, struct soltab *stp, struct rt_db_internal *ip);
 
 
 __END_DECLS

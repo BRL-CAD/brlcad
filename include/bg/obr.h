@@ -1,7 +1,7 @@
 /*                        O B R . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -91,10 +91,10 @@ BG_EXPORT extern int bg_2d_obr(point2d_t *center,
  * @param pnt_cnt	number of points in pnts array
  */
 BG_EXPORT extern int bg_3d_coplanar_obr(point_t *center,
-			       vect_t *v1,
-			       vect_t *v2,
-			       const point_t *points_3d,
-			       int pnt_cnt);
+					vect_t *v1,
+					vect_t *v2,
+					const point_t *points_3d,
+					int pnt_cnt);
 
 /**
  *@brief

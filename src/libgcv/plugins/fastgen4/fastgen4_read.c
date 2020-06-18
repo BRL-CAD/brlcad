@@ -1,7 +1,7 @@
 /*                 F A S T G E N 4 _ R E A D . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2016 United States Government as represented by
+ * Copyright (c) 1994-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -464,7 +464,7 @@ Check_names(struct conversion_state *pstate)
 
 
 HIDDEN struct name_tree *
-Search_names(struct name_tree *root, char *name, int *found)
+Search_names(struct name_tree *root, const char *name, int *found)
 {
     struct name_tree *ptr;
 
@@ -573,7 +573,7 @@ List_names(struct conversion_state *pstate)
 
 
 HIDDEN void
-Insert_region_name(struct conversion_state *pstate, char *name, int reg_id)
+Insert_region_name(struct conversion_state *pstate, const char *name, int reg_id)
 {
     struct name_tree *nptr_model, *rptr_model;
     struct name_tree *new_ptr;
@@ -649,8 +649,6 @@ Insert_region_name(struct conversion_state *pstate, char *name, int reg_id)
 	}
     }
     Check_names(pstate);
-    if (RT_G_DEBUG&DEBUG_MEM_FULL && bu_mem_barriercheck())
-	bu_bomb("ERROR: bu_mem_barriercheck failed in Insert_region_name");
 }
 
 
@@ -675,27 +673,28 @@ find_region_name(const struct conversion_state *pstate, int g_id, int c_id)
 }
 
 
-HIDDEN char *
-make_unique_name(const struct conversion_state *pstate, char *name)
+static void
+make_unique_name(struct bu_vls *name, const struct conversion_state *pstate)
 {
+    int name_cnt = 0;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     int found;
 
-    /* make a unique name from what we got off the $NAME card */
-
-    (void)Search_names(pstate->name_root, name, &found);
+    /* If we're already unique, we're good */
+    (void)Search_names(pstate->name_root, bu_vls_cstr(name), &found);
     if (!found)
-	return bu_strdup(name);
+	return;
 
+    /* Not unique - make a unique name from what we got off the $NAME card */
     while (found) {
 	bu_vls_trunc(&vls, 0);
-	bu_vls_printf(&vls, "%s_%d", name, pstate->name_count);
+	bu_vls_printf(&vls, "%s_%d", bu_vls_cstr(name), name_cnt);
 	(void)Search_names(pstate->name_root, bu_vls_addr(&vls), &found);
+	name_cnt++;
     }
-    if (RT_G_DEBUG&DEBUG_MEM_FULL && bu_mem_barriercheck())
-	bu_bomb("ERROR: bu_mem_barriercheck failed in make_unique_name");
 
-    return bu_vls_strgrab(&vls);
+    bu_vls_sprintf(name, "%s", bu_vls_cstr(&vls));
+    bu_vls_free(&vls);
 }
 
 
@@ -704,7 +703,7 @@ make_region_name(struct conversion_state *pstate, int g_id, int c_id)
 {
     int r_id;
     const char *tmp_name;
-    char *name;
+    struct bu_vls name = BU_VLS_INIT_ZERO;
 
     r_id = g_id * 1000 + c_id;
 
@@ -716,12 +715,12 @@ make_region_name(struct conversion_state *pstate, int g_id, int c_id)
 	return;
 
     /* create a new name */
-    name = (char *)bu_malloc(MAX_LINE_SIZE, "make_region_name");
-    snprintf(name, MAX_LINE_SIZE, "comp_%04d.r", r_id);
+    bu_vls_sprintf(&name, "comp_%04d.r", r_id);
 
-    make_unique_name(pstate, name);
+    make_unique_name(&name, pstate);
 
-    Insert_region_name(pstate, name, r_id);
+    Insert_region_name(pstate, bu_vls_cstr(&name), r_id);
+    bu_vls_free(&name);
 }
 
 
@@ -785,8 +784,6 @@ Insert_name(const struct conversion_state *pstate, struct name_tree **root, char
 	}
 	ptr->nleft = new_ptr;
     }
-    if (RT_G_DEBUG&DEBUG_MEM_FULL && bu_mem_barriercheck())
-	bu_bomb("ERROR: bu_mem_barriercheck failed in Insert_name");
 }
 
 
@@ -961,11 +958,10 @@ f4_do_groups(struct conversion_state *pstate)
 HIDDEN void
 f4_do_name(struct conversion_state *pstate)
 {
-    int i, j;
+    int foundr = 0;
     int g_id;
     int c_id;
-    char comp_name[MAX_LINE_SIZE] = {0}; /* should only use 25 chars */
-    char tmp_name[MAX_LINE_SIZE] = {0}; /* should only use 25 chars */
+    struct bu_vls comp_name = BU_VLS_INIT_ZERO;
 
     if (pstate->pass)
 	return;
@@ -991,43 +987,31 @@ f4_do_name(struct conversion_state *pstate)
 	return;
     }
 
-    /* skip leading blanks */
-    i = 56;
-    while ((size_t)i < sizeof(comp_name) && isspace((int)pstate->line[i]))
-	i++;
-
-    if (i == sizeof(comp_name))
+    /* Eliminate leading and trailing blanks.  Note - the 56 offset is based on the
+     * fastgen file format definition - the name will be after that point. */
+    bu_vls_sprintf(&comp_name, "%s", &pstate->line[56]);
+    bu_vls_trimspace(&comp_name);
+    if (!bu_vls_strlen(&comp_name)) {
+	bu_vls_free(&comp_name);
 	return;
-
-    bu_strlcpy(comp_name, &pstate->line[i], sizeof(comp_name) - i);
-
-    /* eliminate trailing blanks */
-    i = sizeof(comp_name) - i;
-    while (--i >= 0 && isspace((int)comp_name[i]))
-	comp_name[i] = '\0';
-
-    /* copy comp_name to tmp_name while replacing white space with "_" */
-    i = (-1);
-    j = (-1);
-
-    /* copy */
-    while (comp_name[++i] != '\0') {
-	if (isspace((int)comp_name[i]) || comp_name[i] == '/') {
-	    if (j == (-1) || tmp_name[j] != '_')
-		tmp_name[++j] = '_';
-	} else {
-	    tmp_name[++j] = comp_name[i];
-	}
     }
-    tmp_name[++j] = '\0';
 
-    /* reserve this name for group name */
-    make_unique_name(pstate, tmp_name);
-    Insert_region_name(pstate, tmp_name, pstate->region_id);
+    /* Simplify */
+    bu_vls_simplify(&comp_name, NULL, NULL, NULL);
+
+    /* Reserve this name for group name. If we've already seen this region_id before,
+     * go with the existing name rather than making a new unique name. */
+    Search_ident(pstate->name_root, pstate->region_id, &foundr);
+    if (!foundr) {
+	make_unique_name(&comp_name, pstate);
+    } else {
+	bu_log("Already encountered region id %d - reusing name\n", pstate->region_id);
+    }
+    Insert_region_name(pstate, bu_vls_cstr(&comp_name), pstate->region_id);
 
     pstate->name_count = 0;
-    if (RT_G_DEBUG&DEBUG_MEM_FULL && bu_mem_barriercheck())
-	bu_bomb("ERROR: bu_mem_barriercheck failed in f4_do_name");
+
+    bu_vls_free(&comp_name);
 }
 
 
@@ -1039,9 +1023,6 @@ f4_do_grid(struct conversion_state *pstate)
 
     if (!pstate->pass)	/* not doing geometry yet */
 	return 1;
-
-    if (RT_G_DEBUG&DEBUG_MEM_FULL && bu_mem_barriercheck())
-	bu_bomb("ERROR: bu_mem_barriercheck failed at start of f4_do_grid");
 
     bu_strlcpy(pstate->field, &pstate->line[8], sizeof(pstate->field));
     grid_no = atoi(pstate->field);
@@ -1068,9 +1049,6 @@ f4_do_grid(struct conversion_state *pstate)
     VSET(pstate->grid_points[grid_no], x*25.4, y*25.4, z*25.4);
 
     V_MAX(pstate->max_grid_no, grid_no);
-
-    if (RT_G_DEBUG&DEBUG_MEM_FULL && bu_mem_barriercheck())
-	bu_bomb("ERROR: bu_mem_barriercheck failed at end of f4_do_grid");
 
     return 1;
 }
@@ -1795,18 +1773,12 @@ Add_holes(struct conversion_state *pstate, int type, int gr, int comp, struct ho
 	if (!skip_region(pstate, gr*1000 + comp)) {
 	    /* add holes for this region to the list of regions to process */
 	    hptr = ptr;
-	    if (RT_G_DEBUG&DEBUG_MEM_FULL && bu_mem_barriercheck())
-		bu_bomb("ERROR: bu_mem_barriercheck failed in Add_hole");
 	    while (hptr) {
 		if (pstate->f4_do_skips == pstate->region_list_len) {
 		    pstate->region_list_len += REGION_LIST_BLOCK;
 		    pstate->region_list = (int *)bu_realloc((char *)pstate->region_list, pstate->region_list_len*sizeof(int), "region_list");
-		    if (RT_G_DEBUG&DEBUG_MEM_FULL && bu_mem_barriercheck())
-			bu_bomb("ERROR: bu_mem_barriercheck failed in Add_hole (after realloc)");
 		}
 		pstate->region_list[pstate->f4_do_skips++] = 1000*hptr->group + hptr->component;
-		if (RT_G_DEBUG&DEBUG_MEM_FULL && bu_mem_barriercheck())
-		    bu_bomb("ERROR: bu_mem_barriercheck failed in Add_hole (after adding)");
 		hptr = hptr->next;
 	    }
 	}
@@ -1951,13 +1923,9 @@ f4_Add_bot_face(struct conversion_state *pstate, int pt1, int pt2, int pt3, fast
 
     if (pstate->face_count >= pstate->face_size) {
 	pstate->face_size += GRID_BLOCK;
-	if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
-	    bu_log("memory corrupted before realloc of faces, thickness, and facemode\n");
 	pstate->faces = (int *)bu_realloc((void *)pstate->faces, pstate->face_size*3*sizeof(int), "faces");
 	pstate->thickness = (fastf_t *)bu_realloc((void *)pstate->thickness, pstate->face_size*sizeof(fastf_t), "thickness");
 	pstate->facemode = (char *)bu_realloc((void *)pstate->facemode, pstate->face_size*sizeof(char), "facemode");
-	if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
-	    bu_log("memory corrupted after realloc of faces, thickness, and facemode\n");
     }
 
     pstate->faces[pstate->face_count*3] = pt1;
@@ -1975,9 +1943,6 @@ f4_Add_bot_face(struct conversion_state *pstate, int pt1, int pt2, int pt3, fast
     }
 
     pstate->face_count++;
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
-	bu_log("memory corrupted at end of f4_Add_bot_face()\n");
 }
 
 
@@ -2002,15 +1967,11 @@ f4_do_tri(struct conversion_state *pstate)
 	return;
 
     if (pstate->faces == NULL) {
-	if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
-	    bu_log("memory corrupted before malloc of faces\n");
 	pstate->faces = (int *)bu_malloc(GRID_BLOCK*3*sizeof(int), "faces");
 	pstate->thickness = (fastf_t *)bu_malloc(GRID_BLOCK*sizeof(fastf_t), "thickness");
 	pstate->facemode = (char *)bu_malloc(GRID_BLOCK*sizeof(char), "facemode");
 	pstate->face_size = GRID_BLOCK;
 	pstate->face_count = 0;
-	if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
-	    bu_log("memory corrupted after malloc of faces, thickness, and facemode\n");
     }
 
     bu_strlcpy(pstate->field, &pstate->line[24], sizeof(pstate->field));
@@ -2042,13 +2003,7 @@ f4_do_tri(struct conversion_state *pstate)
     if (pstate->f4_do_plot)
 	plot_tri(pstate, pt1, pt2, pt3);
 
-    if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
-	bu_log("memory corrupted before call to f4_Add_bot_face()\n");
-
     f4_Add_bot_face(pstate, pt1, pt2, pt3, thick, pos);
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
-	bu_log("memory corrupted after call to f4_Add_bot_face()\n");
 }
 
 
@@ -2203,7 +2158,7 @@ make_bot_object(struct conversion_state *pstate)
 HIDDEN void
 skip_section(struct conversion_state *pstate)
 {
-    off_t section_start;
+    b_off_t section_start;
 
     /* skip to start of next section */
     section_start = bu_ftell(pstate->fpin);
@@ -2476,8 +2431,6 @@ Process_hole_wall(struct conversion_state *pstate)
 {
     if (pstate->gcv_options->debug_mode)
 	bu_log("Process_hole_wall\n");
-    if (bu_debug & BU_DEBUG_MEM_CHECK)
-	bu_prmem("At start of Process_hole_wall:");
 
     rewind(pstate->fpin);
     while (1) {
@@ -2575,8 +2528,6 @@ Process_input(struct conversion_state *pstate, int pass_number)
 {
     if (pstate->gcv_options->debug_mode)
 	bu_log("\n\nProcess_input(pass = %d)\n", pass_number);
-    if (bu_debug & BU_DEBUG_MEM_CHECK)
-	bu_prmem("At start of Process_input:");
 
     if (pass_number != 0 && pass_number != 1) {
 	bu_bomb("Process_input: illegal pass_number");
@@ -2669,18 +2620,12 @@ make_region_list(struct conversion_state *pstate, const char *in_str)
 	    ptr2++;
 	    start = atoi(ptr);
 	    stop = atoi(ptr2);
-	    if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
-		bu_bomb("ERROR: bu_mem_barriercheck failed in make_region_list");
 	    for (i=start; i<=stop; i++) {
 		if (pstate->f4_do_skips == pstate->region_list_len) {
 		    pstate->region_list_len += REGION_LIST_BLOCK;
 		    pstate->region_list = (int *)bu_realloc((char *)pstate->region_list, pstate->region_list_len*sizeof(int), "region_list");
-		    if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
-			bu_bomb("ERROR: bu_mem_barriercheck failed in make_region_list (after realloc)");
 		}
 		pstate->region_list[pstate->f4_do_skips++] = i;
-		if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
-		    bu_bomb("ERROR: bu_mem_barriercheck failed in make_region_list (after adding)");
 	    }
 	} else {
 	    if (pstate->f4_do_skips == pstate->region_list_len) {
@@ -2959,9 +2904,6 @@ fastgen4_read(struct gcv_context *context, const struct gcv_opts *gcv_options, c
 	    return 0;
 	}
 
-    if (bu_debug & BU_DEBUG_MEM_CHECK)
-	bu_log("doing memory checking\n");
-
     if ((state.fpin=fopen(source_path, "rb")) == (FILE *)NULL) {
 	bu_log("Cannot open FASTGEN4 file (%s)\n", source_path);
 	fg4_free_conversion_state(&state);
@@ -2977,7 +2919,7 @@ fastgen4_read(struct gcv_context *context, const struct gcv_opts *gcv_options, c
     }
 
     if (bu_debug) {
-	bu_printb("librtbu_debug", bu_debug, DEBUG_FORMAT);
+	bu_printb("librtbu_debug", bu_debug, RT_DEBUG_FORMAT);
 	bu_log("\n");
     }
     if (nmg_debug) {
@@ -3036,7 +2978,7 @@ fastgen4_read(struct gcv_context *context, const struct gcv_opts *gcv_options, c
 
 
 static const struct gcv_filter gcv_conv_fastgen4_read = {
-    "FASTGEN4 Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_FASTGEN,
+    "FASTGEN4 Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_FASTGEN, NULL,
     fastgen4_create_opts, fastgen4_free_opts, fastgen4_read
 };
 
@@ -3046,7 +2988,7 @@ static const struct gcv_filter * const filters[] = {&gcv_conv_fastgen4_read, &gc
 
 const struct gcv_plugin gcv_plugin_info_s = { filters };
 
-GCV_EXPORT const struct gcv_plugin *
+COMPILER_DLLEXPORT const struct gcv_plugin *
 gcv_plugin_info(){ return &gcv_plugin_info_s; }
 
 /*

@@ -1,7 +1,7 @@
 /*                        P O L Y G O N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,9 +36,9 @@
 
 __BEGIN_DECLS
 
-/*********************************************************
-  Operations on 2D point types
- *********************************************************/
+/********************************
+ * Operations on 2D point types *
+ ********************************/
 
 /**
  * @brief
@@ -66,7 +66,7 @@ BG_EXPORT extern int bg_polygon_direction(size_t npts, const point2d_t *pts, con
  * test whether a point is inside a 2d polygon
  *
  * franklin's test for point inclusion within a polygon - see
- * http://www.ecse.rpi.edu/homepages/wrf/research/short_notes/pnpoly.html
+ * https://wrf.ecse.rpi.edu/Research/Short_Notes/pnpoly.html
  * for more details and the implementation file polygon.c for license info.
  *
  * @param[in] npts number of points pts contains
@@ -77,25 +77,21 @@ BG_EXPORT extern int bg_polygon_direction(size_t npts, const point2d_t *pts, con
  * @return 0 if point is outside polygon
  * @return 1 if point is inside polygon
  */
-BG_EXPORT extern int bg_pt_in_polygon(size_t npts, const point2d_t *pts, const point2d_t *test_pt);
+BG_EXPORT extern int bg_pnt_in_polygon(size_t npts, const point2d_t *pts, const point2d_t *test_pt);
 
 /**
  * Triangulation is the process of finding a set of triangles that as a set cover
  * the same total surface area as a polygon.  There are many algorithms for this
  * operation, which have various trade-offs in speed and output quality.
- *
- * Ear clipping is implemented here in a manner similar to the method
- * documented in David Eberly's Triangulation by Ear Clipping, section 2:
- * http://www.geometrictools.com/Documentation/TriangulationByEarClipping.pdf
- *
  */
-
 typedef enum {
-    EAR_CLIPPING = 0,
-    MONOTONE,
-    HERTEL_MEHLHORN,
-    KEIL_SNOEYINK,
-    DELAUNAY
+    TRI_ANY = 0,
+    TRI_EAR_CLIPPING,
+    TRI_CONSTRAINED_DELAUNAY,
+    TRI_MONOTONE,
+    TRI_HERTEL_MEHLHORN,
+    TRI_KEIL_SNOEYINK,
+    TRI_DELAUNAY
 } triangulation_t;
 
 /**
@@ -112,13 +108,15 @@ typedef enum {
  *
  * @param[out] faces Set of faces in the triangulation, stored as integer indices to the pts.  The first three indices are the vertices of the first face, the second three define the second face, and so forth.
  * @param[out] num_faces Number of faces created
- * @param[out] out_pts  output points used by faces set, if an algorithm was selected that generates new points
+ * @param[out] out_pts  output points used by faces set. If an algorithm was selected that generates new points, this will be a new array.
  * @param[out] num_outpts number of output points, if an algorithm was selected that generates new points
  * @param[in] poly Non-hole polygon, defined as a CCW array of indices into the pts array.
  * @param[in] poly_npts Number of points in non-hole polygon
  * @param[in] holes_array Array of hole polygons, each defined as a CW array of indices into the pts array.
  * @param[in] holes_npts Array of counts of points in hole polygons
  * @param[in] nholes Number of hole polygons contained in holes_array
+ * @param[in] steiner Array of Steiner points
+ * @param[in] steiner_npts Number of Steiner points
  * @param[in] pts Array of points defining a polygon. Duplicated points
  * @param[in] npts Number of points pts contains
  * @param[in] type Type of triangulation 
@@ -127,9 +125,10 @@ typedef enum {
  * @return 1 if triangulation is unsuccessful
  */
 BG_EXPORT extern int bg_nested_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
-	const int *poly, const size_t poly_npts,
-       	const int **holes_array, const size_t *holes_npts, const size_t nholes,
-       	const point2d_t *pts, const size_t npts, triangulation_t type);
+						   const int *poly, const size_t poly_npts,
+						   const int **holes_array, const size_t *holes_npts, const size_t nholes,
+						   const int *steiner, const size_t steiner_npts,
+						   const point2d_t *pts, const size_t npts, triangulation_t type);
 
 /**
  * @brief
@@ -150,6 +149,8 @@ BG_EXPORT extern int bg_nested_polygon_triangulate(int **faces, int *num_faces, 
  * @param[out] num_faces Number of faces created
  * @param[out] out_pts output points used by faces set, if an algorithm was selected that generates new points
  * @param[out] num_outpts number of output points, if an algorithm was selected that generates new points
+ * @param[in] steiner Array of Steiner points
+ * @param[in] steiner_npts Number of Steiner points
  * @param[in] pts Array of points defining a polygon. Duplicated points
  * @param[in] npts Number of points pts contains
  * @param[in] type Triangulation type
@@ -158,13 +159,15 @@ BG_EXPORT extern int bg_nested_polygon_triangulate(int **faces, int *num_faces, 
  * @return 1 if triangulation is unsuccessful
  */
 BG_EXPORT extern int bg_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
-	const point2d_t *pts, const size_t npts, triangulation_t type);
+				   	    const int *steiner, const size_t steiner_npts,
+					    const point2d_t *pts, const size_t npts, triangulation_t type);
+
 
 
 /*********************************************************
   Operations on 3D point types - these are assumed to be
   polygons embedded in 3D planes in space
- *********************************************************/
+*********************************************************/
 
 /**
  * @brief
@@ -230,9 +233,13 @@ BG_EXPORT extern int bg_3d_polygon_sort_ccw(size_t npts, point_t *pts, plane_t c
  * @return 0 if calculation was successful
  * @return 1 if calculation failed, e.g. because one parameter is a NULL-Pointer
  */
-BG_EXPORT extern int bg_3d_polygon_mk_pts_planes(size_t *npts, point_t **pts, size_t neqs, const plane_t *eqs);
+BG_EXPORT extern int bg_3d_polygon_make_pnts_planes(size_t *npts, point_t **pts, size_t neqs, const plane_t *eqs);
 
 
+
+/* Debugging functions - do not use */
+BG_EXPORT extern void bg_polygon_plot_2d(const char *filename, const point2d_t *pnts, int npnts, int r, int g, int b);
+BG_EXPORT extern void bg_tri_plot_2d(const char *filename, const int *faces, int num_faces, const point2d_t *pnts, int r, int g, int b);
 
 __END_DECLS
 

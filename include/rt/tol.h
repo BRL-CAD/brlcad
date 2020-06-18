@@ -1,7 +1,7 @@
 /*                          T O L . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -78,19 +78,6 @@ __BEGIN_DECLS
 #define RT_DOT_TOL      (0.001)
 #define RT_PCOEF_TOL    (1.0e-10)
 #define RT_ROOT_TOL     (1.0e-5)
-
-/**
- * Tessellation (geometric) tolerances, different beasts than the
- * calculation tolerance in bn_tol.
- */
-struct rt_tess_tol {
-    uint32_t magic;
-    double              abs;                    /**< @brief absolute dist tol */
-    double              rel;                    /**< @brief rel dist tol */
-    double              norm;                   /**< @brief normal tol */
-};
-#define RT_CK_TESS_TOL(_p) BU_CKMAG(_p, RT_TESS_TOL_MAGIC, "rt_tess_tol")
-#define RT_TESS_TOL_INIT_ZERO {RT_TESS_TOL_MAGIC, 0.0, 0.0, 0.0}
 
 /**
  * Fills in the provided bn_tol structure with compile-time default

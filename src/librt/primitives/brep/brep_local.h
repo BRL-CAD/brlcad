@@ -1,7 +1,7 @@
 /*                    B R E P _ L O C A L . H
  * BRL-CAD
  *
- * Copyright (c) 2013-2016 United States Government as represented by
+ * Copyright (c) 2013-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@
 #ifndef LIBRT_PRIMITIVES_BREP_BREP_LOCAL_H
 #define LIBRT_PRIMITIVES_BREP_BREP_LOCAL_H
 
+
 /**
  * The b-rep specific data structure for caching the prepared
  * acceleration data structure.
@@ -32,10 +33,13 @@
 struct brep_specific {
     ON_Brep* brep;
     BrepBoundingVolume* bvh;
+    int is_solid;
+    int plate_mode;
+    int plate_mode_nocos;
+    double plate_mode_thickness;
 };
 
 #endif /* LIBRT_PRIMITIVES_BREP_BREP_LOCAL_H */
-
 /*
  * Local Variables:
  * tab-width: 8

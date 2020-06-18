@@ -1,7 +1,7 @@
 /*                           I S S T  . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2016 United States Government as represented by
+ * Copyright (c) 2005-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,6 +33,7 @@
 #include "tcl.h"
 #include "tk.h"
 
+#include "bu/app.h"
 #include "bu/parallel.h"
 #include "bu/time.h"
 #include "dm.h"
@@ -363,7 +364,7 @@ zero_view(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(
     vect_t vec;
     double mag_vec;
 
-    mag_vec = DIST_PT_PT(isst->camera.pos, isst->camera.focus);
+    mag_vec = DIST_PNT_PNT(isst->camera.pos, isst->camera.focus);
 
     VSUB2(vec, isst->camera_focus_init, isst->camera.pos);
     VUNITIZE(vec);
@@ -457,7 +458,7 @@ aetolookat(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj 
     if (Tcl_GetDoubleFromObj(interp, objv[3], &y) != TCL_OK)
 	return TCL_ERROR;
 
-    mag_vec = DIST_PT_PT(isst->camera.pos, isst->camera.focus);
+    mag_vec = DIST_PNT_PNT(isst->camera.pos, isst->camera.focus);
 
     VSUB2(vecdfoc, isst->camera.pos, isst->camera.focus);
     VUNITIZE(vecdfoc);
@@ -492,9 +493,9 @@ aerotate(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Obj *c
     if (Tcl_GetDoubleFromObj(interp, objv[3], &y) != TCL_OK)
 	return TCL_ERROR;
 
-    mag_pos = DIST_PT_PT(isst->camera.pos, isst->camera_focus_init);
+    mag_pos = DIST_PNT_PNT(isst->camera.pos, isst->camera_focus_init);
 
-    mag_focus = DIST_PT_PT(isst->camera.focus, isst->camera_focus_init);
+    mag_focus = DIST_PNT_PNT(isst->camera.focus, isst->camera_focus_init);
 
     VSUB2(vecdpos, isst->camera_focus_init, isst->camera.pos);
     VUNITIZE(vecdpos);
@@ -627,7 +628,7 @@ const char *fullname;
     argv = __argv;
 #endif
 
-    /* Need progname set for bu_brlcad_root/bu_brlcad_data to work */
+    /* initialize progname for run-tim resource finding */
     bu_setprogname(argv[0]);
 
 #ifdef HAVE_WINDOWS_H
@@ -652,7 +653,7 @@ const char *fullname;
     argv++; argc--;
     tclcad_set_argv(interp, argc, argv);
 
-    isst_tcl = bu_brlcad_data("tclscripts/isst/isst.tcl", 1);
+    isst_tcl = bu_brlcad_root("share/tclscripts/isst/isst.tcl", 1);
     Tcl_DStringInit(&temp);
     fullname = Tcl_TranslateFileName(interp, isst_tcl, &temp);
     status = Tcl_EvalFile(interp, fullname);

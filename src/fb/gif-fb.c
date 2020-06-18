@@ -1,7 +1,7 @@
 /*                        G I F - F B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -72,6 +72,9 @@
 #include <stdarg.h>
 #include <limits.h>
 
+#include "bio.h"
+
+#include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
@@ -435,6 +438,7 @@ Rasters(void)				/* process (convert) raster data */
 int
 main(int argc, char **argv)
 {
+    bu_setprogname(argv[0]);
     {
 	/* Plant signal catcher. */
 	static int getsigs[] = {
@@ -469,7 +473,7 @@ main(int argc, char **argv)
 	int c;
 	bool_t errors;
 
-    	errors = argc == 1 && isatty(fileno(stdin));
+	errors = argc == 1 && isatty(fileno(stdin));
 
 	while ((c = bu_getopt(argc, argv, OPTSTR)) != -1) {
 	    switch (c) {
@@ -539,6 +543,7 @@ main(int argc, char **argv)
 	    switch (getc(gfp)) {
 		case EOF:
 		    Fatal(fbp, "File does not contain \"GIF\" header");
+		    break;
 
 		case 'G':
 		    state = ST_G_SEEN;
@@ -749,6 +754,7 @@ main(int argc, char **argv)
 		bu_free(g_cmap, "g_cmap");
 
 		bu_exit(EXIT_SUCCESS, NULL);
+		break;
 
 	    case GIF_EXTENSION: {
 		/* GIF extension block introducer */

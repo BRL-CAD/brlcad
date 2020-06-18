@@ -3,8 +3,6 @@
 # This demonstration script creates a pair of text widgets that can edit a
 # single logical buffer. This is particularly useful when editing related text
 # in two (or more) parts of the same file.
-#
-# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."
@@ -38,7 +36,7 @@ proc makeClone {w parent} {
     global count
     set t [$parent peer create $w.text[incr count] -yscroll "$w.sb$count set"\
 		  -height 10 -wrap word]
-    set sb [scrollbar $w.sb$count -command "$t yview" -orient vertical]
+    set sb [ttk::scrollbar $w.sb$count -command "$t yview" -orient vertical]
     set b1 [button $w.clone$count -command "makeClone $w $t" \
 		    -text "Make Peer"]
     set b2 [button $w.kill$count -command "killClone $w $count" \

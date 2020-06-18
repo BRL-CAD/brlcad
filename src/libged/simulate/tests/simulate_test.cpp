@@ -1,3 +1,28 @@
+/*               S I M U L A T E _ T E S T . C P P
+ * BRL-CAD
+ *
+ * Copyright (c) 2017-2020 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file simulate_test.cpp
+ *
+ * Brief description
+ *
+ */
+
 #include "common.h"
 
 #include "../utility.hpp"
@@ -310,7 +335,8 @@ simulate_test()
 
 
 int
-main()
+main(int UNUSED(argc), const char **argv)
 {
+    bu_setprogname(argv[0]);
     return simulate_test() ? EXIT_SUCCESS : EXIT_FAILURE;
 }

@@ -1,7 +1,7 @@
 /*                       T E A _ N M G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,6 +30,7 @@
 #include <stdlib.h>
 #include <stdio.h>		/* Direct the output to stdout */
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "vmath.h"		/* BRL-CAD Vector macros */
 #include "nmg.h"
@@ -168,21 +169,20 @@ main(int argc, char **argv)
     int i;
     struct rt_wdb *outfp;
 
+    bu_setprogname(argv[0]);
+
     tol.magic = BN_TOL_MAGIC;
     tol.dist = 0.0005;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    RTG.debug |= DEBUG_ALLRAYS;	/* Cause core dumps on bu_bomb(), but no extra messages */
+    rt_debug |= RT_DEBUG_ALLRAYS;	/* Cause core dumps on bu_bomb(), but no extra messages */
 
-    while ((i=bu_getopt(argc, argv, "dh?")) != -1) {
+    while ((i=bu_getopt(argc, argv, "h?")) != -1) {
 	switch (i) {
-	    case 'd':
-		RTG.debug |= DEBUG_MEM | DEBUG_MEM_FULL;
-		 break;
 	    default:
-		fprintf(stderr,"Usage: %s [-d]\n", *argv);
+		fprintf(stderr,"Usage: %s\n", *argv);
 		return -1;
 	}
     }

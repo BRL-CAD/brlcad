@@ -1,7 +1,7 @@
 /*                   B R E P _ C O B B . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2016 United States Government as represented by
+ * Copyright (c) 2013-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Based off of code from Ayam:
@@ -45,7 +45,7 @@
 #include "common.h"
 
 #include "bio.h"
-
+#include "bu/app.h"
 #include "wdb.h"
 
 
@@ -281,6 +281,8 @@ main(int argc, char** argv)
     const char* id_name = "B-Rep Cobb Sphere";
     const char* geom_name = "cobb.s";
 
+    bu_setprogname(argv[0]);
+
     if (argc > 1 || BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?")) {
 	return 0;
     }
@@ -294,7 +296,7 @@ main(int argc, char** argv)
 
 
     brep = Cobb_Sphere(1, &origin);
-    mk_brep(outfp, geom_name, brep);
+    mk_brep(outfp, geom_name, (void *)brep);
 
     //mk_comb1(outfp, "cube.r", geom_name, 1);
     unsigned char rgb[] = {50, 255, 50};

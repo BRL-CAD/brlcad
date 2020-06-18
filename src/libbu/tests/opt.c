@@ -1,7 +1,7 @@
 /*                       O P T . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2016 United States Government as represented by
+ * Copyright (c) 2015-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@
 
 
 int
-d1_verb(struct bu_vls *msg, int argc, const char **argv, void *set_v)
+d1_verb(struct bu_vls *msg, size_t argc, const char **argv, void *set_v)
 {
     int val = INT_MAX;
     int *int_set = (int *)set_v;
@@ -67,125 +67,131 @@ set_msg_str(struct bu_vls *msg, int ac, const char **av)
 }
 
 #define EXPECT_SUCCESS_FLAG(_name, _var) { \
-    set_msg_str(&parse_msgs, ac, av); \
-    ret = bu_opt_parse(&parse_msgs, ac, av, d); \
-    if (ret || _var != 1) { \
-	bu_vls_printf(&parse_msgs, "\nError - expected value \"1\" and got value %d\n", _var); \
-	val_ok = 0; \
-    } else { \
-	bu_vls_printf(&parse_msgs, "  \nGot expected value: %s = %d\n", _name, _var); \
-    } \
-}
-
-
-#define EXPECT_SUCCESS_INT(_name, _var, _exp) { \
-    set_msg_str(&parse_msgs, ac, av); \
-    ret = bu_opt_parse(&parse_msgs, ac, av, d); \
-    if (ret || _var != _exp) { \
-	bu_vls_printf(&parse_msgs, "\nError - expected value \"%d\" and got value %d\n", _exp, _var); \
-	val_ok = 0; \
-    } else { \
-	bu_vls_printf(&parse_msgs, "  \nGot expected value: %s = %d\n", _name, _var); \
-    } \
-}
-
-#define EXPECT_SUCCESS_INT_UNKNOWN(_name, _var, _exp) { \
-    set_msg_str(&parse_msgs, ac, av); \
-    ret = bu_opt_parse(&parse_msgs, ac, av, d); \
-    if (ret <= 0) { \
-	bu_vls_printf(&parse_msgs, "\nError - extra args but none found.\n"); \
-	val_ok = 0; \
-    } else { \
-	if ( _var != _exp) { \
-	    bu_vls_printf(&parse_msgs, "\nError - expected value \"%d\" and got value %d\n", _exp, _var); \
+	set_msg_str(&parse_msgs, ac, av); \
+	ret = bu_opt_parse(&parse_msgs, ac, av, d); \
+	if (ret || _var != 1) { \
+	    bu_vls_printf(&parse_msgs, "\nError - expected value \"1\" and got value %d\n", _var); \
 	    val_ok = 0; \
 	} else { \
 	    bu_vls_printf(&parse_msgs, "  \nGot expected value: %s = %d\n", _name, _var); \
-	}} \
-}
+	} \
+    }
 
-#define EXPECT_FAILURE_INT_UNKNOWN(_name, _var, _exp) { \
-    set_msg_str(&parse_msgs, ac, av); \
-    ret = bu_opt_parse(&parse_msgs, ac, av, d); \
-    if (ret <= 0 || _var == _exp) { \
-	bu_vls_printf(&parse_msgs, "\nError - expected failure (%s) but no error returned\n", _name); \
-	val_ok = 0; \
-    } else { \
-	bu_vls_printf(&parse_msgs, "  \nOK (expected failure) %s\n", _name); \
-    } \
-}
 
-#define EXPECT_SUCCESS_FLOAT(_name, _var, _exp) { \
-    set_msg_str(&parse_msgs, ac, av); \
-    ret = bu_opt_parse(&parse_msgs, ac, av, d); \
-    if (ret || !NEAR_EQUAL(_var, _exp, SMALL_FASTF)) { \
-	bu_vls_printf(&parse_msgs, "\nError - expected value \"%f\" and got value %f\n", _exp, _var); \
-	val_ok = 0; \
-    } else { \
-	bu_vls_printf(&parse_msgs, "  \nGot expected value: %s = %f\n", _name, _var); \
-    } \
-}
-
-#define EXPECT_SUCCESS_STRING(_name, _var, _exp) { \
-    set_msg_str(&parse_msgs, ac, av); \
-    ret = bu_opt_parse(&parse_msgs, ac, av, d); \
-    if (ret || !BU_STR_EQUAL(_var, _exp)) { \
-	bu_vls_printf(&parse_msgs, "\nError - expected value \"%s\" and got value %s\n", _exp, _var); \
-	val_ok = 0; \
-    } else { \
-	bu_vls_printf(&parse_msgs, "  \nGot expected value: %s = %s\n", _name, _var); \
-    } \
-}
-
-#define EXPECT_SUCCESS_COLOR(_name, _color, _r, _g, _b) { \
-    set_msg_str(&parse_msgs, ac, av); \
-    ret = bu_opt_parse(&parse_msgs, ac, av, d); \
-    if (ret || (!NEAR_EQUAL(_color.buc_rgb[0], _r, SMALL_FASTF) || !NEAR_EQUAL(_color.buc_rgb[1], _g, SMALL_FASTF) || !NEAR_EQUAL(_color.buc_rgb[2], _b, SMALL_FASTF))) { \
-	bu_vls_printf(&parse_msgs, "\nError - expected value \"%d/%d/%d\" and got value %.0f/%.0f/%.0f\n", _r, _g, _b, _color.buc_rgb[0], _color.buc_rgb[1], _color.buc_rgb[2]); \
-	val_ok = 0; \
-    } else { \
-	bu_vls_printf(&parse_msgs, "  \nGot expected value: %s == %.0f/%.0f/%.0f\n", _name,  _color.buc_rgb[0], _color.buc_rgb[1], _color.buc_rgb[2]); \
-    } \
-}
-
-#define EXPECT_SUCCESS_COLOR_UNKNOWN(_name, _color, _r, _g, _b) { \
-    set_msg_str(&parse_msgs, ac, av); \
-    ret = bu_opt_parse(&parse_msgs, ac, av, d); \
-    if (ret <= 0) { \
-	bu_vls_printf(&parse_msgs, "\nError - extra args expected but not found\n"); \
-	val_ok = 0; \
-    } else { \
-	if ((!NEAR_EQUAL(_color.buc_rgb[0], _r, SMALL_FASTF) || !NEAR_EQUAL(_color.buc_rgb[1], _g, SMALL_FASTF) || !NEAR_EQUAL(_color.buc_rgb[2], _b, SMALL_FASTF))) { \
-	    bu_vls_printf(&parse_msgs, "\nError - expected value \"%d/%d/%d\" and got value %.0f/%.0f/%.0f\n", _r, _g, _b, _color.buc_rgb[0], _color.buc_rgb[1], _color.buc_rgb[2]); \
+#define EXPECT_SUCCESS_INT(_name, _var, _exp) { \
+	set_msg_str(&parse_msgs, ac, av); \
+	ret = bu_opt_parse(&parse_msgs, ac, av, d); \
+	if (ret || _var != _exp) { \
+	    bu_vls_printf(&parse_msgs, "\nError - expected value \"%ld\" and got value %ld\n", (long int)_exp, (long int)_var); \
 	    val_ok = 0; \
 	} else { \
-	    bu_vls_printf(&parse_msgs, "  \nGot expected value: %s == %.0f/%.0f/%.0f\n", _name,  _color.buc_rgb[0], _color.buc_rgb[1], _color.buc_rgb[2]); \
-	}} \
-}
+	    bu_vls_printf(&parse_msgs, "  \nGot expected value: %s = %ld\n", _name, (long int)_var); \
+	} \
+    }
+
+#define EXPECT_SUCCESS_INT_UNKNOWN(_name, _var, _exp) { \
+	set_msg_str(&parse_msgs, ac, av); \
+	ret = bu_opt_parse(&parse_msgs, ac, av, d); \
+	if (ret <= 0) { \
+	    bu_vls_printf(&parse_msgs, "\nError - extra args but none found.\n"); \
+	    val_ok = 0; \
+	} else { \
+	    if ( _var != _exp) { \
+		bu_vls_printf(&parse_msgs, "\nError - expected value \"%d\" and got value %d\n", _exp, _var); \
+		val_ok = 0; \
+	    } else { \
+		bu_vls_printf(&parse_msgs, "  \nGot expected value: %s = %d\n", _name, _var); \
+	    } \
+	} \
+    }
+
+#define EXPECT_FAILURE_INT_UNKNOWN(_name, _var, _exp) { \
+	set_msg_str(&parse_msgs, ac, av); \
+	ret = bu_opt_parse(&parse_msgs, ac, av, d); \
+	if (ret <= 0 || _var == _exp) { \
+	    bu_vls_printf(&parse_msgs, "\nError - expected failure (%s) but no error returned\n", _name); \
+	    val_ok = 0; \
+	} else { \
+	    bu_vls_printf(&parse_msgs, "  \nOK (expected failure) %s\n", _name); \
+	} \
+    }
+
+#define EXPECT_SUCCESS_FLOAT(_name, _var, _exp) { \
+	set_msg_str(&parse_msgs, ac, av); \
+	ret = bu_opt_parse(&parse_msgs, ac, av, d); \
+	if (ret || !NEAR_EQUAL(_var, _exp, SMALL_FASTF)) { \
+	    bu_vls_printf(&parse_msgs, "\nError - expected value \"%f\" and got value %f\n", _exp, _var); \
+	    val_ok = 0; \
+	} else { \
+	    bu_vls_printf(&parse_msgs, "  \nGot expected value: %s = %f\n", _name, _var); \
+	} \
+    }
+
+#define EXPECT_SUCCESS_STRING(_name, _var, _exp) { \
+	set_msg_str(&parse_msgs, ac, av); \
+	ret = bu_opt_parse(&parse_msgs, ac, av, d); \
+	if (ret || !BU_STR_EQUAL(_var, _exp)) { \
+	    bu_vls_printf(&parse_msgs, "\nError - expected value \"%s\" and got value %s\n", _exp, _var); \
+	    val_ok = 0; \
+	} else { \
+	    bu_vls_printf(&parse_msgs, "  \nGot expected value: %s = %s\n", _name, _var); \
+	} \
+    }
+
+#define EXPECT_SUCCESS_COLOR(_name, _color, _r, _g, _b) { \
+	unsigned char rgb[3] = {0, 0, 0}; \
+	set_msg_str(&parse_msgs, ac, av); \
+	ret = bu_opt_parse(&parse_msgs, ac, av, d); \
+	bu_color_to_rgb_chars(&_color, rgb); \
+	if (ret || (!NEAR_EQUAL(rgb[RED], _r, SMALL_FASTF) || !NEAR_EQUAL(rgb[GRN], _g, SMALL_FASTF) || !NEAR_EQUAL(rgb[BLU], _b, SMALL_FASTF))) { \
+	    bu_vls_printf(&parse_msgs, "\nError - expected value \"%d/%d/%d\" and got value %d/%d/%d\n", _r, _g, _b, rgb[RED], rgb[GRN], rgb[BLU]); \
+	    val_ok = 0; \
+	} else { \
+	    bu_vls_printf(&parse_msgs, "  \nGot expected value: %s == %d/%d/%d\n", _name, rgb[RED], rgb[GRN], rgb[BLU]); \
+	} \
+    }
+
+#define EXPECT_SUCCESS_COLOR_UNKNOWN(_name, _color, _r, _g, _b) { \
+	unsigned char rgb[3] = {0, 0, 0}; \
+	set_msg_str(&parse_msgs, ac, av); \
+	ret = bu_opt_parse(&parse_msgs, ac, av, d); \
+	bu_color_to_rgb_chars(&_color, rgb); \
+	if (ret <= 0) { \
+	    bu_vls_printf(&parse_msgs, "\nError - extra args expected but not found\n"); \
+	    val_ok = 0; \
+	} else { \
+	    if ((!NEAR_EQUAL(rgb[RED], _r, SMALL_FASTF) || !NEAR_EQUAL(rgb[GRN], _g, SMALL_FASTF) || !NEAR_EQUAL(rgb[BLU], _b, SMALL_FASTF))) { \
+		bu_vls_printf(&parse_msgs, "\nError - expected value \"%d/%d/%d\" and got value %d/%d/%d\n", _r, _g, _b, rgb[RED], rgb[GRN], rgb[BLU]); \
+		val_ok = 0; \
+	    } else { \
+		bu_vls_printf(&parse_msgs, "  \nGot expected value: %s == %d/%d/%d\n", _name, rgb[RED], rgb[GRN], rgb[BLU]); \
+	    } \
+	} \
+    }
 
 #define EXPECT_SUCCESS_VECT(_name, _v, _v1, _v2, _v3) { \
-    set_msg_str(&parse_msgs, ac, av); \
-    ret = bu_opt_parse(&parse_msgs, ac, av, d); \
-    if (ret || (!NEAR_EQUAL(_v[0], _v1, SMALL_FASTF) || !NEAR_EQUAL(_v[1], _v2, SMALL_FASTF) || !NEAR_EQUAL(_v[2], _v3, SMALL_FASTF))) { \
-	bu_vls_printf(&parse_msgs, "\nError - expected value \"%f/%f/%f\" and got value %f/%f/%f\n", _v1, _v2, _v3, _v[0], _v[1], _v[2]); \
-	val_ok = 0; \
-    } else { \
-	bu_vls_printf(&parse_msgs, "  \nGot expected value: %s == %f/%f/%f\n", _name,  _v[0], _v[1], _v[2]); \
-    } \
-}
+	set_msg_str(&parse_msgs, ac, av); \
+	ret = bu_opt_parse(&parse_msgs, ac, av, d); \
+	if (ret || (!NEAR_EQUAL(_v[0], _v1, SMALL_FASTF) || !NEAR_EQUAL(_v[1], _v2, SMALL_FASTF) || !NEAR_EQUAL(_v[2], _v3, SMALL_FASTF))) { \
+	    bu_vls_printf(&parse_msgs, "\nError - expected value \"%f/%f/%f\" and got value %f/%f/%f\n", _v1, _v2, _v3, _v[0], _v[1], _v[2]); \
+	    val_ok = 0; \
+	} else { \
+	    bu_vls_printf(&parse_msgs, "  \nGot expected value: %s == %f/%f/%f\n", _name,  _v[0], _v[1], _v[2]); \
+	} \
+    }
 
 
 #define EXPECT_FAILURE(_name, _reason) { \
-    set_msg_str(&parse_msgs, ac, av); \
-    ret = bu_opt_parse(&parse_msgs, ac, av, d); \
-    if (ret != -1) { \
-	bu_vls_printf(&parse_msgs, "\nError - expected parser to fail with error and it didn't\n"); \
-	val_ok = 0; \
-    } else { \
-	bu_vls_printf(&parse_msgs, "  \nOK (expected failure) - %s failed (%s)\n", _name, _reason); \
-	ret = 0; \
-    } \
-}
+	set_msg_str(&parse_msgs, ac, av); \
+	ret = bu_opt_parse(&parse_msgs, ac, av, d); \
+	if (ret != -1) { \
+	    bu_vls_printf(&parse_msgs, "\nError - expected parser to fail with error and it didn't\n"); \
+	    val_ok = 0; \
+	} else { \
+	    bu_vls_printf(&parse_msgs, "  \nOK (expected failure) - %s failed (%s)\n", _name, _reason); \
+	    ret = 0; \
+	} \
+    }
 
 
 int desc_1(const char *cgy, int test_num)
@@ -196,22 +202,26 @@ int desc_1(const char *cgy, int test_num)
     static int m = 0;
     static int F = 0;
     static const char *str = NULL;
+    static struct bu_vls vls = BU_VLS_INIT_ZERO;
+    static struct bu_vls vls2 = BU_VLS_INIT_ZERO;
     static int i = 0;
     static long l = 0;
     static fastf_t f = 0;
 
     /* Option descriptions */
     struct bu_opt_desc d[] = {
-	{"h", "help",    "",       NULL,     (void *)&print_help, help_str},
-	{"?", "",        "",       NULL,     (void *)&print_help, help_str},
-	{"v", "verb",    "[#]",    &d1_verb, (void *)&verbosity,  "Set verbosity (range is 0 to 3)"},
-	{"b", "bool",    "bool",   &bu_opt_bool, (void *)&b,      "Set boolean flag"},
-	{"s", "str",     "string", &bu_opt_str,  (void *)&str,    "Set string"},
-	{"i", "int",     "#",      &bu_opt_int,  (void *)&i,      "Set int"},
-	{"l", "long",    "#",      &bu_opt_long, (void *)&l,      "Set long"},
-	{"f", "fastf_t", "#",      &bu_opt_fastf_t, (void *)&f,   "Read float"},
-	{"m", "mflag",   "flag",   NULL,     (void *)&m,      "Set boolean flag"},
-	{"F", "Fflag",   "flag",   NULL,     (void *)&F,      "Set boolean flag"},
+	{"h", "help",    "",       NULL,            (void *)&print_help, help_str},
+	{"?", "",        "",       NULL,            (void *)&print_help, help_str},
+	{"v", "verb",    "[#]",    &d1_verb,        (void *)&verbosity,  "Set verbosity (range is 0 to 3)"},
+	{"b", "bool",    "bool",   &bu_opt_bool,    (void *)&b,          "Set boolean flag"},
+	{"s", "str",     "string", &bu_opt_str,     (void *)&str,        "Set string"},
+	{"i", "int",     "#",      &bu_opt_int,     (void *)&i,          "Set int"},
+	{"l", "long",    "#",      &bu_opt_long,    (void *)&l,          "Set long"},
+	{"f", "fastf_t", "#",      &bu_opt_fastf_t, (void *)&f,          "Read float"},
+	{"m", "mflag",   "flag",   NULL,            (void *)&m,          "Set boolean flag"},
+	{"F", "Fflag",   "flag",   NULL,            (void *)&F,          "Set boolean flag"},
+	{"",  "vls1", "variable-length string", &bu_opt_vls, (void *)&vls, "Set variable length string"},
+	{"a", "vls2", "variable-length string", &bu_opt_vls, (void *)&vls2, "Set variable length string with flag"},
 	BU_OPT_DESC_NULL
     };
 
@@ -418,6 +428,24 @@ int desc_1(const char *cgy, int test_num)
 		av[1] = "test_str";
 		EXPECT_SUCCESS_STRING("string", str, "test_str");
 		break;
+	    case 3:
+		ac = 2;
+		av[0] = "--vls1";
+		av[1] = "vls_str";
+		EXPECT_SUCCESS_STRING("vls", bu_vls_cstr(&vls), "vls_str");
+		break;
+	    case 4:
+		ac = 2;
+		av[0] = "-a";
+		av[1] = "vls_str2";
+		EXPECT_SUCCESS_STRING("vls", bu_vls_cstr(&vls2), "vls_str2");
+		break;
+	    case 5:
+		ac = 2;
+		av[0] = "--vls2";
+		av[1] = "vls_str2";
+		EXPECT_SUCCESS_STRING("vls", bu_vls_cstr(&vls2), "vls_str2");
+		break;
 	    default:
 		bu_vls_printf(&parse_msgs, "unknown test: %d\n", test_num);
 		return -1;
@@ -576,17 +604,21 @@ int desc_1(const char *cgy, int test_num)
 int
 isnum(const char *str) {
     int i, sl;
-    if (!str) return 0;
+    if (!str)
+	return 0;
     sl = strlen(str);
-    for (i = 0; i < sl; i++) if (!isdigit(str[i])) return 0;
+    for (i = 0; i < sl; i++)
+	if (!isdigit(str[i]))
+	    return 0;
     return 1;
 }
 
+
 int
-dc_color(struct bu_vls *msg, int argc, const char **argv, void *set_c)
+dc_color(struct bu_vls *msg, size_t argc, const char **argv, void *set_c)
 {
     struct bu_color *set_color = (struct bu_color *)set_c;
-    unsigned int rgb[3];
+    unsigned int rgb[3] = {0, 0, 0};
 
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "color");
 
@@ -599,30 +631,36 @@ dc_color(struct bu_vls *msg, int argc, const char **argv, void *set_c)
 	    if (!bu_str_to_rgb(bu_vls_addr(&tmp_color), (unsigned char *)&rgb)) {
 		/* Not valid with 3 */
 		bu_vls_free(&tmp_color);
-		if (msg) bu_vls_sprintf(msg, "No valid color found.\n");
+		if (msg)
+		    bu_vls_sprintf(msg, "No valid color found.\n");
 		return -1;
 	    } else {
 		/* 3 did the job */
 		bu_vls_free(&tmp_color);
-		if (set_color) (void)bu_color_from_rgb_chars(set_color, (unsigned char *)&rgb);
+		if (set_color)
+		    (void)bu_color_from_rgb_chars(set_color, (unsigned char *)&rgb);
 		return 3;
 	    }
 	} else {
 	    /* Not valid with 1 and don't have 3 - we require at least one, so
 	     * claim one argv as belonging to this option regardless. */
-	    if (msg) bu_vls_sprintf(msg, "No valid color found: %s\n", argv[0]);
+	    if (msg)
+		bu_vls_sprintf(msg, "No valid color found: %s\n", argv[0]);
 	    return -1;
 	}
     } else {
 	/* yep, 1 did the job */
-	if (set_color) (void)bu_color_from_rgb_chars(set_color, (unsigned char *)&rgb);
+	if (set_color)
+	    (void)bu_color_from_rgb_chars(set_color, (unsigned char *)&rgb);
 	return 1;
     }
 
     return -1;
 }
 
-int desc_2(int test_num)
+
+int
+desc_2(int test_num)
 {
     int ret = 0;
     int val_ok = 1;
@@ -634,8 +672,8 @@ int desc_2(int test_num)
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
 
     struct bu_opt_desc d[3];
-    BU_OPT(d[0], "h", "help",  "",      NULL,      (void *)&print_help, help_str);
-    BU_OPT(d[1], "C", "color", "r/g/b", &dc_color, (void *)&color,      "Set color");
+    BU_OPT(d[0], "h", "help",  "",      NULL,      &print_help, help_str);
+    BU_OPT(d[1], "C", "color", "r/g/b", &dc_color, &color,      "Set color");
     BU_OPT_NULL(d[2]);
 
     av = (const char **)bu_calloc(containers, sizeof(char *), "Input array");
@@ -752,7 +790,11 @@ int desc_2(int test_num)
 	    av[4] = "50";
 	    EXPECT_FAILURE("color", "invalid argument");
 	    break;
-
+	case 16:
+	    ac = 1;
+	    av[0] = "-C0/0/50";
+	    EXPECT_SUCCESS_COLOR("color", color, 0, 0, 50);
+	    break;
     }
 
     if (ret > 0) {
@@ -786,8 +828,8 @@ int desc_3(int test_num)
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
 
     struct bu_opt_desc d[3];
-    BU_OPT(d[0], "h", "help",  "",      NULL,      (void *)&print_help, help_str);
-    BU_OPT(d[1], "V", "vector", "x,y,z", &bu_opt_vect_t, (void *)&v, "Set vector");
+    BU_OPT(d[0], "h", "help",   "",      NULL,           &print_help, help_str);
+    BU_OPT(d[1], "V", "vector", "x,y,z", &bu_opt_vect_t, &v,          "Set vector");
     BU_OPT_NULL(d[2]);
 
     av = (const char **)bu_calloc(5, sizeof(char *), "Input array");
@@ -798,28 +840,28 @@ int desc_3(int test_num)
 	    av[0] = "-V";
 	    av[1] = "2,10,30";
 	    ret = bu_opt_parse(&parse_msgs, 0, NULL, d);
-	    EXPECT_SUCCESS_VECT("vect_t", v, 2, 10, 30);
+	    EXPECT_SUCCESS_VECT("vect_t", v, 2.0, 10.0, 30.0);
 	    break;
 	case 1:
 	    ac = 2;
 	    av[0] = "-V";
 	    av[1] = "2/10/30";
 	    ret = bu_opt_parse(&parse_msgs, 0, NULL, d);
-	    EXPECT_SUCCESS_VECT("vect_t", v, 2, 10, 30);
+	    EXPECT_SUCCESS_VECT("vect_t", v, 2.0, 10.0, 30.0);
 	    break;
 	case 2:
 	    ac = 2;
 	    av[0] = "-V";
 	    av[1] = "30.3,2,-10.1";
 	    ret = bu_opt_parse(&parse_msgs, 0, NULL, d);
-	    EXPECT_SUCCESS_VECT("vect_t", v, 30.3, 2, -10.1);
+	    EXPECT_SUCCESS_VECT("vect_t", v, 30.3, 2.0, -10.1);
 	    break;
 	case 3:
 	    ac = 2;
 	    av[0] = "-V";
 	    av[1] = "30.3, 2, -10.1";
 	    ret = bu_opt_parse(&parse_msgs, 0, NULL, d);
-	    EXPECT_SUCCESS_VECT("vect_t", v, 30.3, 2, -10.1);
+	    EXPECT_SUCCESS_VECT("vect_t", v, 30.3, 2.0, -10.1);
 	    break;
 	case 4:
 	    ac = 4;
@@ -828,7 +870,7 @@ int desc_3(int test_num)
 	    av[2] = "2";
 	    av[3] = "-10.1";
 	    ret = bu_opt_parse(&parse_msgs, 0, NULL, d);
-	    EXPECT_SUCCESS_VECT("vect_t", v, 30.3, 2, -10.1);
+	    EXPECT_SUCCESS_VECT("vect_t", v, 30.3, 2.0, -10.1);
 	    break;
 
     }
@@ -854,7 +896,7 @@ int desc_3(int test_num)
 
 
 int
-opt_main(int argc, char **argv)
+main(int argc, char *argv[])
 {
     int ret = -1;
     long desc_num;
@@ -862,9 +904,13 @@ opt_main(int argc, char **argv)
     const char *cgy = NULL;
     char *endptr = NULL;
 
+    bu_setprogname(argv[0]);
+
     /* Sanity check */
-    if (argc < 4)
-	bu_exit(1, "ERROR: wrong number of parameters - need option desc num, category and test num");
+    if (argc < 4) {
+	bu_log("Usage: %s {desc_number} {category_num} {test_num}\n", argv[0]);
+	bu_exit(1, "ERROR: wrong number of parameters - need desc num, category and test num\n");
+    }
 
     /* Set the option description to used based on the input number */
     desc_num = strtol(argv[1], &endptr, 0);
@@ -876,12 +922,13 @@ opt_main(int argc, char **argv)
 
     test_num = strtol(argv[3], &endptr, 0);
     if (endptr && strlen(endptr) != 0) {
-	bu_exit(1, "Invalid test number: %s\n", argv[2]);
+	bu_exit(2, "Invalid test number: %s\n", argv[2]);
     }
 
     switch (desc_num) {
 	case 0:
 	    ret = bu_opt_parse(NULL, 0, NULL, NULL);
+	    /* fall through */
 	case 1:
 	    ret = desc_1(cgy, test_num);
 	    break;

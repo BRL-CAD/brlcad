@@ -1,7 +1,7 @@
 /*                        S K E T C H . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2016 United States Government as represented by
+ * Copyright (c) 1990-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -464,7 +464,7 @@ rt_sketch_degree(struct rt_sketch_internal *sk)
 
 
 int
-seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, fastf_t *u_vec, fastf_t *v_vec, struct rt_sketch_internal *sketch_ip, void *seg)
+seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, fastf_t *u_vec, fastf_t *v_vec, struct rt_sketch_internal *sketch_ip, void *seg)
 {
     int ret=0;
     int i;
@@ -741,9 +741,9 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 			    pt[j] /= pt[coords-1];
 		    }
 		    if (i == 0)
-			RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE)
-			    else
-				RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
+			RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_MOVE);
+		    else
+			RT_ADD_VLIST(vhead, pt, BN_VLIST_LINE_DRAW);
 		}
 		bu_free((char *)eg.ctl_points, "eg.ctl_points");
 		break;
@@ -856,25 +856,15 @@ seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, 
 
 
 int
-curve_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V, fastf_t *u_vec, fastf_t *v_vec, struct rt_sketch_internal *sketch_ip, struct rt_curve *crv)
+curve_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, fastf_t *V, fastf_t *u_vec, fastf_t *v_vec, struct rt_sketch_internal *sketch_ip, struct rt_curve *crv)
 {
     size_t seg_no;
     int ret=0;
 
     BU_CK_LIST_HEAD(vhead);
 
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at start of curve_to_vlist():\n");
-	bu_mem_barriercheck();
-    }
-
     for (seg_no=0; seg_no < crv->count; seg_no++) {
 	ret += seg_to_vlist(vhead, ttol, V, u_vec, v_vec, sketch_ip, crv->segment[seg_no]);
-    }
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at end of curve_to_vlist():\n");
-	bu_mem_barriercheck();
     }
 
     return ret;
@@ -882,7 +872,7 @@ curve_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, fastf_t *V
 
 
 int
-rt_sketch_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_sketch_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     struct rt_sketch_internal *sketch_ip;
     int ret;
@@ -1085,7 +1075,7 @@ rt_sketch_centroid(point_t *cent, const struct rt_db_internal *ip)
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_sketch_tess(struct nmgregion **UNUSED(r), struct model *UNUSED(m), struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+rt_sketch_tess(struct nmgregion **UNUSED(r), struct model *UNUSED(m), struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
 
@@ -1119,11 +1109,6 @@ rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, const
     if (rp->u_id != DBID_SKETCH) {
 	bu_log("rt_sketch_import4: defective record\n");
 	return -1;
-    }
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at start of sketch_import4():\n");
-	bu_mem_barriercheck();
     }
 
     RT_CK_DB_INTERNAL(ip);
@@ -1277,11 +1262,6 @@ rt_sketch_import4(struct rt_db_internal *ip, const struct bu_external *ep, const
 	ptr += SIZEOF_NETWORK_LONG;
     }
 
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at end of sketch_import4():\n");
-	bu_mem_barriercheck();
-    }
-
     return 0;			/* OK */
 }
 
@@ -1306,11 +1286,6 @@ rt_sketch_export4(struct bu_external *ep, const struct rt_db_internal *ip, doubl
     if (ip->idb_type != ID_SKETCH) return -1;
     sketch_ip = (struct rt_sketch_internal *)ip->idb_ptr;
     RT_SKETCH_CK_MAGIC(sketch_ip);
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at start of sketch_export4():\n");
-	bu_mem_barriercheck();
-    }
 
     BU_CK_EXTERNAL(ep);
 
@@ -1478,10 +1453,6 @@ rt_sketch_export4(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 	*(uint32_t *)ptr = htonl(sketch_ip->curve.reverse[seg_no]);
 	ptr += SIZEOF_NETWORK_LONG;
     }
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at end of sketch_export4():\n");
-	bu_mem_barriercheck();
-    }
 
     return 0;
 }
@@ -1503,11 +1474,6 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
     /* must be double for import and export */
     double v[ELEMENTS_PER_VECT];
     double *vp;
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at start of sketch_import5():\n");
-	bu_mem_barriercheck();
-    }
 
     if (dbip) RT_CK_DBI(dbip);
     BU_CK_EXTERNAL(ep);
@@ -1668,11 +1634,6 @@ rt_sketch_import5(struct rt_db_internal *ip, const struct bu_external *ep, const
 	ptr += SIZEOF_NETWORK_LONG;
     }
 
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at end of sketch_import5():\n");
-	bu_mem_barriercheck();
-    }
-
     return 0;			/* OK */
 }
 
@@ -1690,11 +1651,6 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
 
     /* must be double for import and export */
     double tmp_vec[ELEMENTS_PER_VECT];
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at start of sketch_export5():\n");
-	bu_mem_barriercheck();
-    }
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -1877,11 +1833,6 @@ rt_sketch_export5(struct bu_external *ep, const struct rt_db_internal *ip, doubl
     for (seg_no=0; seg_no < sketch_ip->curve.count; seg_no++) {
 	*(uint32_t *)cp = htonl(sketch_ip->curve.reverse[seg_no]);
 	cp += SIZEOF_NETWORK_LONG;
-    }
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at end of sketch_export5():\n");
-	bu_mem_barriercheck();
     }
 
     return 0;
@@ -2148,11 +2099,6 @@ rt_sketch_ifree(struct rt_db_internal *ip)
     RT_SKETCH_CK_MAGIC(sketch_ip);
     sketch_ip->magic = 0;			/* sanity */
 
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at start of sketch_ifree():\n");
-	bu_mem_barriercheck();
-    }
-
     if (sketch_ip->verts)
 	bu_free((char *)sketch_ip->verts, "sketch_ip->verts");
 
@@ -2162,11 +2108,6 @@ rt_sketch_ifree(struct rt_db_internal *ip)
 
     bu_free((char *)sketch_ip, "sketch ifree");
     ip->idb_ptr = ((void *)0);	/* sanity */
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at end of sketch_ifree():\n");
-	bu_mem_barriercheck();
-    }
 }
 
 
@@ -2249,11 +2190,6 @@ rt_copy_sketch(const struct rt_sketch_internal *sketch_ip)
 
     RT_SKETCH_CK_MAGIC(sketch_ip);
 
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at start of rt_copy_sketch():\n");
-	bu_mem_barriercheck();
-    }
-
     BU_ALLOC(out, struct rt_sketch_internal);
     *out = *sketch_ip;	/* struct copy */
 
@@ -2267,11 +2203,6 @@ rt_copy_sketch(const struct rt_sketch_internal *sketch_ip)
     crv_out = &out->curve;
     if (crv_out)
 	rt_copy_curve(crv_out, &sketch_ip->curve);
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at end of rt_copy_sketch():\n");
-	bu_mem_barriercheck();
-    }
 
     return out;
 }
@@ -2706,7 +2637,12 @@ rt_curve_order_segments(struct rt_curve *crv)
 {
     int i, j, k;
     int count;
-    int start1, end1, start2, end2, start3, end3;
+    int start1 = 0;
+    int start2 = 0;
+    int start3 = 0;
+    int end1 = 0;
+    int end2 = 0;
+    int end3 = 0;
 
     count = crv->count;
     if (count < 2) {

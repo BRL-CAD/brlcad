@@ -1,5 +1,4 @@
-/* $Id$
- *
+/*
  * Copyright (c) Joe English, Pat Thoyts, Michael Kirkham
  *
  * ttk::progressbar widget.
@@ -69,6 +68,8 @@ static Tk_OptionSpec ProgressbarOptionSpecs[] =
     {TK_OPTION_INT, "-phase", "phase", "Phase",
 	"0", Tk_Offset(Progressbar,progress.phaseObj), -1,
 	0, 0, 0 },
+
+    WIDGET_TAKEFOCUS_FALSE,
     WIDGET_INHERIT_OPTIONS(ttkCoreOptionSpecs)
 };
 
@@ -420,21 +421,23 @@ static int ProgressbarStepCommand(
     }
 
     newValueObj = Tcl_NewDoubleObj(value);
+    Tcl_IncrRefCount(newValueObj);
 
     TtkRedisplayWidget(&pb->core);
 
     /* Update value by setting the linked -variable, if there is one: 
      */
     if (pb->progress.variableTrace) {
-	return Tcl_ObjSetVar2(
-		    interp, pb->progress.variableObj, 0, newValueObj,
-		    TCL_GLOBAL_ONLY | TCL_LEAVE_ERR_MSG)
-	    ? TCL_OK : TCL_ERROR;
+	int result = Tcl_ObjSetVar2(
+		        interp, pb->progress.variableObj, 0, newValueObj,
+		        TCL_GLOBAL_ONLY | TCL_LEAVE_ERR_MSG)
+	        ? TCL_OK : TCL_ERROR;
+        Tcl_DecrRefCount(newValueObj);
+        return result;
     }
 
     /* Otherwise, change the -value directly:
      */
-    Tcl_IncrRefCount(newValueObj);
     Tcl_DecrRefCount(pb->progress.valueObj);
     pb->progress.valueObj = newValueObj;
     CheckAnimation(pb);

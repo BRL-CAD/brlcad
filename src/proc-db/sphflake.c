@@ -1,7 +1,7 @@
 /*                      S P H F L A K E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,6 +31,7 @@
 #include <math.h>
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -138,6 +139,8 @@ int main(int argc, char **argv)
     int inter = 0;
     char fileName[MAX_INPUT_LENGTH] = {0};
     int depth = DEFAULT_MAXDEPTH;
+
+    bu_setprogname(argv[0]);
 
     memset(fileName, 0, MAX_INPUT_LENGTH);
     bu_strlcpy(fileName, DEFAULT_FILENAME, sizeof(fileName));

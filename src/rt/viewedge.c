@@ -1,7 +1,7 @@
 /*                      V I E W E D G E . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2016 United States Government as represented by
+ * Copyright (c) 2001-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -272,66 +272,6 @@ struct bu_structparse view_parse[] = {
 
 const char title[] = "RT Hidden-Line Renderer";
 
-void
-usage(const char *argv0)
-{
-    bu_log("Usage:  %s [options] model.g objects... >file.pix\n", argv0);
-    bu_log("Options:\n");
-    bu_log(" -r		Report overlaps (default)\n");
-    bu_log(" -R		Do not report overlaps\n");
-    bu_log(" -M		Read matrix+commands on stdin\n");
-    bu_log(" -o model.pix	Output .pix format file (default is window)\n");
-    bu_log(" -s #		Square grid size in pixels (default is 512)\n");
-    bu_log(" -w # -n #	Grid size width (w) and height (n) in pixels\n");
-    bu_log(" -a # -e #	Azimuth (a) and elevation (e) in degrees\n");
-    bu_log(" -V #		View (pixel) aspect ratio (width/height)\n");
-    bu_log(" -p #		Perspective angle, degrees side to side (0 <= # < 180)\n");
-    bu_log(" -P #		Set number of processors\n");
-    bu_log(" -T # or -T #,# or -T #/#\n");
-    bu_log("		Tolerance: distance or distance,angular or distance/angular\n");
-    bu_log(" -l #		Set lighting model rendering style (default is 0)\n");
-    bu_log(" -U #		Use air if # is greater than 0\n");
-    bu_log(" -x #		librt debug flags\n");
-    bu_log(" -N #		NMG debug flags\n");
-    bu_log(" -X #		rt debug flags\n");
-    bu_log(" -. #		Select factor in NUgrid algorithm (default is 1.5)\n");
-    bu_log(" -, #		Selection of which space partitioning algorithm to use\n");
-    bu_log(" -@ #		Set limit to each dimension of the nugrid\n");
-    bu_log(" -b \"# #\"	Specify X and Y pixel coordinates (need quotes) for single ray to be fired, for debugging\n");
-    bu_log(" -c		Auxiliary commands (see man page)\n");
-    bu_log(" -d #		Set flag for reporting of pixel distances\n");
-    bu_log(" -f #		Set expected playback rate in frames-per-second (default is 30)\n");
-    bu_log(" -g #		Set grid cell width, in millimeters\n");
-    bu_log(" -m density,r,g,b\n");
-    bu_log("		Provide parameters for an exponential shading (default r,g,b is 0.8,0.9,0.99)\n");
-    bu_log(" -i		Enable incremental mode processing\n");
-    bu_log(" -j xmin,xmax,ymin,ymax\n");
-    bu_log("		Enable processing of sub-rectangle\n");
-    bu_log(" -k xdir,ydir,zdir,dist\n");
-    bu_log("		Enable use of a cutting plane\n");
-    bu_log(" -l #		Select lighting model (default is 0)\n");
-    bu_log(" -t		Reverse the order of grid traversal (default is not to do that)\n");
-    bu_log(" -u units	Specify the units (or use \"model\" for the local model's units)\n");
-    bu_log(" -v #		Set the verbosity bit vector flags\n");
-    bu_log(" -A #		Set the ambient light intensity\n");
-    bu_log(" -B		Turn on the \"benchmark\" flag (default is off)\n");
-    bu_log(" -C #/#/#	Set the background color to the RGB value #/#/#\n");
-    bu_log(" -D #		Specify the starting frame number (ending frame number is specified via -K #)\n");
-    bu_log(" -E #           Set the distance from eye point to center of the model RPP (default is sqrt(2))\n");
-    bu_log(" -F framebuffer	Cause output to be sent to the indicated framebuffer\n");
-    bu_log(" -G #		Set grid cell height, in millimeters\n");
-    bu_log(" -H #		Set number of extra rays to fire\n");
-    bu_log(" -J #		Set a bit vector for \"jitter\"\n");
-    bu_log(" -K #		Specify the ending frame number (starting frame number is specified via -D #)\n");
-    bu_log(" -O model.pix	Output .pix format file, double precision format\n");
-    bu_log(" -Q x,y		Select pixel ray for query with debugging; compute other pixels without debugging\n");
-    bu_log(" -S		Enable stereo viewing (off by default)\n");
-    bu_log(" -W		Set background image color to white (default is black)\n");
-    bu_log(" -! #		Turn on the libbu(3) library debugging flags\n");
-    bu_log(" -+ t		Specify that output is NOT binary (default is that it is); -+ is otherwise not\n");
-    bu_log("		implemented\n");
-}
-
 
 int handle_main_ray(struct application *ap, register struct partition *PartHeadp, struct seg *segp);
 int diffpixel(RGBpixel a, RGBpixel b);
@@ -382,9 +322,14 @@ static int occludes(struct application *ap, struct cell *here)
 	return 2;
     }
 
-    if (occlusion_apps[cpu]->a_dist < here->c_dist) {
-	/*
-	 * The second geometry is close than the edge, therefore it is
+    if (NEAR_EQUAL(occlusion_apps[cpu]->a_dist, here->c_dist, BN_TOL_DIST)) {
+	/* same hit point.  object is probably in first and second
+	 * geometry sets.  it's not occluding itself, but we want an
+	 * edge because it's in the first display set.
+	 */
+	return 1;
+    } else if (	occlusion_apps[cpu]->a_dist < here->c_dist) {
+	/* second geometry is closer than the first, therefore it is
 	 * 'foreground'. Do not draw the edge.
 	 *
 	 * This pixel DOES NOT occlude the second geometry.
@@ -488,7 +433,7 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 	nObjs = split_argc;
 
 	for (i=0; i<nObjs; ++i) {
-	    bu_log("rtedge: occlusion object %d = %s\n", i, objs[i]);
+	    bu_log("rtedge: occlusion object %zu = %s\n", i, objs[i]);
 	}
 
 
@@ -519,7 +464,7 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 	    if (rt_gettree(occlusion_rtip, objs[i]) < 0)
 		bu_log("rtedge: gettree failed for %s\n", objs[i]);
 	    else
-		bu_log("rtedge: got tree for object %d = %s\n", i, objs[i]);
+		bu_log("rtedge: got tree for object %zu = %s\n", i, objs[i]);
 
 	bu_free((char *)objs, "free occlusion objs array");
 
@@ -574,6 +519,26 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 	bu_exit(EXIT_FAILURE, "rtedge: occlusion mode set, but no objects were specified.\n");
     }
 
+
+    // TODO - the setting of colors below broke the -W flag - lines and
+    // background were both white.  Looks like rtedge was relying on bgcolor
+    // being black to get a black line in that mode, but it gets set to white
+    // first via -W.  Work around this by stashing the "original" bgcolor in a
+    // temporary variable, but this is just a hacky workaround to restore
+    // previous behavior.  If -W is just doing what it is supposed to do by
+    // setting a white background, and rtedge wants to set default line color
+    // that is far away from the background color automatically, we need a
+    // different solution for the general case. There is no guarantee that the
+    // initialized contents of bgcolor (currently hard-coded to 0,0,0 up on
+    // line 159) will be appropriate for all backgrounds - indeed, it is
+    // trivially NOT appropriate for all possible background colors.
+    color tmpcolor;
+    tmpcolor[RED] = bgcolor[RED];
+    tmpcolor[GRN] = bgcolor[GRN];
+    tmpcolor[BLU] = bgcolor[BLU];
+
+
+    // Set bgcolor and fgcolor from the floating point versions
     bgcolor[0] = background[0] * 255.0 + 0.5;
     bgcolor[1] = background[1] * 255.0 + 0.5;
     bgcolor[2] = background[2] * 255.0 + 0.5;
@@ -587,13 +552,13 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
     if (!default_background) {
 	int tmp;
 	tmp = fgcolor[RED];
-	fgcolor[RED] = bgcolor[RED];
+	fgcolor[RED] = tmpcolor[RED];
 	bgcolor[RED] = tmp;
 	tmp = fgcolor[GRN];
-	fgcolor[GRN] = bgcolor[GRN];
+	fgcolor[GRN] = tmpcolor[GRN];
 	bgcolor[GRN] = tmp;
 	tmp = fgcolor[BLU];
-	fgcolor[BLU] = bgcolor[BLU];
+	fgcolor[BLU] = tmpcolor[BLU];
 	bgcolor[BLU] = tmp;
     }
 
@@ -960,13 +925,13 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
      *
      *    left      right
      * _____________________
-     * |0, 0 | AL | AR | 0, 3|  above
+     * |0 0 | AL | AR | 0 3|  above
      * |____|____|____|____|
      * | TL | UL | UR | TR |  top/upper
      * |____|____|____|____|
      * | BL | LL | LR | BR |  bottom/lower
      * |____|____|____|____|
-     * |3, 0 | DL | DR | 3, 3|  debajo
+     * |3 0 | DL | DR | 3 3|  debajo
      * |____|____|____|____|
      */
 
@@ -1372,9 +1337,11 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
      * check on edges as well since right side and top edges are
      * actually misses.
      */
-    if (occlusion_mode != OCCLUSION_MODE_NONE)
-	if (me.c_ishit || edge)
+    if (occlusion_mode != OCCLUSION_MODE_NONE) {
+	if (me.c_ishit || edge) {
 	    oc = occludes(ap, &me);
+	}
+    }
 
     /*
      * Perverse Pixel Painting Paradigm(tm) If a pixel should be
@@ -1472,6 +1439,14 @@ void application_init(void) {
     view_parse[25].sp_offset = bu_byteoffset(antialias);
     view_parse[26].sp_offset = bu_byteoffset(both_sides);
     view_parse[27].sp_offset = bu_byteoffset(both_sides);
+
+    option("", "-c \"command\"", "Customize behavior (see rtedge manual)", 1);
+    option("Raytrace", "-i", "Enable incremental (progressive-style) rendering", 1);
+    option("Raytrace", "-t", "Render from top to bottom (default: from bottom up)", 1);
+
+    /* this reassignment hack ensures help is last in the first list */
+    option("dummy", "-? or -h", "Display help", 1);
+    option("", "-? or -h", "Display help", 1);
 }
 
 

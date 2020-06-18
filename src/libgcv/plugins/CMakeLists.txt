@@ -5,13 +5,7 @@ set_target_properties(libgcv_plugins PROPERTIES FOLDER "BRL-CAD Shared Libraries
 function(LIBGCV_ADD_PLUGIN plugin_name sources libs)
   set(target_name libgcv_${plugin_name})
   BRLCAD_ADDLIB(${target_name} "${sources}" "libgcv;${libs}" SHARED NO_INSTALL FOLDER "LibGCV Plugins")
-  # TODO - not sure if a straight-up include_directories will work, but if not
-  # we're going to have to up our minimum required version of CMake to >=2.8.12
-  if("${CMAKE_VERSION}" VERSION_GREATER 2.8.11)
-    target_include_directories(${target_name} PRIVATE "${GCV_INCLUDE_DIRS}")
-  else("${CMAKE_VERSION}" VERSION_GREATER 2.8.11)
-    include_directories("${GCV_INCLUDE_DIRS}")
-  endif("${CMAKE_VERSION}" VERSION_GREATER 2.8.11)
+  target_include_directories(${target_name} PRIVATE "${GCV_INCLUDE_DIRS}")
 
   set(DIR_TYPES LIBRARY RUNTIME ARCHIVE)
   if(NOT CMAKE_CONFIGURATION_TYPES)
@@ -32,11 +26,6 @@ function(LIBGCV_ADD_PLUGIN plugin_name sources libs)
       endforeach(DIR_TYPE ${DIR_TYPES})
     endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
   endif(NOT CMAKE_CONFIGURATION_TYPES)
-
-  # We're using GCV_EXPORT for these plugins, so we need to set the DLL_EXPORTS accordingly
-  if(CPP_DLL_DEFINES)
-    set_property(TARGET ${target_name} APPEND PROPERTY COMPILE_DEFINITIONS "GCV_DLL_EXPORTS")
-  endif(CPP_DLL_DEFINES)
 
   install(TARGETS ${target_name}
     RUNTIME DESTINATION ${BIN_DIR}/${LIBGCV_PLUGINS_DIRECTORY}
@@ -59,6 +48,8 @@ endfunction(GET_LIBGCV_PLUGINS)
 
 
 GET_LIBGCV_PLUGINS()
+
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

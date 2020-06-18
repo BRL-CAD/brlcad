@@ -1,7 +1,7 @@
 /*              T E S T _ B O T 2 N U R B S . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2016 United States Government as represented by
+ * Copyright (c) 2013-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -118,9 +118,9 @@ face_area(struct rt_bot_internal *bot, size_t face_num)
     VMOVE(ptA, &bot->vertices[bot->faces[face_num*3+0]*3]);
     VMOVE(ptB, &bot->vertices[bot->faces[face_num*3+1]*3]);
     VMOVE(ptC, &bot->vertices[bot->faces[face_num*3+2]*3]);
-    a = DIST_PT_PT(ptA, ptB);
-    b = DIST_PT_PT(ptB, ptC);
-    c = DIST_PT_PT(ptC, ptA);
+    a = DIST_PNT_PNT(ptA, ptB);
+    b = DIST_PNT_PNT(ptB, ptC);
+    c = DIST_PNT_PNT(ptC, ptA);
     p = (a + b + c)/2;
     area = sqrt(p*(p-a)*(p-b)*(p-c));
     return area;
@@ -883,7 +883,7 @@ bot_partition(struct Manifold_Info *info)
 					double dist_to_plane = plane.DistanceTo(ON_3dPoint(cpt[0], cpt[1], cpt[2]));
 					//std::cout << "Distance[" << face_num << "," << (*cf_it) << "](" <<  pt << "): " << dist_to_plane << "\n";
 					if (dist_to_plane > 0) {
-					    double dist = DIST_PT_PT(origin, cpt);
+					    double dist = DIST_PNT_PNT(origin, cpt);
 					    double angle = atan(dist_to_plane/dist);
 					    if (angle > info->neighbor_angle_threshold) ok = 0;
 					}
@@ -1559,6 +1559,8 @@ main(int argc, char *argv[])
     struct bu_vls name;
     struct bu_vls bname;
 
+    bu_setprogname(argv[0]);
+
     FaceList::iterator f_it;
 
     Manifold_Info info;
@@ -1630,7 +1632,7 @@ main(int argc, char *argv[])
     wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
     bu_vls_init(&bname);
     bu_vls_sprintf(&bname, "%s_brep", argv[2]);
-    if (mk_brep(wdbp, bu_vls_addr(&bname), info.brep) == 0) {
+    if (mk_brep(wdbp, bu_vls_addr(&bname), (void *)(info.brep)) == 0) {
 	bu_log("Generated brep object %s\n", bu_vls_addr(&bname));
     }
 
@@ -1638,7 +1640,7 @@ main(int argc, char *argv[])
     for (int fc = 0; fc < info.brep->m_F.Count(); fc++) {
 	ON_Brep *brep_face = info.brep->DuplicateFace(fc, false);
 	bu_vls_sprintf(&bname, "%s_face_%d", argv[2], fc);
-	if (mk_brep(wdbp, bu_vls_addr(&bname), brep_face) == 0) {
+	if (mk_brep(wdbp, bu_vls_addr(&bname), (void *)brep_face) == 0) {
 	    bu_log("Generated brep object %s\n", bu_vls_addr(&bname));
 	}
     }

@@ -1,7 +1,7 @@
 /*                      D E C I M A T E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,6 +38,7 @@
 #include <stdio.h>
 #include <limits.h> /* for INT_MAX */
 
+#include "bu/app.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 
@@ -68,6 +69,8 @@ main(int argc, char **argv)
 
     int failure;
 
+    bu_setprogname(argv[0]);
+
     if (argc < 4) {
 	bu_exit (1, "%s", usage);
     }
@@ -94,7 +97,7 @@ main(int argc, char **argv)
 	bu_log("decimate: bad size of output range: %ldx%ld\n", (long int)owidth, (long int)oheight);
     }
     if (failure) {
-	bu_exit(EXIT_FAILURE, usage);
+	bu_exit(EXIT_FAILURE, "%s", usage);
     }
 
     /* Determine how many samples/lines to discard after each one saved,

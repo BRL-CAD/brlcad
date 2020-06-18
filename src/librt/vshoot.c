@@ -1,7 +1,7 @@
 /*                        V S H O O T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2016 United States Government as represented by
+ * Copyright (c) 1985-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -141,7 +141,7 @@ rt_vshootray(struct application *ap)
     }
     RT_CK_RESOURCE(ap->a_resource);
 
-    if (RT_G_DEBUG&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION)) {
+    if (RT_G_DEBUG&(RT_DEBUG_ALLRAYS|RT_DEBUG_SHOOT|RT_DEBUG_PARTITION)) {
 	bu_log("\n**********mshootray cpu=%d  %d, %d lvl=%d (%s)\n",
 	       ap->a_resource->re_cpu,
 	       ap->a_x, ap->a_y,
@@ -324,7 +324,7 @@ rt_vshootray(struct application *ap)
      * VJOIN1(hitp->hit_point, rp->r_pt, hitp->hit_dist, rp->r_dir);
      */
 hitit:
-    if (RT_G_DEBUG&DEBUG_SHOOT) rt_pr_partitions(rtip, &FinalPart, "a_hit()");
+    if (RT_G_DEBUG&RT_DEBUG_SHOOT) rt_pr_partitions(rtip, &FinalPart, "a_hit()");
 
     if (ap->a_hit)
 	ret = ap->a_hit(ap, &FinalPart, HeadSeg/* &finished_segs */);
@@ -363,7 +363,7 @@ out:
     if (solidbits != NULL) {
 	bu_bitv_free(solidbits);
     }
-    if (RT_G_DEBUG&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION)) {
+    if (RT_G_DEBUG&(RT_DEBUG_ALLRAYS|RT_DEBUG_SHOOT|RT_DEBUG_PARTITION)) {
 	bu_log("----------mshootray cpu=%d  %d, %d lvl=%d (%s) %s ret=%d\n",
 	       ap->a_resource->re_cpu,
 	       ap->a_x, ap->a_y,

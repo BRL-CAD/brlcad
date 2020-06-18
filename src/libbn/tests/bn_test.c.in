@@ -1,7 +1,7 @@
 /*                    B N _ T E S T . C . I N
  * BRL-CAD
  *
- * Copyright (c) 2011-2016 United States Government as represented by
+ * Copyright (c) 2011-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,6 +32,8 @@
 int
 main(int ac, char *av[])
 {
+    bu_setprogname(av[0]);
+
     if (ac < 2)	bu_exit(1, "Usage: %s [test] options\n\nAvailable tests:\n@BN_TEST_LIST@", av[0]);
 
     ac--; av++;

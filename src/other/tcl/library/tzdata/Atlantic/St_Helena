@@ -1,7 +1,5 @@
 # created by tools/tclZIC.tcl - do not edit
-
-set TZData(:Atlantic/St_Helena) {
-    {-9223372036854775808 -1368 0 LMT}
-    {-2524520232 -1368 0 JMT}
-    {-599614632 0 0 GMT}
+if {![info exists TZData(Africa/Abidjan)]} {
+    LoadTimeZoneFile Africa/Abidjan
 }
+set TZData(:Atlantic/St_Helena) $TZData(:Africa/Abidjan)

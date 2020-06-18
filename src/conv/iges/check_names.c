@@ -1,7 +1,7 @@
 /*                   C H E C K _ N A M E S . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -156,11 +156,11 @@ Skip_field()
     int done = 0;
     int lencard;
 
-    if (card[counter] == eof) {
+    if (card[counter] == eofd) {
 	/* This is an empty field */
 	counter++;
 	return;
-    } else if (card[counter] == eor) /* Up against the end of record */
+    } else if (card[counter] == eord) /* Up against the end of record */
 	return;
 
     if (card[72] == 'P')
@@ -172,15 +172,15 @@ Skip_field()
 	Readrec(++currec);
 
     while (!done) {
-	while (card[counter++] != eof && card[counter] != eor &&
+	while (card[counter++] != eofd && card[counter] != eord &&
 	       counter <= lencard);
-	if (counter > lencard && card[counter] != eor && card[counter] != eof)
+	if (counter > lencard && card[counter] != eord && card[counter] != eofd)
 	    Readrec(++currec);
 	else
 	    done = 1;
     }
 
-    if (card[counter] == eor)
+    if (card[counter] == eord)
 	counter--;
 }
 
@@ -328,8 +328,8 @@ Get_csg_name(int entityno)
 {
     int sol_num;
     int i, j, k;
-    int num;
     int skip;
+    int num = 0;
     int no_of_assoc = 0;
     int no_of_props = 0;
     int name_de = 0;
@@ -474,7 +474,7 @@ void
 Get_subfig_name(size_t entityno)
 {
     int i;
-    int entity_type;
+    int entity_type = 0;
     char *name;
 
     if (entityno >= totentities)

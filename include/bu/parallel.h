@@ -1,7 +1,7 @@
 /*                      P A R A L L E L . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -78,25 +78,8 @@ BU_EXPORT extern int bu_parallel_id(void);
 
 /**
  * @brief
- * terminate a given process.
- */
-
-/**
- * terminate a given process and any children.
- *
- * returns truthfully whether the process could be killed.
- */
-BU_EXPORT extern int bu_terminate(int process);
-
-/**
- * @brief
  * process management routines
  */
-
-/**
- * returns the process ID of the calling process
- */
-BU_EXPORT extern int bu_process_id(void);
 
 /**
  * @brief
@@ -155,36 +138,39 @@ BU_EXPORT extern size_t bu_avail_cpus(void);
  *
  * In following is a working stand-alone example demonstrating how to
  * call the bu_parallel() interface.
-
-@code
-void shoot_cells_in_series(int width, int height) {
-  int i, j;
-  for (i=0; i<height; i++)
-    for (j=0; j<width; j++)
-      printf("Shooting cell (%d, %d) on CPU %d\n", i, j, bu_parallel_id());
-}
-
-void shoot_row_per_thread(int cpu, void *mydata) {
-  int i, j, width;
-  width = *(int *)mydata;
-  for (i=0; i<width; i++)
-    printf("Shooting cell (%d, %d) on CPU %d\n", i, cpu, bu_parallel_id());
-}
-
-void shoot_cells_in_parallel(int width, int height) {
-  bu_parallel(shoot_row_per_thread, height, &width);
-  // we don't reach here until all threads complete
-}
-
-int main(int ac, char *av[]) {
-  int width = 4, height = 4;
-  printf("\nShooting cells one at a time, 4x4 grid:\n");
-  shoot_cells_in_series(width, height);
-  printf("\nShooting cells in parallel with 4 threads, one per row:\n");
-  shoot_cells_in_parallel(width, height);
-  return 0;
-}
-@endcode
+ *
+ * @code
+ * void shoot_cells_in_series(int width, int height) {
+ *   int i, j;
+ *   for (i=0; i<height; i++) {
+ *     for (j=0; j<width; j++) {
+ *       printf("Shooting cell (%d, %d) on CPU %d\n", i, j, bu_parallel_id());
+ *     }
+ *   }
+ * }
+ *
+ * void shoot_row_per_thread(int cpu, void *mydata) {
+ *   int i, j, width;
+ *   width = *(int *)mydata;
+ *   for (i=0; i<width; i++) {
+ *     printf("Shooting cell (%d, %d) on CPU %d\n", i, cpu, bu_parallel_id());
+ *   }
+ * }
+ *
+ * void shoot_cells_in_parallel(int width, int height) {
+ *   bu_parallel(shoot_row_per_thread, height, &width);
+ *   // we don't reach here until all threads complete
+ * }
+ *
+ * int main(int ac, char *av[]) {
+ *   int width = 4, height = 4;
+ *   printf("\nShooting cells one at a time, 4x4 grid:\n");
+ *   shoot_cells_in_series(width, height);
+ *   printf("\nShooting cells in parallel with 4 threads, one per row:\n");
+ *   shoot_cells_in_parallel(width, height);
+ *   return 0;
+ * }
+ * @endcode
  */
 BU_EXPORT extern void bu_parallel(void (*func)(int func_cpu_id, void *func_data), size_t ncpu, void *data);
 
@@ -204,17 +190,41 @@ BU_EXPORT extern void bu_parallel(void (*func)(int func_cpu_id, void *func_data)
  * because bu_log() acquires semaphore #0 (BU_SEM_SYSCALL).
  */
 
-/*
- * Section for manifest constants for bu_semaphore_acquire()
+/**
+ *
  */
-#define BU_SEM_SYSCALL 0
-#define BU_SEM_LISTS 1
-#define BU_SEM_BN_NOISE 2
-#define BU_SEM_MAPPEDFILE 3
-#define BU_SEM_THREAD 4
-#define BU_SEM_MALLOC 5
-#define BU_SEM_DATETIME 6
-#define BU_SEM_LAST (BU_SEM_DATETIME+1) /* allocate this many for LIBBU+LIBBN */
+BU_EXPORT extern int bu_semaphore_register(const char *name);
+
+
+/**
+ * emaphores available for both library and application
+ * use.
+ *
+ */
+#define BU_SEMAPHORE_DEFINE(x) x = bu_semaphore_register(CPP_STR(x))
+
+/**
+ * This semaphore is intended for short-lived protection.
+ *
+ * It is provided for both library and application use, code that
+ * doesn't call into a BRL-CAD library.
+ */
+BU_EXPORT extern int BU_SEM_GENERAL;
+
+/**
+ * This semaphore is intended to protect general system calls.
+ *
+ * It is provided for both library and application use, code that
+ * doesn't call into a BRL-CAD library.
+ */
+BU_EXPORT extern int BU_SEM_SYSCALL;
+
+/**
+ * FIXME: this one shouldn't need to be global.
+ */
+BU_EXPORT extern int BU_SEM_MAPPEDFILE;
+
+
 /*
  * Automatic restart capability in bu_bomb().  The return from
  * BU_SETJUMP is the return from the setjmp().  It is 0 on the first
@@ -242,6 +252,8 @@ BU_EXPORT extern void bu_semaphore_init(unsigned int nsemaphores);
 
 /**
  * Release all initialized semaphores and any associated memory.
+ *
+ * FIXME: per hacking, rename to bu_semaphore_clear()
  */
 BU_EXPORT extern void bu_semaphore_free(void);
 

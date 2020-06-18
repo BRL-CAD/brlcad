@@ -1,7 +1,7 @@
 /*                    T G C _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,6 @@
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "brep.h"
-
 
 extern "C" void
 rt_tgc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *UNUSED(tol))
@@ -91,10 +90,9 @@ rt_tgc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     ellcurve1->SetDomain(0.0, 1.0);
     ellcurve2->SetDomain(0.0, 1.0);
 
-    // Create the side surface with
-    // ON_NurbsSurface::CreateRuledSurface and the top and bottom
-    // planes by using the ellipses as outer trimming curves - define
-    // UV surfaces for the top and bottom such that they contain the
+    // Create the side surface with ON_NurbsSurface::CreateRuledSurface and the
+    // top and bottom planes by using the ellipses as outer trimming curves -
+    // define UV surfaces for the top and bottom such that they contain the
     // ellipses.
     ON_SimpleArray<ON_Curve*> bottomboundary;
     bottomboundary.Append(ON_Curve::Cast(ellcurve1));
@@ -114,6 +112,7 @@ rt_tgc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     bp->SetExtents(1, bp->Domain(1));
     (*b)->SetTrimIsoFlags(bface);
     (*b)->FlipFace(bface);
+    int ell1eind = (*b)->m_E.Count() - 1;
 
     ON_SimpleArray<ON_Curve*> topboundary;
     topboundary.Append(ON_Curve::Cast(ellcurve2));
@@ -132,27 +131,14 @@ rt_tgc_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     tp->SetExtents(0, tp->Domain(0));
     tp->SetExtents(1, tp->Domain(1));
     (*b)->SetTrimIsoFlags(tface);
+    int ell2eind = (*b)->m_E.Count() - 1;
 
 
-    // Need to use NewRuledEdge here, which means valid edges need to
-    // be created using the ellipses
+    // For the side of the tgc, use NewRuledEdge and reuse the 3D edges from
+    // the ellipses of the end cap surfaces.
+    (*b)->NewRuledFace((*b)->m_E[ell1eind], false, (*b)->m_E[ell2eind], false);
 
-    int ell1ind = (*b)->AddEdgeCurve(ellcurve1);
-    int ell2ind = (*b)->AddEdgeCurve(ellcurve2);
-    ON_BrepVertex& bottomvert1 = (*b)->NewVertex(ellcurve1->PointAt(0), SMALL_FASTF);
-    bottomvert1.m_tolerance = 0.0;
-    int vert1ind = (*b)->m_V.Count() - 1;
-    ON_BrepVertex& topvert1 = (*b)->NewVertex(ellcurve2->PointAt(0), SMALL_FASTF);
-    topvert1.m_tolerance = 0.0;
-    int vert2ind = (*b)->m_V.Count() - 1;
-    ON_BrepEdge& bottomedge = (*b)->NewEdge((*b)->m_V[vert1ind], (*b)->m_V[vert1ind], ell1ind);
-    bottomedge.m_tolerance = 0.0;
-    int bei = (*b)->m_E.Count() - 1;
-    ON_BrepEdge& topedge = (*b)->NewEdge((*b)->m_V[vert2ind], (*b)->m_V[vert2ind], ell2ind);
-    topedge.m_tolerance = 0.0;
-    int tei = (*b)->m_E.Count() - 1;
-
-    (*b)->NewRuledFace((*b)->m_E[bei], false, (*b)->m_E[tei], false);
+    (*b)->Compact();
 }
 
 

@@ -1,7 +1,7 @@
 /*                           V O L . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2016 United States Government as represented by
+ * Copyright (c) 1989-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -102,10 +102,14 @@ extern void rt_vol_plate(point_t a, point_t b, point_t c, point_t d,
 #define VOL_XWIDEN 2
 #define VOL_YWIDEN 2
 #define VOL_ZWIDEN 2
-#define VOL(_vip, _xx, _yy, _zz)	(_vip)->map[ \
-	(((_zz)+VOL_ZWIDEN) * ((_vip)->ydim + VOL_YWIDEN*2)+ \
-	 ((_yy)+VOL_YWIDEN))* ((_vip)->xdim + VOL_XWIDEN*2)+ \
-	(_xx)+VOL_XWIDEN ]
+#define VOLIDX(_xdim, _ydim, _xx, _yy, _zz) \
+	(((_zz)+VOL_ZWIDEN) \
+	 * ((_ydim) + VOL_YWIDEN*2) \
+	 + ((_yy)+VOL_YWIDEN)) \
+	* ((_xdim) + VOL_XWIDEN*2) \
+	+ (_xx)+VOL_XWIDEN
+#define VOLMAP(_map, _xdim, _ydim, _xx, _yy, _zz) (_map)[ VOLIDX(_xdim, _ydim, _xx, _yy, _zz) ]
+#define VOL(_vip, _xx, _yy, _zz) VOLMAP((_vip)->map, (_vip)->xdim, (_vip)->ydim, _xx, _yy, _zz)
 
 #define OK(_vip, _v)	((_v) >= (_vip)->lo && (_v) <= (_vip)->hi)
 
@@ -133,6 +137,7 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     vect_t P;	/* hit point */
     int inside;	/* inside/outside a solid flag */
     int in_axis;
+    int axis_set = 0;
     int out_axis;
     int j;
     struct xray ideal_ray;
@@ -167,14 +172,14 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     if (! rt_in_rpp(rp, invdir, P, volp->vol_large))
 	return 0;	/* MISS */
     VJOIN1(P, rp->r_pt, rp->r_min, rp->r_dir);	/* P is hit point */
-    if (RT_G_DEBUG&DEBUG_VOL)VPRINT("vol_large", volp->vol_large);
-    if (RT_G_DEBUG&DEBUG_VOL)VPRINT("vol_origin", volp->vol_origin);
-    if (RT_G_DEBUG&DEBUG_VOL)VPRINT("r_pt", rp->r_pt);
-    if (RT_G_DEBUG&DEBUG_VOL)VPRINT("P", P);
-    if (RT_G_DEBUG&DEBUG_VOL)VPRINT("cellsize", volp->vol_i.cellsize);
+    if (RT_G_DEBUG&RT_DEBUG_VOL)VPRINT("vol_large", volp->vol_large);
+    if (RT_G_DEBUG&RT_DEBUG_VOL)VPRINT("vol_origin", volp->vol_origin);
+    if (RT_G_DEBUG&RT_DEBUG_VOL)VPRINT("r_pt", rp->r_pt);
+    if (RT_G_DEBUG&RT_DEBUG_VOL)VPRINT("P", P);
+    if (RT_G_DEBUG&RT_DEBUG_VOL)VPRINT("cellsize", volp->vol_i.cellsize);
     t0 = rp->r_min;
     tmax = rp->r_max;
-    if (RT_G_DEBUG&DEBUG_VOL)bu_log("[shoot: r_min=%g, r_max=%g]\n", rp->r_min, rp->r_max);
+    if (RT_G_DEBUG&RT_DEBUG_VOL)bu_log("[shoot: r_min=%g, r_max=%g]\n", rp->r_min, rp->r_max);
 
     /* find grid cell where ray first hits ideal space bounding RPP */
     igrid[X] = (P[X] - volp->vol_origin[X]) / volp->vol_i.cellsize[X];
@@ -195,7 +200,7 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     } else if ((size_t)igrid[Z] >= volp->vol_i.zdim) {
 	igrid[Z] = volp->vol_i.zdim-1;
     }
-    if (RT_G_DEBUG&DEBUG_VOL)bu_log("igrid=(%d, %d, %d)\n", igrid[X], igrid[Y], igrid[Z]);
+    if (RT_G_DEBUG&RT_DEBUG_VOL)bu_log("igrid=(%d, %d, %d)\n", igrid[X], igrid[Y], igrid[Z]);
 
     /* X setup */
     if (ZERO(rp->r_dir[X])) {
@@ -207,6 +212,11 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	t[X] = (volp->vol_origin[X] + j*volp->vol_i.cellsize[X] -
 		rp->r_pt[X]) * invdir[X];
 	delta[X] = volp->vol_i.cellsize[X] * fabs(invdir[X]);
+
+	/* face of entry into first cell -- max initial t value */
+	t0 = t[X];
+	in_axis = X;
+	axis_set = 1;
     }
     /* Y setup */
     if (ZERO(rp->r_dir[Y])) {
@@ -218,6 +228,19 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	t[Y] = (volp->vol_origin[Y] + j*volp->vol_i.cellsize[Y] -
 		rp->r_pt[Y]) * invdir[Y];
 	delta[Y] = volp->vol_i.cellsize[Y] * fabs(invdir[Y]);
+
+	/* face of entry into first cell -- max initial t value */
+	if (axis_set) {
+	    if (t[Y] > t0) {
+		t0 = t[Y];
+		in_axis = Y;
+	    }
+	}
+	else {
+	    t0 = t[Y];
+	    in_axis = Y;
+	    axis_set = 1;
+	}
     }
     /* Z setup */
     if (ZERO(rp->r_dir[Z])) {
@@ -229,26 +252,29 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	t[Z] = (volp->vol_origin[Z] + j*volp->vol_i.cellsize[Z] -
 		rp->r_pt[Z]) * invdir[Z];
 	delta[Z] = volp->vol_i.cellsize[Z] * fabs(invdir[Z]);
+
+	/* face of entry into first cell -- max initial t value */
+	if (axis_set) {
+	    if (t[Z] > t0) {
+		t0 = t[Z];
+		in_axis = Z;
+	    }
+	}
+	else {
+	    t0 = t[Z];
+	    in_axis = Z;
+	    axis_set = 1;
+	}
     }
 
     /* The delta[] elements *must* be positive, as t must increase */
-    if (RT_G_DEBUG&DEBUG_VOL)bu_log("t[X] = %g, delta[X] = %g\n", t[X], delta[X]);
-    if (RT_G_DEBUG&DEBUG_VOL)bu_log("t[Y] = %g, delta[Y] = %g\n", t[Y], delta[Y]);
-    if (RT_G_DEBUG&DEBUG_VOL)bu_log("t[Z] = %g, delta[Z] = %g\n", t[Z], delta[Z]);
+    if (RT_G_DEBUG&RT_DEBUG_VOL)bu_log("t[X] = %g, delta[X] = %g\n", t[X], delta[X]);
+    if (RT_G_DEBUG&RT_DEBUG_VOL)bu_log("t[Y] = %g, delta[Y] = %g\n", t[Y], delta[Y]);
+    if (RT_G_DEBUG&RT_DEBUG_VOL)bu_log("t[Z] = %g, delta[Z] = %g\n", t[Z], delta[Z]);
 
-    /* Find face of entry into first cell -- max initial t value */
-    if (t[X] >= t[Y]) {
-	in_axis = X;
-	t0 = t[X];
-    } else {
-	in_axis = Y;
-	t0 = t[Y];
-    }
-    if (t[Z] > t0) {
-	in_axis = Z;
-	t0 = t[Z];
-    }
-    if (RT_G_DEBUG&DEBUG_VOL)bu_log("Entry axis is %s, t0=%g\n", in_axis==X ? "X" : (in_axis==Y?"Y":"Z"), t0);
+    if (!axis_set) bu_log("ERROR vol: no valid entry face found\n");
+
+    if (RT_G_DEBUG&RT_DEBUG_VOL)bu_log("Entry axis is %s, t0=%g\n", in_axis==X ? "X" : (in_axis==Y?"Y":"Z"), t0);
 
     /* Advance to next exits */
     t[X] += delta[X];
@@ -268,7 +294,7 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	bu_log("*** advancing t[Z]\n");
 	t[Z] += delta[Z];
     }
-    if (RT_G_DEBUG&DEBUG_VOL) VPRINT("Exit t[]", t);
+    if (RT_G_DEBUG&RT_DEBUG_VOL) VPRINT("Exit t[]", t);
 
     inside = 0;
 
@@ -297,10 +323,10 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 	/* Ray passes through cell igrid[XY] from t0 to t1 */
 	val = VOL(&volp->vol_i, igrid[X], igrid[Y], igrid[Z]);
-	if (RT_G_DEBUG&DEBUG_VOL)bu_log("igrid [%d %d %d] from %g to %g, val=%d\n",
+	if (RT_G_DEBUG&RT_DEBUG_VOL)bu_log("igrid [%d %d %d] from %g to %g, val=%d\n",
 					igrid[X], igrid[Y], igrid[Z],
 					t0, t1, val);
-	if (RT_G_DEBUG&DEBUG_VOL)bu_log("Exit axis is %s, t[]=(%g, %g, %g)\n",
+	if (RT_G_DEBUG&RT_DEBUG_VOL)bu_log("Exit axis is %s, t[]=(%g, %g, %g)\n",
 					out_axis==X ? "X" : (out_axis==Y?"Y":"Z"),
 					t[X], t[Y], t[Z]);
 
@@ -326,7 +352,7 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 			(-rt_vol_normtab[in_axis]);
 		}
 		BU_LIST_INSERT(&(seghead->l), &(segp->l));
-		if (RT_G_DEBUG&DEBUG_VOL) bu_log("START t=%g, surfno=%d\n",
+		if (RT_G_DEBUG&RT_DEBUG_VOL) bu_log("START t=%g, surfno=%d\n",
 						 t0, segp->seg_in.hit_surfno);
 	    } else {
 		/* Do nothing, marching through void */
@@ -353,7 +379,7 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		    tail->seg_out.hit_surfno =
 			rt_vol_normtab[in_axis];
 		}
-		if (RT_G_DEBUG&DEBUG_VOL) bu_log("END t=%g, surfno=%d\n",
+		if (RT_G_DEBUG&RT_DEBUG_VOL) bu_log("END t=%g, surfno=%d\n",
 						 t0, tail->seg_out.hit_surfno);
 	    }
 	}
@@ -384,7 +410,7 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 	    /* go right, exit norm goes right */
 	    tail->seg_out.hit_surfno = rt_vol_normtab[in_axis];
 	}
-	if (RT_G_DEBUG&DEBUG_VOL) bu_log("closed END t=%g, surfno=%d\n",
+	if (RT_G_DEBUG&RT_DEBUG_VOL) bu_log("closed END t=%g, surfno=%d\n",
 					 tmax, tail->seg_out.hit_surfno);
     }
 
@@ -476,8 +502,9 @@ rt_vol_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     /* Because of in-memory padding, read each scanline separately */
     for (z = 0; z < vip->zdim; z++) {
 	for (y = 0; y < vip->ydim; y++) {
+	    void *data = &VOLMAP(vip->map, vip->xdim, vip->ydim, 0, y, z);
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
-	    ret = fread(&VOL(vip, 0, y, z), vip->xdim, 1, fp); /* res_syscall */
+	    ret = fread(data, vip->xdim, 1, fp); /* res_syscall */
 	    bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
 	    if (ret < 1) {
 		bu_log("rt_vol_import4(%s): Unable to read whole VOL, y=%zu, z=%zu\n",
@@ -534,6 +561,56 @@ rt_vol_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 }
 
 
+static size_t
+vol_from_file(const char *file, size_t xdim, size_t ydim, size_t zdim, unsigned char **map)
+{
+    size_t y;
+    size_t z;
+    size_t ret = 0;
+    size_t nbytes;
+    FILE *fp;
+
+    /* Get bit map from .bw(5) file */
+    nbytes = (xdim+VOL_XWIDEN*2)*
+	(ydim+VOL_YWIDEN*2)*
+	(zdim+VOL_ZWIDEN*2);
+    *map = (unsigned char *)bu_calloc(1, nbytes, "vol_import4 bitmap");
+
+    bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
+    if ((fp = fopen(file, "rb")) == NULL) {
+	perror(file);
+	bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
+	return 0;
+    }
+    bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
+
+    /* Because of in-memory padding, read each scanline separately */
+    for (z = 0; z < zdim; z++) {
+	for (y = 0; y < ydim; y++) {
+	    size_t fret;
+	    void *data = &VOLMAP(*map, xdim, ydim, 0, y, z);
+
+	    bu_semaphore_acquire(BU_SEM_SYSCALL);	/* lock */
+	    fret = fread(data, xdim, 1, fp);		/* res_syscall */
+	    bu_semaphore_release(BU_SEM_SYSCALL);	/* unlock */
+	    if (fret < 1) {
+		bu_log("rt_vol_import4(%s): Unable to read whole VOL, y=%zu, z=%zu\n", file, y, z);
+		bu_semaphore_acquire(BU_SEM_SYSCALL);	/* lock */
+		fclose(fp);
+		bu_semaphore_release(BU_SEM_SYSCALL);	/* unlock */
+		return 0;
+	    }
+	    ret += xdim;
+	}
+    }
+    bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
+    fclose(fp);
+    bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
+
+    return ret;
+}
+
+
 /**
  * Read in the information from the string solid record.
  * Then, as a service to the application, read in the bitmap
@@ -544,12 +621,8 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 {
     register struct rt_vol_internal *vip;
     struct bu_vls str = BU_VLS_INIT_ZERO;
-    FILE *fp;
-    int nbytes;
-    size_t y;
-    size_t z;
+    size_t nbytes;
     mat_t tmat;
-    size_t ret;
 
     if (dbip) RT_CK_DBI(dbip);
 
@@ -580,52 +653,31 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     bu_vls_free(&str);
 
     /* Check for reasonable values */
-    if (vip->file[0] == '\0' || vip->xdim < 1 ||
-	vip->ydim < 1 || vip->zdim < 1 || vip->mat[15] <= 0.0 ||
-	vip->hi > 255) {
-	bu_struct_print("Unreasonable VOL parameters", rt_vol_parse,
-			(char *)vip);
+    if (vip->file[0] == '\0'
+	|| vip->xdim < 1 || vip->ydim < 1 || vip->zdim < 1
+	|| vip->mat[15] <= 0.0 || vip->hi > 255)
+    {
+	bu_struct_print("Unreasonable VOL parameters", rt_vol_parse, (char *)vip);
 	return -1;
     }
 
+    if (!mat)
+	mat = bn_mat_identity;
+
     /* Apply any modeling transforms to get final matrix */
-    if (mat == NULL) mat = bn_mat_identity;
     bn_mat_mul(tmat, mat, vip->mat);
     MAT_COPY(vip->mat, tmat);
 
-    /* Get bit map from .bw(5) file */
-    nbytes = (vip->xdim+VOL_XWIDEN*2)*
-	(vip->ydim+VOL_YWIDEN*2)*
-	(vip->zdim+VOL_ZWIDEN*2);
-    vip->map = (unsigned char *)bu_calloc(1, nbytes, "vol_import4 bitmap");
-
-    bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
-    if ((fp = fopen(vip->file, "rb")) == NULL) {
-	perror(vip->file);
-	bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
-	return -1;
-    }
-    bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
-
-    /* Because of in-memory padding, read each scanline separately */
-    for (z = 0; z < vip->zdim; z++) {
-	for (y = 0; y < vip->ydim; y++) {
-	    bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
-	    ret = fread(&VOL(vip, 0, y, z), vip->xdim, 1, fp); /* res_syscall */
-	    bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
-	    if (ret < 1) {
-		bu_log("rt_vol_import4(%s): Unable to read whole VOL, y=%zu, z=%zu\n",
-		       vip->file, y, z);
-		bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
-		fclose(fp);
-		bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
-		return -1;
-	    }
+    if (bu_file_exists(vip->file, NULL)) {
+	size_t bytes = vip->xdim * vip->ydim * vip->zdim;
+	nbytes = vol_from_file(vip->file, vip->xdim, vip->ydim, vip->zdim, &vip->map);
+	if (nbytes != bytes) {
+	    bu_log("WARNING: unexpected VOL bytes (read %zu, expected %zu) in %s\n", nbytes, bytes, vip->file);
 	}
+    } else {
+	bu_log("WARNING: VOL data file missing [%s]\n", vip->file);
     }
-    bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
-    fclose(fp);
-    bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
+
     return 0;
 }
 
@@ -670,7 +722,7 @@ rt_vol_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
  * Additional lines are indented one tab, and give parameter values.
  */
 int
-rt_vol_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local)
+rt_vol_describe(struct bu_vls *str, const struct rt_db_internal *ip, int UNUSED(verbose), double mm2local)
 {
     struct rt_vol_internal *vip = (struct rt_vol_internal *)ip->idb_ptr;
     register int i;
@@ -679,20 +731,17 @@ rt_vol_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
     RT_VOL_CK_MAGIC(vip);
 
+    bu_vls_strcat(str, "thresholded volumetric solid (VOL)\n");
+
+    /* pretty-print dimensions in local, not storage (mm) units */
     VSCALE(local, vip->cellsize, mm2local);
-    bu_vls_strcat(str, "thresholded volumetric solid (VOL)\n\t");
-
-    if (!verbose)
-	return 0;
-
-/* bu_vls_struct_print(str, rt_vol_parse, (char *)vip);
-   bu_vls_strcat(str, "\n"); */
-
-    bu_vls_printf(&substr, "  file=\"%s\" w=%u n=%u d=%u lo=%u hi=%u size=%g %g %g\n   mat=",
+    bu_vls_printf(&substr, "\tfile=\"%s\"\n\tw=%u n=%u d=%u\n\tlo=%u hi=%u\n\tsize=%g,%g,%g\n",
 		  vip->file,
 		  vip->xdim, vip->ydim, vip->zdim, vip->lo, vip->hi,
 		  V3INTCLAMPARGS(local));
     bu_vls_vlscat(str, &substr);
+
+    bu_vls_strcat(str, "\tmat=");
     for (i = 0; i < 15; i++) {
 	bu_vls_trunc(&substr, 0);
 	bu_vls_printf(&substr, "%g, ", INTCLAMP(vip->mat[i]));
@@ -922,10 +971,10 @@ rt_vol_free(struct soltab *stp)
 
 
 int
-rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     register struct rt_vol_internal *vip;
-    size_t x, y, z;
+    int x, y, z;
     register short v1, v2;
     point_t a, b, c, d;
 
@@ -938,16 +987,16 @@ rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
      * Scan across in Z & X.  For each X position, scan down Y,
      * looking for the longest run of edge.
      */
-    for (z=-1; z<=vip->zdim; z++) {
-	for (x=-1; x<=vip->xdim; x++) {
-	    for (y=-1; y<=vip->ydim; y++) {
+    for (z=-1; z<=(int)vip->zdim; z++) {
+	for (x=-1; x<=(int)vip->xdim; x++) {
+	    for (y=-1; y<=(int)vip->ydim; y++) {
 		v1 = VOL(vip, x, y, z);
 		v2 = VOL(vip, x+1, y, z);
 		if (OK(vip, (size_t)v1) == OK(vip, (size_t)v2)) continue;
 		/* Note start point, continue scan */
 		VSET(a, x+0.5, y-0.5, z-0.5);
 		VSET(b, x+0.5, y-0.5, z+0.5);
-		for (++y; y<=vip->ydim; y++) {
+		for (++y; y<=(int)vip->ydim; y++) {
 		    v1 = VOL(vip, x, y, z);
 		    v2 = VOL(vip, x+1, y, z);
 		    if (OK(vip, (size_t)v1) == OK(vip, (size_t)v2))
@@ -964,16 +1013,16 @@ rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     /*
      * Scan up in Z & Y.  For each Y position, scan across X
      */
-    for (z=-1; z<=vip->zdim; z++) {
-	for (y=-1; y<=vip->ydim; y++) {
-	    for (x=-1; x<=vip->xdim; x++) {
+    for (z=-1; z<=(int)vip->zdim; z++) {
+	for (y=-1; y<=(int)vip->ydim; y++) {
+	    for (x=-1; x<=(int)vip->xdim; x++) {
 		v1 = VOL(vip, x, y, z);
 		v2 = VOL(vip, x, y+1, z);
 		if (OK(vip, (size_t)v1) == OK(vip, (size_t)v2)) continue;
 		/* Note start point, continue scan */
 		VSET(a, x-0.5, y+0.5, z-0.5);
 		VSET(b, x-0.5, y+0.5, z+0.5);
-		for (++x; x<=vip->xdim; x++) {
+		for (++x; x<=(int)vip->xdim; x++) {
 		    v1 = VOL(vip, x, y, z);
 		    v2 = VOL(vip, x, y+1, z);
 		    if (OK(vip, (size_t)v1) == OK(vip, (size_t)v2))
@@ -990,16 +1039,16 @@ rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     /*
      * Scan across in Y & X.  For each X position pair edge, scan up Z.
      */
-    for (x=-1; x<=vip->xdim; x++) {
-	for (z=-1; z<=vip->zdim; z++) {
-	    for (y=-1; y<=vip->ydim; y++) {
+    for (x=-1; x<=(int)vip->xdim; x++) {
+	for (z=-1; z<=(int)vip->zdim; z++) {
+	    for (y=-1; y<=(int)vip->ydim; y++) {
 		v1 = VOL(vip, x, y, z);
 		v2 = VOL(vip, x, y, z+1);
 		if (OK(vip, (size_t)v1) == OK(vip, (size_t)v2)) continue;
 		/* Note start point, continue scan */
 		VSET(a, (x-0.5), (y-0.5), (z+0.5));
 		VSET(b, (x+0.5), (y-0.5), (z+0.5));
-		for (++y; y<=vip->ydim; y++) {
+		for (++y; y<=(int)vip->ydim; y++) {
 		    v1 = VOL(vip, x, y, z);
 		    v2 = VOL(vip, x, y, z+1);
 		    if (OK(vip, (size_t)v1) == OK(vip, (size_t)v2))
@@ -1045,7 +1094,7 @@ rt_vol_plate(fastf_t *a, fastf_t *b, fastf_t *c, fastf_t *d, register fastf_t *m
 
 
 int
-rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     struct rt_vol_internal *vip;
     register size_t x, y, z;
@@ -1058,7 +1107,7 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     NMG_CK_MODEL(m);
     BN_CK_TOL(tol);
-    RT_CK_TESS_TOL(ttol);
+    BG_CK_TESS_TOL(ttol);
 
     RT_CK_DB_INTERNAL(ip);
     vip = (struct rt_vol_internal *)ip->idb_ptr;

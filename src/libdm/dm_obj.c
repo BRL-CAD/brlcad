@@ -1,7 +1,7 @@
 /*                        D M _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2016 United States Government as represented by
+ * Copyright (c) 1997-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@
 #include <string.h>
 #include <math.h>
 
-#include <png.h>
+#include "png.h"
 
 #include "tcl.h"
 
@@ -84,7 +84,7 @@ struct dm_obj {
 #ifdef USE_FBSERV
     struct fbserv_obj dmo_fbs;		/**< @brief fbserv object */
 #endif
-    struct bu_observer dmo_observers;		/**< @brief fbserv observers */
+    struct bu_observer_list dmo_observers;		/**< @brief fbserv observers */
     mat_t viewMat;
     int (*dmo_drawLabelsHook)(dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData);
     void *dmo_drawLabelsHookClientData;
@@ -1173,7 +1173,7 @@ dmo_drawSolid(struct dm_obj *dmop,
  * Draw a scale.
  *
  * Usage:
- * drawScale vsize color
+ * drawScale vsize unit color
  *
  */
 int
@@ -1181,12 +1181,13 @@ dmo_drawScale_cmd(struct dm_obj *dmop,
 		  int argc,
 		  const char **argv)
 {
+    const char *unit;
     int color[3];
     double scan;
     fastf_t viewSize;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
-    if (argc != 3) {
+    if (argc != 4) {
 	bu_vls_printf(&vls, "helplib_alias dm_drawScale %s", argv[0]);
 	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -1203,7 +1204,10 @@ dmo_drawScale_cmd(struct dm_obj *dmop,
     /* convert double to fastf_t */
     viewSize = scan;
 
-    if (sscanf(argv[2], "%d %d %d",
+
+    unit = argv[2];
+
+    if (sscanf(argv[3], "%d %d %d",
 	       &color[0],
 	       &color[1],
 	       &color[2]) != 3) {
@@ -1227,7 +1231,7 @@ dmo_drawScale_cmd(struct dm_obj *dmop,
 	return BRLCAD_ERROR;
     }
 
-    dm_draw_scale(dmop->dmo_dmp, viewSize, color, color);
+    dm_draw_scale(dmop->dmo_dmp, viewSize, unit, color, color);
 
     return BRLCAD_OK;
 }
@@ -1235,7 +1239,7 @@ dmo_drawScale_cmd(struct dm_obj *dmop,
 
 /*
  * Usage:
- * objname drawScale vsize color
+ * objname drawScale vsize unit color
  */
 HIDDEN int
 dmo_drawScale_tcl(void *clientData, int argc, const char **argv)
@@ -2463,7 +2467,7 @@ dmo_logfile_tcl(void *clientData, int argc, const char **argv)
 
     /* get log file */
     if (argc == 2) {
-	bu_vls_printf(&vls, "%d", bu_vls_addr(&(dmop->dmo_dmp->dm_log)));
+	bu_vls_printf(&vls, "%s", bu_vls_addr(&(dmop->dmo_dmp->dm_log)));
 	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -3028,8 +3032,6 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
     dmop->dmo_fbs.fbs_interp = interp;
 #endif
     dmop->interp = interp;
-
-    BU_LIST_INIT(&dmop->dmo_observers.l);
 
     /* append to list of dm_obj's */
     BU_LIST_APPEND(&HeadDMObj.l, &dmop->l);

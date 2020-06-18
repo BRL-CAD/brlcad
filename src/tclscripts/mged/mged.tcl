@@ -1,7 +1,7 @@
 #                        M G E D . T C L
 # BRL-CAD
 #
-# Copyright (c) 1995-2016 United States Government as represented by
+# Copyright (c) 1995-2020 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -48,12 +48,12 @@ if { [info exists tk_strictMotif] == 0 } {
 
 # MGED html manual directory search order precedence should be:
 #   MGED_HTML_DIR
-#   bu_brlcad_data/html/manuals/mged
+#   bu_brlcad_root/share/html/manuals/mged
 
 if ![info exists mged_default(html_dir)] {
-    set mged_default(html_dir) [file normalize [file join [bu_brlcad_data "html"] manuals mged]]
+    set mged_default(html_dir) [file normalize [file join [bu_brlcad_root "share/html"] manuals mged]]
     if {![file exists $mged_default(html_dir)]} {
-	set mged_default(html_dir) [file normalize [file join [bu_brlcad_data "doc"] html manuals mged]]
+	set mged_default(html_dir) [file normalize [file join [bu_brlcad_root "share/doc"] html manuals mged]]
     }
 }
 
@@ -209,8 +209,9 @@ proc do_Open { id } {
 	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "Error" \
 		$msg info 0 OK
 	} else {
+	    set dbtitle [title]
 	    cad_dialog $::tk::Priv(cad_dialog) $mged_gui($id,screen) "File loaded" \
-		$msg info 0 OK
+		$dbtitle info 0 OK
 	}
     }
 }
@@ -472,7 +473,11 @@ proc ia_invoke { w } {
 	    .$id.t tag add oldcmd promptEnd insert
 
 	    if {$ia_msg != ""} {
-		mged_print_tag $w $ia_msg\n result
+		if {[string index $ia_msg end] == "\n"} {
+		    mged_print_tag $w "$ia_msg" result
+		} else {
+		    mged_print_tag $w "$ia_msg\n" result
+		}
 	    }
 
 	    distribute_text $w $hcmd $ia_msg

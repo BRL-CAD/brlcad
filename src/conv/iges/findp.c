@@ -1,7 +1,7 @@
 /*                         F I N D P . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2016 United States Government as represented by
+ * Copyright (c) 1990-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@ Findp()
 {
     int saverec, rec2;
     size_t i;
-    off_t offset;
+    b_off_t offset;
     char str[8];
 
     str[7] = '\0';

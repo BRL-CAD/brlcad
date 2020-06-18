@@ -41,8 +41,6 @@
 #include "mm.h"
 #include "mmatomic.h"
 
-#include "tinycthread.h"
-
 #include <string.h>
 
 
@@ -64,7 +62,7 @@ typedef struct {
     mmAtomicP owner;
 #else
     /* Mutex, or how to ruin performance */
-    mtx_t mutex;
+    bu_mtx_t mutex;
     void *owner;
 #endif
 } mmHashPage MM_CACHE_ALIGN;
@@ -91,7 +89,7 @@ typedef struct {
 #ifdef MM_ATOMIC_SUPPORT
     mmAtomic32 entrycount;
 #else
-    mtx_t countmutex;
+    bu_mtx_t countmutex;
     uint32_t entrycount;
 #endif
     uint32_t lowcount;
@@ -102,11 +100,11 @@ typedef struct {
 #ifdef MM_ATOMIC_SUPPORT
     mmAtomic32 globallock;
 #else
-    mtx_t globalmutex;
+    bu_mtx_t globalmutex;
 #endif
     char paddingB[64];
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
     long entrycountmax;
     mmAtomicL statentrycount;
     mmAtomicL accesscount;
@@ -150,25 +148,25 @@ static void mmHashSetBounds(mmHashTable *table)
 #else
 
 #define MM_HASH_LOCK_TRY_READ(t,p) (mtMutexTryLock(&t->page[p].mutex))
-#define MM_HASH_LOCK_DONE_READ(t,p) do {if (mtx_unlock(&t->page[p].mutex) != thrd_success) bu_bomb("mtx_unlock() failed"); } while (0)
+#define MM_HASH_LOCK_DONE_READ(t,p) do {if (bu_mtx_unlock(&t->page[p].mutex) != bu_thrd_success) bu_bomb("bu_mtx_unlock() failed"); } while (0)
 #define MM_HASH_LOCK_TRY_WRITE(t,p) (mtMutexTryLock(&t->page[p].mutex))
 #define MM_HASH_LOCK_DONE_WRITE(t,p) MM_HASH_LOCK_DONE_READ((t), (p))
-#define MM_HASH_GLOBAL_LOCK(t) do {if (mtx_lock(&t->globalmutex) != thrd_success) bu_bomb("mtx_lock() failed"); } while (0)
-#define MM_HASH_GLOBAL_UNLOCK(t) do {if (mtx_unlock(&t->globalmutex) != thrd_success) bu_bomb("mtx_unlock() failed"); } while (0)
+#define MM_HASH_GLOBAL_LOCK(t) do {if (bu_mtx_lock(&t->globalmutex) != bu_thrd_success) bu_bomb("bu_mtx_lock() failed"); } while (0)
+#define MM_HASH_GLOBAL_UNLOCK(t) do {if (bu_mtx_unlock(&t->globalmutex) != bu_thrd_success) bu_bomb("bu_mtx_unlock() failed"); } while (0)
 
 
 static inline uint32_t MM_HASH_ENTRYCOUNT_ADD_READ(mmHashTable *t, int32_t c)
 {
     uint32_t entrycount;
 
-    if (mtx_lock(&t->countmutex) != thrd_success)
-	bu_bomb("mtx_lock() failed");
+    if (bu_mtx_lock(&t->countmutex) != bu_thrd_success)
+	bu_bomb("bu_mtx_lock() failed");
 
     t->entrycount += c;
     entrycount = t->entrycount;
 
-    if (mtx_unlock(&t->countmutex) != thrd_success)
-	bu_bomb("mtx_unlock() failed");
+    if (bu_mtx_unlock(&t->countmutex) != bu_thrd_success)
+	bu_bomb("bu_mtx_unlock() failed");
 
     return entrycount;
 }
@@ -185,7 +183,7 @@ static int mmHashTryCallEntry(mmHashTable *table, mmHashAccess *vaccess, void *c
     /* Hash key of entry */
     hashkey = vaccess->entrykey(callentry) & table->hashmask;
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
     mmAtomicAddL(&table->accesscount, 1);
 #endif
 
@@ -224,7 +222,7 @@ static int mmHashTryCallEntry(mmHashTable *table, mmHashAccess *vaccess, void *c
 	    goto end;
 	}
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
 	mmAtomicAddL(&table->collisioncount, 1);
 #endif
     }
@@ -246,7 +244,7 @@ static int mmHashTryCallEntry(mmHashTable *table, mmHashAccess *vaccess, void *c
 	    table->status = MM_HASH_STATUS_MUSTGROW;
     }
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
     int statentrycount = mmAtomicAddReadL(&table->statentrycount, 1);
 
     if (statentrycount > table->entrycountmax)
@@ -283,7 +281,7 @@ static int mmHashTryDeleteEntry(mmHashTable *table, mmHashAccess *vaccess, void 
     /* Hash key of entry */
     hashkey = vaccess->entrykey(deleteentry) & table->hashmask;
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
     mmAtomicAddL(&table->accesscount, 1);
 #endif
 
@@ -320,7 +318,7 @@ static int mmHashTryDeleteEntry(mmHashTable *table, mmHashAccess *vaccess, void 
 	} else if (cmpvalue == MM_HASH_ENTRYCMP_FOUND)
 	    break;
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
 	mmAtomicAddL(&table->collisioncount, 1);
 #endif
     }
@@ -422,7 +420,7 @@ static int mmHashTryDeleteEntry(mmHashTable *table, mmHashAccess *vaccess, void 
 	/* Move entry in place and continue the repair process */
 	memcpy(entry, targetentry, table->entrysize);
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
 	mmAtomicAddL(&table->relocationcount, 1);
 #endif
 
@@ -437,7 +435,7 @@ static int mmHashTryDeleteEntry(mmHashTable *table, mmHashAccess *vaccess, void 
 	    table->status = MM_HASH_STATUS_MUSTSHRINK;
     }
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
     mmAtomicAddL(&table->statentrycount, -1);
 #endif
 
@@ -465,7 +463,7 @@ static int mmHashTryReadEntry(mmHashTable *table, mmHashAccess *vaccess, void *r
     /* Hash key of entry */
     hashkey = vaccess->entrykey(readentry) & table->hashmask;
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
     mmAtomicAddL(&table->accesscount, 1);
 #endif
 
@@ -504,7 +502,7 @@ static int mmHashTryReadEntry(mmHashTable *table, mmHashAccess *vaccess, void *r
 	} else if (cmpvalue == MM_HASH_ENTRYCMP_FOUND)
 	    break;
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
 	mmAtomicAddL(&table->collisioncount, 1);
 #endif
     }
@@ -534,7 +532,7 @@ static int mmHashTryAddEntry(mmHashTable *table, mmHashAccess *vaccess, void *ad
     /* Hash key of entry */
     hashkey = vaccess->entrykey(addentry) & table->hashmask;
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
     mmAtomicAddL(&table->accesscount, 1);
 #endif
 
@@ -579,7 +577,7 @@ static int mmHashTryAddEntry(mmHashTable *table, mmHashAccess *vaccess, void *ad
 		break;
 	}
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
 	mmAtomicAddL(&table->collisioncount, 1);
 #endif
     }
@@ -595,7 +593,7 @@ static int mmHashTryAddEntry(mmHashTable *table, mmHashAccess *vaccess, void *ad
 	    table->status = MM_HASH_STATUS_MUSTGROW;
     }
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
     int statentrycount = mmAtomicAddReadL(&table->statentrycount, 1);
 
     if (statentrycount > table->entrycountmax)
@@ -624,7 +622,7 @@ static int mmHashTryFindEntry(mmHashTable *table, mmHashAccess *vaccess, void *f
     int cmpvalue, retvalue;
     void *entry;
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
     mmAtomicAddL(&table->accesscount, 1);
 #endif
 
@@ -666,7 +664,7 @@ static int mmHashTryFindEntry(mmHashTable *table, mmHashAccess *vaccess, void *f
 	} else if (cmpvalue == MM_HASH_ENTRYCMP_FOUND)
 	    break;
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
 	mmAtomicAddL(&table->collisioncount, 1);
 #endif
     }
@@ -718,8 +716,8 @@ void mmHashInit(void *hashtable, mmHashAccess *vaccess, size_t entrysize, uint32
     mmAtomicWrite32(&table->entrycount, 0);
 #else
 
-    if (mtx_init(&table->countmutex, mtx_plain) != thrd_success)
-	bu_bomb("mtx_init() failed");
+    if (bu_mtx_init(&table->countmutex) != bu_thrd_success)
+	bu_bomb("bu_mtx_init() failed");
 
     table->entrycount = 0;
 #endif
@@ -746,18 +744,18 @@ void mmHashInit(void *hashtable, mmHashAccess *vaccess, size_t entrysize, uint32
 #else
 
     for (pageindex = table->pagecount; pageindex; pageindex--, page++) {
-	if (mtx_init(&page->mutex, mtx_plain) != thrd_success)
-	    bu_bomb("mtx_init() failed");
+	if (bu_mtx_init(&page->mutex) != bu_thrd_success)
+	    bu_bomb("bu_mtx_init() failed");
 
 	page->owner = 0;
     }
 
-    if (mtx_init(&table->globalmutex, mtx_plain) != thrd_success)
-	bu_bomb("mtx_init() failed");
+    if (bu_mtx_init(&table->globalmutex) != bu_thrd_success)
+	bu_bomb("bu_mtx_init() failed");
 
 #endif
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
     table->entrycountmax = 0;
     mmAtomicWriteL(&table->statentrycount, 0);
     mmAtomicWriteL(&table->accesscount, 0);
@@ -790,7 +788,7 @@ int mmHashDirectAddEntry(void *hashtable, mmHashAccess *vaccess, void *addentry,
 
     table = (mmHashTable *)hashtable;
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
     mmAtomicAddL(&table->accesscount, 1);
 #endif
 
@@ -814,7 +812,7 @@ int mmHashDirectAddEntry(void *hashtable, mmHashAccess *vaccess, void *addentry,
 		break;
 	}
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
 	mmAtomicAddL(&table->collisioncount, 1);
 #endif
     }
@@ -830,7 +828,7 @@ int mmHashDirectAddEntry(void *hashtable, mmHashAccess *vaccess, void *addentry,
 	    table->status = MM_HASH_STATUS_MUSTGROW;
     }
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
     int statentrycount = mmAtomicAddReadL(&table->statentrycount, 1);
 
     if (statentrycount > table->entrycountmax)
@@ -851,7 +849,7 @@ void mmHashDirectListEntry(void *hashtable, mmHashAccess *vaccess, void *listent
 
     table = (mmHashTable *)hashtable;
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
     mmAtomicAddL(&table->accesscount, 1);
 #endif
 
@@ -866,7 +864,7 @@ void mmHashDirectListEntry(void *hashtable, mmHashAccess *vaccess, void *listent
 	if (cmpvalue == MM_HASH_ENTRYLIST_BREAK)
 	    break;
 
-#ifdef MM_HASH_DEBUG_STATISTICS
+#ifdef MM_HASH_RT_DEBUG_STATISTICS
 	mmAtomicAddL(&table->collisioncount, 1);
 #endif
     }

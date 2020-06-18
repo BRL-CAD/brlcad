@@ -1,4 +1,4 @@
-/* $Id$
+/*
  * Copyright (c) 2003, Joe English
  *
  * label, button, checkbutton, radiobutton, and menubutton widgets.
@@ -81,8 +81,9 @@ static Tk_OptionSpec BaseOptionSpecs[] =
      * Compound base/image options
      */
     {TK_OPTION_STRING_TABLE, "-compound", "compound", "Compound",
-	 "none", Tk_Offset(Base,base.compoundObj), -1,
-	 0,(ClientData)ttkCompoundStrings,GEOMETRY_CHANGED },
+	 NULL, Tk_Offset(Base,base.compoundObj), -1,
+	 TK_OPTION_NULL_OK,(ClientData)ttkCompoundStrings,
+         GEOMETRY_CHANGED },
     {TK_OPTION_STRING, "-padding", "padding", "Pad",
 	NULL, Tk_Offset(Base,base.paddingObj), -1,
 	TK_OPTION_NULL_OK,0,GEOMETRY_CHANGED},
@@ -136,6 +137,15 @@ BaseCleanup(void *recordPtr)
     	TtkFreeImageSpec(basePtr->base.imageSpec);
 }
 
+static void
+BaseImageChanged(
+	ClientData clientData, int x, int y, int width, int height,
+	int imageWidth, int imageHeight)
+{
+    Base *basePtr = (Base *)clientData;
+    TtkResizeWidget(&basePtr->core);
+}
+
 static int BaseConfigure(Tcl_Interp *interp, void *recordPtr, int mask)
 {
     Base *basePtr = recordPtr;
@@ -149,8 +159,8 @@ static int BaseConfigure(Tcl_Interp *interp, void *recordPtr, int mask)
     }
 
     if (basePtr->base.imageObj) {
-	imageSpec = TtkGetImageSpec(
-	    interp, basePtr->core.tkwin, basePtr->base.imageObj);
+	imageSpec = TtkGetImageSpecEx(
+	    interp, basePtr->core.tkwin, basePtr->base.imageObj, BaseImageChanged, basePtr);
 	if (!imageSpec) {
 	    goto error;
 	}
@@ -244,6 +254,7 @@ static Tk_OptionSpec LabelOptionSpecs[] =
 	NULL, Tk_Offset(Label, label.wrapLengthObj), -1,
 	TK_OPTION_NULL_OK,0,GEOMETRY_CHANGED /*SB: SIZE_CHANGED*/ },
 
+    WIDGET_TAKEFOCUS_FALSE,
     WIDGET_INHERIT_OPTIONS(BaseOptionSpecs)
 };
 
@@ -301,14 +312,13 @@ typedef struct
  */
 static Tk_OptionSpec ButtonOptionSpecs[] =
 {
-    WIDGET_TAKES_FOCUS,
-
     {TK_OPTION_STRING, "-command", "command", "Command",
 	"", Tk_Offset(Button, button.commandObj), -1, 0,0,0},
     {TK_OPTION_STRING_TABLE, "-default", "default", "Default",
 	"normal", Tk_Offset(Button, button.defaultStateObj), -1,
 	0, (ClientData) ttkDefaultStrings, DEFAULTSTATE_CHANGED},
 
+    WIDGET_TAKEFOCUS_TRUE,
     WIDGET_INHERIT_OPTIONS(BaseOptionSpecs)
 };
 
@@ -412,11 +422,9 @@ typedef struct
  */
 static Tk_OptionSpec CheckbuttonOptionSpecs[] =
 {
-    WIDGET_TAKES_FOCUS,
-
     {TK_OPTION_STRING, "-variable", "variable", "Variable",
-	"", Tk_Offset(Checkbutton, checkbutton.variableObj), -1,
-	TK_OPTION_DONT_SET_DEFAULT,0,0},
+	NULL, Tk_Offset(Checkbutton, checkbutton.variableObj), -1,
+	TK_OPTION_NULL_OK,0,0},
     {TK_OPTION_STRING, "-onvalue", "onValue", "OnValue",
 	"1", Tk_Offset(Checkbutton, checkbutton.onValueObj), -1,
 	0,0,0},
@@ -427,6 +435,7 @@ static Tk_OptionSpec CheckbuttonOptionSpecs[] =
 	"", Tk_Offset(Checkbutton, checkbutton.commandObj), -1,
 	0,0,0},
 
+    WIDGET_TAKEFOCUS_TRUE,
     WIDGET_INHERIT_OPTIONS(BaseOptionSpecs)
 };
 
@@ -481,12 +490,15 @@ static int
 CheckbuttonConfigure(Tcl_Interp *interp, void *recordPtr, int mask)
 {
     Checkbutton *checkPtr = recordPtr;
-    Ttk_TraceHandle *vt = Ttk_TraceVariable(
-	interp, checkPtr->checkbutton.variableObj,
-	CheckbuttonVariableChanged, checkPtr);
-
-    if (!vt) {
-	return TCL_ERROR;
+    Tcl_Obj *varName = checkPtr->checkbutton.variableObj;
+    Ttk_TraceHandle *vt = NULL;
+        
+    if (varName != NULL && *Tcl_GetString(varName) != '\0') {
+        vt = Ttk_TraceVariable(interp, varName,
+	    CheckbuttonVariableChanged, checkPtr);
+        if (!vt) {
+	    return TCL_ERROR;
+        }
     }
 
     if (BaseConfigure(interp, recordPtr, mask) != TCL_OK){
@@ -494,7 +506,9 @@ CheckbuttonConfigure(Tcl_Interp *interp, void *recordPtr, int mask)
 	return TCL_ERROR;
     }
 
-    Ttk_UntraceVariable(checkPtr->checkbutton.variableTrace);
+    if (checkPtr->checkbutton.variableTrace) {
+        Ttk_UntraceVariable(checkPtr->checkbutton.variableTrace);
+    }
     checkPtr->checkbutton.variableTrace = vt;
 
     return TCL_OK;
@@ -540,10 +554,13 @@ CheckbuttonInvokeCommand(
     else
 	newValue = checkPtr->checkbutton.onValueObj;
 
-    if (Tcl_ObjSetVar2(interp,
-	    checkPtr->checkbutton.variableObj, NULL, newValue,
-	    TCL_GLOBAL_ONLY|TCL_LEAVE_ERR_MSG)
-	== NULL)
+    if (checkPtr->checkbutton.variableObj == NULL ||
+        *Tcl_GetString(checkPtr->checkbutton.variableObj) == '\0')
+        CheckbuttonVariableChanged(checkPtr, Tcl_GetString(newValue));
+    else if (Tcl_ObjSetVar2(interp,
+	        checkPtr->checkbutton.variableObj, NULL, newValue,
+	        TCL_GLOBAL_ONLY|TCL_LEAVE_ERR_MSG)
+	    == NULL)
 	return TCL_ERROR;
 
     if (WidgetDestroyed(corePtr))
@@ -613,8 +630,6 @@ typedef struct
  */
 static Tk_OptionSpec RadiobuttonOptionSpecs[] =
 {
-    WIDGET_TAKES_FOCUS,
-
     {TK_OPTION_STRING, "-variable", "variable", "Variable",
 	"::selectedButton", Tk_Offset(Radiobutton, radiobutton.variableObj),-1,
 	0,0,0},
@@ -625,6 +640,7 @@ static Tk_OptionSpec RadiobuttonOptionSpecs[] =
 	"", Tk_Offset(Radiobutton, radiobutton.commandObj), -1,
 	0,0,0},
 
+    WIDGET_TAKEFOCUS_TRUE,
     WIDGET_INHERIT_OPTIONS(BaseOptionSpecs)
 };
 
@@ -789,14 +805,13 @@ static const char *const directionStrings[] = {
 };
 static Tk_OptionSpec MenubuttonOptionSpecs[] =
 {
-    WIDGET_TAKES_FOCUS,
-
     {TK_OPTION_STRING, "-menu", "menu", "Menu",
 	"", Tk_Offset(Menubutton, menubutton.menuObj), -1, 0,0,0},
     {TK_OPTION_STRING_TABLE, "-direction", "direction", "Direction",
 	"below", Tk_Offset(Menubutton, menubutton.directionObj), -1,
 	0,(ClientData)directionStrings,GEOMETRY_CHANGED},
 
+    WIDGET_TAKEFOCUS_TRUE,
     WIDGET_INHERIT_OPTIONS(BaseOptionSpecs)
 };
 

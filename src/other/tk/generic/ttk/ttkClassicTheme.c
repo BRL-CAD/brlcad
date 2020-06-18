@@ -1,15 +1,11 @@
 /*
- * $Id$
- *
  * Copyright (c) 2004, Joe English
  *
  * "classic" theme; implements the classic Motif-like Tk look.
  *
  */
 
-#include <tk.h>
-#include <X11/Xlib.h>
-#include <X11/Xutil.h>
+#include "tkInt.h"
 #include "ttkTheme.h"
 
 #define DEFAULT_BORDERWIDTH "2"

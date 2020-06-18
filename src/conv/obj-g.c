@@ -1,7 +1,7 @@
 /*                     O B J - G . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2016 United States Government as represented by
+ * Copyright (c) 2010-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -52,10 +52,11 @@
 #include <errno.h>
 #include <time.h>
 
-#include "vmath.h"
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/sort.h"
 #include "bu/units.h"
+#include "vmath.h"
 #include "nmg.h"
 #include "bn/plot3.h"
 #include "rt/geom.h"
@@ -786,8 +787,8 @@ test_face(struct ga_t *ga,
 		 */
 		VSCALE(tmp_v_o, tmp_v_o, conv_factor);
 		VSCALE(tmp_v_i, tmp_v_i, conv_factor);
-		if (bn_pt3_pt3_equal(tmp_v_o, tmp_v_i, tol)) {
-		    distance_between_vertices = DIST_PT_PT(tmp_v_o, tmp_v_i);
+		if (bn_pnt3_pnt3_equal(tmp_v_o, tmp_v_i, tol)) {
+		    distance_between_vertices = DIST_PNT_PNT(tmp_v_o, tmp_v_i);
 		    degenerate_face = 3;
 		    if (gfi->grouping_type != GRP_NONE) {
 			if (verbose || debug) {
@@ -1264,7 +1265,7 @@ populate_triangle_indexes(struct ga_t *ga,
     tri_arr_3D_t index_arr_tri_3D = NULL;
 
     double *facePoints;
-    int *triFaces;
+    int *triFaces = NULL;
     size_t i, numFacePoints;
     struct faceuse *fu;
     const int POINTS_PER_FACE = 3;
@@ -1431,7 +1432,8 @@ populate_triangle_indexes(struct ga_t *ga,
 	ti->num_tri++;
     }
 
-    bu_free(triFaces, "triFaces");
+    if (triFaces)
+	bu_free(triFaces, "triFaces");
 
     return;
 }
@@ -2021,9 +2023,9 @@ populate_fuse_map(struct ga_t *ga,
 		    VMOVE(tmp_v2, ga->vert_list[unique_index_list[idx2]]);
 		    VSCALE(tmp_v2, tmp_v2, conv_factor);
 		    if ((compare_type == FUSE_EQUAL) ? VEQUAL(tmp_v1, tmp_v2) :
-			bn_pt3_pt3_equal(tmp_v1, tmp_v2, tol)) {
+			bn_pnt3_pnt3_equal(tmp_v1, tmp_v2, tol)) {
 			if (debug) {
-			    distance_between_vertices = DIST_PT_PT(tmp_v1, tmp_v2);
+			    distance_between_vertices = DIST_PNT_PNT(tmp_v1, tmp_v2);
 			    bu_log("found equal i1=(%zu)vi1=(%zu)v1=(%f)(%f)(%f), i2=(%zu)vi2=(%zu)v2=(%f)(%f)(%f), dist = (%lu mm)\n",
 				   idx1, unique_index_list[idx1], tmp_v1[0], tmp_v1[1], tmp_v1[2],
 				   idx2, unique_index_list[idx2], tmp_v2[0], tmp_v2[1], tmp_v2[2],
@@ -3247,8 +3249,8 @@ main(int argc, char **argv)
 		debug = 1;
 		break;
 	    case 'x': /* set librt debug level */
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
-		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT);
+		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
+		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, RT_DEBUG_FORMAT);
 		bu_log("\n");
 		break;
 	    case 'X': /* set nmg debug level */

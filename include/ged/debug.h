@@ -1,7 +1,7 @@
 /*                          D E B U G . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,6 +33,10 @@
 
 __BEGIN_DECLS
 
+/**
+ * Report/Control BRL-CAD library debugging settings
+ */
+GED_EXPORT extern int ged_debug(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Set/get libbu's debug bit vector
@@ -48,12 +52,6 @@ GED_EXPORT extern int ged_debugdir(struct ged *gedp, int argc, const char *argv[
  * Set/get librt's debug bit vector
  */
 GED_EXPORT extern int ged_debuglib(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Provides user-level access to LIBBU's bu_prmem()
- */
-GED_EXPORT extern int ged_debugmem(struct ged *gedp, int argc, const char *argv[]);
-GED_EXPORT extern int ged_memprint(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Set/get librt's NMG debug bit vector
@@ -80,10 +78,10 @@ struct _ged_trace_data {
 
 
 GED_EXPORT extern void ged_trace(struct directory *dp,
-		       int pathpos,
-		       const mat_t old_xlate,
-		       struct _ged_trace_data *gtdp,
-		       int verbose);
+				 int pathpos,
+				 const mat_t old_xlate,
+				 struct _ged_trace_data *gtdp,
+				 int verbose);
 
 
 

@@ -1,7 +1,7 @@
 /*                        R T F U N C . H
  * BRL-CAD
  *
- * Copyright (c) 2010-2016 United States Government as represented by
+ * Copyright (c) 2010-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -110,7 +110,7 @@ RT_EXPORT extern int rt_obj_free(struct soltab *stp);
 /**
  * obtain a vlist wireframe representation of an object for plotting purposes
  */
-RT_EXPORT extern int rt_obj_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol);
+RT_EXPORT extern int rt_obj_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
 
 /**
  * shoot an array of rays at a set of homogeneous objects.
@@ -120,7 +120,7 @@ RT_EXPORT extern int rt_obj_vshot(struct soltab *stp[], struct xray *rp[], struc
 /**
  * tessellate an object (into NMG form)
  */
-RT_EXPORT extern int rt_obj_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol);
+RT_EXPORT extern int rt_obj_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol);
 
 /**
  * tessellate an object (into NURBS NMG form)
@@ -155,7 +155,7 @@ RT_EXPORT extern int rt_obj_adjust(struct bu_vls *logstr, struct rt_db_internal 
 /**
  * describe an object in text form (used by the 'l' command)
  */
-RT_EXPORT extern int rt_obj_describe(struct bu_vls *logstr, const struct rt_db_internal *ip, int verbose, double mm2local, struct resource *resp, struct db_i *dbip);
+RT_EXPORT extern int rt_obj_describe(struct bu_vls *logstr, const struct rt_db_internal *ip, int verbose, double mm2local);
 
 /**
  * create a 'default' object
@@ -165,7 +165,7 @@ RT_EXPORT extern int rt_obj_make(const struct rt_functab *ftp, struct rt_db_inte
 /**
  * apply a matrix transformation to an object (translation, rotation, scale)
  */
-RT_EXPORT extern int rt_obj_xform(struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int release, struct db_i *dbip, struct resource *resp);
+RT_EXPORT extern int rt_obj_xform(struct rt_db_internal *op, const mat_t mat, struct rt_db_internal *ip, int release, struct db_i *dbip);
 
 /**
  * obtain parameters for an object in libpc form

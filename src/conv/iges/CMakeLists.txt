@@ -4,15 +4,8 @@ set(IGES_INCLUDE_DIRS
   ${RT_INCLUDE_DIRS}
   ${WDB_INCLUDE_DIRS}
   )
-LIST(REMOVE_DUPLICATES IGES_INCLUDE_DIRS)
+list(REMOVE_DUPLICATES IGES_INCLUDE_DIRS)
 include_directories(${IGES_INCLUDE_DIRS})
-
-if(MSVC)
-  set(WIN32LIBS ${WINSOCK_LIB} Rpcrt4.lib)
-  add_definitions(
-    -DON_DLL_IMPORTS
-    )
-endif(MSVC)
 
 #add_executable(iges
 #    BrepHandler.cpp
@@ -20,7 +13,7 @@ endif(MSVC)
 #    n_iges.cpp
 #    n_main.cpp
 #)
-#target_link_libraries(iges libwdb librt libbu ${OPENNURBS_LIBRARIES} ${WIN32LIBS} ${M_LIBRARY})
+#target_link_libraries(iges libwdb librt libbu ${OPENNURBS_LIBRARIES} ${WIN32LIBS} ${M_LIBRARY} ${WINSOCK_LIB} ${RPCRT_LIB})
 #install(TARGETS iges RUNTIME DESTINATION ${CMAKE_INSTALL_PREFIX}/bin)
 
 set(iges-g_SRCS
@@ -30,7 +23,6 @@ set(iges-g_SRCS
   b-spline.c
   block2.c
   brep.c
-  brlabs.c
   check_names.c
   cone.c
   conv_drawings.c
@@ -99,6 +91,7 @@ BRLCAD_ADDEXEC(g-iges "g-iges.c;iges.c" "librt;libnmg;libbu;${M_LIBRARY}")
 
 set(iges_ignore_files
   BrepHandler.cpp
+  CMakeLists.txt
   PullbackCurve.cpp
   PullbackCurve.h
   add_face.cpp

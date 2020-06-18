@@ -1,7 +1,7 @@
 /*                         D D I S P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,13 +28,16 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "bio.h"
+
+#include "bu/app.h"
+#include "bu/malloc.h"
 #include "bu/color.h"
 #include "bu/str.h"
 #include "bu/exit.h"
+#include "bu/snooze.h"
 #include "fb.h"
 
-
-#define MAXPTS 4096
 
 #define VERT 1
 #define BARS 2
@@ -139,13 +142,15 @@ main(int argc, char **argv)
     static const char usage[] = "Usage: ddisp [-v -b -p -c -H] [width (512)] < inputfile\n";
 
     fb *fbp = NULL;
-    double buf[MAXPTS];
+    double buf[BU_PAGE_SIZE];
 
     int n, L;
     int Clear = 0;
     int pause_time = 0;
     int mode = 0;
     int fbsize = 512;
+
+    bu_setprogname(argv[0]);
 
     if (isatty(fileno(stdin))) {
 	bu_exit(1, "%s", usage);
@@ -178,7 +183,7 @@ main(int argc, char **argv)
 	bu_exit(2, "Unable to open framebuffer\n");
     }
 
-    L = (argc > 1) ? atoi(argv[1]) : 512;
+    L = (argc > 1) ? atoi(argv[1]) : BU_PAGE_SIZE;
 
     while ((n = fread(buf, sizeof(*buf), L, stdin)) > 0) {
 	/* XXX - width hack */
@@ -194,7 +199,7 @@ main(int argc, char **argv)
 	else
 	    lineout(fbp, buf, n);
 	if (pause_time)
-	    sleep(pause_time);
+	    bu_snooze(BU_SEC2USEC(pause_time));
     }
     fb_close(fbp);
 

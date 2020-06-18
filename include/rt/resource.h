@@ -1,7 +1,7 @@
 /*                     R E S O U R C E . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -86,7 +86,7 @@ struct resource {
     /* Optimizations.  Rays not shot at solids */
     long                re_prune_solrpp;/**< @brief  shot missed solid RPP, ft_shot skipped */
     long                re_ndup;        /**< @brief  ft_shot() calls skipped for already-ft_shot() solids */
-    long                re_nempty_cells;        /**< @brief  number of empty NUgrid cells passed through */
+    long                re_nempty_cells;        /**< @brief  number of empty spatial partitioning cells passed through */
     /* Data for accelerating "pieces" of solids */
     struct rt_piecestate *re_pieces;    /**< @brief  array [rti_nsolids_with_pieces] */
     long                re_piece_ndup;  /**< @brief  ft_piece_shot() calls skipped for already-ft_shot() solids */
@@ -110,6 +110,20 @@ RT_EXPORT extern struct resource rt_uniresource;        /**< @brief  default.  D
 #define RESOURCE_NULL   ((struct resource *)0)
 #define RT_CK_RESOURCE(_p) BU_CKMAG(_p, RESOURCE_MAGIC, "struct resource")
 #define RT_RESOURCE_INIT_ZERO { RESOURCE_MAGIC, 0, BU_LIST_INIT_ZERO, BU_PTBL_INIT_ZERO, 0, 0, 0, BU_LIST_INIT_ZERO, 0, 0, 0, BU_LIST_INIT_ZERO, BU_LIST_INIT_ZERO, BU_LIST_INIT_ZERO, NULL, 0, NULL, 0, 0, 0, 0, 0, 0, 0, 0, NULL, 0, 0, 0, 0, BU_PTBL_INIT_ZERO, NULL, 0, 0, 0, NULL, BU_PTBL_INIT_ZERO }
+
+/**
+ * Definition of global parallel-processing semaphores.
+ *
+ * res_syscall is now   BU_SEM_SYSCALL
+ */
+RT_EXPORT extern int RT_SEM_WORKER;
+RT_EXPORT extern int RT_SEM_MODEL;
+RT_EXPORT extern int RT_SEM_RESULTS;
+RT_EXPORT extern int RT_SEM_TREE0;
+RT_EXPORT extern int RT_SEM_TREE1;
+RT_EXPORT extern int RT_SEM_TREE2;
+RT_EXPORT extern int RT_SEM_TREE3;
+
 
 __END_DECLS
 

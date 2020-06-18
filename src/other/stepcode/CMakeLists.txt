@@ -38,7 +38,7 @@
 # This file contains the top level CMakeLists.txt logic for the
 # SC software package.
 
-PROJECT(SC)
+project(SC)
 
 # SC version
 SET(SC_VERSION_MAJOR 0)
@@ -55,16 +55,7 @@ SET(SC_ABI_SOVERSION 2)
 SET(SC_ABI_VERSION ${SC_ABI_SOVERSION}.0.0)
 
 # Minimum required version of CMake
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8.8)
-IF(COMMAND CMAKE_POLICY)
-  CMAKE_POLICY(SET CMP0003 NEW)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-	  CMAKE_POLICY(SET CMP0026 OLD)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
-	  CMAKE_POLICY(SET CMP0054 NEW)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
-ENDIF(COMMAND CMAKE_POLICY)
+cmake_minimum_required(VERSION 3.1.3)
 
 IF( NOT DEFINED INCLUDE_INSTALL_DIR )
   SET( INCLUDE_INSTALL_DIR include )
@@ -86,6 +77,10 @@ if(NOT DEFINED LIB_DIR)
   set(LIB_DIR lib)
 endif(NOT DEFINED LIB_DIR)
 
+# Because the STEPcode headers are used in BRL-CAD, we have added some decl code
+# to the headers for strict c89/c++98.  Don't use it for the stepcode build itself
+add_definitions(-DHAVE_DECL_FSEEKO)
+
 IF( NOT DEFINED SC_BUILD_TYPE )
   SET( SC_BUILD_TYPE "Debug" CACHE STRING "Build type" ) # By default set debug build
 ENDIF( NOT DEFINED SC_BUILD_TYPE )
@@ -95,25 +90,17 @@ ELSE(NOT SC_IS_SUBBUILD)
   SET(CMAKE_BUILD_TYPE ${SC_BUILD_TYPE} )
 ENDIF(NOT SC_IS_SUBBUILD)
 
-# Define helper macro OPTION_WITH_DEFAULT
-MACRO( OPTION_WITH_DEFAULT OPTION_NAME OPTION_STRING OPTION_DEFAULT )
-  IF( NOT DEFINED ${OPTION_NAME} )
-    SET( ${OPTION_NAME} ${OPTION_DEFAULT} )
-  ENDIF( NOT DEFINED ${OPTION_NAME} )
-  OPTION( ${OPTION_NAME} "${OPTION_STRING}" ${${OPTION_NAME}} )
-ENDMACRO( OPTION_WITH_DEFAULT OPTION_NAME OPTION_STRING OPTION_DEFAULT )
-
 # build shared libs by default
-OPTION_WITH_DEFAULT(SC_BUILD_SHARED_LIBS "Build shared libs" ON )
+OPTION(SC_BUILD_SHARED_LIBS "Build shared libs" ON)
 
 # don't build static libs by default
-OPTION_WITH_DEFAULT(SC_BUILD_STATIC_LIBS "Build static libs" OFF)
+OPTION(SC_BUILD_STATIC_LIBS "Build static libs" OFF)
 
-OPTION_WITH_DEFAULT(SC_PYTHON_GENERATOR "Compile exp2python" ON)
-OPTION_WITH_DEFAULT(SC_CPP_GENERATOR "Compile exp2cxx" ON)
+OPTION(SC_PYTHON_GENERATOR "Compile exp2python" ON)
+OPTION(SC_CPP_GENERATOR "Compile exp2cxx" ON)
 
-OPTION_WITH_DEFAULT(SC_MEMMGR_ENABLE_CHECKS "Enable sc_memmgr's memory leak detection" OFF)
-OPTION_WITH_DEFAULT(SC_TRACE_FPRINTF "Enable extra comments in generated code so the code's source in exp2cxx may be located" OFF)
+OPTION(SC_MEMMGR_ENABLE_CHECKS "Enable sc_memmgr's memory leak detection" OFF)
+OPTION(SC_TRACE_FPRINTF "Enable extra comments in generated code so the code's source in exp2cxx may be located" OFF)
 
 if(NOT DEFINED SC_SDAI_ADDITIONAL_EXES_SRCS )
   set( SC_SDAI_ADDITIONAL_EXES_SRCS "" CACHE STRING "Source files for additional executables to be linked with SDAI libs" )
@@ -154,7 +141,7 @@ ENDIF(_orig_lang)
 
 #---------------------------------------------------------------------
 # Coverage option
-OPTION_WITH_DEFAULT( SC_ENABLE_COVERAGE "Enable code coverage test" OFF )
+OPTION( SC_ENABLE_COVERAGE "Enable code coverage test" OFF )
 IF(SC_ENABLE_COVERAGE)
   SET(SC_ENABLE_TESTING ON CACHE BOOL "Testing enabled by coverage option" FORCE)
   # build static libs, better coverage report
@@ -169,7 +156,7 @@ ENDIF(SC_ENABLE_COVERAGE)
 
 #---------------------------------------------------------------------
 # Testing option
-OPTION_WITH_DEFAULT( SC_ENABLE_TESTING "Enable unittesting framework" OFF )
+OPTION( SC_ENABLE_TESTING "Enable unittesting framework" OFF )
 IF(SC_ENABLE_TESTING)
   if( NOT DEFINED SC_BUILD_SCHEMAS )
     set( SC_BUILD_SCHEMAS "ALL" ) #test all schemas, unless otherwise specified
@@ -177,32 +164,6 @@ IF(SC_ENABLE_TESTING)
   INCLUDE(CTest)
   ENABLE_TESTING()
 ENDIF(SC_ENABLE_TESTING)
-
-#---------------------------------------------------------------------
-# The following logic is what allows binaries to run successfully in
-# the build directory AND install directory.  Thanks to plplot for
-# identifying the necessity of setting CMAKE_INSTALL_NAME_DIR on OSX.
-# Documentation of these options is available at
-# http://www.cmake.org/Wiki/CMake_RPATH_handling
-
-# use, i.e. don't skip the full RPATH for the build tree
-set(CMAKE_SKIP_BUILD_RPATH  FALSE)
-
-# when building, don't use the install RPATH already
-# (but later on when installing)
-set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-
-# the RPATH/INSTALL_NAME_DIR to be used when installing
-if (NOT APPLE)
-  set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib:\$ORIGIN/../lib")
-endif(NOT APPLE)
-# On OSX, we need to set INSTALL_NAME_DIR instead of RPATH
-# http://www.cmake.org/cmake/help/cmake-2-8-docs.html#variable:CMAKE_INSTALL_NAME_DIR
-set(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
-
-# add the automatically determined parts of the RPATH which point to
-# directories outside the build tree to the install RPATH
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
 
 #-----------------------------------------------------------------------------
 # Output directories.
@@ -442,9 +403,9 @@ ADD_SUBDIRECTORY(src/clstepcore)
 ADD_SUBDIRECTORY(src/cleditor)
 ADD_SUBDIRECTORY(src/cldai)
 ADD_SUBDIRECTORY(src/clutils)
-if( NOT WIN32 ) # don't build cllazyfile on windows until export/import macros are in place
-  ADD_SUBDIRECTORY( src/cllazyfile )
-endif( NOT WIN32 )
+#if( NOT WIN32 ) # don't build cllazyfile on windows until export/import macros are in place
+#  ADD_SUBDIRECTORY( src/cllazyfile )
+#endif( NOT WIN32 )
 ADD_SUBDIRECTORY(include)
 ADD_SUBDIRECTORY(data)
 IF(SC_ENABLE_TESTING)

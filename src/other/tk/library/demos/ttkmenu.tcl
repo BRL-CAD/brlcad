@@ -2,15 +2,12 @@
 #
 # This demonstration script creates a toplevel window containing several Ttk
 # menubutton widgets.
-#
-# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."
 }
 
 package require Tk
-package require Ttk
 
 set w .ttkmenu
 catch {destroy $w}

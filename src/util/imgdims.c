@@ -1,7 +1,7 @@
 /*                       I M G D I M S . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2016 United States Government as represented by
+ * Copyright (c) 1997-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,6 +33,7 @@
 
 #include "vmath.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/file.h"
 #include "bu/malloc.h"
@@ -111,6 +112,8 @@ main (int argc, char **argv)
     size_t height;
     struct stat stat_buf;
 
+    bu_setprogname(argv[0]);
+
     /*
      * Process the command line
      */
@@ -135,7 +138,7 @@ main (int argc, char **argv)
 	print_usage();
     }
 
-    argument = bu_realpath(argv[bu_optind], NULL);
+    argument = bu_file_realpath(argv[bu_optind], NULL);
     if (how != NONE && !bu_file_exists(argument, NULL)) {
 	bu_log("image file [%s] does not exist\n", argument);
 	bu_free(argument, "argument realpath");

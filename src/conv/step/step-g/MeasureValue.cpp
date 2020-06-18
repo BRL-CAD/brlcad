@@ -1,7 +1,7 @@
 /*                 MeasureValue.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2016 United States Government as represented by
+ * Copyright (c) 1994-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -55,7 +55,7 @@ const char *measure_type_names[] = {
     "THERMODYNAMIC_TEMPERATURE_MEASURE",
     "TIME_MEASURE",
     "VOLUME_MEASURE",
-    "UNKNOWN",
+    "MEASURE_VALUE_UNKNOWN",
     NULL
 };
 
@@ -63,7 +63,7 @@ MeasureValue::MeasureValue()
 {
     step = NULL;
     id = 0;
-    type = MeasureValue::UNKNOWN;
+    type = MeasureValue::MEASURE_VALUE_UNKNOWN;
     ivalue = 0;
     rvalue = 0.0;
 }
@@ -72,7 +72,7 @@ MeasureValue::MeasureValue(STEPWrapper *sw, int step_id)
 {
     step = sw;
     id = step_id;
-    type = MeasureValue::UNKNOWN;
+    type = MeasureValue::MEASURE_VALUE_UNKNOWN;
     ivalue = 0;
     rvalue = 0.0;
 }

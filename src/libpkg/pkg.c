@@ -1,7 +1,7 @@
 /*                           P K G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,10 +27,10 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <ctype.h>		/* used by inet_addr() routine, below */
 #include <time.h>
 #include <string.h>
+
 
 #ifdef HAVE_SYS_PARAM_H
 #  include <sys/param.h>
@@ -58,15 +58,6 @@
 #  undef LITTLE_ENDIAN		/* defined in netinet/{ip.h, tcp.h} */
 #endif
 
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#else
-#  include <windows.h>
-#  include <io.h>
-#  include <fcntl.h>
-#endif
-
-
 /* Not all systems with "BSD Networking" include UNIX Domain sockets */
 #ifdef HAVE_SYS_UN_H
 #  include <sys/un.h>		/* UNIX Domain sockets */
@@ -81,13 +72,19 @@
 #  include <sys/netinet/tcp.h>
 #endif
 
-#ifdef HAVE_WRITEV
+#ifdef HAVE_SYS_UIO_H
 #  include <sys/uio.h>		/* for struct iovec (writev) */
 #endif
 
 #include <errno.h>
+
+#include "bio.h"
+
 #include "pkg.h"
 
+#if defined(HAVE_GETHOSTBYNAME) && !defined(HAVE_DECL_GETHOSTBYNAME) && !defined(_WINSOCKAPI_)
+extern struct hostent *gethostbyname(const char *);
+#endif
 
 /* compatibility for pedantic bug/limitation in gcc 4.6.2, need to
  * mark macros as extensions else they may emit "ISO C forbids
@@ -135,14 +132,10 @@
 #  define DMSG(s) /**/
 #endif
 
-#if !defined(_WIN32) || defined(__CYGWIN__)
-#include <errno.h>
-#endif
-
 int pkg_nochecking = 0;	/* set to disable extra checking for input */
 int pkg_permport = 0;	/* TCP port that pkg_permserver() is listening on XXX */
 
-#define MAX_PKG_ERRBUF_SIZE 80
+#define MAX_PKG_ERRBUF_SIZE 128
 static char _pkg_errbuf[MAX_PKG_ERRBUF_SIZE] = {0};
 static FILE *_pkg_debug = (FILE*)NULL;
 
@@ -772,6 +765,7 @@ pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog)(const cha
 	    if (errno == EINTR)
 		continue;
 #ifdef HAVE_WINSOCK_H
+		errno = WSAGetLastError();
 	    if (errno == WSAEWOULDBLOCK)
 		return PKC_NULL;
 #else
@@ -779,6 +773,11 @@ pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog)(const cha
 		return PKC_NULL;
 #endif
 	    _pkg_perror(errlog, "pkg_getclient: accept");
+#ifdef HAVE_WINSOCK_H
+		char msgbuf[256] = { '\0' };
+		FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM | FORMAT_MESSAGE_IGNORE_INSERTS, NULL, errno, MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT), msgbuf, sizeof(msgbuf), NULL);
+		_pkg_perror(errlog, (char *)msgbuf);
+#endif
 	    return PKC_ERROR;
 	}
     }  while (s2 < 0);

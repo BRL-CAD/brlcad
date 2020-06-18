@@ -581,7 +581,7 @@ proc ::fileutil::stripN {path n} {
 # Results:
 #	path		The (possibly) modified path.
 
-if {[string equal $tcl_platform(platform) windows]} {
+if {[string equal $::tcl_platform(platform) windows]} {
 
     # Windows. While paths are stored with letter-case preserved al
     # comparisons have to be done case-insensitive. For reference see
@@ -1827,7 +1827,7 @@ proc ::fileutil::TempDir {} {
 	    }
 	}
 
-	switch $tcl_platform(platform) {
+	switch $::tcl_platform(platform) {
 	    windows {
 		lappend attempdirs "C:\\TEMP" "C:\\TMP" "\\TEMP" "\\TMP"
 	    }

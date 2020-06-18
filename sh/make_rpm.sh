@@ -2,7 +2,7 @@
 #                     M A K E _ R P M . S H
 # BRL-CAD
 #
-# Copyright (c) 2005-2016 United States Government as represented by
+# Copyright (c) 2005-2020 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -160,7 +160,6 @@ mkdir -p $TMPDIR/tmp/usr/share/applications
 cp -f $TMPDIR/archer.desktop $TMPDIR/tmp/usr/share/applications
 cp -f $TMPDIR/brlcad-db.desktop $TMPDIR/tmp/usr/share/applications
 cp -f $TMPDIR/brlcad-doc.desktop $TMPDIR/tmp/usr/share/applications
-cp -f $TMPDIR/brlcad-doc-animation.desktop $TMPDIR/tmp/usr/share/applications
 cp -f $TMPDIR/brlcad-doc-mged.desktop $TMPDIR/tmp/usr/share/applications
 cp -f $TMPDIR/mged.desktop $TMPDIR/tmp/usr/share/applications
 cp -f $TMPDIR/rtwizard.desktop $TMPDIR/tmp/usr/share/applications

@@ -1,7 +1,7 @@
 /*                        D M _ U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2016 United States Government as represented by
+ * Copyright (c) 1988-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@ drawLine3D(struct dm_internal *dmp, point_t pt1, point_t pt2, const char *log_bu
     GLdouble pt[3];
 
     if (dmp->dm_debugLevel)
-	bu_log(log_bu);
+	bu_log("%s", log_bu);
 
     if (dmp->dm_debugLevel) {
 	GLfloat pmat[16];
@@ -85,7 +85,7 @@ drawLines3D(struct dm_internal *dmp, int npoints, point_t *points, int lflag, co
     static float black[4] = {0.0, 0.0, 0.0, 0.0};
 
     if (dmp->dm_debugLevel)
-	bu_log(log_bu);
+	bu_log("%s", log_bu);
 
     if (dmp->dm_debugLevel) {
 	GLfloat pmat[16];
@@ -137,7 +137,7 @@ int
 drawLine2D(struct dm_internal *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2, const char *log_bu)
 {
     if (dmp->dm_debugLevel)
-	bu_log(log_bu);
+	bu_log("%s", log_bu);
 
     if (dmp->dm_debugLevel) {
 	GLfloat pmat[16];
@@ -171,7 +171,7 @@ draw_Line3D(struct dm_internal *dmp, point_t pt1, point_t pt2)
     if (!dmp)
 	return BRLCAD_ERROR;
 
-    if (bn_pt3_pt3_equal(pt1, pt2, NULL)) {
+    if (bn_pnt3_pnt3_equal(pt1, pt2, NULL)) {
 	/* nothing to do for a singular point */
 	return BRLCAD_OK;
     }

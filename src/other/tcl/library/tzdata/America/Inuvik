@@ -1,7 +1,7 @@
 # created by tools/tclZIC.tcl - do not edit
 
 set TZData(:America/Inuvik) {
-    {-9223372036854775808 0 0 zzz}
+    {-9223372036854775808 0 0 -00}
     {-536457600 -28800 0 PST}
     {-147888000 -21600 1 PDDT}
     {-131558400 -28800 0 PST}

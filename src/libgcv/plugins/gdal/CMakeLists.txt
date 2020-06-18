@@ -1,11 +1,10 @@
-find_package(GDAL)
-
-if(GDAL_FOUND)
+if(GDAL_LIBRARY AND GDAL_INCLUDE_DIR)
   include_directories(SYSTEM ${GDAL_INCLUDE_DIR})
   LIBGCV_ADD_PLUGIN(gdal "gdal.cpp" "librt;libbu;${GDAL_LIBRARY}")
-else(GDAL_FOUND)
-  CMAKEFILES(../gdal)
-endif(GDAL_FOUND)
+endif(GDAL_LIBRARY AND GDAL_INCLUDE_DIR)
+
+CMAKEFILES(gdal.cpp)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

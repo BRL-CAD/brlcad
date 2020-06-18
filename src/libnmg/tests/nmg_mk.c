@@ -1,7 +1,7 @@
 /*                   T E S T _ N M G _ M K . C
  * BRL-CAD
  *
- * Copyright (c) 2014-2016 United States Government as represented by
+ * Copyright (c) 2014-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,6 +22,7 @@
 
 #include <string.h>
 
+#include "bu/app.h"
 #include "raytrace.h"
 
 int
@@ -180,6 +181,8 @@ test_nmg_msv(void)
 int
 main(int argc, char **argv)
 {
+    bu_setprogname(argv[0]);
+
     if (argc > 1) {
 	bu_exit(1, "Usage: %s\n", argv[0]);
     }

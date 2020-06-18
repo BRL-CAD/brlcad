@@ -1,7 +1,7 @@
 /*                       G A S T A N K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,7 +22,10 @@
  * Program to create a gas tank using libwdb.  All dimensions are in
  * mm.  The gas tank is composed of 3 arb8s, 8 spheres, and 12
  * cylinders.  The gas tank is solid and centered at (0, 0, 0).
+ * Note that it is not approparte as-is for any application which
+ * expects the internal volume of the tank to be modeled as well.
  *
+ * Introduced in BRL-CAD release 4.4.
  */
 
 #include "common.h"
@@ -34,6 +37,7 @@
 
 #include "rt/db4.h"
 #include "vmath.h"
+#include "bu/app.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -82,6 +86,8 @@ main(int argc, char **argv)
 
     int i, j, k;		/* Loop counters. */
     int ret;
+
+    bu_setprogname(argv[0]);
 
     /* Set up solid, region, and group names. */
     solnam[0] = 's';

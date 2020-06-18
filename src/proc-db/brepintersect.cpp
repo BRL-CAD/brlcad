@@ -1,7 +1,7 @@
 /*                 B R E P I N T E R S E C T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,6 +33,7 @@
 /* implementation system header */
 #include <assert.h>
 
+#include "bu/app.h"
 
 int PolylineBBox(
     const ON_Polyline& pline,
@@ -342,8 +343,7 @@ int SegmentSegmentIntersect(
 	 * outside these bounds by tiny little amounts */
 	if (-tol <= s && s <= 1.0 + tol && -tol <= t && t <= 1.0 + tol) {
 	    ON_3dPoint Ps = x1 + s * (x2 - x1); /* The answer according to equation P*/
-	    ON_3dPoint Qt = x3 + t * (x4 - x3); /* The answer according to equation Q*/
-	    assert(VNEAR_EQUAL(Ps, Qt, tol)); /* check to see if they agree, just a sanity check*/
+	    assert(VNEAR_EQUAL(Ps, x3 + t * (x4 - x3), tol)); /* check to see if it agrees with the answer according to equation Q, just a sanity check*/
 	    x[0] = Ps;
 	    return 1;
 	} else {
@@ -962,8 +962,10 @@ int MeshMeshIntersect(
 }
 
 
-int main()
+int main(int UNUSED(argc), const char **argv)
 {
+    bu_setprogname(argv[0]);
+
     /* create the points */
     ON_3fPoint a1 = ON_3fPoint(1.0, 1.0, -1.0);
     ON_3fPoint b1 = ON_3fPoint(1.0, 1.0, 1.0);

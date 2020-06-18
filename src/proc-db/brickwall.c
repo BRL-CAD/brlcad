@@ -1,7 +1,7 @@
 /*                     B R I C K W A L L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,6 +30,7 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/units.h"
 #include "bu/exit.h"
@@ -316,6 +317,8 @@ int main(int ac, char **av)
     int vert_bricks;
     double horiz_spacing;
     double vert_spacing;
+
+    bu_setprogname(av[0]);
 
     if (ac == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
 	usage("\n");

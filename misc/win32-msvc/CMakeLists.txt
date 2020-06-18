@@ -1,9 +1,11 @@
 # build DLL
 add_subdirectory(Dll)
 
-if(CPP_DLL_DEFINES)
+if(MSVC)
   add_library(bs SHARED bootstrap.cpp)
-endif(CPP_DLL_DEFINES)
+endif(MSVC)
+
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

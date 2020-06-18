@@ -1,7 +1,7 @@
 /*                          D M - X . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2016 United States Government as represented by
+ * Copyright (c) 1988-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,15 +37,15 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
-#define USE_DIALS_AND_BUTTONS 1
-
 #ifdef HAVE_X11_XOSDEFS_H
 #  include <X11/Xfuncproto.h>
 #  include <X11/Xosdefs.h>
 #endif
-#if USE_DIALS_AND_BUTTONS
+
+#ifdef HAVE_X11_EXTENSIONS_XINPUT_H
 #  include <X11/extensions/XInput.h>
-#endif
+#endif /* HAVE_X11_XINPUT_H */
+
 #if defined(linux)
 #  undef X_NOT_STDC_ENV
 #  undef X_NOT_POSIX
@@ -144,9 +144,14 @@ get_color(Display *dpy, Colormap cmap, XColor *color)
 HIDDEN int
 X_reshape(struct dm_internal *dmp, int width, int height)
 {
+    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
+
     dmp->dm_height = height;
     dmp->dm_width = width;
     dmp->dm_aspect = (fastf_t)dmp->dm_width / (fastf_t)dmp->dm_height;
+
+    privars->disp_mat[0] = 2. * privars->ppmm_x / dmp->dm_width;
+    privars->disp_mat[5] = 2. * privars->ppmm_y / dmp->dm_width;
 
     return 0;
 }
@@ -420,7 +425,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     static int count = 0;
     int make_square = -1;
     XGCValues gcv;
-#if USE_DIALS_AND_BUTTONS
+#ifdef HAVE_X11_EXTENSIONS_XINPUT_H
     int j, k;
     int ndevices;
     int nclass = 0;
@@ -475,8 +480,6 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	else
 	    bu_vls_strcpy(&dmp->dm_dName, ":0.0");
     }
-    if (bu_vls_strlen(&init_proc_vls) == 0)
-	bu_vls_strcpy(&init_proc_vls, "bind_dm");
 
     /* initialize dm specific variables */
     pubvars->devmotionnotify = LASTEvent;
@@ -531,14 +534,14 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 		  (char *)Tk_Name(pubvars->xtkwin));
 #endif
 
-    bu_vls_printf(&str, "_init_dm %s %s\n",
-		  bu_vls_addr(&init_proc_vls),
-		  bu_vls_addr(&dmp->dm_pathName));
+    if (bu_vls_strlen(&init_proc_vls) > 0) {
+	bu_vls_printf(&str, "%s %s\n", bu_vls_addr(&init_proc_vls), bu_vls_addr(&dmp->dm_pathName));
 
-    if (Tcl_Eval(interp, bu_vls_addr(&str)) == BRLCAD_ERROR) {
-	bu_vls_free(&str);
-	(void)X_close(dmp);
-	return DM_NULL;
+	if (Tcl_Eval(interp, bu_vls_addr(&str)) == BRLCAD_ERROR) {
+	    bu_vls_free(&str);
+	    (void)X_close(dmp);
+	    return DM_NULL;
+	}
     }
 
     bu_vls_free(&init_proc_vls);
@@ -577,6 +580,9 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
      * digit) value and the screens[] array it indexes into being 0x0.
      * Might have better luck calling functions instead of macros.
      */
+
+    privars->ppmm_x = screen->width / screen->mwidth;
+    privars->ppmm_y = screen->height / screen->mheight;
 
     if (dmp->dm_width == 0) {
 	dmp->dm_width =
@@ -679,7 +685,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	    goto Skip_dials;
     }
 
-#if USE_DIALS_AND_BUTTONS
+#ifdef HAVE_X11_EXTENSIONS_XINPUT_H
     /*
      * Take a look at the available input devices. We're looking for
      * "dial+buttons".
@@ -736,6 +742,11 @@ Done:
 #endif
 
 Skip_dials:
+    MAT_IDN(privars->mod_mat);
+    MAT_IDN(privars->disp_mat);
+
+    privars->xmat = &(privars->mod_mat[0]);
+
     (void)X_configureWin_guts(dmp, 1);
 
 #ifdef HAVE_TK
@@ -743,8 +754,6 @@ Skip_dials:
 			   privars->bg);
     Tk_MapWindow(pubvars->xtkwin);
 #endif
-
-    MAT_IDN(privars->xmat);
 
     return dmp;
 }
@@ -805,7 +814,7 @@ X_drawEnd(struct dm_internal *dmp)
 
 
 /*
- * Load a new transformation matrix.  This will be followed by many
+ * Load a new Model matrix.  This will be followed by many
  * calls to X_draw().
  */
 HIDDEN int
@@ -814,7 +823,7 @@ X_loadMatrix(struct dm_internal *dmp, fastf_t *mat, int which_eye)
     struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
     if (dmp->dm_debugLevel) {
-	bu_log("X_loadMatrix()\n");
+	bu_log("X_load_Matrix()\n");
 
 	bu_log("which eye = %d\t", which_eye);
 	bu_log("transformation matrix = \n");
@@ -826,7 +835,7 @@ X_loadMatrix(struct dm_internal *dmp, fastf_t *mat, int which_eye)
 	bu_log("%g %g %g %g\n", mat[12], mat[13], mat[14], mat[15]);
     }
 
-    MAT_COPY(privars->xmat, mat);
+    MAT_COPY(privars->mod_mat, mat);
     return BRLCAD_OK;
 }
 
@@ -844,15 +853,11 @@ X_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
     fastf_t delta;
     point_t *pt_prev = NULL;
     fastf_t dist_prev=1.0;
+    fastf_t pointSize = DM_X_DEFAULT_POINT_SIZE;
+
     static int nvectors = 0;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
-    fastf_t pointSize = DM_X_DEFAULT_POINT_SIZE;
-
-    if (dmp->dm_debugLevel) {
-	bu_log("X_drawVList()\n");
-	bu_log("vp - %lu, perspective - %d\n", vp, dmp->dm_perspective);
-    }
 
     /* delta is used in clipping to insure clipped endpoint is
      * slightly in front of eye plane (perspective mode only).  This
@@ -871,6 +876,7 @@ X_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 	int nused = tvp->nused;
 	int *cmd = tvp->cmd;
 	point_t *pt = tvp->pt;
+	point_t tlate;
 	fastf_t dist;
 
 	/* Viewing region is from -1.0 to +1.0 */
@@ -883,6 +889,16 @@ X_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 		case BN_VLIST_POLY_VERTNORM:
 		case BN_VLIST_TRI_START:
 		case BN_VLIST_TRI_VERTNORM:
+		    continue;
+		case BN_VLIST_MODEL_MAT:
+		    privars->xmat = &(privars->mod_mat[0]);
+		    continue;
+		case BN_VLIST_DISPLAY_MAT:
+		    MAT4X3PNT(tlate, privars->mod_mat, *pt);
+		    privars->disp_mat[3] = tlate[0];
+		    privars->disp_mat[7] = tlate[1];
+		    privars->disp_mat[11] = tlate[2];
+		    privars->xmat = &(privars->disp_mat[0]);
 		    continue;
 		case BN_VLIST_POLY_MOVE:
 		case BN_VLIST_LINE_MOVE:
@@ -897,7 +913,7 @@ X_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 			/* cannot apply perspective transformation to
 			 * points behind eye plane!!!!
 			 */
-			dist = VDOT(*pt, &privars->xmat[12]) + privars->xmat[15];
+			dist = VDOT(*pt, &(privars->xmat)[12]) + privars->xmat[15];
 			if (dist <= 0.0) {
 			    pt_prev = pt;
 			    dist_prev = dist;
@@ -930,7 +946,7 @@ X_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 			/* cannot apply perspective transformation to
 			 * points behind eye plane!!!!
 			 */
-			dist = VDOT(*pt, &privars->xmat[12]) + privars->xmat[15];
+			dist = VDOT(*pt, &(privars->xmat)[12]) + privars->xmat[15];
 			if (dmp->dm_debugLevel > 2)
 			    bu_log("dist=%g, dist_prev=%g\n", dist, dist_prev);
 			if (dist <= 0.0) {
@@ -1063,7 +1079,7 @@ X_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 		    }
 
 		    if (dmp->dm_perspective > 0) {
-			dist = VDOT(*pt, &privars->xmat[12]) + privars->xmat[15];
+			dist = VDOT(*pt, &(privars->xmat)[12]) + privars->xmat[15];
 
 			if (dist <= 0.0) {
 			    /* nothing to plot - point is behind eye plane */
@@ -1477,7 +1493,7 @@ X_getDisplayImage(struct dm_internal *dmp, unsigned char **image)
 			 ~0, ZPixmap);
 
     if (!ximage_p) {
-	bu_log("png: could not get XImage\n", (char *)NULL);
+	bu_log("png: could not get XImage\n");
 	return BRLCAD_ERROR;
     }
 
@@ -1654,7 +1670,7 @@ X_getDisplayImage(struct dm_internal *dmp, unsigned char **image)
 	    bu_free(rows, "rows");
 	    bu_free(idata, "image data");
 
-	    bu_log("png: not supported for this platform\n", (char *)NULL);
+	    bu_log("png: not supported for this platform\n");
 	    return BRLCAD_ERROR;
 	}
     }

@@ -1,7 +1,7 @@
 /*                           D - A . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,8 +30,10 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/str.h"
 #include "bu/exit.h"
+#include "bu/snooze.h"
 
 
 int
@@ -42,8 +44,10 @@ main(int argc, char *argv[])
     double d;
     int nflag = 0;
 
+    bu_setprogname(argv[0]);
+
     fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     while (argc > 1) {
 	if (BU_STR_EQUAL(argv[1], "-n"))

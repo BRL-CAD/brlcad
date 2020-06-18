@@ -1,7 +1,7 @@
 /*                    U T I L . C P P
  * BRL-CAD
  *
- * Copyright (c) 2017 United States Government as represented by
+ * Copyright (c) 2017-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -57,7 +57,7 @@ creo_log(struct creo_conv_info *cinfo, int msg_type, const char *fmt, ...) {
 
 	switch (cinfo->curr_msg_type) {
 	    case MSG_FAIL:
-		bu_vls_sprintf(&vmsg, "FAILURE: %s", msg);
+		bu_vls_sprintf(&vmsg, "FAILURE!!!: %s", msg);
 		break;
 	    case MSG_OK:
 		bu_vls_sprintf(&vmsg, "SUCCESS: %s", msg);
@@ -94,7 +94,7 @@ wstr_to_long(struct creo_conv_info *cinfo, wchar_t *tmp_str)
     ret = strtol(astr, &endptr, 0);
     if (endptr != NULL && strlen(endptr) > 0) {
 	/* Had some invalid character in the input, fail */
-	creo_log(cinfo, MSG_FAIL, "Invalid string specifier for int: %s\n", astr);
+	creo_log(cinfo, MSG_DEBUG, "Invalid string specifier for int: %s\n", astr);
 	return -1;
     }
     return ret;
@@ -111,7 +111,7 @@ wstr_to_double(struct creo_conv_info *cinfo, wchar_t *tmp_str)
     ret = strtod(astr, &endptr);
     if (endptr != NULL && strlen(endptr) > 0) {
 	/* Had some invalid character in the input, fail */
-	creo_log(cinfo, MSG_FAIL, "Invalid string specifier for double: %s\n", astr);
+	creo_log(cinfo, MSG_DEBUG, "Invalid string specifier for double: %s\n", astr);
 	return -1.0;
     }
     return ret;
@@ -157,49 +157,6 @@ lower_case( char *name )
 	(*c) = tolower( *c );
 	c++;
     }
-}
-
-extern "C" void
-make_legal( char *name )
-{
-    unsigned char *c;
-
-    c = (unsigned char *)name;
-    while ( *c ) {
-	int replace = 1;
-	if (isalnum(*c)) replace = 0;
-	if (*c == '.') replace = 0;
-	if (replace) *c = '_';
-	c++;
-    }
-}
-
-extern "C" void
-collapse_underscores( struct bu_vls *name )
-{
-    struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
-    unsigned char *c;
-
-    c = (unsigned char *)bu_vls_addr(name);
-
-    /* Don't copy leading underscores */
-    while (*c == '_') c++;
-
-    /* Don't copy two underscores in a row, and don't copy an underscore at the end of the string */
-    while ( *c ) {
-	unsigned char *curr = c;
-	c++;
-	if (!(*curr == '_' && *c == '_') && !(*curr == '_' && !*c)) {
-	    bu_vls_putc(&tmpstr, *curr);
-	}
-    }
-
-    /* Only replace if we have something left - otherwise,
-       leave original unchanged */
-    if (bu_vls_strlen(&tmpstr) > 0) {
-	bu_vls_sprintf(name, "%s", bu_vls_addr(&tmpstr));
-    }
-    bu_vls_free(&tmpstr);
 }
 
 struct pparam_data {
@@ -251,8 +208,8 @@ extern "C" ProError regex_key(ProParameter *param, ProError UNUSED(status), ProA
 extern "C" ProError
 creo_attribute_val(char **val, const char *key, ProMdl m)
 {
+    struct bu_vls cpval = BU_VLS_INIT_ZERO;
     wchar_t wkey[CREO_NAME_MAX];
-    wchar_t wval[CREO_NAME_MAX];
     char cval[CREO_NAME_MAX];
     char *fval = NULL;
     ProError pstatus;
@@ -260,6 +217,10 @@ creo_attribute_val(char **val, const char *key, ProMdl m)
     ProParameter param;
     ProParamvalueType ptype;
     ProParamvalue pval;
+    wchar_t w_val[CREO_NAME_MAX];
+    short b_val;
+    int i_val;
+    double d_val;
 
     ProStringToWstring(wkey, (char *)key);
     ProMdlToModelitem(m, &mitm);
@@ -273,15 +234,30 @@ creo_attribute_val(char **val, const char *key, ProMdl m)
     ProParamvalueTypeGet(&pval, &ptype);
     switch (ptype) {
 	case PRO_PARAM_STRING:
-	    ProParamvalueValueGet(&pval, ptype, wval);
-	    ProWstringToString(cval, wval);
+	    ProParamvalueValueGet(&pval, ptype, (void *)w_val);
+	    ProWstringToString(cval, w_val);
 	    if (strlen(cval) > 0) fval = bu_strdup(cval);
+	    break;
+	case PRO_PARAM_INTEGER:
+	    ProParamvalueValueGet(&pval, ptype, (void *)&i_val);
+	    bu_vls_sprintf(&cpval, "%d", i_val);
+	    if (bu_vls_strlen(&cpval) > 0) fval = bu_strdup(bu_vls_cstr(&cpval));
+	    break;
+	case PRO_PARAM_DOUBLE:
+	    ProParamvalueValueGet(&pval, ptype, (void *)&d_val);
+	    bu_vls_sprintf(&cpval, "%g", d_val);
+	    if (bu_vls_strlen(&cpval) > 0) fval = bu_strdup(bu_vls_cstr(&cpval));
+	    break;
+	case PRO_PARAM_BOOLEAN:
+	    ProParamvalueValueGet(&pval, ptype, (void *)&b_val);
+	    fval = (b_val) ? bu_strdup("YES") : bu_strdup("NO");
 	    break;
 	default:
 	    break;
     }
 
     *val = fval;
+    bu_vls_free(&cpval);
     return PRO_TK_NO_ERROR;
 }
 
@@ -298,7 +274,7 @@ creo_param_name(struct creo_conv_info *cinfo, wchar_t *creo_name, int flags)
     ProModelitem itm;
     ProMdl model;
 
-    if (flags == N_REGION) {
+    if (flags == N_REGION || flags == N_SOLID) {
 	if (ProMdlnameInit(creo_name, PRO_MDLFILE_PART, &model) != PRO_TK_NO_ERROR)
 	    return NULL;
     } else if (flags == N_ASSEM) {
@@ -368,6 +344,8 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, const char *suffix,
     std::map<wchar_t *, struct bu_vls *, WStrCmp> *nmap = NULL;
     std::set<struct bu_vls *, StrCmp> *nset = cinfo->brlcad_names;
     char astr[CREO_NAME_MAX];
+    const char *keep_chars = "+-.=_";
+    const char *collapse_chars = "_";
 
     ProWstringToString(astr, name);
 
@@ -418,9 +396,8 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, const char *suffix,
     BU_GET(gname, struct bu_vls);
     bu_vls_init(gname);
 
-    /* First try the parameters, if the user specified any and if the name type
-     * requested can use parameters */
-    if (!(flag == N_CREO) && !(flag == N_SOLID)) {
+    /* First try the parameters, if the user specified any */
+    if (flag != N_CREO) {
 	param_name = creo_param_name(cinfo, name, flag);
 	bu_vls_sprintf(&gname_root, "%s", param_name);
     }
@@ -436,8 +413,7 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, const char *suffix,
 
     /* scrub */
     lower_case(bu_vls_addr(&gname_root));
-    make_legal(bu_vls_addr(&gname_root));
-    collapse_underscores(&gname_root);
+    bu_vls_simplify(&gname_root, keep_chars, collapse_chars, collapse_chars);
     bu_vls_sprintf(gname, "%s", bu_vls_addr(&gname_root));
 
     /* if we don't have something by now, go with unknown */
@@ -450,13 +426,13 @@ get_brlcad_name(struct creo_conv_info *cinfo, wchar_t *name, const char *suffix,
 	bu_vls_sprintf(gname, "%s_1", bu_vls_addr(&gname_root));
 	if (suffix) {bu_vls_printf(gname, ".%s", suffix);}
 	while (nset->find(gname) != nset->end()) {
-	    (void)bu_namegen(gname, NULL, NULL);
+	    (void)bu_vls_incr(gname, NULL, NULL, NULL, NULL);
 	    count++;
 	    creo_log(cinfo, MSG_DEBUG, "\t trying name : %s\n", bu_vls_addr(gname));
 	    if (count == LONG_MAX) {
 		bu_vls_free(gname);
 		BU_PUT(gname, struct bu_vls);
-		creo_log(cinfo, MSG_FAIL, "%s name generation FAILED.\n", astr);
+		creo_log(cinfo, MSG_DEBUG, "%s name generation FAILED.\n", astr);
 		return NULL;
 	    }
 	}
@@ -493,7 +469,7 @@ ProError PopupMsg(const char *title, const char *msg)
 {
     wchar_t wtitle[CREO_NAME_MAX];
     wchar_t wmsg[CREO_MSG_MAX];
-    ProUIMessageButton* button;
+    ProUIMessageButton* button = NULL;
     ProUIMessageButton bresult;
 
     ProArrayAlloc(1, sizeof(ProUIMessageButton), 1, (ProArray*)&button);

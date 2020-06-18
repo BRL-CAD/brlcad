@@ -1,7 +1,7 @@
 /*                     D B _ I N M E M . C
  * BRL-CAD
  *
- * Copyright (c) 2006-2016 United States Government as represented by
+ * Copyright (c) 2006-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -52,7 +52,7 @@ db_open_inmem(void)
     register int i;
 
     BU_ALLOC(dbip, struct db_i);
-    dbip->dbi_eof = (off_t)-1L;
+    dbip->dbi_eof = (b_off_t)-1L;
     dbip->dbi_fp = NULL;
     dbip->dbi_mf = NULL;
 

@@ -12,8 +12,6 @@
  * Author: Paul Mackerras (paulus@cs.anu.edu.au),
  *	Department of Computer Science,
  *	Australian National University.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -36,14 +34,14 @@
  * The format record for the PPM file format:
  */
 
-static int		FileMatchPPM(Tcl_Channel chan, CONST char *fileName,
+static int		FileMatchPPM(Tcl_Channel chan, const char *fileName,
 			    Tcl_Obj *format, int *widthPtr, int *heightPtr,
 			    Tcl_Interp *interp);
 static int		FileReadPPM(Tcl_Interp *interp, Tcl_Channel chan,
-			    CONST char *fileName, Tcl_Obj *format,
+			    const char *fileName, Tcl_Obj *format,
 			    Tk_PhotoHandle imageHandle, int destX, int destY,
 			    int width, int height, int srcX, int srcY);
-static int		FileWritePPM(Tcl_Interp *interp, CONST char *fileName,
+static int		FileWritePPM(Tcl_Interp *interp, const char *fileName,
 			    Tcl_Obj *format, Tk_PhotoImageBlock *blockPtr);
 static int		StringWritePPM(Tcl_Interp *interp, Tcl_Obj *format,
 			    Tk_PhotoImageBlock *blockPtr);
@@ -62,6 +60,7 @@ Tk_PhotoImageFormat tkImgFmtPPM = {
     StringReadPPM,		/* stringReadProc */
     FileWritePPM,		/* fileWriteProc */
     StringWritePPM,		/* stringWriteProc */
+    NULL
 };
 
 /*
@@ -95,7 +94,7 @@ static int		ReadPPMStringHeader(Tcl_Obj *dataObj, int *widthPtr,
 static int
 FileMatchPPM(
     Tcl_Channel chan,		/* The image file, open for reading. */
-    CONST char *fileName,	/* The name of the image file. */
+    const char *fileName,	/* The name of the image file. */
     Tcl_Obj *format,		/* User-specified format string, or NULL. */
     int *widthPtr, int *heightPtr,
 				/* The dimensions of the image are returned
@@ -131,7 +130,7 @@ static int
 FileReadPPM(
     Tcl_Interp *interp,		/* Interpreter to use for reporting errors. */
     Tcl_Channel chan,		/* The image file, open for reading. */
-    CONST char *fileName,	/* The name of the image file. */
+    const char *fileName,	/* The name of the image file. */
     Tcl_Obj *format,		/* User-specified format string, or NULL. */
     Tk_PhotoHandle imageHandle,	/* The photo image to write into. */
     int destX, int destY,	/* Coordinates of top-left pixel in photo
@@ -142,28 +141,31 @@ FileReadPPM(
 				 * image being read. */
 {
     int fileWidth, fileHeight, maxIntensity;
-    int nLines, nBytes, h, type, count;
+    int nLines, nBytes, h, type, count, bytesPerChannel = 1;
     unsigned char *pixelPtr;
     Tk_PhotoImageBlock block;
 
     type = ReadPPMFileHeader(chan, &fileWidth, &fileHeight, &maxIntensity);
     if (type == 0) {
-	Tcl_AppendResult(interp, "couldn't read raw PPM header from file \"",
-		fileName, "\"", NULL);
+	Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		"couldn't read raw PPM header from file \"%s\"", fileName));
+	Tcl_SetErrorCode(interp, "TK", "IMAGE", "PPM", "NO_HEADER", NULL);
 	return TCL_ERROR;
     }
     if ((fileWidth <= 0) || (fileHeight <= 0)) {
-	Tcl_AppendResult(interp, "PPM image file \"", fileName,
-		"\" has dimension(s) <= 0", NULL);
+	Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		"PPM image file \"%s\" has dimension(s) <= 0", fileName));
+	Tcl_SetErrorCode(interp, "TK", "IMAGE", "PPM", "DIMENSIONS", NULL);
 	return TCL_ERROR;
     }
-    if ((maxIntensity <= 0) || (maxIntensity >= 256)) {
-	char buffer[TCL_INTEGER_SPACE];
-
-	sprintf(buffer, "%d", maxIntensity);
-	Tcl_AppendResult(interp, "PPM image file \"", fileName,
-		"\" has bad maximum intensity value ", buffer, NULL);
+    if ((maxIntensity <= 0) || (maxIntensity > 0xffff)) {
+	Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		"PPM image file \"%s\" has bad maximum intensity value %d",
+		fileName, maxIntensity));
+	Tcl_SetErrorCode(interp, "TK", "IMAGE", "PPM", "INTENSITY", NULL);
 	return TCL_ERROR;
+    } else if (maxIntensity > 0x00ff) {
+	bytesPerChannel = 2;
     }
 
     if ((srcX + width) > fileWidth) {
@@ -173,20 +175,20 @@ FileReadPPM(
 	height = fileHeight - srcY;
     }
     if ((width <= 0) || (height <= 0)
-	|| (srcX >= fileWidth) || (srcY >= fileHeight)) {
+	    || (srcX >= fileWidth) || (srcY >= fileHeight)) {
 	return TCL_OK;
     }
 
     if (type == PGM) {
-	block.pixelSize = 1;
+	block.pixelSize = 1 * bytesPerChannel;
 	block.offset[0] = 0;
 	block.offset[1] = 0;
 	block.offset[2] = 0;
     } else {
-	block.pixelSize = 3;
+	block.pixelSize = 3 * bytesPerChannel;
 	block.offset[0] = 0;
-	block.offset[1] = 1;
-	block.offset[2] = 2;
+	block.offset[1] = 1 * bytesPerChannel;
+	block.offset[2] = 2 * bytesPerChannel;
     }
     block.offset[3] = 0;
     block.width = width;
@@ -209,7 +211,7 @@ FileReadPPM(
 	nLines = 1;
     }
     nBytes = nLines * block.pitch;
-    pixelPtr = (unsigned char *) ckalloc((unsigned) nBytes);
+    pixelPtr = ckalloc(nBytes);
     block.pixelPtr = pixelPtr + srcX * block.pixelSize;
 
     for (h = height; h > 0; h -= nLines) {
@@ -219,30 +221,41 @@ FileReadPPM(
 	}
 	count = Tcl_Read(chan, (char *) pixelPtr, nBytes);
 	if (count != nBytes) {
-	    Tcl_AppendResult(interp, "error reading PPM image file \"",
-		    fileName, "\": ",
-		    Tcl_Eof(chan) ? "not enough data" : Tcl_PosixError(interp),
-		    NULL);
-	    ckfree((char *) pixelPtr);
+	    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		    "error reading PPM image file \"%s\": %s", fileName,
+		    Tcl_Eof(chan)?"not enough data":Tcl_PosixError(interp)));
+	    if (Tcl_Eof(chan)) {
+		Tcl_SetErrorCode(interp, "TK", "IMAGE", "PPM", "EOF", NULL);
+	    }
+	    ckfree(pixelPtr);
 	    return TCL_ERROR;
 	}
-	if (maxIntensity != 255) {
+	if (maxIntensity < 0x00ff) {
 	    unsigned char *p;
 
 	    for (p = pixelPtr; count > 0; count--, p++) {
 		*p = (((int) *p) * 255)/maxIntensity;
 	    }
+	} else if (maxIntensity > 0x00ff) {
+	    unsigned char *p;
+	    unsigned int value;
+
+	    for (p = pixelPtr; count > 0; count--, p += 2) {
+		value = ((unsigned int) p[0]) * 256 + ((unsigned int) p[1]);
+		value = value * 255 / maxIntensity;
+		p[0] = p[1] = (unsigned char) value;
+	    }
 	}
 	block.height = nLines;
 	if (Tk_PhotoPutBlock(interp, imageHandle, &block, destX, destY,
 		width, nLines, TK_PHOTO_COMPOSITE_SET) != TCL_OK) {
-	    ckfree((char *) pixelPtr);
+	    ckfree(pixelPtr);
 	    return TCL_ERROR;
 	}
 	destY += nLines;
     }
 
-    ckfree((char *) pixelPtr);
+    ckfree(pixelPtr);
     return TCL_OK;
 }
 
@@ -267,7 +280,7 @@ FileReadPPM(
 static int
 FileWritePPM(
     Tcl_Interp *interp,
-    CONST char *fileName,
+    const char *fileName,
     Tcl_Obj *format,
     Tk_PhotoImageBlock *blockPtr)
 {
@@ -326,8 +339,8 @@ FileWritePPM(
     chan = NULL;
 
   writeerror:
-    Tcl_AppendResult(interp, "error writing \"", fileName, "\": ",
-	    Tcl_PosixError(interp), NULL);
+    Tcl_SetObjResult(interp, Tcl_ObjPrintf("error writing \"%s\": %s",
+	    fileName, Tcl_PosixError(interp)));
     if (chan != NULL) {
 	Tcl_Close(NULL, chan);
     }
@@ -476,30 +489,32 @@ StringReadPPM(
 				 * image being read. */
 {
     int fileWidth, fileHeight, maxIntensity;
-    int nLines, nBytes, h, type, count, dataSize;
+    int nLines, nBytes, h, type, count, dataSize, bytesPerChannel = 1;
     unsigned char *pixelPtr, *dataBuffer;
     Tk_PhotoImageBlock block;
 
     type = ReadPPMStringHeader(dataObj, &fileWidth, &fileHeight,
 	    &maxIntensity, &dataBuffer, &dataSize);
     if (type == 0) {
-	Tcl_AppendResult(interp, "couldn't read raw PPM header from string",
-		NULL);
+	Tcl_SetObjResult(interp, Tcl_NewStringObj(
+		"couldn't read raw PPM header from string", -1));
+	Tcl_SetErrorCode(interp, "TK", "IMAGE", "PPM", "NO_HEADER", NULL);
 	return TCL_ERROR;
     }
     if ((fileWidth <= 0) || (fileHeight <= 0)) {
-	Tcl_AppendResult(interp, "PPM image data has dimension(s) <= 0",
-		NULL);
+	Tcl_SetObjResult(interp, Tcl_NewStringObj(
+		"PPM image data has dimension(s) <= 0", -1));
+	Tcl_SetErrorCode(interp, "TK", "IMAGE", "PPM", "DIMENSIONS", NULL);
 	return TCL_ERROR;
     }
-    if ((maxIntensity <= 0) || (maxIntensity >= 256)) {
-	char buffer[TCL_INTEGER_SPACE];
-
-	sprintf(buffer, "%d", maxIntensity);
-	Tcl_AppendResult(interp,
-		"PPM image data has bad maximum intensity value ", buffer,
-		NULL);
+    if ((maxIntensity <= 0) || (maxIntensity > 0xffff)) {
+	Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		"PPM image data has bad maximum intensity value %d",
+		maxIntensity));
+	Tcl_SetErrorCode(interp, "TK", "IMAGE", "PPM", "INTENSITY", NULL);
 	return TCL_ERROR;
+    } else if (maxIntensity > 0x00ff) {
+	bytesPerChannel = 2;
     }
 
     if ((srcX + width) > fileWidth) {
@@ -514,15 +529,15 @@ StringReadPPM(
     }
 
     if (type == PGM) {
-	block.pixelSize = 1;
+	block.pixelSize = 1 * bytesPerChannel;
 	block.offset[0] = 0;
 	block.offset[1] = 0;
 	block.offset[2] = 0;
     } else {
-	block.pixelSize = 3;
+	block.pixelSize = 3 * bytesPerChannel;
 	block.offset[0] = 0;
-	block.offset[1] = 1;
-	block.offset[2] = 2;
+	block.offset[1] = 1 * bytesPerChannel;
+	block.offset[2] = 2 * bytesPerChannel;
     }
     block.offset[3] = 0;
     block.width = width;
@@ -533,13 +548,15 @@ StringReadPPM(
 	dataSize -= srcY * block.pitch;
     }
 
-    if (maxIntensity == 255) {
+    if (maxIntensity == 0x00ff) {
 	/*
 	 * We have all the data in memory, so write everything in one go.
 	 */
 
 	if (block.pitch*height > dataSize) {
-	    Tcl_AppendResult(interp, "truncated PPM data", NULL);
+	    Tcl_SetObjResult(interp, Tcl_NewStringObj(
+		    "truncated PPM data", -1));
+	    Tcl_SetErrorCode(interp, "TK", "IMAGE", "PPM", "TRUNCATED", NULL);
 	    return TCL_ERROR;
 	}
 	block.pixelPtr = dataBuffer + srcX * block.pixelSize;
@@ -561,7 +578,7 @@ StringReadPPM(
 	nLines = 1;
     }
     nBytes = nLines * block.pitch;
-    pixelPtr = (unsigned char *) ckalloc((unsigned) nBytes);
+    pixelPtr = ckalloc(nBytes);
     block.pixelPtr = pixelPtr + srcX * block.pixelSize;
 
     for (h = height; h > 0; h -= nLines) {
@@ -572,24 +589,37 @@ StringReadPPM(
 	    nBytes = nLines * block.pitch;
 	}
 	if (dataSize < nBytes) {
-	    ckfree((char *) pixelPtr);
-	    Tcl_AppendResult(interp, "truncated PPM data", NULL);
+	    ckfree(pixelPtr);
+	    Tcl_SetObjResult(interp, Tcl_NewStringObj(
+		    "truncated PPM data", -1));
+	    Tcl_SetErrorCode(interp, "TK", "IMAGE", "PPM", "TRUNCATED", NULL);
 	    return TCL_ERROR;
 	}
-	for (p=pixelPtr,count=nBytes ; count>0 ; count--,p++,dataBuffer++) {
-	    *p = (((int) *dataBuffer) * 255)/maxIntensity;
+	if (maxIntensity < 0x00ff) {
+	    for (p=pixelPtr,count=nBytes ; count>0 ; count--,p++,dataBuffer++) {
+		*p = (((int) *dataBuffer) * 255)/maxIntensity;
+	    }
+	} else {
+	    unsigned char *p;
+	    unsigned int value;
+
+	    for (p = pixelPtr,count=nBytes; count > 1; count-=2, p += 2) {
+		value = ((unsigned int) p[0]) * 256 + ((unsigned int) p[1]);
+		value = value * 255 / maxIntensity;
+		p[0] = p[1] = (unsigned char) value;
+	    }
 	}
 	dataSize -= nBytes;
 	block.height = nLines;
 	if (Tk_PhotoPutBlock(interp, imageHandle, &block, destX, destY,
 		width, nLines, TK_PHOTO_COMPOSITE_SET) != TCL_OK) {
-	    ckfree((char *) pixelPtr);
+	    ckfree(pixelPtr);
 	    return TCL_ERROR;
 	}
 	destY += nLines;
     }
 
-    ckfree((char *) pixelPtr);
+    ckfree(pixelPtr);
     return TCL_OK;
 }
 

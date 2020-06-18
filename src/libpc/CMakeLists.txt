@@ -14,6 +14,7 @@ if(BRLCAD_ENABLE_GECODE)
 endif(BRLCAD_ENABLE_GECODE)
 
 set(pc_ignore_files
+  CMakeLists.txt
   README
   solver_test.cpp
   vm_test.cpp

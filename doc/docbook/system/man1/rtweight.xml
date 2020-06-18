@@ -32,16 +32,22 @@ operates on the indicated
 in
 <emphasis remap='I'>model.g</emphasis>
 to calculate the volume and centroid of each region encountered along
-rays.  An auxiliary file called
-<markup>.density</markup>
+rays.  Material density information
 and region line of sight (LOS) thickness estimates are used to calculate
 the mass for each region.
-<command>rtweight</command>
-looks for the
-<markup>.density</markup>
-file in the current directory and then in the user's home directory.
-The file must contain lines with the material number, density in g/cc,
-and material name, each separated by some white space.</para>
+</para>
+
+<para>
+	<command>rtweight</command> can either use density information stored
+	directly in a .g database or read a density
+	file specified by the <option>-d</option> option.
+</para>
+<para>
+	If using a density file the file must contain lines with the material
+	number, density in g/cc, and material name, each separated by some
+	white space.  See the <citerefentry><refentrytitle>gqa</refentrytitle><manvolnum>1</manvolnum></citerefentry> manual page for more information about defining
+	and managing density information.
+</para>
 
 <para>The following options are recognized.</para>
 <variablelist remap='TP'>
@@ -76,6 +82,12 @@ and conflicts with
 <option>-a</option>
 and conflicts with
 <option>-M</option></para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-d file</option></term>
+  <listitem>
+<para>Read density information from the specified file.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -139,13 +151,13 @@ package instead.</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1991-2016 United States Government as
+<para>This software is Copyright (c) 1991-2020 United States Government as
 represented by the U.S. Army Research Laboratory.</para>
 </refsect1>
 
 <refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
 <para>Reports of bugs or problems should be submitted via electronic
-mail to &lt;devs@brlcad.org&gt;.</para>
+mail to <email>devs@brlcad.org</email></para>
 </refsect1>
 </refentry>
 

@@ -1,7 +1,7 @@
 /*                          C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -54,6 +54,11 @@
 #include "rt/db5.h"
 #include "raytrace.h"
 
+/**
+ * Number of bytes used for each value of DB5HDR_WIDTHCODE_*
+ */
+#define ENCODE_LEN(len) (1 << len)
+
 
 struct db_tree_counter_state {
     uint32_t magic;
@@ -78,7 +83,7 @@ struct db_tree_counter_state {
  * holding the matrix subscripts.  The caller is responsible for
  * correcting by saying:
  *
- * tcsp->leafbytes -= tcsp->n_leaf * (8 - DB5_ENC_LEN(wid));
+ * tcsp->leafbytes -= tcsp->n_leaf * (8 - ENCODE_LEN(wid));
  */
 size_t
 db_tree_counter(const union tree *tp, struct db_tree_counter_state *tcsp)
@@ -294,15 +299,15 @@ rt_comb_export5(
      * 'wid'.  Ignore the slight chance that a smaller 'wid' might now
      * be possible.
      */
-    tcs.leafbytes -= tcs.n_leaf * (8 - DB5_ENC_LEN(wid));
+    tcs.leafbytes -= tcs.n_leaf * (8 - ENCODE_LEN(wid));
 
     /* Second pass -- determine amount of on-disk storage needed */
     need =  1 +			/* width code */
-	DB5_ENC_LEN(wid) + 	/* size for nmatrices */
-	DB5_ENC_LEN(wid) +	/* size for nleaves */
-	DB5_ENC_LEN(wid) +	/* size for leafbytes */
-	DB5_ENC_LEN(wid) +	/* size for len of RPN */
-	DB5_ENC_LEN(wid) +	/* size for max_stack_depth */
+	ENCODE_LEN(wid) + 	/* size for nmatrices */
+	ENCODE_LEN(wid) +	/* size for nleaves */
+	ENCODE_LEN(wid) +	/* size for leafbytes */
+	ENCODE_LEN(wid) +	/* size for len of RPN */
+	ENCODE_LEN(wid) +	/* size for max_stack_depth */
 	tcs.n_mat * (ELEMENTS_PER_MAT * SIZEOF_NETWORK_DOUBLE) +	/* sizeof matrix array */
 	tcs.leafbytes +		/* size for leaf nodes */
 	rpn_len;		/* storage for RPN expression */
@@ -498,7 +503,8 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 	    union tree *tp;
 	    size_t mi;
 
-	    RT_GET_TREE(tp, resp);
+	    BU_GET(tp, union tree);
+	    RT_TREE_INIT(tp);
 	    tp->tr_l.tl_op = OP_DB_LEAF;
 	    tp->tr_l.tl_name = bu_strdup((const char *)leafp);
 	    leafp += strlen((const char *)leafp) + 1;
@@ -567,7 +573,8 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 		}
 
 		if (tp2) {
-		    RT_GET_TREE(unionp, resp);
+		    BU_GET(unionp, union tree);
+		    RT_TREE_INIT(unionp);
 		    unionp->tr_b.tb_op = OP_UNION;
 		    unionp->tr_b.tb_left = tp1;
 		    unionp->tr_b.tb_right = tp2;
@@ -618,7 +625,8 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
 	union tree *tp;
 	size_t mi;
 
-	RT_GET_TREE(tp, resp);
+	BU_GET(tp, union tree);
+	RT_TREE_INIT(tp);
 
 	switch (*exprp) {
 	    case DB5COMB_TOKEN_LEAF:

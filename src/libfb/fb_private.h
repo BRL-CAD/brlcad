@@ -1,7 +1,7 @@
 /*                   F B _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -58,11 +58,24 @@ FB_EXPORT extern fb remote_interface; /* not in list[] */
 
 /* Always included */
 FB_EXPORT extern fb debug_interface, disk_interface, stk_interface;
-FB_EXPORT extern fb memory_interface, null_interface;
+FB_EXPORT extern fb memory_interface, fb_null_interface;
 
 
 /* Shared memory (shmget et. al.) key common to multiple framebuffers */
 #define SHMEM_KEY 42
+
+/* Maximum memory buffer allocation.
+ *
+ * Care must be taken as this can result in a large default memory
+ * allocation that can have an impact on performance or minimum system
+ * requirements.  For example, 20*1024 results in a 20480x20480 buffer
+ * and a 1.6GB allocation.  Using 32*1024 results in a 4GB allocation.
+ */
+#define FB_XMAXSCREEN 20*1024 /* 1.6GB */
+#define FB_YMAXSCREEN 20*1024 /* 1.6GB */
+
+/* setting to 1 turns on general intrface debugging for all fb types */
+#define FB_DEBUG 0
 
 
 __BEGIN_DECLS
@@ -138,6 +151,48 @@ struct fb_internal {
         char *p;
         size_t l;
     } u1, u2, u3, u4, u5, u6;
+};
+
+
+/*
+ * Structure of color map in shared memory region.  Has exactly the
+ * same format as the SGI hardware "gammaramp" map Note that only the
+ * lower 8 bits are significant.
+ */
+struct fb_cmap {
+    short cmr[256];
+    short cmg[256];
+    short cmb[256];
+};
+
+
+/*
+ * This defines the format of the in-memory framebuffer copy.  The
+ * alpha component and reverse order are maintained for compatibility
+ * with /dev/sgi
+ */
+struct fb_pixel {
+    unsigned char blue;
+    unsigned char green;
+    unsigned char red;
+    unsigned char alpha;
+};
+
+
+/* Clipping structure for zoom/pan operations */
+struct fb_clip {
+    int xpixmin;	/* view clipping planes clipped to pixel memory space*/
+    int xpixmax;
+    int ypixmin;
+    int ypixmax;
+    int xscrmin;	/* view clipping planes */
+    int xscrmax;
+    int yscrmin;
+    int yscrmax;
+    double oleft;	/* glOrtho parameters */
+    double oright;
+    double otop;
+    double obottom;
 };
 
 /*

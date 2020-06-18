@@ -1,7 +1,7 @@
 /*                         D U P . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@ struct dir_check_stuff {
 static void
 dup_dir_check5(struct db_i *input_dbip,
 	       const struct db5_raw_internal *rip,
-	       off_t addr,
+	       b_off_t addr,
 	       void *ptr)
 {
     char *name;
@@ -105,7 +105,7 @@ dup_dir_check5(struct db_i *input_dbip,
  * Check a name against the global directory.
  */
 static int
-dup_dir_check(struct db_i *input_dbip, const char *name, off_t UNUSED(laddr), size_t UNUSED(len), int UNUSED(flags), void *ptr)
+dup_dir_check(struct db_i *input_dbip, const char *name, b_off_t UNUSED(laddr), size_t UNUSED(len), int UNUSED(flags), void *ptr)
 {
     struct directory *dupdp;
     struct bu_vls local = BU_VLS_INIT_ZERO;

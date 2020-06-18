@@ -1,7 +1,7 @@
 /*                         V F O N T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@
 #define LIBBU_VFONT_H
 
 #include "common.h"
-
+#include "bio.h" /* for b_off_T */
 #include "bu/file.h"
 #include "bu/endian.h"
 #include "bu/str.h"
@@ -67,7 +67,7 @@ struct dispatch {
 
 struct vfont_file {
     FILE		*ffdes;		/* File pointer for current font.	*/
-    off_t		offset;		/* Current offset to character data.	*/
+    b_off_t		offset;		/* Current offset to character data.	*/
     struct header	hdr;		/* Header for font file.		*/
     struct dispatch	dir[256];	/* Directory for character font.	*/
     int			width;		/* Current character width.		*/

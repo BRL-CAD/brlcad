@@ -1,7 +1,7 @@
 /*                     P I X E L S W A P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,6 +28,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "bio.h"
+
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"
 #include "fb.h"
@@ -93,6 +96,8 @@ int main(int ac, char **av)
     int i, pixels;
     unsigned char r, g, b, R, G, B;
     size_t ret;
+
+    bu_setprogname(av[0]);
 
     i=parse_args(ac, av);
 /* if ac == 1, there is only 1 argument; i.e., run-with-no-arguments

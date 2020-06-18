@@ -1,7 +1,7 @@
 /*                        B W C R O P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2016 United States Government as represented by
+ * Copyright (c) 1986-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,21 +34,24 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <limits.h> /* for INT_MAX */
+#include "vmath.h"
 
+#include "bio.h" /* for b_off_t */
+
+#include "bu/app.h"
 #include "bu/file.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
 
 
 #define round(x) ((int)(x+0.5))
-#define MAXBUFBYTES 4096*4096	/* max bytes to malloc in buffer space */
+#define MAXBUFBYTES BU_PAGE_SIZE*BU_PAGE_SIZE	/* max bytes to malloc in buffer space */
 
 unsigned char *buffer;
 ssize_t scanlen;			/* length of infile scanlines */
 ssize_t buflines;		/* Number of lines held in buffer */
-off_t buf_start = -1000;	/* First line in buffer */
+b_off_t buf_start = -1000;	/* First line in buffer */
 
 unsigned long xnum, ynum;	/* Number of pixels in new file */
 float ulx, uly, urx, ury, lrx, lry, llx, lly;	/* Corners of original file */
@@ -74,11 +77,11 @@ init_buffer()
     max = MAXBUFBYTES / scanlen;
 
     /*
-     * Do a max of 4096.  We really should see how big
-     * the input file is to decide if we should buffer
-     * less than our max.
+     * Do a max of page size.  We really should see how big the input
+     * file is to decide if we should buffer less than our max.
      */
-    if (max > 4096) max = 4096;
+    if (max > BU_PAGE_SIZE)
+	max = BU_PAGE_SIZE;
 
     if (max < scanlen)
 	buflines = max;
@@ -112,13 +115,15 @@ fill_buffer(int y)
 int
 main(int argc, char **argv)
 {
-    float x1, y1, x2, y2, x, y;
+    float bx1, by1, bx2, by2, bx, by;
     size_t row, col;
     ssize_t yindex;
     char value;
     size_t ret;
 
     int atoival;
+
+    bu_setprogname(argv[0]);
 
     if (argc < 3) {
 	bu_exit(1, "%s", usage);
@@ -251,26 +256,26 @@ main(int argc, char **argv)
     /* Move all points */
     for (row = 0; row < ynum; row++) {
 	/* calculate left point of row */
-	x1 = ((ulx-llx)/(fastf_t)(ynum-1)) * (fastf_t)row + llx;
-	y1 = ((uly-lly)/(fastf_t)(ynum-1)) * (fastf_t)row + lly;
+	bx1 = ((ulx-llx)/(fastf_t)(ynum-1)) * (fastf_t)row + llx;
+	by1 = ((uly-lly)/(fastf_t)(ynum-1)) * (fastf_t)row + lly;
 	/* calculate right point of row */
-	x2 = ((urx-lrx)/(fastf_t)(ynum-1)) * (fastf_t)row + lrx;
-	y2 = ((ury-lry)/(fastf_t)(ynum-1)) * (fastf_t)row + lry;
+	bx2 = ((urx-lrx)/(fastf_t)(ynum-1)) * (fastf_t)row + lrx;
+	by2 = ((ury-lry)/(fastf_t)(ynum-1)) * (fastf_t)row + lry;
 
 	for (col = 0; col < xnum; col++) {
 	    /* calculate point along row */
-	    x = ((x2-x1)/(fastf_t)(xnum-1)) * (fastf_t)col + x1;
-	    y = ((y2-y1)/(fastf_t)(xnum-1)) * (fastf_t)col + y1;
+	    bx = ((bx2-bx1)/(fastf_t)(xnum-1)) * (fastf_t)col + bx1;
+	    by = ((by2-by1)/(fastf_t)(xnum-1)) * (fastf_t)col + by1;
 
 	    /* Make sure we are in the buffer */
-	    yindex = round(y) - buf_start;
+	    yindex = round(by) - buf_start;
 	    if (yindex >= buflines) {
-		fill_buffer(round(y));
-		yindex = round(y) - buf_start;
+		fill_buffer(round(by));
+		yindex = round(by) - buf_start;
 	    }
 	    yindex = yindex + buf_start;
 
-	    value = buffer[ yindex * scanlen + round(x) ];
+	    value = buffer[ yindex * scanlen + round(bx) ];
 	    ret = fwrite(&value, sizeof(value), 1, ofp);
 	    if (ret == 0)
 		perror("fwrite");

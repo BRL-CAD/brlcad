@@ -1,7 +1,7 @@
 /*                         M A G I C . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -86,6 +86,9 @@ __BEGIN_DECLS
 #define BN_VLBLOCK_MAGIC		0x981bd112 /**< ???? */
 #define BN_VLIST_MAGIC			0x98237474 /**< ?\#tt */
 
+/* libbg */
+#define BG_TESS_TOL_MAGIC		0xb9090dab /**< ???? */
+
 /* primitive internals */
 
 #define RT_ARBN_INTERNAL_MAGIC		0x18236461 /**< ?\#da */
@@ -122,9 +125,10 @@ __BEGIN_DECLS
 #define RT_TGC_INTERNAL_MAGIC		0xaabbdd87 /**< ???? */
 #define RT_TOR_INTERNAL_MAGIC		0x9bffed87 /**< ???? */
 #define RT_VOL_INTERNAL_MAGIC		0x987ba1d0 /**< ?{?? */
-#define RT_PNTS_INTERNAL_MAGIC          0x706e7473 /**< pnts */
-#define RT_ANNOTATION_INTERNAL_MAGIC    0x616e6e6f /**< anno */
+#define RT_PNTS_INTERNAL_MAGIC		0x706e7473 /**< pnts */
+#define RT_ANNOT_INTERNAL_MAGIC		0x616e6e6f /**< anno */
 #define RT_HRT_INTERNAL_MAGIC		0x6872743f /**< hrt? */
+#define RT_SCRIPT_INTERNAL_MAGIC	0x73637269 /**< scri */
 
 /* n-manifold geometry */
 
@@ -179,7 +183,6 @@ __BEGIN_DECLS
 #define RT_SEG_MAGIC			0x98bcdef1 /**< ???? */
 #define RT_SOLTAB2_MAGIC		0x92bfcde2 /**< ???? => l2.magic */
 #define RT_SOLTAB_MAGIC			0x92bfcde0 /**< ???? => l.magic */
-#define RT_TESS_TOL_MAGIC		0xb9090dab /**< ???? */
 #define RT_TREE_MAGIC			0x91191191 /**< ???? */
 #define RT_WDB_MAGIC		       	0x5f576462 /**< _Wdb */
 
@@ -210,6 +213,7 @@ __BEGIN_DECLS
 #define CURVE_CARC_MAGIC		0x63617263 /**< carc */
 #define CURVE_LSEG_MAGIC		0x6c736567 /**< lseg */
 #define CURVE_NURB_MAGIC		0x6e757262 /**< nurb */
+#define ANN_TSEG_MAGIC			0x74736567 /**< tseg */
 #define DB5_RAW_INTERNAL_MAGIC		0x64357269 /**< d5ri */
 #define DBI_MAGIC			0x57204381 /**< W C? */
 #define DB_FULL_PATH_MAGIC		0x64626670 /**< dbfp */
@@ -236,9 +240,9 @@ __BEGIN_DECLS
 #  define BU_CKMAG(_ptr, _magic, _str) (void)(_ptr)
 #else
 #  define BU_CKMAG(_ptr, _magic, _str) do { \
-        if (UNLIKELY(((const uintptr_t)(_ptr) == 0) || ((const uintptr_t)(_ptr) & (sizeof((const uintptr_t)(_ptr))-1)) || *((const uint32_t *)(_ptr)) != (uint32_t)(_magic))) { \
-            bu_badmagic((const uint32_t *)(_ptr), (uint32_t)(_magic), _str, __FILE__, __LINE__); \
-        } \
+	if (UNLIKELY(((uintptr_t)(_ptr) == 0) || ((uintptr_t)(_ptr) & (sizeof((uintptr_t)(_ptr))-1)) || *((const uint32_t *)(_ptr)) != (uint32_t)(_magic))) { \
+	    bu_badmagic((const uint32_t *)(_ptr), (uint32_t)(_magic), _str, __FILE__, __LINE__); \
+	} \
     } while (0)
 #endif
 

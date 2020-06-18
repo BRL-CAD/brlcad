@@ -1,7 +1,7 @@
 /*               B N _ T R I _ T R I _ I S E C T . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2016 United States Government as represented by
+ * Copyright (c) 2011-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,6 +38,8 @@ main(int argc, char **argv)
     point_t U0 = VINIT_ZERO;
     point_t U1 = VINIT_ZERO;
     point_t U2 = VINIT_ZERO;
+
+    bu_setprogname(argv[0]);
 
     if (argc != 8)
 	bu_exit(1, "ERROR: input format is V0x,V0y,V0z V1x,V1y,V1z V2x,V2y,V2z U0x,U0y,U0z U1x,U1y,U1z U2x,U2y,U2z expected_result [%s]\n", argv[0]);

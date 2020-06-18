@@ -44,6 +44,7 @@ BRLCAD_ADDEXEC(u-bw u-bw.c libbu)
 BRLCAD_ADDEXEC(u-d u-d.c libbu)
 BRLCAD_ADDEXEC(u-f u-f.c libbu)
 
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

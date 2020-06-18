@@ -1,8 +1,5 @@
 # created by tools/tclZIC.tcl - do not edit
-
-set TZData(:Africa/Maseru) {
-    {-9223372036854775808 6600 0 LMT}
-    {-2109289800 7200 0 SAST}
-    {-829526400 10800 1 SAST}
-    {-813805200 7200 0 SAST}
+if {![info exists TZData(Africa/Johannesburg)]} {
+    LoadTimeZoneFile Africa/Johannesburg
 }
+set TZData(:Africa/Maseru) $TZData(:Africa/Johannesburg)

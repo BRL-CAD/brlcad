@@ -4,8 +4,6 @@
 # checkbutton, and radiobutton widgets and provides procedures
 # that help in implementing those bindings.
 #
-# RCS: @(#) $Id$
-#
 # Copyright (c) 1992-1994 The Regents of the University of California.
 # Copyright (c) 1994-1996 Sun Microsystems, Inc.
 # Copyright (c) 2002 ActiveState Corporation.
@@ -19,6 +17,7 @@
 #-------------------------------------------------------------------------
 
 if {[tk windowingsystem] eq "aqua"} {
+
     bind Radiobutton <Enter> {
 	tk::ButtonEnter %W
     }
@@ -41,7 +40,7 @@ if {[tk windowingsystem] eq "aqua"} {
 	tk::ButtonLeave %W
     }
 }
-if {"windows" eq $tcl_platform(platform)} {
+if {"win32" eq [tk windowingsystem]} {
     bind Checkbutton <equal> {
 	tk::CheckRadioInvoke %W select
     }
@@ -111,6 +110,15 @@ bind Checkbutton <space> {
 bind Radiobutton <space> {
     tk::CheckRadioInvoke %W
 }
+bind Button <<Invoke>> {
+    tk::ButtonInvoke %W
+}
+bind Checkbutton <<Invoke>> {
+    tk::CheckRadioInvoke %W
+}
+bind Radiobutton <<Invoke>> {
+    tk::CheckRadioInvoke %W
+}
 
 bind Button <FocusIn> {}
 bind Button <Enter> {
@@ -133,10 +141,10 @@ bind Radiobutton <Leave> {
     tk::ButtonLeave %W
 }
 
-if {"windows" eq $tcl_platform(platform)} {
+if {"win32" eq [tk windowingsystem]} {
 
 #########################
-# Windows implementation 
+# Windows implementation
 #########################
 
 # ::tk::ButtonEnter --
@@ -589,12 +597,25 @@ proc ::tk::ButtonUp w {
 # w -		The name of the widget.
 
 proc ::tk::ButtonInvoke w {
-    if {[$w cget -state] ne "disabled"} {
+    if {[winfo exists $w] && [$w cget -state] ne "disabled"} {
 	set oldRelief [$w cget -relief]
 	set oldState [$w cget -state]
 	$w configure -state active -relief sunken
-	update idletasks
-	after 100
+	after 100 [list ::tk::ButtonInvokeEnd $w $oldState $oldRelief]
+    }
+}
+
+# ::tk::ButtonInvokeEnd --
+# The procedure below is called after a button is invoked through
+# the keyboard.  It simulate a release of the button via the mouse.
+#
+# Arguments:
+# w -         The name of the widget.
+# oldState -  Old state to be set back.
+# oldRelief - Old relief to be set back.
+
+proc ::tk::ButtonInvokeEnd {w oldState oldRelief} {
+    if {[winfo exists $w]} {
 	$w configure -state $oldState -relief $oldRelief
 	uplevel #0 [list $w invoke]
     }
@@ -727,11 +748,15 @@ proc ::tk::CheckLeave {w} {
 	$w configure -state normal
     }
 
-    # Restore the original button "selected" color; assume that the user
-    # wasn't monkeying around with things too much.
+    # Restore the original button "selected" color; but only if the user
+    # has not changed it in the meantime.
 
     if {![$w cget -indicatoron] && [info exist Priv($w,selectcolor)]} {
-	$w configure -selectcolor $Priv($w,selectcolor)
+        if {[$w cget -selectcolor] eq $Priv($w,selectcolor)
+                || ([info exist Priv($w,aselectcolor)] &&
+                    [$w cget -selectcolor] eq $Priv($w,aselectcolor))} {
+	    $w configure -selectcolor $Priv($w,selectcolor)
+	}
     }
     unset -nocomplain Priv($w,selectcolor) Priv($w,aselectcolor)
 
@@ -748,3 +773,10 @@ proc ::tk::CheckLeave {w} {
 
     set Priv(window) ""
 }
+
+return
+
+# Local Variables:
+# mode: tcl
+# fill-column: 78
+# End:

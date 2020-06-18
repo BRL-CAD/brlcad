@@ -1,7 +1,7 @@
 /*                         C O M B M E M . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -224,7 +224,7 @@ combmem_assemble_mat(matp_t matp, vect_t aetvec, vect_t tvec, hvect_t svec, poin
     }
 
     combmem_mat_aet(mat_aet, aetvec[X], aetvec[Y], aetvec[Z]);
-    bn_mat_xform_about_pt(mat_aet_about_pt, mat_aet, key_pt);
+    bn_mat_xform_about_pnt(mat_aet_about_pt, mat_aet, key_pt);
 
     MAT_IDN(mat_scale);
 
@@ -447,6 +447,7 @@ combmem_get(struct ged *gedp, int argc, const char *argv[], enum etypes etype)
 		break; \
 	    default: \
 		bu_vls_printf((_gedp)->ged_result_str, "combmem_set: unrecognized relation %c (assuming UNION)\n", (_opstr)[0]); \
+	    /* fall through */ \
 	    case DB_OP_UNION: \
 		(_rt_tree_array_index).tl_op = OP_UNION; \
 		break; \
@@ -677,7 +678,7 @@ combmem_set_rot(struct ged *gedp, int argc, const char *argv[], enum etypes etyp
 	    } else
 		bn_mat_angles(mat_rot, az, el, tw);
 
-	    bn_mat_xform_about_pt(mat, mat_rot, key_pt);
+	    bn_mat_xform_about_pnt(mat, mat_rot, key_pt);
 	}
 
 	BU_ALLOC(tp, union tree);

@@ -1,8 +1,6 @@
 # parray:
 # Print the contents of a global array on stdout.
 #
-# RCS: @(#) $Id$
-#
 # Copyright (c) 1991-1993 The Regents of the University of California.
 # Copyright (c) 1994 Sun Microsystems, Inc.
 #
@@ -13,7 +11,7 @@
 proc parray {a {pattern *}} {
     upvar 1 $a array
     if {![array exists array]} {
-	error "\"$a\" isn't an array"
+	return -code error "\"$a\" isn't an array"
     }
     set maxl 0
     set names [lsort [array names array $pattern]]

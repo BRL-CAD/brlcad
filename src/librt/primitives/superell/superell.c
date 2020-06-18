@@ -1,7 +1,7 @@
 /*                      S U P E R E L L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2016 United States Government as represented by
+ * Copyright (c) 1985-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,6 +45,9 @@
 
 #include "../../librt_private.h"
 
+#if defined(HAVE_TGAMMA) && !defined(HAVE_DECL_TGAMMA)
+extern double tgamma(double x);
+#endif
 
 const struct bu_structparse rt_superell_parse[] = {
     { "%f", 3, "V", bu_offsetofarray(struct rt_superell_internal, v, fastf_t, X), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -505,7 +508,7 @@ rt_superell_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
 		short n;
 		short lim;
 
-		/* Inline rt_pt_sort().  Sorts realRoot[] into descending order. */
+		/* Inline rt_pnt_sort().  Sorts realRoot[] into descending order. */
 		for (lim = i-1; lim > 0; lim--) {
 		    for (n = 0; n < lim; n++) {
 			fastf_t u;
@@ -670,7 +673,7 @@ rt_superell_16pts(fastf_t *ov,
 
 
 int
-rt_superell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_superell_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     int i;
     struct rt_superell_internal *eip;
@@ -754,7 +757,7 @@ struct superell_vert_strip {
  * 0 OK.  *r points to nmgregion that holds this tesssuperellation.
  */
 int
-rt_superell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+rt_superell_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     if (r) NMG_CK_REGION(*r);
     if (m) NMG_CK_MODEL(m);
@@ -1190,8 +1193,8 @@ superell_surf_area_general(const struct rt_superell_internal *sip, vect_t mags, 
 	 */
 	for (v = - M_PI_2; v < M_PI_2 - side_length; v += side_length, idx++) {
 	    area +=
-		bn_dist_pt3_pt3(row1[idx], row1[idx + 1]) *
-		bn_dist_pt3_pt3(row1[idx], row2[idx]);
+		bn_dist_pnt3_pnt3(row1[idx], row1[idx + 1]) *
+		bn_dist_pnt3_pnt3(row1[idx], row2[idx]);
 	}
 
 	memcpy(row1, row2, row_length);

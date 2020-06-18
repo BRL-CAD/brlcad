@@ -1,24 +1,5 @@
-/*                        S O R T . C
- * BRL-CAD
- *
- * Copyright (c) 2013-2016 United States Government as represented by
- * the U.S. Army Research Laboratory.
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public License
- * version 2.1 as published by the Free Software Foundation.
- *
- * This library is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this file; see the file named COPYING for more
- * information.
- */
 /* Based on OpenBSD's qsort.c rev. 251672 2013/12/17
- * -
+ *
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
@@ -59,8 +40,8 @@
  * Qsort routine from Bentley & McIlroy's "Engineering a Sort Function".
  */
 #define SWAPCODE(TYPE, parmi, parmj, n)     \
-    {                                       \
-	long i = (n) / sizeof (TYPE); 		\
+    do {                                       \
+	size_t i = (n) / sizeof (TYPE); 		\
 	TYPE *pi = (TYPE *) (parmi); 		\
 	TYPE *pj = (TYPE *) (parmj); 		\
 	do {                                \
@@ -68,29 +49,31 @@
 	    *pi++ = *pj;                    \
 	    *pj++ = t;                      \
 	} while (--i > 0);                  \
-    }
+    } while (0)
 
 #define SWAPINIT(a, es) swaptype = ((char *)a - (char *)0) % sizeof(long) || \
-    es % sizeof(long) ? 2 : es == sizeof(long)? 0 : 1;
+	es % sizeof(long) ? 2 : es == sizeof(long)? 0 : 1;
 
 
 static void
-swapfunc(char *a, char *b, int n, int swaptype)
+swapfunc(char *a, char *b, size_t n, int swaptype)
 {
     if (swaptype <= 1)
-	SWAPCODE(long, a, b, n)
+	SWAPCODE(long, a, b, n);
     else
-	SWAPCODE(char, a, b, n)
+	SWAPCODE(char, a, b, n);
 }
 
 
-#define SWAP(a, b)				\
-    if (swaptype == 0) {			\
-	long t = *(long *)(a);			\
-	*(long *)(a) = *(long *)(b);		\
-	*(long *)(b) = t;			\
-    } else 					\
-	swapfunc((char *)a, (char *)b, sizememb, swaptype)
+#define SWAP(a, b) do {  			\
+	if (swaptype == 0) {			\
+	    long t = *(long *)(a);			\
+	    *(long *)(a) = *(long *)(b);		\
+	    *(long *)(b) = t;			\
+	} else { 					\
+	    swapfunc((char *)a, (char *)b, sizememb, swaptype); \
+	} \
+    } while (0)
 
 #define VECSWAP(a, b, n) if ((n) > 0) swapfunc((char *)a, (char *)b, n, swaptype)
 
@@ -101,8 +84,8 @@ static char *
 med3(char *a, char *b, char *c, int (*compare)(const void *, const void *, void *), void *thunk)
 {
     return CMP(a, b, thunk) < 0 ?
-	   (CMP(b, c, thunk) < 0 ? b : (CMP(a, c, thunk) < 0 ? c : a))
-	  :(CMP(b, c, thunk) > 0 ? b : (CMP(a, c, thunk) < 0 ? a : c));
+	(CMP(b, c, thunk) < 0 ? b : (CMP(a, c, thunk) < 0 ? c : a))
+	:(CMP(b, c, thunk) > 0 ? b : (CMP(a, c, thunk) < 0 ? a : c));
 }
 
 
@@ -115,7 +98,7 @@ bu_sort(void *array, size_t nummemb, size_t sizememb, int (*compare)(const void 
     size_t d, r;
     size_t swap_cnt;
 
-  loop:	SWAPINIT(array, sizememb);
+loop:	SWAPINIT(array, sizememb);
     swap_cnt = 0;
     if (nummemb < 7) {
 	for (pm = (char *)array + sizememb; pm < (char *)array + nummemb * sizememb; pm += sizememb)

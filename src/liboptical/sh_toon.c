@@ -1,7 +1,7 @@
 /*                        S H _ T O O N . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2016 United States Government as represented by
+ * Copyright (c) 2010-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -122,7 +122,7 @@ toon_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const
     BU_CK_VLS(matparm);
     RT_CK_REGION(rp);
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_log("toon_setup(%s)\n", rp->reg_name);
 
     /* Get memory for the shader parameters and shader-specific data */
@@ -136,7 +136,7 @@ toon_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const
     if (bu_struct_parse(matparm, toon_parse_tab, (char *)toon_sp, NULL) < 0)
 	return -1;
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	bu_struct_print(" Parameters:", toon_print_tab, (char *)toon_sp);
     }
 
@@ -176,7 +176,7 @@ toon_render(struct application *ap, const struct partition *pp, struct shadework
     RT_CHECK_PT(pp);
     CK_TOON_SP(toon_sp);
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_struct_print("toon_render Parameters:", toon_print_tab, (char *)toon_sp);
 
     /* if surface normal is nearly orthogonal to the ray, make a black line */

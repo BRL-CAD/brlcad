@@ -39,7 +39,7 @@
 #define MY_ZCALLOC
 #endif
 
-#include <zlib.h>
+#include "zlib.h"
 
 #if defined(WIN32) && defined(WIN64)
 /* zlib.h includes zconf.h which defines WIN32 */

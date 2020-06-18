@@ -1,7 +1,7 @@
 /*                       E X T R U D E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2016 United States Government as represented by
+ * Copyright (c) 1990-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,7 +44,7 @@
 #include "../../librt_private.h"
 
 
-extern int seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, point_t V,
+extern int seg_to_vlist(struct bu_list *vhead, const struct bg_tess_tol *ttol, point_t V,
 			vect_t u_vec, vect_t v_vec, struct rt_sketch_internal *sketch_ip, void *seg);
 
 extern void rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip);
@@ -848,9 +848,9 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
     point_t ray_start;			/* 2D */
     vect_t ray_dir, ray_dir_unit;	/* 2D */
     struct rt_curve *crv;
-    struct hit hits[MAX_HITS];
-    fastf_t dists_before[MAX_HITS];
-    fastf_t dists_after[MAX_HITS];
+    struct hit hits[MAX_HITS] = {RT_HIT_INIT_ZERO};
+    fastf_t dists_before[MAX_HITS] = {0.0};
+    fastf_t dists_after[MAX_HITS] = {0.0};
     fastf_t *dists=NULL;
     size_t dist_count = 0;
     size_t hit_count = 0;
@@ -873,8 +873,8 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
     dot_pl1 = VDOT(rp->r_dir, extr->pl1);
     if (ZERO(dot_pl1)) {
 	/* ray is parallel to top and bottom faces */
-	dist_bottom = DIST_PT_PLANE(rp->r_pt, extr->pl1);
-	dist_top = DIST_PT_PLANE(rp->r_pt, extr->pl2);
+	dist_bottom = DIST_PNT_PLANE(rp->r_pt, extr->pl1);
+	dist_top = DIST_PNT_PLANE(rp->r_pt, extr->pl2);
 	if (dist_bottom < 0.0 && dist_top < 0.0)
 	    return 0;
 	if (dist_bottom > 0.0 && dist_top > 0.0)
@@ -882,9 +882,9 @@ rt_extrude_shot(struct soltab *stp, struct xray *rp, struct application *ap, str
 	dist_bottom = -MAX_FASTF;
 	dist_top = MAX_FASTF;
     } else {
-	dist_bottom = -DIST_PT_PLANE(rp->r_pt, extr->pl1)/dot_pl1;
+	dist_bottom = -DIST_PNT_PLANE(rp->r_pt, extr->pl1)/dot_pl1;
 	to_bottom = dist_bottom;				/* need to remember this */
-	dist_top = -DIST_PT_PLANE(rp->r_pt, extr->pl2)/dot_pl1;	/* pl1 and pl2 are parallel */
+	dist_top = -DIST_PNT_PLANE(rp->r_pt, extr->pl2)/dot_pl1;	/* pl1 and pl2 are parallel */
 	if (dist_bottom > dist_top) {
 	    fastf_t tmp1;
 
@@ -1278,7 +1278,7 @@ rt_extrude_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 	    break;
 	case CARC_SEG:
 	case -CARC_SEG:
-	    alpha = DIST_PT_PLANE(hitp->hit_point, extr->pl1) / VDOT(extr->unit_h, extr->pl1);
+	    alpha = DIST_PNT_PLANE(hitp->hit_point, extr->pl1) / VDOT(extr->unit_h, extr->pl1);
 	    VJOIN1(hit_in_plane, hitp->hit_point, -alpha, extr->unit_h);
 	    VSUB2(tmp, hit_in_plane, hitp->hit_vpriv);
 	    VCROSS(tmp2, extr->pl1, tmp);
@@ -1387,7 +1387,7 @@ rt_extrude_free(struct soltab *stp)
 
 
 int
-rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     struct rt_extrude_internal *extrude_ip;
     struct rt_curve *crv = NULL;
@@ -2052,7 +2052,7 @@ classify_sketch_loops(struct bu_ptbl *loopa, struct bu_ptbl *loopb, struct rt_sk
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     struct bu_list vhead;
     struct shell *s;
@@ -2356,7 +2356,7 @@ rt_extrude_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip
  * Apply modeling transformations as well.
  */
 int
-rt_extrude_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip, struct resource *resp)
+rt_extrude_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fastf_t *mat, const struct db_i *dbip)
 {
     struct rt_extrude_internal *extrude_ip;
     struct rt_db_internal tmp_ip;
@@ -2393,7 +2393,11 @@ rt_extrude_import4(struct rt_db_internal *ip, const struct bu_external *ep, cons
 	       sketch_name, rp->extr.ex_name);
 	extrude_ip->skt = (struct rt_sketch_internal *)NULL;
     } else {
-	if (rt_db_get_internal(&tmp_ip, dp, dbip, bn_mat_identity, resp) != ID_SKETCH) {
+	/* initialize before our first use */
+	if (rt_uniresource.re_magic != RESOURCE_MAGIC)
+	    rt_init_resource(&rt_uniresource, 0, NULL);
+
+	if (rt_db_get_internal(&tmp_ip, dp, dbip, bn_mat_identity, &rt_uniresource) != ID_SKETCH) {
 	    bu_log("rt_extrude_import4: ERROR: Cannot import sketch (%.16s) for extrusion (%.16s)\n",
 		   sketch_name, rp->extr.ex_name);
 	    bu_free(ip->idb_ptr, "extrusion");
@@ -2524,7 +2528,7 @@ rt_extrude_export5(struct bu_external *ep, const struct rt_db_internal *ip, doub
  * Apply modeling transformations as well.
  */
 int
-rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp)
+rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip)
 {
     struct rt_extrude_internal *extrude_ip;
     struct rt_db_internal tmp_ip;
@@ -2555,7 +2559,11 @@ rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, cons
 	       sketch_name);
 	extrude_ip->skt = (struct rt_sketch_internal *)NULL;
     } else {
-	if (rt_db_get_internal(&tmp_ip, dp, dbip, bn_mat_identity, resp) != ID_SKETCH) {
+	/* initialize before our first use */
+	if (rt_uniresource.re_magic != RESOURCE_MAGIC)
+	    rt_init_resource(&rt_uniresource, 0, NULL);
+
+	if (rt_db_get_internal(&tmp_ip, dp, dbip, bn_mat_identity, &rt_uniresource) != ID_SKETCH) {
 	    bu_log("rt_extrude_import4: ERROR: Cannot import sketch (%s) for extrusion\n",
 		   sketch_name);
 	    bu_free(ip->idb_ptr, "extrusion");
@@ -2654,22 +2662,15 @@ rt_extrude_xform(
     const mat_t mat,
     struct rt_db_internal *ip,
     int release,
-    struct db_i *dbip,
-    struct resource *resp)
+    struct db_i *dbip)
 {
     struct rt_extrude_internal *eip, *eop;
     point_t tmp_vec;
 
     if (dbip) RT_CK_DBI(dbip);
     RT_CK_DB_INTERNAL(ip);
-    RT_CK_RESOURCE(resp);
     eip = (struct rt_extrude_internal *)ip->idb_ptr;
     RT_EXTRUDE_CK_MAGIC(eip);
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at start of extrude_xform():\n");
-	bu_mem_barriercheck();
-    }
 
     if (op != ip) {
 	RT_DB_INTERNAL_INIT(op);
@@ -2706,11 +2707,6 @@ rt_extrude_xform(
 	eop->skt = rt_copy_sketch(eip->skt);
     } else {
 	eop->skt = (struct rt_sketch_internal *)NULL;
-    }
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK) {
-	bu_log("Barrier check at end of extrude_xform():\n");
-	bu_mem_barriercheck();
     }
 
     return 0;

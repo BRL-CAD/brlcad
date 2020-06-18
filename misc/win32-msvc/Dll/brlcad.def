@@ -39,7 +39,7 @@ db_tree_nleaves
 db_update_nref
 db_walk_tree
 
-mk_add_pipe_pt
+mk_add_pipe_pnt
 mk_addmember
 mk_arb8
 mk_bot

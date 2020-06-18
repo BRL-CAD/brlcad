@@ -11,6 +11,13 @@ set(LIBTCL "-ltcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}")
 if(M_LIBRARY)
   set(LIBM "-l${M_LIBRARY}")
 endif(M_LIBRARY)
+if(REGEX_LIBRARY)
+  set(LIBREGEX "-l${REGEX_LIBRARY}")
+endif(REGEX_LIBRARY)
+if(UUID_LIBRARIES)
+  set(LIBUUID "-l${UUID_LIBRARIES}")
+endif(UUID_LIBRARIES)
+
 #The CMake system relies on the C++ compiler to find
 #this, so we set it manually for pkgconfig
 set(LIBSTDCXX "-lstdc++")
@@ -23,25 +30,32 @@ set(LIBSTDCXX "-lstdc++")
 set(X_LIBS "-lX11 -lXext -lXi")
 set(LIBPNG "-lpng")
 
+
 set(pkgconfig_DATA
-  libanalyze.pc.in
-  libgm.pc.in
-  libbn.pc.in
-  libbrlcad.pc.in
   libbu.pc.in
-  libdm.pc.in
-  libfb.pc.in
-  libfft.pc.in
-  libgcv.pc.in
-  libged.pc.in
-  libicv.pc.in
-  libmultispectral.pc.in
-  liboptical.pc.in
-  libpc.pc.in
-  libpkg.pc.in
+  libbn.pc.in
+  libbg.pc.in
+  libnmg.pc.in
+  libbrep.pc.in
   librt.pc.in
   libwdb.pc.in
-  )
+)
+if("${BRLCAD_ENABLE_TARGETS}" GREATER 1 OR "${BRLCAD_ENABLE_TARGETS}" STREQUAL "")
+  set(pkgconfig_DATA
+    ${pkgconfig_DATA}
+    libanalyze.pc.in
+    libbrlcad.pc.in
+    libdm.pc.in
+    libfb.pc.in
+    libfft.pc.in
+    libgcv.pc.in
+    libged.pc.in
+    libicv.pc.in
+    liboptical.pc.in
+    libpc.pc.in
+    libpkg.pc.in
+    )
+endif("${BRLCAD_ENABLE_TARGETS}" GREATER 1 OR "${BRLCAD_ENABLE_TARGETS}" STREQUAL "")
 
 foreach(pkgfile ${pkgconfig_DATA})
   string(REGEX REPLACE "([0-9a-z_-]*).pc.in" "\\1" filename_root "${pkgfile}")
@@ -50,6 +64,7 @@ foreach(pkgfile ${pkgconfig_DATA})
 endforeach(pkgfile ${pkgconfig_DATA})
 
 CMAKEFILES(${pkgconfig_DATA})
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

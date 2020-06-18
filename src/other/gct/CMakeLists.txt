@@ -1,16 +1,5 @@
 # Minimum required version of CMake
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8.3)
-if(COMMAND CMAKE_POLICY)
-  CMAKE_POLICY(SET CMP0003 NEW)
-  CMAKE_POLICY(SET CMP0007 OLD)
-  if("${CMAKE_VERSION}" VERSION_GREATER 2.8.3)
-    CMAKE_POLICY(SET CMP0017 OLD)
-  endif("${CMAKE_VERSION}" VERSION_GREATER 2.8.3)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-    CMAKE_POLICY(SET CMP0026 OLD)
-  endif ("${CMAKE_VERSION}"
-    VERSION_GREATER 2.99)
-endif(COMMAND CMAKE_POLICY)
+cmake_minimum_required(VERSION 3.1.3)
 
 # set CMake project name
 project(GCT)
@@ -29,6 +18,19 @@ if(NOT LIB_DIR)
   endif(NOT WIN32)
 endif(NOT LIB_DIR)
 
+CHECK_INCLUDE_FILE(pthread.h PROBE_PTHREAD_H)
+if (NOT PROBE_PTHREAD_H)
+  cmake_push_check_state(RESET)
+  # pthread.h on FreeBSD 10 and some older Linucies use non-c90 types
+  set(CMAKE_REQUIRED_DEFINITIONS "-Dclockid_t=clock_t")
+  set(CMAKE_REQUIRED_FLAGS "-pthread")
+  CHECK_INCLUDE_FILE(pthread.h PROBE_PTHREAD_H_CLOCKID_T)
+  if (PROBE_PTHREAD_H_CLOCKID_T)
+    set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Dclockid_t=clock_t -pthread")
+    set(THREADS_PREFER_PTHREAD_FLAG TRUE)
+  endif (PROBE_PTHREAD_H_CLOCKID_T)
+endif (NOT PROBE_PTHREAD_H)
+set(CMAKE_THREAD_PREFER_PTHREAD TRUE)
 find_package(Threads)
 
 add_subdirectory(Auxiliary)

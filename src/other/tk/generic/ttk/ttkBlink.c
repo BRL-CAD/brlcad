@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Copyright 2004, Joe English.
  *
  * Usage:
@@ -51,10 +49,10 @@ static void CursorManagerDeleteProc(ClientData clientData, Tcl_Interp *interp)
 static CursorManager *GetCursorManager(Tcl_Interp *interp)
 {
     static const char *cm_key = "ttk::CursorManager";
-    CursorManager *cm = (CursorManager *) Tcl_GetAssocData(interp, cm_key,0);
+    CursorManager *cm = Tcl_GetAssocData(interp, cm_key,0);
 
     if (!cm) {
-	cm = (CursorManager*)ckalloc(sizeof(*cm));
+	cm = ckalloc(sizeof(*cm));
 	cm->timer = 0;
 	cm->owner = 0;
 	cm->onTime = DEF_CURSOR_ON_TIME;

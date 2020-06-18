@@ -1,7 +1,7 @@
 /*                        D E F I N E S . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,10 +29,12 @@
 #define GED_DEFINES_H
 
 #include "common.h"
-#include "bio.h"
 #include "bu/hash.h"
 #include "bu/list.h"
+#include "bu/process.h"
 #include "bu/vls.h"
+#include "dm/bview.h"
+#include "rt/search.h"
 
 __BEGIN_DECLS
 
@@ -40,9 +42,9 @@ __BEGIN_DECLS
 #  if defined(GED_DLL_EXPORTS) && defined(GED_DLL_IMPORTS)
 #    error "Only GED_DLL_EXPORTS or GED_DLL_IMPORTS can be defined, not both."
 #  elif defined(GED_DLL_EXPORTS)
-#    define GED_EXPORT __declspec(dllexport)
+#    define GED_EXPORT COMPILER_DLLEXPORT
 #  elif defined(GED_DLL_IMPORTS)
-#    define GED_EXPORT __declspec(dllimport)
+#    define GED_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define GED_EXPORT
 #  endif
@@ -84,7 +86,7 @@ __BEGIN_DECLS
  * Definition of global parallel-processing semaphores.
  *
  */
-#define GED_SEM_WORKER RT_SEM_LAST
+#define GED_SEM_WORKER ANALYZE_SEM_LAST
 #define GED_SEM_STATS GED_SEM_WORKER+1
 #define GED_SEM_LIST GED_SEM_STATS+1
 #define GED_SEM_LAST GED_SEM_LIST+1
@@ -112,19 +114,10 @@ __BEGIN_DECLS
 #define RT_VDRW_DEF_COLOR       0xffff00
 
 
-struct ged_run_rt {
+struct ged_subprocess {
     struct bu_list l;
-#if defined(_WIN32) && !defined(__CYGWIN__)
-    HANDLE fd;
-    HANDLE hProcess;
-    DWORD pid;
-    void *chan; /* FIXME: uses communication channel instead of file
-		 * descriptor to get output from rt.
-		 */
-#else
-    int fd;
-    int pid;
-#endif
+    struct bu_process *p;
+    void *chan;
     int aborted;
 };
 
@@ -157,9 +150,8 @@ struct ged_drawable {
     struct vd_curve		*gd_currVHead;		/**< @brief  current vdraw head */
     struct solid                *gd_freeSolids;         /**< @brief  ptr to head of free solid list */
 
-    char			**gd_rt_cmd;
-    int				gd_rt_cmd_len;
-    struct ged_run_rt		gd_headRunRt;		/**< @brief  head of forked rt processes */
+    char			**gd_rt_cmd;    /* DEPRECATED - will be removed, do not use */
+    int				gd_rt_cmd_len;  /* DEPRECATED - will be removed, do not use */
 
     void			(*gd_rtCmdNotify)(int aborted);	/**< @brief  function called when rt command completes */
 
@@ -177,6 +169,9 @@ struct ged_drawable {
     struct ged_qray_color	gd_qray_overlap_color;
     int				gd_shaded_mode;		/**< @brief  1 - draw bots shaded by default */
 };
+
+
+typedef void (*ged_io_handler_callback_t)(void *, int);
 
 struct ged_cmd;
 
@@ -222,13 +217,21 @@ struct ged {
     /* FIXME -- this ugly hack needs to die.  the result string should be stored before the call. */
     int 			ged_internal_call;
 
+    /* Handler functions for I/O communication with asynchronous subprocess commands */
+    int io_mode;
+    void (*ged_create_io_handler)(void **chan, struct bu_process *p, int fd, int mode, void *data, ged_io_handler_callback_t callback);
+    void (*ged_delete_io_handler)(void *interp, void *chan, struct bu_process *p, int fd, void *data, ged_io_handler_callback_t callback);
+
     /* FOR LIBGED INTERNAL USE */
     struct ged_cmd *cmds;
     int (*add)(struct ged *gedp, const struct ged_cmd *cmd);
     int (*del)(struct ged *gedp, const char *name);
     int (*run)(struct ged *gedp, int ac, char *av[]);
 
+    struct ged_subprocess	gd_headSubprocess; /**< @brief  head of forked processes */
+
     void *ged_interp; /* Temporary - do not rely on when designing new functionality */
+    db_search_callback_t ged_interp_eval; /* FIXME: broke the rule written on the previous line */
 
     /* Interface to LIBDM */
     int ged_dm_width;

@@ -9,8 +9,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 /*
@@ -32,32 +30,13 @@
 #endif
 
 /*
- * The following structure encapsulates the state for a background channel
- * copy. Note that the data buffer for the copy will be appended to this
- * structure.
- */
-
-typedef struct CopyState {
-    struct Channel *readPtr;	/* Pointer to input channel. */
-    struct Channel *writePtr;	/* Pointer to output channel. */
-    int readFlags;		/* Original read channel flags. */
-    int writeFlags;		/* Original write channel flags. */
-    int toRead;			/* Number of bytes to copy, or -1. */
-    Tcl_WideInt total;		/* Total bytes transferred (written). */
-    Tcl_Interp *interp;		/* Interp that started the copy. */
-    Tcl_Obj *cmdPtr;		/* Command to be invoked at completion. */
-    int bufSize;		/* Size of appended buffer. */
-    char buffer[1];		/* Copy buffer, this must be the last
-				 * field. */
-} CopyState;
-
-/*
  * struct ChannelBuffer:
  *
  * Buffers data being sent to or from a channel.
  */
 
 typedef struct ChannelBuffer {
+    int refCount;		/* Current uses count */
     int nextAdded;		/* The next position into which a character
 				 * will be put in the buffer. */
     int nextRemoved;		/* Position of next byte to be removed from
@@ -65,13 +44,13 @@ typedef struct ChannelBuffer {
     int bufLength;		/* How big is the buffer? */
     struct ChannelBuffer *nextPtr;
     				/* Next buffer in chain. */
-    char buf[4];		/* Placeholder for real buffer. The real
-				 * buffer occuppies this space + bufSize-4
+    char buf[1];		/* Placeholder for real buffer. The real
+				 * buffer occuppies this space + bufSize-1
 				 * bytes. This must be the last field in the
 				 * structure. */
 } ChannelBuffer;
 
-#define CHANNELBUFFER_HEADER_SIZE	(sizeof(ChannelBuffer) - 4)
+#define CHANNELBUFFER_HEADER_SIZE	TclOffset(ChannelBuffer, buf)
 
 /*
  * How much extra space to allocate in buffer to hold bytes from previous
@@ -86,19 +65,6 @@ typedef struct ChannelBuffer {
  */
 
 #define CHANNELBUFFER_DEFAULT_SIZE	(1024 * 4)
-
-/*
- * Structure to record a close callback. One such record exists for each close
- * callback registered for a channel.
- */
-
-typedef struct CloseCallback {
-    Tcl_CloseProc *proc;	/* The procedure to call. */
-    ClientData clientData;	/* Arbitrary one-word data to pass to the
-				 * callback. */
-    struct CloseCallback *nextPtr;
-				/* For chaining close callbacks. */
-} CloseCallback;
 
 /*
  * The following structure describes the information saved from a call to
@@ -132,7 +98,7 @@ typedef struct Channel {
     struct ChannelState *state; /* Split out state information */
     ClientData instanceData;	/* Instance-specific data provided by creator
 				 * of channel. */
-    Tcl_ChannelType *typePtr;	/* Pointer to channel type structure. */
+    const Tcl_ChannelType *typePtr; /* Pointer to channel type structure. */
     struct Channel *downChanPtr;/* Refers to channel this one was stacked
 				 * upon. This reference is NULL for normal
 				 * channels. See Tcl_StackChannel. */
@@ -146,6 +112,8 @@ typedef struct Channel {
 
     ChannelBuffer *inQueueHead;	/* Points at first buffer in input queue. */
     ChannelBuffer *inQueueTail;	/* Points at last buffer in input queue. */
+
+    int refCount;
 } Channel;
 
 /*
@@ -158,7 +126,7 @@ typedef struct Channel {
  */
 
 typedef struct ChannelState {
-    CONST char *channelName;	/* The name of the channel instance in Tcl
+    char *channelName;		/* The name of the channel instance in Tcl
 				 * commands. Storage is owned by the generic
 				 * IO code, is dynamically allocated. */
     int	flags;			/* ORed combination of the flags defined
@@ -197,7 +165,8 @@ typedef struct ChannelState {
 				 * value is the POSIX error code. */
     int refCount;		/* How many interpreters hold references to
 				 * this IO channel? */
-    CloseCallback *closeCbPtr;	/* Callbacks registered to be called when the
+    struct CloseCallback *closeCbPtr;
+				/* Callbacks registered to be called when the
 				 * channel is closed. */
     char *outputStage;		/* Temporary staging buffer used when
 				 * translating EOL before converting from
@@ -219,8 +188,10 @@ typedef struct ChannelState {
 				 * handlers ("fileevent") on this channel. */
     int bufSize;		/* What size buffers to allocate? */
     Tcl_TimerToken timer;	/* Handle to wakeup timer for this channel. */
-    CopyState *csPtrR;		/* State of background copy for which channel is input, or NULL. */
-    CopyState *csPtrW;		/* State of background copy for which channel is output, or NULL. */
+    struct CopyState *csPtrR;	/* State of background copy for which channel
+				 * is input, or NULL. */
+    struct CopyState *csPtrW;	/* State of background copy for which channel
+				 * is output, or NULL. */
     Channel *topChanPtr;	/* Refers to topmost channel in a stack. Never
 				 * NULL. */
     Channel *bottomChanPtr;	/* Refers to bottommost channel in a stack.
@@ -243,6 +214,8 @@ typedef struct ChannelState {
 				 * because it happened in the background. The
 				 * value is the chanMg, if any. #219's
 				 * companion to 'unreportedError'. */
+    int epoch;			/* Used to test validity of stored channelname
+				 * lookup results. */
 } ChannelState;
 
 /*
@@ -258,11 +231,6 @@ typedef struct ChannelState {
 					 * flushed after every newline. */
 #define CHANNEL_UNBUFFERED	(1<<5)	/* Output to the channel must always
 					 * be flushed immediately. */
-#define BUFFER_READY		(1<<6)	/* Current output buffer (the
-					 * curOutPtr field in the channel
-					 * structure) should be output as soon
-					 * as possible even though it may not
-					 * be full. */
 #define BG_FLUSH_SCHEDULED	(1<<7)	/* A background flush of the queued
 					 * output buffers has been
 					 * scheduled. */
@@ -284,9 +252,6 @@ typedef struct ChannelState {
 #define INPUT_SAW_CR		(1<<12)	/* Channel is in CRLF eol input
 					 * translation mode and the last byte
 					 * seen was a "\r". */
-#define INPUT_NEED_NL		(1<<15)	/* Saw a '\r' at end of last buffer,
-					 * and there should be a '\n' at
-					 * beginning of next buffer. */
 #define CHANNEL_DEAD		(1<<13)	/* The channel has been closed by the
 					 * exit handler (on exit) but not
 					 * deallocated. When any IO operation
@@ -306,122 +271,22 @@ typedef struct ChannelState {
 					 * changes. */
 #define CHANNEL_RAW_MODE	(1<<16)	/* When set, notes that the Raw API is
 					 * being used. */
-#ifdef TCL_IO_TRACK_OS_FOR_DRIVER_WITH_BAD_BLOCKING
-#define CHANNEL_TIMER_FEV	(1<<17)	/* When set the event we are notified
-					 * by is a fileevent generated by a
-					 * timer. We don't know if the driver
-					 * has more data and should not try to
-					 * read from it. If the system needs
-					 * more than is in the buffers out
-					 * read routines will simulate a short
-					 * read (0 characters read) */
-#define CHANNEL_HAS_MORE_DATA   (1<<18) /* Set by NotifyChannel for a channel
-					 * if and only if the channel is
-					 * configured non-blocking, the driver
-					 * for said channel has no
-					 * blockmodeproc, and data has arrived
-					 * for reading at the OS level). A
-					 * GetInput will pass reading from the
-					 * driver if the channel is
-					 * non-blocking, without blockmode
-					 * proc and the flag has not been set.
-					 * A read will be performed if the
-					 * flag is set. This will reset the
-					 * flag as well. */
-#endif /* TCL_IO_TRACK_OS_FOR_DRIVER_WITH_BAD_BLOCKING */
 
 #define CHANNEL_INCLOSE		(1<<19)	/* Channel is currently being closed.
 					 * Its structures are still live and
 					 * usable, but it may not be closed
 					 * again from within the close
 					 * handler. */
-#define CHANNEL_TAINTED		(1<<20)	/* Channel stack structure has changed.
-					 * Used by Channel Tcl_Obj type to
-					 * determine if we have to revalidate
-					 * the channel. */
+#define CHANNEL_CLOSEDWRITE	(1<<21)	/* Channel write side has been closed.
+					 * No further Tcl-level write IO on
+					 * the channel is allowed. */
 
 /*
- * For each channel handler registered in a call to Tcl_CreateChannelHandler,
- * there is one record of the following type. All of records for a specific
- * channel are chained together in a singly linked list which is stored in the
- * channel structure.
+ * The length of time to wait between synthetic timer events. Must be zero or
+ * bad things tend to happen.
  */
 
-typedef struct ChannelHandler {
-    Channel *chanPtr;		/* The channel structure for this channel. */
-    int mask;			/* Mask of desired events. */
-    Tcl_ChannelProc *proc;	/* Procedure to call in the type of
-				 * Tcl_CreateChannelHandler. */
-    ClientData clientData;	/* Argument to pass to procedure. */
-    struct ChannelHandler *nextPtr;
-    				/* Next one in list of registered handlers. */
-} ChannelHandler;
-
-/*
- * This structure keeps track of the current ChannelHandler being invoked in
- * the current invocation of ChannelHandlerEventProc. There is a potential
- * problem if a ChannelHandler is deleted while it is the current one, since
- * ChannelHandlerEventProc needs to look at the nextPtr field. To handle this
- * problem, structures of the type below indicate the next handler to be
- * processed for any (recursively nested) dispatches in progress. The
- * nextHandlerPtr field is updated if the handler being pointed to is deleted.
- * The nextPtr field is used to chain together all recursive invocations, so
- * that Tcl_DeleteChannelHandler can find all the recursively nested
- * invocations of ChannelHandlerEventProc and compare the handler being
- * deleted against the NEXT handler to be invoked in that invocation; when it
- * finds such a situation, Tcl_DeleteChannelHandler updates the nextHandlerPtr
- * field of the structure to the next handler.
- */
-
-typedef struct NextChannelHandler {
-    ChannelHandler *nextHandlerPtr;
-				/* The next handler to be invoked in this
-				 * invocation. */
-    struct NextChannelHandler *nestedHandlerPtr;
-				/* Next nested invocation of
-				 * ChannelHandlerEventProc. */
-} NextChannelHandler;
-
-/*
- * The following structure describes the event that is added to the Tcl event
- * queue by the channel handler check procedure.
- */
-
-typedef struct ChannelHandlerEvent {
-    Tcl_Event header;		/* Standard header for all events. */
-    Channel *chanPtr;		/* The channel that is ready. */
-    int readyMask;		/* Events that have occurred. */
-} ChannelHandlerEvent;
-
-/*
- * The following structure is used by Tcl_GetsObj() to encapsulates the state
- * for a "gets" operation.
- */
-
-typedef struct GetsState {
-    Tcl_Obj *objPtr;		/* The object to which UTF-8 characters will
-				 * be appended. */
-    char **dstPtr;		/* Pointer into objPtr's string rep where next
-				 * character should be stored. */
-    Tcl_Encoding encoding;	/* The encoding to use to convert raw bytes to
-				 * UTF-8. */
-    ChannelBuffer *bufPtr;	/* The current buffer of raw bytes being
-				 * emptied. */
-    Tcl_EncodingState state;	/* The encoding state just before the last
-				 * external to UTF-8 conversion in
-				 * FilterInputBytes(). */
-    int rawRead;		/* The number of bytes removed from bufPtr in
-				 * the last call to FilterInputBytes(). */
-    int bytesWrote;		/* The number of bytes of UTF-8 data appended
-				 * to objPtr during the last call to
-				 * FilterInputBytes(). */
-    int charsWrote;		/* The corresponding number of UTF-8
-				 * characters appended to objPtr during the
-				 * last call to FilterInputBytes(). */
-    int totalChars;		/* The total number of UTF-8 characters
-				 * appended to objPtr so far, just before the
-				 * last call to FilterInputBytes(). */
-} GetsState;
+#define SYNTHETIC_EVENT_TIME	0
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
-/*                           D I R E N T . C
+/*                         D I R E N T . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2016 United States Government as represented by
+ * Copyright (c) 2001-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@
 #include "uce-dirent.h"
 
 
-int
+static int
 cmpdir(const void *a, const void *b, void *UNUSED(context))
 {
     return (bu_strcmp(*(const char **)a, *(const char **)b));
@@ -48,17 +48,18 @@ bu_file_list(const char *path, const char *pattern, char ***files)
     DIR *dir = NULL;
     struct dirent *dp = NULL;
 
-    /* calculate file cound */
+    /* calculate file count */
     dir = opendir(path);
-    while ((dp = readdir(dir)) != NULL) {
+    while (dir && (dp = readdir(dir)) != NULL) {
 	if (!pattern
 	    || (strlen(pattern) == 0)
-	    || (bu_fnmatch(pattern, dp->d_name, 0) == 0))
+	    || (bu_path_match(pattern, dp->d_name, 0) == 0))
 	{
 	    filecount++;
 	}
     }
-    (void)closedir(dir);
+    if (dir)
+	(void)closedir(dir);
 
     /* bail now if there's no files array pointer to fill in */
     if (!files) {
@@ -69,15 +70,16 @@ bu_file_list(const char *path, const char *pattern, char ***files)
     *files = (char **)bu_calloc(filecount+1, sizeof(char *), "files alloc");
 
     dir = opendir(path);
-    while ((dp = readdir(dir)) != NULL) {
+    while (dir && (dp = readdir(dir)) != NULL) {
 	if (!pattern
 	    || (strlen(pattern) == 0)
-	    || (bu_fnmatch(pattern, dp->d_name, 0) == 0))
+	    || (bu_path_match(pattern, dp->d_name, 0) == 0))
 	{
 	    (*files)[i++] = bu_strdup(dp->d_name);
 	}
     }
-    (void)closedir(dir);
+    if (dir)
+	(void)closedir(dir);
 
     bu_sort(*files, filecount, sizeof(char *), cmpdir, NULL);
 

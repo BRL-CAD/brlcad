@@ -1,7 +1,7 @@
 /*                      N M G M O D E L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,8 +29,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "bu/getopt.h"
 #include "vmath.h"
+#include "bu/app.h"
+#include "bu/getopt.h"
 #include "nmg.h"
 #include "raytrace.h"
 #include "wdb.h"
@@ -224,7 +225,7 @@ make_3manifold_bits(struct bn_tol *tol)
     /* this face isn't strictly convex, so we have to make the plane
      * equation the old-fashioned way.
      */
-    bn_mk_plane_3pts(plane,
+    bn_make_plane_3pnts(plane,
 		     vertl[7]->vg_p->coord,
 		     vertl[17]->vg_p->coord,
 		     vertl[12]->vg_p->coord,
@@ -518,6 +519,8 @@ main(int ac, char *av[])
     struct bn_tol tol;
     FILE *fdplot;
     struct rt_wdb *fdmodel;
+
+    bu_setprogname(av[0]);
 
     parse_args(ac, av);
     if (!manifold[0] && !manifold[1] && !manifold[2] && !manifold[3])

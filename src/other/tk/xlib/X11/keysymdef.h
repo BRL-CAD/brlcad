@@ -397,6 +397,7 @@ SOFTWARE.
 #define XK_Otilde              0x0d5
 #define XK_Odiaeresis          0x0d6
 #define XK_multiply            0x0d7
+#define XK_Oslash              0x0d8
 #define XK_Ooblique            0x0d8
 #define XK_Ugrave              0x0d9
 #define XK_Uacute              0x0da
@@ -840,6 +841,7 @@ SOFTWARE.
 #define XK_Greek_EPSILONaccent                         0x7a2
 #define XK_Greek_ETAaccent                             0x7a3
 #define XK_Greek_IOTAaccent                            0x7a4
+#define XK_Greek_IOTAdieresis                          0x7a5
 #define XK_Greek_IOTAdiaeresis                         0x7a5
 #define XK_Greek_OMICRONaccent                         0x7a7
 #define XK_Greek_UPSILONaccent                         0x7a8
@@ -1166,4 +1168,16 @@ SOFTWARE.
 #define XK_hebrew_taf                                  0xcfa  /* deprecated */
 #define XK_Hebrew_switch        0xFF7E  /* Alias for mode_switch */
 #endif /* XK_HEBREW */
+
+/* Multimedia keys, defined same as on Linux
+ * /usr/include/pkg/libxkbcommon/xkbcommon/xkbcommon-keysyms.h
+ */
+
+#define XK_XF86AudioLowerVolume	0x1008FF11   /* Volume control down        */
+#define XK_XF86AudioMute	0x1008FF12   /* Mute sound from the system */
+#define XK_XF86AudioRaiseVolume	0x1008FF13   /* Volume control up          */
+#define XK_XF86AudioPlay	0x1008FF14   /* Start playing of audio >   */
+#define XK_XF86AudioStop	0x1008FF15   /* Stop playing audio         */
+#define XK_XF86AudioPrev	0x1008FF16   /* Previous track             */
+#define XK_XF86AudioNext	0x1008FF17   /* Next track                 */
 

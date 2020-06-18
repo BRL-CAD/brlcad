@@ -1,7 +1,7 @@
 /*                        V L S _ V P R I N T F . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -83,86 +83,86 @@ reset_vflags(vflags_t *f)
 int
 format_part_status(const char c)
 {
-  int status = VP_VALID; /* assume valid */
+    int status = VP_VALID; /* assume valid */
 
-  /* return a bit flag with: type, validity */
-  switch (c) {
-      /* VALID ===================================== */
-      case 'd':
-      case 'i':
-      case 'o':
-      case 'u':
-      case 'x':
-      case 'X':
-      case 'e':
-      case 'E':
-      case 'f':
-      case 'F':
-      case 'g':
-      case 'G':
-      case 'a':
-      case 'A':
-      case 'c':
-      case 's':
-      case 'p':
-      case 'n':
-      case '%':
-      case 'V': /* bu_vls extension */
-	  status |= VP_CONVERSION_SPEC;
-	  break;
+    /* return a bit flag with: type, validity */
+    switch (c) {
+	/* VALID ===================================== */
+	case 'd':
+	case 'i':
+	case 'o':
+	case 'u':
+	case 'x':
+	case 'X':
+	case 'e':
+	case 'E':
+	case 'f':
+	case 'F':
+	case 'g':
+	case 'G':
+	case 'a':
+	case 'A':
+	case 'c':
+	case 's':
+	case 'p':
+	case 'n':
+	case '%':
+	case 'V': /* bu_vls extension */
+	    status |= VP_CONVERSION_SPEC;
+	    break;
 
-      case 'h': /* can be doubled: 'hh' */
-      case 'l': /* can be doubled: 'll' */
-      case 'L':
-      case 'j':
-      case 'z':
-      case 't':
-	  status |= VP_LENGTH_MOD;
-	  break;
+	case 'h': /* can be doubled: 'hh' */
+	case 'l': /* can be doubled: 'll' */
+	case 'L':
+	case 'j':
+	case 'z':
+	case 't':
+	    status |= VP_LENGTH_MOD;
+	    break;
 
-      case '#':
-      case '0':
-      case '-':
-      case ' ':
-      case '+':
-      case '\'': /* SUSv2 */
-	  status |= VP_FLAG;
-	  break;
+	case '#':
+	case '0':
+	case '-':
+	case ' ':
+	case '+':
+	case '\'': /* SUSv2 */
+	    status |= VP_FLAG;
+	    break;
 
-      case '*':
-      case ';':
-	  status |= VP_MISC;
-	  break;
+	case '*':
+	case ';':
+	    status |= VP_MISC;
+	    break;
 
-	  /* OBSOLETE ===================================== */
-	  /* obsolete or not recommended (considered obsolete for bu_vls): */
-      case 'm': /* glibc extension for printing strerror(errno) (not same as %m$ or %*mS) */
-      case 'C': /* Synonym for lc. (Not in C99, but in SUSv2. Don't use.) */
-      case 'D': /* Synonym for ld. (libc4--don't use) */
-      case 'O': /* Synonym for lo. (libc5--don't use) */
-      case 'S': /* Synonym for ls. (Not in C99, but in SUSv2. Don't use.) */
-      case 'U': /* Synonym for lu. (libc5--don't use) */
-	  status  = VP_OBSOLETE;
-	  status |= VP_CONVERSION_SPEC;
-	  break;
+	    /* OBSOLETE ===================================== */
+	    /* obsolete or not recommended (considered obsolete for bu_vls): */
+	case 'm': /* glibc extension for printing strerror(errno) (not same as %m$ or %*mS) */
+	case 'C': /* Synonym for lc. (Not in C99, but in SUSv2. Don't use.) */
+	case 'D': /* Synonym for ld. (libc4--don't use) */
+	case 'O': /* Synonym for lo. (libc5--don't use) */
+	case 'S': /* Synonym for ls. (Not in C99, but in SUSv2. Don't use.) */
+	case 'U': /* Synonym for lu. (libc5--don't use) */
+	    status  = VP_OBSOLETE;
+	    status |= VP_CONVERSION_SPEC;
+	    break;
 
-      case 'Z': /* alias for 'z' (libc5--don't use) */
-	  status  = VP_OBSOLETE;
-	  status |= VP_LENGTH_MOD;
-	  break;
+	case 'Z': /* alias for 'z' (libc5--don't use) */
+	    status  = VP_OBSOLETE;
+	    status |= VP_LENGTH_MOD;
+	    break;
 
-      case 'I': /* alias for 'z' (libc5--don't use) */
-	  status  = VP_OBSOLETE;
-	  status |= VP_FLAG;
-	  break;
+	case 'I': /* alias for 'z' (libc5--don't use) */
+	    status  = VP_OBSOLETE;
+	    status |= VP_FLAG;
+	    break;
 
-      default:
-	  /* all others are unknown--be sure to redefine the status value to VP_UNKNOWN */
-	  status = VP_UNKNOWN;
-	  break;
-  }
+	default:
+	    /* all others are unknown--be sure to redefine the status value to VP_UNKNOWN */
+	    status = VP_UNKNOWN;
+	    break;
+    }
 
-  return status;
+    return status;
 }
 
 /* function returns 1 if input char is found, 0 otherwise */
@@ -277,8 +277,8 @@ handle_obsolete_format_char(const char c, const int print)
 	    break;
 	case 'C': /* (Not in C99, but in SUSv2.)  Synonym for lc.  Don't use. */
 	    if (print) {
-	      fprintf(stderr, "Format specifier '%c' is obsolete.\n", c);
-	      fprintf(stderr, "  Use 'lc' instead.\n");
+		fprintf(stderr, "Format specifier '%c' is obsolete.\n", c);
+		fprintf(stderr, "  Use 'lc' instead.\n");
 	    }
 	    break;
 	case 'D': /* libc4--don't use */
@@ -306,7 +306,7 @@ handle_obsolete_format_char(const char c, const int print)
 	    }
 	    break;
 
-	  /* length modifiers */
+	    /* length modifiers */
 	case 'q': /* "quad".  4.4BSD  and  Linux libc5 only.  Don't use. */
 	    if (print) {
 		fprintf(stderr, "Format length modifier '%c' is obsolete.\n", c);
@@ -320,7 +320,7 @@ handle_obsolete_format_char(const char c, const int print)
 	    }
 	    break;
 
-	  /* flags */
+	    /* flags */
 	case 'I': /* specifies use of locale's alternative output digits */
 	    if (print) {
 		fprintf(stderr, "Format flag '%c' is not yet supported.\n", c);
@@ -341,37 +341,37 @@ handle_obsolete_format_char(const char c, const int print)
 
 
 /*
-The bu_vls_vprintf function aims to adhere to the following
-specifications:
+  The bu_vls_vprintf function aims to adhere to the following
+  specifications:
 
   1.  First, follow the POSIX man page at
-      "http://www.unix.com/man-page/POSIX/3/printf/" regarding the
-      definition of a format specifier.
+  "http://www.unix.com/man-page/POSIX/3/printf/" regarding the
+  definition of a format specifier.
 
   2.  Then modify [1] to accommodate a compatible subset of parts
-      applicable to a wide range of standard C libraries including
-      GNU/Linux, Windows, FreeBSD, and others as differences are
-      brought to our attention.
+  applicable to a wide range of standard C libraries including
+  GNU/Linux, Windows, FreeBSD, and others as differences are
+  brought to our attention.
 
   3.  The subset [2] shall be the "valid" flags, length modifiers, and
-      conversion specifiers ("parts") accepted by this function.
-      Those are defined in the following local function:
+  conversion specifiers ("parts") accepted by this function.
+  Those are defined in the following local function:
 
-	format_part_status
+  format_part_status
 
   4.  Parts known to be defined outside subset [3] shall generate a
-      message stating such invalidity and giving a suitable
-      alternative if possible (such parts will be called "obsolete");
-      otherwise, the part shall be said to be "unsupported."
+  message stating such invalidity and giving a suitable
+  alternative if possible (such parts will be called "obsolete");
+  otherwise, the part shall be said to be "unsupported."
 
   5.  Parts seen by this function but not defined above shall be
-      deemed "unknown" and result in a suitable message.
+  deemed "unknown" and result in a suitable message.
 
   6.  Library users of this function receiving "unknown" messages
-      while attempting to use valid parts according to their O/S and
-      compiler need to contact the BRL-CAD developers to resolve the
-      issue.  Resolution should normally result in assigning the
-      "unknown" part to one of the categories described in [4].
+  while attempting to use valid parts according to their O/S and
+  compiler need to contact the BRL-CAD developers to resolve the
+  issue.  Resolution should normally result in assigning the
+  "unknown" part to one of the categories described in [4].
 
 */
 void
@@ -430,11 +430,11 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		/* skip */
 	    } else if (c == '-') {
 		/* the first occurrence before a dot is the
-		 left-justify flag, but the occurrence AFTER a dot is
-		 taken to be zero precision */
+		   left-justify flag, but the occurrence AFTER a dot is
+		   taken to be zero precision */
 		if (f.have_dot) {
-		  f.precision  = 0;
-		  f.have_digit = 0;
+		    f.precision  = 0;
+		    f.have_digit = 0;
 		} else if (f.have_digit) {
 		    /* FIXME: ERROR condition?: invalid format string
 		       (e.g., '%7.8-f') */
@@ -483,11 +483,12 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 	bu_vls_strncpy(&fbuf, sp, (size_t)len);
 	fbufp = bu_vls_addr(&fbuf);
 
-#ifndef HAVE_C99_FORMAT_SPECIFIERS
-	/* if the format string uses the %z, %t, or %j width specifiers, we need to
-	 * them it with something more palatable to this busted compiler.
+	/* if the format string uses the %z, %t, or %j width
+	 * specifiers, we may need to substitute them with something
+	 * more palatable on lame compilers.
 	 */
 
+#ifndef HAVE_PERCENT_Z
 	if ((f.flags & SIZETINT) || (f.flags & PTRDIFFT) || (f.flags & INTMAX_T)) {
 	    char *fp = fbufp;
 	    while (*fp) {
@@ -509,11 +510,11 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 			    continue;
 			}
 			if (*fp == 'z' || *fp == 't' || *fp == 'j') {
-			    /* assume MSVC replacing instances of %z or %t or
-			     * %j with %I (capital i) until we encounter
-			     * anything different.
-			     */
-			    *fp = 'I';
+#  ifdef HAVE_WINDOWS_H
+			    *fp = 'I'; /* MSVC: replace with %I (uppercase i) */
+#  else
+			    *fp = 'l'; /* anyone else: assume it fits in long */
+#  endif /* HAVE_WINDOWS_H */
 			}
 
 			break;
@@ -525,7 +526,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		fp++;
 	    }
 	}
-#endif
+#endif /* HAVE_PERCENT_Z */
 
 	/* use type specifier to grab parameter appropriately from arg
 	   list, and print it correctly */
@@ -535,8 +536,8 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		    /* variables used to determine final effects of
 		       field length and precision (different for
 		       strings versus numbers) */
-		    int minfldwid = -1;
-		    int maxstrlen = -1;
+		    ssize_t minfldwid = -1;
+		    ssize_t maxstrlen = -1;
 
 		    char *str = va_arg(ap, char *);
 		    const char *fp = fbufp;
@@ -548,14 +549,14 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 
 			    if (!f.have_dot) {
 				if (*fp == '0') {
-				    bu_sscanf(fp, "%d", &f.fieldlen);
+				    bu_sscanf(fp, "%zd", &f.fieldlen);
 				} else {
 				    f.fieldlen = atoi(fp);
 				}
 				f.flags |= FIELDLEN;
 			    } else {
 				if (*fp == '0') {
-				    bu_sscanf(fp, "%d", &f.precision);
+				    bu_sscanf(fp, "%zd", &f.precision);
 				} else {
 				    f.precision = atoi(fp);
 				}
@@ -588,7 +589,7 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		    }
 
 		    if (str) {
-			int stringlen = (int)strlen(str);
+			size_t stringlen = strlen(str);
 			struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
 
 			/* use a copy of the string */
@@ -597,21 +598,21 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 			/* handle a non-empty string */
 			/* strings may be truncated */
 			if (maxstrlen >= 0) {
-			    if (maxstrlen < stringlen) {
+			    if ((size_t)maxstrlen < stringlen) {
 				/* have to truncate */
 				bu_vls_trunc(&tmpstr, maxstrlen);
 				stringlen = maxstrlen;
 			    } else {
-				maxstrlen = stringlen;
+				maxstrlen = (ssize_t)stringlen;
 			    }
 			}
 			minfldwid = minfldwid < maxstrlen ? maxstrlen : minfldwid;
 
-			if (stringlen < minfldwid) {
+			if ((ssize_t)stringlen < minfldwid) {
 			    /* padding spaces needed */
 			    /* start a temp string to deal with padding */
 			    struct bu_vls padded = BU_VLS_INIT_ZERO;
-			    int i;
+			    size_t i;
 
 			    if (f.left_justify) {
 				/* string goes before padding spaces */

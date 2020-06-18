@@ -1,7 +1,7 @@
 /*                         S O L I D . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2016 United States Government as represented by
+ * Copyright (c) 1989-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -41,11 +41,11 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-
 /* defined in read.c */
 extern int get_line(char *cp, int buflen, char *title);
-extern int getint(char *cp, int start, int len);
 extern void namecvt(int n, char **cp, int c);
+extern int getint(char *cp, int start, size_t len);
+extern double getdouble(char *cp, int start, size_t len);
 
 /* defined in cvt.c */
 extern void col_pr(char *str);
@@ -57,7 +57,6 @@ extern struct rt_wdb *outfp;
 extern int version;
 extern int verbose;
 
-extern double getdouble(char *cp, int start, int len);
 extern int sol_total, sol_work;
 
 char scard[132];			/* Solid card buffer area */
@@ -251,7 +250,7 @@ getsolid(void)
 
 	cp = solid_type;
 	while ((c = *cp) != '\0') {
-	    if (!isascii(c)) {
+	    if (!isprint(c)) {
 		*cp++ = '?';
 	    } else if (isupper((int)c)) {
 		*cp++ = tolower((int)c);
@@ -557,7 +556,7 @@ getsolid(void)
 	int num;
 	double dia;
 	fastf_t *pts;		/* 3 entries per pt */
-	struct wdb_pipept *ps;
+	struct wdb_pipe_pnt *ps;
 	struct bu_list head;		/* allow a whole struct for head */
 
 	/* This might be getint(solid_type, 3, 2); for non-V5 */
@@ -578,7 +577,7 @@ getsolid(void)
 	 */
 	BU_LIST_INIT(&head);
 	for (i = 0; i < numpts; i++) {
-	    BU_ALLOC(ps, struct wdb_pipept);
+	    BU_ALLOC(ps, struct wdb_pipe_pnt);
 
 	    ps->l.magic = WDB_PIPESEG_MAGIC;
 	    VMOVE(ps->pp_coord, &pts[i*3]);	/* 3 pts at a time */
@@ -868,7 +867,7 @@ read_arbn(char *name)
 	    } else {
 		VMOVE(c, &input_points[((s)-1)*3]);
 	    }
-	    if (bn_mk_plane_3pts(eqn[cur_eq], a, b, c, &tol) < 0) {
+	    if (bn_make_plane_3pnts(eqn[cur_eq], a, b, c, &tol) < 0) {
 		printf("arbn degenerate plane\n");
 		VPRINT("a", a);
 		VPRINT("b", b);
@@ -996,7 +995,7 @@ read_arbn(char *name)
 	    for (k = j + 1; k < nface; k++) {
 		point_t pt;
 
-		if (bn_mkpoint_3planes(pt, eqn[i], eqn[j], eqn[k]) < 0) continue;
+		if (bn_make_pnt_3planes(pt, eqn[i], eqn[j], eqn[k]) < 0) continue;
 
 		/* See if point is outside arb */
 		for (m = 0; m < nface; m++) {

@@ -1,7 +1,7 @@
 /*                      R A N D S P H . C
  * BRL-CAD
  *
- * Copyright (c) 2014-2016 United States Government as represented by
+ * Copyright (c) 2014-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,6 +22,7 @@
 
 #include <stdio.h>
 
+#include "bu/app.h"
 #include "bu/malloc.h"
 #include "bu/log.h"
 #include "vmath.h"
@@ -37,6 +38,8 @@ main(int argc, const char *argv[])
     point_t *parray;
     point_t center = VINIT_ZERO;
     fastf_t radius = 1.0;
+
+    bu_setprogname(argv[0]);
 
     if (argc != 1) {
 	bu_exit(1, "ERROR: unknown args [%s]\n", argv[0]);
@@ -76,7 +79,7 @@ main(int argc, const char *argv[])
     bu_free(parray, "free array");
 
 
-  return 1;
+    return 1;
 }
 
 

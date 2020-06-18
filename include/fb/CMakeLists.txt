@@ -7,6 +7,7 @@ set(fb_noinstall_headers
   )
 
 CMAKEFILES(${fb_noinstall_headers})
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

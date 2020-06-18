@@ -1,7 +1,7 @@
 /*                            D O . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2016 United States Government as represented by
+ * Copyright (c) 1987-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,6 +38,9 @@
 #  include <sys/stat.h>
 #endif
 
+#include "bio.h"
+
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/debug.h"
 #include "bu/mime.h"
@@ -50,6 +53,9 @@
 #include "./rtuif.h"
 #include "./ext.h"
 
+#if defined(HAVE_FDOPEN) && !defined(HAVE_DECL_FDOPEN)
+extern FILE *fdopen(int fd, const char *mode);
+#endif
 
 /***** Variables shared with viewing model *** */
 extern FILE *outfp;			/* optional pixel output file */
@@ -145,6 +151,11 @@ old_way(FILE *fp)
 	return 0;		/* Not old way */
     }
     bu_log("Interpreting command stream in old format\n");
+
+    /* Committing to old way - better have objv ready */
+    if (!objv) {
+	return -1;
+    }
 
     def_tree(APP.a_rt_i);	/* Load the default trees */
 
@@ -304,19 +315,70 @@ int cm_end(const int UNUSED(argc), const char **UNUSED(argv))
 }
 
 
-int cm_tree(const int argc, const char **argv)
+
+
+int cm_draw(const int argc, const char **argv)
+{
+    int i = 0;
+    size_t j = 0;
+    if (!cmd_objs || argc < 2) {
+	return 0;
+    }
+    for (i = 1; i < argc; i++) {
+	int is_drawn = 0;
+	for (j = 0; j < BU_PTBL_LEN(cmd_objs); j++) {
+	    const char *dobj = (const char *)BU_PTBL_GET(cmd_objs, j);
+	    if (BU_STR_EQUAL(dobj, argv[1])) {
+		is_drawn = 1;
+		break;
+	    }
+	}
+	if (!is_drawn) {
+	    const char *ndraw = bu_strdup(argv[1]);
+	    bu_ptbl_ins(cmd_objs, (long *)ndraw);
+	}
+    }
+    return 0;
+}
+
+int cm_erase(const int argc, const char **argv)
+{
+    int i = 0;
+    size_t j = 0;
+    if (!cmd_objs) {
+	return 0;
+    }
+    for (i = 1; i < argc; i++) {
+	for (j = 0; j < BU_PTBL_LEN(cmd_objs); j++) {
+	    char *dobj = (char *)BU_PTBL_GET(cmd_objs, j);
+	    if (BU_STR_EQUAL(dobj, argv[1])) {
+		bu_ptbl_rm(cmd_objs, (long *)dobj);
+		bu_free(dobj, "free name");
+	    }
+	}
+    }
+    return 0;
+}
+
+
+int cm_prep(const int UNUSED(argc), const char **UNUSED(argv))
 {
     register struct rt_i *rtip = APP.a_rt_i;
     struct bu_vls times = BU_VLS_INIT_ZERO;
-
-    if (argc <= 1) {
-	def_tree(rtip);		/* Load the default trees */
+    int objcnt = 0;
+    const char **objargv = NULL;
+    if (!cmd_objs) {
 	return 0;
     }
+    objcnt = (int)BU_PTBL_LEN(cmd_objs);
+    if (objcnt <= 0) {
+	return 0;
+    }
+    objargv = (const char **)cmd_objs->buffer;
 
     rt_prep_timer();
-    if (rt_gettrees(rtip, argc-1, &argv[1], npsw) < 0)
-	bu_log("rt_gettrees(%s) FAILED\n", argv[0]);
+    if (rt_gettrees(rtip, objcnt, objargv, npsw) < 0)
+	bu_log("rt_gettrees() FAILED\n");
     (void)rt_get_timer(&times, NULL);
 
     if (rt_verbosity & VERBOSE_STATS)
@@ -325,6 +387,27 @@ int cm_tree(const int argc, const char **argv)
     return 0;
 }
 
+int cm_tree(const int argc, const char **argv)
+{
+    int i = 0;
+    size_t j = 0;
+
+    if (argc <= 1) {
+	return 0;
+    }
+
+    for (j = 0; j < BU_PTBL_LEN(cmd_objs); i++) {
+	char *dobj = (char *)BU_PTBL_GET(cmd_objs, i);
+	bu_free(dobj, "free object name");
+    }
+    bu_ptbl_reset(cmd_objs);
+    for (i = 1; i < argc; i++) {
+	const char *ndraw = bu_strdup(argv[i]);
+	bu_ptbl_ins(cmd_objs, (long *)ndraw);
+    }
+
+    return cm_prep(0,NULL);
+}
 
 int cm_multiview(const int UNUSED(argc), const char **UNUSED(argv))
 {
@@ -378,7 +461,7 @@ int cm_clean(const int UNUSED(argc), const char **UNUSED(argv))
 
     rt_clean(APP.a_rt_i);
 
-    if (R_DEBUG&RDEBUG_RTMEM_END)
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_RTMEM_END)
 	bu_prmem("After cm_clean");
     return 0;
 }
@@ -491,8 +574,8 @@ def_tree(register struct rt_i *rtip)
     RT_CK_RTI(rtip);
 
     rt_prep_timer();
-    if (rt_gettrees(rtip, nobjs, (const char **)objtab, npsw) < 0) {
-	bu_log("rt_gettrees(%s) FAILED\n", (objtab && objtab[0]) ? objtab[0] : "ERROR");
+    if (rt_gettrees(rtip, objc, (const char **)objv, npsw) < 0) {
+	bu_log("rt_gettrees(%s) FAILED\n", (objv && objv[0]) ? objv[0] : "ERROR");
     }
     (void)rt_get_timer(&times, NULL);
 
@@ -512,7 +595,7 @@ extern double airdensity;
 
 
 static unsigned int clt_mode;           /* Active render buffers */
-static uint8_t clt_o[3];		/* Sub buffer offsets in bytes: {CLT_COLOR, CLT_DEPTH, MAX} */
+static uint8_t clt_o[2];		/* Sub buffer offsets in bytes: {CLT_COLOR, MAX} */
 
 static fb *clt_fbp = FB_NULL;
 
@@ -526,17 +609,16 @@ clt_connect_fb(fb *fbp)
 void
 clt_view_init(unsigned int mode)
 {
-    uint8_t o[3];
+    uint8_t o[2];
     int i;
 
     clt_mode = mode;
 
     o[0] = (mode & CLT_COLOR) ? 3 : 0;	/* uchar rgb[3] */
-    o[1] = (mode & CLT_DEPTH) ? 8 : 0;  /* double depth */
-    o[2] = 0;
+    o[1] = 0;
 
     clt_o[0] = 0;
-    for (i=1; i<3; i++) {
+    for (i=1; i<2; i++) {
 	clt_o[i] = o[i-1] + clt_o[i-1];
     }
 }
@@ -557,7 +639,7 @@ clt_run(int cur_pixel, int last_pixel)
     ssize_t count;
 
     npix = last_pixel-cur_pixel+1;
-    size = npix * clt_o[2];
+    size = npix * clt_o[1];
 
     a_y = (int)(cur_pixel/width);
     a_x = (int)(cur_pixel - (a_y * width));
@@ -597,9 +679,9 @@ clt_run(int cur_pixel, int last_pixel)
     clt_frame(pixels, clt_o, cur_pixel, last_pixel, width,
               ibackground, inonbackground,
 	      airdensity, haze, gamma_corr, view2model, cell_width,
-              cell_height, aspect, lightmodel);
+              cell_height, aspect, lightmodel, APP.a_no_booleans);
 
-    pixelp = pixels + cur_pixel*clt_o[2];
+    pixelp = pixels + cur_pixel*clt_o[1];
 
     if (clt_fbp != FB_NULL) {
         bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -610,14 +692,14 @@ clt_run(int cur_pixel, int last_pixel)
     }
     if (outfp) {
         bu_semaphore_acquire(BU_SEM_SYSCALL);
-        if (bu_fseek(outfp, cur_pixel*clt_o[2], 0) != 0)
+        if (bu_fseek(outfp, cur_pixel*clt_o[1], 0) != 0)
             fprintf(stderr, "fseek error\n");
         if (fwrite(pixelp, size, 1, outfp) != 1)
             bu_exit(EXIT_FAILURE, "pixel fwrite error");
         bu_semaphore_release(BU_SEM_SYSCALL);
     }
     if (bif) {
-        int span = width*clt_o[2];
+        int span = width*clt_o[1];
 
         BU_ASSERT(a_x == 0);
         while (pixelp < pixels+size) {
@@ -681,10 +763,9 @@ do_prep(struct rt_i *rtip)
     }
     memory_summary();
     if (rt_verbosity & VERBOSE_STATS) {
-	bu_log("%s: %d nu, %d cut, %d box (%zu empty)\n",
-	       rtip->rti_space_partition == RT_PART_NUGRID ?
-	       "NUGrid" : "NUBSP",
-	       rtip->rti_ncut_by_type[CUT_NUGRIDNODE],
+	bu_log("%s: %d cut, %d box (%zu empty)\n",
+	       rtip->rti_space_partition == RT_PART_NUBSPT ?
+	       "NUBSP" : "unknown",
 	       rtip->rti_ncut_by_type[CUT_CUTNODE],
 	       rtip->rti_ncut_by_type[CUT_BOXNODE],
 	       rtip->nempty_cells);
@@ -720,9 +801,9 @@ do_frame(int framenumber)
 	bu_log("Tree: %zu solids in %zu regions\n", rtip->nsolids, rtip->nregions);
 
     if (Query_one_pixel) {
-	query_rdebug = R_DEBUG;
+	query_optical_debug = OPTICAL_DEBUG;
 	query_debug = RT_G_DEBUG;
-	RTG.debug = rdebug = 0;
+	rt_debug = optical_debug = 0;
     }
 
     if (rtip->nsolids <= 0)
@@ -838,7 +919,7 @@ do_frame(int framenumber)
 	/*
 	 * This code allows the computation of a particular frame to a
 	 * disk file to be resumed automatically.  This is worthwhile
-	 * crash protection.  This use of stat() and fseek() is
+	 * crash protection.  This use of stat() and bu_fseek() is
 	 * UNIX-specific.
 	 *
 	 * It is not appropriate for the RT "top part" to assume
@@ -931,16 +1012,11 @@ do_frame(int framenumber)
         unsigned int mode = 0;
 
                             mode |= CLT_COLOR;
-        if (rpt_dist)       mode |= CLT_DEPTH;
         if (full_incr_mode) mode |= CLT_ACCUM;
 
         clt_view_init(mode);
     }
 #endif
-
-    /* Just while doing the ray-tracing */
-    if (R_DEBUG&RDEBUG_RTMEM)
-	bu_debug |= (BU_DEBUG_MEM_CHECK|BU_DEBUG_MEM_LOG);
 
     rtip->nshots = 0;
     rtip->nmiss_model = 0;
@@ -1002,10 +1078,6 @@ do_frame(int framenumber)
      * Typically, writes any remaining results out.
      */
     view_end(&APP);
-
-    /* Stop memory debug printing until next frame, leave full checking on */
-    if (R_DEBUG&RDEBUG_RTMEM)
-	bu_debug &= ~BU_DEBUG_MEM_LOG;
 
     /* These results need to be normalized.  Otherwise, all we would
      * know is that a given workload takes about the same amount of
@@ -1069,15 +1141,11 @@ do_frame(int framenumber)
     }
 
     if (outfp != NULL) {
-	/* Protect finished product */
-	if (outputfile != (char *)0)
-	    (void)bu_fchmod(fileno(outfp), 0444);
-
 	(void)fclose(outfp);
 	outfp = NULL;
     }
 
-    if (R_DEBUG&RDEBUG_STATS) {
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_STATS) {
 	/* Print additional statistics */
 	res_pr();
     }
@@ -1184,7 +1252,7 @@ res_pr(void)
     bu_log("\nResource use summary, by processor:\n");
     res = &resource[0];
     for (i = 0; i < npsw; i++, res++) {
-	bu_log("---CPU %d:\n", i);
+	bu_log("---CPU %zu:\n", i);
 	if (res->re_magic != RESOURCE_MAGIC) {
 	    bu_log("Bad magic number!\n");
 	    continue;
@@ -1220,6 +1288,12 @@ struct command_tab rt_cmdtab[] = {
      cm_anim,	4, 999},
     {"tree", 	"treetop(s)", "specify alternate list of tree tops",
      cm_tree,	1, 999},
+    {"draw", 	"obj", "add an object to the active list",
+     cm_draw,	2, 999},
+    {"erase", 	"obj", "remove an object from the active list",
+     cm_erase,	2, 999},
+    {"prep", 	"", "(re)prep for raytrace with the current obj list",
+     cm_prep,	1, 1},
     {"clean", "", "clean articulation from previous frame",
      cm_clean,	1, 1},
     {"_closedb", "", "Close .g database, (for memory debugging)",

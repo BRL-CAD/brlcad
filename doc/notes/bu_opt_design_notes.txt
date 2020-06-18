@@ -1,0 +1,97 @@
+Thoughts on expansion of bu_opt capability to include subcommands, other misc
+notes...
+
+Check over POSIX.1-2008 Utility Conventions - should guide (but not define) our
+option handling.  (In particular, we want long opts.  On the other hand,
+probably explicitly don't want the full GNU 'opts anywhere' convention as that
+precludes structured subcommand parsing.)
+
+http://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap12.html
+
+* Define separate structure for subcommands, have as an optional pointer in
+  bu_opt structure.
+
+* Explore + and -+ as opt/longopt specifiers for subcommands, directly mapping to
+- and -- for options. Use +- to denote the end of a subcommand, like -- denotes
+end of options.
+
+Rule - options with optional arguments (e.g. --help JSON vs --help - both are
+legal) will require that arguments needing to start with a "+" character (e.g.
+--help "+arg1") be quoted.  (For that matter, is the same true of normal "-"
+option parsing?)
+
+Can we allow "lazy" subcommand specification without +/-+ if we disqualify any
+string in quotes from being a subcommand? (e.g. 'cmd arg1 arg2' treats arg1 as
+a subcommand but 'cmd "arg1" arg2' treats arg1 as an arg?  Do we need to worry
+about this at all?
+
+Can "leftover" operands from a subcommand be handed back up to parent commands?
+
+Convention thoughts:
+
+- or -- - option/long-option handling per POSIX and GNU convention.
+
++ or -+ - explicit specifier of subcommand.
+
+-- - explicit 'exit option parsing' mode - remainder is operands (per POSIX)
+except that a -+ option will indicate another subcommand or a +- will elevate
+the parsing environment back to the parent level.
+
++- "exit subcommand" - returns parsing to the parent level command evaluation
+environment: brep -a1 -+plot -p1 +- -o out.pl results in brep handling -o
+out.pl, not plot.
+
+Scope of "next arg" other than +- is current command/subcommand: e.g. brep -a1
+-+plot -p1 will pass p1 to plot's option handling, not brep's
+
+If subsequent -+ are specified, first check if the current command has the
+specified subcommand.  If not, return parsing to the parent level to see if it
+has the specified subcommand, and so on until a command table claims the
+subcommand.  Allows for both a subcommand of a subcommand:
+
+brep obj_csg.c -+bool_eval -+plot curve S1_S2
+
+and subsequent subcommands:
+brep obj_csg.c -+facetize -+simplify
+
+to be specified without requiring +- unless a command and a subcommand both
+have a matching subcommand.
+
+With that feature present, +- is necessary to specify a parent command's version of
+the subcommand unambiguously (i.e. requires explicit exiting of subcommand state with
+a matching subcommand):
+
+cmd arg1 +c +d    -> runs d subcommand defined by c
+cmd arg1 +c +- +d -> runs d subcommand defined by cmd
+
+
+TODOs for bu_opt help routines:
+
+Maybe have help as a default subcommand rather than a default option, to allow for fancy
+stuff without bastardizing the help option?
+
+* define a built-in bu_help to support docbook, json, etc. specification which
+  can be used by commands not wanting to define their own, more complex options.
+
+* need a routine to generate a POSIX compliant one-line description of the
+  command's syntax
+
+* need built-in help (option or subcommand, maybe both?) that is available for
+  commands not wanting to define their own help, but can be over-ridden by an
+  explicit specification of help in the options.  We will need some "smart" help
+  options for JSON, DocBook, etc as well as subcommand listing (--help cmds
+  maybe?) so a calling script can systematically and automatically generate
+  documentation for all commands.
+
+* explore the possibility of adding to the help system a generator of some sort
+  that can produce a JSON structure describing the structure of the commands and
+  options in such a way that a libbu routine could accept that structure as a
+  validation template and validate a command line string against it.  Would
+  (potentially) allow for things like smart tab completion, valid/invalid syntax
+  highlighting, etc. without having to either explicitly duplicate the command
+  syntax in code or back such validation logic into each command.  With this
+  setup we would run the "generate syntax" help option for every command/subcommand
+  in all of BRL-CAD (which just coincidentally would make the function of the
+  help system for every command in the code a build time requirement/check)
+  and supply a pre-built validation database in a data_dir location for libbu
+  to check.

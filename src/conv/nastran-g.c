@@ -1,7 +1,7 @@
 /*                     N A S T R A N - G . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2016 United States Government as represented by
+ * Copyright (c) 1997-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,8 +33,9 @@
 #include <errno.h>
 #include "bio.h"
 
-#include "vmath.h"
+#include "bu/app.h"
 #include "bu/getopt.h"
+#include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
 #include "raytrace.h"
@@ -107,7 +108,7 @@ static struct rt_wdb *fpout;		/* brlcad output file */
 static FILE *fpin;			/* NASTRAN input file */
 static FILE *fptmp;			/* temporary version of NASTRAN input */
 static char *usage = "[-xX lvl] [-t tol.dist] [-n] [-m] [-i NASTRAN_file] -o BRL-CAD_file\n";
-static off_t start_off;
+static b_off_t start_off;
 static char *delims=", \t";
 static struct coord_sys coord_head;	/* head of linked list of coordinate systems */
 static struct pbar pbar_head;		/* head of linked list of PBAR's */
@@ -131,7 +132,7 @@ static struct bn_tol tol;		/* tolerance for NMG's */
 static int polysolids=1;		/* flag for outputting NMG's rather than BOT's */
 
 HIDDEN int get_next_record(FILE *fp, int call_input, int write_flag);
-HIDDEN int convert_pt(const point_t pt, struct coord_sys *cs, point_t out_pt);
+HIDDEN int convert_pnt(const point_t pt, struct coord_sys *cs, point_t out_pt);
 
 #define INPUT_OK 0
 #define INPUT_NULL 1
@@ -533,10 +534,9 @@ HIDDEN int
 convert_cs(struct coord_sys *cs)
 {
     struct coord_sys *cs2;
-    point_t tmp_orig, tmp_pt1, tmp_pt2;
-    VSETALL(tmp_orig, 0.0);
-    VSETALL(tmp_pt1, 0.0);
-    VSETALL(tmp_pt2, 0.0);
+    point_t tmp_orig = VINIT_ZERO;
+    point_t tmp_pt1 = VINIT_ZERO;
+    point_t tmp_pt2 = VINIT_ZERO;
 
     if (!cs->rid)
 	return 0;
@@ -551,13 +551,13 @@ convert_cs(struct coord_sys *cs)
 	bu_exit(1, "A coordinate system is defined in terms of a non-existent coordinate system!!!\n");
     }
 
-    if (convert_pt(cs->origin, cs2, tmp_orig))
+    if (convert_pnt(cs->origin, cs2, tmp_orig))
 	return 1;
 
-    if (convert_pt(cs->v1, cs2, tmp_pt1))
+    if (convert_pnt(cs->v1, cs2, tmp_pt1))
 	return 1;
 
-    if (convert_pt(cs->v2, cs2, tmp_pt2))
+    if (convert_pnt(cs->v2, cs2, tmp_pt2))
 	return 1;
 
     VMOVE(cs->origin, tmp_orig);
@@ -573,7 +573,7 @@ convert_cs(struct coord_sys *cs)
 
 
 HIDDEN int
-convert_pt(const point_t pt, struct coord_sys *cs, point_t out_pt)
+convert_pnt(const point_t pt, struct coord_sys *cs, point_t out_pt)
 {
     point_t tmp_pt;
     fastf_t c1, c2, c3, c4;
@@ -624,9 +624,7 @@ HIDDEN int
 convert_grid(int idx)
 {
     struct coord_sys *cs;
-    point_t tmp_pt;
-    VSETALL(tmp_pt, 0.0);
-
+    point_t tmp_pt = VINIT_ZERO;
 
     if (!g_pts[idx].cid)
 	return 0;
@@ -641,7 +639,7 @@ convert_grid(int idx)
 	bu_exit(1, "No coordinate system defined for grid point #%d!\n", g_pts[idx].gid);
     }
 
-    if (convert_pt(g_pts[idx].pt, cs, tmp_pt))
+    if (convert_pnt(g_pts[idx].pt, cs, tmp_pt))
 	return 1;
 
     VMOVE(g_pts[idx].pt, tmp_pt);
@@ -1132,8 +1130,8 @@ main(int argc, char **argv)
     while ((c=bu_getopt(argc, argv, "x:X:t:ni:o:mh?")) != -1) {
 	switch (c) {
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
-		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT);
+		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
+		bu_printb("librt RT_G_DEBUG", RT_G_DEBUG, RT_DEBUG_FORMAT);
 		bu_log("\n");
 		break;
 	    case 'X':

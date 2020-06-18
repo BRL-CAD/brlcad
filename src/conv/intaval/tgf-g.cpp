@@ -1,7 +1,7 @@
 /*                      T G F - G . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,7 +29,15 @@
 
 #include "common.h"
 
+#include <cstdio>
+#include <cstring>
 #include <iostream>
+
+#ifndef HAVE_DECL_FSEEKO
+#include "bio.h" /* for b_off_t */
+extern "C" int fseeko(FILE *, b_off_t, int);
+extern "C" b_off_t ftello(FILE *);
+#endif
 #include <fstream>
 
 #include "regtab.h"

@@ -1,19 +1,8 @@
 # Minimum required version of CMake
-cmake_minimum_required(VERSION 2.8.8)
-if(COMMAND CMAKE_POLICY)
-  CMAKE_POLICY(SET CMP0003 NEW)
-  CMAKE_POLICY(SET CMP0007 OLD)
-  CMAKE_POLICY(SET CMP0017 OLD)
-  if("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-    CMAKE_POLICY(SET CMP0020 OLD)
-  endif("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-    CMAKE_POLICY(SET CMP0026 OLD)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-endif(COMMAND CMAKE_POLICY)
+cmake_minimum_required(VERSION 3.1.3)
 
 # set CMake project name
-PROJECT(OpenSceneGraph)
+project(OpenSceneGraph)
 
 set(OPENSCENEGRAPH_MAJOR_VERSION 3)
 set(OPENSCENEGRAPH_MINOR_VERSION 2)
@@ -316,9 +305,9 @@ if(WIN32 AND NOT ANDROID)
 endif()
 
 find_package(Freetype)
-if(NOT ZLIB_LIBRARY)
+if(NOT ZLIB_LIBRARIES)
   find_package(ZLIB)
-endif(NOT ZLIB_LIBRARY)
+endif(NOT ZLIB_LIBRARIES)
 find_package(DirectInput)
 if(NOT WIN32)
   find_package(Asio)
@@ -347,16 +336,15 @@ endif()
 # can use Quicktime.
 if(NOT APPLE)
   find_package(JPEG)
-if(NOT PNG_LIBRARY)
-  find_package(PNG)
-endif(NOT PNG_LIBRARY)
+  if(NOT PNG_LIBRARIES)
+    find_package(PNG)
+  endif(NOT PNG_LIBRARIES)
   find_package(TIFF)
-        # QuickTime is required for OS X, but optional for Windows.
+  # QuickTime is required for OS X, but optional for Windows.
   if(WIN32)
     find_package(QuickTime)
   endif()
-
-    ELSE()
+else()
   find_package(TIFF)
   find_package(QuickTime)
   find_package(QTKit)
@@ -381,7 +369,18 @@ endif(NOT CMAKE_CONFIGURATION_TYPES)
 
 ################################################################################
 # Installation stuff
-include(${OpenSceneGraph_SOURCE_DIR}/CMakeModules/RPath_Setup.cmake)
+if(EXISTS "${OpenSceneGraph_SOURCE_DIR}/CMakeModules/RPath_Setup.cmake")
+  include("${OpenSceneGraph_SOURCE_DIR}/CMakeModules/RPath_Setup.cmake")
+  if(COMMAND cmake_set_rpath)
+    cmake_set_rpath()
+  endif(COMMAND cmake_set_rpath)
+else(EXISTS "${OpenSceneGraph_SOURCE_DIR}/CMakeModules/RPath_Setup.cmake")
+  if(NOT HAVE_PARENT_BUILD)
+    message(FATAL_ERROR "Not building as a subbuild, but CMakeModules/RPath_Setup.cmake not found.  To build as a stand-alone build, add RPath_Setup.cmake to the CMakeModules directory.")
+  endif(NOT HAVE_PARENT_BUILD)
+endif(EXISTS "${OpenSceneGraph_SOURCE_DIR}/CMakeModules/RPath_Setup.cmake")
+
+
 include(${OpenSceneGraph_SOURCE_DIR}/CMakeModules/Path_Setup.cmake)
 
 ################################################################################

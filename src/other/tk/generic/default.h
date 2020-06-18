@@ -9,15 +9,12 @@
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #ifndef _DEFAULT
 #define _DEFAULT
 
-#if defined(__WIN32__) || defined(_WIN32) || \
-    defined(__MINGW32__)
+#ifdef _WIN32
 #   include "tkWinDefault.h"
 #else
 #   if defined(MAC_OSX_TK)

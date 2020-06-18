@@ -1,7 +1,7 @@
 /*                       A S C 2 P I X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,14 +36,18 @@
 
 #include "bio.h"
 
+#include "bu/app.h"
+
 int lmap[256];		/* Map HEX ASCII to binary in left nybble  */
 int rmap[256];		/* Map HEX ASCII to binary in right nybble */
 
 int
-main(void)
+main(int UNUSED(argc), const char **argv)
 {
     int	a, b;
     int	i;
+
+    bu_setprogname(argv[0]);
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);

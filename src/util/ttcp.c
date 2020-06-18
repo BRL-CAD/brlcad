@@ -1,24 +1,11 @@
 /*                          T T C P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
- * the U.S. Army Research Laboratory.
+ * Published in 2004-2020 by the United States Government.
+ * This work is in the public domain.
  *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public License
- * version 2.1 as published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this file; see the file named COPYING for more
- * information.
  */
-/** @file util/ttcp.c
- *
+/** @file ttcp.c
  * Test TCP connection.  Makes a connection on port 2000
  * and transfers zero buffers or data copied from stdin.
  *
@@ -32,6 +19,8 @@
  * Mike Muuss and Terry Slattery have released this code to the Public Domain.
  */
 
+#undef _POSIX_C_SOURCE
+#undef _XOPEN_SOURCE
 #define BSD43
 /* #define BSD42 */
 /* #define BSD41a */

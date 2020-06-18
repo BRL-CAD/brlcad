@@ -3,8 +3,6 @@
 #	Some functions needed for the common dialog boxes. Probably need to go
 #	in a different file.
 #
-# RCS: @(#) $Id$
-#
 # Copyright (c) 1996 Sun Microsystems, Inc.
 #
 # See the file "license.terms" for information on usage and redistribution
@@ -42,7 +40,8 @@ proc tclParseConfigSpec {w specs flags argList} {
     #
     foreach spec $specs {
 	if {[llength $spec] < 4} {
-	    error "\"spec\" should contain 5 or 4 elements"
+	    return -code error -errorcode {TK VALUE CONFIG_SPEC} \
+		"\"spec\" should contain 5 or 4 elements"
 	}
 	set cmdsw [lindex $spec 0]
 	set cmd($cmdsw) ""
@@ -55,9 +54,11 @@ proc tclParseConfigSpec {w specs flags argList} {
     if {[llength $argList] & 1} {
 	set cmdsw [lindex $argList end]
 	if {![info exists cmd($cmdsw)]} {
-	    error "bad option \"$cmdsw\": must be [tclListValidFlags cmd]"
+	    return -code error -errorcode [list TK LOOKUP OPTION $cmdsw] \
+		"bad option \"$cmdsw\": must be [tclListValidFlags cmd]"
 	}
-	error "value for \"$cmdsw\" missing"
+	return -code error -errorcode {TK VALUE_MISSING} \
+	    "value for \"$cmdsw\" missing"
     }
 
     # 2: set the default values
@@ -70,7 +71,8 @@ proc tclParseConfigSpec {w specs flags argList} {
     #
     foreach {cmdsw value} $argList {
 	if {![info exists cmd($cmdsw)]} {
-	    error "bad option \"$cmdsw\": must be [tclListValidFlags cmd]"
+	    return -code error -errorcode [list TK LOOKUP OPTION $cmdsw] \
+		"bad option \"$cmdsw\": must be [tclListValidFlags cmd]"
 	}
 	set data($cmdsw) $value
     }
@@ -122,7 +124,8 @@ proc tclListValidFlags {v} {
 proc ::tk::FocusGroup_Create {t} {
     variable ::tk::Priv
     if {[winfo toplevel $t] ne $t} {
-	error "$t is not a toplevel window"
+	return -code error -errorcode [list TK LOOKUP TOPLEVEL $t] \
+	    "$t is not a toplevel window"
     }
     if {![info exists Priv(fg,$t)]} {
 	set Priv(fg,$t) 1
@@ -142,7 +145,8 @@ proc ::tk::FocusGroup_BindIn {t w cmd} {
     variable FocusIn
     variable ::tk::Priv
     if {![info exists Priv(fg,$t)]} {
-	error "focus group \"$t\" doesn't exist"
+	return -code error -errorcode [list TK LOOKUP FOCUS_GROUP $t] \
+	    "focus group \"$t\" doesn't exist"
     }
     set FocusIn($t,$w) $cmd
 }
@@ -158,7 +162,8 @@ proc ::tk::FocusGroup_BindOut {t w cmd} {
     variable FocusOut
     variable ::tk::Priv
     if {![info exists Priv(fg,$t)]} {
-	error "focus group \"$t\" doesn't exist"
+	return -code error -errorcode [list TK LOOKUP FOCUS_GROUP $t] \
+	    "focus group \"$t\" doesn't exist"
     }
     set FocusOut($t,$w) $cmd
 }
@@ -175,7 +180,7 @@ proc ::tk::FocusGroup_Destroy {t w} {
 
     if {$t eq $w} {
 	unset Priv(fg,$t)
-	unset Priv(focus,$t) 
+	unset Priv(focus,$t)
 
 	foreach name [array names FocusIn $t,*] {
 	    unset FocusIn($name)
@@ -257,7 +262,8 @@ proc ::tk::FocusGroup_Out {t w detail} {
 proc ::tk::FDGetFileTypes {string} {
     foreach t $string {
 	if {[llength $t] < 2 || [llength $t] > 3} {
-	    error "bad file type \"$t\", should be \"typeName {extension ?extensions ...?} ?{macType ?macTypes ...?}?\""
+	    return -code error -errorcode {TK VALUE FILE_TYPE} \
+		"bad file type \"$t\", should be \"typeName {extension ?extensions ...?} ?{macType ?macTypes ...?}?\""
 	}
 	lappend fileTypes([lindex $t 0]) {*}[lindex $t 1]
     }
@@ -271,15 +277,16 @@ proc ::tk::FDGetFileTypes {string} {
 	    continue
 	}
 
-	# Validate each macType.  This is to agree with the 
+	# Validate each macType.  This is to agree with the
 	# behaviour of TkGetFileFilters().  This list may be
 	# empty.
 	foreach macType [lindex $t 2] {
 	    if {[string length $macType] != 4} {
-		error "bad Macintosh file type \"$macType\""
+		return -code error -errorcode {TK VALUE MAC_TYPE} \
+		    "bad Macintosh file type \"$macType\""
 	    }
 	}
-	
+
 	set name "$label \("
 	set sep ""
 	set doAppend 1

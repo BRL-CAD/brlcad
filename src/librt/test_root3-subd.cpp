@@ -1,7 +1,7 @@
 /*             T E S T _ R O O T 3 - S U B D . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2016 United States Government as represented by
+ * Copyright (c) 2013-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -489,6 +489,8 @@ main(int argc, char *argv[])
     struct bu_vls bname;
     struct Mesh_Info *prev_mesh = NULL;
     struct Mesh_Info *mesh = NULL;
+
+    bu_setprogname(argv[0]);
 
     bu_vls_init(&name);
 

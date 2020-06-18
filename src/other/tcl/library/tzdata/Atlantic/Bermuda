@@ -1,8 +1,8 @@
 # created by tools/tclZIC.tcl - do not edit
 
 set TZData(:Atlantic/Bermuda) {
-    {-9223372036854775808 -15544 0 LMT}
-    {-1262281256 -14400 0 AST}
+    {-9223372036854775808 -15558 0 LMT}
+    {-1262281242 -14400 0 AST}
     {136360800 -10800 0 ADT}
     {152082000 -14400 0 AST}
     {167810400 -10800 1 ADT}

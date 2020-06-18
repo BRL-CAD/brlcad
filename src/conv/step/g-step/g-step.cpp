@@ -1,7 +1,7 @@
 /*                    G -  S T E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2016 United States Government as represented by
+ * Copyright (c) 2013-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@
 
 #include "AP_Common.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/file.h"
 #include "bu/log.h"
@@ -56,6 +57,8 @@ main(int argc, char *argv[])
     struct directory **paths;
     int path_cnt = 0;
     AP203_Contents *sc = new AP203_Contents;
+
+    bu_setprogname(argv[0]);
 
     // process command line arguments
     int c;

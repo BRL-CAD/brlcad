@@ -1,7 +1,7 @@
 /*                        V I E W G 3 . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2016 United States Government as represented by
+ * Copyright (c) 1989-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -83,31 +83,6 @@ static FILE *plotfp;			/* optional plotting file */
 
 const char title[] = "RTG3";
 
-void
-usage(const char *argv0)
-{
-    bu_log("Usage:  %s [options] model.g objects... >file.ray\n", argv0);
-    bu_log("Options:\n");
-    bu_log(" -s #          Grid size in pixels, default 512\n");
-    bu_log(" -a Az         Azimuth in degrees (conflicts with -M)\n");
-    bu_log(" -e Elev       Elevation in degrees (conflicts with -M)\n");
-    bu_log(" -M            Read model2view matrix on stdin (conflicts with -a, -e)\n");
-    bu_log(" -g #          Grid cell width in millimeters (conflicts with -s)\n");
-    bu_log(" -G #          Grid cell height in millimeters (conflicts with -s)\n");
-    bu_log(" -J #          Jitter.  Default is off.  Any non-zero number is on\n");
-    bu_log(" -o model.g3   Specify output file, GIFT-3 format (default=stdout)\n");
-    bu_log(" -U #          Set use_air boolean to # (default=1)\n");
-    bu_log(" -c \"set ray_data_file=ray_file_name\"\n"
-	   "               Specify ray data output file\n"
-	   "               (az el x_start y_start z_start x_dir y_dir z_dir line_number_in_shotline_file ray_first_hit_x ray_first_hit_y ray_first_hit_z)\n");
-    bu_log(" -c \"set save_overlaps=1\"\n"
-	   "               Reproduce FASTGEN behavior for regions flagged as FASTGEN regions\n");
-    bu_log(" -c \"set rt_cline_radius=radius\"\n"
-	   "              Additional radius to be added to CLINE solids\n");
-    bu_log(" -x #         Set librt debug flags\n");
-}
-
-
 int rayhit(register struct application *ap, struct partition *PartHeadp, struct seg *segp);
 int raymiss(register struct application *ap);
 
@@ -164,7 +139,7 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o, i
 
     output_is_binary = 0;		/* output is printable ascii */
 
-    if (R_DEBUG & RDEBUG_RAYPLOT) {
+    if (OPTICAL_DEBUG & OPTICAL_DEBUG_RAYPLOT) {
 	plotfp = fopen("rtg3.plot3", "w");
 	if (npsw > 1) {
 	    bu_log("Note: writing rtg3.plot3 file can only be done using only 1 processor\n");
@@ -425,7 +400,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
      * The easy way to activate this is with the harmless -!1 option
      * when running RTG3.
      */
-    if (R_DEBUG || bu_debug || RT_G_DEBUG) {
+    if (OPTICAL_DEBUG || bu_debug || RT_G_DEBUG) {
 	bu_vls_printf(&str, "   -b%d, %d -p %26.20e %26.20e %26.20e -d %26.20e %26.20e %26.20e\n",
 		      ap->a_x, ap->a_y,
 		      V3ARGS(ap->a_ray.r_pt),
@@ -518,7 +493,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 		air_thickness = 0.0;
 	    if (!NEAR_ZERO(air_thickness, 0.1)) {
 		air_id = 1;	/* air gap */
-		if (R_DEBUG & RDEBUG_HITS)
+		if (OPTICAL_DEBUG & OPTICAL_DEBUG_HITS)
 		    bu_log("air gap added\n");
 	    } else {
 		air_thickness = 0.0;
@@ -613,7 +588,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 	 * always be done single CPU, to prevent output garbling.
 	 * (See view_init).
 	 */
-	if (R_DEBUG & RDEBUG_RAYPLOT) {
+	if (OPTICAL_DEBUG & OPTICAL_DEBUG_RAYPLOT) {
 	    vect_t inpt;
 	    vect_t outpt;
 	    VJOIN1(inpt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist,
@@ -801,7 +776,27 @@ part_compact(register struct application *ap, register struct partition *PartHea
 }
 
 
-void application_init (void) {}
+void
+application_init (void)
+{
+    option("", "-o model.g3", "Specify output file, GIFT-3 format (default=stdout)", 0);
+    option("", "-U #", "Set use_air boolean to # (default=1)", 0);
+    option("Command (-c)", "\"set ray_data_file=ray_file_name\"", "", 0);
+    option("Command (-c)", "", "Specify ray data output file", 0);
+    option("Command (-c)", "", "(az el x_start y_start z_start x_dir y_dir z_dir line_number_in_shotline_file ray_first_hit_x ray_first_hit_y ray_first_hit_z)", 0);
+    option("Command (-c)", "\"set save_overlaps=1\"", "", 0);
+    option("Command (-c)", "", "Reproduce FASTGEN behavior for regions flagged", 0);
+    option("Command (-c)", "", "as FASTGEN regions", 0);
+    option("Command (-c)", "\"set rt_cline_radius=radius\"", "", 0);
+    option("Command (-c)", "", "Additional radius to be added to CLINE solids", 0);
+
+    /* this reassignment hack ensures help is last in the first list */
+    option("dummy", "-? or -h", "Display help", 1);
+    option("", "-? or -h", "Display help", 1);
+
+    option(NULL, "-C", "Disabled, not implemented", -2);
+    option(NULL, "-W", "Disabled, non implemented", -2);
+}
 
 /*
  * Local Variables:

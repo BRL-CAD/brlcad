@@ -1,7 +1,7 @@
 /*                        S H _ X X X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -174,7 +174,7 @@ xxx_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const 
     RT_CK_REGION(rp);
 
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_log("xxx_setup(%s)\n", rp->reg_name);
 
     /* Get memory for the shader parameters and shader-specific data */
@@ -211,7 +211,7 @@ xxx_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const 
      *
      */
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	bu_struct_print(" Parameters:", xxx_print_tab, (char *)xxx_sp);
 	bn_mat_print("m_to_sh", xxx_sp->xxx_m_to_sh);
     }
@@ -254,7 +254,7 @@ xxx_render(struct application *ap, const struct partition *pp, struct shadework 
     RT_CHECK_PT(pp);
     CK_xxx_SP(xxx_sp);
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_struct_print("xxx_render Parameters:", xxx_print_tab, (char *)xxx_sp);
 
     /* If we are performing the shading in "region" space, we must
@@ -263,7 +263,7 @@ xxx_render(struct application *ap, const struct partition *pp, struct shadework 
      MAT4X3PNT(pt, xxx_sp->xxx_m_to_sh, swp->sw_hit.hit_point);
      MAT4X3PNT(pt, xxx_sp->xxx_m_to_r, swp->sw_hit.hit_point);
 
-     if (rdebug&RDEBUG_SHADE) {
+     if (optical_debug&OPTICAL_DEBUG_SHADE) {
      bu_log("xxx_render() model:(%g %g %g) shader:(%g %g %g)\n",
      V3ARGS(swp->sw_hit.hit_point),
      V3ARGS(pt));

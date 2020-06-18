@@ -1,7 +1,7 @@
 /*                      I C V _ C R O P . C
  * BRL-CAD
  *
- * Copyright (c) 2016 United States Government as represented by
+ * Copyright (c) 2016-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@
 #include <stdlib.h>
 
 #include "bio.h"
+#include "bu/app.h"
 #include "bu/log.h"
 #include "bu/mime.h"
 #include "bu/getopt.h"
@@ -58,10 +59,13 @@ int main(int argc, char* argv[])
     int urx, ury, ulx, uly, llx, lly, lrx, lry;
     int ret;
 
+    bu_setprogname(argv[0]);
+
     if (argc<2) {
 	    usage();
 	    return 1;
     }
+
 
     while ((c = bu_getopt(argc, argv, "s:W:w:N:n:s:S:o:bpdmh?")) != -1) {
 	    switch (c) {

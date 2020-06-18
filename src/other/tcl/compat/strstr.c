@@ -1,4 +1,4 @@
-/* 
+/*
  * strstr.c --
  *
  *	Source code for the "strstr" library routine.
@@ -8,8 +8,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tcl.h"

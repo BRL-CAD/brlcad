@@ -1,7 +1,7 @@
 /*                        D E F I N E S . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,9 +34,9 @@
 #  if defined(BN_DLL_EXPORTS) && defined(BN_DLL_IMPORTS)
 #    error "Only BN_DLL_EXPORTS or BN_DLL_IMPORTS can be defined, not both."
 #  elif defined(BN_DLL_EXPORTS)
-#    define BN_EXPORT __declspec(dllexport)
+#    define BN_EXPORT COMPILER_DLLEXPORT
 #  elif defined(BN_DLL_IMPORTS)
-#    define BN_EXPORT __declspec(dllimport)
+#    define BN_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define BN_EXPORT
 #  endif

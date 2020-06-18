@@ -1,7 +1,7 @@
 /*                        E L L . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,10 +31,10 @@
 __BEGIN_DECLS
 
 /* TODO - can this move elsewhere? */
-RT_EXPORT extern void rt_ell_16pts(fastf_t *ov,
-                                   fastf_t *V,
-                                   fastf_t *A,
-                                   fastf_t *B);
+RT_EXPORT extern void rt_ell_16pnts(fastf_t *ov,
+				   fastf_t *V,
+				   fastf_t *A,
+				   fastf_t *B);
 /** @} */
 
 __END_DECLS

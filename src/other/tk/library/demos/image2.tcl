@@ -2,8 +2,6 @@
 #
 # This demonstration script creates a simple collection of widgets
 # that allow you to select and view images in a Tk label.
-#
-# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."
@@ -38,7 +36,7 @@ proc loadDir w {
 proc selectAndLoadDir w {
     global dirName
     set dir [tk_chooseDirectory -initialdir $dirName -parent $w -mustexist 1]
-    if {[string length $dir] != 0} {
+    if {$dir ne ""} {
 	set dirName $dir
 	loadDir $w
     }
@@ -94,7 +92,7 @@ pack $w.dir.b -side left -fill y    -padx {0 2m} -pady 2m
 labelframe $w.f -text "File:" -padx 2m -pady 2m
 
 listbox $w.f.list -width 20 -height 10 -yscrollcommand "$w.f.scroll set"
-scrollbar $w.f.scroll -command "$w.f.list yview"
+ttk::scrollbar $w.f.scroll -command "$w.f.list yview"
 pack $w.f.list $w.f.scroll -side left -fill y -expand 1
 $w.f.list insert 0 earth.gif earthris.gif teapot.ppm
 bind $w.f.list <Double-1> "loadImage $w %x %y"

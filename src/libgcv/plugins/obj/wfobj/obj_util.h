@@ -1,7 +1,7 @@
 /*                       O B J _ U T I L . H
  * BRL-CAD
  *
- * Copyright (c) 2010-2016 United States Government as represented by
+ * Copyright (c) 2010-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,10 +31,12 @@
 #ifndef WFOBJ_EXPORT
 #  if defined(WFOBJ_DLL_EXPORTS) && defined(WFOBJ_DLL_IMPORTS)
 #    error "Only WFOBJ_DLL_EXPORTS or WFOBJ_DLL_IMPORTS can be defined, not both."
+#  elif defined(STATIC_BUILD)
+#    define WFOBJ_EXPORT
 #  elif defined(WFOBJ_DLL_EXPORTS)
-#    define WFOBJ_EXPORT __declspec(dllexport)
+#    define WFOBJ_EXPORT COMPILER_DLLEXPORT
 #  elif defined(WFOBJ_DLL_IMPORTS)
-#    define WFOBJ_EXPORT __declspec(dllimport)
+#    define WFOBJ_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define WFOBJ_EXPORT
 #  endif

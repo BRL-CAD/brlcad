@@ -8,8 +8,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkWinInt.h"
@@ -45,7 +43,7 @@ typedef struct {
 TkBorder *
 TkpGetBorder(void)
 {
-    WinBorder *borderPtr = (WinBorder *) ckalloc(sizeof(WinBorder));
+    WinBorder *borderPtr = ckalloc(sizeof(WinBorder));
 
     borderPtr->light2ColorPtr = NULL;
     borderPtr->dark2ColorPtr = NULL;
@@ -129,7 +127,7 @@ Tk_3DVerticalBevel(
     HDC dc = TkWinGetDrawableDC(display, drawable, &state);
     int half;
 
-    if ((borderPtr->lightGC == None) && (relief != TK_RELIEF_FLAT)) {
+    if ((borderPtr->lightGC == NULL) && (relief != TK_RELIEF_FLAT)) {
 	TkpGetShadows(borderPtr, tkwin);
     }
 
@@ -224,7 +222,7 @@ Tk_3DHorizontalBevel(
     HDC dc = TkWinGetDrawableDC(display, drawable, &state);
     int topColor, bottomColor;
 
-    if ((borderPtr->lightGC == None) && (relief != TK_RELIEF_FLAT)) {
+    if ((borderPtr->lightGC == NULL) && (relief != TK_RELIEF_FLAT)) {
 	TkpGetShadows(borderPtr, tkwin);
     }
 
@@ -341,7 +339,7 @@ TkpGetShadows(
     int r, g, b;
     XGCValues gcValues;
 
-    if (borderPtr->lightGC != None) {
+    if (borderPtr->lightGC != NULL) {
 	return;
     }
 
@@ -542,7 +540,7 @@ TkWinGetBorderPixels(
 {
     WinBorder *borderPtr = (WinBorder *) border;
 
-    if (borderPtr->info.lightGC == None) {
+    if (borderPtr->info.lightGC == NULL) {
 	TkpGetShadows(&borderPtr->info, tkwin);
     }
     switch (which) {

@@ -1,7 +1,7 @@
 /*                    R I N G W O R L D . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2016 United States Government as represented by
+ * Copyright (c) 2011-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -44,8 +44,9 @@
 #  include <unistd.h>
 #endif
 
-#include "bu/getopt.h"
 #include "vmath.h"
+#include "bu/app.h"
+#include "bu/getopt.h"
 #include "raytrace.h"
 #include "rt/geom.h"
 #include "wdb.h"
@@ -126,6 +127,8 @@ main(int argc, char *argv[])
     char outfile[MAXPATHLEN] = "ringworld.g";
     int optc;
     struct rt_wdb *fp;
+
+    bu_setprogname(argv[0]);
 
     while ((optc = bu_getopt(argc, argv, "o:h?")) != -1) {
     	if (bu_optopt == '?') optc='h';

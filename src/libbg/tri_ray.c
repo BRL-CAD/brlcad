@@ -27,8 +27,8 @@
 #define EPSILON 0.000001
 
 int bg_isect_tri_ray(const point_t orig, const point_t dir,
-	const point_t vert0, const point_t vert1, const point_t vert2,
-	point_t *isect)
+		     const point_t vert0, const point_t vert1, const point_t vert2,
+		     point_t *isect)
 {
     point_t edge1, edge2, tvec, pvec, qvec, D;
     fastf_t det,inv_det, u, v, t;

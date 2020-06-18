@@ -1,7 +1,7 @@
 /*                        C A M E R A . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2016 United States Government as represented by
+ * Copyright (c) 2007-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -88,6 +88,7 @@ typedef struct render_camera_thread_data_s
     camera_tile_t *tile;
     void *res_buf;
     unsigned int *scanline;
+    int sem_tie_worker;
 } render_camera_thread_data_t;
 
 

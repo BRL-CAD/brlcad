@@ -1,7 +1,7 @@
 /*                      P I X C L U M P . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2016 United States Government as represented by
+ * Copyright (c) 1997-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,6 +32,7 @@
 
 #include "vmath.h"
 
+#include "bu/app.h"
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
@@ -174,6 +175,8 @@ main (int argc, char **argv)
     int best_diff;	/* error in best match */
     int this_diff;	/* pixel-color_tbl difference */
 
+    bu_setprogname(argv[0]);
+
     /*
      * Initialize the color table
      */
@@ -211,11 +214,11 @@ main (int argc, char **argv)
     switch (argc - bu_optind) {
 	case 0:
 	    infp = stdin;
-	    /* Break intentionally omitted */
+	    /* fall through */
 	case 1:
 	    outf_name = "stdout";
 	    outfp = stdout;
-	    /* Break intentionally omitted */
+	    /* fall through */
 	case 2:
 	    break;
 	default:

@@ -1,7 +1,7 @@
 /*                 C O M P L E X . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2016 United States Government as represented by
+ * Copyright (c) 2013-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -70,7 +70,7 @@ test_bn_cx_mul(int argc, char **argv)
     sscanf(argv[3], "%lg,%lg", &bn_cx_real(&bp), &bn_cx_imag(&bp));
     sscanf(argv[4], "%lg,%lg", &bn_cx_real(&expected_result), &bn_cx_imag(&expected_result));
 
-    bn_cx_mul2(&actual_result, &ap, &bp)
+    bn_cx_mul2(&actual_result, &ap, &bp);
     bn_cx_mul(&ap, &bp);
 
     bu_log("bn_cx_mul: result: %g + %g * i\n", bn_cx_real(&ap), bn_cx_imag(&ap));

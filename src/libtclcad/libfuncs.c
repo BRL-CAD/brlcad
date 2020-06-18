@@ -1,7 +1,7 @@
 /*                        L I B F U N C S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -60,36 +60,6 @@ lwrapper_func(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
 
 #define TINYBUFSIZ 32
 #define SMALLBUFSIZ 256
-
-/**
- * A wrapper for bu_mem_barriercheck.
- *
- * \@param clientData    - UNUSED, present for signature matching
- * @param argc		- number of elements in argv
- * @param argv		- command name and arguments
- *
- * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
- */
-HIDDEN int
-tcl_bu_mem_barriercheck(void *UNUSED(clientData),
-			int argc,
-			const char **argv)
-{
-    int ret;
-
-    if (argc > 1) {
-	bu_log("Usage: %s\n", argv[0]);
-	return BRLCAD_ERROR;
-    }
-
-    ret = bu_mem_barriercheck();
-    if (UNLIKELY(ret < 0)) {
-	bu_log("bu_mem_barriercheck() failed\n");
-	return BRLCAD_ERROR;
-    }
-    return BRLCAD_OK;
-}
-
 
 /**
  * A wrapper for bu_prmem. Prints map of memory currently in use, to
@@ -308,6 +278,103 @@ tcl_bu_hsv_to_rgb(void *clientData,
 
 }
 
+const char *
+_tclcad_bu_dir_print(const char *dirkey, int fail_quietly)
+{
+    static char result[MAXPATHLEN] = {0};
+    if (BU_STR_EQUIV(dirkey, "curr") || BU_STR_EQUIV(dirkey, "cwd") ||
+	    BU_STR_EQUAL(dirkey, "BU_DIR_CURR")) {
+	snprintf(result, MAXPATHLEN, "%s", bu_dir(NULL, 0, BU_DIR_CURR, NULL));
+	return result;
+    }
+    if (BU_STR_EQUIV(dirkey, "init") || BU_STR_EQUIV(dirkey, "iwd") ||
+	    BU_STR_EQUAL(dirkey, "BU_DIR_INIT")) {
+	snprintf(result, MAXPATHLEN, "%s", bu_dir(NULL, 0, BU_DIR_INIT, NULL));
+	return result;
+    }
+    if (BU_STR_EQUIV(dirkey, "bin") || BU_STR_EQUAL(dirkey, "BU_DIR_BIN")) {
+	snprintf(result, MAXPATHLEN, "%s", bu_dir(NULL, 0, BU_DIR_BIN, NULL));
+	return result;
+    }
+    if (BU_STR_EQUIV(dirkey, "lib") || BU_STR_EQUAL(dirkey, "BU_DIR_LIB")) {
+	snprintf(result, MAXPATHLEN, "%s", bu_dir(NULL, 0, BU_DIR_LIB, NULL));
+	return result;
+    }
+    if (BU_STR_EQUIV(dirkey, "libexec") || BU_STR_EQUAL(dirkey, "BU_DIR_LIBEXEC")) {
+	snprintf(result, MAXPATHLEN, "%s", bu_dir(NULL, 0, BU_DIR_LIBEXEC, NULL));
+	return result;
+    }
+    if (BU_STR_EQUIV(dirkey, "include") || BU_STR_EQUAL(dirkey, "BU_DIR_INCLUDE")) {
+	snprintf(result, MAXPATHLEN, "%s", bu_dir(NULL, 0, BU_DIR_INCLUDE, NULL));
+	return result;
+    }
+    if (BU_STR_EQUIV(dirkey, "data") || BU_STR_EQUIV(dirkey, "share") ||
+	    BU_STR_EQUAL(dirkey, "BU_DIR_DATA")) {
+	snprintf(result, MAXPATHLEN, "%s", bu_dir(NULL, 0, BU_DIR_DATA, NULL));
+	return result;
+    }
+    if (BU_STR_EQUIV(dirkey, "doc") || BU_STR_EQUAL(dirkey, "BU_DIR_DOC")) {
+	snprintf(result, MAXPATHLEN, "%s", bu_dir(NULL, 0, BU_DIR_DOC, NULL));
+	return result;
+    }
+    if (BU_STR_EQUIV(dirkey, "man") || BU_STR_EQUAL(dirkey, "BU_DIR_MAN")) {
+	snprintf(result, MAXPATHLEN, "%s", bu_dir(NULL, 0, BU_DIR_MAN, NULL));
+	return result;
+    }
+    if (BU_STR_EQUIV(dirkey, "temp") || BU_STR_EQUAL(dirkey, "BU_DIR_TEMP")) {
+	snprintf(result, MAXPATHLEN, "%s", bu_dir(NULL, 0, BU_DIR_TEMP, NULL));
+	return result;
+    }
+    if (BU_STR_EQUIV(dirkey, "home") || BU_STR_EQUAL(dirkey, "BU_DIR_HOME")) {
+	snprintf(result, MAXPATHLEN, "%s", bu_dir(NULL, 0, BU_DIR_HOME, NULL));
+	return result;
+    }
+    if (BU_STR_EQUIV(dirkey, "cache") || BU_STR_EQUAL(dirkey, "BU_DIR_CACHE")) {
+	snprintf(result, MAXPATHLEN, "%s", bu_dir(NULL, 0, BU_DIR_CACHE, NULL));
+	return result;
+    }
+    if (BU_STR_EQUIV(dirkey, "config") || BU_STR_EQUAL(dirkey, "BU_DIR_CONFIG")) {
+	snprintf(result, MAXPATHLEN, "%s", bu_dir(NULL, 0, BU_DIR_CONFIG, NULL));
+	return result;
+    }
+    if (BU_STR_EQUIV(dirkey, "ext") || BU_STR_EQUAL(dirkey, "BU_DIR_EXT")) {
+	snprintf(result, MAXPATHLEN, "%s", bu_dir(NULL, 0, BU_DIR_EXT, NULL));
+	return result;
+    }
+    if (BU_STR_EQUIV(dirkey, "libext") || BU_STR_EQUAL(dirkey, "BU_DIR_LIBEXT")) {
+	snprintf(result, MAXPATHLEN, "%s", bu_dir(NULL, 0, BU_DIR_LIBEXT, NULL));
+	return result;
+    }
+    if (!fail_quietly) {
+	snprintf(result, MAXPATHLEN, "Unknown directory key %s", dirkey);
+	return result;
+    }
+    return NULL;
+}
+
+/**
+ * A wrapper for bu_dir.
+ *
+ * @param clientData	- associated data/state
+ * @param argc		- number of elements in argv
+ * @param argv		- command name and arguments
+ *
+ * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
+ */
+HIDDEN int
+tcl_bu_dir(void *clientData,
+		   int argc,
+		   const char **argv)
+{
+    Tcl_Interp *interp = (Tcl_Interp *)clientData;
+    if (argc != 2) {
+	bu_log("Usage: bu_dir [curr|init|bin|lib|libexec|include|data|doc|man|temp|home|cache|config|ext|libext]\n");
+	return BRLCAD_ERROR;
+    }
+    Tcl_AppendResult(interp, _tclcad_bu_dir_print(argv[1],1), NULL);
+    return BRLCAD_OK;
+}
+
 /**
  * A wrapper for bu_brlcad_dir.
  *
@@ -351,30 +418,6 @@ tcl_bu_brlcad_root(void *clientData,
 	return BRLCAD_ERROR;
     }
     Tcl_AppendResult(interp, bu_brlcad_root(argv[1], 1), NULL);
-    return BRLCAD_OK;
-}
-
-
-/**
- * A wrapper for bu_brlcad_data.
- *
- * @param clientData	- associated data/state
- * @param argc		- number of elements in argv
- * @param argv		- command name and arguments
- *
- * @return BRLCAD_OK if successful, otherwise, BRLCAD_ERROR.
- */
-HIDDEN int
-tcl_bu_brlcad_data(void *clientData,
-		   int argc,
-		   const char **argv)
-{
-    Tcl_Interp *interp = (Tcl_Interp *)clientData;
-    if (argc != 2) {
-	bu_log("Usage: bu_brlcad_data subdir\n");
-	return BRLCAD_ERROR;
-    }
-    Tcl_AppendResult(interp, bu_brlcad_data(argv[1], 1), NULL);
     return BRLCAD_OK;
 }
 
@@ -433,10 +476,9 @@ Bu_Init(void *p)
 
     static struct bu_cmdtab cmds[] = {
 	{"bu_units_conversion",		tcl_bu_units_conversion},
-	{"bu_brlcad_data",		tcl_bu_brlcad_data},
+	{"bu_dir",		        tcl_bu_dir},
 	{"bu_brlcad_dir",		tcl_bu_brlcad_dir},
 	{"bu_brlcad_root",		tcl_bu_brlcad_root},
-	{"bu_mem_barriercheck",		tcl_bu_mem_barriercheck},
 	{"bu_prmem",			tcl_bu_prmem},
 	{"bu_get_value_by_keyword",	tcl_bu_get_value_by_keyword},
 	{"bu_rgb_to_hsv",		tcl_bu_rgb_to_hsv},
@@ -460,20 +502,6 @@ bn_quat_distance_wrapper(double *dp, mat_t q1, mat_t q2)
 }
 
 
-void
-bn_mat_scale_about_pt_wrapper(int *statusp, mat_t mat, const point_t pt, const double scale)
-{
-    *statusp = bn_mat_scale_about_pt(mat, pt, scale);
-}
-
-
-static void
-bn_mat4x3pnt(fastf_t *o, mat_t m, point_t i)
-{
-    MAT4X3PNT(o, m, i);
-}
-
-
 static void
 bn_mat4x3vec(fastf_t *o, mat_t m, vect_t i)
 {
@@ -488,7 +516,7 @@ bn_hdivide(fastf_t *o, const mat_t i)
 }
 
 static int
-tclcad_bn_dist_pt2_lseg2(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+tclcad_bn_dist_pnt2_lseg2(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
     point_t ptA, ptB, pca;
@@ -501,26 +529,26 @@ tclcad_bn_dist_pt2_lseg2(ClientData UNUSED(clientData), Tcl_Interp *interp, int 
 
     if (argc != 4) {
 	bu_vls_printf(&result,
-		"Usage: bn_dist_pt2_lseg2 ptA ptB pt (%d args specified)", argc-1);
+		"Usage: bn_dist_pnt2_lseg2 pntA pntB pnt (%d args specified)", argc-1);
 	goto error;
     }
 
     if (bn_decode_vect(ptA, argv[1]) < 2) {
-	bu_vls_printf(&result, "bn_dist_pt2_lseg2 no ptA: %s\n", argv[0]);
+	bu_vls_printf(&result, "bn_dist_pnt2_lseg2 no pntA: %s\n", argv[0]);
 	goto error;
     }
 
     if (bn_decode_vect(ptB, argv[2]) < 2) {
-	bu_vls_printf(&result, "bn_dist_pt2_lseg2 no ptB: %s\n", argv[0]);
+	bu_vls_printf(&result, "bn_dist_pnt2_lseg2 no pntB: %s\n", argv[0]);
 	goto error;
     }
 
     if (bn_decode_vect(pt, argv[3]) < 2) {
-	bu_vls_printf(&result, "bn_dist_pt2_lseg2 no pt: %s\n", argv[0]);
+	bu_vls_printf(&result, "bn_dist_pnt2_lseg2 no pnt: %s\n", argv[0]);
 	goto error;
     }
 
-    ret = bn_dist_pt2_lseg2(&dist, pca, ptA, ptB, pt, &tol);
+    ret = bn_dist_pnt2_lseg2(&dist, pca, ptA, ptB, pt, &tol);
     switch (ret) {
 	case 0:
 	case 1:
@@ -549,8 +577,10 @@ tclcad_bn_isect_line2_line2(ClientData UNUSED(clientData), Tcl_Interp *interp, i
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
     fastf_t dist[2];
-    point_t pt, a;
-    vect_t dir, c;
+    point_t pt = VINIT_ZERO;
+    point_t a = VINIT_ZERO;
+    vect_t dir = VINIT_ZERO;
+    vect_t c = VINIT_ZERO;
     int i;
     static const struct bn_tol tol = {
 	BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST*BN_TOL_DIST, 1e-6, 1-1e-6
@@ -564,11 +594,6 @@ tclcad_bn_isect_line2_line2(ClientData UNUSED(clientData), Tcl_Interp *interp, i
     }
 
     /* i = bn_isect_line2_line2 {0 0} {1 0} {1 1} {0 -1} */
-
-    VSETALL(pt, 0.0);
-    VSETALL(dir, 0.0);
-    VSETALL(a, 0.0);
-    VSETALL(c, 0.0);
 
     if (bn_decode_vect(pt, argv[1]) < 2) {
 	bu_vls_printf(&result, "bn_isect_line2_line2 no pt: %s\n", argv[0]);
@@ -657,31 +682,8 @@ error:
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
     return TCL_ERROR;
-} 
-
-
-static int
-tclcad_bn_mat_mul(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
-{
-    struct bu_vls result = BU_VLS_INIT_ZERO;
-    mat_t o, a, b;
-    if (argc < 3 || bn_decode_mat(a, argv[1]) < 16 ||
-	    bn_decode_mat(b, argv[2]) < 16) {
-	bu_vls_printf(&result, "usage: %s matA matB", argv[0]);
-	goto error;
-    }
-    bn_mat_mul(o, a, b);
-    bn_encode_mat(&result, o, 1);
-
-    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
-    bu_vls_free(&result);
-    return TCL_OK;
-
-error:
-    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
-    bu_vls_free(&result);
-    return TCL_ERROR;
 }
+
 
 static int
 tclcad_bn_mat_inv(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
@@ -783,30 +785,6 @@ error:
     return TCL_ERROR;
 }
 
-static int
-tclcad_bn_mat4x3pnt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
-{
-    struct bu_vls result = BU_VLS_INIT_ZERO;
-    mat_t m;
-    point_t i, o;
-    MAT_ZERO(m);
-    if (argc < 3 || bn_decode_mat(m, argv[1]) < 16 ||
-	    bn_decode_vect(i, argv[2]) < 3) {
-	bu_vls_printf(&result, "usage: %s mat point", argv[0]);
-	goto error;
-    }
-    bn_mat4x3pnt(o, m, i);
-    bn_encode_vect(&result, o, 1);
-
-    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
-    bu_vls_free(&result);
-    return TCL_OK;
-
-error:
-    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
-    bu_vls_free(&result);
-    return TCL_ERROR;
-}
 
 static int
 tclcad_bn_hdivide(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
@@ -879,33 +857,6 @@ tclcad_bn_vblend(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, ch
 
     VBLEND2(a, b, c, d, e);
     bn_encode_vect(&result, a, 1);
-
-    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
-    bu_vls_free(&result);
-    return TCL_OK;
-
-error:
-    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
-    bu_vls_free(&result);
-    return TCL_ERROR;
-}
-
-static int
-tclcad_bn_mat_ae(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
-{
-    struct bu_vls result = BU_VLS_INIT_ZERO;
-    mat_t o;
-    double az, el;
-
-    if (argc < 3) {
-	bu_vls_printf(&result, "usage: %s azimuth elevation", argv[0]);
-	goto error;
-    }
-    if (Tcl_GetDouble(interp, argv[1], &az) != TCL_OK) goto error;
-    if (Tcl_GetDouble(interp, argv[2], &el) != TCL_OK) goto error;
-
-    bn_mat_ae(o, (fastf_t)az, (fastf_t)el);
-    bn_encode_mat(&result, o, 1);
 
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
@@ -1222,40 +1173,7 @@ error:
 
 
 static int
-tclcad_bn_mat_scale_about_pt_wrapper(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
-{
-    struct bu_vls result = BU_VLS_INIT_ZERO;
-    mat_t o;
-    vect_t v;
-    double scale;
-    int status;
-
-    if (argc < 3 || bn_decode_vect(v, argv[1]) < 3) {
-	bu_vls_printf(&result, "usage: %s pt scale", argv[0]);
-	goto error;
-    }
-    if (Tcl_GetDouble(interp, argv[2], &scale) != TCL_OK) goto error;
-
-    bn_mat_scale_about_pt_wrapper(&status, o, v, scale);
-    if (status != 0) {
-	bu_vls_printf(&result, "error performing calculation");
-	goto error;
-    }
-    bn_encode_mat(&result, o, 1);
-
-    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
-    bu_vls_free(&result);
-    return TCL_OK;
-
-error:
-    Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
-    bu_vls_free(&result);
-    return TCL_ERROR;
-}
-
-
-static int
-tclcad_bn_mat_xform_about_pt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
+tclcad_bn_mat_xform_about_pnt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char **argv)
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
     mat_t o, xform;
@@ -1267,7 +1185,7 @@ tclcad_bn_mat_xform_about_pt(ClientData UNUSED(clientData), Tcl_Interp *interp, 
 	goto error;
     }
 
-    bn_mat_xform_about_pt(o, xform, v);
+    bn_mat_xform_about_pnt(o, xform, v);
     bn_encode_mat(&result, o, 1);
 
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
@@ -1583,19 +1501,17 @@ static struct math_func_link {
     const char *name;
     int (*func)(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv);
 } math_funcs[] = {
-    {"bn_dist_pt2_lseg2",	 BN_FUNC_TCL_CAST(tclcad_bn_dist_pt2_lseg2) },
+    /* FIXME: migrate these all to libged */
+    {"bn_dist_pnt2_lseg2",	 BN_FUNC_TCL_CAST(tclcad_bn_dist_pnt2_lseg2) },
     {"bn_isect_line2_line2",	 BN_FUNC_TCL_CAST(tclcad_bn_isect_line2_line2) },
     {"bn_isect_line3_line3",	 BN_FUNC_TCL_CAST(tclcad_bn_isect_line3_line3) },
-    {"mat_mul",                  BN_FUNC_TCL_CAST(tclcad_bn_mat_mul) },
     {"mat_inv",                  BN_FUNC_TCL_CAST(tclcad_bn_mat_inv) },
     {"mat_trn",                  BN_FUNC_TCL_CAST(tclcad_bn_mat_trn) },
     {"matXvec",                  BN_FUNC_TCL_CAST(tclcad_bn_matXvec) },
     {"mat4x3vec",                BN_FUNC_TCL_CAST(tclcad_bn_mat4x3vec) },
-    {"mat4x3pnt",                BN_FUNC_TCL_CAST(tclcad_bn_mat4x3pnt) },
     {"hdivide",                  BN_FUNC_TCL_CAST(tclcad_bn_hdivide) },
     {"vjoin1",	                 BN_FUNC_TCL_CAST(tclcad_bn_vjoin1) },
     {"vblend",	                 BN_FUNC_TCL_CAST(tclcad_bn_vblend) },
-    {"mat_ae",                   BN_FUNC_TCL_CAST(tclcad_bn_mat_ae) },
     {"mat_ae_vec",               BN_FUNC_TCL_CAST(tclcad_bn_ae_vec) },
     {"mat_aet_vec",              BN_FUNC_TCL_CAST(tclcad_bn_aet_vec) },
     {"mat_angles",               BN_FUNC_TCL_CAST(tclcad_bn_mat_angles) },
@@ -1607,8 +1523,7 @@ static struct math_func_link {
     {"mat_lookat",               BN_FUNC_TCL_CAST(tclcad_bn_mat_lookat) },
     {"mat_vec_ortho",            BN_FUNC_TCL_CAST(tclcad_bn_vec_ortho) },
     {"mat_vec_perp",             BN_FUNC_TCL_CAST(tclcad_bn_vec_perp) },
-    {"mat_scale_about_pt",       BN_FUNC_TCL_CAST(tclcad_bn_mat_scale_about_pt_wrapper) },
-    {"mat_xform_about_pt",       BN_FUNC_TCL_CAST(tclcad_bn_mat_xform_about_pt) },
+    {"mat_xform_about_pnt",      BN_FUNC_TCL_CAST(tclcad_bn_mat_xform_about_pnt) },
     {"mat_arb_rot",              BN_FUNC_TCL_CAST(tclcad_bn_mat_arb_rot) },
     {"quat_mat2quat",            BN_FUNC_TCL_CAST(tclcad_bn_quat_mat2quat) },
     {"quat_quat2mat",            BN_FUNC_TCL_CAST(tclcad_bn_quat_quat2mat) },
@@ -1903,19 +1818,6 @@ Bn_Init(Tcl_Interp *interp)
     return TCL_OK;
 }
 
-int
-Sysv_Init(Tcl_Interp *UNUSED(interp))
-{
-    return TCL_OK;
-}
-
-int
-Pkg_Init(Tcl_Interp *interp)
-{
-    if (!interp)
-	return TCL_ERROR;
-    return TCL_OK;
-}
 
 #define RT_FUNC_TCL_CAST(_func) ((int (*)(ClientData clientData, Tcl_Interp *interp, int argc, const char *const *argv))_func)
 
@@ -2022,20 +1924,6 @@ tclcad_rt_pr_cutter(Tcl_Interp *interp, const union cutter *cutp)
 		bu_vls_strcat(&str, "} } ");
 	    }
 	    bu_vls_strcat(&str, "}");
-	    break;
-	case CUT_NUGRIDNODE:
-	    bu_vls_printf(&str, "type nugridnode");
-	    for (i = 0; i < 3; i++) {
-		bu_vls_printf(&str, " %c {", xyz[i]);
-		bu_vls_printf(&str, "spos %.25G epos %.25G width %.25g",
-			      cutp->nugn.nu_axis[i]->nu_spos,
-			      cutp->nugn.nu_axis[i]->nu_epos,
-			      cutp->nugn.nu_axis[i]->nu_width);
-		bu_vls_printf(&str, " cells_per_axis %d",
-			      cutp->nugn.nu_cells_per_axis[i]);
-		bu_vls_printf(&str, " stepsize %d}",
-			      cutp->nugn.nu_stepsize[i]);
-	    }
 	    break;
 	default:
 	    bu_vls_printf(&str, "tclcad_rt_pr_cutter() bad pointer cutp=%p",
@@ -2369,10 +2257,9 @@ tclcad_rt_prep(ClientData clientData, Tcl_Interp *interp, int argc, const char *
 		  rtip->needprep
 	);
 
-    bu_vls_printf(&str, " space_partition_type %s n_nugridnode %d n_cutnode %d n_boxnode %d n_empty %ld",
-		  rtip->rti_space_partition == RT_PART_NUGRID ?
-		  "NUGrid" : "NUBSP",
-		  rtip->rti_ncut_by_type[CUT_NUGRIDNODE],
+    bu_vls_printf(&str, " space_partition_type %s n_cutnode %d n_boxnode %d n_empty %ld",
+		  rtip->rti_space_partition == RT_PART_NUBSPT ?
+		  "NUBSP" : "unknown",
 		  rtip->rti_ncut_by_type[CUT_CUTNODE],
 		  rtip->rti_ncut_by_type[CUT_BOXNODE],
 		  rtip->nempty_cells);

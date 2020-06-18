@@ -1,5 +1,0 @@
-SET(clipper_ignore_files
-README
-License.txt
-clipper.hpp
-)

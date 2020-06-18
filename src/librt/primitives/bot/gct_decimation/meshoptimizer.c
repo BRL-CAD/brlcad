@@ -40,6 +40,7 @@
 
 #include "auxiliary/cc.h"
 #include "auxiliary/mm.h"
+#include "bu/tc.h"
 
 #include "bu/malloc.h"
 #include "bu/parallel.h"
@@ -66,8 +67,8 @@ typedef float mof;
 
 
 typedef struct {
-    mtx_t mutex;
-    cnd_t signal;
+    bu_mtx_t mutex;
+    bu_cnd_t signal;
     int resetcount;
     volatile int index;
     volatile int count[2];
@@ -75,11 +76,11 @@ typedef struct {
 
 static void moBarrierInit(moBarrier *barrier, int count)
 {
-    if (mtx_init(&barrier->mutex, mtx_plain) == thrd_error)
-	bu_bomb("mtx_init() failed");
+    if (bu_mtx_init(&barrier->mutex) == bu_thrd_error)
+	bu_bomb("bu_mtx_init() failed");
 
-    if (cnd_init(&barrier->signal) != thrd_success)
-	bu_bomb("cnd_init() failed");
+    if (bu_cnd_init(&barrier->signal) != bu_thrd_success)
+	bu_bomb("bu_cnd_init() failed");
 
     barrier->resetcount = count;
     barrier->index = 0;
@@ -89,16 +90,16 @@ static void moBarrierInit(moBarrier *barrier, int count)
 
 static void moBarrierDestroy(moBarrier *barrier)
 {
-    mtx_destroy(&barrier->mutex);
-    cnd_destroy(&barrier->signal);
+    bu_mtx_destroy(&barrier->mutex);
+    bu_cnd_destroy(&barrier->signal);
 }
 
 static int moBarrierSync(moBarrier *barrier)
 {
     int index, ret;
 
-    if (mtx_lock(&barrier->mutex) == thrd_error)
-	bu_bomb("mtx_lock() failed");
+    if (bu_mtx_lock(&barrier->mutex) == bu_thrd_error)
+	bu_bomb("bu_mtx_lock() failed");
 
     index = barrier->index;
     ret = 0;
@@ -106,20 +107,20 @@ static int moBarrierSync(moBarrier *barrier)
     if (!(--barrier->count[index])) {
 	ret = 1;
 
-	if (cnd_broadcast(&barrier->signal) == thrd_error)
-	    bu_bomb("cnd_broadcast() failed");
+	if (bu_cnd_broadcast(&barrier->signal) == bu_thrd_error)
+	    bu_bomb("bu_cnd_broadcast() failed");
 
 	index ^= 1;
 	barrier->index = index;
 	barrier->count[index] = barrier->resetcount;
     } else {
 	for (; barrier->count[index];)
-	    if (cnd_wait(&barrier->signal, &barrier->mutex) == thrd_error)
-		bu_bomb("cnd_wait() failed");
+	    if (bu_cnd_wait(&barrier->signal, &barrier->mutex) == bu_thrd_error)
+		bu_bomb("bu_cnd_wait() failed");
     }
 
-    if (mtx_unlock(&barrier->mutex) == thrd_error)
-	bu_bomb("mtx_unlock() failed");
+    if (bu_mtx_unlock(&barrier->mutex) == bu_thrd_error)
+	bu_bomb("bu_mtx_unlock() failed");
 
     return ret;
 }
@@ -1446,7 +1447,7 @@ int moOptimizeMesh(size_t vertexcount, size_t tricount, void *indices, int indic
     int a, threadid, threadcount;
     mof factor;
     moMesh mesh;
-    thrd_t thread[MAX_PSW];
+    bu_thrd_t thread[MAX_PSW];
     moThreadInit threadinit[MAX_PSW];
     moThreadInit *tinit;
 
@@ -1521,7 +1522,7 @@ int moOptimizeMesh(size_t vertexcount, size_t tricount, void *indices, int indic
 	factor *= 0.25;
 
     for (a = 3; a < mesh.vertexcachesize; a++)
-	mesh.cachescore[a] = powf(1.0 - ((mof)(a - 3) * factor), 1.5);
+	mesh.cachescore[a] = pow(1.0 - ((mof)(a - 3) * factor), 1.5);
 
     if (mesh.operationflags & MO_FLAGS_FIXED_CACHE_SIZE) {
 	if (mesh.vertexcachesize > 1)
@@ -1534,7 +1535,7 @@ int moOptimizeMesh(size_t vertexcount, size_t tricount, void *indices, int indic
     mesh.trirefscore[0] = -256.0;
 
     for (a = 1; a < MO_TRIREFSCORE_COUNT; a++)
-	mesh.trirefscore[a] = 2.0 * powf((float)a, -0.5);
+	mesh.trirefscore[a] = 2.0 * pow((float)a, -0.5);
 
     /* Allocation */
     mesh.vertexlist = (moVertex *)mmAlignAlloc(mesh.vertexcount * sizeof(moVertex), 0x40);
@@ -1549,16 +1550,16 @@ int moOptimizeMesh(size_t vertexcount, size_t tricount, void *indices, int indic
 	tinit->threadid = threadid;
 	tinit->mesh = &mesh;
 
-	if (thrd_create(&thread[threadid], moThreadMain, tinit) == thrd_error)
-	    bu_bomb("thrd_create() failed");
+	if (bu_thrd_create(&thread[threadid], moThreadMain, tinit) == bu_thrd_error)
+	    bu_bomb("bu_thrd_create() failed");
     }
 
     /* Wait for all threads to be done */
     moBarrierSync(&mesh.globalbarrier);
 
     for (threadid = 0; threadid < threadcount; threadid++)
-	if (thrd_join(thread[threadid], NULL) == thrd_error)
-	    bu_bomb("thrd_join() failed");
+	if (bu_thrd_join(thread[threadid], NULL) == bu_thrd_error)
+	    bu_bomb("bu_thrd_join() failed");
 
     /* Read the linked list of each thread and rebuild the new indices */
     if (!(mesh.shufflecallback))

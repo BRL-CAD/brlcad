@@ -1,7 +1,7 @@
 /*                      D E F I N E S . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,9 +38,9 @@
 #  if defined(BU_DLL_EXPORTS) && defined(BU_DLL_IMPORTS)
 #    error "Only BU_DLL_EXPORTS or BU_DLL_IMPORTS can be defined, not both."
 #  elif defined(BU_DLL_EXPORTS)
-#    define BU_EXPORT __declspec(dllexport)
+#    define BU_EXPORT COMPILER_DLLEXPORT
 #  elif defined(BU_DLL_IMPORTS)
-#    define BU_EXPORT __declspec(dllimport)
+#    define BU_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define BU_EXPORT
 #  endif
@@ -147,21 +147,63 @@
 #endif
 
 /**
- *  If we're compiling strict, turn off "format string vs arguments"
- *  checks. As long as we are using C89, the proper printf support
- *  for size_t is not available in the standard and we will get
- *  warnings about using extensions.
+ * shorthand declaration of a function that will return the exact same
+ * value for the exact same arguments.  this implies it's a function
+ * that doesn't examine into any pointer values, doesn't call any
+ * non-cost functions, doesn't read globals, and has no effects except
+ * the return value.
  */
-#if defined(STRICT_FLAGS)
-#  undef _BU_ATTR_PRINTF12
-#  undef _BU_ATTR_PRINTF23
-#  undef _BU_ATTR_SCANF23
-#  undef _BU_ATTR_NORETURN
-#  define _BU_ATTR_PRINTF12
-#  define _BU_ATTR_PRINTF23
-#  define _BU_ATTR_SCANF23
-#  define _BU_ATTR_NORETURN
+#ifdef HAVE_CONST_ATTRIBUTE
+#  define _BU_ATTR_CONST __attribute__((const))
+#else
+#  define _BU_ATTR_CONST
 #endif
+
+/**
+ * shorthand declaration of a function that depends only on its
+ * parameters and/or global variables.  this implies it's a function
+ * that has no effects except the return value and, as such, can be
+ * subject to common subexpression elimination and loop optimization
+ * just as an arithmetic operator would be.
+ */
+#ifdef HAVE_PURE_ATTRIBUTE
+#  define _BU_ATTR_PURE __attribute__((pure))
+#else
+#  define _BU_ATTR_PURE
+#endif
+
+/**
+ * shorthand declaration of a function that is not likely to be
+ * called.  this is typically for debug logging and error routines.
+ */
+#ifdef HAVE_COLD_ATTRIBUTE
+#  define _BU_ATTR_COLD __attribute__((cold))
+#else
+#  define _BU_ATTR_COLD
+#endif
+
+/**
+ * shorthand declaration of a function that doesn't accept NULL
+ * pointer arugments.  if a null pointer is detected during
+ * compilation, a warning/error can be emitted.
+ */
+#ifdef HAVE_NONNULL_ATTRIBUTE
+#  define _BU_ATTR_NONNULL __attribute__((nonnull))
+#else
+#  define _BU_ATTR_NONNULL
+#endif
+
+/**
+ * shorthand declaration of a function whose return value should not
+ * be ignored.  a warning / error will be emitted if the caller does
+ * not use the return value.
+ */
+#ifdef HAVE_WARN_UNUSED_RESULT_ATTRIBUTE
+#  define _BU_ATTR_WARN_UNUSED_RESULT __attribute__((warn_unused_result))
+#else
+#  define _BU_ATTR_WARN_UNUSED_RESULT
+#endif
+
 
 /**
  * This macro is used to take the 'C' function name, and convert it at
@@ -183,77 +225,13 @@
 #else
 #  define BU_ASSERT(_equation)	\
     if (UNLIKELY(!(_equation))) { \
-	bu_log("BU_ASSERT(" #_equation ") failed, file %s, line %d\n", \
-	       __FILE__, __LINE__); \
+	const char *_equation_buf = #_equation; \
+	bu_log("BU_ASSERT(%s), failed, file %s, line %d\n", \
+	       _equation_buf, __FILE__, __LINE__); \
 	bu_bomb("BU_ASSERT failure\n"); \
     }
 #endif
 
-
-/**
- * fastf_t - Intended to be the fastest floating point data type on
- * the current machine, with at least 64 bits of precision.  On 16 and
- * 32 bit machines, this is typically "double", but on 64 bit machines,
- * it is often "float".  Virtually all floating point variables (and
- * more complicated data types, like vect_t and mat_t) are defined as
- * fastf_t.  The one exception is when a subroutine return is a
- * floating point value; that is always declared as "double".
- *
- * TODO: If used pervasively, it should eventually be possible to make
- * fastf_t a GMP C++ type for fixed-precision computations.
- */
-typedef double fastf_t;
-
-/**
- * Definitions about limits of floating point representation
- * Eventually, should be tied to type of hardware (IEEE, IBM, Cray)
- * used to implement the fastf_t type.
- *
- * MAX_FASTF - Very close to the largest value that can be held by a
- * fastf_t without overflow.  Typically specified as an integer power
- * of ten, to make the value easy to spot when printed.  TODO: macro
- * function syntax instead of constant (DEPRECATED)
- *
- * SQRT_MAX_FASTF - sqrt(MAX_FASTF), or slightly smaller.  Any number
- * larger than this, if squared, can be expected to * produce an
- * overflow.  TODO: macro function syntax instead of constant
- * (DEPRECATED)
- *
- * SMALL_FASTF - Very close to the smallest value that can be
- * represented while still being greater than zero.  Any number
- * smaller than this (and non-negative) can be considered to be
- * zero; dividing by such a number can be expected to produce a
- * divide-by-zero error.  All divisors should be checked against
- * this value before actual division is performed.  TODO: macro
- * function syntax instead of constant (DEPRECATED)
- *
- * SQRT_SMALL_FASTF - sqrt(SMALL_FASTF), or slightly larger.  The
- * value of this is quite a lot larger than that of SMALL_FASTF.  Any
- * number smaller than this, when squared, can be expected to produce
- * a zero result.  TODO: macro function syntax instead of constant
- * (DEPRECATED)
- *
- */
-#if defined(vax)
-/* DEC VAX "D" format, the most restrictive */
-#  define MAX_FASTF		1.0e37	/* Very close to the largest number */
-#  define SQRT_MAX_FASTF	1.0e18	/* This squared just avoids overflow */
-#  define SMALL_FASTF		1.0e-37	/* Anything smaller is zero */
-#  define SQRT_SMALL_FASTF	1.0e-18	/* This squared gives zero */
-#else
-/* IBM format, being the next most restrictive format */
-#  define MAX_FASTF		1.0e73	/* Very close to the largest number */
-#  define SQRT_MAX_FASTF	1.0e36	/* This squared just avoids overflow */
-#  define SMALL_FASTF		1.0e-77	/* Anything smaller is zero */
-#  if defined(aux)
-#    define SQRT_SMALL_FASTF	1.0e-40 /* _doprnt error in libc */
-#  else
-#    define SQRT_SMALL_FASTF	1.0e-39	/* This squared gives zero */
-#  endif
-#endif
-
-/** DEPRECATED, do not use */
-#define SMALL SQRT_SMALL_FASTF
 
 /** @} */
 

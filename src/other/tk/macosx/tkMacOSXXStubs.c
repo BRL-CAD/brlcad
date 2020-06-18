@@ -3,23 +3,23 @@
  *
  *	This file contains most of the X calls called by Tk. Many of these
  *	calls are just stubs and either don't make sense on the Macintosh or
- *	their implamentation just doesn't do anything. Other calls will
+ *	their implementation just doesn't do anything. Other calls will
  *	eventually be moved into other files.
  *
  * Copyright (c) 1995-1997 Sun Microsystems, Inc.
- * Copyright 2001, Apple Computer, Inc.
- * Copyright (c) 2005-2007 Daniel A. Steffen <das@users.sourceforge.net>
+ * Copyright 2001-2009, Apple Inc.
+ * Copyright (c) 2005-2009 Daniel A. Steffen <das@users.sourceforge.net>
+ * Copyright 2014 Marc Culler.
  *
- * See the file "license.terms" for information on usage and redistribution of
- * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
+ * See the file "license.terms" for information on usage and redistribution
+ * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  */
 
 #include "tkMacOSXPrivate.h"
 #include "tkMacOSXEvent.h"
 
 #include <IOKit/IOKitLib.h>
+#include <IOKit/hidsystem/IOHIDShared.h>
 
 /*
  * Because this file is still under major development Debugger statements are
@@ -37,10 +37,13 @@
  * Declarations of static variables used in this file.
  */
 
+/* The unique Macintosh display. */
 static TkDisplay *gMacDisplay = NULL;
-				/* Macintosh display. */
+/* The default name of the Macintosh display. */
 static const char *macScreenName = ":0";
-				/* Default name of macintosh display. */
+/* Timestamp showing the last reset of the inactivity timer. */
+static Time lastInactivityReset = 0;
+
 
 /*
  * Forward declarations of procedures used in this file.
@@ -50,19 +53,6 @@ static XID		MacXIdAlloc(Display *display);
 static int		DefaultErrorHandler(Display *display,
 			    XErrorEvent *err_evt);
 
-/*
- * Other declarations
- */
-
-static int		DestroyImage(XImage *image);
-static unsigned long	ImageGetPixel(XImage *image, int x, int y);
-static int		PutPixel(XImage *image, int x, int y,
-			    unsigned long pixel);
-#if 0
-static XImage *		SubImage(XImage *image, int x, int y,
-			    unsigned int width, unsigned int height);
-static int		AddPixel(XImage *image, long value);
-#endif
 
 /*
  *----------------------------------------------------------------------
@@ -85,39 +75,93 @@ void
 TkMacOSXDisplayChanged(
     Display *display)
 {
-    GDHandle graphicsDevice;
     Screen *screen;
-    Rect bounds = {0, 0, 0, 0}, *maxBounds;
+    NSArray *nsScreens;
+
 
     if (display == NULL || display->screens == NULL) {
 	return;
     }
     screen = display->screens;
 
-    graphicsDevice = GetMainDevice();
-    screen->root_depth = (*(*graphicsDevice)->gdPMap)->cmpSize *
-	    (*(*graphicsDevice)->gdPMap)->cmpCount;
-    screen->height = (*graphicsDevice)->gdRect.bottom -
-	    (*graphicsDevice)->gdRect.top;
-    screen->width = (*graphicsDevice)->gdRect.right -
-	    (*graphicsDevice)->gdRect.left;
+    nsScreens = [NSScreen screens];
+    if (nsScreens && [nsScreens count]) {
+	NSScreen *s = [nsScreens objectAtIndex:0];
+	NSRect bounds = [s frame];
+	NSRect maxBounds = NSZeroRect;
 
-    screen->mwidth = (screen->width * 254 + 360) / 720;
-    screen->mheight = (screen->height * 254 + 360) / 720;
+	screen->root_depth = NSBitsPerPixelFromDepth([s depth]);
+	screen->width = bounds.size.width;
+	screen->height = bounds.size.height;
+	screen->mwidth = (bounds.size.width * 254 + 360) / 720;
+	screen->mheight = (bounds.size.height * 254 + 360) / 720;
 
-    maxBounds = (Rect *) screen->ext_data;
-    *maxBounds = bounds;
-    graphicsDevice = GetDeviceList();
-    while (graphicsDevice) {
-	OSStatus err;
-
-	err = ChkErr(GetAvailableWindowPositioningBounds, graphicsDevice,
-		&bounds);
-	if (err == noErr) {
-	    UnionRect(&bounds, maxBounds, maxBounds);
+	for (s in nsScreens) {
+	    maxBounds = NSUnionRect(maxBounds, [s visibleFrame]);
 	}
-	graphicsDevice = GetNextDevice(graphicsDevice);
+	*((NSRect *)screen->ext_data) = maxBounds;
     }
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TkMacOSXZeroScreenHeight --
+ *
+ *	Replacement for the tkMacOSXZeroScreenHeight variable to avoid
+ *	caching values from NSScreen (fixes bug aea00be199).
+ *
+ * Results:
+ *	Returns the height of screen 0 (the screen assigned the menu bar
+ *	in System Preferences), or 0.0 if getting [NSScreen screens] fails.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+CGFloat
+TkMacOSXZeroScreenHeight()
+{
+    NSArray *nsScreens = [NSScreen screens];
+    if (nsScreens && [nsScreens count]) {
+	NSScreen *s = [nsScreens objectAtIndex:0];
+	NSRect bounds = [s frame];
+	return bounds.size.height;
+    }
+    return 0.0;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TkMacOSXZeroScreenTop --
+ *
+ *	Replacement for the tkMacOSXZeroScreenTop variable to avoid
+ *	caching values from visibleFrame.
+ *
+ * Results:
+ *	Returns how far below the top of screen 0 to draw
+ *	(i.e. the height of the menu bar if it is always shown),
+ *	or 0.0 if getting [NSScreen screens] fails.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+CGFloat
+TkMacOSXZeroScreenTop()
+{
+    NSArray *nsScreens = [NSScreen screens];
+    if (nsScreens && [nsScreens count]) {
+	NSScreen *s = [nsScreens objectAtIndex:0];
+	NSRect bounds = [s frame], visible = [s visibleFrame];
+	return bounds.size.height - (visible.origin.y + visible.size.height);
+    }
+    return 0.0;
 }
 
 /*
@@ -139,12 +183,15 @@ TkMacOSXDisplayChanged(
 
 TkDisplay *
 TkpOpenDisplay(
-    CONST char *display_name)
+    const char *display_name)
 {
     Display *display;
     Screen *screen;
     int fd = 0;
-    static Rect maxBounds = {0, 0, 0, 0};
+    static NSRect maxBounds = {{0, 0}, {0, 0}};
+    static char vendor[25] = "";
+    NSArray *cgVers;
+    NSAutoreleasePool *pool = [NSAutoreleasePool new];
 
     if (gMacDisplay != NULL) {
 	if (strcmp(gMacDisplay->display->display_name, display_name) == 0) {
@@ -154,8 +201,8 @@ TkpOpenDisplay(
 	}
     }
 
-    display = (Display *) ckalloc(sizeof(Display));
-    screen  = (Screen *) ckalloc(sizeof(Screen));
+    display = ckalloc(sizeof(Display));
+    screen  = ckalloc(sizeof(Screen));
     bzero(display, sizeof(Display));
     bzero(screen, sizeof(Screen));
 
@@ -168,11 +215,35 @@ TkpOpenDisplay(
     display->default_screen = 0;
     display->display_name   = (char *) macScreenName;
 
-    Gestalt(gestaltQuickdrawVersion, (long *) &display->proto_minor_version);
-    display->proto_major_version = 10;
-    display->proto_minor_version -= gestaltMacOSXQD;
-    display->vendor = "Apple";
-    Gestalt(gestaltSystemVersion, (long *) &display->release);
+    cgVers = [[[NSBundle bundleWithIdentifier:@"com.apple.CoreGraphics"]
+	    objectForInfoDictionaryKey:@"CFBundleShortVersionString"]
+	    componentsSeparatedByString:@"."];
+    if ([cgVers count] >= 2) {
+	display->proto_major_version = [[cgVers objectAtIndex:1] integerValue];
+    }
+    if ([cgVers count] >= 3) {
+	display->proto_minor_version = [[cgVers objectAtIndex:2] integerValue];
+    }
+    if (!vendor[0]) {
+	snprintf(vendor, sizeof(vendor), "Apple AppKit %g",
+		NSAppKitVersionNumber);
+    }
+    display->vendor = vendor;
+    {
+	int major, minor, patch;
+
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 101000
+	Gestalt(gestaltSystemVersionMajor, (SInt32*)&major);
+	Gestalt(gestaltSystemVersionMinor, (SInt32*)&minor);
+	Gestalt(gestaltSystemVersionBugFix, (SInt32*)&patch);
+#else
+	NSOperatingSystemVersion systemVersion = [[NSProcessInfo processInfo] operatingSystemVersion];
+	major = systemVersion.majorVersion;
+	minor = systemVersion.minorVersion;
+	patch = systemVersion.patchVersion;
+#endif
+	display->release = major << 16 | minor << 8 | patch;
+    }
 
     /*
      * These screen bits never change
@@ -183,9 +254,9 @@ TkpOpenDisplay(
     screen->white_pixel = 0x00FFFFFF | PIXEL_MAGIC << 24;
     screen->ext_data	= (XExtData *) &maxBounds;
 
-    screen->root_visual = (Visual *) ckalloc(sizeof(Visual));
+    screen->root_visual = ckalloc(sizeof(Visual));
     screen->root_visual->visualid     = 0;
-    screen->root_visual->class	      = TrueColor;
+    screen->root_visual->c_class      = TrueColor;
     screen->root_visual->red_mask     = 0x00FF0000;
     screen->root_visual->green_mask   = 0x0000FF00;
     screen->root_visual->blue_mask    = 0x000000FF;
@@ -198,7 +269,7 @@ TkpOpenDisplay(
 
     TkMacOSXDisplayChanged(display);
 
-    gMacDisplay = (TkDisplay *) ckalloc(sizeof(TkDisplay));
+    gMacDisplay = ckalloc(sizeof(TkDisplay));
 
     /*
      * This is the quickest way to make sure that all the *Init flags get
@@ -207,6 +278,13 @@ TkpOpenDisplay(
 
     bzero(gMacDisplay, sizeof(TkDisplay));
     gMacDisplay->display = display;
+    [pool drain];
+
+    /*
+     * Key map info must be available immediately, because of "send event".
+     */
+    TkpInitKeymapInfo(gMacDisplay);
+
     return gMacDisplay;
 }
 
@@ -239,11 +317,11 @@ TkpCloseDisplay(
     gMacDisplay = NULL;
     if (display->screens != NULL) {
 	if (display->screens->root_visual != NULL) {
-	    ckfree((char *) display->screens->root_visual);
+	    ckfree(display->screens->root_visual);
 	}
-	ckfree((char *) display->screens);
+	ckfree(display->screens);
     }
-    ckfree((char *) display);
+    ckfree(display);
 }
 
 /*
@@ -274,7 +352,7 @@ TkClipCleanup(
      * needed.
      */
 
-    TkSuspendClipboard();
+    [NSApp tkProvidePasteboard:dispPtr];
 
     if (dispPtr->clipWindow != NULL) {
 	Tk_DeleteSelHandler(dispPtr->clipWindow, dispPtr->clipboardAtom,
@@ -323,33 +401,6 @@ MacXIdAlloc(
 /*
  *----------------------------------------------------------------------
  *
- * TkpWindowWasRecentlyDeleted --
- *
- *	Tries to determine whether the given window was recently deleted.
- *	Called from the generic code error handler to attempt to deal with
- *	async BadWindow errors under some circumstances.
- *
- * Results:
- *	Always 0, we do not keep this information on the Mac, so we do not
- *	know whether the window was destroyed.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-
-int
-TkpWindowWasRecentlyDeleted(
-    Window win,
-    TkDisplay *dispPtr)
-{
-    return 0;
-}
-
-/*
- *----------------------------------------------------------------------
- *
  * DefaultErrorHandler --
  *
  *	This procedure is the default X error handler. Tk uses it's own error
@@ -387,13 +438,6 @@ XGetAtomName(
     return NULL;
 }
 
-int
-_XInitImageFuncPtrs(
-    XImage *image)
-{
-    return 0;
-}
-
 XErrorHandler
 XSetErrorHandler(
     XErrorHandler handler)
@@ -434,21 +478,18 @@ XGetGeometry(
 	*border_width_return = winPtr->changes.border_width;
 	*depth_return = Tk_Depth(winPtr);
     } else {
-	Rect boundsRect;
-	CGrafPtr destPort = TkMacOSXGetDrawablePort(d);
-
-	GetPortBounds(destPort, &boundsRect);
-	*x_return = boundsRect.left;
-	*y_return =  boundsRect.top;
-	*width_return = boundsRect.right - boundsRect.left;
-	*height_return = boundsRect.bottom - boundsRect.top;
+	CGSize size = ((MacDrawable *) d)->size;
+	*x_return = 0;
+	*y_return =  0;
+	*width_return = size.width;
+	*height_return = size.height;
 	*border_width_return = 0;
 	*depth_return = 32;
     }
     return 1;
 }
 
-void
+int
 XChangeProperty(
     Display* display,
     Window w,
@@ -460,23 +501,26 @@ XChangeProperty(
     int nelements)
 {
     Debugger();
+    return Success;
 }
 
-void
+int
 XSelectInput(
     Display* display,
     Window w,
     long event_mask)
 {
     Debugger();
+    return Success;
 }
 
-void
+int
 XBell(
     Display* display,
     int percent)
 {
-    SysBeep(percent);
+    NSBeep();
+    return Success;
 }
 
 #if 0
@@ -526,15 +570,16 @@ XSendEvent(
     return 0;
 }
 
-void
+int
 XClearWindow(
     Display* display,
     Window w)
 {
+    return Success;
 }
 
 /*
-void
+int
 XDrawPoint(
     Display* display,
     Drawable d,
@@ -542,9 +587,10 @@ XDrawPoint(
     int x,
     int y)
 {
+    return Success;
 }
 
-void
+int
 XDrawPoints(
     Display* display,
     Drawable d,
@@ -553,10 +599,11 @@ XDrawPoints(
     int npoints,
     int mode)
 {
+    return Success;
 }
 */
 
-void
+int
 XWarpPointer(
     Display* display,
     Window src_w,
@@ -568,9 +615,10 @@ XWarpPointer(
     int dest_x,
     int dest_y)
 {
+    return Success;
 }
 
-void
+int
 XQueryColor(
     Display* display,
     Colormap colormap,
@@ -589,9 +637,10 @@ XQueryColor(
     d->blue	= (b << 8) | b;
     d->flags	= DoRed|DoGreen|DoBlue;
     d->pad	= 0;
+    return Success;
 }
 
-void
+int
 XQueryColors(
     Display* display,
     Colormap colormap,
@@ -614,6 +663,7 @@ XQueryColors(
 	d->flags	= DoRed|DoGreen|DoBlue;
 	d->pad		= 0;
     }
+    return Success;
 }
 
 int
@@ -652,14 +702,16 @@ XGetWindowProperty(
     return 0;
 }
 
-void
-XRefreshKeyboardMapping( XMappingEvent* x)
+int
+XRefreshKeyboardMapping(
+    XMappingEvent *x)
 {
     /* used by tkXEvent.c */
     Debugger();
+    return Success;
 }
 
-void
+int
 XSetIconName(
     Display* display,
     Window w,
@@ -669,9 +721,10 @@ XSetIconName(
      * This is a no-op, no icon name for Macs.
      */
     display->request++;
+    return Success;
 }
 
-void
+int
 XForceScreenSaver(
     Display* display,
     int mode)
@@ -683,6 +736,7 @@ XForceScreenSaver(
      */
 
     display->request++;
+    return Success;
 }
 
 void
@@ -696,7 +750,7 @@ Tk_FreeXId(
 int
 XSync(
     Display *display,
-    Bool flag)
+    Bool discard)
 {
     TkMacOSXFlushWindows();
     display->request++;
@@ -718,7 +772,7 @@ XSetClipRectangles(
 
     while (n--) {
 	XRectangle rect = *rectangles;
-	
+
 	rect.x += clip_x_origin;
 	rect.y += clip_y_origin;
 	TkUnionRectWithRegion(&rect, clipRgn, clipRgn);
@@ -755,333 +809,17 @@ TkGetServerInfo(
     Tk_Window tkwin)		/* Token for window; this selects a particular
 				 * display and server. */
 {
-    char buffer[8 + TCL_INTEGER_SPACE * 2];
-    char buffer2[TCL_INTEGER_SPACE];
+    char buffer[5 + TCL_INTEGER_SPACE * 2];
+    char buffer2[11 + TCL_INTEGER_SPACE];
 
-    sprintf(buffer, "QD%dR%x ", ProtocolVersion(Tk_Display(tkwin)),
+    snprintf(buffer, sizeof(buffer), "CG%d.%d ",
+	    ProtocolVersion(Tk_Display(tkwin)),
 	    ProtocolRevision(Tk_Display(tkwin)));
-    sprintf(buffer2, " %x", VendorRelease(Tk_Display(tkwin)));
+    snprintf(buffer2, sizeof(buffer2), " Mac OS X %x",
+	    VendorRelease(Tk_Display(tkwin)));
     Tcl_AppendResult(interp, buffer, ServerVendor(Tk_Display(tkwin)),
 	    buffer2, NULL);
 }
-
-#pragma mark XImage handling
-/*
- *----------------------------------------------------------------------
- *
- * XCreateImage --
- *
- *	Allocates storage for a new XImage.
- *
- * Results:
- *	Returns a newly allocated XImage.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-
-XImage *
-XCreateImage(
-    Display* display,
-    Visual* visual,
-    unsigned int depth,
-    int format,
-    int offset,
-    char* data,
-    unsigned int width,
-    unsigned int height,
-    int bitmap_pad,
-    int bytes_per_line)
-{
-    XImage *ximage;
-
-    display->request++;
-    ximage = (XImage *) ckalloc(sizeof(XImage));
-
-    ximage->height = height;
-    ximage->width = width;
-    ximage->depth = depth;
-    ximage->xoffset = offset;
-    ximage->format = format;
-    ximage->data = data;
-
-    if (format == ZPixmap) {
-	ximage->bits_per_pixel = 32;
-	ximage->bitmap_unit = 32;
-    } else {
-	ximage->bits_per_pixel = 1;
-	ximage->bitmap_unit = 8;
-    }
-    if (bitmap_pad) {
-	ximage->bitmap_pad = bitmap_pad;
-    } else {
-	/* Use 16 byte alignment for best Quartz perfomance */
-	ximage->bitmap_pad = 128;
-    }
-    if (bytes_per_line) {
-	ximage->bytes_per_line = bytes_per_line;
-    } else {
-	ximage->bytes_per_line = ((width * ximage->bits_per_pixel +
-		(ximage->bitmap_pad - 1)) >> 3) &
-		~((ximage->bitmap_pad >> 3) - 1);
-    }
-#ifdef WORDS_BIGENDIAN
-    ximage->byte_order = MSBFirst;
-    ximage->bitmap_bit_order = MSBFirst;
-#else
-    ximage->byte_order = LSBFirst;
-    ximage->bitmap_bit_order = LSBFirst;
-#endif
-    ximage->red_mask = 0x00FF0000;
-    ximage->green_mask = 0x0000FF00;
-    ximage->blue_mask = 0x000000FF;
-    ximage->obdata = NULL;
-    ximage->f.create_image = NULL;
-    ximage->f.destroy_image = DestroyImage;
-    ximage->f.get_pixel = ImageGetPixel;
-    ximage->f.put_pixel = PutPixel;
-    ximage->f.sub_image = NULL;
-    ximage->f.add_pixel = NULL;
-
-    return ximage;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * XGetImage --
- *
- *	This function copies data from a pixmap or window into an XImage.
- *
- * Results:
- *	Returns a newly allocated image containing the data from the given
- *	rectangle of the given drawable.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-
-XImage *
-XGetImage(
-    Display *display,
-    Drawable d,
-    int x,
-    int y,
-    unsigned int width,
-    unsigned int height,
-    unsigned long plane_mask,
-    int format)
-{
-    XImage *   imagePtr = NULL;
-    Pixmap     pixmap = (Pixmap) NULL;
-    Tk_Window  win = (Tk_Window) ((MacDrawable *) d)->winPtr;
-    GC	       gc;
-    int	       depth = 32;
-    int	       offset = 0;
-    int	       bitmap_pad = 32;
-    int	       bytes_per_line = 0;
-
-    if (TkMacOSXGetDrawablePort(d)) {
-	if (format == ZPixmap) {
-	    if (width > 0 && height > 0) {
-		/*
-		 * Tk_GetPixmap fails for zero width or height.
-		 */
-
-		pixmap = Tk_GetPixmap(display, d, width, height, depth);
-	    }
-	    if (win) {
-		XGCValues values;
-
-		gc = Tk_GetGC(win, 0, &values);
-	    } else {
-		gc = XCreateGC(display, pixmap, 0, NULL);
-	    }
-	    if (pixmap) {
-		XCopyArea(display, d, pixmap, gc, x, y, width, height, 0, 0);
-	    }
-	    imagePtr = XCreateImage(display, NULL, depth, format, offset,
-		    (char *) TkMacOSXGetDrawablePort(pixmap),
-		    width, height, bitmap_pad, bytes_per_line);
-
-	    /*
-	     * Track Pixmap underlying the XImage in the unused obdata field
-	     * so that we can treat XImages coming from XGetImage specially.
-	     */
-
-	    imagePtr->obdata = (XPointer) pixmap;
-	    if (!win) {
-		XFreeGC(display, gc);
-	    }
-	} else {
-	    TkpDisplayWarning(
-		    "XGetImage: only ZPixmap types are implemented",
-		    "XGetImage Failure");
-	}
-    }
-    return imagePtr;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * DestroyImage --
- *
- *	Destroys storage associated with an image.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	Deallocates the image.
- *
- *----------------------------------------------------------------------
- */
-
-static int
-DestroyImage(
-    XImage *image)
-{
-    if (image) {
-	if (image->obdata) {
-	    Tk_FreePixmap((Display*) gMacDisplay, (Pixmap) image->obdata);
-	} else if (image->data) {
-	    ckfree(image->data);
-	}
-	ckfree((char*) image);
-    }
-    return 0;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * ImageGetPixel --
- *
- *	Get a single pixel from an image.
- *
- * Results:
- *	Returns the 32 bit pixel value.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-
-static unsigned long
-ImageGetPixel(
-    XImage *image,
-    int x,
-    int y)
-{
-    CGrafPtr destPort, savePort;
-    Boolean portChanged;
-    RGBColor cPix;
-    unsigned long r, g, b, c;
-
-    destPort = (CGrafPtr) image->data;
-    portChanged = QDSwapPort(destPort, &savePort);
-    GetCPixel(x, y, &cPix);
-    if (image->obdata) {
-	/*
-	 * Image from XGetImage, 16 bit color values.
-	 */
-
-	r = (cPix . red) >> 8;
-	g = (cPix . green) >> 8;
-	b = (cPix . blue) >> 8;
-    } else {
-	r = cPix . red;
-	g = cPix . green;
-	b = cPix . blue;
-    }
-    c = (r<<16)|(g<<8)|(b);
-    if (portChanged) {
-	QDSwapPort(savePort, NULL);
-    }
-    return c;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * PutPixel --
- *
- *	Set a single pixel in an image.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-
-static int
-PutPixel(
-    XImage *image,
-    int x,
-    int y,
-    unsigned long pixel)
-{
-    CGrafPtr destPort, savePort;
-    Boolean portChanged;
-    RGBColor cPix;
-    unsigned long r, g, b;
-
-    destPort = (CGrafPtr)image->data;
-    portChanged = QDSwapPort(destPort, &savePort);
-    r = (pixel & image->red_mask)>>16;
-    g = (pixel & image->green_mask)>>8;
-    b = (pixel & image->blue_mask);
-    if (image->obdata) {
-	/*
-	 * Image from XGetImage, 16 bit color values.
-	 */
-
-	cPix.red = r << 8;
-	cPix.green = g << 8;
-	cPix.blue = b << 8;
-    } else {
-	cPix.red = r;
-	cPix.green = g;
-	cPix.blue = b;
-    }
-    SetCPixel(x, y, &cPix);
-    if (portChanged) {
-	QDSwapPort(savePort, NULL);
-    }
-    return 0;
-}
-
-#if 0
-static XImage *
-SubImage(
-    XImage *image,
-    int x,
-    int y,
-    unsigned int width,
-    unsigned int height)
-{
-    Debugger();
-    return NULL;
-}
-
-static int
-AddPixel(
-    XImage *image,
-    long value)
-{
-    Debugger();
-    return 0;
-}
-#endif
 
 /*
  *----------------------------------------------------------------------
@@ -1102,89 +840,158 @@ AddPixel(
  *----------------------------------------------------------------------
  */
 
-void
+int
 XChangeWindowAttributes(
-    Display* display,
+    Display *display,
     Window w,
     unsigned long value_mask,
-    XSetWindowAttributes* attributes)
+    XSetWindowAttributes *attributes)
 {
+    return Success;
 }
 
-void
+int
 XSetWindowBackground(
-	Display *display,
-	Window window,
-	unsigned long value)
+    Display *display,
+    Window window,
+    unsigned long value)
 {
+    return Success;
 }
 
-void
+int
 XSetWindowBackgroundPixmap(
-    Display* display,
+    Display *display,
     Window w,
     Pixmap background_pixmap)
 {
+    return Success;
 }
 
-void
+int
 XSetWindowBorder(
-    Display* display,
+    Display *display,
     Window w,
     unsigned long border_pixel)
 {
+    return Success;
 }
 
-void
+int
 XSetWindowBorderPixmap(
-    Display* display,
+    Display *display,
     Window w,
     Pixmap border_pixmap)
 {
+    return Success;
 }
 
-void
+int
 XSetWindowBorderWidth(
-    Display* display,
+    Display *display,
     Window w,
     unsigned int width)
 {
+    return Success;
 }
 
-void
+int
 XSetWindowColormap(
-    Display* display,
+    Display *display,
     Window w,
     Colormap colormap)
 {
     Debugger();
+    return Success;
 }
 
 Status
 XStringListToTextProperty(
-    char** list,
+    char **list,
     int count,
-    XTextProperty* text_prop_return)
+    XTextProperty *text_prop_return)
 {
     Debugger();
     return (Status) 0;
 }
+
 void
 XSetWMClientMachine(
-    Display* display,
+    Display *display,
     Window w,
-    XTextProperty* text_prop)
+    XTextProperty *text_prop)
 {
     Debugger();
 }
+
 XIC
-XCreateIC(
-    void)
+XCreateIC(XIM xim, ...)
 {
     Debugger();
     return (XIC) 0;
 }
 
+#undef XVisualIDFromVisual
+VisualID
+XVisualIDFromVisual(
+    Visual *visual)
+{
+    return visual->visualid;
+}
+
+#undef XSynchronize
+XAfterFunction
+XSynchronize(
+    Display *display,
+    Bool onoff)
+{
+	display->request++;
+    return NULL;
+}
+
+#undef XUngrabServer
+int
+XUngrabServer(
+    Display *display)
+{
+    return 0;
+}
+
+#undef XNoOp
+int
+XNoOp(
+    Display *display)
+{
+	display->request++;
+    return 0;
+}
+
+#undef XGrabServer
+int
+XGrabServer(
+    Display *display)
+{
+    return 0;
+}
+
+#undef XFree
+int
+XFree(
+    void *data)
+{
+	if ((data) != NULL) {
+		ckfree(data);
+	}
+    return 0;
+}
+#undef XFlush
+int
+XFlush(
+    Display *display)
+{
+    return 0;
+}
+
 /*
  *----------------------------------------------------------------------
  *
@@ -1202,18 +1009,15 @@ XCreateIC(
  *----------------------------------------------------------------------
  */
 
-CONST char *
+const char *
 TkGetDefaultScreenName(
     Tcl_Interp *interp,		/* Not used. */
-    CONST char *screenName)		/* If NULL, use default string. */
+    const char *screenName)		/* If NULL, use default string. */
 {
-#if 0
     if ((screenName == NULL) || (screenName[0] == '\0')) {
 	screenName = macScreenName;
     }
     return screenName;
-#endif
-    return macScreenName;
 }
 
 /*
@@ -1261,26 +1065,22 @@ Tk_GetUserInactiveTime(
     timeObj = CFDictionaryGetValue(props, CFSTR("HIDIdleTime"));
 
     if (timeObj) {
-	CFTypeID type = CFGetTypeID(timeObj);
-
-	if (type == CFDataGetTypeID()) { /* Jaguar */
-	    CFDataGetBytes((CFDataRef) timeObj,
-		    CFRangeMake(0, sizeof(time)), (UInt8 *) &time);
-	    /* Convert nanoseconds to milliseconds. */
-	    /* ret /= kMillisecondScale; */
-	    ret = (long) (time/kMillisecondScale);
-	} else if (type == CFNumberGetTypeID()) { /* Panther+ */
 	    CFNumberGetValue((CFNumberRef)timeObj,
 		    kCFNumberSInt64Type, &time);
 	    /* Convert nanoseconds to milliseconds. */
-	    /* ret /= kMillisecondScale; */
 	    ret = (long) (time/kMillisecondScale);
-	} else {
-	    ret = -1l;
-	}
     }
     /* Cleanup */
     CFRelease(props);
+
+    /*
+     * If the idle time reported by the system is larger than the elapsed
+     * time since the last reset, return the elapsed time.
+     */
+    long elapsed = (long)(TkpGetMS() - lastInactivityReset);
+    if (ret > elapsed) {
+    	ret = elapsed;
+    }
 
     return ret;
 }
@@ -1306,5 +1106,14 @@ void
 Tk_ResetUserInactiveTime(
     Display *dpy)
 {
-    UpdateSystemActivity(UsrActivity);
+    lastInactivityReset = TkpGetMS();
 }
+
+/*
+ * Local Variables:
+ * mode: objc
+ * c-basic-offset: 4
+ * fill-column: 79
+ * coding: utf-8
+ * End:
+ */

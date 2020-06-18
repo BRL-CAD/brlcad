@@ -8,8 +8,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #ifndef _TKWIN
@@ -18,16 +16,16 @@
 /*
  * We must specify the lower version we intend to support. In particular
  * the SystemParametersInfo API doesn't like to receive structures that
- * are larger than it expects which affects the font assignements.
+ * are larger than it expects which affects the font assignments.
  *
- * WINVER = 0x0410 means Windows 98 and above
+ * WINVER = 0x0500 means Windows 2000 and above
  */
 
 #ifndef WINVER
-#define WINVER 0x0410
+#define WINVER 0x0500
 #endif
-#ifndef _WIN32_WINDOWS
-#define _WIN32_WINDOWS 0x0410
+#ifndef _WIN32_WINNT
+#define _WIN32_WINNT 0x0500
 #endif
 
 #ifndef _TK
@@ -38,16 +36,11 @@
 #include <windows.h>
 #undef WIN32_LEAN_AND_MEAN
 
-#ifdef BUILD_tk
-# undef TCL_STORAGE_CLASS
-# define TCL_STORAGE_CLASS DLLEXPORT
-#endif
-
 /*
  * The following messages are used to communicate between a Tk toplevel
- * and its container window. A Tk container may not be able to provide 
- * service to all of the following requests at the moment. But an embedded 
- * Tk window will send out these requests to support external Tk container 
+ * and its container window. A Tk container may not be able to provide
+ * service to all of the following requests at the moment. But an embedded
+ * Tk window will send out these requests to support external Tk container
  * application.
  */
 
@@ -68,7 +61,7 @@
 
 /*
  * The following are sub-messages (wParam) for TK_INFO.  An embedded window may
- * send a TK_INFO message with one of the sub-messages to query a container 
+ * send a TK_INFO message with one of the sub-messages to query a container
  * for verification and availability
  */
 #define TK_CONTAINER_VERIFY	    0x01
@@ -84,8 +77,5 @@
  */
 
 #include "tkPlatDecls.h"
-
-# undef TCL_STORAGE_CLASS
-# define TCL_STORAGE_CLASS DLLIMPORT
 
 #endif /* _TKWIN */

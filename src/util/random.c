@@ -1,7 +1,7 @@
 /*                        R A N D O M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,8 +32,9 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/getopt.h"
-#include "bu/parallel.h"
+#include "bu/process.h"
 #include "bu/log.h"
 #include "bn.h"
 
@@ -59,6 +60,8 @@ main(int argc, char *argv[])
     int uniform = 0;
     int cdone = 0;
     int c;
+
+    bu_setprogname(argv[0]);
 
     while ((c = bu_getopt(argc, argv, "vugs:c:h?")) != -1) {
 	switch (c) {

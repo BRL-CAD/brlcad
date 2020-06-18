@@ -1,7 +1,7 @@
 /*                       V L S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2016 United States Government as represented by
+ * Copyright (c) 1985-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@
 
 #include "bu.h"
 
-#include "./vls_vprintf.h"
+#include "../vls_vprintf.h"
 
 
 /* This prints out the values of the expected vls and compares it with
@@ -674,12 +674,14 @@ test_bu_vls_substr(int argc, char **argv)
 
 
 int
-vls_main(int argc, char *argv[])
+main(int argc, char *argv[])
 {
     int function_num = 0;
 
+    bu_setprogname(argv[0]);
+
     if (argc < 2) {
-	bu_exit(1, "ERROR: input format is function_num function_test_args [%s]\n", argv[0]);
+	bu_exit(1, "Usage: %s {function_num} {args...}\n", argv[0]);
     }
 
     sscanf(argv[1], "%d", &function_num);
@@ -734,6 +736,7 @@ vls_main(int argc, char *argv[])
     }
 
     bu_log("ERROR: function_num %d is not valid [%s]\n", function_num, argv[0]);
+
     return 1;
 }
 

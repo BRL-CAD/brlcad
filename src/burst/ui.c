@@ -1,7 +1,7 @@
 /*                            U I . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,14 +22,15 @@
  *
  */
 
+
 #include "common.h"
 
 #include <assert.h>
-#include <stdio.h>
 #include <signal.h>
-#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+
+#include "bio.h"
 
 #include "vmath.h"
 #include "raytrace.h"
@@ -37,17 +38,19 @@
 #include "./Sc.h"
 #include "./Mm.h"
 #include "./burst.h"
-#include "./trie.h"
-#include "./ascii.h"
 #include "./extern.h"
+#include "./ascii.h"
 
 
 #define DEBUG_UI 0
 
-static char promptbuf[LNBUFSZ];
-#ifdef HAVE_TERMLIB
-static const char *bannerp = "BURST (2.2)";
+
+#if defined(__GNUC__) && __GNUC__ >= 7 && !defined(__clang__) && !defined(__INTEL_COMPILER)
+#  pragma GCC diagnostic ignored "-Wformat-truncation"
 #endif
+
+
+static char promptbuf[LNBUFSZ];
 
 #define AddCmd(nm, f) \
 	{ \
@@ -142,15 +145,14 @@ static void MreadCmdFile();
 static void MshotlineFile();
 static void Munits();
 static void MwriteCmdFile();
+static void Mhelp();
+static void Mquit();
 
 /* local utility functions */
 static HmMenu *addMenu();
 static int getInput();
 static int unitStrToInt();
 static void addItem();
-#ifdef HAVE_TERMLIB
-static void banner();
-#endif
 
 typedef struct ftable Ftable;
 struct ftable
@@ -373,6 +375,10 @@ Ftable mainmenu[] =
     { "preferences",
       "options for tailoring behavior of user interface",
       prefmenu, 0 },
+    { "help",
+      "get a list of available commands", 0, Mhelp },
+    { "quit",
+      "stop reading commands, exit the application", 0, Mquit },
     { NULL, NULL, 0, NULL },
 };
 
@@ -420,22 +426,6 @@ addMenu(Ftable *tp)
     }
     return menup;
 }
-
-#ifdef HAVE_TERMLIB
-/*
-  void banner(void)
-
-  Display program name and version on one line with BORDER_CHRs
-  to border the top of the scrolling region.
-*/
-static void
-banner()
-{
-    (void) snprintf(scrbuf, LNBUFSZ, "%s", bannerp);
-    HmBanner(scrbuf, BORDER_CHR);
-    return;
-}
-#endif
 
 void
 closeUi()
@@ -513,24 +503,6 @@ initMenus(Ftable *tp)
 int
 initUi()
 {
-#ifdef HAVE_TERMLIB
-    if (tty) {
-	if (! ScInit(stdout))
-	    return 0;
-	if (ScSetScrlReg(SCROLL_TOP, SCROLL_BTM))
-	    (void) ScClrScrlReg();
-	else
-	    if (ScDL == NULL) {
-		prntScr(
-		    "This terminal has no scroll region or delete line capability."
-		    );
-		return 0;
-	    }
-	(void) ScClrText();	/* wipe screen */
-	HmInit(MENU_LFT, MENU_TOP, MENU_MAXVISITEMS);
-	banner();
-    }
-#endif
     initMenus(mainmenu);
     initCmds(mainmenu);
     return 1;
@@ -787,6 +759,24 @@ Mcomment(HmItem *UNUSED(itemp))
 
 /*ARGSUSED*/
 static void
+Mhelp(HmItem *UNUSED(itemp))
+{
+    brst_log("\nAvailable Commands"
+	     "\n------------------\n");
+    prntTrie(cmdtrie, 0);
+}
+
+
+/*ARGSUSED*/
+static void
+Mquit(HmItem *UNUSED(itemp))
+{
+    bu_exit(EXIT_SUCCESS, "Quitting application.\n");
+}
+
+
+/*ARGSUSED*/
+static void
 MconeHalfAngle(HmItem *itemp)
 {
     static Input input[] = {
@@ -932,15 +922,8 @@ MerrorFile(HmItem *itemp)
 	locPerror(errfile);
 	return;
     }
-
-/* TODO: we need a copy of stderr on non-termlib platforms or this doesn't work */
-#ifdef HAVE_TERMLIB
-    close(2);
-    if (fcntl(errfd, F_DUPFD, 2) == -1) {
-	locPerror("fcntl");
-	return;
-    }
-#endif
+    /* TODO: we need a copy of stderr on non-termlib platforms or this doesn't
+     * work. Note: is this still true after termlib support removal?? */
     (void) snprintf(scrbuf, LNBUFSZ, "%s\t\t%s",
 		    itemp != NULL ? itemp->text : cmdname,
 		    errfile);

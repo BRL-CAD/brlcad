@@ -1,62 +1,70 @@
+# Values set at CMake configure time
 set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
 set(INPUTFILE "@INPUT_FILE@")
 set(CTRLIMG "@CONTROL_IMAGE@")
 set(TGTIMG "@TARGET_IMAGE@")
+set(BIN_DIR "@BIN_DIR@")
 set(LOGFILE "@LOG_FILE@")
-set(TGTNAME "@TARGET_NAME@")
 
-set(SBDIR "@CMAKE_RUNTIME_OUTPUT_DIRECTORY@")
-set(DBDIR "@CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG@")
-set(RBDIR "@CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE@")
-# Use the mechanism created to allow multiconfig builds to
-# know what the current build type is.
-if(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
-  set(BDIR "${RBDIR}")
-  set(test_suffix "-Release")
-elseif(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Debug")
-  set(BDIR "${DBDIR}")
-  set(test_suffix "-Debug")
-else(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
-  set(BDIR "${SBDIR}")
-  set(test_suffix "")
-endif(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
+file(WRITE "${LOGFILE}" "Starting rtwizard run\n")
 
-get_filename_component(EXE "@CMAKE_COMMAND@" EXT)
-set(RWIZ "${BDIR}/rtwizard${EXE}")
-set(PIXCMP "${BDIR}/pixcmp${EXE}")
+# The executable locations aren't know at CMake configure time, so one of them
+# is passed in via the EXEC variable at runtime.  De-quote it and assign it to
+# the appropriate variable.
+string(REPLACE "\\" "" RTWIZ "${EXEC}")
+if (NOT EXISTS "${RTWIZ}")
+  file(WRITE "${LOGFILE}" "rtwizard not found at location \"${RTWIZ}\" - aborting\n")
+  message(FATAL_ERROR "Unable to find rtwizard, aborting.\nSee ${LOGFILE} for more details.")
+endif (NOT EXISTS "${RTWIZ}")
 
-# Now that we know where the binary directory is, set the .g input path
-set(SRCFILE "${BDIR}/../${INPUTFILE}")
+# Apparently CMAKE_EXECUTABLE_SUFFIX is not reliably defined in cmake -P - get
+# it from the executable passed in to us.
+get_filename_component(EXE_SUFFIX "${RTWIZ}" EXT)
+
+# Use the path passed in from the build target generator expression
+# to ascertain the current binary directory in use, and locate any
+# other necessary programs.
+get_filename_component(BDIR "${RTWIZ}" DIRECTORY)
+set(PIXCMP_EXEC "${BDIR}/pixcmp${EXE_SUFFIX}")
+if (NOT EXISTS "${PIXCMP_EXEC}")
+  file(WRITE "${LOGFILE}" "pixcmp not found at location \"${PIXCMP_EXEC}\" - aborting\n")
+  message(FATAL_ERROR "Unable to find pixcmp, aborting.\nSee ${LOGFILE} for more details.")
+endif (NOT EXISTS "${PIXCMP_EXEC}")
+
+# Reconstruct the tree root from the EXEC path, and identify the input file location
+string(REGEX REPLACE "${BIN_DIR}$" "" RDIR "${BDIR}")
+set(SRCFILE "${RDIR}/${INPUTFILE}")
 
 # Clean up in case we've run before
-execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${TGTIMG}")
+execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "${TGTIMG}")
 
 # Start with the file using standard UNIX line endings
 file(APPEND "${LOGFILE}" "Generating ${TGTIMG}:\n")
 execute_process(
-  COMMAND "${RWIZ}" --no-gui -i "${SRCFILE}" -o "${TGTIMG}" @OPTIONS@
-  OUTPUT_VARIABLE rtwiz_log ERROR_VARIABLE rtwiz_log
+  COMMAND "${RTWIZ}" --no-gui -i "${SRCFILE}" -o "${TGTIMG}" @OPTIONS@
+  RESULT_VARIABLE rtwiz_result OUTPUT_VARIABLE rtwiz_log ERROR_VARIABLE rtwiz_log
   )
 file(APPEND "${LOGFILE}" "${rtwiz_log}")
 set(rtwiz_log)
 if(NOT EXISTS "${TGTIMG}")
-  message(FATAL_ERROR "Unable to generate ${TGTIMG} with ${RWIZ}, aborting.\nSee ${LOGFILE} for more details.")
+  file(APPEND "${LOGFILE}" "Failure: ${rtwiz_result}")
+  message(FATAL_ERROR "Unable to generate ${TGTIMG} with ${RTWIZ}, aborting.\nSee ${LOGFILE} for more details.")
 endif(NOT EXISTS "${TGTIMG}")
 
 # pixcmp the results with the control image to make sure rtwiz got it right
 file(APPEND "${LOGFILE}" "\nComparing ${TGTIMG} to ${CTRLIMG}:\n")
 execute_process(
-  COMMAND "${PIXCMP}" "${TGTIMG}" "${CTRLIMG}"
-  RESULT_VARIABLE pixcmp_val OUTPUT_VARIABLE rtwiz_log ERROR_VARIABLE rtwiz_log
+  COMMAND "${PIXCMP_EXEC}" "${TGTIMG}" "${CTRLIMG}"
+  RESULT_VARIABLE pixcmp_result OUTPUT_VARIABLE rtwiz_log ERROR_VARIABLE rtwiz_log
   )
 file(APPEND "${LOGFILE}" "${rtwiz_log}")
 
-if(${pixcmp_val} GREATER 0)
-  message(FATAL_ERROR "Differences found between ${TGTIMG} and ${CTRLIMG} with ${PIXCMP}, aborting.\nSee ${LOGFILE} for more details.")
-else(${pixcmp_val} GREATER 0)
-  execute_process(COMMAND "@CMAKE_COMMAND@" -E remove ${TGTIMG})
-  execute_process(COMMAND "@CMAKE_COMMAND@" -E touch "@CMAKE_CURRENT_BINARY_DIR@/${TGTNAME}${test_suffix}.done")
-endif(${pixcmp_val} GREATER 0)
+if(pixcmp_result)
+  file(APPEND "${LOGFILE}" "Failure: ${pixcmp_result}")
+  message(FATAL_ERROR "Differences found between ${TGTIMG} and ${CTRLIMG} with ${PIXCMP_EXEC}, aborting.\nSee ${LOGFILE} for more details.")
+endif(pixcmp_result)
+
+execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f ${TGTIMG})
 
 # Local Variables:
 # tab-width: 8

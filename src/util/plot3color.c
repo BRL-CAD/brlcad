@@ -1,7 +1,7 @@
 /*                    P L O T 3 C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2016 United States Government as represented by
+ * Copyright (c) 1986-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/exit.h"
 #include "vmath.h"
 #include "bn/plot3.h"
@@ -40,6 +41,8 @@ main(int argc, char **argv)
 {
     int c;
     int r, g, b;
+
+    bu_setprogname(argv[0]);
 
     if (argc != 4 || isatty(fileno(stdout))) {
 	bu_exit(1, "%s", usage);

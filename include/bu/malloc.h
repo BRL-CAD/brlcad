@@ -1,7 +1,7 @@
 /*                     M A L L O C . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -45,8 +45,32 @@ __BEGIN_DECLS
 /** @{ */
 /** @file bu/malloc.h */
 
-BU_EXPORT extern long bu_n_malloc;
-BU_EXPORT extern long bu_n_realloc;
+BU_EXPORT extern size_t bu_n_malloc;
+BU_EXPORT extern size_t bu_n_realloc;
+BU_EXPORT extern size_t bu_n_free;
+
+
+/**
+ * Compilation constant for a page of memory.
+ *
+ * This is basically intended to be the minimum size for a contiguous
+ * block of virtual memory that hopefully, but not necessarily, aligns
+ * with or is a smaller evenly divisible fraction of the operating
+ * system's virtual memory page size.  We could look page size up at
+ * runtime but the primary purpose of this define is to help routines
+ * using static memory buffers for processing pick a fixed array size.
+ */
+#ifndef BU_PAGE_SIZE
+#  include <limits.h>
+#  if defined(PAGE_SIZE)
+     /* use the system page size if handy */
+#    define BU_PAGE_SIZE PAGE_SIZE
+#  else
+     /* common enough default */
+#    define BU_PAGE_SIZE 4096
+#  endif
+#endif /* BU_PAGE_SIZE */
+
 
 /**
  * This routine only returns on successful allocation.  We promise
@@ -54,7 +78,7 @@ BU_EXPORT extern long bu_n_realloc;
  * Allocation failure results in bu_bomb() being called.
  */
 BU_EXPORT extern void *bu_malloc(size_t siz,
-				    const char *str);
+				 const char *str);
 
 /**
  * This routine only returns on successful allocation.
@@ -62,8 +86,8 @@ BU_EXPORT extern void *bu_malloc(size_t siz,
  * Failure results in bu_bomb() being called.
  */
 BU_EXPORT extern void *bu_calloc(size_t nelem,
-				    size_t elsize,
-				    const char *str);
+				 size_t elsize,
+				 const char *str);
 
 BU_EXPORT extern void bu_free(void *ptr,
 			      const char *str);
@@ -81,13 +105,8 @@ BU_EXPORT extern void bu_free(void *ptr,
  * tracked back to its original creator.
  */
 BU_EXPORT extern void *bu_realloc(void *ptr,
-				     size_t siz,
-				     const char *str);
-
-/**
- * Print map of memory currently in use.
- */
-BU_EXPORT extern void bu_prmem(const char *str);
+				  size_t siz,
+				  const char *str);
 
 /**
  * On systems with the CalTech malloc(), the amount of storage
@@ -105,32 +124,6 @@ BU_EXPORT extern void bu_prmem(const char *str);
  * unused memory will be consumed.
  */
 BU_EXPORT extern int bu_malloc_len_roundup(int nbytes);
-
-/**
- * For a given pointer allocated by bu_malloc(), bu_calloc(), or
- * BU_ALLOC() check the magic number stored after the allocation area
- * when BU_DEBUG_MEM_CHECK is set.
- *
- * This is the individual version of bu_mem_barriercheck().
- *
- * returns if pointer good or BU_DEBUG_MEM_CHECK not set, bombs if
- * memory is corrupted.
- */
-BU_EXPORT extern void bu_ck_malloc_ptr(void *ptr, const char *str);
-
-/**
- * Check *all* entries in the memory debug table for barrier word
- * corruption.  Intended to be called periodically through an
- * application during debugging.  Has to run single-threaded, to
- * prevent table mutation.
- *
- * This is the bulk version of bu_ck_malloc_ptr()
- *
- * Returns -
- *  -1	something is wrong
- *   0	all is OK;
- */
-BU_EXPORT extern int bu_mem_barriercheck(void);
 
 /**
  * really fast heap-based memory allocation intended for "small"
@@ -243,8 +236,16 @@ BU_EXPORT extern int bu_shmget(int *shmid, char **shared_memory, int key, size_t
  */
 #define BU_FREE(_ptr, _type) do { bu_free(_ptr, #_type " (BU_FREE) " CPP_FILELINE); _ptr = (_type *)NULL; } while (0)
 
-
 /** @} */
+
+/* DEPRECATED */
+BU_EXPORT extern void bu_prmem(const char *str);
+
+/* DEPRECATED: use valgrind/memcheck, SGcheck */
+BU_EXPORT extern void bu_ck_malloc_ptr(void *ptr, const char *str);
+
+/* DEPRECATED: use valgrind/memcheck, SGcheck */
+BU_EXPORT extern int bu_mem_barriercheck(void);
 
 __END_DECLS
 

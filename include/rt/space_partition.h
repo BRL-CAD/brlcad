@@ -1,7 +1,7 @@
 /*                 S P A C E _ P A R T I T I O N . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -63,30 +63,15 @@ struct boxnode {
     size_t              bn_maxpiecelen; /**< @brief # of piecelists allocated */
 };
 
-struct nu_axis {
-    fastf_t     nu_spos;        /**< @brief cell start position */
-    fastf_t     nu_epos;        /**< @brief cell end position */
-    fastf_t     nu_width;       /**< @brief voxel size (end - start) */
-};
-
-struct nugridnode {
-    int nu_type;
-    struct nu_axis *nu_axis[3];
-    int nu_cells_per_axis[3];   /**< @brief number of slabs */
-    int nu_stepsize[3];         /**< @brief number of cells to jump for one step in each axis */
-    union cutter *nu_grid;      /**< @brief 3-D array of boxnodes */
-};
 
 #define CUT_CUTNODE     1
 #define CUT_BOXNODE     2
-#define CUT_NUGRIDNODE  3
-#define CUT_MAXIMUM     3
+#define CUT_MAXIMUM     2
 union cutter {
     int cut_type;
     union cutter *cut_forw;     /**< @brief Freelist forward link */
     struct cutnode cn;
     struct boxnode bn;
-    struct nugridnode nugn;
 };
 
 
@@ -98,22 +83,22 @@ union cutter {
  * lvl is recursion level.
  */
 RT_EXPORT extern void rt_pr_cut(const union cutter *cutp,
-	                                int lvl);
+				int lvl);
 
 struct rt_i;     /*forward declaration */
 struct resource; /*forward declaration */
 struct soltab;   /*forward declaration */
 RT_EXPORT extern void rt_pr_cut_info(const struct rt_i  *rtip,
-                                     const char         *str);
+				     const char         *str);
 RT_EXPORT extern void remove_from_bsp(struct soltab *stp,
-                                      union cutter *cutp,
-                                      struct bn_tol *tol);
+				      union cutter *cutp,
+				      struct bn_tol *tol);
 RT_EXPORT extern void insert_in_bsp(struct soltab *stp,
-                                    union cutter *cutp);
+				    union cutter *cutp);
 RT_EXPORT extern void fill_out_bsp(struct rt_i *rtip,
-                                   union cutter *cutp,
-                                   struct resource *resp,
-                                   fastf_t bb[6]);
+				   union cutter *cutp,
+				   struct resource *resp,
+				   fastf_t bb[6]);
 
 struct bvh_build_node; /*forward declaration */
 RT_EXPORT extern struct bvh_build_node *
@@ -130,8 +115,8 @@ hlbvh_create(long max_prims_in_node, struct bu_pool *pool, const fastf_t *centro
  * Solids with pieces go onto a special list.
  */
 RT_EXPORT extern void rt_cut_extend(union cutter *cutp,
-                                    struct soltab *stp,
-                                    const struct rt_i *rtip);
+				    struct soltab *stp,
+				    const struct rt_i *rtip);
 
 /**
  * Return pointer to cell 'n' along a given ray.  Used for debugging
@@ -139,7 +124,7 @@ RT_EXPORT extern void rt_cut_extend(union cutter *cutp,
  * mirror the operation of rt_shootray().  The first cell is 0.
  */
 RT_EXPORT extern const union cutter *rt_cell_n_on_ray(struct application *ap,
-                                                      int n);
+						      int n);
 /*
  * The rtip->rti_CutFree list can not be freed directly because is
  * bulk allocated.  Fortunately, we have a list of all the
@@ -157,8 +142,8 @@ struct clt_bvh_bounds {
 struct clt_linear_bvh_node {
     struct clt_bvh_bounds bounds;
     union {
-        cl_int primitives_offset;	/* leaf */
-        cl_int second_child_offset;	/* interior */
+	cl_int primitives_offset;	/* leaf */
+	cl_int second_child_offset;	/* interior */
     } u;
     cl_ushort n_primitives;		/* 0 -> interior node */
     cl_uchar axis;			/* interior node: xyz */

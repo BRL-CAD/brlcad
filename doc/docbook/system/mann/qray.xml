@@ -157,7 +157,7 @@ printed. The <emphasis>qray</emphasis> command accepts the following subcommands
 
   <para>
     Reports of bugs or problems should be submitted via electronic
-    mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
+    mail to <email>devs@brlcad.org</email>
   </para>
 </refsection>
 </refentry>

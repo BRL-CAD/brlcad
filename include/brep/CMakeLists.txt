@@ -3,6 +3,7 @@ set(brep_headers
   bbnode.h
   boolean.h
   brnode.h
+  cdt.h
   csg.h
   curvetree.h
   intersect.h
@@ -11,10 +12,10 @@ set(brep_headers
   surfacetree.h
   util.h
   )
+BRLCAD_MANAGE_FILES(brep_headers ${INCLUDE_DIR}/brlcad/brep)
 
-install(FILES ${brep_headers} DESTINATION ${INCLUDE_DIR}/brlcad/brep)
-
-CMAKEFILES(${brep_headers})
+CMAKEFILES(CMakeLists.txt)
+CMAKEFILES(cdt2.h)
 
 # Local Variables:
 # tab-width: 8

@@ -2,7 +2,7 @@
 #                   F L A W F I N D E R . S H
 # BRL-CAD
 #
-# Copyright (c) 2010-2016 United States Government as represented by
+# Copyright (c) 2010-2020 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -35,43 +35,42 @@
 #
 ###
 
-TOPSRC="$1"
-if test "x$TOPSRC" = "x" ; then
-    TOPSRC="."
+# Ensure /bin/sh
+export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
+
+# source common library functionality, setting ARGS, NAME_OF_THIS,
+# PATH_TO_THIS, and THIS.
+. "$1/regress/library.sh"
+
+if test "x$LOGFILE" = "x" ; then
+    LOGFILE=`pwd`/flawfinder.log
+    rm -f $LOGFILE
 fi
-if test ! -f "$TOPSRC/misc/flawfinder" ; then
-    echo "Unable to find flawfinder in misc directory, aborting"
+log "=== TESTING flawfinder ==="
+
+if test ! -f "$PATH_TO_THIS/../misc/flawfinder" ; then
+    log "Unable to find flawfinder in misc directory, aborting"
     exit 1
 fi
 
-HAVE_PYTHON=no
-if test "x`env python -V 2>&1 | awk '{print $1}'`" = "xPython" ; then
-    HAVE_PYTHON=yes
+if test "x`env python -V 2>&1 | awk '{print $1}'`" != "xPython" ; then
+    log "No python available, skipping"
+    exit 0
 fi
 
-if test "x$HAVE_PYTHON" = "xyes" ; then
+SRCFILES="`find src -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.cc -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -not -regex '.*src/libbu/realpath_bsd.c.*'`"
+run ${PATH_TO_THIS}/../misc/flawfinder --context --followdotdir --minlevel=5 --singleline --neverignore --falsepositive --quiet ${SRCFILES} | grep -v running
 
-    echo "running flawfinder..."
+NUMBER_WRONG=0
+if test "x`grep \"No hits found.\" $LOGFILE`" = "x" ; then
+    NUMBER_WRONG="`grep \"Hits = \" $LOGFILE | awk '{print $3}'`"
+fi
 
-    rm -f flawfinder.log
-    ${TOPSRC}/misc/flawfinder --followdotdir --minlevel=5 --singleline --neverignore --falsepositive --quiet ${TOPSRC}/src/[^o]* > flawfinder.log 2>&1
-
-    NUMBER_WRONG=0
-    if test "x`grep \"No hits found.\" flawfinder.log`" = "x" ; then
-	NUMBER_WRONG="`grep \"Hits = \" flawfinder.log | awk '{print $3}'`"
-    fi
-
-    if test "x$NUMBER_WRONG" = "x0" ; then
-	echo "-> flawfinder.sh succeeded"
-    else
-	if test -f flawfinder.log ; then
-	    cat flawfinder.log
-	fi
-	echo "-> flawfinder.sh FAILED"
-    fi
-
-fi # HAVE_PYTHON
-
+if test "x$NUMBER_WRONG" = "x0" ; then
+    log "-> flawfinder.sh succeeded"
+else
+    log "-> flawfinder.sh FAILED, see $LOGFILE"
+fi
 
 exit $NUMBER_WRONG
 

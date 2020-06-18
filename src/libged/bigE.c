@@ -1,7 +1,7 @@
 /*                          B I G E . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2016 United States Government as represented by
+ * Copyright (c) 1997-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -998,31 +998,6 @@ eval_etree(union E_tree *eptr,
 }
 
 
-HIDDEN void
-inverse_dir(vect_t dir, vect_t inv_dir)
-{
-    /* Compute the inverse of the direction cosines */
-    if (!ZERO(dir[X])) {
-	inv_dir[X]=1.0/dir[X];
-    } else {
-	inv_dir[X] = INFINITY;
-	dir[X] = 0.0;
-    }
-    if (!ZERO(dir[Y])) {
-	inv_dir[Y]=1.0/dir[Y];
-    } else {
-	inv_dir[Y] = INFINITY;
-	dir[Y] = 0.0;
-    }
-    if (!ZERO(dir[Z])) {
-	inv_dir[Z]=1.0/dir[Z];
-    } else {
-	inv_dir[Z] = INFINITY;
-	dir[Z] = 0.0;
-    }
-}
-
-
 HIDDEN struct soltab *
 classify_seg(struct seg *segp, struct soltab *shoot, struct xray *rp, struct _ged_client_data *dgcdp)
 {
@@ -1043,7 +1018,8 @@ classify_seg(struct seg *segp, struct soltab *shoot, struct xray *rp, struct _ge
 #endif
 
     bn_vec_ortho(new_rp.r_dir, rp->r_dir);
-    inverse_dir(new_rp.r_dir, rd.rd_invdir);
+    /* Compute the inverse of the direction cosines */
+    VINVDIR(rd.rd_invdir, new_rp.r_dir);
 
     /* set up "ray_data" structure for nmg raytrace */
     rd.rp = &new_rp;
@@ -1080,7 +1056,9 @@ classify_seg(struct seg *segp, struct soltab *shoot, struct xray *rp, struct _ge
 
 	VCROSS(new_dir, new_rp.r_dir, rp->r_dir);
 	VMOVE(new_rp.r_dir, new_dir);
-	inverse_dir(new_rp.r_dir, rd.rd_invdir);
+	/* Compute the inverse of the direction cosines */
+	VINVDIR(rd.rd_invdir, new_rp.r_dir);
+
 	if (OBJ[shoot->st_id].ft_shot && OBJ[shoot->st_id].ft_shot(shoot, &new_rp, dgcdp->ap, rd.seghead)) {
 	    struct seg *seg;
 
@@ -1129,9 +1107,6 @@ shoot_and_plot(point_t start_pt,
     size_t shoot_leaf;
     struct bu_list *final_segs;
 
-    if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
-	bu_log("Error at start of shoot_and_plot()\n");
-
     CK_ETREE(eptr);
 
     memset(&rd, 0, sizeof(struct ray_data));
@@ -1142,24 +1117,7 @@ shoot_and_plot(point_t start_pt,
     VMOVE(rp.r_pt, start_pt);
     VMOVE(rp.r_dir, dir);
     /* Compute the inverse of the direction cosines */
-    if (!ZERO(rp.r_dir[X])) {
-	rd.rd_invdir[X]=1.0/rp.r_dir[X];
-    } else {
-	rd.rd_invdir[X] = INFINITY;
-	rp.r_dir[X] = 0.0;
-    }
-    if (!ZERO(rp.r_dir[Y])) {
-	rd.rd_invdir[Y]=1.0/rp.r_dir[Y];
-    } else {
-	rd.rd_invdir[Y] = INFINITY;
-	rp.r_dir[Y] = 0.0;
-    }
-    if (!ZERO(rp.r_dir[Z])) {
-	rd.rd_invdir[Z]=1.0/rp.r_dir[Z];
-    } else {
-	rd.rd_invdir[Z] = INFINITY;
-	rp.r_dir[Z] = 0.0;
-    }
+    VINVDIR(rd.rd_invdir, rp.r_dir);
 
     /* set up "ray_data" structure for nmg raytrace */
     rd.rp = &rp;
@@ -1337,10 +1295,6 @@ shoot_and_plot(point_t start_pt,
     if (final_segs)
 	MY_FREE_SEG_LIST(final_segs, dgcdp->ap->a_resource);
     bu_free((char *)final_segs, "bu_list");
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
-	bu_log("Error at end of shoot_and_plot()\n");
-
 }
 
 
@@ -1799,8 +1753,8 @@ fix_halfs(struct _ged_client_data *dgcdp)
 
 	HMOVE(haf_pl, hp->half_eqn);
 
-	if (DIST_PT_PLANE(max, haf_pl) >= -tol->dist &&
-	    DIST_PT_PLANE(min, haf_pl) >= -tol->dist)
+	if (DIST_PNT_PLANE(max, haf_pl) >= -tol->dist &&
+	    DIST_PNT_PLANE(min, haf_pl) >= -tol->dist)
 	    continue;
 
 	/* make an NMG the size of our model bounding box */
@@ -1925,7 +1879,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
 		if (eu->vu_p->v_p == vcut[0]->v_p || eu->vu_p->v_p == vcut[1]->v_p)
 		    continue;
 
-		if (DIST_PT_PLANE(eu->vu_p->v_p->vg_p->coord, haf_pl) > tol->dist) {
+		if (DIST_PNT_PLANE(eu->vu_p->v_p->vg_p->coord, haf_pl) > tol->dist) {
 		    nmg_klu(lu);
 		    break;
 		} else {
@@ -1967,7 +1921,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
 
 		    vg = eu->vu_p->v_p->vg_p;
 
-		    if (DIST_PT_PLANE(vg->coord, haf_pl) > tol->dist) {
+		    if (DIST_PNT_PLANE(vg->coord, haf_pl) > tol->dist) {
 			killit = 1;
 			break;
 		    }
@@ -2046,9 +2000,6 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_HELP;
     }
-
-    if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
-	bu_log("Error at start of 'E'\n");
 
     /* XXX: where is this released? */
     BU_ALLOC(dgcdp, struct _ged_client_data);

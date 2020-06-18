@@ -6,6 +6,8 @@ add_test(NAME nmg_mk COMMAND nmg_mk)
 BRLCAD_ADDEXEC(nmg_copy nmg_copy.c "libnmg" TEST)
 add_test(NAME nmg_copy COMMAND nmg_copy)
 
+CMAKEFILES(CMakeLists.txt)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

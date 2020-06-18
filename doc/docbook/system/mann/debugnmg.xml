@@ -31,8 +31,7 @@
       value for the <emphasis>NMG</emphasis> debug flag. Similar debug commands
       for other <emphasis>BRL-CAD</emphasis> libraries are
       <command>debuglib</command> for <emphasis>librt</emphasis> and
-      <command>debugbu</command> for <emphasis>libbu</emphasis>.  Other debugging
-      commands include <command>debugmem</command> and <command>debugdir</command>.
+      <command>debugbu</command> for <emphasis>libbu</emphasis>.
     </para>
   </refsection>
 
@@ -58,7 +57,7 @@
 
     <para>
       Reports of bugs or problems should be submitted via electronic
-      mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
+      mail to <email>devs@brlcad.org</email>
     </para>
   </refsection>
 </refentry>

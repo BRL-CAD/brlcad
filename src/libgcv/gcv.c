@@ -1,7 +1,7 @@
 /*                           G C V . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2016 United States Government as represented by
+ * Copyright (c) 2015-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,14 +28,19 @@
 #include <string.h>
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/debug.h"
+#include "bu/dylib.h"
 #include "bu/file.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
+#include "bu/mime.h"
 #include "bu/str.h"
+#include "rt/db4.h"
 #include "rt/db5.h"
 #include "rt/db_instance.h"
 #include "rt/db_io.h"
+#include "rt/debug.h"
 #include "rt/wdb.h"
 #include "rt/search.h"
 #include "rt/global.h"
@@ -93,13 +98,32 @@ _gcv_brlcad_write(struct gcv_context *context,
     return 1;
 }
 
+int
+_gcv_brlcad_can_read(const char *data)
+{
+    union record record; /* GED database record */
+    FILE *ifp = fopen(data, "rb");
+    if (fread((char *)&record, sizeof record, 1, ifp) != 1) return 0;
+    fclose(ifp);
+    if (db5_header_is_valid((unsigned char *)&record)) return 1;
+    return 0;
+}
 
+int
+_gcv_brlcad_can_write(const char *data)
+{
+    int out_type = bu_file_mime_int(data);
+    if (out_type == (int)BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY) return 1;
+    return 0;
+}
+
+/* TODO - implement a BRL-CAD "valid file" test function...) */
 static const struct gcv_filter _gcv_filter_brlcad_read =
-{"BRL-CAD Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, NULL, NULL, _gcv_brlcad_read};
+{"BRL-CAD Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, _gcv_brlcad_can_read, NULL, NULL, _gcv_brlcad_read};
 
 
 static const struct gcv_filter _gcv_filter_brlcad_write =
-{"BRL-CAD Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, NULL, NULL, _gcv_brlcad_write};
+{"BRL-CAD Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, _gcv_brlcad_can_write, NULL, NULL, _gcv_brlcad_write};
 
 
 HIDDEN void
@@ -114,9 +138,6 @@ _gcv_filter_register(struct bu_ptbl *filter_table,
 
     switch (filter->filter_type) {
 	case GCV_FILTER_FILTER:
-	    if (filter->mime_type != BU_MIME_MODEL_UNKNOWN)
-		bu_bomb("invalid mime_type");
-
 	    break;
 
 	case GCV_FILTER_READ:
@@ -226,14 +247,14 @@ _gcv_filter_options_process(const struct gcv_filter *filter, size_t argc,
 	}
 
 	if (temp)
-	    bu_free(temp, "temp");
+	    bu_free((void *)temp, "temp");
 
 	_gcv_filter_options_free(filter, *options_data);
 	return 0;
     }
 
     if (temp)
-	bu_free(temp, "temp");
+	bu_free((void *)temp, "temp");
 
     return 1;
 }
@@ -246,7 +267,7 @@ _gcv_opts_check(const struct gcv_opts *gcv_options)
 	bu_bomb("null gcv_options");
 
     BN_CK_TOL(&gcv_options->calculational_tolerance);
-    RT_CK_TESS_TOL(&gcv_options->tessellation_tolerance);
+    BG_CK_TESS_TOL(&gcv_options->tessellation_tolerance);
 
     if (gcv_options->debug_mode != 0 && gcv_options->debug_mode != 1)
 	bu_bomb("invalid gcv_opts.debug_mode");
@@ -287,8 +308,8 @@ _gcv_plugins_load(struct bu_ptbl *filter_table, const char *path)
 	if (error_msg)
 	    bu_log("%s\n", error_msg);
 
-	bu_log("bu_dlopen() failed for '%s'\n", path);
-	bu_bomb("bu_dlopen() failed");
+	bu_log("Unable to dynamically load '%s' (skipping)\n", path);
+	return;
     }
 
     info_val = bu_dlsym(dl_handle, "gcv_plugin_info");
@@ -300,15 +321,16 @@ _gcv_plugins_load(struct bu_ptbl *filter_table, const char *path)
 	if (error_msg)
 	    bu_log("%s\n", error_msg);
 
-	bu_log("bu_dlsym() failed for '%s'\n", path);
-	bu_bomb("could not find 'gcv_plugin_info' symbol in plugin");
+	bu_log("Unable to load symbols from '%s' (skipping)\n", path);
+	bu_log("Could not find 'gcv_plugin_info' symbol in plugin\n");
+	return;
     }
 
     plugin = plugin_info();
 
     if (!plugin || !plugin->filters) {
-	bu_log("invalid gcv_plugin in '%s'\n", path);
-	bu_bomb("invalid gcv_plugin");
+	bu_log("Invalid plugin encountered from '%s' (skipping)\n", path);
+	return;
     }
 
     for (current = plugin->filters; *current; ++current)
@@ -413,8 +435,8 @@ gcv_list_filters(void)
 void
 gcv_opts_default(struct gcv_opts *gcv_options)
 {
-    const struct rt_tess_tol default_tessellation_tolerance =
-    {RT_TESS_TOL_MAGIC, 0.0, 1.0e-2, 0.0};
+    const struct bg_tess_tol default_tessellation_tolerance =
+    {BG_TESS_TOL_MAGIC, 0.0, 1.0e-2, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
     memset(gcv_options, 0, sizeof(*gcv_options));
 
@@ -433,7 +455,7 @@ gcv_execute(struct gcv_context *context, const struct gcv_filter *filter,
 	    const char *target)
 {
     const int bu_debug_orig = bu_debug;
-    const uint32_t rt_debug_orig = RTG.debug;
+    const uint32_t rt_debug_orig = rt_debug;
     const uint32_t nmg_debug_orig = nmg_debug;
     int dbi_read_only_orig;
 
@@ -475,7 +497,7 @@ gcv_execute(struct gcv_context *context, const struct gcv_filter *filter,
 	return 0;
 
     bu_debug |= gcv_options->bu_debug_flag;
-    RTG.debug |= gcv_options->rt_debug_flag;
+    rt_debug |= gcv_options->rt_debug_flag;
     nmg_debug |= gcv_options->nmg_debug_flag;
 
     dbi_read_only_orig = context->dbip->dbi_read_only;
@@ -505,7 +527,7 @@ gcv_execute(struct gcv_context *context, const struct gcv_filter *filter,
 	result = filter->filter_fn(context, gcv_options, options_data, target);
 
     bu_debug = bu_debug_orig;
-    RTG.debug = rt_debug_orig;
+    rt_debug = rt_debug_orig;
     nmg_debug = nmg_debug_orig;
     context->dbip->dbi_read_only = dbi_read_only_orig;
 

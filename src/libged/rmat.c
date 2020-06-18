@@ -1,7 +1,7 @@
 /*                         R M A T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -56,7 +56,7 @@ ged_rmat(struct ged *gedp, int argc, const char *argv[])
 	MAT_COPY(gedp->ged_gvp->gv_rotation, rotation);
 	ged_view_update(gedp->ged_gvp);
 
-	return TCL_OK;
+	return GED_OK;
     }
 
     bu_vls_printf(gedp->ged_result_str, "Usage: %s", argv[0]);

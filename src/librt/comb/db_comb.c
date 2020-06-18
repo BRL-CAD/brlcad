@@ -1,7 +1,7 @@
 /*                       D B _ C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2016 United States Government as represented by
+ * Copyright (c) 1996-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -160,7 +160,7 @@ db_flatten_tree(
 		/* The leaves have been stolen, free the binary op */
 		tp->tr_b.tb_left = TREE_NULL;
 		tp->tr_b.tb_right = TREE_NULL;
-		RT_FREE_TREE(tp, resp);
+		BU_PUT(tp, union tree);
 	    }
 	    return rt_tree_array;
 
@@ -179,7 +179,7 @@ rt_comb_import4(
     const struct bu_external *ep,
     const mat_t matrix,		/* NULL if identity */
     const struct db_i *dbip,
-    struct resource *resp)
+    struct resource *UNUSED(resp))
 {
     union record *rp;
     struct rt_tree_array *rt_tree_array;
@@ -233,7 +233,8 @@ rt_comb_import4(
 	    mat_t diskmat;
 	    char namebuf[NAMESIZE+1];
 
-	    RT_GET_TREE(tp, resp);
+	    BU_GET(tp, union tree);
+	    RT_TREE_INIT(tp);
 	    rt_tree_array[j].tl_tree = tp;
 	    tp->tr_l.tl_op = OP_DB_LEAF;
 
@@ -778,11 +779,9 @@ db_comb_describe(
     struct bu_vls *str,
     const struct rt_comb_internal *comb,
     int verbose,
-    double mm2local,
-    struct resource *resp)
+    double mm2local)
 {
     RT_CK_COMB(comb);
-    RT_CK_RESOURCE(resp);
 
     if (comb->region_flag) {
 	bu_vls_printf(str,
@@ -822,7 +821,7 @@ db_comb_describe(
 
     if (comb->tree) {
 	if (verbose) {
-	    db_tree_flatten_describe(str, comb->tree, 0, 1, mm2local, resp);
+	    db_tree_flatten_describe(str, comb->tree, 0, 1, mm2local, &rt_uniresource);
 	} else {
 	    rt_pr_tree_vls(str, comb->tree);
 	}
@@ -858,20 +857,16 @@ rt_comb_describe(
     struct bu_vls *str,
     const struct rt_db_internal *ip,
     int verbose,
-    double mm2local,
-    struct resource *resp,
-    struct db_i *dbip)
+    double mm2local)
 {
     const struct rt_comb_internal *comb;
 
     RT_CK_DB_INTERNAL(ip);
-    RT_CK_RESOURCE(resp);
-    if (dbip) RT_CK_DBI(dbip);
 
     comb = (struct rt_comb_internal *)ip->idb_ptr;
     RT_CK_COMB(comb);
 
-    db_comb_describe(str, comb, verbose, mm2local, resp);
+    db_comb_describe(str, comb, verbose, mm2local);
     return 0;
 }
 
@@ -980,7 +975,7 @@ db_mkbool_tree(
 
     if (first_tlp->tl_op != OP_UNION) {
 	first_tlp->tl_op = OP_UNION;	/* Fix it */
-	if (RT_G_DEBUG & DEBUG_TREEWALK) {
+	if (RT_G_DEBUG & RT_DEBUG_TREEWALK) {
 	    bu_log("db_mkbool_tree() WARNING: non-union (%c) first operation ignored\n",
 		   first_tlp->tl_op);
 	}
@@ -993,7 +988,8 @@ db_mkbool_tree(
 	if (tlp->tl_tree == TREE_NULL)
 	    continue;
 
-	RT_GET_TREE(xtp, resp);
+	BU_GET(xtp, union tree);
+	RT_TREE_INIT(xtp);
 	xtp->tr_b.tb_left = curtree;
 	xtp->tr_b.tb_right = tlp->tl_tree;
 	xtp->tr_b.tb_regionp = (struct region *)0;
@@ -1048,7 +1044,7 @@ db_mkgift_tree(struct rt_tree_array *trees, size_t subtreecount, struct resource
 	tstart->tl_op = OP_UNION;
 	tstart->tl_tree = curtree;
 
-	if (RT_G_DEBUG&DEBUG_TREEWALK) {
+	if (RT_G_DEBUG&RT_DEBUG_TREEWALK) {
 	    bu_log("db_mkgift_tree() intermediate term:\n");
 	    rt_pr_tree(tstart->tl_tree, 0);
 	}
@@ -1058,7 +1054,7 @@ db_mkgift_tree(struct rt_tree_array *trees, size_t subtreecount, struct resource
     }
 
     curtree = db_mkbool_tree(trees, subtreecount, resp);
-    if (RT_G_DEBUG&DEBUG_TREEWALK) {
+    if (RT_G_DEBUG&RT_DEBUG_TREEWALK) {
 	bu_log("db_mkgift_tree() returns:\n");
 	rt_pr_tree(curtree, 0);
     }
@@ -1167,6 +1163,7 @@ _db_comb_find_invalid(int *inv_cnt, struct db_i *dbip, union tree *tp)
         case OP_SUBTRACT:
         case OP_XOR:
             _db_comb_find_invalid(inv_cnt, dbip, tp->tr_b.tb_right);
+            /* fall through */
         case OP_NOT:
         case OP_GUARD:
         case OP_XNOP:
@@ -1203,6 +1200,7 @@ _db_comb_get_children(struct directory **children, int *curr_ind, int curr_bool,
         case OP_XOR:
 	    bool_op = tp->tr_op;
             _db_comb_get_children(children, curr_ind, bool_op, dbip, tp->tr_b.tb_right, bool_ops, mats);
+            /* fall through */
         case OP_NOT:
         case OP_GUARD:
         case OP_XNOP:

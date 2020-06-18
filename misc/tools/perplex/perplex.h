@@ -1,7 +1,7 @@
 /*                       P E R P L E X . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2016 United States Government as represented by
+ * Copyright (c) 2011-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -66,9 +66,9 @@ typedef enum YYCONDTYPE {
 
 struct Buf {
     void   *elts;	/* elements. */
-    int     nelts;	/* number of elements. */
-    size_t  elt_size;	/* in bytes. */
-    int     nmax;	/* max capacity of elements. */
+    size_t nelts;	/* number of elements. */
+    size_t elt_size;	/* in bytes. */
+    size_t nmax;	/* max capacity of elements. */
 };
 
 typedef struct appData_t {

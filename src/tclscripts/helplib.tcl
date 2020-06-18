@@ -1,7 +1,7 @@
 #                     H E L P L I B . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2016 United States Government as represented by
+# Copyright (c) 2004-2020 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -172,6 +172,7 @@ set helplib_data(vo_zoom)		{{sf} {zoom view by specified scale factor}}
 set helplib_data(dgo_assoc)		{{[wdb_obj]} {set/get the associated database object}}
 set helplib_data(dgo_autoview)		{{view_obj} {calculate an appropriate view size and center for view_obj}}
 set helplib_data(dgo_blast)		{{[-A] [-o] [-C#/#/#] [-s] <object(s) | attribute name/value pairs>} {erase all currently displayed geometry and draw the specified object(s)}}
+set helplib_data(dgo_check)		{{{subcommand} [options] [objects]} {do geometry analysis on the current view or specified objects}}
 set helplib_data(dgo_clear)		{{} {erase all objects from the display}}
 set helplib_data(dgo_draw)		{{[-A] [-o] [-C#/#/#] [-s] <objects | attribute name/value pairs>} {prepare object(s) for display}}
 set helplib_data(dgo_E)			{{[-C#/#/#] [-s] <objects>} {evaluated display of objects}}
@@ -232,7 +233,7 @@ set helplib_data(mat_lookat)		{{dir yflip}	{compute a matrix which rotates vecto
 set helplib_data(mat_vec_ortho)		{{vec}	{find a vector which is perpendicular to vec and with unit length}}
 set helplib_data(mat_vec_perp)		{{vec}	{find a vector which is perpendicular to vec and with unit length
     if vec was of unit length}}
-set helplib_data(mat_scale_about_pt)	{{pt scale}	{build a matrix to scale uniformly around a given point}}
+set helplib_data(mat_scale_about_pnt)	{{pt scale}	{build a matrix to scale uniformly around a given point}}
 set helplib_data(mat_xform_about_pt)	{{xform pt}	{build a matrix to apply an arbitrary 4x4 transformation around
     a given point}}
 set helplib_data(mat_arb_rot)		{{pt dir angle}	{build a matrix to rotate about an arbitrary axis}}

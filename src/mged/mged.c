@@ -1,7 +1,7 @@
 /*                           M G E D . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -44,15 +44,12 @@
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
-#ifdef HAVE_SYS_SOCKET_H
-/* for recv */
-#  include <sys/socket.h>
-#endif
 
 #ifdef HAVE_POLL_H
 #  include <poll.h>
 #endif
 
+#include "bio.h"
 #include "bsocket.h"
 
 #include "tcl.h"
@@ -60,11 +57,14 @@
 #  include "tk.h"
 #endif
 
-#include "vmath.h"
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/debug.h"
 #include "bu/units.h"
 #include "bu/version.h"
+#include "bu/time.h"
+#include "bu/snooze.h"
+#include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "libtermio.h"
@@ -128,16 +128,15 @@ Tcl_Interp *ged_interp = (Tcl_Interp *)NULL;
 static int stdfd[2] = {1, 2};
 
 /* FIXME: these are problematic globals */
-struct ged *gedp = GED_NULL;
-struct db_i *dbip = DBI_NULL;	/* database instance pointer */
-struct rt_wdb *wdbp = RT_WDB_NULL;
+struct ged *GEDP = GED_NULL;
+struct db_i *DBIP = DBI_NULL;	/* database instance pointer */
+struct rt_wdb *WDBP = RT_WDB_NULL;
 
 /* called by numerous functions to indicate truthfully whether the
  * views need to be redrawn.
  */
 int update_views = 0;
 
-int (*cmdline_hook)() = NULL;
 jmp_buf jmp_env;		/* For non-local gotos */
 double frametime;		/* time needed to draw last frame */
 
@@ -185,7 +184,7 @@ int mged_db_upgrade = 0;
 int mged_db_version = 5;
 
 struct bn_tol mged_tol;	/* calculation tolerance */
-struct rt_tess_tol mged_ttol;	/* XXX needs to replace mged_abs_tol, et.al. */
+struct bg_tess_tol mged_ttol;	/* XXX needs to replace mged_abs_tol, et.al. */
 
 
 #if !defined(_WIN32) || defined(__CYGWIN__)
@@ -476,7 +475,7 @@ do_rc(void)
 
     /* No telling what the commands may have done to the result string -
      * make sure we start with a clean slate */
-    bu_vls_trunc(gedp->ged_result_str, 0);
+    bu_vls_trunc(GEDP->ged_result_str, 0);
     return 0;
 }
 
@@ -572,7 +571,7 @@ mged_process_char(char ch)
 #define CTRL_W      '\027'
 #define ESC         27
 #define BACKSPACE   '\b'
-#ifdef WIN32
+#ifdef _WIN32
 # undef DELETE
 #endif
 #define DELETE      127
@@ -641,41 +640,27 @@ mged_process_char(char ch)
 		curr_cmd_list = &head_cmd_list;
 		if (curr_cmd_list->cl_tie)
 		    curr_dm_list = curr_cmd_list->cl_tie;
-		if (cmdline_hook) {
-		    /* Command-line hooks don't do CMD_MORE */
-		    reset_Tty(fileno(stdin));
 
-		    if ((*cmdline_hook)(&input_str_prefix))
-			pr_prompt(interactive);
-
-		    set_Cbreak(fileno(stdin));
-		    clr_Echo(fileno(stdin));
-
+		reset_Tty(fileno(stdin)); /* Backwards compatibility */
+		(void)signal(SIGINT, SIG_IGN);
+		if (cmdline(&input_str_prefix, TRUE) == CMD_MORE) {
+		    /* Remove newline */
+		    bu_vls_trunc(&input_str_prefix,
+				 bu_vls_strlen(&input_str_prefix)-1);
 		    bu_vls_trunc(&input_str, 0);
-		    bu_vls_trunc(&input_str_prefix, 0);
-		    (void)signal(SIGINT, SIG_IGN);
+		    (void)signal(SIGINT, sig2);
+		    /*
+		   *** The mged_prompt vls now contains prompt for
+		   *** more input.
+		   */
 		} else {
-		    reset_Tty(fileno(stdin)); /* Backwards compatibility */
+		    /* All done; clear all strings. */
+		    bu_vls_trunc(&input_str_prefix, 0);
+		    bu_vls_trunc(&input_str, 0);
 		    (void)signal(SIGINT, SIG_IGN);
-		    if (cmdline(&input_str_prefix, TRUE) == CMD_MORE) {
-			/* Remove newline */
-			bu_vls_trunc(&input_str_prefix,
-				     bu_vls_strlen(&input_str_prefix)-1);
-			bu_vls_trunc(&input_str, 0);
-			(void)signal(SIGINT, sig2);
-			/*
-		       *** The mged_prompt vls now contains prompt for
-		       *** more input.
-		       */
-		    } else {
-			/* All done; clear all strings. */
-			bu_vls_trunc(&input_str_prefix, 0);
-			bu_vls_trunc(&input_str, 0);
-			(void)signal(SIGINT, SIG_IGN);
-		    }
-		    set_Cbreak(fileno(stdin)); /* Back to single-character mode */
-		    clr_Echo(fileno(stdin));
 		}
+		set_Cbreak(fileno(stdin)); /* Back to single-character mode */
+		clr_Echo(fileno(stdin));
 	    } else {
 		bu_vls_trunc(&input_str, 0);
 		bu_vls_strcpy(&mged_prompt, "\r? ");
@@ -772,7 +757,7 @@ mged_process_char(char ch)
 	    if (input_str_index == bu_vls_strlen(&input_str))
 		break;
 	    pr_prompt(interactive);
-	    bu_log("%*V", input_str_index, &input_str);
+	    bu_log("%*s", (int)input_str_index, bu_vls_addr(&input_str));
 	    escaped = bracketed = 0;
 	    break;
 	case CTRL_B:                   /* Back one character */
@@ -808,7 +793,7 @@ mged_process_char(char ch)
 		bu_vls_addr(&input_str)[input_str_index - 1];
 	    bu_vls_addr(&input_str)[input_str_index - 1] = ch;
 	    bu_log("\b");
-	    bu_log("%c%c", bu_vls_addr(&input_str)+input_str_index-1, bu_vls_addr(&input_str)+input_str_index);
+	    bu_log("%c%c", bu_vls_addr(&input_str)[input_str_index-1], bu_vls_addr(&input_str)[input_str_index]);
 	    ++input_str_index;
 	    escaped = bracketed = 0;
 	    break;
@@ -1009,6 +994,8 @@ mged_process_char(char ch)
 		bracketed = 1;
 		break;
 	    }
+
+	    /* fall through */
 	case '~':
 	    if (tilded) {
 		/* we were in an escape sequence (Mac delete key),
@@ -1018,6 +1005,7 @@ mged_process_char(char ch)
 		break;
 	    }
 	    /* Fall through if not escaped! */
+	    /* fall through */
 	default:
 	    if (!isprint((int)ch))
 		break;
@@ -1049,8 +1037,6 @@ main(int argc, char *argv[])
     int run_in_foreground=1;
 
     Tcl_Channel chan;
-    struct timeval timeout;
-
 #if !defined(_WIN32) || defined(__CYGWIN__)
     fd_set read_set;
     fd_set exception_set;
@@ -1062,9 +1048,6 @@ main(int argc, char *argv[])
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
     setmode(fileno(stderr), O_BINARY);
-
-    timeout.tv_sec = 0;
-    timeout.tv_usec = 1;
 
     (void)_set_invalid_parameter_handler(mgedInvalidParameterHandler);
 
@@ -1095,7 +1078,7 @@ main(int argc, char *argv[])
 		classic_mged = 1;
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
 		break;
 	    case 'X':
 		sscanf(bu_optarg, "%x", (unsigned int *)&bu_debug);
@@ -1123,7 +1106,7 @@ main(int argc, char *argv[])
 		break;
 	    default:
 		bu_log("Unrecognized option (%c)\n", bu_optopt);
-		/* Fall through to help */
+		/* fall through */
 	    case 'h':
 		bu_exit(1, "Usage:  %s [-a attach] [-b] [-c] [-d display] [-h|?] [-r] [-x#] [-X#] [-v] [database [command]]\n", argv[0]);
 	}
@@ -1137,22 +1120,37 @@ main(int argc, char *argv[])
 	/* if there is more than a file name remaining, mged is not interactive */
 	interactive = 0;
     } else {
-#if defined(_WIN32) && !defined(__CYGWIN__)
-	if (!isatty(fileno(stdin)) || !isatty(fileno(stdout)))
+#if defined(_WIN32) && !defined(CYGWIN)
+	if(!isatty(fileno(stdin)) || !isatty(fileno(stdout)))
 	    interactive = 0;
 #else
-	/* check if there is data on stdin (better than checking if isatty()) */
+	struct timeval timeout;
+
+	/* wait 1/10sec for input, in case we're piped */
+	timeout.tv_sec = 0;
+	timeout.tv_usec = 100000;
+
+	/* check if there is data on stdin, first relying on whether
+	 * there is standard input pending, second on whether there's
+	 * a controlling terminal (isatty).
+	 */
 	FD_ZERO(&read_set);
 	FD_SET(fileno(stdin), &read_set);
 	result = select(fileno(stdin)+1, &read_set, NULL, NULL, &timeout);
 	if (bu_debug > 0)
 	    fprintf(stdout, "DEBUG: select result: %d, stdin read: %d\n", result, FD_ISSET(fileno(stdin), &read_set));
 
-	if (result > 0 && FD_ISSET(fileno(stdin), &read_set)) {
+	if (result == 0) {
+	    if (!isatty(fileno(stdin)) || !isatty(fileno(stdout))) {
+		interactive = 0;
+	    }
+	} else if (result > 0 && FD_ISSET(fileno(stdin), &read_set)) {
 	    /* stdin pending, probably not interactive */
 	    interactive = 0;
 
-	    /* check if there is an out-of-bounds exception set on stdin */
+	    /* check if there's an out-of-bounds exception.  sometimes
+	     * the case if mged -c is started via desktop GUI.
+	     */
 	    FD_ZERO(&exception_set);
 	    FD_SET(fileno(stdin), &exception_set);
 	    result = select(fileno(stdin)+1, NULL, NULL, &exception_set, &timeout);
@@ -1174,18 +1172,17 @@ main(int argc, char *argv[])
 		if (pfd.revents & POLLNVAL) {
 		    interactive = 1;
 		}
-#else /* !HAVE_POLL_H */
-		interactive = 1;
+#else
+		/* just in case we get input too quickly, see if it's coming from a tty */
+		if (isatty(fileno(stdin))) {
+		    interactive = 1;
+		}
 #endif /* HAVE_POLL_H */
+
 	    }
 
-	    /* just in case we get input too quickly, see if it's coming from a tty */
-	    if (isatty(fileno(stdin))) {
-		interactive = 1;
-	    }
 	} /* read_set */
 #endif
-
     } /* argc > 1 */
 
     if (bu_debug > 0)
@@ -1225,6 +1222,7 @@ main(int argc, char *argv[])
 	     * (child sends us a byte after the window is displayed).
 	     */
 	    if (use_pipe) {
+		struct timeval timeout;
 
 		FD_ZERO(&read_set);
 		FD_SET(parent_pipe[0], &read_set);
@@ -1242,7 +1240,7 @@ main(int argc, char *argv[])
 
 	    } else {
 		/* no pipe, so just wait a little while */
-		sleep(3);
+		bu_snooze(BU_SEC2USEC(3));
 	    }
 
 	    /* exit instead of mged_finish as this is the parent
@@ -1275,12 +1273,12 @@ main(int argc, char *argv[])
     BU_LIST_INIT(&curr_dm_list->dml_p_vlist);
     predictor_init();
 
-    dmp = dm_get();
-    dm_set_null(dmp);
+    DMP = dm_get();
+    dm_set_null(DMP);
     bu_vls_init(tkName);
     bu_vls_init(dName);
-    if (dm_get_pathname(dmp)) {
-	bu_vls_strcpy(dm_get_pathname(dmp), "nu");
+    if (dm_get_pathname(DMP)) {
+	bu_vls_strcpy(dm_get_pathname(DMP), "nu");
     }
     bu_vls_strcpy(tkName, "nu");
 
@@ -1358,6 +1356,8 @@ main(int argc, char *argv[])
 	if (classic_mged) {
 	    /* identify */
 
+	    (void)Tcl_Eval(INTERP, "set mged_console_mode classic");
+
 	    bu_log("%s\n", brlcad_ident("Geometry Editor (MGED)"));
 
 #if !defined(_WIN32) || defined(__CYGWIN__)
@@ -1374,6 +1374,8 @@ main(int argc, char *argv[])
 	    int status;
 	    struct bu_vls vls = BU_VLS_INIT_ZERO;
 	    struct bu_vls error = BU_VLS_INIT_ZERO;
+
+	    (void)Tcl_Eval(INTERP, "set mged_console_mode gui");
 
 	    if (dpy_string != (char *)NULL)
 		bu_vls_printf(&vls, "loadtk %s", dpy_string);
@@ -1398,6 +1400,8 @@ main(int argc, char *argv[])
 	    }
 	    bu_vls_free(&error);
 	}
+    } else {
+	(void)Tcl_Eval(INTERP, "set mged_console_mode batch");
     }
 
     if (!interactive || classic_mged || old_mged_gui) {
@@ -1423,14 +1427,14 @@ main(int argc, char *argv[])
 	}
     }
 
-    if (dbip != DBI_NULL && (read_only_flag || dbip->dbi_read_only)) {
-	dbip->dbi_read_only = 1;
+    if (DBIP != DBI_NULL && (read_only_flag || DBIP->dbi_read_only)) {
+	DBIP->dbi_read_only = 1;
 	bu_log("Opened in READ ONLY mode\n");
     }
 
-    if (dbip != DBI_NULL) {
+    if (DBIP != DBI_NULL) {
 	setview(0.0, 0.0, 0.0);
-	gedp->ged_gdp->gd_rtCmdNotify = mged_notify;
+	GEDP->ged_gdp->gd_rtCmdNotify = mged_notify;
     }
 
     /* --- Now safe to process commands. --- */
@@ -1467,7 +1471,7 @@ main(int argc, char *argv[])
 		status = Tcl_Eval(INTERP, bu_vls_addr(&vls));
 	    } else {
 		Tcl_DString temp;
-		const char *archer = bu_brlcad_data("tclscripts/archer/archer_launch.tcl", 1);
+		const char *archer = bu_brlcad_root("share/tclscripts/archer/archer_launch.tcl", 1);
 		const char *archer_trans;
 		Tcl_DStringInit(&temp);
 		archer_trans = Tcl_TranslateFileName(INTERP, archer, &temp);
@@ -1536,12 +1540,8 @@ main(int argc, char *argv[])
      * dm first opens filled with garbage.
      */
     {
-	unsigned char *dm_bg = dm_get_bg(dmp);
-	if (dm_bg) {
-	    dm_set_bg(dmp, dm_bg[0], dm_bg[1], dm_bg[2]);
-	} else {
-	    dm_set_bg(dmp, 0, 0, 0);
-	}
+	const unsigned char *dm_bg = dm_get_bg(DMP);
+	dm_set_bg(DMP, dm_bg[0], dm_bg[1], dm_bg[2]);
     }
 
     /* initialize a display manager */
@@ -1780,27 +1780,20 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 	    curr_cmd_list = &head_cmd_list;
 	    if (curr_cmd_list->cl_tie)
 		curr_dm_list = curr_cmd_list->cl_tie;
-	    if (cmdline_hook != NULL) {
-		if ((*cmdline_hook)(&input_str))
-		    pr_prompt(interactive);
-		bu_vls_trunc(&input_str, 0);
-		bu_vls_trunc(&input_str_prefix, 0);
-		(void)signal(SIGINT, SIG_IGN);
-	    } else {
-		if (cmdline(&input_str_prefix, TRUE) == CMD_MORE) {
-		    /* Remove newline */
-		    bu_vls_trunc(&input_str_prefix,
-				 bu_vls_strlen(&input_str_prefix)-1);
-		    bu_vls_trunc(&input_str, 0);
 
-		    (void)signal(SIGINT, sig2);
-		} else {
-		    bu_vls_trunc(&input_str_prefix, 0);
-		    bu_vls_trunc(&input_str, 0);
-		    (void)signal(SIGINT, SIG_IGN);
-		}
-		pr_prompt(interactive);
+	    if (cmdline(&input_str_prefix, TRUE) == CMD_MORE) {
+		/* Remove newline */
+		bu_vls_trunc(&input_str_prefix,
+			     bu_vls_strlen(&input_str_prefix)-1);
+		bu_vls_trunc(&input_str, 0);
+
+		(void)signal(SIGINT, sig2);
+	    } else {
+		bu_vls_trunc(&input_str_prefix, 0);
+		bu_vls_trunc(&input_str, 0);
+		(void)signal(SIGINT, SIG_IGN);
 	    }
+	    pr_prompt(interactive);
 	    input_str_index = 0;
 	} else {
 	    bu_vls_trunc(&input_str, 0);
@@ -1815,14 +1808,14 @@ stdin_input(ClientData clientData, int UNUSED(mask))
     /*XXXXX*/
 #define TRY_STDIN_INPUT_HACK
 #ifdef TRY_STDIN_INPUT_HACK
-    /* Grab everything --- assuming everything is <= 4096 */
+    /* Grab everything --- assuming everything is <= page size */
     {
-	char buf[4096];
+	char buf[BU_PAGE_SIZE];
 	int idx;
 #  ifdef _WIN32
-	count = Tcl_Read(chan, buf, 4096);
+	count = Tcl_Read(chan, buf, BU_PAGE_SIZE);
 #  else
-	count = read((int)fd, (void *)buf, 4096);
+	count = read((int)fd, (void *)buf, BU_PAGE_SIZE);
 #  endif
 
 #else
@@ -1856,8 +1849,6 @@ stdin_input(ClientData clientData, int UNUSED(mask))
 		c = 0;
 	    if (c > CHAR_MAX)
 		c = CHAR_MAX;
-	    if (!isascii(c))
-		continue;
 #endif
 	    mged_process_char(c);
 #ifdef TRY_STDIN_INPUT_HACK
@@ -1979,13 +1970,9 @@ event_check(int non_blocking)
 	}
     }
 
-    if (bu_debug > 0) {
-	bu_log("Handled %d events\n", handled);
-    }
-
     non_blocking = 0;
 
-    if (dbip == DBI_NULL)
+    if (DBIP == DBI_NULL)
 	return non_blocking;
 
     /*********************************
@@ -2278,10 +2265,8 @@ refresh(void)
     struct bu_vls overlay_vls = BU_VLS_INIT_ZERO;
     struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
     int do_overlay = 1;
-    double elapsed_time;
+    int64_t elapsed_time, start_time = bu_gettime();
     int do_time = 0;
-
-    rt_prep_timer();
 
     FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
 	if (!p->dml_view_state)
@@ -2313,17 +2298,17 @@ refresh(void)
 	    int restore_zbuffer = 0;
 
 	    if (mged_variables->mv_fb &&
-		dm_get_zbuffer(dmp)) {
+		dm_get_zbuffer(DMP)) {
 		restore_zbuffer = 1;
-		(void)dm_make_current(dmp);
-		(void)dm_set_zbuffer(dmp, 0);
+		(void)dm_make_current(DMP);
+		(void)dm_set_zbuffer(DMP, 0);
 	    }
 
 	    dirty = 0;
 	    do_time = 1;
 	    VMOVE(geometry_default_color, color_scheme->cs_geo_def);
 
-	    if (dbip != DBI_NULL) {
+	    if (DBIP != DBI_NULL) {
 		if (do_overlay) {
 		    bu_vls_trunc(&overlay_vls, 0);
 		    create_text_overlay(&overlay_vls);
@@ -2337,13 +2322,13 @@ refresh(void)
 	    if (mged_variables->mv_predictor)
 		predictor_frame();
 
-	    dm_draw_begin(dmp);	/* update displaylist prolog */
+	    dm_draw_begin(DMP);	/* update displaylist prolog */
 
-	    if (dbip != DBI_NULL) {
+	    if (DBIP != DBI_NULL) {
 		/* do framebuffer underlay */
 		if (mged_variables->mv_fb && !mged_variables->mv_fb_overlay) {
 		    if (mged_variables->mv_fb_all)
-			fb_refresh(fbp, 0, 0, dm_get_width(dmp), dm_get_height(dmp));
+			fb_refresh(fbp, 0, 0, dm_get_width(DMP), dm_get_height(DMP));
 		    else if (mged_variables->mv_mouse_behavior != 'z')
 			paint_rect_area();
 		}
@@ -2352,13 +2337,13 @@ refresh(void)
 		if (mged_variables->mv_fb &&
 		    mged_variables->mv_fb_overlay &&
 		    mged_variables->mv_fb_all) {
-		    fb_refresh(fbp, 0, 0, dm_get_width(dmp), dm_get_height(dmp));
+		    fb_refresh(fbp, 0, 0, dm_get_width(DMP), dm_get_height(DMP));
 
 		    if (restore_zbuffer)
-			dm_set_zbuffer(dmp, 1);
+			dm_set_zbuffer(DMP, 1);
 		} else {
 		    if (restore_zbuffer)
-			dm_set_zbuffer(dmp, 1);
+			dm_set_zbuffer(DMP, 1);
 
 		    /* Draw each solid in its proper place on the
 		     * screen by applying zoom, rotation, &
@@ -2366,7 +2351,7 @@ refresh(void)
 		     * dm_draw_vlist().
 		     */
 
-		    if (dm_get_stereo(dmp) == 0 ||
+		    if (dm_get_stereo(DMP) == 0 ||
 			mged_variables->mv_eye_sep_dist <= 0) {
 			/* Normal viewing */
 			dozoom(0);
@@ -2385,7 +2370,7 @@ refresh(void)
 
 
 		/* Restore to non-rotated, full brightness */
-		dm_normal(dmp);
+		dm_normal(DMP);
 
 		/* only if not doing overlay */
 		if (!mged_variables->mv_fb ||
@@ -2421,24 +2406,24 @@ refresh(void)
 	    if (!mged_variables->mv_fb ||
 		mged_variables->mv_fb_overlay != 2) {
 		/* Draw center dot */
-		dm_set_fg(dmp,
-			       color_scheme->cs_center_dot[0],
-			       color_scheme->cs_center_dot[1],
-			       color_scheme->cs_center_dot[2], 1, 1.0);
-		dm_draw_point_2d(dmp, 0.0, 0.0);
+		dm_set_fg(DMP,
+			  color_scheme->cs_center_dot[0],
+			  color_scheme->cs_center_dot[1],
+			  color_scheme->cs_center_dot[2], 1, 1.0);
+		dm_draw_point_2d(DMP, 0.0, 0.0);
 	    }
 
-	    dm_draw_end(dmp);
+	    dm_draw_end(DMP);
 	}
     }
 
     /* a frame was drawn */
     if (do_time) {
-	(void)rt_get_timer((struct bu_vls *)0, &elapsed_time);
+	elapsed_time = bu_gettime() - start_time;
 	/* Only use reasonable measurements */
-	if (elapsed_time > 1.0e-5 && elapsed_time < 30) {
+	if (elapsed_time > 10LL && elapsed_time < 30000000LL) {
 	    /* Smoothly transition to new speed */
-	    frametime = 0.9 * frametime + 0.1 * elapsed_time;
+	    frametime = 0.9 * frametime + 0.1 * elapsed_time / 1000000LL;
 	}
     }
 
@@ -2504,12 +2489,12 @@ mged_finish(int exitcode)
     Tcl_Eval(INTERP, "rename " MGED_DB_NAME " \"\"; rename .inmem \"\"");
     Tcl_Release((ClientData)INTERP);
 
-    ged_close(gedp);
-    if (gedp)
-	BU_PUT(gedp, struct ged);
+    ged_close(GEDP);
+    if (GEDP)
+	BU_PUT(GEDP, struct ged);
 
-    wdbp = RT_WDB_NULL;
-    dbip = DBI_NULL;
+    WDBP = RT_WDB_NULL;
+    DBIP = DBI_NULL;
 
     /* XXX should deallocate libbu semaphores */
 
@@ -2543,6 +2528,7 @@ mged_refresh_handler(void *UNUSED(clientdata))
     refresh();
 }
 
+
 /**
  * Close the current database, if open, and then open a new database.
  * May also open a display manager, if interactive and none selected
@@ -2571,8 +2557,8 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     if (argc <= 1) {
 	/* Invoked without args, return name of current database */
 
-	if (dbip != DBI_NULL) {
-	    Tcl_AppendResult(interpreter, dbip->dbi_filename, (char *)NULL);
+	if (DBIP != DBI_NULL) {
+	    Tcl_AppendResult(interpreter, DBIP->dbi_filename, (char *)NULL);
 	    return TCL_OK;
 	}
 
@@ -2606,15 +2592,15 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	return TCL_ERROR;
     }
 
-    save_gedp = gedp;
-    save_dbip = dbip;
-    dbip = DBI_NULL;
+    save_gedp = GEDP;
+    save_dbip = DBIP;
+    DBIP = DBI_NULL;
     save_materp = rt_material_head();
     rt_new_material_head(MATER_NULL);
 
     /* Get input file */
-    if (((dbip = db_open(argv[1], DB_OPEN_READWRITE)) == DBI_NULL) &&
-	((dbip = db_open(argv[1], DB_OPEN_READONLY)) == DBI_NULL)) {
+    if (((DBIP = db_open(argv[1], DB_OPEN_READWRITE)) == DBI_NULL) &&
+	((DBIP = db_open(argv[1], DB_OPEN_READONLY)) == DBI_NULL)) {
 	char line[128];
 
 	/*
@@ -2622,8 +2608,8 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	 */
 	if (bu_file_exists(argv[1], NULL)) {
 	    /* need to reset things before returning */
-	    gedp = save_gedp;
-	    dbip = save_dbip;
+	    GEDP = save_gedp;
+	    DBIP = save_dbip;
 	    rt_new_material_head(save_materp);
 
 	    if (!bu_file_readable(argv[1])) {
@@ -2678,8 +2664,8 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 		/* not initializing mged */
 		if (argc == 2) {
 		    /* need to reset this before returning */
-		    gedp = save_gedp;
-		    dbip = save_dbip;
+		    GEDP = save_gedp;
+		    DBIP = save_dbip;
 		    rt_new_material_head(save_materp);
 		    Tcl_AppendResult(interpreter, MORE_ARGS_STR, "Create new database (y|n)[n]? ",
 				     (char *)NULL);
@@ -2693,17 +2679,17 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 
 	/* did the caller specify not creating a new database? */
 	if (argc >= 3 && bu_str_false(argv[2])) {
-	    gedp = save_gedp;
-	    dbip = save_dbip; /* restore previous database */
+	    GEDP = save_gedp;
+	    DBIP = save_dbip; /* restore previous database */
 	    rt_new_material_head(save_materp);
 	    bu_vls_free(&msg);
 	    return TCL_OK;
 	}
 
 	/* File does not exist, and should be created */
-	if ((dbip = db_create(argv[1], mged_db_version)) == DBI_NULL) {
-	    gedp = save_gedp;
-	    dbip = save_dbip; /* restore previous database */
+	if ((DBIP = db_create(argv[1], mged_db_version)) == DBI_NULL) {
+	    GEDP = save_gedp;
+	    DBIP = save_dbip; /* restore previous database */
 	    rt_new_material_head(save_materp);
 	    bu_vls_free(&msg);
 
@@ -2715,7 +2701,7 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	    }
 
 	    Tcl_AppendResult(interpreter, "opendb: failed to create ", argv[1], "\n", (char *)NULL);
-	    if (dbip == DBI_NULL)
+	    if (DBIP == DBI_NULL)
 		Tcl_AppendResult(interpreter, "opendb: no database is currently opened!", (char *)NULL);
 
 	    return TCL_ERROR;
@@ -2728,7 +2714,7 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	/* Opened existing database file */
 
 	/* Scan geometry database and build in-memory directory */
-	(void)db_dirbuild(dbip);
+	(void)db_dirbuild(DBIP);
     }
 
     /* close out the old dbip */
@@ -2736,99 +2722,98 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	struct db_i *new_dbip;
 	struct mater *new_materp;
 
-	new_dbip = dbip;
+	new_dbip = DBIP;
 	new_materp = rt_material_head();
 
 	/* activate the 'saved' values so we can cleanly close the previous db */
-	gedp = save_gedp;
-	dbip = save_dbip;
+	GEDP = save_gedp;
+	DBIP = save_dbip;
 	rt_new_material_head(save_materp);
 
 	/* bye bye db */
 	f_closedb(clientData, interpreter, 1, NULL);
 
 	/* restore to the new db just opened */
-	dbip = new_dbip;
+	DBIP = new_dbip;
 	rt_new_material_head(new_materp);
     }
 
     if (flip_v4) {
-	if (db_version(dbip) != 4) {
-	    bu_log("WARNING: [%s] is not a v4 database.  The -f option will be ignored.\n", dbip->dbi_filename);
+	if (db_version(DBIP) != 4) {
+	    bu_log("WARNING: [%s] is not a v4 database.  The -f option will be ignored.\n", DBIP->dbi_filename);
 	} else {
-	    if (dbip->dbi_version < 0) {
-		bu_log("Database [%s] was already (perhaps automatically) flipped, -f is redundant.\n", dbip->dbi_filename);
+	    if (DBIP->dbi_version < 0) {
+		bu_log("Database [%s] was already (perhaps automatically) flipped, -f is redundant.\n", DBIP->dbi_filename);
 	    } else {
-		bu_log("Treating [%s] as a binary-incompatible v4 geometry database.\n", dbip->dbi_filename);
+		bu_log("Treating [%s] as a binary-incompatible v4 geometry database.\n", DBIP->dbi_filename);
 		bu_log("Endianness flipped.  Converting to READ ONLY.\n");
 
 		/* flip the version number to indicate a flipped database. */
-		dbip->dbi_version *= -1;
+		DBIP->dbi_version *= -1;
 
 		/* do NOT write to a flipped database */
-		dbip->dbi_read_only = 1;
+		DBIP->dbi_read_only = 1;
 	    }
 	}
     }
 
-    if (dbip->dbi_read_only) {
-	bu_vls_printf(&msg, "%s: READ ONLY\n", dbip->dbi_filename);
+    if (DBIP->dbi_read_only) {
+	bu_vls_printf(&msg, "%s: READ ONLY\n", DBIP->dbi_filename);
     }
 
     /* associate the gedp with a wdbp as well, but separate from the
      * one we fed tcl.  must occur before the call to [get_dbip] since
      * that hooks into a libged callback.
      */
-    if (!gedp) {
-	BU_ALLOC(gedp, struct ged);
+    if (!GEDP) {
+	BU_ALLOC(GEDP, struct ged);
     }
 
     /* initialize a separate wdbp for libged to manage */
-    ged_wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK);
-    GED_INIT(gedp, ged_wdbp);
-    gedp->ged_output_handler = mged_output_handler;
-    gedp->ged_refresh_handler = mged_refresh_handler;
-    gedp->ged_create_vlist_solid_callback = createDListSolid;
-    gedp->ged_create_vlist_callback = createDListAll;
-    gedp->ged_free_vlist_callback = freeDListsAll;
+    ged_wdbp = wdb_dbopen(DBIP, RT_WDB_TYPE_DB_DISK);
+    GED_INIT(GEDP, ged_wdbp);
+    GEDP->ged_output_handler = mged_output_handler;
+    GEDP->ged_refresh_handler = mged_refresh_handler;
+    GEDP->ged_create_vlist_solid_callback = createDListSolid;
+    GEDP->ged_create_vlist_callback = createDListAll;
+    GEDP->ged_free_vlist_callback = freeDListsAll;
 
     /* increment use count for gedp db instance */
-    (void)db_clone_dbi(dbip, NULL);
+    (void)db_clone_dbi(DBIP, NULL);
 
     /* Provide LIBWDB C access to the on-disk database */
-    if ((wdbp = wdb_dbopen(dbip, RT_WDB_TYPE_DB_DISK)) == RT_WDB_NULL) {
+    if ((WDBP = wdb_dbopen(DBIP, RT_WDB_TYPE_DB_DISK)) == RT_WDB_NULL) {
 	Tcl_AppendResult(interpreter, "wdb_dbopen() failed?\n", (char *)NULL);
 
 	/* release any allocated memory */
-	ged_free(gedp);
-	bu_free((void *)gedp, "struct ged");
-	gedp = NULL;
+	ged_free(GEDP);
+	bu_free((void *)GEDP, "struct ged");
+	GEDP = NULL;
 
 	return TCL_ERROR;
     }
 
     /* increment use count for tcl db instance */
-    (void)db_clone_dbi(dbip, NULL);
+    (void)db_clone_dbi(DBIP, NULL);
 
     /* Establish LIBWDB TCL access to both disk and in-memory databases */
 
     /* initialize rt_wdb */
-    bu_vls_init(&wdbp->wdb_name);
-    bu_vls_strcpy(&wdbp->wdb_name, MGED_DB_NAME);
+    bu_vls_init(&WDBP->wdb_name);
+    bu_vls_strcpy(&WDBP->wdb_name, MGED_DB_NAME);
 
-    BU_LIST_INIT(&wdbp->wdb_observers.l);
-    wdbp->wdb_interp = interpreter;
+    WDBP->wdb_interp = interpreter;
 
     /* append to list of rt_wdb's */
-    BU_LIST_APPEND(&RTG.rtg_headwdb.l, &wdbp->l);
+    BU_LIST_APPEND(&RTG.rtg_headwdb.l, &WDBP->l);
 
     /* This creates a "db" command object */
 
     /* Beware, returns a "token", not TCL_OK. */
-    (void)Tcl_CreateCommand((Tcl_Interp *)wdbp->wdb_interp, MGED_DB_NAME, (Tcl_CmdProc *)wdb_cmd, (ClientData)wdbp, wdb_deleteProc);
+    (void)Tcl_CreateCommand((Tcl_Interp *)WDBP->wdb_interp, MGED_DB_NAME, (Tcl_CmdProc *)wdb_cmd, (ClientData)WDBP, wdb_deleteProc);
 
     /* Return new function name as result */
-    Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, MGED_DB_NAME, (char *)NULL);
+    Tcl_AppendResult((Tcl_Interp *)WDBP->wdb_interp, MGED_DB_NAME, (char *)NULL);
 
     /* This creates the ".inmem" in-memory geometry container and sets
      * up the GUI.
@@ -2844,16 +2829,16 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 	    bu_vls_free(&cmd);
 
 	    /* release any allocated memory */
-	    ged_free(gedp);
-	    bu_free((void *)gedp, "struct ged");
-	    gedp = NULL;
+	    ged_free(GEDP);
+	    bu_free((void *)GEDP, "struct ged");
+	    GEDP = NULL;
 
 	    return TCL_ERROR;
 	}
 
 	/* Perhaps do something special with the GUI */
 	bu_vls_trunc(&cmd, 0);
-	bu_vls_printf(&cmd, "opendb_callback %s", dbip->dbi_filename);
+	bu_vls_printf(&cmd, "opendb_callback %s", DBIP->dbi_filename);
 	(void)Tcl_Eval(interpreter, bu_vls_addr(&cmd));
 
 	bu_vls_strcpy(&cmd, "local2base");
@@ -2871,15 +2856,15 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 
     /* Print title/units information */
     if (interactive) {
-	bu_vls_printf(&msg, "%s (units=%s)\n", dbip->dbi_title,
-		      bu_units_string(dbip->dbi_local2base));
+	bu_vls_printf(&msg, "%s (units=%s)\n", DBIP->dbi_title,
+		      bu_units_string(DBIP->dbi_local2base));
     }
 
     /*
      * We have an old database version AND we're not in the process of
      * creating a new database.
      */
-    if (db_version(dbip) < 5 && !created_new_db) {
+    if (db_version(DBIP) < 5 && !created_new_db) {
 	if (mged_db_upgrade) {
 	    if (mged_db_warn)
 		bu_vls_printf(&msg, "Warning:\n\tDatabase version is old.\n\tConverting to the new format.\n");
@@ -2920,7 +2905,7 @@ f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
 	return TCL_ERROR;
     }
 
-    if (dbip == DBI_NULL) {
+    if (DBIP == DBI_NULL) {
 	Tcl_AppendResult(interpreter, "No database is open\n", NULL);
 	return TCL_OK;
     }
@@ -2934,11 +2919,11 @@ f_closedb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *
     Tcl_Eval(interpreter, "rename " MGED_DB_NAME " \"\"; rename .inmem \"\"");
 
     /* close the geometry instance */
-    ged_close(gedp);
-    BU_PUT(gedp, struct ged);
+    ged_close(GEDP);
+    BU_PUT(GEDP, struct ged);
 
-    wdbp = RT_WDB_NULL;
-    dbip = DBI_NULL;
+    WDBP = RT_WDB_NULL;
+    DBIP = DBI_NULL;
 
     /* wipe out the material list */
     rt_new_material_head(MATER_NULL);

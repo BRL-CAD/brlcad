@@ -1,7 +1,7 @@
 /*                        T O R . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@
 __BEGIN_DECLS
 
 RT_EXPORT extern int rt_num_circular_segments(double maxerr,
-	                                      double radius);
+					      double radius);
 
 __END_DECLS
 

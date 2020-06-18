@@ -1,7 +1,7 @@
 /*                           C M D . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2016 United States Government as represented by
+ * Copyright (c) 1998-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,6 +25,24 @@
 #include "bu/cmd.h"
 #include "bu/str.h"
 
+int
+bu_cmd_valid(const struct bu_cmdtab *cmds, const char *cmdname)
+{
+    const struct bu_cmdtab *ctp = NULL;
+
+    /* sanity */
+    if (UNLIKELY(!cmds || !cmdname)) {
+	return BRLCAD_ERROR;
+    }
+
+    for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
+	if (BU_STR_EQUAL(ctp->ct_name, cmdname)) {
+	    return BRLCAD_OK;
+	}
+    }
+
+    return BRLCAD_ERROR;
+}
 
 int
 bu_cmd(const struct bu_cmdtab *cmds, int argc, const char **argv, int cmd_index, void *data, int *retval)
@@ -33,14 +51,11 @@ bu_cmd(const struct bu_cmdtab *cmds, int argc, const char **argv, int cmd_index,
 
     /* sanity */
     if (UNLIKELY(cmd_index >= argc)) {
-	bu_log("missing command; must be one of:");
-	goto missing_cmd;
+	return BRLCAD_ERROR;
     }
 
     for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
-	if (ctp->ct_name[0] == argv[cmd_index][0]
-	    && BU_STR_EQUAL(ctp->ct_name, argv[cmd_index]))
-	{
+	if (BU_STR_EQUAL(ctp->ct_name, argv[cmd_index])) {
 	    if (retval) {
 		*retval = (*ctp->ct_func)(data, argc, argv);
 	    } else {
@@ -52,7 +67,6 @@ bu_cmd(const struct bu_cmdtab *cmds, int argc, const char **argv, int cmd_index,
 
     bu_log("unknown command: %s; must be one of: ", argv[cmd_index]);
 
-missing_cmd:
     for (ctp = cmds; ctp->ct_name != (char *)NULL; ctp++) {
 	bu_log(" %s", ctp->ct_name);
     }

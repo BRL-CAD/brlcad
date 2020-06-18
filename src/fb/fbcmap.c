@@ -1,7 +1,7 @@
 /*                        F B C M A P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2016 United States Government as represented by
+ * Copyright (c) 1986-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,8 +30,12 @@
 
 #include <stdlib.h>
 
+#include "bio.h"
+
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
+#include "bu/snooze.h"
 #include "fb.h"
 #include "pkg.h"
 
@@ -653,8 +657,10 @@ main(int argc, char **argv)
     ColorMap *cp = &cmap;
     fb *fbp;
 
+    bu_setprogname(argv[0]);
+
     bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
 	usage();

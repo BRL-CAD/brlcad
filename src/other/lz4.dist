@@ -1,9 +1,0 @@
-SET(lz4_ignore_files
-README.md
-LICENSE
-lz4.h
-lz4frame.h
-lz4frame_static.h
-lz4hc.h
-xxhash.h
-)

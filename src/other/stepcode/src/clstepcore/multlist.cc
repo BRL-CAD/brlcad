@@ -87,7 +87,7 @@ EntList * MultList::getChild( int num ) {
         // Check for error situations (shouldn't normally occur):
         return NULL;
     }
-    for( j = 0; j < num; j++, child = child->next ) {
+    for( j = 0; j < num && child; j++, child = child->next ) {
         ;
     }
     return child;

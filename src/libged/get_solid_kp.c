@@ -1,7 +1,7 @@
 /*                    G E T _ S O L I D _ K P . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -71,13 +71,13 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 	case ID_PIPE:
 	    {
 		struct rt_pipe_internal *pipeip;
-		struct wdb_pipept *pipe_seg;
+		struct wdb_pipe_pnt *pipe_seg;
 
 		pipeip = (struct rt_pipe_internal *)ip->idb_ptr;
 
 		RT_PIPE_CK_MAGIC(pipeip);
 
-		pipe_seg = BU_LIST_FIRST(wdb_pipept, &pipeip->pipe_segs_head);
+		pipe_seg = BU_LIST_FIRST(wdb_pipe_pnt, &pipeip->pipe_segs_head);
 		VMOVE(mpt, pipe_seg->pp_coord);
 		break;
 	    }
@@ -85,14 +85,14 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 	    {
 		struct rt_metaball_internal *metaball =
 		    (struct rt_metaball_internal *)ip->idb_ptr;
-		struct wdb_metaballpt *metaballpt;
+		struct wdb_metaball_pnt *metaball_pnt;
 
 		RT_METABALL_CK_MAGIC(metaball);
 
 		VSETALL(mpt, 0.0);
-		metaballpt = BU_LIST_FIRST(wdb_metaballpt,
+		metaball_pnt = BU_LIST_FIRST(wdb_metaball_pnt,
 					   &metaball->metaball_ctrl_head);
-		VMOVE(mpt, metaballpt->coord);
+		VMOVE(mpt, metaball_pnt->coord);
 		break;
 	    }
 	case ID_ARBN:
@@ -106,7 +106,7 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		for (i = 0; i < arbn->neqn; i++) {
 		    for (j = i + 1; j < arbn->neqn; j++) {
 			for (k = j + 1; k < arbn->neqn; k++) {
-			    if (!bn_mkpoint_3planes(mpt, arbn->eqn[i],
+			    if (!bn_make_pnt_3planes(mpt, arbn->eqn[i],
 						    arbn->eqn[j],
 						    arbn->eqn[k])) {
 				size_t l;
@@ -116,7 +116,7 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 				    if (l == i || l == j || l == k)
 					continue;
 
-				    if (DIST_PT_PLANE(mpt,
+				    if (DIST_PNT_PLANE(mpt,
 					arbn->eqn[l]) >
 					gedp->ged_wdbp->wdb_tol.dist) {
 					good_vert = 0;
@@ -141,11 +141,10 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 	    {
 		struct rt_ebm_internal *ebm =
 		    (struct rt_ebm_internal *)ip->idb_ptr;
-		point_t pnt;
+		point_t pnt = VINIT_ZERO;
 
 		RT_EBM_CK_MAGIC(ebm);
 
-		VSETALL(pnt, 0.0);
 		MAT4X3PNT(mpt, ebm->mat, pnt);
 		break;
 	    }
@@ -161,11 +160,10 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 	    {
 		struct rt_dsp_internal *dsp =
 		    (struct rt_dsp_internal *)ip->idb_ptr;
-		point_t pnt;
+		point_t pnt = VINIT_ZERO;
 
 		RT_DSP_CK_MAGIC(dsp);
 
-		VSETALL(pnt, 0.0);
 		MAT4X3PNT(mpt, dsp->dsp_stom, pnt);
 		break;
 	    }
@@ -183,11 +181,10 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 	    {
 		struct rt_vol_internal *vol =
 		    (struct rt_vol_internal *)ip->idb_ptr;
-		point_t pnt;
+		point_t pnt = VINIT_ZERO;
 
 		RT_VOL_CK_MAGIC(vol);
 
-		VSETALL(pnt, 0.0);
 		MAT4X3PNT(mpt, vol->mat, pnt);
 		break;
 	    }
@@ -338,6 +335,15 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		VMOVE(mpt, skt->V);
 		break;
 	    }
+	case ID_ANNOT:
+	    {
+		struct rt_annot_internal *ann =
+		    (struct rt_annot_internal *)ip->idb_ptr;
+		RT_ANNOT_CK_MAGIC(ann);
+
+		VMOVE(mpt, ann->V);
+		break;
+	    }
 	case ID_EXTRUDE:
 	    {
 		struct rt_extrude_internal *extr =
@@ -464,6 +470,9 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		    break;
 		}
 	    }
+
+	    /* fall through */
+
 	default:
 	    VSETALL(mpt, 0.0);
 	    bu_vls_printf(gedp->ged_result_str,

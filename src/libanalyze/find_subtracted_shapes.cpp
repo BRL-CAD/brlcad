@@ -1,6 +1,25 @@
-/*
- * TODO
+/*      F I N D _ S U B T R A C T E D _ S H A P E S . C P P
+ * BRL-CAD
  *
+ * Copyright (c) 2015-2020 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file find_subtracted_shapes.cpp
+ *
+ * TODO
  *
  * better bbox rays function that accepts x, y and z tolerances so we can adaptively sample thin sides
  * without blowing the ray count all out of proportion.  Got to get a handle on intelligently refining
@@ -621,7 +640,8 @@ analyze_find_subtracted(struct bu_ptbl *UNUSED(results), struct rt_wdb *wdbp, co
 	    for (size_t si = 0; si < BU_PTBL_LEN(&to_subtract); si++) {
 		struct subbrep_island_data *s = (struct subbrep_island_data *)BU_PTBL_GET(&to_subtract, si);
 		tree_list[curr_count].tl_op = OP_UNION;
-		RT_GET_TREE(tp, &rt_uniresource);
+		BU_GET(tp, union tree);
+		RT_TREE_INIT(tp);
 		tree_list[curr_count].tl_tree = tp;
 		tp->tr_l.tl_op = OP_DB_LEAF;
 		tp->tr_l.tl_name = bu_strdup(bu_vls_addr(s->obj_name));

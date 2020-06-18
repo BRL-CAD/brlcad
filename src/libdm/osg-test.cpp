@@ -1,7 +1,7 @@
 /*                    O S G - T E S T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2016 United States Government as represented by
+ * Copyright (c) 2014-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -67,6 +67,7 @@
 
 #include <osgText/Text>
 
+#include "bu/app.h"
 #include "bu/list.h"
 #include "raytrace.h"
 #include "rt/func.h"
@@ -78,7 +79,7 @@ obj_vlist(const struct directory *dp, const struct db_i *dbip, mat_t mat)
     struct bu_list *plot_segments;
     struct rt_db_internal intern;
     const struct bn_tol tol = {BN_TOL_MAGIC, 0.0005, 0.0005 * 0.0005, 1e-6, 1 - 1e-6};
-    const struct rt_tess_tol rttol = {RT_TESS_TOL_MAGIC, 0.0, 0.01, 0};
+    const struct bg_tess_tol rttol = {BG_TESS_TOL_MAGIC, 0.0, 0.01, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
     RT_DB_INTERNAL_INIT(&intern);
     if (rt_db_get_internal(&intern, dp, dbip, mat, &rt_uniresource) < 0) {
 	bu_exit(1, "ERROR: Unable to get internal representation of %s\n", dp->d_namep);
@@ -206,7 +207,7 @@ create_solid_nodes(std::map<const struct directory *, osg::ref_ptr<osg::Group> >
 {
     const char *solid_search = "! -type comb";
     struct bu_ptbl solids = BU_PTBL_INIT_ZERO;
-    (void)db_search(&solids, DB_SEARCH_RETURN_UNIQ_DP, solid_search, 1, &dp, dbip);
+    (void)db_search(&solids, DB_SEARCH_RETURN_UNIQ_DP, solid_search, 1, &dp, dbip, NULL);
 
     for (int i = (int)BU_PTBL_LEN(&solids) - 1; i >= 0; i--) {
 	/* Get the vlist associated with this particular object */
@@ -334,13 +335,13 @@ full_comb_node(
 
     const char *comb_search = "-type comb";
     struct bu_ptbl combs = BU_PTBL_INIT_ZERO;
-    (void)db_search(&combs, DB_SEARCH_RETURN_UNIQ_DP, comb_search, 1, &dp, dbip);
+    (void)db_search(&combs, DB_SEARCH_RETURN_UNIQ_DP, comb_search, 1, &dp, dbip, NULL);
     for (int i = (int)BU_PTBL_LEN(&combs) - 1; i >= 0; i--) {
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(&combs, i);
 	osg::ref_ptr<osg::Group> sub_comb = bare_comb_node(osg_nodes, curr_dp, dbip);
 	const char *comb_children_search = "-mindepth 1 -maxdepth 1";
 	struct bu_ptbl comb_children = BU_PTBL_INIT_ZERO;
-	(void)db_search(&comb_children, DB_SEARCH_TREE, comb_children_search, 1, &curr_dp, dbip);
+	(void)db_search(&comb_children, DB_SEARCH_TREE, comb_children_search, 1, &curr_dp, dbip, NULL);
 	for (int j = (int)BU_PTBL_LEN(&comb_children) - 1; j >= 0; j--) {
 	    struct db_full_path *curr_path = (struct db_full_path *)BU_PTBL_GET(&comb_children, j);
 	    struct directory *curr_child_dp = DB_FULL_PATH_CUR_DIR(curr_path);
@@ -405,7 +406,7 @@ full_region_node(
      */
     const char *region_vlist_search = "! -type comb";
     struct bu_ptbl region_vlist_contributors = BU_PTBL_INIT_ZERO;
-    (void)db_search(&region_vlist_contributors, DB_SEARCH_TREE, region_vlist_search, 1, &dp, dbip);
+    (void)db_search(&region_vlist_contributors, DB_SEARCH_TREE, region_vlist_search, 1, &dp, dbip, NULL);
     int have_subtraction = 0;
     for (int j = (int)BU_PTBL_LEN(&region_vlist_contributors) - 1; j >= 0; j--) {
 	struct db_full_path *curr_path = (struct db_full_path *)BU_PTBL_GET(&region_vlist_contributors, j);
@@ -457,13 +458,13 @@ full_assembly_node(
 
     const char *assembly_search = "-type comb ! -below -type region ! -type region";
     struct bu_ptbl assemblies = BU_PTBL_INIT_ZERO;
-    (void)db_search(&assemblies, DB_SEARCH_RETURN_UNIQ_DP, assembly_search, 1, &dp, dbip);
+    (void)db_search(&assemblies, DB_SEARCH_RETURN_UNIQ_DP, assembly_search, 1, &dp, dbip, NULL);
     for (int i = (int)BU_PTBL_LEN(&assemblies) - 1; i >= 0; i--) {
 	struct directory *curr_dp = (struct directory *)BU_PTBL_GET(&assemblies, i);
 	osg::ref_ptr<osg::Group> sub_comb = bare_comb_node(osg_nodes, curr_dp, dbip);
 	const char *comb_children_search = "-mindepth 1 -maxdepth 1";
 	struct bu_ptbl comb_children = BU_PTBL_INIT_ZERO;
-	(void)db_search(&comb_children, DB_SEARCH_TREE, comb_children_search, 1, &curr_dp, dbip);
+	(void)db_search(&comb_children, DB_SEARCH_TREE, comb_children_search, 1, &curr_dp, dbip, NULL);
 	for (int j = (int)BU_PTBL_LEN(&comb_children) - 1; j >= 0; j--) {
 	    struct db_full_path *curr_path = (struct db_full_path *)BU_PTBL_GET(&comb_children, j);
 	    struct directory *curr_child_dp = DB_FULL_PATH_CUR_DIR(curr_path);
@@ -520,7 +521,7 @@ characterize_dp(struct directory *dp, struct db_i *dbip)
 	    /* TODO - db_search should let us know the results without needing the table,
 	     * but that doesn't seem to be working... */
 	    struct bu_ptbl search_results = BU_PTBL_INIT_ZERO;
-	    (void)db_search(&search_results, DB_SEARCH_QUIET, is_assembly_search, 1, &dp, dbip);
+	    (void)db_search(&search_results, DB_SEARCH_QUIET, is_assembly_search, 1, &dp, dbip, NULL);
 	    if (BU_PTBL_LEN(&search_results) > 0) ret = 3;
 	    db_search_free(&search_results);
 	}
@@ -587,8 +588,9 @@ int main( int argc, char **argv )
 {
     std::map<const struct directory *, osg::ref_ptr<osg::Group> > osg_nodes;
     struct db_i *dbip = DBI_NULL;
-    struct directory *dp = RT_DIR_NULL;
     struct db_full_path path;
+
+    bu_setprogname(argv[0]);
 
     if (argc != 3 || !argv) {
 	bu_exit(1, "Error - please specify a .g file and an object\n");

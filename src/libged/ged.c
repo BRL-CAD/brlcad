@@ -1,7 +1,7 @@
 /*                       G E D . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2016 United States Government as represented by
+ * Copyright (c) 2000-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -78,6 +78,17 @@ ged_close(struct ged *gedp)
     if (gedp->ged_wdbp) {
 	wdb_close(gedp->ged_wdbp);
 	gedp->ged_wdbp = RT_WDB_NULL;
+    }
+
+    /* Terminate any ged subprocesses */
+    if (gedp != GED_NULL) {
+	struct ged_subprocess *rrp;
+	for (BU_LIST_FOR(rrp, ged_subprocess, &gedp->gd_headSubprocess.l)) {
+	    if (!rrp->aborted) {
+		bu_terminate(bu_process_pid(rrp->p));
+		rrp->aborted = 1;
+	    }
+	}
     }
 
     ged_free(gedp);
@@ -177,6 +188,7 @@ ged_free(struct ged *gedp)
 
     free_object_selections(gedp->ged_selections);
     bu_hash_destroy(gedp->ged_selections);
+
 }
 
 
@@ -239,6 +251,8 @@ ged_init(struct ged *gedp)
     BU_GET(gedp->ged_results, struct ged_results);
     (void)_ged_results_init(gedp->ged_results);
 
+    BU_LIST_INIT(&gedp->gd_headSubprocess.l);
+
     /* For now, we're keeping the string... will go once no one uses it */
     BU_GET(gedp->ged_result_str, struct bu_vls);
     bu_vls_init(gedp->ged_result_str);
@@ -248,7 +262,6 @@ ged_init(struct ged *gedp)
     BU_LIST_INIT(gedp->ged_gdp->gd_headDisplay);
     BU_GET(gedp->ged_gdp->gd_headVDraw, struct bu_list);
     BU_LIST_INIT(gedp->ged_gdp->gd_headVDraw);
-    BU_LIST_INIT(&gedp->ged_gdp->gd_headRunRt.l);
 
     gedp->ged_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
     qray_init(gedp->ged_gdp);
@@ -413,7 +426,7 @@ ged_open(const char *dbtype, const char *filename, int existing_only)
 	    int i;
 
 	    BU_ALLOC(dbip, struct db_i);
-	    dbip->dbi_eof = (off_t)-1L;
+	    dbip->dbi_eof = (b_off_t)-1L;
 	    dbip->dbi_fp = NULL;
 	    dbip->dbi_mf = NULL;
 	    dbip->dbi_read_only = 0;

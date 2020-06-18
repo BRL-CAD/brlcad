@@ -7,8 +7,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -57,7 +55,7 @@ TkAlignImageData(
 	dataWidth += (alignment - (dataWidth % alignment));
     }
 
-    data = ckalloc((unsigned) dataWidth * image->height);
+    data = ckalloc(dataWidth * image->height);
 
     destPtr = data;
     for (i = 0; i < image->height; i++) {

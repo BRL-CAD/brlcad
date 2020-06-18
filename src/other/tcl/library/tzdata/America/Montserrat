@@ -1,6 +1,5 @@
 # created by tools/tclZIC.tcl - do not edit
-
-set TZData(:America/Montserrat) {
-    {-9223372036854775808 -14932 0 LMT}
-    {-1846266608 -14400 0 AST}
+if {![info exists TZData(America/Port_of_Spain)]} {
+    LoadTimeZoneFile America/Port_of_Spain
 }
+set TZData(:America/Montserrat) $TZData(:America/Port_of_Spain)

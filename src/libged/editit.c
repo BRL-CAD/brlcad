@@ -1,7 +1,7 @@
 /*                        E D I T I T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,8 +32,11 @@
 #  include <sys/types.h>
 #endif
 
+#include "bio.h"
 #include "bresource.h"
 
+#include "bu/app.h"
+#include "bu/file.h"
 #include "bu/path.h"
 #include "ged.h"
 
@@ -148,7 +151,7 @@ _ged_editit(char *editstring, const char *filename)
 	} else {
 	    bu_log("Invoking [%s %s]\n\n", editor, file);
 	}
-	editor_basename = bu_basename(editor, NULL);
+	editor_basename = bu_path_basename(editor, NULL);
 	bu_vls_sprintf(&str, "\nNOTE: You must QUIT %s before %s will respond and continue.\n", editor_basename, bu_getprogname());
 	for (length = bu_vls_strlen(&str) - 2; length > 0; length--) {
 	    bu_vls_putc(&sep, '*');
@@ -199,7 +202,7 @@ _ged_editit(char *editstring, const char *filename)
 	    WaitForSingleObject(pi.hProcess, INFINITE);
 	    return 1;
 #else
-	    char *editor_basename = bu_basename(editor, NULL);
+	    char *editor_basename = bu_path_basename(editor, NULL);
 	    if (BU_STR_EQUAL(editor_basename, "TextEdit")) {
 		/* close stdout/stderr so we don't get blather from TextEdit about service registration failure */
 		close(fileno(stdout));
@@ -258,7 +261,7 @@ ged_editit(struct ged *gedp, int argc, const char *argv[])
      */
     if (argc != 5) {
 	bu_vls_printf(gedp->ged_result_str, "Internal Error: \"%s -e editstring -f tmpfile\" is malformed (argc == %d)", argv[0], argc);
-	return TCL_ERROR;
+	return GED_ERROR;
     } else {
 	char *edstr = bu_strdup((char *)argv[2]);
 	ret = _ged_editit(edstr, argv[4]);

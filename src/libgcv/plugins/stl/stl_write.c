@@ -1,7 +1,7 @@
 /*                     S T L _ W R I T E . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2016 United States Government as represented by
+ * Copyright (c) 2003-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -95,7 +95,7 @@ stl_write_make_units_str(double scale_factor)
 	return bu_strdup(bu_units);
     else {
 	struct bu_vls temp = BU_VLS_INIT_ZERO;
-	bu_vls_printf(&temp, "%d units per mm", scale_factor);
+	bu_vls_printf(&temp, "%g units per mm", scale_factor);
 	return bu_vls_strgrab(&temp);
     }
 }
@@ -298,7 +298,7 @@ nmg_to_stl(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	    unsigned char tot_buffer[4];
 
 	    /* Re-position pointer to 80th byte */
-	    lseek(pstate->bfd, 80, SEEK_SET);
+	    bu_lseek(pstate->bfd, 80, SEEK_SET);
 
 	    /* Write out number of triangles */
 	    *(uint32_t *)tot_buffer = htonl((unsigned long)region_polys);
@@ -441,7 +441,7 @@ stl_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const
 	    unsigned char tot_buffer[4];
 
 	    /* Re-position pointer to 80th byte */
-	    lseek(state.bfd, 80, SEEK_SET);
+	    bu_lseek(state.bfd, 80, SEEK_SET);
 
 	    /* Write out number of triangles */
 	    *(uint32_t *)tot_buffer = htonl((unsigned long)state.tot_polygons);
@@ -462,9 +462,8 @@ stl_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const
     return 1;
 }
 
-
 const struct gcv_filter gcv_conv_stl_write = {
-    "STL Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_STL,
+    "STL Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_STL, NULL,
     stl_write_create_opts, stl_write_free_opts, stl_write
 };
 

@@ -1,7 +1,7 @@
 # created by tools/tclZIC.tcl - do not edit
 
 set TZData(:America/Pangnirtung) {
-    {-9223372036854775808 0 0 zzz}
+    {-9223372036854775808 0 0 -00}
     {-1546300800 -14400 0 AST}
     {-880221600 -10800 1 AWT}
     {-769395600 -10800 1 APT}

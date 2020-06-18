@@ -1,7 +1,7 @@
 /*                          V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2016 United States Government as represented by
+ * Copyright (c) 1985-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -63,105 +63,49 @@
 #include "./ext.h"
 
 
-const char title[] = "The BRL-CAD Raytracer RT";
-
-void
-usage(const char *argv0)
-{
-    bu_log("Usage:  %s [options] model.g objects...\n", argv0);
-    bu_log("Options:\n");
-    bu_log(" -r		Report overlaps (default)\n");
-    bu_log(" -R		Do not report overlaps\n");
-    bu_log(" -M		Read matrix+commands on stdin\n");
-    bu_log(" -o model.pix	Output .pix format file (default is window)\n");
-    bu_log(" -s #		Square grid size in pixels (default is 512)\n");
-    bu_log(" -w # -n #	Grid size width (w) and height (n) in pixels\n");
-    bu_log(" -a # -e #	Azimuth (a) and elevation (e) in degrees\n");
-    bu_log(" -V #		View (pixel) aspect ratio (width/height)\n");
-    bu_log(" -p #		Perspective angle, degrees side to side (0 <= # < 180)\n");
-    bu_log(" -P #		Set number of processors\n");
-    bu_log(" -T # or -T #,# or -T #/#\n");
-    bu_log("		Tolerance: distance or distance,angular or distance/angular\n");
-    bu_log(" -l #		Set lighting model rendering style (default is 0)\n");
-    bu_log(" -U #		Use air if # is greater than 0\n");
-    bu_log(" -x #		librt debug flags\n");
-    bu_log(" -N #		NMG debug flags\n");
-    bu_log(" -X #		rt debug flags\n");
-#ifdef USE_OPENCL
-    bu_log(" -z # 		Use OpenCL ray-trace engine: no/default (0), yes (1)\n");
-#endif
-    bu_log(" -. #		Select factor in NUgrid algorithm (default is 1.5)\n");
-    bu_log(" -, #		Selection of which space partitioning algorithm to use\n");
-    bu_log(" -@ #		Set limit to each dimension of the nugrid\n");
-    bu_log(" -b \"# #\"	Specify X and Y pixel coordinates (need quotes) for single ray to be fired, for debugging\n");
-    bu_log(" -c script_command\n");
-    bu_log("		Supply, on command line, command which can appear in -M command script\n");
-    bu_log(" -d #		Set flag for reporting of pixel distances\n");
-    bu_log(" -f #		Set expected playback rate in frames-per-second (default is 30)\n");
-    bu_log(" -g #		Set grid cell width, in millimeters\n");
-    bu_log(" -m density,r,g,b\n");
-    bu_log("		Provide parameters for an exponential shading (default r,g,b is 0.8,0.9,0.99)\n");
-    bu_log(" -i		Enable incremental mode processing\n");
-    bu_log(" -j xmin,xmax,ymin,ymax\n");
-    bu_log("		Enable processing of sub-rectangle\n");
-    bu_log(" -k xdir,ydir,zdir,dist\n");
-    bu_log("		Enable use of a cutting plane\n");
-    bu_log(" -l #		Select lighting model (default is 0)\n");
-    bu_log(" -t		Reverse the order of grid traversal (default is not to do that)\n");
-    bu_log(" -u units	Specify the units (or use \"model\" for the local model's units)\n");
-    bu_log(" -v #		Set the verbosity bit vector flags\n");
-    bu_log(" -A #		Set the ambient light intensity\n");
-    bu_log(" -B		Turn on the \"benchmark\" flag (default is off)\n");
-    bu_log(" -C #/#/#	Set the background color to the RGB value #/#/#\n");
-    bu_log(" -D #		Specify the starting frame number (ending frame number is specified via -K #)\n");
-    bu_log(" -E #           Set the distance from eye point to center of the model RPP (default is sqrt(2))\n");
-    bu_log(" -F framebuffer	Cause output to be sent to the indicated framebuffer\n");
-    bu_log(" -G #		Set grid cell height, in millimeters\n");
-    bu_log(" -H #		Set number of extra rays to fire\n");
-    bu_log(" -J #		Set a bit vector for \"jitter\"\n");
-    bu_log(" -K #		Specify the ending frame number (starting frame number is specified via -D #)\n");
-    bu_log(" -O model.pix	Output .pix format file, double precision format\n");
-    bu_log(" -Q x,y		Select pixel ray for query with debugging; compute other pixels without debugging\n");
-    bu_log(" -S		Enable stereo viewing (off by default)\n");
-    bu_log(" -W		Set background image color to white (default is black)\n");
-    bu_log(" -! #		Turn on the libbu(3) library debugging flags\n");
-    bu_log(" -+ t		Specify that output is NOT binary (default is that it is); -+ is otherwise not\n");
-    bu_log("		implemented\n");
-}
-
-
 extern fb *fbp;			/* Framebuffer handle */
 
 extern int curframe;		/* from main.c */
-extern fastf_t frame_delta_t;		/* from main.c */
-extern double airdensity;		/* from opt.c */
+extern double airdensity;	/* from opt.c */
 extern double haze[3];		/* from opt.c */
-extern int do_kut_plane;           /* from opt.c */
-extern plane_t kut_plane;              /* from opt.c */
-vect_t kut_norm;
-struct soltab *kut_soltab = NULL;
+extern int do_kut_plane;        /* from opt.c */
+extern plane_t kut_plane;       /* from opt.c */
 extern struct icv_image *bif;
-
 extern struct floatpixel *curr_float_frame;	/* buffer of full frame */
-
-int ambSlow = 0;
-int ambSamples = 0;
-double ambRadius = 0.0;
-double ambOffset = 0.0;
-vect_t ambient_color = { 1, 1, 1 };	/* Ambient white light */
-
-int ibackground[3] = {0};		/* integer 0..255 version */
-int inonbackground[3] = {0};	/* integer non-background */
+extern fastf_t** timeTable_init(int x, int y);  /* from heatgraph.c */
+extern void timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), fb *efbp); /* from heatgraph.c */
+extern void free_scanlines(int, struct scanline *);
+extern struct scanline* alloc_scanlines(int);
 
 #ifdef RTSRV
-extern int srv_startpix;		/* offset for view_pixel */
+extern int srv_startpix;	/* offset for view_pixel */
 extern int srv_scanlen;		/* BUFMODE_RTSRV buffer length */
 #endif
 
-void free_scanlines(int, struct scanline *);
-struct scanline* alloc_scanlines(int);
-extern fastf_t** timeTable_init(int x, int y);
-extern void timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), fb *efbp);
+
+const char title[] = "The BRL-CAD Raytracer RT";
+
+static struct scanline* scanline = NULL;
+static fastf_t* psum_buffer;            /* Buffer that keeps partial sums for multi-samples modes */
+static size_t pwidth = 0;		/* Width of each pixel (in bytes) */
+struct mfuncs *mfHead = MF_NULL;	/* Head of list of shaders */
+
+/**
+ * Overlay
+ *
+ * If in overlay mode, and writing to a framebuffer, only write
+ * non-background pixels.
+ */
+static int overlay = 0;
+
+/**
+ * Called when the reprojected value lies on the current screen.
+ * Write the reprojected value into the screen, checking *screen* Z
+ * values if the new location is already occupied.
+ *
+ * May be run in parallel.
+ */
+static int scr_lim_dist_sq = 100;	/* dist**2 pixels allowed to move */
 
 static int buf_mode=0;
 #define BUFMODE_UNBUF     1	/* No output buffering */
@@ -174,14 +118,17 @@ static int buf_mode=0;
 				   always have the average of the
 				   colors sampled for each pixel */
 
-static struct scanline* scanline;
-static fastf_t* psum_buffer;              /* Buffer that keeps partial sums for multi-samples modes */
+vect_t kut_norm = VINIT_ZERO;
+struct soltab *kut_soltab = NULL;
 
-static size_t pwidth;		/* Width of each pixel (in bytes) */
-struct mfuncs *mfHead = MF_NULL;	/* Head of list of shaders */
-
+int ambSlow = 0;
+int ambSamples = 0;
+double ambRadius = 0.0;
+double ambOffset = 0.0;
+vect_t ambient_color = { 1, 1, 1 };	/* Ambient white light */
+int ibackground[3] = {0};		/* integer 0..255 version */
+int inonbackground[3] = {0};		/* integer non-background */
 fastf_t gamma_corr = 0.0;		/* gamma correction if !0 */
-
 
 /**
  * The default a_onehit = -1 requires at least one non-air hit, (stop
@@ -192,13 +139,9 @@ fastf_t gamma_corr = 0.0;		/* gamma correction if !0 */
 int a_onehit = -1;
 
 /**
- * Overlay
- *
- * If in overlay mode, and writing to a framebuffer, only write
- * non-background pixels.
+ * Set to 1 to turn off boolean evaluation with -c 'set a_no_booleans=1'
  */
-static int overlay = 0;
-
+int a_no_booleans = -1;
 
 /* Viewing module specific "set" variables:
  *
@@ -213,6 +156,7 @@ struct bu_structparse view_parse[] = {
     {"%d", 1, "bounces", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "ireflect", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "a_onehit", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "a_no_booleans", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%f", ELEMENTS_PER_VECT, "background", 0, color_hook, NULL, NULL},
     {"%d", 1, "overlay", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "ov", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
@@ -235,8 +179,8 @@ view_pixel(struct application *ap)
     unsigned char *pixelp;
     struct scanline *slp;
     int do_eol = 0;
-    unsigned char dist[8];	/* pixel distance (in IEEE format) */
 
+/* #define DRAW_INDICATOR_LINE 1 */
 #ifdef DRAW_INDICATOR_LINE
     /* this draws a nice indicator line to let you know where you are
      * currently rendering into the frame, but testing demonstrated
@@ -250,10 +194,6 @@ view_pixel(struct application *ap)
     (void)fb_write(fbp, ap->a_x, ap->a_y, (unsigned char *)white, 1);
     bu_semaphore_release(BU_SEM_SYSCALL);
 #endif
-
-
-    if (rpt_dist)
-	bu_cv_htond(dist, (unsigned char *)&(ap->a_dist), 1);
 
     if (ap->a_user == 0) {
 	/* Shot missed the model, don't dither */
@@ -305,7 +245,7 @@ view_pixel(struct application *ap)
 	    b = 1;
     }
 
-    if (R_DEBUG&RDEBUG_HITS) bu_log("rgb=%3d, %3d, %3d xy=%3d, %3d (%g, %g, %g)\n",
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_HITS) bu_log("rgb=%3d, %3d, %3d xy=%3d, %3d (%g, %g, %g)\n",
 				    r, g, b, ap->a_x, ap->a_y,
 				    V3ARGS(ap->a_color));
 
@@ -370,9 +310,6 @@ view_pixel(struct application *ap)
 			fprintf(stderr, "fseek error\n");
 		    if (fwrite(p, 3, 1, outfp) != 1)
 			bu_exit(EXIT_FAILURE, "pixel fwrite error");
-		    if (rpt_dist &&
-			(fwrite(dist, 8, 1, outfp) != 1))
-			bu_exit(EXIT_FAILURE, "pixel fwrite error");
 		    bu_semaphore_release(BU_SEM_SYSCALL);
 		}
 
@@ -396,16 +333,6 @@ view_pixel(struct application *ap)
 	    *pixelp++ = r;
 	    *pixelp++ = g;
 	    *pixelp++ = b;
-	    if (rpt_dist) {
-		*pixelp++ = dist[0];
-		*pixelp++ = dist[1];
-		*pixelp++ = dist[2];
-		*pixelp++ = dist[3];
-		*pixelp++ = dist[4];
-		*pixelp++ = dist[5];
-		*pixelp++ = dist[6];
-		*pixelp++ = dist[7];
-	    }
 	    bu_semaphore_release(RT_SEM_RESULTS);
 	    return;
 #endif
@@ -426,16 +353,6 @@ view_pixel(struct application *ap)
 	    *pixelp++ = r;
 	    *pixelp++ = g;
 	    *pixelp++ = b;
-	    if (rpt_dist) {
-		*pixelp++ = dist[0];
-		*pixelp++ = dist[1];
-		*pixelp++ = dist[2];
-		*pixelp++ = dist[3];
-		*pixelp++ = dist[4];
-		*pixelp++ = dist[5];
-		*pixelp++ = dist[6];
-		*pixelp++ = dist[7];
-	    }
 	    if (--(slp->sl_left) <= 0)
 		do_eol = 1;
 	    bu_semaphore_release(RT_SEM_RESULTS);
@@ -454,16 +371,6 @@ view_pixel(struct application *ap)
 	    *pixelp++ = r;
 	    *pixelp++ = g;
 	    *pixelp++ = b;
-	    if (rpt_dist) {
-		*pixelp++ = dist[0];
-		*pixelp++ = dist[1];
-		*pixelp++ = dist[2];
-		*pixelp++ = dist[3];
-		*pixelp++ = dist[4];
-		*pixelp++ = dist[5];
-		*pixelp++ = dist[6];
-		*pixelp++ = dist[7];
-	    }
 	    if (--(slp->sl_left) <= 0)
 		do_eol = 1;
 	    break;
@@ -488,16 +395,6 @@ view_pixel(struct application *ap)
 			*pixelp++ = r;
 			*pixelp++ = g;
 			*pixelp++ = b;
-			if (rpt_dist) {
-			    *pixelp++ = dist[0];
-			    *pixelp++ = dist[1];
-			    *pixelp++ = dist[2];
-			    *pixelp++ = dist[3];
-			    *pixelp++ = dist[4];
-			    *pixelp++ = dist[5];
-			    *pixelp++ = dist[6];
-			    *pixelp++ = dist[7];
-			}
 		    }
 		}
 		/* First 3 incremental iterations are boring */
@@ -521,10 +418,6 @@ view_pixel(struct application *ap)
 
 		tmp_pixel = (fastf_t *)bu_calloc(pwidth, sizeof(fastf_t), "tmp_pixel");
 		VMOVE(tmp_pixel, ap->a_color);
-		if (rpt_dist) {
-		    for (i = 0; i < 8; i++)
-			tmp_pixel[i + 3] = dist[i];
-		}
 
 		psum_p = &psum_buffer[ap->a_y*width*pwidth + ap->a_x*pwidth];
 		slp = &scanline[ap->a_y];
@@ -650,20 +543,14 @@ view_eol(struct application *UNUSED(ap))
 void
 view_end(struct application *ap)
 {
-    /* FIXME: this should work on windows after the bu_timer() is
-     * created to replace the librt timing mechanism.
-     */
-#if !defined(_WIN32) || defined(__CYGWIN__)
     /* If the heat graph is on, render it after all pixels completed */
     if (lightmodel == 8) {
-
 	fastf_t **timeTable;
 	timeTable = timeTable_init(0, 0);
 	bu_log("Building Heat-Graph!\n");
 	bu_log("X:%d Y:%d W:%zu H%zu\n", ap->a_x, ap->a_y, width, height);
 	timeTable_process(timeTable, ap, fbp);
     }
-#endif
 
     if (fullfloat_mode) {
 	struct floatpixel *tmp;
@@ -719,7 +606,7 @@ view_setup(struct rt_i *rtip)
 		{
 		    struct region *r = BU_LIST_NEXT(region, &regp->l);
 
-		    if (R_DEBUG&RDEBUG_MATERIAL)
+		    if (OPTICAL_DEBUG&OPTICAL_DEBUG_MATERIAL)
 			bu_log("mlib_setup: drop region %s\n", regp->reg_name);
 
 		    /* zap reg_udata? beware of light structs */
@@ -729,7 +616,7 @@ view_setup(struct rt_i *rtip)
 		}
 	    case 1:
 		/* Full success */
-		if (R_DEBUG&RDEBUG_MATERIAL &&
+		if (OPTICAL_DEBUG&OPTICAL_DEBUG_MATERIAL &&
 		    ((struct mfuncs *)(regp->reg_mfuncs))->mf_print) {
 		    ((struct mfuncs *)(regp->reg_mfuncs))->
 			mf_print(regp, regp->reg_udata);
@@ -784,7 +671,8 @@ view_re_setup(struct rt_i *rtip)
 /**
  * Called before rt_clean() in do.c
  */
-void view_cleanup(struct rt_i *rtip)
+void
+view_cleanup(struct rt_i *rtip)
 {
     struct region *regp;
 
@@ -807,9 +695,10 @@ void view_cleanup(struct rt_i *rtip)
  * Background texture mapping could be done here.  For now, return a
  * pleasant dark blue.
  */
-static int hit_nothing(struct application *ap)
+static int
+hit_nothing(struct application *ap)
 {
-    if (R_DEBUG&RDEBUG_MISSPLOT) {
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_MISSPLOT) {
 	vect_t out;
 
 	/* XXX length should be 1 model diameter */
@@ -864,7 +753,7 @@ static int hit_nothing(struct application *ap)
 	VSETALL(u.sw.sw_color, 1);
 	VSETALL(u.sw.sw_basecolor, 1);
 
-	if (R_DEBUG&RDEBUG_SHADE)
+	if (OPTICAL_DEBUG&OPTICAL_DEBUG_SHADE)
 	    bu_log("hit_nothing calling viewshade\n");
 
 	(void)viewshade(ap, &u.part, &u.sw);
@@ -1072,7 +961,7 @@ colorview(struct application *ap, struct partition *PartHeadp, struct seg *finis
     if (do_kut_plane) {
 	fastf_t slant_factor;
 	fastf_t dist;
-	fastf_t norm_dist = DIST_PT_PLANE(ap->a_ray.r_pt, kut_plane);
+	fastf_t norm_dist = DIST_PNT_PLANE(ap->a_ray.r_pt, kut_plane);
 
 	if ((slant_factor = -VDOT(kut_plane, ap->a_ray.r_dir)) < -1.0e-10) {
 	    /* exit point, ignore everything before "dist" */
@@ -1119,11 +1008,11 @@ colorview(struct application *ap, struct partition *PartHeadp, struct seg *finis
     RT_CK_RAY(hitp->hit_rayp);
     ap->a_uptr = (void *)pp->pt_regionp;	/* note which region was shaded */
 
-    if (R_DEBUG&RDEBUG_HITS) {
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_HITS) {
 	bu_log("colorview: lvl=%d coloring %s\n",
 	       ap->a_level,
 	       pp->pt_regionp->reg_name);
-	rt_pr_pt(ap->a_rt_i, pp);
+	rt_pr_partition(ap->a_rt_i, pp);
     }
     if (hitp->hit_dist >= INFINITY) {
 	bu_log("colorview:  entry beyond infinity\n");
@@ -1148,7 +1037,7 @@ colorview(struct application *ap, struct partition *PartHeadp, struct seg *finis
 
 	if (pp->pt_outhit->hit_dist >= INFINITY ||
 	    ap->a_level > max_bounces) {
-	    if (R_DEBUG&RDEBUG_SHOWERR) {
+	    if (OPTICAL_DEBUG&OPTICAL_DEBUG_SHOWERR) {
 		VSET(ap->a_color, 9, 0, 0);	/* RED */
 		bu_log("colorview:  eye inside %s (x=%d, y=%d, lvl=%d)\n",
 		       pp->pt_regionp->reg_name,
@@ -1181,7 +1070,7 @@ colorview(struct application *ap, struct partition *PartHeadp, struct seg *finis
     }
 
     /* Record the approach path */
-    if (R_DEBUG&RDEBUG_RAYWRITE && (hitp->hit_dist > 0.0001)) {
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_RAYWRITE && (hitp->hit_dist > 0.0001)) {
 	VJOIN1(hitp->hit_point, ap->a_ray.r_pt,
 	       hitp->hit_dist, ap->a_ray.r_dir);
 	wraypts(ap->a_ray.r_pt,
@@ -1190,7 +1079,7 @@ colorview(struct application *ap, struct partition *PartHeadp, struct seg *finis
 		-1, ap, stdout);	/* -1 = air */
     }
 
-    if ((R_DEBUG&(RDEBUG_RAYPLOT|RDEBUG_RAYWRITE|RDEBUG_REFRACT)) && (hitp->hit_dist > 0.0001)) {
+    if ((OPTICAL_DEBUG&(OPTICAL_DEBUG_RAYPLOT|OPTICAL_DEBUG_RAYWRITE|OPTICAL_DEBUG_REFRACT)) && (hitp->hit_dist > 0.0001)) {
 	/* There are two parts to plot here.  Ray start to inhit
 	 * (purple), and inhit to outhit (grey).
 	 */
@@ -1205,7 +1094,7 @@ colorview(struct application *ap, struct partition *PartHeadp, struct seg *finis
 
 	VJOIN1(inhit, ap->a_ray.r_pt,
 	       hitp->hit_dist, ap->a_ray.r_dir);
-	if (R_DEBUG&RDEBUG_RAYPLOT) {
+	if (OPTICAL_DEBUG&OPTICAL_DEBUG_RAYPLOT) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    pl_color(stdout, i, 0, i);
 	    pdv_3line(stdout, ap->a_ray.r_pt, inhit);
@@ -1222,7 +1111,7 @@ vdraw open oray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
 	VJOIN1(outhit,
 	       ap->a_ray.r_pt, out,
 	       ap->a_ray.r_dir);
-	if (R_DEBUG&RDEBUG_RAYPLOT) {
+	if (OPTICAL_DEBUG&OPTICAL_DEBUG_RAYPLOT) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    pl_color(stdout, i, i, i);
 	    pdv_3line(stdout, inhit, outhit);
@@ -1242,12 +1131,11 @@ vdraw open iray;vdraw params c %2.2x%2.2x%2.2x;vdraw write n 0 %g %g %g;vdraw wr
     sw.sw_xmitonly = 0;		/* want full data */
     sw.sw_inputs = 0;		/* no fields filled yet */
     sw.sw_frame = curframe;
-    sw.sw_pixeltime = sw.sw_frametime = curframe * frame_delta_t;
     sw.sw_segs = finished_segs;
     VSETALL(sw.sw_color, 1);
     VSETALL(sw.sw_basecolor, 1);
 
-    if (R_DEBUG&RDEBUG_SHADE)
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_SHADE)
 	bu_log("colorview calling viewshade\n");
 
     /* individual shaders must handle reflection & refraction */
@@ -1276,7 +1164,7 @@ out:
 	ambientOcclusion(ap, pp);
 
     RT_CK_REGION(ap->a_uptr);
-    if (R_DEBUG&RDEBUG_HITS) {
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_HITS) {
 	bu_log("colorview: lvl=%d ret a_user=%d %s\n",
 	       ap->a_level,
 	       ap->a_user,
@@ -1290,9 +1178,8 @@ out:
 /**
  * a_hit() routine for simple lighting model.
  */
-int viewit(struct application *ap,
-	   struct partition *PartHeadp,
-	   struct seg *UNUSED(segHeadp))
+int
+viewit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segHeadp))
 {
     struct partition *pp;
     struct hit *hitp;
@@ -1312,7 +1199,7 @@ int viewit(struct application *ap,
     if (do_kut_plane) {
 	fastf_t slant_factor;
 	fastf_t dist;
-	fastf_t norm_dist = DIST_PT_PLANE(ap->a_ray.r_pt, kut_plane);
+	fastf_t norm_dist = DIST_PNT_PLANE(ap->a_ray.r_pt, kut_plane);
 
 	if ((slant_factor = -VDOT(kut_plane, ap->a_ray.r_dir)) < -1.0e-10) {
 	    /* exit point, ignore everything before "dist" */
@@ -1442,7 +1329,7 @@ int viewit(struct application *ap,
 
     }
 
-    if (R_DEBUG&RDEBUG_HITS) {
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_HITS) {
 	rt_pr_hit(" In", hitp);
 	bu_log("cosI0=%f, diffuse0=%f   ", cosI0, diffuse0);
 	VPRINT("RGB", ap->a_color);
@@ -1470,11 +1357,6 @@ view_init(struct application *UNUSED(ap), char *UNUSED(file), char *UNUSED(obj),
 
     optical_shader_init(&mfHead);	/* in liboptical/init.c */
 
-    if (rpt_dist && !minus_o) {
-	bu_log("Warning: -d ignored.  Writing to frame buffer only\n");
-	rpt_dist = 0;
-    }
-
     if (do_kut_plane) {
 	struct rt_functab *functab;
 	struct directory *dp;
@@ -1499,16 +1381,6 @@ view_init(struct application *UNUSED(ap), char *UNUSED(file), char *UNUSED(obj),
 
     return 0;
 }
-
-
-/**
- * Called when the reprojected value lies on the current screen.
- * Write the reprojected value into the screen, checking *screen* Z
- * values if the new location is already occupied.
- *
- * May be run in parallel.
- */
-int rt_scr_lim_dist_sq = 100;	/* dist**2 pixels allowed to move */
 
 
 int
@@ -1592,7 +1464,7 @@ reproject_worker(int UNUSED(cpu), void *UNUSED(arg))
 		/* Don't reproject if too pixel moved too far on the screen */
 		dx = ix - ip->ff_x;
 		dy = iy - ip->ff_y;
-		if (dx*dx + dy*dy > rt_scr_lim_dist_sq)
+		if (dx*dx + dy*dy > scr_lim_dist_sq)
 		    continue;	/* moved too far */
 
 				/* Don't reproject for too many frame-times */
@@ -1665,11 +1537,11 @@ view_2init(struct application *ap, char *UNUSED(framename))
     } else {
 	ap->a_onehit = a_onehit;
     }
+    if (a_no_booleans >= 0) {
+	ap->a_no_booleans = a_no_booleans;
+    }
 
-    if (rpt_dist)
-	pwidth = 3+8;
-    else
-	pwidth = 3;
+    pwidth = 3;
 
     /* Always allocate the scanline[] array (unless we already have
      * one in incremental mode)
@@ -1693,8 +1565,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	buf_mode = BUFMODE_INCR;
     } else if (full_incr_mode) {
 	buf_mode = BUFMODE_ACC;
-    }
-    else if (width <= 96 || random_mode) {
+    } else if (width <= 96 || random_mode) {
 	buf_mode = BUFMODE_UNBUF;
     } else if ((size_t)npsw <= (size_t)height/4) {
 	/* Have each CPU do a whole scanline.  Saves lots of semaphore
@@ -1749,8 +1620,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	    break;
 #ifdef RTSRV
 	case BUFMODE_RTSRV:
-	    scanbuf = bu_malloc(srv_scanlen*pwidth + sizeof(long),
-				"scanbuf [multi-line]");
+	    scanbuf = (unsigned char *)bu_malloc(srv_scanlen*pwidth + sizeof(long), "scanbuf [multi-line]");
 	    break;
 #endif
 	case BUFMODE_INCR:
@@ -1818,7 +1688,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	     */
 	    if (BU_LIST_IS_EMPTY(&(LightHead.l))
 		|| !BU_LIST_IS_INITIALIZED(&(LightHead.l))) {
-		if (R_DEBUG&RDEBUG_SHOWERR)bu_log("No explicit light\n");
+		if (OPTICAL_DEBUG&OPTICAL_DEBUG_SHOWERR)bu_log("No explicit light\n");
 		light_maker(1, view2model);
 	    }
 	    break;
@@ -1842,7 +1712,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 		 * create one.
 		 */
 		if (BU_LIST_IS_EMPTY(&(LightHead.l)) || !BU_LIST_IS_INITIALIZED(&(LightHead.l))) {
-		    if (rdebug&RDEBUG_SHOWERR)
+		    if (optical_debug&OPTICAL_DEBUG_SHOWERR)
 			bu_log("No explicit light\n");
 		    light_maker(1, view2model);
 		}
@@ -1870,7 +1740,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 		ap->a_hit = colorview;
 		if (BU_LIST_IS_EMPTY(&(LightHead.l))
 		    || !BU_LIST_IS_INITIALIZED(&(LightHead.l))) {
-		    if (R_DEBUG&RDEBUG_SHOWERR)bu_log("No explicit light\n");
+		    if (OPTICAL_DEBUG&OPTICAL_DEBUG_SHOWERR)bu_log("No explicit light\n");
 		    light_maker(1, view2model);
 		}
 		break;
@@ -1887,7 +1757,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
      * structures in the space partitioning tree
      */
     bu_ptbl_init(&stps, 8, "soltabs to delete");
-    if (R_DEBUG & RDEBUG_LIGHT)
+    if (OPTICAL_DEBUG & OPTICAL_DEBUG_LIGHT)
 	bu_log("deleting %lu invisible light regions\n", BU_PTBL_LEN(&ap->a_rt_i->delete_regs));
 
     for (i=0; i<BU_PTBL_LEN(&ap->a_rt_i->delete_regs); i++) {
@@ -1906,7 +1776,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	/* remove the invisible light region pointers from the soltab
 	 * structs.
 	 */
-	if (R_DEBUG & RDEBUG_LIGHT)
+	if (OPTICAL_DEBUG & OPTICAL_DEBUG_LIGHT)
 	    bu_log("Removing invisible light region pointers from %lu soltabs\n",
 		   BU_PTBL_LEN(&stps));
 
@@ -1919,7 +1789,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	    for (; k>=0; k--) {
 		rp2 = (struct region *)BU_PTBL_GET(&stp->st_regions, k);
 		if (rp2 == rp) {
-		    if (R_DEBUG & RDEBUG_LIGHT) {
+		    if (OPTICAL_DEBUG & OPTICAL_DEBUG_LIGHT) {
 			bu_log("\tRemoving region %s from soltab for %s\n", rp2->reg_name, stp->st_dp->d_namep);
 		    }
 		    bu_ptbl_rm(&stp->st_regions, (long *)rp2);
@@ -1962,20 +1832,30 @@ view_2init(struct application *ap, char *UNUSED(framename))
 void
 application_init(void)
 {
-    /* rpt_overlap = 1; */
-
     /* Set the byte offsets at run time */
     view_parse[ 0].sp_offset = bu_byteoffset(gamma_corr);
     view_parse[ 1].sp_offset = bu_byteoffset(max_bounces);
     view_parse[ 2].sp_offset = bu_byteoffset(max_ireflect);
     view_parse[ 3].sp_offset = bu_byteoffset(a_onehit);
-    view_parse[ 4].sp_offset = bu_byteoffset(background[0]);
-    view_parse[ 5].sp_offset = bu_byteoffset(overlay);
+    view_parse[ 4].sp_offset = bu_byteoffset(a_no_booleans);
+    view_parse[ 5].sp_offset = bu_byteoffset(background[0]);
     view_parse[ 6].sp_offset = bu_byteoffset(overlay);
-    view_parse[ 7].sp_offset = bu_byteoffset(ambSamples);
-    view_parse[ 8].sp_offset = bu_byteoffset(ambRadius);
-    view_parse[ 9].sp_offset = bu_byteoffset(ambOffset);
-    view_parse[10].sp_offset = bu_byteoffset(ambSlow);
+    view_parse[ 7].sp_offset = bu_byteoffset(overlay);
+    view_parse[ 8].sp_offset = bu_byteoffset(ambSamples);
+    view_parse[ 9].sp_offset = bu_byteoffset(ambRadius);
+    view_parse[10].sp_offset = bu_byteoffset(ambOffset);
+    view_parse[11].sp_offset = bu_byteoffset(ambSlow);
+
+    option("", "-A #", "Set image brightness, ambient light intensity (default: 0.4)", 0);
+    option("Raytrace", "-i", "Enable incremental (progressive-style) rendering", 1);
+    option("Raytrace", "-t", "Render from top to bottom (default: from bottom up)", 1);
+    option("Advanced", "-O file.dpix", "Render to .dpix format file, double precision image data", 1);
+    option("Advanced", "-m density, r, g, b", "Render hazy air (e.g., 0.0002, 0.8, 0.9, 1 for sky-blue haze)", 1);
+    option("Developer", "-l #", "Select lighting model (default is 0)", 1);
+
+    /* this reassignment hack ensures help is last in the first list */
+    option("dummy", "-? or -h", "Display help", 1);
+    option("", "-? or -h", "Display help", 1);
 }
 
 

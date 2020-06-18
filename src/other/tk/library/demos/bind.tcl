@@ -2,8 +2,6 @@
 #
 # This demonstration script creates a text widget with bindings set
 # up for hypertext-like effects.
-#
-# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."
@@ -24,7 +22,7 @@ pack $btns -side bottom -fill x
 
 text $w.text -yscrollcommand "$w.scroll set" -setgrid true \
 	-width 60 -height 24 -font $font -wrap word
-scrollbar $w.scroll -command "$w.text yview"
+ttk::scrollbar $w.scroll -command "$w.text yview"
 pack $w.scroll -side right -fill y
 pack $w.text -expand yes -fill both
 

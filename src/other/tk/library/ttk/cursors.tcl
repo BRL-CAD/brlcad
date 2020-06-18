@@ -1,6 +1,4 @@
 #
-# $Id$
-#
 # Map symbolic cursor names to platform-appropriate cursors.
 #
 # The following cursors are defined:

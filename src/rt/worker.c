@@ -1,7 +1,7 @@
 /*                        W O R K E R . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2016 United States Government as represented by
+ * Copyright (c) 1985-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -59,7 +59,7 @@ extern int timeTable_input(int x, int y, fastf_t t, fastf_t **timeTable);
 extern int query_x;
 extern int query_y;
 extern int Query_one_pixel;
-extern int query_rdebug;
+extern int query_optical_debug;
 extern int query_debug;
 
 extern unsigned char *pixmap;	/* pixmap for rerendering of black pixels */
@@ -78,10 +78,13 @@ int reproj_cur;	/* number of pixels reprojected this frame */
 int reproj_max;	/* out of total number of pixels */
 
 /* Local communication with worker() */
-int cur_pixel;			/* current pixel number, 0..last_pixel */
-int last_pixel;			/* last pixel number */
+int cur_pixel = 0;			/* current pixel number, 0..last_pixel */
+int last_pixel = 0;			/* last pixel number */
 
 int stop_worker = 0;
+
+/* for stereo output */
+vect_t left_eye_delta = VINIT_ZERO;
 
 /**
  * For certain hypersample values there is a particular advantage to
@@ -132,7 +135,7 @@ static struct jitter_pattern pt_pats[] = {
  * fire each ray in a specific sub-section of the pixel.
  */
 static void
-jitter_start_pt(vect_t point, struct application *a, int samplenum, int pat_num)
+jitter_start_pnt(vect_t point, struct application *a, int samplenum, int pat_num)
 {
     fastf_t dx, dy;
 
@@ -197,10 +200,10 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 
     if (Query_one_pixel) {
 	if (a.a_x == query_x && a.a_y == query_y) {
-	    rdebug = query_rdebug;
-	    RTG.debug = query_debug;
+	    optical_debug = query_optical_debug;
+	    rt_debug = query_debug;
 	} else {
-	    RTG.debug = rdebug = 0;
+	    rt_debug = optical_debug = 0;
 	}
     }
 
@@ -261,7 +264,7 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 	/****************/
 
 	if (jitter & JITTER_CELL) {
-	    jitter_start_pt(point, &a, samplenum, pat_num);
+	    jitter_start_pnt(point, &a, samplenum, pat_num);
 	}
 
 	if (a.a_rt_i->rti_prismtrace) {
@@ -341,7 +344,7 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 	    /**********************/
 
 	    if (jitter & JITTER_CELL) {
-		jitter_start_pt(point, &a, samplenum, pat_num);
+		jitter_start_pnt(point, &a, samplenum, pat_num);
 	    }
 
 	    if (a.a_rt_i->rti_prismtrace) {
@@ -421,23 +424,19 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 
     /* bu_log("2: [%d, %d] : [%.2f, %.2f, %.2f]\n", pixelnum%width, pixelnum/width, a.a_color[0], a.a_color[1], a.a_color[2]); */
 
-    /* FIXME: this should work on windows after the bu_timer() is
-     * created to replace the librt timing mechanism.
-     */
-#if !defined(_WIN32) || defined(__CYGWIN__)
     /* Add get_pixel_timer here to get total time taken to get pixel, when asked */
     if (lightmodel == 8) {
 	fastf_t pixelTime;
 	fastf_t **timeTable;
 
-	pixelTime = rt_get_timer(NULL,NULL);
+	pixelTime = rt_get_timer(NULL,NULL); /* FIXME: needs to use bu_gettime() */
 	/* bu_log("PixelTime = %lf X:%d Y:%d\n", pixelTime, a.a_x, a.a_y); */
-	bu_semaphore_acquire(RT_SEM_LAST-2);
+	bu_semaphore_acquire(RT_SEM_RESULTS);
 	timeTable = timeTable_init(width, height);
 	timeTable_input(a.a_x, a.a_y, pixelTime, timeTable);
-	bu_semaphore_release(RT_SEM_LAST-2);
+	bu_semaphore_release(RT_SEM_RESULTS);
     }
-#endif
+
     /* we're done */
     view_pixel(&a);
     if ((size_t)a.a_x == width-1) {
@@ -464,8 +463,47 @@ worker(int cpu, void *UNUSED(arg))
     int pixelnum;
     int pat_num = -1;
 
-    /* The more CPUs at work, the bigger the bites we take */
-    if (per_processor_chunk <= 0) per_processor_chunk = npsw;
+    /* Figure out a reasonable chunk size that should keep most
+     * workers busy all the way to the end.  We divide up the image
+     * into chunks equating to tiles 1x1, 2x2, 4x4, 8x8 ... in size.
+     * Work is distributed so that all CPUs work on at least 8 chunks
+     * with the chunking adjusted from a maximum chunk size (512x512)
+     * all the way down to 1 pixel at a time, depending on the number
+     * of cores and the size of our rendering.
+     *
+     * TODO: actually work on image tiles instead of pixel spans.
+     */
+    if (per_processor_chunk <= 0) {
+	size_t chunk_size;
+	size_t one_eighth = (last_pixel - cur_pixel) * (hypersample + 1) / 8;
+	if (UNLIKELY(one_eighth < 1))
+	    one_eighth = 1;
+
+	if (one_eighth > npsw * 262144)
+	    chunk_size = 262144; /* 512x512 */
+	else if (one_eighth > npsw * 65536)
+	    chunk_size = 65536; /* 256x256 */
+	else if (one_eighth > npsw * 16384)
+	    chunk_size = 16384; /* 128x128 */
+	else if (one_eighth > npsw * 4096)
+	    chunk_size = 4096; /* 64x64 */
+	else if (one_eighth > npsw * 1024)
+	    chunk_size = 1024; /* 32x32 */
+	else if (one_eighth > npsw * 256)
+	    chunk_size = 256; /* 16x16 */
+	else if (one_eighth > npsw * 64)
+	    chunk_size = 64; /* 8x8 */
+	else if (one_eighth > npsw * 16)
+	    chunk_size = 16; /* 4x4 */
+	else if (one_eighth > npsw * 4)
+	    chunk_size = 4; /* 2x2 */
+	else
+	    chunk_size = 1; /* one pixel at a time */
+
+	bu_semaphore_acquire(RT_SEM_WORKER);
+	per_processor_chunk = chunk_size;
+	bu_semaphore_release(RT_SEM_WORKER);
+    }
 
     if (cpu >= MAX_PSW) {
 	bu_log("rt/worker() cpu %d > MAX_PSW %d, array overrun\n", cpu, MAX_PSW);
@@ -485,33 +523,15 @@ worker(int cpu, void *UNUSED(arg))
 	    }
 	}
     }
+
 pat_found:
 
-    if (transpose_grid) {
-	int tmp;
+    if (random_mode) {
 
-	/* switch cur_pixel and last_pixel */
-	tmp = cur_pixel;
-	cur_pixel = last_pixel;
-	last_pixel = tmp;
-
-	while (1) {
-	    if (stop_worker)
-		return;
-
-	    bu_semaphore_acquire(RT_SEM_WORKER);
-	    pixel_start = cur_pixel;
-	    cur_pixel -= per_processor_chunk;
-	    bu_semaphore_release(RT_SEM_WORKER);
-
-	    for (pixelnum = pixel_start; pixelnum > pixel_start-per_processor_chunk; pixelnum--) {
-		if (pixelnum < last_pixel)
-		    return;
-
-		do_pixel(cpu, pat_num, pixelnum);
-	    }
-	}
-    } else if (random_mode) {
+	/* FIXME: this currently runs forever. It should probably
+	 *        generate a list of random pixels and then process
+	 *        them in that order.
+	 */
 
 	while (1) {
 	    /* Generate a random pixel id between 0 and last_pixel
@@ -523,6 +543,9 @@ pat_found:
 	}
 
     } else {
+	int from;
+	int to;
+
 	while (1) {
 	    if (stop_worker)
 		return;
@@ -532,11 +555,20 @@ pat_found:
 	    cur_pixel += per_processor_chunk;
 	    bu_semaphore_release(RT_SEM_WORKER);
 
-	    for (pixelnum = pixel_start; pixelnum < pixel_start+per_processor_chunk; pixelnum++) {
+	    if (top_down) {
+		from = last_pixel - pixel_start;
+		to = from - per_processor_chunk;
+	    } else {
+		from = pixel_start;
+		to = pixel_start + per_processor_chunk;
+	    }
 
-		if (pixelnum > last_pixel)
+	    /* bu_log("SPAN[%d -> %d] for %d pixels\n", pixel_start, pixel_start+per_processor_chunk, per_processor_chunk); */
+	    for (pixelnum = from; pixelnum != to; (from < to) ? pixelnum++ : pixelnum--) {
+		if (pixelnum > last_pixel || pixelnum < 0)
 		    return;
 
+		/* bu_log("    PIXEL[%d]\n", pixelnum); */
 		do_pixel(cpu, pat_num, pixelnum);
 	    }
 	}
@@ -628,9 +660,7 @@ grid_setup(void)
     if (stereo) {
 	/* Move left 2.5 inches (63.5mm) */
 	VSET(temp, -63.5*2.0/viewsize, 0, 0);
-	bu_log("red eye: moving %f relative screen (left)\n", temp[X]);
 	MAT4X3VEC(left_eye_delta, view2model, temp);
-	VPRINT("left_eye_delta", left_eye_delta);
     }
 
     /* "Lower left" corner of viewing plane */
@@ -666,7 +696,7 @@ grid_setup(void)
 	fastf_t ang;	/* radians */
 	fastf_t dx, dy;
 
-	ang = curframe * frame_delta_t * M_2PI / 10;	/* 10 sec period */
+	ang = curframe * M_2PI / 100.0;	/* semi-abitrary 100 frame period */
 	dx = cos(ang) * 0.5;	/* +/- 1/4 pixel width in amplitude */
 	dy = sin(ang) * 0.5;
 	VJOIN2(viewbase_model, viewbase_model,
@@ -754,7 +784,7 @@ do_run(int a, int b)
 	    /* flush the pipe */
 	    if (close(p[1]) == -1) {
 		perror("Unable to close the communication pipe");
-		sleep(1); /* give the parent time to read */
+		bu_snooze(BU_SEC2USEC(1)); /* give the parent time to read */
 	    }
 	    bu_exit(0, NULL);
 	} else {
@@ -796,7 +826,7 @@ do_run(int a, int b)
     /* Tally up the statistics */
     for (cpu=0; cpu < npsw; cpu++) {
 	if (resource[cpu].re_magic != RESOURCE_MAGIC) {
-	    bu_log("ERROR: CPU %d resources corrupted, statistics bad\n", cpu);
+	    bu_log("ERROR: CPU %zu resources corrupted, statistics bad\n", cpu);
 	    continue;
 	}
 	rt_add_res_stats(APP.a_rt_i, &resource[cpu]);

@@ -1,7 +1,7 @@
 /*                    F B _ G E N E R I C . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2016 United States Government as represented by
+ * Copyright (c) 1986-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <png.h>
+#include "png.h"
 
 #ifdef HAVE_STRINGS_H
 # include <strings.h>
@@ -43,6 +43,7 @@
 #include "bio.h"
 
 #include "bu/color.h"
+#include "bu/file.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "bu/log.h"
@@ -79,7 +80,7 @@ fb *_if_list[] = {
 /* never get any of the following by default */
     &stk_interface,
     &memory_interface,
-    &null_interface,
+    &fb_null_interface,
     (fb *) 0
 };
 
@@ -148,10 +149,11 @@ fb_put_platform_specific(struct fb_platform_specific *fb_p)
 fb *
 fb_open_existing(const char *file, int width, int height, struct fb_platform_specific *fb_p)
 {
-    fb *ifp = (fb *) calloc(sizeof(fb), 1);
+    fb *ifp = (fb *)calloc(sizeof(fb), 1);
+    if (!ifp) return NULL;
     fb_set_interface(ifp, file);
     fb_set_magic(ifp, FB_MAGIC);
-    ifp->if_open_existing(ifp, width, height, fb_p);
+    if (ifp->if_open_existing) ifp->if_open_existing(ifp, width, height, fb_p);
     return ifp;
 }
 
@@ -221,6 +223,7 @@ int fb_clear_fd(fb *ifp, fd_set *list)
 
 void fb_set_magic(fb *ifp, uint32_t magic)
 {
+    if (!ifp) return;
     ifp->if_magic = magic;
 }
 
@@ -464,12 +467,17 @@ found_interface:
     /* Mark OK by filling in magic number */
     ifp->if_magic = FB_MAGIC;
 
-    if ((i=(*ifp->if_open)(ifp, file, width, height)) <= -1) {
-	fb_log("fb_open: can't open device \"%s\", ret=%d.\n",
-	       file, i);
+    i=(*ifp->if_open)(ifp, file, width, height);
+    if (i != 0) {
 	ifp->if_magic = 0;		/* sanity */
 	free((void *) ifp->if_name);
 	free((void *) ifp);
+
+	if (i < 0)
+	    fb_log("fb_open: can't open device \"%s\", ret=%d.\n", file, i);
+	else
+	    bu_exit(0, "Terminating early by request\n"); /* e.g., zap memory */
+
 	return FB_NULL;
     }
     return ifp;
@@ -663,12 +671,12 @@ fb_write_fp(fb *ifp, FILE *fp, int req_width, int req_height, int crunch, int in
  * Throw bytes away.  Use reads into scanline buffer if a pipe, else seek.
  */
 static int
-fb_skip_bytes(int fd, off_t num, int fileinput, int scanbytes, unsigned char *scanline)
+fb_skip_bytes(int fd, b_off_t num, int fileinput, int scanbytes, unsigned char *scanline)
 {
     int n, tries;
 
     if (fileinput) {
-	(void)lseek(fd, num, 1);
+	(void)bu_lseek(fd, num, 1);
 	return 0;
     }
 
@@ -778,7 +786,7 @@ fb_read_fd(fb *ifp, int fd, int file_width, int file_height, int file_xoff, int 
 	}
     }
 
-    if (file_yoff != 0) fb_skip_bytes(fd, (off_t)file_yoff*(off_t)file_width*sizeof(RGBpixel), fileinput, scanbytes, scanline);
+    if (file_yoff != 0) fb_skip_bytes(fd, (b_off_t)file_yoff*(b_off_t)file_width*sizeof(RGBpixel), fileinput, scanbytes, scanline);
 
     if (multiple_lines) {
 	/* Bottom to top with multi-line reads & writes */
@@ -809,11 +817,11 @@ fb_read_fd(fb *ifp, int fd, int file_width, int file_height, int file_xoff, int 
 	/* Normal way -- bottom to top */
 	for (y = scr_yoff; y < scr_yoff + yout; y++) {
 	    if (y < 0 || y > scr_height) {
-		fb_skip_bytes(fd, (off_t)file_width*sizeof(RGBpixel), fileinput, scanbytes, scanline);
+		fb_skip_bytes(fd, (b_off_t)file_width*sizeof(RGBpixel), fileinput, scanbytes, scanline);
 		continue;
 	    }
 	    if (file_xoff+xskip != 0)
-		fb_skip_bytes(fd, (off_t)(file_xoff+xskip)*sizeof(RGBpixel), fileinput, scanbytes, scanline);
+		fb_skip_bytes(fd, (b_off_t)(file_xoff+xskip)*sizeof(RGBpixel), fileinput, scanbytes, scanline);
 	    n = bu_mread(fd, (char *)scanline, scanbytes);
 	    if (n <= 0) break;
 	    m = fb_write(ifp, xstart, y, scanline, xout);
@@ -825,17 +833,17 @@ fb_read_fd(fb *ifp, int fd, int file_width, int file_height, int file_xoff, int 
 	    }
 	    /* slop at the end of the line? */
 	    if ((size_t)file_xoff+xskip+scanpix < (size_t)file_width)
-		fb_skip_bytes(fd, (off_t)(file_width-file_xoff-xskip-scanpix)*sizeof(RGBpixel), fileinput, scanbytes, scanline);
+		fb_skip_bytes(fd, (b_off_t)(file_width-file_xoff-xskip-scanpix)*sizeof(RGBpixel), fileinput, scanbytes, scanline);
 	}
     } else {
 	/* Inverse -- top to bottom */
 	for (y = scr_height-1-scr_yoff; y >= scr_height-scr_yoff-yout; y--) {
 	    if (y < 0 || y >= scr_height) {
-		fb_skip_bytes(fd, (off_t)file_width*sizeof(RGBpixel), fileinput, scanbytes, scanline);
+		fb_skip_bytes(fd, (b_off_t)file_width*sizeof(RGBpixel), fileinput, scanbytes, scanline);
 		continue;
 	    }
 	    if (file_xoff+xskip != 0)
-		fb_skip_bytes(fd, (off_t)(file_xoff+xskip)*sizeof(RGBpixel), fileinput, scanbytes, scanline);
+		fb_skip_bytes(fd, (b_off_t)(file_xoff+xskip)*sizeof(RGBpixel), fileinput, scanbytes, scanline);
 	    n = bu_mread(fd, (char *)scanline, scanbytes);
 	    if (n <= 0) break;
 	    m = fb_write(ifp, xstart, y, scanline, xout);
@@ -847,7 +855,7 @@ fb_read_fd(fb *ifp, int fd, int file_width, int file_height, int file_xoff, int 
 	    }
 	    /* slop at the end of the line? */
 	    if ((size_t)file_xoff+xskip+scanpix < (size_t)file_width)
-		fb_skip_bytes(fd, (off_t)(file_width-file_xoff-xskip-scanpix)*sizeof(RGBpixel), fileinput, scanbytes, scanline);
+		fb_skip_bytes(fd, (b_off_t)(file_width-file_xoff-xskip-scanpix)*sizeof(RGBpixel), fileinput, scanbytes, scanline);
 	}
     }
     free(scanline);

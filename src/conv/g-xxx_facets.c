@@ -1,7 +1,7 @@
 /*                  G - X X X _ F A C E T S . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2016 United States Government as represented by
+ * Copyright (c) 2003-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,6 +32,7 @@
 #include <math.h>
 #include <string.h>
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/parallel.h"
 #include "vmath.h"
@@ -66,7 +67,7 @@ static const char *usage =
 static int NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int verbose;
 static struct db_i *dbip;
-static struct rt_tess_tol ttol;	/* tessellation tolerance in mm */
+static struct bg_tess_tol ttol;	/* tessellation tolerance in mm */
 static struct bn_tol tol;	/* calculation tolerance */
 static struct model *the_model;
 
@@ -100,7 +101,7 @@ main(int argc, char **argv)
     tree_state.ts_m = &the_model;
 
     /* Set up tessellation tolerance defaults */
-    ttol.magic = RT_TESS_TOL_MAGIC;
+    ttol.magic = BG_TESS_TOL_MAGIC;
     /* Defaults, updated by command line options. */
     ttol.abs = DEFAULT_ABS_TOL;
     ttol.rel = DEFAULT_REL_TOL;
@@ -138,7 +139,7 @@ main(int argc, char **argv)
 		verbose++;
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
 		break;
 	    case 'D':
 		tol.dist = atof(bu_optarg);
@@ -171,7 +172,7 @@ main(int argc, char **argv)
 	bu_exit(1, "db_dirbuild failed\n");
 
     BN_CK_TOL(tree_state.ts_tol);
-    RT_CK_TESS_TOL(tree_state.ts_ttol);
+    BG_CK_TESS_TOL(tree_state.ts_ttol);
 
     if (verbose) {
 	int i;
@@ -395,7 +396,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 
     RT_CK_FULL_PATH(pathp);
     RT_CK_TREE(curtree);
-    RT_CK_TESS_TOL(tsp->ts_ttol);
+    BG_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
     NMG_CK_MODEL(*tsp->ts_m);
 

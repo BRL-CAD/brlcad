@@ -1,7 +1,7 @@
 /*                S U P E R E L L _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2012-2016 United States Government as represented by
+ * Copyright (c) 2012-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@
 #include "brep.h"
 
 extern "C" {
-    void rt_ell_brep(ON_Brep **b, struct rt_db_internal *ip, const struct bn_tol *tol);
+    void rt_ell_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol);
 }
 
 extern "C" void

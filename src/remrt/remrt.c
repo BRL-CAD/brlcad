@@ -1,7 +1,7 @@
 /*                         R E M R T . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2016 United States Government as represented by
+ * Copyright (c) 1989-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -46,8 +46,25 @@
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>		/* sometimes includes <time.h> */
 #endif
+#include "bio.h"
 #include "bresource.h"
 #include "bsocket.h"
+#include "bu/app.h"
+
+/* decls for strict c90 */
+
+#if !defined(HAVE_DECL_FDOPEN) && !defined(fdopen)
+extern FILE *fdopen(int fd, const char *mode);
+#endif
+#if !defined(HAVE_DECL_VFORK) && !defined(vfork)
+extern pid_t vfork(void);
+#endif
+#if !defined(HAVE_DECL_FCHMOD) && !defined(fchmod)
+extern int fchmod(int fd, mode_t mode);
+#endif
+#if !defined(HAVE_DECL_GETTIMEOFDAY) && !defined(gettimeofday)
+extern int gettimeofday(struct timeval *, void *);
+#endif
 
 /* FIXME: is this basically FD_COPY()? */
 #ifndef FD_MOVE
@@ -80,8 +97,8 @@
 #  endif
 #endif
 
-#define TARDY_SERVER_INTERVAL	(9*60)		/* max seconds of silence */
-#define N_SERVER_ASSIGNMENTS	3		/* desired # of assignments */
+#define TARDY_SERVER_INTERVAL	(900*60)	/* max seconds of silence */
+#define N_SERVER_ASSIGNMENTS	1		/* desired # of assignments */
 #define MIN_ASSIGNMENT_TIME	5		/* desired seconds/result */
 #define SERVER_CHECK_INTERVAL	(10*60)		/* seconds */
 #ifndef RSH
@@ -133,13 +150,10 @@
 #  define MAXSERVERS NFD		/* No relay function yet */
 #endif
 
-
-/* Needed to satisfy the reference created by including ../rt/opt.o */
-struct command_tab rt_cmdtab[] = {
-    {(char *)0, (char *)0, (char *)0,
-     0,		0, 0}	/* END */
-};
-
+/* NOTE: satisfies linkage with do.c command parsing.  possibly wrong
+ * to stub empty... might hinder remrt's ability to read rt commands.
+ */
+struct command_tab rt_cmdtab[] = {{NULL, NULL, NULL, 0, 0, 0}};
 
 struct frame {
     struct frame *fr_forw;
@@ -319,7 +333,6 @@ extern size_t height;
 /* variables shared with do.c */
 extern int matflag;
 extern int benchmark;
-extern int rt_verbosity;
 extern char *outputfile;		/* output file name */
 extern int desiredframe;
 extern int finalframe;
@@ -428,7 +441,7 @@ statechange(struct servers *sp, int newstate)
 static void
 remrt_log(const char *msg)
 {
-    bu_log(msg);
+    bu_log("%s", msg);
 }
 
 
@@ -605,6 +618,13 @@ addclient(struct pkg_conn *pc)
 
 
 static void
+input_error(const char *str)
+{
+    bu_log("%s", str);
+}
+
+
+static void
 check_input(int waittime)
 {
     static fd_set ifdset;
@@ -640,7 +660,7 @@ check_input(int waittime)
 
     /* Third, accept any pending connections */
     if (FD_ISSET(tcp_listen_fd, &ifdset)) {
-	pc = pkg_getclient(tcp_listen_fd, pkgswitch, (void(*)())bu_log, 1);
+	pc = pkg_getclient(tcp_listen_fd, pkgswitch, input_error, 1);
 	if (pc != PKC_NULL && pc != PKC_ERROR)
 	    addclient(pc);
 	FD_CLR(tcp_listen_fd, &ifdset);
@@ -726,7 +746,7 @@ static double
 tvdiff(struct timeval *t1, struct timeval *t0)
 {
     return ((t1->tv_sec - t0->tv_sec) +
-	   (t1->tv_usec - t0->tv_usec) / 1000000.);
+	    (t1->tv_usec - t0->tv_usec) / 1000000.);
 }
 
 
@@ -787,7 +807,7 @@ prep_frame(struct frame *fr)
 	    use_air, jitter,
 	    AmbientIntensity, lightmodel,
 	    eye_backoff,
-	    RT_G_DEBUG, R_DEBUG,
+	    RT_G_DEBUG, OPTICAL_DEBUG,
 	    rt_dist_tol, rt_perp_tol
 	);
     bu_vls_strcat(&fr->fr_cmd, buf);
@@ -826,18 +846,18 @@ read_matrix(FILE *fp, struct frame *fr)
 {
     int i;
     char number[128];
-    char cmd[128];
+    char cmd[146];
 
     CHECK_FRAME(fr);
 
     /* Visible part is from -1 to +1 in view space */
     if (fscanf(fp, "%128s", number) != 1) goto eof;
-    snprintf(cmd, 128, "viewsize %s; eye_pt ", number);
+    snprintf(cmd, sizeof(cmd), "viewsize %s; eye_pt ", number);
     bu_vls_strcat(&(fr->fr_cmd), cmd);
 
     for (i = 0; i < 3; i++) {
 	if (fscanf(fp, "%128s", number) != 1) goto out;
-	snprintf(cmd, 128, "%s ", number);
+	snprintf(cmd, sizeof(cmd), "%s ", number);
 	bu_vls_strcat(&fr->fr_cmd, cmd);
     }
 
@@ -846,7 +866,7 @@ read_matrix(FILE *fp, struct frame *fr)
 
     for (i = 0; i < 16; i++) {
 	if (fscanf(fp, "%128s", number) != 1) goto out;
-	snprintf(cmd, 128, "%s ", number);
+	snprintf(cmd, sizeof(cmd), "%s ", number);
 	bu_vls_strcat(&fr->fr_cmd, cmd);
     }
     bu_vls_strcat(&fr->fr_cmd, "; ");
@@ -1544,7 +1564,7 @@ send_gettrees(struct servers *sp, struct frame *fr)
 static void
 send_do_lines(struct servers *sp, int start, int stop, int framenum)
 {
-    char obuf[128];
+    char obuf[256] = {0};
 
     if (sp->sr_pc == PKC_NULL) return;
 
@@ -1591,14 +1611,13 @@ task_server(struct servers *sp, struct frame *fr, struct timeval *nowp)
     }
 
     /*
-     * Check for tardy server.
-     * The assignments are estimated to take about MIN_ASSIGNMENT_TIME
-     * seconds, so waiting many minutes is unreasonable.
-     * However, if the picture "suddenly" became very complex,
-     * or a system got very busy,
-     * the estimate could be quite low.
-     * This mechanism exists mostly to protect against servers that
-     * go into "black hole" mode while REMRT is running unattended.
+     * Check for tardy server.  The assignments are estimated to take
+     * about MIN_ASSIGNMENT_TIME seconds, so waiting many minutes is
+     * unreasonable.  However, if the picture "suddenly" became very
+     * complex, or a system got very busy, the estimate could be quite
+     * low.  This mechanism exists mostly to protect against servers
+     * that go into "black hole" mode while REMRT is running
+     * unattended.
      */
     if (server_q_len(sp) > 0 &&
 	sp->sr_sendtime.tv_sec > 0 &&
@@ -1667,8 +1686,8 @@ task_server(struct servers *sp, struct frame *fr, struct timeval *nowp)
     if (work_allocate_method == OPT_MOVIE) {
 	lump = fr->fr_width * 2;	/* 2 scanlines at a whack */
     } else {
-	/* Limit growth in assignment size to 2X each assignment */
-	if (lump > 2*sp->sr_lump) lump = 2*sp->sr_lump;
+	/* Limit growth in assignment size to 1.5X each assignment */
+	if (lump > 1.5*sp->sr_lump) lump = 1.5*sp->sr_lump;
     }
     /* Provide some bounds checking */
     if (lump < 32) lump = 32;
@@ -2341,23 +2360,6 @@ cd_frames(const int argc, const char **UNUSED(argv))
 	pr_list(&(fr->fr_todo));
 	bu_log("\tcmd=%s\n", bu_vls_addr(&fr->fr_cmd));
 	bu_log("\tafter_cmd=%s\n", bu_vls_addr(&fr->fr_after_cmd));
-    }
-    return 0;
-}
-
-
-static int
-cd_memprint(const int argc, const char **argv)
-{
-    if (argc < 2)
-	return 1;
-
-    if (BU_STR_EQUAL(argv[1], "on")) {
-	RTG.debug |= (DEBUG_MEM|DEBUG_MEM_FULL);
-    } else if (BU_STR_EQUAL(argv[1], "off")) {
-	RTG.debug &= ~(DEBUG_MEM|DEBUG_MEM_FULL);
-    } else {
-	bu_prmem("memprint command");
     }
     return 0;
 }
@@ -3232,7 +3234,7 @@ ph_pixels(struct pkg_conn *pc, char *buf)
     if ((fd = open(fr->fr_filename, 2)) < 0) {
 	/* open failed */
 	perror(fr->fr_filename);
-    } else if (lseek(fd, info.li_startpix*3, 0) < 0) {
+    } else if (bu_lseek(fd, info.li_startpix*3, 0) < 0) {
 	/* seek failed */
 	perror(fr->fr_filename);
 	(void)close(fd);
@@ -3352,7 +3354,7 @@ static void
 host_helper(FILE *fp)
 {
     char line[512];
-    char cmd[128];
+    char cmd[553];
     char host[128];
     char loc_db[128];
     char rem_db[128];
@@ -3378,7 +3380,7 @@ host_helper(FILE *fp)
 	}
 
 	if (cnt == 3) {
-	    snprintf(cmd, 128,
+	    snprintf(cmd, sizeof(cmd),
 		     "cd %s; rtsrv %s %d",
 		     rem_dir, our_hostname, port);
 	    if (rem_debug) {
@@ -3409,7 +3411,7 @@ host_helper(FILE *fp)
 		(void)wait(0);
 	    }
 	} else {
-	    snprintf(cmd, 128,
+	    snprintf(cmd, sizeof(cmd),
 		     "g2asc<%s|%s %s \"cd %s; asc2g>%s; rtsrv %s %d\"",
 		     loc_db,
 		     RSH, host,
@@ -3532,6 +3534,8 @@ main(int argc, char *argv[])
 {
     struct servers *sp;
     int i, done;
+
+    bu_setprogname(argv[0]);
 
     /* Random inits */
     our_hostname = get_our_hostname();
@@ -3735,8 +3739,6 @@ struct command_tab cmd_tab[] = {
      cd_persp,	2, 2},
     {"print", "[0|1]",	"set/toggle remote message printing",
      cd_print,	1, 2},
-    {"memprint", "on|off|NULL",	"debug dump of memory usage",
-     cd_memprint,	1, 2},
     /* HELP */
     {"?", "",		"help",
      cd_help,	1, 1},

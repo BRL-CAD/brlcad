@@ -22,6 +22,7 @@ BRLCAD_ADDDATA(PIX_LOG pix)
 
 CMAKEFILES(${BENCHMARK_PIX})
 CMAKEFILES(${PIX_LOG})
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

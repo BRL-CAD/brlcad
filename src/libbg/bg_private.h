@@ -1,7 +1,7 @@
 /*                     G M _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2013-2016 United States Government as represented by
+ * Copyright (c) 2013-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -66,8 +66,8 @@ coplanar_2d_coord_sys(point_t *origin_pnt, vect_t *u_axis, vect_t *v_axis, const
  */
 extern int
 coplanar_3d_to_2d(point2d_t **points_2d, const point_t *origin_pnt,
-                     const vect_t *u_axis, const vect_t *v_axis,
-                     const point_t *points_3d, int n);
+		  const vect_t *u_axis, const vect_t *v_axis,
+		  const point_t *points_3d, int n);
 
 /**
  * @brief
@@ -83,8 +83,8 @@ coplanar_3d_to_2d(point2d_t **points_2d, const point_t *origin_pnt,
  */
 extern int
 coplanar_2d_to_3d(point_t **points_3d, const point_t *origin_pnt,
-                     const vect_t *u_axis, const vect_t *v_axis,
-                     const point2d_t *points_2d, int n);
+		  const vect_t *u_axis, const vect_t *v_axis,
+		  const point2d_t *points_2d, int n);
 
 
 #endif /* LIBGM_LIBGM_PRIVATE_H */

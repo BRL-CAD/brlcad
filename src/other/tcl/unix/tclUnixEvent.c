@@ -7,8 +7,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -66,7 +64,7 @@ Tcl_Sleep(
 	}
 
 	if ((vdelay.sec != 0) || (vdelay.usec != 0)) {
-	    (*tclScaleTimeProcPtr) (&vdelay, tclTimeClientData);
+	    tclScaleTimeProcPtr(&vdelay, tclTimeClientData);
 	}
 
 	delay.tv_sec  = vdelay.sec;

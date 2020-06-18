@@ -1,7 +1,7 @@
 /*                    D O U B L E - A S C . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2016 United States Government as represented by
+ * Copyright (c) 1996-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,13 +28,17 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "bio.h"
+
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "bu/file.h"
 #include "bu/log.h"
 #include "bu/str.h"
 #include "bu/cv.h"
+#include "bu/snooze.h"
 #include "bn.h"
 #include "fb.h"
 
@@ -124,12 +128,12 @@ get_args(int argc, char **argv)
 	    break;
 	case 1:
 	    file_name = argv[bu_optind++];
-	    ifname = bu_realpath(file_name, NULL);
+	    ifname = bu_file_realpath(file_name, NULL);
 	    if ((infd = open(ifname, O_RDONLY)) == -1) {
-		bu_free(ifname, "ifname alloc from bu_realpath");
+		bu_free(ifname, "ifname alloc from bu_file_realpath");
 		bu_exit (1, "Cannot open file '%s'\n", file_name);
 	    }
-	    bu_free(ifname, "ifname alloc from bu_realpath");
+	    bu_free(ifname, "ifname alloc from bu_file_realpath");
 	    fileinput = 1;
 	    break;
 	default:
@@ -157,8 +161,10 @@ main (int argc, char **argv)
     int i;
     int row, col;	/* coords within input stream */
 
+    bu_setprogname(argv[0]);
+
     bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     if (!get_args(argc, argv)) {
 	print_usage();

@@ -1,7 +1,7 @@
 /*                          U U I D . C
  * BRL-CAD
  *
- * Copyright (c) 2016 United States Government as represented by
+ * Copyright (c) 2016-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,6 +40,10 @@
 #include "bu/exit.h"
 #include "bu/log.h"
 
+#ifndef HAVE_DECL_DRAND48
+extern double drand48(void);
+#endif
+
 
 int
 bu_uuid_create(uint8_t uuid[STATIC_ARRAY(16)], size_t nbytes, const uint8_t *bytes, const uint8_t namespace_uuid[STATIC_ARRAY(16)])
@@ -76,7 +80,7 @@ bu_uuid_create(uint8_t uuid[STATIC_ARRAY(16)], size_t nbytes, const uint8_t *byt
 
 	    SHA1Init(&context);
 	    SHA1Update(&context, (const unsigned char *)namespace_uuid, 16);
-	    SHA1Update(&context, (const unsigned char *)bytes, nbytes);
+	    SHA1Update(&context, (const unsigned char *)bytes, (uint32_t)nbytes);
 	    SHA1Final(buffer, &context);
 
 	    memcpy(uuid, buffer, 16);
@@ -146,7 +150,7 @@ bu_uuid_decode(const char *cp, uint8_t uuid[STATIC_ARRAY(16)])
     while (*cp) {
 	int chars = 1;
 	if (isxdigit(*cp)) {
-	    int value;
+	    unsigned int value;
 	    bu_sscanf(cp, "%02X%n", &value, &chars);
 	    uuid[count++] = (uint8_t)value;
 	}

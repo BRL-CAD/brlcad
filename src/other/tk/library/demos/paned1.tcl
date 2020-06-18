@@ -2,8 +2,6 @@
 #
 # This demonstration script creates a toplevel window containing
 # a paned window that separates two windows horizontally.
-#
-# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."
@@ -28,7 +26,7 @@ pack $btns -side bottom -fill x
 panedwindow $w.pane
 pack $w.pane -side top -expand yes -fill both -pady 2 -padx 2m
 
-label $w.pane.left  -text "This is the\nleft side"  -bg yellow
-label $w.pane.right -text "This is the\nright side" -bg cyan
+label $w.pane.left  -text "This is the\nleft side"  -fg black -bg yellow
+label $w.pane.right -text "This is the\nright side" -fg black -bg cyan
 
 $w.pane add $w.pane.left $w.pane.right

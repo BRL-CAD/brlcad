@@ -1,7 +1,7 @@
 /*                      B W T H R E S H . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2016 United States Government as represented by
+ * Copyright (c) 1990-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,6 +34,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "bu/app.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
@@ -50,6 +51,8 @@ main (int argc, char **argv)
     int nm_threshs;	/* How many thresholds? */
     int i;
     unsigned char *bin_color = (unsigned char *)0;/* resultant pixel values */
+
+    bu_setprogname(argv[0]);
 
     if ((BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) && argc == 2)
 	bu_exit(1, "%s", USAGE);

@@ -1,7 +1,7 @@
 /*                    G -  A P 2 4 2 . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2016 United States Government as represented by
+ * Copyright (c) 2013-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -64,6 +64,8 @@ int
 main(int argc, char *argv[])
 {
     int ret = 0;
+
+    bu_setprogname(argv[0]);
 
     // process command line arguments
     int c;

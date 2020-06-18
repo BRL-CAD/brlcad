@@ -1,7 +1,7 @@
 /*                 Conic.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2016 United States Government as represented by
+ * Copyright (c) 1994-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@ public:
 	ELLIPSE,
 	HYPERBOLA,
 	PARABOLA,
-	UNKNOWN_CONIC
+	CONIC_UNKNOWN
     };
 
 private:
@@ -66,7 +66,7 @@ public:
 	return CONIC;
     };
     virtual conic_type ConicType() {
-	return UNKNOWN_CONIC;
+	return CONIC_UNKNOWN;
     };
 
     //static methods

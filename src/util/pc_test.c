@@ -1,7 +1,7 @@
 /*                   	P C _ T E S T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,6 +36,7 @@
 #include "bio.h"
 
 #include "rt/db4.h"
+#include "bu/app.h"
 #include "raytrace.h"
 #include "wdb.h"
 #include "rt/geom.h"
@@ -52,6 +53,9 @@ main(int argc, char **argv)
     point_t cent;
     fastf_t rad;
     char solnam[9];
+
+    bu_setprogname(argv[0]);
+
     /* Set up solid name */
     solnam[0] = 's';
     solnam[1] = '.';

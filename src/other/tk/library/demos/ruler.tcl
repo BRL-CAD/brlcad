@@ -2,8 +2,6 @@
 #
 # This demonstration script creates a canvas widget that displays a ruler
 # with tab stops that can be set, moved, and deleted.
-#
-# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."
@@ -21,8 +19,13 @@ package require Tk
 
 proc rulerMkTab {c x y} {
     upvar #0 demo_rulerInfo v
-    $c create polygon $x $y [expr {$x+$v(size)}] [expr {$y+$v(size)}] \
-	    [expr {$x-$v(size)}] [expr {$y+$v(size)}]
+    set newTab [$c create polygon $x $y \
+	    [expr {$x+$v(size)}] [expr {$y+$v(size)}] \
+	    [expr {$x-$v(size)}] [expr {$y+$v(size)}]]
+    set fill [$c itemcget $newTab -outline]
+    $c itemconfigure $newTab -fill $fill -outline {}
+    set v(normalStyle) "-fill $fill"
+    return $newTab
 }
 
 set w .ruler
@@ -49,7 +52,6 @@ set demo_rulerInfo(right) [winfo fpixels $c 13c]
 set demo_rulerInfo(top) [winfo fpixels $c 1c]
 set demo_rulerInfo(bottom) [winfo fpixels $c 1.5c]
 set demo_rulerInfo(size) [winfo fpixels $c .2c]
-set demo_rulerInfo(normalStyle) "-fill black"
 # Main widget program sets variable tk_demoDirectory
 if {[winfo depth $c] > 1} {
     set demo_rulerInfo(activeStyle) "-fill red -stipple {}"
@@ -71,7 +73,7 @@ for {set i 0} {$i < 12} {incr i} {
     $c create text $x.15c .75c -text $i -anchor sw
 }
 $c addtag well withtag [$c create rect 13.2c 1c 13.8c 0.5c \
-	-outline black -fill [lindex [$c config -bg] 4]]
+	-fill [lindex [$c config -bg] 4]]
 $c addtag well withtag [rulerMkTab $c [winfo pixels $c 13.5c] \
 	[winfo pixels $c .65c]]
 

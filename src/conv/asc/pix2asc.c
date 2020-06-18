@@ -1,7 +1,7 @@
 /*                       P I X 2 A S C . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2016 United States Government as represented by
+ * Copyright (c) 1985-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,13 +25,16 @@
 #include <limits.h>
 
 #include "bio.h"
+#include "bu/app.h"
 #include "bu/exit.h"
 
 
 int
-main(int UNUSED(ac), char **UNUSED(argv))
+main(int UNUSED(ac), char **argv)
 {
     unsigned char pix[3]; /* RGB of one pixel */
+
+    bu_setprogname(argv[0]);
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);

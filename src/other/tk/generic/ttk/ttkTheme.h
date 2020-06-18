@@ -1,4 +1,4 @@
-/* $Id$
+/*
  * Copyright (c) 2003 Joe English.  Freely redistributable.
  *
  * Declarations for Tk theme engine.
@@ -29,9 +29,13 @@ extern "C" {
  * +++ Defaults for element option specifications.
  */
 #define DEFAULT_FONT 		"TkDefaultFont"
+#ifdef MAC_OSX_TK
+#define DEFAULT_BACKGROUND	"systemTextBackgroundColor"
+#define DEFAULT_FOREGROUND	"systemTextColor"
+#else
 #define DEFAULT_BACKGROUND	"#d9d9d9"
 #define DEFAULT_FOREGROUND	"black"
-
+#endif
 /*------------------------------------------------------------------------
  * +++ Widget states.
  * 	Keep in sync with stateNames[] in tkstate.c.
@@ -372,6 +376,8 @@ MODULE_SCOPE void Ttk_RegisterNamedColor(Ttk_ResourceCache, const char *, XColor
 
 typedef struct TtkImageSpec Ttk_ImageSpec;
 TTKAPI Ttk_ImageSpec *TtkGetImageSpec(Tcl_Interp *, Tk_Window, Tcl_Obj *);
+TTKAPI Ttk_ImageSpec *TtkGetImageSpecEx(Tcl_Interp *, Tk_Window, Tcl_Obj *,
+					Tk_ImageChangedProc *, ClientData);
 TTKAPI void TtkFreeImageSpec(Ttk_ImageSpec *);
 TTKAPI Tk_Image TtkSelectImage(Ttk_ImageSpec *, Ttk_State);
 

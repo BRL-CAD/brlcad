@@ -3,8 +3,6 @@
 # This demonstration script creates a collection of widgets that
 # allow you to load a file into a text widget, then perform searches
 # on that file.
-#
-# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."
@@ -111,7 +109,7 @@ pack $w.string.button -side left -pady 5 -padx 10
 bind $w.string.entry <Return> "textSearch $w.text \$searchString search"
 
 text $w.text -yscrollcommand "$w.scroll set" -setgrid true
-scrollbar $w.scroll -command "$w.text yview"
+ttk::scrollbar $w.scroll -command "$w.text yview"
 pack $w.file $w.string -side top -fill x
 pack $w.scroll -side right -fill y
 pack $w.text -expand yes -fill both

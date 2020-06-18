@@ -1,7 +1,7 @@
 /*                       R E F R A C T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2016 United States Government as represented by
+ * Copyright (c) 1985-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,12 +51,7 @@ int max_bounces = 5;	/* Maximum recursion level */
 #define AIR_GAP_TOL 0.01		/* Max permitted air gap for RI tracking */
 
 
-#ifdef RT_MULTISPECTRAL
-#include "spectrum.h"
-extern struct bn_tabdata *background;
-#else
 extern vect_t background;
-#endif
 
 HIDDEN int
 rr_miss(struct application *ap)
@@ -100,7 +95,7 @@ rr_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
     for (pp=PartHeadp->pt_forw; pp != PartHeadp; pp = pp->pt_forw)
 	if (pp->pt_outhit->hit_dist > 0.0) break;
     if (pp == PartHeadp) {
-	if (R_DEBUG&(RDEBUG_SHOWERR|RDEBUG_REFRACT)) {
+	if (OPTICAL_DEBUG&(OPTICAL_DEBUG_SHOWERR|OPTICAL_DEBUG_REFRACT)) {
 	    bu_log("rr_hit:  %d, %d no hit out front?\n",
 		   ap->a_x, ap->a_y);
 	    ret = 0;	/* error */
@@ -119,11 +114,11 @@ rr_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
      * region that it started in, although not by much.
      */
     psave = pp;
-    if (R_DEBUG&RDEBUG_REFRACT) bu_log("rr_hit(%s)\n", psave->pt_regionp->reg_name);
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_REFRACT) bu_log("rr_hit(%s)\n", psave->pt_regionp->reg_name);
     for (; pp != PartHeadp; pp = pp->pt_forw)
 	if (pp->pt_regionp == (struct region *)(ap->a_uptr)) break;
     if (pp == PartHeadp) {
-	if (R_DEBUG&(RDEBUG_SHOWERR|RDEBUG_REFRACT)) {
+	if (OPTICAL_DEBUG&(OPTICAL_DEBUG_SHOWERR|OPTICAL_DEBUG_REFRACT)) {
 	    bu_log("rr_hit:  %d, %d Ray internal to %s landed unexpectedly in %s\n",
 		   ap->a_x, ap->a_y,
 		   ((struct region *)(ap->a_uptr))->reg_name,
@@ -157,7 +152,7 @@ rr_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
      */
 
     if (pp->pt_inhit->hit_dist > 10) {
-	if (R_DEBUG&RDEBUG_REFRACT)
+	if (OPTICAL_DEBUG&OPTICAL_DEBUG_REFRACT)
 	    bu_log("rr_hit: %d, %d %s inhit %g > 10.0! (treating as escaping ray)\n",
 		   ap->a_x, ap->a_y,
 		   pp->pt_regionp->reg_name,
@@ -182,7 +177,7 @@ rr_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
 	    break;
 	if (pp->pt_forw->pt_regionp != pp->pt_regionp)
 	    break;
-	if (R_DEBUG&(RDEBUG_SHOWERR|RDEBUG_REFRACT)) bu_log(
+	if (OPTICAL_DEBUG&(OPTICAL_DEBUG_SHOWERR|OPTICAL_DEBUG_REFRACT)) bu_log(
 	    "rr_hit: %d, %d fusing small crack in glass %s\n",
 	    ap->a_x, ap->a_y,
 	    pp->pt_regionp->reg_name);
@@ -237,30 +232,21 @@ rr_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
 	     */
 	    sw.sw_xmitonly = 2;
 	    sw.sw_inputs = 0;		/* no fields filled yet */
-#ifdef RT_MULTISPECTRAL
-	    sw.msw_color = bn_tabdata_get_constval(1.0, spectrum);
-	    sw.msw_basecolor = bn_tabdata_get_constval(1.0, spectrum);
-#else
 	    VSETALL(sw.sw_color, 1);
 	    VSETALL(sw.sw_basecolor, 1);
-#endif
 
-	    if (R_DEBUG&(RDEBUG_SHADE|RDEBUG_REFRACT))
+	    if (OPTICAL_DEBUG&(OPTICAL_DEBUG_SHADE|OPTICAL_DEBUG_REFRACT))
 		bu_log("rr_hit calling viewshade to discover refractive index\n");
 
 	    (void)viewshade(&appl, pp->pt_forw, &sw);
 
-#ifdef RT_MULTISPECTRAL
-	    bu_free(sw.msw_color, "sw.msw_color");
-	    bu_free(sw.msw_basecolor, "sw.msw_basecolor");
-#endif
 
-	    if (R_DEBUG&(RDEBUG_SHADE|RDEBUG_REFRACT))
+	    if (OPTICAL_DEBUG&(OPTICAL_DEBUG_SHADE|OPTICAL_DEBUG_REFRACT))
 		bu_log("rr_hit refractive index = %g\n", sw.sw_refrac_index);
 
 	    if (sw.sw_transmit > 0) {
 		ap->a_refrac_index = sw.sw_refrac_index;
-		if (R_DEBUG&RDEBUG_SHADE) {
+		if (OPTICAL_DEBUG&OPTICAL_DEBUG_SHADE) {
 		    bu_log("rr_hit a_refrac_index=%g (trans=%g)\n",
 			   ap->a_refrac_index,
 			   sw.sw_transmit);
@@ -272,7 +258,7 @@ rr_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
     }
     ret = 2;				/* OK -- no more glass */
 out:
-    if (R_DEBUG&RDEBUG_REFRACT) bu_log("rr_hit(%s) return=%d\n",
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_REFRACT) bu_log("rr_hit(%s) return=%d\n",
 				       psave ? psave->pt_regionp->reg_name : "",
 				       ret);
     return ret;
@@ -306,7 +292,14 @@ rr_refract(vect_t v_1, vect_t norml, double ri_1, double ri_2, vect_t v_2)
     fastf_t beta;
 
     if (NEAR_ZERO(ri_1, 0.0001) || NEAR_ZERO(ri_2, 0.0001)) {
-	bu_log("rr_refract:ri1=%g, ri2=%g\n", ri_1, ri_2);
+	static int counter = 0;
+	if (counter < 100) {
+	    bu_log("rr_refract: ri1=%g, ri2=%g\n", ri_1, ri_2);
+	    counter++;
+	} else if (counter == 100) {
+	    bu_log("rr_refract: further warnings suppressed\n");
+	    counter++;
+	}
 	beta = 1;
     } else {
 	beta = ri_1/ri_2;		/* temp */
@@ -326,7 +319,7 @@ rr_refract(vect_t v_1, vect_t norml, double ri_1, double ri_2, vect_t v_2)
 	/* Past critical angle, total reflection.
 	 * Calculate reflected (bounced) incident ray.
 	 */
-	if (R_DEBUG&RDEBUG_REFRACT) bu_log("rr_refract: reflected.  ri1=%g ri2=%g beta=%g\n",
+	if (OPTICAL_DEBUG&OPTICAL_DEBUG_REFRACT) bu_log("rr_refract: reflected.  ri1=%g ri2=%g beta=%g\n",
 					   ri_1, ri_2, beta);
 	VREVERSE(u, v_1);
 	beta = 2 * VDOT(u, norml);
@@ -339,7 +332,7 @@ rr_refract(vect_t v_1, vect_t norml, double ri_1, double ri_2, vect_t v_2)
 	 *	    = cos(theta_2)^^2.
 	 * beta = -1.0 * cos(theta_2) - Dot(w, norml).
 	 */
-	if (R_DEBUG&RDEBUG_REFRACT) bu_log("rr_refract: refracted.  ri1=%g ri2=%g beta=%g\n",
+	if (OPTICAL_DEBUG&OPTICAL_DEBUG_REFRACT) bu_log("rr_refract: refracted.  ri1=%g ri2=%g beta=%g\n",
 					   ri_1, ri_2, beta);
 	beta = -sqrt(1.0 - beta) - VDOT(w, norml);
 	VSCALE(u, norml, beta);
@@ -362,17 +355,10 @@ rr_render(register struct application *ap,
     fastf_t reflect;
     fastf_t transmit;
 
-#ifdef RT_MULTISPECTRAL
-    struct bn_tabdata *ms_filter_color = BN_TABDATA_NULL;
-    struct bn_tabdata *ms_shader_color = BN_TABDATA_NULL;
-    struct bn_tabdata *ms_reflect_color = BN_TABDATA_NULL;
-    struct bn_tabdata *ms_transmit_color = BN_TABDATA_NULL;
-#else
     vect_t filter_color;
     vect_t shader_color;
     vect_t reflect_color;
     vect_t transmit_color;
-#endif
 
     fastf_t attenuation;
     vect_t to_eye;
@@ -382,10 +368,6 @@ rr_render(register struct application *ap,
 
     RT_APPLICATION_INIT(&sub_ap);
 
-#ifdef RT_MULTISPECTRAL
-    sub_ap.a_spectrum = BN_TABDATA_NULL;
-    ms_reflect_color = bn_tabdata_get_constval(0.0, spectrum);
-#endif
 
     /*
      * sw_xmitonly is set primarily for light visibility rays.
@@ -405,7 +387,7 @@ rr_render(register struct application *ap,
 	reflect = swp->sw_reflect;
 	transmit = swp->sw_transmit;
     }
-    if (R_DEBUG&RDEBUG_REFRACT) {
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_REFRACT) {
 	bu_log("rr_render(%s) START: lvl=%d reflect=%g, transmit=%g, xmitonly=%d\n",
 	       pp->pt_regionp->reg_name,
 	       ap->a_level,
@@ -419,7 +401,7 @@ rr_render(register struct application *ap,
 	/* Nothing more to do for this ray */
 	static long count = 0;		/* Not PARALLEL, should be OK */
 
-	if ((R_DEBUG&(RDEBUG_SHOWERR|RDEBUG_REFRACT)) && (
+	if ((OPTICAL_DEBUG&(OPTICAL_DEBUG_SHOWERR|OPTICAL_DEBUG_REFRACT)) && (
 		count++ < MSG_PROLOGUE ||
 		(count%MSG_INTERVAL) == 3
 		)) {
@@ -436,23 +418,11 @@ rr_render(register struct application *ap,
 	 * This is much better than returning just black,
 	 * but something better might be done.
 	 */
-#ifdef RT_MULTISPECTRAL
-	BN_CK_TABDATA(swp->msw_color);
-	BN_CK_TABDATA(swp->msw_basecolor);
-	bn_tabdata_copy(swp->msw_color, swp->msw_basecolor);
-#else
 	VMOVE(swp->sw_color, swp->sw_basecolor);
-#endif
 	ap->a_cumlen += pp->pt_inhit->hit_dist;
 	goto out;
     }
-#ifdef RT_MULTISPECTRAL
-    BN_CK_TABDATA(swp->msw_basecolor);
-    ms_filter_color = bn_tabdata_dup(swp->msw_basecolor);
-
-#else
     VMOVE(filter_color, swp->sw_basecolor);
-#endif
 
     if ((swp->sw_inputs & (MFI_HIT|MFI_NORMAL)) != (MFI_HIT|MFI_NORMAL))
 	shade_inputs(ap, pp, swp, MFI_HIT|MFI_NORMAL);
@@ -483,18 +453,13 @@ rr_render(register struct application *ap,
     } else if (shader_fract >= 1) {
 	goto out;
     }
-    if (R_DEBUG&RDEBUG_REFRACT) {
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_REFRACT) {
 	bu_log("rr_render: lvl=%d start shader=%g, reflect=%g, transmit=%g %s\n",
 	       ap->a_level,
 	       shader_fract, reflect, transmit,
 	       pp->pt_regionp->reg_name);
     }
-#ifdef RT_MULTISPECTRAL
-    BN_GET_TABDATA(ms_shader_color, swp->msw_color->table);
-    bn_tabdata_scale(ms_shader_color, swp->msw_color, shader_fract);
-#else
     VSCALE(shader_color, swp->sw_color, shader_fract);
-#endif
 
     /*
      * Compute transmission through an object.
@@ -502,7 +467,7 @@ rr_render(register struct application *ap,
      * by the reflection code later
      */
     if (transmit > 0) {
-	if (R_DEBUG&RDEBUG_REFRACT) {
+	if (OPTICAL_DEBUG&OPTICAL_DEBUG_REFRACT) {
 	    bu_log("rr_render: lvl=%d transmit=%g.  Calculate refraction at entrance to %s.\n",
 		   ap->a_level, transmit,
 		   pp->pt_regionp->reg_name);
@@ -511,9 +476,6 @@ rr_render(register struct application *ap,
 	 * Calculate refraction at entrance.
 	 */
 	sub_ap = *ap;		/* struct copy */
-#ifdef RT_MULTISPECTRAL
-	sub_ap.a_spectrum = bn_tabdata_dup((struct bn_tabdata *)ap->a_spectrum);
-#endif
 	sub_ap.a_level = 0;	/* # of internal reflections */
 	sub_ap.a_cumlen = 0;	/* distance through the glass */
 	sub_ap.a_user = -1;	/* sanity */
@@ -542,19 +504,15 @@ rr_render(register struct application *ap,
 	     */
 	    reflect += transmit;
 	    transmit = 0;
-#ifdef RT_MULTISPECTRAL
-	    ms_transmit_color = bn_tabdata_get_constval(0.0, spectrum);
-#else
 	    VSETALL(transmit_color, 0);
-#endif
-	    if (R_DEBUG&RDEBUG_REFRACT) {
+	    if (OPTICAL_DEBUG&OPTICAL_DEBUG_REFRACT) {
 		bu_log("rr_render: lvl=%d change xmit into reflection %s\n",
 		       ap->a_level,
 		       pp->pt_regionp->reg_name);
 	    }
 	    goto do_reflection;
 	}
-	if (R_DEBUG&RDEBUG_REFRACT) {
+	if (OPTICAL_DEBUG&OPTICAL_DEBUG_REFRACT) {
 	    bu_log("rr_render: lvl=%d begin transmission through %s.\n",
 		   ap->a_level,
 		   pp->pt_regionp->reg_name);
@@ -596,21 +554,17 @@ rr_render(register struct application *ap,
 		break;
 	    case 1:
 		/* Treat as escaping ray */
-		if (R_DEBUG&RDEBUG_REFRACT)
+		if (OPTICAL_DEBUG&OPTICAL_DEBUG_REFRACT)
 		    bu_log("rr_refract: Treating as escaping ray\n");
 		goto do_exit;
 	    case 0:
 	    default:
 		/* Dreadful error */
-#ifdef RT_MULTISPECTRAL
-		bu_bomb("rr_refract: Stuck in glass. Very green pixel, unsupported in multi-spectral mode\n");
-#else
 		VSET(swp->sw_color, 0, 99, 0); /* very green */
-#endif
 		goto out;			/* abandon hope */
 	}
 
-	if (R_DEBUG&RDEBUG_REFRACT) {
+	if (OPTICAL_DEBUG&OPTICAL_DEBUG_REFRACT) {
 	    bu_log("rr_render: calculating refraction @ exit from %s (green)\n", pp->pt_regionp->reg_name);
 	    bu_log("Start point to exit point:\n\
 vdraw open rr;vdraw params c 00ff00; vdraw write n 0 %g %g %g; vdraw wwrite n 1 %g %g %g; vdraw send\n",
@@ -621,13 +575,13 @@ vdraw open rr;vdraw params c 00ff00; vdraw write n 0 %g %g %g; vdraw wwrite n 1 
 	 * and returns EXIT Normal in sub_ap.a_vvec,
 	 * and returns next RI in sub_ap.a_refrac_index
 	 */
-	if (R_DEBUG&RDEBUG_RAYWRITE) {
+	if (OPTICAL_DEBUG&OPTICAL_DEBUG_RAYWRITE) {
 	    wraypts(sub_ap.a_ray.r_pt,
 		    sub_ap.a_ray.r_dir,
 		    sub_ap.a_uvec,
 		    2, ap, stdout);	/* 2 = ?? */
 	}
-	if (R_DEBUG&RDEBUG_RAYPLOT) {
+	if (OPTICAL_DEBUG&OPTICAL_DEBUG_RAYPLOT) {
 	    /* plotfp */
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    pl_color(stdout, 0, 255, 0);
@@ -669,7 +623,7 @@ vdraw open rr;vdraw params c 00ff00; vdraw write n 0 %g %g %g; vdraw wwrite n 1 
 	     * which is much better than just returning
 	     * grey or black, as before.
 	     */
-	    if ((R_DEBUG&(RDEBUG_SHOWERR|RDEBUG_REFRACT)) && (
+	    if ((OPTICAL_DEBUG&(OPTICAL_DEBUG_SHOWERR|OPTICAL_DEBUG_REFRACT)) && (
 		    count++ < MSG_PROLOGUE ||
 		    (count%MSG_INTERVAL) == 3
 		    )) {
@@ -728,36 +682,20 @@ vdraw open rr;vdraw params c 00ff00; vdraw write n 0 %g %g %g; vdraw wwrite n 1 
 
 	/* a_user has hit/miss flag! */
 	if (sub_ap.a_user == 0) {
-#ifdef RT_MULTISPECTRAL
-	    ms_transmit_color = bn_tabdata_dup(background);
-#else
 	    VMOVE(transmit_color, background);
-#endif
 	    sub_ap.a_cumlen = 0;
 	} else {
-#ifdef RT_MULTISPECTRAL
-	    ms_transmit_color = bn_tabdata_dup(sub_ap.a_spectrum);
-#else
 	    VMOVE(transmit_color, sub_ap.a_color);
-#endif
 	}
 	transmit *= attenuation;
-#ifdef RT_MULTISPECTRAL
-	bn_tabdata_mul(ms_transmit_color, ms_filter_color, ms_transmit_color);
-#else
 	VELMUL(transmit_color, filter_color, transmit_color);
-#endif
-	if (R_DEBUG&RDEBUG_REFRACT) {
+	if (OPTICAL_DEBUG&OPTICAL_DEBUG_REFRACT) {
 	    bu_log("rr_render: lvl=%d end of xmit through %s\n",
 		   ap->a_level,
 		   pp->pt_regionp->reg_name);
 	}
     } else {
-#ifdef RT_MULTISPECTRAL
-	ms_transmit_color = bn_tabdata_get_constval(0.0, spectrum);
-#else
 	VSETALL(transmit_color, 0);
-#endif
     }
 
     /*
@@ -765,22 +703,13 @@ vdraw open rr;vdraw params c 00ff00; vdraw write n 0 %g %g %g; vdraw wwrite n 1 
      * detected by the transmission code, above.
      */
 do_reflection:
-#ifdef RT_MULTISPECTRAL
-    if (sub_ap.a_spectrum) {
-	bu_free(sub_ap.a_spectrum, "rr_render: sub_ap.a_spectrum bn_tabdata*");
-	sub_ap.a_spectrum = BN_TABDATA_NULL;
-    }
-#endif
     if (reflect > 0) {
 	register fastf_t f;
 
 	/* Mirror reflection */
-	if (R_DEBUG&RDEBUG_REFRACT)
+	if (OPTICAL_DEBUG&OPTICAL_DEBUG_REFRACT)
 	    bu_log("rr_render: calculating mirror reflection off of %s\n", pp->pt_regionp->reg_name);
 	sub_ap = *ap;		/* struct copy */
-#ifdef RT_MULTISPECTRAL
-	sub_ap.a_spectrum = bn_tabdata_dup((struct bn_tabdata *)ap->a_spectrum);
-#endif
 	sub_ap.a_rbeam = ap->a_rbeam + swp->sw_hit.hit_dist * ap->a_diverge;
 	sub_ap.a_diverge = 0.0;
 	sub_ap.a_level = ap->a_level+1;
@@ -794,14 +723,14 @@ do_reflection:
 	sub_ap.a_purpose = "rr reflected ray";
 	sub_ap.a_flag = 0;
 
-	if (R_DEBUG&(RDEBUG_RAYPLOT|RDEBUG_REFRACT)) {
+	if (OPTICAL_DEBUG&(OPTICAL_DEBUG_RAYPLOT|OPTICAL_DEBUG_REFRACT)) {
 	    point_t endpt;
 	    /* Plot the surface normal -- green/blue */
 	    /* plotfp */
 	    f = sub_ap.a_rt_i->rti_radius * 0.02;
 	    VJOIN1(endpt, sub_ap.a_ray.r_pt,
 		   f, swp->sw_hit.hit_normal);
-	    if (R_DEBUG&RDEBUG_RAYPLOT) {
+	    if (OPTICAL_DEBUG&OPTICAL_DEBUG_RAYPLOT) {
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
 		pl_color(stdout, 0, 255, 255);
 		pdv_3line(stdout, sub_ap.a_ray.r_pt, endpt);
@@ -819,86 +748,36 @@ vdraw open rrnorm;vdraw params c 00ffff;vdraw write n 0 %g %g %g;vdraw write n 1
 	/* a_user has hit/miss flag! */
 	if (sub_ap.a_user == 0) {
 	    /* MISS */
-#ifdef RT_MULTISPECTRAL
-	    bn_tabdata_copy(ms_reflect_color, background);
-#else
 	    VMOVE(reflect_color, background);
-#endif
 	} else {
 	    ap->a_cumlen += sub_ap.a_cumlen;
-#ifdef RT_MULTISPECTRAL
-	    bn_tabdata_copy(ms_reflect_color, sub_ap.a_spectrum);
-#else
 	    VMOVE(reflect_color, sub_ap.a_color);
-#endif
 	}
     } else {
-#ifdef RT_MULTISPECTRAL
-	bn_tabdata_constval(ms_reflect_color, 0.0);
-#else
 	VSETALL(reflect_color, 0);
-#endif
     }
 
     /*
      * Collect the contributions to the final color
      */
-#ifdef RT_MULTISPECTRAL
-    bn_tabdata_join2(swp->msw_color, ms_shader_color,
-		     reflect, ms_reflect_color,
-		     transmit, ms_transmit_color);
-#else
     VJOIN2(swp->sw_color, shader_color,
 	   reflect, reflect_color,
 	   transmit, transmit_color);
-#endif
-    if (R_DEBUG&RDEBUG_REFRACT) {
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_REFRACT) {
 	bu_log("rr_render: lvl=%d end shader=%g reflect=%g, transmit=%g %s\n",
 	       ap->a_level,
 	       shader_fract, reflect, transmit,
 	       pp->pt_regionp->reg_name);
-#ifdef RT_MULTISPECTRAL
-	{
-	    struct bu_vls str = BU_VLS_INIT_ZERO;
-
-	    bu_vls_strcat(&str, "ms_shader_color: ");
-	    bn_tabdata_to_tcl(&str, ms_shader_color);
-	    bu_vls_strcat(&str, "\nms_reflect_color: ");
-	    bn_tabdata_to_tcl(&str, ms_reflect_color);
-	    bu_vls_strcat(&str, "\nms_transmit_color: ");
-	    bn_tabdata_to_tcl(&str, ms_transmit_color);
-	    bu_log("rr_render: %s\n", bu_vls_addr(&str));
-	    bu_vls_free(&str);
-	}
-#else
 	VPRINT("shader  ", shader_color);
 	VPRINT("reflect ", reflect_color);
 	VPRINT("transmit", transmit_color);
-#endif
     }
 out:
-    if (R_DEBUG&RDEBUG_REFRACT) {
-#ifdef RT_MULTISPECTRAL
-	{
-	    struct bu_vls str = BU_VLS_INIT_ZERO;
-
-	    bu_vls_strcat(&str, "final swp->msw_color: ");
-	    bn_tabdata_to_tcl(&str, swp->msw_color);
-	    bu_log("rr_render: %s\n", bu_vls_addr(&str));
-	    bu_vls_free(&str);
-	}
-#else
+    if (OPTICAL_DEBUG&OPTICAL_DEBUG_REFRACT) {
 	VPRINT("final   ", swp->sw_color);
-#endif
     }
 
     /* Release all the dynamic spectral curves */
-#ifdef RT_MULTISPECTRAL
-    if (ms_filter_color) bu_free(ms_filter_color, "rr_render: ms_filter_color bn_tabdata*");
-    if (ms_shader_color) bu_free(ms_shader_color, "rr_render: ms_shader_color bn_tabdata*");
-    if (ms_reflect_color) bu_free(ms_reflect_color, "rr_render: ms_reflect_color bn_tabdata*");
-    if (sub_ap.a_spectrum) bu_free(sub_ap.a_spectrum, "rr_render: sub_ap.a_spectrum bn_tabdata*");
-#endif
 
     return 1;
 }

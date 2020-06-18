@@ -167,7 +167,7 @@ respectively. The units for <emphasis>value</emphasis> are degrees for rotation 
 
   <para>
     Reports of bugs or problems should be submitted via electronic
-    mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
+    mail to <email>devs@brlcad.org</email>
   </para>
 </refsection>
 </refentry>

@@ -1,7 +1,7 @@
 /*                          I M O D . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2016 United States Government as represented by
+ * Copyright (c) 1986-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,6 +34,7 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "bu/file.h"
@@ -113,15 +114,15 @@ get_args(int argc, char *argv[])
 	char *ifname;
 	char *file_name = NULL;
 	file_name = argv[bu_optind];
-	ifname = bu_realpath(file_name, NULL);
+	ifname = bu_file_realpath(file_name, NULL);
 	if (freopen(ifname, "r", stdin) == NULL) {
 	    fprintf(stderr,
 		    "%s: cannot open \"%s(canonical %s)\" for reading\n",
 		    progname, file_name, ifname);
-	    bu_free(ifname, "ifname alloc from bu_realpath");
+	    bu_free(ifname, "ifname alloc from bu_file_realpath");
 	    return 0;
 	}
-	bu_free(ifname, "ifname alloc from bu_realpath");
+	bu_free(ifname, "ifname alloc from bu_file_realpath");
     }
 
     if (argc > ++bu_optind)
@@ -171,6 +172,8 @@ main(int argc, char *argv[])
     unsigned int n;
     unsigned long clip_high, clip_low;
     short iobuf[BUFLEN];		/* input buffer */
+
+    bu_setprogname(argv[0]);
 
     if (!(progname=strrchr(*argv, '/')))
 	progname = *argv;

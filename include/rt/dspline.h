@@ -1,7 +1,7 @@
 /*                      D S P L I N E . H
  * BRL-CAD
  *
- * Copyright (c) 2014-2016 United States Government as represented by
+ * Copyright (c) 2014-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,6 +24,10 @@
 #ifndef RT_DSPLINE_H
 #define RT_DSPLINE_H
 
+#include "common.h"
+
+#include "vmath.h"
+
 #include "rt/defines.h"
 
 __BEGIN_DECLS
@@ -32,8 +36,8 @@ __BEGIN_DECLS
  * Initialize a spline matrix for a particular spline type.
  */
 RT_EXPORT extern void rt_dspline_matrix(mat_t m, const char *type,
-                                        const double    tension,
-                                        const double    bias);
+					const double    tension,
+					const double    bias);
 
 /**
  * m            spline matrix (see rt_dspline4_matrix)
@@ -44,11 +48,11 @@ RT_EXPORT extern void rt_dspline_matrix(mat_t m, const char *type,
  * a, b, c, d.
  */
 RT_EXPORT extern double rt_dspline4(mat_t m,
-                                    double a,
-                                    double b,
-                                    double c,
-                                    double d,
-                                    double alpha);
+				    double a,
+				    double b,
+				    double c,
+				    double d,
+				    double alpha);
 
 /**
  * pt           vector to receive the interpolation result
@@ -61,13 +65,13 @@ RT_EXPORT extern double rt_dspline4(mat_t m,
  *
  */
 RT_EXPORT extern void rt_dspline4v(double *pt,
-                                   const mat_t m,
-                                   const double *a,
-                                   const double *b,
-                                   const double *c,
-                                   const double *d,
-                                   const int depth,
-                                   const double alpha);
+				   const mat_t m,
+				   const double *a,
+				   const double *b,
+				   const double *c,
+				   const double *d,
+				   const int depth,
+				   const double alpha);
 
 /**
  * Interpolate n knot vectors over the range 0..1
@@ -95,11 +99,11 @@ RT_EXPORT extern void rt_dspline4v(double *pt,
  *
  */
 RT_EXPORT extern void rt_dspline_n(double *r,
-                                   const mat_t m,
-                                   const double *knots,
-                                   const int n,
-                                   const int depth,
-                                   const double alpha);
+				   const mat_t m,
+				   const double *knots,
+				   const int n,
+				   const int depth,
+				   const double alpha);
 
 
 __END_DECLS

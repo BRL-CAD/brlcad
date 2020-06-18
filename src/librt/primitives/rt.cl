@@ -25,7 +25,7 @@ double3 MAT4X3VEC(global const double *m, double3 i)
 }
 
 
-double3
+static double3
 bu_rand0to1(const uint id, global float *bnrandhalftab, const uint randhalftabsize)
 {
     double3 ret;
@@ -35,7 +35,7 @@ bu_rand0to1(const uint id, global float *bnrandhalftab, const uint randhalftabsi
     return ret;
 }
 
-ulong
+static ulong
 bu_cv_htond(const ulong d)
 {
     return ((d & 0xFF00000000000000UL) >> 56)
@@ -78,6 +78,31 @@ rt_in_rpp(const double3 pt,
     return (rmin <= rmax);
 }
 
+bool
+rt_in_rpp2(const double3 pt, const double3 invdir,
+	   global const double *min, global const double *max,
+	   double *rmin, double *rmax)
+{
+    /* Start with infinite ray, and trim it down */
+    double x0 = (min[0] - pt.x) * invdir.x;
+    double y0 = (min[1] - pt.y) * invdir.y;
+    double z0 = (min[2] - pt.z) * invdir.z;
+    double x1 = (max[0] - pt.x) * invdir.x;
+    double y1 = (max[1] - pt.y) * invdir.y;
+    double z1 = (max[2] - pt.z) * invdir.z;
+
+    /*
+     * Direction cosines along this axis is NEAR 0,
+     * which implies that the ray is perpendicular to the axis,
+     * so merely check position against the boundaries.
+     */
+    *rmin = fmax(-MAX_FASTF, fmax(fmax(fmin(x0, x1), fmin(y0, y1)), fmin(z0, z1)));
+    *rmax = fmin( MAX_FASTF, fmin(fmin(fmax(x0, x1), fmax(y0, y1)), fmax(z0, z1)));
+
+    /* If equal, RPP is actually a plane */
+    return (*rmin <= *rmax);
+}
+
 
 /*
  * Values for Solid ID.
@@ -89,6 +114,7 @@ rt_in_rpp(const double3 pt,
 #define ID_ARS          5       /**< @brief ARS */
 #define ID_REC          7       /**< @brief Right Elliptical Cylinder [TGC special] */
 #define ID_SPH          10      /**< @brief Sphere */
+#define ID_EBM          12      /**< @brief Extruded bitmap solid */
 #define ID_PARTICLE     16      /**< @brief Particle system solid */
 #define ID_RPC          17      /**< @brief Right Parabolic Cylinder [TGC special] */
 #define ID_RHC          18      /**< @brief Right Hyperbolic Cylinder [TGC special] */
@@ -96,6 +122,7 @@ rt_in_rpp(const double3 pt,
 #define ID_EHY          20      /**< @brief Elliptical Hyperboloid  */
 #define ID_ETO          21      /**< @brief Elliptical Torus  */
 #define ID_BOT          30      /**< @brief Bag o' triangles */
+#define ID_HRT          43      /**< @brief Heart */
 
 
 inline int shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, const int id, global const void *args)
@@ -107,6 +134,7 @@ inline int shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const
     case ID_ARB8:	return arb_shot(res, r_pt, r_dir, idx, args);
     case ID_REC:	return rec_shot(res, r_pt, r_dir, idx, args);
     case ID_SPH:	return sph_shot(res, r_pt, r_dir, idx, args);
+    case ID_EBM:	return ebm_shot(res, r_pt, r_dir, idx, args);
     case ID_PARTICLE:	return part_shot(res, r_pt, r_dir, idx, args);
     case ID_EHY:	return ehy_shot(res, r_pt, r_dir, idx, args);
     case ID_ARS:
@@ -115,6 +143,7 @@ inline int shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const
     case ID_ETO:	return eto_shot(res, r_pt, r_dir, idx, args);
     case ID_RHC:	return rhc_shot(res, r_pt, r_dir, idx, args);
     case ID_RPC:	return rpc_shot(res, r_pt, r_dir, idx, args);
+    case ID_HRT:	return hrt_shot(res, r_pt, r_dir, idx, args);
     default:		return 0;
     };
 }
@@ -129,6 +158,7 @@ inline void norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, cons
     case ID_REC:	rec_norm(hitp, r_pt, r_dir, args);	break;
     case ID_EHY:	ehy_norm(hitp, r_pt, r_dir, args);	break;
     case ID_SPH:	sph_norm(hitp, r_pt, r_dir, args);	break;
+    case ID_EBM:	ebm_norm(hitp, r_pt, r_dir, args);	break;
     case ID_PARTICLE:	part_norm(hitp, r_pt, r_dir, args);	break;
     case ID_ARS:
     case ID_BOT:	bot_norm(hitp, r_pt, r_dir, args);	break;
@@ -136,6 +166,7 @@ inline void norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, cons
     case ID_ETO:	eto_norm(hitp, r_pt, r_dir, args);	break;
     case ID_RHC:	rhc_norm(hitp, r_pt, r_dir, args);	break;
     case ID_RPC:	rpc_norm(hitp, r_pt, r_dir, args);	break;
+    case ID_HRT:	hrt_norm(hitp, r_pt, r_dir, args);	break;
     default:							break;
     };
 }
@@ -317,9 +348,7 @@ double3 MAT4X3PNT(const double16 m, double3 i) {
 }
 
 inline double3
-shade(const double3 r_pt, const double3 r_dir, struct hit *hitp, const uint idx, const double3 lt_pos,
-      global uchar *ids, global uint *indexes, global uchar *prims, global struct region *regions)
-
+shade(const double3 r_pt, const double3 r_dir, struct hit *hitp, const double3 lt_pos, const uint idx, global struct region *regions)
 {
     double3 color;
     double3 normal;
@@ -364,8 +393,7 @@ void do_segp(RESULT_TYPE *res, const uint idx,
     if (acc->lightmodel == 4) {
 	if (seg_in->hit_dist >= 0.0) {
 	    norm(seg_in, acc->r_pt, acc->r_dir, acc->ids[idx], acc->prims + acc->indexes[idx]);
-	    const double3 color = shade(acc->r_pt, acc->r_dir, seg_in, idx,
-		    acc->lt_pos, acc->ids, acc->indexes, acc->prims, acc->regions);
+	    const double3 color = shade(acc->r_pt, acc->r_dir, seg_in, acc->lt_pos, acc->iregions[idx], acc->regions);
 	    double f = exp(-seg_in->hit_dist*1e-10);
 	    acc->a_color += color * f;
 	    acc->a_total += f;
@@ -382,7 +410,7 @@ do_pixel(global uchar *pixels, const uchar3 o, const int cur_pixel,
 	 const double16 view2model, const double cell_width, const double cell_height,
 	 const double aspect, const int lightmodel, const uint nprims, global uchar *ids,
 	 global struct linear_bvh_node *nodes, global uint *indexes,global uchar *prims,
-	 global struct region *regions)
+	 global struct region *regions, global int *iregions)
 {
     const size_t id = get_global_size(0)*get_global_id(1)+get_global_id(0);
 
@@ -412,6 +440,7 @@ do_pixel(global uchar *pixels, const uchar3 o, const int cur_pixel,
     a.indexes = indexes;
     a.prims = prims;
     a.regions = regions;
+    a.iregions = iregions;
 
     struct seg *segp = &a.s;
     segp->seg_in.hit_dist = INFINITY;
@@ -448,7 +477,7 @@ do_pixel(global uchar *pixels, const uchar3 o, const int cur_pixel,
          */
         switch (lightmodel) {
 	    default:
-		a_color = shade(r_pt, r_dir, hitp, idx, lt_pos, ids, indexes, prims, regions);
+		a_color = shade(r_pt, r_dir, hitp, lt_pos, iregions[idx], regions);
 	    	break;
             case 1:
                 /* Light from the "eye" (ray source).  Note sign change */
@@ -596,65 +625,103 @@ store_segs(RESULT_TYPE segs, global uint *h,
 }
 
 __kernel void
-shade_segs(global uchar *pixels, const uchar3 o, RESULT_TYPE segs, global uint *h,
+shade_segs(global uchar *pixels, const uchar3 o, RESULT_TYPE segs, global uint *head_partition,
          const int cur_pixel, const int last_pixel, const int width,
 	 global float *rand_halftab, const uint randhalftabsize,
 	 const uchar3 background, const uchar3 nonbackground,
 	 const double airdensity, const double3 haze, const double gamma,
 	 const double16 view2model, const double cell_width, const double cell_height,
-	 const double aspect, const int lightmodel, const uint nprims, global uchar *ids,
-	 global struct linear_bvh_node *nodes, global uint *indexes, global uchar *prims,
-	 global struct region *regions)
+	 const double aspect, const int lightmodel, global uchar *ids,
+	 global uint *indexes, global uchar *prims, global struct region *regions,
+         global struct partition *partitions)
 {
     const size_t id = get_global_size(0)*get_global_id(1)+get_global_id(0);
 
     if (id >= (last_pixel-cur_pixel+1))
       return;
 
-    const int pixelnum = cur_pixel+id;
-
-    const int a_y = (int)(pixelnum/width);
-    const int a_x = (int)(pixelnum - (a_y * width));
-
-    double3 r_pt, r_dir;
-    gen_ray(&r_pt, &r_dir, a_x, a_y, view2model, cell_width, cell_height, aspect);
-
-    /* Determine the Light location(s) in view space */
-    /* 0:  At left edge, 1/2 high */
-    const double3 lt_pos = MAT4X3PNT(view2model, (double3){-1,0,1});
-
     double3 a_color;
     uchar3 rgb;
     struct hit hitp;
 
-    a_color = 0.0;
-    hitp.hit_dist = INFINITY;
-    if (h[id] != h[id+1]) {
+    if (lightmodel >= 0 && head_partition[id] != UINT_MAX) {
+	const int pixelnum = cur_pixel+id;
+
+	const int a_y = (int)(pixelnum/width);
+	const int a_x = (int)(pixelnum - (a_y * width));
+
+	double3 r_pt, r_dir;
+	gen_ray(&r_pt, &r_dir, a_x, a_y, view2model, cell_width, cell_height, aspect);
+
+	/* Determine the Light location(s) in view space */
+	/* 0:  At left edge, 1/2 high */
+	const double3 lt_pos = MAT4X3PNT(view2model, (double3){-1,0,1});
+
+	bool flipflag;
+	uint region_id;
 	uint idx;
 
-	idx = UINT_MAX;
-	for (uint k=h[id]; k!=h[id+1]; k++) {
-	    RESULT_TYPE segp = segs+k;
+	double diffuse0 = 0;
+	double cosI0 = 0;
+	double3 work0, work1;
 
-	    if (segp->seg_in.hit_dist < hitp.hit_dist) {
-		hitp = segp->seg_in;
-		idx = segp->seg_sti;
-	    }
+	a_color = 0.0;
+	hitp.hit_dist = INFINITY;
+	region_id = 0;
+
+	idx = UINT_MAX;
+
+	/* Get first partition of the ray */
+	flipflag = 0;
+	for (uint k = head_partition[id];
+	     k != UINT_MAX;
+	     k = partitions[k].forw_pp) {
+	    global struct partition *pp = &partitions[k];
+            RESULT_TYPE segp = &segs[pp->inseg];
+
+            if (pp->inhit.hit_dist < hitp.hit_dist) {
+                hitp = pp->inhit;
+                idx = segp->seg_sti;
+                region_id = pp->region_id;
+                flipflag = pp->inflip;
+            }
 	}
+
         double3 normal;
 
-	if (hitp.hit_dist < 0.0) {
+        if (hitp.hit_dist < 0.0) {
 	    /* Eye inside solid, orthoview */
 	    normal = -r_dir;
         } else {
 	    norm(&hitp, r_pt, r_dir, ids[idx], prims + indexes[idx]);
+            hitp.hit_normal = flipflag ? -hitp.hit_normal : hitp.hit_normal;
 	    normal = hitp.hit_normal;
         }
 
         /*
          * Diffuse reflectance from each light source
          */
-	a_color = shade(r_pt, r_dir, &hitp, idx, lt_pos, ids, indexes, prims, regions);
+        switch (lightmodel) {
+	    default:
+		a_color = shade(r_pt, r_dir, &hitp, lt_pos, region_id, regions);
+	    	break;
+            case 1:
+                /* Light from the "eye" (ray source).  Note sign change */
+                diffuse0 = 0;
+                if ((cosI0 = -dot(normal, r_dir)) >= 0.0)
+                    diffuse0 = cosI0 * (1.0 - AmbientIntensity);
+                work0 = lt_color * diffuse0;
+
+                /* Add in contribution from ambient light */
+                work1 = ambient_color * AmbientIntensity;
+                a_color = work0 + work1;
+                break;
+            case 2:
+                /* Store surface normals pointing inwards */
+                /* (For Spencer's moving light program) */
+                a_color = (normal * DOUBLE_C(-.5)) + DOUBLE_C(.5);
+                break;
+        }
 
         /*
          * e ^(-density * distance)

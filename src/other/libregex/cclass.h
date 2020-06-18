@@ -8,12 +8,12 @@
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
  * are met:
- *  * Redistributions of source code must retain the above copyright
+ * 1. Redistributions of source code must retain the above copyright
  *    notice, this list of conditions and the following disclaimer.
- *  * Redistributions in binary form must reproduce the above copyright
+ * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- *  * Neither the name of the University nor the names of its contributors
+ * 3. Neither the name of the University nor the names of its contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
  *
@@ -38,28 +38,28 @@ static struct cclass {
 	char *chars;
 	char *multis;
 } cclasses[] = {
-	{"alnum",	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz\
-0123456789",				""},
-	{"alpha",	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
-					""},
-	{"blank",	" \t",		""},
-	{"cntrl",	"\007\b\t\n\v\f\r\1\2\3\4\5\6\16\17\20\21\22\23\24\
-\25\26\27\30\31\32\33\34\35\36\37\177",	""},
-	{"digit",	"0123456789",	""},
-	{"graph",	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz\
+	{ "alnum",	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz\
+0123456789",				""} ,
+	{ "alpha",	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz",
+					""} ,
+	{ "blank",	" \t",		""} ,
+	{ "cntrl",	"\007\b\t\n\v\f\r\1\2\3\4\5\6\16\17\20\21\22\23\24\
+\25\26\27\30\31\32\33\34\35\36\37\177",	""} ,
+	{ "digit",	"0123456789",	""} ,
+	{ "graph",	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz\
 0123456789!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~",
-					""},
-	{"lower",	"abcdefghijklmnopqrstuvwxyz",
-					""},
-	{"print",	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz\
+					""} ,
+	{ "lower",	"abcdefghijklmnopqrstuvwxyz",
+					""} ,
+	{ "print",	"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz\
 0123456789!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~ ",
-					""},
-	{"punct",	"!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~",
-					""},
-	{"space",	"\t\n\v\f\r ",	""},
-	{"upper",	"ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-					""},
-	{"xdigit",	"0123456789ABCDEFabcdef",
-					""},
-	{NULL,		0,		""}
+					""} ,
+	{ "punct",	"!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~",
+					""} ,
+	{ "space",	"\t\n\v\f\r ",	""} ,
+	{ "upper",	"ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+					""} ,
+	{ "xdigit",	"0123456789ABCDEFabcdef",
+					""} ,
+	{ NULL,		0,		"" }
 };

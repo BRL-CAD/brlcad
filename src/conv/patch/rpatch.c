@@ -1,7 +1,7 @@
 /*                        R P A T C H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,6 +34,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/exit.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
@@ -189,6 +190,8 @@ main(int argc, char **argv)
     int type3_is_donut=0;
     int c;
 
+    bu_setprogname(argv[0]);
+
     fast3 = 0;
     if (argc > 2) {
 	bu_exit(1, "%s", usage);
@@ -205,6 +208,7 @@ main(int argc, char **argv)
 		break;
 	    case '?':
 		bu_exit(1, "%s", usage);
+		break;
 	    default:
 		bu_exit(1, "Illegal option (%c)\n%s", c, usage);
 	}

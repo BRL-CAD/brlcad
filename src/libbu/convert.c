@@ -1,7 +1,7 @@
 /*                       C O N V E R T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,6 +23,7 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <string.h>
+#include <limits.h>
 
 #include "bu/cv.h"
 #include "bu/endian.h"
@@ -286,8 +287,8 @@ bu_cv_itemlen(register int cookie)
 {
     register int fmt = (cookie & CV_TYPE_MASK) >> CV_TYPE_SHIFT;
     static size_t host_size_table[8] = {0, sizeof(char),
-				     sizeof(short), sizeof(int),
-				     sizeof(long int), sizeof(double)};
+					sizeof(short), sizeof(int),
+					sizeof(long int), sizeof(double)};
     static size_t net_size_table[8] = {0, 1, 2, 4, 8, 8};
 
     if (cookie & CV_HOST_MASK)
@@ -469,7 +470,7 @@ bu_cv_htonul(void *out, size_t size, register long unsigned int *in, size_t coun
 size_t
 bu_cv_w_cookie(void *out, int outcookie, size_t size, void *in, int incookie, size_t count)
 {
-    size_t work_count = 4096;
+    size_t work_count = BU_PAGE_SIZE;
     size_t number_done = 0;
     int inIsHost, outIsHost, infmt, outfmt;
     size_t insize, outsize;
@@ -484,7 +485,7 @@ bu_cv_w_cookie(void *out, int outcookie, size_t size, void *in, int incookie, si
 
     /*
      * Work_count is the size of the working buffer.  If count is
-     * smaller than the default work_count (4096) use the smaller
+     * smaller than the default work_count (page size) use the smaller
      * number.
      */
 

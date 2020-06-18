@@ -1,15 +1,15 @@
 /* ================ sha1.c ================ */
 /*
-SHA-1 in C
-By Steve Reid <steve@edmweb.com>
-100% Public Domain
+  SHA-1 in C
+  By Steve Reid <steve@edmweb.com>
+  100% Public Domain
 
-Test Vectors (from FIPS PUB 180-1)
-"abc"
+  Test Vectors (from FIPS PUB 180-1)
+  "abc"
   A9993E36 4706816A BA3E2571 7850C26C 9CD0D89D
-"abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"
+  "abcdbcdecdefdefgefghfghighijhijkijkljklmklmnlmnomnopnopq"
   84983E44 1C3BD26E BAAE4AA1 F95129E5 E54670F1
-A million repetitions of "a"
+  A million repetitions of "a"
   34AA973C D4C4DAA4 F61EEB2B DBAD2731 6534016F
 */
 
@@ -33,12 +33,12 @@ A million repetitions of "a"
 #ifndef WORDS_BIGENDIAN
 /* assume anything not big endian is little */
 #define blk0(i) (block->l[i] = (rol(block->l[i],24)&0xFF00FF00) \
-    |(rol(block->l[i],8)&0x00FF00FF))
+		 |(rol(block->l[i],8)&0x00FF00FF))
 #else
 #define blk0(i) block->l[i]
 #endif
 #define blk(i) (block->l[i&15] = rol(block->l[(i+13)&15]^block->l[(i+8)&15] \
-    ^block->l[(i+2)&15]^block->l[i&15],1))
+				     ^block->l[(i+2)&15]^block->l[i&15],1))
 
 /* (R0+R1), R2, R3, R4 are the different operations used in SHA1 */
 #define R0(v,w,x,y,z,i) z+=((w&(x^y))^y)+blk0(i)+0x5A827999+rol(v,5);w=rol(w,30);
@@ -54,8 +54,8 @@ void SHA1Transform(uint32_t state[5], const unsigned char buffer[64])
 {
     uint32_t a, b, c, d, e;
     typedef union {
-        unsigned char c[64];
-        uint32_t l[16];
+	unsigned char c[64];
+	uint32_t l[16];
     } CHAR64LONG16;
 #ifdef SHA1HANDSOFF
     CHAR64LONG16 block[1];  /* use array to appear as a pointer */
@@ -129,16 +129,16 @@ void SHA1Update(SHA1_CTX* context, const unsigned char* data, uint32_t len)
 
     j = context->count[0];
     if ((context->count[0] += len << 3) < j)
-        context->count[1]++;
+	context->count[1]++;
     context->count[1] += (len>>29);
     j = (j >> 3) & 63;
     if ((j + len) > 63) {
-        memcpy(&context->buffer[j], data, (i = 64-j));
-        SHA1Transform(context->state, context->buffer);
-        for ( ; i + 63 < len; i += 64) {
-            SHA1Transform(context->state, &data[i]);
-        }
-        j = 0;
+	memcpy(&context->buffer[j], data, (i = 64-j));
+	SHA1Transform(context->state, context->buffer);
+	for ( ; i + 63 < len; i += 64) {
+	    SHA1Transform(context->state, &data[i]);
+	}
+	j = 0;
     }
     else i = 0;
     memcpy(&context->buffer[j], &data[i], len - i);
@@ -154,20 +154,20 @@ void SHA1Final(unsigned char digest[20], SHA1_CTX* context)
     unsigned char c;
 
     for (i = 0; i < 8; i++) {
-        finalcount[i] = (unsigned char)((context->count[(i >= 4 ? 0 : 1)]
-         >> ((3-(i & 3)) * 8) ) & 255);  /* Endian independent */
+	finalcount[i] = (unsigned char)((context->count[(i >= 4 ? 0 : 1)]
+					 >> ((3-(i & 3)) * 8) ) & 255);  /* Endian independent */
     }
 
     c = 0200;
     SHA1Update(context, &c, 1);
     while ((context->count[0] & 504) != 448) {
 	c = 0000;
-        SHA1Update(context, &c, 1);
+	SHA1Update(context, &c, 1);
     }
     SHA1Update(context, finalcount, 8);  /* Should cause a SHA1Transform() */
     for (i = 0; i < 20; i++) {
-        digest[i] = (unsigned char)
-         ((context->state[i>>2] >> ((3-(i & 3)) * 8) ) & 255);
+	digest[i] = (unsigned char)
+	    ((context->state[i>>2] >> ((3-(i & 3)) * 8) ) & 255);
     }
     /* Wipe variables */
     memset(context, '\0', sizeof(*context));
@@ -186,19 +186,29 @@ main(int argc, char **argv)
     int i;
 
     for(i=0;i<BUFSIZE;i++)
-        buf[i] = i;
+	buf[i] = i;
 
     SHA1Init(&ctx);
     for(i=0;i<1000;i++)
-        SHA1Update(&ctx, buf, BUFSIZE);
+	SHA1Update(&ctx, buf, BUFSIZE);
     SHA1Final(hash, &ctx);
 
     printf("SHA1=");
     for(i=0;i<20;i++)
-        printf("%02x", hash[i]);
+	printf("%02x", hash[i]);
     printf("\n");
     return 0;
 }
 
 #endif
 
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

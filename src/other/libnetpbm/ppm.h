@@ -3,13 +3,21 @@
 #ifndef _PPM_H_
 #define _PPM_H_
 
+#if defined(_WIN32)
+# define COMPILER_DLLEXPORT __declspec(dllexport)
+# define COMPILER_DLLIMPORT __declspec(dllimport)
+#else
+# define COMPILER_DLLEXPORT __attribute__ ((visibility ("default")))
+# define COMPILER_DLLIMPORT __attribute__ ((visibility ("default")))
+#endif
+
 #ifndef NETPBM_EXPORT
 #  if defined(NETPBM_DLL_EXPORTS) && defined(NETPBM_DLL_IMPORTS)
 #    error "Only NETPBM_DLL_EXPORTS or NETPBM_DLL_IMPORTS can be defined, not both."
 #  elif defined(NETPBM_DLL_EXPORTS)
-#    define NETPBM_EXPORT __declspec(dllexport)
+#    define NETPBM_EXPORT COMPILER_DLLEXPORT
 #  elif defined(NETPBM_DLL_IMPORTS)
-#    define NETPBM_EXPORT __declspec(dllimport)
+#    define NETPBM_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define NETPBM_EXPORT
 #  endif

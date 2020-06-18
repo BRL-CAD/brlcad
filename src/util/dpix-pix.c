@@ -1,7 +1,7 @@
 /*                      D P I X - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2016 United States Government as represented by
+ * Copyright (c) 1990-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,6 +35,7 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/file.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
@@ -60,17 +61,19 @@ main(int argc, char **argv)
 
     double min, max;		/* high usage items */
 
+    bu_setprogname(argv[0]);
+
     if (argc < 2) {
 	bu_exit(1, "Usage: dpix-pix file.dpix > file.pix\n");
     }
 
-    ifname = bu_realpath(argv[1], NULL);
+    ifname = bu_file_realpath(argv[1], NULL);
     if ((fd = open(ifname, 0)) < 0) {
 	perror(ifname);
-	bu_free(ifname, "ifname alloc from bu_realpath");
+	bu_free(ifname, "ifname alloc from bu_file_realpath");
 	exit(1);
     }
-    bu_free(ifname, "ifname alloc from bu_realpath");
+    bu_free(ifname, "ifname alloc from bu_file_realpath");
 
     if (isatty(fileno(stdout))) {
 	bu_exit(2, "dpix-pix:  binary output directed to terminal, aborting\n");
@@ -97,7 +100,7 @@ main(int argc, char **argv)
 	}
     }
 
-    lseek(fd, 0, 0);		/* rewind(fp); */
+    bu_lseek(fd, 0, 0);		/* rewind(fp); */
 
     /* This section uses the maximum and the minimum values found to
      * compute the m and the b of the line as specified by the

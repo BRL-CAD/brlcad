@@ -1,7 +1,7 @@
 /*                      P L O T 3 R O T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2016 United States Government as represented by
+ * Copyright (c) 1986-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,6 +31,7 @@
 #include <math.h>
 
 #include "bio.h"   /* for isatty */
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/str.h"
 #include "bu/log.h"
@@ -322,6 +323,8 @@ main(int argc, char **argv)
    -v             Verbose\n\
    -S#            Space: takes a quoted string of six floats\n";
 
+    bu_setprogname(argv[0]);
+
     if (!get_args(argc, argv)) {
 	fputs("Usage: plot3rot [options] [file1 ... fileN] > file.plot3\n", stderr);
 
@@ -523,9 +526,9 @@ dofile(FILE *fp)
 		break;
 	    default:
 		bu_log("plot3rot: unrecognized command '%c' (0x%x)\n",
-		       (isascii(c) && isprint(c)) ? c : '?',
+		       (isprint(c)) ? c : '?',
 		       c);
-		bu_log("plot3rot: ftell = %ld\n", bu_ftell(fp));
+		bu_log("plot3rot: ftell = %jd\n", (intmax_t)bu_ftell(fp));
 		putchar(c);
 		break;
 	}

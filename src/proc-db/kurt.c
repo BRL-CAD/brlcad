@@ -1,7 +1,7 @@
 /*                          K U R T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2016 United States Government as represented by
+ * Copyright (c) 1986-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@
 #include <math.h>
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "wdb.h"
@@ -56,6 +57,8 @@ main(int argc, char **argv)
     double size;
     double base;
     int quant;
+
+    bu_setprogname(argv[0]);
 
     if (argc > 1) {
 	bu_exit(1, "Usage: %s\n", argv[0]);

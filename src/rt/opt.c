@@ -1,7 +1,7 @@
 /*                           O P T . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2016 United States Government as represented by
+ * Copyright (c) 1989-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,6 +35,7 @@
 #include "bu/getopt.h"
 #include "bu/parallel.h"
 #include "bu/units.h"
+#include "bn/str.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
@@ -49,19 +50,19 @@
  */
 #define COMMA ','
 
+int rt_verbosity = -1;        /* blather incessantly by default */
 
-int rpt_dist = 0;		/* report distance to each pixel */
-size_t width = 0;		/* # of pixels in X */
-size_t height = 0;		/* # of lines in Y */
+size_t width = 0;                /* # of pixels in X */
+size_t height = 0;                /* # of lines in Y */
 
 
 /***** Variables shared with viewing model *** */
-int doubles_out = 0;	/* u_char or double .pix output file */
+int doubles_out = 0;        /* u_char or double .pix output file */
 fastf_t azimuth = 0.0, elevation = 0.0;
-int lightmodel = 0;		/* Select lighting model */
-int rpt_overlap = 1;	/* report overlapping region names */
+int lightmodel = 0;                /* Select lighting model */
+int rpt_overlap = 1;        /* report overlapping region names */
 int default_background = 1; /* Default is black */
-int output_is_binary = 1;	/* !0 means output file is binary */
+int output_is_binary = 1;        /* !0 means output file is binary */
 
 /***** end of sharing with viewing model *****/
 
@@ -69,38 +70,38 @@ int output_is_binary = 1;	/* !0 means output file is binary */
 int query_x = 0;
 int query_y = 0;
 int Query_one_pixel = 0;
-int query_rdebug  = 0;
+int query_optical_debug  = 0;
 int query_debug = 0;
-int stereo = 0;		/* stereo viewing */
-int hypersample = 0;		/* number of extra rays to fire */
-unsigned int jitter = 0;		/* ray jitter control variable */
-fastf_t rt_perspective = (fastf_t)0.0;	/* presp (degrees X) 0 => ortho */
-fastf_t aspect = (fastf_t)1.0;	/* view aspect ratio X/Y (needs to be 1.0 for g/G options) */
-vect_t dx_model;		/* view delta-X as model-space vect */
-vect_t dy_model;		/* view delta-Y as model-space vect */
-vect_t dx_unit;		/* view delta-X as unit-len vect */
-vect_t dy_unit;		/* view delta-Y as unit-len vect */
-fastf_t cell_width = (fastf_t)0.0;		/* model space grid cell width */
-fastf_t cell_height = (fastf_t)0.0;	/* model space grid cell height */
-int cell_newsize = 0;		/* new grid cell size */
-point_t eye_model = {(fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0};		/* model-space location of eye */
-fastf_t eye_backoff = (fastf_t)M_SQRT2;	/* dist from eye to center */
+int stereo = 0;                         /* stereo viewing */
+int hypersample = 0;                    /* number of extra rays to fire */
+unsigned int jitter = 0;                /* ray jitter control variable */
+fastf_t rt_perspective = (fastf_t)0.0;  /* presp (degrees X) 0 => ortho */
+fastf_t aspect = (fastf_t)1.0;          /* view aspect ratio X/Y (needs to be 1.0 for g/G options) */
+vect_t dx_model;                        /* view delta-X as model-space vect */
+vect_t dy_model;                        /* view delta-Y as model-space vect */
+vect_t dx_unit;                         /* view delta-X as unit-len vect */
+vect_t dy_unit;                         /* view delta-Y as unit-len vect */
+fastf_t cell_width = (fastf_t)0.0;      /* model space grid cell width */
+fastf_t cell_height = (fastf_t)0.0;     /* model space grid cell height */
+int cell_newsize = 0;                   /* new grid cell size */
+point_t eye_model = {(fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0}; /* model-space location of eye */
+fastf_t eye_backoff = (fastf_t)M_SQRT2; /* dist from eye to center */
 mat_t Viewrotscale = { (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0,
 		       (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0,
 		       (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0,
 		       (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0, (fastf_t)0.0};
 fastf_t viewsize = (fastf_t)0.0;
-int incr_mode = 0;		/* !0 for incremental resolution */
-int full_incr_mode = 0;     /* !0 for fully incremental resolution */
-size_t incr_level = 0;		/* current incremental level */
-size_t incr_nlevel = 0;	/* number of levels */
-size_t full_incr_sample = 0;    /* current fully incremental sample */
-size_t full_incr_nsamples = 0;  /* number of samples in the fully incremental mode */
-size_t npsw = 1;		/* number of worker PSWs to run */
-struct resource resource[MAX_PSW];	/* memory resources */
-int transpose_grid = 0;     /* reverse the order of grid traversal */
-int random_mode = 0;        /* Mode to shoot rays at random directions */
-int opencl_mode = 0;	/* enable/disable OpenCL */
+int incr_mode = 0;                      /* !0 for incremental resolution */
+int full_incr_mode = 0;                 /* !0 for fully incremental resolution */
+size_t incr_level = 0;                  /* current incremental level */
+size_t incr_nlevel = 0;                 /* number of levels */
+size_t full_incr_sample = 0;            /* current fully incremental sample */
+size_t full_incr_nsamples = 0;          /* number of samples in the fully incremental mode */
+size_t npsw = 1;                        /* number of worker PSWs to run */
+struct resource resource[MAX_PSW];      /* memory resources */
+int top_down = 0;                       /* render image top-down or bottom-up (default) */
+int random_mode = 0;                    /* Mode to shoot rays at random directions */
+int opencl_mode = 0;                    /* enable/disable OpenCL */
 /***** end variables shared with worker() *****/
 
 /***** Photon Mapping Variables *****/
@@ -109,25 +110,26 @@ char pmfile[255];
 /***** ************************ *****/
 
 /***** variables shared with do.c *****/
-char *string_pix_start = (char *)NULL;	/* string spec of starting pixel */
-char *string_pix_end = (char *)NULL;	/* string spec of ending pixel */
-int pix_start = -1;		/* pixel to start at */
-int pix_end = 0;		/* pixel to end at */
-int nobjs = 0;		/* Number of cmd-line treetops */
-char **objtab = (char **)NULL;	/* array of treetop strings */
-int matflag = 0;		/* read matrix from stdin */
-int orientflag = 0;		/* 1 means orientation has been set */
-int desiredframe = 0;	/* frame to start at */
-int finalframe = -1;	/* frame to halt at */
-int curframe = 0;		/* current frame number,
-				 * also shared with view.c */
-char *outputfile = (char *)NULL;	/* name of base of output file */
-int benchmark = 0;		/* No random numbers:  benchmark */
+int objc = 0;                           /* Number of cmd-line treetops */
+char **objv = (char **)NULL;            /* array of treetop strings */
+struct bu_ptbl *cmd_objs = NULL;        /* container for command specified objects */
+char *string_pix_start = (char *)NULL;  /* string spec of starting pixel */
+char *string_pix_end = (char *)NULL;    /* string spec of ending pixel */
+int pix_start = -1;                     /* pixel to start at */
+int pix_end = 0;                        /* pixel to end at */
+int matflag = 0;                        /* read matrix from stdin */
+int orientflag = 0;                     /* 1 means orientation has been set */
+int desiredframe = 0;                   /* frame to start at */
+int finalframe = -1;                    /* frame to halt at */
+int curframe = 0;                       /* current frame number,
+					 * also shared with view.c */
+char *outputfile = (char *)NULL;        /* name of base of output file */
+int benchmark = 0;                      /* No random numbers:  benchmark */
 
-int sub_grid_mode = 0;	/* mode to raytrace a rectangular portion of view */
-int sub_xmin = 0;		/* lower left of sub rectangle */
+int sub_grid_mode = 0;                  /* mode to raytrace a rectangular portion of view */
+int sub_xmin = 0;                       /* lower left of sub rectangle */
 int sub_ymin = 0;
-int sub_xmax = 0;		/* upper right of sub rectangle */
+int sub_xmax = 0;                       /* upper right of sub rectangle */
 int sub_ymax = 0;
 
 /**
@@ -136,15 +138,14 @@ int sub_ymax = 0;
  * If this variable is set non-zero, then "air" solids will be
  * retained, and can be expected to show up in the partition lists.
  */
-int use_air = 0;		/* whether librt should handle air */
+int use_air = 0;                        /* whether librt should handle air */
 
 /***** end variables shared with do.c *****/
 
 
 /***** variables shared with view.c *****/
-fastf_t frame_delta_t = (fastf_t)(1.0/30.0); /* 1.0 / frames_per_second_playback */
-double airdensity;    /* is the scene hazy (we shade the void space) */
-double haze[3] = { 0.8, 0.9, 0.99 };	      /* color of the haze */
+double airdensity = 0.0;                /* is the scene hazy (we shade the void space) */
+double haze[3] = { 0.8, 0.9, 0.99 };    /* color of the haze */
 int do_kut_plane = 0;
 plane_t kut_plane;
 
@@ -154,34 +155,46 @@ int model_units = 0;
 
 /***** end variables shared with view.c *****/
 
+char *densityfile = (char *)NULL;       /* name of density file */
+
 /* temporary kludge to get rt to use a tighter tolerance for raytracing */
-fastf_t rt_dist_tol = (fastf_t)0.0005;	/* Value for rti_tol.dist */
+fastf_t rt_dist_tol = (fastf_t)0.0005;  /* Value for rti_tol.dist */
 
-fastf_t rt_perp_tol = (fastf_t)0.0;	/* Value for rti_tol.perp */
-char *framebuffer = (char *)NULL;		/* desired framebuffer */
+fastf_t rt_perp_tol = (fastf_t)0.0;     /* Value for rti_tol.perp */
+char *framebuffer = (char *)NULL;       /* desired framebuffer */
 
-int space_partition = 	/*space partitioning algorithm to use*/
-/* Do NOT insert value above for space_partition ; it's taken care of below. */
-
-/* TODO: need a run-time mechanism for toggling spatial partitioning
- * methods.  Use this compile-time switch to toggle between different
- * spatial partitioning methods.
+/**
+ * space partitioning algorithm to use.  previously had experimental
+ * grid support, but now only uses a Non-uniform Binary Spatial
+ * Partitioning (BSP) tree.
  */
-#ifdef USE_NUGRID
-/* Non-uniform grid/mesh discretized spatial partitioning */
-    RT_PART_NUGRID;
-#else
-/* Non-uniform Binary Spatial Partitioning (BSP) tree */
-RT_PART_NUBSPT;
-#endif
-int nugrid_dimlimit = 0;	/* limit to each dimension of
-				   the nugrid */
-double nu_gfactor = RT_NU_GFACTOR_DEFAULT;
-/* constant factor in NUgrid algorithm, if applicable */
+int space_partition = RT_PART_NUBSPT;
 
 #define MAX_WIDTH (32*1024)
 
 extern struct command_tab rt_cmdtab[];
+
+
+/* this helper function is used to increase a bit variable through
+ * five levels (8 bits set at a time, 0 through level 4).  this can be
+ * used to incrementally increase uint32 bits as typically used for
+ * verbose and/or debug printing.
+ */
+static unsigned int
+increase_level(unsigned int bits)
+{
+    if ((bits & 0x000000ff) != 0x000000ff)
+	bits |= 0x000000ff;
+    else if ((bits & 0x0000ff00) != 0x0000ff00)
+	bits |= 0x0000ff00;
+    else if ((bits & 0x00ff0000) != 0x00ff0000)
+	bits |= 0x00ff0000;
+    else if ((bits & 0xff000000) != 0xff000000)
+	bits |= 0xff000000;
+
+    return bits;
+}
+
 
 int
 get_args(int argc, const char *argv[])
@@ -189,15 +202,18 @@ get_args(int argc, const char *argv[])
     register int c;
     register int i;
     char *env_str;
-
-    bu_optind = 1;		/* restart */
+    FILE *objsfile = NULL;
+    struct bu_vls oline = BU_VLS_INIT_ZERO;
+    int oid = 0;
+    bu_optind = 1;                /* restart */
 
 
 #define GETOPT_STR	\
-    ".:, :@:a:b:c:d:e:f:g:m:ij:k:l:n:o:p:q:rs:tu:v:w:x:z:A:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:WX:!:+:h?"
+    ".:, :@:a:b:c:d:e:f:g:m:ij:k:l:n:o:p:q:rs:tu:v::w:x:z:A:BC:D:E:F:G:H:I:J:K:MN:O:P:Q:RST:U:V:WX:!:+:h?"
 
     while ((c=bu_getopt(argc, (char * const *)argv, GETOPT_STR)) != -1) {
 	if (bu_optopt == '?')
+	    /* specifically asking for help? */
 	    c = 'h';
 	switch (c) {
 	    case 'q':
@@ -206,19 +222,18 @@ get_args(int argc, const char *argv[])
 		    bu_exit(EXIT_FAILURE, "-q %d is < 0\n", i);
 		}
 		if (i > BN_RANDHALFTABSIZE) {
-		    bu_exit(EXIT_FAILURE, "-q %d is > maximum (%d)\n",
-			    i, BN_RANDHALFTABSIZE);
+		    bu_exit(EXIT_FAILURE, "-q %d is > maximum (%d)\n", i, BN_RANDHALFTABSIZE);
 		}
 		bn_randhalftabsize = i;
 		break;
 	    case 'm':
-		i = sscanf(bu_optarg, "%lg, %lg, %lg, %lg", &airdensity, &haze[X], &haze[Y], &haze[Z]);
+		i = sscanf(bu_optarg, "%lg, %lg, %lg, %lg", &airdensity, &haze[RED], &haze[GRN], &haze[BLU]);
 		if (i != 4) {
-		    bu_exit(EXIT_FAILURE, "ERROR: bad air density + haze\n");
+		    bu_exit(EXIT_FAILURE, "ERROR: bad air density or haze 0.0-to-1.0 RGB values\n");
 		}
 		break;
 	    case 't':
-		transpose_grid = 1;
+		top_down = 1;
 		break;
 	    case 'j':
 		{
@@ -269,35 +284,27 @@ get_args(int argc, const char *argv[])
 		kut_plane[W] *= f;
 		break;
 	    }
-	    case '.':
-		nu_gfactor = (double)atof(bu_optarg);
-		break;
 	    case COMMA:
 		space_partition = atoi(bu_optarg);
 		break;
-	    case '@':
-		nugrid_dimlimit = atoi(bu_optarg);
-		break;
 	    case 'c':
 		(void)rt_do_cmd((struct rt_i *)0, bu_optarg, rt_cmdtab);
+		break;
+	    case 'd':
+		densityfile = bu_optarg;
 		break;
 	    case 'C':
 		{
 		    struct bu_color color = BU_COLOR_INIT_ZERO;
 
 		    if (!bu_color_from_str(&color, bu_optarg)) {
-			bu_log("ERROR: invalid color string: '%s'\n", bu_optarg);
-			return 0;
+			bu_exit(EXIT_FAILURE, "ERROR: invalid color string: '%s'\n", bu_optarg);
 		    }
-#if defined(_WIN32)
-		    VMOVE(background, color.buc_rgb);
-#else
 		    {
 			char buf[128] = {0};
 			sprintf(buf, "set background=%f/%f/%f", color.buc_rgb[RED], color.buc_rgb[GRN], color.buc_rgb[BLU]);
 			(void)rt_do_cmd((struct rt_i *)0, buf, rt_cmdtab);
 		    }
-#endif
 		}
 		break;
 	    case 'T':
@@ -329,6 +336,33 @@ get_args(int argc, const char *argv[])
 	    case 'S':
 		stereo = 1;
 		break;
+	    case 'I':
+		if (!bu_file_exists(bu_optarg, NULL)) {
+		    bu_exit(1, "Object list file %s not found, aborting\n", bu_optarg);
+		}
+		if ((objsfile = fopen(bu_optarg, "r")) == NULL) {
+		    bu_exit(1, "Unable to open object list file %s, aborting\n", bu_optarg);
+		}
+		objc = 0;
+		while (bu_vls_gets(&oline, objsfile) >= 0) {
+		    objc++;
+		    bu_vls_trunc(&oline, 0);
+		}
+		fclose(objsfile);
+		if (objc) {
+		    objv = (char **)bu_calloc(objc+1, sizeof(char *), "obj array");
+		    objsfile = fopen(bu_optarg, "r");
+		    oid = 0;
+		    bu_vls_trunc(&oline, 0);
+		    while (bu_vls_gets(&oline, objsfile) >= 0) {
+			objv[oid] = bu_strdup(bu_vls_addr(&oline));
+			bu_vls_trunc(&oline, 0);
+			oid++;
+		    }
+		    fclose(objsfile);
+		}
+		bu_vls_free(&oline);
+		break;
 	    case 'J':
 		sscanf(bu_optarg, "%x", &jitter);
 		break;
@@ -357,10 +391,10 @@ get_args(int argc, const char *argv[])
 		AmbientIntensity = atof(bu_optarg);
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
 		break;
 	    case 'X':
-		sscanf(bu_optarg, "%x", (unsigned int *)&rdebug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&optical_debug);
 		break;
 	    case '!':
 		sscanf(bu_optarg, "%x", (unsigned int *)&bu_debug);
@@ -402,12 +436,16 @@ get_args(int argc, const char *argv[])
 
 	    case 'a':
 		/* Set azimuth */
-		azimuth = atof(bu_optarg);
+		if (bn_decode_angle(&azimuth, bu_optarg) == 0) {
+		    fprintf(stderr, "WARNING: Unexpected units for azimuth angle, using default value\n");
+		}
 		matflag = 0;
 		break;
 	    case 'e':
 		/* Set elevation */
-		elevation = atof(bu_optarg);
+		if (bn_decode_angle(&elevation, bu_optarg) == 0) {
+		    fprintf(stderr, "WARNING: Unexpected units for elevation angle, using default value\n");
+		}
 		matflag = 0;
 		break;
 	    case 'l':
@@ -480,12 +518,45 @@ get_args(int argc, const char *argv[])
 		    }
 		}
 		break;
-	    case 'v': /* Set level of "non-debug" debugging output */
-		sscanf(bu_optarg, "%x", (unsigned int *)&rt_verbosity);
-		bu_printb("Verbosity:", rt_verbosity,
-			  VERBOSE_FORMAT);
+	    case 'v': {
+		/* change our "verbosity" level, increasing the amount
+		 * of (typically non-debug) information printed during
+		 * ray tracing for each -v specified or to the
+		 * specific setting if an optional hexadecimal value
+		 * is provided as an argument.
+		 */
+
+		int ret;
+		unsigned int scanned_verbosity = 0;
+		size_t num_v = 1;
+		const char *cp = bu_optarg;
+
+		if (!bu_optarg || *bu_optarg == '\0') {
+		    /* turn on next 2 bits */
+		    rt_verbosity = increase_level(rt_verbosity);
+		} else {
+
+		    while (*cp == 'v') {
+			num_v++;
+			cp++;
+		    }
+
+		    while (num_v--)
+			rt_verbosity = increase_level(rt_verbosity);
+
+		    /* we have a hex, set it specifically */
+		    if (*cp != '\0' && isxdigit((int)*cp)) {
+			ret = sscanf(cp, "%x", (unsigned int *)&scanned_verbosity);
+			if (ret == 1) {
+			    rt_verbosity = scanned_verbosity;
+			}
+		    }
+		}
+
+		bu_printb("Verbosity:", rt_verbosity, VERBOSE_FORMAT);
 		bu_log("\n");
 		break;
+	    }
 	    case 'E':
 		eye_backoff = atof(bu_optarg);
 		break;
@@ -504,7 +575,7 @@ get_args(int argc, const char *argv[])
 				(unsigned long)npsw, (unsigned long)avail_cpus);
 
 			if ((bu_debug & BU_DEBUG_PARALLEL) ||
-			    (RT_G_DEBUG & DEBUG_PARALLEL)) {
+			    (RT_G_DEBUG & RT_DEBUG_PARALLEL)) {
 			    fprintf(stderr, "\nAllowing surplus cpus due to debug flag.\n");
 			} else {
 			    fprintf(stderr, "  Will use %lu.\n", (unsigned long)avail_cpus);
@@ -515,7 +586,7 @@ get_args(int argc, const char *argv[])
 			fprintf(stderr, "Numer of requested cpus (%lu) is out of range 1..%d", (unsigned long)npsw, MAX_PSW);
 
 			if ((bu_debug & BU_DEBUG_PARALLEL) ||
-			    (RT_G_DEBUG & DEBUG_PARALLEL)) {
+			    (RT_G_DEBUG & RT_DEBUG_PARALLEL)) {
 			    fprintf(stderr, ", but allowing due to debug flag\n");
 			} else {
 			    fprintf(stderr, ", using -P1\n");
@@ -540,20 +611,6 @@ get_args(int argc, const char *argv[])
 		/* Actually processed in do_frame() */
 		string_pix_start = bu_optarg;
 		npsw = 1;	/* Cancel running in parallel */
-		break;
-	    case 'f':
-		/* input expected playback rate in frames-per-second;
-		 * actually stored as the delta-t per frame
-		 */
-		frame_delta_t = atof(bu_optarg);
-		if (ZERO(frame_delta_t)) {
-		    fprintf(stderr, "Invalid frames/sec (%s) == 0.0; set to default\n",
-			    bu_optarg);
-		    frame_delta_t = 30.0;
-		}
-		/* now convert to delta-t per frame
-		 */
-		frame_delta_t = 1.0 / frame_delta_t;
 		break;
 	    case 'V':
 		{
@@ -585,9 +642,6 @@ get_args(int argc, const char *argv[])
 		/* DON'T report overlapping region names */
 		rpt_overlap = 0;
 		break;
-	    case 'd':
-		rpt_dist = atoi(bu_optarg);
-		break;
 	    case 'z':
 		opencl_mode = atoi(bu_optarg);
 		break;
@@ -599,15 +653,17 @@ get_args(int argc, const char *argv[])
 			    output_is_binary = 0;
 			    break;
 			default:
-			    fprintf(stderr, "ERROR: unknown option %c\n", *cp);
-			    return 0;	/* BAD */
+			    bu_exit(EXIT_FAILURE, "ERROR: unknown option %c\n", *cp);
 		    }
 		}
 		break;
-	    default:		/* '?' 'h' */
-		if(bu_optopt != 'h')
-		    fprintf(stderr, "ERROR: argument missing or bad option specified\n");
-		return 0;	/* BAD */
+	    case 'h':
+		/* asking for help */
+		return 0;
+	    default:
+		/* '?' except not -? */
+		fprintf(stderr, "ERROR: argument missing or bad option specified\n");
+		return -1;
 	}
     }
 
@@ -617,20 +673,13 @@ get_args(int argc, const char *argv[])
     }
 
     /* Compat */
-    if (RT_G_DEBUG || R_DEBUG || nmg_debug)
+    if (RT_G_DEBUG || OPTICAL_DEBUG || nmg_debug)
 	bu_debug |= BU_DEBUG_COREDUMP;
 
-    if (RT_G_DEBUG & DEBUG_MEM_FULL)
-	bu_debug |= BU_DEBUG_MEM_CHECK;
-    if (RT_G_DEBUG & DEBUG_MEM)
-	bu_debug |= BU_DEBUG_MEM_LOG;
-    if (RT_G_DEBUG & DEBUG_PARALLEL)
+    if (RT_G_DEBUG & RT_DEBUG_PARALLEL)
 	bu_debug |= BU_DEBUG_PARALLEL;
-    if (RT_G_DEBUG & DEBUG_MATH)
+    if (RT_G_DEBUG & RT_DEBUG_MATH)
 	bu_debug |= BU_DEBUG_MATH;
-
-    if (R_DEBUG & RDEBUG_RTMEM_END)
-	bu_debug |= BU_DEBUG_MEM_CHECK;
 
     /* TODO: add options instead of reading from ENV */
     env_str = getenv("LIBRT_RAND_MODE");

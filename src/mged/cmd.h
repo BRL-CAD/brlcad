@@ -1,7 +1,7 @@
 /*                           C M D . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,6 +39,9 @@ struct cmdtab {
 };
 
 
+extern int mged_db_search_callback(int, const char **, void *);
+
+
 /* Commands */
 
 extern int cmd_ged_edit_wrapper(ClientData, Tcl_Interp *, int, const char *[]);
@@ -58,7 +61,6 @@ extern int cmd_blast(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_center(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_cmd_win(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_draw(ClientData, Tcl_Interp *, int, const char *[]);
-extern int cmd_emuves(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_ev(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_get(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_get_more_default(ClientData, Tcl_Interp *, int, const char *[]);
@@ -75,6 +77,7 @@ extern int cmd_nop(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_oed(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_output_hook(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_overlay(ClientData, Tcl_Interp *, int, const char *[]);
+extern int cmd_ps(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_put(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_rot(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_rrt(ClientData, Tcl_Interp *, int, const char *[]);
@@ -107,7 +110,6 @@ extern int f_closedb(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_comm(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_copy_inv(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_dm(ClientData, Tcl_Interp *, int, const char *[]);
-extern int f_e_muves(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_edcodes(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_edcolor(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_edgedir(ClientData, Tcl_Interp *, int, const char *[]);
@@ -129,13 +131,11 @@ extern int f_joint(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_journal(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_keypoint(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_knob(ClientData, Tcl_Interp *, int, const char *[]);
-extern int f_l_muves(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_labelvert(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_labelface(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_list(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_make(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_matpick(ClientData, Tcl_Interp *, int, const char *[]);
-extern int f_memprint(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_mirface(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_model2view(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_mouse(ClientData, Tcl_Interp *, int, const char *[]);
@@ -148,12 +148,11 @@ extern int f_permute(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_plot(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_prefix(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_press(ClientData, Tcl_Interp *, int, const char *[]);
-extern int f_ps(ClientData, Tcl_Interp *, int, const char *[]);
+extern int f_postscript(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_put_sedit(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_qorot(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_qray(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_quit(ClientData, Tcl_Interp *, int, const char *[]);
-extern int f_read_muves(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_red(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_refresh(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_regdebug(ClientData, Tcl_Interp *, int, const char *[]);
@@ -171,7 +170,6 @@ extern int f_share(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_slewview(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_status(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_svbase(ClientData, Tcl_Interp *, int, const char *[]);
-extern int f_t_muves(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_tedit(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_tie(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_tr_obj(ClientData, Tcl_Interp *, int, const char *[]);

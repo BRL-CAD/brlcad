@@ -5,7 +5,7 @@ set(OPTICAL_INCLUDE_DIRS
   ${BU_INCLUDE_DIRS}
   ${BN_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
-  ${TCL_INCLUDE_DIRS}
+  ${TCL_INCLUDE_PATH}
   )
 BRLCAD_LIB_INCLUDE_DIRS(optical OPTICAL_INCLUDE_DIRS "")
 
@@ -116,6 +116,7 @@ else(BRLCAD_ENABLE_OSL)
 endif(BRLCAD_ENABLE_OSL)
 
 CMAKEFILES(
+  CMakeLists.txt
   liboslrend.cpp
   oslexec_pvt.h
   render_svc.h

@@ -1,7 +1,7 @@
 /*                       D E F I N E S . H
  * BRL-CAD
  *
- * Copyright (c) 2015-2016 United States Government as represented by
+ * Copyright (c) 2015-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,9 +42,9 @@ __BEGIN_DECLS
 #  if defined(OPTICAL_DLL_EXPORTS) && defined(OPTICAL_DLL_IMPORTS)
 #    error "Only OPTICAL_DLL_EXPORTS or OPTICAL_DLL_IMPORTS can be defined, not both."
 #  elif defined(OPTICAL_DLL_EXPORTS)
-#    define OPTICAL_EXPORT __declspec(dllexport)
+#    define OPTICAL_EXPORT COMPILER_DLLEXPORT
 #  elif defined(OPTICAL_DLL_IMPORTS)
-#    define OPTICAL_EXPORT __declspec(dllimport)
+#    define OPTICAL_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define OPTICAL_EXPORT
 #  endif
@@ -52,11 +52,7 @@ __BEGIN_DECLS
 
 /* for liboptical */
 OPTICAL_EXPORT extern double AmbientIntensity;
-#ifdef RT_MULTISPECTRAL
-OPTICAL_EXPORT extern struct bn_tabdata *background;
-#else
 OPTICAL_EXPORT extern vect_t background;
-#endif
 
 /* defined in sh_text.c */
 OPTICAL_EXPORT extern struct region env_region; /* environment map region */

@@ -45,53 +45,230 @@ set(density_DATAFILES
   )
 BRLCAD_ADDDATA(density_DATAFILES data)
 
+add_subdirectory(nirt)
+
 BRLCAD_ADDDATA(profont/ProFont.ttf fonts)
 
 BRLCAD_ADDDATA(nsis/brlcad.ico icons)
 BRLCAD_ADDDATA(nsis/archer.ico icons)
 
-if(DOXYGEN_FOUND)
-  add_subdirectory(doxygen)
-else(DOXYGEN_FOUND)
-  set(misc_ignore_files doxygen)
-endif(DOXYGEN_FOUND)
+
+add_subdirectory(doxygen)
+add_subdirectory(CMake)
+add_subdirectory(debian)
+add_subdirectory(osl_shaders)
 
 set(misc_ignore_files
-  ${misc_ignore_files}
   Bullet_Box_Chain_Demo.cpp
-  CMake
+  CMakeLists.txt
   Description.txt
   Makefile.defs
-  archlinux
+  archlinux/PKGBUILD
+  archlinux/brlcad.install
   astyle.opt
-  auto-man-page
+  auto-man-page/BIN_OPT_ARG_ANALYSIS.txt
+  auto-man-page/README.auto-man-page-handling
+  auto-man-page/auto-man-progs.txt
   batch-indent-region.el
   brlcad-config.in
   brlcad.spec.in
+  check/adj_air.sh
+  check/exp_air.sh
+  check/overlaps.sh
+  check/rtcheck.sh
+  check/volume.sh
+  check/gap.sh
   clang-static-analyzer-run.sh
-  d-bindings
-  debian
+  external_build_testing/CMakeLists.txt
+  external_build_testing/CMake/buildpath_replace.cxx.in
+  external_build_testing/CMake/Path_Setup.cmake
+  external_build_testing/CMake/rpath_replace.cxx.in
+  external_build_testing/CMake/RPath_Setup.cmake
+  external_build_testing/CMake/ExternalProject_Target.cmake
+  external_build_testing/NOTES
   flawfinder
+  hawaii_islands.sh
   jove.emacs
-  macosx
+  macosx/README
+  macosx/Resources/License.rtf
+  macosx/Resources/ReadMe.rtfd/.typeAttributes.dict
+  macosx/Resources/ReadMe.rtfd/TXT.rtf
+  macosx/Resources/ReadMe.rtfd/brlcad_logo_tiny.png
+  macosx/Resources/Welcome.rtfd/.typeAttributes.dict
+  macosx/Resources/Welcome.rtfd/TXT.rtf
+  macosx/Resources/Welcome.rtfd/brlcad_logo_tiny.png
+  macosx/background.png
+  macosx/openUp.c
   mime.types
   mime_cad.types
-  nsis
-  osl_shaders
+  nsis/archer.ico
+  nsis/brlcad.ico
+  nsis/header.bmp
+  nsis/side.bmp
+  nsis/uninstall.ico
   profont/LICENSE
   profont/profont-IIx-charmap.png
   profont/profont_IIx_readme.pdf
   profont/readme.txt
-  svn2git
   uncpowerplant2g.sh
-  win32-msvc
-  wix
+  repoconv/29886-note-template.fi
+  repoconv/CONVERT.sh
+  repoconv/NOTES
+  repoconv/RESUME.sh
+  repoconv/account-map
+  repoconv/audit_merges/audit_merges.cxx
+  repoconv/audit_merges/commit_list.txt
+  repoconv/checkout_dercs.sh
+  repoconv/common_structs.h
+  repoconv/custom/29937-blob.fi
+  repoconv/custom/29982-tree.fi
+  repoconv/custom/30760-b.fi
+  repoconv/custom/30760-commit.fi
+  repoconv/custom/31039-b.fi
+  repoconv/custom/31039-tree.fi
+  repoconv/custom/32007-blob.fi
+  repoconv/custom/32007-tree.fi
+  repoconv/custom/32009-blob.fi
+  repoconv/custom/32009-tree.fi
+  repoconv/custom/32046-blob.fi
+  repoconv/custom/32046-tree.fi
+  repoconv/custom/32314-b.fi
+  repoconv/custom/32314-tree.fi
+  repoconv/custom/32430-blob.fi
+  repoconv/custom/33115-tree.fi
+  repoconv/custom/33147-blob.fi
+  repoconv/custom/33713-blob.fi
+  repoconv/custom/35881-tree.fi
+  repoconv/custom/36053-b.fi
+  repoconv/custom/36053-blob.fi
+  repoconv/custom/36053-commit.fi
+  repoconv/custom/36053-tree.fi
+  repoconv/custom/36472-b.fi
+  repoconv/custom/36472-commit.fi
+  repoconv/custom/36631-blob.fi
+  repoconv/custom/36631-tree.fi
+  repoconv/custom/36633-b.fi
+  repoconv/custom/36633-commit.fi
+  repoconv/custom/36633-tree.fi
+  repoconv/custom/36843-b.fi
+  repoconv/custom/36843-commit.fi
+  repoconv/custom/36843-tree.fi
+  repoconv/custom/36941-tree.fi
+  repoconv/custom/37277-tree.fi
+  repoconv/custom/37288-tree.fi
+  repoconv/custom/39465-b.fi
+  repoconv/custom/39465-commit.fi
+  repoconv/custom/39465-tree.fi
+  repoconv/custom/39897-tree.fi
+  repoconv/custom/40401-tree.fi
+  repoconv/custom/40402-tree.fi
+  repoconv/custom/41112-tree.fi
+  repoconv/custom/41269-tree.fi
+  repoconv/custom/41349-tree.fi
+  repoconv/custom/41871-tree.fi
+  repoconv/custom/42728-blob.fi
+  repoconv/custom/42728-tree.fi
+  repoconv/custom/43254-tree.fi
+  repoconv/custom/44463-tree.fi
+  repoconv/custom/44465-tree.fi
+  repoconv/custom/54597-blob.fi
+  repoconv/custom/54598-blob.fi
+  repoconv/custom/54916-blob.fi
+  repoconv/custom/57359-tree.fi
+  repoconv/custom/58306-blob.fi
+  repoconv/custom/60192-blob.fi
+  repoconv/custom/60421-blob.fi
+  repoconv/custom/61149-b.fi
+  repoconv/custom/61149-commit.fi
+  repoconv/custom/61579-blob.fi
+  repoconv/custom/61579-tree.fi
+  repoconv/custom/61844-blob.fi
+  repoconv/custom/61845-blob.fi
+  repoconv/custom/62029-b.fi
+  repoconv/custom/64060-b.fi
+  repoconv/custom/64060-commit.fi
+  repoconv/custom/65867-b.fi
+  repoconv/custom/65867-commit.fi
+  repoconv/custom/68611-b.fi
+  repoconv/custom/68611-commit.fi
+  repoconv/custom/69909-b.fi
+  repoconv/custom/69909-commit.fi
+  repoconv/custom/69921-b.fi
+  repoconv/custom/70326-b.fi
+  repoconv/custom/70326-commit.fi
+  repoconv/custom/71925-b.fi
+  repoconv/custom/71925-commit.fi
+  repoconv/custom/72855-b.fi
+  repoconv/custom/72855-commit.fi
+  repoconv/custom/73059-b.fi
+  repoconv/custom/73059-commit.fi
+  repoconv/custom/r29886_branches.fi
+  repoconv/custom/r29886_cjohnson_mac_hack.fi
+  repoconv/custom/r29886_cvs_svn_rel-5-1-branch_sync.fi
+  repoconv/custom/r29886_cvs_svn_trunk_sync.fi
+  repoconv/custom/r29886_tags.fi
+  repoconv/cvs_authormap
+  repoconv/cvs_repaired/sphflake.pix,v
+  repoconv/gitignore.tar.gz
+  repoconv/manual_merge_info.tar.gz
+  repoconv/md5.hpp
+  repoconv/sha1.hpp
+  repoconv/svn2git/README
+  repoconv/svn2git/account-map
+  repoconv/svn2git/archive_branches.sh
+  repoconv/svn2git/rules
+  repoconv/svn2git/rules-geomcore
+  repoconv/svn2git/svn-fast-export/CMake/FindAPR.cmake
+  repoconv/svn2git/svn-fast-export/CMake/FindSubversionLibrary.cmake
+  repoconv/svn2git/svn-fast-export/CMakeLists.txt
+  repoconv/svn2git/svn-fast-export/CommandLineParser.cpp
+  repoconv/svn2git/svn-fast-export/CommandLineParser.h
+  repoconv/svn2git/svn-fast-export/LICENSE
+  repoconv/svn2git/svn-fast-export/README.md
+  repoconv/svn2git/svn-fast-export/main.cpp
+  repoconv/svn2git/svn-fast-export/repository.cpp
+  repoconv/svn2git/svn-fast-export/repository.h
+  repoconv/svn2git/svn-fast-export/ruleparser.cpp
+  repoconv/svn2git/svn-fast-export/ruleparser.h
+  repoconv/svn2git/svn-fast-export/samples/ignore-branch.rules
+  repoconv/svn2git/svn-fast-export/samples/merged-branches-tags.rules
+  repoconv/svn2git/svn-fast-export/samples/min-max-revision.rules
+  repoconv/svn2git/svn-fast-export/samples/recurse.rules
+  repoconv/svn2git/svn-fast-export/samples/standardlayout.rules
+  repoconv/svn2git/svn-fast-export/samples/two-projects.rules
+  repoconv/svn2git/svn-fast-export/svn.cpp
+  repoconv/svn2git/svn-fast-export/svn.h
+  repoconv/svn2git/svn2git_gitignore_files-r29886_to_r72245.tar.gz
+  repoconv/svn_date.cxx
+  repoconv/svn_date.h
+  repoconv/svn_de-rcs.cxx
+  repoconv/svn_map_commit_revs.cxx
+  repoconv/svn_msgs.cxx
+  repoconv/svnfexport.cxx
+  repoconv/svnfexport_git.cxx
+  repoconv/svnfexport_svn.cxx
+  repoconv/sync_commit.sh
+  repoconv/sync_commit_trunk.sh
+  repoconv/terra.dsp
+  win32-msvc/CMakeLists.txt
+  win32-msvc/Dll/BrlcadCore.def
+  win32-msvc/Dll/BrlcadCore.rc
+  win32-msvc/Dll/CMakeLists.txt
+  win32-msvc/Dll/TclDummies.c
+  win32-msvc/Dll/brlcad.def
+  win32-msvc/Dll/brlcad.rc
+  win32-msvc/bootstrap.cpp
+  wix/License.rtf
+  wix/brlcad_banner.bmp
+  wix/brlcad_dialog.bmp
+  wix/brlcad_product.ico
   )
 CMAKEFILES(${misc_ignore_files})
-
 # Local Variables:
 # tab-width: 8
 # mode: cmake
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
+
+

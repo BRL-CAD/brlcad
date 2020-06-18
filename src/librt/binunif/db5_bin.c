@@ -1,7 +1,7 @@
 /*                       D B 5 _ B I N . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2016 United States Government as represented by
+ * Copyright (c) 2000-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -66,41 +66,6 @@ static const int binu_sizes[]={
 };
 
 
-/**
- * XXX these are the interface routines needed for table.c
- */
-int
-rt_bin_unif_export5(struct bu_external *UNUSED(ep),
-		    const struct rt_db_internal *UNUSED(ip),
-		    double UNUSED(local2mm),
-		    const struct db_i *UNUSED(dbip),
-		    struct resource *UNUSED(resp))
-{
-    bu_log("rt_bin_unif_export5() not implemented\n");
-    return -1;
-}
-
-int
-rt_bin_unif_import5(struct rt_db_internal *UNUSED(ip),
-		    const struct bu_external *UNUSED(ep),
-		    const mat_t UNUSED(mat),
-		    const struct db_i *UNUSED(dbip),
-		    struct resource *UNUSED(resp))
-{
-    bu_log("rt_bin_unif_import5() not implemented\n");
-    return -1;
-}
-
-int
-rt_bin_mime_import5(struct rt_db_internal * UNUSED(ip),
-		    const struct bu_external *UNUSED(ep),
-		    const mat_t UNUSED(mat),
-		    const struct db_i *UNUSED(dbip),
-		    struct resource *UNUSED(resp))
-{
-    bu_log("rt_bin_mime_import5() not implemented\n");
-    return -1;
-}
 
 /**
  * Import a uniform-array binary object from the database format to
@@ -211,7 +176,7 @@ rt_binunif_import5_minor_type(struct rt_db_internal *ip,
 void
 rt_binunif_dump(struct rt_binunif_internal *bip) {
     RT_CK_BINUNIF(bip);
-    bu_log("rt_bin_unif_internal <%p>...\n", (void *)bip);
+    bu_log("rt_binunif_internal <%p>...\n", (void *)bip);
     bu_log("  type = x%x = %d", bip->type, bip->type);
     bu_log("  count = %ld  first = 0x%02x", bip->count,
 	   bip->u.uint8[0] & 0x0ff);
@@ -318,14 +283,11 @@ rt_binunif_export5(struct bu_external		*ep,
  * tab, and give parameter values.
  */
 int
-rt_binunif_describe(struct bu_vls *str,
-		     const struct rt_db_internal *ip,
-		     int UNUSED(verbose),
-		     double UNUSED(mm2local))
+rt_binunif_describe(struct bu_vls *str, const struct rt_db_internal *ip, int UNUSED(verbose), double UNUSED(mm2local))
 {
-    register struct rt_binunif_internal	*bip;
-    char					buf[256];
-    unsigned short				wid;
+    register struct rt_binunif_internal *bip;
+    char buf[256];
+    unsigned short wid;
 
     bip = (struct rt_binunif_internal *) ip->idb_ptr;
     RT_CK_BINUNIF(bip);
@@ -428,7 +390,7 @@ rt_retrieve_binunif(struct rt_db_internal *intern,
     if (db5_type_descrip_from_codes(&tmp, raw.major_type, raw.minor_type))
 	tmp = 0;
 
-    if (RT_G_DEBUG & DEBUG_VOL)
+    if (RT_G_DEBUG & RT_DEBUG_VOL)
 	bu_log("get_body() sees type (%d, %d)='%s'\n",
 	       raw.major_type, raw.minor_type, tmp);
 
@@ -437,46 +399,46 @@ rt_retrieve_binunif(struct rt_db_internal *intern,
 
     bip = (struct rt_binunif_internal *)intern->idb_ptr;
     RT_CK_BINUNIF(bip);
-    if (RT_G_DEBUG & DEBUG_HF)
+    if (RT_G_DEBUG & RT_DEBUG_HF)
 	rt_binunif_dump(bip);
 
-    if (RT_G_DEBUG & DEBUG_VOL)
+    if (RT_G_DEBUG & RT_DEBUG_VOL)
 	bu_log("rt_retrieve_binunif thinks bip->count=%zu\n",
 	       bip->count);
 
     switch (bip->type) {
 	case DB5_MINORTYPE_BINU_FLOAT:
-	    if (RT_G_DEBUG & DEBUG_VOL)
+	    if (RT_G_DEBUG & RT_DEBUG_VOL)
 		bu_log("bip->type switch... float");
 	    break;
 	case DB5_MINORTYPE_BINU_DOUBLE:
-	    if (RT_G_DEBUG & DEBUG_VOL)
+	    if (RT_G_DEBUG & RT_DEBUG_VOL)
 		bu_log("bip->type switch... double");
 	    break;
 	case DB5_MINORTYPE_BINU_8BITINT:
-	    if (RT_G_DEBUG & DEBUG_VOL)
+	    if (RT_G_DEBUG & RT_DEBUG_VOL)
 		bu_log("bip->type switch... 8bitint");
 	    break;
 	case DB5_MINORTYPE_BINU_8BITINT_U:
-	    if (RT_G_DEBUG & DEBUG_VOL)
+	    if (RT_G_DEBUG & RT_DEBUG_VOL)
 		bu_log("bip->type switch... 8bituint");
 	    break;
 	case DB5_MINORTYPE_BINU_16BITINT:
-	    if (RT_G_DEBUG & DEBUG_VOL)
+	    if (RT_G_DEBUG & RT_DEBUG_VOL)
 		bu_log("bip->type switch... 16bituint");
 	    break;
 	case DB5_MINORTYPE_BINU_16BITINT_U:
-	    if (RT_G_DEBUG & DEBUG_VOL)
+	    if (RT_G_DEBUG & RT_DEBUG_VOL)
 		bu_log("bip->type switch... 16bitint");
 	    break;
 	case DB5_MINORTYPE_BINU_32BITINT:
 	case DB5_MINORTYPE_BINU_32BITINT_U:
-	    if (RT_G_DEBUG & DEBUG_VOL)
+	    if (RT_G_DEBUG & RT_DEBUG_VOL)
 		bu_log("bip->type switch... 32bitint");
 	    break;
 	case DB5_MINORTYPE_BINU_64BITINT:
 	case DB5_MINORTYPE_BINU_64BITINT_U:
-	    if (RT_G_DEBUG & DEBUG_VOL)
+	    if (RT_G_DEBUG & RT_DEBUG_VOL)
 		bu_log("bip->type switch... 64bitint");
 	    break;
 	default:

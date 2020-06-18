@@ -1,15 +1,12 @@
 # msgbox.tcl --
 #
 # This demonstration script creates message boxes of various type
-#
-# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."
 }
 
 package require Tk
-package require Ttk
 
 set w .msgbox
 catch {destroy $w}
@@ -26,7 +23,7 @@ pack [addSeeDismiss $w.buttons $w {} {
 }] -side bottom -fill x
 #pack $w.buttons.dismiss $w.buttons.code $w.buttons.vars -side left -expand 1
 
-frame $w.left 
+frame $w.left
 frame $w.right
 pack $w.left $w.right -side left -expand yes -fill y  -pady .5c -padx .5c
 
@@ -59,7 +56,7 @@ proc showMessageBox {w} {
     set button [tk_messageBox -icon $msgboxIcon -type $msgboxType \
 	-title Message -parent $w\
 	-message "This is a \"$msgboxType\" type messagebox with the \"$msgboxIcon\" icon"]
-    
+
     tk_messageBox -icon info -message "You have selected \"$button\"" -type ok\
 	-parent $w
 }

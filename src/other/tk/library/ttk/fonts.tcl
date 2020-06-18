@@ -1,6 +1,4 @@
 #
-# $Id$
-#
 # Font specifications.
 #
 # This file, [source]d at initialization time, sets up the following
@@ -62,7 +60,7 @@
 
 namespace eval ttk {
 
-set tip145 [catch {font create TkDefaultFont}]
+variable tip145 [catch {font create TkDefaultFont}]
 catch {font create TkTextFont}
 catch {font create TkHeadingFont}
 catch {font create TkCaptionFont}

@@ -8,8 +8,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -45,12 +43,12 @@ void
 TkMenuInitializeDrawingFields(
     TkMenu *menuPtr)		/* The menu we are initializing. */
 {
-    menuPtr->textGC = None;
+    menuPtr->textGC = NULL;
     menuPtr->gray = None;
-    menuPtr->disabledGC = None;
-    menuPtr->activeGC = None;
-    menuPtr->indicatorGC = None;
-    menuPtr->disabledImageGC = None;
+    menuPtr->disabledGC = NULL;
+    menuPtr->activeGC = NULL;
+    menuPtr->indicatorGC = NULL;
+    menuPtr->disabledImageGC = NULL;
     menuPtr->totalWidth = menuPtr->totalHeight = 0;
 }
 
@@ -81,10 +79,10 @@ TkMenuInitializeEntryDrawingFields(
     mePtr->y = 0;
     mePtr->indicatorSpace = 0;
     mePtr->labelWidth = 0;
-    mePtr->textGC = None;
-    mePtr->activeGC = None;
-    mePtr->disabledGC = None;
-    mePtr->indicatorGC = None;
+    mePtr->textGC = NULL;
+    mePtr->activeGC = NULL;
+    mePtr->disabledGC = NULL;
+    mePtr->indicatorGC = NULL;
 }
 
 /*
@@ -108,22 +106,22 @@ void
 TkMenuFreeDrawOptions(
     TkMenu *menuPtr)
 {
-    if (menuPtr->textGC != None) {
+    if (menuPtr->textGC != NULL) {
 	Tk_FreeGC(menuPtr->display, menuPtr->textGC);
     }
-    if (menuPtr->disabledImageGC != None) {
+    if (menuPtr->disabledImageGC != NULL) {
 	Tk_FreeGC(menuPtr->display, menuPtr->disabledImageGC);
     }
     if (menuPtr->gray != None) {
 	Tk_FreeBitmap(menuPtr->display, menuPtr->gray);
     }
-    if (menuPtr->disabledGC != None) {
+    if (menuPtr->disabledGC != NULL) {
 	Tk_FreeGC(menuPtr->display, menuPtr->disabledGC);
     }
-    if (menuPtr->activeGC != None) {
+    if (menuPtr->activeGC != NULL) {
 	Tk_FreeGC(menuPtr->display, menuPtr->activeGC);
     }
-    if (menuPtr->indicatorGC != None) {
+    if (menuPtr->indicatorGC != NULL) {
 	Tk_FreeGC(menuPtr->display, menuPtr->indicatorGC);
     }
 }
@@ -149,16 +147,16 @@ void
 TkMenuEntryFreeDrawOptions(
     TkMenuEntry *mePtr)
 {
-    if (mePtr->textGC != None) {
+    if (mePtr->textGC != NULL) {
 	Tk_FreeGC(mePtr->menuPtr->display, mePtr->textGC);
     }
-    if (mePtr->disabledGC != None) {
+    if (mePtr->disabledGC != NULL) {
 	Tk_FreeGC(mePtr->menuPtr->display, mePtr->disabledGC);
     }
-    if (mePtr->activeGC != None) {
+    if (mePtr->activeGC != NULL) {
 	Tk_FreeGC(mePtr->menuPtr->display, mePtr->activeGC);
     }
-    if (mePtr->indicatorGC != None) {
+    if (mePtr->indicatorGC != NULL) {
 	Tk_FreeGC(mePtr->menuPtr->display, mePtr->indicatorGC);
     }
 }
@@ -207,7 +205,7 @@ TkMenuConfigureDrawOptions(
     gcValues.background = Tk_3DBorderColor(border)->pixel;
     newGC = Tk_GetGC(menuPtr->tkwin, GCForeground|GCBackground|GCFont,
 	    &gcValues);
-    if (menuPtr->textGC != None) {
+    if (menuPtr->textGC != NULL) {
 	Tk_FreeGC(menuPtr->display, menuPtr->textGC);
     }
     menuPtr->textGC = newGC;
@@ -235,7 +233,7 @@ TkMenuConfigureDrawOptions(
 	}
     }
     newGC = Tk_GetGC(menuPtr->tkwin, mask, &gcValues);
-    if (menuPtr->disabledGC != None) {
+    if (menuPtr->disabledGC != NULL) {
 	Tk_FreeGC(menuPtr->display, menuPtr->disabledGC);
     }
     menuPtr->disabledGC = newGC;
@@ -251,7 +249,7 @@ TkMenuConfigureDrawOptions(
 	newGC = Tk_GetGC(menuPtr->tkwin,
 	    GCForeground|GCFillStyle|GCStipple, &gcValues);
     }
-    if (menuPtr->disabledImageGC != None) {
+    if (menuPtr->disabledImageGC != NULL) {
 	Tk_FreeGC(menuPtr->display, menuPtr->disabledImageGC);
     }
     menuPtr->disabledImageGC = newGC;
@@ -264,7 +262,7 @@ TkMenuConfigureDrawOptions(
     gcValues.background = Tk_3DBorderColor(activeBorder)->pixel;
     newGC = Tk_GetGC(menuPtr->tkwin, GCForeground|GCBackground|GCFont,
 	    &gcValues);
-    if (menuPtr->activeGC != None) {
+    if (menuPtr->activeGC != NULL) {
 	Tk_FreeGC(menuPtr->display, menuPtr->activeGC);
     }
     menuPtr->activeGC = newGC;
@@ -275,7 +273,7 @@ TkMenuConfigureDrawOptions(
     gcValues.background = Tk_3DBorderColor(border)->pixel;
     newGC = Tk_GetGC(menuPtr->tkwin, GCForeground|GCBackground|GCFont,
 	    &gcValues);
-    if (menuPtr->indicatorGC != None) {
+    if (menuPtr->indicatorGC != NULL) {
 	Tk_FreeGC(menuPtr->display, menuPtr->indicatorGC);
     }
     menuPtr->indicatorGC = newGC;
@@ -387,24 +385,24 @@ TkMenuConfigureEntryDrawOptions(
 		GCForeground|GCBackground|GCFont|GCGraphicsExposures,
 		&gcValues);
     } else {
-	newGC = None;
-	newActiveGC = None;
-	newDisabledGC = None;
-	newIndicatorGC = None;
+	newGC = NULL;
+	newActiveGC = NULL;
+	newDisabledGC = NULL;
+	newIndicatorGC = NULL;
     }
-    if (mePtr->textGC != None) {
+    if (mePtr->textGC != NULL) {
 	Tk_FreeGC(menuPtr->display, mePtr->textGC);
     }
     mePtr->textGC = newGC;
-    if (mePtr->activeGC != None) {
+    if (mePtr->activeGC != NULL) {
 	Tk_FreeGC(menuPtr->display, mePtr->activeGC);
     }
     mePtr->activeGC = newActiveGC;
-    if (mePtr->disabledGC != None) {
+    if (mePtr->disabledGC != NULL) {
 	Tk_FreeGC(menuPtr->display, mePtr->disabledGC);
     }
     mePtr->disabledGC = newDisabledGC;
-    if (mePtr->indicatorGC != None) {
+    if (mePtr->indicatorGC != NULL) {
 	Tk_FreeGC(menuPtr->display, mePtr->indicatorGC);
     }
     mePtr->indicatorGC = newIndicatorGC;
@@ -434,7 +432,7 @@ TkEventuallyRecomputeMenu(
 {
     if (!(menuPtr->menuFlags & RESIZE_PENDING)) {
 	menuPtr->menuFlags |= RESIZE_PENDING;
-	Tcl_DoWhenIdle(ComputeMenuGeometry, (ClientData) menuPtr);
+	Tcl_DoWhenIdle(ComputeMenuGeometry, menuPtr);
     }
 }
 
@@ -460,8 +458,8 @@ TkRecomputeMenu(
     TkMenu *menuPtr)
 {
     if (menuPtr->menuFlags & RESIZE_PENDING) {
-	Tcl_CancelIdleCall(ComputeMenuGeometry, (ClientData) menuPtr);
-	ComputeMenuGeometry((ClientData) menuPtr);
+	Tcl_CancelIdleCall(ComputeMenuGeometry, menuPtr);
+	ComputeMenuGeometry(menuPtr);
     }
 }
 
@@ -477,7 +475,7 @@ TkRecomputeMenu(
  *	None.
  *
  * Side effects:
- *	A when-idle hander is scheduled to do the redisplay, if there isn't
+ *	A when-idle handler is scheduled to do the redisplay, if there isn't
  *	one already scheduled.
  *
  *----------------------------------------------------------------------
@@ -505,7 +503,7 @@ TkEventuallyRedrawMenu(
 	    || (menuPtr->menuFlags & REDRAW_PENDING)) {
 	return;
     }
-    Tcl_DoWhenIdle(DisplayMenu, (ClientData) menuPtr);
+    Tcl_DoWhenIdle(DisplayMenu, menuPtr);
     menuPtr->menuFlags |= REDRAW_PENDING;
 }
 
@@ -532,7 +530,7 @@ static void
 ComputeMenuGeometry(
     ClientData clientData)	/* Structure describing menu. */
 {
-    TkMenu *menuPtr = (TkMenu *) clientData;
+    TkMenu *menuPtr = clientData;
 
     if (menuPtr->tkwin == NULL) {
 	return;
@@ -588,12 +586,12 @@ TkMenuSelectImageProc(
 				 * <=0). */
     int imgWidth, int imgHeight)/* New dimensions of image. */
 {
-    register TkMenuEntry *mePtr = (TkMenuEntry *) clientData;
+    register TkMenuEntry *mePtr = clientData;
 
     if ((mePtr->entryFlags & ENTRY_SELECTED)
 	    && !(mePtr->menuPtr->menuFlags & REDRAW_PENDING)) {
 	mePtr->menuPtr->menuFlags |= REDRAW_PENDING;
-	Tcl_DoWhenIdle(DisplayMenu, (ClientData) mePtr->menuPtr);
+	Tcl_DoWhenIdle(DisplayMenu, mePtr->menuPtr);
     }
 }
 
@@ -617,7 +615,7 @@ static void
 DisplayMenu(
     ClientData clientData)	/* Information about widget. */
 {
-    register TkMenu *menuPtr = (TkMenu *) clientData;
+    register TkMenu *menuPtr = clientData;
     register TkMenuEntry *mePtr;
     register Tk_Window tkwin = menuPtr->tkwin;
     int index, strictMotif;
@@ -626,7 +624,6 @@ DisplayMenu(
     int width;
     int borderWidth;
     Tk_3DBorder border;
-    int activeBorderWidth;
     int relief;
 
 
@@ -638,8 +635,6 @@ DisplayMenu(
     Tk_GetPixelsFromObj(NULL, menuPtr->tkwin, menuPtr->borderWidthPtr,
 	    &borderWidth);
     border = Tk_Get3DBorderFromObj(menuPtr->tkwin, menuPtr->borderPtr);
-    Tk_GetPixelsFromObj(NULL, menuPtr->tkwin,
-	    menuPtr->activeBorderWidthPtr, &activeBorderWidth);
 
     if (menuPtr->menuType == MENUBAR) {
 	Tk_Fill3DRectangle(tkwin, Tk_WindowId(tkwin), border, borderWidth,
@@ -670,28 +665,16 @@ DisplayMenu(
 	}
 	mePtr->entryFlags &= ~ENTRY_NEEDS_REDISPLAY;
 
-	if (menuPtr->menuType == MENUBAR) {
-	    width = mePtr->width;
-	} else {
-	    if (mePtr->entryFlags & ENTRY_LAST_COLUMN) {
-		width = Tk_Width(menuPtr->tkwin) - mePtr->x
-			- activeBorderWidth;
-	    } else {
-		width = mePtr->width + borderWidth;
-	    }
-	}
 	TkpDrawMenuEntry(mePtr, Tk_WindowId(menuPtr->tkwin), tkfont,
-		&menuMetrics, mePtr->x, mePtr->y, width,
+		&menuMetrics, mePtr->x, mePtr->y, mePtr->width,
 		mePtr->height, strictMotif, 1);
 	if ((index > 0) && (menuPtr->menuType != MENUBAR)
 		&& mePtr->columnBreak) {
 	    mePtr = menuPtr->entries[index - 1];
 	    Tk_Fill3DRectangle(tkwin, Tk_WindowId(tkwin), border,
-		mePtr->x, mePtr->y + mePtr->height,
-		mePtr->width,
-		Tk_Height(tkwin) - mePtr->y - mePtr->height -
-		activeBorderWidth, 0,
-		TK_RELIEF_FLAT);
+		mePtr->x, mePtr->y + mePtr->height, mePtr->width,
+		Tk_Height(tkwin) - mePtr->y - mePtr->height - borderWidth,
+		0, TK_RELIEF_FLAT);
 	}
     }
 
@@ -700,19 +683,18 @@ DisplayMenu(
 
 	if (menuPtr->numEntries == 0) {
 	    x = y = borderWidth;
-	    width = Tk_Width(tkwin) - 2 * activeBorderWidth;
-	    height = Tk_Height(tkwin) - 2 * activeBorderWidth;
+	    width = Tk_Width(tkwin) - 2 * borderWidth;
+	    height = Tk_Height(tkwin) - 2 * borderWidth;
 	} else {
 	    mePtr = menuPtr->entries[menuPtr->numEntries - 1];
 	    Tk_Fill3DRectangle(tkwin, Tk_WindowId(tkwin),
 		border, mePtr->x, mePtr->y + mePtr->height, mePtr->width,
-		Tk_Height(tkwin) - mePtr->y - mePtr->height
-		- activeBorderWidth, 0,
-		TK_RELIEF_FLAT);
+		Tk_Height(tkwin) - mePtr->y - mePtr->height - borderWidth,
+		0, TK_RELIEF_FLAT);
 	    x = mePtr->x + mePtr->width;
 	    y = mePtr->y + mePtr->height;
-	    width = Tk_Width(tkwin) - x - activeBorderWidth;
-	    height = Tk_Height(tkwin) - y - activeBorderWidth;
+	    width = Tk_Width(tkwin) - x - borderWidth;
+	    height = Tk_Height(tkwin) - y - borderWidth;
 	}
 	Tk_Fill3DRectangle(tkwin, Tk_WindowId(tkwin), border, x, y,
 		width, height, 0, TK_RELIEF_FLAT);
@@ -747,7 +729,7 @@ TkMenuEventProc(
     ClientData clientData,	/* Information about window. */
     XEvent *eventPtr)		/* Information about event. */
 {
-    TkMenu *menuPtr = (TkMenu *) clientData;
+    TkMenu *menuPtr = clientData;
 
     if ((eventPtr->type == Expose) && (eventPtr->xexpose.count == 0)) {
 	TkEventuallyRedrawMenu(menuPtr, NULL);
@@ -774,14 +756,14 @@ TkMenuEventProc(
 	    menuPtr->widgetCmd = NULL;
 	}
 	if (menuPtr->menuFlags & REDRAW_PENDING) {
-	    Tcl_CancelIdleCall(DisplayMenu, (ClientData) menuPtr);
+	    Tcl_CancelIdleCall(DisplayMenu, menuPtr);
 	    menuPtr->menuFlags &= ~REDRAW_PENDING;
 	}
 	if (menuPtr->menuFlags & RESIZE_PENDING) {
-	    Tcl_CancelIdleCall(ComputeMenuGeometry, (ClientData) menuPtr);
+	    Tcl_CancelIdleCall(ComputeMenuGeometry, menuPtr);
 	    menuPtr->menuFlags &= ~RESIZE_PENDING;
 	}
-	Tcl_EventuallyFree((ClientData) menuPtr, TCL_DYNAMIC);
+	Tcl_EventuallyFree(menuPtr, TCL_DYNAMIC);
     }
 }
 
@@ -812,11 +794,11 @@ TkMenuImageProc(
 				 * <=0). */
     int imgWidth, int imgHeight)/* New dimensions of image. */
 {
-    register TkMenu *menuPtr = ((TkMenuEntry *)clientData)->menuPtr;
+    register TkMenu *menuPtr = ((TkMenuEntry *) clientData)->menuPtr;
 
     if ((menuPtr->tkwin != NULL) && !(menuPtr->menuFlags & RESIZE_PENDING)) {
 	menuPtr->menuFlags |= RESIZE_PENDING;
-	Tcl_DoWhenIdle(ComputeMenuGeometry, (ClientData) menuPtr);
+	Tcl_DoWhenIdle(ComputeMenuGeometry, menuPtr);
     }
 }
 
@@ -825,9 +807,8 @@ TkMenuImageProc(
  *
  * TkPostTearoffMenu --
  *
- *	Posts a menu on the screen. Used to post tearoff menus. On Unix, all
- *	menus are posted this way. Adjusts the menu's position so that it fits
- *	on the screen, and maps and raises the menu.
+ *	Posts a tearoff menu on the screen. Adjusts the menu's position so
+ *	that it fits on the screen, and maps and raises the menu.
  *
  * Results:
  *	Returns a standard Tcl Error.
@@ -845,72 +826,7 @@ TkPostTearoffMenu(
     int x, int y)		/* The root X,Y coordinates where we are
 				 * posting */
 {
-    int vRootX, vRootY, vRootWidth, vRootHeight;
-    int tmp, result;
-
-    TkActivateMenuEntry(menuPtr, -1);
-    TkRecomputeMenu(menuPtr);
-    result = TkPostCommand(menuPtr);
-    if (result != TCL_OK) {
-    	return result;
-    }
-
-    /*
-     * The post commands could have deleted the menu, which means we are dead
-     * and should go away.
-     */
-
-    if (menuPtr->tkwin == NULL) {
-    	return TCL_OK;
-    }
-
-    /*
-     * Adjust the position of the menu if necessary to keep it visible on the
-     * screen. There are two special tricks to make this work right:
-     *
-     * 1. If a virtual root window manager is being used then the coordinates
-     *    are in the virtual root window of menuPtr's parent; since the menu
-     *    uses override-redirect mode it will be in the *real* root window for
-     *    the screen, so we have to map the coordinates from the virtual root
-     *    (if any) to the real root. Can't get the virtual root from the menu
-     *    itself (it will never be seen by the wm) so use its parent instead
-     *    (it would be better to have an an option that names a window to use
-     *    for this...).
-     * 2. The menu may not have been mapped yet, so its current size might be
-     *    the default 1x1. To compute how much space it needs, use its
-     *    requested size, not its actual size.
-     *
-     * Note that this code assumes square screen regions and all positive
-     * coordinates. This does not work on a Mac with multiple monitors. But
-     * then again, Tk has other problems with this.
-     */
-
-    Tk_GetVRootGeometry(Tk_Parent(menuPtr->tkwin), &vRootX, &vRootY,
-	&vRootWidth, &vRootHeight);
-    x += vRootX;
-    y += vRootY;
-    tmp = WidthOfScreen(Tk_Screen(menuPtr->tkwin))
-	- Tk_ReqWidth(menuPtr->tkwin);
-    if (x > tmp) {
-	x = tmp;
-    }
-    if (x < 0) {
-	x = 0;
-    }
-    tmp = HeightOfScreen(Tk_Screen(menuPtr->tkwin))
-	- Tk_ReqHeight(menuPtr->tkwin);
-    if (y > tmp) {
-	y = tmp;
-    }
-    if (y < 0) {
-	y = 0;
-    }
-    Tk_MoveToplevelWindow(menuPtr->tkwin, x, y);
-    if (!Tk_IsMapped(menuPtr->tkwin)) {
-	Tk_MapWindow(menuPtr->tkwin);
-    }
-    TkWmRestackToplevel((TkWindow *) menuPtr->tkwin, Above, NULL);
-    return TCL_OK;
+    return TkpPostTearoffMenu(interp, menuPtr, x, y, -1);
 }
 
 /*

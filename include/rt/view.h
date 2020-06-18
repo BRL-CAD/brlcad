@@ -1,7 +1,7 @@
 /*                          V I E W . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -146,7 +146,7 @@ struct rt_selection_operation {
 #define RT_SELECTION_TRANSLATION 1
     int type;
     union {
-        struct rt_selection_translation tran;
+	struct rt_selection_translation tran;
     } parameters;
 };
 

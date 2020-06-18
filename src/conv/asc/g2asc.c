@@ -1,7 +1,7 @@
 /*                         G 2 A S C . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2016 United States Government as represented by
+ * Copyright (c) 1985-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,6 +33,7 @@
 #include "bnetwork.h"
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/debug.h"
 #include "bu/units.h"
 #include "vmath.h"
@@ -111,6 +112,8 @@ int
 main(int argc, char **argv)
 {
     unsigned i;
+
+    bu_setprogname(argv[0]);
 
     if (argc != 3) {
 	bu_exit(1, "%s", usage);
@@ -423,7 +426,7 @@ char *encode_name(char *str)
 
     while (op < &buf[NAMESIZE]) {
 	if (*ip == '\0')  break;
-	if (isascii((int)*ip) && isprint((int)*ip) && !isspace((int)*ip)) {
+	if (isprint((int)*ip) && !isspace((int)*ip)) {
 	    *op++ = *ip++;
 	}  else  {
 	    *op++ = '@';
@@ -748,13 +751,13 @@ void
 dump_pipe_segs(char *name, struct bu_list *headp)
 {
 
-    struct wdb_pipept *sp;
+    struct wdb_pipe_pnt *sp;
 
     fprintf(ofp, "%c %.16s\n", DBID_PIPE, name);
 
     /* print parameters for each point: one point per line */
 
-    for (BU_LIST_FOR(sp, wdb_pipept, headp)) {
+    for (BU_LIST_FOR(sp, wdb_pipe_pnt, headp)) {
 	fprintf(ofp,  "%26.20e %26.20e %26.20e %26.20e %26.20e %26.20e\n",
 		sp->pp_id, sp->pp_od, sp->pp_bendradius, V3ARGS(sp->pp_coord));
     }
@@ -931,7 +934,7 @@ combdump(void)	/* Print out Combination record information */
 		  record.c.c_rgb[1],
 		  record.c.c_rgb[2]);
     m1 = m2 = 0;
-    if (isascii((int)record.c.c_matname[0]) && isprint((int)record.c.c_matname[0])) {
+    if (isprint((int)record.c.c_matname[0])) {
 	m1 = 1;
 	if (record.c.c_matparm[0])
 	    m2 = 1;
@@ -1147,7 +1150,7 @@ char *strchop(char *str, size_t len)
     ep = &buf[len-1];		/* Leave room for null */
     while (op < ep) {
 	if (*ip == '\0')  break;
-	if ((int)isascii((int)*ip) && ((int)isprint((int)*ip) || isspace((int)*ip))) {
+	if ((int)isprint((int)*ip) || isspace((int)*ip)) {
 	    *op++ = *ip++;
 	}  else  {
 	    *op++ = '@';

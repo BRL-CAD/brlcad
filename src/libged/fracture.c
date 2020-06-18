@@ -1,7 +1,7 @@
 /*                        F R A C T U R E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -91,7 +91,7 @@ ged_fracture(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal old_intern;
     struct model *m, *new_model;
     char newname[32];
-    char prefix[32];
+    char prefix[31];
     int maxdigits;
     struct nmgregion *r, *new_r;
     struct shell *s, *new_s;

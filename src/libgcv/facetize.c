@@ -1,7 +1,7 @@
 /*                      F A C E T I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 2015-2016 United States Government as represented by
+ * Copyright (c) 2015-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -137,7 +137,7 @@ _gcv_optimize_model(struct model *nmg_model)
 
 struct rt_bot_internal *
 gcv_facetize(struct db_i *db, const struct db_full_path *path,
-	     const struct bn_tol *tol, const struct rt_tess_tol *tess_tol)
+	     const struct bn_tol *tol, const struct bg_tess_tol *tess_tol)
 {
     union tree *facetize_tree;
     struct model *nmg_model;
@@ -150,7 +150,7 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
     RT_CK_DBI(db);
     RT_CK_FULL_PATH(path);
     BN_CK_TOL(tol);
-    RT_CK_TESS_TOL(tess_tol);
+    BG_CK_TESS_TOL(tess_tol);
 
     {
 	char * const str_path = db_path_to_string(path);

@@ -41,9 +41,10 @@
 
 #include "auxiliary/mm.h"
 
+#include <emmintrin.h>
+
 #include "vmath.h"
 
-#include <emmintrin.h>
 
 
 #define MD_CONFIG_SSE_APPROX
@@ -111,7 +112,7 @@ float mdEdgeCollapsePenaltyTriangleSSE2f(float *newpoint, float *oldpoint, float
 #else
 	oldcompactness = (MD_COMPACTNESS_NORMALIZATION_FACTOR * sqrtf(VDOT(oldnormal.f, oldnormal.f))) / (vectadp + VDOT(oldvectb.f, oldvectb.f) + VDOT(oldvectc.f, oldvectc.f));
 #endif
-	compactness = fmin(compactnesstarget, oldcompactness) - newcompactness;
+	compactness = FMIN(compactnesstarget, oldcompactness) - newcompactness;
 
 	if (compactness > 0.0)
 	    penalty = compactness;
@@ -193,7 +194,7 @@ double mdEdgeCollapsePenaltyTriangleSSE2d(double *newpoint, double *oldpoint, do
 	oldvectc0 = _mm_mul_pd(oldvectc0, oldvectc0);
 	oldvectc0 = _mm_add_sd(_mm_add_sd(oldvectc0, _mm_unpackhi_pd(oldvectc0, oldvectc0)), _mm_mul_sd(oldvectc1, oldvectc1));
 	oldcompactness = _mm_cvtsd_f64(_mm_div_sd(_mm_mul_sd(_mm_set_sd(MD_COMPACTNESS_NORMALIZATION_FACTOR), _mm_sqrt_sd(oldnormal0, oldnormal0)), _mm_add_sd(vecta0, _mm_add_sd(oldvectb0, oldvectc0))));
-	compactness = fmin(compactnesstarget, oldcompactness) - newcompactness;
+	compactness = FMIN(compactnesstarget, oldcompactness) - newcompactness;
 
 	if (compactness > 0.0)
 	    penalty = compactness;

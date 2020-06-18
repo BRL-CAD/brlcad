@@ -1,7 +1,7 @@
 /*                   A P P L I C A T I O N . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -120,8 +120,8 @@ struct application {
     int                 a_return;       /**< @brief  Return of a_hit()/a_miss() */
     int                 a_no_booleans;  /**< @brief  1= partitions==segs, no booleans */
     char **             attrs;          /**< @brief  null terminated list of attributes
-                                         * This list should be the same as passed to
-                                         * rt_gettrees_and_attrs() */
+					 * This list should be the same as passed to
+					 * rt_gettrees_and_attrs() */
     int                 a_bot_reverse_normal_disabled;  /**< @brief  1= no bot normals get reversed in BOT_UNORIENTED_NORM */
     /* THESE ELEMENTS ARE USED BY THE PROGRAM "rt" AND MAY BE USED BY */
     /* THE LIBRARY AT SOME FUTURE DATE */
@@ -132,7 +132,7 @@ struct application {
     struct partition *  a_Final_Part_hdp;
     vect_t              a_inv_dir;      /**< @brief  filled in by rt_shootray(), inverse of ray direction cosines */
     /* THE FOLLOWING ELEMENTS ARE MAINLINE & APPLICATION SPECIFIC. */
-    /* THEY ARE NEVER EXAMINED BY THE LIBRARY. */
+    /* THEY SHOULD NEVER BE USED BY THE LIBRARY. */
     int                 a_user;         /**< @brief  application-specific value */
     void *              a_uptr;         /**< @brief  application-specific pointer */
     struct bn_tabdata * a_spectrum;     /**< @brief  application-specific bn_tabdata pointer */
@@ -192,8 +192,8 @@ struct application_bundle
 #define RT_CK_AP(_p) BU_CKMAG(_p, RT_AP_MAGIC, "struct application")
 #define RT_CK_APPLICATION(_p) BU_CKMAG(_p, RT_AP_MAGIC, "struct application")
 #define RT_APPLICATION_INIT(_p) { \
-        memset((char *)(_p), 0, sizeof(struct application)); \
-        (_p)->a_magic = RT_AP_MAGIC; \
+	memset((char *)(_p), 0, sizeof(struct application)); \
+	(_p)->a_magic = RT_AP_MAGIC; \
     }
 
 
@@ -202,7 +202,7 @@ struct application_bundle
 #else
 #  define RT_AP_CHECK(_ap)      \
     {if ((_ap)->a_zero1||(_ap)->a_zero2) \
-            bu_bomb("corrupt application struct"); }
+	    bu_bomb("corrupt application struct"); }
 #endif
 
 __END_DECLS

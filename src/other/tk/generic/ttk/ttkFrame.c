@@ -1,4 +1,4 @@
-/* $Id$
+/*
  * Copyright (c) 2004, Joe English
  *
  * ttk::frame and ttk::labelframe widgets.
@@ -44,6 +44,7 @@ static Tk_OptionSpec FrameOptionSpecs[] = {
 	Tk_Offset(Frame,frame.heightObj), -1,
 	0,0,GEOMETRY_CHANGED },
 
+    WIDGET_TAKEFOCUS_FALSE,
     WIDGET_INHERIT_OPTIONS(ttkCoreOptionSpecs)
 };
 
@@ -205,10 +206,9 @@ int TtkGetLabelAnchorFromObj(
 
 error:
     if (interp) {
-	Tcl_ResetResult(interp);
-	Tcl_AppendResult(interp,
-	    "Bad label anchor specification ", Tcl_GetString(objPtr),
-	    NULL);
+	Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		"Bad label anchor specification %s", Tcl_GetString(objPtr)));
+	Tcl_SetErrorCode(interp, "TTK", "LABEL", "ANCHOR", NULL);
     }
     return TCL_ERROR;
 }
@@ -440,8 +440,10 @@ static void LabelframeDoLayout(void *recordPtr)
 	*/
 	switch (LabelAnchorSide(style.labelAnchor)) {
 	    case TTK_SIDE_LEFT: 	borderParcel.x -= lw / 2;
+	    /* FALLTHRU */
 	    case TTK_SIDE_RIGHT:	borderParcel.width += lw/2; 	break;
 	    case TTK_SIDE_TOP:  	borderParcel.y -= lh / 2;
+	    /* FALLTHRU */
 	    case TTK_SIDE_BOTTOM:	borderParcel.height += lh / 2;	break;
 	}
     }

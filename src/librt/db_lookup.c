@@ -1,7 +1,7 @@
 /*                     D B _ L O O K U P . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2016 United States Government as represented by
+ * Copyright (c) 1988-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,6 +31,7 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/vls.h"
 #include "rt/db4.h"
 #include "raytrace.h"
 
@@ -153,42 +154,83 @@ db_dircheck(struct db_i *dbip,
 struct directory *
 db_lookup(const struct db_i *dbip, const char *name, int noisy)
 {
-    struct directory *dp;
+    int is_path = 0;
+    const char *pc = name;
+    struct directory *dp = RT_DIR_NULL;
     char n0;
     char n1;
 
-    if (!name || name[0] == '\0') {
-	if (noisy || RT_G_DEBUG&DEBUG_DB)
+    /* No string, no lookup */
+    if (UNLIKELY(!name || name[0] == '\0')) {
+	if (UNLIKELY(noisy || RT_G_DEBUG&RT_DEBUG_DB)) {
 	    bu_log("db_lookup received NULL or empty name\n");
+	}
+	return RT_DIR_NULL;
+    }
+    if (UNLIKELY(!dbip)) {
 	return RT_DIR_NULL;
     }
 
-    n0 = name[0];
-    n1 = name[1];
-
-    RT_CK_DBI(dbip);
-
-    dp = dbip->dbi_Head[db_dirhash(name)];
-    for (; dp != RT_DIR_NULL; dp=dp->d_forw) {
-	char *this_obj;
-
-	/* first two checks are for speed */
-	if ((n0 == *(this_obj=dp->d_namep)) && (n1 == this_obj[1]) && (BU_STR_EQUAL(name, this_obj))) {
-	    if (RT_G_DEBUG&DEBUG_DB)
-		bu_log("db_lookup(%s) %p\n", name, (void *)dp);
-	    return dp;
-	}
+    /* Anything with a forward slash is only valid as a path.  The
+     * full path lookup is potentially more expensive, so only do
+     * it when we need to.
+     *
+     * TODO - could we ultimately consolidate db_lookup and db_string_to_path
+     * somehow - maybe have db_lookup take an optional parameter for a full
+     * path, and always return the directory pointer?
+     */
+    while(*pc != '\0' && !is_path) {
+	is_path = (*pc == '/');
+	pc++;
     }
 
-    if (noisy || RT_G_DEBUG&DEBUG_DB)
-	bu_log("db_lookup(%s) failed: %s does not exist\n", name, name);
+    if (is_path) {
 
-    return RT_DIR_NULL;
+	/* If we have a valid path, return the dp of the current directory
+	 * (which is the leaf node in the path */
+	struct db_full_path fp;
+	dp = RT_DIR_NULL;
+
+	/* db_string_to_path does the hard work */
+	db_full_path_init(&fp);
+	if (!db_string_to_path(&fp, dbip, name)) {
+	    dp = DB_FULL_PATH_CUR_DIR(&fp);
+	}
+	db_free_full_path(&fp);
+	return dp;
+
+    } else {
+
+	n0 = name[0];
+	n1 = name[1];
+
+	RT_CK_DBI(dbip);
+
+	dp = dbip->dbi_Head[db_dirhash(name)];
+	for (; dp != RT_DIR_NULL; dp=dp->d_forw) {
+	    char *this_obj;
+
+	    /* first two checks are for speed */
+	    if ((n0 == *(this_obj=dp->d_namep)) && (n1 == this_obj[1]) && (BU_STR_EQUAL(name, this_obj))) {
+		if (UNLIKELY(RT_G_DEBUG&RT_DEBUG_DB)) {
+		    bu_log("db_lookup(%s) %p\n", name, (void *)dp);
+		}
+		return dp;
+	    }
+	}
+
+	if (noisy || RT_G_DEBUG&RT_DEBUG_DB) {
+	    bu_log("db_lookup(%s) failed: %s does not exist\n", name, name);
+	}
+
+	return RT_DIR_NULL;
+
+    }
 }
 
 
 struct directory *
-db_diradd(struct db_i *dbip, const char *name, off_t laddr, size_t len, int flags, void *ptr)
+db_diradd(struct db_i *dbip, const char *name, b_off_t laddr, size_t len, int flags, void *ptr)
 {
     struct directory **headp;
     struct directory *dp;
@@ -197,9 +239,9 @@ db_diradd(struct db_i *dbip, const char *name, off_t laddr, size_t len, int flag
 
     RT_CK_DBI(dbip);
 
-    if (RT_G_DEBUG&DEBUG_DB) {
-	bu_log("db_diradd(dbip=%p, name='%s', addr=%ld, len=%zu, flags=0x%x, ptr=%p)\n",
-	       (void *)dbip, name, laddr, len, flags, ptr);
+    if (RT_G_DEBUG&RT_DEBUG_DB) {
+	bu_log("db_diradd(dbip=%p, name='%s', addr=%jd, len=%zu, flags=0x%x, ptr=%p)\n",
+	       (void *)dbip, name, (intmax_t)laddr, len, flags, ptr);
     }
 
     if ((tmp_ptr = strchr(name, '/')) != NULL) {
@@ -365,11 +407,11 @@ db_pr_dir(const struct db_i *dbip)
 		flags = "COM";
 	    else
 		flags = "Bad";
-	    bu_log("%p %s %s=%ld len=%.5ld use=%.2ld nref=%.2ld %s",
+	    bu_log("%p %s %s=%jd len=%.5ld use=%.2ld nref=%.2ld %s",
 		   (void *)dp,
 		   flags,
 		   dp->d_flags & RT_DIR_INMEM ? "  ptr " : "d_addr",
-		   dp->d_addr,
+		   (intmax_t)dp->d_addr,
 		   dp->d_len,
 		   dp->d_uses,
 		   dp->d_nref,
@@ -389,8 +431,8 @@ db_lookup_by_attr(struct db_i *dbip, int dir_flags, struct bu_attribute_value_se
     struct bu_attribute_value_set obj_avs;
     struct directory *dp;
     struct bu_ptbl *tbl;
-    int match_count = 0;
-    int attr_count;
+    size_t match_count = 0;
+    size_t attr_count;
     int i, j;
     int draw;
 

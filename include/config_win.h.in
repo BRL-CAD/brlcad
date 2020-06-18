@@ -1,7 +1,7 @@
 /*                          C O N F I G _ W I N . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,13 +27,14 @@
  */
 
 #ifndef IGNORE_CONFIG_H
+#define IGNORE_CONFIG_H
 #if defined(_WIN32)
 
 #include <fcntl.h>
 #include <errno.h>
-
-/* !!! this should not be here, should fix the build system settings */
-#define __STDC__ 1
+#if !defined(__cplusplus)
+#include <math.h>
+#endif
 
 /* 4127 conditional expression is constant
  * 4244 conversion from type 1 to type 2
@@ -44,14 +45,6 @@
  */
 #pragma warning( disable : 4127 4244 4312 4996 )
 /* #pragma warning( disable : 4244 4305 4018) */
-
-/*
- * Ensure that Project Settings / Project Options includes
- *	/Za		for ANSI C
- */
-# if !__STDC__
-#	error "STDC is not properly set on WIN32 build, add /Za to Project Settings / Project Options"
-# endif
 
 #ifndef EXPAND_IN_STRING
 #  define EXPAND_IN_STRING(x) EXPAND_IN_STRING_INTERN(x)
@@ -93,6 +86,11 @@
 #define YY_NO_UNISTD_H		1
 #define YYTOKENTYPE		1
 
+
+#define close _close
+#define dup _dup
+#define dup2 _dup2
+
 /* it we're compiling c++ sources, there's a possibility that we'll be
  * including libc++ headers (e.g., iostream) where these underscore IO
  * function hacks become counterproductive.
@@ -106,13 +104,9 @@
 #define access _access
 #define chmod _chmod
 #define chsize _chsize
-#define close _close
 #define commit _commit
 #define creat _creat
-#define dup _dup
-#define dup2 _dup2
 /* #define filelength _filelength */
-#define isatty _isatty
 #define locking _locking
 /* #define mktemp _mktemp */
 #define open _open
@@ -122,13 +116,20 @@
 #define pipe(_FD) (_pipe((_FD), 256, _O_TEXT))
 
 #define read _read
-#define setmode _setmode
 /* #define tell _tell */
 #define tzset _tzset
 #define umask _umask
 #define write _write
 
 #endif /* __cplusplus */
+
+/* Both C and C++ may need to know about isatty */
+#ifndef isatty
+#  define isatty _isatty
+#endif
+
+/* Both C and C++ need to know about _setmode */
+#define setmode _setmode
 
 /*
  * other functions declared elsewhere (many in stdio.h)
@@ -142,9 +143,27 @@
 /* FIXME: this will be wildly wrong for any values far from 1.0 */
 #cmakedefine nextafterl(x,y) ((y)>0?(x)+DBL_EPSILON:(x)-DBL_EPSILON)
 
-#cmakedefine isnan _isnan
-#cmakedefine isinf(x) (!_finite(x))
+#if !defined(HAVE_ISNAN) && defined(HAVE__ISNAN)
+#  if defined(__cplusplus)
+     /* workaround for VS 2012, needed for Creo 3 build */
+     #include <float.h> /* for _isnan() */
+     namespace std {
+       static inline int isnan(double x) {
+         return _isnan(x);
+       }
+     }
+#  else
+#    if !defined(isnan) && !defined(__cplusplus)
+#       define isnan _isnan
+#    endif
+#  endif
+#endif
+
+#if !defined(isinf) && !defined(__cplusplus)
+#   define isinf(x) (!_finite(x))
+#endif
 #cmakedefine asinh(x) (log(x + sqrt(x * x + 1)))
+#define execl _execl
 #define execvp _execvp
 #define fdopen _fdopen
 #define fileno _fileno
@@ -161,30 +180,10 @@
 #define sys_errlist _sys_errlist
 #define sys_nerr _sys_nerr
 #define getcwd _getcwd
+#define chdir _chdir
 
 #if !defined(HAVE_STRTOLL) && defined(HAVE__STRTOI64)
 #  define strtoll _strtoi64
-#endif
-
-/* set up stat */
-#if defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8
-#   define stat _stati64
-#else
-#   define stat _stat
-#endif
-
-/* set up fstat */
-#if defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8
-#   define fstat _fstati64
-#else
-#   define fstat _fstat
-#endif
-
-/* set up lseek */
-#if defined(SIZEOF_VOID_P) && SIZEOF_VOID_P == 8
-#   define lseek _lseeki64
-#else
-#   define lseek _lseek
 #endif
 
 #cmakedefine fmax __max
@@ -201,8 +200,6 @@ typedef void (*sig_t)(int);
 /*
  * types
  */
-
-#define off_t ptrdiff_t
 
 typedef int pid_t;
 typedef int socklen_t;
@@ -260,6 +257,9 @@ typedef int mode_t;
 #ifndef S_IXGRP
 #  define S_IXGRP      ((S_IXUSR)>>3)
 #endif
+#ifndef S_IRWXG
+#  define S_IRWXG      (((S_IRUSR)|(S_IWUSR)|(S_IXUSR))>>3)
+#endif
 #ifndef S_IROTH
 #  define S_IROTH      ((S_IRUSR)>>6)
 #endif
@@ -268,6 +268,9 @@ typedef int mode_t;
 #endif
 #ifndef S_IXOTH
 #  define S_IXOTH      ((S_IXUSR)>>6)
+#endif
+#ifndef S_IRWXO
+#  define S_IRWXO      (((S_IRUSR)|(S_IWUSR)|(S_IXUSR))>>6)
 #endif
 
 #ifndef S_ISDIR
@@ -308,10 +311,10 @@ typedef int mode_t;
 
 #define fork() -1
 #define getprogname() _pgmptr
-#cmakedefine rint(_X) (floor((_X) + 0.5))
+#define HAVE_SHARED_RINT_TEST 1
 #define sleep(_SECONDS) (Sleep(1000 * (_SECONDS)))
 
-#ifndef __cplusplus
+#if !defined(__cplusplus) && !defined(inline)
 /*  Microsoft specific inline specifier */
 #   define inline __inline
 #endif /* not __cplusplus */

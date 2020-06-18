@@ -38,33 +38,15 @@
 #include "common.h"
 
 #include <stddef.h>
+#ifdef HAVE_SYS_SELECT_H
+#  include <sys/select.h>
+#endif
+#include <time.h>
+
+#include "bu/tc.h"
 
 #include "bu/exit.h"
 #include "mmatomic.h"
-
-
-#include "tinycthread.h"
-
-
-static inline void mtSignalWaitTimeout(cnd_t *gsignal, mtx_t *mutex, long milliseconds)
-{
-    uint64_t microsecs;
-    struct timespec ts;
-
-    timespec_get(&ts, TIME_UTC);
-    ts.tv_sec += (milliseconds / 1000);
-    microsecs = ((ts.tv_nsec + 500) / 1000) + ((milliseconds % 1000) * 1000);
-
-    if (microsecs >= 1000000) {
-	ts.tv_sec++;
-	microsecs -= 1000000;
-    }
-
-    ts.tv_nsec = microsecs * 1000;
-
-    if (cnd_timedwait(gsignal, mutex, &ts) == thrd_error)
-	bu_bomb("cnd_timedwait() failed");
-}
 
 
 #ifdef MM_ATOMIC_SUPPORT
@@ -103,17 +85,17 @@ static inline void mtSpinUnlock(mtSpin *spin)
 #else
 
 
-static inline int mtMutexTryLock(mtx_t *mutex)
+static inline int mtMutexTryLock(bu_mtx_t *mutex)
 {
-    switch (mtx_trylock(mutex)) {
-	case thrd_success:
+    switch (bu_mtx_trylock(mutex)) {
+	case bu_thrd_success:
 	    return 1;
 
-	case thrd_busy:
+	case bu_thrd_busy:
 	    return 0;
 
 	default:
-	    bu_bomb("mtx_trylock() failed");
+	    bu_bomb("bu_mtx_trylock() failed");
 	    return -1; /* silence warnings */
     };
 }
@@ -160,32 +142,32 @@ static inline void mtSpinUnlock(mtSpin *spin)
 #else
 
 
-typedef mtx_t mtSpin;
+typedef bu_mtx_t mtSpin;
 
 
 static inline void mtSpinInit(mtSpin *spin)
 {
-    if (mtx_init(spin, mtx_plain) == thrd_error)
-	bu_bomb("mtx_init() failed");
+    if (bu_mtx_init(spin) == bu_thrd_error)
+	bu_bomb("bu_mtx_init() failed");
 }
 
 
 static inline void mtSpinDestroy(mtSpin *spin)
 {
-    mtx_destroy(spin);
+    bu_mtx_destroy(spin);
 }
 
 static inline void mtSpinLock(mtSpin *spin)
 {
-    if (mtx_lock(spin) == thrd_error)
-	bu_bomb("mtx_lock() failed");
+    if (bu_mtx_lock(spin) == bu_thrd_error)
+	bu_bomb("bu_mtx_lock() failed");
 }
 
 
 static inline void mtSpinUnlock(mtSpin *spin)
 {
-    if (mtx_unlock(spin) == thrd_error)
-	bu_bomb("mtx_unlock() failed");
+    if (bu_mtx_unlock(spin) == bu_thrd_error)
+	bu_bomb("bu_mtx_unlock() failed");
 }
 
 
@@ -195,7 +177,7 @@ static inline void mtSpinUnlock(mtSpin *spin)
 static void mtQuellPedantic(int var)
 {
 if (!var) {
-  (void)mtSignalWaitTimeout(NULL, NULL, 0);
+  /*(void)mtSignalWaitTimeout(NULL, NULL, 0);*/
   (void)mtSpinInit(NULL);
   (void)mtSpinDestroy(NULL);
   (void)mtSpinLock(NULL);

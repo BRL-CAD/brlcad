@@ -1,7 +1,7 @@
 /*                         S A V E K E Y . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -85,7 +85,7 @@ ged_savekey(struct ged *gedp, int argc, const char *argv[])
 
     if ((fp = fopen(argv[1], "a")) == NULL) {
 	perror(argv[1]);
-	return TCL_ERROR;
+	return GED_ERROR;
     }
     if (argc > 2) {
 	timearg = atof(argv[2]);

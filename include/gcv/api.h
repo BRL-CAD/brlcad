@@ -1,7 +1,7 @@
 /*                       G C V _ A P I . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -101,7 +101,7 @@ struct gcv_opts
     unsigned max_cpus;
 
     struct bn_tol calculational_tolerance;
-    struct rt_tess_tol tessellation_tolerance;
+    struct bg_tess_tol tessellation_tolerance;
     enum gcv_tessellation_algorithm tessellation_algorithm;
 
     /* conversion to units */
@@ -116,6 +116,9 @@ struct gcv_opts
 
     /* objects to convert */
     const char * const *object_names;
+
+    /* Apply color randomization */
+    unsigned randomize_colors;
 };
 
 
@@ -136,8 +139,20 @@ struct gcv_filter {
     /* operation type */
     const enum gcv_filter_type filter_type;
 
-    /* MIME_MODEL_UNKNOWN if 'filter_type' is GCV_FILTER_FILTER */
+    /* If we have a definite type this converter is known to handle, call
+     * it out here.
+     * MIME_MODEL_UNKNOWN if 'filter_type' is GCV_FILTER_FILTER or
+     * if the plugin is a multi-format I/O plugin */
     const bu_mime_model_t mime_type;
+
+    /* For plugins supporting multiple file types, call this to
+     * process them.
+     *
+     * Return 1 if the input data can be processed by this filter.
+     * (for example: is the file readable by this plugin?  Return
+     * 1 if yes, 0 if no.  Later we should incorporate some notion
+     * of quality of support into this return value...) */
+    int (* const data_supported)(const char *data);
 
     /**
      * PRIVATE
@@ -186,8 +201,6 @@ struct gcv_plugin {
  * const struct gcv_filter pointers.
  */
 GCV_EXPORT const struct bu_ptbl *gcv_list_filters(void);
-
-GCV_EXPORT const struct gcv_plugin *gcv_plugin_info(void);
 
 /**
  * Perform a filtering operation on a gcv_context.

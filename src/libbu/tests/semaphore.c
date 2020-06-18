@@ -1,7 +1,7 @@
 /*                  S E M A P H O R E . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2016 United States Government as represented by
+ * Copyright (c) 2013-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
 #include "bu.h"
 
 
-const int SEM = BU_SEM_LAST+1;
+const int SEM = 1000; /* FIXME */
 
 
 struct increment_thread_args {
@@ -131,7 +131,7 @@ parallel_test(size_t ncpu, size_t reps)
 
 
 int
-semaphore_main(int argc, char **argv)
+main(int argc, char *argv[])
 {
     const char * const USAGE = "Usage: %s [-P ncpu] [-n reps]\n";
 
@@ -141,6 +141,8 @@ semaphore_main(int argc, char **argv)
     unsigned long nreps_opt;
     size_t ncpu = bu_avail_cpus();
     unsigned long ncpu_opt;
+
+    bu_setprogname(argv[0]);
 
     while ((c = bu_getopt(argc, argv, "n:P:")) != -1) {
 	switch (c) {

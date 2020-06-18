@@ -1,7 +1,7 @@
 /*                      S H O W S H O T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,8 +31,9 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
-#include "bu/parallel.h"
+#include "bu/process.h"
 #include "bu/str.h"
 #include "bu/exit.h"
 #include "bu/log.h"
@@ -64,6 +65,7 @@ main (int argc, char **argv)
     double entryp[3] = VINIT_ZERO;	/* Ray's entry into current region */
     double exitp[3] = VINIT_ZERO;		/* Ray's exit from current region */
 
+    bu_setprogname(argv[0]);
     pid = bu_process_id();
 
     *rayname = '\0';

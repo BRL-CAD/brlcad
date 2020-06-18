@@ -1,7 +1,7 @@
 /*                      D B _ I O . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2016 United States Government as represented by
+ * Copyright (c) 1993-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,6 +25,11 @@
 #define RT_DB_IO_H
 
 #include "common.h"
+
+/* system headers */
+#include <stdio.h> /* for FILE */
+
+/* interface headers */
 #include "vmath.h"
 #include "bu/avs.h"
 #include "rt/db5.h"
@@ -284,17 +289,21 @@ RT_EXPORT extern void db5_make_free_object(struct bu_external *ep,
 
 
 /**
- * Given a variable-width length field in network order (XDR), store
- * it in *lenp.
+ * Given a variable-width length field character pointer (cp) in
+ * network order (XDR), store it in *lenp.
  *
- * This routine processes signed values.
+ * Format is typically expected to be one of:
+ *   DB5HDR_WIDTHCODE_8BIT
+ *   DB5HDR_WIDTHCODE_16BIT
+ *   DB5HDR_WIDTHCODE_32BIT
+ *   DB5HDR_WIDTHCODE_64BIT
  *
  * Returns -
  * The number of bytes of input that were decoded.
  */
-RT_EXPORT extern int db5_decode_signed(size_t			*lenp,
-				       const unsigned char	*cp,
-				       int			format);
+RT_EXPORT extern size_t db5_decode_signed(size_t *lenp,
+					  const unsigned char *cp,
+					  int format);
 
 /**
  * Given a variable-width length field in network order (XDR), store
@@ -325,8 +334,33 @@ RT_EXPORT extern int db5_select_length_encoding(size_t len);
 
 RT_EXPORT extern void db5_import_color_table(char *cp);
 
+/**
+ * Given a value and a variable-width format spec, store it in network
+ * order.
+ *
+ * Returns -
+ * pointer to next available byte.
+ */
+RT_EXPORT extern unsigned char *db5_encode_length(unsigned char *cp,
+						  size_t val,
+						  int format);
 
 /**
+ * Given a pointer to the memory for a serialized database object, get
+ * a raw internal representation.
+ *
+ * Returns -
+ * on success, pointer to next unused byte in 'ip' after object got;
+ * NULL, on error.
+ */
+RT_EXPORT extern const unsigned char *db5_get_raw_internal_ptr(struct db5_raw_internal *rip,
+							       const unsigned char *ip);
+
+
+/**
+ * Given a file pointer to an open geometry database positioned on a
+ * serialized object, get a raw internal representation.
+ *
  * Returns -
  * 0 on success
  * -1 on EOF
@@ -334,6 +368,7 @@ RT_EXPORT extern void db5_import_color_table(char *cp);
  */
 RT_EXPORT extern int db5_get_raw_internal_fp(struct db5_raw_internal	*rip,
 					     FILE			*fp);
+
 
 /**
  * Verify that this is a valid header for a BRL-CAD v5 database.
@@ -344,6 +379,15 @@ RT_EXPORT extern int db5_get_raw_internal_fp(struct db5_raw_internal	*rip,
  */
 RT_EXPORT extern int db5_header_is_valid(const unsigned char *hp);
 
+
+/**
+ * write an ident header (title and units) to the provided file
+ * pointer.
+ *
+ * Returns -
+ * 0 Success
+ * -1 Error
+ */
 RT_EXPORT extern int db5_fwrite_ident(FILE *,
 				      const char *,
 				      double);
@@ -388,7 +432,7 @@ RT_EXPORT extern void db_wrap_v4_external(struct bu_external *op,
 RT_EXPORT extern int db_write(struct db_i	*dbip,
 			      const void *	addr,
 			      size_t		count,
-			      off_t		offset);
+			      b_off_t		offset);
 
 /**
  * Add name from dp->d_namep to external representation of solid, and
@@ -442,7 +486,7 @@ RT_EXPORT extern union record *db_getmrec(const struct db_i *,
 RT_EXPORT extern int db_get(const struct db_i *,
 			    const struct directory *dp,
 			    union record *where,
-			    off_t offset,
+			    b_off_t offset,
 			    size_t len);
 /* put several records into db */
 
@@ -457,7 +501,7 @@ RT_EXPORT extern int db_get(const struct db_i *,
 RT_EXPORT extern int db_put(struct db_i *,
 			    const struct directory *dp,
 			    union record *where,
-			    off_t offset, size_t len);
+			    b_off_t offset, size_t len);
 
 /**
  * Obtains a object from the database, leaving it in external
@@ -504,7 +548,7 @@ RT_EXPORT extern int db_put_external(struct bu_external *ep,
 RT_EXPORT extern int db_scan(struct db_i *,
 			     int (*handler)(struct db_i *,
 					    const char *name,
-					    off_t addr,
+					    b_off_t addr,
 					    size_t nrec,
 					    int flags,
 					    void *client_data),
@@ -597,7 +641,7 @@ RT_EXPORT extern int db_v4_get_units_code(const char *str);
 RT_EXPORT extern int db_dirbuild(struct db_i *dbip);
 RT_EXPORT extern struct directory *db5_diradd(struct db_i *dbip,
 					      const struct db5_raw_internal *rip,
-					      off_t laddr,
+					      b_off_t laddr,
 					      void *client_data);
 
 /**
@@ -610,7 +654,7 @@ RT_EXPORT extern struct directory *db5_diradd(struct db_i *dbip,
 RT_EXPORT extern int db5_scan(struct db_i *dbip,
 			      void (*handler)(struct db_i *,
 					      const struct db5_raw_internal *,
-					      off_t addr,
+					      b_off_t addr,
 					      void *client_data),
 			      void *client_data);
 
@@ -636,16 +680,13 @@ RT_EXPORT extern int db_version(struct db_i *dbip);
 RT_EXPORT extern int rt_db_flip_endian(struct db_i *dbip);
 
 
-/* extrude.c */
-RT_EXPORT extern int rt_extrude_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip, struct resource *resp);
-
-
 /**
  * "open" an in-memory-only database instance.  this initializes a
  * dbip for use, creating an inmem dbi_wdbp as the means to add
  * geometry to the directory (use wdb_export_external()).
  */
 RT_EXPORT extern struct db_i * db_open_inmem(void);
+
 
 /**
  * creates an in-memory-only database.  this is very similar to
@@ -718,12 +759,19 @@ RT_EXPORT extern int db_dircheck(struct db_i *dbip,
 /* convert name to directory ptr */
 
 /**
- * This routine takes a name and looks it up in the directory table.
- * If the name is present, a pointer to the directory struct element
- * is returned, otherwise NULL is returned.
+ * This routine takes a path or a name and returns the current directory
+ * pointer (if any) associated with the object.
  *
- * If noisy is non-zero, a print occurs, else only the return code
- * indicates failure.
+ * If given an object name, it will look up the object name in the directory
+ * table.  If the name is present, a pointer to the directory struct element is
+ * returned, otherwise NULL is returned.
+ *
+ * If given a path, it will validate that the path is a valid path in the
+ * current database.  If it is, a pointer to the current directory in the path
+ * (i.e. the leaf object on the path) is returned, otherwise NULL is returned.
+ *
+ * If noisy is non-zero, a print occurs, else only the return code indicates
+ * failure.
  *
  * Returns -
  * struct directory if name is found
@@ -757,13 +805,13 @@ RT_EXPORT extern struct directory *db_lookup(const struct db_i *,
  */
 RT_EXPORT extern struct directory *db_diradd(struct db_i *,
 					     const char *name,
-					     off_t laddr,
+					     b_off_t laddr,
 					     size_t len,
 					     int flags,
 					     void *ptr);
 RT_EXPORT extern struct directory *db_diradd5(struct db_i *dbip,
 					      const char *name,
-					      off_t				laddr,
+					      b_off_t				laddr,
 					      unsigned char			major_type,
 					      unsigned char 			minor_type,
 					      unsigned char			name_hidden,

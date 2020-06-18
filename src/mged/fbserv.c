@@ -1,7 +1,7 @@
 /*                        F B S E R V . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2016 United States Government as represented by
+ * Copyright (c) 1995-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,10 +29,9 @@
 #include <stdlib.h>
 #include <ctype.h>
 
+#include "bio.h"
 #include "bnetwork.h"
-#ifndef HAVE_WINSOCK_H
-#  include <sys/socket.h> /* TODO - should this be in bsocket.h? */
-#endif
+#include "bsocket.h"
 
 #include "tcl.h"
 #include "vmath.h"
@@ -52,7 +51,7 @@
 HIDDEN void
 communications_error(const char *str)
 {
-    bu_log(str);
+    bu_log("%s", str);
 }
 
 
@@ -100,8 +99,8 @@ fbserv_drop_client(int sub)
 				 clients[sub].c_handler,
 				 (ClientData)clients[sub].c_fd);
 
-	if (dm_interp(dmp) != NULL) {
-	    Tcl_Close((Tcl_Interp *)dm_interp(dmp), clients[sub].c_chan);
+	if (dm_interp(DMP) != NULL) {
+	    Tcl_Close((Tcl_Interp *)dm_interp(DMP), clients[sub].c_chan);
 	}
 	clients[sub].c_chan = NULL;
 #else
@@ -233,7 +232,7 @@ fbserv_new_client_handler(ClientData clientData,
 
 
 void
-fbserv_set_port(void)
+fbserv_set_port(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1), void *UNUSED(v1), const char *UNUSED(c2), void *UNUSED(v2))
 {
     int i;
     int save_port;
@@ -251,8 +250,8 @@ fbserv_set_port(void)
 	fd = (ClientData)netfd;
 	Tcl_DeleteChannelHandler(netchan, (Tcl_ChannelProc *)fbserv_new_client_handler, fd);
 
-	if (dm_interp(dmp) != NULL) {
-	    Tcl_Close((Tcl_Interp *)dm_interp(dmp), netchan);
+	if (dm_interp(DMP) != NULL) {
+	    Tcl_Close((Tcl_Interp *)dm_interp(DMP), netchan);
 	}
 	netchan = NULL;
 
@@ -288,8 +287,8 @@ fbserv_set_port(void)
 	 * Hang an unending listen for PKG connections
 	 */
 
-	if (dm_interp(dmp) != NULL) {
-	    netchan = Tcl_OpenTcpServer((Tcl_Interp *)dm_interp(dmp), port, hostname, fbserv_new_client_handler, (ClientData)curr_dm_list);
+	if (dm_interp(DMP) != NULL) {
+	    netchan = Tcl_OpenTcpServer((Tcl_Interp *)dm_interp(DMP), port, hostname, fbserv_new_client_handler, (ClientData)curr_dm_list);
 	}
 
 	if (netchan == NULL)
@@ -409,7 +408,7 @@ fbserv_new_client_handler(ClientData clientData, int UNUSED(mask))
 
 
 void
-fbserv_set_port(void)
+fbserv_set_port(const struct bu_structparse *UNUSED(sp), const char *UNUSED(c1), void *UNUSED(v1), const char *UNUSED(c2), void *UNUSED(v2))
 {
     int i;
     int save_port;

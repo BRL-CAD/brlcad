@@ -1,7 +1,7 @@
 /*                          P I P E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2016 United States Government as represented by
+ * Copyright (c) 1990-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -85,9 +85,9 @@ mk_pipe(struct rt_wdb *fp, const char *name, struct bu_list *headp)
 void
 mk_pipe_free(struct bu_list *headp)
 {
-    struct wdb_pipept *wp;
+    struct wdb_pipe_pnt *wp;
 
-    while (BU_LIST_WHILE(wp, wdb_pipept, headp)) {
+    while (BU_LIST_WHILE(wp, wdb_pipe_pnt, headp)) {
 	BU_LIST_DEQUEUE(&wp->l);
 	bu_free((char *)wp, "mk_pipe_free");
     }
@@ -95,18 +95,18 @@ mk_pipe_free(struct bu_list *headp)
 
 
 void
-mk_add_pipe_pt(
+mk_add_pipe_pnt(
     struct bu_list *headp,
     const point_t coord,
     double od,
     double id,
     double bendradius)
 {
-    struct wdb_pipept *newpp;
+    struct wdb_pipe_pnt *newpp;
 
     BU_CKMAG(headp, WDB_PIPESEG_MAGIC, "pipe point");
 
-    BU_ALLOC(newpp, struct wdb_pipept);
+    BU_ALLOC(newpp, struct wdb_pipe_pnt);
     newpp->l.magic = WDB_PIPESEG_MAGIC;
     newpp->pp_od = od;
     newpp->pp_id = id;

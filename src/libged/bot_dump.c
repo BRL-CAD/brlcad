@@ -1,7 +1,7 @@
 /*                         B O T _ D U M P . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2016 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,6 +30,7 @@
 #include <sys/stat.h>
 #include <string.h>
 #include <ctype.h>
+#include "bio.h"
 #include "bnetwork.h"
 
 #include "bu/cv.h"
@@ -53,8 +54,7 @@
 
 #define V3ARGS_SCALE(_a) (_a)[X]*cfactor, (_a)[Y]*cfactor, (_a)[Z]*cfactor
 
-static char usage[] = "\
-Usage: %s [-b] [-n] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] [bot1 bot2 ...]\n";
+static char usage[] = "[-b] [-n] [-m directory] [-o file] [-t dxf|obj|sat|stl] [-u units] [bot1 bot2 ...]";
 
 
 struct _ged_bot_dump_client_data {
@@ -593,7 +593,7 @@ stl_write_bot_binary(struct rt_bot_internal *bot, int fd, char *UNUSED(name))
 
 
 void
-_ged_bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, const char *file_ext, const char *db_name)
+_ged_bot_dump(struct directory *dp, const struct db_full_path *pathp, struct rt_bot_internal *bot, FILE *fp, int fd, const char *file_ext, const char *db_g_name)
 {
     int ret;
 
@@ -645,7 +645,7 @@ _ged_bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int f
 	    stl_write_bot_binary(bot, fd, dp->d_namep);
 
 	    /* Re-position pointer to 80th byte */
-	    lseek(fd, 80, SEEK_SET);
+	    bu_lseek(fd, 80, SEEK_SET);
 
 	    /* Write out number of triangles */
 	    *(uint32_t *)tot_buffer = htonl((unsigned long)total_faces);
@@ -668,14 +668,20 @@ _ged_bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int f
 		case OTYPE_DXF:
 		    fprintf(fp,
 			    "0\nSECTION\n2\nHEADER\n999\n%s (BOT from %s)\n0\nENDSEC\n0\nSECTION\n2\nENTITIES\n",
-			    dp->d_namep, db_name);
+			    dp->d_namep, db_g_name);
 		    dxf_write_bot(bot, fp, dp->d_namep);
 		    fprintf(fp, "0\nENDSEC\n0\nEOF\n");
 		    break;
 		case OTYPE_OBJ:
 		    v_offset = 1;
 		    fprintf(fp, "mtllib %s\n", bu_vls_addr(&obj_materials_file));
-		    obj_write_bot(bot, fp, dp->d_namep);
+		    if (!pathp) {
+			obj_write_bot(bot, fp, dp->d_namep);
+		    } else {
+			char *pathstr = db_path_to_string(pathp);
+			obj_write_bot(bot, fp, pathstr);
+			bu_free(pathstr, "free path");
+		    }
 		    break;
 		case OTYPE_SAT:
 		    curr_line_num = 0;
@@ -705,12 +711,19 @@ _ged_bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int f
       } else {
 	/* If we get to this point, we need fp - check for it */
 	if (fp) {
+	    char *pathstr;
 	switch (output_type) {
 	  case OTYPE_DXF:
 	    dxf_write_bot(bot, fp, dp->d_namep);
 	    break;
 	  case OTYPE_OBJ:
-	    obj_write_bot(bot, fp, dp->d_namep);
+	    if (!pathp) {
+		obj_write_bot(bot, fp, dp->d_namep);
+	    } else {
+		pathstr = db_path_to_string(pathp);
+		obj_write_bot(bot, fp, pathstr);
+		bu_free(pathstr, "free path");
+	    }
 	    break;
 	  case OTYPE_SAT:
 	    sat_write_bot(bot, fp, dp->d_namep);
@@ -729,10 +742,10 @@ _ged_bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int f
 
 
 static union tree *
-bot_dump_leaf(struct db_tree_state *tsp,
-		  const struct db_full_path *pathp,
-		  struct rt_db_internal *ip,
-		  void *client_data)
+bot_dump_leaf(struct db_tree_state *UNUSED(tsp),
+	      const struct db_full_path *pathp,
+	      struct rt_db_internal *UNUSED(ip),
+	      void *client_data)
 {
     int ret;
     union tree *curtree;
@@ -742,10 +755,9 @@ bot_dump_leaf(struct db_tree_state *tsp,
     struct rt_bot_internal *bot;
     struct _ged_bot_dump_client_data *gbdcdp = (struct _ged_bot_dump_client_data *)client_data;
 
-    if (ip) RT_CK_DB_INTERNAL(ip);
-
     /* Indicate success by returning something other than TREE_NULL */
-    RT_GET_TREE(curtree, tsp->ts_resp);
+    BU_GET(curtree, union tree);
+    RT_TREE_INIT(curtree);
     curtree->tr_op = OP_NOP;
 
     dp = pathp->fp_names[pathp->fp_len-1];
@@ -771,7 +783,7 @@ bot_dump_leaf(struct db_tree_state *tsp,
     }
 
     bot = (struct rt_bot_internal *)intern.idb_ptr;
-    _ged_bot_dump(dp, bot, gbdcdp->fp, gbdcdp->fd, gbdcdp->file_ext, gbdcdp->gedp->ged_wdbp->dbip->dbi_filename);
+    _ged_bot_dump(dp, pathp, bot, gbdcdp->fp, gbdcdp->fd, gbdcdp->file_ext, gbdcdp->gedp->ged_wdbp->dbip->dbi_filename);
     rt_db_free_internal(&intern);
 
     return curtree;
@@ -819,7 +831,7 @@ bot_dump_get_args(struct ged *gedp, int argc, const char *argv[])
 		else if (BU_STR_EQUAL("stl", bu_optarg))
 		    output_type = OTYPE_STL;
 		else {
-		    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n", argv[0], usage);
 		    return GED_ERROR;
 		}
 		break;
@@ -832,7 +844,7 @@ bot_dump_get_args(struct ged *gedp, int argc, const char *argv[])
 
 		break;
 	    default:
-		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+		bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n", argv[0], usage);
 		return GED_ERROR;
 	}
     }
@@ -863,7 +875,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, usage, argv[0]);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s\n", argv[0], usage);
 	return GED_HELP;
     }
 
@@ -884,7 +896,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 
     if (!output_file && !output_directory) {
 	if (binary) {
-	    bu_vls_printf(gedp->ged_result_str, "Can't output binary to stdout\nUsage: %s %s", argv[0], usage);
+	    bu_vls_printf(gedp->ged_result_str, "Can't output binary to stdout\nUsage: %s %s\n", argv[0], usage);
 	    return GED_ERROR;
 	}
 	fp = stdout;
@@ -989,7 +1001,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 	    }
 
 	    bot = (struct rt_bot_internal *)intern.idb_ptr;
-	    _ged_bot_dump(dp, bot, fp, fd, file_ext, gedp->ged_wdbp->dbip->dbi_filename);
+	    _ged_bot_dump(dp, NULL, bot, fp, fd, file_ext, gedp->ged_wdbp->dbip->dbi_filename);
 	    rt_db_free_internal(&intern);
 
 	} FOR_ALL_DIRECTORY_END;
@@ -1025,7 +1037,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
 	    unsigned char tot_buffer[4];
 
 	    /* Re-position pointer to 80th byte */
-	    lseek(fd, 80, SEEK_SET);
+	    bu_lseek(fd, 80, SEEK_SET);
 
 	    /* Write out number of triangles */
 	    *(uint32_t *)tot_buffer = htonl((unsigned long)total_faces);
@@ -1505,7 +1517,7 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 	    unsigned char tot_buffer[4];
 
 	    /* Re-position pointer to 80th byte */
-	    lseek(fd, 80, SEEK_SET);
+	    bu_lseek(fd, 80, SEEK_SET);
 
 	    /* Write out number of triangles */
 	    *(uint32_t *)tot_buffer = htonl((unsigned long)total_faces);

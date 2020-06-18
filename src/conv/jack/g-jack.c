@@ -1,7 +1,7 @@
 /*                        G - J A C K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -41,6 +41,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/parallel.h"
 #include "vmath.h"
@@ -67,7 +68,7 @@ static char	*prefix = NULL;	/* output filename prefix. */
 static FILE	*fp_fig;	/* Jack Figure file. */
 static struct db_i		*dbip;
 static struct bu_vls		base_seg = BU_VLS_INIT_ZERO;
-static struct rt_tess_tol	ttol;
+static struct bg_tess_tol	ttol;
 static struct bn_tol		tol;
 static struct model		*the_model;
 
@@ -286,11 +287,11 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
 
     RT_CK_FULL_PATH(pathp);
     RT_CK_TREE(curtree);
-    RT_CK_TESS_TOL(tsp->ts_ttol);
+    BG_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
     NMG_CK_MODEL(*tsp->ts_m);
 
-    if (RT_G_DEBUG&DEBUG_TREEWALK || verbose) {
+    if (RT_G_DEBUG&RT_DEBUG_TREEWALK || verbose) {
 	char	*sofar = db_path_to_string(pathp);
 	bu_log("\ndo_region_end(%d %d%%) %s\n",
 	       regions_tried,
@@ -432,7 +433,7 @@ main(int argc, char **argv)
     jack_tree_state.ts_ttol = &ttol;
     jack_tree_state.ts_m = &the_model;
 
-    ttol.magic = RT_TESS_TOL_MAGIC;
+    ttol.magic = BG_TESS_TOL_MAGIC;
     /* Defaults, updated by command line options. */
     ttol.abs = 0.0;
     ttol.rel = 0.01;
@@ -486,7 +487,7 @@ main(int argc, char **argv)
 		ncpu = atoi(bu_optarg);
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
 		break;
 	    case 'D':
 		tol.dist = atof(bu_optarg);
@@ -545,7 +546,7 @@ main(int argc, char **argv)
     fprintf(fp_fig, "figure {\n");
 
     BN_CK_TOL(jack_tree_state.ts_tol);
-    RT_CK_TESS_TOL(jack_tree_state.ts_ttol);
+    BG_CK_TESS_TOL(jack_tree_state.ts_ttol);
 
     /* Walk indicated tree(s).  Each region will be output separately */
     (void) db_walk_tree(dbip, argc-1, (const char **)(argv+1),

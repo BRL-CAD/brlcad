@@ -1,7 +1,7 @@
 /*                          P A R T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2016 United States Government as represented by
+ * Copyright (c) 1990-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -965,7 +965,7 @@ rt_part_hemisphere(register point_t (*ov), register fastf_t *v, fastf_t *a, fast
 
 
 int
-rt_part_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_part_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     struct rt_part_internal *pip;
     point_t tail;
@@ -988,19 +988,19 @@ rt_part_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 	VSET(b, 0, pip->part_vrad, 0);
 	VSET(c, 0, 0, pip->part_vrad);
 
-	rt_ell_16pts(&sphere_rim[0][X], pip->part_V, a, b);
+	rt_ell_16pnts(&sphere_rim[0][X], pip->part_V, a, b);
 	RT_ADD_VLIST(vhead, sphere_rim[15], BN_VLIST_LINE_MOVE);
 	for (i=0; i<16; i++) {
 	    RT_ADD_VLIST(vhead, sphere_rim[i], BN_VLIST_LINE_DRAW);
 	}
 
-	rt_ell_16pts(&sphere_rim[0][X], pip->part_V, b, c);
+	rt_ell_16pnts(&sphere_rim[0][X], pip->part_V, b, c);
 	RT_ADD_VLIST(vhead, sphere_rim[15], BN_VLIST_LINE_MOVE);
 	for (i=0; i<16; i++) {
 	    RT_ADD_VLIST(vhead, sphere_rim[i], BN_VLIST_LINE_DRAW);
 	}
 
-	rt_ell_16pts(&sphere_rim[0][X], pip->part_V, a, c);
+	rt_ell_16pnts(&sphere_rim[0][X], pip->part_V, a, c);
 	RT_ADD_VLIST(vhead, sphere_rim[15], BN_VLIST_LINE_MOVE);
 	for (i=0; i<16; i++) {
 	    RT_ADD_VLIST(vhead, sphere_rim[i], BN_VLIST_LINE_DRAW);
@@ -1099,7 +1099,7 @@ struct part_vert_strip {
  * lower hemisphere	nsegs+1..nstrips-1	V	South
  */
 int
-rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+rt_part_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol)
 {
     struct rt_part_internal *pip;
     mat_t R;

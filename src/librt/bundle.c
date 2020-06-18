@@ -1,7 +1,7 @@
 /*                        B U N D L E . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2016 United States Government as represented by
+ * Copyright (c) 1985-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -71,7 +71,7 @@ struct shootrays_data {
  * XXX maybe parameter with NORM, UV, CURVE bits?
  */
 int
-rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays)
+rt_shootray_bundle(struct application *ap, struct xray *rays, int nrays)
 {
     struct rt_shootray_status ss;
     struct seg new_segs;	/* from solid intersections */
@@ -87,7 +87,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
     register const union cutter *cutp;
     struct resource *resp;
     struct rt_i *rtip;
-    const int debug_shoot = RT_G_DEBUG & DEBUG_SHOOT;
+    const int debug_shoot = RT_G_DEBUG & RT_DEBUG_SHOOT;
 
     memset(&ss, 0, sizeof(struct rt_shootray_status));
 
@@ -113,7 +113,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
     RT_CK_RESOURCE(resp);
     ss.resp = resp;
 
-    if (RT_G_DEBUG&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION|DEBUG_ALLHITS)) {
+    if (RT_G_DEBUG&(RT_DEBUG_ALLRAYS|RT_DEBUG_SHOOT|RT_DEBUG_PARTITION|RT_DEBUG_ALLHITS)) {
 	bu_log_indent_delta(2);
 	bu_log("\n**********shootray_bundle cpu=%d  %d, %d lvl=%d (%s)\n",
 	       resp->re_cpu,
@@ -184,6 +184,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
     }
 
     /* Compute the inverse of the direction cosines */
+    /* TODO: utilize VINVDIR after getting rid of nugrid */
     if (ap->a_ray.r_dir[X] < -SQRT_SMALL_FASTF) {
 	ss.abs_inv_dir[X] = -(ss.inv_dir[X]=1.0/ap->a_ray.r_dir[X]);
 	ss.rstep[X] = -1;
@@ -262,16 +263,8 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
     ss.lastcut = CUTTER_NULL;
     ss.old_status = (struct rt_shootray_status *)NULL;
     ss.curcut = &ap->a_rt_i->rti_CutHead;
-    if (ss.curcut->cut_type == CUT_NUGRIDNODE) {
-	ss.lastcell = CUTTER_NULL;
-	VSET(ss.curmin, ss.curcut->nugn.nu_axis[X][0].nu_spos,
-	     ss.curcut->nugn.nu_axis[Y][0].nu_spos,
-	     ss.curcut->nugn.nu_axis[Z][0].nu_spos);
-	VSET(ss.curmax, ss.curcut->nugn.nu_axis[X][ss.curcut->nugn.nu_cells_per_axis[X]-1].nu_epos,
-	     ss.curcut->nugn.nu_axis[Y][ss.curcut->nugn.nu_cells_per_axis[Y]-1].nu_epos,
-	     ss.curcut->nugn.nu_axis[Z][ss.curcut->nugn.nu_cells_per_axis[Z]-1].nu_epos);
-    } else if (ss.curcut->cut_type == CUT_CUTNODE ||
-	       ss.curcut->cut_type == CUT_BOXNODE) {
+
+    if (ss.curcut->cut_type == CUT_CUTNODE || ss.curcut->cut_type == CUT_BOXNODE) {
 	ss.lastcell = ss.curcut;
 	VMOVE(ss.curmin, rtip->mdl_min);
 	VMOVE(ss.curmax, rtip->mdl_max);
@@ -369,7 +362,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 		break;			/* HIT */
 	    }
 	}
-	if (RT_G_DEBUG & DEBUG_ADVANCE)
+	if (RT_G_DEBUG & RT_DEBUG_ADVANCE)
 	    rt_plot_cell(cutp, &ss, &(waiting_segs.l), rtip);
 
 	/*
@@ -419,7 +412,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
      * segments into the partition list.
      */
 weave:
-    if (RT_G_DEBUG&DEBUG_ADVANCE)
+    if (RT_G_DEBUG&RT_DEBUG_ADVANCE)
 	bu_log("rt_shootray_bundle: ray has left known space\n");
 
     if (BU_LIST_NON_EMPTY(&(waiting_segs.l))) {
@@ -481,7 +474,7 @@ hitit:
      * finished_segs is only used by special hit routines which don't
      * follow the traditional solid modeling paradigm.
      */
-    if (RT_G_DEBUG&DEBUG_ALLHITS) rt_pr_partitions(rtip, &FinalPart, "Partition list passed to a_hit() routine");
+    if (RT_G_DEBUG&RT_DEBUG_ALLHITS) rt_pr_partitions(rtip, &FinalPart, "Partition list passed to a_hit() routine");
     if (ap->a_hit)
 	ap->a_return = ap->a_hit(ap, &FinalPart, &finished_segs);
     else
@@ -507,7 +500,7 @@ out:
     resp->re_nshootray++;
 
     /* Terminate any logging */
-    if (RT_G_DEBUG&(DEBUG_ALLRAYS|DEBUG_SHOOT|DEBUG_PARTITION|DEBUG_ALLHITS)) {
+    if (RT_G_DEBUG&(RT_DEBUG_ALLRAYS|RT_DEBUG_SHOOT|RT_DEBUG_PARTITION|RT_DEBUG_ALLHITS)) {
 	bu_log_indent_delta(-2);
 	bu_log("----------shootray_bundle cpu=%d  %d, %d lvl=%d (%s) %s ret=%d\n",
 	       resp->re_cpu,
@@ -578,8 +571,8 @@ bundle_miss(register struct application *ap)
     return 0;
 }
 
-
-void
+#ifdef SHOOTRAYS_IN_PARALLEL
+static void
 shootrays_in_parallel(int UNUSED(cpu), void *data)
 {
     size_t i;
@@ -605,7 +598,7 @@ shootrays_in_parallel(int UNUSED(cpu), void *data)
 
     return;
 }
-
+#endif
 
 int
 rt_shootrays(struct application_bundle *bundle)

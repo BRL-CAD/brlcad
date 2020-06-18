@@ -1,4 +1,13 @@
-/* This file is provided as a compilation stub to ensure ongoing build testing
+/*                        S H I M . C P P
+ * BRL-CAD
+ *
+ * Published in 2020 by the United States Government.
+ * This work is in the public domain.
+ *
+ */
+/** @file shim.cpp
+ *
+ * This file is provided as a compilation stub to ensure ongoing build testing
  * of CREO to BRL-CAD conversion source code.  This file does not necessarily
  * reflect the CREO api, its values, or type constructs and any similarity is
  * either coincidental or necessary for compilation.
@@ -14,10 +23,10 @@ extern "C" int ProArraySizeGet(ProArray,int*) {return 0;}
 extern "C" int ProAsmcompMdlGet(ProFeature*,void**) {return 0;}
 extern "C" int ProAsmcompMdlNameGet(ProFeature*,int*,wchar_t*) {return 0;}
 extern "C" int ProAsmcomppathInit(void*,ProIdTable,int,void**) {return 0;}
-extern "C" int ProAsmcomppathTrfGet(void**,bool,ProMatrix) {return 0;}
-extern "C" int ProAssemblyIsExploded(void*,bool*) {return 0;}
+extern "C" int ProAsmcomppathTrfGet(void**,int,ProMatrix) {return 0;}
+extern "C" int ProAssemblyIsExploded(void*,int*) {return 0;}
 extern "C" int ProBsplinesrfdataGet(void**,int[2],double**,double**,double**,ProVector**,int*,int*,int*) {return 0;}
-extern "C" int ProCmdActionAdd(const char*,int(*)(int,int*,void*),int,int(*)(int),bool,bool,int*) {return 0;}
+extern "C" int ProCmdActionAdd(const char*,int(*)(int,int*,void*),int,int(*)(int),int,int,int*) {return 0;}
 extern "C" int ProDimensionTypeGet(void**,int*) {return 0;}
 extern "C" int ProDimensionValueGet(void**,double *) {return 0;}
 extern "C" int ProElementFree(void**) {return 0;}
@@ -41,16 +50,16 @@ extern "C" int ProMdlToModelitem(void*,void**) {return 0;}
 extern "C" int ProMdlTypeGet(void*,int*) {return 0;}
 extern "C" int ProMdlVerstampGet(void*, void**) {return 0;}
 extern "C" int ProMdlnameInit(void*,int,void*) {return 0;}
-extern "C" int ProMenubarmenuPushbuttonAdd(const char*,const char*,const char*,const char*,const char*,bool,int,wchar_t*) {return 0;}
+extern "C" int ProMenubarmenuPushbuttonAdd(const char*,const char*,const char*,const char*,const char*,int,int,wchar_t*) {return 0;}
 extern "C" int ProMessageDisplay(wchar_t *,const char *,const char *) {return 0;}
 extern "C" int ProParameterInit(void *,wchar_t *,void *) {return 0;}
 extern "C" int ProParameterValueGet(ProParameter *,void *) {return 0;}
 extern "C" int ProParameterVisit (void **,	void*,int (*)(ProParameter*,int,void*),void *) {return 0;}
 extern "C" int ProParamvalueTypeGet(void **,void *) {return 0;}
-extern "C" int ProParamvalueValueGet(void **,int,wchar_t *) {return 0;}
+extern "C" int ProParamvalueValueGet(void **,int,void *) {return 0;}
 extern "C" int ProPartMaterialNameGet(void*,wchar_t *) {return 0;}
 extern "C" int ProPartMaterialdataGet(void*,wchar_t*,ProMaterialProps*) {return 0;}
-extern "C" int ProPartTessellate(void*,double,double,bool,ProSurfaceTessellationData**) {return 0;}
+extern "C" int ProPartTessellate(void*,double,double,int,ProSurfaceTessellationData**) {return 0;}
 extern "C" int ProSolidFeatVisit(void*,int (*)(ProFeature*,int,void*),int (*)(ProFeature*,void*),void*) {return 0;}
 extern "C" int ProSolidMassPropertyGet(void*,void*,ProMassProperty*) {return 0;}
 extern "C" int ProSolidOutlineGet(void*, Pro3dPnt*) {return 0;}
@@ -58,7 +67,7 @@ extern "C" int ProStringVerstampGet(void*, void**) {return 0;}
 extern "C" int ProStringarrayFree(char**,int) {return 0;}
 extern "C" int ProSurfaceAppearancepropsGet(void**,ProSurfaceAppearanceProps*) {return 0;}
 extern "C" int ProUICheckbuttonActivateActionSet(const char*,const char*,void(*)(char*,char*,void*),void*) {return 0;}
-extern "C" int ProUICheckbuttonGetState(const char*,const char*,bool*) {return 0;}
+extern "C" int ProUICheckbuttonGetState(const char*,const char*,int*) {return 0;}
 extern "C" int ProUIDialogActivate(const char*,int*) {return 0;}
 extern "C" int ProUIDialogCreate(const char *,const char *) {return 0;}
 extern "C" int ProUIDialogDestroy(const char *) {return 0;}
@@ -82,7 +91,7 @@ extern "C" int ProWstringFree(wchar_t*) {return 0;}
 extern "C" void ProAssemblyUnexplode(void*) {}
 extern "C" void ProContourEdgeVisit(void*,void*,int(*)(void*,int,void*),int(*)(void*,void*),void*) {}
 extern "C" void ProContourTraversalGet(void*,int*) {}
-extern "C" void ProMdlIsSkeleton(void*, bool*) {}
+extern "C" void ProMdlIsSkeleton(void*, int*) {}
 extern "C" void ProMdlMdlNameGet(void*,int*,wchar_t*) {}
 extern "C" void ProMdlMdlnameGet(void*,wchar_t*) {}
 extern "C" void ProMessageClear() {}

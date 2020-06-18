@@ -4,13 +4,11 @@
  *	Implements subwindows for the macintosh version of Tk.
  *
  * Copyright (c) 1995-1997 Sun Microsystems, Inc.
- * Copyright 2001, Apple Computer, Inc.
- * Copyright (c) 2006-2008 Daniel A. Steffen <das@users.sourceforge.net>
+ * Copyright 2001-2009, Apple Inc.
+ * Copyright (c) 2006-2009 Daniel A. Steffen <das@users.sourceforge.net>
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkMacOSXPrivate.h"
@@ -27,10 +25,12 @@
  * Prototypes for functions used only in this file.
  */
 
-static void MoveResizeWindow(MacDrawable *macWin);
-static void GenerateConfigureNotify(TkWindow *winPtr, int includeWin);
-static void UpdateOffsets(TkWindow *winPtr, int deltaX, int deltaY);
-static void NotifyVisibility(TkWindow *winPtr, XEvent *eventPtr);
+static void		MoveResizeWindow(MacDrawable *macWin);
+static void		GenerateConfigureNotify(TkWindow *winPtr,
+			    int includeWin);
+static void		UpdateOffsets(TkWindow *winPtr, int deltaX,
+			    int deltaY);
+static void		NotifyVisibility(TkWindow *winPtr, XEvent *eventPtr);
 
 
 /*
@@ -49,148 +49,69 @@ static void NotifyVisibility(TkWindow *winPtr, XEvent *eventPtr);
  *----------------------------------------------------------------------
  */
 
-void
+int
 XDestroyWindow(
-    Display* display,		/* Display. */
+    Display *display,		/* Display. */
     Window window)		/* Window. */
 {
     MacDrawable *macWin = (MacDrawable *) window;
 
     /*
-     * Remove any dangling pointers that may exist if
-     * the window we are deleting is being tracked by
-     * the grab code.
+     * Remove any dangling pointers that may exist if the window we are
+     * deleting is being tracked by the grab code.
      */
 
     TkPointerDeadWindow(macWin->winPtr);
+    TkMacOSXSelDeadWindow(macWin->winPtr);
     macWin->toplevel->referenceCount--;
 
-    if (Tk_IsTopLevel(macWin->winPtr)) {
-	WindowRef winRef;
-	/*
-	 * We are relying on the Activate Mac OS event to pass the
-	 * focus away from a window that is getting Destroyed to the
-	 * Front non-floating window. BUT we don't get activate events
-	 * when a floating window is destroyed - since the front non-floating
-	 * window doesn't in fact get activated... So maybe we can check here
-	 * and if we are destroying a floating window, we can pass the focus
-	 * back to the front non-floating window...
-	 */
-
-	if (macWin->grafPtr != NULL) {
-	    TkWindow *focusPtr = TkGetFocusWin(macWin->winPtr);
-	    if (focusPtr == NULL || (focusPtr->mainPtr->winPtr == macWin->winPtr)) {
-		winRef = TkMacOSXDrawableWindow(window);
-		if (TkpIsWindowFloating (winRef)) {
-		    Window window;
-
-		    window = TkMacOSXGetXWindow(ActiveNonFloatingWindow());
-		    if (window != None) {
-			TkMacOSXGenerateFocusEvent(window, 1);
-		    }
-		}
-	    }
-	}
-	if (macWin->visRgn) {
-	    CFRelease(macWin->visRgn);
-	}
-	if (macWin->aboveVisRgn) {
-	    CFRelease(macWin->aboveVisRgn);
-	}
-
-	/*
-	 * Delete the Mac window and remove it from the windowTable.
-	 * The window could be NULL if the window was never mapped.
-	 * However, we don't do this for embedded windows, they don't
-	 * go in the window list, and they do not own their portPtr's.
-	 */
-
-	if (!(Tk_IsEmbedded(macWin->winPtr))) {
-	    WindowRef winRef = TkMacOSXDrawableWindow(window);
-
-	    if (winRef) {
-		TkMacOSXWindowList *listPtr, *prevPtr;
-		WindowGroupRef group;
-
-		if (GetWindowProperty(winRef, 'Tk  ', 'TsGp', sizeof(group),
-			NULL, &group) == noErr) {
-		    TkDisplay *dispPtr = TkGetDisplayList();
-		    ItemCount i = CountWindowGroupContents(group,
-			    kWindowGroupContentsReturnWindows);
-
-		    while (i > 0) {
-			WindowRef macWin;
-			
-			ChkErr(GetIndexedWindow, group, i--, 0, &macWin);
-			if (macWin) {
-			    WindowGroupRef newGroup = NULL;
-			    Window window = TkMacOSXGetXWindow(macWin);
-
-			    if (window != None) {
-				TkWindow * winPtr = (TkWindow *)Tk_IdToWindow(
-					dispPtr->display, window);
-
-				if (winPtr && winPtr->wmInfoPtr) {
-				    newGroup = GetWindowGroupOfClass(
-					    winPtr->wmInfoPtr->macClass);
-				}
-			    }
-			    if (!newGroup) {
-				newGroup = GetWindowGroupOfClass(
-					kDocumentWindowClass);
-			    }
-			    ChkErr(SetWindowGroup, macWin, newGroup);
-			}
-
-		    }
-		    ChkErr(SetWindowGroupOwner, group, NULL);
-		    ChkErr(ReleaseWindowGroup, group);
-		}
-		TkMacOSXUnregisterMacWindow(winRef);
-		DisposeWindow(winRef);
-
-		for (listPtr = tkMacOSXWindowListPtr, prevPtr = NULL;
-			tkMacOSXWindowListPtr != NULL;
-			prevPtr = listPtr, listPtr = listPtr->nextPtr) {
-		    if (listPtr->winPtr == macWin->winPtr) {
-			if (prevPtr == NULL) {
-			    tkMacOSXWindowListPtr = listPtr->nextPtr;
-			} else {
-			    prevPtr->nextPtr = listPtr->nextPtr;
-			}
-			ckfree((char *) listPtr);
-			break;
-		    }
-		}
-	    }
-	}
-
-	macWin->grafPtr = NULL;
-
-	/*
-	 * Delay deletion of a toplevel data structure untill all
-	 * children have been deleted.
-	 */
-	if (macWin->toplevel->referenceCount == 0) {
-	    ckfree((char *) macWin->toplevel);
-	}
-    } else {
+    if (!Tk_IsTopLevel(macWin->winPtr)) {
 	TkMacOSXInvalidateWindow(macWin, TK_PARENT_WINDOW);
 	if (macWin->winPtr->parentPtr != NULL) {
 	    TkMacOSXInvalClipRgns((Tk_Window) macWin->winPtr->parentPtr);
 	}
 	if (macWin->visRgn) {
 	    CFRelease(macWin->visRgn);
+            macWin->visRgn = NULL;
 	}
 	if (macWin->aboveVisRgn) {
 	    CFRelease(macWin->aboveVisRgn);
+            macWin->aboveVisRgn = NULL;
+	}
+	if (macWin->drawRgn) {
+	    CFRelease(macWin->drawRgn);
+            macWin->drawRgn = NULL;
 	}
 
 	if (macWin->toplevel->referenceCount == 0) {
-	    ckfree((char *) macWin->toplevel);
+	    ckfree(macWin->toplevel);
 	}
-	ckfree((char *) macWin);
+	ckfree(macWin);
+	return Success;
     }
+    if (macWin->visRgn) {
+	CFRelease(macWin->visRgn);
+        macWin->visRgn = NULL;
+    }
+    if (macWin->aboveVisRgn) {
+	CFRelease(macWin->aboveVisRgn);
+        macWin->aboveVisRgn = NULL;
+    }
+    if (macWin->drawRgn) {
+	CFRelease(macWin->drawRgn);
+        macWin->drawRgn = NULL;
+    }
+    macWin->view = nil;
+
+    /*
+     * Delay deletion of a toplevel data structure untill all children have
+     * been deleted.
+     */
+
+    if (macWin->toplevel->referenceCount == 0) {
+	ckfree(macWin->toplevel);
+    }
+    return Success;
 }
 
 /*
@@ -198,8 +119,8 @@ XDestroyWindow(
  *
  * XMapWindow --
  *
- *	Map the given X Window to the screen. See X window documentation
- *  for more details.
+ *	Map the given X Window to the screen. See X window documentation for
+ *	more details.
  *
  * Results:
  *	None.
@@ -210,66 +131,91 @@ XDestroyWindow(
  *----------------------------------------------------------------------
  */
 
-void
+int
 XMapWindow(
-    Display* display,		/* Display. */
+    Display *display,		/* Display. */
     Window window)		/* Window. */
 {
     MacDrawable *macWin = (MacDrawable *) window;
+    TkWindow *winPtr = macWin->winPtr;
+    NSWindow *win = TkMacOSXDrawableWindow(window);
     XEvent event;
 
     /*
-     * Under certain situations it's possible for this function to be
-     * called before the toplevel window it's associated with has actually
-     * been mapped. In that case we need to create the real Macintosh
-     * window now as this function as well as other X functions assume that
-     * the portPtr is valid.
+     * Under certain situations it's possible for this function to be called
+     * before the toplevel window it's associated with has actually been
+     * mapped. In that case we need to create the real Macintosh window now as
+     * this function as well as other X functions assume that the portPtr is
+     * valid.
      */
+
     if (!TkMacOSXHostToplevelExists(macWin->toplevel->winPtr)) {
 	TkMacOSXMakeRealWindowExist(macWin->toplevel->winPtr);
     }
 
     display->request++;
-    macWin->winPtr->flags |= TK_MAPPED;
-    if (Tk_IsTopLevel(macWin->winPtr)) {
-	if (!Tk_IsEmbedded(macWin->winPtr)) {
-	    /*
-	     * XXX This should be ShowSheetWindow for kSheetWindowClass
-	     * XXX windows that have a wmPtr->master parent set.
-	     */
-	    WindowRef wRef = TkMacOSXDrawableWindow(window);
+    winPtr->flags |= TK_MAPPED;
+    if (Tk_IsTopLevel(winPtr)) {
+	if (!Tk_IsEmbedded(winPtr)) {
 
-	    if ((macWin->winPtr->wmInfoPtr->macClass == kSheetWindowClass)
-		    && (macWin->winPtr->wmInfoPtr->master != None)) {
-		ShowSheetWindow(wRef, TkMacOSXDrawableWindow(
-			macWin->winPtr->wmInfoPtr->master));
+	    /*
+	     * We want to activate Tk when a toplevel is mapped but we must not
+	     * supply YES here.  This is because during Tk initialization the
+	     * root window is mapped before applicationDidFinishLaunching
+	     * returns. Forcing the app to activate too early can make the menu
+	     * bar unresponsive.
+	     */
+
+	    TkMacOSXApplyWindowAttributes(winPtr, win);
+	    [win setExcludedFromWindowsMenu:NO];
+	    [NSApp activateIgnoringOtherApps:NO];
+	    [[win contentView] setNeedsDisplay:YES];
+	    if ([win canBecomeKeyWindow]) {
+		[win makeKeyAndOrderFront:NSApp];
 	    } else {
-		ShowWindow(wRef);
+		[win orderFrontRegardless];
 	    }
+	} else {
+	    TkWindow *contWinPtr = TkpGetOtherWindow(winPtr);
+
+	    /*
+	     * Rebuild the container's clipping region and display
+	     * the window.
+	     */
+
+	    TkMacOSXInvalClipRgns((Tk_Window) contWinPtr);
+	    TkMacOSXInvalidateWindow(macWin, TK_PARENT_WINDOW);
 	}
-	TkMacOSXInvalClipRgns((Tk_Window) macWin->winPtr);
+
+	TkMacOSXInvalClipRgns((Tk_Window) winPtr);
 
 	/*
-	 * We only need to send the MapNotify event
-	 * for toplevel windows.
+	 * We only need to send the MapNotify event for toplevel windows.
 	 */
 
-	event.xany.serial = display->request;
+	event.xany.serial = LastKnownRequestProcessed(display);
 	event.xany.send_event = False;
 	event.xany.display = display;
 
 	event.xmap.window = window;
 	event.xmap.type = MapNotify;
 	event.xmap.event = window;
-	event.xmap.override_redirect = macWin->winPtr->atts.override_redirect;
+	event.xmap.override_redirect = winPtr->atts.override_redirect;
 	Tk_QueueWindowEvent(&event, TCL_QUEUE_TAIL);
     } else {
+
 	/*
-	 * Generate damage for that area of the window
+	 * For non-toplevel windows, rebuild the parent's clipping region
+	 * and redisplay the window.
 	 */
 
-	TkMacOSXInvalClipRgns((Tk_Window) macWin->winPtr->parentPtr);
-	TkMacOSXInvalidateWindow(macWin, TK_PARENT_WINDOW);
+	TkMacOSXInvalClipRgns((Tk_Window) winPtr->parentPtr);
+    }
+
+    if ([NSApp isDrawing]) {
+	[[win contentView] setNeedsRedisplay:YES];
+    } else {
+	[[win contentView] setNeedsDisplay:YES];
     }
 
     /*
@@ -280,7 +226,8 @@ XMapWindow(
     event.xany.display = display;
     event.xvisibility.type = VisibilityNotify;
     event.xvisibility.state = VisibilityUnobscured;
-    NotifyVisibility(macWin->winPtr, &event);
+    NotifyVisibility(winPtr, &event);
+    return Success;
 }
 
 /*
@@ -289,7 +236,7 @@ XMapWindow(
  * NotifyVisibility --
  *
  *	Recursively called helper proc for XMapWindow().
- 
+ *
  * Results:
  *	None.
  *
@@ -322,8 +269,8 @@ NotifyVisibility(
  *
  * XUnmapWindow --
  *
- *	Unmap the given X Window to the screen. See X window
- *	documentation for more details.
+ *	Unmap the given X Window to the screen. See X window documentation for
+ *	more details.
  *
  * Results:
  *	None.
@@ -334,39 +281,30 @@ NotifyVisibility(
  *----------------------------------------------------------------------
  */
 
-void
+int
 XUnmapWindow(
-    Display* display,		/* Display. */
+    Display *display,		/* Display. */
     Window window)		/* Window. */
 {
     MacDrawable *macWin = (MacDrawable *) window;
+    TkWindow *winPtr = macWin->winPtr;
+    TkWindow *parentPtr = winPtr->parentPtr;
+    NSWindow *win = TkMacOSXDrawableWindow(window);
     XEvent event;
 
     display->request++;
-    macWin->winPtr->flags &= ~TK_MAPPED;
-    if (Tk_IsTopLevel(macWin->winPtr)) {
-	if (!Tk_IsEmbedded(macWin->winPtr)
-		&& macWin->winPtr->wmInfoPtr->hints.initial_state != IconicState) {
-	    /*
-	     * XXX This should be HideSheetWindow for kSheetWindowClass
-	     * XXX windows that have a wmPtr->master parent set.
-	     */
-	    WindowRef wref = TkMacOSXDrawableWindow(window);
-
-	    if ((macWin->winPtr->wmInfoPtr->macClass == kSheetWindowClass)
-		    && (macWin->winPtr->wmInfoPtr->master != None)) {
-		HideSheetWindow(wref);
-	    } else {
-		HideWindow(wref);
-	    }
+    if (Tk_IsTopLevel(winPtr)) {
+	if (!Tk_IsEmbedded(winPtr) &&
+		winPtr->wmInfoPtr->hints.initial_state!=IconicState) {
+	    [win orderOut:nil];
 	}
-	TkMacOSXInvalClipRgns((Tk_Window) macWin->winPtr);
+	TkMacOSXInvalClipRgns((Tk_Window) winPtr);
 
 	/*
-	 * We only need to send the UnmapNotify event
-	 * for toplevel windows.
+	 * We only need to send the UnmapNotify event for toplevel windows.
 	 */
-	event.xany.serial = display->request;
+
+	event.xany.serial = LastKnownRequestProcessed(display);
 	event.xany.send_event = False;
 	event.xany.display = display;
 
@@ -377,12 +315,26 @@ XUnmapWindow(
 	Tk_QueueWindowEvent(&event, TCL_QUEUE_TAIL);
     } else {
 	/*
-	 * Generate damage for that area of the window.
+	 * Rebuild the visRgn clip region for the parent so it will be allowed
+	 * to draw in the space from which this subwindow was removed and then
+	 * redraw the window.
 	 */
 
-	TkMacOSXInvalidateWindow(macWin, TK_PARENT_WINDOW);
-	TkMacOSXInvalClipRgns((Tk_Window) macWin->winPtr->parentPtr);
+	if (parentPtr && parentPtr->privatePtr->visRgn) {
+	    TkMacOSXInvalidateViewRegion(
+		    TkMacOSXDrawableView(parentPtr->privatePtr),
+		    parentPtr->privatePtr->visRgn);
+	}
+	TkMacOSXInvalClipRgns((Tk_Window) parentPtr);
+	TkMacOSXUpdateClipRgn(parentPtr);
     }
+    winPtr->flags &= ~TK_MAPPED;
+    if ([NSApp isDrawing]) {
+	[[win contentView] setNeedsRedisplay:YES];
+    } else {
+	[[win contentView] setNeedsDisplay:YES];
+    }
+    return Success;
 }
 
 /*
@@ -390,95 +342,7 @@ XUnmapWindow(
  *
  * XResizeWindow --
  *
- *	Resize a given X window. See X windows documentation for
- *	further details.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-
-void
-XResizeWindow(
-    Display* display,		/* Display. */
-    Window window,		/* Window. */
-    unsigned int width,
-    unsigned int height)
-{
-    MacDrawable *macWin = (MacDrawable *) window;
-
-    display->request++;
-    if (Tk_IsTopLevel(macWin->winPtr) && !Tk_IsEmbedded(macWin->winPtr)) {
-	WindowRef w = TkMacOSXDrawableWindow(window);
-
-	if (w) {
-	    Rect bounds;
-
-	    ChkErr(GetWindowBounds, w, kWindowContentRgn, &bounds);
-	    bounds.right = bounds.left + width;
-	    bounds.bottom = bounds.top + height;
-	    ChkErr(SetWindowBounds, w, kWindowContentRgn, &bounds);
-	}
-    } else {
-	MoveResizeWindow(macWin);
-    }
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * XMoveResizeWindow --
- *
- *	Move or resize a given X window. See X windows documentation
- *	for further details.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-
-void
-XMoveResizeWindow(
-    Display* display,		/* Display. */
-    Window window,		/* Window. */
-    int x, int y,
-    unsigned int width,
-    unsigned int height)
-{
-    MacDrawable * macWin = (MacDrawable *) window;
-
-    display->request++;
-    if (Tk_IsTopLevel(macWin->winPtr) && !Tk_IsEmbedded(macWin->winPtr)) {
-	WindowRef w = TkMacOSXDrawableWindow(window);
-
-	if (w) {
-	    Rect bounds;
-
-	    bounds.left = x + macWin->winPtr->wmInfoPtr->xInParent;
-	    bounds.right = bounds.left + width;
-	    bounds.top = y + macWin->winPtr->wmInfoPtr->yInParent;
-	    bounds.bottom = bounds.top + height;
-	    ChkErr(SetWindowBounds, w, kWindowContentRgn, &bounds);
-	}
-    } else {
-	MoveResizeWindow(macWin);
-    }
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * XMoveWindow --
- *
- *	Move a given X window. See X windows documentation for further
+ *	Resize a given X window. See X windows documentation for further
  *	details.
  *
  * Results:
@@ -490,25 +354,125 @@ XMoveResizeWindow(
  *----------------------------------------------------------------------
  */
 
-void
-XMoveWindow(
-    Display* display,		/* Display. */
+int
+XResizeWindow(
+    Display *display,		/* Display. */
     Window window,		/* Window. */
-    int x,
-    int y)
+    unsigned int width,
+    unsigned int height)
 {
     MacDrawable *macWin = (MacDrawable *) window;
 
     display->request++;
     if (Tk_IsTopLevel(macWin->winPtr) && !Tk_IsEmbedded(macWin->winPtr)) {
-	WindowRef w = TkMacOSXDrawableWindow(window);
+	NSWindow *w = macWin->winPtr->wmInfoPtr->window;
 
 	if (w) {
-	    ChkErr(MoveWindowStructure, w, x, y);
+	    NSRect r = [w contentRectForFrameRect:[w frame]];
+
+	    r.origin.y += r.size.height - height;
+	    r.size.width = width;
+	    r.size.height = height;
+	    [w setFrame:[w frameRectForContentRect:r] display:YES];
 	}
     } else {
 	MoveResizeWindow(macWin);
     }
+    return Success;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * XMoveResizeWindow --
+ *
+ *	Move or resize a given X window. See X windows documentation for
+ *	further details.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+int
+XMoveResizeWindow(
+    Display *display,		/* Display. */
+    Window window,		/* Window. */
+    int x, int y,
+    unsigned int width,
+    unsigned int height)
+{
+    MacDrawable *macWin = (MacDrawable *) window;
+
+    display->request++;
+    if (Tk_IsTopLevel(macWin->winPtr) && !Tk_IsEmbedded(macWin->winPtr)) {
+	NSWindow *w = macWin->winPtr->wmInfoPtr->window;
+
+	if (w) {
+	    /*
+	     * We explicitly convert everything to doubles so we don't get
+	     * surprised (again) by what happens when you do arithmetic with
+	     * unsigned ints.
+	     */
+
+	    CGFloat X = (CGFloat) x;
+	    CGFloat Y = (CGFloat) y;
+	    CGFloat Width = (CGFloat) width;
+	    CGFloat Height = (CGFloat) height;
+	    CGFloat XOff = (CGFloat) macWin->winPtr->wmInfoPtr->xInParent;
+	    CGFloat YOff = (CGFloat) macWin->winPtr->wmInfoPtr->yInParent;
+	    NSRect r = NSMakeRect(
+		    X + XOff, TkMacOSXZeroScreenHeight() - Y - YOff - Height,
+	    	    Width, Height);
+
+	    [w setFrame:[w frameRectForContentRect:r] display:YES];
+	}
+    } else {
+	MoveResizeWindow(macWin);
+    }
+    return Success;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * XMoveWindow --
+ *
+ *	Move a given X window. See X windows documentation for further details.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+int
+XMoveWindow(
+    Display *display,		/* Display. */
+    Window window,		/* Window. */
+    int x, int y)
+{
+    MacDrawable *macWin = (MacDrawable *) window;
+
+    display->request++;
+    if (Tk_IsTopLevel(macWin->winPtr) && !Tk_IsEmbedded(macWin->winPtr)) {
+	NSWindow *w = macWin->winPtr->wmInfoPtr->window;
+
+	if (w) {
+	    [w setFrameTopLeftPoint: NSMakePoint(
+		    x, TkMacOSXZeroScreenHeight() - y)];
+	}
+    } else {
+	MoveResizeWindow(macWin);
+    }
+    return Success;
 }
 
 /*
@@ -533,11 +497,12 @@ MoveResizeWindow(
 {
     int deltaX = 0, deltaY = 0, parentBorderwidth = 0;
     MacDrawable *macParent = NULL;
-    CGrafPtr destPort = TkMacOSXGetDrawablePort((Drawable) macWin);
+    NSWindow *macWindow = TkMacOSXDrawableWindow((Drawable) macWin);
 
     /*
      * Find the Parent window, for an embedded window it will be its container.
      */
+
     if (Tk_IsEmbedded(macWin->winPtr)) {
 	TkWindow *contWinPtr = TkpGetOtherWindow(macWin->winPtr);
 
@@ -545,10 +510,10 @@ MoveResizeWindow(
 	    macParent = contWinPtr->privatePtr;
 	} else {
 	    /*
-	     * Here we should handle out of process embedding.
-	     * At this point, we are assuming that the changes.x,y is not
-	     * maintained, if you need the info get it from Tk_GetRootCoords,
-	     * and that the toplevel sits at 0,0 when it is drawn.
+	     * Here we should handle out of process embedding. At this point,
+	     * we are assuming that the changes.x,y is not maintained, if you
+	     * need the info get it from Tk_GetRootCoords, and that the
+	     * toplevel sits at 0,0 when it is drawn.
 	     */
 	}
     } else {
@@ -559,20 +524,21 @@ MoveResizeWindow(
 	macParent = macWin->winPtr->parentPtr->privatePtr;
 	parentBorderwidth = macWin->winPtr->parentPtr->changes.border_width;
     }
+
     if (macParent) {
 	deltaX = macParent->xOff + parentBorderwidth +
 		macWin->winPtr->changes.x - macWin->xOff;
 	deltaY = macParent->yOff + parentBorderwidth +
 		macWin->winPtr->changes.y - macWin->yOff;
     }
-    if (destPort) {
+    if (macWindow) {
 	TkMacOSXInvalidateWindow(macWin, TK_PARENT_WINDOW);
 	if (macParent) {
 	    TkMacOSXInvalClipRgns((Tk_Window) macParent->winPtr);
 	}
     }
     UpdateOffsets(macWin->winPtr, deltaX, deltaY);
-    if (destPort) {
+    if (macWindow) {
 	TkMacOSXInvalidateWindow(macWin, TK_PARENT_WINDOW);
     }
     GenerateConfigureNotify(macWin->winPtr, 0);
@@ -583,10 +549,9 @@ MoveResizeWindow(
  *
  * GenerateConfigureNotify --
  *
- *	Generates ConfigureNotify events for all the child widgets
- *	of the widget passed in the winPtr parameter. If includeWin
- *	is true, also generates ConfigureNotify event for the
- *	widget itself.
+ *	Generates ConfigureNotify events for all the child widgets of the
+ *	widget passed in the winPtr parameter. If includeWin is true, also
+ *	generates ConfigureNotify event for the widget itself.
  *
  * Results:
  *	None.
@@ -598,12 +563,14 @@ MoveResizeWindow(
  */
 
 static void
-GenerateConfigureNotify (TkWindow *winPtr, int includeWin)
+GenerateConfigureNotify(
+    TkWindow *winPtr,
+    int includeWin)
 {
     TkWindow *childPtr;
 
     for (childPtr = winPtr->childList; childPtr != NULL;
-			       childPtr = childPtr->nextPtr) {
+	    childPtr = childPtr->nextPtr) {
 	if (!Tk_IsMapped(childPtr) || Tk_IsTopLevel(childPtr)) {
 	    continue;
 	}
@@ -630,9 +597,9 @@ GenerateConfigureNotify (TkWindow *winPtr, int includeWin)
  *----------------------------------------------------------------------
  */
 
-void
+int
 XRaiseWindow(
-    Display* display,		/* Display. */
+    Display *display,		/* Display. */
     Window window)		/* Window. */
 {
     MacDrawable *macWin = (MacDrawable *) window;
@@ -645,6 +612,7 @@ XRaiseWindow(
 	 * TODO: this should generate damage
 	 */
     }
+    return Success;
 }
 
 #if 0
@@ -666,7 +634,7 @@ XRaiseWindow(
 
 void
 XLowerWindow(
-    Display* display,		/* Display. */
+    Display *display,		/* Display. */
     Window window)		/* Window. */
 {
     MacDrawable *macWin = (MacDrawable *) window;
@@ -675,7 +643,7 @@ XLowerWindow(
     if (Tk_IsTopLevel(macWin->winPtr) && !Tk_IsEmbedded(macWin->winPtr)) {
 	TkWmRestackToplevel(macWin->winPtr, Below, NULL);
     } else {
-	/*
+        /*
 	 * TODO: this should generate damage
 	 */
     }
@@ -687,26 +655,25 @@ XLowerWindow(
  *
  * XConfigureWindow --
  *
- *	Change the size, position, stacking, or border of the specified
- *	window.
+ *	Change the size, position, stacking, or border of the specified window.
  *
  * Results:
  *	None.
  *
  * Side effects:
- *	Changes the attributes of the specified window. Note that we
- *	ignore the passed in values and use the values stored in the
- *	TkWindow data structure.
+ *	Changes the attributes of the specified window. Note that we ignore the
+ *	passed in values and use the values stored in the TkWindow data
+ *	structure.
  *
  *----------------------------------------------------------------------
  */
 
-void
+int
 XConfigureWindow(
-    Display* display,		/* Display. */
+    Display *display,		/* Display. */
     Window w,			/* Window. */
     unsigned int value_mask,
-    XWindowChanges* values)
+    XWindowChanges *values)
 {
     MacDrawable *macWin = (MacDrawable *) w;
     TkWindow *winPtr = macWin->winPtr;
@@ -723,25 +690,91 @@ XConfigureWindow(
     }
 
     /*
-     * Change the stacking order of the window. Tk actuall keeps all
-     * the information we need for stacking order. All we need to do
-     * is make sure the clipping regions get updated and generate damage
-     * that will ensure things get drawn correctly.
+     * Change the stacking order of the window. Tk actually keeps all the
+     * information we need for stacking order. All we need to do is make sure
+     * the clipping regions get updated and generate damage that will ensure
+     * things get drawn correctly.
      */
 
     if (value_mask & CWStackMode) {
+	NSView *view = TkMacOSXDrawableView(macWin);
 	Rect bounds;
-	WindowRef wRef = TkMacOSXDrawableWindow(w);
+	NSRect r;
 
-	if (wRef) {
+	if (view) {
 	    TkMacOSXInvalClipRgns((Tk_Window) winPtr->parentPtr);
 	    TkMacOSXWinBounds(winPtr, &bounds);
-	    InvalWindowRect(wRef, &bounds);
+	    r = NSMakeRect(bounds.left,
+		    [view bounds].size.height - bounds.bottom,
+		    bounds.right - bounds.left, bounds.bottom - bounds.top);
+	    [view setNeedsDisplayInRect:r];
 	}
     }
 
-    /* TkGenWMMoveRequestEvent(macWin->winPtr,
-	    macWin->winPtr->changes.x, macWin->winPtr->changes.y); */
+#if 0
+    TkGenWMMoveRequestEvent(macWin->winPtr,
+	    macWin->winPtr->changes.x, macWin->winPtr->changes.y);
+#endif
+    return Success;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TkMacOSXSetDrawingEnabled --
+ *
+ *	This function sets the TK_DO_NOT_DRAW flag for a given window and
+ *	all of its children.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	The clipping regions for the window and its children are cleared.
+ *
+ *----------------------------------------------------------------------
+ */
+
+void
+TkMacOSXSetDrawingEnabled(
+    TkWindow *winPtr,
+    int flag)
+{
+    TkWindow *childPtr;
+    MacDrawable *macWin = winPtr->privatePtr;
+
+    if (macWin) {
+	if (flag) {
+	    macWin->flags &= ~TK_DO_NOT_DRAW;
+	} else {
+	    macWin->flags |= TK_DO_NOT_DRAW;
+	}
+    }
+
+    /*
+     * Set the flag for all children & their descendants, excluding Toplevels.
+     * (??? Do we need to exclude Toplevels?)
+     */
+
+    childPtr = winPtr->childList;
+    while (childPtr) {
+	if (!Tk_IsTopLevel(childPtr)) {
+	    TkMacOSXSetDrawingEnabled(childPtr, flag);
+	}
+	childPtr = childPtr->nextPtr;
+    }
+
+    /*
+     * If the window is a container, set the flag for its embedded window.
+     */
+
+    if (Tk_IsContainer(winPtr)) {
+	childPtr = TkpGetOtherWindow(winPtr);
+
+	if (childPtr) {
+	    TkMacOSXSetDrawingEnabled(childPtr, flag);
+	}
+    }
 }
 
 /*
@@ -749,10 +782,10 @@ XConfigureWindow(
  *
  * TkMacOSXUpdateClipRgn --
  *
- *	This function updates the cliping regions for a given window
- *	and all of its children. Once updated the TK_CLIP_INVALID flag
- *	in the subwindow data structure is unset. The TK_CLIP_INVALID
- *	flag should always be unset before any drawing is attempted.
+ *	This function updates the clipping regions for a given window and all of
+ *	its children. Once updated the TK_CLIP_INVALID flag in the subwindow
+ *	data structure is unset. The TK_CLIP_INVALID flag should always be
+ *	unset before any drawing is attempted.
  *
  * Results:
  *	None.
@@ -776,6 +809,9 @@ TkMacOSXUpdateClipRgn(
     if (macWin && macWin->flags & TK_CLIP_INVALID) {
 	TkWindow *win2Ptr;
 
+#ifdef TK_MAC_DEBUG_CLIP_REGIONS
+	TkMacOSXDbgMsg("%s", winPtr->pathName);
+#endif
 	if (Tk_IsMapped(winPtr)) {
 	    int rgnChanged = 0;
 	    CGRect bounds;
@@ -789,24 +825,21 @@ TkMacOSXUpdateClipRgn(
 	    rgn = TkMacOSXHIShapeCreateMutableWithRect(&bounds);
 
 	    /*
-	     * Clip away the area of any windows that may obscure this
-	     * window.
+	     * Clip away the area of any windows that may obscure this window.
 	     * For a non-toplevel window, first, clip to the parents visible
-	     * clip region.
-	     * Second, clip away any siblings that are higher in the
-	     * stacking order.
-	     * For an embedded toplevel, just clip to the container's visible
-	     * clip region. Remember, we only allow one contained window
-	     * in a frame, and don't support any other widgets in the frame
-	     * either. This is not currently enforced, however.
+	     * clip region. Second, clip away any siblings that are higher in
+	     * the stacking order. For an embedded toplevel, just clip to the
+	     * container's visible clip region. Remember, we only allow one
+	     * contained window in a frame, and don't support any other widgets
+	     * in the frame either. This is not currently enforced, however.
 	     */
 
 	    if (!Tk_IsTopLevel(winPtr)) {
-		TkMacOSXUpdateClipRgn(winPtr->parentPtr);
 		if (winPtr->parentPtr) {
+		    TkMacOSXUpdateClipRgn(winPtr->parentPtr);
 		    ChkErr(HIShapeIntersect,
-			    winPtr->parentPtr->privatePtr->aboveVisRgn, rgn,
-			    rgn);
+			    winPtr->parentPtr->privatePtr->aboveVisRgn,
+			    rgn, rgn);
 		}
 		win2Ptr = winPtr;
 		while ((win2Ptr = win2Ptr->nextPtr)) {
@@ -823,41 +856,27 @@ TkMacOSXUpdateClipRgn(
 		    ChkErr(HIShapeIntersect,
 			    win2Ptr->privatePtr->aboveVisRgn, rgn, rgn);
 		} else if (tkMacOSXEmbedHandler != NULL) {
+		    TkRegion r = TkCreateRegion();
 		    HIShapeRef visRgn;
 
-		    TkMacOSXCheckTmpQdRgnEmpty();
-		    tkMacOSXEmbedHandler->getClipProc((Tk_Window) winPtr,
-			    tkMacOSXtmpQdRgn);
-		    visRgn = HIShapeCreateWithQDRgn(tkMacOSXtmpQdRgn);
-		    SetEmptyRgn(tkMacOSXtmpQdRgn);
+		    tkMacOSXEmbedHandler->getClipProc((Tk_Window) winPtr, r);
+		    visRgn = TkMacOSXGetNativeRegion(r);
 		    ChkErr(HIShapeIntersect, visRgn, rgn, rgn);
+		    CFRelease(visRgn);
+		    TkpReleaseRegion(r);
 		}
 
 		/*
 		 * TODO: Here we should handle out of process embedding.
 		 */
-	    } else if (winPtr->wmInfoPtr->attributes &
-		    kWindowResizableAttribute) {
-		HIViewRef growBoxView;
-		OSErr err = HIViewFindByID(HIViewGetRoot(
-			TkMacOSXDrawableWindow(winPtr->window)),
-			kHIViewWindowGrowBoxID, &growBoxView);
-
-		if (err == noErr) {
-		    ChkErr(HIViewGetFrame, growBoxView, &bounds);
-		    bounds = CGRectOffset(bounds,
-			    -winPtr->wmInfoPtr->xInParent,
-			    -winPtr->wmInfoPtr->yInParent);
-		    ChkErr(TkMacOSHIShapeDifferenceWithRect, rgn, &bounds);
-		}
 	    }
 	    macWin->aboveVisRgn = HIShapeCreateCopy(rgn);
 
 	    /*
-	     * The final clip region is the aboveVis region (or visible
-	     * region) minus all the children of this window.
-	     * If the window is a container, we must also subtract the region
-	     * of the embedded window.
+	     * The final clip region is the aboveVis region (or visible region)
+	     * minus all the children of this window. If the window is a
+	     * container, we must also subtract the region of the embedded
+	     * window.
 	     */
 
 	    win2Ptr = winPtr->childList;
@@ -886,6 +905,7 @@ TkMacOSXUpdateClipRgn(
 		 * TODO: Here we should handle out of process embedding.
 		 */
 	    }
+
 	    if (rgnChanged) {
 		HIShapeRef diffRgn = HIShapeCreateDifference(
 			macWin->aboveVisRgn, rgn);
@@ -917,10 +937,6 @@ TkMacOSXUpdateClipRgn(
 	    macWin->visRgn = HIShapeCreateCopy(macWin->aboveVisRgn);
 	}
 	macWin->flags &= ~TK_CLIP_INVALID;
-
-#ifdef TK_MAC_DEBUG_CLIP_REGIONS
-	TkMacOSXDebugFlashRegion((Drawable) macWin, macWin->visRgn);
-#endif /* TK_MAC_DEBUG_CLIP_REGIONS */
     }
 }
 
@@ -929,8 +945,9 @@ TkMacOSXUpdateClipRgn(
  *
  * TkMacOSXVisableClipRgn --
  *
- *	This function returnd the Macintosh cliping region for the
- *	given window. A NULL Rgn means the window is not visible.
+ *	This function returns the Macintosh clipping region for the given
+ *	window. The caller is responsible for disposing of the returned region
+ *	via TkDestroyRegion().
  *
  * Results:
  *	The region.
@@ -941,20 +958,68 @@ TkMacOSXUpdateClipRgn(
  *----------------------------------------------------------------------
  */
 
-RgnHandle
+TkRegion
 TkMacOSXVisableClipRgn(
     TkWindow *winPtr)
 {
-    static RgnHandle visQdRgn = NULL;
-
-    if (visQdRgn == NULL) {
-	visQdRgn = NewRgn();
-    }
     if (winPtr->privatePtr->flags & TK_CLIP_INVALID) {
 	TkMacOSXUpdateClipRgn(winPtr);
     }
-    ChkErr(HIShapeGetAsQDRgn, winPtr->privatePtr->visRgn, visQdRgn);
-    return visQdRgn;
+    return (TkRegion) HIShapeCreateMutableCopy(winPtr->privatePtr->visRgn);
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TkMacOSXInvalidateViewRegion --
+ *
+ *	This function invalidates the given region of a view.
+ *
+ * Results:
+ *	None.
+ *
+ * Side effects:
+ *	Damage is created.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static OSStatus
+InvalViewRect(
+    int msg,
+    HIShapeRef rgn,
+    const CGRect *rect,
+    void *ref)
+{
+    static CGAffineTransform t;
+    NSView *view = ref;
+
+    if (!view) {
+	return paramErr;
+    }
+    switch (msg) {
+    case kHIShapeEnumerateInit:
+	t = CGAffineTransformMake(1.0, 0.0, 0.0, -1.0, 0.0,
+		NSHeight([view bounds]));
+	break;
+    case kHIShapeEnumerateRect:
+	[view setNeedsDisplayInRect:NSRectFromCGRect(
+		CGRectApplyAffineTransform(*rect, t))];
+	break;
+    }
+    return noErr;
+}
+
+void
+TkMacOSXInvalidateViewRegion(
+    NSView *view,
+    HIShapeRef rgn)
+{
+    if (view && !HIShapeIsEmpty(rgn)) {
+	ChkErr(HIShapeEnumerate, rgn,
+		kHIShapeParseFromBottom|kHIShapeParseFromLeft,
+		InvalViewRect, view);
+    }
 }
 
 /*
@@ -962,8 +1027,7 @@ TkMacOSXVisableClipRgn(
  *
  * TkMacOSXInvalidateWindow --
  *
- *	This function makes the window as invalid will generate damage
- *	for the window.
+ *	This function invalidates a window and (optionally) its children.
  *
  * Results:
  *	None.
@@ -976,38 +1040,29 @@ TkMacOSXVisableClipRgn(
 
 void
 TkMacOSXInvalidateWindow(
-    MacDrawable *macWin,	/* Make window that's causing damage. */
+    MacDrawable *macWin,	/* Window to be invalidated. */
     int flag)			/* Should be TK_WINDOW_ONLY or
 				 * TK_PARENT_WINDOW */
 {
-    WindowRef windowRef;
-    HIShapeRef rgn;
-
-    windowRef = TkMacOSXDrawableWindow((Drawable)macWin);
+#ifdef TK_MAC_DEBUG_CLIP_REGIONS
+    TkMacOSXDbgMsg("%s", macWin->winPtr->pathName);
+#endif
     if (macWin->flags & TK_CLIP_INVALID) {
 	TkMacOSXUpdateClipRgn(macWin->winPtr);
     }
-    rgn = (flag == TK_WINDOW_ONLY) ? macWin->visRgn : macWin->aboveVisRgn;
-    if (!HIShapeIsEmpty(rgn)) {
-	TkMacOSXCheckTmpQdRgnEmpty();
-	ChkErr(HIShapeGetAsQDRgn, rgn, tkMacOSXtmpQdRgn);
-	InvalWindowRgn(windowRef, tkMacOSXtmpQdRgn);
-	SetEmptyRgn(tkMacOSXtmpQdRgn);
-    }
-#ifdef TK_MAC_DEBUG_CLIP_REGIONS
-    TkMacOSXDebugFlashRegion((Drawable) macWin, rgn);
-#endif /* TK_MAC_DEBUG_CLIP_REGIONS */
+    TkMacOSXInvalidateViewRegion(TkMacOSXDrawableView(macWin),
+	    (flag == TK_WINDOW_ONLY) ? macWin->visRgn : macWin->aboveVisRgn);
 }
 
 /*
  *----------------------------------------------------------------------
  *
- * TkMacOSXGetDrawableWindow --
+ * TkMacOSXDrawableWindow --
  *
- *	This function returns the WindowRef for a given X drawable.
+ *	This function returns the NSWindow for a given X drawable.
  *
  * Results:
- *	A WindowRef, or NULL for off screen pixmaps.
+ *	A NSWindow, or nil for off screen pixmaps.
  *
  * Side effects:
  *	None.
@@ -1015,19 +1070,37 @@ TkMacOSXInvalidateWindow(
  *----------------------------------------------------------------------
  */
 
-WindowRef
+NSWindow *
 TkMacOSXDrawableWindow(
     Drawable drawable)
 {
     MacDrawable *macWin = (MacDrawable *) drawable;
-    WindowRef result = NULL;
+    NSWindow *result = nil;
 
     if (!macWin || macWin->flags & TK_IS_PIXMAP) {
-	result = NULL;
-    } else {
-	result = GetWindowFromPort(TkMacOSXGetDrawablePort(drawable));
+	result = nil;
+    } else if (macWin->toplevel && macWin->toplevel->winPtr &&
+	    macWin->toplevel->winPtr->wmInfoPtr &&
+	    macWin->toplevel->winPtr->wmInfoPtr->window) {
+	result = macWin->toplevel->winPtr->wmInfoPtr->window;
+    } else if (macWin->winPtr && macWin->winPtr->wmInfoPtr &&
+	    macWin->winPtr->wmInfoPtr->window) {
+	result = macWin->winPtr->wmInfoPtr->window;
+    } else if (macWin->toplevel && (macWin->toplevel->flags & TK_EMBEDDED)) {
+	TkWindow *contWinPtr = TkpGetOtherWindow(macWin->toplevel->winPtr);
+
+	if (contWinPtr) {
+	    result = TkMacOSXDrawableWindow((Drawable) contWinPtr->privatePtr);
+	}
     }
     return result;
+}
+
+void *
+TkMacOSXDrawable(
+    Drawable drawable)
+{
+    return TkMacOSXDrawableWindow(drawable);
 }
 
 /*
@@ -1038,7 +1111,7 @@ TkMacOSXDrawableWindow(
  *	This function returns the Graphics Port for a given X drawable.
  *
  * Results:
- *	A CGrafPort . Either an off screen pixmap or a Window.
+ *	NULL.
  *
  * Side effects:
  *	None.
@@ -1046,73 +1119,49 @@ TkMacOSXDrawableWindow(
  *----------------------------------------------------------------------
  */
 
-CGrafPtr
+void *
 TkMacOSXGetDrawablePort(
     Drawable drawable)
 {
-    MacDrawable *macWin = (MacDrawable *) drawable;
-    CGrafPtr resultPort = NULL;
+    return NULL;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TkMacOSXDrawableView --
+ *
+ *	This function returns the NSView for a given X drawable.
+ *
+ * Results:
+ *	A NSView* or nil.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
 
-    if (macWin) {
-	if (macWin->toplevel) {
-	    /*
-	     * If the Drawable is in an embedded window, use the Port of its
-	     * container.
-	     *
-	     * TRICKY POINT: we can have cases when a toplevel is being
-	     * destroyed where the winPtr for the toplevel has been freed, but
-	     * the children are not all the way destroyed. The children will
-	     * call this function as they are being destroyed, but
-	     * Tk_IsEmbedded will return garbage. So we check the copy of the
-	     * TK_EMBEDDED flag we put into the toplevel's macWin flags.
-	     */
+NSView *
+TkMacOSXDrawableView(
+    MacDrawable *macWin)
+{
+    NSView *result = nil;
 
-	    if (macWin->toplevel->flags & TK_EMBEDDED) {
-		TkWindow *contWinPtr;
+    if (!macWin) {
+	result = nil;
+    } else if (!macWin->toplevel) {
+	result = macWin->view;
+    } else if (!(macWin->toplevel->flags & TK_EMBEDDED)) {
+	result = macWin->toplevel->view;
+    } else {
+	TkWindow *contWinPtr = TkpGetOtherWindow(macWin->toplevel->winPtr);
 
-		contWinPtr = TkpGetOtherWindow(macWin->toplevel->winPtr);
-
-		if (contWinPtr != NULL) {
-		    resultPort = TkMacOSXGetDrawablePort(
-			(Drawable) contWinPtr->privatePtr);
-		} else if (tkMacOSXEmbedHandler != NULL) {
-		    resultPort = tkMacOSXEmbedHandler->getPortProc(
-			    (Tk_Window) macWin->winPtr);
-		}
-
-		if (!resultPort) {
-		    /*
-		     * FIXME: So far as I can tell, the only time that this
-		     * happens is when we are tearing down an embedded child
-		     * interpreter, and most of the time, this is harmless...
-		     * However, we really need to find why the embedding loses.
-		     */
-		    TkMacOSXDbgMsg("Couldn't find container");
-		}
-
-		/*
-		 * TODO: Here we should handle out of process embedding.
-		 */
-	    } else {
-		resultPort = macWin->toplevel->grafPtr;
-	    }
-	} else {
-	    if ((macWin->flags & TK_IS_PIXMAP) && !macWin->grafPtr) {
-		Rect bounds = {0, 0, macWin->size.height, macWin->size.width};
-
-		ChkErr(NewGWorld, &macWin->grafPtr,
-			(macWin->flags & TK_IS_BW_PIXMAP) ? 1 : 0,
-			&bounds, NULL, NULL, 0
-#ifdef __LITTLE_ENDIAN__
-			| kNativeEndianPixMap
-#endif
-			);
-	    }
-	    resultPort = macWin->grafPtr;	
+	if (contWinPtr) {
+	    result = TkMacOSXDrawableView(contWinPtr->privatePtr);
 	}
     }
-
-    return resultPort;
+    return result;
 }
 
 /*
@@ -1120,10 +1169,10 @@ TkMacOSXGetDrawablePort(
  *
  * TkMacOSXGetRootControl --
  *
- *	This function returns the Root Control for a given X drawable.
+ *	This function returns the NSView for a given X drawable.
  *
  * Results:
- *	A ControlRef .
+ *	A NSView* .
  *
  * Side effects:
  *	None.
@@ -1131,34 +1180,15 @@ TkMacOSXGetDrawablePort(
  *----------------------------------------------------------------------
  */
 
-ControlRef
+void *
 TkMacOSXGetRootControl(
     Drawable drawable)
 {
     /*
      * will probably need to fix this up for embedding
      */
-    MacDrawable *macWin = (MacDrawable *) drawable;
-    ControlRef result = NULL;
 
-    if (macWin == NULL) {
-	return NULL;
-    }
-    if (!(macWin->toplevel->flags & TK_EMBEDDED)) {
-	return macWin->toplevel->rootControl;
-    } else {
-	TkWindow *contWinPtr;
-
-	contWinPtr = TkpGetOtherWindow(macWin->toplevel->winPtr);
-
-	if (contWinPtr != NULL) {
-	    result = TkMacOSXGetRootControl(
-		(Drawable) contWinPtr->privatePtr);
-	} else if (tkMacOSXEmbedHandler != NULL) {
-	    result = NULL;
-	}
-   }
-    return result;
+    return TkMacOSXDrawableView((MacDrawable *) drawable);
 }
 
 /*
@@ -1166,17 +1196,17 @@ TkMacOSXGetRootControl(
  *
  * TkMacOSXInvalClipRgns --
  *
- *	This function invalidates the clipping regions for a given
- *	window and all of its children. This function should be
- *	called whenever changes are made to subwindows that would
- *	affect the size or position of windows.
+ *	This function invalidates the clipping regions for a given window and
+ *	all of its children. This function should be called whenever changes
+ *	are made to subwindows that would affect the size or position of
+ *	windows.
  *
  * Results:
  *	None.
  *
  * Side effects:
- *	The cliping regions for the window and its children are
- *	mark invalid. (Make sure they are valid before drawing.)
+ *	The clipping regions for the window and its children are marked invalid.
+ *	(Make sure they are valid before drawing.)
  *
  *----------------------------------------------------------------------
  */
@@ -1190,9 +1220,14 @@ TkMacOSXInvalClipRgns(
     MacDrawable *macWin = winPtr->privatePtr;
 
     /*
-     * If already marked we can stop because all
-     * decendants will also already be marked.
+     * If already marked we can stop because all descendants will also already
+     * be marked.
      */
+
+#ifdef TK_MAC_DEBUG_CLIP_REGIONS
+	TkMacOSXDbgMsg("%s", winPtr->pathName);
+#endif
+
     if (!macWin || macWin->flags & TK_CLIP_INVALID) {
 	return;
     }
@@ -1206,11 +1241,16 @@ TkMacOSXInvalClipRgns(
 	CFRelease(macWin->aboveVisRgn);
 	macWin->aboveVisRgn = NULL;
     }
+    if (macWin->drawRgn) {
+	CFRelease(macWin->drawRgn);
+	macWin->drawRgn = NULL;
+    }
 
     /*
-     * Invalidate clip regions for all children &
-     * their decendants - unless the child is a toplevel.
+     * Invalidate clip regions for all children & their descendants, unless the
+     * child is a toplevel.
      */
+
     childPtr = winPtr->childList;
     while (childPtr) {
 	if (!Tk_IsTopLevel(childPtr)) {
@@ -1220,7 +1260,7 @@ TkMacOSXInvalClipRgns(
     }
 
     /*
-     * Also, if the window is a container, mark its embedded window
+     * Also, if the window is a container, mark its embedded window.
      */
 
     if (Tk_IsContainer(winPtr)) {
@@ -1241,10 +1281,10 @@ TkMacOSXInvalClipRgns(
  *
  * TkMacOSXWinBounds --
  *
- *	Given a Tk window this function determines the windows
- *	bounds in relation to the Macintosh window's coordinate
- *	system. This is also the same coordinate system as the
- *	Tk toplevel window in which this window is contained.
+ *	Given a Tk window this function determines the windows bounds in
+ *	relation to the Macintosh window's coordinate system. This is also the
+ *	same coordinate system as the Tk toplevel window in which this window
+ *	is contained.
  *
  * Results:
  *	None.
@@ -1258,12 +1298,14 @@ TkMacOSXInvalClipRgns(
 void
 TkMacOSXWinBounds(
     TkWindow *winPtr,
-    Rect *bounds)
+    void *bounds)
 {
-    bounds->left = winPtr->privatePtr->xOff;
-    bounds->top = winPtr->privatePtr->yOff;
-    bounds->right = bounds->left + winPtr->changes.width;
-    bounds->bottom = bounds->top + winPtr->changes.height;
+    Rect *b = (Rect *) bounds;
+
+    b->left = winPtr->privatePtr->xOff;
+    b->top = winPtr->privatePtr->yOff;
+    b->right = b->left + winPtr->changes.width;
+    b->bottom = b->top + winPtr->changes.height;
 }
 
 /*
@@ -1271,10 +1313,10 @@ TkMacOSXWinBounds(
  *
  * TkMacOSXWinCGBounds --
  *
- *	Given a Tk window this function determines the windows
- *	bounds in relation to the Macintosh window's coordinate
- *	system. This is also the same coordinate system as the
- *	Tk toplevel window in which this window is contained.
+ *	Given a Tk window this function determines the windows bounds in
+ *	relation to the Macintosh window's coordinate system. This is also the
+ *	same coordinate system as the Tk toplevel window in which this window
+ *	is contained.
  *
  * Results:
  *	None.
@@ -1301,15 +1343,15 @@ TkMacOSXWinCGBounds(
  *
  * UpdateOffsets --
  *
- *	Updates the X & Y offsets of the given TkWindow from the
- *	TopLevel it is a decendant of.
+ *	Updates the X & Y offsets of the given TkWindow from the TopLevel it is
+ *	a descendant of.
  *
  * Results:
  *	None.
  *
  * Side effects:
- *	The xOff & yOff fields for the Mac window datastructure
- *	is updated to the proper offset.
+ *	The xOff & yOff fields for the Mac window datastructure is updated to
+ *	the proper offset.
  *
  *----------------------------------------------------------------------
  */
@@ -1324,11 +1366,12 @@ UpdateOffsets(
 
     if (winPtr->privatePtr == NULL) {
 	/*
-	 * We haven't called Tk_MakeWindowExist for this window yet. The
-	 * offset information will be postponed and calulated at that
-	 * time. (This will usually only happen when a mapped parent is
-	 * being moved but has child windows that have yet to be mapped.)
+	 * We haven't called Tk_MakeWindowExist for this window yet. The offset
+	 * information will be postponed and calulated at that time. (This will
+	 * usually only happen when a mapped parent is being moved but has
+	 * child windows that have yet to be mapped.)
 	 */
+
 	return;
     }
 
@@ -1366,7 +1409,7 @@ UpdateOffsets(
  *	Returns a handle to a new pixmap.
  *
  * Side effects:
- *	Allocates a new Macintosh GWorld.
+ *	Allocates a new CGBitmapContext.
  *
  *----------------------------------------------------------------------
  */
@@ -1384,29 +1427,19 @@ Tk_GetPixmap(
     if (display != NULL) {
 	display->request++;
     }
-    macPix = (MacDrawable *) ckalloc(sizeof(MacDrawable));
+    macPix = ckalloc(sizeof(MacDrawable));
     macPix->winPtr = NULL;
     macPix->xOff = 0;
     macPix->yOff = 0;
     macPix->visRgn = NULL;
     macPix->aboveVisRgn = NULL;
-    macPix->drawRect = CGRectNull;
+    macPix->drawRgn = NULL;
     macPix->referenceCount = 0;
     macPix->toplevel = NULL;
     macPix->flags = TK_IS_PIXMAP | (depth == 1 ? TK_IS_BW_PIXMAP : 0);
-    macPix->grafPtr = NULL;
+    macPix->view = nil;
     macPix->context = NULL;
     macPix->size = CGSizeMake(width, height);
-    {
-	Rect bounds = {0, 0, height, width};
-
-	ChkErr(NewGWorld, &macPix->grafPtr, depth == 1 ? 1 : 0, &bounds, NULL,
-		NULL, 0
-#ifdef __LITTLE_ENDIAN__
-		| kNativeEndianPixMap
-#endif
-		);
-    }
 
     return (Pixmap) macPix;
 }
@@ -1422,7 +1455,7 @@ Tk_GetPixmap(
  *	None.
  *
  * Side effects:
- *	Deletes the Macintosh GWorld created by Tk_GetPixmap.
+ *	Deletes the CGBitmapContext created by Tk_GetPixmap.
  *
  *----------------------------------------------------------------------
  */
@@ -1435,18 +1468,20 @@ Tk_FreePixmap(
     MacDrawable *macPix = (MacDrawable *) pixmap;
 
     display->request++;
-    if (macPix->grafPtr) {
-	DisposeGWorld(macPix->grafPtr);
-    }
     if (macPix->context) {
-	TkMacOSXDbgMsg("Cannot free CG backed Pixmap");
+	char *data = CGBitmapContextGetData(macPix->context);
+
+	if (data) {
+	    ckfree(data);
+	}
+	CFRelease(macPix->context);
     }
-    ckfree((char *) macPix);
+    ckfree(macPix);
 }
 
 /*
  * Local Variables:
- * mode: c
+ * mode: objc
  * c-basic-offset: 4
  * fill-column: 79
  * coding: utf-8

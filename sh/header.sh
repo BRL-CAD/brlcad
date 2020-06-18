@@ -2,7 +2,7 @@
 #                       H E A D E R . S H
 # BRL-CAD
 #
-# Copyright (c) 2004-2016 United States Government as represented by
+# Copyright (c) 2004-2020 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -353,7 +353,7 @@ copyrightline="`grep -i copyright $FILE | grep -v -i notice | grep -v -i '\.SH' 
 if [ "x$copyrightline" = "x" ] ; then
     copyrightline="`grep -i copyright $FILE | grep -v -i united | grep -v -i '\.SH' | head -n 1`"
 fi
-copyrightline="`echo $copyrightline | head -n 1`"
+copyrightline="`echo "$copyrightline" | head -n 1`"
 
 echo "copyrightline is [$copyrightline]"
 
@@ -363,16 +363,16 @@ if [ "x$copyrightline" = "x" ] ; then
 else
     startyear="`echo "$copyrightline" | sed 's/.*\([0-9][0-9][0-9][0-9]\)-[0-9][0-9][0-9][0-9].*/\1/'`"
     echo "start is $startyear"
-    if [ `echo $startyear | wc | awk '{print $3}'` -gt 10 -o "x$startyear" = "x" ] ; then
+    if [ `echo "$startyear" | wc | awk '{print $3}'` -gt 10 -o "x$startyear" = "x" ] ; then
 	startyear="`echo "$copyrightline" | sed 's/.*[^0-9]\([0-9][0-9][0-9][0-9]\),[0-9][0-9][0-9][0-9],[0-9][0-9][0-9][0-9][^0-9].*/\1/'`"
 	echo "start2 is $startyear"
-	if [ `echo $startyear | wc | awk '{print $3}'` -gt 10 -o "x$startyear" = "x" ] ; then
+	if [ `echo "$startyear" | wc | awk '{print $3}'` -gt 10 -o "x$startyear" = "x" ] ; then
 	    startyear="`echo "$copyrightline" | sed 's/.*[^0-9]\([0-9][0-9][0-9][0-9]\),[0-9][0-9][0-9][0-9][^0-9].*/\1/'`"
 	    echo "start3 is $startyear"
-	    if [ `echo $startyear | wc | awk '{print $3}'` -gt 10 -o "x$startyear" = "x" ] ; then
+	    if [ `echo "$startyear" | wc | awk '{print $3}'` -gt 10 -o "x$startyear" = "x" ] ; then
 		startyear="`echo "$copyrightline" | sed 's/.*[^0-9]\([0-9][0-9][0-9][0-9]\)[^0-9].*/\1/'`"
 		echo "start4 is $startyear"
-		if [ `echo $startyear | wc | awk '{print $3}'` -gt 10 -o "x$startyear" = "x" ] ; then
+		if [ `echo "$startyear" | wc | awk '{print $3}'` -gt 10 -o "x$startyear" = "x" ] ; then
 		    # didn't find a year, so use current year
 		    startyear="$currentyear"
 		fi

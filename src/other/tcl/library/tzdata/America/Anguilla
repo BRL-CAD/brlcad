@@ -1,6 +1,5 @@
 # created by tools/tclZIC.tcl - do not edit
-
-set TZData(:America/Anguilla) {
-    {-9223372036854775808 -15136 0 LMT}
-    {-1825098464 -14400 0 AST}
+if {![info exists TZData(America/Port_of_Spain)]} {
+    LoadTimeZoneFile America/Port_of_Spain
 }
+set TZData(:America/Anguilla) $TZData(:America/Port_of_Spain)

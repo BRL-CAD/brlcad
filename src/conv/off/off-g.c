@@ -1,7 +1,7 @@
 /*                         O F F - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "bu/app.h"
 #include "bu/log.h"
 #include "vmath.h"
 #include "bn.h"
@@ -151,7 +152,7 @@ int read_faces(struct model *m, FILE *fgeom)
 int off2nmg(FILE *fpin, struct rt_wdb *fpout)
 {
 #define SZ 64
-    char title[SZ+1], geom_fname[SZ+1];
+    char title[SZ-1], geom_fname[SZ+1];
     char rname[SZ+1], sname[SZ+1];
 
 #define BUF_SZ 200

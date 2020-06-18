@@ -1,7 +1,7 @@
 #                        T E X T . T C L
 # BRL-CAD
 #
-# Copyright (c) 1995-2016 United States Government as represented by
+# Copyright (c) 1995-2020 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -59,14 +59,14 @@ proc distribute_text { w cmd str } {
 
 		if {$cmd != ""} {
 		    mged_print_tag $_w "mged:$src_id> " prompt
-		    mged_print_tag $_w $cmd\n oldcmd
+		    mged_print_tag $_w "$cmd\n" oldcmd
 		}
 
 		if {$str != ""} {
 		    if {[string index $str end] == "\n"} {
-			mged_print_tag $_w $str result
+			mged_print_tag $_w "$str" result
 		    } else {
-			mged_print_tag $_w $str\n result
+			mged_print_tag $_w "$str\n" result
 		    }
 		}
 
@@ -344,7 +344,7 @@ proc gets_execute_cmd {w} {
     rename execute_cmd_save execute_cmd
 
     $w mark set insert {end - 2c}
-    $w insert insert \n
+    $w insert insert "\n"
 
     $w see insert
     update
@@ -356,7 +356,7 @@ proc execute_cmd {w} {
     global mged_gui
 
     $w mark set insert {end - 2c}
-    $w insert insert \n
+    $w insert insert "\n"
 
     $w see insert
     update
@@ -373,7 +373,7 @@ proc interrupt_cmd { w } {
     set id [get_player_id_t $w]
     set mged_gui($id,cmd_prefix) ""
     set mged_gui($id,more_default) ""
-    $w insert insert \n
+    $w insert insert "\n"
     mged_print_prompt $w "mged> "
     $w see insert
 }
@@ -1678,7 +1678,7 @@ proc selection_modify { w x y } {
 }
 
 proc mged_print { w str } {
-    $w insert insert $str
+    $w insert insert "$str"
 }
 
 proc mged_print_prompt { w str } {
@@ -1689,7 +1689,7 @@ proc mged_print_prompt { w str } {
 
 proc mged_print_tag { w str tag } {
     set first [$w index insert]
-    $w insert insert $str
+    $w insert insert "$str"
     set last [$w index insert]
     $w tag add $tag $first $last
 }
@@ -2021,7 +2021,7 @@ proc set_text_key_bindings { id } {
 	break
     }
 
-    if {$tcl_platform(platform) == "windows"} {
+    if {$::tcl_platform(platform) == "windows"} {
 	bind $w <Control-c> "do_windows_copy $w; break"
     } else {
 	bind $w <Control-c> "\

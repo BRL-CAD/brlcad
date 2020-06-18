@@ -5,24 +5,11 @@ DOXYGEN_FEATURE("Solid Raytracing" DESCRIPTION "Ray/geometry intersection calcul
 
 # Minimal directories required for any BRL-CAD functionality
 
-# Define some common definitions here that are used
-# in most BRL-CAD directories
-
-add_definitions(
-  -DHAVE_CONFIG_H
-  -DBRLCADBUILD=1
-  )
-
 if(MSVC)
   add_definitions(
     -D_CRT_SECURE_NO_WARNINGS
     )
-  # FIXME: these should be proper library checks, not based on MSVC "platform"
-  set(WINSOCK_LIB ws2_32.lib)
-  set(PSAPI_LIB psapi.lib)
-  set(RPCRT_LIB rpcrt4.lib)
 endif(MSVC)
-
 
 # We need to define a number of "components" to allow for easy building of
 # subsets of BRL-CAD.  We will control this process with an advanced
@@ -51,13 +38,11 @@ set(level_2_dirs
   libfb
   libgcv
   libanalyze
-  libged
   liboptical
-  libcursor
+  libged
   libdm
   libfft
   libicv
-  libmultispectral
   libpc
   libtclcad
   libtermio
@@ -66,31 +51,26 @@ set(level_2_dirs
 # Level 3 directories contain BRL-CAD's executables.  Setting
 # the BRLCAD_ENABLE_TARGETS level to 3 will enable all programs.
 
-# FIXME: Ideally these should all be in the above list,
+# FIXME: Ideally these should all be in the below list,
 # need to fix them on Windows.
 if(NOT WIN32)
-  set(non_win32_dirs remrt rttherm)
+  set(non_win32_dirs remrt)
 endif(NOT WIN32)
 
 set(level_3_dirs
-  anim
   brlman
   burst
   bwish
   conv
   fb
-  fbed
   fbserv
   gtools
-  halftone
-  irprep
-  lgt
   nirt
   proc-db
   rt
+  art
   shapes
   sig
-  tab
   util
   external
   ${non_win32_dirs}
@@ -141,41 +121,50 @@ while(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
   foreach(subdir ${level_${current_level}_dirs})
     if(${current_level} LESS ${BRLCAD_ENABLE_TARGETS} OR ${current_level} EQUAL ${BRLCAD_ENABLE_TARGETS} )
       verbose_add_subdirectory(src ${subdir})
-    else(${current_level} LESS ${BRLCAD_ENABLE_TARGETS} OR ${current_level} EQUAL ${BRLCAD_ENABLE_TARGETS} )
-      CMAKEFILES(${subdir})
     endif(${current_level} LESS ${BRLCAD_ENABLE_TARGETS} OR ${current_level} EQUAL ${BRLCAD_ENABLE_TARGETS} )
   endforeach(subdir ${level_${current_level}_dirs})
 endwhile(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
 
-# This corresponds roughly to the libbrlcad definition in
-# the autotools build.  It needs CMake 2.8.8 plus changes
-# to the BRLCAD_ADDLIB macro to define OBJECT add_library
-# targets, and is commented out for now, but this is the
-# starting point for a "proper" libbrlcad
-#if(${HIGHEST_TARGET_LEVEL} GREATER 1)
-#  add_library(libbrlcad STATIC
-#    $<TARGET_OBJECTS:libbu_OBJECTS>
-#    $<TARGET_OBJECTS:libbn_OBJECTS>
-#    $<TARGET_OBJECTS:librt_OBJECTS>
-#    $<TARGET_OBJECTS:libwdb_OBJECTS>
-#    $<TARGET_OBJECTS:libicv_OBJECTS>
-#    $<TARGET_OBJECTS:libged_OBJECTS>
-#    )
-#  target_link_libraries(libbrlcad ${OPENNURBS_LIBRARIES} ${TCL_LIBRARY})
-#endif(${HIGHEST_TARGET_LEVEL} GREATER 1)
+# This corresponds roughly to the libbrlcad originally defined in BRL-CAD
+# autotools build.
+if(BRLCAD_ENABLE_BRLCAD_LIBRARY AND USE_OBJECT_LIBS)
+  set(current_level 1)
+  while(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
+    set(wl 1)
+    math(EXPR cml "${current_level} + 1")
+    while(${wl} LESS ${cml})
+      foreach(llib ${level_${wl}_dirs})
+	if(TARGET ${llib})
+	  set(libbrlcad_objs ${libbrlcad_objs} $<TARGET_OBJECTS:${llib}-obj>)
+	endif(TARGET ${llib})
+      endforeach(llib ${level_${wl}_dirs})
+      math(EXPR wl "${wl} + 1")
+    endwhile(${wl} LESS ${cml})
+    if("${current_level}" EQUAL 1)
+      add_library(libbrlcad-core SHARED ${libbrlcad_objs})
+      add_library(libbrlcad-core-static STATIC ${libbrlcad_objs})
+    endif("${current_level}" EQUAL 1)
+    if("${current_level}" EQUAL 2)
+      add_library(libbrlcad SHARED ${libbrlcad_objs})
+      add_library(libbrlcad-static STATIC ${libbrlcad_objs})
+    endif("${current_level}" EQUAL 2)
+    math(EXPR current_level "${current_level} + 1")
+  endwhile(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
+endif(BRLCAD_ENABLE_BRLCAD_LIBRARY AND USE_OBJECT_LIBS)
 
-CMAKEFILES(README)
+CMAKEFILES(
+  CMakeLists.txt
+  README
+  )
 
 # Add a convenience directory that is only added to the
 # build if it exists.  This directory is ignored by svn,
 # so it can be used for experimentation that needs to be
 # part of the build but the dev doesn't want to accidentally
 # commit.
-if(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
-  if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/testing)
-    add_subdirectory(testing)
-  endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/testing)
-endif(NOT BRLCAD_ENABLE_TARGETS OR "${BRLCAD_ENABLE_TARGETS}" GREATER 2)
+if("${BRLCAD_ENABLE_TARGETS}" GREATER 2 AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/testing)
+  add_subdirectory(testing)
+endif("${BRLCAD_ENABLE_TARGETS}" GREATER 2 AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/testing)
 
 
 # Local Variables:

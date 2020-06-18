@@ -1,7 +1,7 @@
 /*                           V L S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,18 +20,23 @@
 
 #include "common.h"
 
-#include <stdlib.h>
-#include <ctype.h>
-#include <string.h>
-#include <stdarg.h>
 #include <assert.h>
+#include <ctype.h>
+#include <errno.h> /* for errno */
+#include <limits.h> /* for LONG_MAX */
+#include <stdarg.h>
+#include <stdlib.h> /* for strtol */
+#include <string.h>
+
 
 #include "bio.h"
 
+#include "vmath.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
 #include "bu/str.h"
+#include "bu/uuid.h"
 #include "bu/vls.h"
 
 #include "./vls_vprintf.h"
@@ -43,13 +48,13 @@ extern const char bu_strdup_message[];
 /* private constants */
 
 /* minimum initial allocation size */
-static const unsigned int _VLS_ALLOC_MIN = 32;
+static const unsigned int VLS_ALLOC_MIN = 32;
 
 /* minimum vls allocation increment size */
-static const size_t _VLS_ALLOC_STEP = 128;
+static const size_t VLS_ALLOC_STEP = 128;
 
 /* minimum vls buffer allocation size */
-static const unsigned int _VLS_ALLOC_READ = 4096;
+static const unsigned int VLS_ALLOC_READ = BU_PAGE_SIZE;
 
 void
 bu_vls_init(struct bu_vls *vp)
@@ -137,8 +142,8 @@ bu_vls_extend(struct bu_vls *vp, size_t extra)
     BU_CK_VLS(vp);
 
     /* allocate at least 32 bytes (8 or 4 words) extra */
-    if (extra < _VLS_ALLOC_MIN)
-	extra = _VLS_ALLOC_MIN;
+    if (extra < VLS_ALLOC_MIN)
+	extra = VLS_ALLOC_MIN;
 
     /* first time allocation.
      *
@@ -158,10 +163,10 @@ bu_vls_extend(struct bu_vls *vp, size_t extra)
     }
 
     /* make sure to increase in step sized increments */
-    if (extra < _VLS_ALLOC_STEP)
-	extra = _VLS_ALLOC_STEP;
-    else if (extra % _VLS_ALLOC_STEP != 0)
-	extra += _VLS_ALLOC_STEP - (extra % _VLS_ALLOC_STEP);
+    if (extra < VLS_ALLOC_STEP)
+	extra = VLS_ALLOC_STEP;
+    else if (extra % VLS_ALLOC_STEP != 0)
+	extra += VLS_ALLOC_STEP - (extra % VLS_ALLOC_STEP);
 
     /* need more space? */
     if (vp->vls_offset + vp->vls_len + extra >= vp->vls_max) {
@@ -207,13 +212,15 @@ bu_vls_trunc(struct bu_vls *vp, int len)
     if (len == 0)
 	vp->vls_offset = 0;
 
-    vp->vls_str[len+vp->vls_offset] = '\0'; /* force null termination */
+    if (vp->vls_str)
+	vp->vls_str[len+vp->vls_offset] = '\0'; /* force null termination */
+
     vp->vls_len = len;
 }
 
 
 void
-bu_vls_nibble(struct bu_vls *vp, off_t len)
+bu_vls_nibble(struct bu_vls *vp, b_off_t len)
 {
     BU_CK_VLS(vp);
 
@@ -591,7 +598,7 @@ bu_vls_read(struct bu_vls *vp, int fd)
     BU_CK_VLS(vp);
 
     for (;;) {
-	bu_vls_extend(vp, _VLS_ALLOC_READ);
+	bu_vls_extend(vp, VLS_ALLOC_READ);
 	todo = vp->vls_max - vp->vls_len - vp->vls_offset - 1;
 
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -666,7 +673,7 @@ bu_vls_gets(struct bu_vls *vp, FILE *fp)
     if (endlen < startlen)
 	return -1;
 
-    return endlen;
+    return (int)endlen;
 }
 
 void
@@ -675,7 +682,7 @@ bu_vls_putc(struct bu_vls *vp, int c)
     BU_CK_VLS(vp);
 
     if (vp->vls_offset + vp->vls_len+1 >= vp->vls_max)
-	bu_vls_extend(vp, _VLS_ALLOC_STEP);
+	bu_vls_extend(vp, VLS_ALLOC_STEP);
 
     vp->vls_str[vp->vls_offset + vp->vls_len++] = (char)c;
     vp->vls_str[vp->vls_offset + vp->vls_len] = '\0'; /* force null termination */
@@ -776,7 +783,7 @@ bu_vls_detab(struct bu_vls *vp)
     BU_CK_VLS(vp);
 
     bu_vls_vlscatzap(&src, vp);	/* make temporary copy of src */
-    bu_vls_extend(vp, bu_vls_strlen(&src) + _VLS_ALLOC_STEP);
+    bu_vls_extend(vp, bu_vls_strlen(&src) + VLS_ALLOC_STEP);
 
     cp = bu_vls_addr(&src);
     used = 0;
@@ -801,7 +808,7 @@ bu_vls_detab(struct bu_vls *vp)
 
 
 void
-bu_vls_prepend(struct bu_vls *vp, char *str)
+bu_vls_prepend(struct bu_vls *vp, const char *str)
 {
     size_t len = strlen(str);
 
@@ -814,6 +821,89 @@ bu_vls_prepend(struct bu_vls *vp, char *str)
     memcpy(vp->vls_str+vp->vls_offset, str, len);
 
     vp->vls_len += len;
+}
+
+HIDDEN int
+vls_char_in_set(const char *c, const char *str)
+{
+    unsigned int i = 0;
+    if (!c || !str) return 0;
+    for (i = 0; i < strlen(str); i++) {
+	if ((unsigned char)(*c) == (unsigned char )(str[i])) return 1;
+    }
+    return 0;
+}
+
+int
+bu_vls_simplify(struct bu_vls *vp, const char *keep, const char *de_dup, const char *trim)
+{
+    struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
+    const char *tr;
+    unsigned char *c = NULL;
+    int ret = 0;
+
+    if (!vp || bu_vls_strlen(vp) == 0) return 0;
+
+    /* Map for replacing diacritic characters(code >= 192) from the extended
+     * ASCII set with a specific mapping from the standard ASCII set. See
+     * http://stackoverflow.com/questions/14094621/ for more info */
+
+    /*   "ÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖ×ØÙÚÛÜÝÞßàáâãäåæçèéêëìíîïðñòóôõö÷øùúûüýþÿ" */
+    tr = "AAAAAAECEEEEIIIIDNOOOOOx0UUUUYPsaaaaaaeceeeeiiiiOnooooo/0uuuuypy";
+
+    c = (unsigned char *)bu_vls_addr(vp);
+    while (*c) {
+	unsigned char ch = (*c);
+	if (vls_char_in_set((const char *)&ch, keep)) {
+	    bu_vls_putc(&tmpstr, ch);
+	} else {
+	    if (isalnum(ch)) {
+		bu_vls_putc(&tmpstr, ch);
+	    } else {
+		if (ch >= 192 && ch < strlen(tr) + 192) {
+		    bu_vls_putc(&tmpstr, tr[ch-192]);
+		} else {
+		    bu_vls_putc(&tmpstr, '_');
+		}
+	    }
+	}
+	c++;
+    }
+
+    if (de_dup) {
+	struct bu_vls dd_str = BU_VLS_INIT_ZERO;
+	unsigned char ch, currh;
+	c = (unsigned char *)bu_vls_addr(&tmpstr);
+	if (*c) bu_vls_putc(&dd_str, (unsigned char)(*c));
+	while (*c) {
+	    ch = (unsigned char)(*c);
+	    c++;
+	    currh = (unsigned char)(*c);
+	    if (!(ch == currh && vls_char_in_set((const char *)&currh, de_dup))) {
+		bu_vls_putc(&dd_str, currh);
+	    }
+	}
+	bu_vls_sprintf(&tmpstr, "%s", bu_vls_addr(&dd_str));
+	bu_vls_free(&dd_str);
+    }
+
+
+    if (trim) {
+	int ccnt = 0;
+	c = (unsigned char *)bu_vls_addr(&tmpstr);
+	while (*c && vls_char_in_set((const char *)c, trim)) {ccnt++; c++;}
+	if (ccnt) bu_vls_nibble(&tmpstr, ccnt);
+	ccnt = 0;
+	c = (unsigned char *)&(bu_vls_addr(&tmpstr)[(strlen(bu_vls_addr(&tmpstr)) - 1)]);
+	while (*c && vls_char_in_set((const char *)c, trim)) {ccnt++; c--;}
+	if (ccnt)
+	    bu_vls_trunc(&tmpstr, (int)(bu_vls_strlen(&tmpstr) - ccnt));
+    }
+
+    ret = (!bu_vls_strcmp(&tmpstr, vp)) ? 0 : 1;
+    bu_vls_sprintf(vp, "%s", bu_vls_addr(&tmpstr));
+    bu_vls_free(&tmpstr);
+    return ret;
 }
 
 /*

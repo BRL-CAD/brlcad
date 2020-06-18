@@ -1,4 +1,0 @@
-SET(libtermlib_ignore_files
-termcap.h
-termcap.src
-)

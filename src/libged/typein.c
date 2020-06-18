@@ -1,7 +1,7 @@
 /*                        T Y P E I N . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2016 United States Government as represented by
+ * Copyright (c) 1985-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,13 +30,14 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bu/opt.h"
 #include "rt/geom.h"
 #include "wdb.h"
 
 #include "./ged_private.h"
+#include "./pnts_util.h"
 
-
-static char *p_half[] = {
+static const char *p_half[] = {
     "Enter X, Y, Z of outward pointing normal vector: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -44,7 +45,7 @@ static char *p_half[] = {
 };
 
 
-static char *p_dsp_v4[] = {
+static const char *p_dsp_v4[] = {
     "Enter name of displacement-map file: ",
     "Enter width of displacement-map (number of values): ",
     "Enter length of displacement-map (number of values): ",
@@ -54,7 +55,7 @@ static char *p_dsp_v4[] = {
 };
 
 
-static char *p_dsp_v5[] = {
+static const char *p_dsp_v5[] = {
     "Take data from file or database binary object [f|o]:",
     "Enter name of file/object: ",
     "Enter width of displacement-map (number of values): ",
@@ -66,7 +67,7 @@ static char *p_dsp_v5[] = {
 };
 
 
-static char *p_hf[] = {
+static const char *p_hf[] = {
     "Enter name of control file (or \"\" for none): ",
     "Enter name of data file (containing heights): ",
     "Enter 'cv' style format of data [h|n][s|u]c|s|i|l|d|8|16|32|64: ",
@@ -89,22 +90,23 @@ static char *p_hf[] = {
 };
 
 
-static char *p_ebm[] = {
-    "Enter name of bit-map file: ",
+static const char *p_ebm[] = {
+    "Take data from file or database binary object [f|o]: ",
+    "Enter name of file/object: ",
     "Enter width of bit-map (number of cells): ",
     "Enter height of bit-map (number of cells): ",
     "Enter extrusion distance: "
 };
 
 
-static char *p_submodel[] = {
+static const char *p_submodel[] = {
     "Enter name of treetop: ",
     "Enter space partitioning method: ",
     "Enter name of .g file (or \"\" for none): "
 };
 
 
-static char *p_vol[] = {
+static const char *p_vol[] = {
     "Enter name of file containing voxel data: ",
     "Enter X, Y, Z dimensions of file (number of cells): ",
     "Enter Y dimension of file (number of cells): ",
@@ -117,7 +119,7 @@ static char *p_vol[] = {
 };
 
 
-static char *p_bot[] = {
+static const char *p_bot[] = {
     "Enter number of vertices: ",
     "Enter number of triangles: ",
     "Enter mode (1->surface, 2->solid, 3->plate): ",
@@ -133,7 +135,7 @@ static char *p_bot[] = {
 };
 
 
-static char *p_arbn[] = {
+static const char *p_arbn[] = {
     "Enter number of planes: ",
     "Enter coefficients",
     "Enter Y-coordinate of normal",
@@ -142,7 +144,7 @@ static char *p_arbn[] = {
 };
 
 
-static char *p_pipe[] = {
+static const char *p_pipe[] = {
     "Enter number of points: ",
     "Enter X, Y, Z, inner diameter, outer diameter, and bend radius for first point: ",
     "Enter Y: ",
@@ -159,7 +161,7 @@ static char *p_pipe[] = {
 };
 
 
-static char *p_ars[] = {
+static const char *p_ars[] = {
     "Enter number of points per waterline, and number of waterlines: ",
     "Enter number of waterlines: ",
     "Enter X, Y, Z for First row point: ",
@@ -171,7 +173,7 @@ static char *p_ars[] = {
 };
 
 
-static char *p_arb[] = {
+static const char *p_arb[] = {
     "Enter X, Y, Z for point 1: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -199,7 +201,7 @@ static char *p_arb[] = {
 };
 
 
-static char *p_sph[] = {
+static const char *p_sph[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -207,7 +209,7 @@ static char *p_sph[] = {
 };
 
 
-static char *p_ellg[] = {
+static const char *p_ellg[] = {
     "Enter X, Y, Z of focus point 1: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -218,7 +220,7 @@ static char *p_ellg[] = {
 };
 
 
-static char *p_ell1[] = {
+static const char *p_ell1[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -229,7 +231,7 @@ static char *p_ell1[] = {
 };
 
 
-static char *p_ell[] = {
+static const char *p_ell[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -245,7 +247,7 @@ static char *p_ell[] = {
 };
 
 
-static char *p_tor[] = {
+static const char *p_tor[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -257,7 +259,7 @@ static char *p_tor[] = {
 };
 
 
-static char *p_rcc[] = {
+static const char *p_rcc[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -268,7 +270,7 @@ static char *p_rcc[] = {
 };
 
 
-static char *p_tec[] = {
+static const char *p_tec[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -285,7 +287,7 @@ static char *p_tec[] = {
 };
 
 
-static char *p_rec[] = {
+static const char *p_rec[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -301,7 +303,7 @@ static char *p_rec[] = {
 };
 
 
-static char *p_trc[] = {
+static const char *p_trc[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -313,7 +315,7 @@ static char *p_trc[] = {
 };
 
 
-static char *p_tgc[] = {
+static const char *p_tgc[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -331,7 +333,7 @@ static char *p_tgc[] = {
 };
 
 
-static char *p_box[] = {
+static const char *p_box[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -347,7 +349,7 @@ static char *p_box[] = {
 };
 
 
-static char *p_rpp[] = {
+static const char *p_rpp[] = {
     "Enter XMIN, XMAX, YMIN, YMAX, ZMIN, ZMAX: ",
     "Enter XMAX: ",
     "Enter YMIN, YMAX, ZMIN, ZMAX: ",
@@ -357,14 +359,14 @@ static char *p_rpp[] = {
 };
 
 
-static char *p_orpp[] = {
+static const char *p_orpp[] = {
     "Enter XMAX, YMAX, ZMAX: ",
     "Enter YMAX, ZMAX: ",
     "Enter ZMAX: "
 };
 
 
-static char *p_rpc[] = {
+static const char *p_rpc[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -378,7 +380,7 @@ static char *p_rpc[] = {
 };
 
 
-static char *p_part[] = {
+static const char *p_part[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -390,7 +392,7 @@ static char *p_part[] = {
 };
 
 
-static char *p_rhc[] = {
+static const char *p_rhc[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -405,7 +407,7 @@ static char *p_rhc[] = {
 };
 
 
-static char *p_epa[] = {
+static const char *p_epa[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -419,7 +421,7 @@ static char *p_epa[] = {
 };
 
 
-static char *p_ehy[] = {
+static const char *p_ehy[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -434,7 +436,7 @@ static char *p_ehy[] = {
 };
 
 
-static char *p_hyp[] = {
+static const char *p_hyp[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -449,7 +451,7 @@ static char *p_hyp[] = {
 };
 
 
-static char *p_eto[] = {
+static const char *p_eto[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -464,14 +466,14 @@ static char *p_eto[] = {
 };
 
 
-static char *p_binunif[] = {
+static const char *p_binunif[] = {
     "Enter minor type (f, d, c, s, i, L, C, S, I, or L): ",
     "Enter name of file containing the data: ",
     "Enter number of values to read (-1 for entire file): "
 };
 
 
-static char *p_extrude[] = {
+static const char *p_extrude[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -489,7 +491,7 @@ static char *p_extrude[] = {
 };
 
 
-static char *p_grip[] = {
+static const char *p_grip[] = {
     "Enter X, Y, Z of center: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -501,7 +503,7 @@ static char *p_grip[] = {
 };
 
 
-static char *p_superell[] = {
+static const char *p_superell[] = {
     "Enter X, Y, Z of superellipse vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -519,7 +521,7 @@ static char *p_superell[] = {
 };
 
 
-static char *p_metaball[] = {
+static const char *p_metaball[] = {
     "Enter render method: ",
     "Enter threshold: ",
     "Enter number of points: ",
@@ -534,7 +536,7 @@ static char *p_metaball[] = {
 };
 
 
-static char *p_revolve[] = {
+static const char *p_revolve[] = {
     "Enter X, Y, Z of vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -549,30 +551,30 @@ static char *p_revolve[] = {
 };
 
 
-static char *p_pnts[] = {
-    "Are points in a file (yes/no)? ",
-    "Enter number of points (-1 for auto): ",
-    "Are the points orientated (yes/no)? ",
-    "Do the points have color values (yes/no)? ",
-    "Do the points differ in size (yes/no)? ",
-    "Enter default point size (>= 0.0): ",
-    "Enter X, Y, Z position",
-    "Enter Y position component",
-    "Enter Z position component",
-    "Enter X, Y, Z orientation vector",
-    "Enter Y orientation vector component",
-    "Enter Z orientation vector component",
-    "Enter R, G, B color values (0 to 255)",
-    "Enter G component color value",
-    "Enter B component color value",
-    "Enter point size (>= 0.0, -1 for default)",
-    "Enter point file path and name: ",
-    "Enter file data format (px, py, pz, cr, cg, cb, s, nx, ny, nz): ",
-    "Enter file data units ([mm|cm|m|in|ft]): "
+static const char *p_pnts[] = {
+    /*00*/ "Are points in a file (yes/no)? ",
+    /*01*/ "Enter number of points (-1 for auto): ",
+    /*02*/ "Are the points orientated (yes/no)? ",
+    /*03*/ "Do the points have color values (yes/no)? ",
+    /*04*/ "Do the points differ in size (yes/no)? ",
+    /*05*/ "Enter default point size (>= 0.0): ",
+    /*06*/ "Enter X, Y, Z position",
+    /*07*/ "Enter Y position component",
+    /*08*/ "Enter Z position component",
+    /*09*/ "Enter X, Y, Z orientation vector",
+    /*10*/ "Enter Y orientation vector component",
+    /*11*/ "Enter Z orientation vector component",
+    /*12*/ "Enter R, G, B color values (0 to 255)",
+    /*13*/ "Enter G component color value",
+    /*14*/ "Enter B component color value",
+    /*15*/ "Enter point size (>= 0.0, -1 for default)",
+    /*16*/ "Enter point file path and name: ",
+    /*17*/ "Enter file data format (px, py, pz, cr, cg, cb, s, nx, ny, nz): ",
+    /*18*/ "Enter file data units ([mm|cm|m|in|ft]): "
 };
 
 
-static char *p_hrt[] = {
+static const char *p_hrt[] = {
     "Enter X, Y, Z of the heart vertex: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -588,7 +590,7 @@ static char *p_hrt[] = {
     "Enter distance to cusps: "
 };
 
-static char *p_joint[] = {
+static const char *p_joint[] = {
     "Enter X, Y, Z of the joint location: ",
     "Enter Y: ",
     "Enter Z: ",
@@ -603,7 +605,7 @@ static char *p_joint[] = {
     "Reference Path 2: "
 };
 
-static char *p_datum[] = {
+static const char *p_datum[] = {
     "Enter a datum type ([point|line|plane]): ",
     "Enter X, Y, Z for the datum point: ", /* 1 == point prompts */
     "Enter Y: ",
@@ -619,9 +621,33 @@ static char *p_datum[] = {
     "Enter Z: ",
     "Enter X, Y, Z for the datum plane direction vector: ",
     "Enter Y: ",
-    "Enter Z: ",
+    "Enter Z: "
 };
 
+
+/**
+ * TODO:
+ * Add support for the line,curve,beizer,nurb
+ */
+static const char *p_annot[] = {
+    "Enter the point to be annotated: ",
+    "Enter Y: ",
+    "Enter Z: ",
+    "Enter the text label: ",
+    "Enter X, Y for the text placement: ",
+    "Enter Y: ",
+    "Enter relative horizontal position (1->left, 2->center, 3->right): ",
+    "Enter relative vertical position (1->bottom, 2->middle, 3->top): "
+};
+
+
+/**
+ * TODO:
+ * add support
+ */
+static const char *p_script[] = {
+    "Enter the script type: "
+};
 
 /**
  * helper function that infers a boolean value from a given string
@@ -745,11 +771,22 @@ ebm_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     intern->idb_ptr = (void *)ebm;
     ebm->magic = RT_EBM_INTERNAL_MAGIC;
 
-    bu_strlcpy(ebm->file, cmd_argvs[3], RT_EBM_NAME_LEN);
-    ebm->xdim = atoi(cmd_argvs[4]);
-    ebm->ydim = atoi(cmd_argvs[5]);
-    ebm->tallness = atof(cmd_argvs[6]) * gedp->ged_wdbp->dbip->dbi_local2base;
+    bu_strlcpy(ebm->name, cmd_argvs[4], RT_EBM_NAME_LEN);
+    ebm->xdim = atoi(cmd_argvs[5]);
+    ebm->ydim = atoi(cmd_argvs[6]);
+    ebm->tallness = atof(cmd_argvs[7]) * gedp->ged_wdbp->dbip->dbi_local2base;
     MAT_IDN(ebm->mat);
+
+    ebm->buf = NULL;
+    ebm->mp = NULL;
+    ebm->bip = NULL;
+
+    if (*cmd_argvs[3] == 'f' || *cmd_argvs[3] == 'F')
+	ebm->datasrc = RT_EBM_SRC_FILE;
+    else if (*cmd_argvs[3] == 'o' || *cmd_argvs[3] == 'O')
+	ebm->datasrc = RT_EBM_SRC_OBJ;
+    else
+	return GED_ERROR;
 
     return GED_OK;
 }
@@ -848,14 +885,14 @@ dsp_in_v5(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inter
     dsp->dsp_smooth = atoi(cmd_argvs[7]);
 
     switch (*cmd_argvs[8]) {
-	case 'a':	/* adaptive */
+	case 'a':       /* adaptive */
 	case 'A':
 	    dsp->dsp_cuttype = DSP_CUT_DIR_ADAPT;
 	    break;
-	case 'l':	/* lower left to upper right */
+	case 'l':       /* lower left to upper right */
 	    dsp->dsp_cuttype = DSP_CUT_DIR_llUR;
 	    break;
-	case 'L':	/* Upper Left to lower right */
+	case 'L':       /* Upper Left to lower right */
 	    dsp->dsp_cuttype = DSP_CUT_DIR_ULlr;
 	    break;
 	default:
@@ -977,7 +1014,7 @@ vol_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 
 
 static int
-bot_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt)
+bot_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, const char **prompt)
 {
     int i;
     int num_verts, num_faces;
@@ -1086,7 +1123,7 @@ bot_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
 
 
 static int
-arbn_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt)
+arbn_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, const char **prompt)
 {
     struct rt_arbn_internal *arbn;
     int num_planes=0;
@@ -1127,7 +1164,7 @@ arbn_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 
 
 static int
-pipe_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt)
+pipe_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, const char **prompt)
 {
     struct rt_pipe_internal *pipeip;
     int i, num_points;
@@ -1162,17 +1199,17 @@ pipe_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     pipeip->pipe_magic = RT_PIPE_INTERNAL_MAGIC;
     BU_LIST_INIT(&pipeip->pipe_segs_head);
     for (i = 4; i < argc; i += 6) {
-	struct wdb_pipept *pipept;
+	struct wdb_pipe_pnt *pipe_pnt;
 
-	BU_ALLOC(pipept, struct wdb_pipept);
-	pipept->pp_coord[0] = atof(argv[i]) * gedp->ged_wdbp->dbip->dbi_local2base;
-	pipept->pp_coord[1] = atof(argv[i+1]) * gedp->ged_wdbp->dbip->dbi_local2base;
-	pipept->pp_coord[2] = atof(argv[i+2]) * gedp->ged_wdbp->dbip->dbi_local2base;
-	pipept->pp_id = atof(argv[i+3]) * gedp->ged_wdbp->dbip->dbi_local2base;
-	pipept->pp_od = atof(argv[i+4]) * gedp->ged_wdbp->dbip->dbi_local2base;
-	pipept->pp_bendradius = atof(argv[i+5]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	BU_ALLOC(pipe_pnt, struct wdb_pipe_pnt);
+	pipe_pnt->pp_coord[0] = atof(argv[i]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	pipe_pnt->pp_coord[1] = atof(argv[i+1]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	pipe_pnt->pp_coord[2] = atof(argv[i+2]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	pipe_pnt->pp_id = atof(argv[i+3]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	pipe_pnt->pp_od = atof(argv[i+4]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	pipe_pnt->pp_bendradius = atof(argv[i+5]) * gedp->ged_wdbp->dbip->dbi_local2base;
 
-	BU_LIST_INSERT(&pipeip->pipe_segs_head, &pipept->l);
+	BU_LIST_INSERT(&pipeip->pipe_segs_head, &pipe_pnt->l);
     }
 
     if (rt_pipe_ck(&pipeip->pipe_segs_head)) {
@@ -1185,13 +1222,13 @@ pipe_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 
 
 static int
-ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt)
+ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, const char **prompt)
 {
     struct rt_ars_internal *arip;
     size_t i;
     size_t total_points;
-    int cv;	/* current curve (waterline) # */
-    size_t axis;	/* current fastf_t in waterline */
+    int cv;     /* current curve (waterline) # */
+    size_t axis;        /* current fastf_t in waterline */
     int ncurves_minus_one;
     int num_pts = 0;
     int num_curves = 0;
@@ -1225,8 +1262,8 @@ ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
 	return GED_MORE;
     }
 
-    total_vals_needed = 2 +		/* #rows, #pts/row */
-	(ELEMENTS_PER_POINT * 2) +	/* the first point, and very last */
+    total_vals_needed = 2 +             /* #rows, #pts/row */
+	(ELEMENTS_PER_POINT * 2) +      /* the first point, and very last */
 	(num_pts * ELEMENTS_PER_POINT * (num_curves-2)); /* the curves */
 
     if (vals_present < (total_vals_needed - ELEMENTS_PER_POINT)) {
@@ -1386,7 +1423,7 @@ arb_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     aip = (struct rt_arb_internal *)intern->idb_ptr;
     aip->magic = RT_ARB_INTERNAL_MAGIC;
 
-    n = atoi(&cmd_argvs[2][3]);	/* get # from "arb#" */
+    n = atoi(&cmd_argvs[2][3]); /* get # from "arb#" */
     for (j = 0; j < n; j++)
 	for (i = 0; i < ELEMENTS_PER_POINT; i++)
 	    aip->pt[j][i] = atof(cmd_argvs[3+i+3*j]) * gedp->ged_wdbp->dbip->dbi_local2base;
@@ -1409,7 +1446,7 @@ arb_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 	VMOVE(aip->pt[7], aip->pt[4]);
     }
 
-    return GED_OK;	/* success */
+    return GED_OK;      /* success */
 }
 
 
@@ -1428,10 +1465,25 @@ sph_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern, 
 
     intern->idb_ptr = NULL;
 
+    struct bu_vls opt_msg = BU_VLS_INIT_ZERO;
     for (i = 0; i < ELEMENTS_PER_POINT; i++) {
-	center[i] = atof(cmd_argvs[3+i]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	fastf_t optf;
+	bu_vls_trunc(&opt_msg, 0);
+	if (bu_opt_fastf_t(&opt_msg, 1, (const char **)&(cmd_argvs[3+i]), (void *)&optf) < 0) {
+	    bu_vls_printf(gedp->ged_result_str, "Value read error: %s\n", bu_vls_cstr(&opt_msg));
+	    bu_vls_free(&opt_msg);
+	    return GED_ERROR;
+	}
+	center[i] = optf * gedp->ged_wdbp->dbip->dbi_local2base;
     }
-    r = atof(cmd_argvs[6]) * gedp->ged_wdbp->dbip->dbi_local2base;
+    if (bu_opt_fastf_t(&opt_msg, 1, (const char **)&(cmd_argvs[6]), (void *)&r) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "Value read error: %s\n", bu_vls_cstr(&opt_msg));
+	bu_vls_free(&opt_msg);
+	return GED_ERROR;
+    }
+    r = r * gedp->ged_wdbp->dbip->dbi_local2base;
+
+    bu_vls_free(&opt_msg);
 
     if (r < RT_LEN_TOL) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR, radius must be greater than zero!\n");
@@ -1457,8 +1509,8 @@ ell_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     int i, n;
     struct rt_ell_internal *eip;
 
-    n = 12;				/* ELL has twelve params */
-    if (cmd_argvs[2][3] != '\0')	/* ELLG and ELL1 have seven */
+    n = 12;                             /* ELL has twelve params */
+    if (cmd_argvs[2][3] != '\0')        /* ELLG and ELL1 have seven */
 	n = 7;
 
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
@@ -1694,8 +1746,8 @@ tec_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 	return GED_ERROR;
     }
 
-    VSCALE(tip->c, tip->a, 1./ratio);	/* C vector */
-    VSCALE(tip->d, tip->b, 1./ratio);	/* D vector */
+    VSCALE(tip->c, tip->a, 1./ratio);   /* C vector */
+    VSCALE(tip->d, tip->b, 1./ratio);   /* D vector */
 
     return GED_OK;
 }
@@ -1734,8 +1786,8 @@ rec_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 	return GED_ERROR;
     }
 
-    VMOVE(tip->c, tip->a);		/* C vector */
-    VMOVE(tip->d, tip->b);		/* D vector */
+    VMOVE(tip->c, tip->a);              /* C vector */
+    VMOVE(tip->d, tip->b);              /* D vector */
 
     return GED_OK;
 }
@@ -2381,13 +2433,13 @@ grip_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
  * 1 if unsuccessful read
  */
 static int
-superell_in(struct ged *gedp, char *cmd_argvs[], struct rt_db_internal *intern)
+superell_in(struct ged *gedp, const char *cmd_argvs[], struct rt_db_internal *intern)
 {
     fastf_t vals[14];
     int i, n;
     struct rt_superell_internal *eip;
 
-    n = 14;				/* SUPERELL has 12 (same as ELL) + 2 (for <n, e>) params */
+    n = 14;                             /* SUPERELL has 12 (same as ELL) + 2 (for <n, e>) params */
 
     intern->idb_type = ID_SUPERELL;
     intern->idb_meth = &OBJ[ID_SUPERELL];
@@ -2419,7 +2471,7 @@ superell_in(struct ged *gedp, char *cmd_argvs[], struct rt_db_internal *intern)
  * should be.
  */
 static int
-metaball_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt)
+metaball_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, const char **prompt)
 {
     struct rt_metaball_internal *metaball;
     static int i, num_points;
@@ -2481,16 +2533,16 @@ metaball_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal
      * line. Is that a bug, or a feature?
      */
     for (i = 6; i + 3 < argc; i += 4) {
-	struct wdb_metaballpt *metaballpt;
+	struct wdb_metaball_pnt *metaball_pnt;
 
-	BU_ALLOC(metaballpt, struct wdb_metaballpt);
-	metaballpt->coord[0] = atof(argv[i]) * gedp->ged_wdbp->dbip->dbi_local2base;
-	metaballpt->coord[1] = atof(argv[i+1]) * gedp->ged_wdbp->dbip->dbi_local2base;
-	metaballpt->coord[2] = atof(argv[i+2]) * gedp->ged_wdbp->dbip->dbi_local2base;
-	metaballpt->fldstr = atof(argv[i+3]) * gedp->ged_wdbp->dbip->dbi_local2base;
-	metaballpt->sweat = 1.0;
+	BU_ALLOC(metaball_pnt, struct wdb_metaball_pnt);
+	metaball_pnt->coord[0] = atof(argv[i]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	metaball_pnt->coord[1] = atof(argv[i+1]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	metaball_pnt->coord[2] = atof(argv[i+2]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	metaball_pnt->fldstr = atof(argv[i+3]) * gedp->ged_wdbp->dbip->dbi_local2base;
+	metaball_pnt->sweat = 1.0;
 
-	BU_LIST_INSERT(&metaball->metaball_ctrl_head, &metaballpt->l);
+	BU_LIST_INSERT(&metaball->metaball_ctrl_head, &metaball_pnt->l);
     }
 
     return GED_OK;
@@ -2498,13 +2550,12 @@ metaball_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal
 
 
 static int
-pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt)
+pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, const char **prompt)
 {
     unsigned long i;
     unsigned long numPoints;
     long readPoints;
     struct rt_pnts_internal *pnts;
-    void *headPoint = NULL;
 
     rt_pnt_type type;
 
@@ -2527,46 +2578,22 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     /* if points are in a file */
     if (bu_str_true(argv[3])) {
 
-	/* prompt for point file path and name */
-	if (argc < 5) {
-	    bu_vls_printf(gedp->ged_result_str, "%s", prompt[16]);
-	    return GED_MORE;
-	}
-
-	/* prompt for file data format */
-	if (argc < 6) {
-	    bu_vls_printf(gedp->ged_result_str, "%s", prompt[17]);
-	    return GED_MORE;
-	}
-
-	/* prompt for file data units */
-	if (argc < 7) {
-	    bu_vls_printf(gedp->ged_result_str, "%s", prompt[18]);
-	    return GED_MORE;
-	}
-
-	/* prompt for default point size */
-	if (argc < 8) {
-	    bu_vls_printf(gedp->ged_result_str, "%s", prompt[5]);
-	    return GED_MORE;
-	}
-
-	/* call function(s) to validate 'point file data format string' and return the
-	 * point-cloud type.
+	/*                    file?   path  fmt? units? size?
+	 *       in obj pnts   yes  mydata   cr     in   123
+	 * argv [0] [1]  [2]   [3]     [4]  [5]    [6]   [7]
+	 * argc  1   2    3     4       5    6      7     8
 	 */
-
-	/* call function(s) to validate the units string and return the conversion factor to
-	 * millimeters.
-	 */
-
-	/* call function(s) to read point cloud data and save into database.
-	 */
-
 	bu_log("The ability to create a pnts primitive from a data file is not yet implemented.\n");
 
 	return GED_ERROR;
 
     } /* endif to process point data file */
+
+    /*                    file? #pnts orient? color? scale? size    data
+     *       in obj pnts    no  12345     no     yes     no 12.0 ...pnts...
+     * argv [0] [1]  [2]   [3]    [4]    [5]     [6]    [7]  [8]
+     * argc  1   2    3     4      5      6       7      8    9
+     */
 
 
     /* prompt for readPoints if not entered */
@@ -2692,6 +2719,8 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 	    case RT_PNT_TYPE_COL_SCA_NRM:
 		/* do nothing, they're in order */
 		break;
+	    default:
+		break;
 	}
 
 	bu_vls_printf(&vls, "%s for point %d: ",
@@ -2718,140 +2747,69 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     pnts->scale = defaultSize;
     pnts->type = type;
     pnts->count = numPoints;
-    pnts->point = NULL;
-
-    /* empty list head */
-    switch (type) {
-	case RT_PNT_TYPE_PNT:
-	    BU_ALLOC(headPoint, struct pnt);
-	    BU_LIST_INIT(&(((struct pnt *)headPoint)->l));
-	    break;
-	case RT_PNT_TYPE_COL:
-	    BU_ALLOC(headPoint, struct pnt_color);
-	    BU_LIST_INIT(&(((struct pnt_color *)headPoint)->l));
-	    break;
-	case RT_PNT_TYPE_SCA:
-	    BU_ALLOC(headPoint, struct pnt_scale);
-	    BU_LIST_INIT(&(((struct pnt_scale *)headPoint)->l));
-	    break;
-	case RT_PNT_TYPE_NRM:
-	    BU_ALLOC(headPoint, struct pnt_normal);
-	    BU_LIST_INIT(&(((struct pnt_normal *)headPoint)->l));
-	    break;
-	case RT_PNT_TYPE_COL_SCA:
-	    BU_ALLOC(headPoint, struct pnt_color_scale);
-	    BU_LIST_INIT(&(((struct pnt_color_scale *)headPoint)->l));
-	    break;
-	case RT_PNT_TYPE_COL_NRM:
-	    BU_ALLOC(headPoint, struct pnt_color_normal);
-	    BU_LIST_INIT(&(((struct pnt_color_normal *)headPoint)->l));
-	    break;
-	case RT_PNT_TYPE_SCA_NRM:
-	    BU_ALLOC(headPoint, struct pnt_scale_normal);
-	    BU_LIST_INIT(&(((struct pnt_scale_normal *)headPoint)->l));
-	    break;
-	case RT_PNT_TYPE_COL_SCA_NRM:
-	    BU_ALLOC(headPoint, struct pnt_color_scale_normal);
-	    BU_LIST_INIT(&(((struct pnt_color_scale_normal *)headPoint)->l));
-	    break;
-    }
-    pnts->point = headPoint;
+    pnts->point = _ged_pnts_new_pnt(pnts->type);
+    _ged_pnts_init_head_pnt(pnts);
 
     /* store points in list */
     for (i = 0; i < numPoints * valuesPerPoint; i += valuesPerPoint) {
-	void *point;
+	void *point = _ged_pnts_new_pnt(pnts->type);
+
+	/* We always have X, Y and Z as the first 3 */
+	_ged_pnt_v_set(point, pnts->type, 'x', strtod(argv[i + 0], NULL) * local2base);
+	_ged_pnt_v_set(point, pnts->type, 'y', strtod(argv[i + 1], NULL) * local2base);
+	_ged_pnt_v_set(point, pnts->type, 'z', strtod(argv[i + 2], NULL) * local2base);
 
 	/* bu_log("%d: [%s, %s, %s]\n", ((i-5)/3)+1, argv[i], argv[i+1], argv[i+2]); */
 	switch (type) {
 	    case RT_PNT_TYPE_PNT:
-		BU_ALLOC(point, struct pnt);
-		((struct pnt *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
-		((struct pnt *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
-		((struct pnt *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
-		BU_LIST_PUSH(&(((struct pnt *)headPoint)->l), &((struct pnt *)point)->l);
 		break;
 	    case RT_PNT_TYPE_COL:
-		BU_ALLOC(point, struct pnt_color);
-		((struct pnt_color *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
-		((struct pnt_color *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
-		((struct pnt_color *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
-		((struct pnt_color *)point)->c.buc_magic = BU_COLOR_MAGIC;
-		((struct pnt_color *)point)->c.buc_rgb[0 /* RED */] = strtod(argv[i + 3], NULL);
-		((struct pnt_color *)point)->c.buc_rgb[1 /* GRN */] = strtod(argv[i + 4], NULL);
-		((struct pnt_color *)point)->c.buc_rgb[2 /* BLU */] = strtod(argv[i + 5], NULL);
-		BU_LIST_PUSH(&(((struct pnt_color *)headPoint)->l), &((struct pnt_color *)point)->l);
+		_ged_pnt_c_set(point, pnts->type, 'r', strtod(argv[i + 3], NULL));
+		_ged_pnt_c_set(point, pnts->type, 'g', strtod(argv[i + 4], NULL));
+		_ged_pnt_c_set(point, pnts->type, 'b', strtod(argv[i + 5], NULL));
 		break;
 	    case RT_PNT_TYPE_SCA:
-		BU_ALLOC(point, struct pnt_scale);
-		((struct pnt_scale *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
-		((struct pnt_scale *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
-		((struct pnt_scale *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
-		((struct pnt_scale *)point)->s = strtod(argv[i + 3], NULL) * local2base;
-		BU_LIST_PUSH(&(((struct pnt_scale *)headPoint)->l), &((struct pnt_scale *)point)->l);
+		_ged_pnt_s_set(point, pnts->type, 's', strtod(argv[i + 3], NULL) * local2base);
 		break;
 	    case RT_PNT_TYPE_NRM:
-		BU_ALLOC(point, struct pnt_normal);
-		((struct pnt_normal *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
-		((struct pnt_normal *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
-		((struct pnt_normal *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
-		((struct pnt_normal *)point)->n[X] = strtod(argv[i + 3], NULL) * local2base;
-		((struct pnt_normal *)point)->n[Y] = strtod(argv[i + 4], NULL) * local2base;
-		((struct pnt_normal *)point)->n[Z] = strtod(argv[i + 5], NULL) * local2base;
-		BU_LIST_PUSH(&(((struct pnt_normal *)headPoint)->l), &((struct pnt_normal *)point)->l);
+		_ged_pnt_n_set(point, pnts->type, 'i', strtod(argv[i + 3], NULL) * local2base);
+		_ged_pnt_n_set(point, pnts->type, 'j', strtod(argv[i + 4], NULL) * local2base);
+		_ged_pnt_n_set(point, pnts->type, 'k', strtod(argv[i + 5], NULL) * local2base);
 		break;
 	    case RT_PNT_TYPE_COL_SCA:
-		BU_ALLOC(point, struct pnt_color_scale);
-		((struct pnt_color_scale *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
-		((struct pnt_color_scale *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
-		((struct pnt_color_scale *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
-		((struct pnt_color_scale *)point)->c.buc_magic = BU_COLOR_MAGIC;
-		((struct pnt_color_scale *)point)->c.buc_rgb[0 /* RED */] = strtod(argv[i + 3], NULL);
-		((struct pnt_color_scale *)point)->c.buc_rgb[1 /* GRN */] = strtod(argv[i + 4], NULL);
-		((struct pnt_color_scale *)point)->c.buc_rgb[2 /* BLU */] = strtod(argv[i + 5], NULL);
-		((struct pnt_color_scale *)point)->s = strtod(argv[i + 6], NULL) * local2base;
-		BU_LIST_PUSH(&(((struct pnt_color_scale *)headPoint)->l), &((struct pnt_color_scale *)point)->l);
+		_ged_pnt_c_set(point, pnts->type, 'r', strtod(argv[i + 3], NULL));
+		_ged_pnt_c_set(point, pnts->type, 'g', strtod(argv[i + 4], NULL));
+		_ged_pnt_c_set(point, pnts->type, 'b', strtod(argv[i + 5], NULL));
+		_ged_pnt_s_set(point, pnts->type, 's', strtod(argv[i + 6], NULL) * local2base);
 		break;
 	    case RT_PNT_TYPE_COL_NRM:
-		BU_ALLOC(point, struct pnt_color_normal);
-		((struct pnt_color_normal *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
-		((struct pnt_color_normal *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
-		((struct pnt_color_normal *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
-		((struct pnt_color_normal *)point)->n[X] = strtod(argv[i + 3], NULL) * local2base;
-		((struct pnt_color_normal *)point)->n[Y] = strtod(argv[i + 4], NULL) * local2base;
-		((struct pnt_color_normal *)point)->n[Z] = strtod(argv[i + 5], NULL) * local2base;
-		((struct pnt_color_normal *)point)->c.buc_magic = BU_COLOR_MAGIC;
-		((struct pnt_color_normal *)point)->c.buc_rgb[0 /* RED */] = strtod(argv[i + 6], NULL);
-		((struct pnt_color_normal *)point)->c.buc_rgb[1 /* GRN */] = strtod(argv[i + 7], NULL);
-		((struct pnt_color_normal *)point)->c.buc_rgb[2 /* BLU */] = strtod(argv[i + 8], NULL);
-		BU_LIST_PUSH(&(((struct pnt_color_normal *)headPoint)->l), &((struct pnt_color_normal *)point)->l);
+		_ged_pnt_n_set(point, pnts->type, 'i', strtod(argv[i + 3], NULL) * local2base);
+		_ged_pnt_n_set(point, pnts->type, 'j', strtod(argv[i + 4], NULL) * local2base);
+		_ged_pnt_n_set(point, pnts->type, 'k', strtod(argv[i + 5], NULL) * local2base);
+		_ged_pnt_c_set(point, pnts->type, 'r', strtod(argv[i + 6], NULL));
+		_ged_pnt_c_set(point, pnts->type, 'g', strtod(argv[i + 7], NULL));
+		_ged_pnt_c_set(point, pnts->type, 'b', strtod(argv[i + 8], NULL));
 		break;
 	    case RT_PNT_TYPE_SCA_NRM:
-		BU_ALLOC(point, struct pnt_scale_normal);
-		((struct pnt_scale_normal *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
-		((struct pnt_scale_normal *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
-		((struct pnt_scale_normal *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
-		((struct pnt_scale_normal *)point)->n[X] = strtod(argv[i + 3], NULL) * local2base;
-		((struct pnt_scale_normal *)point)->n[Y] = strtod(argv[i + 4], NULL) * local2base;
-		((struct pnt_scale_normal *)point)->n[Z] = strtod(argv[i + 5], NULL) * local2base;
-		((struct pnt_scale_normal *)point)->s = strtod(argv[i + 6], NULL) * local2base;
-		BU_LIST_PUSH(&(((struct pnt_scale_normal *)headPoint)->l), &((struct pnt_scale_normal *)point)->l);
+		_ged_pnt_n_set(point, pnts->type, 'i', strtod(argv[i + 3], NULL) * local2base);
+		_ged_pnt_n_set(point, pnts->type, 'j', strtod(argv[i + 4], NULL) * local2base);
+		_ged_pnt_n_set(point, pnts->type, 'k', strtod(argv[i + 5], NULL) * local2base);
+		_ged_pnt_s_set(point, pnts->type, 's', strtod(argv[i + 6], NULL) * local2base);
 		break;
 	    case RT_PNT_TYPE_COL_SCA_NRM:
-		BU_ALLOC(point, struct pnt_color_scale_normal);
-		((struct pnt_color_scale_normal *)point)->v[X] = strtod(argv[i + 0], NULL) * local2base;
-		((struct pnt_color_scale_normal *)point)->v[Y] = strtod(argv[i + 1], NULL) * local2base;
-		((struct pnt_color_scale_normal *)point)->v[Z] = strtod(argv[i + 2], NULL) * local2base;
-		((struct pnt_color_scale_normal *)point)->n[X] = strtod(argv[i + 3], NULL) * local2base;
-		((struct pnt_color_scale_normal *)point)->n[Y] = strtod(argv[i + 4], NULL) * local2base;
-		((struct pnt_color_scale_normal *)point)->n[Z] = strtod(argv[i + 5], NULL) * local2base;
-		((struct pnt_color_scale_normal *)point)->c.buc_magic = BU_COLOR_MAGIC;
-		((struct pnt_color_scale_normal *)point)->c.buc_rgb[0 /* RED */] = strtod(argv[i + 6], NULL);
-		((struct pnt_color_scale_normal *)point)->c.buc_rgb[1 /* GRN */] = strtod(argv[i + 7], NULL);
-		((struct pnt_color_scale_normal *)point)->c.buc_rgb[2 /* BLU */] = strtod(argv[i + 8], NULL);
-		((struct pnt_color_scale_normal *)point)->s = strtod(argv[i + 9], NULL) * local2base;
-		BU_LIST_PUSH(&(((struct pnt_color_scale_normal *)headPoint)->l), &((struct pnt_color_scale_normal *)point)->l);
+		_ged_pnt_n_set(point, pnts->type, 'i', strtod(argv[i + 3], NULL) * local2base);
+		_ged_pnt_n_set(point, pnts->type, 'j', strtod(argv[i + 4], NULL) * local2base);
+		_ged_pnt_n_set(point, pnts->type, 'k', strtod(argv[i + 5], NULL) * local2base);
+		_ged_pnt_c_set(point, pnts->type, 'r', strtod(argv[i + 6], NULL));
+		_ged_pnt_c_set(point, pnts->type, 'g', strtod(argv[i + 7], NULL));
+		_ged_pnt_c_set(point, pnts->type, 'b', strtod(argv[i + 8], NULL));
+		_ged_pnt_s_set(point, pnts->type, 's', strtod(argv[i + 9], NULL) * local2base);
+		break;
+	    default:
 		break;
 	}
+
+	_ged_pnts_add(pnts, point);
     }
 
     return GED_OK;
@@ -2865,13 +2823,14 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
  * returns 1 if unsuccessful read
  */
 static int
-hrt_in(struct ged *gedp, char *cmd_argv[], struct rt_db_internal *intern)
+hrt_in(struct ged *gedp, const char *cmd_argv[], struct rt_db_internal *intern)
 {
     fastf_t vals[13];
     int i, n;
     struct rt_hrt_internal *hip;
     n = 13;
 
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_HRT;
     intern->idb_meth = &OBJ[ID_HRT];
     intern->idb_ptr = bu_malloc(sizeof(struct rt_hrt_internal), "rt_hrt_internal");
@@ -2899,7 +2858,7 @@ hrt_in(struct ged *gedp, char *cmd_argv[], struct rt_db_internal *intern)
  * returns 1 if unsuccessful read
  */
 static int
-joint_in(struct ged *gedp, char *cmd_argv[], struct rt_db_internal *intern)
+joint_in(struct ged *gedp, const char *cmd_argv[], struct rt_db_internal *intern)
 {
     fastf_t vals[10];
     int i, n;
@@ -2937,7 +2896,7 @@ joint_in(struct ged *gedp, char *cmd_argv[], struct rt_db_internal *intern)
  * 1 if unsuccessfully read
  */
 static int
-datum_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt)
+datum_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, const char **prompt)
 {
     struct rt_datum_internal *datums;
     struct rt_datum_internal *prev;
@@ -3087,14 +3046,94 @@ argc 1       2     3     4 5 6 7    8 9 10 11 12 13 14    15 16 17 18 19 20 21
 }
 
 
+/*
+ * reads annot parameters from the keyboard
+ *
+ * returns 0 if successul read
+ * 1 if unsuccessful read
+ */
+static int
+annot_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
+{
+    int i, p_ver, p_hor;
+    struct rt_annot_internal *anip;
+    struct txt_seg *tsg;
+    struct line_seg *lsg;
+
+    intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
+    intern->idb_type = ID_ANNOT;
+    intern->idb_meth = &OBJ[ID_ANNOT];
+    BU_ALLOC(intern->idb_ptr, struct rt_annot_internal);
+    anip = (struct rt_annot_internal *)intern->idb_ptr;
+    anip->magic = RT_ANNOT_INTERNAL_MAGIC;
+    anip->ant.count = 2;
+    anip->vert_count = 2;
+
+    anip->verts = (point2d_t *)bu_calloc(anip->vert_count, sizeof(point2d_t), "verts");
+
+
+    for (i = 0; i<ELEMENTS_PER_POINT; i++) {
+	anip->V[i] = atof(cmd_argvs[3+i]) * gedp->ged_wdbp->dbip->dbi_local2base;
+   }
+
+    BU_ALLOC(tsg, struct txt_seg);
+
+    tsg->magic = ANN_TSEG_MAGIC;
+    tsg->ref_pt = 0;
+    bu_vls_init(&tsg->label);
+    bu_vls_strcpy(&tsg->label, cmd_argvs[6]);
+
+    BU_ALLOC(lsg, struct line_seg);
+    lsg->magic = CURVE_LSEG_MAGIC;
+    lsg->start = 0;
+    lsg->end = 1;
+
+    for (i = 0; i<ELEMENTS_PER_POINT2D; i++)
+	anip->verts[0][i] = atof(cmd_argvs[7+i]) * gedp->ged_wdbp->dbip->dbi_local2base;
+
+    p_hor = atoi(cmd_argvs[9]);
+    p_ver = atoi(cmd_argvs[10]);
+    rt_txt_pos_flag(&tsg->rel_pos, p_hor, p_ver);
+
+    anip->ant.segments = (void **)bu_calloc(anip->ant.count, sizeof(void *), "segs");
+    anip->ant.reverse = (int *)bu_calloc(anip->ant.count, sizeof(int), "rev");
+
+    anip->ant.segments[0] = (void *)lsg;
+    anip->ant.reverse[0] = 0;
+    anip->ant.segments[1] = (void *)tsg;
+    anip->ant.reverse[1] = 0;
+    return GED_OK;
+}
+
+
+static int
+script_in(struct ged *UNUSED(gedp), const char **cmd_argvs, struct rt_db_internal *intern)
+{
+    struct rt_script_internal *script_ip;
+
+    intern->idb_type = ID_SCRIPT;
+    intern->idb_meth = &OBJ[ID_SCRIPT];
+    BU_ALLOC(intern->idb_ptr, struct rt_script_internal);
+    script_ip = (struct rt_script_internal *)intern->idb_ptr;
+    script_ip->script_magic = RT_SCRIPT_INTERNAL_MAGIC;
+
+    bu_vls_init(&script_ip->s_type);
+    bu_vls_strcpy(&script_ip->s_type, cmd_argvs[3]);
+
+    return GED_OK;
+}
+
+
 int
 ged_in(struct ged *gedp, int argc, const char *argv[])
 {
     struct directory *dp;
     char *name;
     struct rt_db_internal internal;
-    char **menu;
-    int nvals, (*fn_in)();
+    const char **menu;
+    int nvals;
+    int (*fn_in)(struct ged *, const char **, struct rt_db_internal *) = NULL;
+    int (*fn_in_2)(struct ged *, const char **, struct rt_db_internal *, const char *) = NULL;
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -3133,7 +3172,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
      rec|trc|rcc|box|raw|rpp|rpc|rhc|epa|ehy|hyp|eto|superell|hrt>
     */
     if (BU_STR_EQUAL(argv[2], "ebm")) {
-	nvals = 4;
+	nvals = 5;
 	menu = p_ebm;
 	fn_in = ebm_in;
     } else if (BU_STR_EQUAL(argv[2], "arbn")) {
@@ -3222,7 +3261,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
     } else if (BU_STR_EQUAL(argv[2], "half")) {
 	nvals = 3*1 + 1;
 	menu = p_half;
-	fn_in = half_in;
+	fn_in_2 = half_in;
     } else if (bu_strncmp(argv[2], "arb", 3) == 0) {
 	int n = atoi(&argv[2][3]);
 
@@ -3239,7 +3278,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
     } else if (BU_STR_EQUAL(argv[2], "sph")) {
 	nvals = 3*1 + 1;
 	menu = p_sph;
-	fn_in = sph_in;
+	fn_in_2 = sph_in;
     } else if (BU_STR_EQUAL(argv[2], "ellg")) {
 	nvals = 3*2 + 1;
 	menu = p_ellg;
@@ -3284,11 +3323,11 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
     } else if (BU_STR_EQUAL(argv[2], "rpp")) {
 	nvals = 3*2;
 	menu = p_rpp;
-	fn_in = rpp_in;
+	fn_in_2 = rpp_in;
     } else if (BU_STR_EQUAL(argv[2], "orpp")) {
 	nvals = 3*1;
 	menu = p_orpp;
-	fn_in = orpp_in;
+	fn_in_2 = orpp_in;
     } else if (BU_STR_EQUAL(argv[2], "rpc")) {
 	nvals = 3*3 + 1;
 	menu = p_rpc;
@@ -3326,7 +3365,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	} else {
 	    nvals = 3;
 	    menu = p_binunif;
-	    fn_in = binunif_in;
+	    fn_in_2 = binunif_in;
 	}
     } else if (BU_STR_EQUAL(argv[2], "extrude")) {
 	nvals = 4*3 + 1;
@@ -3352,6 +3391,14 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	nvals = 3*3 + 1 + 2;
 	menu = p_joint;
 	fn_in = joint_in;
+    } else if (BU_STR_EQUAL(argv[2], "annot")) {
+	nvals = 3 + 1+ 2 + 2;
+	menu = p_annot;
+	fn_in = annot_in;
+    } else if (BU_STR_EQUAL(argv[2], "script")) {
+	nvals = 1;
+	menu = p_script;
+	fn_in = script_in;
     } else if (BU_STR_EQUAL(argv[2], "pnts")) {
 	switch (pnts_in(gedp, argc, argv, &internal, p_pnts)) {
 	    case GED_ERROR:
@@ -3392,14 +3439,30 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	return GED_MORE;
     }
 
-    if (fn_in(gedp, argv, &internal, name) != 0) {
-	bu_vls_printf(gedp->ged_result_str, "%s: ERROR %s not made!\n", argv[0], argv[2]);
-	if (internal.idb_ptr) {
-	    /* a few input functions do not use the internal pointer
-	     * only free it, if it has been used
-	     */
-	    rt_db_free_internal(&internal);
+    if (fn_in) {
+	if (fn_in(gedp, argv, &internal) != 0) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: ERROR %s not made!\n", argv[0], argv[2]);
+	    if (internal.idb_ptr) {
+		/* a few input functions do not use the internal pointer
+		 * only free it, if it has been used
+		 */
+		rt_db_free_internal(&internal);
+	    }
+	    return GED_ERROR;
 	}
+    } else if (fn_in_2) {
+	if (fn_in_2(gedp, argv, &internal, name) != 0) {
+	    bu_vls_printf(gedp->ged_result_str, "%s: ERROR %s not made!\n", argv[0], argv[2]);
+	    if (internal.idb_ptr) {
+		/* a few input functions do not use the internal pointer
+		 * only free it, if it has been used
+		 */
+		rt_db_free_internal(&internal);
+	    }
+	    return GED_ERROR;
+	}
+    } else {
+	bu_vls_printf(gedp->ged_result_str, "%s: ERROR %s not made!\n", argv[0], argv[2]);
 	return GED_ERROR;
     }
 

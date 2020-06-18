@@ -1,7 +1,7 @@
 /*                         G - O B J . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2016 United States Government as represented by
+ * Copyright (c) 1996-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,6 +34,7 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/opt.h"
 #include "bu/parallel.h"
@@ -58,8 +59,8 @@ print_usage(const char *progname)
 }
 
 
-static off_t vert_offset=0;
-static off_t norm_offset=0;
+static b_off_t vert_offset=0;
+static b_off_t norm_offset=0;
 static int do_normals=0;
 static int NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int verbose=0;
@@ -77,7 +78,7 @@ static char *error_file = NULL;		/* error filename */
 static FILE *fp;			/* Output file pointer */
 static FILE *fpe;			/* Error file pointer */
 static struct db_i *dbip;
-static struct rt_tess_tol ttol;
+static struct bg_tess_tol ttol;
 static struct bn_tol tol;
 static struct model *the_model;
 
@@ -90,82 +91,81 @@ static int inches = 0;
 static int print_help = 0;
 
 static int
-parse_tol_abs(struct bu_vls *error_msg, int argc, const char **argv, void *UNUSED(set_var))
+parse_tol_abs(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
 {
     int ret;
     BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "absolute tolerance");
 
-    ret = bu_opt_fastf_t(error_msg, argc, argv, (void *)&(ttol.abs));
-    ttol.rel = 0.0;
-    return ret;
+    if (set_var) {
+	ret = bu_opt_fastf_t(error_msg, argc, argv, (void *)&(ttol.abs));
+	ttol.rel = 0.0;
+	return ret;
+    } else {
+	return -1;
+    }
 }
 
 
 static int
-parse_tol_norm(struct bu_vls *error_msg, int argc, const char **argv, void *UNUSED(set_var))
+parse_tol_norm(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
 {
     int ret;
     BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "normal tolerance");
 
-    ret = bu_opt_fastf_t(error_msg, argc, argv, (void *)&(ttol.norm));
-    ttol.rel = 0.0;
-    return ret;
+    if (set_var) {
+	ret = bu_opt_fastf_t(error_msg, argc, argv, (void *)&(ttol.norm));
+	ttol.rel = 0.0;
+	return ret;
+    } else {
+	return -1;
+    }
 }
 
 
 static int
-parse_tol_dist(struct bu_vls *error_msg, int argc, const char **argv, void *UNUSED(set_var))
+parse_tol_dist(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
 {
     int ret;
     BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "distance tolerance");
 
-    ret = bu_opt_fastf_t(error_msg, argc, argv, (void *)&(tol.dist));
-    tol.dist_sq = tol.dist * tol.dist;
-    rt_pr_tol(&tol);
-    return ret;
+    if (set_var) {
+	ret = bu_opt_fastf_t(error_msg, argc, argv, (void *)&(tol.dist));
+	tol.dist_sq = tol.dist * tol.dist;
+	rt_pr_tol(&tol);
+	return ret;
+    } else {
+	return -1;
+    }
 }
 
 
 static int
-parse_debug_rt(struct bu_vls *error_msg, int argc, const char **argv, void *UNUSED(set_var))
+parse_debug_rt(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
 {
     BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "debug rt");
 
-    sscanf(argv[0], "%x", (unsigned int *)&RTG.debug);
-    return 1;
+    if (set_var) {
+	sscanf(argv[0], "%x", (unsigned int *)&rt_debug);
+	return 1;
+    } else {
+	return -1;
+    }
 }
 
 
 static int
-parse_debug_nmg(struct bu_vls *error_msg, int argc, const char **argv, void *UNUSED(set_var))
+parse_debug_nmg(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
 {
     BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "debug nmg");
 
-    sscanf(argv[0], "%x", (unsigned int *)&nmg_debug);
-    NMG_debug = nmg_debug;
-    return 1;
+    if (set_var) {
+	sscanf(argv[0], "%x", (unsigned int *)&nmg_debug);
+	NMG_debug = nmg_debug;
+	return 1;
+    } else {
+	return -1;
+    }
 }
-
-
-static struct bu_opt_desc options[] = {
-    {"?", "", NULL,         NULL,            &print_help,  "print help and exit"},
-    {"h", "", NULL,         NULL,            &print_help,  "print help and exit"},
-    {"i", "", NULL,         NULL,            &inches,      "change output units from mm to inches"},
-    {"m", "", NULL,         NULL,            &usemtl,      "output usemtl statements"},
-    {"u", "", NULL,         NULL,            &do_normals,  "output vertex normals"},
-    {"v", "", NULL,         NULL,            &verbose,     "verbose output"},
-    {"a", "", "#",          parse_tol_abs,   &ttol,        "absolute tolerance"},
-    {"n", "", "#",          parse_tol_norm,  &ttol,        "surface normal tolerance"},
-    {"D", "", "#",          parse_tol_dist,  &tol,         "distance tolerance"},
-    {"x", "", "level",      parse_debug_rt,  NULL,         "set RT debug flag"},
-    {"X", "", "level",      parse_debug_nmg, NULL,         "set NMG debug flag"},
-    {"e", "", "error_file", bu_opt_str,      &error_file,  "error file name"},
-    {"o", "", "output.obj", bu_opt_str,      &output_file, "output file name"},
-    {"P", "", "#",          bu_opt_int,      &ncpu,        "number of CPUs"},
-    {"r", "", "#",          bu_opt_fastf_t,  &ttol.rel,    "relative tolerance"},
-    BU_OPT_DESC_NULL
-};
-
 
 int
 main(int argc, const char **argv)
@@ -174,6 +174,23 @@ main(int argc, const char **argv)
     double percent;
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
     const char *prog_name = argv[0];
+    struct bu_opt_desc options[16];
+    BU_OPT(options[0], "?", "", NULL,          NULL,            &print_help,  "print help and exit");
+    BU_OPT(options[1], "h", "", NULL,          NULL,            &print_help,  "print help and exit");
+    BU_OPT(options[2], "i", "", NULL,          NULL,            &inches,      "change output units from mm to inches");
+    BU_OPT(options[3], "m", "", NULL,          NULL,            &usemtl,      "output usemtl statements");
+    BU_OPT(options[4], "u", "", NULL,          NULL,            &do_normals,  "output vertex normals");
+    BU_OPT(options[5], "v", "", NULL,          NULL,            &verbose,     "verbose output");
+    BU_OPT(options[6], "a", "", "#",           parse_tol_abs,   &ttol,        "absolute tolerance");
+    BU_OPT(options[7], "n", "", "#",           parse_tol_norm,  &ttol,        "surface normal tolerance");
+    BU_OPT(options[8], "D", "", "#",           parse_tol_dist,  &tol,         "distance tolerance");
+    BU_OPT(options[9], "x", "", "level",       parse_debug_rt,  &rt_debug,   "set RT debug flag");
+    BU_OPT(options[10], "X", "", "level",      parse_debug_nmg, &nmg_debug,   "set NMG debug flag");
+    BU_OPT(options[11], "e", "", "error_file", bu_opt_str,      &error_file,  "error file name");
+    BU_OPT(options[12], "o", "", "output.obj", bu_opt_str,      &output_file, "output file name");
+    BU_OPT(options[13], "P", "", "#",          bu_opt_int,      &ncpu,        "number of CPUs");
+    BU_OPT(options[14], "r", "", "#",          bu_opt_fastf_t,  &ttol.rel,    "relative tolerance");
+    BU_OPT_NULL(options[15]);
 
     bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
@@ -183,7 +200,7 @@ main(int argc, const char **argv)
     tree_state.ts_ttol = &ttol;
     tree_state.ts_m = &the_model;
 
-    ttol.magic = RT_TESS_TOL_MAGIC;
+    ttol.magic = BG_TESS_TOL_MAGIC;
     /* Defaults, updated by command line options. */
     ttol.abs = 0.0;
     ttol.rel = 0.01;
@@ -239,7 +256,7 @@ main(int argc, const char **argv)
 	bu_exit(1, "db_dirbuild failed\n");
 
     BN_CK_TOL(tree_state.ts_tol);
-    RT_CK_TESS_TOL(tree_state.ts_ttol);
+    BG_CK_TESS_TOL(tree_state.ts_ttol);
 
     /* Write out header */
     if (inches)
@@ -603,13 +620,13 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 
     RT_CK_FULL_PATH(pathp);
     RT_CK_TREE(curtree);
-    RT_CK_TESS_TOL(tsp->ts_ttol);
+    BG_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
     NMG_CK_MODEL(*tsp->ts_m);
 
     BU_LIST_INIT(&vhead);
 
-    if (RT_G_DEBUG&DEBUG_TREEWALK || verbose) {
+    if (RT_G_DEBUG&RT_DEBUG_TREEWALK || verbose) {
 	char *sofar = db_path_to_string(pathp);
 	bu_log("\ndo_region_end(%d %d%%) %s\n",
 	       regions_tried,

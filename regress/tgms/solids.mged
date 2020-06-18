@@ -99,13 +99,13 @@ mater rpc.r plastic 128 128 255 0
 #
 # Extruded bit-map
 #
-db put ebm.s ebm F ebm.bw W 32 N 32 H 32 M {1 0 0 -82  0 1 0 -64   0 0 1 0  0 0 0 0.05}
+db put ebm.s ebm F solids.ebm.bw W 32 N 32 H 32 M {1 0 0 -82  0 1 0 -64   0 0 1 0  0 0 0 0.05}
 r ebm.r u ebm.s
 
 #
 # Displacement map
 #
-db put dsp.s dsp src f name dsp.pix w 33 n 33 sm 0 cut a stom {20 0 0 -1687 0 20 0 -2432 0 0 0.3906250 0 0 0 0 1}
+db put dsp.s dsp src f name solids.dsp.pix w 33 n 33 sm 0 cut a stom {20 0 0 -1687 0 20 0 -2432 0 0 0.3906250 0 0 0 0 1}
 r dsp.r u dsp.s
 
 #

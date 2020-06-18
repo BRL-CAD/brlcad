@@ -1,7 +1,7 @@
 /*                       C O M M A N D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2016 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,7 +37,6 @@
 
 #include "./nirt.h"
 #include "./usrfmt.h"
-
 
 char local_u_name[65];
 double base2local;		/* from db_i struct, not fastf_t */
@@ -358,7 +357,7 @@ shoot(char *UNUSED(buffer), com_table *UNUSED(ctp), struct rt_i *rtip)
 	 */
 	VADD2SCALE(center_bsphere, rtip->mdl_max, rtip->mdl_min, 0.5);
 
-	dist_to_target = DIST_PT_PT(center_bsphere, ray_point);
+	dist_to_target = DIST_PNT_PNT(center_bsphere, ray_point);
 
 	VSUB2(dvec, ray_point, center_bsphere);
 	VUNITIZE(dvec);
@@ -535,7 +534,8 @@ do_overlap_claims(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 void
 cm_attr(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 {
-    while (isascii(*buffer) && isspace((int)*buffer)) buffer++;
+    while (isspace((int)*buffer))
+	buffer++;
 
     if (strlen(buffer) == 0) {
 	com_usage(ctp);
@@ -561,7 +561,7 @@ cm_debug(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
     char *cp = buffer;
 
     /* This is really icky -- should have argc, argv interface */
-    while (*cp && isascii(*cp) && isspace((int)*cp))  cp++;
+    while (*cp && isspace((int)*cp))  cp++;
     if (*cp == '\0') {
 	/* display current value */
 	bu_printb("debug ", nirt_debug, DEBUG_FMT);
@@ -585,19 +585,19 @@ cm_libdebug(char *buffer, com_table *ctp, struct rt_i *UNUSED(rtip))
 
     /* This is really icky -- should have argc, argv interface */
 
-    while (*cp && isascii(*cp) && isspace((int)*cp))
+    while (*cp && isspace((int)*cp))
 	cp++;
 
     if (*cp == '\0') {
 	/* display current value */
-	bu_printb("libdebug ", RT_G_DEBUG, RT_DEBUG_FMT);
+	bu_printb("libdebug ", RT_G_DEBUG, RT_DEBUG_FORMAT);
 	bu_log("\n");
 	return;
     }
 
     /* Set a new value */
-    if (sscanf(cp, "%x", (unsigned int *)&RTG.debug) == 1) {
-	bu_printb("libdebug ", RT_G_DEBUG, RT_DEBUG_FMT);
+    if (sscanf(cp, "%x", (unsigned int *)&rt_debug) == 1) {
+	bu_printb("libdebug ", RT_G_DEBUG, RT_DEBUG_FORMAT);
 	bu_log("\n");
     } else {
 	com_usage(ctp);

@@ -1,4 +1,4 @@
-/* $Id$
+/*
  * Copyright (C) 2004 Pat Thoyts <patthoyts@users.sourceforge.net>
  *
  * ttk::scale widget.
@@ -14,6 +14,10 @@
 
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
+
+/* Bit fields for OptionSpec mask field:
+ */
+#define STATE_CHANGED	 	(0x100)		/* -state option changed */
 
 /*
  * Scale widget record
@@ -35,6 +39,11 @@ typedef struct
     /* internal state */
     Ttk_TraceHandle *variableTrace;
 
+    /*
+     * Compatibility/legacy options:
+     */
+    Tcl_Obj *stateObj;
+
 } ScalePart;
 
 typedef struct
@@ -45,8 +54,6 @@ typedef struct
 
 static Tk_OptionSpec ScaleOptionSpecs[] =
 {
-    WIDGET_TAKES_FOCUS,
-
     {TK_OPTION_STRING, "-command", "command", "Command", "",
 	Tk_Offset(Scale,scale.commandObj), -1, 
 	TK_OPTION_NULL_OK,0,0},
@@ -68,6 +75,11 @@ static Tk_OptionSpec ScaleOptionSpecs[] =
 	DEF_SCALE_LENGTH, Tk_Offset(Scale,scale.lengthObj), -1, 0, 0, 
     	GEOMETRY_CHANGED},
 
+    {TK_OPTION_STRING, "-state", "state", "State",
+	"normal", Tk_Offset(Scale,scale.stateObj), -1,
+        0,0,STATE_CHANGED},
+
+    WIDGET_TAKEFOCUS_TRUE,
     WIDGET_INHERIT_OPTIONS(ttkCoreOptionSpecs)
 };
 
@@ -139,6 +151,10 @@ static int ScaleConfigure(Tcl_Interp *interp, void *recordPtr, int mask)
 	Ttk_UntraceVariable(scale->scale.variableTrace);
     }
     scale->scale.variableTrace = vt;
+
+    if (mask & STATE_CHANGED) {
+	TtkCheckStateOption(&scale->core, scale->scale.stateObj);
+    }
 
     return TCL_OK;
 }

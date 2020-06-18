@@ -1,7 +1,7 @@
 /*                        F C H M O D . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2016 United States Government as represented by
+ * Copyright (c) 2007-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,6 +38,7 @@
 #  endif
 #endif
 
+#include "bu/app.h"
 #include "bu/file.h"
 #include "bu/str.h"
 
@@ -45,6 +46,12 @@
 /* extern int fchmod(int, mode_t); */
 /* use correct fchmod decl: */
 #  include <sys/stat.h>
+
+/* c89 strict doesn't declare fchmod */
+# ifndef HAVE_DECL_FCHMOD
+extern int fchmod(int, mode_t);
+# endif
+
 #else
 
 /* Presumably Windows, pulled from MSDN sample code */
@@ -150,10 +157,10 @@ bu_fchmod(int fd,
 	HANDLE h = (HANDLE)_get_osfhandle(fd);
 	GetFileNameFromHandle(h, filepath);
 
-    /* quell flawfinder because this is a necessary evil unless/until
-     * someone rewrites this to use SetNamedSecurityInfo() based on
-     * unix-style permissions/mode settings.
-     */
+	/* quell flawfinder because this is a necessary evil unless/until
+	 * someone rewrites this to use SetNamedSecurityInfo() based on
+	 * unix-style permissions/mode settings.
+	 */
 #  define CHMOD ch ## mod
 
 	return CHMOD(filepath, pmode);

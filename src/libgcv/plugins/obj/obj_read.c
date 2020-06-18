@@ -1,7 +1,7 @@
 /*                      O B J _ R E A D . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2016 United States Government as represented by
+ * Copyright (c) 2010-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -708,8 +708,8 @@ test_face(struct ga_t *ga,
 		 */
 		VSCALE(tmp_v_o, tmp_v_o, conv_factor);
 		VSCALE(tmp_v_i, tmp_v_i, conv_factor);
-		if (bn_pt3_pt3_equal(tmp_v_o, tmp_v_i, tol)) {
-		    distance_between_vertices = DIST_PT_PT(tmp_v_o, tmp_v_i);
+		if (bn_pnt3_pnt3_equal(tmp_v_o, tmp_v_i, tol)) {
+		    distance_between_vertices = DIST_PNT_PNT(tmp_v_o, tmp_v_i);
 		    degenerate_face = 3;
 		    if (gfi->grouping_type != GRP_NONE) {
 			if (ga->gcv_options->verbosity_level || ga->gcv_options->debug_mode) {
@@ -1184,10 +1184,11 @@ populate_triangle_indexes(struct ga_t *ga,
     tri_arr_2D_t index_arr_tri_2D = NULL;
     tri_arr_3D_t index_arr_tri_3D = NULL;
 
-    double *facePoints;
-    int *triFaces;
-    size_t i, numFacePoints;
-    struct faceuse *fu;
+    double *facePoints = NULL;
+    int *triFaces = NULL;
+    size_t i = 0;
+    size_t numFacePoints = 0;
+    struct faceuse *fu = NULL;
     const int POINTS_PER_FACE = 3;
 
     if (ti->index_arr_tri == (void *)NULL) {
@@ -1942,9 +1943,9 @@ populate_fuse_map(struct ga_t *ga,
 		    VMOVE(tmp_v2, ga->vert_list[unique_index_list[idx2]]);
 		    VSCALE(tmp_v2, tmp_v2, conv_factor);
 		    if ((compare_type == FUSE_EQUAL) ? VEQUAL(tmp_v1, tmp_v2) :
-			bn_pt3_pt3_equal(tmp_v1, tmp_v2, tol)) {
+			bn_pnt3_pnt3_equal(tmp_v1, tmp_v2, tol)) {
 			if (ga->gcv_options->debug_mode) {
-			    distance_between_vertices = DIST_PT_PT(tmp_v1, tmp_v2);
+			    distance_between_vertices = DIST_PNT_PNT(tmp_v1, tmp_v2);
 			    bu_log("found equal i1=(%zu)vi1=(%zu)v1=(%f)(%f)(%f), i2=(%zu)vi2=(%zu)v2=(%f)(%f)(%f), dist = (%lu mm)\n",
 				   idx1, unique_index_list[idx1], tmp_v1[0], tmp_v1[1], tmp_v1[2],
 				   idx2, unique_index_list[idx2], tmp_v2[0], tmp_v2[1], tmp_v2[2],
@@ -2562,7 +2563,23 @@ output_to_bot(struct ga_t *ga,
     }
 
     /* write bot to ".g" file */
-    if (ti.tri_type == FACE_NV || ti.tri_type == FACE_TNV) {
+    if (ti.tri_type == FACE_TNV) {
+	ret = mk_bot_w_normals_and_uvs(outfp, bu_vls_addr(gfi->primitive_name),
+				       ti.bot_mode, bot_orientation,
+				       RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS | RT_BOT_HAS_TEXTURE_UVS,
+				       ti.bot_num_vertices, ti.bot_num_faces, ti.bot_vertices,
+				       ti.bot_faces, ti.bot_thickness, ti.bot_face_mode,
+				       ti.bot_num_normals, ti.bot_normals, ti.bot_face_normals,
+				       ti.bot_num_texture_vertices, ti.bot_texture_vertices, ti.bot_textures);
+    } else if (ti.tri_type == FACE_TV) {
+	ret = mk_bot_w_normals_and_uvs(outfp, bu_vls_addr(gfi->primitive_name),
+				       ti.bot_mode, bot_orientation,
+				       RT_BOT_HAS_TEXTURE_UVS,
+				       ti.bot_num_vertices, ti.bot_num_faces, ti.bot_vertices,
+				       ti.bot_faces, ti.bot_thickness, ti.bot_face_mode,
+				       0, NULL, NULL,
+				       ti.bot_num_texture_vertices, ti.bot_texture_vertices, ti.bot_textures);
+    } else if (ti.tri_type == FACE_NV) {
 	ret = mk_bot_w_normals(outfp, bu_vls_addr(gfi->primitive_name),
 			       ti.bot_mode, bot_orientation,
 			       RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS,
@@ -3096,11 +3113,13 @@ struct obj_read_options
 
 
 HIDDEN int
-parse_grouping_option(struct bu_vls *error_msg, int argc, const char **argv, void *set_var)
+parse_grouping_option(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
 {
     char * const value = (char *)set_var;
 
     BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "parse_grouping_option");
+
+    if (!value) return -1;
 
     if (!bu_strcmp(argv[0], "group"))
 	*value = 'g';
@@ -3122,11 +3141,13 @@ parse_grouping_option(struct bu_vls *error_msg, int argc, const char **argv, voi
 
 
 HIDDEN int
-parse_mode_option(struct bu_vls *error_msg, int argc, const char **argv, void *set_var)
+parse_mode_option(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
 {
     struct obj_read_options * const options = (struct obj_read_options *)set_var;
 
     BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "parse_mode_option");
+
+    if (!options) return -1;
 
     if (!bu_strcmp(argv[0], "bot")) {
 	options->mode_option = 'b';
@@ -3146,11 +3167,13 @@ parse_mode_option(struct bu_vls *error_msg, int argc, const char **argv, void *s
 
 
 HIDDEN int
-parse_bot_thickness_option(struct bu_vls *error_msg, int argc, const char **argv, void *set_var)
+parse_bot_thickness_option(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
 {
     struct obj_read_options * const options = (struct obj_read_options *)set_var;
 
     BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "parse_bot_thickness_option");
+
+    if (!options) return -1;
 
     if (bu_opt_fastf_t(error_msg, argc, argv, &options->bot_thickness) != 1)
 	return -1;
@@ -3167,21 +3190,25 @@ parse_bot_thickness_option(struct bu_vls *error_msg, int argc, const char **argv
 
 
 HIDDEN int
-parse_normal_mode_option(struct bu_vls *UNUSED(error_msg), int UNUSED(argc), const char **UNUSED(argv), void *set_var)
+parse_normal_mode_option(struct bu_vls *UNUSED(error_msg), size_t UNUSED(argc), const char **UNUSED(argv), void *set_var)
 {
     int * const value = (int *)set_var;
 
-    *value = IGNR_NORM;
+    if (value) {
+	*value = IGNR_NORM;
+    }
     return 0;
 }
 
 
 HIDDEN int
-parse_open_bot_output_mode_option(struct bu_vls *error_msg, int argc, const char **argv, void *set_var)
+parse_open_bot_output_mode_option(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
 {
     int * const value = (int *)set_var;
 
     BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "parse_open_bot_output_mode_option");
+
+    if (!value ) return -1;
 
     if (!bu_strcmp(argv[0], "nocos"))
 	*value = RT_BOT_PLATE_NOCOS;
@@ -3199,29 +3226,38 @@ parse_open_bot_output_mode_option(struct bu_vls *error_msg, int argc, const char
 
 
 HIDDEN int
-parse_plot_mode_option(struct bu_vls *UNUSED(error_msg), int UNUSED(argc), const char **UNUSED(argv), void *set_var)
+parse_plot_mode_option(struct bu_vls *UNUSED(error_msg), size_t UNUSED(argc), const char **UNUSED(argv), void *set_var)
 {
     int * const value = (int *)set_var;
 
-    *value = PLOT_ON;
+    if (value) {
+	*value = PLOT_ON;
+    }
     return 0;
 }
 
 
 HIDDEN int
-parse_bot_orientation_option(struct bu_vls *error_msg, int argc, const char **argv, void *set_var)
+parse_bot_orientation_option(struct bu_vls *error_msg, size_t argc, const char **argv, void *set_var)
 {
+    int have_orientation = 0;
     int * const value = (int *)set_var;
 
     BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "parse_bot_orientation_option");
 
-    if (!bu_strcmp(argv[0], "unoriented"))
+    if (!bu_strcmp(argv[0], "unoriented")) {
 	*value = RT_BOT_UNORIENTED;
-    else if (!bu_strcmp(argv[0], "ccw"))
+	have_orientation = 1;
+    }
+    if (!bu_strcmp(argv[0], "ccw")) {
 	*value = RT_BOT_CCW;
-    else if (!bu_strcmp(argv[0], "cw"))
+	have_orientation = 1;
+    }
+    if (!bu_strcmp(argv[0], "cw")) {
 	*value = RT_BOT_CW;
-    else {
+	have_orientation = 1;
+    }
+    if (!have_orientation) {
 	bu_vls_printf(error_msg, "invalid BoT orientation mode\n");
 	return -1;
     }
@@ -3541,9 +3577,34 @@ obj_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const 
     return 1;
 }
 
+HIDDEN int
+obj_can_read(const char *source_path)
+{
+    FILE *fp;
+    int ret;
+    obj_contents_t contents; /* obj_fparse */
+    obj_parser_t parser;     /* obj_parser_create */
+
+    if (obj_parser_create(&parser)) {
+	obj_parser_destroy(parser);
+	return 0;
+    }
+    if (!(fp = fopen(source_path, "r"))) {
+	obj_parser_destroy(parser);
+	return 0;
+    }
+
+    ret = !obj_fparse(fp, parser, &contents);
+    obj_contents_destroy(contents);
+    obj_parser_destroy(parser);
+    fclose(fp);
+    return ret;
+}
+
+
 
 static const struct gcv_filter gcv_conv_obj_read = {
-    "OBJ Reader", GCV_FILTER_READ, BU_MIME_MODEL_OBJ,
+    "OBJ Reader", GCV_FILTER_READ, BU_MIME_MODEL_OBJ, obj_can_read,
     obj_read_create_opts, obj_read_free_opts, obj_read
 };
 
@@ -3553,7 +3614,7 @@ static const struct gcv_filter * const filters[] = {&gcv_conv_obj_read, &gcv_con
 
 const struct gcv_plugin gcv_plugin_info_s = { filters };
 
-GCV_EXPORT const struct gcv_plugin *
+COMPILER_DLLEXPORT const struct gcv_plugin *
 gcv_plugin_info(){ return &gcv_plugin_info_s; }
 
 /*

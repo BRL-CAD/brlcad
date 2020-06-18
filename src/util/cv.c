@@ -1,7 +1,7 @@
 /*                            C V . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2016 United States Government as represented by
+ * Copyright (c) 1991-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/cv.h"
 #include "raytrace.h"
 
@@ -43,11 +44,11 @@ e.g., hui is host unsigned int, nl is network (signed) long\n\
 int in_cookie;
 int out_cookie;
 
-int iitem;
-int oitem;
+size_t iitem;
+size_t oitem;
 
-int inbytes;
-int outbytes;
+size_t inbytes;
+size_t outbytes;
 
 FILE *infp;
 FILE *outfp;
@@ -63,8 +64,10 @@ main(int argc, char **argv)
 {
     const char *in_pat;
     const char *out_pat;
-    int m;
-    int n;
+    size_t m;
+    size_t n;
+
+    bu_setprogname(argv[0]);
 
     if (argc < 3 || argc > 5) {
 	fputs(usage, stderr);
@@ -114,6 +117,15 @@ main(int argc, char **argv)
     out_cookie = bu_cv_cookie(out_pat);
     iitem = bu_cv_itemlen(in_cookie);
     oitem = bu_cv_itemlen(out_cookie);
+
+    if (iitem == 0) {
+	fprintf(stderr, "cv: unrecognized input format [%s]\n", in_pat);
+	return 6;
+    } else if (oitem == 0) {
+	fprintf(stderr, "cv: unrecognized output format [%s]\n", out_pat);
+	return 6;
+    }
+
 #define NITEMS (64*1024)
     inbytes = NITEMS*iitem;
     outbytes = NITEMS*oitem;
@@ -126,13 +138,13 @@ main(int argc, char **argv)
 	    break;
 	m = bu_cv_w_cookie(obuf, out_cookie, outbytes, ibuf, in_cookie, n);
 	if (m != n) {
-	    fprintf(stderr, "cv: bu_cv_w_cookie() ret=%d, count=%d\n", m, n);
+	    bu_log("cv: bu_cv_w_cookie() ret=%zu, count=%zu\n", m, n);
 	    return 4;
 	}
 	m = fwrite(obuf, oitem, n, outfp);
 	if (m != n) {
 	    perror("fwrite");
-	    fprintf(stderr, "cv: fwrite() ret=%d, count=%d\n", m, n);
+	    bu_log("cv: fwrite() ret=%zu, count=%zu\n", m, n);
 	    return 5;
 	}
     }
