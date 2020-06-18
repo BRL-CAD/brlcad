@@ -1,7 +1,7 @@
 /*                        D M _ U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2018 United States Government as represented by
+ * Copyright (c) 1988-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -171,7 +171,7 @@ draw_Line3D(struct dm_internal *dmp, point_t pt1, point_t pt2)
     if (!dmp)
 	return BRLCAD_ERROR;
 
-    if (bn_pt3_pt3_equal(pt1, pt2, NULL)) {
+    if (bn_pnt3_pnt3_equal(pt1, pt2, NULL)) {
 	/* nothing to do for a singular point */
 	return BRLCAD_OK;
     }

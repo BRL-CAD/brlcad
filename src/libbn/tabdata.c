@@ -1,7 +1,7 @@
 /*                       T A B D A T A . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -498,7 +498,7 @@ bn_table_find_x(const struct bn_table *tabp, double xval)
     /* Search for proper interval in input spectrum */
     for (i = tabp->nx-2; i > 0; i--)  {
 	if (xval >= tabp->x[i])
-	    return i;
+	    return (long)i;
     }
     if (xval >= tabp->x[0])
 	return 0;
@@ -545,7 +545,7 @@ bn_table_lin_interp(const struct bn_tabdata *samp, register double wl)
     if (fract < 0 || fract > 1)  bu_bomb("bn_table_lin_interp() assertion2 failed\n");
     ret = (1-fract) * samp->y[i] + fract * samp->y[i+1];
     if (bu_debug&BU_DEBUG_TABDATA)bu_log("bn_table_lin_interp(%g)=%g in range %g to %g\n",
-					     wl, ret, tabp->x[i], tabp->x[i+1]);
+					 wl, ret, tabp->x[i], tabp->x[i+1]);
     return ret;
 }
 
@@ -651,8 +651,8 @@ bn_tabdata_resample_avg(const struct bn_table *newtable, const struct bn_tabdata
 	     *  Interpolate for both ends, take average.
 	     */
 	    newsamp->y[i] = 0.5 * (
-				bn_table_lin_interp(olddata, newtable->x[i]) +
-				bn_table_lin_interp(olddata, newtable->x[i+1]));
+		bn_table_lin_interp(olddata, newtable->x[i]) +
+		bn_table_lin_interp(olddata, newtable->x[i+1]));
 	} else {
 	    /*
 	     *  Complex case: find average value.
@@ -1170,7 +1170,7 @@ bn_table_interval_num_samples(const struct bn_table *tabp, double low, double hi
 }
 
 size_t
-bn_table_delete_sample_pts(struct bn_table *tabp, size_t i, size_t j)
+bn_table_delete_sample_pnts(struct bn_table *tabp, size_t i, size_t j)
 {
     size_t tokill;
     size_t k;
@@ -1181,14 +1181,14 @@ bn_table_delete_sample_pts(struct bn_table *tabp, size_t i, size_t j)
     BN_CK_TABLE(tabp);
 
     if (i >= tabp->nx || j >= tabp->nx)
-	bu_bomb("bn_table_delete_sample_pts() index out of range\n");
+	bu_bomb("bn_table_delete_sample_pnts() index out of range\n");
 
     tokill = j - i + 1;
 
     if (tokill < 1)
-	bu_bomb("bn_table_delete_sample_pts(): nothing to delete\n");
+	bu_bomb("bn_table_delete_sample_pnts(): nothing to delete\n");
     if (tokill >= tabp->nx)
-	bu_bomb("bn_table_delete_sample_pts(): you can't kill 'em all!\n");
+	bu_bomb("bn_table_delete_sample_pnts(): you can't kill 'em all!\n");
 
     tabp->nx -= tokill;
 

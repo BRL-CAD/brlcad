@@ -1,7 +1,7 @@
 /*                        I S T A T S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,6 +33,7 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "bu/file.h"
@@ -119,18 +120,20 @@ main(int ac, char *av[])
     const char *progname = "istats";
     int arg_index;
 
+    bu_setprogname(av[0]);
+
     /* parse command flags
      */
     arg_index = parse_args(ac, av, &progname);
     if (arg_index < ac) {
-	char *ifname = bu_realpath(av[arg_index], NULL);
+	char *ifname = bu_file_realpath(av[arg_index], NULL);
 	/* open file of shorts */
 	if (freopen(ifname, "r", stdin) == (FILE *)NULL) {
 	    perror(ifname);
-	    bu_free(ifname, "ifname alloc from bu_realpath");
+	    bu_free(ifname, "ifname alloc from bu_file_realpath");
 	    return -1;
 	}
-	bu_free(ifname, "ifname alloc from bu_realpath");
+	bu_free(ifname, "ifname alloc from bu_file_realpath");
     } else if (isatty((int)fileno(stdin))) {
 	usage(progname);
     }

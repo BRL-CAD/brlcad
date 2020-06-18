@@ -1,7 +1,7 @@
 /*                       P I X - P N G . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2018 United States Government as represented by
+ * Copyright (c) 1998-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,12 +33,15 @@
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
-#include <png.h>
+
+#include "bio.h"
+
+#include "png.h"
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
-#include "bu/file.h"
 #include "bu/malloc.h"
 #include "bn.h"
 #include "fb.h"
@@ -198,7 +201,6 @@ main(int argc, char *argv[])
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
-    setmode(fileno(stderr), O_BINARY);
 
     /* important to store these before calling get_args().  they're
      * also not necessarily constants so have to set here instead of

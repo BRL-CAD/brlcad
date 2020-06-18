@@ -1,7 +1,7 @@
 /*                      M E M A L L O C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,10 +23,8 @@
  *
  * Functions -
  * rt_memalloc allocate 'size' of memory from a given map
- * rt_memget allocate 'size' of memory from map at 'place'
  * rt_memfree return 'size' of memory to map at 'place'
  * rt_mempurge free everything on current memory chain
- * rt_memprint print a map
  * rt_memclose
  *
  * The structure of the displaylist memory map chains consists of
@@ -84,7 +82,7 @@ rt_memalloc(struct mem_map **pp, register size_t size)
 	return 0L;	/* No more space */
 
     addr = (size_t)curp->m_addr;
-    curp->m_addr += (off_t)size;
+    curp->m_addr += (b_off_t)size;
 
     /* If the element size goes to zero, put it on the freelist */
 
@@ -137,100 +135,14 @@ rt_memalloc_nosplit(struct mem_map **pp, register size_t size)
     return best;
 }
 
-size_t
-rt_memget(struct mem_map **pp, register size_t size, off_t place)
-{
-    register struct mem_map *prevp, *curp;
-    size_t addr;
-
-    prevp = MAP_NULL;		/* special for first pass through */
-    if (size == 0)
-	bu_bomb("rt_memget() size==0\n");
-
-    curp = *pp;
-    while (curp) {
-	/*
-	 * Assumption: We will always be APPENDING to an existing
-	 * memory allocation, so we search for a free piece of memory
-	 * which begins at 'place', without worrying about ones which
-	 * could begin earlier but be long enough to satisfy this
-	 * request.
-	 */
-	if (curp->m_addr == place && curp->m_size >= size)
-	    break;
-	curp = (prevp=curp)->m_nxtp;
-    }
-
-    if (curp == MAP_NULL)
-	return 0L;		/* No space here */
-
-    addr = (size_t)curp->m_addr;
-    curp->m_addr += (off_t)size;
-
-    /* If the element size goes to zero, put it on the freelist */
-    if ((curp->m_size -= size) == 0) {
-	if (prevp)
-	    prevp->m_nxtp = curp->m_nxtp;
-	else
-	    *pp = curp->m_nxtp;	/* Click list down at start */
-	curp->m_nxtp = rt_mem_freemap;		/* Link it in */
-	rt_mem_freemap = curp;			/* Make it the start */
-    }
-    return addr;
-}
-
-
-/**
- * Returns:	0 Unable to satisfy request
- * <size> Actual size of free block, may be larger
- * than requested size.
- *
- * Comments:
- * Caller is responsible for returning unused portion.
- */
-size_t
-rt_memget_nosplit(struct mem_map **pp, register size_t size, size_t place)
-{
-    register struct mem_map *prevp, *curp;
-
-    prevp = MAP_NULL;		/* special for first pass through */
-    if (size == 0)
-	bu_bomb("rt_memget_nosplit() size==0\n");
-
-    curp = *pp;
-    while (curp) {
-	/*
-	 * Assumption: We will always be APPENDING to an existing
-	 * memory allocation, so we search for a free piece of memory
-	 * which begins at 'place', without worrying about ones which
-	 * could begin earlier but be long enough to satisfy this
-	 * request.
-	 */
-	if (curp->m_addr == (off_t)place && curp->m_size >= size) {
-	    size = curp->m_size;
-	    /* put this element on the freelist */
-	    if (prevp)
-		prevp->m_nxtp = curp->m_nxtp;
-	    else
-		*pp = curp->m_nxtp;	/* Click list down at start */
-	    curp->m_nxtp = rt_mem_freemap;		/* Link it in */
-	    rt_mem_freemap = curp;			/* Make it the start */
-	    return size;		/* actual size found */
-	}
-	curp = (prevp=curp)->m_nxtp;
-    }
-
-    return 0L;		/* No space found */
-}
-
 
 void
-rt_memfree(struct mem_map **pp, size_t size, off_t addr)
+rt_memfree(struct mem_map **pp, size_t size, b_off_t addr)
 {
     register int type = 0;
     register struct mem_map *prevp = MAP_NULL;
     register struct mem_map *curp;
-    off_t il;
+    b_off_t il;
     struct mem_map *tmap;
 
     if (size == 0)
@@ -244,14 +156,14 @@ rt_memfree(struct mem_map **pp, size_t size, off_t addr)
     /* Make up the `type' variable */
 
     if (prevp) {
-	il = prevp->m_addr + (off_t)prevp->m_size;
+	il = prevp->m_addr + (b_off_t)prevp->m_size;
 	if (il > addr)
 	    type |= M_BOVFL;
 	if (il == addr)
 	    type |= M_BMTCH;
     }
     if (curp) {
-	il = addr + (off_t)size;
+	il = addr + (b_off_t)size;
 	if (il > curp->m_addr)
 	    type |= M_TOVFL;
 	if (il == curp->m_addr)
@@ -259,14 +171,14 @@ rt_memfree(struct mem_map **pp, size_t size, off_t addr)
     }
 
     if (type & (M_TOVFL|M_BOVFL)) {
-	bu_log("rt_memfree(addr=%ld, size=%zu) ERROR type=0%o\n",
-	       addr, size, type);
+	bu_log("rt_memfree(addr=%jd, size=%zu) ERROR type=0%o\n",
+	       (intmax_t)addr, size, type);
 	if (prevp)
-	    bu_log("prevp: m_addr=%ld, m_size=%zu\n",
-		   prevp->m_addr, prevp->m_size);
+	    bu_log("prevp: m_addr=%jd, m_size=%zu\n",
+		   (intmax_t)prevp->m_addr, prevp->m_size);
 	if (curp)
-	    bu_log("curp: m_addr=%ld, m_size=%zu\n",
-		   curp->m_addr, curp->m_size);
+	    bu_log("curp: m_addr=%jd, m_size=%zu\n",
+		   (intmax_t)curp->m_addr, curp->m_size);
 	return;
     }
 
@@ -291,7 +203,7 @@ rt_memfree(struct mem_map **pp, size_t size, off_t addr)
 
 	case M_TMTCH:		/* Expand top element downward */
 	    curp->m_size += size;
-	    curp->m_addr -= (off_t)size;
+	    curp->m_addr -= (b_off_t)size;
 	    break;
 
 	default:		/* No matches; allocate and insert */
@@ -330,17 +242,6 @@ rt_mempurge(struct mem_map **pp)
     rt_mem_freemap = *pp;
 
     *pp = MAP_NULL;
-}
-
-
-void
-rt_memprint(struct mem_map **pp)
-{
-    register struct mem_map *curp;
-
-    bu_log("rt_memprint(%p):  address, length\n", (void *)*pp);
-    for (curp = *pp; curp; curp = curp->m_nxtp)
-	bu_log(" a=%ld, l=%.5zu\n", curp->m_addr, curp->m_size);
 }
 
 

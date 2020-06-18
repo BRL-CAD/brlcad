@@ -1,7 +1,7 @@
 /*                   C R A S H R E P O R T . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2018 United States Government as represented by
+ * Copyright (c) 2007-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,9 +26,10 @@
 #include <time.h>
 #include "bio.h"
 
-#include "bu/file.h"
+#include "bu/app.h"
 #include "bu/log.h"
 #include "bu/parallel.h"
+#include "bu/process.h"
 #include "brlcad_ident.h"
 
 #if defined(HAVE_POPEN) && !defined(HAVE_POPEN_DECL) && !defined(popen)

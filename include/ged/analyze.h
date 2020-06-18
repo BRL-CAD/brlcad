@@ -1,7 +1,7 @@
 /*                          A N A L Y Z E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,9 +46,9 @@ GED_EXPORT extern int ged_analyze(struct ged *gedp, int argc, const char *argv[]
 GED_EXPORT extern int ged_bb(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Checks for overlaps of the current view or specified objects.
+ * Analyzes the geometry
  */
-GED_EXPORT extern int ged_check_overlaps(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_check(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Calculate a geometry diff

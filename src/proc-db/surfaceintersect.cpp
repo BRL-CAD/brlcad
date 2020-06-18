@@ -1,7 +1,7 @@
 /*             S U R F A C E I N T E R S E C T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2009-2018 United States Government as represented by
+ * Copyright (c) 2009-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@
 
 /* implementation system headers */
 #include <assert.h>
-
+#include "bu/app.h"
 
 #define SI_MIN(a, b) (((a) > (b)) ? (a) : (b))
 
@@ -1000,8 +1000,9 @@ MakeTwistedCubeFaces2(ON_Brep& brep)
 }
 
 int
-main()
+main(int UNUSED(argc), const char **argv)
 {
+    bu_setprogname(argv[0]);
     ON_3dPointArray pts1, pts2;
     pts1.Append(ON_3dPoint(1.0, 1.0, 0.0));
     pts1.Append(ON_3dPoint(-1.0, -1.0, 0.0));

@@ -1,7 +1,7 @@
 /*                      B I N U N I F . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2018 United States Government as represented by
+ * Copyright (c) 1993-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,10 +33,10 @@ __BEGIN_DECLS
 
 /* defined in binary_obj.c */
 RT_EXPORT extern int rt_mk_binunif(struct rt_wdb *wdbp,
-                                   const char *obj_name,
-                                   const char *file_name,
-                                   unsigned int minor_type,
-                                   size_t max_count);
+				   const char *obj_name,
+				   const char *file_name,
+				   unsigned int minor_type,
+				   size_t max_count);
 
 
 /* defined in db5_bin.c */

@@ -1,7 +1,7 @@
 /*                   W D B _ E X A M P L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,6 +35,7 @@
 #include <math.h>
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "rt/geom.h"
@@ -49,6 +50,8 @@ main(int ac, char *av[])
     int is_region;
     unsigned char rgb[3];
     struct wmember wm_hd; /* defined in wdb.h */
+
+    bu_setprogname(av[0]);
 
     if (ac != 2) {
 	bu_exit(1, "Usage: %s db_file.g\n", av[0]);

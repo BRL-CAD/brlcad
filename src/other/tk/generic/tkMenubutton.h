@@ -21,11 +21,6 @@
 #include "tkMenu.h"
 #endif
 
-#ifdef BUILD_tk
-# undef TCL_STORAGE_CLASS
-# define TCL_STORAGE_CLASS DLLEXPORT
-#endif
-
 /*
  * Legal values for the "orient" field of TkMenubutton records.
  */
@@ -175,7 +170,7 @@ typedef struct {
     				 * "left" and "right" will pop the menu left
     				 * or right, and the active item will be next
     				 * to the button. */
-    Tk_Cursor cursor;		/* Current cursor for window, or None. */
+    Tk_Cursor cursor;		/* Current cursor for window, or NULL. */
     char *takeFocus;		/* Value of -takefocus option; not used in the
 				 * C code, but used by keyboard traversal
 				 * scripts. Malloc'ed, but may be NULL. */
@@ -209,12 +204,6 @@ typedef struct {
 #define INDICATOR_HEIGHT	17
 
 /*
- * Declaration of variables shared between the files in the button module.
- */
-
-MODULE_SCOPE Tk_ClassProcs tkpMenubuttonClass;
-
-/*
  * Declaration of procedures used in the implementation of the button widget.
  */
 
@@ -223,8 +212,5 @@ MODULE_SCOPE TkMenuButton *TkpCreateMenuButton(Tk_Window tkwin);
 MODULE_SCOPE void	TkpDisplayMenuButton(ClientData clientData);
 MODULE_SCOPE void 	TkpDestroyMenuButton(TkMenuButton *mbPtr);
 MODULE_SCOPE void	TkMenuButtonWorldChanged(ClientData instanceData);
-
-# undef TCL_STORAGE_CLASS
-# define TCL_STORAGE_CLASS DLLIMPORT
 
 #endif /* _TKMENUBUTTON */

@@ -12,7 +12,7 @@
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  */
 
-#include <tkInt.h>
+#include "tkInt.h"
 
 #if !defined(MAC_OSX_TK)
 #   include <X11/Xlib.h>
@@ -50,8 +50,8 @@
 static TkpClipMask *AllocClipMask(GC gc) {
     TkpClipMask *clip_mask = (TkpClipMask*) gc->clip_mask;
 
-    if (clip_mask == None) {
-	clip_mask = (TkpClipMask*) ckalloc(sizeof(TkpClipMask));
+    if (clip_mask == NULL) {
+	clip_mask = ckalloc(sizeof(TkpClipMask));
 	gc->clip_mask = (Pixmap) clip_mask;
 #ifdef MAC_OSX_TK
     } else if (clip_mask->type == TKP_CLIP_REGION) {
@@ -84,7 +84,7 @@ static void FreeClipMask(GC gc) {
 	    TkpReleaseRegion(((TkpClipMask*) gc->clip_mask)->value.region);
 	}
 #endif
-	ckfree((char*) gc->clip_mask);
+	ckfree(gc->clip_mask);
 	gc->clip_mask = None;
     }
 }
@@ -117,16 +117,15 @@ XCreateGC(
     /*
      * In order to have room for a dash list, MAX_DASH_LIST_SIZE extra chars
      * are defined, which is invisible from the outside. The list is assumed
-     * to end with a 0-char, so this must be set explicitely during
+     * to end with a 0-char, so this must be set explicitly during
      * initialization.
      */
 
 #define MAX_DASH_LIST_SIZE 10
 
-    gp = (XGCValues *) ckalloc(sizeof(XGCValues) + MAX_DASH_LIST_SIZE +
-	    gcCacheSize);
+    gp = ckalloc(sizeof(XGCValues) + MAX_DASH_LIST_SIZE + gcCacheSize);
     if (!gp) {
-	return None;
+	return NULL;
     }
 
 #define InitField(name,maskbit,default) \
@@ -269,10 +268,10 @@ int XFreeGC(
     Display *d,
     GC gc)
 {
-    if (gc != None) {
+    if (gc != NULL) {
 	FreeClipMask(gc);
 	TkpFreeGCCache(gc);
-	ckfree((char *) gc);
+	ckfree(gc);
     }
     return Success;
 }
@@ -454,19 +453,19 @@ XSetClipOrigin(
  *	None.
  *
  * Side effects:
- *	Allocates or dealloates a TkpClipMask.
+ *	Allocates or deallocates a TkpClipMask.
  *
  *----------------------------------------------------------------------
  */
 
-void
+int
 TkSetRegion(
     Display *display,
     GC gc,
     TkRegion r)
 {
-    if (r == None) {
-	Tcl_Panic("must not pass None to TkSetRegion for compatibility with X11; use XSetClipMask instead");
+    if (r == NULL) {
+	Tcl_Panic("must not pass NULL to TkSetRegion for compatibility with X11; use XSetClipMask instead");
     } else {
 	TkpClipMask *clip_mask = AllocClipMask(gc);
 
@@ -476,6 +475,7 @@ TkSetRegion(
 	TkpRetainRegion(r);
 #endif
     }
+    return Success;
 }
 
 int
@@ -561,7 +561,7 @@ XDrawSegments(
     XSegment *segments,
     int nsegments)
 {
-    return Success;
+    return BadDrawable;
 }
 #endif
 

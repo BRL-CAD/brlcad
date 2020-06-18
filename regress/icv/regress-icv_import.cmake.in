@@ -1,51 +1,65 @@
+# Values set at CMake configure time
 set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
-set(SRCIMG "@INPUT_IMAGE@")
 set(CTRLIMG "@CONTROL_IMAGE@")
-set(TGTIMG "@TARGET_IMAGE@")
 set(LOGFILE "@LOG_FILE@")
+set(SRCIMG "@INPUT_IMAGE@")
+set(TGTIMG "@TARGET_IMAGE@")
 
-set(SBDIR "@CMAKE_RUNTIME_OUTPUT_DIRECTORY@")
-set(DBDIR "@CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG@")
-set(RBDIR "@CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE@")
-# Use the mechanism created to allow multiconfig builds to
-# know what the current build type is.
-if(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
-  set(BDIR "${RBDIR}")
-elseif(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Debug")
-  set(BDIR "${DBDIR}")
-else(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
-  set(BDIR "${SBDIR}")
-endif(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
+file(WRITE "${LOGFILE}" "Starting icv_import run\n")
 
-get_filename_component(EXE "@CMAKE_COMMAND@" EXT)
-set(ICV "${BDIR}/icv${EXE}")
-set(PIXCMP "${BDIR}/pixcmp${EXE}")
+# The executable locations aren't know at CMake configure time, so one of them
+# is passed in via the EXEC variable at runtime.  De-quote it and assign it to
+# the appropriate variable.
+string(REPLACE "\\" "" ICV_EXEC "${EXEC}")
+if (NOT EXISTS "${ICV_EXEC}")
+  file(WRITE "${LOGFILE}" "icv not found at location \"${ICV_EXEC}\" - aborting\n")
+  message(FATAL_ERROR "Unable to find icv, aborting.\nSee ${LOGFILE} for more details.")
+endif (NOT EXISTS "${ICV_EXEC}")
 
-# Start with the file using standard UNIX line endings
-file(APPEND "${LOGFILE}" "Converting ${SRCIMG} to ${TGTIMG}:\n")
+# Apparently CMAKE_EXECUTABLE_SUFFIX is not reliably defined in cmake -P - get
+# it from the executable passed in to us.
+get_filename_component(EXE_SUFFIX "${ICV_EXEC}" EXT)
+
+# Use the path passed in from the build target generator expression
+# to ascertain the current binary directory in use, and locate any
+# other necessary programs.
+get_filename_component(BDIR "${ICV_EXEC}" DIRECTORY)
+set(PIXCMP_EXEC "${BDIR}/pixcmp${EXE_SUFFIX}")
+if (NOT EXISTS "${PIXCMP_EXEC}")
+  file(WRITE "${LOGFILE}" "pixcmp not found at location \"${PIXCMP_EXEC}\" - aborting\n")
+  message(FATAL_ERROR "Unable to find pixcmp, aborting.\nSee ${LOGFILE} for more details.")
+endif (NOT EXISTS "${PIXCMP_EXEC}")
+
+# Clean up in case we've run before unsuccessfully
+execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "${TGTIMG}")
+
+# Perform the ICV conversion
+file(APPEND "${LOGFILE}" "Converting ${SRCIMG} to ${TGTIMG}\n")
 execute_process(
-  COMMAND "${ICV}" "${SRCIMG}" "${TGTIMG}"
-  OUTPUT_VARIABLE icv_log ERROR_VARIABLE icv_log
+  COMMAND "${ICV_EXEC}" "${SRCIMG}" "${TGTIMG}"
+  RESULT_VARIABLE icv_result OUTPUT_VARIABLE icv_log ERROR_VARIABLE icv_log
   )
 file(APPEND "${LOGFILE}" "${icv_log}")
 set(icv_log)
 if(NOT EXISTS "${TGTIMG}")
-  message(FATAL_ERROR "Unable to convert ${SRCIMG} to ${TGTIMG} with ${ICV}, aborting.\nSee ${LOGFILE} for more details.")
+  file(APPEND "${LOGFILE}" "Failure: ${icv_result}")
+  message(FATAL_ERROR "Unable to convert ${SRCIMG} to ${TGTIMG} with ${ICV_EXEC}, aborting.\nSee ${LOGFILE} for more details.")
 endif(NOT EXISTS "${TGTIMG}")
 
 # pixcmp the results with the control image to make sure icv got it right
-file(APPEND "${LOGFILE}" "\nComparing ${TGTIMG} to ${CTRLIMG}:\n")
+file(APPEND "${LOGFILE}" "\nComparing ${TGTIMG} to ${CTRLIMG}\n")
 execute_process(
-  COMMAND "${PIXCMP}" "${TGTIMG}" "${CTRLIMG}"
+  COMMAND "${PIXCMP_EXEC}" "${TGTIMG}" "${CTRLIMG}"
   RESULT_VARIABLE pixcmp_val OUTPUT_VARIABLE icv_log ERROR_VARIABLE icv_log
   )
 file(APPEND "${LOGFILE}" "${icv_log}")
 
+# Final success/failure check
 if(${pixcmp_val} GREATER 0)
-  message(FATAL_ERROR "Differences found between ${TGTIMG} and ${CTRLIMG} with ${PIXCMP}, aborting.\nSee ${LOGFILE} for more details.")
+  file(APPEND "${LOGFILE}" "Failure: ${pixcmp_val}")
+  message(FATAL_ERROR "Differences found between ${TGTIMG} and ${CTRLIMG} with ${PIXCMP_EXEC}, aborting.\nSee ${LOGFILE} for more details.")
 else(${pixcmp_val} GREATER 0)
-  execute_process(COMMAND "@CMAKE_COMMAND@" -E remove ${TGTIMG})
-  execute_process(COMMAND "@CMAKE_COMMAND@" -E touch "@STAMP_FILE@")
+  execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f ${TGTIMG})
 endif(${pixcmp_val} GREATER 0)
 
 # Local Variables:

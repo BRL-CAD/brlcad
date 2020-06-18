@@ -1,7 +1,7 @@
 /*                  C O M B _ S T D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -179,7 +179,8 @@ add_operand(struct ged *gedp, struct bu_list *hp, char *name)
     ptr_lparen = strchr(name, '(');
     ptr_rparen = strchr(name, ')');
 
-    RT_GET_TREE(node, &rt_uniresource);
+    BU_GET(node, union tree);
+    RT_TREE_INIT(node);
     node->tr_op = OP_DB_LEAF;
     node->tr_l.tl_mat = (matp_t)NULL;
     if (ptr_lparen || ptr_rparen) {

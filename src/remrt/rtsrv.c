@@ -1,7 +1,7 @@
 /*                         R T S R V . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2018 United States Government as represented by
+ * Copyright (c) 1985-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -41,6 +41,7 @@
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
+#include "bio.h"
 #include "bresource.h"
 #include "bsocket.h"
 
@@ -48,11 +49,14 @@
 #  undef VMIN
 #endif
 
-#include "bu/list.h"
+#include "bu/app.h"
 #include "bu/str.h"
+#include "bu/process.h"
+#include "bu/snooze.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
+#include "optical/debug.h"
 #include "pkg.h"
 #include "fb.h"
 #include "icv.h"
@@ -94,8 +98,6 @@ int report_progress;	/* !0 = user wants progress report */
 /* Variables shared elsewhere */
 extern fastf_t rt_dist_tol;	/* Value for rti_tol.dist */
 extern fastf_t rt_perp_tol;	/* Value for rti_tol.perp */
-extern int rdebug;		/* RT program debugging (not library) */
-extern int rt_verbosity;	/* from liboptical */
 static char idbuf[132];		/* First ID record info */
 
 /* State flags */
@@ -161,6 +163,8 @@ main(int argc, char **argv)
 {
     int n;
 
+    bu_setprogname(argv[0]);
+
     if (argc < 2) {
 	fprintf(stderr, "%s", srv_usage);
 	return 1;
@@ -171,10 +175,10 @@ main(int argc, char **argv)
 	if (BU_STR_EQUAL(argv[1], "-d")) {
 	    debug++;
 	} else if (BU_STR_EQUAL(argv[1], "-x")) {
-	    sscanf(argv[2], "%x", (unsigned int *)&RTG.debug);
+	    sscanf(argv[2], "%x", (unsigned int *)&rt_debug);
 	    argc--; argv++;
 	} else if (BU_STR_EQUAL(argv[1], "-X")) {
-	    sscanf(argv[2], "%x", (unsigned int *)&rdebug);
+	    sscanf(argv[2], "%x", (unsigned int *)&optical_debug);
 	    argc--; argv++;
 	} else {
 	    fprintf(stderr, "%s", srv_usage);
@@ -209,7 +213,7 @@ main(int argc, char **argv)
 	(void)pkg_send(MSG_CMD, argv[3], strlen(argv[3])+1, pcsrv);
 
 	/* Prevent chasing the package with an immediate TCP close */
-	sleep(1);
+	bu_snooze(BU_SEC2USEC(1));
 
 	pkg_close(pcsrv);
 	return 0;
@@ -320,7 +324,7 @@ main(int argc, char **argv)
 	RTG.rtg_parallel = 0;
     }
 
-    bu_log("using %d of %d cpus\n",
+    bu_log("using %zu of %d cpus\n",
 	   npsw, avail_cpus);
 
     /* Before option processing, do application-specific initialization */
@@ -546,7 +550,7 @@ ph_gettrees(struct pkg_conn *UNUSED(pc), char *buf)
 	view_end(&APP);
 	view_cleanup(rtip);
 	rt_clean(rtip);
-	if (rdebug&RDEBUG_RTMEM_END)
+	if (optical_debug&OPTICAL_DEBUG_RTMEM_END)
 	    bu_prmem("After rt_clean");
     }
 
@@ -822,24 +826,25 @@ bu_log_indent_vls(struct bu_vls *v)
  * Log an error.  This version buffers a full line, to save network
  * traffic.
  */
-void
+int
 bu_log(const char *fmt, ...)
 {
     va_list vap;
     char buf[512];		/* a generous output line.  Must be AUTO, else non-PARALLEL. */
-    int ret;
+    int ret = 0;
 
     if (print_on == 0)
-	return;
+	return 0;
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
     va_start(vap, fmt);
-    (void)vsprintf(buf, fmt, vap);
+    ret = vsprintf(buf, fmt, vap);
     va_end(vap);
 
     if (pcsrv == PKC_NULL || pcsrv == PKC_ERROR) {
 	fprintf(stderr, "%s", buf);
-	goto out;
+	bu_semaphore_release(BU_SEM_SYSCALL);
+	return ret;
     }
 
     if (debug)
@@ -850,8 +855,9 @@ bu_log(const char *fmt, ...)
 	fprintf(stderr, "pkg_send MSG_PRINT failed\n");
 	bu_exit(12, NULL);
     }
-out:
+
     bu_semaphore_release(BU_SEM_SYSCALL);
+    return ret;
 }
 
 

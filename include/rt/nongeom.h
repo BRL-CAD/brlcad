@@ -1,7 +1,7 @@
 /*                      N O N G E O M . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2018 United States Government as represented by
+ * Copyright (c) 1993-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -63,36 +63,36 @@ struct rt_comb_internal {
  * initialize an rt_comb_internal to empty.
  */
 #define RT_COMB_INTERNAL_INIT(_p) { \
-        (_p)->magic = RT_COMB_MAGIC; \
-        (_p)->tree = TREE_NULL; \
-        (_p)->region_flag = 0; \
-        (_p)->is_fastgen = REGION_NON_FASTGEN; \
-        (_p)->region_id = 0; \
-        (_p)->aircode = 0; \
-        (_p)->GIFTmater = 0; \
-        (_p)->los = 0; \
-        (_p)->rgb_valid = 0; \
-        (_p)->rgb[0] = 0; \
-        (_p)->rgb[1] = 0; \
-        (_p)->rgb[2] = 0; \
-        (_p)->temperature = 0.0; \
-        BU_VLS_INIT(&(_p)->shader); \
-        BU_VLS_INIT(&(_p)->material); \
-        (_p)->inherit = 0; \
+	(_p)->magic = RT_COMB_MAGIC; \
+	(_p)->tree = TREE_NULL; \
+	(_p)->region_flag = 0; \
+	(_p)->is_fastgen = REGION_NON_FASTGEN; \
+	(_p)->region_id = 0; \
+	(_p)->aircode = 0; \
+	(_p)->GIFTmater = 0; \
+	(_p)->los = 0; \
+	(_p)->rgb_valid = 0; \
+	(_p)->rgb[0] = 0; \
+	(_p)->rgb[1] = 0; \
+	(_p)->rgb[2] = 0; \
+	(_p)->temperature = 0.0; \
+	BU_VLS_INIT(&(_p)->shader); \
+	BU_VLS_INIT(&(_p)->material); \
+	(_p)->inherit = 0; \
     }
 
 /**
  * deinitialize an rt_comb_internal.  the tree pointer is not released
- * so callers will need to call RT_FREE_TREE() or db_free_tree()
+ * so callers will need to call BU_PUT() or db_free_tree()
  * directly if a tree is set.  the shader and material strings are
  * released.  the comb itself will need to be released with bu_free()
  * unless it resides on the stack.
  */
 #define RT_FREE_COMB_INTERNAL(_p) { \
-        bu_vls_free(&(_p)->shader); \
-        bu_vls_free(&(_p)->material); \
-        (_p)->tree = TREE_NULL; \
-        (_p)->magic = 0; \
+	bu_vls_free(&(_p)->shader); \
+	bu_vls_free(&(_p)->material); \
+	(_p)->tree = TREE_NULL; \
+	(_p)->magic = 0; \
     }
 
 
@@ -105,16 +105,16 @@ struct rt_binunif_internal {
     int                 type;
     size_t              count;
     union {
-        float           *flt;
-        double          *dbl;
-        char            *int8;
-        short           *int16;
-        int             *int32;
-        long            *int64;
-        unsigned char   *uint8;
-        unsigned short  *uint16;
-        unsigned int    *uint32;
-        unsigned long   *uint64;
+	float           *flt;
+	double          *dbl;
+	char            *int8;
+	short           *int16;
+	int             *int32;
+	long            *int64;
+	unsigned char   *uint8;
+	unsigned short  *uint16;
+	unsigned int    *uint32;
+	unsigned long   *uint64;
     } u;
 };
 #define RT_CHECK_BINUNIF(_p) BU_CKMAG(_p, RT_BINUNIF_INTERNAL_MAGIC, "rt_binunif_internal")

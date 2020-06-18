@@ -1,7 +1,7 @@
 /*              T E S T _ B R E P R E P O R T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2015-2018 United States Government as represented by
+ * Copyright (c) 2015-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -154,6 +154,8 @@ main(int argc, char *argv[])
     int unlikelyconvertable = 0;
     int nonconvertable = 0;
     struct type_counts cnts;
+
+    bu_setprogname(argv[0]);
 
     cnts.planar = 0;
     cnts.spherical = 0;

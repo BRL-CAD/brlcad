@@ -1,7 +1,7 @@
 /*                         V D E C K . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2018 United States Government as represented by
+ * Copyright (c) 1990-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -65,6 +65,7 @@
 #endif
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/parallel.h"
 #include "bu/sort.h"
 #include "bu/units.h"
@@ -144,7 +145,7 @@ int	ndir;		/* Entries in directory.			*/
 /* Miscellaneous globals leftover from Keith's KARDS code.		*/
 int		delsol = 0, delreg = 0;
 char		buff[30];
-off_t		savsol;		/* File position of # of solids & regions	*/
+b_off_t		savsol;		/* File position of # of solids & regions	*/
 
 /* Structures.								*/
 mat_t		identity;
@@ -172,7 +173,7 @@ void			addarbn();
 void			addell();
 void			addars();
 void			deck();
-void			itoa();
+static void		vdeck_itoa();
 void			vls_blanks();
 void			vls_itoa();
 void			vls_ftoa_vec_cvt();
@@ -243,6 +244,8 @@ sortFunc(const void *a, const void *b, void *UNUSED(arg))
 int
 main(int argc, char *argv[])
 {
+    bu_setprogname(argv[0]);
+
     setbuf(stdout, (char *)bu_malloc(BUFSIZ, "stdout buffer"));
     BU_LIST_INIT(&(sol_hd.l));
 
@@ -642,7 +645,7 @@ gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct
     if (debug) {
 	struct bu_vls str = BU_VLS_INIT_ZERO;
 	/* verbose = 1, mm2local = 1.0 */
-	if (ip->idb_meth->ft_describe(&str, ip, 1, 1.0, &rt_uniresource, dbip) < 0) {
+	if (ip->idb_meth->ft_describe(&str, ip, 1, 1.0) < 0) {
 	    bu_log("rt_gettree_leaf(%s):  solid describe failure\n",
 		   dp->d_namep);
 	}
@@ -1252,7 +1255,7 @@ deck(char *prefix)
 	perror(id_file);
 	bu_exit(10, NULL);
     }
-    itoa(-1, buff, 5);
+    vdeck_itoa(-1, buff, 5);
     ewrite(ridfp, buff, 5);
     ewrite(ridfp, LF, 1);
 
@@ -1274,9 +1277,9 @@ deck(char *prefix)
     if (savsol >= 0)
 	bu_fseek(solfp, savsol, 0);
 
-    itoa(nns, buff, 5);
+    vdeck_itoa(nns, buff, 5);
     ewrite(solfp, buff, 5);
-    itoa(nnr, buff, 5);
+    vdeck_itoa(nnr, buff, 5);
     ewrite(solfp, buff, 5);
 
     /* Finish region id table.					*/
@@ -1461,8 +1464,8 @@ delete_obj(char *args[])
 /**
  * Convert integer to ascii  wd format.
  */
-void
-itoa(int n, char *s, int w)
+static void
+vdeck_itoa(int n, char *s, int w)
 {
     int	 c, i, j, sign;
 

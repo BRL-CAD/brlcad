@@ -1,9 +1,8 @@
 set(tkhtml_ignore_files
-CMake/FindTCL.cmake
-CMake/FindX11.cmake
 CMakeLists.txt
 COPYING
 README
+TCL_PKGINDEX.cmake
 doc/html.man
 doc/macros.tcl
 doc/tkhtml_requirements.tcl

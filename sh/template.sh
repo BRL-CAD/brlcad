@@ -1,7 +1,7 @@
 #                     T E M P L A T E . S H
 # BRL-CAD
 #
-# Copyright (c) 2007-2018 United States Government as represented by
+# Copyright (c) 2007-2020 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -130,7 +130,8 @@ fi
 
 # apply the header
 output="`env bash \"$header_sh\" \"$LICE\" \"$FILE\" \"$PROJ\" \"$COPY\" 2>&1`"
-if [ $? -ne 0 ] ; then
+# return 0 is header applied, return 9 is header already exists
+if [ $? -ne 0 -a $? -ne 9 ] ; then
     if [ -f "$FILE.backup" ] ; then
 	cp "$FILE.backup" "$FILE"
     fi

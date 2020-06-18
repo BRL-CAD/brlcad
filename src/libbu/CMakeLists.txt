@@ -10,13 +10,12 @@ endif(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
 
 # locally used but not needed by users of the library
 set(BU_LOCAL_INCLUDE_DIRS
-  ${CMAKE_CURRENT_SOURCE_DIR}
   ${CMAKE_CURRENT_SOURCE_DIR}/y2038
-  ${REGEX_INCLUDE_DIR}
+  ${REGEX_INCLUDE_DIRS}
   )
-if (${UUID_INCLUDE_DIR})
+if (UUID_INCLUDE_DIR)
   set(BU_LOCAL_INCLUDE_DIRS ${BU_LOCAL_INCLUDE_DIRS} ${UUID_INCLUDE_DIR})
-endif (${UUID_INCLUDE_DIR})
+endif (UUID_INCLUDE_DIR)
 
 BRLCAD_LIB_INCLUDE_DIRS(bu BU_INCLUDE_DIRS BU_LOCAL_INCLUDE_DIRS)
 
@@ -24,15 +23,16 @@ BRLCAD_LIB_INCLUDE_DIRS(bu BU_INCLUDE_DIRS BU_LOCAL_INCLUDE_DIRS)
 # Use configure_file to make copies of the mime input files,
 # so CMake will get notified for the need for a re-configure
 # if they are edited.
-configure_file(${BRLCAD_SOURCE_DIR}/misc/mime.types ${CMAKE_CURRENT_BINARY_DIR}/tmp COPYONLY)
-configure_file(${BRLCAD_SOURCE_DIR}/misc/mime_cad.types ${CMAKE_CURRENT_BINARY_DIR}/tmp COPYONLY)
-execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/tmp)
+configure_file(${BRLCAD_SOURCE_DIR}/misc/mime.types ${CMAKE_CURRENT_BINARY_DIR}/mime.tmp COPYONLY)
+configure_file(${BRLCAD_SOURCE_DIR}/misc/mime_cad.types ${CMAKE_CURRENT_BINARY_DIR}/mime.tmp COPYONLY)
+execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/mime.tmp)
 
 # Run the generation process
 include(${CMAKE_CURRENT_SOURCE_DIR}/mime.cmake)
 
 # We do want to install the mime header
-install(FILES ${BU_MIME_H_FILE} DESTINATION ${INCLUDE_DIR}/brlcad/bu)
+set_source_files_properties("${BU_MIME_TYPES_H_FILE}" PROPERTIES GENERATED TRUE)
+BUILD_CFG_HDR("${BU_MIME_TYPES_H_FILE}" ${INCLUDE_DIR}/brlcad/bu)
 
 # Year 2038+ support
 set_property(SOURCE y2038/time64.c PROPERTY EXTERNAL 1)
@@ -54,15 +54,16 @@ set(LIBBU_SOURCES
   bomb.c
   booleanize.c
   brlcad_path.c
+  bu_init.cpp
   cmd.c
-  cmdhist.c
-  color.c
+  color.cpp
   convert.c
   crashreport.c
   ctype.c
+  dir.c
   dirent.c
   datetime.c
-  dlfcn.c
+  dylib.c
   encode.c
   endian.c
   env.c
@@ -92,11 +93,13 @@ set(LIBBU_SOURCES
   mappedfile.c
   ${BU_MIME_C_FILE}
   mread.c
+  num.c
   observer.c
   opt.c
   parallel.c
   parse.c
   path.c
+  path_normalize.c
   printb.c
   process.c
   progname.c
@@ -104,52 +107,82 @@ set(LIBBU_SOURCES
   redblack.c
   realpath.c
   semaphore.c
+  semaphore_register.cpp
   sha1.c
   simd.c
   sort.c
   sscanf.c
   scan.c
+  snooze.c
   str.c
   tc.c
+  tcllist.c
   temp.c
   thread.cpp
   units.c
+  units_dehumanize.c
+  units_humanize.c
   uuid.c
   vers.c
   vfont.c
   vlb.c
   vls.c
+  vls_incr.cpp
   vls_vprintf.c
+  whereami.c
   whereis.c
   which.c
   xdr.c
   )
+
 if(NOT CMAKE_CXX_STANDARD EQUAL 98)
   set(LIBBU_SOURCES ${LIBBU_SOURCES} parallel_cpp11thread.cpp)
 else(NOT CMAKE_CXX_STANDARD EQUAL 98)
   CMAKEFILES(parallel_cpp11thread.cpp)
 endif(NOT CMAKE_CXX_STANDARD EQUAL 98)
 
-BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${CMAKE_THREAD_LIBS_INIT};${DL_LIBRARY};${WINSOCK_LIB};${PSAPI_LIB};${BSON_LIBRARIES};${UUID_LIBRARIES};${REGEX_LIBRARY};${M_LIBRARY}")
+BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${Foundation_LIBRARIES};${CMAKE_THREAD_LIBS_INIT};${DL_LIBRARY};${WINSOCK_LIB};${PSAPI_LIB};${BSON_LIBRARIES};${UUID_LIBRARIES};${REGEX_LIBRARIES};${M_LIBRARY}")
 set_target_properties(libbu PROPERTIES VERSION 20.0.1 SOVERSION 20)
+
+# Define a pre-build test for libbu to check the semaphores in BRL-CAD's headers for
+# ordering issues
+#set(BCAD_HDRS_FILE "${CMAKE_CURRENT_BINARY_DIR}/brlcad_headers.txt")
+#file(REMOVE "${BCAD_HDRS_FILE}")
+#file(GLOB_RECURSE BCAD_HDRS "${CMAKE_SOURCE_DIR}/include/*.h*")
+#foreach(HDRF ${BCAD_HDRS})
+#  if (NOT "${HDRF}" MATCHES ".*.svn.*")
+#    file(APPEND "${BCAD_HDRS_FILE}" "${HDRF}\n")
+#  endif (NOT "${HDRF}" MATCHES ".*.svn.*")
+#endforeach(HDRF ${BCAD_HDRS})
+#DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/brlcad_headers.txt")
+#BRLCAD_ADDEXEC(semchk "tests/semchk.cpp" "" NO_INSTALL)
+#add_custom_command(
+#  TARGET libbu PRE_BUILD
+#  COMMAND $<TARGET_FILE:semchk> "${BCAD_HDRS_FILE}"
+#  COMMENT "Validating BRL-CAD library semaphore definitions"
+#  DEPENDS semchk
+#  )
 
 BRLCAD_ADDDATA(fix.6r vfont)
 BRLCAD_ADDDATA(nonie.r.12 vfont)
 
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
-  add_subdirectory(tests)
-endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+add_subdirectory(tests)
 
 set(bu_ignore_files
+  CMakeLists.txt
   bitv.h
   charclass.h
   mime.cmake
   parallel.h
+  process.h
+  realpath_bsd.c
+  tests/semchk.cpp
   sha1.h
   vfont.h
   vls_vprintf.h
   TODO.binary_attributes
   uce-dirent.h
+  whereami.h
   y2038/LICENSE
   y2038/README.txt
   y2038/time64.h

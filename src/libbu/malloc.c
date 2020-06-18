@@ -1,7 +1,7 @@
 /*                        M A L L O C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,6 +21,7 @@
 #include "common.h"
 
 #include <stdlib.h>
+#include <limits.h>
 #include <string.h>
 #ifdef HAVE_SYS_IPC_H
 #  include <sys/ipc.h>
@@ -32,7 +33,6 @@
 #include "bio.h"
 
 #include "bu/debug.h"
-#include "bu/list.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
 #include "bu/exit.h"
@@ -42,6 +42,8 @@
 #ifndef HAVE_DECL_POSIX_MEMALIGN
 extern int posix_memalign(void **, size_t, size_t);
 #endif
+
+int BU_SEM_MALLOC;
 
 
 /**
@@ -63,25 +65,6 @@ typedef enum {
     CALLOC
 } alloc_t;
 
-
-#define MDB_MAGIC 0x12348969
-struct memdebug {
-    uint32_t magic;		/* corruption can be everywhere */
-    void *mdb_addr;
-    const char *mdb_str;
-    size_t mdb_len;
-};
-static struct memdebug *bu_memdebug = (struct memdebug *)NULL;
-static size_t bu_memdebug_len = 0;
-#define MEMDEBUG_NULL ((struct memdebug *)0)
-
-struct memqdebug {
-    struct bu_list q;
-    struct memdebug m;
-};
-
-static struct bu_list *bu_memq = BU_LIST_NULL;
-#define MEMQDEBUG_NULL ((struct memqdebug *)0)
 
 /* non-published globals */
 extern const char bu_vls_message[];
@@ -200,7 +183,24 @@ bu_free(void *ptr, const char *str)
 	str = nul;
 
     if (UNLIKELY(ptr == (char *)0 || ptr == (char *)(-1L))) {
+	const char *msg_sleep_time_str = NULL;
 	fprintf(stderr, "%p free ERROR %s\n", ptr, str);
+	/* There is a class of parallel failures that produce attempts to free
+	 * NULL values, but are difficult to reproduce.  To get a debugger on
+	 * those cases to see how we got there, we need time.  If we hit this
+	 * case, spend a little extra time to see if an environment variable is
+	 * set to a time value in seconds.  If it is set, sleep to give the
+	 * user time to attach the debugger. */
+	msg_sleep_time_str = getenv("BU_NIL_FREE_SLEEP_SEC");
+	if (msg_sleep_time_str) {
+	    long stime = 0;
+	    char *end;
+	    errno = 0;
+	    stime = strtol(msg_sleep_time_str, &end, 10);
+	    if (errno != ERANGE && errno != EINVAL && stime > 0 && stime < UINT_MAX) {
+		sleep((unsigned int)stime);
+	    }
+	}
 	return;
     }
 
@@ -292,66 +292,8 @@ bu_realloc(register void *ptr, size_t siz, const char *str)
 void
 bu_prmem(const char *str)
 {
-    register struct memdebug *mp;
-    register struct memqdebug *mqp;
-    register uint32_t *ip;
-    register size_t count = 0;
-
-    fprintf(stderr, "\nbu_prmem(): dynamic memory use (%s)\n", str);
-    fprintf(stderr, " Address Length Purpose\n");
-    if (bu_memdebug_len > 0) {
-	mp = &bu_memdebug[bu_memdebug_len-1];
-	for (; mp >= bu_memdebug; mp--) {
-	    if (!mp->magic) continue;
-	    if (mp->magic != MDB_MAGIC) bu_bomb("memdebug_check() malloc tracing table corrupted!\n");
-	    if (mp->mdb_len == 0) continue;
-
-	    count++;
-	    ip = (uint32_t *)(((char *)mp->mdb_addr)+mp->mdb_len-sizeof(uint32_t));
-	    if (mp->mdb_str == bu_strdup_message) {
-		fprintf(stderr, "%p %llu bu_strdup: \"%s\"\n",
-			mp->mdb_addr, (unsigned long long)mp->mdb_len,
-			((char *)mp->mdb_addr));
-	    } else if (mp->mdb_str == bu_vls_message) {
-		fprintf(stderr, "%p %llu bu_vls: \"%s\"\n",
-			mp->mdb_addr, (unsigned long long)mp->mdb_len,
-			((char *)mp->mdb_addr));
-	    } else {
-		fprintf(stderr, "%p %llu %s\n",
-			mp->mdb_addr, (unsigned long long)mp->mdb_len,
-			mp->mdb_str);
-	    }
-	    if (*ip != MDB_MAGIC) {
-		fprintf(stderr, "\tCorrupted end marker was=x%lx\ts/b=x%x\n",
-			(unsigned long)*ip, MDB_MAGIC);
-	    }
-	}
-    }
-
-
-    if (bu_memq != BU_LIST_NULL) {
-	fprintf(stderr, "memdebug queue\n Address Length Purpose\n");
-	BU_LIST_EACH(bu_memq, mqp, struct memqdebug) {
-	    if (!BU_LIST_MAGIC_EQUAL(&(mqp->q), MDB_MAGIC)
-		|| !BU_LIST_MAGIC_EQUAL(&(mqp->m), MDB_MAGIC))
-		bu_bomb("bu_prmem() malloc tracing queue corrupted!\n");
-	    if (mqp->m.mdb_str == bu_strdup_message) {
-		fprintf(stderr, "%p %llu bu_strdup: \"%s\"\n",
-			mqp->m.mdb_addr, (unsigned long long)mqp->m.mdb_len,
-			((char *)mqp->m.mdb_addr));
-	    } else if (mqp->m.mdb_str == bu_vls_message) {
-		fprintf(stderr, "%p %llu bu_vls: \"%s\"\n",
-			mqp->m.mdb_addr, (unsigned long long)mqp->m.mdb_len,
-			((char *)mqp->m.mdb_addr));
-	    } else {
-		fprintf(stderr, "%p %llu %s\n",
-			mqp->m.mdb_addr, (unsigned long long)mqp->m.mdb_len,
-			mqp->m.mdb_str);
-	    }
-	}
-    }
-
-    fprintf(stderr, "%lu allocation entries\n", (unsigned long)count);
+    fprintf(stderr, "bu_prmem: no op\n");
+    fprintf(stderr, "bu_prmem: str=%s\n", str);
 }
 
 
@@ -397,33 +339,7 @@ bu_ck_malloc_ptr(void *ptr, const char *str)
 int
 bu_mem_barriercheck(void)
 {
-    register struct memdebug *mp = &bu_memdebug[bu_memdebug_len-1];
-    register uint32_t *ip;
-
-    if (UNLIKELY(bu_memdebug == (struct memdebug *)0)) {
-	fprintf(stderr, "bu_mem_barriercheck() no memdebug table yet\n");
-	return 0;
-    }
-    bu_semaphore_acquire(BU_SEM_MALLOC);
-    for (; mp >= bu_memdebug; mp--) {
-	if (!mp->magic) continue;
-	if (mp->magic != MDB_MAGIC) {
-	    bu_semaphore_release(BU_SEM_MALLOC);
-	    fprintf(stderr, "  mp->magic = x%lx, s/b=x%x\n", (unsigned long)(mp->magic), MDB_MAGIC);
-	    bu_bomb("bu_mem_barriercheck() malloc tracing table corrupted!\n");
-	}
-	if (mp->mdb_len == 0) continue;
-	ip = (uint32_t *)(((char *)mp->mdb_addr)+mp->mdb_len-sizeof(uint32_t));
-	if (*ip != MDB_MAGIC) {
-	    bu_semaphore_release(BU_SEM_MALLOC);
-	    fprintf(stderr, "ERROR bu_mem_barriercheck(%p, len=%llu) barrier word corrupted!\n\tbarrier at %p was=x%lx s/b=x%x %s\n",
-		    mp->mdb_addr, (unsigned long long)mp->mdb_len,
-		    (void *)ip, (unsigned long)*ip, MDB_MAGIC, mp->mdb_str);
-	    return -1;	/* FAIL */
-	}
-    }
-    bu_semaphore_release(BU_SEM_MALLOC);
-    return 0;			/* OK */
+    return 0;
 }
 
 
@@ -431,35 +347,35 @@ int
 #ifdef HAVE_SYS_SHM_H
 bu_shmget(int *shmid, char **shared_memory, int key, size_t size)
 #else
-bu_shmget(int *UNUSED(shmid), char **UNUSED(shared_memory), int UNUSED(key), size_t UNUSED(size))
+    bu_shmget(int *UNUSED(shmid), char **UNUSED(shared_memory), int UNUSED(key), size_t UNUSED(size))
 #endif
 {
     int ret = 1;
 #ifdef HAVE_SYS_SHM_H
-    int shmsize;
-    long psize;
-    int flags = IPC_CREAT|0666;
+    size_t shmsize;
+    size_t psize;
+    int flags = IPC_CREAT | 0666;
 
 #ifdef _SC_PAGESIZE
     psize = sysconf(_SC_PAGESIZE);
 #else
-    psize = 4096;
+    psize = BU_PAGE_SIZE;
 #endif
 
     ret = 0;
     errno = 0;
 
     /*
-       make more portable
-       shmsize = (size + getpagesize()-1) & ~(getpagesize()-1);
-       */
+      make more portable
+      shmsize = (size + getpagesize()-1) & ~(getpagesize()-1);
+    */
     shmsize = (size + psize - 1) & ~(psize - 1);
-
     /* First try to attach to an existing one */
     if (((*shmid) = shmget(key, shmsize, 0)) < 0) {
 	/* No existing one, create a new one */
 	if (((*shmid) = shmget(key, shmsize, flags)) < 0) {
 	    printf("bu_shmget failed, errno=%d\n", errno);
+	    perror("bu_shmget");
 	    return 1;
 	}
 	ret = -1;
@@ -469,7 +385,8 @@ bu_shmget(int *UNUSED(shmid), char **UNUSED(shared_memory), int UNUSED(key), siz
     /* Open the segment Read/Write */
     /* This gets mapped to a high address on some platforms, so no problem. */
     if (((*shared_memory) = (char *)shmat((*shmid), 0, 0)) == (char *)(-1L)) {
-	printf("errno=%d\n", errno);
+	printf("bu_shmget failed, errno=%d\n", errno);
+	perror("shmat");
 	return 1;
     }
 

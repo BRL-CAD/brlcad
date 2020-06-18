@@ -1,7 +1,7 @@
 /*                         N O I S E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -135,6 +135,7 @@ struct str_ht {
 
 static struct str_ht ht;
 
+/* must not vary in size cross-platform for repeatibility */
 #define TABLE_SIZE 4096
 
 #define MAGIC_STRHT1 1771561
@@ -162,16 +163,22 @@ static struct str_ht ht;
 	]
 
 
+static int sem_noise = 0;
+
+
 void
 bn_noise_init(void)
 {
     uint32_t i, j, k, temp;
     uint32_t rndtabi = BN_RAND_TABSIZE - 1;
 
-    bu_semaphore_acquire(BU_SEM_BN_NOISE);
+    if (!sem_noise)
+	sem_noise = bu_semaphore_register("SEM_NOISE");
+
+    bu_semaphore_acquire(sem_noise);
 
     if (ht.hashTableValid) {
-	bu_semaphore_release(BU_SEM_BN_NOISE);
+	bu_semaphore_release(sem_noise);
 	return;
     }
 
@@ -201,7 +208,7 @@ bn_noise_init(void)
 
     ht.hashTableValid = 1;
 
-    bu_semaphore_release(BU_SEM_BN_NOISE);
+    bu_semaphore_release(sem_noise);
 
     CK_HT();
 }
@@ -491,7 +498,7 @@ find_spec_wgt(double h, double l, double o)
      * the list to wait our turn to add what we want to the table.
      */
 
-    bu_semaphore_acquire(BU_SEM_BN_NOISE);
+    bu_semaphore_acquire(sem_noise);
 
     /* We search the list one more time in case the last process to
      * hold the semaphore just created the table we were about to add
@@ -511,7 +518,7 @@ find_spec_wgt(double h, double l, double o)
     if (i >= etbl_next)
 	ep = build_spec_tbl(h, l, o);
 
-    bu_semaphore_release(BU_SEM_BN_NOISE);
+    bu_semaphore_release(sem_noise);
 
     return ep;
 }

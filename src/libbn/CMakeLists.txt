@@ -4,7 +4,12 @@ set(BN_INCLUDE_DIRS
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   )
-BRLCAD_LIB_INCLUDE_DIRS(bn BN_INCLUDE_DIRS "")
+
+set(BN_LOCAL_INCLUDE_DIRS
+  ${BRLCAD_SOURCE_DIR}/src/other/Eigen
+  )
+
+BRLCAD_LIB_INCLUDE_DIRS(bn BN_INCLUDE_DIRS BN_LOCAL_INCLUDE_DIRS)
 
 set(LIBBN_SOURCES
   anim.c
@@ -17,16 +22,17 @@ set(LIBBN_SOURCES
   marker.c
   mat.c
   msr.c
+  mt19937ar.c
   multipoly.c
   noise.c
-  plane.c
+  plane.cpp
   plot3.c
   poly.c
   qmath.c
   rand.c
-  randmt.c
   randsph.c
   scale.c
+  sobolseq.c
   sphmap.c
   str.c
   symbol.c
@@ -45,13 +51,11 @@ set(LIBBN_SOURCES
 BRLCAD_ADDLIB(libbn "${LIBBN_SOURCES}" "libbu")
 set_target_properties(libbn PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
-  add_subdirectory(tests)
-endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/tests)
+add_subdirectory(tests)
 
 CMAKEFILES(
+  CMakeLists.txt
   README
-  sobolseq.c
   soboldata.h
   numgen.c
   )

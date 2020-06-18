@@ -1,7 +1,7 @@
 /*                          G _ Q A . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2018 United States Government as represented by
+ * Copyright (c) 2005-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,11 +30,12 @@
 
 #include "common.h"
 
+#include "bu/app.h"
 #include "bu/cmd.h"
 #include "bu/getopt.h"
 #include "ged.h"
 
-static char usage[] = "Usage: %s [-A A|a|b|e|g|o|v|w] [-a az] [-d] [-e el] [-f densityFile] [-g spacing|upper, lower|upper-lower] [-G] [-n nhits] [-N nviews] [-p] [-P ncpus] [-q] [-r] [-S nsamples] [-t overlap_tol] [-U useair] [-u len_units vol_units wt_units] [-v] [-V volume_tol] [-W weight_tol] model object [objects...]\n";
+static char usage[] = "Usage: %s [-A A|a|b|e|g|o|v|w] [-a az] [-d] [-e el] [-f densityFile] [-g spacing|upper, lower|upper-lower] [-G] [-n nhits] [-N nviews] [-p plotPrefix] [-P ncpus] [-q] [-r] [-S nsamples] [-t overlap_tol] [-U useair] [-u len_units vol_units wt_units] [-v] [-V volume_tol] [-W weight_tol] model object [objects...]\n";
 
 int
 main(int argc, char *argv[])
@@ -45,11 +46,13 @@ main(int argc, char *argv[])
     const char **av;
     struct ged *gedp;
 
+    bu_setprogname(argv[0]);
+
     bu_opterr = 0;
     bu_optind = 1;
 
     /* Get past command line options. */
-    while ((c = bu_getopt(argc, argv, "A:a:de:f:g:Gn:N:pP:qrS:t:U:u:vV:W:h?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "A:a:de:f:g:Gn:N:p:P:qrS:t:U:u:vV:W:h?")) != -1) {
 	switch (c) {
 	    case 'A':
 	    case 'a':

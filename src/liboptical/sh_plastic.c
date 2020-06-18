@@ -1,7 +1,7 @@
 /*                    S H _ P L A S T I C . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2018 United States Government as represented by
+ * Copyright (c) 1998-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -286,7 +286,7 @@ phong_render(register struct application *ap, const struct partition *pp, struct
     if (pp == NULL)
 	bu_bomb("phong_render: bad partition\n");
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_struct_print("phong_render", phong_parse, (char *)ps);
 
     swp->sw_transmit = ps->transmit;
@@ -298,7 +298,7 @@ phong_render(register struct application *ap, const struct partition *pp, struct
 	if (swp->sw_xmitonly > 1)
 	    return 1;	/* done -- wanted parameters only */
 	if (swp->sw_reflect > 0 || swp->sw_transmit > 0) {
-	    if (rdebug&RDEBUG_SHADE)
+	    if (optical_debug&OPTICAL_DEBUG_SHADE)
 		bu_log("calling rr_render from phong, sw_xmitonly\n");
 	    (void)rr_render(ap, pp, swp);
 	}
@@ -350,7 +350,7 @@ phong_render(register struct application *ap, const struct partition *pp, struct
 	    if ((lp = (struct light_specific *)swp->sw_visible[i]) == LIGHT_NULL)
 		continue;
 
-	    if (rdebug & RDEBUG_LIGHT) {
+	    if (optical_debug & OPTICAL_DEBUG_LIGHT) {
 		bu_log("phong_render light=%s lightfract=%g\n",
 		       lp->lt_name, swp->sw_lightfract[i]);
 	    }

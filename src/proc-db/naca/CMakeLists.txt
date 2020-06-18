@@ -11,9 +11,10 @@ set(NACA_INCLUDES
   )
 BRLCAD_INCLUDE_DIRS(NACA_INCLUDES)
 
-BRLCAD_ADDEXEC(naca456 "${naca_srcs}" "libwdb;${OPENNURBS_LIBRARIES}" NO_INSTALL)
+BRLCAD_ADDEXEC(naca456 "${naca_srcs}" "libwdb;libbu;${OPENNURBS_LIBRARIES}" NO_INSTALL)
 
 CMAKEFILES(naca.h)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

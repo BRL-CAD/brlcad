@@ -1,52 +1,32 @@
-if(BRLCAD_EXTRADOCS)
-  verbose_add_subdirectory(doc docbook)
-else(BRLCAD_EXTRADOCS)
-  include(${CMAKE_CURRENT_SOURCE_DIR}/docbook_files.cmake)
-  CMAKEFILES_IN_DIR(docbook_files docbook)
-endif(BRLCAD_EXTRADOCS)
-
+verbose_add_subdirectory(doc docbook)
 verbose_add_subdirectory(doc html)
 verbose_add_subdirectory(doc legal)
 
-CMAKEFILES(
-  parsers/bison_to_lemon.txt
-  parsers/flex_to_re2c.txt
-  parsers/templates/CMakeLists.txt
-  parsers/templates/main.c
-  parsers/templates/main.h
-  parsers/templates/parser.lemon
-  parsers/templates/scanner.perplex
-  parsers/writing_perplex_lemon_parsers.txt
-  )
-
 set(documentation_DATA
+  BRL-CAD.bib
   IDEAS
   PROJECTS
-  README.AIX
-  README.BSD
-  README.IRIX
   README.Linux
   README.MacOSX
-  README.Solaris
-  README.VAX
   README.Windows
-  TODO.BREP
-  TODO.shaded_displays
-  archer_ack.txt
-  benchmark.tr
-  bu_opt_design_notes.txt
-  brep.txt
-  BRL-CAD.bib
-  code_review.txt
-  cvs.txt
+  README.other/README.AIX
+  README.other/README.BSD
+  README.other/README.IRIX
+  README.other/README.Solaris
+  README.other/README.VAX
+  checklist.txt
   description.txt
-  editors.txt
-  ged.tr
-  history.txt
-  hypot.txt
-  irprep.tr
-  mater.txt
-  matrix.txt
+  notes/TODO.BREP
+  notes/TODO.shaded_displays
+  notes/brep.txt
+  notes/bu_opt_design_notes.txt
+  notes/cvs.txt
+  notes/editors.txt
+  notes/history.txt
+  notes/hypot.txt
+  notes/mater.txt
+  notes/matrix.txt
+  pre_BRL-CAD.bib
   )
 ADD_DOC(documentation_DATA ".")
 
@@ -215,13 +195,11 @@ set(documentation_mged_old_DATA
   mged/wm-leg1.ps
   mged/wm-prims.ps
   mged/wm-tube.ps
-  mk.tr
+  notes/ecosystem.dot
+  notes/regions.txt
+  notes/rounding.txt
+  notes/tool_categories.txt
   old-mged.tr
-  pkg.tr
-  regions.txt
-  rounding.txt
-  tool_categories.txt
-  ecosystem.dot
   )
 ADD_DOC(documentation_mged_old_DATA mged_old)
 
@@ -229,41 +207,58 @@ configure_file(pad_file.xml.in "${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml" @ONLY)
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml" DESTINATION ${DOC_DIR})
 
 CMAKEFILES(
-  README.OSCON-2014
+  CMakeLists.txt
+  README.other/README.OSCON-2014
   STARTERS
   STRATEGY
-  csv_to_comgeom.txt
-  docbook_files.cmake
-  implicit_constraints.txt
-  lcov.txt
+  notes/bsd_semaphore_bug.txt
+  notes/cmake_paths/CMakeLists.txt
+  notes/cmake_paths/README.txt
+  notes/cmake_paths/dir_info.c
+  notes/cmake_paths/test.cmake.in
+  notes/cmake_vars.txt
+  notes/csv_to_comgeom.txt
+  notes/implicit_constraints.txt
+  notes/lcov.txt
   pad_file.xml.in
-  trunk_hierarchy.org
   )
 
 # Generic C/C++ examples
 CMAKEFILES(
-  c_cxx_patterns/01_basic_C/CMakeLists.txt
-  c_cxx_patterns/01_basic_C/main.c
-  c_cxx_patterns/01_basic_C/nlib.c
-  c_cxx_patterns/01_basic_C/nlib.h
-  c_cxx_patterns/02_hidden_C/CMakeLists.txt
-  c_cxx_patterns/02_hidden_C/main.c
-  c_cxx_patterns/02_hidden_C/nlib.c
-  c_cxx_patterns/02_hidden_C/nlib.h
-  c_cxx_patterns/03_PImpl_C/CMakeLists.txt
-  c_cxx_patterns/03_PImpl_C/main.c
-  c_cxx_patterns/03_PImpl_C/nlib.c
-  c_cxx_patterns/03_PImpl_C/nlib.h
-  c_cxx_patterns/04_hidden_CXX/CMakeLists.txt
-  c_cxx_patterns/04_hidden_CXX/main.c
-  c_cxx_patterns/04_hidden_CXX/nlib.cxx
-  c_cxx_patterns/04_hidden_CXX/nlib.h
-  c_cxx_patterns/05_PImpl_CXX/CMakeLists.txt
-  c_cxx_patterns/05_PImpl_CXX/main.c
-  c_cxx_patterns/05_PImpl_CXX/nlib.cxx
-  c_cxx_patterns/05_PImpl_CXX/nlib.h
-  c_cxx_patterns/CMakeLists.txt
-  c_cxx_patterns/README
+  notes/c_cxx_patterns/01_basic_C/CMakeLists.txt
+  notes/c_cxx_patterns/01_basic_C/main.c
+  notes/c_cxx_patterns/01_basic_C/nlib.c
+  notes/c_cxx_patterns/01_basic_C/nlib.h
+  notes/c_cxx_patterns/02_hidden_C/CMakeLists.txt
+  notes/c_cxx_patterns/02_hidden_C/main.c
+  notes/c_cxx_patterns/02_hidden_C/nlib.c
+  notes/c_cxx_patterns/02_hidden_C/nlib.h
+  notes/c_cxx_patterns/03_PImpl_C/CMakeLists.txt
+  notes/c_cxx_patterns/03_PImpl_C/main.c
+  notes/c_cxx_patterns/03_PImpl_C/nlib.c
+  notes/c_cxx_patterns/03_PImpl_C/nlib.h
+  notes/c_cxx_patterns/04_hidden_CXX/CMakeLists.txt
+  notes/c_cxx_patterns/04_hidden_CXX/main.c
+  notes/c_cxx_patterns/04_hidden_CXX/nlib.cxx
+  notes/c_cxx_patterns/04_hidden_CXX/nlib.h
+  notes/c_cxx_patterns/05_PImpl_CXX/CMakeLists.txt
+  notes/c_cxx_patterns/05_PImpl_CXX/main.c
+  notes/c_cxx_patterns/05_PImpl_CXX/nlib.cxx
+  notes/c_cxx_patterns/05_PImpl_CXX/nlib.h
+  notes/c_cxx_patterns/CMakeLists.txt
+  notes/c_cxx_patterns/README
+  )
+
+# Notes about parser generators
+CMAKEFILES(
+  notes/parsers/bison_to_lemon.txt
+  notes/parsers/flex_to_re2c.txt
+  notes/parsers/templates/CMakeLists.txt
+  notes/parsers/templates/main.c
+  notes/parsers/templates/main.h
+  notes/parsers/templates/parser.lemon
+  notes/parsers/templates/scanner.perplex
+  notes/parsers/writing_perplex_lemon_parsers.txt
   )
 
 # Local Variables:

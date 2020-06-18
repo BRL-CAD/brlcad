@@ -1,7 +1,7 @@
 /*                          T I R E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1782,7 +1782,7 @@ MakeAirRegion(struct rt_wdb (*file), char *suffix, fastf_t dyhub, fastf_t zhub, 
 }
 
 HIDDEN int
-_opt_tire_iso(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+_opt_tire_iso(struct bu_vls *msg, size_t argc, const char **argv, void *set_var)
 {
     int d1, d2, d3;
     char s1, s2;
@@ -1813,11 +1813,11 @@ HIDDEN void
 _tire_show_help(struct ged *gedp, const char *cmd, struct bu_opt_desc *d)
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
-    const char *option_help = bu_opt_describe(d, NULL);
+    char *option_help = bu_opt_describe(d, NULL);
     bu_vls_sprintf(&str, "Usage: %s [options] [obj_name]\n", cmd);
     if (option_help) {
 	bu_vls_printf(&str, "Options:\n%s\n", option_help);
-	bu_free((char *)option_help, "help str");
+	bu_free(option_help, "help str");
     }
     bu_vls_printf(&str, "\nStandard ISO formatting for tire dimensions is of the form %s, where <width> is in mm, <aspect> is a ratio, and <rim diameter> is in inches.\n",
     ISO_TIRE_FMT);

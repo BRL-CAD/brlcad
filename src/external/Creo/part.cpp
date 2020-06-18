@@ -1,7 +1,7 @@
 /*                   P A R T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2017-2018 United States Government as represented by
+ * Copyright (c) 2017-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -453,7 +453,7 @@ opennurbs_part(struct creo_conv_info *cinfo, ProMdl model, struct bu_vls **sname
 
     /* Output the solid */
     *sname = get_brlcad_name(cinfo, wname, "brep", N_SOLID);
-    mk_brep(cinfo->wdbp, bu_vls_addr(*sname), (void *)nbrep);
+    mk_brep(cinfo->wdbp, bu_vls_addr(*sname), nbrep);
     /*
      * Things to investigate:
      *
@@ -787,7 +787,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 	    rmax[1] = bboxpnts[1][1];
 	    rmax[2] = bboxpnts[1][2];
 	    mk_rpp(cinfo->wdbp, bu_vls_addr(sname), rmin, rmax);
-	    creo_log(cinfo, MSG_DEBUG, "%s: writing bounding box as placeholder.\n", pname);
+	    creo_log(cinfo, MSG_FAIL, "%s: replaced with bounding box.\n", pname);
 	    goto have_part;
 	} else {
 	    wchar_t *stable = stable_wchar(cinfo, wname);
@@ -796,7 +796,7 @@ output_part(struct creo_conv_info *cinfo, ProMdl model)
 	    } else {
 		cinfo->empty->insert(stable);
 	    }
-		creo_log(cinfo, MSG_FAIL, "%s not converted.\n", pname);
+	    creo_log(cinfo, MSG_FAIL, "%s not converted.\n", pname);
 	    ret = status;
 	    goto cleanup;
 	}
@@ -820,13 +820,14 @@ have_part:
     ProMdlToModelitem(model, &mitm);
     if (ProSurfaceAppearancepropsGet(&mitm, &aprops) == PRO_TK_NO_ERROR) {
 	/* use the colors, ... that were set in CREO */
-	rgbflts[0] = aprops.color_rgb[0]*255.0;
-	rgbflts[1] = aprops.color_rgb[1]*255.0;
-	rgbflts[2] = aprops.color_rgb[2]*255.0;
+	rgbflts[0] = aprops.color_rgb[0];
+	rgbflts[1] = aprops.color_rgb[1];
+	rgbflts[2] = aprops.color_rgb[2];
 	bu_color_from_rgb_floats(&color, rgbflts);
 	bu_color_to_rgb_chars(&color, rgb);
 
 	/* shader args */
+	/* FIXME: make exporting material optional */
 	bu_vls_sprintf(&shader_args, "{");
 	if (!NEAR_ZERO(aprops.transparency, SMALL_FASTF)) bu_vls_printf(&shader_args, " tr %g", aprops.transparency);
 	if (!NEAR_EQUAL(aprops.shininess, 1.0, SMALL_FASTF)) bu_vls_printf(&shader_args, " sh %d", (int)(aprops.shininess * 18 + 2.0));
@@ -836,7 +837,7 @@ have_part:
 
 	/* Make the region comb */
 	mk_comb(cinfo->wdbp, bu_vls_addr(rname), &wcomb.l, 1,
-		"plastic", bu_vls_addr(&shader_args), (const unsigned char *)rgb,
+		NULL, NULL, (const unsigned char *)rgb,
 		cinfo->reg_id, 0, 0, 0, 0, 0, 0);
     } else {
 	/* something is wrong, but just ignore the missing properties */
@@ -896,6 +897,19 @@ have_part:
 	    bu_avs_add(&r_avs, "volume", bu_vls_addr(&vstr));
 	}
 	bu_vls_free(&vstr);
+    }
+
+    /* If we have a user supplied list of attributes to save, do it */
+    if (cinfo->attrs->size() > 0) {
+	for (unsigned int i = 0; i < cinfo->attrs->size(); i++) {
+	    char *attr_val = NULL;
+	    const char *arg = cinfo->attrs->at(i);
+	    creo_attribute_val(&attr_val, arg, model);
+	    if (attr_val) {
+		bu_avs_add(&r_avs, arg, attr_val);
+		bu_free(attr_val, "value string");
+	    }
+	}
     }
 
     /* Update attributes stored on disk */

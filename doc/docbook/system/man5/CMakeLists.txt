@@ -22,6 +22,7 @@ set_target_properties(attr_std_list_xml PROPERTIES FOLDER "DocBook")
 set(man5_EN
   dsp.xml
   ${CMAKE_CURRENT_BINARY_DIR}/attributes.xml
+  benchmark.xml
   burst_point_library.xml
   burst_shotline_files.xml
   bw.xml
@@ -34,6 +35,7 @@ set(man5_EN
 set(attribute_DEPS attr_std_list_xml attr_std_table_xml)
 
 ADD_DOCBOOK("HTML;PHP;MAN5;PDF" man5_EN man5 "${attribute_DEPS}")
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

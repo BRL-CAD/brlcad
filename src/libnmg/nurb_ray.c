@@ -1,7 +1,7 @@
 /*                      N U R B _ R A Y . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2018 United States Government as represented by
+ * Copyright (c) 1991-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,6 +34,8 @@
 #include "bu/malloc.h"
 #include "nmg.h"
 
+/* TODO - this was defined in rt/debug.h */
+#define NMG_DEBUG_SPLINE  0x00000100
 
 void rt_nurb_pbound(struct face_g_snurb *srf, fastf_t *vmin, fastf_t *vmax);
 
@@ -47,7 +49,7 @@ nmg_nurb_project_srf(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *p
     int rational;
     int i;
 
-    if (nmg_debug & DEBUG_RT_ISECT)
+    if (nmg_debug & NMG_DEBUG_RT_ISECT)
 	bu_log("nmg_nurb_project_srf: projecting surface, planes = (%g %g %g %g) (%g %g %g %g)\n",
 	       V4ARGS(plane1), V4ARGS(plane2));
 
@@ -90,7 +92,7 @@ nmg_nurb_project_srf(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *p
 		mp1[2] * plane2[2] - plane2[3];
 	}
 
-	if (nmg_debug & DEBUG_RT_ISECT) {
+	if (nmg_debug & NMG_DEBUG_RT_ISECT) {
 	    if (rational)
 		bu_log("\tmesh pt (%g %g %g %g), becomes (%g %g)\n", V4ARGS(mp1), mp2[0], mp2[1]);
 	    else
@@ -288,7 +290,7 @@ nmg_nurb_region_from_srf(const struct face_g_snurb *srf, int dir, fastf_t param1
 
     fastf_t *knot_vec = NULL;
     size_t maxorder = FMAX(srf->order[0], srf->order[1]);
-    knot_vec = (fastf_t *)bu_calloc(maxorder * 2, sizeof(fastf_t), "knot vector");
+    knot_vec = (fastf_t *)nmg_calloc(maxorder * 2, sizeof(fastf_t), "knot vector");
 
     /* Build the new knot vector in a local array, which gets copied
      * later in nmg_nurb_s_refine(). */
@@ -311,7 +313,7 @@ nmg_nurb_region_from_srf(const struct face_g_snurb *srf, int dir, fastf_t param1
     }
 
     region = nmg_nurb_s_refine(srf, dir, &new_knots);
-    bu_free(knot_vec, "knot vector");
+    nmg_free(knot_vec, "knot vector");
 
     return region;
 }
@@ -346,7 +348,7 @@ nmg_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *pla
     psrf->dir = 1;
     BU_LIST_APPEND(plist, &psrf->l);
 
-    if (nmg_debug & DEBUG_NMG_SPLINE)
+    if (nmg_debug & NMG_DEBUG_SPLINE)
 	nmg_nurb_s_print("srf", psrf);
 
     /* This list starts out with only a single snurb, but more may be
@@ -367,7 +369,7 @@ nmg_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *pla
 	    sub++;
 	    dir = (dir == 0)?1:0;	/* change direction */
 
-	    if (nmg_debug & DEBUG_NMG_SPLINE)
+	    if (nmg_debug & NMG_DEBUG_SPLINE)
 		nmg_nurb_s_print("psrf", psrf);
 
 	    rt_nurb_pbound(psrf, vmin, vmax);
@@ -375,7 +377,7 @@ nmg_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *pla
 	    /* Check for origin to be included in the bounding box */
 	    if (!(vmin[0] <= 0.0 && vmin[1] <= 0.0 &&
 		  vmax[0] >= 0.0 && vmax[1] >= 0.0)) {
-		if (nmg_debug & DEBUG_NMG_SPLINE)
+		if (nmg_debug & NMG_DEBUG_SPLINE)
 		    bu_log("this srf doesn't include the origin\n");
 		flat = 1;
 		nmg_nurb_free_snurb(psrf);
@@ -389,7 +391,7 @@ nmg_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *pla
 
 		/* Split surf, requeue both sub-surfs at head */
 		/* New surfs will have same dir as arg, here */
-		if (nmg_debug & DEBUG_NMG_SPLINE)
+		if (nmg_debug & NMG_DEBUG_SPLINE)
 		    bu_log("splitting this surface\n");
 		nmg_nurb_s_split(plist, psrf, dir);
 		nmg_nurb_free_snurb(psrf);
@@ -398,7 +400,7 @@ nmg_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *pla
 		return hp;
 	    }
 	    if (smin > 1.0 || smax < 0.0) {
-		if (nmg_debug & DEBUG_NMG_SPLINE)
+		if (nmg_debug & NMG_DEBUG_SPLINE)
 		    bu_log("eliminating this surface (smin=%g, smax=%g)\n", smin, smax);
 		flat = 1;
 		nmg_nurb_free_snurb(psrf);
@@ -427,7 +429,7 @@ nmg_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *pla
 	    psrf->dir = dir;
 	    nmg_nurb_free_snurb(osrf);
 
-	    if (nmg_debug & DEBUG_NMG_SPLINE) {
+	    if (nmg_debug & NMG_DEBUG_SPLINE) {
 		bu_log("After call to nmg_nurb_region_from_srf() (smin=%g, smax=%g)\n", smin, smax);
 		nmg_nurb_s_print("psrf", psrf);
 	    }
@@ -441,7 +443,7 @@ nmg_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *pla
 	    if ((u[1] - u[0]) < uv_tol && (v[1] - v[0]) < uv_tol) {
 		struct nmg_nurb_uv_hit * hit;
 
-		if (nmg_debug & DEBUG_NMG_SPLINE) {
+		if (nmg_debug & NMG_DEBUG_SPLINE) {
 		    fastf_t p1[4], p2[4];
 		    int coords;
 		    vect_t diff;
@@ -465,7 +467,7 @@ nmg_nurb_intersect(const struct face_g_snurb *srf, fastf_t *plane1, fastf_t *pla
 			   MAGNITUDE(diff), V3ARGS(p1), V3ARGS(p2));
 		}
 
-		hit = (struct nmg_nurb_uv_hit *) bu_malloc(
+		hit = (struct nmg_nurb_uv_hit *) nmg_malloc(
 		    sizeof(struct nmg_nurb_uv_hit),  "hit");
 
 		hit->next = (struct nmg_nurb_uv_hit *)0;

@@ -1,28 +1,32 @@
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2//EN">
-<HTML>
-<HEAD><TITLE>Mged User's Manual</TITLE></HEAD>
-<BODY BGCOLOR="#E0D8c8" Text="#000000">
-<a name="solidedit"><h2>Editing Solids</h2></a>
-<p>
-So far we've focused on creating primitive solids and combinations.&nbsp; Now
-let's look at ways of altering and deleting things that already exist.&nbsp;
-We'll continue with our example mug geometry.&nbsp;  There are a number of
-changes that need to be made to make it more realistic.
-<ul>
-<li>
-The handle for the mug is a little awkward.&nbsp;
-It sticks out too far from the side of the mug, and it is too wide.&nbsp;
-<li>
-The bottom is perfectly flat.&nbsp;
-Any imperfection in the table top would cause it to wobble.
-<li>
-The inside bottom corner is too sharp.  We need to create a "fillet" at the
-seam between side and bottom.
-</ul>
-
-
-<a name="handle"><h3>Fixing the Handle</h3></a>
-<pre>
+<html>
+<head>
+  <title>Mged User's Manual</title>
+  <style type="text/css">
+  body {
+  background-color: #E0D8C8;
+  color: #000000;
+  }
+  </style>
+</head>
+<body>
+  <h2><a name="solidedit">Editing Solids</a></h2>
+  <p>So far we've focused on creating primitive solids and
+  combinations.&nbsp; Now let's look at ways of altering and
+  deleting things that already exist.&nbsp; We'll continue with our
+  example mug geometry.&nbsp; There are a number of changes that
+  need to be made to make it more realistic.</p>
+  <ul>
+    <li>The handle for the mug is a little awkward.&nbsp; It sticks
+    out too far from the side of the mug, and it is too
+    wide.&nbsp;</li>
+    <li>The bottom is perfectly flat.&nbsp; Any imperfection in the
+    table top would cause it to wobble.</li>
+    <li>The inside bottom corner is too sharp. We need to create a
+    "fillet" at the seam between side and bottom.</li>
+  </ul>
+  <h3><a name="handle">Fixing the Handle</a></h3>
+  <pre>
 kill handle.c
 kill ring.s
 in handle_01.s eto 0 2.25 1.25 1 0 0 .75 0.3 0 0 .15
@@ -32,11 +36,10 @@ in handle_04.s eto 0 2.25 2.5 1 0 0 .75 0.3 0 0 .15
 
 comb handle.c u handle_01.s - handle_02.s - outside.s u handle_04.s - handle_02.s - outside.s u handle_03.s
 
-</pre>
-<a href="handle.jpg"><img src="handle.gif" alt="new handle"></a>
-
-<a name="base"><h3>Adding a Base</h3></a>
-<pre>
+</pre><a href="handle.jpg"><img src="handle.gif" alt=
+"new handle"></a>
+  <h3><a name="base">Adding a Base</a></h3>
+  <pre>
 mvall outside.s outside_01.s
 in outside_02.s tor 0 0 0 0 0 1 1.6875 .0625
 comb cup.c u outside_02.s
@@ -52,10 +55,8 @@ ae 170 -52 120
 rt -s 512 -F :1
 <a href="base.jpg"><img src="base.gif" alt="new base"></a>
 </pre>
-
-
-<a name="fillet"><h3>Adding a fillet</h3></a>
-<pre>
+  <h3><a name="fillet">Adding a fillet</a></h3>
+  <pre>
 mvall inside.s inside.c
 mv inside.c inside_01.s
 solid edit bottom of inside_01.s up to 0 0 0.3125
@@ -66,7 +67,7 @@ B mug.r
 ae 35 85
 size 5
 rt -s 512 -F :1
-</pre>
-<a href="fillet.jpg"><img src="fillet.gif" alt="inside fillet"></a>
-
-</BODY></HTML>
+</pre><a href="fillet.jpg"><img src="fillet.gif" alt=
+"inside fillet"></a>
+</body>
+</html>

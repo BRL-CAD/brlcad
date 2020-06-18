@@ -51,6 +51,7 @@ typedef struct TimeInfo {
 				 * initialized. */
     int perfCounterAvailable;	/* Flag == 1 if the hardware has a performance
 				 * counter. */
+    DWORD calibrationInterv;	/* Calibration interval in seconds (start 1 sec) */
     HANDLE calibrationThread;	/* Handle to the thread that keeps the virtual
 				 * clock calibrated. */
     HANDLE readyEvent;		/* System event used to trigger the requesting
@@ -61,7 +62,6 @@ typedef struct TimeInfo {
     LARGE_INTEGER nominalFreq;	/* Nominal frequency of the system performance
 				 * counter, that is, the value returned from
 				 * QueryPerformanceFrequency. */
-
     /*
      * The following values are used for calculating virtual time. Virtual
      * time is always equal to:
@@ -74,6 +74,8 @@ typedef struct TimeInfo {
     ULARGE_INTEGER fileTimeLastCall;
     LARGE_INTEGER perfCounterLastCall;
     LARGE_INTEGER curCounterFreq;
+    LARGE_INTEGER posixEpoch;	/* Posix epoch expressed as 100-ns ticks since
+				 * the windows epoch. */
 
     /*
      * Data used in developing the estimate of performance counter frequency
@@ -87,9 +89,10 @@ typedef struct TimeInfo {
 } TimeInfo;
 
 static TimeInfo timeInfo = {
-    { NULL },
+    { NULL, 0, 0, NULL, NULL, 0 },
     0,
     0,
+    1,
     (HANDLE) NULL,
     (HANDLE) NULL,
     (HANDLE) NULL,
@@ -98,16 +101,29 @@ static TimeInfo timeInfo = {
     (ULARGE_INTEGER) (DWORDLONG) 0,
     (LARGE_INTEGER) (Tcl_WideInt) 0,
     (LARGE_INTEGER) (Tcl_WideInt) 0,
+    (LARGE_INTEGER) (Tcl_WideInt) 0,
 #else
-    0,
-    0,
-    0,
-    0,
+    {0, 0},
+    {0, 0},
+    {0, 0},
+    {0, 0},
+    {0, 0},
 #endif
     { 0 },
     { 0 },
     0
 };
+
+/*
+ * Scale to convert wide click values from the TclpGetWideClicks native
+ * resolution to microsecond resolution and back.
+ */
+static struct {
+    int initialized;		/* 1 if initialized, 0 otherwise */
+    int perfCounter;		/* 1 if performance counter usable for wide clicks */
+    double microsecsScale;	/* Denominator scale between clock / microsecs */
+} wideClick = {0, 0, 0.0};
+
 
 /*
  * Declarations for functions defined later in this file.
@@ -123,6 +139,7 @@ static Tcl_WideInt	AccumulateSample(Tcl_WideInt perfCounter,
 			    Tcl_WideUInt fileTime);
 static void		NativeScaleTime(Tcl_Time* timebuf,
 			    ClientData clientData);
+static Tcl_WideInt	NativeGetMicroseconds(void);
 static void		NativeGetTime(Tcl_Time* timebuf,
 			    ClientData clientData);
 
@@ -154,10 +171,19 @@ ClientData tclTimeClientData = NULL;
 unsigned long
 TclpGetSeconds(void)
 {
-    Tcl_Time t;
+    Tcl_WideInt usecSincePosixEpoch;
 
-    (*tclGetTimeProcPtr) (&t, tclTimeClientData);    /* Tcl_GetTime inlined. */
-    return t.sec;
+    /* Try to use high resolution timer */
+    if ( tclGetTimeProcPtr == NativeGetTime
+      && (usecSincePosixEpoch = NativeGetMicroseconds())
+    ) {
+	return usecSincePosixEpoch / 1000000;
+    } else {
+	Tcl_Time t;
+
+	tclGetTimeProcPtr(&t, tclTimeClientData);	/* Tcl_GetTime inlined. */
+	return t.sec;
+    }
 }
 
 /*
@@ -168,7 +194,7 @@ TclpGetSeconds(void)
  *	This procedure returns a value that represents the highest resolution
  *	clock available on the system. There are no guarantees on what the
  *	resolution will be. In Tcl we will call this value a "click". The
- *	start time is also system dependant.
+ *	start time is also system dependent.
  *
  * Results:
  *	Number of clicks from some start time.
@@ -182,31 +208,93 @@ TclpGetSeconds(void)
 unsigned long
 TclpGetClicks(void)
 {
-    /*
-     * Use the Tcl_GetTime abstraction to get the time in microseconds, as
-     * nearly as we can, and return it.
-     */
+    Tcl_WideInt usecSincePosixEpoch;
 
-    Tcl_Time now;		/* Current Tcl time */
-    unsigned long retval;	/* Value to return */
+    /* Try to use high resolution timer */
+    if ( tclGetTimeProcPtr == NativeGetTime
+      && (usecSincePosixEpoch = NativeGetMicroseconds())
+    ) {
+	return (unsigned long)usecSincePosixEpoch;
+    } else {
+	/*
+	* Use the Tcl_GetTime abstraction to get the time in microseconds, as
+	* nearly as we can, and return it.
+	*/
 
-    (*tclGetTimeProcPtr) (&now, tclTimeClientData);   /* Tcl_GetTime inlined */
+	Tcl_Time now;		/* Current Tcl time */
 
-    retval = (now.sec * 1000000) + now.usec;
-    return retval;
-
+	tclGetTimeProcPtr(&now, tclTimeClientData);	/* Tcl_GetTime inlined */
+	return (unsigned long)(now.sec * 1000000) + now.usec;
+    }
 }
 
 /*
  *----------------------------------------------------------------------
  *
- * TclpGetTimeZone --
+ * TclpGetWideClicks --
  *
- *	Determines the current timezone. The method varies wildly between
- *	different Platform implementations, so its hidden in this function.
+ *	This procedure returns a WideInt value that represents the highest
+ *	resolution clock in microseconds available on the system.
  *
  * Results:
- *	Minutes west of GMT.
+ *	Number of microseconds (from some start time).
+ *
+ * Side effects:
+ *	This should be used for time-delta resp. for measurement purposes
+ *	only, because on some platforms can return microseconds from some
+ *	start time (not from the epoch).
+ *
+ *----------------------------------------------------------------------
+ */
+
+Tcl_WideInt
+TclpGetWideClicks(void)
+{
+    LARGE_INTEGER curCounter;
+
+    if (!wideClick.initialized) {
+	LARGE_INTEGER perfCounterFreq;
+
+	/*
+	 * The frequency of the performance counter is fixed at system boot and
+	 * is consistent across all processors. Therefore, the frequency need
+	 * only be queried upon application initialization.
+	 */
+	if (QueryPerformanceFrequency(&perfCounterFreq)) {
+	    wideClick.perfCounter = 1;
+	    wideClick.microsecsScale = 1000000.0 / perfCounterFreq.QuadPart;
+	} else {
+	    /* fallback using microseconds */
+	    wideClick.perfCounter = 0;
+	    wideClick.microsecsScale = 1;
+	}
+
+	wideClick.initialized = 1;
+    }
+    if (wideClick.perfCounter) {
+	if (QueryPerformanceCounter(&curCounter)) {
+	    return (Tcl_WideInt)curCounter.QuadPart;
+	}
+	/* fallback using microseconds */
+	wideClick.perfCounter = 0;
+	wideClick.microsecsScale = 1;
+	return TclpGetMicroseconds();
+    } else {
+    	return TclpGetMicroseconds();
+    }
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TclpWideClickInMicrosec --
+ *
+ *	This procedure return scale to convert wide click values from the
+ *	TclpGetWideClicks native resolution to microsecond resolution
+ *	and back.
+ *
+ * Results:
+ * 	1 click in microseconds as double.
  *
  * Side effects:
  *	None.
@@ -214,16 +302,53 @@ TclpGetClicks(void)
  *----------------------------------------------------------------------
  */
 
-int
-TclpGetTimeZone(
-    unsigned long currentTime)
+double
+TclpWideClickInMicrosec(void)
 {
-    int timeZone;
+    if (!wideClick.initialized) {
+    	(void)TclpGetWideClicks();	/* initialize */
+    }
+    return wideClick.microsecsScale;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TclpGetMicroseconds --
+ *
+ *	This procedure returns a WideInt value that represents the highest
+ *	resolution clock in microseconds available on the system.
+ *
+ * Results:
+ *	Number of microseconds (from the epoch).
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
 
-    tzset();
-    timeZone = timezone / 60;
+Tcl_WideInt
+TclpGetMicroseconds(void)
+{
+    Tcl_WideInt usecSincePosixEpoch;
 
-    return timeZone;
+    /* Try to use high resolution timer */
+    if ( tclGetTimeProcPtr == NativeGetTime
+      && (usecSincePosixEpoch = NativeGetMicroseconds())
+    ) {
+	return usecSincePosixEpoch;
+    } else {
+	/*
+	* Use the Tcl_GetTime abstraction to get the time in microseconds, as
+	* nearly as we can, and return it.
+	*/
+
+	Tcl_Time now;
+
+	tclGetTimeProcPtr(&now, tclTimeClientData);	/* Tcl_GetTime inlined */
+	return (((Tcl_WideInt)now.sec) * 1000000) + now.usec;
+    }
 }
 
 /*
@@ -252,7 +377,17 @@ void
 Tcl_GetTime(
     Tcl_Time *timePtr)		/* Location to store time information. */
 {
-    (*tclGetTimeProcPtr) (timePtr, tclTimeClientData);
+    Tcl_WideInt usecSincePosixEpoch;
+
+    /* Try to use high resolution timer */
+    if ( tclGetTimeProcPtr == NativeGetTime
+      && (usecSincePosixEpoch = NativeGetMicroseconds())
+    ) {
+	timePtr->sec = (long) (usecSincePosixEpoch / 1000000);
+	timePtr->usec = (unsigned long) (usecSincePosixEpoch % 1000000);
+    } else {
+    	tclGetTimeProcPtr(timePtr, tclTimeClientData);
+    }
 }
 
 /*
@@ -285,13 +420,14 @@ NativeScaleTime(
 /*
  *----------------------------------------------------------------------
  *
- * NativeGetTime --
+ * NativeGetMicroseconds --
  *
- *	TIP #233: Gets the current system time in seconds and microseconds
- *	since the beginning of the epoch: 00:00 UCT, January 1, 1970.
+ *	Gets the current system time in microseconds since the beginning
+ *	of the epoch: 00:00 UCT, January 1, 1970.
  *
  * Results:
- *	Returns the current time in timePtr.
+ *	Returns the wide integer with number of microseconds from the epoch, or
+ *	0 if high resolution timer is not available.
  *
  * Side effects:
  *	On the first call, initializes a set of static variables to keep track
@@ -304,13 +440,20 @@ NativeScaleTime(
  *----------------------------------------------------------------------
  */
 
-static void
-NativeGetTime(
-    Tcl_Time *timePtr,
-    ClientData clientData)
-{
-    struct _timeb t;
+static inline Tcl_WideInt
+NativeCalc100NsTicks(
+    ULONGLONG fileTimeLastCall,
+    LONGLONG perfCounterLastCall,
+    LONGLONG curCounterFreq,
+    LONGLONG curCounter
+) {
+    return fileTimeLastCall +
+	((curCounter - perfCounterLastCall) * 10000000 / curCounterFreq);
+}
 
+static Tcl_WideInt
+NativeGetMicroseconds(void)
+{
     /*
      * Initialize static storage on the first trip through.
      *
@@ -321,6 +464,10 @@ NativeGetTime(
     if (!timeInfo.initialized) {
 	TclpInitLock();
 	if (!timeInfo.initialized) {
+
+	    timeInfo.posixEpoch.LowPart = 0xD53E8000;
+	    timeInfo.posixEpoch.HighPart = 0x019DB1DE;
+
 	    timeInfo.perfCounterAvailable =
 		    QueryPerformanceFrequency(&timeInfo.nominalFreq);
 
@@ -397,8 +544,8 @@ NativeGetTime(
 		DWORD id;
 
 		InitializeCriticalSection(&timeInfo.cs);
-		timeInfo.readyEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
-		timeInfo.exitEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+		timeInfo.readyEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
+		timeInfo.exitEvent = CreateEventW(NULL, FALSE, FALSE, NULL);
 		timeInfo.calibrationThread = CreateThread(NULL, 256,
 			CalibrationThread, (LPVOID) NULL, 0, &id);
 		SetThreadPriority(timeInfo.calibrationThread,
@@ -412,7 +559,7 @@ NativeGetTime(
 
 		WaitForSingleObject(timeInfo.readyEvent, INFINITE);
 		CloseHandle(timeInfo.readyEvent);
-		Tcl_CreateExitHandler(StopCalibration, (ClientData) NULL);
+		Tcl_CreateExitHandler(StopCalibration, NULL);
 	    }
 	    timeInfo.initialized = TRUE;
 	}
@@ -425,22 +572,12 @@ NativeGetTime(
 	 * time.
 	 */
 
-	ULARGE_INTEGER fileTimeLastCall;
-	LARGE_INTEGER perfCounterLastCall, curCounterFreq;
+	ULONGLONG fileTimeLastCall;
+	LONGLONG perfCounterLastCall, curCounterFreq;
 				/* Copy with current data of calibration cycle */
 
 	LARGE_INTEGER curCounter;
 				/* Current performance counter. */
-	Tcl_WideInt curFileTime;/* Current estimated time, expressed as 100-ns
-				 * ticks since the Windows epoch. */
-	static LARGE_INTEGER posixEpoch;
-				/* Posix epoch expressed as 100-ns ticks since
-				 * the windows epoch. */
-	Tcl_WideInt usecSincePosixEpoch;
-				/* Current microseconds since Posix epoch. */
-
-	posixEpoch.LowPart = 0xD53E8000;
-	posixEpoch.HighPart = 0x019DB1DE;
 
 	QueryPerformanceCounter(&curCounter);
 
@@ -449,21 +586,18 @@ NativeGetTime(
 	 */
 	EnterCriticalSection(&timeInfo.cs);
 
-	fileTimeLastCall.QuadPart = timeInfo.fileTimeLastCall.QuadPart;
-	perfCounterLastCall.QuadPart = timeInfo.perfCounterLastCall.QuadPart;
-	curCounterFreq.QuadPart = timeInfo.curCounterFreq.QuadPart;
+	fileTimeLastCall = timeInfo.fileTimeLastCall.QuadPart;
+	perfCounterLastCall = timeInfo.perfCounterLastCall.QuadPart;
+	curCounterFreq = timeInfo.curCounterFreq.QuadPart;
 
 	LeaveCriticalSection(&timeInfo.cs);
 
 	/*
 	 * If calibration cycle occurred after we get curCounter
 	 */
-	if (curCounter.QuadPart <= perfCounterLastCall.QuadPart) {
-	    usecSincePosixEpoch =
-		(fileTimeLastCall.QuadPart - posixEpoch.QuadPart) / 10;
-	    timePtr->sec = (long) (usecSincePosixEpoch / 1000000);
-	    timePtr->usec = (unsigned long) (usecSincePosixEpoch % 1000000);
-	    return;
+	if (curCounter.QuadPart <= perfCounterLastCall) {
+	    /* Calibrated file-time is saved from posix in 100-ns ticks */
+	    return fileTimeLastCall / 10;
 	}
 
 	/*
@@ -476,27 +610,62 @@ NativeGetTime(
 	 * loop should recover.
 	 */
 
-	if (curCounter.QuadPart - perfCounterLastCall.QuadPart <
-		11 * curCounterFreq.QuadPart / 10
+	if (curCounter.QuadPart - perfCounterLastCall <
+		11 * curCounterFreq * timeInfo.calibrationInterv / 10
 	) {
-	    curFileTime = fileTimeLastCall.QuadPart +
-		 ((curCounter.QuadPart - perfCounterLastCall.QuadPart)
-		    * 10000000 / curCounterFreq.QuadPart);
-
-	    usecSincePosixEpoch = (curFileTime - posixEpoch.QuadPart) / 10;
-	    timePtr->sec = (long) (usecSincePosixEpoch / 1000000);
-	    timePtr->usec = (unsigned long) (usecSincePosixEpoch % 1000000);
-	    return;
+	    /* Calibrated file-time is saved from posix in 100-ns ticks */
+	    return NativeCalc100NsTicks(fileTimeLastCall,
+		perfCounterLastCall, curCounterFreq, curCounter.QuadPart) / 10;
 	}
     }
 
     /*
-     * High resolution timer is not available. Just use ftime.
+     * High resolution timer is not available.
      */
+    return 0;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * NativeGetTime --
+ *
+ *	TIP #233: Gets the current system time in seconds and microseconds
+ *	since the beginning of the epoch: 00:00 UCT, January 1, 1970.
+ *
+ * Results:
+ *	Returns the current time in timePtr.
+ *
+ * Side effects:
+ *	See NativeGetMicroseconds for more information.
+ *
+ *----------------------------------------------------------------------
+ */
 
-    _ftime(&t);
-    timePtr->sec = (long)t.time;
-    timePtr->usec = t.millitm * 1000;
+static void
+NativeGetTime(
+    Tcl_Time *timePtr,
+    ClientData clientData)
+{
+    Tcl_WideInt usecSincePosixEpoch;
+
+    /*
+     * Try to use high resolution timer.
+     */
+    if ( (usecSincePosixEpoch = NativeGetMicroseconds()) ) {
+	timePtr->sec = (long) (usecSincePosixEpoch / 1000000);
+	timePtr->usec = (unsigned long) (usecSincePosixEpoch % 1000000);
+    } else {
+	/*
+	* High resolution timer is not available. Just use ftime.
+	*/
+
+	struct _timeb t;
+
+	_ftime(&t);
+	timePtr->sec = (long)t.time;
+	timePtr->usec = t.millitm * 1000;
+    }
 }
 
 /*
@@ -517,6 +686,8 @@ NativeGetTime(
  *----------------------------------------------------------------------
  */
 
+void TclWinResetTimerResolution(void);
+
 static void
 StopCalibration(
     ClientData unused)		/* Client data is unused */
@@ -531,93 +702,6 @@ StopCalibration(
     WaitForSingleObject(timeInfo.calibrationThread, 100);
     CloseHandle(timeInfo.exitEvent);
     CloseHandle(timeInfo.calibrationThread);
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * TclpGetTZName --
- *
- *	Gets the current timezone string.
- *
- * Results:
- *	Returns a pointer to a static string, or NULL on failure.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-
-char *
-TclpGetTZName(
-    int dst)
-{
-    int len;
-    char *zone, *p;
-    TIME_ZONE_INFORMATION tz;
-    Tcl_Encoding encoding;
-    ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
-    char *name = tsdPtr->tzName;
-
-    /*
-     * tzset() under Borland doesn't seem to set up tzname[] at all.
-     * tzset() under MSVC has the following weird observed behavior:
-     *	 First time we call "clock format [clock seconds] -format %Z -gmt 1"
-     *	 we get "GMT", but on all subsequent calls we get the current time
-     *	 ezone string, even though env(TZ) is GMT and the variable _timezone
-     *	 is 0.
-     */
-
-    name[0] = '\0';
-
-    zone = getenv("TZ");
-    if (zone != NULL) {
-	/*
-	 * TZ is of form "NST-4:30NDT", where "NST" would be the name of the
-	 * standard time zone for this area, "-4:30" is the offset from GMT in
-	 * hours, and "NDT is the name of the daylight savings time zone in
-	 * this area. The offset and DST strings are optional.
-	 */
-
-	len = strlen(zone);
-	if (len > 3) {
-	    len = 3;
-	}
-	if (dst != 0) {
-	    /*
-	     * Skip the offset string and get the DST string.
-	     */
-
-	    p = zone + len;
-	    p += strspn(p, "+-:0123456789");
-	    if (*p != '\0') {
-		zone = p;
-		len = strlen(zone);
-		if (len > 3) {
-		    len = 3;
-		}
-	    }
-	}
-	Tcl_ExternalToUtf(NULL, NULL, zone, len, 0, NULL, name,
-		sizeof(tsdPtr->tzName), NULL, NULL, NULL);
-    }
-    if (name[0] == '\0') {
-	if (GetTimeZoneInformation(&tz) == TIME_ZONE_ID_UNKNOWN) {
-	    /*
-	     * MSDN: On NT this is returned if DST is not used in the current
-	     * TZ
-	     */
-
-	    dst = 0;
-	}
-	encoding = Tcl_GetEncoding(NULL, "unicode");
-	Tcl_ExternalToUtf(NULL, encoding,
-		(char *) ((dst) ? tz.DaylightName : tz.StandardName), -1,
-		0, NULL, name, sizeof(tsdPtr->tzName), NULL, NULL, NULL);
-	Tcl_FreeEncoding(encoding);
-    }
-    return name;
 }
 
 /*
@@ -640,13 +724,23 @@ TclpGetTZName(
 
 struct tm *
 TclpGetDate(
-    CONST time_t *t,
+    const time_t *t,
     int useGMT)
 {
     struct tm *tmPtr;
     time_t time;
+#if defined(_WIN64) || (defined(_USE_64BIT_TIME_T) || (defined(_MSC_VER) && _MSC_VER < 1400))
+#   define  t2 *t /* no need to cripple time to 32-bit */
+#else
+    time_t t2 = *(__time32_t *)t;
+#endif
 
     if (!useGMT) {
+#if defined(_MSC_VER) && (_MSC_VER >= 1900)
+#	undef timezone /* prevent conflict with timezone() function */
+	long timezone = 0;
+#endif
+
 	tzset();
 
 	/*
@@ -672,11 +766,15 @@ TclpGetDate(
 #define LOCALTIME_VALIDITY_BOUNDARY	0
 #endif
 
-	if (*t >= LOCALTIME_VALIDITY_BOUNDARY) {
-	    return TclpLocaltime(t);
+	if (t2 >= LOCALTIME_VALIDITY_BOUNDARY) {
+	    return TclpLocaltime(&t2);
 	}
 
-	time = *t - timezone;
+#if defined(_MSC_VER) && (_MSC_VER >= 1900)
+	_get_timezone(&timezone);
+#endif
+
+	time = t2 - timezone;
 
 	/*
 	 * If we aren't near to overflowing the long, just add the bias and
@@ -684,10 +782,10 @@ TclpGetDate(
 	 * result at the end.
 	 */
 
-	if (*t < (LONG_MAX - 2*SECSPERDAY) && *t > (LONG_MIN + 2*SECSPERDAY)) {
+	if (t2 < (LONG_MAX - 2*SECSPERDAY) && t2 > (LONG_MIN + 2*SECSPERDAY)) {
 	    tmPtr = ComputeGMT(&time);
 	} else {
-	    tmPtr = ComputeGMT(t);
+	    tmPtr = ComputeGMT(&t2);
 
 	    tzset();
 
@@ -723,7 +821,7 @@ TclpGetDate(
 	    tmPtr->tm_wday = (tmPtr->tm_wday + (int)time) % 7;
 	}
     } else {
-	tmPtr = ComputeGMT(t);
+	tmPtr = ComputeGMT(&t2);
     }
     return tmPtr;
 }
@@ -883,6 +981,8 @@ CalibrationThread(
     QueryPerformanceFrequency(&timeInfo.curCounterFreq);
     timeInfo.fileTimeLastCall.LowPart = curFileTime.dwLowDateTime;
     timeInfo.fileTimeLastCall.HighPart = curFileTime.dwHighDateTime;
+    /* Calibrated file-time will be saved from posix in 100-ns ticks */
+    timeInfo.fileTimeLastCall.QuadPart -= timeInfo.posixEpoch.QuadPart;
 
     ResetCounterSamples(timeInfo.fileTimeLastCall.QuadPart,
 	    timeInfo.perfCounterLastCall.QuadPart,
@@ -942,6 +1042,7 @@ UpdateTimeEachSecond(void)
 				/* Current value returned from
 				 * QueryPerformanceCounter. */
     FILETIME curSysTime;	/* Current system time. */
+    static LARGE_INTEGER lastFileTime; /* File time of the previous calibration */
     LARGE_INTEGER curFileTime;	/* File time at the time this callback was
 				 * scheduled. */
     Tcl_WideInt estFreq;	/* Estimated perf counter frequency. */
@@ -953,15 +1054,24 @@ UpdateTimeEachSecond(void)
 				 * step over 1 second. */
 
     /*
-     * Sample performance counter and system time.
+     * Sample performance counter and system time (from posix epoch).
      */
 
-    QueryPerformanceCounter(&curPerfCounter);
     GetSystemTimeAsFileTime(&curSysTime);
     curFileTime.LowPart = curSysTime.dwLowDateTime;
     curFileTime.HighPart = curSysTime.dwHighDateTime;
+    curFileTime.QuadPart -= timeInfo.posixEpoch.QuadPart;
+    /* If calibration still not needed (check for possible time switch) */
+    if ( curFileTime.QuadPart > lastFileTime.QuadPart
+      && curFileTime.QuadPart < lastFileTime.QuadPart +
+      				    (timeInfo.calibrationInterv * 10000000)
+    ) {
+    	/* again in next one second */
+	return;
+    }
+    QueryPerformanceCounter(&curPerfCounter);
 
-    EnterCriticalSection(&timeInfo.cs);
+    lastFileTime.QuadPart = curFileTime.QuadPart;
 
     /*
      * We devide by timeInfo.curCounterFreq.QuadPart in several places. That
@@ -973,7 +1083,6 @@ UpdateTimeEachSecond(void)
      */
 
     if (timeInfo.curCounterFreq.QuadPart == 0){
-	LeaveCriticalSection(&timeInfo.cs);
 	timeInfo.perfCounterAvailable = 0;
 	return;
     }
@@ -1012,12 +1121,9 @@ UpdateTimeEachSecond(void)
      * is estFreq * 20000000 / (vt1 - vt0)
      */
 
-    vt0 = 10000000 * (curPerfCounter.QuadPart
-		- timeInfo.perfCounterLastCall.QuadPart)
-	    / timeInfo.curCounterFreq.QuadPart
-	    + timeInfo.fileTimeLastCall.QuadPart;
-    vt1 = 20000000 + curFileTime.QuadPart;
-
+    vt0 = NativeCalc100NsTicks(timeInfo.fileTimeLastCall.QuadPart,
+	    timeInfo.perfCounterLastCall.QuadPart, timeInfo.curCounterFreq.QuadPart,
+	    curPerfCounter.QuadPart);
     /*
      * If we've gotten more than a second away from system time, then drifting
      * the clock is going to be pretty hopeless. Just let it jump. Otherwise,
@@ -1026,21 +1132,75 @@ UpdateTimeEachSecond(void)
 
     tdiff = vt0 - curFileTime.QuadPart;
     if (tdiff > 10000000 || tdiff < -10000000) {
-	timeInfo.fileTimeLastCall.QuadPart = curFileTime.QuadPart;
-	timeInfo.curCounterFreq.QuadPart = estFreq;
+    	/* jump to current system time, use curent estimated frequency */
+    	vt0 = curFileTime.QuadPart;
     } else {
-	driftFreq = estFreq * 20000000 / (vt1 - vt0);
+    	/* calculate new frequency and estimate drift to the next second */
+	vt1 = 20000000 + curFileTime.QuadPart;
+	driftFreq = (estFreq * 20000000 / (vt1 - vt0));
+	/*
+	 * Avoid too large drifts (only half of the current difference),
+	 * that allows also be more accurate (aspire to the smallest tdiff),
+	 * so then we can prolong calibration interval by tdiff < 100000
+	 */
+	driftFreq = timeInfo.curCounterFreq.QuadPart +
+		(driftFreq - timeInfo.curCounterFreq.QuadPart) / 2;
 
-	if (driftFreq > 1003*estFreq/1000) {
-	    driftFreq = 1003*estFreq/1000;
-	} else if (driftFreq < 997*estFreq/1000) {
-	    driftFreq = 997*estFreq/1000;
-	}
-
-	timeInfo.fileTimeLastCall.QuadPart = vt0;
-	timeInfo.curCounterFreq.QuadPart = driftFreq;
+	/*
+	 * Average between estimated, 2 current and 5 drifted frequencies,
+	 * (do the soft drifting as possible)
+	 */
+	estFreq = (estFreq + 2 * timeInfo.curCounterFreq.QuadPart + 5 * driftFreq) / 8;
     }
 
+    /* Avoid too large discrepancy from nominal frequency */
+    if (estFreq > 1003*timeInfo.nominalFreq.QuadPart/1000) {
+	estFreq = 1003*timeInfo.nominalFreq.QuadPart/1000;
+	vt0 = curFileTime.QuadPart;
+    } else if (estFreq < 997*timeInfo.nominalFreq.QuadPart/1000) {
+	estFreq = 997*timeInfo.nominalFreq.QuadPart/1000;
+	vt0 = curFileTime.QuadPart;
+    } else if (vt0 != curFileTime.QuadPart) {
+	/*
+	 * Be sure the clock ticks never backwards (avoid it by negative drifting)
+	 * just compare native time (in 100-ns) before and hereafter using
+	 * new calibrated values) and do a small adjustment (short time freeze)
+	 */
+	LARGE_INTEGER newPerfCounter;
+	Tcl_WideInt nt0, nt1;
+
+	QueryPerformanceCounter(&newPerfCounter);
+	nt0 = NativeCalc100NsTicks(timeInfo.fileTimeLastCall.QuadPart,
+		timeInfo.perfCounterLastCall.QuadPart, timeInfo.curCounterFreq.QuadPart,
+		newPerfCounter.QuadPart);
+	nt1 = NativeCalc100NsTicks(vt0,
+		curPerfCounter.QuadPart, estFreq,
+		newPerfCounter.QuadPart);
+	if (nt0 > nt1) { /* drifted backwards, try to compensate with new base */
+	    /* first adjust with a micro jump (short frozen time is acceptable) */
+	    vt0 += nt0 - nt1;
+	    /* if drift unavoidable (e. g. we had a time switch), then reset it */
+	    vt1 = vt0 - curFileTime.QuadPart;
+	    if (vt1 > 10000000 || vt1 < -10000000) {
+	    	/* larger jump resp. shift relative new file-time */
+	    	vt0 = curFileTime.QuadPart;
+	    }
+	}
+    }
+
+    /* In lock commit new values to timeInfo (hold lock as short as possible) */
+    EnterCriticalSection(&timeInfo.cs);
+
+    /* grow calibration interval up to 10 seconds (if still precise enough) */
+    if (tdiff < -100000 || tdiff > 100000) {
+	/* too long drift - reset calibration interval to 1000 second */
+	timeInfo.calibrationInterv = 1;
+    } else if (timeInfo.calibrationInterv < 10) {
+	timeInfo.calibrationInterv++;
+    }
+
+    timeInfo.fileTimeLastCall.QuadPart = vt0;
+    timeInfo.curCounterFreq.QuadPart = estFreq;
     timeInfo.perfCounterLastCall.QuadPart = curPerfCounter.QuadPart;
 
     LeaveCriticalSection(&timeInfo.cs);
@@ -1186,7 +1346,7 @@ AccumulateSample(
 
 struct tm *
 TclpGmtime(
-    CONST time_t *timePtr)	/* Pointer to the number of seconds since the
+    const time_t *timePtr)	/* Pointer to the number of seconds since the
 				 * local system's epoch */
 {
     /*
@@ -1195,7 +1355,11 @@ TclpGmtime(
      * Posix gmtime_r function.
      */
 
+#if defined(_WIN64) || defined(_USE_64BIT_TIME_T) || (defined(_MSC_VER) && _MSC_VER < 1400)
     return gmtime(timePtr);
+#else
+    return _gmtime32((CONST __time32_t *)timePtr);
+#endif
 }
 
 /*
@@ -1217,9 +1381,8 @@ TclpGmtime(
 
 struct tm *
 TclpLocaltime(
-    CONST time_t *timePtr)	/* Pointer to the number of seconds since the
+    const time_t *timePtr)	/* Pointer to the number of seconds since the
 				 * local system's epoch */
-
 {
     /*
      * The MS implementation of localtime is thread safe because it returns
@@ -1227,7 +1390,11 @@ TclpLocaltime(
      * provide a Posix localtime_r function.
      */
 
+#if defined(_WIN64) || defined(_USE_64BIT_TIME_T) || (defined(_MSC_VER) && _MSC_VER < 1400)
     return localtime(timePtr);
+#else
+    return _localtime32((CONST __time32_t *)timePtr);
+#endif
 }
 
 /*

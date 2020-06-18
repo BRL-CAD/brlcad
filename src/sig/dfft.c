@@ -1,7 +1,7 @@
 /*                          D F F T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,11 +33,13 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/app.h"
+#include "bu/malloc.h"
 #include "bu/getopt.h"
 #include "bu/exit.h"
 #include "vmath.h"
 
-#define MAXFFT 4096
+#define MAXFFT BU_PAGE_SIZE
 
 
 /* functions specified elsewhere (these probably belong in a header) */
@@ -206,6 +208,8 @@ main(int argc, char **argv)
     double cbsum = 0.0;
     int phase = 0;
     double data[MAXFFT];		/* Data buffer: 2*Points in spectrum */
+
+    bu_setprogname(argv[0]);
 
     while ((c = bu_getopt(argc, argv, optstring)) != -1) {
 	switch (c) {

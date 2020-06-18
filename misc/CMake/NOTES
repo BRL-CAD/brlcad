@@ -1,0 +1,31 @@
+Right now we have scripts that need to redirect their
+output referencing the file written out by a custom
+build target to indicate the current build type.  We
+might instead be able to pass that information in as
+a define using the $<CONFIG> generator expression (or
+maybe more than just that one if that's not enough
+for MSVC).
+
+CMakeLists.txt:
+add_custom_command(
+	OUTPUT script_type.txt
+	COMMAND ${CMAKE_COMMAND} -DBUILD_TYPE="$<CONFIG>" -P ${CMAKE_SOURCE_DIR}/script.cmake
+	)
+add_custom_target(script DEPENDS script_type.txt)
+
+script.cmake:
+message("BUILD_TYPE: ${BUILD_TYPE}")
+file(WRITE script_type.txt "${BUILD_TYPE}")
+
+output:
+
+cmake .. -DCMAKE_BUILD_TYPE=Debug && make script
+[100%] Generating script_type.txt
+BUILD_TYPE: Debug
+[100%] Built target script
+
+cmake .. -DCMAKE_BUILD_TYPE=Release && make script
+[100%] Generating script_type.txt
+BUILD_TYPE: Release
+[100%] Built target script
+

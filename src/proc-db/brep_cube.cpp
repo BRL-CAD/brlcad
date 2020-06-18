@@ -1,7 +1,7 @@
 /*                   B R E P _ C U B E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -52,6 +52,7 @@
 #include "common.h"
 
 #include "bio.h"
+#include "bu/app.h"
 #include "bu/log.h"
 
 #include "twistedcube.h"
@@ -238,6 +239,8 @@ main(int argc, char** argv)
     ON_TextLog error_log;
     const char* id_name = "B-Rep Example";
     const char* geom_name = "cube.s";
+
+    bu_setprogname(argv[0]);
 
     if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?")) {
     	printusage();

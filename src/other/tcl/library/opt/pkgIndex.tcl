@@ -9,4 +9,4 @@
 # full path name of this file's directory.
 
 if {![package vsatisfies [package provide Tcl] 8.2]} {return}
-package ifneeded opt 0.4.5 [list source [file join $dir optparse.tcl]]
+package ifneeded opt 0.4.6 [list source [file join $dir optparse.tcl]]

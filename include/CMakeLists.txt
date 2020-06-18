@@ -1,3 +1,4 @@
+add_subdirectory(analyze)
 add_subdirectory(bu)
 add_subdirectory(bn)
 add_subdirectory(bg)
@@ -6,6 +7,7 @@ add_subdirectory(dm)
 add_subdirectory(gcv)
 add_subdirectory(ged)
 add_subdirectory(icv)
+add_subdirectory(nmg)
 add_subdirectory(optical)
 add_subdirectory(rt)
 add_subdirectory(fb)
@@ -24,7 +26,6 @@ set(public_hdrs
   bsocket.h
   bu.h
   common.h
-  cursor.h
   dm.h
   fb.h
   fft.h
@@ -45,38 +46,20 @@ set(public_hdrs
   vmath.h
   wdb.h
   )
-install(FILES ${public_hdrs} DESTINATION ${INCLUDE_DIR}/brlcad)
-CMAKEFILES(${public_hdrs})
+BRLCAD_MANAGE_FILES("${public_hdrs}" ${INCLUDE_DIR}/brlcad)
 
-# Configuration headers
-install(FILES "${CMAKE_CURRENT_BINARY_DIR}/brlcad_config.h" DESTINATION ${INCLUDE_DIR}/brlcad)
-if(WIN32)
-  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/config_win.h" DESTINATION ${INCLUDE_DIR}/brlcad)
-endif(WIN32)
+BUILD_CFG_HDR(brlcad_ident.h.in ${INCLUDE_DIR}/brlcad)
+BUILD_CFG_HDR(brlcad_version.h.in ${INCLUDE_DIR}/brlcad)
 
-# Used by others but still considered private
-install(FILES "${CMAKE_CURRENT_SOURCE_DIR}/brlcad_version.h" DESTINATION ${INCLUDE_DIR})
-CMAKEFILES(brlcad_version.h)
-
-# Enforce the above list - check the public headers to make sure
-# they do not include any private headers.
-#set(inc_error 0)
-#set(msgs "")
-#foreach(header_file ${public_hdrs})
-#  file(READ "${header_file}" contents)
-#  foreach(noinst_file ${noinst_HEADERS})
-#    if("${contents}" MATCHES "include [\"<]${noinst_file}")
-#      set(inc_error 1)
-#      set(msgs "${msgs}\nPublic header file ${header_file} is including private header ${noinst_file}")
-#    endif("${contents}" MATCHES "include [\"<]${noinst_file}")
-#  endforeach(noinst_file ${noinst_HEADERS})
-#endforeach(header_file ${public_hdrs})
-#if(inc_error)
-#  message(FATAL_ERROR "${msgs}\nFATAL ERROR: Public headers are including private headers per messages above.")
-#endif(inc_error)
+# FIXME: shouldn't exist, needs to be absorbed into brlcad_config.h
+if(MSVC)
+  BUILD_CFG_HDR(config_win.h.in ${INCLUDE_DIR}/brlcad)
+endif(MSVC)
 
 set(include_misc
+  CMakeLists.txt
   brlcad_ident.h.in
+  brlcad_version.h.in
   conf/BrlcadConfig.tmpl
   conf/MAJOR
   conf/MINOR
@@ -85,6 +68,48 @@ set(include_misc
   config_win.h.in
   )
 CMAKEFILES(${include_misc})
+
+# Header checking target - this compiles the headers as isolated files to
+# ensure they include what is needed to resolve any symbols defined in the
+# public API.
+
+# Note: don't know how to do this on Windows - skip with Visual Studio
+if (DEFINED BRLCAD_HDR_CHECK AND NOT MSVC)
+
+  add_custom_target(check-headers)
+  set_target_properties(check-headers PROPERTIES FOLDER "BRL-CAD Header Checks")
+
+  file(GLOB_RECURSE hdrfiles RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}" "*.h")
+
+  foreach(hdrfile ${hdrfiles})
+
+    if (NOT "${hdrfile}" STREQUAL "RtServerImpl.h")
+
+      string(REPLACE "-" "_" STMPFILE "${hdrfile}")
+      string(REPLACE "." "_" STMPFILE "${STMPFILE}")
+      string(REPLACE "/" "_" STMPFILE "${STMPFILE}")
+
+      add_custom_command(
+	OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${STMPFILE}.stamp
+	COMMAND ${CMAKE_CXX_COMPILER} -I${CMAKE_SOURCE_DIR}/include -I${CMAKE_BINARY_DIR}/include
+	-I${CMAKE_SOURCE_DIR}/src/other/openNURBS -I${CMAKE_SOURCE_DIR}/src/other/tcl/generic
+	-fsyntax-only -Wall -Wextra -Wno-deprecated
+	${CMAKE_CURRENT_SOURCE_DIR}/${hdrfile}
+	COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/${STMPFILE}.stamp
+	DEPENDS ${hdrfile}
+	)
+      add_custom_target(${STMPFILE}-check DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${STMPFILE}.stamp)
+      set_target_properties(${STMPFILE}-check PROPERTIES FOLDER "BRL-CAD Header Checks")
+
+      add_dependencies(check-headers ${STMPFILE}-check)
+
+    endif (NOT "${hdrfile}" STREQUAL "RtServerImpl.h")
+
+  endforeach(hdrfile ${hdrfiles})
+
+endif (DEFINED BRLCAD_HDR_CHECK AND NOT MSVC)
+
+
 
 # Local Variables:
 # tab-width: 8

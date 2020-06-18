@@ -1,7 +1,7 @@
 /*                        S H _ T C L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -132,7 +132,7 @@ tcl_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const 
     RT_CK_REGION(rp);
 
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_log("tcl_setup(%s)\n", rp->reg_name);
 
     /* Get memory for the shader parameters and shader-specific data */
@@ -161,7 +161,7 @@ tcl_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const 
     db_region_mat(tcl_sp->tcl_m_to_r, rtip->rti_dbip, rp->reg_name, &rt_uniresource);
 
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	bu_struct_print(" Parameters:", tcl_print_tab,
 			(char *)tcl_sp);
 	bn_mat_print("m_to_sh", tcl_sp->tcl_m_to_r);
@@ -208,7 +208,7 @@ tcl_render(struct application *ap, const struct partition *pp, struct shadework 
     RT_CHECK_PT(pp);
     CK_tcl_SP(tcl_sp);
 
-    if (rdebug&RDEBUG_SHADE)
+    if (optical_debug&OPTICAL_DEBUG_SHADE)
 	bu_struct_print("tcl_render Parameters:",
 			tcl_print_tab, (char *)tcl_sp);
 
@@ -217,7 +217,7 @@ tcl_render(struct application *ap, const struct partition *pp, struct shadework 
      */
     MAT4X3PNT(pt, tcl_sp->tcl_m_to_r, swp->sw_hit.hit_point);
 
-    if (rdebug&RDEBUG_SHADE) {
+    if (optical_debug&OPTICAL_DEBUG_SHADE) {
 	bu_log("tcl_render() model:(%g %g %g) shader:(%g %g %g)\n",
 	       V3ARGS(swp->sw_hit.hit_point),
 	       V3ARGS(pt));

@@ -119,9 +119,12 @@ if(BRLCAD_ENABLE_IFC)
   add_subdirectory(ifc-g)
 endif(BRLCAD_ENABLE_IFC)
 
+add_subdirectory(util)
+
 CMAKEFILES(
   AP_Common.h
   BRLCADWrapper.h
+  CMakeLists.txt
   STEPWrapper.h
   ap203_elements.txt
   ap203e2-g/CMakeLists.txt

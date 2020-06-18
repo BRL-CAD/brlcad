@@ -1,7 +1,7 @@
 /*                       P I X T I L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2018 United States Government as represented by
+ * Copyright (c) 1986-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,6 +31,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/file.h"
 #include "bu/malloc.h"
@@ -116,6 +117,8 @@ main(int argc, char **argv)
     char name[256] = {0};
     ssize_t ret;
 
+    bu_setprogname(argv[0]);
+
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
 	bu_exit (1, NULL);
@@ -182,13 +185,13 @@ main(int argc, char **argv)
 		    snprintf(name, sizeof(name), "%s.%d", base_name, framenumber);
 		}
 
-		ifname = bu_realpath(name, NULL);
+		ifname = bu_file_realpath(name, NULL);
 		if ((fd=open(ifname, 0))<0) {
 		    perror(ifname);
-		    bu_free(ifname, "ifname alloc from bu_realpath");
+		    bu_free(ifname, "ifname alloc from bu_file_realpath");
 		    goto done;
 		}
-		bu_free(ifname, "ifname alloc from bu_realpath");
+		bu_free(ifname, "ifname alloc from bu_file_realpath");
 	    }
 	    /* Read in .pix file.  Bottom to top */
 	    for (i=0; i<file_height; i++) {

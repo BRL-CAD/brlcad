@@ -3303,14 +3303,6 @@ Usage: pixdiff f1.pix f2.pix >file.pix
 
 ----- end usage -----------------------------------
 ***** end pixdiff ***********************************
-***** begin pixdsplit ***********************************
-	result : (wait)
-	file(s):
-	error  : 1:TIMEOUT
------ begin usage -----------------------------------
-
------ end usage -----------------------------------
-***** end pixdsplit ***********************************
 ***** begin pixelswap ***********************************
 	result : (usage)
 	file(s):

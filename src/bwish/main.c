@@ -1,7 +1,7 @@
 /*                          M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2018 United States Government as represented by
+ * Copyright (c) 1998-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -41,10 +41,12 @@
 #  include <sys/select.h> /* for select */
 #endif
 
+#include "bu/app.h"
 #include "vmath.h"
 #include "tclcad.h"
 
 extern int cmdInit(Tcl_Interp *interp);
+
 
 #ifdef BWISH
 Tk_Window tkwin;

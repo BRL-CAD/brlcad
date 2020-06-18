@@ -53,21 +53,15 @@ function(ADD_G_TARGET in_model folder)
   # the sense that it uses libgcv...)
   if(${MODEL_TYPE} STREQUAL "3dm")
 
-    # Because we won't know the output directory in the script reliably until run time,
-    # we append CURRENT_BUILD_DIR as a string to the arguments - it is the script's
-    # responsibility to handle it correctly at run time.
-    set(CMD_ARGS "-o" "CURRENT_BUILD_DIR/${output_file}" "${CMAKE_CURRENT_SOURCE_DIR}/${in_model}")
-
+    set(INPUT_FILE "${CMAKE_CURRENT_SOURCE_DIR}/${in_model}")
+    set(OUTPUT_FILE "${output_file}")
     # Use the model name for the script, since the output file is specific to this input
-    set(script_file "${CMAKE_CURRENT_BINARY_DIR}/${in_model_root}.cmake")
-
-    # We know enough - write the script
-    generate_cmd_script(3dm-g "${script_file}" OLOG "${log_file}" ELOG "${log_file}" CARGS "${CMD_ARGS}")
+    configure_file("${CMAKE_SOURCE_DIR}/db/conv_run.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${in_model_root}.cmake" @ONLY)
 
     # Define the target
     add_custom_command(
       OUTPUT ${CMAKE_CURRENT_BUILD_DIR_SCRIPT}/${output_file}
-      COMMAND ${CMAKE_COMMAND} -P "${script_file}"
+      COMMAND ${CMAKE_COMMAND} -DEXEC=$<TARGET_FILE:3dm-g> -P "${CMAKE_CURRENT_BINARY_DIR}/${in_model_root}.cmake"
       DEPENDS 3dm-g ${CMAKE_CURRENT_SOURCE_DIR}/${in_model}
       )
 
@@ -134,6 +128,7 @@ set(G_BENCHMARK_MODELS
 set(G_SAMPLE_MODELS
   aet.asc
   axis.asc
+  bearing.asc
   boolean-ops.asc
   castle.asc
   cornell.asc
@@ -153,6 +148,7 @@ set(G_SAMPLE_MODELS
   pic.asc
   pinewood.asc
   prim.asc
+  rounds.asc
   tank_car.asc
   terra.asc
   toyjeep.asc
@@ -178,9 +174,45 @@ if(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
    BRLCAD_ADDDATA(terra.dsp db)
 endif(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
 
+if(SH_EXEC)
+  set(conversion_g_files)
+  set(conversion_g_files_fp)
+  set(conversion_deps_list)
+
+  macro(Sh_Conversion_Test gfile depends_list)
+    add_custom_target(convert-${gfile} COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/sh/conversion.sh GED=$<TARGET_FILE:mged> ${CMAKE_BINARY_DIR}/${DATA_DIR}/db/${gfile})
+    set_target_properties(convert-${gfile} PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
+    set_target_properties(convert-${gfile} PROPERTIES FOLDER "BRL-CAD Conversion Tests")
+    set(conversion_g_files ${conversion_g_files} ${gfile})
+    if(NOT "${depends_list}" STREQUAL "")
+      add_dependencies(convert-${gfile} ${depends_list})
+      set(conversion_deps_list ${conversion_deps_list} ${depends_list})
+    endif(NOT "${depends_list}" STREQUAL "")
+  endmacro(Sh_Conversion_Test)
+
+  foreach(g_input ${G_BENCHMARK_MODELS})
+    get_filename_component(GROOT "${g_input}" NAME_WE)
+    Sh_Conversion_Test(${GROOT}.g "mged")
+  endforeach(g_input ${G_BENCHMARK_MODELS})
+  foreach(g_input ${G_SAMPLE_MODELS})
+    get_filename_component(GROOT "${g_input}" NAME_WE)
+    Sh_Conversion_Test(${GROOT}.g "mged")
+  endforeach(g_input ${G_SAMPLE_MODELS})
+
+  list(REMOVE_DUPLICATES conversion_deps_list)
+  foreach(gfile ${conversion_g_files})
+    set(conversion_g_files_fp ${conversion_g_files_fp} "${CMAKE_BINARY_DIR}/${DATA_DIR}/db/${gfile}")
+  endforeach(gfile ${conversion_g_files})
+  add_custom_target(convert COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/sh/conversion.sh GED=$<TARGET_FILE:mged> ${conversion_g_files_fp})
+  set_target_properties(convert PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
+  set_target_properties(convert PROPERTIES FOLDER "BRL-CAD Conversion Tests")
+  add_dependencies(convert ${conversion_deps_list})
+endif(SH_EXEC)
+
 CMAKEFILES(
   ${G_BENCHMARK_MODELS}
   ${G_SAMPLE_MODELS}
+  CMakeLists.txt
   aet.rt
   cornell.rt
   cube.rt

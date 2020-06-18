@@ -1,7 +1,7 @@
 /*                           B I O . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,6 +39,11 @@
 #define BIO_H
 
 #include <stdio.h>
+
+/* strict mode may not declare fileno() */
+# if !defined(fileno) && !defined(__cplusplus)
+extern int fileno(FILE *stream);
+# endif
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
 

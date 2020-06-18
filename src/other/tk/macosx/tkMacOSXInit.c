@@ -7,6 +7,7 @@
  * Copyright (c) 1995-1997 Sun Microsystems, Inc.
  * Copyright 2001-2009, Apple Inc.
  * Copyright (c) 2005-2009 Daniel A. Steffen <das@users.sourceforge.net>
+ * Copyright (c) 2017 Marc Culler
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
@@ -14,10 +15,7 @@
 
 #include "tkMacOSXPrivate.h"
 
-#include "tclInt.h" /* for Tcl_GetStartupScript() & Tcl_SetStartupScript() */
-
 #include <sys/stat.h>
-#include <sys/utsname.h>
 #include <dlfcn.h>
 #include <objc/objc-auto.h>
 
@@ -30,56 +28,52 @@ static char tkLibPath[PATH_MAX + 1] = "";
 
 static char scriptPath[PATH_MAX + 1] = "";
 
-long tkMacOSXMacOSXVersion = 0;
-
-#pragma mark TKApplication(TKInit) 
-
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 1060
-#define NSTextInputContextKeyboardSelectionDidChangeNotification @"NSTextInputContextKeyboardSelectionDidChangeNotification"
-static void keyboardChanged(CFNotificationCenterRef center, void *observer, CFStringRef name, const void *object, CFDictionaryRef userInfo) {
-    [[NSNotificationCenter defaultCenter] postNotificationName:NSTextInputContextKeyboardSelectionDidChangeNotification object:nil userInfo:nil];
-}
-#endif
-
-@interface TKApplication(TKKeyboard)
-- (void)keyboardChanged:(NSNotification *)notification;
-@end
-
-#if MAC_OS_X_VERSION_MAX_ALLOWED >= 1060
-#define TKApplication_NSApplicationDelegate <NSApplicationDelegate>
-#else
-#define TKApplication_NSApplicationDelegate
-#endif
-@interface TKApplication(TKWindowEvent) TKApplication_NSApplicationDelegate
-- (void)_setupWindowNotifications;
-@end
-
-@interface TKApplication(TKMenus)
-- (void)_setupMenus;
-@end
+#pragma mark TKApplication(TKInit)
 
 @implementation TKApplication
-@synthesize poolProtected = _poolProtected;
+@synthesize poolLock = _poolLock;
+@synthesize macMinorVersion = _macMinorVersion;
+@synthesize isDrawing = _isDrawing;
 @end
+
+/*
+ * #define this to see a message on stderr whenever _resetAutoreleasePool is
+ * called while the pool is locked.
+ */
+#undef DEBUG_LOCK
 
 @implementation TKApplication(TKInit)
 - (void) _resetAutoreleasePool
 {
-    if(![self poolProtected]) {
+    if ([self poolLock] == 0) {
 	[_mainPool drain];
 	_mainPool = [NSAutoreleasePool new];
+    } else {
+#ifdef DEBUG_LOCK
+	fprintf(stderr, "Pool is locked with count %d!!!!\n", [self poolLock]);
+#endif
     }
 }
-
+- (void) _lockAutoreleasePool
+{
+    [self setPoolLock:[self poolLock] + 1];
+}
+- (void) _unlockAutoreleasePool
+{
+    [self setPoolLock:[self poolLock] - 1];
+}
 #ifdef TK_MAC_DEBUG_NOTIFICATIONS
-- (void)_postedNotification:(NSNotification *)notification {
+- (void) _postedNotification: (NSNotification *) notification
+{
     TKLog(@"-[%@(%p) %s] %@", [self class], self, _cmd, notification);
 }
 #endif
 
-- (void)_setupApplicationNotifications {
+- (void) _setupApplicationNotifications
+{
     NSNotificationCenter *nc = [NSNotificationCenter defaultCenter];
-#define observe(n, s) [nc addObserver:self selector:@selector(s) name:(n) object:nil]
+#define observe(n, s) \
+	[nc addObserver:self selector:@selector(s) name:(n) object:nil]
     observe(NSApplicationDidBecomeActiveNotification, applicationActivate:);
     observe(NSApplicationDidResignActiveNotification, applicationDeactivate:);
     observe(NSApplicationDidUnhideNotification, applicationShowHide:);
@@ -87,34 +81,130 @@ static void keyboardChanged(CFNotificationCenterRef center, void *observer, CFSt
     observe(NSApplicationDidChangeScreenParametersNotification, displayChanged:);
     observe(NSTextInputContextKeyboardSelectionDidChangeNotification, keyboardChanged:);
 #undef observe
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 1060
-    CFNotificationCenterAddObserver(CFNotificationCenterGetDistributedCenter(), NULL, &keyboardChanged, kTISNotifySelectedKeyboardInputSourceChanged, NULL, CFNotificationSuspensionBehaviorCoalesce);
-#endif
 }
 
-- (void)_setupEventLoop {
-    NSAutoreleasePool *pool = [NSAutoreleasePool new];
-    [self finishLaunching];
-    [self setWindowsNeedUpdate:YES];
-    [pool drain];
-}
+-(void)applicationWillFinishLaunching:(NSNotification *)aNotification
+{
 
-- (void)_setup:(Tcl_Interp *)interp {
-    _eventInterp = interp;
-    _mainPool = [NSAutoreleasePool new];
-    [NSApp setPoolProtected:NO];
-    _defaultMainMenu = nil;
-    [self _setupMenus];
-    [self setDelegate:self];
+    /*
+     * Initialize notifications.
+     */
 #ifdef TK_MAC_DEBUG_NOTIFICATIONS
     [[NSNotificationCenter defaultCenter] addObserver:self
 	    selector:@selector(_postedNotification:) name:nil object:nil];
 #endif
     [self _setupWindowNotifications];
     [self _setupApplicationNotifications];
+
+    /*
+     * Construct the menu bar.
+     */
+    _defaultMainMenu = nil;
+    [self _setupMenus];
+
+    /*
+     * Initialize event processing.
+     */
+    TkMacOSXInitAppleEvents(_eventInterp);
+
+    /*
+     * Initialize the graphics context.
+     */
+    TkMacOSXUseAntialiasedText(_eventInterp, -1);
+    TkMacOSXInitCGDrawing(_eventInterp, TRUE, 0);
 }
 
-- (NSString *)tkFrameworkImagePath:(NSString*)image {
+-(void)applicationDidFinishLaunching:(NSNotification *)notification
+{
+    /*
+     * It is not safe to force activation of the NSApp until this method is
+     * called. Activating too early can cause the menu bar to be unresponsive.
+     * The call to activateIgnoringOtherApps was moved here to avoid this.
+     * However, with the release of macOS 10.15 (Catalina) this was no longer
+     * sufficient.  (See ticket bf93d098d7.)  Apparently apps were being
+     * activated automatically, and this was sometimes being done too early.
+     * As a workaround we deactivate and then reactivate the app, even though
+     * Apple says that "Normally, you shouldn’t invoke this method".
+     */
+
+    [NSApp deactivate];
+    [NSApp activateIgnoringOtherApps: YES];
+
+    /*
+     * Process events to ensure that the root window is fully initialized. See
+     * ticket 56a1823c73.
+     */
+
+    [NSApp _lockAutoreleasePool];
+    while (Tcl_DoOneEvent(TCL_WINDOW_EVENTS| TCL_DONT_WAIT)) {}
+    [NSApp _unlockAutoreleasePool];
+}
+
+- (void) _setup: (Tcl_Interp *) interp
+{
+    /*
+     * Remember our interpreter.
+     */
+    _eventInterp = interp;
+
+    /*
+     * Install the global autoreleasePool.
+     */
+    _mainPool = [NSAutoreleasePool new];
+    [NSApp setPoolLock:0];
+
+    /*
+     * Record the OS version we are running on.
+     */
+    int minorVersion;
+#if MAC_OS_X_VERSION_MAX_ALLOWED < 101000
+    Gestalt(gestaltSystemVersionMinor, (SInt32*)&minorVersion);
+#else
+    NSOperatingSystemVersion systemVersion;
+    systemVersion = [[NSProcessInfo processInfo] operatingSystemVersion];
+    minorVersion = systemVersion.minorVersion;
+#endif
+    [NSApp setMacMinorVersion: minorVersion];
+
+    /*
+     * We are not drawing right now.
+     */
+
+    [NSApp setIsDrawing:NO];
+
+    /*
+     * Be our own delegate.
+     */
+
+    [self setDelegate:self];
+
+    /*
+     * Make sure we are allowed to open windows.
+     */
+
+    [NSApp setActivationPolicy:NSApplicationActivationPolicyRegular];
+
+    /*
+     * If no icon has been set from an Info.plist file, use the Wish icon from
+     * the Tk framework.
+     */
+
+    NSString *iconFile = [[NSBundle mainBundle] objectForInfoDictionaryKey:
+						    @"CFBundleIconFile"];
+    if (!iconFile) {
+	NSString *path = [NSApp tkFrameworkImagePath:@"Tk.icns"];
+	if (path) {
+	    NSImage *image = [[NSImage alloc] initWithContentsOfFile:path];
+	    if (image) {
+		[NSApp setApplicationIconImage:image];
+		[image release];
+	    }
+	}
+    }
+}
+
+- (NSString *) tkFrameworkImagePath: (NSString *) image
+{
     NSString *path = nil;
     NSAutoreleasePool *pool = [NSAutoreleasePool new];
     if (tkLibPath[0] != '\0') {
@@ -125,8 +215,10 @@ static void keyboardChanged(CFNotificationCenterRef center, void *observer, CFSt
     if (!path) {
 	const char *tk_library = Tcl_GetVar2(_eventInterp, "tk_library", NULL,
 		TCL_GLOBAL_ONLY);
+
 	if (tk_library) {
 	    NSFileManager *fm = [NSFileManager defaultManager];
+
 	    path = [[NSString stringWithUTF8String:tk_library]
 		    stringByAppendingFormat:@"/%@", image];
 	    if (![fm isReadableFileAtPath:path]) {
@@ -154,38 +246,6 @@ static void keyboardChanged(CFNotificationCenterRef center, void *observer, CFSt
 @end
 
 #pragma mark -
-
-/*
- *----------------------------------------------------------------------
- *
- * DoWindowActivate --
- *
- *	Idle handler that sets the application icon to the generic Tk icon.
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-
-static void
-SetApplicationIcon(
-    ClientData clientData)
-{
-    NSAutoreleasePool *pool = [NSAutoreleasePool new];
-    NSString *path = [NSApp tkFrameworkImagePath:@"Tk.icns"];
-    if (path) {
-	NSImage *image = [[NSImage alloc] initWithContentsOfFile:path];
-	if (image) {
-	    [NSApp setApplicationIconImage:image];
-	    [image release];
-	}
-    }
-    [pool drain];
-}
 
 /*
  *----------------------------------------------------------------------
@@ -218,10 +278,6 @@ TkpInit(
      */
 
     if (!initialized) {
-	int bundledExecutable = 0;
-	CFBundleRef bundleRef;
-	CFURLRef bundleUrl = NULL;
-	struct utsname name;
 	struct stat st;
 
 	initialized = 1;
@@ -230,23 +286,9 @@ TkpInit(
 	 * Initialize/check OS version variable for runtime checks.
 	 */
 
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 1050
-#   error Mac OS X 10.5 required
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1060
+#   error Mac OS X 10.6 required
 #endif
-
-	if (!uname(&name)) {
-	    tkMacOSXMacOSXVersion = (strtod(name.release, NULL) + 96) * 10;
-	}
-        /*Check for new versioning scheme on Yosemite (10.10) and later.*/
-	if (MAC_OS_X_VERSION_MIN_REQUIRED > 100000) {
-		tkMacOSXMacOSXVersion = MAC_OS_X_VERSION_MIN_REQUIRED/100;
-	    }
-	if (tkMacOSXMacOSXVersion && MAC_OS_X_VERSION_MIN_REQUIRED < 100000 &&
-		tkMacOSXMacOSXVersion/10 < MAC_OS_X_VERSION_MIN_REQUIRED/10) {
-	    Tcl_Panic("Mac OS X 10.%d or later required !",
-		    (MAC_OS_X_VERSION_MIN_REQUIRED/10)-100);
-	}
-		
 
 #ifdef TK_FRAMEWORK
 	/*
@@ -258,88 +300,12 @@ TkpInit(
 	if (Tcl_MacOSXOpenVersionedBundleResources(interp,
 		"com.tcltk.tklibrary", TK_FRAMEWORK_VERSION, 0, PATH_MAX,
 		tkLibPath) != TCL_OK) {
+            # if 0 /* This is not really an error.  Wish still runs fine. */
 	    TkMacOSXDbgMsg("Tcl_MacOSXOpenVersionedBundleResources failed");
+	    # endif
 	}
 #endif
 
-	{
-	    NSAutoreleasePool *pool = [NSAutoreleasePool new];
-		[[NSUserDefaults standardUserDefaults] registerDefaults:
-		     [NSDictionary dictionaryWithObjectsAndKeys:
-		     [NSNumber numberWithBool:YES],
-		     @"_NSCanWrapButtonTitles",
-		     [NSNumber numberWithInt:-1],
-		     @"NSStringDrawingTypesetterBehavior",
-		     nil]];
-	    [TKApplication sharedApplication];
-	    [pool drain];
-	    [NSApp _setup:interp];
-	}
-
-	/* Check whether we are a bundled executable: */
-	bundleRef = CFBundleGetMainBundle();
-	if (bundleRef) {
-	    bundleUrl = CFBundleCopyBundleURL(bundleRef);
-	}
-	if (bundleUrl) {
-	    /*
-	     * A bundled executable is two levels down from its main bundle
-	     * directory (e.g. Wish.app/Contents/MacOS/Wish), whereas an
-	     * unbundled executable's main bundle directory is just the
-	     * directory containing the executable. So to check whether we are
-	     * bundled, we delete the last three path components of the
-	     * executable's url and compare the resulting url with the main
-	     * bundle url.
-	     */
-
-	    int j = 3;
-	    CFURLRef url = CFBundleCopyExecutableURL(bundleRef);
-
-	    while (url && j--) {
-		CFURLRef parent =
-			CFURLCreateCopyDeletingLastPathComponent(NULL, url);
-
-		CFRelease(url);
-		url = parent;
-	    }
-	    if (url) {
-		bundledExecutable = CFEqual(bundleUrl, url);
-		CFRelease(url);
-	    }
-	    CFRelease(bundleUrl);
-	}
-
-	if (!bundledExecutable) {
-	    /*
-	     * If we are loaded into an executable that is not a bundled
-	     * application, the window server does not let us come to the
-	     * foreground. For such an executable, notify the window server
-	     * that we are now a full GUI application.
-	     */
-
-	    OSStatus err = procNotFound;
-	    ProcessSerialNumber psn = { 0, kCurrentProcess };
-
-	    err = ChkErr(TransformProcessType, &psn,
-		    kProcessTransformToForegroundApplication);
-
-	    /*
-	     * Set application icon to generic Tk icon, do it at idle time
-	     * instead of now to ensure tk_library is setup.
-	     */
-
-	    Tcl_DoWhenIdle(SetApplicationIcon, NULL);
-	}
-
-	{
-	    NSAutoreleasePool *pool = [NSAutoreleasePool new];
-	    [NSApp _setupEventLoop];
-	    TkMacOSXInitAppleEvents(interp);
-	    TkMacOSXUseAntialiasedText(interp, -1);
-	    TkMacOSXInitCGDrawing(interp, TRUE, 0);
-	    [pool drain];
-	}
-	
 	/*
 	 * FIXME: Close stdin & stdout for remote debugging otherwise we will
 	 * fight with gdb for stdin & stdout
@@ -349,6 +315,60 @@ TkpInit(
 	    close(0);
 	    close(1);
 	}
+
+	/*
+	 * Instantiate our NSApplication object. This needs to be done before
+	 * we check whether to open a console window.
+	 */
+
+	NSAutoreleasePool *pool = [NSAutoreleasePool new];
+	[[NSUserDefaults standardUserDefaults] registerDefaults:
+		[NSDictionary dictionaryWithObjectsAndKeys:
+				  [NSNumber numberWithBool:YES],
+			      @"_NSCanWrapButtonTitles",
+				   [NSNumber numberWithInt:-1],
+			      @"NSStringDrawingTypesetterBehavior",
+			      nil]];
+	[TKApplication sharedApplication];
+	[pool drain];
+	[NSApp _setup:interp];
+
+        /*
+         * WARNING: The finishLaunching method runs asynchronously, apparently
+         * in a separate thread.  This creates a race between the
+         * initialization of the NSApplication and the initialization of Tk.
+         * If Tk wins the race bad things happen with the root window (see
+         * below).  If the NSApplication wins then an AppleEvent created during
+         * launch, e.g. by dropping a file icon on the application icon, will
+         * be delivered before the procedure meant to to handle the AppleEvent
+         * has been defined.  This is now handled by processing the AppleEvent
+         * as an idle task.  See tkMacOSXHLEvents.c.
+         */
+
+	[NSApp finishLaunching];
+
+        /*
+         * Create a Tk event source based on the Appkit event queue.
+         */
+
+	Tk_MacOSXSetupTkNotifier();
+
+	/*
+	 * If Tk initialization wins the race, the root window is mapped before
+         * the NSApplication is initialized.  This can cause bad things to
+         * happen.  The root window can open off screen with no way to make it
+         * appear on screen until the app icon is clicked.  This will happen if
+         * a Tk application opens a modal window in its startup script (see
+         * ticket 56a1823c73).  In other cases, an empty root window can open
+         * on screen and remain visible for a noticeable amount of time while
+         * the Tk initialization finishes (see ticket d1989fb7cf).  The call
+         * below forces Tk to block until the Appkit event queue has been
+         * created.  This seems to be sufficient to ensure that the
+         * NSApplication initialization wins the race, avoiding these bad
+         * window behaviors.
+	 */
+
+	Tcl_DoOneEvent(TCL_WINDOW_EVENTS | TCL_DONT_WAIT);
 
 	/*
 	 * If we don't have a TTY and stdin is a special character file of
@@ -365,16 +385,16 @@ TkpInit(
 	    Tcl_RegisterChannel(interp, Tcl_GetStdChannel(TCL_STDERR));
 
 	    /*
-	     * Only show the console if we don't have a startup script
-	     * and tcl_interactive hasn't been set already.
+	     * Only show the console if we don't have a startup script and
+	     * tcl_interactive hasn't been set already.
 	     */
 
 	    if (Tcl_GetStartupScript(NULL) == NULL) {
-		const char *intvar = Tcl_GetVar(interp,
-			"tcl_interactive", TCL_GLOBAL_ONLY);
+		const char *intvar = Tcl_GetVar2(interp,
+			"tcl_interactive", NULL, TCL_GLOBAL_ONLY);
 
 		if (intvar == NULL) {
-		    Tcl_SetVar(interp, "tcl_interactive", "1",
+		    Tcl_SetVar2(interp, "tcl_interactive", NULL, "1",
 			    TCL_GLOBAL_ONLY);
 		}
 	    }
@@ -382,16 +402,22 @@ TkpInit(
 		return TCL_ERROR;
 	    }
 	}
+
+	/*
+	 * Initialize the NSServices object here. Apple's docs say to do this
+	 * in applicationDidFinishLaunching, but the Tcl interpreter is not
+	 * initialized until this function call.
+	 */
+
+	TkMacOSXServices_Init(interp);
     }
 
-    Tk_MacOSXSetupTkNotifier();
-
     if (tkLibPath[0] != '\0') {
-	Tcl_SetVar(interp, "tk_library", tkLibPath, TCL_GLOBAL_ONLY);
+	Tcl_SetVar2(interp, "tk_library", NULL, tkLibPath, TCL_GLOBAL_ONLY);
     }
 
     if (scriptPath[0] != '\0') {
-	Tcl_SetVar(interp, "auto_path", scriptPath,
+	Tcl_SetVar2(interp, "auto_path", NULL, scriptPath,
 		TCL_GLOBAL_ONLY|TCL_LIST_ELEMENT|TCL_APPEND_VALUE);
     }
 
@@ -399,7 +425,7 @@ TkpInit(
 	    TkMacOSXStandardAboutPanelObjCmd, NULL, NULL);
     Tcl_CreateObjCommand(interp, "::tk::mac::iconBitmap",
 	    TkMacOSXIconBitmapObjCmd, NULL, NULL);
-
+    Tcl_CreateObjCommand(interp, "::tk::mac::GetAppPath", TkMacOSXGetAppPath, NULL, NULL);
     return TCL_OK;
 }
 
@@ -428,7 +454,7 @@ TkpGetAppName(
 {
     const char *p, *name;
 
-    name = Tcl_GetVar(interp, "argv0", TCL_GLOBAL_ONLY);
+    name = Tcl_GetVar2(interp, "argv0", NULL, TCL_GLOBAL_ONLY);
     if ((name == NULL) || (*name == 0)) {
 	name = "tk";
     } else {
@@ -439,7 +465,58 @@ TkpGetAppName(
     }
     Tcl_DStringAppend(namePtr, name, -1);
 }
-
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TkMacOSXGetAppPath --
+ *
+ *	Returns the path of the Wish application bundle.
+ *
+ * Results:
+ *	Returns the application path.
+ *
+ * Side effects:
+ *	None.
+ *
+ *----------------------------------------------------------------------
+ */
+int TkMacOSXGetAppPath(
+		       ClientData cd,
+		       Tcl_Interp *ip,
+		       int objc,
+		       Tcl_Obj *const objv[])
+{
+
+  CFURLRef mainBundleURL = CFBundleCopyBundleURL(CFBundleGetMainBundle());
+
+
+  /*
+   * Convert the URL reference into a string reference.
+   */
+
+  CFStringRef appPath = CFURLCopyFileSystemPath(mainBundleURL, kCFURLPOSIXPathStyle);
+
+  /*
+   * Get the system encoding method.
+   */
+
+  CFStringEncoding encodingMethod = CFStringGetSystemEncoding();
+
+  /*
+   * Convert the string reference into a C string.
+   */
+
+  char *path = (char *) CFStringGetCStringPtr(appPath, encodingMethod);
+
+  Tcl_SetResult(ip, path, NULL);
+
+  CFRelease(mainBundleURL);
+  CFRelease(appPath);
+  return TCL_OK;
+
+}
+
 /*
  *----------------------------------------------------------------------
  *

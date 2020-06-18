@@ -1,7 +1,7 @@
 /*                          W D B . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2018 United States Government as represented by
+ * Copyright (c) 1993-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,7 +51,7 @@ struct rt_wdb {
     int                 type;
     struct db_i *       dbip;
     struct db_tree_state        wdb_initial_tree_state;
-    struct rt_tess_tol  wdb_ttol;
+    struct bg_tess_tol  wdb_ttol;
     struct bn_tol       wdb_tol;
     struct resource*    wdb_resp;
 
@@ -68,14 +68,14 @@ struct rt_wdb {
 
     /* These members are marked for removal */
     struct bu_vls       wdb_name;       /**< @brief  database object name */
-    struct bu_observer  wdb_observers;
+    struct bu_observer_list  wdb_observers;
     void *              wdb_interp; /**< @brief Tcl_Interp */
 };
 
 
 #define RT_CHECK_WDB(_p) BU_CKMAG(_p, RT_WDB_MAGIC, "rt_wdb")
 #define RT_CK_WDB(_p) RT_CHECK_WDB(_p)
-#define RT_WDB_INIT_ZERO { {RT_WDB_MAGIC, BU_LIST_NULL, BU_LIST_NULL}, 0, NULL, RT_DBTS_INIT_ZERO, RT_TESS_TOL_INIT_ZERO, BN_TOL_INIT_ZERO, NULL, BU_VLS_INIT_ZERO, 0, 0, 0, 0, 0, 0, BU_VLS_INIT_ZERO, BU_OBSERVER_INIT_ZERO, NULL }
+#define RT_WDB_INIT_ZERO { {RT_WDB_MAGIC, BU_LIST_NULL, BU_LIST_NULL}, 0, NULL, RT_DBTS_INIT_ZERO, BG_TESS_TOL_INIT_ZERO, BN_TOL_INIT_ZERO, NULL, BU_VLS_INIT_ZERO, 0, 0, 0, 0, 0, 0, BU_VLS_INIT_ZERO, BU_OBSERVER_LIST_INIT_ZERO, NULL }
 #define RT_WDB_NULL             ((struct rt_wdb *)NULL)
 #define RT_WDB_TYPE_DB_DISK                     2
 #define RT_WDB_TYPE_DB_DISK_APPEND_ONLY         3
@@ -102,7 +102,7 @@ RT_EXPORT extern struct rt_wdb *wdb_fopen(const char *filename);
  * Users can change the database title by calling: ???
  */
 RT_EXPORT extern struct rt_wdb *wdb_fopen_v(const char *filename,
-                                            int version);
+					    int version);
 
 
 /**
@@ -115,7 +115,7 @@ RT_EXPORT extern struct rt_wdb *wdb_fopen_v(const char *filename,
  * RT_WDB_TYPE_DB_INMEM_APPEND_ONLY Ditto, but give errors if name in use.
  */
 RT_EXPORT extern struct rt_wdb *wdb_dbopen(struct db_i *dbip,
-                                           int mode);
+					   int mode);
 
 
 /**
@@ -129,9 +129,9 @@ RT_EXPORT extern struct rt_wdb *wdb_dbopen(struct db_i *dbip,
  * NON-PARALLEL because of rt_uniresource
  */
 RT_EXPORT extern int wdb_import(struct rt_wdb *wdbp,
-                                struct rt_db_internal *internp,
-                                const char *name,
-                                const mat_t mat);
+				struct rt_db_internal *internp,
+				const char *name,
+				const mat_t mat);
 
 
 /**
@@ -142,10 +142,10 @@ RT_EXPORT extern int wdb_import(struct rt_wdb *wdbp,
  * <0 error
  */
 RT_EXPORT extern int wdb_export_external(struct rt_wdb *wdbp,
-                                         struct bu_external *ep,
-                                         const char *name,
-                                         int flags,
-                                         unsigned char minor_type);
+					 struct bu_external *ep,
+					 const char *name,
+					 int flags,
+					 unsigned char minor_type);
 
 /**
  * Convert the internal representation of a solid to the external one,
@@ -164,9 +164,9 @@ RT_EXPORT extern int wdb_export_external(struct rt_wdb *wdbp,
  * <0 error
  */
 RT_EXPORT extern int wdb_put_internal(struct rt_wdb *wdbp,
-                                      const char *name,
-                                      struct rt_db_internal *ip,
-                                      double local2mm);
+				      const char *name,
+				      struct rt_db_internal *ip,
+				      double local2mm);
 
 
 /**
@@ -188,13 +188,13 @@ RT_EXPORT extern int wdb_put_internal(struct rt_wdb *wdbp,
  * <0 error
  */
 RT_EXPORT extern int wdb_export(struct rt_wdb *wdbp,
-                                const char *name,
-                                void *gp,
-                                int id,
-                                double local2mm);
+				const char *name,
+				void *gp,
+				int id,
+				double local2mm);
 RT_EXPORT extern void wdb_init(struct rt_wdb *wdbp,
-                               struct db_i   *dbip,
-                               int           mode);
+			       struct db_i   *dbip,
+			       int           mode);
 
 
 /**
@@ -213,9 +213,9 @@ RT_EXPORT extern void wdb_close(struct rt_wdb *wdbp);
  * BRLCAD_ERROR
  */
 RT_EXPORT extern int wdb_import_from_path(struct bu_vls *logstr,
-                                          struct rt_db_internal *ip,
-                                          const char *path,
-                                          struct rt_wdb *wdb);
+					  struct rt_db_internal *ip,
+					  const char *path,
+					  struct rt_wdb *wdb);
 
 
 /**
@@ -229,10 +229,10 @@ RT_EXPORT extern int wdb_import_from_path(struct bu_vls *logstr,
  * BRLCAD_ERROR
  */
 RT_EXPORT extern int wdb_import_from_path2(struct bu_vls *logstr,
-                                           struct rt_db_internal *ip,
-                                           const char *path,
-                                           struct rt_wdb *wdb,
-                                           matp_t matp);
+					   struct rt_db_internal *ip,
+					   const char *path,
+					   struct rt_wdb *wdb,
+					   matp_t matp);
 
 
 __END_DECLS

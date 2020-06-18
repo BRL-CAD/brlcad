@@ -1,7 +1,7 @@
 /*                         G - X 3 D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,6 +39,7 @@
 
 /* interface headers */
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/units.h"
 #include "nmg.h"
@@ -108,7 +109,7 @@ static int ncpu = 1;		/* Number of processors */
 static char *out_file = NULL;	/* Output filename */
 static FILE *outfp;		/* Output file pointer */
 static struct db_i *dbip;
-static struct rt_tess_tol ttol;
+static struct bg_tess_tol ttol;
 static struct bn_tol tol;
 static struct model *the_model;
 
@@ -358,7 +359,7 @@ main(int argc, char **argv)
     tree_state.ts_ttol = &ttol;
     tree_state.ts_m = &the_model;
 
-    ttol.magic = RT_TESS_TOL_MAGIC;
+    ttol.magic = BG_TESS_TOL_MAGIC;
     /* Defaults, updated by command line options. */
     ttol.abs = 0.0;
     ttol.rel = 0.01;
@@ -407,7 +408,7 @@ main(int argc, char **argv)
 		ncpu = atoi(bu_optarg);
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
 		break;
 	    case 'X':
 		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);
@@ -761,7 +762,7 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
 
 			    v = eu->vu_p->v_p;
 			    NMG_CK_VERTEX(v);
-			    fprintf(fp, " %d, ", bu_ptbl_locate(&verts, (long *)v));
+			    fprintf(fp, " %jd, ", bu_ptbl_locate(&verts, (long *)v));
 			}
 			fprintf(fp, "-1");
 		    }
@@ -903,7 +904,7 @@ do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union
 	return nmg_region_end(tsp, pathp, curtree, client_data);
     }
 
-    if (RT_G_DEBUG&DEBUG_TREEWALK || verbose) {
+    if (RT_G_DEBUG&RT_DEBUG_TREEWALK || verbose) {
 	bu_log("\nConverted %d%% so far (%d of %d)\n",
 	       regions_tried>0 ? (regions_converted * 100) / regions_tried : 0,
 	       regions_converted, regions_tried);
@@ -973,13 +974,13 @@ nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, unio
     union tree *ret_tree;
     char *name;
 
-    RT_CK_TESS_TOL(tsp->ts_ttol);
+    BG_CK_TESS_TOL(tsp->ts_ttol);
     BN_CK_TOL(tsp->ts_tol);
     NMG_CK_MODEL(*tsp->ts_m);
 
     BU_LIST_INIT(&vhead);
 
-    if (RT_G_DEBUG&DEBUG_TREEWALK || verbose) {
+    if (RT_G_DEBUG&RT_DEBUG_TREEWALK || verbose) {
 	bu_log("\nConverted %d%% so far (%d of %d)\n",
 	       regions_tried>0 ? (regions_converted * 100) / regions_tried : 0,
 	       regions_converted, regions_tried);

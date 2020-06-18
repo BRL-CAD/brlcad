@@ -1,7 +1,7 @@
 /*                      B R N O D E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014-2018 United States Government as represented by
+ * Copyright (c) 2014-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,8 +20,10 @@
 
 #include "common.h"
 
+#include <algorithm>
+
 #include "bu/log.h"
-#include "brep.h"
+#include "brep/brnode.h"
 
 
 namespace brlcad {
@@ -82,14 +84,14 @@ BRNode::BRNode(
 	m_v[1] = m_end[Y];
     }
 
-    if (NEAR_EQUAL(m_end[X], m_start[X], 0.000001)) {
+    if (NEAR_EQUAL(m_end[X], m_start[X], BREP_UV_DIST_FUZZ)) {
 	m_Vertical = true;
 	if (m_innerTrim) {
 	    m_XIncreasing = false;
 	} else {
 	    m_XIncreasing = true;
 	}
-    } else if (NEAR_EQUAL(m_end[Y], m_start[Y], 0.000001)) {
+    } else if (NEAR_EQUAL(m_end[Y], m_start[Y], BREP_UV_DIST_FUZZ)) {
 	m_Horizontal = true;
 	if ((m_end[X] - m_start[X]) > 0.0) {
 	    m_XIncreasing = true;
@@ -105,7 +107,7 @@ BRNode::BRNode(
 	}
 	m_slope = (m_end[Y] - m_start[Y]) / (m_end[X] - m_start[X]);
     }
-    m_bb_diag = DIST_PT_PT(m_start, m_end);
+    m_bb_diag = DIST_PNT_PNT(m_start, m_end);
 }
 
 

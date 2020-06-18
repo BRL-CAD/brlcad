@@ -1,7 +1,7 @@
 /*                       E D M A T E R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,8 +31,11 @@
 #   include <unistd.h>
 #endif
 
+#include "bu/app.h"
+#include "bu/file.h"
 #include "bu/getopt.h"
 #include "./ged_private.h"
+
 
 int
 ged_edmater(struct ged *gedp, int argc, const char *argv[])
@@ -76,7 +79,7 @@ ged_edmater(struct ged *gedp, int argc, const char *argv[])
 
     fp = bu_temp_file(tmpfil, MAXPATHLEN);
     if (!fp)
-	return TCL_ERROR;
+	return GED_ERROR;
 
     av = (const char **)bu_malloc(sizeof(char *)*(argc + 2), "f_edmater: av");
     av[0] = "wmater";
@@ -88,10 +91,10 @@ ged_edmater(struct ged *gedp, int argc, const char *argv[])
 
     (void)fclose(fp);
 
-    if (ged_wmater(gedp, argc, av) == TCL_ERROR) {
+    if (ged_wmater(gedp, argc, av) == GED_ERROR) {
 	bu_file_delete(tmpfil);
 	bu_free((void *)av, "f_edmater: av");
-	return TCL_ERROR;
+	return GED_ERROR;
     }
 
     if (_ged_editit(editstring, tmpfil)) {
@@ -99,7 +102,7 @@ ged_edmater(struct ged *gedp, int argc, const char *argv[])
 	av[2] = NULL;
 	status = ged_rmater(gedp, 2, av);
     } else {
-	status = TCL_ERROR;
+	status = GED_ERROR;
     }
 
     bu_file_delete(tmpfil);

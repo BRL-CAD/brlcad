@@ -1,7 +1,7 @@
 /*                   P I P E _ M I R R O R . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2018 United States Government as represented by
+ * Copyright (c) 2009-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -48,7 +48,7 @@ rt_pipe_mirror(struct rt_db_internal *ip, register const plane_t plane)
     point_t mirror_pt;
     fastf_t ang;
 
-    struct wdb_pipept *ps;
+    struct wdb_pipe_pnt *ps;
 
     static point_t origin = {0.0, 0.0, 0.0};
 
@@ -82,7 +82,7 @@ rt_pipe_mirror(struct rt_db_internal *ip, register const plane_t plane)
     mirmat[3 + Y*4] += mirror_pt[Y] * mirror_dir[Y];
     mirmat[3 + Z*4] += mirror_pt[Z] * mirror_dir[Z];
 
-    for (BU_LIST_FOR (ps, wdb_pipept, &pipep->pipe_segs_head)) {
+    for (BU_LIST_FOR (ps, wdb_pipe_pnt, &pipep->pipe_segs_head)) {
 	point_t pt;
 
 	VMOVE(pt, ps->pp_coord);

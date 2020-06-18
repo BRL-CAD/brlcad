@@ -1,7 +1,7 @@
 /*                   T E S T _ N M G _ C O P Y . C
  * BRL-CAD
  *
- * Copyright (c) 2014-2018 United States Government as represented by
+ * Copyright (c) 2014-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,6 +22,7 @@
 
 #include <string.h>
 
+#include "bu/app.h"
 #include "raytrace.h"
 
 int
@@ -372,7 +373,7 @@ test_nmg_clone_model(struct model *m1, struct model *m2)
     /* Testing manifolds of model */
     if (m1->manifolds != (char *)NULL && m2->manifolds != (char *)NULL) {
 	if (*m1->manifolds != *m2->manifolds) {
-	    bu_log("Error manifolds of model. m1: %ld, m2: %ld\n", *m1->manifolds, *m2->manifolds);
+	    bu_log("Error manifolds of model. m1: %d, m2: %d\n", *m1->manifolds, *m2->manifolds);
 	    result = -1;
 	}
     } else {
@@ -455,6 +456,8 @@ testcase_nmg_mrsv()
 int
 main(int argc, char **argv)
 {
+    bu_setprogname(argv[0]);
+
     if (argc > 1) {
 	bu_exit(1, "Usage: %s\n", argv[0]);
     }

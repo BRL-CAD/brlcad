@@ -1,7 +1,7 @@
 /*                 PCurveOrSurface.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2018 United States Government as represented by
+ * Copyright (c) 1994-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@ public:
     enum pcurve_or_surface_type {
 	PCURVE,
 	SURFACE,
-	UNKNOWN
+	PCURVE_OR_SURFACE_UNKNOWN
     };
 
 private:

@@ -1,7 +1,7 @@
 /*                         S L A V E . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2018 United States Government as represented by
+ * Copyright (c) 2007-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,6 +35,7 @@
 #  include <getopt.h>
 #endif
 
+#include "bu/app.h"
 #include "rt/tie.h"
 #include "adrt.h"
 #include "camera.h"
@@ -457,6 +458,7 @@ main(int argc, char **argv)
     int		port = 0, c = 0, threads = 0;
     char		host[64], temp[64];
 
+    bu_setprogname(argv[0]);
 
     /* Default Port */
     signal(SIGINT, finish);

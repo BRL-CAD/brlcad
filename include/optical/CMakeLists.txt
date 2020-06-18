@@ -6,10 +6,9 @@ set(optical_headers
   shadework.h
   shadefuncs.h
   )
+BRLCAD_MANAGE_FILES(optical_headers ${INCLUDE_DIR}/brlcad/optical)
 
-install(FILES ${optical_headers} DESTINATION ${INCLUDE_DIR}/brlcad/optical)
-
-CMAKEFILES(${optical_headers})
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

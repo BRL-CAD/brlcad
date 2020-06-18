@@ -8,13 +8,6 @@ set(mann_EN
   ae.xml
   all_sf.xml
   analyze.xml
-  anim_cascade.xml
-  anim_fly.xml
-  anim_hardtrack.xml
-  anim_keyread.xml
-  anim_lookat.xml
-  anim_offset.xml
-  anim_orient.xml
   animmate.xml
   apropos.xml
   aproposdevel.xml
@@ -44,6 +37,8 @@ set(mann_EN
   c.xml
   cat.xml
   center.xml
+  check.xml
+  clone.xml
   color.xml
   comb.xml
   comb_color.xml
@@ -57,10 +52,10 @@ set(mann_EN
   db_glob.xml
   dbconcat.xml
   dbupgrade.xml
+  debug.xml
   debugbu.xml
   debugdir.xml
   debuglib.xml
-  debugmem.xml
   debugnmg.xml
   decompose.xml
   delay.xml
@@ -68,7 +63,6 @@ set(mann_EN
   draw.xml
   dup.xml
   e_command.xml
-  e_muves.xml
   eac.xml
   echo.xml
   edcodes.xml
@@ -78,7 +72,6 @@ set(mann_EN
   edit.xml
   edit_translate.xml
   edmater.xml
-  em.xml
   eqn.xml
   erase.xml
   ev.xml
@@ -93,6 +86,7 @@ set(mann_EN
   g.xml
   garbage_collect.xml
   gdiff.xml
+  get.xml
   gqa.xml
   gr.xml
   graph.xml
@@ -117,11 +111,10 @@ set(mann_EN
   killtree.xml
   knob.xml
   l.xml
-  l_muves.xml
   labelvert.xml
   lc.xml
+  lint.xml
   listeval.xml
-  lm.xml
   loadtk.xml
   lookat.xml
   ls.xml
@@ -131,7 +124,6 @@ set(mann_EN
   man.xml
   mater.xml
   matpick.xml
-  memprint.xml
   mirface.xml
   mrot.xml
   mv.xml
@@ -155,7 +147,7 @@ set(mann_EN
   press.xml
   preview.xml
   prj_add.xml
-  ps.xml
+  postscript.xml
   pull.xml
   push.xml
   put_comb.xml
@@ -172,7 +164,6 @@ set(mann_EN
   rcc-tgc.xml
   rcc-tor.xml
   rcodes.xml
-  read_muves.xml
   red.xml
   refresh.xml
   regdebug.xml
@@ -183,7 +174,6 @@ set(mann_EN
   rfarb.xml
   rm.xml
   rmater.xml
-  rmats.xml
   rot.xml
   rotobj.xml
   rpp-arch.xml
@@ -192,7 +182,6 @@ set(mann_EN
   rt.xml
   rtarea.xml
   rtcheck.xml
-  savekey.xml
   saveview.xml
   sca.xml
   search.xml
@@ -210,7 +199,6 @@ set(mann_EN
   sv.xml
   sync.xml
   t.xml
-  t_muves.xml
   ted.xml
   title.xml
   tol.xml
@@ -256,6 +244,7 @@ ADD_DOCBOOK("HTML;PHP" mann_INTRO mann "")
 
 
 CMAKEFILES(mged_cmd_template.xml)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

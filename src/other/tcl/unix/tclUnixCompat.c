@@ -36,10 +36,10 @@
  * 'length' stay aligned.
  */
 
-#define PadBuffer(buffer, length, size)             \
-    if (((length) % (size))) {                      \
-	(buffer) += ((size) - ((length) % (size))); \
-	(length) += ((size) - ((length) % (size))); \
+#define PadBuffer(buffer, length, size)			\
+    if (((length) % (size))) {				\
+	(buffer) += ((size) - ((length) % (size)));	\
+	(length) += ((size) - ((length) % (size)));	\
     }
 
 /*
@@ -962,6 +962,14 @@ CopyString(
 #endif /* NEED_COPYSTRING */
 
 /*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 4
+ * fill-column: 78
+ * End:
+ */
+
+/*
  *------------------------------------------------------------------------
  *
  * TclWinCPUID --
@@ -1004,7 +1012,7 @@ TclWinCPUID(
 #endif
     return status;
 }
-
+
 /*
  * Local Variables:
  * mode: c

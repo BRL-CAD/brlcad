@@ -1,7 +1,7 @@
 /*                    P A R A L L E L . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2018 United States Government as represented by
+ * Copyright (c) 2013-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -91,7 +91,7 @@ tally(size_t ncpu)
 
 
 int
-parallel_main(int argc, char *argv[])
+main(int argc, char *argv[])
 {
     const char * const USAGE = "Usage: %s [-P ncpu]\n";
 
@@ -99,6 +99,8 @@ parallel_main(int argc, char *argv[])
     size_t ncpu = bu_avail_cpus();
     unsigned long ncpu_opt;
     struct parallel_data data;
+
+    bu_setprogname(argv[0]);
 
     while ((c = bu_getopt(argc, argv, "P:!:")) != -1) {
 	switch (c) {

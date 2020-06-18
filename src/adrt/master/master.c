@@ -1,7 +1,7 @@
 /*                        M A S T E R . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2018 United States Government as represented by
+ * Copyright (c) 2007-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,16 +38,18 @@
 #if 0
 #include <tinycthread.h>
 #endif
-#include <zlib.h>
+#include "zlib.h"
 
 #include "bnetwork.h"
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/debug.h"
 #include "bu/getopt.h"
 #include "bu/str.h"
+#include "bu/snooze.h"
 
 #include "adrt.h"		/* adrt Defines */
 #include "adrt_struct.h"	/* adrt common structs */
@@ -365,7 +367,7 @@ master_networking(void *ptr)
     if (go_daemon_mode) {
 	/* spinlock until other socket is good */
 	while (master_listener_result == 1)
-	    sleep(0);
+	    bu_snooze(BU_SEC2USEC(0));
 	/* if both sockets are listening, background. */
 	if (master_listener_result == 0 && observer_listener_result == 0) {
 #ifdef HAVE_WORKING_DAEMON_FUNCTION
@@ -649,6 +651,8 @@ int main(int argc, char **argv) {
     int port = 0, obs_port = 0, c = 0;
     char exec[64], list[64], comp_host[64];
     int verbose = 0;
+
+    bu_setprogname(argv[0]);
 
     signal(SIGINT, finish);
 

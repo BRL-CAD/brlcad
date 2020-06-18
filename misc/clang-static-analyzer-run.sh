@@ -91,7 +91,6 @@ cleantest libanalyze
 cleantest liboptical
 cleantest libicv
 failingtest libged
-cleantest libcursor
 cleantest libdm
 cleantest libfft
 failingtest libtclcad
@@ -351,7 +350,6 @@ if [ "0" -eq "1" ]; then
  failingtest pixcrop
  cleantest pixcut
  cleantest pixdiff
- cleantest pixdsplit
  cleantest pixelswap
  cleantest pixembed
  cleantest pixfade

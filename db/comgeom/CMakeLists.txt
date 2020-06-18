@@ -8,6 +8,7 @@ endforeach(comgeom_input ${COMGEOM_V5_MODELS})
 
 CMAKEFILES(
   ${COMGEOM_V5_MODELS}
+  CMakeLists.txt
   README_ADA073408
   ADA073408_inputs.tar.gz
 )

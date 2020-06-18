@@ -1,7 +1,7 @@
 /*                       R E A D R E C . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2018 United States Government as represented by
+ * Copyright (c) 1990-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@ Readrec(int recno)
 {
 
     int i, ch;
-    off_t offset;
+    b_off_t offset;
 
     currec = recno;
     offset = (recno - 1) * reclen;

@@ -1,7 +1,7 @@
 /*                          I N I T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2018 United States Government as represented by
+ * Copyright (c) 1998-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,8 +35,7 @@
 #include "raytrace.h"
 #include "optical.h"
 
-int rt_verbosity = -1;	/* blather incessantly by default */
-int rdebug;			/* RT program debugging */
+unsigned int optical_debug;	/* RT program debugging */
 double AmbientIntensity = 0.4;	/* Ambient light intensity */
 
 vect_t background = VINIT_ZERO; /* Black */

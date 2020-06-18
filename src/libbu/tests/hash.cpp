@@ -1,7 +1,7 @@
 /*                    B U _ H A S H . C P P
  * BRL-CAD
  *
- * Copyright (c) 2015-2018 United States Government as represented by
+ * Copyright (c) 2015-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,7 +30,8 @@
 /* Slightly tweaked and reformatted text originally generated from libsum.com -
  * 275 words, one of which is an empty string (position 195 after "feugiat.")
  * to test behavior in the NULL conditions */
-const char *lorem_ipsum[] = {"Lorem", "ipsum", "dolor", "sit", "amet,",
+const char *lorem_ipsum[] = {
+    "Lorem", "ipsum", "dolor", "sit", "amet,",
     "consectetur", "adipiscing", "elit.", "Nulla", "quis", "neque", "egetdui",
     "consequat", "sodales.", "Cras", "vitae", "quam", "ut", "neque", "rutrum",
     "posuere", "gravida", "a", "nisi.Pellentesque", "quis", "eros",
@@ -70,7 +71,8 @@ const char *lorem_ipsum[] = {"Lorem", "ipsum", "dolor", "sit", "amet,",
     "suscipit", "ex", "leo,", "sit", "amet", "sollicitudin", "odio",
     "laoreetvel.", "Phasellus", "tellus", "felis,", "blandit", "vitae", "est",
     "vel,", "consectetur", "molestie", "dolor.Donec", "vitae", "eros", "odio.",
-    "Nullam", "tempus", "auctor."};
+    "Nullam", "tempus", "auctor."
+};
 
 const char *array1[] = {
     "1",
@@ -192,25 +194,29 @@ main(int argc, const char **argv)
     long test_num;
     char *endptr = NULL;
 
+    bu_setprogname(argv[0]);
+
     /* Sanity checks */
     if (argc < 2) {
-	bu_exit(1, "ERROR: wrong number of parameters - need test num");
+	bu_log("Usage: %s {test_number}\n", argv[0]);
+	bu_exit(1, "ERROR: missing test number\n");
     }
+
     test_num = strtol(argv[1], &endptr, 0);
     if (endptr && strlen(endptr) != 0) {
-	bu_exit(1, "Invalid test number: %s\n", argv[1]);
+	bu_exit(2, "Invalid test number: %s\n", argv[1]);
     }
 
     switch (test_num) {
-    case 0:
-	ret = hash_noop_test();
-	break;
-    case 1:
-	ret = hash_add_del_one();
-	break;
-    case 2:
-	ret = hash_loremipsum();
-	break;
+	case 0:
+	    ret = hash_noop_test();
+	    break;
+	case 1:
+	    ret = hash_add_del_one();
+	    break;
+	case 2:
+	    ret = hash_loremipsum();
+	    break;
     }
 
     return ret;

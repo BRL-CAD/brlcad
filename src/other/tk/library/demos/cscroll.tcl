@@ -47,7 +47,7 @@ for {set i 0} {$i < 20} {incr i} {
     set x [expr {-10 + 3*$i}]
     for {set j 0; set y -10} {$j < 10} {incr j; incr y 3} {
 	$c create rect ${x}c ${y}c [expr {$x+2}]c [expr {$y+2}]c \
-		-outline black -fill $bg -tags rect
+		-fill $bg -tags rect
 	$c create text [expr {$x+1}]c [expr {$y+1}]c -text "$i,$j" \
 	    -anchor center -tags text
     }
@@ -60,18 +60,53 @@ bind $c <2> "$c scan mark %x %y"
 bind $c <B2-Motion> "$c scan dragto %x %y"
 if {[tk windowingsystem] eq "aqua"} {
     bind $c <MouseWheel> {
-        %W yview scroll [expr {- (%D)}] units
+	%W yview scroll [expr {-(%D)}] units
     }
     bind $c <Option-MouseWheel> {
-        %W yview scroll [expr {-10 * (%D)}] units
+	%W yview scroll [expr {-10 * (%D)}] units
     }
     bind $c <Shift-MouseWheel> {
-        %W xview scroll [expr {- (%D)}] units
+	%W xview scroll [expr {-(%D)}] units
     }
     bind $c <Shift-Option-MouseWheel> {
-        %W xview scroll [expr {-10 * (%D)}] units
+	%W xview scroll [expr {-10 * (%D)}] units
+    }
+} else {
+    bind $c <MouseWheel> {
+	%W yview scroll [expr {-(%D / 30)}] units
+    }
+    bind $c <Shift-MouseWheel> {
+	%W xview scroll [expr {-(%D / 30)}] units
     }
 }
+
+if {[tk windowingsystem] eq "x11"} {
+    # Support for mousewheels on Linux/Unix commonly comes through mapping
+    # the wheel to the extended buttons.  If you have a mousewheel, find
+    # Linux configuration info at:
+    #	http://linuxreviews.org/howtos/xfree/mouse/
+    bind $c <4> {
+	if {!$tk_strictMotif} {
+	    %W yview scroll -5 units
+	}
+    }
+    bind $c <Shift-4> {
+	if {!$tk_strictMotif} {
+	    %W xview scroll -5 units
+	}
+    }
+    bind $c <5> {
+	if {!$tk_strictMotif} {
+	    %W yview scroll 5 units
+	}
+    }
+    bind $c <Shift-5> {
+	if {!$tk_strictMotif} {
+	    %W xview scroll 5 units
+	}
+    }
+}
+
 
 proc scrollEnter canvas {
     global oldFill
@@ -81,10 +116,11 @@ proc scrollEnter canvas {
     }
     set oldFill [lindex [$canvas itemconfig $id -fill] 4]
     if {[winfo depth $canvas] > 1} {
-	$canvas itemconfigure $id -fill SeaGreen1
-    } else {
-	$canvas itemconfigure $id -fill black
-	$canvas itemconfigure [expr {$id+1}] -fill white
+	if {[tk windowingsystem] eq "aqua"} {
+	    $canvas itemconfigure $id -fill systemSelectedTextBackgroundColor
+	} else {
+	    $canvas itemconfigure $id -fill LightSeaGreen
+	}
     }
 }
 
@@ -95,11 +131,9 @@ proc scrollLeave canvas {
 	set id [expr {$id-1}]
     }
     $canvas itemconfigure $id -fill $oldFill
-    $canvas itemconfigure [expr {$id+1}] -fill black
 }
 
 proc scrollButton canvas {
-    global oldFill
     set id [$canvas find withtag current]
     if {[lsearch [$canvas gettags current] text] < 0} {
 	set id [expr {$id+1}]

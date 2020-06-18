@@ -22,7 +22,7 @@
  * the current thread.
  */
 
-typedef struct ThreadSpecificData {
+typedef struct {
     int initialized;
     Tcl_HashTable uidTable;
 } ThreadSpecificData;
@@ -35,10 +35,10 @@ static void		FreeUidThreadExitProc(ClientData clientData);
  * used by Tk_GetAnchorFromObj and Tk_GetJustifyFromObj.
  */
 
-static CONST char *anchorStrings[] = {
+static const char *const anchorStrings[] = {
     "n", "ne", "e", "se", "s", "sw", "w", "nw", "center", NULL
 };
-static CONST char *justifyStrings[] = {
+static const char *const justifyStrings[] = {
     "left", "right", "center", NULL
 };
 
@@ -101,7 +101,7 @@ Tk_GetAnchorFromObj(
 int
 Tk_GetAnchor(
     Tcl_Interp *interp,		/* Use this for error reporting. */
-    CONST char *string,		/* String describing a direction. */
+    const char *string,		/* String describing a direction. */
     Tk_Anchor *anchorPtr)	/* Where to store Tk_Anchor corresponding to
 				 * string. */
 {
@@ -152,8 +152,10 @@ Tk_GetAnchor(
     }
 
   error:
-    Tcl_AppendResult(interp, "bad anchor position \"", string,
-	    "\": must be n, ne, e, se, s, sw, w, nw, or center", NULL);
+    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+	    "bad anchor position \"%s\": must be"
+	    " n, ne, e, se, s, sw, w, nw, or center", string));
+    Tcl_SetErrorCode(interp, "TK", "VALUE", "ANCHOR", NULL);
     return TCL_ERROR;
 }
 
@@ -173,7 +175,7 @@ Tk_GetAnchor(
  *--------------------------------------------------------------
  */
 
-CONST char *
+const char *
 Tk_NameOfAnchor(
     Tk_Anchor anchor)		/* Anchor for which identifying string is
 				 * desired. */
@@ -214,7 +216,7 @@ Tk_NameOfAnchor(
 int
 Tk_GetJoinStyle(
     Tcl_Interp *interp,		/* Use this for error reporting. */
-    CONST char *string,		/* String describing a justification style. */
+    const char *string,		/* String describing a justification style. */
     int *joinPtr)		/* Where to store join style corresponding to
 				 * string. */
 {
@@ -237,8 +239,10 @@ Tk_GetJoinStyle(
 	return TCL_OK;
     }
 
-    Tcl_AppendResult(interp, "bad join style \"", string,
-	    "\": must be bevel, miter, or round", NULL);
+    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+	    "bad join style \"%s\": must be bevel, miter, or round",
+	    string));
+    Tcl_SetErrorCode(interp, "TK", "VALUE", "JOIN", NULL);
     return TCL_ERROR;
 }
 
@@ -258,7 +262,7 @@ Tk_GetJoinStyle(
  *--------------------------------------------------------------
  */
 
-CONST char *
+const char *
 Tk_NameOfJoinStyle(
     int join)			/* Join style for which identifying string is
 				 * desired. */
@@ -293,7 +297,7 @@ Tk_NameOfJoinStyle(
 int
 Tk_GetCapStyle(
     Tcl_Interp *interp,		/* Use this for error reporting. */
-    CONST char *string,		/* String describing a justification style. */
+    const char *string,		/* String describing a justification style. */
     int *capPtr)		/* Where to store cap style corresponding to
 				 * string. */
 {
@@ -316,8 +320,10 @@ Tk_GetCapStyle(
 	return TCL_OK;
     }
 
-    Tcl_AppendResult(interp, "bad cap style \"", string,
-	    "\": must be butt, projecting, or round", NULL);
+    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+	    "bad cap style \"%s\": must be butt, projecting, or round",
+	    string));
+    Tcl_SetErrorCode(interp, "TK", "VALUE", "CAP", NULL);
     return TCL_ERROR;
 }
 
@@ -337,7 +343,7 @@ Tk_GetCapStyle(
  *--------------------------------------------------------------
  */
 
-CONST char *
+const char *
 Tk_NameOfCapStyle(
     int cap)			/* Cap style for which identifying string is
 				 * desired. */
@@ -409,7 +415,7 @@ Tk_GetJustifyFromObj(
 int
 Tk_GetJustify(
     Tcl_Interp *interp,		/* Use this for error reporting. */
-    CONST char *string,		/* String describing a justification style. */
+    const char *string,		/* String describing a justification style. */
     Tk_Justify *justifyPtr)	/* Where to store Tk_Justify corresponding to
 				 * string. */
 {
@@ -432,8 +438,10 @@ Tk_GetJustify(
 	return TCL_OK;
     }
 
-    Tcl_AppendResult(interp, "bad justification \"", string,
-	    "\": must be left, right, or center", NULL);
+    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+	    "bad justification \"%s\": must be left, right, or center",
+	    string));
+    Tcl_SetErrorCode(interp, "TK", "VALUE", "JUSTIFY", NULL);
     return TCL_ERROR;
 }
 
@@ -454,7 +462,7 @@ Tk_GetJustify(
  *--------------------------------------------------------------
  */
 
-CONST char *
+const char *
 Tk_NameOfJustify(
     Tk_Justify justify)		/* Justification style for which identifying
 				 * string is desired. */
@@ -487,8 +495,9 @@ static void
 FreeUidThreadExitProc(
     ClientData clientData)		/* Not used. */
 {
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+    ThreadSpecificData *tsdPtr =
             Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
+
     Tcl_DeleteHashTable(&tsdPtr->uidTable);
     tsdPtr->initialized = 0;
 }
@@ -517,10 +526,10 @@ FreeUidThreadExitProc(
 
 Tk_Uid
 Tk_GetUid(
-    CONST char *string)		/* String to convert. */
+    const char *string)		/* String to convert. */
 {
     int dummy;
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+    ThreadSpecificData *tsdPtr =
             Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
     Tcl_HashTable *tablePtr = &tsdPtr->uidTable;
 
@@ -559,7 +568,7 @@ Tk_GetScreenMM(
     Tk_Window tkwin,		/* Window whose screen determines conversion
 				 * from centimeters and other absolute
 				 * units. */
-    CONST char *string,		/* String describing a screen distance. */
+    const char *string,		/* String describing a screen distance. */
     double *doublePtr)		/* Place to store converted result. */
 {
     char *end;
@@ -567,9 +576,7 @@ Tk_GetScreenMM(
 
     d = strtod(string, &end);
     if (end == string) {
-	error:
-	Tcl_AppendResult(interp, "bad screen distance \"", string, "\"", NULL);
-	return TCL_ERROR;
+	goto error;
     }
     while ((*end != '\0') && isspace(UCHAR(*end))) {
 	end++;
@@ -605,6 +612,12 @@ Tk_GetScreenMM(
     }
     *doublePtr = d;
     return TCL_OK;
+
+  error:
+    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+	    "bad screen distance \"%s\"", string));
+    Tcl_SetErrorCode(interp, "TK", "VALUE", "SCREEN_DISTANCE", NULL);
+    return TCL_ERROR;
 }
 
 /*
@@ -633,7 +646,7 @@ Tk_GetPixels(
     Tk_Window tkwin,		/* Window whose screen determines conversion
 				 * from centimeters and other absolute
 				 * units. */
-    CONST char *string,		/* String describing a number of pixels. */
+    const char *string,		/* String describing a number of pixels. */
     int *intPtr)		/* Place to store converted result. */
 {
     double d;
@@ -658,7 +671,6 @@ Tk_GetPixels(
  *	string.
  *
  * Results:
-
  *	The return value is a standard Tcl return result. If TCL_OK is
  *	returned, then everything went well and the pixel distance is stored
  *	at *doublePtr; otherwise TCL_ERROR is returned and an error message is
@@ -676,7 +688,7 @@ TkGetDoublePixels(
     Tk_Window tkwin,		/* Window whose screen determines conversion
 				 * from centimeters and other absolute
 				 * units. */
-    CONST char *string,		/* String describing a number of pixels. */
+    const char *string,		/* String describing a number of pixels. */
     double *doublePtr)		/* Place to store converted result. */
 {
     char *end;
@@ -684,9 +696,7 @@ TkGetDoublePixels(
 
     d = strtod((char *) string, &end);
     if (end == string) {
-    error:
-	Tcl_AppendResult(interp, "bad screen distance \"", string, "\"", NULL);
-	return TCL_ERROR;
+	goto error;
     }
     while ((*end != '\0') && isspace(UCHAR(*end))) {
 	end++;
@@ -725,6 +735,12 @@ TkGetDoublePixels(
     }
     *doublePtr = d;
     return TCL_OK;
+
+  error:
+    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+	    "bad screen distance \"%s\"", string));
+    Tcl_SetErrorCode(interp, "TK", "VALUE", "FRACTIONAL_PIXELS", NULL);
+    return TCL_ERROR;
 }
 
 /*

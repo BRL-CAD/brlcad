@@ -1,7 +1,7 @@
 /*                          P R E P . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2018 United States Government as represented by
+ * Copyright (c) 1990-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,6 +50,15 @@ extern void rt_ck(struct rt_i *rtip);
 HIDDEN void rt_solid_bitfinder(register union tree *treep, struct region *regp, struct resource *resp);
 
 
+int RT_SEM_WORKER = 0;
+int RT_SEM_RESULTS = 0;
+int RT_SEM_MODEL = 0;
+int RT_SEM_TREE0 = 0;
+int RT_SEM_TREE1 = 0;
+int RT_SEM_TREE2 = 0;
+int RT_SEM_TREE3 = 0;
+
+
 /* XXX Need rt_init_rtg(), rt_clean_rtg() */
 
 /**
@@ -67,13 +76,14 @@ rt_new_rti(struct db_i *dbip)
 
     /* XXX Move to rt_global_init() ? */
     if (BU_LIST_FIRST(bu_list, &RTG.rtg_vlfree) == 0) {
-	char *envflags;
-	envflags = getenv("LIBRT_DEBUG");
-	if (envflags) {
-	    if (RTG.debug)
-		bu_log("WARNING: discarding LIBRT_DEBUG value in favor of application specified flags\n");
-	    else
-		RTG.debug = strtol(envflags, NULL, 0x10);
+	char *debug_flags;
+	debug_flags = getenv("LIBRT_DEBUG");
+	if (debug_flags) {
+	    if (rt_debug) {
+		bu_log("WARNING: discarding LIBRT_DEBUG value in favor of application-specified flags\n");
+	    } else {
+		rt_debug = strtol(debug_flags, NULL, 0x10);
+	    }
 	}
 
 	BU_LIST_INIT(&RTG.rtg_vlfree);
@@ -111,7 +121,7 @@ rt_new_rti(struct db_i *dbip)
     rtip->rti_tol.perp = 1e-6;
     rtip->rti_tol.para = 1 - rtip->rti_tol.perp;
 
-    rtip->rti_ttol.magic = RT_TESS_TOL_MAGIC;
+    rtip->rti_ttol.magic = BG_TESS_TOL_MAGIC;
     rtip->rti_ttol.abs = 0.0;
     rtip->rti_ttol.rel = 0.01;
     rtip->rti_ttol.norm = 0;
@@ -208,7 +218,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 
     RT_CK_RTI(rtip);
 
-    if (RT_G_DEBUG&DEBUG_REGIONS) bu_log("rt_prep_parallel(%s, %d, ncpu=%d) START\n",
+    if (RT_G_DEBUG&RT_DEBUG_REGIONS) bu_log("rt_prep_parallel(%s, %d, ncpu=%d) START\n",
 					 rtip->rti_dbip->dbi_filename,
 					 rtip->rti_dbip->dbi_uses, ncpu);
 
@@ -278,21 +288,26 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
      * bit vector of every solid contained in the subtree.
      */
     rtip->Regions = (struct region **)bu_calloc(rtip->nregions, sizeof(struct region *), "rtip->Regions[]");
-    if (RT_G_DEBUG&DEBUG_REGIONS) bu_log("rt_prep_parallel(%s, %d) about to optimize regions\n",
-					 rtip->rti_dbip->dbi_filename,
-					 rtip->rti_dbip->dbi_uses);
+
+    if (RT_G_DEBUG&RT_DEBUG_REGIONS)
+	bu_log("rt_prep_parallel(%s, %d) about to optimize regions\n",
+	       rtip->rti_dbip->dbi_filename,
+	       rtip->rti_dbip->dbi_uses);
+
     for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
 	/* Ensure bit numbers are unique */
 	BU_ASSERT(rtip->Regions[regp->reg_bit] == REGION_NULL);
 	rtip->Regions[regp->reg_bit] = regp;
 	rt_optim_tree(regp->reg_treetop, resp);
 	rt_solid_bitfinder(regp->reg_treetop, regp, resp);
-	if (RT_G_DEBUG&DEBUG_REGIONS) {
+
+	if (RT_G_DEBUG&RT_DEBUG_REGIONS) {
 	    db_ck_tree(regp->reg_treetop);
 	    rt_pr_region(regp);
 	}
     }
-    if (RT_G_DEBUG&DEBUG_REGIONS) {
+
+    if (RT_G_DEBUG&RT_DEBUG_REGIONS) {
 	bu_log("rt_prep_parallel() printing primitives' region pointers\n");
 	RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
 	    bu_log("solid %s ", stp->st_name);
@@ -331,16 +346,15 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
     /* Find solid type with maximum length (for rt_shootray) */
     rtip->rti_maxsol_by_type = 0;
     for (i=0; i <= ID_MAX_SOLID; i++) {
-	if (rtip->rti_nsol_by_type[i] > rtip->rti_maxsol_by_type)
+	if (rtip->rti_nsol_by_type[i] > rtip->rti_maxsol_by_type) {
 	    rtip->rti_maxsol_by_type = rtip->rti_nsol_by_type[i];
+	}
     }
     /* Malloc the storage and zero the counts */
     for (i=0; i <= ID_MAX_SOLID; i++) {
-	if (rtip->rti_nsol_by_type[i] <= 0) continue;
-	rtip->rti_sol_by_type[i] = (struct soltab **)bu_calloc(
-	    rtip->rti_nsol_by_type[i],
-	    sizeof(struct soltab *),
-	    "rti_sol_by_type[]");
+	if (rtip->rti_nsol_by_type[i] <= 0)
+	    continue;
+	rtip->rti_sol_by_type[i] = (struct soltab **)bu_calloc(rtip->rti_nsol_by_type[i], sizeof(struct soltab *), "rti_sol_by_type[]");
 	rtip->rti_nsol_by_type[i] = 0;
     }
     /* Fill in the array and rebuild the count (aka index) */
@@ -349,15 +363,12 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 	id = stp->st_id;
 	rtip->rti_sol_by_type[id][rtip->rti_nsol_by_type[id]++] = stp;
     } RT_VISIT_ALL_SOLTABS_END;
-    if (RT_G_DEBUG & (DEBUG_DB|DEBUG_SOLIDS)) {
+    if (RT_G_DEBUG & (RT_DEBUG_DB|RT_DEBUG_SOLIDS)) {
 	bu_log("rt_prep_parallel(%s, %d) printing number of primitives by type\n",
 	       rtip->rti_dbip->dbi_filename,
 	       rtip->rti_dbip->dbi_uses);
 	for (i=1; i <= ID_MAX_SOLID; i++) {
-	    bu_log("%5d %s (%d)\n",
-		   rtip->rti_nsol_by_type[i],
-		   OBJ[i].ft_name,
-		   i);
+	    bu_log("%5d %s (%d)\n", rtip->rti_nsol_by_type[i], OBJ[i].ft_name, i);
 	}
     }
 
@@ -373,10 +384,16 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
 
 	diff = (rtip->mdl_max[X] - rtip->mdl_min[X]);
 	f = (rtip->mdl_max[Y] - rtip->mdl_min[Y]);
-	if (f > diff) diff = f;
+	if (f > diff)
+	    diff = f;
+
 	f = (rtip->mdl_max[Z] - rtip->mdl_min[Z]);
-	if (f > diff) diff = f;
-	diff *= 0.1;	/* 10% expansion of box */
+	if (f > diff)
+	    diff = f;
+
+	/* 10% expansion of box */
+	diff *= 0.1;
+
 	rtip->rti_pmin[0] = rtip->mdl_min[0] - diff;
 	rtip->rti_pmin[1] = rtip->mdl_min[1] - diff;
 	rtip->rti_pmin[2] = rtip->mdl_min[2] - diff;
@@ -402,7 +419,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
     } RT_VISIT_ALL_SOLTABS_END;
 
     /* Plot bounding RPPs */
-    if ((RT_G_DEBUG&DEBUG_PL_BOX)) {
+    if ((RT_G_DEBUG&RT_DEBUG_PL_BOX)) {
 	FILE *plotfp;
 
 	plotfp = fopen("rtrpp.plot3", "wb");
@@ -415,7 +432,7 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
     }
 
     /* Plot solid outlines */
-    if ((RT_G_DEBUG&DEBUG_PL_SOLIDS)) {
+    if ((RT_G_DEBUG&RT_DEBUG_PL_SOLIDS)) {
 	FILE *plotfp;
 
 	plotfp = fopen("rtsolids.plot3", "wb");
@@ -427,9 +444,11 @@ rt_prep_parallel(register struct rt_i *rtip, int ncpu)
     rtip->needprep = 0;		/* prep is done */
     bu_semaphore_release(RT_SEM_RESULTS);	/* end critical section */
 
-    if (RT_G_DEBUG&DEBUG_REGIONS) bu_log("rt_prep_parallel(%s, %d, ncpu=%d) FINISH\n",
-					 rtip->rti_dbip->dbi_filename,
-					 rtip->rti_dbip->dbi_uses, ncpu);
+    if (RT_G_DEBUG&RT_DEBUG_REGIONS) {
+	bu_log("rt_prep_parallel(%s, %d, ncpu=%d) FINISH\n",
+	       rtip->rti_dbip->dbi_filename,
+	       rtip->rti_dbip->dbi_uses, ncpu);
+    }
 }
 
 
@@ -455,7 +474,7 @@ rt_btree_translate(struct rt_i *rtip, struct soltab **primitives, struct bit_tre
     RT_CK_RTI(rtip);
 
     for (i=start; i<end; i++) {
-        uop = btp[i].val & 7;
+	uop = btp[i].val & 7;
 	if (uop == UOP_SOLID) {
 	    st_bit = btp[i].val >> 3;
 	    for (j = 0; j < n_primitives; j++) {
@@ -468,6 +487,7 @@ rt_btree_translate(struct rt_i *rtip, struct soltab **primitives, struct bit_tre
     }
 }
 
+
 static void
 build_regions_table(cl_uint *regions_table, struct bit_tree *btp, size_t start, size_t end, const long n_primitives, const size_t n_regions, const long reg_id)
 {
@@ -477,15 +497,16 @@ build_regions_table(cl_uint *regions_table, struct bit_tree *btp, size_t start, 
 
     rt_index = n_regions/32 + 1;
     for (i=start; i<end; i++) {
-        uop = btp[i].val & 7;
+	uop = btp[i].val & 7;
 	if (uop == UOP_SOLID) {
-            st_bit = btp[i].val >> 3;
+	    st_bit = btp[i].val >> 3;
 	    if (st_bit < n_primitives) {
-	        regions_table[st_bit * rt_index + (reg_id >> 5)] |= 1 << (reg_id & 31);
+		regions_table[st_bit * rt_index + (reg_id >> 5)] |= 1 << (reg_id & 31);
 	    }
-        }
+	}
     }
 }
+
 
 void
 clt_prep(struct rt_i *rtip)
@@ -501,23 +522,25 @@ clt_prep(struct rt_i *rtip)
 
     n_primitives = rtip->nsolids+1;
     primitives = (struct soltab **)bu_calloc(n_primitives,
-        sizeof(struct soltab *), "primitives");
+					     sizeof(struct soltab *), "primitives");
 
     i = 0;
     RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
-        /* Ignore "dead" solids in the list.  (They failed prep) */
-        if (stp->st_aradius <= 0) continue;
-        /* Infinite solids make the BVH construction explode. */
-        if (stp->st_aradius >= INFINITY) continue;
+	/* Ignore "dead" solids in the list.  (They failed prep) */
+	if (stp->st_aradius <= 0)
+	    continue;
+	/* Infinite solids make the BVH construction explode. */
+	if (stp->st_aradius >= INFINITY)
+	    continue;
 
-        primitives[i++] = stp;
+	primitives[i++] = stp;
     } RT_VISIT_ALL_SOLTABS_END;
 
     n_primitives = i;
 
     if (n_primitives != 0) {
-        /* Build BVH tree for primitives */
-        cl_int total_nodes = 0;
+	/* Build BVH tree for primitives */
+	cl_int total_nodes = 0;
 	struct clt_linear_bvh_node *nodes;
 	long *ordered_prims;
 	fastf_t *centroids;
@@ -543,7 +566,7 @@ clt_prep(struct rt_i *rtip)
 	bu_free(bounds, "bounds");
 	bu_free(centroids, "centroids");
 
-        clt_db_store_bvh(total_nodes, nodes);
+	clt_db_store_bvh(total_nodes, nodes);
 	bu_free(nodes, "nodes");
 
 	if (ordered_prims) {
@@ -606,10 +629,10 @@ clt_prep(struct rt_i *rtip)
 		mfp = (const struct mfuncs*)regp->reg_mfuncs;
 		if (mfp) {
 		    if (bu_strcmp(mfp->mf_name, "default") ||
-			    bu_strcmp(mfp->mf_name, "phong") ||
-			    bu_strcmp(mfp->mf_name, "plastic") ||
-			    bu_strcmp(mfp->mf_name, "mirror") ||
-			    bu_strcmp(mfp->mf_name, "glass")) {
+			bu_strcmp(mfp->mf_name, "phong") ||
+			bu_strcmp(mfp->mf_name, "plastic") ||
+			bu_strcmp(mfp->mf_name, "mirror") ||
+			bu_strcmp(mfp->mf_name, "glass")) {
 			struct phong_specific *src =
 			    (struct phong_specific*)regp->reg_udata;
 			struct cl_phong_specific *dst =
@@ -637,7 +660,7 @@ clt_prep(struct rt_i *rtip)
 	    for (BU_LIST_FOR(regp, region, &(rtip->HeadRegion))) {
 		RT_CK_REGION(regp);
 
-                regions[i].btree_offset = len;
+		regions[i].btree_offset = len;
 		regions[i].reg_aircode = regp->reg_aircode;
 		regions[i].reg_bit = regp->reg_bit;
 		regions[i].reg_all_unions = regp->reg_all_unions;
@@ -675,10 +698,13 @@ rt_plot_all_bboxes(FILE *fp, struct rt_i *rtip)
     pdv_3space(fp, rtip->rti_pmin, rtip->rti_pmax);
     RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
 	/* Ignore "dead" solids in the list.  (They failed prep) */
-	if (stp->st_aradius <= 0) continue;
+	if (stp->st_aradius <= 0)
+	    continue;
+
 	/* Don't draw infinite solids */
 	if (stp->st_aradius >= INFINITY)
 	    continue;
+
 	pdv_3box(fp, stp->st_min, stp->st_max);
     } RT_VISIT_ALL_SOLTABS_END;
 }
@@ -698,7 +724,8 @@ rt_plot_all_solids(
 
     RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
 	/* Ignore "dead" solids in the list.  (They failed prep) */
-	if (stp->st_aradius <= 0) continue;
+	if (stp->st_aradius <= 0)
+	    continue;
 
 	/* Don't draw infinite solids */
 	if (stp->st_aradius >= INFINITY)
@@ -773,19 +800,18 @@ rt_plot_solid(
     BU_LIST_INIT(&vhead);
 
     if (rt_vlist_solid(&vhead, rtip, stp, resp) < 0) {
-	bu_log("rt_plot_solid(%s): rt_vlist_solid() failed\n",
-	       stp->st_name);
-	return -1;			/* FAIL */
+	bu_log("rt_plot_solid(%s): rt_vlist_solid() failed\n", stp->st_name);
+	return -1; /* FAIL */
     }
 
     if (BU_LIST_IS_EMPTY(&vhead)) {
-	bu_log("rt_plot_solid(%s): no vectors to plot?\n",
-	       stp->st_name);
-	return -3;		/* FAIL */
+	bu_log("rt_plot_solid(%s): no vectors to plot?\n", stp->st_name);
+	return -3; /* FAIL */
     }
 
     /* Take color from one region */
-    if ((regp = (struct region *)BU_PTBL_GET(&stp->st_regions, 0)) != REGION_NULL) {
+    regp = (struct region *)BU_PTBL_GET(&stp->st_regions, 0);
+    if (regp != REGION_NULL) {
 	pl_color(fp,
 		 (int)(255*regp->reg_mater.ma_color[0]),
 		 (int)(255*regp->reg_mater.ma_color[1]),
@@ -800,15 +826,28 @@ rt_plot_solid(
 
 
 void
-rt_init_resource(struct resource *resp,
-		 int cpu_num,
-		 struct rt_i *rtip)
+rt_init_resource(struct resource *resp, int cpu_num, struct rt_i *rtip)
 {
     if (!resp)
 	return;
 
     BU_ASSERT(cpu_num >= 0);
     BU_ASSERT(cpu_num < MAX_PSW);
+
+    if (!RT_SEM_WORKER)
+	RT_SEM_WORKER = bu_semaphore_register("RT_SEM_WORKER");
+    if (!RT_SEM_RESULTS)
+	RT_SEM_RESULTS = bu_semaphore_register("RT_SEM_RESULTS");
+    if (!RT_SEM_MODEL)
+	RT_SEM_MODEL = bu_semaphore_register("RT_SEM_MODEL");
+    if (!RT_SEM_TREE0)
+	RT_SEM_TREE0 = bu_semaphore_register("RT_SEM_TREE0");
+    if (!RT_SEM_TREE1)
+	RT_SEM_TREE1 = bu_semaphore_register("RT_SEM_TREE1");
+    if (!RT_SEM_TREE2)
+	RT_SEM_TREE2 = bu_semaphore_register("RT_SEM_TREE2");
+    if (!RT_SEM_TREE3)
+	RT_SEM_TREE3 = bu_semaphore_register("RT_SEM_TREE3");
 
     if (rtip)
 	RT_CK_RTI(rtip);
@@ -1150,7 +1189,8 @@ rt_clean(register struct rt_i *rtip)
 
     /* Free array of solid table pointers indexed by solid ID */
     for (i=0; i <= ID_MAX_SOLID; i++) {
-	if (rtip->rti_nsol_by_type[i] <= 0) continue;
+	if (rtip->rti_nsol_by_type[i] <= 0)
+	    continue;
 	if (rtip->rti_sol_by_type[i]) {
 	    bu_free((char *)rtip->rti_sol_by_type[i], "sol_by_type");
 	}
@@ -1176,7 +1216,8 @@ rt_clean(register struct rt_i *rtip)
 	    /* After using a submodel, some entries may be NULL
 	     * while others are not NULL
 	     */
-	    if (*rpp == NULL) continue;
+	    if (*rpp == NULL)
+		continue;
 	    RT_CK_RESOURCE(*rpp);
 	    /* Clean but do not free the resource struct */
 	    rt_clean_resource(rtip, *rpp);
@@ -1258,11 +1299,12 @@ rt_clean(register struct rt_i *rtip)
 int
 rt_del_regtree(struct rt_i *rtip, register struct region *delregp, struct resource *resp)
 {
-    if (rtip) RT_CK_RTI(rtip);
+    if (rtip)
+	RT_CK_RTI(rtip);
     RT_CK_RESOURCE(resp);
     RT_CK_REGION(delregp);
 
-    if (RT_G_DEBUG & DEBUG_REGIONS)
+    if (RT_G_DEBUG & RT_DEBUG_REGIONS)
 	bu_log("rt_del_regtree(%s): region deleted\n", delregp->reg_name);
 
     BU_LIST_DEQUEUE(&(delregp->l));
@@ -1273,6 +1315,7 @@ rt_del_regtree(struct rt_i *rtip, register struct region *delregp, struct resour
     delregp->reg_name = (char *)0;
     bu_avs_free(&(delregp->attr_values));
     bu_free((char *)delregp, "struct region");
+
     return 0;
 }
 
@@ -1391,12 +1434,14 @@ int rt_load_attrs(struct rt_i *rtip, char **attrs)
 	RT_CK_REGION(regp);
 
 	did_set = 0;
-	if ((reg_name=strrchr(regp->reg_name, '/')) == NULL)
+	reg_name = strrchr(regp->reg_name, '/');
+	if (reg_name == NULL)
 	    reg_name = regp->reg_name;
 	else
 	    reg_name++;
 
-	if ((dp=db_lookup(rtip->rti_dbip, reg_name, LOOKUP_NOISY)) == RT_DIR_NULL)
+	dp = db_lookup(rtip->rti_dbip, reg_name, LOOKUP_NOISY);
+	if (dp == RT_DIR_NULL)
 	    continue;
 
 	bu_avs_init_empty(&avs);
@@ -1406,8 +1451,9 @@ int rt_load_attrs(struct rt_i *rtip, char **attrs)
 	}
 
 	bu_avs_init_empty(&(regp->attr_values));
-	for (i=0; i<attr_count; i++) {
-	    if ((attr = bu_avs_get(&avs, attrs[i])) == NULL)
+	for (i = 0; i < attr_count; i++) {
+	    attr = bu_avs_get(&avs, attrs[i]);
+	    if (attr == NULL)
 		continue;
 
 	    bu_avs_add(&(regp->attr_values), attrs[i], attr);
@@ -1437,7 +1483,7 @@ rt_find_path(struct db_i *dbip,
 	     struct db_full_path **curr_path,
 	     struct resource *resp)
 {
-    int curr_path_index=(*curr_path)->fp_len;
+    int curr_path_index = (*curr_path)->fp_len;
     struct db_full_path *newpath;
     struct directory *dp;
     struct rt_db_internal intern;
@@ -1590,10 +1636,10 @@ unprep_reg_start(struct db_tree_state *tsp,
 
     /* Ignore "air" regions unless wanted */
     if (tsp) {
-    if (tsp->ts_rtip->useair == 0 &&  tsp->ts_aircode != 0) {
-	tsp->ts_rtip->rti_air_discards++;
-	return -1;	/* drop this region */
-    }
+	if (tsp->ts_rtip->useair == 0 &&  tsp->ts_aircode != 0) {
+	    tsp->ts_rtip->rti_air_discards++;
+	    return -1;	/* drop this region */
+	}
     }
     return 0;
 }
@@ -1609,8 +1655,10 @@ unprep_reg_end(struct db_tree_state *tsp,
 	RT_CK_RTI(tsp->ts_rtip);
 	RT_CK_RESOURCE(tsp->ts_resp);
     }
-    if (pathp) RT_CK_FULL_PATH(pathp);
-    if (tree) RT_CK_TREE(tree);
+    if (pathp)
+	RT_CK_FULL_PATH(pathp);
+    if (tree)
+	RT_CK_TREE(tree);
 
     return (union tree *)NULL;
 }
@@ -1894,8 +1942,8 @@ rt_unprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *r
 
 /**
  * This routine "re-preps" the list of objects specified in the
- *"unprepped" list of the "objs" structure. This structure must
- *previously have been passed to "rt_unprep"
+ * "unprepped" list of the "objs" structure. This structure must
+ * previously have been passed to "rt_unprep"
  */
 int
 rt_reprep(struct rt_i *rtip, struct rt_reprep_obj_list *objs, struct resource *resp)

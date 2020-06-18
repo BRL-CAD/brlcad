@@ -6,6 +6,8 @@ BRLCAD_ADDDATA(geometree_TCLSCRIPTS tclscripts/geometree)
 pkgIndex_BUILD(tclscripts/geometree)
 tclIndex_BUILD(tclscripts/geometree)
 
+CMAKEFILES(CMakeLists.txt)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake

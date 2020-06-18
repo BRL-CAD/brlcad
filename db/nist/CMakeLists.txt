@@ -15,6 +15,7 @@ endforeach(im ${NIST_SAMPLE_MODELS})
 
 CMAKEFILES(
   ${NIST_SAMPLE_MODELS}
+  CMakeLists.txt
   README
   pdf/1.pdf
   pdf/2.pdf

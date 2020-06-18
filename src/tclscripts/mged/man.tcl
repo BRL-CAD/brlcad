@@ -1,7 +1,7 @@
 #                   M A N . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2018 United States Government as represented by
+# Copyright (c) 2004-2020 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -48,6 +48,11 @@ proc man {{cmdname {}}} {
 	    exec $cmd $cmdname
 	}
     }
+}
+
+proc brlman {{cmdname {}}} {
+    # simple (intentionally undocumented) pass-through alias
+    man $cmdname
 }
 
 # Local Variables:

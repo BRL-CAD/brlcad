@@ -1,7 +1,7 @@
 /*                          D 2 - C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,8 +28,10 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/str.h"
 #include "bu/exit.h"
+#include "bu/snooze.h"
 
 
 static void
@@ -61,8 +63,10 @@ main(int argc, char *argv[])
     double real[1024], imag[1024];
     size_t ret;
 
+    bu_setprogname(argv[0]);
+
     fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(1);
+    bu_snooze(BU_SEC2USEC(1));
 
     if (argc != 3 || isatty(fileno(stdout))) {
 	bu_exit(1, "Usage: d2-c real_file imag_file > complex (- stdin, . skip)\n");

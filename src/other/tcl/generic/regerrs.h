@@ -16,5 +16,5 @@
 { REG_INVARG,	"REG_INVARG",	"invalid argument to regex function" },
 { REG_MIXED,	"REG_MIXED",	"character widths of regex and string differ" },
 { REG_BADOPT,	"REG_BADOPT",	"invalid embedded option" },
-{ REG_ETOOBIG,	"REG_ETOOBIG",	"nfa has too many states" },
+{ REG_ETOOBIG,	"REG_ETOOBIG",	"regular expression is too complex" },
 { REG_ECOLORS,	"REG_ECOLORS",	"too many colors" },

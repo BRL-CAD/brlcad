@@ -2,7 +2,7 @@
 #                         I G E S . S H
 # BRL-CAD
 #
-# Copyright (c) 2010-2018 United States Government as represented by
+# Copyright (c) 2010-2020 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -42,33 +42,40 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 # PATH_TO_THIS, and THIS.
 . "$1/regress/library.sh"
 
+if test "x$LOGFILE" = "x" ; then
+    LOGFILE=`pwd`/iges.log
+    rm -f "$LOGFILE"
+fi
+log "=== TESTING iges conversion ==="
+
 MGED="`ensearch mged`"
 if test ! -f "$MGED" ; then
-    echo "Unable to find mged, aborting"
+    log "Unable to find mged, aborting"
     exit 1
 fi
 
 GIGES="`ensearch g-iges`"
 if test ! -f "$MGED" ; then
-    echo "Unable to find g-iges, aborting"
+    log "Unable to find g-iges, aborting"
     exit 1
 fi
 
 IGESG="`ensearch iges-g`"
 if test ! -f "$MGED" ; then
-    echo "Unable to find iges-g, aborting"
+    log "Unable to find iges-g, aborting"
     exit 1
 fi
 
-TFILS='iges.log iges.g iges_file.iges iges_stdout_new.g iges_new.g iges_stdout.iges iges_file.iges'
-TFILS="$TFILS iges_file2.iges iges_file3.iges iges.m35.asc iges.m35.g"
-
-rm -f $TFILS
 
 STATUS=0
 
-$MGED -c 2> iges.log <<EOF
-opendb iges.g y
+# CREATE G
+
+output=iges.g
+rm -f "$output"
+log "... running mged to create facetized geometry ($output)"
+$MGED -c >> "$LOGFILE" 2>&1 <<EOF
+opendb $output y
 
 units mm
 size 1000
@@ -77,100 +84,190 @@ facetize -n box.nmg box.s
 kill box.s
 q
 EOF
-
-# .g to iges:
-# these two commands should produce almost identical output
-$GIGES -o iges_file.iges iges.g box.nmg  2>> iges.log > /dev/null
-if [ $? != 0 ] ; then
-    echo "...g-iges (1) FAILED"
-    STATUS=1
-else
-    echo "...g-iges (1) succeeded"
+if [ ! -f "$output" ] ; then
+    log "ERROR: mged failed to create $output"
+    log "-> iges.sh FAILED, see $LOGFILE"
+    exit 1
 fi
 
-$GIGES iges.g box.nmg > iges_stdout.iges 2>> iges.log
-if [ $? != 0 ] ; then
-    echo "...g-iges (2) FAILED"
-    STATUS=1
-else
-    echo "...g-iges (2) succeeded"
+# G TO IGES
+
+# test G -> IGES via -o
+output="iges.export.iges"
+rm -f "$output"
+run $GIGES -o "$output" iges.g box.nmg
+if [ ! -f "$output" ] ; then
+    log "ERROR: g-iges failed to create $output"
+    log "-> iges.sh FAILED, see $LOGFILE"
+    exit 1
 fi
 
-# convert back to .g
-$IGESG -o iges_new.g -p -N box.nmg iges_file.iges 2>> iges.log
-if [ $? != 0 ] ; then
-    echo "...iges-g (1) FAILED"
-    STATUS=1
-else
-    echo "...iges-g (1) succeeded"
+# test G -> IGES via stdout (can't use 'run')
+output="iges.export.stdout.iges"
+rm -f "$output"
+log "... running $GIGES iges.g box.nmg > $output"
+$GIGES iges.g box.nmg > $output 2>> "$LOGFILE"
+if [ ! -f "$output" ] ; then
+    log "ERROR: g-iges failed to create $output"
+    log "-> iges.sh FAILED, see $LOGFILE"
+    exit 1
 fi
 
-# check round trip back to iges: vertex permutation?
-# these two commands should produce almost identical output
-$GIGES -o iges_file2.iges iges_new.g box.nmg  2>> iges.log > /dev/null
-if [ $? != 0 ] ; then
-    echo "...g-iges (3) FAILED"
-    STATUS=1
-else
-    echo "...g-iges (3) succeeded"
-fi
-$GIGES iges_new.g box.nmg > iges_stdout2.iges 2>> iges.log
-if [ $? != 0 ] ; then
-    echo "...g-iges (4) FAILED"
-    STATUS=1
-else
-    echo "...g-iges (4) succeeded"
+# test that the first g-iges -o output matches the stdout output
+files_match iges.export.iges iges.export.stdout.iges -I 'G'
+if test $? -ne 0 ; then
+    STATUS="`expr $STATUS + 1`"
+    export STATUS
 fi
 
-# these two files should be identical
-#    iges_file.iges
-#    iges_file2.iges
+# G TO IGES TO G
 
-# these two files should be identical
-#    iges_stdout.iges
-#    iges_stdout2.iges
-
-$IGESG -o iges_stdout_new.g -p iges_stdout.iges 2>> iges.log
-if [ $? != 0 ] ; then
-    echo "...iges-g (2) FAILED"
-    STATUS=1
-else
-    echo "...iges-g (2) succeeded"
+# test IGES -> G
+output="iges.import.g"
+rm -f "$output"
+run $IGESG -o "$output" iges.export.iges
+if [ ! -f "$output" ] ; then
+    log "ERROR: iges-g failed to create $output"
+    log "-> iges.sh FAILED, see $LOGFILE"
+    exit 1
 fi
 
-# check one other TGM known to have a conversion failure which should be graceful
+# test IGES -> G (with -p)
+output="iges.import2.g"
+rm -f "$output"
+run $IGESG -o "$output" -p iges.export.iges
+if [ ! -f "$output" ] ; then
+    log "ERROR: iges-g failed to create $output"
+    log "-> iges.sh FAILED, see $LOGFILE"
+    exit 1
+fi
+
+# test IGES -> G (with -p -N name)
+output="iges.import3.g"
+rm -f "$output"
+run $IGESG -o "$output" -p -N box.nmg iges.export.iges
+if [ ! -f "$output" ] ; then
+    log "ERROR: iges-g failed to create $output"
+    log "-> iges.sh FAILED, see $LOGFILE"
+    exit 1
+fi
+
+# test that these produced different output
+files_differ iges.import.g iges.import2.g
+if test $? -ne 0 ; then
+    STATUS="`expr $STATUS + 1`"
+    export STATUS
+fi
+# FIXME: these should match but -N is creating 'box.nmgA'
+# files_match iges.import2.g iges.import3.g
+# if test $? -ne 0 ; then
+#     STATUS="`expr $STATUS + 1`"
+#     export STATUS
+# fi
+# FIXME: these should match but -N is creating 'box.nmgA'
+# files_match iges.import.g iges.import3.g
+# if test $? -ne 0 ; then
+#     STATUS="`expr $STATUS + 1`"
+#     export STATUS
+# fi
+
+# G TO IGES TO G TO IGES (ROUND TRIP)
+
+# make sure we don't permute vertices or introduce some other
+# unintended change.
+
+# test G -> IGES #2a via -o
+output="iges.import.export.iges"
+rm -f "$output"
+run $GIGES -o "$output" iges.import.g box.nmg
+if [ ! -f "$output" ] ; then
+    log "ERROR: g-iges failed to create $output"
+    log "-> iges.sh FAILED, see $LOGFILE"
+    exit 1
+fi
+
+# test G -> IGES #2b via -o
+output="iges.import2.export.iges"
+rm -f "$output"
+run $GIGES -o "$output" iges.import2.g box.nmg
+if [ ! -f "$output" ] ; then
+    log "ERROR: g-iges failed to create $output"
+    log "-> iges.sh FAILED, see $LOGFILE"
+    exit 1
+fi
+
+# test G -> IGES #2c via -o
+output="iges.import3.export.iges"
+rm -f "$output"
+run $GIGES -o "$output" iges.import3.g box.nmg
+if [ ! -f "$output" ] ; then
+    log "ERROR: g-iges failed to create $output"
+    log "-> iges.sh FAILED, see $LOGFILE"
+    exit 1
+fi
+
+# COMPARE RESULTS
+
+# test that initial g-iges output does NOT match final BoT output
+files_differ iges.export.iges iges.import.export.iges -I 'G'
+if test $? -ne 0 ; then
+    STATUS="`expr $STATUS + 1`"
+    export STATUS
+fi
+
+# FIXME: these should match but vertices are permuted!
+# test that initial g-iges output DOES match final NMG output
+# files_match iges.export.iges iges.import2.export.iges -I 'G'
+# if test $? -ne 0 ; then
+#     STATUS="`expr $STATUS + 1`"
+#     export STATUS
+# fi
+
+# test that initial g-iges output DOES match final named NMG output
+# FIXME: these should match but iges-g -N is creating 'box.nmgA'
+# files_match iges.export.iges iges.import3.export.iges -I 'G'
+# if test $? -ne 0 ; then
+#     STATUS="`expr $STATUS + 1`"
+#     export STATUS
+# fi
+
+# COMPLEX TEST
+
+# check another TGM known to have a conversion failure which should be graceful
 ASC2G="`ensearch asc2g`"
 if test ! -f "$ASC2G" ; then
-    echo "Unable to find asc2g, aborting"
+    log "Unable to find asc2g, aborting"
     exit 1
 fi
 GZIP="`which gzip`"
 if test ! -f "$GZIP" ; then
-    echo "Unable to find gzip, aborting"
+    log "Unable to find gzip, aborting"
     exit 1
 fi
 
 # make our starting database
-$GZIP -d -c "$1/regress/tgms/m35.asc.gz" > iges.m35.asc
+$GZIP -d -c "$PATH_TO_THIS/tgms/m35.asc.gz" > iges.m35.asc
 $ASC2G iges.m35.asc iges.m35.g
+
 # and test it (note it should work with the '-f' option, but fail
 # without any options)
-$GIGES -f -o iges_file3.iges iges.m35.g r516 2>> iges.log > /dev/null
-
-if [ $? != 0 ] ; then
-    echo "...g-iges (5) FAILED"
-    STATUS=1
-else
-    echo "...g-iges (5) succeeded"
+run $GIGES -f -o iges.m35.r516.iges iges.m35.g r516
+if test $? -ne 0 ; then
+    STATUS="`expr $STATUS + 1`"
+    export STATUS
 fi
 
-#=====================
-# output final results
+# TODO: add full m35 conversion test
+# run $GIGES -f -o iges.m35.iges iges.m35.g component
+# if test $? -ne 0 ; then
+#     STATUS="`expr $STATUS + 1`"
+#     export STATUS
+# fi
+
 if [ X$STATUS = X0 ] ; then
-    echo "-> iges.sh succeeded"
+    log "-> iges.sh succeeded"
 else
-    echo "-> iges.sh FAILED"
-    echo "   See files: $TFILS"
+    log "-> iges.sh FAILED, see $LOGFILE"
 fi
 
 exit $STATUS

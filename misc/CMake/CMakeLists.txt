@@ -6,30 +6,32 @@ set(cmake_ignore_files
   BRLCAD_Summary.cmake
   BRLCAD_Targets.cmake
   BRLCAD_Util.cmake
+  CMakeLists.txt
   CheckCInline.cmake
   CheckCSourceRuns.cmake
+  CheckCXX11Features.cmake
+  CheckCXX11Features/cxx11-test-nullptr.cpp
+  CheckCXX11Features/cxx11-test-nullptr_fail_compile.cpp
+  CheckCXX11Features/cxx11-test-lib_regex.cpp
   CompilerFlags.cmake
   Distcheck.cmake
   DocBook.cmake
   Doxygen.cmake
   FindADAPTAGRAMS.cmake
   FindASTYLE.cmake
-  FindBRLCADTCL.cmake
-  FindBRLCADZLIB.cmake
+  FindAppleseed.cmake
+  FindBlosc.cmake
   FindBSON.cmake
   FindFontconfig.cmake
-  FindGDAL.cmake
   FindGECODE.cmake
   FindGL.cmake
+  FindIlmBase.cmake
   FindLEMON.cmake
-  FindLEX.cmake
-  FindLZ4.cmake
   FindNETPBM.cmake
-  FindOIIO.cmake
   FindOPENNURBS.cmake
   FindOSL.cmake
   FindOpenCL.cmake
-  FindOpenEXR.cmake
+  FindOpenVDB.cmake
   FindPERPLEX.cmake
   FindPkgMacros.cmake
   FindPROJ4.cmake
@@ -40,15 +42,17 @@ set(cmake_ignore_files
   FindSTL.cmake
   FindShellDeps.cmake
   FindTBB.cmake
-  FindTERMLIB.cmake
+  FindTCL.cmake
   FindUTAHRLE.cmake
   FindUUID.cmake
   FindVDS.cmake
   FindX11.cmake
   FindXMLLINT.cmake
   FindXSLTPROC.cmake
-  Fink_MacPorts.cmake
+  Fuzzer.cmake
   NSIS.template.in
+  NSIS_silent.template.in
+  OpenVDBUtils.cmake
   Path_Setup.cmake
   RPath_Setup.cmake
   ResetCache.cmake
@@ -91,6 +95,8 @@ set(cmake_ignore_files
   tcltest.tcl.in
   )
 CMAKEFILES(${cmake_ignore_files})
+
+CMAKEFILES(NOTES)
 
 # Local Variables:
 # tab-width: 8

@@ -1,7 +1,7 @@
 /*                           E X T . H
  * BRL-CAD
  *
- * Copyright (c) 1989-2018 United States Government as represented by
+ * Copyright (c) 1989-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,6 +28,44 @@
 
 #include "optical.h"
 #include "fb.h"
+#include "bu/parallel.h" /* for MAX_PSW */
+#include "bu/ptbl.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/*
+ *	A Bit vector to determine how much stuff rt prints when not in
+ *	debugging mode.
+ *
+ */
+extern int rt_verbosity; /* from opt.c */
+
+/*	   flag_name		value		prints */
+#define VERBOSE_LIBVERSIONS  0x00000001	/* Library version strings */
+#define VERBOSE_MODELTITLE   0x00000002	/* model title */
+#define VERBOSE_TOLERANCE    0x00000004	/* model tolerance */
+#define VERBOSE_STATS	     0x00000008	/* stats about rt_gettrees() */
+#define VERBOSE_FRAMENUMBER  0x00000010	/* current frame number */
+#define VERBOSE_VIEWDETAIL   0x00000020	/* view specifications */
+#define VERBOSE_LIGHTINFO    0x00000040	/* scene lights */
+#define VERBOSE_INCREMENTAL  0x00000080	/* progressive/incremental state */
+#define VERBOSE_MULTICPU     0x00000100	/* #  of CPU's to be used */
+#define VERBOSE_OUTPUTFILE   0x00000200	/* name of output image */
+
+#define VERBOSE_FORMAT       "\020" /* print hex */ \
+    "\012OUTPUTFILE" \
+    "\011MULTICPU" \
+    "\010INCREMENTAL" \
+    "\7LIGHTINFO" \
+    "\6VIEWDETAIL" \
+    "\5FRAMENUMBER" \
+    "\4STATS" \
+    "\3TOLERANCE" \
+    "\2MODELTITLE" \
+    "\1LIBVERSIONS"
+
 
 /***** Variables declared in opt.c *****/
 extern char *framebuffer;		/* desired framebuffer */
@@ -36,10 +74,9 @@ extern int Query_one_pixel;
 extern int benchmark;
 extern int lightmodel;			/* Select lighting model */
 extern int query_debug;
-extern int query_rdebug;
+extern int query_optical_debug;
 extern int query_x;
 extern int query_y;
-extern int rpt_dist;			/* Output depth along w/ RGB? */
 extern int rpt_overlap;			/* Warn about overlaps? */
 extern int space_partition;		/* Space partitioning algorithm to use */
 extern int sub_grid_mode;		/* mode to raytrace a rectangular portion of view */
@@ -47,7 +84,7 @@ extern int sub_xmax;			/* upper right of sub rectangle */
 extern int sub_xmin;			/* lower left of sub rectangle */
 extern int sub_ymax;
 extern int sub_ymin;
-extern int transpose_grid;		/* reverse the order of grid traversal */
+extern int top_down;			/* reverse the order of grid traversal */
 extern int use_air;			/* Handling of air in librt */
 extern int random_mode;                 /* Mode to shoot rays at random directions */
 extern int opencl_mode;			/* enable/disable OpenCL */
@@ -111,8 +148,8 @@ extern double pmargs[9];
 /***** variables shared with do.c *****/
 extern int objc;			/* Number of cmd-line treetops */
 extern char **objv;			/* array of treetop strings */
+extern struct bu_ptbl *cmd_objs;               /* container to hold cmd specified objects */
 extern char *outputfile;		/* name of base of output file */
-extern fastf_t frame_delta_t;		/* 1.0 / frames_per_second_playback */
 extern int benchmark;			/* No random numbers:  benchmark */
 extern int curframe;			/* current frame number */
 extern int desiredframe;		/* frame to start at */
@@ -132,8 +169,7 @@ extern int do_frame(int framenumber);
 #ifdef USE_OPENCL
 enum {
     CLT_COLOR = (1<<0),
-    CLT_DEPTH = (1<<1),
-    CLT_ACCUM = (1<<2)      /* TODO */
+    CLT_ACCUM = (1<<1)      /* TODO */
 };
 
 extern void clt_connect_fb(fb *fbp);
@@ -148,8 +184,18 @@ extern int get_args(int argc, const char *argv[]);
 extern void color_hook(const struct bu_structparse *sp, const char *name, void *base, const char *value, void *data);
 
 
-/* view.c */
-extern void usage(const char *argv0);
+/* usage.c */
+extern void usage(const char *argv0, int verbose);
+
+/**
+ * called by apps during application_init() to register
+ * application-specific usage options.
+ */
+extern void option(const char *option, const char *description, const char *category, int verbose);
+
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
 
 #endif /* RT_EXT_H */
 /*

@@ -1,7 +1,7 @@
 #               G E O M E T R Y I O . T C L
 # BRL-CAD
 #
-# Copyright (c) 2014-2018 United States Government as represented by
+# Copyright (c) 2014-2020 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@ if {$::tcl_platform(platform) == "windows"} {
 
 proc ::run_conversion_config {input_file log_file} {
     set gui_cmd [list [bu_brlcad_root [file join [bu_brlcad_dir bin] bwish$::exe_ext]] \
-    [bu_brlcad_data tclscripts/lib/gui_conversion.tcl] "$input_file" "$log_file"]
+    [bu_brlcad_root "share/tclscripts/lib/gui_conversion.tcl"] "$input_file" "$log_file"]
     catch {eval exec $gui_cmd} _conv_log
 }
 

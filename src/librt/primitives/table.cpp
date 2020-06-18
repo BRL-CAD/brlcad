@@ -1,7 +1,7 @@
 /*                       T A B L E . C P P
  * BRL-CAD
  *
- * Copyright (c) 1989-2018 United States Government as represented by
+ * Copyright (c) 1989-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,7 +43,7 @@ extern "C" {
 
 #define RT_DECLARE_INTERFACE(name) \
     extern int rt_##name##_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip); \
-    extern int rt_##name##_shot(struct soltab *stp, register struct xray *rp, struct application *ap, struct seg *seghead); \
+    extern int rt_##name##_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead); \
     extern int rt_##name##_piece_shot(struct rt_piecestate *psp, struct rt_piecelist *plp, double dist_corr, struct xray *rp, struct application *ap, struct seg *seghead); \
     extern void rt_##name##_piece_hitsegs(struct rt_piecestate *psp, struct seg *seghead, struct application *ap); \
     extern void rt_##name##_print(const struct soltab *stp); \
@@ -52,10 +52,10 @@ extern "C" {
     extern void rt_##name##_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp); \
     extern int rt_##name##_class(const struct soltab *, const vect_t *, const vect_t *, const struct bn_tol *); \
     extern void rt_##name##_free(struct soltab *stp); \
-    extern int rt_##name##_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *info); \
+    extern int rt_##name##_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol, const struct rt_view_info *info); \
     extern int rt_##name##_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info); \
     extern void rt_##name##_vshot(struct soltab *stp[], struct xray *rp[], struct seg *segp, int n, struct application *ap); \
-    extern int rt_##name##_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol); \
+    extern int rt_##name##_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *ttol, const struct bn_tol *tol); \
     extern int rt_##name##_tnurb(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bn_tol *tol); \
     extern void rt_##name##_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol); \
     extern int rt_##name##_import5(struct rt_db_internal *ip, const struct bu_external *ep, const mat_t mat, const struct db_i *dbip); \
@@ -122,6 +122,7 @@ RT_DECLARE_INTERFACE(hrt);
 RT_DECLARE_INTERFACE(datum);
 RT_DECLARE_INTERFACE(brep);
 RT_DECLARE_INTERFACE(joint);
+RT_DECLARE_INTERFACE(script);
 
 
 /* generics for object manipulation, in generic.c */
@@ -149,12 +150,14 @@ extern int rt_comb_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 extern void rt_comb_make(const struct rt_functab *ftp, struct rt_db_internal *intern);
 extern void rt_comb_ifree(struct rt_db_internal *ip);
 
-extern int rt_ebm_form(struct bu_vls *logstr, const struct rt_functab *ftp);
-extern int rt_bot_form(struct bu_vls *logstr, const struct rt_functab *ftp);
-extern int rt_sketch_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 extern int rt_annot_form(struct bu_vls *logstr, const struct rt_functab *ftp);
+extern int rt_bot_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 extern int rt_cline_form(struct bu_vls *logstr, const struct rt_functab *ftp);
+extern int rt_ebm_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 extern int rt_extrude_form(struct bu_vls *logstr, const struct rt_functab *ftp);
+extern int rt_metaball_form(struct bu_vls *logstr, const struct rt_functab *ftp);
+extern int rt_script_form(struct bu_vls *logstr, const struct rt_functab *ftp);
+extern int rt_sketch_form(struct bu_vls *logstr, const struct rt_functab *ftp);
 
 
 const struct rt_functab OBJ[] = {
@@ -1893,7 +1896,7 @@ const struct rt_functab OBJ[] = {
 	RT_METABALL_INTERNAL_MAGIC,
 	RTFUNCTAB_FUNC_GET_CAST(rt_metaball_get),
 	RTFUNCTAB_FUNC_ADJUST_CAST(rt_metaball_adjust),
-	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
+	RTFUNCTAB_FUNC_FORM_CAST(rt_metaball_form),
 	NULL, /* make */
 	RTFUNCTAB_FUNC_PARAMS_CAST(rt_metaball_params),
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_metaball_bbox),
@@ -2095,7 +2098,7 @@ const struct rt_functab OBJ[] = {
 	/* 41 */
 	RT_FUNCTAB_MAGIC, "ID_PNTS", "pnts",
 	0,
-	NULL, /* prep */
+	RTFUNCTAB_FUNC_PREP_CAST(rt_pnts_prep),
 	NULL, /* shot */
 	RTFUNCTAB_FUNC_PRINT_CAST(rt_pnts_print),
 	NULL, /* norm */
@@ -2159,8 +2162,8 @@ const struct rt_functab OBJ[] = {
 	NULL, /* brep */
 	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_annot_import5),
 	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_annot_export5),
-	RTFUNCTAB_FUNC_IMPORT4_CAST(rt_annot_import4),
-	RTFUNCTAB_FUNC_EXPORT4_CAST(rt_annot_export4),
+	NULL, /* import4 */
+	NULL, /* export4 */
 	RTFUNCTAB_FUNC_IFREE_CAST(rt_annot_ifree),
 	RTFUNCTAB_FUNC_DESCRIBE_CAST(rt_annot_describe),
 	RTFUNCTAB_FUNC_XFORM_CAST(rt_generic_xform),
@@ -2265,6 +2268,53 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
 	NULL, /* make */
 	NULL, /* params */
+	NULL, /* bbox */
+	NULL, /* volume */
+	NULL, /* surf_area */
+	NULL, /* centroid */
+	NULL, /* oriented_bbox */
+	NULL, /* find_selections */
+	NULL, /* evaluate_selection */
+	NULL, /* process_selection */
+	NULL /* serialize */
+    },
+
+
+    {
+    /* 45 */
+    RT_FUNCTAB_MAGIC, "ID_SCRIPT", "script",
+	1,
+	RTFUNCTAB_FUNC_PREP_CAST(rt_script_prep),
+	RTFUNCTAB_FUNC_SHOT_CAST(rt_script_shot),
+	RTFUNCTAB_FUNC_PRINT_CAST(rt_script_print),
+	RTFUNCTAB_FUNC_NORM_CAST(rt_script_norm),
+	NULL, /* piece_shot */
+	NULL, /* piece_hitsegs */
+	RTFUNCTAB_FUNC_UV_CAST(rt_script_uv),
+	RTFUNCTAB_FUNC_CURVE_CAST(rt_script_curve),
+	NULL, /* class */
+	RTFUNCTAB_FUNC_FREE_CAST(rt_script_free),
+	RTFUNCTAB_FUNC_PLOT_CAST(rt_script_plot),
+	NULL, /* adaptive_plot */
+	NULL, /* vshot */
+	NULL, /* tess */
+	NULL, /* tnurb */
+	NULL, /* brep */
+	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_script_import5),
+	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_script_export5),
+	RTFUNCTAB_FUNC_IMPORT4_CAST(rt_script_import4),
+	RTFUNCTAB_FUNC_EXPORT4_CAST(rt_script_export4),
+	RTFUNCTAB_FUNC_IFREE_CAST(rt_script_ifree),
+	RTFUNCTAB_FUNC_DESCRIBE_CAST(rt_script_describe),
+	RTFUNCTAB_FUNC_XFORM_CAST(rt_generic_xform),
+	NULL, /* parse */
+	sizeof(struct rt_script_internal),
+	RT_SCRIPT_INTERNAL_MAGIC,
+	RTFUNCTAB_FUNC_GET_CAST(rt_script_get), 
+	RTFUNCTAB_FUNC_ADJUST_CAST(rt_script_adjust), 
+	RTFUNCTAB_FUNC_FORM_CAST(rt_script_form), 
+	NULL, /* make */
+	RTFUNCTAB_FUNC_PARAMS_CAST(rt_script_params), 
 	NULL, /* bbox */
 	NULL, /* volume */
 	NULL, /* surf_area */
@@ -2439,6 +2489,9 @@ rt_id_solid(struct bu_external *ep)
 	case DBID_BOT:
 	    id = ID_BOT;
 	    break;
+	case DBID_SCRIPT:
+	    id = ID_SCRIPT;
+	    break; 
 	default:
 	    bu_log("rt_id_solid:  u_id=x%x unknown\n", rec->u_id);
 	    id = ID_NULL;		/* BAD */

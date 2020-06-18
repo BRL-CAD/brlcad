@@ -17,7 +17,7 @@ wm title $w "Animated Wave Demonstration"
 wm iconname $w "aniwave"
 positionWindow $w
 
-label $w.msg -font $font -wraplength 4i -justify left -text "This demonstration contains a canvas widget with a line item inside it. The animation routines work by adjusting the coordinates list of the line; a trace on a variable is used so updates to the variable result in a change of position of the line." 
+label $w.msg -font $font -wraplength 4i -justify left -text "This demonstration contains a canvas widget with a line item inside it. The animation routines work by adjusting the coordinates list of the line; a trace on a variable is used so updates to the variable result in a change of position of the line."
 pack $w.msg -side top
 
 ## See Code / Dismiss buttons

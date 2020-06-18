@@ -1,7 +1,7 @@
 /*                     S H _ T O Y O T A . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2018 United States Government as represented by
+ * Copyright (c) 1992-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -2182,7 +2182,7 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
 	    VUNITIZE(Sky_elmnt);
 	    i_dot_n = VDOT(swp->sw_hit.hit_normal, Sky_elmnt);
 	    if (i_dot_n >= 1.0) i_dot_n = .9999;
-	    if (rdebug&RDEBUG_RAYPLOT) {
+	    if (optical_debug&OPTICAL_DEBUG_RAYPLOT) {
 		VSCALE(work, Sky_elmnt, 200.0);
 		VADD2(work, swp->sw_hit.hit_point, work);
 		pl_color(stdout, 0, 255, 0);
@@ -2205,7 +2205,7 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
     /* Don't forget contribution from luminance at Ctr. */
     bg_radiance = skylight_spectral_dist(lambda, ts->Zenith, Ctr,
 					 Sun, ts->weather, t_vl);
-    if (rdebug&RDEBUG_RAYPLOT) {
+    if (optical_debug&OPTICAL_DEBUG_RAYPLOT) {
 	VSCALE(work, Ctr, 200.0);
 	VADD2(work, swp->sw_hit.hit_point, work);
 	pl_color(stdout, 255, 50, 0);
@@ -2304,7 +2304,7 @@ toyota_render(register struct application *ap, const struct partition *UNUSED(pp
 	    * ts->sun_sang;
 
 	/* XXX Hack:  it always misses */
-	if (rdebug&RDEBUG_RAYPLOT) {
+	if (optical_debug&OPTICAL_DEBUG_RAYPLOT) {
 	    VSCALE(work, Reflected, 200.0);
 	    VADD2(work, swp->sw_hit.hit_point, work);
 	    pl_color(stdout, 0, 150, 255);

@@ -1,7 +1,7 @@
 /*                         D C O N V . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,6 +38,8 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/app.h"
+#include "bu/malloc.h"
 #include "bu/exit.h"
 #include "fft.h"
 
@@ -69,17 +71,17 @@ mult(double *o, double *b, int n)
 int
 main(int argc, char *argv[])
 {
-
-#define MAXM 4096
-    double savebuffer[MAXM];
-    double xbuf[2 * (MAXM + 1)];
-    double ibuf[2 * (MAXM + 1)];		/* impulse response */
+    double savebuffer[BU_PAGE_SIZE];
+    double xbuf[2 * (BU_PAGE_SIZE + 1)];
+    double ibuf[2 * (BU_PAGE_SIZE + 1)];		/* impulse response */
 
     int i;
     int M = 128;	/* kernel size */
     int N, L;
     FILE *fp;
     size_t ret;
+
+    bu_setprogname(argv[0]);
 
     if (argc != 2 || isatty(fileno(stdin)) || isatty(fileno(stdout))) {
 	bu_exit(1, "Usage: dconv filterfile < doubles > doubles\n       WARNING: kernel size must be 2^i - 1\n");
@@ -104,12 +106,12 @@ main(int argc, char *argv[])
     if ((fp = fopen(argv[1], "r")) == NULL) {
 	bu_exit(2, "dconv: can't open \"%s\"\n", argv[1]);
     }
-    if ((M = fread(ibuf, sizeof(*ibuf), 2*MAXM, fp)) == 0) {
+    if ((M = fread(ibuf, sizeof(*ibuf), 2*BU_PAGE_SIZE, fp)) == 0) {
 	bu_exit(3, "dconv: problem reading filter file\n");
     }
     fclose(fp);
-    if (M > MAXM) {
-	bu_exit(4, "dconv: only compiled for up to %d sized filter kernels\n", MAXM);
+    if (M > BU_PAGE_SIZE) {
+	bu_exit(4, "dconv: only compiled for up to %d sized filter kernels\n", BU_PAGE_SIZE);
     }
 /*XXX HACK HACK HACK HACK XXX*/
 /* Assume M = 2^i - 1 */

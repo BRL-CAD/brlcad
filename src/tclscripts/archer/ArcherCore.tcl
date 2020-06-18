@@ -1,7 +1,7 @@
 #                      A R C H E R C O R E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2018 United States Government as represented by
+# Copyright (c) 2002-2020 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -199,6 +199,7 @@ namespace eval ArcherCore {
 	method bot_sync            {args}
 	method bot_vertex_fuse     {args}
 	method brep                {args}
+	method brlman              {args}
 	method c                   {args}
 	method cd                  {args}
 	method clear               {args}
@@ -225,6 +226,7 @@ namespace eval ArcherCore {
 	method edcolor             {args}
 	method edcomb              {args}
 	method edmater             {args}
+	method env                 {args}
 	method d                   {args}
 	method dsp                 {args}
 	method erase               {args}
@@ -582,9 +584,9 @@ namespace eval ArcherCore {
 	    3ptarb adjust arced attr bb bev B blast bo bot bot_condense \
 	    bot_decimate bot_face_fuse bot_face_sort bot_flip bot_fuse \
 	    bot_merge bot_smooth bot_split bot_sync bot_vertex_fuse \
-	    brep c cd clear clone closedb color comb comb_color combmem \
+	    brep brlman c cd clear clone closedb color comb comb_color combmem \
 	    copy copyeval copymat cp cpi dbconcat dbExpand decompose \
-	    delete draw dsp e E edarb edcodes edcolor edcomb edit edmater d erase ev exists \
+	    delete draw dsp e E edarb edcodes edcolor edcomb edit edmater env d erase ev exists \
 	    exit facetize fracture freezeGUI g get graph group hide human i igraph \
 	    importFg4Section in inside item kill killall killrefs \
 	    killtree l lc ls make make_name make_pnts man mater mirror move \
@@ -1087,7 +1089,7 @@ namespace eval ArcherCore {
 	set env(DISPLAY) ":0"
     }
 
-    set mImgDir [file join [bu_brlcad_data "tclscripts"] archer images]
+    set mImgDir [file join [bu_brlcad_root "share/tclscripts"] archer images]
 
     if {[llength $args] == 1} {
 	set args [lindex $args 0]
@@ -1548,22 +1550,6 @@ namespace eval ArcherCore {
 	    -text "Raytrace" -menu {
 		options -tearoff 0
 
-		cascade checkoverlaps \
-		    -label "check overlaps" \
-		    -menu {
-			command fifty \
-			    -label "50x50" \
-			    -helpstr "Check for overlaps using a 50x50 grid"
-			command hundred \
-			    -label "100x100" \
-			    -helpstr "Check for overlaps using a 100x100 grid"
-			command twofiftysix \
-			    -label "256x256" \
-			    -helpstr "Check for overlaps using a 256x256 grid"
-			command fivetwelve \
-			    -label "512x512" \
-			    -helpstr "Check for overlaps using a 512x512 grid"
-		    }
 		cascade rt \
 		    -label "rt" \
 		    -menu {
@@ -1612,20 +1598,6 @@ namespace eval ArcherCore {
 		    -helpstr "Launch nirt from view center"
 	    }
 
-	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps \
-	    -state disabled
-	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.fifty \
-	    -command [::itcl::code $this launchCheckOverlaps 50] \
-	    -state disabled
-	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.hundred \
-	    -command [::itcl::code $this launchCheckOverlaps 100] \
-	    -state disabled
-	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.twofiftysix \
-	    -command [::itcl::code $this launchCheckOverlaps 256] \
-	    -state disabled
-	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.fivetwelve \
-	    -command [::itcl::code $this launchCheckOverlaps 512] \
-	    -state disabled
 	$itk_component(canvas_menu) menuconfigure .raytrace.rt \
 	    -state disabled
 	$itk_component(canvas_menu) menuconfigure .raytrace.rt.fivetwelve \
@@ -2089,16 +2061,6 @@ namespace eval ArcherCore {
     #bind $itk_component(ged) <Enter> {focus %W}
 
     if {$mViewOnly && !$mNoToolbar} {
-	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps \
-	    -state normal
-	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.fifty \
-	    -state normal
-	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.hundred \
-	    -state normal
-	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.twofiftysix \
-	    -state normal
-	$itk_component(canvas_menu) menuconfigure .raytrace.checkoverlaps.fivetwelve \
-	    -state normal
 	$itk_component(canvas_menu) menuconfigure .raytrace.rt \
 	    -state normal
 	$itk_component(canvas_menu) menuconfigure .raytrace.rt.fivetwelve \
@@ -2235,6 +2197,10 @@ namespace eval ArcherCore {
 
     switch -- [file extension $target] {
 	".g"   {
+	    $itk_component(ged) open $target
+	}
+	"" {
+	    set target $target.g
 	    $itk_component(ged) open $target
 	}
 	default {
@@ -5937,8 +5903,8 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::launchCheckOverlaps {size} {
-    putString "running check_overlaps -s $size"
-    if {[catch {$itk_component(ged) check_overlaps -s $size} output]} {
+    putString "running check overlaps -G $size -i -o -q"
+    if {[catch {$itk_component(ged) check overlaps -G $size -i -o -q} output]} {
 	tk_messageBox -message "$output"
 	return
     }
@@ -6182,6 +6148,11 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::brep {args} {
     eval gedWrapper brep 0 1 1 2 $args
+}
+
+::itcl::body ArcherCore::brlman {args} {
+    # simple (intentionally undocumented) pass-through alias
+    man $args
 }
 
 ::itcl::body ArcherCore::c {args} {
@@ -6460,6 +6431,10 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::edmater {args} {
     eval gedWrapper edmater 0 0 1 0 $args
+}
+
+::itcl::body ArcherCore::env {args} {
+    eval gedWrapper env 1 0 0 0 $args
 }
 
 ::itcl::body ArcherCore::d {args} {

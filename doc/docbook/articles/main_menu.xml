@@ -1,0 +1,5049 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<article xmlns="http://docbook.org/ns/docbook" xmlns:xlink="http://www.w3.org/1999/xlink" version="5.0">
+  <itemizedlist>
+    <listitem>
+      <para>
+        <link xlink:href="../x.php">Articles</link>
+      </para>
+      <itemizedlist>
+    <listitem>
+      <para>
+        <link xlink:href="../../articles/en/about.php">About BRL-CAD</link>
+      </para>
+      <itemizedlist>
+        <listitem>
+          <para>
+        <link xlink:href="../../articles/en/about.php#article-body">Introduction</link>
+          </para>
+        </listitem>
+      </itemizedlist>
+</listitem>
+<listitem>
+    <para>
+        <link xlink:href="../../articles/en/build_pattern.php">Build Pattern</link>
+    </para>
+    <itemizedlist>
+      <listitem>
+        <para>
+        <link xlink:href="../../articles/en/build_pattern.php#build_pattern_generalinfo">Build Pattern Information</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../articles/en/build_pattern.php#build_pattern_names">Pattern Name</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../articles/en/build_pattern.php#build_pattern_fields">Common Fields For All Pattern Fields</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../articles/en/build_pattern.php#build_pattern_stringsub"> Strings Substitution</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../articles/en/build_pattern.php#build_pattern_recpatterns">Rectangular Patterns</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../articles/en/build_pattern.php#build_pattern_spherical">Spherical Patterns</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../articles/en/build_pattern.php#build_pattern_cylind">Cylindrical Patterns</link>
+        </para>
+      </listitem>
+    </itemizedlist>
+</listitem>
+  <listitem>
+    <para>
+        <link xlink:href="../../articles/en/build_region.php">Build Region</link>
+    </para>
+  </listitem>
+  <listitem>
+    <para>
+        <link xlink:href="../../articles/en/camo_shader.php">Camouflage Shader</link>
+    </para>
+    <itemizedlist>
+      <listitem>
+        <para>
+        <link xlink:href="../../articles/en/camo_shader.php#Introduction">Introduction</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../articles/en/camo_shader.php#Limitations">Limitations</link>
+        </para>
+      </listitem>
+    </itemizedlist>
+  </listitem>
+  <listitem>
+    <para>
+        <link xlink:href="../../articles/en/ged.php">GED</link>
+    </para>
+   <itemizedlist>
+  <listitem>
+    <para>
+        <link xlink:href="../../articles/en/ged.php#Preface">Preface</link>
+    </para>
+</listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../articles/en/ged.php#INTRODUCTION">Introduction</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../articles/en/ged.php#COMGEOM_BACKGROUND">Comgeom Background</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../articles/en/ged.php#COMPUTER_GRAPHICS">Computer Graphics</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../articles/en/ged.php#APPROACH_TO_THE_PROBLEM">Approach To The Problem</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../articles/en/ged.php#GED_OVERVIEW">GED Overview</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../articles/en/ged.php#GED_INTERNAL_DATA_STRUCTURE">GED Internal Data Structure</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../articles/en/ged.php#KEYBOARD_COMMANDS">Keyboard Commands</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../articles/en/ged.php#PERIPHERAL_DEVICES">Peripheral Devices</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../articles/en/ged.php#ANGLE_DISTANCE_CURSOR">ADC</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../articles/en/ged.php#VIEWING_FUNCTIONS">Viewing Functions</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../articles/en/ged.php#SELECTING_OBJECTS_FOR_EDITING">Selecting Objects For Editing</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../articles/en/ged.php#OBJECT_EDITING">Object Editing</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../articles/en/ged.php#SOLID_EDITING">Solid Editing</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../articles/en/ged.php#CONCLUSION">Conclusion</link>
+        </para>
+      </listitem>
+  </itemizedlist>
+  </listitem>
+
+        <listitem>
+        <para>
+        <link xlink:href="../../articles/en/mged.php">MGED</link>
+        </para>
+     <itemizedlist>
+      <listitem>
+        <para>
+        <link xlink:href="../../articles/en/mged.php#Preface">Preface</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../articles/en/mged.php#Modeling_With_CSG">Modeling With CSG</link>
+        </para>
+      <itemizedlist>
+      <listitem>
+        <para>
+        <link xlink:href="../../articles/en/mged.php#Starting_MGED">Starting MGED</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../articles/en/mged.php#The_Screen_Coordinate_System">The Screen Coordinate System</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../articles/en/mged.php#Creating_Geometry">Creating Geometry</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../articles/en/mged.php#Editing_Solids">Editing Solids</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../articles/en/mged.php#Adding_a_Base">Adding A Base</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../articles/en/mged.php#Adding_a_fillet">Adding A Fillet</link>
+        </para>
+      </listitem>
+    </itemizedlist>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../articles/en/mged.php#New_Graphical_User_Interface">MGED’s New Graphical User Interface </link>
+        </para>
+        <itemizedlist>
+          <listitem>
+            <para>
+        <link xlink:href="../../articles/en/mged.php#47403072">MGED’s New Graphical User Interface </link>
+            </para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../articles/en/mged.php#cmd_line_ed">Command Line Editing</link>
+        </para>
+        <itemizedlist>
+          <listitem>
+            <para>
+        <link xlink:href="../../articles/en/mged.php#Emacs_Bindings">Emacs Bindings</link>
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+        <link xlink:href="../../articles/en/mged.php#VI_Bindings">Vi Bindings</link>
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+        <link xlink:href="../../articles/en/mged.php#Insert_Mode">Insert Mode</link>
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+        <link xlink:href="../../articles/en/mged.php#Command_Mode">Command Mode</link>
+            </para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../articles/en/mged.php#MGED_User_Commands">MGED User Commands</link>
+        </para>
+        <itemizedlist>
+          <listitem>
+            <para>
+        <link xlink:href="../../articles/en/mged.php#MGEDDeveloperCommands">MGED Developer Commands</link>
+            </para>
+          </listitem>
+        </itemizedlist>
+      </listitem>
+       <listitem>
+        <para>
+        <link xlink:href="../../articles/en/mged.php#MGED_Tcl_Variables">MGED Tcl Variables</link>
+        </para>
+      </listitem>
+       <listitem>
+        <para>
+        <link xlink:href="../../articles/en/mged.php#MGED_Environment_Variable">MGED Environment Variable</link>
+        </para>
+      </listitem>
+       <listitem>
+        <para>
+        <link xlink:href="../../articles/en/mged.php#MGED_Callback">MGED Callback</link>
+        </para>
+      </listitem>
+       <listitem>
+        <para>
+        <link xlink:href="../../articles/en/mged.php#Glossary">Glossary</link>
+        </para>
+      </listitem>
+       <listitem>
+        <para>
+        <link xlink:href="../../articles/en/mged.php#BRL-CAD_Solid">BRLCAD Solids</link>
+        </para>
+      </listitem>
+</itemizedlist>
+</listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../articles/en/mgedrc.php">MGEDRC</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../articles/en/nirt.php">About Nirt</link>
+      </para>
+    <itemizedlist>
+    <listitem>
+      <para>
+        <link xlink:href="../../articles/en/nirt.php#NIRT_Basic_Syntax_and_operations">Nirt: Basic Syntax and Operations</link>
+      </para>
+    <itemizedlist>
+    <listitem>
+      <para>
+        <link xlink:href="../../articles/en/nirt.php#Command_Line_Help">Command Line Help</link>
+      </para>
+   </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../articles/en/nirt.php#Loading_a_Model">Loading A Model</link>
+      </para>
+   </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../articles/en/nirt.php#Shooting_a_Ray">Shooting a Ray</link>
+      </para>
+   </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../articles/en/nirt.php#Moving_the_Origination_Point">Moving The Origination Point</link>
+      </para>
+   </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../articles/en/nirt.php#Backing_Out_of_a_Model">Backing Out of a Model</link>
+      </para>
+   </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../articles/en/nirt.php#Changing_the_Direction_of_the_Ray">Changing the Direction of the Ray</link>
+      </para>
+   </listitem>
+     <listitem>
+      <para>
+        <link xlink:href="../../articles/en/nirt.php#Reporting_of_Overlaps">Reporting of Overlaps</link>
+      </para>
+   </listitem>
+
+   </itemizedlist>
+</listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/nirt.php#Graphical_Visualization">Graphical Visualization: NIRT in MGED</link>
+      </para>
+      <itemizedlist>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/nirt.php#Basic_Usage">Basic Usage</link>
+      </para>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/nirt.php#Backing_Out_with_NIRT_in_MGED">Backing Out with NIRT in MGED</link>
+      </para>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/nirt.php#Ray_Segment_Coloring_with_Nirt">Ray Segment Coloring with NIRT and MGED</link>
+      </para>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/nirt.php#Mouse-Based">Mouse-Based NIRT Usage</link>
+      </para>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/nirt.php#Configuring_NIRT">Configuring NIRT </link>
+      </para>
+   </listitem>
+      </itemizedlist>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/nirt.php#Reporting_Options">Reporting Options</link>
+      </para>
+      <itemizedlist>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/nirt.php#How_to_Change_the_Reporting_Format">How To Change The Report Format</link>
+      </para>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/nirt.php#Handling_Attribute_Reporting">Handling Attribute Reporting</link>
+      </para>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/nirt.php#Changing_Units">Changing Units</link>
+      </para>
+   </listitem>
+      </itemizedlist>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/nirt.php#Other_Options">Other Options</link>
+      </para>
+    <itemizedlist>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/nirt.php#Silent_and_Verbose_Modes">Silent and Verbose Modes</link>
+      </para>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/nirt.php#Using_Air_Regions">Using Air Regions</link>
+      </para>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/nirt.php#Reading_an_Orientation">Reading an Orientation Matrix and Command</link>
+      </para>
+   </listitem>
+    </itemizedlist>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/nirt.php#Scripting_NIRT">Scripting NIRT</link>
+      </para>
+      <itemizedlist>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/nirt.php#Command_Line_Scripts">Command Line Scripts</link>
+      </para>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/nirt.php#Scripts_Files">Scripts Files</link>
+      </para>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/nirt.php#Defining_a_Custom">Defining a Custom Reporting Format</link>
+      </para>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/nirt.php#Customizing_Report_Output_in_MGED">Customizing Report Output in MGED</link>
+      </para>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/nirt.php#Reporting_Attributes_in_MGED">Reporting Attributes in MGED</link>
+      </para>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/nirt.php#Available_Information_for_Inclusion_in_Reports">Available Information for Inclusion in Reports</link>
+      </para>
+   </listitem>
+      </itemizedlist>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/nirt.php#Summary">Summary</link>
+      </para>
+   </listitem>
+</itemizedlist>
+</listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/oed.php">oed</link>
+      </para>
+ <itemizedlist>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/oed.php#oed_Basic_Syntax_and_Operations">oed - Basic Syntax and Operations</link>
+      </para>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/oed.php#Right_Hand_Path_Section">Right Hand Path Selection</link>
+      </para>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/oed.php#Flexible_Manipulation">Flexible_Manipulation</link>
+      </para>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/oed.php#sub_combination_editing">Sub-Combination Editing</link>
+      </para>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/oed.php#Summary">Summary</link>
+      </para>
+   </listitem>
+</itemizedlist>
+</listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/pipes.php">Pipe</link>
+      </para>
+      <itemizedlist>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/pipes.php#pipe_general_use">General Use</link>
+      </para>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/pipes.php#pipe_make_coil">Making a Coil</link>
+      </para>
+   </listitem>
+  </itemizedlist>
+</listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/projection_shader.php">Projection Shader</link>
+      </para>
+      <itemizedlist>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/projection_shader.php#projshader_general">General</link>
+      </para>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/projection_shader.php#projshader_getimage">Create/Obtain an Image to Project</link>
+      </para>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/projection_shader.php#projshader_resize">Resize the Graphics Display</link>
+      </para>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/projection_shader.php#projshader_actframe">Ensure the Framebuffer is Active</link>
+      </para>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/projection_shader.php#projshader_dispimage">Display the Image</link>
+      </para>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/projection_shader.php#projshader_overlayimage">Overlay the Image</link>
+      </para>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/projection_shader.php#projshader_savesettingsfile">Save the Projection Shader Settings File</link>
+      </para>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/projection_shader.php#projshader_render">Render the Image</link>
+      </para>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/projection_shader.php#projshader_projectfront">Project the Image on the Front</link>
+      </para>
+   </listitem>
+ </itemizedlist>
+</listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/tire.php#Overview">Tire</link>
+      </para>
+      <itemizedlist>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/tire.php#Specifying_a_Tire">Specifying Tire</link>
+      </para>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/tire.php#Options_for_Tire">Options for Tire</link>
+      </para>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/tire.php#Setting_Tire_Thickness">Setting Tire Thickness</link>
+      </para>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/tire.php#Changing_the_Rim_width">Changing the Rim Width</link>
+      </para>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/tire.php#Changing_the_Redial">Changing the Radial </link>
+      </para>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/tire.php#Other_Options">Other Options</link>
+      </para>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/tire.php#Structure_of_a_Tire">Structure of a Tire Model</link>
+      </para>
+   </listitem>
+      <listitem>
+      <para>
+        <link xlink:href="../../articles/en/tire.php#Summary">Summary</link>
+      </para>
+   </listitem>
+ </itemizedlist>
+</listitem>
+  <listitem>
+    <para>
+        <link xlink:href="../../articles/en/TEMPLATE.php">Template</link>
+      </para>
+  </listitem>
+</itemizedlist>
+</listitem>
+<listitem>
+      <para>
+        <link xlink:href="../xx.php">Books</link>
+      </para>
+      <itemizedlist>
+        <listitem>
+          <para>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeI.php">BRL-CAD Tutorial Series-VolumeI</link>
+          </para>
+          <itemizedlist>
+            <listitem>
+              <para>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeI.php#whatisbrlcad">What is Brlcad ?</link>
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeI.php#whycsg">Why CSG Modeling?</link>
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeI.php#packagecontent">Package Content</link>
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeI.php#libraries">Libraries</link>
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeI.php#toolsutilities">Tools Utilities</link>
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeI.php#benchmarkingimages"> Benchmark Testing</link>
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeI.php#acknowledgments">Acknowledgments</link>
+              </para>
+            </listitem>
+
+          </itemizedlist>
+        </listitem>
+    <listitem>
+      <para>
+      <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php">BRL-CAD Tutorial Series-VolumeII</link>
+      </para>
+      <itemizedlist>
+        <listitem>
+          <para>
+          <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#Preface">Preface</link>
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+          <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#Acknowledgments">Acknowledgments</link>
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+          <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-1">Creating Primitive Shapes</link>
+          </para>
+          <itemizedlist>
+            <listitem>
+              <para>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#launching_mged">Launching the MGED Program</link>
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#entering_commands">Entering Commands</link>
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#using_gui">Using Gui</link>
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#open_new_database">Open New Database</link>
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#create_new_database">Create New Database</link>
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#assign_title">Assign Title</link>
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#set_units">Set Units</link>
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#select_primitive">Select Primitive</link>
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#create_sphere_cmd_line">Create Sphere Cmd Line</link>
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#clear_window">Clear Window</link>
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#draw_object">Draw Object</link>
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#erase_from_window">Erase From Window</link>
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#create_sphere_gui">Create Sphere Gui</link>
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#view_params">View Params</link>
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#list_db_contents">List db Contents</link>
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#kill_object">Kill Object</link>
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#editing_commands">Editing Commands</link>
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#quitting">Quitting</link>
+              </para>
+            </listitem>
+            <listitem>
+              <para>
+              <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#creating_primitive_shapes_review">Creating Primitive Shapes Review</link>
+              </para>
+            </listitem>
+          </itemizedlist>
+        </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-2"> Learning the Viewing Options</link>
+        </para>
+      <itemizedlist>
+      <listitem>
+        <para>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#creating_radio">Creating Radio</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#locating_viewing_info_cmd_window">Locating Viewing info Cmd Window</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#entering_commands">Entering Commands</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#entering_commands">Entering Commands</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#coord_sys_summary">Coord sys Summary</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#view_radio_angles">View Radio Angles</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#shift_grips">Shift Grips</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#learning_viewing_options_review">Learning viewing options Review</link>
+        </para>
+      </listitem>
+      </itemizedlist>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#Lessons-3">Using the Insert Command to Size and Place Shapes</link>
+        </para>
+       <itemizedlist>
+      <listitem>
+        <para>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#new_db_myShapes">New db MyShapes</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#sphere_make">Sphere Make</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#using_in">Using in</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#args_on_one_line">Args on one Line</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#command_combined_in">Command Combined in</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#mged_naming_conventions">Mged Naming Conventions</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#view_shapes">View Shapes</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#using_insert_command_quit">Using insert command quit</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#using_insert_command_review">using insert command review</link>  </para>
+      </listitem>
+</itemizedlist>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-4">Assigning Material Properties and Raytracing</link>
+</para>
+<itemizedlist>
+<listitem>
+<para>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#assigning_material_properties_and_raytracing_opendb">Assigning material properties and raytracing opendb</link>
+</para>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#create_region">Create Region</link>
+</para>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#assign_material_prop">Assign Material Prop</link>
+</para>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#clear_window_new_region">Clear Window New Region</link>
+</para>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#raytrace_model">Raytrace Model</link>
+</para>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#layers_graphics_window">Layers Graphics Window</link>
+</para>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#clear_graphics_window">Clear Graphics Window</link>
+</para>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#assigning_material_properties_and_raytracing_review">Review</link>
+</para>
+</listitem>
+</itemizedlist>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-5">Learning About Boolean Expressions</link>
+</para>
+<itemizedlist>
+<listitem>
+<para>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#boolean_tools">Boolean Tools</link>
+</para>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#making_regions_bool_ops">Making regions bool ops</link>
+</para>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#operator_precedence">Operator Precedence</link>
+</para>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#learning_boolean_operations_review">Review</link>
+</para>
+</listitem>
+</itemizedlist>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-6">Creating a Goblet</link>
+</para>
+<itemizedlist>
+<listitem>
+<para>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_new_database">Goblet New Database</link>
+</para>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_view_data_tree">Goblet view Data Tree</link>
+</para>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#raytracing_goblet">Raytracing Goblet</link>
+</para>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#creating_goblet_review">Creating Goblet Review</link>
+</para>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#making_goblet_regions">Making Goblet Regions</link>
+</para>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#making_goblet_region_comb">Making Goblet Region Comb</link>
+</para>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#making_goblet_region_comb">Making Goblet Region Comb</link>
+</para>
+</listitem>
+</itemizedlist>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-8"> Assigning Material Properties to Your Goblet</link>
+</para>
+<itemizedlist>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_review_opening_db">Goblet review opening db</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_assign_colors">Goblet assign colors</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_transparency_mirror">Goblet transparency mirror</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_newforms_raytrace">Goblet newforms Raytrace</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_material_properties_review">Goblet material properties review</link>
+  </para>
+  </listitem>
+</itemizedlist>
+</listitem>
+<listitem>
+<para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson">Assigning More Material Properties to Your Goblet</link>
+  </para>
+<itemizedlist>
+<listitem>
+<para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_specular_diffuse">Goblet specular diffuse</link>
+  </para>
+</listitem>
+<listitem>
+<para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_refractive_index">Goblet refractive index</link>
+  </para>
+</listitem>
+<listitem>
+<para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_shininess">Goblet shininess</link>
+  </para>
+</listitem>
+<listitem>
+<para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_extinction">Goblet extinction</link>
+  </para>
+</listitem>
+<listitem>
+<para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_emission">Goblet emission</link>
+  </para>
+</listitem>
+<listitem>
+<para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_shader_attributes">Goblet shader attributes</link>
+  </para>
+</listitem>
+</itemizedlist>
+</listitem>
+<listitem>
+<para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#goblet_material_properties2_review">Goblet material properties2 review</link>
+  </para>
+ <itemizedlist>
+  <listitem>
+<para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-9">Creating a Globe in a Display Box</link>
+  </para>
+</listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#globe_in_display_newdb">Globe in display newdb</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#globe_create_display_box">Globe create display box</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#create_globe_in_box">Create globe in box</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#globe_assign_mater_prop">Globe assign mater prop</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#globe_move_rotate">Globe move rotate</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#globe_use_color_tool">Globe use color tool</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#globe_in_display_box_review">Globe in display box review</link>
+  </para>
+  </listitem>
+  </itemizedlist>
+</listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-11">Refining the Mug</link>
+  </para>
+  <itemizedlist>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#mug_new_db">Mug new db</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#mug_outside_cyl">Mug outside cyl</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#mug_handle">Mug handle</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#mug_comb1">Mug comb1</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#mug_comb2">Mug comb2</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#mug_region">Mug region</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#mug_review">Mug review</link>
+  </para>
+  </listitem>
+  </itemizedlist>
+</listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-12">Creating the Mug Through the GUI</link>
+  </para>
+  <itemizedlist>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#mug_mater_prop_mater_cmd">Mug mater prop mater cmd</link>
+  </para>
+</listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#mug_raytrace1">Mug raytrace1</link>
+  </para>
+</listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#mug_refining">Mug refining</link>
+  </para>
+</listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#mug_torus_cup_combine">Mug torus cup combine</link>
+  </para>
+</listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#refining_mug_review">Refining mug review</link>
+  </para>
+</listitem>
+  </itemizedlist>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-13">Placing Shapes in 3-D Space</link>
+  </para>
+  <itemizedlist>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#candle_create_tabletop">candle create tabletop</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#candle_create_base">candle create base</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#candle_create_candle">candle create candle</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#candle_create_flame">candle create flame</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#candle_create_combination">candle create combination</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#candle_check_data_tree">candle check data tree</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#candle_assign_mater_prop">candle assign mater prop</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#candle_raytrace">candle raytrace</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#placing_shapes_in_3d_review">placing shapes in 3d review</link>
+  </para>
+</listitem>
+  </itemizedlist>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-14">Gaining More Practice Placing Shapes in Space</link>
+  </para>
+  <itemizedlist>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#candle_base_1st_sphere">candle base 1st sphere</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#multipane_feature">multipane feature</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#copies_of_shapes">copies of shapes</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#practice_make_regions_spheres">practice make regions spheres</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#candle_base_spheres_combine">candle base spheres combine</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#placing_shapes_in_3d_2_review">placing shapes in 3d 2 review</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#candle_assign_mater_prop">candle assign mater prop</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#candle_raytrace">candle raytrace</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#placing_shapes_in_3d_review">placing shapes in 3d review</link>
+  </para>
+</listitem>
+</itemizedlist>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-15">Creating a Toy Truck</link>
+  </para>
+  <itemizedlist>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#truck_cab_in_cmd">truck cab in cmd</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#truck_hood_in_cmd">truck hood in cmd</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#truck_cab_wheel_well">truck cab wheel well</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#ok_accept_apply_reset_cancel_dismiss">ok accept apply reset cancel dismiss</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#truck_wheel_well_prim_edit_cpy">truck wheel well prim edit cpy</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#truck_cab_shape_comb">truck cab shape comb</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#truck_body_in_cmd">truck body in cmd</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#prim_ed_wheel_wells">prim ed wheel wells</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#truck_body_wheel_wells_comb">truck body wheel wells comb</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#truck_cab_body_region">truck cab body region</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#truck_wheels">truck wheels</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#truck_wheels_region">truck wheels region</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#truck_regions_mater_props">truck regions mater props</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#on_screen_help">on screen help</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#stacker_shading">stacker shading</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#using_stacker_shading">using stacker shading</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#truck_combine_regions">truck combine regions</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#truck_raytracing">truck raytracing</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#creating_toy_truck_review">creating toy truck review</link>
+  </para>
+</listitem>
+
+</itemizedlist>
+</listitem>
+ <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-16"> Learning Modeling Techniques and Structures</link>
+  </para>
+  <itemizedlist>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#radio_shapes_to_regions">Radio shapes to regions</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#body_of_radio">body of radio</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#radio_other_regions">radio other regions</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#radio_assembly_comb">radio assembly comb</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#radio_assign_mater_props">radio assign mater props</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#radio_internal_components">radio internal components</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#radio_specialty_models">radio specialty models</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+    <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#radio_structure_redefinition">radio structure redefinition</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeII.php#modeling_techniques_and_structures_review">modeling techniques and structures review</link>
+  </para>
+</listitem>
+</itemizedlist>
+</listitem>
+</itemizedlist>
+</listitem>
+ <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php">BRL-CAD_Tutorial_Series-VolumeIII</link>
+  </para>
+  <itemizedlist>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#volIIIintro">Introduction</link>
+  </para>
+</listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#modelprocess">The Model Process</link>
+  </para>
+  <itemizedlist>
+    <listitem>
+      <para>
+    <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#The_Importance_of_the_Model_Mission">The Importance of the Model Mission</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+    <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#M_O_D_E_L_A_Five-Step_Approach_to_Creating_Effective_Models">M-O-D-E-L: A Five-Step Approach to Creating Effective Models</link>
+      </para>
+    </listitem>
+  </itemizedlist>
+</listitem>
+
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php##projshader_resize">Projshader resize</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#projshader_getimage">Projshader getimage</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#projshader_actframe">Projshader actframe</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#projshader_dispimage">Projshader dispimage</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#projshader_overlayimage">Projshader overlay image</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#projshader_savesettingsfile">Projshader savesettings file</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+    <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#projshader_projectfront">Projshader projectfront</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#build_pattern_generalinfo">Build pattern generalinfo</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#build_pattern_generalinfo">Build pattern general Info</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#build_pattern_names">Build pattern names</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#build_pattern_fields">Build pattern fields</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#build_pattern_stringsub">Build pattern stringsub</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#build_pattern_recpatterns">Build pattern recpatterns</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#build_pattern_cylind">Build pattern cyl ind</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#build_pattern_spherical">Build pattern spherical</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#volIIImodelprocess">Model process</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#volIIImeasuringdata">Measuring data</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#volIIIorganizing">organizing</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#volIIIdevgeometry">develop geometry</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#build_pattern_recpatterns">Build pattern recpatterns</link>
+  </para>
+</listitem>
+</itemizedlist>
+</listitem>
+ <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php">BRL-CAD_Tutorial_Series-VolumeIV</link>
+  </para>
+  <itemizedlist>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#chapt_introduction">Introduction</link>
+  </para>
+  <itemizedlist>
+    <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Background_Purpose_and_Scope">Background, Purpose, and Scope</link>
+  </para>
+    </listitem>
+    <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#The_Need_for_Conversion">The Need for Conversion</link>
+  </para>
+    </listitem>
+
+  </itemizedlist>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#chapt_pert_char">Pert char</link>
+  </para>
+<itemizedlist>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#CSG_vs._BREP">CSG_vs._BREP</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Prerelease_6.0_Database_vs._Current_Format">Prerelease 6.0 Database vs. Current Format</link>
+  </para>
+  </listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converters_Currently_Available_in_BRL-CAD">Converters Currently Available in BRL-CAD</link>
+  </para>
+  </listitem>
+</itemizedlist>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#sec_convert_from_to_ascii">Convert from to ascii</link>
+  </para>
+  <itemizedlist>
+    <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_ASCII">Converting From ASCII</link>
+  </para>
+    </listitem>
+    <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_to_ASCII">Converting_to_ASCII</link>
+  </para>
+    </listitem>
+  </itemizedlist>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#sec_convert_to_brlcad">Convert to brlcad</link>
+  </para>
+<itemizedlist>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#General_Information_About_Converting_to_BRL-CAD">General Information About Converting to BRL-CAD</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_AutoCAD_DXF_Format">Converting From AutoCAD DXF Format</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_Elysium_Neutral_Facetted_Format">Converting From Elysium Neutral Facetted Format</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_EUCLID_Format">Converting From EUCLID Format</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_FASTGEN_Format">Converting From FASTGEN Format</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_IGES_Format">Converting From IGES Format</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_Jack">Converting From Jack</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_NASTRAN_Format">Converting From NASTRAN Format</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_Pro_E_Format">Converting From Pro/E Format</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_STL_Format">Converting From STL Format</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_TANKILL_Format">Converting From TANKILL Format</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_Unigraphics_Format">Converting From Unigraphics Format</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_Viewpoint_Datalabs_Format">Converting From Viewpoint Datalabs Format</link>
+  </para>
+  </listitem>
+</itemizedlist>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#sec_convert_from_brlcad">Convert from brlcad</link>
+  </para>
+  <itemizedlist>
+    <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#General_Information_About_Converting_From_BRL-CAD">General Information About Converting From BRL-CAD</link>
+  </para>
+    </listitem>
+    <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_to_ACAD_Format">Converting to ACAD Format</link>
+  </para>
+    </listitem>
+    <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_to_AutoCAD_DXF_Format">Converting to AutoCAD DXF Format</link>
+  </para>
+    </listitem>
+    <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_to_EUCLID_Format">Converting to EUCLID Format</link>
+  </para>
+    </listitem>
+    <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_to_IGES_Format">Converting to IGES Format
+</link>
+  </para>
+    </listitem>
+    <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_to_Jack">Converting to Jack</link>
+  </para>
+    </listitem>
+    <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_to_STL_Format">Converting to STL Format</link>
+  </para>
+    </listitem>
+    <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_to_TANKILL_Format">Converting to TANKILL Format</link>
+  </para>
+    </listitem>
+    <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_to_VRML_Format">Converting to VRML Format</link>
+  </para>
+    </listitem>
+    <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_to_Wavefront_Format">Converting to Wavefront Format</link>
+  </para>
+    </listitem>
+    <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_to_X3D_Format">Converting to X3D Format</link>
+  </para>
+    </listitem>
+
+  </itemizedlist>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#sec_build_new_converter">Build new converter</link>
+  </para>
+  <itemizedlist>
+    <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#General_Information_About_Building_a_New_Converter">General Information About Building a New Converter</link>
+  </para>
+    </listitem>
+    <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#Converting_From_BRL-CAD">Converting From BRL-CAD</link>
+  </para>
+    </listitem>
+    <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#Converting_to_BRL-CAD">Converting to BRL-CAD</link>
+  </para>
+    </listitem>
+  </itemizedlist>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../books/BRL-CAD_Tutorial_Series-VolumeIII.php#sec_postconversion_issues">Postconversion issues</link>
+  </para>
+</listitem>
+</itemizedlist>
+</listitem>
+</itemizedlist>
+</listitem>
+<listitem>
+  <para>
+ <link xlink:href="../xxx.php">Lessons</link>
+  </para>
+
+<itemizedlist>
+<listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged01_creating_primitive_shapes.php">Mged01 creating primitive shapes</link>
+  </para>
+<itemizedlist>
+  <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged01_creating_primitive_shapes.php#launching_mged">Launching Mged</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged01_creating_primitive_shapes.php#entering_commands">Entering commands</link>
+  </para>
+  </listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged01_creating_primitive_shapes.php#using_gui">Using gui</link>
+  </para>
+  </listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged01_creating_primitive_shapes.php#open_new_database">Open new database</link>
+  </para>
+  </listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged01_creating_primitive_shapes.php#create_new_database">Create new database</link>
+  </para>
+  </listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged01_creating_primitive_shapes.php#assign_title">Assign title</link>
+  </para>
+  </listitem>
+    <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged01_creating_primitive_shapes.php#set_units">Set units</link>
+  </para>
+  </listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged01_creating_primitive_shapes.php#select_primitive">Select primitive</link>
+  </para>
+  </listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged01_creating_primitive_shapes.php#create_sphere_cmd_line">Create sphere cmd line</link>
+  </para>
+  </listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged01_creating_primitive_shapes.php#clear_window">Clear window</link>
+  </para>
+  </listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged01_creating_primitive_shapes.php#clear_window">Clear window</link>
+  </para>
+  </listitem>
+     <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged01_creating_primitive_shapes.php#draw_object">Draw object</link>
+  </para>
+  </listitem>
+    <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged01_creating_primitive_shapes.php#erase_from_window">Erase from window</link>
+  </para>
+  </listitem>
+    <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged01_creating_primitive_shapes.php#create_sphere_gui">Create sphere gui</link>
+  </para>
+  </listitem>
+    <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged01_creating_primitive_shapes.php#view_params">view params</link>
+  </para>
+  </listitem>
+    <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged01_creating_primitive_shapes.php#list_db_contents">List db contents</link>
+  </para>
+  </listitem>
+    <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged01_creating_primitive_shapes.php#kill_object">Kill object</link>
+  </para>
+  </listitem>
+    <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged01_creating_primitive_shapes.php#editing_commands">Editing commands</link>
+  </para>
+  </listitem>
+     <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged01_creating_primitive_shapes.php#quitting">Quitting</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged01_creating_primitive_shapes.php#creating_primitive_shapes_review">Creating primitive shapes review</link>
+  </para>
+  </listitem>
+</itemizedlist>
+</listitem>
+<listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged02_learning_viewing_options.php">Mged02 Learning Viewing Options in MGED</link>
+  </para>
+<itemizedlist>
+  <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged02_learning_viewing_options.php#creating_radio">Creating radio</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged02_learning_viewing_options.php#entering_commands">Locating viewing info cmd window</link>
+  </para>
+  </listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged02_learning_viewing_options.php#viewing_system_elements">Viewing system elements</link>
+  </para>
+  </listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged02_learning_viewing_options.php#coord_sys_summary">Coord sys summary</link>
+  </para>
+  </listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged02_learning_viewing_options.php#view_radio_angles">View radio angles</link>
+  </para>
+  </listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged02_learning_viewing_options.php#shift_grips">Shift grips</link>
+  </para>
+  </listitem>
+    <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged02_learning_viewing_options.php#learning_viewing_options_review">Learning viewing options review</link>
+  </para>
+</listitem>
+</itemizedlist>
+</listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../lessons/en/mged03_using_insert_command.php">Command to Size and Place Shapes</link>
+        </para>
+       <itemizedlist>
+      <listitem>
+        <para>
+        <link xlink:href="../../lessons/en/mged03_using_insert_command.php#new_db_myShapes">New db MyShapes</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../lessons/en/mged03_using_insert_command.php#sphere_make">Sphere Make</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../lessons/en/mged03_using_insert_command.php#using_in">Using in</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../lessons/en/mged03_using_insert_command.php#args_on_one_line">Args on one Line</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../lessons/en/mged03_using_insert_command.php#command_combined_in">Command Combined in</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../lessons/en/mged03_using_insert_command.php#mged_naming_conventions">Mged Naming Conventions</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../lessons/en/mged03_using_insert_command.php#view_shapes">View Shapes</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../lessons/en/mged03_using_insert_command.php#using_insert_command_quit">Using insert command quit</link>
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+        <link xlink:href="../../lessons/en/mged03_using_insert_command.php#using_insert_command_review">using insert command review</link>  </para>
+      </listitem>
+</itemizedlist>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../lessons/en/mged04_assign_mat_prop_rt.php#6">Assigning Material Properties and Raytracing</link>
+</para>
+<itemizedlist>
+<listitem>
+<para>
+<link xlink:href="../../lessons/en/mged04_assign_mat_prop_rt.php#assigning_material_properties_and_raytracing_opendb">Assigning material properties and raytracing opendb</link>
+</para>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../lessons/en/mged04_assign_mat_prop_rt.php#create_region">Create Region</link>
+</para>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../lessons/en/mged04_assign_mat_prop_rt.php#assign_material_prop">Assign Material Prop</link>
+</para>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../lessons/en/mged04_assign_mat_prop_rt.php#clear_window_new_region">Clear Window New Region</link>
+</para>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../lessons/en/mged04_assign_mat_prop_rt.php#raytrace_model">Raytrace Model</link>
+</para>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../lessons/en/mged04_assign_mat_prop_rt.php#layers_graphics_window">Layers Graphics Window</link>
+</para>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../lessons/en/mged04_assign_mat_prop_rt.php#clear_graphics_window">Clear Graphics Window</link>
+</para>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../lessons/en/mged04_assign_mat_prop_rt.php#assigning_material_properties_and_raytracing_review">Review</link>
+</para>
+</listitem>
+</itemizedlist>
+</listitem>
+
+
+<listitem>
+<para>
+<link xlink:href="../../lessons/en/mged05_learning_boolean_expressions.php#7">Learning About Boolean Expressions</link>
+</para>
+<itemizedlist>
+<listitem>
+<para>
+<link xlink:href="../../lessons/en/mged05_learning_boolean_expressions.php#boolean_tools">Boolean tools</link>
+</para>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../lessons/en/mged05_learning_boolean_expressions.php#boolean_operations">Boolean operations</link>
+</para>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../lessons/en/mged05_learning_boolean_expressions.php#making_regions_bool_ops">Making regions bool ops</link>
+</para>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../lessons/en/mged05_learning_boolean_expressions.php#operator_precedence">Operator precedence</link>
+</para>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../lessons/en/mged05_learning_boolean_expressions.php#learning_boolean_operations_review">Learning boolean operations review</link>
+</para>
+</listitem>
+</itemizedlist>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../lessons/en/mged06_creating_a_goblet.php#8">Creating a Goblet</link>
+</para>
+<itemizedlist>
+<listitem>
+<para>
+<link xlink:href="../../lessons/en/mged06_creating_a_goblet.php#goblet_new_database">Goblet New Database</link>
+</para>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../lessons/en/mged06_creating_a_goblet.php#goblet_view_data_tree">Goblet view Data Tree</link>
+</para>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../lessons/en/mged06_creating_a_goblet.php#raytracing_goblet">Raytracing Goblet</link>
+</para>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../lessons/en/mged06_creating_a_goblet.php#creating_goblet_review">Creating Goblet Review</link>
+</para>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../lessons/en/mged06_creating_a_goblet.php#making_goblet_regions">Making Goblet Regions</link>
+</para>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../lessons/en/mged06_creating_a_goblet.php#making_goblet_region_comb">Making Goblet Region Comb</link>
+</para>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../lessons/en/mged06_creating_a_goblet.php#making_goblet_region_comb">Making Goblet Region Comb</link>
+</para>
+</listitem>
+</itemizedlist>
+</listitem>
+<listitem>
+<para>
+<link xlink:href="../../lessons/en/mged07_goblet_material_properties.php#9"> Assigning Material Properties to Your Goblet</link>
+</para>
+<itemizedlist>
+  <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged07_goblet_material_properties.php#goblet_review_opening_db">Goblet review opening db</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged07_goblet_material_properties.php#goblet_assign_colors">Goblet assign colors</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged07_goblet_material_properties.php#goblet_transparency_mirror">Goblet transparency mirror</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged07_goblet_material_properties.php#goblet_newforms_raytrace">Goblet newforms Raytrace</link>
+  </para>
+  </listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged07_goblet_material_properties.php#goblet_material_properties_review">Goblet material properties review</link>
+  </para>
+  </listitem>
+</itemizedlist>
+</listitem>
+<listitem>
+<para>
+  <link xlink:href="../../lessons/en/mged08_goblet_material_properties2.php#10">Assigning More Material Properties to Your Goblet</link>
+  </para>
+<itemizedlist>
+<listitem>
+<para>
+  <link xlink:href="../../lessons/en/mged08_goblet_material_properties2.php#goblet_specular_diffuse">Goblet specular diffuse</link>
+  </para>
+</listitem>
+<listitem>
+<para>
+  <link xlink:href="../../lessons/en/mged08_goblet_material_properties2.php#goblet_refractive_index">Goblet refractive index</link>
+  </para>
+</listitem>
+<listitem>
+<para>
+  <link xlink:href="../../lessons/en/mged08_goblet_material_properties2.php#goblet_shininess">Goblet shininess</link>
+  </para>
+</listitem>
+<listitem>
+<para>
+  <link xlink:href="../../lessons/en/mged08_goblet_material_properties2.php#goblet_extinction">Goblet extinction</link>
+  </para>
+</listitem>
+<listitem>
+<para>
+  <link xlink:href="../../lessons/en/mged08_goblet_material_properties2.php#goblet_emission">Goblet emission</link>
+  </para>
+</listitem>
+<listitem>
+<para>
+  <link xlink:href="../../lessons/en/mged08_goblet_material_properties2.php#goblet_shader_attributes">Goblet shader attributes</link>
+  </para>
+</listitem>
+</itemizedlist>
+</listitem>
+<listitem>
+<para>
+  <link xlink:href="../../lessons/en/mged09_globe_in_display_box.php#goblet_material_properties2_review#11">Goblet material properties2 review</link>
+  </para>
+ <itemizedlist>
+  <listitem>
+<para>
+  <link xlink:href="../../lessons/en/mged09_globe_in_display_box.php">Creating a Globe in a Display Box</link>
+  </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged09_globe_in_display_box.php#globe_in_display_newdb">Globe in display newdb</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged09_globe_in_display_box.php#globe_create_display_box">Globe create display box</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged09_globe_in_display_box.php#create_globe_in_box">Create globe in box</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged09_globe_in_display_box.php#globe_assign_mater_prop">Globe assign mater prop</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged09_globe_in_display_box.php#globe_move_rotate">Globe move rotate</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged09_globe_in_display_box.php#globe_use_color_tool">Globe use color tool</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged09_globe_in_display_box.php#globe_in_display_box_review">Globe in display box review</link>
+      </para>
+    </listitem>
+  </itemizedlist>
+</listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged10_creating_mug.php#12">Refining the Mug</link>
+  </para>
+  <itemizedlist>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged10_creating_mug.php#mug_new_db">Mug new db</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged10_creating_mug.php#mug_outside_cyl">Mug outside cyl</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged10_creating_mug.php#mug_handle">Mug handle</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged10_creating_mug.php#mug_comb1">Mug comb1</link>
+      </para>
+    </listitem>
+   <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged10_creating_mug.php#mug_comb2">Mug comb2</link>
+      </para>
+    </listitem>
+   <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged10_creating_mug.php#mug_region">Mug region</link>
+      </para>
+    </listitem>
+   <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged10_creating_mug.php#mug_review">Mug review</link>
+      </para>
+    </listitem>
+  </itemizedlist>
+</listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged11_refining_mug.php#14">Creating the Mug Through the GUI</link>
+  </para>
+  <itemizedlist>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged11_refining_mug.php#mug_mater_prop_mater_cmd">Mug mater prop mater cmd</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged11_refining_mug.php#mug_raytrace1">Mug raytrace1</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged11_refining_mug.php#mug_refining">Mug refining</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged11_refining_mug.php#mug_torus_cup_combine">Mug torus cup combine</link>
+      </para>
+</listitem>
+  <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged11_refining_mug.php#refining_mug_review">Refining mug review</link>
+  </para>
+</listitem>
+  </itemizedlist>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged12_mug_through_gui.php#15">Creating the Mug Through the GUI</link>
+  </para>
+  <itemizedlist>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged12_mug_through_gui.php#mug_gui_create_body">Mug gui create body</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged12_mug_through_gui.php#mug_gui_create_handle">Mug gui create handle</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged12_mug_through_gui.php#mug_gui_create_rim">Mug gui create rim</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged12_mug_through_gui.php#mug_gui_create_combinations">Mug gui create combinations</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged12_mug_through_gui.php#mug_gui_make_region">Mug gui make region</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged12_mug_through_gui.php#mug_gui_check_tree">Mug gui check tree</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged12_mug_through_gui.php#mug_gui_comb_edit_props">Mug gui comb edit props</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged12_mug_through_gui.php#mug_gui_raytracing">Mug gui raytracing</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged12_mug_through_gui.php#mug_through_gui_review">Mug through gui review</link>
+      </para>
+</listitem>
+  </itemizedlist>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged13_placing_shapes_in_3d.php#16">Placing Shapes in 3-D Space</link>
+      </para>
+  <itemizedlist>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged13_placing_shapes_in_3d.php#candle_create_tabletop">candle create tabletop</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged13_placing_shapes_in_3d.php#candle_create_base">candle create base</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged13_placing_shapes_in_3d.php#candle_create_candle">candle create candle</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged13_placing_shapes_in_3d.php#candle_create_flame">candle create flame</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged13_placing_shapes_in_3d.php#candle_create_combination">candle create combination</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged13_placing_shapes_in_3d.php#candle_check_data_tree">candle check data tree</link>
+      </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged13_placing_shapes_in_3d.php#candle_assign_mater_prop">candle assign mater prop</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged13_placing_shapes_in_3d.php#candle_raytrace">candle raytrace</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged13_placing_shapes_in_3d.php#placing_shapes_in_3d_review">placing shapes in 3d review</link>
+  </para>
+</listitem>
+  </itemizedlist>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged14_placing_shapes_in_3d_2.php#17">Gaining More Practice Placing Shapes in Space</link>
+  </para>
+  <itemizedlist>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged14_placing_shapes_in_3d_2.php#candle_base_1st_sphere">candle base 1st sphere</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged14_placing_shapes_in_3d_2.php#multipane_feature">multipane feature</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged14_placing_shapes_in_3d_2.php#copies_of_shapes">copies of shapes</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged14_placing_shapes_in_3d_2.php#practice_make_regions_spheres">practice make regions spheres</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged14_placing_shapes_in_3d_2.php#candle_base_spheres_combine">candle base spheres combine</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged14_placing_shapes_in_3d_2.php#placing_shapes_in_3d_2_review">placing shapes in 3d 2 review</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged14_placing_shapes_in_3d_2.php#candle_assign_mater_prop">candle assign mater prop</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged14_placing_shapes_in_3d_2.php#candle_raytrace">candle raytrace</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged14_placing_shapes_in_3d_2.php#placing_shapes_in_3d_review">placing shapes in 3d review</link>
+      </para>
+</listitem>
+</itemizedlist>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged15_creating_a_toy_truck.php#17">Creating a Toy Truck</link>
+      </para>
+  <itemizedlist>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged15_creating_a_toy_truck.php#truck_cab_in_cmd">truck cab in cmd</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged15_creating_a_toy_truck.php#truck_hood_in_cmd">truck hood in cmd</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged15_creating_a_toy_truck.php#truck_cab_wheel_well">truck cab wheel well</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged15_creating_a_toy_truck.php#ok_accept_apply_reset_cancel_dismiss">ok accept apply reset cancel dismiss</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged15_creating_a_toy_truck.php#truck_wheel_well_prim_edit_cpy">truck wheel well prim edit cpy</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged15_creating_a_toy_truck.php#truck_cab_shape_comb">truck cab shape comb</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged15_creating_a_toy_truck.php#truck_body_in_cmd">truck body in cmd</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged15_creating_a_toy_truck.php#prim_ed_wheel_wells">prim ed wheel wells</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged15_creating_a_toy_truck.php#truck_body_wheel_wells_comb">truck body wheel wells comb</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged15_creating_a_toy_truck.php#truck_cab_body_region">truck cab body region</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged15_creating_a_toy_truck.php#truck_wheels">truck wheels</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged15_creating_a_toy_truck.php#truck_wheels_region">truck wheels region</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged15_creating_a_toy_truck.php#truck_regions_mater_props">truck regions mater props</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged15_creating_a_toy_truck.php#on_screen_help">on screen help</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged15_creating_a_toy_truck.php#stacker_shading">stacker shading</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged15_creating_a_toy_truck.php#using_stacker_shading">using stacker shading</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged15_creating_a_toy_truck.php#truck_combine_regions">truck combine regions</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged15_creating_a_toy_truck.php#truck_raytracing">truck raytracing</link>
+  </para>
+</listitem>
+   <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged15_creating_a_toy_truck.php#creating_toy_truck_review">creating toy truck review</link>
+  </para>
+</listitem>
+
+</itemizedlist>
+</listitem>
+ <listitem>
+  <para>
+  <link xlink:href="../../lessons/en/mged16_mod_tech_struct.php#19"> Learning Modeling Techniques and Structures</link>
+      </para>
+  <itemizedlist>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged16_mod_tech_struct.php#radio_shapes_to_regions">Radio shapes to regions</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged16_mod_tech_struct.php#body_of_radio">body of radio</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged16_mod_tech_struct.php#radio_other_regions">radio other regions</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged16_mod_tech_struct.php#radio_assembly_comb">radio assembly comb</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged16_mod_tech_struct.php#radio_assign_mater_props">radio assign mater props</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged16_mod_tech_struct.php#radio_internal_components">radio internal components</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged16_mod_tech_struct.php#radio_specialty_models">radio specialty models</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+    <link xlink:href="../../lessons/en/mged16_mod_tech_struct.php#radio_structure_redefinition">radio structure redefinition</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+  <link xlink:href="../../lessons/en/mged16_mod_tech_struct.php#modeling_techniques_and_structures_review">modeling techniques and structures review</link>
+      </para>
+</listitem>
+</itemizedlist>
+</listitem>
+</itemizedlist>
+</listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../xxxx.php">Man 1</link>
+      </para>
+    <itemizedlist>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/ap-pix.php">AP Pix</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/asc2dsp.php">Asc2dsp</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/asc2g.php">ASC2G</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/asc-nmg.php">ASC NMG</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/asc-plot3.php">ASC PLOT 3</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/azel.php">Azel</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/bary.php">Bary</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/benchmark.php">Benchmark</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/bot_dump.php">Bot Dump</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/brep_simple.php">Brep Simple</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/brlcad.php">Brlcad</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/brlcad-config.php">BrlCad Config</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/buffer.php">Buffer</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/bw3-pix.php">BW 3 Pix</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/bwcrop.php">BwCrop</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/bwdiff.php">BWDfiff</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/bw-fb.php">BW FB</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/bwfilter.php">BW Filter</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/bwhist.php">Bwhist</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/bwhisteq.php">Bwhisteq</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/bw-imp.php">Bw Imp</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/bwmod.php">Bwmod</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/bw-pix.php">BW PIX</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/bw-png.php">BW PNG</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/bw-ps.php">BW PS</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/bwrect.php">BW Rect</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/bw-rle.php">BW RLE</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/bwrot.php">BW ROT</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/bwscale.php">BW SCALE</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/bwshrink.php">BW Shrink</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/bwstat.php">BW STAT</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/bwthresh.php">BW THRESH</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/cad_boundp.php">CAP Boundp</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/cad_parea.php">CAD Parea</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/canonize.php">Canonize</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/cell-fb.php">Cell FB</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/cmap-fb.php">Cmap FB</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/coil.php">Coil</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/comgeom-g.php">Comgeom G</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/conv-vg2g.php">Conv vg2g</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/cv.php">Cv</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/cy-g.php">Cy-g </link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/db.php">db</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/dbclean.php">Db Clean</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/dbcp.php">Db cp</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/decimate.php">Decimate</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/dpix-pix.php">Dpix pix</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/dxf-g.php">Dxf-g</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/enf-g.php">enf-g</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/euclid-g.php">euclid-g</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/fast4-g.php">Fast4-g</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/fbanim.php">Fbanim</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/fb-bw.php">Fb-bw</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/fbcbars.php">Fbcbars</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/fbclear.php">Fbclear</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/fbcmap.php">Fbcmap</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/fb-cmap.php">Fb Cmap</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/fbcmrot.php">Fbcmrot</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/fbcolor.php">Fbcolor</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/fbed.php">Fbed</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/fbfade.php">Fbfade</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/fb-fb.php">FB-FB</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/fbframe.php">Fb Frame</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/fbfree.php">Fb Free</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/fbgamma.php">Fb Gamma</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/fbgrid.php">Fb Grid</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/fbhelp.php">Fb Help</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/fblabel.php">Fb Label</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/fbline.php">Fb Line</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/fb-pix.php">Fb pix</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/fb-png.php">Fb Png</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/fbpoint.php">Fb Point</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/fb-rle.php">Fb RLE</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/fbscanplot.php">Fb Scanplot</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/fbserv.php">Fb Serv</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/fbstretch.php">Fb Stretch</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/fbzoom.php">Fb zoom</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/firpass.php">Fir pass</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/g2asc.php">G2asc</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/g-acad.php">g-aced</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/gdiff2.php">Gdiff2</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/g_diff.php">G Diff</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/g-dxf.php">G dxf</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/g-egg.php">G-egg</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/gencolor.php">Gen Color</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/g-euclid.php">g-euclid</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/gif2fb.php">Gif 2 fb</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/gif-fb.php">Gif Fb</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/g-iges.php">g-iges</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/g_lint.php">G Lint</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/g_niff.php">G-niff</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/g-nmg.php">G nmg</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/g-obj.php">G obj</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/gqa.php">gqa</link>
+      </para>
+    </listitem>
+
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/g-raw.php">G raw</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/g-shell-rect.php">G Shell Rect</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/g-step.php">G Step</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/g-stl.php">G-stl</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/g-tankill.php">G tankill</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/g-var.php">G-var</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/g-x3d.php">G x3d</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/halftone.php">Halftone</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/hex.php">hex</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/iges-g.php">Iges-g</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/imgdims.php">Imgdims</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/irdisp.php">Irdisp</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/ir-X.php">Ir-X</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/lgt.php">Lgt</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/loop.php">Loop</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/mac-pix.php">Mac Pix</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/mged.php">Mged</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/morphedit.php">Morphedit</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+       <link xlink:href="../../man1/en/nastran-g.php">Nastran </link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/nirt.php">Nirt</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/nmg-bot.php">nmg-bot</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/nmg-rib.php">Nmg-rib</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/obj-g.php">obj-g</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/patch-g.php">Patch G</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pictx.php">Pictx</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pix2asc.php">Pix 2 asc</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pix-alias.php">Pix Alias</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pixautosize.php">Pix Autosize</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pixbackgnd.php">Pix Backgnd</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pixbgstrip.php">Pix Gstrip</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pixblend.php">Pix Blend</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pixborder.php">Pix border</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pixbustup.php">Pix Bustup</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pix-bw.php">Pix Bw</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pix-bw3.php">Pix Bw 3</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pixclump.php">Pix Clump</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pixcmp.php">Pix Cmp</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pixcolors.php">Pix Color</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pixcut.php">Pix Cut</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pixdiff.php">Pix Diff</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pixfade.php">Pix Fade</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pix-fb.php">Pix fb</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pixfilter.php">Pix Filter</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pixhalve.php">Pix Halve</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pixhist.php">Pix hist</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pixhist3d.php">Pix hist3d</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pixhist3d-plot3.php">Pix hist3d Plot3</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pixinterp2x.php">Pix Interp2x</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pixmatte.php">Pix Matte</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pixmerge.php">Pix Merge</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pixmorph.php">Pix Morph</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pix-png.php">Pix Png</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pix-ppm.php">Pix Ppm</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pix-ps.php">Pix ps</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pixrect.php">Pix Rect</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pix-rle.php">Pix rle</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pixrot.php">Pix rot</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pixsaturate.php">Pix saturate</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pixscale.php">pixscale</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pixshrink.php">Pix Shrink</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pixstat.php">Pix Stat</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pixsubst.php">Pix subst</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pix-sun.php">Pix Sun</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pixtile.php">Pixtile</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pixuntile.php">Pix untile</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/plot3-asc.php">Plot3 Asc</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pixcolors.php">Plot 3 Color</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/plot3debug.php">Plot 3 debug</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/plot3-fb.php">Plot3-fb</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/plot3getframe.php">Plot 3 get frame</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/plot3-hpgi.php">Plot 3 hpgi</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/plot3line2.php">Plot 3 line 2</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/plot3-plot3.php">Plot 3 </link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/plot3-ps.php">Plot3 ps</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/plot3rot.php">Plot 3 rot</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/plot3-tek.php">Plot 3 tek</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/plot3-X.php">Plot3 x</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/ply-g.php">ply g</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/png-bw.php">Png bw</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/png-fb.php">Png fb</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/png_info.php">Png Info</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/png-pix.php">Png Pix</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/pp-fb.php">PP FB</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/proe-g.php">Proe-g</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/random.php">Random</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/ramapid.php">Ramapid</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/remrt.php">Remrt</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/reshoot.php">Reshoot</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/rel-fb.php">Rle Fb</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/rle-pix.php">Rle Pix</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/rpatch.php">Rpatch</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/rt.php">Rt</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/rtarea.php">Rtarea</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/rt_bot_faces.php">Rt Bot Faces</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/rtcheck.php">Rt Check</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/rtedge.php">R Tedge</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/rtexample.php">Rt example</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/rtg3.php">RTG3</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/rthide.php">RT Hide</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/rtpp.php">RT PP</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/rtrange.php">Rt Range</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/rtray.php">R Tray</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/rtscale.php">Rt Scale</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/rtshot.php">Rt shot</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/rtwalk.php">Rt Walk</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/rtweight.php">Rt Weight</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/rtwizard.php">Rt Wizard</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/rtxray.php">Rt xray</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/scriptsort.php">Script sort</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/secpass.php">Sec Pass</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/shapefact.php">Shape Fact</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/showshot.php">Show Shot</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/showtherm.php">Show Therm </link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/stl-g.php">Stl g</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/sun-pix.php">Sun  Pix</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/tankill-g.php">Tankill G</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/terrain.php">Terrain</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/tire.php">Tire</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/ug-g.php">Ug g</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/vdeck.php">Vdeck</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/viewpoint-g.php">View Point</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/wavelet.php">wavelet</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../man1/en/wdb_example.php">Wdb Example</link>
+      </para>
+    </listitem>
+    </itemizedlist>
+  </listitem>
+<listitem>
+      <para>
+        <link xlink:href="../xxxxx.php">Man 3</link>
+      </para>
+  <itemizedlist>
+      <listitem>
+      <para>
+        <link xlink:href="../../man3/en/libfb.php">Lib fb</link>
+      </para>
+    </listitem>
+        <listitem>
+      <para>
+        <link xlink:href="../../man3/en/librole.php">Lib Role</link>
+      </para>
+    </listitem>
+        <listitem>
+      <para>
+        <link xlink:href="../../man3/en/libplot3.php">Lib Plot3</link>
+      </para>
+    </listitem>
+        <listitem>
+      <para>
+        <link xlink:href="../../man3/en/librt.php">Librt</link>
+      </para>
+    </listitem>
+        <listitem>
+      <para>
+        <link xlink:href="../../man3/en/libwdb.php">Libwdb</link>
+      </para>
+    </listitem>
+        <listitem>
+      <para>
+        <link xlink:href="../../man3/en/redblack.php">Red Black</link>
+      </para>
+    </listitem>
+
+  </itemizedlist>
+    </listitem>
+    <listitem>
+      <para>
+    <link xlink:href="../xxxxxx.php">Man 5</link>
+      </para>
+  <itemizedlist>
+        <listitem>
+      <para>
+        <link xlink:href="../../man5/en/attributes.php">Attributes</link>
+      </para>
+    </listitem>
+        <listitem>
+      <para>
+        <link xlink:href="../../man5/en/bw.php">bw</link>
+      </para>
+    </listitem>
+        <listitem>
+      <para>
+        <link xlink:href="../../man5/en/cmap.php">Cmap</link>
+      </para>
+    </listitem>
+        <listitem>
+      <para>
+        <link xlink:href="../../man5/en/dsp.php">Dsp</link>
+      </para>
+    </listitem>
+        <listitem>
+      <para>
+        <link xlink:href="../../man5/en/pix.php">Pix</link>
+      </para>
+    </listitem>
+        <listitem>
+      <para>
+        <link xlink:href="../../man5/en/plot3.php">Plot 3</link>
+      </para>
+    </listitem>
+  </itemizedlist>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../xxxxxxx.php">Mann</link>
+      </para>
+<itemizedlist>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/3ptarb.php">3 Ptarb</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/adc.php">ADC</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/ae.php">AE</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/alias-pix.php">Alias Pix</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/analyze.php">Analyze</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/animmate.php">Animmate</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/apropos.php">Apropos</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/aproposdevel.php">Apropos Devel</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/aproposlib.php">Apropos Lib</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/arced.php">Arced</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/area.php">Area</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/arot.php">Arot</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/attach.php">Attach</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/attr.php">Attr</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/autoview.php">Auto View</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/B.php">B</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/bb.php">BB</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/bev.php">Bev</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/bo.php">Bo</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/bolt.php">Bolt</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/bot_condense.php">Bot Condense</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/bot_decimate.php">Bot Decimate</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/bot_face_fuse.php">Bot Face Fuse</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/bot_face_sort.php">Bot Face Sort </link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/bot_flip.php">Bot Flip</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/bot_sync.php">Bot Sync</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/bot_vertex_fuse.php">Bot Vertex Fuse</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/brep.php">Brep</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/build_region.php">Build Region</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/c.php">C</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/cat.php">Cat</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/center.php">Center</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/color.php">Color</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/comb.php">Comb</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/comb_color.php">Comb Color</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/copyeval.php">CopyEval</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/copymat.php">Copy Mat</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/cp.php">CP</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/cpi.php">CPI</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/d.php">D</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/db.php">DB</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/dbconcat.php">DB Concat</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/db_glob.php">DB Glob</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/dbupgrade.php">DB Upgrade</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/debugbu.php">De Bugbu</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/debugdir.php">De Bugdir</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/debuglib.php">De Buglib </link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/debugnmg.php">De Bugnmg</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/decompose.php">De Compose</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/delay.php">Delay</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/dm.php">DM</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/draw.php">Draw</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/dup.php">Dup</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/E.php">E</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/eac.php">EAC</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/echo.php">Echo</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/e_command.php">E Command</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/edcodes.php">Ed Codes</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/edcolor.php">Ed Color</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/edcomb.php">Ed Comb</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/edgedir.php">Ed Gedir</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/edit.php">Edit</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/edit_translate.php">Edit Translate</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/edmater.php">Ed Mater</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/eqn.php">EQN</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/erase.php">Erase</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/ev.php">EV</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/exists.php">Exists</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/exit.php">Exit</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/expand.php">Expand</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/extrude.php">Extrude</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/eye_pt.php">Eye Pt</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/facedef.php">Face Def</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/facetize.php">Facetize</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/find.php">Find</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/fracture.php">Fracture</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/g.php">G</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/garbage_collect.php">Garbage Collect</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/gastank.php">Gastank</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/gqa.php">GQA</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/gr.php">GR</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/graph.php">Graph</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/gui.php">Gui</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/handle.php">Handle</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/help.php">Help</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/helpdevel.php">Help Devel</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/helplib.php">Help Lib</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/hide.php">Hide</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/history.php">History</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/i.php">I</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/idents.php">Idents</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/igraph.php">I Graph</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/ill.php">ILL</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/in.php">IN</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/inside.php">Inside</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/Introduction.php">Introduction</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/item.php">ITEM</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/journal.php">Journal</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/keep.php">Keep</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/keypoint.php">Key Point</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/kill.php">Kill</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/killall.php">Kill All</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/killtree.php">Kill Tree</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/knob.php">Knob</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/l.php">L</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/labelvert.php">Labelvert</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/lc.php">Lc</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/listeval.php">Listeval</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/loadtk.php">Load Tk</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/lookat.php">Lookat</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/ls.php">Ls</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/M.php">M</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/make.php">Make</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+       <link xlink:href="../../mann/en/make_pnts.php">Make Pnts</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/mater.php">Mater</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/matpick.php">Mat Pick</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/mirface.php">MirFace</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/mrot.php">Mrot</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/mv.php">Mv</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/mvall.php">Mvall</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/nirt.php">Nirt</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/nmg_collapse.php">NMG Collapse</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/nmg_simplify.php">NMG Simplify</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/oed.php">oed</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/opendb.php">Open DB</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/orientation.php">Orientation</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/orot.php">Orot</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/oscale.php">Oscale</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/overlay.php">Over Lay</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/p.php">P</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/pathlist.php">Pathlist</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/paths.php">Path</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/permute.php">Permute</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/picket_fence.php">Picket Fence</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/plot.php">Plot</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/prcolor.php">Pr Color</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/prefix.php">Prefix</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/press.php">Press</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/preview.php">Preview</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/prj_add.php">Prj Add</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/ps.php">Ps</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/pull.php">Pull</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/push.php">Push</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/put_comb.php">Put Comb</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/putmat.php">Putmat</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/q.php">Q</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/qorot.php">Qorot</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/qray.php">Qray</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/query_ray.php">Query Ray</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/quit.php">Quit</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/qvrot.php">Qvrot</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/r.php">R</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/rcc-blend.php">Rcc Blend</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/rcc-cap.php">Rcc Cap</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/rcc-tgc.php">Rcc Tgc</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/rcc-tor.php">rcc-tor</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/rcodes.php">Rocdes</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/red.php">Red</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/refresh.php">Refresh</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/regdebug.php">Regdebug</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/regdef.php">Regdef</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/regions.php">Regions</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/reid.php">Reid</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/release.php">Release</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/rfarb.php">Rfarb</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/rm.php">RM</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/rmater.php">Rmater</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/rot.php">Rot</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/rotobj.php">Rotobj </link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/rpp-arch.php">Rpp Arch</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/rpp-cap.php">Rpp Cap</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/rrt.php">RRT</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/rt.php">Rt</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/rtarea.php">Rt area</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/rtcheck.php">Rt Check</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/saveview.php">Save View</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/sca.php">Sca</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/search.php">Search</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/sed.php">Sed</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/setview.php">Set View</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/shader.php">Shader</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/shell.php">Shell</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/showmats.php">Show Mats</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/size.php">Size</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/solids.php">Solids</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/sph-part.php">Sph Part</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/status.php">Status</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/summary.php">Summary</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/sv.php">Sv</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/sync.php">Sync</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/t.php">T</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/ted.php">Ted</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/title.php">Title</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/tol.php">Tol</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/tops.php">Tops</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/tor-rcc.php">Tor rcc</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/tra.php">Tra</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/track.php">Track</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/translate.php">Translate</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/tree.php">Tree</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/units.php">Units</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/vars.php">Vars</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/vdraw.php">Vdraw</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/view.php">View</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/viewsize.php">Viewsize</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/vnirt.php">Vnirt</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/voxelize.php">Voxelize</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/vquery_ray.php">Vquery Ray</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/vrot.php">vrot</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/wcodes.php">Wcodes </link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/whatid.php">What Id</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/whichair.php">WhichAir</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/which_shader.php">Which Shader</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/who.php">Who</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/window.php">Window</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/window_frame.php">Window Frame</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/wire.php">Wire</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/wmater.php">Wmater</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/x.php">X</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/xpuch.php">Xpuch</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/Z.php">Z</link>
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../mann/en/zoom.php">zoom</link>
+      </para>
+    </listitem>
+</itemizedlist>
+    </listitem>
+
+      <listitem>
+      <para>
+        <link xlink:href="../xxxxxxxx.php">Presentations</link>
+      </para>
+      <itemizedlist>
+            <listitem>
+      <para>
+        <link xlink:href="../../presentations/en/Introduction-brlcad-app-devel.php">Application Development with BRL-CAD</link>
+      </para>
+</listitem>
+    <listitem>
+      <para>
+        <link xlink:href="../../presentations/en/Introduction-to-tcltk.php">Introduction To TclTK</link>
+      </para>
+    </listitem>
+      </itemizedlist>
+    </listitem>
+  <listitem>
+    <para>
+        <link xlink:href="../xxxxxxxxx.php">  Specifications</link>
+    </para>
+        <itemizedlist>
+        <listitem>
+        <para>
+        <link xlink:href="../../specifications/en/BRL_CAD_g_format_V5.php">BRL-CAD G Format V5</link>
+      </para>
+  <itemizedlist>
+    <listitem>
+        <para>
+        <link xlink:href="../../specifications/en/BRL_CAD_g_format_V5.php#Background_and_Terminology">Background and Terminology</link>
+      </para>
+      <itemizedlist>
+        <listitem>
+          <para>
+        <link xlink:href="../../specifications/en/BRL_CAD_g_format_V5.php#Format_of_Data_Elements_Database_External_Format">Format of Data Elements Database External Format</link>
+          </para>
+        </listitem>
+      </itemizedlist>
+</listitem>
+<listitem>
+          <para>
+        <link xlink:href="../../specifications/en/BRL_CAD_g_format_V5.php#Definition_of_a_Single_Generic_Database_Object">Definition of a Single, Generic Database Object</link>
+          </para>
+          <itemizedlist>
+        <listitem>
+          <para>
+        <link xlink:href="../../specifications/en/BRL_CAD_g_format_V5.php#Object_Structure">Object Structure</link>
+        </para>
+      </listitem>
+        <listitem>
+          <para>
+        <link xlink:href="../../specifications/en/BRL_CAD_g_format_V5.php#Flags">Flags</link>
+        </para>
+      </listitem>
+        <listitem>
+          <para>
+        <link xlink:href="../../specifications/en/BRL_CAD_g_format_V5.php#Object_Type">Object Type</link>
+        </para>
+      </listitem>
+        <listitem>
+          <para>
+        <link xlink:href="../../specifications/en/BRL_CAD_g_format_V5.php#Object_Length">Object Length</link>
+        </para>
+      </listitem>
+        <listitem>
+          <para>
+        <link xlink:href="../../specifications/en/BRL_CAD_g_format_V5.php#Object_Name">Object Name</link>
+        </para>
+      </listitem>
+        <listitem>
+          <para>
+        <link xlink:href="../../specifications/en/BRL_CAD_g_format_V5.php#Object_Attributes">Object Attributes</link>
+        </para>
+      </listitem>
+        <listitem>
+          <para>
+        <link xlink:href="../../specifications/en/BRL_CAD_g_format_V5.php#Object_Body">Object Body</link>
+        </para>
+      </listitem>
+        <listitem>
+          <para>
+        <link xlink:href="../../specifications/en/BRL_CAD_g_format_V5.php#Padding_and_Length_Rounding">Padding and Length Rounding</link>
+        </para>
+      </listitem>
+        <listitem>
+          <para>
+        <link xlink:href="../../specifications/en/BRL_CAD_g_format_V5.php#How_Objects_Are_Grouped_into_a_Database">How Objects Are Grouped into a Database</link>
+        </para>
+      </listitem>
+        <listitem>
+          <para>
+        <link xlink:href="../../specifications/en/BRL_CAD_g_format_V5.php#Details_of_BRL-CAD-Specific_Nongeometric_Database_Object_Types">Details of BRL-CAD-Specific Nongeometric Database Object Types</link>
+        </para>
+      </listitem>
+        <listitem>
+          <para>
+        <link xlink:href="../../specifications/en/BRL_CAD_g_format_V5.php#Details_of_BRL-CAD-Specific_Geometric_Database_Object_Types">Details of BRL-CAD-Specific Geometric Database Object Types</link>
+        </para>
+      </listitem>
+        <listitem>
+          <para>
+        <link xlink:href="../../specifications/en/BRL_CAD_g_format_V5.php#Extensions_for_Deferred_Implementation">Extensions for Deferred Implementation</link>
+        </para>
+      </listitem>
+        <listitem>
+          <para>
+        <link xlink:href="../../specifications/en/BRL_CAD_g_format_V5.php#Community_Feedback_on_the_Proposal">Community Feedback on the Proposal</link>
+        </para>
+      </listitem>
+        <listitem>
+          <para>
+        <link xlink:href="../../specifications/en/BRL_CAD_g_format_V5.php#Database_Library_Application_Programming_Interface">Database Library Application Programming Interface (API)</link>
+        </para>
+      </listitem>
+    </itemizedlist>
+  </listitem>
+</itemizedlist>
+</listitem>
+</itemizedlist>
+</listitem>
+</itemizedlist>
+</article>

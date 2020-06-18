@@ -1,7 +1,7 @@
 /*                   N M G _ E X T R U D E . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2018 United States Government as represented by
+ * Copyright (c) 1994-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -107,7 +107,7 @@ nmg_translate_face(struct faceuse *fu, const fastf_t *Vec, struct bu_list *vlfre
     cur = 0;
     cnt = verts_in_nmg_face(fu);
     verts = (struct vertex **)
-	bu_malloc(cnt * sizeof(struct vertex *), "verts");
+	nmg_malloc(cnt * sizeof(struct vertex *), "verts");
     for (i = 0; i < cnt; i++)
 	verts[i] = NULL;
 
@@ -165,7 +165,7 @@ nmg_translate_face(struct faceuse *fu, const fastf_t *Vec, struct bu_list *vlfre
 	bu_bomb("nmg_translate_face: Cannot calculate plane equation for face\n");
     }
     nmg_face_g(fu_tmp, pl);
-    bu_free((char *)verts, "verts");
+    nmg_free((char *)verts, "verts");
 }
 
 
@@ -211,7 +211,7 @@ nmg_extrude_face(struct faceuse *fu, const fastf_t *Vec, struct bu_list *vlfree,
 	nmg_translate_face(fu2->fumate_p, Vec, vlfree);
 
     nfaces = verts_in_nmg_face(fu);
-    outfaces = (struct faceuse **)bu_calloc(nfaces+2, sizeof(struct faceuse *) ,
+    outfaces = (struct faceuse **)nmg_calloc(nfaces+2, sizeof(struct faceuse *) ,
 					    "nmg_extrude_face: outfaces");
 
     outfaces[0] = fu;
@@ -251,7 +251,7 @@ nmg_extrude_face(struct faceuse *fu, const fastf_t *Vec, struct bu_list *vlfree,
 
     nmg_gluefaces(outfaces, face_count, vlfree, tol);
 
-    bu_free((char *)outfaces, "nmg_extrude_face: outfaces");
+    nmg_free((char *)outfaces, "nmg_extrude_face: outfaces");
 
     return 0;
 }
@@ -310,7 +310,7 @@ nmg_start_new_loop(struct edgeuse *start_eu, struct loopuse *lu1, struct loopuse
     NMG_CK_LOOPUSE(lu2);
 
     /* create a table to hold eu pointers for a new loop */
-    BU_ALLOC(new_lu_tab, struct bu_ptbl);
+    NMG_ALLOC(new_lu_tab, struct bu_ptbl);
     bu_ptbl_init(new_lu_tab, 64, " new_lu_tab ");
 
     /* add this table to the list of loops */
@@ -418,7 +418,7 @@ nmg_fix_overlapping_loops(struct shell *s, struct bu_list *vlfree, const struct 
 
     NMG_CK_SHELL(s);
 
-    if (nmg_debug & DEBUG_BASIC)
+    if (nmg_debug & NMG_DEBUG_BASIC)
 	bu_log("nmg_fix_overlapping_loops: s = %p\n", (void *)s);
 
     /* this routine needs simple faceuses */
@@ -503,7 +503,7 @@ nmg_fix_overlapping_loops(struct shell *s, struct bu_list *vlfree, const struct 
 	    if (!nmg_find_vertex_in_lu(vu->v_p, lu1)) {
 		int nmg_class;
 
-		nmg_class = nmg_classify_pt_loop(vu->v_p->vg_p->coord, lu1, vlfree, tol);
+		nmg_class = nmg_classify_pnt_loop(vu->v_p->vg_p->coord, lu1, vlfree, tol);
 		if (nmg_class == NMG_CLASS_AoutB)
 		    outside++;
 		else if (nmg_class == NMG_CLASS_AinB)
@@ -600,7 +600,7 @@ nmg_fix_overlapping_loops(struct shell *s, struct bu_list *vlfree, const struct 
 	     */
 	    VBLEND2(mid_pt, 0.5, v1->vg_p->coord, 0.5, v2->vg_p->coord);
 
-	    if (nmg_classify_pt_loop(mid_pt, lu2, vlfree, tol) == NMG_CLASS_AoutB) {
+	    if (nmg_classify_pnt_loop(mid_pt, lu2, vlfree, tol) == NMG_CLASS_AoutB) {
 		start_eu = eu1;
 		break;
 	    }
@@ -664,7 +664,7 @@ nmg_fix_overlapping_loops(struct shell *s, struct bu_list *vlfree, const struct 
 		}
 
 		bu_ptbl_free(loop_tab);
-		bu_free((char *)loop_tab, "nmg_fix_overlapping_loops: loop_tab");
+		nmg_free((char *)loop_tab, "nmg_fix_overlapping_loops: loop_tab");
 	    }
 	}
 
@@ -684,7 +684,7 @@ nmg_fix_overlapping_loops(struct shell *s, struct bu_list *vlfree, const struct 
     }
     bu_ptbl_free(&loops);
 
-    if (nmg_debug & DEBUG_BASIC)
+    if (nmg_debug & NMG_DEBUG_BASIC)
 	bu_log("nmg_fix_overlapping_loops: done\n");
 }
 
@@ -751,7 +751,7 @@ nmg_break_crossed_loops(struct shell *is, const struct bn_tol *tol)
 			    } else {
 				VJOIN1(pt, eu1->vu_p->v_p->vg_p->coord ,
 				       dist[0], v1);
-				v = nmg_find_pt_in_shell(is, pt, tol);
+				v = nmg_find_pnt_in_shell(is, pt, tol);
 			    }
 
 			    new_eu = nmg_esplit(v, eu1, 0);
@@ -773,7 +773,7 @@ nmg_break_crossed_loops(struct shell *is, const struct bn_tol *tol)
 				VMOVE(pt, v->vg_p->coord);
 			    } else {
 				VJOIN1(pt, eu2->vu_p->v_p->vg_p->coord, dist[1], v2);
-				v = nmg_find_pt_in_shell(is, pt, tol);
+				v = nmg_find_pnt_in_shell(is, pt, tol);
 			    }
 
 			    new_eu = nmg_esplit(v, eu2, 0);
@@ -812,7 +812,7 @@ nmg_extrude_cleanup(struct shell *in_shell, const int is_void, struct bu_list *v
     NMG_CK_SHELL(in_shell);
     BN_CK_TOL(tol);
 
-    if (nmg_debug & DEBUG_BASIC)
+    if (nmg_debug & NMG_DEBUG_BASIC)
 	bu_log("nmg_extrude_cleanup(in_shell=%p)\n", (void *)in_shell);
 
     m = nmg_find_model(&in_shell->l.magic);
@@ -995,7 +995,7 @@ nmg_hollow_shell(struct shell *s, const fastf_t thick, const int approximate, st
     int is_void;
     int s_tmp_is_closed;
 
-    if (nmg_debug & DEBUG_BASIC)
+    if (nmg_debug & NMG_DEBUG_BASIC)
 	bu_log("nmg_extrude_shell(s=%p, thick=%f)\n", (void *)s, thick);
 
     NMG_CK_SHELL(s);
@@ -1044,7 +1044,7 @@ nmg_hollow_shell(struct shell *s, const fastf_t thick, const int approximate, st
 	is = nmg_dup_shell(s_tmp, &copy_tbl, vlfree, tol);
 
 	/* make a translation table for this model */
-	flags = (long *)bu_calloc(m->maxindex, sizeof(long), "nmg_extrude_shell flags");
+	flags = (long *)nmg_calloc(m->maxindex, sizeof(long), "nmg_extrude_shell flags");
 
 	/* now adjust all the planes, first move them inward by distance "thick" */
 	for (BU_LIST_FOR(fu, faceuse, &is->fu_hd)) {
@@ -1141,8 +1141,8 @@ nmg_hollow_shell(struct shell *s, const fastf_t thick, const int approximate, st
 	nmg_region_a(s_tmp->r_p, tol);
 
 	/* free memory */
-	bu_free((char *)flags, "nmg_extrude_shell: flags");
-	bu_free((char *)copy_tbl, "nmg_extrude_shell: copy_tbl");
+	nmg_free((char *)flags, "nmg_extrude_shell: flags");
+	nmg_free((char *)copy_tbl, "nmg_extrude_shell: copy_tbl");
     }
 
     /* put it all back together */
@@ -1241,7 +1241,7 @@ nmg_extrude_shell(struct shell *s, const fastf_t dist, const int normal_ward, co
 	is_void = nmg_shell_is_void(s_tmp);
 
 	/* make a translation table for this model */
-	flags = (long *)bu_calloc(m->maxindex, sizeof(long), "nmg_extrude_shell flags");
+	flags = (long *)nmg_calloc(m->maxindex, sizeof(long), "nmg_extrude_shell flags");
 
 	/* now adjust all the planes, first move them by distance "thick" */
 	for (BU_LIST_FOR(fu, faceuse, &s_tmp->fu_hd)) {
@@ -1261,7 +1261,7 @@ nmg_extrude_shell(struct shell *s, const fastf_t dist, const int normal_ward, co
 	    }
 	}
 
-	bu_free((char *)flags, "nmg_extrude_shell flags");
+	nmg_free((char *)flags, "nmg_extrude_shell flags");
 
 	/* get table of vertices in this shell */
 	nmg_vertex_tabulate(&verts, &s_tmp->l.magic, vlfree);

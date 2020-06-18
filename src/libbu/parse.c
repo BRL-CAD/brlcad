@@ -1,7 +1,7 @@
 /*                         P A R S E . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2018 United States Government as represented by
+ * Copyright (c) 1989-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -53,7 +53,7 @@
 	    } while (offset < 0);					\
 	    offset = cp - (char *)ext->ext_buf;				\
 	    ext->ext_buf = (uint8_t *)bu_realloc((char *) ext->ext_buf,	\
-						ext->ext_nbytes, "bu_struct_export"); \
+						 ext->ext_nbytes, "bu_struct_export"); \
 	    ep = (char *)ext->ext_buf + ext->ext_nbytes;		\
 	    cp = (char *)ext->ext_buf + offset;			\
 	}								\
@@ -968,132 +968,61 @@ bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, 
 }
 
 
-/* XXX Should this be here, or could it be with the matrix support?
- * pretty-print a matrix
+/**
+ * FIXME: This should not be here, need to adapt bu_num_*() to support
+ * printing to strings/bu_log/etc.
+ */
+HIDDEN void
+parse_vls_matprint(struct bu_vls *vls,
+		   const char *name,
+		   register const fastf_t *mat)
+{
+    int delta;
+
+    if (UNLIKELY(!vls || !name || !mat))
+	return;
+
+    delta = (int)strlen(name)+2;
+
+    /* indent the body of the matrix */
+    bu_log_indent_delta(delta);
+
+    bu_vls_printf(vls, " %s=%12E %12E %12E %12E\n",
+		  name, mat[0], mat[1], mat[2], mat[3]);
+    bu_log_indent_vls(vls);
+
+    bu_vls_printf(vls, "%12E %12E %12E %12E\n",
+		  mat[4], mat[5], mat[6], mat[7]);
+    bu_log_indent_vls(vls);
+
+    bu_vls_printf(vls, "%12E %12E %12E %12E\n",
+		  mat[8], mat[9], mat[10], mat[11]);
+    bu_log_indent_vls(vls);
+
+    bu_log_indent_delta(-delta);
+
+    bu_vls_printf(vls, "%12E %12E %12E %12E\n",
+		  mat[12], mat[13], mat[14], mat[15]);
+}
+
+
+/**
+ * FIXME: This should not be here, need to adapt bu_num_*() to support
+ * printing to strings/bu_log/etc.
  */
 HIDDEN void
 parse_matprint(const char *name, register const fastf_t *mat)
 {
-    int delta;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     if (UNLIKELY(!name || !mat))
 	return;
 
-    delta = (int)strlen(name)+2;
+    parse_vls_matprint(&str, name, mat);
 
-    /* indent the body of the matrix */
-    bu_log_indent_delta(delta);
+    bu_log("%s", bu_vls_cstr(&str));
 
-    bu_log(" %s=%12E %12E %12E %12E\n",
-	   name, mat[0], mat[1], mat[2], mat[3]);
-
-    bu_log("%12E %12E %12E %12E\n",
-	   mat[4], mat[5], mat[6], mat[7]);
-
-    bu_log("%12E %12E %12E %12E\n",
-	   mat[8], mat[9], mat[10], mat[11]);
-
-    bu_log_indent_delta(-delta);
-
-    bu_log("%12E %12E %12E %12E\n",
-	   mat[12], mat[13], mat[14], mat[15]);
-}
-
-
-HIDDEN void
-parse_dmatprint(const char *name, register const double *mat)
-{
-    int delta;
-
-    if (UNLIKELY(!name || !mat))
-	return;
-
-    delta = (int)strlen(name)+2;
-
-    /* indent the body of the matrix */
-    bu_log_indent_delta(delta);
-
-    bu_log(" %s=%12E %12E %12E %12E\n",
-	   name, mat[0], mat[1], mat[2], mat[3]);
-
-    bu_log("%12E %12E %12E %12E\n",
-	   mat[4], mat[5], mat[6], mat[7]);
-
-    bu_log("%12E %12E %12E %12E\n",
-	   mat[8], mat[9], mat[10], mat[11]);
-
-    bu_log_indent_delta(-delta);
-
-    bu_log("%12E %12E %12E %12E\n",
-	   mat[12], mat[13], mat[14], mat[15]);
-}
-
-
-HIDDEN void
-parse_vls_matprint(struct bu_vls *vls,
-		 const char *name,
-		 register const fastf_t *mat)
-{
-    int delta;
-
-    if (UNLIKELY(!vls || !name || !mat))
-	return;
-
-    delta = (int)strlen(name)+2;
-
-    /* indent the body of the matrix */
-    bu_log_indent_delta(delta);
-
-    bu_vls_printf(vls, " %s=%12E %12E %12E %12E\n",
-		  name, mat[0], mat[1], mat[2], mat[3]);
-    bu_log_indent_vls(vls);
-
-    bu_vls_printf(vls, "%12E %12E %12E %12E\n",
-		  mat[4], mat[5], mat[6], mat[7]);
-    bu_log_indent_vls(vls);
-
-    bu_vls_printf(vls, "%12E %12E %12E %12E\n",
-		  mat[8], mat[9], mat[10], mat[11]);
-    bu_log_indent_vls(vls);
-
-    bu_log_indent_delta(-delta);
-
-    bu_vls_printf(vls, "%12E %12E %12E %12E\n",
-		  mat[12], mat[13], mat[14], mat[15]);
-}
-
-
-HIDDEN void
-parse_vls_dmatprint(struct bu_vls *vls,
-		 const char *name,
-		 register const double *mat)
-{
-    int delta;
-
-    if (UNLIKELY(!vls || !name || !mat))
-	return;
-
-    delta = (int)strlen(name)+2;
-
-    /* indent the body of the matrix */
-    bu_log_indent_delta(delta);
-
-    bu_vls_printf(vls, " %s=%12E %12E %12E %12E\n",
-		  name, mat[0], mat[1], mat[2], mat[3]);
-    bu_log_indent_vls(vls);
-
-    bu_vls_printf(vls, "%12E %12E %12E %12E\n",
-		  mat[4], mat[5], mat[6], mat[7]);
-    bu_log_indent_vls(vls);
-
-    bu_vls_printf(vls, "%12E %12E %12E %12E\n",
-		  mat[8], mat[9], mat[10], mat[11]);
-    bu_log_indent_vls(vls);
-
-    bu_log_indent_delta(-delta);
-
-    bu_vls_printf(vls, "%12E %12E %12E %12E\n",
-		  mat[12], mat[13], mat[14], mat[15]);
+    bu_vls_free(&str);
 }
 
 
@@ -1127,10 +1056,13 @@ bu_vls_struct_item(struct bu_vls *vp, const struct bu_structparse *sdp, const ch
 	case 's':
 	    if (sdp->sp_count < 1)
 		break;
-	    if (sdp->sp_count == 1)
-		bu_vls_printf(vp, "%c", *loc);
-	    else
+	    if (sdp->sp_count == 1) {
+		if (*loc != '\0') {
+		    bu_vls_printf(vp, "%c", *loc);
+		}
+	    } else {
 		bu_vls_printf(vp, "%s", (char *)loc);
+	    }
 	    break;
 	case 'V':
 	    {
@@ -1269,11 +1201,16 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 	    case 's':
 		if (sdp->sp_count < 1)
 		    break;
-		if (sdp->sp_count == 1)
-		    bu_log("\t%s='%c'\n", sdp->sp_name, *loc);
-		else
+		if (sdp->sp_count == 1) {
+		    if (*loc == '\0') {
+			bu_log("\t%s=''\n", sdp->sp_name);
+		    } else {
+			bu_log("\t%s='%c'\n", sdp->sp_name, *loc);
+		    }
+		} else {
 		    bu_log("\t%s=\"%s\"\n", sdp->sp_name,
 			   (char *)loc);
+		}
 		break;
 	    case 'V':
 		{
@@ -1287,43 +1224,50 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 	    case 'i':
 		{
 		    register short *sp = (short *)loc;
+		    struct bu_vls str = BU_VLS_INIT_ZERO;
 
-		    bu_log("\t%s=%d", sdp->sp_name, *sp++);
+		    bu_vls_printf(&str, "\t%s=%d", sdp->sp_name, *sp++);
 
 		    for (i = 1; i < sdp->sp_count; i++) {
-			bu_log("%c%d", COMMA, *sp++);
+			bu_vls_printf(&str, "%c%d", COMMA, *sp++);
 		    }
 
-		    bu_log("\n");
+		    bu_log("%s\n", bu_vls_cstr(&str));
+		    bu_vls_free(&str);
 		}
 		break;
 	    case 'd':
 		{
 		    register int *dp = (int *)loc;
+		    struct bu_vls str = BU_VLS_INIT_ZERO;
 
-		    bu_log("\t%s=%d", sdp->sp_name, *dp++);
+		    bu_vls_printf(&str, "\t%s=%d", sdp->sp_name, *dp++);
 
 		    for (i = 1; i < sdp->sp_count; i++) {
-			bu_log("%c%d", COMMA, *dp++);
+			bu_vls_printf(&str, "%c%d", COMMA, *dp++);
 		    }
 
-		    bu_log("\n");
+		    bu_log("%s\n", bu_vls_cstr(&str));
+		    bu_vls_free(&str);
 		}
 		break;
 	    case 'f':
 		{
 		    register fastf_t *dp = (fastf_t *)loc;
 
-		    if (sdp->sp_count == 16) {
+		    if (sdp->sp_count == ELEMENTS_PER_MAT) {
 			parse_matprint(sdp->sp_name, dp);
 		    } else if (sdp->sp_count <= 3) {
-			bu_log("\t%s=%.25G", sdp->sp_name, *dp++);
+			struct bu_vls str = BU_VLS_INIT_ZERO;
+
+			bu_vls_printf(&str, "\t%s=%.25G", sdp->sp_name, *dp++);
 
 			for (i = 1; i < sdp->sp_count; i++) {
-			    bu_log("%c%.25G", COMMA, *dp++);
+			    bu_vls_printf(&str, "%c%.25G", COMMA, *dp++);
 			}
 
-			bu_log("\n");
+			bu_log("%s\n", bu_vls_cstr(&str));
+			bu_vls_free(&str);
 		    } else {
 			int delta = (int)strlen(sdp->sp_name)+2;
 
@@ -1347,16 +1291,21 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 		{
 		    register double *dp = (double *)loc;
 
-		    if (sdp->sp_count == 16) {
-			parse_dmatprint(sdp->sp_name, dp);
+		    if (sdp->sp_count == ELEMENTS_PER_MAT) {
+			fastf_t mp[ELEMENTS_PER_MAT];
+			MAT_COPY(mp, dp);
+			parse_matprint(sdp->sp_name, mp);
 		    } else if (sdp->sp_count <= 3) {
-			bu_log("\t%s=%.25G", sdp->sp_name, *dp++);
+			struct bu_vls str = BU_VLS_INIT_ZERO;
+
+			bu_vls_printf(&str, "\t%s=%.25G", sdp->sp_name, *dp++);
 
 			for (i = 1; i < sdp->sp_count; i++) {
-			    bu_log("%c%.25G", COMMA, *dp++);
+			    bu_vls_printf(&str, "%c%.25G", COMMA, *dp++);
 			}
 
-			bu_log("\n");
+			bu_log("%s\n", bu_vls_cstr(&str));
+			bu_vls_free(&str);
 		    } else {
 			int delta = (int)strlen(sdp->sp_name)+2;
 
@@ -1379,14 +1328,16 @@ bu_struct_print(const char *title, const struct bu_structparse *parsetab, const 
 	    case 'x':
 		{
 		    register int *dp = (int *)loc;
+		    struct bu_vls str = BU_VLS_INIT_ZERO;
 
-		    bu_log("\t%s=%08x", sdp->sp_name, *dp++);
+		    bu_vls_printf(&str, "\t%s=%08x", sdp->sp_name, *dp++);
 
 		    for (i = 1; i < sdp->sp_count; i++) {
-			bu_log("%c%08x", COMMA, *dp++);
+			bu_vls_printf(&str, "%c%08x", COMMA, *dp++);
 		    }
 
-		    bu_log("\n");
+		    bu_log("%s\n", bu_vls_cstr(&str));
+		    bu_vls_free(&str);
 		}
 		break;
 	    case 'p':
@@ -1443,8 +1394,6 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 {
     register char *loc;
     register int lastoff = -1;
-    register char *cp;
-    size_t increase;
 
     BU_CK_VLS(vls);
 
@@ -1494,19 +1443,20 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		if (sdp->sp_count < 1)
 		    break;
 		if (sdp->sp_count == 1) {
-		    increase = strlen(sdp->sp_name)+6;
-		    bu_vls_extend(vls, (unsigned int)increase);
-		    cp = vls->vls_str + vls->vls_offset + bu_vls_strlen(vls);
-		    if (*loc == '"')
-			snprintf(cp, increase, "%s%s=\"%s\"",
-				 (bu_vls_strlen(vls)?" ":""),
-				 sdp->sp_name, "\\\"");
-		    else
-			snprintf(cp, increase, "%s%s=\"%c\"",
-				 (bu_vls_strlen(vls)?" ":""),
-				 sdp->sp_name,
-				 *loc);
-		    vls->vls_len += (int)strlen(cp);
+ 		    if (*loc == '"') {
+			bu_vls_printf(vls, "%s%s=\"%s\"",
+				      (bu_vls_strlen(vls)?" ":""),
+				      sdp->sp_name, "\\\"");
+		    } else if (*loc == '\0') {
+			bu_vls_printf(vls, "%s%s=\"\"",
+				      (bu_vls_strlen(vls)?" ":""),
+				      sdp->sp_name);
+		    } else {
+			bu_vls_printf(vls, "%s%s=\"%c\"",
+				      (bu_vls_strlen(vls)?" ":""),
+				      sdp->sp_name,
+				      *loc);
+		    }
 		} else {
 		    struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
 
@@ -1532,24 +1482,13 @@ bu_vls_struct_print(struct bu_vls *vls, register const struct bu_structparse *sd
 		{
 		    register size_t i = sdp->sp_count;
 		    register short *sp = (short *)loc;
-		    register int tmpi;
 
-		    increase = 64 * i + strlen(sdp->sp_name) + 3;
-		    bu_vls_extend(vls, (unsigned int)increase);
-
-
-		    cp = vls->vls_str + vls->vls_offset + bu_vls_strlen(vls);
-		    snprintf(cp, increase, "%s%s=%d",
-			     (bu_vls_strlen(vls)?" ":""),
-			     sdp->sp_name, *sp++);
-		    tmpi = (int)strlen(cp);
-		    vls->vls_len += tmpi;
+		    bu_vls_printf(vls, "%s%s=%d",
+				  (bu_vls_strlen(vls)?" ":""),
+				  sdp->sp_name, *sp++);
 
 		    while (--i > 0) {
-			cp += tmpi;
-			sprintf(cp, "%c%d", COMMA, *sp++);
-			tmpi = (int)strlen(cp);
-			vls->vls_len += tmpi;
+			bu_vls_printf(vls, "%c%d", COMMA, *sp++);
 		    }
 		}
 		break;
@@ -1645,7 +1584,10 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
 		if (sdp->sp_count < 1)
 		    break;
 		if (sdp->sp_count == 1)
-		    bu_vls_printf(vls_out, "\t%s='%c'\n", sdp->sp_name, *loc);
+		    if (*loc == '\0')
+			bu_vls_printf(vls_out, "\t%s=''\n", sdp->sp_name);
+		    else
+			bu_vls_printf(vls_out, "\t%s='%c'\n", sdp->sp_name, *loc);
 		else
 		    bu_vls_printf(vls_out, "\t%s=\"%s\"\n", sdp->sp_name,
 				  (char *)loc);
@@ -1690,7 +1632,7 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
 		    register size_t i = sdp->sp_count;
 		    register fastf_t *dp = (fastf_t *)loc;
 
-		    if (sdp->sp_count == 16) {
+		    if (sdp->sp_count == ELEMENTS_PER_MAT) {
 			parse_vls_matprint(vls_out, sdp->sp_name, dp);
 		    } else if (sdp->sp_count <= 3) {
 			bu_vls_printf(vls_out, "\t%s=%.25G", sdp->sp_name, *dp++);
@@ -1724,8 +1666,10 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
 		    register size_t i = sdp->sp_count;
 		    register double *dp = (double *)loc;
 
-		    if (sdp->sp_count == 16) {
-			parse_vls_dmatprint(vls_out, sdp->sp_name, dp);
+		    if (sdp->sp_count == ELEMENTS_PER_MAT) {
+			fastf_t mp[ELEMENTS_PER_MAT];
+			MAT_COPY(mp, dp);
+			parse_vls_matprint(vls_out, sdp->sp_name, mp);
 		    } else if (sdp->sp_count <= 3) {
 			bu_vls_printf(vls_out, "\t%s=%.25G", sdp->sp_name, *dp++);
 
@@ -1778,29 +1722,6 @@ bu_vls_struct_print2(struct bu_vls *vls_out,
 	}
     }
 }
-
-
-void
-bu_parse_mm(const struct bu_structparse *sdp, const char *name, char *base, const char *value)
-/* structure description */
-/* struct member name */
-/* beginning of structure */
-/* string containing value */
-{
-    double *p;
-
-    if (UNLIKELY(!sdp || !base || !value))
-	return;
-
-    p = (double *)(base+sdp->sp_offset);
-
-    /* reconvert with optional units, name if-statement just to quell unused warning */
-    if (name)
-	*p = bu_mm_value(value);
-    else
-	*p = bu_mm_value(value);
-}
-
 
 #define STATE_UNKNOWN 0
 #define STATE_IN_KEYWORD 1
@@ -2472,7 +2393,6 @@ bu_next_token(char *str)
 void
 bu_structparse_get_terse_form(struct bu_vls *logstr, const struct bu_structparse *sp)
 {
-    struct bu_vls str = BU_VLS_INIT_ZERO;
     size_t i;
 
     if (UNLIKELY(!logstr || !sp))
@@ -2504,7 +2424,6 @@ bu_structparse_get_terse_form(struct bu_vls *logstr, const struct bu_structparse
 	}
 	++sp;
     }
-    bu_vls_free(&str);
 }
 
 
@@ -2521,7 +2440,6 @@ bu_structparse_argv(struct bu_vls *logstr,
     register size_t ii;
     const char *cp = NULL;
     char *loc = NULL;
-    struct bu_vls str = BU_VLS_INIT_ZERO;
 
     if (UNLIKELY(!logstr || !argv))
 	return BRLCAD_OK;
@@ -2556,7 +2474,7 @@ bu_structparse_argv(struct bu_vls *logstr,
 		case 's':
 		    /* copy the string to an array of length
 		     * sdp->sp_count, converting escaped double quotes
-		     * to just double quotes
+		     * to just double quotes.
 		     */
 		    if (argc < 1) {
 			bu_vls_printf(logstr,
@@ -2575,7 +2493,10 @@ bu_structparse_argv(struct bu_vls *logstr,
 			loc[sdp->sp_count-1] = '\0';
 			bu_vls_printf(logstr, "%s %s ", sdp->sp_name, loc);
 		    } else {
-			bu_vls_printf(logstr, "%s %c ", sdp->sp_name, *loc);
+			if (*loc == '\0')
+			    bu_vls_printf(logstr, "%s \"\" ", sdp->sp_name);
+			else
+			    bu_vls_printf(logstr, "%s %c ", sdp->sp_name, *loc);
 		    }
 		    break;
 		case 'V':
@@ -2740,7 +2661,7 @@ bu_structparse_argv(struct bu_vls *logstr,
 		    fastf_t *fp = (fastf_t *)loc;
 
 		    if (argc < 1) {
-			bu_vls_printf(&str,
+			bu_vls_printf(logstr,
 				      "not enough values for \"%s\" argument: should have %zu, only %d given",
 				      sdp->sp_name,
 				      sdp->sp_count, argc);
@@ -2799,20 +2720,21 @@ bu_structparse_argv(struct bu_vls *logstr,
 				cp++;
 			}
 
-			bu_vls_trunc(&str, 0);
-			bu_vls_strcpy(&str, numstart);
-			bu_vls_trunc(&str, cp-numstart);
+			{
+			    struct bu_vls str = BU_VLS_INIT_ZERO;
+			    bu_vls_strcpy(&str, numstart);
+			    bu_vls_trunc(&str, cp-numstart);
 
-			ret = sscanf(bu_vls_addr(&str), "%lf", &tmp_double);
-			if (ret != 1) {
-			    bu_vls_printf(logstr,
-					  "value \"%s\" to argument %s isn't a float",
-					  numstart,
-					  sdp->sp_name);
+			    ret = sscanf(bu_vls_addr(&str), "%lf", &tmp_double);
 			    bu_vls_free(&str);
-			    return BRLCAD_ERROR;
+			    if (ret != 1) {
+				bu_vls_printf(logstr,
+					      "value \"%s\" to argument %s isn't a float",
+					      numstart,
+					      sdp->sp_name);
+				return BRLCAD_ERROR;
+			    }
 			}
-			bu_vls_free(&str);
 
 			if (sdp->sp_fmt[1] == 'f') {
 			    *fp++ = (fastf_t)tmp_double;

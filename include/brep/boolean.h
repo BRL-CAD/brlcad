@@ -1,7 +1,7 @@
 /*                       B O O L E A N . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2018 United States Government as represented by
+ * Copyright (c) 2007-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,23 +35,23 @@
 
 extern "C++" {
 
-    enum op_type {
-	BOOLEAN_UNION = 0,
-	BOOLEAN_INTERSECT = 1,
-	BOOLEAN_DIFF = 2,
-	BOOLEAN_XOR = 3
-    };
+enum op_type {
+    BOOLEAN_UNION = 0,
+    BOOLEAN_INTERSECT = 1,
+    BOOLEAN_DIFF = 2,
+    BOOLEAN_XOR = 3
+};
 
-    /**
-     * Evaluate NURBS boolean operations.
-     *
-     * @param brepO [out]
-     * @param brepA [in]
-     * @param brepB [in]
-     * @param operation [in]
-     */
-    extern BREP_EXPORT int
-	ON_Boolean(ON_Brep *brepO, const ON_Brep *brepA, const ON_Brep *brepB, op_type operation);
+/**
+ * Evaluate NURBS boolean operations.
+ *
+ * @param brepO [out]
+ * @param brepA [in]
+ * @param brepB [in]
+ * @param operation [in]
+ */
+extern BREP_EXPORT int
+ON_Boolean(ON_Brep *brepO, const ON_Brep *brepA, const ON_Brep *brepB, op_type operation);
 
 } /* extern C++ */
 #endif

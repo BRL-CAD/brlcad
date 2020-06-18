@@ -33,5 +33,14 @@
 				<type type="text"/>
 			</result>
 		</command>
+			<command name="open location" code="GURLGURL"
+				 description="Open a URL.">
+			<direct-parameter description="URL" type="text">
+				<type type="text"/>
+			</direct-parameter>
+			<result description="Result">
+				<type type="text"/>
+			</result>
+		</command>
 	</suite>
 </dictionary>

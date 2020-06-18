@@ -54,7 +54,7 @@ listbox $f.list -listvariable paneList -yscrollcommand "$f.scr set"
 # Invert the first item to highlight it
 $f.list itemconfigure 0 \
 	-background [$f.list cget -fg] -foreground [$f.list cget -bg]
-scrollbar $f.scr -orient vertical -command "$f.list yview"
+ttk::scrollbar $f.scr -orient vertical -command "$f.list yview"
 pack $f.scr -side right -fill y
 pack $f.list -fill both -expand 1
 
@@ -62,8 +62,8 @@ pack $f.list -fill both -expand 1
 set f [frame $w.pane.bottom]
 text $f.text -xscrollcommand "$f.xscr set" -yscrollcommand "$f.yscr set" \
 	-width 30 -height 8 -wrap none
-scrollbar $f.xscr -orient horizontal -command "$f.text xview"
-scrollbar $f.yscr -orient vertical -command "$f.text yview"
+ttk::scrollbar $f.xscr -orient horizontal -command "$f.text xview"
+ttk::scrollbar $f.yscr -orient vertical -command "$f.text yview"
 grid $f.text $f.yscr -sticky nsew
 grid $f.xscr         -sticky nsew
 grid columnconfigure $f 0 -weight 1

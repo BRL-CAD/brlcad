@@ -1,7 +1,7 @@
 /*                         F B - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2018 United States Government as represented by
+ * Copyright (c) 1991-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@
 
 #include <stdlib.h>
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "fb.h"
@@ -95,6 +96,8 @@ main(int argc, char **argv)
     int scanbytes;              /* # of bytes of scanline */
     int scanpix;                /* # of pixels of scanline */
     int streamline;             /* # scanlines to do at once */
+
+    bu_setprogname(argv[0]);
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);

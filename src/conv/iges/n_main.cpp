@@ -1,7 +1,7 @@
 /*                      N _ M A I N . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,12 +25,16 @@
 #include "n_iges.hpp"
 #include "brlcad_brep.hpp"
 
+#include "bu/app.h"
 
 using namespace brlcad;
 
 int
 main(int argc, char** argv) {
     cout << argc << endl;
+
+    bu_setprogname(argv[0]);
+
     if (argc != 3) {
 	bu_exit(0, "iges <iges_filename> <output_filename>\n");
     }

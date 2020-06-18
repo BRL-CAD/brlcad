@@ -1,7 +1,7 @@
 /*                       D B _ A N I M . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2018 United States Government as represented by
+ * Copyright (c) 1987-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,7 +47,7 @@ db_add_anim(struct db_i *dbip, register struct animate *anp, int root)
     RT_CK_ANIMATE(anp);
     anp->an_forw = ANIM_NULL;
     if (root) {
-	if (RT_G_DEBUG&DEBUG_ANIM)
+	if (RT_G_DEBUG&RT_DEBUG_ANIM)
 	    bu_log("db_add_anim(%p) root\n", (void *)anp);
 
 	if (!dbip)
@@ -58,7 +58,7 @@ db_add_anim(struct db_i *dbip, register struct animate *anp, int root)
 	dp = DB_FULL_PATH_CUR_DIR(&anp->an_path);
 	if (!dp)
 	    return 1;
-	if (RT_G_DEBUG&DEBUG_ANIM)
+	if (RT_G_DEBUG&RT_DEBUG_ANIM)
 	    bu_log("db_add_anim(%p) arc %s\n", (void *)anp,
 		   dp->d_namep);
 	headp = &(dp->d_animate);
@@ -90,18 +90,18 @@ db_do_anim(register struct animate *anp, mat_t stack, mat_t arc, struct mater_in
 {
     mat_t temp;
 
-    if (RT_G_DEBUG&DEBUG_ANIM)
+    if (RT_G_DEBUG&RT_DEBUG_ANIM)
 	bu_log("db_do_anim(%p) ", (void *)anp);
-    if (RT_G_DEBUG&DEBUG_ANIM && !materp) bu_log("(null materp) ");
+    if (RT_G_DEBUG&RT_DEBUG_ANIM && !materp) bu_log("(null materp) ");
     RT_CK_ANIMATE(anp);
     switch (anp->an_type) {
 	case RT_AN_MATRIX:
-	    if (RT_G_DEBUG&DEBUG_ANIM) {
+	    if (RT_G_DEBUG&RT_DEBUG_ANIM) {
 		int op = anp->an_u.anu_m.anm_op;
 		if (op < 0) op = 0;
 		bu_log("matrix, op=%s (%d)\n",
 		       db_anim_matrix_strings[op], op);
-		if (RT_G_DEBUG&DEBUG_ANIM_FULL) {
+		if (RT_G_DEBUG&RT_DEBUG_ANIM_FULL) {
 		    bn_mat_print("on original arc", arc);
 		    bn_mat_print("on original stack", stack);
 		}
@@ -130,13 +130,13 @@ db_do_anim(register struct animate *anp, mat_t stack, mat_t arc, struct mater_in
 		default:
 		    return -1;		/* BAD */
 	    }
-	    if (RT_G_DEBUG&DEBUG_ANIM_FULL) {
+	    if (RT_G_DEBUG&RT_DEBUG_ANIM_FULL) {
 		bn_mat_print("arc result", arc);
 		bn_mat_print("stack result", stack);
 	    }
 	    break;
 	case RT_AN_MATERIAL:
-	    if (RT_G_DEBUG&DEBUG_ANIM)
+	    if (RT_G_DEBUG&RT_DEBUG_ANIM)
 		bu_log("property\n");
 	    /*
 	     * if the caller does not care about property, a null
@@ -164,7 +164,7 @@ db_do_anim(register struct animate *anp, mat_t stack, mat_t arc, struct mater_in
 		bu_log("Unknown anp_op=%d\n", anp->an_u.anu_p.anp_op);
 	    break;
 	case RT_AN_COLOR:
-	    if (RT_G_DEBUG&DEBUG_ANIM)
+	    if (RT_G_DEBUG&RT_DEBUG_ANIM)
 		bu_log("color\n");
 	    /*
 	     * if the caller does not care about property, a null
@@ -185,7 +185,7 @@ db_do_anim(register struct animate *anp, mat_t stack, mat_t arc, struct mater_in
 		(((float)anp->an_u.anu_c.anc_rgb[2])+0.5) / 255.0;
 	    break;
 	case RT_AN_TEMPERATURE:
-	    if (RT_G_DEBUG&DEBUG_ANIM)
+	    if (RT_G_DEBUG&RT_DEBUG_ANIM)
 		bu_log("temperature = %g\n", anp->an_u.anu_t);
 	    if (!materp) {
 		char *sofar = db_path_to_string(&anp->an_path);
@@ -196,7 +196,7 @@ db_do_anim(register struct animate *anp, mat_t stack, mat_t arc, struct mater_in
 	    materp->ma_temperature = anp->an_u.anu_t;
 	    break;
 	default:
-	    if (RT_G_DEBUG&DEBUG_ANIM)
+	    if (RT_G_DEBUG&RT_DEBUG_ANIM)
 		bu_log("unknown op\n");
 	    /* Print something here? */
 	    return -1;			/* BAD */
@@ -356,8 +356,8 @@ db_parse_1anim(struct db_i *dbip, int argc, const char *argv[])
 		 atof(argv[5+1]),
 		 atof(argv[5+2]));
 	    scale = atof(argv[5+3]);
-	    if (bn_mat_scale_about_pt(anp->an_u.anu_m.anm_mat,
-				      pt, scale) < 0) {
+	    if (bn_mat_scale_about_pnt(anp->an_u.anu_m.anm_mat,
+				       pt, scale) < 0) {
 		bu_log("db_parse_1anim: matrix %s scale_about (%g, %g, %g) scale=%g failed\n",
 		       argv[3], V3ARGS(pt), scale);
 		goto bad;
@@ -455,7 +455,7 @@ db_write_anim(FILE *fop, struct animate *anp)
     RT_CK_ANIMATE(anp);
 
     thepath  = db_path_to_string(&(anp->an_path));
-    if (RT_G_DEBUG&DEBUG_ANIM) {
+    if (RT_G_DEBUG&RT_DEBUG_ANIM) {
 	bu_log("db_write_anim: Writing %s\n", thepath);
     }
 

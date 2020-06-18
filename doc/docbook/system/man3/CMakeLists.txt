@@ -1,7 +1,7 @@
 set(man3_EN
-  libcursor.xml
   libfb.xml
   libplot3.xml
+  libpkg.xml
   librt.xml
   libwdb.xml
   redblack.xml
@@ -16,6 +16,7 @@ set(man3_EN
 ADD_DOCBOOK("HTML;PHP;MAN3;PDF" man3_EN man3 "")
 
 CMAKEFILES(libbu.xml libdm.xml TODO)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

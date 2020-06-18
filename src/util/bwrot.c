@@ -1,7 +1,7 @@
 /*                         B W R O T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2018 United States Government as represented by
+ * Copyright (c) 1986-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,8 +43,8 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
-#include "bu/file.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
@@ -297,7 +297,7 @@ main(int argc, char **argv)
     ssize_t x, y;
     size_t j;
     int ret = 0;
-    off_t outbyte, outplace;
+    size_t outbyte, outplace;
     FILE *ifp, *ofp;
     unsigned char *obuf;
     unsigned char *buffer;
@@ -331,7 +331,7 @@ main(int argc, char **argv)
 
     /*
      * Clear our "file pointer."  We need to maintain this
-     * In order to tell if seeking is required.  ftell() always
+     * In order to tell if seeking is required.  bu_ftell() always
      * fails on pipes, so we can't use it.
      */
     outplace = 0;

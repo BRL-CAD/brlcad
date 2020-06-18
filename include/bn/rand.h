@@ -1,7 +1,7 @@
 /*                        R A N D . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -97,7 +97,7 @@ BN_EXPORT extern float bn_rand_halftab[BN_RANDHALFTABSIZE];
 #define bn_rand_half(_p)	\
     ((++(_p) >= &bn_rand_halftab[bn_randhalftabsize] || \
       (_p) < bn_rand_halftab) ? \
-     *((_p) = bn_rand_halftab) : *(_p))
+    *((_p) = bn_rand_halftab) : *(_p))
 
 /**
  * initialize the seed for the large random number table (halftab)

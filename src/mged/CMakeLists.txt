@@ -28,7 +28,6 @@ set(MGED_SOURCES
   clone.c
   color_scheme.c
   columns.c
-  dir.c
   dm-generic.c
   dodraw.c
   doevent.c
@@ -45,7 +44,6 @@ set(MGED_SOURCES
   menu.c
   mged.c
   mover.c
-  muves.c
   overlay.c
   plot.c
   predictor.c
@@ -65,13 +63,10 @@ set(MGED_SOURCES
   wdb_obj.c
   )
 
-set(mged_libs libtclcad libged libwdb libdm libnmg ${ITCL_LIBRARY} ${ITK_LIBRARY})
+set(mged_libs libtclcad libged libwdb libdm libnmg ${ITCL_LIBRARY} ${ITK_LIBRARY} ${WS2_32_LIBRARY} ${OPENGL32_LIBRARY})
 if(TARGET libtermio)
   set(mged_libs ${mged_libs} libtermio)
 endif(TARGET libtermio)
-if(CPP_DLL_DEFINES)
-  set(mged_libs ${mged_libs} ws2_32.lib;opengl32.lib)
-endif(CPP_DLL_DEFINES)
 
 # Ideally we'd build as GUI for Windows to avoid the command window popping up,
 # but I'm not sure if that would be a problem for scripting with mged.exe on
@@ -89,6 +84,7 @@ BRLCAD_ADDEXEC(cad_boundp cad_boundp.c "libbu;${M_LIBRARY}")
 BRLCAD_ADDEXEC(cad_parea cad_parea.c libbu)
 
 set(mged_ignore_files
+  CMakeLists.txt
   bool_rewrite.c
   cmd.h
   comb_bool.h

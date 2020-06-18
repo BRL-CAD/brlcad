@@ -95,8 +95,17 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   set(CREO_PTK_UNLOCKER "${CREO_ROOT_DIR}/${MDIR}/Parametric/bin/protk_unlock.bat")
 
   # CREO libraries
-  set(CREO_PTK_EXE_LIBS "${CREO_ROOT_DIR}/${MDIR}/Common Files/protoolkit/${CREO_OS_VERSION}/obj/protoolkit.lib")
-  set(CREO_PTK_DLL_LIBS "${CREO_ROOT_DIR}/${MDIR}/Common Files/protoolkit/${CREO_OS_VERSION}/obj/protk_dll.lib")
+  set(CREO_LIB_PATH "${CREO_ROOT_DIR}/${MDIR}/Common Files/protoolkit/${CREO_OS_VERSION}/obj/")
+  find_file(CREO_PTK_DLL_LIBS NAMES "protk_dll_NU.lib" "protk_dll.lib" PATHS "${CREO_LIB_PATH}")
+  find_file(CREO_PTK_EXE_LIBS NAMES "protoolkit_NU.lib" "protoolkit.lib" PATHS "${CREO_LIB_PATH}")
+
+  foreach(libname "ucore.lib" "udata.lib")
+    set(unicode_lib "${CREO_LIB_PATH}/${libname}")
+
+    if(EXISTS "${unicode_lib}")
+      set(CREO_PTK_DLL_LIBS "${CREO_PTK_DLL_LIBS}" "${unicode_lib}")
+    endif(EXISTS "${unicode_lib}")
+  endforeach(libname "ucore.lib" "udata.lib")
 
   # CREO include directories
   set(CREO_PTK_INCDIR "${CREO_ROOT_DIR}/${MDIR}/Common Files/protoolkit/includes")
@@ -114,12 +123,14 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     CREO_PTK_INCDIR
     CREO_PTK_APPLS_INCDIR
     )
-  foreach(reqpath ${CREO_REQUIRED_PATHS_ABS})
-    if(NOT EXISTS "${${reqpath}}")
-      set(have_creo_paths 0)
-      message(WARNING "Required CREO path variable ${reqpath} has non-existant path ${${reqpath}} - update ${reqpath} to reflect the correct path for this installation of CREO.")
-    endif(NOT EXISTS "${${reqpath}}")
-  endforeach(reqpath ${CREO_REQUIRED_PATHS_ABS})
+  foreach(reqpath_set ${CREO_REQUIRED_PATHS_ABS})
+    foreach(reqpath ${${reqpath_set}})
+      if(NOT EXISTS "${reqpath}")
+	set(have_creo_paths 0)
+	message(WARNING "Required CREO path variable ${reqpath_set} has non-existant path ${reqpath} - update ${reqpath} to reflect the correct path for this installation of CREO.")
+      endif(NOT EXISTS "${reqpath}")
+    endforeach(reqpath ${${reqpath_set}})
+  endforeach(reqpath_set ${CREO_REQUIRED_PATHS_ABS})
 
   # CREO resource paths
   set(CREO_RESOURCE_DIR "Common Files/text/resource")
@@ -206,6 +217,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     openNURBS
     regex
     zlib1
+	libSPSR
     )
   set(BRLCAD_STATIC_LIBS)
   set(brlcadlibs_notinstalled)
@@ -261,6 +273,7 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   # DLLs in place will result in silent failure of the loading step. ***
   add_library(creo-brl SHARED ${creo_brl_srcs})
   target_link_libraries(creo-brl ${WIN_LIBS} ${CREO_PTK_DLL_LIBS} ${BRLCAD_STATIC_LIBS})
+  set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
   install(TARGETS creo-brl
     RUNTIME DESTINATION "${MDIR}/${CREO_OBJ_DIR}"
     )
@@ -285,6 +298,8 @@ if(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
       set(DAT_TEXT_DIR "${CREO_ROOT_DIR}/${MDIR}/${CREO_MSG_DIR}")
       configure_file(creo-brl.dat.in ${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE}/creo-brl-debug.dat @ONLY)
     endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+	set_property(TARGET creo-brl-exe APPEND PROPERTY COMPILE_DEFINITIONS "TINYCTHREAD_DLL_IMPORTS")
+	set_property(TARGET creo-brl-exe APPEND PROPERTY COMPILE_DEFINITIONS "SPSR_DLL_IMPORTS")
   endif(DEFINED CREO_EXEC_PLUGIN)
 
   # Install the resource files
@@ -338,8 +353,8 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     "${CMAKE_CURRENT_BINARY_DIR}/../../../include"
     "${CMAKE_CURRENT_SOURCE_DIR}/../../../include"
     "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/other/openNURBS"
-    "${ZLIB_INCLUDE_DIR}"
-    "${REGEX_INCLUDE_DIR}"
+    "${ZLIB_INCLUDE_DIRS}"
+    "${REGEX_INCLUDE_DIRS}"
     )
 
   # The build shims aren't so great at mocking the initialization
@@ -351,7 +366,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   add_library(creo-brl ${creo_brl_srcs})
   target_link_libraries(creo-brl librt libwdb libbrep libbg libnmg libbn libbu)
   set_target_properties(creo-brl PROPERTIES FOLDER "BRL-CAD Executables/Build Only")
-  if(CPP_DLL_DEFINES)
+  if(HIDE_INTERNAL_SYMBOLS)
     set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "BU_DLL_IMPORTS")
     set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "BN_DLL_IMPORTS")
     set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "NMG_DLL_IMPORTS")
@@ -365,7 +380,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "VDS_DLL_IMPORTS")
     set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "ON_DLL_IMPORTS")
     set_property(TARGET creo-brl APPEND PROPERTY COMPILE_DEFINITIONS "LZ4_DLL_IMPORT=1")
-  endif(CPP_DLL_DEFINES)
+  endif(HIDE_INTERNAL_SYMBOLS)
 
   # Distcheck file list
   set(creo_dist_files
@@ -379,6 +394,7 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     shim.h
     )
 CMAKEFILES(${creo_dist_files})
+CMAKEFILES(CMakeLists.txt)
 
 endif(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 

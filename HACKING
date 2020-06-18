@@ -263,10 +263,6 @@ routines needed for the manipulation and analysis of Non-Uniform
 Rational BSpline based boundary representations.
 	Depends on: libbg libbn libbu OpenNURBS
 
-libcursor: The cursor library is a lightweight cursor manipulation
-library similar to curses but with less overhead.
-	Depends on: termlib
-
 libdm: The display manager library contains the logic for generalizing
 a drawable context.  This includes the ability to output
 drawing/plotting instructions to a variety of devices such as X11,
@@ -407,26 +403,25 @@ should be POSIX-compliant Bourne Shell Script.  The build system uses
 the CMake build tool.  An initial implementation of a BRL-CAD Geometry
 Server is written in PHP.
 
-With release 7.0, BRL-CAD has moved forward and worked toward making
-all of BRL-CAD C code conform strictly with the ANSI/ISO standard for
-C language compilation (ISO/IEC 9899:1990, i.e. c89).  Support for
-older compilers and older K&R-based system facilities is being
-migrated to build system declarations, preprocessor defines, or being
-removed outright.  It's okay to make modifications that assume
-compiler conformance with the ANSI C standard (c89).
+With release 7.28, BRL-CAD intends to conform strictly with the 2011
+ANSI/ISO standards for C and C++ language compilation
+(ISO/IEC 9899:2011, i.e. C11 and ISO/IEC 14882:2011, i.e. C++11).
+Support for use of necessary non-standard system facilities is
+handled by build system declarations and preprocessor defines driven
+by build configuration tests.  The working feature set for normal
+development should be widely supported C++11 features and the subset
+of C11 that is also valid (and widely supported) C++11.
 
-There is currently no C++ interface to the core BRL-CAD libraries.
-There are a few tools and enhancements to libraries that are
-implemented in C++ (the new BREP object type in librt, for example),
-and C++ is used underneath quite a number of libraries, but there is
-presently no public C++ API in use outside of OpenNURBS.
+C++ is used as an implementation language within libraries, but there
+are no public C++ APIs in use outside of OpenNURBS.  For new work,
+public library APIs should expose only C function calls and data
+except in very specific cases (should be discussed with the
+development team ahead of time to get consensus on the necessity.)
 
-While C++ as an implementation language of new tools and new library
-interfaces is not prohibited, the mixing of C++ semantics and C++ code
-(including simple // style comments) in the existing C files is not
-allowed.  As new interfaces are developed, new contributors become
-involved, and C++ code integration becomes more prevalent, the
-contributor guidelines will become reinforced with more details.
+There is a C++ interface to the core BRL-CAD libraries called MOOSE
+that is maintained in a separate repository.  It is developed with
+separation in order to avoid mixing C++ semantics into existing APIs
+and to ensure clean separation of responsibilities and modularity.
 
 
 CODING STYLE & STANDARDS
@@ -512,11 +507,15 @@ system headers.
 
 Language Compliance:
 
-Features of C that conform to the ISO/IEC 9899-1990 C standard (C90)
-are generally the baseline for strict language conformance.  As
-BRL-CAD used to be K&R syntax conformant, there remains an on-going
-effort to ensure a full conversion to a standards compliant ISO C
-implementation.
+Features of C that conform to the ISO/IEC 9899:2011 C standard (C11)
+and the ISO/IEC 14882:2011 C++ standard (C++11) are generally the
+baseline for strict language conformance, with the caveat that
+features deprecated in subsequent standards or not widely/reliably
+implemented on OS/compiler platforms targeted by BRL-CAD should be
+avoided.  When writing in C coders should keep their code within the
+subset of C shared by the C and C++ standards - while not currently
+strictly enforced, full C++ only build support is a long term project
+goal.
 
 Code Conventions:
 
@@ -563,17 +562,27 @@ variables should be utilized instead of the standard C facility:
   bu_malloc() instead of malloc()
   bu_calloc() instead of calloc()
   bu_realloc() instead of realloc()
-  bu_fgets() instead of fgets()
   bu_free() instead of free()
-  bu_log() instead of printf()
+
   bu_bomb() instead of abort()
   bu_exit() instead of printf()+exit()
-  bu_dirname() instead of dirname()
+  bu_snooze() instead of sleep(), usleep(), nanosleep()
+
   bu_getopt() instead of getopt()
   bu_opterr instead of opterr
   bu_optind instead of optind
   bu_optopt instead of optopt
   bu_optarg instead of optarg
+
+  bu_file_delete() instead of unlink(), rmdir(), and remove()
+  bu_path_basename() instead of basename()
+  bu_path_dirname() instead of dirname()
+  bu_path_match() instead of fnmatch()
+
+  bu_log() instead of printf()
+  bu_fgets() instead of fgets()
+  bu_sort() instead of qsort()
+
   bu_strdup() instead of strdup()
   bu_strlcat() instead of strcat(), strncat(), and strlcat()
   bu_strlcpy() instead of strcpy(), strncpy(), and strlcpy()
@@ -581,8 +590,6 @@ variables should be utilized instead of the standard C facility:
   bu_strcasecmp() and BU_STR_EQUIV() instead of stricmp()/strcasecmp()
   bu_strncmp() instead of strncmp()
   bu_strcasecmp() instead of strnicmp()/strncasecmp()
-  bu_file_delete() instead of unlink(), rmdir(), and remove()
-  bu_sort() instead of qsort()
 
 Similarly, ANSI C functions are preferred over the BSD and POSIX
 interfaces.  The following functions should be used:
@@ -824,19 +831,16 @@ it better?" and add documentation accordingly.
 
 All public library functions and most private or application functions
 should be appropriately documented using Doxygen/Javadoc style
-comments.  Without getting into the advanced details, this minimally
-means that you need to add an additional asterisk to a comment that
-precedes your functions:
+comments.  This minimally means that you need to add an additional
+asterisk to a comment that precedes your functions.  Public functions
+must be exported and imported using per-library macros that precede
+public symbol declarations (e.g., BU_EXPORT int func();).  Example:
 
 /**
  * Computes the answer to the meaning of life, the universe, and
  * everything.
  */
-int
-the_answer(void)
-{
-    return 42;
-}
+MYLIB_EXPORT int mylib_function();
 
 
 TESTING & DEBUGGING
@@ -1073,10 +1077,7 @@ number follows a common convention where the three numbers represent:
     {MAJOR_VERSION}.{MINOR_VERSION}.{PATCH_VERSION}
 
 All "development" builds use an odd number for the minor version.  All
-"release" builds use an even number for the minor version.  Patched
-versions should include a release count:
-
-    {MAJOR_VERSION}.{MINOR_VERSION}.{PATCH_VERSION}[-{RELEASE_COUNT}]
+"release" builds use an even number for the minor version.
 
 The MAJOR_VERSION should only increment when it is deemed that a
 significant amount of major changes have accumulated, new features
@@ -1098,9 +1099,13 @@ backwards incompatible in some manner should increment the patch
 version number.
 
 If it becomes necessary to update a posted release, use and increment
-the RELEASE_COUNT.  The first posted release is implicitly the "-0"
-release count (e.g., 7.10.2 is implicitly 7.10.2-0) with subsequent
-updated releases incrementing the count (e.g., 7.10.2-1).
+the AMEND_COUNT format outlined below.  The first posted release is
+implicitly the "-0" release (e.g., 7.10.2 is implicitly 7.10.2-0) with
+subsequent updated releases incrementing the count (e.g., 7.10.2-1).
+See the "AMENDING A RELEASE" section below for guidelines on when a
+release should be amended in lieu of a new PATCH_VERSION release.
+
+    {MAJOR_VERSION}.{MINOR_VERSION}.{PATCH_VERSION}[-{AMEND_COUNT}]
 
 
 NAMING A SOURCE RELEASE
@@ -1194,33 +1199,35 @@ necessary convention by a binary package management system.  Examples:
   zip
 
 
-PATCHING A RELEASE
+AMENDING A RELEASE
 ------------------
 
-Should it become necessary to patch a release that has already been
-posted and announced, the mechanism is to post patch files for the
-source release and update the uploaded release notes README file.
+Should it become necessary to modify a release after it has been
+tagged, uploaded, and announced, a release amendment may be issued.
+Releases that are neither tagged, uploaded, or announced are subject
+to at-will change and re-tagging.
+
+Amendments to source releases are expressed as a sequence of one or
+more patch files that are to be applied sequentially.  Patch files may
+be descriptively named but must be incrementally numbered.  The
+uploaded release notes and/or README file(s) should instruct users
+building from source to download and apply all available patch files
+in order.
 
 Example: stop_rt_crashing-0.patch and fix_fbserv-1.patch
 
-It's expected that all patch files are independent and will be applied
-sequentially.  They should be consistently and incrementally numbered.
-Users should be instructed in the release notes README to download and
-apply all available patch files.
-
-For binary releases, it's recommended to just "move on" and let issues
+For binary builds, it's recommended to just "move on" and let issues
 become resolved in the next release unless there's a critical security
-or significant data corruption issue involved.  If it becomes
-necessary to repost a release, use the RELEASE_COUNT file name
-convention described in VERSION NUMBERS & COMPATIBILITY.
+or data corruption issue involved.  That said, binary releases may be
+re-posted with a modified name per the convention described in VERSION
+NUMBERS & COMPATIBILITY.
 
 Example:  BRL-CAD-7.12.2.dmg is superseded by BRL-CAD-7.12.2-1.dmg
 
-Patched binary releases may be moved to the hidden attic folder if
-critical, though not necessary or recommended.  They are preserved for
-historic record and should never be deleted once announced.  Releases
-not yet been announced may be updated within two days of being posted
-without involving a patch.
+Older binary releases may be moved to the hidden attic folder, though
+not necessary or recommended except where critical vulnerabilities are
+involved.  Releases are preserved for historic record and should never
+be deleted once announced.
 
 
 MAKING A RELEASE
@@ -1257,19 +1264,23 @@ Release steps are as follows:
     PREV=[[last_trunk_rev]]
     echo "PREV=$PREV"
 
-    svn co svn://svn.code.sf.net/p/brlcad/code/brlcad/branches/RELEASE brlcad.RELEASE
+    svn co https://svn.code.sf.net/p/brlcad/code/brlcad/branches/RELEASE brlcad.RELEASE
     cd brlcad.RELEASE
     svn merge https://svn.code.sf.net/p/brlcad/code/brlcad/trunk@$PREV https://svn.code.sf.net/p/brlcad/code/brlcad/trunk@HEAD .
 
 #####################################################################
 # 02: Test the merge.
 
+    # NON-AUTO: Confirm versioning in include/conf/.
+    # BRLCAD_VERSION_AMEND may be defined during CMake for an
+    # amendment build.
+
     mkdir -p .build && cd .build
     cmake .. -DBRLCAD_BUNDLED_LIBS=ON -DCMAKE_BUILD_TYPE=Release && make
 
-    # Manually check rt, mged, and archer.
+    # NON-AUTO: Manually check rt, mged, and archer.
     bin/rt        # should report usage with correct library versions
-    bin/mged -c test.g "make sph sph ; draw sph ; rt"   # pops up a sphere
+    bin/mged -c test.g "make sph sph ; draw sph ; rt ; after 1000 ; l sph"   # create, view and list info about a sphere
     bin/mged      # displays gui, run: opendb test.g ; draw sph ; rt
     bin/archer    # displays gui, run: opendb test.g ; draw sph ; rt
 

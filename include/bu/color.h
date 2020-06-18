@@ -1,7 +1,7 @@
 /*                        C O L O R . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,45 +42,43 @@ __BEGIN_DECLS
 #define RED 0
 #define GRN 1
 #define BLU 2
+#define ALP 3
 
 #define HUE 0
 #define SAT 1
 #define VAL 2
 
-#define ACHROMATIC	-1.0
 
+/**
+ * a single color value, stored as a 0.0 to 1.0 triplet for RGBA
+ */
 struct bu_color
 {
-    uint32_t buc_magic;
-    fastf_t buc_rgb[3];
+    hvect_t buc_rgb;
 };
 typedef struct bu_color bu_color_t;
 #define BU_COLOR_NULL ((struct bu_color *) 0)
 
 /**
- * asserts the integrity of a bu_color struct.
- */
-#define BU_CK_COLOR(_c) BU_CKMAG(_c, BU_COLOR_MAGIC, "bu_color")
-
-/**
  * initializes a bu_color struct without allocating any memory.
  */
 #define BU_COLOR_INIT(_c) { \
-	(_c)->buc_magic = BU_COLOR_MAGIC; \
-	(_c)->buc_rgb[0] = (_c)->buc_rgb[1] = (_c)->buc_rgb[2] = 0; \
+	(_c)->buc_rgb[RED] = (_c)->buc_rgb[GRN] = (_c)->buc_rgb[BLU] = 0; (_c)->buc_rgb[ALP]; \
     }
 
 /**
  * macro suitable for declaration statement initialization of a bu_color
  * struct.  does not allocate memory.
  */
-#define BU_COLOR_INIT_ZERO { BU_COLOR_MAGIC, {0, 0, 0} }
+#define BU_COLOR_INIT_ZERO {{0, 0, 0, 0}}
 
-/**
- * returns truthfully whether a bu_color has been initialized
- */
-#define BU_COLOR_IS_INITIALIZED(_c) (((struct bu_color *)(_c) != BU_COLOR_NULL) && LIKELY((_c)->magic == BU_COLOR_MAGIC))
 
+
+/* random color generating methods */
+typedef enum {
+    BU_COLOR_RANDOM = 0,
+    BU_COLOR_RANDOM_LIGHTENED
+} bu_color_rand_t;
 
 /**
  * Function to generate random color
@@ -90,17 +88,22 @@ typedef struct bu_color bu_color_t;
  *     3dm-g: src/libgcv/plugins/rhino/rhino_read.cpp
  *   "constrained" random
  *     BRLCADWrapper:getRandomColor(): src/conv/step/BRLCADWrapper.cpp
- *   color command (set specified color)
+
+ */
+BU_EXPORT extern int bu_color_rand(struct bu_color *c, bu_color_rand_t type);
+
+#if 0
+
+/*
+ * Refactoring points:
+ * color command (set specified color)
  *     src/libged/color.c
  *     src/libged/brep.c
  *   get color from string
  *     src/libbu/color.c
- *
- * Possible calling syntax:
+
+* Possible calling syntax:
  @code
- * // get a color object given a string description
- * bu_color_from_str(redcolor, "red");
- *
  * // draw a purely random color in 0/0/0 to 255/255/255 range
  * bn_color_samples(colors, NULL, COLOR_RANDOM, 1); // problematic in libbu, random is libbn domain
  *
@@ -130,7 +133,6 @@ typedef struct bu_color bu_color_t;
  *     ignoring YCbCr, YPbPr, YUV, YIQ, CMYK, CIE LAB
  *     ignoring grayscale specification
  */
-#if 0
 /**
  * Return a set of sampled colors given a range of zero or more colors
  * (a NULL-terminated list of colors), a sample method, and desired
@@ -153,15 +155,15 @@ size_t bn_color_samples(struct bu_color **samples, const bu_color *colors, enum 
  *
  * H is in [0.0, 360.0), and S and V are in [0.0, 1.0],
  *
- * unless S = 0.0, in which case H = ACHROMATIC.
+ * If S == 0.0, H is achromatic and set to 0.0
  *
  * These two routines are adapted from:
  * pp. 592-3 of J.D. Foley, A. van Dam, S.K. Feiner, and J.F. Hughes,
  * _Computer graphics: principles and practice_, 2nd ed., Addison-Wesley,
  * Reading, MA, 1990.
  */
-BU_EXPORT extern void bu_rgb_to_hsv(unsigned char *rgb, fastf_t *hsv);
-BU_EXPORT extern int bu_hsv_to_rgb(fastf_t *hsv, unsigned char *rgb);
+BU_EXPORT extern void bu_rgb_to_hsv(const unsigned char *rgb, fastf_t *hsv);
+BU_EXPORT extern int bu_hsv_to_rgb(const fastf_t *hsv, unsigned char *rgb);
 
 
 /**
@@ -178,16 +180,16 @@ BU_EXPORT extern int bu_hsv_to_rgb(fastf_t *hsv, unsigned char *rgb);
  *   bu_color_create(&colors, "%d/%d/%d", rgb[0], rgb[1], rgb[2], "hsv(%lf,0.5,0.95)", hsv, NULL);
  *   bu_color_destroy(colors);
  */
-BU_EXPORT extern int bu_color_from_rgb_floats(struct bu_color *cp, fastf_t *rgb);
-BU_EXPORT extern int bu_color_from_rgb_chars(struct bu_color *cp, unsigned char *rgb);
+BU_EXPORT extern int bu_color_from_rgb_floats(struct bu_color *cp, const fastf_t *rgb);
+BU_EXPORT extern int bu_color_from_rgb_chars(struct bu_color *cp, const unsigned char *rgb);
 BU_EXPORT extern int bu_color_from_str(struct bu_color *cp, const char *str);
 /* UNIMPLEMENTED: BU_EXPORT extern int bu_color_from_hsv_floats(struct bu_color *cp, fastf_t *hsv); */
 
-BU_EXPORT extern int bu_str_to_rgb(char *str, unsigned char *rgb);  /* inconsistent, deprecate */
+BU_EXPORT extern int bu_str_to_rgb(const char *str, unsigned char *rgb);  /* inconsistent, deprecate */
 
-BU_EXPORT extern int bu_color_to_rgb_floats(struct bu_color *cp, fastf_t *rgb); /* bu_color_as_rgb_3fv */
-BU_EXPORT extern int bu_color_to_rgb_chars(struct bu_color *cp, unsigned char *rgb); /* bu_color_as_rgb */
-BU_EXPORT extern int bu_color_to_rgb_ints(struct bu_color *cp, int *r, int *g, int *b); /* bu_color_as_rgb_3i */
+BU_EXPORT extern int bu_color_to_rgb_floats(const struct bu_color *cp, fastf_t *rgb); /* bu_color_as_rgb_3fv */
+BU_EXPORT extern int bu_color_to_rgb_chars(const struct bu_color *cp, unsigned char *rgb); /* bu_color_as_rgb */
+BU_EXPORT extern int bu_color_to_rgb_ints(const struct bu_color *cp, int *r, int *g, int *b); /* bu_color_as_rgb_3i */
 /* UNIMPLEMENTED: BU_EXPORT extern int bu_color_to_hsv_floats(struct bu_color *cp, fastf_t *hsv); */ /* bu_color_as_hsv_3fv */
 
 

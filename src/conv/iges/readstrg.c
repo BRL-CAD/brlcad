@@ -1,7 +1,7 @@
 /*                      R E A D S T R G . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2018 United States Government as represented by
+ * Copyright (c) 1990-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,8 +26,8 @@
  * only action taken is to read the string (effectively skipping the
  * field).
  *
- * "eof" is the "end-of-field" delimiter
- * "eor" is the "end-of-record" delimiter
+ * "eofd" is the "end-of-field" delimiter
+ * "eord" is the "end-of-record" delimiter
  *
  */
 
@@ -40,11 +40,11 @@ Readstrg(char *id)
     int i = (-1), length = 0, done = 0, lencard;
     char num[80];
 
-    if (card[counter] == eof) {
+    if (card[counter] == eofd) {
 	/* This is an empty field */
 	counter++;
 	return;
-    } else if (card[counter] == eor) /* Up against the end of record */
+    } else if (card[counter] == eord) /* Up against the end of record */
 	return;
 
     if (card[72] == 'P')
@@ -82,14 +82,14 @@ Readstrg(char *id)
     if (*id != '\0')
 	bu_log("%c", '\n');
 
-    while (card[counter] != eof && card[counter] != eor) {
+    while (card[counter] != eofd && card[counter] != eord) {
 	if (counter < lencard)
 	    counter++;
 	else
 	    Readrec(++currec);
     }
 
-    if (card[counter] == eof) {
+    if (card[counter] == eofd) {
 	counter++;
 	if (counter > lencard)
 	    Readrec(++ currec);

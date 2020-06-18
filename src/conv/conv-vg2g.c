@@ -1,7 +1,7 @@
 /*                     C O N V - V G 2 G . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2018 United States Government as represented by
+ * Copyright (c) 1985-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,6 +38,7 @@
 
 #include "rt/db4.h"
 
+#include "bu/app.h"
 #include "bu/file.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
@@ -65,21 +66,21 @@ main(int argc, char **argv)
 	return 11;
     }
 
-    ifpath = bu_realpath(argv[1], NULL);
+    ifpath = bu_file_realpath(argv[1], NULL);
     if ((ifd = open(ifpath, O_RDONLY | O_BINARY)) < 0) {
 	perror(ifpath);
-	bu_free(ifpath, "ifpath alloc from bu_realpath");
+	bu_free(ifpath, "ifpath alloc from bu_file_realpath");
 	return 12;
     }
-    bu_free(ifpath, "ifpath alloc from bu_realpath");
+    bu_free(ifpath, "ifpath alloc from bu_file_realpath");
 
-    ofpath = bu_realpath(argv[2], NULL);
+    ofpath = bu_file_realpath(argv[2], NULL);
     if ((ofd = creat(ofpath, 0664)) < 0) {
 	perror(ofpath);
-	bu_free(ofpath, "ofpath alloc from bu_realpath");
+	bu_free(ofpath, "ofpath alloc from bu_file_realpath");
 	return 13;
     }
-    bu_free(ofpath, "ofpath alloc from bu_realpath");
+    bu_free(ofpath, "ofpath alloc from bu_file_realpath");
 
     setmode(ofd, O_BINARY);
 
@@ -106,7 +107,7 @@ main(int argc, char **argv)
 	    bu_strlcpy(rec.i.i_version, ID_VERSION, sizeof(rec.i.i_version));
 	}
     } else {
-	lseek(ifd, 0, 0);
+	bu_lseek(ifd, 0, 0);
 	/* have an old vged file to convert */
 
 	/* units are important now because:
@@ -205,7 +206,7 @@ top:
 	    case ID_ARS_A:
 		if (rec.a.a_name[0] == '\0') {
 		    /* Skip deleted junk */
-		    lseek(ifd, (off_t)(rec.a.a_totlen * sizeof(rec)), 1);
+		    bu_lseek(ifd, (b_off_t)(rec.a.a_totlen * sizeof(rec)), 1);
 		    goto top;
 		}
 		rec.a.a_xmin *= factor;

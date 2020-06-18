@@ -1,7 +1,7 @@
 /*                      S H _ L I G H T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2018 United States Government as represented by
+ * Copyright (c) 1998-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -146,7 +146,7 @@ aim_set(const struct bu_structparse *UNUSED(sdp),
 	void *UNUSED(data))
 {
     register struct light_specific *lsp = (struct light_specific *)base;
-    if (rdebug & RDEBUG_LIGHT) {
+    if (optical_debug & OPTICAL_DEBUG_LIGHT) {
 	VPRINT("lt_target: ", lsp->lt_target);
     }
     lsp->lt_exaim = 1;
@@ -171,7 +171,7 @@ light_cvt_visible(const struct bu_structparse *sdp,
 {
     struct light_specific *lsp = (struct light_specific *)base;
 
-    if (rdebug & RDEBUG_LIGHT) {
+    if (optical_debug & OPTICAL_DEBUG_LIGHT) {
 	bu_log("light_cvt_visible(%s, %zu)\n", name, sdp->sp_offset);
 	bu_log("visible: %lu invisible: %lu\n",
 	       LIGHT_O(lt_visible),
@@ -238,7 +238,7 @@ light_pt_set(const struct bu_structparse *sdp,
     light_pt_allocate(lsp);
     memcpy(&lsp->lt_sample_pts[ lsp->lt_pt_count++ ], p, sizeof(struct light_pt));
 
-    if (rdebug & RDEBUG_LIGHT) {
+    if (optical_debug & OPTICAL_DEBUG_LIGHT) {
 	bu_log("set light point %g %g %g N %g %g %g\n", p[0], p[1], p[2], p[3], p[4], p[5]);
     }
 }
@@ -277,7 +277,7 @@ light_render(struct application *ap, const struct partition *pp, struct shadewor
 	VSCALE(swp->sw_color, lsp->lt_color, f);
     }
 
-    if (rdebug & RDEBUG_LIGHT) {
+    if (optical_debug & OPTICAL_DEBUG_LIGHT) {
 	bu_log("light %s xy=%d, %d temp=%g\n",
 	       pp->pt_regionp->reg_name, ap->a_x, ap->a_y,
 	       swp->sw_temperature);
@@ -476,7 +476,7 @@ light_gen_sample_pts(struct application *upap,
 
     RT_CK_LIGHT(lsp);
 
-    if (rdebug & RDEBUG_LIGHT)
+    if (optical_debug & OPTICAL_DEBUG_LIGHT)
 	bu_log("light_gen_sample_pts(%s)\n", lsp->lt_name);
 
 
@@ -492,7 +492,7 @@ light_gen_sample_pts(struct application *upap,
      * Return if we can't get the bounding tree dimensions */
     if (rt_bound_tree(lsp->lt_rp->reg_treetop, tree_min, tree_max) < 0) return;
 
-    if (rdebug & RDEBUG_LIGHT) {
+    if (optical_debug & OPTICAL_DEBUG_LIGHT) {
 	bu_log("\tlight bb (%g %g %g), (%g %g %g)\n",
 	       V3ARGS(tree_min), V3ARGS(tree_max));
     }
@@ -501,7 +501,7 @@ light_gen_sample_pts(struct application *upap,
      * just give up
      */
     VSUB2(span, tree_max, tree_min);
-    if (rdebug & RDEBUG_LIGHT) {
+    if (optical_debug & OPTICAL_DEBUG_LIGHT) {
 	bu_log("\tspan %g %g %g\n", V3ARGS(span));
     }
     if (span[X] <= 0.0 && span[Y] <= 0.0 && span[Z] <= 0.0) {
@@ -520,7 +520,7 @@ light_gen_sample_pts(struct application *upap,
     /* debugging for the light sample points. output a plot line for
      * each sample point.
      */
-    if (rdebug & RDEBUG_LIGHT) {
+    if (optical_debug & OPTICAL_DEBUG_LIGHT) {
 	int l;
 	point_t p;
 	struct light_pt *lpt = &lsp->lt_sample_pts[0];
@@ -673,7 +673,7 @@ light_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, cons
     }
     BU_LIST_INSERT(&(LightHead.l), &(lsp->l));
 
-    if (rdebug&RDEBUG_LIGHT) {
+    if (optical_debug&OPTICAL_DEBUG_LIGHT) {
 	light_print(rp, (char *)lsp);
     }
     if (lsp->lt_invisible) {
@@ -740,7 +740,7 @@ light_init(struct application *ap)
     }
 
 
-    if (R_DEBUG) {
+    if (OPTICAL_DEBUG) {
 	bu_log("Lighting: Ambient = %d%%\n",
 	       (int)(AmbientIntensity*100));
 
@@ -849,7 +849,7 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
     RT_CK_PT_HD(PartHeadp);
 
     memset(&sw, 0, sizeof(sw));		/* make sure nothing nasty on the stack */
-    if (rdebug&RDEBUG_LIGHT)
+    if (optical_debug&OPTICAL_DEBUG_LIGHT)
 	bu_log("light_hit level %d %d\n", ap->a_level, __LINE__);
 
 
@@ -897,9 +897,9 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
 	    sw.sw_segs = finished_segs;
 	    VSETALL(sw.sw_color, 1);
 	    VSETALL(sw.sw_basecolor, 1);
-	    if (rdebug&RDEBUG_LIGHT) bu_log("calling viewshade\n");
+	    if (optical_debug&OPTICAL_DEBUG_LIGHT) bu_log("calling viewshade\n");
 	    (void)viewshade(ap, pp, &sw);
-	    if (rdebug&RDEBUG_LIGHT) bu_log("viewshade returns\n");
+	    if (optical_debug&OPTICAL_DEBUG_LIGHT) bu_log("viewshade returns\n");
 	    /* sw_transmit is only return */
 
 	    /* XXX Clouds don't yet attenuate differently based on freq */
@@ -914,7 +914,7 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
 
 
     if (pp == PartHeadp) {
-	if (rdebug&RDEBUG_LIGHT) bu_log("pp == PartHeadp\n");
+	if (optical_debug&OPTICAL_DEBUG_LIGHT) bu_log("pp == PartHeadp\n");
 
 	pp=PartHeadp->pt_forw;
 	RT_CK_PT(pp);
@@ -952,7 +952,7 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
 	    VJOIN1(sub_ap.a_ray.r_pt, ap->a_ray.r_pt,
 		   pp->pt_outhit->hit_dist, ap->a_ray.r_dir);
 
-	    if (rdebug&RDEBUG_LIGHT) bu_log("hit_dist < tol\n");
+	    if (optical_debug&OPTICAL_DEBUG_LIGHT) bu_log("hit_dist < tol\n");
 	    retval = rt_shootray(&sub_ap);
 
 	    ap->a_user = sub_ap.a_user;
@@ -1053,9 +1053,9 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
     VSETALL(sw.sw_color, 1);
     VSETALL(sw.sw_basecolor, 1);
 
-    if (rdebug&RDEBUG_LIGHT) bu_log("calling viewshade\n");
+    if (optical_debug&OPTICAL_DEBUG_LIGHT) bu_log("calling viewshade\n");
     (void)viewshade(ap, pp, &sw);
-    if (rdebug&RDEBUG_LIGHT) bu_log("viewshade back\n");
+    if (optical_debug&OPTICAL_DEBUG_LIGHT) bu_log("viewshade back\n");
     /* sw_transmit is output */
 
     VSCALE(filter_color, filter_color, sw.sw_transmit);
@@ -1079,11 +1079,11 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
 	VJOIN1(sub_ap.a_ray.r_pt, ap->a_ray.r_pt, f, ap->a_ray.r_dir);
     }
     sub_ap.a_purpose = "light transmission after filtering";
-    if (rdebug&RDEBUG_LIGHT)
+    if (optical_debug&OPTICAL_DEBUG_LIGHT)
 	bu_log("shooting level %d from %d\n",
 	       sub_ap.a_level, __LINE__);
     light_visible = rt_shootray(&sub_ap);
-    if (rdebug&RDEBUG_LIGHT)
+    if (optical_debug&OPTICAL_DEBUG_LIGHT)
 	if (light_visible < 0)
 	    bu_log("%s:%d\n", __FILE__, __LINE__);
 
@@ -1091,7 +1091,7 @@ light_hit(struct application *ap, struct partition *PartHeadp, struct seg *finis
     reason = "after filtering";
 out:
 
-    if (rdebug & RDEBUG_LIGHT) bu_log("light vis=%d %s (%4.2f, %4.2f, %4.2f) %s %s\n",
+    if (optical_debug & OPTICAL_DEBUG_LIGHT) bu_log("light vis=%d %s (%4.2f, %4.2f, %4.2f) %s %s\n",
 				      light_visible,
 				      lsp->lt_name,
 				      V3ARGS(ap->a_color), reason,
@@ -1112,11 +1112,11 @@ light_miss(register struct application *ap)
     RT_CK_LIGHT(lsp);
     if (lsp->lt_invisible || lsp->lt_infinite) {
 	VSETALL(ap->a_color, 1);
-	if (rdebug & RDEBUG_LIGHT) bu_log("light_miss vis=1\n");
+	if (optical_debug & OPTICAL_DEBUG_LIGHT) bu_log("light_miss vis=1\n");
 	return 1;		/* light_visible = 1 */
     }
 
-    if (rdebug & RDEBUG_LIGHT) {
+    if (optical_debug & OPTICAL_DEBUG_LIGHT) {
 	bu_log("light ray missed non-infinite, visible light source\n");
 	bu_log("on pixel: %d %d\n", ap->a_x, ap->a_y);
 	bu_log("ray: (%g %g %g) -> %g %g %g\n", V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir));
@@ -1125,7 +1125,7 @@ light_miss(register struct application *ap)
 
     /* Missed light, either via blockage or dither.  Return black */
     VSETALL(ap->a_color, 0);
-    if (rdebug & RDEBUG_LIGHT) bu_log("light_miss vis=0\n");
+    if (optical_debug & OPTICAL_DEBUG_LIGHT) bu_log("light_miss vis=0\n");
     return -1;			/* light_visible = 0 */
 }
 
@@ -1156,7 +1156,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
     double VisRayvsLightN;
     double VisRayvsSurfN;
 
-    if (rdebug & RDEBUG_LIGHT) bu_log("light_vis\n");
+    if (optical_debug & OPTICAL_DEBUG_LIGHT) bu_log("light_vis\n");
 
     /* compute the light direction */
     if (los->lsp->lt_infinite) {
@@ -1178,14 +1178,14 @@ light_vis(struct light_obs_stuff *los, char *flags)
 
 	for (k=idx; ((k+1) % los->lsp->lt_pt_count) != idx;
 	     k = (k+1) % los->lsp->lt_pt_count) {
-	    if (rdebug & RDEBUG_LIGHT)
+	    if (optical_debug & OPTICAL_DEBUG_LIGHT)
 		bu_log("checking sample pt %d\n", k);
 
 	    if (flags[k] & VF_SEEN) continue;
 	    if (flags[k] & VF_BACKFACE) continue;
 
 	    /* we've got a candidate, check for backfacing */
-	    if (rdebug & RDEBUG_LIGHT)
+	    if (optical_debug & OPTICAL_DEBUG_LIGHT)
 		bu_log("\tpossible sample pt %d\n", k);
 
 	    lpt = &los->lsp->lt_sample_pts[k];
@@ -1228,7 +1228,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
 		VisRayvsSurfN > cosine89_99deg) {
 
 		/* ok, we can shoot at this sample point */
-		if (rdebug & RDEBUG_LIGHT)
+		if (optical_debug & OPTICAL_DEBUG_LIGHT)
 		    bu_log("\tPt %d selected... OK normal %g %g %g\n",
 			   k, V3ARGS(lpt->lp_norm));
 
@@ -1237,7 +1237,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
 		goto done;
 	    }
 
-	    if (rdebug & RDEBUG_LIGHT) {
+	    if (optical_debug & OPTICAL_DEBUG_LIGHT) {
 		bu_log("\tbackfacing\n");
 		bu_log("VisRayvsLightN %g\n", VisRayvsLightN);
 		bu_log("VisRayvsSurfN %g\n", VisRayvsSurfN);
@@ -1251,7 +1251,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
 
 	/* if we get here, then everything is used or backfacing */
 
-	if (rdebug & RDEBUG_LIGHT) {
+	if (optical_debug & OPTICAL_DEBUG_LIGHT) {
 	    bu_log("all light sample pts used.  trying to recycle\n");
 	}
 
@@ -1264,7 +1264,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
 	    }
 	}
 	if (tryagain) {
-	    if (rdebug & RDEBUG_LIGHT) {
+	    if (optical_debug & OPTICAL_DEBUG_LIGHT) {
 		bu_log("recycling\n");
 	    }
 	    goto reusept;
@@ -1272,7 +1272,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
 	/* at this point, we have no candidate points available to
 	 * shoot at
 	 */
-	if (rdebug & RDEBUG_LIGHT) {
+	if (optical_debug & OPTICAL_DEBUG_LIGHT) {
 	    bu_log("can't find point to shoot at\n");
 	}
 	return 0;
@@ -1283,7 +1283,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
 
     } else {
 
-	if (rdebug & RDEBUG_LIGHT)
+	if (optical_debug & OPTICAL_DEBUG_LIGHT)
 	    bu_log("shooting at approximating sphere\n");
 
 	/* We're going to shoot at a point on the approximating
@@ -1319,7 +1319,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
 	       x, los->light_x,
 	       y, los->light_y);
 
-	if (rdebug & RDEBUG_LIGHT) {
+	if (optical_debug & OPTICAL_DEBUG_LIGHT) {
 	    bu_log("light at (%g %g %g) radius %g\n",
 		   V3ARGS(los->lsp->lt_pos),
 		   los->lsp->lt_radius);
@@ -1332,11 +1332,11 @@ light_vis(struct light_obs_stuff *los, char *flags)
 	VSUB2(shoot_dir, shoot_pt, los->swp->sw_hit.hit_point);
     }
 
-    if (rdebug & RDEBUG_LIGHT) {
+    if (optical_debug & OPTICAL_DEBUG_LIGHT) {
 	VPRINT("shoot_dir", shoot_dir);
     }
 
-    if (rdebug& RDEBUG_RAYPLOT) {
+    if (optical_debug& OPTICAL_DEBUG_RAYPLOT) {
 	point_t ray_endpt;
 
 	/* Yellow -- light visibility ray */
@@ -1355,7 +1355,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
      */
     if (-VDOT(shoot_dir, los->lsp->lt_aim) < los->lsp->lt_cosangle) {
 	/* dark (outside of light beam) */
-	if (rdebug & RDEBUG_LIGHT)
+	if (optical_debug & OPTICAL_DEBUG_LIGHT)
 	    bu_log("point outside beam, obscured: %s\n",
 		   los->lsp->lt_name);
 	return 0;
@@ -1364,7 +1364,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
 
     if (!(los->lsp->lt_shadows)) {
 	/* "fill light" in beam, don't care about shadows */
-	if (rdebug & RDEBUG_LIGHT)
+	if (optical_debug & OPTICAL_DEBUG_LIGHT)
 	    bu_log("fill light, no shadow, visible: %s\n",
 		   los->lsp->lt_name);
 
@@ -1410,7 +1410,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
     RT_CK_LIGHT((struct light_specific *)(sub_ap.a_uptr));
     RT_CK_AP(&sub_ap);
 
-    if (rdebug & RDEBUG_LIGHT)
+    if (optical_debug & OPTICAL_DEBUG_LIGHT)
 	bu_log("shooting level %d from %d\n", sub_ap.a_level, __LINE__);
 
     /* see if we are in the dark. */
@@ -1418,7 +1418,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
 
     if (shot_status > 0) {
 	/* light visible */
-	if (rdebug & RDEBUG_LIGHT)
+	if (optical_debug & OPTICAL_DEBUG_LIGHT)
 	    bu_log("light visible: %s\n", los->lsp->lt_name);
 
 	VMOVE(los->inten, sub_ap.a_color);
@@ -1427,7 +1427,7 @@ light_vis(struct light_obs_stuff *los, char *flags)
     }
 
     /* dark (light obscured) */
-    if (rdebug & RDEBUG_LIGHT)
+    if (optical_debug & OPTICAL_DEBUG_LIGHT)
 	bu_log("light obscured: %s\n", los->lsp->lt_name);
 
     return 0;
@@ -1468,7 +1468,7 @@ light_obs(struct application *ap, struct shadework *swp, int have)
     char static_flags[SOME_LIGHT_SAMPLES] = {0};
     char *flags = static_flags;
 
-    if (rdebug & RDEBUG_LIGHT) {
+    if (optical_debug & OPTICAL_DEBUG_LIGHT) {
 	bu_log("computing Light obscuration: start\n");
     }
 
@@ -1500,7 +1500,7 @@ light_obs(struct application *ap, struct shadework *swp, int have)
     for (BU_LIST_FOR(lsp, light_specific, &(LightHead.l))) {
 	RT_CK_LIGHT(lsp);
 
-	if (rdebug & RDEBUG_LIGHT)
+	if (optical_debug & OPTICAL_DEBUG_LIGHT)
 	    bu_log("computing for light %d\n", i);
 	swp->sw_lightfract[i] = 0.0;
 
@@ -1529,7 +1529,7 @@ light_obs(struct application *ap, struct shadework *swp, int have)
 	    if (VDOT(swp->sw_hit.hit_normal,
 		     los.to_light_center)      < 0) {
 		/* backfacing, opaque */
-		if (rdebug & RDEBUG_LIGHT)
+		if (optical_debug & OPTICAL_DEBUG_LIGHT)
 		    bu_log("norm backfacing, opaque surf:%s\n",
 			   lsp->lt_name);
 		continue;
@@ -1544,7 +1544,7 @@ light_obs(struct application *ap, struct shadework *swp, int have)
 	    int lv;
 	    los.iter = vis_ray;
 
-	    if (rdebug & RDEBUG_LIGHT)
+	    if (optical_debug & OPTICAL_DEBUG_LIGHT)
 		bu_log("----------vis_ray %d---------\n",
 		       vis_ray);
 
@@ -1562,7 +1562,7 @@ light_obs(struct application *ap, struct shadework *swp, int have)
 		    visibility = vis_ray = tot_vis_rays;
 		    break;
 		case 0:	/* light not visible */
-		    if (rdebug & RDEBUG_LIGHT)
+		    if (optical_debug & OPTICAL_DEBUG_LIGHT)
 			bu_log("light not visible\n");
 		    break;
 		default:
@@ -1585,7 +1585,7 @@ light_obs(struct application *ap, struct shadework *swp, int have)
 	bu_free(flags, "free flags array");
     }
 
-    if (rdebug & RDEBUG_LIGHT) bu_log("computing Light obscuration: end\n");
+    if (optical_debug & OPTICAL_DEBUG_LIGHT) bu_log("computing Light obscuration: end\n");
 }
 
 
@@ -1626,7 +1626,7 @@ light_maker(int num, mat_t v2m)
 		return;
 	}
 
-	if (rdebug & RDEBUG_LIGHT) {
+	if (optical_debug & OPTICAL_DEBUG_LIGHT) {
 	    /* debugging ascii plot commands drawing from point
 	     * location to origin
 	     */

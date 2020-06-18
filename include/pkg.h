@@ -1,7 +1,7 @@
 /*                           P K G . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,9 +38,9 @@
 #  if defined(PKG_DLL_EXPORTS) && defined(PKG_DLL_IMPORTS)
 #    error "Only PKG_DLL_EXPORTS or PKG_DLL_IMPORTS can be defined, not both."
 #  elif defined(PKG_DLL_EXPORTS)
-#    define PKG_EXPORT __declspec(dllexport)
+#    define PKG_EXPORT COMPILER_DLLEXPORT
 #  elif defined(PKG_DLL_IMPORTS)
-#    define PKG_EXPORT __declspec(dllimport)
+#    define PKG_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define PKG_EXPORT
 #  endif
@@ -50,6 +50,9 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/* ?? used in remrt */
+PKG_EXPORT extern int pkg_permport;
 
 struct pkg_conn;
 
@@ -110,7 +113,7 @@ struct pkg_conn {
  * Sends a VLS as a given message type across a pkg connection.
  */
 #define pkg_send_vls(type, vlsp, pkg)	\
-	pkg_send( (type), bu_vls_addr((vlsp)), bu_vls_strlen((vlsp))+1, (pkg) )
+    pkg_send( (type), bu_vls_addr((vlsp)), bu_vls_strlen((vlsp))+1, (pkg) )
 
 
 /**

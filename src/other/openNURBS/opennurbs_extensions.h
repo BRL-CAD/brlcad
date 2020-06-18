@@ -25,7 +25,7 @@ Description:
 class ON_CLASS ONX_Model_UserData
 {
 public:
-#if defined(ON_DLL_EXPORTS) || defined(ON_DLL_IMPORTS)
+#if defined(ON_COMPILER_MSC)
   // See comments at the top of opennurbs_extensions.cpp for details.
 
   // new/delete
@@ -67,7 +67,7 @@ Description:
 class ON_CLASS ONX_Model_Object
 {
 public:
-#if defined(ON_DLL_EXPORTS) || defined(ON_DLL_IMPORTS)
+#if defined(ON_COMPILER_MSC)
   // See comments at the top of opennurbs_extensions.cpp for details.
 
   // new/delete
@@ -109,7 +109,7 @@ Description:
 class ON_CLASS ONX_Model_RenderLight
 {
 public:
-#if defined(ON_DLL_EXPORTS) || defined(ON_DLL_IMPORTS)
+#if defined(ON_COMPILER_MSC)
   // See comments at the top of opennurbs_extensions.cpp for details.
 
   // new/delete
@@ -175,7 +175,7 @@ Description:
 class ON_CLASS ONX_Model
 {
 public:
-#if defined(ON_DLL_EXPORTS) || defined(ON_DLL_IMPORTS)
+#if defined(ON_COMPILER_MSC)
   // See comments at the top of opennurbs_extensions.cpp for details.
 
   // new/delete

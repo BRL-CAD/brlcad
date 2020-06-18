@@ -1,7 +1,7 @@
 /*                           B O T . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2018 United States Government as represented by
+ * Copyright (c) 1999-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -377,11 +377,11 @@ rt_botface_w_normals(struct soltab *stp,
 {
 
     if (bot->bot_flags & RT_BOT_USE_FLOATS) {
-	return rt_botface_w_normals_float(stp, bot, ap, bp, cp,
-					  vertex_normals, face_no, tol);
+	return bot_face_w_normals_float(stp, bot, ap, bp, cp,
+					vertex_normals, face_no, tol);
     } else {
-	return rt_botface_w_normals_double(stp, bot, ap, bp, cp,
-					   vertex_normals, face_no, tol);
+	return bot_face_w_normals_double(stp, bot, ap, bp, cp,
+					 vertex_normals, face_no, tol);
     }
 }
 
@@ -409,9 +409,9 @@ rt_bot_prep_pieces(struct bot_specific *bot,
 		   const struct bn_tol *tol)
 {
     if (bot->bot_flags & RT_BOT_USE_FLOATS) {
-	rt_bot_prep_pieces_float(bot, stp, ntri, tol);
+	bot_prep_pieces_float(bot, stp, ntri, tol);
     } else {
-	rt_bot_prep_pieces_double(bot, stp, ntri, tol);
+	bot_prep_pieces_double(bot, stp, ntri, tol);
     }
 }
 
@@ -496,9 +496,9 @@ rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     if (rt_bot_mintie > 0 && bot_ip->num_faces >= rt_bot_mintie /* FIXME: (necessary?) && (bot_ip->face_normals != NULL || bot_ip->orientation != RT_BOT_UNORIENTED) */)
 	ret = bottie_prep_double(stp, bot_ip, rtip);
     else if (bot_ip->bot_flags & RT_BOT_USE_FLOATS)
-	ret = rt_bot_prep_float(stp, bot_ip, rtip);
+	ret = bot_prep_float(stp, bot_ip, rtip);
     else
-	ret = rt_bot_prep_double(stp, bot_ip, rtip);
+	ret = bot_prep_double(stp, bot_ip, rtip);
 
 #ifdef USE_OPENCL
     clt_bot_prep(stp, bot_ip, rtip);
@@ -524,9 +524,9 @@ rt_bot_plate_segs(struct hit *hits,
 		  struct bot_specific *bot)
 {
     if (bot->bot_flags & RT_BOT_USE_FLOATS) {
-	return rt_bot_plate_segs_float(hits, nhits, stp, rp, ap, seghead, bot);
+	return bot_plate_segs_float(hits, nhits, stp, rp, ap, seghead, bot);
     } else {
-	return rt_bot_plate_segs_double(hits, nhits, stp, rp, ap, seghead, bot);
+	return bot_plate_segs_double(hits, nhits, stp, rp, ap, seghead, bot);
     }
 }
 
@@ -541,9 +541,9 @@ rt_bot_unoriented_segs(struct hit *hits,
 		       struct bot_specific *bot)
 {
     if (bot->bot_flags & RT_BOT_USE_FLOATS) {
-	return rt_bot_unoriented_segs_float(hits, nhits, stp, rp, ap, seghead);
+	return bot_unoriented_segs_float(hits, nhits, stp, rp, ap, seghead);
     } else {
-	return rt_bot_unoriented_segs_double(hits, nhits, stp, rp, ap, seghead);
+	return bot_unoriented_segs_double(hits, nhits, stp, rp, ap, seghead);
     }
 }
 
@@ -563,9 +563,9 @@ rt_bot_makesegs(struct hit *hits, size_t nhits, struct soltab *stp, struct xray 
     }
 
     if (bot->bot_flags & RT_BOT_USE_FLOATS) {
-	return rt_bot_makesegs_float(hits, nhits, stp, rp, ap, seghead, psp);
+	return bot_makesegs_float(hits, nhits, stp, rp, ap, seghead, psp);
     } else {
-	return rt_bot_makesegs_double(hits, nhits, stp, rp, ap, seghead, psp);
+	return bot_makesegs_double(hits, nhits, stp, rp, ap, seghead, psp);
     }
 }
 
@@ -597,9 +597,9 @@ rt_bot_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     if (bot->tie != NULL) {
 	return bottie_shot_double(stp, rp, ap, seghead);
     } else if (bot->bot_flags & RT_BOT_USE_FLOATS) {
-	return rt_bot_shot_float(stp, rp, ap, seghead);
+	return bot_shot_float(stp, rp, ap, seghead);
     } else {
-	return rt_bot_shot_double(stp, rp, ap, seghead);
+	return bot_shot_double(stp, rp, ap, seghead);
     }
 }
 
@@ -627,9 +627,9 @@ rt_bot_piece_shot(struct rt_piecestate *psp, struct rt_piecelist *plp, double di
     bot = (struct bot_specific *)stp->st_specific;
 
     if (bot->bot_flags & RT_BOT_USE_FLOATS) {
-	return rt_bot_piece_shot_float(psp, plp, dist_corr, rp, ap, seghead);
+	return bot_piece_shot_float(psp, plp, dist_corr, rp, ap, seghead);
     } else {
-	return rt_bot_piece_shot_double(psp, plp, dist_corr, rp, ap, seghead);
+	return bot_piece_shot_double(psp, plp, dist_corr, rp, ap, seghead);
     }
 }
 
@@ -658,9 +658,9 @@ rt_bot_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
     struct bot_specific *bot=(struct bot_specific *)stp->st_specific;
 
     if (bot->bot_flags & RT_BOT_USE_FLOATS) {
-	rt_bot_norm_float(bot, hitp, stp, rp);
+	bot_norm_float(bot, hitp, rp);
     } else {
-	rt_bot_norm_double(bot, hitp, stp, rp);
+	bot_norm_double(bot, hitp, rp);
     }
 }
 
@@ -691,10 +691,20 @@ rt_bot_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 void
 rt_bot_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct uvcoord *uvp)
 {
+    struct bot_specific *bot;
+
     if (ap) RT_CK_APPLICATION(ap);
     if (stp) RT_CK_SOLTAB(stp);
     if (hitp) RT_CK_HIT(hitp);
     if (!uvp) return;
+
+    bot = (struct bot_specific *)stp->st_specific;
+
+    if (bot->bot_flags & RT_BOT_USE_FLOATS) {
+	bot_uv_float(bot, hitp, uvp);
+    } else {
+	bot_uv_double(bot, hitp, uvp);
+    }
 }
 
 
@@ -710,9 +720,9 @@ rt_bot_free(struct soltab *stp)
     }
 
     if (bot->bot_flags & RT_BOT_USE_FLOATS) {
-	rt_bot_free_float(bot);
+	bot_free_float(bot);
     } else {
-	rt_bot_free_double(bot);
+	bot_free_double(bot);
     }
 
 #ifdef USE_OPENCL
@@ -796,9 +806,9 @@ should_fold(const vdsNode *node, void *udata)
 	corner_nodes[1] = vdsFindNode(node->subtris[i].corners[1].id, fold_data->root);
 	corner_nodes[2] = vdsFindNode(node->subtris[i].corners[2].id, fold_data->root);
 
-	dist_01 = DIST_PT_PT(corner_nodes[0]->coord, corner_nodes[1]->coord);
-	dist_12 = DIST_PT_PT(corner_nodes[1]->coord, corner_nodes[2]->coord);
-	dist_20 = DIST_PT_PT(corner_nodes[2]->coord, corner_nodes[0]->coord);
+	dist_01 = DIST_PNT_PNT(corner_nodes[0]->coord, corner_nodes[1]->coord);
+	dist_12 = DIST_PNT_PNT(corner_nodes[1]->coord, corner_nodes[2]->coord);
+	dist_20 = DIST_PNT_PNT(corner_nodes[2]->coord, corner_nodes[0]->coord);
 
 	/* check triangle edge point spacing against target point spacing */
 	if (dist_01 < fold_data->point_spacing) {
@@ -901,7 +911,7 @@ rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
         }
 
 int
-rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol, const struct rt_view_info *info)
+rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *tol, const struct rt_view_info *info)
 {
     struct rt_bot_internal *bot_ip;
     size_t i;
@@ -936,7 +946,7 @@ rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
 
 int
-rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+rt_bot_plot_poly(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_bot_internal *bot_ip;
     size_t i;
@@ -1016,7 +1026,7 @@ rt_bot_centroid(point_t *cent, const struct rt_db_internal *ip)
  * 0 OK.  *r points to nmgregion that holds this tessellation.
  */
 int
-rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
+rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *tol)
 {
     struct rt_bot_internal *bot_ip;
     struct shell *s;
@@ -1098,8 +1108,8 @@ rt_bot_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    corners[2] = &verts[bot_ip->faces[i*3+2]];
 	}
 
-	if (!bn_3pts_distinct(pt[0], pt[1], pt[2], tol)
-	    || bn_3pts_collinear(pt[0], pt[1], pt[2], tol))
+	if (!bn_3pnts_distinct(pt[0], pt[1], pt[2], tol)
+	    || bn_3pnts_collinear(pt[0], pt[1], pt[2], tol))
 	    continue;
 
 	if ((fu=nmg_cmface(s, corners, 3)) == (struct faceuse *)NULL) {
@@ -1445,6 +1455,49 @@ rt_bot_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	bip->num_face_normals = 0;
     }
 
+    if (bip->bot_flags & RT_BOT_HAS_TEXTURE_UVS) {
+	/* must be double for import and export */
+	double tmp[ELEMENTS_PER_VECT];
+
+	bip->num_uvs = ntohl(*(uint32_t *)&cp[0]);
+	cp += SIZEOF_NETWORK_LONG;
+	bip->num_face_uvs = ntohl(*(uint32_t *)&cp[0]);
+	cp += SIZEOF_NETWORK_LONG;
+
+	if (bip->num_uvs <= 0) {
+	    bip->uvs = (fastf_t *)NULL;
+	}
+	if (bip->num_face_uvs <= 0) {
+	    bip->face_uvs = (int *)NULL;
+	}
+	if (bip->num_uvs > 0) {
+	    bip->uvs = (fastf_t *)bu_calloc(bip->num_uvs * 3, sizeof(fastf_t), "BOT texture UVs");
+
+	    for (i = 0; i < bip->num_uvs; i++) {
+		bu_cv_ntohd((unsigned char *)tmp, (const unsigned char *)cp, ELEMENTS_PER_VECT);
+		cp += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT;
+		MAT4X3VEC(&(bip->uvs[i*ELEMENTS_PER_VECT]), mat, tmp);
+	    }
+	}
+	if (bip->num_face_uvs > 0) {
+	    bip->face_uvs = (int *)bu_calloc(bip->num_face_uvs * 3, sizeof(int), "BOT face UVs");
+
+	    for (i = 0; i < bip->num_face_uvs; i++) {
+		bip->face_uvs[i*3 + 0] = ntohl(*(uint32_t *)&cp[0]);
+		cp += SIZEOF_NETWORK_LONG;
+		bip->face_uvs[i*3 + 1] = ntohl(*(uint32_t *)&cp[0]);
+		cp += SIZEOF_NETWORK_LONG;
+		bip->face_uvs[i*3 + 2] = ntohl(*(uint32_t *)&cp[0]);
+		cp += SIZEOF_NETWORK_LONG;
+	    }
+	}
+    } else {
+	bip->uvs = (fastf_t *)NULL;
+	bip->face_uvs = (int *)NULL;
+	bip->num_uvs = 0;
+	bip->num_face_uvs = 0;
+    }
+
     bip->tie = NULL;
 
     return 0;			/* OK */
@@ -1487,6 +1540,11 @@ rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
     if (bip->bot_flags & RT_BOT_HAS_SURFACE_NORMALS) {
 	ep->ext_nbytes += SIZEOF_NETWORK_DOUBLE * bip->num_normals * 3 /* vertex normals */
 	    + SIZEOF_NETWORK_LONG * (bip->num_face_normals * 3 + 2); /* indices into normals array, num_normals, num_face_normals */
+    }
+
+    if (bip->bot_flags & RT_BOT_HAS_TEXTURE_UVS) {
+	ep->ext_nbytes += SIZEOF_NETWORK_DOUBLE * bip->num_uvs * 3 /* vertex uvs */
+	    + SIZEOF_NETWORK_LONG * (bip->num_face_uvs * 3 + 2); /* indices into uvs array, num_uvs, num_face_uvs */
     }
 
     ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "BOT external");
@@ -1587,6 +1645,49 @@ rt_bot_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 		rem -= SIZEOF_NETWORK_LONG;
 
 		*(uint32_t *)&cp[0] = htonl(bip->face_normals[i*ELEMENTS_PER_VECT + 2]);
+		cp += SIZEOF_NETWORK_LONG;
+		rem -= SIZEOF_NETWORK_LONG;
+	    }
+	}
+    }
+
+    if (bip->bot_flags & RT_BOT_HAS_TEXTURE_UVS) {
+	*(uint32_t *)&cp[0] = htonl(bip->num_uvs);
+	cp += SIZEOF_NETWORK_LONG;
+	rem -= SIZEOF_NETWORK_LONG;
+
+	*(uint32_t *)&cp[0] = htonl(bip->num_face_uvs);
+	cp += SIZEOF_NETWORK_LONG;
+	rem -= SIZEOF_NETWORK_LONG;
+
+	if (bip->num_uvs > 0) {
+	    /* must be double for import and export */
+	    double *uvs;
+	    uvs = (double *)bu_malloc(bip->num_uvs*ELEMENTS_PER_VECT*sizeof(double), "uvs");
+
+	    /* convert fastf_t to double */
+	    for (i = 0; i < bip->num_uvs * ELEMENTS_PER_VECT; i++) {
+		uvs[i] = bip->uvs[i];
+	    }
+
+	    bu_cv_htond(cp, (unsigned char*)uvs, bip->num_uvs*ELEMENTS_PER_VECT);
+
+	    bu_free(uvs, "uvs");
+
+	    cp += SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT * bip->num_uvs;
+	    rem -= SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT * bip->num_uvs;
+	}
+	if (bip->num_face_uvs > 0) {
+	    for (i = 0; i < bip->num_face_uvs; i++) {
+		*(uint32_t *)&cp[0] = htonl(bip->face_uvs[i*ELEMENTS_PER_VECT + 0]);
+		cp += SIZEOF_NETWORK_LONG;
+		rem -= SIZEOF_NETWORK_LONG;
+
+		*(uint32_t *)&cp[0] = htonl(bip->face_uvs[i*ELEMENTS_PER_VECT + 1]);
+		cp += SIZEOF_NETWORK_LONG;
+		rem -= SIZEOF_NETWORK_LONG;
+
+		*(uint32_t *)&cp[0] = htonl(bip->face_uvs[i*ELEMENTS_PER_VECT + 2]);
 		cp += SIZEOF_NETWORK_LONG;
 		rem -= SIZEOF_NETWORK_LONG;
 	    }
@@ -2004,7 +2105,7 @@ rt_bot_find_e_nearest_pt2(
 	p1[Z] = 0.0;
 	p2[Z] = 0.0;
 
-	ret = bn_dist_pt2_lseg2(&tmp_dist, pca, p1, p2, pt2, &tol);
+	ret = bn_dist_pnt2_lseg2(&tmp_dist, pca, p1, p2, pt2, &tol);
 
 	if (ret < 3 || tmp_dist < dist) {
 	    switch (ret) {
@@ -3219,7 +3320,7 @@ rt_bot_vertex_fuse(struct rt_bot_internal *bot, const struct bn_tol *tol)
     for (i = 0; i < bot->num_vertices; i++) {
 	j = i + 1;
 	while (j < bot->num_vertices) {
-	    if (bn_pt3_pt3_equal(&bot->vertices[i*3], &bot->vertices[j*3], tol)) {
+	    if (bn_pnt3_pnt3_equal(&bot->vertices[i*3], &bot->vertices[j*3], tol)) {
 		count++;
 
 		/* update bot */
@@ -4783,8 +4884,6 @@ rt_bot_volume(fastf_t *volume, const struct rt_db_internal *ip)
 
     for (face.npts = 0, i = 0; i < bot->num_faces; face.npts = 0, i++) {
 	int a, b, c;
-	vect_t tmp;
-
 
 	/* find indices of the 3 vertices that make up this face */
 	a = bot->faces[i * ELEMENTS_PER_POINT + 0];
@@ -4795,7 +4894,7 @@ rt_bot_volume(fastf_t *volume, const struct rt_db_internal *ip)
 	if (bot->bot_flags == RT_BOT_HAS_SURFACE_NORMALS && bot->normals) {
 	    /* bot->normals array already exists, use those instead */
 	    VMOVE(face.plane_eqn, &bot->normals[i * ELEMENTS_PER_VECT]);
-	} else if (UNLIKELY(bn_mk_plane_3pts(face.plane_eqn, (&bot->vertices[(a) * ELEMENTS_PER_POINT]), (&bot->vertices[(b) * ELEMENTS_PER_POINT]), (&bot->vertices[(c) * ELEMENTS_PER_POINT]), &tol) < 0)) {
+	} else if (UNLIKELY(bn_make_plane_3pnts(face.plane_eqn, (&bot->vertices[(a) * ELEMENTS_PER_POINT]), (&bot->vertices[(b) * ELEMENTS_PER_POINT]), (&bot->vertices[(c) * ELEMENTS_PER_POINT]), &tol) < 0)) {
 	    continue;
 	}
 
@@ -4809,17 +4908,14 @@ rt_bot_volume(fastf_t *volume, const struct rt_db_internal *ip)
 	bg_3d_polygon_sort_ccw(face.npts, face.pts, face.plane_eqn);
 	bg_3d_polygon_area(&face.area, face.npts, (const point_t *)face.pts);
 
-	/* VOLUME */
-	VSCALE(tmp, face.plane_eqn, face.area);
-	*volume += fabs(VDOT(face.pts[0], tmp));
 	if (bot->mode == RT_BOT_PLATE || bot->mode == RT_BOT_PLATE_NOCOS) {
-	    if (BU_BITTEST(bot->face_mode, i))
-		*volume += face.area * bot->thickness[i];
-	    else
-		*volume += face.area * 0.5 * bot->thickness[i];
+	    *volume += face.area * bot->thickness[i];
+	} else {
+	    /* VOLUME */
+	    *volume += VDOT(face.pts[0], face.plane_eqn)*face.area;
 	}
     }
-    *volume /= 3.0;
+    *volume = fabs(*volume)/3.0;
     bu_free((char *)face.pts, "rt_bot_volume: pts");
 }
 
@@ -4910,7 +5006,7 @@ rt_bot_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	    if (a_is_exterior_edge == 1) {
 		fastf_t rectangle_size, edge_length;
 
-		edge_length = bn_dist_pt3_pt3(whole_bot_vertices[a][0], whole_bot_vertices[a][1]);
+		edge_length = bn_dist_pnt3_pnt3(whole_bot_vertices[a][0], whole_bot_vertices[a][1]);
 		rectangle_size = bot_ip->thickness[a] * edge_length;
 		whole_bot_overall_area += rectangle_size;
 
@@ -4918,14 +5014,14 @@ rt_bot_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 	    if (b_is_exterior_edge == 1) {
 		fastf_t rectangle_size, edge_length;
 
-		edge_length = bn_dist_pt3_pt3(whole_bot_vertices[a][1], whole_bot_vertices[a][2]);
+		edge_length = bn_dist_pnt3_pnt3(whole_bot_vertices[a][1], whole_bot_vertices[a][2]);
 		rectangle_size = bot_ip->thickness[a] * edge_length;
 		whole_bot_overall_area += rectangle_size;
 	    }
 	    if (c_is_exterior_edge == 1) {
 		fastf_t rectangle_size, edge_length;
 
-		edge_length = bn_dist_pt3_pt3(whole_bot_vertices[a][2], whole_bot_vertices[a][0]);
+		edge_length = bn_dist_pnt3_pnt3(whole_bot_vertices[a][2], whole_bot_vertices[a][0]);
 		rectangle_size = bot_ip->thickness[a] * edge_length;
 		whole_bot_overall_area += rectangle_size;
 	    }

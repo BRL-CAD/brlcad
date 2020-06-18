@@ -1,7 +1,7 @@
 /*                         V U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -146,7 +146,7 @@ _ged_do_rot(struct ged *gedp,
 		return GED_ERROR;
 	}
 
-	bn_mat_xform_about_pt(viewchg, rmat, rot_pt);
+	bn_mat_xform_about_pnt(viewchg, rmat, rot_pt);
 	bn_mat_inv(viewchginv, viewchg);
 
 	/* Convert origin in new (viewchg) coords back to old view coords */

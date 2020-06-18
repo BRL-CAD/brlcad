@@ -11,9 +11,9 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     "${CMAKE_CURRENT_BINARY_DIR}/../../../include"
     "${CMAKE_CURRENT_SOURCE_DIR}/../../../include"
     "${CMAKE_CURRENT_SOURCE_DIR}/../../../src/other/openNURBS"
-    "${ZLIB_INCLUDE_DIR}"
-    "${REGEX_INCLUDE_DIR}"
-    "${TCL_INCLUDE_DIRS}"
+    "${ZLIB_INCLUDE_DIRS}"
+    "${REGEX_INCLUDE_DIRS}"
+    "${TCL_INCLUDE_PATH}"
     )
 
   # The build shims aren't so great at mocking the initialization
@@ -24,9 +24,10 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
   set(ug_g_srcs ug-g.c ug_misc.c shim.cpp)
   add_definitions(-DTEST_BUILD)
   add_library(ug-g ${ug_g_srcs})
-  target_link_libraries(ug-g librt libwdb libbrep libbg libnmg libbn libbu ${TCL_LIBRARIES})
+  target_link_libraries(ug-g librt libwdb libbrep libbg libnmg libbn libbu ${TCL_LIBRARY})
+  set_property(TARGET ug-g APPEND PROPERTY COMPILE_DEFINITIONS BRLCADBUILD HAVE_CONFIG_H)
   set_target_properties(ug-g PROPERTIES FOLDER "BRL-CAD Executables/Build Only")
-  if(CPP_DLL_DEFINES)
+  if(HIDE_INTERNAL_SYMBOLS)
     set_property(TARGET ug-g APPEND PROPERTY COMPILE_DEFINITIONS "BU_DLL_IMPORTS")
     set_property(TARGET ug-g APPEND PROPERTY COMPILE_DEFINITIONS "BN_DLL_IMPORTS")
     set_property(TARGET ug-g APPEND PROPERTY COMPILE_DEFINITIONS "NMG_DLL_IMPORTS")
@@ -41,10 +42,11 @@ else(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
     set_property(TARGET ug-g APPEND PROPERTY COMPILE_DEFINITIONS "ON_DLL_IMPORTS")
     set_property(TARGET ug-g APPEND PROPERTY COMPILE_DEFINITIONS "TINYCTHREAD_DLL_IMPORTS")
     set_property(TARGET ug-g APPEND PROPERTY COMPILE_DEFINITIONS "LZ4_DLL_IMPORT=1")
-  endif(CPP_DLL_DEFINES)
+  endif(HIDE_INTERNAL_SYMBOLS)
 
   # Distcheck file list
   CMAKEFILES(${ug_g_srcs} conv.h log.h shim.h ug-g.1 ug_misc.h)
+  CMAKEFILES(CMakeLists.txt)
 
 endif(NOT DEFINED BRLCAD_BUILDTEST_EXTERNALS)
 

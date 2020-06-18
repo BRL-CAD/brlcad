@@ -13,7 +13,8 @@
  */
 
 #include "tclInt.h"
-#include <float.h>
+#include "tclParse.h"
+#include "tclStringTrim.h"
 #include <math.h>
 
 /*
@@ -26,9 +27,9 @@ static ProcessGlobalValue executableName = {
 };
 
 /*
- * The following values are used in the flags arguments of Tcl*Scan*Element and
- * Tcl*Convert*Element. The values TCL_DONT_USE_BRACES and TCL_DONT_QUOTE_HASH
- * are defined in tcl.h, like so:
+ * The following values are used in the flags arguments of Tcl*Scan*Element
+ * and Tcl*Convert*Element.  The values TCL_DONT_USE_BRACES and
+ * TCL_DONT_QUOTE_HASH are defined in tcl.h, like so:
  *
 #define TCL_DONT_USE_BRACES     1
 #define TCL_DONT_QUOTE_HASH     8
@@ -40,11 +41,11 @@ static ProcessGlobalValue executableName = {
  *				quoting not be used when converting the list
  *				element.
  * TCL_DONT_QUOTE_HASH -	1 means the caller insists that a leading hash
- * 				character ('#') should *not* be quoted. This
- * 				is appropriate when the caller can guarantee
- * 				the element is not the first element of a
- * 				list, so [eval] cannot mis-parse the element
- * 				as a comment.
+ *				character ('#') should *not* be quoted. This
+ *				is appropriate when the caller can guarantee
+ *				the element is not the first element of a
+ *				list, so [eval] cannot mis-parse the element
+ *				as a comment.
  *
  * The remaining values which can be carried by the flags of these routines
  * are for internal use only.  Make sure they do not overlap with the public
@@ -54,8 +55,8 @@ static ProcessGlobalValue executableName = {
  * conversion is most appropriate for Tcl*Convert*Element() to perform, and
  * sets two bits of the flags value to indicate the mode selected.
  *
- * CONVERT_NONE		The element needs no quoting.  Its literal string
- *			is suitable as is.
+ * CONVERT_NONE		The element needs no quoting. Its literal string is
+ *			suitable as is.
  * CONVERT_BRACE	The conversion should be enclosing the literal string
  *			in braces.
  * CONVERT_ESCAPE	The conversion should be using backslashes to escape
@@ -64,18 +65,18 @@ static ProcessGlobalValue executableName = {
  *			the flags argument.
  *			Also indicates a strange conversion mode where all
  *			special characters are escaped with backslashes
- *			*except for braces*.  This is a strange and unnecessary
+ *			*except for braces*. This is a strange and unnecessary
  *			case, but it's part of the historical way in which
- *			lists have been formatted in Tcl.  To experiment with
+ *			lists have been formatted in Tcl. To experiment with
  *			removing this case, set the value of COMPAT to 0.
  *
- * One last flag value is used only by callers of TclScanElement().  The flag
+ * One last flag value is used only by callers of TclScanElement(). The flag
  * value produced by a call to Tcl*Scan*Element() will never leave this bit
  * set.
  *
- * CONVERT_ANY		The caller of TclScanElement() declares it can make
- *			no promise about what public flags will be passed to
- *			the matching call of TclConvertElement().  As such,
+ * CONVERT_ANY		The caller of TclScanElement() declares it can make no
+ *			promise about what public flags will be passed to the
+ *			matching call of TclConvertElement(). As such,
  *			TclScanElement() has to determine the worst case
  *			destination buffer length over all possibilities, and
  *			in other cases this means an overestimate of the
@@ -106,11 +107,17 @@ static Tcl_ThreadDataKey precisionKey;
 static void		ClearHash(Tcl_HashTable *tablePtr);
 static void		FreeProcessGlobalValue(ClientData clientData);
 static void		FreeThreadHash(ClientData clientData);
+static int		GetEndOffsetFromObj(Tcl_Obj *objPtr, int endValue,
+			    int *indexPtr);
 static Tcl_HashTable *	GetThreadHash(Tcl_ThreadDataKey *keyPtr);
-static int		SetEndOffsetFromAny(Tcl_Interp* interp,
-			    Tcl_Obj* objPtr);
-static void		UpdateStringOfEndOffset(Tcl_Obj* objPtr);
-
+static int		SetEndOffsetFromAny(Tcl_Interp *interp,
+			    Tcl_Obj *objPtr);
+static void		UpdateStringOfEndOffset(Tcl_Obj *objPtr);
+static int		FindElement(Tcl_Interp *interp, const char *string,
+			    int stringLength, const char *typeStr,
+			    const char *typeCode, const char **elementPtr,
+			    const char **nextPtr, int *sizePtr,
+			    int *literalPtr);
 /*
  * The following is the Tcl object type definition for an object that
  * represents a list index in the form, "end-offset". It is used as a
@@ -118,7 +125,7 @@ static void		UpdateStringOfEndOffset(Tcl_Obj* objPtr);
  * integer, so no memory management is required for it.
  */
 
-Tcl_ObjType tclEndOffsetType = {
+const Tcl_ObjType tclEndOffsetType = {
     "end-offset",			/* name */
     NULL,				/* freeIntRepProc */
     NULL,				/* dupIntRepProc */
@@ -129,17 +136,17 @@ Tcl_ObjType tclEndOffsetType = {
 /*
  *	*	STRING REPRESENTATION OF LISTS	*	*	*
  *
- * The next several routines implement the conversions of strings to and
- * from Tcl lists.  To understand their operation, the rules of parsing
- * and generating the string representation of lists must be known.  Here
- * we describe them in one place.
+ * The next several routines implement the conversions of strings to and from
+ * Tcl lists. To understand their operation, the rules of parsing and
+ * generating the string representation of lists must be known.  Here we
+ * describe them in one place.
  *
- * A list is made up of zero or more elements.  Any string is a list if
- * it is made up of alternating substrings of element-separating ASCII
- * whitespace and properly formatted elements.
+ * A list is made up of zero or more elements. Any string is a list if it is
+ * made up of alternating substrings of element-separating ASCII whitespace
+ * and properly formatted elements.
  *
- * The ASCII characters which can make up the whitespace between list
- * elements are:
+ * The ASCII characters which can make up the whitespace between list elements
+ * are:
  *
  *	\u0009	\t	TAB
  *	\u000A	\n	NEWLINE
@@ -158,69 +165,68 @@ Tcl_ObjType tclEndOffsetType = {
  *	* Unlike command parsing, the BACKSLASH NEWLINE sequence is not
  *	  considered to be a whitespace character.
  *
- *	* Other Unicode whitespace characters (recognized by
- *	  [string is space] or Tcl_UniCharIsSpace()) do not play any role
- *	  as element separators in Tcl lists.
+ *	* Other Unicode whitespace characters (recognized by [string is space]
+ *	  or Tcl_UniCharIsSpace()) do not play any role as element separators
+ *	  in Tcl lists.
  *
  *	* The NUL byte ought not appear, as it is not in strings properly
  *	  encoded for Tcl, but if it is present, it is not treated as
- *	  separating whitespace, or a string terminator.  It is just
- *	  another character in a list element.
+ *	  separating whitespace, or a string terminator. It is just another
+ *	  character in a list element.
  *
- * The interpretation of a formatted substring as a list element follows
- * rules similar to the parsing of the words of a command in a Tcl script.
- * Backslash substitution plays a key role, and is defined exactly as it is
- * in command parsing.  The same routine, TclParseBackslash() is used in both
- * command parsing and list parsing.
+ * The interpretation of a formatted substring as a list element follows rules
+ * similar to the parsing of the words of a command in a Tcl script. Backslash
+ * substitution plays a key role, and is defined exactly as it is in command
+ * parsing. The same routine, TclParseBackslash() is used in both command
+ * parsing and list parsing.
  *
- * NOTE:  This means that if and when backslash substitution rules ever
- * change for command parsing, the interpretation of strings as lists also
- * changes.
+ * NOTE: This means that if and when backslash substitution rules ever change
+ * for command parsing, the interpretation of strings as lists also changes.
  *
  * Backslash substitution replaces an "escape sequence" of one or more
  * characters starting with
  *		\u005c	\	BACKSLASH
- * with a single character.  The one character escape sequence case happens
- * only when BACKSLASH is the last character in the string.  In all other
- * cases, the escape sequence is at least two characters long.
+ * with a single character. The one character escape sequence case happens only
+ * when BACKSLASH is the last character in the string. In all other cases, the
+ * escape sequence is at least two characters long.
  *
- * The formatted substrings are interpreted as element values according to
- * the following cases:
+ * The formatted substrings are interpreted as element values according to the
+ * following cases:
  *
  * * If the first character of a formatted substring is
  *		\u007b	{	OPEN BRACE
  *   then the end of the substring is the matching
  *		\u007d	}	CLOSE BRACE
- *   character, where matching is determined by counting nesting levels,
- *   and not including any brace characters that are contained within a
- *   backslash escape sequence in the nesting count.  Having found the
- *   matching brace, all characters between the braces are the string
- *   value of the element.  If no matching close brace is found before the
- *   end of the string, the string is not a Tcl list.  If the character
- *   following the close brace is not an element separating whitespace
- *   character, or the end of the string, then the string is not a Tcl list.
+ *   character, where matching is determined by counting nesting levels, and
+ *   not including any brace characters that are contained within a backslash
+ *   escape sequence in the nesting count. Having found the matching brace,
+ *   all characters between the braces are the string value of the element.
+ *   If no matching close brace is found before the end of the string, the
+ *   string is not a Tcl list. If the character following the close brace is
+ *   not an element separating whitespace character, or the end of the string,
+ *   then the string is not a Tcl list.
  *
- *   NOTE: this differs from a brace-quoted word in the parsing of a
- *   Tcl command only in its treatment of the backslash-newline sequence.
- *   In a list element, the literal characters in the backslash-newline
- *   sequence become part of the element value.  In a script word,
- *   conversion to a single SPACE character is done.
+ *   NOTE: this differs from a brace-quoted word in the parsing of a Tcl
+ *   command only in its treatment of the backslash-newline sequence. In a
+ *   list element, the literal characters in the backslash-newline sequence
+ *   become part of the element value. In a script word, conversion to a
+ *   single SPACE character is done.
  *
  *   NOTE: Most list element values can be represented by a formatted
- *   substring using brace quoting.  The exceptions are any element value
- *   that includes an unbalanced brace not in a backslash escape sequence,
- *   and any value that ends with a backslash not itself in a backslash
- *   escape sequence.
+ *   substring using brace quoting. The exceptions are any element value that
+ *   includes an unbalanced brace not in a backslash escape sequence, and any
+ *   value that ends with a backslash not itself in a backslash escape
+ *   sequence.
  *
  * * If the first character of a formatted substring is
  *		\u0022	"	QUOTE
  *   then the end of the substring is the next QUOTE character, not counting
  *   any QUOTE characters that are contained within a backslash escape
- *   sequence.  If no next QUOTE is found before the end of the string, the
- *   string is not a Tcl list.  If the character following the closing QUOTE
- *   is not an element separating whitespace character, or the end of the
- *   string, then the string is not a Tcl list.  Having found the limits
- *   of the substring, the element value is produced by performing backslash
+ *   sequence. If no next QUOTE is found before the end of the string, the
+ *   string is not a Tcl list. If the character following the closing QUOTE is
+ *   not an element separating whitespace character, or the end of the string,
+ *   then the string is not a Tcl list. Having found the limits of the
+ *   substring, the element value is produced by performing backslash
  *   substitution on the character sequence between the open and close QUOTEs.
  *
  *   NOTE: Any element value can be represented by this style of formatting,
@@ -231,20 +237,20 @@ Tcl_ObjType tclEndOffsetType = {
  *   of the substring, the element value is produced by performing backslash
  *   substitution on it.
  *
- *   NOTE:  Any element value can be represented by this style of formatting,
+ *   NOTE: Any element value can be represented by this style of formatting,
  *   given suitable choice of backslash escape sequences, with one exception.
  *   The empty string cannot be represented as a list element without the use
  *   of either braces or quotes to delimit it.
  *
  * This collection of parsing rules is implemented in the routine
- * TclFindElement().
+ * FindElement().
  *
- * In order to produce lists that can be parsed by these rules, we need
- * the ability to distinguish between characters that are part of a list
- * element value from characters providing syntax that define the structure
- * of the list.  This means that our code that generates lists must at a
- * minimum be able to produce escape sequences for the 10 characters
- * identified above that have significance to a list parser.
+ * In order to produce lists that can be parsed by these rules, we need the
+ * ability to distinguish between characters that are part of a list element
+ * value from characters providing syntax that define the structure of the
+ * list. This means that our code that generates lists must at a minimum be
+ * able to produce escape sequences for the 10 characters identified above
+ * that have significance to a list parser.
  *
  *	*	*	CANONICAL LISTS	*	*	*	*	*
  *
@@ -253,18 +259,18 @@ Tcl_ObjType tclEndOffsetType = {
  * generated by Tcl.  Such list values are often said to be in "canonical
  * form":
  *
- * * When any canonical list is evaluated as a Tcl script, it is a script
- *   of either zero commands (an empty list) or exactly one command.  The
- *   command word is exactly the first element of the list, and each argument
- *   word is exactly one of the following elements of the list.  This means
- *   that any characters that have special meaning during script evaluation
- *   need special treatment when canonical lists are produced:
+ * * When any canonical list is evaluated as a Tcl script, it is a script of
+ *   either zero commands (an empty list) or exactly one command. The command
+ *   word is exactly the first element of the list, and each argument word is
+ *   exactly one of the following elements of the list. This means that any
+ *   characters that have special meaning during script evaluation need
+ *   special treatment when canonical lists are produced:
  *
  *	* Whitespace between elements may not include NEWLINE.
  *	* The command terminating character,
  *		\u003b	;	SEMICOLON
- *	  must be BRACEd, QUOTEd, or escaped so that it does not terminate
- * 	  the command prematurely.
+ *	  must be BRACEd, QUOTEd, or escaped so that it does not terminate the
+ * 	  command prematurely.
  *	* Any of the characters that begin substitutions in scripts,
  *		\u0024	$	DOLLAR
  *		\u005b	[	OPEN BRACKET
@@ -274,11 +280,10 @@ Tcl_ObjType tclEndOffsetType = {
  *		\u0023	#	HASH
  *	  that HASH character must be BRACEd, QUOTEd, or escaped so that it
  *	  does not convert the command into a comment.
- *	* Any list element that contains the character sequence
- *	  BACKSLASH NEWLINE cannot be formatted with BRACEs.  The
- *	  BACKSLASH character must be represented by an escape
- *	  sequence, and unless QUOTEs are used, the NEWLINE must
- *	  be as well.
+ *	* Any list element that contains the character sequence BACKSLASH
+ *	  NEWLINE cannot be formatted with BRACEs. The BACKSLASH character
+ *	  must be represented by an escape sequence, and unless QUOTEs are
+ *	  used, the NEWLINE must be as well.
  *
  * * It is also guaranteed that one can use a canonical list as a building
  *   block of a larger script within command substitution, as in this example:
@@ -289,10 +294,10 @@ Tcl_ObjType tclEndOffsetType = {
  *
  * * Finally it is guaranteed that enclosing a canonical list in braces
  *   produces a new value that is also a canonical list.  This new list has
- *   length 1, and its only element is the original canonical list.  This
- *   same guarantee also makes it possible to construct scripts where an
- *   argument word is given a list value by enclosing the canonical form
- *   of that list in braces:
+ *   length 1, and its only element is the original canonical list.  This same
+ *   guarantee also makes it possible to construct scripts where an argument
+ *   word is given a list value by enclosing the canonical form of that list
+ *   in braces:
  *	set script "puts {[list $one $two $three]}"; eval $script
  *   This sort of coding was once fairly common, though it's become more
  *   idiomatic to see the following instead:
@@ -301,54 +306,54 @@ Tcl_ObjType tclEndOffsetType = {
  *   balance when counting those braces that are not in escape sequences.
  *
  * Within these constraints, the canonical list generation routines
- * TclScanElement() and TclConvertElement() attempt to generate the string
- * for any list that is easiest to read.  When an element value is itself
+ * TclScanElement() and TclConvertElement() attempt to generate the string for
+ * any list that is easiest to read. When an element value is itself
  * acceptable as the formatted substring, it is usually used (CONVERT_NONE).
- * When some quoting or escaping is required, use of BRACEs (CONVERT_BRACE)
- * is usually preferred over the use of escape sequences (CONVERT_ESCAPE).
- * There are some exceptions to both of these preferences for reasons of
- * code simplicity, efficiency, and continuation of historical habits.
- * Canonical lists never use the QUOTE formatting to delimit their elements
- * because that form of quoting does not nest, which makes construction of
- * nested lists far too much trouble.  Canonical lists always use only a
- * single SPACE character for element-separating whitespace.
+ * When some quoting or escaping is required, use of BRACEs (CONVERT_BRACE) is
+ * usually preferred over the use of escape sequences (CONVERT_ESCAPE). There
+ * are some exceptions to both of these preferences for reasons of code
+ * simplicity, efficiency, and continuation of historical habits. Canonical
+ * lists never use the QUOTE formatting to delimit their elements because that
+ * form of quoting does not nest, which makes construction of nested lists far
+ * too much trouble.  Canonical lists always use only a single SPACE character
+ * for element-separating whitespace.
  *
  *	*	*	FUTURE CONSIDERATIONS	*	*	*
  *
  * When a list element requires quoting or escaping due to a CLOSE BRACKET
  * character or an internal QUOTE character, a strange formatting mode is
- * recommended.  For example, if the value "a{b]c}d" is converted by the
- * usual modes:
+ * recommended. For example, if the value "a{b]c}d" is converted by the usual
+ * modes:
  *
  *	CONVERT_BRACE:	a{b]c}d		=> {a{b]c}d}
  *	CONVERT_ESCAPE:	a{b]c}d		=> a\{b\]c\}d
  *
- * we get perfectly usable formatted list elements.  However, this is not
- * what Tcl releases have been producing.  Instead, we have:
+ * we get perfectly usable formatted list elements. However, this is not what
+ * Tcl releases have been producing. Instead, we have:
  *
  *	CONVERT_MASK:	a{b]c}d		=> a{b\]c}d
  *
- * where the CLOSE BRACKET is escaped, but the BRACEs are not.  The same
- * effect can be seen replacing ] with " in this example.  There does not
- * appear to be any functional or aesthetic purpose for this strange
- * additional mode.  The sole purpose I can see for preserving it is to
- * keep generating the same formatted lists programmers have become accustomed
- * to, and perhaps written tests to expect.  That is, compatibility only.
- * The additional code complexity required to support this mode is significant.
- * The lines of code supporting it are delimited in the routines below with
- * #if COMPAT directives.  This makes it easy to experiment with eliminating
- * this formatting mode simply with "#define COMPAT 0" above.  I believe
- * this is worth considering.
+ * where the CLOSE BRACKET is escaped, but the BRACEs are not. The same effect
+ * can be seen replacing ] with " in this example. There does not appear to be
+ * any functional or aesthetic purpose for this strange additional mode. The
+ * sole purpose I can see for preserving it is to keep generating the same
+ * formatted lists programmers have become accustomed to, and perhaps written
+ * tests to expect. That is, compatibility only. The additional code
+ * complexity required to support this mode is significant. The lines of code
+ * supporting it are delimited in the routines below with #if COMPAT
+ * directives. This makes it easy to experiment with eliminating this
+ * formatting mode simply with "#define COMPAT 0" above. I believe this is
+ * worth considering.
  *
- * Another consideration is the treatment of QUOTE characters in list elements.
- * TclConvertElement() must have the ability to produce the escape sequence
- * \" so that when a list element begins with a QUOTE we do not confuse
- * that first character with a QUOTE used as list syntax to define list
- * structure.  However, that is the only place where QUOTE characters need
- * quoting.  In this way, handling QUOTE could really be much more like
- * the way we handle HASH which also needs quoting and escaping only in
- * particular situations.  Following up this could increase the set of
- * list elements that can use the CONVERT_NONE formatting mode.
+ * Another consideration is the treatment of QUOTE characters in list
+ * elements. TclConvertElement() must have the ability to produce the escape
+ * sequence \" so that when a list element begins with a QUOTE we do not
+ * confuse that first character with a QUOTE used as list syntax to define
+ * list structure. However, that is the only place where QUOTE characters need
+ * quoting. In this way, handling QUOTE could really be much more like the way
+ * we handle HASH which also needs quoting and escaping only in particular
+ * situations. Following up this could increase the set of list elements that
+ * can use the CONVERT_NONE formatting mode.
  *
  * More speculative is that the demands of canonical list form require brace
  * balance for the list as a whole, while the current implementation achieves
@@ -366,15 +371,15 @@ Tcl_ObjType tclEndOffsetType = {
  *
  *	Given 'bytes' pointing to 'numBytes' bytes, scan through them and
  *	count the number of whitespace runs that could be list element
- *	separators.  If 'numBytes' is -1, scan to the terminating '\0'.
- *	Not a full list parser.  Typically used to get a quick and dirty
- *	overestimate of length size in order to allocate space for an
- *	actual list parser to operate with.
+ *	separators. If 'numBytes' is -1, scan to the terminating '\0'. Not a
+ *	full list parser. Typically used to get a quick and dirty overestimate
+ *	of length size in order to allocate space for an actual list parser to
+ *	operate with.
  *
  * Results:
- *	Returns the largest number of list elements that could possibly
- *	be in this string, interpreted as a Tcl list.  If 'endPtr' is not
- *	NULL, writes a pointer to the end of the string scanned there.
+ *	Returns the largest number of list elements that could possibly be in
+ *	this string, interpreted as a Tcl list. If 'endPtr' is not NULL,
+ *	writes a pointer to the end of the string scanned there.
  *
  * Side effects:
  *	None.
@@ -384,9 +389,9 @@ Tcl_ObjType tclEndOffsetType = {
 
 int
 TclMaxListLength(
-    CONST char *bytes,
+    const char *bytes,
     int numBytes,
-    CONST char **endPtr)
+    const char **endPtr)
 {
     int count = 0;
 
@@ -395,16 +400,25 @@ TclMaxListLength(
 	goto done;
     }
 
-    /* No list element before leading white space */
+    /*
+     * No list element before leading white space.
+     */
+
     count += 1 - TclIsSpaceProc(*bytes);
 
-    /* Count white space runs as potential element separators */
+    /*
+     * Count white space runs as potential element separators.
+     */
+
     while (numBytes) {
 	if ((numBytes == -1) && (*bytes == '\0')) {
 	    break;
 	}
 	if (TclIsSpaceProc(*bytes)) {
-	    /* Space run started; bump count */
+	    /*
+	     * Space run started; bump count.
+	     */
+
 	    count++;
 	    do {
 		bytes++;
@@ -413,16 +427,22 @@ TclMaxListLength(
 	    if ((numBytes == 0) || ((numBytes == -1) && (*bytes == '\0'))) {
 		break;
 	    }
-	    /* (*bytes) is non-space; return to counting state */
+
+	    /*
+	     * (*bytes) is non-space; return to counting state.
+	     */
 	}
 	bytes++;
 	numBytes -= (numBytes != -1);
     }
 
-    /* No list element following trailing white space */
+    /*
+     * No list element following trailing white space.
+     */
+
     count -= TclIsSpaceProc(bytes[-1]);
 
-    done:
+  done:
     if (endPtr) {
 	*endPtr = bytes;
     }
@@ -449,18 +469,18 @@ TclMaxListLength(
  *	that's part of the element. If this is the last argument in the list,
  *	then *nextPtr will point just after the last character in the list
  *	(i.e., at the character at list+listLength). If sizePtr is non-NULL,
- *	*sizePtr is filled in with the number of bytes in the element. If
- *	the element is in braces, then *elementPtr will point to the character
+ *	*sizePtr is filled in with the number of bytes in the element. If the
+ *	element is in braces, then *elementPtr will point to the character
  *	after the opening brace and *sizePtr will not include either of the
  *	braces. If there isn't an element in the list, *sizePtr will be zero,
  *	and both *elementPtr and *nextPtr will point just after the last
  *	character in the list. If literalPtr is non-NULL, *literalPtr is set
- *	to a boolean value indicating whether the substring returned as
- *	the values of **elementPtr and *sizePtr is the literal value of
- *	a list element.  If not, a call to TclCopyAndCollapse() is needed
- *	to produce the actual value of the list element.  Note: this function
- *	does NOT collapse backslash sequences, but uses *literalPtr to tell
- * 	callers when it is required for them to do so.
+ *	to a boolean value indicating whether the substring returned as the
+ *	values of **elementPtr and *sizePtr is the literal value of a list
+ *	element. If not, a call to TclCopyAndCollapse() is needed to produce
+ *	the actual value of the list element. Note: this function does NOT
+ *	collapse backslash sequences, but uses *literalPtr to tell callers
+ *	when it is required for them to do so.
  *
  * Side effects:
  *	None.
@@ -473,13 +493,13 @@ TclFindElement(
     Tcl_Interp *interp,		/* Interpreter to use for error reporting. If
 				 * NULL, then no error message is left after
 				 * errors. */
-    CONST char *list,		/* Points to the first byte of a string
+    const char *list,		/* Points to the first byte of a string
 				 * containing a Tcl list with zero or more
 				 * elements (possibly in braces). */
     int listLength,		/* Number of bytes in the list's string. */
-    CONST char **elementPtr,	/* Where to put address of first significant
+    const char **elementPtr,	/* Where to put address of first significant
 				 * character in first element of list. */
-    CONST char **nextPtr,	/* Fill in with location of character just
+    const char **nextPtr,	/* Fill in with location of character just
 				 * after all white space following end of
 				 * argument (next arg or end of list). */
     int *sizePtr,		/* If non-zero, fill in with size of
@@ -491,23 +511,84 @@ TclFindElement(
 				 * does not/does require a call to
 				 * TclCopyAndCollapse() by the caller. */
 {
-    CONST char *p = list;
-    CONST char *elemStart;	/* Points to first byte of first element. */
-    CONST char *limit;		/* Points just after list's last byte. */
+    return FindElement(interp, list, listLength, "list", "LIST", elementPtr,
+	    nextPtr, sizePtr, literalPtr);
+}
+
+int
+TclFindDictElement(
+    Tcl_Interp *interp,		/* Interpreter to use for error reporting. If
+				 * NULL, then no error message is left after
+				 * errors. */
+    const char *dict,		/* Points to the first byte of a string
+				 * containing a Tcl dictionary with zero or
+				 * more keys and values (possibly in
+				 * braces). */
+    int dictLength,		/* Number of bytes in the dict's string. */
+    const char **elementPtr,	/* Where to put address of first significant
+				 * character in the first element (i.e., key
+				 * or value) of dict. */
+    const char **nextPtr,	/* Fill in with location of character just
+				 * after all white space following end of
+				 * element (next arg or end of list). */
+    int *sizePtr,		/* If non-zero, fill in with size of
+				 * element. */
+    int *literalPtr)		/* If non-zero, fill in with non-zero/zero to
+				 * indicate that the substring of *sizePtr
+				 * bytes starting at **elementPtr is/is not
+				 * the literal key or value and therefore
+				 * does not/does require a call to
+				 * TclCopyAndCollapse() by the caller. */
+{
+    return FindElement(interp, dict, dictLength, "dict", "DICTIONARY",
+	    elementPtr, nextPtr, sizePtr, literalPtr);
+}
+
+static int
+FindElement(
+    Tcl_Interp *interp,		/* Interpreter to use for error reporting. If
+				 * NULL, then no error message is left after
+				 * errors. */
+    const char *string,		/* Points to the first byte of a string
+				 * containing a Tcl list or dictionary with
+				 * zero or more elements (possibly in
+				 * braces). */
+    int stringLength,		/* Number of bytes in the string. */
+    const char *typeStr,	/* The name of the type of thing we are
+				 * parsing, for error messages. */
+    const char *typeCode,	/* The type code for thing we are parsing, for
+				 * error messages. */
+    const char **elementPtr,	/* Where to put address of first significant
+				 * character in first element. */
+    const char **nextPtr,	/* Fill in with location of character just
+				 * after all white space following end of
+				 * argument (next arg or end of list/dict). */
+    int *sizePtr,		/* If non-zero, fill in with size of
+				 * element. */
+    int *literalPtr)		/* If non-zero, fill in with non-zero/zero to
+				 * indicate that the substring of *sizePtr
+				 * bytes starting at **elementPtr is/is not
+				 * the literal list/dict element and therefore
+				 * does not/does require a call to
+				 * TclCopyAndCollapse() by the caller. */
+{
+    const char *p = string;
+    const char *elemStart;	/* Points to first byte of first element. */
+    const char *limit;		/* Points just after list/dict's last byte. */
     int openBraces = 0;		/* Brace nesting level during parse. */
     int inQuotes = 0;
     int size = 0;		/* lint. */
     int numChars;
     int literal = 1;
-    CONST char *p2;
+    const char *p2;
 
     /*
      * Skim off leading white space and check for an opening brace or quote.
-     * We treat embedded NULLs in the list as bytes belonging to a list
-     * element.
+     * We treat embedded NULLs in the list/dict as bytes belonging to a list
+     * element (or dictionary key or value).
      */
 
-    limit = (list + listLength);
+    limit = (string + stringLength);
     while ((p < limit) && (TclIsSpaceProc(*p))) {
 	p++;
     }
@@ -568,8 +649,10 @@ TclFindElement(
 			p2++;
 		    }
 		    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
-			    "list element in braces followed by \"%.*s\" "
-			    "instead of space", (int) (p2-p), p));
+			    "%s element in braces followed by \"%.*s\" "
+			    "instead of space", typeStr, (int) (p2-p), p));
+		    Tcl_SetErrorCode(interp, "TCL", "VALUE", typeCode, "JUNK",
+			    NULL);
 		}
 		return TCL_ERROR;
 	    }
@@ -585,9 +668,10 @@ TclFindElement(
 		/*
 		 * A backslash sequence not within a brace quoted element
 		 * means the value of the element is different from the
-		 * substring we are parsing.  A call to TclCopyAndCollapse()
-		 * is needed to produce the element value.  Inform the caller.
+		 * substring we are parsing. A call to TclCopyAndCollapse() is
+		 * needed to produce the element value. Inform the caller.
 		 */
+
 		literal = 0;
 	    }
 	    TclParseBackslash(p, limit - p, &numChars, NULL);
@@ -634,8 +718,10 @@ TclFindElement(
 			p2++;
 		    }
 		    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
-			    "list element in quotes followed by \"%.*s\" "
-			    "instead of space", (int) (p2-p), p));
+			    "%s element in quotes followed by \"%.*s\" "
+			    "instead of space", typeStr, (int) (p2-p), p));
+		    Tcl_SetErrorCode(interp, "TCL", "VALUE", typeCode, "JUNK",
+			    NULL);
 		}
 		return TCL_ERROR;
 	    }
@@ -645,20 +731,24 @@ TclFindElement(
     }
 
     /*
-     * End of list: terminate element.
+     * End of list/dict: terminate element.
      */
 
     if (p == limit) {
 	if (openBraces != 0) {
 	    if (interp != NULL) {
-		Tcl_SetResult(interp, "unmatched open brace in list",
-			TCL_STATIC);
+		Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+			"unmatched open brace in %s", typeStr));
+		Tcl_SetErrorCode(interp, "TCL", "VALUE", typeCode, "BRACE",
+			NULL);
 	    }
 	    return TCL_ERROR;
 	} else if (inQuotes) {
 	    if (interp != NULL) {
-		Tcl_SetResult(interp, "unmatched open quote in list",
-			TCL_STATIC);
+		Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+			"unmatched open quote in %s", typeStr));
+		Tcl_SetErrorCode(interp, "TCL", "VALUE", typeCode, "QUOTE",
+			NULL);
 	    }
 	    return TCL_ERROR;
 	}
@@ -689,9 +779,9 @@ TclFindElement(
  *
  * Results:
  *	Count bytes get copied from src to dst. Along the way, backslash
- *	sequences are substituted in the copy.  After scanning count bytes
- *	from src, a null character is placed at the end of dst.  Returns
- *	the number of bytes that got written to dst.
+ *	sequences are substituted in the copy. After scanning count bytes from
+ *	src, a null character is placed at the end of dst. Returns the number
+ *	of bytes that got written to dst.
  *
  * Side effects:
  *	None.
@@ -702,13 +792,14 @@ TclFindElement(
 int
 TclCopyAndCollapse(
     int count,			/* Number of byte to copy from src. */
-    CONST char *src,		/* Copy from here... */
+    const char *src,		/* Copy from here... */
     char *dst)			/* ... to here. */
 {
     int newCount = 0;
 
     while (count > 0) {
 	char c = *src;
+
 	if (c == '\\') {
 	    int numRead;
 	    int backslashCount = TclParseBackslash(src, count, &numRead, dst);
@@ -761,56 +852,56 @@ int
 Tcl_SplitList(
     Tcl_Interp *interp,		/* Interpreter to use for error reporting. If
 				 * NULL, no error message is left. */
-    CONST char *list,		/* Pointer to string with list structure. */
+    const char *list,		/* Pointer to string with list structure. */
     int *argcPtr,		/* Pointer to location to fill in with the
 				 * number of elements in the list. */
-    CONST char ***argvPtr)	/* Pointer to place to store pointer to array
+    const char ***argvPtr)	/* Pointer to place to store pointer to array
 				 * of pointers to list elements. */
 {
-    CONST char **argv, *end, *element;
+    const char **argv, *end, *element;
     char *p;
     int length, size, i, result, elSize;
 
     /*
-     * Allocate enough space to work in. A (CONST char *) for each
-     * (possible) list element plus one more for terminating NULL,
-     * plus as many bytes as in the original string value, plus one
-     * more for a terminating '\0'.  Space used to hold element separating
-     * white space in the original string gets re-purposed to hold '\0'
-     * characters in the argv array.
+     * Allocate enough space to work in. A (const char *) for each (possible)
+     * list element plus one more for terminating NULL, plus as many bytes as
+     * in the original string value, plus one more for a terminating '\0'.
+     * Space used to hold element separating white space in the original
+     * string gets re-purposed to hold '\0' characters in the argv array.
      */
 
     size = TclMaxListLength(list, -1, &end) + 1;
     length = end - list;
-    argv = (CONST char **) ckalloc((unsigned)
-	    ((size * sizeof(char *)) + length + 1));
+    argv = ckalloc((size * sizeof(char *)) + length + 1);
 
     for (i = 0, p = ((char *) argv) + size*sizeof(char *);
 	    *list != 0;  i++) {
-	CONST char *prevList = list;
+	const char *prevList = list;
 	int literal;
 
 	result = TclFindElement(interp, list, length, &element, &list,
 		&elSize, &literal);
 	length -= (list - prevList);
 	if (result != TCL_OK) {
-	    ckfree((char *) argv);
+	    ckfree(argv);
 	    return result;
 	}
 	if (*element == 0) {
 	    break;
 	}
 	if (i >= size) {
-	    ckfree((char *) argv);
+	    ckfree(argv);
 	    if (interp != NULL) {
-		Tcl_SetResult(interp, "internal error in Tcl_SplitList",
-			TCL_STATIC);
+		Tcl_SetObjResult(interp, Tcl_NewStringObj(
+			"internal error in Tcl_SplitList", -1));
+		Tcl_SetErrorCode(interp, "TCL", "INTERNAL", "Tcl_SplitList",
+			NULL);
 	    }
 	    return TCL_ERROR;
 	}
 	argv[i] = p;
 	if (literal) {
-	    memcpy(p, element, (size_t) elSize);
+	    memcpy(p, element, elSize);
 	    p += elSize;
 	    *p = 0;
 	    p++;
@@ -835,9 +926,9 @@ Tcl_SplitList(
  *	enclosing braces) to make the string into a valid Tcl list element.
  *
  * Results:
- *	The return value is an overestimate of the number of bytes that
- *	will be needed by Tcl_ConvertElement to produce a valid list element
- *	from src. The word at *flagPtr is filled in with a value needed by
+ *	The return value is an overestimate of the number of bytes that will
+ *	be needed by Tcl_ConvertElement to produce a valid list element from
+ *	src. The word at *flagPtr is filled in with a value needed by
  *	Tcl_ConvertElement when doing the actual conversion.
  *
  * Side effects:
@@ -848,8 +939,8 @@ Tcl_SplitList(
 
 int
 Tcl_ScanElement(
-    register CONST char *src,	/* String to convert to list element. */
-    register int *flagPtr)	/* Where to store information to guide
+    const char *src,	/* String to convert to list element. */
+    int *flagPtr)	/* Where to store information to guide
 				 * Tcl_ConvertCountedElement. */
 {
     return Tcl_ScanCountedElement(src, -1, flagPtr);
@@ -867,10 +958,10 @@ Tcl_ScanElement(
  *	to the first null byte.
  *
  * Results:
- *	The return value is an overestimate of the number of bytes that
- *	will be needed by Tcl_ConvertCountedElement to produce a valid list
- *	element from src. The word at *flagPtr is filled in with a value
- *	needed by Tcl_ConvertCountedElement when doing the actual conversion.
+ *	The return value is an overestimate of the number of bytes that will
+ *	be needed by Tcl_ConvertCountedElement to produce a valid list element
+ *	from src. The word at *flagPtr is filled in with a value needed by
+ *	Tcl_ConvertCountedElement when doing the actual conversion.
  *
  * Side effects:
  *	None.
@@ -880,12 +971,12 @@ Tcl_ScanElement(
 
 int
 Tcl_ScanCountedElement(
-    CONST char *src,		/* String to convert to Tcl list element. */
+    const char *src,		/* String to convert to Tcl list element. */
     int length,			/* Number of bytes in src, or -1. */
     int *flagPtr)		/* Where to store information to guide
 				 * Tcl_ConvertElement. */
 {
-    int flags = CONVERT_ANY;
+    char flags = CONVERT_ANY;
     int numBytes = TclScanElement(src, length, &flags);
 
     *flagPtr = flags;
@@ -897,24 +988,24 @@ Tcl_ScanCountedElement(
  *
  * TclScanElement --
  *
- *	This function is a companion function to TclConvertElement. It
- *	scans a string to see what needs to be done to it (e.g. add
- *	backslashes or enclosing braces) to make the string into a valid Tcl
- *	list element. If length is -1, then the string is scanned from src up
- *	to the first null byte.  A NULL value for src is treated as an
- *	empty string.  The incoming value of *flagPtr is a report from the
- *	caller what additional flags it will pass to TclConvertElement().
+ *	This function is a companion function to TclConvertElement. It scans a
+ *	string to see what needs to be done to it (e.g. add backslashes or
+ *	enclosing braces) to make the string into a valid Tcl list element. If
+ *	length is -1, then the string is scanned from src up to the first null
+ *	byte. A NULL value for src is treated as an empty string. The incoming
+ *	value of *flagPtr is a report from the caller what additional flags it
+ *	will pass to TclConvertElement().
  *
  * Results:
- *	The recommended formatting mode for the element is determined and
- *	a value is written to *flagPtr indicating that recommendation.  This
+ *	The recommended formatting mode for the element is determined and a
+ *	value is written to *flagPtr indicating that recommendation. This
  *	recommendation is combined with the incoming flag values in *flagPtr
  *	set by the caller to determine how many bytes will be needed by
  *	TclConvertElement() in which to write the formatted element following
- *	the recommendation modified by the flag values.  This number of bytes
- *	is the return value of the routine.  In some situations it may be
- *	an overestimate, but so long as the caller passes the same flags
- *	to TclConvertElement(), it will be large enough.
+ *	the recommendation modified by the flag values. This number of bytes
+ *	is the return value of the routine.  In some situations it may be an
+ *	overestimate, but so long as the caller passes the same flags to
+ *	TclConvertElement(), it will be large enough.
  *
  * Side effects:
  *	None.
@@ -924,15 +1015,15 @@ Tcl_ScanCountedElement(
 
 int
 TclScanElement(
-    CONST char *src,		/* String to convert to Tcl list element. */
+    const char *src,		/* String to convert to Tcl list element. */
     int length,			/* Number of bytes in src, or -1. */
-    int *flagPtr)		/* Where to store information to guide
+    char *flagPtr)		/* Where to store information to guide
 				 * Tcl_ConvertElement. */
 {
-    CONST char *p = src;
+    const char *p = src;
     int nestingLevel = 0;	/* Brace nesting count */
     int forbidNone = 0;		/* Do not permit CONVERT_NONE mode. Something
-				   needs protection or escape. */
+				 * needs protection or escape. */
     int requireEscape = 0;	/* Force use of CONVERT_ESCAPE mode.  For some
 				 * reason bare or brace-quoted form fails. */
     int extra = 0;		/* Count of number of extra bytes needed for
@@ -944,47 +1035,72 @@ TclScanElement(
     int preferEscape = 0;	/* Use preferences to track whether to use */
     int preferBrace = 0;	/* CONVERT_MASK mode. */
     int braceCount = 0;		/* Count of all braces '{' '}' seen. */
-#endif
+#endif /* COMPAT */
 
     if ((p == NULL) || (length == 0) || ((*p == '\0') && (length == -1))) {
-	/* Empty string element must be brace quoted. */
+	/*
+	 * Empty string element must be brace quoted.
+	 */
+
 	*flagPtr = CONVERT_BRACE;
 	return 2;
     }
+
+#if COMPAT
+    /*
+     * We have an established history in TclConvertElement() when quoting
+     * because of a leading hash character to force what would be the
+     * CONVERT_MASK mode into the CONVERT_BRACE mode. That is, we format
+     * the element #{a"b} like this:
+     *			{#{a"b}}
+     * and not like this:
+     *			\#{a\"b}
+     * This is inconsistent with [list x{a"b}], but we will not change that now.
+     * Set that preference here so that we compute a tight size requirement.
+     */
+    if ((*src == '#') && !(*flagPtr & TCL_DONT_QUOTE_HASH)) {
+	preferBrace = 1;
+    }
+#endif
 
     if ((*p == '{') || (*p == '"')) {
 	/*
 	 * Must escape or protect so leading character of value is not
 	 * misinterpreted as list element delimiting syntax.
 	 */
+
 	forbidNone = 1;
 #if COMPAT
 	preferBrace = 1;
-#endif
+#endif /* COMPAT */
     }
 
     while (length) {
+      if (CHAR_TYPE(*p) != TYPE_NORMAL) {
 	switch (*p) {
-	case '{':
+	case '{':	/* TYPE_BRACE */
 #if COMPAT
 	    braceCount++;
-#endif
+#endif /* COMPAT */
 	    extra++;				/* Escape '{' => '\{' */
 	    nestingLevel++;
 	    break;
-	case '}':
+	case '}':	/* TYPE_BRACE */
 #if COMPAT
 	    braceCount++;
-#endif
+#endif /* COMPAT */
 	    extra++;				/* Escape '}' => '\}' */
 	    nestingLevel--;
 	    if (nestingLevel < 0) {
-		/* Unbalanced braces!  Cannot format with brace quoting. */
+		/*
+		 * Unbalanced braces!  Cannot format with brace quoting.
+		 */
+
 		requireEscape = 1;
 	    }
 	    break;
-	case ']':
-	case '"':
+	case ']':	/* TYPE_CLOSE_BRACK */
+	case '"':	/* TYPE_SPACE */
 #if COMPAT
 	    forbidNone = 1;
 	    extra++;		/* Escapes all just prepend a backslash */
@@ -992,32 +1108,39 @@ TclScanElement(
 	    break;
 #else
 	    /* FLOW THROUGH */
-#endif
-	case '[':
-	case '$':
-	case ';':
-	case ' ':
-	case '\f':
-	case '\n':
-	case '\r':
-	case '\t':
-	case '\v':
+#endif /* COMPAT */
+	case '[':	/* TYPE_SUBS */
+	case '$':	/* TYPE_SUBS */
+	case ';':	/* TYPE_COMMAND_END */
+	case ' ':	/* TYPE_SPACE */
+	case '\f':	/* TYPE_SPACE */
+	case '\n':	/* TYPE_COMMAND_END */
+	case '\r':	/* TYPE_SPACE */
+	case '\t':	/* TYPE_SPACE */
+	case '\v':	/* TYPE_SPACE */
 	    forbidNone = 1;
 	    extra++;		/* Escape sequences all one byte longer. */
 #if COMPAT
 	    preferBrace = 1;
-#endif
+#endif /* COMPAT */
 	    break;
-	case '\\':
+	case '\\':	/* TYPE_SUBS */
 	    extra++;				/* Escape '\' => '\\' */
 	    if ((length == 1) || ((length == -1) && (p[1] == '\0'))) {
-		/* Final backslash. Cannot format with brace quoting. */
+		/*
+		 * Final backslash. Cannot format with brace quoting.
+		 */
+
 		requireEscape = 1;
 		break;
 	    }
 	    if (p[1] == '\n') {
 		extra++;	/* Escape newline => '\n', one byte longer */
-		/* Backslash newline sequence.  Brace quoting not permitted. */
+
+		/*
+		 * Backslash newline sequence.  Brace quoting not permitted.
+		 */
+
 		requireEscape = 1;
 		length -= (length > 0);
 		p++;
@@ -1031,35 +1154,47 @@ TclScanElement(
 	    forbidNone = 1;
 #if COMPAT
 	    preferBrace = 1;
-#endif
+#endif /* COMPAT */
 	    break;
-	case '\0':
+	case '\0':	/* TYPE_SUBS */
 	    if (length == -1) {
 		goto endOfString;
 	    }
 	    /* TODO: Panic on improper encoding? */
 	    break;
 	}
+      }
 	length -= (length > 0);
 	p++;
     }
 
-    endOfString:
+  endOfString:
     if (nestingLevel != 0) {
-	/* Unbalanced braces!  Cannot format with brace quoting. */
+	/*
+	 * Unbalanced braces!  Cannot format with brace quoting.
+	 */
+
 	requireEscape = 1;
     }
 
-    /* We need at least as many bytes as are in the element value... */
+    /*
+     * We need at least as many bytes as are in the element value...
+     */
+
     bytesNeeded = p - src;
 
     if (requireEscape) {
 	/*
-	 * We must use escape sequences.  Add all the extra bytes needed
-	 * to have room to create them.
+	 * We must use escape sequences.  Add all the extra bytes needed to
+	 * have room to create them.
 	 */
+
 	bytesNeeded += extra;
-	/* Make room to escape leading #, if needed. */
+
+	/*
+	 * Make room to escape leading #, if needed.
+	 */
+
 	if ((*src == '#') && !(*flagPtr & TCL_DONT_QUOTE_HASH)) {
 	    bytesNeeded++;
 	}
@@ -1069,12 +1204,13 @@ TclScanElement(
     if (*flagPtr & CONVERT_ANY) {
 	/*
 	 * The caller has not let us know what flags it will pass to
-	 * TclConvertElement() so compute the max size we might need for
-	 * any possible choice.  Normally the formatting using escape
-	 * sequences is the longer one, and a minimum "extra" value of 2
-	 * makes sure we don't request too small a buffer in those edge
-	 * cases where that's not true.
+	 * TclConvertElement() so compute the max size we might need for any
+	 * possible choice.  Normally the formatting using escape sequences is
+	 * the longer one, and a minimum "extra" value of 2 makes sure we
+	 * don't request too small a buffer in those edge cases where that's
+	 * not true.
 	 */
+
 	if (extra < 2) {
 	    extra = 2;
 	}
@@ -1082,59 +1218,78 @@ TclScanElement(
 	*flagPtr |= TCL_DONT_USE_BRACES;
     }
     if (forbidNone) {
-	/* We must request some form of quoting of escaping... */
+	/*
+	 * We must request some form of quoting of escaping...
+	 */
+
 #if COMPAT
 	if (preferEscape && !preferBrace) {
 	    /*
-	     * If we are quoting solely due to ] or internal " characters
-	     * use the CONVERT_MASK mode where we escape all special
-	     * characters except for braces.  "extra" counted space needed
-	     * to escape braces too, so substract "braceCount" to get our
-	     * actual needs.
+	     * If we are quoting solely due to ] or internal " characters use
+	     * the CONVERT_MASK mode where we escape all special characters
+	     * except for braces. "extra" counted space needed to escape
+	     * braces too, so substract "braceCount" to get our actual needs.
 	     */
+
 	    bytesNeeded += (extra - braceCount);
 	    /* Make room to escape leading #, if needed. */
 	    if ((*src == '#') && !(*flagPtr & TCL_DONT_QUOTE_HASH)) {
 		bytesNeeded++;
 	    }
+
 	    /*
 	     * If the caller reports it will direct TclConvertElement() to
 	     * use full escapes on the element, add back the bytes needed to
 	     * escape the braces.
 	     */
+
 	    if (*flagPtr & TCL_DONT_USE_BRACES) {
 		bytesNeeded += braceCount;
 	    }
 	    *flagPtr = CONVERT_MASK;
 	    goto overflowCheck;
 	}
-#endif
+#endif /* COMPAT */
 	if (*flagPtr & TCL_DONT_USE_BRACES) {
 	    /*
 	     * If the caller reports it will direct TclConvertElement() to
 	     * use escapes, add the extra bytes needed to have room for them.
 	     */
+
 	    bytesNeeded += extra;
-	    /* Make room to escape leading #, if needed. */
+
+	    /*
+	     * Make room to escape leading #, if needed.
+	     */
+
 	    if ((*src == '#') && !(*flagPtr & TCL_DONT_QUOTE_HASH)) {
 		bytesNeeded++;
 	    }
 	} else {
-	    /* Add 2 bytes for room for the enclosing braces. */
+	    /*
+	     * Add 2 bytes for room for the enclosing braces.
+	     */
+
 	    bytesNeeded += 2;
 	}
 	*flagPtr = CONVERT_BRACE;
 	goto overflowCheck;
     }
 
-    /* So far, no need to quote or escape anything. */
+    /*
+     * So far, no need to quote or escape anything.
+     */
+
     if ((*src == '#') && !(*flagPtr & TCL_DONT_QUOTE_HASH)) {
-	/* If we need to quote a leading #, make room to enclose in braces. */
+	/*
+	 * If we need to quote a leading #, make room to enclose in braces.
+	 */
+
 	bytesNeeded += 2;
     }
     *flagPtr = CONVERT_NONE;
 
-    overflowCheck:
+  overflowCheck:
     if (bytesNeeded < 0) {
 	Tcl_Panic("TclScanElement: string length overflow");
     }
@@ -1164,9 +1319,9 @@ TclScanElement(
 
 int
 Tcl_ConvertElement(
-    register CONST char *src,	/* Source information for list element. */
-    register char *dst,		/* Place to put list-ified element. */
-    register int flags)		/* Flags produced by Tcl_ScanElement. */
+    const char *src,	/* Source information for list element. */
+    char *dst,		/* Place to put list-ified element. */
+    int flags)		/* Flags produced by Tcl_ScanElement. */
 {
     return Tcl_ConvertCountedElement(src, -1, dst, flags);
 }
@@ -1194,7 +1349,7 @@ Tcl_ConvertElement(
 
 int
 Tcl_ConvertCountedElement(
-    register CONST char *src,	/* Source information for list element. */
+    const char *src,	/* Source information for list element. */
     int length,			/* Number of bytes in src, or -1. */
     char *dst,			/* Place to put list-ified element. */
     int flags)			/* Flags produced by Tcl_ScanElement. */
@@ -1209,9 +1364,9 @@ Tcl_ConvertCountedElement(
  *
  * TclConvertElement --
  *
- *	This is a companion function to TclScanElement. Given the
- *	information produced by TclScanElement, this function converts
- *	a string to a list element equal to that string.
+ *	This is a companion function to TclScanElement. Given the information
+ *	produced by TclScanElement, this function converts a string to a list
+ *	element equal to that string.
  *
  * Results:
  *	Information is copied to *dst in the form of a list element identical
@@ -1225,8 +1380,9 @@ Tcl_ConvertCountedElement(
  *----------------------------------------------------------------------
  */
 
-int TclConvertElement(
-    register CONST char *src,	/* Source information for list element. */
+int
+TclConvertElement(
+    const char *src,	/* Source information for list element. */
     int length,			/* Number of bytes in src, or -1. */
     char *dst,			/* Place to put list-ified element. */
     int flags)			/* Flags produced by Tcl_ScanElement. */
@@ -1234,19 +1390,28 @@ int TclConvertElement(
     int conversion = flags & CONVERT_MASK;
     char *p = dst;
 
-    /* Let the caller demand we use escape sequences rather than braces. */
+    /*
+     * Let the caller demand we use escape sequences rather than braces.
+     */
+
     if ((flags & TCL_DONT_USE_BRACES) && (conversion & CONVERT_BRACE)) {
 	conversion = CONVERT_ESCAPE;
     }
 
-    /* No matter what the caller demands, empty string must be braced! */
-    if ((src == NULL) || (length == 0) || ((*src == '\0') && (length == -1))) {
+    /*
+     * No matter what the caller demands, empty string must be braced!
+     */
+
+    if ((src == NULL) || (length == 0) || (*src == '\0' && length == -1)) {
 	src = tclEmptyStringRep;
 	length = 0;
 	conversion = CONVERT_BRACE;
     }
 
-    /* Escape leading hash as needed and requested. */
+    /*
+     * Escape leading hash as needed and requested.
+     */
+
     if ((*src == '#') && !(flags & TCL_DONT_QUOTE_HASH)) {
 	if (conversion == CONVERT_ESCAPE) {
 	    p[0] = '\\';
@@ -1259,7 +1424,10 @@ int TclConvertElement(
 	}
     }
 
-    /* No escape or quoting needed.  Copy the literal string value. */
+    /*
+     * No escape or quoting needed.  Copy the literal string value.
+     */
+
     if (conversion == CONVERT_NONE) {
 	if (length == -1) {
 	    /* TODO: INT_MAX overflow? */
@@ -1273,7 +1441,10 @@ int TclConvertElement(
 	}
     }
 
-    /* Formatted string is original string enclosed in braces. */
+    /*
+     * Formatted string is original string enclosed in braces.
+     */
+
     if (conversion == CONVERT_BRACE) {
 	*p = '{';
 	p++;
@@ -1293,7 +1464,10 @@ int TclConvertElement(
 
     /* conversion == CONVERT_ESCAPE or CONVERT_MASK */
 
-    /* Formatted string is original string converted to escape sequences. */
+    /*
+     * Formatted string is original string converted to escape sequences.
+     */
+
     for ( ; length; src++, length -= (length > 0)) {
 	switch (*src) {
 	case ']':
@@ -1309,13 +1483,12 @@ int TclConvertElement(
 	case '{':
 	case '}':
 #if COMPAT
-	    if (conversion == CONVERT_ESCAPE) {
-#endif
+	    if (conversion == CONVERT_ESCAPE)
+#endif /* COMPAT */
+	    {
 		*p = '\\';
 		p++;
-#if COMPAT
 	    }
-#endif
 	    break;
 	case '\f':
 	    *p = '\\';
@@ -1351,13 +1524,15 @@ int TclConvertElement(
 	    if (length == -1) {
 		return p - dst;
 	    }
+
 	    /*
-	     * If we reach this point, there's an embedded NULL in the
-	     * string range being processed, which should not happen when
-	     * the encoding rules for Tcl strings are properly followed.
-	     * If the day ever comes when we stop tolerating such things,
-	     * this is where to put the Tcl_Panic().
+	     * If we reach this point, there's an embedded NULL in the string
+	     * range being processed, which should not happen when the
+	     * encoding rules for Tcl strings are properly followed.  If the
+	     * day ever comes when we stop tolerating such things, this is
+	     * where to put the Tcl_Panic().
 	     */
+
 	    break;
 	}
 	*p = *src;
@@ -1389,19 +1564,19 @@ int TclConvertElement(
 char *
 Tcl_Merge(
     int argc,			/* How many strings to merge. */
-    CONST char * CONST *argv)	/* Array of string values. */
+    const char *const *argv)	/* Array of string values. */
 {
-#   define LOCAL_SIZE 20
-    int localFlags[LOCAL_SIZE], *flagPtr = NULL;
+#define LOCAL_SIZE 64
+    char localFlags[LOCAL_SIZE], *flagPtr = NULL;
     int i, bytesNeeded = 0;
     char *result, *dst;
-    const int maxFlags = UINT_MAX / sizeof(int);
+
+    /*
+     * Handle empty list case first, so logic of the general case can be
+     * simpler.
+     */
 
     if (argc == 0) {
-	/*
-	 * Handle empty list case first, so logic of the general case
-	 * can be simpler.
-	 */
 	result = ckalloc(1);
 	result[0] = '\0';
 	return result;
@@ -1413,22 +1588,8 @@ Tcl_Merge(
 
     if (argc <= LOCAL_SIZE) {
 	flagPtr = localFlags;
-    } else if (argc > maxFlags) {
-	/*
-	 * We cannot allocate a large enough flag array to format this
-	 * list in one pass.  We could imagine converting this routine
-	 * to a multi-pass implementation, but for sizeof(int) == 4,
-	 * the limit is a max of 2^30 list elements and since each element
-	 * is at least one byte formatted, and requires one byte space
-	 * between it and the next one, that a minimum space requirement
-	 * of 2^31 bytes, which is already INT_MAX. If we tried to format
-	 * a list of > maxFlags elements, we're just going to overflow
-	 * the size limits on the formatted string anyway, so just issue
-	 * that same panic early.
-	 */
-	Tcl_Panic("max size for a Tcl value (%d bytes) exceeded", INT_MAX);
     } else {
-	flagPtr = (int *) ckalloc((unsigned) argc*sizeof(int));
+	flagPtr = ckalloc(argc);
     }
     for (i = 0; i < argc; i++) {
 	flagPtr[i] = ( i ? TCL_DONT_QUOTE_HASH : 0 );
@@ -1446,7 +1607,7 @@ Tcl_Merge(
      * Pass two: copy into the result area.
      */
 
-    result = ckalloc((unsigned) bytesNeeded);
+    result = ckalloc(bytesNeeded);
     dst = result;
     for (i = 0; i < argc; i++) {
 	flagPtr[i] |= ( i ? TCL_DONT_QUOTE_HASH : 0 );
@@ -1457,7 +1618,7 @@ Tcl_Merge(
     dst[-1] = 0;
 
     if (flagPtr != localFlags) {
-	ckfree((char *) flagPtr);
+	ckfree(flagPtr);
     }
     return result;
 }
@@ -1483,13 +1644,13 @@ Tcl_Merge(
 
 char
 Tcl_Backslash(
-    CONST char *src,		/* Points to the backslash character of a
+    const char *src,		/* Points to the backslash character of a
 				 * backslash sequence. */
     int *readPtr)		/* Fill in with number of characters read from
 				 * src, unless NULL. */
 {
-    char buf[TCL_UTF_MAX];
-    Tcl_UniChar ch;
+    char buf[TCL_UTF_MAX] = "";
+    Tcl_UniChar ch = 0;
 
     Tcl_UtfBackslash(src, readPtr, buf);
     TclUtfToUniChar(buf, &ch);
@@ -1516,16 +1677,16 @@ Tcl_Backslash(
 static inline const char*
 UtfWellFormedEnd(
     Tcl_DString *buffer,	/* Buffer used to hold well-formed string. */
-    CONST char *bytes,		/* Pointer to the beginning of the string. */
+    const char *bytes,		/* Pointer to the beginning of the string. */
     int length)			/* Length of the string. */
 {
-    CONST char *l = bytes + length;
-    CONST char *p = Tcl_UtfPrev(l, bytes);
+    const char *l = bytes + length;
+    const char *p = Tcl_UtfPrev(l, bytes);
 
     if (Tcl_UtfCharComplete(p, l - p)) {
 	return bytes;
     }
-    /* 
+    /*
      * Malformed utf-8 end, be sure we've NTS to safe compare of end-character,
      * avoid segfault by access violation out of range.
      */
@@ -1551,26 +1712,31 @@ UtfWellFormedEnd(
 
 static inline int
 TrimRight(
-    const char *bytes,	/* String to be trimmed... */
-    int numBytes,	/* ...and its length in bytes */
-    const char *trim,	/* String of trim characters... */
-    int numTrim)	/* ...and its length in bytes */
+    const char *bytes,		/* String to be trimmed... */
+    int numBytes,		/* ...and its length in bytes */
+    const char *trim,		/* String of trim characters... */
+    int numTrim)		/* ...and its length in bytes */
 {
     const char *p = bytes + numBytes;
     int pInc;
+    Tcl_UniChar ch1 = 0, ch2 = 0;
 
-    /* Outer loop: iterate over string to be trimmed */
+    /*
+     * Outer loop: iterate over string to be trimmed.
+     */
+
     do {
-	Tcl_UniChar ch1;
 	const char *q = trim;
 	int bytesLeft = numTrim;
 
 	p = Tcl_UtfPrev(p, bytes);
  	pInc = TclUtfToUniChar(p, &ch1);
 
-	/* Inner loop: scan trim string for match to current character */
+	/*
+	 * Inner loop: scan trim string for match to current character.
+	 */
+
 	do {
-	    Tcl_UniChar ch2;
 	    int qInc = TclUtfToUniChar(q, &ch2);
 
 	    if (ch1 == ch2) {
@@ -1582,7 +1748,10 @@ TrimRight(
 	} while (bytesLeft);
 
 	if (bytesLeft == 0) {
-	    /* No match; trim task done; *p is last non-trimmed char */
+	    /*
+	     * No match; trim task done; *p is last non-trimmed char.
+	     */
+
 	    p += pInc;
 	    break;
 	}
@@ -1626,6 +1795,7 @@ TclTrimRight(
  *----------------------------------------------------------------------
  *
  * TclTrimLeft --
+ *
  *	Takes two counted strings in the Tcl encoding.  Conceptually
  *	finds the sub string (offset) to trim from the left side of the
  *	first string all characters found in the second string.
@@ -1641,23 +1811,28 @@ TclTrimRight(
 
 static inline int
 TrimLeft(
-    const char *bytes,	/* String to be trimmed... */
-    int numBytes,	/* ...and its length in bytes */
-    const char *trim,	/* String of trim characters... */
-    int numTrim)	/* ...and its length in bytes */
+    const char *bytes,		/* String to be trimmed... */
+    int numBytes,		/* ...and its length in bytes */
+    const char *trim,		/* String of trim characters... */
+    int numTrim)		/* ...and its length in bytes */
 {
     const char *p = bytes;
+	Tcl_UniChar ch1 = 0, ch2 = 0;
 
-    /* Outer loop: iterate over string to be trimmed */
+    /*
+     * Outer loop: iterate over string to be trimmed.
+     */
+
     do {
-	Tcl_UniChar ch1;
 	int pInc = TclUtfToUniChar(p, &ch1);
 	const char *q = trim;
 	int bytesLeft = numTrim;
 
-	/* Inner loop: scan trim string for match to current character */
+	/*
+	 * Inner loop: scan trim string for match to current character.
+	 */
+
 	do {
-	    Tcl_UniChar ch2;
 	    int qInc = TclUtfToUniChar(q, &ch2);
 
 	    if (ch1 == ch2) {
@@ -1669,7 +1844,10 @@ TrimLeft(
 	} while (bytesLeft);
 
 	if (bytesLeft == 0) {
-	    /* No match; trim task done; *p is first non-trimmed char */
+	    /*
+	     * No match; trim task done; *p is first non-trimmed char.
+	     */
+
 	    break;
 	}
 
@@ -1789,25 +1967,30 @@ TclTrim(
  */
 
 /* The whitespace characters trimmed during [concat] operations */
-#define CONCAT_WS " \f\v\r\t\n"
-#define CONCAT_WS_SIZE (int) (sizeof(CONCAT_WS "") - 1)
+#define CONCAT_WS_SIZE (int) (sizeof(CONCAT_TRIM_SET "") - 1)
 
 char *
 Tcl_Concat(
     int argc,			/* Number of strings to concatenate. */
-    CONST char * CONST *argv)	/* Array of strings to concatenate. */
+    const char *const *argv)	/* Array of strings to concatenate. */
 {
     int i, needSpace = 0, bytesNeeded = 0;
     char *result, *p;
 
-    /* Dispose of the empty result corner case first to simplify later code */
+    /*
+     * Dispose of the empty result corner case first to simplify later code.
+     */
+
     if (argc == 0) {
 	result = (char *) ckalloc(1);
 	result[0] = '\0';
 	return result;
     }
 
-    /* First allocate the result buffer at the size required */
+    /*
+     * First allocate the result buffer at the size required.
+     */
+
     for (i = 0;  i < argc;  i++) {
 	bytesNeeded += strlen(argv[i]);
 	if (bytesNeeded < 0) {
@@ -1816,13 +1999,18 @@ Tcl_Concat(
     }
     if (bytesNeeded + argc - 1 < 0) {
 	/*
-	 * Panic test could be tighter, but not going to bother for
-	 * this legacy routine.
+	 * Panic test could be tighter, but not going to bother for this
+	 * legacy routine.
 	 */
+
 	Tcl_Panic("Tcl_Concat: max size of Tcl value exceeded");
     }
-    /* All element bytes + (argc - 1) spaces + 1 terminating NULL */
-    result = (char *) ckalloc((unsigned) (bytesNeeded + argc));
+
+    /*
+     * All element bytes + (argc - 1) spaces + 1 terminating NULL.
+     */
+
+    result = ckalloc(bytesNeeded + argc);
 
     for (p = result, i = 0;  i < argc;  i++) {
 	int triml, trimr, elemLength;
@@ -1832,22 +2020,30 @@ Tcl_Concat(
 	elemLength = strlen(argv[i]);
 
 	/* Trim away the leading/trailing whitespace. */
-	triml = TclTrim(element, elemLength, CONCAT_WS, CONCAT_WS_SIZE, &trimr);
+	triml = TclTrim(element, elemLength, CONCAT_TRIM_SET,
+		CONCAT_WS_SIZE, &trimr);
 	element += triml;
 	elemLength -= triml + trimr;
+
 	/* Do not permit trimming to expose a final backslash character. */
 	elemLength += trimr && (element[elemLength - 1] == '\\');
 
-	/* If we're left with empty element after trimming, do nothing */
+	/*
+	 * If we're left with empty element after trimming, do nothing.
+	 */
+
 	if (elemLength == 0) {
 	    continue;
 	}
 
-	/* Append to the result with space if needed */
+	/*
+	 * Append to the result with space if needed.
+	 */
+
 	if (needSpace) {
 	    *p++ = ' ';
 	}
-	memcpy(p, element, (size_t) elemLength);
+	memcpy(p, element, elemLength);
 	p += elemLength;
 	needSpace = 1;
     }
@@ -1876,7 +2072,7 @@ Tcl_Concat(
 Tcl_Obj *
 Tcl_ConcatObj(
     int objc,			/* Number of objects to concatenate. */
-    Tcl_Obj *CONST objv[])	/* Array of objects to concatenate. */
+    Tcl_Obj *const objv[])	/* Array of objects to concatenate. */
 {
     int i, elemLength, needSpace = 0, bytesNeeded = 0;
     const char *element;
@@ -1901,36 +2097,20 @@ Tcl_ConcatObj(
 	}
     }
     if (i == objc) {
-	Tcl_Obj **listv;
-	int listc;
-
 	resPtr = NULL;
 	for (i = 0;  i < objc;  i++) {
-	    /*
-	     * Tcl_ListObjAppendList could be used here, but this saves us a
-	     * bit of type checking (since we've already done it). Use of
-	     * INT_MAX tells us to always put the new stuff on the end. It
-	     * will be set right in Tcl_ListObjReplace.
-	     * Note that all objs at this point are either lists or have an
-	     * empty string rep.
-	     */
-
 	    objPtr = objv[i];
 	    if (objPtr->bytes && objPtr->length == 0) {
 		continue;
 	    }
-	    TclListObjGetElements(NULL, objPtr, &listc, &listv);
-	    if (listc) {
-		if (resPtr) {
-		    if (TCL_OK != Tcl_ListObjReplace(NULL, resPtr,
-			    INT_MAX, 0, listc, listv)) {
-			/* Abandon ship! */
-			Tcl_DecrRefCount(resPtr);
-			goto slow;
-		    }
-		} else {
-		    resPtr = TclListObjCopy(NULL, objPtr);
+	    if (resPtr) {
+		if (TCL_OK != Tcl_ListObjAppendList(NULL, resPtr, objPtr)) {
+		    /* Abandon ship! */
+		    Tcl_DecrRefCount(resPtr);
+		    goto slow;
 		}
+	    } else {
+		resPtr = TclListObjCopy(NULL, objPtr);
 	    }
 	}
 	if (!resPtr) {
@@ -1939,13 +2119,14 @@ Tcl_ConcatObj(
 	return resPtr;
     }
 
+  slow:
     /*
      * Something cannot be determined to be safe, so build the concatenation
      * the slow way, using the string representations.
+     *
+     * First try to pre-allocate the size required.
      */
 
-  slow:
-    /* First try to pre-allocate the size required */
     for (i = 0;  i < objc;  i++) {
 	element = TclGetStringFromObj(objv[i], &elemLength);
 	bytesNeeded += elemLength;
@@ -1953,13 +2134,15 @@ Tcl_ConcatObj(
 	    break;
 	}
     }
+
     /*
-     * Does not matter if this fails, will simply try later to build up
-     * the string with each Append reallocating as needed with the usual
-     * string append algorithm.  When that fails it will report the error.
+     * Does not matter if this fails, will simply try later to build up the
+     * string with each Append reallocating as needed with the usual string
+     * append algorithm.  When that fails it will report the error.
      */
+
     TclNewObj(resPtr);
-    Tcl_AttemptSetObjLength(resPtr, bytesNeeded + objc - 1);
+    (void) Tcl_AttemptSetObjLength(resPtr, bytesNeeded + objc - 1);
     Tcl_SetObjLength(resPtr, 0);
 
     for (i = 0;  i < objc;  i++) {
@@ -1968,18 +2151,26 @@ Tcl_ConcatObj(
 	element = TclGetStringFromObj(objv[i], &elemLength);
 
 	/* Trim away the leading/trailing whitespace. */
-	triml = TclTrim(element, elemLength, CONCAT_WS, CONCAT_WS_SIZE, &trimr);
+	triml = TclTrim(element, elemLength, CONCAT_TRIM_SET,
+		CONCAT_WS_SIZE, &trimr);
 	element += triml;
 	elemLength -= triml + trimr;
+
 	/* Do not permit trimming to expose a final backslash character. */
 	elemLength += trimr && (element[elemLength - 1] == '\\');
 
-	/* If we're left with empty element after trimming, do nothing */
+	/*
+	 * If we're left with empty element after trimming, do nothing.
+	 */
+
 	if (elemLength == 0) {
 	    continue;
 	}
 
-	/* Append to the result with space if needed */
+	/*
+	 * Append to the result with space if needed.
+	 */
+
 	if (needSpace) {
 	    Tcl_AppendToObj(resPtr, " ", 1);
 	}
@@ -2009,8 +2200,8 @@ Tcl_ConcatObj(
 
 int
 Tcl_StringMatch(
-    CONST char *str,		/* String. */
-    CONST char *pattern)	/* Pattern, which may contain special
+    const char *str,		/* String. */
+    const char *pattern)	/* Pattern, which may contain special
 				 * characters. */
 {
     return Tcl_StringCaseMatch(str, pattern, 0);
@@ -2037,14 +2228,14 @@ Tcl_StringMatch(
 
 int
 Tcl_StringCaseMatch(
-    CONST char *str,		/* String. */
-    CONST char *pattern,	/* Pattern, which may contain special
+    const char *str,		/* String. */
+    const char *pattern,	/* Pattern, which may contain special
 				 * characters. */
     int nocase)			/* 0 for case sensitive, 1 for insensitive */
 {
     int p, charLen;
-    CONST char *pstart = pattern;
-    Tcl_UniChar ch1, ch2;
+    const char *pstart = pattern;
+    Tcl_UniChar ch1 = 0, ch2 = 0;
 
     while (1) {
 	p = *pattern;
@@ -2154,7 +2345,7 @@ Tcl_StringCaseMatch(
 	 */
 
 	if (p == '[') {
-	    Tcl_UniChar startChar, endChar;
+	    Tcl_UniChar startChar = 0, endChar = 0;
 
 	    pattern++;
 	    if (UCHAR(*str) < 0x80) {
@@ -2270,11 +2461,12 @@ Tcl_StringCaseMatch(
 
 int
 TclByteArrayMatch(
-    const unsigned char *string,	/* String. */
-    int strLen,				/* Length of String */
-    const unsigned char *pattern,	/* Pattern, which may contain special
-					 * characters. */
-    int ptnLen,				/* Length of Pattern */
+    const unsigned char *string,/* String. */
+    int strLen,			/* Length of String */
+    const unsigned char *pattern,
+				/* Pattern, which may contain special
+				 * characters. */
+    int ptnLen,			/* Length of Pattern */
     int flags)
 {
     const unsigned char *stringEnd, *patternEnd;
@@ -2382,6 +2574,7 @@ TclByteArrayMatch(
 			/*
 			 * Matches ranges of form [a-z] or [z-a].
 			 */
+
 			break;
 		    }
 		} else if (startChar == ch1) {
@@ -2428,9 +2621,9 @@ TclByteArrayMatch(
  *
  * TclStringMatchObj --
  *
- *	See if a particular string matches a particular pattern.
- *	Allows case insensitivity.  This is the generic multi-type handler
- *	for the various matching algorithms.
+ *	See if a particular string matches a particular pattern. Allows case
+ *	insensitivity. This is the generic multi-type handler for the various
+ *	matching algorithms.
  *
  * Results:
  *	The return value is 1 if string matches pattern, and 0 otherwise. The
@@ -2445,9 +2638,10 @@ TclByteArrayMatch(
 
 int
 TclStringMatchObj(
-    Tcl_Obj *strObj,	/* string object. */
-    Tcl_Obj *ptnObj,	/* pattern object. */
-    int flags)		/* Only TCL_MATCH_NOCASE should be passed or 0. */
+    Tcl_Obj *strObj,		/* string object. */
+    Tcl_Obj *ptnObj,		/* pattern object. */
+    int flags)			/* Only TCL_MATCH_NOCASE should be passed, or
+				 * 0. */
 {
     int match, length, plen;
 
@@ -2458,7 +2652,7 @@ TclStringMatchObj(
     trivial = nocase ? 0 : TclMatchIsTrivial(TclGetString(ptnObj));
      */
 
-    if (strObj->typePtr == &tclStringType) {
+    if ((strObj->typePtr == &tclStringType) || (strObj->typePtr == NULL)) {
 	Tcl_UniChar *udata, *uptn;
 
 	udata = Tcl_GetUnicodeFromObj(strObj, &length);
@@ -2527,15 +2721,13 @@ Tcl_DStringInit(
 char *
 Tcl_DStringAppend(
     Tcl_DString *dsPtr,		/* Structure describing dynamic string. */
-    CONST char *bytes,		/* String to append. If length is -1 then this
+    const char *bytes,		/* String to append. If length is -1 then this
 				 * must be null-terminated. */
     int length)			/* Number of bytes from "bytes" to append. If
 				 * < 0, then append all of bytes, up to null
 				 * at end. */
 {
     int newSize;
-    char *dst;
-    CONST char *end;
 
     if (length < 0) {
 	length = strlen(bytes);
@@ -2551,9 +2743,9 @@ Tcl_DStringAppend(
     if (newSize >= dsPtr->spaceAvl) {
 	dsPtr->spaceAvl = newSize * 2;
 	if (dsPtr->string == dsPtr->staticSpace) {
-	    char *newString = ckalloc((unsigned) dsPtr->spaceAvl);
+	    char *newString = ckalloc(dsPtr->spaceAvl);
 
-	    memcpy(newString, dsPtr->string, (size_t) dsPtr->length);
+	    memcpy(newString, dsPtr->string, dsPtr->length);
 	    dsPtr->string = newString;
 	} else {
 	    int offset = -1;
@@ -2564,8 +2756,7 @@ Tcl_DStringAppend(
 		offset = bytes - dsPtr->string;
 	    }
 
-	    dsPtr->string = ckrealloc((void *) dsPtr->string,
-		    (size_t) dsPtr->spaceAvl);
+	    dsPtr->string = ckrealloc(dsPtr->string, dsPtr->spaceAvl);
 
 	    if (offset >= 0) {
 		bytes = dsPtr->string + offset;
@@ -2577,13 +2768,41 @@ Tcl_DStringAppend(
      * Copy the new string into the buffer at the end of the old one.
      */
 
-    for (dst = dsPtr->string + dsPtr->length, end = bytes+length;
-	    bytes < end; bytes++, dst++) {
-	*dst = *bytes;
-    }
-    *dst = '\0';
+    memcpy(dsPtr->string + dsPtr->length, bytes, length);
     dsPtr->length += length;
+    dsPtr->string[dsPtr->length] = '\0';
     return dsPtr->string;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TclDStringAppendObj, TclDStringAppendDString --
+ *
+ *	Simple wrappers round Tcl_DStringAppend that make it easier to append
+ *	from particular sources of strings.
+ *
+ *----------------------------------------------------------------------
+ */
+
+char *
+TclDStringAppendObj(
+    Tcl_DString *dsPtr,
+    Tcl_Obj *objPtr)
+{
+    int length;
+    char *bytes = Tcl_GetStringFromObj(objPtr, &length);
+
+    return Tcl_DStringAppend(dsPtr, bytes, length);
+}
+
+char *
+TclDStringAppendDString(
+    Tcl_DString *dsPtr,
+    Tcl_DString *toAppendPtr)
+{
+    return Tcl_DStringAppend(dsPtr, Tcl_DStringValue(toAppendPtr),
+	    Tcl_DStringLength(toAppendPtr));
 }
 
 /*
@@ -2607,12 +2826,12 @@ Tcl_DStringAppend(
 char *
 Tcl_DStringAppendElement(
     Tcl_DString *dsPtr,		/* Structure describing dynamic string. */
-    CONST char *element)	/* String to append. Must be
+    const char *element)	/* String to append. Must be
 				 * null-terminated. */
 {
     char *dst = dsPtr->string + dsPtr->length;
     int needSpace = TclNeedSpace(dsPtr->string, dst);
-    int flags = needSpace ? TCL_DONT_QUOTE_HASH : 0;
+    char flags = needSpace ? TCL_DONT_QUOTE_HASH : 0;
     int newSize = dsPtr->length + needSpace
 	    + TclScanElement(element, -1, &flags);
 
@@ -2627,9 +2846,9 @@ Tcl_DStringAppendElement(
     if (newSize >= dsPtr->spaceAvl) {
 	dsPtr->spaceAvl = newSize * 2;
 	if (dsPtr->string == dsPtr->staticSpace) {
-	    char *newString = ckalloc((unsigned) dsPtr->spaceAvl);
+	    char *newString = ckalloc(dsPtr->spaceAvl);
 
-	    memcpy(newString, dsPtr->string, (size_t) dsPtr->length);
+	    memcpy(newString, dsPtr->string, dsPtr->length);
 	    dsPtr->string = newString;
 	} else {
 	    int offset = -1;
@@ -2640,8 +2859,7 @@ Tcl_DStringAppendElement(
 		offset = element - dsPtr->string;
 	    }
 
-	    dsPtr->string = (char *) ckrealloc((void *) dsPtr->string,
-		    (size_t) dsPtr->spaceAvl);
+	    dsPtr->string = ckrealloc(dsPtr->string, dsPtr->spaceAvl);
 
 	    if (offset >= 0) {
 		element = dsPtr->string + offset;
@@ -2722,13 +2940,12 @@ Tcl_DStringSetLength(
 	    dsPtr->spaceAvl = length + 1;
 	}
 	if (dsPtr->string == dsPtr->staticSpace) {
-	    char *newString = ckalloc((unsigned) dsPtr->spaceAvl);
+	    char *newString = ckalloc(dsPtr->spaceAvl);
 
-	    memcpy(newString, dsPtr->string, (size_t) dsPtr->length);
+	    memcpy(newString, dsPtr->string, dsPtr->length);
 	    dsPtr->string = newString;
 	} else {
-	    dsPtr->string = (char *) ckrealloc((void *) dsPtr->string,
-		    (size_t) dsPtr->spaceAvl);
+	    dsPtr->string = ckrealloc(dsPtr->string, dsPtr->spaceAvl);
 	}
     }
     dsPtr->length = length;
@@ -2792,21 +3009,7 @@ Tcl_DStringResult(
 				 * result of interp. */
 {
     Tcl_ResetResult(interp);
-
-    if (dsPtr->string != dsPtr->staticSpace) {
-	interp->result = dsPtr->string;
-	interp->freeProc = TCL_DYNAMIC;
-    } else if (dsPtr->length < TCL_RESULT_SIZE) {
-	interp->result = ((Interp *) interp)->resultSpace;
-	strcpy(interp->result, dsPtr->string);
-    } else {
-	Tcl_SetResult(interp, dsPtr->string, TCL_VOLATILE);
-    }
-
-    dsPtr->string = dsPtr->staticSpace;
-    dsPtr->length = 0;
-    dsPtr->spaceAvl = TCL_DSTRING_STATIC_SIZE;
-    dsPtr->staticSpace[0] = '\0';
+    Tcl_SetObjResult(interp, TclDStringToObj(dsPtr));
 }
 
 /*
@@ -2842,6 +3045,39 @@ Tcl_DStringGetResult(
     }
 
     /*
+     * Do more efficient transfer when we know the result is a Tcl_Obj. When
+     * there's no string result, we only have to deal with two cases:
+     *
+     *  1. When the string rep is the empty string, when we don't copy but
+     *     instead use the staticSpace in the DString to hold an empty string.
+
+     *  2. When the string rep is not there or there's a real string rep, when
+     *     we use Tcl_GetString to fetch (or generate) the string rep - which
+     *     we know to have been allocated with ckalloc() - and use it to
+     *     populate the DString space. Then, we free the internal rep. and set
+     *     the object's string representation back to the canonical empty
+     *     string.
+     */
+
+    if (!iPtr->result[0] && iPtr->objResultPtr
+	    && !Tcl_IsShared(iPtr->objResultPtr)) {
+	if (iPtr->objResultPtr->bytes == tclEmptyStringRep) {
+	    dsPtr->string = dsPtr->staticSpace;
+	    dsPtr->string[0] = 0;
+	    dsPtr->length = 0;
+	    dsPtr->spaceAvl = TCL_DSTRING_STATIC_SIZE;
+	} else {
+	    dsPtr->string = TclGetString(iPtr->objResultPtr);
+	    dsPtr->length = iPtr->objResultPtr->length;
+	    dsPtr->spaceAvl = dsPtr->length + 1;
+	    TclFreeIntRep(iPtr->objResultPtr);
+	    iPtr->objResultPtr->bytes = tclEmptyStringRep;
+	    iPtr->objResultPtr->length = 0;
+	}
+	return;
+    }
+
+    /*
      * If the string result is empty, move the object result to the string
      * result, then reset the object result.
      */
@@ -2854,9 +3090,9 @@ Tcl_DStringGetResult(
 	    dsPtr->string = iPtr->result;
 	    dsPtr->spaceAvl = dsPtr->length+1;
 	} else {
-	    dsPtr->string = (char *) ckalloc((unsigned) (dsPtr->length+1));
-	    memcpy(dsPtr->string, iPtr->result, (unsigned) dsPtr->length+1);
-	    (*iPtr->freeProc)(iPtr->result);
+	    dsPtr->string = ckalloc(dsPtr->length+1);
+	    memcpy(dsPtr->string, iPtr->result, dsPtr->length+1);
+	    iPtr->freeProc(iPtr->result);
 	}
 	dsPtr->spaceAvl = dsPtr->length+1;
 	iPtr->freeProc = NULL;
@@ -2865,14 +3101,74 @@ Tcl_DStringGetResult(
 	    dsPtr->string = dsPtr->staticSpace;
 	    dsPtr->spaceAvl = TCL_DSTRING_STATIC_SIZE;
 	} else {
-	    dsPtr->string = (char *) ckalloc((unsigned) (dsPtr->length + 1));
+	    dsPtr->string = ckalloc(dsPtr->length+1);
 	    dsPtr->spaceAvl = dsPtr->length + 1;
 	}
-	memcpy(dsPtr->string, iPtr->result, (unsigned) dsPtr->length+1);
+	memcpy(dsPtr->string, iPtr->result, dsPtr->length+1);
     }
 
     iPtr->result = iPtr->resultSpace;
     iPtr->resultSpace[0] = 0;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TclDStringToObj --
+ *
+ *	This function moves a dynamic string's contents to a new Tcl_Obj. Be
+ *	aware that this function does *not* check that the encoding of the
+ *	contents of the dynamic string is correct; this is the caller's
+ *	responsibility to enforce.
+ *
+ * Results:
+ *	The newly-allocated untyped (i.e., typePtr==NULL) Tcl_Obj with a
+ *	reference count of zero.
+ *
+ * Side effects:
+ *	The string is "moved" to the object. dsPtr is reinitialized to an
+ *	empty string; it does not need to be Tcl_DStringFree'd after this if
+ *	not used further.
+ *
+ *----------------------------------------------------------------------
+ */
+
+Tcl_Obj *
+TclDStringToObj(
+    Tcl_DString *dsPtr)
+{
+    Tcl_Obj *result;
+
+    if (dsPtr->string == dsPtr->staticSpace) {
+	if (dsPtr->length == 0) {
+	    TclNewObj(result);
+	} else {
+	    /*
+	     * Static buffer, so must copy.
+	     */
+
+	    TclNewStringObj(result, dsPtr->string, dsPtr->length);
+	}
+    } else {
+	/*
+	 * Dynamic buffer, so transfer ownership and reset.
+	 */
+
+	TclNewObj(result);
+	result->bytes = dsPtr->string;
+	result->length = dsPtr->length;
+    }
+
+    /*
+     * Re-establish the DString as empty with no buffer allocated.
+     */
+
+    dsPtr->string = dsPtr->staticSpace;
+    dsPtr->spaceAvl = TCL_DSTRING_STATIC_SIZE;
+    dsPtr->length = 0;
+    dsPtr->staticSpace[0] = '\0';
+
+    return result;
 }
 
 /*
@@ -2898,9 +3194,9 @@ Tcl_DStringStartSublist(
     Tcl_DString *dsPtr)		/* Dynamic string. */
 {
     if (TclNeedSpace(dsPtr->string, dsPtr->string + dsPtr->length)) {
-	Tcl_DStringAppend(dsPtr, " {", -1);
+	TclDStringAppendLiteral(dsPtr, " {");
     } else {
-	Tcl_DStringAppend(dsPtr, "{", -1);
+	TclDStringAppendLiteral(dsPtr, "{");
     }
 }
 
@@ -2926,7 +3222,7 @@ void
 Tcl_DStringEndSublist(
     Tcl_DString *dsPtr)		/* Dynamic string. */
 {
-    Tcl_DStringAppend(dsPtr, "}", -1);
+    TclDStringAppendLiteral(dsPtr, "}");
 }
 
 /*
@@ -2961,91 +3257,90 @@ Tcl_PrintDouble(
     char *p, c;
     int exponent;
     int signum;
-    char* digits;
-    char* end;
-
-    int *precisionPtr = Tcl_GetThreadData(&precisionKey, (int)sizeof(int));
+    char *digits;
+    char *end;
+    int *precisionPtr = Tcl_GetThreadData(&precisionKey, sizeof(int));
 
     /*
-	 * Handle NaN.
-	 */
+     * Handle NaN.
+     */
 
-	if (TclIsNaN(value)) {
-	    TclFormatNaN(value, dst);
-	    return;
-	}
+    if (TclIsNaN(value)) {
+	TclFormatNaN(value, dst);
+	return;
+    }
 
-	/*
-	 * Handle infinities.
-	 */
+    /*
+     * Handle infinities.
+     */
 
-	if (TclIsInfinite(value)) {
+    if (TclIsInfinite(value)) {
 	/*
 	 * Remember to copy the terminating NUL too.
 	 */
 
-	    if (value < 0) {
+	if (value < 0) {
 	    memcpy(dst, "-Inf", 5);
-	    } else {
+	} else {
 	    memcpy(dst, "Inf", 4);
-	    }
-	    return;
 	}
+	return;
+    }
 
-	/*
-	 * Ordinary (normal and denormal) values.
-	 */
+    /*
+     * Ordinary (normal and denormal) values.
+     */
 
     if (*precisionPtr == 0) {
 	digits = TclDoubleDigits(value, -1, TCL_DD_SHORTEST,
-				 &exponent, &signum, &end);
+		&exponent, &signum, &end);
     } else {
 	/*
 	 * There are at least two possible interpretations for tcl_precision.
 	 *
 	 * The first is, "choose the decimal representation having
-	 * $tcl_precision digits of significance that is nearest to the
-	 * given number, breaking ties by rounding to even, and then
-	 * trimming trailing zeros." This gives the greatest possible
-	 * precision in the decimal string, but offers the anomaly that
-	 * [expr 0.1] will be "0.10000000000000001".
+	 * $tcl_precision digits of significance that is nearest to the given
+	 * number, breaking ties by rounding to even, and then trimming
+	 * trailing zeros." This gives the greatest possible precision in the
+	 * decimal string, but offers the anomaly that [expr 0.1] will be
+	 * "0.10000000000000001".
 	 *
-	 * The second is "choose the decimal representation having at
-	 * most $tcl_precision digits of significance that is nearest
-	 * to the given number. If no such representation converts
-	 * exactly to the given number, choose the one that is closest,
-	 * breaking ties by rounding to even. If more than one such
-	 * representation converts exactly to the given number, choose
-	 * the shortest, breaking ties in favour of the nearest, breaking
-	 * remaining ties in favour of the one ending in an even digit."
+	 * The second is "choose the decimal representation having at most
+	 * $tcl_precision digits of significance that is nearest to the given
+	 * number. If no such representation converts exactly to the given
+	 * number, choose the one that is closest, breaking ties by rounding
+	 * to even. If more than one such representation converts exactly to
+	 * the given number, choose the shortest, breaking ties in favour of
+	 * the nearest, breaking remaining ties in favour of the one ending in
+	 * an even digit."
 	 *
 	 * Tcl 8.4 implements the first of these, which gives rise to
 	 * anomalies in formatting:
 	 *
-	 * % expr 0.1
-	 * 0.10000000000000001
-	 * % expr 0.01
-	 * 0.01
-	 * % expr 1e-7
-	 * 9.9999999999999995e-08
+	 *	% expr 0.1
+	 *	0.10000000000000001
+	 *	% expr 0.01
+	 *	0.01
+	 *	% expr 1e-7
+	 *	9.9999999999999995e-08
 	 *
 	 * For human readability, it appears better to choose the second rule,
-	 * and let [expr 0.1] return 0.1. But for 8.4 compatibility, we
-	 * prefer the first (the recommended zero value for tcl_precision
-	 * avoids the problem entirely).
+	 * and let [expr 0.1] return 0.1. But for 8.4 compatibility, we prefer
+	 * the first (the recommended zero value for tcl_precision avoids the
+	 * problem entirely).
 	 *
-	 * Uncomment TCL_DD_SHORTEN_FLAG in the next call to prefer the
-	 * method that allows floating point values to be shortened if
-	 * it can be done without loss of precision.
+	 * Uncomment TCL_DD_SHORTEN_FLAG in the next call to prefer the method
+	 * that allows floating point values to be shortened if it can be done
+	 * without loss of precision.
 	 */
 
 	digits = TclDoubleDigits(value, *precisionPtr,
-				 TCL_DD_E_FORMAT /* | TCL_DD_SHORTEN_FLAG */,
-				 &exponent, &signum, &end);
+		TCL_DD_E_FORMAT /* | TCL_DD_SHORTEN_FLAG */,
+		&exponent, &signum, &end);
     }
-	if (signum) {
-	    *dst++ = '-';
-	}
+    if (signum) {
+	*dst++ = '-';
+    }
     p = digits;
     if (exponent < -4 || exponent > 16) {
 	/*
@@ -3061,10 +3356,12 @@ Tcl_PrintDouble(
 		c = *++p;
 	    }
 	}
+
 	/*
-	 * Tcl 8.4 appears to format with at least a two-digit exponent; \
+	 * Tcl 8.4 appears to format with at least a two-digit exponent;
 	 * preserve that behaviour when tcl_precision != 0
 	 */
+
 	if (*precisionPtr == 0) {
 	    sprintf(dst, "e%+d", exponent);
 	} else {
@@ -3129,11 +3426,11 @@ char *
 TclPrecTraceProc(
     ClientData clientData,	/* Not used. */
     Tcl_Interp *interp,		/* Interpreter containing variable. */
-    CONST char *name1,		/* Name of variable. */
-    CONST char *name2,		/* Second part of variable name. */
+    const char *name1,		/* Name of variable. */
+    const char *name2,		/* Second part of variable name. */
     int flags)			/* Information about what happened. */
 {
-    Tcl_Obj* value;
+    Tcl_Obj *value;
     int prec;
     int *precisionPtr = Tcl_GetThreadData(&precisionKey, (int) sizeof(int));
 
@@ -3170,13 +3467,13 @@ TclPrecTraceProc(
      */
 
     if (Tcl_IsSafe(interp)) {
-	return "can't modify precision from a safe interpreter";
+	return (char *) "can't modify precision from a safe interpreter";
     }
     value = Tcl_GetVar2Ex(interp, name1, name2, flags & TCL_GLOBAL_ONLY);
     if (value == NULL
-	    || Tcl_GetIntFromObj((Tcl_Interp*) NULL, value, &prec) != TCL_OK
+	    || Tcl_GetIntFromObj(NULL, value, &prec) != TCL_OK
 	    || prec < 0 || prec > TCL_MAX_PREC) {
-	return "improper value for precision";
+	return (char *) "improper value for precision";
     }
     *precisionPtr = prec;
     return NULL;
@@ -3201,8 +3498,8 @@ TclPrecTraceProc(
 
 int
 TclNeedSpace(
-    CONST char *start,		/* First character in string. */
-    CONST char *end)		/* End of string (place where space will be
+    const char *start,		/* First character in string. */
+    const char *end)		/* End of string (place where space will be
 				 * added, if appropriate). */
 {
     /*
@@ -3252,6 +3549,7 @@ TclNeedSpace(
 	 * NOTE: Remove this if other Unicode spaces ever get accepted as
 	 * list-element separators.
 	 */
+
 	return 1;
     }
     switch (*end) {
@@ -3276,33 +3574,33 @@ TclNeedSpace(
  *	This procedure formats an integer into a sequence of decimal digit
  *	characters in a buffer. If the integer is negative, a minus sign is
  *	inserted at the start of the buffer. A null character is inserted at
- *	the end of the formatted characters. It is the caller's
- *	responsibility to ensure that enough storage is available. This
- *	procedure has the effect of sprintf(buffer, "%ld", n) but is faster
- *	as proven in benchmarks.  This is key to UpdateStringOfInt, which
- *	is a common path for a lot of code (e.g. int-indexed arrays).
+ *	the end of the formatted characters. It is the caller's responsibility
+ *	to ensure that enough storage is available. This procedure has the
+ *	effect of sprintf(buffer, "%ld", n) but is faster as proven in
+ *	benchmarks.  This is key to UpdateStringOfInt, which is a common path
+ *	for a lot of code (e.g. int-indexed arrays).
  *
  * Results:
  *	An integer representing the number of characters formatted, not
  *	including the terminating \0.
  *
  * Side effects:
- *	The formatted characters are written into the storage pointer to
- *	by the "buffer" argument.
+ *	The formatted characters are written into the storage pointer to by
+ *	the "buffer" argument.
  *
  *----------------------------------------------------------------------
  */
 
 int
-TclFormatInt(buffer, n)
-    char *buffer;		/* Points to the storage into which the
+TclFormatInt(
+    char *buffer,		/* Points to the storage into which the
 				 * formatted characters are written. */
-    long n;			/* The integer to format. */
+    long n)			/* The integer to format. */
 {
     long intVal;
     int i;
     int numFormatted, j;
-    char *digits = "0123456789";
+    const char *digits = "0123456789";
 
     /*
      * Check first whether "n" is zero.
@@ -3315,9 +3613,9 @@ TclFormatInt(buffer, n)
     }
 
     /*
-     * Check whether "n" is the maximum negative value. This is
-     * -2^(m-1) for an m-bit word, and has no positive equivalent;
-     * negating it produces the same value.
+     * Check whether "n" is the maximum negative value. This is -2^(m-1) for
+     * an m-bit word, and has no positive equivalent; negating it produces the
+     * same value.
      */
 
     intVal = -n;			/* [Bug 3390638] Workaround for*/
@@ -3349,6 +3647,7 @@ TclFormatInt(buffer, n)
 
     for (j = 0;  j < i;  j++, i--) {
 	char tmp = buffer[i];
+
 	buffer[i] = buffer[j];
 	buffer[j] = tmp;
     }
@@ -3360,21 +3659,26 @@ TclFormatInt(buffer, n)
  *
  * TclGetIntForIndex --
  *
- *	This function returns an integer corresponding to the list index held
- *	in a Tcl object. The Tcl object's value is expected to be in the
- *	format integer([+-]integer)? or the format end([+-]integer)?.
+ *	Provides an integer corresponding to the list index held in a Tcl
+ *	object. The string value 'objPtr' is expected have the format
+ *	integer([+-]integer)? or end([+-]integer)?.
  *
- * Results:
- *	The return value is normally TCL_OK, which means that the index was
- *	successfully stored into the location referenced by "indexPtr". If the
- *	Tcl object referenced by "objPtr" has the value "end", the value
- *	stored is "endValue". If "objPtr"s values is not of one of the
- *	expected formats, TCL_ERROR is returned and, if "interp" is non-NULL,
- *	an error message is left in the interpreter's result object.
+ * Value
+ * 	TCL_OK
  *
- * Side effects:
- *	The object referenced by "objPtr" might be converted to an integer,
- *	wide integer, or end-based-index object.
+ * 	    The index is stored at the address given by by 'indexPtr'. If
+ * 	    'objPtr' has the value "end", the value stored is 'endValue'.
+ *
+ * 	TCL_ERROR
+ *
+ * 	    The value of 'objPtr' does not have one of the expected formats. If
+ * 	    'interp' is non-NULL, an error message is left in the interpreter's
+ * 	    result object.
+ *
+ * Effect
+ *
+ * 	The object referenced by 'objPtr' is converted, as needed, to an
+ * 	integer, wide integer, or end-based-index object.
  *
  *----------------------------------------------------------------------
  */
@@ -3392,19 +3696,14 @@ TclGetIntForIndex(
 				 * representing an index. */
 {
     int length;
-    char *opPtr, *bytes;
+    char *opPtr;
+    const char *bytes;
 
     if (TclGetIntFromObj(NULL, objPtr, indexPtr) == TCL_OK) {
 	return TCL_OK;
     }
 
-    if (SetEndOffsetFromAny(NULL, objPtr) == TCL_OK) {
-	/*
-	 * If the object is already an offset from the end of the list, or can
-	 * be converted to one, use it.
-	 */
-
-	*indexPtr = endValue + objPtr->internalRep.longValue;
+    if (GetEndOffsetFromObj(objPtr, endValue, indexPtr) == TCL_OK) {
 	return TCL_OK;
     }
 
@@ -3453,21 +3752,15 @@ TclGetIntForIndex(
 
   parseError:
     if (interp != NULL) {
-	char *bytes = Tcl_GetString(objPtr);
-
-	/*
-	 * The result might not be empty; this resets it which should be both
-	 * a cheap operation, and of little problem because this is an
-	 * error-generation path anyway.
-	 */
-
-	Tcl_ResetResult(interp);
-	Tcl_AppendResult(interp, "bad index \"", bytes,
-		"\": must be integer?[+-]integer? or end?[+-]integer?", NULL);
+	bytes = TclGetString(objPtr);
+	Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		"bad index \"%s\": must be integer?[+-]integer? or"
+		" end?[+-]integer?", bytes));
 	if (!strncmp(bytes, "end-", 4)) {
 	    bytes += 4;
 	}
 	TclCheckBadOctal(interp, bytes);
+	Tcl_SetErrorCode(interp, "TCL", "VALUE", "INDEX", NULL);
     }
 
     return TCL_ERROR;
@@ -3495,13 +3788,12 @@ TclGetIntForIndex(
 
 static void
 UpdateStringOfEndOffset(
-    register Tcl_Obj* objPtr)
+    register Tcl_Obj *objPtr)
 {
-    char buffer[TCL_INTEGER_SPACE + sizeof("end") + 1];
-    register int len;
+    char buffer[TCL_INTEGER_SPACE + 5];
+    register int len = 3;
 
-    strcpy(buffer, "end");
-    len = sizeof("end") - 1;
+    memcpy(buffer, "end", 4);
     if (objPtr->internalRep.longValue != 0) {
 	buffer[len++] = '-';
 	len += TclFormatInt(buffer+len, -(objPtr->internalRep.longValue));
@@ -3511,6 +3803,41 @@ UpdateStringOfEndOffset(
     objPtr->length = len;
 }
 
+/*
+ *----------------------------------------------------------------------
+ *
+ * GetEndOffsetFromObj --
+ *
+ *      Look for a string of the form "end[+-]offset" and convert it to an
+ *      internal representation holding the offset.
+ *
+ * Results:
+ *      Tcl return code.
+ *
+ * Side effects:
+ *      May store a Tcl_ObjType.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static int
+GetEndOffsetFromObj(
+    Tcl_Obj *objPtr,            /* Pointer to the object to parse */
+    int endValue,               /* The value to be stored at "indexPtr" if
+                                 * "objPtr" holds "end". */
+    int *indexPtr)              /* Location filled in with an integer
+                                 * representing an index. */
+{
+    if (SetEndOffsetFromAny(NULL, objPtr) != TCL_OK) {
+	return TCL_ERROR;
+    }
+
+    /* TODO: Handle overflow cases sensibly */
+    *indexPtr = endValue + (int)objPtr->internalRep.longValue;
+    return TCL_OK;
+}
+
+
 /*
  *----------------------------------------------------------------------
  *
@@ -3535,7 +3862,7 @@ SetEndOffsetFromAny(
     Tcl_Obj *objPtr)		/* Pointer to the object to parse */
 {
     int offset;			/* Offset in the "end-offset" expression */
-    register char* bytes;	/* String rep of the object */
+    register const char *bytes;	/* String rep of the object */
     int length;			/* Length of the object's string rep */
 
     /*
@@ -3554,9 +3881,9 @@ SetEndOffsetFromAny(
     if ((*bytes != 'e') || (strncmp(bytes, "end",
 	    (size_t)((length > 3) ? 3 : length)) != 0)) {
 	if (interp != NULL) {
-	    Tcl_ResetResult(interp);
-	    Tcl_AppendResult(interp, "bad index \"", bytes,
-		    "\": must be end?[+-]integer?", NULL);
+	    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		    "bad index \"%s\": must be end?[+-]integer?", bytes));
+	    Tcl_SetErrorCode(interp, "TCL", "VALUE", "INDEX", NULL);
 	}
 	return TCL_ERROR;
     }
@@ -3574,12 +3901,14 @@ SetEndOffsetFromAny(
 	 */
 
 	if (TclIsSpaceProc(bytes[4])) {
-	    return TCL_ERROR;
+	    goto badIndexFormat;
 	}
 	if (Tcl_GetInt(interp, bytes+4, &offset) != TCL_OK) {
 	    return TCL_ERROR;
 	}
 	if (bytes[3] == '-') {
+
+	    /* TODO: Review overflow concerns here! */
 	    offset = -offset;
 	}
     } else {
@@ -3587,10 +3916,11 @@ SetEndOffsetFromAny(
 	 * Conversion failed. Report the error.
 	 */
 
+    badIndexFormat:
 	if (interp != NULL) {
-	    Tcl_ResetResult(interp);
-	    Tcl_AppendResult(interp, "bad index \"", bytes,
-		    "\": must be end?[+-]integer?", NULL);
+	    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		    "bad index \"%s\": must be end?[+-]integer?", bytes));
+	    Tcl_SetErrorCode(interp, "TCL", "VALUE", "INDEX", NULL);
 	}
 	return TCL_ERROR;
     }
@@ -3605,6 +3935,143 @@ SetEndOffsetFromAny(
     objPtr->typePtr = &tclEndOffsetType;
 
     return TCL_OK;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TclIndexEncode --
+ *
+ *      Parse objPtr to determine if it is an index value. Two cases
+ *	are possible.  The value objPtr might be parsed as an absolute
+ *	index value in the C signed int range.  Note that this includes
+ *	index values that are integers as presented and it includes index
+ *      arithmetic expressions. The absolute index values that can be
+ *	directly meaningful as an index into either a list or a string are
+ *	those integer values >= TCL_INDEX_START (0)
+ *	and < TCL_INDEX_AFTER (INT_MAX).
+ *      The largest string supported in Tcl 8 has bytelength INT_MAX.
+ *      This means the largest supported character length is also INT_MAX,
+ *      and the index of the last character in a string of length INT_MAX
+ *      is INT_MAX-1.
+ *
+ *      Any absolute index value parsed outside that range is encoded
+ *      using the before and after values passed in by the
+ *      caller as the encoding to use for indices that are either
+ *      less than or greater than the usable index range. TCL_INDEX_AFTER
+ *      is available as a good choice for most callers to use for
+ *      after. Likewise, the value TCL_INDEX_BEFORE is good for
+ *      most callers to use for before.  Other values are possible
+ *      when the caller knows it is helpful in producing its own behavior
+ *      for indices before and after the indexed item.
+ *
+ *      A token can also be parsed as an end-relative index expression.
+ *      All end-relative expressions that indicate an index larger
+ *      than end (end+2, end--5) point beyond the end of the indexed
+ *      collection, and can be encoded as after.  The end-relative
+ *      expressions that indicate an index less than or equal to end
+ *      are encoded relative to the value TCL_INDEX_END (-2).  The
+ *      index "end" is encoded as -2, down to the index "end-0x7ffffffe"
+ *      which is encoded as INT_MIN. Since the largest index into a
+ *      string possible in Tcl 8 is 0x7ffffffe, the interpretation of
+ *      "end-0x7ffffffe" for that largest string would be 0.  Thus,
+ *      if the tokens "end-0x7fffffff" or "end+-0x80000000" are parsed,
+ *      they can be encoded with the before value.
+ *
+ *      These details will require re-examination whenever string and
+ *      list length limits are increased, but that will likely also
+ *      mean a revised routine capable of returning Tcl_WideInt values.
+ *
+ * Returns:
+ *      TCL_OK if parsing succeeded, and TCL_ERROR if it failed.
+ *
+ * Side effects:
+ *      When TCL_OK is returned, the encoded index value is written
+ *      to *indexPtr.
+ *
+ *----------------------------------------------------------------------
+ */
+
+int
+TclIndexEncode(
+    Tcl_Interp *interp,	/* For error reporting, may be NULL */
+    Tcl_Obj *objPtr,	/* Index value to parse */
+    int before,		/* Value to return for index before beginning */
+    int after,		/* Value to return for index after end */
+    int *indexPtr)	/* Where to write the encoded answer, not NULL */
+{
+    int idx;
+
+    if (TCL_OK == TclGetIntFromObj(NULL, objPtr, &idx)) {
+        /* We parsed a value in the range INT_MIN...INT_MAX */
+    integerEncode:
+        if (idx < TCL_INDEX_START) {
+            /* All negative absolute indices are "before the beginning" */
+            idx = before;
+        } else if (idx == INT_MAX) {
+            /* This index value is always "after the end" */
+            idx = after;
+        }
+        /* usual case, the absolute index value encodes itself */
+    } else if (TCL_OK == GetEndOffsetFromObj(objPtr, 0, &idx)) {
+        /*
+         * We parsed an end+offset index value.
+         * idx holds the offset value in the range INT_MIN...INT_MAX.
+         */
+        if (idx > 0) {
+            /*
+             * All end+postive or end-negative expressions
+             * always indicate "after the end".
+             */
+            idx = after;
+        } else if (idx < INT_MIN - TCL_INDEX_END) {
+            /* These indices always indicate "before the beginning */
+            idx = before;
+        } else {
+            /* Encoded end-positive (or end+negative) are offset */
+            idx += TCL_INDEX_END;
+        }
+
+    /* TODO: Consider flag to suppress repeated end-offset parse. */
+    } else if (TCL_OK == TclGetIntForIndexM(interp, objPtr, 0, &idx)) {
+        /*
+         * Only reach this case when the index value is a
+         * constant index arithmetic expression, and idx
+         * holds the result. Treat it the same as if it were
+         * parsed as an absolute integer value.
+         */
+        goto integerEncode;
+    } else {
+	return TCL_ERROR;
+    }
+    *indexPtr = idx;
+    return TCL_OK;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TclIndexDecode --
+ *
+ *	Decodes a value previously encoded by TclIndexEncode.  The argument
+ *	endValue indicates what value of "end" should be used in the
+ *	decoding.
+ *
+ * Results:
+ *	The decoded index value.
+ *
+ *----------------------------------------------------------------------
+ */
+
+int
+TclIndexDecode(
+    int encoded,	/* Value to decode */
+    int endValue)	/* Meaning of "end" to use, > TCL_INDEX_END */
+{
+    if (encoded <= TCL_INDEX_END) {
+	return (encoded - TCL_INDEX_END) + endValue;
+    }
+    return encoded;
 }
 
 /*
@@ -3629,9 +4096,9 @@ TclCheckBadOctal(
     Tcl_Interp *interp,		/* Interpreter to use for error reporting. If
 				 * NULL, then no error message is left after
 				 * errors. */
-    CONST char *value)		/* String to check. */
+    const char *value)		/* String to check. */
 {
-    register CONST char *p = value;
+    const char *p = value;
 
     /*
      * A frequent mistake is invalid octal values due to an unwanted leading
@@ -3646,7 +4113,7 @@ TclCheckBadOctal(
     }
     if (*p == '0') {
 	if ((p[1] == 'o') || p[1] == 'O') {
-	    p+=2;
+	    p += 2;
 	}
 	while (isdigit(UCHAR(*p))) {	/* INTL: digit. */
 	    p++;
@@ -3665,8 +4132,8 @@ TclCheckBadOctal(
 		 * be added to an existing error message as extra info.
 		 */
 
-		Tcl_AppendResult(interp, " (looks like invalid octal number)",
-			NULL);
+		Tcl_AppendToObj(Tcl_GetObjResult(interp),
+			" (looks like invalid octal number)", -1);
 	    }
 	    return 1;
 	}
@@ -3693,7 +4160,8 @@ ClearHash(
 
     for (hPtr = Tcl_FirstHashEntry(tablePtr, &search); hPtr != NULL;
 	    hPtr = Tcl_NextHashEntry(&search)) {
-	Tcl_Obj *objPtr = (Tcl_Obj *) Tcl_GetHashValue(hPtr);
+	Tcl_Obj *objPtr = Tcl_GetHashValue(hPtr);
+
 	Tcl_DecrRefCount(objPtr);
 	Tcl_DeleteHashEntry(hPtr);
     }
@@ -3721,12 +4189,12 @@ static Tcl_HashTable *
 GetThreadHash(
     Tcl_ThreadDataKey *keyPtr)
 {
-    Tcl_HashTable **tablePtrPtr = (Tcl_HashTable **)
-	    Tcl_GetThreadData(keyPtr, (int) sizeof(Tcl_HashTable *));
+    Tcl_HashTable **tablePtrPtr =
+	    Tcl_GetThreadData(keyPtr, sizeof(Tcl_HashTable *));
 
     if (NULL == *tablePtrPtr) {
-	*tablePtrPtr = (Tcl_HashTable *)ckalloc(sizeof(Tcl_HashTable));
-	Tcl_CreateThreadExitHandler(FreeThreadHash, (ClientData)*tablePtrPtr);
+	*tablePtrPtr = ckalloc(sizeof(Tcl_HashTable));
+	Tcl_CreateThreadExitHandler(FreeThreadHash, *tablePtrPtr);
 	Tcl_InitHashTable(*tablePtrPtr, TCL_ONE_WORD_KEYS);
     }
     return *tablePtrPtr;
@@ -3750,11 +4218,11 @@ static void
 FreeThreadHash(
     ClientData clientData)
 {
-    Tcl_HashTable *tablePtr = (Tcl_HashTable *) clientData;
+    Tcl_HashTable *tablePtr = clientData;
 
     ClearHash(tablePtr);
     Tcl_DeleteHashTable(tablePtr);
-    ckfree((char *) tablePtr);
+    ckfree(tablePtr);
 }
 
 /*
@@ -3772,7 +4240,7 @@ static void
 FreeProcessGlobalValue(
     ClientData clientData)
 {
-    ProcessGlobalValue *pgvPtr = (ProcessGlobalValue *) clientData;
+    ProcessGlobalValue *pgvPtr = clientData;
 
     pgvPtr->epoch++;
     pgvPtr->numBytes = 0;
@@ -3802,7 +4270,7 @@ TclSetProcessGlobalValue(
     Tcl_Obj *newValue,
     Tcl_Encoding encoding)
 {
-    CONST char *bytes;
+    const char *bytes;
     Tcl_HashTable *cacheMap;
     Tcl_HashEntry *hPtr;
     int dummy;
@@ -3817,11 +4285,11 @@ TclSetProcessGlobalValue(
     if (NULL != pgvPtr->value) {
 	ckfree(pgvPtr->value);
     } else {
-	Tcl_CreateExitHandler(FreeProcessGlobalValue, (ClientData) pgvPtr);
+	Tcl_CreateExitHandler(FreeProcessGlobalValue, pgvPtr);
     }
     bytes = Tcl_GetStringFromObj(newValue, &pgvPtr->numBytes);
-    pgvPtr->value = ckalloc((unsigned) pgvPtr->numBytes + 1);
-    memcpy(pgvPtr->value, bytes, (unsigned) pgvPtr->numBytes + 1);
+    pgvPtr->value = ckalloc(pgvPtr->numBytes + 1);
+    memcpy(pgvPtr->value, bytes, pgvPtr->numBytes + 1);
     if (pgvPtr->encoding) {
 	Tcl_FreeEncoding(pgvPtr->encoding);
     }
@@ -3836,9 +4304,8 @@ TclSetProcessGlobalValue(
     Tcl_IncrRefCount(newValue);
     cacheMap = GetThreadHash(&pgvPtr->key);
     ClearHash(cacheMap);
-    hPtr = Tcl_CreateHashEntry(cacheMap,
-	    (char *) INT2PTR(pgvPtr->epoch), &dummy);
-    Tcl_SetHashValue(hPtr, (ClientData) newValue);
+    hPtr = Tcl_CreateHashEntry(cacheMap, INT2PTR(pgvPtr->epoch), &dummy);
+    Tcl_SetHashValue(hPtr, newValue);
     Tcl_MutexUnlock(&pgvPtr->mutex);
 }
 
@@ -3878,18 +4345,16 @@ TclGetProcessGlobalValue(
 	    Tcl_DString native, newValue;
 
 	    Tcl_MutexLock(&pgvPtr->mutex);
-	    pgvPtr->epoch++;
-	    epoch = pgvPtr->epoch;
+	    epoch = ++pgvPtr->epoch;
 	    Tcl_UtfToExternalDString(pgvPtr->encoding, pgvPtr->value,
 		    pgvPtr->numBytes, &native);
 	    Tcl_ExternalToUtfDString(current, Tcl_DStringValue(&native),
 	    Tcl_DStringLength(&native), &newValue);
 	    Tcl_DStringFree(&native);
 	    ckfree(pgvPtr->value);
-	    pgvPtr->value = ckalloc((unsigned int)
-		    Tcl_DStringLength(&newValue) + 1);
+	    pgvPtr->value = ckalloc(Tcl_DStringLength(&newValue) + 1);
 	    memcpy(pgvPtr->value, Tcl_DStringValue(&newValue),
-		    (size_t) Tcl_DStringLength(&newValue) + 1);
+		    Tcl_DStringLength(&newValue) + 1);
 	    Tcl_DStringFree(&newValue);
 	    Tcl_FreeEncoding(pgvPtr->encoding);
 	    pgvPtr->encoding = current;
@@ -3899,7 +4364,7 @@ TclGetProcessGlobalValue(
 	}
     }
     cacheMap = GetThreadHash(&pgvPtr->key);
-    hPtr = Tcl_FindHashEntry(cacheMap, (char *) INT2PTR(epoch));
+    hPtr = Tcl_FindHashEntry(cacheMap, INT2PTR(epoch));
     if (NULL == hPtr) {
 	int dummy;
 
@@ -3919,12 +4384,11 @@ TclGetProcessGlobalValue(
 	Tcl_MutexLock(&pgvPtr->mutex);
 	if ((NULL == pgvPtr->value) && (pgvPtr->proc)) {
 	    pgvPtr->epoch++;
-	    (*(pgvPtr->proc))(&pgvPtr->value, &pgvPtr->numBytes,
-		    &pgvPtr->encoding);
+	    pgvPtr->proc(&pgvPtr->value,&pgvPtr->numBytes,&pgvPtr->encoding);
 	    if (pgvPtr->value == NULL) {
 		Tcl_Panic("PGV Initializer did not initialize");
 	    }
-	    Tcl_CreateExitHandler(FreeProcessGlobalValue, (ClientData)pgvPtr);
+	    Tcl_CreateExitHandler(FreeProcessGlobalValue, pgvPtr);
 	}
 
 	/*
@@ -3933,12 +4397,12 @@ TclGetProcessGlobalValue(
 
 	value = Tcl_NewStringObj(pgvPtr->value, pgvPtr->numBytes);
 	hPtr = Tcl_CreateHashEntry(cacheMap,
-		(char *) INT2PTR(pgvPtr->epoch), &dummy);
+		INT2PTR(pgvPtr->epoch), &dummy);
 	Tcl_MutexUnlock(&pgvPtr->mutex);
-	Tcl_SetHashValue(hPtr, (ClientData) value);
+	Tcl_SetHashValue(hPtr, value);
 	Tcl_IncrRefCount(value);
     }
-    return (Tcl_Obj *) Tcl_GetHashValue(hPtr);
+    return Tcl_GetHashValue(hPtr);
 }
 
 /*
@@ -3950,7 +4414,7 @@ TclGetProcessGlobalValue(
  *	(normally as computed by TclpFindExecutable).
  *
  * Results:
- * 	None.
+ *	None.
  *
  * Side effects:
  *	Stores the executable name.
@@ -3981,7 +4445,7 @@ TclSetObjNameOfExecutable(
  *	pathname of the application is unknown.
  *
  * Side effects:
- * 	None.
+ *	None.
  *
  *----------------------------------------------------------------------
  */
@@ -4000,20 +4464,20 @@ TclGetObjNameOfExecutable(void)
  *	This function retrieves the absolute pathname of the application in
  *	which the Tcl library is running, and returns it in string form.
  *
- * 	The returned string belongs to Tcl and should be copied if the caller
- * 	plans to keep it, to guard against it becoming invalid.
+ *	The returned string belongs to Tcl and should be copied if the caller
+ *	plans to keep it, to guard against it becoming invalid.
  *
  * Results:
  *	A pointer to the internal string or NULL if the internal full path
  *	name has not been computed or unknown.
  *
  * Side effects:
- * 	None.
+ *	None.
  *
  *----------------------------------------------------------------------
  */
 
-CONST char *
+const char *
 Tcl_GetNameOfExecutable(void)
 {
     int numBytes;
@@ -4100,14 +4564,18 @@ TclReToGlob(
     const char *reStr,
     int reStrLen,
     Tcl_DString *dsPtr,
-    int *exactPtr)
+    int *exactPtr,
+    int *quantifiersFoundPtr)
 {
     int anchorLeft, anchorRight, lastIsStar, numStars;
-    char *dsStr, *dsStrStart, *msg;
-    const char *p, *strEnd;
+    char *dsStr, *dsStrStart;
+    const char *msg, *p, *strEnd, *code;
 
     strEnd = reStr + reStrLen;
     Tcl_DStringInit(dsPtr);
+    if (quantifiersFoundPtr != NULL) {
+	*quantifiersFoundPtr = 0;
+    }
 
     /*
      * "***=xxx" == "*xxx*", watch for glob-sensitive chars.
@@ -4115,10 +4583,11 @@ TclReToGlob(
 
     if ((reStrLen >= 4) && (memcmp("***=", reStr, 4) == 0)) {
 	/*
-	 * At most, the glob pattern has length 2*reStrLen + 2 to
-	 * backslash escape every character and have * at each end.
+	 * At most, the glob pattern has length 2*reStrLen + 2 to backslash
+	 * escape every character and have * at each end.
 	 */
-	Tcl_DStringSetLength(dsPtr, 2*reStrLen + 2);
+
+	Tcl_DStringSetLength(dsPtr, reStrLen + 2);
 	dsStr = dsStrStart = Tcl_DStringValue(dsPtr);
 	*dsStr++ = '*';
 	for (p = reStr + 4; p < strEnd; p++) {
@@ -4141,8 +4610,8 @@ TclReToGlob(
     }
 
     /*
-     * At most, the glob pattern has length reStrLen + 2 to account
-     * for possible * at each end.
+     * At most, the glob pattern has length reStrLen + 2 to account for
+     * possible * at each end.
      */
 
     Tcl_DStringSetLength(dsPtr, reStrLen + 2);
@@ -4152,12 +4621,12 @@ TclReToGlob(
      * Check for anchored REs (ie ^foo$), so we can use string equal if
      * possible. Do not alter the start of str so we can free it correctly.
      *
-     * Keep track of the last char being an unescaped star to prevent
-     * multiple instances.  Simpler than checking that the last star
-     * may be escaped.
+     * Keep track of the last char being an unescaped star to prevent multiple
+     * instances.  Simpler than checking that the last star may be escaped.
      */
 
     msg = NULL;
+    code = NULL;
     p = reStr;
     anchorRight = 0;
     lastIsStar = 0;
@@ -4214,10 +4683,14 @@ TclReToGlob(
 		break;
 	    default:
 		msg = "invalid escape sequence";
+		code = "BADESCAPE";
 		goto invalidGlob;
 	    }
 	    break;
 	case '.':
+	    if (quantifiersFoundPtr != NULL) {
+		*quantifiersFoundPtr = 1;
+	    }
 	    anchorLeft = 0; /* prevent exact match */
 	    if (p+1 < strEnd) {
 		if (p[1] == '*') {
@@ -4242,6 +4715,7 @@ TclReToGlob(
 	case '$':
 	    if (p+1 != strEnd) {
 		msg = "$ not anchor";
+		code = "NONANCHOR";
 		goto invalidGlob;
 	    }
 	    anchorRight = 1;
@@ -4249,8 +4723,8 @@ TclReToGlob(
 	case '*': case '+': case '?': case '|': case '^':
 	case '{': case '}': case '(': case ')': case '[': case ']':
 	    msg = "unhandled RE special char";
+	    code = "UNHANDLED";
 	    goto invalidGlob;
-	    break;
 	default:
 	    *dsStr++ = *p;
 	    break;
@@ -4262,7 +4736,9 @@ TclReToGlob(
 	 * Heuristic: if >1 non-anchoring *, the risk is large that glob
 	 * matching is slower than the RE engine, so report invalid.
 	 */
+
 	msg = "excessive recursive glob backtrack potential";
+	code = "OVERCOMPLEX";
 	goto invalidGlob;
     }
 
@@ -4275,22 +4751,12 @@ TclReToGlob(
 	*exactPtr = (anchorLeft && anchorRight);
     }
 
-#if 0
-    fprintf(stderr, "INPUT RE '%.*s' OUTPUT GLOB '%s' anchor %d:%d \n",
-	    reStrLen, reStr,
-	    Tcl_DStringValue(dsPtr), anchorLeft, anchorRight);
-    fflush(stderr);
-#endif
     return TCL_OK;
 
   invalidGlob:
-#if 0
-    fprintf(stderr, "INPUT RE '%.*s' NO OUTPUT GLOB %s (%c)\n",
-	    reStrLen, reStr, msg, *p);
-    fflush(stderr);
-#endif
     if (interp != NULL) {
-	Tcl_AppendResult(interp, msg, NULL);
+	Tcl_SetObjResult(interp, Tcl_NewStringObj(msg, -1));
+	Tcl_SetErrorCode(interp, "TCL", "RE2GLOB", code, NULL);
     }
     Tcl_DStringFree(dsPtr);
     return TCL_ERROR;

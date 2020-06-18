@@ -1,7 +1,7 @@
 /*                       R E A L P A T H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,23 +30,35 @@
 #include "bu/str.h"
 
 /* c89 strict doesn't declare realpath */
-#ifndef HAVE_DECL_REALPATH
+#if defined(HAVE_WORKING_REALPATH) && !defined(HAVE_DECL_REALPATH)
 extern char *realpath(const char *, char *);
 #endif
 
+#if !defined(HAVE_WORKING_REALPATH) && !defined(HAVE_GETFULLPATHNAME)
+#  include "./realpath_bsd.c"
+#  define BSD_REALPATH 1
+#endif
+
 char *
-bu_realpath(const char *path, char *resolved_path)
+bu_file_realpath(const char *path, char *resolved_path)
 {
     if (!resolved_path)
 	resolved_path = (char *) bu_calloc(MAXPATHLEN, sizeof(char), "resolved_path alloc");
 
-#if defined(HAVE_REALPATH)
+#if defined(HAVE_WORKING_REALPATH) || defined(BSD_REALPATH)
     {
 	char *dirpath = NULL;
+	/* NOTE: realpath() has a critical but well-reported buffer-overrun bug
+	 * (linux glibc pre 5.4.13), so we intentionally avoid it if we have
+	 * alternatives. */
+#if defined(HAVE_WORKING_REALPATH)
 	dirpath = realpath(path, resolved_path);
+#elif defined(BSD_REALPATH)
+	dirpath = bsd_realpath(path, resolved_path);
+#endif
 	if (!dirpath) {
-	    /* if path lookup failed, resort to simple copy */
-	    bu_strlcpy(resolved_path, path, (size_t)MAXPATHLEN);
+	    /* If path lookup failed, resort to simple copy */
+	    bu_strlcpy(resolved_path, path, MAXPATHLEN);
 	}
     }
 #elif defined(HAVE_GETFULLPATHNAME)

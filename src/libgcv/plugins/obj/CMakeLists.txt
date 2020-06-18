@@ -15,6 +15,7 @@ include_directories(
 LIBGCV_ADD_PLUGIN(obj "obj_read.c;obj_write.c;tri_face.c" "librt;libwfobj")
 
 set(obj_ignore_files
+  CMakeLists.txt
   obj_read.c
   obj_write.c
   tri_face.c

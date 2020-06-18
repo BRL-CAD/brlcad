@@ -81,7 +81,7 @@ TCL_DL_LIBS='@DL_LIBS@'
 # an executable tclsh or tcltest binary.
 TCL_LD_FLAGS='@LDFLAGS@'
 
-# Flags to pass to ld, such as "-R /usr/local/tcl/lib", that tell the
+# Flags to pass to cc/ld, such as "-R /usr/local/tcl/lib", that tell the
 # run-time dynamic linker where to look for shared libraries such as
 # libtcl.so.  Used when linking applications.  Only works if there
 # is a variable "LIB_RUNTIME_DIR" defined in the Makefile.

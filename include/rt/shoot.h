@@ -1,7 +1,7 @@
 /*                        S H O O T . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2018 United States Government as represented by
+ * Copyright (c) 1993-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -130,15 +130,15 @@ RT_EXPORT extern int rt_shootrays(struct application_bundle *bundle);
  * performance matters.
  */
 RT_EXPORT extern struct partition *rt_shootray_simple(struct application *ap,
-                                                      point_t origin,
-                                                      vect_t direction);
+						      point_t origin,
+						      vect_t direction);
 
 
 /**
  * PRIVATE: this is new API and should be considered private for the
  * time being.
  */
-RT_EXPORT extern int rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays);
+RT_EXPORT extern int rt_shootray_bundle(struct application *ap, struct xray *rays, int nrays);
 
 /**
  * To be called only in non-parallel mode, to tally up the statistics
@@ -149,13 +149,13 @@ RT_EXPORT extern int rt_shootray_bundle(register struct application *ap, struct 
  * to have the default resource results tallied in.
  */
 RT_EXPORT extern void rt_add_res_stats(struct rt_i *rtip,
-                                       struct resource *resp);
+				       struct resource *resp);
 /** Tally stats into struct rt_i */
 RT_EXPORT extern void rt_zero_res_stats(struct resource *resp);
 
 
 RT_EXPORT extern void rt_res_pieces_clean(struct resource *resp,
-                                          struct rt_i *rtip);
+					  struct rt_i *rtip);
 
 
 /**
@@ -163,12 +163,12 @@ RT_EXPORT extern void rt_res_pieces_clean(struct resource *resp,
  * rt_shootray()'s use of 'solid pieces'.
  */
 RT_EXPORT extern void rt_res_pieces_init(struct resource *resp,
-                                         struct rt_i *rtip);
+					 struct rt_i *rtip);
 RT_EXPORT extern void rt_vstub(struct soltab *stp[],
-                               struct xray *rp[],
-                               struct seg segp[],
-                               int n,
-                               struct application *ap);
+			       struct xray *rp[],
+			       struct seg segp[],
+			       int n,
+			       struct application *ap);
 
 #ifdef USE_OPENCL
 struct cl_hit {
@@ -198,11 +198,11 @@ struct cl_partition {
 };
 
 RT_EXPORT extern void
-clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
+clt_frame(void *pixels, uint8_t o[2], int cur_pixel, int last_pixel,
 	  int width, int ibackground[3], int inonbackground[3],
 	  double airdensity, double haze[3], fastf_t gamma,
-          mat_t view2model, fastf_t cell_width, fastf_t cell_height,
-          fastf_t aspect, int lightmodel, int a_no_booleans);
+	  mat_t view2model, fastf_t cell_width, fastf_t cell_height,
+	  fastf_t aspect, int lightmodel, int a_no_booleans);
 #endif
 
 

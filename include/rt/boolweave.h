@@ -1,7 +1,7 @@
 /*                      B O O L W E A V E . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2018 United States Government as represented by
+ * Copyright (c) 1993-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -53,7 +53,7 @@ __BEGIN_DECLS
  * Weave a chain of segments into an existing set of partitions.  The
  * edge of each partition is an inhit or outhit of some solid (seg).
  *
- * NOTE: When the final partitions are completed, it is the users
+ * NOTE: When the final partitions are completed, it is the user's
  * responsibility to honor the inflip and outflip flags.  They can not
  * be flipped here because an outflip=1 edge and an inflip=0 edge
  * following it may in fact be the same edge.  This could be dealt
@@ -74,9 +74,9 @@ __BEGIN_DECLS
  * well as the partition list that we return.
  */
 RT_EXPORT extern void rt_boolweave(struct seg *out_hd,
-                                   struct seg *in_hd,
-                                   struct partition *PartHeadp,
-                                   struct application *ap);
+				   struct seg *in_hd,
+				   struct partition *PartHeadp,
+				   struct application *ap);
 
 /**
  * @brief
@@ -153,12 +153,12 @@ RT_EXPORT extern void rt_boolweave(struct seg *out_hd,
  * it are ready to be evaluated.
  */
 RT_EXPORT extern int rt_boolfinal(struct partition *InputHdp,
-                                  struct partition *FinalHdp,
-                                  fastf_t startdist,
-                                  fastf_t enddist,
-                                  struct bu_ptbl *regionbits,
-                                  struct application *ap,
-                                  const struct bu_bitv *solidbits);
+				  struct partition *FinalHdp,
+				  fastf_t startdist,
+				  fastf_t enddist,
+				  struct bu_ptbl *regionbits,
+				  struct application *ap,
+				  const struct bu_bitv *solidbits);
 
 /**
  * Increase the size of re_boolstack to double the previous size.

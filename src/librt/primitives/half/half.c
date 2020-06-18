@@ -1,7 +1,7 @@
 /*                          H A L F . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2018 United States Government as represented by
+ * Copyright (c) 1985-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -171,7 +171,7 @@ rt_hlf_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 		return 0;	/* MISS */
 	}
     }
-    if (RT_G_DEBUG & DEBUG_ARB8)
+    if (RT_G_DEBUG & RT_DEBUG_ARB8)
 	bu_log("half: in=%f, out=%f\n", in, out);
 
     {
@@ -389,7 +389,7 @@ rt_hlf_free(struct soltab *stp)
  * the plane, with the outward normal drawn shorter.
  */
 int
-rt_hlf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_hlf_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
     struct rt_half_internal *hip;
     vect_t cent;		/* some point on the plane */
@@ -745,7 +745,7 @@ rt_hlf_ifree(struct rt_db_internal *ip)
 
 
 int
-rt_hlf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
+rt_hlf_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct bg_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol))
 {
     struct rt_half_internal *vip;
 

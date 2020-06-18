@@ -1,7 +1,7 @@
 /*                       P I X R E C T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2018 United States Government as represented by
+ * Copyright (c) 1986-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "bu/mime.h"
@@ -111,6 +112,8 @@ int
 main(int argc, char **argv)
 {
     icv_image_t *img;
+
+    bu_setprogname(argv[0]);
 
     if (!get_args(argc, argv)) {
 	bu_log("%s", usage);

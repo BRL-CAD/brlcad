@@ -73,6 +73,9 @@ Help -> Apropos                     |                     INCOMPLETE, not workin
 stability & usability
 =====================
 
+* fix traceback error (from tk::panedwindow, $w identify) when moving
+  mouse before window is fully created, when opened with a .g file
+
 * need a manual page
 
 * raytrace button won't abort correctly due to using rtwizard rather

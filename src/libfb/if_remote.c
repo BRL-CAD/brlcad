@@ -1,7 +1,7 @@
 /*                     I F _ R E M O T E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2018 United States Government as represented by
+ * Copyright (c) 1986-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -61,6 +61,7 @@
 #define MAX_HOSTNAME 128
 #define PCP(ptr)	((struct pkg_conn *)((ptr)->u1.p))
 #define PCPL(ptr)	((ptr)->u1.p)	/* left hand side version */
+
 
 /* Package Handlers. */
 static void pkgerror(struct pkg_conn *pcpp, char *buf);	/* error message handler */
@@ -810,8 +811,8 @@ fb remote_interface = {
     rem_free,
     rem_help,
     "Remote Device Interface",	/* should be filled in */
-    32*1024,			/* " */
-    32*1024,			/* " */
+    FB_XMAXSCREEN,		/* max width */
+    FB_YMAXSCREEN,		/* max height */
     "host:[dev]",
     512,
     512,

@@ -1,7 +1,7 @@
 /*                         B U R S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,24 +28,19 @@
 #include <stdio.h>
 #include <signal.h>
 
+#include "bu/app.h"
 #include "bu/getopt.h"
 #include "bu/file.h"
+#include "bu/opt.h"
 #include "bu/str.h"
 #include "bu/exit.h"
 #include "bu/log.h"
+#include "bu/vls.h"
 
 #include "./burst.h"
-#include "./trie.h"
 #include "./extern.h"
 #include "./ascii.h"
 
-
-#ifndef SIGCLD
-#  define SIGCLD SIGCHLD
-#endif
-#ifndef SIGTSTP
-#  define SIGTSTP 18
-#endif
 
 #define DEBUG_BURST 0 /* 1 enables debugging for this module */
 
@@ -115,39 +110,6 @@ setupSigs(void)
     return;
 }
 
-
-/*
-  int parsArgv(int argc, char **argv)
-
-  Parse program command line.
-*/
-static int
-parsArgv(int argc, char **argv)
-{
-    const char optstring[] = "bpPh?";
-
-    int c;
-
-    /* Parse options.						*/
-    while ((c = bu_getopt(argc, argv, optstring)) != -1) {
-	switch (c) {
-	    case 'b' :
-		tty = 0;
-		break;
-	    case 'p' :
-		plotline = 0;
-		break;
-	    case 'P' :
-		plotline = 1;
-		break;
-	    default:
-		return 0;
-	}
-    }
-    return 1;
-}
-
-
 /*
   void readBatchInput(FILE *fp)
 
@@ -186,8 +148,7 @@ readBatchInput(FILE *fp)
 }
 
 static const char usage[] =
-    "Usage: burst [-b] [-p|-P]\n"
-    "\tThe -b option suppresses the screen display (for batch jobs).\n"
+    "Usage: burst [-p|-P] [file]\n"
     "\tThe -p/-P options specifies whether to plot points or lines."
 ;
 
@@ -195,22 +156,75 @@ static const char usage[] =
   int main(int argc, char *argv[])
 */
 int
-main(int argc, char *argv[])
+main(int argc, const char *argv[])
 {
+    struct burst_state s;
+    const char *bfile = NULL;
+    int burst_opt; /* unused, for option compatibility */
+    int plot_lines = 0;
+    int plot_points = 0;
+    int ret_ac;
+
+    bu_setprogname(argv[0]);
+
+    struct bu_opt_desc d[4];
+    struct bu_vls pmsg = BU_VLS_INIT_ZERO;
+
+    BU_OPT(d[0],  "p", "", "",  NULL,   &plot_points, "Plot points");
+    BU_OPT(d[1],  "P", "", "",  NULL,   &plot_lines,  "Plot lines");
+    BU_OPT(d[2],  "b", "", "",  NULL,   &burst_opt,   "Batch mode");
+    BU_OPT_NULL(d[3]);
+
+    burst_state_init(&s);
+
+
+    /* Interactive mode is gone - until we strip all the leftovers out
+     * of the code, let it know we're not in tty mode */
+    tty = 0;
+
     bu_setlinebuf(stderr);
+
+    /* Skip first arg */
+    argv++; argc--;
+
+    /* no options imply a request for usage */
+    if (argc < 1 || !argv || argv[0] == NULL) {
+	(void)fprintf(stderr, "%s\n", usage);
+	return EXIT_SUCCESS;
+    }
+
+    /* Process options */
+    ret_ac = bu_opt_parse(&pmsg, argc, argv, d);
+    if (ret_ac < 0) {
+	(void)fprintf(stderr, "%s\n", bu_vls_cstr(&pmsg));
+	bu_vls_free(&pmsg);
+	(void)fprintf(stderr, "%s\n", usage);
+	return EXIT_FAILURE;
+    }
+    bu_vls_free(&pmsg);
+
+    if (ret_ac) {
+	if (!bu_file_exists(argv[0], NULL)) {
+	    (void)fprintf(stderr, "ERROR: Input file [%s] does not exist!\n", argv[0]);
+	    (void)fprintf(stderr, "%s\n", usage);
+	    return EXIT_FAILURE;
+	} else {
+	    bfile = argv[0];
+	}
+    }
 
     tmpfp = bu_temp_file(tmpfname, TIMER_LEN);
     if (!tmpfp) {
 	bu_exit(EXIT_FAILURE, "ERROR: Unable to create temporary file.\n");
     }
-    if (!parsArgv(argc, argv)) {
-	(void)fprintf(stderr, "%s\n", usage);
-	return EXIT_FAILURE;
-    }
 
     setupSigs();
-    if (! initUi()) /* must be called before any output is produced */
+
+    /* must be called before any output is produced */
+    if (!initUi()) {
+	fclose(tmpfp);
 	return EXIT_FAILURE;
+    }
 
 #if DEBUG_BURST
     prntTrie(cmdtrie, 0);
@@ -219,18 +233,15 @@ main(int argc, char *argv[])
     assert(armorids.i_next == NULL);
     assert(critids.i_next == NULL);
 
-    if (! isatty(0) || ! tty) {
-	readBatchInput(stdin);
+    if (bfile) {
+	FILE *fp = fopen(bfile, "rb");
+	readBatchInput(fp);
+	fclose(fp);
     } else {
-#ifdef HAVE_TERMLIB
-	if (tty)
-	    (void) HmHit(mainhmenu);
-	exitCleanly(EXIT_SUCCESS);
-#else
-	bu_exit(EXIT_FAILURE, "Error: This version of burst was not compiled with interactive menu support.  To process a batch file, use the -b option.\n");
-#endif
+	readBatchInput(stdin);
     }
-    /* not reached */
+
+    fclose(tmpfp);
     return EXIT_SUCCESS;
 }
 
@@ -251,6 +262,123 @@ exitCleanly(int code)
     exit(code);
 }
 
+void
+burst_state_init(struct burst_state *s)
+{
+    //Colors colorids;
+    s->fbiop = NULL;
+    s->burstfp = NULL;
+    s->gridfp = NULL;
+    s->histfp = NULL;
+    s->outfp = NULL;
+    s->plotfp = NULL;
+    s->shotfp = NULL;
+    s->shotlnfp = NULL;
+    s->tmpfp = NULL;
+    s->mainhmenu = NULL;
+    //Ids airids;
+    //Ids armorids;
+    //Ids critids;
+    s->pixgrid = NULL;
+    VSET(s->pixaxis, 255,   0,   0);
+    VSET(s->pixbhit, 200, 255, 200);
+    VSET(s->pixbkgr, 150, 100, 255);
+    VSET(s->pixblack,  0,   0,   0);
+    VSET(s->pixcrit, 255, 200, 200);
+    VSET(s->pixghit, 255,   0, 255);
+    VSET(s->pixmiss, 200, 200, 200);
+    VSET(s->pixtarg, 255, 255, 255);
+    s->cmdtrie = NULL;
+    s->plotline = 0;
+    s->batchmode = 0;
+    s->cantwarhead = 0;
+    s->deflectcone = DFL_DEFLECT;
+    s->dithercells = DFL_DITHER;
+    s->fatalerror = 0;
+    s->groundburst = 0;
+    s->reportoverlaps = DFL_OVERLAPS;
+    s->reqburstair = 1;
+    s->shotburst = 0;
+    s->tty = 1;
+    s->userinterrupt = 0;
+    memset(s->airfile, 0, LNBUFSZ);
+    memset(s->armorfile, 0, LNBUFSZ);
+    memset(s->burstfile, 0, LNBUFSZ);
+    memset(s->cmdbuf, 0, LNBUFSZ);
+    memset(s->cmdname, 0, LNBUFSZ);
+    memset(s->colorfile, 0, LNBUFSZ);
+    memset(s->critfile, 0, LNBUFSZ);
+    memset(s->errfile, 0, LNBUFSZ);
+    memset(s->fbfile, 0, LNBUFSZ);
+    memset(s->gedfile, 0, LNBUFSZ);
+    memset(s->gridfile, 0, LNBUFSZ);
+    memset(s->histfile, 0, LNBUFSZ);
+    memset(s->objects, 0, LNBUFSZ);
+    memset(s->outfile, 0, LNBUFSZ);
+    memset(s->plotfile, 0, LNBUFSZ);
+    memset(s->scrbuf, 0, LNBUFSZ);
+    memset(s->scriptfile, 0, LNBUFSZ);
+    memset(s->shotfile, 0, LNBUFSZ);
+    memset(s->shotlnfile, 0, LNBUFSZ);
+    memset(s->title, 0, TITLE_LEN);
+    memset(s->timer, 0, TIMER_LEN);
+    memset(s->tmpfname, 0, TIMER_LEN);
+    s->cmdptr = NULL;
+    s->bdist = DFL_BDIST;
+    VSET(s->burstpoint, 0.0, 0.0, 0.0);
+    s->cellsz = DFL_CELLSIZE;
+    s->conehfangle = DFL_CONEANGLE;
+    VSET(s->fire, 0.0, 0.0, 0.0);
+    s->griddn = 0.0;
+    s->gridlf = 0.0;
+    s->gridrt = 0.0;
+    s->gridup = 0.0;
+    VSET(s->gridhor, 0.0, 0.0, 0.0);
+    VSET(s->gridsoff, 0.0, 0.0, 0.0);
+    VSET(s->gridver, 0.0, 0.0, 0.0);
+    s->grndbk = 0.0;
+    s->grndht = 0.0;
+    s->grndfr = 0.0;
+    s->grndlf = 0.0;
+    s->grndrt = 0.0;
+    VSET(s->modlcntr, 0.0, 0.0, 0.0);
+    s->modldn = 0.0;
+    s->modllf = 0.0;
+    s->modlrt = 0.0;
+    s->modlup = 0.0;
+    s->raysolidangle = 0.0;
+    s->standoff = 0.0;
+    s->unitconv = 1.0;
+    s->viewazim = DFL_AZIMUTH;
+    s->viewelev = DFL_ELEVATION;
+    s->pitch = 0.0;
+    s->yaw = 0.0;
+    VSET(s->xaxis, 1.0, 0.0, 0.0);
+    VSET(s->zaxis, 0.0, 0.0, 1.0);
+    VSET(s->negzaxis, 0.0, 0.0, -1.0);
+    co = 0;
+    devwid = 0;
+    devhgt = 0;
+    firemode = FM_DFLT;
+    gridsz = 512;
+    gridxfin = 0;
+    gridyfin = 0;
+    gridxorg = 0;
+    gridyorg = 0;
+    gridwidth = 0;
+    gridheight = 0;
+    li = 0;
+    nbarriers = DFL_BARRIERS;
+    noverlaps = 0;
+    nprocessors = 0;
+    nriplevels = DFL_RIPLEVELS;
+    s->nspallrays = DFL_NRAYS;
+    s->units = DFL_UNITS;
+    s->zoom = 1;
+    s->rtip = RTI_NULL;
+    s->norml_sig = NULL;	/* active during interactive operation */
+    s->abort_sig = NULL; /* active during ray tracing only */
+}
 
 /*
  * Local Variables:

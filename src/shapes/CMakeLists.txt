@@ -19,6 +19,7 @@ BRLCAD_ADDEXEC(window_frame window_frame.c libwdb)
 BRLCAD_ADDEXEC(wire wire.c "libwdb;${M_LIBRARY}")
 
 CMAKEFILES(fence.h)
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

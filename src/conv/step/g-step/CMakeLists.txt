@@ -45,7 +45,7 @@ BRLCAD_ADDEXEC(g-step "${gstep_SOURCES}" "${gstep_LIBS}" NO_STRICT)
 add_dependencies(g-step step-express-${SCHEMA_NAME}-gstep)
 set_property(TARGET g-step APPEND PROPERTY INCLUDE_DIRECTORIES "${gstep_SCHEMA_OUT_DIR}")
 
-if(MSVC)
+if (HIDE_INTERNAL_SYMBOLS)
   set(gstep_IMPORTS
     BU_DLL_IMPORTS
     BN_DLL_IMPORTS
@@ -57,10 +57,11 @@ if(MSVC)
     SC_UTILS_DLL_IMPORTS
     )
   list(APPEND gstep_IMPORTS ${gstep_IMPORTS})
-  set_target_properties(g-step PROPERTIES COMPILE_DEFINITIONS "${gstep_IMPORTS}")
-endif(MSVC)
+  set_property(TARGET g-step APPEND PROPERTY COMPILE_DEFINITIONS "${gstep_IMPORTS}")
+endif (HIDE_INTERNAL_SYMBOLS)
 
 set(IGNORE_FILES
+  CMakeLists.txt
   AP203.h
   Assembly_Product.h
   Comb.h
@@ -70,21 +71,9 @@ set(IGNORE_FILES
   Shape_Definition_Representation.h
   Shape_Representation.h
   Shape_Representation_Relationship.h
-  list_elements.cpp
   Trees.h
   )
 CMAKEFILES(${IGNORE_FILES})
-
-GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} list_elements)
-
-set(list_elements_srcs ${express_srcs} list_elements.cpp)
-BRLCAD_ADDEXEC(list_elements "${list_elements_srcs}" "${gstep_LIBS}" NO_STRICT NO_INSTALL)
-add_dependencies(list_elements step-express-${SCHEMA_NAME}-list_elements)
-set_property(TARGET list_elements APPEND PROPERTY INCLUDE_DIRECTORIES "${list_elements_SCHEMA_OUT_DIR}")
-
-if(MSVC)
-  set_target_properties(list_elements PROPERTIES COMPILE_DEFINITIONS "${gstep_IMPORTS}")
-endif(MSVC)
 
 # Local Variables:
 # tab-width: 8

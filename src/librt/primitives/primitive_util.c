@@ -1,7 +1,7 @@
 /*               P R I M I T I V E _ U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 2012-2018 United States Government as represented by
+ * Copyright (c) 2012-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,6 +26,7 @@
 
 #include "bu/malloc.h"
 #include "bu/opt.h"
+#include "bu/app.h"
 #include "../librt_private.h"
 
 
@@ -62,7 +63,7 @@ primitive_hitsort(register struct hit *h, register int nh)
 #define DEFAULT_REL_TOL .1
 fastf_t
 primitive_get_absolute_tolerance(
-	const struct rt_tess_tol *ttol,
+	const struct bg_tess_tol *ttol,
 	fastf_t rel_to_abs)
 {
     fastf_t tol, rel_tol, abs_tol;
@@ -108,7 +109,7 @@ primitive_diagonal_samples(
     fastf_t diagonal_samples;
 
     ip->idb_meth->ft_bbox(ip, &bbox_min, &bbox_max, info->tol);
-    primitive_diagonal_mm = DIST_PT_PT(bbox_min, bbox_max);
+    primitive_diagonal_mm = DIST_PNT_PNT(bbox_min, bbox_max);
 
     samples_per_mm = 1.0 / info->point_spacing;
     diagonal_samples = samples_per_mm * primitive_diagonal_mm;
@@ -199,11 +200,11 @@ parabola_point_farthest_from_line(point_t max_point, fastf_t p, fastf_t m)
  * Returns number of points successfully added.
  */
 int
-approximate_parabolic_curve(struct rt_pt_node *pts, fastf_t p, int num_new_points)
+approximate_parabolic_curve(struct rt_pnt_node *pts, fastf_t p, int num_new_points)
 {
     fastf_t error, max_error, seg_slope, seg_intercept;
     point_t v, point, p0, p1, new_point = VINIT_ZERO;
-    struct rt_pt_node *node, *worst_node, *new_node;
+    struct rt_pnt_node *node, *worst_node, *new_node;
     int i;
 
     if (pts == NULL || pts->next == NULL || num_new_points < 1) {
@@ -248,7 +249,7 @@ approximate_parabolic_curve(struct rt_pt_node *pts, fastf_t p, int num_new_point
 	}
 
 	/* insert new point between endpoints of the least accurate segment */
-	BU_ALLOC(new_node, struct rt_pt_node);
+	BU_ALLOC(new_node, struct rt_pnt_node);
 	VMOVE(new_node->p, new_point);
 	new_node->next = worst_node->next;
 	worst_node->next = new_node;
@@ -299,11 +300,11 @@ hyperbola_point_farthest_from_line(point_t max_point, fastf_t a, fastf_t b, fast
  * Returns number of points successfully added.
  */
 int
-approximate_hyperbolic_curve(struct rt_pt_node *pts, fastf_t a, fastf_t b, int num_new_points)
+approximate_hyperbolic_curve(struct rt_pnt_node *pts, fastf_t a, fastf_t b, int num_new_points)
 {
     fastf_t error, max_error, seg_slope, seg_intercept;
     point_t v, point, p0, p1, new_point = VINIT_ZERO;
-    struct rt_pt_node *node, *worst_node, *new_node;
+    struct rt_pnt_node *node, *worst_node, *new_node;
     int i;
 
     if (pts == NULL || pts->next == NULL || num_new_points < 1) {
@@ -350,7 +351,7 @@ approximate_hyperbolic_curve(struct rt_pt_node *pts, fastf_t a, fastf_t b, int n
 	}
 
 	/* insert new point between endpoints of the least accurate segment */
-	BU_ALLOC(new_node, struct rt_pt_node);
+	BU_ALLOC(new_node, struct rt_pnt_node);
 	VMOVE(new_node->p, new_point);
 	new_node->next = worst_node->next;
 	worst_node->next = new_node;
@@ -527,8 +528,8 @@ clt_read_code(const char *filename, size_t *length)
     fp = fopen(filename , "r");
     if (!fp) bu_exit(-1, "failed to read OpenCL code file (%s)\n", filename);
 
-    fseek(fp, 0, SEEK_END);
-    *length = ftell(fp);
+    bu_fseek(fp, 0, SEEK_END);
+    *length = bu_ftell(fp);
     rewind(fp);
 
     data = (char*)bu_malloc((*length+1)*sizeof(char), "failed bu_malloc() in clt_read_code()");
@@ -554,8 +555,8 @@ clt_get_program(cl_context context, cl_device_id device, cl_uint count, const ch
 
     programs = (cl_program*)bu_calloc(count, sizeof(cl_program), "programs");
     for (i=0; i<count; i++) {
-	snprintf(file, MAXPATHLEN, "%s%c%s", BRLCAD_OPENCL_DIR, BU_DIR_SEPARATOR, filenames[i]);
-	snprintf(path, MAXPATHLEN, "%s", bu_brlcad_data(file, 0));
+	snprintf(file, MAXPATHLEN, "%s%c%s", "share/" BRLCAD_OPENCL_DIR, BU_DIR_SEPARATOR, filenames[i]);
+	snprintf(path, MAXPATHLEN, "%s", bu_brlcad_root(file, 0));
 
         pc_string = clt_read_code(path, &pc_length);
         programs[i] = clCreateProgramWithSource(context, 1, &pc_string, &pc_length, &error);
@@ -653,7 +654,7 @@ clt_init(void)
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL command queue");
 
 	/* locate opencl directory */
-	snprintf(path, MAXPATHLEN, "%s", bu_brlcad_data(BRLCAD_OPENCL_DIR, 0));
+	snprintf(path, MAXPATHLEN, "%s", bu_brlcad_root("share/" BRLCAD_OPENCL_DIR, 0));
 
 	/* compile opencl programs */
 	snprintf(args, MAXPATHLEN, "-I %s -D RT_SINGLE_HIT=1", path);
@@ -828,7 +829,7 @@ clt_db_release(void)
 }
 
 void
-clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
+clt_frame(void *pixels, uint8_t o[2], int cur_pixel, int last_pixel,
 	  int width, int ibackground[3], int inonbackground[3],
 	  double airdensity, double haze[3], fastf_t gamma,
           mat_t view2model, fastf_t cell_width, fastf_t cell_height,
@@ -848,7 +849,7 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
 	cl_uint randhalftabsize;
         cl_int cur_pixel, last_pixel, width;
         cl_int lightmodel;
-        cl_uchar3 o;
+        cl_uchar2 o;
         cl_uchar3 ibackground, inonbackground;
     }p;
 
@@ -860,7 +861,7 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
     p.cur_pixel = cur_pixel;
     p.last_pixel = last_pixel;
     p.width = width;
-    VMOVE(p.o.s, o);
+    V2MOVE(p.o.s, o);
     VMOVE(p.ibackground.s, ibackground);
     VMOVE(p.inonbackground.s, inonbackground);
     p.airdensity = airdensity;
@@ -872,7 +873,7 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
     p.aspect = aspect;
     p.lightmodel = lightmodel;
 
-    sz_pixels = sizeof(cl_uchar)*o[2]*npix;
+    sz_pixels = sizeof(cl_uchar)*o[1]*npix;
     ppixels = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY|CL_MEM_HOST_READ_ONLY, sz_pixels, NULL, &error);
     if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL pixels buffer");
 
@@ -890,7 +891,7 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
     if (a_no_booleans) {
 	bu_semaphore_acquire(clt_semaphore);
 	error = clSetKernelArg(clt_frame_kernel, 0, sizeof(cl_mem), &ppixels);
-	error |= clSetKernelArg(clt_frame_kernel, 1, sizeof(cl_uchar3), &p.o);
+	error |= clSetKernelArg(clt_frame_kernel, 1, sizeof(cl_uchar2), &p.o);
 	error |= clSetKernelArg(clt_frame_kernel, 2, sizeof(cl_int), &p.cur_pixel);
 	error |= clSetKernelArg(clt_frame_kernel, 3, sizeof(cl_int), &p.last_pixel);
 	error |= clSetKernelArg(clt_frame_kernel, 4, sizeof(cl_int), &p.width);
@@ -1095,7 +1096,7 @@ clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
 
 	bu_semaphore_acquire(clt_semaphore);
 	error = clSetKernelArg(clt_shade_segs_kernel, 0, sizeof(cl_mem), &ppixels);
-	error |= clSetKernelArg(clt_shade_segs_kernel, 1, sizeof(cl_uchar3), &p.o);
+	error |= clSetKernelArg(clt_shade_segs_kernel, 1, sizeof(cl_uchar2), &p.o);
 	error |= clSetKernelArg(clt_shade_segs_kernel, 2, sizeof(cl_mem), &psegs);
         error |= clSetKernelArg(clt_shade_segs_kernel, 3, sizeof(cl_mem), &head_partition);
 	error |= clSetKernelArg(clt_shade_segs_kernel, 4, sizeof(cl_int), &p.cur_pixel);

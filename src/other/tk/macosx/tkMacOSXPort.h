@@ -16,21 +16,6 @@
 #ifndef _TKMACPORT
 #define _TKMACPORT
 
-/*
- * Macro to use instead of "void" for arguments that must have
- * type "void *" in ANSI C; maps them to type "char *" in
- * non-ANSI systems. This macro may be used in some of the include
- * files below, which is why it is defined here.
- */
-
-#ifndef VOID
-#   ifdef __STDC__
-#	define VOID void
-#   else
-#	define VOID char
-#   endif
-#endif
-
 #include <stdio.h>
 #include <ctype.h>
 #include <fcntl.h>
@@ -38,6 +23,7 @@
 #include <math.h>
 #include <pwd.h>
 #include <stdlib.h>
+#include <assert.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/file.h>
@@ -68,7 +54,6 @@
 #include <X11/Xatom.h>
 #include <X11/Xfuncproto.h>
 #include <X11/Xutil.h>
-#include "tkIntXlibDecls.h"
 
 /*
  * The following macro defines the type of the mask arguments to
@@ -126,35 +111,40 @@
  * no-op functions on the Macintosh.
  */
 
-#define XFlush(display)
-#define XFree(data) {if ((data) != NULL) ckfree((char *) (data));}
-#define XGrabServer(display)
-#define XNoOp(display) {display->request++;}
-#define XUngrabServer(display)
-#define XSynchronize(display, bool) {display->request++;}
+#undef XFlush
+#define XFlush(display) (0)
+#undef XFree
+#define XFree(data) (((data) != NULL) ? (ckfree(data),0) : 0)
+#undef XGrabServer
+#define XGrabServer(display) (0)
+#undef XNoOp
+#define XNoOp(display) (display->request++,0)
+#undef XUngrabServer
+#define XUngrabServer(display) (0)
+#undef XSynchronize
+#define XSynchronize(display, onoff) (display->request++,NULL)
+#undef XVisualIDFromVisual
 #define XVisualIDFromVisual(visual) (visual->visualid)
 
 /*
  * The following functions are not used on the Mac, so we stub them out.
  */
 
-#define TkFreeWindowId(dispPtr,w)
-#define TkInitXId(dispPtr)
 #define TkpCmapStressed(tkwin,colormap) (0)
 #define TkpFreeColor(tkColPtr)
 #define TkSetPixmapColormap(p,c) {}
 #define TkpSync(display)
 
 /*
- * The following macro returns the pixel value that corresponds to the
- * RGB values in the given XColor structure.
+ * TkMacOSXGetCapture is a legacy function used on the Mac. When fixing
+ * [943d5ebe51], TkpGetCapture was added to the Windows port. Both
+ * are actually the same feature and should bear the same name. However,
+ * in order to avoid potential backwards incompatibilities, renaming
+ * TkMacOSXGetCapture into TkpGetCapture in *PlatDecls.h shall not be
+ * done in a patch release, therefore use a define here.
  */
 
-#define PIXEL_MAGIC ((unsigned char) 0x69)
-#define TkpGetPixel(p) ((((((PIXEL_MAGIC << 8) \
-	| (((p)->red >> 8) & 0xff)) << 8) \
-	| (((p)->green >> 8) & 0xff)) << 8) \
-	| (((p)->blue >> 8) & 0xff))
+#define TkpGetCapture TkMacOSXGetCapture
 
 /*
  * This macro stores a representation of the window handle in a string.
@@ -177,19 +167,20 @@
  */
 
 #define TRANSPARENT_PIXEL		30
-#define HIGHLIGHT_PIXEL			31
-#define HIGHLIGHT_SECONDARY_PIXEL	32
-#define HIGHLIGHT_TEXT_PIXEL		33
-#define HIGHLIGHT_ALTERNATE_PIXEL	34
-#define CONTROL_TEXT_PIXEL		35
-#define CONTROL_BODY_PIXEL		37
-#define CONTROL_FRAME_PIXEL		39
-#define WINDOW_BODY_PIXEL		41
-#define MENU_ACTIVE_PIXEL		43
-#define MENU_ACTIVE_TEXT_PIXEL		45
-#define MENU_BACKGROUND_PIXEL		47
-#define MENU_DISABLED_PIXEL		49
-#define MENU_TEXT_PIXEL			51
 #define APPEARANCE_PIXEL		52
+#define PIXEL_MAGIC ((unsigned char) 0x69)
+
+/*
+ * The following macro returns the pixel value that corresponds to the
+ * 16-bit RGB values in the given XColor structure.
+ * The format is: (PIXEL_MAGIC <<< 24) | (R << 16) | (G << 8) | B
+ * where each of R, G and B is the high order byte of a 16-bit component.
+ */
+
+#define TkpGetPixel(p) ((((((PIXEL_MAGIC << 8) \
+	| (((p)->red >> 8) & 0xff)) << 8) \
+	| (((p)->green >> 8) & 0xff)) << 8) \
+	| (((p)->blue >> 8) & 0xff))
+
 
 #endif /* _TKMACPORT */

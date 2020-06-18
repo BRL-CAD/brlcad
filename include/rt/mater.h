@@ -1,7 +1,7 @@
 /*                          M A T E R . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2018 United States Government as represented by
+ * Copyright (c) 1993-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -53,11 +53,11 @@ struct mater {
     unsigned char	mt_r;		/**< @brief color */
     unsigned char	mt_g;
     unsigned char	mt_b;
-    off_t		mt_daddr;	/**< @brief db address, for updating */
+    b_off_t		mt_daddr;	/**< @brief db address, for updating */
     struct mater	*mt_forw;	/**< @brief next in chain */
 };
 #define MATER_NULL	((struct mater *)0)
-#define MATER_NO_ADDR	((off_t)0)		/**< @brief invalid mt_daddr */
+#define MATER_NO_ADDR	((b_off_t)0)		/**< @brief invalid mt_daddr */
 
 
 RT_EXPORT extern void rt_region_color_map(struct region *regp);
@@ -68,7 +68,7 @@ RT_EXPORT extern void rt_color_addrec(int low,
 				      int r,
 				      int g,
 				      int b,
-				      off_t addr);
+				      b_off_t addr);
 RT_EXPORT extern void rt_insert_color(struct mater *newp);
 RT_EXPORT extern void rt_vls_color_map(struct bu_vls *str);
 RT_EXPORT extern struct mater *rt_material_head(void);

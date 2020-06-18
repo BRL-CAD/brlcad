@@ -119,7 +119,7 @@ typedef struct TkScrollbar {
      * Miscellaneous information:
      */
 
-    Tk_Cursor cursor;		/* Current cursor for window, or None. */
+    Tk_Cursor cursor;		/* Current cursor for window, or NULL. */
     char *takeFocus;		/* Value of -takefocus option; not used in the
 				 * C code, but used by keyboard traversal
 				 * scripts. Malloc'ed, but may be NULL. */
@@ -161,7 +161,7 @@ typedef struct TkScrollbar {
  * and default scrollbar width, for use in configSpec.
  */
 
-MODULE_SCOPE Tk_ClassProcs tkpScrollbarProcs;
+MODULE_SCOPE const Tk_ClassProcs tkpScrollbarProcs;
 MODULE_SCOPE char tkDefScrollbarWidth[TCL_INTEGER_SPACE];
 
 /*

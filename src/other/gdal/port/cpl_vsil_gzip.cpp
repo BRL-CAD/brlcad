@@ -91,7 +91,7 @@
 #if HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
-#include <zlib.h>
+#include "zlib.h"
 
 #include <algorithm>
 #include <map>

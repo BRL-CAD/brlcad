@@ -90,25 +90,17 @@ ELSE(NOT SC_IS_SUBBUILD)
   SET(CMAKE_BUILD_TYPE ${SC_BUILD_TYPE} )
 ENDIF(NOT SC_IS_SUBBUILD)
 
-# Define helper macro OPTION_WITH_DEFAULT
-MACRO( OPTION_WITH_DEFAULT OPTION_NAME OPTION_STRING OPTION_DEFAULT )
-  IF( NOT DEFINED ${OPTION_NAME} )
-    SET( ${OPTION_NAME} ${OPTION_DEFAULT} )
-  ENDIF( NOT DEFINED ${OPTION_NAME} )
-  OPTION( ${OPTION_NAME} "${OPTION_STRING}" ${${OPTION_NAME}} )
-ENDMACRO( OPTION_WITH_DEFAULT OPTION_NAME OPTION_STRING OPTION_DEFAULT )
-
 # build shared libs by default
-OPTION_WITH_DEFAULT(SC_BUILD_SHARED_LIBS "Build shared libs" ON )
+OPTION(SC_BUILD_SHARED_LIBS "Build shared libs" ON)
 
 # don't build static libs by default
-OPTION_WITH_DEFAULT(SC_BUILD_STATIC_LIBS "Build static libs" OFF)
+OPTION(SC_BUILD_STATIC_LIBS "Build static libs" OFF)
 
-OPTION_WITH_DEFAULT(SC_PYTHON_GENERATOR "Compile exp2python" ON)
-OPTION_WITH_DEFAULT(SC_CPP_GENERATOR "Compile exp2cxx" ON)
+OPTION(SC_PYTHON_GENERATOR "Compile exp2python" ON)
+OPTION(SC_CPP_GENERATOR "Compile exp2cxx" ON)
 
-OPTION_WITH_DEFAULT(SC_MEMMGR_ENABLE_CHECKS "Enable sc_memmgr's memory leak detection" OFF)
-OPTION_WITH_DEFAULT(SC_TRACE_FPRINTF "Enable extra comments in generated code so the code's source in exp2cxx may be located" OFF)
+OPTION(SC_MEMMGR_ENABLE_CHECKS "Enable sc_memmgr's memory leak detection" OFF)
+OPTION(SC_TRACE_FPRINTF "Enable extra comments in generated code so the code's source in exp2cxx may be located" OFF)
 
 if(NOT DEFINED SC_SDAI_ADDITIONAL_EXES_SRCS )
   set( SC_SDAI_ADDITIONAL_EXES_SRCS "" CACHE STRING "Source files for additional executables to be linked with SDAI libs" )
@@ -149,7 +141,7 @@ ENDIF(_orig_lang)
 
 #---------------------------------------------------------------------
 # Coverage option
-OPTION_WITH_DEFAULT( SC_ENABLE_COVERAGE "Enable code coverage test" OFF )
+OPTION( SC_ENABLE_COVERAGE "Enable code coverage test" OFF )
 IF(SC_ENABLE_COVERAGE)
   SET(SC_ENABLE_TESTING ON CACHE BOOL "Testing enabled by coverage option" FORCE)
   # build static libs, better coverage report
@@ -164,7 +156,7 @@ ENDIF(SC_ENABLE_COVERAGE)
 
 #---------------------------------------------------------------------
 # Testing option
-OPTION_WITH_DEFAULT( SC_ENABLE_TESTING "Enable unittesting framework" OFF )
+OPTION( SC_ENABLE_TESTING "Enable unittesting framework" OFF )
 IF(SC_ENABLE_TESTING)
   if( NOT DEFINED SC_BUILD_SCHEMAS )
     set( SC_BUILD_SCHEMAS "ALL" ) #test all schemas, unless otherwise specified
@@ -172,20 +164,6 @@ IF(SC_ENABLE_TESTING)
   INCLUDE(CTest)
   ENABLE_TESTING()
 ENDIF(SC_ENABLE_TESTING)
-
-#---------------------------------------------------------------------
-# The following logic is what allows binaries to run successfully in
-# the build directory AND install directory.
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/RPath_Setup.cmake")
-  include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/RPath_Setup.cmake")
-  if(COMMAND cmake_set_rpath)
-    cmake_set_rpath()
-  endif(COMMAND cmake_set_rpath)
-else(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/RPath_Setup.cmake")
-  if(NOT HAVE_PARENT_BUILD)
-    message(FATAL_ERROR "Not building as a subbuild, but cmake/RPath_Setup.cmake not found.  To build as a stand-alone build, add RPath_Setup.cmake to the CMake directory.")
-  endif(NOT HAVE_PARENT_BUILD)
-endif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/cmake/RPath_Setup.cmake")
 
 #-----------------------------------------------------------------------------
 # Output directories.
@@ -425,9 +403,9 @@ ADD_SUBDIRECTORY(src/clstepcore)
 ADD_SUBDIRECTORY(src/cleditor)
 ADD_SUBDIRECTORY(src/cldai)
 ADD_SUBDIRECTORY(src/clutils)
-if( NOT WIN32 ) # don't build cllazyfile on windows until export/import macros are in place
-  ADD_SUBDIRECTORY( src/cllazyfile )
-endif( NOT WIN32 )
+#if( NOT WIN32 ) # don't build cllazyfile on windows until export/import macros are in place
+#  ADD_SUBDIRECTORY( src/cllazyfile )
+#endif( NOT WIN32 )
 ADD_SUBDIRECTORY(include)
 ADD_SUBDIRECTORY(data)
 IF(SC_ENABLE_TESTING)

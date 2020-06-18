@@ -1,7 +1,7 @@
 /*                 L I B R T _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2018 United States Government as represented by
+ * Copyright (c) 2011-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -111,17 +111,17 @@ extern const union cutter *rt_advance_to_next_cell(struct rt_shootray_status *ss
  */
 extern void rt_plot_cell(const union cutter *cutp, struct rt_shootray_status *ssp, struct bu_list *waiting_segs_hd, struct rt_i *rtip);
 
-
 /* db_fullpath.c */
 
 /**
  * Function to test whether a path has a cyclic entry in it.
  *
  * @param fp [i] Full path to test
- * @param name [i] String to use when checking path (optional).  If NULL, use the name of the current directory pointer in fp.
+ * @param test_name [i] String to use when checking path.
+ * @param depth [i] Starting depth for path node name comparisons.
  * @return 1 if the path is cyclic, 0 if it is not.
  */
-extern int cyclic_path(const struct db_full_path *fp, const char *name);
+extern int cyclic_path(const struct db_full_path *fp, const char *test_name, long int depth);
 
 
 /* db_diff.c */
@@ -133,7 +133,7 @@ extern int cyclic_path(const struct db_full_path *fp, const char *name);
 extern int tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *avs, int offset);
 
 /* db_io.c */
-extern int db_read(const struct db_i *dbip, void *addr, size_t count, off_t offset);
+extern int db_read(const struct db_i *dbip, void *addr, size_t count, b_off_t offset);
 
 /* db5_io.c */
 #define DB_SIZE_OBJ 0x1
@@ -153,8 +153,8 @@ extern int db_read(const struct db_i *dbip, void *addr, size_t count, off_t offs
  * default, attributes are not included in size calculations.
  *
  * The FORCE_RECALC flag is also optional and will result in a re-evaluation of
- * the cached size information in the directory structures instead of using any
- * cached information from previous db5_size evaluations. This flag should be
+ * the stored size information in the directory structures instead of using any
+ * stored information from previous db5_size evaluations. This flag should be
  * supplied if the geometry information in the database has changed since the
  * last db5_size call.
  */
@@ -169,7 +169,7 @@ extern int rt_binunif_import5_minor_type(struct rt_db_internal *, const struct b
 extern void primitive_hitsort(struct hit h[], int nh);
 
 extern fastf_t primitive_get_absolute_tolerance(
-	const struct rt_tess_tol *ttol,
+	const struct bg_tess_tol *ttol,
 	fastf_t rel_to_abs);
 
 extern fastf_t primitive_diagonal_samples(
@@ -177,7 +177,7 @@ extern fastf_t primitive_diagonal_samples(
 	const struct rt_view_info *info);
 
 extern int approximate_parabolic_curve(
-	struct rt_pt_node *pts,
+	struct rt_pnt_node *pts,
 	fastf_t p,
 	int num_new_points);
 
@@ -186,7 +186,7 @@ extern fastf_t primitive_curve_count(
 	const struct rt_view_info *info);
 
 extern int approximate_hyperbolic_curve(
-	struct rt_pt_node *pts,
+	struct rt_pnt_node *pts,
 	fastf_t a,
 	fastf_t b,
 	int num_new_points);

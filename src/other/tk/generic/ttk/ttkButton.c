@@ -81,8 +81,9 @@ static Tk_OptionSpec BaseOptionSpecs[] =
      * Compound base/image options
      */
     {TK_OPTION_STRING_TABLE, "-compound", "compound", "Compound",
-	 "none", Tk_Offset(Base,base.compoundObj), -1,
-	 0,(ClientData)ttkCompoundStrings,GEOMETRY_CHANGED },
+	 NULL, Tk_Offset(Base,base.compoundObj), -1,
+	 TK_OPTION_NULL_OK,(ClientData)ttkCompoundStrings,
+         GEOMETRY_CHANGED },
     {TK_OPTION_STRING, "-padding", "padding", "Pad",
 	NULL, Tk_Offset(Base,base.paddingObj), -1,
 	TK_OPTION_NULL_OK,0,GEOMETRY_CHANGED},
@@ -489,12 +490,15 @@ static int
 CheckbuttonConfigure(Tcl_Interp *interp, void *recordPtr, int mask)
 {
     Checkbutton *checkPtr = recordPtr;
-    Ttk_TraceHandle *vt = Ttk_TraceVariable(
-	interp, checkPtr->checkbutton.variableObj,
-	CheckbuttonVariableChanged, checkPtr);
-
-    if (!vt) {
-	return TCL_ERROR;
+    Tcl_Obj *varName = checkPtr->checkbutton.variableObj;
+    Ttk_TraceHandle *vt = NULL;
+        
+    if (varName != NULL && *Tcl_GetString(varName) != '\0') {
+        vt = Ttk_TraceVariable(interp, varName,
+	    CheckbuttonVariableChanged, checkPtr);
+        if (!vt) {
+	    return TCL_ERROR;
+        }
     }
 
     if (BaseConfigure(interp, recordPtr, mask) != TCL_OK){
@@ -502,7 +506,9 @@ CheckbuttonConfigure(Tcl_Interp *interp, void *recordPtr, int mask)
 	return TCL_ERROR;
     }
 
-    Ttk_UntraceVariable(checkPtr->checkbutton.variableTrace);
+    if (checkPtr->checkbutton.variableTrace) {
+        Ttk_UntraceVariable(checkPtr->checkbutton.variableTrace);
+    }
     checkPtr->checkbutton.variableTrace = vt;
 
     return TCL_OK;
@@ -548,10 +554,13 @@ CheckbuttonInvokeCommand(
     else
 	newValue = checkPtr->checkbutton.onValueObj;
 
-    if (Tcl_ObjSetVar2(interp,
-	    checkPtr->checkbutton.variableObj, NULL, newValue,
-	    TCL_GLOBAL_ONLY|TCL_LEAVE_ERR_MSG)
-	== NULL)
+    if (checkPtr->checkbutton.variableObj == NULL ||
+        *Tcl_GetString(checkPtr->checkbutton.variableObj) == '\0')
+        CheckbuttonVariableChanged(checkPtr, Tcl_GetString(newValue));
+    else if (Tcl_ObjSetVar2(interp,
+	        checkPtr->checkbutton.variableObj, NULL, newValue,
+	        TCL_GLOBAL_ONLY|TCL_LEAVE_ERR_MSG)
+	    == NULL)
 	return TCL_ERROR;
 
     if (WidgetDestroyed(corePtr))

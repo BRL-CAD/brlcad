@@ -3,10 +3,9 @@ set(gcv_headers
   api.h
   util.h
   )
+BRLCAD_MANAGE_FILES(gcv_headers ${INCLUDE_DIR}/brlcad/gcv)
 
-install(FILES ${gcv_headers} DESTINATION ${INCLUDE_DIR}/brlcad/gcv)
-
-CMAKEFILES(${gcv_headers})
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

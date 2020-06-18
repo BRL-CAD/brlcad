@@ -1,7 +1,7 @@
 /*                           V L S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,7 +24,6 @@
 #include <ctype.h>
 #include <errno.h> /* for errno */
 #include <limits.h> /* for LONG_MAX */
-#include <regex.h>
 #include <stdarg.h>
 #include <stdlib.h> /* for strtol */
 #include <string.h>
@@ -49,13 +48,13 @@ extern const char bu_strdup_message[];
 /* private constants */
 
 /* minimum initial allocation size */
-static const unsigned int _VLS_ALLOC_MIN = 32;
+static const unsigned int VLS_ALLOC_MIN = 32;
 
 /* minimum vls allocation increment size */
-static const size_t _VLS_ALLOC_STEP = 128;
+static const size_t VLS_ALLOC_STEP = 128;
 
 /* minimum vls buffer allocation size */
-static const unsigned int _VLS_ALLOC_READ = 4096;
+static const unsigned int VLS_ALLOC_READ = BU_PAGE_SIZE;
 
 void
 bu_vls_init(struct bu_vls *vp)
@@ -143,8 +142,8 @@ bu_vls_extend(struct bu_vls *vp, size_t extra)
     BU_CK_VLS(vp);
 
     /* allocate at least 32 bytes (8 or 4 words) extra */
-    if (extra < _VLS_ALLOC_MIN)
-	extra = _VLS_ALLOC_MIN;
+    if (extra < VLS_ALLOC_MIN)
+	extra = VLS_ALLOC_MIN;
 
     /* first time allocation.
      *
@@ -164,10 +163,10 @@ bu_vls_extend(struct bu_vls *vp, size_t extra)
     }
 
     /* make sure to increase in step sized increments */
-    if (extra < _VLS_ALLOC_STEP)
-	extra = _VLS_ALLOC_STEP;
-    else if (extra % _VLS_ALLOC_STEP != 0)
-	extra += _VLS_ALLOC_STEP - (extra % _VLS_ALLOC_STEP);
+    if (extra < VLS_ALLOC_STEP)
+	extra = VLS_ALLOC_STEP;
+    else if (extra % VLS_ALLOC_STEP != 0)
+	extra += VLS_ALLOC_STEP - (extra % VLS_ALLOC_STEP);
 
     /* need more space? */
     if (vp->vls_offset + vp->vls_len + extra >= vp->vls_max) {
@@ -214,14 +213,14 @@ bu_vls_trunc(struct bu_vls *vp, int len)
 	vp->vls_offset = 0;
 
     if (vp->vls_str)
-       	vp->vls_str[len+vp->vls_offset] = '\0'; /* force null termination */
+	vp->vls_str[len+vp->vls_offset] = '\0'; /* force null termination */
 
     vp->vls_len = len;
 }
 
 
 void
-bu_vls_nibble(struct bu_vls *vp, off_t len)
+bu_vls_nibble(struct bu_vls *vp, b_off_t len)
 {
     BU_CK_VLS(vp);
 
@@ -599,7 +598,7 @@ bu_vls_read(struct bu_vls *vp, int fd)
     BU_CK_VLS(vp);
 
     for (;;) {
-	bu_vls_extend(vp, _VLS_ALLOC_READ);
+	bu_vls_extend(vp, VLS_ALLOC_READ);
 	todo = vp->vls_max - vp->vls_len - vp->vls_offset - 1;
 
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -674,7 +673,7 @@ bu_vls_gets(struct bu_vls *vp, FILE *fp)
     if (endlen < startlen)
 	return -1;
 
-    return endlen;
+    return (int)endlen;
 }
 
 void
@@ -683,7 +682,7 @@ bu_vls_putc(struct bu_vls *vp, int c)
     BU_CK_VLS(vp);
 
     if (vp->vls_offset + vp->vls_len+1 >= vp->vls_max)
-	bu_vls_extend(vp, _VLS_ALLOC_STEP);
+	bu_vls_extend(vp, VLS_ALLOC_STEP);
 
     vp->vls_str[vp->vls_offset + vp->vls_len++] = (char)c;
     vp->vls_str[vp->vls_offset + vp->vls_len] = '\0'; /* force null termination */
@@ -784,7 +783,7 @@ bu_vls_detab(struct bu_vls *vp)
     BU_CK_VLS(vp);
 
     bu_vls_vlscatzap(&src, vp);	/* make temporary copy of src */
-    bu_vls_extend(vp, bu_vls_strlen(&src) + _VLS_ALLOC_STEP);
+    bu_vls_extend(vp, bu_vls_strlen(&src) + VLS_ALLOC_STEP);
 
     cp = bu_vls_addr(&src);
     used = 0;
@@ -825,7 +824,7 @@ bu_vls_prepend(struct bu_vls *vp, const char *str)
 }
 
 HIDDEN int
-_vls_char_in_set(const char *c, const char *str)
+vls_char_in_set(const char *c, const char *str)
 {
     unsigned int i = 0;
     if (!c || !str) return 0;
@@ -855,7 +854,7 @@ bu_vls_simplify(struct bu_vls *vp, const char *keep, const char *de_dup, const c
     c = (unsigned char *)bu_vls_addr(vp);
     while (*c) {
 	unsigned char ch = (*c);
-	if (_vls_char_in_set((const char *)&ch, keep)) {
+	if (vls_char_in_set((const char *)&ch, keep)) {
 	    bu_vls_putc(&tmpstr, ch);
 	} else {
 	    if (isalnum(ch)) {
@@ -880,7 +879,7 @@ bu_vls_simplify(struct bu_vls *vp, const char *keep, const char *de_dup, const c
 	    ch = (unsigned char)(*c);
 	    c++;
 	    currh = (unsigned char)(*c);
-	    if (!(ch == currh && _vls_char_in_set((const char *)&currh, de_dup))) {
+	    if (!(ch == currh && vls_char_in_set((const char *)&currh, de_dup))) {
 		bu_vls_putc(&dd_str, currh);
 	    }
 	}
@@ -892,12 +891,13 @@ bu_vls_simplify(struct bu_vls *vp, const char *keep, const char *de_dup, const c
     if (trim) {
 	int ccnt = 0;
 	c = (unsigned char *)bu_vls_addr(&tmpstr);
-	while (*c && _vls_char_in_set((const char *)c, trim)) {ccnt++; c++;}
+	while (*c && vls_char_in_set((const char *)c, trim)) {ccnt++; c++;}
 	if (ccnt) bu_vls_nibble(&tmpstr, ccnt);
 	ccnt = 0;
 	c = (unsigned char *)&(bu_vls_addr(&tmpstr)[(strlen(bu_vls_addr(&tmpstr)) - 1)]);
-	while (*c && _vls_char_in_set((const char *)c, trim)) {ccnt++; c--;}
-	if (ccnt) bu_vls_trunc(&tmpstr, bu_vls_strlen(&tmpstr) - ccnt);
+	while (*c && vls_char_in_set((const char *)c, trim)) {ccnt++; c--;}
+	if (ccnt)
+	    bu_vls_trunc(&tmpstr, (int)(bu_vls_strlen(&tmpstr) - ccnt));
     }
 
     ret = (!bu_vls_strcmp(&tmpstr, vp)) ? 0 : 1;
@@ -905,189 +905,6 @@ bu_vls_simplify(struct bu_vls *vp, const char *keep, const char *de_dup, const c
     bu_vls_free(&tmpstr);
     return ret;
 }
-
-
-HIDDEN int
-_bu_vls_incr_next(struct bu_vls *next_incr, const char *incr_state, const char *inc_specifier)
-{
-    int i = 0;
-    long ret = 0;
-    /*char bsep = '\0';
-    char esep = '\0';*/
-    long vals[4] = {0}; /* 0 = width, 1 = min/init, 2 = max, 3 = increment */
-    long state_val = 0;
-    const char *wstr = inc_specifier;
-    char *endptr;
-    int spacer_cnt = 1;
-    long spacer_val;
-
-    if (!inc_specifier || !next_incr || !incr_state) return 0;
-
-    errno = 0;
-    state_val = strtol(incr_state, &endptr, 10);
-    if (errno == ERANGE) {
-	bu_log("ERANGE error reading current value\n");
-	return -1;
-    }
-
-    for(i = 0; i < 4; i++) {
-	errno = 0;
-	if (!wstr) {
-	    bu_log("Invalid incrementation specifier: %s\n", inc_specifier);
-	    return -1;
-	}
-	vals[i] = strtol(wstr, &endptr, 10);
-	if (errno == ERANGE) {
-	    bu_log("ERANGE error reading name generation specifier\n");
-	    return -1;
-	}
-	wstr = (strchr(wstr, ':')) ?  strchr(wstr, ':') + 1 : NULL;
-    }
-
-    /* increment */
-    state_val = (vals[3]) ? state_val + vals[3] : state_val + 1;
-
-    /* if we're below the minimum specified range, clamp to minimum */
-    if (vals[1] && state_val < vals[1]) state_val = vals[1];
-
-    /* if we're above the maximum specified range, roll over */
-    if (vals[2] && state_val > vals[2]) {
-	state_val = vals[1];
-	ret = -2;
-    }
-
-    /* find out if we need padding zeros */
-    if (vals[0]) {
-	spacer_val = state_val;
-	while ((spacer_val = spacer_val / 10)) spacer_cnt++;
-    }
-
-    if (wstr) {
-	bu_vls_printf(next_incr, "%c", wstr[0]);
-	if (vals[0]) {
-	    for (i = 0; i < vals[0]-spacer_cnt; i++) {
-		bu_vls_printf(next_incr, "%d", 0);
-	    }
-	    bu_vls_printf(next_incr, "%ld", state_val);
-	} else {
-	    bu_vls_printf(next_incr, "%ld", state_val);
-	}
-	wstr = (strchr(wstr, ':')) ?  strchr(wstr, ':') + 1 : NULL;
-	if (wstr) bu_vls_printf(next_incr, "%c", wstr[0]);
-    } else {
-	if (vals[0]) {
-	    for (i = 0; i < vals[0]-spacer_cnt; i++) {
-		bu_vls_printf(next_incr, "%d", 0);
-	    }
-	    bu_vls_printf(next_incr, "%ld", state_val);
-	} else {
-	    bu_vls_printf(next_incr, "%ld", state_val);
-	}
-    }
-    return ret;
-}
-
-int
-bu_vls_incr(struct bu_vls *name, const char *regex_str, const char *incr_spec, bu_vls_uniq_t ut, void *data)
-{
-    int ret = 0;
-    int i = 0;
-    int j = 0;
-    int offset = 0;
-    regex_t compiled_regex;
-    regmatch_t *incr_substrs;
-    regmatch_t *num_substrs;
-    struct bu_vls new_name = BU_VLS_INIT_ZERO;
-    struct bu_vls curr_incr = BU_VLS_INIT_ZERO;
-    struct bu_vls ispec = BU_VLS_INIT_ZERO;
-    const char *num_regex = "([0-9]+)";
-    const char *last_regex = "([0-9]+)[^0-9]*$";
-    const char *rs = NULL;
-    struct bu_vls num_str = BU_VLS_INIT_ZERO;
-    int success = 0;
-
-    if (!name) return -1;
-
-    rs = (regex_str) ? regex_str : last_regex;
-
-    while (!success) {
-	/* Find incrementer. */
-	ret = regcomp(&compiled_regex, rs, REG_EXTENDED);
-	if (ret != 0) return -1;
-	incr_substrs = (regmatch_t *)bu_calloc(bu_vls_strlen(name) + 1, sizeof(regmatch_t), "regex results");
-	ret = regexec(&compiled_regex, bu_vls_addr(name), bu_vls_strlen(name) + 1, incr_substrs, 0);
-	if (ret == REG_NOMATCH) {
-	    bu_vls_printf(name, "0");
-	    bu_free(incr_substrs, "free regex results");
-	    incr_substrs = (regmatch_t *)bu_calloc(bu_vls_strlen(name) + 1, sizeof(regmatch_t), "regex results");
-	    ret = regexec(&compiled_regex, bu_vls_addr(name), bu_vls_strlen(name) + 1, incr_substrs, 0);
-	    if (ret == REG_NOMATCH) {
-		bu_free(incr_substrs, "free regex results");
-		return -1;
-	    }
-	}
-	i = bu_vls_strlen(name);
-	while(incr_substrs[i].rm_so == -1 || incr_substrs[i].rm_eo == -1) i--;
-
-	if (i != 1) return -1;
-
-	/* Now we know where the incrementer is - process, find the number, and assemble the new string */
-	bu_vls_trunc(&new_name, 0);
-	bu_vls_substr(&curr_incr, name, incr_substrs[1].rm_so, incr_substrs[1].rm_eo - incr_substrs[1].rm_so);
-	bu_vls_strncpy(&new_name, bu_vls_addr(name)+offset, incr_substrs[j].rm_so - offset);
-
-	/* Find number. */
-	ret = regcomp(&compiled_regex, num_regex, REG_EXTENDED);
-	if (ret != 0) return -1;
-	num_substrs = (regmatch_t *)bu_calloc(bu_vls_strlen(&curr_incr) + 1, sizeof(regmatch_t), "regex results");
-	ret = regexec(&compiled_regex, bu_vls_addr(&curr_incr), bu_vls_strlen(&curr_incr) + 1, num_substrs, 0);
-	if (ret == REG_NOMATCH) {
-	    bu_vls_free(&new_name);
-	    bu_vls_free(&ispec);
-	    bu_vls_free(&curr_incr);
-	    bu_free(num_substrs, "free regex results");
-	    return -1;
-	}
-	bu_vls_substr(&num_str, &curr_incr, num_substrs[1].rm_so, num_substrs[1].rm_eo - num_substrs[1].rm_so);
-
-
-	/* Either used the supplied incrementing specification or initialize with the default */
-	if (!incr_spec) {
-	    bu_vls_sprintf(&ispec, "%lu:%d:%d:%d", strlen(bu_vls_addr(&num_str)), 0, 0, 1);
-	} else {
-	    bu_vls_sprintf(&ispec, "%s", incr_spec);
-	}
-
-	/* Do incrementation */
-	ret = _bu_vls_incr_next(&new_name, bu_vls_addr(&num_str), bu_vls_addr(&ispec));
-	bu_vls_printf(&new_name, "%s", bu_vls_addr(name)+incr_substrs[1].rm_eo);
-	bu_vls_sprintf(name, "%s", bu_vls_addr(&new_name));
-
-	if (ret < 0) {
-	    bu_vls_free(&new_name);
-	    bu_vls_free(&ispec);
-	    bu_vls_free(&curr_incr);
-	    bu_free(num_substrs, "free regex results");
-	    return ret;
-	}
-
-	/* If we need to, test for uniqueness */
-	if (ut) {
-	    success = (*ut)(name,data);
-	} else {
-	    success = 1;
-	}
-    }
-
-    bu_vls_free(&new_name);
-    bu_vls_free(&ispec);
-    bu_vls_free(&curr_incr);
-    bu_free(incr_substrs, "free regex results");
-
-    return ret;
-}
-
-
 
 /*
  * Local Variables:

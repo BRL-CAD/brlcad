@@ -1,7 +1,7 @@
 /*                        B W D I F F . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2018 United States Government as represented by
+ * Copyright (c) 1986-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,6 +32,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/str.h"
 #include "bu/exit.h"
 
@@ -70,8 +71,10 @@ int
 main(int argc, char **argv)
 {
     unsigned char *p1, *p2, *op;
-    int i, n, m;
+    size_t i, n, m;
     size_t ret;
+
+    bu_setprogname(argv[0]);
 
     while (argc > 3) {
 	if (BU_STR_EQUAL(argv[1], "-m")) {

@@ -1,0 +1,171 @@
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="lint">
+
+  <refmeta>
+    <refentrytitle>LINT</refentrytitle>
+    <manvolnum>nged</manvolnum>
+    <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+    <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
+  </refmeta>
+
+  <refnamediv xml:id="name">
+    <refname>lint</refname>
+    <refpurpose>Detect and report problems with subsets or all of a .g database.
+    </refpurpose>
+  </refnamediv>
+
+  <!-- body begins here -->
+  <refsynopsisdiv xml:id="synopsis">
+    <cmdsynopsis sepchar=" ">
+      <command>lint</command>
+      <arg choice="opt" rep="norepeat">-h</arg>
+      <arg choice="opt" rep="norepeat">-C</arg>
+      <arg choice="opt" rep="norepeat">-M</arg>
+      <arg choice="opt" rep="norepeat">-I</arg>
+      <arg choice="opt" rep="norepeat">-F "filters"</arg>
+      <arg choice="opt" rep="norepeat"><replaceable>ObjectName</replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsection xml:id="description"><title>DESCRIPTION</title>
+  <para>
+    The 'lint' command analyzes the currently open geometry database (or a subset of
+    that database if object names are supplied as arguments) and searches for a variety
+    of problems know to sometimes occur.  By default all defect types are searched for -
+    if one or more of the options enabling a search for a specific type of problem are
+    supplied, only those searches will be performed.
+  </para>
+  </refsection>
+
+  <refsection xml:id="options"><title>OPTIONS</title>
+  <variablelist remap="TP">
+    <varlistentry>
+      <term><option>-h</option></term>
+      <listitem>
+	<para>
+	  Print help message.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-C</option>, <option>--cyclic</option></term>
+      <listitem>
+	<para>
+	  Check for full paths that are cyclic - i.e. a situation where a high
+	  level object incorporates in its definition tree a reference to itself.
+	  Such definitions are always considered invalid, and are sometimes problematic
+	  for tools working with geometry hierarchy.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-M</option>, <option>--missing</option></term>
+      <listitem>
+	<para>
+	  Check for references to objects or files that are missing (not present
+	  in the database or on the file system.)  Primarily this is a check for
+	  comb objects referring to missing objects, but it will also check for
+	  and report invalid object and file references in extrude
+	  and dsp primitives.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-I</option>, <option>--invalid</option></term>
+      <listitem>
+	<para>
+	  Check for shapes in the database that do not satisfy one or more properties
+	  required for them to be valid definitions, where correcting the problem requires
+	  a change to the object's definition.  (As of this writing the only implemented
+	  check is for BoT object solidity, but many more are possible and planned.)
+	  (Objects invalid due to missing objects are potentially valid without the necessity
+	  of changing the object's own definition - e.g. the missing object/file can be added.
+	  That category of error can be searched for with the <option>-M</option> check.)
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-F</option>, <option>--filter</option></term>
+      <listitem>
+	<para>
+	  Apply search command style filters to the set of objects to be tested.  Allows,
+	  (for example) a user to test only brep objects and not bot objects or only objects
+	  matching a particular name pattern.  Does not impact the checks for missing or
+	  cylic geometry - the underlying search mechanism assumes inputs do not have those
+	  particular categories of problem and thus can't be reliably applied in those cases.
+	</para>
+      </listitem>
+    </varlistentry>
+  </variablelist>
+  </refsection>
+  
+  <refsection xml:id="examples"><title>EXAMPLES</title>
+
+   <example>
+    <title>Examine entire database for all defect categories</title>
+
+    <para>
+      <prompt>mged&gt; </prompt><userinput>lint</userinput>
+      <literallayout class="normal">
+Checking for cyclic paths...
+Checking for references to non-extant objects...
+Checking for invalid objects...
+Found cyclic paths:
+  /c1/c2/c1
+  /c2/c1/c2
+Found references to missing objects:
+  invalid_dsp_missing_binary_obj.s/missing_binary_object.s
+  invalid_dsp_missing_file.s/missing_file.data
+  invalid_extrude_missing_sketch.s/missing_sketch.s
+  missingentry.c/missing.s
+Found invalid objects:
+  nonsolid.bot[bot] failed solidity test, but BoT type is RT_BOT_SOLID
+
+      </literallayout>
+    </para>
+  </example>
+
+  <example>
+    <title>Check the validity of a single geometry object</title>
+
+    <para>
+      <prompt>mged&gt; </prompt><userinput>lint -I nonsolid.bot</userinput>
+      <literallayout class="normal">
+Checking for invalid objects...
+Found invalid objects:
+  nonsolid.bot[bot] failed solidity test, but BoT type is RT_BOT_SOLID
+
+      </literallayout>
+    </para>
+  </example>
+
+  <example>
+    <title>Examine all non-BoT objects in the database matching the name pattern "*_1.*" for invalidity</title>
+
+    <para>
+      <prompt>mged&gt; </prompt><userinput>lint -F "! -type bot -name *_1.*"</userinput>
+      <literallayout class="normal">
+Checking for invalid objects...
+Found invalid objects:
+  Brep_1.s[brep] failed OpenNURBS validity test
+brep.m_L[27] loop is not valid.
+	end of brep.m_T[loop.m_ti[5]=147]=(0,-1.309) and start 
+	of brep.m_T[loop.m_ti[6]=148]=(0,-5.63995e-08) do not match.
+brep.m_F[25] face is not valid.
+	brep.m_L[face.m_li[0]=27] is not valid.
+ON_Brep.m_F[25] is invalid.
+
+      </literallayout>
+    </para>
+  </example>
+  </refsection>
+  
+  <refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
+
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
+
+  <para>
+    Reports of bugs or problems should be submitted via electronic
+    mail to <email>devs@brlcad.org</email>
+  </para>
+  </refsection>
+</refentry>

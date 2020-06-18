@@ -1,7 +1,7 @@
 /*                           D B 5 . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,9 +41,9 @@ __BEGIN_DECLS
 #  if defined(RT_DLL_EXPORTS) && defined(RT_DLL_IMPORTS)
 #    error "Only RT_DLL_EXPORTS or RT_DLL_IMPORTS can be defined, not both."
 #  elif defined(RT_DLL_EXPORTS)
-#    define RT_EXPORT __declspec(dllexport)
+#    define RT_EXPORT COMPILER_DLLEXPORT
 #  elif defined(RT_DLL_IMPORTS)
-#    define RT_EXPORT __declspec(dllimport)
+#    define RT_EXPORT COMPILER_DLLIMPORT
 #  else
 #    define RT_EXPORT
 #  endif
@@ -172,6 +172,7 @@ struct db5_ondisk_header {
 #define DB5_MINORTYPE_BRLCAD_ANNOT		42
 #define DB5_MINORTYPE_BRLCAD_HRT		43
 #define DB5_MINORTYPE_BRLCAD_DATUM		44
+#define DB5_MINORTYPE_BRLCAD_SCRIPT     45
 
 /* Uniform-array binary */
 #define DB5_MINORTYPE_BINU_WID_MASK		0x30
@@ -219,17 +220,6 @@ struct db5_raw_internal {
     unsigned char	*buf;		/* if non-null needs to be bu_free()ed */
 };
 #define RT_CK_RIP(_ptr)		BU_CKMAG( _ptr, DB5_RAW_INTERNAL_MAGIC, "db5_raw_internal" )
-
-/**
- * Number of bytes used for each value of DB5HDR_WIDTHCODE_*
- */
-#define DB5_ENC_LEN(len) (1 << len)
-
-RT_EXPORT extern unsigned char *db5_encode_length(unsigned char	*cp,
-						   size_t		val,
-						   int		format);
-RT_EXPORT extern const unsigned char *db5_get_raw_internal_ptr(struct db5_raw_internal *rip,
-								const unsigned char *ip);
 
 
 __END_DECLS

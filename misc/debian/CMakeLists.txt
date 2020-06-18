@@ -1,7 +1,6 @@
 set(debian_ignore_files
   archer.desktop
   brlcad-db.desktop
-  brlcad-doc-animation.desktop
   brlcad-doc-mged.desktop
   brlcad-doc.desktop
   brlcad-doc.directory
@@ -96,6 +95,7 @@ set(debian_ignore_files
   source/include-binaries
   )
 CMAKEFILES(${debian_ignore_files})
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

@@ -1,7 +1,7 @@
 /*                        D B 5 _ I O . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,6 +40,13 @@
 #include "rt/db5.h"
 #include "raytrace.h"
 #include "librt_private.h"
+
+
+/**
+ * Number of bytes used for each value of DB5HDR_WIDTHCODE_*
+ */
+#define ENCODE_LEN(len) (1 << len)
+
 
 int
 db5_header_is_valid(const unsigned char *hp)
@@ -114,15 +121,17 @@ db5_decode_length(size_t *lenp, const unsigned char *cp, int format)
     return 0;
 }
 
-int
+size_t
 db5_decode_signed(size_t *lenp, const unsigned char *cp, int format)
 {
     switch (format) {
 	case DB5HDR_WIDTHCODE_8BIT:
-	    if ((*lenp = (*cp)) & 0x80) *lenp |= ((size_t)-1 ^ 0xFF);
+	    if ((*lenp = (*cp)) & 0x80)
+		*lenp |= ((size_t)-1 ^ 0xFF);
 	    return 1;
 	case DB5HDR_WIDTHCODE_16BIT:
-	    if ((*lenp = BU_GSHORT(cp)) & 0x8000)  *lenp |= ((size_t)-1 ^ 0xFFFF);
+	    if ((*lenp = BU_GSHORT(cp)) & 0x8000)
+		*lenp |= ((size_t)-1 ^ 0xFFFF);
 	    return 2;
 	case DB5HDR_WIDTHCODE_32BIT:
 	    if ((*lenp = BU_GLONG(cp)) & 0x80000000)
@@ -140,13 +149,6 @@ db5_decode_signed(size_t *lenp, const unsigned char *cp, int format)
 }
 
 
-/**
- * Given a value and a variable-width format spec, store it in network
- * order.
- *
- * Returns -
- * pointer to next available byte.
- */
 unsigned char *
 db5_encode_length(
     unsigned char *cp,
@@ -177,12 +179,11 @@ db5_encode_length(
  * 0 on success
  * -1 on error
  */
-int
-db5_crack_disk_header(struct db5_raw_internal *rip, const unsigned char *cp)
+HIDDEN int
+crack_disk_header(struct db5_raw_internal *rip, const unsigned char *cp)
 {
     if (cp[0] != DB5HDR_MAGIC1) {
-	bu_log("db5_crack_disk_header() bad magic1 -- database has become corrupted\n expected x%x, got x%x\n",
-	       DB5HDR_MAGIC1, cp[0]);
+	bu_log("crack_disk_header() bad magic1: expected x%x, got x%x\n", DB5HDR_MAGIC1, cp[0]);
 	if (cp[0] == 'I') {
 	    bu_log ("Concatenation of different database versions detected.\n");
 	    bu_log ("Run 'dbupgrade' on all databases before concatenation (cat command).\n");
@@ -214,7 +215,7 @@ db5_crack_disk_header(struct db5_raw_internal *rip, const unsigned char *cp)
     rip->major_type = cp[4];
     rip->minor_type = cp[5];
 
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db5_crack_disk_header()\n\
+    if (RT_G_DEBUG&RT_DEBUG_DB) bu_log("crack_disk_header()\n\
 	h_dli=%d, h_object_width=%d, h_name_present=%d, h_name_width=%d, \n\
 	a_width=%d, a_present=%d, a_zzz=%d, \n\
 	b_width=%d, b_present=%d, b_zzz=%d, major=%d, minor=%d\n",
@@ -235,32 +236,26 @@ db5_crack_disk_header(struct db5_raw_internal *rip, const unsigned char *cp)
 }
 
 
-/**
- * Returns -
- * on success, pointer to first unused byte
- * NULL, on error
- */
 const unsigned char *
 db5_get_raw_internal_ptr(struct db5_raw_internal *rip, const unsigned char *ip)
 {
     const unsigned char *cp = ip;
 
-    if (db5_crack_disk_header(rip, cp) < 0) return NULL;
+    if (crack_disk_header(rip, cp) < 0) return NULL;
     cp += sizeof(struct db5_ondisk_header);
 
     cp += db5_decode_length(&rip->object_length, cp, rip->h_object_width);
     rip->object_length <<= 3;	/* cvt 8-byte chunks to byte count */
 
     if ((size_t)rip->object_length < sizeof(struct db5_ondisk_header)) {
-	bu_log("db5_get_raw_internal_ptr(): object_length=%ld is too short, database is corrupted\n",
+	bu_log("db5_get_raw_internal_ptr(): object_length=%ld is too short, database possibly corrupted\n",
 	       rip->object_length);
 	return NULL;
     }
 
     /* Verify trailing magic number */
     if (ip[rip->object_length-1] != DB5HDR_MAGIC2) {
-	bu_log("db5_get_raw_internal_ptr() bad magic2 -- database has become corrupted.\n expected x%x, got x%x\n",
-	       DB5HDR_MAGIC2, ip[rip->object_length-1]);
+	bu_log("db5_get_raw_internal_ptr() bad magic2: expected x%x, got x%x\n", DB5HDR_MAGIC2, ip[rip->object_length-1]);
 	return NULL;
     }
 
@@ -305,7 +300,7 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
 {
     struct db5_ondisk_header header;
     unsigned char lenbuf[8];
-    int count = 0;
+    size_t count = 0;
     size_t used;
     size_t want, got;
     size_t dlen;
@@ -316,7 +311,7 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
 	bu_log("db5_get_raw_internal_fp(): fread header error\n");
 	return -2;
     }
-    if (db5_crack_disk_header(rip, (unsigned char *)&header) < 0)
+    if (crack_disk_header(rip, (unsigned char *)&header) < 0)
 	return -2;
     used = sizeof(header);
 
@@ -354,7 +349,7 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
     rip->object_length <<= 3;	/* cvt 8-byte chunks to byte count */
 
     if (rip->object_length < sizeof(struct db5_ondisk_header) || rip->object_length < used) {
-	bu_log("db5_get_raw_internal_fp(): object_length=%ld is too short, database is corrupted\n",
+	bu_log("db5_get_raw_internal_fp(): object_length=%ld is too short, database possibly corrupted\n",
 	       rip->object_length);
 	return -1;
     }
@@ -369,15 +364,13 @@ db5_get_raw_internal_fp(struct db5_raw_internal *rip, FILE *fp)
     want = rip->object_length - used;
 
     if ((got = fread(cp, 1, want, fp)) != want) {
-	bu_log("db5_get_raw_internal_fp(): Database is too short, want=%ld, got=%ld\n",
-	       want, got);
+	bu_log("db5_get_raw_internal_fp(): database is too short, want=%ld, got=%ld\n", want, got);
 	return -2;
     }
 
     /* Verify trailing magic number */
     if (rip->buf[rip->object_length-1] != DB5HDR_MAGIC2) {
-	bu_log("db5_get_raw_internal_fp(): bad magic2 -- database has become corrupted.\n expected x%x, got x%x\n",
-	       DB5HDR_MAGIC2, rip->buf[rip->object_length-1]);
+	bu_log("db5_get_raw_internal_fp() bad magic2: expected x%x, got x%x\n", DB5HDR_MAGIC2, rip->buf[rip->object_length-1]);
 	return -2;
     }
 
@@ -445,7 +438,7 @@ db5_export_object3(
 	namelen = (long)strlen(name) + 1;	/* includes null */
 	if (namelen > 1) {
 	    n_width = db5_select_length_encoding(namelen);
-	    need += namelen + DB5_ENC_LEN(n_width);
+	    need += namelen + ENCODE_LEN(n_width);
 	} else {
 	    name = NULL;
 	    namelen = 0;
@@ -458,7 +451,7 @@ db5_export_object3(
 	BU_CK_EXTERNAL(attrib);
 	if (attrib->ext_nbytes > 0) {
 	    a_width = db5_select_length_encoding(attrib->ext_nbytes);
-	    need += attrib->ext_nbytes + DB5_ENC_LEN(a_width);
+	    need += attrib->ext_nbytes + ENCODE_LEN(a_width);
 	} else {
 	    attrib = NULL;
 	    a_width = 0;
@@ -470,7 +463,7 @@ db5_export_object3(
 	BU_CK_EXTERNAL(body);
 	if (body->ext_nbytes > 0) {
 	    b_width = db5_select_length_encoding(body->ext_nbytes);
-	    need += body->ext_nbytes + DB5_ENC_LEN(b_width);
+	    need += body->ext_nbytes + ENCODE_LEN(b_width);
 	} else {
 	    body = NULL;
 	    b_width = 0;
@@ -746,7 +739,7 @@ db_put_external5(struct bu_external *ep, struct directory *dp, struct db_i *dbip
     RT_CK_DIR(dp);
     BU_CK_EXTERNAL(ep);
 
-    if (RT_G_DEBUG&DEBUG_DB) bu_log("db_put_external5(%s) ep=%p, dbip=%p, dp=%p\n",
+    if (RT_G_DEBUG&RT_DEBUG_DB) bu_log("db_put_external5(%s) ep=%p, dbip=%p, dp=%p\n",
 				    dp->d_namep, (void *)ep, (void *)dbip, (void *)dp);
 
     if (dbip->dbi_read_only) {

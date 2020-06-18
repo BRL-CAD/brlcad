@@ -32,8 +32,7 @@
       as the new value for <emphasis>bu_debug</emphasis>. Similar debug commands for
       other <emphasis>BRL-CAD</emphasis> libraries are <command>debuglib</command> for
       <emphasis>librt</emphasis> and <command>debugnmg</command> for the NMG portion
-      of <emphasis>librt</emphasis>. Other debugging commands include
-      <command>debugmem</command> and <command>debugdir</command>.
+      of <emphasis>librt</emphasis>.
     </para>
   </refsection>
 
@@ -75,7 +74,7 @@
 
     <para>
       Reports of bugs or problems should be submitted via electronic
-      mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
+      mail to <email>devs@brlcad.org</email>
     </para>
   </refsection>
 </refentry>

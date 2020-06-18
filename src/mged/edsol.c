@@ -1,7 +1,7 @@
 /*                         E D S O L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2018 United States Government as represented by
+ * Copyright (c) 1985-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -44,10 +44,10 @@
 #include "./mged_dm.h"
 
 
-extern struct wdb_pipept *find_pipept_nearest_pt(const struct bu_list *, const point_t);
-extern void split_pipept(struct bu_list *, struct wdb_pipept *, point_t);
-extern struct wdb_pipept *del_pipept(struct wdb_pipept *);
-extern struct wdb_pipept *add_pipept(struct rt_pipe_internal *, struct wdb_pipept *, const point_t);
+extern struct wdb_pipe_pnt *find_pipe_pnt_nearest_pnt(const struct bu_list *, const point_t);
+extern void pipe_split_pnt(struct bu_list *, struct wdb_pipe_pnt *, point_t);
+extern struct wdb_pipe_pnt *pipe_del_pnt(struct wdb_pipe_pnt *);
+extern struct wdb_pipe_pnt *pipe_add_pnt(struct rt_pipe_internal *, struct wdb_pipe_pnt *, const point_t);
 
 static void arb8_edge(int arg), ars_ed(int arg), ell_ed(int arg), tgc_ed(int arg), tor_ed(int arg), spline_ed(int arg);
 static void nmg_ed(int arg), pipe_ed(int arg), vol_ed(int arg), ebm_ed(int arg), dsp_ed(int arg), cline_ed(int arg), bot_ed(int arg), extr_ed(int arg);
@@ -106,8 +106,8 @@ static plane_t lu_pl;	/* plane equation for loop to be extruded */
 static struct shell *es_s=(struct shell *)NULL;	/* Shell where extrusion is to end up */
 static point_t lu_keypoint;	/* keypoint of lu_copy for extrusion */
 
-static struct wdb_pipept *es_pipept=(struct wdb_pipept *)NULL; /* Currently selected PIPE segment */
-static struct wdb_metaballpt *es_metaballpt=(struct wdb_metaballpt *)NULL; /* Currently selected METABALL Point */
+static struct wdb_pipe_pnt *es_pipe_pnt=(struct wdb_pipe_pnt *)NULL; /* Currently selected PIPE segment */
+static struct wdb_metaball_pnt *es_metaball_pnt=(struct wdb_metaball_pnt *)NULL; /* Currently selected METABALL Point */
 
 /* These values end up in es_menu, as do ARB vertex numbers */
 int es_menu;		/* item selected from menu */
@@ -222,6 +222,22 @@ int es_menu;		/* item selected from menu */
 #define MENU_HYP_SCALE_B	129
 #define MENU_HYP_C		130
 #define MENU_HYP_ROT_H		131
+
+#define PARAM_1ARG (es_edflag == SSCALE || \
+		    es_edflag == PSCALE || \
+		    es_edflag == ECMD_BOT_THICK || \
+		    es_edflag == ECMD_VOL_THRESH_LO || \
+		    es_edflag == ECMD_VOL_THRESH_HI || \
+		    es_edflag == ECMD_DSP_SCALE_X || \
+		    es_edflag == ECMD_DSP_SCALE_Y || \
+		    es_edflag == ECMD_DSP_SCALE_ALT || \
+		    es_edflag == ECMD_EBM_HEIGHT || \
+		    es_edflag == ECMD_CLINE_SCALE_H || \
+		    es_edflag == ECMD_CLINE_SCALE_R || \
+		    es_edflag == ECMD_CLINE_SCALE_T || \
+		    es_edflag == ECMD_EXTR_SCALE_H)
+#define PARAM_2ARG (es_edflag == ECMD_DSP_FSIZE || \
+		    es_edflag == ECMD_EBM_FSIZE)
 
 struct menu_item cline_menu[] = {
     { "CLINE MENU",		(void (*)())NULL, 0 },
@@ -1099,10 +1115,10 @@ vol_ed(int arg)
 static void
 pipe_ed(int arg)
 {
-    struct wdb_pipept *next;
-    struct wdb_pipept *prev;
+    struct wdb_pipe_pnt *next;
+    struct wdb_pipe_pnt *prev;
 
-    if (dbip == DBI_NULL)
+    if (DBIP == DBI_NULL)
 	return;
 
     switch (arg) {
@@ -1111,33 +1127,33 @@ pipe_ed(int arg)
 	    es_edflag = ECMD_PIPE_PICK;
 	    break;
 	case MENU_PIPE_NEXT_PT:
-	    if (!es_pipept) {
+	    if (!es_pipe_pnt) {
 		Tcl_AppendResult(INTERP, "No Pipe Segment selected\n", (char *)NULL);
 		return;
 	    }
-	    next = BU_LIST_NEXT(wdb_pipept, &es_pipept->l);
+	    next = BU_LIST_NEXT(wdb_pipe_pnt, &es_pipe_pnt->l);
 	    if (next->l.magic == BU_LIST_HEAD_MAGIC) {
 		Tcl_AppendResult(INTERP, "Current segment is the last\n", (char *)NULL);
 		return;
 	    }
-	    es_pipept = next;
-	    rt_pipept_print(es_pipept, base2local);
+	    es_pipe_pnt = next;
+	    rt_pipe_pnt_print(es_pipe_pnt, base2local);
 	    es_menu = arg;
 	    es_edflag = IDLE;
 	    sedit();
 	    break;
 	case MENU_PIPE_PREV_PT:
-	    if (!es_pipept) {
+	    if (!es_pipe_pnt) {
 		Tcl_AppendResult(INTERP, "No Pipe Segment selected\n", (char *)NULL);
 		return;
 	    }
-	    prev = BU_LIST_PREV(wdb_pipept, &es_pipept->l);
+	    prev = BU_LIST_PREV(wdb_pipe_pnt, &es_pipe_pnt->l);
 	    if (prev->l.magic == BU_LIST_HEAD_MAGIC) {
 		Tcl_AppendResult(INTERP, "Current segment is the first\n", (char *)NULL);
 		return;
 	    }
-	    es_pipept = prev;
-	    rt_pipept_print(es_pipept, base2local);
+	    es_pipe_pnt = prev;
+	    rt_pipe_pnt_print(es_pipe_pnt, base2local);
 	    es_menu = arg;
 	    es_edflag = IDLE;
 	    sedit();
@@ -1146,7 +1162,7 @@ pipe_ed(int arg)
 	    /* not used */
 	    break;
 	case MENU_PIPE_MOV_PT:
-	    if (!es_pipept) {
+	    if (!es_pipe_pnt) {
 		Tcl_AppendResult(INTERP, "No Pipe Segment selected\n", (char *)NULL);
 		es_edflag = IDLE;
 		return;
@@ -1157,7 +1173,7 @@ pipe_ed(int arg)
 	case MENU_PIPE_PT_OD:
 	case MENU_PIPE_PT_ID:
 	case MENU_PIPE_PT_RADIUS:
-	    if (!es_pipept) {
+	    if (!es_pipe_pnt) {
 		Tcl_AppendResult(INTERP, "No Pipe Segment selected\n", (char *)NULL);
 		es_edflag = IDLE;
 		return;
@@ -1475,9 +1491,9 @@ static void superell_ed(int arg) {
 static void
 metaball_ed(int arg)
 {
-    struct wdb_metaballpt *next, *prev;
+    struct wdb_metaball_pnt *next, *prev;
 
-    if (dbip == DBI_NULL)
+    if (DBIP == DBI_NULL)
 	return;
 
     switch (arg) {
@@ -1498,39 +1514,39 @@ metaball_ed(int arg)
 	    es_edflag = ECMD_METABALL_PT_PICK;
 	    break;
 	case MENU_METABALL_NEXT_PT:
-	    if (!es_metaballpt) {
+	    if (!es_metaball_pnt) {
 		Tcl_AppendResult(INTERP, "No Metaball Point selected\n", (char *)NULL);
 		return;
 	    }
-	    next = BU_LIST_NEXT(wdb_metaballpt, &es_metaballpt->l);
+	    next = BU_LIST_NEXT(wdb_metaball_pnt, &es_metaball_pnt->l);
 	    if (next->l.magic == BU_LIST_HEAD_MAGIC) {
 		Tcl_AppendResult(INTERP, "Current point is the last\n", (char *)NULL);
 		return;
 	    }
-	    es_metaballpt = next;
-	    rt_metaballpt_print(es_metaballpt, base2local);
+	    es_metaball_pnt = next;
+	    rt_metaball_pnt_print(es_metaball_pnt, base2local);
 	    es_menu = arg;
 	    es_edflag = IDLE;
 	    sedit();
 	    break;
 	case MENU_METABALL_PREV_PT:
-	    if (!es_metaballpt) {
+	    if (!es_metaball_pnt) {
 		Tcl_AppendResult(INTERP, "No Metaball Point selected\n", (char *)NULL);
 		return;
 	    }
-	    prev = BU_LIST_PREV(wdb_metaballpt, &es_metaballpt->l);
+	    prev = BU_LIST_PREV(wdb_metaball_pnt, &es_metaball_pnt->l);
 	    if (prev->l.magic == BU_LIST_HEAD_MAGIC) {
 		Tcl_AppendResult(INTERP, "Current point is the first\n", (char *)NULL);
 		return;
 	    }
-	    es_metaballpt = prev;
-	    rt_metaballpt_print(es_metaballpt, base2local);
+	    es_metaball_pnt = prev;
+	    rt_metaball_pnt_print(es_metaball_pnt, base2local);
 	    es_menu = arg;
 	    es_edflag = IDLE;
 	    sedit();
 	    break;
 	case MENU_METABALL_MOV_PT:
-	    if (!es_metaballpt) {
+	    if (!es_metaball_pnt) {
 		Tcl_AppendResult(INTERP, "No Metaball Point selected\n", (char *)NULL);
 		es_edflag = IDLE;
 		return;
@@ -1540,7 +1556,7 @@ metaball_ed(int arg)
 	    sedit();
 	    break;
 	case MENU_METABALL_PT_FLDSTR:
-	    if (!es_metaballpt) {
+	    if (!es_metaball_pnt) {
 		Tcl_AppendResult(INTERP, "No Metaball Point selected\n", (char *)NULL);
 		es_edflag = IDLE;
 		return;
@@ -1914,15 +1930,15 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 	    {
 		struct rt_pipe_internal *pipeip =
 		    (struct rt_pipe_internal *)ip->idb_ptr;
-		struct wdb_pipept *pipe_seg;
+		struct wdb_pipe_pnt *pipe_seg;
 
 		RT_PIPE_CK_MAGIC(pipeip);
 
-		if (es_pipept == (struct wdb_pipept *)NULL) {
-		    pipe_seg = BU_LIST_FIRST(wdb_pipept, &pipeip->pipe_segs_head);
+		if (es_pipe_pnt == (struct wdb_pipe_pnt *)NULL) {
+		    pipe_seg = BU_LIST_FIRST(wdb_pipe_pnt, &pipeip->pipe_segs_head);
 		    VMOVE(mpt, pipe_seg->pp_coord);
 		} else {
-		    VMOVE(mpt, es_pipept->pp_coord);
+		    VMOVE(mpt, es_pipe_pnt->pp_coord);
 		}
 		*strp = "V";
 		break;
@@ -1934,11 +1950,11 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 		RT_METABALL_CK_MAGIC(metaball);
 
 		VSETALL(mpt, 0.0);
-		if (es_metaballpt==NULL) {
+		if (es_metaball_pnt==NULL) {
 		    snprintf(buf, BUFSIZ, "no point selected");
 		} else {
-		    VMOVE(mpt, es_metaballpt->coord);
-		    snprintf(buf, BUFSIZ, "V %f", es_metaballpt->fldstr);
+		    VMOVE(mpt, es_metaball_pnt->coord);
+		    snprintf(buf, BUFSIZ, "V %f", es_metaball_pnt->fldstr);
 		}
 		*strp = buf;
 		break;
@@ -1954,7 +1970,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 		for (i=0; i<arbn->neqn; i++) {
 		    for (j=i+1; j<arbn->neqn; j++) {
 			for (k=j+1; k<arbn->neqn; k++) {
-			    if (!bn_mkpoint_3planes(mpt, arbn->eqn[i], arbn->eqn[j], arbn->eqn[k])) {
+			    if (!bn_make_pnt_3planes(mpt, arbn->eqn[i], arbn->eqn[j], arbn->eqn[k])) {
 				size_t l;
 
 				good_vert = 1;
@@ -1962,7 +1978,7 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 				    if (l == i || l == j || l == k)
 					continue;
 
-				    if (DIST_PT_PLANE(mpt, arbn->eqn[l]) > mged_tol.dist) {
+				    if (DIST_PNT_PLANE(mpt, arbn->eqn[l]) > mged_tol.dist) {
 					good_vert = 0;
 					break;
 				    }
@@ -2511,7 +2527,7 @@ init_sedit(void)
     int type;
     int id;
 
-    if (dbip == DBI_NULL || !illump)
+    if (DBIP == DBI_NULL || !illump)
 	return;
 
     /*
@@ -2525,7 +2541,7 @@ init_sedit(void)
 
     /* Read solid description into es_int */
     if (rt_db_get_internal(&es_int, LAST_SOLID(illump),
-			   dbip, NULL, &rt_uniresource) < 0) {
+			   DBIP, NULL, &rt_uniresource) < 0) {
 	Tcl_AppendResult(INTERP, "init_sedit(",
 			 LAST_SOLID(illump)->d_namep,
 			 "):  solid import failure\n", (char *)NULL);
@@ -2568,7 +2584,7 @@ init_sedit(void)
     }
 
     /* Save aggregate path matrix */
-    (void)db_path_to_mat(dbip, &illump->s_fullpath, es_mat, illump->s_fullpath.fp_len-1, &rt_uniresource);
+    (void)db_path_to_mat(DBIP, &illump->s_fullpath, es_mat, illump->s_fullpath.fp_len-1, &rt_uniresource);
 
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);
@@ -2578,8 +2594,8 @@ init_sedit(void)
     get_solid_keypoint(es_keypoint, &es_keytag, &es_int, es_mat);
 
     es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
-    es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
-    es_metaballpt = (struct wdb_metaballpt *)NULL; /* Reset es_metaballpt */
+    es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
+    es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
     lu_copy = (struct loopuse *)NULL;
     es_ars_crv = (-1);
     es_ars_col = (-1);
@@ -2655,13 +2671,13 @@ replot_editing_solid(void)
 
     illdp = LAST_SOLID(illump);
 
-    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 	    if (LAST_SOLID(sp) == illdp) {
-		(void)db_path_to_mat(dbip, &sp->s_fullpath, mat, sp->s_fullpath.fp_len-1, &rt_uniresource);
+		(void)db_path_to_mat(DBIP, &sp->s_fullpath, mat, sp->s_fullpath.fp_len-1, &rt_uniresource);
 		(void)replot_modified_solid(sp, &es_int, mat);
 	    }
 	}
@@ -2678,7 +2694,7 @@ transform_editing_solid(
     struct rt_db_internal *is,		/* input solid */
     int freeflag)
 {
-    if (rt_matrix_transform(os, mat, is, freeflag, dbip, &rt_uniresource) < 0)
+    if (rt_matrix_transform(os, mat, is, freeflag, DBIP, &rt_uniresource) < 0)
 	bu_exit(EXIT_FAILURE, "transform_editing_solid failed to apply a matrix transform, aborting");
 }
 
@@ -2838,10 +2854,10 @@ get_file_name(char *str)
 	bu_free((void *)dir, "get_file_name: directory string");
     }
 
-    if (dm_get_pathname(dmp)) {
+    if (dm_get_pathname(DMP)) {
 	bu_vls_printf(&cmd,
 		"getFile %s %s {{{All Files} {*}}} {Get File}",
-		bu_vls_addr(dm_get_pathname(dmp)),
+		bu_vls_addr(dm_get_pathname(DMP)),
 		bu_vls_addr(&varname_vls));
     }
     bu_vls_free(&varname_vls);
@@ -2881,7 +2897,7 @@ dsp_scale(struct rt_dsp_internal *dsp, int idx)
 	es_scale = 0.0;
     }
 
-    bn_mat_xform_about_pt(scalemat, m, es_keypoint);
+    bn_mat_xform_about_pnt(scalemat, m, es_keypoint);
 
     bn_mat_mul(m, dsp->dsp_stom, scalemat);
     MAT_COPY(dsp->dsp_stom, m);
@@ -3700,71 +3716,71 @@ pscale(void)
 
 	case MENU_PIPE_PT_OD:	/* scale OD of one pipe segment */
 	    {
-		if (!es_pipept) {
+		if (!es_pipe_pnt) {
 		    Tcl_AppendResult(INTERP, "pscale: no pipe segment selected for scaling\n", (char *)NULL);
 		    return;
 		}
 
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
-		    if (es_pipept->pp_od > 0.0)
-			es_scale = es_para[0] * es_mat[15]/es_pipept->pp_od;
+		    if (es_pipe_pnt->pp_od > 0.0)
+			es_scale = es_para[0] * es_mat[15]/es_pipe_pnt->pp_od;
 		    else
 			es_scale = (-es_para[0] * es_mat[15]);
 		}
-		pipe_seg_scale_od(es_pipept, es_scale);
+		pipe_seg_scale_od(es_pipe_pnt, es_scale);
 	    }
 	    break;
 	case MENU_PIPE_PT_ID:	/* scale ID of one pipe segment */
 	    {
-		if (!es_pipept) {
+		if (!es_pipe_pnt) {
 		    Tcl_AppendResult(INTERP, "pscale: no pipe segment selected for scaling\n", (char *)NULL);
 		    return;
 		}
 
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
-		    if (es_pipept->pp_id > 0.0)
-			es_scale = es_para[0] * es_mat[15]/es_pipept->pp_id;
+		    if (es_pipe_pnt->pp_id > 0.0)
+			es_scale = es_para[0] * es_mat[15]/es_pipe_pnt->pp_id;
 		    else
 			es_scale = (-es_para[0] * es_mat[15]);
 		}
-		pipe_seg_scale_id(es_pipept, es_scale);
+		pipe_seg_scale_id(es_pipe_pnt, es_scale);
 	    }
 	    break;
 	case MENU_PIPE_PT_RADIUS:	/* scale bend radius at selected point */
 	    {
-		if (!es_pipept) {
+		if (!es_pipe_pnt) {
 		    Tcl_AppendResult(INTERP, "pscale: no pipe segment selected for scaling\n", (char *)NULL);
 		    return;
 		}
 
 		if (inpara) {
 		    /* take es_mat[15] (path scaling) into account */
-		    if (es_pipept->pp_id > 0.0)
-			es_scale = es_para[0] * es_mat[15]/es_pipept->pp_bendradius;
+		    if (es_pipe_pnt->pp_id > 0.0)
+			es_scale = es_para[0] * es_mat[15]/es_pipe_pnt->pp_bendradius;
 		    else
 			es_scale = (-es_para[0] * es_mat[15]);
 		}
-		pipe_seg_scale_radius(es_pipept, es_scale);
+		pipe_seg_scale_radius(es_pipe_pnt, es_scale);
 	    }
 	    break;
 	case MENU_PIPE_SCALE_OD:	/* scale entire pipe OD */
 	    if (inpara) {
 		struct rt_pipe_internal *pipeip =
 		    (struct rt_pipe_internal *)es_int.idb_ptr;
-		struct wdb_pipept *ps;
+		struct wdb_pipe_pnt *ps;
 
 		RT_PIPE_CK_MAGIC(pipeip);
 
-		ps = BU_LIST_FIRST(wdb_pipept, &pipeip->pipe_segs_head);
-		BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "wdb_pipept");
+		ps = BU_LIST_FIRST(wdb_pipe_pnt, &pipeip->pipe_segs_head);
+		BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "wdb_pipe_pnt");
 
 		if (ps->pp_od > 0.0) {
 		    es_scale = es_para[0] * es_mat[15]/ps->pp_od;
 		} else {
 		    while (ps->l.magic != BU_LIST_HEAD_MAGIC && ps->pp_od <= 0.0)
-			ps = BU_LIST_NEXT(wdb_pipept, &ps->l);
+			ps = BU_LIST_NEXT(wdb_pipe_pnt, &ps->l);
 
 		    if (ps->l.magic == BU_LIST_HEAD_MAGIC) {
 			Tcl_AppendResult(INTERP, "Entire pipe solid has zero OD!\n", (char *)NULL);
@@ -3780,18 +3796,18 @@ pscale(void)
 	    if (inpara) {
 		struct rt_pipe_internal *pipeip =
 		    (struct rt_pipe_internal *)es_int.idb_ptr;
-		struct wdb_pipept *ps;
+		struct wdb_pipe_pnt *ps;
 
 		RT_PIPE_CK_MAGIC(pipeip);
 
-		ps = BU_LIST_FIRST(wdb_pipept, &pipeip->pipe_segs_head);
-		BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "wdb_pipept");
+		ps = BU_LIST_FIRST(wdb_pipe_pnt, &pipeip->pipe_segs_head);
+		BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "wdb_pipe_pnt");
 
 		if (ps->pp_id > 0.0) {
 		    es_scale = es_para[0] * es_mat[15]/ps->pp_id;
 		} else {
 		    while (ps->l.magic != BU_LIST_HEAD_MAGIC && ps->pp_id <= 0.0)
-			ps = BU_LIST_NEXT(wdb_pipept, &ps->l);
+			ps = BU_LIST_NEXT(wdb_pipe_pnt, &ps->l);
 
 		    /* Check if entire pipe has zero ID */
 		    if (ps->l.magic == BU_LIST_HEAD_MAGIC)
@@ -3806,18 +3822,18 @@ pscale(void)
 	    if (inpara) {
 		struct rt_pipe_internal *pipeip =
 		    (struct rt_pipe_internal *)es_int.idb_ptr;
-		struct wdb_pipept *ps;
+		struct wdb_pipe_pnt *ps;
 
 		RT_PIPE_CK_MAGIC(pipeip);
 
-		ps = BU_LIST_FIRST(wdb_pipept, &pipeip->pipe_segs_head);
-		BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "wdb_pipept");
+		ps = BU_LIST_FIRST(wdb_pipe_pnt, &pipeip->pipe_segs_head);
+		BU_CKMAG(ps, WDB_PIPESEG_MAGIC, "wdb_pipe_pnt");
 
 		if (ps->pp_bendradius > 0.0) {
 		    es_scale = es_para[0] * es_mat[15]/ps->pp_bendradius;
 		} else {
 		    while (ps->l.magic != BU_LIST_HEAD_MAGIC && ps->pp_bendradius <= 0.0)
-			ps = BU_LIST_NEXT(wdb_pipept, &ps->l);
+			ps = BU_LIST_NEXT(wdb_pipe_pnt, &ps->l);
 
 		    /* Check if entire pipe has zero ID */
 		    if (ps->l.magic == BU_LIST_HEAD_MAGIC)
@@ -3893,20 +3909,20 @@ pscale(void)
 	    break;
 	case MENU_METABALL_PT_SET_GOO:
 	    {
-		if (!es_metaballpt || !inpara) {
+		if (!es_metaball_pnt || !inpara) {
 		    Tcl_AppendResult(INTERP, "pscale: no metaball point selected for scaling goo\n", (char *)NULL);
 		    return;
 		}
-		es_metaballpt->sweat *= *es_para * ((es_scale > -SMALL_FASTF) ? es_scale : 1.0);
+		es_metaball_pnt->sweat *= *es_para * ((es_scale > -SMALL_FASTF) ? es_scale : 1.0);
 	    }
 	    break;
 	case MENU_METABALL_PT_FLDSTR:
 	    {
-		if (!es_metaballpt || !inpara) {
+		if (!es_metaball_pnt || !inpara) {
 		    Tcl_AppendResult(INTERP, "pscale: no metaball point selected for scaling strength\n", (char *)NULL);
 		    return;
 		}
-		es_metaballpt->fldstr *= *es_para * ((es_scale > -SMALL_FASTF) ? es_scale : 1.0);
+		es_metaball_pnt->fldstr *= *es_para * ((es_scale > -SMALL_FASTF) ? es_scale : 1.0);
 	    }
 	    break;
     }
@@ -3938,7 +3954,7 @@ sedit(void)
     mat_t edit;
     point_t rot_point;
 
-    if (dbip == DBI_NULL)
+    if (DBIP == DBI_NULL)
 	return;
 
     sedraw = 0;
@@ -3966,7 +3982,7 @@ sedit(void)
 		    (struct rt_dsp_internal *)es_int.idb_ptr;
 		const char *fname;
 		struct stat stat_buf;
-		off_t need_size;
+		b_off_t need_size;
 		struct bu_vls message = BU_VLS_INIT_ZERO;
 
 		RT_DSP_CK_MAGIC(dsp);
@@ -4001,27 +4017,27 @@ sedit(void)
 		struct rt_ebm_internal *ebm =
 		    (struct rt_ebm_internal *)es_int.idb_ptr;
 		struct stat stat_buf;
-		off_t need_size;
+		b_off_t need_size;
 
 		RT_EBM_CK_MAGIC(ebm);
 
 		if (inpara == 2) {
-		    if (stat(ebm->file, &stat_buf)) {
-			Tcl_AppendResult(INTERP, "Cannot get status of file ", ebm->file, (char *)NULL);
+		    if (stat(ebm->name, &stat_buf)) {
+			Tcl_AppendResult(INTERP, "Cannot get status of ebm data source ", ebm->name, (char *)NULL);
 			mged_print_result(TCL_ERROR);
 			return;
 		    }
 		    need_size = es_para[0] * es_para[1] * sizeof(unsigned char);
 		    if (stat_buf.st_size < need_size) {
-			Tcl_AppendResult(INTERP, "File (", ebm->file,
-					 ") is too small, set file name first", (char *)NULL);
+			Tcl_AppendResult(INTERP, "File (", ebm->name,
+					 ") is too small, set data source name first", (char *)NULL);
 			mged_print_result(TCL_ERROR);
 			return;
 		    }
 		    ebm->xdim = es_para[0];
 		    ebm->ydim = es_para[1];
 		} else if (inpara > 0) {
-		    Tcl_AppendResult(INTERP, "width and length of file are required\n", (char *)NULL);
+		    Tcl_AppendResult(INTERP, "width and length of data source are required\n", (char *)NULL);
 		    mged_print_result(TCL_ERROR);
 		    return;
 		}
@@ -4034,11 +4050,11 @@ sedit(void)
 		    (struct rt_ebm_internal *)es_int.idb_ptr;
 		const char *fname;
 		struct stat stat_buf;
-		off_t need_size;
+		b_off_t need_size;
 
 		RT_EBM_CK_MAGIC(ebm);
 
-		fname = get_file_name(ebm->file);
+		fname = get_file_name(ebm->name);
 		if (fname) {
 		    struct bu_vls message = BU_VLS_INIT_ZERO;
 
@@ -4057,7 +4073,7 @@ sedit(void)
 			mged_print_result(TCL_ERROR);
 			return;
 		    }
-		    bu_strlcpy(ebm->file, fname, RT_EBM_NAME_LEN);
+		    bu_strlcpy(ebm->name, fname, RT_EBM_NAME_LEN);
 		}
 
 		break;
@@ -4110,7 +4126,7 @@ sedit(void)
 		struct rt_vol_internal *vol =
 		    (struct rt_vol_internal *)es_int.idb_ptr;
 		struct stat stat_buf;
-		off_t need_size;
+		b_off_t need_size;
 
 		RT_VOL_CK_MAGIC(vol);
 
@@ -4196,7 +4212,7 @@ sedit(void)
 		    (struct rt_vol_internal *)es_int.idb_ptr;
 		const char *fname;
 		struct stat stat_buf;
-		off_t need_size;
+		b_off_t need_size;
 
 		RT_VOL_CK_MAGIC(vol);
 
@@ -4237,9 +4253,9 @@ sedit(void)
 		RT_BOT_CK_MAGIC(bot);
 		old_mode = bot->mode;
 		sprintf(mode, " %d", old_mode - 1);
-		if (dm_get_pathname(dmp)) {
+		if (dm_get_pathname(DMP)) {
 		    ret_tcl = Tcl_VarEval(INTERP, "cad_radio", " .bot_mode_radio ",
-			    bu_vls_addr(dm_get_pathname(dmp)), " _bot_mode_result",
+			    bu_vls_addr(dm_get_pathname(DMP)), " _bot_mode_result",
 			    " \"BOT Mode\"", "  \"Select the desired mode\"", mode,
 			    " { surface volume plate plate/nocosine }",
 			    " { \"In surface mode, each triangle represents part of a zero thickness surface and no volume is enclosed\" \"In volume mode, the triangles are expected to enclose a volume and that volume becomes the solid\" \"In plate mode, each triangle represents a plate with a specified thickness\" \"In plate/nocosine mode, each triangle represents a plate with a specified thickness, but the LOS thickness reported by the raytracer is independent of obliquity angle\" } ", (char *)NULL);
@@ -4277,9 +4293,9 @@ sedit(void)
 
 		RT_BOT_CK_MAGIC(bot);
 		sprintf(orient, " %d", bot->orientation - 1);
-		if (dm_get_pathname(dmp)) {
+		if (dm_get_pathname(DMP)) {
 		    ret_tcl = Tcl_VarEval(INTERP, "cad_radio", " .bot_orient_radio ",
-			    bu_vls_addr(dm_get_pathname(dmp)), " _bot_orient_result",
+			    bu_vls_addr(dm_get_pathname(DMP)), " _bot_orient_result",
 			    " \"BOT Face Orientation\"", "  \"Select the desired orientation\"", orient,
 			    " { none right-hand-rule left-hand-rule }",
 			    " { \"No orientation means that there is no particular order for the vertices of the triangles\" \"right-hand-rule means that the vertices of each triangle are ordered such that the right-hand-rule produces an outward pointing normal\"  \"left-hand-rule means that the vertices of each triangle are ordered such that the left-hand-rule produces an outward pointing normal\" } ", (char *)NULL);
@@ -4370,11 +4386,11 @@ sedit(void)
 		    cur_settings[5] = '1';
 		}
 
-		if (dm_get_pathname(dmp)) {
+		if (dm_get_pathname(DMP)) {
 		    ret_tcl = Tcl_VarEval(INTERP,
 			    "cad_list_buts",
 			    " .bot_list_flags ",
-			    bu_vls_addr(dm_get_pathname(dmp)),
+			    bu_vls_addr(dm_get_pathname(DMP)),
 			    " _bot_flags_result ",
 			    cur_settings,
 			    " \"BOT Flags\"",
@@ -4455,8 +4471,8 @@ sedit(void)
 		else
 		    sprintf(fmode, " %d", BU_BITTEST(bot->face_mode, 0)?1:0);
 
-		if (dm_get_pathname(dmp)) {
-		    ret_tcl = Tcl_VarEval(INTERP, "cad_radio", " .bot_fmode_radio ", bu_vls_addr(dm_get_pathname(dmp)),
+		if (dm_get_pathname(DMP)) {
+		    ret_tcl = Tcl_VarEval(INTERP, "cad_radio", " .bot_fmode_radio ", bu_vls_addr(dm_get_pathname(DMP)),
 			    " _bot_fmode_result ", "\"BOT Face Mode\"",
 			    " \"Select the desired face mode\"", fmode,
 			    " { {Thickness centered about hit point} {Thickness appended to hit point} }",
@@ -4583,14 +4599,14 @@ sedit(void)
 		    rt_db_free_internal(&tmp_ip);
 		}
 
-		if ((dp = db_lookup(dbip, sketch_name, 0)) == RT_DIR_NULL) {
+		if ((dp = db_lookup(DBIP, sketch_name, 0)) == RT_DIR_NULL) {
 		    bu_log("Warning: %s does not exist!\n",
 			   sketch_name);
 		    extr->skt = (struct rt_sketch_internal *)NULL;
 		} else {
 		    /* import the new sketch */
 
-		    if (rt_db_get_internal(&tmp_ip, dp, dbip, bn_mat_identity, &rt_uniresource) != ID_SKETCH) {
+		    if (rt_db_get_internal(&tmp_ip, dp, DBIP, bn_mat_identity, &rt_uniresource) != ID_SKETCH) {
 			bu_log("rt_extrude_import: ERROR: Cannot import sketch (%.16s) for extrusion\n",
 			       sketch_name);
 			extr->skt = (struct rt_sketch_internal *)NULL;
@@ -4752,7 +4768,7 @@ sedit(void)
 		    bn_mat_mul(incr_change, modelchanges, invsolr);
 		    if (mged_variables->mv_context) {
 			/* calculate rotations about keypoint */
-			bn_mat_xform_about_pt(edit, incr_change, es_keypoint);
+			bn_mat_xform_about_pnt(edit, incr_change, es_keypoint);
 
 			/* We want our final matrix (mat) to xform the original solid
 			 * to the position of this instance of the solid, perform the
@@ -4825,8 +4841,8 @@ sedit(void)
 		mat_t scalemat;
 
 		es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
-		es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
-		es_metaballpt = (struct wdb_metaballpt *)NULL; /* Reset es_metaballpt */
+		es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
+		es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
 		bot_verts[0] = -1;
 		bot_verts[1] = -1;
 		bot_verts[2] = -1;
@@ -4836,7 +4852,7 @@ sedit(void)
 		    acc_sc_sol = es_para[0];
 		}
 
-		bn_mat_scale_about_pt(scalemat, es_keypoint, es_scale);
+		bn_mat_scale_about_pnt(scalemat, es_keypoint, es_scale);
 		bn_mat_mul(mat1, scalemat, es_mat);
 		bn_mat_mul(mat, es_invmat, mat1);
 		transform_editing_solid(&es_int, mat, &es_int, 1);
@@ -4852,8 +4868,8 @@ sedit(void)
 		vect_t delta;
 
 		es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
-		es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
-		es_metaballpt = (struct wdb_metaballpt *)NULL; /* Reset es_metaballpt */
+		es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
+		es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
 		bot_verts[0] = -1;
 		bot_verts[1] = -1;
 		bot_verts[2] = -1;
@@ -4885,8 +4901,8 @@ sedit(void)
 	case ECMD_VTRANS:
 	    /* translate a vertex */
 	    es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
-	    es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
-	    es_metaballpt = (struct wdb_metaballpt *)NULL; /* Reset es_metaballpt */
+	    es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
+	    es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
 	    bot_verts[0] = -1;
 	    bot_verts[1] = -1;
 	    bot_verts[2] = -1;
@@ -5109,8 +5125,8 @@ sedit(void)
 	    /* rot solid about vertex */
 	    {
 		es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
-		es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
-		es_metaballpt = (struct wdb_metaballpt *)NULL; /* Reset es_metaballpt */
+		es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
+		es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
 		bot_verts[0] = -1;
 		bot_verts[1] = -1;
 		bot_verts[2] = -1;
@@ -5161,7 +5177,7 @@ sedit(void)
 
 		if (mged_variables->mv_context) {
 		    /* calculate rotations about keypoint */
-		    bn_mat_xform_about_pt(edit, incr_change, rot_point);
+		    bn_mat_xform_about_pnt(edit, incr_change, rot_point);
 
 		    /* We want our final matrix (mat) to xform the original solid
 		     * to the position of this instance of the solid, perform the
@@ -5172,7 +5188,7 @@ sedit(void)
 		    bn_mat_mul(mat, es_invmat, mat1);
 		} else {
 		    MAT4X3PNT(work, es_invmat, rot_point);
-		    bn_mat_xform_about_pt(mat, incr_change, work);
+		    bn_mat_xform_about_pnt(mat, incr_change, work);
 		}
 		transform_editing_solid(&es_int, mat, &es_int, 1);
 
@@ -5215,7 +5231,7 @@ sedit(void)
 
 		if (mged_variables->mv_context) {
 		    /* calculate rotations about keypoint */
-		    bn_mat_xform_about_pt(edit, incr_change, es_keypoint);
+		    bn_mat_xform_about_pnt(edit, incr_change, es_keypoint);
 
 		    /* We want our final matrix (mat) to xform the original solid
 		     * to the position of this instance of the solid, perform the
@@ -5268,7 +5284,7 @@ sedit(void)
 
 		if (mged_variables->mv_context) {
 		    /* calculate rotations about keypoint */
-		    bn_mat_xform_about_pt(edit, incr_change, es_keypoint);
+		    bn_mat_xform_about_pnt(edit, incr_change, es_keypoint);
 
 		    /* We want our final matrix (mat) to xform the original solid
 		     * to the position of this instance of the solid, perform the
@@ -5321,7 +5337,7 @@ sedit(void)
 
 		if (mged_variables->mv_context) {
 		    /* calculate rotations about keypoint */
-		    bn_mat_xform_about_pt(edit, incr_change, es_keypoint);
+		    bn_mat_xform_about_pnt(edit, incr_change, es_keypoint);
 
 		    /* We want our final matrix (mat) to xform the original solid
 		     * to the position of this instance of the solid, perform the
@@ -5379,7 +5395,7 @@ sedit(void)
 
 		if (mged_variables->mv_context) {
 		    /* calculate rotations about keypoint */
-		    bn_mat_xform_about_pt(edit, incr_change, es_keypoint);
+		    bn_mat_xform_about_pnt(edit, incr_change, es_keypoint);
 
 		    /* We want our final matrix (mat) to xform the original solid
 		     * to the position of this instance of the solid, perform the
@@ -5432,7 +5448,7 @@ sedit(void)
 
 		if (mged_variables->mv_context) {
 		    /* calculate rotations about keypoint */
-		    bn_mat_xform_about_pt(edit, incr_change, es_keypoint);
+		    bn_mat_xform_about_pnt(edit, incr_change, es_keypoint);
 
 		    /* We want our final matrix (mat) to xform the original solid
 		     * to the position of this instance of the solid, perform the
@@ -5514,7 +5530,7 @@ sedit(void)
 		    }
 		}
 
-		if (nmg_move_edge_thru_pt(es_eu, new_pt, &mged_tol) < 0) {
+		if (nmg_move_edge_thru_pnt(es_eu, new_pt, &mged_tol) < 0) {
 		    VPRINT("Unable to hit", new_pt);
 		}
 	    }
@@ -5780,12 +5796,12 @@ sedit(void)
 		} else if (!es_mvalid && !inpara)
 		    break;
 
-		es_pipept = find_pipept_nearest_pt(&pipeip->pipe_segs_head, new_pt);
-		if (!es_pipept) {
+		es_pipe_pnt = find_pipe_pnt_nearest_pnt(&pipeip->pipe_segs_head, new_pt);
+		if (!es_pipe_pnt) {
 		    Tcl_AppendResult(INTERP, "No PIPE segment selected\n", (char *)NULL);
 		    mged_print_result(TCL_ERROR);
 		} else
-		    rt_pipept_print(es_pipept, base2local);
+		    rt_pipe_pnt_print(es_pipe_pnt, base2local);
 	    }
 	    break;
 	case ECMD_PIPE_SPLIT:
@@ -5812,13 +5828,13 @@ sedit(void)
 		} else if (!es_mvalid && !inpara)
 		    break;
 
-		if (!es_pipept) {
+		if (!es_pipe_pnt) {
 		    Tcl_AppendResult(INTERP, "No pipe segment selected\n", (char *)NULL);
 		    mged_print_result(TCL_ERROR);
 		    break;
 		}
 
-		split_pipept(&pipeip->pipe_segs_head, es_pipept, new_pt);
+		pipe_split_pnt(&pipeip->pipe_segs_head, es_pipe_pnt, new_pt);
 	    }
 	    break;
 	case ECMD_PIPE_PT_MOVE:
@@ -5845,13 +5861,13 @@ sedit(void)
 		} else if (!es_mvalid && !inpara)
 		    break;
 
-		if (!es_pipept) {
+		if (!es_pipe_pnt) {
 		    Tcl_AppendResult(INTERP, "No pipe segment selected\n", (char *)NULL);
 		    mged_print_result(TCL_ERROR);
 		    break;
 		}
 
-		move_pipept(pipeip, es_pipept, new_pt);
+		pipe_move_pnt(pipeip, es_pipe_pnt, new_pt);
 	    }
 	    break;
 	case ECMD_PIPE_PT_ADD:
@@ -5878,7 +5894,7 @@ sedit(void)
 		} else if (!es_mvalid && !inpara)
 		    break;
 
-		es_pipept = add_pipept(pipeip, es_pipept, new_pt);
+		es_pipe_pnt = pipe_add_pnt(pipeip, es_pipe_pnt, new_pt);
 	    }
 	    break;
 	case ECMD_PIPE_PT_INS:
@@ -5905,17 +5921,17 @@ sedit(void)
 		} else if (!es_mvalid && !inpara)
 		    break;
 
-		ins_pipept(pipeip, es_pipept, new_pt);
+		pipe_ins_pnt(pipeip, es_pipe_pnt, new_pt);
 	    }
 	    break;
 	case ECMD_PIPE_PT_DEL:
 	    {
-		if (!es_pipept) {
+		if (!es_pipe_pnt) {
 		    Tcl_AppendResult(INTERP, "No pipe segment selected\n", (char *)NULL);
 		    mged_print_result(TCL_ERROR);
 		    break;
 		}
-		es_pipept = del_pipept(es_pipept);
+		es_pipe_pnt = pipe_del_pnt(es_pipe_pnt);
 	    }
 	    break;
 	case ECMD_ARS_PICK_MENU:
@@ -5961,7 +5977,7 @@ sedit(void)
 		/* Get view direction vector */
 		VSET(z_dir, 0.0, 0.0, 1.0);
 		MAT4X3VEC(view_dir, view_state->vs_gvp->gv_view2model, z_dir);
-		find_nearest_ars_pt(&es_ars_crv, &es_ars_col, ars, pick_pt, view_dir);
+		find_ars_nearest_pnt(&es_ars_crv, &es_ars_col, ars, pick_pt, view_dir);
 		VMOVE(es_pt, &ars->curves[es_ars_crv][es_ars_col*3]);
 		VSCALE(selected_pt, es_pt, base2local);
 		bu_log("Selected point #%d from curve #%d (%f %f %f)\n",
@@ -6287,7 +6303,7 @@ sedit(void)
 		    view_pl[W] = VDOT(view_pl, &ars->curves[es_ars_crv][es_ars_col*3]);
 
 		    /* project es_mparam onto the plane */
-		    dist = DIST_PT_PLANE(es_mparam, view_pl);
+		    dist = DIST_PNT_PLANE(es_mparam, view_pl);
 		    VJOIN1(new_pt, es_mparam, -dist, view_pl);
 		} else if (inpara == 3) {
 		    if (mged_variables->mv_context) {
@@ -6340,7 +6356,7 @@ sedit(void)
 		    view_pl[W] = VDOT(view_pl, &ars->curves[es_ars_crv][es_ars_col*3]);
 
 		    /* project es_mparam onto the plane */
-		    dist = DIST_PT_PLANE(es_mparam, view_pl);
+		    dist = DIST_PNT_PLANE(es_mparam, view_pl);
 		    VJOIN1(new_pt, es_mparam, -dist, view_pl);
 		} else if (inpara == 3) {
 		    if (mged_variables->mv_context) {
@@ -6392,7 +6408,7 @@ sedit(void)
 		    view_pl[W] = VDOT(view_pl, &ars->curves[es_ars_crv][es_ars_col*3]);
 
 		    /* project es_mparam onto the plane */
-		    dist = DIST_PT_PLANE(es_mparam, view_pl);
+		    dist = DIST_PNT_PLANE(es_mparam, view_pl);
 		    VJOIN1(new_pt, es_mparam, -dist, view_pl);
 		} else if (inpara == 3) {
 		    if (mged_variables->mv_context) {
@@ -6551,8 +6567,8 @@ sedit(void)
 		struct rt_metaball_internal *metaball=
 		    (struct rt_metaball_internal *)es_int.idb_ptr;
 		point_t new_pt;
-		struct wdb_metaballpt *ps;
-		struct wdb_metaballpt *nearest=(struct wdb_metaballpt *)NULL;
+		struct wdb_metaball_pnt *ps;
+		struct wdb_metaball_pnt *nearest=(struct wdb_metaball_pnt *)NULL;
 		struct bn_tol tmp_tol;
 		fastf_t min_dist = MAX_FASTF;
 		vect_t dir;
@@ -6581,69 +6597,69 @@ sedit(void)
 		VSET(work, 0.0, 0.0, 1.0);
 		MAT4X3VEC(dir, view_state->vs_gvp->gv_view2model, work);
 
-		for (BU_LIST_FOR(ps, wdb_metaballpt, &metaball->metaball_ctrl_head)) {
+		for (BU_LIST_FOR(ps, wdb_metaball_pnt, &metaball->metaball_ctrl_head)) {
 		    fastf_t dist;
 
-		    dist = bn_dist_line3_pt3(new_pt, dir, ps->coord);
+		    dist = bn_dist_line3_pnt3(new_pt, dir, ps->coord);
 		    if (dist < min_dist) {
 			min_dist = dist;
 			nearest = ps;
 		    }
 		}
 
-		es_metaballpt = nearest;
+		es_metaball_pnt = nearest;
 
-		if (!es_metaballpt) {
+		if (!es_metaball_pnt) {
 		    Tcl_AppendResult(INTERP, "No METABALL control point selected\n", (char *)NULL);
 		    mged_print_result(TCL_ERROR);
 		} else {
-		    rt_metaballpt_print(es_metaballpt, base2local);
+		    rt_metaball_pnt_print(es_metaball_pnt, base2local);
 		}
 	    }
 	    break;
 	case ECMD_METABALL_PT_MOV:
-	    if (!es_metaballpt) {
+	    if (!es_metaball_pnt) {
 		bu_log("Must select a point to move"); break; }
 	    if (inpara != 3) {
 		bu_log("Must provide dx dy dz"); break; }
-	    VADD2(es_metaballpt->coord, es_metaballpt->coord, es_para);
+	    VADD2(es_metaball_pnt->coord, es_metaball_pnt->coord, es_para);
 	    break;
 	case ECMD_METABALL_PT_DEL:
 	    {
-		struct wdb_metaballpt *tmp = es_metaballpt, *p;
+		struct wdb_metaball_pnt *tmp = es_metaball_pnt, *p;
 
-		if (es_metaballpt == NULL) {
+		if (es_metaball_pnt == NULL) {
 		    bu_log("No point selected");
 		    break;
 		}
-		p = BU_LIST_PREV(wdb_metaballpt, &es_metaballpt->l);
+		p = BU_LIST_PREV(wdb_metaball_pnt, &es_metaball_pnt->l);
 		if (p->l.magic == BU_LIST_HEAD_MAGIC) {
-		    es_metaballpt = BU_LIST_NEXT(wdb_metaballpt, &es_metaballpt->l);
+		    es_metaball_pnt = BU_LIST_NEXT(wdb_metaball_pnt, &es_metaball_pnt->l);
 		    /* 0 point metaball... allow it for now. */
-		    if (es_metaballpt->l.magic == BU_LIST_HEAD_MAGIC)
-			es_metaballpt = NULL;
+		    if (es_metaball_pnt->l.magic == BU_LIST_HEAD_MAGIC)
+			es_metaball_pnt = NULL;
 		} else
-		    es_metaballpt = p;
+		    es_metaball_pnt = p;
 		BU_LIST_DQ(&tmp->l);
 		free(tmp);
-		if (!es_metaballpt)
+		if (!es_metaball_pnt)
 		    bu_log("WARNING: Last point of this metaball has been deleted.");
 	    }
 	    break;
 	case ECMD_METABALL_PT_ADD:
 	    {
 		struct rt_metaball_internal *metaball= (struct rt_metaball_internal *)es_int.idb_ptr;
-		struct wdb_metaballpt *n = (struct wdb_metaballpt *)malloc(sizeof(struct wdb_metaballpt));
+		struct wdb_metaball_pnt *n = (struct wdb_metaball_pnt *)malloc(sizeof(struct wdb_metaball_pnt));
 
 		if (inpara != 3) {
 		    bu_log("Must provide x y z"); break; }
 
-		es_metaballpt = BU_LIST_FIRST(wdb_metaballpt, &metaball->metaball_ctrl_head);
+		es_metaball_pnt = BU_LIST_FIRST(wdb_metaball_pnt, &metaball->metaball_ctrl_head);
 		VMOVE(n->coord, es_para);
 		n->l.magic = WDB_METABALLPT_MAGIC;
 		n->fldstr = 1.0;
-		BU_LIST_APPEND(&es_metaballpt->l, &n->l);
-		es_metaballpt = n;
+		BU_LIST_APPEND(&es_metaball_pnt->l, &n->l);
+		es_metaball_pnt = n;
 	    }
 	    break;
 
@@ -7303,7 +7319,7 @@ vls_solid(struct bu_vls *vp, struct rt_db_internal *ip, const mat_t mat)
 
     RT_DB_INTERNAL_INIT(&intern);
 
-    if (dbip == DBI_NULL)
+    if (DBIP == DBI_NULL)
 	return;
 
     BU_CK_VLS(vp);
@@ -7313,31 +7329,29 @@ vls_solid(struct bu_vls *vp, struct rt_db_internal *ip, const mat_t mat)
     transform_editing_solid(&intern, mat, (struct rt_db_internal *)ip, 0);
 
     if (id != ID_ARS && id != ID_POLY && id != ID_BOT) {
-	if (OBJ[id].ft_describe(vp, &intern, 1 /*verbose*/,
-				       base2local, &rt_uniresource, dbip) < 0)
+	if (OBJ[id].ft_describe(vp, &intern, 1 /*verbose*/, base2local) < 0)
 	    Tcl_AppendResult(INTERP, "vls_solid: describe error\n", (char *)NULL);
     } else {
-	if (OBJ[id].ft_describe(vp, &intern, 0 /* not verbose */,
-				       base2local, &rt_uniresource, dbip) < 0)
+	if (OBJ[id].ft_describe(vp, &intern, 0 /* not verbose */, base2local) < 0)
 	    Tcl_AppendResult(INTERP, "vls_solid: describe error\n", (char *)NULL);
     }
 
-    if (id == ID_PIPE && es_pipept) {
+    if (id == ID_PIPE && es_pipe_pnt) {
 	struct rt_pipe_internal *pipeip;
-	struct wdb_pipept *ps=(struct wdb_pipept *)NULL;
+	struct wdb_pipe_pnt *ps=(struct wdb_pipe_pnt *)NULL;
 	int seg_no = 0;
 
 	pipeip = (struct rt_pipe_internal *)ip->idb_ptr;
 	RT_PIPE_CK_MAGIC(pipeip);
 
-	for (BU_LIST_FOR(ps, wdb_pipept, &pipeip->pipe_segs_head)) {
+	for (BU_LIST_FOR(ps, wdb_pipe_pnt, &pipeip->pipe_segs_head)) {
 	    seg_no++;
-	    if (ps == es_pipept)
+	    if (ps == es_pipe_pnt)
 		break;
 	}
 
-	if (ps == es_pipept)
-	    rt_vls_pipept(vp, seg_no, &intern, base2local);
+	if (ps == es_pipe_pnt)
+	    rt_vls_pipe_pnt(vp, seg_no, &intern, base2local);
     }
 
     rt_db_free_internal(&intern);
@@ -7355,7 +7369,7 @@ init_oedit_guts(void)
     es_edflag = -1;
     MAT_IDN(es_mat);
 
-    if (dbip == DBI_NULL || !illump) {
+    if (DBIP == DBI_NULL || !illump) {
 	return;
     }
 
@@ -7373,7 +7387,7 @@ init_oedit_guts(void)
 
     /* Not an evaluated region - just a regular path ending in a solid */
     if (rt_db_get_internal(&es_int, LAST_SOLID(illump),
-			   dbip, NULL, &rt_uniresource) < 0) {
+			   DBIP, NULL, &rt_uniresource) < 0) {
 	Tcl_AppendResult(INTERP, "init_oedit(",
 			 LAST_SOLID(illump)->d_namep,
 			 "):  solid import failure\n", (char *)NULL);
@@ -7394,7 +7408,7 @@ init_oedit_guts(void)
     }
 
     /* Save aggregate path matrix */
-    (void)db_path_to_mat(dbip, &illump->s_fullpath, es_mat, illump->s_fullpath.fp_len-1, &rt_uniresource);
+    (void)db_path_to_mat(DBIP, &illump->s_fullpath, es_mat, illump->s_fullpath.fp_len-1, &rt_uniresource);
 
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);
@@ -7484,7 +7498,7 @@ oedit_apply(int continue_editing)
 	    MAT_IDN(deltam);
 	    MAT_IDN(tempm);
 
-	    (void)db_path_to_mat(dbip, &illump->s_fullpath, topm, ipathpos-1, &rt_uniresource);
+	    (void)db_path_to_mat(DBIP, &illump->s_fullpath, topm, ipathpos-1, &rt_uniresource);
 
 	    bn_mat_inv(inv_topm, topm);
 
@@ -7506,8 +7520,8 @@ oedit_apply(int continue_editing)
     modelchanges[15] = 1000000000;	/* => small ratio */
 
     /* Now, recompute new chunks of displaylist */
-    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+    gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
+    while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
@@ -7532,14 +7546,14 @@ oedit_accept(void)
     struct display_list *next_gdlp;
     struct solid *sp;
 
-    if (dbip == DBI_NULL)
+    if (DBIP == DBI_NULL)
 	return;
 
-    if (dbip->dbi_read_only) {
+    if (DBIP->dbi_read_only) {
 	oedit_reject();
 
-	gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+	gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
@@ -7646,8 +7660,8 @@ sedit_apply(int accept_flag)
     struct directory *dp;
 
     es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
-    es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
-    es_metaballpt = (struct wdb_metaballpt *)NULL; /* Reset es_metaballpt */
+    es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
+    es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
     bot_verts[0] = -1;
     bot_verts[1] = -1;
     bot_verts[2] = -1;
@@ -7698,7 +7712,7 @@ sedit_apply(int accept_flag)
     }
 
     /* Scale change on export is 1.0 -- no change */
-    if (rt_db_put_internal(dp, dbip, &es_int, &rt_uniresource) < 0) {
+    if (rt_db_put_internal(dp, DBIP, &es_int, &rt_uniresource) < 0) {
 	Tcl_AppendResult(INTERP, "sedit_apply(", dp->d_namep,
 			 "):  solid export failure\n", (char *)NULL);
 	if (accept_flag) {
@@ -7718,7 +7732,7 @@ sedit_apply(int accept_flag)
 	/* XXX hack to restore es_int after rt_db_put_internal blows it away */
 	/* Read solid description into es_int again! Gaak! */
 	if (rt_db_get_internal(&es_int, LAST_SOLID(illump),
-			       dbip, NULL, &rt_uniresource) < 0) {
+			       DBIP, NULL, &rt_uniresource) < 0) {
 	    Tcl_AppendResult(INTERP, "sedit_apply(",
 			     LAST_SOLID(illump)->d_namep,
 			     "):  solid reimport failure\n", (char *)NULL);
@@ -7735,13 +7749,13 @@ sedit_apply(int accept_flag)
 void
 sedit_accept(void)
 {
-    if (dbip == DBI_NULL)
+    if (DBIP == DBI_NULL)
 	return;
 
     if (not_state(ST_S_EDIT, "Solid edit accept"))
 	return;
 
-    if (dbip->dbi_read_only) {
+    if (DBIP->dbi_read_only) {
 	sedit_reject();
 	bu_log("Sorry, this database is READ-ONLY\n");
 	pr_prompt(interactive);
@@ -7766,8 +7780,8 @@ sedit_reject(void)
 	sedit();
 
     es_eu = (struct edgeuse *)NULL;	/* Reset es_eu */
-    es_pipept = (struct wdb_pipept *)NULL; /* Reset es_pipept */
-    es_metaballpt = (struct wdb_metaballpt *)NULL; /* Reset es_metaballpt */
+    es_pipe_pnt = (struct wdb_pipe_pnt *)NULL; /* Reset es_pipe_pnt */
+    es_metaball_pnt = (struct wdb_metaball_pnt *)NULL; /* Reset es_metaball_pnt */
     bot_verts[0] = -1;
     bot_verts[1] = -1;
     bot_verts[2] = -1;
@@ -7787,8 +7801,8 @@ sedit_reject(void)
 	struct display_list *next_gdlp;
 	struct solid *sp;
 
-	gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
+	gdlp = BU_LIST_NEXT(display_list, GEDP->ged_gdp->gd_headDisplay);
+	while (BU_LIST_NOT_HEAD(gdlp, GEDP->ged_gdp->gd_headDisplay)) {
 	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
 	    FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
@@ -7828,7 +7842,7 @@ mged_param(Tcl_Interp *interp, int argc, fastf_t *argvect)
 	es_para[ inpara++ ] = argvect[i];
     }
 
-    if (es_edflag == PSCALE || es_edflag == SSCALE || es_edflag == ECMD_BOT_THICK) {
+    if (PARAM_1ARG) {
 	if (inpara != 1) {
 	    Tcl_AppendResult(interp, "ERROR: only one argument needed\n", (char *)NULL);
 	    inpara = 0;
@@ -7850,6 +7864,22 @@ mged_param(Tcl_Interp *interp, int argc, fastf_t *argvect)
 		inpara = 0;
 		return TCL_ERROR;
 	    }
+	}
+    } else if (PARAM_2ARG) {
+	if (inpara != 2) {
+	    Tcl_AppendResult(interp, "ERROR: two arguments needed\n", (char *)NULL);
+	    inpara = 0;
+	    return TCL_ERROR;
+	}
+
+	if (es_para[0] <= 0.0) {
+	    Tcl_AppendResult(interp, "ERROR: X SIZE <= 0\n", (char *)NULL);
+	    inpara = 0;
+	    return TCL_ERROR;
+	} else if (es_para[1] <= 0.0) {
+	    Tcl_AppendResult(interp, "ERROR: Y SIZE <= 0\n", (char *)NULL);
+	    inpara = 0;
+	    return TCL_ERROR;
 	}
     } else {
 	if (inpara != 3) {
@@ -8435,10 +8465,10 @@ label_edited_solid(
 		RT_PIPE_CK_MAGIC(pipeip);
 #endif
 
-		if (es_pipept) {
-		    BU_CKMAG(es_pipept, WDB_PIPESEG_MAGIC, "wdb_pipept");
+		if (es_pipe_pnt) {
+		    BU_CKMAG(es_pipe_pnt, WDB_PIPESEG_MAGIC, "wdb_pipe_pnt");
 
-		    MAT4X3PNT(pos_view, xform, es_pipept->pp_coord);
+		    MAT4X3PNT(pos_view, xform, es_pipe_pnt->pp_coord);
 		    POINT_LABEL_STR(pos_view, "pt");
 		}
 	    }
@@ -8515,10 +8545,10 @@ label_edited_solid(
 		RT_METABALL_CK_MAGIC(metaball);
 #endif
 
-		if (es_metaballpt) {
-		    BU_CKMAG(es_metaballpt, WDB_METABALLPT_MAGIC, "wdb_metaballpt");
+		if (es_metaball_pnt) {
+		    BU_CKMAG(es_metaball_pnt, WDB_METABALLPT_MAGIC, "wdb_metaball_pnt");
 
-		    MAT4X3PNT(pos_view, xform, es_metaballpt->coord);
+		    MAT4X3PNT(pos_view, xform, es_metaball_pnt->coord);
 		    POINT_LABEL_STR(pos_view, "pt");
 		}
 	    }
@@ -9037,14 +9067,14 @@ f_sedit_reset(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const
     rt_db_free_internal(&es_int);
 
     /* reset */
-    es_pipept = (struct wdb_pipept *)NULL;
-    es_metaballpt = (struct wdb_metaballpt *)NULL;
+    es_pipe_pnt = (struct wdb_pipe_pnt *)NULL;
+    es_metaball_pnt = (struct wdb_metaball_pnt *)NULL;
     es_s = (struct shell *)NULL;
     es_eu = (struct edgeuse *)NULL;
 
     /* read in a fresh copy */
     if (rt_db_get_internal(&es_int, LAST_SOLID(illump),
-			   dbip, NULL, &rt_uniresource) < 0) {
+			   DBIP, NULL, &rt_uniresource) < 0) {
 	Tcl_AppendResult(interp, "sedit_reset(",
 			 LAST_SOLID(illump)->d_namep,
 			 "):  solid import failure\n", (char *)NULL);
@@ -9156,7 +9186,7 @@ f_oedit_apply(ClientData UNUSED(clientData), Tcl_Interp *interp, int UNUSED(argc
 
     /* Save aggregate path matrix */
     MAT_IDN(es_mat);
-    (void)db_path_to_mat(dbip, &illump->s_fullpath, es_mat, illump->s_fullpath.fp_len-1, &rt_uniresource);
+    (void)db_path_to_mat(DBIP, &illump->s_fullpath, es_mat, illump->s_fullpath.fp_len-1, &rt_uniresource);
 
     /* get the inverse matrix */
     bn_mat_inv(es_invmat, es_mat);

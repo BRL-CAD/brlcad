@@ -1,7 +1,7 @@
 /*                          M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2018 United States Government as represented by
+ * Copyright (c) 1990-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include "bu/app.h"
 #include "bu/debug.h"
 #include "bu/getopt.h"
 /* private */
@@ -34,8 +35,8 @@
 
 
 int do_projection = 1;
-char eor = 0;
-char eof = -1;
+char eord = 0;
+char eofd = -1;
 char card[256] = {0};
 fastf_t scale = 0.0;
 fastf_t inv_scale = 0.0;
@@ -180,7 +181,7 @@ main(int argc, char *argv [])
 		solid_name = bu_optarg;
 		break;
 	    case 'x':
-		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
+		sscanf(bu_optarg, "%x", (unsigned int *)&rt_debug);
 		break;
 	    case 'X':
 		sscanf(bu_optarg, "%x", (unsigned int *)&nmg_debug);

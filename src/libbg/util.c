@@ -1,7 +1,7 @@
 /*                       U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2018 United States Government as represented by
+ * Copyright (c) 2013-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Copyright 2001 softSurfer, 2012 Dan Sunday
@@ -71,7 +71,7 @@ coplanar_2d_coord_sys(point_t *origin_pnt, vect_t *u_axis, vect_t *v_axis, const
 
     /* Step 2 - find furthest points from the center point */
     for (i = 0; i < n; i++) {
-	fastf_t curr_dist = DIST_PT_PT_SQ(*origin_pnt, points_3d[i]);
+	fastf_t curr_dist = DIST_PNT_PNT_SQ(*origin_pnt, points_3d[i]);
 	if (curr_dist > dist_pt_pt) {
 	    dist_pt_pt = curr_dist;
 	    VMOVE(p_farthest, points_3d[i]);
@@ -83,7 +83,7 @@ coplanar_2d_coord_sys(point_t *origin_pnt, vect_t *u_axis, vect_t *v_axis, const
 
     /* Step 3 - find normal vector of plane holding points */
     i = 0;
-    dist_pt_pt = DIST_PT_PT(*origin_pnt, p_farthest);
+    dist_pt_pt = DIST_PNT_PNT(*origin_pnt, p_farthest);
     if (NEAR_ZERO(dist_pt_pt, VUNITIZE_TOL)) return -1;
     while (i < n) {
 	if (i != p_farthest_index) {
@@ -93,7 +93,7 @@ coplanar_2d_coord_sys(point_t *origin_pnt, vect_t *u_axis, vect_t *v_axis, const
 	    VUNITIZE(temp_vect);
 	    curr_vdot = fabs(VDOT(temp_vect, *u_axis));
 	    if (curr_vdot < vdot) {
-		if (!bn_mk_plane_3pts(plane, *origin_pnt, p_farthest, points_3d[i], &tol)) {
+		if (!bn_make_plane_3pnts(plane, *origin_pnt, p_farthest, points_3d[i], &tol)) {
 		    VSET(normal, plane[0], plane[1], plane[2]);
 		    have_normal = 1;
 		    vdot = curr_vdot;
@@ -115,8 +115,8 @@ coplanar_2d_coord_sys(point_t *origin_pnt, vect_t *u_axis, vect_t *v_axis, const
 
 int
 coplanar_3d_to_2d(point2d_t **points_2d, const point_t *origin_pnt,
-		     const vect_t *u_axis, const vect_t *v_axis,
-		     const point_t *points_3d, int n)
+		  const vect_t *u_axis, const vect_t *v_axis,
+		  const point_t *points_3d, int n)
 {
     int i = 0;
     for (i = 0; i < n; i++) {
@@ -135,10 +135,10 @@ coplanar_3d_to_2d(point2d_t **points_2d, const point_t *origin_pnt,
 
 int
 coplanar_2d_to_3d(point_t **points_3d, const point_t *origin_pnt,
-		     const vect_t *u_axis, const vect_t *v_axis,
-		     const point2d_t *points_2d, int n)
+		  const vect_t *u_axis, const vect_t *v_axis,
+		  const point2d_t *points_2d, int n)
 {
-int i;
+    int i;
     vect_t u_x_component, u_y_component, u_z_component;
     vect_t v_x_component, v_y_component, v_z_component;
     vect_t x_axis, y_axis, z_axis;
@@ -166,8 +166,8 @@ int i;
     for (i = 0; i < n; i++) {
 	vect_t temp_2d;
 	VSET(temp_2d, points_2d[i][0]*mag_u_x + (points_2d)[i][1]*mag_v_x,
-		(points_2d)[i][0]*mag_u_y + (points_2d)[i][1]*mag_v_y,
-		(points_2d)[i][0]*mag_u_z + (points_2d)[i][1]*mag_v_z);
+	     (points_2d)[i][0]*mag_u_y + (points_2d)[i][1]*mag_v_y,
+	     (points_2d)[i][0]*mag_u_z + (points_2d)[i][1]*mag_v_z);
 	VADD2((*points_3d)[i], (*origin_pnt), temp_2d);
     }
 

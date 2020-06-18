@@ -1,7 +1,7 @@
 /*                         D E B U G L I B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2018 United States Government as represented by
+ * Copyright (c) 2008-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,19 +51,17 @@ ged_debuglib(struct ged *gedp, int argc, const char *argv[])
 
     /* get librt's debug bit vector */
     if (argc == 1) {
-	bu_vls_printb(gedp->ged_result_str, "Possible flags", 0xffffffffL, DEBUG_FORMAT);
+	bu_vls_printb(gedp->ged_result_str, "Possible flags", 0xffffffffL, RT_DEBUG_FORMAT);
 	bu_vls_printf(gedp->ged_result_str, "\n");
     } else {
 	/* set librt's debug bit vector */
-	if (sscanf(argv[1], "%x", (unsigned int *)&RTG.debug) != 1) {
+	if (sscanf(argv[1], "%x", (unsigned int *)&rt_debug) != 1) {
 	    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	    return GED_ERROR;
 	}
-
-	if (RT_G_DEBUG) bu_debug |= BU_DEBUG_COREDUMP;
     }
 
-    bu_vls_printb(gedp->ged_result_str, "librt RT_G_DEBUG", RT_G_DEBUG, DEBUG_FORMAT);
+    bu_vls_printb(gedp->ged_result_str, "librt RT_G_DEBUG", RT_G_DEBUG, RT_DEBUG_FORMAT);
     bu_vls_printf(gedp->ged_result_str, "\n");
 
     return GED_OK;

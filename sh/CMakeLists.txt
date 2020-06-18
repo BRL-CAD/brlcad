@@ -4,8 +4,6 @@ set(sh_SCRIPTS
   cmp.sh
   conversion.sh
   facetall.sh
-  orbit.sh
-  pixinfo.sh
   show.sh
   )
 foreach(script ${sh_SCRIPTS})
@@ -41,6 +39,7 @@ set(noinst_SCRIPTS
   )
 CMAKEFILES(${sh_SCRIPTS})
 CMAKEFILES(${noinst_SCRIPTS})
+CMAKEFILES(CMakeLists.txt)
 
 # Local Variables:
 # tab-width: 8

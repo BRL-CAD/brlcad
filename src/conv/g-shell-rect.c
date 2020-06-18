@@ -1,7 +1,7 @@
 /*                  G - S H E L L - R E C T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,6 +37,7 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/app.h"
 #include "bu/debug.h"
 #include "bu/getopt.h"
 #include "vmath.h"
@@ -1095,7 +1096,7 @@ refine_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
     VJOIN1(hit_pt, ap->a_ray.r_pt, pp->pt_inhit->hit_dist, ap->a_ray.r_dir);
 
     for (BU_LIST_FOR(rpp, refine_rpp, &add_rpp_head)) {
-	if (V3PT_IN_RPP(hit_pt, rpp->min, rpp->max)) {
+	if (V3PNT_IN_RPP(hit_pt, rpp->min, rpp->max)) {
 	    V_MIN(use_tolerance, rpp->tolerance);
 	}
     }
@@ -1440,7 +1441,7 @@ Make_shell(void)
 		    }
 
 		    if (debug > 3) {
-			bu_log("Making faces for y_index=%d, z_index=%d\n", y_index, z_index);
+			bu_log("Making faces for y_index=%zu, z_index=%zu\n", y_index, z_index);
 			for (i = 0; i < 4; i++) {
 			    bu_log("part #%d:\n", i);
 			    bu_log("\tray start is (%g %g %g)\n", V3ARGS(yz_rays[cell_no[i]].r_pt));
@@ -1474,7 +1475,7 @@ Make_shell(void)
 		    }
 
 		    if (debug > 3) {
-			bu_log("Making faces for x_index=%d, z_index=%d\n", x_index, z_index);
+			bu_log("Making faces for x_index=%zu, z_index=%zu\n", x_index, z_index);
 			for (i = 0; i < 4; i++) {
 			    bu_log("part #%d:\n", i);
 			    bu_log("\tray start is (%g %g %g)\n", V3ARGS(xz_rays[cell_no[i]].r_pt));
@@ -1508,7 +1509,7 @@ Make_shell(void)
 		    }
 
 		    if (debug > 3) {
-			bu_log("Making faces for x_index=%d, y_index=%d\n", x_index, y_index);
+			bu_log("Making faces for x_index=%zu, y_index=%zu\n", x_index, y_index);
 			for (i = 0; i < 4; i++) {
 			    bu_log("part #%d:\n", i);
 			    bu_log("\tray start is (%g %g %g)\n", V3ARGS(xy_rays[cell_no[i]].r_pt));
@@ -1821,7 +1822,7 @@ main(int argc, char **argv)
     cell_count[X] = (int)((rtip->mdl_max[X] - rtip->mdl_min[X])/cell_size) + 3;
     cell_count[Y] = (int)((rtip->mdl_max[Y] - rtip->mdl_min[Y])/cell_size) + 3;
     cell_count[Z] = (int)((rtip->mdl_max[Z] - rtip->mdl_min[Z])/cell_size) + 3;
-    bu_log("cell size is %gmm\n\t%d cells in X-direction\n\t%d cells in Y-direction\n\t%d cells in Z-direction\n",
+    bu_log("cell size is %gmm\n\t%zu cells in X-direction\n\t%zu cells in Y-direction\n\t%zu cells in Z-direction\n",
 	   cell_size, cell_count[X], cell_count[Y], cell_count[Z]);
 
     x_start = rtip->mdl_min[X] - ((double)cell_count[X] * cell_size - (rtip->mdl_max[X] - rtip->mdl_min[X]))/2.0;

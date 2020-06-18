@@ -1,7 +1,7 @@
 /*                        R T _ D A T U M . C
  * BRL-CAD
  *
- * Copyright (c) 2018 United States Government as represented by
+ * Copyright (c) 2018-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,11 +21,12 @@
 #include "common.h"
 
 #include "vmath.h"
+#include "bu/app.h"
 #include "bu/avs.h"
-#include "bu/file.h"
 #include "bu/malloc.h"
 #include "raytrace.h"
 #include "../librt_private.h"
+
 
 /* Note - initially, the thought was to use only librt API for this, without
  * pulling in libwdb.  Normally libwdb should be used to create objects of this
@@ -135,7 +136,8 @@ add_comb(struct db_i *dbip, const char *name, int obj_argc, const char **obj_arg
     tree_list = (struct rt_tree_array *)bu_calloc(obj_argc, sizeof(struct rt_tree_array), "tree list");
     for (i = 0; i < obj_argc; i++) {
 	union tree *tp;
-	RT_GET_TREE(tp, &rt_uniresource);
+	BU_GET(tp, union tree);
+	RT_TREE_INIT(tp);
 	tree_list[i].tl_op = OP_UNION;
 	tree_list[i].tl_tree = tp;
 	tp->tr_l.tl_op = OP_DB_LEAF;
@@ -152,7 +154,7 @@ add_comb(struct db_i *dbip, const char *name, int obj_argc, const char **obj_arg
     }
     if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
 	rt_db_free_internal(&intern);
-	bu_log("%s error: Database write error, aborting\n");
+	bu_log("Error: Database write error, aborting\n");
 	return 1;
     }
 
@@ -250,12 +252,20 @@ report_object_params(struct db_i *dbip, const char *o)
     int id;
     struct bu_vls rtlog = BU_VLS_INIT_ZERO;
     struct rt_db_internal intern;
+
     struct directory *dp = db_lookup(dbip, o, LOOKUP_QUIET);
-    if (dp == RT_DIR_NULL) return;
+    if (dp == RT_DIR_NULL)
+	return;
+
     RT_DB_INTERNAL_INIT(&intern);
-    if ((id = rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource)) < 0) return;
-    if (!OBJ[id].ft_describe) return;
-    if (OBJ[id].ft_describe(&rtlog, &intern, 1, dbip->dbi_base2local, &rt_uniresource,dbip) < 0) return;
+    if ((id = rt_db_get_internal(&intern, dp, dbip, (fastf_t *)NULL, &rt_uniresource)) < 0)
+	return;
+
+    if (!OBJ[id].ft_describe)
+	return;
+    if (OBJ[id].ft_describe(&rtlog, &intern, 1, dbip->dbi_base2local) < 0)
+	return;
+
     bu_log("OBJECT %s:\n%s\n", o, bu_vls_addr(&rtlog));
     bu_vls_free(&rtlog);
 }
@@ -272,12 +282,16 @@ report_instance_params(struct db_i *dbip, const char *c, const char *o)
     union tree *tp;
     struct directory *cdp = db_lookup(dbip, c, LOOKUP_QUIET);
     struct directory *dp = db_lookup(dbip, o, LOOKUP_QUIET);
-    if (cdp == RT_DIR_NULL || dp == RT_DIR_NULL) return;
+
+    if (cdp == RT_DIR_NULL || dp == RT_DIR_NULL)
+	return;
+
     RT_DB_INTERNAL_INIT(&cintern);
     if (rt_db_get_internal(&cintern, cdp, dbip, NULL, &rt_uniresource) < 0) {
 	rt_db_free_internal(&cintern);
 	return;
     }
+
     comb = (struct rt_comb_internal *)cintern.idb_ptr;
     if (!comb->tree) return;
     tp = (union tree *)db_find_named_leaf(comb->tree, dp->d_namep);
@@ -285,17 +299,23 @@ report_instance_params(struct db_i *dbip, const char *c, const char *o)
 	rt_db_free_internal(&cintern);
 	return;
     }
+
     /* Got a matching instance, grab matrix */
     if (tp->tr_l.tl_mat) {
 	MAT_COPY(cmat, tp->tr_l.tl_mat);
-    } 
+    }
 
     /* Load the actual object instance, applying the comb matrix to transform the
      * object parameter values into the instance values */
     RT_DB_INTERNAL_INIT(&intern);
-    if ((id = rt_db_get_internal(&intern, dp, dbip, cmat, &rt_uniresource)) < 0) return;
-    if (!OBJ[id].ft_describe) return;
-    if (OBJ[id].ft_describe(&rtlog, &intern, 1, dbip->dbi_base2local, &rt_uniresource,dbip) < 0) return;
+    if ((id = rt_db_get_internal(&intern, dp, dbip, cmat, &rt_uniresource)) < 0)
+	return;
+
+    if (!OBJ[id].ft_describe)
+	return;
+    if (OBJ[id].ft_describe(&rtlog, &intern, 1, dbip->dbi_base2local) < 0)
+	return;
+
     bu_log("INSTANCE %s/%s:\n%s\n", c, o, bu_vls_addr(&rtlog));
     bu_vls_free(&rtlog);
 }
@@ -309,6 +329,8 @@ main(int UNUSED(argc), char *argv[])
     mat_t mat;
     char rt_tmpfile[MAXPATHLEN];
     struct db_i *dbip = DBI_NULL;
+
+    bu_setprogname(argv[0]);
 
     /* Get a guaranteed-valid temp file */
     FILE *fp = bu_temp_file(rt_tmpfile, MAXPATHLEN);
@@ -434,7 +456,7 @@ main(int UNUSED(argc), char *argv[])
 
     bu_log("\n\nOperation 05: scale a comb about -30, 40, 10 by 5x\n\n");
     VSET(p, -30, 40, 10);
-    bn_mat_scale_about_pt(mat, p, 5);
+    bn_mat_scale_about_pnt(mat, p, 5);
     apply_mat_obj(dbip, "comb_1.c", mat);
 
     /* Report */
@@ -451,7 +473,7 @@ main(int UNUSED(argc), char *argv[])
 
     bu_log("\n\nOperation 06: scale the solids about 10, 30, -40 by 5x\n\n");
     VSET(p, 10, 30, -40);
-    bn_mat_scale_about_pt(mat, p, 5);
+    bn_mat_scale_about_pnt(mat, p, 5);
     apply_mat_obj(dbip, "rcc_1.s", mat);
     apply_mat_obj(dbip, "datum_plane.s", mat);
 
@@ -470,7 +492,7 @@ main(int UNUSED(argc), char *argv[])
 
 
 
-    /*sleep(1000);*/
+    /*bu_snooze(BU_SEC2USEC(1000));*/
 
     db_close(dbip);
     /*bu_file_delete(tmpfile);*/

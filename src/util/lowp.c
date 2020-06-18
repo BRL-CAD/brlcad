@@ -1,7 +1,7 @@
 /*                          L O W P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2018 United States Government as represented by
+ * Copyright (c) 2004-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/app.h"
 #include "bu/file.h"
 #include "bu/malloc.h"
 #include "bu/exit.h"
@@ -68,34 +69,36 @@ main(int argc, char **argv)
     ssize_t ret;
     char *ifname;
 
+    bu_setprogname(argv[0]);
+
     if (argc < 2) {
 	fprintf(stderr, "%s", usage);
 	bu_exit (1, NULL);
     }
 
-    ifname = bu_realpath(argv[1], NULL);
+    ifname = bu_file_realpath(argv[1], NULL);
     if ((infd1 = open(ifname, 0)) < 0) {
 	perror(ifname);
-	bu_free(ifname, "ifname alloc from bu_realpath");
+	bu_free(ifname, "ifname alloc from bu_file_realpath");
 	bu_exit (3, NULL);
     }
-    bu_free(ifname, "ifname alloc from bu_realpath");
+    bu_free(ifname, "ifname alloc from bu_file_realpath");
 
-    ifname = bu_realpath(argv[2], NULL);
+    ifname = bu_file_realpath(argv[2], NULL);
     if ((infd2 = open(ifname, 0)) < 0) {
 	perror(ifname);
-	bu_free(ifname, "ifname alloc from bu_realpath");
+	bu_free(ifname, "ifname alloc from bu_file_realpath");
 	bu_exit (3, NULL);
     }
-    bu_free(ifname, "ifname alloc from bu_realpath");
+    bu_free(ifname, "ifname alloc from bu_file_realpath");
 
-    ifname = bu_realpath(argv[3], NULL);
+    ifname = bu_file_realpath(argv[3], NULL);
     if ((infd3 = open(ifname, 0)) < 0) {
 	perror(ifname);
-	bu_free(ifname, "ifname alloc from bu_realpath");
+	bu_free(ifname, "ifname alloc from bu_file_realpath");
 	bu_exit (3, NULL);
     }
-    bu_free(ifname, "ifname alloc from bu_realpath");
+    bu_free(ifname, "ifname alloc from bu_file_realpath");
 
     if (argc == 5) {
 	nlines = atoi(argv[4]);

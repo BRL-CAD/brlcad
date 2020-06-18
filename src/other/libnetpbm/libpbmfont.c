@@ -17,7 +17,6 @@
 #include <string.h>
 
 #include "pm_c_util.h"
-#include "nstring.h"
 #include "pbm.h"
 #include "pbmfont.h"
 #include "mallocvar.h"
@@ -1121,14 +1120,14 @@ int mk_max;
 
     n = 0;
     while (*s) {
-        if (ISSPACE(*s)) {
+        if (isspace(*s)) {
             *s++ = '\0';
             continue;
         }
         vec[n++] = s;
         if (n >= mk_max)
             break;
-        while (*s && !ISSPACE(*s))
+        while (*s && !isspace(*s))
             s++;
     }
     vec[n] = 0;

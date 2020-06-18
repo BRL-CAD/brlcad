@@ -1,7 +1,7 @@
 /*                     B A D M A G I C . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2018 United States Government as represented by
+ * Copyright (c) 2013-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -53,7 +53,7 @@ bomb_callback(const void *data, const char *str)
 }
 
 int
-badmagic_main(int argc, char *argv[])
+main(int argc, char *argv[])
 {
     unsigned char *misalign = (unsigned char *)bu_malloc(1, "bu_badmagic.c");
     uint32_t *ptr = (uint32_t *)bu_malloc(sizeof(uint32_t), "bu_badmagic.c");
@@ -63,44 +63,46 @@ badmagic_main(int argc, char *argv[])
     char *file = "bu_badmagic.c";
     int line = 42, testnum;
 
+    bu_setprogname(argv[0]);
+
     if (argc < 2) {
-	bu_exit(1, "Must specify a function number. [%s]\n", argv[0]);
+	bu_exit(1, "Usage: %s {number}\nMust specify a function number.\n", argv[0]);
     }
 
     bu_bomb_add_hook((bu_hook_t)&bomb_callback, (void *)expected_str);
 
     sscanf(argv[1], "%d", &testnum);
     switch (testnum) {
-    case 1:
-	*ptr = BU_AVS_MAGIC;
-	magic = BU_BITV_MAGIC;
-	str = (char *)bu_identify_magic(*(ptr));
-	sprintf(expected_str, "ERROR: bad pointer %p: s/b %s(x%lx), was %s(x%lx), file %s, line %d\n",
-		(void *)ptr,
-		str, (unsigned long)magic,
-		bu_identify_magic(*(ptr)), (unsigned long)*(ptr),
-		file, line);
-	bu_badmagic(ptr, magic, str, file, line);
-	return 1;
-    case 2:
-	return 0;
-    case 3:
-	ptr = NULL;
-	magic = BU_COLOR_MAGIC;
-	str = (char *)bu_identify_magic(magic);
-	sprintf(expected_str, "ERROR: NULL %s pointer, file %s, line %d\n",
-		str, file, line);
-	bu_badmagic(ptr, magic, str, file, line);
-	return 1;
-    case 4:
-	misalign = (unsigned char *)ptr;
-	ptr = (uint32_t *)(misalign + 1);
-	magic = BU_EXTERNAL_MAGIC;
-	str = (char *)bu_identify_magic(magic);
-	sprintf(expected_str, "ERROR: %p mis-aligned %s pointer, file %s, line %d\n",
-		(void *)ptr, str, file, line);
-	bu_badmagic(ptr, magic, str, file, line);
-	return 1;
+	case 1:
+	    *ptr = BU_AVS_MAGIC;
+	    magic = BU_BITV_MAGIC;
+	    str = (char *)bu_identify_magic(*(ptr));
+	    sprintf(expected_str, "ERROR: bad pointer %p: s/b %s(x%lx), was %s(x%lx), file %s, line %d\n",
+		    (void *)ptr,
+		    str, (unsigned long)magic,
+		    bu_identify_magic(*(ptr)), (unsigned long)*(ptr),
+		    file, line);
+	    bu_badmagic(ptr, magic, str, file, line);
+	    return 1;
+	case 2:
+	    return 0;
+	case 3:
+	    ptr = NULL;
+	    magic = BU_VLS_MAGIC;
+	    str = (char *)bu_identify_magic(magic);
+	    sprintf(expected_str, "ERROR: NULL %s pointer, file %s, line %d\n",
+		    str, file, line);
+	    bu_badmagic(ptr, magic, str, file, line);
+	    return 1;
+	case 4:
+	    misalign = (unsigned char *)ptr;
+	    ptr = (uint32_t *)(misalign + 1);
+	    magic = BU_EXTERNAL_MAGIC;
+	    str = (char *)bu_identify_magic(magic);
+	    sprintf(expected_str, "ERROR: %p mis-aligned %s pointer, file %s, line %d\n",
+		    (void *)ptr, str, file, line);
+	    bu_badmagic(ptr, magic, str, file, line);
+	    return 1;
     }
 
     bu_log("Invalid function number %d specified. [%s]\n", testnum, argv[0]);

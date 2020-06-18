@@ -1,7 +1,7 @@
 /*                        E S C A P E . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2018 United States Government as represented by
+ * Copyright (c) 2011-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@ static int
 expand_expression(const char *expression, struct bu_vls *vp)
 {
     const char *ep = expression;
-	const char *cp;
+    const char *cp;
 
     if (!expression)
 	return 0;

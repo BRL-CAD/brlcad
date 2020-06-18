@@ -1,7 +1,7 @@
 /*                   T K I M G F M T P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2018 United States Government as represented by
+ * Copyright (c) 1994-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -66,6 +66,7 @@
 #include "fb.h"
 #include "tk.h"
 
+#include "tclcad.h"
 
 /* we need tk version numbers for compatibility compilation */
 #if !defined(TK_MAJOR_VERSION) || (TK_MAJOR_VERSION != 8)
@@ -90,7 +91,7 @@ static int		FileWritePIX _ANSI_ARGS_((Tcl_Interp *interp,
 						  const char *fileName, Tcl_Obj *formatString,
 						  Tk_PhotoImageBlock *blockPtr));
 
-Tk_PhotoImageFormat tkImgFmtPIX = {
+TCLCAD_EXPORT Tk_PhotoImageFormat tkImgFmtPIX = {
     "PIX",			/* name */
     FileMatchPIX,		/* fileMatchProc */
     NULL,			/* stringMatchProc */

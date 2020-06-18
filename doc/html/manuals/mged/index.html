@@ -1,14 +1,19 @@
-<HTML><HEAD><TITLE>Frames</TITLE></HEAD>
+<!DOCTYPE html>
+<html>
+<head>
+  <title>MGED Overview</title>
+</head>
 <!-- Target names:
-	 _blank (new, unnamed window)
-	 _self (same frame as element that refers to target)
-	 _parent
-	 _top (Full, original window)
+ _blank (new, unnamed window)
+ _self (same frame as element that refers to target)
+ _parent
+ _top (Full, original window)
 -->
-<FRAMESET cols="23%, 77%">
-    <FRAME name="toc" src="contents.html">
-    <FRAME name="doc" src="preface.html" >
-    <NOFRAMES>
-<!--#include file="mged.html" -->
-    </NOFRAMES>
-</FRAMESET>
+<frameset cols="23%, 77%">
+  <frame name="toc" src="contents.html">
+  <frame name="doc" src="preface.html">
+  <noframes>
+    <!--#include file="mged.html" -->
+  </noframes>
+</frameset>
+</html>

@@ -1,4 +1,13 @@
-/* This file is provided as a compilation stub to ensure ongoing build testing
+/*                        S H I M . C P P
+ * BRL-CAD
+ *
+ * Published in 2020 by the United States Government.
+ * This work is in the public domain.
+ *
+ */
+/** @file shim.cpp
+ *
+ * This file is provided as a compilation stub to ensure ongoing build testing
  * of CREO to BRL-CAD conversion source code.  This file does not necessarily
  * reflect the CREO api, its values, or type constructs and any similarity is
  * either coincidental or necessary for compilation.
@@ -47,7 +56,7 @@ extern "C" int ProParameterInit(void *,wchar_t *,void *) {return 0;}
 extern "C" int ProParameterValueGet(ProParameter *,void *) {return 0;}
 extern "C" int ProParameterVisit (void **,	void*,int (*)(ProParameter*,int,void*),void *) {return 0;}
 extern "C" int ProParamvalueTypeGet(void **,void *) {return 0;}
-extern "C" int ProParamvalueValueGet(void **,int,wchar_t *) {return 0;}
+extern "C" int ProParamvalueValueGet(void **,int,void *) {return 0;}
 extern "C" int ProPartMaterialNameGet(void*,wchar_t *) {return 0;}
 extern "C" int ProPartMaterialdataGet(void*,wchar_t*,ProMaterialProps*) {return 0;}
 extern "C" int ProPartTessellate(void*,double,double,int,ProSurfaceTessellationData**) {return 0;}

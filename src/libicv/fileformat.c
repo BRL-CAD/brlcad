@@ -1,7 +1,7 @@
 /*                      F I L E F O R M A T . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2018 United States Government as represented by
+ * Copyright (c) 2007-2020 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,7 +23,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>	/* for file mode info in WRMODE */
-#include <png.h>
+#include "png.h"
 
 #include "bio.h"
 
